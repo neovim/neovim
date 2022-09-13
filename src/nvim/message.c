@@ -2792,8 +2792,8 @@ static int do_more_prompt(int typed_char)
   if (typed_char == 'G') {
     // "g<": Find first line on the last page.
     mp_last = msg_sb_start(last_msgchunk);
-    for (i = 0; i < Rows - 2 && mp_last != NULL
-         && mp_last->sb_prev != NULL; i++) {
+    for (i = 0; i < (ui_has_messages() ? Rows - 2 : Rows - 1)
+         && mp_last != NULL && mp_last->sb_prev != NULL; i++) {
       mp_last = msg_sb_start(mp_last->sb_prev);
     }
   }
@@ -2910,7 +2910,8 @@ static int do_more_prompt(int typed_char)
         }
 
         // go to start of line at top of the screen
-        for (i = 0; i < Rows - 2 && mp != NULL && mp->sb_prev != NULL; i++) {
+        for (i = 0; i < (ui_has_messages() ? Rows - 2 : Rows - 1)
+             && mp != NULL && mp->sb_prev != NULL; i++) {
           mp = msg_sb_start(mp->sb_prev);
         }
 
@@ -2948,7 +2949,7 @@ static int do_more_prompt(int typed_char)
           }
           toscroll = 0;
         }
-      } else if (ui_has_messages()) {
+      } else {
         // First display any text that we scrolled back.
         while (toscroll > 0 && mp_last != NULL) {
           if (msg_do_throttle() && !msg_grid.throttled) {
