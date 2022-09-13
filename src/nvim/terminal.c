@@ -38,6 +38,7 @@
 
 #include <assert.h>
 #include <limits.h>
+#include <math.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -48,6 +49,7 @@
 
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"
+#include "nvim/api/vim.h"
 #include "nvim/ascii.h"
 #include "nvim/autocmd.h"
 #include "nvim/buffer.h"
@@ -169,6 +171,11 @@ static VTermScreenCallbacks vterm_screen_callbacks = {
   .sb_popline  = term_sb_pop,
 };
 
+VTermStateFallbacks vterm_parser_callbacks = {
+  .dcs = term_unhandled_dcs,
+  .osc = term_unhandled_osc,
+};
+
 static PMap(ptr_t) invalidated_terminals = MAP_INIT;
 
 void terminal_init(void)
@@ -217,6 +224,8 @@ Terminal *terminal_open(buf_T *buf, TerminalOptions opts)
   vterm_set_utf8(rv->vt, 1);
   // Setup state
   VTermState *state = vterm_obtain_state(rv->vt);
+  // handle custom escape sequences
+  vterm_state_set_unrecognised_fallbacks(state, &vterm_parser_callbacks, rv);
   // Set up screen
   rv->vts = vterm_obtain_screen(rv->vt);
   vterm_screen_enable_altscreen(rv->vts, true);
@@ -453,10 +462,8 @@ bool terminal_enter(void)
 
   adjust_topline(s->term, buf, 0);  // scroll to end
   // erase the unfocused cursor
-  invalidate_terminal(s->term, s->term->cursor.row, s->term->cursor.row + 1);
   showmode();
   curwin->w_redr_status = true;  // For mode() in statusline. #8323
-  ui_busy_start();
   apply_autocmds(EVENT_TERMENTER, NULL, NULL, false, curbuf);
   may_trigger_modechanged();
 
@@ -495,7 +502,6 @@ bool terminal_enter(void)
   } else {
     unshowmode(true);
   }
-  ui_busy_stop();
   if (s->close) {
     bool wipe = s->term->buf_handle != 0;
     s->term->destroy = true;
@@ -858,14 +864,6 @@ void terminal_get_line_attributes(Terminal *term, win_T *wp, int linenr, int *te
       });
     }
 
-    if (term->cursor.visible && term->cursor.row == row
-        && term->cursor.col == col) {
-      attr_id = hl_combine_attr(attr_id,
-                                is_focused(term) && wp == curwin
-                                ? win_hl_attr(wp, HLF_TERM)
-                                : win_hl_attr(wp, HLF_TERMNC));
-    }
-
     term_attrs[col] = attr_id;
   }
 }
@@ -882,6 +880,42 @@ bool terminal_running(const Terminal *term)
 
 // }}}
 // libvterm callbacks {{{
+
+static int term_unhandled_dcs(const char *command, size_t command_length, VTermStringFragment fragment, void *user)
+{
+  if (fragment.initial) {
+    char *buffer = xmalloc(command_length + 3);
+    snprintf(buffer, command_length + 3, "\033P%s;", command);
+    ui_call_term_unhandled((String){.data = buffer, .size = command_length + 5});
+  }
+  if (fragment.len > 0) {
+    char *buffer = xmalloc(fragment.len);
+    memcpy(buffer, fragment.str, fragment.len);
+    ui_call_term_unhandled((String){.data = buffer, .size = fragment.len});
+  }
+  if (fragment.final) {
+    ui_call_term_unhandled((String){.data = "\033\\", .size = 2});
+  }
+  return 1;
+}
+
+static int term_unhandled_osc(int command, VTermStringFragment fragment, void *user)
+{
+  if (fragment.initial) {
+    char *buffer = xmalloc((size_t)((ceil(log10(command))+1)*sizeof(char)));
+    int len = sprintf(buffer, "\033]%d;", command);
+    ui_call_term_unhandled((String){.data = buffer, .size = (size_t)len});
+  }
+  if (fragment.len > 0) {
+    char *buffer = xmalloc(fragment.len);
+    memcpy(buffer, fragment.str, fragment.len);
+    ui_call_term_unhandled((String){.data = buffer, .size = fragment.len});
+  }
+  if (fragment.final) {
+    ui_call_term_unhandled((String){.data = "\033\\", .size = 2});
+  }
+  return 1;
+}
 
 static int term_damage(VTermRect rect, void *data)
 {

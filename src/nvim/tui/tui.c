@@ -55,10 +55,12 @@
 #define STARTS_WITH(str, prefix) \
   (strlen(str) >= (sizeof(prefix) - 1) \
    && 0 == memcmp((str), (prefix), sizeof(prefix) - 1))
-#define TMUX_WRAP(is_tmux, seq) \
-  ((is_tmux) ? "\x1bPtmux;\x1b" seq "\x1b\\" : seq)
 #define LINUXSET0C "\x1b[?0c"
 #define LINUXSET1C "\x1b[?1c"
+
+#define TMUX_START "\x1bPtmux;\x1b"
+#define TMUX_END   "\x1b\\"
+#define TMUX_WRAP(is_tmux, seq) ((is_tmux) ? TMUX_START seq TMUX_END : seq)
 
 #define UNIBI_SET_NUM_VAR(var, num) \
   do { \
@@ -1426,6 +1428,18 @@ void tui_option_set(TUIData *tui, String name, Object value)
     tui->input.ttimeoutlen = (long)value.data.integer;
   } else if (strequal(name.data, "verbose")) {
     tui->verbose = value.data.integer;
+  }
+}
+
+void tui_term_unhandled(TUIData *tui, String cmd)
+{
+  bool tmux = terminfo_is_term_family(tui->term, "tmux") || !!os_getenv("TMUX");
+  if (tmux) {
+    out(tui, TMUX_START, strlen(TMUX_START));
+  }
+  out(tui, cmd.data, cmd.size);
+  if (tmux) {
+    out(tui, TMUX_END, strlen(TMUX_END));
   }
 }
 
