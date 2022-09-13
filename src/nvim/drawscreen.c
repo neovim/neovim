@@ -60,6 +60,7 @@
 #include <string.h>
 
 #include "nvim/buffer.h"
+#include "nvim/buffer_defs.h"
 #include "nvim/charset.h"
 #include "nvim/cmdexpand.h"
 #include "nvim/diff.h"
@@ -630,7 +631,6 @@ static void win_redr_border(win_T *wp)
   int irow = wp->w_height_inner + wp->w_winbar_height, icol = wp->w_width_inner;
 
   bool title = wp->w_float_config.title;
-  int title_pos = (int)wp->w_float_config.title_pos;
   char *title_text = wp->w_float_config.title_text;
 
   if (adj[0]) {
@@ -639,11 +639,11 @@ static void win_redr_border(win_T *wp)
       grid_put_schar(grid, 0, 0, chars[0], attrs[0]);
     }
     for (int i = 0; i < icol; i++) {
-      if (title) {
+      if (title && title_text != NULL) {
         int len = sizeof(title_text) - 1;
 
         // title in left
-        if (title_pos == 1) {
+        if (wp->w_float_config.title_pos == kBorderTitleLeft) {
           if (i > 0 && i <= len) {
             grid_put_schar(grid, 0, i + adj[3], title_text++, attrs[1]);
           } else {
@@ -652,18 +652,18 @@ static void win_redr_border(win_T *wp)
         }
 
         // title in center
-        if (title_pos == 2) {
+        if (wp->w_float_config.title_pos == kBorderTitleCenter) {
           int text_center = len >> 1;
           int col_center = icol >> 1;
-          if (i >= col_center - text_center && i <= col_center + text_center) {
-            grid_put_schar(grid, 0, i + adj[3], title_text++, attrs[1]);
+          if (i >= col_center - text_center && i < col_center + text_center) {
+            grid_put_schar(grid, 0, i + adj[3], title_text, attrs[1]);
           }else {
             grid_put_schar(grid, 0, i + adj[3], chars[1], attrs[1]);
           }
         }
 
         // title in right
-        if (title_pos == 3 ) {
+        if (wp->w_float_config.title_pos == kBorderTitleRight) {
           if ( i >= icol - len){
             grid_put_schar(grid, 0, i + adj[3], title_text++, attrs[1]);
           } else {
