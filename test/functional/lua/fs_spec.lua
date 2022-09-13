@@ -78,6 +78,23 @@ describe('vim.fs', function()
         return vim.fs.find(nvim, { path = dir, type = 'file' })
       ]], test_build_dir, nvim_prog_basename))
     end)
+
+    it('accepts predicate as names', function()
+      eq({test_build_dir}, exec_lua([[
+        local dir = ...
+        local opts = { path = dir, upward = true, type = 'directory' }
+        return vim.fs.find(function(x) return x == 'build' end, opts)
+      ]], nvim_dir))
+      eq({nvim_prog}, exec_lua([[
+        local dir, nvim = ...
+        return vim.fs.find(function(x) return x == nvim end, { path = dir, type = 'file' })
+      ]], test_build_dir, nvim_prog_basename))
+      eq({}, exec_lua([[
+        local dir = ...
+        local opts = { path = dir, upward = true, type = 'directory' }
+        return vim.fs.find(function(x) return x == 'no-match' end, opts)
+      ]], nvim_dir))
+    end)
   end)
 
   describe('normalize()', function()
