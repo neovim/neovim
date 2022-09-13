@@ -3,11 +3,13 @@
 -- Test for *:s%* on :substitute.
 
 local helpers = require('test.functional.helpers')(after_each)
+local Screen = require('test.functional.ui.screen')
 local feed, insert = helpers.feed, helpers.insert
+local exec = helpers.exec
 local clear, feed_command, expect = helpers.clear, helpers.feed_command, helpers.expect
 local eq, eval = helpers.eq, helpers.eval
 
-describe('substitue()', function()
+describe('substitute()', function()
   before_each(clear)
 
   -- The original test contained several TEST_X lines to delimit different
@@ -132,7 +134,7 @@ describe('substitue()', function()
   end)
 end)
 
-describe(':substitue', function()
+describe(':substitute', function()
   before_each(clear)
 
   it('with \\ze and \\zs and confirmation dialog (TEST_8)', function()
@@ -158,5 +160,30 @@ describe(':substitue', function()
     feed_command('s/x/X/gc')
     feed('yyq')  -- For the dialog of the previous :s command.
     expect('XXx')
+  end)
+
+  it('first char is highlighted with confirmation dialog and empty match', function()
+    local screen = Screen.new(60, 8)
+    screen:set_default_attr_ids({
+      [0] = {bold = true, foreground = Screen.colors.Blue},  -- NonText
+      [1] = {reverse = true},  -- IncSearch
+      [2] = {bold = true, foreground = Screen.colors.SeaGreen},  -- MoreMsg
+    })
+    screen:attach()
+    exec([[
+      set nohlsearch noincsearch
+      call setline(1, ['one', 'two', 'three'])
+    ]])
+    feed(':%s/^/   /c<CR>')
+    screen:expect([[
+      {1:o}ne                                                         |
+      two                                                         |
+      three                                                       |
+      {0:~                                                           }|
+      {0:~                                                           }|
+      {0:~                                                           }|
+      {0:~                                                           }|
+      {2:replace with     (y/n/a/q/l/^E/^Y)?}^                         |
+    ]])
   end)
 end)
