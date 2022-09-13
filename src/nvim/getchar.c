@@ -1697,8 +1697,8 @@ static void getchar_common(typval_T *argvars, typval_T *rettv)
 
   if (!ui_has_messages()) {
     // redraw the screen after getchar()
-    update_screen(UPD_NOT_VALID);
-    clear_cmdline = true;
+    // Note: UPD_CLEAR is needed to redraw screen properly
+    update_screen(UPD_CLEAR);
   }
 
   set_vim_var_nr(VV_MOUSE_WIN, 0);
