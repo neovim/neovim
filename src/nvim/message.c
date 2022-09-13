@@ -2948,7 +2948,7 @@ static int do_more_prompt(int typed_char)
           }
           toscroll = 0;
         }
-      } else {
+      } else if (ui_has_messages()) {
         // First display any text that we scrolled back.
         while (toscroll > 0 && mp_last != NULL) {
           if (msg_do_throttle() && !msg_grid.throttled) {
