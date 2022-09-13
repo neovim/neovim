@@ -640,12 +640,12 @@ static void win_redr_border(win_T *wp)
     }
     for (int i = 0; i < icol; i++) {
       if (title && title_text != NULL) {
-        int len = sizeof(title_text) - 1;
+        int len = (int)strlen(title_text);
 
         // title in left
         if (wp->w_float_config.title_pos == kBorderTitleLeft) {
-          if (i > 0 && i <= len) {
-            grid_put_schar(grid, 0, i + adj[3], title_text++, attrs[1]);
+          if (i > 0 && i < len) {
+            grid_puts_len(grid, title_text++,len,0, i + adj[3], attrs[1]);
           } else {
             grid_put_schar(grid, 0, i + adj[3], chars[1], attrs[1]);
           }
@@ -655,8 +655,8 @@ static void win_redr_border(win_T *wp)
         if (wp->w_float_config.title_pos == kBorderTitleCenter) {
           int text_center = len >> 1;
           int col_center = icol >> 1;
-          if (i >= col_center - text_center && i < col_center + text_center) {
-            grid_put_schar(grid, 0, i + adj[3], title_text, attrs[1]);
+          if (i >= col_center - text_center && i < col_center + text_center - 1) {
+            grid_put_schar(grid, 0, i + adj[3], title_text++, attrs[1]);
           }else {
             grid_put_schar(grid, 0, i + adj[3], chars[1], attrs[1]);
           }
@@ -664,7 +664,7 @@ static void win_redr_border(win_T *wp)
 
         // title in right
         if (wp->w_float_config.title_pos == kBorderTitleRight) {
-          if ( i >= icol - len){
+          if ( i >= icol - len - 1 && i < icol - 1){
             grid_put_schar(grid, 0, i + adj[3], title_text++, attrs[1]);
           } else {
             grid_put_schar(grid, 0, i + adj[3], chars[1], attrs[1]);

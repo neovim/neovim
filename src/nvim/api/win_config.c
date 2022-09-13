@@ -353,7 +353,7 @@ static bool parse_border_title(Object title, FloatConfig *fconfig, Error *err)
           api_set_error(err, kErrorTypeValidation, "invalid title_text");
           return false;
         }
-        fconfig->title_text = v->data.string.data;
+        fconfig->title_text = xstrdup(v->data.string.data);
       }
 
       if (striequal(k.data, "title_pos")) {
