@@ -909,7 +909,7 @@ char *msg_may_trunc(bool force, char *s)
 
   room = (Rows - cmdline_row - 1) * Columns + sc_col - 1;
   if ((force || (shortmess(SHM_TRUNC) && !exmode_active))
-      && (int)strlen(s) - room > 0 && p_ch > 0) {
+      && (int)STRLEN(s) - room > 0) {
     int size = vim_strsize(s);
 
     // There may be room anyway when there are multibyte chars.
@@ -1401,9 +1401,7 @@ void msg_start(void)
     need_fileinfo = false;
   }
 
-  const bool no_msg_area = !ui_has_messages();
-
-  if (need_clr_eos || (no_msg_area && redrawing_cmdline)) {
+  if (need_clr_eos || (p_ch == 0 && redrawing_cmdline)) {
     // Halfway an ":echo" command and getting an (error) message: clear
     // any text from the command.
     need_clr_eos = false;
@@ -1411,12 +1409,14 @@ void msg_start(void)
   }
 
   if (!msg_scroll && full_screen) {     // overwrite last message
+    if (cmdline_row >= Rows && !ui_has(kUIMessages)) {
+      msg_scroll_up(false, true);
+      msg_scrolled++;
+      cmdline_row = Rows - 1;
+    }
     msg_row = cmdline_row;
     msg_col = cmdmsg_rl ? Columns - 1 : 0;
-    if (no_msg_area && get_cmdprompt() == NULL) {
-      msg_row -= 1;
-    }
-  } else if (msg_didout || no_msg_area) {  // start message on next line
+  } else if (msg_didout || (p_ch == 0 && !ui_has(kUIMessages))) {  // start message on next line
     msg_putchar('\n');
     did_return = true;
     cmdline_row = msg_row;
@@ -2186,7 +2186,7 @@ static void msg_puts_display(const char *str, int maxlen, int attr, int recurse)
 
       // Scroll the screen up one line.
       bool has_last_char = ((uint8_t)(*s) >= ' ' && !cmdmsg_rl);
-      msg_scroll_up(!has_last_char);
+      msg_scroll_up(!has_last_char, false);
 
       msg_row = Rows - 2;
       if (msg_col >= Columns) {         // can happen after screen resize
@@ -2350,7 +2350,7 @@ bool msg_use_msgsep(void)
 {
   // the full-screen scroll behavior doesn't really make sense with
   // 'ext_multigrid'
-  return (dy_flags & DY_MSGSEP) || ui_has(kUIMultigrid);
+  return (dy_flags & DY_MSGSEP) || p_ch == 0 || ui_has(kUIMultigrid);
 }
 
 bool msg_do_throttle(void)
@@ -2359,7 +2359,7 @@ bool msg_do_throttle(void)
 }
 
 /// Scroll the screen up one line for displaying the next message line.
-void msg_scroll_up(bool may_throttle)
+void msg_scroll_up(bool may_throttle, bool zerocmd)
 {
   if (may_throttle && msg_do_throttle()) {
     msg_grid.throttled = true;
@@ -2367,7 +2367,13 @@ void msg_scroll_up(bool may_throttle)
   msg_did_scroll = true;
   if (msg_use_msgsep()) {
     if (msg_grid_pos > 0) {
-      msg_grid_set_pos(msg_grid_pos - 1, true);
+      msg_grid_set_pos(msg_grid_pos - 1, !zerocmd);
+
+      // When displaying the first line with cmdheight=0, we need to draw over
+      // the existing last line of the screen.
+      if (zerocmd && msg_grid.chars) {
+        grid_clear_line(&msg_grid, msg_grid.line_offset[0], msg_grid.cols, false);
+      }
     } else {
       grid_del_lines(&msg_grid, 0, 1, msg_grid.rows, 0, msg_grid.cols);
       memmove(msg_grid.dirty_col, msg_grid.dirty_col + 1,
@@ -2378,8 +2384,7 @@ void msg_scroll_up(bool may_throttle)
     grid_del_lines(&msg_grid_adj, 0, 1, Rows, 0, Columns);
   }
 
-  grid_fill(&msg_grid_adj, Rows - 1, Rows, 0, Columns, ' ', ' ',
-            HL_ATTR(HLF_MSG));
+  grid_fill(&msg_grid_adj, Rows - 1, Rows, 0, Columns, ' ', ' ', HL_ATTR(HLF_MSG));
 }
 
 /// Send throttled message output to UI clients
@@ -2958,7 +2963,7 @@ static int do_more_prompt(int typed_char)
             msg_grid_scroll_discount++;
           }
           // scroll up, display line at bottom
-          msg_scroll_up(true);
+          msg_scroll_up(true, false);
           inc_msg_scrolled();
           grid_fill(&msg_grid_adj, Rows - 2, Rows - 1, 0, Columns, ' ', ' ',
                     HL_ATTR(HLF_MSG));
@@ -3094,7 +3099,7 @@ void repeat_message(void)
 /// Skip this when ":silent" was used, no need to clear for redirection.
 void msg_clr_eos(void)
 {
-  if (msg_silent == 0 && p_ch > 0) {
+  if (msg_silent == 0) {
     msg_clr_eos_force();
   }
 }
@@ -3116,12 +3121,10 @@ void msg_clr_eos_force(void)
     msg_row = msg_grid_pos;
   }
 
-  if (ui_has_messages()) {
-    grid_fill(&msg_grid_adj, msg_row, msg_row + 1, msg_startcol, msg_endcol,
-              ' ', ' ', HL_ATTR(HLF_MSG));
-    grid_fill(&msg_grid_adj, msg_row + 1, Rows, 0, Columns,
-              ' ', ' ', HL_ATTR(HLF_MSG));
-  }
+  grid_fill(&msg_grid_adj, msg_row, msg_row + 1, msg_startcol, msg_endcol,
+            ' ', ' ', HL_ATTR(HLF_MSG));
+  grid_fill(&msg_grid_adj, msg_row + 1, Rows, 0, Columns,
+            ' ', ' ', HL_ATTR(HLF_MSG));
 
   redraw_cmdline = true;  // overwritten the command line
   if (msg_row < Rows - 1 || msg_col == (cmdmsg_rl ? Columns : 0)) {

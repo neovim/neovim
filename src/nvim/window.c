@@ -6193,8 +6193,7 @@ void win_set_inner_size(win_T *wp, bool valid_cursor)
 
     // There is no point in adjusting the scroll position when exiting.  Some
     // values might be invalid.
-    // Skip scroll_to_fraction() when 'cmdheight' was set to one from zero.
-    if (!exiting && !made_cmdheight_nonzero && valid_cursor) {
+    if (!exiting && valid_cursor) {
       scroll_to_fraction(wp, prev_height);
     }
     redraw_later(wp, UPD_NOT_VALID);  // UPD_SOME_VALID??

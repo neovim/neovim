@@ -485,6 +485,10 @@ static void compose_debug(Integer startrow, Integer endrow, Integer startcol, In
   endcol = MIN(endcol, default_grid.cols);
   int attr = syn_id2attr(syn_id);
 
+  if (delay) {
+    debug_delay(endrow - startrow);
+  }
+
   for (int row = (int)startrow; row < endrow; row++) {
     ui_composed_call_raw_line(1, row, startcol, startcol, endcol, attr, false,
                               (const schar_T *)linebuf,
@@ -610,7 +614,7 @@ static void ui_comp_msg_set_pos(UI *ui, Integer grid, Integer row, Boolean scrol
   if (row > msg_current_row && ui_comp_should_draw()) {
     compose_area(MAX(msg_current_row - 1, 0), row, 0, default_grid.cols);
   } else if (row < msg_current_row && ui_comp_should_draw()
-             && msg_current_row < Rows) {
+             && (msg_current_row < Rows || (scrolled && !msg_was_scrolled))) {
     int delta = msg_current_row - (int)row;
     if (msg_grid.blending) {
       int first_row = MAX((int)row - (scrolled?1:0), 0);

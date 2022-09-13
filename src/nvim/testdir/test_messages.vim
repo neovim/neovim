@@ -398,7 +398,7 @@ func Test_cmdheight_zero()
 
   " Check change/restore cmdheight when macro
   call feedkeys("qa", "xt")
-  call assert_equal(1, &cmdheight)
+  call assert_equal(0, &cmdheight)
   call feedkeys("q", "xt")
   call assert_equal(0, &cmdheight)
 

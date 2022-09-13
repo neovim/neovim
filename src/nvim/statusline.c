@@ -266,7 +266,7 @@ void win_redr_ruler(win_T *wp, bool always)
       off = 0;
     }
 
-    if (!part_of_status && !ui_has_messages()) {
+    if (!part_of_status && p_ch == 0 && !ui_has(kUIMessages)) {
       return;
     }
 

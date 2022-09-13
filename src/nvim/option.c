@@ -2570,9 +2570,10 @@ static char *set_num_option(int opt_idx, char_u *varp, long value, char *errbuf,
       Rows = (int)p_lines;
       Columns = (int)p_columns;
       check_screensize();
-      if (cmdline_row > Rows - p_ch && Rows > p_ch) {
-        assert(p_ch >= 0 && Rows - p_ch <= INT_MAX);
-        cmdline_row = (int)(Rows - p_ch);
+      int new_row = (int)(Rows - MAX(p_ch, 1));
+      if (cmdline_row > new_row && Rows > p_ch) {
+        assert(p_ch >= 0 && new_row <= INT_MAX);
+        cmdline_row = new_row;
       }
     }
     if (p_window >= Rows || !option_was_set("window")) {

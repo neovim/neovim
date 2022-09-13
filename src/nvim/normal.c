@@ -2817,7 +2817,8 @@ void pop_showcmd(void)
 
 static void display_showcmd(void)
 {
-  if (!ui_has_messages()) {
+  if (p_ch == 0 && !ui_has(kUIMessages)) {
+    // TODO(bfredl): would be nice to show in global statusline, perhaps
     return;
   }
 

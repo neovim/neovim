@@ -1022,7 +1022,7 @@ describe('cmdheight=0', function()
       ~                        |
       :^                        |
     ]]}
-    eq(1, eval('&cmdheight'))
+    eq(0, eval('&cmdheight'))
     feed('<cr>')
     screen:expect{grid=[[
       ^                         |
@@ -1040,11 +1040,11 @@ describe('cmdheight=0', function()
     screen:expect{grid=[[
                                |
       ~                        |
-      ~                        |
-      ~                        |
+                               |
+      :call input("foo >")     |
       foo >^                    |
     ]]}
-    eq(1, eval('&cmdheight'))
+    eq(0, eval('&cmdheight'))
     feed('<cr>')
     screen:expect{grid=[[
       ^                         |
@@ -1060,8 +1060,8 @@ describe('cmdheight=0', function()
     command("set cmdheight=0 noruler laststatus=3 winbar=foo")
     feed(':split<CR>')
     screen:expect{grid=[[
-      foo                      |
                                |
+      :split                   |
       E36: Not enough room     |
       Press ENTER or type comma|
       nd to continue^           |
@@ -1079,7 +1079,7 @@ describe('cmdheight=0', function()
       foo                      |
                                |
       ~                        |
-      [No Name]                |
+      ~                        |
       :^                        |
     ]]}
     feed('<Esc>')
@@ -1103,8 +1103,8 @@ describe('cmdheight=0', function()
       ~                        |
       ~                        |
       ~                        |
-      recording @q             |
-    ]], showmode={}}
+      ~                        |
+    ]]}
     feed('q')
     screen:expect{grid=[[
       ^                         |
@@ -1112,7 +1112,7 @@ describe('cmdheight=0', function()
       ~                        |
       ~                        |
       ~                        |
-    ]], showmode={}}
+    ]], unchanged=true}
   end)
 
   it("when substitute text", function()
@@ -1131,7 +1131,7 @@ describe('cmdheight=0', function()
       foo                      |
       ~                        |
       ~                        |
-      [No Name] [+]            |
+      ~                        |
       replace wi...q/l/^E/^Y)?^ |
     ]]}
 
