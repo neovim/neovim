@@ -699,7 +699,6 @@ static void win_redr_border(win_T *wp)
 
   bool title = wp->w_float_config.title;
   char *title_text = wp->w_float_config.title_text;
-  int len = (int)strlen(title_text);
 
   if (adj[0]) {
     grid_puts_line_start(grid, 0);
@@ -708,6 +707,7 @@ static void win_redr_border(win_T *wp)
     }
 
     if (title && title_text != NULL) {
+      int len = (int)strlen(title_text);
       int title_attr = wp->w_float_config.title_attr;
 
       if (wp->w_float_config.title_pos == kBorderTitleLeft) {
