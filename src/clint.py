@@ -2700,7 +2700,7 @@ def CheckLanguage(filename, clean_lines, linenum, error):
     if match:
         error(filename, linenum, 'runtime/printf', 4,
               'Use xstrlcat or snprintf instead of %s' % match.group(1))
-    if not Search(r'eval/typval\.[ch]$', filename):
+    if not Search(r'eval/typval\.[ch]$|eval/typval_defs\.h$', filename):
         match = Search(r'(?:\.|->)'
                        r'(?:lv_(?:first|last|refcount|len|watch|idx(?:_item)?'
                        r'|copylist|lock)'
