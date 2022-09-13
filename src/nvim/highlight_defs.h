@@ -114,7 +114,7 @@ typedef enum {
   HLF_WBR,        // Window bars
   HLF_WBRNC,      // Window bars of not-current windows
   HLF_CU,         // Cursor
-  HLF_BORDER_TITLE,// Float Border TItle
+  HLF_BORDER_TITLE,  // Float Border TItle
   HLF_COUNT,      // MUST be the last one
 } hlf_T;
 

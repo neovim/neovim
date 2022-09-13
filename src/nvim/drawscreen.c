@@ -644,7 +644,7 @@ static void win_redr_border(win_T *wp)
       int title_attr = wp->w_float_config.title_attr;
 
       if (wp->w_float_config.title_pos == kBorderTitleLeft) {
-        grid_puts_len(grid, title_text,len, 0, 1, title_attr);
+        grid_puts_len(grid, title_text, len, 0, 1, title_attr);
         for (int i = len; i < icol; i++) {
           grid_put_schar(grid, 0, i + adj[3], chars[1], attrs[1]);
         }
@@ -655,7 +655,8 @@ static void win_redr_border(win_T *wp)
         int col_center = icol >> 1;
         grid_puts_len(grid, title_text, len, 0, col_center - text_center, title_attr);
         for (int i = 0; i < icol; i++) {
-          if (i <= col_center - text_center - 2*adj[3] || i >= col_center - text_center + len - 1) {
+          if (i <= col_center - text_center - 2 * adj[3]
+              || i >= col_center - text_center + len - 1) {
             grid_put_schar(grid, 0, i + adj[3], chars[1], attrs[1]);
           }
         }
@@ -669,8 +670,7 @@ static void win_redr_border(win_T *wp)
           }
         }
       }
-    }
-    else{
+    } else {
       for (int i = 0; i < icol; i++) {
         grid_put_schar(grid, 0, i + adj[3], chars[1], attrs[1]);
       }
