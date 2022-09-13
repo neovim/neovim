@@ -1216,7 +1216,14 @@ static bool decor_spell_nav_col(win_T *wp, linenr_T lnum, linenr_T *decor_lnum, 
     *decor_lnum = lnum;
   }
   decor_redraw_col(wp->w_buffer, col, col, false, &decor_state);
-  return decor_state.spell;
+  return decor_state.spell == kTrue;
+}
+
+static inline bool can_syn_spell(win_T *wp, linenr_T lnum, int col)
+{
+  bool can_spell;
+  (void)syn_get_id(wp, lnum, col, false, &can_spell, false);
+  return can_spell;
 }
 
 /// Moves to the next spell error.
@@ -1346,15 +1353,9 @@ size_t spell_move_to(win_T *wp, int dir, bool allwords, bool curline, hlf_T *att
                             : p - buf) > wp->w_cursor.col)) {
             col = (colnr_T)(p - buf);
 
-            bool can_spell = decor_spell_nav_col(wp, lnum, &decor_lnum, col, &decor_error);
-
-            if (!can_spell) {
-              if (has_syntax) {
-                (void)syn_get_id(wp, lnum, col, false, &can_spell, false);
-              } else {
-                can_spell = (wp->w_s->b_p_spo_flags & SPO_NPBUFFER) == 0;
-              }
-            }
+            bool can_spell = (!has_syntax && (wp->w_s->b_p_spo_flags & SPO_NPBUFFER) == 0)
+                             || decor_spell_nav_col(wp, lnum, &decor_lnum, col, &decor_error)
+                             || (has_syntax && can_syn_spell(wp, lnum, col));
 
             if (!can_spell) {
               attr = HLF_COUNT;

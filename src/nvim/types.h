@@ -45,6 +45,9 @@ typedef enum {
   kTrue  = 1,
 } TriState;
 
+#define TRISTATE_TO_BOOL(val, \
+                         default) ((val) == kTrue ? true : ((val) == kFalse ? false : (default)))
+
 typedef struct Decoration Decoration;
 
 #endif  // NVIM_TYPES_H

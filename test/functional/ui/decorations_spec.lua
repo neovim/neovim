@@ -176,7 +176,13 @@ describe('decorations providers', function()
       beamtrace = {}
       local function on_do(kind, ...)
         if kind == 'win' or kind == 'spell' then
-          a.nvim_buf_set_extmark(0, ns, 0, 0, { end_row = 2, end_col = 23, spell = true, ephemeral = true })
+          a.nvim_buf_set_extmark(0, ns, 0, 0, {
+            end_row = 2,
+            end_col = 23,
+            spell = true,
+            priority = 20,
+            ephemeral = true
+          })
         end
         table.insert(beamtrace, {kind, ...})
       end
@@ -234,6 +240,36 @@ describe('decorations providers', function()
     {1:~                                       }|
                                             |
     ]]}
+
+    -- spell=false with lower priority doesn't disable spell
+    local ns = meths.create_namespace "spell"
+    local id = helpers.curbufmeths.set_extmark(ns, 0, 0, { priority = 30, end_row = 2, end_col = 23, spell = false })
+
+    screen:expect{grid=[[
+    I am well written text.                 |
+    i am not capitalized.                   |
+    I am a ^speling mistakke.                |
+                                            |
+    {1:~                                       }|
+    {1:~                                       }|
+    {1:~                                       }|
+                                            |
+    ]]}
+
+    -- spell=false with higher priority does disable spell
+    helpers.curbufmeths.set_extmark(ns, 0, 0, { id = id, priority = 10, end_row = 2, end_col = 23, spell = false })
+
+    screen:expect{grid=[[
+    I am well written text.                 |
+    {15:i} am not capitalized.                   |
+    I am a {16:^speling} {16:mistakke}.                |
+                                            |
+    {1:~                                       }|
+    {1:~                                       }|
+    {1:~                                       }|
+                                            |
+    ]]}
+
   end)
 
   it('can predefine highlights', function()
