@@ -337,14 +337,14 @@ static bool parse_border_title(Object title, FloatConfig *fconfig, Error *err)
 
   if (HAS_KEY(title)) {
     if (title.type != kObjectTypeDictionary
-        && (title.type == kObjectTypeArray && title.data.array.size == 0))  {
+        && (title.type == kObjectTypeArray && title.data.array.size == 0)) {
       api_set_error(err, kErrorTypeValidation, "title must be a dictionary");
       return false;
     }
 
     Dictionary title_data = title.data.dictionary;
 
-    for(size_t i = 0; i < title_data.size; i++){
+    for (size_t i = 0; i < title_data.size; i++) {
       String k = title_data.items[i].key;
       Object *v = &title_data.items[i].value;
 
@@ -369,18 +369,18 @@ static bool parse_border_title(Object title, FloatConfig *fconfig, Error *err)
           api_set_error(err, kErrorTypeValidation, "title_hl must be a string");
           return false;
         }
-        int hl_id = object_to_hl_id(*v,"border title highlight",err);
+        int hl_id = object_to_hl_id(*v, "border title highlight", err);
         fconfig->title_hi_id = hl_id;
       }
     }
 
     if (striequal(pos, "left")) {
       fconfig->title_pos = kBorderTitleLeft;
-    }else if (striequal(pos, "center")) {
+    } else if (striequal(pos, "center")) {
       fconfig->title_pos = kBorderTitleCenter;
-    }else if (striequal(pos, "right")) {
+    } else if (striequal(pos, "right")) {
       fconfig->title_pos = kBorderTitleRight;
-    }else {
+    } else {
       api_set_error(err, kErrorTypeValidation, "invalid title_pos value");
       return false;
     }
