@@ -2252,8 +2252,9 @@ void ml_add_deleted_len_buf(buf_T *buf, char_u *ptr, ssize_t len)
   if (inhibit_delete_count) {
     return;
   }
-  if (len == -1) {
-    len = (ssize_t)STRLEN(ptr);
+  ssize_t maxlen = (ssize_t)STRLEN(ptr);
+  if (len == -1 || len > maxlen) {
+    len = maxlen;
   }
   curbuf->deleted_bytes += (size_t)len + 1;
   curbuf->deleted_bytes2 += (size_t)len + 1;
