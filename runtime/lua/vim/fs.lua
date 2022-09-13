@@ -76,8 +76,11 @@ end
 --- The search can be narrowed to find only files or or only directories by
 --- specifying {type} to be "file" or "directory", respectively.
 ---
----@param names (string|table) Names of the files and directories to find. Must
----             be base names, paths and globs are not supported.
+---@param names (string|table|fun(name: string): boolean) Names of the files
+---             and directories to find.
+---             Must be base names, paths and globs are not supported.
+---             If a function it is called per file and dir within the
+---             traversed directories to test if they match.
 ---@param opts (table) Optional keyword arguments:
 ---                       - path (string): Path to begin searching from. If
 ---                              omitted, the current working directory is used.
@@ -98,7 +101,7 @@ end
 function M.find(names, opts)
   opts = opts or {}
   vim.validate({
-    names = { names, { 's', 't' } },
+    names = { names, { 's', 't', 'f' } },
     path = { opts.path, 's', true },
     upward = { opts.upward, 'b', true },
     stop = { opts.stop, 's', true },
@@ -123,18 +126,31 @@ function M.find(names, opts)
   end
 
   if opts.upward then
-    ---@private
-    local function test(p)
-      local t = {}
-      for _, name in ipairs(names) do
-        local f = p .. '/' .. name
-        local stat = vim.loop.fs_stat(f)
-        if stat and (not opts.type or opts.type == stat.type) then
-          t[#t + 1] = f
-        end
-      end
+    local test
 
-      return t
+    if type(names) == 'function' then
+      test = function(p)
+        local t = {}
+        for name, type in M.dir(p) do
+          if names(name) and (not opts.type or opts.type == type) then
+            table.insert(t, p .. '/' .. name)
+          end
+        end
+        return t
+      end
+    else
+      test = function(p)
+        local t = {}
+        for _, name in ipairs(names) do
+          local f = p .. '/' .. name
+          local stat = vim.loop.fs_stat(f)
+          if stat and (not opts.type or opts.type == stat.type) then
+            t[#t + 1] = f
+          end
+        end
+
+        return t
+      end
     end
 
     for _, match in ipairs(test(path)) do
@@ -162,17 +178,25 @@ function M.find(names, opts)
         break
       end
 
-      for other, type in M.dir(dir) do
+      for other, type_ in M.dir(dir) do
         local f = dir .. '/' .. other
-        for _, name in ipairs(names) do
-          if name == other and (not opts.type or opts.type == type) then
+        if type(names) == 'function' then
+          if names(other) and (not opts.type or opts.type == type_) then
             if add(f) then
               return matches
             end
           end
+        else
+          for _, name in ipairs(names) do
+            if name == other and (not opts.type or opts.type == type_) then
+              if add(f) then
+                return matches
+              end
+            end
+          end
         end
 
-        if type == 'directory' then
+        if type_ == 'directory' then
           dirs[#dirs + 1] = f
         end
       end
