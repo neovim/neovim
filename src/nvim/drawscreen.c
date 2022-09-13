@@ -712,7 +712,7 @@ static void win_redr_border(win_T *wp)
         // title in left
         if (title_pos == 1) {
           if (i > 0 && i <= len) {
-            grid_put_schar(grid, 0, i + adj[3], title_text + 1, attrs[1]);
+            grid_put_schar(grid, 0, i + adj[3], title_text++, attrs[1]);
           } else {
             grid_put_schar(grid, 0, i + adj[3], chars[1], attrs[1]);
           }
@@ -723,7 +723,7 @@ static void win_redr_border(win_T *wp)
           int text_center = len >> 1;
           int col_center = icol >> 1;
           if (i >= col_center - text_center && i <= col_center + text_center) {
-            grid_put_schar(grid, 0, i + adj[3], title_text + 1, attrs[1]);
+            grid_put_schar(grid, 0, i + adj[3], title_text++, attrs[1]);
           }else {
             grid_put_schar(grid, 0, i + adj[3], chars[1], attrs[1]);
           }
@@ -732,7 +732,7 @@ static void win_redr_border(win_T *wp)
         // title in right
         if (title_pos == 3 ) {
           if ( i >= icol - len){
-            grid_put_schar(grid, 0, i + adj[3], title_text + 1, attrs[1]);
+            grid_put_schar(grid, 0, i + adj[3], title_text++, attrs[1]);
           } else {
             grid_put_schar(grid, 0, i + adj[3], chars[1], attrs[1]);
           }
