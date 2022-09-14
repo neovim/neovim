@@ -720,7 +720,7 @@ end
 ---
 --- They mimic defaultdict in python.
 ---
---- If @p create is @c nil, this will create a defaulttable whose constructor function is
+--- If {create} is `nil`, this will create a defaulttable whose constructor function is
 --- this function, effectively allowing to create nested tables on the fly:
 ---
 --- <pre>

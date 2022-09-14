@@ -2,6 +2,7 @@ local a = vim.api
 local query = require('vim.treesitter.query')
 
 -- support reload for quick experimentation
+---@class TSHighlighter
 local TSHighlighter = rawget(vim.treesitter, 'TSHighlighter') or {}
 TSHighlighter.__index = TSHighlighter
 
@@ -45,9 +46,10 @@ end
 
 --- Creates a new highlighter using @param tree
 ---
----@param tree The language tree to use for highlighting
----@param opts Table used to configure the highlighter
----           - queries: Table to overwrite queries used by the highlighter
+---@param tree LanguageTree |LanguageTree| parser object to use for highlighting
+---@param opts (table|nil) Configuration of the highlighter:
+---           - queries table overwrite queries used by the highlighter
+---@return TSHighlighter Created highlighter object
 function TSHighlighter.new(tree, opts)
   local self = setmetatable({}, TSHighlighter)
 
@@ -149,8 +151,10 @@ function TSHighlighter:on_changedtree(changes)
 end
 
 --- Gets the query used for @param lang
----
----@param lang A language used by the highlighter.
+--
+---@private
+---@param lang string Language used by the highlighter.
+---@return Query
 function TSHighlighter:get_query(lang)
   if not self._queries[lang] then
     self._queries[lang] = TSHighlighterQuery.new(lang)
