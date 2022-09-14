@@ -28,7 +28,6 @@ typedef enum {
 
 EXTERN const char *const hl_mode_str[] INIT(= { "", "replace", "combine", "blend" });
 
-typedef kvec_t(VirtTextChunk) VirtText;
 #define VIRTTEXT_EMPTY ((VirtText)KV_INITIAL_VALUE)
 
 typedef kvec_t(struct virt_line { VirtText line; bool left_col; }) VirtLines;

@@ -82,6 +82,7 @@ return {
     "zindex";
     "border";
     "title";
+    "title_pos";
     "style";
     "noautocmd";
   };

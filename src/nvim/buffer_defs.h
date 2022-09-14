@@ -44,6 +44,8 @@ typedef struct {
 #include "nvim/lib/kvec.h"
 // for marktree
 #include "nvim/marktree.h"
+// for float window title
+#include "nvim/extmark_defs.h"
 
 #define GETFILE_SUCCESS(x)    ((x) <= 0)
 #define MODIFIABLE(buf) (buf->b_p_ma)
@@ -1053,6 +1055,13 @@ typedef enum {
 } BorderTitlePos;
 
 typedef struct {
+  char *text;
+  int hl_id;
+} BorderTitleChunk;
+
+typedef kvec_t(BorderTitleChunk) BorderTitleText;
+
+typedef struct {
   Window window;
   lpos_T bufpos;
   int height, width;
@@ -1070,6 +1079,7 @@ typedef struct {
   int border_hl_ids[8];
   int border_attr[9];
   BorderTitlePos title_pos;
+  VirtText title_texts;
   char *title_text;
   int title_hi_id;
   int title_attr;
