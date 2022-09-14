@@ -38,6 +38,8 @@ static RBuffer *input_buffer = NULL;
 static bool input_eof = false;
 static int global_fd = -1;
 static bool blocking = false;
+static int cursorhold_time = 0;  ///< time waiting for CursorHold event
+static int cursorhold_tb_change_cnt = 0;  ///< tb_change_cnt when waiting started
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "os/input.c.generated.h"
@@ -97,13 +99,25 @@ static void create_cursorhold_event(bool events_enabled)
   multiqueue_put(main_loop.events, cursorhold_event, 0);
 }
 
+static void restart_cursorhold_wait(int tb_change_cnt)
+{
+  cursorhold_time = 0;
+  cursorhold_tb_change_cnt = tb_change_cnt;
+}
+
 /// Low level input function
 ///
 /// wait until either the input buffer is non-empty or, if `events` is not NULL
 /// until `events` is non-empty.
 int os_inchar(uint8_t *buf, int maxlen, int ms, int tb_change_cnt, MultiQueue *events)
 {
+  // This check is needed so that feeding typeahead from RPC can prevent CursorHold.
+  if (tb_change_cnt != cursorhold_tb_change_cnt) {
+    restart_cursorhold_wait(tb_change_cnt);
+  }
+
   if (maxlen && rbuffer_size(input_buffer)) {
+    restart_cursorhold_wait(tb_change_cnt);
     return (int)rbuffer_read(input_buffer, (char *)buf, (size_t)maxlen);
   }
 
@@ -118,18 +132,23 @@ int os_inchar(uint8_t *buf, int maxlen, int ms, int tb_change_cnt, MultiQueue *e
       return 0;
     }
   } else {
-    if ((result = inbuf_poll((int)p_ut, events)) == kInputNone) {
+    uint64_t wait_start = os_hrtime();
+    assert((int)p_ut >= cursorhold_time);
+    if ((result = inbuf_poll((int)p_ut - cursorhold_time, events)) == kInputNone) {
       if (read_stream.closed && silent_mode) {
         // Drained eventloop & initial input; exit silent/batch-mode (-es/-Es).
         read_error_exit();
       }
-
+      restart_cursorhold_wait(tb_change_cnt);
       if (trigger_cursorhold() && !typebuf_changed(tb_change_cnt)) {
         create_cursorhold_event(events == main_loop.events);
       } else {
         before_blocking();
         result = inbuf_poll(-1, events);
       }
+    } else {
+      cursorhold_time += (int)((os_hrtime() - wait_start) / 1000000);
+      cursorhold_time = MIN(cursorhold_time, (int)p_ut);
     }
   }
 
@@ -141,6 +160,7 @@ int os_inchar(uint8_t *buf, int maxlen, int ms, int tb_change_cnt, MultiQueue *e
   }
 
   if (maxlen && rbuffer_size(input_buffer)) {
+    restart_cursorhold_wait(tb_change_cnt);
     // Safe to convert rbuffer_read to int, it will never overflow since we use
     // relatively small buffers.
     return (int)rbuffer_read(input_buffer, (char *)buf, (size_t)maxlen);

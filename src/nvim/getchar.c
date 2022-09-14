@@ -1666,7 +1666,7 @@ static void getchar_common(typval_T *argvars, typval_T *rettv)
       if (!char_avail()) {
         // flush output before waiting
         ui_flush();
-        (void)os_inchar(NULL, 0, -1, 0, main_loop.events);
+        (void)os_inchar(NULL, 0, -1, typebuf.tb_change_cnt, main_loop.events);
         if (!multiqueue_empty(main_loop.events)) {
           state_handle_k_event();
           continue;
