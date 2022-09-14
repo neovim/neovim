@@ -66,6 +66,7 @@
 #include "nvim/diff.h"
 #include "nvim/drawscreen.h"
 #include "nvim/ex_getln.h"
+#include "nvim/extmark_defs.h"
 #include "nvim/grid.h"
 #include "nvim/highlight.h"
 #include "nvim/highlight_group.h"
@@ -83,6 +84,7 @@
 #include "nvim/undo.h"
 #include "nvim/version.h"
 #include "nvim/window.h"
+#include <sys/_types/_size_t.h>
 
 /// corner value flags for hsep_connected and vsep_connected
 typedef enum {
@@ -615,6 +617,36 @@ int update_screen(void)
   return OK;
 }
 
+static char * get_title_texts_data(VirtText title_texts)
+{
+  char *cmp_title_text = NULL;
+  for (size_t i = 0; i < title_texts.size; i ++){
+    char *text = title_texts.items[i].text;
+    strcat(cmp_title_text,text);
+  }
+  return cmp_title_text;
+}
+
+static void redr_title_texts(win_T *wp,ScreenGrid *grid,int col,int attr)
+{
+  char *text;
+  int len;
+  VirtText title_texts = wp->w_float_config.title_texts;
+  char *title_text = wp->w_float_config.title_text;
+
+  if (title_text != NULL) {
+    len = (int)strlen(title_text);
+    grid_puts_len(grid, title_text, len, 0, col, attr);
+  } else {
+    for(size_t i = 0; i< title_texts.size; i ++){
+      text = title_texts.items[i].text;
+      len = (int)strlen(text);
+      grid_puts_len(grid, text, len, 0, col, attr);
+      col++;
+    }
+  }
+}
+
 static void win_redr_border(win_T *wp)
 {
   wp->w_redr_border = false;
@@ -631,7 +663,6 @@ static void win_redr_border(win_T *wp)
   int irow = wp->w_height_inner + wp->w_winbar_height, icol = wp->w_width_inner;
 
   bool title = wp->w_float_config.title;
-  char *title_text = wp->w_float_config.title_text;
 
   if (adj[0]) {
     grid_puts_line_start(grid, 0);
@@ -639,11 +670,21 @@ static void win_redr_border(win_T *wp)
       grid_put_schar(grid, 0, 0, chars[0], attrs[0]);
     }
 
-    if (title && title_text != NULL) {
+    if (title) {
+      char *title_text;
+      VirtText title_texts = wp->w_float_config.title_texts;
+
+      if (wp->w_float_config.title_text != NULL){
+        title_text = wp->w_float_config.title_text;
+      } else {
+        title_text = get_title_texts_data(title_texts);
+      }
+
       int len = (int)strlen(title_text);
       int title_attr = wp->w_float_config.title_attr;
 
       if (wp->w_float_config.title_pos == kBorderTitleLeft) {
+        // redr_title_texts(wp, grid, 1, title_attr);
         grid_puts_len(grid, title_text, len, 0, 1, title_attr);
         for (int i = len; i < icol; i++) {
           grid_put_schar(grid, 0, i + adj[3], chars[1], attrs[1]);
