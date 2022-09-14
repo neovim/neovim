@@ -19,10 +19,10 @@
 #include "nvim/ui.h"
 #include "nvim/window.h"
 #include <inttypes.h>
+#include "nvim/api/extmark.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "api/win_config.c.generated.h"
-# include "api/extmark.h.generated.h"
 #endif
 
 /// Open a new window.
@@ -348,12 +348,12 @@ static void parse_border_title(Object title, Object title_pos, Object width, Flo
   }
 
   if (title.type != kObjectTypeArray) {
-    api_set_error(err, kErrorTypeValidation, "title must be string or dictionary");
+    api_set_error(err, kErrorTypeValidation, "title must be string or array");
     return;
   }
 
   if (title.type == kObjectTypeArray && title.data.array.size == 0) {
-    api_set_error(err, kErrorTypeValidation, "title must not be an empty dictionary");
+    api_set_error(err, kErrorTypeValidation, "title cannot be an empty array");
     return;
   }
 

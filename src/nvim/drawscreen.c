@@ -624,7 +624,7 @@ static int get_title_texts_len(VirtText title_texts)
     char *text = title_texts.items[i].text;
     len += (int)strlen(text);
   }
-  return len - 1;
+  return len;
 }
 
 static void redr_title_texts(win_T *wp,ScreenGrid *grid,int col,int attr)
@@ -642,7 +642,7 @@ static void redr_title_texts(win_T *wp,ScreenGrid *grid,int col,int attr)
       text = title_texts.items[i].text;
       len = (int)strlen(text);
       grid_puts_len(grid, text, len, 0, col, attr);
-      col++;
+      col += len;
     }
   }
 }
