@@ -459,59 +459,52 @@ function M.apply_text_edits(text_edits, bufnr, offset_encoding)
       text = split(text_edit.newText, '\n', true),
     }
 
-    -- Some LSP servers may return +1 range of the buffer content but nvim_buf_set_text can't accept it so we should fix it here.
     local max = api.nvim_buf_line_count(bufnr)
-    if max <= e.start_row or max <= e.end_row then
-      local len = #(get_line(bufnr, max - 1) or '')
-      if max <= e.start_row then
-        e.start_row = max - 1
-        e.start_col = len
-        table.insert(e.text, 1, '')
-      end
+    -- If the whole edit is after the lines in the buffer we can simply add the new text to the end
+    -- of the buffer.
+    if max <= e.start_row then
+      api.nvim_buf_set_lines(bufnr, max, max, false, e.text)
+    else
+      local last_line_len = #(get_line(bufnr, math.min(e.end_row, max - 1)) or '')
+      -- Some LSP servers may return +1 range of the buffer content but nvim_buf_set_text can't
+      -- accept it so we should fix it here.
       if max <= e.end_row then
         e.end_row = max - 1
-        e.end_col = len
+        e.end_col = last_line_len
+        has_eol_text_edit = true
+      else
+        -- If the replacement is over the end of a line (i.e. e.end_col is out of bounds and the
+        -- replacement text ends with a newline We can likely assume that the replacement is assumed
+        -- to be meant to replace the newline with another newline and we need to make sure this
+        -- doens't add an extra empty line. E.g. when the last line to be replaced contains a '\r'
+        -- in the file some servers (clangd on windows) will include that character in the line
+        -- while nvim_buf_set_text doesn't count it as part of the line.
+        if
+          e.end_col > last_line_len
+          and #text_edit.newText > 0
+          and string.sub(text_edit.newText, -1) == '\n'
+        then
+          table.remove(e.text, #e.text)
+        end
       end
-      has_eol_text_edit = true
-    end
+      -- Make sure we don't go out of bounds for e.end_col
+      e.end_col = math.min(last_line_len, e.end_col)
 
-    -- If the replacement is over the end of a line (i.e. e.end_col is out of bounds and the
-    -- replacement text ends with a newline We can likely assume that the replacement is assumed to
-    -- be meant to replace the newline with another newline and we need to make sure this doens't
-    -- add an extra empty line. E.g. when the last line to be replaced contains a '\r' in the file
-    -- some servers (clangd on windows) will include that character in the line while
-    -- nvim_buf_set_lines doesn't count it as part of the line.
-    local last_line = get_line(bufnr, e.end_row)
-    if
-      e.end_col > #last_line
-      and #text_edit.newText > 0
-      and string.sub(text_edit.newText, -1) == '\n'
-    then
-      table.remove(e.text, #e.text)
-    end
-    -- Make sure we don't go out of bounds for e.end_col
-    e.end_col = math.min(#last_line, e.end_col)
-
-    -- If the replacement is over full lines it is recommended to use nvim_buf_set_lines
-    -- see. https://neovim.io/doc/user/api.html#nvim_buf_set_test()
-    if e.end_col == #last_line and e.start_col == 0 then
-      api.nvim_buf_set_lines(bufnr, e.start_row, e.end_row + 1, false, e.text)
-    else
       api.nvim_buf_set_text(bufnr, e.start_row, e.start_col, e.end_row, e.end_col, e.text)
-    end
 
-    -- Fix cursor position.
-    local row_count = (e.end_row - e.start_row) + 1
-    if e.end_row < cursor.row then
-      cursor.row = cursor.row + (#e.text - row_count)
-      is_cursor_fixed = true
-    elseif e.end_row == cursor.row and e.end_col <= cursor.col then
-      cursor.row = cursor.row + (#e.text - row_count)
-      cursor.col = #e.text[#e.text] + (cursor.col - e.end_col)
-      if #e.text == 1 then
-        cursor.col = cursor.col + e.start_col
+      -- Fix cursor position.
+      local row_count = (e.end_row - e.start_row) + 1
+      if e.end_row < cursor.row then
+        cursor.row = cursor.row + (#e.text - row_count)
+        is_cursor_fixed = true
+      elseif e.end_row == cursor.row and e.end_col <= cursor.col then
+        cursor.row = cursor.row + (#e.text - row_count)
+        cursor.col = #e.text[#e.text] + (cursor.col - e.end_col)
+        if #e.text == 1 then
+          cursor.col = cursor.col + e.start_col
+        end
+        is_cursor_fixed = true
       end
-      is_cursor_fixed = true
     end
   end
 
