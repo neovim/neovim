@@ -17,7 +17,9 @@
 #include "nvim/digraph.h"
 #include "nvim/drawscreen.h"
 #include "nvim/eval.h"
+#include "nvim/eval/typval.h"
 #include "nvim/eval/vars.h"
+#include "nvim/lua/executor.h"
 #include "nvim/ex_getln.h"
 #include "nvim/hardcopy.h"
 #include "nvim/highlight_group.h"
@@ -1469,14 +1471,6 @@ char *did_set_string_option(int opt_idx, char **varp, char *oldval, char *errbuf
           errmsg = e_invarg;
         }
       }
-    }
-  } else if (varp == &p_opfunc) {  // 'operatorfunc'
-    if (set_operatorfunc_option() == FAIL) {
-      errmsg = e_invarg;
-    }
-  } else if (varp == &p_qftf) {  // 'quickfixtextfunc'
-    if (qf_process_qftf_option() == FAIL) {
-      errmsg = e_invarg;
     }
   } else {
     // Options that are a list of flags.

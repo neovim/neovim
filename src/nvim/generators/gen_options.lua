@@ -26,6 +26,7 @@ local type_flags={
   bool='P_BOOL',
   number='P_NUM',
   string='P_STRING',
+  ['function']='P_FUNC',
 }
 
 local redraw_flags={

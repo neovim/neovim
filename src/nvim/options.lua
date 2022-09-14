@@ -455,11 +455,10 @@ return {
     {
       full_name='completefunc', abbreviation='cfu',
       short_desc=N_("function to be used for Insert mode completion"),
-      type='string', scope={'buffer'},
+      type='function', scope={'buffer'},
       secure=true,
       alloced=true,
       varname='p_cfu',
-      defaults={if_true=""}
     },
     {
       full_name='completeopt', abbreviation='cot',
@@ -623,11 +622,10 @@ return {
     {
       full_name='diffexpr', abbreviation='dex',
       short_desc=N_("expression used to obtain a diff file"),
-      type='string', scope={'global'},
+      type='function', scope={'global'},
       secure=true,
       redraw={'curswant'},
       varname='p_dex',
-      defaults={if_true=""}
     },
     {
       full_name='diffopt', abbreviation='dip',
@@ -871,11 +869,10 @@ return {
     {
       full_name='foldexpr', abbreviation='fde',
       short_desc=N_("expression used when 'foldmethod' is \"expr\""),
-      type='string', scope={'window'},
+      type='function', scope={'window'},
       modelineexpr=true,
       alloced=true,
       redraw={'current_window'},
-      defaults={if_true="0"}
     },
     {
       full_name='foldignore', abbreviation='fdi',
@@ -952,11 +949,10 @@ return {
     {
       full_name='formatexpr', abbreviation='fex',
       short_desc=N_("expression used with \"gq\" command"),
-      type='string', scope={'buffer'},
+      type='function', scope={'buffer'},
       modelineexpr=true,
       alloced=true,
       varname='p_fex',
-      defaults={if_true=""}
     },
     {
       full_name='formatoptions', abbreviation='fo',
@@ -1210,11 +1206,10 @@ return {
     {
       full_name='includeexpr', abbreviation='inex',
       short_desc=N_("expression used to process an include line"),
-      type='string', scope={'buffer'},
+      type='function', scope={'buffer'},
       modelineexpr=true,
       alloced=true,
       varname='p_inex',
-      defaults={if_true=""}
     },
     {
       full_name='incsearch', abbreviation='is',
@@ -1226,11 +1221,10 @@ return {
     {
       full_name='indentexpr', abbreviation='inde',
       short_desc=N_("expression used to obtain the indent of a line"),
-      type='string', scope={'buffer'},
+      type='function', scope={'buffer'},
       modelineexpr=true,
       alloced=true,
       varname='p_inde',
-      defaults={if_true=""}
     },
     {
       full_name='indentkeys', abbreviation='indk',
@@ -1559,7 +1553,6 @@ return {
       type='bool', scope={'global'},
       secure=true,
       varname='p_mle',
-      defaults={if_true=false}
     },
     {
       full_name='modelines', abbreviation='mls',
@@ -1677,11 +1670,10 @@ return {
     {
       full_name='omnifunc', abbreviation='ofu',
       short_desc=N_("function for filetype-specific completion"),
-      type='string', scope={'buffer'},
+      type='function', scope={'buffer'},
       secure=true,
       alloced=true,
       varname='p_ofu',
-      defaults={if_true=""}
     },
     {
       full_name='opendevice', abbreviation='odev',
@@ -1693,10 +1685,9 @@ return {
     {
       full_name='operatorfunc', abbreviation='opfunc',
       short_desc=N_("function to be called for |g@| operator"),
-      type='string', scope={'global'},
+      type='function', scope={'global'},
       secure=true,
       varname='p_opfunc',
-      defaults={if_true=""}
     },
     {
       full_name='packpath', abbreviation='pp',
@@ -1733,10 +1724,9 @@ return {
     {
       full_name='patchexpr', abbreviation='pex',
       short_desc=N_("expression used to patch a file"),
-      type='string', scope={'global'},
+      type='function', scope={'global'},
       secure=true,
       varname='p_pex',
-      defaults={if_true=""}
     },
     {
       full_name='patchmode', abbreviation='pm',
@@ -1795,10 +1785,9 @@ return {
     {
       full_name='printexpr', abbreviation='pexpr',
       short_desc=N_("expression used to print PostScript for :hardcopy"),
-      type='string', scope={'global'},
+      type='function', scope={'global'},
       secure=true,
       varname='p_pexpr',
-      defaults={if_true=""}
     },
     {
       full_name='printfont', abbreviation='pfn',
@@ -1876,9 +1865,8 @@ return {
     {
       full_name='quickfixtextfunc', abbreviation='qftf',
       short_desc=N_("customize the quickfix window"),
-      type='string', scope={'global'},
+      type='function', scope={'global'},
       varname='p_qftf',
-      defaults={if_true=""}
     },
     {
       full_name='quoteescape', abbreviation='qe',
@@ -2444,9 +2432,8 @@ return {
     {
       full_name='tagfunc', abbreviation='tfu',
       short_desc=N_("function used to perform tag searches"),
-      type='string', scope={'buffer'},
+      type='function', scope={'buffer'},
       varname='p_tfu',
-      defaults={if_true=""}
     },
     {
       full_name='tabline', abbreviation='tal',
@@ -2572,11 +2559,10 @@ return {
     {
       full_name='thesaurusfunc', abbreviation='tsrfu',
       short_desc=N_("function used for thesaurus completion"),
-      type='string', scope={'global', 'buffer'},
+      type='function', scope={'global', 'buffer'},
       secure=true,
       alloced=true,
       varname='p_tsrfu',
-      defaults={if_true=""}
     },
     {
       full_name='tildeop', abbreviation='top',

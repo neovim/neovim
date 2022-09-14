@@ -5567,23 +5567,6 @@ static void op_colon(oparg_T *oap)
   // do_cmdline() does the rest
 }
 
-/// callback function for 'operatorfunc'
-static Callback opfunc_cb;
-
-/// Process the 'operatorfunc' option value.
-/// @return  OK or FAIL
-int set_operatorfunc_option(void)
-{
-  return option_set_callback_func(p_opfunc, &opfunc_cb);
-}
-
-#if defined(EXITFREE)
-void free_operatorfunc_option(void)
-{
-  callback_free(&opfunc_cb);
-}
-#endif
-
 /// Handle the "g@" operator: call 'operatorfunc'.
 static void op_function(const oparg_T *oap)
   FUNC_ATTR_NONNULL_ALL
@@ -5593,7 +5576,7 @@ static void op_function(const oparg_T *oap)
   const pos_T orig_start = curbuf->b_op_start;
   const pos_T orig_end = curbuf->b_op_end;
 
-  if (*p_opfunc == NUL) {
+  if (p_opfunc.type == kCallbackNone) {
     emsg(_("E774: 'operatorfunc' is empty"));
   } else {
     // Set '[ and '] marks to text to be operated on.

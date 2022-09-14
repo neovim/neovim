@@ -6,6 +6,7 @@
 #include <math.h>
 #include <stdlib.h>
 
+#include "nvim/api/private/converter.h"
 #include "nvim/ascii.h"
 #include "nvim/autocmd.h"
 #include "nvim/buffer.h"
@@ -3676,37 +3677,22 @@ int get_option_tv(const char **const arg, typval_T *const rettv, const bool eval
     return OK;
   }
 
-  long numval;
-  char *stringval;
   int ret = OK;
-
+  bool hidden;
   char c = *option_end;
   *option_end = NUL;
-  getoption_T opt_type = get_option_value(*arg, &numval,
-                                          rettv == NULL ? NULL : &stringval, opt_flags);
+  Object val = get_option_value(*arg, &hidden, opt_flags);
 
-  if (opt_type == gov_unknown) {
+  if (val.type == kObjectTypeNil) {
     if (rettv != NULL) {
       semsg(_("E113: Unknown option: %s"), *arg);
     }
     ret = FAIL;
   } else if (rettv != NULL) {
-    if (opt_type == gov_hidden_string) {
-      rettv->v_type = VAR_STRING;
-      rettv->vval.v_string = NULL;
-    } else if (opt_type == gov_hidden_bool || opt_type == gov_hidden_number) {
-      rettv->v_type = VAR_NUMBER;
-      rettv->vval.v_number = 0;
-    } else if (opt_type == gov_bool || opt_type == gov_number) {
-      rettv->v_type = VAR_NUMBER;
-      rettv->vval.v_number = numval;
-    } else {                          // string option
-      rettv->v_type = VAR_STRING;
-      rettv->vval.v_string = stringval;
-    }
-  } else if (working && (opt_type == gov_hidden_bool
-                         || opt_type == gov_hidden_number
-                         || opt_type == gov_hidden_string)) {
+    Error err;
+    object_to_vim(val, rettv, &err);
+    assert(err.type == kErrorTypeNone);
+  } else if (working && hidden) {
     ret = FAIL;
   }
 

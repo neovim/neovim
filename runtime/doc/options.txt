@@ -312,15 +312,22 @@ Note: In the future more global options can be made |global-local|.  Using
 ":setlocal" on a global option might work differently then.
 
 
-						*option-value-function*
+						*option-value-function* *E5378*
 Some options ('completefunc', 'imactivatefunc', 'imstatusfunc', 'omnifunc',
-'operatorfunc', 'quickfixtextfunc' and 'tagfunc') are set to a function name
-or a function reference or a lambda function.  Examples:
+'operatorfunc', 'quickfixtextfunc' and 'tagfunc') are set to a function name,
+function reference, or a lambda function.  Examples:
 >
 	set opfunc=MyOpFunc
 	set opfunc=function("MyOpFunc")
 	set opfunc=funcref("MyOpFunc")
 	set opfunc={t\ ->\ MyOpFunc(t)}
+<
+They can also be set to |Lua| functions using |vim.o|, |vim.opt| or the Nvim
+|API|:
+>
+	vim.o.opfunc = my_op_func
+	vim.opt.opfunc = my_op_func
+	vim.api.nvim_set_option_value("opfunc", my_op_func, {})
 <
 
 Setting the filetype
@@ -1429,7 +1436,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	|i_CTRL-X_CTRL-I|, tags |i_CTRL-X_CTRL-]| and normal expansions).
 
 						*'completefunc'* *'cfu'*
-'completefunc' 'cfu'	string	(default: empty)
+'completefunc' 'cfu'	|option-value-function|	(default: empty)
 			local to buffer
 	This option specifies a function to be used for Insert mode completion
 	with CTRL-X CTRL-U. |i_CTRL-X_CTRL-U|
@@ -1959,7 +1966,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	between files.  See |diff-mode|.
 
 						*'dex'* *'diffexpr'*
-'diffexpr' 'dex'	string	(default "")
+'diffexpr' 'dex'	|option-value-function|	(default "")
 			global
 	Expression which is evaluated to obtain a diff file (either ed-style
 	or unified-style) from two versions of a file.  See |diff-diffexpr|.
@@ -2556,7 +2563,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	See |folding|.
 
 						*'foldexpr'* *'fde'*
-'foldexpr' 'fde'	string (default: "0")
+'foldexpr' 'fde'	|option-value-function| (default: "0")
 			local to window
 	The expression used for when 'foldmethod' is "expr".  It is evaluated
 	for each line to obtain its fold level.  See |fold-expr|.
@@ -2685,7 +2692,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	evaluating 'foldtext' |textlock|.
 
 						*'formatexpr'* *'fex'*
-'formatexpr' 'fex'	string (default "")
+'formatexpr' 'fex'	|option-value-function| (default "")
 			local to buffer
 	Expression which is evaluated to format a range of lines for the |gq|
 	operator or automatic formatting (see 'formatoptions').  When this
@@ -3321,7 +3328,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	See |option-backslash| about including spaces and backslashes.
 
 						*'includeexpr'* *'inex'*
-'includeexpr' 'inex'	string	(default "")
+'includeexpr' 'inex'	|option-value-function|	(default "")
 			local to buffer
 	Expression to be used to transform the string found with the 'include'
 	option to a file name.  Mostly useful to change "." to "/" for Java: >
@@ -3375,7 +3382,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	match, excluding the characters that were already typed.
 
 						*'indentexpr'* *'inde'*
-'indentexpr' 'inde'	string	(default "")
+'indentexpr' 'inde'	|option-value-function|	(default "")
 			local to buffer
 	Expression which is evaluated to obtain the proper indent for a line.
 	It is used when a new line is created, for the |=| operator and
@@ -4052,7 +4059,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	no lines are checked.  See |modeline|.
 
 			   *'modelineexpr'* *'mle'* *'nomodelineexpr'* *'nomle'*
-'modelineexpr' 'mle'	boolean (default: off)
+'modelineexpr' 'mle'	|option-value-function| (default: off)
 			global
 	When on allow some options that are an expression to be set in the
 	modeline.  Check the option for whether it is affected by
@@ -4398,7 +4405,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	The minimum value is 1, the maximum value is 20.
 
 						*'omnifunc'* *'ofu'*
-'omnifunc' 'ofu'	string	(default: empty)
+'omnifunc' 'ofu'	|option-value-function|	(default: empty)
 			local to buffer
 	This option specifies a function to be used for Insert mode omni
 	completion with CTRL-X CTRL-O. |i_CTRL-X_CTRL-O|
@@ -4422,12 +4429,11 @@ A jump table for the options with a short description can be found at |Q_op|.
 
 
 						*'operatorfunc'* *'opfunc'*
-'operatorfunc' 'opfunc'	string	(default: empty)
+'operatorfunc' 'opfunc'	|option-value-function|	(default: empty)
 			global
 	This option specifies a function to be called by the |g@| operator.
 	See |:map-operator| for more info and an example.  The value can be
-	the name of a function, a |lambda| or a |Funcref|. See
-	|option-value-function| for more information.
+	the name of a function, a |lambda| or a |Funcref|.
 
 	This option cannot be set from a |modeline| or in the |sandbox|, for
 	security reasons.
@@ -4515,13 +4521,13 @@ A jump table for the options with a short description can be found at |Q_op|.
 	When the value has several bytes 'ttimeoutlen' applies.
 
 						*'pex'* *'patchexpr'*
-'patchexpr' 'pex'	string	(default "")
+'patchexpr' 'pex'	|option-value-function|	(default "")
 			global
 	Expression which is evaluated to apply a patch to a file and generate
 	the resulting new version of the file.  See |diff-patchexpr|.
 
 					*'patchmode'* *'pm'* *E205* *E206*
-'patchmode' 'pm'	string	(default "")
+'patchmode' 'pm'	|option-value-function|	(default "")
 			global
 	When non-empty the oldest version of a file is kept.  This can be used
 	to keep the original version of a file if you are changing files in a
@@ -4637,7 +4643,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	See |penc-option|.
 
 						*'printexpr'* *'pexpr'*
-'printexpr' 'pexpr'	string	(default: see below)
+'printexpr' 'pexpr'	|option-value-function|	(default: see below)
 			global
 	Expression used to print the PostScript produced with |:hardcopy|.
 	See |pexpr-option|.
@@ -4714,16 +4720,14 @@ A jump table for the options with a short description can be found at |Q_op|.
 	security reasons.
 
 						*'quickfixtextfunc'* *'qftf'*
-'quickfixtextfunc' 'qftf'	string (default "")
+'quickfixtextfunc' 'qftf'	|option-value-function| (default "")
 			global
 	This option specifies a function to be used to get the text to display
 	in the quickfix and location list windows.  This can be used to
 	customize the information displayed in the quickfix or location window
 	for each entry in the corresponding quickfix or location list.  See
 	|quickfix-window-function| for an explanation of how to write the
-	function and an example.  The value can be the name of a function, a
-	|lambda| or a |Funcref|. See |option-value-function| for more
-	information.
+	function and an example.
 
 	This option cannot be set from a |modeline| or in the |sandbox|, for
 	security reasons.
@@ -6413,7 +6417,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	   smart	Ignore case unless an upper case letter is used
 
 							*'tagfunc'* *'tfu'*
-'tagfunc' 'tfu'		string	(default: empty)
+'tagfunc' 'tfu'		|option-value-function|	(default: empty)
 			local to buffer
 	This option specifies a function to be used to perform tag searches.
 	The function gets the tag pattern and should return a List of matching
@@ -6537,7 +6541,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	reasons.
 
 						*'thesaurusfunc'* *'tsrfu'*
-'thesaurusfunc' 'tsrfu'	string	(default: empty)
+'thesaurusfunc' 'tsrfu'	|option-value-function|	(default: empty)
 			global or local to buffer |global-local|
 	This option specifies a function to be used for thesaurus completion
 	with CTRL-X CTRL-T. |i_CTRL-X_CTRL-T| See |compl-thesaurusfunc|.

@@ -334,6 +334,7 @@ void msgpack_rpc_from_object(const Object result, msgpack_packer *const res)
     switch (cur.aobj->type) {
     case kObjectTypeNil:
     case kObjectTypeLuaRef:
+    case kObjectTypePartial:
       // TODO(bfredl): could also be an error. Though kObjectTypeLuaRef
       // should only appear when the caller has opted in to handle references,
       // see nlua_pop_Object.

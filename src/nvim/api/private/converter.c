@@ -357,6 +357,13 @@ bool object_to_vim(Object obj, typval_T *tv, Error *err)
     break;
   }
 
+  case kObjectTypePartial: {
+    tv->v_type = VAR_PARTIAL;
+    tv->vval.v_partial = obj.data.partial;
+    tv->vval.v_partial->pt_refcount++;
+    break;
+  }
+
   default:
     abort();
   }

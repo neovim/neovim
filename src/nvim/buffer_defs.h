@@ -177,7 +177,7 @@ typedef struct {
 #define w_p_fml w_onebuf_opt.wo_fml    // 'foldminlines'
   long wo_fdn;
 #define w_p_fdn w_onebuf_opt.wo_fdn    // 'foldnestmax'
-  char *wo_fde;
+  Callback wo_fde;
 #define w_p_fde w_onebuf_opt.wo_fde    // 'foldexpr'
   char *wo_fdt;
 #define w_p_fdt w_onebuf_opt.wo_fdt   // 'foldtext'
@@ -672,9 +672,9 @@ struct file_buffer {
 #ifdef BACKSLASH_IN_FILENAME
   char *b_p_csl;                ///< 'completeslash'
 #endif
-  char *b_p_cfu;                ///< 'completefunc'
-  char *b_p_ofu;                ///< 'omnifunc'
-  char *b_p_tfu;                ///< 'tagfunc'
+  Callback b_p_cfu;             ///< 'completefunc'
+  Callback b_p_ofu;             ///< 'omnifunc'
+  Callback b_p_tfu;             ///< 'tagfunc'
   int b_p_eol;                  ///< 'endofline'
   int b_p_fixeol;               ///< 'fixendofline'
   int b_p_et;                   ///< 'expandtab'
@@ -689,13 +689,13 @@ struct file_buffer {
   char *b_p_isk;                ///< 'iskeyword'
   char *b_p_def;                ///< 'define' local value
   char *b_p_inc;                ///< 'include'
-  char *b_p_inex;               ///< 'includeexpr'
+  Callback b_p_inex;           ///< 'includeexpr'
   uint32_t b_p_inex_flags;      ///< flags for 'includeexpr'
-  char *b_p_inde;               ///< 'indentexpr'
+  Callback b_p_inde;               ///< 'indentexpr'
   uint32_t b_p_inde_flags;      ///< flags for 'indentexpr'
   char *b_p_indk;               ///< 'indentkeys'
   char *b_p_fp;                 ///< 'formatprg'
-  char *b_p_fex;                ///< 'formatexpr'
+  Callback b_p_fex;             ///< 'formatexpr'
   uint32_t b_p_fex_flags;       ///< flags for 'formatexpr'
   char *b_p_kp;                 ///< 'keywordprg'
   int b_p_lisp;                 ///< 'lisp'
@@ -743,7 +743,7 @@ struct file_buffer {
   unsigned b_tc_flags;          ///< flags for 'tagcase'
   char *b_p_dict;               ///< 'dictionary' local value
   char *b_p_tsr;                ///< 'thesaurus' local value
-  char *b_p_tsrfu;              ///< 'thesaurusfunc' local value
+  Callback b_p_tsrfu;           ///< 'thesaurusfunc' local value
   long b_p_ul;                  ///< 'undolevels' local value
   int b_p_udf;                  ///< 'undofile'
   char *b_p_lw;                 ///< 'lispwords' local value

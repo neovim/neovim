@@ -19,6 +19,7 @@
 // - Add documentation! doc/options.txt, and any other related places.
 // - Add an entry in runtime/optwin.vim.
 
+#include "nvim/eval/typval_defs.h"
 #define IN_OPTION_C
 #include <assert.h>
 #include <inttypes.h>
@@ -27,6 +28,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "nvim/api/private/helpers.h"
 #include "nvim/arglist.h"
 #include "nvim/ascii.h"
 #include "nvim/buffer.h"
@@ -476,6 +478,16 @@ static void set_option_default(int opt_idx, int opt_flags)
             def_val;
         }
       }
+    } else if (flags & P_FUNC) {
+      callback_free((Callback *)varp);
+      *(Callback *)varp = (Callback)CALLBACK_INIT;
+
+      // May also set global value for local option.
+      if (both) {
+        Callback *gvarp = (Callback *)get_varp_scope(&(options[opt_idx]), OPT_GLOBAL);
+        callback_free(gvarp);
+        *gvarp = (Callback)CALLBACK_INIT;
+      }
     } else {  // P_BOOL
       *(int *)varp = (int)(intptr_t)options[opt_idx].def_val;
 #ifdef UNIX
@@ -599,7 +611,6 @@ void free_all_options(void)
       clear_string_option((char **)options[i].var);
     }
   }
-  free_operatorfunc_option();
 }
 #endif
 
@@ -2663,6 +2674,95 @@ static char *set_num_option(int opt_idx, char_u *varp, long value, char *errbuf,
   return errmsg;
 }
 
+/// Set the value of a function option, taking care of side effects
+///
+/// @param[in]   opt_idx  Option index in options[] table.
+/// @param[out]  varp  Pointer to the option variable.
+/// @param[in]   value  New value.
+/// @param[in]   opt_flags  OPT_LOCAL, OPT_GLOBAL or OPT_MODELINE.
+///
+/// @return NULL on success, error message on error.
+static char *set_func_option(int opt_idx, char_u *varp, Callback value, int opt_flags)
+{
+  // TODO(famiu): Currently this function does not have any error handling logic. Take a look at
+  // `set_num_option` and `set_bool_option` to see how error handling is done there when needing to
+  // add error handling in the future.
+  Callback *pp = (Callback *)varp;
+  Callback old_value = *pp;
+  Callback old_global_value = (Callback)CALLBACK_INIT;
+  bool both = (opt_flags & (OPT_LOCAL | OPT_GLOBAL)) == 0;
+
+  // Disallow changing some options from secure mode.
+  if ((secure || sandbox != 0) && (options[opt_idx].flags & P_SECURE)) {
+    return e_secure;
+  }
+
+  // Save the global value before changing anything. This is needed as for
+  // a global-only option setting the "local value" in fact sets the global
+  // value (since there is only one value).
+  if (both) {
+    old_global_value = *(Callback *)get_varp_scope(&(options[opt_idx]), OPT_GLOBAL);
+  }
+
+  *pp = value;        // set new value
+  // Remember where the option was set.
+  set_option_sctx_idx(opt_idx, opt_flags, current_sctx);
+
+  // May set global value for local option
+  if (both) {
+    *(Callback *)get_varp_scope(&(options[opt_idx]), OPT_GLOBAL) = value;
+  }
+
+  // after handling side effects, call autocommand
+  options[opt_idx].flags |= P_WAS_SET;
+
+  // Don't do this while starting up or recursively.
+  if (!starting && *get_vim_var_str(VV_OPTION_TYPE) == NUL) {
+    char *buf_old = callback_to_string(&old_value);
+    char *buf_old_global = callback_to_string(&old_global_value);
+    char *buf_new = callback_to_string(&value);
+    char buf_type[7];
+
+    vim_snprintf(buf_type, ARRAY_SIZE(buf_type), "%s",
+                 (opt_flags & OPT_LOCAL) ? "local" : "global");
+
+    set_vim_var_string(VV_OPTION_NEW, buf_new, -1);
+    set_vim_var_string(VV_OPTION_OLD, buf_old, -1);
+    set_vim_var_string(VV_OPTION_TYPE, buf_type, -1);
+    if (opt_flags & OPT_LOCAL) {
+      set_vim_var_string(VV_OPTION_COMMAND, "setlocal", -1);
+      set_vim_var_string(VV_OPTION_OLDLOCAL, buf_old, -1);
+    }
+    if (opt_flags & OPT_GLOBAL) {
+      set_vim_var_string(VV_OPTION_COMMAND, "setglobal", -1);
+      set_vim_var_string(VV_OPTION_OLDGLOBAL, buf_old, -1);
+    }
+    if (both) {
+      set_vim_var_string(VV_OPTION_COMMAND, "set", -1);
+      set_vim_var_string(VV_OPTION_OLDLOCAL, buf_old, -1);
+      set_vim_var_string(VV_OPTION_OLDGLOBAL, buf_old_global, -1);
+    }
+    if (opt_flags & OPT_MODELINE) {
+      set_vim_var_string(VV_OPTION_COMMAND, "modeline", -1);
+      set_vim_var_string(VV_OPTION_OLDLOCAL, buf_old, -1);
+    }
+    apply_autocmds(EVENT_OPTIONSET, options[opt_idx].fullname, NULL, false, NULL);
+    reset_v_option_vars();
+
+    xfree(buf_old);
+    xfree(buf_old_global);
+    xfree(buf_new);
+  }
+
+  // Free old value
+  callback_free(&old_value);
+  if (both) {
+    callback_free(&old_global_value);
+  }
+
+  return NULL;
+}
+
 /// Called after an option changed: check if something needs to be redrawn.
 void check_redraw(uint32_t flags)
 {
@@ -2864,58 +2964,61 @@ int findoption(const char *const arg)
 
 /// Gets the value for an option.
 ///
-/// @param stringval  NULL when only checking existence
+/// @param[out] hidden  Whether option is hidden. Can be NULL.
 ///
-/// @returns:
-///           Number option: gov_number, *numval gets value.
-///           Tottle option: gov_bool,   *numval gets value.
-///           String option: gov_string, *stringval gets allocated string.
-///           Hidden Number option: gov_hidden_number.
-///           Hidden Toggle option: gov_hidden_bool.
-///           Hidden String option: gov_hidden_string.
-///           Unknown option: gov_unknown.
-getoption_T get_option_value(const char *name, long *numval, char **stringval, int opt_flags)
+/// @return API Object representing the option value.
+Object get_option_value(const char *name, bool *hidden, int opt_flags)
 {
-  if (get_tty_option(name, stringval)) {
-    return gov_string;
+  if (hidden != NULL) {
+    *hidden = false;
+  }
+
+  char *stringval;
+  if (get_tty_option(name, &stringval)) {
+    return STRING_OBJ(cstr_as_string(stringval));
   }
 
   int opt_idx = findoption(name);
   if (opt_idx < 0) {  // option not in the table
-    return gov_unknown;
+    return (Object)OBJECT_INIT;
   }
 
   char_u *varp = (char_u *)get_varp_scope(&(options[opt_idx]), opt_flags);
 
+  if (hidden != NULL) {
+    *hidden = (varp == NULL);
+  }
+
   if (options[opt_idx].flags & P_STRING) {
     if (varp == NULL) {  // hidden option
-      return gov_hidden_string;
+      return STRING_OBJ((String)STRING_INIT);
     }
-    if (stringval != NULL) {
-      if ((char **)varp == &p_pt) {  // 'pastetoggle'
-        *stringval = str2special_save(*(char **)(varp), false, false);
-      } else {
-        *stringval = xstrdup(*(char **)(varp));
-      }
+    if ((char **)varp == &p_pt) {  // 'pastetoggle'
+      stringval = str2special_save(*(char **)(varp), false, false);
+    } else {
+      stringval = xstrdup(*(char **)(varp));
     }
-    return gov_string;
+    return STRING_OBJ(cstr_as_string(stringval));
   }
 
   if (varp == NULL) {  // hidden option
-    return (options[opt_idx].flags & P_NUM) ? gov_hidden_number : gov_hidden_bool;
+    return (options[opt_idx].flags & P_NUM) ? INTEGER_OBJ(0) : BOOLEAN_OBJ(0);
   }
+
+  long numval;
+
   if (options[opt_idx].flags & P_NUM) {
-    *numval = *(long *)varp;
+    numval = *(long *)varp;
   } else {
     // Special case: 'modified' is b_changed, but we also want to consider
     // it set when 'ff' or 'fenc' changed.
     if ((int *)varp == &curbuf->b_changed) {
-      *numval = curbufIsChanged();
+      numval = curbufIsChanged();
     } else {
-      *numval = (long)(*(int *)varp);
+      numval = (long)(*(int *)varp);
     }
   }
-  return (options[opt_idx].flags & P_NUM) ? gov_number : gov_bool;
+  return (options[opt_idx].flags & P_NUM) ? INTEGER_OBJ(numval) : BOOLEAN_OBJ(numval);
 }
 
 // Returns the option attributes and its value. Unlike the above function it
@@ -3085,19 +3188,17 @@ bool is_hidden_option(int opt_idx)
   return options[opt_idx].var == NULL;
 }
 
-/// Set the value of an option
+/// Set the value of an option.
 ///
-/// @param[in]  name  Option name.
-/// @param[in]  number  New value for the number or boolean option.
-/// @param[in]  string  New value for string option.
+/// @param[in]  name   Option name.
+/// @param[in]  value  New value for option
 /// @param[in]  opt_flags  Flags: OPT_LOCAL, OPT_GLOBAL, or 0 (both).
 ///                        If OPT_CLEAR is set, the value of the option
 ///                        is cleared  (the exact semantics of this depend
 ///                        on the option).
 ///
 /// @return NULL on success, an untranslated error message on error.
-char *set_option_value(const char *const name, const long number, const char *const string,
-                       const int opt_flags)
+char *set_option_value(const char *const name, Object value, const int opt_flags)
   FUNC_ATTR_NONNULL_ARG(1)
 {
   if (is_tty_option(name)) {
@@ -3110,58 +3211,82 @@ char *set_option_value(const char *const name, const long number, const char *co
   opt_idx = findoption(name);
   if (opt_idx < 0) {
     semsg(_("E355: Unknown option: %s"), name);
-  } else {
-    uint32_t flags = options[opt_idx].flags;
-    // Disallow changing some options in the sandbox
-    if (sandbox > 0 && (flags & P_SECURE)) {
-      emsg(_(e_sandbox));
+    return NULL;
+  }
+  uint32_t flags = options[opt_idx].flags;
+  // Disallow changing some options in the sandbox
+  if (sandbox > 0 && (flags & P_SECURE)) {
+    emsg(_(e_sandbox));
+    return NULL;
+  }
+
+  if (flags & P_STRING) {
+    if (value.type != kObjectTypeString) {
+      emsg(_(e_stringreq));
       return NULL;
     }
-    if (flags & P_STRING) {
-      const char *s = string;
-      if (s == NULL || opt_flags & OPT_CLEAR) {
-        s = "";
-      }
-      return set_string_option(opt_idx, s, opt_flags);
+
+    const char *s = (const char *)value.data.string.data;
+    if (s == NULL || opt_flags & OPT_CLEAR) {
+      s = "";
+    }
+    return set_string_option(opt_idx, s, opt_flags);
+  }
+
+  varp = (char_u *)get_varp_scope(&(options[opt_idx]), opt_flags);
+  if (varp == NULL) {       // hidden option is not changed
+    return NULL;
+  }
+
+  if (flags & P_FUNC) {
+    Callback cb;
+
+    if (opt_flags & OPT_CLEAR) {
+      cb = (Callback)CALLBACK_INIT;
+    } else if (!func_option_from_object(&value, &cb)) {
+      emsg(_(e_inv_func_opt));
     }
 
-    varp = (char_u *)get_varp_scope(&(options[opt_idx]), opt_flags);
-    if (varp != NULL) {       // hidden option is not changed
-      if (number == 0 && string != NULL) {
-        int idx;
+    return set_func_option(opt_idx, varp, cb, opt_flags);
+  }
 
-        // Either we are given a string or we are setting option
-        // to zero.
-        for (idx = 0; string[idx] == '0'; idx++) {}
-        if (string[idx] != NUL || idx == 0) {
-          // There's another character after zeros or the string
-          // is empty.  In both cases, we are trying to set a
-          // num option using a string.
-          semsg(_("E521: Number required: &%s = '%s'"),
-                name, string);
-          return NULL;  // do nothing as we hit an error
-        }
-      }
-      long numval = number;
-      if (opt_flags & OPT_CLEAR) {
-        if ((int *)varp == &curbuf->b_p_ar) {
-          numval = -1;
-        } else if ((long *)varp == &curbuf->b_p_ul) {
-          numval = NO_LOCAL_UNDOLEVEL;
-        } else if ((long *)varp == &curwin->w_p_so || (long *)varp == &curwin->w_p_siso) {
-          numval = -1;
-        } else {
-          char *s = NULL;
-          (void)get_option_value(name, &numval, &s, OPT_GLOBAL);
-        }
-      }
-      if (flags & P_NUM) {
-        return set_num_option(opt_idx, varp, numval, NULL, 0, opt_flags);
-      } else {
-        return set_bool_option(opt_idx, varp, (int)numval, opt_flags);
-      }
+  if (value.type == kObjectTypeString) {
+    char *string = value.data.string.data;
+    int idx;
+
+    // Either we are given a string or we are setting option
+    // to zero.
+    for (idx = 0; string[idx] == '0'; idx++) {}
+    if (string[idx] != NUL || idx == 0) {
+      // There's another character after zeros or the string
+      // is empty.  In both cases, we are trying to set a
+      // num option using a string.
+      semsg(_("E521: Number required: &%s = '%s'"),
+            name, string);
+      return NULL;  // do nothing as we hit an error
     }
   }
+
+
+  long numval = value.data.integer;
+  if (opt_flags & OPT_CLEAR) {
+    if ((int *)varp == &curbuf->b_p_ar) {
+      numval = -1;
+    } else if ((long *)varp == &curbuf->b_p_ul) {
+      numval = NO_LOCAL_UNDOLEVEL;
+    } else if ((long *)varp == &curwin->w_p_so || (long *)varp == &curwin->w_p_siso) {
+      numval = -1;
+    } else {
+      char *s = NULL;
+      (void)get_option_value(name, &numval, &s, OPT_GLOBAL);
+    }
+  }
+  if (flags & P_NUM) {
+    return set_num_option(opt_idx, varp, numval, NULL, 0, opt_flags);
+  } else {
+    return set_bool_option(opt_idx, varp, (int)numval, opt_flags);
+  }
+
   return NULL;
 }
 
@@ -3888,7 +4013,7 @@ static char_u *get_varp(vimoption_T *p)
     return *curbuf->b_p_tsr != NUL
            ? (char_u *)&(curbuf->b_p_tsr) : p->var;
   case PV_TSRFU:
-    return *curbuf->b_p_tsrfu != NUL
+    return curbuf->b_p_tsrfu.type != kCallbackNone
            ? (char_u *)&(curbuf->b_p_tsrfu) : p->var;
   case PV_FP:
     return *curbuf->b_p_fp != NUL
@@ -5223,42 +5348,70 @@ int fill_culopt_flags(char *val, win_T *wp)
   return OK;
 }
 
-/// Set the callback function value for an option that accepts a function name,
-/// lambda, et al. (e.g. 'operatorfunc', 'tagfunc', etc.)
-/// @return  OK if the option is successfully set to a function, otherwise FAIL
-int option_set_callback_func(char *optval, Callback *optcb)
+/// Get a callback function value from a string for an option that accepts a function name.
+///
+/// @param[in]   str  String to get callback from.
+/// @param[out]  cb   Callback.
+///
+/// @return  Success or failure.
+bool func_option_from_str(char *str, Callback *cb)
 {
-  if (optval == NULL || *optval == NUL) {
-    callback_free(optcb);
-    return OK;
+  if (str == NULL || *str == NUL) {
+    return true;
   }
 
   typval_T *tv;
-  if (*optval == '{'
-      || (STRNCMP(optval, "function(", 9) == 0)
-      || (STRNCMP(optval, "funcref(", 8) == 0)) {
+  if (*str == '{'
+      || (STRNCMP(str, "function(", 9) == 0)
+      || (STRNCMP(str, "funcref(", 8) == 0)) {
     // Lambda expression or a funcref
-    tv = eval_expr(optval);
+    tv = eval_expr(str);
     if (tv == NULL) {
-      return FAIL;
+      return false;
     }
   } else {
     // treat everything else as a function name string
     tv = xcalloc(1, sizeof(*tv));
     tv->v_type = VAR_STRING;
-    tv->vval.v_string = xstrdup(optval);
+    tv->vval.v_string = xstrdup(str);
   }
 
-  Callback cb;
-  if (!callback_from_typval(&cb, tv)) {
+  if (!callback_from_typval(cb, tv)) {
     tv_free(tv);
-    return FAIL;
+    return false;
   }
 
-  callback_free(optcb);
-  *optcb = cb;
   tv_free(tv);
-  return OK;
+  return true;
+}
+
+/// Get a callback function value from an API Object for an option that accepts a function name.
+/// Consumes the Object if successful.
+///
+/// @param[in]   obj  Object to get callback from.
+/// @param[out]  cb   Callback.
+///
+/// @return  Success or failure.
+bool func_option_from_object(Object *obj, Callback *cb) {
+  switch(obj->type) {
+  case kObjectTypeString:
+    if (!func_option_from_str(obj->data.string.data, cb)) {
+      return false;
+    }
+    xfree(obj->data.string.data);
+    obj->data.string.data = NULL;
+  case kObjectTypeLuaRef:
+    cb->type = kCallbackLua;
+    cb->data.luaref = obj->data.luaref;
+    obj->data.luaref = LUA_NOREF;
+  case kObjectTypePartial:
+    cb->type = kCallbackPartial;
+    cb->data.partial = obj->data.partial;
+    obj->data.partial = NULL;
+  default:
+    return false;
+  }
+  return true;
 }
 
 /// Check if backspacing over something is allowed.

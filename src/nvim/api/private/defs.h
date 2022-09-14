@@ -8,6 +8,7 @@
 #include "nvim/func_attr.h"
 #include "nvim/lib/kvec.h"
 #include "nvim/types.h"
+#include "nvim/eval/typval_defs.h"
 
 #define ARRAY_DICT_INIT KV_INITIAL_VALUE
 #define STRING_INIT { .data = NULL, .size = 0 }
@@ -87,6 +88,7 @@ REMOTE_TYPE(Tabpage);
 
 typedef struct object Object;
 typedef kvec_t(Object) Array;
+typedef partial_T * Partial;
 
 typedef struct key_value_pair KeyValuePair;
 typedef kvec_t(KeyValuePair) Dictionary;
@@ -100,6 +102,7 @@ typedef enum {
   kObjectTypeArray,
   kObjectTypeDictionary,
   kObjectTypeLuaRef,
+  kObjectTypePartial,
   // EXT types, cannot be split or reordered, see #EXT_OBJECT_TYPE_SHIFT
   kObjectTypeBuffer,
   kObjectTypeWindow,
@@ -116,6 +119,7 @@ struct object {
     Array array;
     Dictionary dictionary;
     LuaRef luaref;
+    Partial partial;
   } data;
 };
 

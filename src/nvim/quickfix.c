@@ -530,9 +530,6 @@ static int efm_to_regpat(const char *efm, int len, efm_T *fmt_ptr, char *regpat)
 
 static efm_T *fmt_start = NULL;  // cached across qf_parse_line() calls
 
-// callback function for 'quickfixtextfunc'
-static Callback qftf_cb;
-
 static void free_efm_list(efm_T **efm_first)
 {
   for (efm_T *efm_ptr = *efm_first; efm_ptr != NULL; efm_ptr = *efm_first) {
@@ -3828,13 +3825,6 @@ static buf_T *qf_find_buf(qf_info_T *qi)
   return NULL;
 }
 
-/// Process the 'quickfixtextfunc' option value.
-/// @return  OK or FAIL
-int qf_process_qftf_option(void)
-{
-  return option_set_callback_func(p_qftf, &qftf_cb);
-}
-
 /// Update the w:quickfix_title variable in the quickfix/location list window in
 /// all the tab pages.
 static void qf_update_win_titlevar(qf_info_T *qi)
@@ -3976,7 +3966,7 @@ static int qf_buf_add_line(qf_list_T *qfl, buf_T *buf, linenr_T lnum, const qfli
 // the quickfix window for the entries 'start_idx' to 'end_idx'.
 static list_T *call_qftf_func(qf_list_T *qfl, int qf_winid, long start_idx, long end_idx)
 {
-  Callback *cb = &qftf_cb;
+  Callback *cb = &p_qftf;
   list_T *qftf_list = NULL;
 
   // If 'quickfixtextfunc' is set, then use the user-supplied function to get

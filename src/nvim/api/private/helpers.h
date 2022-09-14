@@ -54,6 +54,10 @@
     .type = kObjectTypeLuaRef, \
     .data.luaref = r })
 
+#define PARTIAL_OBJ(p) ((Object) { \
+    .type = kObjectTypePartial, \
+    .data.partial = p })
+
 #define NIL ((Object)OBJECT_INIT)
 #define NULL_STRING ((String)STRING_INIT)
 

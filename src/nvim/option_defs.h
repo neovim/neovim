@@ -53,6 +53,8 @@
 #define P_NO_DEF_EXP   0x40000000U  ///< Do not expand default value.
 #define P_UI_OPTION    0x80000000U  ///< send option to remote ui
 
+#define P_FUNC         0x100000000U ///< this option is a function
+
 /// Flags for option-setting functions
 ///
 /// When OPT_GLOBAL and OPT_LOCAL are both missing, set both local and global
@@ -393,9 +395,9 @@ EXTERN long p_channel;          ///< 'channel'
 EXTERN char *p_cink;            ///< 'cinkeys'
 EXTERN char *p_cinsd;           ///< 'cinscopedecls'
 EXTERN char *p_cinw;            ///< 'cinwords'
-EXTERN char *p_cfu;             ///< 'completefunc'
-EXTERN char *p_ofu;             ///< 'omnifunc'
-EXTERN char *p_tsrfu;           ///< 'thesaurusfunc'
+EXTERN Callback p_cfu;          ///< 'completefunc'
+EXTERN Callback p_ofu;          ///< 'omnifunc'
+EXTERN Callback p_tsrfu;        ///< 'thesaurusfunc'
 EXTERN int p_ci;                ///< 'copyindent'
 EXTERN int p_ar;                // 'autoread'
 EXTERN int p_aw;                // 'autowrite'
@@ -483,7 +485,7 @@ EXTERN char *p_debug;           // 'debug'
 EXTERN char *p_def;             // 'define'
 EXTERN char *p_inc;
 EXTERN char *p_dip;             // 'diffopt'
-EXTERN char *p_dex;             // 'diffexpr'
+EXTERN Callback p_dex;          // 'diffexpr'
 EXTERN char *p_dict;            // 'dictionary'
 EXTERN int p_dg;                // 'digraph'
 EXTERN char *p_dir;             // 'directory'
@@ -531,7 +533,7 @@ EXTERN unsigned fdo_flags;
 #define FDO_INSERT             0x100
 #define FDO_UNDO               0x200
 #define FDO_JUMP               0x400
-EXTERN char *p_fex;             ///< 'formatexpr'
+EXTERN Callback p_fex;          ///< 'formatexpr'
 EXTERN char *p_flp;             ///< 'formatlistpat'
 EXTERN char *p_fo;              ///< 'formatoptions'
 EXTERN char_u *p_fp;            // 'formatprg'
@@ -539,7 +541,7 @@ EXTERN int p_fs;                // 'fsync'
 EXTERN int p_gd;                // 'gdefault'
 EXTERN char_u *p_pdev;          // 'printdevice'
 EXTERN char *p_penc;            // 'printencoding'
-EXTERN char *p_pexpr;           // 'printexpr'
+EXTERN Callback p_pexpr;        // 'printexpr'
 EXTERN char *p_pmfn;            // 'printmbfont'
 EXTERN char *p_pmcs;            // 'printmbcharset'
 EXTERN char *p_pfn;             // 'printfont'
@@ -564,9 +566,9 @@ EXTERN int p_ic;                // 'ignorecase'
 EXTERN long p_iminsert;         ///< 'iminsert'
 EXTERN long p_imsearch;         ///< 'imsearch'
 EXTERN int p_inf;               ///< 'infercase'
-EXTERN char *p_inex;            ///< 'includeexpr'
+EXTERN Callback p_inex;         ///< 'includeexpr'
 EXTERN int p_is;                // 'incsearch'
-EXTERN char *p_inde;            ///< 'indentexpr'
+EXTERN Callback p_inde;         ///< 'indentexpr'
 EXTERN char *p_indk;            ///< 'indentkeys'
 EXTERN char *p_icm;             // 'inccommand'
 EXTERN char *p_isf;             // 'isfname'
@@ -624,11 +626,11 @@ EXTERN long p_mousescroll_hor INIT(= MOUSESCROLL_HOR_DFLT);
 EXTERN long p_mouset;           // 'mousetime'
 EXTERN int p_more;              // 'more'
 EXTERN char *p_nf;              ///< 'nrformats'
-EXTERN char *p_opfunc;          // 'operatorfunc'
+EXTERN Callback p_opfunc;       // 'operatorfunc'
 EXTERN char_u *p_para;          // 'paragraphs'
 EXTERN int p_paste;             // 'paste'
 EXTERN char *p_pt;              // 'pastetoggle'
-EXTERN char_u *p_pex;           // 'patchexpr'
+EXTERN Callback p_pex;          // 'patchexpr'
 EXTERN char *p_pm;              // 'patchmode'
 EXTERN char_u *p_path;          // 'path'
 EXTERN char_u *p_cdpath;        // 'cdpath'
@@ -652,7 +654,7 @@ EXTERN int p_ri;              // 'revins'
 EXTERN int p_ru;              // 'ruler'
 EXTERN char *p_ruf;           // 'rulerformat'
 EXTERN char *p_pp;            // 'packpath'
-EXTERN char *p_qftf;          // 'quickfixtextfunc'
+EXTERN Callback p_qftf;       // 'quickfixtextfunc'
 EXTERN char *p_rtp;           // 'runtimepath'
 EXTERN long p_scbk;           // 'scrollback'
 EXTERN long p_sj;             // 'scrolljump'
@@ -726,7 +728,7 @@ EXTERN unsigned int tpf_flags;  ///< flags from 'termpastefilter'
 #define TPF_DEL                0x010
 #define TPF_C0                 0x020
 #define TPF_C1                 0x040
-EXTERN char *p_tfu;             ///< 'tagfunc'
+EXTERN Callback p_tfu;           ///< 'tagfunc'
 EXTERN char *p_spc;             ///< 'spellcapcheck'
 EXTERN char *p_spf;             ///< 'spellfile'
 EXTERN char *p_spl;             ///< 'spelllang'
