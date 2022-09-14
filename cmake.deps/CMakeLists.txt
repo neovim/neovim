@@ -139,12 +139,6 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
   message("-- Using deployment target ${CMAKE_OSX_DEPLOYMENT_TARGET}")
 endif()
 
-set(HOSTDEPS_INSTALL_DIR "${DEPS_INSTALL_DIR}")
-set(HOSTDEPS_BIN_DIR "${DEPS_BIN_DIR}")
-set(HOSTDEPS_LIB_DIR "${DEPS_LIB_DIR}")
-set(HOSTDEPS_C_COMPILER "${DEPS_C_COMPILER}")
-set(HOSTDEPS_CXX_COMPILER "${DEPS_CXX_COMPILER}")
-
 include(ExternalProject)
 
 set(LIBUV_URL https://github.com/libuv/libuv/archive/f610339f74f7f0fcd183533d2c965ce1468b44c6.tar.gz)

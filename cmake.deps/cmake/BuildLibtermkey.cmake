@@ -4,8 +4,6 @@ if(WIN32)
       ${DEPS_BUILD_DIR}/src/libtermkey/CMakeLists.txt
     COMMAND ${CMAKE_COMMAND} ${DEPS_BUILD_DIR}/src/libtermkey
       -DCMAKE_INSTALL_PREFIX=${DEPS_INSTALL_DIR}
-      # Pass toolchain
-      -DCMAKE_TOOLCHAIN_FILE=${TOOLCHAIN}
       ${BUILD_TYPE_STRING}
       # Hack to avoid -rdynamic in Mingw
       -DCMAKE_SHARED_LIBRARY_LINK_C_FLAGS=""
