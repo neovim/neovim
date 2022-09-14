@@ -367,7 +367,7 @@ static void parse_border_title(Object title, Object title_pos, Object width, Flo
     }
 
     if (iytem.data.array.items[0].type != kObjectTypeString) {
-      api_set_error(err, kErrorTypeValidation, "miss title string in title array");
+      api_set_error(err, kErrorTypeValidation, "missing title string in title array");
       return;
     }
   }
