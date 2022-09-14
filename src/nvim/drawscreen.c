@@ -84,7 +84,7 @@
 #include "nvim/undo.h"
 #include "nvim/version.h"
 #include "nvim/window.h"
-#include <sys/_types/_size_t.h>
+#include <inttypes.h>
 
 /// corner value flags for hsep_connected and vsep_connected
 typedef enum {
@@ -617,14 +617,14 @@ int update_screen(void)
   return OK;
 }
 
-static char * get_title_texts_data(VirtText title_texts)
+static int get_title_texts_len(VirtText title_texts)
 {
-  char *cmp_title_text = NULL;
+  int len = 0;
   for (size_t i = 0; i < title_texts.size; i ++){
     char *text = title_texts.items[i].text;
-    strcat(cmp_title_text,text);
+    len += (int)strlen(text);
   }
-  return cmp_title_text;
+  return len - 1;
 }
 
 static void redr_title_texts(win_T *wp,ScreenGrid *grid,int col,int attr)
@@ -638,7 +638,7 @@ static void redr_title_texts(win_T *wp,ScreenGrid *grid,int col,int attr)
     len = (int)strlen(title_text);
     grid_puts_len(grid, title_text, len, 0, col, attr);
   } else {
-    for(size_t i = 0; i< title_texts.size; i ++){
+    for(size_t i = 0; i < title_texts.size; i ++){
       text = title_texts.items[i].text;
       len = (int)strlen(text);
       grid_puts_len(grid, text, len, 0, col, attr);
@@ -672,20 +672,20 @@ static void win_redr_border(win_T *wp)
 
     if (title) {
       char *title_text;
+      int len;
       VirtText title_texts = wp->w_float_config.title_texts;
 
       if (wp->w_float_config.title_text != NULL){
         title_text = wp->w_float_config.title_text;
+        len = (int)strlen(title_text);
       } else {
-        title_text = get_title_texts_data(title_texts);
+        len = get_title_texts_len(title_texts);
       }
 
-      int len = (int)strlen(title_text);
       int title_attr = wp->w_float_config.title_attr;
 
       if (wp->w_float_config.title_pos == kBorderTitleLeft) {
-        // redr_title_texts(wp, grid, 1, title_attr);
-        grid_puts_len(grid, title_text, len, 0, 1, title_attr);
+        redr_title_texts(wp, grid, 1, title_attr);
         for (int i = len; i < icol; i++) {
           grid_put_schar(grid, 0, i + adj[3], chars[1], attrs[1]);
         }
@@ -694,7 +694,8 @@ static void win_redr_border(win_T *wp)
       if (wp->w_float_config.title_pos == kBorderTitleCenter) {
         int text_center = len >> 1;
         int col_center = icol >> 1;
-        grid_puts_len(grid, title_text, len, 0, col_center - text_center, title_attr);
+        redr_title_texts(wp, grid, col_center - text_center, title_attr);
+        // grid_puts_len(grid, title_text, len, 0, col_center - text_center, title_attr);
         for (int i = 0; i < icol; i++) {
           if (i <= col_center - text_center - 2 * adj[3]
               || i >= col_center - text_center + len - 1) {
@@ -704,7 +705,8 @@ static void win_redr_border(win_T *wp)
       }
 
       if (wp->w_float_config.title_pos == kBorderTitleRight) {
-        grid_puts_len(grid, title_text, len, 0, icol - len + adj[3], title_attr);
+        redr_title_texts(wp, grid, icol- len + adj[3], title_attr);
+        // grid_puts_len(grid, title_text, len, 0, icol - len + adj[3], title_attr);
         for (int i = 0; i < icol; i++) {
           if (i + len + adj[3] <= icol) {
             grid_put_schar(grid, 0, i + adj[3], chars[1], attrs[1]);

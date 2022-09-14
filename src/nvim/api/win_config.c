@@ -18,7 +18,7 @@
 #include "nvim/syntax.h"
 #include "nvim/ui.h"
 #include "nvim/window.h"
-#include <sys/_types/_size_t.h>
+#include <inttypes.h>
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "api/win_config.c.generated.h"
