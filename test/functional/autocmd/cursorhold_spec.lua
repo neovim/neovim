@@ -15,7 +15,7 @@ describe('CursorHoldI', function()
   --       issue (#3757) via timer's or RPC callbacks in the first place.
   it('is triggered after input', function()
     source([[
-    set updatetime=1
+    set updatetime=100
 
     let g:cursorhold = 0
     augroup test
@@ -24,7 +24,7 @@ describe('CursorHoldI', function()
     ]])
     feed('ifoo')
     retry(5, nil, function()
-      sleep(1)
+      sleep(50)
       eq(1, eval('g:cursorhold'))
     end)
   end)
