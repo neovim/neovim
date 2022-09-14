@@ -870,7 +870,8 @@ static uint8_t *command_line_enter(int firstc, long count, int indent, bool init
 
   if (!tl_ret && ERROR_SET(&err)) {
     msg_putchar('\n');
-    msg_printf_attr(HL_ATTR(HLF_E)|MSG_HIST, (char *)e_autocmd_err, err.msg);
+    semsg(e_autocmd_err, err.msg);
+    did_emsg = false;
     api_clear_error(&err);
   }
 
