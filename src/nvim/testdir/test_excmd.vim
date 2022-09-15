@@ -230,7 +230,6 @@ endfunc
 " Test for the :language command
 func Test_language_cmd()
   CheckNotMSWindows  " FIXME: why does this fail on Windows CI?
-  CheckNotBSD  " FIXME: why does this fail on OpenBSD CI?
   CheckFeature multi_lang
 
   call assert_fails('language ctype non_existing_lang', 'E197:')
