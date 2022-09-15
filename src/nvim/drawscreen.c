@@ -635,7 +635,7 @@ static void redr_title_texts(win_T *wp, ScreenGrid *grid, int col)
 
   if (title_text != NULL) {
     len = (int)strlen(title_text);
-    attr = syn_id2attr(wp->w_float_config.title_hi_id);
+    attr = wp->w_float_config.title_attr;
     grid_puts_len(grid, title_text, len, 0, col, attr);
     return;
   }
