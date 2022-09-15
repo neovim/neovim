@@ -1057,13 +1057,6 @@ typedef enum {
 } BorderTitlePos;
 
 typedef struct {
-  char *text;
-  int hl_id;
-} BorderTitleChunk;
-
-typedef kvec_t(BorderTitleChunk) BorderTitleText;
-
-typedef struct {
   Window window;
   lpos_T bufpos;
   int height, width;

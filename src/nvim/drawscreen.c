@@ -627,12 +627,13 @@ static int get_title_texts_len(VirtText title_texts)
   return len;
 }
 
-static void redr_title_texts(win_T *wp,ScreenGrid *grid,int col,int attr)
+static void redr_title_texts(win_T *wp, ScreenGrid *grid, int col)
 {
   char *text;
   int len;
   VirtText title_texts = wp->w_float_config.title_texts;
   char *title_text = wp->w_float_config.title_text;
+  int attr = wp->w_float_config.title_attr;
 
   if (title_text != NULL) {
     len = (int)strlen(title_text);
@@ -640,7 +641,7 @@ static void redr_title_texts(win_T *wp,ScreenGrid *grid,int col,int attr)
     return;
   }
 
-  for(size_t i = 0; i < title_texts.size; i ++){
+  for(size_t i = 0; i < title_texts.size; i++){
     text = title_texts.items[i].text;
     len = (int)strlen(text);
     grid_puts_len(grid, text, len, 0, col, attr);
@@ -681,10 +682,8 @@ static void win_redr_border(win_T *wp)
         len = get_title_texts_len(title_texts);
       }
 
-      int title_attr = wp->w_float_config.title_attr;
-
       if (wp->w_float_config.title_pos == kBorderTitleLeft) {
-        redr_title_texts(wp, grid, 1, title_attr);
+        redr_title_texts(wp, grid, 1);
         for (int i = len; i < icol; i++) {
           grid_put_schar(grid, 0, i + adj[3], chars[1], attrs[1]);
         }
@@ -693,7 +692,7 @@ static void win_redr_border(win_T *wp)
       if (wp->w_float_config.title_pos == kBorderTitleCenter) {
         int text_center = len >> 1;
         int col_center = icol >> 1;
-        redr_title_texts(wp, grid, col_center - text_center, title_attr);
+        redr_title_texts(wp, grid, col_center - text_center);
         for (int i = 0; i < icol; i++) {
           if (i <= col_center - text_center - 2 * adj[3]
               || i >= col_center - text_center + len - 1) {
@@ -703,7 +702,7 @@ static void win_redr_border(win_T *wp)
       }
 
       if (wp->w_float_config.title_pos == kBorderTitleRight) {
-        redr_title_texts(wp, grid, icol- len + adj[3], title_attr);
+        redr_title_texts(wp, grid, icol- len + adj[3]);
         for (int i = 0; i < icol; i++) {
           if (i + len + adj[3] <= icol) {
             grid_put_schar(grid, 0, i + adj[3], chars[1], attrs[1]);
