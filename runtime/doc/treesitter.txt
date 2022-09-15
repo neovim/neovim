@@ -203,7 +203,7 @@ purpose, e.g., `queries/lua/highlights.scm` for highlighting Lua files.
 By default, the first query on `runtimepath` is used (which usually implies
 that user config takes precedence over plugins, which take precedence over
 queries bundled with Neovim). If a query should extend other queries instead
-of replacing them, use |ts-query-modeline-extends|.
+of replacing them, use |treesitter-query-modeline-extends|.
 
 See |lua-treesitter-query| for the list of available methods for working with
 treesitter queries from Lua.
@@ -220,28 +220,28 @@ to only match identifier corresponding to the `"foo"` text.
 
 The following predicates are built in:
 
-    `eq?`                                                   *ts-predicate-eq?*
+    `eq?`                                            *treesitter-predicate-eq?*
         Match a string against the text corresponding to a node: >
             ((identifier) @foo (#eq? @foo "foo"))
             ((node1) @left (node2) @right (#eq? @left @right))
 <
-    `match?`                                        *ts-predicate-match?*
-    `vim-match?`                                    *ts-predicate-vim-match?*
+    `match?`                                      *treesitter-predicate-match?*
+    `vim-match?`                              *treesitter-predicate-vim-match?*
          Match a |regexp| against the text corresponding to a node: >
             ((identifier) @constant (#match? @constant "^[A-Z_]+$"))
 <         Note: The `^` and `$` anchors will match the start and end of the
                node's text.
 
-    `lua-match?`                                    *ts-predicate-lua-match?*
+    `lua-match?`                              *treesitter-predicate-lua-match?*
          Match a |lua-pattern| against the text corresponding to a node,
          similar to `match?`
 
-    `contains?`                                     *ts-predicate-contains?*
+    `contains?`                                *treesitter-predicate-contains?*
         Match a string against parts of the text corresponding to a node: >
             ((identifier) @foo (#contains? @foo "foo"))
             ((identifier) @foo-bar (#contains @foo-bar "foo" "bar"))
 <
-    `any-of?`                                       *ts-predicate-any-of?*
+    `any-of?`                                    *treesitter-predicate-any-of?*
         Match any of the given strings against the text corresponding to
         a node: >
             ((identifier) @foo (#any-of? @foo "foo" "bar"))
@@ -267,7 +267,7 @@ effects. For example, the |set!| predicate sets metadata on the match or node: >
 <
 The following directives are built in:
 
-    `set!`                                                  *ts-directive-set!*
+    `set!`                                          *treesitter-directive-set!*
         Sets key/value metadata for a specific match or capture. Value is
         accessible as either `metadata[key]` (match specific) or
         `metadata[capture_id][key]` (capture specific).
@@ -281,7 +281,7 @@ The following directives are built in:
             ((identifier) @foo (#set! @foo "kind" "parameter"))
             ((node1) @left (node2) @right (#set! "type" "pair"))
 <
-    `offset!`                                           *ts-directive-offset!*
+    `offset!`                                      *treesitter-directive-offset!*
         Takes the range of the captured node and applies an offset. This will
         generate a new range object for the captured node as
         `metadata[capture_id].range`.
@@ -302,13 +302,13 @@ Use `vim.treesitter.query.`|list_directives()| to list all available
 directives.
 
 
-TREESITTER QUERY MODELINES                                 *ts-query-modeline*
+TREESITTER QUERY MODELINES                          *treesitter-query-modeline*
 
 Neovim supports to customize the behavior of the queries using a set of
 "modelines", that is comments in the queries starting with `;`. Here are the
 currently supported modeline alternatives:
 
-    `inherits: {lang}...`                           *ts-query-modeline-inherits*
+    `inherits: {lang}...`                     *treesitter-query-modeline-inherits*
         Specifies that this query should inherit the queries from {lang}.
         This will recursively descend in the queries of {lang} unless wrapped
         in parentheses: `({lang})`.
@@ -316,7 +316,7 @@ currently supported modeline alternatives:
         language. If you want your query to extend the queries of the same
         language, use `extends`.
 
-    `extends`                                        *ts-query-modeline-extends*
+    `extends`                                  *treesitter-query-modeline-extends*
         Specifies that this query should be used as an extension for the
         query, i.e. that it should be merged with the others.
         Note: The order of the extensions, and the query that will be used as
@@ -436,14 +436,20 @@ get_captures_at_cursor({winnr})                     *get_captures_at_cursor()*
 
                                                   *get_captures_at_position()*
 get_captures_at_position({bufnr}, {row}, {col})
+    Returns a list of highlight captures at the given position
+
+    Each capture is represented by a table containing the capture name as a
+    string as well as a table of metadata (`priority`, `conceal`, ...; empty
+    if none are defined).
+
     Parameters: ~
         {bufnr}  (number) Buffer number (0 for current buffer)
         {row}    (number) Position row
         {col}    (number) Position column
 
     Return: ~
-        table[] Captures of the form `{ capture = "capture name", priority =
-        capture priority }`
+        table[] List of captures `{ capture = "capture name", metadata = { ...
+        } }`
 
 get_node_at_cursor({winnr})                             *get_node_at_cursor()*
     Returns the smallest named node under the cursor

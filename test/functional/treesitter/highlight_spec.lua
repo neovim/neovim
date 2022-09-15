@@ -605,8 +605,8 @@ describe('treesitter highlighting', function()
     }}
 
     eq({
-      {capture='Error', priority='101'};
-      {capture='type'};
+      {capture='Error', metadata = { priority='101' }};
+      {capture='type', metadata = { } };
     }, exec_lua [[ return vim.treesitter.get_captures_at_position(0, 0, 2) ]])
     end)
 
