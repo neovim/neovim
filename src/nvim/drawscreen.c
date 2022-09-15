@@ -629,13 +629,13 @@ static int get_title_texts_len(VirtText title_texts)
 static void redr_title_texts(win_T *wp, ScreenGrid *grid, int col)
 {
   char *text;
-  int len;
+  int len, attr;
   VirtText title_texts = wp->w_float_config.title_texts;
   char *title_text = wp->w_float_config.title_text;
-  int attr = wp->w_float_config.title_attr;
 
   if (title_text != NULL) {
     len = (int)strlen(title_text);
+    attr = syn_id2attr(wp->w_float_config.title_hi_id);
     grid_puts_len(grid, title_text, len, 0, col, attr);
     return;
   }
@@ -643,6 +643,7 @@ static void redr_title_texts(win_T *wp, ScreenGrid *grid, int col)
   for (size_t i = 0; i < title_texts.size; i++) {
     text = title_texts.items[i].text;
     len = (int)strlen(text);
+    attr = syn_id2attr(title_texts.items[i].hl_id);
     grid_puts_len(grid, text, len, 0, col, attr);
     col += len;
   }

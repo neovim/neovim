@@ -1072,12 +1072,11 @@ typedef struct {
   bool shadow;
   schar_T border_chars[8];
   int border_hl_ids[8];
-  int border_attr[9];
+  int border_attr[8];
   BorderTitlePos title_pos;
   VirtText title_texts;
   char *title_text;
   int title_hi_id;
-  int title_attr;
   bool noautocmd;
 } FloatConfig;
 
