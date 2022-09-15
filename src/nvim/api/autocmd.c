@@ -59,6 +59,9 @@ static int64_t next_autocmd_id = 1;
 ///             - group (string|integer): the autocommand group name or id to match against.
 ///             - event (string|array): event or events to match against |autocmd-events|.
 ///             - pattern (string|array): pattern or patterns to match against |autocmd-pattern|.
+///             Cannot be used with {buffer}
+///             - buffer: Buffer number or list of buffer numbers for buffer local autocommands
+///             |autocmd-buflocal|. Cannot be used with {pattern}
 /// @return Array of autocommands matching the criteria, with each item
 ///         containing the following fields:
 ///             - id (number): the autocommand id (only when defined with the API).
