@@ -340,8 +340,16 @@ static void parse_border_title(Object title, Object title_pos, Object width, Flo
     return;
   }
 
+  int win_width = (int)width.data.integer;
+
   if (title.type == kObjectTypeString) {
     fconfig->title_text = xstrdup(title.data.string.data);
+    int len = (int)strlen(fconfig->title_text);
+    if (len > win_width) {
+      api_set_error(err, kErrorTypeException, "title length must be less than win width");
+      return;
+    }
+
     int hl_id = object_to_hl_id(title, "border title highlight", err);
     fconfig->title_hi_id = hl_id;
     fconfig->title = true;
@@ -373,7 +381,6 @@ static void parse_border_title(Object title, Object title_pos, Object width, Flo
     }
   }
 
-  int win_width = (int)width.data.integer;
   fconfig->title_texts = parse_virt_text(title.data.array, err, &win_width);
 
   fconfig->title = true;

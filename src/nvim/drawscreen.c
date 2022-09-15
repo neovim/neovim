@@ -84,7 +84,6 @@
 #include "nvim/undo.h"
 #include "nvim/version.h"
 #include "nvim/window.h"
-#include <inttypes.h>
 
 /// corner value flags for hsep_connected and vsep_connected
 typedef enum {
