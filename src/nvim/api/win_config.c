@@ -2,10 +2,12 @@
 // it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
 #include <assert.h>
+#include <inttypes.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
 
+#include "nvim/api/extmark.h"
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/api/win_config.h"
@@ -18,8 +20,6 @@
 #include "nvim/syntax.h"
 #include "nvim/ui.h"
 #include "nvim/window.h"
-#include <inttypes.h>
-#include "nvim/api/extmark.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "api/win_config.c.generated.h"
@@ -333,7 +333,8 @@ static bool parse_float_bufpos(Array bufpos, lpos_T *out)
   return true;
 }
 
-static void parse_border_title(Object title, Object title_pos, Object width, FloatConfig *fconfig, Error *err)
+static void parse_border_title(Object title, Object title_pos, Object width, FloatConfig *fconfig,
+                               Error *err)
 {
   if (!parse_title_pos(title_pos, fconfig, err)) {
     return;
@@ -359,7 +360,7 @@ static void parse_border_title(Object title, Object title_pos, Object width, Flo
 
   Array arr = title.data.array;
   size_t size = arr.size;
-  for (size_t i = 0; i < size; i ++){
+  for (size_t i = 0; i < size; i++) {
     Object iytem = arr.items[i];
     if (iytem.type != kObjectTypeArray || iytem.data.array.size == 0) {
       api_set_error(err, kErrorTypeValidation, "not allow empty array in title");
