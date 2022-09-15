@@ -5,7 +5,7 @@ env:
 
 freebsd_task:
   name: FreeBSD
-  only_if: $BRANCH != "master"
+  only_if: $BRANCH != "master" && $CIRRUS_PR_DRAFT != "true"
   freebsd_instance:
     image_family: freebsd-13-1
   timeout_in: 30m
