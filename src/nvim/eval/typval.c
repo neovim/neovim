@@ -1086,9 +1086,9 @@ static int item_compare2(const void *s1, const void *s2, bool keep_zero)
 
   rettv.v_type = VAR_UNKNOWN;  // tv_clear() uses this
   funcexe_T funcexe = FUNCEXE_INIT;
-  funcexe.evaluate = true;
-  funcexe.partial = partial;
-  funcexe.selfdict = sortinfo->item_compare_selfdict;
+  funcexe.fe_evaluate = true;
+  funcexe.fe_partial = partial;
+  funcexe.fe_selfdict = sortinfo->item_compare_selfdict;
   res = call_func(func_name, -1, &rettv, 2, argv, &funcexe);
   tv_clear(&argv[0]);
   tv_clear(&argv[1]);

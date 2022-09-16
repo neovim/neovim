@@ -204,10 +204,10 @@ static Object _call_function(String fn, Array args, dict_T *self, Error *err)
     try_start();
     typval_T rettv;
     funcexe_T funcexe = FUNCEXE_INIT;
-    funcexe.firstline = curwin->w_cursor.lnum;
-    funcexe.lastline = curwin->w_cursor.lnum;
-    funcexe.evaluate = true;
-    funcexe.selfdict = self;
+    funcexe.fe_firstline = curwin->w_cursor.lnum;
+    funcexe.fe_lastline = curwin->w_cursor.lnum;
+    funcexe.fe_evaluate = true;
+    funcexe.fe_selfdict = self;
     // call_func() retval is deceptive, ignore it.  Instead we set `msg_list`
     // (see above) to capture abort-causing non-exception errors.
     (void)call_func(fn.data, (int)fn.size, &rettv, (int)args.size,

@@ -6498,8 +6498,8 @@ static void f_reduce(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   }
 
   funcexe_T funcexe = FUNCEXE_INIT;
-  funcexe.evaluate = true;
-  funcexe.partial = partial;
+  funcexe.fe_evaluate = true;
+  funcexe.fe_partial = partial;
 
   typval_T initial;
   typval_T argv[3];
