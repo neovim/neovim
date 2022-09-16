@@ -154,7 +154,7 @@ function M.get_node_range(node_or_range)
   end
 end
 
----Determines whether (line, col) position is in node range
+--- Determines whether (line, col) position is in node range
 ---
 ---@param node userdata |tsnode| defining the range
 ---@param line number Line (0-based)
@@ -178,7 +178,8 @@ function M.is_in_node_range(node, line, col)
   end
 end
 
----Determines if a node contains a range
+--- Determines if a node contains a range
+---
 ---@param node userdata |tsnode|
 ---@param range table
 ---
@@ -191,17 +192,16 @@ function M.node_contains(node, range)
   return start_fits and end_fits
 end
 
----Returns a list of highlight captures at the given position
---
----@param bufnr number Buffer number (0 for current buffer)
----@param row number Position row
----@param col number Position column
+--- Returns a list of highlight captures at the given position
+---
+--- Each capture is represented by a table containing the capture name as a string as
+--- well as a table of metadata (`priority`, `conceal`, ...; empty if none are defined).
 ---
 ---@param bufnr number Buffer number (0 for current buffer)
 ---@param row number Position row
 ---@param col number Position column
 ---
----@return table[] Captures of the form `{ capture = "capture name", priority = capture priority }`
+---@return table[] List of captures `{ capture = "capture name", metadata = { ... } }`
 function M.get_captures_at_position(bufnr, row, col)
   if bufnr == 0 then
     bufnr = a.nvim_get_current_buf()
@@ -240,7 +240,7 @@ function M.get_captures_at_position(bufnr, row, col)
       if M.is_in_node_range(node, row, col) then
         local c = q._query.captures[capture] -- name of the capture in the query
         if c ~= nil then
-          table.insert(matches, { capture = c, priority = metadata.priority })
+          table.insert(matches, { capture = c, metadata = metadata })
         end
       end
     end
@@ -248,7 +248,7 @@ function M.get_captures_at_position(bufnr, row, col)
   return matches
 end
 
----Returns a list of highlight capture names under the cursor
+--- Returns a list of highlight capture names under the cursor
 ---
 ---@param winnr (number|nil) Window handle or 0 for current window (default)
 ---
