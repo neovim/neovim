@@ -105,4 +105,16 @@ describe('vim.ui_attach', function()
     }
 
   end)
+
+  it('does not crash on exit', function()
+    helpers.funcs.system({
+      helpers.nvim_prog,
+      '-u', 'NONE',
+      '-i', 'NONE',
+      '--cmd', [[ lua ns = vim.api.nvim_create_namespace 'testspace' ]],
+      '--cmd', [[ lua vim.ui_attach(ns, {ext_popupmenu=true}, function() end) ]],
+      '--cmd', 'quitall!',
+    })
+    eq(0, helpers.eval('v:shell_error'))
+  end)
 end)
