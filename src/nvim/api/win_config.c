@@ -212,6 +212,9 @@ void nvim_win_set_config(Window window, Dict(float_config) *config, Error *err)
     }
     redraw_later(win, UPD_NOT_VALID);
   } else {
+    clear_virttext(&win->w_float_config.title_texts);
+    xfree(win->w_float_config.title_text);
+
     win_config_float(win, fconfig);
     win->w_pos_changed = true;
   }
