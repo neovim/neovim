@@ -896,7 +896,6 @@ int do_record(int c)
 {
   char_u *p;
   static int regname;
-  static bool changed_cmdheight = false;
   yankreg_T *old_y_previous;
   int retval;
 
@@ -907,17 +906,10 @@ int do_record(int c)
       retval = FAIL;
     } else {
       reg_recording = c;
+      // TODO(bfredl): showmode based messaging is currently missing with cmdheight=0
       showmode();
       regname = c;
       retval = OK;
-
-      if (!ui_has_messages()) {
-        // Enable macro indicator temporarily
-        set_option_value("ch", 1L, NULL, 0);
-        update_screen(UPD_VALID);
-
-        changed_cmdheight = true;
-      }
 
       apply_autocmds(EVENT_RECORDINGENTER, NULL, NULL, false, curbuf);
     }
@@ -948,7 +940,7 @@ int do_record(int c)
     restore_v_event(dict, &save_v_event);
     reg_recorded = reg_recording;
     reg_recording = 0;
-    if (ui_has(kUIMessages)) {
+    if (p_ch == 0 || ui_has(kUIMessages)) {
       showmode();
     } else {
       msg("");
@@ -963,12 +955,6 @@ int do_record(int c)
       retval = stuff_yank(regname, p);
 
       y_previous = old_y_previous;
-    }
-
-    if (changed_cmdheight) {
-      // Restore cmdheight
-      set_option_value("ch", 0L, NULL, 0);
-      redraw_all_later(UPD_CLEAR);
     }
   }
   return retval;

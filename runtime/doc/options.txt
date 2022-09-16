@@ -1337,7 +1337,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 	page can have a different value.
 
 	When 'cmdheight' is zero, there is no command-line unless it is being
-	used.  Some informative messages will not be displayed, any other
+	used.  The command-line will cover the last line of the screen when
+	shown. Some informative messages will not be displayed, any other
 	messages will cause the |hit-enter| prompt.  Expect some other
 	unexpected behavior too.
 

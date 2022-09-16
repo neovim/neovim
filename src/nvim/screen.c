@@ -442,7 +442,7 @@ void redraw_wildmenu(expand_T *xp, int num_matches, char **matches, int match, i
         // Put the wildmenu just above the command line.  If there is
         // no room, scroll the screen one line up.
         if (cmdline_row == Rows - 1) {
-          msg_scroll_up(false);
+          msg_scroll_up(false, false);
           msg_scrolled++;
         } else {
           cmdline_row++;
@@ -1173,7 +1173,9 @@ bool redrawing(void)
 /// Return true if printing messages should currently be done.
 bool messaging(void)
 {
-  return !(p_lz && char_avail() && !KeyTyped) && ui_has_messages();
+  // TODO(bfredl): with general support for "async" messages with p_ch,
+  // this should be re-enabled.
+  return !(p_lz && char_avail() && !KeyTyped) && (p_ch > 0 || ui_has(kUIMessages));
 }
 
 #define COL_RULER 17        // columns needed by standard ruler

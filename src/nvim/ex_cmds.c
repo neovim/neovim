@@ -3616,13 +3616,6 @@ static int do_sub(exarg_T *eap, proftime_T timeout, long cmdpreview_ns, handle_T
     }
   }
 
-  const bool cmdheight0 = !ui_has_messages();
-  if (cmdheight0) {
-    // If cmdheight is 0, cmdheight must be set to 1 when we enter command line.
-    set_option_value("ch", 1L, NULL, 0);
-    redraw_statuslines();
-  }
-
   // Check for a match on each line.
   // If preview: limit to max('cmdwinheight', viewport).
   linenr_T line2 = eap->line2;
@@ -3914,7 +3907,9 @@ static int do_sub(exarg_T *eap, proftime_T timeout, long cmdpreview_ns, handle_T
               msg_no_more = false;
               msg_scroll = (int)i;
               show_cursor_info(true);
-              ui_cursor_goto(msg_row, msg_col);
+              if (!ui_has(kUIMessages)) {
+                ui_cursor_goto(msg_row, msg_col);
+              }
               RedrawingDisabled = temp;
 
               no_mapping++;                     // don't map this key
@@ -4370,7 +4365,7 @@ skip:
           beginline(BL_WHITE | BL_FIX);
         }
       }
-      if (!cmdpreview && !do_sub_msg(subflags.do_count) && subflags.do_ask) {
+      if (!cmdpreview && !do_sub_msg(subflags.do_count) && subflags.do_ask && p_ch > 0) {
         msg("");
       }
     } else {
@@ -4385,7 +4380,9 @@ skip:
       emsg(_(e_interr));
     } else if (got_match) {
       // did find something but nothing substituted
-      msg("");
+      if (p_ch > 0) {
+        msg("");
+      }
     } else if (subflags.do_error) {
       // nothing found
       semsg(_(e_patnotf2), get_search_pat());
@@ -4416,11 +4413,6 @@ skip:
       }
       retv = show_sub(eap, old_cursor, &preview_lines, pre_hl_id, cmdpreview_ns, cmdpreview_bufnr);
     }
-  }
-
-  if (cmdheight0) {
-    // Restore cmdheight
-    set_option_value("ch", 0L, NULL, 0);
   }
 
   kv_destroy(preview_lines.subresults);

@@ -599,24 +599,6 @@ static void finish_incsearch_highlighting(int gotesc, incsearch_state_T *s, bool
 /// @param init_ccline  clear ccline first
 static uint8_t *command_line_enter(int firstc, long count, int indent, bool init_ccline)
 {
-  const bool cmdheight0 = !ui_has_messages();
-
-  if (cmdheight0) {
-    const long save_so = lastwin->w_p_so;
-
-    // If cmdheight is 0, cmdheight must be set to 1 when we enter the
-    // command line.  Set "made_cmdheight_nonzero" and reset 'scrolloff' to
-    // avoid scrolling the last window.
-    made_cmdheight_nonzero = true;
-
-    lastwin->w_p_so = 0;
-    set_option_value("ch", 1L, NULL, 0);
-    update_screen(UPD_VALID);                 // redraw the screen NOW
-
-    made_cmdheight_nonzero = false;
-    lastwin->w_p_so = save_so;
-  }
-
   // can be invoked recursively, identify each level
   static int cmdline_level = 0;
   cmdline_level++;
@@ -865,6 +847,11 @@ static uint8_t *command_line_enter(int firstc, long count, int indent, bool init
   // If the line is too long, clear it, so ruler and shown command do
   // not get printed in the middle of it.
   msg_check();
+  if (p_ch == 0 && !ui_has(kUIMessages)) {
+    if (must_redraw < UPD_VALID) {
+      must_redraw = UPD_VALID;
+    }
+  }
   msg_scroll = s->save_msg_scroll;
   redir_off = false;
 
@@ -909,17 +896,6 @@ theend:
     restore_cmdline(&save_ccline);
   } else {
     ccline.cmdbuff = NULL;
-  }
-
-  if (cmdheight0) {
-    made_cmdheight_nonzero = true;
-
-    // Restore cmdheight
-    set_option_value("ch", 0L, NULL, 0);
-    // Redraw is needed for command line completion
-    redraw_all_later(UPD_NOT_VALID);
-
-    made_cmdheight_nonzero = false;
   }
 
   return p;
@@ -3716,6 +3692,9 @@ void compute_cmdrow(void)
     win_T *wp = lastwin_nofloating();
     cmdline_row = wp->w_winrow + wp->w_height
                   + wp->w_hsep_height + wp->w_status_height + global_stl_height();
+  }
+  if (cmdline_row == Rows) {
+    cmdline_row--;
   }
   lines_left = cmdline_row;
 }
