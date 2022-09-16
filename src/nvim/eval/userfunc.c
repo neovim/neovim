@@ -1199,6 +1199,34 @@ static bool func_name_refcount(char_u *name)
   return isdigit(*name) || *name == '<';
 }
 
+/// Call a user function after checking the arguments.
+static int call_user_func_check(ufunc_T *fp, int argcount, typval_T *argvars, typval_T *rettv,
+                                funcexe_T *funcexe, dict_T *selfdict)
+  FUNC_ATTR_NONNULL_ARG(1, 3, 4, 5)
+{
+  if (fp->uf_flags & FC_LUAREF) {
+    return typval_exec_lua_callable(fp->uf_luaref, argcount, argvars, rettv);
+  }
+
+  if ((fp->uf_flags & FC_RANGE) && funcexe->fe_doesrange != NULL) {
+    *funcexe->fe_doesrange = true;
+  }
+  int error;
+  if (argcount < fp->uf_args.ga_len - fp->uf_def_args.ga_len) {
+    error = FCERR_TOOFEW;
+  } else if (!fp->uf_varargs && argcount > fp->uf_args.ga_len) {
+    error = FCERR_TOOMANY;
+  } else if ((fp->uf_flags & FC_DICT) && selfdict == NULL) {
+    error = FCERR_DICT;
+  } else {
+    // Call the user function.
+    call_user_func(fp, argcount, argvars, rettv, funcexe->fe_firstline, funcexe->fe_lastline,
+                   (fp->uf_flags & FC_DICT) ? selfdict : NULL);
+    error = FCERR_NONE;
+  }
+  return error;
+}
+
 static funccal_entry_T *funccal_stack = NULL;
 
 /// Save the current function call pointer, and set it to NULL.
@@ -1524,8 +1552,6 @@ int call_func(const char *funcname, int len, typval_T *rettv, int argcount_in, t
 
       if (fp != NULL && (fp->uf_flags & FC_DELETED)) {
         error = FCERR_DELETED;
-      } else if (fp != NULL && (fp->uf_flags & FC_LUAREF)) {
-        error = typval_exec_lua_callable(fp->uf_luaref, argcount, argvars, rettv);
       } else if (fp != NULL) {
         if (funcexe->fe_argv_func != NULL) {
           // postponed filling in the arguments, do it now
@@ -1534,22 +1560,7 @@ int call_func(const char *funcname, int len, typval_T *rettv, int argcount_in, t
 
         argv_add_base(funcexe->fe_basetv, &argvars, &argcount, argv, &argv_base);
 
-        if (fp->uf_flags & FC_RANGE && funcexe->fe_doesrange != NULL) {
-          *funcexe->fe_doesrange = true;
-        }
-        if (argcount < fp->uf_args.ga_len - fp->uf_def_args.ga_len) {
-          error = FCERR_TOOFEW;
-        } else if (!fp->uf_varargs && argcount > fp->uf_args.ga_len) {
-          error = FCERR_TOOMANY;
-        } else if ((fp->uf_flags & FC_DICT) && selfdict == NULL) {
-          error = FCERR_DICT;
-        } else {
-          // Call the user function.
-          call_user_func(fp, argcount, argvars, rettv, funcexe->fe_firstline,
-                         funcexe->fe_lastline,
-                         (fp->uf_flags & FC_DICT) ? selfdict : NULL);
-          error = FCERR_NONE;
-        }
+        error = call_user_func_check(fp, argcount, argvars, rettv, funcexe, selfdict);
       }
     } else if (funcexe->fe_basetv != NULL) {
       // expr->method(): Find the method name in the table, call its
