@@ -757,7 +757,7 @@ int eval_expr_typval(const typval_T *expr, typval_T *argv, int argc, typval_T *r
     if (s == NULL || *s == NUL) {
       return FAIL;
     }
-    funcexe.evaluate = true;
+    funcexe.fe_evaluate = true;
     if (call_func(s, -1, rettv, argc, argv, &funcexe) == FAIL) {
       return FAIL;
     }
@@ -767,8 +767,8 @@ int eval_expr_typval(const typval_T *expr, typval_T *argv, int argc, typval_T *r
     if (s == NULL || *s == NUL) {
       return FAIL;
     }
-    funcexe.evaluate = true;
-    funcexe.partial = partial;
+    funcexe.fe_evaluate = true;
+    funcexe.fe_partial = partial;
     if (call_func(s, -1, rettv, argc, argv, &funcexe) == FAIL) {
       return FAIL;
     }
@@ -1093,10 +1093,10 @@ int call_vim_function(const char *func, int argc, typval_T *argv, typval_T *rett
 
   rettv->v_type = VAR_UNKNOWN;  // tv_clear() uses this.
   funcexe_T funcexe = FUNCEXE_INIT;
-  funcexe.firstline = curwin->w_cursor.lnum;
-  funcexe.lastline = curwin->w_cursor.lnum;
-  funcexe.evaluate = true;
-  funcexe.partial = pt;
+  funcexe.fe_firstline = curwin->w_cursor.lnum;
+  funcexe.fe_lastline = curwin->w_cursor.lnum;
+  funcexe.fe_evaluate = true;
+  funcexe.fe_partial = pt;
   ret = call_func(func, len, rettv, argc, argv, &funcexe);
 
 fail:
@@ -2227,11 +2227,11 @@ static int eval_func(char **const arg, char *const name, const int name_len, typ
 
   // Invoke the function.
   funcexe_T funcexe = FUNCEXE_INIT;
-  funcexe.firstline = curwin->w_cursor.lnum;
-  funcexe.lastline = curwin->w_cursor.lnum;
-  funcexe.evaluate = evaluate;
-  funcexe.partial = partial;
-  funcexe.basetv = basetv;
+  funcexe.fe_firstline = curwin->w_cursor.lnum;
+  funcexe.fe_lastline = curwin->w_cursor.lnum;
+  funcexe.fe_evaluate = evaluate;
+  funcexe.fe_partial = partial;
+  funcexe.fe_basetv = basetv;
   int ret = get_func_tv((char_u *)s, len, rettv, arg, &funcexe);
 
   xfree(s);
@@ -3211,12 +3211,12 @@ static int call_func_rettv(char **const arg, typval_T *const rettv, const bool e
   }
 
   funcexe_T funcexe = FUNCEXE_INIT;
-  funcexe.firstline = curwin->w_cursor.lnum;
-  funcexe.lastline = curwin->w_cursor.lnum;
-  funcexe.evaluate = evaluate;
-  funcexe.partial = pt;
-  funcexe.selfdict = selfdict;
-  funcexe.basetv = basetv;
+  funcexe.fe_firstline = curwin->w_cursor.lnum;
+  funcexe.fe_lastline = curwin->w_cursor.lnum;
+  funcexe.fe_evaluate = evaluate;
+  funcexe.fe_partial = pt;
+  funcexe.fe_selfdict = selfdict;
+  funcexe.fe_basetv = basetv;
   const int ret = get_func_tv((char_u *)funcname, is_lua ? (int)(*arg - funcname) : -1, rettv,
                               arg, &funcexe);
 
@@ -5869,10 +5869,10 @@ bool callback_call(Callback *const callback, const int argcount_in, typval_T *co
   }
 
   funcexe_T funcexe = FUNCEXE_INIT;
-  funcexe.firstline = curwin->w_cursor.lnum;
-  funcexe.lastline = curwin->w_cursor.lnum;
-  funcexe.evaluate = true;
-  funcexe.partial = partial;
+  funcexe.fe_firstline = curwin->w_cursor.lnum;
+  funcexe.fe_lastline = curwin->w_cursor.lnum;
+  funcexe.fe_evaluate = true;
+  funcexe.fe_partial = partial;
   return call_func(name, -1, rettv, argcount_in, argvars_in, &funcexe);
 }
 
@@ -8491,9 +8491,9 @@ typval_T eval_call_provider(char *provider, char *method, list_T *arguments, boo
   tv_list_ref(arguments);
 
   funcexe_T funcexe = FUNCEXE_INIT;
-  funcexe.firstline = curwin->w_cursor.lnum;
-  funcexe.lastline = curwin->w_cursor.lnum;
-  funcexe.evaluate = true;
+  funcexe.fe_firstline = curwin->w_cursor.lnum;
+  funcexe.fe_lastline = curwin->w_cursor.lnum;
+  funcexe.fe_evaluate = true;
   (void)call_func(func, name_len, &rettv, 2, argvars, &funcexe);
 
   tv_list_unref(arguments);

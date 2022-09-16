@@ -55,26 +55,26 @@ typedef int (*ArgvFunc)(int current_argcount, typval_T *argv, int argskip,
 
 /// Structure passed between functions dealing with function call execution.
 typedef struct {
-  ArgvFunc argv_func;  ///< when not NULL, can be used to fill in arguments only
-                       ///< when the invoked function uses them
-  linenr_T firstline;  ///< first line of range
-  linenr_T lastline;   ///< last line of range
-  bool *doesrange;     ///< [out] if not NULL: function handled range
-  bool evaluate;       ///< actually evaluate expressions
-  partial_T *partial;  ///< for extra arguments
-  dict_T *selfdict;    ///< Dictionary for "self"
-  typval_T *basetv;    ///< base for base->method()
+  ArgvFunc fe_argv_func;  ///< when not NULL, can be used to fill in arguments only
+                          ///< when the invoked function uses them
+  linenr_T fe_firstline;  ///< first line of range
+  linenr_T fe_lastline;   ///< last line of range
+  bool *fe_doesrange;     ///< [out] if not NULL: function handled range
+  bool fe_evaluate;       ///< actually evaluate expressions
+  partial_T *fe_partial;  ///< for extra arguments
+  dict_T *fe_selfdict;    ///< Dictionary for "self"
+  typval_T *fe_basetv;    ///< base for base->method()
 } funcexe_T;
 
 #define FUNCEXE_INIT (funcexe_T) { \
-  .argv_func = NULL, \
-  .firstline = 0, \
-  .lastline = 0, \
-  .doesrange = NULL, \
-  .evaluate = false, \
-  .partial = NULL, \
-  .selfdict = NULL, \
-  .basetv = NULL, \
+  .fe_argv_func = NULL, \
+  .fe_firstline = 0, \
+  .fe_lastline = 0, \
+  .fe_doesrange = NULL, \
+  .fe_evaluate = false, \
+  .fe_partial = NULL, \
+  .fe_selfdict = NULL, \
+  .fe_basetv = NULL, \
 }
 
 #define FUNCARG(fp, j)  ((char **)(fp->uf_args.ga_data))[j]
