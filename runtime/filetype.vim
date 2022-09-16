@@ -2112,6 +2112,9 @@ au BufNewFile,BufRead */.config/upstart/*.override	       setf upstart
 " Vala
 au BufNewFile,BufRead *.vala			setf vala
 
+" VDF
+au BufNewFile,BufRead *.vdf			setf vdf
+
 " VDM
 au BufRead,BufNewFile *.vdmpp,*.vpp		setf vdmpp
 au BufRead,BufNewFile *.vdmrt			setf vdmrt
