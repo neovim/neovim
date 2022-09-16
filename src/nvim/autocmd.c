@@ -1445,7 +1445,6 @@ win_found:
     }
 
     aucmd_win_used = false;
-    last_status(false);  // may need to remove last status line
 
     if (!valid_tabpage_win(curtab)) {
       // no valid window in current tabpage

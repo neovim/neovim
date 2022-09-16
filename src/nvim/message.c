@@ -2053,7 +2053,7 @@ void msg_puts_attr_len(const char *const str, const ptrdiff_t len, int attr)
       overflow = true;
     }
   } else {
-    overflow = msg_scrolled != 0;
+    overflow = msg_scrolled > (p_ch == 0 ? 1 : 0);
   }
 
   if (overflow && !msg_scrolled_ign && strcmp(str, "\r") != 0) {
@@ -2334,7 +2334,7 @@ bool message_filtered(char *msg)
 /// including horizontal separator
 int msg_scrollsize(void)
 {
-  return msg_scrolled + (int)p_ch + 1;
+  return msg_scrolled + (int)p_ch + ((p_ch > 0 || msg_scrolled > 1) ? 1 : 0);
 }
 
 bool msg_use_msgsep(void)

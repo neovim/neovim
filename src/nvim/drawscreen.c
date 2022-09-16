@@ -389,6 +389,10 @@ int update_screen(int type)
     diff_redraw(true);
   }
 
+  // TODO(bfredl): completely get rid of using update_screen(UPD_XX_VALID)
+  // to redraw curwin
+  int curwin_type = MIN(type, UPD_NOT_VALID);
+
   if (must_redraw) {
     if (type < must_redraw) {       // use maximal type
       type = must_redraw;
@@ -445,9 +449,11 @@ int update_screen(int type)
     }
     if (msg_use_msgsep()) {
       msg_grid.throttled = false;
+      bool was_invalidated = false;
+
       // UPD_CLEAR is already handled
       if (type == UPD_NOT_VALID && !ui_has(kUIMultigrid) && msg_scrolled) {
-        ui_comp_set_screen_valid(false);
+        was_invalidated = ui_comp_set_screen_valid(false);
         for (int i = valid; i < Rows - p_ch; i++) {
           grid_clear_line(&default_grid, default_grid.line_offset[i],
                           Columns, false);
@@ -457,6 +463,8 @@ int update_screen(int type)
             continue;
           }
           if (W_ENDROW(wp) > valid) {
+            // TODO(bfredl): too pessimistic. type could be UPD_NOT_VALID
+            // only because windows that are above the separator.
             wp->w_redr_type = MAX(wp->w_redr_type, UPD_NOT_VALID);
           }
           if (!is_stl_global && W_ENDROW(wp) + wp->w_status_height > valid) {
@@ -469,9 +477,16 @@ int update_screen(int type)
       }
       msg_grid_set_pos(Rows - (int)p_ch, false);
       msg_grid_invalid = false;
+      if (was_invalidated) {
+        // screen was only invalid for the msgarea part.
+        // @TODO(bfredl): using the same "valid" flag
+        // for both messages and floats moving is bit of a mess.
+        ui_comp_set_screen_valid(true);
+      }
     } else if (type != UPD_CLEAR) {
       if (msg_scrolled > Rows - 5) {  // redrawing is faster
         type = UPD_NOT_VALID;
+        curwin_type = UPD_NOT_VALID;
       } else {
         check_for_delay(false);
         grid_ins_lines(&default_grid, 0, msg_scrolled, Rows, 0, Columns);
@@ -506,7 +521,7 @@ int update_screen(int type)
     need_wait_return = false;
   }
 
-  win_ui_flush();
+  win_ui_flush(true);
   msg_ext_check_clear();
 
   // reset cmdline_row now (may have been changed temporarily)
@@ -553,6 +568,8 @@ int update_screen(int type)
 
   // Force redraw when width of 'number' or 'relativenumber' column
   // changes.
+  // TODO(bfredl): special casing curwin here is SÅ JÄVLA BULL.
+  // Either this should be done for all windows or not at all.
   if (curwin->w_redr_type < UPD_NOT_VALID
       && curwin->w_nrwidth != ((curwin->w_p_nu || curwin->w_p_rnu)
                                ? number_width(curwin) : 0)) {
@@ -560,22 +577,25 @@ int update_screen(int type)
   }
 
   // Only start redrawing if there is really something to do.
-  if (type == UPD_INVERTED) {
+  // TODO(bfredl): more curwin special casing to get rid of.
+  // Change update_screen(UPD_INVERTED) to a wrapper function
+  // perhaps?
+  if (curwin_type == UPD_INVERTED) {
     update_curswant();
   }
-  if (curwin->w_redr_type < type
-      && !((type == UPD_VALID
+  if (curwin->w_redr_type < curwin_type
+      && !((curwin_type == UPD_VALID
             && curwin->w_lines[0].wl_valid
             && curwin->w_topfill == curwin->w_old_topfill
             && curwin->w_botfill == curwin->w_old_botfill
             && curwin->w_topline == curwin->w_lines[0].wl_lnum)
-           || (type == UPD_INVERTED
+           || (curwin_type == UPD_INVERTED
                && VIsual_active
                && curwin->w_old_cursor_lnum == curwin->w_cursor.lnum
                && curwin->w_old_visual_mode == VIsual_mode
                && (curwin->w_valid & VALID_VIRTCOL)
                && curwin->w_old_curswant == curwin->w_curswant))) {
-    curwin->w_redr_type = type;
+    curwin->w_redr_type = curwin_type;
   }
 
   // Redraw the tab pages line if needed.
@@ -1022,7 +1042,9 @@ win_update_start:
   type = wp->w_redr_type;
 
   if (type >= UPD_NOT_VALID) {
+    // TODO(bfredl): should only be implied for CLEAR, not NOT_VALID!
     wp->w_redr_status = true;
+
     wp->w_lines_valid = 0;
   }
 
