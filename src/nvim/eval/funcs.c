@@ -195,15 +195,15 @@ int call_internal_func(const char_u *const fname, const int argcount, typval_T *
 {
   const EvalFuncDef *const fdef = find_internal_func((const char *)fname);
   if (fdef == NULL) {
-    return ERROR_UNKNOWN;
+    return FCERR_UNKNOWN;
   } else if (argcount < fdef->min_argc) {
-    return ERROR_TOOFEW;
+    return FCERR_TOOFEW;
   } else if (argcount > fdef->max_argc) {
-    return ERROR_TOOMANY;
+    return FCERR_TOOMANY;
   }
   argvars[argcount].v_type = VAR_UNKNOWN;
   fdef->func(argvars, rettv, fdef->data);
-  return ERROR_NONE;
+  return FCERR_NONE;
 }
 
 /// Invoke a method for base->method().
@@ -213,13 +213,13 @@ int call_internal_method(const char_u *const fname, const int argcount, typval_T
 {
   const EvalFuncDef *const fdef = find_internal_func((const char *)fname);
   if (fdef == NULL) {
-    return ERROR_UNKNOWN;
+    return FCERR_UNKNOWN;
   } else if (fdef->base_arg == BASE_NONE) {
-    return ERROR_NOTMETHOD;
+    return FCERR_NOTMETHOD;
   } else if (argcount + 1 < fdef->min_argc) {
-    return ERROR_TOOFEW;
+    return FCERR_TOOFEW;
   } else if (argcount + 1 > fdef->max_argc) {
-    return ERROR_TOOMANY;
+    return FCERR_TOOMANY;
   }
 
   typval_T argv[MAX_FUNC_ARGS + 1];
@@ -231,7 +231,7 @@ int call_internal_method(const char_u *const fname, const int argcount, typval_T
   argv[argcount + 1].v_type = VAR_UNKNOWN;
 
   fdef->func(argv, rettv, fdef->data);
-  return ERROR_NONE;
+  return FCERR_NONE;
 }
 
 /// @return  true for a non-zero Number and a non-empty String.

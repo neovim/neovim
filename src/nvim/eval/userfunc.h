@@ -38,16 +38,15 @@ struct funccal_entry {
 
 /// errors for when calling a function
 typedef enum {
-  ERROR_UNKNOWN = 0,
-  ERROR_TOOMANY,
-  ERROR_TOOFEW,
-  ERROR_SCRIPT,
-  ERROR_DICT,
-  ERROR_NONE,
-  ERROR_OTHER,
-  ERROR_BOTH,
-  ERROR_DELETED,
-  ERROR_NOTMETHOD,
+  FCERR_UNKNOWN = 0,
+  FCERR_TOOMANY = 1,
+  FCERR_TOOFEW = 2,
+  FCERR_SCRIPT = 3,
+  FCERR_DICT = 4,
+  FCERR_NONE = 5,
+  FCERR_OTHER = 6,
+  FCERR_DELETED = 7,
+  FCERR_NOTMETHOD = 8,  ///< function cannot be used as a method
 } FnameTransError;
 
 /// Used in funcexe_T. Returns the new argcount.
