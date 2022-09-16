@@ -2164,7 +2164,7 @@ static void augment_terminfo(TUIData *data, const char *term, long vte_version, 
   data->unibi_ext.set_underline_style = unibi_find_ext_str(ut, "Smulx");
   if (data->unibi_ext.set_underline_style == -1) {
     int ext_bool_Su = unibi_find_ext_bool(ut, "Su");  // used by kitty
-    if (vte_version >= 5102
+    if (vte_version >= 5102 || konsolev >= 221170
         || (ext_bool_Su != -1
             && unibi_get_ext_bool(ut, (size_t)ext_bool_Su))) {
       data->unibi_ext.set_underline_style = (int)unibi_add_ext_str(ut, "ext.set_underline_style",
