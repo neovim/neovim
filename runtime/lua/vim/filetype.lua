@@ -1021,6 +1021,7 @@ local extension = {
   dsm = 'vb',
   ctl = 'vb',
   vbs = 'vb',
+  vdf = 'vdf',
   vdmpp = 'vdmpp',
   vpp = 'vdmpp',
   vdmrt = 'vdmrt',
