@@ -2020,4 +2020,55 @@ aliquip ex ea commodo consequat.]])
                                     |
     ]]}
   end)
+
+  it('with cmdheight=0 does not crash with g<', function()
+    command('set cmdheight=0')
+    feed(':ls<cr>')
+    screen:expect{grid=[[
+                                         |
+      {1:~                                  }|
+      {12:                                   }|
+      :ls                                |
+        1 %a   "[No Name]"               |
+           line 1                        |
+      {4:Press ENTER or type command to cont}|
+      {4:inue}^                               |
+    ]]}
+
+    feed('<cr>')
+    screen:expect{grid=[[
+      ^                                   |
+      {1:~                                  }|
+      {1:~                                  }|
+      {1:~                                  }|
+      {1:~                                  }|
+      {1:~                                  }|
+      {1:~                                  }|
+      {1:~                                  }|
+    ]]}
+
+    feed('g<lt>')
+    screen:expect{grid=[[
+                                         |
+      {1:~                                  }|
+      {12:                                   }|
+      :ls                                |
+        1 %a   "[No Name]"               |
+           line 1                        |
+      {4:Press ENTER or type command to cont}|
+      {4:inue}^                               |
+    ]]}
+
+    feed('<cr>')
+    screen:expect{grid=[[
+      ^                                   |
+      {1:~                                  }|
+      {1:~                                  }|
+      {1:~                                  }|
+      {1:~                                  }|
+      {1:~                                  }|
+      {1:~                                  }|
+      {1:~                                  }|
+    ]]}
+  end)
 end)

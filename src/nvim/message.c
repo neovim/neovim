@@ -2955,6 +2955,11 @@ static int do_more_prompt(int typed_char)
         }
       } else {
         // First display any text that we scrolled back.
+        // if p_ch=0 we need to allocate a line for "press enter" messages!
+        if (cmdline_row >= Rows && !ui_has(kUIMessages)) {
+          msg_scroll_up(true, false);
+          msg_scrolled++;
+        }
         while (toscroll > 0 && mp_last != NULL) {
           if (msg_do_throttle() && !msg_grid.throttled) {
             // Tricky: we redraw at one line higher than usual. Therefore
