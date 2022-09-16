@@ -15,7 +15,7 @@
 #include "nvim/tui/input.h"
 #include "nvim/tui/tui.h"
 #include "nvim/vim.h"
-#ifdef WIN32
+#ifdef MSWIN
 # include "nvim/os/os_win_console.h"
 #endif
 #include "nvim/event/rstream.h"
@@ -143,7 +143,7 @@ void tinput_init(TermInput *input, Loop *loop)
   // If stdin is not a pty, switch to stderr. For cases like:
   //    echo q | nvim -es
   //    ls *.md | xargs nvim
-#ifdef WIN32
+#ifdef MSWIN
   if (!os_isatty(input->in_fd)) {
     input->in_fd = os_get_conin_fd();
   }

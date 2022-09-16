@@ -256,7 +256,7 @@ enum { FOLD_TEXT_LEN = 51, };  //!< buffer size for get_foldtext()
 // functions of these names. The declarations would break if the defines had
 // been seen at that stage.  But it must be before globals.h, where error_ga
 // is declared.
-#ifndef WIN32
+#ifndef MSWIN
 # define mch_errmsg(str)        fprintf(stderr, "%s", (str))
 # define mch_msg(str)           printf("%s", (str))
 #endif

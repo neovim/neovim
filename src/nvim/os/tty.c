@@ -12,7 +12,7 @@
 # include "os/tty.c.generated.h"
 #endif
 
-#ifdef WIN32
+#ifdef MSWIN
 # if !defined(ENABLE_VIRTUAL_TERMINAL_PROCESSING)
 #  define ENABLE_VIRTUAL_TERMINAL_PROCESSING 0x0004
 # endif

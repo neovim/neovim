@@ -5,7 +5,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <uv.h>
-#ifdef _WIN32
+#ifdef MSWIN
 # include <windows.h>
 #else
 # include <unistd.h>
@@ -23,7 +23,7 @@ uv_tty_t tty_out;
 bool owns_tty(void);  // silence -Wmissing-prototypes
 bool owns_tty(void)
 {
-#ifdef _WIN32
+#ifdef MSWIN
   // XXX: We need to make proper detect owns tty
   // HWND consoleWnd = GetConsoleWindow();
   // DWORD dwProcessId;
@@ -38,14 +38,14 @@ bool owns_tty(void)
 static void walk_cb(uv_handle_t *handle, void *arg)
 {
   if (!uv_is_closing(handle)) {
-#ifdef WIN32
+#ifdef MSWIN
     uv_tty_set_mode(&tty, UV_TTY_MODE_NORMAL);
 #endif
     uv_close(handle, NULL);
   }
 }
 
-#ifndef WIN32
+#ifndef MSWIN
 static void sig_handler(int signum)
 {
   switch (signum) {
@@ -64,7 +64,7 @@ static void sig_handler(int signum)
 }
 #endif
 
-#ifdef WIN32
+#ifdef MSWIN
 static void sigwinch_cb(uv_signal_t *handle, int signum)
 {
   int width, height;
@@ -102,7 +102,7 @@ static void read_cb(uv_stream_t *stream, ssize_t cnt, const uv_buf_t *buf)
   uv_write_t req;
   uv_buf_t b = {
     .base = buf->base,
-#ifdef WIN32
+#ifdef MSWIN
     .len = (ULONG)cnt
 #else
     .len = (size_t)cnt
@@ -171,7 +171,7 @@ int main(int argc, char **argv)
   uv_prepare_t prepare;
   uv_prepare_init(uv_default_loop(), &prepare);
   uv_prepare_start(&prepare, prepare_cb);
-#ifndef WIN32
+#ifndef MSWIN
   uv_tty_init(uv_default_loop(), &tty, fileno(stderr), 1);
 #else
   uv_tty_init(uv_default_loop(), &tty, fileno(stdin), 1);
@@ -182,7 +182,7 @@ int main(int argc, char **argv)
   uv_tty_set_mode(&tty, UV_TTY_MODE_RAW);
   tty.data = &interrupted;
   uv_read_start(STRUCT_CAST(uv_stream_t, &tty), alloc_cb, read_cb);
-#ifndef WIN32
+#ifndef MSWIN
   struct sigaction sa;
   sigemptyset(&sa.sa_mask);
   sa.sa_flags = 0;
@@ -196,7 +196,7 @@ int main(int argc, char **argv)
 #endif
   uv_run(uv_default_loop(), UV_RUN_DEFAULT);
 
-#ifndef WIN32
+#ifndef MSWIN
   // XXX: Without this the SIGHUP handler is skipped on some systems.
   sleep(100);
 #endif

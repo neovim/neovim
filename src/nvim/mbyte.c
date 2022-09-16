@@ -1350,7 +1350,7 @@ static int utf_strnicmp(const char_u *s1, const char_u *s2, size_t n1, size_t n2
   return n1 == 0 ? -1 : 1;
 }
 
-#ifdef WIN32
+#ifdef MSWIN
 # ifndef CP_UTF8
 #  define CP_UTF8 65001  // magic number from winnls.h
 # endif

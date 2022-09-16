@@ -14,7 +14,7 @@
 #ifdef HAVE_PWD_H
 # include <pwd.h>
 #endif
-#ifdef WIN32
+#ifdef MSWIN
 # include <lm.h>
 #endif
 
@@ -56,7 +56,7 @@ int os_get_usernames(garray_T *users)
     }
     endpwent();
   }
-#elif defined(WIN32)
+#elif defined(MSWIN)
   {
     DWORD nusers = 0, ntotal = 0, i;
     PUSER_INFO_0 uinfo;

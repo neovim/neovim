@@ -25,7 +25,7 @@ int libuv_process_spawn(LibuvProcess *uvproc)
   uvproc->uvopts.file = proc->argv[0];
   uvproc->uvopts.args = proc->argv;
   uvproc->uvopts.flags = UV_PROCESS_WINDOWS_HIDE;
-#ifdef WIN32
+#ifdef MSWIN
   // libuv collapses the argv to a CommandLineToArgvW()-style string. cmd.exe
   // expects a different syntax (must be prepared by the caller before now).
   if (os_shell_is_cmdexe(proc->argv[0])) {
@@ -55,7 +55,7 @@ int libuv_process_spawn(LibuvProcess *uvproc)
 
   if (!proc->in.closed) {
     uvproc->uvstdio[0].flags = UV_CREATE_PIPE | UV_READABLE_PIPE;
-#ifdef WIN32
+#ifdef MSWIN
     uvproc->uvstdio[0].flags |= proc->overlapped ? UV_OVERLAPPED_PIPE : 0;
 #endif
     uvproc->uvstdio[0].data.stream = STRUCT_CAST(uv_stream_t,
@@ -64,7 +64,7 @@ int libuv_process_spawn(LibuvProcess *uvproc)
 
   if (!proc->out.closed) {
     uvproc->uvstdio[1].flags = UV_CREATE_PIPE | UV_WRITABLE_PIPE;
-#ifdef WIN32
+#ifdef MSWIN
     // pipe must be readable for IOCP to work on Windows.
     uvproc->uvstdio[1].flags |= proc->overlapped ?
                                 (UV_READABLE_PIPE | UV_OVERLAPPED_PIPE) : 0;
@@ -113,7 +113,7 @@ static void close_cb(uv_handle_t *handle)
 static void exit_cb(uv_process_t *handle, int64_t status, int term_signal)
 {
   Process *proc = handle->data;
-#if defined(WIN32)
+#if defined(MSWIN)
   // Use stored/expected signal.
   term_signal = proc->exit_signal;
 #endif

@@ -31,7 +31,7 @@
 #include "nvim/os/tty.h"
 #include "nvim/ui.h"
 #include "nvim/vim.h"
-#ifdef WIN32
+#ifdef MSWIN
 # include "nvim/os/os_win_console.h"
 #endif
 #include "nvim/cursor_shape.h"
@@ -263,7 +263,7 @@ static void terminfo_start(UI *ui)
   data->input.tui_data = data;
 
   const char *term = os_getenv("TERM");
-#ifdef WIN32
+#ifdef MSWIN
   os_tty_guess_term(&term, data->out_fd);
   os_setenv("TERM", term, 1);
   // Old os_getenv() pointer is invalid after os_setenv(), fetch it again.
@@ -353,7 +353,7 @@ static void terminfo_start(UI *ui)
     if (ret) {
       ELOG("uv_tty_init failed: %s", uv_strerror(ret));
     }
-#ifdef WIN32
+#ifdef MSWIN
     ret = uv_tty_set_mode(&data->output_handle.tty, UV_TTY_MODE_RAW);
     if (ret) {
       ELOG("uv_tty_set_mode failed: %s", uv_strerror(ret));
@@ -1810,7 +1810,7 @@ static void patch_terminfo_bugs(TUIData *data, const char *term, const char *col
       }
     }
 
-#ifdef WIN32
+#ifdef MSWIN
     // XXX: workaround libuv implicit LF => CRLF conversion. #10558
     unibi_set_str(ut, unibi_cursor_down, "\x1b[B");
 #endif

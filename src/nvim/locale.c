@@ -270,7 +270,7 @@ void ex_language(exarg_T *eap)
 
 static char **locales = NULL;       // Array of all available locales
 
-# ifndef WIN32
+# ifndef MSWIN
 static bool did_init_locales = false;
 
 /// @return  an array of strings for all available locales + NULL for the
@@ -311,7 +311,7 @@ static char **find_locales(void)
 /// Lazy initialization of all available locales.
 static void init_locales(void)
 {
-# ifndef WIN32
+# ifndef MSWIN
   if (!did_init_locales) {
     did_init_locales = true;
     locales = find_locales();

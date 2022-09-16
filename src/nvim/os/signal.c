@@ -4,7 +4,7 @@
 #include <assert.h>
 #include <stdbool.h>
 #include <uv.h>
-#ifndef WIN32
+#ifndef MSWIN
 # include <signal.h>  // for sigset_t
 #endif
 
@@ -34,7 +34,7 @@ static bool rejecting_deadly;
 
 void signal_init(void)
 {
-#ifndef WIN32
+#ifndef MSWIN
   // Ensure a clean slate by unblocking all signals. For example, if SIGCHLD is
   // blocked, libuv may hang after spawning a subprocess on Linux. #5230
   sigset_t mask;

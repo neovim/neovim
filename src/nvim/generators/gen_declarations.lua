@@ -218,7 +218,7 @@ local footer = [[
 
 local non_static = header .. [[
 #ifndef DLLEXPORT
-#  ifdef WIN32
+#  ifdef MSWIN
 #    define DLLEXPORT __declspec(dllexport)
 #  else
 #    define DLLEXPORT
