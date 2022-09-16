@@ -1529,8 +1529,7 @@ int call_func(const char *funcname, int len, typval_T *rettv, int argcount_in, t
       } else if (fp != NULL) {
         if (funcexe->fe_argv_func != NULL) {
           // postponed filling in the arguments, do it now
-          argcount = funcexe->fe_argv_func(argcount, argvars, argv_clear,
-                                           fp->uf_args.ga_len);
+          argcount = funcexe->fe_argv_func(argcount, argvars, argv_clear, fp);
         }
 
         argv_add_base(funcexe->fe_basetv, &argvars, &argcount, argv, &argv_base);
