@@ -1605,12 +1605,12 @@ static regsubmatch_T rsm;  // can only be used when can_f_submatch is true
 
 /// Put the submatches in "argv[argskip]" which is a list passed into
 /// call_func() by vim_regsub_both().
-static int fill_submatch_list(int argc FUNC_ATTR_UNUSED, typval_T *argv, int argskip, int argcount)
+static int fill_submatch_list(int argc FUNC_ATTR_UNUSED, typval_T *argv, int argskip, ufunc_T *fp)
   FUNC_ATTR_NONNULL_ALL
 {
   typval_T *listarg = argv + argskip;
 
-  if (argcount == argskip) {
+  if (!fp->uf_varargs && fp->uf_args.ga_len <= argskip) {
     // called function doesn't take a submatches argument
     return argskip;
   }

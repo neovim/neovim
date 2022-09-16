@@ -50,8 +50,8 @@ typedef enum {
 } FnameTransError;
 
 /// Used in funcexe_T. Returns the new argcount.
-typedef int (*ArgvFunc)(int current_argcount, typval_T *argv, int argskip,
-                        int called_func_argcount);
+typedef int (*ArgvFunc)(int current_argcount, typval_T *argv, int partial_argcount,
+                        ufunc_T *called_func);
 
 /// Structure passed between functions dealing with function call execution.
 typedef struct {
