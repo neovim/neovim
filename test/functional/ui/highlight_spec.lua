@@ -826,6 +826,51 @@ describe("'listchars' highlight", function()
                           |
     ]])
   end)
+
+  it("combine with :match", function()
+    screen:set_default_attr_ids({
+      [0] = {bold=true, foreground=Screen.colors.Blue},
+      [1] = {foreground=Screen.colors.Yellow},
+      [2] = {foreground=Screen.colors.X11Green, background=Screen.colors.Red1},
+      [3] = {foreground=Screen.colors.Yellow, background=Screen.colors.Red1},
+    })
+    feed_command('highlight clear ModeMsg')
+    feed_command('highlight Whitespace guifg=#FFFF00')
+    feed_command('highlight Error guifg=#00FF00')
+    feed_command('set nowrap')
+    feed('ia \t bc \t  <esc>')
+    screen:expect([[
+      a        bc      ^   |
+      {0:~                   }|
+      {0:~                   }|
+      {0:~                   }|
+                          |
+    ]])
+    feed_command('set listchars=space:.,eol:¬,tab:>-,extends:>,precedes:<,trail:* list')
+    screen:expect([[
+      a{1:.>-----.}bc{1:*>---*^*}{0:¬} |
+      {0:~                   }|
+      {0:~                   }|
+      {0:~                   }|
+                          |
+    ]])
+    feed_command('match Error /\\s\\+$/')
+    screen:expect([[
+      a{1:.>-----.}bc{2:*>---*^*}{0:¬} |
+      {0:~                   }|
+      {0:~                   }|
+      {0:~                   }|
+                          |
+    ]])
+    feed_command('highlight Error guifg=None')
+    screen:expect([[
+      a{1:.>-----.}bc{3:*>---*^*}{0:¬} |
+      {0:~                   }|
+      {0:~                   }|
+      {0:~                   }|
+                          |
+    ]])
+  end)
 end)
 
 describe('CursorLine and CursorLineNr highlights', function()

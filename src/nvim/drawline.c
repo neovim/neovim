@@ -2176,8 +2176,9 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
     }
 
     // Don't override visual selection highlighting.
-    if (n_attr > 0 && draw_state == WL_LINE && !search_attr_from_match) {
-      char_attr = hl_combine_attr(char_attr, extra_attr);
+    if (n_attr > 0 && draw_state == WL_LINE) {
+      char_attr = search_attr_from_match ? hl_combine_attr(extra_attr, char_attr)
+                                         : hl_combine_attr(char_attr, extra_attr);
     }
 
     // Handle the case where we are in column 0 but not on the first
