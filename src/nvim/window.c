@@ -4,6 +4,7 @@
 #include <assert.h>
 #include <inttypes.h>
 #include <stdbool.h>
+#include <string.h>
 
 #include "nvim/api/private/helpers.h"
 #include "nvim/api/vim.h"
@@ -31,6 +32,7 @@
 #include "nvim/grid.h"
 #include "nvim/hashtab.h"
 #include "nvim/highlight.h"
+#include "nvim/lib/kvec.h"
 #include "nvim/main.h"
 #include "nvim/mapping.h"
 #include "nvim/mark.h"
@@ -796,6 +798,21 @@ void win_config_float(win_T *wp, FloatConfig fconfig)
     if (new_adj != wp->w_border_adj[i]) {
       change_border = true;
       wp->w_border_adj[i] = new_adj;
+    }
+  }
+
+  if (!fconfig.title && wp->w_float_config.title) {
+    XFREE_CLEAR(wp->w_float_config.title_text);
+    clear_virttext(&wp->w_float_config.title_texts);
+  }
+
+  if (has_border && fconfig.title) {
+    if (wp->w_float_config.title_text != NULL && kv_size(fconfig.title_texts) > 0 ){
+      XFREE_CLEAR(wp->w_float_config.title_text);
+      wp->w_float_config.title_texts = fconfig.title_texts;
+    } else if(kv_size(wp->w_float_config.title_texts) > 0 && fconfig.title_text != NULL){
+      clear_virttext(&wp->w_float_config.title_texts);
+      wp->w_float_config.title_text = xstrdup(fconfig.title_text);
     }
   }
 

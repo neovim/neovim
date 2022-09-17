@@ -212,9 +212,6 @@ void nvim_win_set_config(Window window, Dict(float_config) *config, Error *err)
     }
     redraw_later(win, UPD_NOT_VALID);
   } else {
-    clear_virttext(&win->w_float_config.title_texts);
-    XFREE_CLEAR(win->w_float_config.title_text);
-
     win_config_float(win, fconfig);
     win->w_pos_changed = true;
   }
@@ -418,7 +415,8 @@ static bool parse_title_pos(Object title_pos, FloatConfig *fconfig, Error *err)
     return false;
   }
 
-  char *pos = strcase_save(title_pos.data.string.data, false);
+  char *pos = xstrdup(title_pos.data.string.data);
+  pos = strcase_save(pos,false);
 
   if (striequal(pos, "left")) {
     fconfig->title_pos = kAlignLeft;
