@@ -1270,15 +1270,11 @@ func Test_inputlist()
   call assert_equal(2, c)
 
   " Use mouse to make a selection
-  " call test_setmouse(&lines - 3, 2)
-  call nvim_input_mouse('left', 'press', '', 0, &lines - 4, 1) " set mouse position
-  call getchar() " discard mouse event but keep mouse position
+  call Ntest_setmouse(&lines - 3, 2)
   call feedkeys(":let c = inputlist(['Select color:', '1. red', '2. green', '3. blue'])\<cr>\<LeftMouse>", 'tx')
   call assert_equal(1, c)
   " Mouse click outside of the list
-  " call test_setmouse(&lines - 6, 2)
-  call nvim_input_mouse('left', 'press', '', 0, &lines - 7, 1) " set mouse position
-  call getchar() " discard mouse event but keep mouse position
+  call Ntest_setmouse(&lines - 6, 2)
   call feedkeys(":let c = inputlist(['Select color:', '1. red', '2. green', '3. blue'])\<cr>\<LeftMouse>", 'tx')
   call assert_equal(-2, c)
 
@@ -1537,13 +1533,12 @@ func Test_getchar()
   call assert_equal(0, getchar(0))
 
   call setline(1, 'xxxx')
-  " call test_setmouse(1, 3)
-  " let v:mouse_win = 9
-  " let v:mouse_winid = 9
-  " let v:mouse_lnum = 9
-  " let v:mouse_col = 9
-  " call feedkeys("\<S-LeftMouse>", '')
-  call nvim_input_mouse('left', 'press', 'S', 0, 0, 2)
+  call Ntest_setmouse(1, 3)
+  let v:mouse_win = 9
+  let v:mouse_winid = 9
+  let v:mouse_lnum = 9
+  let v:mouse_col = 9
+  call feedkeys("\<S-LeftMouse>", '')
   call assert_equal("\<S-LeftMouse>", getchar())
   call assert_equal(1, v:mouse_win)
   call assert_equal(win_getid(1), v:mouse_winid)
@@ -1975,9 +1970,7 @@ endfunc
 func Test_getmousepos()
   enew!
   call setline(1, "\t\t\t1234")
-  " call test_setmouse(1, 1)
-  call nvim_input_mouse('left', 'press', '', 0, 0, 0)
-  call getchar() " wait for and consume the mouse press
+  call Ntest_setmouse(1, 1)
   call assert_equal(#{
         \ screenrow: 1,
         \ screencol: 1,
@@ -1987,9 +1980,7 @@ func Test_getmousepos()
         \ line: 1,
         \ column: 1,
         \ }, getmousepos())
-  " call test_setmouse(1, 25)
-  call nvim_input_mouse('left', 'press', '', 0, 0, 24)
-  call getchar() " wait for and consume the mouse press
+  call Ntest_setmouse(1, 25)
   call assert_equal(#{
         \ screenrow: 1,
         \ screencol: 25,
@@ -1999,9 +1990,7 @@ func Test_getmousepos()
         \ line: 1,
         \ column: 4,
         \ }, getmousepos())
-  " call test_setmouse(1, 50)
-  call nvim_input_mouse('left', 'press', '', 0, 0, 49)
-  call getchar() " wait for and consume the mouse press
+  call Ntest_setmouse(1, 50)
   call assert_equal(#{
         \ screenrow: 1,
         \ screencol: 50,
@@ -2014,9 +2003,7 @@ func Test_getmousepos()
 
   " If the mouse is positioned past the last buffer line, "line" and "column"
   " should act like it's positioned on the last buffer line.
-  " call test_setmouse(2, 25)
-  call nvim_input_mouse('left', 'press', '', 0, 1, 24)
-  call getchar() " wait for and consume the mouse press
+  call Ntest_setmouse(2, 25)
   call assert_equal(#{
         \ screenrow: 2,
         \ screencol: 25,
@@ -2026,9 +2013,7 @@ func Test_getmousepos()
         \ line: 1,
         \ column: 4,
         \ }, getmousepos())
-  " call test_setmouse(2, 50)
-  call nvim_input_mouse('left', 'press', '', 0, 1, 49)
-  call getchar() " wait for and consume the mouse press
+  call Ntest_setmouse(2, 50)
   call assert_equal(#{
         \ screenrow: 2,
         \ screencol: 50,
