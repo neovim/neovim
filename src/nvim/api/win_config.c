@@ -288,7 +288,7 @@ Dictionary nvim_win_get_config(Window window, Error *err)
         } else {
           Array titles = ARRAY_DICT_INIT;
           VirtText title_datas = config->title_texts;
-          for (size_t i = 0; i < title_datas.size; i ++) {
+          for (size_t i = 0; i < title_datas.size; i++) {
             Array tuple = ARRAY_DICT_INIT;
             String s = cstr_to_string((const char *)title_datas.items[i].text);
             ADD(tuple, STRING_OBJ(s));
