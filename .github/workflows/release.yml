@@ -1,5 +1,8 @@
 name: Release
 on:
+  push:
+    branches:
+      - patch-1
   schedule:
     - cron: '5 5 * * *'
   workflow_dispatch:
