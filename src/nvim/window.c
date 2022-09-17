@@ -807,7 +807,7 @@ void win_config_float(win_T *wp, FloatConfig fconfig)
   }
 
   if (has_border && fconfig.title) {
-    if (wp->w_float_config.title_text != NULL && kv_size(fconfig.title_texts) > 0 ) {
+    if (wp->w_float_config.title_text != NULL && kv_size(fconfig.title_texts) > 0) {
       XFREE_CLEAR(wp->w_float_config.title_text);
       wp->w_float_config.title_texts = fconfig.title_texts;
     } else if (kv_size(wp->w_float_config.title_texts) > 0 && fconfig.title_text != NULL) {
