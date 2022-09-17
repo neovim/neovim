@@ -9,8 +9,6 @@ on:
         required: false
         default: nightly
   push:
-    branches:
-      - patch-1
     tags:
       - v[0-9]+.[0-9]+.[0-9]+
 
