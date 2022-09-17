@@ -281,6 +281,62 @@ func Test_modeline_fails_modelineexpr()
   call s:modeline_fails('titlestring', 'titlestring=Something()', 'E992:')
 endfunc
 
+func Test_modeline_setoption_verbose()
+  let modeline = &modeline
+  set modeline
+
+  let lines =<< trim END
+  1 vim:ts=2
+  2 two
+  3 three
+  4 four
+  5 five
+  6 six
+  7 seven
+  8 eight
+  END
+  call writefile(lines, 'Xmodeline')
+  edit Xmodeline
+  let info = split(execute('verbose set tabstop?'), "\n")
+  call assert_match('^\s*Last set from modeline line 1$', info[-1])
+  bwipe!
+
+  let lines =<< trim END
+  1 one
+  2 two
+  3 three
+  4 vim:ts=4
+  5 five
+  6 six
+  7 seven
+  8 eight
+  END
+  call writefile(lines, 'Xmodeline')
+  edit Xmodeline
+  let info = split(execute('verbose set tabstop?'), "\n")
+  call assert_match('^\s*Last set from modeline line 4$', info[-1])
+  bwipe!
+
+  let lines =<< trim END
+  1 one
+  2 two
+  3 three
+  4 four
+  5 five
+  6 six
+  7 seven
+  8 vim:ts=8
+  END
+  call writefile(lines, 'Xmodeline')
+  edit Xmodeline
+  let info = split(execute('verbose set tabstop?'), "\n")
+  call assert_match('^\s*Last set from modeline line 8$', info[-1])
+  bwipe!
+
+  let &modeline = modeline
+  call delete('Xmodeline')
+endfunc
+
 func Test_modeline_disable()
   set modeline
   call writefile(['vim: sw=2', 'vim: nomodeline', 'vim: sw=3'], 'Xmodeline_disable')

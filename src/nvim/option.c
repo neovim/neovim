@@ -1891,14 +1891,15 @@ void set_option_sctx_idx(int opt_idx, int opt_flags, sctx_T script_ctx)
   int both = (opt_flags & (OPT_LOCAL | OPT_GLOBAL)) == 0;
   int indir = (int)options[opt_idx].indir;
   nlua_set_sctx(&script_ctx);
-  const LastSet last_set = {
-    .script_ctx = {
-      script_ctx.sc_sid,
-      script_ctx.sc_seq,
-      script_ctx.sc_lnum + SOURCING_LNUM
-    },
-    current_channel_id
+  LastSet last_set = {
+    .script_ctx = script_ctx,
+    .channel_id = current_channel_id,
   };
+
+  // Modeline already has the line number set.
+  if (!(opt_flags & OPT_MODELINE)) {
+    last_set.script_ctx.sc_lnum += SOURCING_LNUM;
+  }
 
   // Remember where the option was set.  For local options need to do that
   // in the buffer or window structure.
