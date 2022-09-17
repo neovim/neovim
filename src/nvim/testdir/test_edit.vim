@@ -1228,15 +1228,11 @@ func Test_edit_MOUSE()
   call assert_equal(24, line('w0'))
 
   call assert_equal([0, 24, 2, 0], getpos('.'))
-  " call test_setmouse(4, 3)
-  call nvim_input_mouse('left', 'press', '', 0, 3, 2) " set mouse position
-  call getchar() " discard mouse event but keep mouse position
+  call Ntest_setmouse(4, 3)
   call feedkeys("A\<LeftMouse>\<esc>", 'tnix')
   call assert_equal([0, 27, 2, 0], getpos('.'))
   set mousemodel=extend
-  " call test_setmouse(5, 3)
-  call nvim_input_mouse('right', 'press', '', 0, 4, 2) " set mouse position
-  call getchar() " discard mouse event but keep mouse position
+  call Ntest_setmouse(5, 3)
   call feedkeys("A\<RightMouse>\<esc>\<esc>", 'tnix')
   call assert_equal([0, 28, 2, 0], getpos('.'))
   set mousemodel&

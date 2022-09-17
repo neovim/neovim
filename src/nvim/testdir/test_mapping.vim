@@ -1006,15 +1006,14 @@ func Test_plug_remap()
 endfunc
 
 func Test_mouse_drag_mapped_start_select()
-  CheckFunction test_setmouse
   set mouse=a
   set selectmode=key,mouse
   func ClickExpr()
-    call test_setmouse(1, 1)
+    call Ntest_setmouse(1, 1)
     return "\<LeftMouse>"
   endfunc
   func DragExpr()
-    call test_setmouse(1, 2)
+    call Ntest_setmouse(1, 2)
     return "\<LeftDrag>"
   endfunc
   nnoremap <expr> <F2> ClickExpr()
@@ -1036,14 +1035,13 @@ endfunc
 
 " Test for mapping <LeftDrag> in Insert mode
 func Test_mouse_drag_insert_map()
-  CheckFunction test_setmouse
   set mouse=a
   func ClickExpr()
-    call test_setmouse(1, 1)
+    call Ntest_setmouse(1, 1)
     return "\<LeftMouse>"
   endfunc
   func DragExpr()
-    call test_setmouse(1, 2)
+    call Ntest_setmouse(1, 2)
     return "\<LeftDrag>"
   endfunc
   inoremap <expr> <F2> ClickExpr()
