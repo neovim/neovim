@@ -382,13 +382,13 @@ static void parse_border_title(Object title, Object title_pos, Object width, Flo
   Array arr = title.data.array;
   size_t size = arr.size;
   for (size_t i = 0; i < size; i++) {
-    Object iytem = arr.items[i];
-    if (iytem.type != kObjectTypeArray || iytem.data.array.size == 0) {
+    Object item = arr.items[i];
+    if (item.type != kObjectTypeArray || item.data.array.size == 0) {
       api_set_error(err, kErrorTypeValidation, "not allow empty array in title");
       return;
     }
 
-    if (iytem.data.array.items[0].type != kObjectTypeString) {
+    if (item.data.array.items[0].type != kObjectTypeString) {
       api_set_error(err, kErrorTypeValidation, "missing title string in title array");
       return;
     }

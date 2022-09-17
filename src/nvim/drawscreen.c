@@ -688,8 +688,8 @@ static void win_redr_border(win_T *wp)
           grid_put_schar(grid, 0, i + adj[3], chars[1], attrs[1]);
         }
       } else if (wp->w_float_config.title_pos == kAlignCenter) {
-        int text_center = len >> 1;
-        int col_center = icol >> 1;
+        int text_center = len / 2;
+        int col_center = icol / 2;
         title_col = col_center - text_center;
         for (int i = 0; i < icol; i++) {
           if (i <= col_center - text_center - 2 * adj[3]
