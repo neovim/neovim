@@ -1074,7 +1074,7 @@ typedef struct {
   int border_hl_ids[8];
   int border_attr[8];
   AlignTextPos title_pos;
-  VirtText title_texts;
+  VirtText title_chunks;
   char *title_text;
   int title_hi_id;
   int title_attr;

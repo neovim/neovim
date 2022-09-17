@@ -1720,12 +1720,12 @@ describe('float window', function()
       local buf = meths.create_buf(false,false)
       eq("title must set with border",
          pcall_err(meths.open_win,buf, false, {
-          relative='editor', width=9, height=2, row=2, col=5, title="Title",
+          relative='editor', width=9, height=2, row=2, col=5, title='Title',
          }))
       eq("title_pos must set with title",
          pcall_err(meths.open_win,buf, false, {
           relative='editor', width=9, height=2, row=2, col=5,
-          border="single", title_pos="left",
+          border='single', title_pos='left',
          }))
     end)
 

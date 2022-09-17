@@ -283,15 +283,13 @@ Dictionary nvim_win_get_config(Window window, Error *err)
       PUT(rv, "border", ARRAY_OBJ(border));
       if (config->title) {
         if (config->title_text != NULL) {
-          String s = cstr_to_string((const char *)config->title_text);
-          PUT(rv, "title", STRING_OBJ(s));
+          PUT(rv, "title", CSTR_TO_OBJ((const char *)config->title_text));
         } else {
           Array titles = ARRAY_DICT_INIT;
-          VirtText title_datas = config->title_texts;
+          VirtText title_datas = config->title_chunks;
           for (size_t i = 0; i < title_datas.size; i++) {
             Array tuple = ARRAY_DICT_INIT;
-            String s = cstr_to_string((const char *)title_datas.items[i].text);
-            ADD(tuple, STRING_OBJ(s));
+            ADD(tuple, CSTR_TO_OBJ((const char *)title_datas.items[i].text));
             ADD(titles, ARRAY_OBJ(tuple));
           }
           PUT(rv, "title", ARRAY_OBJ(titles));
@@ -397,7 +395,7 @@ static void parse_border_title(Object title, Object title_pos, Object width, Flo
   }
 
   int win_width = (int)width.data.integer;
-  fconfig->title_texts = parse_virt_text(title.data.array, err, &win_width);
+  fconfig->title_chunks = parse_virt_text(title.data.array, err, &win_width);
 
   fconfig->title = true;
   return;
