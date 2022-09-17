@@ -320,6 +320,7 @@ endif()
 if(MINGW)
   # Use POSIX compatible stdio in Mingw
   add_definitions(-D__USE_MINGW_ANSI_STDIO)
+  add_definitions(-DMSWIN)
 endif()
 if(WIN32)
   # Windows Vista is the minimum supported version
