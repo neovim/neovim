@@ -641,7 +641,7 @@ static void redr_title_texts(win_T *wp, ScreenGrid *grid, int col)
   }
 
   for (size_t i = 0; i < title_texts.size; i++) {
-    text = title_texts.items[i].text;
+    text = xstrdup(title_texts.items[i].text);
     len = (int)strlen(text);
     attr = syn_id2attr(title_texts.items[i].hl_id);
     grid_puts_len(grid, text, len, 0, col, attr);

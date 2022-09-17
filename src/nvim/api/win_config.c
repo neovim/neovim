@@ -213,7 +213,7 @@ void nvim_win_set_config(Window window, Dict(float_config) *config, Error *err)
     redraw_later(win, UPD_NOT_VALID);
   } else {
     clear_virttext(&win->w_float_config.title_texts);
-    xfree(win->w_float_config.title_text);
+    XFREE_CLEAR(win->w_float_config.title_text);
 
     win_config_float(win, fconfig);
     win->w_pos_changed = true;
@@ -284,6 +284,24 @@ Dictionary nvim_win_get_config(Window window, Error *err)
         }
       }
       PUT(rv, "border", ARRAY_OBJ(border));
+      if (config->title) {
+        if (config->title_text != NULL) {
+          String s = cstr_to_string((const char *)config->title_text);
+          PUT(rv, "title", STRING_OBJ(s));
+        } else {
+          Array titles = ARRAY_DICT_INIT;
+          VirtText title_datas = config->title_texts;
+          for (size_t i = 0; i < title_datas.size; i ++) {
+            Array tuple = ARRAY_DICT_INIT;
+            String s = cstr_to_string((const char *)title_datas.items[i].text);
+            ADD(tuple, STRING_OBJ(s));
+            ADD(titles, ARRAY_OBJ(tuple));
+          }
+          PUT(rv, "title", ARRAY_OBJ(titles));
+        }
+
+        PUT(rv, "title_pos", INTEGER_OBJ(config->title_pos));
+      }
     }
   }
 
@@ -400,7 +418,7 @@ static bool parse_title_pos(Object title_pos, FloatConfig *fconfig, Error *err)
     return false;
   }
 
-  char *pos = title_pos.data.string.data;
+  char *pos = strcase_save(title_pos.data.string.data, false);
 
   if (striequal(pos, "left")) {
     fconfig->title_pos = kAlignLeft;
