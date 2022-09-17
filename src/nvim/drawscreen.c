@@ -629,21 +629,20 @@ static int get_title_texts_len(VirtText title_chunks)
 static void redr_title_texts(win_T *wp, ScreenGrid *grid, int col)
 {
   char *text;
-  int len, attr;
   VirtText title_chunks = wp->w_float_config.title_chunks;
   char *title_text = wp->w_float_config.title_text;
 
   if (title_text != NULL) {
-    len = (int)strlen(title_text);
-    attr = wp->w_float_config.title_attr;
+    int len = (int)strlen(title_text);
+    int attr = wp->w_float_config.title_attr;
     grid_puts_len(grid, title_text, len, 0, col, attr);
     return;
   }
 
   for (size_t i = 0; i < title_chunks.size; i++) {
     text = xstrdup(title_chunks.items[i].text);
-    len = (int)strlen(text);
-    attr = syn_id2attr(title_chunks.items[i].hl_id);
+    int len = (int)strlen(text);
+    int attr = syn_id2attr(title_chunks.items[i].hl_id);
     grid_puts_len(grid, text, len, 0, col, attr);
     col += len;
   }
