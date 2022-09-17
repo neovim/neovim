@@ -348,16 +348,8 @@ static void parse_border_title(Object title, Object title_pos, Object width, Flo
     return;
   }
 
-  int win_width = (int)width.data.integer;
-
   if (title.type == kObjectTypeString) {
     fconfig->title_text = xstrdup(title.data.string.data);
-    int len = (int)strlen(fconfig->title_text);
-    if (len > win_width) {
-      api_set_error(err, kErrorTypeException, "title length must be less than win width");
-      return;
-    }
-
     int hl_id = object_to_hl_id(title, "border title highlight", err);
     fconfig->title_hi_id = hl_id;
     fconfig->title = true;
@@ -389,6 +381,7 @@ static void parse_border_title(Object title, Object title_pos, Object width, Flo
     }
   }
 
+  int win_width = (int)width.data.integer;
   fconfig->title_texts = parse_virt_text(title.data.array, err, &win_width);
 
   fconfig->title = true;
@@ -398,7 +391,7 @@ static void parse_border_title(Object title, Object title_pos, Object width, Flo
 static bool parse_title_pos(Object title_pos, FloatConfig *fconfig, Error *err)
 {
   if (!HAS_KEY(title_pos)) {
-    fconfig->title_pos = kBorderTitleLeft;
+    fconfig->title_pos = kAlignLeft;
     return true;
   }
 
@@ -410,11 +403,11 @@ static bool parse_title_pos(Object title_pos, FloatConfig *fconfig, Error *err)
   char *pos = title_pos.data.string.data;
 
   if (striequal(pos, "left")) {
-    fconfig->title_pos = kBorderTitleLeft;
+    fconfig->title_pos = kAlignLeft;
   } else if (striequal(pos, "center")) {
-    fconfig->title_pos = kBorderTitleCenter;
+    fconfig->title_pos = kAlignCenter;
   } else if (striequal(pos, "right")) {
-    fconfig->title_pos = kBorderTitleRight;
+    fconfig->title_pos = kAlignRight;
   } else {
     api_set_error(err, kErrorTypeValidation, "invalid title_pos value");
     return false;

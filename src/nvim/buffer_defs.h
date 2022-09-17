@@ -1051,10 +1051,10 @@ typedef enum {
 } WinStyle;
 
 typedef enum {
-  kBorderTitleLeft   = 0,
-  kBorderTitleCenter = 1,
-  kBorderTitleRight  = 2,
-} BorderTitlePos;
+  kAlignLeft   = 0,
+  kAlignCenter = 1,
+  kAlignRight  = 2,
+} AlignTextPos;
 
 typedef struct {
   Window window;
@@ -1073,7 +1073,7 @@ typedef struct {
   schar_T border_chars[8];
   int border_hl_ids[8];
   int border_attr[8];
-  BorderTitlePos title_pos;
+  AlignTextPos title_pos;
   VirtText title_texts;
   char *title_text;
   int title_hi_id;
