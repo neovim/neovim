@@ -673,7 +673,7 @@ static void win_redr_border(win_T *wp)
     }
 
     if (title) {
-      int len;
+      int len, title_col;
       VirtText title_texts = wp->w_float_config.title_texts;
 
       if (wp->w_float_config.title_text != NULL) {
@@ -683,7 +683,7 @@ static void win_redr_border(win_T *wp)
       }
 
       if (wp->w_float_config.title_pos == kAlignLeft) {
-        redr_title_texts(wp, grid, 1);
+        title_col = 1;
         for (int i = len; i < icol; i++) {
           grid_put_schar(grid, 0, i + adj[3], chars[1], attrs[1]);
         }
@@ -692,7 +692,7 @@ static void win_redr_border(win_T *wp)
       if (wp->w_float_config.title_pos == kAlignCenter) {
         int text_center = len >> 1;
         int col_center = icol >> 1;
-        redr_title_texts(wp, grid, col_center - text_center);
+        title_col = col_center - text_center;
         for (int i = 0; i < icol; i++) {
           if (i <= col_center - text_center - 2 * adj[3]
               || i >= col_center - text_center + len - 1) {
@@ -702,13 +702,15 @@ static void win_redr_border(win_T *wp)
       }
 
       if (wp->w_float_config.title_pos == kAlignRight) {
-        redr_title_texts(wp, grid, icol - len + adj[3]);
+        title_col = icol - len + adj[3];
         for (int i = 0; i < icol; i++) {
           if (i + len + adj[3] <= icol) {
             grid_put_schar(grid, 0, i + adj[3], chars[1], attrs[1]);
           }
         }
       }
+
+      redr_title_texts(wp, grid, title_col);
     } else {
       for (int i = 0; i < icol; i++) {
         grid_put_schar(grid, 0, i + adj[3], chars[1], attrs[1]);
