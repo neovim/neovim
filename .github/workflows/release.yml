@@ -245,9 +245,9 @@ jobs:
         id: get-version
         run: |
           Invoke-WebRequest https://github.com/neovim/neovim/releases/download/nightly/nvim-win64.msi -OutFile setup.msi
-          Install-Module -Name 'Carbon' -AllowClobber -Force
+          Install-Module -Name 'Carbon.Windows.Installer' -Force
           Import-Module Carbon
-          $VERSION = (Get-CMsi .\setup.msi).ProductVersion
+          $VERSION = (Get-CMsi (Resolve-Path .\setup.msi).Path).ProductVersion
           echo "::set-output name=version::$VERSION"
       - if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && github.event.inputs.tag_name == 'nightly')
         name: Publish nightly
