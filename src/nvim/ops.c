@@ -1961,6 +1961,8 @@ static int op_replace(oparg_T *oap, int c)
     // TODO(bfredl): we could batch all the splicing
     // done on the same line, at least
     while (ltoreq(curwin->w_cursor, oap->end)) {
+      bool done = false;
+
       n = gchar_cursor();
       if (n != NUL) {
         int new_byte_len = utf_char2len(c);
@@ -1973,6 +1975,7 @@ static int op_replace(oparg_T *oap, int c)
             oap->end.col += new_byte_len - old_byte_len;
           }
           replace_character(c);
+          done = true;
         } else {
           if (n == TAB) {
             int end_vcol = 0;
@@ -1988,9 +1991,14 @@ static int op_replace(oparg_T *oap, int c)
               getvpos(&oap->end, end_vcol);
             }
           }
-          pbyte(curwin->w_cursor, c);
+          // with "coladd" set may move to just after a TAB
+          if (gchar_cursor() != NUL) {
+            pbyte(curwin->w_cursor, c);
+            done = true;
+          }
         }
-      } else if (virtual_op && curwin->w_cursor.lnum == oap->end.lnum) {
+      }
+      if (!done && virtual_op && curwin->w_cursor.lnum == oap->end.lnum) {
         int virtcols = oap->end.coladd;
 
         if (curwin->w_cursor.lnum == oap->start.lnum
