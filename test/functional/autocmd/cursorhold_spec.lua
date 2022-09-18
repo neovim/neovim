@@ -2,7 +2,6 @@ local helpers = require('test.functional.helpers')(after_each)
 
 local clear = helpers.clear
 local eq = helpers.eq
-local eval = helpers.eval
 local feed = helpers.feed
 local retry = helpers.retry
 local exec = helpers.source
@@ -12,13 +11,16 @@ local meths = helpers.meths
 before_each(clear)
 
 describe('CursorHold', function()
-  it('is triggered correctly #12587', function()
+  before_each(function()
     exec([[
+      let g:cursorhold = 0
       augroup test
         au CursorHold * let g:cursorhold += 1
       augroup END
     ]])
+  end)
 
+  it('is triggered correctly #12587', function()
     local function test_cursorhold(fn, early)
       local ut = 2
       -- if testing with small 'updatetime' fails, double its value and test again
@@ -47,6 +49,17 @@ describe('CursorHold', function()
     test_cursorhold(function() feed('<Ignore>') end, 0)
     test_cursorhold(function() meths.feedkeys(ignore_key, 'n', true) end, 0)
   end)
+
+  it("reducing 'updatetime' while waiting for CursorHold #20241", function()
+    meths.set_option('updatetime', 10000)
+    feed('0')  -- reset did_cursorhold
+    meths.set_var('cursorhold', 0)
+    sleep(50)
+    eq(0, meths.get_var('cursorhold'))
+    meths.set_option('updatetime', 20)
+    sleep(10)
+    eq(1, meths.get_var('cursorhold'))
+  end)
 end)
 
 describe('CursorHoldI', function()
@@ -64,7 +77,7 @@ describe('CursorHoldI', function()
     feed('ifoo')
     retry(5, nil, function()
       sleep(1)
-      eq(1, eval('g:cursorhold'))
+      eq(1, meths.get_var('cursorhold'))
     end)
   end)
 end)
