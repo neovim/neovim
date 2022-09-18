@@ -449,6 +449,9 @@ endif
 " Lynx config files
 au BufNewFile,BufRead lynx.cfg			setf lynx
 
+" LyRiCs
+au BufNewFile,BufRead *.lrc			setf lyrics
+
 " Modula-3 configuration language (must be before *.cfg and *makefile)
 au BufNewFile,BufRead *.quake,cm3.cfg		setf m3quake
 au BufNewFile,BufRead m3makefile,m3overrides	setf m3build
