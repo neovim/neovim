@@ -71,6 +71,7 @@
 #include "nvim/highlight.h"
 #include "nvim/highlight_group.h"
 #include "nvim/insexpand.h"
+#include "nvim/lib/kvec.h"
 #include "nvim/match.h"
 #include "nvim/move.h"
 #include "nvim/option.h"
@@ -642,7 +643,8 @@ static void redr_title_texts(win_T *wp, ScreenGrid *grid, int col)
   for (size_t i = 0; i < title_chunks.size; i++) {
     text = xstrdup(title_chunks.items[i].text);
     int len = (int)strlen(text);
-    int attr = syn_id2attr(title_chunks.items[i].hl_id);
+    int hl_id = title_chunks.items[i].hl_id;
+    int attr = hl_id ? syn_id2attr(hl_id) : 0;
     grid_puts_len(grid, text, len, 0, col, attr);
     col += len;
   }
