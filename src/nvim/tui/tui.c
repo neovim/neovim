@@ -1616,7 +1616,7 @@ static void unibi_goto(UI *ui, int row, int col)
       memset(&vars, 0, sizeof(vars)); \
       data->cork = true; \
 retry: \
-      unibi_format(vars, vars + 26, str, data->params, out, ui, NULL, NULL); \
+      unibi_format(vars, vars + 26, str, data->params, out, ui, pad, ui); \
       if (data->overflow) { \
         data->bufpos = orig_pos; \
         flush_buf(ui); \
@@ -1647,6 +1647,7 @@ static void out(void *ctx, const char *str, size_t len)
 
   if (len > available) {
     if (data->cork) {
+      // Called by unibi_format(): avoid flush_buf() halfway an escape sequence.
       data->overflow = true;
       return;
     } else {
@@ -1656,6 +1657,30 @@ static void out(void *ctx, const char *str, size_t len)
 
   memcpy(data->buf + data->bufpos, str, len);
   data->bufpos += len;
+}
+
+/// Called by unibi_format() for padding instructions.
+/// The following parameter descriptions are extracted from unibi_format(3) and terminfo(5).
+///
+/// @param ctx    the same as `ctx2` passed to unibi_format()
+/// @param delay  the delay in tenths of milliseconds
+/// @param scale  padding is proportional to the number of lines affected
+/// @param force  padding is mandatory
+static void pad(void *ctx, size_t delay, int scale FUNC_ATTR_UNUSED, int force)
+{
+  if (!force) {
+    return;
+  }
+
+  UI *ui = ctx;
+  TUIData *data = ui->data;
+
+  if (data->overflow) {
+    return;
+  }
+
+  flush_buf(ui);
+  loop_uv_run(data->loop, (int)(delay / 10), false);
 }
 
 static void unibi_set_if_empty(unibi_term *ut, enum unibi_string str, const char *val)
