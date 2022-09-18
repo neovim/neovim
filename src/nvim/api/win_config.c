@@ -362,6 +362,10 @@ static void parse_border_title(Object title, Object title_pos, Object width, Flo
   }
 
   if (title.type == kObjectTypeString) {
+    if (title.data.string.size == 0) {
+      fconfig->title = false;
+      return;
+    }
     fconfig->title_text = xstrdup(title.data.string.data);
     int hl_id = object_to_hl_id(title, "border title highlight", err);
     fconfig->title_hi_id = hl_id;
@@ -411,6 +415,11 @@ static bool parse_title_pos(Object title_pos, FloatConfig *fconfig, Error *err)
   if (title_pos.type != kObjectTypeString) {
     api_set_error(err, kErrorTypeValidation, "title_pos must be string");
     return false;
+  }
+
+  if (title_pos.data.string.size == 0) {
+    fconfig->title_pos = kAlignLeft;
+    return true;
   }
 
   char *pos = strcase_save(title_pos.data.string.data, false);
