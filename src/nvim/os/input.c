@@ -133,7 +133,7 @@ int os_inchar(uint8_t *buf, int maxlen, int ms, int tb_change_cnt, MultiQueue *e
     }
   } else {
     uint64_t wait_start = os_hrtime();
-    assert((int)p_ut >= cursorhold_time);
+    cursorhold_time = MIN(cursorhold_time, (int)p_ut);
     if ((result = inbuf_poll((int)p_ut - cursorhold_time, events)) == kInputNone) {
       if (read_stream.closed && silent_mode) {
         // Drained eventloop & initial input; exit silent/batch-mode (-es/-Es).
@@ -148,7 +148,6 @@ int os_inchar(uint8_t *buf, int maxlen, int ms, int tb_change_cnt, MultiQueue *e
       }
     } else {
       cursorhold_time += (int)((os_hrtime() - wait_start) / 1000000);
-      cursorhold_time = MIN(cursorhold_time, (int)p_ut);
     }
   }
 
