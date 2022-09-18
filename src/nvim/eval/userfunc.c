@@ -11,7 +11,7 @@
 #include <string.h>
 
 #include "lauxlib.h"
-#include "nvim/ascii.h"
+#include "nvim/ascii_defs.h"
 #include "nvim/autocmd.h"
 #include "nvim/buffer_defs.h"
 #include "nvim/charset.h"

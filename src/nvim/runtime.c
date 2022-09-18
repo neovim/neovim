@@ -9,14 +9,13 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <inttypes.h>
-#include <stddef.h>
 #include <stdio.h>
 #include <string.h>
 #include <uv.h>
 
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"
-#include "nvim/ascii.h"
+#include "nvim/ascii_defs.h"
 #include "nvim/autocmd.h"
 #include "nvim/buffer_defs.h"
 #include "nvim/charset.h"

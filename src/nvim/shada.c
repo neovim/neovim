@@ -19,7 +19,7 @@
 #include "klib/khash.h"
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"
-#include "nvim/ascii.h"
+#include "nvim/ascii_defs.h"
 #include "nvim/buffer.h"
 #include "nvim/cmdhist.h"
 #include "nvim/eval.h"

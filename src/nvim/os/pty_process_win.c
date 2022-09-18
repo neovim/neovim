@@ -5,7 +5,7 @@
 #include <stdbool.h>
 #include <stdlib.h>
 
-#include "nvim/ascii.h"
+#include "nvim/ascii_defs.h"
 #include "nvim/mbyte.h"  // for utf8_to_utf16, utf16_to_utf8
 #include "nvim/memory.h"
 #include "nvim/os/os.h"

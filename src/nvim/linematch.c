@@ -9,7 +9,6 @@
 #include "nvim/linematch.h"
 #include "nvim/macros.h"
 #include "nvim/memory.h"
-#include "nvim/vim.h"
 
 // struct for running the diff linematch algorithm
 typedef struct {

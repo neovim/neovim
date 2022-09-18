@@ -16,7 +16,7 @@
 // FIXME: vim.h is not actually needed, but otherwise it states MAXPATHL is
 //        redefined
 #include "klib/kvec.h"
-#include "nvim/ascii.h"
+#include "nvim/ascii_defs.h"
 #include "nvim/eval/decode.h"
 #include "nvim/eval/typval.h"
 #include "nvim/eval/typval_defs.h"

@@ -8,7 +8,7 @@
 #include "klib/kvec.h"
 #include "mpack/conv.h"
 #include "nvim/api/private/helpers.h"
-#include "nvim/ascii.h"
+#include "nvim/ascii_defs.h"
 #include "nvim/macros.h"
 #include "nvim/memory.h"
 #include "nvim/msgpack_rpc/channel_defs.h"

@@ -17,7 +17,7 @@
 
 #include "klib/kvec.h"
 #include "msgpack/pack.h"
-#include "nvim/ascii.h"
+#include "nvim/ascii_defs.h"
 #include "nvim/eval.h"
 #include "nvim/eval/encode.h"
 #include "nvim/eval/typval.h"

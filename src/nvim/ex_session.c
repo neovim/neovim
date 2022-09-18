@@ -15,7 +15,7 @@
 #include <string.h>
 
 #include "nvim/arglist.h"
-#include "nvim/ascii.h"
+#include "nvim/ascii_defs.h"
 #include "nvim/buffer.h"
 #include "nvim/eval.h"
 #include "nvim/ex_cmds_defs.h"

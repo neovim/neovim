@@ -8,7 +8,7 @@
 #include <string.h>
 #include <uv.h>
 
-#include "nvim/ascii.h"
+#include "nvim/ascii_defs.h"
 #include "nvim/charset.h"
 #include "nvim/event/loop.h"
 #include "nvim/event/socket.h"

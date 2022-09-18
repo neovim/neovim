@@ -3,7 +3,7 @@
 
 #include <stddef.h>
 
-#include "nvim/ascii.h"
+#include "nvim/ascii_defs.h"
 #include "nvim/option_defs.h"
 #include "nvim/strings.h"
 

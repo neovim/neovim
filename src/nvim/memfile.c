@@ -46,7 +46,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "nvim/assert.h"
+#include "nvim/assert_defs.h"
 #include "nvim/buffer_defs.h"
 #include "nvim/fileio.h"
 #include "nvim/gettext.h"

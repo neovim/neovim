@@ -10,7 +10,7 @@
 #include <limits.h>
 #include <stdbool.h>
 
-#include "nvim/ascii.h"
+#include "nvim/ascii_defs.h"
 #include "nvim/garray.h"
 #include "nvim/os/input.h"
 

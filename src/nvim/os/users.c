@@ -9,7 +9,7 @@
 #include <uv.h>
 
 #include "auto/config.h"
-#include "nvim/ascii.h"
+#include "nvim/ascii_defs.h"
 #include "nvim/garray.h"
 #include "nvim/memory.h"
 #include "nvim/os/os.h"

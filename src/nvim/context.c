@@ -5,7 +5,9 @@
 
 #include <assert.h>
 #include <stdbool.h>
+#include <stdint.h>
 #include <stdio.h>
+#include <string.h>
 
 #include "nvim/api/private/converter.h"
 #include "nvim/api/private/helpers.h"
@@ -23,8 +25,6 @@
 #include "nvim/message.h"
 #include "nvim/option.h"
 #include "nvim/shada.h"
-#include "nvim/types.h"
-#include "nvim/vim.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "context.c.generated.h"

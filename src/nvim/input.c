@@ -7,7 +7,7 @@
 #include <stdbool.h>
 #include <string.h>
 
-#include "nvim/ascii.h"
+#include "nvim/ascii_defs.h"
 #include "nvim/event/multiqueue.h"
 #include "nvim/func_attr.h"
 #include "nvim/getchar.h"

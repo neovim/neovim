@@ -6,7 +6,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#include "nvim/assert.h"
+#include "nvim/assert_defs.h"
 #include "nvim/garray.h"
 #include "nvim/map.h"
 #include "nvim/map_defs.h"

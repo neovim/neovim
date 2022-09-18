@@ -25,7 +25,7 @@
 #include <stdint.h>
 
 #include "nvim/arabic.h"
-#include "nvim/ascii.h"
+#include "nvim/ascii_defs.h"
 #include "nvim/macros.h"
 #include "nvim/mbyte.h"
 #include "nvim/option_defs.h"

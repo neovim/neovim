@@ -1,5 +1,5 @@
-#ifndef NVIM_ASCII_H
-#define NVIM_ASCII_H
+#ifndef NVIM_ASCII_DEFS_H
+#define NVIM_ASCII_DEFS_H
 
 #include <stdbool.h>
 
@@ -42,38 +42,40 @@
 #define CTRL_H_STR      "\010"
 #define CTRL_V_STR      "\026"
 
-#define Ctrl_AT         0   // @
-#define Ctrl_A          1
-#define Ctrl_B          2
-#define Ctrl_C          3
-#define Ctrl_D          4
-#define Ctrl_E          5
-#define Ctrl_F          6
-#define Ctrl_G          7
-#define Ctrl_H          8
-#define Ctrl_I          9
-#define Ctrl_J          10
-#define Ctrl_K          11
-#define Ctrl_L          12
-#define Ctrl_M          13
-#define Ctrl_N          14
-#define Ctrl_O          15
-#define Ctrl_P          16
-#define Ctrl_Q          17
-#define Ctrl_R          18
-#define Ctrl_S          19
-#define Ctrl_T          20
-#define Ctrl_U          21
-#define Ctrl_V          22
-#define Ctrl_W          23
-#define Ctrl_X          24
-#define Ctrl_Y          25
-#define Ctrl_Z          26
-// CTRL- [ Left Square Bracket == ESC
-#define Ctrl_BSL        28  // \ BackSLash
-#define Ctrl_RSB        29  // ] Right Square Bracket
-#define Ctrl_HAT        30  // ^
-#define Ctrl__          31
+enum {
+  Ctrl_AT = 0,  // @
+  Ctrl_A = 1,
+  Ctrl_B = 2,
+  Ctrl_C = 3,
+  Ctrl_D = 4,
+  Ctrl_E = 5,
+  Ctrl_F = 6,
+  Ctrl_G = 7,
+  Ctrl_H = 8,
+  Ctrl_I = 9,
+  Ctrl_J = 10,
+  Ctrl_K = 11,
+  Ctrl_L = 12,
+  Ctrl_M = 13,
+  Ctrl_N = 14,
+  Ctrl_O = 15,
+  Ctrl_P = 16,
+  Ctrl_Q = 17,
+  Ctrl_R = 18,
+  Ctrl_S = 19,
+  Ctrl_T = 20,
+  Ctrl_U = 21,
+  Ctrl_V = 22,
+  Ctrl_W = 23,
+  Ctrl_X = 24,
+  Ctrl_Y = 25,
+  Ctrl_Z = 26,
+  // CTRL- [ Left Square Bracket == ESC
+  Ctrl_BSL = 28,  // \ BackSLash
+  Ctrl_RSB = 29,  // ] Right Square Bracket
+  Ctrl_HAT = 30,  // ^
+  Ctrl__ = 31,
+};
 
 // Character that separates dir names in a path.
 #ifdef BACKSLASH_IN_FILENAME
@@ -185,4 +187,4 @@ static inline bool ascii_isspace(int c)
   return (c >= 9 && c <= 13) || c == ' ';
 }
 
-#endif  // NVIM_ASCII_H
+#endif  // NVIM_ASCII_DEFS_H

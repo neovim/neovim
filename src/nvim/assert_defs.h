@@ -1,5 +1,5 @@
-#ifndef NVIM_ASSERT_H
-#define NVIM_ASSERT_H
+#ifndef NVIM_ASSERT_DEFS_H
+#define NVIM_ASSERT_DEFS_H
 
 #include "auto/config.h"
 
@@ -61,7 +61,7 @@
 # define STATIC_ASSERT_STATEMENT(cond, msg) _Static_assert(cond, msg)
 // if we're dealing with gcc >= 4.6 in C99 mode, we can still use
 // _Static_assert but we need to suppress warnings, this is pretty ugly.
-#elif (!defined(__clang__) && !defined(__INTEL_COMPILER)) && \
+#elif (!defined(__clang__) && !defined(__INTEL_COMPILER)) &&  /*NOLINT(whitespace/parens)*/ \
   (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6))
 
 # define STATIC_ASSERT_STATEMENT(cond, msg) _Static_assert(cond, msg)
@@ -166,4 +166,4 @@
   do { *(c) = (t)((a) - (b)); } while (0)
 #endif
 
-#endif  // NVIM_ASSERT_H
+#endif  // NVIM_ASSERT_DEFS_H

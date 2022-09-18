@@ -26,10 +26,11 @@
 #include <stdbool.h>
 #include <string.h>
 
-#include "nvim/ascii.h"
+#include "nvim/ascii_defs.h"
 #include "nvim/hashtab.h"
 #include "nvim/memory.h"
 #include "nvim/message.h"
+#include "nvim/types.h"
 #include "nvim/vim.h"
 
 // Magic value for algorithm that walks through the array.

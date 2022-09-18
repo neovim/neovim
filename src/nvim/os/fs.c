@@ -29,7 +29,7 @@
 
 #include <uv.h>
 
-#include "nvim/ascii.h"
+#include "nvim/ascii_defs.h"
 #include "nvim/memory.h"
 #include "nvim/message.h"
 #include "nvim/os/os.h"
