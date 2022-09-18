@@ -3,7 +3,6 @@
   "configurePresets": [
     {
       "name": "base",
-      "displayName": "base preset",
       "generator": "Ninja",
       "binaryDir": "${sourceDir}/build",
       "cacheVariables": {
@@ -15,28 +14,7 @@
       "hidden": true
     },
     {
-      "name": "clang",
-      "environment": {
-        "CC": "clang"
-      },
-      "inherits": [
-        "base"
-      ],
-      "hidden": true
-    },
-    {
-      "name": "release",
-      "displayName": "Release",
-      "description": "Same as RelWithDebInfo, but disables debug information",
-      "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Release"
-      },
-      "inherits": [
-        "base"
-      ]
-    },
-    {
-      "name": "relwithdebinfo",
+      "name": "default",
       "displayName": "RelWithDebInfo",
       "description": "Enables optimizations (-Og or -O2) with debug information",
       "cacheVariables": {
@@ -58,54 +36,50 @@
       ]
     },
     {
-      "name": "asan",
-      "displayName": "Debug (with AddressSanitizer and UndefinedBehaviorSanitizer)",
+      "name": "release",
+      "displayName": "Release",
+      "description": "Same as RelWithDebInfo, but disables debug information",
       "cacheVariables": {
-        "CLANG_ASAN_UBSAN": "ON"
+        "CMAKE_BUILD_TYPE": "Release"
       },
       "inherits": [
-        "clang",
-        "debug"
+        "base"
       ]
     },
     {
-      "name": "tsan",
-      "displayName": "Debug (with ThreadSanitizer)",
-      "cacheVariables": {
-        "CLANG_TSAN": "ON"
-      },
-      "inherits": [
-        "clang",
-        "debug"
-      ]
-    },
-    {
-      "name": "msan",
-      "displayName": "Debug (with MemorySanitizer)",
-      "cacheVariables": {
-        "CLANG_MSAN": "ON"
-      },
-      "inherits": [
-        "clang",
-        "debug"
-      ]
-    },
-    {
-      "name": "msvc-vs2022",
-      "displayName": "Windows MSVC x64 (with VS2022)",
-      "generator": "Visual Studio 17 2022",
+      "name": "windows-default",
+      "displayName": "Windows x64 RelWithDebInfo",
+      "description": "Sets Ninja generator, enables optimizations with debug information for x64",
+      "generator": "Ninja",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "RelWithDebInfo"
       },
-      "inherits": "base",
+      "architecture": {
+        "value": "x64",
+        "strategy": "external"
+      },
+      "vendor": {
+        "microsoft.com/VisualStudioSettings/CMake/1.0": {
+          "hostOS": [
+            "Windows"
+          ]
+        }
+      },
       "condition": {
         "type": "equals",
         "lhs": "${hostSystemName}",
         "rhs": "Windows"
-      }
+      },
+      "inherits": [
+        "base"
+      ]
     }
   ],
   "buildPresets": [
+    {
+      "name": "default",
+      "configurePreset": "default"
+    },
     {
       "name": "debug",
       "configurePreset": "debug"
@@ -115,29 +89,13 @@
       "configurePreset": "release"
     },
     {
-      "name": "asan",
-      "configurePreset": "asan"
-    },
-    {
-      "name": "tsan",
-      "configurePreset": "tsan"
-    },
-    {
-      "name": "msan",
-      "configurePreset": "msan"
-    },
-    {
-      "name": "msvc-vs2022",
-      "configurePreset": "msvc-vs2022",
-      "nativeToolOptions": [
-        "/verbosity:normal",
-        "/m"
-      ],
+      "name": "windows-default",
+      "configurePreset": "windows-default",
       "condition": {
         "type": "equals",
         "lhs": "${hostSystemName}",
         "rhs": "Windows"
       }
     }
-  ],
+  ]
 }
