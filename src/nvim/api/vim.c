@@ -1882,7 +1882,7 @@ Object nvim_get_proc(Integer pid, Error *err)
     api_set_error(err, kErrorTypeException, "Invalid pid: %" PRId64, pid);
     return NIL;
   }
-#ifdef WIN32
+#ifdef MSWIN
   rvobj.data.dictionary = os_proc_info((int)pid);
   if (rvobj.data.dictionary.size == 0) {  // Process not found.
     return NIL;

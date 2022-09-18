@@ -94,7 +94,7 @@ char *server_address_new(const char *name)
 {
   static uint32_t count = 0;
   char fmt[ADDRESS_MAX_SIZE];
-#ifdef WIN32
+#ifdef MSWIN
   int r = snprintf(fmt, sizeof(fmt), "\\\\.\\pipe\\%s.%" PRIu64 ".%" PRIu32,
                    name ? name : "nvim", os_get_pid(), count++);
 #else

@@ -23,7 +23,7 @@
 #define MSG_BUF_CLEN  (MSG_BUF_LEN / 6)  // cell length (worst case: utf-8
                                          // takes 6 bytes for one cell)
 
-#ifdef WIN32
+#ifdef MSWIN
 # define _PATHSEPSTR "\\"
 #else
 # define _PATHSEPSTR "/"

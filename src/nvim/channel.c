@@ -14,7 +14,7 @@
 #include "nvim/msgpack_rpc/server.h"
 #include "nvim/os/fs.h"
 #include "nvim/os/shell.h"
-#ifdef WIN32
+#ifdef MSWIN
 # include "nvim/os/os_win_console.h"
 # include "nvim/os/pty_conpty_win.h"
 #endif
@@ -492,7 +492,7 @@ uint64_t channel_from_stdio(bool rpc, CallbackReader on_output, const char **err
 
   int stdin_dup_fd = STDIN_FILENO;
   int stdout_dup_fd = STDOUT_FILENO;
-#ifdef WIN32
+#ifdef MSWIN
   // Strangely, ConPTY doesn't work if stdin and stdout are pipes. So replace
   // stdin and stdout with CONIN$ and CONOUT$, respectively.
   if (embedded_mode && os_has_conpty_working()) {

@@ -83,7 +83,7 @@
 #include "nvim/undo.h"
 #include "nvim/vim.h"
 #include "nvim/window.h"
-#ifdef WIN32
+#ifdef MSWIN
 # include "nvim/os/pty_conpty_win.h"
 #endif
 #include "nvim/api/extmark.h"
@@ -1274,7 +1274,7 @@ int do_set(char *arg, int opt_flags)
               s = newval;
 
               // Copy the string, skip over escaped chars.
-              // For WIN32 backslashes before normal
+              // For MS-Windows backslashes before normal
               // file name characters are not removed, and keep
               // backslash at start, for "\\machine\path", but
               // do remove it for "\\\\machine\\path".

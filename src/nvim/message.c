@@ -3012,7 +3012,7 @@ static int do_more_prompt(int typed_char)
   return retval;
 }
 
-#if defined(WIN32)
+#if defined(MSWIN)
 void mch_errmsg(char *str)
 {
   assert(str != NULL);
@@ -3039,7 +3039,7 @@ void mch_msg(char *str)
     xfree(utf16str);
   }
 }
-#endif  // WIN32
+#endif  // MSWIN
 
 /// Put a character on the screen at the current message position and advance
 /// to the next position.  Only for printable ASCII!

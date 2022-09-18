@@ -273,7 +273,7 @@ if(MSVC)
   # XXX: /W4 gives too many warnings. #3241
   add_compile_options(/W3)
   add_definitions(-D_CRT_SECURE_NO_WARNINGS -D_CRT_NONSTDC_NO_DEPRECATE)
-  add_definitions(-DWIN32)
+  add_definitions(-DMSWIN)
 else()
   add_compile_options(-Wall -Wextra -pedantic -Wno-unused-parameter
     -Wstrict-prototypes -std=gnu99 -Wshadow -Wconversion
@@ -320,6 +320,7 @@ endif()
 if(MINGW)
   # Use POSIX compatible stdio in Mingw
   add_definitions(-D__USE_MINGW_ANSI_STDIO)
+  add_definitions(-DMSWIN)
 endif()
 if(WIN32)
   # Windows Vista is the minimum supported version

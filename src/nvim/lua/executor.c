@@ -248,7 +248,7 @@ static int nlua_luv_thread_common_cfpcall(lua_State *lstate, int nargs, int nres
       mch_errmsg(e_outofmem);
       mch_errmsg("\n");
       lua_close(lstate);
-#ifdef WIN32
+#ifdef MSWIN
       ExitThread(0);
 #else
       pthread_exit(0);
@@ -673,7 +673,7 @@ static bool nlua_state_init(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
   lua_setfield(lstate, -2, "debug");
   lua_pop(lstate, 1);
 
-#ifdef WIN32
+#ifdef MSWIN
   // os.getenv
   lua_getglobal(lstate, "os");
   lua_pushcfunction(lstate, &nlua_getenv);
@@ -1201,7 +1201,7 @@ static int nlua_empty_dict_tostring(lua_State *lstate)
   return 1;
 }
 
-#ifdef WIN32
+#ifdef MSWIN
 /// os.getenv: override os.getenv to maintain coherency. #9681
 ///
 /// uv_os_setenv uses SetEnvironmentVariableW which does not update _environ.

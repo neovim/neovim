@@ -86,7 +86,7 @@
 // mch_open_rw(): invoke os_open() with third argument for user R/W.
 #if defined(UNIX)  // open in rw------- mode
 # define MCH_OPEN_RW(n, f)      os_open((n), (f), (mode_t)0600)
-#elif defined(WIN32)
+#elif defined(MSWIN)
 # define MCH_OPEN_RW(n, f)      os_open((n), (f), S_IREAD | S_IWRITE)
 #else
 # define MCH_OPEN_RW(n, f)      os_open((n), (f), 0)
@@ -178,14 +178,14 @@
 
 // Type of uv_buf_t.len is platform-dependent.
 // Related: https://github.com/libuv/libuv/pull/1236
-#if defined(WIN32)
+#if defined(MSWIN)
 # define UV_BUF_LEN(x)  (ULONG)(x)
 #else
 # define UV_BUF_LEN(x)  (x)
 #endif
 
 // Type of read()/write() `count` param is platform-dependent.
-#if defined(WIN32)
+#if defined(MSWIN)
 # define IO_COUNT(x)  (unsigned)(x)
 #else
 # define IO_COUNT(x)  (x)

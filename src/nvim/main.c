@@ -71,7 +71,7 @@
 #include "nvim/version.h"
 #include "nvim/vim.h"
 #include "nvim/window.h"
-#ifdef WIN32
+#ifdef MSWIN
 # include "nvim/os/os_win_console.h"
 #endif
 #include "nvim/api/private/defs.h"
@@ -84,7 +84,7 @@
 #include "nvim/msgpack_rpc/helpers.h"
 #include "nvim/msgpack_rpc/server.h"
 #include "nvim/os/signal.h"
-#ifndef WIN32
+#ifndef MSWIN
 # include "nvim/os/pty_process_unix.h"
 #endif
 #include "nvim/api/extmark.h"
@@ -168,7 +168,7 @@ void early_init(mparm_T *paramp)
   runtime_init();
   highlight_init();
 
-#ifdef WIN32
+#ifdef MSWIN
   OSVERSIONINFO ovi;
   ovi.dwOSVersionInfoSize = sizeof(ovi);
   GetVersionEx(&ovi);
@@ -210,13 +210,13 @@ void early_init(mparm_T *paramp)
 #ifdef MAKE_LIB
 int nvim_main(int argc, char **argv);  // silence -Wmissing-prototypes
 int nvim_main(int argc, char **argv)
-#elif defined(WIN32)
+#elif defined(MSWIN)
 int wmain(int argc, wchar_t **argv_w)  // multibyte args on Windows. #7060
 #else
 int main(int argc, char **argv)
 #endif
 {
-#if defined(WIN32) && !defined(MAKE_LIB)
+#if defined(MSWIN) && !defined(MAKE_LIB)
   char **argv = xmalloc((size_t)argc * sizeof(char *));
   for (int i = 0; i < argc; i++) {
     char *buf = NULL;
@@ -582,7 +582,7 @@ int main(int argc, char **argv)
   // Main loop: never returns.
   normal_enter(false, false);
 
-#if defined(WIN32) && !defined(MAKE_LIB)
+#if defined(MSWIN) && !defined(MAKE_LIB)
   xfree(argv);
 #endif
   return 0;
@@ -1273,7 +1273,7 @@ scripterror:
           int error;
           if (strequal(argv[0], "-")) {
             const int stdin_dup_fd = os_dup(STDIN_FILENO);
-#ifdef WIN32
+#ifdef MSWIN
             // Replace the original stdin with the console input handle.
             os_replace_stdin_to_conin();
 #endif
@@ -1426,7 +1426,7 @@ static void check_and_set_isatty(mparm_T *paramp)
   stdout_isatty
     = paramp->output_isatty = os_isatty(STDOUT_FILENO);
   paramp->err_isatty = os_isatty(STDERR_FILENO);
-#ifndef WIN32
+#ifndef MSWIN
   int tty_fd = paramp->input_isatty
     ? STDIN_FILENO
     : (paramp->output_isatty
@@ -1451,7 +1451,7 @@ static void init_path(const char *exename)
   set_vim_var_string(VV_PROGPATH, exepath, -1);
   set_vim_var_string(VV_PROGNAME, path_tail(exename), -1);
 
-#ifdef WIN32
+#ifdef MSWIN
   // Append the process start directory to $PATH, so that ":!foo" finds tools
   // shipped with Windows package. This also mimics SearchPath().
   os_setenv_append_path(exepath);

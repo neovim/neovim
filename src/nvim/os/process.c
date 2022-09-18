@@ -8,7 +8,7 @@
 
 #include <uv.h>  // for HANDLE (win32)
 
-#ifdef WIN32
+#ifdef MSWIN
 # include <tlhelp32.h>  // for CreateToolhelp32Snapshot
 #endif
 
@@ -38,7 +38,7 @@
 # include "os/process.c.generated.h"
 #endif
 
-#ifdef WIN32
+#ifdef MSWIN
 static bool os_proc_tree_kill_rec(HANDLE process, int sig)
 {
   if (process == NULL) {
@@ -114,7 +114,7 @@ int os_proc_children(int ppid, int **proc_list, size_t *proc_count)
   *proc_list = NULL;
   *proc_count = 0;
 
-#ifdef WIN32
+#ifdef MSWIN
   PROCESSENTRY32 pe;
 
   // Snapshot of all processes.
@@ -215,7 +215,7 @@ int os_proc_children(int ppid, int **proc_list, size_t *proc_count)
   return 0;
 }
 
-#ifdef WIN32
+#ifdef MSWIN
 /// Gets various properties of the process identified by `pid`.
 ///
 /// @param pid Process to inspect.

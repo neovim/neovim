@@ -1014,7 +1014,7 @@ return {
       expand=true,
       varname='p_gp',
       defaults={
-        condition='WIN32',
+        condition='MSWIN',
         -- Add an extra file name so that grep will always
         -- insert a file name in the match line. */
         if_true="findstr /n $* nul",
@@ -1276,7 +1276,7 @@ return {
       deny_duplicates=true,
       varname='p_isi',
       defaults={
-        condition='WIN32',
+        condition='MSWIN',
         if_true="@,48-57,_,128-167,224-235",
         if_false="@,48-57,_,192-255"
       }
@@ -2100,7 +2100,7 @@ return {
       expand=true,
       varname='p_sh',
       defaults={
-        condition='WIN32',
+        condition='MSWIN',
         if_true="cmd.exe",
         if_false="sh"
       }
@@ -2112,7 +2112,7 @@ return {
       secure=true,
       varname='p_shcf',
       defaults={
-        condition='WIN32',
+        condition='MSWIN',
         if_true="/s /c",
         if_false="-c"
       }
@@ -2124,7 +2124,7 @@ return {
       secure=true,
       varname='p_sp',
       defaults={
-        condition='WIN32',
+        condition='MSWIN',
         if_true=">%s 2>&1",
         if_false="| tee",
       }
@@ -2144,7 +2144,7 @@ return {
       secure=true,
       varname='p_srr',
       defaults={
-        condition='WIN32',
+        condition='MSWIN',
         if_true=">%s 2>&1",
         if_false=">"
       }
@@ -2171,7 +2171,7 @@ return {
       secure=true,
       varname='p_sxq',
       defaults={
-        condition='WIN32',
+        condition='MSWIN',
         if_true="\"",
         if_false="",
       }

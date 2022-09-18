@@ -10,7 +10,7 @@
 #include "nvim/log.h"
 #include "nvim/macros.h"
 #include "nvim/rbuffer.h"
-#ifdef WIN32
+#ifdef MSWIN
 # include "nvim/os/os_win_console.h"
 #endif
 
@@ -60,7 +60,7 @@ void stream_init(Loop *loop, Stream *stream, int fd, uv_stream_t *uvstream)
       stream->uv.idle.data = stream;
     } else {
       assert(type == UV_NAMED_PIPE || type == UV_TTY);
-#ifdef WIN32
+#ifdef MSWIN
       if (type == UV_TTY) {
         uv_tty_init(&loop->uv, &stream->uv.tty, fd, 0);
         uv_tty_set_mode(&stream->uv.tty, UV_TTY_MODE_RAW);
@@ -75,7 +75,7 @@ void stream_init(Loop *loop, Stream *stream, int fd, uv_stream_t *uvstream)
       uv_pipe_init(&loop->uv, &stream->uv.pipe, 0);
       uv_pipe_open(&stream->uv.pipe, fd);
       stream->uvstream = STRUCT_CAST(uv_stream_t, &stream->uv.pipe);
-#ifdef WIN32
+#ifdef MSWIN
     }
 #endif
     }
@@ -109,7 +109,7 @@ void stream_close(Stream *stream, stream_close_cb on_stream_close, void *data)
   stream->close_cb = on_stream_close;
   stream->close_cb_data = data;
 
-#ifdef WIN32
+#ifdef MSWIN
   if (UV_TTY == uv_guess_handle(stream->fd)) {
     // Undo UV_TTY_MODE_RAW from stream_init(). #10801
     uv_tty_set_mode(&stream->uv.tty, UV_TTY_MODE_NORMAL);

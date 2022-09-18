@@ -7,7 +7,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 
-#ifdef WIN32
+#ifdef MSWIN
 # include "nvim/os/win_defs.h"
 #else
 # include "nvim/os/unix_defs.h"
@@ -43,7 +43,7 @@
 /// Converts system error code to libuv error code.
 #define os_translate_sys_error uv_translate_sys_error
 
-#ifdef WIN32
+#ifdef MSWIN
 # define os_strtok strtok_s
 #else
 # define os_strtok strtok_r
