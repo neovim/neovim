@@ -686,15 +686,15 @@ end]]
 
     screen:expect{grid=[[
       {5:^for} _,item {5:in} {6:ipairs}(items) {5:do}                    |
-          {5:local} text, hl_id_cell, count = unpack(item)  |
-          {5:if} hl_id_cell ~= {13:nil} {5:then}                     |
-              hl_id = hl_id_cell                        |
+          {5:local} text, hl_id_cell, count {5:=} unpack(item)  |
+          {5:if} hl_id_cell {5:~=} {13:nil} {5:then}                     |
+              hl_id {5:=} hl_id_cell                        |
           {5:end}                                           |
-          {5:for} _ = {13:1}, (count {5:or} {13:1}) {5:do}                    |
-              {5:local} cell = line[colpos]                 |
-              cell.text = text                          |
-              cell.hl_id = hl_id                        |
-              colpos = colpos+{13:1}                         |
+          {5:for} _ {5:=} {13:1}, (count {5:or} {13:1}) {5:do}                    |
+              {5:local} cell {5:=} line[colpos]                 |
+              cell.text {5:=} text                          |
+              cell.hl_id {5:=} hl_id                        |
+              colpos {5:=} colpos{5:+}{13:1}                         |
           {5:end}                                           |
       {5:end}                                               |
       {1:~                                                 }|
@@ -713,15 +713,15 @@ end]]
 
     screen:expect{grid=[[
       {5:^for} _,item {5:in} {6:ipairs}(items) {5:do}                    |
-          {5:l}{8:blen}{7:dy}{10:e}{7:text}{10:h}{7:-}{10:_}{7:here}ell, count = unpack(item)  |
-          {5:i}{12:c}{11:ombining color} {13:nil} {5:then}                     |
+          {5:l}{8:blen}{7:dy}{10:e}{7:text}{10:h}{7:-}{10:_}{7:here}ell, count {5:=} unpack(item)  |
+          {5:i}{12:c}{11:ombining col}{12:or} {13:nil} {5:then}                     |
            {11:replacing color}d_cell                        |
           {5:e}{8:bl}{7:endy}{10: }{7:text}{10: }{7:-}{10: }{7:here}                           |
-          {5:f}{12:co}{11:mbini}{16:n}{11:g color}t {5:or} {13:1}) {5:do}                    |
+          {5:f}{12:co}{11:mbi}{12:n}{11:i}{16:n}{11:g color}t {5:or} {13:1}) {5:do}                    |
            {11:replacing color} line[colpos]                 |
-              cell.text = text                          |
-              cell.hl_id = hl_id                        |
-              colpos = colpos+{13:1}                         |
+              cell.text {5:=} text                          |
+              cell.hl_id {5:=} hl_id                        |
+              colpos {5:=} colpos{5:+}{13:1}                         |
           {5:end}                                           |
       {5:end}                                               |
       {1:~                                                 }|
@@ -732,15 +732,15 @@ end]]
     feed 'V5G'
     screen:expect{grid=[[
       {17:for}{18: _,item }{17:in}{18: }{19:ipairs}{18:(items) }{17:do}                    |
-      {18:    }{17:l}{20:blen}{21:dy}{22:e}{21:text}{22:h}{21:-}{22:_}{21:here}{18:ell, count = unpack(item)}  |
-      {18:    }{17:i}{12:c}{11:ombining color}{18: }{23:nil}{18: }{17:then}                     |
+      {18:    }{17:l}{20:blen}{21:dy}{22:e}{21:text}{22:h}{21:-}{22:_}{21:here}{18:ell, count }{17:=}{18: unpack(item)}  |
+      {18:    }{17:i}{12:c}{11:ombining col}{12:or}{18: }{23:nil}{18: }{17:then}                     |
       {18:     }{11:replacing color}{18:d_cell}                        |
       {18:    }{5:^e}{17:nd}                                           |
-          {5:f}{12:co}{11:mbini}{16:n}{11:g color}t {5:or} {13:1}) {5:do}                    |
+          {5:f}{12:co}{11:mbi}{12:n}{11:i}{16:n}{11:g color}t {5:or} {13:1}) {5:do}                    |
            {11:replacing color} line[colpos]                 |
-              cell.text = text                          |
-              cell.hl_id = hl_id                        |
-              colpos = colpos+{13:1}                         |
+              cell.text {5:=} text                          |
+              cell.hl_id {5:=} hl_id                        |
+              colpos {5:=} colpos{5:+}{13:1}                         |
           {5:end}                                           |
       {5:end}                                               |
       {1:~                                                 }|
@@ -751,15 +751,15 @@ end]]
     feed 'jj'
     screen:expect{grid=[[
       {17:for}{18: _,item }{17:in}{18: }{19:ipairs}{18:(items) }{17:do}                    |
-      {18:    }{17:l}{20:blen}{21:dy}{22:e}{21:text}{22:h}{21:-}{22:_}{21:here}{18:ell, count = unpack(item)}  |
-      {18:    }{17:i}{12:c}{11:ombining color}{18: }{23:nil}{18: }{17:then}                     |
+      {18:    }{17:l}{20:blen}{21:dy}{22:e}{21:text}{22:h}{21:-}{22:_}{21:here}{18:ell, count }{17:=}{18: unpack(item)}  |
+      {18:    }{17:i}{12:c}{11:ombining col}{12:or}{18: }{23:nil}{18: }{17:then}                     |
       {18:     }{11:replacing color}{18:d_cell}                        |
       {18:    }{17:end}                                           |
-      {18:    }{17:for}{18: _ = }{23:1}{18:, (count }{17:or}{18: }{23:1}{18:) }{17:do}                    |
-      {18:    }^ {18:   }{17:local}{18: cell = line[colpos]}                 |
-              cell.text = text                          |
-              cell.hl_id = hl_id                        |
-              colpos = colpos+{13:1}                         |
+      {18:    }{17:for}{18: _ }{17:=}{18: }{23:1}{18:, (count }{17:or}{18: }{23:1}{18:) }{17:do}                    |
+      {18:    }^ {18:   }{17:local}{18: cell }{17:=}{18: line[colpos]}                 |
+              cell.text {5:=} text                          |
+              cell.hl_id {5:=} hl_id                        |
+              colpos {5:=} colpos{5:+}{13:1}                         |
           {5:end}                                           |
       {5:end}                                               |
       {1:~                                                 }|
