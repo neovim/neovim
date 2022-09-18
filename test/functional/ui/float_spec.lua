@@ -1823,7 +1823,7 @@ describe('float window', function()
         ]]}
       end
 
-      meths.win_set_config(win, {border="double",title= { {"Te"},{"st"}},title_pos="right"})
+      meths.win_set_config(win, {border="double",title= { {"B"},{"BB"}},title_pos="right"})
       if multigrid then
         screen:expect{grid=[[
         ## grid 1
@@ -1844,7 +1844,7 @@ describe('float window', function()
         ## grid 3
                                                   |
         ## grid 5
-          {5:╔═════}Test{5:╗}|
+          {5:╔══════}BBB{5:╗}|
           {5:║}{1: halloj! }{5:║}|
           {5:║}{1: BORDAA  }{5:║}|
           {5:╚═════════╝}|
@@ -1858,7 +1858,7 @@ describe('float window', function()
         screen:expect{grid=[[
           ^                                        |
           {0:~                                       }|
-          {0:~    }{5:╔═════}Test{5:╗}{0:                        }|
+          {0:~    }{5:╔══════}BBB{5:╗}{0:                        }|
           {0:~    }{5:║}{1: halloj! }{5:║}{0:                        }|
           {0:~    }{5:║}{1: BORDAA  }{5:║}{0:                        }|
           {0:~    }{5:╚═════════╝}{0:                        }|
