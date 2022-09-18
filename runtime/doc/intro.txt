@@ -416,6 +416,10 @@ one always works.
 To get a literal "<lt>" in a mapping: >
 	:map <C-L> <lt>lt>
 
+The notation can be used in a double quoted strings, using "\<" at the start,
+e.g. "\<C-Space>".  This results in a special key code.  To convert this back
+to readable text use `keytrans()`.
+
 ==============================================================================
 Modes, introduction				*vim-modes-intro* *vim-modes*
 

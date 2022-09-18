@@ -1583,7 +1583,7 @@ CHECKCOMPOUNDTRIPLE  (Hunspell)			*spell-CHECKCOMPOUNDTRIPLE*
 		Forbid three identical characters when compounding.  Not
 		supported.
 
-CHECKSHARPS  (Hunspell))			*spell-CHECKSHARPS*
+CHECKSHARPS  (Hunspell)				*spell-CHECKSHARPS*
 		SS letter pair in uppercased (German) words may be upper case
 		sharp s (ß). Not supported.
 

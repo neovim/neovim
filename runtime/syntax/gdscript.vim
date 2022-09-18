@@ -18,8 +18,6 @@ syn keyword gdscriptRepeat for while break continue
 
 syn keyword gdscriptOperator is as not and or in
 
-syn match gdscriptClass "\v<\u\w+>"
-syn match gdscriptConstant "\<[_A-Z]\+[0-9_A-Z]*\>"
 syn match gdscriptBlockStart ":\s*$"
 
 syn keyword gdscriptKeyword null self owner parent tool
@@ -33,14 +31,16 @@ syn keyword gdscriptStatement onready
 syn keyword gdscriptStatement class_name extends
 
 syn keyword gdscriptType void bool int float String contained
+syn match gdscriptType ":\s*\zs\h\w*" contained
+syn match gdscriptType "->\s*\zs\h\w*" contained
 
 syn keyword gdscriptStatement var nextgroup=gdscriptTypeDecl skipwhite
 syn keyword gdscriptStatement const nextgroup=gdscriptTypeDecl skipwhite
-syn match gdscriptTypeDecl "\h\w*\s*:\s*\h\w*" contains=gdscriptOperator,gdscriptType,gdscriptClass contained skipwhite
-syn match gdscriptTypeDecl "->\s*\h\w*" contains=gdscriptOperator,gdscriptType,gdscriptClass skipwhite
+syn match gdscriptTypeDecl "\h\w*\s*:\s*\h\w*" contains=gdscriptType contained skipwhite
+syn match gdscriptTypeDecl "->\s*\h\w*" contains=gdscriptType skipwhite
 
 syn keyword gdscriptStatement export nextgroup=gdscriptExportTypeDecl skipwhite
-syn match gdscriptExportTypeDecl "(.\{-}[,)]" contains=gdscriptOperator,gdscriptType,gdscriptClass contained skipwhite
+syn match gdscriptExportTypeDecl "(.\{-}[,)]" contains=gdscriptOperator,gdscriptType contained skipwhite
 
 syn keyword gdscriptStatement setget nextgroup=gdscriptSetGet,gdscriptSetGetSeparator skipwhite
 syn match gdscriptSetGet "\h\w*" nextgroup=gdscriptSetGetSeparator display contained skipwhite
@@ -84,8 +84,6 @@ hi def link gdscriptOperator Operator
 hi def link gdscriptRepeat Repeat
 hi def link gdscriptSetGet Function
 hi def link gdscriptFunctionName Function
-hi def link gdscriptClass Type
-hi def link gdscriptConstant Constant
 hi def link gdscriptBuiltinStruct Typedef
 hi def link gdscriptComment Comment
 hi def link gdscriptString String

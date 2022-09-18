@@ -12,7 +12,7 @@ This is introduced in section |41.7| of the user manual.
 
 ==============================================================================
 
-1. Defining a fuction ~
+1. Defining a function ~
 						*define-function*
 New functions can be defined.  These can be called just like builtin
 functions.  The function executes a sequence of Ex commands.  Normal mode
@@ -287,7 +287,7 @@ This function can then be called with: >
 <
 ==============================================================================
 
-2. Calling a fuction ~
+2. Calling a function ~
 						*:cal* *:call* *E107* *E117*
 :[range]cal[l] {name}([arguments])
 		Call a function.  The name of the function and its arguments
