@@ -2511,7 +2511,9 @@ void buflist_setfpos(buf_T *const buf, win_T *const win, linenr_T lnum, colnr_T 
     copy_winopt(&win->w_onebuf_opt, &wip->wi_opt);
     wip->wi_fold_manual = win->w_fold_manual;
     cloneFoldGrowArray(&win->w_folds, &wip->wi_folds);
-    wip->wi_optset = true;
+    if (!win->w_minimal) {
+      wip->wi_optset = true;
+    }
   }
 
   // insert the entry in front of the list
@@ -2551,10 +2553,11 @@ static bool wininfo_other_tab_diff(wininfo_T *wip)
 static wininfo_T *find_wininfo(buf_T *buf, bool need_options, bool skip_diff_buffer)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE
 {
-  wininfo_T *wip;
+  wininfo_T *wip = NULL;
 
   for (wip = buf->b_wininfo; wip != NULL; wip = wip->wi_next) {
     if (wip->wi_win == curwin
+        && !wip->wi_win->w_minimal
         && (!skip_diff_buffer || !wininfo_other_tab_diff(wip))
         && (!need_options || wip->wi_optset)) {
       break;
@@ -2573,7 +2576,7 @@ static wininfo_T *find_wininfo(buf_T *buf, bool need_options, bool skip_diff_buf
             && (!need_options
                 || wip->wi_optset
                 || (wip->wi_win != NULL
-                    && wip->wi_win->w_buffer == buf))) {
+                    && wip->wi_win->w_buffer == buf && !wip->wi_win->w_minimal))) {
           break;
         }
       }
@@ -2595,7 +2598,7 @@ void get_winopts(buf_T *buf)
 
   wininfo_T *const wip = find_wininfo(buf, true, true);
   if (wip != NULL && wip->wi_win != curwin && wip->wi_win != NULL
-      && wip->wi_win->w_buffer == buf) {
+      && wip->wi_win->w_buffer == buf && !wip->wi_win->w_minimal) {
     win_T *wp = wip->wi_win;
     copy_winopt(&wp->w_onebuf_opt, &curwin->w_onebuf_opt);
     curwin->w_fold_manual = wp->w_fold_manual;

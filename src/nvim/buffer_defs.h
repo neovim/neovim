@@ -1395,6 +1395,9 @@ struct window_S {
   // Size of the w_status_click_defs array
   size_t w_status_click_defs_size;
 
+  // Whether this window is `minimal`
+  bool w_minimal;
+
   // Window bar click definitions
   StlClickDefinition *w_winbar_click_defs;
   // Size of the w_winbar_click_defs array

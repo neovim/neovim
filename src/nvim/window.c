@@ -726,6 +726,7 @@ void win_set_minimal_style(win_T *wp)
   wp->w_p_cuc = false;
   wp->w_p_spell = false;
   wp->w_p_list = false;
+  wp->w_minimal = true;
 
   // Hide EOB region: use " " fillchar and cleared highlighting
   if (wp->w_p_fcs_chars.eob != ' ') {
@@ -4964,6 +4965,8 @@ static win_T *win_alloc(win_T *after, bool hidden)
   new_wp->w_viewport_invalid = true;
 
   new_wp->w_ns_hl = -1;
+
+  new_wp->w_minimal = false;
 
   // use global option for global-local options
   new_wp->w_p_so = -1;
