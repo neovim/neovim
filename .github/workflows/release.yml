@@ -228,16 +228,14 @@ jobs:
             gh release create stable $PRERELEASE --notes-file "$RUNNER_TEMP/notes.md" --title "$SUBJECT" --target $GITHUB_SHA nvim-macos/* nvim-linux64/* appimage/* nvim-win64/*
           fi
   publish-winget:
-    needs: publish # run after publish job is finished
-    runs-on: windows-latest # action can only be run on windows
+    needs: publish
+    runs-on: windows-latest
     steps:
       - if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.tag_name != 'nightly')
         name: Publish stable
         uses: vedantmgoyal2009/winget-releaser@latest
         with:
           identifier: Neovim.Neovim
-          # the latter one is a fallback value, reference:
-          # https://docs.github.com/en/actions/using-jobs/using-concurrency#example-using-a-fallback-value
           release-tag: ${{ github.event.inputs.tag_name || github.ref }}
           token: ${{ secrets.WINGET_TOKEN }}
       - if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && github.event.inputs.tag_name == 'nightly')
@@ -245,9 +243,8 @@ jobs:
         id: get-version
         run: |
           Invoke-WebRequest https://github.com/neovim/neovim/releases/download/nightly/nvim-win64.msi -OutFile setup.msi
-          Install-Module -Name 'Carbon' -AllowClobber -Force
-          Import-Module Carbon
-          $VERSION = (Get-CMsi .\setup.msi).ProductVersion
+          Install-Module -Name 'Carbon.Windows.Installer' -Force
+          $VERSION = (Get-CMsi (Resolve-Path .\setup.msi).Path).ProductVersion
           echo "::set-output name=version::$VERSION"
       - if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && github.event.inputs.tag_name == 'nightly')
         name: Publish nightly
