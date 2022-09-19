@@ -812,7 +812,7 @@ void win_config_float(win_T *wp, FloatConfig fconfig)
       wp->w_float_config.title_chunks = fconfig.title_chunks;
     } else if (kv_size(wp->w_float_config.title_chunks) > 0 && fconfig.title_text != NULL) {
       clear_virttext(&wp->w_float_config.title_chunks);
-      wp->w_float_config.title_text = xstrdup(fconfig.title_text);
+      wp->w_float_config.title_text = fconfig.title_text;
     }
   }
 
