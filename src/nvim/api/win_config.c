@@ -422,7 +422,7 @@ static bool parse_title_pos(Object title_pos, FloatConfig *fconfig, Error *err)
     return true;
   }
 
-  char *pos = strcase_save(title_pos.data.string.data, false);
+  char *pos = title_pos.data.string.data;
 
   if (striequal(pos, "left")) {
     fconfig->title_pos = kAlignLeft;

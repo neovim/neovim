@@ -641,7 +641,7 @@ static void redr_title_texts(win_T *wp, ScreenGrid *grid, int col)
   }
 
   for (size_t i = 0; i < title_chunks.size; i++) {
-    text = xstrdup(title_chunks.items[i].text);
+    text = title_chunks.items[i].text;
     int len = (int)strlen(text);
     int hl_id = title_chunks.items[i].hl_id;
     int attr = hl_id ? syn_id2attr(hl_id) : 0;
