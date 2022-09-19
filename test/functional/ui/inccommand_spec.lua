@@ -1190,6 +1190,8 @@ describe(":substitute, inccommand=split", function()
   end)
 
   it("deactivates if 'redrawtime' is exceeded #5602", function()
+    -- prevent redraws from 'incsearch'
+    meths.set_option('incsearch', false)
     -- Assert that 'inccommand' is ENABLED initially.
     eq("split", eval("&inccommand"))
     -- Set 'redrawtime' to minimal value, to ensure timeout is triggered.
@@ -2969,6 +2971,59 @@ it(':substitute with inccommand, does not crash if range contains invalid marks'
     {15:~                             }|
     {15:~                             }|
     :'a,'bs/^                      |
+  ]])
+end)
+
+it(':substitute with inccommand, no unnecessary redraw if preview is not shown', function()
+  local screen = Screen.new(60, 6)
+  clear()
+  common_setup(screen, 'split', 'test')
+  feed(':ls<CR>')
+  screen:expect([[
+    test                                                        |
+    {15:~                                                           }|
+    {11:                                                            }|
+    :ls                                                         |
+      1 %a + "[No Name]"                    line 1              |
+    {13:Press ENTER or type command to continue}^                     |
+  ]])
+  feed(':s')
+  -- no unnecessary redraw, so messages are still shown
+  screen:expect([[
+    test                                                        |
+    {15:~                                                           }|
+    {11:                                                            }|
+    :ls                                                         |
+      1 %a + "[No Name]"                    line 1              |
+    :s^                                                          |
+  ]])
+  feed('o')
+  screen:expect([[
+    test                                                        |
+    {15:~                                                           }|
+    {11:                                                            }|
+    :ls                                                         |
+      1 %a + "[No Name]"                    line 1              |
+    :so^                                                         |
+  ]])
+  feed('<BS>')
+  screen:expect([[
+    test                                                        |
+    {15:~                                                           }|
+    {11:                                                            }|
+    :ls                                                         |
+      1 %a + "[No Name]"                    line 1              |
+    :s^                                                          |
+  ]])
+  feed('/test')
+  -- now inccommand is shown, so screen is redrawn
+  screen:expect([[
+    {12:test}                                                        |
+    {15:~                                                           }|
+    {15:~                                                           }|
+    {15:~                                                           }|
+    {15:~                                                           }|
+    :s/test^                                                     |
   ]])
 end)
 
