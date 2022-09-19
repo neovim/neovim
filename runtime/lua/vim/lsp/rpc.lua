@@ -405,8 +405,7 @@ function Client:handle_body(body)
           { status = status, result = result, err = err }
         )
       if status then
-        if not (result or err) then
-          -- TODO this can be a problem if `null` is sent for result. needs vim.NIL
+        if result == nil and err == nil then
           error(
             string.format(
               'method %q: either a result or an error must be sent to the server in response',
