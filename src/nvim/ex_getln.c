@@ -2385,6 +2385,7 @@ static int command_line_changed(CommandLineState *s)
   // Trigger CmdlineChanged autocommands.
   do_autocmd_cmdlinechanged(s->firstc > 0 ? s->firstc : '-');
 
+  const bool prev_cmdpreview = cmdpreview;
   if (s->firstc == ':'
       && current_sctx.sc_sid == 0    // only if interactive
       && *p_icm != NUL       // 'inccommand' is set
@@ -2393,10 +2394,11 @@ static int command_line_changed(CommandLineState *s)
       && !vpeekc_any()
       && cmdpreview_may_show(s)) {
     // 'inccommand' preview has been shown.
-  } else if (cmdpreview) {
-    cmdpreview = false;
-    update_screen(UPD_SOME_VALID);  // Clear 'inccommand' preview.
   } else {
+    cmdpreview = false;
+    if (prev_cmdpreview) {
+      update_screen(UPD_SOME_VALID);  // Clear 'inccommand' preview.
+    }
     if (s->xpc.xp_context == EXPAND_NOTHING && (KeyTyped || vpeekc() == NUL)) {
       may_do_incsearch_highlighting(s->firstc, s->count, &s->is_state);
     }
