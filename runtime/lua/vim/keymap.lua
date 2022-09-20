@@ -36,17 +36,17 @@ local keymap = {}
 ---@param lhs string           Left-hand side |{lhs}| of the mapping.
 ---@param rhs string|function  Right-hand side |{rhs}| of the mapping. Can also be a Lua function.
 --
----@param opts table A table of |:map-arguments|.
----                  + Accepts options accepted by the {opts} parameter in |nvim_set_keymap()|,
----                    with the following notable differences:
----                    - replace_keycodes: Defaults to `true` if "expr" is `true`.
----                    - noremap: Always overridden with the inverse of "remap" (see below).
----                  + In addition to those options, the table accepts the following keys:
----                    - buffer: (number or boolean) Add a mapping to the given buffer.
----                    When `0` or `true`, use the current buffer.
----                    - remap: (boolean) Make the mapping recursive.
----                    This is the inverse of the "noremap" option from |nvim_set_keymap()|.
----                    Defaults to `false`.
+---@param opts table|nil A table of |:map-arguments|.
+---                      + Accepts options accepted by the {opts} parameter in |nvim_set_keymap()|,
+---                        with the following notable differences:
+---                        - replace_keycodes: Defaults to `true` if "expr" is `true`.
+---                        - noremap: Always overridden with the inverse of "remap" (see below).
+---                      + In addition to those options, the table accepts the following keys:
+---                        - buffer: (number or boolean) Add a mapping to the given buffer.
+---                        When `0` or `true`, use the current buffer.
+---                        - remap: (boolean) Make the mapping recursive.
+---                        This is the inverse of the "noremap" option from |nvim_set_keymap()|.
+---                        Defaults to `false`.
 ---@see |nvim_set_keymap()|
 function keymap.set(mode, lhs, rhs, opts)
   vim.validate({
@@ -57,7 +57,6 @@ function keymap.set(mode, lhs, rhs, opts)
   })
 
   opts = vim.deepcopy(opts) or {}
-  local is_rhs_luaref = type(rhs) == 'function'
   mode = type(mode) == 'string' and { mode } or mode
 
   if opts.expr and opts.replace_keycodes ~= false then
@@ -73,7 +72,7 @@ function keymap.set(mode, lhs, rhs, opts)
     opts.remap = nil
   end
 
-  if is_rhs_luaref then
+  if type(rhs) == 'function' then
     opts.callback = rhs
     rhs = ''
   end
@@ -99,9 +98,9 @@ end
 ---
 ---   vim.keymap.del({'n', 'i', 'v'}, '<leader>w', { buffer = 5 })
 --- </pre>
----@param opts table A table of optional arguments:
----                  - buffer: (number or boolean) Remove a mapping from the given buffer.
----                  When "true" or 0, use the current buffer.
+---@param opts table|nil A table of optional arguments:
+---                      - buffer: (number or boolean) Remove a mapping from the given buffer.
+---                      When "true" or 0, use the current buffer.
 ---@see |vim.keymap.set()|
 ---
 function keymap.del(modes, lhs, opts)
