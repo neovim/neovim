@@ -1719,6 +1719,46 @@ describe('LSP', function()
     end)
   end)
 
+  describe('apply_text_edits regression tests for #20116', function()
+    before_each(function()
+      insert(dedent([[
+      Test line one
+      Test line two 21 char]]))
+    end)
+    describe('with LSP end column out of bounds and start column at 0', function()
+      it('applies edits at the end of the buffer', function()
+        local edits = {
+          make_edit(0, 0, 1, 22, {'#include "whatever.h"\r\n#include <algorithm>\r'});
+        }
+        exec_lua('vim.lsp.util.apply_text_edits(...)', edits, 1, "utf-8")
+        eq({'#include "whatever.h"', '#include <algorithm>'}, buf_lines(1))
+      end)
+      it('applies edits in the middle of the buffer', function()
+        local edits = {
+          make_edit(0, 0, 0, 22, {'#include "whatever.h"\r\n#include <algorithm>\r'});
+        }
+        exec_lua('vim.lsp.util.apply_text_edits(...)', edits, 1, "utf-8")
+        eq({'#include "whatever.h"', '#include <algorithm>', 'Test line two 21 char'}, buf_lines(1))
+      end)
+    end)
+    describe('with LSP end column out of bounds and start column NOT at 0', function()
+      it('applies edits at the end of the buffer', function()
+        local edits = {
+          make_edit(0, 2, 1, 22, {'#include "whatever.h"\r\n#include <algorithm>\r'});
+        }
+        exec_lua('vim.lsp.util.apply_text_edits(...)', edits, 1, "utf-8")
+        eq({'Te#include "whatever.h"', '#include <algorithm>'}, buf_lines(1))
+      end)
+      it('applies edits in the middle of the buffer', function()
+        local edits = {
+          make_edit(0, 2, 0, 22, {'#include "whatever.h"\r\n#include <algorithm>\r'});
+        }
+        exec_lua('vim.lsp.util.apply_text_edits(...)', edits, 1, "utf-8")
+        eq({'Te#include "whatever.h"', '#include <algorithm>', 'Test line two 21 char'}, buf_lines(1))
+      end)
+    end)
+  end)
+
   describe('apply_text_document_edit', function()
     local target_bufnr
     local text_document_edit = function(editVersion)
