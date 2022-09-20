@@ -2212,7 +2212,7 @@ del({modes}, {lhs}, {opts})                                 *vim.keymap.del()*
 <
 
     Parameters: ~
-        {opts}  (table) A table of optional arguments:
+        {opts}  (table|nil) A table of optional arguments:
                 • buffer: (number or boolean) Remove a mapping from the given
                   buffer. When "true" or 0, use the current buffer.
 
@@ -2257,7 +2257,7 @@ set({mode}, {lhs}, {rhs}, {opts})                           *vim.keymap.set()*
         {lhs}   (string) Left-hand side |{lhs}| of the mapping.
         {rhs}   string|function Right-hand side |{rhs}| of the mapping. Can
                 also be a Lua function.
-        {opts}  (table) A table of |:map-arguments|.
+        {opts}  (table|nil) A table of |:map-arguments|.
                 • Accepts options accepted by the {opts} parameter in
                   |nvim_set_keymap()|, with the following notable differences:
                   • replace_keycodes: Defaults to `true` if "expr" is `true`.
