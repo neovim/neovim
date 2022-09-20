@@ -936,15 +936,6 @@ void hl_msg_free(HlMessage hl_msg)
   kv_destroy(hl_msg);
 }
 
-#define LINE_BUFFER_SIZE 4096
-
-void add_hl_msg_hist(HlMessage hl_msg)
-{
-  if (kv_size(hl_msg)) {
-    add_msg_hist_multiattr(NULL, 0, 0, true, hl_msg);
-  }
-}
-
 /// @param[in]  len  Length of s or -1.
 static void add_msg_hist(const char *s, int len, int attr, bool multiline)
 {
