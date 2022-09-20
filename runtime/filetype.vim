@@ -300,6 +300,9 @@ au BufNewFile,BufRead cfengine.conf		setf cfengine
 " ChaiScript
 au BufRead,BufNewFile *.chai			setf chaiscript
 
+" Chatito
+au BufNewFile,BufRead *.chatito			setf chatito
+
 " Comshare Dimension Definition Language
 au BufNewFile,BufRead *.cdl			setf cdl
 
