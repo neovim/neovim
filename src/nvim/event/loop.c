@@ -58,9 +58,9 @@ bool loop_uv_run(Loop *loop, int ms, bool once)
     mode = UV_RUN_NOWAIT;
   }
 
-  do {
+  do {  // -V1044
     uv_run(&loop->uv, mode);
-  } while (ms > 0 && !once && !*timeout_expired);
+  } while (ms > 0 && !once && !*timeout_expired);  // -V560
 
   if (ms > 0) {
     uv_timer_stop(&loop->poll_timer);
