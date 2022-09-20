@@ -21,13 +21,15 @@ local function man_system(cmd, silent)
   local done = false
   local exit_code
 
-  local handle = vim.loop.spawn(cmd[1], {
+  local handle
+  handle = vim.loop.spawn(cmd[1], {
     args = vim.list_slice(cmd, 2),
     stdio = { nil, stdout, stderr },
   }, function(code)
     exit_code = code
     stdout:close()
     stderr:close()
+    handle:close()
     done = true
   end)
 
@@ -52,7 +54,7 @@ local function man_system(cmd, silent)
 
   if not done then
     if handle then
-      vim.loop.shutdown(handle)
+      handle:close()
       stdout:close()
       stderr:close()
     end
