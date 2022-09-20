@@ -202,6 +202,7 @@ local extension = {
     return require('vim.filetype.detect').change(bufnr)
   end,
   chs = 'chaskell',
+  chatito = 'chatito',
   chopro = 'chordpro',
   crd = 'chordpro',
   crdpro = 'chordpro',

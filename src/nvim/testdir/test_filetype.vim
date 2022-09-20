@@ -108,6 +108,7 @@ let s:filename_checks = {
     \ 'ch': ['file.chf'],
     \ 'chaiscript': ['file.chai'],
     \ 'chaskell': ['file.chs'],
+    \ 'chatito': ['file.chatito'],
     \ 'chill': ['file..ch'],
     \ 'chordpro': ['file.chopro', 'file.crd', 'file.cho', 'file.crdpro', 'file.chordpro'],
     \ 'cl': ['file.eni'],
