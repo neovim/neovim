@@ -894,7 +894,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
       } else {
         // Long line, use only the last SPWORDLEN bytes.
         nextlinecol = (int)v - SPWORDLEN;
-        memmove(nextline, line + nextlinecol, SPWORDLEN);  // -V512
+        memmove(nextline, line + nextlinecol, SPWORDLEN);  // -V1086
         nextline_idx = SPWORDLEN + 1;
       }
     }
