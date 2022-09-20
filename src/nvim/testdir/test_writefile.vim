@@ -216,6 +216,12 @@ func Test_saveas()
   syntax off
   %bw!
   call delete('Xsaveas.pl')
+
+  " :saveas fails for "nofile" buffer
+  set buftype=nofile
+  call assert_fails('saveas Xsafile', 'E676: No matching autocommands for buftype=nofile buffer')
+
+  bwipe!
 endfunc
 
 func Test_write_errors()
