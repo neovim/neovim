@@ -178,13 +178,15 @@ describe('cmdline', function()
     local screen = Screen.new(60, 6)
     screen:set_default_attr_ids({
       [0] = {bold = true, foreground = Screen.colors.Blue},  -- NonText
-      [1] = {bold = true, reverse = true},  -- MsgSeparator
+      [1] = {bold = true, reverse = true},  -- MsgSeparator, StatusLine
     })
     screen:attach()
     exec([[
-      set cmdheight=2
+      set laststatus=2
+      set statusline=%=:%{getcmdline()}
       autocmd CmdlineChanged * if getcmdline() == 'foobar' | redrawstatus | endif
     ]])
+    -- :redrawstatus is postponed if messages have scrolled
     feed([[:echo "one\ntwo\nthree\nfour"<CR>]])
     feed(':foobar')
     screen:expect([[
@@ -193,6 +195,16 @@ describe('cmdline', function()
       two                                                         |
       three                                                       |
       four                                                        |
+      :foobar^                                                     |
+    ]])
+    -- it is not postponed if messages have not scrolled
+    feed('<Esc>:foobar')
+    screen:expect([[
+                                                                  |
+      {0:~                                                           }|
+      {0:~                                                           }|
+      {0:~                                                           }|
+      {1:                                                     :foobar}|
       :foobar^                                                     |
     ]])
   end)

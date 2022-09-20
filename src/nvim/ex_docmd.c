@@ -6094,7 +6094,7 @@ static void ex_redrawstatus(exarg_T *eap)
   } else {
     status_redraw_curbuf();
   }
-  if (State & MODE_CMDLINE) {
+  if (msg_scrolled) {
     return;  // redraw later
   }
 

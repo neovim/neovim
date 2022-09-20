@@ -152,15 +152,20 @@ func Test_redrawstatus_in_autocmd()
   CheckScreendump
 
   let lines =<< trim END
-      set cmdheight=2
+      set laststatus=2
+      set statusline=%=:%{getcmdline()}
       autocmd CmdlineChanged * if getcmdline() == 'foobar' | redrawstatus | endif
   END
   call writefile(lines, 'XTest_redrawstatus', 'D')
 
   let buf = RunVimInTerminal('-S XTest_redrawstatus', {'rows': 8})
+  " :redrawstatus is postponed if messages have scrolled
   call term_sendkeys(buf, ":echo \"one\\ntwo\\nthree\\nfour\"\<CR>")
   call term_sendkeys(buf, ":foobar")
   call VerifyScreenDump(buf, 'Test_redrawstatus_in_autocmd_1', {})
+  " it is not postponed if messages have not scrolled
+  call term_sendkeys(buf, "\<Esc>:foobar")
+  call VerifyScreenDump(buf, 'Test_redrawstatus_in_autocmd_2', {})
 
   " clean up
   call term_sendkeys(buf, "\<CR>")
