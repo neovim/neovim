@@ -596,10 +596,10 @@ void msg_source(int attr)
   }
   recursive = true;
 
-  msg_scroll = true;  // this will take more than one line
   no_wait_return++;
   char *p = get_emsg_source();
   if (p != NULL) {
+    msg_scroll = true;  // this will take more than one line
     msg_attr(p, attr);
     xfree(p);
   }
@@ -739,7 +739,7 @@ static bool emsg_multiline(const char *s, bool multiline)
   }
 
   // Display name and line number for the source of the error.
-  // Sets "msg_scroll".
+  msg_scroll = true;
   msg_source(attr);
 
   // Display the error message itself.
