@@ -154,7 +154,7 @@ func Test_redrawstatus_in_autocmd()
   let lines =<< trim END
       set laststatus=2
       set statusline=%=:%{getcmdline()}
-      autocmd CmdlineChanged * if getcmdline() == 'foobar' | redrawstatus | endif
+      autocmd CmdlineChanged * redrawstatus
   END
   call writefile(lines, 'XTest_redrawstatus', 'D')
 
@@ -164,8 +164,17 @@ func Test_redrawstatus_in_autocmd()
   call term_sendkeys(buf, ":foobar")
   call VerifyScreenDump(buf, 'Test_redrawstatus_in_autocmd_1', {})
   " it is not postponed if messages have not scrolled
-  call term_sendkeys(buf, "\<Esc>:foobar")
+  call term_sendkeys(buf, "\<Esc>:for in in range(3)")
   call VerifyScreenDump(buf, 'Test_redrawstatus_in_autocmd_2', {})
+  " with cmdheight=1 messages have scrolled when typing :endfor
+  call term_sendkeys(buf, "\<CR>:endfor")
+  call VerifyScreenDump(buf, 'Test_redrawstatus_in_autocmd_3', {})
+  call term_sendkeys(buf, "\<CR>:set cmdheight=2\<CR>")
+  " with cmdheight=2 messages haven't scrolled when typing :for or :endfor
+  call term_sendkeys(buf, ":for in in range(3)")
+  call VerifyScreenDump(buf, 'Test_redrawstatus_in_autocmd_4', {})
+  call term_sendkeys(buf, "\<CR>:endfor")
+  call VerifyScreenDump(buf, 'Test_redrawstatus_in_autocmd_5', {})
 
   " clean up
   call term_sendkeys(buf, "\<CR>")

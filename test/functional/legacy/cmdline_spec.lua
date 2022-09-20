@@ -175,7 +175,7 @@ describe('cmdline', function()
 
   -- oldtest: Test_redrawstatus_in_autocmd()
   it(':redrawstatus in cmdline mode', function()
-    local screen = Screen.new(60, 6)
+    local screen = Screen.new(60, 8)
     screen:set_default_attr_ids({
       [0] = {bold = true, foreground = Screen.colors.Blue},  -- NonText
       [1] = {bold = true, reverse = true},  -- MsgSeparator, StatusLine
@@ -184,13 +184,16 @@ describe('cmdline', function()
     exec([[
       set laststatus=2
       set statusline=%=:%{getcmdline()}
-      autocmd CmdlineChanged * if getcmdline() == 'foobar' | redrawstatus | endif
+      autocmd CmdlineChanged * redrawstatus
+      set display-=msgsep
     ]])
     -- :redrawstatus is postponed if messages have scrolled
     feed([[:echo "one\ntwo\nthree\nfour"<CR>]])
     feed(':foobar')
     screen:expect([[
-      {1:                                                            }|
+      {0:~                                                           }|
+      {0:~                                                           }|
+      {1:                               :echo "one\ntwo\nthree\nfour"}|
       one                                                         |
       two                                                         |
       three                                                       |
@@ -198,14 +201,52 @@ describe('cmdline', function()
       :foobar^                                                     |
     ]])
     -- it is not postponed if messages have not scrolled
-    feed('<Esc>:foobar')
+    feed('<Esc>:for in in range(3)')
     screen:expect([[
                                                                   |
       {0:~                                                           }|
       {0:~                                                           }|
       {0:~                                                           }|
-      {1:                                                     :foobar}|
-      :foobar^                                                     |
+      {0:~                                                           }|
+      {0:~                                                           }|
+      {1:                                         :for in in range(3)}|
+      :for in in range(3)^                                         |
+    ]])
+    -- with cmdheight=1 messages have scrolled when typing :endfor
+    feed('<CR>:endfor')
+    screen:expect([[
+      {0:~                                                           }|
+      {0:~                                                           }|
+      {0:~                                                           }|
+      {0:~                                                           }|
+      {0:~                                                           }|
+      {1:                                         :for in in range(3)}|
+      :for in in range(3)                                         |
+      :  :endfor^                                                  |
+    ]])
+    feed('<CR>:set cmdheight=2<CR>')
+    -- with cmdheight=2 messages haven't scrolled when typing :for or :endfor
+    feed(':for in in range(3)')
+    screen:expect([[
+                                                                  |
+      {0:~                                                           }|
+      {0:~                                                           }|
+      {0:~                                                           }|
+      {0:~                                                           }|
+      {1:                                         :for in in range(3)}|
+      :for in in range(3)^                                         |
+                                                                  |
+    ]])
+    feed('<CR>:endfor')
+    screen:expect([[
+                                                                  |
+      {0:~                                                           }|
+      {0:~                                                           }|
+      {0:~                                                           }|
+      {0:~                                                           }|
+      {1:                                                    ::endfor}|
+      :for in in range(3)                                         |
+      :  :endfor^                                                  |
     ]])
   end)
 end)
