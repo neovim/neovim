@@ -127,6 +127,46 @@ func Test_wildmenu_screendump()
   call delete('XTest_wildmenu')
 endfunc
 
+func Test_redraw_in_autocmd()
+  CheckScreendump
+
+  let lines =<< trim END
+      set cmdheight=2
+      autocmd CmdlineChanged * redraw
+  END
+  call writefile(lines, 'XTest_redraw', 'D')
+
+  let buf = RunVimInTerminal('-S XTest_redraw', {'rows': 8})
+  call term_sendkeys(buf, ":for i in range(3)\<CR>")
+  call VerifyScreenDump(buf, 'Test_redraw_in_autocmd_1', {})
+
+  call term_sendkeys(buf, "let i =")
+  call VerifyScreenDump(buf, 'Test_redraw_in_autocmd_2', {})
+
+  " clean up
+  call term_sendkeys(buf, "\<CR>")
+  call StopVimInTerminal(buf)
+endfunc
+
+func Test_redrawstatus_in_autocmd()
+  CheckScreendump
+
+  let lines =<< trim END
+      set cmdheight=2
+      autocmd CmdlineChanged * if getcmdline() == 'foobar' | redrawstatus | endif
+  END
+  call writefile(lines, 'XTest_redrawstatus', 'D')
+
+  let buf = RunVimInTerminal('-S XTest_redrawstatus', {'rows': 8})
+  call term_sendkeys(buf, ":echo \"one\\ntwo\\nthree\\nfour\"\<CR>")
+  call term_sendkeys(buf, ":foobar")
+  call VerifyScreenDump(buf, 'Test_redrawstatus_in_autocmd_1', {})
+
+  " clean up
+  call term_sendkeys(buf, "\<CR>")
+  call StopVimInTerminal(buf)
+endfunc
+
 func Test_changing_cmdheight()
   CheckScreendump
 

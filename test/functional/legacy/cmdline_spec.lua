@@ -140,6 +140,62 @@ describe('cmdline', function()
       :^                             |
     ]])
   end)
+
+  -- oldtest: Test_redraw_in_autocmd()
+  it('cmdline cursor position is correct after :redraw with cmdheight=2', function()
+    local screen = Screen.new(30, 6)
+    screen:set_default_attr_ids({
+      [0] = {bold = true, foreground = Screen.colors.Blue},  -- NonText
+    })
+    screen:attach()
+    exec([[
+      set cmdheight=2
+      autocmd CmdlineChanged * redraw
+    ]])
+    feed(':for i in range(3)<CR>')
+    screen:expect([[
+                                    |
+      {0:~                             }|
+      {0:~                             }|
+      {0:~                             }|
+      :for i in range(3)            |
+      :  ^                           |
+    ]])
+    feed(':let i =')
+    -- Note: this may still be considered broken, ref #18140
+    screen:expect([[
+                                    |
+      {0:~                             }|
+      {0:~                             }|
+      {0:~                             }|
+      :  :let i =^                   |
+                                    |
+    ]])
+  end)
+
+  -- oldtest: Test_redrawstatus_in_autocmd()
+  it(':redrawstatus in cmdline mode', function()
+    local screen = Screen.new(60, 6)
+    screen:set_default_attr_ids({
+      [0] = {bold = true, foreground = Screen.colors.Blue},  -- NonText
+      [1] = {bold = true, reverse = true},  -- MsgSeparator
+    })
+    screen:attach()
+    exec([[
+      set cmdheight=2
+      autocmd CmdlineChanged * if getcmdline() == 'foobar' | redrawstatus | endif
+    ]])
+    feed([[:echo "one\ntwo\nthree\nfour"<CR>]])
+    feed(':foobar')
+    screen:expect([[
+      {1:                                                            }|
+      one                                                         |
+      two                                                         |
+      three                                                       |
+      four                                                        |
+      :foobar^                                                     |
+    ]])
+  end)
 end)
 
 describe('cmdwin', function()
