@@ -1,3 +1,9 @@
+# This is technically a dev dependency. However, since we run some tests with
+# the minimum cmake version in our CI, then the required minimum version has to
+# be the same as the actual neovim's minimum version defined in the top
+# CMakeLists.txt.
+cmake_minimum_required(VERSION 3.10)
+
 # Set LC_ALL to meet expectations of some locale-sensitive tests.
 set(ENV{LC_ALL} "en_US.UTF-8")
 

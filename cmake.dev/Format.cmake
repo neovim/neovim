@@ -1,3 +1,5 @@
+cmake_minimum_required(VERSION 3.10)
+
 # Returns a list of all files that has been changed in current branch compared
 # to master branch. This includes unstaged, staged and committed files.
 function(get_changed_files outvar)

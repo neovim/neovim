@@ -13,7 +13,7 @@ and *old tests* ([src/nvim/testdir/](https://github.com/neovim/neovim/tree/maste
 You can learn the [key concepts of Lua in 15 minutes](http://learnxinyminutes.com/docs/lua/).
 Use any existing test as a template to start writing new tests.
 
-Tests are run by `/cmake/RunTests.cmake` file, using `busted` (a Lua test-runner).
+Tests are run by `/cmake.dev/RunTests.cmake` file, using `busted` (a Lua test-runner).
 For some failures, `.nvimlog` (or `$NVIM_LOG_FILE`) may provide insight.
 
 Depending on the presence of binaries (e.g., `xclip`) some tests will be

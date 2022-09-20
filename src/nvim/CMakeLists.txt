@@ -760,7 +760,7 @@ add_custom_target(uncrustify-version
   COMMAND ${CMAKE_COMMAND}
     -D UNCRUSTIFY_PRG=${UNCRUSTIFY_PRG}
     -D CONFIG_FILE=${PROJECT_SOURCE_DIR}/src/uncrustify.cfg
-    -P ${PROJECT_SOURCE_DIR}/cmake/CheckUncrustifyVersion.cmake)
+    -P ${PROJECT_SOURCE_DIR}/cmake.dev/CheckUncrustifyVersion.cmake)
 
 add_glob_targets(
   TARGET lintuncrustify
@@ -774,7 +774,7 @@ add_custom_target(formatc
   COMMAND ${CMAKE_COMMAND}
     -D FORMAT_PRG=${UNCRUSTIFY_PRG}
     -D LANG=c
-    -P ${PROJECT_SOURCE_DIR}/cmake/Format.cmake
+    -P ${PROJECT_SOURCE_DIR}/cmake.dev/Format.cmake
   WORKING_DIRECTORY ${PROJECT_SOURCE_DIR})
 add_dependencies(formatc uncrustify-version)
 

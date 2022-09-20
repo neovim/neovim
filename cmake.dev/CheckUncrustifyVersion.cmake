@@ -1,3 +1,5 @@
+cmake_minimum_required(VERSION 3.10)
+
 if(UNCRUSTIFY_PRG)
   execute_process(COMMAND uncrustify --version
     OUTPUT_VARIABLE user_version

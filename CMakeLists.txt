@@ -667,7 +667,7 @@ add_custom_target(formatlua
   COMMAND ${CMAKE_COMMAND}
     -D FORMAT_PRG=${STYLUA_PRG}
     -D LANG=lua
-    -P ${PROJECT_SOURCE_DIR}/cmake/Format.cmake
+    -P ${PROJECT_SOURCE_DIR}/cmake.dev/Format.cmake
   WORKING_DIRECTORY ${PROJECT_SOURCE_DIR})
 
 add_custom_target(format)
@@ -721,7 +721,7 @@ if(BUSTED_PRG)
         -DTEST_DIR=${CMAKE_CURRENT_SOURCE_DIR}/test
         -DBUILD_DIR=${CMAKE_BINARY_DIR}
         -DTEST_TYPE=unit
-        -P ${PROJECT_SOURCE_DIR}/cmake/RunTests.cmake
+        -P ${PROJECT_SOURCE_DIR}/cmake.dev/RunTests.cmake
       DEPENDS ${UNITTEST_PREREQS}
       ${TEST_TARGET_ARGS})
     set_target_properties(unittest PROPERTIES FOLDER test)
@@ -751,7 +751,7 @@ if(BUSTED_PRG)
       -DTEST_DIR=${CMAKE_CURRENT_SOURCE_DIR}/test
       -DBUILD_DIR=${CMAKE_BINARY_DIR}
       -DTEST_TYPE=functional
-      -P ${PROJECT_SOURCE_DIR}/cmake/RunTests.cmake
+      -P ${PROJECT_SOURCE_DIR}/cmake.dev/RunTests.cmake
     DEPENDS ${FUNCTIONALTEST_PREREQS}
     ${TEST_TARGET_ARGS})
   set_target_properties(functionaltest PROPERTIES FOLDER test)
@@ -766,7 +766,7 @@ if(BUSTED_PRG)
       -DTEST_DIR=${CMAKE_CURRENT_SOURCE_DIR}/test
       -DBUILD_DIR=${CMAKE_BINARY_DIR}
       -DTEST_TYPE=benchmark
-      -P ${PROJECT_SOURCE_DIR}/cmake/RunTests.cmake
+      -P ${PROJECT_SOURCE_DIR}/cmake.dev/RunTests.cmake
     DEPENDS ${BENCHMARK_PREREQS}
     ${TEST_TARGET_ARGS})
   set_target_properties(benchmark PROPERTIES FOLDER test)
@@ -783,7 +783,7 @@ if(BUSTED_LUA_PRG)
       -DTEST_DIR=${CMAKE_CURRENT_SOURCE_DIR}/test
       -DBUILD_DIR=${CMAKE_BINARY_DIR}
       -DTEST_TYPE=functional
-      -P ${PROJECT_SOURCE_DIR}/cmake/RunTests.cmake
+      -P ${PROJECT_SOURCE_DIR}/cmake.dev/RunTests.cmake
     DEPENDS ${FUNCTIONALTEST_PREREQS}
     ${TEST_TARGET_ARGS})
     set_target_properties(functionaltest-lua PROPERTIES FOLDER test)
