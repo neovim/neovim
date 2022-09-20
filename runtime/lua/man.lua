@@ -1,5 +1,3 @@
-require('vim.compat')
-
 local api, fn = vim.api, vim.fn
 
 local find_arg = '-w'
