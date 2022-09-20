@@ -10,6 +10,43 @@ before_each(clear)
 describe('messages', function()
   local screen
 
+  -- oldtest: Test_warning_scroll()
+  it('a warning causes scrolling if and only if it has a stacktrace', function()
+    screen = Screen.new(75, 6)
+    screen:set_default_attr_ids({
+      [0] = {bold = true, foreground = Screen.colors.Blue},  -- NonText
+      [1] = {bold = true, foreground = Screen.colors.SeaGreen},  -- MoreMsg
+      [2] = {bold = true, reverse = true},  -- MsgSeparator
+      [3] = {foreground = Screen.colors.Red},  -- WarningMsg
+    })
+    screen:attach()
+
+    -- When the warning comes from a script, messages are scrolled so that the
+    -- stacktrace is visible.
+    -- It is a bit hard to assert the screen when sourcing a script, so skip this part.
+
+    -- When the warning does not come from a script, messages are not scrolled.
+    command('enew')
+    command('set readonly')
+    feed('u')
+    screen:expect({grid = [[
+                                                                                 |
+      {0:~                                                                          }|
+      {0:~                                                                          }|
+      {0:~                                                                          }|
+      {0:~                                                                          }|
+      {3:W10: Warning: Changing a readonly file}^                                     |
+    ]], timeout = 500})
+    screen:expect([[
+      ^                                                                           |
+      {0:~                                                                          }|
+      {0:~                                                                          }|
+      {0:~                                                                          }|
+      {0:~                                                                          }|
+      Already at oldest change                                                   |
+    ]])
+  end)
+
   describe('more prompt', function()
     before_each(function()
       screen = Screen.new(75, 6)
