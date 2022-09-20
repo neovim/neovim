@@ -629,16 +629,18 @@ static int get_title_texts_len(VirtText title_chunks)
 
 static void redr_title_texts(win_T *wp, ScreenGrid *grid, int col)
 {
-  char *text;
-  VirtText title_chunks = wp->w_float_config.title_chunks;
   char *title_text = wp->w_float_config.title_text;
 
   if (title_text != NULL) {
     int len = (int)strlen(title_text);
     int attr = wp->w_float_config.title_attr;
     grid_puts_len(grid, title_text, len, 0, col, attr);
+    XFREE_CLEAR(wp->w_float_config.title_text);
     return;
   }
+
+  char *text;
+  VirtText title_chunks = wp->w_float_config.title_chunks;
 
   for (size_t i = 0; i < title_chunks.size; i++) {
     text = title_chunks.items[i].text;
@@ -648,6 +650,7 @@ static void redr_title_texts(win_T *wp, ScreenGrid *grid, int col)
     grid_puts_len(grid, text, len, 0, col, attr);
     col += len;
   }
+  clear_virttext(&wp->w_float_config.title_chunks);
 }
 
 static void win_redr_border(win_T *wp)

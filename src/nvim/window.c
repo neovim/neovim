@@ -801,21 +801,6 @@ void win_config_float(win_T *wp, FloatConfig fconfig)
     }
   }
 
-  if (!fconfig.title && wp->w_float_config.title) {
-    XFREE_CLEAR(wp->w_float_config.title_text);
-    clear_virttext(&wp->w_float_config.title_chunks);
-  }
-
-  if (has_border && fconfig.title) {
-    if (wp->w_float_config.title_text != NULL && kv_size(fconfig.title_chunks) > 0) {
-      XFREE_CLEAR(wp->w_float_config.title_text);
-      wp->w_float_config.title_chunks = fconfig.title_chunks;
-    } else if (kv_size(wp->w_float_config.title_chunks) > 0 && fconfig.title_text != NULL) {
-      clear_virttext(&wp->w_float_config.title_chunks);
-      wp->w_float_config.title_text = fconfig.title_text;
-    }
-  }
-
   if (!ui_has(kUIMultigrid)) {
     wp->w_height = MIN(wp->w_height, Rows - 1 - win_border_height(wp));
     wp->w_width = MIN(wp->w_width, Columns - win_border_width(wp));

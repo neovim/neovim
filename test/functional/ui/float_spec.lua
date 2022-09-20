@@ -1735,7 +1735,7 @@ describe('float window', function()
                                              ' BORDAA  '})
       local win = meths.open_win(buf, false, {
         relative='editor', width=9, height=2, row=2, col=5, border="double",
-        title = "Title",title_pos = "left",
+        title = "Left",title_pos = "left",
       })
 
       if multigrid then
@@ -1758,7 +1758,7 @@ describe('float window', function()
         ## grid 3
                                                   |
         ## grid 5
-          {5:╔}Title{5:════╗}|
+          {5:╔}Left{5:═════╗}|
           {5:║}{1: halloj! }{5:║}|
           {5:║}{1: BORDAA  }{5:║}|
           {5:╚═════════╝}|
@@ -1772,7 +1772,7 @@ describe('float window', function()
         screen:expect{grid=[[
           ^                                        |
           {0:~                                       }|
-          {0:~    }{5:╔}Title{5:════╗}{0:                        }|
+          {0:~    }{5:╔}Left{5:═════╗}{0:                        }|
           {0:~    }{5:║}{1: halloj! }{5:║}{0:                        }|
           {0:~    }{5:║}{1: BORDAA  }{5:║}{0:                        }|
           {0:~    }{5:╚═════════╝}{0:                        }|
@@ -1780,7 +1780,7 @@ describe('float window', function()
         ]]}
       end
 
-      meths.win_set_config(win, {border="double",title= "TestA",title_pos="right"})
+      meths.win_set_config(win, {border="double",title= "Right",title_pos="right"})
       if multigrid then
         screen:expect{grid=[[
         ## grid 1
@@ -1801,7 +1801,7 @@ describe('float window', function()
         ## grid 3
                                                   |
         ## grid 5
-          {5:╔════}TestA{5:╗}|
+          {5:╔════}Right{5:╗}|
           {5:║}{1: halloj! }{5:║}|
           {5:║}{1: BORDAA  }{5:║}|
           {5:╚═════════╝}|
@@ -1815,7 +1815,7 @@ describe('float window', function()
         screen:expect{grid=[[
           ^                                        |
           {0:~                                       }|
-          {0:~    }{5:╔════}TestA{5:╗}{0:                        }|
+          {0:~    }{5:╔════}Right{5:╗}{0:                        }|
           {0:~    }{5:║}{1: halloj! }{5:║}{0:                        }|
           {0:~    }{5:║}{1: BORDAA  }{5:║}{0:                        }|
           {0:~    }{5:╚═════════╝}{0:                        }|
