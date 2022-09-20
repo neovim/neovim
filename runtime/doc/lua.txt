@@ -1090,6 +1090,20 @@ Example: >
     vim.g.foo = nil   -- Delete (:unlet) the Vimscript variable.
     vim.b[2].foo = 6  -- Set b:foo for buffer 2
 <
+
+Note that setting dictionary fields directly will not write them back into
+Nvim. This is because the index into the namespace simply returns a copy.
+Instead the whole dictionary must be written as one. This can be achieved by
+creating a short-lived temporary.
+
+Example: >
+
+    vim.g.my_dict.field1 = 'value'  -- Does not work
+
+    local my_dict = vim.g.my_dict   --
+    my_dict.field1 = 'value'        -- Instead do
+    vim.g.my_dict = my_dict         --
+
 vim.g                                                                  *vim.g*
     Global (|g:|) editor variables.
     Key with no value returns `nil`.
@@ -1133,32 +1147,23 @@ Vim options can be accessed through |vim.o|, which behaves like Vimscript
     Examples: ~
 
     To set a boolean toggle:
-        In Vimscript:
-            `set number`
-
-        In Lua:
-            `vim.o.number = true`
+        Vimscript: `set number`
+        Lua:       `vim.o.number = true`
 
     To set a string value:
-        In Vimscript:
-            `set wildignore=*.o,*.a,__pycache__`
+        Vimscript: `set wildignore=*.o,*.a,__pycache__`
+        Lua:       `vim.o.wildignore = '*.o,*.a,__pycache__'`
 
-        In Lua:
-            `vim.o.wildignore = '*.o,*.a,__pycache__'`
-
-Similarly, there exist |vim.bo| and |vim.wo| for setting buffer-local and
-window-local options, respectively, similarly to |:setlocal|. There is also
-|vim.go| that only sets the global value of a |global-local| option, see
-|:setglobal|. The following table summarizes this relation.
-
-    lua            command      global_value       local_value ~
-vim.o           :set                set                set
-vim.bo/vim.wo   :setlocal            -                 set
-vim.go          :setglobal          set                 -
-
+Similarly, there is |vim.bo| and |vim.wo| for setting buffer-scoped and
+window-scoped options. Note that this must NOT be confused with
+|local-options| and |:setlocal|. There is also |vim.go| that only accesses the
+global value of a |global-local| option, see |:setglobal|.
 
 vim.o                                                                  *vim.o*
-    Get or set editor options, like |:set|. Invalid key is an error.
+    Get or set an |option|. Like `:set`. Invalid key is an error.
+
+    Note: this works on both buffer-scoped and window-scoped options using the
+    current buffer and window.
 
     Example: >
         vim.o.cmdheight = 4
@@ -1166,14 +1171,12 @@ vim.o                                                                  *vim.o*
         print(vim.o.foo)     -- error: invalid key
 <
 vim.go                                                                *vim.go*
-    Get or set an |option|. Invalid key is an error.
+    Get or set a global |option|. Like `:setglobal`. Invalid key is
+    an error.
 
-    This is a wrapper around |nvim_set_option_value()| and
-    |nvim_get_option_value()|.
-
-    NOTE: This is different from |vim.o| because this ONLY sets the global
-    option, which generally produces confusing behavior for options with
-    |global-local| values.
+    Note: this is different from |vim.o| because this accesses the global
+    option value and thus is mostly useful for use with |global-local|
+    options.
 
     Example: >
         vim.go.cmdheight = 4
@@ -1181,12 +1184,11 @@ vim.go                                                                *vim.go*
         print(vim.go.bar)     -- error: invalid key
 <
 vim.bo[{bufnr}]                                                                *vim.bo*
-    Get or set buffer-scoped |local-options| for the buffer with number {bufnr}.
-    If [{bufnr}] is omitted, use the current buffer. Invalid {bufnr} or key is
-    an error.
+    Get or set buffer-scoped |options| for the buffer with number {bufnr}.
+    Like `:set` and `:setlocal`. If [{bufnr}] is omitted then the current
+    buffer is used. Invalid {bufnr} or key is an error.
 
-    This is a wrapper around |nvim_set_option_value()| and
-    |nvim_get_option_value()| with `opts = {scope = local, buf = bufnr}` .
+    Note: this is equivalent to both `:set` and `:setlocal`.
 
     Example: >
         local bufnr = vim.api.nvim_get_current_buf()
@@ -1195,13 +1197,14 @@ vim.bo[{bufnr}]                                                                *
         print(vim.bo.baz)                 -- error: invalid key
 <
 vim.wo[{winid}]                                                                *vim.wo*
-    Get or set window-scoped |local-options| for the window with handle {winid}.
-    If [{winid}] is omitted, use the current window. Invalid {winid} or key
-    is an error.
+    Get or set window-scoped |options| for the window with handle {winid}.
+    Like `:set`. If [{winid}] is omitted then the current window is used.
+    Invalid {winid} or key is an error.
 
-    This is a wrapper around |nvim_set_option_value()| and
-    |nvim_get_option_value()| with `opts = {scope = local, win = winid}` .
-
+    Note: this does not access |local-options| (`:setlocal`) instead use: >
+        nvim_get_option_value(OPTION, { scope = 'local', win = winid })
+        nvim_set_option_value(OPTION, VALUE, { scope = 'local', win = winid }
+<
     Example: >
         local winid = vim.api.nvim_get_current_win()
         vim.wo[winid].number = true    -- same as vim.wo.number = true
