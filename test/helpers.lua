@@ -1,4 +1,4 @@
-require('vim.compat')
+require('test.compat')
 local shared = require('vim.shared')
 local assert = require('luassert')
 local luv = require('luv')
