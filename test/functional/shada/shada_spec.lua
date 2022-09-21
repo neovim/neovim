@@ -238,6 +238,15 @@ describe('ShaDa support code', function()
     eq('', meths.get_option('shada'))
   end)
 
+  it('setting &shada gives proper error message on missing number', function()
+    eq([[Vim(set):E526: Missing number after <">: shada="]],
+       exc_exec([[set shada=\"]]))
+    for _, c in ipairs({"'", "/", ":", "<", "@", "s"}) do
+      eq(([[Vim(set):E526: Missing number after <%s>: shada=%s]]):format(c, c),
+         exc_exec(([[set shada=%s]]):format(c)))
+    end
+  end)
+
   it('does not crash when ShaDa file directory is not writable', function()
     if helpers.pending_win32(pending) then return end
 
