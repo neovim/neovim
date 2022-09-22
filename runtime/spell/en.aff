@@ -1,0 +1,466 @@
+SET ISO8859-1
+KEY qwertyuiop|asdfghjkl|zxcvbnm
+TRY esianrtolcdugmphbyfvkwzESIANRTOLCDUGMPHBYFVKWZ'-
+NOSUGGEST !
+
+# ordinal numbers (1st, 2nd, 3th, 11th) and decads (0s, 10s, 1990s)
+COMPOUNDMIN 1
+# only in compounds: 1th, 2th, 3th
+ONLYINCOMPOUND c
+# compound rules:
+# 1. [0-9]*1[0-9]th (10th, 11th, 12th, 56714th, etc.)
+# 2. [0-9]*[02-9](1st|2nd|3rd|[4-9]th) (21st, 22nd, 123rd, 1234th, etc.)
+COMPOUNDRULE 2
+COMPOUNDRULE n*1t
+COMPOUNDRULE n*mp
+WORDCHARS 0123456789'
+
+PFX A Y 1
+PFX A   0     re         .
+
+PFX I Y 1
+PFX I   0     in         .
+
+PFX U Y 1
+PFX U   0     un         .
+
+PFX C Y 1
+PFX C   0     de          .
+
+PFX E Y 1
+PFX E   0     dis         .
+
+PFX F Y 1
+PFX F   0     con         .
+
+PFX K Y 1
+PFX K   0     pro         .
+
+SFX V N 2
+SFX V   e     ive        e
+SFX V   0     ive        [^e]
+
+SFX N Y 3
+SFX N   e     ion        e
+SFX N   y     ication    y 
+SFX N   0     en         [^ey] 
+
+SFX X Y 3
+SFX X   e     ions       e
+SFX X   y     ications   y
+SFX X   0     ens        [^ey]
+
+SFX H N 2
+SFX H   y     ieth       y
+SFX H   0     th         [^y] 
+
+SFX Y Y 1
+SFX Y   0     ly         .
+
+SFX G Y 2
+SFX G   e     ing        e
+SFX G   0     ing        [^e] 
+
+SFX J Y 2
+SFX J   e     ings       e
+SFX J   0     ings       [^e]
+
+SFX D Y 4
+SFX D   0     d          e
+SFX D   y     ied        [^aeiou]y
+SFX D   0     ed         [^ey]
+SFX D   0     ed         [aeiou]y
+
+SFX T N 4
+SFX T   0     st         e
+SFX T   y     iest       [^aeiou]y
+SFX T   0     est        [aeiou]y
+SFX T   0     est        [^ey]
+
+SFX R Y 4
+SFX R   0     r          e
+SFX R   y     ier        [^aeiou]y
+SFX R   0     er         [aeiou]y
+SFX R   0     er         [^ey]
+
+SFX Z Y 4
+SFX Z   0     rs         e
+SFX Z   y     iers       [^aeiou]y
+SFX Z   0     ers        [aeiou]y
+SFX Z   0     ers        [^ey]
+
+SFX S Y 4
+SFX S   y     ies        [^aeiou]y
+SFX S   0     s          [aeiou]y
+SFX S   0     es         [sxzh]
+SFX S   0     s          [^sxzhy]
+
+SFX P Y 3
+SFX P   y     iness      [^aeiou]y
+SFX P   0     ness       [aeiou]y
+SFX P   0     ness       [^y]
+
+SFX M Y 1
+SFX M   0     's         .
+
+SFX B Y 3
+SFX B   0     able       [^aeiou]
+SFX B   0     able       ee
+SFX B   e     able       [^aeiou]e
+
+SFX L Y 1
+SFX L   0     ment       .
+
+REP 97
+REP nt n't
+REP alot a_lot
+REP avengence a_vengeance
+REP ninties 1990s
+REP teached taught
+REP rised rose
+REP a ei
+REP ei a
+REP a ey
+REP ey a
+REP ai ie
+REP ie ai
+REP are air
+REP are ear
+REP are eir
+REP air are
+REP air ere
+REP ere air
+REP ere ear
+REP ere eir
+REP ear are
+REP ear air
+REP ear ere
+REP eir are
+REP eir ere
+REP ch te
+REP te ch
+REP ch ti
+REP ti ch
+REP ch tu
+REP tu ch
+REP ch s
+REP s ch
+REP ch k
+REP k ch
+REP f ph
+REP ph f
+REP gh f
+REP f gh
+REP i igh
+REP igh i
+REP i uy
+REP uy i
+REP i ee
+REP ee i
+REP j di
+REP di j
+REP j gg
+REP gg j
+REP j ge
+REP ge j
+REP s ti
+REP ti s
+REP s ci
+REP ci s
+REP k cc
+REP cc k
+REP k qu
+REP qu k
+REP kw qu
+REP o eau
+REP eau o
+REP o ew
+REP ew o
+REP oo ew
+REP ew oo
+REP ew ui
+REP ui ew
+REP oo ui
+REP ui oo
+REP ew u
+REP u ew
+REP oo u
+REP u oo
+REP u oe
+REP oe u
+REP u ieu
+REP ieu u
+REP ue ew
+REP ew ue
+REP uff ough
+REP oo ieu
+REP ieu oo
+REP ier ear
+REP ear ier
+REP ear air
+REP air ear
+REP w qu
+REP qu w
+REP z ss
+REP ss z
+REP shun tion
+REP shun sion
+REP shun cion
+REP tion ssion
+REP ys ies
+REP u ough
+
+#   phonetic_english.h - phonetic transformation rules for use with phonetic.c
+#   Copyright (C) 2000 Björn Jacke
+#
+#   This rule set is based on Lawrence Phillips original metaphone 
+#   algorithm with modifications made by Michael Kuhn in his
+#   C implantation, more modifications by Björn Jacke when
+#   converting the algorithm to a rule set and minor 
+#   touch ups by Kevin Atkinson
+#
+#   This library is free software; you can redistribute it and/or
+#   modify it under the terms of the GNU Lesser General Public
+#   License version 2.1 as published by the Free Software Foundation;
+#
+#   This library is distributed in the hope that it will be useful,
+#   but WITHOUT ANY WARRANTY; without even the implied warranty of
+#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+#   Lesser General Public License for more details.
+#
+#   You should have received a copy of the GNU Lesser General Public
+#   License along with this library; if not, write to the Free Software
+#   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+#
+#   Björn Jacke may be reached by email at bjoern.jacke@gmx.de
+#
+#   Changelog:
+#
+#   2000-01-05  Björn Jacke <bjoern.jacke@gmx.de>
+#               - first version with translation rules derived from
+#                 metaphone.cc distributed with aspell 0.28.3
+#               - "TH" is now representated as "@" because "0" is a
+#                 meta character
+#               - removed TH(!vowel) --> T; always use TH --> # instead
+#               - dropped "^AE" -> "E" (redundant)
+#               - "ing" is transformed to "N", not "NK"
+#               - "SCH(EO)" transforms to "SK" now
+#               - added R --> SILENT if (after a vowel) and no (vowel or
+#                 "y" follows) like in "Marcy" or "abort"
+#               - H is SILENT in RH at beginning of words
+#               - H is SILENT if vowel leads and "Y" follows
+#               - some ".OUGH.."  --> ...F exceptions added
+#               - "^V" transforms to "W"
+#   2000-01-07  Kevin Atkinson <kevinatk@home.com>
+#               Converted from header to data file.
+#
+#   2007-08-23  LÃ¡szlÃ³ NÃ©meth <nemeth AT OOo>
+#               Add PHONE header and PHONE keywords
+#
+# version 1.1
+
+# Documentation: http://aspell.net/man-html/Phonetic-Code.html
+
+PHONE 105
+PHONE AH(AEIOUY)-^         *H
+PHONE AR(AEIOUY)-^         *R
+PHONE A(HR)^               *
+PHONE A^                   *
+PHONE AH(AEIOUY)-          H
+PHONE AR(AEIOUY)-          R
+PHONE A(HR)                _
+PHONE BB-                  _
+PHONE B                    B
+PHONE CQ-                  _
+PHONE CIA                  X
+PHONE CH                   X
+PHONE C(EIY)-              S
+PHONE CK                   K
+PHONE COUGH^               KF
+PHONE CC<                  C
+PHONE C                    K
+PHONE DG(EIY)              K
+PHONE DD-                  _
+PHONE D                    T
+PHONE É<                   E
+PHONE EH(AEIOUY)-^         *H
+PHONE ER(AEIOUY)-^         *R
+PHONE E(HR)^               *
+PHONE ENOUGH^$             *NF
+PHONE E^                   *
+PHONE EH(AEIOUY)-          H
+PHONE ER(AEIOUY)-          R
+PHONE E(HR)                _
+PHONE FF-                  _
+PHONE F                    F
+PHONE GN^                  N
+PHONE GN$                  N
+PHONE GNS$                 NS
+PHONE GNED$                N
+PHONE GH(AEIOUY)-          K
+PHONE GH                   _
+PHONE GG9                  K
+PHONE G                    K
+PHONE H                    H
+PHONE IH(AEIOUY)-^         *H
+PHONE IR(AEIOUY)-^         *R
+PHONE I(HR)^               *
+PHONE I^                   *
+PHONE ING6                 N
+PHONE IH(AEIOUY)-          H
+PHONE IR(AEIOUY)-          R
+PHONE I(HR)                _
+PHONE J                    K
+PHONE KN^                  N
+PHONE KK-                  _
+PHONE K                    K
+PHONE LAUGH^               LF
+PHONE LL-                  _
+PHONE L                    L
+PHONE MB$                  M
+PHONE MM                   M
+PHONE M                    M
+PHONE NN-                  _
+PHONE N                    N
+PHONE OH(AEIOUY)-^         *H
+PHONE OR(AEIOUY)-^         *R
+PHONE O(HR)^               *
+PHONE O^                   *
+PHONE OH(AEIOUY)-          H
+PHONE OR(AEIOUY)-          R
+PHONE O(HR)                _
+PHONE PH                   F
+PHONE PN^                  N
+PHONE PP-                  _
+PHONE P                    P
+PHONE Q                    K
+PHONE RH^                  R
+PHONE ROUGH^               RF
+PHONE RR-                  _
+PHONE R                    R
+PHONE SCH(EOU)-            SK
+PHONE SC(IEY)-             S
+PHONE SH                   X
+PHONE SI(AO)-              X
+PHONE SS-                  _
+PHONE S                    S
+PHONE TI(AO)-              X
+PHONE TH                   @
+PHONE TCH--                _
+PHONE TOUGH^               TF
+PHONE TT-                  _
+PHONE T                    T
+PHONE UH(AEIOUY)-^         *H
+PHONE UR(AEIOUY)-^         *R
+PHONE U(HR)^               *
+PHONE U^                   *
+PHONE UH(AEIOUY)-          H
+PHONE UR(AEIOUY)-          R
+PHONE U(HR)                _
+PHONE V^                   W
+PHONE V                    F
+PHONE WR^                  R
+PHONE WH^                  W
+PHONE W(AEIOU)-            W
+PHONE X^                   S
+PHONE X                    KS
+PHONE Y(AEIOU)-            Y
+PHONE ZZ-                  _
+PHONE Z                    S
+
+#The rules in a different view:
+#
+# Exceptions:
+#
+#  Beginning of word: "gn", "kn-", "pn-", "wr-"  ----> drop first letter
+#                     "Aebersold", "Gnagy", "Knuth", "Pniewski", "Wright"
+#
+#  Beginning of word: "x"                                ----> change to "s"
+#                                     as in "Deng Xiaopeng"
+#
+#  Beginning of word: "wh-"                              ----> change to "w"
+#                                     as in "Whalen"
+#  Beginning of word: leading vowels are transformed to "*"
+#
+#  "[crt]ough" and "enough" are handled separately because of "F" sound
+#
+#
+#  A --> A      at beginning
+#          _      otherwise
+#
+#  B --> B      unless at the end of word after "m", as in "dumb", "McComb"
+#
+#  C --> X      (sh) if "-cia-" or "-ch-"
+#          S      if "-ci-", "-ce-", or "-cy-"
+#                 SILENT if "-sci-", "-sce-", or "-scy-", or "-cq-"
+#          K      otherwise, including in "-sch-"
+#
+#  D --> K      if in "-dge-", "-dgy-", or "-dgi-"
+#          T      otherwise
+#
+#  E --> A      at beginnig
+#          _      SILENT otherwise
+#  
+#  F --> F
+#
+#  G -->        SILENT if in "-gh-" and not at end or before a vowel
+#                            in "-gn" or "-gned" or "-gns"
+#                           in "-dge-" etc., as in above rule
+#          K      if before "i", or "e", or "y" if not double "gg"
+#
+#          K      otherwise (incl. "GG"!)
+#
+#  H -->        SILENT if after vowel and no vowel or "Y" follows
+#                        or after "-ch-", "-sh-", "-ph-", "-th-", "-gh-"
+#                        or after "rh-" at beginning
+#          H      otherwise
+#
+#  I --> A      at beginning
+#          _      SILENT otherwise
+#
+#  J --> K
+#
+#  K -->        SILENT if after "c"
+#          K      otherwise
+#
+#  L --> L
+#
+#  M --> M
+#  
+#  N --> N
+#
+#  O --> A      at beginning
+#          _      SILENT otherwise
+#
+#  P --> F      if before "h"
+#          P      otherwise
+#
+#  Q --> K
+#
+#  R -->        SILENT if after vowel and no vowel or "Y" follows
+#          R      otherwise
+#
+#  S --> X      (sh) if before "h" or in "-sio-" or "-sia-"
+#          SK     if followed by "ch(eo)" (SCH(EO))
+#          S      otherwise
+#
+#  T --> X      (sh) if "-tia-" or "-tio-"
+#          0      (th) if before "h"
+#                 silent if in "-tch-"
+#          T      otherwise
+#
+#  U --> A      at beginning
+#          _      SILENT otherwise
+#
+#  V --> V      if first letter of word
+#          F      otherwise
+#
+#  W -->        SILENT if not followed by a vowel
+#          W      if followed by a vowel
+#
+#  X --> KS
+#
+#  Y -->        SILENT if not followed by a vowel
+#          Y      if followed by a vowel
+# 
+#  Z --> S
