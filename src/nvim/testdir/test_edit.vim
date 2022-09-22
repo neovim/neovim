@@ -1983,5 +1983,20 @@ func Test_edit_CTRL_hat()
   bwipe!
 endfunc
 
+" Weird long file name was going over the end of NameBuff
+func Test_edit_overlong_file_name()
+  CheckUnix
+
+  file 0000000000000000000000000000
+  file %%%%%%%%%%%%%%%%%%%%%%%%%%
+  file %%%%%%
+  set readonly
+  set ls=2 
+
+  redraw!
+  set noreadonly ls&
+  bwipe!
+endfunc
+
 
 " vim: shiftwidth=2 sts=2 expandtab
