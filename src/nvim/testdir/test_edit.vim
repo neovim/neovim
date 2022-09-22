@@ -1967,7 +1967,7 @@ endfunc
 func Test_edit_CTRL_hat()
   CheckFeature xim
 
-  " FIXME: test fails with Athena and Motif GUI.
+  " FIXME: test fails with Motif GUI.
   "        test also fails when running in the GUI.
   CheckFeature gui_gtk
   CheckNotGui

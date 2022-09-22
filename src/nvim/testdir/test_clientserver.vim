@@ -64,8 +64,8 @@ func Test_client_server()
     " the GUI and check that the remote command still works.
     " Need to wait for the GUI to start up, otherwise the send hangs in trying
     " to send to the terminal window.
-    if has('gui_athena') || has('gui_motif')
-      " For those GUIs, ignore the 'failed to create input context' error.
+    if has('gui_motif')
+      " For this GUI ignore the 'failed to create input context' error.
       call remote_send(name, ":call test_ignore_error('E285') | gui -f\<CR>")
     else
       call remote_send(name, ":gui -f\<CR>")
