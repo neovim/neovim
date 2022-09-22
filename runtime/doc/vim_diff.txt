@@ -541,6 +541,7 @@ Commands:
   :sleep! (does not hide the cursor; same as :sleep)
   :smile
   :tearoff
+  :mkspell (neovim now uses hunspell dictionnaries)
 
 Compile-time features:
   Emacs tags support
@@ -550,6 +551,7 @@ Eval:
   Vim9script
   *js_encode()*
   *js_decode()*
+  *soundfold()* (unsupported as neovim relies on hunspell)
   *v:none* (used by Vim to represent JavaScript "undefined"); use |v:null| instead.
   *v:sizeofint*
   *v:sizeoflong*

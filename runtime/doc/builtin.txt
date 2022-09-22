@@ -451,7 +451,6 @@ sockconnect({mode}, {address} [, {opts}])
 				Number	Connects to socket
 sort({list} [, {func} [, {dict}]])
 				List	sort {list}, using {func} to compare
-soundfold({word})		String	sound-fold {word}
 spellbadword()			String	badly spelled word at cursor
 spellsuggest({word} [, {max} [, {capital}]])
 				List	spelling suggestions
@@ -7620,18 +7619,6 @@ sort({list} [, {func} [, {dict}]])			*sort()* *E702*
 			endfunc
 <		For a simple expression you can use a lambda: >
 			eval mylist->sort({i1, i2 -> i1 - i2})
-<
-							*soundfold()*
-soundfold({word})
-		Return the sound-folded equivalent of {word}.  Uses the first
-		language in 'spelllang' for the current window that supports
-		soundfolding.  'spell' must be set.  When no sound folding is
-		possible the {word} is returned unmodified.
-		This can be used for making spelling suggestions.  Note that
-		the method can be quite slow.
-
-		Can also be used as a |method|: >
-			GetWord()->soundfold()
 <
 							*spellbadword()*
 spellbadword([{sentence}])

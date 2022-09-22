@@ -927,7 +927,6 @@ Syntax and highlighting:	  *syntax-functions* *highlighting-functions*
 Spelling:					*spell-functions*
 	spellbadword()		locate badly spelled word at or after cursor
 	spellsuggest()		return suggested spelling corrections
-	soundfold()		return the sound-a-like equivalent of a word
 
 History:					*history-functions*
 	histadd()		add an item to a history
