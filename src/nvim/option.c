@@ -779,10 +779,11 @@ void ex_set(exarg_T *eap)
 
 /// Part of do_set() for string options.
 /// @return  FAIL on failure, do not process further options.
-static int do_set_string(int opt_idx, int opt_flags, char **arg, int nextchar, set_op_T op_arg,
+static int do_set_string(int opt_idx, int opt_flags, char **argp, int nextchar, set_op_T op_arg,
                          uint32_t flags, char *varp_arg, char *errbuf, size_t errbuflen,
                          int *value_checked, char **errmsg)
 {
+  char *arg = *argp;
   set_op_T op = op_arg;
   char *varp = varp_arg;
   char *save_arg = NULL;
@@ -849,15 +850,15 @@ static int do_set_string(int opt_idx, int opt_flags, char **arg, int nextchar, s
   } else if (nextchar == '<') {  // set to global val
     newval = xstrdup(*(char **)get_varp_scope(&(options[opt_idx]), OPT_GLOBAL));
   } else {
-    (*arg)++;  // jump to after the '=' or ':'
+    arg++;  // jump to after the '=' or ':'
 
     // Set 'keywordprg' to ":help" if an empty
     // value was passed to :set by the user.
     // Misuse errbuf[] for the resulting string.
-    if (varp == (char *)&p_kp && (**arg == NUL || **arg == ' ')) {
+    if (varp == (char *)&p_kp && (*arg == NUL || *arg == ' ')) {
       STRCPY(errbuf, ":help");
-      save_arg = *arg;
-      *arg = errbuf;
+      save_arg = arg;
+      arg = errbuf;
     } else if (varp == (char *)&p_bs && ascii_isdigit(**(char_u **)varp)) {
       // Convert 'backspace' number to string, for
       // adding, prepending and removing string.
@@ -887,11 +888,11 @@ static int do_set_string(int opt_idx, int opt_flags, char **arg, int nextchar, s
         origval_g = *(char_u **)varp;
       }
       oldval = *(char_u **)varp;
-    } else if (varp == (char *)&p_ww && ascii_isdigit(**arg)) {
+    } else if (varp == (char *)&p_ww && ascii_isdigit(*arg)) {
       // Convert 'whichwrap' number to string, for backwards compatibility
       // with Vim 3.0.
       *whichwrap = NUL;
-      int i = getdigits_int(arg, true, 0);
+      int i = getdigits_int(&arg, true, 0);
       if (i & 1) {
         xstrlcat(whichwrap, "b,", sizeof(whichwrap));
       }
@@ -910,12 +911,12 @@ static int do_set_string(int opt_idx, int opt_flags, char **arg, int nextchar, s
       if (*whichwrap != NUL) {  // remove trailing ,
         whichwrap[strlen(whichwrap) - 1] = NUL;
       }
-      save_arg = *arg;
-      *arg = whichwrap;
-    } else if (**arg == '>' && (varp == (char *)&p_dir || varp == (char *)&p_bdir)) {
+      save_arg = arg;
+      arg = whichwrap;
+    } else if (*arg == '>' && (varp == (char *)&p_dir || varp == (char *)&p_bdir)) {
       // Remove '>' before 'dir' and 'bdir', for backwards compatibility with
       // version 3.0
-      (*arg)++;
+      arg++;
     }
 
     // Copy the new string into allocated memory.
@@ -923,7 +924,7 @@ static int do_set_string(int opt_idx, int opt_flags, char **arg, int nextchar, s
     // backslashes.
 
     // get a bit too much
-    newlen = (unsigned)strlen(*arg) + 1;
+    newlen = (unsigned)strlen(arg) + 1;
     if (op != OP_NONE) {
       newlen += (unsigned)STRLEN(origval) + 1;
     }
@@ -935,26 +936,26 @@ static int do_set_string(int opt_idx, int opt_flags, char **arg, int nextchar, s
     // are not removed, and keep backslash at start, for "\\machine\path",
     // but do remove it for "\\\\machine\\path".
     // The reverse is found in ExpandOldSetting().
-    while (**arg && !ascii_iswhite(**arg)) {
-      if (**arg == '\\' && (*arg)[1] != NUL
+    while (*arg && !ascii_iswhite(*arg)) {
+      if (*arg == '\\' && arg[1] != NUL
 #ifdef BACKSLASH_IN_FILENAME
           && !((flags & P_EXPAND)
-               && vim_isfilec((*arg)[1])
-               && !ascii_iswhite((*arg)[1])
-               && ((*arg)[1] != '\\'
-                   || (s == newval && (*arg)[2] != '\\')))
+               && vim_isfilec(arg[1])
+               && !ascii_iswhite(arg[1])
+               && (arg[1] != '\\'
+                   || (s == newval && arg[2] != '\\')))
 #endif
           ) {
-        (*arg)++;  // remove backslash
+        arg++;  // remove backslash
       }
-      int i = utfc_ptr2len(*arg);
+      int i = utfc_ptr2len(arg);
       if (i > 1) {
         // copy multibyte char
-        memmove(s, *arg, (size_t)i);
-        *arg += i;
+        memmove(s, arg, (size_t)i);
+        arg += i;
         s += i;
       } else {
-        *s++ = *(*arg)++;
+        *s++ = *arg++;
       }
     }
     *s = NUL;
@@ -1062,7 +1063,7 @@ static int do_set_string(int opt_idx, int opt_flags, char **arg, int nextchar, s
     }
 
     if (save_arg != NULL) {  // number for 'whichwrap'
-      *arg = save_arg;
+      arg = save_arg;
     }
   }
 
@@ -1117,6 +1118,7 @@ static int do_set_string(int opt_idx, int opt_flags, char **arg, int nextchar, s
   xfree(saved_origval_g);
   xfree(saved_newval);
 
+  *argp = arg;
   return *errmsg == NULL ? OK : FAIL;
 }
 
