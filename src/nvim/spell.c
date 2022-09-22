@@ -992,25 +992,6 @@ void slang_clear_sug(slang_T *lp)
   lp->sl_sugtime = 0;
 }
 
-// Load one spell file and store the info into a slang_T.
-// Invoked through do_in_runtimepath().
-static void spell_load_cb(char *fname, void *cookie)
-{
-  spelload_T *slp = (spelload_T *)cookie;
-  slang_T *slang = spell_load_file(fname, (char *)slp->sl_lang, NULL, false);
-  if (slang != NULL) {
-    // When a previously loaded file has NOBREAK also use it for the
-    // ".add" files.
-    if (slp->sl_nobreak && slang->sl_add) {
-      slang->sl_nobreak = true;
-    } else if (slang->sl_nobreak) {
-      slp->sl_nobreak = true;
-    }
-
-    slp->sl_slang = slang;
-  }
-}
-
 /// Add a word to the hashtable of common words.
 /// If it's already there then the counter is increased.
 ///

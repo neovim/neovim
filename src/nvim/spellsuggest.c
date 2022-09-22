@@ -737,13 +737,6 @@ static void spell_find_suggest(char_u *badptr, int badlen, suginfo_T *su, int ma
     }
   }
 
-  // Soundfold the bad word with the default sound folding, so that we don't
-  // have to do this many times.
-  if (su->su_sallang != NULL) {
-    spell_soundfold(su->su_sallang, su->su_fbadword, true,
-                    su->su_sal_badword);
-  }
-
   // If the word is not capitalised and spell_check() doesn't consider the
   // word to be bad then it might need to be capitalised.  Add a suggestion
   // for that.
