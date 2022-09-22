@@ -836,20 +836,19 @@ static void spell_load_lang(win_T *wp, char *lang)
     if (starting) {
       // Prompt the user at VimEnter if spell files are missing. #3027
       // Plugins aren't loaded yet, so spellfile.vim cannot handle this case.
+      // TODO(vigoux): convert to lua
       char autocmd_buf[512] = { 0 };
       snprintf(autocmd_buf, sizeof(autocmd_buf),
                "autocmd VimEnter * call spellfile#LoadFile('%s')|set spell",
                lang);
       do_cmdline_cmd(autocmd_buf);
     } else {
-      smsg(_("Warning: Cannot find word list \"%s.%s.spl\" or \"%s.ascii.spl\""),
-           lang, spell_enc(), lang);
+      smsg(_("Warning: Cannot find word list \"%s.dic\""), lang);
     }
   } else if (sl.sl_slang != NULL) {
     // At least one file was loaded, now load ALL the additions.
     // TODO(vigoux): probably not right and we'll have to load the .add files
     STRCPY(fname_enc + STRLEN(fname_enc) - 3, "add");
-    DLOG("Will try to load %s", fname_enc);
     do_in_runtimepath((char *)fname_enc, DIP_ALL, spell_hunspell_add_cb, &sl);
     sl.sl_slang->sl_next = first_lang;
     first_lang = sl.sl_slang;
