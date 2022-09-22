@@ -107,6 +107,9 @@ The following new APIs and features were added.
 • Bundled treesitter parser and queries (highlight, folds) for Markdown,
 Python, and Bash.
 
+• |vim.wo| can now be double indexed for |:setlocal| behaviour. Currently only
+  `0` for the buffer index is currently supported.
+
 ==============================================================================
 CHANGED FEATURES                                                 *news-changed*
 

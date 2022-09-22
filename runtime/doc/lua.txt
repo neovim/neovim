@@ -1175,20 +1175,21 @@ vim.bo[{bufnr}]                                                                *
         print(vim.bo.comments)
         print(vim.bo.baz)                 -- error: invalid key
 <
-vim.wo[{winid}]                                                                *vim.wo*
-    Get or set window-scoped |options| for the window with handle {winid}.
-    Like `:set`. If [{winid}] is omitted then the current window is used.
-    Invalid {winid} or key is an error.
+vim.wo[{winid}][{bufnr}]                                                       *vim.wo*
+    Get or set window-scoped |options| for the window with handle {winid} and
+    buffer with number {bufnr}. Like `:setlocal` if {bufnr} is provided, like
+    `:set` otherwise. If [{winid}] is omitted then the current window is
+    used. Invalid {winid}, {bufnr} or key is an error.
 
-    Note: this does not access |local-options| (`:setlocal`) instead use: >lua
-        nvim_get_option_value(OPTION, { scope = 'local', win = winid })
-        nvim_set_option_value(OPTION, VALUE, { scope = 'local', win = winid }
-<
+    Note: only {bufnr} with value `0` (the current buffer in the window) is
+    supported.
+
     Example: >lua
         local winid = vim.api.nvim_get_current_win()
         vim.wo[winid].number = true    -- same as vim.wo.number = true
         print(vim.wo.foldmarker)
         print(vim.wo.quux)             -- error: invalid key
+        vim.wo[winid][0].spell = false -- like ':setlocal nospell'
 <
 
 

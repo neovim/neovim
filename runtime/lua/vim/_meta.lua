@@ -67,25 +67,60 @@ local function opt_validate(option_name, target_scope)
   end
 end
 
-local function new_opt_accessor(handle, scope)
+local function new_buf_opt_accessor(bufnr)
   return setmetatable({}, {
     __index = function(_, k)
-      if handle == nil and type(k) == 'number' then
-        return new_opt_accessor(k, scope)
+      if bufnr == nil and type(k) == 'number' then
+        return new_buf_opt_accessor(k)
       end
-      opt_validate(k, scope)
-      return api.nvim_get_option_value(k, { [scope] = handle or 0 })
+      opt_validate(k, 'buf')
+      return api.nvim_get_option_value(k, { buf = bufnr or 0 })
     end,
 
     __newindex = function(_, k, v)
-      opt_validate(k, scope)
-      return api.nvim_set_option_value(k, v, { [scope] = handle or 0 })
+      opt_validate(k, 'buf')
+      return api.nvim_set_option_value(k, v, { buf = bufnr or 0 })
     end,
   })
 end
 
-vim.bo = new_opt_accessor(nil, 'buf')
-vim.wo = new_opt_accessor(nil, 'win')
+vim.bo = new_buf_opt_accessor()
+
+local function new_win_opt_accessor(winid, bufnr)
+  return setmetatable({}, {
+    __index = function(_, k)
+      if bufnr == nil and type(k) == 'number' then
+        if winid == nil then
+          return new_win_opt_accessor(k)
+        else
+          return new_win_opt_accessor(winid, k)
+        end
+      end
+
+      if bufnr ~= nil and bufnr ~= 0 then
+        error('only bufnr=0 is supported')
+      end
+
+      opt_validate(k, 'win')
+      -- TODO(lewis6991): allow passing both buf and win to nvim_get_option_value
+      return api.nvim_get_option_value(k, {
+        scope = bufnr and 'local' or nil,
+        win = winid or 0,
+      })
+    end,
+
+    __newindex = function(_, k, v)
+      opt_validate(k, 'win')
+      -- TODO(lewis6991): allow passing both buf and win to nvim_set_option_value
+      return api.nvim_set_option_value(k, v, {
+        scope = bufnr and 'local' or nil,
+        win = winid or 0,
+      })
+    end,
+  })
+end
+
+vim.wo = new_win_opt_accessor()
 
 -- vim global option
 --  this ONLY sets the global option. like `setglobal`
