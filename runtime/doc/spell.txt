@@ -549,8 +549,7 @@ following procedure is recommended:
 4. Start Vim with the right locale and use |:mkspell| to generate the Vim
    spell file.
 5. Try out the spell file with ":set spell spelllang=xx" if you wrote it in
-   a spell directory in 'runtimepath', or ":set spelllang=xx.enc.spl" if you
-   wrote it somewhere else.
+   a spell directory in 'runtimepath'.
 
 When the Myspell files are updated you can merge the differences:
 1. Obtain the new Myspell files as xx_YY.new.aff and xx_UU.new.dic.

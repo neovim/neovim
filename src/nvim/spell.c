@@ -1127,8 +1127,6 @@ char *did_set_spelllang(win_T *wp)
   garray_T ga;
   char *splp;
   char *region;
-  char region_cp[3];
-  bool filename;
   int region_mask;
   slang_T *slang;
   int c;
@@ -1181,44 +1179,17 @@ char *did_set_spelllang(win_T *wp)
       continue;
     }
 
-    // If the name ends in ".spl" use it as the name of the spell file.
-    // If there is a region name let "region" point to it and remove it
-    // from the name.
-    if (len > 4 && path_fnamecmp(lang + len - 4, ".spl") == 0) {
-      filename = true;
-
-      // Locate a region and remove it from the file name.
-      p = vim_strchr(path_tail((char *)lang), '_');
-      if (p != NULL && ASCII_ISALPHA(p[1]) && ASCII_ISALPHA(p[2])
-          && !ASCII_ISALPHA(p[3])) {
-        STRLCPY(region_cp, p + 1, 3);
-        memmove(p, p + 3, (size_t)(len - (p - lang) - 2));
-        region = region_cp;
-      } else {
-        dont_use_region = true;
-      }
-
-      // Check if we loaded this language before.
-      for (slang = first_lang; slang != NULL; slang = slang->sl_next) {
-        if (path_full_compare((char *)lang, slang->sl_fname, false, true)
-            == kEqualFiles) {
-          break;
-        }
-      }
+    if (len > 3 && lang[len - 3] == '_') {
+      region = lang + len - 2;
+      lang[len - 3] = NUL;
     } else {
-      filename = false;
-      if (len > 3 && lang[len - 3] == '_') {
-        region = lang + len - 2;
-        lang[len - 3] = NUL;
-      } else {
-        dont_use_region = true;
-      }
+      dont_use_region = true;
+    }
 
-      // Check if we loaded this language before.
-      for (slang = first_lang; slang != NULL; slang = slang->sl_next) {
-        if (STRICMP(lang, slang->sl_name) == 0) {
-          break;
-        }
+    // Check if we loaded this language before.
+    for (slang = first_lang; slang != NULL; slang = slang->sl_next) {
+      if (STRICMP(lang, slang->sl_name) == 0) {
+        break;
       }
     }
 
@@ -1233,26 +1204,20 @@ char *did_set_spelllang(win_T *wp)
 
     // If not found try loading the language now.
     if (slang == NULL) {
-      if (filename) {
-        (void)spell_load_file((char *)lang, (char *)lang, NULL, false);
-      } else {
-        spell_load_lang(wp, lang);
-        // SpellFileMissing autocommands may do anything, including
-        // destroying the buffer we are using...
-        if (!bufref_valid(&bufref)) {
-          ret_msg = N_("E797: SpellFileMissing autocommand deleted buffer");
-          goto theend;
-        }
+      spell_load_lang(wp, lang);
+      // SpellFileMissing autocommands may do anything, including
+      // destroying the buffer we are using...
+      if (!bufref_valid(&bufref)) {
+        ret_msg = N_("E797: SpellFileMissing autocommand deleted buffer");
+        goto theend;
       }
     }
 
     // Loop over the languages, there can be several files for "lang".
     for (slang = first_lang; slang != NULL; slang = slang->sl_next) {
-      if (filename
-          ? path_full_compare((char *)lang, slang->sl_fname, false, true) == kEqualFiles
-          : STRICMP(lang, slang->sl_name) == 0) {
+      if (STRICMP(lang, slang->sl_name) == 0) {
         region_mask = REGION_ALL;
-        if (!filename && region != NULL) {
+        if (region != NULL) {
           // find region in sl_regions
           c = find_region(slang->sl_regions, (char_u *)region);
           if (c == REGION_ALL) {

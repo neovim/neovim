@@ -631,6 +631,7 @@ Options:
   *'restorescreen'* *'rs'* *'norestorescreen'* *'nors'*
   *'shelltype'*
   *'shortname'* *'sn'* *'noshortname'* *'nosn'*
+  'spelllang' cannot be set to a filename
   'spellsuggest' "double" is removed as not needed
   *'swapsync'* *'sws'*
   *'termencoding'* *'tenc'* (Vim 7.4.852 also removed this for Windows)

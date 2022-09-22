@@ -5855,12 +5855,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	words.
 	Note that the "medical" dictionary does not exist, it is just an
 	example of a longer name.
-							*E757*
-	As a special case the name of a .spl file can be given as-is.  The
-	first "_xx" in the name is removed and used as the region name
-	(_xx is an underscore, two letters and followed by a non-letter).
-	This is mainly for testing purposes.  You must make sure the correct
-	encoding is used, Vim doesn't check it.
+
 	How the related spell files are found is explained here: |spell-load|.
 
 	If the |spellfile.vim| plugin is active and you use a language name
