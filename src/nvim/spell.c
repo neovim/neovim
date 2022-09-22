@@ -323,44 +323,24 @@ size_t spell_check(win_T *wp, char_u *ptr, hlf_T *attrp, int *capcol, bool docou
 
     // If reloading fails the language is still in the list but everything
     // has been cleared.
-    if (mi.mi_lp->lp_slang->sl_hunspell != NULL
-        && wp->w_s->b_p_spo_flags & SPO_HUNSPELL) {
+    if (mi.mi_lp->lp_slang->sl_hunspell != NULL) {
       if (mi.mi_end == mi.mi_word) {
         MB_PTR_ADV(mi.mi_end);
       }
 
+      size_t wlen = (size_t)(mi.mi_end - mi.mi_word);
       int spell_flags = 0;
       if (hunspell_spell_flags(mi.mi_lp->lp_slang->sl_hunspell, (char *)mi.mi_word,
-                               (size_t)(mi.mi_end - mi.mi_word), &spell_flags)) {
+                               wlen, &spell_flags)) {
         mi.mi_result =
           (spell_flags & HSPELL_FORBIDDEN) ? SP_BANNED :
           (spell_flags & HSPELL_WARN) ? SP_RARE : SP_OK;
       } else {
         mi.mi_result = SP_BAD;
       }
-    } else if (mi.mi_lp->lp_slang->sl_fidxs != NULL) {
-      // Check for a matching word in case-folded words.
-      find_word(&mi, FIND_FOLDWORD);
 
-      // Check for a matching word in keep-case words.
-      find_word(&mi, FIND_KEEPWORD);
-
-      // Check for matching prefixes.
-      find_prefix(&mi, FIND_FOLDWORD);
-
-      // For a NOBREAK language, may want to use a word without a following
-      // word as a backup.
-      if (mi.mi_lp->lp_slang->sl_nobreak && mi.mi_result == SP_BAD
-          && mi.mi_result2 != SP_BAD) {
-        mi.mi_result = mi.mi_result2;
-        mi.mi_end = mi.mi_end2;
-      }
-
-      // Count the word in the first language where it's found to be OK.
-      if (count_word && mi.mi_result == SP_OK) {
-        count_common_word(mi.mi_lp->lp_slang, ptr,
-                          (int)(mi.mi_end - ptr), 1);
-        count_word = false;
+      if (mi.mi_result == OK && count_word) {
+        count_common_word(mi.mi_lp->lp_slang, mi.mi_word, (int)wlen, 1);
       }
     }
   }
@@ -1556,20 +1536,8 @@ static void spell_load_lang(win_T *wp, char *lang)
   // autocommand may load it then.
   for (int round = 1; round <= 2; round++) {
     // Find the first spell file for "lang" in 'runtimepath' and load it.
-    if (wp->w_s->b_p_spo_flags & SPO_HUNSPELL) {
-      vim_snprintf((char *)fname_enc, sizeof(fname_enc) - 5, "spell/%s.dic", lang);
-      r = do_in_runtimepath((char *)fname_enc, 0, spell_hunspell_cb, &sl);
-    } else {
-      vim_snprintf((char *)fname_enc, sizeof(fname_enc) - 5,
-                   "spell/%s.%s.spl", lang, spell_enc());
-      r = do_in_runtimepath((char *)fname_enc, 0, spell_load_cb, &sl);
-      if (r == FAIL && *sl.sl_lang != NUL) {
-        // Try loading the ASCII version.
-        vim_snprintf((char *)fname_enc, sizeof(fname_enc) - 5,
-                     "spell/%s.ascii.spl", lang);
-        r = do_in_runtimepath((char *)fname_enc, 0, spell_load_cb, &sl);
-      }
-    }
+    vim_snprintf((char *)fname_enc, sizeof(fname_enc) - 5, "spell/%s.dic", lang);
+    r = do_in_runtimepath((char *)fname_enc, 0, spell_hunspell_cb, &sl);
 
     if (r == FAIL && *sl.sl_lang != NUL && round == 1
         && apply_autocmds(EVENT_SPELLFILEMISSING, (char *)lang,
@@ -1594,17 +1562,12 @@ static void spell_load_lang(win_T *wp, char *lang)
     }
   } else if (sl.sl_slang != NULL) {
     // At least one file was loaded, now load ALL the additions.
-    if (wp->w_s->b_p_spo_flags & SPO_HUNSPELL) {
-      // TODO(vigoux): probably not right and we'll have to load the .add files
-      STRCPY(fname_enc + STRLEN(fname_enc) - 3, "add");
-      DLOG("Will try to load %s", fname_enc);
-      do_in_runtimepath((char *)fname_enc, DIP_ALL, spell_hunspell_add_cb, &sl);
-      sl.sl_slang->sl_next = first_lang;
-      first_lang = sl.sl_slang;
-    } else {
-      STRCPY(fname_enc + strlen(fname_enc) - 3, "add.spl");
-      do_in_runtimepath((char *)fname_enc, DIP_ALL, spell_load_cb, &sl);
-    }
+    // TODO(vigoux): probably not right and we'll have to load the .add files
+    STRCPY(fname_enc + STRLEN(fname_enc) - 3, "add");
+    DLOG("Will try to load %s", fname_enc);
+    do_in_runtimepath((char *)fname_enc, DIP_ALL, spell_hunspell_add_cb, &sl);
+    sl.sl_slang->sl_next = first_lang;
+    first_lang = sl.sl_slang;
   }
 }
 
@@ -2447,43 +2410,19 @@ bool spell_iswordp(const char_u *p, const win_T *wp)
   const int l = utfc_ptr2len((char *)p);
   const char_u *s = p;
 
-  // TODO(vigoux): there is a lot more variants of iswordp
-  if (wp->w_s->b_p_spo_flags & SPO_HUNSPELL) {
-    for (int lpi = 0; lpi < wp->w_s->b_langp.ga_len; lpi++) {
-      langp_T *lp = LANGP_ENTRY(wp->w_s->b_langp, lpi);
+  for (int lpi = 0; lpi < wp->w_s->b_langp.ga_len; lpi++) {
+    langp_T *lp = LANGP_ENTRY(wp->w_s->b_langp, lpi);
 
-      if (lp->lp_slang->sl_hunspell != NULL) {
-        // TODO(vigoux): correctly handle multibyte characters here
-        if (hunspell_is_wordchar(lp->lp_slang->sl_hunspell, (const char *)s)) {
-          return true;
-        }
+    if (lp->lp_slang->sl_hunspell != NULL) {
+      // TODO(vigoux): correctly handle multibyte characters here
+      if (hunspell_is_wordchar(lp->lp_slang->sl_hunspell, (const char *)s)) {
+        return true;
       }
     }
-    int c = utf_ptr2char((char *)p);
-    // TODO(vigoux): that's certainly not right
-    return iswalnum(c);
   }
-
-  if (l == 1) {
-    // be quick for ASCII
-    if (wp->w_s->b_spell_ismw[*p]) {
-      s = p + 1;                      // skip a mid-word character
-    }
-  } else {
-    int c = utf_ptr2char((char *)p);
-    if (c < 256
-        ? wp->w_s->b_spell_ismw[c]
-        : (wp->w_s->b_spell_ismw_mb != NULL
-           && vim_strchr(wp->w_s->b_spell_ismw_mb, c) != NULL)) {
-      s = p + l;
-    }
-  }
-
-  int c = utf_ptr2char((char *)s);
-  if (c > 255) {
-    return spell_mb_isword_class(mb_get_class(s), wp);
-  }
-  return spelltab.st_isw[c];
+  int c = utf_ptr2char((char *)p);
+  // TODO(vigoux): that's certainly not right, use uft_class functions
+  return iswalnum(c);
 }
 
 // Returns true if "p" points to a word character.
@@ -2491,14 +2430,8 @@ bool spell_iswordp(const char_u *p, const win_T *wp)
 bool spell_iswordp_nmw(const char_u *p, win_T *wp)
 {
   int c = utf_ptr2char((char *)p);
-  if (wp->w_s->b_p_spo_flags & SPO_HUNSPELL) {
-    return iswalnum(c);
-  }
-
-  if (c > 255) {
-    return spell_mb_isword_class(mb_get_class(p), wp);
-  }
-  return spelltab.st_isw[c];
+  // TODO: use utf_class
+  return iswalnum(c);
 }
 
 // Returns true if word class indicates a word character.

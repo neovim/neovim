@@ -5698,26 +5698,19 @@ void spell_add_word(char_u *word, int len, SpellAddType what, int idx, bool undo
 
   if (fd != NULL) {
     // Update the spellchecking
-    // For hunspell, just add the word to the runtime session to save time
-    // For legacy engine, perform mkspell, which reloads all the spellchecking
-    if (curwin->w_s->b_p_spo_flags & SPO_HUNSPELL) {
-      if (idx == 0) {
-        // When `zG` or `zW` add the word to the internal word list
-        for (int lpi = 0; lpi < curwin->w_s->b_langp.ga_len; lpi++) {
-          langp_T *lp = LANGP_ENTRY(curwin->w_s->b_langp, lpi);
-          if (lp->lp_slang->sl_hunspell != NULL) {
-            // TODO(vigoux): When adding a bad word, we'll have to remove
-            // instead of add
-            hunspell_add_word(lp->lp_slang->sl_hunspell, (char *)word);
-          }
+    if (idx == 0) {
+      // When `zG` or `zW` add the word to the internal word list
+      for (int lpi = 0; lpi < curwin->w_s->b_langp.ga_len; lpi++) {
+        langp_T *lp = LANGP_ENTRY(curwin->w_s->b_langp, lpi);
+        if (lp->lp_slang->sl_hunspell != NULL) {
+          // TODO(vigoux): When adding a bad word, we'll have to remove
+          // instead of add
+          hunspell_add_word(lp->lp_slang->sl_hunspell, (char *)word);
         }
-      } else {
-        spell_hunspell_format_dic(fname);
-        spell_reload();
       }
     } else {
-      // Update the .add.spl file.
-      mkspell(1, &fname, false, true, true);
+      spell_hunspell_format_dic(fname);
+      spell_reload();
     }
 
     // If the .add file is edited somewhere, reload it.
@@ -5784,19 +5777,8 @@ static void init_spellfile(void)
                        "/%.*s", (int)(lend - lstart), lstart);
         }
         l = (int)STRLEN(buf);
-        slang_T *sl = LANGP_ENTRY(curwin->w_s->b_langp, 0)
-                      ->lp_slang;
-        if (sl->sl_hunspell != NULL && curwin->w_s->b_p_spo_flags & SPO_HUNSPELL) {
-          // When using hunspell, only output the word on <lang>.add
-          vim_snprintf((char *)buf + l, MAXPATHL - (size_t)l, ".add");
-        } else {
-          fname = (char_u *)sl->sl_fname;
-          vim_snprintf((char *)buf + l, MAXPATHL - (size_t)l, ".%s.add",
-                       ((fname != NULL
-                         && strstr(path_tail((char *)fname), ".ascii.") != NULL)
-                        ? "ascii"
-                        : (const char *)spell_enc()));
-        }
+
+        vim_snprintf((char *)buf + l, MAXPATHL - (size_t)l, ".add");
         set_option_value_give_err("spellfile", 0L, (const char *)buf, OPT_LOCAL);
         break;
       }
