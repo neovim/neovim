@@ -1898,7 +1898,9 @@ func Test_bufadd_bufload()
             \ ['acwrite', 1],
             \ ['quickfix', 0],
             \ ['help', 1],
+            "\ ['terminal', 0],
             \ ['prompt', 0],
+            "\ ['popup', 0],
             \ ]
     bwipe! XotherName
     let buf = bufadd('XotherName')
