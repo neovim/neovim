@@ -299,8 +299,8 @@ size_t spell_check(win_T *wp, const char *ptr, hlf_T *attrp, int *capcol, bool d
     }
   }
 
-  if (wrongcaplen > 0 && (result == SP_OK || result == SP_RARE)) {
-    // Report SpellCap only when the word isn't badly spelled.
+  if (wrongcaplen > 0 && (result == SP_OK || result == SP_RARE) && spell_iswordp_nmw(ptr, wp)) {
+    // Report SpellCap only when the word isn't badly spelled and actually starts with a letter.
     *attrp = HLF_SPC;
     return wrongcaplen;
   }

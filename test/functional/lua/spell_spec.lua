@@ -49,5 +49,8 @@ describe('vim.spell', function()
       )
     end)
 
+    it('does not report too many spellcap errors', function()
+      check('Hello. 72th', {})
+    end)
   end)
 end)
