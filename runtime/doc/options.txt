@@ -5896,13 +5896,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 			changes like "fast" and uses a bit of sound-a-like
 			scoring to improve the ordering.
 
-	double		Internal method that uses two methods and mixes the
-			results.  The first method is "fast", the other method
-			computes how much the suggestion sounds like the bad
-			word.  That only works when the language specifies
-			sound folding.  Can be slow and doesn't always give
-			better results.
-
 	fast		Internal method that only checks for simple changes:
 			character inserts/deletes/swaps.  Works well for
 			simple typing mistakes.

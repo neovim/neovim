@@ -631,6 +631,7 @@ Options:
   *'restorescreen'* *'rs'* *'norestorescreen'* *'nors'*
   *'shelltype'*
   *'shortname'* *'sn'* *'noshortname'* *'nosn'*
+  'spellsuggest' "double" is removed as not needed
   *'swapsync'* *'sws'*
   *'termencoding'* *'tenc'* (Vim 7.4.852 also removed this for Windows)
   *'terse'* *'noterse'* (Add "s" to 'shortmess' instead)

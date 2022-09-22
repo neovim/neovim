@@ -53,16 +53,12 @@ typedef struct suginfo_S {
   garray_T su_ga;                  ///< suggestions, contains "suggest_T"
   int su_maxcount;                 ///< max. number of suggestions displayed
   int su_maxscore;                 ///< maximum score for adding to su_ga
-  int su_sfmaxscore;               ///< idem, for when doing soundfold words
-  garray_T su_sga;                 ///< like su_ga, sound-folded scoring
   char_u *su_badptr;               ///< start of bad word in line
   int su_badlen;                   ///< length of detected bad word in line
   int su_badflags;                 ///< caps flags for bad word
   char_u su_badword[MAXWLEN];      ///< bad word truncated at su_badlen
   char_u su_fbadword[MAXWLEN];     ///< su_badword case-folded
-  char_u su_sal_badword[MAXWLEN];  ///< su_badword soundfolded
   hashtab_T su_banned;             ///< table with banned words
-  slang_T *su_sallang;             ///< default language for sound folding
 } suginfo_T;
 
 /// One word suggestion.  Used in "si_ga".
@@ -74,7 +70,6 @@ typedef struct {
   int st_altscore;    ///< used when st_score compares equal
   bool st_salscore;   ///< st_score is for soundalike
   bool st_had_bonus;  ///< bonus already included in score
-  slang_T *st_slang;  ///< language used for sound folding
 } suggest_T;
 
 #define SUG(ga, i) (((suggest_T *)(ga).ga_data)[i])
@@ -256,7 +251,7 @@ static int badword_captype(char *word, char *end)
 // values for sps_flags
 #define SPS_BEST    1
 #define SPS_FAST    2
-#define SPS_DOUBLE  4
+// SPS_DOUBLE is not used anymore
 
 static int sps_flags = SPS_BEST;  ///< flags from 'spellsuggest'
 static int sps_limit = 9999;      ///< max nr of suggestions given
@@ -287,8 +282,6 @@ int spell_check_sps(void)
       f = SPS_BEST;
     } else if (strcmp(buf, "fast") == 0) {
       f = SPS_FAST;
-    } else if (strcmp(buf, "double") == 0) {
-      f = SPS_DOUBLE;
     } else if (STRNCMP(buf, "expr:", 5) != 0
                && STRNCMP(buf, "file:", 5) != 0
                && (STRNCMP(buf, "timeout:", 8) != 0
@@ -462,7 +455,7 @@ void spell_suggest(int count)
 
       if (p_verbose > 0) {
         // Add the score.
-        if (sps_flags & (SPS_DOUBLE | SPS_BEST)) {
+        if (sps_flags & SPS_BEST) {
           vim_snprintf((char *)IObuff, IOSIZE, " (%s%d - %d)",
                        stp->st_salscore ? "s " : "",
                        stp->st_score, stp->st_altscore);
@@ -598,7 +591,6 @@ static void spell_find_suggest(char_u *badptr, int badlen, suginfo_T *su, int ma
   // Set the info in "*su".
   CLEAR_POINTER(su);
   ga_init(&su->su_ga, (int)sizeof(suggest_T), 10);
-  ga_init(&su->su_sga, (int)sizeof(suggest_T), 10);
   if (*badptr == NUL) {
     return;
   }
@@ -788,7 +780,6 @@ static void spell_find_cleanup(suginfo_T *su)
 #define FREE_SUG_WORD(sug) xfree((sug)->st_word)
   // Free the suggestions.
   GA_DEEP_CLEAR(&su->su_ga, suggest_T, FREE_SUG_WORD);
-  GA_DEEP_CLEAR(&su->su_sga, suggest_T, FREE_SUG_WORD);
 
   // Free the banned words.
   hash_clear_all(&su->su_banned, 0);
@@ -842,60 +833,6 @@ static void prof_report(char *name)
 // Check the maximum score, if we go over it we won't try this change.
 #define TRY_DEEPER(su, stack, depth, add) \
   ((depth) < MAXWLEN - 1 && (stack)[depth].ts_score + (add) < (su)->su_maxscore)
-
-/// For the goodword in "stp" compute the soundalike score compared to the
-/// badword.
-///
-/// @param badsound  sound-folded badword
-static int stp_sal_score(suggest_T *stp, suginfo_T *su, slang_T *slang, char_u *badsound)
-{
-  char_u *p;
-  char_u *pbad;
-  char_u *pgood;
-  char_u badsound2[MAXWLEN];
-  char_u fword[MAXWLEN];
-  char_u goodsound[MAXWLEN];
-  char_u goodword[MAXWLEN];
-  int lendiff;
-
-  lendiff = su->su_badlen - stp->st_orglen;
-  if (lendiff >= 0) {
-    pbad = badsound;
-  } else {
-    // soundfold the bad word with more characters following
-    (void)spell_casefold(curwin, su->su_badptr, stp->st_orglen, fword, MAXWLEN);
-
-    // When joining two words the sound often changes a lot.  E.g., "t he"
-    // sounds like "t h" while "the" sounds like "@".  Avoid that by
-    // removing the space.  Don't do it when the good word also contains a
-    // space.
-    if (ascii_iswhite(su->su_badptr[su->su_badlen])
-        && *skiptowhite(stp->st_word) == NUL) {
-      for (p = fword; *(p = (char_u *)skiptowhite((char *)p)) != NUL;) {
-        STRMOVE(p, p + 1);
-      }
-    }
-
-    spell_soundfold(slang, fword, true, badsound2);
-    pbad = badsound2;
-  }
-
-  if (lendiff > 0 && stp->st_wordlen + lendiff < MAXWLEN) {
-    // Add part of the bad word to the good word, so that we soundfold
-    // what replaces the bad word.
-    STRCPY(goodword, stp->st_word);
-    STRLCPY(goodword + stp->st_wordlen,
-            su->su_badptr + su->su_badlen - lendiff, lendiff + 1);
-    pgood = goodword;
-  } else {
-    pgood = (char_u *)stp->st_word;
-  }
-
-  // Sound-fold the word and compute the score for the difference.
-  spell_soundfold(slang, pgood, false, goodsound);
-
-  return soundalike_score((char *)goodsound, (char *)pbad);
-}
 
 /// structure used to store soundfolded words that add_sound_suggest() has
 /// handled already.
@@ -961,24 +898,6 @@ static void add_suggestion(suginfo_T *su, garray_T *gap, const char *goodword, i
         new_sug.st_altscore = altscore;
         new_sug.st_had_bonus = had_bonus;
 
-        if (stp->st_had_bonus != had_bonus) {
-          // Only one of the two had the soundalike score computed.
-          // Need to do that for the other one now, otherwise the
-          // scores can't be compared.  This happens because
-          // suggest_try_change() doesn't compute the soundalike
-          // word to keep it fast, while some special methods set
-          // the soundalike score to zero.
-          if (had_bonus) {
-            rescore_one(su, stp);
-          } else {
-            new_sug.st_word = stp->st_word;
-            new_sug.st_wordlen = stp->st_wordlen;
-            new_sug.st_slang = stp->st_slang;
-            new_sug.st_orglen = badlen;
-            rescore_one(su, &new_sug);
-          }
-        }
-
         if (stp->st_score > new_sug.st_score) {
           stp->st_score = new_sug.st_score;
           stp->st_altscore = new_sug.st_altscore;
@@ -1002,13 +921,8 @@ static void add_suggestion(suginfo_T *su, garray_T *gap, const char *goodword, i
     // If we have too many suggestions now, sort the list and keep
     // the best suggestions.
     if (gap->ga_len > SUG_MAX_COUNT(su)) {
-      if (maxsf) {
-        su->su_sfmaxscore = cleanup_suggestions(gap,
-                                                su->su_sfmaxscore, SUG_CLEAN_COUNT(su));
-      } else {
-        su->su_maxscore = cleanup_suggestions(gap,
-                                              su->su_maxscore, SUG_CLEAN_COUNT(su));
-      }
+      su->su_maxscore = cleanup_suggestions(gap,
+                                            su->su_maxscore, SUG_CLEAN_COUNT(su));
     }
   }
 }
@@ -1020,7 +934,7 @@ static void add_suggestion(suginfo_T *su, garray_T *gap, const char *goodword, i
 static void check_suggestions(suginfo_T *su, garray_T *gap)
 {
   suggest_T *stp;
-  char_u longword[MAXWLEN + 1];
+  char longword[MAXWLEN + 1];
   int len;
   hlf_T attr;
 
@@ -1060,32 +974,6 @@ static void add_banned(suginfo_T *su, char_u *word)
   if (HASHITEM_EMPTY(hi)) {
     s = xmemdupz(word, word_len);
     hash_add_item(&su->su_banned, hi, s, hash);
-  }
-}
-
-/// Recompute the score for one suggestion if sound-folding is possible.
-static void rescore_one(suginfo_T *su, suggest_T *stp)
-{
-  slang_T *slang = stp->st_slang;
-  char_u sal_badword[MAXWLEN];
-  char_u *p;
-
-  // Only rescore suggestions that have no sal score yet and do have a
-  // language.
-  if (slang != NULL && !GA_EMPTY(&slang->sl_sal) && !stp->st_had_bonus) {
-    if (slang == su->su_sallang) {
-      p = su->su_sal_badword;
-    } else {
-      spell_soundfold(slang, su->su_fbadword, true, sal_badword);
-      p = sal_badword;
-    }
-
-    stp->st_altscore = stp_sal_score(stp, su, slang, p);
-    if (stp->st_altscore == SCORE_MAXMAX) {
-      stp->st_altscore = SCORE_BIG;
-    }
-    stp->st_score = RESCORE(stp->st_score, stp->st_altscore);
-    stp->st_had_bonus = true;
   }
 }
 
@@ -1134,230 +1022,6 @@ static int cleanup_suggestions(garray_T *gap, int maxscore, int keep)
     }
   }
   return maxscore;
-}
-
-/// Compute a score for two sound-a-like words.
-/// This permits up to two inserts/deletes/swaps/etc. to keep things fast.
-/// Instead of a generic loop we write out the code.  That keeps it fast by
-/// avoiding checks that will not be possible.
-///
-/// @param goodstart  sound-folded good word
-/// @param badstart  sound-folded bad word
-static int soundalike_score(char *goodstart, char *badstart)
-{
-  char *goodsound = goodstart;
-  char *badsound = badstart;
-  int goodlen;
-  int badlen;
-  int n;
-  char *pl, *ps;
-  char *pl2, *ps2;
-  int score = 0;
-
-  // Adding/inserting "*" at the start (word starts with vowel) shouldn't be
-  // counted so much, vowels in the middle of the word aren't counted at all.
-  if ((*badsound == '*' || *goodsound == '*') && *badsound != *goodsound) {
-    if ((badsound[0] == NUL && goodsound[1] == NUL)
-        || (goodsound[0] == NUL && badsound[1] == NUL)) {
-      // changing word with vowel to word without a sound
-      return SCORE_DEL;
-    }
-    if (badsound[0] == NUL || goodsound[0] == NUL) {
-      // more than two changes
-      return SCORE_MAXMAX;
-    }
-
-    if (badsound[1] == goodsound[1]
-        || (badsound[1] != NUL
-            && goodsound[1] != NUL
-            && badsound[2] == goodsound[2])) {
-      // handle like a substitute
-    } else {
-      score = 2 * SCORE_DEL / 3;
-      if (*badsound == '*') {
-        badsound++;
-      } else {
-        goodsound++;
-      }
-    }
-  }
-
-  goodlen = (int)strlen(goodsound);
-  badlen = (int)strlen(badsound);
-
-  // Return quickly if the lengths are too different to be fixed by two
-  // changes.
-  n = goodlen - badlen;
-  if (n < -2 || n > 2) {
-    return SCORE_MAXMAX;
-  }
-
-  if (n > 0) {
-    pl = goodsound;         // goodsound is longest
-    ps = badsound;
-  } else {
-    pl = badsound;          // badsound is longest
-    ps = goodsound;
-  }
-
-  // Skip over the identical part.
-  while (*pl == *ps && *pl != NUL) {
-    pl++;
-    ps++;
-  }
-
-  switch (n) {
-  case -2:
-  case 2:
-    // Must delete two characters from "pl".
-    pl++;               // first delete
-    while (*pl == *ps) {
-      pl++;
-      ps++;
-    }
-    // strings must be equal after second delete
-    if (strcmp(pl + 1, ps) == 0) {
-      return score + SCORE_DEL * 2;
-    }
-
-    // Failed to compare.
-    break;
-
-  case -1:
-  case 1:
-    // Minimal one delete from "pl" required.
-
-    // 1: delete
-    pl2 = pl + 1;
-    ps2 = ps;
-    while (*pl2 == *ps2) {
-      if (*pl2 == NUL) {                // reached the end
-        return score + SCORE_DEL;
-      }
-      pl2++;
-      ps2++;
-    }
-
-    // 2: delete then swap, then rest must be equal
-    if (pl2[0] == ps2[1] && pl2[1] == ps2[0]
-        && strcmp(pl2 + 2, ps2 + 2) == 0) {
-      return score + SCORE_DEL + SCORE_SWAP;
-    }
-
-    // 3: delete then substitute, then the rest must be equal
-    if (strcmp(pl2 + 1, ps2 + 1) == 0) {
-      return score + SCORE_DEL + SCORE_SUBST;
-    }
-
-    // 4: first swap then delete
-    if (pl[0] == ps[1] && pl[1] == ps[0]) {
-      pl2 = pl + 2;                 // swap, skip two chars
-      ps2 = ps + 2;
-      while (*pl2 == *ps2) {
-        pl2++;
-        ps2++;
-      }
-      // delete a char and then strings must be equal
-      if (strcmp(pl2 + 1, ps2) == 0) {
-        return score + SCORE_SWAP + SCORE_DEL;
-      }
-    }
-
-    // 5: first substitute then delete
-    pl2 = pl + 1;                   // substitute, skip one char
-    ps2 = ps + 1;
-    while (*pl2 == *ps2) {
-      pl2++;
-      ps2++;
-    }
-    // delete a char and then strings must be equal
-    if (strcmp(pl2 + 1, ps2) == 0) {
-      return score + SCORE_SUBST + SCORE_DEL;
-    }
-
-    // Failed to compare.
-    break;
-
-  case 0:
-    // Lengths are equal, thus changes must result in same length: An
-    // insert is only possible in combination with a delete.
-    // 1: check if for identical strings
-    if (*pl == NUL) {
-      return score;
-    }
-
-    // 2: swap
-    if (pl[0] == ps[1] && pl[1] == ps[0]) {
-      pl2 = pl + 2;                 // swap, skip two chars
-      ps2 = ps + 2;
-      while (*pl2 == *ps2) {
-        if (*pl2 == NUL) {              // reached the end
-          return score + SCORE_SWAP;
-        }
-        pl2++;
-        ps2++;
-      }
-      // 3: swap and swap again
-      if (pl2[0] == ps2[1] && pl2[1] == ps2[0]
-          && strcmp(pl2 + 2, ps2 + 2) == 0) {
-        return score + SCORE_SWAP + SCORE_SWAP;
-      }
-
-      // 4: swap and substitute
-      if (strcmp(pl2 + 1, ps2 + 1) == 0) {
-        return score + SCORE_SWAP + SCORE_SUBST;
-      }
-    }
-
-    // 5: substitute
-    pl2 = pl + 1;
-    ps2 = ps + 1;
-    while (*pl2 == *ps2) {
-      if (*pl2 == NUL) {                // reached the end
-        return score + SCORE_SUBST;
-      }
-      pl2++;
-      ps2++;
-    }
-
-    // 6: substitute and swap
-    if (pl2[0] == ps2[1] && pl2[1] == ps2[0]
-        && strcmp(pl2 + 2, ps2 + 2) == 0) {
-      return score + SCORE_SUBST + SCORE_SWAP;
-    }
-
-    // 7: substitute and substitute
-    if (strcmp(pl2 + 1, ps2 + 1) == 0) {
-      return score + SCORE_SUBST + SCORE_SUBST;
-    }
-
-    // 8: insert then delete
-    pl2 = pl;
-    ps2 = ps + 1;
-    while (*pl2 == *ps2) {
-      pl2++;
-      ps2++;
-    }
-    if (strcmp(pl2 + 1, ps2) == 0) {
-      return score + SCORE_INS + SCORE_DEL;
-    }
-
-    // 9: delete then insert
-    pl2 = pl + 1;
-    ps2 = ps;
-    while (*pl2 == *ps2) {
-      pl2++;
-      ps2++;
-    }
-    if (strcmp(pl2, ps2 + 1) == 0) {
-      return score + SCORE_INS + SCORE_DEL;
-    }
-
-    // Failed to compare.
-    break;
-  }
-
-  return SCORE_MAXMAX;
 }
 
 typedef struct {

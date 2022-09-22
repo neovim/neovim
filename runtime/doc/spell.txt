@@ -452,26 +452,6 @@ Note that the default scripts don't set 'spellcapcheck' if it was changed from
 the default value.  This assumes the user prefers another value then.
 
 
-DOUBLE SCORING						*spell-double-scoring*
-
-The 'spellsuggest' option can be used to select "double" scoring.  This
-mechanism is based on the principle that there are two kinds of spelling
-mistakes:
-
-1. You know how to spell the word, but mistype something.  This results in a
-   small editing distance (character swapped/omitted/inserted) and possibly a
-   word that sounds completely different.
-
-2. You don't know how to spell the word and type something that sounds right.
-   The edit distance can be big but the word is similar after sound-folding.
-
-Since scores for these two mistakes will be very different we use a list
-for each and mix them.
-
-The sound-folding is slow and people that know the language won't make the
-second kind of mistakes.  Therefore 'spellsuggest' can be set to select the
-preferred method for scoring the suggestions.
-
 ==============================================================================
 3. Generating a spell file				*spell-mkspell*
 
