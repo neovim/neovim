@@ -1927,4 +1927,28 @@ func Test_read_invalid()
   set encoding=utf-8
 endfunc
 
+" Test for the 'revins' option
+func Test_edit_revins()
+  CheckFeature rightleft
+  new
+  set revins
+  exe "normal! ione\ttwo three"
+  call assert_equal("eerht owt\teno", getline(1))
+  call setline(1, "one\ttwo three")
+  normal! gg$bi a
+  call assert_equal("one\ttwo a three", getline(1))
+  exe "normal! $bi\<BS>\<BS>"
+  call assert_equal("one\ttwo a ree", getline(1))
+  exe "normal! 0wi\<C-W>"
+  call assert_equal("one\t a ree", getline(1))
+  exe "normal! 0wi\<C-U>"
+  call assert_equal("one\t ", getline(1))
+  " newline in insert mode starts at the end of the line
+  call setline(1, 'one two three')
+  exe "normal! wi\nfour"
+  call assert_equal(['one two three', 'ruof'], getline(1, '$'))
+  set revins&
+  bw!
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab

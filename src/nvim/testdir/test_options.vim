@@ -418,6 +418,7 @@ func Test_set_errors()
   set nomodifiable
   call assert_fails('set fileencoding=latin1', 'E21:')
   set modifiable&
+  " call assert_fails('set t_#-&', 'E522:')
 endfunc
 
 func CheckWasSet(name)
@@ -932,6 +933,18 @@ func Test_opt_local_to_global()
   call assert_equal('gnewprg', &l:equalprg)
   call assert_equal('gnewprg', &equalprg)
   set equalprg&
+
+  " Test for setting the global/local value of a boolean option
+  setglobal autoread
+  setlocal noautoread
+  call assert_false(&autoread)
+  set autoread<
+  call assert_true(&autoread)
+  setglobal noautoread
+  setlocal autoread
+  setlocal autoread<
+  call assert_false(&autoread)
+  set autoread&
 endfunc
 
 " Test for incrementing, decrementing and multiplying a number option value
@@ -1080,6 +1093,25 @@ func Test_opt_reset_scroll()
 
   " clean up
   call delete('Xscroll')
+endfunc
+
+" Test for setting an option to a Vi or Vim default
+func Test_opt_default()
+  throw 'Skipped: Nvim has different defaults'
+  set formatoptions&vi
+  call assert_equal('vt', &formatoptions)
+  set formatoptions&vim
+  call assert_equal('tcq', &formatoptions)
+endfunc
+
+" Test for the 'cmdheight' option
+func Test_cmdheight()
+  %bw!
+  let ht = &lines
+  set cmdheight=9999
+  call assert_equal(1, winheight(0))
+  call assert_equal(ht - 1, &cmdheight)
+  set cmdheight&
 endfunc
 
 " Test for the 'cdhome' option

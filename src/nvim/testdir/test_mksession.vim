@@ -942,6 +942,19 @@ func Test_mkvimrc()
   endfor
 
   call s:ClearMappings()
+
+  " the 'pastetoggle', 'wildchar' and 'wildcharm' option values should be
+  " stored as key names in the vimrc file
+  set pastetoggle=<F5>
+  set wildchar=<F6>
+  set wildcharm=<F7>
+  call assert_fails('mkvimrc Xtestvimrc')
+  mkvimrc! Xtestvimrc
+  call assert_notequal(-1, index(readfile('Xtestvimrc'), 'set pastetoggle=<F5>'))
+  call assert_notequal(-1, index(readfile('Xtestvimrc'), 'set wildchar=<F6>'))
+  call assert_notequal(-1, index(readfile('Xtestvimrc'), 'set wildcharm=<F7>'))
+  set pastetoggle& wildchar& wildcharm&
+
   call delete('Xtestvimrc')
 endfunc
 
