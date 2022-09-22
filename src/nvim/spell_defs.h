@@ -188,8 +188,6 @@ typedef struct slang_S {
 // Structure used in "b_langp", filled from 'spelllang'.
 typedef struct langp_S {
   slang_T *lp_slang;        // info for this language
-  slang_T *lp_sallang;      // language used for sound folding or NULL
-  slang_T *lp_replang;      // language used for REP items or NULL
   int lp_region;                // bitmask for region or REGION_ALL
 } langp_T;
 

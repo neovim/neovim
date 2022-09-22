@@ -1141,7 +1141,6 @@ char *did_set_spelllang(win_T *wp)
   char *use_region = NULL;
   bool dont_use_region = false;
   bool nobreak = false;
-  langp_T *lp, *lp2;
   static bool recursive = false;
   char *ret_msg = NULL;
   char *spl_copy;
@@ -1361,8 +1360,6 @@ char *did_set_spelllang(win_T *wp)
       if (region_mask != 0) {
         langp_T *p_ = GA_APPEND_VIA_PTR(langp_T, &ga);
         p_->lp_slang = slang;
-        p_->lp_sallang = NULL;
-        p_->lp_replang = NULL;
         p_->lp_region = region_mask;
 
         use_midword(slang, wp);
@@ -1374,46 +1371,6 @@ char *did_set_spelllang(win_T *wp)
   ga_clear(&wp->w_s->b_langp);
   wp->w_s->b_langp = ga;
 
-  // For each language figure out what language to use for sound folding and
-  // REP items.  If the language doesn't support it itself use another one
-  // with the same name.  E.g. for "en-math" use "en".
-  for (int i = 0; i < ga.ga_len; i++) {
-    lp = LANGP_ENTRY(ga, i);
-
-    // sound folding
-    if (!GA_EMPTY(&lp->lp_slang->sl_sal)) {
-      // language does sound folding itself
-      lp->lp_sallang = lp->lp_slang;
-    } else {
-      // find first similar language that does sound folding
-      for (int j = 0; j < ga.ga_len; j++) {
-        lp2 = LANGP_ENTRY(ga, j);
-        if (!GA_EMPTY(&lp2->lp_slang->sl_sal)
-            && STRNCMP(lp->lp_slang->sl_name,
-                       lp2->lp_slang->sl_name, 2) == 0) {
-          lp->lp_sallang = lp2->lp_slang;
-          break;
-        }
-      }
-    }
-
-    // REP items
-    if (!GA_EMPTY(&lp->lp_slang->sl_rep)) {
-      // language has REP items itself
-      lp->lp_replang = lp->lp_slang;
-    } else {
-      // find first similar language that has REP items
-      for (int j = 0; j < ga.ga_len; j++) {
-        lp2 = LANGP_ENTRY(ga, j);
-        if (!GA_EMPTY(&lp2->lp_slang->sl_rep)
-            && STRNCMP(lp->lp_slang->sl_name,
-                       lp2->lp_slang->sl_name, 2) == 0) {
-          lp->lp_replang = lp2->lp_slang;
-          break;
-        }
-      }
-    }
-  }
   redraw_later(wp, UPD_NOT_VALID);
 
 theend:
