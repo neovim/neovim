@@ -80,10 +80,11 @@ void win_redr_status(win_T *wp)
     p = (char_u *)NameBuff;
     len = (int)STRLEN(p);
 
-    if (bt_help(wp->w_buffer)
-        || wp->w_p_pvw
-        || bufIsChanged(wp->w_buffer)
-        || wp->w_buffer->b_p_ro) {
+    if ((bt_help(wp->w_buffer)
+         || wp->w_p_pvw
+         || bufIsChanged(wp->w_buffer)
+         || wp->w_buffer->b_p_ro)
+        && len < MAXPATHL - 1) {
       *(p + len++) = ' ';
     }
     if (bt_help(wp->w_buffer)) {

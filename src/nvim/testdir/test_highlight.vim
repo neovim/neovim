@@ -722,7 +722,7 @@ func Test_1_highlight_Normalgroup_exists()
   elseif has('gui_gtk2') || has('gui_gnome') || has('gui_gtk3')
     " expect is DEFAULT_FONT of gui_gtk_x11.c
     call assert_match('hi Normal\s*font=Monospace 10', hlNormal)
-  elseif has('gui_motif') || has('gui_athena')
+  elseif has('gui_motif')
     " expect is DEFAULT_FONT of gui_x11.c
     call assert_match('hi Normal\s*font=7x13', hlNormal)
   elseif has('win32')
