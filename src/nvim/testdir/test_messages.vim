@@ -358,7 +358,8 @@ func Test_quit_long_message()
     echom range(9999)->join("\x01")
   END
   call writefile(content, 'Xtest_quit_message')
-  let buf = RunVimInTerminal('-S Xtest_quit_message', #{rows: 6})
+  let buf = RunVimInTerminal('-S Xtest_quit_message', #{rows: 6, wait_for_ruler: 0})
+  call WaitForAssert({-> assert_match('^-- More --', term_getline(buf, 6))})
   call term_sendkeys(buf, "q")
   call VerifyScreenDump(buf, 'Test_quit_long_message', {})
 

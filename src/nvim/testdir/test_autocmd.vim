@@ -533,7 +533,9 @@ func Test_BufReadCmdNofile()
             \ 'acwrite',
             \ 'quickfix',
             \ 'help',
+            "\ 'terminal',
             \ 'prompt',
+            "\ 'popup',
             \ ]
     new somefile
     exe 'set buftype=' .. val
@@ -650,7 +652,9 @@ func Test_BufEnter()
             \ 'acwrite',
             \ 'quickfix',
             \ 'help',
+            "\ 'terminal',
             \ 'prompt',
+            "\ 'popup',
             \ ]
     new somefile
     exe 'set buftype=' .. val
