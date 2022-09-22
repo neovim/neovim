@@ -282,6 +282,15 @@ func Test_set_completion()
   call feedkeys(":set fileencodings:\<C-A>\<C-B>\"\<CR>", 'tx')
   call assert_equal('"set fileencodings:ucs-bom,utf-8,default,latin1', @:)
 
+  " Expand key codes.
+  " call feedkeys(":set <H\<C-A>\<C-B>\"\<CR>", 'tx')
+  " call assert_equal('"set <Help> <Home>', @:)
+
+  " Expand terminal options.
+  " call feedkeys(":set t_A\<C-A>\<C-B>\"\<CR>", 'tx')
+  " call assert_equal('"set t_AB t_AF t_AU t_AL', @:)
+  " call assert_fails('call feedkeys(":set <t_afoo>=\<C-A>\<CR>", "xt")', 'E474:')
+
   " Expand directories.
   call feedkeys(":set cdpath=./\<C-A>\<C-B>\"\<CR>", 'tx')
   call assert_match('./samples/ ', @:)
@@ -409,6 +418,7 @@ func Test_set_errors()
   set nomodifiable
   call assert_fails('set fileencoding=latin1', 'E21:')
   set modifiable&
+  " call assert_fails('set t_#-&', 'E522:')
 endfunc
 
 func CheckWasSet(name)
@@ -923,6 +933,40 @@ func Test_opt_local_to_global()
   call assert_equal('gnewprg', &l:equalprg)
   call assert_equal('gnewprg', &equalprg)
   set equalprg&
+
+  " Test for setting the global/local value of a boolean option
+  setglobal autoread
+  setlocal noautoread
+  call assert_false(&autoread)
+  set autoread<
+  call assert_true(&autoread)
+  setglobal noautoread
+  setlocal autoread
+  setlocal autoread<
+  call assert_false(&autoread)
+  set autoread&
+endfunc
+
+func Test_set_in_sandbox()
+  " Some boolean options cannot be set in sandbox, some can.
+  call assert_fails('sandbox set modelineexpr', 'E48:')
+  sandbox set number
+  call assert_true(&number)
+  set number&
+
+  " Some boolean options cannot be set in sandbox, some can.
+  if has('python') || has('python3')
+    call assert_fails('sandbox set pyxversion=3', 'E48:')
+  endif
+  sandbox set tabstop=4
+  call assert_equal(4, &tabstop)
+  set tabstop&
+
+  " Some string options cannot be set in sandbox, some can.
+  call assert_fails('sandbox set backupdir=/tmp', 'E48:')
+  sandbox set filetype=perl
+  call assert_equal('perl', &filetype)
+  set filetype&
 endfunc
 
 " Test for incrementing, decrementing and multiplying a number option value
@@ -1071,6 +1115,64 @@ func Test_opt_reset_scroll()
 
   " clean up
   call delete('Xscroll')
+endfunc
+
+" Test for setting an option to a Vi or Vim default
+func Test_opt_default()
+  throw 'Skipped: Nvim has different defaults'
+  set formatoptions&vi
+  call assert_equal('vt', &formatoptions)
+  set formatoptions&vim
+  call assert_equal('tcq', &formatoptions)
+endfunc
+
+" Test for the 'cmdheight' option
+func Test_cmdheight()
+  %bw!
+  let ht = &lines
+  set cmdheight=9999
+  call assert_equal(1, winheight(0))
+  call assert_equal(ht - 1, &cmdheight)
+  set cmdheight&
+endfunc
+
+" To specify a control character as a option value, '^' can be used
+func Test_opt_control_char()
+  set wildchar=^v
+  call assert_equal("\<C-V>", nr2char(&wildchar))
+  set wildcharm=^r
+  call assert_equal("\<C-R>", nr2char(&wildcharm))
+  " Bug: This doesn't work for the 'cedit' and 'termwinkey' options
+  set wildchar& wildcharm&
+endfunc
+
+" Test for the 'errorbells' option
+func Test_opt_errorbells()
+  set errorbells
+  call assert_beeps('s/a1b2/x1y2/')
+  set noerrorbells
+endfunc
+
+func Test_opt_scrolljump()
+  help
+  resize 10
+
+  " Test with positive 'scrolljump'.
+  set scrolljump=2
+  norm! Lj
+  call assert_equal({'lnum':11, 'leftcol':0, 'col':0, 'topfill':0,
+        \            'topline':3, 'coladd':0, 'skipcol':0, 'curswant':0},
+        \           winsaveview())
+
+  " Test with negative 'scrolljump' (percentage of window height).
+  set scrolljump=-40
+  norm! ggLj
+  call assert_equal({'lnum':11, 'leftcol':0, 'col':0, 'topfill':0,
+         \            'topline':5, 'coladd':0, 'skipcol':0, 'curswant':0},
+         \           winsaveview())
+
+  set scrolljump&
+  bw
 endfunc
 
 " Test for the 'cdhome' option

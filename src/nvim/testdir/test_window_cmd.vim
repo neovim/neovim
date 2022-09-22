@@ -433,7 +433,15 @@ func Test_window_width()
   call assert_inrange(ww1, ww1 + 1, ww2)
   call assert_inrange(ww3, ww3 + 1, ww2)
 
-  bw Xa Xb Xc
+  " when the current window width is less than the new 'winwidth', the current
+  " window width should be increased.
+  enew | only
+  split
+  10vnew
+  set winwidth=15
+  call assert_equal(15, winwidth(0))
+
+  %bw!
 endfunc
 
 func Test_equalalways_on_close()

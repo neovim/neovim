@@ -26,4 +26,23 @@ function Test_set_add()
   let &wig = wig_save
 endfunction
 
+
+" :set, :setlocal, :setglobal without arguments show values of options.
+func Test_set_no_arg()
+  set textwidth=79
+  let a = execute('set')
+  call assert_match("^\n--- Options ---\n.*textwidth=79\\>", a)
+  set textwidth&
+
+  setlocal textwidth=78
+  let a = execute('setlocal')
+  call assert_match("^\n--- Local option values ---\n.*textwidth=78\\>", a)
+  setlocal textwidth&
+
+  setglobal textwidth=77
+  let a = execute('setglobal')
+  call assert_match("^\n--- Global option values ---\n.*textwidth=77\\>", a)
+  setglobal textwidth&
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab

@@ -1,4 +1,30 @@
 
+" Test for translation of special key codes (<xF1>, <xF2>, etc.)
+func Test_Keycode_Translation()
+  let keycodes = [
+        \ ["<xUp>", "<Up>"],
+        \ ["<xDown>", "<Down>"],
+        \ ["<xLeft>", "<Left>"],
+        \ ["<xRight>", "<Right>"],
+        \ ["<xHome>", "<Home>"],
+        \ ["<xEnd>", "<End>"],
+        \ ["<zHome>", "<Home>"],
+        \ ["<zEnd>", "<End>"],
+        \ ["<xF1>", "<F1>"],
+        \ ["<xF2>", "<F2>"],
+        \ ["<xF3>", "<F3>"],
+        \ ["<xF4>", "<F4>"],
+        \ ["<S-xF1>", "<S-F1>"],
+        \ ["<S-xF2>", "<S-F2>"],
+        \ ["<S-xF3>", "<S-F3>"],
+        \ ["<S-xF4>", "<S-F4>"]]
+  for [k1, k2] in keycodes
+    exe "nnoremap " .. k1 .. " 2wx"
+    call assert_true(maparg(k1, 'n', 0, 1).lhs == k2)
+    exe "nunmap " .. k1
+  endfor
+endfunc
+
 " Test for terminal keycodes that doesn't have termcap entries
 func Test_special_term_keycodes()
   new
