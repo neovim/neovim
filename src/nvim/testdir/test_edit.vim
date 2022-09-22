@@ -1966,7 +1966,11 @@ endfunc
 " Test toggling of input method. See :help i_CTRL-^
 func Test_edit_CTRL_hat()
   CheckFeature xim
-  CheckNotGui " FIXME: why does this test fail when running in the GUI?
+
+  " FIXME: test fails with Athena and Motif GUI.
+  "        test also fails when running in the GUI.
+  CheckFeature gui_gtk
+  CheckNotGui
 
   new
 
