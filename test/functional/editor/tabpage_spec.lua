@@ -9,6 +9,7 @@ local feed = helpers.feed
 local eval = helpers.eval
 local exec = helpers.exec
 local funcs = helpers.funcs
+local assert_alive = helpers.assert_alive
 
 describe('tabpage', function()
   before_each(clear)
@@ -52,6 +53,19 @@ describe('tabpage', function()
       +tabclose
     ]])
     neq(999, eval('g:win_closed'))
+  end)
+
+  it('no segfault with strange WinClosed autocommand #20290', function()
+    pcall(exec, [[
+      set nohidden
+      edit Xa
+      split Xb
+      tab split
+      new
+      autocmd WinClosed * tabprev | bwipe!
+      close
+    ]])
+    assert_alive()
   end)
 
   it('switching tabpage after setting laststatus=3 #19591', function()

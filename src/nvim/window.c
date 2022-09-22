@@ -2520,14 +2520,6 @@ bool one_nonfloat(void) FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
   return firstwin->w_next == NULL || firstwin->w_next->w_floating;
 }
 
-/// if wp is the last non-floating window
-///
-/// always false for a floating window
-bool last_nonfloat(win_T *wp) FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
-{
-  return wp != NULL && firstwin == wp && !(wp->w_next && !wp->w_floating);
-}
-
 /// Check if floating windows in the current tab can be closed.
 /// Do not call this when the autocommand window is in use!
 ///
