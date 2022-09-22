@@ -975,6 +975,21 @@ func Test_abbreviate_multi_byte()
   bwipe!
 endfunc
 
+" Test for abbreviations with 'latin1' encoding
+func Test_abbreviate_latin1_encoding()
+  " set encoding=latin1
+  call assert_fails('abbr ab#$c ABC', 'E474:')
+  new
+  iabbr <buffer> #i #include
+  iabbr <buffer> ## #enddef
+  exe "normal i#i\<C-]>"
+  call assert_equal('#include', getline(1))
+  exe "normal 0Di##\<C-]>"
+  call assert_equal('#enddef', getline(1))
+  %bw!
+  set encoding=utf-8
+endfunc
++
 " Test for <Plug> always being mapped, even when used with "noremap".
 func Test_plug_remap()
   let g:foo = 0

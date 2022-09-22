@@ -665,7 +665,7 @@ func Sandbox_tests()
   " some options cannot be changed in a sandbox
   call assert_fails('set exrc', 'E48:')
   call assert_fails('set cdpath', 'E48:')
-  if has('xim')
+  if has('xim') && has('gui_gtk')
     call assert_fails('set imstyle', 'E48:')
   endif
 endfunc

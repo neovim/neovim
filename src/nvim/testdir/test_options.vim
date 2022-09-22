@@ -1114,6 +1114,23 @@ func Test_cmdheight()
   set cmdheight&
 endfunc
 
+" To specify a control character as a option value, '^' can be used
+func Test_opt_control_char()
+  set wildchar=^v
+  call assert_equal("\<C-V>", nr2char(&wildchar))
+  set wildcharm=^r
+  call assert_equal("\<C-R>", nr2char(&wildcharm))
+  " Bug: This doesn't work for the 'cedit' and 'termwinkey' options
+  set wildchar& wildcharm&
+endfunc
+
+" Test for the 'errorbells' option
+func Test_opt_errorbells()
+  set errorbells
+  call assert_beeps('s/a1b2/x1y2/')
+  set noerrorbells
+endfunc
+
 " Test for the 'cdhome' option
 func Test_opt_cdhome()
   if has('unix') || has('vms')

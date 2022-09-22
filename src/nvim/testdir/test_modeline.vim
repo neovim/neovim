@@ -1,5 +1,7 @@
 " Tests for parsing the modeline.
 
+source check.vim
+
 func Test_modeline_invalid()
   " This was reading allocated memory in the past.
   call writefile(['vi:0', 'nothing'], 'Xmodeline')
@@ -335,6 +337,32 @@ func Test_modeline_setoption_verbose()
 
   let &modeline = modeline
   call delete('Xmodeline')
+endfunc
+
+" Test for the 'modeline' default value in compatible and non-compatible modes
+" for root and non-root accounts
+func Test_modeline_default()
+  " set compatible
+  " call assert_false(&modeline)
+  set nocompatible
+  call assert_equal(IsRoot() ? 0 : 1, &modeline)
+  " set compatible&vi
+  " call assert_false(&modeline)
+  set compatible&vim
+  call assert_equal(IsRoot() ? 0 : 1, &modeline)
+  set compatible& modeline&
+endfunc
+
+" Some options cannot be set from the modeline when 'diff' option is set
+func Test_modeline_diff_buffer()
+  call writefile(['vim: diff foldmethod=marker wrap'], 'Xfile')
+  set foldmethod& nowrap
+  new Xfile
+  call assert_equal('manual', &foldmethod)
+  call assert_false(&wrap)
+  set wrap&
+  call delete('Xfile')
+  bw
 endfunc
 
 func Test_modeline_disable()
