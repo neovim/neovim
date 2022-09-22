@@ -240,30 +240,28 @@ size_t spell_check(win_T *wp, const char *ptr, hlf_T *attrp, int *capcol, bool d
   // Loop over the languages specified in 'spelllang'.
   // We check them all, because a word may be matched longer in another
   // language.
-  for (int lpi = 0; lpi < wp->w_s->b_langp.ga_len; lpi++) {
-    langp_T *lp = LANGP_ENTRY(wp->w_s->b_langp, lpi);
+  if (end != ptr) {
+    for (int lpi = 0; lpi < wp->w_s->b_langp.ga_len; lpi++) {
+      langp_T *lp = LANGP_ENTRY(wp->w_s->b_langp, lpi);
 
-    // If reloading fails the language is still in the list but everything
-    // has been cleared.
-    if (lp->lp_slang->sl_hunspell != NULL) {
-      if (end == ptr) {
-        MB_PTR_ADV(end);
-      }
+      // If reloading fails the language is still in the list but everything
+      // has been cleared.
+      if (lp->lp_slang->sl_hunspell != NULL) {
+        size_t wlen = (size_t)(end - ptr);
+        int spell_flags = 0;
+        if (hunspell_spell_flags(lp->lp_slang->sl_hunspell, (char *)ptr,
+                                 wlen, &spell_flags)) {
+          result =
+            (spell_flags & HSPELL_FORBIDDEN) ? SP_BANNED :
+            (spell_flags & HSPELL_WARN) ? SP_RARE : SP_OK;
+        } else {
+          result = SP_BAD;
+        }
 
-      size_t wlen = (size_t)(end - ptr);
-      int spell_flags = 0;
-      if (hunspell_spell_flags(lp->lp_slang->sl_hunspell, (char *)ptr,
-                               wlen, &spell_flags)) {
-        result =
-          (spell_flags & HSPELL_FORBIDDEN) ? SP_BANNED :
-          (spell_flags & HSPELL_WARN) ? SP_RARE : SP_OK;
-      } else {
-        result = SP_BAD;
-      }
-
-      if (result == SP_OK && count_word) {
-        count_common_word(lp->lp_slang, (char_u *)ptr, (int)wlen, 1);
-        count_word = false;
+        if (result == SP_OK && count_word) {
+          count_common_word(lp->lp_slang, (char_u *)ptr, (int)wlen, 1);
+          count_word = false;
+        }
       }
     }
   }
