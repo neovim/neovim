@@ -105,7 +105,6 @@
 #include "nvim/search.h"          // for SEARCH_KEEP, for do_search
 #include "nvim/spell.h"           // for FUNC_ATTR_NONNULL_ALL, FUNC_AT...
 #include "nvim/spell_defs.h"      // for slang_T, langp_T, MAXWLEN, sal...
-#include "nvim/spellfile.h"       // for spell_load_file
 #include "nvim/spellsuggest.h"    // for spell_suggest_list
 #include "nvim/strings.h"         // for vim_strchr, vim_snprintf, conc...
 #include "nvim/syntax.h"          // for syn_get_id, syntax_present
@@ -788,7 +787,7 @@ static void spell_hunspell_cb(char *path, void *ud)
   if (h != NULL) {
     sl->sl_slang = slang_alloc((char *)sl->sl_lang);
     sl->sl_slang->sl_hunspell = h;
-    sl->sl_slang->sl_fname = xstrdup(aff_path);
+    sl->sl_slang->sl_fname = xstrdup(path);
   }
 
   xfree(aff_path);
@@ -805,7 +804,7 @@ static void spell_hunspell_add_cb(char *path, void *ud)
 
 // Load word list(s) for "lang" from Vim spell file(s).
 // "lang" must be the language without the region: e.g., "en".
-static void spell_load_lang(win_T *wp, char *lang)
+static slang_T *spell_load_lang(win_T *wp, char *lang)
 {
   char fname_enc[85];
   int r;
@@ -853,6 +852,8 @@ static void spell_load_lang(win_T *wp, char *lang)
     sl.sl_slang->sl_next = first_lang;
     first_lang = sl.sl_slang;
   }
+
+  return sl.sl_slang;
 }
 
 // Return the encoding used for spell checking: Use 'encoding', except that we
@@ -1204,7 +1205,7 @@ char *did_set_spelllang(win_T *wp)
 
     // If not found try loading the language now.
     if (slang == NULL) {
-      spell_load_lang(wp, lang);
+      (void)spell_load_lang(wp, lang);
       // SpellFileMissing autocommands may do anything, including
       // destroying the buffer we are using...
       if (!bufref_valid(&bufref)) {
@@ -1288,20 +1289,16 @@ char *did_set_spelllang(win_T *wp)
         break;
       }
     }
-    if (slang == NULL) {
-      // Not loaded, try loading it now.  The language name includes the
-      // region name, the region is ignored otherwise.  for int_wordlist
-      // use an arbitrary name.
-      if (round == 0) {
-        STRCPY(lang, "internal wordlist");
-      } else {
-        STRLCPY(lang, path_tail((char *)spf_name), MAXWLEN + 1);
-        p = vim_strchr((char *)lang, '.');
-        if (p != NULL) {
-          *p = NUL;             // truncate at ".encoding.add"
-        }
+    // Not loaded, try loading it now.  The language name includes the
+    // region name, the region is ignored otherwise.
+    // Ignore int_wordlist
+    if (slang == NULL && round != 0) {
+      STRLCPY(lang, path_tail((char *)spf_name), MAXWLEN + 1);
+      p = vim_strchr((char *)lang, '.');
+      if (p != NULL) {
+        *p = NUL;             // truncate at ".encoding.add"
       }
-      slang = spell_load_file((char *)spf_name, (char *)lang, NULL, true);
+      slang = spell_load_lang(wp, (char *)lang);
 
       // If one of the languages has NOBREAK we assume the addition
       // files also have this.

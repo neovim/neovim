@@ -70,5 +70,12 @@ describe('vim.spell', function()
         })
       end)
     end)
+
+    it('loads the spellfile', function()
+      meths.set_option_value("spell", true, { scope = 'local' })
+      meths.set_option_value("spellfile", "test/functional/fixtures/spell/extra.add", { scope = 'local' })
+
+      check('This is gud', {})
+    end)
   end)
 end)
