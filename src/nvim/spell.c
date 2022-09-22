@@ -84,6 +84,7 @@
 #include "nvim/hashtab.h"         // for hash_clear_all, hash_init, has...
 #include "nvim/highlight_defs.h"  // for HLF_COUNT, hlf_T, HLF_SPB, HLF...
 #include "nvim/insexpand.h"       // for ins_compl_add_infercase, ins_c...
+#include "nvim/lib/kvec.h"
 #include "nvim/log.h"             // for ELOG
 #include "nvim/macros.h"          // for MB_PTR_ADV, MB_PTR_BACK, ASCII...
 #include "nvim/mark.h"            // for clearpos
@@ -116,8 +117,8 @@
 // languages.
 slang_T *first_lang = NULL;
 
-// file used for "zG" and "zW"
-char_u *int_wordlist = NULL;
+wordlist_T int_good_words = KV_INITIAL_VALUE;
+wordlist_T int_bad_words = KV_INITIAL_VALUE;
 
 // Structure used for the cookie argument of do_in_runtimepath().
 typedef struct spelload_S {
@@ -846,9 +847,17 @@ static slang_T *spell_load_lang(win_T *wp, char *lang)
     }
   } else if (sl.sl_slang != NULL) {
     // At least one file was loaded, now load ALL the additions.
-    // TODO(vigoux): probably not right and we'll have to load the .add files
     STRCPY(fname_enc + STRLEN(fname_enc) - 3, "add");
     do_in_runtimepath((char *)fname_enc, DIP_ALL, spell_hunspell_add_cb, &sl);
+
+    // Now add the internal wordlist
+    for (size_t i = 0; i < kv_size(int_good_words); i++) {
+      hunspell_add_word(sl.sl_slang->sl_hunspell, kv_A(int_good_words, i));
+    }
+    for (size_t i = 0; i < kv_size(int_bad_words); i++) {
+      hunspell_remove_word(sl.sl_slang->sl_hunspell, kv_A(int_bad_words, i));
+    }
+
     sl.sl_slang->sl_next = first_lang;
     first_lang = sl.sl_slang;
   }
@@ -864,14 +873,6 @@ char_u *spell_enc(void)
     return (char_u *)p_enc;
   }
   return (char_u *)"latin1";
-}
-
-// Get the name of the .spl file for the internal wordlist into
-// "fname[MAXPATHL]".
-static void int_wordlist_spl(char_u *fname)
-{
-  vim_snprintf((char *)fname, MAXPATHL, SPL_FNAME_TMPL,
-               int_wordlist, spell_enc());
 }
 
 /// Allocate a new slang_T for language "lang".  "lang" can be NULL.
@@ -1252,34 +1253,24 @@ char *did_set_spelllang(win_T *wp)
     }
   }
 
-  // round 0: load int_wordlist, if possible.
-  // round 1: load first name in 'spellfile'.
-  // round 2: load second name in 'spellfile.
-  // etc.
+  // The internal wordlist is handled when loading a language
+  // For each spellfile item
   spf = curwin->w_s->b_p_spf;
-  for (round = 0; round == 0 || *spf != NUL; round++) {
-    if (round == 0) {
-      // Internal wordlist, if there is one.
-      if (int_wordlist == NULL) {
-        continue;
-      }
-      int_wordlist_spl((char_u *)spf_name);
-    } else {
-      // One entry in 'spellfile'.
-      copy_option_part(&spf, (char *)spf_name, MAXPATHL - 5, ",");
-      STRCAT(spf_name, ".spl");
+  for (round = 0; *spf != NUL; round++) {
+    // One entry in 'spellfile'.
+    copy_option_part(&spf, (char *)spf_name, MAXPATHL - 5, ",");
+    STRCAT(spf_name, ".spl");
 
-      // If it was already found above then skip it.
-      for (c = 0; c < ga.ga_len; c++) {
-        p = LANGP_ENTRY(ga, c)->lp_slang->sl_fname;
-        if (p != NULL
-            && path_full_compare((char *)spf_name, p, false, true) == kEqualFiles) {
-          break;
-        }
+    // If it was already found above then skip it.
+    for (c = 0; c < ga.ga_len; c++) {
+      p = LANGP_ENTRY(ga, c)->lp_slang->sl_fname;
+      if (p != NULL
+          && path_full_compare((char *)spf_name, p, false, true) == kEqualFiles) {
+        break;
       }
-      if (c < ga.ga_len) {
-        continue;
-      }
+    }
+    if (c < ga.ga_len) {
+      continue;
     }
 
     // Check if it was loaded already.
@@ -1292,7 +1283,7 @@ char *did_set_spelllang(win_T *wp)
     // Not loaded, try loading it now.  The language name includes the
     // region name, the region is ignored otherwise.
     // Ignore int_wordlist
-    if (slang == NULL && round != 0) {
+    if (slang == NULL) {
       STRLCPY(lang, path_tail((char *)spf_name), MAXWLEN + 1);
       p = vim_strchr((char *)lang, '.');
       if (p != NULL) {
@@ -1452,12 +1443,16 @@ int captype(char *word, char *end)
 // Delete the internal wordlist and its .spl file.
 void spell_delete_wordlist(void)
 {
-  if (int_wordlist != NULL) {
-    char_u fname[MAXPATHL] = { 0 };
-    os_remove((char *)int_wordlist);
-    int_wordlist_spl(fname);
-    os_remove((char *)fname);
-    XFREE_CLEAR(int_wordlist);
+  wordlist_T lists[2] = {
+    int_good_words,
+    int_bad_words
+  };
+
+  for (size_t l = 0; l < 2; l++) {
+    for (size_t i = 0; i < kv_size(lists[l]); i++) {
+      xfree(kv_A(lists[l], i));
+    }
+    kv_destroy(lists[l]);
   }
 }
 

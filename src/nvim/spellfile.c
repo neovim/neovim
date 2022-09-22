@@ -229,6 +229,7 @@
 #include <fcntl.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <string.h>
 #include <wctype.h>
 
 #include "hunspell/hunspell_wrapper.h"
@@ -1120,7 +1121,6 @@ void spell_add_word(char_u *word, int len, SpellAddType what, int idx, bool undo
   char_u *fnamebuf = NULL;
   char_u line[MAXWLEN * 2];
   long fpos, fpos_next = 0;
-  int i;
   char_u *spf;
 
   if (!valid_spell_word((char *)word, (char *)word + len)) {
@@ -1129,51 +1129,82 @@ void spell_add_word(char_u *word, int len, SpellAddType what, int idx, bool undo
   }
 
   if (idx == 0) {           // use internal wordlist
-    if (int_wordlist == NULL) {
-      int_wordlist = (char_u *)vim_tempname();
-      if (int_wordlist == NULL) {
-        return;
-      }
-    }
-    fname = (char *)int_wordlist;
-  } else {
-    // If 'spellfile' isn't set figure out a good default value.
-    if (*curwin->w_s->b_p_spf == NUL) {
-      init_spellfile();
-      new_spf = true;
-    }
+    // First push that in the corresponding list
+    wordlist_T ilist = (what == SPELL_ADD_GOOD) ? int_good_words : int_bad_words;
+    wordlist_T other = (what == SPELL_ADD_GOOD) ? int_bad_words : int_good_words;
 
-    if (*curwin->w_s->b_p_spf == NUL) {
-      semsg(_(e_notset), "spellfile");
-      return;
-    }
-    fnamebuf = xmalloc(MAXPATHL);
+    kv_push(ilist, xstrdup((char *)word));
 
-    for (spf = (char_u *)curwin->w_s->b_p_spf, i = 1; *spf != NUL; i++) {
-      copy_option_part((char **)&spf, (char *)fnamebuf, MAXPATHL, ",");
-      if (i == idx) {
-        break;
-      }
-      if (*spf == NUL) {
-        semsg(_("E765: 'spellfile' does not have %" PRId64 " entries"), (int64_t)idx);
-        xfree(fnamebuf);
-        return;
+    size_t i;
+    // Find the word in the other list, and free it
+    for (i = 0; i < kv_size(other); i++) {
+      char *tgt = kv_A(other, i);
+      if (strcmp(tgt, (char *)word) == 0) {
+        xfree(tgt);
       }
     }
 
-    // Check that the user isn't editing the .add file somewhere.
-    buf = buflist_findname_exp((char *)fnamebuf);
-    if (buf != NULL && buf->b_ml.ml_mfp == NULL) {
-      buf = NULL;
+    if (i < kv_size(other)) {
+      // We found the word in the other list, se now splice the elements
+      for (; i + 1 < kv_size(other); i++) {
+        kv_A(other, i) = kv_A(other, i + 1);
+      }
+
+      kv_pop(other);
     }
-    if (buf != NULL && bufIsChanged(buf)) {
-      emsg(_(e_bufloaded));
+
+    // Now update each language to reflect that new word
+    for (int lpi = 0; lpi < curwin->w_s->b_langp.ga_len; lpi++) {
+      langp_T *lp = LANGP_ENTRY(curwin->w_s->b_langp, lpi);
+      if (lp->lp_slang->sl_hunspell != NULL) {
+        if (what == SPELL_ADD_GOOD) {
+          hunspell_add_word(lp->lp_slang->sl_hunspell, (char *)word);
+        } else if (what == SPELL_ADD_BAD) {
+          hunspell_remove_word(lp->lp_slang->sl_hunspell, (char *)word);
+        }
+      }
+    }
+    redraw_all_later(UPD_SOME_VALID);
+    return;
+  }
+
+  // If 'spellfile' isn't set figure out a good default value.
+  if (*curwin->w_s->b_p_spf == NUL) {
+    init_spellfile();
+    new_spf = true;
+  }
+
+  if (*curwin->w_s->b_p_spf == NUL) {
+    semsg(_(e_notset), "spellfile");
+    return;
+  }
+  fnamebuf = xmalloc(MAXPATHL);
+
+  int i;
+  for (spf = (char_u *)curwin->w_s->b_p_spf, i = 1; *spf != NUL; i++) {
+    copy_option_part((char **)&spf, (char *)fnamebuf, MAXPATHL, ",");
+    if (i == idx) {
+      break;
+    }
+    if (*spf == NUL) {
+      semsg(_("E765: 'spellfile' does not have %" PRId64 " entries"), (int64_t)idx);
       xfree(fnamebuf);
       return;
     }
-
-    fname = (char *)fnamebuf;
   }
+
+  // Check that the user isn't editing the .add file somewhere.
+  buf = buflist_findname_exp((char *)fnamebuf);
+  if (buf != NULL && buf->b_ml.ml_mfp == NULL) {
+    buf = NULL;
+  }
+  if (buf != NULL && bufIsChanged(buf)) {
+    emsg(_(e_bufloaded));
+    xfree(fnamebuf);
+    return;
+  }
+
+  fname = (char *)fnamebuf;
 
   if (what == SPELL_ADD_BAD || undo) {
     // When the word appears as good word we need to remove that one,
@@ -1258,24 +1289,8 @@ void spell_add_word(char_u *word, int len, SpellAddType what, int idx, bool undo
 
   if (fd != NULL) {
     // Update the spellchecking
-    if (idx == 0) {
-      // When `zG` or `zW` add the word to the internal word list
-      for (int lpi = 0; lpi < curwin->w_s->b_langp.ga_len; lpi++) {
-        langp_T *lp = LANGP_ENTRY(curwin->w_s->b_langp, lpi);
-        if (lp->lp_slang->sl_hunspell != NULL) {
-          // TODO(vigoux): This wordlist is not _stored anywhere, maybe we should hold that in
-          // memory ?
-          if (what == SPELL_ADD_GOOD) {
-            hunspell_add_word(lp->lp_slang->sl_hunspell, (char *)word);
-          } else if (what == SPELL_ADD_BAD) {
-            hunspell_remove_word(lp->lp_slang->sl_hunspell, (char *)word);
-          }
-        }
-      }
-    } else {
-      spell_hunspell_format_dic(fname);
-      spell_reload();
-    }
+    spell_hunspell_format_dic(fname);
+    spell_reload();
 
     // If the .add file is edited somewhere, reload it.
     if (buf != NULL) {

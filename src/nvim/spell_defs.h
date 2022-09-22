@@ -225,8 +225,9 @@ typedef struct {
 // languages.
 extern slang_T *first_lang;
 
-// file used for "zG" and "zW"
-extern char_u *int_wordlist;
+typedef kvec_t(char *) wordlist_T;
+extern wordlist_T int_good_words;
+extern wordlist_T int_bad_words;
 
 extern spelltab_T spelltab;
 extern int did_set_spelltab;
