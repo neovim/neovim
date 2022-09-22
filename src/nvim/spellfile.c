@@ -1107,9 +1107,10 @@ void spell_hunspell_format_dic(const char *path)
 
 /// Add "word[len]" to 'spellfile' as a good or bad word.
 ///
+/// @param word  the word to add/remove
 /// @param what  SPELL_ADD_ values
-/// @param idx  "zG" and "zW": zero, otherwise index in 'spellfile'
-/// @param bool  // true for "zug", "zuG", "zuw" and "zuW"
+/// @param idx   "zG" and "zW": zero, otherwise index in 'spellfile'
+/// @param undo  true for "zug", "zuG", "zuw" and "zuW"
 void spell_add_word(char_u *word, int len, SpellAddType what, int idx, bool undo)
 {
   FILE *fd = NULL;
@@ -1262,9 +1263,13 @@ void spell_add_word(char_u *word, int len, SpellAddType what, int idx, bool undo
       for (int lpi = 0; lpi < curwin->w_s->b_langp.ga_len; lpi++) {
         langp_T *lp = LANGP_ENTRY(curwin->w_s->b_langp, lpi);
         if (lp->lp_slang->sl_hunspell != NULL) {
-          // TODO(vigoux): When adding a bad word, we'll have to remove
-          // instead of add
-          hunspell_add_word(lp->lp_slang->sl_hunspell, (char *)word);
+          // TODO(vigoux): This wordlist is not _stored anywhere, maybe we should hold that in
+          // memory ?
+          if (what == SPELL_ADD_GOOD) {
+            hunspell_add_word(lp->lp_slang->sl_hunspell, (char *)word);
+          } else if (what == SPELL_ADD_BAD) {
+            hunspell_remove_word(lp->lp_slang->sl_hunspell, (char *)word);
+          }
         }
       }
     } else {

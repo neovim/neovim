@@ -25,6 +25,7 @@ void hunspell_destroy(hunspell_T *pHunspell);
 
 void hunspell_add_dic(hunspell_T *pHunspell, const char *dicpath);
 void hunspell_add_word(hunspell_T *pHunspell, const char *word);
+void hunspell_remove_word(hunspell_T *pHunspell, const char *word);
 
 bool hunspell_is_wordchar(hunspell_T *handle, const char *p);
 
