@@ -12,8 +12,6 @@ describe('treesitter parser API', function()
   clear()
 
   it('parses buffer', function()
-    if helpers.pending_win32(pending) then return end
-
     insert([[
       int main() {
         int x = 3;
@@ -684,7 +682,6 @@ int x = INT_MAX;
       end)
 
       it("should not inject bad languages", function()
-        if helpers.pending_win32(pending) then return end
         exec_lua([=[
         vim.treesitter.add_directive("inject-bad!", function(match, _, _, pred, metadata)
           metadata.language = "{"
