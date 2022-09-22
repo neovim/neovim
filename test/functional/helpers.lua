@@ -380,10 +380,23 @@ local function remove_args(args, args_rm)
   return new_args
 end
 
+function module.check_close(old_session)
+  local start_time = luv.now()
+  old_session:close()
+  luv.update_time()  -- Update cached value of luv.now() (libuv: uv_now()).
+  local end_time = luv.now()
+  local delta = end_time - start_time
+  if delta > 500 then
+    print("nvim took " .. delta .. " milliseconds to exit after last test\n"..
+          "This indicates a likely problem with the test even if it passed!\n")
+    io.stdout:flush()
+  end
+end
+
 --- @param io_extra used for stdin_fd, see :help ui-option
 function module.spawn(argv, merge, env, keep, io_extra)
   if session and not keep then
-    session:close()
+    module.check_close(session)
   end
 
   local child_stream = ChildProcessStream.spawn(

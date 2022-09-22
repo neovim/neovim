@@ -155,8 +155,6 @@ void win_draw_end(win_T *wp, int c1, int c2, bool draw_margin, int row, int endr
   } else {
     grid_fill(&wp->w_grid, row, endrow, n, wp->w_grid.cols, c1, c2, attr);
   }
-
-  set_empty_rows(wp, row);
 }
 
 /// Compute the width of the foldcolumn.  Based on 'foldcolumn' and how much

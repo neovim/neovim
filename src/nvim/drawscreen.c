@@ -389,6 +389,10 @@ int update_screen(int type)
     diff_redraw(true);
   }
 
+  // TODO(bfredl): completely get rid of using update_screen(UPD_XX_VALID)
+  // to redraw curwin
+  int curwin_type = MIN(type, UPD_NOT_VALID);
+
   if (must_redraw) {
     if (type < must_redraw) {       // use maximal type
       type = must_redraw;
@@ -445,9 +449,11 @@ int update_screen(int type)
     }
     if (msg_use_msgsep()) {
       msg_grid.throttled = false;
+      bool was_invalidated = false;
+
       // UPD_CLEAR is already handled
       if (type == UPD_NOT_VALID && !ui_has(kUIMultigrid) && msg_scrolled) {
-        ui_comp_set_screen_valid(false);
+        was_invalidated = ui_comp_set_screen_valid(false);
         for (int i = valid; i < Rows - p_ch; i++) {
           grid_clear_line(&default_grid, default_grid.line_offset[i],
                           Columns, false);
@@ -457,6 +463,8 @@ int update_screen(int type)
             continue;
           }
           if (W_ENDROW(wp) > valid) {
+            // TODO(bfredl): too pessimistic. type could be UPD_NOT_VALID
+            // only because windows that are above the separator.
             wp->w_redr_type = MAX(wp->w_redr_type, UPD_NOT_VALID);
           }
           if (!is_stl_global && W_ENDROW(wp) + wp->w_status_height > valid) {
@@ -469,9 +477,16 @@ int update_screen(int type)
       }
       msg_grid_set_pos(Rows - (int)p_ch, false);
       msg_grid_invalid = false;
+      if (was_invalidated) {
+        // screen was only invalid for the msgarea part.
+        // @TODO(bfredl): using the same "valid" flag
+        // for both messages and floats moving is bit of a mess.
+        ui_comp_set_screen_valid(true);
+      }
     } else if (type != UPD_CLEAR) {
       if (msg_scrolled > Rows - 5) {  // redrawing is faster
         type = UPD_NOT_VALID;
+        curwin_type = UPD_NOT_VALID;
       } else {
         check_for_delay(false);
         grid_ins_lines(&default_grid, 0, msg_scrolled, Rows, 0, Columns);
@@ -506,7 +521,7 @@ int update_screen(int type)
     need_wait_return = false;
   }
 
-  win_ui_flush();
+  win_ui_flush(true);
   msg_ext_check_clear();
 
   // reset cmdline_row now (may have been changed temporarily)
@@ -553,6 +568,8 @@ int update_screen(int type)
 
   // Force redraw when width of 'number' or 'relativenumber' column
   // changes.
+  // TODO(bfredl): special casing curwin here is SÅ JÄVLA BULL.
+  // Either this should be done for all windows or not at all.
   if (curwin->w_redr_type < UPD_NOT_VALID
       && curwin->w_nrwidth != ((curwin->w_p_nu || curwin->w_p_rnu)
                                ? number_width(curwin) : 0)) {
@@ -560,22 +577,25 @@ int update_screen(int type)
   }
 
   // Only start redrawing if there is really something to do.
-  if (type == UPD_INVERTED) {
+  // TODO(bfredl): more curwin special casing to get rid of.
+  // Change update_screen(UPD_INVERTED) to a wrapper function
+  // perhaps?
+  if (curwin_type == UPD_INVERTED) {
     update_curswant();
   }
-  if (curwin->w_redr_type < type
-      && !((type == UPD_VALID
+  if (curwin->w_redr_type < curwin_type
+      && !((curwin_type == UPD_VALID
             && curwin->w_lines[0].wl_valid
             && curwin->w_topfill == curwin->w_old_topfill
             && curwin->w_botfill == curwin->w_old_botfill
             && curwin->w_topline == curwin->w_lines[0].wl_lnum)
-           || (type == UPD_INVERTED
+           || (curwin_type == UPD_INVERTED
                && VIsual_active
                && curwin->w_old_cursor_lnum == curwin->w_cursor.lnum
                && curwin->w_old_visual_mode == VIsual_mode
                && (curwin->w_valid & VALID_VIRTCOL)
                && curwin->w_old_curswant == curwin->w_curswant))) {
-    curwin->w_redr_type = type;
+    curwin->w_redr_type = curwin_type;
   }
 
   // Redraw the tab pages line if needed.
@@ -998,6 +1018,9 @@ win_update_start:
   bool scrolled_down = false;   // true when scrolled down when w_topline got smaller a bit
   bool top_to_mod = false;      // redraw above mod_top
 
+  int bot_scroll_start = 999;   // first line that needs to be redrawn due to
+                                // scrolling. only used for EOB
+
   int row;                      // current window row to display
   linenr_T lnum;                // current buffer lnum to display
   int idx;                      // current index in w_lines[]
@@ -1022,7 +1045,9 @@ win_update_start:
   type = wp->w_redr_type;
 
   if (type >= UPD_NOT_VALID) {
+    // TODO(bfredl): should only be implied for CLEAR, not NOT_VALID!
     wp->w_redr_status = true;
+
     wp->w_lines_valid = 0;
   }
 
@@ -1173,6 +1198,7 @@ win_update_start:
       mod_bot = MAXLNUM;
     }
   }
+
   wp->w_redraw_top = 0;  // reset for next time
   wp->w_redraw_bot = 0;
 
@@ -1243,6 +1269,7 @@ win_update_start:
           // If not the last window, delete the lines at the bottom.
           // win_ins_lines may fail when the terminal can't do it.
           win_scroll_lines(wp, 0, i);
+          bot_scroll_start = 0;
           if (wp->w_lines_valid != 0) {
             // Need to update rows that are new, stop at the
             // first one that scrolled down.
@@ -1303,6 +1330,7 @@ win_update_start:
         if (row > 0) {
           win_scroll_lines(wp, 0, -row);
           bot_start = wp->w_grid.rows - row;
+          bot_scroll_start = bot_start;
         }
         if ((row == 0 || bot_start < 999) && wp->w_lines_valid != 0) {
           // Skip the lines (below the deleted lines) that are still
@@ -1680,6 +1708,7 @@ win_update_start:
           // need to redraw until the end of the window.
           // Inserting/deleting lines has no use.
           bot_start = 0;
+          bot_scroll_start = 0;
         } else {
           // Able to count old number of rows: Count new window
           // rows, and may insert/delete lines
@@ -1710,6 +1739,7 @@ win_update_start:
             } else {
               win_scroll_lines(wp, row, xtra_rows);
               bot_start = wp->w_grid.rows + xtra_rows;
+              bot_scroll_start = bot_start;
             }
           } else if (xtra_rows > 0) {
             // May scroll text down.  If there is not enough
@@ -1719,6 +1749,7 @@ win_update_start:
               mod_bot = MAXLNUM;
             } else {
               win_scroll_lines(wp, row + old_rows, xtra_rows);
+              bot_scroll_start = 0;
               if (top_end > row + old_rows) {
                 // Scrolled the part at the top that requires
                 // updating down.
@@ -1908,6 +1939,7 @@ win_update_start:
       wp->w_botline = lnum;
     } else {
       win_draw_end(wp, '@', ' ', true, srow, wp->w_grid.rows, HLF_AT);
+      set_empty_rows(wp, srow);
       wp->w_botline = lnum;
     }
   } else {
@@ -1928,8 +1960,18 @@ win_update_start:
     // Make sure the rest of the screen is blank.
     // write the "eob" character from 'fillchars' to rows that aren't part
     // of the file.
-    win_draw_end(wp, wp->w_p_fcs_chars.eob, ' ', false, row, wp->w_grid.rows,
+    // TODO(bfredl): just keep track of the valid EOB area from last redraw?
+    int lastline = bot_scroll_start;
+    if (mid_end >= row) {
+      lastline = MIN(lastline, mid_start);
+    }
+    if (mod_bot > buf->b_ml.ml_line_count + 1) {
+      lastline = 0;
+    }
+
+    win_draw_end(wp, wp->w_p_fcs_chars.eob, ' ', false, MAX(lastline, row), wp->w_grid.rows,
                  HLF_EOB);
+    set_empty_rows(wp, row);
   }
 
   kvi_destroy(line_providers);
@@ -2041,12 +2083,14 @@ void redraw_buf_later(buf_T *buf, int type)
   }
 }
 
-void redraw_buf_line_later(buf_T *buf,  linenr_T line)
+void redraw_buf_line_later(buf_T *buf, linenr_T line, bool force)
 {
   FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
-    if (wp->w_buffer == buf
-        && line >= wp->w_topline && line < wp->w_botline) {
-      redrawWinline(wp, line);
+    if (wp->w_buffer == buf) {
+      redrawWinline(wp, MIN(line, buf->b_ml.ml_line_count));
+      if (force && line > buf->b_ml.ml_line_count) {
+        wp->w_redraw_bot = line;
+      }
     }
   }
 }

@@ -557,7 +557,7 @@ static linenr_T buf_delsign(buf_T *buf, linenr_T atlnum, int id, char *group)
         sign_group_unref((char *)sign->se_group->sg_name);
       }
       xfree(sign);
-      redraw_buf_line_later(buf, lnum);
+      redraw_buf_line_later(buf, lnum, false);
       // Check whether only one sign needs to be deleted
       // If deleting a sign with a specific identifier in a particular
       // group or deleting any sign at a particular line number, delete
@@ -1062,7 +1062,7 @@ static int sign_place(int *sign_id, const char *sign_group, const char *sign_nam
     lnum = buf_change_sign_type(buf, *sign_id, (char *)sign_group, sp->sn_typenr, prio);
   }
   if (lnum > 0) {
-    redraw_buf_line_later(buf, lnum);
+    redraw_buf_line_later(buf, lnum, false);
 
     // When displaying signs in the 'number' column, if the width of the
     // number column is less than 2, then force recomputing the width.
@@ -1093,7 +1093,7 @@ static int sign_unplace(int sign_id, char *sign_group, buf_T *buf, linenr_T atln
     if (lnum == 0) {
       return FAIL;
     }
-    redraw_buf_line_later(buf, lnum);
+    redraw_buf_line_later(buf, lnum, false);
   }
 
   // When all the signs in a buffer are removed, force recomputing the

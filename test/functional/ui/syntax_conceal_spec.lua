@@ -947,7 +947,7 @@ describe('Screen', function()
       {0:~                                                    }|
                                                            |
     ]]}
-    eq({{2, 0, {{'c', 0, 3}}}}, grid_lines)
+    eq({{2, 0, {{'c', 0, 3}, {' ', 0, 50}}}, {3, 0, {{' ', 0, 53}}}}, grid_lines)
   end)
 
   it('K_EVENT should not cause extra redraws with concealcursor #13196', function()
@@ -994,10 +994,11 @@ describe('Screen', function()
       {0:~                                                    }|
                                                            |
     ]]}
-    eq({{2, 0, {{'c', 0, 3}}}}, grid_lines)
+    eq({{2, 0, {{'c', 0, 3}, {' ', 0, 50}}}}, grid_lines)
+    grid_lines = {}
     poke_eventloop()  -- causes K_EVENT key
     screen:expect_unchanged()
-    eq({{2, 0, {{'c', 0, 3}}}}, grid_lines)
+    eq({}, grid_lines) -- no redraw was done
   end)
 
   -- Copy of Test_cursor_column_in_concealed_line_after_window_scroll in

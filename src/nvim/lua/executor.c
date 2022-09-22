@@ -1658,7 +1658,7 @@ void ex_luado(exarg_T *const eap)
   }
   lua_pop(lstate, 1);
   check_cursor();
-  update_screen(UPD_NOT_VALID);
+  redraw_curbuf_later(UPD_NOT_VALID);
 }
 
 /// Run lua file

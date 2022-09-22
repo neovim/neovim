@@ -871,8 +871,9 @@ int win_fdccol_count(win_T *wp)
   }
 }
 
-void ui_ext_win_position(win_T *wp)
+void ui_ext_win_position(win_T *wp, bool validate)
 {
+  wp->w_pos_changed = false;
   if (!wp->w_floating) {
     ui_call_win_pos(wp->w_grid_alloc.handle, wp->handle, wp->w_winrow,
                     wp->w_wincol, wp->w_width, wp->w_height);
@@ -910,6 +911,11 @@ void ui_ext_win_position(win_T *wp)
                             grid->handle, row, col, c.focusable,
                             wp->w_grid_alloc.zindex);
     } else {
+      bool valid = (wp->w_redr_type == 0);
+      if (!valid && !validate) {
+        wp->w_pos_changed = true;
+        return;
+      }
       // TODO(bfredl): ideally, compositor should work like any multigrid UI
       // and use standard win_pos events.
       bool east = c.anchor & kFloatAnchorEast;
@@ -923,7 +929,6 @@ void ui_ext_win_position(win_T *wp)
       comp_col = MAX(MIN(comp_col, Columns - wp->w_width_outer), 0);
       wp->w_winrow = comp_row;
       wp->w_wincol = comp_col;
-      bool valid = (wp->w_redr_type == 0);
       ui_comp_put_grid(&wp->w_grid_alloc, comp_row, comp_col,
                        wp->w_height_outer, wp->w_width_outer, valid, false);
       ui_check_cursor_grid(wp->w_grid_alloc.handle);
@@ -2849,12 +2854,12 @@ int win_close(win_T *win, bool free_buf, bool force)
     check_cursor();
   }
 
-  // If last window has a status line now and we don't want one,
-  // remove the status line. Do this before win_equal(), because
-  // it may change the height of a window.
-  last_status(false);
-
   if (!was_floating) {
+    // If last window has a status line now and we don't want one,
+    // remove the status line. Do this before win_equal(), because
+    // it may change the height of a window.
+    last_status(false);
+
     if (!curwin->w_floating && p_ea && (*p_ead == 'b' || *p_ead == dir)) {
       // If the frame of the closed window contains the new current window,
       // only resize that frame.  Otherwise resize all windows.
@@ -2898,7 +2903,10 @@ int win_close(win_T *win, bool free_buf, bool force)
   }
 
   curwin->w_pos_changed = true;
-  redraw_all_later(UPD_NOT_VALID);
+  if (!was_floating) {
+    // TODO(bfredl): how about no?
+    redraw_all_later(UPD_NOT_VALID);
+  }
   return OK;
 }
 
@@ -5413,7 +5421,7 @@ void win_setheight_win(int height, win_T *win)
   if (win->w_floating) {
     win->w_float_config.height = height;
     win_config_float(win, win->w_float_config);
-    redraw_later(win, UPD_NOT_VALID);
+    redraw_later(win, UPD_VALID);
   } else {
     frame_setheight(win->w_frame, height + win->w_hsep_height + win->w_status_height);
 
@@ -6059,6 +6067,9 @@ void win_new_height(win_T *wp, int height)
   wp->w_height = height;
   wp->w_pos_changed = true;
   win_set_inner_size(wp, true);
+  if (wp->w_status_height) {
+    wp->w_redr_status = true;
+  }
 }
 
 void scroll_to_fraction(win_T *wp, int prev_height)
@@ -6196,7 +6207,7 @@ void win_set_inner_size(win_T *wp, bool valid_cursor)
     if (!exiting && valid_cursor) {
       scroll_to_fraction(wp, prev_height);
     }
-    redraw_later(wp, UPD_NOT_VALID);  // UPD_SOME_VALID??
+    redraw_later(wp, UPD_SOME_VALID);
   }
 
   if (width != wp->w_width_inner) {
@@ -6608,7 +6619,6 @@ static void last_status_rec(frame_T *fr, bool statusline, bool is_stl_global)
       wp->w_hsep_height = 0;
       comp_col();
     }
-    redraw_all_later(UPD_SOME_VALID);
   } else {
     // For a column or row frame, recursively call this function for all child frames
     FOR_ALL_FRAMES(fp, fr->fr_child) {
@@ -7336,16 +7346,16 @@ void get_framelayout(const frame_T *fr, list_T *l, bool outer)
   }
 }
 
-void win_ui_flush(void)
+void win_ui_flush(bool validate)
 {
   FOR_ALL_TAB_WINDOWS(tp, wp) {
     if (wp->w_pos_changed && wp->w_grid_alloc.chars != NULL) {
       if (tp == curtab) {
-        ui_ext_win_position(wp);
+        ui_ext_win_position(wp, validate);
       } else {
         ui_call_win_hide(wp->w_grid_alloc.handle);
+        wp->w_pos_changed = false;
       }
-      wp->w_pos_changed = false;
     }
     if (tp == curtab) {
       ui_ext_win_viewport(wp);
