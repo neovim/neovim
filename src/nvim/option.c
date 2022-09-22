@@ -854,11 +854,9 @@ static int do_set_string(int opt_idx, int opt_flags, char **argp, int nextchar, 
 
     // Set 'keywordprg' to ":help" if an empty
     // value was passed to :set by the user.
-    // Misuse errbuf[] for the resulting string.
     if (varp == (char *)&p_kp && (*arg == NUL || *arg == ' ')) {
-      STRCPY(errbuf, ":help");
       save_arg = arg;
-      arg = errbuf;
+      arg = ":help";
     } else if (varp == (char *)&p_bs && ascii_isdigit(**(char_u **)varp)) {
       // Convert 'backspace' number to string, for
       // adding, prepending and removing string.
@@ -936,7 +934,7 @@ static int do_set_string(int opt_idx, int opt_flags, char **argp, int nextchar, 
     // are not removed, and keep backslash at start, for "\\machine\path",
     // but do remove it for "\\\\machine\\path".
     // The reverse is found in ExpandOldSetting().
-    while (*arg && !ascii_iswhite(*arg)) {
+    while (*arg != NUL && !ascii_iswhite(*arg)) {
       if (*arg == '\\' && arg[1] != NUL
 #ifdef BACKSLASH_IN_FILENAME
           && !((flags & P_EXPAND)
@@ -1062,8 +1060,8 @@ static int do_set_string(int opt_idx, int opt_flags, char **argp, int nextchar, 
       }
     }
 
-    if (save_arg != NULL) {  // number for 'whichwrap'
-      arg = save_arg;
+    if (save_arg != NULL) {
+      arg = save_arg;  // arg was temporarily changed, restore it
     }
   }
 

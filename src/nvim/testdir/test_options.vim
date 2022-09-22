@@ -1209,4 +1209,18 @@ func Test_switchbuf_reset()
   only!
 endfunc
 
+" :set empty string for global 'keywordprg' falls back to ":help"
+func Test_keywordprg_empty()
+  let k = &keywordprg
+  set keywordprg=man
+  call assert_equal('man', &keywordprg)
+  set keywordprg=
+  call assert_equal(':help', &keywordprg)
+  set keywordprg=man
+  call assert_equal('man', &keywordprg)
+  call assert_equal("\n  keywordprg=:help", execute('set kp= kp?'))
+  let &keywordprg = k
+endfunc
+
+
 " vim: shiftwidth=2 sts=2 expandtab
