@@ -57,19 +57,20 @@ describe("'spell'", function()
     "should just be black, nothing wrong here.",
     "",
     "This line has a sepll error. and missing caps.",
-    "And and this is the the duplication.",
+    "Thiiis line starts wrong"
     "with missing caps here.",
     ]])
-    command('set spell spelllang=en_nz')
+    command('set spell spelllang=en')
     screen:expect([[
     "This is some text without any spell errors.  Everything",                      |
     "should just be black, nothing wrong here.",                                    |
     "",                                                                             |
     "This line has a {1:sepll} error. {2:and} missing caps.",                               |
-    "{1:And and} this is {1:the the} duplication.",                                         |
+    "{1:Thiiis} line starts wrong"                                                      |
     "with missing caps here.",                                                      |
     ^                                                                                |
                                                                                     |
+
       ]])
   end)
 
