@@ -127,45 +127,6 @@ slang_T *first_lang = NULL;
 // file used for "zG" and "zW"
 char_u *int_wordlist = NULL;
 
-// Structure to store info for word matching.
-typedef struct matchinf_S {
-  langp_T *mi_lp;                   // info for language and region
-
-  // pointers to original text to be checked
-  char_u *mi_word;                 // start of word being checked
-  char_u *mi_end;                  // end of matching word so far
-  char_u *mi_fend;                 // next char to be added to mi_fword
-  char_u *mi_cend;                 // char after what was used for
-                                   // mi_capflags
-
-  // case-folded text
-  char_u mi_fword[MAXWLEN + 1];         // mi_word case-folded
-  int mi_fwordlen;                      // nr of valid bytes in mi_fword
-
-  // for when checking word after a prefix
-  int mi_prefarridx;                    // index in sl_pidxs with list of
-                                        // affixID/condition
-  int mi_prefcnt;                       // number of entries at mi_prefarridx
-  int mi_prefixlen;                     // byte length of prefix
-  int mi_cprefixlen;                    // byte length of prefix in original
-                                        // case
-
-  // for when checking a compound word
-  int mi_compoff;                       // start of following word offset
-  char_u mi_compflags[MAXWLEN];         // flags for compound words used
-  int mi_complen;                       // nr of compound words used
-  int mi_compextra;                     // nr of COMPOUNDROOT words
-
-  // others
-  int mi_result;                        // result so far: SP_BAD, SP_OK, etc.
-  int mi_capflags;                      // WF_ONECAP WF_ALLCAP WF_KEEPCAP
-  win_T *mi_win;                  // buffer being checked
-
-  // for NOBREAK
-  int mi_result2;                       // "mi_resul" without following word
-  char_u *mi_end2;                 // "mi_end" without following word
-} matchinf_T;
-
 // Structure used for the cookie argument of do_in_runtimepath().
 typedef struct spelload_S {
   char_u sl_lang[MAXWLEN + 1];          // language name
@@ -216,12 +177,11 @@ char *repl_to = NULL;
 ///
 /// @return  the length of the word in bytes, also when it's OK, so that the
 /// caller can skip over the word.
-size_t spell_check(win_T *wp, char_u *ptr, hlf_T *attrp, int *capcol, bool docount)
+size_t spell_check(win_T *wp, const char *ptr, hlf_T *attrp, int *capcol, bool docount)
 {
-  matchinf_T mi;              // Most things are put in "mi" so that it can
-                              // be passed to functions quickly.
   size_t nrlen = 0;              // found a number first
   size_t wrongcaplen = 0;
+  const char *end = ptr;
   bool count_word = docount;
   bool use_camel_case = (wp->w_s->b_p_spo_flags & SPO_CAMEL) != 0;
   bool camel_case = false;
@@ -237,49 +197,45 @@ size_t spell_check(win_T *wp, char_u *ptr, hlf_T *attrp, int *capcol, bool docou
     return 1;
   }
 
-  CLEAR_FIELD(mi);
-
   // A number is always OK.  Also skip hexadecimal numbers 0xFF99 and
   // 0X99FF.  But always do check spelling to find "3GPP" and "11
   // julifeest".
   if (*ptr >= '0' && *ptr <= '9') {
     if (*ptr == '0' && (ptr[1] == 'b' || ptr[1] == 'B')) {
-      mi.mi_end = (char_u *)skipbin((char *)ptr + 2);
+      end = skipbin(ptr + 2);
     } else if (*ptr == '0' && (ptr[1] == 'x' || ptr[1] == 'X')) {
-      mi.mi_end = (char_u *)skiphex((char *)ptr + 2);
+      end = skiphex(ptr + 2);
     } else {
-      mi.mi_end = (char_u *)skipdigits((char *)ptr);
+      end = skipdigits(ptr);
     }
-    nrlen = (size_t)(mi.mi_end - ptr);
+    nrlen = (size_t)(end - ptr);
   }
 
   // Find the normal end of the word (until the next non-word character).
-  mi.mi_word = ptr;
-  mi.mi_fend = ptr;
-  if (spell_iswordp(mi.mi_fend, wp)) {
+  if (spell_iswordp(end, wp)) {
     bool this_upper = false;  // init for gcc
 
     if (use_camel_case) {
-      int c = utf_ptr2char((char *)mi.mi_fend);
+      int c = utf_ptr2char(end);
       this_upper = SPELL_ISUPPER(c);
     }
 
     do {
-      MB_PTR_ADV(mi.mi_fend);
+      MB_PTR_ADV(end);
       if (use_camel_case) {
         const bool prev_upper = this_upper;
-        int c = utf_ptr2char((char *)mi.mi_fend);
+        int c = utf_ptr2char(end);
         this_upper = SPELL_ISUPPER(c);
         camel_case = !prev_upper && this_upper;
       }
-    } while (*mi.mi_fend != NUL && spell_iswordp(mi.mi_fend, wp)
+    } while (*end != NUL && spell_iswordp(end, wp)
              && !camel_case);
 
     if (capcol != NULL && *capcol == 0 && wp->w_s->b_cap_prog != NULL) {
       // Check word starting with capital letter.
       int c = utf_ptr2char((char *)ptr);
       if (!SPELL_ISUPPER(c)) {
-        wrongcaplen = (size_t)(mi.mi_fend - ptr);
+        wrongcaplen = (size_t)(end - ptr);
       }
     }
   }
@@ -287,69 +243,57 @@ size_t spell_check(win_T *wp, char_u *ptr, hlf_T *attrp, int *capcol, bool docou
     *capcol = -1;
   }
 
-  // We always use the characters up to the next non-word character,
-  // also for bad words.
-  mi.mi_end = mi.mi_fend;
-
-  // Check caps type later.
-  mi.mi_capflags = 0;
-  mi.mi_cend = NULL;
-  mi.mi_win = wp;
-
   // case-fold the word with one non-word character, so that we can check
   // for the word end.
-  if (*mi.mi_fend != NUL) {
-    MB_PTR_ADV(mi.mi_fend);
+  if (*end != NUL) {
+    MB_PTR_ADV(end);
   }
 
-  (void)spell_casefold(wp, ptr, (int)(mi.mi_fend - ptr), mi.mi_fword,
-                       MAXWLEN + 1);
-  mi.mi_fwordlen = (int)STRLEN(mi.mi_fword);
-
-  if (camel_case && mi.mi_fwordlen > 0) {
-    // introduce a fake word end space into the folded word.
-    mi.mi_fword[mi.mi_fwordlen - 1] = ' ';
-  }
+  // TODO(vigoux): I think that this is not necessary anymore, and we only check the exact word
+  // length
+  // if (camel_case && mi.mi_fwordlen > 0) {
+  //   // introduce a fake word end space into the folded word.
+  //   mi.mi_fword[mi.mi_fwordlen - 1] = ' ';
+  // }
 
   // The word is bad unless we recognize it.
-  mi.mi_result = SP_BAD;
-  mi.mi_result2 = SP_BAD;
+  int result = SP_BAD;
 
   // Loop over the languages specified in 'spelllang'.
   // We check them all, because a word may be matched longer in another
   // language.
   for (int lpi = 0; lpi < wp->w_s->b_langp.ga_len; lpi++) {
-    mi.mi_lp = LANGP_ENTRY(wp->w_s->b_langp, lpi);
+    slang_T *lp = LANGP_ENTRY(wp->w_s->b_langp, lpi);
 
     // If reloading fails the language is still in the list but everything
     // has been cleared.
-    if (mi.mi_lp->lp_slang->sl_hunspell != NULL) {
-      if (mi.mi_end == mi.mi_word) {
-        MB_PTR_ADV(mi.mi_end);
+    if (lp->sl_hunspell != NULL) {
+      if (end == ptr) {
+        MB_PTR_ADV(end);
       }
 
-      size_t wlen = (size_t)(mi.mi_end - mi.mi_word);
+      size_t wlen = (size_t)(end - ptr);
       int spell_flags = 0;
-      if (hunspell_spell_flags(mi.mi_lp->lp_slang->sl_hunspell, (char *)mi.mi_word,
+      if (hunspell_spell_flags(lp->sl_hunspell, (char *)ptr,
                                wlen, &spell_flags)) {
-        mi.mi_result =
+        result =
           (spell_flags & HSPELL_FORBIDDEN) ? SP_BANNED :
           (spell_flags & HSPELL_WARN) ? SP_RARE : SP_OK;
       } else {
-        mi.mi_result = SP_BAD;
+        result = SP_BAD;
       }
 
-      if (mi.mi_result == OK && count_word) {
-        count_common_word(mi.mi_lp->lp_slang, mi.mi_word, (int)wlen, 1);
+      if (result == SP_OK && count_word) {
+        count_common_word(lp, (char_u *)ptr, (int)wlen, 1);
       }
     }
   }
 
-  if (mi.mi_result != SP_OK) {
+  if (result != SP_OK) {
     // If we found a number skip over it.  Allows for "42nd".  Do flag
     // rare and local words, e.g., "3GPP".
     if (nrlen > 0) {
-      if (mi.mi_result == SP_BAD || mi.mi_result == SP_BANNED) {
+      if (result == SP_BAD || result == SP_BANNED) {
         return nrlen;
       }
     } else if (!spell_iswordp_nmw(ptr, wp)) {
@@ -369,531 +313,28 @@ size_t spell_check(win_T *wp, char_u *ptr, hlf_T *attrp, int *capcol, bool docou
       }
 
       return (size_t)(utfc_ptr2len((char *)ptr));
-    } else if (mi.mi_end == ptr) {
+    } else if (end == ptr) {
       // Always include at least one character.  Required for when there
       // is a mixup in "midword".
-      MB_PTR_ADV(mi.mi_end);
-    } else if (mi.mi_result == SP_BAD
-               && LANGP_ENTRY(wp->w_s->b_langp, 0)->lp_slang->sl_nobreak) {
-      char_u *p, *fp;
-      int save_result = mi.mi_result;
-
-      // First language in 'spelllang' is NOBREAK.  Find first position
-      // at which any word would be valid.
-      mi.mi_lp = LANGP_ENTRY(wp->w_s->b_langp, 0);
-      if (mi.mi_lp->lp_slang->sl_fidxs != NULL) {
-        p = mi.mi_word;
-        fp = mi.mi_fword;
-        for (;;) {
-          MB_PTR_ADV(p);
-          MB_PTR_ADV(fp);
-          if (p >= mi.mi_end) {
-            break;
-          }
-          mi.mi_compoff = (int)(fp - mi.mi_fword);
-          find_word(&mi, FIND_COMPOUND);
-          if (mi.mi_result != SP_BAD) {
-            mi.mi_end = p;
-            break;
-          }
-        }
-        mi.mi_result = save_result;
-      }
+      MB_PTR_ADV(end);
     }
 
-    if (mi.mi_result == SP_BAD || mi.mi_result == SP_BANNED) {
+    if (result == SP_BAD || result == SP_BANNED) {
       *attrp = HLF_SPB;
-    } else if (mi.mi_result == SP_RARE) {
+    } else if (result == SP_RARE) {
       *attrp = HLF_SPR;
     } else {
       *attrp = HLF_SPL;
     }
   }
 
-  if (wrongcaplen > 0 && (mi.mi_result == SP_OK || mi.mi_result == SP_RARE)) {
+  if (wrongcaplen > 0 && (result == SP_OK || result == SP_RARE)) {
     // Report SpellCap only when the word isn't badly spelled.
     *attrp = HLF_SPC;
     return wrongcaplen;
   }
 
-  return (size_t)(mi.mi_end - ptr);
-}
-
-// Check if the word at "mip->mi_word" is in the tree.
-// When "mode" is FIND_FOLDWORD check in fold-case word tree.
-// When "mode" is FIND_KEEPWORD check in keep-case word tree.
-// When "mode" is FIND_PREFIX check for word after prefix in fold-case word
-// tree.
-//
-// For a match mip->mi_result is updated.
-static void find_word(matchinf_T *mip, int mode)
-{
-  int wlen = 0;
-  int flen;
-  char_u *ptr;
-  slang_T *slang = mip->mi_lp->lp_slang;
-  char_u *byts;
-  idx_T *idxs;
-
-  if (mode == FIND_KEEPWORD || mode == FIND_KEEPCOMPOUND) {
-    // Check for word with matching case in keep-case tree.
-    ptr = mip->mi_word;
-    flen = 9999;                    // no case folding, always enough bytes
-    byts = slang->sl_kbyts;
-    idxs = slang->sl_kidxs;
-
-    if (mode == FIND_KEEPCOMPOUND) {
-      // Skip over the previously found word(s).
-      wlen += mip->mi_compoff;
-    }
-  } else {
-    // Check for case-folded in case-folded tree.
-    ptr = mip->mi_fword;
-    flen = mip->mi_fwordlen;        // available case-folded bytes
-    byts = slang->sl_fbyts;
-    idxs = slang->sl_fidxs;
-
-    if (mode == FIND_PREFIX) {
-      // Skip over the prefix.
-      wlen = mip->mi_prefixlen;
-      flen -= mip->mi_prefixlen;
-    } else if (mode == FIND_COMPOUND) {
-      // Skip over the previously found word(s).
-      wlen = mip->mi_compoff;
-      flen -= mip->mi_compoff;
-    }
-  }
-
-  if (byts == NULL) {
-    return;                     // array is empty
-  }
-  idx_T arridx = 0;
-  int endlen[MAXWLEN];              // length at possible word endings
-  idx_T endidx[MAXWLEN];            // possible word endings
-  int endidxcnt = 0;
-  int c;
-
-  // Repeat advancing in the tree until:
-  // - there is a byte that doesn't match,
-  // - we reach the end of the tree,
-  // - or we reach the end of the line.
-  for (;;) {
-    if (flen <= 0 && *mip->mi_fend != NUL) {
-      flen = fold_more(mip);
-    }
-
-    int len = byts[arridx++];
-
-    // If the first possible byte is a zero the word could end here.
-    // Remember this index, we first check for the longest word.
-    if (byts[arridx] == 0) {
-      if (endidxcnt == MAXWLEN) {
-        // Must be a corrupted spell file.
-        emsg(_(e_format));
-        return;
-      }
-      endlen[endidxcnt] = wlen;
-      endidx[endidxcnt++] = arridx++;
-      len--;
-
-      // Skip over the zeros, there can be several flag/region
-      // combinations.
-      while (len > 0 && byts[arridx] == 0) {
-        arridx++;
-        len--;
-      }
-      if (len == 0) {
-        break;              // no children, word must end here
-      }
-    }
-
-    // Stop looking at end of the line.
-    if (ptr[wlen] == NUL) {
-      break;
-    }
-
-    // Perform a binary search in the list of accepted bytes.
-    c = ptr[wlen];
-    if (c == TAB) {         // <Tab> is handled like <Space>
-      c = ' ';
-    }
-    idx_T lo = arridx;
-    idx_T hi = arridx + len - 1;
-    while (lo < hi) {
-      idx_T m = (lo + hi) / 2;
-      if (byts[m] > c) {
-        hi = m - 1;
-      } else if (byts[m] < c) {
-        lo = m + 1;
-      } else {
-        lo = hi = m;
-        break;
-      }
-    }
-
-    // Stop if there is no matching byte.
-    if (hi < lo || byts[lo] != c) {
-      break;
-    }
-
-    // Continue at the child (if there is one).
-    arridx = idxs[lo];
-    wlen++;
-    flen--;
-
-    // One space in the good word may stand for several spaces in the
-    // checked word.
-    if (c == ' ') {
-      for (;;) {
-        if (flen <= 0 && *mip->mi_fend != NUL) {
-          flen = fold_more(mip);
-        }
-        if (ptr[wlen] != ' ' && ptr[wlen] != TAB) {
-          break;
-        }
-        wlen++;
-        flen--;
-      }
-    }
-  }
-
-  char_u *p;
-  bool word_ends;
-
-  // Verify that one of the possible endings is valid.  Try the longest
-  // first.
-  while (endidxcnt > 0) {
-    endidxcnt--;
-    arridx = endidx[endidxcnt];
-    wlen = endlen[endidxcnt];
-
-    if (utf_head_off((char *)ptr, (char *)ptr + wlen) > 0) {
-      continue;             // not at first byte of character
-    }
-    if (spell_iswordp(ptr + wlen, mip->mi_win)) {
-      if (slang->sl_compprog == NULL && !slang->sl_nobreak) {
-        continue;                   // next char is a word character
-      }
-      word_ends = false;
-    } else {
-      word_ends = true;
-    }
-    // The prefix flag is before compound flags.  Once a valid prefix flag
-    // has been found we try compound flags.
-    bool prefix_found = false;
-
-    if (mode != FIND_KEEPWORD) {
-      // Compute byte length in original word, length may change
-      // when folding case.  This can be slow, take a shortcut when the
-      // case-folded word is equal to the keep-case word.
-      p = mip->mi_word;
-      if (STRNCMP(ptr, p, wlen) != 0) {
-        for (char_u *s = ptr; s < ptr + wlen; MB_PTR_ADV(s)) {
-          MB_PTR_ADV(p);
-        }
-        wlen = (int)(p - mip->mi_word);
-      }
-    }
-
-    // Check flags and region.  For FIND_PREFIX check the condition and
-    // prefix ID.
-    // Repeat this if there are more flags/region alternatives until there
-    // is a match.
-    for (int len = byts[arridx - 1]; len > 0 && byts[arridx] == 0; len--, arridx++) {
-      uint32_t flags = (uint32_t)idxs[arridx];
-
-      // For the fold-case tree check that the case of the checked word
-      // matches with what the word in the tree requires.
-      // For keep-case tree the case is always right.  For prefixes we
-      // don't bother to check.
-      if (mode == FIND_FOLDWORD) {
-        if (mip->mi_cend != mip->mi_word + wlen) {
-          // mi_capflags was set for a different word length, need
-          // to do it again.
-          mip->mi_cend = mip->mi_word + wlen;
-          mip->mi_capflags = captype(mip->mi_word, mip->mi_cend);
-        }
-
-        if (mip->mi_capflags == WF_KEEPCAP
-            || !spell_valid_case(mip->mi_capflags, (int)flags)) {
-          continue;
-        }
-      } else if (mode == FIND_PREFIX && !prefix_found) {
-        // When mode is FIND_PREFIX the word must support the prefix:
-        // check the prefix ID and the condition.  Do that for the list at
-        // mip->mi_prefarridx that find_prefix() filled.
-        c = valid_word_prefix(mip->mi_prefcnt, mip->mi_prefarridx,
-                              (int)flags,
-                              mip->mi_word + mip->mi_cprefixlen, slang,
-                              false);
-        if (c == 0) {
-          continue;
-        }
-
-        // Use the WF_RARE flag for a rare prefix.
-        if (c & WF_RAREPFX) {
-          flags |= WF_RARE;
-        }
-        prefix_found = true;
-      }
-
-      if (slang->sl_nobreak) {
-        if ((mode == FIND_COMPOUND || mode == FIND_KEEPCOMPOUND)
-            && (flags & WF_BANNED) == 0) {
-          // NOBREAK: found a valid following word.  That's all we
-          // need to know, so return.
-          mip->mi_result = SP_OK;
-          break;
-        }
-      } else if ((mode == FIND_COMPOUND || mode == FIND_KEEPCOMPOUND
-                  || !word_ends)) {
-        // If there is no compound flag or the word is shorter than
-        // COMPOUNDMIN reject it quickly.
-        // Makes you wonder why someone puts a compound flag on a word
-        // that's too short...  Myspell compatibility requires this
-        // anyway.
-        if (((unsigned)flags >> 24) == 0
-            || wlen - mip->mi_compoff < slang->sl_compminlen) {
-          continue;
-        }
-        // For multi-byte chars check character length against
-        // COMPOUNDMIN.
-        if (slang->sl_compminlen > 0
-            && mb_charlen_len(mip->mi_word + mip->mi_compoff,
-                              wlen - mip->mi_compoff) < slang->sl_compminlen) {
-          continue;
-        }
-
-        // Limit the number of compound words to COMPOUNDWORDMAX if no
-        // maximum for syllables is specified.
-        if (!word_ends && mip->mi_complen + mip->mi_compextra + 2
-            > slang->sl_compmax
-            && slang->sl_compsylmax == MAXWLEN) {
-          continue;
-        }
-
-        // Don't allow compounding on a side where an affix was added,
-        // unless COMPOUNDPERMITFLAG was used.
-        if (mip->mi_complen > 0 && (flags & WF_NOCOMPBEF)) {
-          continue;
-        }
-        if (!word_ends && (flags & WF_NOCOMPAFT)) {
-          continue;
-        }
-
-        // Quickly check if compounding is possible with this flag.
-        if (!byte_in_str(mip->mi_complen == 0 ? slang->sl_compstartflags : slang->sl_compallflags,
-                         (int)((unsigned)flags >> 24))) {
-          continue;
-        }
-
-        // If there is a match with a CHECKCOMPOUNDPATTERN rule
-        // discard the compound word.
-        if (match_checkcompoundpattern(ptr, wlen, &slang->sl_comppat)) {
-          continue;
-        }
-
-        if (mode == FIND_COMPOUND) {
-          int capflags;
-
-          // Need to check the caps type of the appended compound
-          // word.
-          if (STRNCMP(ptr, mip->mi_word, mip->mi_compoff) != 0) {
-            // case folding may have changed the length
-            p = mip->mi_word;
-            for (char_u *s = ptr; s < ptr + mip->mi_compoff; MB_PTR_ADV(s)) {
-              MB_PTR_ADV(p);
-            }
-          } else {
-            p = mip->mi_word + mip->mi_compoff;
-          }
-          capflags = captype(p, mip->mi_word + wlen);
-          if (capflags == WF_KEEPCAP || (capflags == WF_ALLCAP
-                                         && (flags & WF_FIXCAP) != 0)) {
-            continue;
-          }
-
-          if (capflags != WF_ALLCAP) {
-            // When the character before the word is a word
-            // character we do not accept a Onecap word.  We do
-            // accept a no-caps word, even when the dictionary
-            // word specifies ONECAP.
-            MB_PTR_BACK(mip->mi_word, p);
-            if (spell_iswordp_nmw(p, mip->mi_win)
-                ? capflags == WF_ONECAP
-                : (flags & WF_ONECAP) != 0
-                && capflags != WF_ONECAP) {
-              continue;
-            }
-          }
-        }
-
-        // If the word ends the sequence of compound flags of the
-        // words must match with one of the COMPOUNDRULE items and
-        // the number of syllables must not be too large.
-        mip->mi_compflags[mip->mi_complen] = (char_u)((unsigned)flags >> 24);
-        mip->mi_compflags[mip->mi_complen + 1] = NUL;
-        if (word_ends) {
-          char_u fword[MAXWLEN] = { 0 };
-
-          if (slang->sl_compsylmax < MAXWLEN) {
-            // "fword" is only needed for checking syllables.
-            if (ptr == mip->mi_word) {
-              (void)spell_casefold(mip->mi_win, ptr, wlen, fword, MAXWLEN);
-            } else {
-              STRLCPY(fword, ptr, endlen[endidxcnt] + 1);
-            }
-          }
-          if (!can_compound(slang, fword, mip->mi_compflags)) {
-            continue;
-          }
-        } else if (slang->sl_comprules != NULL
-                   && !match_compoundrule(slang, mip->mi_compflags)) {
-          // The compound flags collected so far do not match any
-          // COMPOUNDRULE, discard the compounded word.
-          continue;
-        }
-      } else if (flags & WF_NEEDCOMP) {
-        // skip if word is only valid in a compound
-        continue;
-      }
-
-      int nobreak_result = SP_OK;
-
-      if (!word_ends) {
-        int save_result = mip->mi_result;
-        char_u *save_end = mip->mi_end;
-        langp_T *save_lp = mip->mi_lp;
-
-        // Check that a valid word follows.  If there is one and we
-        // are compounding, it will set "mi_result", thus we are
-        // always finished here.  For NOBREAK we only check that a
-        // valid word follows.
-        // Recursive!
-        if (slang->sl_nobreak) {
-          mip->mi_result = SP_BAD;
-        }
-
-        // Find following word in case-folded tree.
-        mip->mi_compoff = endlen[endidxcnt];
-        if (mode == FIND_KEEPWORD) {
-          // Compute byte length in case-folded word from "wlen":
-          // byte length in keep-case word.  Length may change when
-          // folding case.  This can be slow, take a shortcut when
-          // the case-folded word is equal to the keep-case word.
-          p = mip->mi_fword;
-          if (STRNCMP(ptr, p, wlen) != 0) {
-            for (char_u *s = ptr; s < ptr + wlen; MB_PTR_ADV(s)) {
-              MB_PTR_ADV(p);
-            }
-            mip->mi_compoff = (int)(p - mip->mi_fword);
-          }
-        }
-#if 0
-        c = mip->mi_compoff;
-#endif
-        mip->mi_complen++;
-        if (flags & WF_COMPROOT) {
-          mip->mi_compextra++;
-        }
-
-        // For NOBREAK we need to try all NOBREAK languages, at least
-        // to find the ".add" file(s).
-        for (int lpi = 0; lpi < mip->mi_win->w_s->b_langp.ga_len; lpi++) {
-          if (slang->sl_nobreak) {
-            mip->mi_lp = LANGP_ENTRY(mip->mi_win->w_s->b_langp, lpi);
-            if (mip->mi_lp->lp_slang->sl_fidxs == NULL
-                || !mip->mi_lp->lp_slang->sl_nobreak) {
-              continue;
-            }
-          }
-
-          find_word(mip, FIND_COMPOUND);
-
-          // When NOBREAK any word that matches is OK.  Otherwise we
-          // need to find the longest match, thus try with keep-case
-          // and prefix too.
-          if (!slang->sl_nobreak || mip->mi_result == SP_BAD) {
-            // Find following word in keep-case tree.
-            mip->mi_compoff = wlen;
-            find_word(mip, FIND_KEEPCOMPOUND);
-
-#if 0       // Disabled, a prefix must not appear halfway through a compound
-            // word, unless the COMPOUNDPERMITFLAG is used, in which case it
-            // can't be a postponed prefix.
-            if (!slang->sl_nobreak || mip->mi_result == SP_BAD) {
-              // Check for following word with prefix.
-              mip->mi_compoff = c;
-              find_prefix(mip, FIND_COMPOUND);
-            }
-#endif
-          }
-
-          if (!slang->sl_nobreak) {
-            break;
-          }
-        }
-        mip->mi_complen--;
-        if (flags & WF_COMPROOT) {
-          mip->mi_compextra--;
-        }
-        mip->mi_lp = save_lp;
-
-        if (slang->sl_nobreak) {
-          nobreak_result = mip->mi_result;
-          mip->mi_result = save_result;
-          mip->mi_end = save_end;
-        } else {
-          if (mip->mi_result == SP_OK) {
-            break;
-          }
-          continue;
-        }
-      }
-
-      int res = SP_BAD;
-      if (flags & WF_BANNED) {
-        res = SP_BANNED;
-      } else if (flags & WF_REGION) {
-        // Check region.
-        if (((unsigned)mip->mi_lp->lp_region & (flags >> 16)) != 0) {
-          res = SP_OK;
-        } else {
-          res = SP_LOCAL;
-        }
-      } else if (flags & WF_RARE) {
-        res = SP_RARE;
-      } else {
-        res = SP_OK;
-      }
-
-      // Always use the longest match and the best result.  For NOBREAK
-      // we separately keep the longest match without a following good
-      // word as a fall-back.
-      if (nobreak_result == SP_BAD) {
-        if (mip->mi_result2 > res) {
-          mip->mi_result2 = res;
-          mip->mi_end2 = mip->mi_word + wlen;
-        } else if (mip->mi_result2 == res
-                   && mip->mi_end2 < mip->mi_word + wlen) {
-          mip->mi_end2 = mip->mi_word + wlen;
-        }
-      } else if (mip->mi_result > res) {
-        mip->mi_result = res;
-        mip->mi_end = mip->mi_word + wlen;
-      } else if (mip->mi_result == res && mip->mi_end < mip->mi_word + wlen) {
-        mip->mi_end = mip->mi_word + wlen;
-      }
-
-      if (mip->mi_result == SP_OK) {
-        break;
-      }
-    }
-
-    if (mip->mi_result == SP_OK) {
-      break;
-    }
-  }
+  return (size_t)(end - ptr);
 }
 
 /// Returns true if there is a match between the word ptr[wlen] and
@@ -1041,133 +482,6 @@ int valid_word_prefix(int totprefcnt, int arridx, int flags, char_u *word, slang
     return pidx;
   }
   return 0;
-}
-
-// Check if the word at "mip->mi_word" has a matching prefix.
-// If it does, then check the following word.
-//
-// If "mode" is "FIND_COMPOUND" then do the same after another word, find a
-// prefix in a compound word.
-//
-// For a match mip->mi_result is updated.
-static void find_prefix(matchinf_T *mip, int mode)
-{
-  idx_T arridx = 0;
-  int wlen = 0;
-  slang_T *slang = mip->mi_lp->lp_slang;
-
-  char_u *byts = slang->sl_pbyts;
-  if (byts == NULL) {
-    return;                     // array is empty
-  }
-  // We use the case-folded word here, since prefixes are always
-  // case-folded.
-  char_u *ptr = mip->mi_fword;
-  int flen = mip->mi_fwordlen;      // available case-folded bytes
-  if (mode == FIND_COMPOUND) {
-    // Skip over the previously found word(s).
-    ptr += mip->mi_compoff;
-    flen -= mip->mi_compoff;
-  }
-  idx_T *idxs = slang->sl_pidxs;
-
-  // Repeat advancing in the tree until:
-  // - there is a byte that doesn't match,
-  // - we reach the end of the tree,
-  // - or we reach the end of the line.
-  for (;;) {
-    if (flen == 0 && *mip->mi_fend != NUL) {
-      flen = fold_more(mip);
-    }
-
-    int len = byts[arridx++];
-
-    // If the first possible byte is a zero the prefix could end here.
-    // Check if the following word matches and supports the prefix.
-    if (byts[arridx] == 0) {
-      // There can be several prefixes with different conditions.  We
-      // try them all, since we don't know which one will give the
-      // longest match.  The word is the same each time, pass the list
-      // of possible prefixes to find_word().
-      mip->mi_prefarridx = arridx;
-      mip->mi_prefcnt = len;
-      while (len > 0 && byts[arridx] == 0) {
-        arridx++;
-        len--;
-      }
-      mip->mi_prefcnt -= len;
-
-      // Find the word that comes after the prefix.
-      mip->mi_prefixlen = wlen;
-      if (mode == FIND_COMPOUND) {
-        // Skip over the previously found word(s).
-        mip->mi_prefixlen += mip->mi_compoff;
-      }
-
-      // Case-folded length may differ from original length.
-      mip->mi_cprefixlen = nofold_len(mip->mi_fword, mip->mi_prefixlen,
-                                      mip->mi_word);
-      find_word(mip, FIND_PREFIX);
-
-      if (len == 0) {
-        break;              // no children, word must end here
-      }
-    }
-
-    // Stop looking at end of the line.
-    if (ptr[wlen] == NUL) {
-      break;
-    }
-
-    // Perform a binary search in the list of accepted bytes.
-    int c = ptr[wlen];
-    idx_T lo = arridx;
-    idx_T hi = arridx + len - 1;
-    while (lo < hi) {
-      idx_T m = (lo + hi) / 2;
-      if (byts[m] > c) {
-        hi = m - 1;
-      } else if (byts[m] < c) {
-        lo = m + 1;
-      } else {
-        lo = hi = m;
-        break;
-      }
-    }
-
-    // Stop if there is no matching byte.
-    if (hi < lo || byts[lo] != c) {
-      break;
-    }
-
-    // Continue at the child (if there is one).
-    arridx = idxs[lo];
-    wlen++;
-    flen--;
-  }
-}
-
-// Need to fold at least one more character.  Do until next non-word character
-// for efficiency.  Include the non-word character too.
-// Return the length of the folded chars in bytes.
-static int fold_more(matchinf_T *mip)
-{
-  char_u *p = mip->mi_fend;
-  do {
-    MB_PTR_ADV(mip->mi_fend);
-  } while (*mip->mi_fend != NUL && spell_iswordp(mip->mi_fend, mip->mi_win));
-
-  // Include the non-word character so that we can check for the word end.
-  if (*mip->mi_fend != NUL) {
-    MB_PTR_ADV(mip->mi_fend);
-  }
-
-  (void)spell_casefold(mip->mi_win, p, (int)(mip->mi_fend - p),
-                       mip->mi_fword + mip->mi_fwordlen,
-                       MAXWLEN - mip->mi_fwordlen);
-  int flen = (int)STRLEN(mip->mi_fword + mip->mi_fwordlen);
-  mip->mi_fwordlen += flen;
-  return flen;
 }
 
 /// Checks case flags for a word. Returns true, if the word has the requested
@@ -1324,7 +638,7 @@ size_t spell_move_to(win_T *wp, int dir, bool allwords, bool curline, hlf_T *att
 
       // start of word
       attr = HLF_COUNT;
-      len = spell_check(wp, p, &attr, &capcol, false);
+      len = spell_check(wp, (char *)p, &attr, &capcol, false);
 
       if (attr != HLF_COUNT) {
         // We found a bad word.  Check the attribute.
@@ -2404,10 +1718,10 @@ void init_spell_chartab(void)
 /// Thus this only works properly when past the first character of the word.
 ///
 /// @param wp Buffer used.
-bool spell_iswordp(const char_u *p, const win_T *wp)
+bool spell_iswordp(const char *p, const win_T *wp)
   FUNC_ATTR_NONNULL_ALL
 {
-  const int l = utfc_ptr2len((char *)p);
+  const int l = utfc_ptr2len(p);
   const char_u *s = p;
 
   for (int lpi = 0; lpi < wp->w_s->b_langp.ga_len; lpi++) {
@@ -2420,7 +1734,7 @@ bool spell_iswordp(const char_u *p, const win_T *wp)
       }
     }
   }
-  int c = utf_ptr2char((char *)p);
+  int c = utf_ptr2char(p);
   // TODO(vigoux): that's certainly not right, use uft_class functions
   return iswalnum(c);
 }

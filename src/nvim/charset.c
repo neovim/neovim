@@ -1232,10 +1232,10 @@ const char *skipbin(const char *q)
 ///
 /// @return Pointer to the character after the skipped digits and hex
 ///         characters.
-char *skiphex(char *q)
+const char *skiphex(const char *q)
   FUNC_ATTR_PURE
 {
-  char *p = q;
+  const char *p = q;
   while (ascii_isxdigit(*p)) {
     // skip to next non-digit
     p++;
