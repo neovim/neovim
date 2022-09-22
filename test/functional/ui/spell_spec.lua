@@ -7,6 +7,8 @@ local feed = helpers.feed
 local insert = helpers.insert
 local uname = helpers.uname
 local command = helpers.command
+local meths = helpers.meths
+local assert_alive = helpers.assert_alive
 
 describe("'spell'", function()
   local screen
@@ -162,5 +164,74 @@ describe("'spell'", function()
       {0:~                                                                               }|
       {6:search hit BOTTOM, continuing at TOP}                                            |
     ]])
+  end)
+
+  it('wraps search', function()
+    insert[[
+    The
+
+    A plong line with two zpelling mistakes
+
+    End
+    ]]
+
+    meths.set_option_value('spell', true, { scope = 'local' })
+    meths.set_option_value('wrapscan', true, { scope = 'local' })
+
+
+    screen:expect([[
+    The                                                                             |
+                                                                                    |
+    A {1:plong} line with two {1:zpelling} mistakes                                         |
+                                                                                    |
+    End                                                                             |
+    ^                                                                                |
+    {0:~                                                                               }|
+                                                                                    |
+    ]])
+
+    feed "gg]s"
+
+    screen:expect([[
+    The                                                                             |
+                                                                                    |
+    A {1:^plong} line with two {1:zpelling} mistakes                                         |
+                                                                                    |
+    End                                                                             |
+                                                                                    |
+    {0:~                                                                               }|
+                                                                                    |
+    ]])
+
+    feed "]s"
+    screen:expect([[
+    The                                                                             |
+                                                                                    |
+    A {1:plong} line with two {1:^zpelling} mistakes                                         |
+                                                                                    |
+    End                                                                             |
+                                                                                    |
+    {0:~                                                                               }|
+                                                                                    |
+    ]])
+
+    feed "]s"
+    screen:expect([[
+    The                                                                             |
+                                                                                    |
+    A {1:^plong} line with two {1:zpelling} mistakes                                         |
+                                                                                    |
+    End                                                                             |
+                                                                                    |
+    {0:~                                                                               }|
+    {6:search hit BOTTOM, continuing at TOP}                                            |
+    ]])
+  end)
+
+  it('z= on invalid utf-8 word', function()
+    insert(string.char(0xFF))
+    meths.set_option_value('spell', true, { scope = 'local' })
+    feed "z=<ESC>"
+    assert_alive()
   end)
 end)

@@ -241,7 +241,7 @@
 #include "nvim/ex_cmds2.h"
 #include "nvim/fileio.h"
 #include "nvim/globals.h"
-#include "nvim/lib/kvec.h"
+#include "klib/kvec.h"
 #include "nvim/memline.h"
 #include "nvim/memory.h"
 #include "nvim/option.h"
