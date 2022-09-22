@@ -4878,21 +4878,7 @@ static int put_node(FILE *fd, wordnode_T *node, int idx, int regionmask, bool pr
 // ":mkspell [-ascii] addfile"
 void ex_mkspell(exarg_T *eap)
 {
-  int fcount;
-  char **fnames;
-  char *arg = eap->arg;
-  bool ascii = false;
-
-  if (STRNCMP(arg, "-ascii", 6) == 0) {
-    ascii = true;
-    arg = skipwhite(arg + 6);
-  }
-
-  // Expand all the remaining arguments (e.g., $VIMRUNTIME).
-  if (get_arglist_exp(arg, &fcount, &fnames, false) == OK) {
-    mkspell(fcount, fnames, ascii, eap->forceit, false);
-    FreeWild(fcount, fnames);
-  }
+  emsg("mkspell is now deprecated");
 }
 
 // Create the .sug file.

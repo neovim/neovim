@@ -8020,9 +8020,7 @@ static void f_reltimefloat(typval_T *argvars, typval_T *rettv, EvalFuncData fptr
 /// "soundfold({word})" function
 static void f_soundfold(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
-  rettv->v_type = VAR_STRING;
-  const char *const s = tv_get_string(&argvars[0]);
-  rettv->vval.v_string = eval_soundfold(s);
+  emsg("soundfold() is deprecated");
 }
 
 /// "spellbadword()" function
@@ -8058,7 +8056,7 @@ static void f_spellbadword(typval_T *argvars, typval_T *rettv, EvalFuncData fptr
     if (str != NULL) {
       // Check the argument for spelling.
       while (*str != NUL) {
-        len = spell_check(curwin, (char_u *)str, &attr, &capcol, false);
+        len = spell_check(curwin, str, &attr, &capcol, false);
         if (attr != HLF_COUNT) {
           word = str;
           break;

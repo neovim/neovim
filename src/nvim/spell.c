@@ -172,7 +172,6 @@ char *repl_to = NULL;
 /// caller can skip over the word.
 size_t spell_check(win_T *wp, const char *ptr, hlf_T *attrp, int *capcol, bool docount)
 {
-  size_t nrlen = 0;              // found a number first
   size_t wrongcaplen = 0;
   const char *end = ptr;
   bool count_word = docount;
@@ -188,20 +187,6 @@ size_t spell_check(win_T *wp, const char *ptr, hlf_T *attrp, int *capcol, bool d
   // Return here when loading language files failed.
   if (GA_EMPTY(&wp->w_s->b_langp)) {
     return 1;
-  }
-
-  // A number is always OK.  Also skip hexadecimal numbers 0xFF99 and
-  // 0X99FF.  But always do check spelling to find "3GPP" and "11
-  // julifeest".
-  if (*ptr >= '0' && *ptr <= '9') {
-    if (*ptr == '0' && (ptr[1] == 'b' || ptr[1] == 'B')) {
-      end = skipbin(ptr + 2);
-    } else if (*ptr == '0' && (ptr[1] == 'x' || ptr[1] == 'X')) {
-      end = skiphex(ptr + 2);
-    } else {
-      end = skipdigits(ptr);
-    }
-    nrlen = (size_t)(end - ptr);
   }
 
   // Find the normal end of the word (until the next non-word character).
@@ -283,13 +268,7 @@ size_t spell_check(win_T *wp, const char *ptr, hlf_T *attrp, int *capcol, bool d
   }
 
   if (result != SP_OK) {
-    // If we found a number skip over it.  Allows for "42nd".  Do flag
-    // rare and local words, e.g., "3GPP".
-    if (nrlen > 0) {
-      if (result == SP_BAD || result == SP_BANNED) {
-        return nrlen;
-      }
-    } else if (!spell_iswordp_nmw(ptr, wp)) {
+    if (!spell_iswordp_nmw(ptr, wp)) {
       // When we are at a non-word character there is no error, just
       // skip over the character (try looking for a word after it).
       if (capcol != NULL && wp->w_s->b_cap_prog != NULL) {
@@ -1528,10 +1507,10 @@ static int find_region(char_u *rp, char_u *region)
 /// @param[in]  end  End of word or NULL for NUL delimited string
 ///
 /// @returns  Case type of word
-int captype(char_u *word, char_u *end)
+int captype(char *word, char *end)
   FUNC_ATTR_NONNULL_ARG(1)
 {
-  char_u *p;
+  char *p;
 
   // find first letter
   for (p = word; !spell_iswordp_nmw(p, curwin); MB_PTR_ADV(p)) {
@@ -1714,22 +1693,20 @@ void init_spell_chartab(void)
 bool spell_iswordp(const char *p, const win_T *wp)
   FUNC_ATTR_NONNULL_ALL
 {
-  const int l = utfc_ptr2len(p);
-  const char_u *s = p;
+  int c = utf_ptr2char(p);
 
   for (int lpi = 0; lpi < wp->w_s->b_langp.ga_len; lpi++) {
     langp_T *lp = LANGP_ENTRY(wp->w_s->b_langp, lpi);
 
     if (lp->lp_slang->sl_hunspell != NULL) {
       // TODO(vigoux): correctly handle multibyte characters here
-      if (hunspell_is_wordchar(lp->lp_slang->sl_hunspell, (const char *)s)) {
+      if (hunspell_is_wordchar(lp->lp_slang->sl_hunspell, p)) {
         return true;
       }
     }
   }
-  int c = utf_ptr2char(p);
   // TODO(vigoux): that's certainly not right, use uft_class functions
-  return iswalnum(c);
+  return mb_isalpha(c);
 }
 
 // Returns true if "p" points to a word character.
@@ -1738,7 +1715,7 @@ bool spell_iswordp_nmw(const char *p, win_T *wp)
 {
   int c = utf_ptr2char(p);
   // TODO: use utf_class
-  return iswalnum(c);
+  return mb_isalpha(c);
 }
 
 // Returns true if word class indicates a word character.
@@ -1781,7 +1758,7 @@ static bool spell_iswordp_w(const int *p, const win_T *wp)
 // Uses the character definitions from the .spl file.
 // When using a multi-byte 'encoding' the length may change!
 // Returns FAIL when something wrong.
-int spell_casefold(const win_T *wp, char_u *str, int len, char_u *buf, int buflen)
+int spell_casefold(const win_T *wp, char *str, int len, char *buf, int buflen)
   FUNC_ATTR_NONNULL_ALL
 {
   if (len >= buflen) {
@@ -1792,7 +1769,7 @@ int spell_casefold(const win_T *wp, char_u *str, int len, char_u *buf, int bufle
   int outi = 0;
 
   // Fold one character at a time.
-  for (char_u *p = str; p < str + len;) {
+  for (char *p = str; p < str + len;) {
     if (outi + MB_MAXBYTES > buflen) {
       buf[outi] = NUL;
       return FAIL;
@@ -1812,7 +1789,7 @@ int spell_casefold(const win_T *wp, char_u *str, int len, char_u *buf, int bufle
       c = SPELL_TOFOLD(c);
     }
 
-    outi += utf_char2bytes(c, (char *)buf + outi);
+    outi += utf_char2bytes(c, buf + outi);
   }
   buf[outi] = NUL;
 
@@ -1829,21 +1806,21 @@ bool check_need_cap(linenr_T lnum, colnr_T col)
     return false;
   }
 
-  char_u *line = (char_u *)get_cursor_line_ptr();
-  char_u *line_copy = NULL;
+  char *line = get_cursor_line_ptr();
+  char *line_copy = NULL;
   colnr_T endcol = 0;
-  if (getwhitecols((char *)line) >= (int)col) {
+  if (getwhitecols(line) >= (int)col) {
     // At start of line, check if previous line is empty or sentence
     // ends there.
     if (lnum == 1) {
       need_cap = true;
     } else {
-      line = (char_u *)ml_get(lnum - 1);
-      if (*skipwhite((char *)line) == NUL) {
+      line = ml_get(lnum - 1);
+      if (*skipwhite(line) == NUL) {
         need_cap = true;
       } else {
         // Append a space in place of the line break.
-        line_copy = (char_u *)concat_str((char *)line, " ");
+        line_copy = concat_str(line, " ");
         line = line_copy;
         endcol = (colnr_T)STRLEN(line);
       }
@@ -1858,14 +1835,14 @@ bool check_need_cap(linenr_T lnum, colnr_T col)
       .regprog = curwin->w_s->b_cap_prog,
       .rm_ic = false
     };
-    char_u *p = line + endcol;
+    char *p = line + endcol;
     for (;;) {
       MB_PTR_BACK(line, p);
       if (p == line || spell_iswordp_nmw(p, curwin)) {
         break;
       }
-      if (vim_regexec(&regmatch, (char *)p, 0)
-          && (char_u *)regmatch.endp[0] == line + endcol) {
+      if (vim_regexec(&regmatch, p, 0)
+          && regmatch.endp[0] == line + endcol) {
         need_cap = true;
         break;
       }
@@ -2014,33 +1991,6 @@ void make_case_word(char_u *fword, char_u *cword, int flags)
   }
 }
 
-/// Soundfold a string, for soundfold()
-///
-/// @param[in]  word  Word to soundfold.
-///
-/// @return [allocated] soundfolded string or NULL in case of error. May return
-///                     copy of the input string if soundfolding is not
-///                     supported by any of the languages in &spellang.
-char *eval_soundfold(const char *const word)
-  FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_MALLOC FUNC_ATTR_NONNULL_ALL
-{
-  if (curwin->w_p_spell && *curwin->w_s->b_p_spl != NUL) {
-    // Use the sound-folding of the first language that supports it.
-    for (int lpi = 0; lpi < curwin->w_s->b_langp.ga_len; lpi++) {
-      langp_T *const lp = LANGP_ENTRY(curwin->w_s->b_langp, lpi);
-      if (!GA_EMPTY(&lp->lp_slang->sl_sal)) {
-        // soundfold the word
-        char_u sound[MAXWLEN];
-        spell_soundfold(lp->lp_slang, (char_u *)word, false, sound);
-        return xstrdup((const char *)sound);
-      }
-    }
-  }
-
-  // No language with sound folding, return word as-is.
-  return xstrdup(word);
-}
-
 /// Turn "inword" into its sound-a-like equivalent in "res[MAXWLEN]".
 ///
 /// There are many ways to turn a word into a sound-a-like representation.  The
@@ -2056,14 +2006,14 @@ char *eval_soundfold(const char *const word)
 /// @param[in]  inword  word to soundfold
 /// @param[in]  folded  whether inword is already case-folded
 /// @param[in,out]  res  destination for soundfolded word
-void spell_soundfold(slang_T *slang, char_u *inword, bool folded, char_u *res)
+void spell_soundfold(slang_T *slang, char *inword, bool folded, char *res)
 {
   if (slang->sl_sofo) {
     // SOFOFROM and SOFOTO used
     spell_soundfold_sofo(slang, inword, res);
   } else {
-    char_u fword[MAXWLEN];
-    char_u *word;
+    char fword[MAXWLEN];
+    char *word;
     // SAL items used.  Requires the word to be case-folded.
     if (folded) {
       word = inword;
@@ -2514,7 +2464,7 @@ void spell_dump_compl(char *pat, int ic, Direction *dir, int dumpflags_arg)
     if (ic) {
       dumpflags |= DUMPFLAG_ICASE;
     } else {
-      n = captype((char_u *)pat, NULL);
+      n = captype(pat, NULL);
       if (n == WF_ONECAP) {
         dumpflags |= DUMPFLAG_ONECAP;
       } else if (n == WF_ALLCAP
@@ -2529,7 +2479,7 @@ void spell_dump_compl(char *pat, int ic, Direction *dir, int dumpflags_arg)
   for (int lpi = 0; lpi < curwin->w_s->b_langp.ga_len; lpi++) {
     lp = LANGP_ENTRY(curwin->w_s->b_langp, lpi);
     p = (char *)lp->lp_slang->sl_regions;
-    if (p[0] != 0) {
+    if (p != 0) {
       if (region_names == NULL) {           // first language with regions
         region_names = p;
       } else if (strcmp(region_names, p) != 0) {
