@@ -282,6 +282,15 @@ func Test_set_completion()
   call feedkeys(":set fileencodings:\<C-A>\<C-B>\"\<CR>", 'tx')
   call assert_equal('"set fileencodings:ucs-bom,utf-8,default,latin1', @:)
 
+  " Expand key codes.
+  " call feedkeys(":set <H\<C-A>\<C-B>\"\<CR>", 'tx')
+  " call assert_equal('"set <Help> <Home>', @:)
+
+  " Expand terminal options.
+  " call feedkeys(":set t_A\<C-A>\<C-B>\"\<CR>", 'tx')
+  " call assert_equal('"set t_AB t_AF t_AU t_AL', @:)
+  " call assert_fails('call feedkeys(":set <t_afoo>=\<C-A>\<CR>", "xt")', 'E474:')
+
   " Expand directories.
   call feedkeys(":set cdpath=./\<C-A>\<C-B>\"\<CR>", 'tx')
   call assert_match('./samples/ ', @:)

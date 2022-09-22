@@ -141,3 +141,41 @@ func Test_system_with_shell_quote()
     call delete('Xdir with spaces', 'rf')
   endtry
 endfunc
+
+" Test for 'shellxquote'
+func Test_Shellxquote()
+  CheckUnix
+
+  let save_shell = &shell
+  let save_sxq = &shellxquote
+  let save_sxe = &shellxescape
+
+  call writefile(['#!/bin/sh', 'echo "Cmd: [$*]" > Xlog'], 'Xtestshell')
+  call setfperm('Xtestshell', "r-x------")
+  set shell=./Xtestshell
+
+  set shellxquote=\\"
+  call feedkeys(":!pwd\<CR>\<CR>", 'xt')
+  call assert_equal(['Cmd: [-c "pwd"]'], readfile('Xlog'))
+
+  set shellxquote=(
+  call feedkeys(":!pwd\<CR>\<CR>", 'xt')
+  call assert_equal(['Cmd: [-c (pwd)]'], readfile('Xlog'))
+
+  set shellxquote=\\"(
+  call feedkeys(":!pwd\<CR>\<CR>", 'xt')
+  call assert_equal(['Cmd: [-c "(pwd)"]'], readfile('Xlog'))
+
+  set shellxescape=\"&<<()@^
+  set shellxquote=(
+  call feedkeys(":!pwd\"&<<{}@^\<CR>\<CR>", 'xt')
+  call assert_equal(['Cmd: [-c (pwd^"^&^<^<{}^@^^)]'], readfile('Xlog'))
+
+  let &shell = save_shell
+  let &shellxquote = save_sxq
+  let &shellxescape = save_sxe
+  call delete('Xtestshell')
+  call delete('Xlog')
+endfunc
+
+" vim: shiftwidth=2 sts=2 expandtab
