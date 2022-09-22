@@ -113,13 +113,6 @@
 #include "nvim/undo.h"            // for u_save_cursor
 #include "nvim/vim.h"             // for curwin, strlen, STRLCPY, STRNCMP
 
-// Result values.  Lower number is accepted over higher one.
-#define SP_BANNED       (-1)
-#define SP_RARE         0
-#define SP_OK           1
-#define SP_LOCAL        2
-#define SP_BAD          3
-
 // First language that is loaded, start of the linked list of loaded
 // languages.
 slang_T *first_lang = NULL;
@@ -243,12 +236,6 @@ size_t spell_check(win_T *wp, const char *ptr, hlf_T *attrp, int *capcol, bool d
     *capcol = -1;
   }
 
-  // case-fold the word with one non-word character, so that we can check
-  // for the word end.
-  if (*end != NUL) {
-    MB_PTR_ADV(end);
-  }
-
   // TODO(vigoux): I think that this is not necessary anymore, and we only check the exact word
   // length
   // if (camel_case && mi.mi_fwordlen > 0) {
@@ -257,24 +244,30 @@ size_t spell_check(win_T *wp, const char *ptr, hlf_T *attrp, int *capcol, bool d
   // }
 
   // The word is bad unless we recognize it.
-  int result = SP_BAD;
+  enum {
+    SP_BANNED,
+    SP_RARE,
+    SP_OK,
+    SP_LOCAL,
+    SP_BAD,
+  } result = SP_BAD;
 
   // Loop over the languages specified in 'spelllang'.
   // We check them all, because a word may be matched longer in another
   // language.
   for (int lpi = 0; lpi < wp->w_s->b_langp.ga_len; lpi++) {
-    slang_T *lp = LANGP_ENTRY(wp->w_s->b_langp, lpi);
+    langp_T *lp = LANGP_ENTRY(wp->w_s->b_langp, lpi);
 
     // If reloading fails the language is still in the list but everything
     // has been cleared.
-    if (lp->sl_hunspell != NULL) {
+    if (lp->lp_slang->sl_hunspell != NULL) {
       if (end == ptr) {
         MB_PTR_ADV(end);
       }
 
       size_t wlen = (size_t)(end - ptr);
       int spell_flags = 0;
-      if (hunspell_spell_flags(lp->sl_hunspell, (char *)ptr,
+      if (hunspell_spell_flags(lp->lp_slang->sl_hunspell, (char *)ptr,
                                wlen, &spell_flags)) {
         result =
           (spell_flags & HSPELL_FORBIDDEN) ? SP_BANNED :
@@ -284,7 +277,7 @@ size_t spell_check(win_T *wp, const char *ptr, hlf_T *attrp, int *capcol, bool d
       }
 
       if (result == SP_OK && count_word) {
-        count_common_word(lp, (char_u *)ptr, (int)wlen, 1);
+        count_common_word(lp->lp_slang, (char_u *)ptr, (int)wlen, 1);
       }
     }
   }
@@ -1741,9 +1734,9 @@ bool spell_iswordp(const char *p, const win_T *wp)
 
 // Returns true if "p" points to a word character.
 // Unlike spell_iswordp() this doesn't check for "midword" characters.
-bool spell_iswordp_nmw(const char_u *p, win_T *wp)
+bool spell_iswordp_nmw(const char *p, win_T *wp)
 {
-  int c = utf_ptr2char((char *)p);
+  int c = utf_ptr2char(p);
   // TODO: use utf_class
   return iswalnum(c);
 }
