@@ -2464,7 +2464,8 @@ void close_windows(buf_T *buf, bool keep_curwin)
   for (tp = first_tabpage; tp != NULL; tp = nexttp) {
     nexttp = tp->tp_next;
     if (tp != curtab) {
-      FOR_ALL_WINDOWS_IN_TAB(wp, tp) {
+      // Start from tp_lastwin to close floating windows with the same buffer first.
+      for (win_T *wp = tp->tp_lastwin; wp != NULL; wp = wp->w_prev) {
         if (wp->w_buffer == buf
             && !(wp->w_closing || wp->w_buffer->b_locked > 0)) {
           win_close_othertab(wp, false, tp);
