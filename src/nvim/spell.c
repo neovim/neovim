@@ -263,6 +263,7 @@ size_t spell_check(win_T *wp, const char *ptr, hlf_T *attrp, int *capcol, bool d
 
       if (result == SP_OK && count_word) {
         count_common_word(lp->lp_slang, (char_u *)ptr, (int)wlen, 1);
+        count_word = false;
       }
     }
   }
