@@ -4696,7 +4696,6 @@ void tabpage_close(int forceit)
 void tabpage_close_other(tabpage_T *tp, int forceit)
 {
   int done = 0;
-  int h = tabline_height();
   char prev_idx[NUMBUFLEN];
 
   // Limit to 1000 windows, autocommands may add a window while we close
@@ -4711,11 +4710,6 @@ void tabpage_close_other(tabpage_T *tp, int forceit)
     if (!valid_tabpage(tp) || tp->tp_lastwin == wp) {
       break;
     }
-  }
-
-  redraw_tabline = true;
-  if (h != tabline_height()) {
-    win_new_screen_rows();
   }
 }
 
