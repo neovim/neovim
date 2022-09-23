@@ -1607,7 +1607,7 @@ bool spell_iswordp(const char *p, const win_T *wp)
 bool spell_iswordp_nmw(const char *p, win_T *wp)
 {
   int c = utf_ptr2char(p);
-  // TODO: use utf_class
+  // TODO(vigoux): use utf_class
   return mb_isalpha(c);
 }
 

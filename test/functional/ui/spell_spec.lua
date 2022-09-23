@@ -234,4 +234,120 @@ describe("'spell'", function()
     feed "z=<ESC>"
     assert_alive()
   end)
+
+  describe('internal word list', function()
+    it('works', function()
+      insert "This is foo"
+
+      meths.set_option_value('spell', true, { scope = 'local' })
+      feed '[s'
+
+      screen:expect [[
+      This is {1:^foo}                                                                     |
+      {0:~                                                                               }|
+      {0:~                                                                               }|
+      {0:~                                                                               }|
+      {0:~                                                                               }|
+      {0:~                                                                               }|
+      {0:~                                                                               }|
+                                                                                      |
+      ]]
+
+      feed 'zG'
+      screen:expect [[
+      This is ^foo                                                                     |
+      {0:~                                                                               }|
+      {0:~                                                                               }|
+      {0:~                                                                               }|
+      {0:~                                                                               }|
+      {0:~                                                                               }|
+      {0:~                                                                               }|
+                                                                                      |
+      ]]
+
+      feed 'zW'
+      screen:expect [[
+      This is {1:^foo}                                                                     |
+      {0:~                                                                               }|
+      {0:~                                                                               }|
+      {0:~                                                                               }|
+      {0:~                                                                               }|
+      {0:~                                                                               }|
+      {0:~                                                                               }|
+                                                                                      |
+      ]]
+    end)
+
+    it('avoids duplicates', function()
+      insert "This is foo"
+
+      meths.set_option_value('spell', true, { scope = 'local' })
+      feed '[s'
+
+      screen:expect [[
+      This is {1:^foo}                                                                     |
+      {0:~                                                                               }|
+      {0:~                                                                               }|
+      {0:~                                                                               }|
+      {0:~                                                                               }|
+      {0:~                                                                               }|
+      {0:~                                                                               }|
+                                                                                      |
+      ]]
+
+      feed 'zGzG'
+      screen:expect [[
+      This is ^foo                                                                     |
+      {0:~                                                                               }|
+      {0:~                                                                               }|
+      {0:~                                                                               }|
+      {0:~                                                                               }|
+      {0:~                                                                               }|
+      {0:~                                                                               }|
+                                                                                      |
+      ]]
+
+      feed 'zW'
+      screen:expect [[
+      This is {1:^foo}                                                                     |
+      {0:~                                                                               }|
+      {0:~                                                                               }|
+      {0:~                                                                               }|
+      {0:~                                                                               }|
+      {0:~                                                                               }|
+      {0:~                                                                               }|
+                                                                                      |
+      ]]
+    end)
+
+    it('allows to exclude valid words', function()
+      insert "This is foo"
+
+      meths.set_option_value('spell', true, { scope = 'local' })
+      feed '[sB'
+
+      screen:expect [[
+      This ^is {1:foo}                                                                     |
+      {0:~                                                                               }|
+      {0:~                                                                               }|
+      {0:~                                                                               }|
+      {0:~                                                                               }|
+      {0:~                                                                               }|
+      {0:~                                                                               }|
+                                                                                      |
+      ]]
+
+      feed "zW"
+      screen:expect [[
+      This {1:^is} {1:foo}                                                                     |
+      {0:~                                                                               }|
+      {0:~                                                                               }|
+      {0:~                                                                               }|
+      {0:~                                                                               }|
+      {0:~                                                                               }|
+      {0:~                                                                               }|
+                                                                                      |
+      ]]
+    end)
+  end)
 end)

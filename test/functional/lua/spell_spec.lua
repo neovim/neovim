@@ -1,7 +1,6 @@
 local helpers = require('test.functional.helpers')(after_each)
 local clear = helpers.clear
 local exec_lua = helpers.exec_lua
-local command = helpers.command
 local meths = helpers.meths
 local eq = helpers.eq
 local pcall_err = helpers.pcall_err

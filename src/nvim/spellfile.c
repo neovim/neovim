@@ -1129,18 +1129,45 @@ void spell_add_word(char_u *word, int len, SpellAddType what, int idx, bool undo
   }
 
   if (idx == 0) {           // use internal wordlist
+    if (what == SPELL_ADD_RARE) {
+      emsg("Adding rare words to the internal wordlist is not supported");
+      return;
+    }
     // First push that in the corresponding list
-    wordlist_T ilist = (what == SPELL_ADD_GOOD) ? int_good_words : int_bad_words;
-    wordlist_T other = (what == SPELL_ADD_GOOD) ? int_bad_words : int_good_words;
+    wordlist_T ilist;
+    wordlist_T other;
+    bool did_change = false;
 
-    kv_push(ilist, xstrdup((char *)word));
+    if (what == SPELL_ADD_GOOD) {
+      ilist = int_good_words;
+      other = int_bad_words;
+    } else {
+      ilist = int_bad_words;
+      other = int_good_words;
+    }
 
     size_t i;
+
+    // Find the word in ilist to avoid duplicates
+    for (i = 0; i < kv_size(ilist); i++) {
+      char *tgt = kv_A(ilist, i);
+      if (strncmp(tgt, (char *)word, (size_t)len) == 0) {
+        break;
+      }
+    }
+
+    if (i == kv_size(ilist)) {
+      did_change = true;
+      kv_push(ilist, xstrndup((char *)word, (size_t)len));
+    }
+
     // Find the word in the other list, and free it
     for (i = 0; i < kv_size(other); i++) {
       char *tgt = kv_A(other, i);
-      if (strcmp(tgt, (char *)word) == 0) {
+      if (strncmp(tgt, (char *)word, (size_t)len) == 0) {
+        did_change = true;
         xfree(tgt);
+        break;
       }
     }
 
@@ -1150,21 +1177,31 @@ void spell_add_word(char_u *word, int len, SpellAddType what, int idx, bool undo
         kv_A(other, i) = kv_A(other, i + 1);
       }
 
-      kv_pop(other);
+      (void)kv_pop(other);
     }
 
     // Now update each language to reflect that new word
-    for (int lpi = 0; lpi < curwin->w_s->b_langp.ga_len; lpi++) {
-      langp_T *lp = LANGP_ENTRY(curwin->w_s->b_langp, lpi);
-      if (lp->lp_slang->sl_hunspell != NULL) {
-        if (what == SPELL_ADD_GOOD) {
-          hunspell_add_word(lp->lp_slang->sl_hunspell, (char *)word);
-        } else if (what == SPELL_ADD_BAD) {
-          hunspell_remove_word(lp->lp_slang->sl_hunspell, (char *)word);
+    if (did_change) {
+      for (int lpi = 0; lpi < curwin->w_s->b_langp.ga_len; lpi++) {
+        langp_T *lp = LANGP_ENTRY(curwin->w_s->b_langp, lpi);
+        if (lp->lp_slang->sl_hunspell != NULL) {
+          if (what == SPELL_ADD_GOOD) {
+            hunspell_add_word(lp->lp_slang->sl_hunspell, (char *)word);
+          } else if (what == SPELL_ADD_BAD) {
+            hunspell_remove_word(lp->lp_slang->sl_hunspell, (char *)word);
+          }
         }
       }
+
+      if (what == SPELL_ADD_GOOD) {
+        int_good_words = ilist;
+        int_bad_words = other;
+      } else {
+        int_bad_words = ilist;
+        int_good_words = other;
+      }
+      redraw_all_later(UPD_SOME_VALID);
     }
-    redraw_all_later(UPD_SOME_VALID);
     return;
   }
 
