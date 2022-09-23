@@ -349,11 +349,13 @@ func Test_nocatch_timer_garbage_collect()
     let a = {'foo', 'bar'}
   endfunc
   func FeedChar(id)
-    call feedkeys('x', 't')
+    call feedkeys(":\<CR>", 't')
   endfunc
   call timer_start(300, 'FeedChar')
   call timer_start(100, 'CauseAnError')
-  let x = getchar()
+  let x = getchar()   " wait for error in timer
+  let x = getchar(0)  " read any remaining chars
+  let x = getchar(0)
 
   set ut&
   call test_override('no_wait_return', 1)
