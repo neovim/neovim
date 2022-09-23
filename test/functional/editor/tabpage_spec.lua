@@ -90,7 +90,7 @@ describe('tabpage', function()
     eq({2, 1}, funcs.win_screenpos(0))
     local win3 = curwin().id
 
-    meths.win_close(win2, true)
+    meths.win_hide(win2)
     eq(win3, curwin().id)
     eq(1, #meths.list_tabpages())
     eq({1, 1}, funcs.win_screenpos(0))
