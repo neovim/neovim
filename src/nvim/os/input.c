@@ -306,37 +306,35 @@ static uint8_t check_multiclick(int code, int grid, int row, int col)
   static int orig_mouse_row = 0;
   static uint64_t orig_mouse_time = 0;  // time of previous mouse click
 
-  if (code == KE_LEFTRELEASE
-      || code == KE_RIGHTRELEASE
-      || code == KE_MIDDLERELEASE
-      || code == KE_MOUSEDOWN
-      || code == KE_MOUSEUP
-      || code == KE_MOUSELEFT
-      || code == KE_MOUSERIGHT
-      || code == KE_MOUSEMOVE) {
+  if ((code >= KE_MOUSEDOWN && code <= KE_MOUSERIGHT) || code == KE_MOUSEMOVE) {
     return 0;
   }
-  uint64_t mouse_time = os_hrtime();    // time of current mouse click (ns)
 
-  // compute the time elapsed since the previous mouse click and
-  // convert p_mouse from ms to ns
-  uint64_t timediff = mouse_time - orig_mouse_time;
-  uint64_t mouset = (uint64_t)p_mouset * 1000000;
-  if (code == orig_mouse_code
-      && timediff < mouset
-      && orig_num_clicks != 4
-      && orig_mouse_grid == grid
-      && orig_mouse_col == col
-      && orig_mouse_row == row) {
-    orig_num_clicks++;
-  } else {
-    orig_num_clicks = 1;
+  // For click events the number of clicks is updated.
+  if (code == KE_LEFTMOUSE || code == KE_RIGHTMOUSE || code == KE_MIDDLEMOUSE) {
+    uint64_t mouse_time = os_hrtime();    // time of current mouse click (ns)
+    // compute the time elapsed since the previous mouse click and
+    // convert p_mouse from ms to ns
+    uint64_t timediff = mouse_time - orig_mouse_time;
+    uint64_t mouset = (uint64_t)p_mouset * 1000000;
+    if (code == orig_mouse_code
+        && timediff < mouset
+        && orig_num_clicks != 4
+        && orig_mouse_grid == grid
+        && orig_mouse_col == col
+        && orig_mouse_row == row) {
+      orig_num_clicks++;
+    } else {
+      orig_num_clicks = 1;
+    }
+    orig_mouse_code = code;
+    orig_mouse_time = mouse_time;
   }
-  orig_mouse_code = code;
+  // For drag and release events the number of clicks is kept.
+
   orig_mouse_grid = grid;
   orig_mouse_col = col;
   orig_mouse_row = row;
-  orig_mouse_time = mouse_time;
 
   uint8_t modifiers = 0;
   if (orig_num_clicks == 2) {
