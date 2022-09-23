@@ -812,9 +812,12 @@ static slang_T *spell_load_lang(win_T *wp, char *lang)
   int r;
   spelload_T sl;
 
+  if (*lang == NUL) {
+    return NULL;
+  }
+
   // Copy the language name to pass it to spell_load_cb() as a cookie.
   // It's truncated when an error is detected.
-  STRCPY(sl.sl_lang, lang);
   sl.sl_slang = NULL;
   sl.sl_nobreak = false;
 
@@ -825,9 +828,8 @@ static slang_T *spell_load_lang(win_T *wp, char *lang)
     vim_snprintf((char *)fname, sizeof(fname) - 5, "spell/%s.aff", lang);
     r = do_in_runtimepath((char *)fname, 0, spell_hunspell_cb, &sl);
 
-    if (r == FAIL && *sl.sl_lang != NUL && round == 1
-        && apply_autocmds(EVENT_SPELLFILEMISSING, (char *)lang,
-                          curbuf->b_fname, false, curbuf)) {
+    if (r == FAIL && round == 1 && apply_autocmds(EVENT_SPELLFILEMISSING, (char *)lang,
+                                                  curbuf->b_fname, false, curbuf)) {
       continue;
     }
     break;
@@ -857,6 +859,16 @@ static slang_T *spell_load_lang(win_T *wp, char *lang)
     }
     for (size_t i = 0; i < kv_size(int_bad_words); i++) {
       hunspell_remove_word(sl.sl_slang->sl_hunspell, kv_A(int_bad_words, i));
+    }
+
+    // Finally, extract the region name from the language
+    char *region_start = strchr(lang, '_');
+    memset(sl.sl_slang->sl_region, 0x00, 3);
+    if (region_start != NULL && strlen(region_start + 1) == 2) {
+      xstrlcpy(sl.sl_slang->sl_name, lang, (size_t)(region_start - lang));
+      xstrlcpy(sl.sl_slang->sl_region, region_start + 1, 2);
+    } else {
+      xstrlcpy(sl.sl_slang->sl_name, lang, 255);
     }
 
     sl.sl_slang->sl_next = first_lang;
@@ -952,7 +964,6 @@ void slang_clear(slang_T *lp)
   }
   lp->sl_prefixcnt = 0;
   XFREE_CLEAR(lp->sl_prefprog);
-  XFREE_CLEAR(lp->sl_info);
   XFREE_CLEAR(lp->sl_midword);
 
   vim_regfree(lp->sl_compprog);
@@ -1128,17 +1139,14 @@ static int count_syllables(slang_T *slang, const char_u *word)
 char *did_set_spelllang(win_T *wp)
 {
   garray_T ga;
-  char *splp;
   char *region;
   int region_mask;
   slang_T *slang;
   int c;
   char lang[MAXWLEN + 1];
   char spf_name[MAXPATHL];
-  int len;
+  size_t len;
   char *p;
-  int round;
-  char *spf;
   char *use_region = NULL;
   bool dont_use_region = false;
   bool nobreak = false;
@@ -1167,11 +1175,11 @@ char *did_set_spelllang(win_T *wp)
   wp->w_s->b_cjk = 0;
 
   // Loop over comma separated language names.
-  for (splp = spl_copy; *splp != NUL;) {
+  for (char *splp = spl_copy; *splp != NUL;) {
     // Get one language name.
     copy_option_part(&splp, (char *)lang, MAXWLEN, ",");
     region = NULL;
-    len = (int)strlen(lang);
+    len = strlen(lang);
 
     if (!valid_spelllang((char *)lang)) {
       continue;
@@ -1243,7 +1251,6 @@ char *did_set_spelllang(win_T *wp)
         if (region_mask != 0) {
           langp_T *p_ = GA_APPEND_VIA_PTR(langp_T, &ga);
           p_->lp_slang = slang;
-          p_->lp_region = region_mask;
 
           use_midword(slang, wp);
           if (slang->sl_nobreak) {
@@ -1256,8 +1263,7 @@ char *did_set_spelllang(win_T *wp)
 
   // The internal wordlist is handled when loading a language
   // For each spellfile item
-  spf = curwin->w_s->b_p_spf;
-  for (round = 0; *spf != NUL; round++) {
+  for (char *spf = wp->w_s->b_p_spf; *spf != NUL;) {
     // One entry in 'spellfile'.
     copy_option_part(&spf, (char *)spf_name, MAXPATHL - 5, ",");
     STRCAT(spf_name, ".spl");
@@ -1283,7 +1289,6 @@ char *did_set_spelllang(win_T *wp)
     }
     // Not loaded, try loading it now.  The language name includes the
     // region name, the region is ignored otherwise.
-    // Ignore int_wordlist
     if (slang == NULL) {
       STRLCPY(lang, path_tail((char *)spf_name), MAXWLEN + 1);
       p = vim_strchr((char *)lang, '.');
@@ -1314,7 +1319,6 @@ char *did_set_spelllang(win_T *wp)
       if (region_mask != 0) {
         langp_T *p_ = GA_APPEND_VIA_PTR(langp_T, &ga);
         p_->lp_slang = slang;
-        p_->lp_region = region_mask;
 
         use_midword(slang, wp);
       }
@@ -2274,14 +2278,15 @@ void ex_spellinfo(exarg_T *eap)
   msg_start();
   for (int lpi = 0; lpi < curwin->w_s->b_langp.ga_len && !got_int; lpi++) {
     langp_T *const lp = LANGP_ENTRY(curwin->w_s->b_langp, lpi);
-    msg_puts("file: ");
+    msg_puts("lang: ");
+    msg_puts((const char *)lp->lp_slang->sl_name);
+    if (*lp->lp_slang->sl_region != NUL) {
+      msg_puts(", region: ");
+      msg_puts((const char *)lp->lp_slang->sl_region);
+    }
+    msg_puts(", file: ");
     msg_puts((const char *)lp->lp_slang->sl_fname);
     msg_putchar('\n');
-    const char *const p = (const char *)lp->lp_slang->sl_info;
-    if (p != NULL) {
-      msg_puts(p);
-      msg_putchar('\n');
-    }
   }
   msg_end();
 }
@@ -2453,9 +2458,7 @@ void spell_dump_compl(char *pat, int ic, Direction *dir, int dumpflags_arg)
             if ((round == 2 || (flags & WF_KEEPCAP) == 0)
                 && (flags & WF_NEEDCOMP) == 0
                 && (do_region
-                    || (flags & WF_REGION) == 0
-                    || (((unsigned)flags >> 16)
-                        & (unsigned)lp->lp_region) != 0)) {
+                    || (flags & WF_REGION) == 0)) {
               word[depth] = NUL;
               if (!do_region) {
                 flags &= ~WF_REGION;

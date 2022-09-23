@@ -115,6 +115,7 @@ typedef int salfirst_T;
 typedef struct slang_S {
   struct slang_S *sl_next;         // next language
   char *sl_name;            // language name "en", "en.rare", "nl", etc.
+  char sl_region[3];
   char *sl_fname;           // name of .spl file
   bool sl_add;              // true if it's a .add file.
 
@@ -125,8 +126,6 @@ typedef struct slang_S {
   idx_T *sl_kidxs;        // keep-case word indexes
   char_u *sl_pbyts;        // prefix tree word bytes
   idx_T *sl_pidxs;        // prefix tree word indexes
-
-  char_u *sl_info;         // infotext string or NULL
 
   char_u sl_regions[MAXREGIONS * 2 + 1];
   // table with up to 8 region names plus NUL
@@ -186,9 +185,9 @@ typedef struct slang_S {
 } slang_T;
 
 // Structure used in "b_langp", filled from 'spelllang'.
+// TODO(vigoux): this indirection is useless now
 typedef struct langp_S {
   slang_T *lp_slang;        // info for this language
-  int lp_region;                // bitmask for region or REGION_ALL
 } langp_T;
 
 #define LANGP_ENTRY(ga, i)      (((langp_T *)(ga).ga_data) + (i))
