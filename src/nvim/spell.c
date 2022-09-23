@@ -777,27 +777,28 @@ void spell_cat_line(char_u *buf, char_u *line, int maxlen)
   }
 }
 
-static void spell_hunspell_cb(char *path, void *ud)
+static void spell_hunspell_cb(char *aff_path, void *ud)
 {
   spelload_T *sl = (spelload_T *)ud;
 
-  char *aff_path = xstrdup(path);
-  STRCPY(aff_path + STRLEN(path) - 3, "aff");
+  char *dic_path = xstrdup(aff_path);
+  STRCPY(dic_path + STRLEN(aff_path) - 3, "dic");
 
-  hunspell_T *h = hunspell_create(aff_path, path);
+  hunspell_T *h = hunspell_create(aff_path, dic_path);
   if (h != NULL) {
     sl->sl_slang = slang_alloc((char *)sl->sl_lang);
     sl->sl_slang->sl_hunspell = h;
-    sl->sl_slang->sl_fname = xstrdup(path);
+    sl->sl_slang->sl_fname = xstrdup(dic_path);
   }
 
-  xfree(aff_path);
+  xfree(dic_path);
 }
 
 static void spell_hunspell_add_cb(char *path, void *ud)
 {
   spelload_T *sl = (spelload_T *)ud;
-  if (sl->sl_slang->sl_hunspell != NULL) {
+  if (sl->sl_slang->sl_hunspell != NULL
+      && path_full_compare(path, sl->sl_slang->sl_fname, false, false) == kDifferentFiles) {
     DLOG("Adding %s", path);
     hunspell_add_dic(sl->sl_slang->sl_hunspell, path);
   }
@@ -807,7 +808,7 @@ static void spell_hunspell_add_cb(char *path, void *ud)
 // "lang" must be the language without the region: e.g., "en".
 static slang_T *spell_load_lang(win_T *wp, char *lang)
 {
-  char fname_enc[85];
+  char fname[85];
   int r;
   spelload_T sl;
 
@@ -821,8 +822,8 @@ static slang_T *spell_load_lang(win_T *wp, char *lang)
   // autocommand may load it then.
   for (int round = 1; round <= 2; round++) {
     // Find the first spell file for "lang" in 'runtimepath' and load it.
-    vim_snprintf((char *)fname_enc, sizeof(fname_enc) - 5, "spell/%s.dic", lang);
-    r = do_in_runtimepath((char *)fname_enc, 0, spell_hunspell_cb, &sl);
+    vim_snprintf((char *)fname, sizeof(fname) - 5, "spell/%s.aff", lang);
+    r = do_in_runtimepath((char *)fname, 0, spell_hunspell_cb, &sl);
 
     if (r == FAIL && *sl.sl_lang != NUL && round == 1
         && apply_autocmds(EVENT_SPELLFILEMISSING, (char *)lang,
@@ -843,12 +844,12 @@ static slang_T *spell_load_lang(win_T *wp, char *lang)
                lang);
       do_cmdline_cmd(autocmd_buf);
     } else {
-      smsg(_("Warning: Cannot find word list \"%s.dic\""), lang);
+      smsg(_("Warning: Cannot find dictionnary for \"%s\""), lang);
     }
   } else if (sl.sl_slang != NULL) {
     // At least one file was loaded, now load ALL the additions.
-    STRCPY(fname_enc + STRLEN(fname_enc) - 3, "add");
-    do_in_runtimepath((char *)fname_enc, DIP_ALL, spell_hunspell_add_cb, &sl);
+    STRCPY(fname + STRLEN(fname) - 3, "dic");
+    do_in_runtimepath((char *)fname, DIP_ALL, spell_hunspell_add_cb, &sl);
 
     // Now add the internal wordlist
     for (size_t i = 0; i < kv_size(int_good_words); i++) {
