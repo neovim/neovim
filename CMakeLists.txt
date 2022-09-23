@@ -639,6 +639,7 @@ include(InstallHelpers)
 add_glob_targets(
   TARGET lintpy
   COMMAND ${FLAKE8_PRG}
+  FLAGS --max-line-length 88
   GLOB_DIRS contrib scripts src test
   GLOB_PAT *.py
   TOUCH_STRATEGY SINGLE
