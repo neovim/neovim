@@ -52,12 +52,12 @@ syn match markdownH2 "^.\+\n-\+$" contained contains=@markdownInline,markdownHea
 
 syn match markdownHeadingRule "^[=-]\+$" contained
 
-syn region markdownH1 matchgroup=markdownH1Delimiter start="##\@!"      end="#*\s*$" keepend oneline contains=@markdownInline,markdownAutomaticLink contained
-syn region markdownH2 matchgroup=markdownH2Delimiter start="###\@!"     end="#*\s*$" keepend oneline contains=@markdownInline,markdownAutomaticLink contained
-syn region markdownH3 matchgroup=markdownH3Delimiter start="####\@!"    end="#*\s*$" keepend oneline contains=@markdownInline,markdownAutomaticLink contained
-syn region markdownH4 matchgroup=markdownH4Delimiter start="#####\@!"   end="#*\s*$" keepend oneline contains=@markdownInline,markdownAutomaticLink contained
-syn region markdownH5 matchgroup=markdownH5Delimiter start="######\@!"  end="#*\s*$" keepend oneline contains=@markdownInline,markdownAutomaticLink contained
-syn region markdownH6 matchgroup=markdownH6Delimiter start="#######\@!" end="#*\s*$" keepend oneline contains=@markdownInline,markdownAutomaticLink contained
+syn region markdownH1 matchgroup=markdownH1Delimiter start="##\@!\s"      end="#*\s*$" keepend oneline contains=@markdownInline,markdownAutomaticLink contained
+syn region markdownH2 matchgroup=markdownH2Delimiter start="###\@!\s"     end="#*\s*$" keepend oneline contains=@markdownInline,markdownAutomaticLink contained
+syn region markdownH3 matchgroup=markdownH3Delimiter start="####\@!\s"    end="#*\s*$" keepend oneline contains=@markdownInline,markdownAutomaticLink contained
+syn region markdownH4 matchgroup=markdownH4Delimiter start="#####\@!\s"   end="#*\s*$" keepend oneline contains=@markdownInline,markdownAutomaticLink contained
+syn region markdownH5 matchgroup=markdownH5Delimiter start="######\@!\s"  end="#*\s*$" keepend oneline contains=@markdownInline,markdownAutomaticLink contained
+syn region markdownH6 matchgroup=markdownH6Delimiter start="#######\@!\s" end="#*\s*$" keepend oneline contains=@markdownInline,markdownAutomaticLink contained
 
 syn match markdownBlockquote ">\%(\s\|$\)" contained nextgroup=@markdownBlock
 
@@ -65,7 +65,7 @@ syn region markdownCodeBlock start="    \|\t" end="$" contained
 
 " TODO: real nesting
 syn match markdownListMarker "\%(\t\| \{0,4\}\)[-*+]\%(\s\+\S\)\@=" contained
-syn match markdownOrderedListMarker "\%(\t\| \{0,4}\)\<\d\+\.\%(\s\+\S\)\@=" contained
+syn match markdownOrderedListMarker "\%(\t\| \{0,4}\)\<\S\+\.\%(\s\+\S\)\@=" contained
 
 syn match markdownRule "\* *\* *\*[ *]*$" contained
 syn match markdownRule "- *- *-[ -]*$" contained

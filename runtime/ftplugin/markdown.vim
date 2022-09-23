@@ -11,7 +11,7 @@ runtime! ftplugin/html.vim ftplugin/html_*.vim ftplugin/html/*.vim
 
 setlocal comments=fb:*,fb:-,fb:+,n:> commentstring=<!--%s-->
 setlocal formatoptions+=tcqln formatoptions-=r formatoptions-=o
-setlocal formatlistpat=^\\s*\\d\\+\\.\\s\\+\\\|^[-*+]\\s\\+\\\|^\\[^\\ze[^\\]]\\+\\]:
+setlocal formatlistpat=^\\s*\\S\\+[.)]\\s\\+\\\|^[-*+]\\s\\+\\\|^\\[^\\ze[^\\]]\\+\\]:
 
 if exists('b:undo_ftplugin')
   let b:undo_ftplugin .= "|setl cms< com< fo< flp<"
