@@ -321,13 +321,13 @@ describe("'spell'", function()
     end)
 
     it('allows to exclude valid words', function()
-      insert "This is foo"
+      insert "This is good"
 
       meths.set_option_value('spell', true, { scope = 'local' })
-      feed '[sB'
+      feed "EE"
 
       screen:expect [[
-      This ^is {1:foo}                                                                     |
+      This is goo^d                                                                    |
       {0:~                                                                               }|
       {0:~                                                                               }|
       {0:~                                                                               }|
@@ -339,7 +339,7 @@ describe("'spell'", function()
 
       feed "zW"
       screen:expect [[
-      This {1:^is} {1:foo}                                                                     |
+      This is {1:goo^d}                                                                    |
       {0:~                                                                               }|
       {0:~                                                                               }|
       {0:~                                                                               }|
