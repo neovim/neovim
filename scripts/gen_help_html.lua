@@ -16,7 +16,7 @@
 --
 -- NOTES:
 --   * gen() and validate() are the primary entrypoints. validate() only exists because gen() is too
---   slow (~1 min) to run in per-commit CI.
+--     slow (~1 min) to run in per-commit CI.
 --   * visit_node() is the core function used by gen() to traverse the document tree and produce HTML.
 --   * visit_validate() is the core function used by validate().
 --   * Files in `new_layout` will be generated with a "flow" layout instead of preformatted/fixed-width layout.
@@ -50,7 +50,6 @@ local tagmap = nil
 local helpfiles = nil
 local invalid_tags = {}
 
-local commit = '?'
 local api = vim.api
 local M = {}
 
@@ -477,7 +476,7 @@ end
 -- @param old boolean Preformat paragraphs (for old :help files which are full of arbitrary whitespace)
 --
 -- @returns html, stats
-local function gen_one(fname, to_fname, old)
+local function gen_one(fname, to_fname, old, commit)
   local stats = {
     noise_lines = {},
     parse_errors = {},
@@ -604,7 +603,7 @@ local function gen_one(fname, to_fname, old)
   <footer>
     <div class="container flex">
       <div class="generator-stats">
-        Generated on %s from <code>{%s}</code>
+        Generated at %s from <code><a href="https://github.com/neovim/neovim/commit/%s">%s</a></code>
       </div>
       <div class="generator-stats">
       parse_errors: %d %s | <span title="%s">noise_lines: %d</span>
@@ -612,7 +611,7 @@ local function gen_one(fname, to_fname, old)
     <div>
   </footer>
   ]]):format(
-    os.date('%Y-%m-%d %H:%M:%S'), commit, #stats.parse_errors, bug_link,
+    os.date('%Y-%m-%d %H:%M'), commit, commit:sub(1, 7), #stats.parse_errors, bug_link,
     html_esc(table.concat(stats.noise_lines, '\n')), #stats.noise_lines)
 
   html = ('%s%s%s</div>\n%s</body>\n</html>\n'):format(
@@ -763,11 +762,12 @@ end
 --- @param include table|nil Process only these filenames. Example: {'api.txt', 'autocmd.txt', 'channel.txt'}
 ---
 --- @returns info dict
-function M.gen(help_dir, to_dir, include)
+function M.gen(help_dir, to_dir, include, commit)
   vim.validate{
     help_dir={help_dir, function(d) return vim.fn.isdirectory(d) == 1 end, 'valid directory'},
     to_dir={to_dir, 's'},
     include={include, 't', true},
+    commit={commit, 's', true},
   }
 
   local err_count = 0
@@ -781,7 +781,7 @@ function M.gen(help_dir, to_dir, include)
   for _, f in ipairs(helpfiles) do
     local helpfile = vim.fs.basename(f)
     local to_fname = ('%s/%s'):format(to_dir, get_helppage(helpfile))
-    local html, stats = gen_one(f, to_fname, not new_layout[helpfile])
+    local html, stats = gen_one(f, to_fname, not new_layout[helpfile], commit or '?')
     tofile(to_fname, html)
     print(('generated (%-4s errors): %-15s => %s'):format(#stats.parse_errors, helpfile, vim.fs.basename(to_fname)))
     err_count = err_count + #stats.parse_errors
