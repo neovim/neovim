@@ -447,6 +447,26 @@ func Test_WinClosed_throws_with_tabs()
   augroup! test-WinClosed
 endfunc
 
+" This used to trigger WinClosed twice for the same window, and the window's
+" buffer was NULL in the second autocommand.
+func Test_WinClosed_switch_tab()
+  edit Xa
+  split Xb
+  split Xc
+  tab split
+  new
+  augroup test-WinClosed
+    autocmd WinClosed * tabprev | bwipe!
+  augroup END
+  close
+  " Check that the tabline has been fully removed
+  call assert_equal([1, 1], win_screenpos(0))
+
+  autocmd! test-WinClosed
+  augroup! test-WinClosed
+  %bwipe!
+endfunc
+
 func s:AddAnAutocmd()
   augroup vimBarTest
     au BufReadCmd * echo 'hello'

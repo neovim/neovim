@@ -4,6 +4,7 @@ local assert_alive = helpers.assert_alive
 local feed, clear, nvim = helpers.feed, helpers.clear, helpers.nvim
 local poke_eventloop = helpers.poke_eventloop
 local eval, feed_command, source = helpers.eval, helpers.feed_command, helpers.source
+local pcall_err = helpers.pcall_err
 local eq, neq = helpers.eq, helpers.neq
 local meths = helpers.meths
 local retry = helpers.retry
@@ -338,6 +339,11 @@ describe(':terminal buffer', function()
       {3:-- TERMINAL --}                                    |
     ]]}
     eq('t', funcs.mode(1))
+  end)
+
+  it('writing to an existing file with :w fails #13549', function()
+    eq('Vim(write):E13: File exists (add ! to override)',
+       pcall_err(command, 'write test/functional/fixtures/tty-test.c'))
   end)
 end)
 

@@ -2439,7 +2439,6 @@ void curwin_init(void)
 void close_windows(buf_T *buf, bool keep_curwin)
 {
   tabpage_T *tp, *nexttp;
-  int h = tabline_height();
 
   RedrawingDisabled++;
 
@@ -2480,11 +2479,6 @@ void close_windows(buf_T *buf, bool keep_curwin)
   }
 
   RedrawingDisabled--;
-
-  redraw_tabline = true;
-  if (h != tabline_height()) {
-    win_new_screen_rows();
-  }
 }
 
 /// Check that the specified window is the last one.
@@ -2575,7 +2569,6 @@ static bool close_last_window_tabpage(win_T *win, bool free_buf, tabpage_T *prev
   // Don't trigger autocommands yet, they may use wrong values, so do
   // that below.
   goto_tabpage_tp(alt_tabpage(), false, true);
-  redraw_tabline = true;
 
   // save index for tabclosed event
   char_u prev_idx[NUMBUFLEN];
@@ -2584,12 +2577,7 @@ static bool close_last_window_tabpage(win_T *win, bool free_buf, tabpage_T *prev
   // Safety check: Autocommands may have closed the window when jumping
   // to the other tab page.
   if (valid_tabpage(prev_curtab) && prev_curtab->tp_firstwin == win) {
-    int h = tabline_height();
-
     win_close_othertab(win, free_buf, prev_curtab);
-    if (h != tabline_height()) {
-      win_new_screen_rows();
-    }
   }
   entering_window(curwin);
 
@@ -2793,7 +2781,10 @@ int win_close(win_T *win, bool free_buf, bool force)
   if (curtab != prev_curtab && win_valid_any_tab(win)
       && win->w_buffer == NULL) {
     // Need to close the window anyway, since the buffer is NULL.
+    // Don't trigger autocmds with a NULL buffer.
+    block_autocmds();
     win_close_othertab(win, false, prev_curtab);
+    unblock_autocmds();
     return FAIL;
   }
 
@@ -2990,6 +2981,8 @@ void win_close_othertab(win_T *win, int free_buf, tabpage_T *tp)
       vim_snprintf(prev_idx, NUMBUFLEN, "%i", tabpage_index(tp));
     }
 
+    int h = tabline_height();
+
     if (tp == first_tabpage) {
       first_tabpage = tp->tp_next;
     } else {
@@ -3004,6 +2997,10 @@ void win_close_othertab(win_T *win, int free_buf, tabpage_T *tp)
       ptp->tp_next = tp->tp_next;
     }
     free_tp = true;
+    redraw_tabline = true;
+    if (h != tabline_height()) {
+      win_new_screen_rows();
+    }
 
     if (has_event(EVENT_TABCLOSED)) {
       apply_autocmds(EVENT_TABCLOSED, prev_idx, prev_idx, false, win->w_buffer);
