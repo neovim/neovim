@@ -702,6 +702,27 @@ func Test_recursive_complete_func()
   bw!
 endfunc
 
+" Test for using complete() with completeopt+=longest
+func Test_complete_with_longest()
+  new
+  inoremap <buffer> <f3> <cmd>call complete(1, ["iaax", "iaay", "iaaz"])<cr>
+
+  " default: insert first match
+  set completeopt&
+  call setline(1, ['i'])
+  exe "normal Aa\<f3>\<esc>"
+  call assert_equal('iaax', getline(1))
+
+  " with longest: insert longest prefix
+  set completeopt+=longest
+  call setline(1, ['i'])
+  exe "normal Aa\<f3>\<esc>"
+  call assert_equal('iaa', getline(1))
+  set completeopt&
+  bwipe!
+endfunc
+
+
 " Test for completing words following a completed word in a line
 func Test_complete_wrapscan()
   " complete words from another buffer
@@ -1256,7 +1277,7 @@ endfunc
 " A mapping is not used for the key after CTRL-X.
 func Test_no_mapping_for_ctrl_x_key()
   new
-  inoremap <C-K> <Cmd>let was_mapped = 'yes'<CR>
+  inoremap <buffer> <C-K> <Cmd>let was_mapped = 'yes'<CR>
   setlocal dictionary=README.txt
   call feedkeys("aexam\<C-X>\<C-K> ", 'xt')
   call assert_equal('example ', getline(1))
