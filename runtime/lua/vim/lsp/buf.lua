@@ -404,7 +404,7 @@ end
 ---@param end_pos ({number, number}, optional) mark-indexed position.
 ---Defaults to the end of the last visual selection.
 function M.range_formatting(options, start_pos, end_pos)
-  vim.deprecate('vim.lsp.buf.range_formatting', 'vim.lsp.formatexpr or vim.lsp.format', '0.9.0')
+  vim.deprecate('vim.lsp.buf.range_formatting', 'vim.lsp.formatexpr or vim.lsp.buf.format', '0.9.0')
   local params = util.make_given_range_params(start_pos, end_pos)
   params.options = util.make_formatting_params(options).options
   select_client('textDocument/rangeFormatting', function(client)
