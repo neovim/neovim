@@ -1491,6 +1491,17 @@ get_effective_tabstop({bufnr})          *vim.lsp.util.get_effective_tabstop()*
     See also: ~
         'shiftwidth'
 
+get_progress_messages()                 *vim.lsp.util.get_progress_messages()*
+    Process and return progress reports from lsp server
+
+    Return: ~
+        (table) A table that contains progress report, the keys include:
+        • name: The name of the language server
+        • title: The event currently being run
+        • message: The status of the event being run
+        • done: Whether the lsp has finished setting up
+        • percentage: The percentage of setup completed
+
                                              *vim.lsp.util.jump_to_location()*
 jump_to_location({location}, {offset_encoding}, {reuse_win})
     Jumps to a location.

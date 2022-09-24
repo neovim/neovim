@@ -241,7 +241,7 @@ end
 ---
 ---@param bufnr number bufnr to get the lines from
 ---@param rows number[] zero-indexed line numbers
----@return table<number string> a table mapping rows to lines
+---@return table<number, string> a table mapping rows to lines
 local function get_lines(bufnr, rows)
   rows = type(rows) == 'table' and rows or { rows }
 
@@ -352,17 +352,22 @@ local function get_line_byte_from_position(bufnr, position, offset_encoding)
 end
 
 --- Process and return progress reports from lsp server
----@private
+---
+---@return table A table that contains progress report, the keys include:
+---  - name: The name of the language server
+---  - title: The event currently being run
+---  - message: The status of the event being run
+---  - done: Whether the lsp has finished setting up
+---  - percentage: The percentage of setup completed
 function M.get_progress_messages()
   local new_messages = {}
   local progress_remove = {}
 
   for _, client in ipairs(vim.lsp.get_active_clients()) do
     local messages = client.messages
-    local data = messages
-    for token, ctx in pairs(data.progress) do
+    for token, ctx in pairs(messages.progress) do
       local new_report = {
-        name = data.name,
+        name = messages.name,
         title = ctx.title or 'empty title',
         message = ctx.message,
         percentage = ctx.percentage,
@@ -680,8 +685,8 @@ end
 --- Turns the result of a `textDocument/completion` request into vim-compatible
 --- |complete-items|.
 ---
----@param result The result of a `textDocument/completion` call, e.g. from
----|vim.lsp.buf.completion()|, which may be one of `CompletionItem[]`,
+---@param result table The result of a `textDocument/completion` call,
+---  e.g. from |vim.lsp.buf.completion()|, which may be one of `CompletionItem[]`,
 --- `CompletionList` or `null`
 ---@param prefix (string) the prefix to filter the completion items
 ---@returns { matches = complete-items table, incomplete = bool }
@@ -1182,10 +1187,10 @@ end
 --- Trims empty lines from input and pad top and bottom with empty lines
 ---
 ---@param contents table of lines to trim and pad
----@param opts dictionary with optional fields
+---@param opts {pad_top: number, pad_bottom: number} with optional fields
 ---             - pad_top    number of lines to pad contents at top (default 0)
 ---             - pad_bottom number of lines to pad contents at bottom (default 0)
----@return contents table of trimmed and padded lines
+---@return table contents of trimmed and padded lines
 function M._trim(contents, opts)
   validate({
     contents = { contents, 't' },
@@ -1208,7 +1213,7 @@ end
 
 --- Generates a table mapping markdown code block lang to vim syntax,
 --- based on g:markdown_fenced_languages
----@return a table of lang -> syntax mappings
+---@return (table) a table of lang -> syntax mappings
 ---@private
 local function get_markdown_fences()
   local fences = {}
