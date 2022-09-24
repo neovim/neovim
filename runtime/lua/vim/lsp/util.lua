@@ -772,8 +772,11 @@ local function create_file(change)
   -- from spec: Overwrite wins over `ignoreIfExists`
   local fname = vim.uri_to_fname(change.uri)
   if not opts.ignoreIfExists or opts.overwrite then
+    vim.fn.mkdir(vim.fs.dirname(fname), 'p')
     local file = io.open(fname, 'w')
-    file:close()
+    if file then
+      file:close()
+    end
   end
   vim.fn.bufadd(fname)
 end
