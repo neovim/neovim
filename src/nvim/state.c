@@ -16,6 +16,7 @@
 #include "nvim/option.h"
 #include "nvim/option_defs.h"
 #include "nvim/os/input.h"
+#include "nvim/profile.h"
 #include "nvim/state.h"
 #include "nvim/ui.h"
 #include "nvim/vim.h"
@@ -62,6 +63,15 @@ getkey:
       }
       // Flush screen updates before blocking
       ui_flush();
+
+      // Now that we are listening for user input, close any file for startup messages.
+      if (time_fd != NULL) {
+        TIME_MSG("ready for user input");
+        TIME_MSG("--- NVIM STARTED ---");
+        fclose(time_fd);
+        time_fd = NULL;
+      }
+
       // Call `os_inchar` directly to block for events or user input without
       // consuming anything from `input_buffer`(os/input.c) or calling the
       // mapping engine.

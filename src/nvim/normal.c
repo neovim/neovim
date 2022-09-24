@@ -1381,13 +1381,11 @@ static int normal_check(VimState *state)
     normal_redraw(s);
     do_redraw = false;
 
-    // Now that we have drawn the first screen all the startup stuff
-    // has been done, close any file for startup messages.
-    if (time_fd != NULL) {
+    // Measure the first screen update in --startuptime
+    static bool first = true;
+    if (time_fd != NULL && first) {
+      first = false;
       TIME_MSG("first screen update");
-      TIME_MSG("--- NVIM STARTED ---");
-      fclose(time_fd);
-      time_fd = NULL;
     }
   }
 
