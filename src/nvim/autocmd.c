@@ -478,34 +478,37 @@ void augroup_del(char *name, bool stupid_legacy_mode)
   int i = augroup_find(name);
   if (i == AUGROUP_ERROR) {  // the group doesn't exist
     semsg(_("E367: No such group: \"%s\""), name);
-  } else if (i == current_augroup) {
+    return;
+  }
+  if (i == current_augroup) {
     emsg(_("E936: Cannot delete the current group"));
-  } else {
-    if (stupid_legacy_mode) {
-      FOR_ALL_AUEVENTS(event) {
-        FOR_ALL_AUPATS_IN_EVENT(event, ap) {
-          if (ap->group == i && ap->pat != NULL) {
-            give_warning(_("W19: Deleting augroup that is still in use"), true);
-            map_put(String, int)(&map_augroup_name_to_id, cstr_as_string(name), AUGROUP_DELETED);
-            augroup_map_del(ap->group, NULL);
-            return;
-          }
-        }
-      }
-    } else {
-      FOR_ALL_AUEVENTS(event) {
-        FOR_ALL_AUPATS_IN_EVENT(event, ap) {
-          if (ap->group == i) {
-            aupat_del(ap);
-          }
+    return;
+  }
+
+  if (stupid_legacy_mode) {
+    FOR_ALL_AUEVENTS(event) {
+      FOR_ALL_AUPATS_IN_EVENT(event, ap) {
+        if (ap->group == i && ap->pat != NULL) {
+          give_warning(_("W19: Deleting augroup that is still in use"), true);
+          map_put(String, int)(&map_augroup_name_to_id, cstr_as_string(name), AUGROUP_DELETED);
+          augroup_map_del(ap->group, NULL);
+          return;
         }
       }
     }
-
-    // Remove the group because it's not currently in use.
-    augroup_map_del(i, name);
-    au_cleanup();
+  } else {
+    FOR_ALL_AUEVENTS(event) {
+      FOR_ALL_AUPATS_IN_EVENT(event, ap) {
+        if (ap->group == i) {
+          aupat_del(ap);
+        }
+      }
+    }
   }
+
+  // Remove the group because it's not currently in use.
+  augroup_map_del(i, name);
+  au_cleanup();
 }
 
 /// Find the ID of an autocmd group name.
@@ -733,7 +736,6 @@ char *au_event_disable(char *what)
   }
   set_string_option_direct("ei", -1, new_ei, OPT_FREE, SID_NONE);
   xfree(new_ei);
-
   return save_ei;
 }
 
@@ -837,13 +839,15 @@ void do_autocmd(char *arg_in, int forceit)
 
     bool invalid_flags = false;
     for (size_t i = 0; i < 2; i++) {
-      if (*cmd != NUL) {
-        invalid_flags |= arg_autocmd_flag_get(&once, &cmd, "++once", 6);
-        invalid_flags |= arg_autocmd_flag_get(&nested, &cmd, "++nested", 8);
-
-        // Check the deprecated "nested" flag.
-        invalid_flags |= arg_autocmd_flag_get(&nested, &cmd, "nested", 6);
+      if (*cmd == NUL) {
+        continue;
       }
+
+      invalid_flags |= arg_autocmd_flag_get(&once, &cmd, "++once", 6);
+      invalid_flags |= arg_autocmd_flag_get(&nested, &cmd, "++nested", 8);
+
+      // Check the deprecated "nested" flag.
+      invalid_flags |= arg_autocmd_flag_get(&nested, &cmd, "nested", 6);
     }
 
     if (invalid_flags) {
@@ -1275,6 +1279,7 @@ void ex_doautoall(exarg_T *eap)
     if (buf->b_ml.ml_mfp == NULL || buf == curbuf) {
       continue;
     }
+
     // Find a window for this buffer and save some values.
     aucmd_prepbuf(&aco, buf);
     set_bufref(&bufref, buf);

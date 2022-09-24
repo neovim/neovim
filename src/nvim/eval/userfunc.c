@@ -515,35 +515,34 @@ static char *fname_trans_sid(const char *const name, char *const fname_buf, char
                              int *const error)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  char *fname;
   const int llen = eval_fname_script(name);
-  if (llen > 0) {
-    fname_buf[0] = (char)K_SPECIAL;
-    fname_buf[1] = (char)KS_EXTRA;
-    fname_buf[2] = KE_SNR;
-    int i = 3;
-    if (eval_fname_sid(name)) {  // "<SID>" or "s:"
-      if (current_sctx.sc_sid <= 0) {
-        *error = FCERR_SCRIPT;
-      } else {
-        snprintf(fname_buf + i, (size_t)(FLEN_FIXED + 1 - i), "%" PRId64 "_",
-                 (int64_t)current_sctx.sc_sid);
-        i = (int)strlen(fname_buf);
-      }
-    }
-    if ((size_t)i + strlen(name + llen) < FLEN_FIXED) {
-      STRCPY(fname_buf + i, name + llen);
-      fname = fname_buf;
-    } else {
-      fname = xmalloc((size_t)i + strlen(name + llen) + 1);
-      *tofree = fname;
-      memmove(fname, fname_buf, (size_t)i);
-      STRCPY(fname + i, name + llen);
-    }
-  } else {
-    fname = (char *)name;
+  if (llen == 0) {
+    return (char *)name;  // no prefix
   }
 
+  fname_buf[0] = (char)K_SPECIAL;
+  fname_buf[1] = (char)KS_EXTRA;
+  fname_buf[2] = KE_SNR;
+  int i = 3;
+  if (eval_fname_sid(name)) {  // "<SID>" or "s:"
+    if (current_sctx.sc_sid <= 0) {
+      *error = FCERR_SCRIPT;
+    } else {
+      snprintf(fname_buf + i, (size_t)(FLEN_FIXED + 1 - i), "%" PRId64 "_",
+               (int64_t)current_sctx.sc_sid);
+      i = (int)strlen(fname_buf);
+    }
+  }
+  char *fname;
+  if ((size_t)i + strlen(name + llen) < FLEN_FIXED) {
+    STRCPY(fname_buf + i, name + llen);
+    fname = fname_buf;
+  } else {
+    fname = xmalloc((size_t)i + strlen(name + llen) + 1);
+    *tofree = fname;
+    memmove(fname, fname_buf, (size_t)i);
+    STRCPY(fname + i, name + llen);
+  }
   return fname;
 }
 
