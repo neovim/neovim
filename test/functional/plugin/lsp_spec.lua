@@ -1977,6 +1977,22 @@ describe('LSP', function()
       exec_lua('vim.lsp.util.apply_workspace_edit(...)', edit, 'utf-16')
       eq(true, exec_lua('return vim.loop.fs_stat(...) ~= nil', tmpfile))
     end)
+    it('Supports file creation in folder that needs to be created with CreateFile payload', function()
+      local tmpfile = helpers.tmpname()
+      os.remove(tmpfile) -- Should not exist, only interested in a tmpname
+      tmpfile = tmpfile .. '/dummy/x/'
+      local uri = exec_lua('return vim.uri_from_fname(...)', tmpfile)
+      local edit = {
+        documentChanges = {
+          {
+            kind = 'create',
+            uri = uri,
+          },
+        }
+      }
+      exec_lua('vim.lsp.util.apply_workspace_edit(...)', edit, 'utf-16')
+      eq(true, exec_lua('return vim.loop.fs_stat(...) ~= nil', tmpfile))
+    end)
     it('createFile does not touch file if it exists and ignoreIfExists is set', function()
       local tmpfile = helpers.tmpname()
       write_file(tmpfile, 'Dummy content')
