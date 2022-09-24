@@ -64,10 +64,11 @@ getkey:
       // Flush screen updates before blocking
       ui_flush();
 
-      // Now that we are listening for user input, close any file for startup messages.
-      if (time_fd != NULL) {
+      // Skip everything before VimEnter event, like calling prompt() in init.vim
+      if (time_fd != NULL && get_vim_var_nr(VV_VIM_DID_ENTER)) {
         TIME_MSG("ready for user input");
         TIME_MSG("--- NVIM STARTED ---");
+        // Now that we are listening for user input, close any file for startup messages.
         fclose(time_fd);
         time_fd = NULL;
       }
