@@ -72,7 +72,7 @@ typedef struct cmdarg_S {
 #define CA_COMMAND_BUSY     1   // skip restarting edit() once
 #define CA_NO_ADJ_OP_END    2   // don't adjust operator end
 
-extern bool first_redraw;
+extern bool did_first_redraw;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "normal.h.generated.h"
