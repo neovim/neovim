@@ -702,6 +702,26 @@ func Test_recursive_complete_func()
   bw!
 endfunc
 
+" Test for using complete() with completeopt+=longest
+func Test_complete_with_longest()
+  inoremap <f3> <cmd>call complete(1, ["iaax", "iaay", "iaaz"])<cr>
+  new
+
+  " default: insert first match
+  set completeopt&
+  call setline(1, ['i'])
+  exe "normal Aa\<f3>\<esc>"
+  call assert_equal('iaax', getline(1))
+
+  " with longest: insert longest prefix
+  set completeopt+=longest
+  call setline(1, ['i'])
+  exe "normal Aa\<f3>\<esc>"
+  call assert_equal('iaa', getline(1))
+  set completeopt&
+endfunc
+
+
 " Test for completing words following a completed word in a line
 func Test_complete_wrapscan()
   " complete words from another buffer
