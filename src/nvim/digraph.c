@@ -1578,7 +1578,7 @@ static int getexactdigraph(int char1, int char2, bool meta_char)
   if (retval == 0) {
     dp = digraphdefault;
 
-    for (int i = 0; dp->char1 != 0; i++) {
+    while (dp->char1 != 0) {
       if (((int)dp->char1 == char1) && ((int)dp->char2 == char2)) {
         retval = dp->result;
         break;
@@ -1707,7 +1707,7 @@ void listdigraphs(bool use_headers)
 
   const digr_T *dp = digraphdefault;
 
-  for (int i = 0; dp->char1 != NUL && !got_int; i++) {
+  while (dp->char1 != NUL && !got_int) {
     digr_T tmp;
 
     // May need to convert the result to 'encoding'.
@@ -1759,7 +1759,7 @@ void digraph_getlist_common(bool list_all, typval_T *rettv)
 
   if (list_all) {
     dp = digraphdefault;
-    for (int i = 0; dp->char1 != NUL && !got_int; i++) {
+    while (dp->char1 != NUL && !got_int) {
       digr_T tmp;
       tmp.char1 = dp->char1;
       tmp.char2 = dp->char2;
