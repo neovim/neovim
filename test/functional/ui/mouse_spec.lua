@@ -648,8 +648,10 @@ describe('ui/mouse/input', function()
     ]]}
   end)
 
-  it('two clicks will select the word and enter VISUAL', function()
-    feed('<LeftMouse><2,2><LeftMouse><2,2>')
+  it('two clicks will enter VISUAL and dragging selects words', function()
+    feed('<LeftMouse><2,2>')
+    feed('<LeftRelease><2,2>')
+    feed('<LeftMouse><2,2>')
     screen:expect([[
       testing                  |
       mouse                    |
@@ -657,10 +659,38 @@ describe('ui/mouse/input', function()
       {0:~                        }|
       {2:-- VISUAL --}             |
     ]])
+    feed('<LeftDrag><0,1>')
+    screen:expect([[
+      testing                  |
+      ^m{1:ouse}                    |
+      {1:support} and selection    |
+      {0:~                        }|
+      {2:-- VISUAL --}             |
+    ]])
+    feed('<LeftDrag><4,0>')
+    screen:expect([[
+      ^t{1:esting}                  |
+      {1:mouse}                    |
+      {1:support} and selection    |
+      {0:~                        }|
+      {2:-- VISUAL --}             |
+    ]])
+    feed('<LeftDrag><14,2>')
+    screen:expect([[
+      testing                  |
+      mouse                    |
+      {1:support and selectio}^n    |
+      {0:~                        }|
+      {2:-- VISUAL --}             |
+    ]])
   end)
 
-  it('three clicks will select the line and enter VISUAL LINE', function()
-    feed('<LeftMouse><2,2><LeftMouse><2,2><LeftMouse><2,2>')
+  it('three clicks will enter VISUAL LINE and dragging selects lines', function()
+    feed('<LeftMouse><2,2>')
+    feed('<LeftRelease><2,2>')
+    feed('<LeftMouse><2,2>')
+    feed('<LeftRelease><2,2>')
+    feed('<LeftMouse><2,2>')
     screen:expect([[
       testing                  |
       mouse                    |
@@ -668,14 +698,68 @@ describe('ui/mouse/input', function()
       {0:~                        }|
       {2:-- VISUAL LINE --}        |
     ]])
+    feed('<LeftDrag><0,1>')
+    screen:expect([[
+      testing                  |
+      ^m{1:ouse}                    |
+      {1:support and selection}    |
+      {0:~                        }|
+      {2:-- VISUAL LINE --}        |
+    ]])
+    feed('<LeftDrag><4,0>')
+    screen:expect([[
+      {1:test}^i{1:ng}                  |
+      {1:mouse}                    |
+      {1:support and selection}    |
+      {0:~                        }|
+      {2:-- VISUAL LINE --}        |
+    ]])
+    feed('<LeftDrag><14,2>')
+    screen:expect([[
+      testing                  |
+      mouse                    |
+      {1:support and se}^l{1:ection}    |
+      {0:~                        }|
+      {2:-- VISUAL LINE --}        |
+    ]])
   end)
 
-  it('four clicks will enter VISUAL BLOCK', function()
-    feed('<LeftMouse><2,2><LeftMouse><2,2><LeftMouse><2,2><LeftMouse><2,2>')
+  it('four clicks will enter VISUAL BLOCK and dragging selects blockwise', function()
+    feed('<LeftMouse><2,2>')
+    feed('<LeftRelease><2,2>')
+    feed('<LeftMouse><2,2>')
+    feed('<LeftRelease><2,2>')
+    feed('<LeftMouse><2,2>')
+    feed('<LeftRelease><2,2>')
+    feed('<LeftMouse><2,2>')
     screen:expect([[
       testing                  |
       mouse                    |
       su^pport and selection    |
+      {0:~                        }|
+      {2:-- VISUAL BLOCK --}       |
+    ]])
+    feed('<LeftDrag><0,1>')
+    screen:expect([[
+      testing                  |
+      ^m{1:ou}se                    |
+      {1:sup}port and selection    |
+      {0:~                        }|
+      {2:-- VISUAL BLOCK --}       |
+    ]])
+    feed('<LeftDrag><4,0>')
+    screen:expect([[
+      te{1:st}^ing                  |
+      mo{1:use}                    |
+      su{1:ppo}rt and selection    |
+      {0:~                        }|
+      {2:-- VISUAL BLOCK --}       |
+    ]])
+    feed('<LeftDrag><14,2>')
+    screen:expect([[
+      testing                  |
+      mouse                    |
+      su{1:pport and se}^lection    |
       {0:~                        }|
       {2:-- VISUAL BLOCK --}       |
     ]])
