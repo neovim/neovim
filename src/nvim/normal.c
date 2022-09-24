@@ -95,6 +95,8 @@ typedef struct normal_state {
 
 static int VIsual_mode_orig = NUL;              // saved Visual mode
 
+bool first_redraw = false;
+
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "normal.c.generated.h"
 #endif
@@ -1382,9 +1384,8 @@ static int normal_check(VimState *state)
     do_redraw = false;
 
     // Measure the first screen update in --startuptime
-    static bool first = true;
-    if (time_fd != NULL && first) {
-      first = false;
+    if (time_fd != NULL && !first_redraw) {
+      first_redraw = true;
       TIME_MSG("first screen update");
     }
   }

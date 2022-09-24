@@ -13,6 +13,7 @@
 #include "nvim/lib/kvec.h"
 #include "nvim/log.h"
 #include "nvim/main.h"
+#include "nvim/normal.h"
 #include "nvim/option.h"
 #include "nvim/option_defs.h"
 #include "nvim/os/input.h"
@@ -64,8 +65,9 @@ getkey:
       // Flush screen updates before blocking
       ui_flush();
 
-      // Skip everything before VimEnter event, like calling prompt() in init.vim
-      if (time_fd != NULL && get_vim_var_nr(VV_VIM_DID_ENTER)) {
+      // Skip everything before the first screen update to prevent closing
+      // the startup log file when prompt() is called in VimEnter autocommand.
+      if (time_fd != NULL && first_redraw) {
         TIME_MSG("ready for user input");
         TIME_MSG("--- NVIM STARTED ---");
         // Now that we are listening for user input, close any file for startup messages.
