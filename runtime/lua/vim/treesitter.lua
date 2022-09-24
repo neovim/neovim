@@ -202,7 +202,7 @@ end
 ---@param col number Position column
 ---
 ---@return table[] List of captures `{ capture = "capture name", metadata = { ... } }`
-function M.get_captures_at_position(bufnr, row, col)
+function M.get_captures_at_pos(bufnr, row, col)
   if bufnr == 0 then
     bufnr = a.nvim_get_current_buf()
   end
@@ -258,7 +258,7 @@ function M.get_captures_at_cursor(winnr)
   local bufnr = a.nvim_win_get_buf(winnr)
   local cursor = a.nvim_win_get_cursor(winnr)
 
-  local data = M.get_captures_at_position(bufnr, cursor[1] - 1, cursor[2])
+  local data = M.get_captures_at_pos(bufnr, cursor[1] - 1, cursor[2])
 
   local captures = {}
 
@@ -278,7 +278,7 @@ end
 ---             - ignore_injections boolean Ignore injected languages (default true)
 ---
 ---@return userdata |tsnode| under the cursor
-function M.get_node_at_position(bufnr, row, col, opts)
+function M.get_node_at_pos(bufnr, row, col, opts)
   if bufnr == 0 then
     bufnr = a.nvim_get_current_buf()
   end
@@ -302,8 +302,7 @@ function M.get_node_at_cursor(winnr)
   local bufnr = a.nvim_win_get_buf(winnr)
   local cursor = a.nvim_win_get_cursor(winnr)
 
-  return M.get_node_at_position(bufnr, cursor[1] - 1, cursor[2], { ignore_injections = false })
-    :type()
+  return M.get_node_at_pos(bufnr, cursor[1] - 1, cursor[2], { ignore_injections = false }):type()
 end
 
 --- Starts treesitter highlighting for a buffer
