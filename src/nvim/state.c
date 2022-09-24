@@ -65,11 +65,11 @@ getkey:
       // Flush screen updates before blocking
       ui_flush();
 
-      // Ready for user input. Skip everything before the first screen update to prevent
+      // Entered idle state. Skip everything before the first screen update to prevent
       // closing the startup log file when prompt() is called in VimEnter autocommand.
       if (time_fd != NULL && did_first_redraw) {
         TIME_MSG("--- NVIM STARTED ---");
-        // Now that we are listening for user input, close any file for startup messages.
+        // Now that we are idle, close any file for startup messages.
         fclose(time_fd);
         time_fd = NULL;
       }
