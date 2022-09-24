@@ -845,6 +845,9 @@ au BufNewFile,BufRead *.hex,*.h32		setf hex
 " Hjson
 au BufNewFile,BufRead *.hjson			setf hjson
 
+" HLS Playlist
+au BufNewFile,BufRead *.m3u8			setf hlsplaylist
+
 " Hollywood
 au BufRead,BufNewFile *.hws			setf hollywood
 
