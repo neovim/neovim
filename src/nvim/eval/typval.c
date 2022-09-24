@@ -1249,14 +1249,12 @@ static void do_sort_uniq(typval_T *argvars, typval_T *rettv, bool sort)
         item_compare_func_ptr = item_compare_keeping_zero;
       }
 
-      int idx = 0;
       for (listitem_T *li = TV_LIST_ITEM_NEXT(l, tv_list_first(l))
            ; li != NULL;) {
         listitem_T *const prev_li = TV_LIST_ITEM_PREV(l, li);
         if (item_compare_func_ptr(&prev_li, &li) == 0) {
           li = tv_list_item_remove(l, li);
         } else {
-          idx++;
           li = TV_LIST_ITEM_NEXT(l, li);
         }
         if (info.item_compare_func_err) {  // -V547
