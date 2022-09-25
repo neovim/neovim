@@ -2536,8 +2536,8 @@ int buf_write(buf_T *buf, char *fname, char *sfname, linenr_T start, linenr_T en
       goto fail;
     }
 
-    // Check if the timestamp hasn't changed since reading the file.
-    if (overwriting) {
+    // If 'forceit' is false, check if the timestamp hasn't changed since reading the file.
+    if (overwriting && !forceit) {
       retval = check_mtime(buf, &file_info_old);
       if (retval == FAIL) {
         goto fail;
