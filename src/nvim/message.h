@@ -5,9 +5,9 @@
 #include <stdbool.h>
 #include <stddef.h>
 
+#include "klib/kvec.h"
 #include "nvim/api/private/defs.h"
 #include "nvim/grid_defs.h"
-#include "nvim/lib/kvec.h"
 #include "nvim/macros.h"
 #include "nvim/types.h"
 

@@ -15,12 +15,12 @@
 #include "nvim/memory.h"
 // FIXME: vim.h is not actually needed, but otherwise it states MAXPATHL is
 //        redefined
+#include "klib/kvec.h"
 #include "nvim/ascii.h"
 #include "nvim/eval/decode.h"
 #include "nvim/eval/typval.h"
 #include "nvim/eval/userfunc.h"
 #include "nvim/globals.h"
-#include "nvim/lib/kvec.h"
 #include "nvim/lua/converter.h"
 #include "nvim/lua/executor.h"
 #include "nvim/macros.h"

@@ -13,6 +13,7 @@
 #include <msgpack.h>
 #include <stddef.h>
 
+#include "klib/kvec.h"
 #include "nvim/ascii.h"
 #include "nvim/buffer_defs.h"
 #include "nvim/charset.h"  // vim_isprintc()
@@ -21,7 +22,6 @@
 #include "nvim/eval/typval.h"
 #include "nvim/eval/typval_encode.h"
 #include "nvim/garray.h"
-#include "nvim/lib/kvec.h"
 #include "nvim/macros.h"
 #include "nvim/math.h"
 #include "nvim/mbyte.h"

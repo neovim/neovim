@@ -9,6 +9,7 @@
 #include <stdbool.h>
 #include <string.h>
 
+#include "klib/kvec.h"
 #include "nvim/ascii.h"
 #include "nvim/assert.h"
 #include "nvim/buffer.h"
@@ -28,7 +29,6 @@
 #include "nvim/globals.h"
 #include "nvim/indent.h"
 #include "nvim/indent_c.h"
-#include "nvim/lib/kvec.h"
 #include "nvim/log.h"
 #include "nvim/macros.h"
 #include "nvim/mark.h"

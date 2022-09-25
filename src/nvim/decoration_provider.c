@@ -1,13 +1,13 @@
 // This is an open source non-commercial project. Dear PVS-Studio, please check
 // it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
+#include "klib/kvec.h"
 #include "nvim/api/extmark.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/buffer.h"
 #include "nvim/decoration.h"
 #include "nvim/decoration_provider.h"
 #include "nvim/highlight.h"
-#include "nvim/lib/kvec.h"
 #include "nvim/lua/executor.h"
 
 static kvec_t(DecorProvider) decor_providers = KV_INITIAL_VALUE;

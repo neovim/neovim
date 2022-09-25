@@ -41,7 +41,7 @@ typedef struct {
 // for Map(K, V)
 #include "nvim/map.h"
 // for kvec
-#include "nvim/lib/kvec.h"
+#include "klib/kvec.h"
 // for marktree
 #include "nvim/marktree.h"
 

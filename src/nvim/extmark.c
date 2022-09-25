@@ -30,6 +30,7 @@
 
 #include <assert.h>
 
+#include "klib/kbtree.h"
 #include "nvim/api/extmark.h"
 #include "nvim/buffer.h"
 #include "nvim/buffer_updates.h"
@@ -37,7 +38,6 @@
 #include "nvim/decoration.h"
 #include "nvim/extmark.h"
 #include "nvim/globals.h"
-#include "nvim/lib/kbtree.h"
 #include "nvim/map.h"
 #include "nvim/memline.h"
 #include "nvim/pos.h"

@@ -55,11 +55,11 @@
 #include <stddef.h>
 #include <string.h>
 
+#include "klib/kvec.h"
 #include "nvim/ascii.h"
 #include "nvim/assert.h"
 #include "nvim/charset.h"
 #include "nvim/eval/typval.h"
-#include "nvim/lib/kvec.h"
 #include "nvim/memory.h"
 #include "nvim/types.h"
 #include "nvim/vim.h"

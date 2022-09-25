@@ -16,9 +16,9 @@
 #include <string.h>
 #include <uv.h>
 
+#include "klib/kvec.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/buffer.h"
-#include "nvim/lib/kvec.h"
 #include "nvim/log.h"
 #include "nvim/lua/treesitter.h"
 #include "nvim/map.h"

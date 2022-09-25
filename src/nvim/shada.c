@@ -11,6 +11,8 @@
 #include <string.h>
 #include <uv.h>
 
+#include "klib/khash.h"
+#include "klib/kvec.h"
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/ascii.h"
@@ -25,8 +27,6 @@
 #include "nvim/fileio.h"
 #include "nvim/garray.h"
 #include "nvim/globals.h"
-#include "nvim/lib/khash.h"
-#include "nvim/lib/kvec.h"
 #include "nvim/macros.h"
 #include "nvim/mark.h"
 #include "nvim/memory.h"

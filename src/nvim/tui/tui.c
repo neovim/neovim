@@ -13,13 +13,13 @@
 # include <termios.h>
 #endif
 
+#include "klib/kvec.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/api/vim.h"
 #include "nvim/ascii.h"
 #include "nvim/event/loop.h"
 #include "nvim/event/signal.h"
 #include "nvim/highlight.h"
-#include "nvim/lib/kvec.h"
 #include "nvim/log.h"
 #include "nvim/main.h"
 #include "nvim/map.h"

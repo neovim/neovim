@@ -14,7 +14,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "nvim/lib/khash.h"
+#include "klib/khash.h"
 #include "nvim/map.h"
 #include "nvim/map_defs.h"
 #include "nvim/memory.h"

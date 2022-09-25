@@ -49,8 +49,8 @@
 
 #include <assert.h>
 
+#include "klib/kvec.h"
 #include "nvim/garray.h"
-#include "nvim/lib/kvec.h"
 #include "nvim/marktree.h"
 
 #define T MT_BRANCH_FACTOR

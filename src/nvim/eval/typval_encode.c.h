@@ -250,7 +250,7 @@
 #include "nvim/eval/typval.h"
 #include "nvim/eval/typval_encode.h"
 #include "nvim/func_attr.h"
-#include "nvim/lib/kvec.h"
+#include "klib/kvec.h"
 
 // -V::1063
 

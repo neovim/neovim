@@ -11,12 +11,12 @@
 #include <stdbool.h>
 #include <stdio.h>
 
+#include "klib/kvec.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/ascii.h"
 #include "nvim/grid.h"
 #include "nvim/highlight.h"
 #include "nvim/highlight_group.h"
-#include "nvim/lib/kvec.h"
 #include "nvim/log.h"
 #include "nvim/lua/executor.h"
 #include "nvim/main.h"

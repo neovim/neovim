@@ -5,8 +5,8 @@
 #include <stdbool.h>
 #include <stddef.h>
 
+#include "klib/kvec.h"
 #include "nvim/func_attr.h"
-#include "nvim/lib/kvec.h"
 #include "nvim/mbyte.h"
 #include "nvim/memory.h"
 

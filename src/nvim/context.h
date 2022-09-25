@@ -3,8 +3,8 @@
 
 #include <msgpack.h>
 
+#include "klib/kvec.h"
 #include "nvim/api/private/defs.h"
-#include "nvim/lib/kvec.h"
 
 typedef struct {
   msgpack_sbuffer regs;     ///< Registers.

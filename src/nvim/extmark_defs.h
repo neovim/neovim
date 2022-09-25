@@ -1,7 +1,7 @@
 #ifndef NVIM_EXTMARK_DEFS_H
 #define NVIM_EXTMARK_DEFS_H
 
-#include "nvim/lib/kvec.h"
+#include "klib/kvec.h"
 #include "nvim/types.h"
 
 typedef struct {
