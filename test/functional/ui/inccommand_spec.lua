@@ -3047,6 +3047,43 @@ it(":substitute doesn't crash with inccommand, if undo is empty #12932", functio
   assert_alive()
 end)
 
+it(':substitute with inccommand works properly if undo is not synced #20029', function()
+  local screen = Screen.new(30, 6)
+  clear()
+  common_setup(screen, 'nosplit', 'foo\nbar\nbaz')
+  meths.set_keymap('x', '<F2>', '<Esc>`<Oaaaaa asdf<Esc>`>obbbbb asdf<Esc>V`<k:s/asdf/', {})
+  feed('gg0<C-V>lljj<F2>')
+  screen:expect([[
+    aaaaa                         |
+    foo                           |
+    bar                           |
+    baz                           |
+    bbbbb                         |
+    :'<,'>s/asdf/^                 |
+  ]])
+  feed('hjkl')
+  screen:expect([[
+    aaaaa {12:hjkl}                    |
+    foo                           |
+    bar                           |
+    baz                           |
+    bbbbb {12:hjkl}                    |
+    :'<,'>s/asdf/hjkl^             |
+  ]])
+  feed('<CR>')
+  expect([[
+    aaaaa hjkl
+    foo
+    bar
+    baz
+    bbbbb hjkl]])
+  feed('u')
+  expect([[
+    foo
+    bar
+    baz]])
+end)
+
 it('long :%s/ with inccommand does not collapse cmdline', function()
   local screen = Screen.new(10,5)
   clear()
