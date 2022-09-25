@@ -1165,7 +1165,7 @@ previous change.  Two commands can be used to jump to positions of changes,
 also those that have been undone:
 
 							*g;* *E662*
-g;			Go to [count] older position in change list.
+g;			Go to [count] older cursor position in change list.
 			If [count] is larger than the number of older change
 			positions go to the oldest change.
 			If there is no older change an error message is given.
