@@ -147,7 +147,7 @@ Object nvim_get_option_value(String name, Dict(option) *opts, Error *err)
 /// @param name      Option name
 /// @param value     New option value
 /// @param opts      Optional parameters
-///                  - scope: One of 'global' or 'local'. Analogous to
+///                  - scope: One of "global" or "local". Analogous to
 ///                  |:setglobal| and |:setlocal|, respectively.
 ///                  - win: |window-ID|. Used for setting window local option.
 ///                  - buf: Buffer number. Used for setting buffer local option.
@@ -202,7 +202,7 @@ void nvim_set_option_value(String name, Object value, Dict(option) *opts, Error 
 /// Gets the option information for all options.
 ///
 /// The dictionary has the full option names as keys and option metadata
-/// dictionaries as detailed at |nvim_get_option_info|.
+/// dictionaries as detailed at |nvim_get_option_info()|.
 ///
 /// @return dictionary of all options
 Dictionary nvim_get_all_options_info(Error *err)

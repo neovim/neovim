@@ -615,10 +615,6 @@ Short explanation of each option:		*option-list*
 'backupdir'	  'bdir'    list of directories for the backup file
 'backupext'	  'bex'     extension used for the backup file
 'backupskip'	  'bsk'     no backup for files that match these patterns
-'balloondelay'	  'bdlay'   delay in mS before a balloon may pop up
-'ballooneval'	  'beval'     switch on balloon evaluation in the GUI
-'balloonevalterm' 'bevalterm' switch on balloon evaluation in the terminal
-'balloonexpr'	  'bexpr'   expression to show in balloon
 'belloff'	  'bo'	    do not ring the bell for these reasons
 'binary'	  'bin'     read/write/edit file in binary mode
 'bomb'			    prepend a Byte Order Mark to the file
@@ -817,8 +813,6 @@ Short explanation of each option:		*option-list*
 'printoptions'	  'popt'    controls the format of :hardcopy output
 'pumheight'	  'ph'	    maximum height of the popup menu
 'pumwidth'	  'pw'	    minimum width of the popup menu
-'pythondll'		    name of the Python 2 dynamic library
-'pythonthreedll'	    name of the Python 3 dynamic library
 'pyxversion'	  'pyx'	    Python version used for pyx* commands
 'quoteescape'	  'qe'	    escape characters used in a string
 'readonly'	  'ro'	    disallow writing the buffer
@@ -829,7 +823,6 @@ Short explanation of each option:		*option-list*
 'revins'	  'ri'	    inserting characters will work backwards
 'rightleft'	  'rl'	    window is right-to-left oriented
 'rightleftcmd'	  'rlc'     commands for which editing works right-to-left
-'rubydll'		    name of the Ruby dynamic library
 'ruler'		  'ru'	    show cursor line and column in the status line
 'rulerformat'	  'ruf'     custom format for the ruler
 'runtimepath'	  'rtp'     list of directories used for runtime files

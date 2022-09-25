@@ -244,7 +244,7 @@ key to complete the optional parameter.
 After typing the function name and a space, you can use the completion to
 supply a parameter.  The function takes the name of the Vim script you want to
 source.  Using the |cmdline-completion| feature, the SQLSetType function will
-search the |'runtimepath'| for all Vim scripts with a name containing 'sql'.
+search the |'runtimepath'| for all Vim scripts with a name containing "sql".
 This takes the guess work out of the spelling of the names.  The following are
 examples: >
     :SQLSetType

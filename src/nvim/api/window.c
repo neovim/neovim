@@ -340,7 +340,7 @@ Boolean nvim_win_is_valid(Window window)
 ///
 /// Like |:hide| the buffer becomes hidden unless another window is editing it,
 /// or 'bufhidden' is `unload`, `delete` or `wipe` as opposed to |:close| or
-/// |nvim_win_close|, which will close the buffer.
+/// |nvim_win_close()|, which will close the buffer.
 ///
 /// @param window   Window handle, or 0 for current window
 /// @param[out] err Error details, if any

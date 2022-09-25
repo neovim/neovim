@@ -86,9 +86,8 @@ You can also set 'guifont' alone, the Nvim GUI will try to find a matching
 INPUT
 
 There are several ways to enter multibyte characters:
-- For X11 XIM can be used.  See |XIM|.
-- For MS-Windows IME can be used.  See |IME|.
-- For all systems keymaps can be used.  See |mbyte-keymap|.
+- Your system IME can be used.
+- Keymaps can be used.  See |mbyte-keymap|.
 
 The options 'iminsert', 'imsearch' and 'imcmdline' can be used to choose
 the different input methods or disable them temporarily.

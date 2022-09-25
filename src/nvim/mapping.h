@@ -9,7 +9,7 @@
 /// All possible |:map-arguments| usable in a |:map| command.
 ///
 /// The <special> argument has no effect on mappings and is excluded from this
-/// struct declaration. |noremap| is included, since it behaves like a map
+/// struct declaration. |:noremap| is included, since it behaves like a map
 /// argument when used in a mapping.
 ///
 /// @see mapblock_T

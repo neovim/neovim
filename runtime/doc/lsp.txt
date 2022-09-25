@@ -40,7 +40,7 @@ Follow these steps to get LSP features:
       root_dir = vim.fs.dirname(vim.fs.find({'setup.py', 'pyproject.toml'}, { upward = true })[1]),
     })
 <
-     See |vim.lsp.start| for details.
+     See |vim.lsp.start()| for details.
 
   3. Configure keymaps and autocmds to utilize LSP features.
      See |lsp-config|.
@@ -48,19 +48,19 @@ Follow these steps to get LSP features:
                                                         *lsp-config*
 
 Starting a LSP client will automatically report diagnostics via
-|vim.diagnostic|. Read |vim.diagnostic.config| to learn how to customize the
+|vim.diagnostic|. Read |vim.diagnostic.config()| to learn how to customize the
 display.
 
 It also sets some buffer options if the options are otherwise empty and if the
 language server supports the functionality.
 
-- |omnifunc| is set to |vim.lsp.omnifunc|. This allows to trigger completion
-  using |i_CTRL-X_CTRL-o|
-- |tagfunc| is set to |vim.lsp.tagfunc|. This enables features like
+- 'omnifunc' is set to |vim.lsp.omnifunc()|. This allows to trigger completion
+  using |i_CTRL-X_CTRL-O|
+- 'tagfunc' is set to |vim.lsp.tagfunc()|. This enables features like
   go-to-definition, |:tjump|, and keymaps like |CTRL-]|, |CTRL-W_]|,
   |CTRL-W_}| to utilize the language server.
-- |formatexpr| is set to |vim.lsp.formatexpr| if both |formatprg| and
-  |formatexpr| are empty. This allows to format lines via |gq| if the language
+- 'formatexpr' is set to |vim.lsp.formatexpr()| if both 'formatprg' and
+  'formatexpr' are empty. This allows to format lines via |gq| if the language
   server supports it.
 
 To use other LSP features like hover, rename, etc. you can setup some
@@ -245,7 +245,7 @@ For |lsp-request|, each |lsp-handler| has this signature: >
         Where `err` must be shaped like an RPC error:
             `{ code, message, data? }`
 
-        You can use |vim.lsp.rpc_response_error()| to create this object.
+        You can use |vim.lsp.rpc.rpc_response_error()| to create this object.
 
 For |lsp-notification|, each |lsp-handler| has this signature: >
 
@@ -338,8 +338,8 @@ To configure the behavior of a builtin |lsp-handler|, the convenient method
     }
 <
   Some handlers do not have an explicitly named handler function (such as
-  |on_publish_diagnostics()|). To override these, first create a reference
-  to the existing handler: >
+  ||vim.lsp.diagnostic.on_publish_diagnostics()|). To override these, first
+  create a reference to the existing handler: >
 
     local on_references = vim.lsp.handlers["textDocument/references"]
     vim.lsp.handlers["textDocument/references"] = vim.lsp.with(
@@ -360,7 +360,7 @@ Handlers can be set by:
 
     vim.lsp.handlers["textDocument/definition"] = my_custom_default_definition
 <
-- The {handlers} parameter for |vim.lsp.start_client|.
+- The {handlers} parameter for |vim.lsp.start_client()|.
     This will set the |lsp-handler| as the default handler for this server.
 
     For example: >
@@ -514,7 +514,7 @@ callback in the "data" table. Example: >
       end,
     })
 <
-In addition, the following |User| |autocommands| are provided:
+Also the following |User| |autocommand|s are provided:
 
 LspProgressUpdate                                          *LspProgressUpdate*
     Upon receipt of a progress notification from the server. See
@@ -788,7 +788,8 @@ start({config}, {opts})                                      *vim.lsp.start()*
     })
 <
 
-    See |lsp.start_client| for all available options. The most important are:
+    See |vim.lsp.start_client()| for all available options. The most important
+    are:
 
     `name` is an arbitrary name for the LSP client. It should be unique per
     language server.
@@ -798,9 +799,9 @@ start({config}, {opts})                                      *vim.lsp.start()*
     constructs like `~` are NOT expanded.
 
     `root_dir` path to the project root. By default this is used to decide if
-    an existing client should be re-used. The example above uses |vim.fs.find|
-    and |vim.fs.dirname| to detect the root by traversing the file system
-    upwards starting from the current directory until either a
+    an existing client should be re-used. The example above uses
+    |vim.fs.find()| and |vim.fs.dirname()| to detect the root by traversing
+    the file system upwards starting from the current directory until either a
     `pyproject.toml` or `setup.py` file is found.
 
     `workspace_folders` a list of { uri:string, name: string } tables. The
@@ -812,13 +813,13 @@ start({config}, {opts})                                      *vim.lsp.start()*
     the project folder.
 
     To ensure a language server is only started for languages it can handle,
-    make sure to call |vim.lsp.start| within a |FileType| autocmd. Either use
-    |:au|, |nvim_create_autocmd()| or put the call in a
+    make sure to call |vim.lsp.start()| within a |FileType| autocmd. Either
+    use |:au|, |nvim_create_autocmd()| or put the call in a
     `ftplugin/<filetype_name>.lua` (See |ftplugin-name|)
 
     Parameters: ~
         {config}  (table) Same configuration as documented in
-                  |lsp.start_client()|
+                  |vim.lsp.start_client()|
         {opts}    nil|table Optional keyword arguments:
                   • reuse_client (fun(client: client, config: table): boolean)
                     Predicate used to decide if a client should be re-used.
@@ -837,15 +838,16 @@ start_client({config})                                *vim.lsp.start_client()*
 
     Parameters: ~
         {cmd}                (table|string|fun(dispatchers: table):table)
-                             command string or list treated like |jobstart|.
+                             command string or list treated like |jobstart()|.
                              The command must launch the language server
                              process. `cmd` can also be a function that
                              creates an RPC client. The function receives a
                              dispatchers table and must return a table with
                              the functions `request`, `notify`, `is_closing`
-                             and `terminate` See |vim.lsp.rpc.request| and
-                             |vim.lsp.rpc.notify| For TCP there is a built-in
-                             rpc client factory: |vim.lsp.rpc.connect|
+                             and `terminate` See |vim.lsp.rpc.request()| and
+                             |vim.lsp.rpc.notify()| For TCP there is a
+                             built-in rpc client factory:
+                             |vim.lsp.rpc.connect()|
         {cmd_cwd}            (string, default=|getcwd()|) Directory to launch
                              the `cmd` process. Not related to `root_dir`.
         {cmd_env}            (table) Environment flags to pass to the LSP on
@@ -900,7 +902,7 @@ start_client({config})                                *vim.lsp.start_client()*
                              when the client operation throws an error. `code`
                              is a number describing the error. Other arguments
                              may be passed depending on the error kind. See
-                             |vim.lsp.rpc.client_errors| for possible errors.
+                             `vim.lsp.rpc.client_errors` for possible errors.
                              Use `vim.lsp.rpc.client_errors[code]` to get
                              human-friendly name.
         {before_init}        Callback with parameters (initialize_params,
@@ -945,9 +947,9 @@ start_client({config})                                *vim.lsp.start_client()*
                                debounce occurs if nil
                              • exit_timeout (number|boolean, default false):
                                Milliseconds to wait for server to exit cleanly
-                               after sending the 'shutdown' request before
+                               after sending the "shutdown" request before
                                sending kill -15. If set to false, nvim exits
-                               immediately after sending the 'shutdown'
+                               immediately after sending the "shutdown"
                                request to the server.
         {root_dir}           (string) Directory where the LSP server will base
                              its workspaceFolders, rootUri, and rootPath on
@@ -1047,7 +1049,7 @@ completion({context})                               *vim.lsp.buf.completion()*
                    character, if applicable)
 
     See also: ~
-        |vim.lsp.protocol.constants.CompletionTriggerKind|
+        vim.lsp.protocol.constants.CompletionTriggerKind
 
 declaration({options})                             *vim.lsp.buf.declaration()*
     Jumps to the declaration of the symbol under the cursor.
@@ -1084,7 +1086,8 @@ document_highlight()                        *vim.lsp.buf.document_highlight()*
 
     Note: Usage of |vim.lsp.buf.document_highlight()| requires the following
     highlight groups to be defined or you won't be able to see the actual
-    highlights. |LspReferenceText| |LspReferenceRead| |LspReferenceWrite|
+    highlights. |hl-LspReferenceText| |hl-LspReferenceRead|
+    |hl-LspReferenceWrite|
 
 document_symbol({options})                     *vim.lsp.buf.document_symbol()*
     Lists all symbols in the current buffer in the quickfix window.
@@ -1193,7 +1196,7 @@ formatting_sync({options}, {timeout_ms})
         {timeout_ms}  (number) Request timeout
 
     See also: ~
-        |vim.lsp.buf.formatting_seq_sync|
+        |vim.lsp.buf.format()|
 
 hover()                                                  *vim.lsp.buf.hover()*
     Displays hover information about the symbol under the cursor in a floating
@@ -1211,7 +1214,7 @@ implementation({options})                       *vim.lsp.buf.implementation()*
 incoming_calls()                                *vim.lsp.buf.incoming_calls()*
     Lists all the call sites of the symbol under the cursor in the |quickfix|
     window. If the symbol can resolve to multiple items, the user can pick one
-    in the |inputlist|.
+    in the |inputlist()|.
 
 list_workspace_folders()                *vim.lsp.buf.list_workspace_folders()*
     List workspace folders.
@@ -1219,7 +1222,7 @@ list_workspace_folders()                *vim.lsp.buf.list_workspace_folders()*
 outgoing_calls()                                *vim.lsp.buf.outgoing_calls()*
     Lists all the items that are called by the symbol under the cursor in the
     |quickfix| window. If the symbol can resolve to multiple items, the user
-    can pick one in the |inputlist|.
+    can pick one in the |inputlist()|.
 
                                              *vim.lsp.buf.range_code_action()*
 range_code_action({context}, {start_pos}, {end_pos})
@@ -1434,7 +1437,7 @@ signature_help({_}, {result}, {ctx}, {config})
         {config}  (table) Configuration table.
                   • border: (default=nil)
                     • Add borders to the floating window
-                    • See |vim.api.nvim_open_win()|
+                    • See |nvim_open_win()|
 
 
 ==============================================================================
@@ -1565,7 +1568,7 @@ get_effective_tabstop({bufnr})          *vim.lsp.util.get_effective_tabstop()*
         (number) indentation size
 
     See also: ~
-        |shiftwidth|
+        'shiftwidth'
 
                                              *vim.lsp.util.jump_to_location()*
 jump_to_location({location}, {offset_encoding}, {reuse_win})
@@ -1722,7 +1725,7 @@ open_floating_preview({contents}, {syntax}, {opts})
         {contents}  (table) of lines to show in window
         {syntax}    (string) of syntax to set for opened buffer
         {opts}      (table) with optional fields (additional keys are passed
-                    on to |vim.api.nvim_open_win()|)
+                    on to |nvim_open_win()|)
                     • height: (number) height of floating window
                     • width: (number) width of floating window
                     • wrap: (boolean, default true) wrap long lines
@@ -1859,7 +1862,7 @@ try_trim_markdown_code_blocks({lines})
         {lines}  (table) list of lines
 
     Return: ~
-        (string) filetype or 'markdown' if it was unchanged.
+        (string) filetype or "markdown" if it was unchanged.
 
 
 ==============================================================================
@@ -1964,7 +1967,7 @@ start({cmd}, {cmd_args}, {dispatchers}, {extra_spawn_params})
     Starts an LSP server process and create an LSP RPC client object to
     interact with it. Communication with the spawned process happens via
     stdio. For communication via TCP, spawn a process manually and use
-    |vim.lsp.rpc.connect|
+    |vim.lsp.rpc.connect()|
 
     Parameters: ~
         {cmd}                 (string) Command to start the LSP server.

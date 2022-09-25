@@ -417,8 +417,8 @@ Normal commands:
 
 Options:
   'ttimeout', 'ttimeoutlen' behavior was simplified
-  |jumpoptions| "stack" behavior
-  |jumpoptions| "view" tries to restore the |mark-view| when moving through
+  'jumpoptions' "stack" behavior
+  'jumpoptions' "view" tries to restore the |mark-view| when moving through
   the |jumplist|, |changelist|, |alternate-file| or using |mark-motions|.
   'shortmess' the "F" flag does not affect output from autocommands
 
@@ -498,12 +498,15 @@ Working directory (Vim implemented some of these later than Nvim):
 ==============================================================================
 5. Missing legacy features				 *nvim-features-missing*
 
-Some legacy Vim features are not implemented:
+Some legacy Vim features are not yet implemented:
 
-- |if_lua|: Nvim Lua API is not compatible with Vim's "if_lua"
+- *if_lua* : Nvim |Lua| API is not compatible with Vim's "if_lua"
 - *if_mzscheme*
-- |if_py|: *python-bindeval* *python-Function* are not supported
+- |if_pyth|: *python-bindeval* *python-Function* are not supported
 - *if_tcl*
+
+*:gui*
+*:gvim*
 
 ==============================================================================
 6. Removed features					 *nvim-features-removed*
@@ -566,18 +569,18 @@ Highlight groups:
 <
 
 Options:
-  'antialias'
+  antialias
   *'balloondelay'* *'bdlay'*
   *'ballooneval'* *'beval'* *'noballooneval'* *'nobeval'*
   *'balloonexpr'* *'bexpr'*
-  'bioskey' (MS-DOS)
-  'conskey' (MS-DOS)
+  bioskey (MS-DOS)
+  conskey (MS-DOS)
   *'cp'* *'nocompatible'* *'nocp'* *'compatible'* (Nvim is always "nocompatible".)
   'cpoptions' (gjkHw<*- and all POSIX flags were removed)
   *'cryptmethod'* *'cm'* *'key'* (Vim encryption implementation)
   *'ed'* *'edcompatible'* *'noed'* *'noedcompatible'*
   'encoding' ("utf-8" is always used)
-  'esckeys'
+  esckeys
   'guioptions' "t" flag was removed
   *'guifontset'* *'gfs'* (Use 'guifont' instead.)
   *'guipty'* (Nvim uses pipes and PTYs consistently on all platforms.)
@@ -618,18 +621,18 @@ Options:
     Nvim always displays up to 6 combining characters.  You can still edit
     text with more than 6 combining characters, you just can't see them.
     Use |g8| or |ga|.  See |mbyte-combining|.
-  'maxmem' Nvim delegates memory-management to the OS.
-  'maxmemtot' Nvim delegates memory-management to the OS.
+  *'maxmem'* Nvim delegates memory-management to the OS.
+  *'maxmemtot'* Nvim delegates memory-management to the OS.
   *'prompt'* *'noprompt'*
   *'remap'* *'noremap'*
   *'restorescreen'* *'rs'* *'norestorescreen'* *'nors'*
-  'shelltype'
+  *'shelltype'*
   *'shortname'* *'sn'* *'noshortname'* *'nosn'*
   *'swapsync'* *'sws'*
   *'termencoding'* *'tenc'* (Vim 7.4.852 also removed this for Windows)
   *'terse'* *'noterse'* (Add "s" to 'shortmess' instead)
-  'textauto'
-  'textmode'
+  textauto
+  textmode
   *'toolbar'* *'tb'*
   *'toolbariconsize'* *'tbis'*
   *'ttybuiltin'* *'tbi'* *'nottybuiltin'* *'notbi'*
@@ -637,7 +640,7 @@ Options:
   *'ttymouse'* *'ttym'*
   *'ttyscroll'* *'tsl'*
   *'ttytype'* *'tty'*
-  'weirdinvert'
+  weirdinvert
 
 Startup:
   --literal (file args are always literal; to expand wildcards on Windows, use

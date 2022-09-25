@@ -1504,7 +1504,7 @@ end
 ---
 ---@param contents table of lines to show in window
 ---@param syntax string of syntax to set for opened buffer
----@param opts table with optional fields (additional keys are passed on to |vim.api.nvim_open_win()|)
+---@param opts table with optional fields (additional keys are passed on to |nvim_open_win()|)
 ---             - height: (number) height of floating window
 ---             - width: (number) width of floating window
 ---             - wrap: (boolean, default true) wrap long lines
@@ -1819,7 +1819,7 @@ end
 --- CAUTION: Modifies the input in-place!
 ---
 ---@param lines (table) list of lines
----@returns (string) filetype or 'markdown' if it was unchanged.
+---@returns (string) filetype or "markdown" if it was unchanged.
 function M.try_trim_markdown_code_blocks(lines)
   local language_id = lines[1]:match('^```(.*)')
   if language_id then
@@ -1992,7 +1992,7 @@ function M.make_workspace_params(added, removed)
 end
 --- Returns indentation size.
 ---
----@see |shiftwidth|
+---@see 'shiftwidth'
 ---@param bufnr (number|nil): Buffer handle, defaults to current
 ---@returns (number) indentation size
 function M.get_effective_tabstop(bufnr)

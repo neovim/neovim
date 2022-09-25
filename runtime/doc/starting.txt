@@ -82,12 +82,10 @@ argument.
 --help							*-h* *--help* *-?*
 -?
 -h		Give usage (help) message and exit.
-		See |info-message| about capturing the text.
 
 --version						*-v* *--version*
 -v		Print version information and exit.  Same output as for
 		|:version| command.
-		See |info-message| about capturing the text.
 
 							*--clean*
 --clean		Mimics a fresh install of Nvim:

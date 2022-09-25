@@ -240,7 +240,7 @@ a list of lines and `regtype` is a register type conforming to |setreg()|.
 Paste 							*provider-paste* *paste*
 
 "Paste" is a separate concept from |clipboard|: paste means "dump a bunch of
-text to the editor", whereas clipboard provides features like |quote-+| to get
+text to the editor", whereas clipboard provides features like |quote+| to get
 and set the OS clipboard directly.  For example, middle-click or CTRL-SHIFT-v
 (macOS: CMD-v) in your terminal is "paste", not "clipboard": the terminal
 application (Nvim) just gets a stream of text, it does not interact with the

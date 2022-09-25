@@ -300,8 +300,7 @@ can use digraphs.  This was already explained in |24.9|.
 keyboard, you will want to use an Input Method (IM).  This requires learning
 the translation from typed keys to resulting character.  When you need an IM
 you probably already have one on your system.  It should work with Vim like
-with other programs.  For details see |mbyte-XIM| for the X Window system and
-|mbyte-IME| for MS-Windows.
+with other programs.
 
 
 KEYMAPS

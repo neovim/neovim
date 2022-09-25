@@ -5704,7 +5704,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	   "yes:[1-9]"  always, with fixed space for signs up to the given
 	                number (maximum 9), e.g. "yes:3"
 	   "number"	display signs in the 'number' column. If the number
-			column is not present, then behaves like 'auto'.
+			column is not present, then behaves like "auto".
 
 	Note regarding 'orphaned signs': with signcolumn numbers higher than
 	1, deleting lines will also remove the associated signs automatically,
@@ -6481,7 +6481,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 'termguicolors' 'tgc'	boolean (default off)
 			global
 	Enables 24-bit RGB color in the |TUI|.  Uses "gui" |:highlight|
-	attributes instead of "cterm" attributes. |highlight-guifg|
+	attributes instead of "cterm" attributes. |guifg|
 	Requires an ISO-8613-3 compatible terminal.
 
 						*'termpastefilter'* *'tpf'*
@@ -7136,7 +7136,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	the window.
 
 	Note: highlight namespaces take precedence over 'winhighlight'.
-	See |nvim_win_set_hl_ns| and |nvim_set_hl|.
+	See |nvim_win_set_hl_ns()| and |nvim_set_hl()|.
 
 	Highlights of vertical separators are determined by the window to the
 	left of the separator.  The 'tabline' highlight of a tabpage is

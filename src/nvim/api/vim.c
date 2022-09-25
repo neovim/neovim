@@ -160,8 +160,8 @@ Dictionary nvim__get_hl_defs(Integer ns_id, Arena *arena, Error *err)
 ///                - nocombine: boolean
 ///                - link: name of another highlight group to link to, see |:hi-link|.
 ///                - default: Don't override existing definition |:hi-default|
-///                - ctermfg: Sets foreground of cterm color |highlight-ctermfg|
-///                - ctermbg: Sets background of cterm color |highlight-ctermbg|
+///                - ctermfg: Sets foreground of cterm color |ctermfg|
+///                - ctermbg: Sets background of cterm color |ctermbg|
 ///                - cterm: cterm attribute map, like |highlight-args|. If not set,
 ///                         cterm attributes will match those from the attribute map
 ///                         documented above.
@@ -185,7 +185,7 @@ void nvim_set_hl(Integer ns_id, String name, Dict(highlight) *val, Error *err)
 }
 
 /// Set active namespace for highlights. This can be set for a single window,
-/// see |nvim_win_set_hl_ns|.
+/// see |nvim_win_set_hl_ns()|.
 ///
 /// @param ns_id the namespace to use
 /// @param[out] err Error details, if any
@@ -205,7 +205,7 @@ void nvim_set_hl_ns(Integer ns_id, Error *err)
 /// Set active namespace for highlights while redrawing.
 ///
 /// This function meant to be called while redrawing, primarily from
-/// |nvim_set_decoration_provider| on_win and on_line callbacks, which
+/// |nvim_set_decoration_provider()| on_win and on_line callbacks, which
 /// are allowed to change the namespace during a redraw cycle.
 ///
 /// @param ns_id the namespace to activate
@@ -523,7 +523,7 @@ Array nvim__runtime_inspect(void)
 
 /// Find files in runtime directories
 ///
-/// 'name' can contain wildcards. For example
+/// "name" can contain wildcards. For example
 /// nvim_get_runtime_file("colors/*.vim", true) will return all color
 /// scheme files. Always use forward slashes (/) in the search pattern for
 /// subdirectories regardless of platform.
@@ -964,7 +964,7 @@ fail:
 ///            mode. Note: keypresses are sent raw as they would be to the pty
 ///            master end. For instance, a carriage return is sent
 ///            as a "\r", not as a "\n". |textlock| applies. It is possible
-///            to call |nvim_chan_send| directly in the callback however.
+///            to call |nvim_chan_send()| directly in the callback however.
 ///                 ["input", term, bufnr, data]
 /// @param[out] err Error details, if any
 /// @return Channel id, or 0 on error
@@ -1452,7 +1452,7 @@ ArrayOf(Dictionary) nvim_get_keymap(String mode)
 /// @param  rhs   Right-hand-side |{rhs}| of the mapping.
 /// @param  opts  Optional parameters map: keys are |:map-arguments|, values are booleans (default
 ///               false). Accepts all |:map-arguments| as keys excluding |<buffer>| but including
-///               |noremap| and "desc". Unknown key is an error.
+///               |:noremap| and "desc". Unknown key is an error.
 ///               "desc" can be used to give a description to the mapping.
 ///               When called from Lua, also accepts a "callback" key that takes a Lua function to
 ///               call when the mapping is executed.

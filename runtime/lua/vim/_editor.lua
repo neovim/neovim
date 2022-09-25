@@ -401,7 +401,7 @@ end
 ---@param bufnr number of buffer
 ---@param pos1 (line, column) tuple marking beginning of region
 ---@param pos2 (line, column) tuple marking end of region
----@param regtype type of selection (:help setreg)
+---@param regtype type of selection, see |setreg()|
 ---@param inclusive boolean indicating whether the selection is end-inclusive
 ---@return region lua table of the form {linenr = {startcol,endcol}}
 function vim.region(bufnr, pos1, pos2, regtype, inclusive)
@@ -448,7 +448,7 @@ end
 --- Defers calling `fn` until `timeout` ms passes.
 ---
 --- Use to do a one-shot timer that calls `fn`
---- Note: The {fn} is |schedule_wrap|ped automatically, so API functions are
+--- Note: The {fn} is |vim.schedule_wrap()|ped automatically, so API functions are
 --- safe to call.
 ---@param fn Callback to call once `timeout` expires
 ---@param timeout Number of milliseconds to wait before calling `fn`

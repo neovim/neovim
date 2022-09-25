@@ -109,7 +109,7 @@
 ///                    is changed to `auto` and 'colorcolumn' is cleared. The
 ///                    end-of-buffer region is hidden by setting `eob` flag of
 ///                    'fillchars' to a space char, and clearing the
-///                    |EndOfBuffer| region in 'winhighlight'.
+///                    |hl-EndOfBuffer| region in 'winhighlight'.
 ///   - border: Style of (optional) window border. This can either be a string
 ///      or an array. The string values are
 ///     - "none": No border (default).

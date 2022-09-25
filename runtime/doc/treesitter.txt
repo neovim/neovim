@@ -50,13 +50,13 @@ Whenever you need to access the current syntax tree, parse the buffer: >
 
     tstree = tsparser:parse()
 <
-This will return a table of immutable |lua-treesitter-tree|s that represent the
+This will return a table of immutable |treesitter-tree|s that represent the
 current state of the buffer. When the plugin wants to access the state after a
 (possible) edit it should call `parse()` again. If the buffer wasn't edited,
 the same tree will be returned again without extra work. If the buffer was
 parsed before, incremental parsing will be done of the changed parts.
 
-Note: To use the parser directly inside a |nvim_buf_attach/)| Lua callback, you
+Note: To use the parser directly inside a |nvim_buf_attach()| Lua callback, you
 must call |get_parser()| before you register your callback. But preferably
 parsing shouldn't be done directly in the change callback anyway as they will
 be very frequent. Rather a plugin that does any kind of analysis on a tree
@@ -233,7 +233,7 @@ The following predicates are built in:
                node's text.
 
     `lua-match?`                              *treesitter-predicate-lua-match?*
-         Match a |lua-pattern| against the text corresponding to a node,
+         Match |lua-patterns| against the text corresponding to a node,
          similar to `match?`
 
     `contains?`                                *treesitter-predicate-contains?*
@@ -394,7 +394,7 @@ still highlighted the same as other operators: >
 
     "!=" @operator (#set! conceal "≠")
 <
-Conceals specified in this way respect |conceallevel|.
+Conceals specified in this way respect 'conceallevel'.
 
                                                *treesitter-highlight-priority*
 Treesitter uses |nvim_buf_set_extmark()| to set highlights with a default
@@ -650,7 +650,7 @@ get_query({lang}, {query_name})                                  *get_query()*
 
     Parameters: ~
         {lang}        (string) Language to use for the query
-        {query_name}  (string) Name of the query (e.g. 'highlights')
+        {query_name}  (string) Name of the query (e.g. "highlights")
 
     Return: ~
         Query Parsed query
@@ -661,7 +661,7 @@ get_query_files({lang}, {query_name}, {is_included})
 
     Parameters: ~
         {lang}         (string) Language to get query for
-        {query_name}   (string) Name of the query to load (e.g., 'highlights')
+        {query_name}   (string) Name of the query to load (e.g., "highlights")
         {is_included}  (boolean|nil) Internal parameter, most of the time left
                        as `nil`
 
@@ -742,7 +742,7 @@ Query:iter_matches({self}, {node}, {source}, {start}, {stop})
     Iterates the matches of self on a given range.
 
     Iterate over all matches within a {node}. The arguments are the same as
-    for |query:iter_captures()| but the iterated values are different: an
+    for |Query:iter_captures()| but the iterated values are different: an
     (1-based) index of the pattern in the query, a table mapping capture
     indices to nodes, and metadata from any directives processing the match.
     If the query has more than one pattern, the capture table might be sparse
@@ -780,7 +780,7 @@ set_query({lang}, {query_name}, {text})                          *set_query()*
 
     Parameters: ~
         {lang}        (string) Language to use for the query
-        {query_name}  (string) Name of the query (e.g., 'highlights')
+        {query_name}  (string) Name of the query (e.g., "highlights")
         {text}        (string) Query text (unparsed).
 
 

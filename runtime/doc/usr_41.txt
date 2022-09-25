@@ -1710,7 +1710,7 @@ There is a little "catch" with comments for some commands.  Examples: >
 	:execute cmd			" do it
 	:!ls *.c			" list C files
 
-The abbreviation 'dev' will be expanded to 'development     " shorthand'.  The
+The abbreviation "dev" will be expanded to 'development     " shorthand'.  The
 mapping of <F3> will actually be the whole line after the 'o# ....' including
 the '" insert include'.  The "execute" command will give an error.  The "!"
 command will send everything after it to the shell, causing an error for an

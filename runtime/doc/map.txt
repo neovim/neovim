@@ -1673,7 +1673,7 @@ backslash followed by a character other than white space or a backslash
 remains unmodified.  Overview:
 
 	command		   <f-args> ~
-	XX ab		   'ab'
+	XX ab		   "ab"
 	XX a\b		   'a\b'
 	XX a\ b		   'a b'
 	XX a\  b	   'a ', 'b'

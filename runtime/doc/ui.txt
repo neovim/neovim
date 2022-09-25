@@ -576,7 +576,7 @@ The multigrid extension gives UIs more control over how windows are displayed:
   per-window. Or reserve space around the border of the window for its own
   elements, such as scrollbars from the UI toolkit.
 - A dedicated grid is used for messages, which may scroll over the window
-  area. (Alternatively |ext_messages| can be used).
+  area. (Alternatively |ui-messages| can be used).
 
 By default, the grid size is handled by Nvim and set to the outer grid size
 (i.e. the size of the window frame in Nvim) whenever the split is created.
@@ -618,7 +618,7 @@ tabs.
 	flag). The Builtin TUI draws a full line filled with `sep_char` and
 	|hl-MsgSeparator| highlight.
 
-	When |ext_messages| is active, no message grid is used, and this event
+	When |ui-messages| is active, no message grid is used, and this event
 	will not be sent.
 
 ["win_viewport", grid, win, topline, botline, curline, curcol]

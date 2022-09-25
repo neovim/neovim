@@ -54,7 +54,7 @@ end
 --- Gets the list of files used to make up a query
 ---
 ---@param lang string Language to get query for
----@param query_name string Name of the query to load (e.g., 'highlights')
+---@param query_name string Name of the query to load (e.g., "highlights")
 ---@param is_included (boolean|nil) Internal parameter, most of the time left as `nil`
 ---@return string[] query_files List of files to load for given query and language
 function M.get_query_files(lang, query_name, is_included)
@@ -162,7 +162,7 @@ local explicit_queries = setmetatable({}, {
 --- set by plugins.
 ---
 ---@param lang string Language to use for the query
----@param query_name string Name of the query (e.g., 'highlights')
+---@param query_name string Name of the query (e.g., "highlights")
 ---@param text string Query text (unparsed).
 function M.set_query(lang, query_name, text)
   explicit_queries[lang][query_name] = M.parse_query(lang, text)
@@ -171,7 +171,7 @@ end
 --- Returns the runtime query {query_name} for {lang}.
 ---
 ---@param lang string Language to use for the query
----@param query_name string Name of the query (e.g. 'highlights')
+---@param query_name string Name of the query (e.g. "highlights")
 ---
 ---@return Query Parsed query
 function M.get_query(lang, query_name)
@@ -596,7 +596,7 @@ end
 --- Iterates the matches of self on a given range.
 ---
 --- Iterate over all matches within a {node}. The arguments are the same as
---- for |query:iter_captures()| but the iterated values are different:
+--- for |Query:iter_captures()| but the iterated values are different:
 --- an (1-based) index of the pattern in the query, a table mapping
 --- capture indices to nodes, and metadata from any directives processing the match.
 --- If the query has more than one pattern, the capture table might be sparse
