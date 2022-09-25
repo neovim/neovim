@@ -110,7 +110,10 @@ argument.
 		This can be used to find out where time is spent while loading
 		your |config|, plugins and opening the first file.
 		When {fname} already exists new messages are appended.
-
+		If your profiler script needs to know when to quit, use:
+>
+		nvim --startuptime nvim.log +'set ut=0 | au CursorHold * qa!'
+<
 							*-+*
 +[num]		The cursor will be positioned on line "num" for the first
 		file being edited.  If "num" is missing, the cursor will be
