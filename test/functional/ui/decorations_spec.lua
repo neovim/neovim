@@ -1550,6 +1550,38 @@ if (h->n_buckets < new_n_buckets) { // expand
       }                                                 |
                                                         |
     ]]}
+
+    command 'set number'
+    screen:expect{grid=[[
+      {9:  1 }^if (h->n_buckets < new_n_buckets) { // expand |
+      {9:  2 }  khkey_t *new_keys = (khkey_t *)krealloc((voi|
+      {9:    }d *)h->keys, new_n_buckets * sizeof(khkey_t));|
+      {9:    }{1:>>}{2:  very    tabby}text   with    tabs          |
+      {9:  3 }  h->keys = new_keys;                         |
+      {9:  4 }  if (kh_is_map && val_size) {                |
+      {9:  5 }    char *new_vals = krealloc( h->vals_buf, ne|
+      {9:    }w_n_buckets * val_size);                      |
+      {9:  6 }    h->vals_buf = new_vals;                   |
+      {9:  7 }  }                                           |
+      {9:  8 }}                                             |
+                                                        |
+    ]]}
+
+    command 'set tabstop&'
+    screen:expect{grid=[[
+      {9:  1 }^if (h->n_buckets < new_n_buckets) { // expand |
+      {9:  2 }  khkey_t *new_keys = (khkey_t *)krealloc((voi|
+      {9:    }d *)h->keys, new_n_buckets * sizeof(khkey_t));|
+      {9:    }{1:>>}{2:      very    tabby}text       with    tabs  |
+      {9:  3 }  h->keys = new_keys;                         |
+      {9:  4 }  if (kh_is_map && val_size) {                |
+      {9:  5 }    char *new_vals = krealloc( h->vals_buf, ne|
+      {9:    }w_n_buckets * val_size);                      |
+      {9:  6 }    h->vals_buf = new_vals;                   |
+      {9:  7 }  }                                           |
+      {9:  8 }}                                             |
+                                                        |
+    ]]}
   end)
 
 end)
