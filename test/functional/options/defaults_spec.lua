@@ -220,7 +220,9 @@ describe('startup defaults', function()
   end)
 
   it("'packpath'", function()
-    clear()
+    clear{
+      args_rm={'runtimepath'},
+    }
     -- Defaults to &runtimepath.
     eq(meths.get_option('runtimepath'), meths.get_option('packpath'))
 
@@ -332,17 +334,19 @@ describe('XDG defaults', function()
 
   describe('with too long XDG variables', function()
     before_each(function()
-      clear({env={
-        XDG_CONFIG_HOME=(root_path .. ('/x'):rep(4096)),
-        XDG_CONFIG_DIRS=(root_path .. ('/a'):rep(2048)
-                         .. env_sep.. root_path .. ('/b'):rep(2048)
-                         .. (env_sep .. root_path .. '/c'):rep(512)),
-        XDG_DATA_HOME=(root_path .. ('/X'):rep(4096)),
-        XDG_RUNTIME_DIR=(root_path .. ('/X'):rep(4096)),
-        XDG_STATE_HOME=(root_path .. ('/X'):rep(4096)),
-        XDG_DATA_DIRS=(root_path .. ('/A'):rep(2048)
-                       .. env_sep .. root_path .. ('/B'):rep(2048)
-                       .. (env_sep .. root_path .. '/C'):rep(512)),
+      clear({
+        args_rm={'runtimepath'},
+        env={
+          XDG_CONFIG_HOME=(root_path .. ('/x'):rep(4096)),
+          XDG_CONFIG_DIRS=(root_path .. ('/a'):rep(2048)
+                           .. env_sep.. root_path .. ('/b'):rep(2048)
+                           .. (env_sep .. root_path .. '/c'):rep(512)),
+          XDG_DATA_HOME=(root_path .. ('/X'):rep(4096)),
+          XDG_RUNTIME_DIR=(root_path .. ('/X'):rep(4096)),
+          XDG_STATE_HOME=(root_path .. ('/X'):rep(4096)),
+          XDG_DATA_DIRS=(root_path .. ('/A'):rep(2048)
+                         .. env_sep .. root_path .. ('/B'):rep(2048)
+                         .. (env_sep .. root_path .. '/C'):rep(512)),
       }})
     end)
 
@@ -405,13 +409,15 @@ describe('XDG defaults', function()
 
   describe('with XDG variables that can be expanded', function()
     before_each(function()
-      clear({env={
-        XDG_CONFIG_HOME='$XDG_DATA_HOME',
-        XDG_CONFIG_DIRS='$XDG_DATA_DIRS',
-        XDG_DATA_HOME='$XDG_CONFIG_HOME',
-        XDG_RUNTIME_DIR='$XDG_RUNTIME_DIR',
-        XDG_STATE_HOME='$XDG_CONFIG_HOME',
-        XDG_DATA_DIRS='$XDG_CONFIG_DIRS',
+      clear({
+        args_rm={'runtimepath'},
+        env={
+          XDG_CONFIG_HOME='$XDG_DATA_HOME',
+          XDG_CONFIG_DIRS='$XDG_DATA_DIRS',
+          XDG_DATA_HOME='$XDG_CONFIG_HOME',
+          XDG_RUNTIME_DIR='$XDG_RUNTIME_DIR',
+          XDG_STATE_HOME='$XDG_CONFIG_HOME',
+          XDG_DATA_DIRS='$XDG_CONFIG_DIRS',
       }})
     end)
 
@@ -478,12 +484,14 @@ describe('XDG defaults', function()
 
   describe('with commas', function()
     before_each(function()
-      clear({env={
-        XDG_CONFIG_HOME=', , ,',
-        XDG_CONFIG_DIRS=',-,-,' .. env_sep .. '-,-,-',
-        XDG_DATA_HOME=',=,=,',
-        XDG_STATE_HOME=',=,=,',
-        XDG_DATA_DIRS=',≡,≡,' .. env_sep .. '≡,≡,≡',
+      clear({
+        args_rm={'runtimepath'},
+        env={
+          XDG_CONFIG_HOME=', , ,',
+          XDG_CONFIG_DIRS=',-,-,' .. env_sep .. '-,-,-',
+          XDG_DATA_HOME=',=,=,',
+          XDG_STATE_HOME=',=,=,',
+          XDG_DATA_DIRS=',≡,≡,' .. env_sep .. '≡,≡,≡',
       }})
     end)
 

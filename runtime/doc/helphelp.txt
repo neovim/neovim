@@ -212,12 +212,6 @@ This is done when viewing the file in Vim, the file itself is not changed.  It
 is done by going through all help files and obtaining the first line of each
 file.  The files in $VIMRUNTIME/doc are skipped.
 
-							*help-xterm-window*
-If you want to have the help in another xterm window, you could use this
-command: >
-	:!xterm -e vim +help &
-<
-
 					*:helpt* *:helptags*
 			*E150* *E151* *E152* *E153* *E154* *E670* *E856*
 :helpt[ags] [++t] {dir}
@@ -372,6 +366,7 @@ To separate sections in a help file, place a series of '=' characters in a
 line starting from the first column.  The section separator line is highlighted
 differently.
 
+							      *help-codeblock*
 To quote a block of ex-commands verbatim, place a greater than (>) character
 at the end of the line before the block and a less than (<) character as the
 first non-blank on a line following the block.  Any line starting in column 1
