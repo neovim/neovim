@@ -118,6 +118,24 @@ describe('lua buffer event callbacks: on_lines', function()
     }
     tick = tick + 1
 
+    tick = tick + 1
+    command('redo')
+    check_events {
+      { "test1", "lines", 1, tick, 3, 5, 4, 32 };
+      { "test2", "lines", 1, tick, 3, 5, 4, 32 };
+      { "test2", "changedtick", 1, tick+1 };
+    }
+    tick = tick + 1
+
+    tick = tick + 1
+    command('undo!')
+    check_events {
+      { "test1", "lines", 1, tick, 3, 4, 5, 13 };
+      { "test2", "lines", 1, tick, 3, 4, 5, 13 };
+      { "test2", "changedtick", 1, tick+1 };
+    }
+    tick = tick + 1
+
     -- simulate next callback returning true
     exec_lua("test_unreg = 'test1'")
 

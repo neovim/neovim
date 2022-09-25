@@ -5867,7 +5867,7 @@ static void ex_undo(exarg_T *eap)
 {
   if (eap->addr_count != 1) {
     if (eap->forceit) {
-      u_undo_and_forget(1);         // :undo!
+      u_undo_and_forget(1, true);   // :undo!
     } else {
       u_undo(1);                    // :undo
     }
@@ -5894,7 +5894,7 @@ static void ex_undo(exarg_T *eap)
       emsg(_(e_undobang_cannot_redo_or_move_branch));
       return;
     }
-    u_undo_and_forget(count);
+    u_undo_and_forget(count, true);
   } else {                        // :undo 123
     undo_time(step, false, false, true);
   }

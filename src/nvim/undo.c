@@ -1771,16 +1771,16 @@ void u_redo(int count)
 
 /// Undo and remove the branch from the undo tree.
 /// Also moves the cursor (as a "normal" undo would).
-bool u_undo_and_forget(int count)
+///
+/// @param do_buf_event If `true`, send the changedtick with the buffer updates
+bool u_undo_and_forget(int count, bool do_buf_event)
 {
   if (curbuf->b_u_synced == false) {
     u_sync(true);
     count = 1;
   }
   undo_undoes = true;
-  u_doit(count, true,
-         // Don't send nvim_buf_lines_event for u_undo_and_forget().
-         false);
+  u_doit(count, true, do_buf_event);
 
   if (curbuf->b_u_curhead == NULL) {
     // nothing was undone.

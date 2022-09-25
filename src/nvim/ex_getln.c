@@ -2190,7 +2190,7 @@ static void cmdpreview_restore_state(CpInfo *cpinfo)
       aco_save_T aco;
       aucmd_prepbuf(&aco, buf);
       // Undo invisibly. This also moves the cursor!
-      if (!u_undo_and_forget(count)) {
+      if (!u_undo_and_forget(count, false)) {
         abort();
       }
       aucmd_restbuf(&aco);
