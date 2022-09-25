@@ -5,6 +5,7 @@ local source = helpers.source
 local command = helpers.command
 local assert_alive = helpers.assert_alive
 local uname = helpers.uname
+local exec = helpers.exec
 local eval = helpers.eval
 local eq = helpers.eq
 
@@ -821,12 +822,23 @@ describe('statusline is redrawn on entering cmdline', function()
     ]]}
   end)
 
-  it('but not with scrolled messages', function()
-    command('set statusline=%{mode()}')
-    screen:try_resize(35,10)
+  it('with scrolled messages and msgsep', function()
+    screen:try_resize(35,14)
+    exec([[
+      let g:count = 0
+      autocmd CmdlineEnter * let g:count += 1
+      split
+      resize 1
+      setlocal statusline=%{mode()}%{g:count}
+      setlocal winbar=%{mode()}%{g:count}
+    ]])
     feed(':echoerr doesnotexist<cr>')
     screen:expect{grid=[[
+      {9:c1                                 }|
                                          |
+      {3:c1                                 }|
+                                         |
+      {1:~                                  }|
       {1:~                                  }|
       {1:~                                  }|
       {1:~                                  }|
@@ -839,9 +851,85 @@ describe('statusline is redrawn on entering cmdline', function()
     ]]}
     feed(':echoerr doesnotexist<cr>')
     screen:expect{grid=[[
+      {9:c2                                 }|
+                                         |
+      {3:c2                                 }|
                                          |
       {1:~                                  }|
+      {1:~                                  }|
       {3:                                   }|
+      {4:E121: Undefined variable: doesnotex}|
+      {4:ist}                                |
+      {5:Press ENTER or type command to cont}|
+      {4:E121: Undefined variable: doesnotex}|
+      {4:ist}                                |
+      {5:Press ENTER or type command to cont}|
+      {5:inue}^                               |
+    ]]}
+
+    feed(':echoerr doesnotexist<cr>')
+    screen:expect{grid=[[
+      {9:c3                                 }|
+                                         |
+      {3:c3                                 }|
+      {3:                                   }|
+      {4:E121: Undefined variable: doesnotex}|
+      {4:ist}                                |
+      {5:Press ENTER or type command to cont}|
+      {4:E121: Undefined variable: doesnotex}|
+      {4:ist}                                |
+      {5:Press ENTER or type command to cont}|
+      {4:E121: Undefined variable: doesnotex}|
+      {4:ist}                                |
+      {5:Press ENTER or type command to cont}|
+      {5:inue}^                               |
+    ]]}
+
+    feed('<cr>')
+    screen:expect{grid=[[
+      {9:n3                                 }|
+      ^                                   |
+      {3:n3                                 }|
+                                         |
+      {1:~                                  }|
+      {1:~                                  }|
+      {1:~                                  }|
+      {1:~                                  }|
+      {1:~                                  }|
+      {1:~                                  }|
+      {1:~                                  }|
+      {1:~                                  }|
+      {2:[No Name]                          }|
+                                         |
+    ]]}
+  end)
+
+  it('but not with scrolled messages without msgsep', function()
+    screen:try_resize(35,10)
+    exec([[
+      let g:count = 0
+      autocmd CmdlineEnter * let g:count += 1
+      set display-=msgsep
+      set statusline=%{mode()}%{g:count}
+    ]])
+    feed(':echoerr doesnotexist<cr>')
+    screen:expect{grid=[[
+      {1:~                                  }|
+      {1:~                                  }|
+      {1:~                                  }|
+      {1:~                                  }|
+      {1:~                                  }|
+      {3:c1                                 }|
+      {4:E121: Undefined variable: doesnotex}|
+      {4:ist}                                |
+      {5:Press ENTER or type command to cont}|
+      {5:inue}^                               |
+    ]]}
+    feed(':echoerr doesnotexist<cr>')
+    screen:expect{grid=[[
+      {1:~                                  }|
+      {1:~                                  }|
+      {3:c1                                 }|
       {4:E121: Undefined variable: doesnotex}|
       {4:ist}                                |
       {5:Press ENTER or type command to cont}|
@@ -875,7 +963,7 @@ describe('statusline is redrawn on entering cmdline', function()
       {1:~                                  }|
       {1:~                                  }|
       {1:~                                  }|
-      {3:n                                  }|
+      {3:n3                                 }|
                                          |
     ]]}
   end)
@@ -1237,5 +1325,37 @@ describe('cmdheight=0', function()
     ]], win_viewport={
       [2] = {win = {id = 1000}, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1};
     }}
+  end)
+
+  it('winbar is redrawn on entering cmdline and :redrawstatus #20336', function()
+    exec([[
+      set cmdheight=0
+      set winbar=%{mode()}%=:%{getcmdline()}
+    ]])
+    feed(':')
+    screen:expect([[
+      {3:c                       :}|
+                               |
+      {1:~                        }|
+      {1:~                        }|
+      :^                        |
+    ]])
+    feed('echo')
+    -- not redrawn yet
+    screen:expect([[
+      {3:c                       :}|
+                               |
+      {1:~                        }|
+      {1:~                        }|
+      :echo^                    |
+    ]])
+    command('redrawstatus')
+    screen:expect([[
+      {3:c                   :echo}|
+                               |
+      {1:~                        }|
+      {1:~                        }|
+      :echo^                    |
+    ]])
   end)
 end)
