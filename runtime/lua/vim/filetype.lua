@@ -473,6 +473,7 @@ local extension = {
   hex = 'hex',
   ['h32'] = 'hex',
   hjson = 'hjson',
+  m3u = 'hlsplaylist',
   m3u8 = 'hlsplaylist',
   hog = 'hog',
   hws = 'hollywood',
