@@ -66,7 +66,7 @@ getkey:
       ui_flush();
 
       // Entered idle state. Skip everything before the first screen update to prevent
-      // closing the startup log file when prompt() is called in VimEnter autocommand.
+      // closing the startup log file when input() is called in VimEnter autocommand.
       if (time_fd != NULL && did_first_redraw) {
         TIME_MSG("--- NVIM IDLE ---");
         // Now that we are idle, close any file for startup messages.
