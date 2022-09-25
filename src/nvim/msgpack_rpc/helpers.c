@@ -5,10 +5,10 @@
 #include <msgpack.h>
 #include <stdbool.h>
 
+#include "klib/kvec.h"
 #include "nvim/api/private/dispatch.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/assert.h"
-#include "nvim/lib/kvec.h"
 #include "nvim/log.h"
 #include "nvim/memory.h"
 #include "nvim/msgpack_rpc/helpers.h"

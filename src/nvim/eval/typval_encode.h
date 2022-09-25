@@ -10,9 +10,9 @@
 #include <stddef.h>
 #include <string.h>
 
+#include "klib/kvec.h"
 #include "nvim/eval/typval.h"
 #include "nvim/func_attr.h"
-#include "nvim/lib/kvec.h"
 
 /// Type of the stack entry
 typedef enum {

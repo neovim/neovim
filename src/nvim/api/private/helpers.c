@@ -8,6 +8,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "klib/kvec.h"
 #include "nvim/api/private/converter.h"
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"
@@ -22,7 +23,6 @@
 #include "nvim/ex_eval.h"
 #include "nvim/extmark.h"
 #include "nvim/highlight_group.h"
-#include "nvim/lib/kvec.h"
 #include "nvim/lua/executor.h"
 #include "nvim/map.h"
 #include "nvim/map_defs.h"

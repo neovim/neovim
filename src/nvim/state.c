@@ -3,6 +3,7 @@
 
 #include <assert.h>
 
+#include "klib/kvec.h"
 #include "nvim/ascii.h"
 #include "nvim/autocmd.h"
 #include "nvim/drawscreen.h"
@@ -10,7 +11,6 @@
 #include "nvim/ex_docmd.h"
 #include "nvim/getchar.h"
 #include "nvim/insexpand.h"
-#include "nvim/lib/kvec.h"
 #include "nvim/log.h"
 #include "nvim/main.h"
 #include "nvim/option.h"

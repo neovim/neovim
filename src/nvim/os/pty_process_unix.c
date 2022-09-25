@@ -31,11 +31,11 @@
 
 #include <uv.h>
 
+#include "klib/klist.h"
 #include "nvim/event/loop.h"
 #include "nvim/event/process.h"
 #include "nvim/event/rstream.h"
 #include "nvim/event/wstream.h"
-#include "nvim/lib/klist.h"
 #include "nvim/log.h"
 #include "nvim/os/os.h"
 #include "nvim/os/pty_process_unix.h"

@@ -4,6 +4,7 @@
 #include <msgpack.h>
 #include <stddef.h>
 
+#include "klib/kvec.h"
 #include "nvim/ascii.h"
 #include "nvim/charset.h"  // vim_str2nr
 #include "nvim/eval.h"
@@ -11,7 +12,6 @@
 #include "nvim/eval/encode.h"
 #include "nvim/eval/typval.h"
 #include "nvim/globals.h"
-#include "nvim/lib/kvec.h"
 #include "nvim/macros.h"
 #include "nvim/message.h"
 #include "nvim/vim.h"  // OK, FAIL
