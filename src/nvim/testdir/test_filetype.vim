@@ -932,6 +932,7 @@ func Test_d_file()
   call assert_equal('d', &filetype)
   bwipe!
 
+  " clean up
   filetype off
   call delete('Xfile.d')
 endfunc
