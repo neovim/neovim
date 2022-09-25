@@ -357,15 +357,14 @@ func Test_quit_long_message()
   let content =<< trim END
     echom range(9999)->join("\x01")
   END
-  call writefile(content, 'Xtest_quit_message')
-  let buf = RunVimInTerminal('-S Xtest_quit_message', #{rows: 6, wait_for_ruler: 0})
-  call WaitForAssert({-> assert_match('^-- More --', term_getline(buf, 6))})
+  call writefile(content, 'Xtest_quit_message', 'D')
+  let buf = RunVimInTerminal('-S Xtest_quit_message', #{rows: 10, wait_for_ruler: 0})
+  call WaitForAssert({-> assert_match('^-- More --', term_getline(buf, 10))})
   call term_sendkeys(buf, "q")
   call VerifyScreenDump(buf, 'Test_quit_long_message', {})
 
   " clean up
   call StopVimInTerminal(buf)
-  call delete('Xtest_quit_message')
 endfunc
 
 " this was missing a terminating NUL
