@@ -1387,6 +1387,8 @@ static int normal_check(VimState *state)
     if (time_fd != NULL && !did_first_redraw) {
       did_first_redraw = true;
       TIME_MSG("first screen update");
+      TIME_MSG("--- NVIM STARTED ---");
+      fflush(time_fd);
     }
   }
 
