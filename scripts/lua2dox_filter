@@ -37,6 +37,10 @@ test_executable(){
 ##! \brief sets the lua interpreter
 set_lua(){
 	if test -z "${EXE}"; then
+		test_executable '.deps/usr/bin/luajit'
+	fi
+
+	if test -z "${EXE}"; then
 		test_executable 'luajit'
 	fi
 
@@ -73,7 +77,8 @@ do_readlink(){
 set_lua
 if test -z "${EXE}"
 then
-	echo "no lua interpreter available"
+	echo "no lua interpreter found"
+	exit 1
 else
 	BASENAME=`basename "$0"`
 	do_readlink "$0"

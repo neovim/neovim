@@ -434,8 +434,7 @@ get_captures_at_cursor({winnr})                     *get_captures_at_cursor()*
     Return: ~
         string[] List of capture names
 
-                                                  *get_captures_at_position()*
-get_captures_at_position({bufnr}, {row}, {col})
+get_captures_at_pos({bufnr}, {row}, {col})             *get_captures_at_pos()*
     Returns a list of highlight captures at the given position
 
     Each capture is represented by a table containing the capture name as a
@@ -460,8 +459,7 @@ get_node_at_cursor({winnr})                             *get_node_at_cursor()*
     Return: ~
         (string) Name of node under the cursor
 
-                                                      *get_node_at_position()*
-get_node_at_position({bufnr}, {row}, {col}, {opts})
+get_node_at_pos({bufnr}, {row}, {col}, {opts})             *get_node_at_pos()*
     Returns the smallest named node at the given position
 
     Parameters: ~

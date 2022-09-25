@@ -251,6 +251,12 @@ Use existing common {action} names if possible:
     list    Get all things
     set     Set a thing (or group of things)
 
+Use existing common {thing} names if possible:
+    buf     Buffer
+    pos     Position
+    tab     Tabpage
+    win     Window
+
 Use consistent names for {thing} in all API functions. E.g. a buffer is called
 "buf" everywhere, not "buffer" in some places and "buf" in others.
 
