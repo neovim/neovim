@@ -98,7 +98,6 @@ General subjects ~
 |help.txt|	overview and quick reference (this file)
 |helphelp.txt|	about using the help files
 |index.txt|	alphabetical index of all commands
-|help-tags|	all the tags you can jump to (index of tags)
 |tips.txt|	various tips on using Vim
 |message.txt|	(error) messages and explanations
 |develop.txt|	development of Nvim

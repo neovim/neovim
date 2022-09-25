@@ -823,7 +823,7 @@ end
 --- })
 --- </pre>
 ---
---- See |lsp.start_client| for all available options. The most important are:
+--- See |vim.lsp.start_client()| for all available options. The most important are:
 ---
 --- `name` is an arbitrary name for the LSP client. It should be unique per
 --- language server.
@@ -834,7 +834,7 @@ end
 ---
 --- `root_dir` path to the project root.
 --- By default this is used to decide if an existing client should be re-used.
---- The example above uses |vim.fs.find| and |vim.fs.dirname| to detect the
+--- The example above uses |vim.fs.find()| and |vim.fs.dirname()| to detect the
 --- root by traversing the file system upwards starting
 --- from the current directory until either a `pyproject.toml` or `setup.py`
 --- file is found.
@@ -849,11 +849,11 @@ end
 ---
 ---
 --- To ensure a language server is only started for languages it can handle,
---- make sure to call |vim.lsp.start| within a |FileType| autocmd.
+--- make sure to call |vim.lsp.start()| within a |FileType| autocmd.
 --- Either use |:au|, |nvim_create_autocmd()| or put the call in a
 --- `ftplugin/<filetype_name>.lua` (See |ftplugin-name|)
 ---
----@param config table Same configuration as documented in |lsp.start_client()|
+---@param config table Same configuration as documented in |vim.lsp.start_client()|
 ---@param opts nil|table Optional keyword arguments:
 ---             - reuse_client (fun(client: client, config: table): boolean)
 ---                            Predicate used to decide if a client should be re-used.
@@ -902,12 +902,12 @@ end
 ---
 ---
 ---@param cmd: (table|string|fun(dispatchers: table):table) command string or
---- list treated like |jobstart|. The command must launch the language server
+--- list treated like |jobstart()|. The command must launch the language server
 --- process. `cmd` can also be a function that creates an RPC client.
 --- The function receives a dispatchers table and must return a table with the
 --- functions `request`, `notify`, `is_closing` and `terminate`
---- See |vim.lsp.rpc.request| and |vim.lsp.rpc.notify|
---- For TCP there is a built-in rpc client factory: |vim.lsp.rpc.connect|
+--- See |vim.lsp.rpc.request()| and |vim.lsp.rpc.notify()|
+--- For TCP there is a built-in rpc client factory: |vim.lsp.rpc.connect()|
 ---
 ---@param cmd_cwd: (string, default=|getcwd()|) Directory to launch
 --- the `cmd` process. Not related to `root_dir`.
@@ -963,7 +963,7 @@ end
 ---@param on_error Callback with parameters (code, ...), invoked
 --- when the client operation throws an error. `code` is a number describing
 --- the error. Other arguments may be passed depending on the error kind.  See
---- |vim.lsp.rpc.client_errors| for possible errors.
+--- `vim.lsp.rpc.client_errors` for possible errors.
 --- Use `vim.lsp.rpc.client_errors[code]` to get human-friendly name.
 ---
 ---@param before_init Callback with parameters (initialize_params, config)
@@ -999,8 +999,8 @@ end
 ---       notifications to the server by the given number in milliseconds. No debounce
 ---       occurs if nil
 --- - exit_timeout (number|boolean, default false): Milliseconds to wait for server to
----       exit cleanly after sending the 'shutdown' request before sending kill -15.
----       If set to false, nvim exits immediately after sending the 'shutdown' request to the server.
+---       exit cleanly after sending the "shutdown" request before sending kill -15.
+---       If set to false, nvim exits immediately after sending the "shutdown" request to the server.
 ---
 ---@param root_dir string Directory where the LSP
 --- server will base its workspaceFolders, rootUri, and rootPath
@@ -1078,7 +1078,7 @@ function lsp.start_client(config)
   ---
   ---@param code (number) Error code
   ---@param err (...) Other arguments may be passed depending on the error kind
-  ---@see |vim.lsp.rpc.client_errors| for possible errors. Use
+  ---@see `vim.lsp.rpc.client_errors` for possible errors. Use
   ---`vim.lsp.rpc.client_errors[code]` to get a human-friendly name.
   function dispatch.on_error(code, err)
     local _ = log.error()

@@ -92,8 +92,8 @@ g:ftplugin_rust_source_path~
 
                                                        *g:rustfmt_command*
 g:rustfmt_command~
-	Set this option to the name of the 'rustfmt' executable in your $PATH. If
-	not specified it defaults to 'rustfmt' : >
+	Set this option to the name of the "rustfmt" executable in your $PATH. If
+	not specified it defaults to "rustfmt" : >
 	    let g:rustfmt_command = 'rustfmt'
 <
                                                        *g:rustfmt_autosave*
@@ -104,14 +104,14 @@ g:rustfmt_autosave~
 <
                                                        *g:rustfmt_fail_silently*
 g:rustfmt_fail_silently~
-	Set this option to 1 to prevent 'rustfmt' from populating the
+	Set this option to 1 to prevent "rustfmt" from populating the
 	|location-list| with errors. If not specified it defaults to 0: >
 	    let g:rustfmt_fail_silently = 0
 <
                                                        *g:rustfmt_options*
 g:rustfmt_options~
 	Set this option to a string of options to pass to 'rustfmt'. The
-	write-mode is already set to 'overwrite'. If not specified it
+	write-mode is already set to "overwrite". If not specified it
 	defaults to '' : >
 	    let g:rustfmt_options = ''
 <

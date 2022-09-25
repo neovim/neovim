@@ -111,7 +111,7 @@ end
 --- about the context in which a completion was triggered (how it was triggered,
 --- and by which trigger character, if applicable)
 ---
----@see |vim.lsp.protocol.constants.CompletionTriggerKind|
+---@see vim.lsp.protocol.constants.CompletionTriggerKind
 function M.completion(context)
   local params = util.make_position_params()
   params.context = context
@@ -317,7 +317,7 @@ end
 ---
 ---@param options table|nil with valid `FormattingOptions` entries
 ---@param timeout_ms (number) Request timeout
----@see |vim.lsp.buf.formatting_seq_sync|
+---@see |vim.lsp.buf.format()|
 function M.formatting_sync(options, timeout_ms)
   vim.notify_once(
     'vim.lsp.buf.formatting_sync is deprecated. Use vim.lsp.buf.format instead',
@@ -614,14 +614,14 @@ end
 
 --- Lists all the call sites of the symbol under the cursor in the
 --- |quickfix| window. If the symbol can resolve to multiple
---- items, the user can pick one in the |inputlist|.
+--- items, the user can pick one in the |inputlist()|.
 function M.incoming_calls()
   call_hierarchy('callHierarchy/incomingCalls')
 end
 
 --- Lists all the items that are called by the symbol under the
 --- cursor in the |quickfix| window. If the symbol can resolve to
---- multiple items, the user can pick one in the |inputlist|.
+--- multiple items, the user can pick one in the |inputlist()|.
 function M.outgoing_calls()
   call_hierarchy('callHierarchy/outgoingCalls')
 end
@@ -730,9 +730,9 @@ end
 ---
 --- Note: Usage of |vim.lsp.buf.document_highlight()| requires the following highlight groups
 ---       to be defined or you won't be able to see the actual highlights.
----         |LspReferenceText|
----         |LspReferenceRead|
----         |LspReferenceWrite|
+---         |hl-LspReferenceText|
+---         |hl-LspReferenceRead|
+---         |hl-LspReferenceWrite|
 function M.document_highlight()
   local params = util.make_position_params()
   request('textDocument/documentHighlight', params)

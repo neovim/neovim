@@ -1537,7 +1537,7 @@ cursor({list})
 debugbreak({pid})					*debugbreak()*
 		Specifically used to interrupt a program being debugged.  It
 		will cause process {pid} to get a SIGTRAP.  Behavior for other
-		processes is undefined. See |terminal-debugger|.
+		processes is undefined. See |terminal-debug|.
 		{Sends a SIGINT to a process {pid} other than MS-Windows}
 
 		Returns |TRUE| if successfully interrupted the program.
@@ -3289,18 +3289,18 @@ getmatches([{win}])					*getmatches()*
 		an empty list is returned.
 		Example: >
 			:echo getmatches()
-<			[{'group': 'MyGroup1', 'pattern': 'TODO',
-			'priority': 10, 'id': 1}, {'group': 'MyGroup2',
-			'pattern': 'FIXME', 'priority': 10, 'id': 2}] >
+<			[{"group": "MyGroup1", "pattern": "TODO",
+			"priority": 10, "id": 1}, {"group": "MyGroup2",
+			"pattern": "FIXME", "priority": 10, "id": 2}] >
 			:let m = getmatches()
 			:call clearmatches()
 			:echo getmatches()
 <			[] >
 			:call setmatches(m)
 			:echo getmatches()
-<			[{'group': 'MyGroup1', 'pattern': 'TODO',
-			'priority': 10, 'id': 1}, {'group': 'MyGroup2',
-			'pattern': 'FIXME', 'priority': 10, 'id': 2}] >
+<			[{"group": "MyGroup1", "pattern": "TODO",
+			"priority": 10, "id": 1}, {"group": "MyGroup2",
+			"pattern": "FIXME", "priority": 10, "id": 2}] >
 			:unlet m
 <
 getmousepos()						*getmousepos()*
@@ -3499,7 +3499,7 @@ getreginfo([{regname}])					*getreginfo()*
 		Dictionary with the following entries:
 			regcontents	List of lines contained in register
 					{regname}, like
-					|getreg|({regname}, 1, 1).
+					getreg({regname}, 1, 1).
 			regtype		the type of register {regname}, as in
 					|getregtype()|.
 			isunnamed	Boolean flag, v:true if this register
@@ -4415,7 +4415,7 @@ jobstart({cmd} [, {opts}])				*jobstart()*
 			      killed when Nvim exits. If the process exits
 			      before Nvim, `on_exit` will be invoked.
 		  env:	      (dict) Map of environment variable name:value
-			      pairs extending (or replacing with |clear_env|)
+			      pairs extending (or replace with "clear_env")
 			      the current environment. |jobstart-env|
 		  height:     (number) Height of the `pty` terminal.
 		  |on_exit|:    (function) Callback invoked when the job exits.
@@ -5209,12 +5209,12 @@ matchfuzzypos({list}, {str} [, {dict}])			*matchfuzzypos()*
 
 		Example: >
 			:echo matchfuzzypos(['testing'], 'tsg')
-<		results in [['testing'], [[0, 2, 6]], [99]] >
+<		results in [["testing"], [[0, 2, 6]], [99]] >
 			:echo matchfuzzypos(['clay', 'lacy'], 'la')
-<		results in [['lacy', 'clay'], [[0, 1], [1, 2]], [153, 133]] >
+<		results in [["lacy", "clay"], [[0, 1], [1, 2]], [153, 133]] >
 			:echo [{'text': 'hello', 'id' : 10}]
 				\ ->matchfuzzypos('ll', {'key' : 'text'})
-<		results in [[{'id': 10, 'text': 'hello'}], [[2, 3]], [127]]
+<		results in [[{"id": 10, "text": "hello"}], [[2, 3]], [127]]
 
 matchlist({expr}, {pat} [, {start} [, {count}]])		*matchlist()*
 		Same as |match()|, but return a |List|.  The first item in the
@@ -8247,7 +8247,7 @@ synIDattr({synID}, {what} [, {mode}])			*synIDattr()*
 		"bg"		background color (as with "fg")
 		"font"		font name (only available in the GUI)
 				|highlight-font|
-		"sp"		special color (as with "fg") |highlight-guisp|
+		"sp"		special color (as with "fg") |guisp|
 		"fg#"		like "fg", but for the GUI and the GUI is
 				running the name in "#RRGGBB" form
 		"bg#"		like "fg#" for "bg"
@@ -9106,12 +9106,12 @@ winlayout([{tabnr}])					*winlayout()*
 		returns an empty list.
 
 		For a leaf window, it returns:
-			['leaf', {winid}]
+			["leaf", {winid}]
 		For horizontally split windows, which form a column, it
 		returns:
-			['col', [{nested list of windows}]]
+			["col", [{nested list of windows}]]
 		For vertically split windows, which form a row, it returns:
-			['row', [{nested list of windows}]]
+			["row", [{nested list of windows}]]
 
 		Example: >
 			" Only one window in the tab page

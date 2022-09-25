@@ -302,7 +302,7 @@ end
 
 --- Merges recursively two or more map-like tables.
 ---
----@see |tbl_extend()|
+---@see |vim.tbl_extend()|
 ---
 ---@param behavior string Decides what to do if a key is found in more than one map:
 ---      - "error": raise an error

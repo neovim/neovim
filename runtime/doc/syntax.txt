@@ -3118,7 +3118,7 @@ The default is to use the twice sh_minlines.  Set it to a smaller number to
 speed up displaying.  The disadvantage is that highlight errors may appear.
 
 syntax/sh.vim tries to flag certain problems as errors; usually things like
-extra ']'s, 'done's, 'fi's, etc.  If you find the error handling problematic
+extra "]"s, "done"s, "fi"s, etc.  If you find the error handling problematic
 for your purposes, you may suppress such error highlighting by putting
 the following line in your .vimrc: >
 
@@ -4935,7 +4935,7 @@ cterm={attr-list}			*attr-list* *highlight-cterm* *E418*
 	have the same effect.
 	"undercurl", "underdouble", "underdotted", and "underdashed" fall back
 	to "underline" in a terminal that does not support them. The color is
-	set using |highlight-guisp|.
+	set using |guisp|.
 
 start={term-list}				*highlight-start* *E422*
 stop={term-list}				*term-list* *highlight-stop*
@@ -4956,8 +4956,8 @@ stop={term-list}				*term-list* *highlight-stop*
         like "<Esc>" and "<Space>".  Example:
 		start=<Esc>[27h;<Esc>[<Space>r;
 
-ctermfg={color-nr}				*highlight-ctermfg* *E421*
-ctermbg={color-nr}				*highlight-ctermbg*
+ctermfg={color-nr}				*ctermfg* *E421*
+ctermbg={color-nr}				*ctermbg*
 	The {color-nr} argument is a color number.  Its range is zero to
 	(not including) the number of |tui-colors| available.
 	The actual color with this number depends on the type of terminal
@@ -5064,9 +5064,9 @@ font={font-name}					*highlight-font*
 	Example: >
 	    :hi comment font='Monospace 10'
 
-guifg={color-name}					*highlight-guifg*
-guibg={color-name}					*highlight-guibg*
-guisp={color-name}					*highlight-guisp*
+guifg={color-name}					*guifg*
+guibg={color-name}					*guibg*
+guisp={color-name}					*guisp*
 	These give the foreground (guifg), background (guibg) and special
 	(guisp) color to use in the GUI.  "guisp" is used for various
 	underlines.
@@ -5123,7 +5123,7 @@ Cursor		Character under the cursor.
 lCursor		Character under the cursor when |language-mapping|
 		is used (see 'guicursor').
 							*hl-CursorIM*
-CursorIM	Like Cursor, but used when in IME mode. |CursorIM|
+CursorIM	Like Cursor, but used when in IME mode. *CursorIM*
 							*hl-CursorColumn*
 CursorColumn	Screen-column at the cursor, when 'cursorcolumn' is set.
 							*hl-CursorLine*

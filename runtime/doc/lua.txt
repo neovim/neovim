@@ -285,7 +285,7 @@ These commands execute a Lua chunk from either the command line (:lua, :luado)
 or a file (:luafile) on the given line [range]. As always in Lua, each chunk
 has its own scope (closure), so only global variables are shared between
 command calls. The |lua-stdlib| modules, user modules, and anything else on
-|lua-package-path| are available.
+|package.path| are available.
 
 The Lua print() function redirects its output to the Nvim message area, with
 arguments separated by " " (space) instead of "\t" (tab).
@@ -617,7 +617,7 @@ A subset of the `vim.*` API is available in threads. This includes:
 
 - `vim.loop` with a separate event loop per thread.
 - `vim.mpack` and `vim.json` (useful for serializing messages between threads)
-- `require` in threads can use lua packages from the global |lua-package-path|
+- `require` in threads can use lua packages from the global |package.path|
 - `print()` and `vim.inspect`
 - `vim.diff`
 - most utility functions in `vim.*` for working with pure lua values
@@ -663,7 +663,7 @@ vim.highlight.range({bufnr}, {ns}, {hlgroup}, {start}, {finish}, {opts})
                 {finish}  finish position (tuple {line,col})
                 {opts}    optional parameters:
                           • `regtype`: type of range (characterwise, linewise,
-                            or blockwise, see |setreg|), default `'v'`
+                            or blockwise, see |setreg()|), default `'v'`
                           • `inclusive`: range includes end position,
                             default `false`
                           • `priority`: priority of highlight, default
@@ -906,7 +906,7 @@ vim.defer_fn({fn}, {timeout})                                   *vim.defer_fn*
     Defers calling {fn} until {timeout} ms passes. Use to do a one-shot timer
     that calls {fn}.
 
-    Note: The {fn} is |schedule_wrap|ped automatically, so API functions are
+    Note: The {fn} is |vim.schedule_wrap()|ped automatically, so API functions are
     safe to call.
 
     Parameters: ~
@@ -1160,7 +1160,7 @@ window-scoped options. Note that this must NOT be confused with
 global value of a |global-local| option, see |:setglobal|.
 
 vim.o                                                                  *vim.o*
-    Get or set an |option|. Like `:set`. Invalid key is an error.
+    Get or set |options|. Like `:set`. Invalid key is an error.
 
     Note: this works on both buffer-scoped and window-scoped options using the
     current buffer and window.
@@ -1171,7 +1171,7 @@ vim.o                                                                  *vim.o*
         print(vim.o.foo)     -- error: invalid key
 <
 vim.go                                                                *vim.go*
-    Get or set a global |option|. Like `:setglobal`. Invalid key is
+    Get or set global |options|. Like `:setglobal`. Invalid key is
     an error.
 
     Note: this is different from |vim.o| because this accesses the global
@@ -1260,7 +1260,7 @@ offers object-oriented method for adding and removing entries.
 
 
 Note that |vim.opt| returns an `Option` object, not the value of the option,
-which is accessed through |Option:get()|:
+which is accessed through |vim.opt:get()|:
 
     Examples: ~
 
@@ -1275,8 +1275,8 @@ which is accessed through |Option:get()|:
             `vim.pretty_print(vim.opt.wildignore:get())`
 
 
-In any of the above examples, to replicate the behavior |setlocal|, use
-`vim.opt_local`. Additionally, to replicate the behavior of |setglobal|, use
+In any of the above examples, to replicate the behavior |:setlocal|, use
+`vim.opt_local`. Additionally, to replicate the behavior of |:setglobal|, use
 `vim.opt_global`.
 
 
@@ -1406,8 +1406,8 @@ connection_failure_errmsg({consequence})
 defer_fn({fn}, {timeout})                                     *vim.defer_fn()*
     Defers calling `fn` until `timeout` ms passes.
 
-    Use to do a one-shot timer that calls `fn` Note: The {fn} is |schedule_wrap|ped automatically, so API functions are
-    safe to call.
+    Use to do a one-shot timer that calls `fn` Note: The {fn} is |vim.schedule_wrap()|ped automatically, so API functions
+    are safe to call.
 
     Parameters: ~
         {fn}       Callback to call once `timeout` expires
@@ -1541,7 +1541,7 @@ region({bufnr}, {pos1}, {pos2}, {regtype}, {inclusive})         *vim.region()*
         {bufnr}      (number) of buffer
         {pos1}       (line, column) tuple marking beginning of region
         {pos2}       (line, column) tuple marking end of region
-        {regtype}    type of selection (:help setreg)
+        {regtype}    type of selection, see |setreg()|
         {inclusive}  (boolean) indicating whether the selection is
                      end-inclusive
 
@@ -1773,7 +1773,7 @@ tbl_deep_extend({behavior}, {...})                     *vim.tbl_deep_extend()*
         (table) Merged table
 
     See also: ~
-        |tbl_extend()|
+        |vim.tbl_extend()|
 
 tbl_extend({behavior}, {...})                               *vim.tbl_extend()*
     Merges two or more map-like tables.

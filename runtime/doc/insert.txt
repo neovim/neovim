@@ -1519,7 +1519,7 @@ RUBY						 *ft-ruby-omni*
 NOTE: |compl-omni| for Ruby code requires |provider-ruby| to be installed.
 
 Ruby completion will parse your buffer on demand in order to provide a list of
-completions.  These completions will be drawn from modules loaded by 'require'
+completions.  These completions will be drawn from modules loaded by "require"
 and modules defined in the current buffer.
 
 The completions provided by CTRL-X CTRL-O are sensitive to the context:
@@ -1759,7 +1759,7 @@ In the example four special elements are visible:
    dialect.
 2. If the list containing possible values of attributes has one element and
    this element is equal to the name of the attribute this attribute will be
-   treated as boolean and inserted as 'attrname' and not as 'attrname="'
+   treated as boolean and inserted as "attrname" and not as 'attrname="'
 3. "vimxmltaginfo" - a special key with a Dictionary containing tag
    names as keys and two element List as values, for additional menu info and
    the long description.

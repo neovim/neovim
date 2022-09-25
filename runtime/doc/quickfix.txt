@@ -466,7 +466,7 @@ You can parse a list of lines using 'errorformat' without creating or
 modifying a quickfix list using the |getqflist()| function. Examples: >
 	echo getqflist({'lines' : ["F1:10:Line10", "F2:20:Line20"]})
 	echo getqflist({'lines' : systemlist('grep -Hn quickfix *')})
-This returns a dictionary where the 'items' key contains the list of quickfix
+This returns a dictionary where the "items" key contains the list of quickfix
 entries parsed from lines. The following shows how to use a custom
 'errorformat' to parse the lines without modifying the 'errorformat' option: >
 	echo getqflist({'efm' : '%f#%l#%m', 'lines' : ['F1#10#Line']})
@@ -585,7 +585,7 @@ can go back to the unfiltered list using the |:colder|/|:lolder| command.
 			quickfix command or function, the |b:changedtick|
 			variable is incremented.  You can get the number of
 			this buffer using the getqflist() and getloclist()
-			functions by passing the 'qfbufnr' item. For a
+			functions by passing the "qfbufnr" item. For a
 			location list, this buffer is wiped out when the
 			location list is removed.
 
@@ -1965,7 +1965,7 @@ The function should return a single line of text to display in the quickfix
 window for each entry from start_idx to end_idx. The function can obtain
 information about the entries using the |getqflist()| function and specifying
 the quickfix list identifier "id". For a location list, getloclist() function
-can be used with the 'winid' argument. If an empty list is returned, then the
+can be used with the "winid" argument. If an empty list is returned, then the
 default format is used to display all the entries. If an item in the returned
 list is an empty string, then the default format is used to display the
 corresponding entry.

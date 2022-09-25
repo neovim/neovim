@@ -345,7 +345,7 @@ LUA ~
 In-process Lua plugins can receive buffer updates in the form of Lua
 callbacks. These callbacks are called frequently in various contexts;
 |textlock| prevents changing buffer contents and window layout (use
-|vim.schedule| to defer such operations to the main loop instead).
+|vim.schedule()| to defer such operations to the main loop instead).
 
 |nvim_buf_attach()| will take keyword args for the callbacks. "on_lines" will
 receive parameters ("lines", {buf}, {changedtick}, {firstline}, {lastline},
@@ -989,7 +989,7 @@ nvim_get_proc_children({pid})                       *nvim_get_proc_children()*
 nvim_get_runtime_file({name}, {all})                 *nvim_get_runtime_file()*
     Find files in runtime directories
 
-    'name' can contain wildcards. For example
+    "name" can contain wildcards. For example
     nvim_get_runtime_file("colors/*.vim", true) will return all color scheme
     files. Always use forward slashes (/) in the search pattern for
     subdirectories regardless of platform.
@@ -1164,7 +1164,7 @@ nvim_open_term({buffer}, {opts})                            *nvim_open_term()*
                     terminal mode. Note: keypresses are sent raw as they would
                     be to the pty master end. For instance, a carriage return
                     is sent as a "\r", not as a "\n". |textlock| applies. It
-                    is possible to call |nvim_chan_send| directly in the
+                    is possible to call |nvim_chan_send()| directly in the
                     callback however. ["input", term, bufnr, data]
 
     Return: ~
@@ -1396,15 +1396,15 @@ nvim_set_hl({ns_id}, {name}, {*val})                           *nvim_set_hl()*
                  • link: name of another highlight group to link to, see
                    |:hi-link|.
                  • default: Don't override existing definition |:hi-default|
-                 • ctermfg: Sets foreground of cterm color |highlight-ctermfg|
-                 • ctermbg: Sets background of cterm color |highlight-ctermbg|
+                 • ctermfg: Sets foreground of cterm color |ctermfg|
+                 • ctermbg: Sets background of cterm color |ctermbg|
                  • cterm: cterm attribute map, like |highlight-args|. If not
                    set, cterm attributes will match those from the attribute
                    map documented above.
 
 nvim_set_hl_ns({ns_id})                                     *nvim_set_hl_ns()*
     Set active namespace for highlights. This can be set for a single window,
-    see |nvim_win_set_hl_ns|.
+    see |nvim_win_set_hl_ns()|.
 
     Parameters: ~
         {ns_id}  the namespace to use
@@ -1413,7 +1413,7 @@ nvim_set_hl_ns_fast({ns_id})                           *nvim_set_hl_ns_fast()*
     Set active namespace for highlights while redrawing.
 
     This function meant to be called while redrawing, primarily from
-    |nvim_set_decoration_provider| on_win and on_line callbacks, which are
+    |nvim_set_decoration_provider()| on_win and on_line callbacks, which are
     allowed to change the namespace during a redraw cycle.
 
     Attributes: ~
@@ -1445,7 +1445,7 @@ nvim_set_keymap({mode}, {lhs}, {rhs}, {*opts})             *nvim_set_keymap()*
         {rhs}   Right-hand-side |{rhs}| of the mapping.
         {opts}  Optional parameters map: keys are |:map-arguments|, values are
                 booleans (default false). Accepts all |:map-arguments| as keys
-                excluding |<buffer>| but including |noremap| and "desc".
+                excluding |<buffer>| but including |:noremap| and "desc".
                 Unknown key is an error. "desc" can be used to give a
                 description to the mapping. When called from Lua, also accepts
                 a "callback" key that takes a Lua function to call when the
@@ -1886,7 +1886,7 @@ nvim_get_all_options_info()                      *nvim_get_all_options_info()*
     Gets the option information for all options.
 
     The dictionary has the full option names as keys and option metadata
-    dictionaries as detailed at |nvim_get_option_info|.
+    dictionaries as detailed at |nvim_get_option_info()|.
 
     Return: ~
         dictionary of all options
@@ -1960,7 +1960,7 @@ nvim_set_option_value({name}, {value}, {*opts})
         {name}   Option name
         {value}  New option value
         {opts}   Optional parameters
-                 • scope: One of 'global' or 'local'. Analogous to
+                 • scope: One of "global" or "local". Analogous to
                    |:setglobal| and |:setlocal|, respectively.
                  • win: |window-ID|. Used for setting window local option.
                  • buf: Buffer number. Used for setting buffer local option.
@@ -2576,7 +2576,7 @@ nvim_buf_set_extmark({buffer}, {ns_id}, {line}, {col}, {*opts})
                     highlight groups that will be stacked (highest priority
                     last). A highlight group can be supplied either as a
                     string or as an integer, the latter which can be obtained
-                    using |nvim_get_hl_id_by_name|.
+                    using |nvim_get_hl_id_by_name()|.
                   • virt_text_pos : position of virtual text. Possible values:
                     • "eol": right after eol character (default)
                     • "overlay": display over the specified column, without
@@ -2608,7 +2608,7 @@ nvim_buf_set_extmark({buffer}, {ns_id}, {line}, {col}, {*opts})
                   • virt_lines_above: place virtual lines above instead.
                   • virt_lines_leftcol: Place extmarks in the leftmost column
                     of the window, bypassing sign and number columns.
-                  • ephemeral : for use with |nvim_set_decoration_provider|
+                  • ephemeral : for use with |nvim_set_decoration_provider()|
                     callbacks. The mark will only be used for the current
                     redraw cycle, and not be permantently stored in the
                     buffer.
@@ -2686,7 +2686,7 @@ nvim_set_decoration_provider({ns_id}, {*opts})
     triggered during the redraw code.
 
     The expected usage is to set extmarks for the currently redrawn buffer.
-    |nvim_buf_set_extmark| can be called to add marks on a per-window or
+    |nvim_buf_set_extmark()| can be called to add marks on a per-window or
     per-lines basis. Use the `ephemeral` key to only use the mark for the
     current screen redraw (the callback will be called again for the next
     redraw ).
@@ -2844,7 +2844,7 @@ nvim_win_hide({window})                                      *nvim_win_hide()*
 
     Like |:hide| the buffer becomes hidden unless another window is editing
     it, or 'bufhidden' is `unload`, `delete` or `wipe` as opposed to |:close|
-    or |nvim_win_close|, which will close the buffer.
+    or |nvim_win_close()|, which will close the buffer.
 
     Attributes: ~
         not allowed when |textlock| is active
@@ -3012,7 +3012,7 @@ nvim_open_win({buffer}, {enter}, {*config})                  *nvim_open_win()*
                       options. 'signcolumn' is changed to `auto` and
                       'colorcolumn' is cleared. The end-of-buffer region is
                       hidden by setting `eob` flag of 'fillchars' to a space
-                      char, and clearing the |EndOfBuffer| region in
+                      char, and clearing the |hl-EndOfBuffer| region in
                       'winhighlight'.
 
                   • border: Style of (optional) window border. This can either
@@ -3148,7 +3148,7 @@ Autocmd Functions                                                *api-autocmd*
 
 nvim_clear_autocmds({*opts})                           *nvim_clear_autocmds()*
     Clear all autocommands that match the corresponding {opts}. To delete a
-    particular autocmd, see |nvim_del_autocmd|.
+    particular autocmd, see |nvim_del_autocmd()|.
 
     Parameters: ~
         {opts}  Parameters
@@ -3295,7 +3295,7 @@ nvim_del_augroup_by_id({id})                        *nvim_del_augroup_by_id()*
 
     To get a group id one can use |nvim_get_autocmds()|.
 
-    NOTE: behavior differs from |augroup-delete|. When deleting a group,
+    NOTE: behavior differs from |:augroup-delete|. When deleting a group,
     autocommands contained in this group will also be deleted and cleared.
     This group will no longer exist.
 
@@ -3309,7 +3309,7 @@ nvim_del_augroup_by_id({id})                        *nvim_del_augroup_by_id()*
 nvim_del_augroup_by_name({name})                  *nvim_del_augroup_by_name()*
     Delete an autocommand group by name.
 
-    NOTE: behavior differs from |augroup-delete|. When deleting a group,
+    NOTE: behavior differs from |:augroup-delete|. When deleting a group,
     autocommands contained in this group will also be deleted and cleared.
     This group will no longer exist.
 
@@ -3317,7 +3317,7 @@ nvim_del_augroup_by_name({name})                  *nvim_del_augroup_by_name()*
         {name}  String The name of the group.
 
     See also: ~
-        |autocommand-groups|
+        |autocmd-groups|
 
 nvim_del_autocmd({id})                                    *nvim_del_autocmd()*
     Delete an autocommand by id.

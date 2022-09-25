@@ -635,7 +635,7 @@ end
 
 --- Starts an LSP server process and create an LSP RPC client object to
 --- interact with it. Communication with the spawned process happens via stdio. For
---- communication via TCP, spawn a process manually and use |vim.lsp.rpc.connect|
+--- communication via TCP, spawn a process manually and use |vim.lsp.rpc.connect()|
 ---
 ---@param cmd (string) Command to start the LSP server.
 ---@param cmd_args (table) List of additional string arguments to pass to {cmd}.

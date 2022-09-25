@@ -389,7 +389,7 @@ M['textDocument/implementation'] = location_handler
 ---@param config table Configuration table.
 ---     - border:     (default=nil)
 ---         - Add borders to the floating window
----         - See |vim.api.nvim_open_win()|
+---         - See |nvim_open_win()|
 function M.signature_help(_, result, ctx, config)
   config = config or {}
   config.focus_id = ctx.method

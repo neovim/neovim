@@ -764,7 +764,7 @@ Count and Range						*N:*
 
 When giving a count before entering ":", this is translated into:
 		:.,.+(count - 1)
-In words: The 'count' lines at and after the cursor.  Example: To delete
+In words: The "count" lines at and after the cursor.  Example: To delete
 three lines: >
 		3:d<CR>		is translated into: .,.+2d<CR>
 <

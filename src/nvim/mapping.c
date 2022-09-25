@@ -890,7 +890,7 @@ theend:
 ///
 /// @param maptype  MAPTYPE_MAP for |:map|
 ///                 MAPTYPE_UNMAP for |:unmap|
-///                 MAPTYPE_NOREMAP for |noremap|.
+///                 MAPTYPE_NOREMAP for |:noremap|.
 /// @param arg      C-string containing the arguments of the map/abbrev
 ///                 command, i.e. everything except the initial `:[X][nore]map`.
 ///                 - Cannot be a read-only string; it will be modified.
