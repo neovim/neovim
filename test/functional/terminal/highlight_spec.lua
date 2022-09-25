@@ -26,6 +26,8 @@ describe(':terminal highlight', function()
       [9] = {foreground = 130},
       [10] = {reverse = true},
       [11] = {background = 11},
+      [12] = {bold = true, underdouble = true},
+      [13] = {italic = true, undercurl = true},
     })
     screen:attach({rgb=false})
     command(("enew | call termopen(['%s'])"):format(testprg('tty-test')))
@@ -113,6 +115,14 @@ describe(':terminal highlight', function()
     thelpers.set_italic()
     thelpers.set_underline()
     thelpers.set_strikethrough()
+  end)
+  descr('bold and underdouble', 12, function()
+    thelpers.set_bold()
+    thelpers.set_underdouble()
+  end)
+  descr('italics and undercurl', 13, function()
+    thelpers.set_italic()
+    thelpers.set_undercurl()
   end)
 end)
 
