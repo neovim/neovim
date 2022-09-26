@@ -1281,6 +1281,110 @@ if (h->n_buckets < new_n_buckets) { // expand
     ]]}
   end)
 
+  it('works beyond end of the buffer with virt_lines_above', function()
+    insert(example_text)
+    feed 'G'
+
+    screen:expect{grid=[[
+      if (h->n_buckets < new_n_buckets) { // expand     |
+        khkey_t *new_keys = (khkey_t *)krealloc((void *)|
+      h->keys, new_n_buckets * sizeof(khkey_t));        |
+        h->keys = new_keys;                             |
+        if (kh_is_map && val_size) {                    |
+          char *new_vals = krealloc( h->vals_buf, new_n_|
+      buckets * val_size);                              |
+          h->vals_buf = new_vals;                       |
+        }                                               |
+      ^}                                                 |
+      {1:~                                                 }|
+                                                        |
+    ]]}
+
+    local id = meths.buf_set_extmark(0, ns, 8, 0, {
+      virt_lines={{{"Grugg"}}};
+      virt_lines_above = true,
+    })
+
+    screen:expect{grid=[[
+      if (h->n_buckets < new_n_buckets) { // expand     |
+        khkey_t *new_keys = (khkey_t *)krealloc((void *)|
+      h->keys, new_n_buckets * sizeof(khkey_t));        |
+        h->keys = new_keys;                             |
+        if (kh_is_map && val_size) {                    |
+          char *new_vals = krealloc( h->vals_buf, new_n_|
+      buckets * val_size);                              |
+          h->vals_buf = new_vals;                       |
+        }                                               |
+      ^}                                                 |
+      Grugg                                             |
+                                                        |
+    ]]}
+
+    feed('dd')
+    screen:expect{grid=[[
+      if (h->n_buckets < new_n_buckets) { // expand     |
+        khkey_t *new_keys = (khkey_t *)krealloc((void *)|
+      h->keys, new_n_buckets * sizeof(khkey_t));        |
+        h->keys = new_keys;                             |
+        if (kh_is_map && val_size) {                    |
+          char *new_vals = krealloc( h->vals_buf, new_n_|
+      buckets * val_size);                              |
+          h->vals_buf = new_vals;                       |
+        ^}                                               |
+      Grugg                                             |
+      {1:~                                                 }|
+                                                        |
+    ]]}
+
+    feed('dk')
+    screen:expect{grid=[[
+      if (h->n_buckets < new_n_buckets) { // expand     |
+        khkey_t *new_keys = (khkey_t *)krealloc((void *)|
+      h->keys, new_n_buckets * sizeof(khkey_t));        |
+        h->keys = new_keys;                             |
+        if (kh_is_map && val_size) {                    |
+          ^char *new_vals = krealloc( h->vals_buf, new_n_|
+      buckets * val_size);                              |
+      Grugg                                             |
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+                                                        |
+    ]]}
+
+    feed('dgg')
+    screen:expect{grid=[[
+      ^                                                  |
+      Grugg                                             |
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      --No lines in buffer--                            |
+    ]]}
+
+    meths.buf_del_extmark(0, ns, id)
+    screen:expect{grid=[[
+      ^                                                  |
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      --No lines in buffer--                            |
+    ]]}
+  end)
+
   it('does not cause syntax ml_get error at the end of a buffer #17816', function()
     command([[syntax region foo keepend start='^foo' end='^$']])
     command('syntax sync minlines=100')
