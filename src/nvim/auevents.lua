@@ -125,10 +125,22 @@ return {
     'WinScrolled',            -- after scrolling a window
   },
   aliases = {
-    BufCreate = 'BufAdd',
-    BufRead = 'BufReadPost',
-    BufWrite = 'BufWritePre',
-    FileEncoding = 'EncodingChanged',
+    {
+      'BufCreate',
+      'BufAdd'
+    },
+    {
+      'BufRead',
+      'BufReadPost'
+    },
+    {
+      'BufWrite',
+      'BufWritePre'
+    },
+    {
+      'FileEncoding',
+      'EncodingChanged'
+    },
   },
   -- List of nvim-specific events or aliases for the purpose of generating
   -- syntax file

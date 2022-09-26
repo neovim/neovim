@@ -32,7 +32,9 @@ for i, event in ipairs(events) do
   end
 end
 
-for alias, event in pairs(aliases) do
+for _, v in ipairs(aliases) do
+  local alias = v[1]
+  local event = v[2]
   names_tgt:write(('\n  {%u, "%s", EVENT_%s},'):format(#alias, alias, event:upper()))
 end
 
