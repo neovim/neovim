@@ -916,7 +916,7 @@ To get the number of the current list in the stack: >
 			   screen).
 			5. The errorfile is read using 'errorformat'.
 			6. All relevant |QuickFixCmdPost| autocommands are
-			   executed. See example below.
+			   executed.  See example below.
 			7. If [!] is not given the first error is jumped to.
 			8. The errorfile is deleted.
 			9. You can now move through the errors with commands
@@ -1939,7 +1939,7 @@ list window is:
 The values displayed in each line correspond to the "bufnr", "lnum", "col" and
 "text" fields returned by the |getqflist()| function.
 
-For some quickfix/location lists, the displayed text need to be customized.
+For some quickfix/location lists, the displayed text needs to be customized.
 For example, if only the filename is present for a quickfix entry, then the
 two "|" field separator characters after the filename are not needed.  Another
 use case is to customize the path displayed for a filename. By default, the

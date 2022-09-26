@@ -296,7 +296,7 @@ EVENTS                                                  *diagnostic-events*
 
                                                         *DiagnosticChanged*
 DiagnosticChanged       After diagnostics have changed. When used from Lua,
-                        the new diagnostics are passed to the autocmcd
+                        the new diagnostics are passed to the autocmd
                         callback in the "data" table.
 
 Example: >

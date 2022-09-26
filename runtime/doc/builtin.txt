@@ -1131,13 +1131,14 @@ chdir({dir})						*chdir()*
 			  directory (|:tcd|) then changes the tabpage local
 			  directory.
 			- Otherwise, changes the global directory.
+		{dir} must be a String.
 		If successful, returns the previous working directory.  Pass
 		this to another chdir() to restore the directory.
 		On failure, returns an empty string.
 
 		Example: >
 			let save_dir = chdir(newdir)
-			if save_dir
+			if save_dir != ""
 			   " ... do some work
 			   call chdir(save_dir)
 			endif
@@ -3240,7 +3241,7 @@ getloclist({nr} [, {what}])				*getloclist()*
 		In addition to the items supported by |getqflist()| in {what},
 		the following item is supported by |getloclist()|:
 
-			filewinid 	id of the window used to display files
+			filewinid	id of the window used to display files
 					from the location list. This field is
 					applicable only when called from a
 					location list window. See
@@ -6069,6 +6070,8 @@ rand([{expr}])						*rand()*
 							*readdir()*
 readdir({directory} [, {expr}])
 		Return a list with file and directory names in {directory}.
+		You can also use |glob()| if you don't need to do complicated
+		things, such as limiting the number of matches.
 
 		When {expr} is omitted all entries are included.
 		When {expr} is given, it is evaluated to check what to do:
@@ -8303,12 +8306,12 @@ synconcealed({lnum}, {col})				*synconcealed()*
 		   the text is "123456" and both "23" and "45" are concealed
 		   and replaced by the character "X", then:
 			call			returns ~
-		   	synconcealed(lnum, 1)   [0, '', 0]
-		   	synconcealed(lnum, 2)   [1, 'X', 1]
-		   	synconcealed(lnum, 3)   [1, 'X', 1]
-		   	synconcealed(lnum, 4)   [1, 'X', 2]
-		   	synconcealed(lnum, 5)   [1, 'X', 2]
-		   	synconcealed(lnum, 6)   [0, '', 0]
+			synconcealed(lnum, 1)   [0, '', 0]
+			synconcealed(lnum, 2)   [1, 'X', 1]
+			synconcealed(lnum, 3)   [1, 'X', 1]
+			synconcealed(lnum, 4)   [1, 'X', 2]
+			synconcealed(lnum, 5)   [1, 'X', 2]
+			synconcealed(lnum, 6)   [0, '', 0]
 
 
 synstack({lnum}, {col})					*synstack()*

@@ -1126,7 +1126,8 @@ that contains the List.  The Dict can have these items:
 			leading text is changed.
 Other items are ignored.
 
-For acting upon end of completion, see the |CompleteDone| autocommand event.
+For acting upon end of completion, see the |CompleteDonePre| and
+|CompleteDone| autocommand event.
 
 For example, the function can contain this: >
 	let matches = ... list of words ...

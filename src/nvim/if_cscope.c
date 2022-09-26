@@ -649,7 +649,7 @@ static char *cs_create_cmd(char *csoption, char *pattern)
     return NULL;
   }
 
-  // Skip white space before the patter, except for text and pattern search,
+  // Skip white space before the pattern, except for text and pattern search,
   // they may want to use the leading white space.
   pat = pattern;
   if (search != 4 && search != 6) {

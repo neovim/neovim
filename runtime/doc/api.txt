@@ -3435,8 +3435,8 @@ nvim_ui_detach()                                            *nvim_ui_detach()*
 
                                                     *nvim_ui_pum_set_bounds()*
 nvim_ui_pum_set_bounds({width}, {height}, {row}, {col})
-    Tells Nvim the geometry of the popumenu, to align floating windows with an
-    external popup menu.
+    Tells Nvim the geometry of the popupmenu, to align floating windows with
+    an external popup menu.
 
     Note that this method is not to be confused with
     |nvim_ui_pum_set_height()|, which sets the number of visible items in the
@@ -3455,7 +3455,7 @@ nvim_ui_pum_set_bounds({width}, {height}, {row}, {col})
         {col}     Popupmenu height.
 
 nvim_ui_pum_set_height({height})                    *nvim_ui_pum_set_height()*
-    Tells Nvim the number of elements displaying in the popumenu, to decide
+    Tells Nvim the number of elements displaying in the popupmenu, to decide
     <PageUp> and <PageDown> movement.
 
     Attributes: ~

@@ -186,8 +186,8 @@ gt					*i_CTRL-<PageDown>* *i_<C-PageDown>*
 		    :+2tabnext	" go to the two next tab page
 		    :1tabnext	" go to the first tab page
 		    :$tabnext	" go to the last tab page
-		    :tabnext #  " go to the last accessed tab page
 		    :tabnext $	" as above
+		    :tabnext #  " go to the last accessed tab page
 		    :tabnext -	" go to the previous tab page
 		    :tabnext -1	" as above
 		    :tabnext +	" go to the next tab page
