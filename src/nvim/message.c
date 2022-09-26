@@ -1399,13 +1399,15 @@ void msg_start(void)
     msg_clr_eos();
   }
 
+  // if cmdheight=0, we need to scroll in the first line of msg_grid upon the screen
+  if (p_ch == 0 && !ui_has(kUIMessages) && !msg_scrolled) {
+    msg_grid_validate();
+    msg_scroll_up(false, true);
+    msg_scrolled++;
+    cmdline_row = Rows - 1;
+  }
+
   if (!msg_scroll && full_screen) {     // overwrite last message
-    if (cmdline_row >= Rows && !ui_has(kUIMessages)) {
-      msg_grid_validate();
-      msg_scroll_up(false, true);
-      msg_scrolled++;
-      cmdline_row = Rows - 1;
-    }
     msg_row = cmdline_row;
     msg_col = cmdmsg_rl ? Columns - 1 : 0;
   } else if (msg_didout || (p_ch == 0 && !ui_has(kUIMessages))) {  // start message on next line

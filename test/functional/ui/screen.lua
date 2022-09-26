@@ -769,6 +769,7 @@ end
 
 function Screen:_handle_grid_cursor_goto(grid, row, col)
   self._cursor.grid = grid
+  assert(row >= 0 and col >= 0)
   self._cursor.row = row + 1
   self._cursor.col = col + 1
 end
