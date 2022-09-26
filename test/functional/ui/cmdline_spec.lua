@@ -1196,4 +1196,46 @@ describe('cmdheight=0', function()
       {1:~                        }|
     ]]}
   end)
+
+  it('with multigrid', function()
+    clear{args={'--cmd', 'set cmdheight=0'}}
+    screen:attach{ext_multigrid=true}
+    screen:expect{grid=[[
+    ## grid 1
+      [2:-------------------------]|
+      [2:-------------------------]|
+      [2:-------------------------]|
+      [2:-------------------------]|
+      [2:-------------------------]|
+    ## grid 2
+      ^                         |
+      {1:~                        }|
+      {1:~                        }|
+      {1:~                        }|
+      {1:~                        }|
+    ## grid 3
+    ]], win_viewport={
+      [2] = {win = {id = 1000}, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1};
+    }}
+
+    feed '/p'
+    screen:expect{grid=[[
+    ## grid 1
+      [2:-------------------------]|
+      [2:-------------------------]|
+      [2:-------------------------]|
+      [2:-------------------------]|
+      [3:-------------------------]|
+    ## grid 2
+                               |
+      {1:~                        }|
+      {1:~                        }|
+      {1:~                        }|
+      {1:~                        }|
+    ## grid 3
+      /p^                       |
+    ]], win_viewport={
+      [2] = {win = {id = 1000}, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1};
+    }}
+  end)
 end)
