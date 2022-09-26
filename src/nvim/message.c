@@ -2315,7 +2315,7 @@ static void msg_puts_display(const char *str, int maxlen, int attr, int recurse)
   if (t_col > 0) {
     t_puts(&t_col, t_s, s, attr);
   }
-  if (p_more && !recurse) {
+  if (p_more && !recurse && !(s == sb_str + 1 && *sb_str == '\n')) {
     store_sb_text((char **)&sb_str, (char *)s, attr, &sb_col, false);
   }
 
