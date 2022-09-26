@@ -1965,7 +1965,8 @@ win_update_start:
     if (mid_end >= row) {
       lastline = MIN(lastline, mid_start);
     }
-    if (mod_bot > buf->b_ml.ml_line_count + 1) {
+    // if (mod_bot > buf->b_ml.ml_line_count + 1) {
+    if (mod_bot > buf->b_ml.ml_line_count) {
       lastline = 0;
     }
 
