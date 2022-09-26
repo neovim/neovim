@@ -1401,6 +1401,7 @@ void msg_start(void)
 
   if (!msg_scroll && full_screen) {     // overwrite last message
     if (cmdline_row >= Rows && !ui_has(kUIMessages)) {
+      msg_grid_validate();
       msg_scroll_up(false, true);
       msg_scrolled++;
       cmdline_row = Rows - 1;

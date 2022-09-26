@@ -1183,4 +1183,17 @@ describe('cmdheight=0', function()
       {1:~                        }|
     ]]}
   end)
+
+  it('with silent! at startup', function()
+    clear{args={'-c', 'set cmdheight=0', '-c', 'autocmd VimEnter * silent! call Foo()'}}
+    screen:attach()
+    -- doesn't crash while not displaying silent! error message
+    screen:expect{grid=[[
+      ^                         |
+      {1:~                        }|
+      {1:~                        }|
+      {1:~                        }|
+      {1:~                        }|
+    ]]}
+  end)
 end)
