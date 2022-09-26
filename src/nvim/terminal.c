@@ -759,6 +759,22 @@ static int get_rgb(VTermState *state, VTermColor color)
   return RGB_(color.rgb.red, color.rgb.green, color.rgb.blue);
 }
 
+static int get_underline_hl_flag(VTermScreenCellAttrs attrs)
+{
+  switch (attrs.underline) {
+  case VTERM_UNDERLINE_OFF:
+    return 0;
+  case VTERM_UNDERLINE_SINGLE:
+    return HL_UNDERLINE;
+  case VTERM_UNDERLINE_DOUBLE:
+    return HL_UNDERDOUBLE;
+  case VTERM_UNDERLINE_CURLY:
+    return HL_UNDERCURL;
+  default:
+    return HL_UNDERLINE;
+  }
+}
+
 void terminal_get_line_attributes(Terminal *term, win_T *wp, int linenr, int *term_attrs)
 {
   int height, width;
@@ -795,7 +811,7 @@ void terminal_get_line_attributes(Terminal *term, win_T *wp, int linenr, int *te
     int hl_attrs = (cell.attrs.bold ? HL_BOLD : 0)
                    | (cell.attrs.italic ? HL_ITALIC : 0)
                    | (cell.attrs.reverse ? HL_INVERSE : 0)
-                   | (cell.attrs.underline ? HL_UNDERLINE : 0)
+                   | get_underline_hl_flag(cell.attrs)
                    | (cell.attrs.strike ? HL_STRIKETHROUGH: 0)
                    | ((fg_indexed && !fg_set) ? HL_FG_INDEXED : 0)
                    | ((bg_indexed && !bg_set) ? HL_BG_INDEXED : 0);
