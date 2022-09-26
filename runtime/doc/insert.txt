@@ -1534,7 +1534,7 @@ The completions provided by CTRL-X CTRL-O are sensitive to the context:
  3. After '.', '::' or ':'	     Methods applicable to the object being
 				       dereferenced
 
- 4. After ':' or ':foo'		     Symbol name (beginning with 'foo')
+ 4. After ':' or ':foo'		     Symbol name (beginning with "foo")
 
 Notes:
  - Vim will load/evaluate code in order to provide completions.  This may

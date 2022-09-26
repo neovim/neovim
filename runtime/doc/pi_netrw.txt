@@ -3569,7 +3569,7 @@ Example: Clear netrw's marked file list via a mapping on gu >
   http://www.chiark.greenend.org.uk/~sgtatham/putty/0.60/htmldoc/Chapter8.html#pubkey-gettingready
 			(8.3 Getting ready for public key authentication)
 <
-		How to use a private key with 'pscp': >
+		How to use a private key with "pscp": >
 
   http://www.chiark.greenend.org.uk/~sgtatham/putty/0.60/htmldoc/Chapter5.html
 			(5.2.4 Using public key authentication with PSCP)

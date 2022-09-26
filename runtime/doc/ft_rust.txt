@@ -110,7 +110,7 @@ g:rustfmt_fail_silently~
 <
                                                        *g:rustfmt_options*
 g:rustfmt_options~
-	Set this option to a string of options to pass to 'rustfmt'. The
+	Set this option to a string of options to pass to "rustfmt". The
 	write-mode is already set to "overwrite". If not specified it
 	defaults to '' : >
 	    let g:rustfmt_options = ''

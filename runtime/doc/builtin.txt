@@ -2628,7 +2628,7 @@ get({dict}, {key} [, {default}])
 		{default} is omitted.  Useful example: >
 			let val = get(g:, 'var_name', 'default')
 <		This gets the value of g:var_name if it exists, and uses
-		'default' when it does not exist.
+		"default" when it does not exist.
 get({func}, {what})
 		Get item {what} from Funcref {func}.  Possible values for
 		{what} are:
@@ -3035,7 +3035,7 @@ getcurpos([{winid}])
 		cursor vertically.  Also see |getcursorcharpos()| and
 		|getpos()|.
 		The first "bufnum" item is always zero. The byte position of
-		the cursor is returned in 'col'. To get the character
+		the cursor is returned in "col". To get the character
 		position, use |getcursorcharpos()|.
 
 		The optional {winid} argument can specify the window.  It can
@@ -3414,7 +3414,7 @@ getqflist([{what}])					*getqflist()*
 				|quickfix-ID|; zero means the id for the
 				current list or the list specified by "nr"
 			idx	get information for the quickfix entry at this
-				index in the list specified by 'id' or 'nr'.
+				index in the list specified by "id" or "nr".
 				If set to zero, then uses the current entry.
 				See |quickfix-index|
 			items	quickfix list entries
@@ -7226,7 +7226,7 @@ setqflist({list} [, {action} [, {what}]])		*setqflist()*
 				See |quickfix-parse|
 		    id		quickfix list identifier |quickfix-ID|
 		    idx		index of the current entry in the quickfix
-				list specified by 'id' or 'nr'. If set to '$',
+				list specified by "id" or "nr". If set to '$',
 				then the last entry in the list is set as the
 				current entry.  See |quickfix-index|
 		    items	list of quickfix entries. Same as the {list}
