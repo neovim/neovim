@@ -818,7 +818,7 @@ static bool pum_set_selected(int n, int repeat)
             // TODO(bfredl): can simplify, get rid of the flag munging?
             // or at least eliminate extra redraw before win_enter()?
             pum_is_visible = false;
-            update_screen(0);
+            update_screen();
             pum_is_visible = true;
 
             if (!resized && win_valid(curwin_save)) {
@@ -830,7 +830,7 @@ static bool pum_set_selected(int n, int repeat)
             // May need to update the screen again when there are
             // autocommands involved.
             pum_is_visible = false;
-            update_screen(0);
+            update_screen();
             pum_is_visible = true;
           }
         }

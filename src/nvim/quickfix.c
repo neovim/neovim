@@ -2784,7 +2784,10 @@ static void qf_jump_print_msg(qf_info_T *qi, int qf_index, qfline_T *qf_ptr, buf
   // Update the screen before showing the message, unless the screen
   // scrolled up.
   if (!msg_scrolled) {
-    update_topline_redraw();
+    update_topline(curwin);
+    if (must_redraw) {
+      update_screen();
+    }
   }
   snprintf((char *)IObuff, IOSIZE, _("(%d of %d)%s%s: "), qf_index,
            qf_get_curlist(qi)->qf_count,

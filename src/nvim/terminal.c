@@ -522,7 +522,7 @@ static int terminal_check(VimState *state)
   terminal_check_cursor();
 
   if (must_redraw) {
-    update_screen(0);
+    update_screen();
   }
 
   if (need_maketitle) {  // Update title in terminal-mode. #7248

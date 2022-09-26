@@ -1286,7 +1286,7 @@ void ins_redraw(bool ready)
     // a "(".  The autocommand may also require a redraw, so it's done
     // again below, unfortunately.
     if (syntax_present(curwin) && must_redraw) {
-      update_screen(0);
+      update_screen();
     }
     // Make sure curswant is correct, an autocommand may call
     // getcurpos()
@@ -1348,7 +1348,7 @@ void ins_redraw(bool ready)
 
   pum_check_clear();
   if (must_redraw) {
-    update_screen(0);
+    update_screen();
   } else if (clear_cmdline || redraw_cmdline) {
     showmode();  // clear cmdline and show mode
   }

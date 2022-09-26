@@ -2321,7 +2321,7 @@ void showmatch(int c)
         dollar_vcol = -1;
       }
       curwin->w_virtcol++;              // do display ')' just before "$"
-      update_screen(UPD_VALID);         // show the new char first
+      update_screen();                  // show the new char first
 
       save_dollar_vcol = dollar_vcol;
       save_state = State;

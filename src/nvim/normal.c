@@ -636,7 +636,7 @@ static void normal_redraw_mode_message(NormalState *s)
     // Showmode() will clear keep_msg, but we want to use it anyway.
     // First update w_topline.
     setcursor();
-    update_screen(0);
+    update_screen();
     // now reset it, otherwise it's put in the history again
     keep_msg = kmsg;
 
@@ -1284,9 +1284,9 @@ static void normal_redraw(NormalState *s)
 
   if (VIsual_active) {
     redraw_curbuf_later(UPD_INVERTED);  // update inverted part
-    update_screen(0);
+    update_screen();
   } else if (must_redraw) {
-    update_screen(0);
+    update_screen();
   } else if (redraw_cmdline || clear_cmdline || redraw_mode) {
     showmode();
   }
@@ -1841,7 +1841,7 @@ bool do_mouse(oparg_T *oap, int c, int dir, long count, bool fixindent)
       if (jump_flags) {
         jump_flags = jump_to_mouse(jump_flags, NULL, which_button);
         redraw_curbuf_later(VIsual_active ? UPD_INVERTED : UPD_VALID);
-        update_screen(0);
+        update_screen();
         setcursor();
         ui_flush();  // Update before showing popup menu
       }

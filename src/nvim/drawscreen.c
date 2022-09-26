@@ -341,7 +341,7 @@ void screen_resize(int width, int height)
       }
       if (State & MODE_CMDLINE) {
         redraw_popupmenu = false;
-        update_screen(UPD_NOT_VALID);
+        update_screen();
         redrawcmdline();
         if (pum_drawn()) {
           cmdline_pum_display(false);
@@ -350,12 +350,12 @@ void screen_resize(int width, int height)
         update_topline(curwin);
         if (pum_drawn()) {
           // TODO(bfredl): ins_compl_show_pum wants to redraw the screen first.
-          // For now make sure the nested update_screen(0) won't redraw the
+          // For now make sure the nested update_screen() won't redraw the
           // pum at the old position. Try to untangle this later.
           redraw_popupmenu = false;
           ins_compl_show_pum();
         }
-        update_screen(UPD_NOT_VALID);
+        update_screen();
         if (redrawing()) {
           setcursor();
         }
@@ -370,9 +370,7 @@ void screen_resize(int width, int height)
 ///
 /// Most code shouldn't call this directly, rather use redraw_later() and
 /// and redraw_all_later() to mark parts of the screen as needing a redraw.
-///
-/// @param type set to a UPD_NOT_VALID to force redraw of entire screen
-int update_screen(int type)
+int update_screen(void)
 {
   static bool did_intro = false;
   bool is_stl_global = global_stl_height() > 0;
@@ -389,9 +387,7 @@ int update_screen(int type)
     diff_redraw(true);
   }
 
-  // TODO(bfredl): completely get rid of using update_screen(UPD_XX_VALID)
-  // to redraw curwin
-  int curwin_type = MIN(type, UPD_NOT_VALID);
+  int type = 0;
 
   if (must_redraw) {
     if (type < must_redraw) {       // use maximal type
@@ -404,11 +400,6 @@ int update_screen(int type)
     // scroll, or a decoration provider requires a redraw, the screen
     // will be redrawn later or in win_update().
     must_redraw = 0;
-  }
-
-  // Need to update w_lines[].
-  if (curwin->w_lines_valid == 0 && type < UPD_NOT_VALID) {
-    type = UPD_NOT_VALID;
   }
 
   // Postpone the redrawing when it's not needed and when being called
@@ -486,7 +477,6 @@ int update_screen(int type)
     } else if (type != UPD_CLEAR) {
       if (msg_scrolled > Rows - 5) {  // redrawing is faster
         type = UPD_NOT_VALID;
-        curwin_type = UPD_NOT_VALID;
       } else {
         check_for_delay(false);
         grid_ins_lines(&default_grid, 0, msg_scrolled, Rows, 0, Columns);
@@ -574,28 +564,6 @@ int update_screen(int type)
       && curwin->w_nrwidth != ((curwin->w_p_nu || curwin->w_p_rnu)
                                ? number_width(curwin) : 0)) {
     curwin->w_redr_type = UPD_NOT_VALID;
-  }
-
-  // Only start redrawing if there is really something to do.
-  // TODO(bfredl): more curwin special casing to get rid of.
-  // Change update_screen(UPD_INVERTED) to a wrapper function
-  // perhaps?
-  if (curwin_type == UPD_INVERTED) {
-    update_curswant();
-  }
-  if (curwin->w_redr_type < curwin_type
-      && !((curwin_type == UPD_VALID
-            && curwin->w_lines[0].wl_valid
-            && curwin->w_topfill == curwin->w_old_topfill
-            && curwin->w_botfill == curwin->w_old_botfill
-            && curwin->w_topline == curwin->w_lines[0].wl_lnum)
-           || (curwin_type == UPD_INVERTED
-               && VIsual_active
-               && curwin->w_old_cursor_lnum == curwin->w_cursor.lnum
-               && curwin->w_old_visual_mode == VIsual_mode
-               && (curwin->w_valid & VALID_VIRTCOL)
-               && curwin->w_old_curswant == curwin->w_curswant))) {
-    curwin->w_redr_type = curwin_type;
   }
 
   // Redraw the tab pages line if needed.
@@ -2034,7 +2002,7 @@ win_update_start:
   }
 }
 
-/// Redraw a window later, with update_screen(type).
+/// Redraw a window later, with wp->w_redr_type >= type.
 ///
 /// Set must_redraw only if not already set to a higher value.
 /// e.g. if must_redraw is UPD_CLEAR, type UPD_NOT_VALID will do nothing.

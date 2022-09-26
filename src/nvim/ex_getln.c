@@ -501,7 +501,8 @@ static void may_do_incsearch_highlighting(int firstc, long count, incsearch_stat
     curwin->w_redr_status = true;
   }
 
-  update_screen(UPD_SOME_VALID);
+  redraw_later(curwin, UPD_SOME_VALID);
+  update_screen();
   highlight_match = false;
   restore_last_search_pattern();
 
@@ -588,7 +589,7 @@ static void finish_incsearch_highlighting(int gotesc, incsearch_state_T *s, bool
     validate_cursor();          // needed for TAB
     redraw_all_later(UPD_SOME_VALID);
     if (call_update_screen) {
-      update_screen(UPD_SOME_VALID);
+      update_screen();
     }
   }
 }
@@ -1376,7 +1377,8 @@ static int may_do_command_line_next_incsearch(int firstc, long count, incsearch_
     validate_cursor();
     highlight_match = true;
     save_viewstate(curwin, &s->old_viewstate);
-    update_screen(UPD_NOT_VALID);
+    redraw_later(curwin, UPD_NOT_VALID);
+    update_screen();
     highlight_match = false;
     redrawcmdline();
     curwin->w_cursor = s->match_end;
@@ -2336,7 +2338,7 @@ static bool cmdpreview_may_show(CommandLineState *s)
   if (cmdpreview_type != 0) {
     int save_rd = RedrawingDisabled;
     RedrawingDisabled = 0;
-    update_screen(UPD_SOME_VALID);
+    update_screen();
     RedrawingDisabled = save_rd;
   }
 
@@ -2406,7 +2408,9 @@ static int command_line_changed(CommandLineState *s)
   } else {
     cmdpreview = false;
     if (prev_cmdpreview) {
-      update_screen(UPD_SOME_VALID);  // Clear 'inccommand' preview.
+      // TODO(bfredl): add an immediate redraw flag for cmdline mode which will trigger
+      // at next wait-for-input
+      update_screen();  // Clear 'inccommand' preview.
     }
     if (s->xpc.xp_context == EXPAND_NOTHING && (KeyTyped || vpeekc() == NUL)) {
       may_do_incsearch_highlighting(s->firstc, s->count, &s->is_state);
