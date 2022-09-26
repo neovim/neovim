@@ -40,7 +40,7 @@ List		An ordered sequence of items, see |List| for details.
 Dictionary	An associative, unordered array: Each entry has a key and a
 		value. |Dictionary|
 		Examples:
-			{'blue': "#0000ff", 'red': "#ff0000"}
+			{"blue": "#0000ff", "red": "#ff0000"}
 			#{blue: "#0000ff", red: "#ff0000"}
 
 Blob		Binary Large Object. Stores any sequence of bytes.  See |Blob|
@@ -2531,7 +2531,7 @@ text...
 				     echo 'done'
 				   endif
 				END
-<			Results in: ["if ok", "  echo 'done'", "endif"]
+<			Results in: `["if ok", "  echo 'done'", "endif"]`
 			The marker must line up with "let" and the indentation
 			of the first line is removed from all the text lines.
 			Specifically: all the leading indentation exactly

@@ -1762,7 +1762,7 @@ does not exist as a mapped sequence.  An error will be issued, which is very
 hard to identify, because the ending whitespace character in ":unmap ,ab " is
 not visible.
 
-And this is the same as what happens when one uses a comment after an 'unmap'
+And this is the same as what happens when one uses a comment after an "unmap"
 command: >
 
 	:unmap ,ab     " comment

@@ -119,7 +119,7 @@ windows.
 
 							*filler-lines*
 The lines after the last buffer line in a window are called filler lines.  By
-default, these lines start with a tilde (~) character. The 'eob' item in the
+default, these lines start with a tilde (~) character. The "eob" item in the
 'fillchars' option can be used to change this character. By default, these
 characters are highlighted as NonText (|hl-NonText|). The EndOfBuffer
 highlight group (|hl-EndOfBuffer|) can be used to change the highlighting of

@@ -757,7 +757,7 @@ the syntax items for Perl.
 
 Step 2
 ------
-Manually setting the filetype to 'sql' will also fire the appropriate filetype
+Manually setting the filetype to "sql" will also fire the appropriate filetype
 files ftplugin/sql.vim.  This file will define a number of buffer specific
 maps for SQL completion, see |sql-completion-maps|.  Now these maps have
 been created and the SQL completion plugin has been initialized.  All SQL
