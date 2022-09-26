@@ -573,11 +573,11 @@ add_custom_command(OUTPUT ${GENERATED_UNICODE_TABLES}
 add_custom_command(
   OUTPUT ${GENERATED_API_DISPATCH} ${GENERATED_FUNCS_METADATA}
          ${API_METADATA} ${LUA_API_C_BINDINGS}
-  COMMAND ${LUA_PRG} ${API_DISPATCH_GENERATOR} ${CMAKE_CURRENT_LIST_DIR}
-                     ${GENERATED_API_DISPATCH}
-                     ${GENERATED_FUNCS_METADATA} ${API_METADATA}
-                     ${LUA_API_C_BINDINGS}
-                     ${API_HEADERS}
+  COMMAND ${LUA_GEN_PRG} ${API_DISPATCH_GENERATOR} ${CMAKE_CURRENT_LIST_DIR}
+                         ${GENERATED_API_DISPATCH}
+                         ${GENERATED_FUNCS_METADATA} ${API_METADATA}
+                         ${LUA_API_C_BINDINGS}
+                         ${API_HEADERS}
   DEPENDS
     ${API_HEADERS}
     ${MSGPACK_RPC_HEADERS}
@@ -622,12 +622,12 @@ add_custom_command(
          ${GENERATED_UI_EVENTS_REMOTE}
          ${GENERATED_UI_EVENTS_METADATA}
          ${GENERATED_UI_EVENTS_CLIENT}
-  COMMAND ${LUA_PRG} ${API_UI_EVENTS_GENERATOR} ${CMAKE_CURRENT_LIST_DIR}
-                     ${CMAKE_CURRENT_LIST_DIR}/api/ui_events.in.h
-                     ${GENERATED_UI_EVENTS_CALL}
-                     ${GENERATED_UI_EVENTS_REMOTE}
-                     ${GENERATED_UI_EVENTS_METADATA}
-                     ${GENERATED_UI_EVENTS_CLIENT}
+  COMMAND ${LUA_GEN_PRG} ${API_UI_EVENTS_GENERATOR} ${CMAKE_CURRENT_LIST_DIR}
+                         ${CMAKE_CURRENT_LIST_DIR}/api/ui_events.in.h
+                         ${GENERATED_UI_EVENTS_CALL}
+                         ${GENERATED_UI_EVENTS_REMOTE}
+                         ${GENERATED_UI_EVENTS_METADATA}
+                         ${GENERATED_UI_EVENTS_CLIENT}
   DEPENDS
     ${API_UI_EVENTS_GENERATOR}
     ${GENERATOR_C_GRAMMAR}

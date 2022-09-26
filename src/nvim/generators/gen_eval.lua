@@ -73,14 +73,13 @@ for _,fun in ipairs(metadata) do
   end
 end
 
+local func_names = vim.tbl_keys(funcs)
+table.sort(func_names)
 local funcsdata = io.open(funcs_file, 'w')
-funcsdata:write(mpack.pack(funcs))
+funcsdata:write(mpack.pack(func_names))
 funcsdata:close()
 
-
-local names = vim.tbl_keys(funcs)
-
-local neworder, hashfun = hashy.hashy_hash("find_internal_func", names, function (idx)
+local neworder, hashfun = hashy.hashy_hash("find_internal_func", func_names, function (idx)
   return "functions["..idx.."].name"
 end)
 hashpipe:write("static const EvalFuncDef functions[] = {\n")

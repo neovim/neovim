@@ -426,7 +426,9 @@ for _,fn in ipairs(functions) do
 end
 remote_fns.redraw = {impl_name="ui_client_redraw", fast=true}
 
-local hashorder, hashfun = hashy.hashy_hash("msgpack_rpc_get_handler_for", vim.tbl_keys(remote_fns), function (idx)
+local names = vim.tbl_keys(remote_fns)
+table.sort(names)
+local hashorder, hashfun = hashy.hashy_hash("msgpack_rpc_get_handler_for", names, function (idx)
   return "method_handlers["..idx.."].name"
 end)
 

@@ -11,6 +11,8 @@ local funcs_file = arg[3]
 
 package.path = nvimsrcdir .. '/?.lua;' .. package.path
 
+_G.vim = loadfile(nvimsrcdir..'/../../runtime/lua/vim/shared.lua')()
+
 local lld = {}
 local syn_fd = io.open(syntax_file, 'w')
 lld.line_length = 0
@@ -115,7 +117,7 @@ end
 local nvimau_start = 'syn keyword nvimAutoEvent contained '
 w('\n\n' .. nvimau_start)
 
-for au, _ in pairs(auevents.nvim_specific) do
+for au, _ in vim.spairs(auevents.nvim_specific) do
   if lld.line_length > 850 then
     w('\n' .. nvimau_start)
   end
@@ -126,7 +128,7 @@ w('\n\nsyn case match')
 local vimfun_start = 'syn keyword vimFuncName contained '
 w('\n\n' .. vimfun_start)
 local funcs = mpack.unpack(io.open(funcs_file, 'rb'):read("*all"))
-for name, _ in pairs(funcs) do
+for _, name in ipairs(funcs) do
   if name then
     if lld.line_length > 850 then
       w('\n' .. vimfun_start)
