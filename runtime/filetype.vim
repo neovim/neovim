@@ -1113,6 +1113,9 @@ au BufNewFile,BufRead *.lou,*.lout		setf lout
 " Lua
 au BufNewFile,BufRead *.lua			setf lua
 
+" Luacheck
+au BufNewFile,BufRead .luacheckrc		setf lua
+
 " Luarocks
 au BufNewFile,BufRead *.rockspec		setf lua
 
