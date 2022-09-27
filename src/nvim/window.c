@@ -2239,7 +2239,7 @@ static void win_equal_rec(win_T *next_curwin, bool current, frame_T *topfr, int 
       // Compute maximum number of windows vertically in this frame.
       n = frame_minheight(topfr, NOWIN);
       // add one for the bottom window if it doesn't have a statusline or separator
-      if (row + height == cmdline_row && p_ls == 0) {
+      if (row + height >= cmdline_row && p_ls == 0) {
         extra_sep = STATUS_HEIGHT;
       } else if (global_stl_height() > 0) {
         extra_sep = 1;
