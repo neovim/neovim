@@ -31,14 +31,15 @@
 /// @param[out] err  Error details, if any.
 /// @return Dictionary containing command information, with these keys:
 ///         - cmd: (string) Command name.
-///         - range: (array) Command <range>. Can have 0-2 elements depending on how many items the
-///                          range contains. Has no elements if command doesn't accept a range or if
-///                          no range was specified, one element if only a single range item was
-///                          specified and two elements if both range items were specified.
-///         - count: (number) Any |<count>| that was supplied to the command. -1 if command cannot
-///                           take a count.
-///         - reg: (string) The optional command |<register>|, if specified. Empty string if not
-///                         specified or if command cannot take a register.
+///         - range: (array) (optional) Command range (|<line1>| |<line2>|).
+///                          Omitted if command doesn't accept a range.
+///                          Otherwise, has no elements if no range was specified, one element if
+///                          only a single range item was specified, or two elements if both range
+///                          items were specified.
+///         - count: (number) (optional) Command |<count>|.
+///                           Omitted if command cannot take a count.
+///         - reg: (string) (optional) Command |<register>|.
+///                         Omitted if command cannot take a register.
 ///         - bang: (boolean) Whether command contains a |<bang>| (!) modifier.
 ///         - args: (array) Command arguments.
 ///         - addr: (string) Value of |:command-addr|. Uses short name.
@@ -142,15 +143,15 @@ Dictionary nvim_parse_cmd(String str, Dictionary opts, Error *err)
     PUT(result, "cmd", CSTR_TO_OBJ((char *)get_command_name(NULL, ea.cmdidx)));
   }
 
-  if ((ea.argt & EX_RANGE) && ea.addr_count > 0) {
+  if (ea.argt & EX_RANGE) {
     Array range = ARRAY_DICT_INIT;
-    if (ea.addr_count > 1) {
-      ADD(range, INTEGER_OBJ(ea.line1));
+    if (ea.addr_count > 0) {
+      if (ea.addr_count > 1) {
+        ADD(range, INTEGER_OBJ(ea.line1));
+      }
+      ADD(range, INTEGER_OBJ(ea.line2));
     }
-    ADD(range, INTEGER_OBJ(ea.line2));
     PUT(result, "range", ARRAY_OBJ(range));
-  } else {
-    PUT(result, "range", ARRAY_OBJ(ARRAY_DICT_INIT));
   }
 
   if (ea.argt & EX_COUNT) {
@@ -161,12 +162,12 @@ Dictionary nvim_parse_cmd(String str, Dictionary opts, Error *err)
     } else {
       PUT(result, "count", INTEGER_OBJ(0));
     }
-  } else {
-    PUT(result, "count", INTEGER_OBJ(-1));
   }
 
-  char reg[2] = { (char)ea.regname, NUL };
-  PUT(result, "reg", CSTR_TO_OBJ(reg));
+  if (ea.argt & EX_REGSTR) {
+    char reg[2] = { (char)ea.regname, NUL };
+    PUT(result, "reg", CSTR_TO_OBJ(reg));
+  }
 
   PUT(result, "bang", BOOLEAN_OBJ(ea.forceit));
   PUT(result, "args", ARRAY_OBJ(args));

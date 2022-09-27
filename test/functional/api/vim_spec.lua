@@ -3177,9 +3177,6 @@ describe('API', function()
         cmd = 'echo',
         args = { 'foo' },
         bang = false,
-        range = {},
-        count = -1,
-        reg = '',
         addr = 'none',
         magic = {
             file = false,
@@ -3220,8 +3217,6 @@ describe('API', function()
         args = { '/math.random/math.max/' },
         bang = false,
         range = { 4, 6 },
-        count = -1,
-        reg = '',
         addr = 'line',
         magic = {
             file = false,
@@ -3263,7 +3258,6 @@ describe('API', function()
         bang = false,
         range = { 1 },
         count = 1,
-        reg = '',
         addr = 'buf',
         magic = {
             file = false,
@@ -3304,7 +3298,6 @@ describe('API', function()
         args = {},
         bang = false,
         range = {},
-        count = -1,
         reg = '+',
         addr = 'line',
         magic = {
@@ -3339,6 +3332,45 @@ describe('API', function()
           vertical = false,
         }
       }, meths.parse_cmd('put +', {}))
+      eq({
+        cmd = 'put',
+        args = {},
+        bang = false,
+        range = {},
+        reg = '',
+        addr = 'line',
+        magic = {
+            file = false,
+            bar = true
+        },
+        nargs = '0',
+        nextcmd = '',
+        mods = {
+          browse = false,
+          confirm = false,
+          emsg_silent = false,
+          filter = {
+              pattern = "",
+              force = false
+          },
+          hide = false,
+          horizontal = false,
+          keepalt = false,
+          keepjumps = false,
+          keepmarks = false,
+          keeppatterns = false,
+          lockmarks = false,
+          noautocmd = false,
+          noswapfile = false,
+          sandbox = false,
+          silent = false,
+          split = "",
+          tab = -1,
+          unsilent = false,
+          verbose = -1,
+          vertical = false,
+        }
+      }, meths.parse_cmd('put', {}))
     end)
     it('works with range, count and register', function()
       eq({
@@ -3388,8 +3420,6 @@ describe('API', function()
         args = {},
         bang = true,
         range = {},
-        count = -1,
-        reg = '',
         addr = 'line',
         magic = {
             file = true,
@@ -3430,8 +3460,6 @@ describe('API', function()
         args = { 'foo.txt' },
         bang = false,
         range = {},
-        count = -1,
-        reg = '',
         addr = '?',
         magic = {
             file = true,
@@ -3470,8 +3498,6 @@ describe('API', function()
         args = { 'foo.txt' },
         bang = false,
         range = {},
-        count = -1,
-        reg = '',
         addr = '?',
         magic = {
             file = true,
@@ -3513,8 +3539,6 @@ describe('API', function()
         args = { 'test', 'it' },
         bang = true,
         range = { 4, 6 },
-        count = -1,
-        reg = '',
         addr = 'line',
         magic = {
             file = false,
@@ -3555,8 +3579,6 @@ describe('API', function()
         args = { 'a.txt' },
         bang = false,
         range = {},
-        count = -1,
-        reg = '',
         addr = 'arg',
         magic = {
             file = true,
@@ -3597,9 +3619,6 @@ describe('API', function()
         cmd = 'MyCommand',
         args = { 'test it' },
         bang = false,
-        range = {},
-        count = -1,
-        reg = '',
         addr = 'none',
         magic = {
             file = false,
@@ -3691,8 +3710,6 @@ describe('API', function()
         args = {'x'},
         bang = true,
         range = {3, 4},
-        count = -1,
-        reg = '',
         addr = 'line',
         magic = {
           file = false,
@@ -3729,6 +3746,11 @@ describe('API', function()
       eq({1, 0}, meths.win_get_cursor(0))
       eq('', funcs.getreg('/'))
       eq('', funcs.histget('search'))
+    end)
+    it('result can be used directly by nvim_cmd #20051', function()
+      eq("foo", meths.cmd(meths.parse_cmd('echo "foo"', {}), { output = true }))
+      meths.cmd(meths.parse_cmd("set cursorline", {}), {})
+      eq(true, meths.get_option_value("cursorline", {}))
     end)
   end)
   describe('nvim_cmd', function()
