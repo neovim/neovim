@@ -1358,4 +1358,61 @@ describe('cmdheight=0', function()
       :echo^                    |
     ]])
   end)
+
+  it('window equalization with laststatus=0 #20367', function()
+    screen:try_resize(60, 9)
+    command('set cmdheight=0 laststatus=0')
+    command('vsplit')
+    screen:expect([[
+      ^                              │                             |
+      {1:~                             }│{1:~                            }|
+      {1:~                             }│{1:~                            }|
+      {1:~                             }│{1:~                            }|
+      {1:~                             }│{1:~                            }|
+      {1:~                             }│{1:~                            }|
+      {1:~                             }│{1:~                            }|
+      {1:~                             }│{1:~                            }|
+      {1:~                             }│{1:~                            }|
+    ]])
+    feed(':')
+    command('split')
+    feed('<Esc>')
+    screen:expect([[
+      ^                              │                             |
+      {1:~                             }│{1:~                            }|
+      {1:~                             }│{1:~                            }|
+      {1:~                             }│{1:~                            }|
+      {2:[No Name]                     }│{1:~                            }|
+                                    │{1:~                            }|
+      {1:~                             }│{1:~                            }|
+      {1:~                             }│{1:~                            }|
+      {1:~                             }│{1:~                            }|
+    ]])
+    command('resize 2')
+    screen:expect([[
+      ^                              │                             |
+      {1:~                             }│{1:~                            }|
+      {2:[No Name]                     }│{1:~                            }|
+                                    │{1:~                            }|
+      {1:~                             }│{1:~                            }|
+      {1:~                             }│{1:~                            }|
+      {1:~                             }│{1:~                            }|
+      {1:~                             }│{1:~                            }|
+      {1:~                             }│{1:~                            }|
+    ]])
+    feed(':')
+    command('wincmd =')
+    feed('<Esc>')
+    screen:expect([[
+      ^                              │                             |
+      {1:~                             }│{1:~                            }|
+      {1:~                             }│{1:~                            }|
+      {1:~                             }│{1:~                            }|
+      {2:[No Name]                     }│{1:~                            }|
+                                    │{1:~                            }|
+      {1:~                             }│{1:~                            }|
+      {1:~                             }│{1:~                            }|
+      {1:~                             }│{1:~                            }|
+    ]])
+  end)
 end)
