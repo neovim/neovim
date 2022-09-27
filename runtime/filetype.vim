@@ -803,6 +803,9 @@ au BufNewFile,BufRead */etc/group,*/etc/group-,*/etc/group.edit,*/etc/gshadow,*/
 " GTK RC
 au BufNewFile,BufRead .gtkrc,gtkrc		setf gtkrc
 
+" GYP
+au BufNewFile,BufRead *.gyp,*.gypi		setf gyp
+
 " Hack
 au BufRead,BufNewFile *.hack,*.hackpartial			setf hack
 
