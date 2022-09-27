@@ -75,3 +75,5 @@ tags
 /vim-*.patch
 
 /CMakeUserPresets.json
+!contrib/CMakeUserPresets.json
+/vcpkg.json

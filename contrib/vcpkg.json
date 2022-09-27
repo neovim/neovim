@@ -1,0 +1,11 @@
+{
+  "$schema": "https://raw.githubusercontent.com/microsoft/vcpkg/master/scripts/vcpkg.schema.json",
+  "name": "neovim",
+  "version": "0.8.0",
+  "dependencies": [
+    "msgpack",
+    "libiconv",
+    "gettext",
+    "libuv"
+  ]
+}

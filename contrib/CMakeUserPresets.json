@@ -1,0 +1,25 @@
+{
+  "version": 3,
+  "configurePresets": [
+    {
+      "name": "custom",
+      "displayName": "custom preset",
+      "cacheVariables": {
+        "CMAKE_TOOLCHAIN_FILE": {
+          "value": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
+          "type": "FILEPATH"
+        },
+        "VCPKG_MANIFEST_DIR": "${sourceDir}"
+      },
+      "inherits": [
+        "default"
+      ]
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "custom",
+      "configurePreset": "custom"
+    }
+  ]
+}
