@@ -57,8 +57,7 @@ has a major bug:
 
 The neovim repository includes a backport [github action](https://github.com/zeebe-io/backport-action).
 In order to trigger the action, a PR must be labeled with a label matching the
-form `backport release-0.X`. Note, the PR must have a description in the issue body,
-or the backport will fail.
+form `backport release-0.X`.
 
 Third-party dependencies
 --------------
