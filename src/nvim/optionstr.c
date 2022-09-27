@@ -178,7 +178,7 @@ void trigger_optionsset_string(int opt_idx, int opt_flags, char *oldval, char *o
       set_vim_var_string(VV_OPTION_COMMAND, "modeline", -1);
       set_vim_var_string(VV_OPTION_OLDLOCAL, oldval, -1);
     }
-    apply_autocmds(EVENT_OPTIONSET, get_option_fullname(opt_idx), NULL, false, NULL);
+    apply_autocmds(EVENT_OPTIONSET, get_option(opt_idx)->fullname, NULL, false, NULL);
     reset_v_option_vars();
   }
 }
@@ -280,19 +280,19 @@ void check_string_option(char **pp)
 
 /// Set global value for string option when it's a local option.
 ///
-/// @param opt_idx  option index
+/// @param opt  option
 /// @param varp  pointer to option variable
-static void set_string_option_global(int opt_idx, char **varp)
+static void set_string_option_global(vimoption_T *opt, char **varp)
 {
   char **p;
 
   // the global value is always allocated
-  if (is_window_local_option(opt_idx)) {
+  if (opt->var == VAR_WIN) {
     p = (char **)GLOBAL_WO(varp);
   } else {
-    p = (char **)get_option_var(opt_idx);
+    p = (char **)opt->var;
   }
-  if (!is_global_option(opt_idx) && p != varp) {
+  if (opt->indir != PV_NONE && p != varp) {
     char *s = xstrdup(*varp);
     free_string_option(*p);
     *p = s;
@@ -324,30 +324,32 @@ void set_string_option_direct(const char *name, int opt_idx, const char *val, in
     }
   }
 
-  if (is_hidden_option(idx)) {       // can't set hidden option
+  vimoption_T *opt = get_option(idx);
+
+  if (opt->var == NULL) {  // can't set hidden option
     return;
   }
 
-  assert((void *)get_option_var(idx) != (void *)&p_shada);
+  assert((void *)opt->var != (void *)&p_shada);
 
   s = xstrdup(val);
   {
-    varp = (char **)get_option_varp_scope(idx, both ? OPT_LOCAL : opt_flags);
-    if ((opt_flags & OPT_FREE) && (get_option_flags(idx) & P_ALLOCED)) {
+    varp = (char **)get_varp_scope(opt, both ? OPT_LOCAL : opt_flags);
+    if ((opt_flags & OPT_FREE) && (opt->flags & P_ALLOCED)) {
       free_string_option(*varp);
     }
     *varp = s;
 
     // For buffer/window local option may also set the global value.
     if (both) {
-      set_string_option_global(idx, varp);
+      set_string_option_global(opt, varp);
     }
 
-    set_option_flag(idx, P_ALLOCED);
+    opt->flags |= P_ALLOCED;
 
     // When setting both values of a global option with a local value,
     // make the local value empty, so that the global value is used.
-    if (is_global_local_option(idx) && both) {
+    if ((opt->indir & PV_BOTH) && both) {
       free_string_option(*varp);
       *varp = empty_option;
     }
@@ -393,24 +395,24 @@ void set_string_option_direct_in_win(win_T *wp, const char *name, int opt_idx, c
 char *set_string_option(const int opt_idx, const char *const value, const int opt_flags)
   FUNC_ATTR_NONNULL_ARG(2) FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  if (is_hidden_option(opt_idx)) {  // don't set hidden option
+  vimoption_T *opt = get_option(opt_idx);
+
+  if (opt->var == NULL) {  // don't set hidden option
     return NULL;
   }
 
   char *const s = xstrdup(value);
   char **const varp
-    = (char **)get_option_varp_scope(opt_idx,
-                                     (opt_flags & (OPT_LOCAL | OPT_GLOBAL)) == 0
-                                     ? (is_global_local_option(opt_idx)
-                                        ? OPT_GLOBAL : OPT_LOCAL)
-                                     : opt_flags);
+    = (char **)get_varp_scope(opt, ((opt_flags & (OPT_LOCAL | OPT_GLOBAL)) == 0
+                                    ? ((opt->indir & PV_BOTH) ? OPT_GLOBAL : OPT_LOCAL)
+                                    : opt_flags));
   char *const oldval = *varp;
   char *oldval_l = NULL;
   char *oldval_g = NULL;
 
   if ((opt_flags & (OPT_LOCAL | OPT_GLOBAL)) == 0) {
-    oldval_l = *(char **)get_option_varp_scope(opt_idx, OPT_LOCAL);
-    oldval_g = *(char **)get_option_varp_scope(opt_idx, OPT_GLOBAL);
+    oldval_l = *(char **)get_varp_scope(opt, OPT_LOCAL);
+    oldval_g = *(char **)get_varp_scope(opt, OPT_GLOBAL);
   }
 
   *varp = s;
@@ -434,8 +436,8 @@ char *set_string_option(const int opt_idx, const char *const value, const int op
       trigger_optionsset_string(opt_idx, opt_flags, saved_oldval, saved_oldval_l, saved_oldval_g,
                                 saved_newval);
     }
-    if (get_option_flags(opt_idx) & P_UI_OPTION) {
-      ui_call_option_set(cstr_as_string(get_option_fullname(opt_idx)),
+    if (opt->flags & P_UI_OPTION) {
+      ui_call_option_set(cstr_as_string(opt->fullname),
                          STRING_OBJ(cstr_as_string(saved_newval)));
     }
   }
@@ -638,20 +640,21 @@ char *did_set_string_option(int opt_idx, char **varp, char *oldval, char *errbuf
   char *errmsg = NULL;
   char *s, *p;
   int did_chartab = false;
-  bool free_oldval = (get_option_flags(opt_idx) & P_ALLOCED);
+  vimoption_T *opt = get_option(opt_idx);
+  bool free_oldval = (opt->flags & P_ALLOCED);
   bool value_changed = false;
 
   // Get the global option to compare with, otherwise we would have to check
   // two values for all local options.
-  char **gvarp = (char **)get_option_varp_scope(opt_idx, OPT_GLOBAL);
+  char **gvarp = (char **)get_varp_scope(opt, OPT_GLOBAL);
 
   // Disallow changing some options from secure mode
   if ((secure || sandbox != 0)
-      && (get_option_flags(opt_idx) & P_SECURE)) {
+      && (opt->flags & P_SECURE)) {
     errmsg = e_secure;
-  } else if (((get_option_flags(opt_idx) & P_NFNAME)
+  } else if (((opt->flags & P_NFNAME)
               && strpbrk(*varp, (secure ? "/\\*?[|;&<>\r\n" : "/\\*?[<>\r\n")) != NULL)
-             || ((get_option_flags(opt_idx) & P_NDNAME)
+             || ((opt->flags & P_NDNAME)
                  && strpbrk(*varp, "*?[|;&<>\r\n") != NULL)) {
     // Check for a "normal" directory or file name in some options.  Disallow a
     // path separator (slash and/or backslash), wildcards and characters that
@@ -986,13 +989,14 @@ char *did_set_string_option(int opt_idx, char **varp, char *oldval, char *errbuf
   } else if (varp == &p_shada) {  // 'shada'
     // TODO(ZyX-I): Remove this code in the future, alongside with &viminfo
     //              option.
-    opt_idx = ((get_option_fullname(opt_idx)[0] == 'v')
+    opt_idx = ((opt->fullname[0] == 'v')
                ? (shada_idx == -1 ? ((shada_idx = findoption("shada"))) : shada_idx)
                : opt_idx);
+    opt = get_option(opt_idx);
     // Update free_oldval now that we have the opt_idx for 'shada', otherwise
     // there would be a disconnect between the check for P_ALLOCED at the start
     // of the function and the set of P_ALLOCED at the end of the function.
-    free_oldval = (get_option_flags(opt_idx) & P_ALLOCED);
+    free_oldval = (opt->flags & P_ALLOCED);
     for (s = p_shada; *s;) {
       // Check it's a valid character
       if (vim_strchr("!\"%'/:<@cfhnrs", *s) == NULL) {
@@ -1522,18 +1526,18 @@ char *did_set_string_option(int opt_idx, char **varp, char *oldval, char *errbuf
     if (free_oldval) {
       free_string_option(oldval);
     }
-    set_option_flag(opt_idx, P_ALLOCED);
+    opt->flags |= P_ALLOCED;
 
     if ((opt_flags & (OPT_LOCAL | OPT_GLOBAL)) == 0
-        && is_global_local_option(opt_idx)) {
+        && (opt->indir & PV_BOTH)) {
       // global option with local value set to use global value; free
       // the local value and make it empty
-      p = get_option_varp_scope(opt_idx, OPT_LOCAL);
+      p = get_varp_scope(opt, OPT_LOCAL);
       free_string_option(*(char **)p);
       *(char **)p = empty_option;
     } else if (!(opt_flags & OPT_LOCAL) && opt_flags != OPT_GLOBAL) {
       // May set global value for local option.
-      set_string_option_global(opt_idx, varp);
+      set_string_option_global(opt, varp);
     }
 
     // Trigger the autocommand only after setting the flags.
@@ -1604,11 +1608,11 @@ char *did_set_string_option(int opt_idx, char **varp, char *oldval, char *errbuf
   }
 
   if (curwin->w_curswant != MAXCOL
-      && (get_option_flags(opt_idx) & (P_CURSWANT | P_RALL)) != 0) {
+      && (opt->flags & (P_CURSWANT | P_RALL)) != 0) {
     curwin->w_set_curswant = true;
   }
 
-  check_redraw(get_option_flags(opt_idx));
+  check_redraw(opt->flags);
 
   return errmsg;
 }
