@@ -1159,10 +1159,6 @@ void wait_return(int redraw)
     c = CAR;                    // no need for a return in ex mode
     got_int = false;
   } else {
-    // Make sure the hit-return prompt is on screen when 'guioptions' was
-    // just changed.
-    screenalloc();
-
     State = MODE_HITRETURN;
     setmouse();
     cmdline_row = msg_row;

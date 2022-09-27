@@ -2324,6 +2324,7 @@ static void do_intro_line(long row, char *mesg, int attr)
 /// @param eap
 void ex_intro(exarg_T *eap)
 {
+  // TODO(bfredl): use msg_grid instead!
   screenclear();
   intro_message(true);
   wait_return(true);
