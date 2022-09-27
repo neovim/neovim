@@ -1027,6 +1027,9 @@ au BufNewFile,BufRead Kconfig,Kconfig.debug	setf kconfig
 " Lace (ISE)
 au BufNewFile,BufRead *.ace,*.ACE		setf lace
 
+" Latexmkrc
+au BufNewFile,BufRead .latexmkrc,latexmkrc	setf perl
+
 " Latte
 au BufNewFile,BufRead *.latte,*.lte		setf latte
 
