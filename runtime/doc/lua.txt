@@ -1641,7 +1641,7 @@ gsplit({s}, {sep}, {plain})                                     *vim.gsplit()*
                  string.find)
 
     Return: ~
-        (function) Iterator over the split components
+        fun():string Iterator over the split components
 
     See also: ~
         |vim.split()|
@@ -1684,7 +1684,7 @@ list_slice({list}, {start}, {finish})                       *vim.list_slice()*
       • {finish}  (number) End range of slice
 
     Return: ~
-        (table) Copy of table sliced from start to finish (inclusive)
+        any[] Copy of table sliced from start to finish (inclusive)
 
 pesc({s})                                                         *vim.pesc()*
     Escapes magic chars in |lua-patterns|.
@@ -1724,7 +1724,7 @@ split({s}, {sep}, {kwargs})                                      *vim.split()*
                     front and back of the list
 
     Return: ~
-        (table) List of split components
+        string[] List of split components
 
 startswith({s}, {prefix})                                   *vim.startswith()*
     Tests if `s` starts with `prefix`.
@@ -1787,7 +1787,7 @@ tbl_deep_extend({behavior}, {...})                     *vim.tbl_deep_extend()*
       • {...}       (table) Two or more map-like tables
 
     Return: ~
-        (table) Merged table
+        table|table Merged table
 
     See also: ~
         |vim.tbl_extend()|
@@ -1817,7 +1817,7 @@ tbl_filter({func}, {t})                                     *vim.tbl_filter()*
       • {t}     (table) Table
 
     Return: ~
-        (table) Table of filtered values
+        any[] Table of filtered values
 
 tbl_flatten({t})                                           *vim.tbl_flatten()*
     Creates a copy of a list-like table such that any nested tables are
@@ -1883,7 +1883,7 @@ tbl_keys({t})                                                 *vim.tbl_keys()*
       • {t}  (table) Table
 
     Return: ~
-        (table) List of keys
+        table[] List of keys
 
     See also: ~
         From https://github.com/premake/premake-core/blob/master/src/base/table.lua
@@ -1906,7 +1906,7 @@ tbl_values({t})                                             *vim.tbl_values()*
       • {t}  (table) Table
 
     Return: ~
-        (table) List of values
+        any[] List of values
 
 trim({s})                                                         *vim.trim()*
     Trim whitespace (Lua pattern "%s") from both sides of a string.
