@@ -583,6 +583,7 @@ let s:filename_checks = {
     \ 'tssop': ['file.tssop'],
     \ 'tsv': ['file.tsv'],
     \ 'twig': ['file.twig'],
+    \ 'typescript': ['file.mts', 'file.cts'],
     \ 'typescript.glimmer': ['file.gts'],
     \ 'typescriptreact': ['file.tsx'],
     \ 'uc': ['file.uc'],

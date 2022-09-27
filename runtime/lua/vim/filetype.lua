@@ -1021,6 +1021,8 @@ local extension = {
   ts = function(path, bufnr)
     return M.getlines(bufnr, 1):find('<%?xml') and 'xml' or 'typescript'
   end,
+  mts = 'typescript',
+  cts = 'typescript',
   tsx = 'typescriptreact',
   uc = 'uc',
   uit = 'uil',
