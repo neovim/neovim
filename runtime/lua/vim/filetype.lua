@@ -448,6 +448,8 @@ local extension = {
   gsp = 'gsp',
   gjs = 'javascript.glimmer',
   gts = 'typescript.glimmer',
+  gyp = 'gyp',
+  gypi = 'gyp',
   hack = 'hack',
   hackpartial = 'hack',
   haml = 'haml',
@@ -1019,6 +1021,8 @@ local extension = {
   ts = function(path, bufnr)
     return M.getlines(bufnr, 1):find('<%?xml') and 'xml' or 'typescript'
   end,
+  mts = 'typescript',
+  cts = 'typescript',
   tsx = 'typescriptreact',
   uc = 'uc',
   uit = 'uil',
@@ -1496,6 +1500,8 @@ local filename = {
   ['/etc/shadow-'] = 'passwd',
   ['/etc/shadow'] = 'passwd',
   ['/etc/passwd.edit'] = 'passwd',
+  ['latexmkrc'] = 'perl',
+  ['.latexmkrc'] = 'perl',
   ['pf.conf'] = 'pf',
   ['main.cf'] = 'pfmain',
   pinerc = 'pine',
