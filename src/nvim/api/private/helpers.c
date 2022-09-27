@@ -218,6 +218,8 @@ Object dict_set_var(dict_T *dict, String key, Object value, bool del, bool retva
     return rv;
   }
 
+  bool watched = tv_dict_is_watched(dict);
+
   if (del) {
     // Delete the key
     if (di == NULL) {
@@ -225,6 +227,10 @@ Object dict_set_var(dict_T *dict, String key, Object value, bool del, bool retva
       api_set_error(err, kErrorTypeValidation, "Key not found: %s",
                     key.data);
     } else {
+      // Notify watchers
+      if (watched) {
+        tv_dict_watcher_notify(dict, key.data, NULL, &di->di_tv);
+      }
       // Return the old value
       if (retval) {
         rv = vim_to_object(&di->di_tv);
@@ -241,11 +247,16 @@ Object dict_set_var(dict_T *dict, String key, Object value, bool del, bool retva
       return rv;
     }
 
+    typval_T oldtv = TV_INITIAL_VALUE;
+
     if (di == NULL) {
       // Need to create an entry
       di = tv_dict_item_alloc_len(key.data, key.size);
       tv_dict_add(dict, di);
     } else {
+      if (watched) {
+        tv_copy(&di->di_tv, &oldtv);
+      }
       // Return the old value
       if (retval) {
         rv = vim_to_object(&di->di_tv);
@@ -255,6 +266,13 @@ Object dict_set_var(dict_T *dict, String key, Object value, bool del, bool retva
 
     // Update the value
     tv_copy(&tv, &di->di_tv);
+
+    // Notify watchers
+    if (watched) {
+      tv_dict_watcher_notify(dict, key.data, &tv, &oldtv);
+      tv_clear(&oldtv);
+    }
+
     // Clear the temporary variable
     tv_clear(&tv);
   }

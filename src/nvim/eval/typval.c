@@ -1781,7 +1781,7 @@ void tv_dict_watcher_notify(dict_T *const dict, const char *const key, typval_T 
     tv_dict_add(argv[2].vval.v_dict, v);
   }
 
-  if (oldtv) {
+  if (oldtv && oldtv->v_type != VAR_UNKNOWN) {
     dictitem_T *const v = tv_dict_item_alloc_len(S_LEN("old"));
     tv_copy(oldtv, &v->di_tv);
     tv_dict_add(argv[2].vval.v_dict, v);

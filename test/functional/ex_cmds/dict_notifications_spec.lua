@@ -4,6 +4,7 @@ local clear, nvim, source = helpers.clear, helpers.nvim, helpers.source
 local insert = helpers.insert
 local eq, next_msg = helpers.eq, helpers.next_msg
 local exc_exec = helpers.exc_exec
+local exec_lua = helpers.exec_lua
 local command = helpers.command
 local eval = helpers.eval
 
@@ -21,6 +22,8 @@ describe('VimL dictionary notifications', function()
   -- t:) and a dictionary variable, so we generate them in the following
   -- function.
   local function gentests(dict_expr, dict_init)
+    local is_g = dict_expr == 'g:'
+
     local function update(opval, key)
       if not key then
         key = 'watched'
@@ -29,6 +32,28 @@ describe('VimL dictionary notifications', function()
         command(('unlet %s[\'%s\']'):format(dict_expr, key))
       else
         command(('let %s[\'%s\'] %s'):format(dict_expr, key, opval))
+      end
+    end
+
+    local function update_with_api(opval, key)
+      if not key then
+        key = 'watched'
+      end
+      if opval == '' then
+        exec_lua(('vim.api.nvim_del_var(\'%s\')'):format(key))
+      else
+        exec_lua(('vim.api.nvim_set_var(\'%s\', %s)'):format(key, opval))
+      end
+    end
+
+    local function update_with_vim_g(opval, key)
+      if not key then
+        key = 'watched'
+      end
+      if opval == '' then
+        exec_lua(('vim.g.%s = nil'):format(key))
+      else
+        exec_lua(('vim.g.%s %s'):format(key, opval))
       end
     end
 
@@ -76,6 +101,18 @@ describe('VimL dictionary notifications', function()
         update('', 'watched2')
         update('')
         verify_echo()
+        if is_g then
+          update_with_api('"test"')
+          update_with_api('"test2"', 'watched2')
+          update_with_api('', 'watched2')
+          update_with_api('')
+          verify_echo()
+          update_with_vim_g('= "test"')
+          update_with_vim_g('= "test2"', 'watched2')
+          update_with_vim_g('', 'watched2')
+          update_with_vim_g('')
+          verify_echo()
+        end
       end)
 
       it('is not triggered when unwatched keys are updated', function()
@@ -83,6 +120,16 @@ describe('VimL dictionary notifications', function()
         update('.= "noop2"', 'unwatched')
         update('', 'unwatched')
         verify_echo()
+        if is_g then
+          update_with_api('"noop"', 'unwatched')
+          update_with_api('vim.g.unwatched .. "noop2"', 'unwatched')
+          update_with_api('', 'unwatched')
+          verify_echo()
+          update_with_vim_g('= "noop"', 'unwatched')
+          update_with_vim_g('= vim.g.unwatched .. "noop2"', 'unwatched')
+          update_with_vim_g('', 'unwatched')
+          verify_echo()
+        end
       end)
 
       it('is triggered by remove()', function()
@@ -91,6 +138,22 @@ describe('VimL dictionary notifications', function()
         nvim('command', 'call remove('..dict_expr..', "watched")')
         verify_value({old = 'test'})
       end)
+
+      if is_g then
+        it('is triggered by remove() when updated with nvim_*_var', function()
+          update_with_api('"test"')
+          verify_value({new = 'test'})
+          nvim('command', 'call remove('..dict_expr..', "watched")')
+          verify_value({old = 'test'})
+        end)
+
+        it('is triggered by remove() when updated with vim.g', function()
+          update_with_vim_g('= "test"')
+          verify_value({new = 'test'})
+          nvim('command', 'call remove('..dict_expr..', "watched")')
+          verify_value({old = 'test'})
+        end)
+      end
 
       it('is triggered by extend()', function()
         update('= "xtend"')
