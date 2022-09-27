@@ -6,6 +6,8 @@ local mkdir, write_file, rmdir = helpers.mkdir, helpers.write_file, helpers.rmdi
 local eq = helpers.eq
 local feed = helpers.feed
 local feed_command = helpers.feed_command
+local insert = helpers.insert
+local expect = helpers.expect
 local iswin = helpers.iswin
 local clear = helpers.clear
 local command = helpers.command
@@ -284,4 +286,35 @@ describe("shell command :!", function()
       end
     end)
   end
+
+  it(':{range}! with powershell filter/redirect #16271 #19250', function()
+    local screen = Screen.new(500, 8)
+    screen:attach()
+    local found = helpers.set_shell_powershell(true)
+    insert([[
+      3
+      1
+      4
+      2]])
+    if iswin() then
+      feed(':4verbose %!sort /R<cr>')
+      screen:expect{
+        any=[[Executing command: .?Start%-Process sort %-ArgumentList "/R" %-RedirectStandardInput .* %-RedirectStandardOutput .* %-NoNewWindow %-Wait]]
+      }
+    else
+      feed(':4verbose %!sort -r<cr>')
+      screen:expect{
+        any=[[Executing command: .?Start%-Process sort %-ArgumentList "%-r" %-RedirectStandardInput .* %-RedirectStandardOutput .* %-NoNewWindow %-Wait]]
+      }
+    end
+    feed('<CR>')
+    if found then
+      -- Not using fake powershell, so we can test the result.
+      expect([[
+        4
+        3
+        2
+        1]])
+    end
+  end)
 end)

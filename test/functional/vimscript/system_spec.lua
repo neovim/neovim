@@ -6,8 +6,6 @@ local eq, call, clear, eval, feed_command, feed, nvim =
   helpers.eq, helpers.call, helpers.clear, helpers.eval, helpers.feed_command,
   helpers.feed, helpers.nvim
 local command = helpers.command
-local insert = helpers.insert
-local expect = helpers.expect
 local exc_exec = helpers.exc_exec
 local iswin = helpers.iswin
 local os_kill = helpers.os_kill
@@ -625,39 +623,4 @@ describe('systemlist()', function()
     eq({iswin() and '?\r' or 'あ'}, eval([[systemlist('Write-Output あ')]]))
   end)
 
-end)
-
-describe('shell :!', function()
-  before_each(clear)
-
-  it(':{range}! with powershell filter/redirect #16271 #19250', function()
-    local screen = Screen.new(500, 8)
-    screen:attach()
-    local found = helpers.set_shell_powershell(true)
-    insert([[
-      3
-      1
-      4
-      2]])
-    if iswin() then
-      feed(':4verbose %!sort /R<cr>')
-      screen:expect{
-        any=[[Executing command: .?Start%-Process sort %-ArgumentList "/R" %-RedirectStandardInput .* %-RedirectStandardOutput .* %-NoNewWindow %-Wait]]
-      }
-    else
-      feed(':4verbose %!sort -r<cr>')
-      screen:expect{
-        any=[[Executing command: .?Start%-Process sort %-ArgumentList "%-r" %-RedirectStandardInput .* %-RedirectStandardOutput .* %-NoNewWindow %-Wait]]
-      }
-    end
-    feed('<CR>')
-    if found then
-      -- Not using fake powershell, so we can test the result.
-      expect([[
-        4
-        3
-        2
-        1]])
-    end
-  end)
 end)
