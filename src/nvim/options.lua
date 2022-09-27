@@ -660,7 +660,7 @@ return {
       deny_duplicates=true,
       redraw={'all_windows'},
       varname='p_dy',
-      defaults={if_true="lastline,msgsep"}
+      defaults={if_true="lastline"}
     },
     {
       full_name='eadirection', abbreviation='ead',

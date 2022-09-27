@@ -682,30 +682,7 @@ local function screen_tests(linegrid)
       ]])
     end)
 
-    it('execute command with multi-line output without msgsep', function()
-      command("set display-=msgsep")
-      feed(':ls<cr>')
-      screen:expect([[
-        {0:~                                                    }|
-        {0:~                                                    }|
-        {0:~                                                    }|
-        {0:~                                                    }|
-        {0:~                                                    }|
-        {0:~                                                    }|
-        {0:~                                                    }|
-        {0:~                                                    }|
-        {0:~                                                    }|
-        {0:~                                                    }|
-        {0:~                                                    }|
-        :ls                                                  |
-          1 %a   "[No Name]"                    line 1       |
-        {7:Press ENTER or type command to continue}^              |
-      ]])
-      feed('<cr>') --  skip the "Press ENTER..." state or tests will hang
-    end)
-
-    it('execute command with multi-line output and with msgsep', function()
-      command("set display+=msgsep")
+    it('execute command with multi-line output', function()
       feed(':ls<cr>')
       screen:expect([[
                                                              |
@@ -1048,41 +1025,5 @@ describe('Screen default colors', function()
     screen:expect{condition=function()
       eq({rgb_bg=-1, rgb_fg=-1, rgb_sp=-1, cterm_bg=0, cterm_fg=0}, screen.default_colors)
     end}
-  end)
-end)
-
-
-describe('screen with msgsep deactivated on startup', function()
-  local screen
-
-  before_each(function()
-    clear('--cmd', 'set display-=msgsep')
-    screen = Screen.new()
-    screen:attach()
-    screen:set_default_attr_ids {
-      [0] = {bold=true, foreground=255};
-      [7] = {bold = true, foreground = Screen.colors.SeaGreen};
-    }
-  end)
-
-  it('execute command with multi-line output', function()
-    feed ':ls<cr>'
-    screen:expect([[
-      {0:~                                                    }|
-      {0:~                                                    }|
-      {0:~                                                    }|
-      {0:~                                                    }|
-      {0:~                                                    }|
-      {0:~                                                    }|
-      {0:~                                                    }|
-      {0:~                                                    }|
-      {0:~                                                    }|
-      {0:~                                                    }|
-      {0:~                                                    }|
-      :ls                                                  |
-        1 %a   "[No Name]"                    line 1       |
-      {7:Press ENTER or type command to continue}^              |
-    ]])
-    feed '<cr>'  -- skip the "Press ENTER..." state or tests will hang
   end)
 end)

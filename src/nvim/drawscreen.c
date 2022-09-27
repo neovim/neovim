@@ -428,73 +428,40 @@ int update_screen(void)
                         msg_grid.cols, false);
       }
     }
-    if (msg_use_msgsep()) {
-      msg_grid.throttled = false;
-      bool was_invalidated = false;
+    msg_grid.throttled = false;
+    bool was_invalidated = false;
 
-      // UPD_CLEAR is already handled
-      if (type == UPD_NOT_VALID && !ui_has(kUIMultigrid) && msg_scrolled) {
-        was_invalidated = ui_comp_set_screen_valid(false);
-        for (int i = valid; i < Rows - p_ch; i++) {
-          grid_clear_line(&default_grid, default_grid.line_offset[i],
-                          Columns, false);
+    // UPD_CLEAR is already handled
+    if (type == UPD_NOT_VALID && !ui_has(kUIMultigrid) && msg_scrolled) {
+      was_invalidated = ui_comp_set_screen_valid(false);
+      for (int i = valid; i < Rows - p_ch; i++) {
+        grid_clear_line(&default_grid, default_grid.line_offset[i],
+                        Columns, false);
+      }
+      FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+        if (wp->w_floating) {
+          continue;
         }
-        FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
-          if (wp->w_floating) {
-            continue;
-          }
-          if (W_ENDROW(wp) > valid) {
-            // TODO(bfredl): too pessimistic. type could be UPD_NOT_VALID
-            // only because windows that are above the separator.
-            wp->w_redr_type = MAX(wp->w_redr_type, UPD_NOT_VALID);
-          }
-          if (!is_stl_global && W_ENDROW(wp) + wp->w_status_height > valid) {
-            wp->w_redr_status = true;
-          }
+        if (W_ENDROW(wp) > valid) {
+          // TODO(bfredl): too pessimistic. type could be UPD_NOT_VALID
+          // only because windows that are above the separator.
+          wp->w_redr_type = MAX(wp->w_redr_type, UPD_NOT_VALID);
         }
-        if (is_stl_global && Rows - p_ch - 1 > valid) {
-          curwin->w_redr_status = true;
+        if (!is_stl_global && W_ENDROW(wp) + wp->w_status_height > valid) {
+          wp->w_redr_status = true;
         }
       }
-      msg_grid_set_pos(Rows - (int)p_ch, false);
-      msg_grid_invalid = false;
-      if (was_invalidated) {
-        // screen was only invalid for the msgarea part.
-        // @TODO(bfredl): using the same "valid" flag
-        // for both messages and floats moving is bit of a mess.
-        ui_comp_set_screen_valid(true);
+      if (is_stl_global && Rows - p_ch - 1 > valid) {
+        curwin->w_redr_status = true;
       }
-    } else if (type != UPD_CLEAR) {
-      if (msg_scrolled > Rows - 5) {  // redrawing is faster
-        type = UPD_NOT_VALID;
-      } else {
-        check_for_delay(false);
-        grid_ins_lines(&default_grid, 0, msg_scrolled, Rows, 0, Columns);
-        FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
-          if (wp->w_floating) {
-            continue;
-          }
-          if (wp->w_winrow < msg_scrolled) {
-            if (W_ENDROW(wp) > msg_scrolled
-                && wp->w_redr_type < UPD_REDRAW_TOP
-                && wp->w_lines_valid > 0
-                && wp->w_topline == wp->w_lines[0].wl_lnum) {
-              wp->w_upd_rows = msg_scrolled - wp->w_winrow;
-              wp->w_redr_type = UPD_REDRAW_TOP;
-            } else {
-              wp->w_redr_type = UPD_NOT_VALID;
-              if (wp->w_winrow + wp->w_winbar_height <= msg_scrolled) {
-                wp->w_redr_status = true;
-              }
-            }
-          }
-        }
-        if (is_stl_global && Rows - p_ch - 1 <= msg_scrolled) {
-          curwin->w_redr_status = true;
-        }
-        redraw_cmdline = true;
-        redraw_tabline = true;
-      }
+    }
+    msg_grid_set_pos(Rows - (int)p_ch, false);
+    msg_grid_invalid = false;
+    if (was_invalidated) {
+      // screen was only invalid for the msgarea part.
+      // @TODO(bfredl): using the same "valid" flag
+      // for both messages and floats moving is bit of a mess.
+      ui_comp_set_screen_valid(true);
     }
     msg_scrolled = 0;
     msg_scrolled_at_flush = 0;
@@ -526,9 +493,8 @@ int update_screen(void)
     default_grid.valid = true;
   }
 
-  // After disabling msgsep the grid might not have been deallocated yet,
-  // hence we also need to check msg_grid.chars
-  if (type == UPD_NOT_VALID && (msg_use_grid() || msg_grid.chars)) {
+  // might need to clear space on default_grid for the message area.
+  if (type == UPD_NOT_VALID && clear_cmdline && !ui_has(kUIMessages)) {
     grid_fill(&default_grid, Rows - (int)p_ch, Rows, 0, Columns, ' ', ' ', 0);
   }
 

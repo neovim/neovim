@@ -608,12 +608,12 @@ tabs.
 	Close the window.
 
 ["msg_set_pos", grid, row, scrolled, sep_char] ~
-	Display messages on `grid`.  The grid will be displayed at `row` on the
-	default grid (grid=1), covering the full column width. `scrolled`
+	Display messages on `grid`.  The grid will be displayed at `row` on
+	the default grid (grid=1), covering the full column width. `scrolled`
 	indicates whether the message area has been scrolled to cover other
-	grids. It can be useful to draw a separator then ('display' msgsep
-	flag). The Builtin TUI draws a full line filled with `sep_char` and
-	|hl-MsgSeparator| highlight.
+	grids. It can be useful to draw a separator then |msgsep|. The Builtin
+	TUI draws a full line filled with `sep_char` ('fillchars' msgsep
+	field) and |hl-MsgSeparator| highlight.
 
 	When |ui-messages| is active, no message grid is used, and this event
 	will not be sent.

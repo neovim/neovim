@@ -184,11 +184,10 @@ describe("'wildmenu'", function()
     screen:expect_unchanged()
   end)
 
-  it('wildmode=list,full and display+=msgsep interaction #10092', function()
+  it('wildmode=list,full and messages interaction #10092', function()
     -- Need more than 5 rows, else tabline is covered and will be redrawn.
     screen:try_resize(25, 7)
 
-    command('set display+=msgsep')
     command('set wildmenu wildmode=list,full')
     command('set showtabline=2')
     feed(':set wildm<tab>')
@@ -215,44 +214,6 @@ describe("'wildmenu'", function()
     screen:expect([[
        [No Name]               |
       ^                         |
-      ~                        |
-      ~                        |
-      ~                        |
-      ~                        |
-                               |
-    ]])
-  end)
-
-  it('wildmode=list,full and display-=msgsep interaction', function()
-    -- Need more than 5 rows, else tabline is covered and will be redrawn.
-    screen:try_resize(25, 7)
-
-    command('set display-=msgsep')
-    command('set wildmenu wildmode=list,full')
-    feed(':set wildm<tab>')
-    screen:expect([[
-      ~                        |
-      ~                        |
-      ~                        |
-      ~                        |
-      :set wildm               |
-      wildmenu  wildmode       |
-      :set wildm^               |
-    ]])
-    feed('<tab>') -- trigger wildmode full
-    screen:expect([[
-      ~                        |
-      ~                        |
-      ~                        |
-      :set wildm               |
-      wildmenu  wildmode       |
-      wildmenu  wildmode       |
-      :set wildmenu^            |
-    ]])
-    feed('<Esc>')
-    screen:expect([[
-      ^                         |
-      ~                        |
       ~                        |
       ~                        |
       ~                        |
@@ -365,7 +326,6 @@ describe("'wildmenu'", function()
     screen:try_resize(25, 7)
 
     command('set laststatus=2')
-    command('set display+=msgsep')
     feed(':set wildm')
     feed('<c-d>')
     screen:expect([[

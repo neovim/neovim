@@ -2128,7 +2128,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	security reasons.
 
 					*'display'* *'dy'*
-'display' 'dy'		string	(default "lastline,msgsep")
+'display' 'dy'		string	(default "lastline")
 			global
 	Change the way text is displayed.  This is a comma-separated list of
 	flags:
@@ -2140,10 +2140,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 			column of the last screen line.  Overrules "lastline".
 	uhex		Show unprintable characters hexadecimal as <xx>
 			instead of using ^C and ~C.
-	msgsep		When showing messages longer than 'cmdheight', only
-			scroll the message lines, not the entire screen. The
-			separator line is decorated by |hl-MsgSeparator| and
-			the "msgsep" flag of 'fillchars'.
+	msgsep		Obsolete flag. Allowed but takes no effect. |msgsep|
 
 	When neither "lastline" nor "truncate" is included, a last line that
 	doesn't fit is replaced with "@" lines.

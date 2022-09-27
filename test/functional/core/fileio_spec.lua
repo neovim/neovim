@@ -166,7 +166,7 @@ describe('fileio', function()
       [3] = {bold = true, foreground = Screen.colors.SeaGreen4}
     })
     screen:attach()
-    command("set display-=msgsep shortmess-=F")
+    command("set shortmess-=F")
 
     command("e Xtest-overwrite-forced")
     screen:expect([[
