@@ -3,9 +3,7 @@
   "name": "neovim",
   "version": "0.8.0",
   "dependencies": [
-    "msgpack",
-    "libiconv",
-    "gettext",
-    "libuv"
+    "libuv",
+    "luv"
   ]
 }
