@@ -4,8 +4,11 @@
 " Previous Maintainer: Jeff Lanzarotta (jefflanzarotta at yahoo dot com)
 " Previous Maintainer: C. Laurence Gonsalves (clgonsal@kami.com)
 " URL: https://github.com/lee-lindley/vim_plsql_syntax
-" Last Change: Aug 21, 2022   
-" History  Lee Lindley (lee dot lindley at gmail dot com)
+" Last Change: Sep 19, 2022   
+" History  Carsten Czarski (carsten dot czarski at oracle com)
+"               add handling for typical SQL*Plus commands (rem, start, host, set, etc)
+"               add error highlight for non-breaking space
+"          Lee Lindley (lee dot lindley at gmail dot com)
 "               use get with default 0 instead of exists per Bram suggestion
 "               make procedure folding optional
 "               updated to 19c keywords. refined quoting. 
@@ -54,7 +57,12 @@ syn case ignore
 
 syn match   plsqlGarbage "[^ \t()]"
 syn match   plsqlIdentifier "[a-z][a-z0-9$_#]*"
+syn match   plsqlSqlPlusDefine "&&\?[a-z][a-z0-9$_#]*\.\?"
 syn match   plsqlHostIdentifier ":[a-z][a-z0-9$_#]*"
+
+" The Non-Breaking is often accidentally typed (Mac User: Opt+Space, after typing the "|",  Opt+7);
+" error highlight for these avoids running into annoying compiler errors.
+syn match   plsqlIllegalSpace "[\xa0]"
 
 " When wanted, highlight the trailing whitespace.
 if get(g:,"plsql_space_errors",0) == 1
@@ -79,7 +87,6 @@ syn match   plsqlOperator "\<IS\\_s\+\(NOT\_s\+\)\?NULL\>"
 "
 " conditional compilation Preprocessor directives and sqlplus define sigil
 syn match plsqlPseudo "$[$a-z][a-z0-9$_#]*"
-syn match plsqlPseudo "&"
 
 syn match plsqlReserved "\<\(CREATE\|THEN\|UPDATE\|INSERT\|SET\)\>"
 syn match plsqlKeyword "\<\(REPLACE\|PACKAGE\|FUNCTION\|PROCEDURE\|TYPE|BODY\|WHEN\|MATCHED\)\>"
@@ -150,7 +157,7 @@ syn keyword plsqlKeyword DATA_SECURITY_REWRITE_LIMIT DATA_VALIDATE DATE_MODE DAY
 syn keyword plsqlKeyword DBMS_STATS DBSTR2UTF8 DBTIMEZONE DB_ROLE_CHANGE DB_UNIQUE_NAME DB_VERSION
 syn keyword plsqlKeyword DDL DEALLOCATE DEBUG DEBUGGER DECLARE DECODE DECOMPOSE DECOMPRESS DECORRELATE
 syn keyword plsqlKeyword DECR DECREMENT DECRYPT DEDUPLICATE DEFAULTS DEFAULT_COLLATION DEFAULT_PDB_HINT
-syn keyword plsqlKeyword DEFERRABLE DEFERRED DEFINE DEFINED DEFINER DEFINITION DEGREE DELAY DELEGATE
+syn keyword plsqlKeyword DEFERRABLE DEFERRED DEFINED DEFINER DEFINITION DEGREE DELAY DELEGATE
 syn keyword plsqlKeyword DELETEXML DELETE_ALL DEMAND DENORM_AV DENSE_RANK DENSE_RANKM DEPENDENT DEPTH
 syn keyword plsqlKeyword DEQUEUE DEREF DEREF_NO_REWRITE DESCENDANT DESCRIPTION DESTROY DETACHED DETERMINED
 syn keyword plsqlKeyword DETERMINES DETERMINISTIC DG_GATHER_STATS DIAGNOSTICS DICTIONARY DIGEST DIMENSION
@@ -189,7 +196,7 @@ syn keyword plsqlKeyword HELP HEXTORAW HEXTOREF HIDDEN HIDE HIERARCHICAL HIERARC
 syn keyword plsqlKeyword HIER_CAPTION HIER_CHILDREN HIER_CHILD_COUNT HIER_COLUMN HIER_CONDITION HIER_DEPTH
 syn keyword plsqlKeyword HIER_DESCRIPTION HIER_HAS_CHILDREN HIER_LAG HIER_LEAD HIER_LEVEL HIER_MEMBER_NAME
 syn keyword plsqlKeyword HIER_MEMBER_UNIQUE_NAME HIER_ORDER HIER_PARENT HIER_WINDOW HIGH HINTSET_BEGIN
-syn keyword plsqlKeyword HINTSET_END HOST HOT HOUR HOURS HTTP HWM_BROKERED HYBRID ID IDENTIFIER IDENTITY
+syn keyword plsqlKeyword HINTSET_END HOT HOUR HOURS HTTP HWM_BROKERED HYBRID ID IDENTIFIER IDENTITY
 syn keyword plsqlKeyword IDGENERATORS IDLE IDLE_TIME IGNORE IGNORE_OPTIM_EMBEDDED_HINTS IGNORE_ROW_ON_DUPKEY_INDEX
 syn keyword plsqlKeyword IGNORE_WHERE_CLAUSE ILM IMMEDIATE IMMUTABLE IMPACT IMPORT INACTIVE INACTIVE_ACCOUNT_TIME
 syn keyword plsqlKeyword INCLUDE INCLUDES INCLUDE_VERSION INCLUDING INCOMING INCR INCREMENT INCREMENTAL
@@ -342,7 +349,7 @@ syn keyword plsqlKeyword SELF SEMIJOIN SEMIJOIN_DRIVER SEMI_TO_INNER SENSITIVE S
 syn keyword plsqlKeyword SERIAL SERIALIZABLE SERVERERROR SERVICE SERVICES SERVICE_NAME_CONVERT SESSION
 syn keyword plsqlKeyword SESSIONS_PER_USER SESSIONTIMEZONE SESSIONTZNAME SESSION_CACHED_CURSORS SETS
 syn keyword plsqlKeyword SETTINGS SET_GBY_PUSHDOWN SET_TO_JOIN SEVERE SHARD SHARDED SHARDS SHARDSPACE
-syn keyword plsqlKeyword SHARD_CHUNK_ID SHARED SHARED_POOL SHARE_OF SHARING SHD$COL$MAP SHELFLIFE SHOW
+syn keyword plsqlKeyword SHARD_CHUNK_ID SHARED SHARED_POOL SHARE_OF SHARING SHD$COL$MAP SHELFLIFE 
 syn keyword plsqlKeyword SHRINK SHUTDOWN SIBLING SIBLINGS SID SIGN SIGNAL_COMPONENT SIGNAL_FUNCTION
 syn keyword plsqlKeyword SIGNATURE SIMPLE SIN SINGLE SINGLETASK SINH SITE SKEWNESS_POP SKEWNESS_SAMP
 syn keyword plsqlKeyword SKIP SKIP_EXT_OPTIMIZER SKIP_PROXY SKIP_UNQ_UNUSABLE_IDX SKIP_UNUSABLE_INDEXES
@@ -445,7 +452,7 @@ syn keyword plsqlKeyword VECTOR_READ_TRACE VECTOR_TRANSFORM VECTOR_TRANSFORM_DIM
 syn keyword plsqlKeyword VERIFIER VERIFY VERSION VERSIONING VERSIONS VERSIONS_ENDSCN VERSIONS_ENDTIME
 syn keyword plsqlKeyword VERSIONS_OPERATION VERSIONS_STARTSCN VERSIONS_STARTTIME VERSIONS_XID VIEWS
 syn keyword plsqlKeyword VIOLATION VIRTUAL VISIBILITY VISIBLE VOLUME VSIZE WAIT WALLET WEEK WEEKS WELLFORMED
-syn keyword plsqlKeyword WHENEVER WHITESPACE WIDTH_BUCKET WINDOW WITHIN WITHOUT WITH_EXPRESSION
+syn keyword plsqlKeyword WHITESPACE WIDTH_BUCKET WINDOW WITHIN WITHOUT WITH_EXPRESSION
 syn keyword plsqlKeyword WITH_PLSQL WORK WRAPPED WRAPPER WRITE XDB_FASTPATH_INSERT XID XML XML2OBJECT
 syn keyword plsqlKeyword XMLATTRIBUTES XMLCAST XMLCDATA XMLCOLATTVAL XMLCOMMENT XMLCONCAT XMLDIFF XMLELEMENT
 syn keyword plsqlKeyword XMLEXISTS XMLEXISTS2 XMLFOREST XMLINDEX_REWRITE XMLINDEX_REWRITE_IN_SELECT
@@ -468,13 +475,13 @@ syn keyword plsqlReserved MINUS MODE NOCOMPRESS NOWAIT NUMBER_BASE OCICOLL OCIDA
 syn keyword plsqlReserved OCIDURATION OCIINTERVAL OCILOBLOCATOR OCINUMBER OCIRAW OCIREF OCIREFCURSOR
 syn keyword plsqlReserved OCIROWID OCISTRING OCITYPE OF ON OPTION ORACLE ORADATA ORDER ORLANY ORLVARY
 syn keyword plsqlReserved OUT OVERRIDING PARALLEL_ENABLE PARAMETER PASCAL PCTFREE PIPE PIPELINED POLYMORPHIC
-syn keyword plsqlReserved PRAGMA PRIOR PUBLIC RAISE RECORD RELIES_ON REM RENAME RESOURCE RESULT REVOKE ROWID 
+syn keyword plsqlReserved PRAGMA PRIOR PUBLIC RAISE RECORD RELIES_ON RENAME RESOURCE RESULT REVOKE ROWID 
 syn keyword plsqlReserved SB1 SB2 
 syn match plsqlReserved "\<SELECT\>"
 syn keyword plsqlReserved SEPARATE SHARE SHORT SIZE SIZE_T SPARSE SQLCODE SQLDATA
 syn keyword plsqlReserved SQLNAME SQLSTATE STANDARD START STORED STRUCT STYLE SYNONYM TABLE TDO
 syn keyword plsqlReserved TRANSACTIONAL TRIGGER UB1 UB4 UNION UNIQUE UNSIGNED UNTRUSTED VALIST
-syn keyword plsqlReserved VALUES VARIABLE VIEW VOID WHERE WITH
+syn keyword plsqlReserved VALUES VIEW VOID WHERE WITH
 
 " PL/SQL and SQL functions.
 syn keyword plsqlFunction ABS ACOS ADD_MONTHS APPROX_COUNT APPROX_COUNT_DISTINCT APPROX_COUNT_DISTINCT_AGG
@@ -584,18 +591,18 @@ syn match plsqlEND "\<END\>"
 syn match plsqlISAS "\<\(IS\|AS\)\>"
 
 " Various types of comments.
-syntax region plsqlCommentL start="--" skip="\\$" end="$" keepend extend contains=@plsqlCommentGroup,plsqlSpaceError
+syntax region plsqlCommentL start="--" skip="\\$" end="$" keepend extend contains=@plsqlCommentGroup,plsqlSpaceError,plsqlIllegalSpace,plsqlSqlplusDefine
 if get(g:,"plsql_fold",0) == 1
     syntax region plsqlComment
         \ start="/\*" end="\*/"
         \ extend
-        \ contains=@plsqlCommentGroup,plsqlSpaceError
+        \ contains=@plsqlCommentGroup,plsqlSpaceError,plsqlIllegalSpace,plsqlSqlplusDefine
         \ fold
 else
     syntax region plsqlComment
         \ start="/\*" end="\*/"
         \ extend
-        \ contains=@plsqlCommentGroup,plsqlSpaceError
+        \ contains=@plsqlCommentGroup,plsqlSpaceError,plsqlIllegalSpace,plsqlSqlplusDefine
 endif
 syn cluster plsqlCommentAll contains=plsqlCommentL,plsqlComment
 
@@ -618,23 +625,23 @@ syn match   plsqlFloatLiteral contained "\.\(\d\+\([eE][+-]\?\d\+\)\?\)[fd]\?"
 " double quoted strings in SQL are database object names. Should be a subgroup of Normal.
 " We will use Character group as a proxy for that so color can be chosen close to Normal
 syn region plsqlQuotedIdentifier	matchgroup=plsqlOperator start=+n\?"+     end=+"+ keepend extend
-syn cluster plsqlIdentifiers contains=plsqlIdentifier,plsqlQuotedIdentifier
+syn cluster plsqlIdentifiers contains=plsqlIdentifier,plsqlQuotedIdentifier,plsqlSqlPlusDefine
 
 " quoted string literals
 if get(g:,"plsql_fold",0) == 1
-    syn region plsqlStringLiteral	matchgroup=plsqlOperator start=+n\?'+  skip=+''+    end=+'+ fold keepend extend
-    syn region plsqlStringLiteral	matchgroup=plsqlOperator start=+n\?q'\z([^[(<{]\)+    end=+\z1'+ fold keepend extend
-    syn region plsqlStringLiteral	matchgroup=plsqlOperator start=+n\?q'<+   end=+>'+ fold keepend extend
-    syn region plsqlStringLiteral	matchgroup=plsqlOperator start=+n\?q'{+   end=+}'+ fold keepend extend
-    syn region plsqlStringLiteral	matchgroup=plsqlOperator start=+n\?q'(+   end=+)'+ fold keepend extend
-    syn region plsqlStringLiteral	matchgroup=plsqlOperator start=+n\?q'\[+  end=+]'+ fold keepend extend
+    syn region plsqlStringLiteral	matchgroup=plsqlOperator start=+n\?'+  skip=+''+    end=+'+ contains=plsqlSqlplusDefine fold keepend extend
+    syn region plsqlStringLiteral	matchgroup=plsqlOperator start=+n\?q'\z([^[(<{]\)+    end=+\z1'+ contains=plsqlSqlplusDefine fold keepend extend
+    syn region plsqlStringLiteral	matchgroup=plsqlOperator start=+n\?q'<+   end=+>'+ contains=plsqlSqlplusDefine fold keepend extend
+    syn region plsqlStringLiteral	matchgroup=plsqlOperator start=+n\?q'{+   end=+}'+ contains=plsqlSqlplusDefine fold keepend extend
+    syn region plsqlStringLiteral	matchgroup=plsqlOperator start=+n\?q'(+   end=+)'+ contains=plsqlSqlplusDefine fold keepend extend
+    syn region plsqlStringLiteral	matchgroup=plsqlOperator start=+n\?q'\[+  end=+]'+ contains=plsqlSqlplusDefine fold keepend extend
 else
-    syn region plsqlStringLiteral	matchgroup=plsqlOperator start=+n\?'+  skip=+''+    end=+'+ 
-    syn region plsqlStringLiteral	matchgroup=plsqlOperator start=+n\?q'\z([^[(<{]\)+    end=+\z1'+ 
-    syn region plsqlStringLiteral	matchgroup=plsqlOperator start=+n\?q'<+   end=+>'+ 
-    syn region plsqlStringLiteral	matchgroup=plsqlOperator start=+n\?q'{+   end=+}'+ 
-    syn region plsqlStringLiteral	matchgroup=plsqlOperator start=+n\?q'(+   end=+)'+ 
-    syn region plsqlStringLiteral	matchgroup=plsqlOperator start=+n\?q'\[+  end=+]'+ 
+    syn region plsqlStringLiteral	matchgroup=plsqlOperator start=+n\?'+  skip=+''+    end=+'+ contains=plsqlSqlplusDefine
+    syn region plsqlStringLiteral	matchgroup=plsqlOperator start=+n\?q'\z([^[(<{]\)+    end=+\z1'+ contains=plsqlSqlplusDefine
+    syn region plsqlStringLiteral	matchgroup=plsqlOperator start=+n\?q'<+   end=+>'+ contains=plsqlSqlplusDefine
+    syn region plsqlStringLiteral	matchgroup=plsqlOperator start=+n\?q'{+   end=+}'+ contains=plsqlSqlplusDefine
+    syn region plsqlStringLiteral	matchgroup=plsqlOperator start=+n\?q'(+   end=+)'+ contains=plsqlSqlplusDefine
+    syn region plsqlStringLiteral	matchgroup=plsqlOperator start=+n\?q'\[+  end=+]'+ contains=plsqlSqlplusDefine
 endif
 
 syn keyword plsqlBooleanLiteral TRUE FALSE 
@@ -681,6 +688,10 @@ syn match plsqlConditional "\<\(ELSIF\|IF\|ELSE\)\>"
 syn match plsqlConditional "\<END\>\_s\+\<IF\>"
 syn match plsqlCase "\<END\>\_s\+\<CASE\>"
 syn match plsqlCase "\<CASE\>"
+
+syn region plsqlSqlPlusCommentL start="^\(REM\)\( \|$\)" skip="\\$" end="$" keepend extend contains=@plsqlCommentGroup,plsqlSpaceError,plsqlIllegalSpace
+syn region plsqlSqlPlusCommand  start="^\(SET\|DEFINE\|PROMPT\|ACCEPT\|EXEC\|HOST\|SHOW\|VAR\|VARIABLE\|COL\|WHENEVER\|TIMING\)\( \|$\)" skip="\\$" end="$" keepend extend
+syn region plsqlSqlPlusRunFile  start="^\(@\|@@\)" skip="\\$" end="$" keepend extend
 
 if get(g:,"plsql_fold",0) == 1
     setlocal foldmethod=syntax
@@ -826,6 +837,13 @@ hi def link plsqlComment2String     String
 hi def link plsqlTrigger	        Function
 hi def link plsqlTypeAttribute      StorageClass
 hi def link plsqlTodo		        Todo
+
+hi def link plsqlIllegalSpace       Error
+hi def link plsqlSqlPlusDefine      PreProc
+hi def link plsqlSqlPlusCommand     PreProc
+hi def link plsqlSqlPlusRunFile     Include
+hi def link plsqlSqlPlusCommentL    Comment
+
 " to be able to change them after loading, need override whether defined or not
 if get(g:,"plsql_legacy_sql_keywords",0) == 1
     hi link plsqlSQLKeyword         Function

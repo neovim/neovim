@@ -1172,7 +1172,7 @@ g;			Go to [count] older position in change list.
 			(not a motion command)
 
 							*g,* *E663*
-g,			Go to [count] newer cursor position in change list.
+g,			Go to [count] newer position in change list.
 			Just like |g;| but in the opposite direction.
 			(not a motion command)
 
