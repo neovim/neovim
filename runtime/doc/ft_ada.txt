@@ -489,7 +489,7 @@ backup.vim
 	http://www.vim.org/scripts/script.php?script_id=1537
 	Keeps as many backups as you like so you don't have to.
 
-rainbow_parenthsis.vim
+rainbow_parenthesis.vim
 	http://www.vim.org/scripts/script.php?script_id=1561
 	Very helpful since Ada uses only '(' and ')'.
 

@@ -575,7 +575,7 @@ bool path_has_exp_wildcard(const char_u *p)
 /// @param path     The path to search.
 /// @param flags    Flags for regexp expansion.
 ///   - EW_ICASE: Ignore case.
-///   - EW_NOERROR: Silence error messeges.
+///   - EW_NOERROR: Silence error messages.
 ///   - EW_NOTWILD: Add matches literally.
 /// @returns the number of matches found.
 static size_t path_expand(garray_T *gap, const char_u *path, int flags)

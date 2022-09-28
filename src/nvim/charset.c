@@ -650,7 +650,7 @@ static inline unsigned nr2hex(unsigned n)
 ///
 /// @param b
 ///
-/// @reeturn Number of display cells.
+/// @return Number of display cells.
 int byte2cells(int b)
   FUNC_ATTR_PURE
 {

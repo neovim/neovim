@@ -194,7 +194,7 @@ end)
 describe('UI can set terminal option', function()
   local screen
   before_each(function()
-    -- by default we implicity "--cmd 'set bg=light'" which ruins everything
+    -- by default we implicitly "--cmd 'set bg=light'" which ruins everything
     clear{args_rm={'--cmd'}}
     screen = Screen.new(20,5)
   end)

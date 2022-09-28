@@ -569,7 +569,7 @@ describe('float window', function()
     end)
   end)
 
-  describe('with mulitple tabpages but only one listed buffer,', function()
+  describe('with multiple tabpages but only one listed buffer,', function()
     local float_opts = {relative = 'editor', row = 1, col = 1, width = 1, height = 1}
     local unlisted_buf, old_buf, old_win
     before_each(function()
@@ -2761,7 +2761,7 @@ describe('float window', function()
             }, "NW", 2, 1, 32, true }
         }}
       else
-        -- note: appears misalinged due to cursor
+        -- note: appears misaligned due to cursor
         screen:expect{grid=[[
           ^example text that is wider than the window   |
                                           {1:some info!  } |

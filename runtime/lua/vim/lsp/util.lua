@@ -476,7 +476,7 @@ function M.apply_text_edits(text_edits, bufnr, offset_encoding)
         -- If the replacement is over the end of a line (i.e. e.end_col is out of bounds and the
         -- replacement text ends with a newline We can likely assume that the replacement is assumed
         -- to be meant to replace the newline with another newline and we need to make sure this
-        -- doens't add an extra empty line. E.g. when the last line to be replaced contains a '\r'
+        -- doesn't add an extra empty line. E.g. when the last line to be replaced contains a '\r'
         -- in the file some servers (clangd on windows) will include that character in the line
         -- while nvim_buf_set_text doesn't count it as part of the line.
         if

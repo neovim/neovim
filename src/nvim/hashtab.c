@@ -265,7 +265,7 @@ void hash_unlock(hashtab_T *ht)
   hash_may_resize(ht, 0);
 }
 
-/// Resize hastable (new size can be given or automatically computed).
+/// Resize hashtable (new size can be given or automatically computed).
 ///
 /// @param minitems Minimum number of items the new table should hold.
 ///                 If zero, new size will depend on currently used items:

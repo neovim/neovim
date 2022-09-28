@@ -220,7 +220,7 @@ local setup_replace_cmd = [[
   end
 
   -- ":<range>Replace <pat1> <pat2>"
-  -- Replaces all occurences of <pat1> in <range> with <pat2>
+  -- Replaces all occurrences of <pat1> in <range> with <pat2>
   vim.api.nvim_create_user_command(
     'Replace',
     replace,

@@ -999,7 +999,7 @@ int copy_indent(int size, char *src)
 /// "second_line_indent": indent for after ^^D in Insert mode or if flag
 ///                       OPENLINE_COM_LIST
 /// "did_do_comment" is set to true when intentionally putting the comment
-/// leader in fromt of the new line.
+/// leader in front of the new line.
 ///
 /// @param dir  FORWARD or BACKWARD
 ///

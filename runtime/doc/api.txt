@@ -2573,7 +2573,7 @@ nvim_buf_set_extmark({buffer}, {ns_id}, {line}, {col}, {*opts})
                   • virt_text : virtual text to link to this mark. A list of
                     [text, highlight] tuples, each representing a text chunk
                     with specified highlight. `highlight` element can either
-                    be a a single highlight group, or an array of multiple
+                    be a single highlight group, or an array of multiple
                     highlight groups that will be stacked (highest priority
                     last). A highlight group can be supplied either as a
                     string or as an integer, the latter which can be obtained
@@ -2891,7 +2891,7 @@ nvim_win_set_hl_ns({window}, {ns_id})                   *nvim_win_set_hl_ns()*
     Set highlight namespace for a window. This will use highlights defined in
     this namespace, but fall back to global highlights (ns=0) when missing.
 
-    This takes predecence over the 'winhighlight' option.
+    This takes precedence over the 'winhighlight' option.
 
     Parameters: ~
         {ns_id}  the namespace to use

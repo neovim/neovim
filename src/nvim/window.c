@@ -737,7 +737,7 @@ void win_set_minimal_style(win_T *wp)
   }
 
   // TODO(bfredl): this could use a highlight namespace directly,
-  // and avoid pecularities around window options
+  // and avoid peculiarities around window options
   char_u *old = (char_u *)wp->w_p_winhl;
   wp->w_p_winhl = ((*old == NUL)
                    ? xstrdup("EndOfBuffer:")

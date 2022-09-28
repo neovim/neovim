@@ -1503,7 +1503,7 @@ bool current_quote(oparg_T *oap, long count, bool include, int quotechar)
   bool inside_quotes = false;           // Looks like "i'" done before
   bool selected_quote = false;          // Has quote inside selection
   int i;
-  bool restore_vis_bef = false;         // resotre VIsual on abort
+  bool restore_vis_bef = false;         // restore VIsual on abort
 
   // When 'selection' is "exclusive" move the cursor to where it would be
   // with 'selection' "inclusive", so that the logic is the same for both.

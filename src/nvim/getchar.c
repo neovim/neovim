@@ -2104,7 +2104,7 @@ static int handle_mapping(int *keylenp, bool *timedout, int *mapdepth)
     } else {
       keylen = 0;
     }
-    if (keylen == 0) {  // no simplication has been done
+    if (keylen == 0) {  // no simplification has been done
       // If there was no mapping at all use the character from the
       // typeahead buffer right here.
       if (mp == NULL) {

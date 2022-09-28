@@ -333,7 +333,7 @@ describe('lua: nvim_buf_attach on_bytes', function()
       start_txt = meths.buf_get_lines(0, 0, -1, true)
     end
     local shadowbytes = table.concat(start_txt, '\n') .. '\n'
-    -- TODO: while we are brewing the real strong coffe,
+    -- TODO: while we are brewing the real strong coffee,
     -- verify should check buf_get_offset after every check_events
     if verify then
       local len = meths.buf_get_offset(0, meths.buf_line_count(0))

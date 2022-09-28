@@ -762,7 +762,7 @@ describe('Buffer highlighting', function()
       local s1 = {{'Köttbullar', 'Comment'}, {'Kräuterbutter'}}
       local s2 = {{'こんにちは', 'Comment'}}
 
-      -- TODO: only a virtual text from the same ns curretly overrides
+      -- TODO: only a virtual text from the same ns currently overrides
       -- an existing virtual text. We might add a prioritation system.
       set_virtual_text(id1, 0, s1, {})
       eq({{1, 0, 0, {

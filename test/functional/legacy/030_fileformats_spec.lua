@@ -255,7 +255,7 @@ describe('fileformats option', function()
 
     -- Assert buffer contents.  This has to be done manually as
     -- helpers.expect() calls helpers.dedent() which messes up the white space
-    -- and carrige returns.
+    -- and carriage returns.
     eq(
       'unix\n'..
       'unix\n'..

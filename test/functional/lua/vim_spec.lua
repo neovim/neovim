@@ -905,7 +905,7 @@ describe('lua stdlib', function()
     ]]))
 
     -- vim.empty_dict() gives new value each time
-    -- equality is not overriden (still by ref)
+    -- equality is not overridden (still by ref)
     -- non-empty table uses the usual heuristics (ignores the tag)
     eq({false, {"foo"}, {namey="bar"}}, exec_lua([[
       local aa = vim.empty_dict()
