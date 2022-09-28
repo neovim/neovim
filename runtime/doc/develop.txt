@@ -151,6 +151,23 @@ DOCUMENTATION						*dev-doc*
       /// @param dirname The path fragment before `pend`
 <
 
+Documentation format ~
+
+For Nvim-owned docs, use the following strict subset of "vimdoc" to ensure
+the help doc renders nicely in other formats (such as HTML:
+https://neovim.io/doc/user ).
+
+Strict "vimdoc" subset:
+
+- Use lists (like this!) prefixed with "-", "*", or "•", for adjacent lines
+  that you don't want auto-wrapped. Lists are always rendered with "flow"
+  (soft-wrapped) layout instead of preformatted (hard-wrapped) layout common
+  in legacy :help docs.
+- Separate blocks (paragraphs) of content by a blank line(s).
+- Do not use indentation in random places—that prevents the page from using
+  "flow" layout. If you need a preformatted section, put it in
+  a |help-codeblock| starting with ">".
+
 C docstrings ~
 
 Nvim API documentation lives in the source code, as docstrings (Doxygen

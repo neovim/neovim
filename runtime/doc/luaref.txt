@@ -55,7 +55,6 @@ Lua means "moon" in Portuguese and is pronounced LOO-ah.
 
 ==============================================================================
 2  THE LANGUAGE                                                *luaref-language*
-==============================================================================
 
 This section describes the lexis, the syntax, and the semantics of Lua. In
 other words, this section describes which tokens are valid, how they can be
@@ -450,21 +449,22 @@ through an arithmetic progression. It has the following syntax:
 <
 The `block` is repeated for `name` starting at the value of the first `exp`, until
 it passes the second `exp` by steps of the third `exp`. More precisely,
-a `for` statement like
+a `for` statement like >
 
-       `for var =`  `e1, e2, e3`  `do`  `block`  `end`
+       for var =  e1, e2, e3  do  block  end
 
-is equivalent to the code:
+< is equivalent to the code: >
 
-       `do`
-         `local`  `var, limit, step`  `= tonumber(e1), tonumber(e2), tonumber(e3)`
-         `if not (`  `var`  `and`  `limit`  `and`  `step`  `) then error() end`
-         `while (`  `step`  `>0 and`  `var`  `<=`  `limit`  `)`
-                 `or (`  `step`  `<=0 and`  `var`  `>=`  `limit`  `) do`
-            `block`
-            `var`  `=`  `var`  `+`  `step`
-         `end`
-       `end`
+       do
+         local  var, limit, step  = tonumber(e1), tonumber(e2), tonumber(e3)
+         if not (  var  and  limit  and  step  ) then error() end
+         while (  step  >0 and  var  <=  limit  )
+                 or (  step  <=0 and  var  >=  limit  ) do
+            block
+            var  =  var  +  step
+         end
+       end
+<
 
 Note the following:
 
@@ -490,18 +490,18 @@ A `for` statement like
 
        `for`  `var1, ..., varn`  `in`  `explist`  `do`  `block`  `end`
 
-is equivalent to the code:
+is equivalent to the code: >
 
-       `do`
-         `local`  `f, s, var`  `=`  `explist`
-         `while true do`
-             `local`  `var1, ..., varn`  `=`  `f(s, var)`
-             `var`  `=`  `var1`
-             `if`  `var`  `== nil then break end`
-             `block`
-         `end`
-       `end`
-
+       do
+         local  f, s, var  =  explist
+         while true do
+             local  var1, ..., varn  =  f(s, var)
+             var  =  var1
+             if  var  == nil then break end
+             block
+         end
+       end
+<
 Note the following:
 
  - `explist` is evaluated only once. Its results are an iterator function,
@@ -1871,25 +1871,25 @@ lua_gc                                                                *lua_gc()*
         This function performs several tasks, according to the value of the
         parameter `what`:
 
-        `LUA_GCSTOP`        stops the garbage collector.
-        `LUA_GCRESTART`     restarts the garbage collector.
-        `LUA_GCCOLLECT`     performs a full garbage-collection cycle.
-        `LUA_GCCOUNT`       returns the current amount of memory (in Kbytes) in
+        - `LUA_GCSTOP`      stops the garbage collector.
+        - `LUA_GCRESTART`   restarts the garbage collector.
+        - `LUA_GCCOLLECT`   performs a full garbage-collection cycle.
+        - `LUA_GCCOUNT`     returns the current amount of memory (in Kbytes) in
                           use by Lua.
-        `LUA_GCCOUNTB`      returns the remainder of dividing the current
+        - `LUA_GCCOUNTB`    returns the remainder of dividing the current
                           amount of bytes of memory in use by Lua by 1024.
-        `LUA_GCSTEP`        performs an incremental step of garbage collection.
+        - `LUA_GCSTEP`      performs an incremental step of garbage collection.
                           The step "size" is controlled by `data` (larger
                           values mean more steps) in a non-specified way. If
                           you want to control the step size you must
                           experimentally tune the value of `data`. The
                           function returns 1 if the step finished a
                           garbage-collection cycle.
-        `LUA_GCSETPAUSE`    sets `data` /100 as the new value for the
+        - `LUA_GCSETPAUSE`  sets `data` /100 as the new value for the
                           `pause` of the collector (see |luaref-langGC|).
                           The function returns the previous value of the
                           pause.
-        `LUA_GCSETSTEPMUL`  sets `data` /100 as the new value for the
+        - `LUA_GCSETSTEPMUL`sets `data` /100 as the new value for the
                           `step` `multiplier`  of the collector (see
                           |luaref-langGC|). The function returns the
                           previous value of the step multiplier.
@@ -2717,20 +2717,22 @@ need "inside information" from the interpreter.
 
 lua_Debug                                                          *lua_Debug()*
 
-    `typedef struct lua_Debug {`
-        `int event;`
-        `const char *name;           /* (n) */`
-        `const char *namewhat;       /* (n) */`
-        `const char *what;           /* (S) */`
-        `const char *source;         /* (S) */`
-        `int currentline;            /* (l) */`
-        `int nups;                   /* (u) number of upvalues */`
-        `int linedefined;            /* (S) */`
-        `int lastlinedefined;        /* (S) */`
-        `char short_src[LUA_IDSIZE]; /* (S) */`
-        `/* private part */`
-        `other fields`
-    `} lua_Debug;`
+>
+    typedef struct lua_Debug {
+        int event;
+        const char *name;           /* (n) */
+        const char *namewhat;       /* (n) */
+        const char *what;           /* (S) */
+        const char *source;         /* (S) */
+        int currentline;            /* (l) */
+        int nups;                   /* (u) number of upvalues */
+        int linedefined;            /* (S) */
+        int lastlinedefined;        /* (S) */
+        char short_src[LUA_IDSIZE]; /* (S) */
+        /* private part */
+        other fields
+    } lua_Debug;
+<
 
 A structure used to carry different pieces of information about an active
 function. `lua_getstack` (see |lua_getstack()|) fills only the private part
@@ -2739,28 +2741,28 @@ useful information, call `lua_getinfo` (see |lua_getinfo()|).
 
 The fields of `lua_Debug`  have the following meaning:
 
-    `source`           If the function was defined in a string, then `source` is
+- `source`             If the function was defined in a string, then `source` is
                      that string. If the function was defined in a file, then
                      `source` starts with a `@` followed by the file name.
-    `short_src`        a "printable" version of `source`, to be used in error messages.
-    `linedefined`      the line number where the definition of the function starts.
-    `lastlinedefined`  the line number where the definition of the function ends.
-    `what`             the string `"Lua"` if the function is a Lua function,
+- `short_src`          a "printable" version of `source`, to be used in error messages.
+- `linedefined`        the line number where the definition of the function starts.
+- `lastlinedefined`    the line number where the definition of the function ends.
+- `what`               the string `"Lua"` if the function is a Lua function,
                      `"C"` if it is a C function, `"main"` if it is the main
                      part of a chunk, and `"tail"` if it was a function that
                      did a tail call. In the latter case, Lua has no other
                      information about the function.
-    `currentline`      the current line where the given function is executing.
+- `currentline`        the current line where the given function is executing.
                      When no line information is available, `currentline` is
                      set to -1.
-    `name`             a reasonable name for the given function. Because
+- `name`               a reasonable name for the given function. Because
                      functions in Lua are first-class values, they do not have
                      a fixed name: some functions may be the value of multiple
                      global variables, while others may be stored only in a
                      table field. The `lua_getinfo` function checks how the
                      function was called to find a suitable name. If it cannot
                      find a name, then `name` is set to `NULL`.
-    `namewhat`         explains the `name` field. The value of `namewhat` can be
+- `namewhat`           explains the `name` field. The value of `namewhat` can be
                      `"global"`, `"local"`, `"method"`, `"field"`,
                      `"upvalue"`, or `""` (the empty string), according to how
                      the function was called. (Lua uses the empty string when

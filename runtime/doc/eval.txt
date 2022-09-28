@@ -4119,7 +4119,7 @@ This example sorts lines with a specific compare function. >
 
 As a one-liner: >
   :call setline(1, sort(getline(1, '$'), function("Strcmp")))
-
+<
 
 scanf() replacement ~
 							*sscanf*

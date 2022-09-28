@@ -907,8 +907,8 @@ function M.convert_signature_help_to_markdown_lines(signature_help, ft, triggers
     return
   end
   --The active signature. If omitted or the value lies outside the range of
-  --`signatures` the value defaults to zero or is ignored if `signatures.length
-  --=== 0`. Whenever possible implementors should make an active decision about
+  --`signatures` the value defaults to zero or is ignored if `signatures.length == 0`.
+  --Whenever possible implementors should make an active decision about
   --the active signature and shouldn't rely on a default value.
   local contents = {}
   local active_hl

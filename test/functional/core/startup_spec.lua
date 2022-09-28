@@ -354,7 +354,9 @@ describe('startup', function()
 
   local function pack_clear(cmd)
     -- add packages after config dir in rtp but before config/after
-    clear{args={'--cmd', 'set packpath=test/functional/fixtures', '--cmd', 'let paths=split(&rtp, ",")', '--cmd', 'let &rtp = paths[0]..",test/functional/fixtures,test/functional/fixtures/middle,"..join(paths[1:],",")', '--cmd', cmd}, env={XDG_CONFIG_HOME='test/functional/fixtures/'}}
+    clear{args={'--cmd', 'set packpath=test/functional/fixtures', '--cmd', 'let paths=split(&rtp, ",")', '--cmd', 'let &rtp = paths[0]..",test/functional/fixtures,test/functional/fixtures/middle,"..join(paths[1:],",")', '--cmd', cmd}, env={XDG_CONFIG_HOME='test/functional/fixtures/'},
+          args_rm={'runtimepath'},
+    }
   end
 
 

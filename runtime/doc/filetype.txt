@@ -178,7 +178,7 @@ If a file type that you want to use is not detected yet, there are a few ways
 to add it.  In any way, it's better not to modify the $VIMRUNTIME/filetype.lua
 or $VIMRUNTIME/filetype.vim files.  They will be overwritten when installing a
 new version of Nvim. The following explains the legacy Vim mechanism (enabled
-if |do_legacy_filetype| is set). For Nvim's default mechanism, see
+if |g:do_legacy_filetype| is set). For Nvim's default mechanism, see
 |vim.filetype.add()|.
 
 A. If you want to overrule all default file type checks.

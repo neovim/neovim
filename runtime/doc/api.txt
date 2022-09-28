@@ -83,6 +83,7 @@ and |rpcnotify()|:
     let nvim = jobstart(['nvim', '--embed'], {'rpc': v:true})
     echo rpcrequest(nvim, 'nvim_eval', '"Hello " . "world!"')
     call jobstop(nvim)
+<
 
 ==============================================================================
 API Definitions                                         *api-definitions*
@@ -92,7 +93,7 @@ The Nvim C API defines custom types for all function parameters. Some are just
 typedefs around C99 standard types, others are Nvim-defined data structures.
 
 Basic types ~
-
+>
   API Type                              C type
   ------------------------------------------------------------------------
   Nil
@@ -103,7 +104,7 @@ Basic types ~
   Array
   Dictionary (msgpack: map)
   Object
-
+<
   Note: empty Array is accepted as a valid argument for Dictionary parameter.
 
 Special types (msgpack EXT) ~
@@ -115,13 +116,13 @@ Special types (msgpack EXT) ~
   The EXT object data is the (integer) object handle. The EXT type codes given
   in the |api-metadata| `types` key are stable: they will not change and are
   thus forward-compatible.
-
+>
   EXT Type      C type                                  Data
   ------------------------------------------------------------------------
   Buffer        enum value kObjectTypeBuffer            |bufnr()|
   Window        enum value kObjectTypeWindow            |window-ID|
   Tabpage       enum value kObjectTypeTabpage           internal handle
-
+<
 
                                                         *api-indexing*
 Most of the API uses 0-based indices, and ranges are end-exclusive. For the
@@ -130,19 +131,19 @@ end of a range, -1 denotes the last line/column.
 Exception: the following API functions use "mark-like" indexing (1-based
 lines, 0-based columns):
 
-    |nvim_get_mark()|
-    |nvim_buf_get_mark()|
-    |nvim_buf_set_mark()|
-    |nvim_win_get_cursor()|
-    |nvim_win_set_cursor()|
+- |nvim_get_mark()|
+- |nvim_buf_get_mark()|
+- |nvim_buf_set_mark()|
+- |nvim_win_get_cursor()|
+- |nvim_win_set_cursor()|
 
 Exception: the following API functions use |extmarks| indexing (0-based
 indices, end-inclusive):
 
-    |nvim_buf_del_extmark()|
-    |nvim_buf_get_extmark_by_id()|
-    |nvim_buf_get_extmarks()|
-    |nvim_buf_set_extmark()|
+- |nvim_buf_del_extmark()|
+- |nvim_buf_get_extmark_by_id()|
+- |nvim_buf_get_extmarks()|
+- |nvim_buf_set_extmark()|
 
                                                         *api-fast*
 Most API functions are "deferred": they are queued on the main loop and
@@ -162,19 +163,19 @@ and return values.
 
 Nvim exposes its API metadata as a Dictionary with these items:
 
-version                 Nvim version, API level/compatibility
-version.api_level       API version integer *api-level*
-version.api_compatible  API is backwards-compatible with this level
-version.api_prerelease  Declares the API as unstable/unreleased >
-                        (version.api_prerelease && fn.since == version.api_level)
-functions               API function signatures, containing |api-types| info
-                        describing the return value and parameters.
-ui_events               |UI| event signatures
-ui_options              Supported |ui-option|s
-{fn}.since              API level where function {fn} was introduced
-{fn}.deprecated_since   API level where function {fn} was deprecated
-types                   Custom handle types defined by Nvim
-error_types             Possible error types returned by API functions
+- version                 Nvim version, API level/compatibility
+- version.api_level       API version integer *api-level*
+- version.api_compatible  API is backwards-compatible with this level
+- version.api_prerelease  Declares the API as unstable/unreleased
+                          `(version.api_prerelease && fn.since == version.api_level)`
+- functions               API function signatures, containing |api-types| info
+                          describing the return value and parameters.
+- ui_events               |UI| event signatures
+- ui_options              Supported |ui-option|s
+- {fn}.since              API level where function {fn} was introduced
+- {fn}.deprecated_since   API level where function {fn} was deprecated
+- types                   Custom handle types defined by Nvim
+- error_types             Possible error types returned by API functions
 
 About the `functions` map:
 
