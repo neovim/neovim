@@ -502,7 +502,7 @@ if(FEAT_TUI)
   include_directories(SYSTEM ${LIBTERMKEY_INCLUDE_DIRS})
 endif()
 
-find_package(LIBVTERM 0.1 REQUIRED)
+find_package(LIBVTERM 0.3 REQUIRED)
 include_directories(SYSTEM ${LIBVTERM_INCLUDE_DIRS})
 
 option(CLANG_ASAN_UBSAN "Enable Clang address & undefined behavior sanitizer for nvim binary." OFF)
