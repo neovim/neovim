@@ -19,6 +19,10 @@ describe("'spell'", function()
       [0] = {bold=true, foreground=Screen.colors.Blue},
       [1] = {special = Screen.colors.Red, undercurl = true},
       [2] = {special = Screen.colors.Blue1, undercurl = true},
+      [3] = {foreground = tonumber('0x6a0dad')},
+      [4] = {foreground = Screen.colors.Magenta},
+      [5] = {bold = true, foreground = Screen.colors.SeaGreen},
+      [6] = {foreground = Screen.colors.Red},
     })
   end)
 
@@ -67,5 +71,95 @@ describe("'spell'", function()
     ^                                                                                |
                                                                                     |
       ]])
+  end)
+
+  it('"noplainbuffer" and syntax #20385', function()
+    command('set filetype=c')
+    command('syntax on')
+    command('set spell')
+    insert([[
+      #include <stdbool.h>
+      bool func(void);]])
+    screen:expect([[
+      {3:#include }{4:<stdbool.h>}                                                            |
+      {5:bool} func({5:void})^;                                                                |
+      {0:~                                                                               }|
+      {0:~                                                                               }|
+      {0:~                                                                               }|
+      {0:~                                                                               }|
+      {0:~                                                                               }|
+                                                                                      |
+    ]])
+    feed('[s')
+    screen:expect([[
+      {3:#include }{4:<stdbool.h>}                                                            |
+      {5:bool} func({5:void})^;                                                                |
+      {0:~                                                                               }|
+      {0:~                                                                               }|
+      {0:~                                                                               }|
+      {0:~                                                                               }|
+      {0:~                                                                               }|
+      {6:search hit TOP, continuing at BOTTOM}                                            |
+    ]])
+    -- "noplainbuffer" shouldn't change spellchecking behavior with syntax enabled
+    command('set spelloptions+=noplainbuffer')
+    screen:expect_unchanged()
+    feed(']s')
+    screen:expect([[
+      {3:#include }{4:<stdbool.h>}                                                            |
+      {5:bool} func({5:void})^;                                                                |
+      {0:~                                                                               }|
+      {0:~                                                                               }|
+      {0:~                                                                               }|
+      {0:~                                                                               }|
+      {0:~                                                                               }|
+      {6:search hit BOTTOM, continuing at TOP}                                            |
+    ]])
+    -- no spellchecking with "noplainbuffer" and syntax disabled
+    command('syntax off')
+    screen:expect([[
+      #include <stdbool.h>                                                            |
+      bool func(void)^;                                                                |
+      {0:~                                                                               }|
+      {0:~                                                                               }|
+      {0:~                                                                               }|
+      {0:~                                                                               }|
+      {0:~                                                                               }|
+      {6:search hit BOTTOM, continuing at TOP}                                            |
+    ]])
+    feed('[s')
+    screen:expect([[
+      #include <stdbool.h>                                                            |
+      bool func(void)^;                                                                |
+      {0:~                                                                               }|
+      {0:~                                                                               }|
+      {0:~                                                                               }|
+      {0:~                                                                               }|
+      {0:~                                                                               }|
+      {6:search hit TOP, continuing at BOTTOM}                                            |
+    ]])
+    -- everything is spellchecked without "noplainbuffer" with syntax disabled
+    command('set spelloptions&')
+    screen:expect([[
+      #include <{1:stdbool}.h>                                                            |
+      {1:bool} {1:func}(void)^;                                                                |
+      {0:~                                                                               }|
+      {0:~                                                                               }|
+      {0:~                                                                               }|
+      {0:~                                                                               }|
+      {0:~                                                                               }|
+      {6:search hit TOP, continuing at BOTTOM}                                            |
+    ]])
+    feed(']s')
+    screen:expect([[
+      #include <{1:^stdbool}.h>                                                            |
+      {1:bool} {1:func}(void);                                                                |
+      {0:~                                                                               }|
+      {0:~                                                                               }|
+      {0:~                                                                               }|
+      {0:~                                                                               }|
+      {0:~                                                                               }|
+      {6:search hit BOTTOM, continuing at TOP}                                            |
+    ]])
   end)
 end)
