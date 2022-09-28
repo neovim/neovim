@@ -1344,14 +1344,14 @@ size_t spell_move_to(win_T *wp, int dir, bool allwords, bool curline, hlf_T *att
                             : p - buf) > wp->w_cursor.col)) {
             col = (colnr_T)(p - buf);
 
-            bool can_spell = (wp->w_s->b_p_spo_flags & SPO_NPBUFFER) == 0;
+            bool can_spell = decor_spell_nav_col(wp, lnum, &decor_lnum, col, &decor_error);
 
             if (!can_spell) {
-              can_spell = decor_spell_nav_col(wp, lnum, &decor_lnum, col, &decor_error);
-            }
-
-            if (!can_spell && has_syntax) {
-              (void)syn_get_id(wp, lnum, col, false, &can_spell, false);
+              if (has_syntax) {
+                (void)syn_get_id(wp, lnum, col, false, &can_spell, false);
+              } else {
+                can_spell = (wp->w_s->b_p_spo_flags & SPO_NPBUFFER) == 0;
+              }
             }
 
             if (!can_spell) {
