@@ -86,11 +86,28 @@ local function validate_commit(commit_message)
       vim.inspect(allowed_types))
   end
 
-  -- Check if scope is empty
+  -- Check if scope is appropriate
   if before_colon:match("%(") then
     local scope = vim.trim(before_colon:match("%((.*)%)"))
+
     if scope == '' then
-      return [[Scope can't be empty.]]
+      return [[Scope can't be empty]]
+    end
+
+    if vim.startswith(scope, "nvim_") then
+        return [[Scope should be "api" instead of "nvim_..."]]
+    end
+
+    local alternative_scope = {
+      ['filetype.vim'] = 'filetype',
+      ['filetype.lua'] = 'filetype',
+      ['tree-sitter'] = 'treesitter',
+      ['ts'] = 'treesitter',
+      ['hl'] = 'highlight',
+    }
+
+    if alternative_scope[scope] then
+      return ('Scope should be "%s" instead of "%s"'):format(alternative_scope[scope], scope)
     end
   end
 
