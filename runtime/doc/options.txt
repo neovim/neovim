@@ -1340,7 +1340,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	used.  The command-line will cover the last line of the screen when
 	shown.
 
-	WARNING: `cmdheight=0` is considered experimental. Except some
+	WARNING: `cmdheight=0` is considered experimental. Expect some
 	unwanted behaviour. Some 'shortmess' flags and similar
 	mechanism might fail to take effect, causing unwanted hit-enter
 	prompts.  Some informative messages, both from Nvim itself and
