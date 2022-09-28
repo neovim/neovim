@@ -63,7 +63,7 @@ end)()
 ---@param s string String to split
 ---@param sep string Separator or pattern
 ---@param plain boolean If `true` use `sep` literally (passed to string.find)
----@return fun():string Iterator over the split components
+---@return fun():string (function) Iterator over the split components
 function vim.gsplit(s, sep, plain)
   vim.validate({ s = { s, 's' }, sep = { sep, 's' }, plain = { plain, 'b', true } })
 
@@ -112,7 +112,7 @@ end
 ---
 ---@param s string String to split
 ---@param sep string Separator or pattern
----@param kwargs {plain: boolean, trimempty: boolean}|nil Keyword arguments:
+---@param kwargs? {plain: boolean, trimempty: boolean} (table|nil) Keyword arguments:
 ---       - plain: (boolean) If `true` use `sep` literally (passed to string.find)
 ---       - trimempty: (boolean) If `true` remove empty items from the front
 ---         and back of the list
@@ -159,9 +159,9 @@ end
 ---
 ---@see From https://github.com/premake/premake-core/blob/master/src/base/table.lua
 ---
----@param t table<T, any> Table
+---@param t table<T, any> (table) Table
 ---@generic T: table
----@return T[] List of keys
+---@return T[] (list) List of keys
 function vim.tbl_keys(t)
   assert(type(t) == 'table', string.format('Expected table, got %s', type(t)))
 
@@ -176,8 +176,8 @@ end
 --- However, the order of the return table of values is not guaranteed.
 ---
 ---@generic T
----@param t table<any, T> Table
----@return T[] List of values
+---@param t table<any, T> (table) Table
+---@return T[] (list) List of values
 function vim.tbl_values(t)
   assert(type(t) == 'table', string.format('Expected table, got %s', type(t)))
 
@@ -191,8 +191,8 @@ end
 --- Apply a function to all values of a table.
 ---
 ---@generic T
----@param func fun(value: T): any Function
----@param t table<any, T> Table
+---@param func fun(value: T): any (function) Function
+---@param t table<any, T> (table) Table
 ---@return table Table of transformed values
 function vim.tbl_map(func, t)
   vim.validate({ func = { func, 'c' }, t = { t, 't' } })
@@ -207,9 +207,9 @@ end
 --- Filter a table using a predicate function
 ---
 ---@generic T
----@param func fun(value: T): boolean Function
----@param t table<any, T> Table
----@return T[] Table of filtered values
+---@param func fun(value: T): boolean (function) Function
+---@param t table<any, T> (table) Table
+---@return T[] (table) Table of filtered values
 function vim.tbl_filter(func, t)
   vim.validate({ func = { func, 'c' }, t = { t, 't' } })
 
@@ -313,12 +313,12 @@ end
 ---
 ---@generic T1: table
 ---@generic T2: table
----@param behavior "error"|"keep"|"force" Decides what to do if a key is found in more than one map:
+---@param behavior "error"|"keep"|"force" (string) Decides what to do if a key is found in more than one map:
 ---      - "error": raise an error
 ---      - "keep":  use value from the leftmost map
 ---      - "force": use value from the rightmost map
 ---@param ... T2 Two or more map-like tables
----@return T1|T2 Merged table
+---@return T1|T2 (table) Merged table
 function vim.tbl_deep_extend(behavior, ...)
   return tbl_extend(behavior, true, ...)
 end
@@ -515,10 +515,10 @@ end
 --- Creates a copy of a table containing only elements from start to end (inclusive)
 ---
 ---@generic T
----@param list T[] Table
+---@param list T[] (list) Table
 ---@param start number Start range of slice
 ---@param finish number End range of slice
----@return T[] Copy of table sliced from start to finish (inclusive)
+---@return T[] (list) Copy of table sliced from start to finish (inclusive)
 function vim.list_slice(list, start, finish)
   local new_list = {}
   for i = start or 1, finish or #list do
