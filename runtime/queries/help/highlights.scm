@@ -1,14 +1,16 @@
-(headline) @text.title
+(h1) @text.title
+(h2) @text.title
+(h3) @text.title
 (column_heading) @text.title
 (tag
    "*" @conceal (#set! conceal "")
-   name: (_) @label)
-(option
-   name: (_) @text.literal)
-(hotlink
+   text: (_) @label)
+(taglink
    "|" @conceal (#set! conceal "")
-   destination: (_) @text.reference)
-(backtick
+   text: (_) @text.reference)
+(optionlink
+   text: (_) @text.literal)
+(codespan
    "`" @conceal (#set! conceal "")
-   content: (_) @string)
+   text: (_) @string)
 (argument) @parameter
