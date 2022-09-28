@@ -978,6 +978,12 @@ vim.ui_attach({ns}, {options}, {callback})                *vim.ui_attach()*
     {callback} receives event name plus additional parameters. See |ui-popupmenu|
     and the sections below for event format for respective events.
 
+    WARNING: This api is considered experimental.  Usability will vary for
+    different screen elements. In particular `ext_messages` behavior is subject
+    to further changes and usability improvements.  This is expected to be
+    used to handle messages when setting 'cmdheight' to zero (which is
+    likewise experimental).
+
     Example (stub for a |ui-popupmenu| implementation): >
 
       ns = vim.api.nvim_create_namespace('my_fancy_pum')

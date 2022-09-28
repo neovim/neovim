@@ -1338,9 +1338,13 @@ A jump table for the options with a short description can be found at |Q_op|.
 
 	When 'cmdheight' is zero, there is no command-line unless it is being
 	used.  The command-line will cover the last line of the screen when
-	shown. Some informative messages will not be displayed, any other
-	messages will cause the |hit-enter| prompt.  Expect some other
-	unexpected behavior too.
+	shown.
+
+	WARNING: `cmdheight=0` is considered experimental. Except some
+	unwanted behaviour. Some 'shortmess' flags and similar
+	mechanism might fail to take effect, causing unwanted hit-enter
+	prompts.  Some informative messages, both from Nvim itself and
+	plugins, will not be displayed.
 
 						*'cmdwinheight'* *'cwh'*
 'cmdwinheight' 'cwh'	number	(default 7)
