@@ -1,6 +1,7 @@
 local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
 local lfs = require('lfs')
+local luv = require('luv')
 
 local fmt = string.format
 local assert_alive = helpers.assert_alive
@@ -3961,6 +3962,24 @@ describe('API', function()
         {0:~                                       }|
         15                                      |
       ]]}
+    end)
+    it('works with non-String args', function()
+      eq('2', meths.cmd({cmd = 'echo', args = {2}}, {output = true}))
+      eq('1', meths.cmd({cmd = 'echo', args = {true}}, {output = true}))
+    end)
+    describe('first argument as count', function()
+      before_each(clear)
+
+      it('works', function()
+        command('vsplit | enew')
+        meths.cmd({cmd = 'bdelete', args = {meths.get_current_buf()}}, {})
+        eq(1, meths.get_current_buf().id)
+      end)
+      it('works with :sleep using milliseconds', function()
+        local start = luv.now()
+        meths.cmd({cmd = 'sleep', args = {'100m'}}, {})
+        ok(luv.now() - start <= 300)
+      end)
     end)
   end)
 end)
