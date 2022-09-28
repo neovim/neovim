@@ -410,7 +410,7 @@ function TLua2DoX_filter.readfile(this,AppStamp,Filename)
           local magic_split = string_split(magic, ' ')
 
           if magic_split[1] == "generic" then
-            local generic_name, generic_type = line:match("@generic%s*(%w+)%s*:?%s*(.*)") 
+            local generic_name, generic_type = line:match("@generic%s*(%w+)%s*:?%s*(.*)")
             if generic_type == "" then
               generic_type = "any"
             end
@@ -420,6 +420,10 @@ function TLua2DoX_filter.readfile(this,AppStamp,Filename)
           local type_index = 2
           if magic_split[1] == 'param' then
             type_index = type_index + 1
+            if magic_split[type_index] and magic_split[2]:find("%?$") then
+              magic_split[type_index] = magic_split[type_index] .. "|nil"
+              magic_split[2] = magic_split[2]:sub(1, -2)
+            end
           end
 
           if magic_split[type_index] then

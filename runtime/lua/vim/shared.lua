@@ -417,8 +417,8 @@ end
 ---@generic T: table
 ---@param dst T List which will be modified and appended to
 ---@param src table List from which values will be inserted
----@param start number|nil Start index on src. Defaults to 1
----@param finish number|nil Final index on src. Defaults to `#src`
+---@param start? number Start index on src. Defaults to 1
+---@param finish? number Final index on src. Defaults to `#src`
 ---@return T dst
 function vim.list_extend(dst, src, start, finish)
   vim.validate({
