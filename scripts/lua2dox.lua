@@ -387,10 +387,13 @@ function TLua2DoX_filter.readfile(this,AppStamp,Filename)
 
     local state = ''  -- luacheck: ignore 231 variable is set but never accessed.
     local offset = 0
+    local generic = {}
+    local l = 0
     while not (inStream:eof()) do
       line = string_trim(inStream:getLine())
       --            TCore_Debug_show_var('inStream',inStream)
       --            TCore_Debug_show_var('line',line )
+      l = l + 1
       if string.sub(line,1,2) == '--' then -- it's a comment
         -- Allow people to write style similar to EmmyLua (since they are basically the same)
         -- instead of silently skipping things that start with ---
@@ -406,9 +409,23 @@ function TLua2DoX_filter.readfile(this,AppStamp,Filename)
 
           local magic_split = string_split(magic, ' ')
 
+          if magic_split[1] == "generic" then
+            local generic_name, generic_type = line:match("@generic%s*(%w+)%s*:?%s*(.*)") 
+            if generic_type == "" then
+              generic_type = "any"
+            end
+            generic[generic_name] = generic_type
+          end
+
           local type_index = 2
           if magic_split[1] == 'param' then
             type_index = type_index + 1
+          end
+
+          if magic_split[type_index] then
+            for k, v in pairs(generic) do
+              magic_split[type_index] = magic_split[type_index]:gsub(k, v)
+            end
           end
 
           if magic_split[type_index] == 'number' or
@@ -426,8 +443,10 @@ function TLua2DoX_filter.readfile(this,AppStamp,Filename)
           end
           magic = table.concat(magic_split, ' ')
 
-          outStream:writeln('/// @' .. magic)
-          fn_magic = checkComment4fn(fn_magic,magic)
+          if magic_split[1] ~= "generic" then
+            outStream:writeln('/// @' .. magic)
+            fn_magic = checkComment4fn(fn_magic,magic)
+          end
         elseif string.sub(line,3,3)=='-' then -- it's a nonmagic doc comment
           local comment = string.sub(line,4)
           outStream:writeln('/// '.. comment)
@@ -467,6 +486,7 @@ function TLua2DoX_filter.readfile(this,AppStamp,Filename)
           fn_magic = nil
         end
       elseif string.find(line, '^function') or string.find(line, '^local%s+function') then
+        generic = {}
         state = 'in_function'  -- it's a function
         local pos_fn = string.find(line,'function')
         -- function
