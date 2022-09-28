@@ -3118,7 +3118,7 @@ The default is to use the twice sh_minlines.  Set it to a smaller number to
 speed up displaying.  The disadvantage is that highlight errors may appear.
 
 syntax/sh.vim tries to flag certain problems as errors; usually things like
-extra "]"s, "done"s, "fi"s, etc.  If you find the error handling problematic
+unmatched "]", "done", "fi", etc.  If you find the error handling problematic
 for your purposes, you may suppress such error highlighting by putting
 the following line in your .vimrc: >
 
