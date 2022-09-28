@@ -423,6 +423,7 @@ describe('nvim_create_user_command', function()
         nargs = 0,
         bang = true,
         count = 2,
+        register = true,
       })
     ]]
     eq({
@@ -458,6 +459,42 @@ describe('nvim_create_user_command', function()
       reg = "",
     }, exec_lua [[
       vim.cmd('CommandWithNoArgs')
+      return result
+    ]])
+    -- register can be specified
+    eq({
+      args = "",
+      fargs = {},
+      bang = false,
+      line1 = 1,
+      line2 = 1,
+      mods = "",
+      smods = {
+        browse = false,
+        confirm = false,
+        emsg_silent = false,
+        hide = false,
+        horizontal = false,
+        keepalt = false,
+        keepjumps = false,
+        keepmarks = false,
+        keeppatterns = false,
+        lockmarks = false,
+        noautocmd = false,
+        noswapfile = false,
+        sandbox = false,
+        silent = false,
+        split = "",
+        tab = -1,
+        unsilent = false,
+        verbose = -1,
+        vertical = false,
+      },
+      range = 0,
+      count = 2,
+      reg = "+",
+    }, exec_lua [[
+      vim.cmd('CommandWithNoArgs +')
       return result
     ]])
 

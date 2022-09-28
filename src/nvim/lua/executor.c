@@ -2036,7 +2036,8 @@ int nlua_do_ucmd(ucmd_T *cmd, exarg_T *eap, bool preview)
   }
   lua_setfield(lstate, -2, "fargs");
 
-  lua_pushstring(lstate, (const char *)&eap->regname);
+  char reg[2] = { (char)eap->regname, NUL };
+  lua_pushstring(lstate, reg);
   lua_setfield(lstate, -2, "reg");
 
   lua_pushinteger(lstate, eap->addr_count);

@@ -37,7 +37,7 @@
 ///                          specified and two elements if both range items were specified.
 ///         - count: (number) Any |<count>| that was supplied to the command. -1 if command cannot
 ///                           take a count.
-///         - reg: (number) The optional command |<register>|, if specified. Empty string if not
+///         - reg: (string) The optional command |<register>|, if specified. Empty string if not
 ///                         specified or if command cannot take a register.
 ///         - bang: (boolean) Whether command contains a |<bang>| (!) modifier.
 ///         - args: (array) Command arguments.
@@ -165,9 +165,7 @@ Dictionary nvim_parse_cmd(String str, Dictionary opts, Error *err)
     PUT(result, "count", INTEGER_OBJ(-1));
   }
 
-  char reg[2];
-  reg[0] = (char)ea.regname;
-  reg[1] = '\0';
+  char reg[2] = { (char)ea.regname, NUL };
   PUT(result, "reg", CSTR_TO_OBJ(reg));
 
   PUT(result, "bang", BOOLEAN_OBJ(ea.forceit));
