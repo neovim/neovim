@@ -83,7 +83,7 @@ pattern and do not match another pattern: >
 This first finds all lines containing "found", but only executes {cmd} when
 there is no match for "notfound".
 
-Any Ex command can be used, see |ex-cmd-index|. To execute a Normal mode
+Any Ex command can be used, see |ex-cmd-index|.  To execute a Normal mode
 command, you can use the `:normal` command: >
 	:g/pat/normal {commands}
 Make sure that {commands} ends with a whole command, otherwise Vim will wait

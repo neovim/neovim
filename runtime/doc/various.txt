@@ -34,8 +34,6 @@ CTRL-L			Clears and redraws the screen.  The redraw may happen
 			window, or all status lines and window bars if "!" is
 			included. Useful if 'statusline' or 'winbar' includes
 			an item that doesn't cause automatic updating.
-			If the command line is being edited the redraw is
-			postponed until later.
 
 						*:redrawt* *:redrawtabline*
 :redrawt[abline]	Redraw the tabline.  Useful to update the tabline when
