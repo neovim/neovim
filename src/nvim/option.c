@@ -106,30 +106,6 @@ static char e_number_required_after_equal[]
 static char e_preview_window_already_exists[]
   = N_("E590: A preview window already exists");
 
-// The options that are local to a window or buffer have "indir" set to one of
-// these values.  Special values:
-// PV_NONE: global option.
-// PV_WIN is added: window-local option
-// PV_BUF is added: buffer-local option
-// PV_BOTH is added: global option which also has a local value.
-#define PV_BOTH 0x1000
-#define PV_WIN  0x2000
-#define PV_BUF  0x4000
-#define PV_MASK 0x0fff
-#define OPT_WIN(x)  (idopt_T)(PV_WIN + (int)(x))
-#define OPT_BUF(x)  (idopt_T)(PV_BUF + (int)(x))
-#define OPT_BOTH(x) (idopt_T)(PV_BOTH + (int)(x))
-
-// WV_ and BV_ values get typecasted to this for the "indir" field
-typedef enum {
-  PV_NONE = 0,
-  PV_MAXVAL = 0xffff,  // to avoid warnings for value out of range
-} idopt_T;
-
-// Options local to a window have a value local to a buffer and global to all
-// buffers.  Indicate this by setting "var" to VAR_WIN.
-#define VAR_WIN ((char_u *)-1)
-
 static char *p_term = NULL;
 static char *p_ttytype = NULL;
 
@@ -146,19 +122,6 @@ static long p_sts_nopaste;
 static long p_tw_nopaste;
 static long p_wm_nopaste;
 static char *p_vsts_nopaste;
-
-typedef struct vimoption {
-  char *fullname;        // full option name
-  char *shortname;       // permissible abbreviation
-  uint32_t flags;               // see below
-  char_u *var;             // global option: pointer to variable;
-                           // window-local option: VAR_WIN;
-                           // buffer-local option: global value
-  idopt_T indir;                // global option: PV_NONE;
-                                // local option: indirect option index
-  char *def_val;         // default values for variable (neovim!!)
-  LastSet last_set;             // script in which the option was last set
-} vimoption_T;
 
 // options[] is initialized here.
 // The order of the options MUST be alphabetic for ":set all" and findoption().
@@ -3047,47 +3010,10 @@ int get_option_value_strict(char *name, int64_t *numval, char **stringval, int o
   return rv;
 }
 
-/// Return the flags for the option at 'opt_idx'.
-uint32_t get_option_flags(int opt_idx)
+// Return information for option at 'opt_idx'
+vimoption_T *get_option(int opt_idx)
 {
-  return options[opt_idx].flags;
-}
-
-/// Set a flag for the option at 'opt_idx'.
-void set_option_flag(int opt_idx, uint32_t flag)
-{
-  options[opt_idx].flags |= flag;
-}
-
-/// Clear a flag for the option at 'opt_idx'.
-void clear_option_flag(int opt_idx, uint32_t flag)
-{
-  options[opt_idx].flags &= ~flag;
-}
-
-/// Returns true if the option at 'opt_idx' is a global option
-bool is_global_option(int opt_idx)
-{
-  return options[opt_idx].indir == PV_NONE;
-}
-
-/// Returns true if the option at 'opt_idx' is a global option which also has a
-/// local value.
-int is_global_local_option(int opt_idx)
-{
-  return options[opt_idx].indir & PV_BOTH;
-}
-
-/// Returns true if the option at 'opt_idx' is a window-local option
-bool is_window_local_option(int opt_idx)
-{
-  return options[opt_idx].var == VAR_WIN;
-}
-
-/// Returns true if the option at 'opt_idx' is a hidden option
-bool is_hidden_option(int opt_idx)
-{
-  return options[opt_idx].var == NULL;
+  return &options[opt_idx];
 }
 
 /// Set the value of an option
@@ -3761,7 +3687,7 @@ void unset_global_local_option(char *name, void *from)
 }
 
 /// Get pointer to option variable, depending on local or global scope.
-static char *get_varp_scope(vimoption_T *p, int opt_flags)
+char *get_varp_scope(vimoption_T *p, int opt_flags)
 {
   if ((opt_flags & OPT_GLOBAL) && p->indir != PV_NONE) {
     if (p->var == VAR_WIN) {
@@ -3831,13 +3757,6 @@ static char *get_varp_scope(vimoption_T *p, int opt_flags)
     return NULL;     // "cannot happen"
   }
   return (char *)get_varp(p);
-}
-
-/// Get pointer to option variable at 'opt_idx', depending on local or global
-/// scope.
-char *get_option_varp_scope(int opt_idx, int opt_flags)
-{
-  return get_varp_scope(&(options[opt_idx]), opt_flags);
 }
 
 /// Get pointer to option variable.
@@ -4147,18 +4066,6 @@ static char_u *get_varp(vimoption_T *p)
   }
   // always return a valid pointer to avoid a crash!
   return (char_u *)&(curbuf->b_p_wm);
-}
-
-/// Return a pointer to the variable for option at 'opt_idx'
-char_u *get_option_var(int opt_idx)
-{
-  return options[opt_idx].var;
-}
-
-/// Return the full name of the option at 'opt_idx'
-char *get_option_fullname(int opt_idx)
-{
-  return options[opt_idx].fullname;
 }
 
 /// Get the value of 'equalprg', either the buffer-local one or the global one.
