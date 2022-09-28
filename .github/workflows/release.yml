@@ -113,6 +113,11 @@ jobs:
                DEPS_CMAKE_FLAGS="$OSX_FLAGS"
           make DESTDIR="$GITHUB_WORKSPACE/build/release/nvim-macos" install
           cd "$GITHUB_WORKSPACE/build/"
+          # Make sure we build everything for M1 as well
+          for macho in bin/* lib/nvim/parser/*.so
+          do
+          lipo -info "$macho" | grep -q arm64 || exit 1
+          done
           cpack -C "$NVIM_BUILD_TYPE"
       - uses: actions/upload-artifact@v3
         with:
