@@ -2,6 +2,7 @@ local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
 local clear, feed, command = helpers.clear, helpers.feed, helpers.command
 local source = helpers.source
+local meths = helpers.meths
 
 describe('Signs', function()
   local screen
@@ -591,5 +592,89 @@ describe('Signs', function()
                                                              |
       ]])
     end)
+  end)
+
+  it('signcolumn width is updated when removing all signs after deleting lines', function()
+    meths.buf_set_lines(0, 0, 1, true, {'a', 'b', 'c', 'd', 'e'})
+    command('sign define piet text=>>')
+    command('sign place 10001 line=1 name=piet')
+    command('sign place 10002 line=5 name=piet')
+    command('2delete')
+    command('sign unplace 10001')
+    screen:expect([[
+      {2:  }a                                                  |
+      {2:  }^c                                                  |
+      {2:  }d                                                  |
+      >>e                                                  |
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+                                                           |
+    ]])
+    command('sign unplace 10002')
+    screen:expect([[
+      a                                                    |
+      ^c                                                    |
+      d                                                    |
+      e                                                    |
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+                                                           |
+    ]])
+  end)
+
+  it('signcolumn width is updated when removing all signs after inserting lines', function()
+    meths.buf_set_lines(0, 0, 1, true, {'a', 'b', 'c', 'd', 'e'})
+    command('sign define piet text=>>')
+    command('sign place 10001 line=1 name=piet')
+    command('sign place 10002 line=5 name=piet')
+    command('copy .')
+    command('sign unplace 10001')
+    screen:expect([[
+      {2:  }a                                                  |
+      {2:  }^a                                                  |
+      {2:  }b                                                  |
+      {2:  }c                                                  |
+      {2:  }d                                                  |
+      >>e                                                  |
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+                                                           |
+    ]])
+    command('sign unplace 10002')
+    screen:expect([[
+      a                                                    |
+      ^a                                                    |
+      b                                                    |
+      c                                                    |
+      d                                                    |
+      e                                                    |
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+                                                           |
+    ]])
   end)
 end)

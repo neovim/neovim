@@ -724,7 +724,27 @@ static void sign_list_placed(buf_T *rbuf, char *sign_group)
   }
 }
 
-/// Adjust a placed sign for inserted/deleted lines.
+/// Adjust or delete a placed sign for inserted/deleted lines.
+///
+/// @return  the new line number of the sign, or 0 if the sign is in deleted lines.
+static linenr_T sign_adjust_one(const linenr_T se_lnum, linenr_T line1, linenr_T line2,
+                                linenr_T amount, linenr_T amount_after)
+{
+  if (se_lnum < line1) {
+    // Ignore changes to lines after the sign
+    return se_lnum;
+  }
+  if (se_lnum > line2) {
+    // Lines inserted or deleted before the sign
+    return se_lnum + amount_after;
+  }
+  if (amount == MAXLNUM) {  // sign in deleted lines
+    return 0;
+  }
+  return se_lnum + amount;
+}
+
+/// Adjust placed signs for inserted/deleted lines.
 void sign_mark_adjust(linenr_T line1, linenr_T line2, linenr_T amount, linenr_T amount_after)
 {
   sign_entry_T *sign;           // a sign in a b_signlist
@@ -735,9 +755,7 @@ void sign_mark_adjust(linenr_T line1, linenr_T line2, linenr_T amount, linenr_T 
   int is_fixed = 0;
   int signcol = win_signcol_configured(curwin, &is_fixed);
 
-  bool delete = amount == MAXLNUM;
-
-  if (delete) {
+  if (amount == MAXLNUM) {  // deleting
     buf_signcols_del_check(curbuf, line1, line2);
   }
 
@@ -745,11 +763,10 @@ void sign_mark_adjust(linenr_T line1, linenr_T line2, linenr_T amount, linenr_T 
 
   for (sign = curbuf->b_signlist; sign != NULL; sign = next) {
     next = sign->se_next;
-    new_lnum = sign->se_lnum;
-    if (sign->se_lnum >= line1 && sign->se_lnum <= line2) {
-      if (!delete) {
-        new_lnum += amount;
-      } else if (!is_fixed || signcol >= 2) {
+
+    new_lnum = sign_adjust_one(sign->se_lnum, line1, line2, amount, amount_after);
+    if (new_lnum == 0) {  // sign in deleted lines
+      if (!is_fixed || signcol >= 2) {
         *lastp = next;
         if (next) {
           next->se_prev = last;
@@ -757,18 +774,22 @@ void sign_mark_adjust(linenr_T line1, linenr_T line2, linenr_T amount, linenr_T 
         xfree(sign);
         continue;
       }
-    } else if (sign->se_lnum > line2) {
-      new_lnum += amount_after;
-    }
-    // If the new sign line number is past the last line in the buffer,
-    // then don't adjust the line number. Otherwise, it will always be past
-    // the last line and will not be visible.
-    if (sign->se_lnum >= line1 && new_lnum <= curbuf->b_ml.ml_line_count) {
-      sign->se_lnum = new_lnum;
+    } else {
+      // If the new sign line number is past the last line in the buffer,
+      // then don't adjust the line number. Otherwise, it will always be past
+      // the last line and will not be visible.
+      if (new_lnum <= curbuf->b_ml.ml_line_count) {
+        sign->se_lnum = new_lnum;
+      }
     }
 
     last = sign;
     lastp = &sign->se_next;
+  }
+
+  new_lnum = sign_adjust_one(curbuf->b_signcols.sentinel, line1, line2, amount, amount_after);
+  if (new_lnum != 0) {
+    curbuf->b_signcols.sentinel = new_lnum;
   }
 }
 
