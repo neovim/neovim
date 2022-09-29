@@ -125,11 +125,12 @@ function M.get_query_files(lang, query_name, is_included)
     io.close(file)
   end
 
-  local query_files = { base_query }
+  local query_files = {}
   for _, base_lang in ipairs(base_langs) do
     local base_files = M.get_query_files(base_lang, query_name, true)
     vim.list_extend(query_files, base_files)
   end
+  vim.list_extend(query_files, { base_query })
   vim.list_extend(query_files, extensions)
 
   return query_files
