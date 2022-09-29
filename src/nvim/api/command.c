@@ -830,13 +830,12 @@ static void build_cmdline_str(char **cmdlinep, exarg_T *eap, CmdParseInfo *cmdin
   // Replace, :make and :grep with 'makeprg' and 'grepprg'.
   char *p = replace_makeprg(eap, eap->arg, cmdlinep);
   if (p != eap->arg) {
-    // If replace_makeprg modified the cmdline string, correct the argument pointers.
+    // If replace_makeprg() modified the cmdline string, correct the eap->arg pointer.
     eap->arg = p;
-    // We can only know the position of the first argument because the argument list can be used
-    // multiple times in makeprg / grepprg.
-    if (argc >= 1) {
-      eap->args[0] = p;
-    }
+    // This cannot be a user command, so eap->args will not be used.
+    XFREE_CLEAR(eap->args);
+    XFREE_CLEAR(eap->arglens);
+    eap->argc = 0;
   }
 }
 
