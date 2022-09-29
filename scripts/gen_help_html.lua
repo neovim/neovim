@@ -237,8 +237,8 @@ local function getbuflinestr(node, bufnr, offset)
 end
 
 local function get_tagname(node, bufnr)
-  local node_text = vim.treesitter.get_node_text(node, bufnr)
-  local tag = (node:type() == 'optionlink' or node:parent():type() == 'optionlink') and ("'%s'"):format(node_text) or node_text
+  local text = vim.treesitter.get_node_text(node, bufnr)
+  local tag = (node:type() == 'optionlink' or node:parent():type() == 'optionlink') and ("'%s'"):format(text) or text
   local helpfile = vim.fs.basename(tagmap[tag]) or nil  -- "api.txt"
   local helppage = get_helppage(helpfile)               -- "api.html"
   return helppage, tag
@@ -271,7 +271,7 @@ local function has_ancestor(node, ancestor_name)
 end
 
 local function validate_link(node, bufnr, fname)
-  local helppage, tagname = get_tagname(node:child(1), bufnr, true)
+  local helppage, tagname = get_tagname(node:child(1), bufnr)
   if not has_ancestor(node, 'column_heading') and not node:has_error() and not tagmap[tagname] and not ignore_invalid(tagname) then
     invalid_links[tagname] = vim.fs.basename(fname)
   end
@@ -300,7 +300,7 @@ local function visit_validate(root, level, lang_tree, opt, stats)
     if ignore_parse_error(text) then
       return
     end
-    -- Store the raw text to give context to the bug report.
+    -- Store the raw text to give context to the error report.
     local sample_text = not toplevel and getbuflinestr(root, opt.buf, 3) or '[top level!]'
     table.insert(stats.parse_errors, sample_text)
   elseif node_name == 'word' or node_name == 'uppercase_name' then
@@ -336,6 +336,10 @@ local function visit_node(root, level, lang_tree, headings, opt, stats)
   local function node_text(node)
     return vim.treesitter.get_node_text(node or root, opt.buf)
   end
+  -- Gets leading whitespace of the current node.
+  local function ws()
+    return node_text():match('^%s+') or ''
+  end
 
   if root:child_count() == 0 or node_name == 'ERROR' then
     text = node_text()
@@ -353,7 +357,7 @@ local function visit_node(root, level, lang_tree, headings, opt, stats)
   if node_name == 'help_file' then  -- root node
     return text
   elseif node_name == 'url' then
-    return ('<a href="%s">%s</a>'):format(trimmed, trimmed)
+    return ('%s<a href="%s">%s</a>'):format(ws(), trimmed, trimmed)
   elseif node_name == 'word' or node_name == 'uppercase_name' then
     return html_esc(text)
   elseif node_name == 'h1' or node_name == 'h2' or node_name == 'h3' then
@@ -416,14 +420,14 @@ local function visit_node(root, level, lang_tree, headings, opt, stats)
       return text
     end
     local helppage, tagname = validate_link(root, opt.buf, opt.fname)
-    return (' <a href="%s#%s">%s</a>'):format(helppage, url_encode(tagname), html_esc(tagname))
+    return ('%s<a href="%s#%s">%s</a>'):format(ws(), helppage, url_encode(tagname), html_esc(tagname))
   elseif node_name == 'codespan' then
     if root:has_error() then
       return text
     end
-    return (' <code>%s</code>'):format(text)
+    return ('%s<code>%s</code>'):format(ws(), text)
   elseif node_name == 'argument' then
-    return (' <code>{%s}</code>'):format(trimmed)
+    return ('%s<code>{%s}</code>'):format(ws(), text)
   elseif node_name == 'codeblock' then
     return ('<pre>%s</pre>'):format(html_esc(trim_indent(trim_gt_lt(text))))
   elseif node_name == 'tag' then  -- anchor
@@ -438,7 +442,7 @@ local function visit_node(root, level, lang_tree, headings, opt, stats)
       table.insert(stats.first_tags, tagname)
       return ''
     end
-    local s = (' <a name="%s"></a><span class="%s">%s</span>'):format(url_encode(tagname), cssclass, trimmed)
+    local s = ('%s<a name="%s"></a><span class="%s">%s</span>'):format(ws(), url_encode(tagname), cssclass, trimmed)
     if in_heading and prev ~= 'tag' then
       -- Start the <span> container for tags in a heading.
       -- This makes "justify-content:space-between" right-align the tags.
@@ -457,11 +461,11 @@ local function visit_node(root, level, lang_tree, headings, opt, stats)
     -- Store the raw text to give context to the bug report.
     local sample_text = not toplevel and getbuflinestr(root, opt.buf, 3) or '[top level!]'
     table.insert(stats.parse_errors, sample_text)
-    return ('<a class="parse-error" target="_blank" title="Parse error. Report to tree-sitter-vimdoc..." href="%s">%s</a>'):format(
+    return ('<a class="parse-error" target="_blank" title="Report bug... (parse error)" href="%s">%s</a>'):format(
       get_bug_url_vimdoc(opt.fname, opt.to_fname, sample_text), trimmed)
   else  -- Unknown token.
     local sample_text = not toplevel and getbuflinestr(root, opt.buf, 3) or '[top level!]'
-    return ('<a class="unknown-token" target="_blank" title="ERROR: unhandled token: %s. Report to neovim/neovim..." href="%s">%s</a>'):format(
+    return ('<a class="unknown-token" target="_blank" title="Report bug... (unhandled token "%s")" href="%s">%s</a>'):format(
       node_name, get_bug_url_nvim(opt.fname, opt.to_fname, sample_text, node_name), trimmed), ('unknown-token:"%s"'):format(node_name)
   end
 end
@@ -737,7 +741,7 @@ local function gen_css(fname)
     }
     h1, h2, h3, h4, h5 {
       font-family: sans-serif;
-      border-bottom: 1px solid gray;
+      border-bottom: 1px solid #41464bd6; /*rgba(0, 0, 0, .9);*/
     }
     h3, h4, h5 {
       border-bottom-style: dashed;
@@ -779,8 +783,6 @@ local function gen_css(fname)
     /* Tag pseudo-header common in :help docs. */
     .help-tag-right {
       color: var(--tag-color);
-      display: block;
-      text-align: right;
     }
     h1 .help-tag, h2 .help-tag {
       font-size: smaller;
@@ -815,7 +817,7 @@ local function gen_css(fname)
       /* Tabs are used in codeblocks only for indentation, not alignment, so we can aggressively shrink them. */
       tab-size: 2;
       white-space: pre;
-      line-height: 1.1;  /* Important for ascii art. */
+      line-height: 1.3;  /* Important for ascii art. */
       overflow: visible;
       /* font-family: ui-monospace,SFMono-Regular,SF Mono,Menlo,Consolas,Liberation Mono,monospace; */
       font-size: 16px;
