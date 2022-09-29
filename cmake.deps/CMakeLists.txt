@@ -2,6 +2,10 @@
 cmake_minimum_required (VERSION 3.10)
 project(NVIM_DEPS C)
 
+if(POLICY CMP0135)
+  cmake_policy(SET CMP0135 NEW)
+endif()
+
 # Point CMake at any custom modules we may ship
 list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake" "${PROJECT_SOURCE_DIR}/../cmake")
 
@@ -61,8 +65,6 @@ else()
   option(USE_BUNDLED_GETTEXT "Use the bundled version of gettext." OFF)
   option(USE_BUNDLED_LIBICONV "Use the bundled version of libiconv." OFF)
 endif()
-
-option(USE_EXISTING_SRC_DIR "Skip download of deps sources in case of existing source directory." OFF)
 
 find_package(Git)
 if(NOT Git_FOUND)

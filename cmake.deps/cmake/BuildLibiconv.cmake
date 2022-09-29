@@ -2,15 +2,9 @@ if(MSVC)
   ExternalProject_Add(libiconv
     PREFIX ${DEPS_BUILD_DIR}
     URL ${LIBICONV_URL}
+    URL_HASH SHA256=${LIBICONV_SHA256}
+    DOWNLOAD_NO_PROGRESS TRUE
     DOWNLOAD_DIR ${DEPS_DOWNLOAD_DIR}/libiconv
-    DOWNLOAD_COMMAND ${CMAKE_COMMAND}
-      -DPREFIX=${DEPS_BUILD_DIR}
-      -DDOWNLOAD_DIR=${DEPS_DOWNLOAD_DIR}/libiconv
-      -DURL=${LIBICONV_URL}
-      -DEXPECTED_SHA256=${LIBICONV_SHA256}
-      -DTARGET=libiconv
-      -DUSE_EXISTING_SRC_DIR=${USE_EXISTING_SRC_DIR}
-      -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/DownloadAndExtractFile.cmake
     CONFIGURE_COMMAND ${CMAKE_COMMAND} -E copy
       ${CMAKE_CURRENT_SOURCE_DIR}/cmake/LibiconvCMakeLists.txt
         ${DEPS_BUILD_DIR}/src/libiconv/CMakeLists.txt
