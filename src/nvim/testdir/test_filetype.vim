@@ -1251,7 +1251,7 @@ endfunc
 func Test_m_file()
   filetype on
 
-  call writefile(['looks like Matlab'], 'Xfile.m')
+  call writefile(['looks like Matlab'], 'Xfile.m', 'D')
   split Xfile.m
   call assert_equal('matlab', &filetype)
   bwipe!
