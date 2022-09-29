@@ -75,8 +75,10 @@ add_custom_command(OUTPUT ${GENERATED_HELP_TAGS}
 )
 
 
+# TODO: This doesn't work. wait for "nvim -l" to land?
 add_custom_target(doc_html
-  COMMAND make html
+  COMMAND "${PROJECT_BINARY_DIR}/bin/nvim"
+    -V1 -es --clean -c "lua require('scripts.gen_help_html').gen('./build/runtime/doc', './build/doc_html', nil, 'todo_commit_id')" -c "0cq"
   DEPENDS
     ${GENERATED_HELP_TAGS}
   WORKING_DIRECTORY "${GENERATED_RUNTIME_DIR}/doc"
