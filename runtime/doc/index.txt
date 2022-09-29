@@ -21,6 +21,7 @@ For a list of Vim variables see |vim-variable|.
 
 tag		char		action in Insert mode	~
 -----------------------------------------------------------------------
+
 |i_CTRL-@|	CTRL-@		insert previously inserted text and stop
 				insert
 |i_CTRL-A|	CTRL-A		insert previously inserted text
@@ -184,6 +185,7 @@ note: 1 = cursor movement command; 2 = can be undone/redone
 
 tag		char	      note action in Normal mode	~
 ------------------------------------------------------------------------------
+
 		CTRL-@		   not used
 |CTRL-A|	CTRL-A		2  add N to number at/after cursor
 |CTRL-B|	CTRL-B		1  scroll N screens Backwards
@@ -469,6 +471,7 @@ These can be used after an operator or in Visual mode to select an object.
 
 tag		command		   action in op-pending and Visual mode	~
 ------------------------------------------------------------------------------
+
 |v_aquote|	a"		   double quoted string
 |v_a'|		a'		   single quoted string
 |v_a(|		a(		   same as ab
@@ -511,6 +514,7 @@ tag		command		   action in op-pending and Visual mode	~
 
 tag		command		   action in Normal mode	~
 ------------------------------------------------------------------------------
+
 |CTRL-W_CTRL-B|	CTRL-W CTRL-B	   same as "CTRL-W b"
 |CTRL-W_CTRL-C|	CTRL-W CTRL-C	   same as "CTRL-W c"
 |CTRL-W_CTRL-D|	CTRL-W CTRL-D	   same as "CTRL-W d"
@@ -609,6 +613,7 @@ tag		command		   action in Normal mode	~
 
 tag		char	      note action in Normal mode	~
 ------------------------------------------------------------------------------
+
 |[_CTRL-D|	[ CTRL-D	   jump to first #define found in current and
 				   included files matching the word under the
 				   cursor, start searching at beginning of
@@ -699,6 +704,7 @@ tag		char	      note action in Normal mode	~
 
 tag		char	      note action in Normal mode	~
 ------------------------------------------------------------------------------
+
 g_CTRL-A	g CTRL-A	   dump a memory profile
 |g_CTRL-G|	g CTRL-G	   show information about current cursor
 				   position
@@ -802,6 +808,7 @@ g_CTRL-A	g CTRL-A	   dump a memory profile
 
 tag		char	      note action in Normal mode	~
 ------------------------------------------------------------------------------
+
 |z<CR>|		z<CR>		   redraw, cursor line to top of window,
 				   cursor on first non-blank
 |zN<CR>|	z{height}<CR>	   redraw, make window {height} lines high
@@ -876,6 +883,7 @@ These can be used after an operator, but before a {motion} has been entered.
 
 tag		char		action in Operator-pending mode	~
 -----------------------------------------------------------------------
+
 |o_v|		v		force operator to work charwise
 |o_V|		V		force operator to work linewise
 |o_CTRL-V|	CTRL-V		force operator to work blockwise
@@ -888,6 +896,7 @@ here are those that are different.
 
 tag		command	      note action in Visual mode	~
 ------------------------------------------------------------------------------
+
 |v_CTRL-\_CTRL-N| CTRL-\ CTRL-N	   stop Visual mode
 |v_CTRL-\_CTRL-G| CTRL-\ CTRL-G	   go to Normal mode
 |v_CTRL-A|	CTRL-A		2  add N to number in highlighted text
@@ -1008,6 +1017,7 @@ file names, tags, commands etc. as appropriate.
 
 tag		command		action in Command-line editing mode	~
 ------------------------------------------------------------------------------
+
 		CTRL-@		not used
 |c_CTRL-A|	CTRL-A		do completion on the pattern in front of the
 				cursor and insert all matches
@@ -1118,6 +1128,7 @@ The commands are sorted on the non-optional part of their name.
 
 tag		command		action ~
 ------------------------------------------------------------------------------
+
 |:|		:		nothing
 |:range|	:{range}	go to last line in {range}
 |:!|		:!		filter lines or execute an external command
