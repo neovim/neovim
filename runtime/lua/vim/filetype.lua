@@ -1734,7 +1734,7 @@ local pattern = {
     { priority = -1 },
   },
   ['[cC]hange[lL]og.*'] = starsetf(function(path, bufnr)
-    require('vim.filetype.detect').changelog(bufnr)
+    return require('vim.filetype.detect').changelog(bufnr)
   end),
   ['.*%.%.ch'] = 'chill',
   ['.*%.cmake%.in'] = 'cmake',
