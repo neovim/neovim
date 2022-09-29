@@ -485,9 +485,7 @@ static void tui_main(UIBridgeData *bridge, UI *ui)
   // TODO(bfredl): zero hl is empty, send this explicitly?
   kv_push(data->attrs, HLATTRS_INIT);
 
-#if TERMKEY_VERSION_MAJOR > 0 || TERMKEY_VERSION_MINOR > 18
   data->input.tk_ti_hook_fn = tui_tk_ti_getstr;
-#endif
   tinput_init(&data->input, &tui_loop);
   tui_terminal_start(ui);
 
@@ -2278,7 +2276,6 @@ static void flush_buf(UI *ui)
   data->overflow = false;
 }
 
-#if TERMKEY_VERSION_MAJOR > 0 || TERMKEY_VERSION_MINOR > 18
 /// Try to get "kbs" code from stty because "the terminfo kbs entry is extremely
 /// unreliable." (Vim, Bash, and tmux also do this.)
 ///
@@ -2287,14 +2284,14 @@ static void flush_buf(UI *ui)
 static const char *tui_get_stty_erase(void)
 {
   static char stty_erase[2] = { 0 };
-# if defined(HAVE_TERMIOS_H)
+#if defined(HAVE_TERMIOS_H)
   struct termios t;
   if (tcgetattr(input_global_fd(), &t) != -1) {
     stty_erase[0] = (char)t.c_cc[VERASE];
     stty_erase[1] = '\0';
     DLOG("stty/termios:erase=%s", stty_erase);
   }
-# endif
+#endif
   return stty_erase;
 }
 
@@ -2328,4 +2325,3 @@ static const char *tui_tk_ti_getstr(const char *name, const char *value, void *d
 
   return value;
 }
-#endif

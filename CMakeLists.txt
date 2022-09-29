@@ -498,7 +498,7 @@ if(FEAT_TUI)
     add_definitions(-DNVIM_UNIBI_HAS_VAR_FROM)
   endif()
 
-  find_package(LibTermkey 0.18 REQUIRED)
+  find_package(LibTermkey 0.22 REQUIRED)
   include_directories(SYSTEM ${LIBTERMKEY_INCLUDE_DIRS})
 endif()
 
