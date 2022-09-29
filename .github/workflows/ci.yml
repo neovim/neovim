@@ -351,7 +351,7 @@ jobs:
           cmake --build .deps
 
       - name: prepare vcpkg
-        run:
+        run: |
           cp contrib/vcpkg.json .
           cp contrib/vcpkg-configuration.json .
           cp contrib/CMakeUserPresets.json .
