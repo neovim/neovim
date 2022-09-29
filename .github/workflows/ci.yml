@@ -327,6 +327,9 @@ jobs:
   vcpkg-test:
     name: vcpkg-test
     runs-on: macos-12
+    env:
+      DEPS_BUILD_DIR: "/home/runner/nvim-deps"
+      DEPS_PREFIX: "/home/runner/nvim-deps/usr"
     steps:
       - uses: actions/checkout@v3
 
@@ -334,6 +337,13 @@ jobs:
         run: |
           brew update --quiet
           brew install automake cpanminus ninja
+
+      - name: Cache dependencies
+        uses: actions/cache@v3
+        with:
+          path: |
+            ${{ env.DEPS_BUILD_DIR }}
+          key: ${{ hashFiles('cmake/*', 'cmake.deps/**', '**/CMakeLists.txt') }}-${{ github.base_ref }}
 
       - name: build deps
         run: |
@@ -343,7 +353,7 @@ jobs:
 
       - name: prepare vcpkg
         run:
-          cd $env:VCPKG_INSTALLATION_ROOT
+          cd "$VCPKG_INSTALLATION_ROOT"
           git remote add fork https://github.com/kylo252/vcpkg
           git fetch --all
           git switch add-luv
