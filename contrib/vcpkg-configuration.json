@@ -1,0 +1,22 @@
+{
+  "registries": [
+    {
+      "kind": "git",
+      "repository": "https://github.com/kylo252/vcpkg",
+      "baseline": "d199b4023a7567f6dcb8aef59bf3cf63607e92d3",
+      "reference": "add-luv",
+      "packages": [
+        "lua-compat53",
+        "luv"
+      ]
+    },
+    {
+      "kind": "git",
+      "repository": "https://github.com/mathisloge/vcpkg-registry",
+      "baseline": "f65530375ff334fd3152b7d5e2651d0b54165629",
+      "packages": [
+        "lua51"
+      ]
+    }
+  ]
+}

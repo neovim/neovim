@@ -347,24 +347,17 @@ jobs:
 
       - name: build deps
         run: |
-          # turn off whatever bundled deps you want to test
           cmake -S cmake.deps -B .deps -DUSE_BUNDLED_LIBUV=OFF -DUSE_BUNDLED_LUV=OFF
           cmake --build .deps
 
       - name: prepare vcpkg
         run:
-          cd "$VCPKG_INSTALLATION_ROOT"
-          git remote add fork https://github.com/kylo252/vcpkg
-          git fetch --all
-          git switch add-luv
+          cp contrib/vcpkg.json .
+          cp contrib/vcpkg-configuration.json .
+          cp contrib/CMakeUserPresets.json .
 
       - name: build neovim
         run: |
-          # add whatever deps you want to vcpkg
-          cp contrib/vcpkg.json .
-          cp contrib/CMakeUserPresets.json .
-
-          # make sure you see 'custom'
           cmake --list-presets
           cmake -S . --preset=custom
           cmake --build --preset=custom
