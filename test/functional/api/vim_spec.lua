@@ -14,6 +14,7 @@ local funcs = helpers.funcs
 local iswin = helpers.iswin
 local meths = helpers.meths
 local matches = helpers.matches
+local pesc = helpers.pesc
 local mkdir_p = helpers.mkdir_p
 local ok, nvim_async, feed = helpers.ok, helpers.nvim_async, helpers.feed
 local is_os = helpers.is_os
@@ -3912,11 +3913,23 @@ describe('API', function()
       eq({'aa'}, meths.buf_get_lines(0, 0, 1, false))
       assert_alive()
     end)
+    it('supports filename expansion', function()
+      meths.cmd({ cmd = 'argadd', args = { '%:p:h:t', '%:p:h:t' } }, {})
+      local arg = funcs.expand('%:p:h:t')
+      eq({ arg, arg }, funcs.argv())
+    end)
     it("'make' command works when argument count isn't 1 #19696", function()
       command('set makeprg=echo')
-      meths.cmd({ cmd = 'make' }, {})
+      command('set shellquote=')
+      matches('^:!echo ',
+              meths.cmd({ cmd = 'make' }, { output = true }))
       assert_alive()
-      meths.cmd({ cmd = 'make', args = { 'foo', 'bar' } }, {})
+      matches('^:!echo foo bar',
+              meths.cmd({ cmd = 'make', args = { 'foo', 'bar' } }, { output = true }))
+      assert_alive()
+      local arg_pesc = pesc(funcs.expand('%:p:h:t'))
+      matches(('^:!echo %s %s'):format(arg_pesc, arg_pesc),
+              meths.cmd({ cmd = 'make', args = { '%:p:h:t', '%:p:h:t' } }, { output = true }))
       assert_alive()
     end)
     it('doesn\'t display messages when output=true', function()

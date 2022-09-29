@@ -3887,7 +3887,7 @@ static char *repl_cmdline(exarg_T *eap, char *src, size_t srclen, char *repl, ch
     } else {
       // Otherwise, argument gets shifted alongside the replaced text.
       // The amount of the shift is equal to the difference of the old and new string length.
-      eap->args[j] = new_cmdline + (eap->args[j] - *cmdlinep) + (len - srclen);
+      eap->args[j] = new_cmdline + ((eap->args[j] - *cmdlinep) + (ptrdiff_t)(len - srclen));
     }
   }
 
