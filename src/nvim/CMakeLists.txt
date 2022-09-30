@@ -490,7 +490,6 @@ if(WIN32)
   foreach(DEP_FILE IN ITEMS
                       curl-ca-bundle.crt
                       curl.exe
-                      diff.exe
                       tee.exe
                       win32yank.exe
                       xxd.exe
