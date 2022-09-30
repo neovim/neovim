@@ -885,7 +885,7 @@ describe('nvim_set_keymap, nvim_del_keymap', function()
     eq({'<space>'}, meths.buf_get_lines(0, 0, -1, false))
   end)
 
-  it('lua expr mapping returning nil is equivalent to returnig an empty string', function()
+  it('lua expr mapping returning nil is equivalent to returning an empty string', function()
     exec_lua [[
       vim.api.nvim_set_keymap ('i', 'aa', '', {callback = function() return nil end, expr = true })
     ]]

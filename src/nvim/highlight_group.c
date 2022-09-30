@@ -2034,7 +2034,7 @@ void highlight_changed(void)
     }
   }
 
-  // sentinel value. used when no hightlight namespace is active
+  // sentinel value. used when no highlight namespace is active
   highlight_attr[HLF_COUNT] = 0;
 
   //

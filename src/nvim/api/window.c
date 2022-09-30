@@ -430,7 +430,7 @@ Object nvim_win_call(Window window, LuaRef fun, Error *err)
 /// Set highlight namespace for a window. This will use highlights defined in
 /// this namespace, but fall back to global highlights (ns=0) when missing.
 ///
-/// This takes predecence over the 'winhighlight' option.
+/// This takes precedence over the 'winhighlight' option.
 ///
 /// @param ns_id the namespace to use
 /// @param[out] err Error details, if any

@@ -3355,7 +3355,7 @@ uv.getnameinfo({address} [, {callback}])                      *uv.getnameinfo()*
                   - `family`: `string` or `integer` or `nil`
                 - `callback`: `callable` (async version) or `nil` (sync
                   version)
-                  - `err`: `nil` or `sring`
+                  - `err`: `nil` or `string`
                   - `host`: `string` or `nil`
                   - `service`: `string` or `nil`
 

@@ -805,7 +805,7 @@ done:
 ///   char *output = NULL;
 ///   size_t nread = 0;
 ///   char *argv[] = {"ls", "-la", NULL};
-///   int exitcode = os_sytem(argv, NULL, 0, &output, &nread);
+///   int exitcode = os_system(argv, NULL, 0, &output, &nread);
 ///
 /// @param argv The commandline arguments to be passed to the shell. `argv`
 ///             will be consumed.

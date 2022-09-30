@@ -2365,7 +2365,7 @@ you set the variable: >
 
 	:let papp_include_html=1
 
-in your startup file it will try to syntax-hilight html code inside phtml
+in your startup file it will try to syntax-highlight html code inside phtml
 sections, but this is relatively slow and much too colourful to be able to
 edit sensibly. ;)
 

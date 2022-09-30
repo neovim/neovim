@@ -202,7 +202,7 @@ _ERROR_CATEGORIES = [
     'whitespace/cast',
 ]
 
-# The default state of the category filter. This is overrided by the --filter=
+# The default state of the category filter. This is overridden by the --filter=
 # flag. By default all errors are on, so only add here categories that should be
 # off by default (i.e., categories that must be enabled by the --filter= flags).
 # All entries here should start with a '-' or '+', as in the --filter= flag.

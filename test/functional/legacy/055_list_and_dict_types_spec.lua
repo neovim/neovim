@@ -907,7 +907,7 @@ describe('list and dictionary types', function()
     feed('o<C-R>=a<CR><esc>')
     feed_command('lang C')
     feed_command('redir => a')
-    -- The test failes if this is not in one line.
+    -- The test fails if this is not in one line.
     feed_command("try|foobar|catch|let a = matchstr(v:exception,'^[^ ]*')|endtry")
     feed_command('redir END')
     feed('o<C-R>=a<CR><esc>')
