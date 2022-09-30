@@ -1697,7 +1697,13 @@ nvim_cmd({*cmd}, {*opts})                                         *nvim_cmd()*
     of a String. This allows for easier construction and manipulation of an Ex
     command. This also allows for things such as having spaces inside a
     command argument, expanding filenames in a command that otherwise doesn't
-    expand filenames, etc.
+    expand filenames, etc. Command arguments may also be Number, Boolean or
+    String.
+
+    The first argument may also be used instead of count for commands that
+    support it in order to make their usage simpler with |vim.cmd()|. For
+    example, instead of `vim.cmd.bdelete{ count = 2 }`, you may do
+    `vim.cmd.bdelete(2)`.
 
     On execution error: fails with VimL error, updates v:errmsg.
 
