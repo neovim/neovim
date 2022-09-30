@@ -68,16 +68,9 @@ set(LUA_FILETYPE_MODULE_SOURCE ${PROJECT_SOURCE_DIR}/runtime/lua/vim/filetype.lu
 set(LUA_INIT_PACKAGES_MODULE_SOURCE ${PROJECT_SOURCE_DIR}/runtime/lua/vim/_init_packages.lua)
 set(LUA_KEYMAP_MODULE_SOURCE ${PROJECT_SOURCE_DIR}/runtime/lua/vim/keymap.lua)
 set(CHAR_BLOB_GENERATOR ${GENERATOR_DIR}/gen_char_blob.lua)
-set(LINT_SUPPRESS_FILE ${PROJECT_BINARY_DIR}/errors.json)
-set(LINT_SUPPRESS_URL_BASE "https://raw.githubusercontent.com/neovim/doc/gh-pages/reports/clint")
-set(LINT_SUPPRESS_URL "${LINT_SUPPRESS_URL_BASE}/errors.json")
-set(LINT_PRG ${PROJECT_SOURCE_DIR}/src/clint.py)
-set(DOWNLOAD_SCRIPT ${PROJECT_SOURCE_DIR}/cmake/Download.cmake)
-set(LINT_SUPPRESSES_ROOT ${PROJECT_BINARY_DIR}/errors)
-set(LINT_SUPPRESSES_URL "${LINT_SUPPRESS_URL_BASE}/errors.tar.gz")
-set(LINT_SUPPRESSES_ARCHIVE ${LINT_SUPPRESSES_ROOT}/errors.tar.gz)
-set(LINT_SUPPRESSES_TOUCH_FILE "${TOUCHES_DIR}/unpacked-clint-errors-archive")
-set(CLINT_REPORT_PATH ${LINT_SUPPRESSES_ROOT}/src/home/runner/work/doc/doc/gh-pages/reports/clint)
+set(CLINT_PRG ${PROJECT_SOURCE_DIR}/src/clint.py)
+set(CLINT_SUPPRESSIONS_DIR ${PROJECT_BINARY_DIR}/reports/clint)
+set(CLINT_SUPPRESSIONS_ALL ${CLINT_SUPPRESSIONS_DIR}/errors.json)
 
 glob_wrapper(UNICODE_FILES ${UNICODE_DIR}/*.txt)
 glob_wrapper(API_HEADERS api/*.h)
@@ -91,8 +84,6 @@ include_directories(${GENERATED_INCLUDES_DIR})
 file(MAKE_DIRECTORY ${TOUCHES_DIR})
 file(MAKE_DIRECTORY ${GENERATED_DIR})
 file(MAKE_DIRECTORY ${GENERATED_INCLUDES_DIR})
-file(MAKE_DIRECTORY ${LINT_SUPPRESSES_ROOT})
-file(MAKE_DIRECTORY ${LINT_SUPPRESSES_ROOT}/src)
 
 glob_wrapper(NVIM_SOURCES *.c)
 glob_wrapper(NVIM_HEADERS *.h)
@@ -703,50 +694,30 @@ foreach(hfile ${NVIM_HEADERS})
 endforeach()
 add_custom_target(check-single-includes DEPENDS ${HEADER_CHECK_TARGETS})
 
-function(add_download output url allow_failure)
-  add_custom_command(
-    OUTPUT "${output}"
-    COMMAND
-      ${CMAKE_COMMAND}
-        -DURL=${url} -DFILE=${output}
-        -DALLOW_FAILURE=${allow_failure}
-        -P ${DOWNLOAD_SCRIPT}
-    DEPENDS ${DOWNLOAD_SCRIPT}
-  )
-endfunction()
-
-add_download(${LINT_SUPPRESSES_ARCHIVE} ${LINT_SUPPRESSES_URL} off)
-
-add_custom_command(
-  OUTPUT ${LINT_SUPPRESSES_TOUCH_FILE}
-  WORKING_DIRECTORY ${LINT_SUPPRESSES_ROOT}/src
-  COMMAND ${CMAKE_COMMAND} -E tar xfz ${LINT_SUPPRESSES_ARCHIVE}
-  COMMAND ${CMAKE_COMMAND} -E copy_directory ${CLINT_REPORT_PATH} "${LINT_SUPPRESSES_ROOT}"
-  COMMAND ${CMAKE_COMMAND} -E touch ${LINT_SUPPRESSES_TOUCH_FILE}
-  DEPENDS ${LINT_SUPPRESSES_ARCHIVE}
+include(FetchErrorSuppressions)
+FetchErrorSuppressions(
+  TARGET clint-reports
+  DOWNLOAD_DIR ${CLINT_SUPPRESSIONS_DIR}
 )
 
-add_download(${LINT_SUPPRESS_FILE} ${LINT_SUPPRESS_URL} off)
-
 if(CI_BUILD)
-  set(LINT_OUTPUT_FORMAT gh_action)
+  set(CLINT_OUTPUT_FORMAT gh_action)
 else()
-  set(LINT_OUTPUT_FORMAT vs7)
+  set(CLINT_OUTPUT_FORMAT vs7)
 endif()
 
 set(LINT_NVIM_REL_SOURCES)
 foreach(sfile ${LINT_NVIM_SOURCES})
   get_test_target("" "${sfile}" r suffix)
-  set(suppress_file ${LINT_SUPPRESSES_ROOT}/${suffix}.json)
-  set(suppress_url "${LINT_SUPPRESS_URL_BASE}/${suffix}.json")
+  set(suppress_file ${CLINT_SUPPRESSIONS_DIR}/${suffix}.json)
   set(rsfile src/nvim/${r})
   set(touch_file "${TOUCHES_DIR}/ran-clint-${suffix}")
   add_custom_command(
     OUTPUT ${touch_file}
-    COMMAND ${LINT_PRG} --suppress-errors=${suppress_file} --output=${LINT_OUTPUT_FORMAT} ${rsfile}
+    COMMAND ${CLINT_PRG} --suppress-errors=${suppress_file} --output=${CLINT_OUTPUT_FORMAT} ${rsfile}
     WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
     COMMAND ${CMAKE_COMMAND} -E touch ${touch_file}
-    DEPENDS ${LINT_PRG} ${sfile} ${LINT_SUPPRESSES_TOUCH_FILE}
+    DEPENDS ${CLINT_PRG} clint-reports
   )
   list(APPEND LINT_TARGETS ${touch_file})
   list(APPEND LINT_NVIM_REL_SOURCES ${rsfile})
@@ -778,9 +749,9 @@ add_dependencies(formatc uncrustify-version)
 add_custom_target(
   lintcfull
   COMMAND
-    ${LINT_PRG} --suppress-errors=${LINT_SUPPRESS_FILE} --output=${LINT_OUTPUT_FORMAT} ${LINT_NVIM_REL_SOURCES}
+    ${CLINT_PRG} --suppress-errors=${CLINT_SUPPRESSIONS_ALL} --output=${CLINT_OUTPUT_FORMAT} ${LINT_NVIM_REL_SOURCES}
   WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
-  DEPENDS ${LINT_PRG} ${LINT_NVIM_SOURCES} ${LINT_SUPPRESS_FILE} lintuncrustify
+  DEPENDS ${CLINT_PRG} ${LINT_NVIM_SOURCES} lintuncrustify clint-reports
 )
 
 add_custom_target(generated-sources DEPENDS
