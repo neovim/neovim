@@ -2607,7 +2607,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
           assert(i >= 0);
           int offset = kv_A(virt_lines, i).left_col ? 0 : win_col_offset;
           draw_virt_text_item(buf, offset, kv_A(virt_lines, i).line,
-                              kHlModeReplace, grid->cols, offset);
+                              kHlModeReplace, grid->cols, 0);
         }
       } else {
         draw_virt_text(wp, buf, win_col_offset, &draw_col, grid->cols, row);
