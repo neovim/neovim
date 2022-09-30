@@ -490,7 +490,6 @@ if(WIN32)
   foreach(DEP_FILE IN ITEMS
                       curl-ca-bundle.crt
                       curl.exe
-                      diff.exe
                       tee.exe
                       win32yank.exe
                       xxd.exe
@@ -532,8 +531,6 @@ if(WIN32)
                       translations/qt_uk.qm
                       D3Dcompiler_47.dll
                       libEGL.dll
-                      libgcc_s_dw2-1.dll
-                      libGLESV2.dll
                       libstdc++-6.dll
                       libwinpthread-1.dll
                       nvim-qt.exe
