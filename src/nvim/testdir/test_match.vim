@@ -2,6 +2,7 @@
 " matchaddpos(), matcharg(), matchdelete(), and setmatches().
 
 source screendump.vim
+source check.vim
 
 function Test_match()
   highlight MyGroup1 term=bold ctermbg=red guibg=red
@@ -217,6 +218,21 @@ func Test_matchaddpos()
   call clearmatches()
   syntax off
   set hlsearch&
+endfunc
+
+" Add 12 match positions (previously the limit was 8 positions).
+func Test_matchaddpos_dump()
+  CheckScreendump
+
+  let lines =<< trim END
+      call setline(1, ['1234567890123']->repeat(14))
+      call matchaddpos('Search', range(1, 12)->map({i, v -> [v, v]}))
+  END
+  call writefile(lines, 'Xmatchaddpos', 'D')
+  let buf = RunVimInTerminal('-S Xmatchaddpos', #{rows: 14})
+  call VerifyScreenDump(buf, 'Test_matchaddpos_1', {})
+
+  call StopVimInTerminal(buf)
 endfunc
 
 func Test_matchaddpos_otherwin()

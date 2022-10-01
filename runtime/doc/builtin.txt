@@ -5068,8 +5068,6 @@ matchaddpos({group}, {pos} [, {priority} [, {id} [, {dict}]]])
 		ignored, as well as entries with negative column numbers and
 		lengths.
 
-		The maximum number of positions in {pos} is 8.
-
 		Returns -1 on error.
 
 		Example: >
