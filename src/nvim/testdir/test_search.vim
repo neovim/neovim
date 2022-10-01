@@ -956,24 +956,24 @@ func Test_incsearch_search_dump()
   call delete('Xis_search_script')
 endfunc
 
-func Test_hlsearch_block_visual_match()
+func Test_hlsearch_dump()
+  CheckOption hlsearch
   CheckScreendump
 
-  let lines =<< trim END
-    set hlsearch
-    call setline(1, ['aa', 'bbbb', 'cccccc'])
-  END
-  call writefile(lines, 'Xhlsearch_block')
-  let buf = RunVimInTerminal('-S Xhlsearch_block', {'rows': 9, 'cols': 60})
+  call writefile([
+	\ 'set hlsearch cursorline',
+        \ 'call setline(1, ["xxx", "xxx", "xxx"])',
+	\ '/.*',
+	\ '2',
+	\ ], 'Xhlsearch_script')
+  let buf = RunVimInTerminal('-S Xhlsearch_script', {'rows': 6, 'cols': 50})
+  call VerifyScreenDump(buf, 'Test_hlsearch_1', {})
 
-  call term_sendkeys(buf, "G\<C-V>$kk\<Esc>")
-  sleep 100m
-  call term_sendkeys(buf, "/\\%V\<CR>")
-  sleep 100m
-  call VerifyScreenDump(buf, 'Test_hlsearch_block_visual_match', {})
+  call term_sendkeys(buf, "/\\_.*\<CR>")
+  call VerifyScreenDump(buf, 'Test_hlsearch_2', {})
 
   call StopVimInTerminal(buf)
-  call delete('Xhlsearch_block')
+  call delete('Xhlsearch_script')
 endfunc
 
 func Test_hlsearch_and_visual()
@@ -996,6 +996,26 @@ func Test_hlsearch_and_visual()
   call delete('Xhlvisual_script')
 endfunc
 
+func Test_hlsearch_block_visual_match()
+  CheckScreendump
+
+  let lines =<< trim END
+    set hlsearch
+    call setline(1, ['aa', 'bbbb', 'cccccc'])
+  END
+  call writefile(lines, 'Xhlsearch_block')
+  let buf = RunVimInTerminal('-S Xhlsearch_block', {'rows': 9, 'cols': 60})
+
+  call term_sendkeys(buf, "G\<C-V>$kk\<Esc>")
+  sleep 100m
+  call term_sendkeys(buf, "/\\%V\<CR>")
+  sleep 100m
+  call VerifyScreenDump(buf, 'Test_hlsearch_block_visual_match', {})
+
+  call StopVimInTerminal(buf)
+  call delete('Xhlsearch_block')
+endfunc
+
 func Test_incsearch_substitute()
   CheckFunction test_override
   CheckOption incsearch
@@ -1015,6 +1035,21 @@ func Test_incsearch_substitute()
   call assert_equal('foo 7', getline(7))
 
   call Incsearch_cleanup()
+endfunc
+
+func Test_incsearch_substitute_long_line()
+  CheckFunction test_override
+  new
+  call test_override("char_avail", 1)
+  set incsearch
+
+  call repeat('x', 100000)->setline(1)
+  call feedkeys(':s/\%c', 'xt')
+  redraw
+  call feedkeys("\<Esc>", 'xt')
+
+  call Incsearch_cleanup()
+  bwipe!
 endfunc
 
 func Test_hlsearch_cursearch()
@@ -1339,21 +1374,6 @@ func Test_subst_word_under_cursor()
   bwipe!
   call test_override("ALL", 0)
   set noincsearch
-endfunc
-
-func Test_incsearch_substitute_long_line()
-  CheckFunction test_override
-  new
-  call test_override("char_avail", 1)
-  set incsearch
-
-  call repeat('x', 100000)->setline(1)
-  call feedkeys(':s/\%c', 'xt')
-  redraw
-  call feedkeys("\<Esc>", 'xt')
-
-  call Incsearch_cleanup()
-  bwipe!
 endfunc
 
 func Test_search_undefined_behaviour()
