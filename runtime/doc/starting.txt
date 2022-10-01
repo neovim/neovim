@@ -458,7 +458,7 @@ accordingly, proceeding as follows:
 
 7. Enable filetype detection.
 	This does the same as the command: >
-		:runtime! filetype.lua filetype.vim
+		:runtime! filetype.lua
 <	Skipped if ":filetype off" was called or if the "-u NONE" command line
 	argument was given.
 

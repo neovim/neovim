@@ -13,7 +13,7 @@ BREAKING CHANGES                                                *news-breaking*
 
 The following changes may require adaptations in user config or plugins.
 
-Cscope is now removed (see |cscope| and |nvim-features-removed|):
+• Cscope is now removed (see |cscope| and |nvim-features-removed|):
   - Commands removed:
     - `:cscope`
     - `:lcscope`
@@ -30,9 +30,9 @@ Cscope is now removed (see |cscope| and |nvim-features-removed|):
   - Eval functions removed:
     - `cscope_connection()`
 
-Note: support for |ctags| remains with no plans to remove.
+  Note: support for |ctags| remains with no plans to remove.
 
-See https://github.com/neovim/neovim/pull/20545 for more information.
+  See https://github.com/neovim/neovim/pull/20545 for more information.
 
 ==============================================================================
 NEW FEATURES                                                    *news-features*
@@ -48,6 +48,11 @@ The following changes to existing APIs or features add new behavior.
 REMOVED FEATURES                                                 *news-removed*
 
 The following deprecated functions or APIs were removed.
+
+• `filetype.vim` is removed in favor of |lua-filetype|
+  (Note that filetype logic and tests still align with Vim, so additions or
+  changes need to be contributed there first.)
+  See https://github.com/neovim/neovim/pull/20674.
 
 ==============================================================================
 DEPRECATIONS                                                *news-deprecations*

@@ -2285,8 +2285,6 @@ end
 ---
 --- See $VIMRUNTIME/lua/vim/filetype.lua for more examples.
 ---
---- Note that Lua filetype detection is disabled when |g:do_legacy_filetype| is set.
----
 --- Example:
 --- <pre>
 ---  vim.filetype.add({
@@ -2323,7 +2321,7 @@ end
 ---  })
 --- </pre>
 ---
---- To add a fallback match on contents (see |new-filetype-scripts|), use
+--- To add a fallback match on contents, use
 --- <pre>
 --- vim.filetype.add {
 ---   pattern = {

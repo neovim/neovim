@@ -1,5 +1,4 @@
--- Skip if legacy filetype is enabled or filetype detection is disabled
-if vim.g.do_legacy_filetype or vim.g.did_load_filetypes then
+if vim.g.did_load_filetypes then
   return
 end
 vim.g.did_load_filetypes = 1
