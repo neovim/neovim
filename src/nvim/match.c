@@ -738,7 +738,13 @@ int update_search_hl(win_T *wp, linenr_T lnum, colnr_T col, char_u **line, match
 
           if (shl->startcol == shl->endcol) {
             // highlight empty match, try again after it
-            shl->endcol += utfc_ptr2len((char *)(*line) + shl->endcol);
+            char *p = (char *)(*line) + shl->endcol;
+
+            if (*p == NUL) {
+              shl->endcol++;
+            } else {
+              shl->endcol += utfc_ptr2len(p);
+            }
           }
 
           // Loop to check if the match starts at the
@@ -792,12 +798,19 @@ bool get_prevcol_hl_flag(win_T *wp, match_T *search_hl, long curcol)
     prevcol++;
   }
 
-  if (!search_hl->is_addpos && prevcol == search_hl->startcol) {
+  // Highlight a character after the end of the line if the match started
+  // at the end of the line or when the match continues in the next line
+  // (match includes the line break).
+  if (!search_hl->is_addpos && (prevcol == (long)search_hl->startcol
+                                || (prevcol > (long)search_hl->startcol
+                                    && search_hl->endcol == MAXCOL))) {
     return true;
   } else {
     cur = wp->w_match_head;
     while (cur != NULL) {
-      if (!cur->hl.is_addpos && prevcol == cur->hl.startcol) {
+      if (!cur->hl.is_addpos && (prevcol == (long)cur->hl.startcol
+                                 || (prevcol > (long)cur->hl.startcol
+                                     && cur->hl.endcol == MAXCOL))) {
         return true;
       }
       cur = cur->next;
@@ -815,7 +828,6 @@ void get_search_match_hl(win_T *wp, match_T *search_hl, long col, int *char_attr
   bool shl_flag = false;        // flag to indicate whether search_hl
                                 // has been processed or not
 
-  *char_attr = search_hl->attr;
   while (cur != NULL || !shl_flag) {
     if (!shl_flag
         && (cur == NULL || cur->priority > SEARCH_HL_PRIORITY)) {

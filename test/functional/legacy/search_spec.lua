@@ -644,7 +644,35 @@ end)
 
 describe('Search highlight', function()
   before_each(clear)
-  it('Search highlight is combined with Visual highlight vim-patch:8.2.2797', function()
+
+  -- oldtest: Test_hlsearch_dump()
+  it('beyond line end vim-patch:8.2.2542', function()
+    local screen = Screen.new(50, 6)
+    screen:set_default_attr_ids({
+      [1] = {bold = true, foreground = Screen.colors.Blue},  -- NonText
+      [2] = {background = Screen.colors.Yellow},  -- Search
+      [3] = {background = Screen.colors.Grey90},  -- CursorLine
+    })
+    screen:attach()
+    exec([[
+      set hlsearch noincsearch cursorline
+      call setline(1, ["xxx", "xxx", "xxx"])
+      /.*
+      2
+    ]])
+    feed([[/\_.*<CR>]])
+    screen:expect([[
+      {2:xxx }                                              |
+      {2:xxx }                                              |
+      {2:^xxx }{3:                                              }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      /\_.*                                             |
+    ]])
+  end)
+
+  -- oldtest: Test_hlsearch_and_visual()
+  it('is combined with Visual highlight vim-patch:8.2.2797', function()
     local screen = Screen.new(40, 6)
     screen:set_default_attr_ids({
       [1] = {bold = true, foreground = Screen.colors.Blue},  -- NonText
