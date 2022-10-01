@@ -642,12 +642,12 @@ describe('shell :!', function()
     if iswin() then
       feed(':4verbose %!sort /R<cr>')
       screen:expect{
-        any=[[Executing command: .?Start%-Process sort %-ArgumentList "/R" %-RedirectStandardInput .* %-RedirectStandardOutput .* %-NoNewWindow %-Wait]]
+        any=[[Executing command: .?& { Get%-Content .* | & sort /R } 2>&1 | Out%-File %-Encoding UTF8 .*; exit $LastExitCode"]]
       }
     else
       feed(':4verbose %!sort -r<cr>')
       screen:expect{
-        any=[[Executing command: .?Start%-Process sort %-ArgumentList "%-r" %-RedirectStandardInput .* %-RedirectStandardOutput .* %-NoNewWindow %-Wait]]
+        any=[[Executing command: .?& { Get%-Content .* | & sort %-r } 2>&1 | Out%-File %-Encoding UTF8 .*; exit $LastExitCode"]]
       }
     end
     feed('<CR>')

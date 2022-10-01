@@ -562,16 +562,16 @@ function module.set_shell_powershell(fake)
     assert(found)
   end
   local shell = found and (iswin() and 'powershell' or 'pwsh') or module.testprg('pwsh-test')
-  local set_encoding = '[Console]::InputEncoding=[Console]::OutputEncoding=[System.Text.Encoding]::UTF8;'
+  local set_encoding = '[Console]::InputEncoding=[Console]::OutputEncoding=[System.Text.UTF8Encoding]::new();'
   local cmd = set_encoding..'Remove-Item -Force '..table.concat(iswin()
-    and {'alias:cat', 'alias:echo', 'alias:sleep'}
+    and {'alias:cat', 'alias:echo', 'alias:sleep', 'alias:sort'}
     or  {'alias:echo'}, ',')..';'
   module.exec([[
     let &shell = ']]..shell..[['
     set shellquote= shellxquote=
     let &shellcmdflag = '-NoLogo -NoProfile -ExecutionPolicy RemoteSigned -Command ]]..cmd..[['
     let &shellpipe = '2>&1 | Out-File -Encoding UTF8 %s; exit $LastExitCode'
-    let &shellredir = '-RedirectStandardOutput %s -NoNewWindow -Wait'
+    let &shellredir = '2>&1 | Out-File -Encoding UTF8 %s; exit $LastExitCode'
   ]])
   return found
 end
