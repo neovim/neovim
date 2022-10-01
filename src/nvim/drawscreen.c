@@ -1126,12 +1126,12 @@ win_update_start:
       } else {
         const matchitem_T *cur = wp->w_match_head;
         while (cur != NULL) {
-          if (cur->match.regprog != NULL
-              && re_multiline(cur->match.regprog)) {
+          if (cur->mit_match.regprog != NULL
+              && re_multiline(cur->mit_match.regprog)) {
             top_to_mod = true;
             break;
           }
-          cur = cur->next;
+          cur = cur->mit_next;
         }
       }
     }
