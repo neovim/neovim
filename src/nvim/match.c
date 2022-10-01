@@ -58,34 +58,32 @@ static int match_add(win_T *wp, const char *const grp, const char *const pat, in
           (int64_t)id);
     return -1;
   }
-  if (id != -1) {
-    cur = wp->w_match_head;
-    while (cur != NULL) {
+  if (id == -1) {
+    // use the next available match ID
+    id = wp->w_next_match_id++;
+  } else {
+    // check the given ID is not already in use
+    for (cur = wp->w_match_head; cur != NULL; cur = cur->mit_next) {
       if (cur->mit_id == id) {
         semsg(_("E801: ID already taken: %" PRId64), (int64_t)id);
         return -1;
       }
-      cur = cur->mit_next;
+    }
+
+    // Make sure the next match ID is always higher than the highest
+    // manually selected ID.  Add some extra in case a few more IDs are
+    // added soon.
+    if (wp->w_next_match_id < id + 100) {
+      wp->w_next_match_id = id + 100;
     }
   }
+
   if ((hlg_id = syn_check_group(grp, strlen(grp))) == 0) {
     return -1;
   }
   if (pat != NULL && (regprog = vim_regcomp((char *)pat, RE_MAGIC)) == NULL) {
     semsg(_(e_invarg2), pat);
     return -1;
-  }
-
-  // Find available match ID.
-  while (id == -1) {
-    cur = wp->w_match_head;
-    while (cur != NULL && cur->mit_id != wp->w_next_match_id) {
-      cur = cur->mit_next;
-    }
-    if (cur == NULL) {
-      id = wp->w_next_match_id;
-    }
-    wp->w_next_match_id++;
   }
 
   // Build new match.

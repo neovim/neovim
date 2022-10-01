@@ -36,8 +36,8 @@ function Test_match()
   let m1 = matchadd("MyGroup1", "TODO")
   let m2 = matchadd("MyGroup2", "FIXME", 42)
   let m3 = matchadd("MyGroup3", "XXX", 60, 17)
-  let ans = [{'group': 'MyGroup1', 'pattern': 'TODO', 'priority': 10, 'id': 4},
-        \    {'group': 'MyGroup2', 'pattern': 'FIXME', 'priority': 42, 'id': 5},
+  let ans = [{'group': 'MyGroup1', 'pattern': 'TODO', 'priority': 10, 'id': 1000},
+        \    {'group': 'MyGroup2', 'pattern': 'FIXME', 'priority': 42, 'id': 1001},
         \    {'group': 'MyGroup3', 'pattern': 'XXX', 'priority': 60, 'id': 17}]
   call assert_equal(ans, getmatches())
 
@@ -118,7 +118,7 @@ function Test_match()
   call clearmatches()
 
   call setline(1, 'abcdΣabcdef')
-  eval "MyGroup1"->matchaddpos([[1, 4, 2], [1, 9, 2]])
+  eval "MyGroup1"->matchaddpos([[1, 4, 2], [1, 9, 2]], 10, 42)
   1
   redraw!
   let v1 = screenattr(1, 1)
@@ -129,7 +129,7 @@ function Test_match()
   let v8 = screenattr(1, 8)
   let v9 = screenattr(1, 9)
   let v10 = screenattr(1, 10)
-  call assert_equal([{'group': 'MyGroup1', 'id': 11, 'priority': 10, 'pos1': [1, 4, 2], 'pos2': [1, 9, 2]}], getmatches())
+  call assert_equal([{'group': 'MyGroup1', 'id': 42, 'priority': 10, 'pos1': [1, 4, 2], 'pos2': [1, 9, 2]}], getmatches())
   call assert_notequal(v1, v4)
   call assert_equal(v5, v4)
   call assert_equal(v6, v1)
@@ -143,7 +143,7 @@ function Test_match()
   let m=getmatches()
   call clearmatches()
   call setmatches(m)
-  call assert_equal([{'group': 'MyGroup1', 'id': 11, 'priority': 10, 'pos1': [1, 4, 2], 'pos2': [1,9, 2]}, {'group': 'MyGroup1', 'pattern': '\%2lmatchadd', 'priority': 10, 'id': 12}], getmatches())
+  call assert_equal([{'group': 'MyGroup1', 'id': 42, 'priority': 10, 'pos1': [1, 4, 2], 'pos2': [1,9, 2]}, {'group': 'MyGroup1', 'pattern': '\%2lmatchadd', 'priority': 10, 'id': 1106}], getmatches())
 
   highlight MyGroup1 NONE
   highlight MyGroup2 NONE
@@ -161,7 +161,7 @@ func Test_matchadd_error()
   call clearmatches()
   " Nvim: not an error anymore:
   call matchadd('GroupDoesNotExist', 'X')
-  call assert_equal([{'group': 'GroupDoesNotExist', 'pattern': 'X', 'priority': 10, 'id': 13}], getmatches())
+  call assert_equal([{'group': 'GroupDoesNotExist', 'pattern': 'X', 'priority': 10, 'id': 1206}], getmatches())
   call assert_fails("call matchadd('Search', '\\(')", 'E475:')
   call assert_fails("call matchadd('Search', 'XXX', 1, 123, 1)", 'E715:')
   call assert_fails("call matchadd('Error', 'XXX', 1, 3)", 'E798:')
@@ -253,8 +253,8 @@ func Test_matchaddpos_otherwin()
 
   let savematches = getmatches(winid)
   let expect = [
-        \ {'group': 'Search', 'pattern': '4', 'priority': 10, 'id': 4},
-        \ {'group': 'Error', 'id': 5, 'priority': 10, 'pos1': [1, 2, 1], 'pos2': [2, 2, 1]},
+        \ {'group': 'Search', 'pattern': '4', 'priority': 10, 'id': 1000},
+        \ {'group': 'Error', 'id': 1001, 'priority': 10, 'pos1': [1, 2, 1], 'pos2': [2, 2, 1]},
         \]
   call assert_equal(expect, savematches)
 
