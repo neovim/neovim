@@ -82,7 +82,6 @@ else()
 endif()
 
 ExternalProject_Add(luarocks
-  PREFIX ${DEPS_BUILD_DIR}
   URL ${LUAROCKS_URL}
   URL_HASH SHA256=${LUAROCKS_SHA256}
   DOWNLOAD_NO_PROGRESS TRUE

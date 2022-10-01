@@ -18,7 +18,6 @@ else()
 endif()
 
 ExternalProject_Add(tree-sitter
-  PREFIX ${DEPS_BUILD_DIR}
   URL ${TREESITTER_URL}
   URL_HASH SHA256=${TREESITTER_SHA256}
   DOWNLOAD_NO_PROGRESS TRUE

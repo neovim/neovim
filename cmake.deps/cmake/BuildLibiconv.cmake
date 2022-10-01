@@ -1,6 +1,5 @@
 if(MSVC)
   ExternalProject_Add(libiconv
-    PREFIX ${DEPS_BUILD_DIR}
     URL ${LIBICONV_URL}
     URL_HASH SHA256=${LIBICONV_SHA256}
     DOWNLOAD_NO_PROGRESS TRUE

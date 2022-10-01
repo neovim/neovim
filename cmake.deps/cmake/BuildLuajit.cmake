@@ -16,7 +16,6 @@ function(BuildLuajit)
   endif()
 
   ExternalProject_Add(${_luajit_TARGET}
-    PREFIX ${DEPS_BUILD_DIR}
     URL ${LUAJIT_URL}
     URL_HASH SHA256=${LUAJIT_SHA256}
     DOWNLOAD_NO_PROGRESS TRUE

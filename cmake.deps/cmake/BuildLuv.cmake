@@ -56,7 +56,6 @@ else()
 endif()
 
 ExternalProject_Add(lua-compat-5.3
-  PREFIX ${DEPS_BUILD_DIR}
   URL ${LUA_COMPAT53_URL}
   URL_HASH SHA256=${LUA_COMPAT53_SHA256}
   DOWNLOAD_NO_PROGRESS TRUE
@@ -66,7 +65,6 @@ ExternalProject_Add(lua-compat-5.3
   INSTALL_COMMAND "")
 
 ExternalProject_Add(luv-static
-  PREFIX ${DEPS_BUILD_DIR}
   DEPENDS lua-compat-5.3
   URL ${LUV_URL}
   URL_HASH SHA256=${LUV_SHA256}

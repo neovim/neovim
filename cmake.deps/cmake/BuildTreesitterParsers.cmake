@@ -1,7 +1,6 @@
 function(BuildTSParser LANG TS_URL TS_SHA256 TS_CMAKE_FILE)
   set(NAME treesitter-${LANG})
   ExternalProject_Add(${NAME}
-    PREFIX ${DEPS_BUILD_DIR}
     URL ${TS_URL}
     URL_HASH SHA256=${TS_SHA256}
     DOWNLOAD_NO_PROGRESS TRUE

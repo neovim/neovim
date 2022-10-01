@@ -23,7 +23,6 @@ else()
 endif()
 
 ExternalProject_Add(libtermkey
-  PREFIX ${DEPS_BUILD_DIR}
   URL ${LIBTERMKEY_URL}
   URL_HASH SHA256=${LIBTERMKEY_SHA256}
   DOWNLOAD_NO_PROGRESS TRUE

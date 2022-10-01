@@ -25,7 +25,6 @@ else()
 endif()
 
 ExternalProject_Add(libvterm
-  PREFIX ${DEPS_BUILD_DIR}
   URL ${LIBVTERM_URL}
   URL_HASH SHA256=${LIBVTERM_SHA256}
   DOWNLOAD_NO_PROGRESS TRUE

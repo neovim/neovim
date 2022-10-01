@@ -1,6 +1,5 @@
 if(MSVC)
   ExternalProject_Add(gettext
-    PREFIX ${DEPS_BUILD_DIR}
     URL ${GETTEXT_URL}
     URL_HASH SHA256=${GETTEXT_SHA256}
     DOWNLOAD_NO_PROGRESS TRUE

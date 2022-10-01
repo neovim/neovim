@@ -23,7 +23,6 @@ function(GetBinaryDep)
   endif()
 
   ExternalProject_Add(${_gettool_TARGET}
-    PREFIX ${DEPS_BUILD_DIR}
     URL ${URL}
     URL_HASH SHA256=${HASH}
     DOWNLOAD_NO_PROGRESS TRUE

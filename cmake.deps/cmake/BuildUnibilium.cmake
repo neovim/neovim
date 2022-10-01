@@ -17,7 +17,6 @@ else()
 endif()
 
 ExternalProject_Add(unibilium
-  PREFIX ${DEPS_BUILD_DIR}
   URL ${UNIBILIUM_URL}
   URL_HASH SHA256=${UNIBILIUM_SHA256}
   DOWNLOAD_NO_PROGRESS TRUE
