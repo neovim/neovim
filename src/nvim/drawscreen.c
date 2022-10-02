@@ -71,7 +71,6 @@
 #include "nvim/highlight.h"
 #include "nvim/highlight_group.h"
 #include "nvim/insexpand.h"
-#include "nvim/lib/kvec.h"
 #include "nvim/match.h"
 #include "nvim/move.h"
 #include "nvim/option.h"
