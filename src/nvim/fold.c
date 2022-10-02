@@ -3012,7 +3012,7 @@ static void foldlevelMarker(fline_T *flp)
 
   char *s = ml_get_buf(flp->wp->w_buffer, flp->lnum + flp->off, false);
   while (*s) {
-    if (*s == cstart
+    if ((unsigned char)(*s) == cstart
         && STRNCMP(s + 1, startmarker, foldstartmarkerlen - 1) == 0) {
       // found startmarker: set flp->lvl
       s += foldstartmarkerlen;
@@ -3032,8 +3032,8 @@ static void foldlevelMarker(fline_T *flp)
         flp->lvl_next++;
         flp->start++;
       }
-    } else if (*s == cend && STRNCMP(s + 1, foldendmarker + 1,
-                                     foldendmarkerlen - 1) == 0) {
+    } else if ((unsigned char)(*s) == cend
+               && STRNCMP(s + 1, foldendmarker + 1, foldendmarkerlen - 1) == 0) {
       // found endmarker: set flp->lvl_next
       s += foldendmarkerlen;
       if (ascii_isdigit(*s)) {
