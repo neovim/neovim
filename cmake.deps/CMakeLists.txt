@@ -2,6 +2,10 @@
 cmake_minimum_required (VERSION 3.10)
 project(NVIM_DEPS C)
 
+if(POLICY CMP0135)
+  cmake_policy(SET CMP0135 NEW)
+endif()
+
 # Point CMake at any custom modules we may ship
 list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake" "${PROJECT_SOURCE_DIR}/../cmake")
 
@@ -62,8 +66,6 @@ else()
   option(USE_BUNDLED_LIBICONV "Use the bundled version of libiconv." OFF)
 endif()
 
-option(USE_EXISTING_SRC_DIR "Skip download of deps sources in case of existing source directory." OFF)
-
 find_package(Git)
 if(NOT Git_FOUND)
   message(FATAL_ERROR "Git is required to apply patches.")
@@ -101,11 +103,7 @@ if(MINGW AND CMAKE_GENERATOR MATCHES "Ninja")
   endif()
 endif()
 
-if(CMAKE_C_COMPILER_ARG1)
-  set(DEPS_C_COMPILER "${CMAKE_C_COMPILER} ${CMAKE_C_COMPILER_ARG1}")
-else()
-  set(DEPS_C_COMPILER "${CMAKE_C_COMPILER}")
-endif()
+set(DEPS_C_COMPILER "${CMAKE_C_COMPILER}")
 
 if(CMAKE_CXX_COMPILER)
   set(DEPS_CXX_COMPILER "${CMAKE_CXX_COMPILER}")
@@ -143,13 +141,8 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
   message("-- Using deployment target ${CMAKE_OSX_DEPLOYMENT_TARGET}")
 endif()
 
-set(HOSTDEPS_INSTALL_DIR "${DEPS_INSTALL_DIR}")
-set(HOSTDEPS_BIN_DIR "${DEPS_BIN_DIR}")
-set(HOSTDEPS_LIB_DIR "${DEPS_LIB_DIR}")
-set(HOSTDEPS_C_COMPILER "${DEPS_C_COMPILER}")
-set(HOSTDEPS_CXX_COMPILER "${DEPS_CXX_COMPILER}")
-
 include(ExternalProject)
+set_directory_properties(PROPERTIES EP_PREFIX "${DEPS_BUILD_DIR}")
 
 set(LIBUV_URL https://github.com/libuv/libuv/archive/f610339f74f7f0fcd183533d2c965ce1468b44c6.tar.gz)
 set(LIBUV_SHA256 d5f22303ba44ac60d3232b1977b404d23a349ae4e8cb83f00e7122fafe38d8c9)
@@ -190,8 +183,6 @@ set(WINTOOLS_SHA256 3c4c490a3d392ceeb1347cb77cc821a31900b688a2189276d3a1131a3f21
 set(WINGUI_URL https://github.com/equalsraf/neovim-qt/releases/download/v0.2.17/neovim-qt.zip)
 set(WINGUI_SHA256 502e386eef677c2c2e0c11d8cbb27f3e12b4d96818369417e8da4129c4580c25)
 
-set(WIN32YANK_X86_URL https://github.com/equalsraf/win32yank/releases/download/v0.0.4/win32yank-x86.zip)
-set(WIN32YANK_X86_SHA256 62f34e5a46c5d4a7b3f3b512e1ff7b77fedd432f42581cbe825233a996eed62c)
 set(WIN32YANK_X86_64_URL https://github.com/equalsraf/win32yank/releases/download/v0.0.4/win32yank-x64.zip)
 set(WIN32YANK_X86_64_SHA256 33a747a92da60fb65e668edbf7661d3d902411a2d545fe9dc08623cecd142a20)
 
@@ -281,15 +272,8 @@ if(WIN32)
     INSTALL_COMMAND ${CMAKE_COMMAND} -E copy_directory bin ${DEPS_INSTALL_DIR}/bin
       COMMAND ${CMAKE_COMMAND} -E copy_directory share ${DEPS_INSTALL_DIR}/share)
 
-  include(TargetArch)
-  GetBinaryDep(TARGET "win32yank_${TARGET_ARCH}"
+  GetBinaryDep(TARGET win32yank_X86_64
     INSTALL_COMMAND ${CMAKE_COMMAND} -E copy win32yank.exe ${DEPS_INSTALL_DIR}/bin)
-
-  if("${TARGET_ARCH}" STREQUAL "X86_64")
-    set(TARGET_ARCH x64)
-  elseif(TARGET_ARCH STREQUAL "X86")
-    set(TARGET_ARCH ia32)
-  endif()
 endif()
 
 # clean-shared-libraries removes ${DEPS_INSTALL_DIR}/lib/nvim/parser/c.dll,

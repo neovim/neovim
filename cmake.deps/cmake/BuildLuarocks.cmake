@@ -1,8 +1,4 @@
-# Luarocks recipe. Luarocks is only required when building Neovim, when
-# cross compiling we still want to build for the HOST system, whenever
-# writing a recipe that is meant for cross-compile, use the HOSTDEPS_* variables
-# instead of DEPS_* - check the main CMakeLists.txt for a list.
-#
+# Luarocks recipe. Luarocks is only required when building Neovim.
 # NOTE: LuaRocks rocks need to "DEPENDS" on the previous module, because
 #       running luarocks in parallel will break, e.g. when some rocks have
 #       the same dependency..
@@ -10,13 +6,13 @@
 option(USE_BUNDLED_BUSTED "Use the bundled version of busted to run tests." ON)
 
 # The luarocks binary location
-set(LUAROCKS_BINARY ${HOSTDEPS_BIN_DIR}/luarocks)
+set(LUAROCKS_BINARY ${DEPS_BIN_DIR}/luarocks)
 
 # Arguments for calls to 'luarocks build'
 if(NOT MSVC)
   # In MSVC don't pass the compiler/linker to luarocks, the bundled
   # version already knows, and passing them here breaks the build
-  set(LUAROCKS_BUILDARGS CC=${HOSTDEPS_C_COMPILER} LD=${HOSTDEPS_C_COMPILER})
+  set(LUAROCKS_BUILDARGS CC=${DEPS_C_COMPILER} LD=${DEPS_C_COMPILER})
 endif()
 
 # Lua version, used with rocks directories.
@@ -27,12 +23,12 @@ if(UNIX)
 
   if(USE_BUNDLED_LUAJIT)
     list(APPEND LUAROCKS_OPTS
-      --with-lua=${HOSTDEPS_INSTALL_DIR}
-      --with-lua-include=${HOSTDEPS_INSTALL_DIR}/include/luajit-2.1
+      --with-lua=${DEPS_INSTALL_DIR}
+      --with-lua-include=${DEPS_INSTALL_DIR}/include/luajit-2.1
       --with-lua-interpreter=luajit)
   elseif(USE_BUNDLED_LUA)
     list(APPEND LUAROCKS_OPTS
-      --with-lua=${HOSTDEPS_INSTALL_DIR})
+      --with-lua=${DEPS_INSTALL_DIR})
   else()
     find_package(LuaJit)
     if(LUAJIT_FOUND)
@@ -58,7 +54,7 @@ if(UNIX)
   endif()
 
   set(LUAROCKS_CONFIGURE_COMMAND ${DEPS_BUILD_DIR}/src/luarocks/configure
-      --prefix=${HOSTDEPS_INSTALL_DIR} --force-config ${LUAROCKS_OPTS})
+      --prefix=${DEPS_INSTALL_DIR} --force-config ${LUAROCKS_OPTS})
   set(LUAROCKS_INSTALL_COMMAND ${MAKE_PRG} -j1 bootstrap)
 elseif(MSVC OR MINGW)
 
@@ -86,17 +82,10 @@ else()
 endif()
 
 ExternalProject_Add(luarocks
-  PREFIX ${DEPS_BUILD_DIR}
   URL ${LUAROCKS_URL}
+  URL_HASH SHA256=${LUAROCKS_SHA256}
+  DOWNLOAD_NO_PROGRESS TRUE
   DOWNLOAD_DIR ${DEPS_DOWNLOAD_DIR}/luarocks
-  DOWNLOAD_COMMAND ${CMAKE_COMMAND}
-    -DPREFIX=${DEPS_BUILD_DIR}
-    -DDOWNLOAD_DIR=${DEPS_DOWNLOAD_DIR}/luarocks
-    -DURL=${LUAROCKS_URL}
-    -DEXPECTED_SHA256=${LUAROCKS_SHA256}
-    -DTARGET=luarocks
-    -DUSE_EXISTING_SRC_DIR=${USE_EXISTING_SRC_DIR}
-    -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/DownloadAndExtractFile.cmake
   BUILD_IN_SOURCE 1
   CONFIGURE_COMMAND "${LUAROCKS_CONFIGURE_COMMAND}"
   BUILD_COMMAND ""
@@ -109,7 +98,7 @@ if(USE_BUNDLED_LUAJIT)
 elseif(USE_BUNDLED_LUA)
   add_dependencies(luarocks lua)
 endif()
-set(ROCKS_DIR ${HOSTDEPS_LIB_DIR}/luarocks/rocks-${LUA_VERSION})
+set(ROCKS_DIR ${DEPS_LIB_DIR}/luarocks/rocks-${LUA_VERSION})
 
 # mpack
 add_custom_command(OUTPUT ${ROCKS_DIR}/mpack
@@ -149,11 +138,11 @@ if(USE_BUNDLED_BUSTED)
 
   # busted
   if(WIN32)
-    set(BUSTED_EXE "${HOSTDEPS_BIN_DIR}/busted.bat")
-    set(LUACHECK_EXE "${HOSTDEPS_BIN_DIR}/luacheck.bat")
+    set(BUSTED_EXE "${DEPS_BIN_DIR}/busted.bat")
+    set(LUACHECK_EXE "${DEPS_BIN_DIR}/luacheck.bat")
   else()
-    set(BUSTED_EXE "${HOSTDEPS_BIN_DIR}/busted")
-    set(LUACHECK_EXE "${HOSTDEPS_BIN_DIR}/luacheck")
+    set(BUSTED_EXE "${DEPS_BIN_DIR}/busted")
+    set(LUACHECK_EXE "${DEPS_BIN_DIR}/luacheck")
   endif()
   add_custom_command(OUTPUT ${BUSTED_EXE}
     COMMAND ${LUAROCKS_BINARY} build busted 2.0.0 ${LUAROCKS_BUILDARGS}

@@ -37,7 +37,6 @@ if(HAVE_WORKING_LIBINTL AND GETTEXT_FOUND AND XGETTEXT_PRG AND ICONV_PRG)
   set(ENV{OLD_PO_FILE_INPUT} yes)
   set(ENV{OLD_PO_FILE_OUTPUT} yes)
 
-
   set(NVIM_RELATIVE_SOURCES)
   foreach(SRC ${NVIM_SOURCES} ${NVIM_HEADERS})
     file(RELATIVE_PATH RELATIVE_SRC ${CMAKE_CURRENT_SOURCE_DIR} ${SRC})
@@ -46,18 +45,13 @@ if(HAVE_WORKING_LIBINTL AND GETTEXT_FOUND AND XGETTEXT_PRG AND ICONV_PRG)
 
   set(NVIM_POT ${CMAKE_CURRENT_BINARY_DIR}/nvim.pot)
 
+  list(SORT NVIM_RELATIVE_SOURCES)
   add_custom_command(
-    OUTPUT nvim.pot
-    COMMAND ${CMAKE_COMMAND}
-        -DXGETTEXT_PRG=${XGETTEXT_PRG}
-        -DPOT_FILE=${NVIM_POT}
-        -DSEARCH_DIR=${CMAKE_CURRENT_SOURCE_DIR}
-        "\"-DSOURCES=${NVIM_RELATIVE_SOURCES}\""
-        -P ${PROJECT_SOURCE_DIR}/cmake/RunXgettext.cmake
+    OUTPUT ${NVIM_POT}
+    COMMAND ${XGETTEXT_PRG} -o ${NVIM_POT} --default-domain=nvim
+      --add-comments --keyword=_ --keyword=N_ -D ${CMAKE_CURRENT_SOURCE_DIR}
+      ${NVIM_RELATIVE_SOURCES}
     DEPENDS ${NVIM_SOURCES})
-
-  add_custom_target(potfile DEPENDS ${NVIM_POT})
-  set_target_properties(potfile PROPERTIES FOLDER po)
 
   set(LANGUAGE_MO_FILES)
   set(UPDATE_PO_TARGETS)
@@ -68,11 +62,7 @@ if(HAVE_WORKING_LIBINTL AND GETTEXT_FOUND AND XGETTEXT_PRG AND ICONV_PRG)
 
     add_custom_command(
       OUTPUT ${moFile}
-      COMMAND ${CMAKE_COMMAND}
-          -DMSGFMT_PRG=${GETTEXT_MSGFMT_EXECUTABLE}
-          -DMO_FILE=${moFile}
-          -DPO_FILE=${poFile}
-          -P ${PROJECT_SOURCE_DIR}/cmake/RunMsgfmt.cmake
+      COMMAND ${GETTEXT_MSGFMT_EXECUTABLE} -o ${moFile} ${poFile}
       DEPENDS ${poFile} ${NVIM_POT})
 
     install_helper(
@@ -101,8 +91,6 @@ if(HAVE_WORKING_LIBINTL AND GETTEXT_FOUND AND XGETTEXT_PRG AND ICONV_PRG)
       lang inputName outputName inputEnc outputEnc outputCharSet)
     set(inputFile ${CMAKE_CURRENT_SOURCE_DIR}/${inputName}.po)
     set(outputFile ${CMAKE_CURRENT_SOURCE_DIR}/${outputName}.po)
-    string(TOUPPER ${inputEnc} upperInputEnc)
-    string(TOLOWER ${inputEnc} lowerInputEnc)
 
     add_custom_target(update-po-${lang}
       COMMAND ${CMAKE_COMMAND}
@@ -172,11 +160,8 @@ if(HAVE_WORKING_LIBINTL AND GETTEXT_FOUND AND XGETTEXT_PRG AND ICONV_PRG)
     set(poFile "${CMAKE_CURRENT_SOURCE_DIR}/${LANGUAGE}.po")
 
     add_custom_target(update-po-${LANGUAGE}
-      COMMAND ${CMAKE_COMMAND}
-          -DMSGMERGE_PRG=${GETTEXT_MSGMERGE_EXECUTABLE}
-          -DPO_FILE=${poFile}
-          -DPOT_FILE=${NVIM_POT}
-          -P ${PROJECT_SOURCE_DIR}/cmake/RunMsgmerge.cmake
+      COMMAND ${GETTEXT_MSGMERGE_EXECUTABLE} -q --update --backup=none --sort-by-file
+      ${poFile} ${NVIM_POT}
       COMMENT "Updating ${LANGUAGE}.po"
       DEPENDS ${NVIM_POT})
 
