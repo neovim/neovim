@@ -147,17 +147,13 @@ distclean:
 install: checkprefix nvim
 	+$(BUILD_TOOL) -C build install
 
-clang-tidy: generate-compilation-db
+clang-tidy: build/.ran-cmake
 	@test $(FILE) \
 		&& clang-tidy --config-file .clang-tidy -p build $(FILE) \
 		|| $(MAKE) clang-tidy-full
 
-clang-tidy-full: generate-compilation-db
+clang-tidy-full: build/.ran-cmake
 	+$(BUILD_TOOL) -C build clang-tidy-full
-
-generate-compilation-db: build/.ran-cmake
-	ninja -C build -t compdb C_COMPILER__nvim_$(CMAKE_BUILD_TYPE) > build/compile_commands.json
-
 
 appimage:
 	bash scripts/genappimage.sh
