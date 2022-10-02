@@ -1,2 +1,32 @@
 CompileFlags:
-  CompilationDatabase: build/       # Search build/ directory for compile_commands.json
+  # Search build/ directory for compile_commands.json
+  CompilationDatabase: build
+Diagnostics:
+  # Additional checks that are useful but too noisy to be included in .clang-tidy
+  ClangTidy:
+    Add:
+      - google-*
+      - misc-*
+      - performance-*
+      - readability-*
+    Remove:
+      - misc-no-recursion
+      - misc-unused-parameters
+      - readability-function-*
+      - readability-identifier-length
+      - readability-magic-numbers
+      - readability-redundant-function-ptr-dereference
+    CheckOptions:
+      readability-identifier-naming.NamespaceCase: lower_case
+      readability-identifier-naming.StructCase: CamelCase
+      readability-identifier-naming.TemplateParameterCase: CamelCase
+      readability-identifier-naming.FunctionCase: lower_case
+      readability-identifier-naming.VariableCase: lower_case
+      readability-identifier-naming.ClassMemberCase: lower_case
+      readability-identifier-naming.ClassMemberSuffix: _
+      readability-identifier-naming.GlobalConstantCase: CamelCase
+      readability-identifier-naming.GlobalConstantPrefix: k
+      readability-identifier-naming.MemberConstantCase: CamelCase
+      readability-identifier-naming.MemberConstantPrefix: k
+      readability-identifier-naming.StaticConstantCase: CamelCase
+      readability-identifier-naming.StaticConstantPrefix: k
