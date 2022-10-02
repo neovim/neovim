@@ -32,7 +32,6 @@
 #include "nvim/grid.h"
 #include "nvim/hashtab.h"
 #include "nvim/highlight.h"
-#include "nvim/lib/kvec.h"
 #include "nvim/main.h"
 #include "nvim/mapping.h"
 #include "nvim/mark.h"
