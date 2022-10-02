@@ -143,8 +143,6 @@ set(NVIM_API_PRERELEASE false)
 set(NVIM_VERSION_BUILD_TYPE "${CMAKE_BUILD_TYPE}")
 # NVIM_VERSION_CFLAGS set further below.
 
-set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-
 # Log level (MIN_LOG_LEVEL in log.h)
 if("${MIN_LOG_LEVEL}" MATCHES "^$")
   # Minimize logging for release-type builds.
