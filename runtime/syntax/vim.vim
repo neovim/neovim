@@ -368,7 +368,7 @@ syn match	vimSetMod	contained	"&vim\=\|[!&?<]\|all&"
 " Let: {{{2
 " ===
 syn keyword	vimLet	let	unl[et]	skipwhite nextgroup=vimVar,vimFuncVar,vimLetHereDoc
-VimFoldh syn region vimLetHereDoc matchgroup=vimLetHereDocStart start='=<<\s\+\%(trim\s\+\)\=\%(eval\s\+\)\=\z(\L\S*\)' matchgroup=vimLetHereDocStop end='^\s*\z1\s*$'
+VimFoldh syn region vimLetHereDoc matchgroup=vimLetHereDocStart start='=<<\s\+\%(trim\s\+\)\=\%(eval\s\+\)\=\s*\z(\L\S*\)' matchgroup=vimLetHereDocStop end='^\s*\z1\s*$'
 
 " Abbreviations: {{{2
 " =============
@@ -619,7 +619,7 @@ syn match	vimCtrlChar	"[--]"
 
 " Beginners - Patterns that involve ^ {{{2
 " =========
-syn match	vimLineComment	+^[ \t:]*".*$+	contains=@vimCommentGroup,vimCommentString,vimCommentTitle
+syn match	vimLineComment	+^[ \t:]*"\("[^"]*"\|[^"]\)*$+	contains=@vimCommentGroup,vimCommentString,vimCommentTitle
 syn match	vim9LineComment	+^[ \t:]\+#.*$+	contains=@vimCommentGroup,vimCommentString,vimCommentTitle
 syn match	vimCommentTitle	'"\s*\%([sS]:\|\h\w*#\)\=\u\w*\(\s\+\u\w*\)*:'hs=s+1	contained contains=vimCommentTitleLeader,vimTodo,@vimCommentGroup
 syn match	vimContinue	"^\s*\\"

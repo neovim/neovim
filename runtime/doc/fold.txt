@@ -491,7 +491,7 @@ is evaluated to obtain the text displayed for a closed fold.  Example: >
 
 This shows the first line of the fold, with "/*", "*/" and "{{{" removed.
 Note the use of backslashes to avoid some characters to be interpreted by the
-":set" command.  It's simpler to define a function and call that: >
+":set" command.  It is much simpler to define a function and call it: >
 
     :set foldtext=MyFoldText()
     :function MyFoldText()
