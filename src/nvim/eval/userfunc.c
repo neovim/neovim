@@ -1983,7 +1983,14 @@ void ex_function(exarg_T *eap)
   // s:func      script-local function name
   // g:func      global function name, same as "func"
   p = eap->arg;
-  name = (char *)trans_function_name(&p, eap->skip, TFN_NO_AUTOLOAD, &fudi, NULL);
+  if (strncmp(p, "<lambda>", 8) == 0) {
+    p += 8;
+    (void)getdigits(&p, false, 0);
+    name = xstrndup(eap->arg, (size_t)(p - eap->arg));
+    CLEAR_FIELD(fudi);
+  } else {
+    name = (char *)trans_function_name(&p, eap->skip, TFN_NO_AUTOLOAD, &fudi, NULL);
+  }
   paren = (vim_strchr(p, '(') != NULL);
   if (name == NULL && (fudi.fd_dict == NULL || !paren) && !eap->skip) {
     // Return on an invalid expression in braces, unless the expression
