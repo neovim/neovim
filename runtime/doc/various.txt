@@ -260,6 +260,10 @@ g8			Print the hex values of the bytes used in the
 			Use |jobstart()| instead. >
 				:call jobstart('foo', {'detach':1})
 <
+			For powershell, chaining a stringed executable path
+			requires using the call operator (&). >
+				:!Write-Output "1`n2" | & "C:\Windows\System32\sort.exe" /r
+<
 							*E34*
 			Any "!" in {cmd} is replaced with the previous
 			external command (see also 'cpoptions'), unless
