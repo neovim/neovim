@@ -17,6 +17,7 @@ local clear = helpers.clear
 local eq = helpers.eq
 local exc_exec = helpers.exc_exec
 local exec = helpers.exec
+local exec_capture = helpers.exec_capture
 local eval = helpers.eval
 local command = helpers.command
 local write_file = helpers.write_file
@@ -245,5 +246,18 @@ describe("uncaught exception", function()
     command('set runtimepath+=. | let result = ""')
     eq('throw1', exc_exec('try | runtime! throw*.vim | endtry'))
     eq('123', eval('result'))
+  end)
+end)
+
+describe('lambda function', function()
+  before_each(clear)
+
+  it('can be shown using :function followed by <lambda> #20466', function()
+    command('let A = {-> 1}')
+    local num = exec_capture('echo A'):match("function%('<lambda>(%d+)'%)")
+    eq(([[
+   function <lambda>%s(...)
+1  return 1
+   endfunction]]):format(num), exec_capture(('function <lambda>%s'):format(num)))
   end)
 end)
