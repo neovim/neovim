@@ -208,7 +208,7 @@ local function get_helppage(f)
     return 'index.html'
   end
 
-  return f:gsub('%.txt$', '.html')
+  return (f:gsub('%.txt$', '.html'))
 end
 
 -- Counts leading spaces (tab=8) to decide the indent size of multiline text.
@@ -255,9 +255,13 @@ end
 
 -- Returns true if the given invalid tagname is a false positive.
 local function ignore_invalid(s)
-  -- Strings like |~/====| appear in various places and the parser thinks they are links, but they
-  -- are just table borders.
-  return not not (s:find('===') or exclude_invalid[s])
+  return not not (
+    exclude_invalid[s]
+    -- Strings like |~/====| appear in various places and the parser thinks they are links, but they
+    -- are just table borders.
+    or s:find('===')
+    or s:find('---')
+  )
 end
 
 local function ignore_parse_error(s)
@@ -281,10 +285,14 @@ end
 
 local function validate_link(node, bufnr, fname)
   local helppage, tagname = get_tagname(node:child(1), bufnr)
-  if not has_ancestor(node, 'column_heading') and not node:has_error() and not tagmap[tagname] and not ignore_invalid(tagname) then
-    invalid_links[tagname] = vim.fs.basename(fname)
+  local ignored = false
+  if not tagmap[tagname] then
+    ignored = has_ancestor(node, 'column_heading') or node:has_error() or ignore_invalid(tagname)
+    if not ignored then
+      invalid_links[tagname] = vim.fs.basename(fname)
+    end
   end
-  return helppage, tagname
+  return helppage, tagname, ignored
 end
 
 -- Traverses the tree at `root` and checks that |tag| links point to valid helptags.
@@ -325,7 +333,7 @@ local function visit_validate(root, level, lang_tree, opt, stats)
       invalid_urls[text] = vim.fs.basename(opt.fname)
     end
   elseif node_name == 'taglink' or node_name == 'optionlink' then
-    local _, _ = validate_link(root, opt.buf, opt.fname)
+    local _, _, _ = validate_link(root, opt.buf, opt.fname)
   end
 end
 
@@ -341,7 +349,7 @@ local function visit_node(root, level, lang_tree, headings, opt, stats)
   -- Parent kind (string).
   local parent = root:parent() and root:parent():type() or nil
   local text = ''
-  local toplevel = level < 1
+  local trimmed
   local function node_text(node)
     return vim.treesitter.get_node_text(node or root, opt.buf)
   end
@@ -352,6 +360,8 @@ local function visit_node(root, level, lang_tree, headings, opt, stats)
 
   if root:named_child_count() == 0 or node_name == 'ERROR' then
     text = node_text()
+    trimmed = html_esc(trim(text))
+    text = html_esc(text)
   else
     -- Process children and join them with whitespace.
     for node, _ in root:iter_children() do
@@ -360,8 +370,8 @@ local function visit_node(root, level, lang_tree, headings, opt, stats)
         text = string.format('%s%s', text, r)
       end
     end
+    trimmed = trim(text)
   end
-  local trimmed = trim(text)
 
   if node_name == 'help_file' then  -- root node
     return text
@@ -369,7 +379,7 @@ local function visit_node(root, level, lang_tree, headings, opt, stats)
     local fixed_url, removed_chars = fix_url(trimmed)
     return ('%s<a href="%s">%s</a>%s'):format(ws(), fixed_url, fixed_url, removed_chars)
   elseif node_name == 'word' or node_name == 'uppercase_name' then
-    return html_esc(text)
+    return text
   elseif node_name == 'h1' or node_name == 'h2' or node_name == 'h3' then
     if is_noise(text, stats.noise_lines) then
       return ''  -- Discard common "noise" lines.
@@ -387,7 +397,7 @@ local function visit_node(root, level, lang_tree, headings, opt, stats)
     if root:has_error() then
       return text
     end
-    return ('<div class="help-column_heading">%s</div>'):format(trimmed)
+    return ('<div class="help-column_heading">%s%s</div>'):format(ws(), trimmed)
   elseif node_name == 'block' then
     if is_blank(text) then
       return ''
@@ -425,28 +435,28 @@ local function visit_node(root, level, lang_tree, headings, opt, stats)
 
     return string.format('<div class="help-li" style="%s">%s</div>', margin, text)
   elseif node_name == 'taglink' or node_name == 'optionlink' then
-    if root:has_error() then
+    local helppage, tagname, ignored = validate_link(root, opt.buf, opt.fname)
+    if ignored then
       return text
     end
-    local helppage, tagname = validate_link(root, opt.buf, opt.fname)
     return ('%s<a href="%s#%s">%s</a>'):format(ws(), helppage, url_encode(tagname), html_esc(tagname))
-  elseif node_name == 'codespan' then
+  elseif vim.tbl_contains({'codespan', 'keycode'}, node_name) then
     if root:has_error() then
       return text
     end
-    return ('%s<code>%s</code>'):format(ws(), text)
+    return ('%s<code>%s</code>'):format(ws(), trimmed)
   elseif node_name == 'argument' then
     return ('%s<code>{%s}</code>'):format(ws(), text)
   elseif node_name == 'codeblock' then
     if is_blank(text) then
       return ''
     end
-    return ('<pre>%s</pre>'):format(html_esc(trim(trim_indent(text), 2)))
+    return ('<pre>%s</pre>'):format(trim(trim_indent(text), 2))
   elseif node_name == 'tag' then  -- anchor
     if root:has_error() then
       return text
     end
-    local in_heading = (parent == 'h1' or parent == 'h2')
+    local in_heading = vim.tbl_count({'h1', 'h2', 'h3'}, parent)
     local cssclass = (not in_heading and get_indent(node_text()) > 8) and 'help-tag-right' or 'help-tag'
     local tagname = node_text(root:child(1))
     if vim.tbl_count(stats.first_tags) < 2 then
@@ -471,12 +481,12 @@ local function visit_node(root, level, lang_tree, headings, opt, stats)
     end
 
     -- Store the raw text to give context to the bug report.
-    local sample_text = not toplevel and getbuflinestr(root, opt.buf, 3) or '[top level!]'
+    local sample_text = level > 0 and getbuflinestr(root, opt.buf, 3) or '[top level!]'
     table.insert(stats.parse_errors, sample_text)
     return ('<a class="parse-error" target="_blank" title="Report bug... (parse error)" href="%s">%s</a>'):format(
       get_bug_url_vimdoc(opt.fname, opt.to_fname, sample_text), trimmed)
   else  -- Unknown token.
-    local sample_text = not toplevel and getbuflinestr(root, opt.buf, 3) or '[top level!]'
+    local sample_text = level > 0 and getbuflinestr(root, opt.buf, 3) or '[top level!]'
     return ('<a class="unknown-token" target="_blank" title="Report bug... (unhandled token "%s")" href="%s">%s</a>'):format(
       node_name, get_bug_url_nvim(opt.fname, opt.to_fname, sample_text, node_name), trimmed), ('unknown-token:"%s"'):format(node_name)
   end
@@ -751,6 +761,8 @@ local function gen_css(fname)
     }
     .toc {
       /* max-width: 12rem; */
+      height: 95%;  /* Scroll if there are too many items. https://github.com/neovim/neovim.github.io/issues/297 */
+      overflow: auto;  /* Scroll if there are too many items. https://github.com/neovim/neovim.github.io/issues/297 */
     }
     .toc > div {
       text-overflow: ellipsis;
@@ -809,7 +821,7 @@ local function gen_css(fname)
     .help-tag-right {
       color: var(--tag-color);
     }
-    h1 .help-tag, h2 .help-tag {
+    h1 .help-tag, h2 .help-tag, h3 .help-tag {
       font-size: smaller;
     }
     .help-heading {

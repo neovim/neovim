@@ -82,27 +82,24 @@ centralized reference of the differences.
 
 Default Mouse ~
 						*default-mouse* *disable-mouse*
-By default the mouse is enabled.  The right button click opens |popup-menu|
-with standard actions, such as "Cut", "Copy" and "Paste".
+By default the mouse is enabled, and <RightMouse> opens a |popup-menu| with
+standard actions ("Cut", "Copy", "Paste", …). Mouse is NOT enabled in
+|command-mode| or the |more-prompt|, so you can temporarily disable it just by
+typing ":".
 
-If you don't like this you can add to your |config| any of the following:
-
-- ignore mouse completely >
+If you don't like this you can disable the mouse in your |config| using any of
+the following:
+- Disable mouse completely by unsetting the 'mouse' option: >
   set mouse=
-<
-- no |popup-menu| but the right button extends selection >
+- Pressing <RightMouse> extends selection instead of showing popup-menu: >
   set mousemodel=extend
->
-- pressing ALT+LeftMouse releases mouse until main cursor moves  >
-  nnoremap <M-LeftMouse> <Cmd>
+- Pressing <A-LeftMouse> releases mouse until the cursor moves:  >
+  nnoremap <A-LeftMouse> <Cmd>
     \ set mouse=<Bar>
     \ echo 'mouse OFF until next cursor-move'<Bar>
     \ autocmd CursorMoved * ++once set mouse&<Bar>
     \ echo 'mouse ON'<CR>
 <
-Also, mouse is not in use in |command-mode| or at |more-prompt|.  So if you
-need to copy/paste with your terminal then just pressing ':' makes Nvim to
-release the mouse cursor temporarily.
 
 Default Mappings ~
 							*default-mappings*

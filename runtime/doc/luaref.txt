@@ -24,7 +24,6 @@ Type |gO| to see the table of contents.
 
 ==============================================================================
 1  INTRODUCTION                                                   *luaref-intro*
-==============================================================================
 
 Lua is an extension programming language designed to support general
 procedural programming with data description facilities.  It also offers good
@@ -1504,7 +1503,6 @@ When you run it, it produces the following output:
 
 ==============================================================================
 3  THE APPLICATION PROGRAM INTERFACE                                *luaref-API*
-==============================================================================
 
 This section describes the C API for Lua, that is, the set of C functions
 available to the host program to communicate with Lua. All API functions and
@@ -2979,7 +2977,6 @@ lua_setupvalue                                                *lua_setupvalue()*
 
 ==============================================================================
 4  THE AUXILIARY LIBRARY                                            *luaref-aux*
-==============================================================================
 
 The auxiliary library provides several convenient functions to interface C
 with Lua. While the basic API provides the primitive functions for all
@@ -3511,7 +3508,6 @@ luaL_where                                                        *luaL_where()*
 
 ==============================================================================
 5  STANDARD LIBRARIES                                               *luaref-Lib*
-==============================================================================
 
 The standard libraries provide useful functions that are implemented directly
 through the C API. Some of these functions provide essential services to the
@@ -4064,7 +4060,7 @@ string.gmatch({s}, {pattern})                                  *string.gmatch()*
                end
 <
 
-string.gsub({s}, {pattern}, {repl} [, {n}])                    *string.gsu{b}()*
+string.gsub({s}, {pattern}, {repl} [, {n}])                    *string.gsub()*
         Returns a copy of {s} in which all occurrences of the {pattern} have
         been replaced by a replacement string specified by {repl}, which may
         be a string, a table, or a function. `gsub` also returns, as its
@@ -4831,7 +4827,6 @@ debug.traceback([{thread},] [{message}] [,{level}])          *debug.traceback()*
 
 ==============================================================================
 A  BIBLIOGRAPHY                                            *luaref-bibliography*
-==============================================================================
 
 This help file is a minor adaptation from this main reference:
 
@@ -4858,7 +4853,6 @@ Lua is discussed in these references:
 
 ==============================================================================
 B  COPYRIGHT & LICENSES                                       *luaref-copyright*
-==============================================================================
 
 This help file has the same copyright and license as Lua 5.1 and the Lua 5.1
  manual:
@@ -4885,7 +4879,6 @@ SOFTWARE.
 
 ==============================================================================
 C  LUAREF DOC                 *luarefvim* *luarefvimdoc* *luaref-help* *luaref-doc*
-==============================================================================
 
 This is a Vim help file containing a reference for Lua 5.1, and it is -- with
 a few exceptions and adaptations -- a copy of the Lua 5.1 Reference Manual
