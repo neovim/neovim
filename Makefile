@@ -148,12 +148,7 @@ install: checkprefix nvim
 	+$(BUILD_TOOL) -C build install
 
 clang-tidy: build/.ran-cmake
-	@test $(FILE) \
-		&& clang-tidy --config-file .clang-tidy -p build $(FILE) \
-		|| $(MAKE) clang-tidy-full
-
-clang-tidy-full: build/.ran-cmake
-	+$(BUILD_TOOL) -C build clang-tidy-full
+	+clang-tidy --config-file .clang-tidy -p build $@
 
 appimage:
 	bash scripts/genappimage.sh
