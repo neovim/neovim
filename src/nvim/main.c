@@ -185,11 +185,11 @@ void early_init(mparm_T *paramp)
   init_locale();
 #endif
 
-  // Allocate the first window and buffer.
-  // Can't do anything without it, exit when it fails.
-  if (!win_alloc_first()) {
-    os_exit(0);
-  }
+  // tabpage local options (p_ch) must be set before allocating first tabpage.
+  set_init_tablocal();
+
+  // Allocate the first tabpage, window and buffer.
+  win_alloc_first();
   TIME_MSG("init first window");
 
   alist_init(&global_alist);    // Init the argument list to empty.

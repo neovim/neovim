@@ -147,6 +147,13 @@ typedef enum {
 # include "option.c.generated.h"
 #endif
 
+void set_init_tablocal(void)
+{
+  // susy baka: cmdheight calls itself OPT_GLOBAL but is really tablocal!
+  int ch_idx = findoption("cmdheight");
+  p_ch = (long)options[ch_idx].def_val;
+}
+
 /// Initialize the options, first part.
 ///
 /// Called only once from main(), just after creating the first buffer.
