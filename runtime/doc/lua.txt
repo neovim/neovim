@@ -1364,7 +1364,7 @@ cmd({command})                                                     *vim.cmd()*
                    |nvim_cmd()| where `opts` is empty.
 
     See also: ~
-        |ex-cmd-index|
+      • |ex-cmd-index|
 
                                              *vim.connection_failure_errmsg()*
 connection_failure_errmsg({consequence})
@@ -1401,8 +1401,8 @@ inspect({object}, {options})                                   *vim.inspect()*
     Gets a human-readable representation of the given object.
 
     See also: ~
-        https://github.com/kikito/inspect.lua
-        https://github.com/mpeterv/vinspect
+      • https://github.com/kikito/inspect.lua
+      • https://github.com/mpeterv/vinspect
 
 lua_omnifunc({find_start}, {_})                           *vim.lua_omnifunc()*
     Omnifunc for completing lua values from from the runtime lua interpreter,
@@ -1494,7 +1494,7 @@ paste({lines}, {phase})                                          *vim.paste()*
         (boolean) # false if client should cancel the paste.
 
     See also: ~
-        |paste| @alias paste_phase -1 | 1 | 2 | 3
+      • |paste| @alias paste_phase -1 | 1 | 2 | 3
 
 print({...})                                                     *vim.print()*
     "Pretty prints" the given arguments and returns them unmodified.
@@ -1507,7 +1507,7 @@ print({...})                                                     *vim.print()*
         any # given arguments.
 
     See also: ~
-        |vim.inspect()|
+      • |vim.inspect()|
 
 region({bufnr}, {pos1}, {pos2}, {regtype}, {inclusive})         *vim.region()*
     Get a table of lines with start, end columns for a region marked by two
@@ -1535,9 +1535,9 @@ schedule_wrap({cb})                                      *vim.schedule_wrap()*
         (function)
 
     See also: ~
-        |lua-loop-callbacks|
-        |vim.schedule()|
-        |vim.in_fast_event()|
+      • |lua-loop-callbacks|
+      • |vim.schedule()|
+      • |vim.in_fast_event()|
 
 
 ==============================================================================
@@ -1663,10 +1663,10 @@ gsplit({s}, {sep}, {plain})                                     *vim.gsplit()*
         (function) Iterator over the split components
 
     See also: ~
-        |vim.split()|
-        |luaref-patterns|
-        https://www.lua.org/pil/20.2.html
-        http://lua-users.org/wiki/StringLibraryTutorial
+      • |vim.split()|
+      • |luaref-patterns|
+      • https://www.lua.org/pil/20.2.html
+      • http://lua-users.org/wiki/StringLibraryTutorial
 
 is_callable({f})                                           *vim.is_callable()*
     Returns true if object `f` can be called as a function.
@@ -1692,7 +1692,7 @@ list_extend({dst}, {src}, {start}, {finish})               *vim.list_extend()*
         (table) dst
 
     See also: ~
-        |vim.tbl_extend()|
+      • |vim.tbl_extend()|
 
 list_slice({list}, {start}, {finish})                       *vim.list_slice()*
     Creates a copy of a table containing only elements from start to end
@@ -1716,7 +1716,7 @@ pesc({s})                                                         *vim.pesc()*
         (string) %-escaped pattern string
 
     See also: ~
-        https://github.com/rxi/lume
+      • https://github.com/rxi/lume
 
 spairs({t})                                                     *vim.spairs()*
     Enumerate a table sorted by its keys.
@@ -1728,7 +1728,7 @@ spairs({t})                                                     *vim.spairs()*
         iterator over sorted keys and their values
 
     See also: ~
-        Based on https://github.com/premake/premake-core/blob/master/src/base/table.lua
+      • Based on https://github.com/premake/premake-core/blob/master/src/base/table.lua
 
 split({s}, {sep}, {kwargs})                                      *vim.split()*
     Splits a string at each instance of a separator.
@@ -1754,7 +1754,7 @@ split({s}, {sep}, {kwargs})                                      *vim.split()*
         string[] List of split components
 
     See also: ~
-        |vim.gsplit()|
+      • |vim.gsplit()|
 
 startswith({s}, {prefix})                                   *vim.startswith()*
     Tests if `s` starts with `prefix`.
@@ -1804,7 +1804,7 @@ tbl_count({t})                                               *vim.tbl_count()*
         (integer) Number of non-nil values in table
 
     See also: ~
-        https://github.com/Tieske/Penlight/blob/master/lua/pl/tablex.lua
+      • https://github.com/Tieske/Penlight/blob/master/lua/pl/tablex.lua
 
 tbl_deep_extend({behavior}, {...})                     *vim.tbl_deep_extend()*
     Merges recursively two or more map-like tables.
@@ -1821,7 +1821,7 @@ tbl_deep_extend({behavior}, {...})                     *vim.tbl_deep_extend()*
         (table) Merged table
 
     See also: ~
-        |vim.tbl_extend()|
+      • |vim.tbl_extend()|
 
 tbl_extend({behavior}, {...})                               *vim.tbl_extend()*
     Merges two or more map-like tables.
@@ -1838,7 +1838,7 @@ tbl_extend({behavior}, {...})                               *vim.tbl_extend()*
         (table) Merged table
 
     See also: ~
-        |extend()|
+      • |extend()|
 
 tbl_filter({func}, {t})                                     *vim.tbl_filter()*
     Filter a table using a predicate function
@@ -1861,7 +1861,7 @@ tbl_flatten({t})                                           *vim.tbl_flatten()*
         (table) Flattened copy of the given list-like table
 
     See also: ~
-        From https://github.com/premake/premake-core/blob/master/src/base/table.lua
+      • From https://github.com/premake/premake-core/blob/master/src/base/table.lua
 
 tbl_get({o}, {...})                                            *vim.tbl_get()*
     Index into a table (first argument) via string keys passed as subsequent
@@ -1891,7 +1891,7 @@ tbl_isempty({t})                                           *vim.tbl_isempty()*
         (boolean) `true` if `t` is empty
 
     See also: ~
-        https://github.com/premake/premake-core/blob/master/src/base/table.lua
+      • https://github.com/premake/premake-core/blob/master/src/base/table.lua
 
 tbl_islist({t})                                             *vim.tbl_islist()*
     Tests if a Lua table can be treated as an array.
@@ -1917,7 +1917,7 @@ tbl_keys({t})                                                 *vim.tbl_keys()*
         (list) List of keys
 
     See also: ~
-        From https://github.com/premake/premake-core/blob/master/src/base/table.lua
+      • From https://github.com/premake/premake-core/blob/master/src/base/table.lua
 
 tbl_map({func}, {t})                                           *vim.tbl_map()*
     Apply a function to all values of a table.
@@ -1949,8 +1949,8 @@ trim({s})                                                         *vim.trim()*
         (string) String with whitespace removed from its beginning and end
 
     See also: ~
-        |luaref-patterns|
-        https://www.lua.org/pil/20.2.html
+      • |luaref-patterns|
+      • https://www.lua.org/pil/20.2.html
 
 validate({opt})                                               *vim.validate()*
     Validates a parameter specification (types and values).
@@ -2275,7 +2275,7 @@ del({modes}, {lhs}, {opts})                                 *vim.keymap.del()*
                   buffer. When "true" or 0, use the current buffer.
 
     See also: ~
-        |vim.keymap.set()|
+      • |vim.keymap.set()|
 
 set({mode}, {lhs}, {rhs}, {opts})                           *vim.keymap.set()*
     Adds a new |mapping|. Examples: >lua
@@ -2312,7 +2312,7 @@ set({mode}, {lhs}, {rhs}, {opts})                           *vim.keymap.set()*
                     "noremap". Defaults to `false`.
 
     See also: ~
-        |nvim_set_keymap()|
+      • |nvim_set_keymap()|
 
 
 ==============================================================================
@@ -2481,7 +2481,7 @@ read({path})                                               *vim.secure.read()*
         trusted, or nil otherwise.
 
     See also: ~
-        |:trust|
+      • |:trust|
 
 trust({opts})                                             *vim.secure.trust()*
     Manage the trust database.

@@ -537,7 +537,7 @@ def render_node(n, text, prefix='', indent='', width=text_width - indentation,
             text += '>{}{}\n<'.format(ensure_nl, o)
 
     elif is_inline(n):
-        text = doc_wrap(get_text(n), indent=indent, width=width)
+        text = doc_wrap(get_text(n), prefix=prefix, indent=indent, width=width)
     elif n.nodeName == 'verbatim':
         # TODO: currently we don't use this. The "[verbatim]" hint is there as
         # a reminder that we must decide how to format this if we do use it.
@@ -550,19 +550,19 @@ def render_node(n, text, prefix='', indent='', width=text_width - indentation,
                 indent=indent + (' ' * len(prefix)),
                 width=width
             )
-
             if is_blank(result):
                 continue
-
             text += indent + prefix + result
     elif n.nodeName in ('para', 'heading'):
+        did_prefix = False
         for c in n.childNodes:
             if (is_inline(c)
                     and '' != get_text(c).strip()
                     and text
                     and ' ' != text[-1]):
                 text += ' '
-            text += render_node(c, text, indent=indent, width=width)
+            text += render_node(c, text, prefix=(prefix if not did_prefix else ''), indent=indent, width=width)
+            did_prefix = True
     elif n.nodeName == 'itemizedlist':
         for c in n.childNodes:
             text += '{}\n'.format(render_node(c, text, prefix='• ',
@@ -586,8 +586,15 @@ def render_node(n, text, prefix='', indent='', width=text_width - indentation,
         for c in n.childNodes:
             text += render_node(c, text, indent='    ', width=width)
         text += '\n'
-    elif (n.nodeName == 'simplesect'
-            and n.getAttribute('kind') in ('return', 'see')):
+    elif n.nodeName == 'simplesect' and 'see' == n.getAttribute('kind'):
+        text += ind('  ')
+        # Example:
+        #   <simplesect kind="see">
+        #     <para>|autocommand|</para>
+        #   </simplesect>
+        for c in n.childNodes:
+            text += render_node(c, text, prefix='• ', indent='    ', width=width)
+    elif n.nodeName == 'simplesect' and 'return' == n.getAttribute('kind'):
         text += ind('    ')
         for c in n.childNodes:
             text += render_node(c, text, indent='    ', width=width)
@@ -678,6 +685,10 @@ def para_as_map(parent, indent='', width=text_width - indentation, fmt_vimhelp=F
         chunks['return'].append(render_node(
             child, '', indent=indent, width=width, fmt_vimhelp=fmt_vimhelp))
     for child in groups['seealso']:
+        # Example:
+        #   <simplesect kind="see">
+        #     <para>|autocommand|</para>
+        #   </simplesect>
         chunks['seealso'].append(render_node(
             child, '', indent=indent, width=width, fmt_vimhelp=fmt_vimhelp))
 
