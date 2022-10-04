@@ -138,7 +138,6 @@ test: functionaltest unittest
 clean:
 	+test -d build && $(BUILD_TOOL) -C build clean || true
 	$(MAKE) -C src/nvim/testdir clean
-	$(MAKE) -C runtime/doc clean
 	$(MAKE) -C runtime/indent clean
 
 distclean:
