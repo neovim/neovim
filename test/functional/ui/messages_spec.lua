@@ -880,7 +880,7 @@ stack traceback:
       {1:~                        }|
       {1:~                        }|
     ]], messages={
-      { content = { { '\n  1 %a   "[No Name]"                    line 1' } }, kind = "echomsg" }
+      { content = { { '\n  1 %a   "[No Name]"                    line 1' } }, kind = "" }
     }}
 
     feed ':messages<cr>'
