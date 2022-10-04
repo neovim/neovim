@@ -1921,24 +1921,27 @@ win_update_start:
       wp->w_filler_rows = wp->w_grid.rows - srow;
     } else if (dy_flags & DY_TRUNCATE) {      // 'display' has "truncate"
       int scr_row = wp->w_grid.rows - 1;
+      int symbol = wp->w_p_fcs_chars.lastline;
+      char fillbuf[12];  // 2 characters of 6 bytes
+      int charlen = utf_char2bytes(symbol, &fillbuf[0]);
+      utf_char2bytes(symbol, &fillbuf[charlen]);
 
       // Last line isn't finished: Display "@@@" in the last screen line.
-      grid_puts_len(&wp->w_grid, "@@", MIN(wp->w_grid.cols, 2), scr_row, 0, at_attr);
-
-      grid_fill(&wp->w_grid, scr_row, scr_row + 1, 2, wp->w_grid.cols,
-                '@', ' ', at_attr);
+      grid_puts_len(&wp->w_grid, fillbuf, MIN(wp->w_grid.cols, 2) * charlen, scr_row, 0, at_attr);
+      grid_fill(&wp->w_grid, scr_row, scr_row + 1, 2, wp->w_grid.cols, symbol, ' ', at_attr);
       set_empty_rows(wp, srow);
       wp->w_botline = lnum;
     } else if (dy_flags & DY_LASTLINE) {      // 'display' has "lastline"
       int start_col = wp->w_grid.cols - 3;
+      int symbol = wp->w_p_fcs_chars.lastline;
 
       // Last line isn't finished: Display "@@@" at the end.
       grid_fill(&wp->w_grid, wp->w_grid.rows - 1, wp->w_grid.rows,
-                MAX(start_col, 0), wp->w_grid.cols, '@', '@', at_attr);
+                MAX(start_col, 0), wp->w_grid.cols, symbol, symbol, at_attr);
       set_empty_rows(wp, srow);
       wp->w_botline = lnum;
     } else {
-      win_draw_end(wp, '@', ' ', true, srow, wp->w_grid.rows, HLF_AT);
+      win_draw_end(wp, wp->w_p_fcs_chars.lastline, ' ', true, srow, wp->w_grid.rows, HLF_AT);
       set_empty_rows(wp, srow);
       wp->w_botline = lnum;
     }
