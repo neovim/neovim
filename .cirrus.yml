@@ -2,3 +2,28 @@ env:
   CIRRUS_CLONE_DEPTH: '2'
   LANG: en_US.UTF-8
   CMAKE_EXTRA_FLAGS: -DCI_BUILD=ON -DMIN_LOG_LEVEL=3
+
+arm32_task:
+  name: Ubuntu arm32
+  only_if: $BRANCH != "master"
+  arm_container:
+    image: arm32v7/ubuntu
+  timeout_in: 30m
+  install_script:
+    - apt-get update
+    - apt-get install -y autoconf automake build-essential cmake cpanminus cscope gdb gettext git language-pack-tr language-pack-en libtool-bin locales ninja-build pkg-config python3 python3-pip python3-setuptools sudo unzip valgrind xclip
+  build_deps_script:
+    - make deps
+  build_script:
+    - make CMAKE_EXTRA_FLAGS="${CMAKE_EXTRA_FLAGS}" nvim
+  workaround_script:
+    # Run tests as user "cirrus" instead of root. This is required for the
+    # permission-related tests to work correctly.
+    - adduser cirrus
+    - chown -R cirrus:cirrus .
+  unittest_script:
+    - sudo -u cirrus make unittest
+  functionaltest_script:
+    - sudo -u cirrus make functionaltest
+  oldtest_script:
+    - sudo -u cirrus make oldtest
