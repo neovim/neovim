@@ -429,7 +429,7 @@ get_captures_at_cursor({winnr})                     *get_captures_at_cursor()*
     Returns a list of highlight capture names under the cursor
 
     Parameters: ~
-        {winnr}  (number|nil) Window handle or 0 for current window (default)
+      • {winnr}  (number|nil) Window handle or 0 for current window (default)
 
     Return: ~
         string[] List of capture names
@@ -442,9 +442,9 @@ get_captures_at_pos({bufnr}, {row}, {col})             *get_captures_at_pos()*
     if none are defined).
 
     Parameters: ~
-        {bufnr}  (number) Buffer number (0 for current buffer)
-        {row}    (number) Position row
-        {col}    (number) Position column
+      • {bufnr}  (number) Buffer number (0 for current buffer)
+      • {row}    (number) Position row
+      • {col}    (number) Position column
 
     Return: ~
         table[] List of captures `{ capture = "capture name", metadata = { ...
@@ -454,7 +454,7 @@ get_node_at_cursor({winnr})                             *get_node_at_cursor()*
     Returns the smallest named node under the cursor
 
     Parameters: ~
-        {winnr}  (number|nil) Window handle or 0 for current window (default)
+      • {winnr}  (number|nil) Window handle or 0 for current window (default)
 
     Return: ~
         (string) Name of node under the cursor
@@ -463,10 +463,10 @@ get_node_at_pos({bufnr}, {row}, {col}, {opts})             *get_node_at_pos()*
     Returns the smallest named node at the given position
 
     Parameters: ~
-        {bufnr}  (number) Buffer number (0 for current buffer)
-        {row}    (number) Position row
-        {col}    (number) Position column
-        {opts}   (table) Optional keyword arguments:
+      • {bufnr}  (number) Buffer number (0 for current buffer)
+      • {row}    (number) Position row
+      • {col}    (number) Position column
+      • {opts}   (table) Optional keyword arguments:
                  • ignore_injections boolean Ignore injected languages
                    (default true)
 
@@ -477,7 +477,7 @@ get_node_range({node_or_range})                             *get_node_range()*
     Returns the node's range or an unpacked range table
 
     Parameters: ~
-        {node_or_range}  (userdata|table) |tsnode| or table of positions
+      • {node_or_range}  (userdata|table) |tsnode| or table of positions
 
     Return: ~
         (table) `{ start_row, start_col, end_row, end_col }`
@@ -489,11 +489,11 @@ get_parser({bufnr}, {lang}, {opts})                             *get_parser()*
     If needed, this will create the parser.
 
     Parameters: ~
-        {bufnr}  (number|nil) Buffer the parser should be tied to (default:
+      • {bufnr}  (number|nil) Buffer the parser should be tied to (default:
                  current buffer)
-        {lang}   (string|nil) Filetype of this parser (default: buffer
+      • {lang}   (string|nil) Filetype of this parser (default: buffer
                  filetype)
-        {opts}   (table|nil) Options to pass to the created language tree
+      • {opts}   (table|nil) Options to pass to the created language tree
 
     Return: ~
         LanguageTree |LanguageTree| object to use for parsing
@@ -502,9 +502,9 @@ get_string_parser({str}, {lang}, {opts})                 *get_string_parser()*
     Returns a string parser
 
     Parameters: ~
-        {str}   (string) Text to parse
-        {lang}  (string) Language of this string
-        {opts}  (table|nil) Options to pass to the created language tree
+      • {str}   (string) Text to parse
+      • {lang}  (string) Language of this string
+      • {opts}  (table|nil) Options to pass to the created language tree
 
     Return: ~
         LanguageTree |LanguageTree| object to use for parsing
@@ -513,8 +513,8 @@ is_ancestor({dest}, {source})                                  *is_ancestor()*
     Determines whether a node is the ancestor of another
 
     Parameters: ~
-        {dest}    userdata Possible ancestor |tsnode|
-        {source}  userdata Possible descendant |tsnode|
+      • {dest}    userdata Possible ancestor |tsnode|
+      • {source}  userdata Possible descendant |tsnode|
 
     Return: ~
         (boolean) True if {dest} is an ancestor of {source}
@@ -523,9 +523,9 @@ is_in_node_range({node}, {line}, {col})                   *is_in_node_range()*
     Determines whether (line, col) position is in node range
 
     Parameters: ~
-        {node}  userdata |tsnode| defining the range
-        {line}  (number) Line (0-based)
-        {col}   (number) Column (0-based)
+      • {node}  userdata |tsnode| defining the range
+      • {line}  (number) Line (0-based)
+      • {col}   (number) Column (0-based)
 
     Return: ~
         (boolean) True if the position is in node range
@@ -534,8 +534,8 @@ node_contains({node}, {range})                               *node_contains()*
     Determines if a node contains a range
 
     Parameters: ~
-        {node}   userdata |tsnode|
-        {range}  (table)
+      • {node}   userdata |tsnode|
+      • {range}  (table)
 
     Return: ~
         (boolean) True if the {node} contains the {range}
@@ -560,16 +560,16 @@ start({bufnr}, {lang})                                               *start()*
 <
 
     Parameters: ~
-        {bufnr}  (number|nil) Buffer to be highlighted (default: current
+      • {bufnr}  (number|nil) Buffer to be highlighted (default: current
                  buffer)
-        {lang}   (string|nil) Language of the parser (default: buffer
+      • {lang}   (string|nil) Language of the parser (default: buffer
                  filetype)
 
 stop({bufnr})                                                         *stop()*
     Stops treesitter highlighting for a buffer
 
     Parameters: ~
-        {bufnr}  (number|nil) Buffer to stop highlighting (default: current
+      • {bufnr}  (number|nil) Buffer to stop highlighting (default: current
                  buffer)
 
 
@@ -583,7 +583,7 @@ inspect_language({lang})                                  *inspect_language()*
     names, ...
 
     Parameters: ~
-        {lang}  (string) Language
+      • {lang}  (string) Language
 
     Return: ~
         (table)
@@ -596,11 +596,11 @@ require_language({lang}, {path}, {silent}, {symbol_name})
     {path}
 
     Parameters: ~
-        {lang}         (string) Language the parser should parse
-        {path}         (string|nil) Optional path the parser is located at
-        {silent}       (boolean|nil) Don't throw an error if language not
+      • {lang}         (string) Language the parser should parse
+      • {path}         (string|nil) Optional path the parser is located at
+      • {silent}       (boolean|nil) Don't throw an error if language not
                        found
-        {symbol_name}  (string|nil) Internal symbol name for the language to
+      • {symbol_name}  (string|nil) Internal symbol name for the language to
                        load
 
     Return: ~
@@ -619,26 +619,26 @@ add_directive({name}, {handler}, {force})                    *add_directive()*
     `metadata[capture_id].key = value`
 
     Parameters: ~
-        {name}     (string) Name of the directive, without leading #
-        {handler}  function(match:string, pattern:string, bufnr:number,
+      • {name}     (string) Name of the directive, without leading #
+      • {handler}  function(match:string, pattern:string, bufnr:number,
                    predicate:function, metadata:table)
 
 add_predicate({name}, {handler}, {force})                    *add_predicate()*
     Adds a new predicate to be used in queries
 
     Parameters: ~
-        {name}     (string) Name of the predicate, without leading #
-        {handler}  function(match:string, pattern:string, bufnr:number,
+      • {name}     (string) Name of the predicate, without leading #
+      • {handler}  function(match:string, pattern:string, bufnr:number,
                    predicate:function)
 
 get_node_text({node}, {source}, {opts})                      *get_node_text()*
     Gets the text corresponding to a given node
 
     Parameters: ~
-        {node}    userdata |tsnode|
-        {source}  (number|string) Buffer or string from which the {node} is
+      • {node}    userdata |tsnode|
+      • {source}  (number|string) Buffer or string from which the {node} is
                   extracted
-        {opts}    (table|nil) Optional parameters.
+      • {opts}    (table|nil) Optional parameters.
                   • concat: (boolean) Concatenate result in a string (default
                     true)
 
@@ -649,8 +649,8 @@ get_query({lang}, {query_name})                                  *get_query()*
     Returns the runtime query {query_name} for {lang}.
 
     Parameters: ~
-        {lang}        (string) Language to use for the query
-        {query_name}  (string) Name of the query (e.g. "highlights")
+      • {lang}        (string) Language to use for the query
+      • {query_name}  (string) Name of the query (e.g. "highlights")
 
     Return: ~
         Query Parsed query
@@ -660,9 +660,9 @@ get_query_files({lang}, {query_name}, {is_included})
     Gets the list of files used to make up a query
 
     Parameters: ~
-        {lang}         (string) Language to get query for
-        {query_name}   (string) Name of the query to load (e.g., "highlights")
-        {is_included}  (boolean|nil) Internal parameter, most of the time left
+      • {lang}         (string) Language to get query for
+      • {query_name}   (string) Name of the query to load (e.g., "highlights")
+      • {is_included}  (boolean|nil) Internal parameter, most of the time left
                        as `nil`
 
     Return: ~
@@ -694,8 +694,8 @@ parse_query({lang}, {query})                                   *parse_query()*
     • `info.patterns` contains information about predicates.
 
     Parameters: ~
-        {lang}   (string) Language to use for the query
-        {query}  (string) Query in s-expr syntax
+      • {lang}   (string) Language to use for the query
+      • {query}  (string) Query in s-expr syntax
 
     Return: ~
         Query Parsed query
@@ -726,11 +726,11 @@ Query:iter_captures({self}, {node}, {source}, {start}, {stop})
 <
 
     Parameters: ~
-        {node}    userdata |tsnode| under which the search will occur
-        {source}  (number|string) Source buffer or string to extract text from
-        {start}   (number) Starting line for the search
-        {stop}    (number) Stopping line for the search (end-exclusive)
-        {self}
+      • {node}    userdata |tsnode| under which the search will occur
+      • {source}  (number|string) Source buffer or string to extract text from
+      • {start}   (number) Starting line for the search
+      • {stop}    (number) Stopping line for the search (end-exclusive)
+      • {self}
 
     Return: ~
         (number) capture Matching capture id
@@ -761,11 +761,11 @@ Query:iter_matches({self}, {node}, {source}, {start}, {stop})
 <
 
     Parameters: ~
-        {node}    userdata |tsnode| under which the search will occur
-        {source}  (number|string) Source buffer or string to search
-        {start}   (number) Starting line for the search
-        {stop}    (number) Stopping line for the search (end-exclusive)
-        {self}
+      • {node}    userdata |tsnode| under which the search will occur
+      • {source}  (number|string) Source buffer or string to search
+      • {start}   (number) Starting line for the search
+      • {stop}    (number) Stopping line for the search (end-exclusive)
+      • {self}
 
     Return: ~
         (number) pattern id
@@ -779,9 +779,9 @@ set_query({lang}, {query_name}, {text})                          *set_query()*
     by plugins.
 
     Parameters: ~
-        {lang}        (string) Language to use for the query
-        {query_name}  (string) Name of the query (e.g., "highlights")
-        {text}        (string) Query text (unparsed).
+      • {lang}        (string) Language to use for the query
+      • {query_name}  (string) Name of the query (e.g., "highlights")
+      • {text}        (string) Query text (unparsed).
 
 
 ==============================================================================
@@ -791,8 +791,8 @@ new({tree}, {opts})                                        *highlighter.new()*
     Creates a new highlighter using
 
     Parameters: ~
-        {tree}  LanguageTree |LanguageTree| parser object to use for highlighting
-        {opts}  (table|nil) Configuration of the highlighter:
+      • {tree}  LanguageTree |LanguageTree| parser object to use for highlighting
+      • {opts}  (table|nil) Configuration of the highlighter:
                 • queries table overwrite queries used by the highlighter
 
     Return: ~
@@ -802,7 +802,7 @@ TSHighlighter:destroy({self})                        *TSHighlighter:destroy()*
     Removes all internal references to the highlighter
 
     Parameters: ~
-        {self}
+      • {self}
 
 
 ==============================================================================
@@ -812,14 +812,14 @@ LanguageTree:children({self})                        *LanguageTree:children()*
     Returns a map of language to child tree.
 
     Parameters: ~
-        {self}
+      • {self}
 
 LanguageTree:contains({self}, {range})               *LanguageTree:contains()*
     Determines whether {range} is contained in the |LanguageTree|.
 
     Parameters: ~
-        {range}  (table) `{ start_line, start_col, end_line, end_col }`
-        {self}
+      • {range}  (table) `{ start_line, start_col, end_line, end_col }`
+      • {self}
 
     Return: ~
         (boolean)
@@ -832,17 +832,17 @@ LanguageTree:destroy({self})                          *LanguageTree:destroy()*
     Note: This DOES NOT remove this tree from a parent. Instead, `remove_child` must be called on the parent to remove it.
 
     Parameters: ~
-        {self}
+      • {self}
 
                                                *LanguageTree:for_each_child()*
 LanguageTree:for_each_child({self}, {fn}, {include_self})
     Invokes the callback for each |LanguageTree| and its children recursively
 
     Parameters: ~
-        {fn}            function(tree: LanguageTree, lang: string)
-        {include_self}  (boolean) Whether to include the invoking tree in the
+      • {fn}            function(tree: LanguageTree, lang: string)
+      • {include_self}  (boolean) Whether to include the invoking tree in the
                         results
-        {self}
+      • {self}
 
 LanguageTree:for_each_tree({self}, {fn})        *LanguageTree:for_each_tree()*
     Invokes the callback for each |LanguageTree| recursively.
@@ -850,40 +850,40 @@ LanguageTree:for_each_tree({self}, {fn})        *LanguageTree:for_each_tree()*
     Note: This includes the invoking tree's child trees as well.
 
     Parameters: ~
-        {fn}    function(tree: TSTree, languageTree: LanguageTree)
-        {self}
+      • {fn}    function(tree: TSTree, languageTree: LanguageTree)
+      • {self}
 
 LanguageTree:included_regions({self})        *LanguageTree:included_regions()*
     Gets the set of included regions
 
     Parameters: ~
-        {self}
+      • {self}
 
 LanguageTree:invalidate({self}, {reload})          *LanguageTree:invalidate()*
     Invalidates this parser and all its children
 
     Parameters: ~
-        {self}
+      • {self}
 
 LanguageTree:is_valid({self})                        *LanguageTree:is_valid()*
     Determines whether this tree is valid. If the tree is invalid, call `parse()` . This will return the updated tree.
 
     Parameters: ~
-        {self}
+      • {self}
 
 LanguageTree:lang({self})                                *LanguageTree:lang()*
     Gets the language of this tree node.
 
     Parameters: ~
-        {self}
+      • {self}
 
                                            *LanguageTree:language_for_range()*
 LanguageTree:language_for_range({self}, {range})
     Gets the appropriate language that contains {range}.
 
     Parameters: ~
-        {range}  (table) `{ start_line, start_col, end_line, end_col }`
-        {self}
+      • {range}  (table) `{ start_line, start_col, end_line, end_col }`
+      • {self}
 
     Return: ~
         LanguageTree Managing {range}
@@ -893,11 +893,11 @@ LanguageTree:named_node_for_range({self}, {range}, {opts})
     Gets the smallest named node that contains {range}.
 
     Parameters: ~
-        {range}  (table) `{ start_line, start_col, end_line, end_col }`
-        {opts}   (table|nil) Optional keyword arguments:
+      • {range}  (table) `{ start_line, start_col, end_line, end_col }`
+      • {opts}   (table|nil) Optional keyword arguments:
                  • ignore_injections boolean Ignore injected languages
                    (default true)
-        {self}
+      • {self}
 
     Return: ~
         userdata|nil Found |tsnode|
@@ -908,7 +908,7 @@ LanguageTree:parse({self})                              *LanguageTree:parse()*
     determine if any child languages should be created.
 
     Parameters: ~
-        {self}
+      • {self}
 
     Return: ~
         userdata[] Table of parsed |tstree|
@@ -918,7 +918,7 @@ LanguageTree:register_cbs({self}, {cbs})         *LanguageTree:register_cbs()*
     Registers callbacks for the |LanguageTree|.
 
     Parameters: ~
-        {cbs}   (table) An |nvim_buf_attach()|-like table argument with the
+      • {cbs}   (table) An |nvim_buf_attach()|-like table argument with the
                 following handlers:
                 • `on_bytes` : see |nvim_buf_attach()|, but this will be called after the parsers callback.
                 • `on_changedtree` : a callback that will be called every time
@@ -929,24 +929,24 @@ LanguageTree:register_cbs({self}, {cbs})         *LanguageTree:register_cbs()*
                   tree.
                 • `on_child_removed` : emitted when a child is removed from
                   the tree.
-        {self}
+      • {self}
 
 LanguageTree:source({self})                            *LanguageTree:source()*
     Returns the source content of the language tree (bufnr or string).
 
     Parameters: ~
-        {self}
+      • {self}
 
                                                *LanguageTree:tree_for_range()*
 LanguageTree:tree_for_range({self}, {range}, {opts})
     Gets the tree that contains {range}.
 
     Parameters: ~
-        {range}  (table) `{ start_line, start_col, end_line, end_col }`
-        {opts}   (table|nil) Optional keyword arguments:
+      • {range}  (table) `{ start_line, start_col, end_line, end_col }`
+      • {opts}   (table|nil) Optional keyword arguments:
                  • ignore_injections boolean Ignore injected languages
                    (default true)
-        {self}
+      • {self}
 
     Return: ~
         userdata|nil Contained |tstree|
@@ -956,7 +956,7 @@ LanguageTree:trees({self})                              *LanguageTree:trees()*
     languages.
 
     Parameters: ~
-        {self}
+      • {self}
 
 new({source}, {lang}, {opts})                             *languagetree.new()*
     A |LanguageTree| holds the treesitter parser for a given language {lang}
@@ -964,9 +964,9 @@ new({source}, {lang}, {opts})                             *languagetree.new()*
     may contain child languages themselves, hence the name).
 
     Parameters: ~
-        {source}  (number|string) Buffer or a string of text to parse
-        {lang}    (string) Root language this tree represents
-        {opts}    (table|nil) Optional keyword arguments:
+      • {source}  (number|string) Buffer or a string of text to parse
+      • {lang}    (string) Root language this tree represents
+      • {opts}    (table|nil) Optional keyword arguments:
                   • injections table Mapping language to injection query
                     strings. This is useful for overriding the built-in
                     runtime file searching for the injection language query

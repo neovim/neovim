@@ -673,7 +673,7 @@ def fmt_node_as_vimhelp(parent, width=text_width - indentation, indent='',
         max_name_len = max_name(m.keys()) + 4
         out = ''
         for name, desc in m.items():
-            name = '    {}'.format('{{{}}}'.format(name).ljust(max_name_len))
+            name = '  • {}'.format('{{{}}}'.format(name).ljust(max_name_len))
             out += '{}{}\n'.format(name, desc)
         return out.rstrip()
 
