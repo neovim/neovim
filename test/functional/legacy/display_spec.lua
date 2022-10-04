@@ -125,6 +125,21 @@ describe('display', function()
       {3:[No Name] [+]                                                              }|
                                                                                  |
     ]]):gsub('@', fillchar)))
+
+    command('close')
+    command('2vsplit')
+    screen:expect((([[
+      ^aa│aaa                                                                     |
+      a │bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb|
+      bb│bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb|
+      bb│bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb                |
+      bb│{1:~                                                                       }|
+      bb│{1:~                                                                       }|
+      bb│{1:~                                                                       }|
+      {1:@@}│{1:~                                                                       }|
+      {2:<  }{3:[No Name] [+]                                                           }|
+                                                                                 |
+    ]]):gsub('@', fillchar)))
   end
 
   -- oldtest: Test_display_lastline()

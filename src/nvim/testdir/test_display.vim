@@ -435,6 +435,10 @@ func Run_Test_display_lastline(euro)
   call term_sendkeys(buf, ":3split\<CR>")
   call VerifyScreenDump(buf, $'Test_display_lastline_{a:euro}5', {})
 
+  call term_sendkeys(buf, ":close\<CR>")
+  call term_sendkeys(buf, ":2vsplit\<CR>")
+  call VerifyScreenDump(buf, $'Test_display_lastline_{a:euro}6', {})
+
   call StopVimInTerminal(buf)
 endfunc
 
