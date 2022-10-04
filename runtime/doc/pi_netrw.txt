@@ -2782,7 +2782,7 @@ your browsing preferences.  (see also: |netrw-settings|)
 				history are saved (as .netrwbook and
 				.netrwhist).
 				Netrw uses |expand()| on the string.
-				 default: stdpath('data') (see |stdpath()|)
+				 default: stdpath("data") (see |stdpath()|)
 
   *g:netrw_keepdir*		=1 (default) keep current directory immune from
 				   the browsing directory.

@@ -434,7 +434,7 @@ its config is non-empty: >
     if vim.api.nvim_win_get_config(window_id).relative ~= '' then
       -- window with this window_id is floating
     end
->
+<
 
 Buffer text can be highlighted by typical mechanisms (syntax highlighting,
 |api-highlights|). The |hl-NormalFloat| group highlights normal text;
@@ -456,7 +456,7 @@ Example: create a float with scratch buffer: >
     let win = nvim_open_win(buf, 0, opts)
     " optional: change highlight, otherwise Pmenu is used
     call nvim_win_set_option(win, 'winhl', 'Normal:MyHighlight')
->
+<
 
 ==============================================================================
 Extended marks                                  *api-extended-marks* *extmarks*
@@ -500,8 +500,8 @@ Let's set an extmark at the first row (row=0) and third column (column=2).
 
       01 2345678
     0 ex|ample..
-<        ^ extmark position
->
+        ^ extmark position
+
     let g:mark_ns = nvim_create_namespace('myplugin')
     let g:mark_id = nvim_buf_set_extmark(0, g:mark_ns, 0, 2, {})
 <
@@ -520,8 +520,8 @@ use |nvim_buf_del_extmark()|. Deleting "x" in our example: >
 
       0 12345678
     0 e|ample..
-<       ^ extmark position
->
+       ^ extmark position
+
     echo nvim_buf_get_extmark_by_id(0, g:mark_ns, g:mark_id, {})
     => [0, 1]
 <

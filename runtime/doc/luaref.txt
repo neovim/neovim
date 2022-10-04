@@ -61,7 +61,7 @@ other words, this section describes which tokens are valid, how they can be
 combined, and what their combinations mean.
 
 The language constructs will be explained using the usual extended BNF
-notation, in which { `a` } means 0 or more `a`'s, and [ `a` ] means an optional `a`.
+notation, in which `{ a }` means 0 or more `a`'s, and `[ a ]` means an optional `a`.
 
 ==============================================================================
 2.1  Lexical Conventions                                    *luaref-langLexConv*
