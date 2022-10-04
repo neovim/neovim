@@ -860,6 +860,9 @@ end
 ---                            Used on all running clients.
 ---                            The default implementation re-uses a client if name
 ---                            and root_dir matches.
+---             - bufnr (number)
+---                     Buffer handle to attach to if starting or re-using a
+---                     client (0 for current).
 ---@return number|nil client_id
 function lsp.start(config, opts)
   opts = opts or {}
@@ -871,7 +874,10 @@ function lsp.start(config, opts)
   if not config.name and type(config.cmd) == 'table' then
     config.name = config.cmd[1] and vim.fs.basename(config.cmd[1]) or nil
   end
-  local bufnr = api.nvim_get_current_buf()
+  local bufnr = opts.bufnr
+  if bufnr == nil or bufnr == 0 then
+    bufnr = api.nvim_get_current_buf()
+  end
   for _, clients in ipairs({ uninitialized_clients, lsp.get_active_clients() }) do
     for _, client in pairs(clients) do
       if reuse_client(client, config) then
