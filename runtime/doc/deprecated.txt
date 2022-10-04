@@ -118,6 +118,10 @@ LSP Functions ~
 *vim.lsp.util.set_loclist()*		Use |setloclist()| instead.
 *vim.lsp.buf_get_clients()*		Use |vim.lsp.get_active_clients()| with
                                         {buffer = bufnr} instead.
+*vim.lsp.buf.formatting()*		Use |vim.lsp.buf.format()| with
+					{async = true} instead.
+*vim.lsp.buf.range_formatting()*	Use |vim.lsp.formatexpr()|
+					or |vim.lsp.format()| instead.
 
 Lua ~
 *vim.register_keystroke_callback()* Use |vim.on_key()| instead.
