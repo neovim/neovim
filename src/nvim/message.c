@@ -269,12 +269,12 @@ void msg_multiattr(HlMessage hl_msg, const char *kind, bool history)
   msg_start();
   msg_clr_eos();
   bool need_clear = false;
+  msg_ext_set_kind(kind);
   for (uint32_t i = 0; i < kv_size(hl_msg); i++) {
     HlMessageChunk chunk = kv_A(hl_msg, i);
     msg_multiline_attr((const char *)chunk.text.data, chunk.attr,
                        true, &need_clear);
   }
-  msg_ext_set_kind(kind);
   if (history && kv_size(hl_msg)) {
     add_msg_hist_multiattr(NULL, 0, 0, true, hl_msg);
   }
