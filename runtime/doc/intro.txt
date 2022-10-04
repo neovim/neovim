@@ -308,7 +308,7 @@ These names for keys are used in the documentation.  They can also be used
 with the ":map" command.
 
 notation	meaning		    equivalent	decimal value(s)	~
------------------------------------------------------------------------
+----------------------------------------------------------------------- ~
 <Nul>		zero			CTRL-@	  0 (stored as 10) *<Nul>*
 <BS>		backspace		CTRL-H	  8	*backspace*
 <Tab>		tab			CTRL-I	  9	*tab* *Tab*
@@ -530,29 +530,29 @@ Ex		 :vi	  --	  --	 --	    --	      --
 
 -- not possible
 
-*1 Go from Normal mode to Insert mode by giving the command "i", "I", "a",
-   "A", "o", "O", "c", "C", "s" or S".
-*2 Go from Visual mode to Normal mode by giving a non-movement command, which
-   causes the command to be executed, or by hitting <Esc> "v", "V" or "CTRL-V"
-   (see |v_v|), which just stops Visual mode without side effects.
-*3 Go from Command-line mode to Normal mode by:
-   - Hitting <CR> or <NL>, which causes the entered command to be executed.
-   - Deleting the complete line (e.g., with CTRL-U) and giving a final <BS>.
-   - Hitting CTRL-C or <Esc>, which quits the command-line without executing
-     the command.
-   In the last case <Esc> may be the character defined with the 'wildchar'
-   option, in which case it will start command-line completion.  You can
-   ignore that and type <Esc> again.
-*4 Go from Normal to Select mode by:
-   - use the mouse to select text while 'selectmode' contains "mouse"
-   - use a non-printable command to move the cursor while keeping the Shift
-     key pressed, and the 'selectmode' option contains "key"
-   - use "v", "V" or "CTRL-V" while 'selectmode' contains "cmd"
-   - use "gh", "gH" or "g CTRL-H"  |g_CTRL-H|
-*5 Go from Select mode to Normal mode by using a non-printable command to move
-   the cursor, without keeping the Shift key pressed.
-*6 Go from Select mode to Insert mode by typing a printable character.  The
-   selection is deleted and the character is inserted.
+* 1 Go from Normal mode to Insert mode by giving the command "i", "I", "a",
+    "A", "o", "O", "c", "C", "s" or S".
+* 2 Go from Visual mode to Normal mode by giving a non-movement command, which
+    causes the command to be executed, or by hitting <Esc> "v", "V" or "CTRL-V"
+    (see |v_v|), which just stops Visual mode without side effects.
+* 3 Go from Command-line mode to Normal mode by:
+    - Hitting <CR> or <NL>, which causes the entered command to be executed.
+    - Deleting the complete line (e.g., with CTRL-U) and giving a final <BS>.
+    - Hitting CTRL-C or <Esc>, which quits the command-line without executing
+      the command.
+    In the last case <Esc> may be the character defined with the 'wildchar'
+    option, in which case it will start command-line completion.  You can
+    ignore that and type <Esc> again.
+* 4 Go from Normal to Select mode by:
+    - use the mouse to select text while 'selectmode' contains "mouse"
+    - use a non-printable command to move the cursor while keeping the Shift
+      key pressed, and the 'selectmode' option contains "key"
+    - use "v", "V" or "CTRL-V" while 'selectmode' contains "cmd"
+    - use "gh", "gH" or "g CTRL-H"  |g_CTRL-H|
+* 5 Go from Select mode to Normal mode by using a non-printable command to move
+    the cursor, without keeping the Shift key pressed.
+* 6 Go from Select mode to Insert mode by typing a printable character.  The
+    selection is deleted and the character is inserted.
 
 			*CTRL-\_CTRL-N* *i_CTRL-\_CTRL-N* *c_CTRL-\_CTRL-N*
 				      *v_CTRL-\_CTRL-N* *t_CTRL-\_CTRL-N*

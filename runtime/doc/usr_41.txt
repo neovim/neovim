@@ -1074,8 +1074,8 @@ Various:					*various-functions*
 	wordcount()		get byte/word/char count of buffer
 
 	luaeval()		evaluate |Lua| expression
-	py3eval()		evaluate Python expression (|+python3|)
-	pyeval()		evaluate Python expression (|+python|)
+	py3eval()		evaluate |Python| expression
+	pyeval()		evaluate |Python| expression
 	pyxeval()		evaluate |python_x| expression
 	rubyeval()		evaluate |Ruby| expression
 
