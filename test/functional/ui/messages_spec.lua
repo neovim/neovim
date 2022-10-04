@@ -869,7 +869,7 @@ stack traceback:
       {1:~                        }|
       {1:~                        }|
     ]], messages={
-      { content = { { "wow, ", 7 }, { "such\n\nvery ", 2 }, { "color", 10 } }, kind = "" }
+      { content = { { "wow, ", 7 }, { "such\n\nvery ", 2 }, { "color", 10 } }, kind = "echomsg" }
     }}
 
     feed ':ls<cr>'
