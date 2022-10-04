@@ -350,7 +350,7 @@ local function visit_node(root, level, lang_tree, headings, opt, stats)
     return node_text():match('^%s+') or ''
   end
 
-  if root:child_count() == 0 or node_name == 'ERROR' then
+  if root:named_child_count() == 0 or node_name == 'ERROR' then
     text = node_text()
   else
     -- Process children and join them with whitespace.
