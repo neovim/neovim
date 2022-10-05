@@ -1,7 +1,7 @@
 " These commands create the option window.
 "
 " Maintainer:	Bram Moolenaar <Bram@vim.org>
-" Last Change:	2022 Sep 11
+" Last Change:	2022 Oct 02
 
 " If there already is an option window, jump to that one.
 let buf = bufnr('option-window')
