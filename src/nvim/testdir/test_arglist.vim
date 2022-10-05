@@ -591,4 +591,20 @@ func Test_quit_with_arglist()
   call delete('.c.swp')
 endfunc
 
+" Test for ":all" not working when in the cmdline window
+func Test_all_not_allowed_from_cmdwin()
+  au BufEnter * all
+  next x
+  " Use try/catch here, somehow assert_fails() doesn't work on MS-Windows
+  " console.
+  let caught = 'no'
+  try
+    exe ":norm! 7q?apat\<CR>"
+  catch /E11:/
+    let caught = 'yes'
+  endtry
+  call assert_equal('yes', caught)
+  au! BufEnter
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab

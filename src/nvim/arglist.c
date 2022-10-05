@@ -782,6 +782,10 @@ static void do_arg_all(int count, int forceit, int keep_tabs)
 
   assert(firstwin != NULL);  // satisfy coverity
 
+  if (cmdwin_type != 0) {
+    emsg(_(e_cmdwin));
+    return;
+  }
   if (ARGCOUNT <= 0) {
     // Don't give an error message.  We don't want it when the ":all" command is in the .vimrc.
     return;
