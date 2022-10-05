@@ -3010,6 +3010,15 @@ func Test_Visual_doautoall_redraw()
   %bwipe!
 endfunc
 
+" This was using freed memory.
+func Test_BufNew_arglocal()
+  arglocal
+  au BufNew * arglocal
+  call assert_fails('drop xx', 'E1156:')
+
+  au! BufNew
+endfunc
+
 func Test_autocmd_closes_window()
   au BufNew,BufWinLeave * e %e
   file yyy
