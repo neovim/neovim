@@ -2054,6 +2054,7 @@ endfunc
 func Test_autocommand_all_events()
   call assert_fails('au * * bwipe', 'E1155:')
   call assert_fails('au * x bwipe', 'E1155:')
+  call assert_fails('au! * x bwipe', 'E1155:')
 endfunc
 
 func Test_autocmd_user()
