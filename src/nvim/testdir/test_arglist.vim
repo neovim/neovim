@@ -509,18 +509,14 @@ func Test_arglist_autocmd()
   new
   " redefine arglist; go to Xxx1
   next! Xxx1 Xxx2 Xxx3
-  " open window for all args; Reading Xxx2 will change the arglist and the
-  " third window will get Xxx1:
-  "   win 1: Xxx1
-  "   win 2: Xxx2
-  "   win 3: Xxx1
-  all
+  " open window for all args; Reading Xxx2 will try to change the arglist and
+  " that will fail
+  call assert_fails("all", "E1156:")
   call assert_equal('test file Xxx1', getline(1))
   wincmd w
-  wincmd w
-  call assert_equal('test file Xxx1', getline(1))
-  rewind
   call assert_equal('test file Xxx2', getline(1))
+  wincmd w
+  call assert_equal('test file Xxx3', getline(1))
 
   autocmd! BufReadPost Xxx2
   enew! | only
@@ -589,6 +585,29 @@ func Test_quit_with_arglist()
   call delete('.a.swp')
   call delete('.b.swp')
   call delete('.c.swp')
+endfunc
+
+" Test for ":all" not working when in the cmdline window
+func Test_all_not_allowed_from_cmdwin()
+  au BufEnter * all
+  next x
+  " Use try/catch here, somehow assert_fails() doesn't work on MS-Windows
+  " console.
+  let caught = 'no'
+  try
+    exe ":norm! 7q?apat\<CR>"
+  catch /E11:/
+    let caught = 'yes'
+  endtry
+  call assert_equal('yes', caught)
+  au! BufEnter
+endfunc
+
+func Test_clear_arglist_in_all()
+  n 0 00 000 0000 00000 000000
+  au WinNew 0 n 0
+  call assert_fails("all", "E1156")
+  au! *
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab

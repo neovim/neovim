@@ -148,6 +148,12 @@ func Test_autocmd_bufunload_with_tabnext()
   quit
 endfunc
 
+func Test_argdelete_in_next()
+  au BufNew,BufEnter,BufLeave,BufWinEnter * argdel
+  call assert_fails('next a b', 'E1156:')
+  au! BufNew,BufEnter,BufLeave,BufWinEnter *
+endfunc
+
 func Test_autocmd_bufwinleave_with_tabfirst()
   tabedit
   augroup sample
@@ -2048,6 +2054,7 @@ endfunc
 func Test_autocommand_all_events()
   call assert_fails('au * * bwipe', 'E1155:')
   call assert_fails('au * x bwipe', 'E1155:')
+  call assert_fails('au! * x bwipe', 'E1155:')
 endfunc
 
 func Test_autocmd_user()
@@ -3002,6 +3009,15 @@ func Test_Visual_doautoall_redraw()
   autocmd User Explode ++once redraw
   doautoall User Explode
   %bwipe!
+endfunc
+
+" This was using freed memory.
+func Test_BufNew_arglocal()
+  arglocal
+  au BufNew * arglocal
+  call assert_fails('drop xx', 'E1156:')
+
+  au! BufNew
 endfunc
 
 func Test_autocmd_closes_window()
