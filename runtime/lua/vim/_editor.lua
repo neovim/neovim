@@ -152,14 +152,15 @@ do
   --- </pre>
   ---
   ---@see |paste|
+  ---@alias paste_phase -1 | 1 | 2 | 3
   ---
-  ---@param lines  |readfile()|-style list of lines to paste. |channel-lines|
-  ---@param phase  -1: "non-streaming" paste: the call contains all lines.
+  ---@param lines  string[] # |readfile()|-style list of lines to paste. |channel-lines|
+  ---@param phase paste_phase  -1: "non-streaming" paste: the call contains all lines.
   ---              If paste is "streamed", `phase` indicates the stream state:
   ---                - 1: starts the paste (exactly once)
   ---                - 2: continues the paste (zero or more times)
   ---                - 3: ends the paste (exactly once)
-  ---@returns false if client should cancel the paste.
+  ---@returns boolean # false if client should cancel the paste.
   function vim.paste(lines, phase)
     local now = vim.loop.now()
     local is_first_chunk = phase < 2
@@ -255,6 +256,8 @@ end
 ---@see |lua-loop-callbacks|
 ---@see |vim.schedule()|
 ---@see |vim.in_fast_event()|
+---@param cb function
+---@return function
 function vim.schedule_wrap(cb)
   return function(...)
     local args = vim.F.pack_len(...)
@@ -399,11 +402,11 @@ end
 --- Get a table of lines with start, end columns for a region marked by two points
 ---
 ---@param bufnr number of buffer
----@param pos1 (line, column) tuple marking beginning of region
----@param pos2 (line, column) tuple marking end of region
----@param regtype type of selection, see |setreg()|
+---@param pos1 integer[] (line, column) tuple marking beginning of region
+---@param pos2 integer[] (line, column) tuple marking end of region
+---@param regtype string type of selection, see |setreg()|
 ---@param inclusive boolean indicating whether the selection is end-inclusive
----@return region lua table of the form {linenr = {startcol,endcol}}
+---@return table<integer, {}> region lua table of the form {linenr = {startcol,endcol}}
 function vim.region(bufnr, pos1, pos2, regtype, inclusive)
   if not vim.api.nvim_buf_is_loaded(bufnr) then
     vim.fn.bufload(bufnr)
@@ -450,9 +453,9 @@ end
 --- Use to do a one-shot timer that calls `fn`
 --- Note: The {fn} is |vim.schedule_wrap()|ped automatically, so API functions are
 --- safe to call.
----@param fn Callback to call once `timeout` expires
----@param timeout Number of milliseconds to wait before calling `fn`
----@return timer luv timer object
+---@param fn function Callback to call once `timeout` expires
+---@param timeout integer Number of milliseconds to wait before calling `fn`
+---@return table timer luv timer object
 function vim.defer_fn(fn, timeout)
   vim.validate({ fn = { fn, 'c', true } })
   local timer = vim.loop.new_timer()
@@ -758,7 +761,7 @@ end
 ---  local hl_normal = vim.pretty_print(vim.api.nvim_get_hl_by_name("Normal", true))
 ---</pre>
 ---@see |vim.inspect()|
----@return given arguments.
+---@return any # given arguments.
 function vim.pretty_print(...)
   local objects = {}
   for i = 1, select('#', ...) do
