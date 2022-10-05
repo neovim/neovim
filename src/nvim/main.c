@@ -346,6 +346,7 @@ int main(int argc, char **argv)
       ui_builtin_start();
     }
     TIME_MSG("done waiting for UI");
+    firstwin->w_prev_height = firstwin->w_height;  // may have changed
   }
 
   // prepare screen now

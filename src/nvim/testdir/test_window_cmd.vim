@@ -1,4 +1,5 @@
 " Tests for window cmd (:wincmd, :split, :vsplit, :resize and etc...)
+source check.vim
 
 func Test_window_cmd_ls0_with_split()
   set ls=0
@@ -1486,5 +1487,256 @@ func Test_win_equal_last_status()
   set laststatus&
 endfunc
 
+" Test "screen" and "cursor" values for 'splitkeep' with a sequence of
+" split operations for various options: with and without a winbar,
+" tabline, for each possible value of 'laststatus', 'scrolloff',
+" 'equalalways', and with the cursor at the top, middle and bottom.
+func Test_splitkeep_options()
+  " disallow window resizing
+  " let save_WS = &t_WS
+  " set t_WS=
+
+  let gui = has("gui_running")
+  inoremap <expr> c "<cmd>copen<bar>wincmd k<CR>"
+  for run in range(0, 20)
+    let &splitkeep = run > 10 ? 'topline' : 'screen'
+    let &scrolloff = (!(run % 4) ? 0 : run)
+    let &laststatus = (run % 3)
+    let &splitbelow = (run % 3)
+    let &equalalways = (run % 2)
+    "let wsb = (run % 2) && &splitbelow
+    let tl = (gui ? 0 : ((run % 5) ? 1 : 0))
+    let pos = !(run % 3) ? 'H' : ((run % 2) ? 'M' : 'L')
+    tabnew | tabonly! | redraw
+    execute (run % 5) ? 'tabnew' : ''
+    " execute (run % 2) ? 'nnoremenu 1.10 WinBar.Test :echo' : ''
+    let &winbar = (run % 2) ? '%f' : ''
+    call setline(1, range(1, 256))
+    " No scroll for restore_snapshot
+    norm G
+    try
+      copen | close | colder
+    catch /E380/
+    endtry
+    call assert_equal(257 - winheight(0), line("w0"))
+
+    " No scroll for firstwin horizontal split
+    execute 'norm gg' . pos
+    split | redraw | wincmd k
+    call assert_equal(1, line("w0"))
+    call assert_equal(&scroll, winheight(0) / 2)
+    wincmd j
+    call assert_equal(&spk == 'topline' ? 1 : win_screenpos(0)[0] - tl, line("w0"))
+
+    " No scroll when resizing windows
+    wincmd k | resize +2 | redraw
+    call assert_equal(1, line("w0"))
+    wincmd j
+    call assert_equal(&spk == 'topline' ? 1 : win_screenpos(0)[0] - tl, line("w0"))
+
+    " No scroll when dragging statusline
+    call win_move_statusline(1, -3)
+    call assert_equal(&spk == 'topline' ? 1 : win_screenpos(0)[0] - tl, line("w0"))
+    wincmd k
+    call assert_equal(1, line("w0"))
+
+    " No scroll when changing shellsize
+    set lines+=2
+    call assert_equal(1, line("w0"))
+    wincmd j
+    call assert_equal(&spk == 'topline' ? 1 : win_screenpos(0)[0] - tl, line("w0"))
+    set lines-=2
+    call assert_equal(&spk == 'topline' ? 1 : win_screenpos(0)[0] - tl, line("w0"))
+    wincmd k
+    call assert_equal(1, line("w0"))
+
+    " No scroll when equalizing windows
+    wincmd =
+    call assert_equal(1, line("w0"))
+    wincmd j
+    call assert_equal(&spk == 'topline' ? 1 : win_screenpos(0)[0] - tl, line("w0"))
+    wincmd k
+    call assert_equal(1, line("w0"))
+
+    " No scroll in windows split multiple times
+    vsplit | split | 4wincmd w
+    call assert_equal(&spk == 'topline' ? 1 : win_screenpos(0)[0] - tl, line("w0"))
+    1wincmd w | quit | wincmd l | split
+    call assert_equal(&spk == 'topline' ? 1 : win_screenpos(0)[0] - tl, line("w0"))
+    wincmd j
+    call assert_equal(&spk == 'topline' ? 1 : win_screenpos(0)[0] - tl, line("w0"))
+
+    " No scroll in small window
+    2wincmd w | only | 5split | wincmd k
+    call assert_equal(1, line("w0"))
+    wincmd j
+    call assert_equal(&spk == 'topline' ? 1 : win_screenpos(0)[0] - tl, line("w0"))
+
+    " No scroll for vertical split
+    quit | vsplit | wincmd l
+    call assert_equal(1, line("w0"))
+    wincmd h
+    call assert_equal(1, line("w0"))
+
+    " No scroll in windows split and quit multiple times
+    quit | redraw | split | split | quit | redraw
+    call assert_equal(&spk == 'topline' ? 1 : win_screenpos(0)[0] - tl, line("w0"))
+
+    " No scroll for new buffer
+    1wincmd w | only | copen | wincmd k
+    call assert_equal(1, line("w0"))
+    only
+    call assert_equal(1, line("w0"))
+    above copen | wincmd j
+    call assert_equal(&spk == 'topline' ? 1 : win_screenpos(0)[0] - tl, line("w0"))
+
+    " No scroll when opening cmdwin, and no cursor move when closing cmdwin.
+    only | norm ggL
+    let curpos = getcurpos()
+    norm q:
+    call assert_equal(1, line("w0"))
+    call assert_equal(curpos, getcurpos())
+
+    " Scroll when cursor becomes invalid in insert mode
+    norm Lic
+    call assert_equal(curpos, getcurpos())
+
+    " No scroll when topline not equal to 1
+    only | execute "norm gg5\<C-e>" | split | wincmd k
+    call assert_equal(6, line("w0"))
+    wincmd j
+    call assert_equal(&spk == 'topline' ? 6 : 5 + win_screenpos(0)[0] - tl, line("w0"))
+  endfor
+
+  tabnew | tabonly! | %bwipeout!
+  iunmap c
+  set scrolloff&
+  set splitbelow&
+  set laststatus&
+  set equalalways&
+  set splitkeep&
+  " let &t_WS = save_WS
+endfunc
+
+function Test_splitkeep_cmdwin_cursor_position()
+  set splitkeep=screen
+  call setline(1, range(&lines))
+
+  " No scroll when cursor is at near bottom of window and cusor position
+  " recompution (done by line('w0') in this test) happens while in cmdwin.
+  normal! G
+  let firstline = line('w0')
+  autocmd CmdwinEnter * ++once autocmd WinEnter * ++once call line('w0')
+  execute "normal! q:\<C-w>q"
+  redraw!
+  call assert_equal(firstline, line('w0'))
+
+  " User script can change cursor position successfully while in cmdwin and it
+  " shouldn't be changed when closing cmdwin.
+  execute "normal! Gq:\<Cmd>call win_execute(winnr('#')->win_getid(), 'call cursor(1, 1)')\<CR>\<C-w>q"
+  call assert_equal(1, line('.'))
+  call assert_equal(1, col('.'))
+
+  execute "normal! Gq:\<Cmd>autocmd WinEnter * ++once call cursor(1, 1)\<CR>\<C-w>q"
+  call assert_equal(1, line('.'))
+  call assert_equal(1, col('.'))
+
+  %bwipeout!
+  set splitkeep&
+endfunction
+
+function Test_splitkeep_misc()
+  set splitkeep=screen
+  set splitbelow
+
+  call setline(1, range(1, &lines))
+  norm Gzz
+  let top = line('w0')
+  " No scroll when aucmd_win is opened
+  call setbufvar(bufnr("test", 1) , '&buftype', 'nofile')
+  call assert_equal(top, line('w0'))
+  " No scroll when tab is changed/closed
+  tab help | close
+  call assert_equal(top, line('w0'))
+  " No scroll when help is closed and buffer line count < window height
+  norm ggdG
+  call setline(1, range(1, &lines - 10))
+  norm G
+  let top = line('w0')
+  help | quit
+  call assert_equal(top, line('w0'))
+  " No error when resizing window in autocmd and buffer length changed
+  autocmd FileType qf exe "resize" line('$')
+  cexpr getline(1, '$')
+  copen
+  wincmd p
+  norm dd
+  cexpr getline(1, '$')
+
+  %bwipeout!
+  set splitbelow&
+  set splitkeep&
+endfunc
+
+function Test_splitkeep_callback()
+  CheckScreendump
+  let lines =<< trim END
+    set splitkeep=screen
+    call setline(1, range(&lines))
+    function C1(a, b)
+      split | wincmd p
+    endfunction
+    function C2(a, b)
+      close | split
+    endfunction
+    nn j <cmd>call job_start([&sh, &shcf, "true"], { 'exit_cb': 'C1' })<CR>
+    nn t <cmd>call popup_create(term_start([&sh, &shcf, "true"],
+          \ { 'hidden': 1, 'exit_cb': 'C2' }), {})<CR>
+  END
+  call writefile(lines, 'XTestSplitkeepCallback', 'D')
+  let buf = RunVimInTerminal('-S XTestSplitkeepCallback', #{rows: 8})
+
+  call term_sendkeys(buf, "j")
+  call VerifyScreenDump(buf, 'Test_splitkeep_callback_1', {})
+
+  call term_sendkeys(buf, ":quit\<CR>Ht")
+  call VerifyScreenDump(buf, 'Test_splitkeep_callback_2', {})
+
+  call term_sendkeys(buf, ":set sb\<CR>:quit\<CR>Gj")
+  call VerifyScreenDump(buf, 'Test_splitkeep_callback_3', {})
+
+  call term_sendkeys(buf, ":quit\<CR>Gt")
+  call VerifyScreenDump(buf, 'Test_splitkeep_callback_4', {})
+endfunc
+
+function Test_splitkeep_fold()
+  CheckScreendump
+
+  let lines =<< trim END
+    set splitkeep=screen
+    set foldmethod=marker
+    set number
+    let line = 1
+    for n in range(1, &lines)
+      call setline(line, ['int FuncName() {/*{{{*/', 1, 2, 3, 4, 5, '}/*}}}*/',
+            \ 'after fold'])
+      let line += 8
+    endfor
+  END
+  call writefile(lines, 'XTestSplitkeepFold', 'D')
+  let buf = RunVimInTerminal('-S XTestSplitkeepFold', #{rows: 10})
+
+  call term_sendkeys(buf, "L:wincmd s\<CR>")
+  call VerifyScreenDump(buf, 'Test_splitkeep_fold_1', {})
+
+  call term_sendkeys(buf, ":quit\<CR>")
+  call VerifyScreenDump(buf, 'Test_splitkeep_fold_2', {})
+
+  call term_sendkeys(buf, "H:below split\<CR>")
+  call VerifyScreenDump(buf, 'Test_splitkeep_fold_3', {})
+
+  call term_sendkeys(buf, ":wincmd k\<CR>:quit\<CR>")
+  call VerifyScreenDump(buf, 'Test_splitkeep_fold_4', {})
+endfunction
 
 " vim: shiftwidth=2 sts=2 expandtab

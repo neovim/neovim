@@ -729,6 +729,7 @@ EXTERN unsigned int tpf_flags;  ///< flags from 'termpastefilter'
 EXTERN char *p_tfu;             ///< 'tagfunc'
 EXTERN char *p_spc;             ///< 'spellcapcheck'
 EXTERN char *p_spf;             ///< 'spellfile'
+EXTERN char *p_spk;             //   'splitkeep'
 EXTERN char *p_spl;             ///< 'spelllang'
 EXTERN char *p_spo;             // 'spelloptions'
 EXTERN unsigned int spo_flags;

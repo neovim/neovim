@@ -2357,6 +2357,13 @@ return {
       defaults={if_true=false}
     },
     {
+      full_name='splitkeep', abbreviation='spk',
+      short_desc=N_("determines scroll behavior for split windows"),
+      type='string', scope={'global'},
+      varname='p_spk',
+      defaults={if_true='cursor'}
+    },
+    {
       full_name='splitright', abbreviation='spr',
       short_desc=N_("new window is put right of the current one"),
       type='bool', scope={'global'},
