@@ -3865,13 +3865,12 @@ void close_others(int message, int forceit)
 }
 
 // Allocate the first window and put an empty buffer in it.
-// Called from main().
-//
-// Return FAIL when something goes wrong.
-int win_alloc_first(void)
+// Only called from main().
+void win_alloc_first(void)
 {
   if (win_alloc_firstwin(NULL) == FAIL) {
-    return FAIL;
+    // allocating first buffer before any autocmds should not fail.
+    abort();
   }
 
   first_tabpage = alloc_tabpage();
@@ -3880,8 +3879,6 @@ int win_alloc_first(void)
   curtab->tp_firstwin = firstwin;
   curtab->tp_lastwin = lastwin;
   curtab->tp_curwin = curwin;
-
-  return OK;
 }
 
 // Init `aucmd_win`. This can only be done after the first window

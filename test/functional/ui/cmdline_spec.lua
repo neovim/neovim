@@ -822,7 +822,7 @@ describe('statusline is redrawn on entering cmdline', function()
     ]]}
   end)
 
-  it('with scrolled messages and msgsep', function()
+  it('with scrolled messages', function()
     screen:try_resize(35,14)
     exec([[
       let g:count = 0
@@ -900,70 +900,6 @@ describe('statusline is redrawn on entering cmdline', function()
       {1:~                                  }|
       {1:~                                  }|
       {2:[No Name]                          }|
-                                         |
-    ]]}
-  end)
-
-  it('but not with scrolled messages without msgsep', function()
-    screen:try_resize(35,10)
-    exec([[
-      let g:count = 0
-      autocmd CmdlineEnter * let g:count += 1
-      set display-=msgsep
-      set statusline=%{mode()}%{g:count}
-    ]])
-    feed(':echoerr doesnotexist<cr>')
-    screen:expect{grid=[[
-      {1:~                                  }|
-      {1:~                                  }|
-      {1:~                                  }|
-      {1:~                                  }|
-      {1:~                                  }|
-      {3:c1                                 }|
-      {4:E121: Undefined variable: doesnotex}|
-      {4:ist}                                |
-      {5:Press ENTER or type command to cont}|
-      {5:inue}^                               |
-    ]]}
-    feed(':echoerr doesnotexist<cr>')
-    screen:expect{grid=[[
-      {1:~                                  }|
-      {1:~                                  }|
-      {3:c1                                 }|
-      {4:E121: Undefined variable: doesnotex}|
-      {4:ist}                                |
-      {5:Press ENTER or type command to cont}|
-      {4:E121: Undefined variable: doesnotex}|
-      {4:ist}                                |
-      {5:Press ENTER or type command to cont}|
-      {5:inue}^                               |
-    ]]}
-
-    feed(':echoerr doesnotexist<cr>')
-    screen:expect{grid=[[
-      {4:E121: Undefined variable: doesnotex}|
-      {4:ist}                                |
-      {5:Press ENTER or type command to cont}|
-      {4:E121: Undefined variable: doesnotex}|
-      {4:ist}                                |
-      {5:Press ENTER or type command to cont}|
-      {4:E121: Undefined variable: doesnotex}|
-      {4:ist}                                |
-      {5:Press ENTER or type command to cont}|
-      {5:inue}^                               |
-    ]]}
-
-    feed('<cr>')
-    screen:expect{grid=[[
-      ^                                   |
-      {1:~                                  }|
-      {1:~                                  }|
-      {1:~                                  }|
-      {1:~                                  }|
-      {1:~                                  }|
-      {1:~                                  }|
-      {1:~                                  }|
-      {3:n3                                 }|
                                          |
     ]]}
   end)

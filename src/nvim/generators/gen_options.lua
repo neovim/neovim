@@ -34,7 +34,6 @@ local redraw_flags={
   current_window_only='P_RWINONLY',
   current_buffer='P_RBUF',
   all_windows='P_RALL',
-  everything='P_RCLR',
   curswant='P_CURSWANT',
   ui_option='P_UI_OPTION',
 }

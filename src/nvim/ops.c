@@ -2220,7 +2220,8 @@ void op_insert(oparg_T *oap, long count1)
 
   // vis block is still marked. Get rid of it now.
   curwin->w_cursor.lnum = oap->start.lnum;
-  update_screen(UPD_INVERTED);
+  redraw_curbuf_later(UPD_INVERTED);
+  update_screen();
 
   if (oap->motion_type == kMTBlockWise) {
     // When 'virtualedit' is used, need to insert the extra spaces before
@@ -2772,7 +2773,10 @@ static void op_yank_reg(oparg_T *oap, bool message, yankreg_T *reg, bool append)
       }
 
       // redisplay now, so message is not deleted
-      update_topline_redraw();
+      update_topline(curwin);
+      if (must_redraw) {
+        update_screen();
+      }
       if (yank_type == kMTBlockWise) {
         smsg(NGETTEXT("block of %" PRId64 " line yanked%s",
                       "block of %" PRId64 " lines yanked%s", yanklines),

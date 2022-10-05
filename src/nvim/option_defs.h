@@ -492,7 +492,7 @@ EXTERN unsigned dy_flags;
 #define DY_LASTLINE             0x001
 #define DY_TRUNCATE             0x002
 #define DY_UHEX                 0x004
-// code should use msg_use_msgsep() to check if msgsep is active
+// legacy flag, not used
 #define DY_MSGSEP               0x008
 EXTERN int p_ed;                // 'edcompatible'
 EXTERN char *p_ead;             // 'eadirection'

@@ -147,6 +147,13 @@ typedef enum {
 # include "option.c.generated.h"
 #endif
 
+void set_init_tablocal(void)
+{
+  // susy baka: cmdheight calls itself OPT_GLOBAL but is really tablocal!
+  int ch_idx = findoption("cmdheight");
+  p_ch = (long)options[ch_idx].def_val;
+}
+
 /// Initialize the options, first part.
 ///
 /// Called only once from main(), just after creating the first buffer.
@@ -2634,9 +2641,8 @@ static char *set_num_option(int opt_idx, char_u *varp, long value, char *errbuf,
 /// Called after an option changed: check if something needs to be redrawn.
 void check_redraw(uint32_t flags)
 {
-  // Careful: P_RCLR and P_RALL are a combination of other P_ flags
-  bool doclear = (flags & P_RCLR) == P_RCLR;
-  bool all = ((flags & P_RALL) == P_RALL || doclear);
+  // Careful: P_RALL is a combination of other P_ flags
+  bool all = (flags & P_RALL) == P_RALL;
 
   if ((flags & P_RSTAT) || all) {  // mark all status lines and window bars dirty
     status_redraw_all();
@@ -2651,9 +2657,7 @@ void check_redraw(uint32_t flags)
   if (flags & P_RWINONLY) {
     redraw_later(curwin, UPD_NOT_VALID);
   }
-  if (doclear) {
-    redraw_all_later(UPD_CLEAR);
-  } else if (all) {
+  if (all) {
     redraw_all_later(UPD_NOT_VALID);
   }
 }

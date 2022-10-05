@@ -254,7 +254,7 @@ void do_exmode(void)
   RedrawingDisabled--;
   no_wait_return--;
   redraw_all_later(UPD_NOT_VALID);
-  update_screen(UPD_NOT_VALID);
+  update_screen();
   need_wait_return = false;
   msg_scroll = save_msg_scroll;
 }
@@ -6090,9 +6090,10 @@ static void ex_redraw(exarg_T *eap)
   if (eap->forceit) {
     redraw_all_later(UPD_NOT_VALID);
     redraw_cmdline = true;
+  } else if (VIsual_active) {
+    redraw_curbuf_later(UPD_INVERTED);
   }
-  update_screen(eap->forceit ? UPD_NOT_VALID
-                : VIsual_active ? UPD_INVERTED : 0);
+  update_screen();
   if (need_maketitle) {
     maketitle();
   }
@@ -6123,16 +6124,16 @@ static void ex_redrawstatus(exarg_T *eap)
   } else {
     status_redraw_curbuf();
   }
-  if (msg_scrolled && !msg_use_msgsep() && (State & MODE_CMDLINE)) {
-    return;  // redraw later
-  }
 
   RedrawingDisabled = 0;
   p_lz = false;
   if (State & MODE_CMDLINE) {
     redraw_statuslines();
   } else {
-    update_screen(VIsual_active ? UPD_INVERTED : 0);
+    if (VIsual_active) {
+      redraw_curbuf_later(UPD_INVERTED);
+    }
+    update_screen();
   }
   RedrawingDisabled = r;
   p_lz = p;

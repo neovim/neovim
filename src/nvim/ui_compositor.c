@@ -138,7 +138,7 @@ bool ui_comp_should_draw(void)
 ///
 /// TODO(bfredl): later on the compositor should just use win_float_pos events,
 /// though that will require slight event order adjustment: emit the win_pos
-/// events in the beginning of  update_screen(0), rather than in ui_flush()
+/// events in the beginning of update_screen(), rather than in ui_flush()
 bool ui_comp_put_grid(ScreenGrid *grid, int row, int col, int height, int width, bool valid,
                       bool on_top)
 {

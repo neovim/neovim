@@ -38,7 +38,7 @@ centralized reference of the differences.
 - 'complete' excludes "i"
 - 'cscopeverbose' is enabled
 - 'directory' defaults to ~/.local/state/nvim/swap// (|xdg|), auto-created
-- 'display' defaults to "lastline,msgsep"
+- 'display' defaults to "lastline"
 - 'encoding' is UTF-8 (cf. 'fileencoding' for file-content encoding)
 - 'fillchars' defaults (in effect) to "vert:│,fold:·,sep:│"
 - 'formatoptions' defaults to "tcqj"
@@ -256,9 +256,8 @@ Normal commands:
 
 Options:
   'cpoptions'   flags: |cpo-_|
-  'display'     flags: "msgsep" minimizes scrolling when showing messages
   'guicursor'   works in the terminal
-  'fillchars'   flags: "msgsep" (see 'display'), "horiz", "horizup",
+  'fillchars'   flags: "msgsep", "horiz", "horizup",
                 "horizdown", "vertleft", "vertright", "verthoriz"
   'foldcolumn'  supports up to 9 dynamic/fixed columns
   'inccommand'  shows interactive results for |:substitute|-like commands
@@ -478,6 +477,11 @@ TUI:
 
 UI/Display:
   |Visual| selection highlights the character at cursor. |visual-use|
+
+  messages: When showing messages longer than 'cmdheight', only
+  scroll the message lines, not the entire screen. The
+  separator line is decorated by |hl-MsgSeparator| and
+  the "msgsep" flag of 'fillchars'. *msgsep*
 
 Vimscript compatibility:
   `count` does not alias to |v:count|

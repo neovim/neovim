@@ -2601,7 +2601,7 @@ static int vgetorpeek(bool advance)
         // input buffer (e.g., termresponse).
         if (((State & MODE_INSERT) != 0 || p_lz) && (State & MODE_CMDLINE) == 0
             && advance && must_redraw != 0 && !need_wait_return) {
-          update_screen(0);
+          update_screen();
           setcursor();  // put cursor back where it belongs
         }
 

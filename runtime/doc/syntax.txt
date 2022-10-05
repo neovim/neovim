@@ -5187,7 +5187,7 @@ ModeMsg		'showmode' message (e.g., "-- INSERT --").
 							*hl-MsgArea*
 MsgArea		Area for messages and cmdline.
 							*hl-MsgSeparator*
-MsgSeparator	Separator for scrolled messages, `msgsep` flag of 'display'.
+MsgSeparator	Separator for scrolled messages |msgsep|.
 							*hl-MoreMsg*
 MoreMsg		|more-prompt|
 							*hl-NonText*

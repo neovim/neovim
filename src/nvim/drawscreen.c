@@ -97,7 +97,7 @@ typedef enum {
 
 static bool redraw_popupmenu = false;
 static bool msg_grid_invalid = false;
-static bool resizing = false;
+static bool resizing_autocmd = false;
 
 static char *provider_err = NULL;
 
@@ -115,7 +115,7 @@ void conceal_check_cursor_line(void)
   }
 }
 
-/// Resize the screen to Rows and Columns.
+/// Resize default_grid to Rows and Columns.
 ///
 /// Allocate default_grid.chars[] and other grid arrays.
 ///
@@ -125,19 +125,18 @@ void conceal_check_cursor_line(void)
 /// default_grid.Columns to access items in default_grid.chars[].  Use Rows
 /// and Columns for positioning text etc. where the final size of the screen is
 /// needed.
-void screenalloc(void)
+bool default_grid_alloc(void)
 {
+  static bool resizing = false;
+
   // It's possible that we produce an out-of-memory message below, which
   // will cause this function to be called again.  To break the loop, just
   // return here.
   if (resizing) {
-    return;
+    return false;
   }
   resizing = true;
 
-  int retry_count = 0;
-
-retry:
   // Allocation of the screen buffers is done only when the size changes and
   // when Rows and Columns have been set and we have started doing full
   // screen stuff.
@@ -148,23 +147,8 @@ retry:
       || Columns == 0
       || (!full_screen && default_grid.chars == NULL)) {
     resizing = false;
-    return;
+    return false;
   }
-
-  // Note that the window sizes are updated before reallocating the arrays,
-  // thus we must not redraw here!
-  RedrawingDisabled++;
-
-  // win_new_screensize will recompute floats position, but tell the
-  // compositor to not redraw them yet
-  ui_comp_set_screen_valid(false);
-  if (msg_grid.chars) {
-    msg_grid_invalid = true;
-  }
-
-  win_new_screensize();      // fit the windows in the new sized screen
-
-  comp_col();           // recompute columns for shown command and ruler
 
   // We're changing the size of the screen.
   // - Allocate new arrays for default_grid
@@ -193,26 +177,13 @@ retry:
   default_grid.col_offset = 0;
   default_grid.handle = DEFAULT_GRID_HANDLE;
 
-  must_redraw = UPD_CLEAR;  // need to clear the screen later
-
-  RedrawingDisabled--;
-
-  // Do not apply autocommands more than 3 times to avoid an endless loop
-  // in case applying autocommands always changes Rows or Columns.
-  if (starting == 0 && ++retry_count <= 3) {
-    apply_autocmds(EVENT_VIMRESIZED, NULL, NULL, false, curbuf);
-    // In rare cases, autocommands may have altered Rows or Columns,
-    // jump back to check if we need to allocate the screen again.
-    goto retry;
-  }
-
   resizing = false;
+  return true;
 }
 
 void screenclear(void)
 {
   check_for_delay(false);
-  screenalloc();  // allocate screen buffers if size changed
 
   int i;
 
@@ -281,13 +252,6 @@ void screen_resize(int width, int height)
     return;
   }
 
-  // curwin->w_buffer can be NULL when we are closing a window and the
-  // buffer has already been closed and removing a scrollbar causes a resize
-  // event. Don't resize then, it will happen after entering another buffer.
-  if (curwin->w_buffer == NULL) {
-    return;
-  }
-
   resizing_screen = true;
 
   Rows = height;
@@ -301,15 +265,53 @@ void screen_resize(int width, int height)
   width = Columns;
   p_lines = Rows;
   p_columns = Columns;
+
+  // was invoked recursively from a VimResized autocmd, handled as a loop below
+  if (resizing_autocmd) {
+    return;
+  }
+
+  int retry_count = 0;
+  resizing_autocmd = true;
+
+  bool retry_resize = true;
+  while (retry_resize) {
+    retry_resize = default_grid_alloc();
+
+    // Do not apply autocommands more than 3 times to avoid an endless loop
+    // in case applying autocommands always changes Rows or Columns.
+    if (++retry_count > 3) {
+      break;
+    }
+
+    if (retry_resize) {
+      // In rare cases, autocommands may have altered Rows or Columns,
+      // retry to check if we need to allocate the screen again.
+      apply_autocmds(EVENT_VIMRESIZED, NULL, NULL, false, curbuf);
+    }
+  }
+
+  resizing_autocmd = false;
+
   ui_call_grid_resize(1, width, height);
 
-  /// The window layout used to be adjusted here, but it now happens in
-  /// screenalloc() (also invoked from screenclear()).  That is because the
-  /// recursize "resizing_screen" check above may skip this, but not screenalloc().
-
-  if (State != MODE_ASKMORE && State != MODE_EXTERNCMD && State != MODE_CONFIRM) {
-    screenclear();
+  // win_new_screensize will recompute floats position, but tell the
+  // compositor to not redraw them yet
+  ui_comp_set_screen_valid(false);
+  if (msg_grid.chars) {
+    msg_grid_invalid = true;
   }
+
+  // Note that the window sizes are updated before reallocating the arrays,
+  // thus we must not redraw here!
+  RedrawingDisabled++;
+
+  win_new_screensize();      // fit the windows in the new sized screen
+
+  comp_col();           // recompute columns for shown command and ruler
+
+  RedrawingDisabled--;
+  redraw_all_later(UPD_CLEAR);
 
   if (starting != NO_SCREEN) {
     maketitle();
@@ -320,14 +322,11 @@ void screen_resize(int width, int height)
     // We only redraw when it's needed:
     // - While at the more prompt or executing an external command, don't
     //   redraw, but position the cursor.
-    // - While editing the command line, only redraw that.
+    // - While editing the command line, only redraw that. TODO: lies
     // - in Ex mode, don't redraw anything.
     // - Otherwise, redraw right now, and position the cursor.
-    // Always need to call update_screen() or screenalloc(), to make
-    // sure Rows/Columns and the size of the screen is correct!
     if (State == MODE_ASKMORE || State == MODE_EXTERNCMD || State == MODE_CONFIRM
         || exmode_active) {
-      screenalloc();
       if (msg_grid.chars) {
         msg_grid_validate();
       }
@@ -341,7 +340,7 @@ void screen_resize(int width, int height)
       }
       if (State & MODE_CMDLINE) {
         redraw_popupmenu = false;
-        update_screen(UPD_NOT_VALID);
+        update_screen();
         redrawcmdline();
         if (pum_drawn()) {
           cmdline_pum_display(false);
@@ -350,12 +349,12 @@ void screen_resize(int width, int height)
         update_topline(curwin);
         if (pum_drawn()) {
           // TODO(bfredl): ins_compl_show_pum wants to redraw the screen first.
-          // For now make sure the nested update_screen(0) won't redraw the
+          // For now make sure the nested update_screen() won't redraw the
           // pum at the old position. Try to untangle this later.
           redraw_popupmenu = false;
           ins_compl_show_pum();
         }
-        update_screen(UPD_NOT_VALID);
+        update_screen();
         if (redrawing()) {
           setcursor();
         }
@@ -370,9 +369,7 @@ void screen_resize(int width, int height)
 ///
 /// Most code shouldn't call this directly, rather use redraw_later() and
 /// and redraw_all_later() to mark parts of the screen as needing a redraw.
-///
-/// @param type set to a UPD_NOT_VALID to force redraw of entire screen
-int update_screen(int type)
+int update_screen(void)
 {
   static bool did_intro = false;
   bool is_stl_global = global_stl_height() > 0;
@@ -380,7 +377,7 @@ int update_screen(int type)
   // Don't do anything if the screen structures are (not yet) valid.
   // A VimResized autocmd can invoke redrawing in the middle of a resize,
   // which would bypass the checks in screen_resize for popupmenu etc.
-  if (!default_grid.chars || resizing) {
+  if (resizing_autocmd || !default_grid.chars) {
     return FAIL;
   }
 
@@ -389,41 +386,25 @@ int update_screen(int type)
     diff_redraw(true);
   }
 
-  // TODO(bfredl): completely get rid of using update_screen(UPD_XX_VALID)
-  // to redraw curwin
-  int curwin_type = MIN(type, UPD_NOT_VALID);
-
-  if (must_redraw) {
-    if (type < must_redraw) {       // use maximal type
-      type = must_redraw;
-    }
-
-    // must_redraw is reset here, so that when we run into some weird
-    // reason to redraw while busy redrawing (e.g., asynchronous
-    // scrolling), or update_topline() in win_update() will cause a
-    // scroll, or a decoration provider requires a redraw, the screen
-    // will be redrawn later or in win_update().
-    must_redraw = 0;
-  }
-
-  // Need to update w_lines[].
-  if (curwin->w_lines_valid == 0 && type < UPD_NOT_VALID) {
-    type = UPD_NOT_VALID;
-  }
-
   // Postpone the redrawing when it's not needed and when being called
   // recursively.
   if (!redrawing() || updating_screen) {
-    must_redraw = type;
-    if (type > UPD_INVERTED_ALL) {
-      curwin->w_lines_valid = 0;  // don't use w_lines[].wl_size now
-    }
     return FAIL;
   }
+
+  int type = must_redraw;
+
+  // must_redraw is reset here, so that when we run into some weird
+  // reason to redraw while busy redrawing (e.g., asynchronous
+  // scrolling), or update_topline() in win_update() will cause a
+  // scroll, or a decoration provider requires a redraw, the screen
+  // will be redrawn later or in win_update().
+  must_redraw = 0;
+
   updating_screen = 1;
 
-  display_tick++;           // let syntax code know we're in a next round of
-                            // display updating
+  display_tick++;  // let syntax code know we're in a next round of
+                   // display updating
 
   // Tricky: vim code can reset msg_scrolled behind our back, so need
   // separate bookkeeping for now.
@@ -447,74 +428,40 @@ int update_screen(int type)
                         msg_grid.cols, false);
       }
     }
-    if (msg_use_msgsep()) {
-      msg_grid.throttled = false;
-      bool was_invalidated = false;
+    msg_grid.throttled = false;
+    bool was_invalidated = false;
 
-      // UPD_CLEAR is already handled
-      if (type == UPD_NOT_VALID && !ui_has(kUIMultigrid) && msg_scrolled) {
-        was_invalidated = ui_comp_set_screen_valid(false);
-        for (int i = valid; i < Rows - p_ch; i++) {
-          grid_clear_line(&default_grid, default_grid.line_offset[i],
-                          Columns, false);
+    // UPD_CLEAR is already handled
+    if (type == UPD_NOT_VALID && !ui_has(kUIMultigrid) && msg_scrolled) {
+      was_invalidated = ui_comp_set_screen_valid(false);
+      for (int i = valid; i < Rows - p_ch; i++) {
+        grid_clear_line(&default_grid, default_grid.line_offset[i],
+                        Columns, false);
+      }
+      FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+        if (wp->w_floating) {
+          continue;
         }
-        FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
-          if (wp->w_floating) {
-            continue;
-          }
-          if (W_ENDROW(wp) > valid) {
-            // TODO(bfredl): too pessimistic. type could be UPD_NOT_VALID
-            // only because windows that are above the separator.
-            wp->w_redr_type = MAX(wp->w_redr_type, UPD_NOT_VALID);
-          }
-          if (!is_stl_global && W_ENDROW(wp) + wp->w_status_height > valid) {
-            wp->w_redr_status = true;
-          }
+        if (W_ENDROW(wp) > valid) {
+          // TODO(bfredl): too pessimistic. type could be UPD_NOT_VALID
+          // only because windows that are above the separator.
+          wp->w_redr_type = MAX(wp->w_redr_type, UPD_NOT_VALID);
         }
-        if (is_stl_global && Rows - p_ch - 1 > valid) {
-          curwin->w_redr_status = true;
+        if (!is_stl_global && W_ENDROW(wp) + wp->w_status_height > valid) {
+          wp->w_redr_status = true;
         }
       }
-      msg_grid_set_pos(Rows - (int)p_ch, false);
-      msg_grid_invalid = false;
-      if (was_invalidated) {
-        // screen was only invalid for the msgarea part.
-        // @TODO(bfredl): using the same "valid" flag
-        // for both messages and floats moving is bit of a mess.
-        ui_comp_set_screen_valid(true);
+      if (is_stl_global && Rows - p_ch - 1 > valid) {
+        curwin->w_redr_status = true;
       }
-    } else if (type != UPD_CLEAR) {
-      if (msg_scrolled > Rows - 5) {  // redrawing is faster
-        type = UPD_NOT_VALID;
-        curwin_type = UPD_NOT_VALID;
-      } else {
-        check_for_delay(false);
-        grid_ins_lines(&default_grid, 0, msg_scrolled, Rows, 0, Columns);
-        FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
-          if (wp->w_floating) {
-            continue;
-          }
-          if (wp->w_winrow < msg_scrolled) {
-            if (W_ENDROW(wp) > msg_scrolled
-                && wp->w_redr_type < UPD_REDRAW_TOP
-                && wp->w_lines_valid > 0
-                && wp->w_topline == wp->w_lines[0].wl_lnum) {
-              wp->w_upd_rows = msg_scrolled - wp->w_winrow;
-              wp->w_redr_type = UPD_REDRAW_TOP;
-            } else {
-              wp->w_redr_type = UPD_NOT_VALID;
-              if (wp->w_winrow + wp->w_winbar_height <= msg_scrolled) {
-                wp->w_redr_status = true;
-              }
-            }
-          }
-        }
-        if (is_stl_global && Rows - p_ch - 1 <= msg_scrolled) {
-          curwin->w_redr_status = true;
-        }
-        redraw_cmdline = true;
-        redraw_tabline = true;
-      }
+    }
+    msg_grid_set_pos(Rows - (int)p_ch, false);
+    msg_grid_invalid = false;
+    if (was_invalidated) {
+      // screen was only invalid for the msgarea part.
+      // @TODO(bfredl): using the same "valid" flag
+      // for both messages and floats moving is bit of a mess.
+      ui_comp_set_screen_valid(true);
     }
     msg_scrolled = 0;
     msg_scrolled_at_flush = 0;
@@ -535,7 +482,8 @@ int update_screen(int type)
   }
 
   if (type == UPD_CLEAR) {          // first clear screen
-    screenclear();              // will reset clear_cmdline
+    screenclear();  // will reset clear_cmdline
+                    // and set UPD_NOT_VALID for each window
     cmdline_screen_cleared();   // clear external cmdline state
     type = UPD_NOT_VALID;
     // must_redraw may be set indirectly, avoid another redraw later
@@ -545,9 +493,8 @@ int update_screen(int type)
     default_grid.valid = true;
   }
 
-  // After disabling msgsep the grid might not have been deallocated yet,
-  // hence we also need to check msg_grid.chars
-  if (type == UPD_NOT_VALID && (msg_use_grid() || msg_grid.chars)) {
+  // might need to clear space on default_grid for the message area.
+  if (type == UPD_NOT_VALID && clear_cmdline && !ui_has(kUIMessages)) {
     grid_fill(&default_grid, Rows - (int)p_ch, Rows, 0, Columns, ' ', ' ', 0);
   }
 
@@ -574,28 +521,6 @@ int update_screen(int type)
       && curwin->w_nrwidth != ((curwin->w_p_nu || curwin->w_p_rnu)
                                ? number_width(curwin) : 0)) {
     curwin->w_redr_type = UPD_NOT_VALID;
-  }
-
-  // Only start redrawing if there is really something to do.
-  // TODO(bfredl): more curwin special casing to get rid of.
-  // Change update_screen(UPD_INVERTED) to a wrapper function
-  // perhaps?
-  if (curwin_type == UPD_INVERTED) {
-    update_curswant();
-  }
-  if (curwin->w_redr_type < curwin_type
-      && !((curwin_type == UPD_VALID
-            && curwin->w_lines[0].wl_valid
-            && curwin->w_topfill == curwin->w_old_topfill
-            && curwin->w_botfill == curwin->w_old_botfill
-            && curwin->w_topline == curwin->w_lines[0].wl_lnum)
-           || (curwin_type == UPD_INVERTED
-               && VIsual_active
-               && curwin->w_old_cursor_lnum == curwin->w_cursor.lnum
-               && curwin->w_old_visual_mode == VIsual_mode
-               && (curwin->w_valid & VALID_VIRTCOL)
-               && curwin->w_old_curswant == curwin->w_curswant))) {
-    curwin->w_redr_type = curwin_type;
   }
 
   // Redraw the tab pages line if needed.
@@ -2034,7 +1959,7 @@ win_update_start:
   }
 }
 
-/// Redraw a window later, with update_screen(type).
+/// Redraw a window later, with wp->w_redr_type >= type.
 ///
 /// Set must_redraw only if not already set to a higher value.
 /// e.g. if must_redraw is UPD_CLEAR, type UPD_NOT_VALID will do nothing.

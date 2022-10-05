@@ -3876,7 +3876,8 @@ static int do_sub(exarg_T *eap, proftime_T timeout, long cmdpreview_ns, handle_T
 
               update_topline(curwin);
               validate_cursor();
-              update_screen(UPD_SOME_VALID);
+              redraw_later(curwin, UPD_SOME_VALID);
+              update_screen();
               highlight_match = false;
               redraw_later(curwin, UPD_SOME_VALID);
 

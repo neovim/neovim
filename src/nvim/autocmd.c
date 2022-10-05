@@ -2720,7 +2720,7 @@ static void do_autocmd_focusgained(bool gained)
       redrawcmdline();
     } else if ((State & MODE_NORMAL) || (State & MODE_INSERT)) {
       if (must_redraw != 0) {
-        update_screen(0);
+        update_screen();
       }
 
       setcursor();

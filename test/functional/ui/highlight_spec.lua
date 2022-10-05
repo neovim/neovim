@@ -1560,17 +1560,6 @@ describe("MsgSeparator highlight and msgsep fillchar", function()
         1 %a   "[No Name]"                    line 1    |
       {3:Press ENTER or type command to continue}^           |
     ]])
-
-    -- when display doesn't contain msgsep, these options have no effect
-    feed_command("set display-=msgsep")
-    feed_command("ls")
-    screen:expect([[
-      {1:~                                                 }|
-      {1:~                                                 }|
-      :ls                                               |
-        1 %a   "[No Name]"                    line 1    |
-      {3:Press ENTER or type command to continue}^           |
-    ]])
   end)
 
   it("and MsgArea", function()

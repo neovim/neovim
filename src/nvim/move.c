@@ -130,16 +130,6 @@ static void redraw_for_cursorcolumn(win_T *wp)
   }
 }
 
-// Update curwin->w_topline and redraw if necessary.
-// Used to update the screen before printing a message.
-void update_topline_redraw(void)
-{
-  update_topline(curwin);
-  if (must_redraw) {
-    update_screen(0);
-  }
-}
-
 // Update curwin->w_topline to move the cursor onto the screen.
 void update_topline(win_T *wp)
 {

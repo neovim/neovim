@@ -1228,7 +1228,7 @@ void ins_compl_show_pum(void)
   do_cmdline_cmd("if exists('g:loaded_matchparen')|3match none|endif");
 
   // Update the screen before drawing the popup menu over it.
-  update_screen(0);
+  update_screen();
 
   int cur = -1;
   bool array_changed = false;
@@ -1648,7 +1648,7 @@ int ins_compl_bs(void)
     ins_compl_restart();
   }
 
-  // ins_compl_restart() calls update_screen(0) which may invalidate the pointer
+  // ins_compl_restart() calls update_screen() which may invalidate the pointer
   // TODO(bfredl): get rid of random update_screen() calls deep inside completion logic
   line = get_cursor_line_ptr();
 
@@ -1759,7 +1759,7 @@ static void ins_compl_restart(void)
   // update screen before restart.
   // so if complete is blocked,
   // will stay to the last popup menu and reduce flicker
-  update_screen(0);
+  update_screen();  // TODO(bfredl): no.
   ins_compl_free();
   compl_started = false;
   compl_matches = 0;
@@ -2048,7 +2048,7 @@ static bool ins_compl_stop(const int c, const int prev_mode, bool retval)
   if (c == Ctrl_C && cmdwin_type != 0) {
     // Avoid the popup menu remains displayed when leaving the
     // command line window.
-    update_screen(0);
+    update_screen();
   }
 
   // Indent now if a key was typed that is in 'cinkeys'.
@@ -3533,7 +3533,7 @@ static int ins_compl_next(bool allow_get_expansion, int count, bool insert_match
 
   if (!allow_get_expansion) {
     // redraw to show the user what was inserted
-    update_screen(0);
+    update_screen();  // TODO(bfredl): no!
 
     // display the updated popup menu
     ins_compl_show_pum();

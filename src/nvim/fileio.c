@@ -1721,13 +1721,6 @@ failed:
       appended_lines_mark(from, linecnt);
     }
 
-    // If we were reading from the same terminal as where messages go,
-    // the screen will have been messed up.
-    // Switch on raw mode now and clear the screen.
-    if (read_stdin) {
-      screenclear();
-    }
-
     if (got_int) {
       if (!(flags & READ_DUMMY)) {
         filemess(curbuf, sfname, _(e_interr), 0);
