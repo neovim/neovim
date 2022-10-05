@@ -148,6 +148,12 @@ func Test_autocmd_bufunload_with_tabnext()
   quit
 endfunc
 
+func Test_argdelete_in_next()
+  au BufNew,BufEnter,BufLeave,BufWinEnter * argdel
+  call assert_fails('next a b', 'E1156:')
+  au! BufNew,BufEnter,BufLeave,BufWinEnter *
+endfunc
+
 func Test_autocmd_bufwinleave_with_tabfirst()
   tabedit
   augroup sample
