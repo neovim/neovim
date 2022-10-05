@@ -1,4 +1,7 @@
 if(MSVC)
+  if(USE_EXISTING_SRC_DIR)
+    unset(GETTEXT_URL)
+  endif()
   ExternalProject_Add(gettext
     URL ${GETTEXT_URL}
     URL_HASH SHA256=${GETTEXT_SHA256}

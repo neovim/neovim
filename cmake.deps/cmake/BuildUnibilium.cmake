@@ -16,6 +16,9 @@ else()
   set(UNIBILIUM_INSTALL_COMMAND ${MAKE_PRG} PREFIX=${DEPS_INSTALL_DIR} install)
 endif()
 
+if(USE_EXISTING_SRC_DIR)
+  unset(UNIBILIUM_URL)
+endif()
 ExternalProject_Add(unibilium
   URL ${UNIBILIUM_URL}
   URL_HASH SHA256=${UNIBILIUM_SHA256}
