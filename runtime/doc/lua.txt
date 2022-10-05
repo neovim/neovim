@@ -1416,11 +1416,11 @@ defer_fn({fn}, {timeout})                                     *vim.defer_fn()*
     are safe to call.
 
     Parameters: ~
-      • {fn}       Callback to call once `timeout` expires
-      • {timeout}  Number of milliseconds to wait before calling `fn`
+      • {fn}       (function) Callback to call once `timeout` expires
+      • {timeout}  integer Number of milliseconds to wait before calling `fn`
 
     Return: ~
-        timer luv timer object
+        (table) timer luv timer object
 
                                                              *vim.deprecate()*
 deprecate({name}, {alternative}, {version}, {plugin}, {backtrace})
@@ -1514,18 +1514,19 @@ paste({lines}, {phase})                                          *vim.paste()*
 <
 
     Parameters: ~
-      • {lines}  |readfile()|-style list of lines to paste. |channel-lines|
-      • {phase}  -1: "non-streaming" paste: the call contains all lines. If
-                 paste is "streamed", `phase` indicates the stream state:
+      • {lines}  string[] # |readfile()|-style list of lines to paste.
+                 |channel-lines|
+      • {phase}  paste_phase -1: "non-streaming" paste: the call contains all
+                 lines. If paste is "streamed", `phase` indicates the stream state:
                  • 1: starts the paste (exactly once)
                  • 2: continues the paste (zero or more times)
                  • 3: ends the paste (exactly once)
 
     Return: ~
-        false if client should cancel the paste.
+        (boolean) # false if client should cancel the paste.
 
     See also: ~
-        |paste|
+        |paste| @alias paste_phase -1 | 1 | 2 | 3
 
 pretty_print({...})                                       *vim.pretty_print()*
     Prints given arguments in human-readable format. Example: >
@@ -1534,7 +1535,7 @@ pretty_print({...})                                       *vim.pretty_print()*
 <
 
     Return: ~
-        given arguments.
+        any # given arguments.
 
     See also: ~
         |vim.inspect()|
@@ -1545,17 +1546,25 @@ region({bufnr}, {pos1}, {pos2}, {regtype}, {inclusive})         *vim.region()*
 
     Parameters: ~
       • {bufnr}      (number) of buffer
-      • {pos1}       (line, column) tuple marking beginning of region
-      • {pos2}       (line, column) tuple marking end of region
-      • {regtype}    type of selection, see |setreg()|
+      • {pos1}       integer[] (line, column) tuple marking beginning of
+                     region
+      • {pos2}       integer[] (line, column) tuple marking end of region
+      • {regtype}    (string) type of selection, see |setreg()|
       • {inclusive}  (boolean) indicating whether the selection is
                      end-inclusive
 
     Return: ~
-        region lua table of the form {linenr = {startcol,endcol}}
+        table<integer, {}> region lua table of the form {linenr =
+        {startcol,endcol}}
 
 schedule_wrap({cb})                                      *vim.schedule_wrap()*
     Defers callback `cb` until the Nvim API is safe to call.
+
+    Parameters: ~
+      • {cb}  (function)
+
+    Return: ~
+        (function)
 
     See also: ~
         |lua-loop-callbacks|
@@ -1700,10 +1709,15 @@ split({s}, {sep}, {kwargs})                                      *vim.split()*
       split("|x|y|z|", "|", {trimempty=true}) --> {'x', 'y', 'z'}
 <
 
+    @alias split_kwargs {plain: boolean, trimempty: boolean} | boolean | nil
+
+    See also: ~
+        |vim.gsplit()|
+
     Parameters: ~
       • {s}       (string) String to split
       • {sep}     (string) Separator or pattern
-      • {kwargs}  (table) Keyword arguments:
+      • {kwargs}  split_kwargs Keyword arguments:
                   • plain: (boolean) If `true` use `sep` literally (passed to
                     string.find)
                   • trimempty: (boolean) If `true` remove empty items from the
@@ -1711,9 +1725,6 @@ split({s}, {sep}, {kwargs})                                      *vim.split()*
 
     Return: ~
         (table) List of split components
-
-    See also: ~
-        |vim.gsplit()|
 
 startswith({s}, {prefix})                                   *vim.startswith()*
     Tests if `s` starts with `prefix`.
