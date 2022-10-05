@@ -3931,8 +3931,7 @@ static void partial_free(partial_T *pt)
 
 // TODO(ZyX-I): Move to eval/typval.h
 
-/// Unreference a closure: decrement the reference count and free it when it
-/// becomes zero.
+/// Unreference a closure: decrement the reference count and free it when it becomes zero.
 void partial_unref(partial_T *pt)
 {
   if (pt != NULL && --pt->pt_refcount <= 0) {

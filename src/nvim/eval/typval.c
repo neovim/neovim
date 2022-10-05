@@ -3208,9 +3208,36 @@ void tv_free(typval_T *tv)
   }
 }
 
+/// Increment reference count of a typval. Does nothing if typval is not refcounted.
+void tv_increment_refcount(const typval_T *const tv)
+{
+  switch (tv->v_type) {
+  case VAR_PARTIAL:
+    if (tv->vval.v_partial != NULL) {
+      tv->vval.v_partial->pt_refcount++;
+    }
+    break;
+  case VAR_BLOB:
+    if (tv->vval.v_blob != NULL) {
+      tv->vval.v_blob->bv_refcount++;
+    }
+    break;
+  case VAR_LIST:
+    tv_list_ref(tv->vval.v_list);
+    break;
+  case VAR_DICT:
+    if (tv->vval.v_dict != NULL) {
+      tv->vval.v_dict->dv_refcount++;
+    }
+    break;
+  default:
+    break;
+  }
+}
+
 //{{{3 Copy
 
-/// Copy typval from one location to another
+/// Copy typval from one location to another.
 ///
 /// When needed allocates string or increases reference count. Does not make
 /// a copy of a container, but copies its reference!
@@ -3222,9 +3249,16 @@ void tv_free(typval_T *tv)
 /// @param[out]  to  Location to copy to.
 void tv_copy(const typval_T *const from, typval_T *const to)
 {
+  if (from == to) {
+    return;
+  }
+
   to->v_type = from->v_type;
   to->v_lock = VAR_UNLOCKED;
-  memmove(&to->vval, &from->vval, sizeof(to->vval));
+  memcpy(&to->vval, &from->vval, sizeof(to->vval));
+
+  // TODO(famiu): Once strings are refcounted as well, this switch statement can be removed
+  // entirely and we can just always call tv_increment_refcount().
   switch (from->v_type) {
   case VAR_NUMBER:
   case VAR_FLOAT:
@@ -3241,22 +3275,10 @@ void tv_copy(const typval_T *const from, typval_T *const to)
     }
     break;
   case VAR_PARTIAL:
-    if (to->vval.v_partial != NULL) {
-      to->vval.v_partial->pt_refcount++;
-    }
-    break;
   case VAR_BLOB:
-    if (from->vval.v_blob != NULL) {
-      to->vval.v_blob->bv_refcount++;
-    }
-    break;
   case VAR_LIST:
-    tv_list_ref(to->vval.v_list);
-    break;
   case VAR_DICT:
-    if (from->vval.v_dict != NULL) {
-      to->vval.v_dict->dv_refcount++;
-    }
+    tv_increment_refcount(to);
     break;
   case VAR_UNKNOWN:
     semsg(_(e_intern2), "tv_copy(UNKNOWN)");

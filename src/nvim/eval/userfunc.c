@@ -649,7 +649,7 @@ static void cleanup_function_call(funccall_T *fc)
 
     // Make a copy of the a: variables, since we didn't do that above.
     TV_DICT_ITER(&fc->l_avars, di, {
-      tv_copy(&di->di_tv, &di->di_tv);
+      tv_increment_refcount(&di->di_tv);
     });
   }
 
@@ -661,7 +661,7 @@ static void cleanup_function_call(funccall_T *fc)
 
     // Make a copy of the a:000 items, since we didn't do that above.
     TV_LIST_ITER(&fc->l_varlist, li, {
-      tv_copy(TV_LIST_ITEM_TV(li), TV_LIST_ITEM_TV(li));
+      tv_increment_refcount(TV_LIST_ITEM_TV(li));
     });
   }
 
@@ -977,7 +977,7 @@ void call_user_func(ufunc_T *fp, int argcount, typval_T *argvars, typval_T *rett
     if (addlocal) {
       // Named arguments can be accessed without the "a:" prefix in lambda
       // expressions. Add to the l: dict.
-      tv_copy(&v->di_tv, &v->di_tv);
+      tv_increment_refcount(&v->di_tv);
       tv_dict_add(&fc->l_vars, v);
     } else {
       tv_dict_add(&fc->l_avars, v);
