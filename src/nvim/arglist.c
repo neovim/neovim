@@ -818,6 +818,7 @@ static void do_arg_all(int count, int forceit, int keep_tabs)
   tabpage_T *old_curtab, *last_curtab;
   win_T *new_curwin = NULL;
   tabpage_T *new_curtab = NULL;
+  bool prev_arglist_locked = arglist_locked;
 
   assert(firstwin != NULL);  // satisfy coverity
 
@@ -839,6 +840,7 @@ static void do_arg_all(int count, int forceit, int keep_tabs)
   // watch out for its size to be changed.
   alist = curwin->w_alist;
   alist->al_refcount++;
+  arglist_locked = true;
 
   old_curwin = curwin;
   old_curtab = curtab;
@@ -1034,8 +1036,10 @@ static void do_arg_all(int count, int forceit, int keep_tabs)
 
   // Remove the "lock" on the argument list.
   alist_unlink(alist);
+  arglist_locked = prev_arglist_locked;
 
   autocmd_no_enter--;
+
   // restore last referenced tabpage's curwin
   if (last_curtab != new_curtab) {
     if (valid_tabpage(last_curtab)) {

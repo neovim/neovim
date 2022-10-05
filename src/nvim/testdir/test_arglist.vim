@@ -607,4 +607,11 @@ func Test_all_not_allowed_from_cmdwin()
   au! BufEnter
 endfunc
 
+func Test_clear_arglist_in_all()
+  n 0 00 000 0000 00000 000000
+  au! * 0 n 0
+  all
+  au! *
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab
