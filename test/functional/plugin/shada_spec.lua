@@ -1,4 +1,5 @@
 local helpers = require('test.functional.helpers')(after_each)
+local Screen = require('test.functional.ui.screen')
 local clear = helpers.clear
 local eq, meths, nvim_eval, nvim_command, nvim, exc_exec, funcs, nvim_feed, curbuf =
   helpers.eq, helpers.meths, helpers.eval, helpers.command, helpers.nvim, helpers.exc_exec,
@@ -2538,13 +2539,26 @@ describe('ftplugin/shada.vim', function()
 end)
 
 describe('syntax/shada.vim', function()
-  local epoch = os.date('%Y-%m-%dT%H:%M:%S', 0)
+  local epoch = os.date('!%Y-%m-%dT%H:%M:%S', 0)
   before_each(reset)
 
   it('works', function()
     nvim_command('syntax on')
     nvim_command('setlocal syntax=shada')
     nvim_command('set laststatus&')
+    local screen = Screen.new(60, 37)
+    screen:set_default_attr_ids {
+      [1] = {bold = true, foreground = Screen.colors.Brown};
+      [2] = {foreground = tonumber('0x6a0dad')};
+      [3] = {foreground = Screen.colors.Fuchsia};
+      [4] = {foreground = Screen.colors.Blue1};
+      [5] = {bold = true, foreground = Screen.colors.SeaGreen4};
+      [6] = {foreground = Screen.colors.SlateBlue};
+      [7] = {bold = true, reverse = true};
+      [8] = {bold = true, foreground = Screen.colors.Blue};
+    }
+    screen:attach()
+
     curbuf('set_lines', 0, 1, true, {
       'Header with timestamp ' .. epoch .. ':',
       '  % Key  Value',
@@ -2580,6 +2594,46 @@ describe('syntax/shada.vim', function()
       '  % Key  Description________  Value',
       '  + se   place cursor at end  TRUE',
     })
+    screen:expect{grid=[=[
+      {1:^Header} with timestamp 1970{1:-}01{1:-}01{1:T}00{1::}00{1::}00:                  |
+      {2:  % Key  Value}                                              |
+       {1: +} {3:t  }  {1:"}{3:test}{1:"}                                             |
+      {1:Jump} with timestamp 1970{1:-}01{1:-}01{1:T}00{1::}00{1::}00:                    |
+      {2:  % Key________  Description  Value}                         |
+       {1: +} {3:n          }  {4:name       }  {3:'A'}                           |
+       {1: +} {3:f          }  {4:file name  }  {1:["}{3:foo}{1:"]}                       |
+       {1: +} {3:l          }  {4:line number}  {3:2}                             |
+       {1: +} {3:c          }  {4:column     }  {3:-200}                          |
+      {1:Register} with timestamp 1970{1:-}01{1:-}01{1:T}00{1::}00{1::}00:                |
+      {2:  % Key  Description  Value}                                 |
+       {1: +} {3:rc }  {4:contents   }  {1:@}                                     |
+       {1: | -} {1:{"}{3:abcdefghijklmnopqrstuvwxyz}{1:":} {3:1.0}{1:}}                   |
+       {1: +} {3:rt }  {4:type       }  {1:CHARACTERWISE}                         |
+       {1: +} {3:rt }  {4:type       }  {1:LINEWISE}                              |
+       {1: +} {3:rt }  {4:type       }  {1:BLOCKWISE}                             |
+      {1:Replacement string} with timestamp 1970{1:-}01{1:-}01{1:T}00{1::}00{1::}00:      |
+      {2:  @ Description__________  Value}                            |
+       {1: -} {4::s replacement string}  {1:CMD}                              |
+       {1: -} {4::s replacement string}  {1:SEARCH}                           |
+       {1: -} {4::s replacement string}  {1:EXPR}                             |
+       {1: -} {4::s replacement string}  {1:INPUT}                            |
+       {1: -} {4::s replacement string}  {1:DEBUG}                            |
+      {1:Buffer list} with timestamp 1970{1:-}01{1:-}01{1:T}00{1::}00{1::}00:             |
+      {4:  # Expected array of maps}                                  |
+        = {1:[{="}{3:a}{1:":} {1:+(}{5:10}{1:)"}{3:ac}{6:\0}{3:df}{6:\n}{3:gi}{6:\"}{3:tt\.}{1:",} {1:TRUE:} {1:FALSE},} {1:[NIL,} {1:+(}{5:-}|
+      {5:10}{1:)""]]}                                                     |
+      {1:Buffer list} with timestamp 1970{1:-}01{1:-}01{1:T}00{1::}00{1::}00:             |
+      {2:  % Key  Description  Value}                                 |
+                                                                  |
+      {2:  % Key  Description  Value}                                 |
+      {1:Header} with timestamp 1970{1:-}01{1:-}01{1:T}00{1::}00{1::}00:                  |
+      {2:  % Key  Description________  Value}                         |
+       {1: +} {3:se }  {4:place cursor at end}  {1:TRUE}                          |
+      {8:~                                                           }|
+      {7:[No Name] [+]                                               }|
+                                                                  |
+    ]=]}
+
     nvim_command([[
       function GetSyntax()
         let lines = []
@@ -2613,7 +2667,7 @@ describe('syntax/shada.vim', function()
       year = htsnum(os.date('%Y', 0)),
       month = htsnum(os.date('%m', 0)),
       day = htsnum(os.date('%d', 0)),
-      hour = htsnum(os.date('%H', 0)),
+      hour = htsnum(os.date('!%H', 0)),
       minute = htsnum(os.date('%M', 0)),
       second = htsnum(os.date('%S', 0)),
     }
@@ -2768,9 +2822,8 @@ describe('syntax/shada.vim', function()
         {{'ShaDaEntryArray', 'ShaDaMsgpackShaDaKeyword'}, 'INPUT'},
       },
       {
-        {{'ShaDaEntryArrayEntryStart'}, '  - '},
-        {{'ShaDaEntryArrayDescription'}, ':s replacement string  '},
-        {{'ShaDaMsgpackShaDaKeyword'}, 'DEBUG'},
+        as(), ad(':s replacement string  '),
+        {{'ShaDaEntryArray', 'ShaDaMsgpackShaDaKeyword'}, 'DEBUG'},
       },
       {
         hname('Buffer list'), h(' with timestamp '),
@@ -2872,10 +2925,10 @@ describe('syntax/shada.vim', function()
         mlh('  % Key  Description________  Value'),
       },
       {
-        {{'ShaDaEntryMapLongEntryStart'}, '  + '},
-        {{'ShaDaEntryMapLongKey'}, 'se   '},
-        {{'ShaDaEntryMapLongDescription'}, 'place cursor at end  '},
-        {{'ShaDaMsgpackKeyword'}, 'TRUE'},
+        mles('  + '),
+        mlk('se   '),
+        mld('place cursor at end  '),
+        {{'ShaDaEntryMapLong', 'ShaDaMsgpackKeyword'}, 'TRUE'},
       },
     }
     eq(exp, act)
