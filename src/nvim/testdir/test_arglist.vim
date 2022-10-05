@@ -509,18 +509,14 @@ func Test_arglist_autocmd()
   new
   " redefine arglist; go to Xxx1
   next! Xxx1 Xxx2 Xxx3
-  " open window for all args; Reading Xxx2 will change the arglist and the
-  " third window will get Xxx1:
-  "   win 1: Xxx1
-  "   win 2: Xxx2
-  "   win 3: Xxx1
-  all
+  " open window for all args; Reading Xxx2 will try to change the arglist and
+  " that will fail
+  call assert_fails("all", "E1156:")
   call assert_equal('test file Xxx1', getline(1))
   wincmd w
-  wincmd w
-  call assert_equal('test file Xxx1', getline(1))
-  rewind
   call assert_equal('test file Xxx2', getline(1))
+  wincmd w
+  call assert_equal('test file Xxx3', getline(1))
 
   autocmd! BufReadPost Xxx2
   enew! | only
@@ -610,7 +606,7 @@ endfunc
 func Test_clear_arglist_in_all()
   n 0 00 000 0000 00000 000000
   au! * 0 n 0
-  all
+  call assert_fails("all", "E1156")
   au! *
 endfunc
 
