@@ -249,6 +249,47 @@ describe('cmdline', function()
       :  :endfor^                                                  |
     ]])
   end)
+
+  it("setting 'cmdheight' works after outputting two messages vim-patch:9.0.0665", function()
+    local screen = Screen.new(60, 8)
+    screen:set_default_attr_ids({
+      [0] = {bold = true, foreground = Screen.colors.Blue},  -- NonText
+      [1] = {bold = true, reverse = true},  -- StatusLine
+    })
+    screen:attach()
+    exec([[
+      set cmdheight=1 laststatus=2
+      func EchoTwo()
+        set laststatus=2
+        set cmdheight=5
+        echo 'foo'
+        echo 'bar'
+        set cmdheight=1
+      endfunc
+    ]])
+    feed(':call EchoTwo()')
+    screen:expect([[
+                                                                  |
+      {0:~                                                           }|
+      {0:~                                                           }|
+      {0:~                                                           }|
+      {0:~                                                           }|
+      {0:~                                                           }|
+      {1:[No Name]                                                   }|
+      :call EchoTwo()^                                             |
+    ]])
+    feed('<CR>')
+    screen:expect([[
+      ^                                                            |
+      {0:~                                                           }|
+      {0:~                                                           }|
+      {0:~                                                           }|
+      {0:~                                                           }|
+      {0:~                                                           }|
+      {1:[No Name]                                                   }|
+                                                                  |
+    ]])
+  end)
 end)
 
 describe('cmdwin', function()
