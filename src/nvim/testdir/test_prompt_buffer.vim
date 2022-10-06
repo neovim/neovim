@@ -223,7 +223,7 @@ func Test_prompt_buffer_getbufinfo()
   %bwipe!
 endfunc
 
-function! Test_prompt_while_writing_to_hidden_buffer()
+func Test_prompt_while_writing_to_hidden_buffer()
   throw 'skipped: TODO'
   call CanTestPromptBuffer()
   CheckUnix

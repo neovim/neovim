@@ -3,26 +3,26 @@
 source check.vim
 source screendump.vim
 
-function! s:screen_attr(lnum) abort
+func s:screen_attr(lnum) abort
   return map(range(1, 8), 'screenattr(a:lnum, v:val)')
-endfunction
+endfunc
 
-function! s:test_windows(h, w) abort
+func s:test_windows(h, w) abort
   call NewWindow(a:h, a:w)
-endfunction
+endfunc
 
-function! s:close_windows() abort
+func s:close_windows() abort
   call CloseWindow()
-endfunction
+endfunc
 
-function! s:new_hi() abort
+func s:new_hi() abort
   redir => save_hi
   silent! hi CursorLineNr
   redir END
   let save_hi = join(split(substitute(save_hi, '\s*xxx\s*', ' ', ''), "\n"), '')
   exe 'hi' save_hi 'ctermbg=0 guibg=Black'
   return save_hi
-endfunction
+endfunc
 
 func Test_cursorline_highlight1()
   let save_hi = s:new_hi()

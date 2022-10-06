@@ -1129,15 +1129,15 @@ func Test_CompleteChanged()
 
   autocmd! AAAAA_Group
   set complete& completeopt&
-  delfunc! OnPumchange
+  delfunc! OnPumChange
   bw!
 endfunc
 
-function! GetPumPosition()
+func GetPumPosition()
   call assert_true( pumvisible() )
   let g:pum_pos = pum_getpos()
   return ''
-endfunction
+endfunc
 
 func Test_pum_getpos()
   new

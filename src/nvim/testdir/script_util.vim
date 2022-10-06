@@ -48,7 +48,7 @@ endfunc
 " delete it afterwards.  However, if an exception is thrown the file may remain,
 " the caller should call DeleteTheScript() afterwards.
 let s:script_name = ''
-function! ExecAsScript(funcname)
+func ExecAsScript(funcname)
     " Make a script from the function passed as argument.
     let s:script_name = MakeScript(a:funcname)
 
@@ -56,9 +56,9 @@ function! ExecAsScript(funcname)
     exec "source" s:script_name
     call delete(s:script_name)
     let s:script_name = ''
-endfunction
+endfunc
 
-function! DeleteTheScript()
+func DeleteTheScript()
     if s:script_name
 	call delete(s:script_name)
 	let s:script_name = ''
