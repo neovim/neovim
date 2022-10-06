@@ -7,7 +7,6 @@ local exec_lua = helpers.exec_lua
 local retry = helpers.retry
 local isCI = helpers.isCI
 local assert_alive = helpers.assert_alive
-local uname = helpers.uname
 
 describe('notify', function()
   local channel
@@ -79,9 +78,6 @@ describe('notify', function()
   end)
 
   it('cancels stale events on channel close', function()
-    if uname() == 'freebsd' then
-      pending('Failing FreeBSD test')
-    end
     if isCI() then
       pending('hangs on CI #14083 #15251')
       return

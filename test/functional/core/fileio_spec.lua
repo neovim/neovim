@@ -25,7 +25,7 @@ local expect_exit = helpers.expect_exit
 local write_file = helpers.write_file
 local Screen = require('test.functional.ui.screen')
 local feed_command = helpers.feed_command
-local uname = helpers.uname
+local isCI = helpers.isCI
 
 describe('fileio', function()
   before_each(function()
@@ -87,8 +87,8 @@ describe('fileio', function()
   end)
 
   it('backup #9709', function()
-    if uname() == 'freebsd' then
-      pending('Failing FreeBSD test')
+    if isCI('cirrus') then
+      pending('FIXME: cirrus')
     end
     clear({ args={ '-i', 'Xtest_startup_shada',
                    '--cmd', 'set directory=Xtest_startup_swapdir' } })
@@ -109,8 +109,8 @@ describe('fileio', function()
   end)
 
   it('backup with full path #11214', function()
-    if uname() == 'freebsd' then
-      pending('Failing FreeBSD test')
+    if isCI('cirrus') then
+      pending('FIXME: cirrus')
     end
     clear()
     mkdir('Xtest_backupdir')

@@ -3,8 +3,8 @@ set(ENV{LC_ALL} "en_US.UTF-8")
 
 if(POLICY CMP0012)
   # Avoid policy warning due to CI=true. This is needed even if the main
-  # project has already set this policy as policy settings are reset when using
-  # the cmake script mode (-P).
+  # project has already set this policy as project settings aren't inherited
+  # when using cmake script mode (-P).
   cmake_policy(SET CMP0012 NEW)
 endif()
 
@@ -14,6 +14,12 @@ set(ENV{XDG_CONFIG_HOME} ${BUILD_DIR}/Xtest_xdg/config)
 set(ENV{XDG_DATA_HOME} ${BUILD_DIR}/Xtest_xdg/share)
 unset(ENV{XDG_DATA_DIRS})
 unset(ENV{NVIM})  # Clear $NVIM in case tests are running from Nvim. #11009
+
+# TODO(dundargoc): The CIRRUS_CI environment variable isn't passed to here from
+# the main CMakeLists.txt, so we have to manually pass it to this script and
+# re-set the environment variable. Investigate if we can avoid manually setting
+# it like with the GITHUB_CI environment variable.
+set(ENV{CIRRUS_CI} ${CIRRUS_CI})
 
 if(NOT DEFINED ENV{NVIM_LOG_FILE})
   set(ENV{NVIM_LOG_FILE} ${BUILD_DIR}/.nvimlog)

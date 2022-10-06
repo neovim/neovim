@@ -790,10 +790,10 @@ end
 
 function module.isCI(name)
   local any = (name == nil)
-  assert(any or name == 'github')
+  assert(any or name == 'github' or name == 'cirrus')
   local gh = ((any or name == 'github') and nil ~= os.getenv('GITHUB_ACTIONS'))
-  return gh
-
+  local cirrus = ((any or name == 'cirrus') and nil ~= os.getenv('CIRRUS_CI'))
+  return gh or cirrus
 end
 
 -- Gets the (tail) contents of `logfile`.
