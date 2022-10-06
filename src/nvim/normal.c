@@ -1740,9 +1740,7 @@ bool do_mouse(oparg_T *oap, int c, int dir, long count, bool fixindent)
     }
 
     // click in a tab selects that tab page
-    if (is_click
-        && cmdwin_type == 0
-        && mouse_col < Columns) {
+    if (is_click && cmdwin_type == 0 && mouse_col < Columns) {
       in_tab_line = true;
       c1 = tab_page_click_defs[mouse_col].tabnr;
       switch (tab_page_click_defs[mouse_col].type) {
@@ -6918,10 +6916,7 @@ static void nv_esc(cmdarg_T *cap)
                && cap->oap->regname == 0);
 
   if (cap->arg) {               // true for CTRL-C
-    if (restart_edit == 0
-        && cmdwin_type == 0
-        && !VIsual_active
-        && no_reason) {
+    if (restart_edit == 0 && cmdwin_type == 0 && !VIsual_active && no_reason) {
       if (anyBufIsChanged()) {
         msg(_("Type  :qa!  and press <Enter> to abandon all changes"
               " and exit Nvim"));
