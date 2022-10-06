@@ -1024,7 +1024,8 @@ static void do_arg_all(int count, int forceit, int keep_tabs)
     return;
   }
   if (ARGCOUNT <= 0) {
-    // Don't give an error message.  We don't want it when the ":all" command is in the .vimrc.
+    // Don't give an error message.  We don't want it when the ":all"
+    // command is in the .vimrc.
     return;
   }
   setpcmark();
