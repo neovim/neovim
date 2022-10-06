@@ -6267,7 +6267,7 @@ void win_comp_scroll(win_T *wp)
   }
 }
 
-// command_height: called whenever p_ch has been changed
+/// command_height: called whenever p_ch has been changed.
 void command_height(void)
 {
   int h;
@@ -6278,6 +6278,9 @@ void command_height(void)
   // GUI starts up, we can't be sure in what order things happen.  And when
   // p_ch was changed in another tab page.
   curtab->tp_ch_used = p_ch;
+
+  // Update cmdline_row to what it should be: just below the last window.
+  cmdline_row = topframe->fr_height;
 
   // If cmdline_row is smaller than what it is supposed to be for 'cmdheight'
   // then set old_p_ch to what it would be, so that the windows get resized

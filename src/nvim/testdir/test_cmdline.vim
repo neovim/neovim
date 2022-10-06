@@ -186,8 +186,15 @@ func Test_changing_cmdheight()
 
   let lines =<< trim END
       set cmdheight=1 laststatus=2
+      func EchoTwo()
+        set laststatus=2
+        set cmdheight=5
+        echo 'foo'
+        echo 'bar'
+        set cmdheight=1
+      endfunc
   END
-  call writefile(lines, 'XTest_cmdheight')
+  call writefile(lines, 'XTest_cmdheight', 'D')
 
   let buf = RunVimInTerminal('-S XTest_cmdheight', {'rows': 8})
   call term_sendkeys(buf, ":resize -3\<CR>")
@@ -205,14 +212,17 @@ func Test_changing_cmdheight()
   call term_sendkeys(buf, ":set cmdheight-=2\<CR>")
   call VerifyScreenDump(buf, 'Test_changing_cmdheight_4', {})
 
-  " reducing window size and then setting cmdheight
+  " reducing window size and then setting cmdheight 
   call term_sendkeys(buf, ":resize -1\<CR>")
   call term_sendkeys(buf, ":set cmdheight=1\<CR>")
   call VerifyScreenDump(buf, 'Test_changing_cmdheight_5', {})
 
+  " setting 'cmdheight' works after outputting two messages
+  call term_sendkeys(buf, ":call EchoTwo()\<CR>")
+  call VerifyScreenDump(buf, 'Test_changing_cmdheight_6', {})
+
   " clean up
   call StopVimInTerminal(buf)
-  call delete('XTest_cmdheight')
 endfunc
 
 func Test_map_completion()
