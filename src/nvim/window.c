@@ -6409,7 +6409,7 @@ void command_height(void)
   curtab->tp_ch_used = p_ch;
 
   // Update cmdline_row to what it should be: just below the last window.
-  cmdline_row = topframe->fr_height + tabline_height();
+  cmdline_row = topframe->fr_height + tabline_height() + global_stl_height();
 
   // If cmdline_row is smaller than what it is supposed to be for 'cmdheight'
   // then set old_p_ch to what it would be, so that the windows get resized
