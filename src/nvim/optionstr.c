@@ -1097,7 +1097,7 @@ char *did_set_string_option(int opt_idx, char **varp, char *oldval, char *errbuf
       errmsg = e_invarg;
     }
   } else if (varp == &p_spk) {  // 'splitkeep'
-    if (check_opt_strings(p_spk, p_spk_values, true) != OK) {
+    if (check_opt_strings(p_spk, p_spk_values, false) != OK) {
       errmsg = e_invarg;
     }
   } else if (varp == &p_debug) {  // 'debug'

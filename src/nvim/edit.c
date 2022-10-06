@@ -2597,6 +2597,7 @@ int cursor_up(long n, int upd_topline)
   if (upd_topline) {
     update_topline(curwin);  // make sure curwin->w_topline is valid
   }
+
   return OK;
 }
 

@@ -6081,12 +6081,12 @@ void set_fraction(win_T *wp)
   }
 }
 
-// Handle scroll position for 'splitkeep'.  Replaces scroll_to_fraction()
-// call from win_set_inner_size().  Instead we iterate over all windows in a
-// tabpage and calculate the new scroll position.
-// TODO(luukvbaal): Ensure this also works with wrapped lines.
-// Requires topline to be able to be set to a bufferline with some
-// offset(row-wise scrolling/smoothscroll).
+/// Handle scroll position for 'splitkeep'.  Replaces scroll_to_fraction()
+/// call from win_set_inner_size().  Instead we iterate over all windows in a
+/// tabpage and calculate the new scroll position.
+/// TODO(luukvbaal): Ensure this also works with wrapped lines.
+/// Requires topline to be able to be set to a bufferline with some
+/// offset(row-wise scrolling/smoothscroll).
 void win_fix_scroll(int resize)
 {
   linenr_T lnum;
@@ -6095,14 +6095,14 @@ void win_fix_scroll(int resize)
   FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
     // Skip when window height has not changed or when floating.
     if (!wp->w_floating && wp->w_height != wp->w_prev_height) {
-      // Determine botline needed to avoid scrolling and set cursor.
+      // If window has moved update botline to keep the same screenlines.
       if (*p_spk == 's' && wp->w_winrow != wp->w_prev_winrow
           && wp->w_botline - 1 <= wp->w_buffer->b_ml.ml_line_count) {
+        lnum = wp->w_cursor.lnum;
         int diff = (wp->w_winrow - wp->w_prev_winrow)
                    + (wp->w_height - wp->w_prev_height);
-        lnum = wp->w_cursor.lnum;
         wp->w_cursor.lnum = wp->w_botline - 1;
-        //  Add difference in height and row to botline.
+        // Add difference in height and row to botline.
         if (diff > 0) {
           cursor_down_inner(wp, diff);
         } else {
@@ -6131,9 +6131,9 @@ void win_fix_scroll(int resize)
   }
 }
 
-// Make sure the cursor position is valid for 'splitkeep'.
-// If it is not, put the cursor position in the jumplist and move it.
-// If we are not in normal mode, scroll to make valid instead.
+/// Make sure the cursor position is valid for 'splitkeep'.
+/// If it is not, put the cursor position in the jumplist and move it.
+/// If we are not in normal mode, scroll to make valid instead.
 static void win_fix_cursor(int normal)
 {
   win_T *wp = curwin;
@@ -6146,6 +6146,7 @@ static void win_fix_cursor(int normal)
     return;
   }
 
+  // Determine valid cursor range.
   so = MIN(wp->w_height_inner / 2, so);
   wp->w_cursor.lnum = wp->w_topline;
   linenr_T top = cursor_down_inner(wp, so);
@@ -6160,7 +6161,8 @@ static void win_fix_cursor(int normal)
   }
 
   if (nlnum) {  // Cursor is invalid for current scroll position.
-    if (normal) {  // Save to jumplist and set cursor to avoid scrolling.
+    if (normal) {
+      // Save to jumplist and set cursor to avoid scrolling.
       setmark('\'');
       wp->w_cursor.lnum = nlnum;
     } else {
@@ -6327,7 +6329,7 @@ void win_set_inner_size(win_T *wp, bool valid_cursor)
 
     // There is no point in adjusting the scroll position when exiting.  Some
     // values might be invalid.
-    if (!exiting && valid_cursor && *p_spk == 'c') {
+    if (valid_cursor && !exiting && *p_spk == 'c') {
       scroll_to_fraction(wp, prev_height);
     }
     redraw_later(wp, UPD_SOME_VALID);

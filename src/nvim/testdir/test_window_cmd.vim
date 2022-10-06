@@ -1,5 +1,7 @@
 " Tests for window cmd (:wincmd, :split, :vsplit, :resize and etc...)
+
 source check.vim
+source screendump.vim
 
 func Test_window_cmd_ls0_with_split()
   set ls=0
@@ -1504,7 +1506,9 @@ func Test_splitkeep_options()
     let &laststatus = (run % 3)
     let &splitbelow = (run % 3)
     let &equalalways = (run % 2)
-    "let wsb = (run % 2) && &splitbelow
+    " Nvim: both windows have a winbar after splitting
+    " let wsb = (run % 2) && &splitbelow
+    let wsb = 0
     let tl = (gui ? 0 : ((run % 5) ? 1 : 0))
     let pos = !(run % 3) ? 'H' : ((run % 2) ? 'M' : 'L')
     tabnew | tabonly! | redraw
@@ -1526,17 +1530,17 @@ func Test_splitkeep_options()
     call assert_equal(1, line("w0"))
     call assert_equal(&scroll, winheight(0) / 2)
     wincmd j
-    call assert_equal(&spk == 'topline' ? 1 : win_screenpos(0)[0] - tl, line("w0"))
+    call assert_equal(&spk == 'topline' ? 1 : win_screenpos(0)[0] - tl - wsb, line("w0"))
 
     " No scroll when resizing windows
     wincmd k | resize +2 | redraw
     call assert_equal(1, line("w0"))
     wincmd j
-    call assert_equal(&spk == 'topline' ? 1 : win_screenpos(0)[0] - tl, line("w0"))
+    call assert_equal(&spk == 'topline' ? 1 : win_screenpos(0)[0] - tl - wsb, line("w0"))
 
     " No scroll when dragging statusline
     call win_move_statusline(1, -3)
-    call assert_equal(&spk == 'topline' ? 1 : win_screenpos(0)[0] - tl, line("w0"))
+    call assert_equal(&spk == 'topline' ? 1 : win_screenpos(0)[0] - tl - wsb, line("w0"))
     wincmd k
     call assert_equal(1, line("w0"))
 
@@ -1544,9 +1548,9 @@ func Test_splitkeep_options()
     set lines+=2
     call assert_equal(1, line("w0"))
     wincmd j
-    call assert_equal(&spk == 'topline' ? 1 : win_screenpos(0)[0] - tl, line("w0"))
+    call assert_equal(&spk == 'topline' ? 1 : win_screenpos(0)[0] - tl - wsb, line("w0"))
     set lines-=2
-    call assert_equal(&spk == 'topline' ? 1 : win_screenpos(0)[0] - tl, line("w0"))
+    call assert_equal(&spk == 'topline' ? 1 : win_screenpos(0)[0] - tl - wsb, line("w0"))
     wincmd k
     call assert_equal(1, line("w0"))
 
@@ -1554,23 +1558,23 @@ func Test_splitkeep_options()
     wincmd =
     call assert_equal(1, line("w0"))
     wincmd j
-    call assert_equal(&spk == 'topline' ? 1 : win_screenpos(0)[0] - tl, line("w0"))
+    call assert_equal(&spk == 'topline' ? 1 : win_screenpos(0)[0] - tl - wsb, line("w0"))
     wincmd k
     call assert_equal(1, line("w0"))
 
     " No scroll in windows split multiple times
     vsplit | split | 4wincmd w
-    call assert_equal(&spk == 'topline' ? 1 : win_screenpos(0)[0] - tl, line("w0"))
+    call assert_equal(&spk == 'topline' ? 1 : win_screenpos(0)[0] - tl - wsb, line("w0"))
     1wincmd w | quit | wincmd l | split
-    call assert_equal(&spk == 'topline' ? 1 : win_screenpos(0)[0] - tl, line("w0"))
+    call assert_equal(&spk == 'topline' ? 1 : win_screenpos(0)[0] - tl - wsb, line("w0"))
     wincmd j
-    call assert_equal(&spk == 'topline' ? 1 : win_screenpos(0)[0] - tl, line("w0"))
+    call assert_equal(&spk == 'topline' ? 1 : win_screenpos(0)[0] - tl - wsb, line("w0"))
 
     " No scroll in small window
     2wincmd w | only | 5split | wincmd k
     call assert_equal(1, line("w0"))
     wincmd j
-    call assert_equal(&spk == 'topline' ? 1 : win_screenpos(0)[0] - tl, line("w0"))
+    call assert_equal(&spk == 'topline' ? 1 : win_screenpos(0)[0] - tl - wsb, line("w0"))
 
     " No scroll for vertical split
     quit | vsplit | wincmd l
@@ -1580,7 +1584,7 @@ func Test_splitkeep_options()
 
     " No scroll in windows split and quit multiple times
     quit | redraw | split | split | quit | redraw
-    call assert_equal(&spk == 'topline' ? 1 : win_screenpos(0)[0] - tl, line("w0"))
+    call assert_equal(&spk == 'topline' ? 1 : win_screenpos(0)[0] - tl - wsb, line("w0"))
 
     " No scroll for new buffer
     1wincmd w | only | copen | wincmd k
@@ -1605,7 +1609,7 @@ func Test_splitkeep_options()
     only | execute "norm gg5\<C-e>" | split | wincmd k
     call assert_equal(6, line("w0"))
     wincmd j
-    call assert_equal(&spk == 'topline' ? 6 : 5 + win_screenpos(0)[0] - tl, line("w0"))
+    call assert_equal(&spk == 'topline' ? 6 : 5 + win_screenpos(0)[0] - tl - wsb, line("w0"))
   endfor
 
   tabnew | tabonly! | %bwipeout!
