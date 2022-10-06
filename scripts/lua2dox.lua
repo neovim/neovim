@@ -159,6 +159,7 @@ end
 --! \param Str
 --! \param Pattern
 --! \returns table of string fragments
+---@return string[]
 local function string_split(Str, Pattern)
   local splitStr = {}
   local fpat = "(.-)" .. Pattern
@@ -369,6 +370,9 @@ local function checkComment4fn(Fn_magic,MagicLines)
 
   return fn_magic
 end
+
+local types = {"number", "string", "table", "list", "boolean", "function"}
+
 --! \brief run the filter
 function TLua2DoX_filter.readfile(this,AppStamp,Filename)
   local inStream = TStream_Read()
@@ -387,10 +391,13 @@ function TLua2DoX_filter.readfile(this,AppStamp,Filename)
 
     local state = ''  -- luacheck: ignore 231 variable is set but never accessed.
     local offset = 0
+    local generic = {}
+    local l = 0
     while not (inStream:eof()) do
       line = string_trim(inStream:getLine())
       --            TCore_Debug_show_var('inStream',inStream)
       --            TCore_Debug_show_var('line',line )
+      l = l + 1
       if string.sub(line,1,2) == '--' then -- it's a comment
         -- Allow people to write style similar to EmmyLua (since they are basically the same)
         -- instead of silently skipping things that start with ---
@@ -405,29 +412,58 @@ function TLua2DoX_filter.readfile(this,AppStamp,Filename)
           local magic = string.sub(line, 4 + offset)
 
           local magic_split = string_split(magic, ' ')
-
-          local type_index = 2
           if magic_split[1] == 'param' then
-            type_index = type_index + 1
+            for _, type in ipairs(types) do
+              magic = magic:gsub("^param%s+([a-zA-Z_?]+)%s+.*%((" .. type .. ")%)", "param %1 %2" )
+              magic = magic:gsub("^param%s+([a-zA-Z_?]+)%s+.*%((" .. type .. "|nil)%)", "param %1 %2" )
+            end
+            magic_split = string_split(magic, ' ')
+          elseif magic_split[1] == 'return' then
+            for _, type in ipairs(types) do
+              magic = magic:gsub("^return%s+.*%((" .. type .. ")%)", "return %1" )
+              magic = magic:gsub("^return%s+.*%((" .. type .. "|nil)%)", "return %1" )
+            end
+            magic_split = string_split(magic, ' ')
           end
 
-          if magic_split[type_index] == 'number' or
-              magic_split[type_index] == 'number|nil' or
-              magic_split[type_index] == 'string' or
-              magic_split[type_index] == 'string|nil' or
-              magic_split[type_index] == 'table' or
-              magic_split[type_index] == 'table|nil' or
-              magic_split[type_index] == 'boolean' or
-              magic_split[type_index] == 'boolean|nil' or
-              magic_split[type_index] == 'function' or
-              magic_split[type_index] == 'function|nil'
-              then
-            magic_split[type_index] = '(' .. magic_split[type_index] .. ')'
-          end
-          magic = table.concat(magic_split, ' ')
+          if magic_split[1] == "generic" then
+            local generic_name, generic_type = line:match("@generic%s*(%w+)%s*:?%s*(.*)")
+            if generic_type == "" then
+              generic_type = "any"
+            end
+            generic[generic_name] = generic_type
+          else
+            local type_index = 2
+            if magic_split[1] == 'param' then
+              type_index = type_index + 1
+            end
 
-          outStream:writeln('/// @' .. magic)
-          fn_magic = checkComment4fn(fn_magic,magic)
+            if magic_split[type_index] then
+              -- fix optional parameters
+              if magic_split[type_index] and magic_split[2]:find("%?$") then
+                if not magic_split[type_index]:find("nil") then
+                  magic_split[type_index] = magic_split[type_index] .. "|nil"
+                end
+                magic_split[2] = magic_split[2]:sub(1, -2)
+              end
+              -- replace generic types
+              if magic_split[type_index] then
+                for k, v in pairs(generic) do
+                  magic_split[type_index] = magic_split[type_index]:gsub(k, v)
+                end
+              end
+              -- surround some types by ()
+              for _, type in ipairs(types) do
+                magic_split[type_index] = magic_split[type_index]:gsub("^(" .. type .. "|nil):?$", "(%1)")
+                magic_split[type_index] = magic_split[type_index]:gsub("^(" .. type .. "):?$", "(%1)")
+              end
+            end
+
+            magic = table.concat(magic_split, ' ')
+
+            outStream:writeln('/// @' .. magic)
+            fn_magic = checkComment4fn(fn_magic,magic)
+          end
         elseif string.sub(line,3,3)=='-' then -- it's a nonmagic doc comment
           local comment = string.sub(line,4)
           outStream:writeln('/// '.. comment)
@@ -467,6 +503,7 @@ function TLua2DoX_filter.readfile(this,AppStamp,Filename)
           fn_magic = nil
         end
       elseif string.find(line, '^function') or string.find(line, '^local%s+function') then
+        generic = {}
         state = 'in_function'  -- it's a function
         local pos_fn = string.find(line,'function')
         -- function

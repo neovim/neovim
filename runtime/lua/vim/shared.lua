@@ -14,8 +14,9 @@ local vim = vim or {}
 --- same functions as those in the input table. Userdata and threads are not
 --- copied and will throw an error.
 ---
----@param orig table Table to copy
----@return table Table of copied keys and (nested) values.
+---@generic T: table
+---@param orig T Table to copy
+---@return T Table of copied keys and (nested) values.
 function vim.deepcopy(orig) end -- luacheck: no unused
 vim.deepcopy = (function()
   local function _id(v)
@@ -62,7 +63,7 @@ end)()
 ---@param s string String to split
 ---@param sep string Separator or pattern
 ---@param plain boolean If `true` use `sep` literally (passed to string.find)
----@return function Iterator over the split components
+---@return fun():string (function) Iterator over the split components
 function vim.gsplit(s, sep, plain)
   vim.validate({ s = { s, 's' }, sep = { sep, 's' }, plain = { plain, 'b', true } })
 
@@ -111,11 +112,11 @@ end
 ---
 ---@param s string String to split
 ---@param sep string Separator or pattern
----@param kwargs split_kwargs Keyword arguments:
+---@param kwargs? {plain: boolean, trimempty: boolean} (table|nil) Keyword arguments:
 ---       - plain: (boolean) If `true` use `sep` literally (passed to string.find)
 ---       - trimempty: (boolean) If `true` remove empty items from the front
 ---         and back of the list
----@return table List of split components
+---@return string[] List of split components
 function vim.split(s, sep, kwargs)
   local plain
   local trimempty = false
@@ -158,8 +159,9 @@ end
 ---
 ---@see From https://github.com/premake/premake-core/blob/master/src/base/table.lua
 ---
----@param t table Table
----@return table List of keys
+---@param t table<T, any> (table) Table
+---@generic T: table
+---@return T[] (list) List of keys
 function vim.tbl_keys(t)
   assert(type(t) == 'table', string.format('Expected table, got %s', type(t)))
 
@@ -173,8 +175,9 @@ end
 --- Return a list of all values used in a table.
 --- However, the order of the return table of values is not guaranteed.
 ---
----@param t table Table
----@return table List of values
+---@generic T
+---@param t table<any, T> (table) Table
+---@return T[] (list) List of values
 function vim.tbl_values(t)
   assert(type(t) == 'table', string.format('Expected table, got %s', type(t)))
 
@@ -187,8 +190,9 @@ end
 
 --- Apply a function to all values of a table.
 ---
----@param func function|table Function or callable table
----@param t table Table
+---@generic T
+---@param func fun(value: T): any (function) Function
+---@param t table<any, T> (table) Table
 ---@return table Table of transformed values
 function vim.tbl_map(func, t)
   vim.validate({ func = { func, 'c' }, t = { t, 't' } })
@@ -202,9 +206,10 @@ end
 
 --- Filter a table using a predicate function
 ---
----@param func function|table Function or callable table
----@param t table Table
----@return table Table of filtered values
+---@generic T
+---@param func fun(value: T): boolean (function) Function
+---@param t table<any, T> (table) Table
+---@return T[] (table) Table of filtered values
 function vim.tbl_filter(func, t)
   vim.validate({ func = { func, 'c' }, t = { t, 't' } })
 
@@ -306,12 +311,14 @@ end
 ---
 ---@see |vim.tbl_extend()|
 ---
----@param behavior string Decides what to do if a key is found in more than one map:
+---@generic T1: table
+---@generic T2: table
+---@param behavior "error"|"keep"|"force" (string) Decides what to do if a key is found in more than one map:
 ---      - "error": raise an error
 ---      - "keep":  use value from the leftmost map
 ---      - "force": use value from the rightmost map
----@param ... table Two or more map-like tables
----@return table Merged table
+---@param ... T2 Two or more map-like tables
+---@return T1|T2 (table) Merged table
 function vim.tbl_deep_extend(behavior, ...)
   return tbl_extend(behavior, true, ...)
 end
@@ -407,11 +414,12 @@ end
 ---
 ---@see |vim.tbl_extend()|
 ---
----@param dst table List which will be modified and appended to
+---@generic T: table
+---@param dst T List which will be modified and appended to
 ---@param src table List from which values will be inserted
----@param start number Start index on src. Defaults to 1
----@param finish number Final index on src. Defaults to `#src`
----@return table dst
+---@param start? number Start index on src. Defaults to 1
+---@param finish? number Final index on src. Defaults to `#src`
+---@return T dst
 function vim.list_extend(dst, src, start, finish)
   vim.validate({
     dst = { dst, 't' },
@@ -506,10 +514,11 @@ end
 
 --- Creates a copy of a table containing only elements from start to end (inclusive)
 ---
----@param list table Table
+---@generic T
+---@param list T[] (list) Table
 ---@param start number Start range of slice
 ---@param finish number End range of slice
----@return table Copy of table sliced from start to finish (inclusive)
+---@return T[] (list) Copy of table sliced from start to finish (inclusive)
 function vim.list_slice(list, start, finish)
   local new_list = {}
   for i = start or 1, finish or #list do

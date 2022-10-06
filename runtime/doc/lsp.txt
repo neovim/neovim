@@ -723,7 +723,7 @@ get_buffers_by_client_id({client_id})
       • {client_id}  (number) client id
 
     Return: ~
-        list of buffer ids
+        (list) of buffer ids
 
 get_client_by_id({client_id})                     *vim.lsp.get_client_by_id()*
     Gets a client by id, or nil if the id is invalid. The returned client may
@@ -1372,8 +1372,8 @@ apply_text_document_edit({text_document_edit}, {index}, {offset_encoding})
     document.
 
     Parameters: ~
-      • {text_document_edit}  table: a `TextDocumentEdit` object
-      • {index}               number: Optional index of the edit, if from a
+      • {text_document_edit}  (table) a `TextDocumentEdit` object
+      • {index}               (number) Optional index of the edit, if from a
                               list of edits (or nil, if not from a list)
 
     See also: ~
@@ -1463,7 +1463,7 @@ convert_signature_help_to_markdown_lines({signature_help}, {ft}, {triggers})
                           server. used to better determine parameter offsets
 
     Return: ~
-        list of lines of converted markdown.
+        (list) of lines of converted markdown.
 
     See also: ~
         https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_signatureHelp
@@ -1485,7 +1485,7 @@ get_effective_tabstop({bufnr})          *vim.lsp.util.get_effective_tabstop()*
     Returns indentation size.
 
     Parameters: ~
-      • {bufnr}  (number|nil): Buffer handle, defaults to current
+      • {bufnr}  (number|nil) Buffer handle, defaults to current
 
     Return: ~
         (number) indentation size
@@ -1589,7 +1589,7 @@ make_position_params({window}, {offset_encoding})
     cursor position.
 
     Parameters: ~
-      • {window}           number|nil: window handle or 0 for current,
+      • {window}           (number|nil) window handle or 0 for current,
                            defaults to current
       • {offset_encoding}  (string) utf-8|utf-16|utf-32|nil defaults to
                            `offset_encoding` of first client of buffer of
@@ -1609,7 +1609,7 @@ make_range_params({window}, {offset_encoding})
     `textDocument/rangeFormatting`.
 
     Parameters: ~
-      • {window}           number|nil: window handle or 0 for current,
+      • {window}           (number|nil) window handle or 0 for current,
                            defaults to current
       • {offset_encoding}  "utf-8"|"utf-16"|"utf-32"|nil defaults to
                            `offset_encoding` of first client of buffer of
@@ -1624,7 +1624,7 @@ make_text_document_params({bufnr})
     Creates a `TextDocumentIdentifier` object for the current buffer.
 
     Parameters: ~
-      • {bufnr}  number|nil: Buffer handle, defaults to current
+      • {bufnr}  (number|nil) Buffer handle, defaults to current
 
     Return: ~
         `TextDocumentIdentifier`
@@ -1854,7 +1854,7 @@ notify({method}, {params})                              *vim.lsp.rpc.notify()*
 
     Parameters: ~
       • {method}  (string) The invoked LSP method
-      • {params}  (table|nil): Parameters for the invoked LSP method
+      • {params}  (table|nil) Parameters for the invoked LSP method
 
     Return: ~
         (bool) `true` if notification could be sent, `false` if not

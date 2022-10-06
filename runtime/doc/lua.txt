@@ -1482,7 +1482,7 @@ on_key({fn}, {ns_id})                                           *vim.on_key()*
         {fn} will receive the keys after mappings have been evaluated
 
     Parameters: ~
-      • {fn}     function: Callback function. It should take one string
+      • {fn}     (function) Callback function. It should take one string
                  argument. On each key press, Nvim passes the key char to
                  fn(). |i_CTRL-V| If {fn} is nil, it removes the callback for
                  the associated {ns_id}
@@ -1665,8 +1665,8 @@ list_extend({dst}, {src}, {start}, {finish})               *vim.list_extend()*
     Parameters: ~
       • {dst}     (table) List which will be modified and appended to
       • {src}     (table) List from which values will be inserted
-      • {start}   (number) Start index on src. Defaults to 1
-      • {finish}  (number) Final index on src. Defaults to `#src`
+      • {start}   (number|nil) Start index on src. Defaults to 1
+      • {finish}  (number|nil) Final index on src. Defaults to `#src`
 
     Return: ~
         (table) dst
@@ -1679,12 +1679,12 @@ list_slice({list}, {start}, {finish})                       *vim.list_slice()*
     (inclusive)
 
     Parameters: ~
-      • {list}    (table) Table
+      • {list}    (list) Table
       • {start}   (number) Start range of slice
       • {finish}  (number) End range of slice
 
     Return: ~
-        (table) Copy of table sliced from start to finish (inclusive)
+        (list) Copy of table sliced from start to finish (inclusive)
 
 pesc({s})                                                         *vim.pesc()*
     Escapes magic chars in |lua-patterns|.
@@ -1717,14 +1717,14 @@ split({s}, {sep}, {kwargs})                                      *vim.split()*
     Parameters: ~
       • {s}       (string) String to split
       • {sep}     (string) Separator or pattern
-      • {kwargs}  split_kwargs Keyword arguments:
+      • {kwargs}  (table|nil) Keyword arguments:
                   • plain: (boolean) If `true` use `sep` literally (passed to
                     string.find)
                   • trimempty: (boolean) If `true` remove empty items from the
                     front and back of the list
 
     Return: ~
-        (table) List of split components
+        string[] List of split components
 
 startswith({s}, {prefix})                                   *vim.startswith()*
     Tests if `s` starts with `prefix`.
@@ -1813,7 +1813,7 @@ tbl_filter({func}, {t})                                     *vim.tbl_filter()*
     Filter a table using a predicate function
 
     Parameters: ~
-      • {func}  function|table Function or callable table
+      • {func}  (function) Function
       • {t}     (table) Table
 
     Return: ~
@@ -1883,7 +1883,7 @@ tbl_keys({t})                                                 *vim.tbl_keys()*
       • {t}  (table) Table
 
     Return: ~
-        (table) List of keys
+        (list) List of keys
 
     See also: ~
         From https://github.com/premake/premake-core/blob/master/src/base/table.lua
@@ -1892,7 +1892,7 @@ tbl_map({func}, {t})                                           *vim.tbl_map()*
     Apply a function to all values of a table.
 
     Parameters: ~
-      • {func}  function|table Function or callable table
+      • {func}  (function) Function
       • {t}     (table) Table
 
     Return: ~
@@ -1906,7 +1906,7 @@ tbl_values({t})                                             *vim.tbl_values()*
       • {t}  (table) Table
 
     Return: ~
-        (table) List of values
+        (list) List of values
 
 trim({s})                                                         *vim.trim()*
     Trim whitespace (Lua pattern "%s") from both sides of a string.
