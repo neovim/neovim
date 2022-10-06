@@ -5,6 +5,7 @@ local command = helpers.command
 local feed = helpers.feed
 local feed_command = helpers.feed_command
 local exec = helpers.exec
+local meths = helpers.meths
 local pesc = helpers.pesc
 
 describe('cmdline', function()
@@ -282,6 +283,31 @@ describe('cmdline', function()
     screen:expect([[
       ^                                                            |
       {0:~                                                           }|
+      {0:~                                                           }|
+      {0:~                                                           }|
+      {0:~                                                           }|
+      {0:~                                                           }|
+      {1:[No Name]                                                   }|
+                                                                  |
+    ]])
+  end)
+
+  -- oldtest: Test_cmdheight_tabline()
+  it("changing 'cmdheight' when there is a tabline", function()
+    local screen = Screen.new(60, 8)
+    screen:set_default_attr_ids({
+      [0] = {bold = true, foreground = Screen.colors.Blue},  -- NonText
+      [1] = {bold = true, reverse = true},  -- StatusLine
+      [2] = {bold = true},  -- TabLineSel
+      [3] = {reverse = true},  -- TabLineFill
+    })
+    screen:attach()
+    meths.set_option('laststatus', 2)
+    meths.set_option('showtabline', 2)
+    meths.set_option('cmdheight', 1)
+    screen:expect([[
+      {2: [No Name] }{3:                                                 }|
+      ^                                                            |
       {0:~                                                           }|
       {0:~                                                           }|
       {0:~                                                           }|
