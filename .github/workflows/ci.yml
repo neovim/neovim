@@ -9,7 +9,7 @@ on:
       - 'master'
       - 'release-[0-9]+.[0-9]+'
     paths-ignore:
-      - 'runtime/doc/*'
+      - 'contrib/**'
 
 # Cancel any in-progress CI runs for a PR if it is updated
 concurrency:
