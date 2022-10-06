@@ -4300,7 +4300,7 @@ static void enter_tabpage(tabpage_T *tp, buf_T *old_curbuf, bool trigger_enter_a
   // When cmdheight is changed in a tab page with '<C-w>-', cmdline_row is
   // changed but p_ch and tp_ch_used are not changed. Thus we also need to
   // check cmdline_row.
-  if ((row < cmdline_row) && (cmdline_row <= Rows - p_ch)) {
+  if (row < cmdline_row && cmdline_row <= Rows - p_ch) {
     clear_cmdline = true;
   }
 
@@ -6409,7 +6409,7 @@ void command_height(void)
   curtab->tp_ch_used = p_ch;
 
   // Update cmdline_row to what it should be: just below the last window.
-  cmdline_row = topframe->fr_height;
+  cmdline_row = topframe->fr_height + tabline_height();
 
   // If cmdline_row is smaller than what it is supposed to be for 'cmdheight'
   // then set old_p_ch to what it would be, so that the windows get resized
