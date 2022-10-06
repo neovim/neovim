@@ -1071,11 +1071,11 @@ EXTERN char windowsVersion[20] INIT(= { 0 });
 
 EXTERN int exit_need_delay INIT(= 0);
 
-///< Skip win_fix_cursor() call for 'splitkeep' when cmdwin is closed.
+/// Skip win_fix_cursor() call for 'splitkeep' when cmdwin is closed.
 EXTERN bool skip_win_fix_cursor INIT(= false);
-///< Skip win_fix_scroll() call for 'splitkeep' when closing tab page.
+/// Skip win_fix_scroll() call for 'splitkeep' when closing tab page.
 EXTERN bool skip_win_fix_scroll INIT(= false);
-///< Skip update_topline() call while executing win_fix_scroll().
+/// Skip update_topline() call while executing win_fix_scroll().
 EXTERN bool skip_update_topline INIT(= false);
 
 #endif  // NVIM_GLOBALS_H

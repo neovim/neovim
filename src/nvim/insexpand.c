@@ -215,11 +215,11 @@ static bool compl_interrupted = false;
 
 static bool compl_restarting = false;   ///< don't insert match
 
-///< When the first completion is done "compl_started" is set.  When it's
-///< false the word to be completed must be located.
+/// When the first completion is done "compl_started" is set.  When it's
+/// false the word to be completed must be located.
 static bool compl_started = false;
 
-///< Which Ctrl-X mode are we in?
+/// Which Ctrl-X mode are we in?
 static int ctrl_x_mode = CTRL_X_NORMAL;
 
 static int compl_matches = 0;           ///< number of completion matches
