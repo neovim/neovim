@@ -134,7 +134,7 @@ assert_match({pattern}, {actual} [, {msg}])
 		When {pattern} does not match {actual} an error message is
 		added to |v:errors|.  Also see |assert-return|.
 
-		{pattern} is used as with |=~|: The matching is always done
+		{pattern} is used as with |expr-=~|: The matching is always done
 		like 'magic' was set and 'cpoptions' is empty, no matter what
 		the actual value of 'magic' or 'cpoptions' is.
 

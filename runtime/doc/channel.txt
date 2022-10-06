@@ -48,21 +48,22 @@ a job channel using RPC, bytes can still be read over its stderr. Similarly,
 only bytes can be written to Nvim's own stderr.
 
 						*channel-callback*
-on_stdout({chan-id}, {data}, {name})		*on_stdout* 
-on_stderr({chan-id}, {data}, {name})		*on_stderr* 
-on_stdin({chan-id}, {data}, {name})		*on_stdin* 
-on_data({chan-id}, {data}, {name})		*on_data*
+- on_stdout({chan-id}, {data}, {name})		*on_stdout*
+- on_stderr({chan-id}, {data}, {name})		*on_stderr*
+- on_stdin({chan-id}, {data}, {name})		*on_stdin*
+- on_data({chan-id}, {data}, {name})		*on_data*
+
     Scripts can react to channel activity (received data) via callback
     functions assigned to the `on_stdout`, `on_stderr`, `on_stdin`, or
     `on_data` option keys. Callbacks should be fast: avoid potentially
     slow/expensive work.
 
     Parameters: ~
-      {chan-id}     Channel handle. |channel-id|
-      {data}	    Raw data (|readfile()|-style list of strings) read from
+      - {chan-id}   Channel handle. |channel-id|
+      - {data}	    Raw data (|readfile()|-style list of strings) read from
 		    the channel. EOF is a single-item list: `['']`. First and
 		    last items may be partial lines! |channel-lines|
-      {name}	    Stream name (string) like "stdout", so the same function
+      - {name}	    Stream name (string) like "stdout", so the same function
 		    can handle multiple streams. Event names depend on how the
 		    channel was opened and in what mode/protocol.
 
@@ -83,13 +84,14 @@ on_data({chan-id}, {data}, {name})		*on_data*
     the final `['']` emitted at EOF):
       - `foobar` may arrive as `['fo'], ['obar']` 
       - `foo\nbar` may arrive as
-	   `['foo','bar']`
-	or `['foo',''], ['bar']`
-	or `['foo'], ['','bar']`
-	or `['fo'], ['o','bar']`
+	- `['foo','bar']`
+	- or `['foo',''], ['bar']`
+	- or `['foo'], ['','bar']`
+	- or `['fo'], ['o','bar']`
+
     There are two ways to deal with this:
-    1. To wait for the entire output, use |channel-buffered| mode.
-    2. To read line-by-line, use the following code: >
+    - 1. To wait for the entire output, use |channel-buffered| mode.
+    - 2. To read line-by-line, use the following code: >
 	let s:lines = ['']
 	func! s:on_event(job_id, data, event) dict
 	  let eof = (a:data == [''])

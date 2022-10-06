@@ -35,7 +35,7 @@ filename	One or more file names.  The first one will be the current
 		no other options or "+command" argument can follow.
 
 							*--*
--		Alias for stdin (standard input).
+`-`		Alias for stdin (standard input).
 		Example: >
 			echo text | nvim - file
 <		"text" is read into buffer 1, "file" is opened as buffer 2.
@@ -1182,7 +1182,7 @@ exactly four MessagePack objects:
                        encoding   Binary, effective 'encoding' value.
                        max_kbyte  Integer, effective |shada-s| limit value.
                        pid        Integer, instance process ID.
-                       *          It is allowed to have any number of
+                       `*`          It is allowed to have any number of
                                   additional keys with any data.
    2 (SearchPattern)   Map containing data describing last used search or
                        substitute pattern.  Normally ShaDa file contains two
@@ -1213,7 +1213,7 @@ exactly four MessagePack objects:
                        sp   Binary   N/A      Actual pattern.  Required.
                        sb   Boolean  false    True if search direction is
                                               backward.
-                       *    any      none     Other keys are allowed for
+                       `*`    any      none     Other keys are allowed for
                                               compatibility reasons, see
                                               |shada-compatibility|.
    3 (SubString)       Array containing last |:substitute| replacement string.
@@ -1284,7 +1284,7 @@ exactly four MessagePack objects:
                                                GlobalMark and LocalMark
                                                entries.
                        f    Binary    N/A      File name.  Required.
-                       *    any       none     Other keys are allowed for
+                       `*`    any       none     Other keys are allowed for
                                                compatibility reasons, see
                                                |shada-compatibility|.
    9 (BufferList)      Array containing maps.  Each map in the array
@@ -1294,10 +1294,10 @@ exactly four MessagePack objects:
                                                greater then zero.
                        c    UInteger  0        Position column number.
                        f    Binary    N/A      File name.  Required.
-                       *    any       none     Other keys are allowed for
+                       `*`    any       none     Other keys are allowed for
                                                compatibility reasons, see
                                                |shada-compatibility|.
-   * (Unknown)         Any other entry type is allowed for compatibility
+   `*` (Unknown)         Any other entry type is allowed for compatibility
                        reasons, see |shada-compatibility|.
 
 								*E575* *E576*

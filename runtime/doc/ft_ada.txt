@@ -51,7 +51,7 @@ for a complete list.
 To enable them, assign a value to the option.  For example, to turn one on:
  >
     > let g:ada_standard_types = 1
->
+
 To disable them use ":unlet".  Example:
 >
     > unlet g:ada_standard_types
