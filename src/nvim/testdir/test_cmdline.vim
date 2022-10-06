@@ -225,6 +225,16 @@ func Test_changing_cmdheight()
   call StopVimInTerminal(buf)
 endfunc
 
+func Test_cmdheight_tabline()
+  CheckScreendump
+
+  let buf = RunVimInTerminal('-c "set ls=2" -c "set stal=2" -c "set cmdheight=1"', {'rows': 6})
+  call VerifyScreenDump(buf, 'Test_cmdheight_tabline_1', {})
+
+  " clean up
+  call StopVimInTerminal(buf)
+endfunc
+
 func Test_map_completion()
   if !has('cmdline_compl')
     return
