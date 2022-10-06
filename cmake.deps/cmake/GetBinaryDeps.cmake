@@ -22,6 +22,9 @@ function(GetBinaryDep)
     message(FATAL_ERROR "${URL_VARNAME} and ${HASH_VARNAME} must be set")
   endif()
 
+  if(USE_EXISTING_SRC_DIR)
+    unset(URL)
+  endif()
   ExternalProject_Add(${_gettool_TARGET}
     URL ${URL}
     URL_HASH SHA256=${HASH}

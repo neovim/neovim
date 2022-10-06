@@ -21,6 +21,9 @@ if(MSVC)
     -DCMAKE_GENERATOR=${CMAKE_GENERATOR})
 endif()
 
+if(USE_EXISTING_SRC_DIR)
+  unset(MSGPACK_URL)
+endif()
 ExternalProject_Add(msgpack
   URL ${MSGPACK_URL}
   URL_HASH SHA256=${MSGPACK_SHA256}

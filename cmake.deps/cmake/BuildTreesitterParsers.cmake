@@ -1,5 +1,8 @@
 function(BuildTSParser LANG TS_URL TS_SHA256 TS_CMAKE_FILE)
   set(NAME treesitter-${LANG})
+  if(USE_EXISTING_SRC_DIR)
+    unset(TS_URL)
+  endif()
   ExternalProject_Add(${NAME}
     URL ${TS_URL}
     URL_HASH SHA256=${TS_SHA256}

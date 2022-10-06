@@ -55,6 +55,9 @@ else()
   endif()
 endif()
 
+if(USE_EXISTING_SRC_DIR)
+  unset(LUA_COMPAT53_URL)
+endif()
 ExternalProject_Add(lua-compat-5.3
   URL ${LUA_COMPAT53_URL}
   URL_HASH SHA256=${LUA_COMPAT53_SHA256}
@@ -64,6 +67,9 @@ ExternalProject_Add(lua-compat-5.3
   BUILD_COMMAND ""
   INSTALL_COMMAND "")
 
+if(USE_EXISTING_SRC_DIR)
+  unset(LUV_URL)
+endif()
 ExternalProject_Add(luv-static
   DEPENDS lua-compat-5.3
   URL ${LUV_URL}
