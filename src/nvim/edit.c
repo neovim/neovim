@@ -2541,97 +2541,112 @@ int oneleft(void)
   return OK;
 }
 
-/// @oaram upd_topline  When true: update topline
+/// Move the cursor up "n" lines in window "wp".
+/// Takes care of closed folds.
+/// Returns the new cursor line or zero for failure.
+linenr_T cursor_up_inner(win_T *wp, long n)
+{
+  linenr_T lnum = wp->w_cursor.lnum;
+
+  // This fails if the cursor is already in the first line.
+  if (lnum <= 1) {
+    return 0;
+  }
+  if (n >= lnum) {
+    lnum = 1;
+  } else if (hasAnyFolding(wp)) {
+    // Count each sequence of folded lines as one logical line.
+
+    // go to the start of the current fold
+    (void)hasFoldingWin(wp, lnum, &lnum, NULL, true, NULL);
+
+    while (n--) {
+      // move up one line
+      lnum--;
+      if (lnum <= 1) {
+        break;
+      }
+      // If we entered a fold, move to the beginning, unless in
+      // Insert mode or when 'foldopen' contains "all": it will open
+      // in a moment.
+      if (n > 0 || !((State & MODE_INSERT) || (fdo_flags & FDO_ALL))) {
+        (void)hasFoldingWin(wp, lnum, &lnum, NULL, true, NULL);
+      }
+    }
+    if (lnum < 1) {
+      lnum = 1;
+    }
+  } else {
+    lnum -= (linenr_T)n;
+  }
+
+  wp->w_cursor.lnum = lnum;
+  return lnum;
+}
+
+/// @param upd_topline  When true: update topline
 int cursor_up(long n, int upd_topline)
 {
-  linenr_T lnum;
-
-  if (n > 0) {
-    lnum = curwin->w_cursor.lnum;
-
-    // This fails if the cursor is already in the first line.
-    if (lnum <= 1) {
-      return FAIL;
-    }
-    if (n >= lnum) {
-      lnum = 1;
-    } else if (hasAnyFolding(curwin)) {
-      // Count each sequence of folded lines as one logical line.
-
-      // go to the start of the current fold
-      (void)hasFolding(lnum, &lnum, NULL);
-
-      while (n--) {
-        // move up one line
-        lnum--;
-        if (lnum <= 1) {
-          break;
-        }
-        // If we entered a fold, move to the beginning, unless in
-        // Insert mode or when 'foldopen' contains "all": it will open
-        // in a moment.
-        if (n > 0 || !((State & MODE_INSERT) || (fdo_flags & FDO_ALL))) {
-          (void)hasFolding(lnum, &lnum, NULL);
-        }
-      }
-      if (lnum < 1) {
-        lnum = 1;
-      }
-    } else {
-      lnum -= (linenr_T)n;
-    }
-    curwin->w_cursor.lnum = lnum;
+  if (n > 0 && cursor_up_inner(curwin, n) == 0) {
+    return FAIL;
   }
 
   // try to advance to the column we want to be at
   coladvance(curwin->w_curswant);
 
   if (upd_topline) {
-    update_topline(curwin);           // make sure curwin->w_topline is valid
+    update_topline(curwin);  // make sure curwin->w_topline is valid
   }
 
   return OK;
 }
 
-/// Cursor down a number of logical lines.
-///
+/// Move the cursor down "n" lines in window "wp".
+/// Takes care of closed folds.
+/// Returns the new cursor line or zero for failure.
+linenr_T cursor_down_inner(win_T *wp, long n)
+{
+  linenr_T lnum = wp->w_cursor.lnum;
+  linenr_T line_count = wp->w_buffer->b_ml.ml_line_count;
+
+  // Move to last line of fold, will fail if it's the end-of-file.
+  (void)hasFoldingWin(wp, lnum, NULL, &lnum, true, NULL);
+  // This fails if the cursor is already in the last line.
+  if (lnum >= line_count) {
+    return FAIL;
+  }
+  if (lnum + n >= line_count) {
+    lnum = line_count;
+  } else if (hasAnyFolding(wp)) {
+    linenr_T last;
+
+    // count each sequence of folded lines as one logical line
+    while (n--) {
+      if (hasFoldingWin(wp, lnum, NULL, &last, true, NULL)) {
+        lnum = last + 1;
+      } else {
+        lnum++;
+      }
+      if (lnum >= line_count) {
+        break;
+      }
+    }
+    if (lnum > line_count) {
+      lnum = line_count;
+    }
+  } else {
+    lnum += (linenr_T)n;
+  }
+
+  wp->w_cursor.lnum = lnum;
+  return lnum;
+}
+
 /// @param upd_topline  When true: update topline
 int cursor_down(long n, int upd_topline)
 {
-  linenr_T lnum;
-
-  if (n > 0) {
-    lnum = curwin->w_cursor.lnum;
-    // Move to last line of fold, will fail if it's the end-of-file.
-    (void)hasFolding(lnum, NULL, &lnum);
-
-    // This fails if the cursor is already in the last line.
-    if (lnum >= curbuf->b_ml.ml_line_count) {
-      return FAIL;
-    }
-    if (lnum + n >= curbuf->b_ml.ml_line_count) {
-      lnum = curbuf->b_ml.ml_line_count;
-    } else if (hasAnyFolding(curwin)) {
-      linenr_T last;
-
-      // count each sequence of folded lines as one logical line
-      while (n--) {
-        if (hasFolding(lnum, NULL, &last)) {
-          lnum = last + 1;
-        } else {
-          lnum++;
-        }
-        if (lnum >= curbuf->b_ml.ml_line_count) {
-          break;
-        }
-      }
-      if (lnum > curbuf->b_ml.ml_line_count) {
-        lnum = curbuf->b_ml.ml_line_count;
-      }
-    } else {
-      lnum += (linenr_T)n;
-    }
-    curwin->w_cursor.lnum = lnum;
+  if (n > 0 && cursor_down_inner(curwin, n) == 0) {
+    return FAIL;
   }
 
   // try to advance to the column we want to be at

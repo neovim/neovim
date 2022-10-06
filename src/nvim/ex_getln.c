@@ -4359,6 +4359,7 @@ static int open_cmdwin(void)
     // First go back to the original window.
     wp = curwin;
     set_bufref(&bufref, curbuf);
+    skip_win_fix_cursor = true;
     win_goto(old_curwin);
 
     // win_goto() may trigger an autocommand that already closes the
@@ -4375,6 +4376,7 @@ static int open_cmdwin(void)
 
     // Restore window sizes.
     win_size_restore(&winsizes);
+    skip_win_fix_cursor = false;
   }
 
   ga_clear(&winsizes);

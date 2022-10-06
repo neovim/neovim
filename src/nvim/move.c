@@ -140,6 +140,11 @@ void update_topline(win_T *wp)
   long *so_ptr = wp->w_p_so >= 0 ? &wp->w_p_so : &p_so;
   long save_so = *so_ptr;
 
+  // Cursor is updated instead when this is true for 'splitkeep'.
+  if (skip_update_topline) {
+    return;
+  }
+
   // If there is no valid screen and when the window height is zero just use
   // the cursor line.
   if (!default_grid.chars || wp->w_height_inner == 0) {
