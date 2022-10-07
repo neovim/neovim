@@ -4,6 +4,8 @@ local eq = helpers.eq
 local eval = helpers.eval
 local command = helpers.command
 local iswin = helpers.iswin
+local insert = helpers.insert
+local feed = helpers.feed
 
 describe('path collapse', function()
   local targetdir
@@ -52,5 +54,17 @@ describe('path collapse', function()
     command('cd test')
     command('edit '..join_path('.', '..', targetdir, 'tty-test.c'))
     eq(expected_path, eval('expand("%:p")'))
+  end)
+end)
+
+describe('file search', function()
+  before_each(clear)
+
+  it('find multibyte file name in line #20517', function()
+    command('cd test/functional/fixtures')
+    insert('filename_with_unicode_ααα')
+    eq('', eval('expand("%")'))
+    feed('gf')
+    eq('filename_with_unicode_ααα', eval('expand("%:t")'))
   end)
 end)
