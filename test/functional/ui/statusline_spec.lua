@@ -178,6 +178,7 @@ describe('global statusline', function()
       [2] = {bold = true, reverse = true};
       [3] = {bold = true};
       [4] = {reverse = true};
+      [5] = {bold = true, foreground = Screen.colors.Fuchsia};
     })
     command('set laststatus=3')
     command('set ruler')
@@ -397,6 +398,106 @@ describe('global statusline', function()
     eq(1, meths.get_option('cmdheight'))
     meths.input_mouse('left', 'drag', '', 0, 14, 10)
     eq(1, meths.get_option('cmdheight'))
+  end)
+
+  it('cmdline row is correct after setting cmdheight #20514', function()
+    command('botright split test/functional/fixtures/bigfile.txt')
+    meths.set_option('cmdheight', 1)
+    feed('L')
+    screen:expect([[
+                                                                  |
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      ────────────────────────────────────────────────────────────|
+      0000;<control>;Cc;0;BN;;;;;N;NULL;;;;                       |
+      0001;<control>;Cc;0;BN;;;;;N;START OF HEADING;;;;           |
+      0002;<control>;Cc;0;BN;;;;;N;START OF TEXT;;;;              |
+      0003;<control>;Cc;0;BN;;;;;N;END OF TEXT;;;;                |
+      0004;<control>;Cc;0;BN;;;;;N;END OF TRANSMISSION;;;;        |
+      0005;<control>;Cc;0;BN;;;;;N;ENQUIRY;;;;                    |
+      ^0006;<control>;Cc;0;BN;;;;;N;ACKNOWLEDGE;;;;                |
+      {2:test/functional/fixtures/bigfile.txt      7,1            Top}|
+                                                                  |
+    ]])
+    feed('j')
+    screen:expect([[
+                                                                  |
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      ────────────────────────────────────────────────────────────|
+      0001;<control>;Cc;0;BN;;;;;N;START OF HEADING;;;;           |
+      0002;<control>;Cc;0;BN;;;;;N;START OF TEXT;;;;              |
+      0003;<control>;Cc;0;BN;;;;;N;END OF TEXT;;;;                |
+      0004;<control>;Cc;0;BN;;;;;N;END OF TRANSMISSION;;;;        |
+      0005;<control>;Cc;0;BN;;;;;N;ENQUIRY;;;;                    |
+      0006;<control>;Cc;0;BN;;;;;N;ACKNOWLEDGE;;;;                |
+      ^0007;<control>;Cc;0;BN;;;;;N;BELL;;;;                       |
+      {2:test/functional/fixtures/bigfile.txt      8,1             0%}|
+                                                                  |
+    ]])
+    meths.set_option('showtabline', 2)
+    screen:expect([[
+      {3: }{5:2}{3: t/f/f/bigfile.txt }{4:                                       }|
+                                                                  |
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      ────────────────────────────────────────────────────────────|
+      0002;<control>;Cc;0;BN;;;;;N;START OF TEXT;;;;              |
+      0003;<control>;Cc;0;BN;;;;;N;END OF TEXT;;;;                |
+      0004;<control>;Cc;0;BN;;;;;N;END OF TRANSMISSION;;;;        |
+      0005;<control>;Cc;0;BN;;;;;N;ENQUIRY;;;;                    |
+      0006;<control>;Cc;0;BN;;;;;N;ACKNOWLEDGE;;;;                |
+      ^0007;<control>;Cc;0;BN;;;;;N;BELL;;;;                       |
+      {2:test/functional/fixtures/bigfile.txt      8,1             0%}|
+                                                                  |
+    ]])
+    meths.set_option('cmdheight', 0)
+    screen:expect([[
+      {3: }{5:2}{3: t/f/f/bigfile.txt }{4:                                       }|
+                                                                  |
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      ────────────────────────────────────────────────────────────|
+      0001;<control>;Cc;0;BN;;;;;N;START OF HEADING;;;;           |
+      0002;<control>;Cc;0;BN;;;;;N;START OF TEXT;;;;              |
+      0003;<control>;Cc;0;BN;;;;;N;END OF TEXT;;;;                |
+      0004;<control>;Cc;0;BN;;;;;N;END OF TRANSMISSION;;;;        |
+      0005;<control>;Cc;0;BN;;;;;N;ENQUIRY;;;;                    |
+      0006;<control>;Cc;0;BN;;;;;N;ACKNOWLEDGE;;;;                |
+      ^0007;<control>;Cc;0;BN;;;;;N;BELL;;;;                       |
+      {2:test/functional/fixtures/bigfile.txt      8,1             0%}|
+    ]])
+    meths.set_option('cmdheight', 1)
+    screen:expect([[
+      {3: }{5:2}{3: t/f/f/bigfile.txt }{4:                                       }|
+                                                                  |
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      ────────────────────────────────────────────────────────────|
+      0002;<control>;Cc;0;BN;;;;;N;START OF TEXT;;;;              |
+      0003;<control>;Cc;0;BN;;;;;N;END OF TEXT;;;;                |
+      0004;<control>;Cc;0;BN;;;;;N;END OF TRANSMISSION;;;;        |
+      0005;<control>;Cc;0;BN;;;;;N;ENQUIRY;;;;                    |
+      0006;<control>;Cc;0;BN;;;;;N;ACKNOWLEDGE;;;;                |
+      ^0007;<control>;Cc;0;BN;;;;;N;BELL;;;;                       |
+      {2:test/functional/fixtures/bigfile.txt      8,1             0%}|
+                                                                  |
+    ]])
   end)
 end)
 
