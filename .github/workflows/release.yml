@@ -51,14 +51,28 @@ jobs:
 
   appimage:
     runs-on: ubuntu-20.04
+    container:
+      image: ubuntu:18.04
+      options: --privileged # Privileged mode is needed to load fuse module.
     steps:
+      - name: Prepare container
+        run: |
+          apt-get update
+          apt-get install -y software-properties-common
+          add-apt-repository -y ppa:ubuntu-toolchain-r/test # For gcc-10.
+          add-apt-repository -y ppa:git-core/ppa # For git>=2.18.
+          apt-get update
+          apt-get install -y git gcc-10
+          apt-get install -y fuse libfuse2 # For linuxdeploy.
+          # Workaround for https://github.com/actions/checkout/issues/766.
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
       - uses: actions/checkout@v3
         with:
           fetch-depth: 0
       - name: Install dependencies
         run: |
-          sudo apt-get update
-          sudo apt-get install -y autoconf automake build-essential cmake gettext libtool-bin locales ninja-build pkg-config unzip
+          apt-get update
+          apt-get install -y autoconf automake build-essential cmake gettext libtool-bin locales ninja-build pkg-config unzip
       - if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.tag_name != 'nightly')
         run: CC=gcc-10 make appimage-latest
       - if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && github.event.inputs.tag_name == 'nightly')
