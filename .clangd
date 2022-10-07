@@ -10,12 +10,15 @@ Diagnostics:
       - performance-*
       - readability-*
     Remove:
+      - google-readability-function-size
       - misc-no-recursion
       - misc-unused-parameters
       - readability-function-*
+      - readability-else-after-return
       - readability-identifier-length
       - readability-magic-numbers
       - readability-redundant-function-ptr-dereference
+      - readability-suspicious-call-argument
     CheckOptions:
       readability-identifier-naming.NamespaceCase: lower_case
       readability-identifier-naming.StructCase: CamelCase

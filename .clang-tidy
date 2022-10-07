@@ -8,10 +8,12 @@ Checks: >
   clang-diagnostics-*,
   cert-*,
   portability-*,
+  -bugprone-assignment-in-if-condition,
   -bugprone-branch-clone,
   -bugprone-easily-swappable-parameters,
   -bugprone-narrowing-conversions,
-  -bugprone-sizeof-expression
+  -bugprone-sizeof-expression,
+  -clang-analyzer-security.insecureAPI.strcpy
 
 # Turn all the warnings from the checks above into errors.
 WarningsAsErrors: ''
