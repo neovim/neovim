@@ -170,6 +170,10 @@ if(DEBUG OR CLANG_ASAN_UBSAN OR CLANG_MSAN OR CLANG_TSAN)
   add_definitions(-DEXITFREE)
 endif()
 
+if(CLANG_ASAN_UBSAN OR CLANG_MSAN OR CLANG_TSAN)
+  add_definitions(-DNOT_CLOSE_UV)
+endif()
+
 get_directory_property(gen_cdefs COMPILE_DEFINITIONS)
 foreach(gen_cdef ${gen_cdefs} DO_NOT_DEFINE_EMPTY_ATTRIBUTES)
   if(NOT ${gen_cdef} MATCHES "INCLUDE_GENERATED_DECLARATIONS")
