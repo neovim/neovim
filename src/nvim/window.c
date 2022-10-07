@@ -6545,7 +6545,7 @@ char_u *file_name_in_line(char_u *line, int col, int options, long count, char_u
 
   // search forward for what could be the start of a file name
   ptr = (char *)line + col;
-  while (*ptr != NUL && !vim_isfilec(*ptr)) {
+  while (*ptr != NUL && !vim_isfilec((uint8_t)(*ptr))) {
     MB_PTR_ADV(ptr);
   }
   if (*ptr == NUL) {            // nothing found
@@ -6560,7 +6560,8 @@ char_u *file_name_in_line(char_u *line, int col, int options, long count, char_u
   while ((char_u *)ptr > line) {
     if ((len = (size_t)(utf_head_off((char *)line, ptr - 1))) > 0) {
       ptr -= len + 1;
-    } else if (vim_isfilec(ptr[-1]) || ((options & FNAME_HYP) && path_is_url(ptr - 1))) {
+    } else if (vim_isfilec((uint8_t)ptr[-1])
+               || ((options & FNAME_HYP) && path_is_url(ptr - 1))) {
       ptr--;
     } else {
       break;
@@ -6570,7 +6571,7 @@ char_u *file_name_in_line(char_u *line, int col, int options, long count, char_u
   // Search forward for the last char of the file name.
   // Also allow ":/" when ':' is not in 'isfname'.
   len = 0;
-  while (vim_isfilec(ptr[len]) || (ptr[len] == '\\' && ptr[len + 1] == ' ')
+  while (vim_isfilec((uint8_t)ptr[len]) || (ptr[len] == '\\' && ptr[len + 1] == ' ')
          || ((options & FNAME_HYP) && path_is_url(ptr + len))
          || (is_url && vim_strchr(":?&=", ptr[len]) != NULL)) {
     // After type:// we also include :, ?, & and = as valid characters, so that
