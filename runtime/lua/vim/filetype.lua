@@ -774,6 +774,7 @@ local extension = {
   po = 'po',
   pot = 'po',
   pod = 'pod',
+  filter = 'poefilter',
   pk = 'poke',
   ps = 'postscr',
   epsi = 'postscr',
