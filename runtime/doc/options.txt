@@ -4892,6 +4892,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	ruler is shown there.  Otherwise it is shown in the last line of the
 	screen.  If the statusline is given by 'statusline' (i.e. not empty),
 	this option takes precedence over 'ruler' and 'rulerformat'.
+	If 'cmdheight' is 0, it may overwrite the last line of the window.
 	If the number of characters displayed is different from the number of
 	bytes in the text (e.g., for a TAB or a multibyte character), both
 	the text column (byte number) and the screen column are shown,
