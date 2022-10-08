@@ -29,36 +29,8 @@ jobs:
       - name: Setup common environment variables
         run: ./.github/workflows/env.sh lint
 
-      - name: Install apt packages
-        run: |
-          sudo add-apt-repository ppa:neovim-ppa/stable
-          sudo apt-get update
-          sudo apt-get install -y \
-            autoconf \
-            automake \
-            build-essential \
-            cmake \
-            flake8 \
-            gettext \
-            libluajit-5.1-dev \
-            libmsgpack-dev \
-            libtermkey-dev \
-            libtool-bin \
-            libtree-sitter-dev \
-            libunibilium-dev \
-            libuv1-dev \
-            libvterm-dev \
-            locales \
-            lua-busted \
-            lua-check \
-            lua-filesystem \
-            lua-inspect \
-            lua-lpeg \
-            lua-luv-dev \
-            lua-nvim \
-            luajit \
-            ninja-build \
-            pkg-config
+      - name: Install dependencies
+        uses: ./.github/actions/install_deps
 
       - name: Cache uncrustify
         id: cache-uncrustify
@@ -152,35 +124,10 @@ jobs:
       - name: Setup common environment variables
         run: ./.github/workflows/env.sh lint
 
-      - name: Install apt packages
-        run: |
-          sudo add-apt-repository ppa:neovim-ppa/stable
-          sudo apt-get update
-          sudo apt-get install -y \
-            autoconf \
-            automake \
-            build-essential \
-            cmake \
-            gettext \
-            libluajit-5.1-dev \
-            libmsgpack-dev \
-            libtermkey-dev \
-            libtool-bin \
-            libtree-sitter-dev \
-            libunibilium-dev \
-            libuv1-dev \
-            libvterm-dev \
-            locales \
-            lua-busted \
-            lua-check \
-            lua-filesystem \
-            lua-inspect \
-            lua-lpeg \
-            lua-luv-dev \
-            lua-nvim \
-            luajit \
-            ninja-build \
-            pkg-config
+      - name: Install dependencies
+        uses: ./.github/actions/install_deps
+        with:
+          type: system
 
       - name: Cache artifacts
         uses: actions/cache@v3
@@ -250,11 +197,10 @@ jobs:
       - name: Setup common environment variables
         run: ./.github/workflows/env.sh ${{ matrix.flavor }}
 
-      - name: Install apt packages
-        if: matrix.os == 'linux'
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y autoconf automake build-essential cmake cpanminus gcc-multilib gdb gettext language-pack-tr libtool-bin locales ninja-build pkg-config python3 python3-pip python3-setuptools unzip valgrind xclip
+      - name: Install dependencies
+        uses: ./.github/actions/install_deps
+        with:
+          additional_packages: cpanminus
 
       - name: Install minimum required version of cmake
         if: matrix.cmake == 'minimum_required'
@@ -281,12 +227,6 @@ jobs:
           chmod a+x llvm.sh
           sudo ./llvm.sh 13
           rm llvm.sh
-
-      - name: Install brew packages
-        if: matrix.os == 'osx'
-        run: |
-          brew update --quiet
-          brew install automake cpanminus ninja
 
       - name: Setup interpreter packages
         run: ./ci/install.sh
