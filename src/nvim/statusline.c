@@ -519,10 +519,6 @@ void win_redr_ruler(win_T *wp, bool always)
       off = 0;
     }
 
-    if (!part_of_status && p_ch == 0 && !ui_has(kUIMessages)) {
-      return;
-    }
-
     // In list mode virtcol needs to be recomputed
     colnr_T virtcol = wp->w_virtcol;
     if (wp->w_p_list && wp->w_p_lcs_chars.tab1 == NUL) {
@@ -594,7 +590,7 @@ void win_redr_ruler(win_T *wp, bool always)
         }
       }
 
-      ScreenGrid *grid = part_of_status ? &default_grid : &msg_grid_adj;
+      ScreenGrid *grid = part_of_status || p_ch <= 0 ? &default_grid : &msg_grid_adj;
       grid_puts(grid, buffer, row, this_ru_col + off, attr);
       grid_fill(grid, row, row + 1,
                 this_ru_col + off + (int)strlen(buffer), off + width, fillchar,

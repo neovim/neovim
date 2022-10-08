@@ -4889,11 +4889,9 @@ A jump table for the options with a short description can be found at |Q_op|.
 		45%	relative position in the file
 	If 'rulerformat' is set, it will determine the contents of the ruler.
 	Each window has its own ruler.  If a window has a status line, the
-	ruler is shown there.  If a window doesn't have a status line and
-	'cmdheight' is zero, the ruler is not shown.  Otherwise it is shown in
-	the last line of the screen.  If the statusline is given by
-	'statusline' (i.e. not empty), this option takes precedence over
-	'ruler' and 'rulerformat'.
+	ruler is shown there.  Otherwise it is shown in the last line of the
+	screen.  If the statusline is given by 'statusline' (i.e. not empty),
+	this option takes precedence over 'ruler' and 'rulerformat'.
 	If the number of characters displayed is different from the number of
 	bytes in the text (e.g., for a TAB or a multibyte character), both
 	the text column (byte number) and the screen column are shown,
