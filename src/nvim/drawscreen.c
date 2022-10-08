@@ -1995,6 +1995,10 @@ static void win_update(win_T *wp, DecorProviders *providers)
 void redraw_later(win_T *wp, int type)
   FUNC_ATTR_NONNULL_ALL
 {
+  if (type < UPD_CLEAR && p_ru && p_ch <= 0 && !ui_has(kUIMessages)) {
+    // UPD_CLEAR is needed for ruler with cmdheight=0
+    type = UPD_CLEAR;
+  }
   if (!exiting && wp->w_redr_type < type) {
     wp->w_redr_type = type;
     if (type >= UPD_NOT_VALID) {
