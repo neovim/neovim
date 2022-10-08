@@ -1905,11 +1905,32 @@ describe('API', function()
     end)
   end)
 
+  describe('nvim_out_write', function()
+    it('prints long messages correctly #20534', function()
+      exec([[
+        set more
+        redir => g:out
+          silent! call nvim_out_write('a')
+          silent! call nvim_out_write('a')
+          silent! call nvim_out_write('a')
+          silent! call nvim_out_write("\n")
+          silent! call nvim_out_write('a')
+          silent! call nvim_out_write('a')
+          silent! call nvim_out_write(repeat('a', 5000) .. "\n")
+          silent! call nvim_out_write('a')
+          silent! call nvim_out_write('a')
+          silent! call nvim_out_write('a')
+          silent! call nvim_out_write("\n")
+        redir END
+      ]])
+      eq('\naaa\n' .. ('a'):rep(5002) .. '\naaa', meths.get_var('out'))
+    end)
+  end)
+
   describe('nvim_err_write', function()
     local screen
 
     before_each(function()
-      clear()
       screen = Screen.new(40, 8)
       screen:attach()
       screen:set_default_attr_ids({

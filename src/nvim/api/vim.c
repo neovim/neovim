@@ -66,7 +66,7 @@
 #include "nvim/viml/parser/parser.h"
 #include "nvim/window.h"
 
-#define LINE_BUFFER_SIZE 4096
+#define LINE_BUFFER_MIN_SIZE 4096
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "api/vim.c.generated.h"
@@ -1718,17 +1718,21 @@ theend:
 /// @param to_err   true: message is an error (uses `emsg` instead of `msg`)
 static void write_msg(String message, bool to_err)
 {
-  static size_t out_pos = 0, err_pos = 0;
-  static char out_line_buf[LINE_BUFFER_SIZE], err_line_buf[LINE_BUFFER_SIZE];
+  static StringBuilder out_line_buf = KV_INITIAL_VALUE;
+  static StringBuilder err_line_buf = KV_INITIAL_VALUE;
 
-#define PUSH_CHAR(i, pos, line_buf, msg) \
-  if (message.data[i] == NL || (pos) == LINE_BUFFER_SIZE - 1) { \
-    (line_buf)[pos] = NUL; \
-    msg(line_buf); \
-    (pos) = 0; \
+#define PUSH_CHAR(i, line_buf, msg) \
+  if (kv_max(line_buf) == 0) { \
+    kv_resize(line_buf, LINE_BUFFER_MIN_SIZE); \
+  } \
+  if (message.data[i] == NL) { \
+    kv_push(line_buf, NUL); \
+    msg(line_buf.items); \
+    kv_drop(line_buf, kv_size(line_buf)); \
+    kv_resize(line_buf, LINE_BUFFER_MIN_SIZE); \
     continue; \
   } \
-  (line_buf)[(pos)++] = message.data[i];
+  kv_push(line_buf, message.data[i]);
 
   no_wait_return++;
   for (uint32_t i = 0; i < message.size; i++) {
@@ -1736,9 +1740,9 @@ static void write_msg(String message, bool to_err)
       break;
     }
     if (to_err) {
-      PUSH_CHAR(i, err_pos, err_line_buf, emsg);
+      PUSH_CHAR(i, err_line_buf, emsg);
     } else {
-      PUSH_CHAR(i, out_pos, out_line_buf, msg);
+      PUSH_CHAR(i, out_line_buf, msg);
     }
   }
   no_wait_return--;
