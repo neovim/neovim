@@ -1001,11 +1001,11 @@ describe('cmdheight=0', function()
       {1:~                        }|
       {1:~                        }|
       {1:~                        }|
-      {1:~                        }|
+      {1:~            }0,0-1   All |
     ]]}
   end)
 
-  it("with cmdheight=0 ruler laststatus=0", function()
+  it("with cmdheight=0 noruler laststatus=0", function()
     command("set cmdheight=0 noruler laststatus=0 showmode")
     feed('i')
     screen:expect{grid=[[
@@ -1019,7 +1019,7 @@ describe('cmdheight=0', function()
     eq(0, eval('&cmdheight'))
   end)
 
-  it("with cmdheight=0 ruler rulerformat laststatus=0", function()
+  it("with cmdheight=0 noruler rulerformat laststatus=0", function()
     command("set cmdheight=0 noruler laststatus=0 rulerformat=%l,%c%= showmode")
     feed('i')
     screen:expect{grid=[[
