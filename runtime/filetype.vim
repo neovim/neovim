@@ -1392,6 +1392,9 @@ au BufNewFile,BufRead *.dpr,*.lpr			setf pascal
 " Free Pascal makefile definition file
 au BufNewFile,BufRead *.fpc				setf fpcmake
 
+" Path of Exile item filter
+au BufNewFile,BufRead *.filter				setf poefilter
+
 " PDF
 au BufNewFile,BufRead *.pdf				setf pdf
 
