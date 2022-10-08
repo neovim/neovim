@@ -44,6 +44,7 @@ local new_layout = {
   ['channel.txt'] = true,
   ['develop.txt'] = true,
   ['luaref.txt'] = true,
+  ['news.txt'] = true,
   ['nvim.txt'] = true,
   ['pi_health.txt'] = true,
   ['provider.txt'] = true,
