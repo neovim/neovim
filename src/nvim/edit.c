@@ -3578,9 +3578,10 @@ static bool ins_esc(long *count, int cmdchar, bool nomove)
   setmouse();
   ui_cursor_shape();            // may show different cursor shape
 
-  // When recording or for CTRL-O, need to display the new mode.
-  // Otherwise remove the mode message.
-  if (reg_recording != 0 || restart_edit != NUL) {
+  // When recording or for CTRL-O or ruler with cmdheight=0, need to display
+  // the new mode. Otherwise remove the mode message.
+  if (reg_recording != 0 || restart_edit != NUL
+      || (p_ru && p_ch <= 0 && !ui_has(kUIMessages))) {
     showmode();
   } else if (p_smd && (got_int || !skip_showmode())) {
     msg("");
