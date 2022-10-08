@@ -1413,13 +1413,16 @@ static void suspend_event(void **argv)
 
 static void tui_suspend(UI *ui)
 {
-#ifdef UNIX
   TUIData *data = ui->data;
+#ifdef UNIX
   // kill(0, SIGTSTP) won't stop the UI thread, so we must poll for SIGCONT
   // before continuing. This is done in another callback to avoid
   // loop_poll_events recursion
   multiqueue_put_event(data->loop->fast_events,
                        event_create(suspend_event, 1, ui));
+#else
+  // Resume the main thread as suspending isn't implemented.
+  CONTINUE(data->bridge);
 #endif
 }
 
