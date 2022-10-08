@@ -1375,23 +1375,6 @@ char *did_set_string_option(int opt_idx, char **varp, char *oldval, char *errbuf
         coladvance(curwin->w_virtcol);
       }
     }
-  } else if (varp == &p_csqf) {
-    if (p_csqf != NULL) {
-      p = p_csqf;
-      while (*p != NUL) {
-        if (vim_strchr(CSQF_CMDS, *p) == NULL
-            || p[1] == NUL
-            || vim_strchr(CSQF_FLAGS, p[1]) == NULL
-            || (p[2] != NUL && p[2] != ',')) {
-          errmsg = e_invarg;
-          break;
-        } else if (p[2] == NUL) {
-          break;
-        } else {
-          p += 3;
-        }
-      }
-    }
   } else if (gvarp == &p_cino) {  // 'cinoptions'
     // TODO(vim): recognize errors
     parse_cino(curbuf);

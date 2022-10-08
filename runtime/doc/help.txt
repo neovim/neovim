@@ -168,7 +168,6 @@ GUI ~
 |gui.txt|	Graphical User Interface (GUI)
 
 Interfaces ~
-|if_cscop.txt|	using Cscope with Vim
 |if_perl.txt|	Perl interface
 |if_pyth.txt|	Python interface
 |if_ruby.txt|	Ruby interface

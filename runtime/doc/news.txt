@@ -13,6 +13,27 @@ BREAKING CHANGES                                                *news-breaking*
 
 The following changes may require adaptations in user config or plugins.
 
+Cscope is now removed (see |cscope| and |nvim-features-removed|):
+  - Commands removed:
+    - `:cscope`
+    - `:lcscope`
+    - `:scscope`
+    - `:cstag`
+  - Options removed:
+    - `cscopepathcomp`
+    - `cscopeprg`
+    - `cscopequickfix`
+    - `cscoperelative`
+    - `cscopetag`
+    - `cscopetagorder`
+    - `cscopeverbose`
+  - Eval functions removed:
+    - `cscope_connection()`
+
+Note: support for |ctags| remains with no plans to remove.
+
+See https://github.com/neovim/neovim/pull/20545 for more information.
+
 ==============================================================================
 NEW FEATURES                                                    *news-features*
 

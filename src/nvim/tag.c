@@ -24,7 +24,6 @@
 #include "nvim/fold.h"
 #include "nvim/garray.h"
 #include "nvim/help.h"
-#include "nvim/if_cscope.h"
 #include "nvim/input.h"
 #include "nvim/insexpand.h"
 #include "nvim/mark.h"
@@ -132,11 +131,8 @@ static int tfu_in_use = false;  // disallow recursive call of tagfunc
 /// type == DT_LAST:     jump to last match of same tag
 /// type == DT_SELECT:   ":tselect [tag]", select tag from a list of all matches
 /// type == DT_JUMP:     ":tjump [tag]", jump to tag or select tag from a list
-/// type == DT_CSCOPE:   use cscope to find the tag
 /// type == DT_LTAG:     use location list for displaying tag matches
 /// type == DT_FREE:     free cached matches
-///
-/// for cscope, returns true if we jumped to tag or aborted, false otherwise
 ///
 /// @param tag  tag (pattern) to jump to
 /// @param forceit  :ta with !
@@ -181,7 +177,6 @@ bool do_tag(char *tag, int type, int count, int forceit, int verbose)
   if (type == DT_FREE) {
     // remove the list of matches
     FreeWild(num_matches, matches);
-    cs_free_tags();
     num_matches = 0;
     return false;
   }
@@ -219,8 +214,7 @@ bool do_tag(char *tag, int type, int count, int forceit, int verbose)
     // new pattern, add to the tag stack
     if (*tag != NUL
         && (type == DT_TAG || type == DT_SELECT || type == DT_JUMP
-            || type == DT_LTAG
-            || type == DT_CSCOPE)) {
+            || type == DT_LTAG)) {
       if (g_do_tagpreview != 0) {
         if (ptag_entry.tagname != NULL
             && strcmp(ptag_entry.tagname, tag) == 0) {
@@ -311,7 +305,6 @@ bool do_tag(char *tag, int type, int count, int forceit, int verbose)
 
         // remove the old list of matches
         FreeWild(num_matches, matches);
-        cs_free_tags();
         num_matches = 0;
         tag_freematch();
         goto end_do_tag;
@@ -360,7 +353,6 @@ bool do_tag(char *tag, int type, int count, int forceit, int verbose)
           cur_match = count - 1; break;
         case DT_SELECT:
         case DT_JUMP:
-        case DT_CSCOPE:
         case DT_LAST:
           cur_match = MAXCOL - 1; break;
         case DT_NEXT:
@@ -454,9 +446,6 @@ bool do_tag(char *tag, int type, int count, int forceit, int verbose)
         flags = TAG_NOIC;
       }
 
-      if (type == DT_CSCOPE) {
-        flags = TAG_CSCOPE;
-      }
       if (verbose) {
         flags |= TAG_VERBOSE;
       }
@@ -509,10 +498,7 @@ bool do_tag(char *tag, int type, int count, int forceit, int verbose)
     } else {
       bool ask_for_selection = false;
 
-      if (type == DT_CSCOPE && num_matches > 1) {
-        cs_print_tags();
-        ask_for_selection = true;
-      } else if (type == DT_TAG && *tag != NUL) {
+      if (type == DT_TAG && *tag != NUL) {
         // If a count is supplied to the ":tag <name>" command, then
         // jump to count'th matching tag.
         cur_match = count > 0 ? count - 1 : 0;
@@ -536,7 +522,6 @@ bool do_tag(char *tag, int type, int count, int forceit, int verbose)
             tagstack[tagstackidx].fmark = saved_fmark;
             tagstackidx = prevtagstackidx;
           }
-          cs_free_tags();
           jumped_to_tag = true;
           break;
         }
@@ -586,7 +571,6 @@ bool do_tag(char *tag, int type, int count, int forceit, int verbose)
 
       ic = (matches[cur_match][0] & MT_IC_OFF);
       if (type != DT_TAG && type != DT_SELECT && type != DT_JUMP
-          && type != DT_CSCOPE
           && (num_matches > 1 || ic)
           && !skip_msg) {
         // Give an indication of the number of matching tags
@@ -619,7 +603,7 @@ bool do_tag(char *tag, int type, int count, int forceit, int verbose)
       set_vim_var_string(VV_SWAPCOMMAND, (char *)IObuff, -1);
 
       // Jump to the desired match.
-      i = jumpto_tag((char_u *)matches[cur_match], forceit, type != DT_CSCOPE);
+      i = jumpto_tag((char_u *)matches[cur_match], forceit, true);
 
       set_vim_var_string(VV_SWAPCOMMAND, NULL, -1);
 
@@ -1324,7 +1308,6 @@ static int find_tagfunc_tags(char_u *pat, garray_T *ga, int *match_count, int fl
 /// TAG_REGEXP     use "pat" as a regexp
 /// TAG_NOIC       don't always ignore case
 /// TAG_KEEP_LANG  keep language
-/// TAG_CSCOPE     use cscope results for tags
 /// TAG_NO_TAGFUNC do not call the 'tagfunc' function
 ///
 /// @param pat  pattern to search for
@@ -1409,7 +1392,6 @@ int find_tags(char *pat, int *num_matches, char ***matchesp, int flags, int minc
   int name_only = (flags & TAG_NAMES);
   int noic = (flags & TAG_NOIC);
   int get_it_again = false;
-  int use_cscope = (flags & TAG_CSCOPE);
   int verbose = (flags & TAG_VERBOSE);
   int use_tfu = ((flags & TAG_NO_TAGFUNC) == 0);
   int save_p_ic = p_ic;
@@ -1448,15 +1430,9 @@ int find_tags(char *pat, int *num_matches, char ***matchesp, int flags, int minc
     hash_init(&ht_match[mtt]);
   }
 
-  STRCPY(tag_fname, "from cscope");             // for error messages
-
   // Initialize a few variables
   if (help_only) {                              // want tags from help file
     curbuf->b_help = true;                      // will be restored later
-  } else if (use_cscope) {
-    // Make sure we don't mix help and cscope, confuses Coverity.
-    help_only = false;
-    curbuf->b_help = false;
   }
 
   orgpat.len = (int)strlen(pat);
@@ -1522,77 +1498,74 @@ int find_tags(char *pat, int *num_matches, char ***matchesp, int flags, int minc
 
     // Try tag file names from tags option one by one.
     for (first_file = true;
-         use_cscope || get_tagfname(&tn, first_file, (char *)tag_fname) == OK;
+         get_tagfname(&tn, first_file, (char *)tag_fname) == OK;
          first_file = false) {
       // A file that doesn't exist is silently ignored.  Only when not a
       // single file is found, an error message is given (further on).
-      if (use_cscope) {
-        fp = NULL;  // avoid GCC warning
-      } else {
-        if (curbuf->b_help) {
-          // Keep en if the file extension is .txt
-          if (is_txt) {
+      if (curbuf->b_help) {
+        // Keep en if the file extension is .txt
+        if (is_txt) {
+          STRCPY(help_lang, "en");
+        } else {
+          // Prefer help tags according to 'helplang'.  Put the
+          // two-letter language name in help_lang[].
+          i = (int)STRLEN(tag_fname);
+          if (i > 3 && tag_fname[i - 3] == '-') {
+            STRCPY(help_lang, tag_fname + i - 2);
+          } else {
             STRCPY(help_lang, "en");
-          } else {
-            // Prefer help tags according to 'helplang'.  Put the
-            // two-letter language name in help_lang[].
-            i = (int)STRLEN(tag_fname);
-            if (i > 3 && tag_fname[i - 3] == '-') {
-              STRCPY(help_lang, tag_fname + i - 2);
-            } else {
-              STRCPY(help_lang, "en");
-            }
-          }
-
-          // When searching for a specific language skip tags files
-          // for other languages.
-          if (help_lang_find != NULL
-              && STRICMP(help_lang, help_lang_find) != 0) {
-            continue;
-          }
-
-          // For CTRL-] in a help file prefer a match with the same
-          // language.
-          if ((flags & TAG_KEEP_LANG)
-              && help_lang_find == NULL
-              && curbuf->b_fname != NULL
-              && (i = (int)strlen(curbuf->b_fname)) > 4
-              && curbuf->b_fname[i - 1] == 'x'
-              && curbuf->b_fname[i - 4] == '.'
-              && STRNICMP(curbuf->b_fname + i - 3, help_lang, 2) == 0) {
-            help_pri = 0;
-          } else {
-            help_pri = 1;
-            for (s = p_hlg; *s != NUL; s++) {
-              if (STRNICMP(s, help_lang, 2) == 0) {
-                break;
-              }
-              help_pri++;
-              if ((s = (char_u *)vim_strchr((char *)s, ',')) == NULL) {
-                break;
-              }
-            }
-            if (s == NULL || *s == NUL) {
-              // Language not in 'helplang': use last, prefer English,
-              // unless found already.
-              help_pri++;
-              if (STRICMP(help_lang, "en") != 0) {
-                help_pri++;
-              }
-            }
           }
         }
 
-        if ((fp = os_fopen((char *)tag_fname, "r")) == NULL) {
+        // When searching for a specific language skip tags files
+        // for other languages.
+        if (help_lang_find != NULL
+            && STRICMP(help_lang, help_lang_find) != 0) {
           continue;
         }
 
-        if (p_verbose >= 5) {
-          verbose_enter();
-          smsg(_("Searching tags file %s"), tag_fname);
-          verbose_leave();
+        // For CTRL-] in a help file prefer a match with the same
+        // language.
+        if ((flags & TAG_KEEP_LANG)
+            && help_lang_find == NULL
+            && curbuf->b_fname != NULL
+            && (i = (int)strlen(curbuf->b_fname)) > 4
+            && curbuf->b_fname[i - 1] == 'x'
+            && curbuf->b_fname[i - 4] == '.'
+            && STRNICMP(curbuf->b_fname + i - 3, help_lang, 2) == 0) {
+          help_pri = 0;
+        } else {
+          help_pri = 1;
+          for (s = p_hlg; *s != NUL; s++) {
+            if (STRNICMP(s, help_lang, 2) == 0) {
+              break;
+            }
+            help_pri++;
+            if ((s = (char_u *)vim_strchr((char *)s, ',')) == NULL) {
+              break;
+            }
+          }
+          if (s == NULL || *s == NUL) {
+            // Language not in 'helplang': use last, prefer English,
+            // unless found already.
+            help_pri++;
+            if (STRICMP(help_lang, "en") != 0) {
+              help_pri++;
+            }
+          }
         }
       }
+
+      if ((fp = os_fopen((char *)tag_fname, "r")) == NULL) {
+        continue;
+      }
+
+      if (p_verbose >= 5) {
+        verbose_enter();
+        smsg(_("Searching tags file %s"), tag_fname);
+        verbose_leave();
+      }
+
       did_open = true;      // remember that we found at least one file
 
       state = TS_START;     // we're at the start of the file
@@ -1676,9 +1649,7 @@ int find_tags(char *pat, int *num_matches, char ***matchesp, int flags, int minc
 
           // skip empty and blank lines
           do {
-            eof = use_cscope
-              ? cs_fgets(lbuf, lbuf_size)
-              : vim_fgets(lbuf, lbuf_size, fp);
+            eof = vim_fgets(lbuf, lbuf_size, fp);
           } while (!eof && vim_isblankline((char *)lbuf));
 
           if (eof) {
@@ -1745,8 +1716,7 @@ line_read_in:
           // the tag file isn't sorted, the second loop will find it.
           // When "!_TAG_FILE_SORTED" found: start binary search if
           // flag set.
-          // For cscope, it's always linear.
-          if (linear || use_cscope) {
+          if (linear) {
             state = TS_LINEAR;
           } else if (tag_file_sorted == NUL) {
             state = TS_BINARY;
@@ -1797,7 +1767,7 @@ parse_line:
         // last-but-one byte (see vim_fgets()).
         // Has been reported for Mozilla JS with extremely long names.
         // In that case we need to increase lbuf_size.
-        if (lbuf[lbuf_size - 2] != NUL && !use_cscope) {
+        if (lbuf[lbuf_size - 2] != NUL) {
           lbuf_size *= 2;
           xfree(lbuf);
           lbuf = xmalloc((size_t)lbuf_size);
@@ -1985,36 +1955,31 @@ parse_line:
         if (match) {
           size_t len = 0;
 
-          if (use_cscope) {
-            // Don't change the ordering, always use the same table.
-            mtt = MT_GL_OTH;
-          } else {
-            // Decide in which array to store this match.
-            is_current = test_for_current((char *)tagp.fname, (char *)tagp.fname_end,
-                                          (char *)tag_fname,
-                                          buf_ffname);
-            is_static = test_for_static(&tagp);
+          // Decide in which array to store this match.
+          is_current = test_for_current((char *)tagp.fname, (char *)tagp.fname_end,
+                                        (char *)tag_fname,
+                                        buf_ffname);
+          is_static = test_for_static(&tagp);
 
-            // Decide in which of the sixteen tables to store this match.
-            if (is_static) {
-              if (is_current) {
-                mtt = MT_ST_CUR;
-              } else {
-                mtt = MT_ST_OTH;
-              }
+          // Decide in which of the sixteen tables to store this match.
+          if (is_static) {
+            if (is_current) {
+              mtt = MT_ST_CUR;
             } else {
-              if (is_current) {
-                mtt = MT_GL_CUR;
-              } else {
-                mtt = MT_GL_OTH;
-              }
+              mtt = MT_ST_OTH;
             }
-            if (orgpat.regmatch.rm_ic && !match_no_ic) {
-              mtt += MT_IC_OFF;
+          } else {
+            if (is_current) {
+              mtt = MT_GL_CUR;
+            } else {
+              mtt = MT_GL_OTH;
             }
-            if (match_re) {
-              mtt += MT_RE_OFF;
-            }
+          }
+          if (orgpat.regmatch.rm_ic && !match_no_ic) {
+            mtt += MT_IC_OFF;
+          }
+          if (match_re) {
+            mtt += MT_RE_OFF;
           }
 
           // Add the found match in ht_match[mtt] and ga_match[mtt].
@@ -2098,16 +2063,11 @@ parse_line:
             hashitem_T *hi;
 
             // Don't add identical matches.
-            // Add all cscope tags, because they are all listed.
             // "mfp" is used as a hash key, there is a NUL byte to end
             // the part that matters for comparing, more bytes may
             // follow after it.  E.g. help tags store the priority
             // after the NUL.
-            if (use_cscope) {
-              hash++;
-            } else {
-              hash = hash_hash((char_u *)mfp);
-            }
+            hash = hash_hash((char_u *)mfp);
             hi = hash_lookup(&ht_match[mtt], (const char *)mfp,
                              strlen(mfp), hash);
             if (HASHITEM_EMPTY(hi)) {
@@ -2121,23 +2081,16 @@ parse_line:
             }
           }
         }
-        if (use_cscope && eof) {
-          break;
-        }
       }   // forever
 
       if (line_error) {
         semsg(_("E431: Format error in tags file \"%s\""), tag_fname);
-        if (!use_cscope) {
-          semsg(_("Before byte %" PRId64), (int64_t)vim_ftell(fp));
-        }
+        semsg(_("Before byte %" PRId64), (int64_t)vim_ftell(fp));
         stop_searching = true;
         line_error = false;
       }
 
-      if (!use_cscope) {
-        fclose(fp);
-      }
+      fclose(fp);
       if (vimconv.vc_type != CONV_NONE) {
         convert_setup(&vimconv, NULL, NULL);
       }
@@ -2154,21 +2107,16 @@ parse_line:
         stop_searching = true;
       }
 
-      if (stop_searching || use_cscope) {
+      if (stop_searching) {
         break;
       }
     }   // end of for-each-file loop
 
-    if (!use_cscope) {
-      tagname_free(&tn);
-    }
+    tagname_free(&tn);
 
     // stop searching when already did a linear search, or when TAG_NOIC
     // used, and 'ignorecase' not set or already did case-ignore search
     if (stop_searching || linear || (!p_ic && noic) || orgpat.regmatch.rm_ic) {
-      break;
-    }
-    if (use_cscope) {
       break;
     }
     orgpat.regmatch.rm_ic = true;       // try another time while ignoring case
@@ -2559,7 +2507,7 @@ static char_u *tag_full_fname(tagptrs_T *tagp)
 ///
 /// @param lbuf_arg  line from the tags file for this tag
 /// @param forceit  :ta with !
-/// @param keep_help  keep help flag (false for cscope)
+/// @param keep_help  keep help flag
 ///
 /// @return  OK for success, NOTAGFILE when file not found, FAIL otherwise.
 static int jumpto_tag(const char_u *lbuf_arg, int forceit, int keep_help)

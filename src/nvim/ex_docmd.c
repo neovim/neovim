@@ -44,7 +44,6 @@
 #include "nvim/hardcopy.h"
 #include "nvim/help.h"
 #include "nvim/highlight_group.h"
-#include "nvim/if_cscope.h"
 #include "nvim/input.h"
 #include "nvim/keycodes.h"
 #include "nvim/locale.h"
@@ -6589,10 +6588,6 @@ static void ex_tag_cmd(exarg_T *eap, char *name)
     cmd = DT_LAST;              // ":tlast"
     break;
   default:                              // ":tag"
-    if (p_cst && *eap->arg != NUL) {
-      ex_cstag(eap);
-      return;
-    }
     cmd = DT_TAG;
     break;
   }

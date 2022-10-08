@@ -319,22 +319,6 @@ if has("eval")
   call append("$", "\t(local to buffer)")
   call <SID>OptionL("tfu")
 endif
-if has("cscope")
-  call append("$", "cscopeprg\tcommand for executing cscope")
-  call <SID>OptionG("csprg", &csprg)
-  call append("$", "cscopetag\tuse cscope for tag commands")
-  call <SID>BinOptionG("cst", &cst)
-  call append("$", "cscopetagorder\t0 or 1; the order in which \":cstag\" performs a search")
-  call append("$", " \tset csto=" . &csto)
-  call append("$", "cscopeverbose\tgive messages when adding a cscope database")
-  call <SID>BinOptionG("csverb", &csverb)
-  call append("$", "cscopepathcomp\thow many components of the path to show")
-  call append("$", " \tset cspc=" . &cspc)
-  call append("$", "cscopequickfix\twhen to open a quickfix window for cscope")
-  call <SID>OptionG("csqf", &csqf)
-  call append("$", "cscoperelative\tfile names in a cscope file are relative to that file")
-  call <SID>BinOptionG("csre", &csre)
-endif
 
 
 call <SID>Header("displaying text")

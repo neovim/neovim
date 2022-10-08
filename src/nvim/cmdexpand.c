@@ -22,7 +22,6 @@
 #include "nvim/getchar.h"
 #include "nvim/help.h"
 #include "nvim/highlight_group.h"
-#include "nvim/if_cscope.h"
 #include "nvim/locale.h"
 #include "nvim/lua/executor.h"
 #include "nvim/mapping.h"
@@ -1419,11 +1418,6 @@ static const char *set_context_by_cmdname(const char *cmd, cmdidx_T cmdidx, cons
   case CMD_highlight:
     set_context_in_highlight_cmd(xp, arg);
     break;
-  case CMD_cscope:
-  case CMD_lcscope:
-  case CMD_scscope:
-    set_context_in_cscope_cmd(xp, arg, cmdidx);
-    break;
   case CMD_sign:
     set_context_in_sign_cmd(xp, (char *)arg);
     break;
@@ -2063,7 +2057,6 @@ static int ExpandOther(expand_T *xp, regmatch_T *rmp, int *num_file, char ***fil
     { EXPAND_HIGHLIGHT, (ExpandFunc)get_highlight_name, true, false },
     { EXPAND_EVENTS, expand_get_event_name, true, false },
     { EXPAND_AUGROUP, expand_get_augroup_name, true, false },
-    { EXPAND_CSCOPE, get_cscope_name, true, true },
     { EXPAND_SIGN, get_sign_name, true, true },
     { EXPAND_PROFILE, get_profile_name, true, true },
 #ifdef HAVE_WORKING_LIBINTL
@@ -2880,11 +2873,6 @@ void f_getcompletion(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 
   if (xpc.xp_context == EXPAND_MENUS) {
     set_context_in_menu_cmd(&xpc, "menu", xpc.xp_pattern, false);
-    xpc.xp_pattern_len = strlen(xpc.xp_pattern);
-  }
-
-  if (xpc.xp_context == EXPAND_CSCOPE) {
-    set_context_in_cscope_cmd(&xpc, (const char *)xpc.xp_pattern, CMD_cscope);
     xpc.xp_pattern_len = strlen(xpc.xp_pattern);
   }
 

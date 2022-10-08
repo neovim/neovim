@@ -1336,7 +1336,6 @@ completion can be enabled:
 	-complete=color		color schemes
 	-complete=command	Ex command (and arguments)
 	-complete=compiler	compilers
-	-complete=cscope	|:cscope| suboptions
 	-complete=dir		directory names
 	-complete=environment	environment variable names
 	-complete=event		autocommand events

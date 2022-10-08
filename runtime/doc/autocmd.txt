@@ -806,7 +806,7 @@ OptionSet			After setting an option (except during
 QuickFixCmdPre			Before a quickfix command is run (|:make|,
 				|:lmake|, |:grep|, |:lgrep|, |:grepadd|,
 				|:lgrepadd|, |:vimgrep|, |:lvimgrep|,
-				|:vimgrepadd|, |:lvimgrepadd|, |:cscope|,
+				|:vimgrepadd|, |:lvimgrepadd|,
 				|:cfile|, |:cgetfile|, |:caddfile|, |:lfile|,
 				|:lgetfile|, |:laddfile|, |:helpgrep|,
 				|:lhelpgrep|, |:cexpr|, |:cgetexpr|,

@@ -1051,7 +1051,6 @@ Various:					*various-functions*
 	exists()		check if a variable, function, etc. exists
 	has()			check if a feature is supported in Vim
 	changenr()		return number of most recent change
-	cscope_connection()	check if a cscope connection exists
 	did_filetype()		check if a FileType autocommand was used
 	eventhandler()		check if invoked by an event handler
 	getpid()		get process ID of Vim

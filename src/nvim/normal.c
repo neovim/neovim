@@ -4310,11 +4310,7 @@ static void nv_ident(cmdarg_T *cap)
 
   case ']':
     tag_cmd = true;
-    if (p_cst) {
-      STRCPY(buf, "cstag ");
-    } else {
-      STRCPY(buf, "ts ");
-    }
+    STRCPY(buf, "ts ");
     break;
 
   default:

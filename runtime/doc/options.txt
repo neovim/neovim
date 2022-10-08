@@ -1792,43 +1792,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 		_	When using |cw| on a word, do not include the
 			whitespace following the word in the motion.
 
-						*'cscopepathcomp'* *'cspc'*
-'cscopepathcomp' 'cspc'	number	(default 0)
-			global
-	Determines how many components of the path to show in a list of tags.
-	See |cscopepathcomp|.
-
-						*'cscopeprg'* *'csprg'*
-'cscopeprg' 'csprg'	string	(default "cscope")
-			global
-	Specifies the command to execute cscope.  See |cscopeprg|.
-	This option cannot be set from a |modeline| or in the |sandbox|, for
-	security reasons.
-
-						*'cscopequickfix'* *'csqf'*
-'cscopequickfix' 'csqf' string	(default "")
-			global
-	Specifies whether to use quickfix window to show cscope results.
-	See |cscopequickfix|.
-
-		*'cscoperelative'* *'csre'* *'nocscoperelative'* *'nocsre'*
-'cscoperelative' 'csre' boolean (default off)
-			global
-	In the absence of a prefix (-P) for cscope. setting this option enables
-	to use the basename of cscope.out path as the prefix.
-	See |cscoperelative|.
-
-				*'cscopetag'* *'cst'* *'nocscopetag'* *'nocst'*
-'cscopetag' 'cst'	boolean (default off)
-			global
-	Use cscope for tag commands.  See |cscope-options|.
-
-						*'cscopetagorder'* *'csto'*
-'cscopetagorder' 'csto'	number	(default 0)
-			global
-	Determines the order in which ":cstag" performs a search.  See
-	|cscopetagorder|.
-
 			*'cursorbind'* *'crb'* *'nocursorbind'* *'nocrb'*
 'cursorbind' 'crb'	boolean  (default off)
 			local to window
