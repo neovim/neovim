@@ -2586,11 +2586,171 @@ describe('LSP', function()
       local mark = funcs.nvim_buf_get_mark(target_bufnr, "'")
       eq({ 1, 0 }, mark)
 
-      funcs.nvim_win_set_cursor(0, {2, 3})
+      funcs.nvim_win_set_cursor(0, { 2, 3 })
       jump(location(0, 9, 0, 9))
 
       mark = funcs.nvim_buf_get_mark(target_bufnr, "'")
       eq({ 2, 3 }, mark)
+    end)
+  end)
+
+  describe('lsp.util.show_document', function()
+    local target_bufnr
+    local target_bufnr2
+
+    before_each(function()
+      target_bufnr = exec_lua([[
+        local bufnr = vim.uri_to_bufnr("file:///fake/uri")
+        local lines = {"1st line of text", "å å ɧ 汉语 ↥ 🤦 🦄"}
+        vim.api.nvim_buf_set_lines(bufnr, 0, 1, false, lines)
+        return bufnr
+      ]])
+
+      target_bufnr2 = exec_lua([[
+        local bufnr = vim.uri_to_bufnr("file:///fake/uri2")
+        local lines = {"1st line of text", "å å ɧ 汉语 ↥ 🤦 🦄"}
+        vim.api.nvim_buf_set_lines(bufnr, 0, 1, false, lines)
+        return bufnr
+      ]])
+    end)
+
+    local location = function(start_line, start_char, end_line, end_char, second_uri)
+      return {
+        uri = second_uri and 'file:///fake/uri2' or 'file:///fake/uri',
+        range = {
+          start = { line = start_line, character = start_char },
+          ['end'] = { line = end_line, character = end_char },
+        },
+      }
+    end
+
+    local show_document = function(msg, focus, reuse_win)
+      eq(
+        true,
+        exec_lua(
+          'return vim.lsp.util.show_document(...)',
+          msg,
+          'utf-16',
+          { reuse_win = reuse_win, focus = focus }
+        )
+      )
+      if focus == true or focus == nil then
+        eq(target_bufnr, exec_lua([[return vim.fn.bufnr('%')]]))
+      end
+      return {
+        line = exec_lua([[return vim.fn.line('.')]]),
+        col = exec_lua([[return vim.fn.col('.')]]),
+      }
+    end
+
+    it('jumps to a Location if focus is true', function()
+      local pos = show_document(location(0, 9, 0, 9), true, true)
+      eq(1, pos.line)
+      eq(10, pos.col)
+    end)
+
+    it('jumps to a Location if focus not set', function()
+      local pos = show_document(location(0, 9, 0, 9), nil, true)
+      eq(1, pos.line)
+      eq(10, pos.col)
+    end)
+
+    it('does not add current position to jumplist if not focus', function()
+      funcs.nvim_win_set_buf(0, target_bufnr)
+      local mark = funcs.nvim_buf_get_mark(target_bufnr, "'")
+      eq({ 1, 0 }, mark)
+
+      funcs.nvim_win_set_cursor(0, { 2, 3 })
+      show_document(location(0, 9, 0, 9), false, true)
+      show_document(location(0, 9, 0, 9, true), false, true)
+
+      mark = funcs.nvim_buf_get_mark(target_bufnr, "'")
+      eq({ 1, 0 }, mark)
+    end)
+
+    it('does not change cursor position if not focus and not reuse_win', function()
+      funcs.nvim_win_set_buf(0, target_bufnr)
+      local cursor = funcs.nvim_win_get_cursor(0)
+
+      show_document(location(0, 9, 0, 9), false, false)
+      eq(cursor, funcs.nvim_win_get_cursor(0))
+    end)
+
+    it('does not change window if not focus', function()
+      funcs.nvim_win_set_buf(0, target_bufnr)
+      local win = funcs.nvim_get_current_win()
+
+      -- same document/bufnr
+      show_document(location(0, 9, 0, 9), false, true)
+      eq(win, funcs.nvim_get_current_win())
+
+      -- different document/bufnr, new window/split
+      show_document(location(0, 9, 0, 9, true), false, true)
+      eq(2, #funcs.nvim_list_wins())
+      eq(win, funcs.nvim_get_current_win())
+    end)
+
+    it("respects 'reuse_win' parameter", function()
+      funcs.nvim_win_set_buf(0, target_bufnr)
+
+      -- does not create a new window if the buffer is already open
+      show_document(location(0, 9, 0, 9), false, true)
+      eq(1, #funcs.nvim_list_wins())
+
+      -- creates a new window even if the buffer is already open
+      show_document(location(0, 9, 0, 9), false, false)
+      eq(2, #funcs.nvim_list_wins())
+    end)
+
+    it('correctly sets the cursor of the split if range is given without focus', function()
+      funcs.nvim_win_set_buf(0, target_bufnr)
+
+      show_document(location(0, 9, 0, 9, true), false, true)
+
+      local wins = funcs.nvim_list_wins()
+      eq(2, #wins)
+      table.sort(wins)
+
+      eq({ 1, 0 }, funcs.nvim_win_get_cursor(wins[1]))
+      eq({ 1, 9 }, funcs.nvim_win_get_cursor(wins[2]))
+    end)
+
+    it('does not change cursor of the split if not range and not focus', function()
+      funcs.nvim_win_set_buf(0, target_bufnr)
+      funcs.nvim_win_set_cursor(0, { 2, 3 })
+
+      exec_lua([[vim.cmd.new()]])
+      funcs.nvim_win_set_buf(0, target_bufnr2)
+      funcs.nvim_win_set_cursor(0, { 2, 3 })
+
+      show_document({ uri = 'file:///fake/uri2' }, false, true)
+
+      local wins = funcs.nvim_list_wins()
+      eq(2, #wins)
+      eq({ 2, 3 }, funcs.nvim_win_get_cursor(wins[1]))
+      eq({ 2, 3 }, funcs.nvim_win_get_cursor(wins[2]))
+    end)
+
+    it('respects existing buffers', function()
+      funcs.nvim_win_set_buf(0, target_bufnr)
+      local win = funcs.nvim_get_current_win()
+
+      exec_lua([[vim.cmd.new()]])
+      funcs.nvim_win_set_buf(0, target_bufnr2)
+      funcs.nvim_win_set_cursor(0, { 2, 3 })
+      local split = funcs.nvim_get_current_win()
+
+      -- reuse win for open document/bufnr if called from split
+      show_document(location(0, 9, 0, 9, true), false, true)
+      eq({ 1, 9 }, funcs.nvim_win_get_cursor(split))
+      eq(2, #funcs.nvim_list_wins())
+
+      funcs.nvim_set_current_win(win)
+
+      -- reuse win for open document/bufnr if called outside the split
+      show_document(location(0, 9, 0, 9, true), false, true)
+      eq({ 1, 9 }, funcs.nvim_win_get_cursor(split))
+      eq(2, #funcs.nvim_list_wins())
     end)
   end)
 

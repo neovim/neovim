@@ -512,6 +512,52 @@ M['window/showMessage'] = function(_, result, ctx, _)
   return result
 end
 
+--see: https://microsoft.github.io/language-server-protocol/specifications/specification-current/#window_showDocument
+M['window/showDocument'] = function(_, result, ctx, _)
+  local uri = result.uri
+
+  if result.external then
+    -- TODO(lvimuser): ask the user for confirmation
+    local cmd
+    if vim.fn.has('win32') == 1 then
+      cmd = { 'cmd.exe', '/c', 'start', '""', vim.fn.shellescape(uri) }
+    elseif vim.fn.has('macunix') == 1 then
+      cmd = { 'open', vim.fn.shellescape(uri) }
+    else
+      cmd = { 'xdg-open', vim.fn.shellescape(uri) }
+    end
+
+    local ret = vim.fn.system(cmd)
+    if vim.v.shellerror ~= 0 then
+      return {
+        success = false,
+        error = {
+          code = protocol.ErrorCodes.UnknownErrorCode,
+          message = ret,
+        },
+      }
+    end
+
+    return { success = true }
+  end
+
+  local client_id = ctx.client_id
+  local client = vim.lsp.get_client_by_id(client_id)
+  local client_name = client and client.name or string.format('id=%d', client_id)
+  if not client then
+    err_message({ 'LSP[', client_name, '] client has shut down after sending ', ctx.method })
+    return vim.NIL
+  end
+
+  local location = {
+    uri = uri,
+    range = result.selection,
+  }
+
+  local success = util.show_document(location, client.offset_encoding, true, result.takeFocus)
+  return { success = success or false }
+end
+
 -- Add boilerplate error validation and logging for all of these.
 for k, fn in pairs(M) do
   M[k] = function(err, result, ctx, config)

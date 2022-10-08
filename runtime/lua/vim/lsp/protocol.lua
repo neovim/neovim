@@ -778,7 +778,7 @@ function protocol.make_client_capabilities()
         },
       },
       showDocument = {
-        support = false,
+        support = true,
       },
     },
   }

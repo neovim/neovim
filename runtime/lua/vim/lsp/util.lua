@@ -110,6 +110,15 @@ local function split_lines(value)
   return split(value, '\n', true)
 end
 
+---@private
+local function create_window_without_focus()
+  local prev = vim.api.nvim_get_current_win()
+  vim.cmd.new()
+  local new = vim.api.nvim_get_current_win()
+  vim.api.nvim_set_current_win(prev)
+  return new
+end
+
 --- Convert byte index to `encoding` index.
 --- Convenience wrapper around vim.str_utfindex
 ---@param line string line to be indexed
@@ -1056,48 +1065,78 @@ function M.make_floating_popup_options(width, height, opts)
   }
 end
 
---- Jumps to a location.
+--- Shows document and optionally jumps to the location.
 ---
 ---@param location table (`Location`|`LocationLink`)
----@param offset_encoding string utf-8|utf-16|utf-32 (required)
----@param reuse_win boolean Jump to existing window if buffer is already opened.
----@returns `true` if the jump succeeded
-function M.jump_to_location(location, offset_encoding, reuse_win)
+---@param offset_encoding "utf-8" | "utf-16" | "utf-32"
+---@param opts table options
+---        - reuse_win (boolean) Jump to existing window if buffer is already open.
+---        - focus (boolean) Whether to focus/jump to location if possible. Defaults to true.
+---@return boolean `true` if succeeded
+function M.show_document(location, offset_encoding, opts)
   -- location may be Location or LocationLink
   local uri = location.uri or location.targetUri
   if uri == nil then
-    return
+    return false
   end
+  if offset_encoding == nil then
+    vim.notify_once('show_document must be called with valid offset encoding', vim.log.levels.WARN)
+  end
+  local bufnr = vim.uri_to_bufnr(uri)
+
+  opts = opts or {}
+  local focus = vim.F.if_nil(opts.focus, true)
+  if focus then
+    -- Save position in jumplist
+    vim.cmd("normal! m'")
+
+    -- Push a new item into tagstack
+    local from = { vim.fn.bufnr('%'), vim.fn.line('.'), vim.fn.col('.'), 0 }
+    local items = { { tagname = vim.fn.expand('<cword>'), from = from } }
+    vim.fn.settagstack(vim.fn.win_getid(), { items = items }, 't')
+  end
+
+  local win = opts.reuse_win and bufwinid(bufnr)
+    or focus and api.nvim_get_current_win()
+    or create_window_without_focus()
+
+  api.nvim_buf_set_option(bufnr, 'buflisted', true)
+  api.nvim_win_set_buf(win, bufnr)
+  if focus then
+    api.nvim_set_current_win(win)
+  end
+
+  -- location may be Location or LocationLink
+  local range = location.range or location.targetSelectionRange
+  if range then
+    --- Jump to new location (adjusting for encoding of characters)
+    local row = range.start.line
+    local col = get_line_byte_from_position(bufnr, range.start, offset_encoding)
+    api.nvim_win_set_cursor(win, { row + 1, col })
+    api.nvim_win_call(win, function()
+      -- Open folds under the cursor
+      vim.cmd('normal! zv')
+    end)
+  end
+
+  return true
+end
+
+--- Jumps to a location.
+---
+---@param location table (`Location`|`LocationLink`)
+---@param offset_encoding "utf-8" | "utf-16" | "utf-32"
+---@param reuse_win boolean Jump to existing window if buffer is already open.
+---@return boolean `true` if the jump succeeded
+function M.jump_to_location(location, offset_encoding, reuse_win)
   if offset_encoding == nil then
     vim.notify_once(
       'jump_to_location must be called with valid offset encoding',
       vim.log.levels.WARN
     )
   end
-  local bufnr = vim.uri_to_bufnr(uri)
-  -- Save position in jumplist
-  vim.cmd("normal! m'")
 
-  -- Push a new item into tagstack
-  local from = { vim.fn.bufnr('%'), vim.fn.line('.'), vim.fn.col('.'), 0 }
-  local items = { { tagname = vim.fn.expand('<cword>'), from = from } }
-  vim.fn.settagstack(vim.fn.win_getid(), { items = items }, 't')
-
-  --- Jump to new location (adjusting for UTF-16 encoding of characters)
-  local win = reuse_win and bufwinid(bufnr)
-  if win then
-    api.nvim_set_current_win(win)
-  else
-    api.nvim_buf_set_option(bufnr, 'buflisted', true)
-    api.nvim_set_current_buf(bufnr)
-  end
-  local range = location.range or location.targetSelectionRange
-  local row = range.start.line
-  local col = get_line_byte_from_position(bufnr, range.start, offset_encoding)
-  api.nvim_win_set_cursor(0, { row + 1, col })
-  -- Open folds under the cursor
-  vim.cmd('normal! zv')
-  return true
+  return M.show_document(location, offset_encoding, { reuse_win = reuse_win, focus = true })
 end
 
 --- Previews a location in a floating window
