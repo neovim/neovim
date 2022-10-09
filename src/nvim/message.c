@@ -1306,6 +1306,7 @@ static void hit_return_msg(void)
     msg_puts(_("Interrupt: "));
   }
 
+  msg_puts_attr(_("Press ENTER or type command to continue"), HL_ATTR(HLF_R));
   if (!msg_use_printf()) {
     msg_clr_eos();
   }
