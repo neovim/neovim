@@ -261,6 +261,9 @@ end
 ---     - name (string|nil):
 ---         Restrict clients used for rename to ones where client.name matches
 ---         this field.
+---     - input_suggestion (string|nil):
+---         When no new_name is provided, |vim.ui.input()| uses input_suggestion
+---         as default reply if set.
 function M.rename(new_name, options)
   options = options or {}
   local bufnr = options.bufnr or api.nvim_get_current_buf()
@@ -339,7 +342,9 @@ function M.rename(new_name, options)
           prompt = 'New Name: ',
         }
         -- result: Range | { range: Range, placeholder: string }
-        if result.placeholder then
+        if options.input_suggestion then
+          prompt_opts.default = options.input_suggestion
+        elseif result.placeholder then
           prompt_opts.default = result.placeholder
         elseif result.start then
           prompt_opts.default = get_text_at_range(result, client.offset_encoding)
@@ -369,6 +374,11 @@ function M.rename(new_name, options)
         prompt = 'New Name: ',
         default = cword,
       }
+
+      if options.input_suggestion then
+        prompt_opts.default = options.input_suggestion
+      end
+
       vim.ui.input(prompt_opts, function(input)
         if not input or #input == 0 then
           return
