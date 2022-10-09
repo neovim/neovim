@@ -297,6 +297,16 @@ local function has_ancestor(node, ancestor_name)
   return false
 end
 
+-- Gets the first matching child node matching `name`.
+local function first(node, name)
+  for c, _ in node:iter_children() do
+    if c:named() and c:type() == name then
+      return c
+    end
+  end
+  return nil
+end
+
 local function validate_link(node, bufnr, fname)
   local helppage, tagname = get_tagname(node:child(1), bufnr)
   local ignored = false
@@ -409,13 +419,18 @@ local function visit_node(root, level, lang_tree, headings, opt, stats)
     end
     -- Remove "===" and tags from ToC text.
     local hname = (node_text():gsub('%-%-%-%-+', ''):gsub('%=%=%=%=+', ''):gsub('%*.*%*', ''))
+    -- Use the first *tag* node as the heading anchor, if any.
+    local tagnode = first(root, 'tag')
+    local tagname = tagnode and url_encode(node_text(tagnode:child(1), false)) or to_heading_tag(hname)
     if node_name == 'h1' or #headings == 0 then
-      table.insert(headings, { name = hname, subheadings = {}, })
+      table.insert(headings, { name = hname, subheadings = {}, tag = tagname })
     else
-      table.insert(headings[#headings].subheadings, { name = hname, subheadings = {}, })
+      table.insert(headings[#headings].subheadings, { name = hname, subheadings = {}, tag = tagname })
     end
     local el = node_name == 'h1' and 'h2' or 'h3'
-    return ('<a name="%s"></a><%s class="help-heading">%s</%s>\n'):format(to_heading_tag(hname), el, text, el)
+    -- If we are re-using the *tag*, this heading anchor is redundant.
+    local a = tagnode and '' or ('<a name="%s"></a>'):format(tagname)
+    return ('%s<%s class="help-heading">%s</%s>\n'):format(a, el, text, el)
   elseif node_name == 'column_heading' or node_name == 'column_name' then
     if root:has_error() then
       return text
@@ -720,10 +735,10 @@ local function gen_one(fname, to_fname, old, commit)
   local n = 0  -- Count of all headings + subheadings.
   for _, h1 in ipairs(headings) do n = n + 1 + #h1.subheadings end
   for _, h1 in ipairs(headings) do
-    toc = toc .. ('<div class="help-toc-h1"><a href="#%s">%s</a>\n'):format(to_heading_tag(h1.name), h1.name)
+    toc = toc .. ('<div class="help-toc-h1"><a href="#%s">%s</a>\n'):format(h1.tag, h1.name)
     if n < 30 or #headings < 10 then  -- Show subheadings only if there aren't too many.
       for _, h2 in ipairs(h1.subheadings) do
-        toc = toc .. ('<div class="help-toc-h2"><a href="#%s">%s</a></div>\n'):format(to_heading_tag(h2.name), h2.name)
+        toc = toc .. ('<div class="help-toc-h2"><a href="#%s">%s</a></div>\n'):format(h2.tag, h2.name)
       end
     end
     toc = toc .. '</div>'
