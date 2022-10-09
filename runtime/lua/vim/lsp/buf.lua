@@ -1,4 +1,3 @@
-local vim = vim
 local api = vim.api
 local validate = vim.validate
 local util = require('vim.lsp.util')

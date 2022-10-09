@@ -36,8 +36,6 @@
 --    - https://github.com/bakpakin/Fennel (pretty print, repl)
 --    - https://github.com/howl-editor/howl/tree/master/lib/howl/util
 
-local vim = assert(vim)
-
 -- These are for loading runtime modules lazily since they aren't available in
 -- the nvim binary as specified in executor.c
 for k, v in pairs({

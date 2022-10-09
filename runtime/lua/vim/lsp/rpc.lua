@@ -1,4 +1,3 @@
-local vim = vim
 local uv = vim.loop
 local log = require('vim.lsp.log')
 local protocol = require('vim.lsp.protocol')
