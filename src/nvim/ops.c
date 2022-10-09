@@ -4172,6 +4172,29 @@ theend:
   return ret;
 }
 
+/// Reset 'linebreak' and take care of side effects.
+/// @return  the previous value, to be passed to restore_lbr().
+static bool reset_lbr(void)
+{
+  if (!curwin->w_p_lbr) {
+    return false;
+  }
+  // changing 'linebreak' may require w_virtcol to be updated
+  curwin->w_p_lbr = false;
+  curwin->w_valid &= ~(VALID_WROW|VALID_WCOL|VALID_VIRTCOL);
+  return true;
+}
+
+/// Restore 'linebreak' and take care of side effects.
+static void restore_lbr(bool lbr_saved)
+{
+  if (!curwin->w_p_lbr && lbr_saved) {
+    // changing 'linebreak' may require w_virtcol to be updated
+    curwin->w_p_lbr = true;
+    curwin->w_valid &= ~(VALID_WROW|VALID_WCOL|VALID_VIRTCOL);
+  }
+}
+
 /// prepare a few things for block mode yank/delete/tilde
 ///
 /// for delete:
@@ -4191,10 +4214,9 @@ static void block_prep(oparg_T *oap, struct block_def *bdp, linenr_T lnum, bool 
   char *line;
   char *prev_pstart;
   char *prev_pend;
-  const int lbr_saved = curwin->w_p_lbr;
-
   // Avoid a problem with unwanted linebreaks in block mode.
-  curwin->w_p_lbr = false;
+  const bool lbr_saved = reset_lbr();
+
   bdp->startspaces = 0;
   bdp->endspaces = 0;
   bdp->textlen = 0;
@@ -4308,7 +4330,7 @@ static void block_prep(oparg_T *oap, struct block_def *bdp, linenr_T lnum, bool 
   }
   bdp->textcol = (colnr_T)(pstart - line);
   bdp->textstart = (char_u *)pstart;
-  curwin->w_p_lbr = lbr_saved;
+  restore_lbr(lbr_saved);
 }
 
 /// Handle the add/subtract operator.
@@ -5733,10 +5755,7 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
     const bool redo_yank = vim_strchr(p_cpo, CPO_YANK) != NULL && !gui_yank;
 
     // Avoid a problem with unwanted linebreaks in block mode
-    if (curwin->w_p_lbr) {
-      curwin->w_valid &= ~VALID_VIRTCOL;
-    }
-    curwin->w_p_lbr = false;
+    (void)reset_lbr();
     oap->is_VIsual = VIsual_active;
     if (oap->motion_force == 'V') {
       oap->motion_type = kMTLineWise;
@@ -6025,7 +6044,7 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
              || oap->op_type == OP_FILTER)
             && oap->motion_force == NUL) {
           // Make sure redrawing is correct.
-          curwin->w_p_lbr = lbr_saved;
+          restore_lbr(lbr_saved);
           redraw_curbuf_later(UPD_INVERTED);
         }
       }
@@ -6057,7 +6076,7 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
     // 'modifiable is off or creating a fold.
     if (oap->is_VIsual && (oap->empty || !MODIFIABLE(curbuf)
                            || oap->op_type == OP_FOLD)) {
-      curwin->w_p_lbr = lbr_saved;
+      restore_lbr(lbr_saved);
       redraw_curbuf_later(UPD_INVERTED);
     }
 
@@ -6133,7 +6152,7 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
           CancelRedo();
         }
       } else {
-        curwin->w_p_lbr = lbr_saved;
+        restore_lbr(lbr_saved);
         oap->excl_tr_ws = cap->cmdchar == 'z';
         (void)op_yank(oap, !gui_yank);
       }
@@ -6157,7 +6176,7 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
         restart_edit = 0;
 
         // Restore linebreak, so that when the user edits it looks as before.
-        curwin->w_p_lbr = lbr_saved;
+        restore_lbr(lbr_saved);
 
         // Reset finish_op now, don't want it set inside edit().
         finish_op = false;
@@ -6228,9 +6247,8 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
     case OP_FUNCTION: {
       redo_VIsual_T save_redo_VIsual = redo_VIsual;
 
-      // Restore linebreak, so that when the user edits it looks as
-      // before.
-      curwin->w_p_lbr = lbr_saved;
+      // Restore linebreak, so that when the user edits it looks as before.
+      restore_lbr(lbr_saved);
       // call 'operatorfunc'
       op_function(oap);
 
@@ -6254,12 +6272,12 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
         restart_edit = 0;
 
         // Restore linebreak, so that when the user edits it looks as before.
-        curwin->w_p_lbr = lbr_saved;
+        restore_lbr(lbr_saved);
 
         op_insert(oap, cap->count1);
 
         // Reset linebreak, so that formatting works correctly.
-        curwin->w_p_lbr = false;
+        (void)reset_lbr();
 
         // TODO(brammool): when inserting in several lines, should format all
         // the lines.
@@ -6280,7 +6298,7 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
         CancelRedo();
       } else {
         // Restore linebreak, so that when the user edits it looks as before.
-        curwin->w_p_lbr = lbr_saved;
+        restore_lbr(lbr_saved);
 
         op_replace(oap, cap->nchar);
       }
@@ -6318,7 +6336,7 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
         CancelRedo();
       } else {
         VIsual_active = true;
-        curwin->w_p_lbr = lbr_saved;
+        restore_lbr(lbr_saved);
         op_addsub(oap, (linenr_T)cap->count1, redo_VIsual.rv_arg);
         VIsual_active = false;
       }
@@ -6333,7 +6351,7 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
       if (!p_sol && oap->motion_type == kMTLineWise && !oap->end_adjusted
           && (oap->op_type == OP_LSHIFT || oap->op_type == OP_RSHIFT
               || oap->op_type == OP_DELETE)) {
-        curwin->w_p_lbr = false;
+        (void)reset_lbr();
         coladvance(curwin->w_curswant = old_col);
       }
     } else {
@@ -6342,7 +6360,7 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
     clearop(oap);
     motion_force = NUL;
   }
-  curwin->w_p_lbr = lbr_saved;
+  restore_lbr(lbr_saved);
 }
 
 /// Check if the default register (used in an unnamed paste) should be a
