@@ -595,6 +595,10 @@ void win_redr_ruler(win_T *wp, bool always)
       grid_fill(grid, row, row + 1,
                 this_ru_col + off + (int)strlen(buffer), off + width, fillchar,
                 fillchar, attr);
+      if (p_ch <= 0) {
+        // UPD_CLEAR is needed for ruler with cmdheight=0
+        must_redraw = UPD_CLEAR;
+      }
     }
 
     wp->w_ru_cursor = wp->w_cursor;
