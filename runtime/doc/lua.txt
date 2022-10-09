@@ -144,7 +144,7 @@ documentation at https://www.lua.org/manual/5.1/manual.html#pdf-require.
 
 For example, if 'runtimepath' is `foo,bar` and |package.cpath| was
 `./?.so;./?.dll` at startup, `require('mod')` searches these paths in order
-and loads the first module found ("first wins"):
+and loads the first module found ("first wins"): >
     foo/lua/mod.lua
     foo/lua/mod/init.lua
     bar/lua/mod.lua
@@ -153,7 +153,7 @@ and loads the first module found ("first wins"):
     foo/lua/mod.dll
     bar/lua/mod.so
     bar/lua/mod.dll
-
+<
                                                         *lua-package-path*
 Nvim automatically adjusts |package.path| and |package.cpath| according to the
 effective 'runtimepath' value. Adjustment happens whenever 'runtimepath' is
@@ -166,37 +166,33 @@ added to |package.cpath|. In this case, instead of appending `/lua/?.lua` and
 `/lua/?/init.lua` to each runtimepath, all unique `?`-containing suffixes of
 the existing |package.cpath| are used. Example:
 
-1. Given that
+- 1. Given that
    - 'runtimepath' contains `/foo/bar,/xxx;yyy/baz,/abc`;
-   - initial (defined at compile-time or derived from
-     `$LUA_CPATH`/`$LUA_INIT`) |package.cpath| contains
-     `./?.so;/def/ghi/a?d/j/g.elf;/def/?.so`.
-2. It finds `?`-containing suffixes `/?.so`, `/a?d/j/g.elf` and `/?.so`, in
-   order: parts of the path starting from the first path component containing
-   question mark and preceding path separator.
-3. The suffix of `/def/?.so`, namely `/?.so` is not unique, as it’s the same
-   as the suffix of the first path from |package.path| (i.e. `./?.so`). Which
-   leaves `/?.so` and `/a?d/j/g.elf`, in this order.
-4. 'runtimepath' has three paths: `/foo/bar`, `/xxx;yyy/baz` and `/abc`. The
-   second one contains a semicolon which is a paths separator so it is out,
-   leaving only `/foo/bar` and `/abc`, in order.
-5. The cartesian product of paths from 4. and suffixes from 3. is taken,
-   giving four variants. In each variant, a `/lua` path segment is inserted
-   between path and suffix, leaving:
+   - initial |package.cpath| (defined at compile-time or derived from
+     `$LUA_CPATH` / `$LUA_INIT`) contains `./?.so;/def/ghi/a?d/j/g.elf;/def/?.so`.
+- 2. It finds `?`-containing suffixes `/?.so`, `/a?d/j/g.elf` and `/?.so`, in
+     order: parts of the path starting from the first path component containing
+     question mark and preceding path separator.
+- 3. The suffix of `/def/?.so`, namely `/?.so` is not unique, as it’s the same
+     as the suffix of the first path from |package.path| (i.e. `./?.so`). Which
+     leaves `/?.so` and `/a?d/j/g.elf`, in this order.
+- 4. 'runtimepath' has three paths: `/foo/bar`, `/xxx;yyy/baz` and `/abc`. The
+     second one contains a semicolon which is a paths separator so it is out,
+     leaving only `/foo/bar` and `/abc`, in order.
+- 5. The cartesian product of paths from 4. and suffixes from 3. is taken,
+     giving four variants. In each variant a `/lua` path segment is inserted
+     between path and suffix, leaving:
+     - `/foo/bar/lua/?.so`
+     - `/foo/bar/lua/a?d/j/g.elf`
+     - `/abc/lua/?.so`
+     - `/abc/lua/a?d/j/g.elf`
+- 6. New paths are prepended to the original |package.cpath|.
 
-   - `/foo/bar/lua/?.so`
-   - `/foo/bar/lua/a?d/j/g.elf`
-   - `/abc/lua/?.so`
-   - `/abc/lua/a?d/j/g.elf`
+The result will look like this: >
 
-6. New paths are prepended to the original |package.cpath|.
-
-The result will look like this:
-
-    `/foo/bar,/xxx;yyy/baz,/abc` ('runtimepath')
-    × `./?.so;/def/ghi/a?d/j/g.elf;/def/?.so` (`package.cpath`)
-
-    = `/foo/bar/lua/?.so;/foo/bar/lua/a?d/j/g.elf;/abc/lua/?.so;/abc/lua/a?d/j/g.elf;./?.so;/def/ghi/a?d/j/g.elf;/def/?.so`
+    /foo/bar,/xxx;yyy/baz,/abc ('runtimepath')
+    × ./?.so;/def/ghi/a?d/j/g.elf;/def/?.so (package.cpath)
+    = /foo/bar/lua/?.so;/foo/bar/lua/a?d/j/g.elf;/abc/lua/?.so;/abc/lua/a?d/j/g.elf;./?.so;/def/ghi/a?d/j/g.elf;/def/?.so
 
 Note:
 
@@ -278,7 +274,7 @@ arguments separated by " " (space) instead of "\t" (tab).
         :lua require"lpeg"
         :lua -- balanced parenthesis grammar:
         :lua bp = lpeg.P{ "(" * ((1 - lpeg.S"()") + lpeg.V(1))^0 * ")" }
-        :luado if bp:match(line) then return "-->\t" .. line end
+        :luado if bp:match(line) then return "=>\t" .. line end
 <
                                                                     *:luafile*
 :luafile {file}
@@ -595,12 +591,12 @@ vim.highlight.range({bufnr}, {ns}, {hlgroup}, {start}, {finish}, {opts})
     Apply highlight group to range of text.
 
             Parameters: ~
-                {bufnr}   buffer number
-                {ns}      namespace for highlights
-                {hlgroup} highlight group name
-                {start}   starting position (tuple {line,col})
-                {finish}  finish position (tuple {line,col})
-                {opts}    optional parameters:
+              • {bufnr}   buffer number
+              • {ns}      namespace for highlights
+              • {hlgroup} highlight group name
+              • {start}   starting position (tuple {line,col})
+              • {finish}  finish position (tuple {line,col})
+              • {opts}    optional parameters:
                           • `regtype`: type of range (characterwise, linewise,
                             or blockwise, see |setreg()|), default `'v'`
                           • `inclusive`: range includes end position,
@@ -653,22 +649,22 @@ vim.diff({a}, {b}, {opts})                                        *vim.diff()*
     Examples: >
 
         vim.diff('a\n', 'b\nc\n')
-        -->
+        =>
         @@ -1 +1,2 @@
         -a
         +b
         +c
 
         vim.diff('a\n', 'b\nc\n', {result_type = 'indices'})
-        -->
+        =>
         {
             {1, 1, 1, 2}
         }
 <
     Parameters: ~
-        {a}      First string to compare
-        {b}      Second string to compare
-        {opts}   Optional parameters:
+      • {a}      First string to compare
+      • {b}      Second string to compare
+      • {opts}   Optional parameters:
                  • `on_hunk` (callback):
                    Invoked for each hunk in the diff. Return a negative number
                    to cancel the callback for any remaining hunks.
@@ -734,13 +730,13 @@ vim.spell.check({str})                                     *vim.spell.check()*
     Example: >
 
         vim.spell.check("the quik brown fox")
-        -->
+        =>
         {
             {'quik', 'bad', 4}
         }
 <
     Parameters: ~
-        {str}    String to spell check.
+      • {str}    String to spell check.
 
     Return: ~
       List of tuples with three items:
@@ -829,9 +825,9 @@ vim.iconv({str}, {from}, {to}[, {opts}])                        *vim.iconv()*
         can accept, see ":Man 3 iconv".
 
         Parameters: ~
-            {str}   (string) Text to convert
-            {from}  (string) Encoding of {str}
-            {to}    (string) Target encoding
+          • {str}   (string) Text to convert
+          • {from}  (string) Encoding of {str}
+          • {to}    (string) Target encoding
 
         Returns: ~
             Converted string if conversion succeeds, `nil` otherwise.
@@ -849,8 +845,8 @@ vim.defer_fn({fn}, {timeout})                                   *vim.defer_fn*
     safe to call.
 
     Parameters: ~
-        {fn}        Callback to call once {timeout} expires
-        {timeout}   Time in ms to wait before calling {fn}
+      • {fn}        Callback to call once {timeout} expires
+      • {timeout}   Time in ms to wait before calling {fn}
 
     Returns: ~
         |vim.loop|.new_timer() object
@@ -863,10 +859,10 @@ vim.wait({time} [, {callback}, {interval}, {fast_only}])          *vim.wait()*
     this time.
 
     Parameters: ~
-        {time}      Number of milliseconds to wait
-        {callback}  Optional callback. Waits until {callback} returns true
-        {interval}  (Approximate) number of milliseconds to wait between polls
-        {fast_only} If true, only |api-fast| events will be processed.
+      • {time}      Number of milliseconds to wait
+      • {callback}  Optional callback. Waits until {callback} returns true
+      • {interval}  (Approximate) number of milliseconds to wait between polls
+      • {fast_only} If true, only |api-fast| events will be processed.
                         If called from while in an |api-fast| event, will
                         automatically be set to `true`.
 
@@ -1254,7 +1250,7 @@ Option:get()
         --  { space = "_", tab = ">~", }
 
         for char, representation in pairs(vim.opt.listchars:get()) do
-            print(char, "->", representation)
+            print(char, "=>", representation)
         end
 <
     For values that are lists of flags, a set will be returned with the flags
@@ -1643,10 +1639,10 @@ split({s}, {sep}, {kwargs})                                      *vim.split()*
 
     Examples: >
 
-      split(":aa::b:", ":")     --> {'','aa','','b',''}
-      split("axaby", "ab?")     --> {'','x','y'}
-      split("x*yz*o", "*", {plain=true})  --> {'x','yz','o'}
-      split("|x|y|z|", "|", {trimempty=true}) --> {'x', 'y', 'z'}
+      split(":aa::b:", ":")     => {'','aa','','b',''}
+      split("axaby", "ab?")     => {'','x','y'}
+      split("x*yz*o", "*", {plain=true})  => {'x','yz','o'}
+      split("|x|y|z|", "|", {trimempty=true}) => {'x', 'y', 'z'}
 <
 
     @alias split_kwargs {plain: boolean, trimempty: boolean} | boolean | nil
