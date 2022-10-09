@@ -100,10 +100,10 @@ end
 ---
 --- Examples:
 --- <pre>
----  split(":aa::b:", ":")     --> {'','aa','','b',''}
----  split("axaby", "ab?")     --> {'','x','y'}
----  split("x*yz*o", "*", {plain=true})  --> {'x','yz','o'}
----  split("|x|y|z|", "|", {trimempty=true}) --> {'x', 'y', 'z'}
+---  split(":aa::b:", ":")     => {'','aa','','b',''}
+---  split("axaby", "ab?")     => {'','x','y'}
+---  split("x*yz*o", "*", {plain=true})  => {'x','yz','o'}
+---  split("|x|y|z|", "|", {trimempty=true}) => {'x', 'y', 'z'}
 --- </pre>
 ---
 ---@see |vim.gsplit()|
