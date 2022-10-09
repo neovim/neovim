@@ -451,6 +451,10 @@ set_target_properties(nvim
   PROPERTIES
   EXPORT_COMPILE_COMMANDS ON)
 
+if(${CMAKE_VERSION} VERSION_LESS 3.20)
+  set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+endif()
+
 target_link_libraries(nvim ${NVIM_EXEC_LINK_LIBRARIES})
 install_helper(TARGETS nvim)
 if(MSVC)
