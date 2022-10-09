@@ -307,7 +307,6 @@ int nlua_regex(lua_State *lstate)
   }
   else if (prog == NULL) {
     nlua_push_errstr(lstate, "couldn't parse regex");
-    api_clear_error(&err);
     return lua_error(lstate);
   }
 
