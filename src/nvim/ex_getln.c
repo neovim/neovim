@@ -849,7 +849,7 @@ static uint8_t *command_line_enter(int firstc, long count, int indent, bool init
   // If the line is too long, clear it, so ruler and shown command do
   // not get printed in the middle of it.
   msg_check();
-  if (p_ch == 0 && !ui_has(kUIMessages)) {
+  if (p_ch == 0 && !ui_has(kUIMessages) && !msg_didout) {
     if (must_redraw < UPD_VALID) {
       must_redraw = UPD_VALID;
     }
