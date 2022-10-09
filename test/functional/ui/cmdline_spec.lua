@@ -1062,7 +1062,7 @@ describe('cmdheight=0', function()
       {1:~                        }|
       {1:~                        }|
       {1:~                        }|
-      {1:~                        }|
+      :                        |
     ]], showmode={}}
     eq(0, eval('&cmdheight'))
   end)
@@ -1073,8 +1073,8 @@ describe('cmdheight=0', function()
     screen:expect{grid=[[
                                |
       {1:~                        }|
-      {2:                         }|
-      :call input("foo >")     |
+      {1:~                        }|
+      {1:~                        }|
       foo >^                    |
     ]]}
     eq(0, eval('&cmdheight'))
@@ -1084,7 +1084,7 @@ describe('cmdheight=0', function()
       {1:~                        }|
       {1:~                        }|
       {1:~                        }|
-      {1:~                        }|
+      foo >                    |
     ]], showmode={}}
     eq(0, eval('&cmdheight'))
   end)
@@ -1093,11 +1093,11 @@ describe('cmdheight=0', function()
     command("set cmdheight=0 noruler laststatus=3 winbar=foo")
     feed(':split<CR>')
     screen:expect{grid=[[
-      {2:                         }|
-      :split                   |
-      {4:E36: Not enough room}     |
-      {5:Press ENTER or type comma}|
-      {5:nd to continue}^           |
+      {3:foo                      }|
+                               |
+      {1:~                        }|
+      {1:~                        }|
+      {4:E36: Not enough room}^     |
     ]]}
     feed('<CR>')
     screen:expect{grid=[[
