@@ -30,9 +30,9 @@ Reporting problems
 Developer guidelines
 --------------------
 
-- Read `:help dev` if you are working on Nvim core.
-- Read `:help dev-ui` if you are developing a UI.
-- Read `:help dev-api-client` if you are developing an API client.
+- Read [:help dev](https://neovim.io/doc/user/develop.html#dev) if you are working on Nvim core.
+- Read [:help dev-ui](https://neovim.io/doc/user/develop.html#dev-ui) if you are developing a UI.
+- Read [:help dev-api-client](https://neovim.io/doc/user/develop.html#dev-api-client) if you are developing an API client.
 - Install `ninja` for faster builds of Nvim.
   ```
   sudo apt-get install ninja-build
@@ -47,21 +47,19 @@ Pull requests (PRs)
 - Your PR must include [test coverage][run-tests].
 - Avoid cosmetic changes to unrelated files in the same commit.
 - Use a [feature branch][git-feature-branch] instead of the master branch.
-- Use a **rebase workflow** for small PRs.
-  - After addressing review comments, it's fine to rebase and force-push.
-- Use a **merge workflow** for big, high-risk PRs.
+- Use a _rebase workflow_ for small PRs.
+  - After addressing review comments, it's fine to force-push.
+- Use a _merge workflow_ (as opposed to "rebase") for big, high-risk PRs.
   - Merge `master` into your PR when there are conflicts or when master
     introduces breaking changes.
-  - Use the `ri` git alias:
-    ```
-    [alias]
-    ri = "!sh -c 't=\"${1:-master}\"; s=\"${2:-HEAD}\"; mb=\"$(git merge-base \"$t\" \"$s\")\"; if test \"x$mb\" = x ; then o=\"$t\"; else lm=\"$(git log -n1 --merges \"$t..$s\" --pretty=%H)\"; if test \"x$lm\" = x ; then o=\"$mb\"; else o=\"$lm\"; fi; fi; test $# -gt 0 && shift; test $# -gt 0 && shift; git rebase --interactive \"$o\" \"$@\"'"
-    ```
-    This avoids unnecessary rebases yet still allows you to combine related
-    commits, separate monolithic commits, etc.
   - Do not edit commits that come before the merge commit.
-- During a squash/fixup, use `exec make -C build unittest` between each
-  pick/edit/reword.
+
+### Merging to master
+
+For maintainers: when a PR is ready to merge to master,
+
+- prefer _Squash Merge_ for "single-commit PRs" (when the PR has only one meaningful commit).
+- prefer _Merge_ for "multi-commit PRs" (when the PR has multiple meaningful commits).
 
 ### Stages: Draft and Ready for review
 

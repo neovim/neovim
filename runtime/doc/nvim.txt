@@ -1,10 +1,10 @@
 *nvim.txt*	Nvim
 
 
-			    NVIM REFERENCE MANUAL
+                            NVIM REFERENCE MANUAL
 
 
-Nvim							   *nvim* *nvim-intro*
+Nvim                                                       *nvim* *nvim-intro*
 
 Nvim is based on Vim by Bram Moolenaar.
 
@@ -14,13 +14,13 @@ If you are new to Vim, try the 30-minute tutorial: >
     :Tutor<Enter>
 
 Nvim is emphatically a fork of Vim, not a clone: compatibility with Vim
-(especially editor and VimL features) is maintained where possible. See
+(especially editor and Vimscript features) is maintained where possible. See
 |vim-differences| for the complete reference of differences from Vim.
 
-				      Type |gO| to see the table of contents.
+                                      Type |gO| to see the table of contents.
 
 ==============================================================================
-Transitioning from Vim				*nvim-from-vim*
+Transitioning from Vim                          *nvim-from-vim*
 
 1. To start the transition, create your |init.vim| (user config) file: >
 
@@ -38,32 +38,37 @@ Transitioning from Vim				*nvim-from-vim*
 See |provider-python| and |provider-clipboard| for additional software you
 might need to use some features.
 
-Your Vim configuration might not be entirely Nvim-compatible.
-See |vim-differences| for the full list of changes.
-
-The |'ttymouse'| option, for example, was removed from Nvim (mouse support
-should work without it). If you use the same |vimrc| for Vim and Nvim,
-consider guarding |'ttymouse'| in your configuration like so:
+Your Vim configuration might not be entirely Nvim-compatible (see
+|vim-differences|). For example the |'ttymouse'| option was removed from Nvim,
+because mouse support is always enabled if possible. If you use the same
+|vimrc| for Vim and Nvim you could guard |'ttymouse'| in your configuration
+like so:
 >
     if !has('nvim')
         set ttymouse=xterm2
     endif
-<
-Conversely, if you have Nvim specific configuration items, you could do
-this:
+
+And for Nvim-specific configuration, you can do this:
 >
     if has('nvim')
         tnoremap <Esc> <C-\><C-n>
     endif
-<
+
 For a more granular approach use |exists()|:
 >
     if exists(':tnoremap')
         tnoremap <Esc> <C-\><C-n>
     endif
-<
+
 Now you should be able to explore Nvim more comfortably. Check |nvim-features|
 for more information.
 
+                                                        *portable-config*
+Because Nvim follows the XDG |base-directories| standard, configuration on
+Windows is stored in ~/AppData instead of ~/.config. But you can still share
+the same Nvim configuration on all of your machines, by creating
+~/AppData/Local/nvim/init.vim containing just this line: >
+    source ~/.config/nvim/init.vim
+
 ==============================================================================
- vim:tw=78:ts=8:noet:ft=help:norl:
+ vim:tw=78:ts=8:et:ft=help:norl:

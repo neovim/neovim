@@ -143,12 +143,11 @@ argument.
 		these commands, independently from "-c" commands.
 
 							*-S*
--S {file}	The {file} will be sourced after the first file has been read.
-		This is an easy way to do the equivalent of: >
+-S {file}	Vimscript or Lua (".lua") {file} will be |:source|d after the
+		first file has been read. Equivalent to: >
 			-c "source {file}"
-<		It can be mixed with "-c" arguments and repeated like "-c".
-		The limit of 10 "-c" arguments applies here as well.
-		{file} cannot start with a "-".
+<		Can be repeated like "-c", subject to the same limit of 10
+		"-c" arguments. {file} cannot start with a "-".
 
 -S		Works like "-S Session.vim".  Only when used as the last
 		argument or when another "-" option follows.
@@ -203,13 +202,14 @@ argument.
 		send commands. >
 			printf "foo\n" | nvim -Es +"%print"
 
-<		Output of these commands is displayed (to stdout):
-			:print
+<		These commands display on stdout:
 			:list
 			:number
-			:set      (to display option values)
-		When 'verbose' is set messages are printed to stderr. >
-			echo foo | nvim -V1 -es
+			:print
+			:set
+		With |:verbose| or 'verbose', other commands display on stderr: >
+			nvim -es +":verbose echo 'foo'"
+			nvim -V1 -es +foo
 
 <		User |config| is skipped (unless given with |-u|).
 		Swap file is skipped (like |-n|).
@@ -443,9 +443,9 @@ accordingly, proceeding as follows:
 						*VIMINIT* *EXINIT* *$MYVIMRC*
      b. Locations searched for initializations, in order of preference:
 	-  $VIMINIT environment variable (Ex command line).
-	-  User |config|: $XDG_CONFIG_HOME/nvim/init.vim.
-	-  Other config: {dir}/nvim/init.vim where {dir} is any directory
-	   in $XDG_CONFIG_DIRS.
+	-  User |config|: $XDG_CONFIG_HOME/nvim/init.vim (or init.lua).
+	-  Other config: {dir}/nvim/init.vim (or init.lua) where {dir} is any
+	   directory in $XDG_CONFIG_DIRS.
 	-  $EXINIT environment variable (Ex command line).
 	|$MYVIMRC| is set to the first valid location unless it was already
 	set or when using $VIMINIT.

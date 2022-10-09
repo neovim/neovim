@@ -33,6 +33,7 @@ local spell_dict = {
   NeoVim = 'Nvim',
   neovim = 'Nvim',
   lua = 'Lua',
+  VimL = 'Vimscript',
 }
 
 local M = {}
@@ -42,7 +43,9 @@ local M = {}
 local new_layout = {
   ['api.txt'] = true,
   ['channel.txt'] = true,
+  ['deprecated.txt'] = true,
   ['develop.txt'] = true,
+  ['lua.txt'] = true,
   ['luaref.txt'] = true,
   ['news.txt'] = true,
   ['nvim.txt'] = true,
@@ -158,8 +161,8 @@ local function is_noise(line, noise_lines)
     or line:find('%s*%*?[a-zA-Z]+%.txt%*?%s+N?[vV]im%s*$')
     -- modeline
     -- Example: "vim:tw=78:ts=8:sw=4:sts=4:et:ft=help:norl:"
-    or line:find('^%s*vi[m]%:.*ft=help')
-    or line:find('^%s*vi[m]%:.*filetype=help')
+    or line:find('^%s*vim?%:.*ft=help')
+    or line:find('^%s*vim?%:.*filetype=help')
     or line:find('[*>]local%-additions[*<]')
   ) then
     -- table.insert(stats.noise_lines, getbuflinestr(root, opt.buf, 0))
@@ -457,7 +460,7 @@ local function visit_node(root, level, lang_tree, headings, opt, stats)
     if root:has_error() then
       return text
     end
-    local in_heading = vim.tbl_count({'h1', 'h2', 'h3'}, parent)
+    local in_heading = vim.tbl_contains({'h1', 'h2', 'h3'}, parent)
     local cssclass = (not in_heading and get_indent(node_text()) > 8) and 'help-tag-right' or 'help-tag'
     local tagname = node_text(root:child(1))
     if vim.tbl_count(stats.first_tags) < 2 then
@@ -465,7 +468,8 @@ local function visit_node(root, level, lang_tree, headings, opt, stats)
       table.insert(stats.first_tags, tagname)
       return ''
     end
-    local s = ('%s<a name="%s"></a><span class="%s">%s</span>'):format(ws(), url_encode(tagname), cssclass, trimmed)
+    local el = in_heading and 'span' or 'code'
+    local s = ('%s<a name="%s"></a><%s class="%s">%s</%s>'):format(ws(), url_encode(tagname), el, cssclass, trimmed, el)
     if in_heading and prev ~= 'tag' then
       -- Start the <span> container for tags in a heading.
       -- This makes "justify-content:space-between" right-align the tags.
@@ -762,7 +766,7 @@ local function gen_css(fname)
     }
     .toc {
       /* max-width: 12rem; */
-      height: 95%;  /* Scroll if there are too many items. https://github.com/neovim/neovim.github.io/issues/297 */
+      height: 85%;  /* Scroll if there are too many items. https://github.com/neovim/neovim.github.io/issues/297 */
       overflow: auto;  /* Scroll if there are too many items. https://github.com/neovim/neovim.github.io/issues/297 */
     }
     .toc > div {

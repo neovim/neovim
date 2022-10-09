@@ -194,7 +194,7 @@ void hash_debug_results(void)
 #endif  // ifdef HT_DEBUG
 }
 
-/// Add item for key "key" to hashtable "ht".
+/// Add (empty) item for key `key` to hashtable `ht`.
 ///
 /// @param key Pointer to the key for the new item. The key has to be contained
 ///            in the new item (@see hashitem_T). Must not be NULL.
