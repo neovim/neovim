@@ -1,11 +1,12 @@
 -- Test for linebreak and list option (non-utf8)
 
 local helpers = require('test.functional.helpers')(after_each)
+local Screen = require('test.functional.ui.screen')
 local feed, insert, source = helpers.feed, helpers.insert, helpers.source
 local clear, feed_command, expect = helpers.clear, helpers.feed_command, helpers.expect
 
 describe('listlbr', function()
-  setup(clear)
+  before_each(clear)
 
   -- luacheck: ignore 621 (Indentation)
   -- luacheck: ignore 611 (Line contains only whitespaces)
@@ -194,5 +195,98 @@ describe('listlbr', function()
       aaaaaaaaaaaaaaaaaaaa
       aa>-----a-$         
       ~                   ]])
+  end)
+
+  -- oldtest: Test_linebreak_reset_restore()
+  it('cursor position is drawn correctly after operator', function()
+    local screen = Screen.new(60, 6)
+    screen:set_default_attr_ids({
+      [0] = {bold = true, foreground = Screen.colors.Blue},  -- NonText
+      [1] = {background = Screen.colors.LightGrey},  -- Visual
+      [2] = {background = Screen.colors.Red, foreground = Screen.colors.White},  -- ErrorMsg
+    })
+    screen:attach()
+
+    -- f_wincol() calls validate_cursor()
+    source([[
+      set linebreak showcmd noshowmode formatexpr=wincol()-wincol()
+      call setline(1, repeat('a', &columns - 10) .. ' bbbbbbbbbb c')
+    ]])
+
+    feed('$v$')
+    screen:expect([[
+      aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa          |
+      bbbbbbbbbb {1:c}^                                                |
+      {0:~                                                           }|
+      {0:~                                                           }|
+      {0:~                                                           }|
+                                                       2          |
+    ]])
+    feed('zo')
+    screen:expect([[
+      aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa          |
+      bbbbbbbbbb ^c                                                |
+      {0:~                                                           }|
+      {0:~                                                           }|
+      {0:~                                                           }|
+      {2:E490: No fold found}                                         |
+    ]])
+
+    feed('$v$')
+    screen:expect([[
+      aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa          |
+      bbbbbbbbbb {1:c}^                                                |
+      {0:~                                                           }|
+      {0:~                                                           }|
+      {0:~                                                           }|
+      {2:E490: No fold found}                              2          |
+    ]])
+    feed('gq')
+    screen:expect([[
+      aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa          |
+      bbbbbbbbbb ^c                                                |
+      {0:~                                                           }|
+      {0:~                                                           }|
+      {0:~                                                           }|
+      {2:E490: No fold found}                                         |
+    ]])
+
+    feed('$<C-V>$')
+    screen:expect([[
+      aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa          |
+      bbbbbbbbbb {1:c}^                                                |
+      {0:~                                                           }|
+      {0:~                                                           }|
+      {0:~                                                           }|
+      {2:E490: No fold found}                              1x2        |
+    ]])
+    feed('I')
+    screen:expect([[
+      aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa          |
+      bbbbbbbbbb ^c                                                |
+      {0:~                                                           }|
+      {0:~                                                           }|
+      {0:~                                                           }|
+      {2:E490: No fold found}                                         |
+    ]])
+
+    feed('<Esc>$v$')
+    screen:expect([[
+      aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa          |
+      bbbbbbbbbb {1:c}^                                                |
+      {0:~                                                           }|
+      {0:~                                                           }|
+      {0:~                                                           }|
+      {2:E490: No fold found}                              2          |
+    ]])
+    feed('s')
+    screen:expect([[
+      aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa          |
+      bbbbbbbbbb ^                                                 |
+      {0:~                                                           }|
+      {0:~                                                           }|
+      {0:~                                                           }|
+      {2:E490: No fold found}                                         |
+    ]])
   end)
 end)

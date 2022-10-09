@@ -1492,37 +1492,4 @@ func Test_switch_buffer_ends_visual_mode()
   exe 'bwipe!' buf2
 endfunc
 
-" Test that cursor is drawn at correct position after an operator in Visual
-" mode when 'linebreak' and 'showcmd' are enabled.
-func Test_visual_operator_with_linebreak()
-  CheckRunVimInTerminal
-
-  let lines =<< trim END
-    set linebreak showcmd noshowmode
-    call setline(1, repeat('a', &columns - 10) .. ' bbbbbbbbbb c')
-  END
-  call writefile(lines, 'XTest_visual_op_linebreak', 'D')
-
-  let buf = RunVimInTerminal('-S XTest_visual_op_linebreak', {'rows': 6})
-
-  call term_sendkeys(buf, '$v$')
-  call WaitForAssert({-> assert_equal(13, term_getcursor(buf)[1])})
-  call term_sendkeys(buf, 'zo')
-  call WaitForAssert({-> assert_equal(12, term_getcursor(buf)[1])})
-
-  call term_sendkeys(buf, "$\<C-V>$")
-  call WaitForAssert({-> assert_equal(13, term_getcursor(buf)[1])})
-  call term_sendkeys(buf, 'I')
-  call WaitForAssert({-> assert_equal(12, term_getcursor(buf)[1])})
-
-  call term_sendkeys(buf, "\<Esc>$v$")
-  call WaitForAssert({-> assert_equal(13, term_getcursor(buf)[1])})
-  call term_sendkeys(buf, 's')
-  call WaitForAssert({-> assert_equal(12, term_getcursor(buf)[1])})
-
-  " clean up
-  call term_sendkeys(buf, "\<Esc>")
-  call StopVimInTerminal(buf)
-endfunc
-
 " vim: shiftwidth=2 sts=2 expandtab
