@@ -1,6 +1,3 @@
--- prevents luacheck from making lints for setting things on vim
-local vim = assert(vim)
-
 local a = vim.api
 
 -- TODO(tjdevries): Improve option metadata so that this doesn't have to be hardcoded.

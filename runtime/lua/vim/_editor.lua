@@ -12,21 +12,8 @@
 -- Guideline: "If in doubt, put it in the runtime".
 --
 -- Most functions should live directly in `vim.`, not in submodules.
--- The only "forbidden" names are those claimed by legacy `if_lua`:
---    $ vim
---    :lua for k,v in pairs(vim) do print(k) end
---    buffer
---    open
---    window
---    lastline
---    firstline
---    type
---    line
---    eval
---    dict
---    beep
---    list
---    command
+--
+-- Compatibility with Vim's `if_lua` is explicitly a non-goal.
 --
 -- Reference (#6580):
 --    - https://github.com/luafun/luafun
@@ -35,8 +22,6 @@
 --    - https://github.com/torch/paths
 --    - https://github.com/bakpakin/Fennel (pretty print, repl)
 --    - https://github.com/howl-editor/howl/tree/master/lib/howl/util
-
-local vim = assert(vim)
 
 -- These are for loading runtime modules lazily since they aren't available in
 -- the nvim binary as specified in executor.c
@@ -122,9 +107,7 @@ function vim._os_proc_children(ppid)
   return children
 end
 
--- TODO(ZyX-I): Create compatibility layer.
-
---- Return a human-readable representation of the given object.
+--- Gets a human-readable representation of the given object.
 ---
 ---@see https://github.com/kikito/inspect.lua
 ---@see https://github.com/mpeterv/vinspect

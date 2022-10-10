@@ -643,6 +643,9 @@ Options:
   *'ttytype'* *'tty'*
   weirdinvert
 
+Performance:
+  Folds are not updated during insert-mode.
+
 Startup:
   --literal (file args are always literal; to expand wildcards on Windows, use
     |:n| e.g. `nvim +"n *"`)

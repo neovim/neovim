@@ -231,6 +231,15 @@ As Nvim evolves the API may change in compliance with this CONTRACT:
   - Existing items will not be removed (after release).
 - Deprecated functions will not be removed until Nvim version 2.0
 
+"Private" interfaces are NOT covered by this contract:
+
+- Undocumented (not in :help) functions or events of any kind
+- nvim__x ("double underscore") functions
+
+The idea is "versionless evolution", in the words of Rich Hickey:
+- Relaxing a requirement should be a compatible change.
+- Strengthening a promise should be a compatible change.
+
 ==============================================================================
 Global events                                               *api-global-events*
 
@@ -649,7 +658,7 @@ nvim_chan_send({chan}, {data})                              *nvim_chan_send()*
 
     Attributes: ~
         |RPC| only
-        |vim.api| only
+        Lua |vim.api| only
 
     Parameters: ~
       • {chan}  id of the channel
@@ -2097,7 +2106,7 @@ nvim_buf_call({buffer}, {fun})                               *nvim_buf_call()*
     buffer/window currently, like |termopen()|.
 
     Attributes: ~
-        |vim.api| only
+        Lua |vim.api| only
 
     Parameters: ~
       • {buffer}  Buffer handle, or 0 for current buffer
@@ -2356,6 +2365,9 @@ nvim_buf_set_lines({buffer}, {start}, {end}, {strict_indexing}, {replacement})
       • {strict_indexing}  Whether out-of-bounds should be an error.
       • {replacement}      Array of lines to use as replacement
 
+    See also: ~
+        |nvim_buf_set_text()|
+
                                                          *nvim_buf_set_mark()*
 nvim_buf_set_mark({buffer}, {name}, {line}, {col}, {opts})
     Sets a named mark in the given buffer, all marks are allowed
@@ -2413,6 +2425,9 @@ nvim_buf_set_text({buffer}, {start_row}, {start_col}, {end_row}, {end_col},
       • {end_row}      Last line index, inclusive
       • {end_col}      Ending column (byte offset) on last line, exclusive
       • {replacement}  Array of lines to use as replacement
+
+    See also: ~
+        |nvim_buf_set_lines()|
 
 nvim_buf_set_var({buffer}, {name}, {value})               *nvim_buf_set_var()*
     Sets a buffer-scoped (b:) variable
@@ -2714,7 +2729,7 @@ nvim_set_decoration_provider({ns_id}, {*opts})
     quite dubious for the moment.
 
     Attributes: ~
-        |vim.api| only
+        Lua |vim.api| only
 
     Parameters: ~
       • {ns_id}  Namespace id from |nvim_create_namespace()|
@@ -2738,7 +2753,7 @@ nvim_win_call({window}, {fun})                               *nvim_win_call()*
     Calls a function with window as temporary current window.
 
     Attributes: ~
-        |vim.api| only
+        Lua |vim.api| only
 
     Parameters: ~
       • {window}  Window handle, or 0 for current window
@@ -2782,7 +2797,9 @@ nvim_win_get_buf({window})                                *nvim_win_get_buf()*
         Buffer handle
 
 nvim_win_get_cursor({window})                          *nvim_win_get_cursor()*
-    Gets the (1,0)-indexed cursor position in the window. |api-indexing|
+    Gets the (1,0)-indexed, buffer-relative cursor position for a given window
+    (different windows showing the same buffer have independent cursor
+    positions). |api-indexing|
 
     Parameters: ~
       • {window}  Window handle, or 0 for current window

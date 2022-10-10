@@ -2277,7 +2277,7 @@ describe('API', function()
       eq({'a', '', 'b'}, meths.list_runtime_paths())
       meths.set_option('runtimepath', ',a,b')
       eq({'', 'a', 'b'}, meths.list_runtime_paths())
-      -- trailing , is ignored, use ,, if you really really want $CWD
+      -- Trailing "," is ignored. Use ",," if you really really want CWD.
       meths.set_option('runtimepath', 'a,b,')
       eq({'a', 'b'}, meths.list_runtime_paths())
       meths.set_option('runtimepath', 'a,b,,')

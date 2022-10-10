@@ -6,7 +6,7 @@
 -- or the test suite. (Eventually the test suite will be run in a worker process,
 -- so this wouldn't be a separate case to consider)
 
-local vim = vim or {}
+vim = vim or {}
 
 --- Returns a deep copy of the given object. Non-table objects are copied as
 --- in a typical Lua assignment, whereas table objects are copied recursively.
@@ -100,10 +100,10 @@ end
 ---
 --- Examples:
 --- <pre>
----  split(":aa::b:", ":")     --> {'','aa','','b',''}
----  split("axaby", "ab?")     --> {'','x','y'}
----  split("x*yz*o", "*", {plain=true})  --> {'x','yz','o'}
----  split("|x|y|z|", "|", {trimempty=true}) --> {'x', 'y', 'z'}
+---  split(":aa::b:", ":")     => {'','aa','','b',''}
+---  split("axaby", "ab?")     => {'','x','y'}
+---  split("x*yz*o", "*", {plain=true})  => {'x','yz','o'}
+---  split("|x|y|z|", "|", {trimempty=true}) => {'x', 'y', 'z'}
 --- </pre>
 ---
 ---@see |vim.gsplit()|

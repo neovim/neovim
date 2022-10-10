@@ -7,6 +7,7 @@ CheckOption linebreak
 CheckFeature conceal
 
 source view_util.vim
+source screendump.vim
 
 function s:screen_lines(lnum, width) abort
   return ScreenLines(a:lnum, a:width)
@@ -131,6 +132,45 @@ func Test_linebreak_with_visual_operations()
   call assert_equal('BBBb', @@)
 
   call s:close_windows()
+endfunc
+
+" Test that cursor is drawn at correct position after an operator when
+" 'linebreak' is enabled.
+func Test_linebreak_reset_restore()
+  CheckScreendump
+
+  " f_wincol() calls validate_cursor()
+  let lines =<< trim END
+    set linebreak showcmd noshowmode formatexpr=wincol()-wincol()
+    call setline(1, repeat('a', &columns - 10) .. ' bbbbbbbbbb c')
+  END
+  call writefile(lines, 'XlbrResetRestore', 'D')
+  let buf = RunVimInTerminal('-S XlbrResetRestore', {'rows': 8})
+
+  call term_sendkeys(buf, '$v$')
+  call WaitForAssert({-> assert_equal(13, term_getcursor(buf)[1])})
+  call term_sendkeys(buf, 'zo')
+  call WaitForAssert({-> assert_equal(12, term_getcursor(buf)[1])})
+
+  call term_sendkeys(buf, '$v$')
+  call WaitForAssert({-> assert_equal(13, term_getcursor(buf)[1])})
+  call term_sendkeys(buf, 'gq')
+  call WaitForAssert({-> assert_equal(12, term_getcursor(buf)[1])})
+
+  call term_sendkeys(buf, "$\<C-V>$")
+  call WaitForAssert({-> assert_equal(13, term_getcursor(buf)[1])})
+  call term_sendkeys(buf, 'I')
+  call WaitForAssert({-> assert_equal(12, term_getcursor(buf)[1])})
+
+  call term_sendkeys(buf, "\<Esc>$v$")
+  call WaitForAssert({-> assert_equal(13, term_getcursor(buf)[1])})
+  call term_sendkeys(buf, 's')
+  call WaitForAssert({-> assert_equal(12, term_getcursor(buf)[1])})
+  call VerifyScreenDump(buf, 'Test_linebreak_reset_restore_1', {})
+
+  " clean up
+  call term_sendkeys(buf, "\<Esc>")
+  call StopVimInTerminal(buf)
 endfunc
 
 func Test_virtual_block()

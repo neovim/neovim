@@ -355,6 +355,8 @@ static bool check_string_array(Array arr, bool disallow_nl, Error *err)
 /// Out-of-bounds indices are clamped to the nearest valid value, unless
 /// `strict_indexing` is set.
 ///
+/// @see |nvim_buf_set_text()|
+///
 /// @param channel_id
 /// @param buffer           Buffer handle, or 0 for current buffer
 /// @param start            First line index
@@ -526,6 +528,8 @@ end:
 /// `replacement = {}`.
 ///
 /// Prefer |nvim_buf_set_lines()| if you are only adding or deleting entire lines.
+///
+/// @see |nvim_buf_set_lines()|
 ///
 /// @param channel_id
 /// @param buffer           Buffer handle, or 0 for current buffer

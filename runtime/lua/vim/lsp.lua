@@ -5,7 +5,6 @@ local protocol = require('vim.lsp.protocol')
 local util = require('vim.lsp.util')
 local sync = require('vim.lsp.sync')
 
-local vim = vim
 local api = vim.api
 local nvim_err_writeln, nvim_buf_get_lines, nvim_command, nvim_buf_get_option, nvim_exec_autocmds =
   api.nvim_err_writeln,

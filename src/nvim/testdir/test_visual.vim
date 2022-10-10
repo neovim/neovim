@@ -1492,5 +1492,4 @@ func Test_switch_buffer_ends_visual_mode()
   exe 'bwipe!' buf2
 endfunc
 
-
 " vim: shiftwidth=2 sts=2 expandtab

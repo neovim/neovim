@@ -131,6 +131,7 @@ DOCUMENTATION						*dev-doc*
   (docstrings, user manual, website materials, newsletters, …). Don't mince
   words. Personality and flavor, used sparingly, are welcome--but in general,
   optimize for the reader's time and energy: be "precise yet concise".
+    - See https://developers.google.com/style/tone
     - Prefer the active voice: "Foo does X", not "X is done by Foo".
 - Vim differences:
     - Do not prefix help tags with "nvim-". Use |vim_diff.txt| to catalog
@@ -144,11 +145,11 @@ DOCUMENTATION						*dev-doc*
     - Use "tui-" to prefix help tags related to the host terminal, and "TUI"
       in prose if possible.
 - Docstrings: do not start parameter descriptions with "The" or "A" unless it
-  is critical to avoid ambiguity.
-      GOOD: >
-      /// @param dirname Path fragment before `pend`
-<      BAD: >
-      /// @param dirname The path fragment before `pend`
+  is critical to avoid ambiguity. >
+    GOOD:
+    /// @param dirname Path fragment before `pend`
+    BAD:
+    /// @param dirname The path fragment before `pend`
 <
 
 Documentation format ~
@@ -163,6 +164,9 @@ Strict "vimdoc" subset:
   that you don't want auto-wrapped. Lists are always rendered with "flow"
   (soft-wrapped) layout instead of preformatted (hard-wrapped) layout common
   in legacy :help docs.
+  - Limitation: currently the parser https://github.com/neovim/tree-sitter-vimdoc
+    does not understand numbered listitems, so use a bullet symbol (- or •)
+    before numbered items, e.g. "- 1." instead of "1.".
 - Separate blocks (paragraphs) of content by a blank line(s).
 - Do not use indentation in random places—that prevents the page from using
   "flow" layout. If you need a preformatted section, put it in
@@ -180,7 +184,7 @@ Docstring format:
   `@note`, `@param`, `@returns`
 - Limited markdown is supported.
   - List-items start with `-` (useful to nest or "indent")
-- Use `<pre>`  for code samples.
+- Use `<pre>` for code samples.
 
 Example: the help for |nvim_open_win()| is generated from a docstring defined
 in src/nvim/api/win_config.c like this: >
@@ -218,7 +222,7 @@ Docstring format:
   `---@see`, `---@param`, `---@returns`
 - Limited markdown is supported.
   - List-items start with `-` (useful to nest or "indent")
-- Use `<pre>`  for code samples.
+- Use `<pre>` for code samples.
 
 Example: the help for |vim.paste()| is generated from a docstring decorating
 vim.paste in runtime/lua/vim/_editor.lua like this: >
@@ -251,7 +255,8 @@ LUA							*dev-lua*
 
 API							*dev-api*
 
-Use this template to name new RPC |API| functions:
+Use this format to name new RPC |API| functions:
+
     nvim_{thing}_{action}_{arbitrary-qualifiers}
 
 If the function acts on an object then {thing} is the name of that object
@@ -260,37 +265,50 @@ If the function acts on an object then {thing} is the name of that object
 with a {thing} that groups functions under a common concept).
 
 Use existing common {action} names if possible:
-    add     Append to, or insert into, a collection
-    create  Create a new thing
-    del     Delete a thing (or group of things)
-    exec    Execute code
-    get     Get a thing (or group of things by query)
-    list    Get all things
-    set     Set a thing (or group of things)
+    - add       Append to, or insert into, a collection
+    - call      Call a function
+    - create    Create a new (non-trivial) thing
+    - del       Delete a thing (or group of things)
+    - eval      Evaluate an expression
+    - exec      Execute code
+    - fmt       Format
+    - get       Get things (often by a query)
+    - open      Open
+    - parse     Parse something into a structured form
+    - set       Set a thing (or group of things)
 
-Use existing common {thing} names if possible:
-    buf     Buffer
-    pos     Position
-    tab     Tabpage
-    win     Window
+Do NOT use these deprecated verbs:
+    - list      Redundant with "get"
 
-Use consistent names for {thing} in all API functions. E.g. a buffer is called
+Use consistent names for {thing} (nouns) in API functions: buffer is called
 "buf" everywhere, not "buffer" in some places and "buf" in others.
+    - buf       Buffer
+    - chan      |channel|
+    - cmd       Command
+    - cmdline   Command-line UI or input
+    - fn        Function
+    - hl        Highlight
+    - pos       Position
+    - proc      System process
+    - tabpage   Tabpage
+    - win       Window
+
+Do NOT use these deprecated nouns:
+    - buffer
+    - command
+    - window
 
 Example:
-    `nvim_get_current_line` acts on the global editor state; the common
-    {action} "get" is used but {thing} is omitted.
+    `nvim_get_keymap('v')` operates in a global context (first parameter is not
+    a Buffer). The "get" {action} indicates that it gets anything matching the
+    given filter parameter. There is no need for a "list" action because
+    `nvim_get_keymap('')` (i.e., empty filter) returns all items.
 
 Example:
-    `nvim_buf_add_highlight` acts on a `Buffer` object (the first parameter)
-    and uses the common {action} "add".
+    `nvim_buf_del_mark` acts on a `Buffer` object (the first parameter)
+    and uses the "del" {action}.
 
-Example:
-    `nvim_list_bufs` operates in a global context (first parameter is not
-    a Buffer). The common {action} "list" indicates that it lists all bufs
-    (plural) in the global context.
-
-Use this template to name new API events:
+Use this format to name new API events:
     nvim_{thing}_{event}_event
 
 Example:
@@ -332,10 +350,10 @@ a good name: it's idiomatic and unambiguous. If the package is named "neovim",
 it confuses users, and complicates documentation and discussions.
 
 Examples of API-client package names:
-        GOOD: nvim-racket
-        GOOD: pynvim
-        BAD:  python-client
-        BAD:  neovim
+- GOOD: nvim-racket
+- GOOD: pynvim
+- BAD:  python-client
+- BAD:  neovim
 
 API client implementation guidelines ~
 
@@ -401,4 +419,4 @@ Use the "on_" prefix to name event handlers and also the interface for
 a confused collection of naming conventions for these related concepts.
 
 
- vim:tw=78:ts=8:noet:ft=help:norl:
+ vim:tw=78:ts=8:sw=4:et:ft=help:norl:

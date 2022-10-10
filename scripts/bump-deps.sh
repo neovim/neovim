@@ -17,9 +17,13 @@ BASENAME="$(basename "${0}")"
 readonly BASENAME
 
 usage() {
-  echo "Bump Neovim dependencies"
+  echo "Bump Nvim dependencies"
   echo
   echo "Usage:  ${BASENAME} [ -h | --pr | --branch=<dep> | --dep=<dependency> ]"
+  echo "    Update a dependency:"
+  echo "        ./scripts/bump-deps.sh --dep Luv --version 1.43.0-0"
+  echo "    Create a PR:"
+  echo "        ./scripts/bump-deps.sh --pr"
   echo
   echo "Options:"
   echo "    -h                    show this message and exit."

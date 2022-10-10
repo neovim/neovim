@@ -1,6 +1,5 @@
 local protocol = require('vim.lsp.protocol')
 local snippet = require('vim.lsp._snippet')
-local vim = vim
 local validate = vim.validate
 local api = vim.api
 local list_extend = vim.list_extend
