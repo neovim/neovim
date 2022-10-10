@@ -1270,7 +1270,7 @@ static void f_ctxsize(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 /// Otherwise use the column number as a byte offset.
 static void set_cursorpos(typval_T *argvars, typval_T *rettv, bool charcol)
 {
-  long line, col;
+  long lnum, col;
   long coladd = 0;
   bool set_curswant = true;
 
@@ -1284,7 +1284,7 @@ static void set_cursorpos(typval_T *argvars, typval_T *rettv, bool charcol)
       return;
     }
 
-    line = pos.lnum;
+    lnum = pos.lnum;
     col = pos.col;
     coladd = pos.coladd;
     if (curswant >= 0) {
@@ -1293,13 +1293,15 @@ static void set_cursorpos(typval_T *argvars, typval_T *rettv, bool charcol)
     }
   } else if ((argvars[0].v_type == VAR_NUMBER || argvars[0].v_type == VAR_STRING)
              && (argvars[1].v_type == VAR_NUMBER || argvars[1].v_type == VAR_STRING)) {
-    line = tv_get_lnum(argvars);
-    if (line < 0) {
+    lnum = tv_get_lnum(argvars);
+    if (lnum < 0) {
       semsg(_(e_invarg2), tv_get_string(&argvars[0]));
+    } else if (lnum == 0) {
+      lnum = curwin->w_cursor.lnum;
     }
     col = (long)tv_get_number_chk(&argvars[1], NULL);
     if (charcol) {
-      col = buf_charidx_to_byteidx(curbuf, (linenr_T)line, (int)col) + 1;
+      col = buf_charidx_to_byteidx(curbuf, (linenr_T)lnum, (int)col) + 1;
     }
     if (argvars[2].v_type != VAR_UNKNOWN) {
       coladd = (long)tv_get_number_chk(&argvars[2], NULL);
@@ -1308,11 +1310,11 @@ static void set_cursorpos(typval_T *argvars, typval_T *rettv, bool charcol)
     emsg(_(e_invarg));
     return;
   }
-  if (line < 0 || col < 0 || coladd < 0) {
+  if (lnum < 0 || col < 0 || coladd < 0) {
     return;  // type error; errmsg already given
   }
-  if (line > 0) {
-    curwin->w_cursor.lnum = (linenr_T)line;
+  if (lnum > 0) {
+    curwin->w_cursor.lnum = (linenr_T)lnum;
   }
   if (col > 0) {
     curwin->w_cursor.col = (colnr_T)col - 1;

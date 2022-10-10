@@ -353,8 +353,14 @@ func Test_setcursorcharpos()
   normal G
   call setcursorcharpos([1, 1])
   call assert_equal([1, 1], [line('.'), col('.')])
+
   call setcursorcharpos([2, 7, 0])
   call assert_equal([2, 9], [line('.'), col('.')])
+  call setcursorcharpos([0, 7, 0])
+  call assert_equal([2, 9], [line('.'), col('.')])
+  call setcursorcharpos(0, 7, 0)
+  call assert_equal([2, 9], [line('.'), col('.')])
+
   call setcursorcharpos(3, 4)
   call assert_equal([3, 1], [line('.'), col('.')])
   call setcursorcharpos([3, 1])
