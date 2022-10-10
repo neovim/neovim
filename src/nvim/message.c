@@ -658,7 +658,7 @@ static bool emsg_multiline(const char *s, bool multiline)
     // interrupt message).
     if (cause_errthrow(s, severe, &ignore)) {
       if (!ignore) {
-        did_emsg = true;
+        did_emsg++;
       }
       return true;
     }
@@ -721,7 +721,7 @@ static bool emsg_multiline(const char *s, bool multiline)
     } else {
       flush_buffers(FLUSH_MINIMAL);  // flush internal buffers
     }
-    did_emsg = true;               // flag for DoOneCmd()
+    did_emsg++;               // flag for DoOneCmd()
   }
 
   emsg_on_display = true;     // remember there is an error message

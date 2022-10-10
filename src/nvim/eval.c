@@ -6454,10 +6454,13 @@ pos_T *var2fpos(const typval_T *const tv, const bool dollar_lnum, int *const ret
   return NULL;
 }
 
-/// Convert list in "arg" into a position and optional file number.
-/// When "fnump" is NULL there is no file number, only 3 items.
+/// Convert list in "arg" into position "posp" and optional file number "fnump".
+/// When "fnump" is NULL there is no file number, only 3 items: [lnum, col, off]
 /// Note that the column is passed on as-is, the caller may want to decrement
 /// it to use 1 for the first column.
+///
+/// @param charcol  if true, use the column as the character index instead of the
+///                 byte index.
 ///
 /// @return  FAIL when conversion is not possible, doesn't check the position for
 ///          validity.
@@ -6498,13 +6501,16 @@ int list2fpos(typval_T *arg, pos_T *posp, int *fnump, colnr_T *curswantp, bool c
     return FAIL;
   }
   // If character position is specified, then convert to byte position
+  // If the line number is zero use the cursor line.
   if (charcol) {
     // Get the text for the specified line in a loaded buffer
     buf_T *buf = buflist_findnr(fnump == NULL ? curbuf->b_fnum : *fnump);
     if (buf == NULL || buf->b_ml.ml_mfp == NULL) {
       return FAIL;
     }
-    n = buf_charidx_to_byteidx(buf, posp->lnum, (int)n) + 1;
+    n = buf_charidx_to_byteidx(buf,
+                               posp->lnum == 0 ? curwin->w_cursor.lnum : posp->lnum,
+                               (int)n) + 1;
   }
   posp->col = (colnr_T)n;
 
