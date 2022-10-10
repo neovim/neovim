@@ -137,7 +137,7 @@ static int tfu_in_use = false;  // disallow recursive call of tagfunc
 /// @param tag  tag (pattern) to jump to
 /// @param forceit  :ta with !
 /// @param verbose  print "tag not found" message
-bool do_tag(char *tag, int type, int count, int forceit, int verbose)
+void do_tag(char *tag, int type, int count, int forceit, int verbose)
 {
   taggy_T *tagstack = curwin->w_tagstack;
   int tagstackidx = curwin->w_tagstackidx;
@@ -154,7 +154,6 @@ bool do_tag(char *tag, int type, int count, int forceit, int verbose)
   int error_cur_match = 0;
   int save_pos = false;
   fmark_T saved_fmark;
-  bool jumped_to_tag = false;
   int new_num_matches;
   char **new_matches;
   int use_tagstack;
@@ -170,7 +169,7 @@ bool do_tag(char *tag, int type, int count, int forceit, int verbose)
 
   if (tfu_in_use) {
     emsg(_(recurmsg));
-    return false;
+    return;
   }
 
 #ifdef EXITFREE
@@ -178,7 +177,7 @@ bool do_tag(char *tag, int type, int count, int forceit, int verbose)
     // remove the list of matches
     FreeWild(num_matches, matches);
     num_matches = 0;
-    return false;
+    return;
   }
 #endif
 
@@ -522,7 +521,6 @@ bool do_tag(char *tag, int type, int count, int forceit, int verbose)
             tagstack[tagstackidx].fmark = saved_fmark;
             tagstackidx = prevtagstackidx;
           }
-          jumped_to_tag = true;
           break;
         }
         cur_match = i - 1;
@@ -633,7 +631,6 @@ bool do_tag(char *tag, int type, int count, int forceit, int verbose)
         if (use_tagstack && tagstackidx > curwin->w_tagstacklen) {
           tagstackidx = curwin->w_tagstackidx;
         }
-        jumped_to_tag = true;
       }
     }
     break;
@@ -647,7 +644,7 @@ end_do_tag:
   postponed_split = 0;          // don't split next time
   g_do_tagpreview = 0;          // don't do tag preview next time
 
-  return jumped_to_tag;
+  return;
 }
 
 // List all the matching tags.
