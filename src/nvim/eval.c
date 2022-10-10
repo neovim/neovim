@@ -3476,14 +3476,14 @@ static int eval_index(char **arg, typval_T *rettv, int evaluate, int verbose)
   if (evaluate) {
     n1 = 0;
     if (!empty1 && rettv->v_type != VAR_DICT && !tv_is_luafunc(rettv)) {
-      n1 = tv_get_number(&var1);
+      n1 = (long)tv_get_number(&var1);
       tv_clear(&var1);
     }
     if (range) {
       if (empty2) {
         n2 = -1;
       } else {
-        n2 = tv_get_number(&var2);
+        n2 = (long)tv_get_number(&var2);
         tv_clear(&var2);
       }
     }
@@ -3765,7 +3765,7 @@ static int get_string_tv(char **arg, typval_T *rettv, int evaluate)
 
   // Copy the string into allocated memory, handling backslashed
   // characters.
-  const int len = (int)(p - *arg + extra);
+  const int len = (int)(p - *arg + (int)extra);
   char *name = xmalloc((size_t)len);
   rettv->v_type = VAR_STRING;
   rettv->vval.v_string = name;
@@ -5298,7 +5298,7 @@ win_T *find_tabwin(typval_T *wvp, typval_T *tvp)
 
   if (wvp->v_type != VAR_UNKNOWN) {
     if (tvp->v_type != VAR_UNKNOWN) {
-      long n = tv_get_number(tvp);
+      long n = (long)tv_get_number(tvp);
       if (n >= 0) {
         tp = find_tabpage((int)n);
       }
@@ -5966,7 +5966,7 @@ void add_timer_info(typval_T *rettv, timer_T *timer)
 
 void add_timer_info_all(typval_T *rettv)
 {
-  tv_list_alloc_ret(rettv, map_size(&timers));
+  tv_list_alloc_ret(rettv, (ptrdiff_t)map_size(&timers));
   timer_T *timer;
   map_foreach_value(&timers, timer, {
     if (!timer->stopped) {
@@ -6509,23 +6509,23 @@ int list2fpos(typval_T *arg, pos_T *posp, int *fnump, colnr_T *curswantp, bool c
   int i = 0;
   long n;
   if (fnump != NULL) {
-    n = tv_list_find_nr(l, i++, NULL);  // fnum
+    n = (long)tv_list_find_nr(l, i++, NULL);  // fnum
     if (n < 0) {
       return FAIL;
     }
     if (n == 0) {
-      n = curbuf->b_fnum;  // Current buffer.
+      n = (long)curbuf->b_fnum;  // Current buffer.
     }
     *fnump = (int)n;
   }
 
-  n = tv_list_find_nr(l, i++, NULL);  // lnum
+  n = (long)tv_list_find_nr(l, i++, NULL);  // lnum
   if (n < 0) {
     return FAIL;
   }
   posp->lnum = (linenr_T)n;
 
-  n = tv_list_find_nr(l, i++, NULL);  // col
+  n = (long)tv_list_find_nr(l, i++, NULL);  // col
   if (n < 0) {
     return FAIL;
   }
@@ -6543,7 +6543,7 @@ int list2fpos(typval_T *arg, pos_T *posp, int *fnump, colnr_T *curswantp, bool c
   }
   posp->col = (colnr_T)n;
 
-  n = tv_list_find_nr(l, i, NULL);  // off
+  n = (long)tv_list_find_nr(l, i, NULL);  // off
   if (n < 0) {
     posp->coladd = 0;
   } else {

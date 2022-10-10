@@ -497,7 +497,7 @@ String nvim_cmd(uint64_t channel_id, Dict(cmd) *cmd, Dict(cmd_opts) *opts, Error
     } else if (cmd->count.type != kObjectTypeInteger || cmd->count.data.integer < 0) {
       VALIDATION_ERROR("'count' must be a non-negative Integer");
     }
-    set_cmd_count(&ea, cmd->count.data.integer, true);
+    set_cmd_count(&ea, (long)cmd->count.data.integer, true);
   }
 
   if (HAS_KEY(cmd->reg)) {
@@ -1064,7 +1064,7 @@ void create_user_command(String name, Object command, Dict(user_command) *opts, 
     }
   } else if (opts->range.type == kObjectTypeInteger) {
     argt |= EX_RANGE | EX_ZEROR;
-    def = opts->range.data.integer;
+    def = (long)opts->range.data.integer;
     addr_type_arg = ADDR_LINES;
   } else if (HAS_KEY(opts->range)) {
     api_set_error(err, kErrorTypeValidation, "Invalid value for 'range'");
@@ -1080,7 +1080,7 @@ void create_user_command(String name, Object command, Dict(user_command) *opts, 
   } else if (opts->count.type == kObjectTypeInteger) {
     argt |= EX_COUNT | EX_ZEROR | EX_RANGE;
     addr_type_arg = ADDR_OTHER;
-    def = opts->count.data.integer;
+    def = (long)opts->count.data.integer;
   } else if (HAS_KEY(opts->count)) {
     api_set_error(err, kErrorTypeValidation, "Invalid value for 'count'");
     goto err;

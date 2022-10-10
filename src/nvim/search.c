@@ -1250,7 +1250,7 @@ int do_search(oparg_T *oap, int dirc, int search_delim, char_u *pat, long count,
     // compatible.
     if (!spats[0].off.line && spats[0].off.off && pos.col < MAXCOL - 2) {
       if (spats[0].off.off > 0) {
-        for (c = spats[0].off.off; c; c--) {
+        for (c = (long)spats[0].off.off; c; c--) {
           if (decl(&pos) == -1) {
             break;
           }
@@ -1260,7 +1260,7 @@ int do_search(oparg_T *oap, int dirc, int search_delim, char_u *pat, long count,
           pos.col = MAXCOL;
         }
       } else {
-        for (c = spats[0].off.off; c; c++) {
+        for (c = (long)spats[0].off.off; c; c++) {
           if (incl(&pos) == -1) {
             break;
           }
@@ -1309,7 +1309,7 @@ int do_search(oparg_T *oap, int dirc, int search_delim, char_u *pat, long count,
       pos_T org_pos = pos;
 
       if (spats[0].off.line) {  // Add the offset to the line number.
-        c = pos.lnum + spats[0].off.off;
+        c = pos.lnum + (long)spats[0].off.off;
         if (c < 1) {
           pos.lnum = 1;
         } else if (c > curbuf->b_ml.ml_line_count) {
@@ -1322,7 +1322,7 @@ int do_search(oparg_T *oap, int dirc, int search_delim, char_u *pat, long count,
         retval = 2;                 // pattern found, line offset added
       } else if (pos.col < MAXCOL - 2) {      // just in case
         // to the right, check for end of file
-        c = spats[0].off.off;
+        c = (long)spats[0].off.off;
         if (c > 0) {
           while (c-- > 0) {
             if (incl(&pos) == -1) {

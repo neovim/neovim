@@ -3090,7 +3090,7 @@ void ex_z(exarg_T *eap)
       bigness = 2 * curbuf->b_ml.ml_line_count;
     }
 
-    p_window = bigness;
+    p_window = (long)bigness;
     if (*kind == '=') {
       bigness += 2;
     }

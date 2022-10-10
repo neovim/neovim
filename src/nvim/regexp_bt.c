@@ -2593,7 +2593,7 @@ static char_u *regpiece(int *flagp)
       if (nr < 0) {
         nr = 0;                 // no limit is same as zero limit
       }
-      reginsert_nr(lop, (uint32_t)nr, ret);
+      reginsert_nr(lop, (long)nr, ret);
     } else {
       reginsert(lop, ret);
     }

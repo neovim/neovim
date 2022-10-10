@@ -285,7 +285,7 @@ int ml_open(buf_T *buf)
     b0p->b0_uname[B0_UNAME_SIZE - 1] = NUL;
     os_get_hostname((char *)b0p->b0_hname, B0_HNAME_SIZE);
     b0p->b0_hname[B0_HNAME_SIZE - 1] = NUL;
-    long_to_char(os_get_pid(), b0p->b0_pid);
+    long_to_char((long)os_get_pid(), b0p->b0_pid);
   }
 
   // Always sync block number 0 to disk, so we can check the file name in
@@ -833,7 +833,7 @@ void ml_recover(bool checkext)
     if ((size = vim_lseek(mfp->mf_fd, (off_T)0L, SEEK_END)) <= 0) {
       mfp->mf_blocknr_max = 0;              // no file or empty file
     } else {
-      mfp->mf_blocknr_max = size / mfp->mf_page_size;
+      mfp->mf_blocknr_max = (blocknr_T)size / mfp->mf_page_size;
     }
     mfp->mf_infile_count = mfp->mf_blocknr_max;
 
@@ -2378,9 +2378,9 @@ static int ml_delete_int(buf_T *buf, linenr_T lnum, bool message)
   int line_start = ((dp->db_index[idx]) & DB_INDEX_MASK);
   long line_size;
   if (idx == 0) {               // first line in block, text at the end
-    line_size = dp->db_txt_end - (unsigned)line_start;
+    line_size = (long)dp->db_txt_end - line_start;
   } else {
-    line_size = ((dp->db_index[idx - 1]) & DB_INDEX_MASK) - (unsigned)line_start;
+    line_size = (long)((dp->db_index[idx - 1]) & DB_INDEX_MASK) - line_start;
   }
 
   // Line should always have an NL char internally (represented as NUL),
@@ -3477,11 +3477,11 @@ static bool fnamecmp_ino(char *fname_c, char *fname_s, long ino_block0)
 static void long_to_char(long n, char_u *s)
 {
   s[0] = (char_u)(n & 0xff);
-  n = (unsigned)n >> 8;
+  n = (long)((unsigned)n >> 8);
   s[1] = (char_u)(n & 0xff);
-  n = (unsigned)n >> 8;
+  n = (long)((unsigned)n >> 8);
   s[2] = (char_u)(n & 0xff);
-  n = (unsigned)n >> 8;
+  n = (long)((unsigned)n >> 8);
   s[3] = (char_u)(n & 0xff);
 }
 

@@ -2759,9 +2759,9 @@ void f_setcellwidths(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
       xfree(table);
       return;
     }
-    table[item].first = n1;
+    table[item].first = (long)n1;
     lili = TV_LIST_ITEM_NEXT(li_l, lili);
-    table[item].last = TV_LIST_ITEM_TV(lili)->vval.v_number;
+    table[item].last = (long)TV_LIST_ITEM_TV(lili)->vval.v_number;
     lili = TV_LIST_ITEM_NEXT(li_l, lili);
     table[item].width = (char)TV_LIST_ITEM_TV(lili)->vval.v_number;
   }

@@ -901,7 +901,7 @@ void tv_list_remove(typval_T *argvars, typval_T *rettv, const char *arg_errmsg)
     return;
   }
 
-  long idx = tv_get_number_chk(&argvars[1], &error);
+  long idx = (long)tv_get_number_chk(&argvars[1], &error);
 
   listitem_T *item;
 
@@ -918,7 +918,7 @@ void tv_list_remove(typval_T *argvars, typval_T *rettv, const char *arg_errmsg)
     } else {
       listitem_T *item2;
       // Remove range of items, return list with values.
-      long end = tv_get_number_chk(&argvars[2], &error);
+      long end = (long)tv_get_number_chk(&argvars[2], &error);
       if (error) {
         // Type error: do nothing.
       } else if ((item2 = tv_list_find(l, (int)end)) == NULL) {
@@ -1180,7 +1180,7 @@ static void do_sort_uniq(typval_T *argvars, typval_T *rettv, bool sort)
       } else {
         bool error = false;
 
-        i = tv_get_number_chk(&argvars[1], &error);
+        i = (long)tv_get_number_chk(&argvars[1], &error);
         if (error) {
           goto theend;  // type error; errmsg already given
         }
@@ -2686,7 +2686,7 @@ void tv_blob_remove(typval_T *argvars, typval_T *rettv, const char *arg_errmsg)
   }
 
   bool error = false;
-  long idx = tv_get_number_chk(&argvars[1], &error);
+  long idx = (long)tv_get_number_chk(&argvars[1], &error);
 
   if (!error) {
     const int len = tv_blob_len(b);
@@ -2707,7 +2707,7 @@ void tv_blob_remove(typval_T *argvars, typval_T *rettv, const char *arg_errmsg)
       b->bv_ga.ga_len--;
     } else {
       // Remove range of items, return blob with values.
-      long end = tv_get_number_chk(&argvars[2], &error);
+      long end = (long)tv_get_number_chk(&argvars[2], &error);
       if (error) {
         return;
       }

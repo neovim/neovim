@@ -270,7 +270,7 @@ int tslua_inspect_lang(lua_State *L)
   lua_setfield(L, -2, "fields");  // [retval]
 
   uint32_t lang_version = ts_language_version(lang);
-  lua_pushinteger(L, lang_version);  // [retval, version]
+  lua_pushinteger(L, (lua_Integer)lang_version);  // [retval, version]
   lua_setfield(L, -2, "_abi_version");
 
   return 1;
@@ -359,13 +359,13 @@ static void push_ranges(lua_State *L, const TSRange *ranges, const size_t length
   lua_createtable(L, (int)length, 0);
   for (size_t i = 0; i < length; i++) {
     lua_createtable(L, 4, 0);
-    lua_pushinteger(L, ranges[i].start_point.row);
+    lua_pushinteger(L, (lua_Integer)ranges[i].start_point.row);
     lua_rawseti(L, -2, 1);
-    lua_pushinteger(L, ranges[i].start_point.column);
+    lua_pushinteger(L, (lua_Integer)ranges[i].start_point.column);
     lua_rawseti(L, -2, 2);
-    lua_pushinteger(L, ranges[i].end_point.row);
+    lua_pushinteger(L, (lua_Integer)ranges[i].end_point.row);
     lua_rawseti(L, -2, 3);
-    lua_pushinteger(L, ranges[i].end_point.column);
+    lua_pushinteger(L, (lua_Integer)ranges[i].end_point.column);
     lua_rawseti(L, -2, 4);
 
     lua_rawseti(L, -2, (int)(i + 1));
@@ -1167,7 +1167,7 @@ static int query_next_capture(lua_State *L)
     TSQueryCapture capture = match.captures[capture_index];
 
     // TODO(vigoux): handle capture quantifiers here
-    lua_pushinteger(L, capture.index + 1);  // [index]
+    lua_pushinteger(L, (lua_Integer)capture.index + 1);  // [index]
     push_node(L, capture.node, lua_upvalueindex(2));  // [index, node]
 
     // Now check if we need to run the predicates

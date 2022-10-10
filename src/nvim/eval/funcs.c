@@ -649,7 +649,7 @@ buf_T *get_buf_arg(typval_T *arg)
 /// "byte2line(byte)" function
 static void f_byte2line(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
-  long boff = tv_get_number(&argvars[0]) - 1;
+  long boff = (long)tv_get_number(&argvars[0]) - 1;
   if (boff < 0) {
     rettv->vval.v_number = -1;
   } else {
@@ -1101,7 +1101,7 @@ static void f_count(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
       listitem_T *li = tv_list_first(l);
       if (argvars[2].v_type != VAR_UNKNOWN) {
         if (argvars[3].v_type != VAR_UNKNOWN) {
-          long idx = tv_get_number_chk(&argvars[3], &error);
+          long idx = (long)tv_get_number_chk(&argvars[3], &error);
           if (!error) {
             li = tv_list_find(l, (int)idx);
             if (li == NULL) {
@@ -4126,7 +4126,7 @@ static void f_insert(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
                              N_("insert() argument"), TV_TRANSLATE)) {
     long before = 0;
     if (argvars[2].v_type != VAR_UNKNOWN) {
-      before = tv_get_number_chk(&argvars[2], &error);
+      before = (long)tv_get_number_chk(&argvars[2], &error);
     }
     if (error) {
       // type error; errmsg already given
@@ -4965,7 +4965,7 @@ static void find_some_match(typval_T *const argvars, typval_T *const rettv,
   if (argvars[2].v_type != VAR_UNKNOWN) {
     bool error = false;
 
-    start = tv_get_number_chk(&argvars[2], &error);
+    start = (long)tv_get_number_chk(&argvars[2], &error);
     if (error) {
       goto theend;
     }
@@ -4994,7 +4994,7 @@ static void find_some_match(typval_T *const argvars, typval_T *const rettv,
     }
 
     if (argvars[3].v_type != VAR_UNKNOWN) {
-      nth = tv_get_number_chk(&argvars[3], &error);
+      nth = (long)tv_get_number_chk(&argvars[3], &error);
     }
     if (error) {
       goto theend;
@@ -5845,7 +5845,7 @@ static void f_range(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   } else if (stride > 0 ? end + 1 < start : end - 1 > start) {
     emsg(_("E727: Start past end"));
   } else {
-    tv_list_alloc_ret(rettv, (end - start) / stride);
+    tv_list_alloc_ret(rettv, (ptrdiff_t)((end - start) / stride));
     for (varnumber_T i = start; stride > 0 ? i <= end : i >= end; i += stride) {
       tv_list_append_number(rettv->vval.v_list, i);
     }
@@ -5927,7 +5927,7 @@ static void read_file_or_blob(typval_T *argvars, typval_T *rettv, bool always_bl
       blob = true;
     }
     if (argvars[2].v_type != VAR_UNKNOWN) {
-      maxline = tv_get_number(&argvars[2]);
+      maxline = (long)tv_get_number(&argvars[2]);
     }
   }
 
@@ -6293,7 +6293,7 @@ static void f_repeat(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
   varnumber_T n = tv_get_number(&argvars[1]);
   if (argvars[0].v_type == VAR_LIST) {
-    tv_list_alloc_ret(rettv, (n > 0) * n * tv_list_len(argvars[0].vval.v_list));
+    tv_list_alloc_ret(rettv, (n > 0) * (ptrdiff_t)n * tv_list_len(argvars[0].vval.v_list));
     while (n-- > 0) {
       tv_list_extend(rettv->vval.v_list, argvars[0].vval.v_list, NULL);
     }
@@ -6713,12 +6713,12 @@ static int search_cmn(typval_T *argvars, pos_T *match_pos, int *flagsp)
 
   // Optional arguments: line number to stop searching, timeout and skip.
   if (argvars[1].v_type != VAR_UNKNOWN && argvars[2].v_type != VAR_UNKNOWN) {
-    lnum_stop = tv_get_number_chk(&argvars[2], NULL);
+    lnum_stop = (long)tv_get_number_chk(&argvars[2], NULL);
     if (lnum_stop < 0) {
       goto theend;
     }
     if (argvars[3].v_type != VAR_UNKNOWN) {
-      time_limit = tv_get_number_chk(&argvars[3], NULL);
+      time_limit = (long)tv_get_number_chk(&argvars[3], NULL);
       if (time_limit < 0) {
         goto theend;
       }
@@ -7219,13 +7219,13 @@ static int searchpair_cmn(typval_T *argvars, pos_T *match_pos)
     skip = &argvars[4];
 
     if (argvars[5].v_type != VAR_UNKNOWN) {
-      lnum_stop = tv_get_number_chk(&argvars[5], NULL);
+      lnum_stop = (long)tv_get_number_chk(&argvars[5], NULL);
       if (lnum_stop < 0) {
         semsg(_(e_invarg2), tv_get_string(&argvars[5]));
         goto theend;
       }
       if (argvars[6].v_type != VAR_UNKNOWN) {
-        time_limit = tv_get_number_chk(&argvars[6], NULL);
+        time_limit = (long)tv_get_number_chk(&argvars[6], NULL);
         if (time_limit < 0) {
           semsg(_(e_invarg2), tv_get_string(&argvars[6]));
           goto theend;
@@ -9330,7 +9330,8 @@ static void f_timer_start(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   if (!callback_from_typval(&callback, &argvars[1])) {
     return;
   }
-  rettv->vval.v_number = (varnumber_T)timer_start(tv_get_number(&argvars[0]), repeat, &callback);
+  rettv->vval.v_number = (varnumber_T)timer_start((long)tv_get_number(&argvars[0]), repeat,
+                                                  &callback);
 }
 
 /// "timer_stop(timerid)" function

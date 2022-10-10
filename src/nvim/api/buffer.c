@@ -606,9 +606,9 @@ void nvim_buf_set_text(uint64_t channel_id, Buffer buffer, Integer start_row, In
 
   // calculate byte size of old region before it gets modified/deleted
   if (start_row == end_row) {
-    old_byte = (bcount_t)end_col - start_col;
+    old_byte = (bcount_t)end_col - (bcount_t)start_col;
   } else {
-    old_byte += (bcount_t)len_at_start - start_col;
+    old_byte += (bcount_t)len_at_start - (bcount_t)start_col;
     for (int64_t i = 1; i < end_row - start_row; i++) {
       int64_t lnum = start_row + i;
 

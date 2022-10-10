@@ -3395,7 +3395,7 @@ static int parse_diff_ed(char *line, diffhunk_T *hunk)
   linenr_T f1 = getdigits_int32(&p, true, 0);
   if (*p == ',') {
     p++;
-    l1 = getdigits(&p, true, 0);
+    l1 = (long)getdigits(&p, true, 0);
   } else {
     l1 = f1;
   }
@@ -3403,10 +3403,10 @@ static int parse_diff_ed(char *line, diffhunk_T *hunk)
     return FAIL;        // invalid diff format
   }
   int difftype = (uint8_t)(*p++);
-  long f2 = getdigits(&p, true, 0);
+  long f2 = (long)getdigits(&p, true, 0);
   if (*p == ',') {
     p++;
-    l2 = getdigits(&p, true, 0);
+    l2 = (long)getdigits(&p, true, 0);
   } else {
     l2 = f2;
   }
@@ -3444,18 +3444,18 @@ static int parse_diff_unified(char *line, diffhunk_T *hunk)
     long oldcount;
     long newline;
     long newcount;
-    long oldline = getdigits(&p, true, 0);
+    long oldline = (long)getdigits(&p, true, 0);
     if (*p == ',') {
       p++;
-      oldcount = getdigits(&p, true, 0);
+      oldcount = (long)getdigits(&p, true, 0);
     } else {
       oldcount = 1;
     }
     if (*p++ == ' ' && *p++ == '+') {
-      newline = getdigits(&p, true, 0);
+      newline = (long)getdigits(&p, true, 0);
       if (*p == ',') {
         p++;
-        newcount = getdigits(&p, true, 0);
+        newcount = (long)getdigits(&p, true, 0);
       } else {
         newcount = 1;
       }
