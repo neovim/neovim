@@ -304,8 +304,10 @@ int nlua_regex(lua_State *lstate)
     nlua_push_errstr(lstate, "couldn't parse regex: %s", err.msg);
     api_clear_error(&err);
     return lua_error(lstate);
+  } else if (prog == NULL) {
+    nlua_push_errstr(lstate, "couldn't parse regex");
+    return lua_error(lstate);
   }
-  assert(prog);
 
   regprog_T **p = lua_newuserdata(lstate, sizeof(regprog_T *));
   *p = prog;
