@@ -126,6 +126,7 @@ function Gcc:init_defines()
   self:define('_Nullable', nil, '')
   self:define('_Nonnull', nil, '')
   self:undefine('__BLOCKS__')
+  self:undefine('__UINTPTR_TYPE__')
 end
 
 function Gcc:new(obj)
