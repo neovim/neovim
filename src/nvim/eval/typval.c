@@ -3751,8 +3751,9 @@ linenr_T tv_get_lnum(const typval_T *const tv)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
   linenr_T lnum = (linenr_T)tv_get_number_chk(tv, NULL);
-  if (lnum <= 0) {  // No valid number, try using same function as line() does.
+  if (lnum <= 0 && tv->v_type != VAR_NUMBER) {
     int fnum;
+    // No valid number, try using same function as line() does.
     pos_T *const fp = var2fpos(tv, true, &fnum, false);
     if (fp != NULL) {
       lnum = fp->lnum;
