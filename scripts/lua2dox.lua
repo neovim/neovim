@@ -50,86 +50,26 @@ However I have put in a hack that will insert the "missing" close paren.
 The effect is that you will get the function documented, but not with the parameter list you might expect.
 ]]
 
-local function class(BaseClass, ClassInitialiser)
+local function class()
   local newClass = {} -- a new class newClass
-  if not ClassInitialiser and type(BaseClass) == 'function' then
-    ClassInitialiser = BaseClass
-    BaseClass = nil
-  elseif type(BaseClass) == 'table' then
-    -- our new class is a shallow copy of the base class!
-    for i, v in pairs(BaseClass) do
-      newClass[i] = v
-    end
-    newClass._base = BaseClass
-  end
   -- the class will be the metatable for all its newInstanceects,
   -- and they will look up their methods in it.
   newClass.__index = newClass
 
   -- expose a constructor which can be called by <classname>(<args>)
-  local classMetatable = {}
-  classMetatable.__call = function(class_tbl, ...)
-    local newInstance = {}
-    setmetatable(newInstance, newClass)
-    --if init then
-    --  init(newInstance,...)
-    if class_tbl.init then
-      class_tbl.init(newInstance, ...)
-    else
-      -- make sure that any stuff from the base class is initialized!
-      if BaseClass and BaseClass.init then
-        BaseClass.init(newInstance, ...)
+  setmetatable(newClass, {
+    __call = function(class_tbl, ...)
+      local newInstance = {}
+      setmetatable(newInstance, newClass)
+      --if init then
+      --  init(newInstance,...)
+      if class_tbl.init then
+        class_tbl.init(newInstance, ...)
       end
+      return newInstance
     end
-    return newInstance
-  end
-  newClass.init = ClassInitialiser
-  newClass.is_a = function(this, klass)
-    local thisMetatable = getmetatable(this)
-    while thisMetatable do
-      if thisMetatable == klass then
-        return true
-      end
-      thisMetatable = thisMetatable._base
-    end
-    return false
-  end
-  setmetatable(newClass, classMetatable)
+  })
   return newClass
-end
-
---! \class TCore_Clock
---! \brief a clock
-local TCore_Clock = class()
-
---! \brief get the current time
-function TCore_Clock.GetTimeNow()
-  local gettimeofday = os.gettimeofday -- luacheck: ignore 143 Accessing an undefined field of a global variable.
-  if gettimeofday then
-    return gettimeofday()
-  else
-    return os.time()
-  end
-end
-
---! \brief constructor
-function TCore_Clock.init(this, T0)
-  if T0 then
-    this.t0 = T0
-  else
-    this.t0 = TCore_Clock.GetTimeNow()
-  end
-end
-
---! \brief get time string
-function TCore_Clock.getTimeStamp(this, T0)
-  local t0
-  if T0 then
-    t0 = T0
-  else
-    t0 = this.t0
-  end
-  return os.date('%c %Z', t0)
 end
 
 --! \brief write to stdout
@@ -210,7 +150,6 @@ function TStream_Read.getContents(this, Filename)
   assert(Filename)
   -- get lines from file
   -- syphon lines to our table
-  --TCore_Debug_show_var('Filename',Filename)
   local filecontents = {}
   for line in io.lines(Filename) do
     table.insert(filecontents, line)
@@ -392,8 +331,6 @@ function TLua2DoX_filter.readfile(this, AppStamp, Filename)
     local l = 0
     while not (inStream:eof()) do
       line = string_trim(inStream:getLine())
-      --            TCore_Debug_show_var('inStream',inStream)
-      --            TCore_Debug_show_var('line',line )
       l = l + 1
       if string.sub(line, 1, 2) == '--' then -- it's a comment
         -- Allow people to write style similar to EmmyLua (since they are basically the same)
@@ -510,12 +447,6 @@ function TLua2DoX_filter.readfile(this, AppStamp, Filename)
         -- ....v...
         if pos_fn then
           -- we've got a function
-          local fn_type
-          if string.find(line, '^local%s+') then
-            fn_type = '' --'static ' -- static functions seem to be excluded
-          else
-            fn_type = ''
-          end
           local fn = TString_removeCommentFromLine(string_trim(string.sub(line, pos_fn + 8)))
           if fn_magic then
             fn = fn_magic
@@ -561,7 +492,7 @@ function TLua2DoX_filter.readfile(this, AppStamp, Filename)
             end
 
             -- add vanilla function
-            outStream:writeln(fn_type .. 'function ' .. fn .. '{}')
+            outStream:writeln('function ' .. fn .. '{}')
           end
         else
           this:warning(inStream:getLineNo(), 'something weird here')
@@ -596,8 +527,7 @@ local TApp = class()
 
 --! \brief constructor
 function TApp.init(this)
-  local t0 = TCore_Clock()
-  this.timestamp = t0:getTimeStamp()
+  this.timestamp = os.date('%c %Z', os.time())
   this.name = 'Lua2DoX'
   this.version = '0.2 20130128'
   this.copyright = 'Copyright (c) Simon Dales 2012-13'
