@@ -1294,6 +1294,9 @@ static void set_cursorpos(typval_T *argvars, typval_T *rettv, bool charcol)
   } else if ((argvars[0].v_type == VAR_NUMBER || argvars[0].v_type == VAR_STRING)
              && (argvars[1].v_type == VAR_NUMBER || argvars[1].v_type == VAR_STRING)) {
     line = tv_get_lnum(argvars);
+    if (line < 0) {
+      semsg(_(e_invarg2), tv_get_string(&argvars[0]));
+    }
     col = (long)tv_get_number_chk(&argvars[1], NULL);
     if (charcol) {
       col = buf_charidx_to_byteidx(curbuf, (linenr_T)line, (int)col) + 1;
