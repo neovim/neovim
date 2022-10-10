@@ -974,6 +974,8 @@ TermResponse			After the response to t_RV is received from
 				terminal version.  May be triggered halfway
 				through another event (file I/O, a shell
 				command, or anything else that takes time).
+							*TermOutput*
+TermOutput			After the output in |Terminal-mode|.
 							*TextChanged*
 TextChanged			After a change was made to the text in the
 				current buffer in Normal mode.  That is after

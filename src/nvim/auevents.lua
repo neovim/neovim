@@ -105,6 +105,7 @@ return {
     'TermLeave',              -- after leaving Terminal mode
     'TermOpen',               -- after opening a terminal buffer
     'TermResponse',           -- after setting "v:termresponse"
+    'TermOutput',             -- after output in Terminal mode
     'TextChanged',            -- text was modified
     'TextChangedI',           -- text was modified in Insert mode(no popup)
     'TextChangedP',           -- text was modified in Insert mode(popup)
@@ -143,6 +144,7 @@ return {
     TabNewEntered=true,
     TermClose=true,
     TermOpen=true,
+    TermOutput=true,
     UIEnter=true,
     UILeave=true,
   },

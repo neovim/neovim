@@ -523,6 +523,8 @@ static int terminal_check(VimState *state)
 
   if (must_redraw) {
     update_screen();
+
+    apply_autocmds(EVENT_TERMOUTPUT, NULL, NULL, false, curbuf);
   }
 
   if (need_maketitle) {  // Update title in terminal-mode. #7248
