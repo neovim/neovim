@@ -481,6 +481,35 @@ func Test_popup_menu()
   unmenu PopUp
 endfunc
 
+" Test for MenuPopup autocommand
+func Test_autocmd_MenuPopup()
+  CheckNotGui
+
+  set mouse=a
+  set mousemodel=popup
+  aunmenu *
+  autocmd MenuPopup * exe printf(
+    \ 'anoremenu PopUp.Foo <Cmd>let g:res = ["%s", "%s"]<CR>',
+    \ expand('<afile>'), expand('<amatch>'))
+
+  call feedkeys("\<RightMouse>\<Down>\<CR>", 'tnix')
+  call assert_equal(['n', 'n'], g:res)
+
+  call feedkeys("v\<RightMouse>\<Down>\<CR>\<Esc>", 'tnix')
+  call assert_equal(['v', 'v'], g:res)
+
+  call feedkeys("gh\<RightMouse>\<Down>\<CR>\<Esc>", 'tnix')
+  call assert_equal(['s', 's'], g:res)
+
+  call feedkeys("i\<RightMouse>\<Down>\<CR>\<Esc>", 'tnix')
+  call assert_equal(['i', 'i'], g:res)
+
+  autocmd! MenuPopup
+  aunmenu PopUp.Foo
+  unlet g:res
+  set mouse& mousemodel&
+endfunc
+
 " Test for listing the menus using the :menu command
 func Test_show_menus()
   " In the GUI, tear-off menu items are present in the output below
