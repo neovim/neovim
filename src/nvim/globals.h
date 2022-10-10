@@ -199,7 +199,7 @@ EXTERN dict_T vimvardict;                   // Dictionary with v: variables
 EXTERN dict_T globvardict;                  // Dictionary with g: variables
 /// g: value
 #define globvarht globvardict.dv_hashtab
-EXTERN bool did_emsg;                       // set by emsg() when the message
+EXTERN int did_emsg;                        // set by emsg() when the message
                                             // is displayed or thrown
 EXTERN bool called_vim_beep;                // set if vim_beep() is called
 EXTERN bool did_emsg_syntax;                // did_emsg set because of a
