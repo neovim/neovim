@@ -12,7 +12,7 @@ local function man_error(msg)
 end
 
 -- Run a system command and timeout after 30 seconds.
-local function man_system(cmd, silent)
+local function man_system(args, silent, env)
   local stdout_data = {}
   local stderr_data = {}
   local stdout = vim.loop.new_pipe(false)
@@ -22,9 +22,10 @@ local function man_system(cmd, silent)
   local exit_code
 
   local handle
-  handle = vim.loop.spawn(cmd[1], {
-    args = vim.list_slice(cmd, 2),
+  handle = vim.loop.spawn('man', {
+    args = args,
     stdio = { nil, stdout, stderr },
+    env = env,
   }, function(code)
     exit_code = code
     stdout:close()
@@ -44,7 +45,8 @@ local function man_system(cmd, silent)
     stdout:close()
     stderr:close()
     if not silent then
-      man_error(string.format('command error: %s', table.concat(cmd)))
+      local cmd = table.concat({ 'man', unpack(args) }, ' ')
+      man_error(string.format('command error: %s', cmd))
     end
   end
 
@@ -58,13 +60,13 @@ local function man_system(cmd, silent)
       stdout:close()
       stderr:close()
     end
-    man_error(string.format('command timed out: %s', table.concat(cmd, ' ')))
+    local cmd = table.concat({ 'man', unpack(args) }, ' ')
+    man_error(string.format('command timed out: %s', cmd))
   end
 
   if exit_code ~= 0 and not silent then
-    man_error(
-      string.format("command error '%s': %s", table.concat(cmd, ' '), table.concat(stderr_data))
-    )
+    local cmd = table.concat({ 'man', unpack(args) }, ' ')
+    man_error(string.format("command error '%s': %s", cmd, table.concat(stderr_data)))
   end
 
   return table.concat(stdout_data)
@@ -267,19 +269,15 @@ local function get_path(sect, name, silent)
   --
   -- Finally, we can avoid relying on -S or -s here since they are very
   -- inconsistently supported. Instead, call -w with a section and a name.
-  local cmd
+  local args
   if sect == '' then
-    cmd = { 'man', find_arg, name }
+    args = { find_arg, name }
   else
-    cmd = { 'man', find_arg, sect, name }
+    args = { find_arg, sect, name }
   end
 
-  local lines = man_system(cmd, silent)
-  if lines == nil then
-    return nil
-  end
-
-  local results = vim.split(lines, '\n', { trimempty = true })
+  local lines = man_system(args, silent)
+  local results = vim.split(lines or {}, '\n', { trimempty = true })
 
   if #results == 0 then
     return
@@ -435,15 +433,17 @@ local function get_page(path, silent)
   else
     manwidth = api.nvim_win_get_width(0)
   end
+
+  local args = localfile_arg and { '-l', path } or { path }
+
   -- Force MANPAGER=cat to ensure Vim is not recursively invoked (by man-db).
   -- http://comments.gmane.org/gmane.editors.vim.devel/29085
   -- Set MAN_KEEP_FORMATTING so Debian man doesn't discard backspaces.
-  local cmd = { 'env', 'MANPAGER=cat', 'MANWIDTH=' .. manwidth, 'MAN_KEEP_FORMATTING=1', 'man' }
-  if localfile_arg then
-    cmd[#cmd + 1] = '-l'
-  end
-  cmd[#cmd + 1] = path
-  return man_system(cmd, silent)
+  return man_system(args, silent, {
+    'MANPAGER=cat',
+    'MANWIDTH=' .. manwidth,
+    'MAN_KEEP_FORMATTING=1',
+  })
 end
 
 local function put_page(page)
@@ -484,7 +484,7 @@ local function get_paths(sect, name, do_fallback)
   -- callers must try-catch this, as some `man` implementations don't support `s:find_arg`
   local ok, ret = pcall(function()
     local mandirs =
-      table.concat(vim.split(man_system({ 'man', find_arg }), '[:\n]', { trimempty = true }), ',')
+      table.concat(vim.split(man_system({ find_arg }), '[:\n]', { trimempty = true }), ',')
     local paths = fn.globpath(mandirs, 'man?/' .. name .. '*.' .. sect .. '*', false, true)
     pcall(function()
       -- Prioritize the result from verify_exists as it obeys b:man_default_sects.
