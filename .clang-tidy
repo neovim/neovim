@@ -1,18 +1,28 @@
 ---
 # Configure clang-tidy for this project.
 #
+# references:
+#   - https://github.com/googleapis/google-cloud-cpp/blob/main/.clang-tidy
+#   - https://wiki.sei.cmu.edu/confluence/display/c/Clang
+#
 Checks: >
   -*,
   bugprone-*,
+  cert-env33-c,
+  cert-err34-c,
+  cert-flp30-c,
+  cert-msc30-c,
   clang-analyzer-*,
   clang-diagnostics-*,
-  cert-*,
+  misc-non-copyable-objects,
+  misc-static-assert,
   portability-*,
   -bugprone-assignment-in-if-condition,
   -bugprone-branch-clone,
   -bugprone-easily-swappable-parameters,
   -bugprone-narrowing-conversions,
   -bugprone-sizeof-expression,
+  -bugprone-unused-return-value,
   -clang-analyzer-security.insecureAPI.strcpy
 
 # Turn all the warnings from the checks above into errors.
