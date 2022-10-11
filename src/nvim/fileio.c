@@ -1683,7 +1683,7 @@ failed:
       HANDLE conin = CreateFile("CONIN$", GENERIC_READ | GENERIC_WRITE,
                                 FILE_SHARE_READ, (LPSECURITY_ATTRIBUTES)NULL,
                                 OPEN_EXISTING, 0, (HANDLE)NULL);
-      vim_ignored = _open_osfhandle(conin, _O_RDONLY);
+      vim_ignored = _open_osfhandle((intptr_t)conin, _O_RDONLY);
 #endif
     }
   }
