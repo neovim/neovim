@@ -308,7 +308,7 @@ void *vim_findfile_init(char *path, char *filename, char *stopdirs, int level, i
         goto error_return;
       }
       path += 2;
-    } else
+    } else  // NOLINT(readability/braces)
 #endif
     if (os_dirname((char_u *)ff_expand_buffer, MAXPATHL) == FAIL) {
       goto error_return;
@@ -619,16 +619,15 @@ char_u *vim_findfile(void *search_ctx_arg)
 #endif
         ff_free_stack_element(stackp);
         continue;
-      }
 #ifdef FF_VERBOSE
-      else if (p_verbose >= 5) {
+      } else if (p_verbose >= 5) {
         verbose_enter_scroll();
         smsg("Searching: %s (%s)",
              stackp->ffs_fix_path, stackp->ffs_wc_path);
         msg_puts("\n");  // don't overwrite this either
         verbose_leave_scroll();
-      }
 #endif
+      }
 
       // check depth
       if (stackp->ffs_level <= 0) {

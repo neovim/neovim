@@ -1274,9 +1274,8 @@ scripterror:
                                                                kFileReadOnly|kFileNonBlocking);
             assert(stdin_dup != NULL);
             scriptin[0] = stdin_dup;
-          } else if ((scriptin[0] =
-                        file_open_new(&error, argv[0], kFileReadOnly|kFileNonBlocking,
-                                      0)) == NULL) {
+          } else if ((scriptin[0] = file_open_new(&error, argv[0],
+                                                  kFileReadOnly|kFileNonBlocking, 0)) == NULL) {
             vim_snprintf((char *)IObuff, IOSIZE,
                          _("Cannot open for reading: \"%s\": %s\n"),
                          argv[0], os_strerror(error));

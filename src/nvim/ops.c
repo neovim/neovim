@@ -2239,7 +2239,7 @@ void op_insert(oparg_T *oap, long count1)
       }
       curwin->w_ve_flags = VE_ALL;
       coladvance_force(oap->op_type == OP_APPEND
-          ? oap->end_vcol + 1 : getviscol());
+                       ? oap->end_vcol + 1 : getviscol());
       if (oap->op_type == OP_APPEND) {
         curwin->w_cursor.col--;
       }

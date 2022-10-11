@@ -271,11 +271,9 @@ typval_T decode_string(const char *const s, const size_t len, const TriState has
       list_T *const list = tv_list_alloc(kListLenMayKnow);
       tv_list_ref(list);
       create_special_dict(&tv, kMPString,
-                          ((typval_T){
-        .v_type = VAR_LIST,
-        .v_lock = VAR_UNLOCKED,
-        .vval = { .v_list = list },
-      }));
+                          (typval_T){ .v_type = VAR_LIST,
+                                      .v_lock = VAR_UNLOCKED,
+                                      .vval = { .v_list = list } });
       const int elw_ret = encode_list_write((void *)list, s, len);
       if (s_allocated) {
         xfree((void *)s);
@@ -368,7 +366,7 @@ static inline int parse_json_string(const char *const buf, const size_t buf_len,
         goto parse_json_string_fail;
       }
     } else {
-      uint8_t p_byte = (uint8_t)*p;
+      uint8_t p_byte = (uint8_t)(*p);
       // unescaped = %x20-21 / %x23-5B / %x5D-10FFFF
       if (p_byte < 0x20) {
         semsg(_("E474: ASCII control characters cannot be present "
@@ -469,7 +467,7 @@ static inline int parse_json_string(const char *const buf, const size_t buf_len,
           ['r'] = CAR,
           ['f'] = FF,
         };
-        *str_end++ = escapes[(int)*t];
+        *str_end++ = escapes[(int)(*t)];
         break;
       }
       default:
@@ -838,12 +836,10 @@ json_decode_string_cycle_start:
         .v_lock = VAR_UNLOCKED,
         .vval = { .v_list = list },
       };
-      kv_push(container_stack, ((ContainerStackItem) {
-          .stack_index = kv_size(stack),
-          .s = p,
-          .container = tv,
-          .special_val = NULL,
-        }));
+      kv_push(container_stack, ((ContainerStackItem) { .stack_index = kv_size(stack),
+                                                       .s = p,
+                                                       .container = tv,
+                                                       .special_val = NULL }));
       kv_push(stack, OBJ(tv, false, didcomma, didcolon));
       break;
     }
@@ -862,12 +858,10 @@ json_decode_string_cycle_start:
           .vval = { .v_dict = dict },
         };
       }
-      kv_push(container_stack, ((ContainerStackItem) {
-          .stack_index = kv_size(stack),
-          .s = p,
-          .container = tv,
-          .special_val = val_list,
-        }));
+      kv_push(container_stack, ((ContainerStackItem) { .stack_index = kv_size(stack),
+                                                       .s = p,
+                                                       .container = tv,
+                                                       .special_val = val_list }));
       kv_push(stack, OBJ(tv, false, didcomma, didcolon));
       break;
     }
@@ -1089,11 +1083,9 @@ msgpack_to_vim_generic_map: {}
     tv_list_append_number(list, mobj.via.ext.type);
     list_T *const ext_val_list = tv_list_alloc(kListLenMayKnow);
     tv_list_append_list(list, ext_val_list);
-    create_special_dict(rettv, kMPExt, ((typval_T) {
-        .v_type = VAR_LIST,
-        .v_lock = VAR_UNLOCKED,
-        .vval = { .v_list = list },
-      }));
+    create_special_dict(rettv, kMPExt, ((typval_T) { .v_type = VAR_LIST,
+                                                     .v_lock = VAR_UNLOCKED,
+                                                     .vval = { .v_list = list } }));
     if (encode_list_write((void *)ext_val_list, mobj.via.ext.ptr,
                           mobj.via.ext.size) == -1) {
       return FAIL;

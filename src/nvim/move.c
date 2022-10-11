@@ -813,8 +813,7 @@ void curs_columns(win_T *wp, int may_scroll)
   if ((wp->w_wrow >= wp->w_height_inner
        || ((prev_skipcol > 0
             || wp->w_wrow + so >= wp->w_height_inner)
-           && (plines =
-                 plines_win_nofill(wp, wp->w_cursor.lnum, false)) - 1
+           && (plines = plines_win_nofill(wp, wp->w_cursor.lnum, false)) - 1
            >= wp->w_height_inner))
       && wp->w_height_inner != 0
       && wp->w_cursor.lnum == wp->w_topline

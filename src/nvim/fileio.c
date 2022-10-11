@@ -1048,9 +1048,8 @@ retry:
                 conv_error = curbuf->b_ml.ml_line_count
                              - linecnt + 1;
               }
-            }
-            // Remember the first linenr with an illegal byte
-            else if (illegal_byte == 0) {
+            } else if (illegal_byte == 0) {
+              // Remember the first linenr with an illegal byte
               illegal_byte = curbuf->b_ml.ml_line_count
                              - linecnt + 1;
             }
@@ -1066,7 +1065,7 @@ retry:
 #ifdef HAVE_ICONV
                                                     || iconv_fd != (iconv_t)-1
 #endif
-                                                    )) {
+                                                    )) {  // NOLINT(whitespace/parens)
                 while (conv_restlen > 0) {
                   *(--ptr) = (char)bad_char_behavior;
                   conv_restlen--;
@@ -3039,9 +3038,11 @@ nobackup:
       // false.
       while ((fd = os_open(wfname,
                            O_WRONLY |
-                           (append ?
-                            (forceit ? (O_APPEND | O_CREAT) : O_APPEND)
-                                     : (O_CREAT | O_TRUNC)),
+                           (append
+                            ? (forceit
+                               ? (O_APPEND | O_CREAT)
+                               : O_APPEND)
+                            : (O_CREAT | O_TRUNC)),
                            perm < 0 ? 0666 : (perm & 0777))) < 0) {
         // A forced write will try to create a new file if the old one
         // is still readonly. This may also happen when the directory
@@ -3336,7 +3337,7 @@ restore_backup:
         } else {
           errmsg_allocated = true;
           SET_ERRMSG(xmalloc(300));
-          vim_snprintf(errmsg, 300,
+          vim_snprintf(errmsg, 300,  // NOLINT(runtime/printf)
                        _("E513: write error, conversion failed in line %" PRIdLINENR
                          " (make 'fenc' empty to override)"),
                        write_info.bw_conv_error_lnum);
@@ -4258,7 +4259,7 @@ char *modname(const char *fname, const char *ext, bool prepend_dot)
   } else {
     fnamelen = strlen(fname);
     retval = xmalloc(fnamelen + extlen + 3);
-    strcpy(retval, fname);
+    strcpy(retval, fname);  // NOLINT(runtime/printf)
   }
 
   // Search backwards until we hit a '/', '\' or ':'.
@@ -4276,12 +4277,11 @@ char *modname(const char *fname, const char *ext, bool prepend_dot)
     ptr[BASENAMELEN] = '\0';
   }
 
-  char *s;
-  s = ptr + strlen(ptr);
+  char *s = ptr + strlen(ptr);
 
   // Append the extension.
   // ext can start with '.' and cannot exceed 3 more characters.
-  strcpy(s, ext);
+  strcpy(s, ext);  // NOLINT(runtime/printf)
 
   char *e;
   // Prepend the dot if needed.
