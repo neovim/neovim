@@ -471,7 +471,7 @@ flag when defining the function, it is not relevant when executing it. >
    :set cpo-=C
 <
 					*line-continuation-comment*
-To add a comment in between the lines start with '"\ '.  Notice the space
+To add a comment in between the lines start with `'"\ '`.  Notice the space
 after the backslash.  Example: >
 	let array = [
 		"\ first entry comment
@@ -491,7 +491,7 @@ Rationale:
 	continuation lines to be part of the comment.  Since it was like this
 	for a long time, when making it possible to add a comment halfway a
 	sequence of continuation lines, it was not possible to use \", since
-	that was a valid continuation line.  Using '"\ ' comes closest, even
+	that was a valid continuation line.  Using `'"\ '` comes closest, even
 	though it may look a bit weird.  Requiring the space after the
 	backslash is to make it very unlikely this is a normal comment line.
 
