@@ -5587,6 +5587,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 			global
 	Show (partial) command in the last line of the screen.  Set this
 	option off if your terminal is slow.
+	If 'cmdheight' is 0, it may overwrite the last line of the window.
 	In Visual mode the size of the selected area is shown:
 	- When selecting characters within a line, the number of characters.
 	  If the number of bytes is different it is also displayed: "2-6"

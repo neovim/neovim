@@ -598,6 +598,11 @@ void win_redr_ruler(win_T *wp, bool always)
       if (p_ch <= 0) {
         // UPD_CLEAR is needed for ruler with cmdheight=0
         must_redraw = UPD_CLEAR;
+
+        if (p_sc) {
+          // Redraw showcmd
+          display_showcmd();
+        }
       }
     }
 
