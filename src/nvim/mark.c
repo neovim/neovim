@@ -645,20 +645,17 @@ fmark_T *getnextmark(pos_T *startpos, int dir, int begin_line)
 // until the mark is used to avoid a long startup delay.
 static void fname2fnum(xfmark_T *fm)
 {
-  char_u *p;
-
   if (fm->fname != NULL) {
     // First expand "~/" in the file name to the home directory.
     // Don't expand the whole name, it may contain other '~' chars.
-    if (fm->fname[0] == '~' && (fm->fname[1] == '/'
 #ifdef BACKSLASH_IN_FILENAME
-                                || fm->fname[1] == '\\'
+    if (fm->fname[0] == '~' && (fm->fname[1] == '/' || fm->fname[1] == '\\')) {
+#else
+    if (fm->fname[0] == '~' && (fm->fname[1] == '/')) {
 #endif
-                                )) {
-      int len;
 
       expand_env("~/", NameBuff, MAXPATHL);
-      len = (int)strlen(NameBuff);
+      int len = (int)strlen(NameBuff);
       STRLCPY(NameBuff + len, fm->fname + 2, MAXPATHL - len);
     } else {
       STRLCPY(NameBuff, fm->fname, MAXPATHL);
@@ -666,10 +663,10 @@ static void fname2fnum(xfmark_T *fm)
 
     // Try to shorten the file name.
     os_dirname((char_u *)IObuff, IOSIZE);
-    p = (char_u *)path_shorten_fname(NameBuff, (char *)IObuff);
+    char *p = path_shorten_fname(NameBuff, IObuff);
 
     // buflist_new() will call fmarks_check_names()
-    (void)buflist_new((char *)NameBuff, (char *)p, (linenr_T)1, 0);
+    (void)buflist_new(NameBuff, p, (linenr_T)1, 0);
   }
 }
 
@@ -935,8 +932,8 @@ void ex_delmarks(exarg_T *eap)
           from = *p;
           to = p[2];
           if (!(lower ? ASCII_ISLOWER(p[2])
-                      : (digit ? ascii_isdigit(p[2])
-                               : ASCII_ISUPPER(p[2])))
+                : (digit ? ascii_isdigit(p[2])
+                   : ASCII_ISUPPER(p[2])))
               || to < from) {
             semsg(_(e_invarg2), p);
             return;
@@ -1056,12 +1053,11 @@ void ex_changes(exarg_T *eap)
       if (got_int) {
         break;
       }
-      sprintf((char *)IObuff, "%c %3d %5ld %4d ",
-              i == curwin->w_changelistidx ? '>' : ' ',
-              i > curwin->w_changelistidx ? i - curwin->w_changelistidx
-                                          : curwin->w_changelistidx - i,
-              (long)curbuf->b_changelist[i].mark.lnum,
-              curbuf->b_changelist[i].mark.col);
+      snprintf(IObuff, IOSIZE, "%c %3d %5ld %4d ",
+               i == curwin->w_changelistidx ? '>' : ' ',
+               i > curwin->w_changelistidx ? i - curwin->w_changelistidx : curwin->w_changelistidx - i,
+               (long)curbuf->b_changelist[i].mark.lnum,
+               curbuf->b_changelist[i].mark.col);
       msg_outtrans((char *)IObuff);
       name = (char_u *)mark_line(&curbuf->b_changelist[i].mark, 17);
       msg_outtrans_attr((char *)name, HL_ATTR(HLF_D));
@@ -1077,30 +1073,30 @@ void ex_changes(exarg_T *eap)
 #define ONE_ADJUST(add) \
   { \
     lp = add; \
-    if (*lp >= line1 && *lp <= line2) \
-    { \
-      if (amount == MAXLNUM) \
-      *lp = 0; \
-      else \
-      *lp += amount; \
+    if (*lp >= line1 && *lp <= line2) { \
+      if (amount == MAXLNUM) { \
+        *lp = 0; \
+      } else { \
+        *lp += amount; \
+      } \
+    } else if (amount_after && *lp > line2) { \
+      *lp += amount_after; \
     } \
-    else if (amount_after && *lp > line2) \
-    *lp += amount_after; \
   }
 
 // don't delete the line, just put at first deleted line
 #define ONE_ADJUST_NODEL(add) \
   { \
     lp = add; \
-    if (*lp >= line1 && *lp <= line2) \
-    { \
-      if (amount == MAXLNUM) \
-      *lp = line1; \
-      else \
-      *lp += amount; \
+    if (*lp >= line1 && *lp <= line2) { \
+      if (amount == MAXLNUM) { \
+        *lp = line1; \
+      } else { \
+        *lp += amount; \
+      } \
+    } else if (amount_after && *lp > line2) { \
+      *lp += amount_after; \
     } \
-    else if (amount_after && *lp > line2) \
-    *lp += amount_after; \
   }
 
 // Adjust marks between line1 and line2 (inclusive) to move 'amount' lines.
@@ -1282,8 +1278,7 @@ static void mark_adjust_internal(linenr_T line1, linenr_T line2, linenr_T amount
 #define COL_ADJUST(pp) \
   { \
     posp = pp; \
-    if (posp->lnum == lnum && posp->col >= mincol) \
-    { \
+    if (posp->lnum == lnum && posp->col >= mincol) { \
       posp->lnum += lnum_amount; \
       assert(col_amount > INT_MIN && col_amount <= INT_MAX); \
       if (col_amount < 0 && posp->col <= (colnr_T) - col_amount) { \
@@ -1479,10 +1474,8 @@ const void *mark_jumplist_iter(const void *const iter, const win_T *const win, x
     *fm = (xfmark_T)INIT_XFMARK;
     return NULL;
   }
-  const xfmark_T *const iter_mark =
-    (iter == NULL
-       ? &(win->w_jumplist[0])
-       : (const xfmark_T *const)iter);
+  const xfmark_T *const iter_mark = iter == NULL ? &(win->w_jumplist[0])
+                                                 : (const xfmark_T *const)iter;
   *fm = *iter_mark;
   if (iter_mark == &(win->w_jumplist[win->w_jumplistlen - 1])) {
     return NULL;
@@ -1518,9 +1511,9 @@ const void *mark_global_iter(const void *const iter, char *const name, xfmark_T 
     return NULL;
   }
   size_t iter_off = (size_t)(iter_mark - &(namedfm[0]));
-  *name = (char)(iter_off < NMARKS
-                  ? 'A' + (char)iter_off
-                  : '0' + (char)(iter_off - NMARKS));
+  *name = (char)(iter_off < NMARKS ?
+                 'A' + (char)iter_off :
+                 '0' + (char)(iter_off - NMARKS));
   *fm = *iter_mark;
   while ((size_t)(++iter_mark - &(namedfm[0])) < ARRAY_SIZE(namedfm)) {
     if (iter_mark->fmark.mark.lnum) {
@@ -1582,16 +1575,11 @@ const void *mark_buffer_iter(const void *const iter, const buf_T *const buf, cha
   FUNC_ATTR_NONNULL_ARG(2, 3, 4) FUNC_ATTR_WARN_UNUSED_RESULT
 {
   *name = NUL;
-  char mark_name = (char)(iter == NULL
-                           ? NUL
-                           : (iter == &(buf->b_last_cursor)
-                              ? '"'
-                              : (iter == &(buf->b_last_insert)
-                                 ? '^'
-                                 : (iter == &(buf->b_last_change)
-                                    ? '.'
-                                    : 'a' + (char)((const fmark_T *)iter
-                                                   - &(buf->b_namedm[0]))))));
+  char mark_name = (char)(iter == NULL ? NUL :
+                          iter == &(buf->b_last_cursor) ? '"' :
+                          iter == &(buf->b_last_insert) ? '^' :
+                          iter == &(buf->b_last_change) ? '.' :
+                          'a' + (char)((const fmark_T *)iter - &(buf->b_namedm[0])));
   const fmark_T *iter_mark = next_buffer_mark(buf, &mark_name);
   while (iter_mark != NULL && iter_mark->mark.lnum == 0) {
     iter_mark = next_buffer_mark(buf, &mark_name);
