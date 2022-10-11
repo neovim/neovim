@@ -334,8 +334,8 @@ Vim will automatically convert from one to another encoding in several places:
   "utf-8" (requires a gettext version that supports this).
 - When reading a Vim script where |:scriptencoding| is different from
   "utf-8".
-Most of these require the |+iconv| feature.  Conversion for reading and
-writing files may also be specified with the 'charconvert' option.
+Most of these require iconv.  Conversion for reading and writing files may
+also be specified with the 'charconvert' option.
 
 Useful utilities for converting the charset:
     All:	    iconv
