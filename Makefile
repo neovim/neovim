@@ -147,9 +147,6 @@ distclean:
 install: checkprefix nvim
 	+$(BUILD_TOOL) -C build install
 
-clang-tidy: generated-sources
-	+clang-tidy --config-file .clang-tidy -p build $(FILE)
-
 appimage:
 	bash scripts/genappimage.sh
 
