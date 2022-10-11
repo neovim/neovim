@@ -996,6 +996,10 @@ TextChangedP			After a change was made to the text in the
 				current buffer in Insert mode, only when the
 				popup menu is visible.  Otherwise the same as
 				TextChanged.
+							*TextChangedT*
+TextChangedT			After a change was made to the text in the
+				current buffer in |Terminal-mode|.  Otherwise
+				the same as TextChanged.
 							*TextYankPost*
 TextYankPost			Just after a |yank| or |deleting| command, but not
 				if the black hole register |quote_| is used nor
