@@ -1149,7 +1149,7 @@ formatting({options})                               *vim.lsp.buf.formatting()*
     Formats the current buffer.
 
     Parameters: ~
-        {options}  (table|nil) Can be used to specify FormattingOptions. Some
+      • {options}  (table|nil) Can be used to specify FormattingOptions. Some
                    unspecified options will be automatically derived from the
                    current Neovim options.
 
@@ -1171,9 +1171,9 @@ formatting_seq_sync({options}, {timeout_ms}, {order})
 <
 
     Parameters: ~
-        {options}     (table|nil) `FormattingOptions` entries
-        {timeout_ms}  (number|nil) Request timeout
-        {order}       (table|nil) List of client names. Formatting is
+      • {options}     (table|nil) `FormattingOptions` entries
+      • {timeout_ms}  (number|nil) Request timeout
+      • {order}       (table|nil) List of client names. Formatting is
                       requested from clients in the following order: first all
                       clients that are not in the `order` list, then the
                       remaining clients in the order as they occur in the
@@ -1192,8 +1192,8 @@ formatting_sync({options}, {timeout_ms})
 <
 
     Parameters: ~
-        {options}     (table|nil) with valid `FormattingOptions` entries
-        {timeout_ms}  (number) Request timeout
+      • {options}     (table|nil) with valid `FormattingOptions` entries
+      • {timeout_ms}  (number) Request timeout
 
     See also: ~
         |vim.lsp.buf.format()|
@@ -1229,14 +1229,14 @@ range_code_action({context}, {start_pos}, {end_pos})
     Performs |vim.lsp.buf.code_action()| for a given range.
 
     Parameters: ~
-        {context}    (table|nil) `CodeActionContext` of the LSP specification:
+      • {context}    (table|nil) `CodeActionContext` of the LSP specification:
                      • diagnostics: (table|nil) LSP`Diagnostic[]` . Inferred from the current position if not provided.
                      • only: (table|nil) List of LSP `CodeActionKind`s used to
                        filter the code actions. Most language servers support
                        values like `refactor` or `quickfix`.
-        {start_pos}  ({number, number}, optional) mark-indexed position.
+      • {start_pos}  ({number, number}, optional) mark-indexed position.
                      Defaults to the start of the last visual selection.
-        {end_pos}    ({number, number}, optional) mark-indexed position.
+      • {end_pos}    ({number, number}, optional) mark-indexed position.
                      Defaults to the end of the last visual selection.
 
                                               *vim.lsp.buf.range_formatting()*
@@ -1244,10 +1244,10 @@ range_formatting({options}, {start_pos}, {end_pos})
     Formats a given range.
 
     Parameters: ~
-        {options}    Table with valid `FormattingOptions` entries.
-        {start_pos}  ({number, number}, optional) mark-indexed position.
+      • {options}    Table with valid `FormattingOptions` entries.
+      • {start_pos}  ({number, number}, optional) mark-indexed position.
                      Defaults to the start of the last visual selection.
-        {end_pos}    ({number, number}, optional) mark-indexed position.
+      • {end_pos}    ({number, number}, optional) mark-indexed position.
                      Defaults to the end of the last visual selection.
 
 references({context}, {options})                    *vim.lsp.buf.references()*
