@@ -16,6 +16,7 @@ Diagnostics:
       - readability-function-*
       - readability-else-after-return
       - readability-identifier-length
+      - readability-isolate-declaration
       - readability-magic-numbers
       - readability-redundant-function-ptr-dereference
       - readability-suspicious-call-argument
