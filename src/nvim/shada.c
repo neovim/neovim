@@ -454,10 +454,7 @@ static const ShadaEntry sd_default_values[] = {
           .additional_data = NULL),
   DEF_SDE(Variable, global_var,
           .name = NULL,
-          .value = {
-    .v_type = VAR_UNKNOWN,
-    .vval = { .v_string = NULL }
-  },
+          .value = { .v_type = VAR_UNKNOWN, .vval = { .v_string = NULL } },
           .additional_elements = NULL),
   DEF_SDE(GlobalMark, filemark,
           .name = '"',
@@ -1127,26 +1124,27 @@ static void shada_read(ShaDaReadDef *const sd_reader, const int flags)
   const bool get_old_files = (flags & (kShaDaGetOldfiles | kShaDaForceit)
                               && (force || tv_list_len(oldfiles_list) == 0));
   const bool want_marks = flags & kShaDaWantMarks;
-  const unsigned srni_flags = (unsigned)(
-                                         (flags & kShaDaWantInfo
-       ? (kSDReadUndisableableData
-          | kSDReadRegisters
-          | kSDReadGlobalMarks
-          | (p_hi ? kSDReadHistory : 0)
-          | (find_shada_parameter('!') != NULL
-             ? kSDReadVariables
-             : 0)
-          | (find_shada_parameter('%') != NULL
-             && ARGCOUNT == 0
-             ? kSDReadBufferList
-             : 0))
-             : 0)
-                                         | (want_marks && get_shada_parameter('\'') > 0
-         ? kSDReadLocalMarks | kSDReadChanges
-         : 0)
-                                         | (get_old_files
-         ? kSDReadLocalMarks
-         : 0));
+  const unsigned srni_flags =
+    (unsigned)(
+               (flags & kShaDaWantInfo
+                ? (kSDReadUndisableableData
+                   | kSDReadRegisters
+                   | kSDReadGlobalMarks
+                   | (p_hi ? kSDReadHistory : 0)
+                   | (find_shada_parameter('!') != NULL
+                      ? kSDReadVariables
+                      : 0)
+                   | (find_shada_parameter('%') != NULL
+                      && ARGCOUNT == 0
+                      ? kSDReadBufferList
+                      : 0))
+                : 0)
+               | (want_marks && get_shada_parameter('\'') > 0
+                  ? kSDReadLocalMarks | kSDReadChanges
+                  : 0)
+               | (get_old_files
+                  ? kSDReadLocalMarks
+                  : 0));
   if (srni_flags == 0) {
     // Nothing to do.
     return;
@@ -1191,17 +1189,18 @@ static void shada_read(ShaDaReadDef *const sd_reader, const int flags)
     case kSDItemSearchPattern:
       if (!force) {
         SearchPattern pat;
-        (cur_entry.data.search_pattern.is_substitute_pattern
-           ? &get_substitute_pattern
-           : &get_search_pattern)(&pat);
+        if (cur_entry.data.search_pattern.is_substitute_pattern) {
+          get_substitute_pattern(&pat);
+        } else {
+          get_search_pattern(&pat);
+        }
         if (pat.pat != NULL && pat.timestamp >= cur_entry.timestamp) {
           shada_free_shada_entry(&cur_entry);
           break;
         }
       }
-      (cur_entry.data.search_pattern.is_substitute_pattern
-         ? &set_substitute_pattern
-         : &set_search_pattern)((SearchPattern) {
+
+      SearchPattern spat = (SearchPattern) {
         .magic = cur_entry.data.search_pattern.magic,
         .no_scs = !cur_entry.data.search_pattern.smartcase,
         .off = {
@@ -1213,7 +1212,14 @@ static void shada_read(ShaDaReadDef *const sd_reader, const int flags)
         .pat = (char_u *)cur_entry.data.search_pattern.pat,
         .additional_data = cur_entry.data.search_pattern.additional_data,
         .timestamp = cur_entry.timestamp,
-      });
+      };
+
+      if (cur_entry.data.search_pattern.is_substitute_pattern) {
+        set_substitute_pattern(spat);
+      } else {
+        set_search_pattern(spat);
+      }
+
       if (cur_entry.data.search_pattern.is_last_used) {
         set_last_used_pattern(cur_entry.data.search_pattern.is_substitute_pattern);
         set_no_hlsearch(!cur_entry.data.search_pattern.highlighted);
@@ -1688,8 +1694,8 @@ static ShaDaWriteResult shada_pack_entry(msgpack_packer *const packer, ShadaEntr
       msgpack_pack_long(spacker, entry.data.filemark.mark.col);
     }
     assert(entry.type == kSDItemJump || entry.type == kSDItemChange
-             ? CHECK_DEFAULT(entry, filemark.name)
-             : true);
+           ? CHECK_DEFAULT(entry, filemark.name)
+           : true);
     if (!CHECK_DEFAULT(entry, filemark.name)) {
       PACK_STATIC_STR(KEY_NAME_CHAR);
       msgpack_pack_uint8(spacker, (uint8_t)entry.data.filemark.name);
@@ -1699,15 +1705,14 @@ static ShaDaWriteResult shada_pack_entry(msgpack_packer *const packer, ShadaEntr
     break;
   }
   case kSDItemRegister: {
-    const size_t map_size = (size_t)(
-                                     2  // Register contents and name
+    const size_t map_size = (size_t)(2  // Register contents and name
                                      + ONE_IF_NOT_DEFAULT(entry, reg.type)
                                      + ONE_IF_NOT_DEFAULT(entry, reg.width)
                                      + ONE_IF_NOT_DEFAULT(entry, reg.is_unnamed)
                                      // Additional entries, if any:
                                      + (size_t)(entry.data.reg.additional_data == NULL
-                      ? 0
-                      : entry.data.reg.additional_data->dv_hashtab.ht_used));
+                                                ? 0
+                                                : entry.data.reg.additional_data->dv_hashtab.ht_used));
     msgpack_pack_map(spacker, map_size);
     PACK_STATIC_STR(REG_KEY_CONTENTS);
     msgpack_pack_array(spacker, entry.data.reg.contents_size);
@@ -2097,8 +2102,8 @@ static inline ShaDaWriteResult shada_read_when_writing(ShaDaReadDef *const sd_re
       break;
     case kSDItemSearchPattern:
       COMPARE_WITH_ENTRY((entry.data.search_pattern.is_substitute_pattern
-                            ? &wms->sub_search_pattern
-                            : &wms->search_pattern), entry);
+                          ? &wms->sub_search_pattern
+                          : &wms->search_pattern), entry);
       break;
     case kSDItemSubString:
       COMPARE_WITH_ENTRY(&wms->replacement, entry);
