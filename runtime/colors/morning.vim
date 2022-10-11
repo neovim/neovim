@@ -13,7 +13,7 @@ set background=light
 hi clear
 let g:colors_name = 'morning'
 
-let s:t_Co = exists('&t_Co') && !has('gui_running') ? (&t_Co ? &t_Co : 0) : -1
+let s:t_Co = &t_Co
 
 if (has('termguicolors') && &termguicolors) || has('gui_running')
   let g:terminal_ansi_colors = ['#e4e4e4', '#a52a2a', '#ff00ff', '#6a0dad', '#008787', '#2e8b57', '#6a5acd', '#bcbcbc', '#0000ff', '#a52a2a', '#ff00ff', '#6a0dad', '#008787', '#2e8b57', '#6a5acd', '#000000']
