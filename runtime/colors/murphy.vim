@@ -13,7 +13,7 @@ set background=dark
 hi clear
 let g:colors_name = 'murphy'
 
-let s:t_Co = exists('&t_Co') && !has('gui_running') ? (&t_Co ? &t_Co : 0) : -1
+let s:t_Co = &t_Co
 
 if (has('termguicolors') && &termguicolors) || has('gui_running')
   let g:terminal_ansi_colors = ['#303030', '#ffa700', '#005f00', '#ffd7af', '#87afff', '#ffafaf', '#00afaf', '#bcbcbc', '#444444', '#ff0000', '#00875f', '#ffff00', '#005fff', '#ff00ff', '#00ffff', '#ffffff']
