@@ -121,7 +121,7 @@ LSP Functions ~
 *vim.lsp.buf.formatting()*		Use |vim.lsp.buf.format()| with
 					{async = true} instead.
 *vim.lsp.buf.range_formatting()*	Use |vim.lsp.formatexpr()|
-					or |vim.lsp.format()| instead.
+					or |vim.lsp.buf.format()| instead.
 
 Lua ~
 *vim.register_keystroke_callback()* Use |vim.on_key()| instead.
