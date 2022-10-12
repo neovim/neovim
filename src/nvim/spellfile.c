@@ -5597,10 +5597,12 @@ void spell_add_word(char_u *word, int len, SpellAddType what, int idx, bool undo
             break;
           }
           if (fseek(fd, fpos, SEEK_SET) == 0) {
-            fputc('#', fd);
             if (undo) {
+              fprintf(fd, "#%s", line);
               home_replace(NULL, fname, (char *)NameBuff, MAXPATHL, true);
               smsg(_("Word '%.*s' removed from %s"), len, word, NameBuff);
+            } else {
+              fputc('#', fd);
             }
           }
           if (fseek(fd, fpos_next, SEEK_SET) != 0) {
