@@ -107,8 +107,6 @@ internally and are no longer exposed as part of the API. Instead, use
 - *vim.lsp.diagnostic.set_virtual_text()*
 
 LSP FUNCTIONS
-- *vim.lsp.range_code_action*		Use |vim.lsp.buf.code_action()| with
-					the `range` parameter.
 - *vim.lsp.util.diagnostics_to_items()*	Use |vim.diagnostic.toqflist()| instead.
 - *vim.lsp.util.set_qflist()*		Use |setqflist()| instead.
 - *vim.lsp.util.set_loclist()*		Use |setloclist()| instead.
