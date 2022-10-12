@@ -1133,11 +1133,14 @@ int do_buffer(int action, int start, int dir, int count, int forceit)
 
   switch (start) {
   case DOBUF_FIRST:
-    buf = firstbuf; break;
+    buf = firstbuf;
+    break;
   case DOBUF_LAST:
-    buf = lastbuf;  break;
+    buf = lastbuf;
+    break;
   default:
-    buf = curbuf;   break;
+    buf = curbuf;
+    break;
   }
   if (start == DOBUF_MOD) {         // find next modified buffer
     while (count-- > 0) {
@@ -3205,17 +3208,22 @@ void maketitle(void)
       case 0:
         break;
       case 1:
-        buf_p = strappend(buf_p, " +"); break;
+        buf_p = strappend(buf_p, " +");
+        break;
       case 2:
-        buf_p = strappend(buf_p, " ="); break;
+        buf_p = strappend(buf_p, " =");
+        break;
       case 3:
-        buf_p = strappend(buf_p, " =+"); break;
+        buf_p = strappend(buf_p, " =+");
+        break;
       case 4:
       case 6:
-        buf_p = strappend(buf_p, " -"); break;
+        buf_p = strappend(buf_p, " -");
+        break;
       case 5:
       case 7:
-        buf_p = strappend(buf_p, " -+"); break;
+        buf_p = strappend(buf_p, " -+");
+        break;
       default:
         abort();
       }

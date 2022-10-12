@@ -802,17 +802,23 @@ int showmode(void)
                   + (VIsual_mode == Ctrl_V) * 2
                   + (VIsual_mode == 'V')) {
           case 0:
-            p = N_(" VISUAL"); break;
+            p = N_(" VISUAL");
+            break;
           case 1:
-            p = N_(" VISUAL LINE"); break;
+            p = N_(" VISUAL LINE");
+            break;
           case 2:
-            p = N_(" VISUAL BLOCK"); break;
+            p = N_(" VISUAL BLOCK");
+            break;
           case 4:
-            p = N_(" SELECT"); break;
+            p = N_(" SELECT");
+            break;
           case 5:
-            p = N_(" SELECT LINE"); break;
+            p = N_(" SELECT LINE");
+            break;
           default:
-            p = N_(" SELECT BLOCK"); break;
+            p = N_(" SELECT BLOCK");
+            break;
           }
           msg_puts_attr(_(p), attr);
         }

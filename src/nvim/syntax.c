@@ -2863,9 +2863,11 @@ static void syn_cmd_foldlevel(exarg_T *eap, int syncing)
   if (*arg == NUL) {
     switch (curwin->w_s->b_syn_foldlevel) {
     case SYNFLD_START:
-      msg("syntax foldlevel start");   break;
+      msg("syntax foldlevel start");
+      break;
     case SYNFLD_MINIMUM:
-      msg("syntax foldlevel minimum"); break;
+      msg("syntax foldlevel minimum");
+      break;
     default:
       break;
     }
@@ -4785,9 +4787,11 @@ static char *get_syn_pattern(char *arg, synpat_T *ci)
         case 'b':
           break;
         case 'e':
-          idx += SPO_COUNT; break;
+          idx += SPO_COUNT;
+          break;
         default:
-          idx = -1; break;
+          idx = -1;
+          break;
         }
       }
       if (idx >= 0) {

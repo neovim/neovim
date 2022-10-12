@@ -2988,21 +2988,29 @@ int mch_print_text_out(char_u *const textp, size_t len)
       ga_append(&prt_ps_buffer, '\\');
       switch (ch) {
       case BS:
-        ga_append(&prt_ps_buffer, 'b'); break;
+        ga_append(&prt_ps_buffer, 'b');
+        break;
       case TAB:
-        ga_append(&prt_ps_buffer, 't'); break;
+        ga_append(&prt_ps_buffer, 't');
+        break;
       case NL:
-        ga_append(&prt_ps_buffer, 'n'); break;
+        ga_append(&prt_ps_buffer, 'n');
+        break;
       case FF:
-        ga_append(&prt_ps_buffer, 'f'); break;
+        ga_append(&prt_ps_buffer, 'f');
+        break;
       case CAR:
-        ga_append(&prt_ps_buffer, 'r'); break;
+        ga_append(&prt_ps_buffer, 'r');
+        break;
       case '(':
-        ga_append(&prt_ps_buffer, '('); break;
+        ga_append(&prt_ps_buffer, '(');
+        break;
       case ')':
-        ga_append(&prt_ps_buffer, ')'); break;
+        ga_append(&prt_ps_buffer, ')');
+        break;
       case '\\':
-        ga_append(&prt_ps_buffer, '\\'); break;
+        ga_append(&prt_ps_buffer, '\\');
+        break;
 
       default:
         sprintf((char *)ch_buff, "%03o", (unsigned int)ch);

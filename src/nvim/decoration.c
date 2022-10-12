@@ -411,7 +411,10 @@ void decor_redraw_signs(buf_T *buf, int row, int *num_signs, SignTextAttrs sattr
       }
     }
 
-    struct { HlPriAttr *dest; int hl; } cattrs[] = {
+    struct {
+      HlPriAttr *dest;
+      int hl;
+    } cattrs[] = {
       { line_attrs, decor->line_hl_id        },
       { num_attrs,  decor->number_hl_id      },
       { cul_attrs,  decor->cursorline_hl_id  },

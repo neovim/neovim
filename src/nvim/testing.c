@@ -51,19 +51,26 @@ static void ga_concat_esc(garray_T *gap, const char_u *p, int clen)
   } else {
     switch (*p) {
     case BS:
-      ga_concat(gap, "\\b"); break;
+      ga_concat(gap, "\\b");
+      break;
     case ESC:
-      ga_concat(gap, "\\e"); break;
+      ga_concat(gap, "\\e");
+      break;
     case FF:
-      ga_concat(gap, "\\f"); break;
+      ga_concat(gap, "\\f");
+      break;
     case NL:
-      ga_concat(gap, "\\n"); break;
+      ga_concat(gap, "\\n");
+      break;
     case TAB:
-      ga_concat(gap, "\\t"); break;
+      ga_concat(gap, "\\t");
+      break;
     case CAR:
-      ga_concat(gap, "\\r"); break;
+      ga_concat(gap, "\\r");
+      break;
     case '\\':
-      ga_concat(gap, "\\\\"); break;
+      ga_concat(gap, "\\\\");
+      break;
     default:
       if (*p < ' ') {
         vim_snprintf((char *)buf, NUMBUFLEN, "\\x%02x", *p);

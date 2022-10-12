@@ -5544,7 +5544,8 @@ static Dictionary vimoption2dict(vimoption_T *opt)
     type = "boolean";
     def = BOOL((intptr_t)def_val);
   } else {
-    type = ""; def = NIL;
+    type = "";
+    def = NIL;
   }
   PUT(dict, "type", CSTR_TO_OBJ(type));
   PUT(dict, "default", def);

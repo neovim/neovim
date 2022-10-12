@@ -70,7 +70,6 @@ struct interval {
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "mbyte.c.generated.h"
-
 # include "unicode_tables.generated.h"
 #endif
 
@@ -134,10 +133,11 @@ const uint8_t utf8len_tab_zero[] = {
 
 // Canonical encoding names and their properties.
 // "iso-8859-n" is handled by enc_canonize() directly.
-static struct
-{   const char *name;   int prop;              int codepage; }
-enc_canon_table[] =
-{
+static struct {
+  const char *name;
+  int prop;
+  int codepage;
+} enc_canon_table[] = {
 #define IDX_LATIN_1     0
   { "latin1",          ENC_8BIT + ENC_LATIN1,  1252 },
 #define IDX_ISO_2       1
@@ -268,10 +268,10 @@ enc_canon_table[] =
 };
 
 // Aliases for encoding names.
-static struct
-{   const char *name; int canon; }
-enc_alias_table[] =
-{
+static struct {
+  const char *name;
+  int canon;
+} enc_alias_table[] = {
   { "ansi",            IDX_LATIN_1 },
   { "iso-8859-1",      IDX_LATIN_1 },
   { "latin2",          IDX_ISO_2 },
@@ -2520,21 +2520,29 @@ char_u *string_convert_ext(const vimconv_T *const vcp, char_u *ptr, size_t *lenp
       c = ptr[i];
       switch (c) {
       case 0xa4:
-        c = 0x20ac; break;                 // euro
+        c = 0x20ac;                  // euro
+        break;
       case 0xa6:
-        c = 0x0160; break;                 // S hat
+        c = 0x0160;                  // S hat
+        break;
       case 0xa8:
-        c = 0x0161; break;                 // S -hat
+        c = 0x0161;                  // S -hat
+        break;
       case 0xb4:
-        c = 0x017d; break;                 // Z hat
+        c = 0x017d;                  // Z hat
+        break;
       case 0xb8:
-        c = 0x017e; break;                 // Z -hat
+        c = 0x017e;                  // Z -hat
+        break;
       case 0xbc:
-        c = 0x0152; break;                 // OE
+        c = 0x0152;                  // OE
+        break;
       case 0xbd:
-        c = 0x0153; break;                 // oe
+        c = 0x0153;                  // oe
+        break;
       case 0xbe:
-        c = 0x0178; break;                 // Y
+        c = 0x0178;                  // Y
+        break;
       }
       d += utf_char2bytes(c, (char *)d);
     }
@@ -2571,21 +2579,29 @@ char_u *string_convert_ext(const vimconv_T *const vcp, char_u *ptr, size_t *lenp
         if (vcp->vc_type == CONV_TO_LATIN9) {
           switch (c) {
           case 0x20ac:
-            c = 0xa4; break;                     // euro
+            c = 0xa4;                      // euro
+            break;
           case 0x0160:
-            c = 0xa6; break;                     // S hat
+            c = 0xa6;                      // S hat
+            break;
           case 0x0161:
-            c = 0xa8; break;                     // S -hat
+            c = 0xa8;                      // S -hat
+            break;
           case 0x017d:
-            c = 0xb4; break;                     // Z hat
+            c = 0xb4;                      // Z hat
+            break;
           case 0x017e:
-            c = 0xb8; break;                     // Z -hat
+            c = 0xb8;                      // Z -hat
+            break;
           case 0x0152:
-            c = 0xbc; break;                     // OE
+            c = 0xbc;                      // OE
+            break;
           case 0x0153:
-            c = 0xbd; break;                     // oe
+            c = 0xbd;                      // oe
+            break;
           case 0x0178:
-            c = 0xbe; break;                     // Y
+            c = 0xbe;                      // Y
+            break;
           case 0xa4:
           case 0xa6:
           case 0xa8:
@@ -2594,7 +2610,8 @@ char_u *string_convert_ext(const vimconv_T *const vcp, char_u *ptr, size_t *lenp
           case 0xbc:
           case 0xbd:
           case 0xbe:
-            c = 0x100; break;                   // not in latin9
+            c = 0x100;                    // not in latin9
+            break;
           }
         }
         if (!utf_iscomposing(c)) {              // skip composing chars

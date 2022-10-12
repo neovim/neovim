@@ -7049,9 +7049,11 @@ void ex_helpgrep(exarg_T *eap)
 
   switch (eap->cmdidx) {
   case CMD_helpgrep:
-    au_name = "helpgrep"; break;
+    au_name = "helpgrep";
+    break;
   case CMD_lhelpgrep:
-    au_name = "lhelpgrep"; break;
+    au_name = "lhelpgrep";
+    break;
   default:
     break;
   }

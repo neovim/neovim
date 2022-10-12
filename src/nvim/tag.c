@@ -358,16 +358,20 @@ bool do_tag(char *tag, int type, int count, int forceit, int verbose)
         }
         switch (type) {
         case DT_FIRST:
-          cur_match = count - 1; break;
+          cur_match = count - 1;
+          break;
         case DT_SELECT:
         case DT_JUMP:
         case DT_CSCOPE:
         case DT_LAST:
-          cur_match = MAXCOL - 1; break;
+          cur_match = MAXCOL - 1;
+          break;
         case DT_NEXT:
-          cur_match += count; break;
+          cur_match += count;
+          break;
         case DT_PREV:
-          cur_match -= count; break;
+          cur_match -= count;
+          break;
         }
         if (cur_match >= MAXCOL) {
           cur_match = MAXCOL - 1;

@@ -62,11 +62,14 @@ Array mode_style_array(Arena *arena)
       String shape_str;
       switch (cur->shape) {
       case SHAPE_BLOCK:
-        shape_str = cstr_as_string("block"); break;
+        shape_str = cstr_as_string("block");
+        break;
       case SHAPE_VER:
-        shape_str = cstr_as_string("vertical"); break;
+        shape_str = cstr_as_string("vertical");
+        break;
       case SHAPE_HOR:
-        shape_str = cstr_as_string("horizontal"); break;
+        shape_str = cstr_as_string("horizontal");
+        break;
       default:
         shape_str = cstr_as_string("unknown");
       }

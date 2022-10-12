@@ -501,7 +501,10 @@ int buf_get_signattrs(buf_T *buf, linenr_T lnum, SignTextAttrs sattrs[], HlPriAt
       };
     }
 
-    struct { HlPriAttr *dest; int hl; } cattrs[] = {
+    struct {
+      HlPriAttr *dest;
+      int hl;
+    } cattrs[] = {
       { line_attrs, sp->sn_line_hl },
       { num_attrs,  sp->sn_num_hl  },
       { cul_attrs,  sp->sn_cul_hl  },

@@ -72,13 +72,17 @@ int eexe_mod_op(typval_T *const tv1, const typval_T *const tv2, const char *cons
           }
           switch (*op) {
           case '+':
-            f += tv2->vval.v_float; break;
+            f += tv2->vval.v_float;
+            break;
           case '-':
-            f -= tv2->vval.v_float; break;
+            f -= tv2->vval.v_float;
+            break;
           case '*':
-            f *= tv2->vval.v_float; break;
+            f *= tv2->vval.v_float;
+            break;
           case '/':
-            f /= tv2->vval.v_float; break;
+            f /= tv2->vval.v_float;
+            break;
           }
           tv_clear(tv1);
           tv1->v_type = VAR_FLOAT;
@@ -86,15 +90,20 @@ int eexe_mod_op(typval_T *const tv1, const typval_T *const tv2, const char *cons
         } else {
           switch (*op) {
           case '+':
-            n += tv_get_number(tv2); break;
+            n += tv_get_number(tv2);
+            break;
           case '-':
-            n -= tv_get_number(tv2); break;
+            n -= tv_get_number(tv2);
+            break;
           case '*':
-            n *= tv_get_number(tv2); break;
+            n *= tv_get_number(tv2);
+            break;
           case '/':
-            n = num_divide(n, tv_get_number(tv2)); break;
+            n = num_divide(n, tv_get_number(tv2));
+            break;
           case '%':
-            n = num_modulus(n, tv_get_number(tv2)); break;
+            n = num_modulus(n, tv_get_number(tv2));
+            break;
           }
           tv_clear(tv1);
           tv1->v_type = VAR_NUMBER;
@@ -126,13 +135,17 @@ int eexe_mod_op(typval_T *const tv1, const typval_T *const tv2, const char *cons
                            : (float_T)tv_get_number(tv2));
       switch (*op) {
       case '+':
-        tv1->vval.v_float += f; break;
+        tv1->vval.v_float += f;
+        break;
       case '-':
-        tv1->vval.v_float -= f; break;
+        tv1->vval.v_float -= f;
+        break;
       case '*':
-        tv1->vval.v_float *= f; break;
+        tv1->vval.v_float *= f;
+        break;
       case '/':
-        tv1->vval.v_float /= f; break;
+        tv1->vval.v_float /= f;
+        break;
       }
       return OK;
     }

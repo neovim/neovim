@@ -252,17 +252,23 @@ void nvim_feedkeys(String keys, String mode, Boolean escape_ks)
   for (size_t i = 0; i < mode.size; i++) {
     switch (mode.data[i]) {
     case 'n':
-      remap = false; break;
+      remap = false;
+      break;
     case 'm':
-      remap = true; break;
+      remap = true;
+      break;
     case 't':
-      typed = true; break;
+      typed = true;
+      break;
     case 'i':
-      insert = true; break;
+      insert = true;
+      break;
     case 'x':
-      execute = true; break;
+      execute = true;
+      break;
     case '!':
-      dangerous = true; break;
+      dangerous = true;
+      break;
     }
   }
 

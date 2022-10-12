@@ -496,19 +496,26 @@ static const char *list_arg_vars(exarg_T *eap, const char *arg, int *first)
             if (arg == arg_subsc && len == 2 && name[1] == ':') {
               switch (*name) {
               case 'g':
-                list_glob_vars(first); break;
+                list_glob_vars(first);
+                break;
               case 'b':
-                list_buf_vars(first); break;
+                list_buf_vars(first);
+                break;
               case 'w':
-                list_win_vars(first); break;
+                list_win_vars(first);
+                break;
               case 't':
-                list_tab_vars(first); break;
+                list_tab_vars(first);
+                break;
               case 'v':
-                list_vim_vars(first); break;
+                list_vim_vars(first);
+                break;
               case 's':
-                list_script_vars(first); break;
+                list_script_vars(first);
+                break;
               case 'l':
-                list_func_vars(first); break;
+                list_func_vars(first);
+                break;
               default:
                 semsg(_("E738: Can't list variables for %s"), name);
               }
@@ -649,15 +656,20 @@ static char *ex_let_one(char *arg, typval_T *const tv, const bool copy, const bo
           if (opt_type == gov_number || opt_type == gov_bool) {
             switch (*op) {
             case '+':
-              n = numval + n; break;
+              n = numval + n;
+              break;
             case '-':
-              n = numval - n; break;
+              n = numval - n;
+              break;
             case '*':
-              n = numval * n; break;
+              n = numval * n;
+              break;
             case '/':
-              n = num_divide(numval, n); break;
+              n = num_divide(numval, n);
+              break;
             case '%':
-              n = num_modulus(numval, n); break;
+              n = num_modulus(numval, n);
+              break;
             }
             s = NULL;
           } else if (opt_type == gov_string && stringval != NULL && s != NULL) {

@@ -955,17 +955,23 @@ static int command_line_execute(VimState *state, int key)
       // mapping.
       switch (s->c) {
       case K_RIGHT:
-        s->c = K_LEFT; break;
+        s->c = K_LEFT;
+        break;
       case K_S_RIGHT:
-        s->c = K_S_LEFT; break;
+        s->c = K_S_LEFT;
+        break;
       case K_C_RIGHT:
-        s->c = K_C_LEFT; break;
+        s->c = K_C_LEFT;
+        break;
       case K_LEFT:
-        s->c = K_RIGHT; break;
+        s->c = K_RIGHT;
+        break;
       case K_S_LEFT:
-        s->c = K_S_RIGHT; break;
+        s->c = K_S_RIGHT;
+        break;
       case K_C_LEFT:
-        s->c = K_C_RIGHT; break;
+        s->c = K_C_RIGHT;
+        break;
       }
     }
   }

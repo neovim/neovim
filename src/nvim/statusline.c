@@ -1372,17 +1372,23 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, int use_san
               + bufIsChanged(wp->w_buffer) * 2
               + (!MODIFIABLE(wp->w_buffer)) * 4) {
       case 2:
-        str = "[+]"; break;
+        str = "[+]";
+        break;
       case 3:
-        str = ",+"; break;
+        str = ",+";
+        break;
       case 4:
-        str = "[-]"; break;
+        str = "[-]";
+        break;
       case 5:
-        str = ",-"; break;
+        str = ",-";
+        break;
       case 6:
-        str = "[+-]"; break;
+        str = "[+-]";
+        break;
       case 7:
-        str = ",+-"; break;
+        str = ",+-";
+        break;
       }
       break;
 

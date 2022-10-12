@@ -1191,13 +1191,17 @@ static void tui_set_mode(UI *ui, ModeShape mode)
   int shape;
   switch (c.shape) {
   default:
-    abort(); break;
+    abort();
+    break;
   case SHAPE_BLOCK:
-    shape = 1; break;
+    shape = 1;
+    break;
   case SHAPE_HOR:
-    shape = 3; break;
+    shape = 3;
+    break;
   case SHAPE_VER:
-    shape = 5; break;
+    shape = 5;
+    break;
   }
   UNIBI_SET_NUM_VAR(data->params[0], shape + (int)(c.blinkon == 0));
   unibi_out_ext(ui, data->unibi_ext.set_cursor_style);

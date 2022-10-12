@@ -816,19 +816,31 @@ int vim_vsnprintf_typval(char *str, size_t str_m, const char *fmt, va_list ap, t
       while (true) {
         switch (*p) {
         case '0':
-          zero_padding = 1; p++; continue;
+          zero_padding = 1;
+          p++;
+          continue;
         case '-':
-          justify_left = 1; p++; continue;
+          justify_left = 1;
+          p++;
+          continue;
         // if both '0' and '-' flags appear, '0' should be ignored
         case '+':
-          force_sign = 1; space_for_positive = 0; p++; continue;
+          force_sign = 1;
+          space_for_positive = 0;
+          p++;
+          continue;
         case ' ':
-          force_sign = 1; p++; continue;
+          force_sign = 1;
+          p++;
+          continue;
         // if both ' ' and '+' flags appear, ' ' should be ignored
         case '#':
-          alternate_form = 1; p++; continue;
+          alternate_form = 1;
+          p++;
+          continue;
         case '\'':
-          p++; continue;
+          p++;
+          continue;
         default:
           break;
         }
@@ -896,13 +908,13 @@ int vim_vsnprintf_typval(char *str, size_t str_m, const char *fmt, va_list ap, t
       // common synonyms
       switch (fmt_spec) {
       case 'i':
-        fmt_spec = 'd'; break;
+        fmt_spec = 'd'; break;  // NOLINT(whitespace/newline)
       case 'D':
-        fmt_spec = 'd'; length_modifier = 'l'; break;
+        fmt_spec = 'd'; length_modifier = 'l'; break;  // NOLINT(whitespace/newline)
       case 'U':
-        fmt_spec = 'u'; length_modifier = 'l'; break;
+        fmt_spec = 'u'; length_modifier = 'l'; break;  // NOLINT(whitespace/newline)
       case 'O':
-        fmt_spec = 'o'; length_modifier = 'l'; break;
+        fmt_spec = 'o'; length_modifier = 'l'; break;  // NOLINT(whitespace/newline)
       default:
         break;
       }

@@ -1690,15 +1690,20 @@ Dictionary commands_array(buf_T *buf)
 
     switch (cmd->uc_argt & (EX_EXTRA | EX_NOSPC | EX_NEEDARG)) {
     case 0:
-      arg[0] = '0'; break;
+      arg[0] = '0';
+      break;
     case (EX_EXTRA):
-      arg[0] = '*'; break;
+      arg[0] = '*';
+      break;
     case (EX_EXTRA | EX_NOSPC):
-      arg[0] = '?'; break;
+      arg[0] = '?';
+      break;
     case (EX_EXTRA | EX_NEEDARG):
-      arg[0] = '+'; break;
+      arg[0] = '+';
+      break;
     case (EX_EXTRA | EX_NOSPC | EX_NEEDARG):
-      arg[0] = '1'; break;
+      arg[0] = '1';
+      break;
     }
     PUT(d, "nargs", STRING_OBJ(cstr_to_string(arg)));
 

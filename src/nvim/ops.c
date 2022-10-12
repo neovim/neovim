@@ -3764,11 +3764,14 @@ void ex_display(exarg_T *eap)
     name = get_register_name(i);
     switch (get_reg_type(name, NULL)) {
     case kMTLineWise:
-      type = 'l'; break;
+      type = 'l';
+      break;
     case kMTCharWise:
-      type = 'c'; break;
+      type = 'c';
+      break;
     default:
-      type = 'b'; break;
+      type = 'b';
+      break;
     }
 
     if (arg != NULL && vim_strchr((char *)arg, name) == NULL) {

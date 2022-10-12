@@ -808,25 +808,35 @@ static void normal_invert_horizontal(NormalState *s)
 {
   switch (s->ca.cmdchar) {
   case 'l':
-    s->ca.cmdchar = 'h'; break;
+    s->ca.cmdchar = 'h';
+    break;
   case K_RIGHT:
-    s->ca.cmdchar = K_LEFT; break;
+    s->ca.cmdchar = K_LEFT;
+    break;
   case K_S_RIGHT:
-    s->ca.cmdchar = K_S_LEFT; break;
+    s->ca.cmdchar = K_S_LEFT;
+    break;
   case K_C_RIGHT:
-    s->ca.cmdchar = K_C_LEFT; break;
+    s->ca.cmdchar = K_C_LEFT;
+    break;
   case 'h':
-    s->ca.cmdchar = 'l'; break;
+    s->ca.cmdchar = 'l';
+    break;
   case K_LEFT:
-    s->ca.cmdchar = K_RIGHT; break;
+    s->ca.cmdchar = K_RIGHT;
+    break;
   case K_S_LEFT:
-    s->ca.cmdchar = K_S_RIGHT; break;
+    s->ca.cmdchar = K_S_RIGHT;
+    break;
   case K_C_LEFT:
-    s->ca.cmdchar = K_C_RIGHT; break;
+    s->ca.cmdchar = K_C_RIGHT;
+    break;
   case '>':
-    s->ca.cmdchar = '<'; break;
+    s->ca.cmdchar = '<';
+    break;
   case '<':
-    s->ca.cmdchar = '>'; break;
+    s->ca.cmdchar = '>';
+    break;
   }
   s->idx = find_command(s->ca.cmdchar);
 }
@@ -2592,17 +2602,23 @@ static void unshift_special(cmdarg_T *cap)
 {
   switch (cap->cmdchar) {
   case K_S_RIGHT:
-    cap->cmdchar = K_RIGHT; break;
+    cap->cmdchar = K_RIGHT;
+    break;
   case K_S_LEFT:
-    cap->cmdchar = K_LEFT; break;
+    cap->cmdchar = K_LEFT;
+    break;
   case K_S_UP:
-    cap->cmdchar = K_UP; break;
+    cap->cmdchar = K_UP;
+    break;
   case K_S_DOWN:
-    cap->cmdchar = K_DOWN; break;
+    cap->cmdchar = K_DOWN;
+    break;
   case K_S_HOME:
-    cap->cmdchar = K_HOME; break;
+    cap->cmdchar = K_HOME;
+    break;
   case K_S_END:
-    cap->cmdchar = K_END; break;
+    cap->cmdchar = K_END;
+    break;
   }
   cap->cmdchar = simplify_key(cap->cmdchar, &mod_mask);
 }

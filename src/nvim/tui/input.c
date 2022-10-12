@@ -407,7 +407,9 @@ static void forward_mouse_event(TermInput *input, TermKeyKey *key)
     return;
   }
 
-  row--; col--;  // Termkey uses 1-based coordinates
+  // Termkey uses 1-based coordinates
+  row--;
+  col--;
   buf[len++] = '<';
 
   if (key->modifiers & TERMKEY_KEYMOD_SHIFT) {

@@ -1014,15 +1014,20 @@ static void f_confirm(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
         } else {
           switch (TOUPPER_ASC(*typestr)) {
           case 'E':
-            type = VIM_ERROR; break;
+            type = VIM_ERROR;
+            break;
           case 'Q':
-            type = VIM_QUESTION; break;
+            type = VIM_QUESTION;
+            break;
           case 'I':
-            type = VIM_INFO; break;
+            type = VIM_INFO;
+            break;
           case 'W':
-            type = VIM_WARNING; break;
+            type = VIM_WARNING;
+            break;
           case 'G':
-            type = VIM_GENERIC; break;
+            type = VIM_GENERIC;
+            break;
           }
         }
       }
@@ -6157,7 +6162,9 @@ static int list2proftime(typval_T *arg, proftime_T *tm) FUNC_ATTR_NONNULL_ALL
   // in f_reltime() we split up the 64-bit proftime_T into two 32-bit
   // values, now we combine them again.
   union {
-    struct { int32_t low, high; } split;
+    struct {
+      int32_t low, high;
+    } split;
     proftime_T prof;
   } u = { .split.high = (int32_t)n1, .split.low = (int32_t)n2 };
 
@@ -6198,7 +6205,9 @@ static void f_reltime(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   // (varnumber_T is defined as int). For all our supported platforms, int's
   // are at least 32-bits wide. So we'll use two 32-bit values to store it.
   union {
-    struct { int32_t low, high; } split;
+    struct {
+      int32_t low, high;
+    } split;
     proftime_T prof;
   } u = { .prof = res };
 
@@ -6608,31 +6617,42 @@ static int get_search_arg(typval_T *varp, int *flagsp)
     while (*flags != NUL) {
       switch (*flags) {
       case 'b':
-        dir = BACKWARD; break;
+        dir = BACKWARD;
+        break;
       case 'w':
-        p_ws = true; break;
+        p_ws = true;
+        break;
       case 'W':
-        p_ws = false; break;
+        p_ws = false;
+        break;
       default:
         mask = 0;
         if (flagsp != NULL) {
           switch (*flags) {
           case 'c':
-            mask = SP_START; break;
+            mask = SP_START;
+            break;
           case 'e':
-            mask = SP_END; break;
+            mask = SP_END;
+            break;
           case 'm':
-            mask = SP_RETCOUNT; break;
+            mask = SP_RETCOUNT;
+            break;
           case 'n':
-            mask = SP_NOMOVE; break;
+            mask = SP_NOMOVE;
+            break;
           case 'p':
-            mask = SP_SUBPAT; break;
+            mask = SP_SUBPAT;
+            break;
           case 'r':
-            mask = SP_REPEAT; break;
+            mask = SP_REPEAT;
+            break;
           case 's':
-            mask = SP_SETPCMARK; break;
+            mask = SP_SETPCMARK;
+            break;
           case 'z':
-            mask = SP_COLUMN; break;
+            mask = SP_COLUMN;
+            break;
           }
         }
         if (mask == 0) {
@@ -9501,24 +9521,33 @@ static void f_type(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 
   switch (argvars[0].v_type) {
   case VAR_NUMBER:
-    n = VAR_TYPE_NUMBER; break;
+    n = VAR_TYPE_NUMBER;
+    break;
   case VAR_STRING:
-    n = VAR_TYPE_STRING; break;
+    n = VAR_TYPE_STRING;
+    break;
   case VAR_PARTIAL:
   case VAR_FUNC:
-    n = VAR_TYPE_FUNC; break;
+    n = VAR_TYPE_FUNC;
+    break;
   case VAR_LIST:
-    n = VAR_TYPE_LIST; break;
+    n = VAR_TYPE_LIST;
+    break;
   case VAR_DICT:
-    n = VAR_TYPE_DICT; break;
+    n = VAR_TYPE_DICT;
+    break;
   case VAR_FLOAT:
-    n = VAR_TYPE_FLOAT; break;
+    n = VAR_TYPE_FLOAT;
+    break;
   case VAR_BOOL:
-    n = VAR_TYPE_BOOL; break;
+    n = VAR_TYPE_BOOL;
+    break;
   case VAR_SPECIAL:
-    n = VAR_TYPE_SPECIAL; break;
+    n = VAR_TYPE_SPECIAL;
+    break;
   case VAR_BLOB:
-    n = VAR_TYPE_BLOB; break;
+    n = VAR_TYPE_BLOB;
+    break;
   case VAR_UNKNOWN:
     internal_error("f_type(UNKNOWN)");
     break;
@@ -9928,13 +9957,17 @@ static void f_writefile(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     for (const char *p = flags; *p; p++) {
       switch (*p) {
       case 'b':
-        binary = true; break;
+        binary = true;
+        break;
       case 'a':
-        append = true; break;
+        append = true;
+        break;
       case 's':
-        do_fsync = true; break;
+        do_fsync = true;
+        break;
       case 'S':
-        do_fsync = false; break;
+        do_fsync = false;
+        break;
       default:
         // Using %s, p and not %c, *p to preserve multibyte characters
         semsg(_("E5060: Unknown flag: %s"), p);

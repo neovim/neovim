@@ -644,17 +644,23 @@ static int insert_execute(VimState *state, int key)
   if (curwin->w_p_rl) {
     switch (s->c) {
     case K_LEFT:
-      s->c = K_RIGHT; break;
+      s->c = K_RIGHT;
+      break;
     case K_S_LEFT:
-      s->c = K_S_RIGHT; break;
+      s->c = K_S_RIGHT;
+      break;
     case K_C_LEFT:
-      s->c = K_C_RIGHT; break;
+      s->c = K_C_RIGHT;
+      break;
     case K_RIGHT:
-      s->c = K_LEFT; break;
+      s->c = K_LEFT;
+      break;
     case K_S_RIGHT:
-      s->c = K_S_LEFT; break;
+      s->c = K_S_LEFT;
+      break;
     case K_C_RIGHT:
-      s->c = K_C_LEFT; break;
+      s->c = K_C_LEFT;
+      break;
     }
   }
 
@@ -3058,11 +3064,14 @@ bool in_cinkeys(int keytyped, int when, bool line_is_empty)
     // 'when' and a '*' or '!' before the key.
     switch (when) {
     case '*':
-      try_match = (*look == '*'); break;
+      try_match = (*look == '*');
+      break;
     case '!':
-      try_match = (*look == '!'); break;
+      try_match = (*look == '!');
+      break;
     default:
-      try_match = (*look != '*') && (*look != '!'); break;
+      try_match = (*look != '*') && (*look != '!');
+      break;
     }
     if (*look == '*' || *look == '!') {
       look++;
@@ -3317,11 +3326,14 @@ int hkmap(int c)
 
     // Hebrew letters - set offset from 'a'
     case ',':
-      c = '{'; break;
+      c = '{';
+      break;
     case '.':
-      c = 'v'; break;
+      c = 'v';
+      break;
     case ';':
-      c = 't'; break;
+      c = 't';
+      break;
     default: {
       static char_u str[] = "zqbcxlsjphmkwonu ydafe rig";
 

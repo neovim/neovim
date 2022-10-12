@@ -132,7 +132,8 @@ static inline int marktree_getp_aux(const mtnode_t *x, mtkey_t k, int *r)
     }
   }
   if (begin == x->n) {
-    *rr = 1; return x->n - 1;
+    *rr = 1;
+    return x->n - 1;
   }
   if ((*rr = key_cmp(k, x->key[begin])) < 0) {
     begin--;
@@ -247,7 +248,9 @@ void marktree_put_key(MarkTree *b, mtkey_t k)
   if (r->n == 2 * T - 1) {
     b->n_nodes++;
     s = (mtnode_t *)xcalloc(1, ILEN);
-    b->root = s; s->level = r->level + 1; s->n = 0;
+    b->root = s;
+    s->level = r->level + 1;
+    s->n = 0;
     s->ptr[0] = r;
     r->parent = s;
     split_node(b, s, 0);

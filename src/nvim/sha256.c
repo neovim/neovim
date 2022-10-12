@@ -91,7 +91,8 @@ static void sha256_process(context_sha256_T *ctx, const char_u data[SHA256_BUFFE
 #define P(a, b, c, d, e, f, g, h, x, K) { \
   temp1 = (h) + S3(e) + F1(e, f, g) + (K) + (x); \
   temp2 = S2(a) + F0(a, b, c); \
-  (d) += temp1; (h) = temp1 + temp2; \
+  (d) += temp1; \
+  (h) = temp1 + temp2; \
 }
 
   A = ctx->state[0];

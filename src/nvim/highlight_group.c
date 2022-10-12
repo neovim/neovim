@@ -761,7 +761,9 @@ void set_hl_group(int id, HlAttrs attrs, Dict(highlight) *dict, int link_id)
   g->sg_rgb_sp = attrs.rgb_sp_color;
 
   struct {
-    int *dest; RgbValue val; Object name;
+    int *dest;
+    RgbValue val;
+    Object name;
   } cattrs[] = {
     { &g->sg_rgb_fg_idx, g->sg_rgb_fg, HAS_KEY(dict->fg) ? dict->fg : dict->foreground },
     { &g->sg_rgb_bg_idx, g->sg_rgb_bg, HAS_KEY(dict->bg) ? dict->bg : dict->background },

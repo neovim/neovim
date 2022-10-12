@@ -157,19 +157,19 @@ static char dollar_command[2] = { '$', 0 };
 
 static void save_dbg_stuff(struct dbg_stuff *dsp)
 {
-  dsp->trylevel       = trylevel;             trylevel = 0;
-  dsp->force_abort    = force_abort;          force_abort = false;
-  dsp->caught_stack   = caught_stack;         caught_stack = NULL;
+  dsp->trylevel       = trylevel;             trylevel = 0;  //  NOLINT(whitespace/newline)
+  dsp->force_abort    = force_abort;          force_abort = false;  //  NOLINT(whitespace/newline)
+  dsp->caught_stack   = caught_stack;         caught_stack = NULL;  //  NOLINT(whitespace/newline)
   dsp->vv_exception   = v_exception(NULL);
   dsp->vv_throwpoint  = v_throwpoint(NULL);
 
   // Necessary for debugging an inactive ":catch", ":finally", ":endtry".
-  dsp->did_emsg       = did_emsg;             did_emsg     = false;
-  dsp->got_int        = got_int;              got_int      = false;
-  dsp->did_throw      = did_throw;            did_throw    = false;
-  dsp->need_rethrow   = need_rethrow;         need_rethrow = false;
-  dsp->check_cstack   = check_cstack;         check_cstack = false;
-  dsp->current_exception = current_exception; current_exception = NULL;
+  dsp->did_emsg       = did_emsg;             did_emsg     = false;  //  NOLINT(whitespace/newline)
+  dsp->got_int        = got_int;              got_int      = false;  //  NOLINT(whitespace/newline)
+  dsp->did_throw      = did_throw;            did_throw    = false;  //  NOLINT(whitespace/newline)
+  dsp->need_rethrow   = need_rethrow;         need_rethrow = false;  //  NOLINT(whitespace/newline)
+  dsp->check_cstack   = check_cstack;         check_cstack = false;  //  NOLINT(whitespace/newline)
+  dsp->current_exception = current_exception; current_exception = NULL;  //  NOLINT(whitespace/newline)
 }
 
 static void restore_dbg_stuff(struct dbg_stuff *dsp)
@@ -5643,9 +5643,11 @@ static void ex_sleep(exarg_T *eap)
   case 'm':
     break;
   case NUL:
-    len *= 1000L; break;
+    len *= 1000L;
+    break;
   default:
-    semsg(_(e_invarg2), eap->arg); return;
+    semsg(_(e_invarg2), eap->arg);
+    return;
   }
   do_sleep(len);
 }
@@ -5971,15 +5973,15 @@ static void ex_later(exarg_T *eap)
     count = getdigits_long(&p, false, 0);
     switch (*p) {
     case 's':
-      p++; sec = true; break;
+      p++; sec = true; break;  // NOLINT(whitespace/newline)
     case 'm':
-      p++; sec = true; count *= 60; break;
+      p++; sec = true; count *= 60; break;  // NOLINT(whitespace/newline)
     case 'h':
-      p++; sec = true; count *= 60 * 60; break;
+      p++; sec = true; count *= 60 * 60; break;  // NOLINT(whitespace/newline)
     case 'd':
-      p++; sec = true; count *= 24 * 60 * 60; break;
+      p++; sec = true; count *= 24 * 60 * 60; break;  // NOLINT(whitespace/newline)
     case 'f':
-      p++; file = true; break;
+      p++; file = true; break;  // NOLINT(whitespace/newline)
     }
   }
 

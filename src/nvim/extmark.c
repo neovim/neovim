@@ -228,7 +228,9 @@ bool extmark_clear(buf_T *buf, uint32_t ns_id, int l_row, colnr_T l_col, int u_r
 
   // the value is either zero or the lnum (row+1) if highlight was present.
   static Map(uint64_t, ssize_t) delete_set = MAP_INIT;
-  typedef struct { int row1; } DecorItem;
+  typedef struct {
+    int row1;
+  } DecorItem;
   static kvec_t(DecorItem) decors;
 
   MarkTreeIter itr[1] = { 0 };

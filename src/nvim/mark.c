@@ -961,19 +961,26 @@ void ex_delmarks(exarg_T *eap)
       } else {
         switch (*p) {
         case '"':
-          CLEAR_FMARK(&curbuf->b_last_cursor); break;
+          CLEAR_FMARK(&curbuf->b_last_cursor);
+          break;
         case '^':
-          CLEAR_FMARK(&curbuf->b_last_insert); break;
+          CLEAR_FMARK(&curbuf->b_last_insert);
+          break;
         case '.':
-          CLEAR_FMARK(&curbuf->b_last_change); break;
+          CLEAR_FMARK(&curbuf->b_last_change);
+          break;
         case '[':
-          curbuf->b_op_start.lnum    = 0; break;
+          curbuf->b_op_start.lnum    = 0;
+          break;
         case ']':
-          curbuf->b_op_end.lnum      = 0; break;
+          curbuf->b_op_end.lnum      = 0;
+          break;
         case '<':
-          curbuf->b_visual.vi_start.lnum = 0; break;
+          curbuf->b_visual.vi_start.lnum = 0;
+          break;
         case '>':
-          curbuf->b_visual.vi_end.lnum   = 0; break;
+          curbuf->b_visual.vi_end.lnum   = 0;
+          break;
         case ' ':
           break;
         default:

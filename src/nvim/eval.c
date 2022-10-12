@@ -3754,17 +3754,29 @@ static int get_string_tv(char **arg, typval_T *rettv, int evaluate)
     if (*p == '\\') {
       switch (*++p) {
       case 'b':
-        *name++ = BS; ++p; break;
+        *name++ = BS;
+        p++;
+        break;
       case 'e':
-        *name++ = ESC; ++p; break;
+        *name++ = ESC;
+        p++;
+        break;
       case 'f':
-        *name++ = FF; ++p; break;
+        *name++ = FF;
+        p++;
+        break;
       case 'n':
-        *name++ = NL; ++p; break;
+        *name++ = NL;
+        p++;
+        break;
       case 'r':
-        *name++ = CAR; ++p; break;
+        *name++ = CAR;
+        p++;
+        break;
       case 't':
-        *name++ = TAB; ++p; break;
+        *name++ = TAB;
+        p++;
+        break;
 
       case 'X':           // hex: "\x1", "\x12"
       case 'x':
@@ -8778,18 +8790,24 @@ int typval_compare(typval_T *typ1, typval_T *typ2, exprtype_T type, bool ic)
     switch (type) {
     case EXPR_IS:
     case EXPR_EQUAL:
-      n1 = f1 == f2; break;
+      n1 = f1 == f2;
+      break;
     case EXPR_ISNOT:
     case EXPR_NEQUAL:
-      n1 = f1 != f2; break;
+      n1 = f1 != f2;
+      break;
     case EXPR_GREATER:
-      n1 = f1 > f2; break;
+      n1 = f1 > f2;
+      break;
     case EXPR_GEQUAL:
-      n1 = f1 >= f2; break;
+      n1 = f1 >= f2;
+      break;
     case EXPR_SMALLER:
-      n1 = f1 < f2; break;
+      n1 = f1 < f2;
+      break;
     case EXPR_SEQUAL:
-      n1 = f1 <= f2; break;
+      n1 = f1 <= f2;
+      break;
     case EXPR_UNKNOWN:
     case EXPR_MATCH:
     case EXPR_NOMATCH:
@@ -8804,18 +8822,24 @@ int typval_compare(typval_T *typ1, typval_T *typ2, exprtype_T type, bool ic)
     switch (type) {
     case EXPR_IS:
     case EXPR_EQUAL:
-      n1 = n1 == n2; break;
+      n1 = n1 == n2;
+      break;
     case EXPR_ISNOT:
     case EXPR_NEQUAL:
-      n1 = n1 != n2; break;
+      n1 = n1 != n2;
+      break;
     case EXPR_GREATER:
-      n1 = n1 > n2; break;
+      n1 = n1 > n2;
+      break;
     case EXPR_GEQUAL:
-      n1 = n1 >= n2; break;
+      n1 = n1 >= n2;
+      break;
     case EXPR_SMALLER:
-      n1 = n1 < n2; break;
+      n1 = n1 < n2;
+      break;
     case EXPR_SEQUAL:
-      n1 = n1 <= n2; break;
+      n1 = n1 <= n2;
+      break;
     case EXPR_UNKNOWN:
     case EXPR_MATCH:
     case EXPR_NOMATCH:
@@ -8836,18 +8860,24 @@ int typval_compare(typval_T *typ1, typval_T *typ2, exprtype_T type, bool ic)
     switch (type) {
     case EXPR_IS:
     case EXPR_EQUAL:
-      n1 = i == 0; break;
+      n1 = i == 0;
+      break;
     case EXPR_ISNOT:
     case EXPR_NEQUAL:
-      n1 = i != 0; break;
+      n1 = i != 0;
+      break;
     case EXPR_GREATER:
-      n1 = i > 0; break;
+      n1 = i > 0;
+      break;
     case EXPR_GEQUAL:
-      n1 = i >= 0; break;
+      n1 = i >= 0;
+      break;
     case EXPR_SMALLER:
-      n1 = i < 0; break;
+      n1 = i < 0;
+      break;
     case EXPR_SEQUAL:
-      n1 = i <= 0; break;
+      n1 = i <= 0;
+      break;
 
     case EXPR_MATCH:
     case EXPR_NOMATCH:

@@ -1380,25 +1380,36 @@ static bool send_mouse_event(Terminal *term, int c)
     switch (c) {
     case K_LEFTDRAG:
     case K_LEFTMOUSE:
-      pressed = true; FALLTHROUGH;
+      pressed = true;
+      FALLTHROUGH;
     case K_LEFTRELEASE:
-      button = 1; break;
+      button = 1;
+      break;
     case K_MOUSEMOVE:
-      button = 0; break;
+      button = 0;
+      break;
     case K_MIDDLEDRAG:
     case K_MIDDLEMOUSE:
-      pressed = true; FALLTHROUGH;
+      pressed = true;
+      FALLTHROUGH;
     case K_MIDDLERELEASE:
-      button = 2; break;
+      button = 2;
+      break;
     case K_RIGHTDRAG:
     case K_RIGHTMOUSE:
-      pressed = true; FALLTHROUGH;
+      pressed = true;
+      FALLTHROUGH;
     case K_RIGHTRELEASE:
-      button = 3; break;
+      button = 3;
+      break;
     case K_MOUSEDOWN:
-      pressed = true; button = 4; break;
+      pressed = true;
+      button = 4;
+      break;
     case K_MOUSEUP:
-      pressed = true; button = 5; break;
+      pressed = true;
+      button = 5;
+      break;
     default:
       return false;
     }
@@ -1537,7 +1548,8 @@ static void refresh_timer_cb(TimeWatcher *watcher, void *data)
     return;
   }
   Terminal *term;
-  void *stub; (void)(stub);
+  void *stub;
+  (void)(stub);
   // don't process autocommands while updating terminal buffers
   block_autocmds();
   map_foreach(&invalidated_terminals, term, stub, {

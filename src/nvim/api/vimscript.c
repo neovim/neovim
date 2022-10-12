@@ -412,11 +412,14 @@ Dictionary nvim_parse_expression(String expr, String flags, Boolean highlight, E
   for (size_t i = 0; i < flags.size; i++) {
     switch (flags.data[i]) {
     case 'm':
-      pflags |= kExprFlagsMulti; break;
+      pflags |= kExprFlagsMulti;
+      break;
     case 'E':
-      pflags |= kExprFlagsDisallowEOC; break;
+      pflags |= kExprFlagsDisallowEOC;
+      break;
     case 'l':
-      pflags |= kExprFlagsParseLet; break;
+      pflags |= kExprFlagsParseLet;
+      break;
     case NUL:
       api_set_error(err, kErrorTypeValidation, "Invalid flag: '\\0' (%u)",
                     (unsigned)flags.data[i]);

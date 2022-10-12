@@ -1449,41 +1449,59 @@ int vgetc(void)
       // its ASCII equivalent
       switch (c) {
       case K_KPLUS:
-        c = '+'; break;
+        c = '+';
+        break;
       case K_KMINUS:
-        c = '-'; break;
+        c = '-';
+        break;
       case K_KDIVIDE:
-        c = '/'; break;
+        c = '/';
+        break;
       case K_KMULTIPLY:
-        c = '*'; break;
+        c = '*';
+        break;
       case K_KENTER:
-        c = CAR; break;
+        c = CAR;
+        break;
       case K_KPOINT:
-        c = '.'; break;
+        c = '.';
+        break;
       case K_KCOMMA:
-        c = ','; break;
+        c = ',';
+        break;
       case K_KEQUAL:
-        c = '='; break;
+        c = '=';
+        break;
       case K_K0:
-        c = '0'; break;
+        c = '0';
+        break;
       case K_K1:
-        c = '1'; break;
+        c = '1';
+        break;
       case K_K2:
-        c = '2'; break;
+        c = '2';
+        break;
       case K_K3:
-        c = '3'; break;
+        c = '3';
+        break;
       case K_K4:
-        c = '4'; break;
+        c = '4';
+        break;
       case K_K5:
-        c = '5'; break;
+        c = '5';
+        break;
       case K_K6:
-        c = '6'; break;
+        c = '6';
+        break;
       case K_K7:
-        c = '7'; break;
+        c = '7';
+        break;
       case K_K8:
-        c = '8'; break;
+        c = '8';
+        break;
       case K_K9:
-        c = '9'; break;
+        c = '9';
+        break;
 
       case K_XHOME:
       case K_ZHOME:
@@ -1512,16 +1530,20 @@ int vgetc(void)
 
       case K_KUP:
       case K_XUP:
-        c = K_UP; break;
+        c = K_UP;
+        break;
       case K_KDOWN:
       case K_XDOWN:
-        c = K_DOWN; break;
+        c = K_DOWN;
+        break;
       case K_KLEFT:
       case K_XLEFT:
-        c = K_LEFT; break;
+        c = K_LEFT;
+        break;
       case K_KRIGHT:
       case K_XRIGHT:
-        c = K_RIGHT; break;
+        c = K_RIGHT;
+        break;
       }
 
       // For a multi-byte character get all the bytes and return the

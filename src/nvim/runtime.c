@@ -146,11 +146,14 @@ char *estack_sfile(estack_arg_T which)
       if (entry->es_type != last_type) {
         switch (entry->es_type) {
         case ETYPE_SCRIPT:
-          type_name = "script "; break;
+          type_name = "script ";
+          break;
         case ETYPE_UFUNC:
-          type_name = "function "; break;
+          type_name = "function ";
+          break;
         default:
-          type_name = ""; break;
+          type_name = "";
+          break;
         }
         last_type = entry->es_type;
       }
