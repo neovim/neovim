@@ -903,7 +903,6 @@ static void ins_compl_longest_match(compl_T *match)
     had_match = (curwin->w_cursor.col > compl_col);
     ins_compl_delete();
     ins_bytes(compl_leader + get_compl_len());
-    ins_redraw(false);
 
     // When the match isn't there (to avoid matching itself) remove it
     // again after redrawing.
@@ -937,7 +936,6 @@ static void ins_compl_longest_match(compl_T *match)
     had_match = (curwin->w_cursor.col > compl_col);
     ins_compl_delete();
     ins_bytes(compl_leader + get_compl_len());
-    ins_redraw(false);
 
     // When the match isn't there (to avoid matching itself) remove it
     // again after redrawing.
@@ -1226,9 +1224,6 @@ void ins_compl_show_pum(void)
 
   // Dirty hard-coded hack: remove any matchparen highlighting.
   do_cmdline_cmd("if exists('g:loaded_matchparen')|3match none|endif");
-
-  // Update the screen before drawing the popup menu over it.
-  update_screen();
 
   int cur = -1;
   bool array_changed = false;
@@ -1648,8 +1643,7 @@ int ins_compl_bs(void)
     ins_compl_restart();
   }
 
-  // ins_compl_restart() calls update_screen() which may invalidate the pointer
-  // TODO(bfredl): get rid of random update_screen() calls deep inside completion logic
+  // ins_compl_restart() may call update_screen() which may invalidate the pointer
   line = get_cursor_line_ptr();
 
   xfree(compl_leader);
@@ -1756,10 +1750,6 @@ void ins_compl_addleader(int c)
 /// BS or a key was typed while still searching for matches.
 static void ins_compl_restart(void)
 {
-  // update screen before restart.
-  // so if complete is blocked,
-  // will stay to the last popup menu and reduce flicker
-  update_screen();  // TODO(bfredl): no.
   ins_compl_free();
   compl_started = false;
   compl_matches = 0;
@@ -2048,6 +2038,7 @@ static bool ins_compl_stop(const int c, const int prev_mode, bool retval)
   if (c == Ctrl_C && cmdwin_type != 0) {
     // Avoid the popup menu remains displayed when leaving the
     // command line window.
+    // TODO: too early! why not redraw screen without cmdwin  later?
     update_screen();
   }
 
@@ -3536,9 +3527,6 @@ static int ins_compl_next(bool allow_get_expansion, int count, bool insert_match
   }
 
   if (!allow_get_expansion) {
-    // redraw to show the user what was inserted
-    update_screen();  // TODO(bfredl): no!
-
     // display the updated popup menu
     ins_compl_show_pum();
 
