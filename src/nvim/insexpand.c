@@ -1251,6 +1251,13 @@ void ins_compl_show_pum(void)
   // part of the screen would be updated.  We do need to redraw here.
   dollar_vcol = -1;
 
+  // Update the screen before drawing the popup menu over it.
+  // TODO(bfredl): pum_display() needs to be
+  // separated into two parts. We should just configure
+  // what is to be drawn here. Then the contents of the pum will be put to
+  // screen in update_screen(), after reallocating/drawing all windows
+  update_screen();
+
   // Compute the screen column of the start of the completed text.
   // Use the cursor to get all wrapping and other settings right.
   const colnr_T col = curwin->w_cursor.col;
