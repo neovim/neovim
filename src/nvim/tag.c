@@ -220,8 +220,7 @@ bool do_tag(char *tag, int type, int count, int forceit, int verbose)
     if (*tag != NUL
         && (type == DT_TAG || type == DT_SELECT || type == DT_JUMP
             || type == DT_LTAG
-            || type == DT_CSCOPE
-            )) {
+            || type == DT_CSCOPE)) {
       if (g_do_tagpreview != 0) {
         if (ptag_entry.tagname != NULL
             && strcmp(ptag_entry.tagname, tag) == 0) {

@@ -539,9 +539,7 @@ static void discard_exception(except_T *excp, bool was_finished)
     if (debug_break_level > 0 || *p_vfile == NUL) {
       msg_scroll = true;            // always scroll up, don't overwrite
     }
-    smsg(was_finished ? _("Exception finished: %s")
-                      : _("Exception discarded: %s"),
-         excp->value);
+    smsg(was_finished ? _("Exception finished: %s") : _("Exception discarded: %s"), excp->value);
     msg_puts("\n");  // don't overwrite this either
     if (debug_break_level > 0 || *p_vfile == NUL) {
       cmdline_row = msg_row;
@@ -1950,7 +1948,7 @@ void rewind_conditionals(cstack_T *cstack, int idx, int cond_type, int *cond_lev
 {
   while (cstack->cs_idx > idx) {
     if (cstack->cs_flags[cstack->cs_idx] & cond_type) {
-      --*cond_level;
+      (*cond_level)--;
     }
     if (cstack->cs_flags[cstack->cs_idx] & CSF_FOR) {
       free_for_info(cstack->cs_forinfo[cstack->cs_idx]);

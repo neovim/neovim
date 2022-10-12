@@ -645,7 +645,7 @@ static size_t do_path_expand(garray_T *gap, const char *path, size_t wildoff, in
 #ifndef MSWIN
                    || (!p_fic && (flags & EW_ICASE) && mb_isalpha(utf_ptr2char((char *)path_end)))
 #endif
-                   )) {
+                   )) {  // NOLINT(whitespace/parens)
       e = p;
     }
     len = (size_t)(utfc_ptr2len((char *)path_end));
@@ -787,7 +787,7 @@ static int find_previous_pathsep(char_u *path, char_u **psep)
 {
   // skip the current separator
   if (*psep > path && vim_ispathsep(**psep)) {
-    --*psep;
+    (*psep)--;
   }
 
   // find the previous separator

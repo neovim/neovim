@@ -207,7 +207,7 @@ void set_init_1(bool clean_arg)
         p = "/tmp";
 # endif
         mustfree = false;
-      } else
+      } else  // NOLINT(readability/braces)
 #endif
       {
         p = vim_getenv(names[n]);
@@ -2042,10 +2042,9 @@ static char *set_bool_option(const int opt_idx, char_u *const varp, const int va
     }
     redraw_titles();
     modified_was_set = value;
-  }
 
 #ifdef BACKSLASH_IN_FILENAME
-  else if ((int *)varp == &p_ssl) {
+  } else if ((int *)varp == &p_ssl) {
     if (p_ssl) {
       psepc = '/';
       psepcN = '\\';
@@ -2060,9 +2059,8 @@ static char *set_bool_option(const int opt_idx, char_u *const varp, const int va
     buflist_slash_adjust();
     alist_slash_adjust();
     scriptnames_slash_adjust();
-  }
 #endif
-  else if ((int *)varp == &curwin->w_p_wrap) {
+  } else if ((int *)varp == &curwin->w_p_wrap) {
     // If 'wrap' is set, set w_leftcol to zero.
     if (curwin->w_p_wrap) {
       curwin->w_leftcol = 0;
@@ -2681,7 +2679,7 @@ int findoption_len(const char *const arg, const size_t len)
   // letter.  There are 26 letters, plus the first "t_" option.
   if (quick_tab[1] == 0) {
     p = options[0].fullname;
-    for (short int i = 1; (s = options[i].fullname) != NULL; i++) {
+    for (uint16_t i = 1; (s = options[i].fullname) != NULL; i++) {
       if (s[0] != p[0]) {
         if (s[0] == 't' && s[1] == '_') {
           quick_tab[26] = i;
@@ -3598,8 +3596,7 @@ void unset_global_local_option(char *name, void *from)
   }
   p = &(options[opt_idx]);
 
-  switch ((int)p->indir)
-  {
+  switch ((int)p->indir) {
   // global option with local value: use local value if it's been set
   case PV_EP:
     clear_string_option(&buf->b_p_ep);
@@ -4862,7 +4859,7 @@ static void option_value2string(vimoption_T *opp, int opt_flags)
       snprintf((char *)NameBuff,
                sizeof(NameBuff),
                "%" PRId64,
-               (int64_t)*(long *)varp);
+               (int64_t)(*(long *)varp));
     }
   } else {  // P_STRING
     varp = *(char_u **)(varp);
