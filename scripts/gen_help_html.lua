@@ -248,6 +248,16 @@ local function getbuflinestr(node, bufnr, offset)
   return table.concat(lines, '\n')
 end
 
+-- Gets the whitespace just before `node` from the raw buffer text.
+-- Needed for preformatted `old` lines.
+local function getws(node, bufnr)
+  local line1, c1, line2, _ = node:range()
+  local raw = vim.fn.getbufline(bufnr, line1 + 1, line2 + 1)[1]
+  local text_before = raw:sub(1, c1)
+  local leading_ws = text_before:match('%s+$') or ''
+  return leading_ws
+end
+
 local function get_tagname(node, bufnr)
   local text = vim.treesitter.get_node_text(node, bufnr)
   local tag = (node:type() == 'optionlink' or node:parent():type() == 'optionlink') and ("'%s'"):format(text) or text
@@ -284,6 +294,16 @@ local function has_ancestor(node, ancestor_name)
     end
   end
   return false
+end
+
+-- Gets the first matching child node matching `name`.
+local function first(node, name)
+  for c, _ in node:iter_children() do
+    if c:named() and c:type() == name then
+      return c
+    end
+  end
+  return nil
 end
 
 local function validate_link(node, bufnr, fname)
@@ -353,12 +373,21 @@ local function visit_node(root, level, lang_tree, headings, opt, stats)
   local parent = root:parent() and root:parent():type() or nil
   local text = ''
   local trimmed
-  local function node_text(node)
-    return vim.treesitter.get_node_text(node or root, opt.buf)
+  -- Gets leading whitespace of `node`.
+  local function ws(node)
+    node = node or root
+    local ws_ = getws(node, opt.buf)
+    -- XXX: first node of a (line) includes whitespace, even after
+    -- https://github.com/neovim/tree-sitter-vimdoc/pull/31 ?
+    if ws_ == '' then
+      ws_ = vim.treesitter.get_node_text(node, opt.buf):match('^%s+') or ''
+    end
+    return ws_
   end
-  -- Gets leading whitespace of the current node.
-  local function ws()
-    return node_text():match('^%s+') or ''
+  local function node_text(node, ws_)
+    node = node or root
+    ws_ = (ws_ == nil or ws_ == true) and getws(node, opt.buf) or ''
+    return string.format('%s%s', ws_, vim.treesitter.get_node_text(node, opt.buf))
   end
 
   if root:child_count() == 0 or node_name == 'ERROR' then
@@ -389,18 +418,23 @@ local function visit_node(root, level, lang_tree, headings, opt, stats)
     end
     -- Remove "===" and tags from ToC text.
     local hname = (node_text():gsub('%-%-%-%-+', ''):gsub('%=%=%=%=+', ''):gsub('%*.*%*', ''))
+    -- Use the first *tag* node as the heading anchor, if any.
+    local tagnode = first(root, 'tag')
+    local tagname = tagnode and url_encode(node_text(tagnode:child(1), false)) or to_heading_tag(hname)
     if node_name == 'h1' or #headings == 0 then
-      table.insert(headings, { name = hname, subheadings = {}, })
+      table.insert(headings, { name = hname, subheadings = {}, tag = tagname })
     else
-      table.insert(headings[#headings].subheadings, { name = hname, subheadings = {}, })
+      table.insert(headings[#headings].subheadings, { name = hname, subheadings = {}, tag = tagname })
     end
     local el = node_name == 'h1' and 'h2' or 'h3'
-    return ('<a name="%s"></a><%s class="help-heading">%s</%s>\n'):format(to_heading_tag(hname), el, text, el)
+    -- If we are re-using the *tag*, this heading anchor is redundant.
+    local a = tagnode and '' or ('<a name="%s"></a>'):format(tagname)
+    return ('%s<%s class="help-heading">%s</%s>\n'):format(a, el, text, el)
   elseif node_name == 'column_heading' or node_name == 'column_name' then
     if root:has_error() then
       return text
     end
-    return ('<div class="help-column_heading">%s%s</div>'):format(ws(), trimmed)
+    return ('<div class="help-column_heading">%s</div>'):format(text)
   elseif node_name == 'block' then
     if is_blank(text) then
       return ''
@@ -461,9 +495,9 @@ local function visit_node(root, level, lang_tree, headings, opt, stats)
     end
     local in_heading = vim.tbl_contains({'h1', 'h2', 'h3'}, parent)
     local cssclass = (not in_heading and get_indent(node_text()) > 8) and 'help-tag-right' or 'help-tag'
-    local tagname = node_text(root:child(1))
+    local tagname = node_text(root:child(1), false)
     if vim.tbl_count(stats.first_tags) < 2 then
-      -- First 2 tags in the doc will be anchored at the main heading.
+      -- Force the first 2 tags in the doc to be anchored at the main heading.
       table.insert(stats.first_tags, tagname)
       return ''
     end
@@ -700,10 +734,10 @@ local function gen_one(fname, to_fname, old, commit)
   local n = 0  -- Count of all headings + subheadings.
   for _, h1 in ipairs(headings) do n = n + 1 + #h1.subheadings end
   for _, h1 in ipairs(headings) do
-    toc = toc .. ('<div class="help-toc-h1"><a href="#%s">%s</a>\n'):format(to_heading_tag(h1.name), h1.name)
+    toc = toc .. ('<div class="help-toc-h1"><a href="#%s">%s</a>\n'):format(h1.tag, h1.name)
     if n < 30 or #headings < 10 then  -- Show subheadings only if there aren't too many.
       for _, h2 in ipairs(h1.subheadings) do
-        toc = toc .. ('<div class="help-toc-h2"><a href="#%s">%s</a></div>\n'):format(to_heading_tag(h2.name), h2.name)
+        toc = toc .. ('<div class="help-toc-h2"><a href="#%s">%s</a></div>\n'):format(h2.tag, h2.name)
       end
     end
     toc = toc .. '</div>'
