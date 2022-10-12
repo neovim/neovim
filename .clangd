@@ -13,25 +13,25 @@ Diagnostics:
       - google-readability-function-size
       - misc-no-recursion
       - misc-unused-parameters
-      - readability-function-*
+      - performance-no-int-to-ptr
       - readability-else-after-return
+      - readability-function-*
       - readability-identifier-length
       - readability-isolate-declaration
       - readability-magic-numbers
       - readability-redundant-function-ptr-dereference
       - readability-suspicious-call-argument
-      - performance-no-int-to-ptr
     CheckOptions:
-      readability-identifier-naming.NamespaceCase: lower_case
-      readability-identifier-naming.StructCase: CamelCase
-      readability-identifier-naming.TemplateParameterCase: CamelCase
-      readability-identifier-naming.FunctionCase: lower_case
-      readability-identifier-naming.VariableCase: lower_case
       readability-identifier-naming.ClassMemberCase: lower_case
       readability-identifier-naming.ClassMemberSuffix: _
+      readability-identifier-naming.FunctionCase: lower_case
       readability-identifier-naming.GlobalConstantCase: CamelCase
       readability-identifier-naming.GlobalConstantPrefix: k
       readability-identifier-naming.MemberConstantCase: CamelCase
       readability-identifier-naming.MemberConstantPrefix: k
+      readability-identifier-naming.NamespaceCase: lower_case
       readability-identifier-naming.StaticConstantCase: CamelCase
       readability-identifier-naming.StaticConstantPrefix: k
+      readability-identifier-naming.StructCase: CamelCase
+      readability-identifier-naming.TemplateParameterCase: CamelCase
+      readability-identifier-naming.VariableCase: lower_case
