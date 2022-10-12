@@ -275,7 +275,6 @@ function module.command(cmd)
   module.request('nvim_command', cmd)
 end
 
-
 -- Use for commands which expect nvim to quit.
 -- The first argument can also be a timeout.
 function module.expect_exit(fn_or_timeout, ...)
