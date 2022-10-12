@@ -1519,9 +1519,10 @@ cursor({list})
 		|setcursorcharpos()|.
 
 		Does not change the jumplist.
+		{lnum} is used like with |getline()|, except that if {lnum} is
+		zero, the cursor will stay in the current line.
 		If {lnum} is greater than the number of lines in the buffer,
 		the cursor will be positioned at the last line in the buffer.
-		If {lnum} is zero, the cursor will stay in the current line.
 		If {col} is greater than the number of bytes in the line,
 		the cursor will be positioned at the last character in the
 		line.
