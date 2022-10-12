@@ -370,6 +370,9 @@ au BufNewFile,BufRead *.ch			call dist#ft#FTchange()
 " ChordPro
 au BufNewFile,BufRead *.chopro,*.crd,*.cho,*.crdpro,*.chordpro	setf chordpro
 
+" Clang-tidy
+au BufNewFile,BufRead .clang-tidy		setf yaml
+
 " Clean
 au BufNewFile,BufRead *.dcl,*.icl		setf clean
 
