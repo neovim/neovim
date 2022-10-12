@@ -110,11 +110,15 @@ if(NOT APPLE)
   install_helper(
     FILES ${CMAKE_CURRENT_SOURCE_DIR}/nvim.desktop
     DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/applications)
-
-  install_helper(
-    FILES ${CMAKE_CURRENT_SOURCE_DIR}/nvim.png
-    DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/icons/hicolor/128x128/apps)
 endif()
+
+install_helper(
+  FILES ${CMAKE_CURRENT_SOURCE_DIR}/nvim.png
+  DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/icons/hicolor/128x128/apps)
+
+install_helper(
+  FILES ${CMAKE_CURRENT_SOURCE_DIR}/neovim.ico
+  DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/nvim/runtime)
 
 globrecurse_wrapper(RUNTIME_PROGRAMS ${CMAKE_CURRENT_SOURCE_DIR} *.awk *.sh *.bat)
 

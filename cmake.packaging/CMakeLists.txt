@@ -32,7 +32,7 @@ if(WIN32)
   # The following guid is just a randomly generated guid that's been pasted here.
   # It has no special meaning other than to supply it to WIX.
   set(CPACK_WIX_UPGRADE_GUID "207A1A70-7B0C-418A-A153-CA6883E38F4D")
-  set(CPACK_WIX_PRODUCT_ICON ${CMAKE_CURRENT_LIST_DIR}/neovim.ico)
+  set(CPACK_WIX_PRODUCT_ICON ${PROJECT_SOURCE_DIR}/runtime/neovim.ico)
 
   # We use a wix patch to add further options to the installer. At present, it's just to add neovim to the path
   # on installation, however, it can be extended.
