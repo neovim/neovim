@@ -777,9 +777,8 @@ int searchit(win_T *win, buf_T *buf, pos_T *pos, pos_T *end_pos, Direction dir, 
                 }
               }
               if (ptr[matchcol] == NUL
-                  || (nmatched =
-                        vim_regexec_multi(&regmatch, win, buf, lnum + matchpos.lnum, matchcol,
-                                          tm, timed_out)) == 0) {
+                  || (nmatched = vim_regexec_multi(&regmatch, win, buf, lnum + matchpos.lnum,
+                                                   matchcol, tm, timed_out)) == 0) {
                 // If the search timed out, we did find a match
                 // but it might be the wrong one, so that's not
                 // OK.
@@ -1331,9 +1330,7 @@ int do_search(oparg_T *oap, int dirc, int search_delim, char_u *pat, long count,
               break;
             }
           }
-        }
-        // to the left, check for start of file
-        else {
+        } else {  // to the left, check for start of file
           while (c++ < 0) {
             if (decl(&pos) == -1) {
               break;
@@ -1765,9 +1762,7 @@ pos_T *findmatchlimit(oparg_T *oap, int initc, int flags, int64_t maxtravel)
               || STRNCMP(ptr, "el", 2) == 0) {
             hash_dir = 1;
           }
-        }
-        // Are we on a comment?
-        else if (linep[pos.col] == '/') {
+        } else if (linep[pos.col] == '/') {  // Are we on a comment?
           if (linep[pos.col + 1] == '*') {
             comment_dir = FORWARD;
             backwards = false;
@@ -1989,7 +1984,7 @@ pos_T *findmatchlimit(oparg_T *oap, int initc, int flags, int64_t maxtravel)
 
     if (comment_dir) {
       // Note: comments do not nest, and we ignore quotes in them
-      // TODO: ignore comment brackets inside strings
+      // TODO(vim): ignore comment brackets inside strings
       if (comment_dir == FORWARD) {
         if (linep[pos.col] == '*' && linep[pos.col + 1] == '/') {
           pos.col++;
@@ -3459,9 +3454,10 @@ void find_pattern_in_path(char_u *ptr, Direction dir, size_t len, bool whole, bo
       // when CONT_SOL is set compare "ptr" with the beginning of the
       // line is faster than quote_meta/regcomp/regexec "ptr" -- Acevedo
       && !compl_status_sol()) {
-    pat = xmalloc(len + 5);
+    size_t patlen = len + 5;
+    pat = xmalloc(patlen);
     assert(len <= INT_MAX);
-    sprintf((char *)pat, whole ? "\\<%.*s\\>" : "%.*s", (int)len, ptr);
+    snprintf((char *)pat, patlen, whole ? "\\<%.*s\\>" : "%.*s", (int)len, ptr);
     // ignore case according to p_ic, p_scs and pat
     regmatch.rm_ic = ignorecase(pat);
     regmatch.regprog = vim_regcomp((char *)pat, p_magic ? RE_MAGIC : 0);
@@ -3748,13 +3744,12 @@ search_line:
     if (matched) {
       if (action == ACTION_EXPAND) {
         bool cont_s_ipos = false;
-        char_u *aux;
 
         if (depth == -1 && lnum == curwin->w_cursor.lnum) {
           break;
         }
         found = true;
-        aux = p = startp;
+        char_u *aux = p = startp;
         if (compl_status_adding()) {
           p += ins_compl_len();
           if (vim_iswordp(p)) {
@@ -3767,7 +3762,7 @@ search_line:
 
         if (compl_status_adding() && i == ins_compl_len()) {
           // IOSIZE > compl_length, so the STRNCPY works
-          STRNCPY(IObuff, aux, i);
+          STRNCPY(IObuff, aux, i);  // NOLINT(runtime/printf)
 
           // Get the next line: when "depth" < 0  from the current
           // buffer, otherwise from the included file.  Jump to
@@ -3805,7 +3800,7 @@ search_line:
             if (p - aux >= IOSIZE - i) {
               p = aux + IOSIZE - i - 1;
             }
-            STRNCPY(IObuff + i, aux, p - aux);
+            STRNCPY(IObuff + i, aux, p - aux);  // NOLINT(runtime/printf)
             i += (int)(p - aux);
             cont_s_ipos = true;
           }
@@ -4056,7 +4051,7 @@ static void show_pat_in_path(char_u *line, int type, bool did_show, int action, 
       if (vim_fgets(line, LSIZE, fp)) {     // end of file
         break;
       }
-      ++*lnum;
+      (*lnum)++;
     } else {
       if (++*lnum > curbuf->b_ml.ml_line_count) {
         break;
