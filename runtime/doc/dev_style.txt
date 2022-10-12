@@ -183,9 +183,15 @@ Use `bool` to represent boolean values. >
 
 Variable declarations ~
 
-Declare only one variable per line. >
+Multiple, simple variable declarations can be declared on the same line given
+that there are no initializations. A simple variable declaration is one that
+is not a pointer or array. >
 
-    int i, j = 1
+    int i, j, k;    // Allowed
+
+Use only one initialization per line. >
+
+    int i, j = 1;   // BAD
 
 
 Conditions ~
