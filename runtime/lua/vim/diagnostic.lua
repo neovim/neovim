@@ -661,7 +661,11 @@ function M.config(opts, namespace)
   end
 
   for k, v in pairs(opts) do
-    t[k] = v
+    if namespace then
+      global_diagnostic_options[k] = v
+    else
+      t[k] = v
+    end
   end
 
   if namespace then
