@@ -2547,22 +2547,9 @@ def CheckStyle(filename, clean_lines, linenum, error):
     # if(match(prev, " +for \\(")) complain = 0;
     # if(prevodd && match(prevprev, " +for \\(")) complain = 0;
     initial_spaces = 0
-    cleansed_line = clean_lines.elided[linenum]
 
     while initial_spaces < len(line) and line[initial_spaces] == ' ':
         initial_spaces += 1
-
-    if (cleansed_line.count(';') > 1 and
-        # for loops are allowed two ;'s (and may run over two lines).
-        cleansed_line.find('for') == -1 and
-        (GetPreviousNonBlankLine(clean_lines, linenum)[0].find('for') == -1 or
-         GetPreviousNonBlankLine(clean_lines, linenum)[0].find(';') != -1) and
-        # It's ok to have many commands in a switch case that fits in 1 line
-        not ((cleansed_line.find('case ') != -1 or
-              cleansed_line.find('default:') != -1) and
-             cleansed_line.find('break;') != -1)):
-        error(filename, linenum, 'whitespace/newline', 0,
-              'More than one command on the same line')
 
     # Some more style checks
     CheckBraces(filename, clean_lines, linenum, error)
