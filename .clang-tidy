@@ -1,10 +1,5 @@
 ---
-# Configure clang-tidy for this project.
-#
-# references:
-#   - https://github.com/googleapis/google-cloud-cpp/blob/main/.clang-tidy
-#   - https://wiki.sei.cmu.edu/confluence/display/c/Clang
-#
+
 Checks: >
   -*,
   bugprone-*,
@@ -14,18 +9,47 @@ Checks: >
   cert-msc30-c,
   clang-analyzer-*,
   clang-diagnostics-*,
+  google-*,
+  misc-*,
   misc-non-copyable-objects,
   misc-static-assert,
+  performance-*,
   portability-*,
+  readability-*,
   -bugprone-assignment-in-if-condition,
   -bugprone-branch-clone,
   -bugprone-easily-swappable-parameters,
   -bugprone-narrowing-conversions,
   -bugprone-sizeof-expression,
   -bugprone-unused-return-value,
-  -clang-analyzer-security.insecureAPI.strcpy
+  -clang-analyzer-security.insecureAPI.strcpy,
+  -google-readability-function-size,
+  -misc-no-recursion,
+  -misc-unused-parameters,
+  -performance-no-int-to-ptr,
+  -readability-else-after-return,
+  -readability-function-*,
+  -readability-identifier-length,
+  -readability-isolate-declaration,
+  -readability-magic-numbers,
+  -readability-redundant-function-ptr-dereference,
+  -readability-suspicious-call-argument,
 
-# Turn all the warnings from the checks above into errors.
+CheckOptions:
+  readability-identifier-naming.ClassMemberCase: lower_case
+  readability-identifier-naming.ClassMemberSuffix: _
+  readability-identifier-naming.FunctionCase: lower_case
+  readability-identifier-naming.GlobalConstantCase: CamelCase
+  readability-identifier-naming.GlobalConstantPrefix: k
+  readability-identifier-naming.MemberConstantCase: CamelCase
+  readability-identifier-naming.MemberConstantPrefix: k
+  readability-identifier-naming.NamespaceCase: lower_case
+  readability-identifier-naming.StaticConstantCase: CamelCase
+  readability-identifier-naming.StaticConstantPrefix: k
+  readability-identifier-naming.StructCase: CamelCase
+  readability-identifier-naming.TemplateParameterCase: CamelCase
+  readability-identifier-naming.VariableCase: lower_case
+
 WarningsAsErrors: ''
 
 HeaderFilterRegex: "(src/[cjson|klib|mpack|unicode|xdiff]/).*\\.h$"
