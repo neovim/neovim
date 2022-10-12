@@ -20,6 +20,7 @@ Diagnostics:
       - readability-magic-numbers
       - readability-redundant-function-ptr-dereference
       - readability-suspicious-call-argument
+      - performance-no-int-to-ptr
     CheckOptions:
       readability-identifier-naming.NamespaceCase: lower_case
       readability-identifier-naming.StructCase: CamelCase
