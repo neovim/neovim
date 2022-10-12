@@ -17,6 +17,10 @@ let s:t_Co = &t_Co
 
 if (has('termguicolors') && &termguicolors) || has('gui_running')
   let g:terminal_ansi_colors = ['#303030', '#870000', '#5fd75f', '#afaf00', '#87afff', '#af00af', '#00afaf', '#6c6c6c', '#444444', '#ff0000', '#00ff00', '#ffff00', '#005fff', '#ff00ff', '#00ffff', '#ffffff']
+  " Nvim uses g:terminal_color_{0-15} instead
+  for i in range(g:terminal_ansi_colors->len())
+    let g:terminal_color_{i} = g:terminal_ansi_colors[i]
+  endfor
 endif
 hi Normal guifg=#dadada guibg=#000000 gui=NONE cterm=NONE
 hi EndOfBuffer guifg=#444444 guibg=#000000 gui=NONE cterm=NONE
