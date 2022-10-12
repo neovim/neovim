@@ -504,6 +504,14 @@ handle_T ui_cursor_grid(void)
   return cursor_grid_handle;
 }
 
+static bool ui_should_reset_cursor(void)
+{
+  // Do not reset the cursor in modes in which the cursor should be placed outside of its window
+  bool no_reset = State == MODE_CMDLINE || State == MODE_HITRETURN || State == MODE_ASKMORE
+                  || State == MODE_SETWSIZE || State == MODE_EXTERNCMD || State == MODE_CONFIRM;
+  return !no_reset;
+}
+
 void ui_flush(void)
 {
   if (!ui_active()) {
@@ -515,6 +523,10 @@ void ui_flush(void)
   msg_scroll_flush();
 
   if (pending_cursor_update) {
+    // Reset the cursor to its position in the window to avoid sending incorrect position to the UI
+    if (ui_should_reset_cursor()) {
+      setcursor();
+    }
     ui_call_grid_cursor_goto(cursor_grid_handle, cursor_row, cursor_col);
     pending_cursor_update = false;
   }
