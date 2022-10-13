@@ -3112,6 +3112,12 @@ void set_option_value_give_err(const char *name, long number, const char *string
   }
 }
 
+bool is_option_allocated(const char *name)
+{
+  int idx = findoption(name);
+  return idx >= 0 && (options[idx].flags & P_ALLOCED);
+}
+
 /// Return true if "name" is a string option.
 /// Returns false if option "name" does not exist.
 bool is_string_option(const char *name)

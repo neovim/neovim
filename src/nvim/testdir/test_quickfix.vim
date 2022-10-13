@@ -261,6 +261,7 @@ func XwindowTests(cchar)
   " Opening the location list window without any errors should fail
   if a:cchar == 'l'
       call assert_fails('lopen', 'E776:')
+      call assert_fails('lwindow', 'E776:')
   endif
 
   " Create a list with no valid entries
@@ -712,6 +713,35 @@ func Test_helpgrep()
   call s:test_xhelpgrep('c')
   helpclose
   call s:test_xhelpgrep('l')
+endfunc
+
+" When running the :helpgrep command, if an autocmd modifies the 'cpoptions'
+" value, then Vim crashes. (issue fixed by 7.2b-004 and 8.2.4453)
+func Test_helpgrep_restore_cpo_aucmd()
+  let save_cpo = &cpo
+  augroup QF_Test
+    au!
+    autocmd BufNew * set cpo=acd
+  augroup END
+
+  helpgrep quickfix
+  call assert_equal('acd', &cpo)
+  %bw!
+
+  set cpo&vim
+  augroup QF_Test
+    au!
+    autocmd BufReadPost * set cpo=
+  augroup END
+
+  helpgrep buffer
+  call assert_equal('', &cpo)
+
+  augroup QF_Test
+    au!
+  augroup END
+  %bw!
+  let &cpo = save_cpo
 endfunc
 
 func Test_errortitle()
@@ -1210,8 +1240,14 @@ func Xinvalid_efm_Tests(cchar)
   set efm=
   call assert_fails('Xexpr "abc.txt:1:Hello world"', 'E378:')
 
+  " Empty directory name. When there is an error in parsing new entries, make
+  " sure the previous quickfix list is made the current list.
+  set efm&
+  cexpr ["one", "two"]
+  let qf_id = getqflist(#{id: 0}).id
   set efm=%DEntering\ dir\ abc,%f:%l:%m
   call assert_fails('Xexpr ["Entering dir abc", "abc.txt:1:Hello world"]', 'E379:')
+  call assert_equal(qf_id, getqflist(#{id: 0}).id)
 
   let &efm = save_efm
 endfunc
@@ -1465,7 +1501,7 @@ func XquickfixChangedByAutocmd(cchar)
     endfunc
   endif
 
-  augroup testgroup
+  augroup QF_Test
     au!
     autocmd BufReadCmd test_changed.txt call ReadFunc()
   augroup END
@@ -1479,7 +1515,24 @@ func XquickfixChangedByAutocmd(cchar)
   endfor
   call assert_fails('Xrewind', ErrorNr . ':')
 
-  augroup! testgroup
+  augroup QF_Test
+    au!
+  augroup END
+
+  if a:cchar == 'c'
+    cexpr ["Xtest1:1:Line"]
+    cwindow
+    only
+    augroup QF_Test
+      au!
+      autocmd WinEnter * call setqflist([], 'f')
+    augroup END
+    call assert_fails('exe "normal \<CR>"', 'E925:')
+    augroup QF_Test
+      au!
+    augroup END
+  endif
+  %bw!
 endfunc
 
 func Test_quickfix_was_changed_by_autocmd()
@@ -1617,6 +1670,9 @@ func SetXlistTests(cchar, bnum)
 	      \ " {'bufnr':999, 'lnum':5}])", 'E92:')
   call g:Xsetlist([[1, 2,3]])
   call assert_equal(0, len(g:Xgetlist()))
+  call assert_fails('call g:Xsetlist([], [])', 'E928:')
+  call g:Xsetlist([v:_null_dict])
+  call assert_equal([], g:Xgetlist())
 endfunc
 
 func Test_setqflist()
@@ -2890,6 +2946,19 @@ func XvimgrepTests(cchar)
   call assert_equal(0, getbufinfo('Xtestfile1')[0].loaded)
   call assert_equal([], getbufinfo('Xtestfile2'))
 
+  " Test for opening the dummy buffer used by vimgrep in a window. The new
+  " window should be closed
+  %bw!
+  augroup QF_Test
+    au!
+    autocmd BufReadPre * exe "sb " .. expand("<abuf>")
+  augroup END
+  call assert_fails("Xvimgrep /sublime/ Xtestfile1", 'E480:')
+  call assert_equal(1, winnr('$'))
+  augroup QF_Test
+    au!
+  augroup END
+
   call delete('Xtestfile1')
   call delete('Xtestfile2')
 endfunc
@@ -4061,14 +4130,19 @@ endfunc
 " The following test used to crash Vim
 func Test_lhelpgrep_autocmd()
   lhelpgrep quickfix
-  autocmd QuickFixCmdPost * call setloclist(0, [], 'f')
+  augroup QF_Test
+    au!
+    autocmd QuickFixCmdPost * call setloclist(0, [], 'f')
+  augroup END
   lhelpgrep buffer
   call assert_equal('help', &filetype)
   call assert_equal(0, getloclist(0, {'nr' : '$'}).nr)
   lhelpgrep tabpage
   call assert_equal('help', &filetype)
   call assert_equal(1, getloclist(0, {'nr' : '$'}).nr)
-  au! QuickFixCmdPost
+  augroup QF_Test
+    au!
+  augroup END
 
   new | only
   augroup QF_Test
@@ -4081,7 +4155,7 @@ func Test_lhelpgrep_autocmd()
   wincmd w
   call assert_fails('helpgrep quickfix', 'E925:')
   augroup QF_Test
-    au! BufEnter
+    au!
   augroup END
 
   new | only
@@ -4091,7 +4165,7 @@ func Test_lhelpgrep_autocmd()
   augroup END
   call assert_fails('helpgrep quickfix', 'E925:')
   augroup QF_Test
-    au! BufEnter
+    au!
   augroup END
 
   new | only
@@ -4101,10 +4175,43 @@ func Test_lhelpgrep_autocmd()
   augroup END
   call assert_fails('lhelpgrep quickfix', 'E926:')
   augroup QF_Test
-    au! BufEnter
+    au!
   augroup END
 
+  " Replace the contents of a help window location list when it is still in
+  " use.
   new | only
+  lhelpgrep quickfix
+  wincmd w
+  augroup QF_Test
+    au!
+    autocmd WinEnter * call setloclist(0, [], 'r')
+  augroup END
+  call assert_fails('lhelpgrep win_getid', 'E926:')
+  augroup QF_Test
+    au!
+  augroup END
+
+  %bw!
+endfunc
+
+" The following test used to crash Vim
+func Test_lhelpgrep_autocmd_free_loclist()
+  %bw!
+  lhelpgrep quickfix
+  wincmd w
+  augroup QF_Test
+    au!
+    autocmd WinEnter * call setloclist(0, [], 'f')
+  augroup END
+  lhelpgrep win_getid
+  wincmd w
+  wincmd w
+  wincmd w
+  augroup QF_Test
+    au!
+  augroup END
+  %bw!
 endfunc
 
 " Test for shortening/simplifying the file name when opening the
@@ -5295,6 +5402,7 @@ func Xtest_getqflist_by_idx(cchar)
   call assert_equal('L20', l[0].text)
   call assert_equal([], g:Xgetlist({'idx' : -1, 'items' : 0}).items)
   call assert_equal([], g:Xgetlist({'idx' : 3, 'items' : 0}).items)
+  call assert_equal({}, g:Xgetlist(#{idx: "abc"}))
   %bwipe!
 endfunc
 
@@ -5352,6 +5460,19 @@ func Xtest_qftextfunc(cchar)
   Xwindow
   call assert_equal('F1|10 col 2-7| green', getline(1))
   call assert_equal('F1|20-25 col 4-8| blue', getline(2))
+  Xclose
+
+  set efm=%f:%l:%c:%m
+  set quickfixtextfunc=Tqfexpr
+  " Update the list with only the cwindow
+  Xwindow
+  only
+  call g:Xsetlist([
+        \ { 'filename': 'F2', 'lnum': 20, 'col': 2,
+        \   'end_col': 7, 'text': 'red'}
+        \ ])
+  call assert_equal(['F2-L20C2-red'], getline(1, '$'))
+  new
   Xclose
   set efm&
   set quickfixtextfunc&
@@ -5660,5 +5781,62 @@ func Test_lopen_bwipe_all()
   call delete('Xresult')
 endfunc
 
+" Test for calling setqflist() function recursively
+func Test_recursive_setqflist()
+  augroup QF_Test
+    au!
+    autocmd BufWinEnter quickfix call setqflist([], 'r')
+  augroup END
+
+  copen
+  call assert_fails("call setqflist([], 'a')", 'E952:')
+
+  augroup QF_Test
+    au!
+  augroup END
+  %bw!
+endfunc
+
+" Test for failure to create a new window when selecting a file from the
+" quickfix window
+func Test_cwindow_newwin_fails()
+  cgetexpr ["Xfile1:10:L10", "Xfile1:20:L20"]
+  cwindow
+  only
+  let qf_wid = win_getid()
+  " create the maximum number of scratch windows
+  let hor_win_count = (&lines - 1)/2
+  let hor_split_count = hor_win_count - 1
+  for s in range(1, hor_split_count) | new | set buftype=nofile | endfor
+  call win_gotoid(qf_wid)
+  call assert_fails('exe "normal \<CR>"', 'E36:')
+  %bw!
+endfunc
+
+" Test for updating the location list when only the location list window is
+" present and the corresponding file window is closed.
+func Test_loclist_update_with_llwin_only()
+  %bw!
+  new
+  wincmd w
+  lexpr ["Xfile1:1:Line1"]
+  lopen
+  wincmd p
+  close
+  call setloclist(2, [], 'r', {'lines': ["Xtest2:2:Line2"]})
+  call assert_equal(['Xtest2|2| Line2'], getbufline(winbufnr(2), 1, '$'))
+  %bw!
+endfunc
+
+" Test for getting the quickfix list after a buffer with an error is wiped out
+func Test_getqflist_wiped_out_buffer()
+  %bw!
+  cexpr ["Xtest1:34:Wiped out"]
+  let bnum = bufnr('Xtest1')
+  call assert_equal(bnum, getqflist()[0].bufnr)
+  bw Xtest1
+  call assert_equal(0, getqflist()[0].bufnr)
+  %bw!
+endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab

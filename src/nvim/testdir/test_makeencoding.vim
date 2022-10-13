@@ -107,3 +107,19 @@ func Test_make()
     lclose
   endfor
 endfunc
+
+" Test for an error file with a long line that needs an encoding conversion
+func Test_longline_conversion()
+  new
+  call setline(1, ['Xfile:10:' .. repeat("\xe0", 2000)])
+  write ++enc=latin1 Xerr.out
+  bw!
+  set errorformat&
+  set makeencoding=latin1
+  cfile Xerr.out
+  call assert_equal(repeat("\u00e0", 2000), getqflist()[0].text)
+  call delete('Xerr.out')
+  set makeencoding&
+endfunc
+
+" vim: shiftwidth=2 sts=2 expandtab

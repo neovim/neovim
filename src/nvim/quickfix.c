@@ -1790,7 +1790,7 @@ void check_quickfix_busy(void)
 /// @param  type     type character
 /// @param  valid    valid entry
 ///
-/// @returns QF_OK or QF_FAIL.
+/// @return  QF_OK on success or QF_FAIL on failure.
 static int qf_add_entry(qf_list_T *qfl, char *dir, char *fname, char *module, int bufnum,
                         char *mesg, linenr_T lnum, linenr_T end_lnum, int col, int end_col,
                         char vis_col, char *pattern, int nr, char type, char valid)
@@ -3461,12 +3461,10 @@ void qf_view_result(bool split)
 {
   qf_info_T *qi = &ql_info;
 
-  if (!bt_quickfix(curbuf)) {
-    return;
-  }
   if (IS_LL_WINDOW(curwin)) {
     qi = GET_LOC_LIST(curwin);
   }
+
   if (qf_list_empty(qf_get_curlist(qi))) {
     emsg(_(e_no_errors));
     return;
@@ -3869,7 +3867,12 @@ static void qf_update_buffer(qf_info_T *qi, qfline_T *old_last)
       if (curwin->w_llist == qi) {
         win = curwin;
       } else {
+        // Find the file window (non-quickfix) with this location list
         win = qf_find_win_with_loclist(qi);
+        if (win == NULL) {
+          // File window is not found. Find the location list window.
+          win = qf_find_win(qi);
+        }
         if (win == NULL) {
           return;
         }
@@ -7065,6 +7068,7 @@ void ex_helpgrep(exarg_T *eap)
   bool updated = false;
   // Make 'cpoptions' empty, the 'l' flag should not be used here.
   char *const save_cpo = p_cpo;
+  const bool save_cpo_allocated = is_option_allocated("cpo");
   p_cpo = empty_option;
 
   bool new_qi = false;
@@ -7104,7 +7108,9 @@ void ex_helpgrep(exarg_T *eap)
     if (*p_cpo == NUL) {
       set_option_value_give_err("cpo", 0L, save_cpo, 0);
     }
-    free_string_option(save_cpo);
+    if (save_cpo_allocated) {
+      free_string_option(save_cpo);
+    }
   }
 
   if (updated) {
@@ -7139,7 +7145,9 @@ void ex_helpgrep(exarg_T *eap)
       if (new_qi) {
         ll_free_all(&qi);
       }
-    } else if (curwin->w_llist == NULL) {
+    } else if (curwin->w_llist == NULL && new_qi) {
+      // current window didn't have a location list associated with it
+      // before. Associate the new location list now.
       curwin->w_llist = qi;
     }
   }
