@@ -3984,6 +3984,12 @@ static list_T *call_qftf_func(qf_list_T *qfl, int qf_winid, long start_idx, long
 {
   Callback *cb = &qftf_cb;
   list_T *qftf_list = NULL;
+  static bool recursive = false;
+
+  if (recursive) {
+    return NULL;  // this doesn't work properly recursively
+  }
+  recursive = true;
 
   // If 'quickfixtextfunc' is set, then use the user-supplied function to get
   // the text to display. Use the local value of 'quickfixtextfunc' if it is
@@ -4017,6 +4023,7 @@ static list_T *call_qftf_func(qf_list_T *qfl, int qf_winid, long start_idx, long
     tv_dict_unref(dict);
   }
 
+  recursive = false;
   return qftf_list;
 }
 
