@@ -206,50 +206,6 @@ void early_init(mparm_T *paramp)
   init_signs();
 }
 
-#ifdef MSWIN
-HWND hWnd = NULL;
-static HICON hOrigIconSmall = NULL;
-static HICON hOrigIcon = NULL;
-
-static void os_icon_set(HWND hWindow, HICON hIconSmall, HICON hIcon)
-{
-  if (hWindow == NULL) {
-    return;
-  }
-  if (hIconSmall != NULL) {
-    SendMessage(hWnd, WM_SETICON, (WPARAM)ICON_SMALL, (LPARAM)hIconSmall);
-  }
-  if (hIcon != NULL) {
-    SendMessage(hWnd, WM_SETICON, (WPARAM)ICON_BIG, (LPARAM)hIcon);
-  }
-}
-
-/// Sets Nvim logo as Windows console icon.
-///
-/// Saves the original icon so it can be restored at exit.
-static void os_icon_init(void)
-{
-  if ((hWnd = GetConsoleWindow()) == NULL) {
-    return;
-  }
-  // Save Windows console icon to be restored later.
-  hOrigIconSmall = (HICON)SendMessage(hWnd, WM_GETICON, (WPARAM)ICON_SMALL, (LPARAM)0);
-  hOrigIcon = (HICON)SendMessage(hWnd, WM_GETICON, (WPARAM)ICON_BIG, (LPARAM)0);
-
-  const char *vimruntime = os_getenv("VIMRUNTIME");
-  if (vimruntime != NULL) {
-    snprintf(NameBuff, MAXPATHL, "%s" _PATHSEPSTR "neovim.ico", vimruntime);
-    if (!os_path_exists(NameBuff)) {
-      WLOG("neovim.ico not found: %s", NameBuff);
-    } else {
-      HICON hVimIcon = LoadImage(NULL, NameBuff, IMAGE_ICON, 64, 64,
-                                 LR_LOADFROMFILE | LR_LOADMAP3DCOLORS);
-      os_icon_set(hWnd, hVimIcon, hVimIcon);
-    }
-  }
-}
-#endif
-
 #ifdef MAKE_LIB
 int nvim_main(int argc, char **argv);  // silence -Wmissing-prototypes
 int nvim_main(int argc, char **argv)
@@ -771,7 +727,7 @@ void getout(int exitval)
 
 #ifdef MSWIN
   // Restore Windows console icon before exiting.
-  os_icon_set(hWnd, hOrigIconSmall, hOrigIcon);
+  os_icon_set(NULL, NULL);
 #endif
 
   os_exit(exitval);
