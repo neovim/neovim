@@ -199,8 +199,8 @@ EXTERN dict_T vimvardict;                   // Dictionary with v: variables
 EXTERN dict_T globvardict;                  // Dictionary with g: variables
 /// g: value
 #define globvarht globvardict.dv_hashtab
-EXTERN int did_emsg;                        // set by emsg() when the message
-                                            // is displayed or thrown
+EXTERN int did_emsg;                        // incremented by emsg() when a
+                                            // message is displayed or thrown
 EXTERN bool called_vim_beep;                // set if vim_beep() is called
 EXTERN bool did_emsg_syntax;                // did_emsg set because of a
                                             // syntax error
@@ -1071,11 +1071,11 @@ EXTERN char windowsVersion[20] INIT(= { 0 });
 
 EXTERN int exit_need_delay INIT(= 0);
 
-///< Skip win_fix_cursor() call for 'splitkeep' when cmdwin is closed.
+/// Skip win_fix_cursor() call for 'splitkeep' when cmdwin is closed.
 EXTERN bool skip_win_fix_cursor INIT(= false);
-///< Skip win_fix_scroll() call for 'splitkeep' when closing tab page.
+/// Skip win_fix_scroll() call for 'splitkeep' when closing tab page.
 EXTERN bool skip_win_fix_scroll INIT(= false);
-///< Skip update_topline() call while executing win_fix_scroll().
+/// Skip update_topline() call while executing win_fix_scroll().
 EXTERN bool skip_update_topline INIT(= false);
 
 #endif  // NVIM_GLOBALS_H

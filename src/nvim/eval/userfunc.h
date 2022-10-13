@@ -23,7 +23,7 @@
 #define FC_VIM9     0x400         // defined in vim9 script file
 #define FC_LUAREF  0x800          // luaref callback
 
-///< Structure used by trans_function_name()
+/// Structure used by trans_function_name()
 typedef struct {
   dict_T *fd_dict;  ///< Dictionary used.
   char_u *fd_newkey;  ///< New key in "dict" in allocated memory.
