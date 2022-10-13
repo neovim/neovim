@@ -4913,7 +4913,7 @@ win_T *buf_jump_open_win(buf_T *buf)
 }
 
 /// Jump to the first open window in any tab page that contains buffer "buf",
-/// if one exists.
+/// if one exists. First search in the windows present in the current tab page.
 /// @return the found window, or NULL.
 win_T *buf_jump_open_tab(buf_T *buf)
 {
