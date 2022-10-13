@@ -239,7 +239,7 @@ enum {
   SHM_MOD            = 'm',  ///< Modified.
   SHM_FILE           = 'f',  ///< (file 1 of 2)
   SHM_LAST           = 'i',  ///< Last line incomplete.
-  SHM_TEXT           = 'x',  ///< Tx instead of textmode.
+  SHM_TEXT           = 'x',  ///< tx instead of textmode.
   SHM_LINES          = 'l',  ///< "L" instead of "lines".
   SHM_NEW            = 'n',  ///< "[New]" instead of "[New file]".
   SHM_WRI            = 'w',  ///< "[w]" instead of "written".
@@ -253,9 +253,10 @@ enum {
   SHM_ATTENTION      = 'A',  ///< No ATTENTION messages.
   SHM_INTRO          = 'I',  ///< Intro messages.
   SHM_COMPLETIONMENU = 'c',  ///< Completion menu messages.
+  SHM_COMPLETIONSCAN = 'C',  ///< Completion scanning messages.
   SHM_RECORDING      = 'q',  ///< Short recording message.
   SHM_FILEINFO       = 'F',  ///< No file info messages.
-  SHM_SEARCHCOUNT    = 'S',  ///< Search sats: '[1/10]'
+  SHM_SEARCHCOUNT    = 'S',  ///< Search stats: '[1/10]'
 };
 /// Represented by 'a' flag.
 #define SHM_ALL_ABBREVIATIONS ((char[]) { \
