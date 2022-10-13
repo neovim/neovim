@@ -1433,7 +1433,7 @@ static void ins_compl_files(int count, char **files, int thesaurus, int flags, r
 
   for (i = 0; i < count && !got_int && !compl_interrupted; i++) {
     fp = os_fopen(files[i], "r");  // open dictionary file
-    if (flags != DICT_EXACT) {
+    if (flags != DICT_EXACT && !shortmess(SHM_COMPLETIONSCAN)) {
       msg_hist_off = true;  // reset in msg_trunc_attr()
       vim_snprintf((char *)IObuff, IOSIZE,
                    _("Scanning dictionary: %s"), files[i]);
@@ -2759,14 +2759,16 @@ static int process_next_cpt_value(ins_compl_next_state_T *st, int *compl_type_ar
       st->dict = (char_u *)st->ins_buf->b_fname;
       st->dict_f = DICT_EXACT;
     }
-    msg_hist_off = true;  // reset in msg_trunc_attr()
-    vim_snprintf((char *)IObuff, IOSIZE, _("Scanning: %s"),
-                 st->ins_buf->b_fname == NULL
-                 ? buf_spname(st->ins_buf)
-                 : st->ins_buf->b_sfname == NULL
-                 ? st->ins_buf->b_fname
-                 : st->ins_buf->b_sfname);
-    (void)msg_trunc_attr((char *)IObuff, true, HL_ATTR(HLF_R));
+    if (!shortmess(SHM_COMPLETIONSCAN)) {
+      msg_hist_off = true;  // reset in msg_trunc_attr()
+      vim_snprintf((char *)IObuff, IOSIZE, _("Scanning: %s"),
+                   st->ins_buf->b_fname == NULL
+                   ? buf_spname(st->ins_buf)
+                   : st->ins_buf->b_sfname == NULL
+                   ? st->ins_buf->b_fname
+                   : st->ins_buf->b_sfname);
+      (void)msg_trunc_attr((char *)IObuff, true, HL_ATTR(HLF_R));
+    }
   } else if (*st->e_cpt == NUL) {
     status = INS_COMPL_CPT_END;
   } else {
@@ -2787,10 +2789,12 @@ static int process_next_cpt_value(ins_compl_next_state_T *st, int *compl_type_ar
     } else if (*st->e_cpt == 'd') {
       compl_type = CTRL_X_PATH_DEFINES;
     } else if (*st->e_cpt == ']' || *st->e_cpt == 't') {
-      msg_hist_off = true;  // reset in msg_trunc_attr()
       compl_type = CTRL_X_TAGS;
-      vim_snprintf((char *)IObuff, IOSIZE, "%s", _("Scanning tags."));
-      (void)msg_trunc_attr((char *)IObuff, true, HL_ATTR(HLF_R));
+      if (!shortmess(SHM_COMPLETIONSCAN)) {
+        msg_hist_off = true;  // reset in msg_trunc_attr()
+        vim_snprintf((char *)IObuff, IOSIZE, "%s", _("Scanning tags."));
+        (void)msg_trunc_attr((char *)IObuff, true, HL_ATTR(HLF_R));
+      }
     } else {
       compl_type = -1;
     }
