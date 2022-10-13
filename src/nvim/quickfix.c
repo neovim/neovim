@@ -176,6 +176,7 @@ enum {
   QF_NOMEM = 3,
   QF_IGNORE_LINE = 4,
   QF_MULTISCAN = 5,
+  QF_ABORT = 6,
 };
 
 /// State information used to parse lines and add entries to a quickfix/location
@@ -2686,6 +2687,10 @@ static int qf_jump_to_usable_window(int qf_fnum, bool newwin, int *opened_window
 }
 
 /// Edit the selected file or help file.
+/// @return  OK if successfully edited the file.
+///          FAIL on failing to open the buffer.
+///          QF_ABORT if the quickfix/location list was freed by an autocmd
+///          when opening the buffer.
 static int qf_jump_edit_buffer(qf_info_T *qi, qfline_T *qf_ptr, int forceit, int prev_winid,
                                int *opened_window)
 {
@@ -2719,13 +2724,13 @@ static int qf_jump_edit_buffer(qf_info_T *qi, qfline_T *qf_ptr, int forceit, int
     if (wp == NULL && curwin->w_llist != qi) {
       emsg(_("E924: Current window was closed"));
       *opened_window = false;
-      return NOTDONE;
+      return QF_ABORT;
     }
   }
 
   if (qfl_type == QFLT_QUICKFIX && !qflist_valid(NULL, save_qfid)) {
     emsg(_(e_current_quickfix_list_was_changed));
-    return NOTDONE;
+    return QF_ABORT;
   }
 
   if (old_qf_curlist != qi->qf_curlist  // -V560
@@ -2736,7 +2741,7 @@ static int qf_jump_edit_buffer(qf_info_T *qi, qfline_T *qf_ptr, int forceit, int
     } else {
       emsg(_(e_current_location_list_was_changed));
     }
-    return NOTDONE;
+    return QF_ABORT;
   }
 
   return retval;
@@ -2814,9 +2819,10 @@ static void qf_jump_print_msg(qf_info_T *qi, int qf_index, qfline_T *qf_ptr, buf
 /// Find a usable window for opening a file from the quickfix/location list. If
 /// a window is not found then open a new window. If 'newwin' is true, then open
 /// a new window.
-/// Returns OK if successfully jumped or opened a window. Returns FAIL if not
-/// able to jump/open a window.  Returns NOTDONE if a file is not associated
-/// with the entry.
+/// @return  OK if successfully jumped or opened a window.
+///          FAIL if not able to jump/open a window.
+///          NOTDONE if a file is not associated with the entry.
+///          QF_ABORT if the quickfix/location list was modified by an autocmd.
 static int qf_jump_open_window(qf_info_T *qi, qfline_T *qf_ptr, bool newwin, int *opened_window)
 {
   qf_list_T *qfl = qf_get_curlist(qi);
@@ -2838,7 +2844,7 @@ static int qf_jump_open_window(qf_info_T *qi, qfline_T *qf_ptr, bool newwin, int
     } else {
       emsg(_(e_current_location_list_was_changed));
     }
-    return FAIL;
+    return QF_ABORT;
   }
 
   // If currently in the quickfix window, find another window to show the
@@ -2863,7 +2869,7 @@ static int qf_jump_open_window(qf_info_T *qi, qfline_T *qf_ptr, bool newwin, int
     } else {
       emsg(_(e_current_location_list_was_changed));
     }
-    return FAIL;
+    return QF_ABORT;
   }
 
   return OK;
@@ -2872,9 +2878,9 @@ static int qf_jump_open_window(qf_info_T *qi, qfline_T *qf_ptr, bool newwin, int
 /// Edit a selected file from the quickfix/location list and jump to a
 /// particular line/column, adjust the folds and display a message about the
 /// jump.
-/// Returns OK on success and FAIL on failing to open the file/buffer.  Returns
-/// NOTDONE if the quickfix/location list is freed by an autocmd when opening
-/// the file.
+/// @return  OK on success and FAIL on failing to open the file/buffer.
+///          QF_ABORT if the quickfix/location list is freed by an autocmd when opening
+///          the file.
 static int qf_jump_to_buffer(qf_info_T *qi, int qf_index, qfline_T *qf_ptr, int forceit,
                              int prev_winid, int *opened_window, int openfold, int print_message)
 {
@@ -2968,14 +2974,19 @@ static void qf_jump_newwin(qf_info_T *qi, int dir, int errornr, int forceit, boo
   if (retval == FAIL) {
     goto failed;
   }
+  if (retval == QF_ABORT) {
+    qi = NULL;
+    qf_ptr = NULL;
+    goto theend;
+  }
   if (retval == NOTDONE) {
     goto theend;
   }
 
   retval = qf_jump_to_buffer(qi, qf_index, qf_ptr, forceit, prev_winid,
                              &opened_window, old_KeyTyped, print_message);
-  if (retval == NOTDONE) {
-    // Quickfix/location list is freed by an autocmd
+  if (retval == QF_ABORT) {
+    // Quickfix/location list was modified by an autocmd
     qi = NULL;
     qf_ptr = NULL;
   }
@@ -3984,6 +3995,12 @@ static list_T *call_qftf_func(qf_list_T *qfl, int qf_winid, long start_idx, long
 {
   Callback *cb = &qftf_cb;
   list_T *qftf_list = NULL;
+  static bool recursive = false;
+
+  if (recursive) {
+    return NULL;  // this doesn't work properly recursively
+  }
+  recursive = true;
 
   // If 'quickfixtextfunc' is set, then use the user-supplied function to get
   // the text to display. Use the local value of 'quickfixtextfunc' if it is
@@ -4017,6 +4034,7 @@ static list_T *call_qftf_func(qf_list_T *qfl, int qf_winid, long start_idx, long
     tv_dict_unref(dict);
   }
 
+  recursive = false;
   return qftf_list;
 }
 

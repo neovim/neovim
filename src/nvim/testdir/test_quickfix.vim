@@ -5839,4 +5839,69 @@ func Test_getqflist_wiped_out_buffer()
   %bw!
 endfunc
 
+" Test for the status message that is displayed when opening a new quickfix
+" list
+func Test_qflist_statusmsg()
+  cexpr "1\n2"
+  cexpr "1\n2\n3\ntest_quickfix.vim:1:msg"
+  call assert_equal('(4 of 4): msg', v:statusmsg)
+  call setqflist([], 'f')
+  %bw!
+
+  " When creating a new quickfix list, if an autocmd changes the quickfix list
+  " in the stack, then an error message should be displayed.
+  augroup QF_Test
+    au!
+    au BufEnter test_quickfix.vim colder
+  augroup END
+  cexpr "1\n2"
+  call assert_fails('cexpr "1\n2\n3\ntest_quickfix.vim:1:msg"', 'E925:')
+  call setqflist([], 'f')
+  augroup QF_Test
+    au!
+  augroup END
+  %bw!
+
+  augroup QF_Test
+    au!
+    au BufEnter test_quickfix.vim caddexpr "4"
+  augroup END
+  call assert_fails('cexpr "1\n2\n3\ntest_quickfix.vim:1:msg"', 'E925:')
+  call setqflist([], 'f')
+  augroup QF_Test
+    au!
+  augroup END
+  %bw!
+endfunc
+
+func Test_quickfixtextfunc_recursive()
+  func s:QFTfunc(o)
+    cgete '0'
+  endfunc
+  copen
+  let &quickfixtextfunc = 's:QFTfunc'
+  cex ""
+
+  let &quickfixtextfunc = ''
+  cclose
+endfunc
+
+" Test for replacing the location list from an autocmd. This used to cause a
+" read from freed memory.
+func Test_loclist_replace_autocmd()
+  %bw!
+  call setloclist(0, [], 'f')
+  let s:bufnr = bufnr()
+  cal setloclist(0, [{'0': 0, '': ''}])
+  au BufEnter * cal setloclist(1, [{'t': ''}, {'bufnr': s:bufnr}], 'r')
+  lopen
+  try
+    exe "norm j\<CR>"
+  catch
+  endtry
+  lnext
+  %bw!
+  call setloclist(0, [], 'f')
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab
