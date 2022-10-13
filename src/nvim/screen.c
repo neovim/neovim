@@ -860,6 +860,7 @@ int showmode(void)
   if (redrawing() && last->w_status_height == 0 && global_stl_height() == 0) {
     win_redr_ruler(last, true);
   }
+
   redraw_cmdline = false;
   redraw_mode = false;
   clear_cmdline = false;

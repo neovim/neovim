@@ -554,6 +554,7 @@ wingotofile:
     no_mapping--;
     allow_keys--;
     (void)add_to_showcmd(xchar);
+
     switch (xchar) {
     case '}':
       xchar = Ctrl_RSB;

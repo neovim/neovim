@@ -1132,6 +1132,7 @@ static int normal_execute(VimState *state, int key)
   if (s->need_flushbuf) {
     ui_flush();
   }
+
   if (s->ca.cmdchar != K_IGNORE && s->ca.cmdchar != K_EVENT) {
     did_cursorhold = false;
   }
@@ -3513,6 +3514,7 @@ static bool nv_z_get_count(cmdarg_T *cap, int *nchar_arg)
     no_mapping--;
     allow_keys--;
     (void)add_to_showcmd(nchar);
+
     if (nchar == K_DEL || nchar == K_KDEL) {
       n /= 10;
     } else if (ascii_isdigit(nchar)) {
@@ -3553,6 +3555,7 @@ static int nv_zg_zw(cmdarg_T *cap, int nchar)
     no_mapping--;
     allow_keys--;
     (void)add_to_showcmd(nchar);
+
     if (vim_strchr("gGwW", nchar) == NULL) {
       clearopbeep(cap->oap);
       return OK;
