@@ -21,7 +21,7 @@ describe(':help docs', function()
     ok(rv.helpfiles > 100, '>100 :help files', rv.helpfiles)
     -- Check that parse errors did not increase wildly.
     -- TODO: Fix all parse errors in :help files.
-    ok(rv.err_count < 150, '<150 parse errors', rv.err_count)
+    ok(rv.err_count < 100, '<100 parse errors', rv.err_count)
     eq({}, rv.invalid_links, exec_lua([[return 'found invalid :help tag links:\n'..vim.inspect(...)]], rv.invalid_links))
   end)
 
@@ -43,7 +43,7 @@ describe(':help docs', function()
       tmpdir
     )
     eq(4, #rv.helpfiles)
-    ok(rv.err_count <= 1, '<=1 parse errors', rv.err_count)
+    ok(rv.err_count == 0, '0 parse errors', rv.err_count)
     eq({}, rv.invalid_links, exec_lua([[return 'found invalid :help tag links:\n'..vim.inspect(...)]], rv.invalid_links))
   end)
 end)
