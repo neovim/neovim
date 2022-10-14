@@ -573,9 +573,7 @@ when using ":w"), therefore Vim requires using a !  after the command, e.g.:
   VirtualBinding
 
 Messages like this appear when starting up.  This is not a Vim problem, your
-X11 configuration is wrong.  You can find a hint on how to solve this here:
-http://groups.yahoo.com/group/solarisonintel/message/12179.
-[this URL is no longer valid]
+X11 configuration is wrong.
 
 							*W10*  >
   Warning: Changing a readonly file

@@ -159,7 +159,7 @@ Working intuitively and consistently is a major goal of Nvim.
 - Nvim avoids features that cannot be provided on all platforms; instead that
   is delegated to external plugins/extensions. E.g. the `-X` platform-specific
   option is "sometimes" available in Vim (with potential surprises:
-  http://stackoverflow.com/q/14635295).
+  https://stackoverflow.com/q/14635295).
 
 - Vim's internal test functions (test_autochdir(), test_settime(), etc.) are
   not exposed (nor implemented); instead Nvim has a robust API.

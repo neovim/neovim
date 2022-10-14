@@ -71,8 +71,8 @@ directory src/po/README.txt.
 programmer.  You must know both English and the language you are translating
 to, of course.
    When you are satisfied with the translation, consider making it available
-to others.  Upload it at vim-online (http://vim.sf.net) or e-mail it to
-the Vim maintainer <maintainer@vim.org>.  Or both.
+to others.  Upload it to https://github.com/vim/vim or e-mail it to the Vim
+maintainer <maintainer@vim.org>.  Or both.
 
 ==============================================================================
 *45.2*	Language for Menus
@@ -166,10 +166,7 @@ script files, etc.  You can regard 'encoding' as the setting for the internals
 of Vim.
    This example assumes you have this font on your system.  The name in the
 example is for the X Window System.  This font is in a package that is used to
-enhance xterm with Unicode support.  If you don't have this font, you might
-find it here:
-
-	http://www.cl.cam.ac.uk/~mgk25/download/ucs-fonts.tar.gz ~
+enhance xterm with Unicode support.
 
 For MS-Windows, some fonts have a limited number of Unicode characters.  Try
 using the "Courier New" font.  You can use the Edit/Select Font... menu to
@@ -178,10 +175,7 @@ though.  Example: >
 
 	:set guifont=courier_new:h12
 
-If it doesn't work well, try getting a fontpack.  If Microsoft didn't move it,
-you can find it here:
-
-	http://www.microsoft.com/typography/fonts/default.aspx ~
+If it doesn't work well, try getting a fontpack.
 
 Now you have told Vim to use Unicode internally and display text with a
 Unicode font.

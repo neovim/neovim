@@ -486,25 +486,25 @@ You can optionally install the following extra plug-ins. They work well with
 Ada and enhance the ability of the Ada mode:
 
 backup.vim
-	http://www.vim.org/scripts/script.php?script_id=1537
+	https://www.vim.org/scripts/script.php?script_id=1537
 	Keeps as many backups as you like so you don't have to.
 
 rainbow_parenthesis.vim
-	http://www.vim.org/scripts/script.php?script_id=1561
+	https://www.vim.org/scripts/script.php?script_id=1561
 	Very helpful since Ada uses only '(' and ')'.
 
 nerd_comments.vim
-	http://www.vim.org/scripts/script.php?script_id=1218
+	https://www.vim.org/scripts/script.php?script_id=1218
 	Excellent commenting and uncommenting support for almost any
 	programming language.
 
 matchit.vim
-	http://www.vim.org/scripts/script.php?script_id=39
+	https://www.vim.org/scripts/script.php?script_id=39
 	'%' jumping for any language. The normal '%' jump only works for '{}'
 	style languages. The Ada mode will set the needed search patterns.
 
 taglist.vim
-	http://www.vim.org/scripts/script.php?script_id=273
+	https://www.vim.org/scripts/script.php?script_id=273
 	Source code explorer sidebar. There is a patch for Ada available.
 
 The GNU Ada Project distribution (http://gnuada.sourceforge.net) of Vim

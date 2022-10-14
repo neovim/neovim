@@ -1350,16 +1350,8 @@ Completion of C code requires a tags file.  You should use Universal/
 Exuberant ctags, because it adds extra information that is needed for
 completion.  You can find it here:
 	Universal Ctags: https://ctags.io
-	Exuberant Ctags: http://ctags.sourceforge.net
 
-Universal Ctags is preferred, Exuberant Ctags is no longer being developed.
-
-For Exuberant ctags, version 5.6 or later is recommended.  For version 5.5.4
-you should add a patch that adds the "typename:" field:
-	ftp://ftp.vim.org/pub/vim/unstable/patches/ctags-5.5.4.patch
-A compiled .exe for MS-Windows can be found at:
-	http://ctags.sourceforge.net/
-	https://github.com/universal-ctags/ctags-win32
+Universal Ctags is preferred, Exuberant Ctags is no longer maintained.
 
 If you want to complete system functions you can do something like this.  Use
 ctags to generate a tags file for all the system header files: >
@@ -1459,7 +1451,7 @@ DOM compatibility
 At the moment (beginning of 2006) there are two main browsers - MS Internet
 Explorer and Mozilla Firefox. These two applications are covering over 90% of
 market. Theoretically standards are created by W3C organisation
-(http://www.w3c.org) but they are not always followed/implemented.
+(https://www.w3.org/) but they are not always followed/implemented.
 
 		IE	FF	W3C  Omni completion ~
 		+/-	+/-	+    +		     ~
@@ -1480,7 +1472,6 @@ external files and for class aware completion. You should use Universal/
 Exuberant ctags version 5.5.4 or newer. You can find it here:
 
 	Universal Ctags: https://ctags.io
-	Exuberant Ctags: http://ctags.sourceforge.net
 
 Script completes:
 
@@ -1779,12 +1770,12 @@ DTD -> Vim							*dtd2vim*
 On |www| is the script |dtd2vim| which parses DTD and creates an XML data file
 for Vim XML omni completion.
 
-    dtd2vim: http://www.vim.org/scripts/script.php?script_id=1462
+    dtd2vim: https://www.vim.org/scripts/script.php?script_id=1462
 
 Check the beginning of that file for usage details.
 The script requires perl and:
 
-    perlSGML: http://savannah.nongnu.org/projects/perlsgml
+    perlSGML: https://savannah.nongnu.org/projects/perlsgml
 
 
 Commands

@@ -11,7 +11,7 @@ low-risk/isolated tasks:
 - Fix bugs found by [Clang](#clang-scan-build), [PVS](#pvs-studio) or
   [Coverity](#coverity).
 - [Improve documentation](#documenting)
-- [Merge a Vim patch] (familiarity with Vim is *strongly* recommended)
+- [Merge a Vim patch] (requires strong familiarity with Vim)
 
 Reporting problems
 ------------------
