@@ -3409,6 +3409,30 @@ static int check_regexp_delim(int c)
 /// @return 0, 1 or 2. See show_cmdpreview() for more information on what the return value means.
 static int do_sub(exarg_T *eap, proftime_T timeout, long cmdpreview_ns, handle_T cmdpreview_bufnr)
 {
+#define ADJUST_SUB_FIRSTLNUM() \
+  do { \
+    /* For a multi-line match, make a copy of the last matched */ \
+    /* line and continue in that one. */ \
+    if (nmatch > 1) { \
+      sub_firstlnum += (linenr_T)nmatch - 1; \
+      xfree(sub_firstline); \
+      sub_firstline = xstrdup(ml_get(sub_firstlnum)); \
+      /* When going beyond the last line, stop substituting. */ \
+      if (sub_firstlnum <= line2) { \
+        do_again = true; \
+      } else { \
+        subflags.do_all = false; \
+      } \
+    } \
+    if (skip_match) { \
+      /* Already hit end of the buffer, sub_firstlnum is one */ \
+      /* less than what it ought to be. */ \
+      xfree(sub_firstline); \
+      sub_firstline = xstrdup(""); \
+      copycol = 0; \
+    } \
+  } while (0)
+
   long i = 0;
   regmmatch_T regmatch;
   static subflags_T subflags = {
@@ -3979,30 +4003,6 @@ static int do_sub(exarg_T *eap, proftime_T timeout, long cmdpreview_ns, handle_T
           current_match.end.lnum = sub_firstlnum + (linenr_T)nmatch;
           skip_match = true;
         }
-
-#define ADJUST_SUB_FIRSTLNUM() \
-  do { \
-    /* For a multi-line match, make a copy of the last matched */ \
-    /* line and continue in that one. */ \
-    if (nmatch > 1) { \
-      sub_firstlnum += (linenr_T)nmatch - 1; \
-      xfree(sub_firstline); \
-      sub_firstline = xstrdup(ml_get(sub_firstlnum)); \
-      /* When going beyond the last line, stop substituting. */ \
-      if (sub_firstlnum <= line2) { \
-        do_again = true; \
-      } else { \
-        subflags.do_all = false; \
-      } \
-    } \
-    if (skip_match) { \
-      /* Already hit end of the buffer, sub_firstlnum is one */ \
-      /* less than what it ought to be. */ \
-      xfree(sub_firstline); \
-      sub_firstline = xstrdup(""); \
-      copycol = 0; \
-    } \
-  } while (0)
 
         // Save the line numbers for the preview buffer
         // NOTE: If the pattern matches a final newline, the next line will

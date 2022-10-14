@@ -2120,6 +2120,22 @@ viml_pexpr_parse_process_token:
     assert(kv_size(pt_stack));
     const ExprASTParseType cur_pt = kv_last(pt_stack);
     assert(lambda_node == NULL || cur_pt == kEPTLambdaArguments);
+#define SIMPLE_UB_OP(op) \
+  case kExprLex##op: { \
+      if (want_node == kENodeValue) { \
+        /* Value level: assume unary operator. */ \
+        NEW_NODE_WITH_CUR_POS(cur_node, kExprNodeUnary##op); \
+        *top_node_p = cur_node; \
+        kvi_push(ast_stack, &cur_node->children); \
+        HL_CUR_TOKEN(Unary##op); \
+      } else { \
+        NEW_NODE_WITH_CUR_POS(cur_node, kExprNodeBinary##op); \
+        ADD_OP_NODE(cur_node); \
+        HL_CUR_TOKEN(Binary##op); \
+      } \
+      want_node = kENodeValue; \
+      break; \
+  }
     switch (tok_type) {
     case kExprLexMissing:
     case kExprLexSpacing:
@@ -2141,22 +2157,6 @@ viml_pexpr_parse_process_token:
       HL_CUR_TOKEN(Register);
       break;
     }
-#define SIMPLE_UB_OP(op) \
-  case kExprLex##op: { \
-      if (want_node == kENodeValue) { \
-        /* Value level: assume unary operator. */ \
-        NEW_NODE_WITH_CUR_POS(cur_node, kExprNodeUnary##op); \
-        *top_node_p = cur_node; \
-        kvi_push(ast_stack, &cur_node->children); \
-        HL_CUR_TOKEN(Unary##op); \
-      } else { \
-        NEW_NODE_WITH_CUR_POS(cur_node, kExprNodeBinary##op); \
-        ADD_OP_NODE(cur_node); \
-        HL_CUR_TOKEN(Binary##op); \
-      } \
-      want_node = kENodeValue; \
-      break; \
-  }
       SIMPLE_UB_OP(Plus)
       SIMPLE_UB_OP(Minus)
 #undef SIMPLE_UB_OP
