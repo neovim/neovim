@@ -74,6 +74,23 @@ local exclude_invalid = {
   ["vim.treesitter.start()"] = "treesitter.txt",
 }
 
+-- False-positive "invalid URLs".
+local exclude_invalid_urls = {
+  ["http://"] = "usr_23.txt",
+  ["http://."] = "usr_23.txt",
+  ["http://aspell.net/man-html/Affix-Compression.html"] = "spell.txt",
+  ["http://aspell.net/man-html/Phonetic-Code.html"] = "spell.txt",
+  ["http://canna.sourceforge.jp/"] = "mbyte.txt",
+  ["http://gnuada.sourceforge.net"] = "ft_ada.txt",
+  ["http://lua-users.org/wiki/StringLibraryTutorial"] = "lua.txt",
+  ["http://michael.toren.net/code/"] = "pi_tar.txt",
+  ["http://papp.plan9.de"] = "syntax.txt",
+  ["http://wiki.services.openoffice.org/wiki/Dictionaries"] = "spell.txt",
+  ["http://www.adapower.com"] = "ft_ada.txt",
+  ["http://www.ghostscript.com/"] = "print.txt",
+  ["http://www.jclark.com/"] = "quickfix.txt",
+}
+
 local function tofile(fname, text)
   local f = io.open(fname, 'w')
   if not f then
@@ -278,10 +295,13 @@ local function ignore_invalid(s)
   )
 end
 
-local function ignore_parse_error(s)
-  -- Ignore parse errors for unclosed codespan/optionlink/tag.
-  -- This is common in vimdocs and is treated as plaintext by :help.
-  return s:find("^[`'|*]")
+local function ignore_parse_error(s, fname)
+  local helpfile = vim.fs.basename(fname)
+  return (helpfile == 'pi_netrw.txt'
+    -- Ignore parse errors for unclosed tag.
+    -- This is common in vimdocs and is treated as plaintext by :help.
+    or s:find("^[*]")
+  )
 end
 
 local function has_ancestor(node, ancestor_name)
@@ -323,7 +343,7 @@ local function validate_url(text, fname)
   local ignored = false
   if vim.fs.basename(fname) == 'pi_netrw.txt' then
     ignored = true
-  elseif text:find('http%:') then
+  elseif text:find('http%:') and not exclude_invalid_urls[text] then
     invalid_urls[text] = vim.fs.basename(fname)
   end
   return ignored
@@ -348,7 +368,7 @@ local function visit_validate(root, level, lang_tree, opt, stats)
   end
 
   if node_name == 'ERROR' then
-    if ignore_parse_error(text) then
+    if ignore_parse_error(text, opt.fname) then
       return
     end
     -- Store the raw text to give context to the error report.
@@ -363,7 +383,8 @@ local function visit_validate(root, level, lang_tree, opt, stats)
       end
     end
   elseif node_name == 'url' then
-    validate_url(text, opt.fname)
+    local fixed_url, _ = fix_url(trim(text))
+    validate_url(fixed_url, opt.fname)
   elseif node_name == 'taglink' or node_name == 'optionlink' then
     local _, _, _ = validate_link(root, opt.buf, opt.fname)
   end
@@ -523,7 +544,7 @@ local function visit_node(root, level, lang_tree, headings, opt, stats)
     end
     return s
   elseif node_name == 'ERROR' then
-    if ignore_parse_error(trimmed) then
+    if ignore_parse_error(trimmed, opt.fname) then
       return text
     end
 
