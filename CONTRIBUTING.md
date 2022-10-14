@@ -12,6 +12,9 @@ low-risk/isolated tasks:
   [Coverity](#coverity).
 - [Improve documentation](#documenting)
 - [Merge a Vim patch] (requires strong familiarity with Vim)
+  - NOTE: read the above link before sending improvements to "runtime files" (anything in `runtime/`).
+    - Vimscript and documentation files are (mostly) maintained by [Vim](https://github.com/vim/vim), not Nvim.
+    - Lua files are maintained by Nvim.
 
 Reporting problems
 ------------------

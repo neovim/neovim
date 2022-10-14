@@ -14,8 +14,9 @@ It is best to view this file with these settings within VIM's GUI: >
 	:set arabicshape
 
 
+------------------------------------------------------------------------------
 Introduction
-------------
+
 Arabic is a rather demanding language in which a number of special
 features are required.	Characters are right-to-left oriented and
 ought to appear as such on the screen (i.e. from right to left).
@@ -34,8 +35,9 @@ The commands, prompts and help files are not in Arabic, therefore
 the user interface remains the standard Vi interface.
 
 
+------------------------------------------------------------------------------
 Highlights
-----------
+
 o  Editing left-to-right files as in the original Vim hasn't changed.
 
 o  Viewing and editing files in right-to-left windows.	 File
@@ -64,8 +66,8 @@ o  Proper Bidirectional functionality is possible given Vim is
    started within a Bidi capable terminal emulator.
 
 
+------------------------------------------------------------------------------
 Arabic Fonts						*arabicfonts*
-------------
 
 Vim requires monospaced fonts of which there are many out there.
 Arabic requires ISO-8859-6 as well as Presentation Form-B fonts
@@ -75,8 +77,8 @@ Do an Internet search or check www.arabeyes.org for further
 info on where to obtain the necessary Arabic fonts.
 
 
+------------------------------------------------------------------------------
 Font Installation
------------------
 
 o  Installation of fonts for X Window systems (Unix/Linux)
 
@@ -88,8 +90,9 @@ o  Installation of fonts for X Window systems (Unix/Linux)
      %	xset +fp path_name_of_arabic_fonts_directory
 
 
+------------------------------------------------------------------------------
 Usage
------
+
 Prior to the actual usage of Arabic within Vim, a number of settings
 need to be accounted for and invoked.
 
@@ -259,8 +262,8 @@ o  Enable Arabic settings [short-cut]
       ':set arabicshape' to your vimrc file.
 
 
+------------------------------------------------------------------------------
 Keymap/Keyboard						*arabickeymap*
----------------
 
 The character/letter encoding used in Vim is the standard UTF-8.
 It is widely discouraged that any other encoding be used or even
@@ -276,7 +279,7 @@ o  Keyboard
    +  CTRL-^ in insert/replace mode toggles between Arabic/Latin mode
 
    +  Keyboard mapping is based on the Microsoft's Arabic keymap (the
-      de facto standard in the Arab world):
+      de facto standard in the Arab world): >
 
   +---------------------------------------------------------------------+
   |!   |@   |#   |$   |%   |^   |&   |*   |(   |)   |_   |+   ||   |~  ّ |
@@ -291,17 +294,18 @@ o  Keyboard
 	   |Z ~ |X  ْ |C { |V } |B لآ |N آ |M ' |< , |> . |? ؟ |
 	   |z ئ |x ء |c ؤ |v ر |b لا |n ى |m ة |, و |. ز |/ ظ |
 	   +-------------------------------------------------+
+<
 
+------------------------------------------------------------------------------
 Restrictions
-------------
 
 o  Vim in its GUI form does not currently support Bi-directionality
    (i.e. the ability to see both Arabic and Latin intermixed within
    the same line).
 
 
+------------------------------------------------------------------------------
 Known Bugs
-----------
 
 There is one known minor bug,
 

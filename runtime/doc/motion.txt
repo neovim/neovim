@@ -309,7 +309,7 @@ g<Down>			[count] display lines downward.  |exclusive| motion.
 			an operator, because it's not linewise.
 
 							*-*
--  <minus>		[count] lines upward, on the first non-blank
+`-`  <minus>		[count] lines upward, on the first non-blank
 			character |linewise|.
 
 +		or					*+*
