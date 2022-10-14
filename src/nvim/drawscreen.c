@@ -434,9 +434,11 @@ int update_screen(void)
     // UPD_CLEAR is already handled
     if (type == UPD_NOT_VALID && !ui_has(kUIMultigrid) && msg_scrolled) {
       was_invalidated = ui_comp_set_screen_valid(false);
-      for (int i = valid; i < Rows - p_ch; i++) {
-        grid_clear_line(&default_grid, default_grid.line_offset[i],
-                        Columns, false);
+      if (p_ch > 0) {
+        for (int i = valid; i < Rows - p_ch; i++) {
+          grid_clear_line(&default_grid, default_grid.line_offset[i],
+                          Columns, false);
+        }
       }
       FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
         if (wp->w_floating) {
