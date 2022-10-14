@@ -252,8 +252,7 @@ void do_tag(char *tag, int type, int count, int forceit, int verbose)
 
       new_tag = true;
     } else {
-      if (
-          g_do_tagpreview != 0 ? ptag_entry.tagname == NULL :
+      if (g_do_tagpreview != 0 ? ptag_entry.tagname == NULL :
           tagstacklen == 0) {
         // empty stack
         emsg(_(e_tagstack));
