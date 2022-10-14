@@ -2623,7 +2623,7 @@ Further reading: |autoload|.
 ==============================================================================
 *41.16*	Distributing Vim scripts			*distribute-script*
 
-Vim users will look for scripts on the Vim website: http://www.vim.org.
+Vim users will look for scripts on the Vim website: https://www.vim.org.
 If you made something that is useful for others, share it!
 
 Vim scripts can be used on any system.  There might not be a tar or gzip

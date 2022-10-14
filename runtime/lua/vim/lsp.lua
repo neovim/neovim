@@ -824,23 +824,16 @@ end
 ---
 --- See |vim.lsp.start_client()| for all available options. The most important are:
 ---
---- `name` is an arbitrary name for the LSP client. It should be unique per
---- language server.
----
---- `cmd` the command as list - used to start the language server.
---- The command must be present in the `$PATH` environment variable or an
---- absolute path to the executable. Shell constructs like `~` are *NOT* expanded.
----
---- `root_dir` path to the project root.
---- By default this is used to decide if an existing client should be re-used.
---- The example above uses |vim.fs.find()| and |vim.fs.dirname()| to detect the
---- root by traversing the file system upwards starting
---- from the current directory until either a `pyproject.toml` or `setup.py`
---- file is found.
----
---- `workspace_folders` a list of { uri:string, name: string } tables.
---- The project root folders used by the language server.
---- If `nil` the property is derived from the `root_dir` for convenience.
+--- - `name` arbitrary name for the LSP client. Should be unique per language server.
+--- - `cmd` command (in list form) used to start the language server. Must be absolute, or found on
+---   `$PATH`. Shell constructs like `~` are not expanded.
+--- - `root_dir` path to the project root. By default this is used to decide if an existing client
+---   should be re-used. The example above uses |vim.fs.find()| and |vim.fs.dirname()| to detect the
+---   root by traversing the file system upwards starting from the current directory until either
+---   a `pyproject.toml` or `setup.py` file is found.
+--- - `workspace_folders` list of `{ uri:string, name: string }` tables specifying the project root
+---   folders used by the language server. If `nil` the property is derived from `root_dir` for
+---   convenience.
 ---
 --- Language servers use this information to discover metadata like the
 --- dependencies of your project and they tend to index the contents within the

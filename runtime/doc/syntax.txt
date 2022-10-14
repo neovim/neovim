@@ -687,13 +687,13 @@ Automatic detection works for the encodings mentioned specifically by name in
 |encoding-names|, but TOhtml will only automatically use those encodings with
 wide browser support. However, you can override this to support specific
 encodings that may not be automatically detected by default (see options
-below). See http://www.iana.org/assignments/character-sets for the IANA names.
+below). See https://www.iana.org/assignments/character-sets for the IANA names.
 
 Note: By default all Unicode encodings are converted to UTF-8 with no BOM in
 the generated HTML, as recommended by W3C:
 
-	http://www.w3.org/International/questions/qa-choosing-encodings
-	http://www.w3.org/International/questions/qa-byte-order-mark
+	https://www.w3.org/International/questions/qa-choosing-encodings
+	https://www.w3.org/International/questions/qa-byte-order-mark
 
 							 *g:html_use_encoding*
 Default: none, uses IANA name for current 'fileencoding' as above.
@@ -832,7 +832,7 @@ files are included:
 	asm68k		Motorola 680x0 assembly
 	asmh8300	Hitachi H-8300 version of GNU assembly
 	ia64		Intel Itanium 64
-	fasm		Flat assembly (http://flatassembler.net)
+	fasm		Flat assembly (https://flatassembler.net)
 	masm		Microsoft assembly (probably works for any 80x86)
 	nasm		Netwide assembly
 	tasm		Turbo Assembly (with opcodes 80x86 up to Pentium, and
@@ -1393,9 +1393,9 @@ Two syntax highlighting files exist for Euphoria. One for Euphoria
 version 3.1.1, which is the default syntax highlighting file, and one for
 Euphoria version 4.0.5 or later.
 
-Euphoria version 3.1.1 (http://www.rapideuphoria.com/) is still necessary
+Euphoria version 3.1.1 (https://www.rapideuphoria.com/) is still necessary
 for developing applications for the DOS platform, which Euphoria version 4
-(http://www.openeuphoria.org/) does not support.
+(https://www.openeuphoria.org/) does not support.
 
 The following file extensions are auto-detected as Euphoria file type:
 
@@ -1452,7 +1452,7 @@ Elixir.
 
 FLEXWIKI				*flexwiki.vim* *ft-flexwiki-syntax*
 
-FlexWiki is an ASP.NET-based wiki package available at http://www.flexwiki.com
+FlexWiki is an ASP.NET-based wiki package available at https://www.flexwiki.com
 NOTE: This site currently doesn't work, on Wikipedia is mentioned that
 development stopped in 2009.
 
@@ -1808,7 +1808,7 @@ are read during initialization) >
 	:let html_my_rendering=1
 
 If you'd like to see an example download mysyntax.vim at
-http://www.fleiner.com/vim/download.html
+https://www.fleiner.com/vim/download.html
 
 You can also disable this rendering by adding the following line to your
 vimrc file: >
@@ -1936,7 +1936,7 @@ highlight them use: >
 	:let java_highlight_java_lang_ids=1
 
 You can also highlight identifiers of most standard Java packages if you
-download the javaid.vim script at http://www.fleiner.com/vim/download.html.
+download the javaid.vim script at https://www.fleiner.com/vim/download.html.
 If you prefer to only highlight identifiers of a certain package, say java.io
 use the following: >
 	:let java_highlight_java_io=1
@@ -3353,13 +3353,11 @@ of specialized LaTeX commands, syntax, and fonts.  If you're using such a
 package you'll often wish that the distributed syntax/tex.vim would support
 it.  However, clearly this is impractical.  So please consider using the
 techniques in |mysyntaxfile-add| to extend or modify the highlighting provided
-by syntax/tex.vim.  Please consider uploading any extensions that you write,
-which typically would go in $HOME/after/syntax/tex/[pkgname].vim, to
-http://vim.sf.net/.
+by syntax/tex.vim.
 
 I've included some support for various popular packages on my website: >
 
-	http://www.drchip.org/astronaut/vim/index.html#LATEXPKGS
+	https://www.drchip.org/astronaut/vim/index.html#LATEXPKGS
 <
 The syntax files there go into your .../after/syntax/tex/ directory.
 
@@ -5397,8 +5395,7 @@ WARNING: The longer the tags file, the slower this will be, and the more
 memory Vim will consume.
 
 Only highlighting typedefs, unions and structs can be done too.  For this you
-must use Universal Ctags (found at https://ctags.io) or Exuberant ctags (found
-at http://ctags.sf.net).
+must use Universal Ctags (https://ctags.io) or Exuberant ctags.
 
 Put these lines in your Makefile:
 

@@ -724,7 +724,7 @@ Fortran with (possibly multiple) loops ending on a labelled executable
 statement of almost arbitrary type.  Correct indentation requires
 compiler-quality parsing.  Old code with do loops ending on labelled statements
 of arbitrary type can be indented with elaborate programs such as Tidy
-(http://www.unb.ca/chem/ajit/f_tidy.htm).  Structured do/continue loops are
+(https://www.unb.ca/chem/ajit/f_tidy.htm).  Structured do/continue loops are
 also left unindented because continue statements are also used for purposes
 other than ending a do loop.  Programs such as Tidy can convert structured
 do/continue loops to the do/enddo form.  Do loops of the do/enddo variety can
