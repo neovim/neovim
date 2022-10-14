@@ -1753,7 +1753,7 @@ win_update_start:
         // Let the syntax stuff know we skipped a few lines.
         if (syntax_last_parsed != 0 && syntax_last_parsed + 1 < lnum
             && syntax_present(wp)) {
-          syntax_end_parsing(syntax_last_parsed + 1);
+          syntax_end_parsing(wp, syntax_last_parsed + 1);
         }
 
         // Display one line
@@ -1827,7 +1827,7 @@ win_update_start:
 
   // Let the syntax stuff know we stop parsing here.
   if (syntax_last_parsed != 0 && syntax_present(wp)) {
-    syntax_end_parsing(syntax_last_parsed + 1);
+    syntax_end_parsing(wp, syntax_last_parsed + 1);
   }
 
   // If we didn't hit the end of the file, and we didn't finish the last
