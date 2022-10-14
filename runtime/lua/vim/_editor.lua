@@ -416,11 +416,16 @@ function vim.region(bufnr, pos1, pos2, regtype, inclusive)
       c2 = c1 + regtype:sub(2)
       -- and adjust for non-ASCII characters
       bufline = vim.api.nvim_buf_get_lines(bufnr, l, l + 1, true)[1]
-      if c1 < #bufline then
+      local utflen = vim.str_utfindex(bufline, #bufline)
+      if c1 <= utflen then
         c1 = vim.str_byteindex(bufline, c1)
+      else
+        c1 = #bufline + 1
       end
-      if c2 < #bufline then
+      if c2 <= utflen then
         c2 = vim.str_byteindex(bufline, c2)
+      else
+        c2 = #bufline + 1
       end
     else
       c1 = (l == pos1[1]) and pos1[2] or 0

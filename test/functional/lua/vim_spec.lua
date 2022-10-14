@@ -2227,13 +2227,19 @@ describe('lua stdlib', function()
     eq(true, exec_lua[[return vim.g.test]])
   end)
 
-  it('vim.region', function()
-    insert(helpers.dedent( [[
-    text tααt tααt text
-    text tαxt txtα tex
-    text tαxt tαxt
-    ]]))
-    eq({5,15}, exec_lua[[ return vim.region(0,{1,5},{1,14},'v',true)[1] ]])
+  describe('vim.region', function()
+    it('charwise', function()
+      insert(helpers.dedent( [[
+      text tααt tααt text
+      text tαxt txtα tex
+      text tαxt tαxt
+      ]]))
+      eq({5,15}, exec_lua[[ return vim.region(0,{1,5},{1,14},'v',true)[1] ]])
+    end)
+    it('blockwise', function()
+      insert([[αα]])
+      eq({0,5}, exec_lua[[ return vim.region(0,{0,0},{0,4},'3',true)[0] ]])
+    end)
   end)
 
   describe('vim.on_key', function()
