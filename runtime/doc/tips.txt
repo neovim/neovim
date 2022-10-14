@@ -8,7 +8,7 @@ Tips and ideas for using Vim				*tips*
 
 These are just a few that we thought would be helpful for many users.
 You can find many more tips on the wiki.  The URL can be found on
-http://www.vim.org
+https://www.vim.org
 
 Don't forget to browse the user manual, it also contains lots of useful tips
 |usr_toc.txt|.

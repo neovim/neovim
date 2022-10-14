@@ -11,9 +11,9 @@ Vim is Charityware.  You can use and copy it as much as you like, but you are
 encouraged to make a donation for needy children in Uganda.  Please see |kcc|
 below or visit the ICCF web site, available at these URLs:
 
-	http://iccf-holland.org/
-	http://www.vim.org/iccf/
-	http://www.iccf.nl/
+	https://iccf-holland.org/
+	https://www.vim.org/iccf/
+	https://www.iccf.nl/
 
 You can also sponsor the development of Vim.  Vim sponsors can vote for
 features.  See |sponsor|.  The money goes to Uganda anyway.
@@ -239,7 +239,7 @@ Holland:	Transfer to the account of "Stichting ICCF Holland" in Lisse.
 
 Germany:	It is possible to make donations that allow for a tax return.
 		Check the ICCF web site for the latest information:
-			http://iccf-holland.org/germany.html
+			https://iccf-holland.org/germany.html
 
 World:		Use a postal money order.  That should be possible from any
 		country, mostly from the post office.  Use this name (which is

@@ -319,6 +319,16 @@ local function validate_link(node, bufnr, fname)
   return helppage, tagname, ignored
 end
 
+local function validate_url(text, fname)
+  local ignored = false
+  if vim.fs.basename(fname) == 'pi_netrw.txt' then
+    ignored = true
+  elseif text:find('http%:') then
+    invalid_urls[text] = vim.fs.basename(fname)
+  end
+  return ignored
+end
+
 -- Traverses the tree at `root` and checks that |tag| links point to valid helptags.
 local function visit_validate(root, level, lang_tree, opt, stats)
   level = level or 0
@@ -353,9 +363,7 @@ local function visit_validate(root, level, lang_tree, opt, stats)
       end
     end
   elseif node_name == 'url' then
-    if text:find('http%:') then
-      invalid_urls[text] = vim.fs.basename(opt.fname)
-    end
+    validate_url(text, opt.fname)
   elseif node_name == 'taglink' or node_name == 'optionlink' then
     local _, _, _ = validate_link(root, opt.buf, opt.fname)
   end

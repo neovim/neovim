@@ -401,7 +401,7 @@ to see more messages.
 
 The self-installing Vim for MS-Windows includes a diff program.  If you don't
 have it you might want to download a diff.exe.  For example from
-http://gnuwin32.sourceforge.net/packages/diffutils.htm.
+https://gnuwin32.sourceforge.net/packages/diffutils.htm.
 
 
 USING PATCHES					*diff-patchexpr*
