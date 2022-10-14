@@ -2085,4 +2085,39 @@ describe('decorations: virt_text', function()
     ]]}
   end)
 
+  it('redraws correctly when re-using extmark ids', function()
+    command 'normal 5ohello'
+
+    screen:expect{grid=[[
+                                                        |
+      hello                                             |
+      hello                                             |
+      hello                                             |
+      hello                                             |
+      hell^o                                             |
+      {3:~                                                 }|
+      {3:~                                                 }|
+      {3:~                                                 }|
+                                                        |
+    ]]}
+
+    local ns = meths.create_namespace('ns')
+    for row = 1, 5 do
+      meths.buf_set_extmark(0, ns, row, 0, { id = 1, virt_text = {{'world', 'Normal'}} })
+    end
+
+    screen:expect{grid=[[
+                                                        |
+      hello                                             |
+      hello                                             |
+      hello                                             |
+      hello                                             |
+      hell^o world                                       |
+      {3:~                                                 }|
+      {3:~                                                 }|
+      {3:~                                                 }|
+                                                        |
+    ]]}
+  end)
+
 end)

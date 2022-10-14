@@ -112,6 +112,7 @@ void extmark_set(buf_T *buf, uint32_t ns_id, uint32_t *idp, int row, colnr_T col
           marktree_revise(buf->b_marktree, itr, decor_level, old_mark);
           goto revised;
         }
+        decor_remove(buf, old_mark.pos.row, old_mark.pos.row, old_mark.decor_full);
         marktree_del_itr(buf->b_marktree, itr, false);
       }
     } else {
