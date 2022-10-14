@@ -180,7 +180,7 @@ int nextwild(expand_T *xp, int type, int options, bool escape)
   assert(ccline->cmdpos >= i);
   xp->xp_pattern_len = (size_t)ccline->cmdpos - (size_t)i;
 
-  if (type == WILD_NEXT || type == WILD_PREV) {
+  if (type == WILD_NEXT || type == WILD_PREV || type == WILD_PUM_WANT) {
     // Get next/previous match for a previous expanded pattern.
     p2 = (char_u *)ExpandOne(xp, NULL, NULL, 0, type);
   } else {
@@ -290,8 +290,11 @@ static char *get_next_or_prev_match(int mode, expand_T *xp, int *p_findex, char 
       findex = xp->xp_numfiles;
     }
     findex--;
-  } else {  // mode == WILD_NEXT
+  } else if (mode == WILD_NEXT) {
     findex++;
+  } else {  // mode == WILD_PUM_WANT
+    assert(pum_want.active);
+    findex = pum_want.item;
   }
 
   // When wrapping around, return the original string, set findex to -1.
@@ -419,7 +422,7 @@ static char *find_longest_match(expand_T *xp, int options)
   return xstrndup(xp->xp_files[0], len);
 }
 
-/// Do wildcard expansion on the string 'str'.
+/// Do wildcard expansion on the string "str".
 /// Chars that should not be expanded must be preceded with a backslash.
 /// Return a pointer to allocated memory containing the new string.
 /// Return NULL for failure.
@@ -443,6 +446,7 @@ static char *find_longest_match(expand_T *xp, int options)
 ///                          popup menu and close the menu.
 /// mode = WILD_CANCEL:      cancel and close the cmdline completion popup and
 ///                          use the original text.
+/// mode = WILD_PUM_WANT:    use the match at index pum_want.item
 ///
 /// options = WILD_LIST_NOTFOUND:    list entries without a match
 /// options = WILD_HOME_REPLACE:     do home_replace() for buffer names
@@ -466,7 +470,7 @@ char *ExpandOne(expand_T *xp, char *str, char *orig, int options, int mode)
   int i;
 
   // first handle the case of using an old match
-  if (mode == WILD_NEXT || mode == WILD_PREV) {
+  if (mode == WILD_NEXT || mode == WILD_PREV || mode == WILD_PUM_WANT) {
     return get_next_or_prev_match(mode, xp, &findex, orig_save);
   }
 

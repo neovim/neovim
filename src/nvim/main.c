@@ -31,7 +31,6 @@
 #include "nvim/highlight.h"
 #include "nvim/highlight_group.h"
 #include "nvim/iconv.h"
-#include "nvim/insexpand.h"
 #include "nvim/locale.h"
 #include "nvim/log.h"
 #include "nvim/lua/executor.h"

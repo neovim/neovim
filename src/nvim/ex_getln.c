@@ -919,6 +919,22 @@ static int command_line_check(VimState *state)
   return 1;
 }
 
+static void command_line_end_wildmenu(CommandLineState *s)
+{
+  if (cmdline_pum_active()) {
+    cmdline_pum_remove();
+  }
+  if (s->xpc.xp_numfiles != -1) {
+    (void)ExpandOne(&s->xpc, NULL, NULL, 0, WILD_FREE);
+  }
+  s->did_wild_list = false;
+  if (!p_wmnu || (s->c != K_UP && s->c != K_DOWN)) {
+    s->xpc.xp_context = EXPAND_NOTHING;
+  }
+  s->wim_index = 0;
+  wildmenu_cleanup(&ccline);
+}
+
 static int command_line_execute(VimState *state, int key)
 {
   if (key == K_IGNORE || key == K_NOP) {
@@ -935,6 +951,19 @@ static int command_line_execute(VimState *state, int key)
       do_cmdline(NULL, getcmdkeycmd, NULL, DOCMD_NOWAIT);
     } else {
       map_execute_lua();
+    }
+
+    // nvim_select_popupmenu_item() can be called from the handling of
+    // K_EVENT, K_COMMAND, or K_LUA.
+    if (pum_want.active) {
+      if (cmdline_pum_active()) {
+        nextwild(&s->xpc, WILD_PUM_WANT, 0, s->firstc != '@');
+        if (pum_want.finish) {
+          nextwild(&s->xpc, WILD_APPLY, WILD_NO_BEEP, s->firstc != '@');
+          command_line_end_wildmenu(s);
+        }
+      }
+      pum_want.active = false;
     }
 
     if (!cmdline_was_last_drawn) {
@@ -1016,18 +1045,7 @@ static int command_line_execute(VimState *state, int key)
   if (!(s->c == p_wc && KeyTyped) && s->c != p_wcm && s->c != Ctrl_Z
       && s->c != Ctrl_N && s->c != Ctrl_P && s->c != Ctrl_A
       && s->c != Ctrl_L) {
-    if (cmdline_pum_active()) {
-      cmdline_pum_remove();
-    }
-    if (s->xpc.xp_numfiles != -1) {
-      (void)ExpandOne(&s->xpc, NULL, NULL, 0, WILD_FREE);
-    }
-    s->did_wild_list = false;
-    if (!p_wmnu || (s->c != K_UP && s->c != K_DOWN)) {
-      s->xpc.xp_context = EXPAND_NOTHING;
-    }
-    s->wim_index = 0;
-    wildmenu_cleanup(&ccline);
+    command_line_end_wildmenu(s);
   }
 
   if (p_wmnu) {

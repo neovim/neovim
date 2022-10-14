@@ -39,6 +39,8 @@ NEW FEATURES                                                    *news-features*
 
 The following new APIs or features were added.
 
+|nvim_select_popupmenu_item()| now supports |cmdline-completion| popup menu.
+
 ==============================================================================
 CHANGED FEATURES                                                 *news-changes*
 
