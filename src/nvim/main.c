@@ -31,7 +31,6 @@
 #include "nvim/highlight.h"
 #include "nvim/highlight_group.h"
 #include "nvim/iconv.h"
-#include "nvim/if_cscope.h"
 #include "nvim/insexpand.h"
 #include "nvim/locale.h"
 #include "nvim/log.h"
@@ -772,7 +771,6 @@ void getout(int exitval)
     ui_call_set_title(cstr_as_string((char *)p_titleold));
   }
 
-  cs_end();
   if (garbage_collect_at_exit) {
     garbage_collect(false);
   }

@@ -128,7 +128,6 @@ NORMAL COMMANDS
 OPTIONS
 - *cpo-<* *:menu-<special>* *:menu-special* *:map-<special>* *:map-special*
   `<>` notation is always enabled.
-- *'cscopeverbose'*	Enabled by default. Use |:silent| instead.
 - *'exrc'* *'ex'*	Security risk: downloaded files could include
 			a malicious .nvimrc or .exrc file. See 'secure'.
 			Recommended alternative: define an autocommand in your

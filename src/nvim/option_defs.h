@@ -471,15 +471,6 @@ EXTERN long p_ph;               // 'pumheight'
 EXTERN long p_pw;               // 'pumwidth'
 EXTERN char *p_com;             ///< 'comments'
 EXTERN char *p_cpo;             // 'cpoptions'
-EXTERN char *p_csprg;           // 'cscopeprg'
-EXTERN int p_csre;              // 'cscoperelative'
-EXTERN char *p_csqf;            // 'cscopequickfix'
-#define       CSQF_CMDS   "sgdctefia"
-#define       CSQF_FLAGS  "+-0"
-EXTERN int p_cst;               // 'cscopetag'
-EXTERN long p_csto;             // 'cscopetagorder'
-EXTERN long p_cspc;             // 'cscopepathcomp'
-EXTERN int p_csverbose;         // 'cscopeverbose'
 EXTERN char *p_debug;           // 'debug'
 EXTERN char *p_def;             // 'define'
 EXTERN char *p_inc;

@@ -604,11 +604,6 @@ function M.goto_tag(pattern, _, _)
     end
   end
 
-  if vim.o.cscopetag then
-    -- return only a single entry so we work well with :cstag (#11675)
-    structured = { structured[1] }
-  end
-
   return vim.tbl_map(function(entry)
     return {
       name = entry.name,

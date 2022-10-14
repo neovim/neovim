@@ -524,7 +524,6 @@ that see the '"' as part of their argument:
     :cexpr (and the like)
     :cdo (and the like)
     :command
-    :cscope (and the like)
     :debug
     :display
     :echo (and the like)
@@ -566,7 +565,6 @@ followed by another Vim command:
     :cdo
     :cfdo
     :command
-    :cscope
     :debug
     :eval
     :folddoopen
@@ -575,7 +573,6 @@ followed by another Vim command:
     :global
     :help
     :helpgrep
-    :lcscope
     :ldo
     :lfdo
     :lhelpgrep
@@ -586,7 +583,6 @@ followed by another Vim command:
     :python
     :registers
     :read !
-    :scscope
     :sign
     :terminal
     :vglobal

@@ -46,7 +46,6 @@ static const char *command_complete[] =
   [EXPAND_COLORS] = "color",
   [EXPAND_COMMANDS] = "command",
   [EXPAND_COMPILER] = "compiler",
-  [EXPAND_CSCOPE] = "cscope",
   [EXPAND_USER_DEFINED] = "custom",
   [EXPAND_USER_LIST] = "customlist",
   [EXPAND_USER_LUA] = "<Lua function>",

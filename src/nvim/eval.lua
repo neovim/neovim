@@ -88,7 +88,6 @@ return {
     cos={args=1, base=1, float_func="cos"},
     cosh={args=1, base=1, float_func="cosh"},
     count={args={2, 4}, base=1},
-    cscope_connection={args={0, 3}},
     ctxget={args={0, 1}},
     ctxpop={},
     ctxpush={args={0, 1}},

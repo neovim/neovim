@@ -496,58 +496,6 @@ return {
       defaults={if_true=macros('CPO_VIM')}
     },
     {
-      full_name='cscopepathcomp', abbreviation='cspc',
-      short_desc=N_("how many components of the path to show"),
-      type='number', scope={'global'},
-      varname='p_cspc',
-      defaults={if_true=0}
-    },
-    {
-      full_name='cscopeprg', abbreviation='csprg',
-      short_desc=N_("command to execute cscope"),
-      type='string', scope={'global'},
-      secure=true,
-      expand=true,
-      varname='p_csprg',
-      defaults={if_true="cscope"}
-    },
-    {
-      full_name='cscopequickfix', abbreviation='csqf',
-      short_desc=N_("use quickfix window for cscope results"),
-      type='string', list='onecomma', scope={'global'},
-      deny_duplicates=true,
-      varname='p_csqf',
-      defaults={if_true=""}
-    },
-    {
-      full_name='cscoperelative', abbreviation='csre',
-      short_desc=N_("Use cscope.out path basename as prefix"),
-      type='bool', scope={'global'},
-      varname='p_csre',
-      defaults={if_true=0}
-    },
-    {
-      full_name='cscopetag', abbreviation='cst',
-      short_desc=N_("use cscope for tag commands"),
-      type='bool', scope={'global'},
-      varname='p_cst',
-      defaults={if_true=0}
-    },
-    {
-      full_name='cscopetagorder', abbreviation='csto',
-      short_desc=N_("determines \":cstag\" search order"),
-      type='number', scope={'global'},
-      varname='p_csto',
-      defaults={if_true=0}
-    },
-    {
-      full_name='cscopeverbose', abbreviation='csverb',
-      short_desc=N_("give messages when adding a cscope database"),
-      type='bool', scope={'global'},
-      varname='p_csverbose',
-      defaults={if_true=1}
-    },
-    {
       full_name='cursorbind', abbreviation='crb',
       short_desc=N_("move cursor in window as it moves in other windows"),
       type='bool', scope={'window'},

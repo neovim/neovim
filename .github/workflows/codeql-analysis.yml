@@ -28,7 +28,7 @@ jobs:
     - name: Install apt packages
       run: |
         sudo apt-get update
-        sudo apt-get install -y autoconf automake build-essential cmake cpanminus cscope gcc-multilib gdb gettext language-pack-tr libtool-bin locales ninja-build pkg-config python3 python3-pip python3-setuptools unzip valgrind xclip
+        sudo apt-get install -y autoconf automake build-essential cmake cpanminus gcc-multilib gdb gettext language-pack-tr libtool-bin locales ninja-build pkg-config python3 python3-pip python3-setuptools unzip valgrind xclip
 
     - name: Initialize CodeQL
       uses: github/codeql-action/init@v2

@@ -1250,8 +1250,6 @@ tag		command		action ~
 |:cpfile|	:cpf[ile]	go to last error in previous file
 |:cquit|	:cq[uit]	quit Vim with an error code
 |:crewind|	:cr[ewind]	go to the specified error, default first one
-|:cscope|	:cs[cope]	execute cscope command
-|:cstag|	:cst[ag]	use cscope to jump to a tag
 |:cunmap|	:cu[nmap]	like ":unmap" but for Command-line mode
 |:cunabbrev|	:cuna[bbrev]	like ":unabbrev" but for Command-line mode
 |:cunmenu|	:cunme[nu]	remove menu for Command-line mode
@@ -1375,7 +1373,6 @@ tag		command		action ~
 |:lcd|		:lc[d]		change directory locally
 |:lchdir|	:lch[dir]	change directory locally
 |:lclose|	:lcl[ose]	close location window
-|:lcscope|	:lcs[cope]	like ":cscope" but uses location list
 |:ldo|		:ld[o]		execute command in valid location list entries
 |:lfdo|		:lfd[o]		execute command in each file in location list
 |:left|		:le[ft]		left align lines
@@ -1556,7 +1553,6 @@ tag		command		action ~
 				buffer list
 |:scriptnames|	:scr[iptnames]	list names of all sourced Vim scripts
 |:scriptencoding| :scripte[ncoding]  encoding used in sourced Vim script
-|:scscope|	:scs[cope]	split window and execute cscope command
 |:set|		:se[t]		show or set options
 |:setfiletype|	:setf[iletype]	set 'filetype', unless it was set already
 |:setglobal|	:setg[lobal]	show global values of options

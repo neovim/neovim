@@ -673,12 +673,6 @@ Short explanation of each option:		*option-list*
 'confirm'	  'cf'	    ask what to do about unsaved/read-only files
 'copyindent'	  'ci'	    make 'autoindent' use existing indent structure
 'cpoptions'	  'cpo'     flags for Vi-compatible behavior
-'cscopepathcomp'  'cspc'    how many components of the path to show
-'cscopeprg'       'csprg'   command to execute cscope
-'cscopequickfix'  'csqf'    use quickfix window for cscope results
-'cscoperelative'  'csre'    Use cscope.out path basename as prefix
-'cscopetag'       'cst'     use cscope for tag commands
-'cscopetagorder'  'csto'    determines ":cstag" search order
 'cursorbind'	  'crb'     move cursor in window as it moves in other windows
 'cursorcolumn'	  'cuc'	    highlight the screen column of the cursor
 'cursorline'	  'cul'	    highlight the screen line of the cursor

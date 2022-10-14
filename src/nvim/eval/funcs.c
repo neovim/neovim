@@ -39,7 +39,6 @@
 #include "nvim/getchar.h"
 #include "nvim/globals.h"
 #include "nvim/highlight_group.h"
-#include "nvim/if_cscope.h"
 #include "nvim/indent.h"
 #include "nvim/indent_c.h"
 #include "nvim/input.h"
@@ -1130,29 +1129,6 @@ static void f_count(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     semsg(_(e_listdictarg), "count()");
   }
   rettv->vval.v_number = n;
-}
-
-/// "cscope_connection([{num} , {dbpath} [, {prepend}]])" function
-///
-/// Checks the existence of a cscope connection.
-static void f_cscope_connection(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
-{
-  int num = 0;
-  const char *dbpath = NULL;
-  const char *prepend = NULL;
-  char buf[NUMBUFLEN];
-
-  if (argvars[0].v_type != VAR_UNKNOWN
-      && argvars[1].v_type != VAR_UNKNOWN) {
-    num = (int)tv_get_number(&argvars[0]);
-    dbpath = tv_get_string(&argvars[1]);
-    if (argvars[2].v_type != VAR_UNKNOWN) {
-      prepend = tv_get_string_buf(&argvars[2], buf);
-    }
-  }
-
-  rettv->vval.v_number = cs_connection(num, (char_u *)dbpath,
-                                       (char_u *)prepend);
 }
 
 /// "ctxget([{index}])" function
@@ -3565,7 +3541,6 @@ static void f_has(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     "cmdwin",
     "comments",
     "conceal",
-    "cscope",
     "cursorbind",
     "cursorshape",
 #ifdef DEBUG

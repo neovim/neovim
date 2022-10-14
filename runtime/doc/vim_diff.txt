@@ -36,7 +36,6 @@ centralized reference of the differences.
 - 'belloff' defaults to "all"
 - 'compatible' is always disabled
 - 'complete' excludes "i"
-- 'cscopeverbose' is enabled
 - 'directory' defaults to ~/.local/state/nvim/swap// (|xdg|), auto-created
 - 'display' defaults to "lastline"
 - 'encoding' is UTF-8 (cf. 'fileencoding' for file-content encoding)
@@ -541,6 +540,10 @@ Commands:
   :sleep! (does not hide the cursor; same as :sleep)
   :smile
   :tearoff
+  :cstag
+  :cscope
+  :lcscope
+  :scscope
 
 Compile-time features:
   Emacs tags support
@@ -548,6 +551,7 @@ Compile-time features:
 
 Eval:
   Vim9script
+  *cscope_connection()*
   *js_encode()*
   *js_decode()*
   *v:none* (used by Vim to represent JavaScript "undefined"); use |v:null| instead.
@@ -579,6 +583,13 @@ Options:
   *'cp'* *'nocompatible'* *'nocp'* *'compatible'* (Nvim is always "nocompatible".)
   'cpoptions' (gjkHw<*- and all POSIX flags were removed)
   *'cryptmethod'* *'cm'* *'key'* (Vim encryption implementation)
+  cscopepathcomp
+  cscopeprg
+  cscopequickfix
+  cscoperelative
+  cscopetag
+  cscopetagorder
+  cscopeverbose
   *'ed'* *'edcompatible'* *'noed'* *'noedcompatible'*
   'encoding' ("utf-8" is always used)
   esckeys
@@ -693,6 +704,10 @@ TUI:
   Vim issues a "request version" sequence to the terminal at startup and looks
   at how the terminal is sending CSI.  Nvim does not issue such a sequence and
   always uses 7-bit control sequences.
+
+Cscope:
+                                                                      *cscope*
+  Cscope has been removed in favour of LSP based solutions.
 
 ==============================================================================
  vim:tw=78:ts=8:sw=2:et:ft=help:norl:

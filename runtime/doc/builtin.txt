@@ -96,8 +96,6 @@ cos({expr})			Float	cosine of {expr}
 cosh({expr})			Float	hyperbolic cosine of {expr}
 count({comp}, {expr} [, {ic} [, {start}]])
 				Number	count how many {expr} are in {comp}
-cscope_connection([{num}, {dbpath} [, {prepend}]])
-				Number	checks existence of cscope connection
 ctxget([{index}])		Dict	return the |context| dict at {index}
 ctxpop()			none	pop and restore |context| from the
 					|context-stack|
@@ -1436,47 +1434,6 @@ count({comp}, {expr} [, {ic} [, {start}]])			*count()*
 		Can also be used as a |method|: >
 			mylist->count(val)
 <
-							*cscope_connection()*
-cscope_connection([{num} , {dbpath} [, {prepend}]])
-		Checks for the existence of a |cscope| connection.  If no
-		parameters are specified, then the function returns:
-			0, if there are no cscope connections;
-			1, if there is at least one cscope connection.
-
-		If parameters are specified, then the value of {num}
-		determines how existence of a cscope connection is checked:
-
-		{num}	Description of existence check
-		-----	------------------------------
-		0	Same as no parameters (e.g., "cscope_connection()").
-		1	Ignore {prepend}, and use partial string matches for
-			{dbpath}.
-		2	Ignore {prepend}, and use exact string matches for
-			{dbpath}.
-		3	Use {prepend}, use partial string matches for both
-			{dbpath} and {prepend}.
-		4	Use {prepend}, use exact string matches for both
-			{dbpath} and {prepend}.
-
-		Note: All string comparisons are case sensitive!
-
-		Examples.  Suppose we had the following (from ":cs show"): >
-
-  # pid    database name			prepend path
-  0 27664  cscope.out				/usr/local
-<
-		Invocation					Return Val ~
-		----------					---------- >
-		cscope_connection()					1
-		cscope_connection(1, "out")				1
-		cscope_connection(2, "out")				0
-		cscope_connection(3, "out")				0
-		cscope_connection(3, "out", "local")			1
-		cscope_connection(4, "out")				0
-		cscope_connection(4, "out", "local")			0
-		cscope_connection(4, "cscope.out", "/usr/local")	1
-<
-
 ctxget([{index}])					*ctxget()*
 		Returns a |Dictionary| representing the |context| at {index}
 		from the top of the |context-stack| (see |context-dict|).
@@ -2981,7 +2938,6 @@ getcompletion({pat}, {type} [, {filtered}])		*getcompletion()*
 		color		color schemes
 		command		Ex command
 		compiler	compilers
-		cscope		|:cscope| suboptions
 		diff_buffer     |:diffget| and |:diffput| completion
 		dir		directory names
 		environment	environment variable names

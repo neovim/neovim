@@ -182,8 +182,7 @@ Additionally uses the following environment variables:
         If set to 1 then all generated declarations receive a comment with file
         name and line number after the declaration. This may be useful for
         debugging gen_declarations script, but not much beyond that with
-        configured development environment (i.e. with ctags/cscope/finding
-        definitions with clang/etc).
+        configured development environment (i.e. with with clang/etc).
 
         WARNING: setting this to 1 will cause extensive rebuilds: declarations
                  generator script will not regenerate non-static.h file if its
