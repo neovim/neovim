@@ -380,6 +380,9 @@ The following new APIs and features were added.
 • |vim.fs.root()| finds project root directories from a list of "root
   markers".
 
+• |CompleteDone| now sets the `reason` key in `v:event` which specifies the reason
+  for completion being done.
+
 ==============================================================================
 CHANGED FEATURES                                                 *news-changed*
 
