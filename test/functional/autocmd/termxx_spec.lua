@@ -5,6 +5,7 @@ local clear, command, nvim, testprg =
   helpers.clear, helpers.command, helpers.nvim, helpers.testprg
 local eval, eq, neq, retry =
   helpers.eval, helpers.eq, helpers.neq, helpers.retry
+local matches = helpers.matches
 local ok = helpers.ok
 local feed = helpers.feed
 local pcall_err = helpers.pcall_err
@@ -22,7 +23,8 @@ describe('autocmd TermClose', function()
   local function test_termclose_delete_own_buf()
     command('autocmd TermClose * bdelete!')
     command('terminal')
-    eq('Vim(bdelete):E937: Attempt to delete a buffer that is in use', pcall_err(command, 'bdelete!'))
+    matches('^Vim%(bdelete%):E937: Attempt to delete a buffer that is in use: term://',
+            pcall_err(command, 'bdelete!'))
     assert_alive()
   end
 

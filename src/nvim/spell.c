@@ -1511,6 +1511,10 @@ static void spell_load_lang(char_u *lang)
   sl.sl_slang = NULL;
   sl.sl_nobreak = false;
 
+  // Disallow deleting the current buffer.  Autocommands can do weird things
+  // and cause "lang" to be freed.
+  curbuf->b_locked++;
+
   // We may retry when no spell file is found for the language, an
   // autocommand may load it then.
   for (int round = 1; round <= 2; round++) {
@@ -1553,6 +1557,8 @@ static void spell_load_lang(char_u *lang)
     STRCPY(fname_enc + strlen(fname_enc) - 3, "add.spl");
     do_in_runtimepath((char *)fname_enc, DIP_ALL, spell_load_cb, &sl);
   }
+
+  curbuf->b_locked--;
 }
 
 // Return the encoding used for spell checking: Use 'encoding', except that we
