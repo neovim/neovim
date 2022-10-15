@@ -206,57 +206,6 @@ void early_init(mparm_T *paramp)
   init_signs();
 }
 
-#ifdef MSWIN
-HWND hWnd = NULL;
-static HICON hOrigIconSmall = NULL;
-static HICON hOrigIcon = NULL;
-
-/// Save Windows console icon to be reset later
-static void SaveWin32ConsoleIcon(void)
-{
-  if ((hWnd = GetConsoleWindow()) == NULL) {
-    return;
-  }
-  hOrigIconSmall = (HICON)SendMessage(hWnd, WM_GETICON, (WPARAM)ICON_SMALL, (LPARAM)0);
-  hOrigIcon = (HICON)SendMessage(hWnd, WM_GETICON, (WPARAM)ICON_BIG, (LPARAM)0);
-}
-
-static void SetConsoleIcon(HWND hWindow, HICON hIconSmall, HICON hIcon)
-{
-  if (hWindow == NULL) {
-    return;
-  }
-  if (hIconSmall != NULL) {
-    SendMessage(hWnd, WM_SETICON, (WPARAM)ICON_SMALL, (LPARAM)hIconSmall);
-  }
-  if (hIcon != NULL) {
-    SendMessage(hWnd, WM_SETICON, (WPARAM)ICON_BIG, (LPARAM)hIcon);
-  }
-}
-
-/// Reset Windows console icon to original
-static void ResetWin32ConsoleIcon(void)
-{
-  SetConsoleIcon(hWnd, hOrigIconSmall, hOrigIcon);
-}
-
-/// Set Neovim logo as Windows console icon
-static void SetWin32ConsoleIcon(void)
-{
-  const char *vimruntime = os_getenv("VIMRUNTIME");
-  if (vimruntime != NULL) {
-    snprintf(NameBuff, MAXPATHL, "%s" _PATHSEPSTR "neovim.ico", vimruntime);
-    if (!os_path_exists(NameBuff)) {
-      WLOG("neovim.ico not found: %s", NameBuff);
-    } else {
-      HICON hVimIcon = LoadImage(NULL, NameBuff, IMAGE_ICON, 64, 64,
-                                 LR_LOADFROMFILE | LR_LOADMAP3DCOLORS);
-      SetConsoleIcon(hWnd, hVimIcon, hVimIcon);
-    }
-  }
-}
-#endif
-
 #ifdef MAKE_LIB
 int nvim_main(int argc, char **argv);  // silence -Wmissing-prototypes
 int nvim_main(int argc, char **argv)
@@ -305,11 +254,6 @@ int main(int argc, char **argv)
   event_init();
 
   early_init(&params);
-
-#ifdef MSWIN
-  SaveWin32ConsoleIcon();
-  SetWin32ConsoleIcon();
-#endif
 
   set_argv_var(argv, argc);  // set v:argv
 
@@ -599,6 +543,12 @@ int main(int argc, char **argv)
     TIME_MSG("UIEnter autocommands");
   }
 
+#ifdef MSWIN
+  if (use_builtin_ui) {
+    os_icon_init();
+  }
+#endif
+
   // Adjust default register name for "unnamed" in 'clipboard'. Can only be
   // done after the clipboard is available and all initial commands that may
   // modify the 'clipboard' setting have run; i.e. just before entering the
@@ -776,7 +726,8 @@ void getout(int exitval)
   }
 
 #ifdef MSWIN
-  ResetWin32ConsoleIcon();
+  // Restore Windows console icon before exiting.
+  os_icon_set(NULL, NULL);
 #endif
 
   os_exit(exitval);
