@@ -93,7 +93,8 @@
 #endif
 
 static char *e_auabort = N_("E855: Autocommands caused command to abort");
-static char *e_buflocked = N_("E937: Attempt to delete a buffer that is in use");
+static char e_attempt_to_delete_buffer_that_is_in_use_str[]
+  = N_("E937: Attempt to delete a buffer that is in use: %s");
 
 // Number of times free_buffer() was called.
 static int buf_free_count = 0;
@@ -401,6 +402,29 @@ bool buf_valid(buf_T *buf)
   return false;
 }
 
+/// Return true when buffer "buf" can be unloaded.
+/// Give an error message and return false when the buffer is locked or the
+/// screen is being redrawn and the buffer is in a window.
+static bool can_unload_buffer(buf_T *buf)
+{
+  bool can_unload = !buf->b_locked;
+
+  if (can_unload && updating_screen) {
+    FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+      if (wp->w_buffer == buf) {
+        can_unload = false;
+        break;
+      }
+    }
+  }
+  if (!can_unload) {
+    char *fname = buf->b_fname != NULL ? buf->b_fname : buf->b_ffname;
+    semsg(_(e_attempt_to_delete_buffer_that_is_in_use_str),
+          fname != NULL ? fname : "[No Name]");
+  }
+  return can_unload;
+}
+
 /// Close the link to a buffer.
 ///
 /// @param win    If not NULL, set b_last_cursor.
@@ -458,8 +482,7 @@ bool close_buffer(win_T *win, buf_T *buf, int action, bool abort_if_last, bool i
 
   // Disallow deleting the buffer when it is locked (already being closed or
   // halfway a command that relies on it). Unloading is allowed.
-  if (buf->b_locked > 0 && (del_buf || wipe_buf)) {
-    emsg(_(e_buflocked));
+  if ((del_buf || wipe_buf) && !can_unload_buffer(buf)) {
     return false;
   }
 
@@ -1206,8 +1229,7 @@ int do_buffer(int action, int start, int dir, int count, int forceit)
   if (unload) {
     int forward;
     bufref_T bufref;
-    if (buf->b_locked) {
-      emsg(_(e_buflocked));
+    if (!can_unload_buffer(buf)) {
       return FAIL;
     }
     set_bufref(&bufref, buf);
