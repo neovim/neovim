@@ -2239,7 +2239,7 @@ void intro_message(int colon)
   size_t lines_size = ARRAY_SIZE(lines);
   assert(lines_size <= LONG_MAX);
 
-  blanklines = Rows - ((long)lines_size - 1l);
+  blanklines = Rows - ((long)lines_size - 1L);
 
   // Don't overwrite a statusline.  Depends on 'cmdheight'.
   if (p_ls > 1) {

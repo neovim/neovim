@@ -5654,7 +5654,7 @@ void do_sleep(long msec)
 {
   ui_flush();  // flush before waiting
   for (long left = msec; !got_int && left > 0; left -= 1000L) {
-    int next = left > 1000l ? 1000 : (int)left;
+    int next = left > 1000L ? 1000 : (int)left;
     LOOP_PROCESS_EVENTS_UNTIL(&main_loop, main_loop.events, (int)next, got_int);
     os_breakcheck();
   }
