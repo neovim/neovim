@@ -1814,17 +1814,15 @@ int open_line(int dir, int flags, int second_line_indent, bool *did_do_comment)
     vreplace_mode = 0;
   }
 
-  // May do lisp indenting.
   if (!p_paste
       && leader == NULL
       && curbuf->b_p_lisp
       && curbuf->b_p_ai) {
+    // do lisp indenting
     fixthisline(get_lisp_indent);
     ai_col = (colnr_T)getwhitecols_curline();
-  }
-
-  // May do indenting after opening a new line.
-  if (do_cindent) {
+  } else if (do_cindent) {
+    // do 'cindent' or 'indentexpr' indenting
     do_c_expr_indent();
     ai_col = (colnr_T)getwhitecols_curline();
   }
