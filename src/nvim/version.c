@@ -2228,6 +2228,9 @@ void intro_message(int colon)
     N_("type  :q<Enter>               to exit         "),
     N_("type  :help<Enter>            for help        "),
     "",
+    N_("type :help news<Enter> to see changes in")
+    " v" STR(NVIM_VERSION_MAJOR) "." STR(NVIM_VERSION_MINOR) "." STR(NVIM_VERSION_PATCH),
+    "",
     N_("Help poor children in Uganda!"),
     N_("type  :help iccf<Enter>       for information "),
   };
