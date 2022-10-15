@@ -185,14 +185,12 @@ void screenclear(void)
 {
   check_for_delay(false);
 
-  int i;
-
   if (starting == NO_SCREEN || default_grid.chars == NULL) {
     return;
   }
 
   // blank out the default grid
-  for (i = 0; i < default_grid.rows; i++) {
+  for (int i = 0; i < default_grid.rows; i++) {
     grid_clear_line(&default_grid, default_grid.line_offset[i],
                     default_grid.cols, true);
     default_grid.line_wraps[i] = false;
@@ -804,12 +802,10 @@ static bool vsep_connected(win_T *wp, WindowCorner corner)
 /// Draw the vertical separator right of window "wp"
 static void draw_vsep_win(win_T *wp)
 {
-  int hl;
-  int c;
-
   if (wp->w_vsep_width) {
     // draw the vertical separator right of this window
-    c = fillchar_vsep(wp, &hl);
+    int hl;
+    int c = fillchar_vsep(wp, &hl);
     grid_fill(&default_grid, wp->w_winrow, W_ENDROW(wp),
               W_ENDCOL(wp), W_ENDCOL(wp) + 1, c, ' ', hl);
   }
@@ -818,12 +814,10 @@ static void draw_vsep_win(win_T *wp)
 /// Draw the horizontal separator below window "wp"
 static void draw_hsep_win(win_T *wp)
 {
-  int hl;
-  int c;
-
   if (wp->w_hsep_height) {
     // draw the horizontal separator below this window
-    c = fillchar_hsep(wp, &hl);
+    int hl;
+    int c = fillchar_hsep(wp, &hl);
     grid_fill(&default_grid, W_ENDROW(wp), W_ENDROW(wp) + 1,
               wp->w_wincol, W_ENDCOL(wp), c, c, hl);
   }
@@ -930,8 +924,6 @@ static void win_update(win_T *wp, DecorProviders *providers)
   bool called_decor_providers = false;
 win_update_start:
   ;
-  buf_T *buf = wp->w_buffer;
-  int type;
   int top_end = 0;              // Below last row of the top area that needs
                                 // updating.  0 when no top area updating.
   int mid_start = 999;          // first row of the mid area that needs
@@ -946,28 +938,20 @@ win_update_start:
   int bot_scroll_start = 999;   // first line that needs to be redrawn due to
                                 // scrolling. only used for EOB
 
-  int row;                      // current window row to display
-  linenr_T lnum;                // current buffer lnum to display
-  int idx;                      // current index in w_lines[]
-  int srow;                     // starting row of the current line
-
-  bool eof = false;             // if true, we hit the end of the file
-  bool didline = false;         // if true, we finished the last line
-  int i;
-  long j;
   static bool recursive = false;  // being called recursively
-  const linenr_T old_botline = wp->w_botline;
+
   // Remember what happened to the previous line.
-#define DID_NONE 1      // didn't update a line
-#define DID_LINE 2      // updated a normal line
-#define DID_FOLD 3      // updated a folded line
-  int did_update = DID_NONE;
+  enum {
+    DID_NONE = 1,  // didn't update a line
+    DID_LINE = 2,  // updated a normal line
+    DID_FOLD = 3,  // updated a folded line
+  } did_update = DID_NONE;
+
   linenr_T syntax_last_parsed = 0;              // last parsed text line
   linenr_T mod_top = 0;
   linenr_T mod_bot = 0;
-  int save_got_int;
 
-  type = wp->w_redr_type;
+  int type = wp->w_redr_type;
 
   if (type >= UPD_NOT_VALID) {
     // TODO(bfredl): should only be implied for CLEAR, not NOT_VALID!
@@ -998,12 +982,14 @@ win_update_start:
 
   init_search_hl(wp, &screen_search_hl);
 
+  buf_T *buf = wp->w_buffer;
+
   // Force redraw when width of 'number' or 'relativenumber' column
   // changes.
-  i = (wp->w_p_nu || wp->w_p_rnu) ? number_width(wp) : 0;
-  if (wp->w_nrwidth != i) {
+  int nrwidth = (wp->w_p_nu || wp->w_p_rnu) ? number_width(wp) : 0;
+  if (wp->w_nrwidth != nrwidth) {
     type = UPD_NOT_VALID;
-    wp->w_nrwidth = i;
+    wp->w_nrwidth = nrwidth;
 
     if (buf->terminal) {
       terminal_check_size(buf->terminal);
@@ -1075,7 +1061,7 @@ win_update_start:
       // to this line.  If there is no valid entry, use MAXLNUM.
       lnumt = wp->w_topline;
       lnumb = MAXLNUM;
-      for (i = 0; i < wp->w_lines_valid; i++) {
+      for (int i = 0; i < wp->w_lines_valid; i++) {
         if (wp->w_lines[i].wl_valid) {
           if (wp->w_lines[i].wl_lastlnum < mod_top) {
             lnumt = wp->w_lines[i].wl_lastlnum + 1;
@@ -1130,8 +1116,8 @@ win_update_start:
   // When only displaying the lines at the top, set top_end.  Used when
   // window has scrolled down for msg_scrolled.
   if (type == UPD_REDRAW_TOP) {
-    j = 0;
-    for (i = 0; i < wp->w_lines_valid; i++) {
+    long j = 0;
+    for (int i = 0; i < wp->w_lines_valid; i++) {
       j += wp->w_lines[i].wl_size;
       if (j >= wp->w_upd_rows) {
         top_end = (int)j;
@@ -1167,6 +1153,7 @@ win_update_start:
                    || (wp->w_topline == wp->w_lines[0].wl_lnum
                        && wp->w_topfill > wp->w_old_topfill))) {
       // New topline is above old topline: May scroll down.
+      long j;
       if (hasAnyFolding(wp)) {
         linenr_T ln;
 
@@ -1184,7 +1171,7 @@ win_update_start:
         j = wp->w_lines[0].wl_lnum - wp->w_topline;
       }
       if (j < wp->w_grid.rows - 2) {               // not too far off
-        i = plines_m_win(wp, wp->w_topline, wp->w_lines[0].wl_lnum - 1);
+        int i = plines_m_win(wp, wp->w_topline, wp->w_lines[0].wl_lnum - 1);
         // insert extra lines for previously invisible filler lines
         if (wp->w_lines[0].wl_lnum != wp->w_topline) {
           i += win_get_fill(wp, wp->w_lines[0].wl_lnum) - wp->w_old_topfill;
@@ -1206,6 +1193,7 @@ win_update_start:
             if ((wp->w_lines_valid += (linenr_T)j) > wp->w_grid.rows) {
               wp->w_lines_valid = wp->w_grid.rows;
             }
+            int idx;
             for (idx = wp->w_lines_valid; idx - j >= 0; idx--) {
               wp->w_lines[idx] = wp->w_lines[idx - j];
             }
@@ -1225,9 +1213,9 @@ win_update_start:
       // needs updating.
 
       // try to find wp->w_topline in wp->w_lines[].wl_lnum
-      j = -1;
-      row = 0;
-      for (i = 0; i < wp->w_lines_valid; i++) {
+      long j = -1;
+      int row = 0;
+      for (int i = 0; i < wp->w_lines_valid; i++) {
         if (wp->w_lines[i].wl_valid
             && wp->w_lines[i].wl_lnum == wp->w_topline) {
           j = i;
@@ -1263,7 +1251,7 @@ win_update_start:
           // upwards, to compensate for the deleted lines.  Set
           // bot_start to the first row that needs redrawing.
           bot_start = 0;
-          idx = 0;
+          int idx = 0;
           for (;;) {
             wp->w_lines[idx] = wp->w_lines[j];
             // stop at line that didn't fit, unless it is still
@@ -1460,9 +1448,9 @@ win_update_start:
     // above the Visual area and reset wl_valid, do count these for
     // mid_end (in srow).
     if (mid_start > 0) {
-      lnum = wp->w_topline;
-      idx = 0;
-      srow = 0;
+      linenr_T lnum = wp->w_topline;
+      int idx = 0;
+      int srow = 0;
       if (scrolled_down) {
         mid_start = top_end;
       } else {
@@ -1509,17 +1497,11 @@ win_update_start:
   }
 
   // reset got_int, otherwise regexp won't work
-  save_got_int = got_int;
+  int save_got_int = got_int;
   got_int = 0;
   // Set the time limit to 'redrawtime'.
   proftime_T syntax_tm = profile_setlimit(p_rdt);
   syn_set_timeout(&syntax_tm);
-
-  // Update all the window rows.
-  idx = 0;              // first entry in w_lines[].wl_size
-  row = 0;
-  srow = 0;
-  lnum = wp->w_topline;  // first line shown in window
 
   win_extmark_arr.size = 0;
 
@@ -1540,6 +1522,14 @@ win_update_start:
 
   win_check_ns_hl(wp);
 
+  // Update all the window rows.
+  int idx = 0;                    // first entry in w_lines[].wl_size
+  int row = 0;                    // current window row to display
+  int srow = 0;                   // starting row of the current line
+  linenr_T lnum = wp->w_topline;  // first line shown in window
+
+  bool eof = false;             // if true, we hit the end of the file
+  bool didline = false;         // if true, we finished the last line
   for (;;) {
     // stop updating when reached the end of the window (check for _past_
     // the end of the window is at the end of the loop)
@@ -1603,6 +1593,7 @@ win_update_start:
         int new_rows = 0;
         int xtra_rows;
         linenr_T l;
+        int i;
 
         // Count the old number of window rows, using w_lines[], which
         // should still contain the sizes for the lines as they are
@@ -1637,7 +1628,7 @@ win_update_start:
         } else {
           // Able to count old number of rows: Count new window
           // rows, and may insert/delete lines
-          j = idx;
+          long j = idx;
           for (l = lnum; l < mod_bot; l++) {
             if (hasFoldingWin(wp, l, NULL, &l, true, NULL)) {
               new_rows++;
@@ -1830,6 +1821,8 @@ win_update_start:
     syntax_end_parsing(wp, syntax_last_parsed + 1);
   }
 
+  const linenr_T old_botline = wp->w_botline;
+
   // If we didn't hit the end of the file, and we didn't finish the last
   // line we were working on, then the line didn't fit.
   wp->w_empty_rows = 0;
@@ -1873,7 +1866,7 @@ win_update_start:
   } else {
     if (eof) {  // we hit the end of the file
       wp->w_botline = buf->b_ml.ml_line_count + 1;
-      j = win_get_fill(wp, wp->w_botline);
+      long j = win_get_fill(wp, wp->w_botline);
       if (j > 0 && !wp->w_botfill && row < wp->w_grid.rows) {
         // Display filler text below last line. win_line() will check
         // for ml_line_count+1 and only draw filler lines
@@ -1943,11 +1936,11 @@ win_update_start:
       update_topline(curwin);  // may invalidate w_botline again
       if (must_redraw != 0) {
         // Don't update for changes in buffer again.
-        i = curbuf->b_mod_set;
+        int mod_set = curbuf->b_mod_set;
         curbuf->b_mod_set = false;
         win_update(curwin, providers);
         must_redraw = 0;
-        curbuf->b_mod_set = i;
+        curbuf->b_mod_set = mod_set;
       }
       recursive = false;
     }
