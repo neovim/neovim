@@ -2125,7 +2125,7 @@ Dictionary nvim_eval_statusline(String str, Dict(eval_statusline) *opts, Error *
   bool use_tabline = false;
   bool highlights = false;
 
-  if (str.size < 2 || memcmp(str.data, "%!", 2)) {
+  if (str.size < 2 || memcmp(str.data, "%!", 2) != 0) {
     const char *const errmsg = check_stl_option(str.data);
     if (errmsg) {
       api_set_error(err, kErrorTypeValidation, "%s", errmsg);

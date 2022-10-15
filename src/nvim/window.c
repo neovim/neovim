@@ -785,7 +785,7 @@ void win_config_float(win_T *wp, FloatConfig fconfig)
   bool change_border = (fconfig.border != wp->w_float_config.border
                         || memcmp(fconfig.border_hl_ids,
                                   wp->w_float_config.border_hl_ids,
-                                  sizeof fconfig.border_hl_ids));
+                                  sizeof fconfig.border_hl_ids) != 0);
 
   wp->w_float_config = fconfig;
 

@@ -1741,7 +1741,7 @@ static bool prt_check_resource(const struct prt_ps_resource_S *resource, const c
   FUNC_ATTR_NONNULL_ALL
 {
   // Version number m.n should match, the revision number does not matter
-  if (STRNCMP(resource->version, version, strlen(version))) {
+  if (STRNCMP(resource->version, version, strlen(version)) != 0) {
     semsg(_("E621: \"%s\" resource file has wrong version"),
           resource->name);
     return false;

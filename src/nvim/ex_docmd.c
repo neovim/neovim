@@ -7266,7 +7266,7 @@ static void ex_terminal(exarg_T *eap)
 
 void verify_command(char *cmd)
 {
-  if (strcmp("smile", cmd)) {
+  if (strcmp("smile", cmd) != 0) {
     return;  // acceptable non-existing command
   }
   msg(" #xxn`          #xnxx`        ,+x@##@Mz;`        .xxx"
