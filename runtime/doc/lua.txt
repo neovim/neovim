@@ -1078,6 +1078,22 @@ vim.env                                                              *vim.env*
         print(vim.env.TERM)
 <
 
+vim.bufcall({bufnr}, {func}, {...})                             *vim.bufcall()*
+    Invokes {func} with the current buffer set to {bufnr}.
+    Equivalent to: >
+        vim.api.nvim_buf_call(bufnr, function()
+          func(...)
+        end)
+<
+
+vim.wincall({winid}, {func}, {...})                             *vim.wincall()*
+    Invokes {func} with the current window set to {winid}.
+    Equivalent to: >
+        vim.api.nvim_win_call(winid, function()
+          func(...)
+        end)
+<
+
                                                                  *lua-options*
                                                              *lua-vim-options*
                                                                  *lua-vim-set*

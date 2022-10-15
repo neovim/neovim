@@ -538,3 +538,16 @@ end
 vim.opt = create_option_accessor()
 vim.opt_local = create_option_accessor('local')
 vim.opt_global = create_option_accessor('global')
+
+local function ctxcall(ctxcaller)
+  return function(handle, fn, ...)
+    local args = { ... }
+    local nargs = select('#', ...)
+    return ctxcaller(handle, function()
+      return fn(unpack(args, 1, nargs))
+    end)
+  end
+end
+
+vim.bufcall = ctxcall(a.nvim_buf_call)
+vim.wincall = ctxcall(a.nvim_win_call)
