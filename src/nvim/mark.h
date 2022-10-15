@@ -78,12 +78,13 @@ static inline int mark_local_index(const char name)
                    : -1))));
 }
 
-static inline bool lt(pos_T, pos_T) REAL_FATTR_CONST REAL_FATTR_ALWAYS_INLINE;
-static inline bool equalpos(pos_T, pos_T)
+static inline bool lt(pos_T a, pos_T b)
   REAL_FATTR_CONST REAL_FATTR_ALWAYS_INLINE;
-static inline bool ltoreq(pos_T, pos_T)
+static inline bool equalpos(pos_T a, pos_T b)
   REAL_FATTR_CONST REAL_FATTR_ALWAYS_INLINE;
-static inline void clearpos(pos_T *)
+static inline bool ltoreq(pos_T a, pos_T b)
+  REAL_FATTR_CONST REAL_FATTR_ALWAYS_INLINE;
+static inline void clearpos(pos_T *a)
   REAL_FATTR_ALWAYS_INLINE;
 
 /// Return true if position a is before (less than) position b.
