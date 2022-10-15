@@ -978,11 +978,32 @@ win_update_start:
     return;
   }
 
+  buf_T *buf = wp->w_buffer;
+
+  // reset got_int, otherwise regexp won't work
+  int save_got_int = got_int;
+  got_int = 0;
+  // Set the time limit to 'redrawtime'.
+  proftime_T syntax_tm = profile_setlimit(p_rdt);
+  syn_set_timeout(&syntax_tm);
+
+  win_extmark_arr.size = 0;
+
+  decor_redraw_reset(buf, &decor_state);
+
+  DecorProviders line_providers;
+  decor_providers_invoke_win(wp, providers, &line_providers, &provider_err);
+  if (must_redraw != 0) {
+    must_redraw = 0;
+    if (!called_decor_providers) {
+      called_decor_providers = true;
+      goto win_update_start;
+    }
+  }
+
   redraw_win_signcol(wp);
 
   init_search_hl(wp, &screen_search_hl);
-
-  buf_T *buf = wp->w_buffer;
 
   // Force redraw when width of 'number' or 'relativenumber' column
   // changes.
@@ -1494,28 +1515,6 @@ win_update_start:
     wp->w_old_cursor_lnum = 0;
     wp->w_old_visual_lnum = 0;
     wp->w_old_visual_col = 0;
-  }
-
-  // reset got_int, otherwise regexp won't work
-  int save_got_int = got_int;
-  got_int = 0;
-  // Set the time limit to 'redrawtime'.
-  proftime_T syntax_tm = profile_setlimit(p_rdt);
-  syn_set_timeout(&syntax_tm);
-
-  win_extmark_arr.size = 0;
-
-  decor_redraw_reset(buf, &decor_state);
-
-  DecorProviders line_providers;
-  decor_providers_invoke_win(wp, providers, &line_providers, &provider_err);
-  (void)win_signcol_count(wp);  // check if provider changed signcol width
-  if (must_redraw != 0) {
-    must_redraw = 0;
-    if (!called_decor_providers) {
-      called_decor_providers = true;
-      goto win_update_start;
-    }
   }
 
   bool cursorline_standout = win_cursorline_standout(wp);
