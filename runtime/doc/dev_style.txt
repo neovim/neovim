@@ -181,13 +181,6 @@ Use `bool` to represent boolean values. >
     int loaded = 1;  // BAD: loaded should have type bool.
 
 
-Variable declarations ~
-
-Declare only one variable per line. >
-
-    int i, j = 1
-
-
 Conditions ~
 
 Don't use "yoda-conditions". Use at most one assignment per condition. >
