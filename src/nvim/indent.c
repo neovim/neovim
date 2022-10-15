@@ -1138,7 +1138,7 @@ static int lisp_match(char_u *p)
     (void)copy_option_part(&word, (char *)buf, LSIZE, ",");
     len = (int)STRLEN(buf);
 
-    if ((STRNCMP(buf, p, len) == 0) && (p[len] == ' ')) {
+    if ((STRNCMP(buf, p, len) == 0) && ascii_iswhite_or_nul(p[len])) {
       return true;
     }
   }
