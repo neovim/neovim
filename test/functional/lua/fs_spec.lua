@@ -79,6 +79,15 @@ describe('vim.fs', function()
       ]], test_build_dir, nvim_prog_basename))
     end)
 
+    it('normalizes slashes correctly', function()
+      if not helpers.iswin() then return end
+      local repo_root = exec_lua([[
+        return vim.fs.find({".git"}, { upward = true, type = 'directory' })
+      ]])
+      assert.truthy(repo_root:match([[\\]]))
+      -- assert.falsy(repo_root:match([[\\]]))
+    end)
+
     it('accepts predicate as names', function()
       eq({test_build_dir}, exec_lua([[
         local dir = ...
