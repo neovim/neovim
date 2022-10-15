@@ -464,6 +464,21 @@ CompleteDone			After Insert mode completion is done.  Either
 				CompleteDonePre if you need it.
 				|v:completed_item| gives the completed item.
 
+				Sets these |v:event| keys:
+				    reason	Reason for completion being
+						done. Can be one of:
+						"accepted"   - completion was
+						               accepted
+						"canceled"   - completion
+						               was canceled
+						"nonkw"	     - non keyword
+						               character
+						               pressed
+						"overridden" - completion
+						               overridden by
+							       another
+							       completion menu
+		
 							*CursorHold*
 CursorHold			When the user doesn't press a key for the time
 				specified with 'updatetime'.  Not triggered

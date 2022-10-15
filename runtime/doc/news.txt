@@ -39,6 +39,11 @@ NEW FEATURES                                                    *news-features*
 
 The following new APIs or features were added.
 
+|CompleteDone| now sets the `reason` key in `v:event` which specifies the
+reason for completion being done.
+
+See https://github.com/neovim/neovim/pull/20671 for more information.
+
 ==============================================================================
 CHANGED FEATURES                                                 *news-changes*
 
