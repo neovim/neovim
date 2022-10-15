@@ -1135,9 +1135,9 @@ tag		command		action ~
 |:!!|		:!!		repeat last ":!" command
 |:#|		:#		same as ":number"
 |:&|		:&		repeat last ":substitute"
-|:star|		:*		execute contents of a register
+|:star|		:*		use the last Visual area, like :'<,'>
 |:<|		:<		shift lines one 'shiftwidth' left
-|:=|		:=		print the cursor line number
+|:=|		:=		print the last line number
 |:>|		:>		shift lines one 'shiftwidth' right
 |:@|		:@		execute contents of a register
 |:@@|		:@@		repeat the previous ":@"
@@ -1329,6 +1329,7 @@ tag		command		action ~
 |:highlight|	:hi[ghlight]	specify highlighting methods
 |:hide|		:hid[e]		hide current buffer for a command
 |:history|	:his[tory]	print a history list
+|:horizontal|	:hor[izontal]	following window command work horizontally
 |:insert|	:i[nsert]	insert text
 |:iabbrev|	:ia[bbrev]	like ":abbrev" but for Insert mode
 |:iabclear|	:iabc[lear]	like ":abclear" but for Insert mode

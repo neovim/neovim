@@ -166,10 +166,11 @@ households are stimulated to build a proper latrine.  I helped setting up a
 production site for cement slabs.  These are used to build a good latrine.
 They are sold below cost price.
 
-There is a small clinic at the project, which provides children and their
-family with medical help.  When needed, transport to a hospital is offered.
-Immunization programs are carried out and help is provided when an epidemic is
-breaking out (measles and cholera have been a problem).
+There is a clinic at the project, which provides children and their family
+medical help.  Since 2020 a maternity ward was added and 24/7 service is
+available.  When needed, transport to a hospital is offered.  Immunization
+programs are carried out and help is provided when an epidemic is breaking out
+(measles and cholera have been a problem).
 							*donate*
 Summer 1994 to summer 1995 I spent a whole year at the centre, working as a
 volunteer.  I have helped to expand the centre and worked in the area of water
@@ -211,44 +212,29 @@ Check the ICCF web site for the latest information!  See |iccf| for the URL.
 
 
 USA:		The methods mentioned below can be used.
-		Sending a check to the Nehemiah Group Outreach Society (NGOS)
-		is no longer possible, unfortunately. We are looking for
-		another way to get you an IRS tax receipt.
-		For sponsoring a child contact KCF in Canada (see below). US
-		checks can be sent to them to lower banking costs.
+		If you must send a check send it to our Canadian partner:
+		https://www.kuwasha.net/
 
-Canada:		Contact Kibaale Children's Fund (KCF) in Surrey, Canada.  They
-		take care of the Canadian sponsors for the children in
-		Kibaale.  KCF forwards 100% of the money to the project in
-		Uganda.  You can send them a one time donation directly.
+Canada:		Contact Kuwasha in Surrey, Canada.  They take care of the
+		Canadian sponsors for the children in Kibaale.  Kuwasha
+		forwards 100% of the money to the project in Uganda.  You can
+		send them a one time donation directly.
 		Please send me a note so that I know what has been donated
-		because of Vim.  Ask KCF for information about sponsorship.
-			Kibaale Children's Fund c/o Pacific Academy
-			10238-168 Street
-			Surrey, B.C. V4N 1Z4
-			Canada
-			Phone: 604-581-5353
-		If you make a donation to Kibaale Children's Fund (KCF) you
-		will receive a tax receipt which can be submitted with your
-		tax return.
+		because of Vim.  Look on their site for information about
+		sponsorship: https://www.kuwasha.net/
+		If you make a donation to Kuwasha you will receive a tax
+		receipt which can be submitted with your tax return.
 
-Holland:	Transfer to the account of "Stichting ICCF Holland" in Lisse.
-		This will allow for tax deduction if you live in Holland.
-			Postbank, nr. 4548774
-			IBAN: NL95 INGB 0004 5487 74
+Holland:	Transfer to the account of "Stichting ICCF Holland" in
+		Amersfoort.  This will allow for tax deduction if you live in
+		Holland.  ING bank, IBAN: NL95 INGB 0004 5487 74
 
 Germany:	It is possible to make donations that allow for a tax return.
 		Check the ICCF web site for the latest information:
 			https://iccf-holland.org/germany.html
 
-World:		Use a postal money order.  That should be possible from any
-		country, mostly from the post office.  Use this name (which is
-		in my passport): "Abraham Moolenaar".  Use Euro for the
-		currency if possible.
-
-Europe:		Use a bank transfer if possible.  Your bank should have a form
-		that you can use for this.  See "Others" below for the swift
-		code and IBAN number.
+Europe:		Use a bank transfer if possible.  See "Others" below for the
+		swift code and IBAN number.
 		Any other method should work.  Ask for information about
 		sponsorship.
 
@@ -258,28 +244,12 @@ Credit Card:	You can use PayPal to send money with a Credit card.  This is
 		    https://www.paypal.com/en_US/mrb/pal=XAC62PML3GF8Q
 		The e-mail address for sending the money to is:
 		    Bram@iccf-holland.org
-		For amounts above 400 Euro ($500) sending a check is
-		preferred.
 
-Others:		Transfer to one of these accounts if possible:
-		    Postbank, account 4548774
-				Swift code: INGB NL 2A
-				IBAN: NL95 INGB 0004 5487 74
-			under the name "stichting ICCF Holland", Lisse
-		    If that doesn't work:
-		    Rabobank Lisse, account 3765.05.117
-				Swift code: RABO NL 2U
-			under the name "Bram Moolenaar", Lisse
-		Otherwise, send a check in euro or US dollars to the address
-		below.  Minimal amount: $70 (my bank does not accept smaller
-		amounts for foreign check, sorry)
+Others:		Transfer to this account if possible:
+		    ING bank: 	IBAN: NL95 INGB 0004 5487 74
+				Swift code: INGBNL2A
+		    under the name "stichting ICCF Holland", Amersfoort
+		Checks are not accepted.
 
-Address to send checks to:
-			Bram Moolenaar
-			Finsterruetihof 1
-			8134 Adliswil
-			Switzerland
-
-This address is expected to be valid for a long time.
 
  vim:tw=78:ts=8:noet:ft=help:norl:
