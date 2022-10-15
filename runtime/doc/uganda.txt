@@ -220,7 +220,7 @@ Canada:		Contact Kuwasha in Surrey, Canada.  They take care of the
 		forwards 100% of the money to the project in Uganda.  You can
 		send them a one time donation directly.
 		Please send me a note so that I know what has been donated
-		because of Vim.  Look on their for information about
+		because of Vim.  Look on their site for information about
 		sponsorship: https://www.kuwasha.net/
 		If you make a donation to Kuwasha you will receive a tax
 		receipt which can be submitted with your tax return.
@@ -245,7 +245,7 @@ Credit Card:	You can use PayPal to send money with a Credit card.  This is
 		The e-mail address for sending the money to is:
 		    Bram@iccf-holland.org
 
-Others:		Transfer to one of these accounts if possible:
+Others:		Transfer to this account if possible:
 		    ING bank: 	IBAN: NL95 INGB 0004 5487 74
 				Swift code: INGBNL2A
 		    under the name "stichting ICCF Holland", Amersfoort
