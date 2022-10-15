@@ -93,6 +93,8 @@
 #endif
 
 static char *e_auabort = N_("E855: Autocommands caused command to abort");
+static char e_attempt_to_delete_buffer_that_is_in_use_str[]
+  = N_("E937: Attempt to delete a buffer that is in use: %s");
 
 // Number of times free_buffer() was called.
 static int buf_free_count = 0;
@@ -416,7 +418,9 @@ static bool can_unload_buffer(buf_T *buf)
     }
   }
   if (!can_unload) {
-    emsg(_("E937: Attempt to delete a buffer that is in use"));
+    char *fname = buf->b_fname != NULL ? buf->b_fname : buf->b_ffname;
+    semsg(_(e_attempt_to_delete_buffer_that_is_in_use_str),
+          fname != NULL ? fname : "[No Name]");
   }
   return can_unload;
 }
