@@ -15,7 +15,6 @@ source test_fnamemodify.vim
 source test_ga.vim
 source test_glob2regpat.vim
 source test_global.vim
-source test_lispwords.vim
 source test_move.vim
 source test_put.vim
 source test_reltime.vim

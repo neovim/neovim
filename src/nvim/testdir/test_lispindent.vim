@@ -86,6 +86,11 @@ func Test_lisp_indent()
   set nolisp
 endfunc
 
+func Test_lispindent_negative()
+  " in legacy script there is no error
+  call assert_equal(-1, lispindent(-1))
+endfunc
+
 func Test_lisp_indent_works()
   " This was reading beyond the end of the line
   new
