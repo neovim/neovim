@@ -2869,7 +2869,7 @@ static void append_command(char *cmd)
     STRCPY(d, "...");
   }
   STRCAT(IObuff, ": ");
-  d = (char *)IObuff + STRLEN(IObuff);
+  d = IObuff + strlen(IObuff);
   while (*s != NUL && d - IObuff + 5 < IOSIZE) {
     if ((char_u)s[0] == 0xc2 && (char_u)s[1] == 0xa0) {
       s += 2;

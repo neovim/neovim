@@ -577,7 +577,7 @@ buf_T *tv_get_buf(typval_T *tv, int curtab_only)
     return NULL;
   }
 
-  char_u *name = (char_u *)tv->vval.v_string;
+  char *name = tv->vval.v_string;
 
   if (name == NULL || *name == NUL) {
     return curbuf;
@@ -592,7 +592,7 @@ buf_T *tv_get_buf(typval_T *tv, int curtab_only)
   char *save_cpo = p_cpo;
   p_cpo = empty_option;
 
-  buf_T *buf = buflist_findnr(buflist_findpat((char *)name, (char *)name + STRLEN(name),
+  buf_T *buf = buflist_findnr(buflist_findpat(name, name + strlen(name),
                                               true, false, curtab_only));
 
   p_magic = save_magic;
@@ -1056,12 +1056,12 @@ static void f_count(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   }
 
   if (argvars[0].v_type == VAR_STRING) {
-    const char_u *expr = (char_u *)tv_get_string_chk(&argvars[1]);
+    const char *expr = tv_get_string_chk(&argvars[1]);
     const char_u *p = (char_u *)argvars[0].vval.v_string;
 
     if (!error && expr != NULL && *expr != NUL && p != NULL) {
       if (ic) {
-        const size_t len = STRLEN(expr);
+        const size_t len = strlen(expr);
 
         while (*p != NUL) {
           if (mb_strnicmp((char *)p, (char *)expr, len) == 0) {
@@ -1075,7 +1075,7 @@ static void f_count(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
         char_u *next;
         while ((next = (char_u *)strstr((char *)p, (char *)expr)) != NULL) {
           n++;
-          p = next + STRLEN(expr);
+          p = next + strlen(expr);
         }
       }
     }
@@ -4855,9 +4855,9 @@ static void f_map(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 static void find_some_match(typval_T *const argvars, typval_T *const rettv,
                             const SomeMatchType type)
 {
-  char_u *str = NULL;
+  char *str = NULL;
   long len = 0;
-  char_u *expr = NULL;
+  char *expr = NULL;
   regmatch_T regmatch;
   long start = 0;
   long nth = 1;
@@ -4865,7 +4865,7 @@ static void find_some_match(typval_T *const argvars, typval_T *const rettv,
   bool match = false;
   list_T *l = NULL;
   long idx = 0;
-  char_u *tofree = NULL;
+  char *tofree = NULL;
 
   // Make 'cpoptions' empty, the 'l' flag should not be used here.
   char *save_cpo = p_cpo;
@@ -4902,8 +4902,8 @@ static void find_some_match(typval_T *const argvars, typval_T *const rettv,
     }
     li = tv_list_first(l);
   } else {
-    expr = str = (char_u *)tv_get_string(&argvars[0]);
-    len = (long)STRLEN(str);
+    expr = str = (char *)tv_get_string(&argvars[0]);
+    len = (long)strlen(str);
   }
 
   char patbuf[NUMBUFLEN];
@@ -4962,14 +4962,13 @@ static void find_some_match(typval_T *const argvars, typval_T *const rettv,
           break;
         }
         xfree(tofree);
-        tofree = expr = str = (char_u *)encode_tv2echo(TV_LIST_ITEM_TV(li),
-                                                       NULL);
+        tofree = expr = str = encode_tv2echo(TV_LIST_ITEM_TV(li), NULL);
         if (str == NULL) {
           break;
         }
       }
 
-      match = vim_regexec_nl(&regmatch, str, startcol);
+      match = vim_regexec_nl(&regmatch, (char_u *)str, startcol);
 
       if (match && --nth <= 0) {
         break;
@@ -4983,9 +4982,9 @@ static void find_some_match(typval_T *const argvars, typval_T *const rettv,
         li = TV_LIST_ITEM_NEXT(l, li);
         idx++;
       } else {
-        startcol = (colnr_T)((char_u *)regmatch.startp[0]
+        startcol = (colnr_T)(regmatch.startp[0]
                              + utfc_ptr2len(regmatch.startp[0]) - str);
-        if (startcol > (colnr_T)len || str + startcol <= (char_u *)regmatch.startp[0]) {
+        if (startcol > (colnr_T)len || str + startcol <= regmatch.startp[0]) {
           match = false;
           break;
         }
@@ -5003,9 +5002,9 @@ static void find_some_match(typval_T *const argvars, typval_T *const rettv,
         xfree(TV_LIST_ITEM_TV(li1)->vval.v_string);
 
         const size_t rd = (size_t)(regmatch.endp[0] - regmatch.startp[0]);
-        TV_LIST_ITEM_TV(li1)->vval.v_string = xmemdupz((const char *)regmatch.startp[0], rd);
-        TV_LIST_ITEM_TV(li3)->vval.v_number = (varnumber_T)((char_u *)regmatch.startp[0] - expr);
-        TV_LIST_ITEM_TV(li4)->vval.v_number = (varnumber_T)(regmatch.endp[0] - (char *)expr);
+        TV_LIST_ITEM_TV(li1)->vval.v_string = xmemdupz(regmatch.startp[0], rd);
+        TV_LIST_ITEM_TV(li3)->vval.v_number = (varnumber_T)(regmatch.startp[0] - expr);
+        TV_LIST_ITEM_TV(li4)->vval.v_number = (varnumber_T)(regmatch.endp[0] - expr);
         if (l != NULL) {
           TV_LIST_ITEM_TV(li2)->vval.v_number = (varnumber_T)idx;
         }
@@ -5039,11 +5038,9 @@ static void find_some_match(typval_T *const argvars, typval_T *const rettv,
           rettv->vval.v_number = idx;
         } else {
           if (type == kSomeMatch) {
-            rettv->vval.v_number =
-              (varnumber_T)((char_u *)regmatch.startp[0] - str);
+            rettv->vval.v_number = (varnumber_T)(regmatch.startp[0] - str);
           } else {
-            rettv->vval.v_number =
-              (varnumber_T)(regmatch.endp[0] - (char *)str);
+            rettv->vval.v_number = (varnumber_T)(regmatch.endp[0] - str);
           }
           rettv->vval.v_number += (varnumber_T)(str - expr);
         }

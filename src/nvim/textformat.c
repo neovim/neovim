@@ -493,14 +493,14 @@ static int fmt_check_par(linenr_T lnum, int *leader_len, char_u **leader_flags, 
 /// @return  true if line "lnum" ends in a white character.
 static bool ends_in_white(linenr_T lnum)
 {
-  char_u *s = (char_u *)ml_get(lnum);
+  char *s = ml_get(lnum);
   size_t l;
 
   if (*s == NUL) {
     return false;
   }
-  l = STRLEN(s) - 1;
-  return ascii_iswhite(s[l]);
+  l = strlen(s) - 1;
+  return ascii_iswhite((uint8_t)s[l]);
 }
 
 /// @return  true if the two comment leaders given are the same.

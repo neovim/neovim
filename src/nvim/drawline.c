@@ -1570,7 +1570,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
         // Non-BMP character : display as ? or fullwidth ?.
         transchar_hex((char *)extra, mb_c);
         if (wp->w_p_rl) {  // reverse
-          rl_mirror(extra);
+          rl_mirror((char *)extra);
         }
 
         p_extra = extra;
@@ -2063,7 +2063,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
             n_extra = byte2cells(c) - 1;
           }
           if ((dy_flags & DY_UHEX) && wp->w_p_rl) {
-            rl_mirror(p_extra);                 // reverse "<12>"
+            rl_mirror((char *)p_extra);                 // reverse "<12>"
           }
           c_extra = NUL;
           c_final = NUL;

@@ -1758,7 +1758,7 @@ static void nlua_add_treesitter(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
   lua_setfield(lstate, -2, "_ts_get_minimum_language_version");
 }
 
-int nlua_expand_pat(expand_T *xp, char_u *pat, int *num_results, char ***results)
+int nlua_expand_pat(expand_T *xp, char *pat, int *num_results, char ***results)
 {
   lua_State *const lstate = global_lstate;
   int ret = OK;
@@ -1771,7 +1771,7 @@ int nlua_expand_pat(expand_T *xp, char_u *pat, int *num_results, char ***results
   luaL_checktype(lstate, -1, LUA_TFUNCTION);
 
   // [ vim, vim._expand_pat, buf ]
-  lua_pushlstring(lstate, (const char *)pat, STRLEN(pat));
+  lua_pushlstring(lstate, (const char *)pat, strlen(pat));
 
   if (nlua_pcall(lstate, 1, 2) != 0) {
     nlua_error(lstate,

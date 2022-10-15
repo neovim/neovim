@@ -3983,7 +3983,7 @@ static int qf_buf_add_line(qf_list_T *qfl, buf_T *buf, linenr_T lnum, const qfli
   }
 
   if (ml_append_buf(buf, lnum, (char_u *)IObuff,
-                    (colnr_T)STRLEN(IObuff) + 1, false) == FAIL) {
+                    (colnr_T)strlen(IObuff) + 1, false) == FAIL) {
     return FAIL;
   }
   return OK;
@@ -4239,7 +4239,7 @@ static char *make_get_fullcmd(const char *makecmd, const char *fname)
     len += strlen(p_sp) + strlen(fname) + 3;
   }
   char *const cmd = xmalloc(len);
-  snprintf(cmd, len, "%s%s%s", (char *)p_shq, (char *)makecmd, (char *)p_shq);
+  snprintf(cmd, len, "%s%s%s", p_shq, (char *)makecmd, p_shq);
 
   // If 'shellpipe' empty: don't redirect to 'errorfile'.
   if (*p_sp != NUL) {
@@ -5284,7 +5284,7 @@ static bool existing_swapfile(const buf_T *buf)
 {
   if (buf->b_ml.ml_mfp != NULL && buf->b_ml.ml_mfp->mf_fname != NULL) {
     const char *const fname = buf->b_ml.ml_mfp->mf_fname;
-    const size_t len = STRLEN(fname);
+    const size_t len = strlen(fname);
 
     return fname[len - 1] != 'p' || fname[len - 2] != 'w';
   }

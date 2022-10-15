@@ -253,14 +253,14 @@ struct prt_resfile_buffer_S {
 // Returns an error message or NULL;
 char *parse_printoptions(void)
 {
-  return parse_list_options((char_u *)p_popt, printer_opts, OPT_PRINT_NUM_OPTIONS);
+  return parse_list_options(p_popt, printer_opts, OPT_PRINT_NUM_OPTIONS);
 }
 
 // Parse 'printoptions' and set the flags in "printer_opts".
 // Returns an error message or NULL;
 char *parse_printmbfont(void)
 {
-  return parse_list_options((char_u *)p_pmfn, mbfont_opts, OPT_MBFONT_NUM_OPTIONS);
+  return parse_list_options(p_pmfn, mbfont_opts, OPT_MBFONT_NUM_OPTIONS);
 }
 
 // Parse a list of options in the form
@@ -270,12 +270,12 @@ char *parse_printmbfont(void)
 //
 // Returns an error message for an illegal option, NULL otherwise.
 // Only used for the printer at the moment...
-static char *parse_list_options(char_u *option_str, option_table_T *table, size_t table_size)
+static char *parse_list_options(char *option_str, option_table_T *table, size_t table_size)
 {
   option_table_T *old_opts;
   char *ret = NULL;
-  char_u *stringp;
-  char_u *colonp;
+  char *stringp;
+  char *colonp;
   char *commap;
   char *p;
   size_t idx = 0;                          // init for GCC
@@ -292,14 +292,14 @@ static char *parse_list_options(char_u *option_str, option_table_T *table, size_
   // Repeat for all comma separated parts.
   stringp = option_str;
   while (*stringp) {
-    colonp = (char_u *)vim_strchr((char *)stringp, ':');
+    colonp = vim_strchr(stringp, ':');
     if (colonp == NULL) {
       ret = N_("E550: Missing colon");
       break;
     }
-    commap = vim_strchr((char *)stringp, ',');
+    commap = vim_strchr(stringp, ',');
     if (commap == NULL) {
-      commap = (char *)option_str + STRLEN(option_str);
+      commap = option_str + strlen(option_str);
     }
 
     len = (int)(colonp - stringp);
@@ -315,7 +315,7 @@ static char *parse_list_options(char_u *option_str, option_table_T *table, size_
       break;
     }
 
-    p = (char *)colonp + 1;
+    p = colonp + 1;
     table[idx].present = true;
 
     if (table[idx].hasnum) {
@@ -330,7 +330,7 @@ static char *parse_list_options(char_u *option_str, option_table_T *table, size_
     table[idx].string = (char_u *)p;
     table[idx].strlen = (int)(commap - p);
 
-    stringp = (char_u *)commap;
+    stringp = commap;
     if (*stringp == ',') {
       stringp++;
     }
@@ -1171,8 +1171,8 @@ static struct prt_ps_mbfont_S prt_ps_mbfonts[] =
 // VIM      Prolog  CIDProlog
 // 6.2      1.3
 // 7.0      1.4     1.0
-#define PRT_PROLOG_VERSION  ((char_u *)"1.4")
-#define PRT_CID_PROLOG_VERSION  ((char_u *)"1.0")
+#define PRT_PROLOG_VERSION  "1.4"
+#define PRT_CID_PROLOG_VERSION  "1.0"
 
 // Strings to look for in a PS resource file
 #define PRT_RESOURCE_HEADER         "%!PS-Adobe-"
@@ -1737,11 +1737,11 @@ static bool prt_open_resource(struct prt_ps_resource_S *resource)
   return true;
 }
 
-static bool prt_check_resource(const struct prt_ps_resource_S *resource, const char_u *version)
+static bool prt_check_resource(const struct prt_ps_resource_S *resource, const char *version)
   FUNC_ATTR_NONNULL_ALL
 {
   // Version number m.n should match, the revision number does not matter
-  if (STRNCMP(resource->version, version, STRLEN(version))) {
+  if (STRNCMP(resource->version, version, strlen(version))) {
     semsg(_("E621: \"%s\" resource file has wrong version"),
           resource->name);
     return false;

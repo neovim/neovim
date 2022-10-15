@@ -621,8 +621,8 @@ void u_compute_hash(buf_T *buf, char_u *hash)
   context_sha256_T ctx;
   sha256_start(&ctx);
   for (linenr_T lnum = 1; lnum <= buf->b_ml.ml_line_count; lnum++) {
-    char_u *p = (char_u *)ml_get_buf(buf, lnum, false);
-    sha256_update(&ctx, p, (uint32_t)(STRLEN(p) + 1));
+    char *p = ml_get_buf(buf, lnum, false);
+    sha256_update(&ctx, (char_u *)p, (uint32_t)(strlen(p) + 1));
   }
   sha256_finish(&ctx, hash);
 }
@@ -2636,7 +2636,7 @@ void ex_undolist(exarg_T *eap)
     if (uhp->uh_prev.ptr == NULL && uhp->uh_walk != nomark
         && uhp->uh_walk != mark) {
       vim_snprintf((char *)IObuff, IOSIZE, "%6ld %7d  ", uhp->uh_seq, changes);
-      undo_fmt_time((char_u *)IObuff + STRLEN(IObuff), IOSIZE - STRLEN(IObuff), uhp->uh_time);
+      undo_fmt_time((char_u *)IObuff + strlen(IObuff), IOSIZE - strlen(IObuff), uhp->uh_time);
       if (uhp->uh_save_nr > 0) {
         while (strlen(IObuff) < 33) {
           STRCAT(IObuff, " ");
@@ -2991,13 +2991,13 @@ void u_undoline(void)
     return;
   }
 
-  char_u *oldp = u_save_line(curbuf->b_u_line_lnum);
+  char *oldp = (char *)u_save_line(curbuf->b_u_line_lnum);
   ml_replace(curbuf->b_u_line_lnum, curbuf->b_u_line_ptr, true);
   changed_bytes(curbuf->b_u_line_lnum, 0);
   extmark_splice_cols(curbuf, (int)curbuf->b_u_line_lnum - 1, 0, (colnr_T)STRLEN(oldp),
                       (colnr_T)strlen(curbuf->b_u_line_ptr), kExtmarkUndo);
   xfree(curbuf->b_u_line_ptr);
-  curbuf->b_u_line_ptr = (char *)oldp;
+  curbuf->b_u_line_ptr = oldp;
 
   colnr_T t = curbuf->b_u_line_colnr;
   if (curwin->w_cursor.lnum == curbuf->b_u_line_lnum) {

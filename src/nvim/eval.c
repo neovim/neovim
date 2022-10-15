@@ -8626,7 +8626,7 @@ void invoke_prompt_callback(void)
     return;
   }
   char *text = ml_get(lnum);
-  char *prompt = (char *)prompt_text();
+  char *prompt = prompt_text();
   if (strlen(text) >= strlen(prompt)) {
     text += strlen(prompt);
   }

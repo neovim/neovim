@@ -434,10 +434,10 @@ int get_indent_str_vtab(const char *ptr, long ts, long *vts, bool list)
 // Returns true if the line was changed.
 int set_indent(int size, int flags)
 {
-  char_u *p;
-  char_u *newline;
-  char_u *oldline;
-  char_u *s;
+  char *p;
+  char *newline;
+  char *oldline;
+  char *s;
   int todo;
   int ind_len;  // Measured in characters.
   int line_len;
@@ -454,7 +454,7 @@ int set_indent(int size, int flags)
   // characters needed for the indent.
   todo = size;
   ind_len = 0;
-  p = oldline = (char_u *)get_cursor_line_ptr();
+  p = oldline = get_cursor_line_ptr();
 
   // Calculate the buffer size for the new indent, and check to see if it
   // isn't already set.
@@ -549,7 +549,7 @@ int set_indent(int size, int flags)
   if (flags & SIN_INSERT) {
     p = oldline;
   } else {
-    p = (char_u *)skipwhite((char *)p);
+    p = skipwhite(p);
   }
   line_len = (int)STRLEN(p) + 1;
 
@@ -631,7 +631,7 @@ int set_indent(int size, int flags)
         todo -= tab_pad;
         ind_done += tab_pad;
       }
-      p = (char_u *)skipwhite((char *)p);
+      p = skipwhite(p);
     }
 
     for (;;) {
@@ -659,7 +659,7 @@ int set_indent(int size, int flags)
     const colnr_T new_offset = (colnr_T)(s - newline);
 
     // this may free "newline"
-    ml_replace(curwin->w_cursor.lnum, (char *)newline, false);
+    ml_replace(curwin->w_cursor.lnum, newline, false);
     if (!(flags & SIN_NOMARK)) {
       extmark_splice_cols(curbuf,
                           (int)curwin->w_cursor.lnum - 1,
@@ -1130,13 +1130,13 @@ int get_lisp_indent(void)
 
 static int lisp_match(char_u *p)
 {
-  char_u buf[LSIZE];
+  char buf[LSIZE];
   int len;
   char *word = (char *)(*curbuf->b_p_lw != NUL ? (char_u *)curbuf->b_p_lw : p_lispwords);
 
   while (*word != NUL) {
-    (void)copy_option_part(&word, (char *)buf, LSIZE, ",");
-    len = (int)STRLEN(buf);
+    (void)copy_option_part(&word, buf, LSIZE, ",");
+    len = (int)strlen(buf);
 
     if ((STRNCMP(buf, p, len) == 0) && ascii_iswhite_or_nul(p[len])) {
       return true;

@@ -344,7 +344,7 @@ size_t spell_check(win_T *wp, char_u *ptr, hlf_T *attrp, int *capcol, bool docou
 
     // Count the word in the first language where it's found to be OK.
     if (count_word && mi.mi_result == SP_OK) {
-      count_common_word(mi.mi_lp->lp_slang, ptr,
+      count_common_word(mi.mi_lp->lp_slang, (char *)ptr,
                         (int)(mi.mi_end - ptr), 1);
       count_word = false;
     }
@@ -911,12 +911,12 @@ static void find_word(matchinf_T *mip, int mode)
 bool match_checkcompoundpattern(char_u *ptr, int wlen, garray_T *gap)
 {
   for (int i = 0; i + 1 < gap->ga_len; i += 2) {
-    char_u *p = ((char_u **)gap->ga_data)[i + 1];
-    if (STRNCMP(ptr + wlen, p, STRLEN(p)) == 0) {
+    char *p = ((char **)gap->ga_data)[i + 1];
+    if (STRNCMP(ptr + wlen, p, strlen(p)) == 0) {
       // Second part matches at start of following compound word, now
       // check if first part matches at end of previous word.
-      p = ((char_u **)gap->ga_data)[i];
-      int len = (int)STRLEN(p);
+      p = ((char **)gap->ga_data)[i];
+      int len = (int)strlen(p);
       if (len <= wlen && STRNCMP(ptr + wlen - len, p, len) == 0) {
         return true;
       }
@@ -1236,7 +1236,7 @@ size_t spell_move_to(win_T *wp, int dir, bool allwords, bool curline, hlf_T *att
   size_t len;
   int has_syntax = syntax_present(wp);
   colnr_T col;
-  char_u *buf = NULL;
+  char *buf = NULL;
   size_t buflen = 0;
   int skip = 0;
   colnr_T capcol = -1;
@@ -1275,9 +1275,9 @@ size_t spell_move_to(win_T *wp, int dir, bool allwords, bool curline, hlf_T *att
   decor_spell_nav_start(wp);
 
   while (!got_int) {
-    char_u *line = (char_u *)ml_get_buf(wp->w_buffer, lnum, false);
+    char *line = ml_get_buf(wp->w_buffer, lnum, false);
 
-    len = STRLEN(line);
+    len = strlen(line);
     if (buflen < len + MAXWLEN + 2) {
       xfree(buf);
       buflen = len + MAXWLEN + 2;
@@ -1292,17 +1292,17 @@ size_t spell_move_to(win_T *wp, int dir, bool allwords, bool curline, hlf_T *att
 
     // For checking first word with a capital skip white space.
     if (capcol == 0) {
-      capcol = (colnr_T)getwhitecols((char *)line);
+      capcol = (colnr_T)getwhitecols(line);
     } else if (curline && wp == curwin) {
       // For spellbadword(): check if first word needs a capital.
-      col = (colnr_T)getwhitecols((char *)line);
+      col = (colnr_T)getwhitecols(line);
       if (check_need_cap(lnum, col)) {
         capcol = col;
       }
 
       // Need to get the line again, may have looked at the previous
       // one.
-      line = (char_u *)ml_get_buf(wp->w_buffer, lnum, false);
+      line = ml_get_buf(wp->w_buffer, lnum, false);
     }
 
     // Copy the line into "buf" and append the start of the next line if
@@ -1311,12 +1311,12 @@ size_t spell_move_to(win_T *wp, int dir, bool allwords, bool curline, hlf_T *att
     bool empty_line = *skipwhite((const char *)line) == NUL;
     STRCPY(buf, line);
     if (lnum < wp->w_buffer->b_ml.ml_line_count) {
-      spell_cat_line(buf + STRLEN(buf),
+      spell_cat_line((char_u *)buf + strlen(buf),
                      (char_u *)ml_get_buf(wp->w_buffer, lnum + 1, false),
                      MAXWLEN);
     }
-    char_u *p = buf + skip;
-    char_u *endp = buf + len;
+    char *p = buf + skip;
+    char *endp = buf + len;
     while (p < endp) {
       // When searching backward don't search after the cursor.  Unless
       // we wrapped around the end of the buffer.
@@ -1329,7 +1329,7 @@ size_t spell_move_to(win_T *wp, int dir, bool allwords, bool curline, hlf_T *att
 
       // start of word
       attr = HLF_COUNT;
-      len = spell_check(wp, p, &attr, &capcol, false);
+      len = spell_check(wp, (char_u *)p, &attr, &capcol, false);
 
       if (attr != HLF_COUNT) {
         // We found a bad word.  Check the attribute.
@@ -1565,7 +1565,7 @@ static void spell_load_lang(char_u *lang)
 // use "latin1" for "latin9".  And limit to 60 characters (just in case).
 char_u *spell_enc(void)
 {
-  if (STRLEN(p_enc) < 60 && strcmp(p_enc, "iso-8859-15") != 0) {
+  if (strlen(p_enc) < 60 && strcmp(p_enc, "iso-8859-15") != 0) {
     return (char_u *)p_enc;
   }
   return (char_u *)"latin1";
@@ -1720,10 +1720,10 @@ static void spell_load_cb(char *fname, void *cookie)
 /// @param[in]  word  added to common words hashtable
 /// @param[in]  len  length of word or -1 for NUL terminated
 /// @param[in]  count  1 to count once, 10 to init
-void count_common_word(slang_T *lp, char_u *word, int len, uint8_t count)
+void count_common_word(slang_T *lp, char *word, int len, uint8_t count)
 {
-  char_u buf[MAXWLEN];
-  char_u *p;
+  char buf[MAXWLEN];
+  char *p;
 
   if (len == -1) {
     p = word;
@@ -1735,8 +1735,8 @@ void count_common_word(slang_T *lp, char_u *word, int len, uint8_t count)
   }
 
   wordcount_T *wc;
-  hash_T hash = hash_hash(p);
-  const size_t p_len = STRLEN(p);
+  hash_T hash = hash_hash((char_u *)p);
+  const size_t p_len = strlen(p);
   hashitem_T *hi = hash_lookup(&lp->sl_wordcount, (const char *)p, p_len, hash);
   if (HASHITEM_EMPTY(hi)) {
     wc = xmalloc(sizeof(wordcount_T) + p_len);
@@ -1769,17 +1769,17 @@ bool byte_in_str(char_u *str, int n)
 int init_syl_tab(slang_T *slang)
 {
   ga_init(&slang->sl_syl_items, sizeof(syl_item_T), 4);
-  char_u *p = (char_u *)vim_strchr((char *)slang->sl_syllable, '/');
+  char *p = vim_strchr((char *)slang->sl_syllable, '/');
   while (p != NULL) {
     *p++ = NUL;
     if (*p == NUL) {        // trailing slash
       break;
     }
-    char_u *s = p;
-    p = (char_u *)vim_strchr((char *)p, '/');
+    char *s = p;
+    p = vim_strchr(p, '/');
     int l;
     if (p == NULL) {
-      l = (int)STRLEN(s);
+      l = (int)strlen(s);
     } else {
       l = (int)(p - s);
     }
@@ -2518,23 +2518,23 @@ bool check_need_cap(linenr_T lnum, colnr_T col)
     return false;
   }
 
-  char_u *line = (char_u *)get_cursor_line_ptr();
-  char_u *line_copy = NULL;
+  char *line = get_cursor_line_ptr();
+  char *line_copy = NULL;
   colnr_T endcol = 0;
-  if (getwhitecols((char *)line) >= (int)col) {
+  if (getwhitecols(line) >= (int)col) {
     // At start of line, check if previous line is empty or sentence
     // ends there.
     if (lnum == 1) {
       need_cap = true;
     } else {
-      line = (char_u *)ml_get(lnum - 1);
-      if (*skipwhite((char *)line) == NUL) {
+      line = ml_get(lnum - 1);
+      if (*skipwhite(line) == NUL) {
         need_cap = true;
       } else {
         // Append a space in place of the line break.
-        line_copy = (char_u *)concat_str((char *)line, " ");
+        line_copy = concat_str(line, " ");
         line = line_copy;
-        endcol = (colnr_T)STRLEN(line);
+        endcol = (colnr_T)strlen(line);
       }
     }
   } else {
@@ -2547,14 +2547,14 @@ bool check_need_cap(linenr_T lnum, colnr_T col)
       .regprog = curwin->w_s->b_cap_prog,
       .rm_ic = false
     };
-    char_u *p = line + endcol;
+    char *p = line + endcol;
     for (;;) {
       MB_PTR_BACK(line, p);
-      if (p == line || spell_iswordp_nmw(p, curwin)) {
+      if (p == line || spell_iswordp_nmw((char_u *)p, curwin)) {
         break;
       }
-      if (vim_regexec(&regmatch, (char *)p, 0)
-          && (char_u *)regmatch.endp[0] == line + endcol) {
+      if (vim_regexec(&regmatch, p, 0)
+          && regmatch.endp[0] == line + endcol) {
         need_cap = true;
         break;
       }
@@ -2596,7 +2596,7 @@ void ex_spellrepall(exarg_T *eap)
 
     // Only replace when the right word isn't there yet.  This happens
     // when changing "etc" to "etc.".
-    char_u *line = (char_u *)get_cursor_line_ptr();
+    char *line = get_cursor_line_ptr();
     if (addlen <= 0 || STRNCMP(line + curwin->w_cursor.col,
                                repl_to, strlen(repl_to)) != 0) {
       char_u *p = xmalloc(STRLEN(line) + (size_t)addlen + 1);

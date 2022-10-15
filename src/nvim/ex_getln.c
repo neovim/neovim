@@ -370,7 +370,7 @@ static void may_do_incsearch_highlighting(int firstc, long count, incsearch_stat
   pos_T end_pos;
   proftime_T tm;
   int skiplen, patlen;
-  char_u next_char;
+  char next_char;
   char_u use_last_pat;
   int search_delim;
 
@@ -408,7 +408,7 @@ static void may_do_incsearch_highlighting(int firstc, long count, incsearch_stat
   int found;  // do_search() result
 
   // Use the previous pattern for ":s//".
-  next_char = (char_u)ccline.cmdbuff[skiplen + patlen];
+  next_char = ccline.cmdbuff[skiplen + patlen];
   use_last_pat = patlen == 0 && skiplen > 0
                  && ccline.cmdbuff[skiplen - 1] == next_char;
 
@@ -437,7 +437,7 @@ static void may_do_incsearch_highlighting(int firstc, long count, incsearch_stat
     found = do_search(NULL, firstc == ':' ? '/' : firstc, search_delim,
                       (char_u *)ccline.cmdbuff + skiplen, count,
                       search_flags, &sia);
-    ccline.cmdbuff[skiplen + patlen] = (char)next_char;
+    ccline.cmdbuff[skiplen + patlen] = next_char;
     emsg_off--;
     if (curwin->w_cursor.lnum < search_first_line
         || curwin->w_cursor.lnum > search_last_line) {
@@ -486,13 +486,13 @@ static void may_do_incsearch_highlighting(int firstc, long count, incsearch_stat
   // Disable 'hlsearch' highlighting if the pattern matches
   // everything. Avoids a flash when typing "foo\|".
   if (!use_last_pat) {
-    next_char = (char_u)ccline.cmdbuff[skiplen + patlen];
+    next_char = ccline.cmdbuff[skiplen + patlen];
     ccline.cmdbuff[skiplen + patlen] = NUL;
     if (empty_pattern(ccline.cmdbuff) && !no_hlsearch) {
       redraw_all_later(UPD_SOME_VALID);
       set_no_hlsearch(true);
     }
-    ccline.cmdbuff[skiplen + patlen] = (char)next_char;
+    ccline.cmdbuff[skiplen + patlen] = next_char;
   }
 
   validate_cursor();
@@ -1051,7 +1051,7 @@ static int command_line_execute(VimState *state, int key)
       vungetc(s->c);
       s->c = Ctrl_BSL;
     } else if (s->c == 'e') {
-      char_u *p = NULL;
+      char *p = NULL;
       int len;
 
       // Replace the command line with the result of an expression.
@@ -1066,11 +1066,11 @@ static int command_line_execute(VimState *state, int key)
       s->c = get_expr_register();
       if (s->c == '=') {
         textlock++;
-        p = (char_u *)get_expr_line();
+        p = get_expr_line();
         textlock--;
 
         if (p != NULL) {
-          len = (int)STRLEN(p);
+          len = (int)strlen(p);
           realloc_cmdbuff(len + 1);
           ccline.cmdlen = len;
           STRCPY(ccline.cmdbuff, p);
@@ -1303,20 +1303,20 @@ static int may_do_command_line_next_incsearch(int firstc, long count, incsearch_
   ui_flush();
 
   pos_T t;
-  char_u *pat;
+  char *pat;
   int search_flags = SEARCH_NOOF;
-  char_u save;
+  char save;
 
   if (search_delim == ccline.cmdbuff[skiplen]) {
-    pat = last_search_pattern();
+    pat = (char *)last_search_pattern();
     if (pat == NULL) {
       restore_last_search_pattern();
       return FAIL;
     }
     skiplen = 0;
-    patlen = (int)STRLEN(pat);
+    patlen = (int)strlen(pat);
   } else {
-    pat = (char_u *)ccline.cmdbuff + skiplen;
+    pat = ccline.cmdbuff + skiplen;
   }
 
   if (next_match) {
@@ -1338,7 +1338,7 @@ static int may_do_command_line_next_incsearch(int firstc, long count, incsearch_
   pat[patlen] = NUL;
   int found = searchit(curwin, curbuf, &t, NULL,
                        next_match ? FORWARD : BACKWARD,
-                       pat, count, search_flags,
+                       (char_u *)pat, count, search_flags,
                        RE_SEARCH, NULL);
   emsg_off--;
   pat[patlen] = save;
@@ -1843,21 +1843,21 @@ static int command_line_handle_key(CommandLineState *s)
 
     if (s->hiscnt != s->save_hiscnt) {
       // jumped to other entry
-      char_u *p;
+      char *p;
       int len = 0;
       int old_firstc;
 
       XFREE_CLEAR(ccline.cmdbuff);
       s->xpc.xp_context = EXPAND_NOTHING;
       if (s->hiscnt == get_hislen()) {
-        p = (char_u *)s->lookfor;                  // back to the old one
+        p = s->lookfor;                  // back to the old one
       } else {
-        p = (char_u *)get_histentry(s->histype)[s->hiscnt].hisstr;
+        p = get_histentry(s->histype)[s->hiscnt].hisstr;
       }
 
       if (s->histype == HIST_SEARCH
-          && p != (char_u *)s->lookfor
-          && (old_firstc = p[STRLEN(p) + 1]) != s->firstc) {
+          && p != s->lookfor
+          && (old_firstc = (uint8_t)p[strlen(p) + 1]) != s->firstc) {
         // Correct for the separator character used when
         // adding the history entry vs the one used now.
         // First loop: count length.
@@ -1884,7 +1884,7 @@ static int command_line_handle_key(CommandLineState *s)
               }
 
               if (i > 0) {
-                ccline.cmdbuff[len] = (char)p[j];
+                ccline.cmdbuff[len] = p[j];
               }
             }
             len++;
@@ -1896,7 +1896,7 @@ static int command_line_handle_key(CommandLineState *s)
         }
         ccline.cmdbuff[len] = NUL;
       } else {
-        alloc_cmdbuff((int)STRLEN(p));
+        alloc_cmdbuff((int)strlen(p));
         STRCPY(ccline.cmdbuff, p);
       }
 
@@ -3381,7 +3381,7 @@ void put_on_cmdline(char_u *str, int len, int redraw)
   int c;
 
   if (len < 0) {
-    len = (int)STRLEN(str);
+    len = (int)strlen((char *)str);
   }
 
   realloc_cmdbuff(ccline.cmdlen + len + 1);

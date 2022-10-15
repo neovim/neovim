@@ -1698,18 +1698,18 @@ void mark_mb_adjustpos(buf_T *buf, pos_T *lp)
   FUNC_ATTR_NONNULL_ALL
 {
   if (lp->col > 0 || lp->coladd > 1) {
-    const char_u *const p = (char_u *)ml_get_buf(buf, lp->lnum, false);
-    if (*p == NUL || (int)STRLEN(p) < lp->col) {
+    const char *const p = ml_get_buf(buf, lp->lnum, false);
+    if (*p == NUL || (int)strlen(p) < lp->col) {
       lp->col = 0;
     } else {
-      lp->col -= utf_head_off((char *)p, (char *)p + lp->col);
+      lp->col -= utf_head_off(p, p + lp->col);
     }
     // Reset "coladd" when the cursor would be on the right half of a
     // double-wide character.
     if (lp->coladd == 1
         && p[lp->col] != TAB
-        && vim_isprintc(utf_ptr2char((char *)p + lp->col))
-        && ptr2cells((char *)p + lp->col) > 1) {
+        && vim_isprintc(utf_ptr2char(p + lp->col))
+        && ptr2cells(p + lp->col) > 1) {
       lp->coladd = 0;
     }
   }
