@@ -2,54 +2,47 @@
 
 Checks: >
   -*,
+
   bugprone-*,
-  cert-env33-c,
-  cert-err34-c,
-  cert-flp30-c,
-  cert-msc30-c,
-  clang-analyzer-*,
-  clang-diagnostics-*,
   google-*,
   misc-*,
-  misc-non-copyable-objects,
-  misc-static-assert,
+  modernize-*,
   performance-*,
   portability-*,
   readability-*,
+
   -bugprone-assignment-in-if-condition,
   -bugprone-branch-clone,
   -bugprone-easily-swappable-parameters,
+  -bugprone-implicit-widening-of-multiplication-result,
+  -bugprone-macro-parentheses,
+  -bugprone-misplaced-widening-cast,
   -bugprone-narrowing-conversions,
+  -bugprone-narrowing-conversions,
+  -bugprone-not-null-terminated-result,
+  -bugprone-reserved-identifier,
   -bugprone-sizeof-expression,
+  -bugprone-suspicious-include,
+  -bugprone-suspicious-memory-comparison,
   -bugprone-unused-return-value,
-  -clang-analyzer-security.insecureAPI.strcpy,
+  -google-readability-braces-around-statements,
   -google-readability-function-size,
+  -misc-misplaced-const,
   -misc-no-recursion,
   -misc-unused-parameters,
+  -modernize-macro-to-enum,
   -performance-no-int-to-ptr,
+  -readability-braces-around-statements,
   -readability-else-after-return,
-  -readability-function-*,
+  -readability-function-cognitive-complexity,
+  -readability-function-size,
   -readability-identifier-length,
   -readability-isolate-declaration,
   -readability-magic-numbers,
+  -readability-misleading-indentation,
+  -readability-redundant-declaration,
   -readability-redundant-function-ptr-dereference,
   -readability-suspicious-call-argument,
-
-CheckOptions:
-  - key: readability-identifier-naming.FunctionCase
-    value: lower_case
-  - key: readability-identifier-naming.GlobalConstantCase
-    value: CamelCase
-  - key: readability-identifier-naming.GlobalConstantPrefix
-    value: k
-  - key: readability-identifier-naming.StaticConstantCase
-    value: CamelCase
-  - key: readability-identifier-naming.StaticConstantPrefix
-    value: k
-  - key: readability-identifier-naming.StructCase
-    value: CamelCase
-  - key: readability-identifier-naming.VariableCase
-    value: lower_case
 
 WarningsAsErrors: ''
 
