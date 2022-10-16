@@ -4,14 +4,12 @@
                             NVIM REFERENCE MANUAL
 
 
-Supported platforms					*supported-platforms*
-
-This is a list of supported platforms for Nvim.
+Support
 
                                       Type |gO| to see the table of contents.
 
 ==============================================================================
-Supported platforms
+Supported platforms					 *supported-platforms*
 
 `System`          `Tier`      `Versions`                  `Tested versions`
 Linux            1      >= 2.6.32, glibc >= 2.12     Ubuntu 20.04
@@ -52,4 +50,3 @@ case adding an `#ifdef` is fine.
 
 
  vim:tw=78:ts=8:et:ft=help:norl:
-
