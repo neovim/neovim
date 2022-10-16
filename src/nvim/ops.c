@@ -3370,6 +3370,9 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
     // adjust '] mark
     curbuf->b_op_end.lnum = curwin->w_cursor.lnum - 1;
     curbuf->b_op_end.col = bd.textcol + (colnr_T)totlen - 1;
+    if (curbuf->b_op_end.col < 0) {
+      curbuf->b_op_end.col = 0;
+    }
     curbuf->b_op_end.coladd = 0;
     if (flags & PUT_CURSEND) {
       colnr_T len;
