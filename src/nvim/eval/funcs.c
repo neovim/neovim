@@ -5866,8 +5866,8 @@ static void f_readfile(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   char buf[(IOSIZE/256) * 256];    // rounded to avoid odd + 1
   int io_size = sizeof(buf);
   char *prev = NULL;               // previously read bytes, if any
-  long prevlen  = 0;               // length of data in prev
-  long prevsize = 0;               // size of prev buffer
+  ptrdiff_t prevlen  = 0;               // length of data in prev
+  ptrdiff_t prevsize = 0;               // size of prev buffer
   long maxline  = MAXLNUM;
 
   if (argvars[1].v_type != VAR_UNKNOWN) {
@@ -6022,17 +6022,17 @@ static void f_readfile(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
         // small, to avoid repeatedly 'allocing' large and
         // 'reallocing' small.
         if (prevsize == 0) {
-          prevsize = (long)(p - start);
+          prevsize = p - start;
         } else {
-          long grow50pc = (prevsize * 3) / 2;
-          long growmin  = (long)((p - start) * 2 + prevlen);
+          ptrdiff_t grow50pc = (prevsize * 3) / 2;
+          ptrdiff_t growmin  = (p - start) * 2 + prevlen;
           prevsize = grow50pc > growmin ? grow50pc : growmin;
         }
         prev = xrealloc(prev, (size_t)prevsize);
       }
       // Add the line part to end of "prev".
       memmove(prev + prevlen, start, (size_t)(p - start));
-      prevlen += (long)(p - start);
+      prevlen += p - start;
     }
   }   // while
 

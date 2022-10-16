@@ -829,7 +829,7 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, int use_san
       //       so `vim_strsize` will work.
       char *t = stl_items[stl_groupitems[groupdepth]].start;
       *out_p = NUL;
-      long group_len = vim_strsize(t);
+      ptrdiff_t group_len = vim_strsize(t);
 
       // If the group contained internal items
       // and the group did not have a minimum width,
@@ -915,7 +915,7 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, int use_san
         }
         // If the group is shorter than the minimum width, add padding characters.
       } else if (abs(stl_items[stl_groupitems[groupdepth]].minwid) > group_len) {
-        long min_group_width = stl_items[stl_groupitems[groupdepth]].minwid;
+        ptrdiff_t min_group_width = stl_items[stl_groupitems[groupdepth]].minwid;
         // If the group is left-aligned, add characters to the right.
         if (min_group_width < 0) {
           min_group_width = 0 - min_group_width;
@@ -929,7 +929,7 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, int use_san
           group_len = (min_group_width - group_len) * utf_char2len(fillchar);
           memmove(t + group_len, t, (size_t)(out_p - t));
           if (out_p + group_len >= (out_end_p + 1)) {
-            group_len = (long)(out_end_p - out_p);
+            group_len = out_end_p - out_p;
           }
           out_p += group_len;
           // }
