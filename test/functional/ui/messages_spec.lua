@@ -1263,7 +1263,6 @@ describe('ui/ext_messages', function()
       {1:~                                                                               }|
       {1:~                                                                               }|
       {1:~                                                                               }|
-      {1:~                                                                               }|
       {MATCH:.*}|
       {1:~                                                                               }|
       {1:~                 }Nvim is open source and freely distributable{1:                  }|
@@ -1274,9 +1273,10 @@ describe('ui/ext_messages', function()
       {1:~                }type  :q{5:<Enter>}               to exit         {1:                 }|
       {1:~                }type  :help{5:<Enter>}            for help        {1:                 }|
       {1:~                                                                               }|
-      {MATCH:.*}|
-      {MATCH:.*}|
+      {1:~               }type :help news{5:<Enter>} to see changes in v{MATCH:.*}|
       {1:~                                                                               }|
+      {MATCH:.*}|
+      {MATCH:.*}|
       {1:~                                                                               }|
       {1:~                                                                               }|
       {1:~                                                                               }|
@@ -1319,7 +1319,6 @@ describe('ui/ext_messages', function()
                                                                                       |
                                                                                       |
                                                                                       |
-                                                                                      |
       {MATCH:.*}|
                                                                                       |
                         Nvim is open source and freely distributable                  |
@@ -1330,9 +1329,10 @@ describe('ui/ext_messages', function()
                        type  :q{5:<Enter>}               to exit                          |
                        type  :help{5:<Enter>}            for help                         |
                                                                                       |
-      {MATCH:.*}|
-      {MATCH:.*}|
+                      type :help news{5:<Enter>} to see changes in {MATCH:.*}|
                                                                                       |
+      {MATCH:.*}|
+      {MATCH:.*}|
                                                                                       |
                                                                                       |
                                                                                       |
