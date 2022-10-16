@@ -3352,7 +3352,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	in Insert mode as specified with the 'indentkeys' option.
 	When this option is not empty, it overrules the 'cindent' and
 	'smartindent' indenting.  When 'lisp' is set, this option is
-	overridden by the Lisp indentation algorithm.
+	is only used when 'lispoptions' contains "expr:1".
 	When 'paste' is set this option is not used for indenting.
 	The expression is evaluated with |v:lnum| set to the line number for
 	which the indent is to be computed.  The cursor is also in this line
@@ -3718,6 +3718,17 @@ A jump table for the options with a short description can be found at |Q_op|.
 	"=" operator to use this same indentation algorithm rather than
 	calling an external program if 'equalprg' is empty.
 	This option is not used when 'paste' is set.
+
+						*'lispoptions'* *'lop'*
+'lispoptions' 'lop'	string	(default "")
+			local to buffer
+	Comma-separated list of items that influence the Lisp indenting when
+	enabled with the |'lisp'| option.  Currently only one item is
+	supported:
+		expr:1	use 'indentexpr' for Lisp indenting when it is set
+		expr:0	do not use 'indentexpr' for Lisp indenting (default)
+	Note that when using 'indentexpr' the `=` operator indents all the
+	lines, otherwise the first line is not indented (Vi-compatible).
 
 						*'lispwords'* *'lw'*
 'lispwords' 'lw'	string	(default is very long)

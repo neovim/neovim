@@ -228,6 +228,7 @@ void check_buf_options(buf_T *buf)
   check_string_option(&buf->b_p_cink);
   check_string_option(&buf->b_p_cino);
   parse_cino(buf);
+  check_string_option(&buf->b_p_lop);
   check_string_option(&buf->b_p_ft);
   check_string_option(&buf->b_p_cinw);
   check_string_option(&buf->b_p_cinsd);
@@ -1378,6 +1379,10 @@ char *did_set_string_option(int opt_idx, char **varp, char *oldval, char *errbuf
   } else if (gvarp == &p_cino) {  // 'cinoptions'
     // TODO(vim): recognize errors
     parse_cino(curbuf);
+  } else if (gvarp == &p_lop) {  // 'lispoptions'
+    if (**varp != NUL && strcmp(*varp, "expr:0") != 0 && strcmp(*varp, "expr:1") != 0) {
+      errmsg = e_invarg;
+    }
   } else if (varp == &p_icm) {  // 'inccommand'
     if (check_opt_strings(p_icm, p_icm_values, false) != OK) {
       errmsg = e_invarg;

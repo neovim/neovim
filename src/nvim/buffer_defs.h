@@ -699,6 +699,7 @@ struct file_buffer {
   uint32_t b_p_fex_flags;       ///< flags for 'formatexpr'
   char *b_p_kp;                 ///< 'keywordprg'
   int b_p_lisp;                 ///< 'lisp'
+  char *b_p_lop;                ///< 'lispoptions'
   char *b_p_menc;               ///< 'makeencoding'
   char *b_p_mps;                ///< 'matchpairs'
   int b_p_ml;                   ///< 'modeline'

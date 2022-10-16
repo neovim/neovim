@@ -4008,6 +4008,8 @@ static char_u *get_varp(vimoption_T *p)
     return (char_u *)&(curbuf->b_p_fex);
   case PV_LISP:
     return (char_u *)&(curbuf->b_p_lisp);
+  case PV_LOP:
+    return (char_u *)&(curbuf->b_p_lop);
   case PV_ML:
     return (char_u *)&(curbuf->b_p_ml);
   case PV_MPS:
@@ -4414,6 +4416,8 @@ void buf_copy_options(buf_T *buf, int flags)
       COPY_OPT_SCTX(buf, BV_CINO);
       buf->b_p_cinsd = xstrdup(p_cinsd);
       COPY_OPT_SCTX(buf, BV_CINSD);
+      buf->b_p_lop = xstrdup(p_lop);
+      COPY_OPT_SCTX(buf, BV_LOP);
 
       // Don't copy 'filetype', it must be detected
       buf->b_p_ft = empty_option;

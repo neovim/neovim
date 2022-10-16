@@ -6206,7 +6206,11 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
       // If 'equalprg' is empty, do the indenting internally.
       if (oap->op_type == OP_INDENT && *get_equalprg() == NUL) {
         if (curbuf->b_p_lisp) {
-          op_reindent(oap, get_lisp_indent);
+          if (use_indentexpr_for_lisp()) {
+            op_reindent(oap, get_expr_indent);
+          } else {
+            op_reindent(oap, get_lisp_indent);
+          }
           break;
         }
         op_reindent(oap,

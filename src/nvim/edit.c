@@ -2993,34 +2993,6 @@ bool cindent_on(void)
   return !p_paste && (curbuf->b_p_cin || *curbuf->b_p_inde != NUL);
 }
 
-// Re-indent the current line, based on the current contents of it and the
-// surrounding lines. Fixing the cursor position seems really easy -- I'm very
-// confused what all the part that handles Control-T is doing that I'm not.
-// "get_the_indent" should be get_c_indent, get_expr_indent or get_lisp_indent.
-void fixthisline(IndentGetter get_the_indent)
-{
-  int amount = get_the_indent();
-
-  if (amount >= 0) {
-    change_indent(INDENT_SET, amount, false, 0, true);
-    if (linewhite(curwin->w_cursor.lnum)) {
-      did_ai = true;  // delete the indent if the line stays empty
-    }
-  }
-}
-
-void fix_indent(void)
-{
-  if (p_paste) {
-    return;
-  }
-  if (curbuf->b_p_lisp && curbuf->b_p_ai) {
-    fixthisline(get_lisp_indent);
-  } else if (cindent_on()) {
-    do_c_expr_indent();
-  }
-}
-
 /// Check that "cinkeys" contains the key "keytyped",
 /// when == '*': Only if key is preceded with '*' (indent before insert)
 /// when == '!': Only if key is preceded with '!' (don't insert)
