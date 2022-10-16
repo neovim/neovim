@@ -1959,8 +1959,9 @@ void free_buf_options(buf_T *buf, int free_p_ff)
   clear_string_option(&buf->b_p_ft);
   clear_string_option(&buf->b_p_cink);
   clear_string_option(&buf->b_p_cino);
-  clear_string_option(&buf->b_p_cinw);
+  clear_string_option(&buf->b_p_lop);
   clear_string_option(&buf->b_p_cinsd);
+  clear_string_option(&buf->b_p_cinw);
   clear_string_option(&buf->b_p_cpt);
   clear_string_option(&buf->b_p_cfu);
   clear_string_option(&buf->b_p_ofu);

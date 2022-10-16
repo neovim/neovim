@@ -1364,6 +1364,14 @@ return {
       defaults={if_true=false}
     },
     {
+      full_name='lispoptions', abbreviation='lop',
+      short_desc=N_("options for lisp indenting"),
+      type='string', list='onecomma', scope={'buffer'},
+      deny_duplicates=true,
+      varname='p_lop', pv_name='p_lop',
+      defaults={if_true=''}
+    },
+    {
       full_name='lispwords', abbreviation='lw',
       short_desc=N_("words that change how lisp indenting works"),
       type='string', list='onecomma', scope={'global', 'buffer'},
