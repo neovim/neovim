@@ -227,7 +227,7 @@ describe('health.vim', function()
                                                                                 |
         {Heading:success1: health#success1#check}                                         |
         {Bar:========================================================================}|
-        {Heading2:##}{Heading: report 1}                                                             |
+        {Heading2:## }{Heading:report 1}                                                             |
         {Bullet:  -} {Ok:OK}: everything is fine                                              |
                                                                                 |
       ]]}
