@@ -978,9 +978,12 @@ indentation: >
 
 PYTHON							*ft-python-indent*
 
-The amount of indent can be set for the following situations.  The examples
-given are the defaults.  Note that the dictionary values are set to an
-expression, so that you can change the value of 'shiftwidth' later.
+The amount of indent can be set with the `g:python_indent` |Dictionary|, which
+needs to be created before adding the items: >
+	let g:python_indent = {}
+The examples given are the defaults.  Note that the dictionary values are set
+to an expression, so that you can change the value of 'shiftwidth' later
+without having to update these values.
 
 Indent after an open paren: >
 	let g:python_indent.open_paren = 'shiftwidth() * 2'

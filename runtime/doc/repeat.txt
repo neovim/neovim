@@ -289,7 +289,7 @@ For writing a Vim script, see chapter 41 of the user manual |usr_41.txt|.
 			how this can be useful.
 
 			This is normally done automatically during startup,
-			after loading your .vimrc file.  With this command it
+			after loading your |vimrc| file.  With this command it
 			can be done earlier.
 
 			Packages will be loaded only once.  Using
