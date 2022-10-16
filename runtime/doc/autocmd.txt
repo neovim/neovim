@@ -844,6 +844,12 @@ RemoteReply			When a reply from a Vim that functions as
 				Note that even if an autocommand is defined,
 				the reply should be read with remote_read()
 				to consume it.
+							*SearchPost*
+SearchPost			After making a search using |/|, |?|, |*|,
+				|#|, |n| or |N|.
+				Sets these |v:event| keys:
+				    startpos
+				    endpos
 							*SearchWrapped*
 SearchWrapped			After making a search with |n| or |N| if the
 				search wraps around the document back to

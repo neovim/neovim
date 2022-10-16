@@ -81,6 +81,7 @@ return {
     'RecordingEnter',         -- when starting to record a macro
     'RecordingLeave',         -- just before a macro stops recording
     'RemoteReply',            -- upon string reception from a remote vim
+    'SearchPost',             -- after the search
     'SearchWrapped',          -- after the search wrapped around
     'SessionLoadPost',        -- after loading a session file
     'ShellCmdPost',           -- after ":!cmd"

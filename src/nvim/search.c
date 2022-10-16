@@ -998,7 +998,7 @@ static int first_submatch(regmmatch_T *rp)
 int do_search(oparg_T *oap, int dirc, int search_delim, char_u *pat, long count, int options,
               searchit_arg_T *sia)
 {
-  pos_T pos;                    // position of the last match
+  pos_T pos, end_pos;           // position of the last match
   char_u *searchstr;
   struct soffset old_off;
   int retval;                   // Return value
@@ -1273,7 +1273,7 @@ int do_search(oparg_T *oap, int dirc, int search_delim, char_u *pat, long count,
       }
     }
 
-    c = searchit(curwin, curbuf, &pos, NULL, dirc == '/' ? FORWARD : BACKWARD,
+    c = searchit(curwin, curbuf, &pos, &end_pos, dirc == '/' ? FORWARD : BACKWARD,
                  searchstr, count,
                  (spats[0].off.end * SEARCH_END
                   + (options
@@ -1300,6 +1300,38 @@ int do_search(oparg_T *oap, int dirc, int search_delim, char_u *pat, long count,
       oap->inclusive = true;        // 'e' includes last character
     }
     retval = 1;                     // pattern found
+
+    if (!(options & SEARCH_PEEK))
+    {
+      save_v_event_T save_v_event;
+      dict_T *dict = get_v_event(&save_v_event);
+
+      list_T *const startpos_list = tv_list_alloc(2);
+      tv_list_append_number(startpos_list, pos.lnum);
+      tv_list_append_number(startpos_list, pos.col);
+      tv_list_set_lock(startpos_list, VAR_FIXED);
+
+      list_T *const endpos_list = tv_list_alloc(2);
+      tv_list_append_number(endpos_list, end_pos.lnum);
+      tv_list_append_number(endpos_list, end_pos.col - (spats[0].off.end ? 0 : 1));
+      tv_list_set_lock(endpos_list, VAR_FIXED);
+
+      if (spats[0].off.end)
+      {
+        (void)tv_dict_add_list(dict, S_LEN("startpos"), endpos_list);
+        (void)tv_dict_add_list(dict, S_LEN("endpos"), startpos_list);
+      }
+      else
+      {
+        (void)tv_dict_add_list(dict, S_LEN("startpos"), startpos_list);
+        (void)tv_dict_add_list(dict, S_LEN("endpos"), endpos_list);
+      }
+
+      tv_dict_set_keys_readonly(dict);
+
+      apply_autocmds(EVENT_SEARCHPOST, NULL, NULL, false, NULL);
+      restore_v_event(dict, &save_v_event);
+    }
 
     if (sia && sia->sa_wrapped) {
       apply_autocmds(EVENT_SEARCHWRAPPED, NULL, NULL, false, NULL);
