@@ -289,7 +289,7 @@ For writing a Vim script, see chapter 41 of the user manual |usr_41.txt|.
 			how this can be useful.
 
 			This is normally done automatically during startup,
-			after loading your .vimrc file.  With this command it
+			after loading your |vimrc| file.  With this command it
 			can be done earlier.
 
 			Packages will be loaded only once.  Using
@@ -539,6 +539,11 @@ You would now have these files under ~/.local/share/nvim/site:
 
 On startup after processing your |config|, Nvim scans all directories in
 'packpath' for plugins in "pack/*/start/*", then loads the plugins.
+
+To allow for calling into package functionality while parsing your |vimrc|,
+|:colorscheme| and |autoload| will both automatically search under 'packpath'
+as well in addition to 'runtimepath'.  See the documentation for each for
+details.
 
 In the example Nvim will find "pack/foo/start/foobar/plugin/foo.vim" and load
 it.

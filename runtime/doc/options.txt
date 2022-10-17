@@ -5949,7 +5949,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	For the "screen" and "topline" values, the cursor position will be
 	changed when necessary. In this case, the jumplist will be populated
 	with the previous cursor position. For "screen", the text cannot always
-	be kept on the same screen line	when 'wrap' is enabled.
+	be kept on the same screen line when 'wrap' is enabled.
 
 			*'splitright'* *'spr'* *'nosplitright'* *'nospr'*
 'splitright' 'spr'	boolean	(default off)

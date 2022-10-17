@@ -2986,15 +2986,24 @@ satisfied with it for my own projects.
 SED						*sed.vim* *ft-sed-syntax*
 
 To make tabs stand out from regular blanks (accomplished by using Todo
-highlighting on the tabs), define "highlight_sedtabs" by putting >
+highlighting on the tabs), define "g:sed_highlight_tabs" by putting >
 
-	:let highlight_sedtabs = 1
-
+	:let g:sed_highlight_tabs = 1
+<
 in the vimrc file.  (This special highlighting only applies for tabs
 inside search patterns, replacement texts, addresses or text included
 by an Append/Change/Insert command.)  If you enable this option, it is
 also a good idea to set the tab width to one character; by doing that,
 you can easily count the number of tabs in a string.
+
+GNU sed allows comments after text on the same line.  BSD sed only allows
+comments where "#" is the first character of the line.  To enforce BSD-style
+comments, i.e. mark end-of-line comments as errors, use: >
+
+	:let g:sed_dialect = "bsd"
+<
+Note that there are other differences between GNU sed and BSD sed which are
+not (yet) affected by this setting.
 
 Bugs:
 

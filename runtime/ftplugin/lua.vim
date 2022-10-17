@@ -3,7 +3,8 @@
 " Maintainer:		Doug Kearns <dougkearns@gmail.com>
 " Previous Maintainer:	Max Ischenko <mfi@ukr.net>
 " Contributor:		Dorai Sitaram <ds26@gte.com>
-" Last Change:		2022 Sep 05
+"			C.D. MacEachern <craig.daniel.maceachern@gmail.com>
+" Last Change:		2022 Oct 15
 
 if exists("b:did_ftplugin")
   finish
@@ -19,9 +20,11 @@ setlocal formatoptions-=t formatoptions+=croql
 
 let &l:define = '\<function\|\<local\%(\s\+function\)\='
 
+" TODO: handle init.lua
+setlocal includeexpr=substitute(v:fname,'\\.','/','g')
 setlocal suffixesadd=.lua
 
-let b:undo_ftplugin = "setlocal cms< com< def< fo< sua<"
+let b:undo_ftplugin = "setlocal cms< com< def< fo< inex< sua<"
 
 if exists("loaded_matchit") && !exists("b:match_words")
   let b:match_ignorecase = 0

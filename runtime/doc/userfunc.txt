@@ -388,6 +388,10 @@ file should then define the function like this: >
 	   echo "Done!"
 	endfunction
 
+If the file doesn't exist, Vim will also search in 'packpath' (under "start")
+to allow calling packages' functions from your |vimrc| when the packages have
+not been added to 'runtimepath' yet (see |packages|).
+
 The file name and the name used before the # in the function must match
 exactly, and the defined function must have the name exactly as it will be
 called.
