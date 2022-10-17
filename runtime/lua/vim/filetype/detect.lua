@@ -634,6 +634,19 @@ function M.lpc(bufnr)
   return 'c'
 end
 
+function M.lsl(bufnr)
+  if vim.g.filetype_lsl then
+    return vim.g.filetype_lsl
+  end
+
+  local line = nextnonblank(bufnr, 1)
+  if findany(line, { '^%s*%%', ':%s*trait%s*$' }) then
+    return 'larch'
+  else
+    return 'lsl'
+  end
+end
+
 function M.m(bufnr)
   if vim.g.filetype_m then
     return vim.g.filetype_m

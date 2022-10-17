@@ -611,7 +611,9 @@ local extension = {
   c = function(path, bufnr)
     return require('vim.filetype.detect').lpc(bufnr)
   end,
-  lsl = 'lsl',
+  lsl = function(path, bufnr)
+    return require('vim.filetype.detect').lsl(bufnr)
+  end,
   lss = 'lss',
   nse = 'lua',
   rockspec = 'lua',
@@ -674,6 +676,7 @@ local extension = {
   DEF = 'modula2',
   ['m2'] = 'modula2',
   mi = 'modula2',
+  lm3 = 'modula3',
   ssc = 'monk',
   monk = 'monk',
   tsc = 'monk',
@@ -1458,6 +1461,9 @@ local filename = {
   ['.sawfishrc'] = 'lisp',
   ['/etc/login.access'] = 'loginaccess',
   ['/etc/login.defs'] = 'logindefs',
+  ['.lsl'] = function(path, bufnr)
+    return require('vim.filetype.detect').lsl(bufnr)
+  end,
   ['.luacheckrc'] = 'lua',
   ['lynx.cfg'] = 'lynx',
   ['m3overrides'] = 'm3build',
