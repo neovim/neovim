@@ -10,7 +10,7 @@ local retry = helpers.retry
 local ok = helpers.ok
 local iswin = helpers.iswin
 local command = helpers.command
-local uname = helpers.uname
+local isCI = helpers.isCI
 
 describe(':terminal', function()
   local screen
@@ -46,8 +46,8 @@ describe(':terminal', function()
   end)
 
   it("reads output buffer on terminal reporting #4151", function()
-    if uname() == 'freebsd' then
-      pending('Failing FreeBSD test')
+    if isCI('cirrus') then
+      pending('FIXME: cirrus')
     end
     if helpers.pending_win32(pending) then return end
     if iswin() then

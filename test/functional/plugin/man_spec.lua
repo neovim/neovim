@@ -8,6 +8,7 @@ local nvim_prog = helpers.nvim_prog
 local matches = helpers.matches
 local write_file = helpers.write_file
 local tmpname = helpers.tmpname
+local isCI = helpers.isCI
 
 clear()
 if funcs.executable('man') == 0 then
@@ -160,6 +161,9 @@ describe(':Man', function()
   end)
 
   it('reports non-existent man pages for absolute paths', function()
+    if isCI('cirrus') then
+      pending('FIXME: cirrus')
+    end
     local actual_file = tmpname()
     -- actual_file must be an absolute path to an existent file for us to test against it
     matches('^/.+', actual_file)
