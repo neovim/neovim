@@ -49,6 +49,10 @@ hi! link debugPC CursorLine
 if &background ==# 'dark'
   if (has('termguicolors') && &termguicolors) || has('gui_running')
     let g:terminal_ansi_colors = ['#080808', '#d7005f', '#00af5f', '#d78700', '#0087d7', '#d787d7', '#00afaf', '#dadada', '#707070', '#ff005f', '#00d75f', '#ffaf00', '#5fafff', '#ff87ff', '#00d7d7', '#ffffff']
+    " Nvim uses g:terminal_color_{0-15} instead
+    for i in range(g:terminal_ansi_colors->len())
+      let g:terminal_color_{i} = g:terminal_ansi_colors[i]
+    endfor
   endif
   hi Normal guifg=#dadada guibg=#080808 gui=NONE cterm=NONE
   hi ColorColumn guifg=NONE guibg=#1c1c1c gui=NONE cterm=NONE
@@ -114,6 +118,10 @@ else
   " Light background
   if (has('termguicolors') && &termguicolors) || has('gui_running')
     let g:terminal_ansi_colors = ['#080808', '#af0000', '#005f00', '#af5f00', '#005faf', '#870087', '#008787', '#d7d7d7', '#626262', '#d70000', '#008700', '#d78700', '#0087d7', '#af00af', '#00afaf', '#ffffff']
+    " Nvim uses g:terminal_color_{0-15} instead
+    for i in range(g:terminal_ansi_colors->len())
+      let g:terminal_color_{i} = g:terminal_ansi_colors[i]
+    endfor
   endif
   hi Normal guifg=#080808 guibg=#d7d7d7 gui=NONE cterm=NONE
   hi ColorColumn guifg=NONE guibg=#e4e4e4 gui=NONE cterm=NONE
