@@ -643,8 +643,6 @@ end_do_tag:
   }
   postponed_split = 0;          // don't split next time
   g_do_tagpreview = 0;          // don't do tag preview next time
-
-  return;
 }
 
 // List all the matching tags.
