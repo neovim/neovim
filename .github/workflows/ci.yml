@@ -19,7 +19,7 @@ concurrency:
 jobs:
   lint:
     if: (github.event_name == 'pull_request' && github.base_ref == 'master') || (github.event_name == 'push' && github.ref == 'refs/heads/master')
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     timeout-minutes: 10
     env:
       CC: gcc
@@ -142,7 +142,7 @@ jobs:
     # of the bundled dependencies.
 
     if: (github.event_name == 'pull_request' && github.base_ref == 'master') || (github.event_name == 'push' && github.ref == 'refs/heads/master')
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     timeout-minutes: 10
     env:
       CC: gcc
@@ -214,18 +214,18 @@ jobs:
         include:
           - flavor: asan
             cc: clang-13
-            runner: ubuntu-20.04
+            runner: ubuntu-22.04
             os: linux
           - flavor: tsan
             cc: clang-13
-            runner: ubuntu-20.04
+            runner: ubuntu-22.04
             os: linux
           - flavor: uchar
             cc: gcc
-            runner: ubuntu-20.04
+            runner: ubuntu-22.04
             os: linux
           - cc: clang
-            runner: macos-11
+            runner: macos-12
             os: osx
 
             # functionaltest-lua is our dumping ground for non-mainline configurations.
@@ -236,7 +236,7 @@ jobs:
             # 3. No treesitter parsers installed.
           - flavor: functionaltest-lua
             cc: gcc
-            runner: ubuntu-20.04
+            runner: ubuntu-22.04
             os: linux
             cmake: minimum_required
     runs-on: ${{ matrix.runner }}
