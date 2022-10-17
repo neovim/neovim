@@ -6,6 +6,8 @@ local exec_lua = helpers.exec_lua
 local funcs = helpers.funcs
 local nvim_prog = helpers.nvim_prog
 local matches = helpers.matches
+local write_file = helpers.write_file
+local tmpname = helpers.tmpname
 
 clear()
 if funcs.executable('man') == 0 then
@@ -155,5 +157,17 @@ describe(':Man', function()
     -- This will hang if #18281 regresses.
     local args = {nvim_prog, '--headless', '+autocmd VimLeave * echo "quit works!!"', '+Man!', '+call nvim_input("q")'}
     matches('quit works!!', funcs.system(args, {'manpage contents'}))
+  end)
+
+  it('reports non-existent man pages for absolute paths', function()
+    local actual_file = tmpname()
+    -- actual_file must be an absolute path to an existent file for us to test against it
+    matches('^/.+', actual_file)
+    write_file(actual_file, '')
+    local args = {nvim_prog, '--headless', '+:Man ' .. actual_file, '+q'}
+    matches(('Error detected while processing command line:\r\n' ..
+      'man.lua: "no manual entry for %s"'):format(actual_file),
+      funcs.system(args, {''}))
+    os.remove(actual_file)
   end)
 end)
