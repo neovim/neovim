@@ -430,6 +430,13 @@ describe('float window', function()
     assert_alive()
   end)
 
+  it("'scroll' is computed correctly when opening float with splitkeep=screen #20684", function()
+    meths.set_option('splitkeep', 'screen')
+    local float_opts = {relative = 'editor', row = 1, col = 1, width = 10, height = 10}
+    local float_win = meths.open_win(0, true, float_opts)
+    eq(5, meths.win_get_option(float_win, 'scroll'))
+  end)
+
   describe('with only one tabpage,', function()
     local float_opts = {relative = 'editor', row = 1, col = 1, width = 1, height = 1}
     local old_buf, old_win

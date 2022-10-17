@@ -6119,7 +6119,6 @@ void win_fix_scroll(int resize)
       invalidate_botline_win(wp);
       validate_botline(wp);
     }
-    win_comp_scroll(wp);
     wp->w_prev_height = wp->w_height;
     wp->w_prev_winrow = wp->w_winrow;
   }
@@ -6292,7 +6291,6 @@ void scroll_to_fraction(win_T *wp, int prev_height)
     wp->w_prev_fraction_row = wp->w_wrow;
   }
 
-  win_comp_scroll(wp);
   redraw_later(wp, UPD_SOME_VALID);
   wp->w_redr_status = true;
   invalidate_botline_win(wp);
@@ -6327,6 +6325,7 @@ void win_set_inner_size(win_T *wp, bool valid_cursor)
     }
     wp->w_skipcol = 0;
     wp->w_height_inner = height;
+    win_comp_scroll(wp);
 
     // There is no point in adjusting the scroll position when exiting.  Some
     // values might be invalid.
