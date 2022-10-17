@@ -181,7 +181,7 @@ function M.cls(bufnr)
     return vim.g.filetype_cls
   end
   local line = getlines(bufnr, 1)
-  if line:find('^%%') then
+  if line:find('^[%%\\]') then
     return 'tex'
   elseif line:find('^#') and line:lower():find('rexx') then
     return 'rexx'

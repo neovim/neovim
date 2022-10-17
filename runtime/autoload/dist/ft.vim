@@ -145,7 +145,7 @@ func dist#ft#FTcls()
     return
   endif
 
-  if getline(1) =~ '^%'
+  if getline(1) =~ '^\v%(\%|\\)'
     setf tex
   elseif getline(1)[0] == '#' && getline(1) =~ 'rexx'
     setf rexx

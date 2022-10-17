@@ -1768,6 +1768,11 @@ func Test_cls_file()
   call assert_equal('tex', &filetype)
   bwipe!
 
+  call writefile(['\NeedsTeXFormat{LaTeX2e}'], 'Xfile.cls')
+  split Xfile.cls
+  call assert_equal('tex', &filetype)
+  bwipe!
+
   " Rexx
 
   call writefile(['# rexx'], 'Xfile.cls')
