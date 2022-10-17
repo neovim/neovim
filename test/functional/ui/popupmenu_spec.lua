@@ -259,174 +259,339 @@ describe('ui/ext_popupmenu', function()
       {2:-- INSERT --}                                                |
     ]])
 
-    command('imap <f1> <cmd>call nvim_select_popupmenu_item(2,v:true,v:false,{})<cr>')
-    command('imap <f2> <cmd>call nvim_select_popupmenu_item(-1,v:false,v:false,{})<cr>')
-    command('imap <f3> <cmd>call nvim_select_popupmenu_item(1,v:false,v:true,{})<cr>')
-    feed('<C-r>=TestComplete()<CR>')
-    screen:expect{grid=[[
+    command('set wildmenu')
+    command('set wildoptions=pum')
+    local expected_wildpum = {
+      { "define", "", "", "" },
+      { "jump", "", "", "" },
+      { "list", "", "", "" },
+      { "place", "", "", "" },
+      { "undefine", "", "", "" },
+      { "unplace", "", "", "" },
+    }
+    feed('<Esc>:sign <Tab>')
+    screen:expect({grid = [[
                                                                   |
-      foo^                                                         |
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {2:-- INSERT --}                                                |
-    ]], popupmenu={
-      items=expected,
-      pos=0,
-      anchor={1,1,0},
-    }}
-
-    feed('<f1>')
-    screen:expect{grid=[[
                                                                   |
-      spam^                                                        |
       {1:~                                                           }|
       {1:~                                                           }|
       {1:~                                                           }|
       {1:~                                                           }|
       {1:~                                                           }|
-      {2:-- INSERT --}                                                |
-    ]], popupmenu={
-      items=expected,
-      pos=2,
-      anchor={1,1,0},
-    }}
+      :sign define^                                                |
+    ]], popupmenu = {
+      items = expected_wildpum,
+      pos = 0,
+      anchor = { 1, 7, 6 },
+    }})
 
-    feed('<f2>')
-    screen:expect{grid=[[
+    meths.select_popupmenu_item(-1, true, false, {})
+    screen:expect({grid = [[
                                                                   |
-      spam^                                                        |
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {2:-- INSERT --}                                                |
-    ]], popupmenu={
-      items=expected,
-      pos=-1,
-      anchor={1,1,0},
-    }}
-
-    feed('<f3>')
-    screen:expect([[
                                                                   |
-      bar^                                                         |
       {1:~                                                           }|
       {1:~                                                           }|
       {1:~                                                           }|
       {1:~                                                           }|
       {1:~                                                           }|
-      {2:-- INSERT --}                                                |
-    ]])
+      :sign ^                                                      |
+    ]], popupmenu = {
+      items = expected_wildpum,
+      pos = -1,
+      anchor = { 1, 7, 6 },
+    }})
 
-    -- also should work for builtin popupmenu
-    screen:set_option('ext_popupmenu', false)
-    feed('<C-r>=TestComplete()<CR>')
-    screen:expect([[
+    meths.select_popupmenu_item(5, true, false, {})
+    screen:expect({grid = [[
                                                                   |
-      foo^                                                         |
-      {6:fo   x the foo }{1:                                             }|
-      {7:bar            }{1:                                             }|
-      {7:spam           }{1:                                             }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {2:-- INSERT --}                                                |
-    ]])
-
-    feed('<f1>')
-    screen:expect([[
                                                                   |
-      spam^                                                        |
-      {7:fo   x the foo }{1:                                             }|
-      {7:bar            }{1:                                             }|
-      {6:spam           }{1:                                             }|
       {1:~                                                           }|
       {1:~                                                           }|
-      {2:-- INSERT --}                                                |
-    ]])
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      :sign unplace^                                               |
+    ]], popupmenu = {
+      items = expected_wildpum,
+      pos = 5,
+      anchor = { 1, 7, 6 },
+    }})
 
-    feed('<f2>')
-    screen:expect([[
+    meths.select_popupmenu_item(-1, true, true, {})
+    screen:expect({grid = [[
                                                                   |
-      spam^                                                        |
-      {7:fo   x the foo }{1:                                             }|
-      {7:bar            }{1:                                             }|
-      {7:spam           }{1:                                             }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {2:-- INSERT --}                                                |
-    ]])
-
-    feed('<f3>')
-    screen:expect([[
                                                                   |
-      bar^                                                         |
       {1:~                                                           }|
       {1:~                                                           }|
       {1:~                                                           }|
       {1:~                                                           }|
       {1:~                                                           }|
-      {2:-- INSERT --}                                                |
-    ]])
+      :sign ^                                                      |
+    ]]})
 
-    command('iunmap <f1>')
-    command('iunmap <f2>')
-    command('iunmap <f3>')
+    feed('<Tab>')
+    screen:expect({grid = [[
+                                                                  |
+                                                                  |
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      :sign define^                                                |
+    ]], popupmenu = {
+      items = expected_wildpum,
+      pos = 0,
+      anchor = { 1, 7, 6 },
+    }})
+
+    meths.select_popupmenu_item(5, true, true, {})
+    screen:expect({grid = [[
+                                                                  |
+                                                                  |
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      :sign unplace^                                               |
+    ]]})
+
+    local function test_pum_select_mappings()
+      screen:set_option('ext_popupmenu', true)
+      feed('<Esc>A<C-r>=TestComplete()<CR>')
+      screen:expect{grid=[[
+                                                                    |
+        foo^                                                         |
+        {1:~                                                           }|
+        {1:~                                                           }|
+        {1:~                                                           }|
+        {1:~                                                           }|
+        {1:~                                                           }|
+        {2:-- INSERT --}                                                |
+      ]], popupmenu={
+        items=expected,
+        pos=0,
+        anchor={1,1,0},
+      }}
+
+      feed('<f1>')
+      screen:expect{grid=[[
+                                                                    |
+        spam^                                                        |
+        {1:~                                                           }|
+        {1:~                                                           }|
+        {1:~                                                           }|
+        {1:~                                                           }|
+        {1:~                                                           }|
+        {2:-- INSERT --}                                                |
+      ]], popupmenu={
+        items=expected,
+        pos=2,
+        anchor={1,1,0},
+      }}
+
+      feed('<f2>')
+      screen:expect{grid=[[
+                                                                    |
+        spam^                                                        |
+        {1:~                                                           }|
+        {1:~                                                           }|
+        {1:~                                                           }|
+        {1:~                                                           }|
+        {1:~                                                           }|
+        {2:-- INSERT --}                                                |
+      ]], popupmenu={
+        items=expected,
+        pos=-1,
+        anchor={1,1,0},
+      }}
+
+      feed('<f3>')
+      screen:expect([[
+                                                                    |
+        bar^                                                         |
+        {1:~                                                           }|
+        {1:~                                                           }|
+        {1:~                                                           }|
+        {1:~                                                           }|
+        {1:~                                                           }|
+        {2:-- INSERT --}                                                |
+      ]])
+
+      feed('<Esc>:sign <Tab>')
+      screen:expect({grid = [[
+                                                                    |
+        bar                                                         |
+        {1:~                                                           }|
+        {1:~                                                           }|
+        {1:~                                                           }|
+        {1:~                                                           }|
+        {1:~                                                           }|
+        :sign define^                                                |
+      ]], popupmenu = {
+        items = expected_wildpum,
+        pos = 0,
+        anchor = { 1, 7, 6 },
+      }})
+
+      feed('<f1>')
+      screen:expect({grid = [[
+                                                                    |
+        bar                                                         |
+        {1:~                                                           }|
+        {1:~                                                           }|
+        {1:~                                                           }|
+        {1:~                                                           }|
+        {1:~                                                           }|
+        :sign list^                                                  |
+      ]], popupmenu = {
+        items = expected_wildpum,
+        pos = 2,
+        anchor = { 1, 7, 6 },
+      }})
+
+      feed('<f2>')
+      screen:expect({grid = [[
+                                                                    |
+        bar                                                         |
+        {1:~                                                           }|
+        {1:~                                                           }|
+        {1:~                                                           }|
+        {1:~                                                           }|
+        {1:~                                                           }|
+        :sign ^                                                      |
+      ]], popupmenu = {
+        items = expected_wildpum,
+        pos = -1,
+        anchor = { 1, 7, 6 },
+      }})
+
+      feed('<f3>')
+      screen:expect({grid = [[
+                                                                    |
+        bar                                                         |
+        {1:~                                                           }|
+        {1:~                                                           }|
+        {1:~                                                           }|
+        {1:~                                                           }|
+        {1:~                                                           }|
+        :sign jump^                                                  |
+      ]]})
+
+      -- also should work for builtin popupmenu
+      screen:set_option('ext_popupmenu', false)
+      feed('<Esc>A<C-r>=TestComplete()<CR>')
+      screen:expect([[
+                                                                    |
+        foo^                                                         |
+        {6:fo   x the foo }{1:                                             }|
+        {7:bar            }{1:                                             }|
+        {7:spam           }{1:                                             }|
+        {1:~                                                           }|
+        {1:~                                                           }|
+        {2:-- INSERT --}                                                |
+      ]])
+
+      feed('<f1>')
+      screen:expect([[
+                                                                    |
+        spam^                                                        |
+        {7:fo   x the foo }{1:                                             }|
+        {7:bar            }{1:                                             }|
+        {6:spam           }{1:                                             }|
+        {1:~                                                           }|
+        {1:~                                                           }|
+        {2:-- INSERT --}                                                |
+      ]])
+
+      feed('<f2>')
+      screen:expect([[
+                                                                    |
+        spam^                                                        |
+        {7:fo   x the foo }{1:                                             }|
+        {7:bar            }{1:                                             }|
+        {7:spam           }{1:                                             }|
+        {1:~                                                           }|
+        {1:~                                                           }|
+        {2:-- INSERT --}                                                |
+      ]])
+
+      feed('<f3>')
+      screen:expect([[
+                                                                    |
+        bar^                                                         |
+        {1:~                                                           }|
+        {1:~                                                           }|
+        {1:~                                                           }|
+        {1:~                                                           }|
+        {1:~                                                           }|
+        {2:-- INSERT --}                                                |
+      ]])
+
+      feed('<Esc>:sign <Tab>')
+      screen:expect([[
+                                                                    |
+        bar  {6: define         }                                       |
+        {1:~    }{7: jump           }{1:                                       }|
+        {1:~    }{7: list           }{1:                                       }|
+        {1:~    }{7: place          }{1:                                       }|
+        {1:~    }{7: undefine       }{1:                                       }|
+        {1:~    }{7: unplace        }{1:                                       }|
+        :sign define^                                                |
+      ]])
+
+      feed('<f1>')
+      screen:expect([[
+                                                                    |
+        bar  {7: define         }                                       |
+        {1:~    }{7: jump           }{1:                                       }|
+        {1:~    }{6: list           }{1:                                       }|
+        {1:~    }{7: place          }{1:                                       }|
+        {1:~    }{7: undefine       }{1:                                       }|
+        {1:~    }{7: unplace        }{1:                                       }|
+        :sign list^                                                  |
+      ]])
+
+      feed('<f2>')
+      screen:expect([[
+                                                                    |
+        bar  {7: define         }                                       |
+        {1:~    }{7: jump           }{1:                                       }|
+        {1:~    }{7: list           }{1:                                       }|
+        {1:~    }{7: place          }{1:                                       }|
+        {1:~    }{7: undefine       }{1:                                       }|
+        {1:~    }{7: unplace        }{1:                                       }|
+        :sign ^                                                      |
+      ]])
+
+      feed('<f3>')
+      screen:expect([[
+                                                                    |
+        bar                                                         |
+        {1:~                                                           }|
+        {1:~                                                           }|
+        {1:~                                                           }|
+        {1:~                                                           }|
+        {1:~                                                           }|
+        :sign jump^                                                  |
+      ]])
+    end
+
+    command('map! <f1> <cmd>call nvim_select_popupmenu_item(2,v:true,v:false,{})<cr>')
+    command('map! <f2> <cmd>call nvim_select_popupmenu_item(-1,v:false,v:false,{})<cr>')
+    command('map! <f3> <cmd>call nvim_select_popupmenu_item(1,v:false,v:true,{})<cr>')
+    test_pum_select_mappings()
+
+    command('unmap! <f1>')
+    command('unmap! <f2>')
+    command('unmap! <f3>')
     exec_lua([[
-      vim.keymap.set('i', '<f1>', function() vim.api.nvim_select_popupmenu_item(2, true, false, {}) end)
-      vim.keymap.set('i', '<f2>', function() vim.api.nvim_select_popupmenu_item(-1, false, false, {}) end)
-      vim.keymap.set('i', '<f3>', function() vim.api.nvim_select_popupmenu_item(1, false, true, {}) end)
+      vim.keymap.set('!', '<f1>', function() vim.api.nvim_select_popupmenu_item(2, true, false, {}) end)
+      vim.keymap.set('!', '<f2>', function() vim.api.nvim_select_popupmenu_item(-1, false, false, {}) end)
+      vim.keymap.set('!', '<f3>', function() vim.api.nvim_select_popupmenu_item(1, false, true, {}) end)
     ]])
-    feed('<C-r>=TestComplete()<CR>')
-    screen:expect([[
-                                                                  |
-      foo^                                                         |
-      {6:fo   x the foo }{1:                                             }|
-      {7:bar            }{1:                                             }|
-      {7:spam           }{1:                                             }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {2:-- INSERT --}                                                |
-    ]])
-
-    feed('<f1>')
-    screen:expect([[
-                                                                  |
-      spam^                                                        |
-      {7:fo   x the foo }{1:                                             }|
-      {7:bar            }{1:                                             }|
-      {6:spam           }{1:                                             }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {2:-- INSERT --}                                                |
-    ]])
-
-    feed('<f2>')
-    screen:expect([[
-                                                                  |
-      spam^                                                        |
-      {7:fo   x the foo }{1:                                             }|
-      {7:bar            }{1:                                             }|
-      {7:spam           }{1:                                             }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {2:-- INSERT --}                                                |
-    ]])
-
-    feed('<f3>')
-    screen:expect([[
-                                                                  |
-      bar^                                                         |
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {2:-- INSERT --}                                                |
-    ]])
+    test_pum_select_mappings()
 
     feed('<esc>ddiaa bb cc<cr>')
     feed('<c-x><c-n>')

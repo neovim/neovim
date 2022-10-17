@@ -3563,17 +3563,6 @@ static int ins_compl_next(bool allow_get_expansion, int count, bool insert_match
   return num_matches;
 }
 
-void pum_ext_select_item(int item, bool insert, bool finish)
-{
-  if (!pum_visible() || item < -1 || item >= compl_match_arraysize) {
-    return;
-  }
-  pum_want.active = true;
-  pum_want.item = item;
-  pum_want.insert = insert;
-  pum_want.finish = finish;
-}
-
 /// Call this while finding completions, to check whether the user has hit a key
 /// that should change the currently displayed completion, or exit completion
 /// mode.  Also, when compl_pending is not zero, show a completion as soon as

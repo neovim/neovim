@@ -16,6 +16,14 @@ typedef struct {
 
 EXTERN ScreenGrid pum_grid INIT(= SCREEN_GRID_INIT);
 
+/// state for pum_ext_select_item.
+EXTERN struct {
+  bool active;
+  int item;
+  bool insert;
+  bool finish;
+} pum_want;
+
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "popupmenu.h.generated.h"
 #endif

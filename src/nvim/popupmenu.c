@@ -904,6 +904,17 @@ void pum_recompose(void)
   ui_comp_compose_grid(&pum_grid);
 }
 
+void pum_ext_select_item(int item, bool insert, bool finish)
+{
+  if (!pum_visible() || item < -1 || item >= pum_size) {
+    return;
+  }
+  pum_want.active = true;
+  pum_want.item = item;
+  pum_want.insert = insert;
+  pum_want.finish = finish;
+}
+
 /// Gets the height of the menu.
 ///
 /// @return the height of the popup menu, the number of entries visible.
