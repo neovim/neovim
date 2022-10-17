@@ -53,11 +53,12 @@ module.exports = async ({github, context}) => {
   if (labels.includes('filetype')) {
     reviewers.add("clason")
     reviewers.add("gpanders")
+    reviewers.add("smjonas")
   }
 
   if (labels.includes('lsp')) {
-    reviewers.add("mfussenegger")
     reviewers.add("glepnir")
+    reviewers.add("mfussenegger")
   }
 
   if (labels.includes('treesitter')) {
