@@ -474,11 +474,11 @@ func Test_cmdheight_zero()
   redraw!
 
   echo 'test echo'
-  call assert_equal(116, screenchar(&lines + 1, 1))
+  call assert_equal(116, screenchar(&lines, 1))
   redraw!
 
   echomsg 'test echomsg'
-  call assert_equal(116, screenchar(&lines + 1, 1))
+  call assert_equal(116, screenchar(&lines, 1))
   redraw!
 
   call feedkeys(":ls\<CR>", "xt")
