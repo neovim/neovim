@@ -366,7 +366,7 @@ let s:filename_checks = {
     \ 'mmp': ['file.mmp'],
     \ 'modconf': ['/etc/modules.conf', '/etc/modules', '/etc/conf.modules', '/etc/modprobe.file', 'any/etc/conf.modules', 'any/etc/modprobe.file', 'any/etc/modules', 'any/etc/modules.conf'],
     \ 'modula2': ['file.m2', 'file.mi'],
-    \ 'modula3': ['file.m3', 'file.mg', 'file.i3', 'file.ig'],
+    \ 'modula3': ['file.m3', 'file.mg', 'file.i3', 'file.ig', 'file.lm3'],
     \ 'monk': ['file.isc', 'file.monk', 'file.ssc', 'file.tsc'],
     \ 'moo': ['file.moo'],
     \ 'moonscript': ['file.moon'],
@@ -1960,6 +1960,38 @@ func Test_inc_file()
   bwipe!
 
   call delete('Xfile.inc')
+  filetype off
+endfunc
+
+func Test_lsl_file()
+  filetype on
+
+  call writefile(['looks like Linden Scripting Language'], 'Xfile.lsl')
+  split Xfile.lsl
+  call assert_equal('lsl', &filetype)
+  bwipe!
+
+  " Test dist#ft#FTlsl()
+
+  let g:filetype_lsl = 'larch'
+  split Xfile.lsl
+  call assert_equal('larch', &filetype)
+  bwipe!
+  unlet g:filetype_lsl
+
+  " Larch Shared Language
+
+  call writefile(['% larch comment'], 'Xfile.lsl')
+  split Xfile.lsl
+  call assert_equal('larch', &filetype)
+  bwipe!
+
+  call writefile(['foo: trait'], 'Xfile.lsl')
+  split Xfile.lsl
+  call assert_equal('larch', &filetype)
+  bwipe!
+
+  call delete('Xfile.lsl')
   filetype off
 endfunc
 
