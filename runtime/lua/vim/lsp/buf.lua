@@ -460,78 +460,19 @@ function M.outgoing_calls()
   call_hierarchy('callHierarchy/outgoingCalls')
 end
 
---- List workspace folders.
----
+---@deprecated use |vim.lsp.list_workspace_folder| instead
 function M.list_workspace_folders()
-  local workspace_folders = {}
-  for _, client in pairs(vim.lsp.buf_get_clients()) do
-    for _, folder in pairs(client.workspace_folders or {}) do
-      table.insert(workspace_folders, folder.name)
-    end
-  end
-  return workspace_folders
+  return vim.lsp.list_workspace_folders({ bufnr = 0 })
 end
 
---- Add the folder at path to the workspace folders. If {path} is
---- not provided, the user will be prompted for a path using |input()|.
+---@deprecated use |vim.lsp.add_workspace_folder| instead
 function M.add_workspace_folder(workspace_folder)
-  workspace_folder = workspace_folder
-    or npcall(vim.fn.input, 'Workspace Folder: ', vim.fn.expand('%:p:h'), 'dir')
-  api.nvim_command('redraw')
-  if not (workspace_folder and #workspace_folder > 0) then
-    return
-  end
-  if vim.fn.isdirectory(workspace_folder) == 0 then
-    print(workspace_folder, ' is not a valid directory')
-    return
-  end
-  local params = util.make_workspace_params(
-    { { uri = vim.uri_from_fname(workspace_folder), name = workspace_folder } },
-    { {} }
-  )
-  for _, client in pairs(vim.lsp.buf_get_clients()) do
-    local found = false
-    for _, folder in pairs(client.workspace_folders or {}) do
-      if folder.name == workspace_folder then
-        found = true
-        print(workspace_folder, 'is already part of this workspace')
-        break
-      end
-    end
-    if not found then
-      vim.lsp.buf_notify(0, 'workspace/didChangeWorkspaceFolders', params)
-      if not client.workspace_folders then
-        client.workspace_folders = {}
-      end
-      table.insert(client.workspace_folders, params.event.added[1])
-    end
-  end
+  vim.lsp.add_workspace_folder(workspace_folder, { bufnr = 0 })
 end
 
---- Remove the folder at path from the workspace folders. If
---- {path} is not provided, the user will be prompted for
---- a path using |input()|.
+---@deprecated use |vim.lsp.remove_workspace_folder| instead
 function M.remove_workspace_folder(workspace_folder)
-  workspace_folder = workspace_folder
-    or npcall(vim.fn.input, 'Workspace Folder: ', vim.fn.expand('%:p:h'))
-  api.nvim_command('redraw')
-  if not (workspace_folder and #workspace_folder > 0) then
-    return
-  end
-  local params = util.make_workspace_params(
-    { {} },
-    { { uri = vim.uri_from_fname(workspace_folder), name = workspace_folder } }
-  )
-  for _, client in pairs(vim.lsp.buf_get_clients()) do
-    for idx, folder in pairs(client.workspace_folders) do
-      if folder.name == workspace_folder then
-        vim.lsp.buf_notify(0, 'workspace/didChangeWorkspaceFolders', params)
-        client.workspace_folders[idx] = nil
-        return
-      end
-    end
-  end
-  print(workspace_folder, 'is not currently part of the workspace')
+  vim.lsp.remove_workspace_folder(workspace_folder, { bufnr = 0 })
 end
 
 --- Lists all symbols in the current workspace in the quickfix window.

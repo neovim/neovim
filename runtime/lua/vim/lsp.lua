@@ -808,6 +808,74 @@ function lsp.client()
   error()
 end
 
+---@private
+---Resolve a workspace for a client
+---
+---@param markers string[] list of search patterns
+---@param bufnr number
+---@return table|nil list of `{ uri:string, name: string }`
+local function resolve_workspace(markers, bufnr)
+  if not markers then
+    return
+  end
+  bufnr = resolve_bufnr(bufnr)
+  local bufname = vim.api.nvim_buf_get_name(bufnr)
+  local buf_path = vim.fs.dirname(bufname)
+  local anchor = vim.fs.find(
+    markers,
+    { path = buf_path, stop = vim.loop.os_homedir(), upward = true }
+  )[1]
+  if not anchor then
+    return
+  end
+  local root_dir = vim.fs.dirname(anchor)
+  if not root_dir then
+    return
+  end
+  local ws = {
+    name = root_dir,
+    uri = vim.uri_from_fname(root_dir),
+  }
+  return ws
+end
+
+---@private
+---Returns true if a workspace marker for a given client is found
+---
+---@param client table see |vim.lsp.client|
+---@param config table
+---@param bufnr number
+---@return boolean|nil
+local function should_reuse_client(client, config, bufnr)
+  if client.name ~= config.name then
+    return
+  end
+  bufnr = resolve_bufnr(bufnr)
+  local ws = resolve_workspace(config.workspace_markers, bufnr)
+  if not ws then
+    return
+  end
+  for _, folder in ipairs(client.workspace_folders or {}) do
+    if ws.uri == folder.uri then
+      local _ = log.debug() and log.debug('found existing workspace_folders for', ws.uri)
+      return true
+    end
+  end
+  local prompt_opts = {
+    prompt = string.format('add %s to current workspaces?\n[y]es or [n]o:\t', ws.uri),
+    default = 'n',
+  }
+  local should_add
+  vim.ui.input(prompt_opts, function(input)
+    if input == 'y' or input == 'Y' or input == 'yes' or input == 'Yes' then
+      should_add = lsp.add_workspace_folder(ws, { id = client.id })
+    end
+    -- TODO: is there another way to dismiss the prompt?
+    api.nvim_command('redraw')
+  end)
+  return should_add
+end
+
 --- Create a new LSP client and start a language server or reuses an already
 --- running client if one is found matching `name` and `root_dir`.
 --- Attaches the current buffer to the client.
@@ -852,6 +920,10 @@ end
 ---                            Used on all running clients.
 ---                            The default implementation re-uses a client if name
 ---                            and root_dir matches.
+---             - workspace_markers (table)
+---                     list of search patterns used to determine the workspace root for the current buffer.
+---                     Neither `/` nor `$HOME` are allowed!, and any pattern search that arrives at either
+---                     will be rejected to prevent performance issues.
 ---             - bufnr (number)
 ---                     Buffer handle to attach to if starting or re-using a
 ---                     client (0 for current).
@@ -859,20 +931,28 @@ end
 function lsp.start(config, opts)
   opts = opts or {}
   local reuse_client = opts.reuse_client
-    or function(client, conf)
-      return client.config.root_dir == conf.root_dir and client.name == conf.name
+    or function(client, conf, bufnr)
+      local res = should_reuse_client(client, conf, bufnr)
+      return res
     end
   config.name = config.name
   if not config.name and type(config.cmd) == 'table' then
     config.name = config.cmd[1] and vim.fs.basename(config.cmd[1]) or nil
   end
-  local bufnr = opts.bufnr
-  if bufnr == nil or bufnr == 0 then
-    bufnr = api.nvim_get_current_buf()
-  end
+  local bufnr = resolve_bufnr(opts.bufnr)
+  config.workspace_markers = config.workspace_markers or opts.workspace_markers
+  config.workspace_folders = config.workspace_folders
+    or (function()
+      local current_workspace = resolve_workspace(config.workspace_markers, bufnr)
+      if current_workspace then
+        return { current_workspace }
+      end
+    end)()
+
   for _, clients in ipairs({ uninitialized_clients, lsp.get_active_clients() }) do
     for _, client in pairs(clients) do
-      if reuse_client(client, config) then
+      if reuse_client(client, config, bufnr) then
+        local _ = log.info() and log.info('reusing found matching workspace for', client.name, 'for buffer', bufnr)
         lsp.buf_attach_client(bufnr, client.id)
         return client.id
       end
@@ -1324,6 +1404,47 @@ function lsp.start_client(config)
           return true
         else
           return false
+        end
+      end
+
+      ---@param folder string|table
+      client.add_workspace_folder = function(folder)
+        if type(folder) == "string" then
+          folder = {
+          uri = vim.uri_from_fname(folder),
+          name = folder,
+          }
+        end
+        client.workspace_folders = client.workspace_folders or {}
+        for _, entry in ipairs(client.workspace_folders) do
+          if entry.uri == folder.uri then
+            -- TODO(kylo252): should we silently ignore this instead?
+            vim.notify_once('[LSP] ' .. folder.name .. ' is already part of this workspace')
+            return
+          end
+        end
+        local params = { event = { added = { folder }, removed = {} } }
+        client.notify('workspace/didChangeWorkspaceFolders', params)
+        table.insert(client.workspace_folders, folder)
+        return true
+      end
+
+      ---@param folder string|table
+      client.remove_workspace_folder = function(folder)
+        if type(folder) == "string" then
+          folder = {
+          uri = vim.uri_from_fname(folder),
+          name = folder,
+          }
+        end
+        client.workspace_folders = client.workspace_folders or {}
+        local params = { event = { added = { }, removed = {folder } } }
+        for idx, entry in ipairs(client.workspace_folders) do
+          if entry.uri == folder.uri then
+            client.workspace_folders[idx] = nil
+            client.notify('workspace/didChangeWorkspaceFolders', params)
+            return true
+          end
         end
       end
 
@@ -2318,6 +2439,62 @@ lsp.commands = setmetatable({}, {
     rawset(tbl, key, value)
   end,
 })
+
+--- List workspace folders for clients matching the filter
+---@param filter table|nil A table with key-value pairs to filter clients
+---@return table|nil list of `{ uri:string, name: string }`
+function lsp.list_workspace_folders(filter)
+  local workspace_folders = {}
+  for _, client in ipairs(lsp.get_active_clients(filter)) do
+    for _, folder in ipairs(client.workspace_folders or {}) do
+      workspace_folders[client.name] =workspace_folders[client.name] or {}
+      table.insert(workspace_folders[client.name], folder)
+    end
+  end
+  return workspace_folders
+end
+
+--- Add the folder at path to the workspace folders to clients matching the filter
+---@param folder string|table|nil will default to CWD
+---@param filter table|nil A table with key-value pairs used to filter clients
+---@return boolean|nil true if workspace was added
+function lsp.add_workspace_folder(folder, filter)
+  folder = folder or uv.cwd()
+  for _, client in ipairs(lsp.get_active_clients(filter)) do
+    if
+      not vim.tbl_get(client.server_capabilities, 'workspace', 'workspaceFolders', 'supported')
+    then
+      vim.notify_once(
+        string.format("[LSP] %s doesn't support workspaces", client.name),
+        vim.log.levels.WARN
+      )
+      return
+    end
+    client.add_workspace_folder(folder)
+  end
+  return true
+end
+
+--- Remove the folder at path from the workspace folders in clients matching the filter
+---@param folder string|table|nil will default to CWD
+---@param filter table|nil A table with key-value pairs used to filter clients
+---@return boolean|nil true if workspace was removed
+function lsp.remove_workspace_folder(folder, filter)
+  folder = folder or uv.cwd()
+  for _, client in ipairs(lsp.get_active_clients(filter)) do
+    if
+      not vim.tbl_get(client.server_capabilities, 'workspace', 'workspaceFolders', 'supported')
+    then
+      vim.notify_once(
+        string.format("[LSP] %s doesn't support workspaces", client.name),
+        vim.log.levels.WARN
+      )
+      return
+    end
+    client.remove_workspace_folder(folder)
+  end
+  return true
+end
 
 return lsp
 -- vim:sw=2 ts=2 et
