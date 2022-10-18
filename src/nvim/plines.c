@@ -37,6 +37,9 @@
 /// Functions calculating vertical size of text when displayed inside a window.
 /// Calls horizontal size functions defined below.
 
+/// Return the number of window lines occupied by buffer line "lnum".
+/// Includes any filler lines.
+///
 /// @param winheight when true limit to window height
 int plines_win(win_T *wp, linenr_T lnum, bool winheight)
 {
@@ -71,6 +74,9 @@ bool win_may_fill(win_T *wp)
   return (wp->w_p_diff && diffopt_filler()) || wp->w_buffer->b_virt_line_blocks;
 }
 
+/// Return the number of window lines occupied by buffer line "lnum".
+/// Does not include filler lines.
+///
 /// @param winheight when true limit to window height
 int plines_win_nofill(win_T *wp, linenr_T lnum, bool winheight)
 {
