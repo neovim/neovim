@@ -1396,16 +1396,14 @@ void msg_start(void)
     msg_clr_eos();
   }
 
+  bool cmdheight_check = p_ch == 0 && !ui_has(kUIMessages);
+
   // if cmdheight=0, we need to scroll in the first line of msg_grid upon the screen
-  if (p_ch == 0 && !ui_has(kUIMessages)) {
+  if (cmdheight_check && !msg_scrolled) {
     msg_grid_validate();
-
-    if (!msg_scrolled) {
-      msg_scroll_up(false, true);
-      cmdline_row = Rows - 1;
-    }
-
+    msg_scroll_up(false, true);
     msg_scrolled++;
+    cmdline_row = Rows - 1;
   }
 
   if (!msg_scroll && full_screen) {     // overwrite last message
@@ -1415,6 +1413,10 @@ void msg_start(void)
     msg_putchar('\n');
     did_return = true;
     cmdline_row = msg_row;
+  } else if (cmdheight_check) {
+    msg_row = Rows - 1;
+    cmdline_row = msg_row;
+    need_wait_return = true;
   }
   if (!msg_didany || lines_left < 0) {
     msg_starthere();
