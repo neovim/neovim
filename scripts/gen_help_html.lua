@@ -300,7 +300,7 @@ local function ignore_parse_error(s, fname)
   return (helpfile == 'pi_netrw.txt'
     -- Ignore parse errors for unclosed tag.
     -- This is common in vimdocs and is treated as plaintext by :help.
-    or s:find("^[*]")
+    or s:find("^[`'|*]")
   )
 end
 
