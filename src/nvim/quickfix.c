@@ -1058,6 +1058,7 @@ static int qf_init_ext(qf_info_T *qi, int qf_idx, const char *restrict efile, bu
 {
   qfstate_T state = { 0 };
   qffields_T fields = { 0 };
+  qfline_T *old_last = NULL;
   static efm_T *fmt_first = NULL;
   static char *last_efm = NULL;
   int retval = -1;                      // default: return error flag
@@ -1071,7 +1072,6 @@ static int qf_init_ext(qf_info_T *qi, int qf_idx, const char *restrict efile, bu
   }
 
   qf_list_T *qfl;
-  qfline_T *old_last = NULL;
   bool adding = false;
   if (newlist || qf_idx == qi->qf_listcount) {
     // make place for a new list
