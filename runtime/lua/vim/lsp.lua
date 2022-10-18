@@ -1522,6 +1522,7 @@ function lsp.start_client(config)
     nvim_exec_autocmds('LspAttach', {
       buffer = bufnr,
       modeline = false,
+      client = client,
       data = { client_id = client.id },
     })
 

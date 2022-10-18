@@ -89,7 +89,7 @@ calls behind capability checks:
 >
     vim.api.nvim_create_autocmd('LspAttach', {
       callback = function(args)
-        local client = vim.lsp.get_client_by_id(args.data.client_id)
+        local client = args.client
         if client.server_capabilities.hoverProvider then
           vim.keymap.set('n', 'K', vim.lsp.buf.hover, { buffer = args.buf })
         end
@@ -492,7 +492,7 @@ callback in the "data" table. Example: >
     vim.api.nvim_create_autocmd("LspAttach", {
       callback = function(args)
         local bufnr = args.buf
-        local client = vim.lsp.get_client_by_id(args.data.client_id)
+        local client = args.client
         if client.server_capabilities.completionProvider then
           vim.bo[bufnr].omnifunc = "v:lua.vim.lsp.omnifunc"
         end
