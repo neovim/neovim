@@ -1397,11 +1397,15 @@ void msg_start(void)
   }
 
   // if cmdheight=0, we need to scroll in the first line of msg_grid upon the screen
-  if (p_ch == 0 && !ui_has(kUIMessages) && !msg_scrolled) {
+  if (p_ch == 0 && !ui_has(kUIMessages)) {
     msg_grid_validate();
-    msg_scroll_up(false, true);
+
+    if (!msg_scrolled) {
+      msg_scroll_up(false, true);
+      cmdline_row = Rows - 1;
+    }
+
     msg_scrolled++;
-    cmdline_row = Rows - 1;
   }
 
   if (!msg_scroll && full_screen) {     // overwrite last message
