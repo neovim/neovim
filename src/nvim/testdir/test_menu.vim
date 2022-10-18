@@ -429,7 +429,7 @@ func Test_menu_special()
   nunmenu Test.Sign
 endfunc
 
-" Test for "icon=filname" in a toolbar
+" Test for "icon=filename" in a toolbar
 func Test_menu_icon()
   CheckFeature toolbar
   nmenu icon=myicon.xpm Toolbar.Foo  :echo "Foo"<CR>

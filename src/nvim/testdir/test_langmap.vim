@@ -52,7 +52,7 @@ func Test_langmap()
   set langmap=RL
   let g:counter = 0
   nnoremap L;L <Cmd>let g:counter += 1<CR>
-  nnoremap <C-L> <Cmd>throw 'This mapping shoud not be triggered'<CR>
+  nnoremap <C-L> <Cmd>throw 'This mapping should not be triggered'<CR>
 
   " 'langmap' is applied to keys without modifiers when matching a mapping
   call feedkeys('R;R', 'tx')

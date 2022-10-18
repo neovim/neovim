@@ -1281,7 +1281,7 @@ func Test_visual_block_with_virtualedit()
 endfunc
 
 func Test_visual_block_ctrl_w_f()
-  " Emtpy block selected in new buffer should not result in an error.
+  " Empty block selected in new buffer should not result in an error.
   au! BufNew foo sil norm f
   edit foo
 

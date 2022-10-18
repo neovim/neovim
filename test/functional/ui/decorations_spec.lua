@@ -1115,7 +1115,7 @@ if (h->n_buckets < new_n_buckets) { // expand
     ]]}
 
     meths.buf_set_extmark(0, ns, 5, 0, {
-      virt_lines = { {{"^^ REVIEW:", "Todo"}, {" new_vals variable seems unneccesary?", "Comment"}} };
+      virt_lines = { {{"^^ REVIEW:", "Todo"}, {" new_vals variable seems unnecessary?", "Comment"}} };
     })
     -- TODO: what about the cursor??
     screen:expect{grid=[[
@@ -1128,7 +1128,7 @@ if (h->n_buckets < new_n_buckets) { // expand
         if (kh_is_map && val_size) {                    |
           ^char *new_vals = {3:krealloc}( h->vals_buf, new_n_|
       buckets * val_size);                              |
-      {5:^^ REVIEW:}{6: new_vals variable seems unneccesary?}   |
+      {5:^^ REVIEW:}{6: new_vals variable seems unnecessary?}   |
           h->vals_buf = new_vals;                       |
                                                         |
     ]]}

@@ -2351,7 +2351,7 @@ static void expand_shellcmd(char *filepat, int *num_file, char ***file, int flag
   }
 
   // Go over all directories in $PATH.  Expand matches in that directory and
-  // collect them in "ga". When "." is not in $PATH also expaned for the
+  // collect them in "ga". When "." is not in $PATH also expand for the
   // current directory, to find "subdir/cmd".
   ga_init(&ga, (int)sizeof(char *), 10);
   hashtab_T found_ht;

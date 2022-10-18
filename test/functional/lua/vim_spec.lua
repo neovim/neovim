@@ -1016,11 +1016,11 @@ describe('lua stdlib', function()
     eq('hi', funcs.luaeval "vim.g.testing")
     eq(123, funcs.luaeval "vim.g.other")
     eq(5120.1, funcs.luaeval "vim.g.floaty")
-    eq(NIL, funcs.luaeval "vim.g.nonexistant")
+    eq(NIL, funcs.luaeval "vim.g.nonexistent")
     eq(NIL, funcs.luaeval "vim.g.nullvar")
     -- lost over RPC, so test locally:
     eq({false, true}, exec_lua [[
-      return {vim.g.nonexistant == vim.NIL, vim.g.nullvar == vim.NIL}
+      return {vim.g.nonexistent == vim.NIL, vim.g.nullvar == vim.NIL}
     ]])
 
     eq({hello="world"}, funcs.luaeval "vim.g.to_delete")
@@ -1123,12 +1123,12 @@ describe('lua stdlib', function()
     eq('bye', funcs.luaeval "vim.b[BUF].testing")
     eq(123, funcs.luaeval "vim.b.other")
     eq(5120.1, funcs.luaeval "vim.b.floaty")
-    eq(NIL, funcs.luaeval "vim.b.nonexistant")
-    eq(NIL, funcs.luaeval "vim.b[BUF].nonexistant")
+    eq(NIL, funcs.luaeval "vim.b.nonexistent")
+    eq(NIL, funcs.luaeval "vim.b[BUF].nonexistent")
     eq(NIL, funcs.luaeval "vim.b.nullvar")
     -- lost over RPC, so test locally:
     eq({false, true}, exec_lua [[
-      return {vim.b.nonexistant == vim.NIL, vim.b.nullvar == vim.NIL}
+      return {vim.b.nonexistent == vim.NIL, vim.b.nullvar == vim.NIL}
     ]])
 
     matches([[attempt to index .* nil value]],
@@ -1207,7 +1207,7 @@ describe('lua stdlib', function()
 
     eq(NIL, funcs.luaeval "vim.b.testing")
     eq(NIL, funcs.luaeval "vim.b.other")
-    eq(NIL, funcs.luaeval "vim.b.nonexistant")
+    eq(NIL, funcs.luaeval "vim.b.nonexistent")
   end)
 
   it('vim.w', function()
@@ -1226,8 +1226,8 @@ describe('lua stdlib', function()
     eq('hi', funcs.luaeval "vim.w.testing")
     eq('bye', funcs.luaeval "vim.w[WIN].testing")
     eq(123, funcs.luaeval "vim.w.other")
-    eq(NIL, funcs.luaeval "vim.w.nonexistant")
-    eq(NIL, funcs.luaeval "vim.w[WIN].nonexistant")
+    eq(NIL, funcs.luaeval "vim.w.nonexistent")
+    eq(NIL, funcs.luaeval "vim.w[WIN].nonexistent")
 
     matches([[attempt to index .* nil value]],
        pcall_err(exec_lua, 'return vim.w[WIN][0].testing'))
@@ -1305,7 +1305,7 @@ describe('lua stdlib', function()
 
     eq(NIL, funcs.luaeval "vim.w.testing")
     eq(NIL, funcs.luaeval "vim.w.other")
-    eq(NIL, funcs.luaeval "vim.w.nonexistant")
+    eq(NIL, funcs.luaeval "vim.w.nonexistent")
   end)
 
   it('vim.t', function()
@@ -1317,10 +1317,10 @@ describe('lua stdlib', function()
 
     eq('hi', funcs.luaeval "vim.t.testing")
     eq(123, funcs.luaeval "vim.t.other")
-    eq(NIL, funcs.luaeval "vim.t.nonexistant")
+    eq(NIL, funcs.luaeval "vim.t.nonexistent")
     eq('hi', funcs.luaeval "vim.t[0].testing")
     eq(123, funcs.luaeval "vim.t[0].other")
-    eq(NIL, funcs.luaeval "vim.t[0].nonexistant")
+    eq(NIL, funcs.luaeval "vim.t[0].nonexistent")
 
     matches([[attempt to index .* nil value]],
        pcall_err(exec_lua, 'return vim.t[0][0].testing'))
@@ -1387,7 +1387,7 @@ describe('lua stdlib', function()
 
     eq(NIL, funcs.luaeval "vim.t.testing")
     eq(NIL, funcs.luaeval "vim.t.other")
-    eq(NIL, funcs.luaeval "vim.t.nonexistant")
+    eq(NIL, funcs.luaeval "vim.t.nonexistent")
   end)
 
   it('vim.env', function()
