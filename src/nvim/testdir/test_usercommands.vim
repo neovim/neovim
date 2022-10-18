@@ -79,6 +79,19 @@ function Test_cmdmods()
   call assert_equal('silent!', g:mods)
   tab MyCmd
   call assert_equal('tab', g:mods)
+  0tab MyCmd
+  call assert_equal('0tab', g:mods)
+  tab split
+  tab MyCmd
+  call assert_equal('tab', g:mods)
+  1tab MyCmd
+  call assert_equal('1tab', g:mods)
+  tabprev
+  tab MyCmd
+  call assert_equal('tab', g:mods)
+  2tab MyCmd
+  call assert_equal('2tab', g:mods)
+  2tabclose
   topleft MyCmd
   call assert_equal('topleft', g:mods)
   to MyCmd
