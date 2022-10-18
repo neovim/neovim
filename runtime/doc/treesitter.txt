@@ -372,6 +372,59 @@ instance, to highlight comments differently per language: >
     hi @comment.lua @guifg=DarkBlue
     hi link @comment.doc.java String
 <
+The following captures are linked by default to standard |group-name|s:
+>
+    @text.literal      Comment
+    @text.reference    Identifier
+    @text.title        Title
+    @text.uri          Underlined
+    @text.underline    Underlined
+    @text.todo         Todo
+
+    @comment           Comment
+    @punctuation       Delimiter
+
+    @constant          Constant
+    @constant.builtin  Special
+    @constant.macro    Define
+    @define            Define
+    @macro             Macro
+    @string            String
+    @string.escape     SpecialChar
+    @string.special    SpecialChar
+    @character         Character
+    @character.special SpecialChar
+    @number            Number
+    @boolean           Boolean
+    @float             Float
+
+    @function          Function
+    @function.builtin  Special
+    @function.macro    Macro
+    @parameter         Identifier
+    @method            Function
+    @field             Identifier
+    @property          Identifier
+    @constructor       Special
+
+    @conditional       Conditional
+    @repeat            Repeat
+    @label             Label
+    @operator          Operator
+    @keyword           Keyword
+    @exception         Exception
+
+    @variable          Identifier
+    @type              Type
+    @type.definition   Typedef
+    @storageclass      StorageClass
+    @structure         Structure
+    @namespace         Identifier
+    @include           Include
+    @preproc           PreProc
+    @debug             Debug
+    @tag               Tag
+<
                                                   *treesitter-highlight-spell*
 The special `@spell` capture can be used to indicate that a node should be
 spell checked by Nvim's builtin |spell| checker. For example, the following

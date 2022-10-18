@@ -98,8 +98,6 @@ enum {
 
 // The default highlight groups.  These are compiled-in for fast startup and
 // they still work when the runtime files can't be found.
-//
-// When making changes here, also change runtime/colors/default.vim!
 
 static const char *highlight_init_both[] = {
   "Conceal      ctermbg=DarkGrey ctermfg=LightGrey guibg=DarkGrey guifg=LightGrey",
@@ -186,9 +184,13 @@ static const char *highlight_init_both[] = {
   "default link DiagnosticSignInfo DiagnosticInfo",
   "default link DiagnosticSignHint DiagnosticHint",
 
+  // Text
+  "default link @text.literal Comment",
+  "default link @text.reference Identifier",
+  "default link @text.title Title",
+  "default link @text.uri Underlined",
   "default link @text.underline Underlined",
-  "default link @todo Todo",
-  "default link @debug Debug",
+  "default link @text.todo Todo",
 
   // Miscs
   "default link @comment Comment",
@@ -202,6 +204,7 @@ static const char *highlight_init_both[] = {
   "default link @macro Macro",
   "default link @string String",
   "default link @string.escape SpecialChar",
+  "default link @string.special SpecialChar",
   "default link @character Character",
   "default link @character.special SpecialChar",
   "default link @number Number",
@@ -226,12 +229,16 @@ static const char *highlight_init_both[] = {
   "default link @keyword Keyword",
   "default link @exception Exception",
 
+  "default link @variable Identifier",
   "default link @type Type",
   "default link @type.definition Typedef",
   "default link @storageclass StorageClass",
   "default link @structure Structure",
+  "default link @namespace Identifier",
   "default link @include Include",
   "default link @preproc PreProc",
+  "default link @debug Debug",
+  "default link @tag Tag",
   NULL
 };
 
