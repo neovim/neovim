@@ -97,7 +97,7 @@ used here to facilitate documenting consistent behavior:
 CONTENTS                                                          *luv-contents*
 
 This documentation is mostly a retelling of the libuv API documentation
-(http://docs.libuv.org/en/v1.x/api.html) within the context of luv's Lua API.
+(https://docs.libuv.org/en/v1.x/api.html) within the context of luv's Lua API.
 Low-level implementation details and unexposed C functions and types are not
 documented here except for when they are relevant to behavior seen in the Lua
 module.
@@ -933,7 +933,7 @@ uv.async_send({async}, {...})                                  *uv.async_send()*
 
 Poll handles are used to watch file descriptors for readability and
 writability, similar to the purpose of poll(2)
-(http://linux.die.net/man/2/poll).
+(https://linux.die.net/man/2/poll).
 
 The purpose of poll handles is to enable integrating external libraries that
 rely on the event loop to signal it about the socket status changes, like

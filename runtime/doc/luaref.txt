@@ -4831,7 +4831,7 @@ A  BIBLIOGRAPHY                                            *luaref-bibliography*
 This help file is a minor adaptation from this main reference:
 
  - R. Ierusalimschy, L. H. de Figueiredo, and W. Celes.,
-   "Lua: 5.1 reference manual", http://www.lua.org/manual/5.1/manual.html
+   "Lua: 5.1 reference manual", https://www.lua.org/manual/5.1/manual.html
 
 Lua is discussed in these references:
 
@@ -4887,10 +4887,10 @@ a few exceptions and adaptations -- a copy of the Lua 5.1 Reference Manual
 
 The main ideas and concepts on how to implement this reference were taken from
 Christian Habermann's CRefVim project
-(http://www.vim.org/scripts/script.php?script_id=614).
+(https://www.vim.org/scripts/script.php?script_id=614).
 
 Adapted for bundled Nvim documentation; the original plugin can be found at
-http://www.vim.org/scripts/script.php?script_id=1291
+https://www.vim.org/scripts/script.php?script_id=1291
 
 ------------------------------------------------------------------------------
  vi:tw=78:ts=4:ft=help:norl:et

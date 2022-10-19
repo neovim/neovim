@@ -320,7 +320,7 @@ Where can you find plugins?
 - Some are always loaded, you can see them in the directory $VIMRUNTIME/plugin.
 - Some come with Vim.  You can find them in the directory $VIMRUNTIME/macros
   and its sub-directories and under $VIM/vimfiles/pack/dist/opt/.
-- Download from the net.  There is a large collection on http://www.vim.org.
+- Download from the net.  There is a large collection on https://www.vim.org.
 - They are sometimes posted in a Vim maillist.
 - You could write one yourself, see |write-plugin|.
 

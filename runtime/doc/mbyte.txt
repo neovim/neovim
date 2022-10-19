@@ -341,34 +341,7 @@ Useful utilities for converting the charset:
     All:	    iconv
 	GNU iconv can convert most encodings.  Unicode is used as the
 	intermediate encoding, which allows conversion from and to all other
-	encodings.  See http://www.gnu.org/directory/libiconv.html.
-
-    Japanese:	    nkf
-	Nkf is "Network Kanji code conversion Filter".  One of the most unique
-	facility of nkf is the guess of the input Kanji code.  So, you don't
-	need to know what the inputting file's |charset| is.  When convert to
-	EUC-JP from ISO-2022-JP or Shift_JIS, simply do the following command
-	in Vim:
-	    :%!nkf -e
-	Nkf can be found at:
-	http://www.sfc.wide.ad.jp/~max/FreeBSD/ports/distfiles/nkf-1.62.tar.gz
-
-    Chinese:	    hc
-	Hc is "Hanzi Converter".  Hc convert a GB file to a Big5 file, or Big5
-	file to GB file.  Hc can be found at:
-	ftp://ftp.cuhk.hk/pub/chinese/ifcss/software/unix/convert/hc-30.tar.gz
-
-    Korean:	    hmconv
-	Hmconv is Korean code conversion utility especially for E-mail.  It can
-	convert between EUC-KR and ISO-2022-KR.  Hmconv can be found at:
-	ftp://ftp.kaist.ac.kr/pub/hangul/code/hmconv/
-
-    Multilingual:   lv
-	Lv is a Powerful Multilingual File Viewer.  And it can be worked as
-	|charset| converter.  Supported |charset|: ISO-2022-CN, ISO-2022-JP,
-	ISO-2022-KR, EUC-CN, EUC-JP, EUC-KR, EUC-TW, UTF-7, UTF-8, ISO-8859
-	series, Shift_JIS, Big5 and HZ.  Lv can be found at:
-	http://www.ff.iij4u.or.jp/~nrt/lv/index.html
+	encodings.  See https://directory.fsf.org/wiki/Libiconv.
 
 
 							*mbyte-conversion*
@@ -403,17 +376,6 @@ is suitable for complex input, such as CJK.
   |IM-server|s adopt FrontEnd system.  The demerit of BackEnd system is the
   large overhead in communication, but it provides safe synchronization with
   no restrictions on applications.
-
-  For example, there are xwnmo and kinput2 Japanese |IM-server|, both are
-  FrontEnd system.  Xwnmo is distributed with Wnn (see below), kinput2 can be
-  found at: ftp://ftp.sra.co.jp/pub/x11/kinput2/
-
-  For Chinese, there's a great XIM server named "xcin", you can input both
-  Traditional and Simplified Chinese characters.  And it can accept other
-  locale if you make a correct input table.  Xcin can be found at:
-  http://cle.linux.org.tw/xcin/
-  Others are scim: http://scim.freedesktop.org/ and fcitx:
-  http://www.fcitx.org/
 
 - Conversion Server
 							*conversion-server*

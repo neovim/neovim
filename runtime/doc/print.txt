@@ -413,7 +413,7 @@ you need to define your own PostScript font encoding vector.  Details on how
 to define a font encoding vector is beyond the scope of this help file, but
 you can find details in the PostScript Language Reference Manual, 3rd Edition,
 published by Addison-Wesley and available in PDF form at
-http://www.adobe.com/.  The following describes what you need to do for Vim to
+https://www.adobe.com/.  The following describes what you need to do for Vim to
 locate and use your print character encoding.
 
 i.   Decide on a unique name for your encoding vector, one that does not clash
@@ -462,15 +462,6 @@ option allows you to specify different fonts to use when printing characters
 which are syntax highlighted with the font styles normal, italic, bold and
 bold-italic.
 
-No CJK fonts are supplied with Vim.  There are some free Korean, Japanese, and
-Traditional Chinese fonts available at:
-
-  http://examples.oreilly.com/cjkvinfo/adobe/samples/
-
-You can find descriptions of the various fonts in the read me file at
-
-  http://examples.oreilly.de/english_examples/cjkvinfo/adobe/00README
-
 Please read your printer documentation on how to install new fonts.
 
 CJK fonts can be large containing several thousand glyphs, and it is not
@@ -491,7 +482,7 @@ It is possible to define your own multibyte character set although this
 should not be attempted lightly.  A discussion on the process if beyond the
 scope of these help files.  You can find details on CMap (character map) files
 in the document 'Adobe CMap and CIDFont Files Specification, Version 1.0',
-available from http://www.adobe.com as a PDF file.
+available from https://www.adobe.com as a PDF file.
 
 ==============================================================================
 6. PostScript Printing Troubleshooting		*postscript-print-trouble*
@@ -548,23 +539,8 @@ Ghostscript is a PostScript and PDF interpreter that can be used to display
 and print on non-PostScript printers PostScript and PDF files.  It can also
 generate PDF files from PostScript.
 
-Ghostscript will run on a wide variety of platforms.
-
-There are three available versions:
-
-- AFPL Ghostscript (formerly Aladdin Ghostscript) which is free for
-  non-commercial use.  It can be obtained from:
-
-    http://www.cs.wisc.edu/~ghost/
-
-- GNU Ghostscript which is available under the GNU General Public License.  It
-  can be obtained from:
-
-    ftp://mirror.cs.wisc.edu/pub/mirrors/ghost/gnu/
-
-- A commercial version for inclusion in commercial products.
-
-Additional information on Ghostscript can also be found at:
+Ghostscript will run on a wide variety of platforms. Information on
+Ghostscript can be found at:
 
   http://www.ghostscript.com/
 
@@ -579,79 +555,6 @@ The interface to Ghostscript is very primitive so a number of graphical front
 ends have been created.  These allow easier PostScript file selection,
 previewing at different zoom levels, and printing.  Check supplied
 documentation for full details.
-
-X11
-
-- Ghostview.  Obtainable from:
-
-    http://www.cs.wisc.edu/~ghost/gv/
-
-- gv.  Derived from Ghostview.  Obtainable from:
-
-    http://wwwthep.physik.uni-mainz.de/~plass/gv/
-
-  Copies (possibly not the most recent) can be found at:
-
-    http://www.cs.wisc.edu/~ghost/gv/
-
-MS-Windows
-
-- GSview.  Obtainable from:
-
-    http://www.cs.wisc.edu/~ghost/gsview/
-
-Linux
-
-- GSview.  Linux version of the popular MS-Windows previewer.
-  Obtainable from:
-
-    http://www.cs.wisc.edu/~ghost/gsview/
-
-- BMV.  Different from Ghostview and gv in that it doesn't use X but svgalib.
-  Obtainable from:
-
-    ftp://sunsite.unc.edu/pub/Linux/apps/graphics/viewers/svga/bmv-1.2.tgz
-
-
-7.3 PSUtils
-
-PSUtils is a collection of utility programs for manipulating PostScript
-documents.  Binary distributions are available for many platforms, as well as
-the full source.  PSUtils can be found at:
-
-  http://knackered.org/angus/psutils
-
-The utilities of interest include:
-
-- psnup.     Convert PS files for N-up printing.
-- psselect.  Select page range and order of printing.
-- psresize.  Change the page size.
-- psbook.    Reorder and lay out pages ready for making a book.
-
-The output of one program can be used as the input to the next, allowing for
-complex print document creation.
-
-
-N-UP PRINTING
-
-The psnup utility takes an existing PostScript file generated from Vim and
-convert it to an n-up version.  The simplest way to create a 2-up printout is
-to first create a PostScript file with: >
-
-	:hardcopy > test.ps
-
-Then on your command line execute: >
-
-	psnup -n 2 test.ps final.ps
-
-Note: You may get warnings from some Ghostscript previewers for files produced
-by psnup - these may safely be ignored.
-
-Finally print the file final.ps to your PostScript printer with your
-platform's print command.  (You will need to delete the two PostScript files
-afterwards yourself.)  'printexpr' could be modified to perform this extra
-step before printing.
-
 
 ALTERNATE DUPLEX PRINTING
 

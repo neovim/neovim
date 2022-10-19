@@ -1287,7 +1287,7 @@ PYUNIT COMPILER						*compiler-pyunit*
 This is not actually a compiler, but a unit testing framework for the
 Python language.  It is included into standard Python distribution
 starting from version 2.0.  For older versions, you can get it from
-http://pyunit.sourceforge.net.
+https://pyunit.sourceforge.net.
 
 When you run your tests with the help of the framework, possible errors
 are parsed by Vim and presented for you in quick-fix mode.
@@ -1297,8 +1297,6 @@ The alltests.py script seems to be used quite often, that's all.
 Useful values for the 'makeprg' options therefore are:
  setlocal makeprg=./alltests.py " Run a testsuite
  setlocal makeprg=python\ %:S   " Run a single testcase
-
-Also see http://vim.sourceforge.net/tip_view.php?tip_id=280.
 
 
 TEX COMPILER						*compiler-tex*
@@ -1823,7 +1821,7 @@ In English, that sed script:
   it as a "continuation of a multi-line message."
 
 						*errorformat-ant*
-For ant (http://jakarta.apache.org/) the above errorformat has to be modified
+For ant (https://jakarta.apache.org/) the above errorformat has to be modified
 to honour the leading [javac] in front of each javac output line: >
   :set efm=%A\ %#[javac]\ %f:%l:\ %m,%-Z\ %#[javac]\ %p^,%-C%.%#
 

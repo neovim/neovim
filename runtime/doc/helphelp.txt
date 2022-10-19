@@ -251,7 +251,7 @@ At this moment translations are available for:
 	Japanese - multiple authors
 	Polish   - translated by Mikolaj Machowski
 	Russian  - translated by Vassily Ragosin
-See the Vim website to find them: http://www.vim.org/translations.php
+See the Vim website to find them: https://www.vim.org/translations.php
 
 A set of translated help files consists of these files:
 
