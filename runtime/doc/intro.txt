@@ -373,7 +373,7 @@ notation	meaning		    equivalent	decimal value(s)	~
 <M-…>		alt-key or meta-key		*META* *ALT* *<M-*
 <A-…>		same as <M-…>			*<A-*
 <D-…>		command-key or "super" key	*<D-*
------------------------------------------------------------------------
+----------------------------------------------------------------------- ~
 
 Note:
 

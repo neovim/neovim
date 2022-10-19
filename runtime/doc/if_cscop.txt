@@ -324,7 +324,7 @@ place your cursor over the function name or C symbol and quickly query cscope
 for any matches.
 
 Or you may use the following scheme, inspired by Vim/Cscope tutorial from
-Cscope Home Page (http://cscope.sourceforge.net/): >
+Cscope Home Page (https://cscope.sourceforge.net/): >
 
 	nmap <C-_>s :cs find s <C-R>=expand("<cword>")<CR><CR>
 	nmap <C-_>g :cs find g <C-R>=expand("<cword>")<CR><CR>
