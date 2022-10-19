@@ -31,7 +31,9 @@
 static linenr_T orig_topline = 0;
 static int orig_topfill = 0;
 
-/// Translate window coordinates to buffer position without any side effects
+/// Translate window coordinates to buffer position without any side effects.
+/// Returns IN_BUFFER and sets "mpos->col" to the column when in buffer text.
+/// The column is one for the first column.
 int get_fpos_of_mouse(pos_T *mpos)
 {
   int grid = mouse_grid;
@@ -67,9 +69,6 @@ int get_fpos_of_mouse(pos_T *mpos)
 
   mpos->col = vcol2col(wp, mpos->lnum, col);
 
-  if (mpos->col > 0) {
-    mpos->col--;
-  }
   mpos->coladd = 0;
   return IN_BUFFER;
 }
