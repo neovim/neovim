@@ -5,6 +5,7 @@
 
 #include "nvim/buffer_defs.h"
 #include "nvim/ex_cmds_defs.h"
+#include "nvim/eval/funcs.h"
 #include "nvim/globals.h"
 
 #define HL_CONTAINED   0x01    // not used on toplevel

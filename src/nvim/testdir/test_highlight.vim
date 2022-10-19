@@ -859,4 +859,137 @@ func Test_highlight_default_colorscheme_restores_links()
   hi clear
 endfunc
 
+" Test for the hlget() function
+func Test_hlget()
+    call assert_notequal([], filter(hlget(), 'v:val.name == "Visual"'))
+    call assert_equal([], hlget('SomeHLGroup'))
+    highlight MyHLGroup cterm=reverse ctermfg=10 ctermbg=Black
+    call assert_equal([{'id': hlID('MyHLGroup'), 'ctermfg': '10', 'name': 'MyHLGroup', 'ctermbg': '0', 'cterm': {'reverse': v:true}}], hlget('MyHLGroup'))
+    highlight clear MyHLGroup
+    call assert_equal(v:true, hlget('MyHLGroup')[0].cleared)
+    highlight link MyHLGroup IncSearch
+    call assert_equal('IncSearch', hlget('MyHLGroup')[0].linksto)
+    highlight clear MyHLGroup
+    " call assert_equal([], hlget(v:null))
+    call assert_equal([], hlget(""))
+
+  " Test for resolving highlight group links
+    highlight hlgA cterm=bold
+    let hlgAid = hlID('hlgA')
+    highlight link hlgB hlgA
+    let hlgBid = hlID('hlgB')
+    highlight link hlgC hlgB
+    let hlgCid = hlID('hlgC')
+    call assert_equal('hlgA', hlget('hlgB')[0].linksto)
+    call assert_equal('hlgB', hlget('hlgC')[0].linksto)
+    call assert_equal([{'id': hlgAid, 'name': 'hlgA',
+                      \ 'cterm': {'bold': v:true}}], hlget('hlgA'))
+    call assert_equal([{'id': hlgBid, 'name': 'hlgB',
+                      \ 'linksto': 'hlgA'}], hlget('hlgB'))
+    call assert_equal([{'id': hlgCid, 'name': 'hlgC',
+                      \ 'linksto': 'hlgB'}], hlget('hlgC'))
+    call assert_equal([{'id': hlgAid, 'name': 'hlgA',
+                      \ 'cterm': {'bold': v:true}}], hlget('hlgA', v:false))
+    call assert_equal([{'id': hlgBid, 'name': 'hlgB',
+                      \ 'linksto': 'hlgA'}], hlget('hlgB', 0))
+    call assert_equal([{'id': hlgCid, 'name': 'hlgC',
+                      \ 'linksto': 'hlgB'}], hlget('hlgC', v:false))
+    call assert_equal([{'id': hlgAid, 'name': 'hlgA',
+                      \ 'cterm': {'bold': v:true}}], hlget('hlgA', v:true))
+    call assert_equal([{'id': hlgBid, 'name': 'hlgB',
+                      \ 'cterm': {'bold': v:true}}], hlget('hlgB', 1))
+    call assert_equal([{'id': hlgCid, 'name': 'hlgC',
+                      \ 'cterm': {'bold': v:true}}], hlget('hlgC', v:true))
+
+  call assert_fails('call hlget([])', 'E1174:')
+  call assert_fails('call hlget("abc", "xyz")', 'E1212:')
+endfunc
+
+" Test for the hlset() function
+func Test_hlset()
+    " call assert_equal(0, hlset(v:null))
+    call assert_equal(0, hlset([]))
+    call assert_fails('call hlset(["Search"])', 'E715:')
+    call hlset(hlget())
+    call hlset([{'name': 'NewHLGroup', 'cterm': {'reverse': v:true}, 'ctermfg': '10'}])
+    call assert_equal({'reverse': v:true}, hlget('NewHLGroup')[0].cterm)
+    call hlset([{'name': 'NewHLGroup', 'cterm': {'bold': v:true}}])
+    call assert_equal({'bold': v:true}, hlget('NewHLGroup')[0].cterm)
+    call hlset([{'name': 'NewHLGroup', 'cleared': v:true}])
+    call assert_equal(v:true, hlget('NewHLGroup')[0].cleared)
+    call hlset([{'name': 'NewHLGroup', 'linksto': 'Search'}])
+    call assert_false(has_key(hlget('NewHLGroup')[0], 'cleared'))
+    call assert_equal('Search', hlget('NewHLGroup')[0].linksto)
+    call assert_fails("call hlset([{'name': [], 'ctermfg': '10'}])", 'E928:')
+    call assert_fails("call hlset([{'name': 'NewHLGroup', 'cleared': []}])",
+          \ 'E745:')
+    call assert_fails("call hlset([{'name': 'NewHLGroup', 'cterm': 'Blue'}])",
+          \ 'E715:')
+    call assert_fails("call hlset([{'name': 'NewHLGroup', 'ctermbg': []}])",
+          \ 'E928:')
+    call assert_fails("call hlset([{'name': 'NewHLGroup', 'ctermfg': []}])",
+          \ 'E928:')
+    if has('gui')
+      call assert_fails("call hlset([{'name': 'NewHLGroup', 'font': []}])",
+            \ 'E928:')
+    endif
+    call assert_fails("call hlset([{'name': 'NewHLGroup', 'gui': 'Cyan'}])",
+          \ 'E715:')
+    call assert_fails("call hlset([{'name': 'NewHLGroup', 'guibg': []}])",
+          \ 'E928:')
+    call assert_fails("call hlset([{'name': 'NewHLGroup', 'guifg': []}])",
+          \ 'E928:')
+    call assert_fails("call hlset([{'name': 'NewHLGroup', 'guisp': []}])",
+          \ 'E928:')
+    call assert_fails("call hlset([{'name': 'NewHLGroup', 'linksto': []}])",
+          \ 'E928:')
+    call assert_fails("call hlset([{'name': 'NewHLGroup', 'cterm': 'Cyan'}])",
+          \ 'E715:')
+    call assert_equal('Search', hlget('NewHLGroup')[0].linksto)
+    highlight clear NewHLGroup
+
+  " Test for clearing the 'cterm' and 'gui' attributes of a highlight
+  " group.
+    highlight myhlg1 cterm=italic gui=standout
+    let id = hlID('myhlg1')
+    call hlset([{'name': 'myhlg1'}])
+    call assert_equal([{'id': id, 'name': 'myhlg1',
+                \ 'cterm': {'italic': v:true}, 'gui': {'standout': v:true}}],
+                \ hlget('myhlg1'))
+    call hlset([{'name': 'myhlg1', 'cterm': {}}])
+    call assert_equal([{'id': id, 'name': 'myhlg1',
+                \ 'gui': {'standout': v:true}}], hlget('myhlg1'))
+    call hlset([{'name': 'myhlg1', 'gui': {}}])
+    call assert_equal([{'id': id, 'name': 'myhlg1', 'cleared': v:true}],
+                \ hlget('myhlg1'))
+    highlight clear myhlg1
+
+  " Test for setting all the 'cterm' and 'gui' attributes of a
+  " highlight group
+    let attr = {'bold': v:true, 'underline': v:true, 'undercurl': v:true,
+                \ 'strikethrough': v:true, 'reverse': v:true, 'italic': v:true,
+                \ 'standout': v:true, 'nocombine': v:true}
+    call hlset([{'name': 'myhlg2', 'cterm': attr, 'gui': attr}])
+    let id2 = hlID('myhlg2')
+    let output =<< trim END
+      myhlg2         xxx cterm=bold,standout,underline,undercurl,italic,reverse,strikethrough,nocombine gui=bold,standout,underline,undercurl,italic,reverse,strikethrough,nocombine
+    END
+    call assert_equal(output, execute('highlight myhlg2')->split("\n"))
+    call assert_equal([{'id': id2, 'name': 'myhlg2', 'gui': attr,
+                      \ 'cterm': attr}], hlget('myhlg2'))
+
+  " Test for clearing some of the 'cterm' and 'gui' attributes of a
+  " highlight group
+    let attr = {'bold': v:false, 'underline': v:true, 'strikethrough': v:true}
+    call hlset([{'name': 'myhlg2', 'cterm': attr, 'gui': attr}])
+    let id2 = hlID('myhlg2')
+    let output =<< trim END
+      myhlg2         xxx cterm=underline,strikethrough gui=underline,strikethrough
+    END
+    call assert_equal(output, execute('highlight myhlg2')->split("\n"))
+    let attr = {'underline': v:true, 'strikethrough': v:true}
+    call assert_equal([{'id': id2, 'name': 'myhlg2', 'gui': attr,
+                      \ 'cterm': attr}], hlget('myhlg2'))
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab

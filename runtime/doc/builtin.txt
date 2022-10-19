@@ -244,6 +244,8 @@ histget({history} [, {index}])	String	get the item {index} from a history
 histnr({history})		Number	highest index of a history
 hlID({name})			Number	syntax ID of highlight group {name}
 hlexists({name})		Number	|TRUE| if highlight group {name} exists
+hlget([{name} [, {resolve}]])	List	get highlight group attributes
+hlset({list})			Number	set highlight group attributes
 hostname()			String	name of the machine Vim is running on
 iconv({expr}, {from}, {to})	String	convert encoding of {expr}
 indent({lnum})			Number	indent of line {lnum}
@@ -3977,6 +3979,88 @@ hlexists({name})					*hlexists()*
 
 		Can also be used as a |method|: >
 			GetName()->hlexists()
+<
+hlget([{name} [, {resolve}]])				*hlget()*
+		Returns a List of all the highlight group attributes.  If the
+		optional {name} is specified, then returns a List with only
+		the attributes of the specified highlight group.  Returns an
+		empty List if the highlight group {name} is not present.
+
+		If the optional {resolve} argument is set to v:true and the
+		highlight group {name} is linked to another group, then the
+		link is resolved recursively and the attributes of the
+		resolved highlight group are returned.
+
+		Each entry in the returned List is a Dictionary with the
+		following items:
+			cleared	Boolean flag, set to v:true if the highlight
+				group attributes are cleared or not yet
+				specified.  See |highlight-clear|.
+			cterm	cterm attributes. See |highlight-cterm|.
+			ctermbg	cterm background color.
+				See |highlight-ctermbg|.
+			ctermfg	cterm foreground color.
+				See |highlight-ctermfg|.
+			gui	gui attributes. See |highlight-gui|.
+			guibg	gui background color.  See |highlight-guibg|.
+			guifg	gui foreground color.  See |highlight-guifg|.
+			guisp	gui special color.  See |highlight-guisp|.
+			id	highlight group ID.
+			linksto	linked highlight group name.
+				See |:highlight-link|.
+			name	highlight group name. See |group-name|.
+
+		The 'cterm' and 'gui' items in the above Dictionary
+		have a dictionary value with the following optional boolean
+		items: 'bold', 'standout', 'underline', 'undercurl', 'italic',
+		'reverse', 'inverse' and 'strikethrough'.
+
+		Example(s): >
+			:echo hlget()
+			:echo hlget('ModeMsg')
+			:echo hlget('Number', v:true)
+<
+		Can also be used as a |method|: >
+			GetName()->hlget()
+<
+hlset({list})						*hlset()*
+		Creates or modifies the attributes of a List of highlight
+		groups.  Each item in {list} is a dictionary containing the
+		attributes of a highlight group. See |hlget()| for the list of
+		supported items in this dictionary.
+
+		The highlight group is identified using the 'name' item and
+		the 'id' item (if supplied) is ignored.  If a highlight group
+		with a specified name doesn't exist, then it is created.
+		Otherwise the attributes of an existing highlight group are
+		modified.
+
+		If an empty dictionary value is used for the 'cterm'
+		or 'gui' entries, then the corresponding attributes are
+		cleared.  If the 'cleared' item is set to v:true, then all the
+		attributes of the highlight group are cleared.
+
+		The 'linksto' item can be used to link a highlight group to
+		another highlight group.  See |:highlight-link|.
+
+		Returns zero for success, -1 for failure.
+
+		Example(s): >
+			" add bold attribute to the Visual highlight group
+			:call hlset([#{name: 'Visual',
+					\ term: #{reverse: 1 , bold: 1}}])
+			:call hlset([#{name: 'Type', guifg: 'DarkGreen'}])
+			:let l = hlget()
+			:call hlset(l)
+			" clear the Search highlight group
+			:call hlset([#{name: 'Search', cleared: v:true}])
+			" clear the 'term' attributes for a highlight group
+			:call hlset([#{name: 'Title', cterm: {}}])
+			" create the MyHlg group linking it to DiffAdd
+			:call hlset([#{name: 'MyHlg', linksto: 'DiffAdd'}])
+<
+		Can also be used as a |method|: >
+			GetAttrList()->hlset()
 <
 							*hlID()*
 hlID({name})	The result is a Number, which is the ID of the highlight group

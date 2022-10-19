@@ -205,6 +205,8 @@ return {
     histnr={args=1, base=1},
     hlID={args=1, base=1},
     hlexists={args=1, base=1},
+    hlget={args={0,2}, base=1},
+    hlset={args=1,base=1},
     hostname={},
     iconv={args=3, base=1, fast=true},
     indent={args=1, base=1},

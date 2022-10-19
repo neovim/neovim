@@ -909,6 +909,8 @@ Syntax and highlighting:	  *syntax-functions* *highlighting-functions*
 	getmatches()		get all matches defined by |matchadd()| and
 				the |:match| commands
 	hlexists()		check if a highlight group exists
+	hlget()			get highlight group attributes
+	hlset()			set highlight group attributes
 	hlID()			get ID of a highlight group
 	synID()			get syntax ID at a specific position
 	synIDattr()		get a specific attribute of a syntax ID
