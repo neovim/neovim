@@ -3269,4 +3269,25 @@ func Test_noname_autocmd()
   augroup! test_noname_autocmd_group
 endfunc
 
+func Test_autocmd_split_dummy()
+  " Autocommand trying to split a window containing a dummy buffer.
+  auto BufReadPre * exe "sbuf " .. expand("<abuf>") 
+  " Avoid the "W11" prompt
+  au FileChangedShell * let v:fcs_choice = 'reload'
+  func Xautocmd_changelist()
+    cal writefile(['Xtestfile2:4:4'], 'Xerr')
+    edit Xerr
+    lex 'Xtestfile2:4:4'
+  endfunc
+  call Xautocmd_changelist()
+  " Should get E86, but it doesn't always happen (timing?)
+  silent! call Xautocmd_changelist()
+
+  au! BufReadPre
+  au! FileChangedShell
+  delfunc Xautocmd_changelist
+  bwipe! Xerr
+  call delete('Xerr')
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab

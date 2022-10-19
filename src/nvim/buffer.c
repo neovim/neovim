@@ -1224,6 +1224,11 @@ int do_buffer(int action, int start, int dir, int count, int forceit)
     }
     return FAIL;
   }
+  if ((action == DOBUF_GOTO || action == DOBUF_SPLIT) && (buf->b_flags & BF_DUMMY)) {
+    // disallow navigating to the dummy buffer
+    semsg(_(e_nobufnr), count);
+    return FAIL;
+  }
 
   // delete buffer "buf" from memory and/or the list
   if (unload) {
