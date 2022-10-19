@@ -2911,9 +2911,6 @@ static dict_T *highlight_get_attr_dict(int hlattr)
   int i;
 
   dict = tv_dict_alloc();
-  if (dict == NULL) {
-    return NULL;
-  }
 
   for (i = 0; hl_attr_table[i] != 0; i++) {
     if (hlattr & hl_attr_table[i]) {
@@ -2937,9 +2934,6 @@ static dict_T *highlight_get_info(int hl_idx, bool resolve_link)
   int hlgid;
 
   dict = tv_dict_alloc();
-  if (dict == NULL) {
-    return dict;
-  }
 
   sgp = &hl_table[hl_idx];
   // highlight group id is 1-based

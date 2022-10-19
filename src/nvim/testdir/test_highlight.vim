@@ -870,7 +870,7 @@ func Test_hlget()
     highlight link MyHLGroup IncSearch
     call assert_equal('IncSearch', hlget('MyHLGroup')[0].linksto)
     highlight clear MyHLGroup
-    " call assert_equal([], hlget(v:null))
+    call assert_equal([], hlget(v:_null_string))
     call assert_equal([], hlget(""))
 
   " Test for resolving highlight group links
@@ -907,7 +907,7 @@ endfunc
 
 " Test for the hlset() function
 func Test_hlset()
-    " call assert_equal(0, hlset(v:null))
+    call assert_equal(0, hlset(v:_null_list))
     call assert_equal(0, hlset([]))
     call assert_fails('call hlset(["Search"])', 'E715:')
     call hlset(hlget())
