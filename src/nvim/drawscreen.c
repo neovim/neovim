@@ -660,7 +660,7 @@ static void win_redr_border(win_T *wp)
       int title_width = wp->w_float_config.title_width;
       AlignTextPos title_pos = wp->w_float_config.title_pos;
 
-      if (title_pos == kAlignLeft || title_pos  == kAlignRight) {
+      if (title_pos == kAlignLeft || title_pos == kAlignRight) {
         title_col = title_pos == kAlignLeft ? 1 : icol - title_width + 1;
         int start_col = title_pos == kAlignLeft ? title_width : 0;
 
@@ -670,7 +670,7 @@ static void win_redr_border(win_T *wp)
       } else if (title_pos == kAlignCenter) {
         int text_center = title_width / 2;
         int col_center = icol / 2;
-        title_col = col_center - text_center  + 1;
+        title_col = col_center - text_center + 1;
         for (int i = 0; i < icol; i++) {
           if (i < title_col || i >= title_col + title_width - 1) {
             grid_put_schar(grid, 0, i + adj[3], chars[1], attrs[1]);
