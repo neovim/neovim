@@ -4,6 +4,7 @@ local clear, feed, meths = helpers.clear, helpers.feed, helpers.meths
 local insert, feed_command = helpers.insert, helpers.feed_command
 local eq, funcs = helpers.eq, helpers.funcs
 local command = helpers.command
+local exec = helpers.exec
 
 describe('ui/mouse/input', function()
   local screen
@@ -1686,5 +1687,134 @@ describe('ui/mouse/input', function()
     feed('<MouseMove>')
     helpers.poke_eventloop()
     helpers.assert_alive()
+  end)
+
+  it('mousemodel=popup_setpos', function()
+    screen:try_resize(80, 24)
+    exec([[
+      5new
+      call setline(1, ['the dish ran away with the spoon',
+            \ 'the cow jumped over the moon' ])
+
+      set mouse=a mousemodel=popup_setpos
+
+      aunmenu PopUp
+      nmenu PopUp.foo :let g:menustr = 'foo'<CR>
+      nmenu PopUp.bar :let g:menustr = 'bar'<CR>
+      nmenu PopUp.baz :let g:menustr = 'baz'<CR>
+      vmenu PopUp.foo y:<C-U>let g:menustr = 'foo'<CR>
+      vmenu PopUp.bar y:<C-U>let g:menustr = 'bar'<CR>
+      vmenu PopUp.baz y:<C-U>let g:menustr = 'baz'<CR>
+    ]])
+
+    meths.win_set_cursor(0, {1, 0})
+    meths.input_mouse('right', 'press', '', 0, 0, 4)
+    meths.input_mouse('right', 'release', '', 0, 0, 4)
+    feed('<Down><Down><CR>')
+    eq('bar', meths.get_var('menustr'))
+    eq({1, 4}, meths.win_get_cursor(0))
+
+    -- Test for right click in visual mode inside the selection
+    funcs.setreg('"', '')
+    meths.win_set_cursor(0, {1, 9})
+    feed('vee')
+    meths.input_mouse('right', 'press', '', 0, 0, 11)
+    meths.input_mouse('right', 'release', '', 0, 0, 11)
+    feed('<Down><CR>')
+    eq({1, 9}, meths.win_get_cursor(0))
+    eq('ran away', funcs.getreg('"'))
+
+    -- Test for right click in visual mode right before the selection
+    funcs.setreg('"', '')
+    meths.win_set_cursor(0, {1, 9})
+    feed('vee')
+    meths.input_mouse('right', 'press', '', 0, 0, 8)
+    meths.input_mouse('right', 'release', '', 0, 0, 8)
+    feed('<Down><CR>')
+    eq({1, 8}, meths.win_get_cursor(0))
+    eq('', funcs.getreg('"'))
+
+    -- Test for right click in visual mode right after the selection
+    funcs.setreg('"', '')
+    meths.win_set_cursor(0, {1, 9})
+    feed('vee')
+    meths.input_mouse('right', 'press', '', 0, 0, 17)
+    meths.input_mouse('right', 'release', '', 0, 0, 17)
+    feed('<Down><CR>')
+    eq({1, 17}, meths.win_get_cursor(0))
+    eq('', funcs.getreg('"'))
+
+    -- Test for right click in block-wise visual mode inside the selection
+    funcs.setreg('"', '')
+    meths.win_set_cursor(0, {1, 15})
+    feed('<C-V>j3l')
+    meths.input_mouse('right', 'press', '', 0, 1, 16)
+    meths.input_mouse('right', 'release', '', 0, 1, 16)
+    feed('<Down><CR>')
+    eq({1, 15}, meths.win_get_cursor(0))
+    eq('\0224', funcs.getregtype('"'))
+
+    -- Test for right click in block-wise visual mode outside the selection
+    funcs.setreg('"', '')
+    meths.win_set_cursor(0, {1, 15})
+    feed('<C-V>j3l')
+    meths.input_mouse('right', 'press', '', 0, 1, 1)
+    meths.input_mouse('right', 'release', '', 0, 1, 1)
+    feed('<Down><CR>')
+    eq({2, 1}, meths.win_get_cursor(0))
+    eq('v', funcs.getregtype('"'))
+    eq('', funcs.getreg('"'))
+
+    -- Test for right click in line-wise visual mode inside the selection
+    funcs.setreg('"', '')
+    meths.win_set_cursor(0, {1, 15})
+    feed('V')
+    meths.input_mouse('right', 'press', '', 0, 0, 9)
+    meths.input_mouse('right', 'release', '', 0, 0, 9)
+    feed('<Down><CR>')
+    eq({1, 0}, meths.win_get_cursor(0)) -- After yanking, the cursor goes to 1,1
+    eq('V', funcs.getregtype('"'))
+    eq(1, #funcs.getreg('"', 1, true))
+
+    -- Test for right click in multi-line line-wise visual mode inside the selection
+    funcs.setreg('"', '')
+    meths.win_set_cursor(0, {1, 15})
+    feed('Vj')
+    meths.input_mouse('right', 'press', '', 0, 1, 19)
+    meths.input_mouse('right', 'release', '', 0, 1, 19)
+    feed('<Down><CR>')
+    eq({1, 0}, meths.win_get_cursor(0)) -- After yanking, the cursor goes to 1,1
+    eq('V', funcs.getregtype('"'))
+    eq(2, #funcs.getreg('"', 1, true))
+
+    -- Test for right click in line-wise visual mode outside the selection
+    funcs.setreg('"', '')
+    meths.win_set_cursor(0, {1, 15})
+    feed('V')
+    meths.input_mouse('right', 'press', '', 0, 1, 9)
+    meths.input_mouse('right', 'release', '', 0, 1, 9)
+    feed('<Down><CR>')
+    eq({2, 9}, meths.win_get_cursor(0))
+    eq('', funcs.getreg('"'))
+
+    -- Try clicking on the status line
+    funcs.setreg('"', '')
+    meths.win_set_cursor(0, {1, 9})
+    feed('vee')
+    meths.input_mouse('right', 'press', '', 0, 5, 1)
+    meths.input_mouse('right', 'release', '', 0, 5, 1)
+    feed('<Down><CR>')
+    eq({1, 9}, meths.win_get_cursor(0))
+    eq('ran away', funcs.getreg('"'))
+
+    -- Try clicking outside the window
+    funcs.setreg('"', '')
+    meths.win_set_cursor(0, {2, 1})
+    feed('vee')
+    meths.input_mouse('right', 'press', '', 0, 6, 1)
+    meths.input_mouse('right', 'release', '', 0, 6, 1)
+    feed('<Down><CR>')
+    eq(2, funcs.winnr())
+    eq('', funcs.getreg('"'))
   end)
 end)
