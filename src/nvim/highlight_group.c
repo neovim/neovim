@@ -2901,370 +2901,367 @@ RgbValue name_to_color(const char *name, int *idx)
   return -1;
 }
 
+// Convert each of the highlight attribute bits (bold, standout, underline,
+// etc.) set in 'hlattr' into a separate boolean item in a Dictionary with
+// the attribute name as the key.
 
-
-/*
- * Convert each of the highlight attribute bits (bold, standout, underline,
- * etc.) set in 'hlattr' into a separate boolean item in a Dictionary with
- * the attribute name as the key.
- */
-    static dict_T *
-highlight_get_attr_dict(int hlattr)
+static dict_T *highlight_get_attr_dict(int hlattr)
 {
-    dict_T	*dict;
-    int		i;
+  dict_T *dict;
+  int i;
 
-    dict = tv_dict_alloc();
-    if (dict == NULL)
-	return NULL;
+  dict = tv_dict_alloc();
+  if (dict == NULL) {
+    return NULL;
+  }
 
-    for (i = 0; hl_attr_table[i] != 0; ++i)
-    {
-	if (hlattr & hl_attr_table[i])
-	{
-	    tv_dict_add_bool(dict, hl_name_table[i], strlen(hl_name_table[i]), kBoolVarTrue);
-	    hlattr &= ~hl_attr_table[i];	// don't want "inverse"
-	}
+  for (i = 0; hl_attr_table[i] != 0; i++) {
+    if (hlattr & hl_attr_table[i]) {
+      tv_dict_add_bool(dict, hl_name_table[i], strlen(hl_name_table[i]), kBoolVarTrue);
+      hlattr &= ~hl_attr_table[i];        // don't want "inverse"
     }
+  }
 
-    return dict;
+  return dict;
 }
 
-/*
- * Return the attributes of the highlight group at index 'hl_idx' as a
- * Dictionary. If 'resolve_link' is true, then resolves the highlight group
- * links recursively.
- */
-    static dict_T *
-highlight_get_info(int hl_idx, bool resolve_link)
+// Return the attributes of the highlight group at index 'hl_idx' as a
+// Dictionary. If 'resolve_link' is true, then resolves the highlight group
+// links recursively.
+
+static dict_T *highlight_get_info(int hl_idx, bool resolve_link)
 {
-    dict_T	*dict;
-    HlGroup	*sgp;
-    dict_T	*attr_dict;
-    int		hlgid;
+  dict_T *dict;
+  HlGroup *sgp;
+  dict_T *attr_dict;
+  int hlgid;
 
-    dict = tv_dict_alloc();
-    if (dict == NULL)
-	return dict;
-
-    sgp = &hl_table[hl_idx];
-    // highlight group id is 1-based
-    hlgid = hl_idx + 1;
-
-    if (tv_dict_add_str(dict, S_LEN("name"), (const char *)sgp->sg_name) == FAIL)
-	goto error;
-    if (tv_dict_add_nr(dict, S_LEN("id"), hlgid) == FAIL)
-	goto error;
-
-    if (sgp->sg_link && resolve_link)
-    {
-	// resolve the highlight group link recursively
-	while (sgp->sg_link)
-	{
-	    hlgid = sgp->sg_link;
-	    sgp = &hl_table[sgp->sg_link - 1];
-	}
-    }
-
-    if (sgp->sg_cterm != 0)
-    {
-	attr_dict = highlight_get_attr_dict(sgp->sg_cterm);
-	if (attr_dict != NULL)
-	    if (tv_dict_add_dict(dict, S_LEN("cterm"), attr_dict) == FAIL)
-		goto error;
-    }
-    if (sgp->sg_cterm_fg != 0)
-	if (tv_dict_add_str(dict, S_LEN("ctermfg"),
-		    highlight_color(hlgid, (const char *)"fg", 'c')) == FAIL)
-	    goto error;
-    if (sgp->sg_cterm_bg != 0)
-	if (tv_dict_add_str(dict, S_LEN("ctermbg"),
-			highlight_color(hlgid, (const char *)"bg", 'c')) == FAIL)
-	    goto error;
-    if (sgp->sg_gui != 0)
-    {
-	attr_dict = highlight_get_attr_dict(sgp->sg_gui);
-	if (attr_dict != NULL)
-	    if (tv_dict_add_dict(dict, S_LEN("gui"), attr_dict) == FAIL)
-		goto error;
-    }
-    if (sgp->sg_rgb_fg_idx != kColorIdxNone)
-	if (tv_dict_add_str(dict, S_LEN("guifg"),
-			highlight_color(hlgid, (const char *)"fg", 'g')) == FAIL)
-	    goto error;
-    if (sgp->sg_rgb_bg_idx != kColorIdxNone)
-	if (tv_dict_add_str(dict, S_LEN("guibg"),
-			highlight_color(hlgid, (const char *)"bg", 'g')) == FAIL)
-	    goto error;
-    if (sgp->sg_rgb_sp_idx != kColorIdxNone)
-	if (tv_dict_add_str(dict, S_LEN("guisp"),
-			highlight_color(hlgid, (const char *)"sp", 'g')) == FAIL)
-	    goto error;
-    if (sgp->sg_link)
-    {
-	char_u	*link;
-
-	link = hl_table[sgp->sg_link - 1].sg_name;
-	if (link != NULL && tv_dict_add_str(dict, S_LEN("linksto"), (char *)link) == FAIL)
-	    goto error;
-    }
-    if (dict->dv_hashtab.ht_used == 2)
-	// If only 'name' is present, then the highlight group is cleared.
-	tv_dict_add_bool(dict, S_LEN("cleared"), kBoolVarTrue);
-
+  dict = tv_dict_alloc();
+  if (dict == NULL) {
     return dict;
+  }
+
+  sgp = &hl_table[hl_idx];
+  // highlight group id is 1-based
+  hlgid = hl_idx + 1;
+
+  if (tv_dict_add_str(dict, S_LEN("name"), (const char *)sgp->sg_name) == FAIL) {
+    goto error;
+  }
+  if (tv_dict_add_nr(dict, S_LEN("id"), hlgid) == FAIL) {
+    goto error;
+  }
+
+  if (sgp->sg_link && resolve_link) {
+    // resolve the highlight group link recursively
+    while (sgp->sg_link) {
+      hlgid = sgp->sg_link;
+      sgp = &hl_table[sgp->sg_link - 1];
+    }
+  }
+
+  if (sgp->sg_cterm != 0) {
+    attr_dict = highlight_get_attr_dict(sgp->sg_cterm);
+    if (attr_dict != NULL) {
+      if (tv_dict_add_dict(dict, S_LEN("cterm"), attr_dict) == FAIL) {
+        goto error;
+      }
+    }
+  }
+  if (sgp->sg_cterm_fg != 0) {
+    if (tv_dict_add_str(dict, S_LEN("ctermfg"),
+                        highlight_color(hlgid, (const char *)"fg", 'c')) == FAIL) {
+      goto error;
+    }
+  }
+  if (sgp->sg_cterm_bg != 0) {
+    if (tv_dict_add_str(dict, S_LEN("ctermbg"),
+                        highlight_color(hlgid, (const char *)"bg", 'c')) == FAIL) {
+      goto error;
+    }
+  }
+  if (sgp->sg_gui != 0) {
+    attr_dict = highlight_get_attr_dict(sgp->sg_gui);
+    if (attr_dict != NULL) {
+      if (tv_dict_add_dict(dict, S_LEN("gui"), attr_dict) == FAIL) {
+        goto error;
+      }
+    }
+  }
+  if (sgp->sg_rgb_fg_idx != kColorIdxNone) {
+    if (tv_dict_add_str(dict, S_LEN("guifg"),
+                        highlight_color(hlgid, (const char *)"fg", 'g')) == FAIL) {
+      goto error;
+    }
+  }
+  if (sgp->sg_rgb_bg_idx != kColorIdxNone) {
+    if (tv_dict_add_str(dict, S_LEN("guibg"),
+                        highlight_color(hlgid, (const char *)"bg", 'g')) == FAIL) {
+      goto error;
+    }
+  }
+  if (sgp->sg_rgb_sp_idx != kColorIdxNone) {
+    if (tv_dict_add_str(dict, S_LEN("guisp"),
+                        highlight_color(hlgid, (const char *)"sp", 'g')) == FAIL) {
+      goto error;
+    }
+  }
+  if (sgp->sg_link) {
+    char_u *link;
+
+    link = hl_table[sgp->sg_link - 1].sg_name;
+    if (link != NULL && tv_dict_add_str(dict, S_LEN("linksto"), (char *)link) == FAIL) {
+      goto error;
+    }
+  }
+  if (dict->dv_hashtab.ht_used == 2) {
+    // If only 'name' is present, then the highlight group is cleared.
+    tv_dict_add_bool(dict, S_LEN("cleared"), kBoolVarTrue);
+  }
+
+  return dict;
 
 error:
-    xfree(dict);
+  xfree(dict);
+  return NULL;
+}
+
+// "hlget([name])" function
+// Return the attributes of a specific highlight group (if specified) or all
+// the highlight groups.
+
+void f_hlget(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
+{
+  list_T *list;
+  dict_T *dict;
+  int i;
+  const char *hlarg = NULL;
+  bool resolve_link = false;
+
+  tv_list_alloc_ret(rettv, kListLenMayKnow);
+
+  if (tv_check_for_opt_string_arg(argvars, 0) == FAIL
+      || (argvars[0].v_type != VAR_UNKNOWN
+          && tv_check_for_opt_bool_arg(argvars, 1) == FAIL)) {
+    return;
+  }
+  if (argvars[0].v_type != VAR_UNKNOWN) {
+    // highlight group name supplied
+    hlarg = tv_get_string_chk(&argvars[0]);
+    if (hlarg == NULL) {
+      return;
+    }
+
+    if (argvars[1].v_type != VAR_UNKNOWN) {
+      if (argvars[1].v_type == VAR_BOOL) {
+        resolve_link = argvars[1].vval.v_bool == kBoolVarTrue ? true : false;
+      } else if (argvars[1].v_type == VAR_NUMBER) {
+        resolve_link = argvars[1].vval.v_number == 1 ? true : false;
+      } else {
+        return;
+      }
+    }
+  }
+
+  list = rettv->vval.v_list;
+  for (i = 0; i < highlight_ga.ga_len && !got_int; i++) {
+    if (hlarg == NULL || STRICMP(hlarg, hl_table[i].sg_name) == 0) {
+      dict = highlight_get_info(i, resolve_link);
+      if (dict != NULL) {
+        tv_list_append_dict(list, dict);
+      }
+    }
+  }
+}
+
+// Returns the string value at 'dict[key]'. Returns NULL, if 'key' is not in
+// 'dict' or the value is not a string type. If the value is not a string type
+// or is NULL, then 'error' is set to true.
+
+static char_u *hldict_get_string(dict_T *dict, char_u *key, int *error)
+{
+  dictitem_T *di;
+
+  *error = false;
+  di = tv_dict_find(dict, (const char *)key, -1);
+  if (di == NULL) {
     return NULL;
+  }
+
+  if (di->di_tv.v_type != VAR_STRING || di->di_tv.vval.v_string == NULL) {
+    emsg(_(e_stringreq));
+    *error = true;
+    return NULL;
+  }
+
+  return (char_u *)di->di_tv.vval.v_string;
 }
 
-/*
- * "hlget([name])" function
- * Return the attributes of a specific highlight group (if specified) or all
- * the highlight groups.
- */
-    void
-f_hlget(typval_T *argvars, typval_T *rettv, EvalFuncData  fptr)
+// Convert the highlight attribute Dictionary at 'dict[key]' into a string
+// value in 'attr_str' of length 'len'. Returns false if 'dict[key]' is not a
+// Dictionary or is NULL.
+
+static int hldict_attr_to_str(dict_T *dict, char_u *key, char_u *attr_str, int len)
 {
-    list_T	*list;
-    dict_T	*dict;
-    int		i;
-    const char	*hlarg = NULL;
-    bool		resolve_link = false;
+  dictitem_T *di;
+  dict_T *attrdict;
+  int i;
 
-    tv_list_alloc_ret(rettv, kListLenMayKnow);
-
-    if (tv_check_for_opt_string_arg(argvars, 0) == FAIL
-	    || (argvars[0].v_type != VAR_UNKNOWN
-		&& tv_check_for_opt_bool_arg(argvars, 1) == FAIL))
-
-    if (argvars[0].v_type != VAR_UNKNOWN)
-    {
-	// highlight group name supplied
-	hlarg = tv_get_string_chk(&argvars[0]);
-	if (hlarg == NULL)
-	    return;
-
-	if (argvars[1].v_type != VAR_UNKNOWN)
-	{
-            if (argvars[1].v_type == VAR_BOOL) {
-                resolve_link = argvars[1].vval.v_bool == kBoolVarTrue ? true : false;
-            } else if (argvars[1].v_type == VAR_NUMBER) {
-                resolve_link = argvars[1].vval.v_number == 1 ? true : false;
-            } else {
-                return;
-            }
-	}
-    }
-
-    list = rettv->vval.v_list;
-    for (i = 0; i < highlight_ga.ga_len && !got_int; ++i)
-    {
-	if (hlarg == NULL || STRICMP(hlarg, hl_table[i].sg_name) == 0)
-	{
-	    dict = highlight_get_info(i, resolve_link);
-	    if (dict != NULL)
-		tv_list_append_dict(list, dict);
-	}
-    }
-}
-
-/*
- * Returns the string value at 'dict[key]'. Returns NULL, if 'key' is not in
- * 'dict' or the value is not a string type. If the value is not a string type
- * or is NULL, then 'error' is set to true.
- */
-    static char_u *
-hldict_get_string(dict_T *dict, char_u *key, int *error)
-{
-    dictitem_T	*di;
-
-    *error = false;
-    di = tv_dict_find(dict, (const char*)key, -1);
-    if (di == NULL)
-	return NULL;
-
-    if (di->di_tv.v_type != VAR_STRING || di->di_tv.vval.v_string == NULL)
-    {
-	emsg(_(e_stringreq));
-	*error = true;
-	return NULL;
-    }
-
-    return (char_u *)di->di_tv.vval.v_string;
-}
-
-/*
- * Convert the highlight attribute Dictionary at 'dict[key]' into a string
- * value in 'attr_str' of length 'len'. Returns false if 'dict[key]' is not a
- * Dictionary or is NULL.
- */
-    static int
-hldict_attr_to_str(
-	dict_T	*dict,
-	char_u	*key,
-	char_u	*attr_str,
-	int	len)
-{
-    dictitem_T	*di;
-    dict_T	*attrdict;
-    int		i;
-
-    attr_str[0] = NUL;
-    di = tv_dict_find(dict, (const char*)key, -1);
-    if (di == NULL)
-	return true;
-
-    if (di->di_tv.v_type != VAR_DICT || di->di_tv.vval.v_dict == NULL)
-    {
-	emsg(_(e_dictreq));
-	return false;
-    }
-
-    attrdict = di->di_tv.vval.v_dict;
-
-    // If the attribute dict is empty, then return NONE to clear the attributes
-    if (attrdict->dv_hashtab.ht_used == 0)
-    {
-	STRCAT(attr_str, (char_u *)"NONE");
-	return true;
-    }
-
-    for (i = 0; i < (int)(sizeof(hl_name_table)/sizeof(hl_name_table[0])); i++)
-    {
-	if (tv_dict_get_number(attrdict, (const char *)hl_name_table[i]) == 1)
-	{
-	    if (attr_str[0] != NUL)
-		STRCAT(attr_str, (char_u *)",");
-	    STRCAT(attr_str, (char_u *)hl_name_table[i]);
-	}
-    }
-
+  attr_str[0] = NUL;
+  di = tv_dict_find(dict, (const char *)key, -1);
+  if (di == NULL) {
     return true;
+  }
+
+  if (di->di_tv.v_type != VAR_DICT || di->di_tv.vval.v_dict == NULL) {
+    emsg(_(e_dictreq));
+    return false;
+  }
+
+  attrdict = di->di_tv.vval.v_dict;
+
+  // If the attribute dict is empty, then return NONE to clear the attributes
+  if (attrdict->dv_hashtab.ht_used == 0) {
+    STRCAT(attr_str, (char_u *)"NONE");
+    return true;
+  }
+
+  for (i = 0; i < (int)(sizeof(hl_name_table)/sizeof(hl_name_table[0])); i++) {
+    if (tv_dict_get_number(attrdict, (const char *)hl_name_table[i]) == 1) {
+      if (attr_str[0] != NUL) {
+        STRCAT(attr_str, (char_u *)",");
+      }
+      STRCAT(attr_str, (char_u *)hl_name_table[i]);
+    }
+  }
+
+  return true;
 }
 
-/*
- * Add or update a highlight group using 'dict' items. Returns true if
- * successfully updated the highlight group.
- */
-    static int
-hlg_add_or_update(dict_T *dict)
+// Add or update a highlight group using 'dict' items. Returns true if
+// successfully updated the highlight group.
+
+static int hlg_add_or_update(dict_T *dict)
 {
-    char_u	*name;
-    int		error;
-    char_u	cterm_attr[80];
-    char_u	gui_attr[80];
-    char_u	*ctermfg;
-    char_u	*ctermbg;
-    char_u	*guifg;
-    char_u	*guibg;
-    char_u	*guisp;
+  char_u *name;
+  int error;
+  char_u cterm_attr[80];
+  char_u gui_attr[80];
+  char_u *ctermfg;
+  char_u *ctermbg;
+  char_u *guifg;
+  char_u *guibg;
+  char_u *guisp;
 
-    name = hldict_get_string(dict, (char_u *)"name", &error);
-    if (name == NULL || error)
-	return false;
+  name = hldict_get_string(dict, (char_u *)"name", &error);
+  if (name == NULL || error) {
+    return false;
+  }
 
-    if (tv_dict_find(dict, "linksto", -1) != NULL)
-    {
-	char_u	*linksto;
+  if (tv_dict_find(dict, "linksto", -1) != NULL) {
+    char_u *linksto;
 
-	// link highlight groups
-	linksto = hldict_get_string(dict, (char_u *)"linksto", &error);
-	if (linksto == NULL || error)
-	    return false;
-
-	vim_snprintf((char *)IObuff, IOSIZE, "link %s %s", name, linksto);
-	do_highlight((char *)IObuff, false, false);
-
-	return true;
+    // link highlight groups
+    linksto = hldict_get_string(dict, (char_u *)"linksto", &error);
+    if (linksto == NULL || error) {
+      return false;
     }
 
-    if (tv_dict_find(dict, "cleared", -1) != NULL)
-    {
-	varnumber_T	cleared;
-
-	// clear a highlight group
-	cleared = tv_dict_get_number(dict, (const char *)"cleared");
-	if (cleared == true)
-	{
-	    vim_snprintf((char *)IObuff, IOSIZE, "clear %s", name);
-	    do_highlight((char *)IObuff, false, false);
-	}
-
-	return true;
-    }
-
-    if (!hldict_attr_to_str(dict, (char_u *)"cterm", cterm_attr,
-		sizeof(cterm_attr)))
-	return false;
-
-    ctermfg = hldict_get_string(dict, (char_u *)"ctermfg", &error);
-    if (error)
-	return false;
-
-    ctermbg = hldict_get_string(dict, (char_u *)"ctermbg", &error);
-    if (error)
-	return false;
-
-    if (!hldict_attr_to_str(dict, (char_u *)"gui", gui_attr,
-		sizeof(gui_attr)))
-	return false;
-
-    guifg = hldict_get_string(dict, (char_u *)"guifg", &error);
-    if (error)
-	return false;
-
-    guibg = hldict_get_string(dict, (char_u *)"guibg", &error);
-    if (error)
-	return false;
-
-    guisp = hldict_get_string(dict, (char_u *)"guisp", &error);
-    if (error)
-	return false;
-
-    // If none of the attributes are specified, then do nothing.
-    if (cterm_attr[0] == NUL && ctermfg == NULL && ctermbg == NULL
-        && gui_attr[0] == NUL && guifg == NULL && guibg == NULL && guisp == NULL)
-	return true;
-
-    vim_snprintf((char *)IObuff, IOSIZE,
-	    "%s %s%s %s%s %s%s %s%s %s%s %s%s %s%s",
-	    name,
-	    cterm_attr[0] != NUL ? "cterm=" : "",
-	    cterm_attr[0] != NUL ? cterm_attr : (char_u *)"",
-	    ctermfg != NULL ? "ctermfg=" : "",
-	    ctermfg != NULL ? ctermfg : (char_u *)"",
-	    ctermbg != NULL ? "ctermbg=" : "",
-	    ctermbg != NULL ? ctermbg : (char_u *)"",
-	    gui_attr[0] != NUL ? "gui=" : "",
-	    gui_attr[0] != NUL ? gui_attr : (char_u *)"",
-	    guifg != NULL ? "guifg=" : "",
-	    guifg != NULL ? guifg : (char_u *)"",
-	    guibg != NULL ? "guibg=" : "",
-	    guibg != NULL ? guibg : (char_u *)"",
-	    guisp != NULL ? "guisp=" : "",
-	    guisp != NULL ? guisp : (char_u *)""
-		);
-
+    vim_snprintf((char *)IObuff, IOSIZE, "link %s %s", name, linksto);
     do_highlight((char *)IObuff, false, false);
 
     return true;
+  }
+
+  if (tv_dict_find(dict, "cleared", -1) != NULL) {
+    varnumber_T cleared;
+
+    // clear a highlight group
+    cleared = tv_dict_get_number(dict, (const char *)"cleared");
+    if (cleared == true) {
+      vim_snprintf((char *)IObuff, IOSIZE, "clear %s", name);
+      do_highlight((char *)IObuff, false, false);
+    }
+
+    return true;
+  }
+
+  if (!hldict_attr_to_str(dict, (char_u *)"cterm", cterm_attr,
+                          sizeof(cterm_attr))) {
+    return false;
+  }
+
+  ctermfg = hldict_get_string(dict, (char_u *)"ctermfg", &error);
+  if (error) {
+    return false;
+  }
+
+  ctermbg = hldict_get_string(dict, (char_u *)"ctermbg", &error);
+  if (error) {
+    return false;
+  }
+
+  if (!hldict_attr_to_str(dict, (char_u *)"gui", gui_attr,
+                          sizeof(gui_attr))) {
+    return false;
+  }
+
+  guifg = hldict_get_string(dict, (char_u *)"guifg", &error);
+  if (error) {
+    return false;
+  }
+
+  guibg = hldict_get_string(dict, (char_u *)"guibg", &error);
+  if (error) {
+    return false;
+  }
+
+  guisp = hldict_get_string(dict, (char_u *)"guisp", &error);
+  if (error) {
+    return false;
+  }
+
+  // If none of the attributes are specified, then do nothing.
+  if (cterm_attr[0] == NUL && ctermfg == NULL && ctermbg == NULL
+      && gui_attr[0] == NUL && guifg == NULL && guibg == NULL && guisp == NULL) {
+    return true;
+  }
+
+  vim_snprintf((char *)IObuff, IOSIZE,
+               "%s %s%s %s%s %s%s %s%s %s%s %s%s %s%s",
+               name,
+               cterm_attr[0] != NUL ? "cterm=" : "",
+               cterm_attr[0] != NUL ? cterm_attr : (char_u *)"",
+               ctermfg != NULL ? "ctermfg=" : "",
+               ctermfg != NULL ? ctermfg : (char_u *)"",
+               ctermbg != NULL ? "ctermbg=" : "",
+               ctermbg != NULL ? ctermbg : (char_u *)"",
+               gui_attr[0] != NUL ? "gui=" : "",
+               gui_attr[0] != NUL ? gui_attr : (char_u *)"",
+               guifg != NULL ? "guifg=" : "",
+               guifg != NULL ? guifg : (char_u *)"",
+               guibg != NULL ? "guibg=" : "",
+               guibg != NULL ? guibg : (char_u *)"",
+               guisp != NULL ? "guisp=" : "",
+               guisp != NULL ? guisp : (char_u *)"");
+
+  do_highlight((char *)IObuff, false, false);
+
+  return true;
 }
 
-/*
- * "hlset([{highlight_attr}])" function
- * Add or modify highlight groups
- */
-    void
-f_hlset(typval_T *argvars, typval_T *rettv, EvalFuncData  fptr)
+// "hlset([{highlight_attr}])" function
+// Add or modify highlight groups
+
+void f_hlset(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
-    dict_T	*dict;
+  dict_T *dict;
 
-    rettv->vval.v_number = -1;
+  rettv->vval.v_number = -1;
 
-    if (tv_check_for_list_arg(argvars, 0) == FAIL)
-	return;
+  if (tv_check_for_list_arg(argvars, 0) == FAIL) {
+    return;
+  }
 
   TV_LIST_ITER(argvars->vval.v_list, li, {
     if (TV_LIST_ITEM_TV(li)->v_type != VAR_DICT) {
@@ -3278,9 +3275,8 @@ f_hlset(typval_T *argvars, typval_T *rettv, EvalFuncData  fptr)
     }
   });
 
-    rettv->vval.v_number = 0;
+  rettv->vval.v_number = 0;
 }
-
 
 const char *coloridx_to_name(int idx, int val, char hexbuf[8])
 {
