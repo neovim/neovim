@@ -1820,10 +1820,17 @@ bool do_mouse(oparg_T *oap, int c, int dir, long count, bool fixindent)
           } else if (get_fpos_of_mouse(&m_pos) != IN_BUFFER) {
             jump_flags = MOUSE_MAY_STOP_VIS;
           } else {
-            if ((lt(curwin->w_cursor, VIsual)
-                 && (lt(m_pos, curwin->w_cursor) || lt(VIsual, m_pos)))
-                || (lt(VIsual, curwin->w_cursor)
-                    && (lt(m_pos, VIsual) || lt(curwin->w_cursor, m_pos)))) {
+            if (VIsual_mode == 'V') {
+              if ((curwin->w_cursor.lnum <= VIsual.lnum
+                   && (m_pos.lnum < curwin->w_cursor.lnum || VIsual.lnum < m_pos.lnum))
+                  || (VIsual.lnum < curwin->w_cursor.lnum
+                      && (m_pos.lnum < VIsual.lnum || curwin->w_cursor.lnum < m_pos.lnum))) {
+                jump_flags = MOUSE_MAY_STOP_VIS;
+              }
+            } else if ((ltoreq(curwin->w_cursor, VIsual)
+                        && (lt(m_pos, curwin->w_cursor) || lt(VIsual, m_pos)))
+                       || (lt(VIsual, curwin->w_cursor)
+                           && (lt(m_pos, VIsual) || lt(curwin->w_cursor, m_pos)))) {
               jump_flags = MOUSE_MAY_STOP_VIS;
             } else if (VIsual_mode == Ctrl_V) {
               getvcols(curwin, &curwin->w_cursor, &VIsual, &leftcol, &rightcol);
