@@ -519,7 +519,7 @@ local function visit_node(root, level, lang_tree, headings, opt, stats)
       return text
     end
     local s = ('%s<a href="%s#%s">%s</a>'):format(ws(), helppage, url_encode(tagname), html_esc(tagname))
-    if node_name == 'taglink' and opt.old then
+    if opt.old and node_name == 'taglink' then
       s = fix_tab_after_conceal(s, node_text(root:next_sibling()))
     end
     return s
@@ -528,7 +528,7 @@ local function visit_node(root, level, lang_tree, headings, opt, stats)
       return text
     end
     local s = ('%s<code>%s</code>'):format(ws(), trimmed)
-    if node_name == 'codespan' and opt.old then
+    if opt.old and node_name == 'codespan' then
       s = fix_tab_after_conceal(s, node_text(root:next_sibling()))
     end
     return s

@@ -4,7 +4,7 @@
 		  VIM REFERENCE MANUAL	  by Bram Moolenaar
 
 
-Builtin functions				*builtin-functions*
+Builtin functions		*vimscript-functions* *builtin-functions*
 
 For functions grouped by what they are used for see |function-list|.
 

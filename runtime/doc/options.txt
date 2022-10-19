@@ -440,9 +440,9 @@ se[t]			the string "set " or "se " (note the space); When
 :			a colon
 [text]			any text or empty
 
-Examples:
-   /* vim: set ai tw=75: */ ~
-   /* Vim: set ai tw=75: */ ~
+Examples: >
+   /* vim: set ai tw=75: */
+   /* Vim: set ai tw=75: */
 
 The white space before {vi:|vim:|Vim:|ex:} is required.  This minimizes the
 chance that a normal word like "lex:" is caught.  There is one exception:
@@ -479,10 +479,10 @@ number can be specified where "vim:" or "Vim:" is used:
 	vim={vers}:	version {vers}
 	vim>{vers}:	version after {vers}
 {vers} is 700 for Vim 7.0 (hundred times the major version plus minor).
-For example, to use a modeline only for Vim 7.0:
-	/* vim700: set foldmethod=marker */ ~
-To use a modeline for Vim after version 7.2:
-	/* vim>702: set cole=2: */ ~
+For example, to use a modeline only for Vim 7.0: >
+	/* vim700: set foldmethod=marker */
+To use a modeline for Vim after version 7.2: >
+	/* vim>702: set cole=2: */
 There can be no blanks between "vim" and the ":".
 The modeline is ignored if {vers} does not fit in an integer.
 
@@ -491,16 +491,16 @@ The number of lines that are checked can be set with the 'modelines' option.
 If 'modeline' is off or 'modelines' is 0 no lines are checked.
 
 Note that for the first form all of the rest of the line is used, thus a line
-like:
-   /* vi:ts=4: */ ~
-will give an error message for the trailing "*/".  This line is OK:
-   /* vi:set ts=4: */ ~
+like: >
+   /* vi:ts=4: */
+will give an error message for the trailing "*/".  This line is OK: >
+   /* vi:set ts=4: */
 
 If an error is detected the rest of the line is skipped.
 
 If you want to include a ':' in a set command precede it with a '\'.  The
-backslash in front of the ':' will be removed.  Example:
-   /* vi:set fillchars=stl\:^,vert\:\|: */ ~
+backslash in front of the ':' will be removed.  Example: >
+   /* vi:set fillchars=stl\:^,vert\:\|: */
 This sets the 'fillchars' option to "stl:^,vert:\|".  Only a single backslash
 before the ':' is removed.  Thus to include "\:" you have to specify "\\:".
 							*E992*
@@ -1872,9 +1872,9 @@ A jump table for the options with a short description can be found at |Q_op|.
 		^\(#\s*define\|[a-z]*\s*const\s*[a-z]*\)
 <	You can also use "\ze" just before the name and continue the pattern
 	to check what is following.  E.g. for Javascript, if a function is
-	defined with "func_name = function(args)": >
+	defined with `func_name = function(args)`: >
 		^\s*\ze\i\+\s*=\s*function(
-<	If the function is defined with "func_name : function() {...": >
+<	If the function is defined with `func_name : function() {...`: >
 	        ^\s*\ze\i\+\s*[:]\s*(*function\s*(
 <	When using the ":set" command, you need to double the backslashes!
 	To avoid that use `:let` with a single quote string: >
@@ -2406,13 +2406,13 @@ A jump table for the options with a short description can be found at |Q_op|.
 	this use the ":filetype on" command. |:filetype|
 	Setting this option to a different value is most useful in a modeline,
 	for a file for which the file type is not automatically recognized.
-	Example, for in an IDL file:
-		/* vim: set filetype=idl : */ ~
-	|FileType| |filetypes|
+	Example, for in an IDL file: >
+		/* vim: set filetype=idl : */
+<	|FileType| |filetypes|
 	When a dot appears in the value then this separates two filetype
-	names.  Example:
-		/* vim: set filetype=c.doxygen : */ ~
-	This will use the "c" filetype first, then the "doxygen" filetype.
+	names.  Example: >
+		/* vim: set filetype=c.doxygen : */
+<	This will use the "c" filetype first, then the "doxygen" filetype.
 	This works both for filetype plugins and for syntax files.  More than
 	one dot may appear.
 	This option is not copied to another buffer, independent of the 's' or
@@ -5685,7 +5685,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	   "number"	display signs in the 'number' column. If the number
 			column is not present, then behaves like "auto".
 
-	Note regarding 'orphaned signs': with signcolumn numbers higher than
+	Note regarding "orphaned signs": with signcolumn numbers higher than
 	1, deleting lines will also remove the associated signs automatically,
 	in contrast to the default Vim behavior of keeping and grouping them.
 	This is done in order for the signcolumn appearance not appear weird
@@ -6263,12 +6263,12 @@ A jump table for the options with a short description can be found at |Q_op|.
 	Otherwise this option does not always reflect the current syntax (the
 	b:current_syntax variable does).
 	This option is most useful in a modeline, for a file which syntax is
-	not automatically recognized.  Example, in an IDL file:
-		/* vim: set syntax=idl : */ ~
-	When a dot appears in the value then this separates two filetype
-	names.  Example:
-		/* vim: set syntax=c.doxygen : */ ~
-	This will use the "c" syntax first, then the "doxygen" syntax.
+	not automatically recognized.  Example, in an IDL file: >
+		/* vim: set syntax=idl : */
+<	When a dot appears in the value then this separates two filetype
+	names.  Example: >
+		/* vim: set syntax=c.doxygen : */
+<	This will use the "c" syntax first, then the "doxygen" syntax.
 	Note that the second one must be prepared to be loaded as an addition,
 	otherwise it will be skipped.  More than one dot may appear.
 	To switch off syntax highlighting for the current file, use: >
