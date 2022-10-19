@@ -9,8 +9,11 @@
    "|" @conceal (#set! conceal "")
    text: (_) @text.reference)
 (optionlink
-   text: (_) @text.literal)
+   text: (_) @text.reference)
 (codespan
    "`" @conceal (#set! conceal "")
-   text: (_) @string)
+   text: (_) @text.literal)
+(codeblock) @text.literal
 (argument) @parameter
+(keycode) @string.special
+(url) @text.uri
