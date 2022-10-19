@@ -46,9 +46,6 @@ endfunc
 func Test_timer_repeat_many()
   let g:val = 0
   let timer = timer_start(50, 'MyHandler', {'repeat': -1})
-  if has('mac')
-    sleep 200m
-  endif
   sleep 200m
   call timer_stop(timer)
   call assert_inrange((has('mac') ? 1 : 2), LoadAdjust(5), g:val)
