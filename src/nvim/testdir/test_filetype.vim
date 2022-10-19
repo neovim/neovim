@@ -642,7 +642,7 @@ let s:filename_checks = {
     \ 'xsd': ['file.xsd'],
     \ 'xslt': ['file.xsl', 'file.xslt'],
     \ 'yacc': ['file.yy', 'file.yxx', 'file.y++'],
-    \ 'yaml': ['file.yaml', 'file.yml', '.clang-tidy'],
+    \ 'yaml': ['file.yaml', 'file.yml', '.clang-format', '.clang-tidy'],
     \ 'yang': ['file.yang'],
     \ 'z8a': ['file.z8a'],
     \ 'zig': ['file.zig'],
