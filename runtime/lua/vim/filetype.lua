@@ -1676,6 +1676,7 @@ local filename = {
   fglrxrc = 'xml',
   ['/etc/blkid.tab'] = 'xml',
   ['/etc/blkid.tab.old'] = 'xml',
+  ['.clang-format'] = 'yaml',
   ['.clang-tidy'] = 'yaml',
   ['/etc/zprofile'] = 'zsh',
   ['.zlogin'] = 'zsh',
