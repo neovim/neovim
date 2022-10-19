@@ -1780,6 +1780,49 @@ describe('float window', function()
         ]]}
       end
 
+      meths.win_set_config(win, {border="double",title= "Center",title_pos="center"})
+      if multigrid then
+        screen:expect{grid=[[
+        ## grid 1
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [3:----------------------------------------]|
+        ## grid 2
+          ^                                        |
+          {0:~                                       }|
+          {0:~                                       }|
+          {0:~                                       }|
+          {0:~                                       }|
+          {0:~                                       }|
+        ## grid 3
+                                                  |
+        ## grid 5
+          {5:╔═}{11:Center}{5:══╗}|
+          {5:║}{1: halloj! }{5:║}|
+          {5:║}{1: BORDAA  }{5:║}|
+          {5:╚═════════╝}|
+        ]], float_pos={
+          [5] = { { id = 1002 }, "NW", 1, 2, 5, true }
+        }, win_viewport={
+          [2] = {win = {id = 1000}, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1};
+          [5] = {win = {id = 1002}, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 2};
+        }}
+      else
+        screen:expect{grid=[[
+          ^                                        |
+          {0:~                                       }|
+          {0:~    }{5:╔═}{11:Center}{5:══╗}{0:                        }|
+          {0:~    }{5:║}{1: halloj! }{5:║}{0:                        }|
+          {0:~    }{5:║}{1: BORDAA  }{5:║}{0:                        }|
+          {0:~    }{5:╚═════════╝}{0:                        }|
+                                                  |
+        ]]}
+      end
+
       meths.win_set_config(win, {border="double",title= "Right",title_pos="right"})
       if multigrid then
         screen:expect{grid=[[
@@ -1823,7 +1866,7 @@ describe('float window', function()
         ]]}
       end
 
-      meths.win_set_config(win, {border="double",title= { {"B"},{"BB"}},title_pos="right"})
+      meths.win_set_config(win, {border="double",title= { {"🦄"},{"BB"}},title_pos="right"})
       if multigrid then
         screen:expect{grid=[[
         ## grid 1
@@ -1844,7 +1887,7 @@ describe('float window', function()
         ## grid 3
                                                   |
         ## grid 5
-          {5:╔══════}BBB{5:╗}|
+          {5:╔═════}🦄BB{5:╗}|
           {5:║}{1: halloj! }{5:║}|
           {5:║}{1: BORDAA  }{5:║}|
           {5:╚═════════╝}|
@@ -1858,7 +1901,7 @@ describe('float window', function()
         screen:expect{grid=[[
           ^                                        |
           {0:~                                       }|
-          {0:~    }{5:╔══════}BBB{5:╗}{0:                        }|
+          {0:~    }{5:╔═════}🦄BB{5:╗}{0:                        }|
           {0:~    }{5:║}{1: halloj! }{5:║}{0:                        }|
           {0:~    }{5:║}{1: BORDAA  }{5:║}{0:                        }|
           {0:~    }{5:╚═════════╝}{0:                        }|

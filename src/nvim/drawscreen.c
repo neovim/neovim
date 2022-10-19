@@ -616,38 +616,20 @@ int update_screen(void)
   return OK;
 }
 
-static int get_title_texts_len(VirtText title_chunks)
-{
-  int len = 0;
-  for (size_t i = 0; i < title_chunks.size; i++) {
-    char *text = title_chunks.items[i].text;
-    len += (int)strlen(text);
-  }
-  return len;
-}
-
 static void redr_title_texts(win_T *wp, ScreenGrid *grid, int col)
 {
-  char *title_text = wp->w_float_config.title_text;
-
-  if (title_text != NULL) {
-    int len = (int)strlen(title_text);
-    int attr = wp->w_float_config.title_attr;
-    grid_puts_len(grid, title_text, len, 0, col, attr);
-    XFREE_CLEAR(wp->w_float_config.title_text);
-    return;
-  }
-
-  char *text;
   VirtText title_chunks = wp->w_float_config.title_chunks;
 
   for (size_t i = 0; i < title_chunks.size; i++) {
-    text = title_chunks.items[i].text;
-    int len = (int)strlen(text);
+    char *text = title_chunks.items[i].text;
+    int cell = (int)mb_string2cells(text);
     int hl_id = title_chunks.items[i].hl_id;
     int attr = hl_id ? syn_id2attr(hl_id) : 0;
-    grid_puts_len(grid, text, len, 0, col, attr);
-    col += len;
+    if (title_chunks.size == 1) {
+      attr = wp->w_float_config.title_attr;
+    }
+    grid_puts(grid, text, 0, col, attr);
+    col += cell;
   }
   clear_virttext(&wp->w_float_config.title_chunks);
 }
@@ -667,43 +649,30 @@ static void win_redr_border(win_T *wp)
   int *adj = wp->w_border_adj;
   int irow = wp->w_height_inner + wp->w_winbar_height, icol = wp->w_width_inner;
 
-  bool title = wp->w_float_config.title;
-
   if (adj[0]) {
     grid_puts_line_start(grid, 0);
     if (adj[3]) {
       grid_put_schar(grid, 0, 0, chars[0], attrs[0]);
     }
 
-    if (title) {
-      int len, title_col = 0;
-      VirtText title_texts = wp->w_float_config.title_chunks;
+    if (wp->w_float_config.title) {
+      int title_col = 0;
+      int title_width = wp->w_float_config.title_width;
+      AlignTextPos title_pos = wp->w_float_config.title_pos;
 
-      if (wp->w_float_config.title_text != NULL) {
-        len = (int)strlen(wp->w_float_config.title_text);
-      } else {
-        len = get_title_texts_len(title_texts);
-      }
+      if (title_pos == kAlignLeft || title_pos  == kAlignRight) {
+        title_col = title_pos == kAlignLeft ? 1 : icol - title_width + 1;
+        int start_col = title_pos == kAlignLeft ? title_width : 0;
 
-      if (wp->w_float_config.title_pos == kAlignLeft) {
-        title_col = 1;
-        for (int i = len; i < icol; i++) {
+        for (int i = start_col; i < icol; i++) {
           grid_put_schar(grid, 0, i + adj[3], chars[1], attrs[1]);
         }
-      } else if (wp->w_float_config.title_pos == kAlignCenter) {
-        int text_center = len / 2;
+      } else if (title_pos == kAlignCenter) {
+        int text_center = title_width / 2;
         int col_center = icol / 2;
-        title_col = col_center - text_center;
+        title_col = col_center - text_center  + 1;
         for (int i = 0; i < icol; i++) {
-          if (i <= col_center - text_center - 2 * adj[3]
-              || i >= col_center - text_center + len - 1) {
-            grid_put_schar(grid, 0, i + adj[3], chars[1], attrs[1]);
-          }
-        }
-      } else if (wp->w_float_config.title_pos == kAlignRight) {
-        title_col = icol - len + adj[3];
-        for (int i = 0; i < icol; i++) {
-          if (i + len + adj[3] <= icol) {
+          if (i < title_col || i >= title_col + title_width - 1) {
             grid_put_schar(grid, 0, i + adj[3], chars[1], attrs[1]);
           }
         }

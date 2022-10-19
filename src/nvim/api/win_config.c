@@ -282,19 +282,14 @@ Dictionary nvim_win_get_config(Window window, Error *err)
       }
       PUT(rv, "border", ARRAY_OBJ(border));
       if (config->title) {
-        if (config->title_text != NULL) {
-          PUT(rv, "title", CSTR_TO_OBJ((const char *)config->title_text));
-        } else {
-          Array titles = ARRAY_DICT_INIT;
-          VirtText title_datas = config->title_chunks;
-          for (size_t i = 0; i < title_datas.size; i++) {
-            Array tuple = ARRAY_DICT_INIT;
-            ADD(tuple, CSTR_TO_OBJ((const char *)title_datas.items[i].text));
-            ADD(titles, ARRAY_OBJ(tuple));
-          }
-          PUT(rv, "title", ARRAY_OBJ(titles));
+        Array titles = ARRAY_DICT_INIT;
+        VirtText title_datas = config->title_chunks;
+        for (size_t i = 0; i < title_datas.size; i++) {
+          Array tuple = ARRAY_DICT_INIT;
+          ADD(tuple, CSTR_TO_OBJ((const char *)title_datas.items[i].text));
+          ADD(titles, ARRAY_OBJ(tuple));
         }
-
+        PUT(rv, "title", ARRAY_OBJ(titles));
         PUT(rv, "title_pos", INTEGER_OBJ(config->title_pos));
       }
     }
@@ -361,14 +356,15 @@ static void parse_border_title(Object title, Object title_pos, Object width, Flo
     return;
   }
 
+  int win_width = (int)width.data.integer;
   if (title.type == kObjectTypeString) {
     if (title.data.string.size == 0) {
       fconfig->title = false;
       return;
     }
-    fconfig->title_text = xstrdup(title.data.string.data);
-    int hl_id = object_to_hl_id(title, "border title highlight", err);
-    fconfig->title_hi_id = hl_id;
+    kv_push(fconfig->title_chunks, ((VirtTextChunk){ .text = xstrdup(title.data.string.data),
+                                                     .hl_id = 0 }));
+    fconfig->title_width = (int)mb_string2cells(title.data.string.data);
     fconfig->title = true;
     return;
   }
@@ -383,23 +379,8 @@ static void parse_border_title(Object title, Object title_pos, Object width, Flo
     return;
   }
 
-  Array arr = title.data.array;
-  size_t size = arr.size;
-  for (size_t i = 0; i < size; i++) {
-    Object item = arr.items[i];
-    if (item.type != kObjectTypeArray || item.data.array.size == 0) {
-      api_set_error(err, kErrorTypeValidation, "not allow empty array in title");
-      return;
-    }
-
-    if (item.data.array.items[0].type != kObjectTypeString) {
-      api_set_error(err, kErrorTypeValidation, "missing title string in title array");
-      return;
-    }
-  }
-
-  int win_width = (int)width.data.integer;
   fconfig->title_chunks = parse_virt_text(title.data.array, err, &win_width);
+  fconfig->title_width = win_width;
 
   fconfig->title = true;
   return;
