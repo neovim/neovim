@@ -3209,6 +3209,33 @@ static void foldclosed_both(typval_T *argvars, typval_T *rettv, int end)
   rettv->vval.v_number = -1;
 }
 
+static int foldclosed_next(const garray_T *gap, int level, linenr_T lnum, int offset)
+{
+  bool maybe_small = false;
+  bool use_level = false;
+  for (int i = 0; i < gap->ga_len; i++) {
+    fold_T f = ((fold_T *)gap->ga_data)[i];
+
+    if (lnum > offset + f.fd_top + f.fd_len - 1) {
+      continue;
+    }
+
+    bool folded = check_closed(curwin, &f, &use_level, level,
+                               &maybe_small, lnum - offset);
+
+    if (folded) {
+      return offset + f.fd_top;
+    }
+
+    int clnum = foldclosed_next(&f.fd_nested, level + 1, lnum, offset + f.fd_top);
+    if (clnum > 0) {
+      return clnum;
+    }
+  }
+
+  return -1;
+}
+
 /// "foldclosed()" function
 void f_foldclosed(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
@@ -3219,6 +3246,14 @@ void f_foldclosed(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 void f_foldclosedend(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
   foldclosed_both(argvars, rettv, true);
+}
+
+/// "foldclosednext()" function
+void f_foldclosednext(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
+{
+  linenr_T lnum = tv_get_lnum(argvars);
+  checkupdate(curwin);
+  rettv->vval.v_number = (varnumber_T)foldclosed_next(&curwin->w_folds, 0, lnum, 0);
 }
 
 /// "foldlevel()" function

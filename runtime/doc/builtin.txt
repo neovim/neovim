@@ -154,6 +154,7 @@ fnameescape({fname})		String	escape special characters in {fname}
 fnamemodify({fname}, {mods})	String	modify file name
 foldclosed({lnum})		Number	first line of fold at {lnum} if closed
 foldclosedend({lnum})		Number	last line of fold at {lnum} if closed
+foldclosednext({lnum})		Number	first line of the next closed fold after {lnum}
 foldlevel({lnum})		Number	fold level at {lnum}
 foldtext()			String	line displayed for closed fold
 foldtextresult({lnum})		String	text for closed fold at {lnum}
@@ -2394,6 +2395,17 @@ foldclosedend({lnum})					*foldclosedend()*
 
 		Can also be used as a |method|: >
 			GetLnum()->foldclosedend()
+
+foldclosednext({lnum})					*foldclosednext()*
+		The result is a Number. The result is the number of the next
+		closed fold. If line {lnum} is in a closed fold, the first
+		line of the closed fold is returned. If there are no closed
+		folds, -1 is returned.
+		{lnum} is used like with |getline()|.  Thus "." is the current
+		line, "'m" mark m, etc.
+
+		Can also be used as a |method|: >
+			GetLnum()->foldclosednext()
 
 foldlevel({lnum})					*foldlevel()*
 		The result is a Number, which is the foldlevel of line {lnum}

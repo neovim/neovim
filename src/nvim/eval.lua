@@ -135,6 +135,7 @@ return {
     fnamemodify={args=2, base=1},
     foldclosed={args=1, base=1},
     foldclosedend={args=1, base=1},
+    foldclosednext={args=1, base=1},
     foldlevel={args=1, base=1},
     foldtext={},
     foldtextresult={args=1, base=1},
