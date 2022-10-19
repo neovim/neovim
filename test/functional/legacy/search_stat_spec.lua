@@ -79,11 +79,31 @@ describe('search stat', function()
       /foo                   [1/2]  |
     ]])
     feed('n')
-    poke_eventloop()
-    screen:expect_unchanged()
+    screen:expect([[
+      if                            |
+      {3:^+--  2 lines: foo·············}|
+      endif                         |
+                                    |
+      {1:~                             }|
+      {1:~                             }|
+      {1:~                             }|
+      {1:~                             }|
+      {1:~                             }|
+      /foo                   [1/2]  |
+    ]])
     feed('n')
-    poke_eventloop()
-    screen:expect_unchanged()
+    screen:expect([[
+      if                            |
+      {3:^+--  2 lines: foo·············}|
+      endif                         |
+                                    |
+      {1:~                             }|
+      {1:~                             }|
+      {1:~                             }|
+      {1:~                             }|
+      {1:~                             }|
+      /foo                   [1/2]  |
+    ]])
   end)
 
   it('is cleared by gd and gD vim-patch:8.2.3583', function()

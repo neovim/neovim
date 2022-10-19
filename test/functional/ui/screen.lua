@@ -156,6 +156,7 @@ function Screen.new(width, height)
     ruler = {},
     hl_groups = {},
     _default_attr_ids = nil,
+    _track_redraws = false,
     mouse_enabled = true,
     _attrs = {},
     _hl_info = {[0]={}},
@@ -192,6 +193,11 @@ end
 function Screen:set_rgb_cterm(val)
   self._rgb_cterm = val
 end
+
+function Screen:track_redraws()
+  self._track_redraws = true
+end
+
 
 function Screen:attach(options, session)
   if session == nil then
@@ -468,13 +474,17 @@ screen:redraw_debug() to show all intermediate screen states.  ]])
       end
     end
   end, expected)
+  if self._track_redraws then
+    for _,grid in pairs(self._grids) do
+      grid.redr_status = {}
+    end
+  end
 end
 
-function Screen:expect_unchanged(waittime_ms, ignore_attrs, request_cb)
+function Screen:expect_unchanged(waittime_ms)
   waittime_ms = waittime_ms and waittime_ms or 100
   -- Collect the current screen state.
-  self:sleep(0, request_cb)
-  local kwargs = self:get_snapshot(nil, ignore_attrs)
+  local kwargs = self:get_snapshot()
 
   -- Check that screen state does not change.
   kwargs.unchanged = true
@@ -689,6 +699,7 @@ function Screen:_handle_grid_resize(grid, width, height)
     rows=rows,
     width=width,
     height=height,
+    redr_status={},
   }
 end
 
@@ -885,6 +896,9 @@ function Screen:_handle_grid_scroll(g, top, bot, left, right, rows, cols)
       target[j].attrs = source[j].attrs
       target[j].hl_id = source[j].hl_id
     end
+    if self._track_redraws then
+      grid.redr_status[i] = grid.redr_status[i+rows] or 's'
+    end
   end
 
   -- clear invalid rows
@@ -940,6 +954,9 @@ function Screen:_handle_grid_line(grid, row, col, items)
       cell.hl_id = hl_id
       colpos = colpos+1
     end
+  end
+  if self._track_redraws then
+    self._grids[grid].redr_status[row+1] = '+'
   end
 end
 
@@ -1264,6 +1281,9 @@ function Screen:render(headers, attr_state, preview)
     for i = 1, height do
       local cursor = self._cursor.grid == igrid and self._cursor.row == i
       local prefix = (headers or preview) and "  " or ""
+      if self._track_redraws then
+        prefix = prefix..(grid.redr_status[i] or "-").." "
+      end
       table.insert(rv, prefix..self:_row_repr(igrid, i, attr_state, cursor).."|")
     end
   end
