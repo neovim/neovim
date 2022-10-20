@@ -2171,18 +2171,14 @@ static afffile_T *spell_read_aff(spellinfo_T *spin, char_u *fname)
         midword = (char_u *)getroom_save(spin, (char_u *)items[1]);
       } else if (is_aff_rule(items, itemcnt, "TRY", 2)) {
         // ignored, we look in the tree for what chars may appear
-      }
-      // TODO: remove "RAR" later
-      else if ((is_aff_rule(items, itemcnt, "RAR", 2)
-                || is_aff_rule(items, itemcnt, "RARE", 2))
-               && aff->af_rare == 0) {
+      } else if ((is_aff_rule(items, itemcnt, "RAR", 2)  // TODO(vim): remove "RAR" later
+                  || is_aff_rule(items, itemcnt, "RARE", 2))
+                 && aff->af_rare == 0) {
         aff->af_rare = affitem2flag(aff->af_flagtype, (char_u *)items[1],
                                     fname, lnum);
-      }
-      // TODO: remove "KEP" later
-      else if ((is_aff_rule(items, itemcnt, "KEP", 2)
-                || is_aff_rule(items, itemcnt, "KEEPCASE", 2))
-               && aff->af_keepcase == 0) {
+      } else if ((is_aff_rule(items, itemcnt, "KEP", 2)  // TODO(vim): remove "KEP" later
+                  || is_aff_rule(items, itemcnt, "KEEPCASE", 2))
+                 && aff->af_keepcase == 0) {
         aff->af_keepcase = affitem2flag(aff->af_flagtype, (char_u *)items[1],
                                         fname, lnum);
       } else if ((is_aff_rule(items, itemcnt, "BAD", 2)
