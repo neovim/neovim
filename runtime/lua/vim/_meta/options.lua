@@ -2473,6 +2473,9 @@ vim.go.fdo = vim.go.foldopen
 --- It is not allowed to change text or jump to another window while
 --- evaluating 'foldtext' `textlock`.
 ---
+--- When set to an empty string, foldtext is disabled, and the line
+--- is displayed normally with highlighting and no line wrapping.
+---
 --- @type string
 vim.o.foldtext = "foldtext()"
 vim.o.fdt = vim.o.foldtext

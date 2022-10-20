@@ -80,56 +80,113 @@ describe('folded lines', function()
       end
     end)
 
-    local function test_folded_cursorline()
+    local function test_folded_cursorline(foldtext)
+      if not foldtext then
+        command('set foldtext=')
+      end
       command('set number cursorline foldcolumn=2')
       command('hi link CursorLineFold Search')
       insert(content1)
       feed('ggzf3jj')
+
       if multigrid then
-        screen:expect([[
-        ## grid 1
-          [2:---------------------------------------------]|*7
-          [3:---------------------------------------------]|
-        ## grid 2
-          {7:+ }{8:  1 }{5:+--  4 lines: This is a················}|
-          {6:  }{9:  5 }{12:^in his cave.                           }|
-          {7:  }{8:  6 }                                       |
-          {1:~                                            }|*4
-        ## grid 3
-                                                       |
-        ]])
+        if foldtext then
+          screen:expect([[
+          ## grid 1
+            [2:---------------------------------------------]|*7
+            [3:---------------------------------------------]|
+          ## grid 2
+            {7:+ }{8:  1 }{5:+--  4 lines: This is a················}|
+            {6:  }{9:  5 }{12:^in his cave.                           }|
+            {7:  }{8:  6 }                                       |
+            {1:~                                            }|*4
+          ## grid 3
+                                                         |
+          ]])
+        else
+          screen:expect([[
+          ## grid 1
+            [2:---------------------------------------------]|*7
+            [3:---------------------------------------------]|
+          ## grid 2
+            {7:+ }{8:  1 }{5:This is a······························}|
+            {6:  }{9:  5 }{12:^in his cave.                           }|
+            {7:  }{8:  6 }                                       |
+            {1:~                                            }|*4
+          ## grid 3
+                                                         |
+          ]])
+        end
       else
-        screen:expect([[
-          {7:+ }{8:  1 }{5:+--  4 lines: This is a················}|
-          {6:  }{9:  5 }{12:^in his cave.                           }|
-          {7:  }{8:  6 }                                       |
-          {1:~                                            }|*4
-                                                       |
-        ]])
+        if foldtext then
+          screen:expect([[
+            {7:+ }{8:  1 }{5:+--  4 lines: This is a················}|
+            {6:  }{9:  5 }{12:^in his cave.                           }|
+            {7:  }{8:  6 }                                       |
+            {1:~                                            }|*4
+                                                         |
+          ]])
+        else
+          screen:expect([[
+            {7:+ }{8:  1 }{5:This is a······························}|
+            {6:  }{9:  5 }{12:^in his cave.                           }|
+            {7:  }{8:  6 }                                       |
+            {1:~                                            }|*4
+                                                         |
+          ]])
+        end
       end
+
       feed('k')
+
       if multigrid then
-        screen:expect([[
-        ## grid 1
-          [2:---------------------------------------------]|*7
-          [3:---------------------------------------------]|
-        ## grid 2
-          {6:+ }{9:  1 }{13:^+--  4 lines: This is a················}|
-          {7:  }{8:  5 }in his cave.                           |
-          {7:  }{8:  6 }                                       |
-          {1:~                                            }|*4
-        ## grid 3
-                                                       |
-        ]])
+        if foldtext then
+          screen:expect([[
+          ## grid 1
+            [2:---------------------------------------------]|*7
+            [3:---------------------------------------------]|
+          ## grid 2
+            {6:+ }{9:  1 }{13:^+--  4 lines: This is a················}|
+            {7:  }{8:  5 }in his cave.                           |
+            {7:  }{8:  6 }                                       |
+            {1:~                                            }|*4
+          ## grid 3
+                                                         |
+          ]])
+        else
+          screen:expect([[
+          ## grid 1
+            [2:---------------------------------------------]|*7
+            [3:---------------------------------------------]|
+          ## grid 2
+            {6:+ }{9:  1 }{13:^This is a······························}|
+            {7:  }{8:  5 }in his cave.                           |
+            {7:  }{8:  6 }                                       |
+            {1:~                                            }|*4
+          ## grid 3
+                                                         |
+          ]])
+        end
       else
-        screen:expect([[
-          {6:+ }{9:  1 }{13:^+--  4 lines: This is a················}|
-          {7:  }{8:  5 }in his cave.                           |
-          {7:  }{8:  6 }                                       |
-          {1:~                                            }|*4
-                                                       |
-        ]])
+        if foldtext then
+          screen:expect([[
+            {6:+ }{9:  1 }{13:^+--  4 lines: This is a················}|
+            {7:  }{8:  5 }in his cave.                           |
+            {7:  }{8:  6 }                                       |
+            {1:~                                            }|*4
+                                                         |
+          ]])
+        else
+          screen:expect([[
+            {6:+ }{9:  1 }{13:^This is a······························}|
+            {7:  }{8:  5 }in his cave.                           |
+            {7:  }{8:  6 }                                       |
+            {1:~                                            }|*4
+                                                         |
+          ]])
+        end
       end
+
       -- CursorLine is applied correctly with screenrow motions #22232
       feed('jgk')
       screen:expect_unchanged()
@@ -137,71 +194,130 @@ describe('folded lines', function()
       feed('zo4Gzc')
       screen:expect_unchanged()
       command('set cursorlineopt=line')
+
       if multigrid then
-        screen:expect([[
-        ## grid 1
-          [2:---------------------------------------------]|*7
-          [3:---------------------------------------------]|
-        ## grid 2
-          {7:+ }{8:  1 }{13:^+--  4 lines: This is a················}|
-          {7:  }{8:  5 }in his cave.                           |
-          {7:  }{8:  6 }                                       |
-          {1:~                                            }|*4
-        ## grid 3
-                                                       |
-        ]])
+        if foldtext then
+          screen:expect([[
+          ## grid 1
+            [2:---------------------------------------------]|*7
+            [3:---------------------------------------------]|
+          ## grid 2
+            {7:+ }{8:  1 }{13:^+--  4 lines: This is a················}|
+            {7:  }{8:  5 }in his cave.                           |
+            {7:  }{8:  6 }                                       |
+            {1:~                                            }|*4
+          ## grid 3
+                                                         |
+          ]])
+        else
+          screen:expect([[
+          ## grid 1
+            [2:---------------------------------------------]|*7
+            [3:---------------------------------------------]|
+          ## grid 2
+            {7:+ }{8:  1 }{13:^This is a······························}|
+            {7:  }{8:  5 }in his cave.                           |
+            {7:  }{8:  6 }                                       |
+            {1:~                                            }|*4
+          ## grid 3
+                                                         |
+          ]])
+        end
       else
-        screen:expect([[
-          {7:+ }{8:  1 }{13:^+--  4 lines: This is a················}|
-          {7:  }{8:  5 }in his cave.                           |
-          {7:  }{8:  6 }                                       |
-          {1:~                                            }|*4
-                                                       |
-        ]])
+        if foldtext then
+          screen:expect([[
+            {7:+ }{8:  1 }{13:^+--  4 lines: This is a················}|
+            {7:  }{8:  5 }in his cave.                           |
+            {7:  }{8:  6 }                                       |
+            {1:~                                            }|*4
+                                                         |
+          ]])
+        else
+          screen:expect([[
+            {7:+ }{8:  1 }{13:^This is a······························}|
+            {7:  }{8:  5 }in his cave.                           |
+            {7:  }{8:  6 }                                       |
+            {1:~                                            }|*4
+                                                         |
+          ]])
+        end
       end
+
       command('set relativenumber cursorlineopt=number')
+
       if multigrid then
-        screen:expect([[
-        ## grid 1
-          [2:---------------------------------------------]|*7
-          [3:---------------------------------------------]|
-        ## grid 2
-          {6:+ }{9:1   }{5:^+--  4 lines: This is a················}|
-          {7:  }{8:  1 }in his cave.                           |
-          {7:  }{8:  2 }                                       |
-          {1:~                                            }|*4
-        ## grid 3
-                                                       |
-        ]])
+        if foldtext then
+          screen:expect([[
+          ## grid 1
+            [2:---------------------------------------------]|*7
+            [3:---------------------------------------------]|
+          ## grid 2
+            {6:+ }{9:1   }{5:^+--  4 lines: This is a················}|
+            {7:  }{8:  1 }in his cave.                           |
+            {7:  }{8:  2 }                                       |
+            {1:~                                            }|*4
+          ## grid 3
+                                                         |
+          ]])
+        else
+          screen:expect([[
+          ## grid 1
+            [2:---------------------------------------------]|*7
+            [3:---------------------------------------------]|
+          ## grid 2
+            {6:+ }{9:1   }{5:^This is a······························}|
+            {7:  }{8:  1 }in his cave.                           |
+            {7:  }{8:  2 }                                       |
+            {1:~                                            }|*4
+          ## grid 3
+                                                         |
+          ]])
+        end
       else
-        screen:expect([[
-          {6:+ }{9:1   }{5:^+--  4 lines: This is a················}|
-          {7:  }{8:  1 }in his cave.                           |
-          {7:  }{8:  2 }                                       |
-          {1:~                                            }|*4
-                                                       |
-        ]])
+        if foldtext then
+          screen:expect([[
+            {6:+ }{9:1   }{5:^+--  4 lines: This is a················}|
+            {7:  }{8:  1 }in his cave.                           |
+            {7:  }{8:  2 }                                       |
+            {1:~                                            }|*4
+                                                         |
+          ]])
+        else
+          screen:expect([[
+            {6:+ }{9:1   }{5:^This is a······························}|
+            {7:  }{8:  1 }in his cave.                           |
+            {7:  }{8:  2 }                                       |
+            {1:~                                            }|*4
+                                                         |
+          ]])
+        end
       end
     end
 
     describe("when 'cursorline' is set", function()
-      it('with high-priority CursorLine', function()
-        command('hi! CursorLine guibg=NONE guifg=Red gui=NONE')
-        test_folded_cursorline()
-      end)
+      local function cursorline_tests(foldtext)
+        local sfx = not foldtext and ' (disabled foldtext)' or ''
+        it('with high-priority CursorLine' .. sfx, function()
+          command('hi! CursorLine guibg=NONE guifg=Red gui=NONE')
+          test_folded_cursorline(foldtext)
+        end)
 
-      it('with low-priority CursorLine', function()
-        command('hi! CursorLine guibg=NONE guifg=NONE gui=underline')
-        local attrs = screen:get_default_attr_ids()
-        attrs[12] = { underline = true }
-        attrs[13] = {
-          foreground = Screen.colors.DarkBlue,
-          background = Screen.colors.LightGrey,
-          underline = true,
-        }
-        screen:set_default_attr_ids(attrs)
-        test_folded_cursorline()
-      end)
+        it('with low-priority CursorLine' .. sfx, function()
+          command('hi! CursorLine guibg=NONE guifg=NONE gui=underline')
+          local attrs = screen:get_default_attr_ids()
+          attrs[12] = { underline = true }
+          attrs[13] = {
+            foreground = Screen.colors.DarkBlue,
+            background = Screen.colors.LightGrey,
+            underline = true,
+          }
+          screen:set_default_attr_ids(attrs)
+          test_folded_cursorline(foldtext)
+        end)
+      end
+
+      cursorline_tests(true)
+      cursorline_tests(false)
     end)
 
     it('work with spell', function()
@@ -2544,6 +2660,120 @@ describe('folded lines', function()
                        {14:hsilgnE dila}^v{7:   -}|
           {20: desopmoc ecnetnes}{19:     }{15:--}{4:▶}{7:  +│}|
           {15:······}{20:.evac sih ni}{19:     }{15:--}{4:▶}{7:  +│}|
+          {1:                             ~}|*2
+          {11:-- VISUAL LINE --}             |
+        ]])
+      end
+    end)
+
+    it('supports disabled foldtext', function()
+      screen:try_resize(30, 7)
+      insert(content1)
+      command('hi! CursorLine guibg=NONE guifg=Red gui=NONE')
+      command('hi F0 guibg=Red guifg=Black')
+      command('hi F1 guifg=White')
+      api.nvim_set_option_value('cursorline', true, {})
+      api.nvim_set_option_value('foldcolumn', '4', {})
+      api.nvim_set_option_value('foldtext', '', {})
+
+      command('3,4fold')
+      command('5,6fold')
+      command('2,6fold')
+      if multigrid then
+        screen:expect([[
+        ## grid 1
+          [2:------------------------------]|*6
+          [3:------------------------------]|
+        ## grid 2
+          {7:    }This is a                 |
+          {7:+   }{13:^valid English·············}|
+          {1:~                             }|*4
+        ## grid 3
+                                        |
+        ]])
+      else
+        screen:expect([[
+          {7:    }This is a                 |
+          {7:+   }{13:^valid English·············}|
+          {1:~                             }|*4
+                                        |
+        ]])
+      end
+
+      feed('zo')
+      if multigrid then
+        screen:expect([[
+        ## grid 1
+          [2:------------------------------]|*6
+          [3:------------------------------]|
+        ## grid 2
+          {7:    }This is a                 |
+          {7:-   }valid English             |
+          {7:│+  }{5:sentence composed by······}|
+          {7:│+  }{13:^in his cave.··············}|
+          {1:~                             }|*2
+        ## grid 3
+                                        |
+        ]])
+      else
+        screen:expect([[
+          {7:    }This is a                 |
+          {7:-   }valid English             |
+          {7:│+  }{5:sentence composed by······}|
+          {7:│+  }{13:^in his cave.··············}|
+          {1:~                             }|*2
+                                        |
+        ]])
+      end
+
+      command('hi! Visual guibg=Red')
+      feed('V2k')
+      if multigrid then
+        screen:expect([[
+        ## grid 1
+          [2:------------------------------]|*6
+          [3:------------------------------]|
+        ## grid 2
+          {7:    }This is a                 |
+          {7:-   }^v{14:alid English}             |
+          {7:│+  }{15:sentence composed by······}|
+          {7:│+  }{15:in his cave.··············}|
+          {1:~                             }|*2
+        ## grid 3
+          {11:-- VISUAL LINE --}             |
+        ]])
+      else
+        screen:expect([[
+          {7:    }This is a                 |
+          {7:-   }^v{14:alid English}             |
+          {7:│+  }{15:sentence composed by······}|
+          {7:│+  }{15:in his cave.··············}|
+          {1:~                             }|*2
+          {11:-- VISUAL LINE --}             |
+        ]])
+      end
+
+      api.nvim_set_option_value('rightleft', true, {})
+      if multigrid then
+        screen:expect([[
+        ## grid 1
+          [2:------------------------------]|*6
+          [3:------------------------------]|
+        ## grid 2
+                           a si sihT{7:    }|
+                       {14:hsilgnE dila}^v{7:   -}|
+          {15:······yb desopmoc ecnetnes}{7:  +│}|
+          {15:··············.evac sih ni}{7:  +│}|
+          {1:                             ~}|*2
+        ## grid 3
+          {11:-- VISUAL LINE --}             |
+        ]])
+      else
+        screen:expect([[
+                           a si sihT{7:    }|
+                       {14:hsilgnE dila}^v{7:   -}|
+          {15:······yb desopmoc ecnetnes}{7:  +│}|
+          {15:··············.evac sih ni}{7:  +│}|
           {1:                             ~}|*2
           {11:-- VISUAL LINE --}             |
         ]])
