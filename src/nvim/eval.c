@@ -330,6 +330,10 @@ varnumber_T num_divide(varnumber_T n1, varnumber_T n2)
     } else {
       result = VARNUMBER_MAX;
     }
+  } else if (n1 == VARNUMBER_MIN && n2 == -1) {
+    // specific case: trying to do VARNUMBAR_MIN / -1 results in a positive
+    // number that doesn't fit in varnumber_T and causes an FPE
+    result = VARNUMBER_MAX;
   } else {
     result = n1 / n2;
   }
