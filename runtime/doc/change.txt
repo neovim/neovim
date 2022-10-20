@@ -441,13 +441,13 @@ steps to make a numbered list.
 SHIFTING LINES LEFT OR RIGHT				*shift-left-right*
 
 							*<*
-<{motion}		Shift {motion} lines one 'shiftwidth' leftwards.
+ <{motion}		Shift {motion} lines one 'shiftwidth' leftwards.
 
 			If the 'shiftwidth' option is set to zero, the amount
 			of indent is calculated at the first non-blank
 			character in the line.
 							*<<*
-<<			Shift [count] lines one 'shiftwidth' leftwards.
+ <<			Shift [count] lines one 'shiftwidth' leftwards.
 
 							*v_<*
 {Visual}[count]<	Shift the highlighted lines [count] 'shiftwidth'

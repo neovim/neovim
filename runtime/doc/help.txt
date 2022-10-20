@@ -1,6 +1,6 @@
 *help.txt*	Nvim
 
-			VIM - main help file
+				 NVIM - help
 									 k
       Move around:  Use the cursor keys, or "h" to go left,	       h   l
 		    "j" to go down, "k" to go up, "l" to go right.	 j
@@ -37,170 +37,153 @@ Get specific help:  It is possible to go directly to whatever you want help
 
 Vim stands for Vi IMproved.  Most of Vim was made by Bram Moolenaar, but only
 through the help of many others.  See |credits|.
+
+==============================================================================
+NVIM DOCUMENTATION
+
 ------------------------------------------------------------------------------
-						*doc-file-list* *Q_ct*
-BASIC:
-|quickref|	Overview of the most common commands you will use
-|tutor|		30-minute interactive course for beginners
-|copying|	About copyrights
-|iccf|		Helping poor children in Uganda
-|sponsor|	Sponsor Vim development, become a registered Vim user
-|www|		Vim on the World Wide Web
-|bugs|		Where to send bug reports
+ABOUT NVIM				*reference_toc* *doc-file-list* *Q_ct*
 
-USER MANUAL: These files explain how to accomplish an editing task.
+|news|			News since the previous release
+|nvim|			Transitioning from Vim
+|vim-differences|	Nvim compared to Vim
+|user-manual|		User manual: How to accomplish editing tasks.
+|quickref|		Overview of common commands
+|tutor|			30-minute interactive course for beginners
+|copying|		About copyrights
+|iccf|			Helping poor children in Uganda
+|sponsor|		Sponsor Vim development, become a registered Vim user
+|www|			Vim on the World Wide Web
+|bugs|			Where to send bug reports
+|support|		Supported platforms
 
-|usr_toc.txt|	Table Of Contents
+------------------------------------------------------------------------------
+GENERAL
 
-Getting Started ~
-|usr_01.txt|  About the manuals
-|usr_02.txt|  The first steps in Vim
-|usr_03.txt|  Moving around
-|usr_04.txt|  Making small changes
-|usr_05.txt|  Set your settings
-|usr_06.txt|  Using syntax highlighting
-|usr_07.txt|  Editing more than one file
-|usr_08.txt|  Splitting windows
-|usr_09.txt|  Using the GUI
-|usr_10.txt|  Making big changes
-|usr_11.txt|  Recovering from a crash
-|usr_12.txt|  Clever tricks
+|intro|			Introduction to Vim; notation used in help files
+|helphelp|		Using the :help files
+|index|			Index of all commands
+|tips|			Various tips on using Vim
+|message.txt|		(Error) messages and explanations
+|uganda.txt|		Vim distribution and what to do with your money
 
-Editing Effectively ~
-|usr_20.txt|  Typing command-line commands quickly
-|usr_21.txt|  Go away and come back
-|usr_22.txt|  Finding the file to edit
-|usr_23.txt|  Editing other files
-|usr_24.txt|  Inserting quickly
-|usr_25.txt|  Editing formatted text
-|usr_26.txt|  Repeating
-|usr_27.txt|  Search commands and patterns
-|usr_28.txt|  Folding
-|usr_29.txt|  Moving through programs
-|usr_30.txt|  Editing programs
-|usr_31.txt|  Exploiting the GUI
-|usr_32.txt|  The undo tree
+------------------------------------------------------------------------------
+BASIC EDITING
 
-Tuning Vim ~
-|usr_40.txt|  Make new commands
-|usr_41.txt|  Write a Vim script
-|usr_42.txt|  Add new menus
-|usr_43.txt|  Using filetypes
-|usr_44.txt|  Your own syntax highlighted
-|usr_45.txt|  Select your language
+|starting|		Starting Vim, Vim command arguments, initialisation
+|edit-files|		Editing and writing files
+|motion.txt|		Commands for moving around
+|scrolling|		Scrolling the text in the window
+|insert.txt|		Insert and Replace mode
+|change.txt|		Deleting and replacing text
+|undo-redo|		Undo and Redo
+|repeat.txt|		Repeating commands, Vim scripts and debugging
+|visual-mode|		Using Visual mode (selecting text)
+|various|		Various other commands
+|crash-recovery|	Recovering from a crash
 
+------------------------------------------------------------------------------
+ADVANCED EDITING
 
-REFERENCE MANUAL: These files explain every detail of Vim.	*reference_toc*
+|cmdline|		Command-line editing
+|options|		Description of all options
+|pattern-searches|	Vim regexp patterns and search commands
+|key-mapping|		Key mapping (shortcuts), abbreviations
+|tags|			Tags and special searches
+|windows|		Commands for using windows and buffers
+|tabpage|		Commands for using tabpages
+|spell|			Spell checking
+|diff|			Comparing files
+|folding|		Hide (fold) ranges of lines
+|terminal|		Embedded terminal emulator
 
-General subjects ~
-|intro.txt|	general introduction to Vim; notation used in help files
-|nvim.txt|	Transitioning from Vim
-|help.txt|	overview and quick reference (this file)
-|helphelp.txt|	about using the help files
-|index.txt|	alphabetical index of all commands
-|tips.txt|	various tips on using Vim
-|message.txt|	(error) messages and explanations
-|develop.txt|	development of Nvim
-|debug.txt|	debugging Vim itself
-|uganda.txt|	Vim distribution conditions and what to do with your money
+------------------------------------------------------------------------------
+API (EXTENSIBILITY/SCRIPTING/PLUGINS)
 
-Basic editing ~
-|starting.txt|	starting Vim, Vim command arguments, initialisation
-|editing.txt|	editing and writing files
-|motion.txt|	commands for moving around
-|scroll.txt|	scrolling the text in the window
-|insert.txt|	Insert and Replace mode
-|change.txt|	deleting and replacing text
-|undo.txt|	Undo and Redo
-|repeat.txt|	repeating commands, Vim scripts and debugging
-|visual.txt|	using the Visual mode (selecting a text area)
-|various.txt|	various remaining commands
-|recover.txt|	recovering from a crash
+|api|			Nvim API via RPC, Lua and VimL
+|ui|			Nvim UI protocol
+|lua|			Lua API
+|luaref|		Lua reference manual
+|luvref|		Luv (|vim.loop|) reference manual
+|autocmd|		Event handlers
+|job-control|		Spawn and control multiple processes
+|channel|		Nvim asynchronous IO
+|vimscript|		Vimscript reference
+|vimscript-functions|	Vimscript functions
+|testing.txt|		Vimscript testing functions
+|remote-plugin|		Nvim remote plugins
 
-Advanced editing ~
-|cmdline.txt|	Command-line editing
-|options.txt|	description of all options
-|pattern.txt|	regexp patterns and search commands
-|map.txt|	key mapping and abbreviations
-|tagsrch.txt|	tags and special searches
-|windows.txt|	commands for using multiple windows and buffers
-|tabpage.txt|	commands for using multiple tab pages
-|spell.txt|	spell checking
-|diff.txt|	working with two to eight versions of the same file
-|autocmd.txt|	automatically executing commands on an event
-|eval.txt|	expression evaluation, conditional commands
-|builtin.txt|	builtin functions
-|userfunc.txt|	defining user functions
-|fold.txt|	hide (fold) ranges of lines
-|lua.txt|	Lua API
-|api.txt|	Nvim API via RPC, Lua and VimL
+------------------------------------------------------------------------------
+PROGRAMMING LANGUAGE SUPPORT
 
-Special issues ~
-|testing.txt|	    testing Vim and Vim scripts
-|print.txt|	    printing
-|remote_plugin.txt|   Nvim support for remote plugins
+|lsp|			Language Server Protocol (LSP)
+|diagnostic-api|	Diagnostic framework
+|treesitter|		Incremental syntax parsing
+|indent.txt|      	automatic indenting for C and other languages
+|syntax|		syntax highlighting
+|filetype|		Settings for specific types of files
+|quickfix|		Commands for a quick edit-compile-fix cycle
+|ft_ada.txt|      	Ada filetype plugin
+|ft_ps1.txt|      	PowerShell filetype plugin
+|ft_raku.txt|     	Raku filetype plugin
+|ft_rust.txt|     	Rust filetype plugin
+|ft_sql.txt|      	SQL filetype plugin
 
-Programming language support ~
-|indent.txt|       automatic indenting for C and other languages
-|lsp.txt|          Language Server Protocol (LSP)
-|treesitter.txt|   tree-sitter library for incremental parsing of buffers
-|diagnostic.txt|   Diagnostic framework
-|syntax.txt|       syntax highlighting
-|filetype.txt|     settings done specifically for a type of file
-|quickfix.txt|     commands for a quick edit-compile-fix cycle
-|provider.txt|     Built-in remote plugin hosts
-|ft_ada.txt|       Ada (the programming language) support
-|ft_ps1.txt|       Filetype plugin for Windows PowerShell
-|ft_raku.txt|      Filetype plugin for Raku
-|ft_rust.txt|      Filetype plugin for Rust
-|ft_sql.txt|       about the SQL filetype plugin
+------------------------------------------------------------------------------
+UI
 
-Language support ~
-|digraph.txt|	list of available digraphs
-|mbyte.txt|	multibyte text support
-|mlang.txt|	non-English language support
-|rileft.txt|	right-to-left editing mode
-|arabic.txt|	Arabic language support and editing
-|hebrew.txt|	Hebrew language support and editing
-|russian.txt|	Russian language support and editing
+|tui|			Builtin UI
+|gui|			External (graphical) UIs
+|signs|			Signs displayed as window decorations (the "gutter")
 
-GUI ~
-|gui.txt|	Graphical User Interface (GUI)
+------------------------------------------------------------------------------
+LANGUAGE SUPPORT
 
-Interfaces ~
-|if_perl.txt|	Perl interface
-|if_pyth.txt|	Python interface
-|if_ruby.txt|	Ruby interface
-|sign.txt|	debugging signs
+|digraph|		List of available digraphs
+|mbyte.txt|		Multibyte text support
+|mlang.txt|		Non-English language support
+|rileft.txt|		Right-to-left editing mode
+|arabic.txt|		Arabic language support and editing
+|hebrew.txt|		Hebrew language support and editing
+|russian.txt|		Russian language support and editing
 
-Versions ~
-|vim_diff.txt|	Main differences between Nvim and Vim
-|vi_diff.txt|	Main differences between Vim and Vi
-|deprecated.txt|  Deprecated items that have been or will be removed
+------------------------------------------------------------------------------
+INTEROP
 
-Other ~
-|news.txt|		News and notable changes in the latest release
-|terminal_emulator.txt|	Terminal buffers
-|term.txt|		Terminal UI
-|ui.txt|		Nvim UI protocol
-|channel.txt|		Nvim asynchronous IO
-|dev_style.txt|		Nvim style guide
-|job_control.txt|	Spawn and control multiple processes
-|luaref.txt|		Lua reference manual
-|luvref.txt|		Luv (|vim.loop|) reference manual
-|support.txt|		Supported platforms
+|provider|		Builtin remote plugin hosts
+|if_perl|		Perl interface
+|if_pyth|		Python interface
+|if_ruby|		Ruby interface
+
+------------------------------------------------------------------------------
+VERSIONS
+
+|deprecated|		Deprecated features that will be removed
+|vi-differences|	Differences between Vim and Vi
+
+------------------------------------------------------------------------------
+DEVELOPING NVIM
+
+|dev|			Development of Nvim
+|dev-style|		Development style guidelines
+|debug.txt|		Debugging Vim itself
+
+------------------------------------------------------------------------------
+OTHER
+
+|print.txt|		For your briefcase and fax machine
 
 						*standard-plugin-list*
 Standard plugins ~
-|matchit.txt|      Extended |%| matching
-|pi_gzip.txt|      Reading and writing compressed files
-|pi_health.txt|    Healthcheck framework
-|pi_msgpack.txt|   msgpack utilities
-|pi_netrw.txt|     Reading and writing files over a network
-|pi_paren.txt|     Highlight matching parens
-|pi_spec.txt|      Filetype plugin to work with rpm spec files
-|pi_tar.txt|       Tar file explorer
-|pi_zip.txt|       Zip archive explorer
+|matchit.txt|		Extended |%| matching
+|pi_gzip.txt|      	Reading and writing compressed files
+|pi_health.txt|    	Healthcheck framework
+|pi_msgpack.txt|   	msgpack utilities
+|pi_netrw.txt|     	Reading and writing files over a network
+|pi_paren.txt|     	Highlight matching parens
+|pi_spec.txt|      	Filetype plugin to work with rpm spec files
+|pi_tar.txt|       	Tar file explorer
+|pi_zip.txt|       	Zip archive explorer
 
 LOCAL ADDITIONS:				*local-additions*
 
@@ -213,8 +196,8 @@ CTRL-T, CTRL-O, g<RightMouse>, or <C-RightMouse> to go back to where you were.
 Note that tags are within | characters, but when highlighting is enabled these
 characters are hidden.  That makes it easier to read a command.
 
-Anyway, you can use CTRL-] on any word, also when it is not within |, and Vim
-will try to find help for it.  Especially for options in single quotes, e.g.
+You can use CTRL-] on any word (even if it is not within "|") and Nvim will
+try to find help for it.  Especially for options in single quotes, e.g.
 'hlsearch'.
 
 ------------------------------------------------------------------------------
