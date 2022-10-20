@@ -486,7 +486,7 @@ function vim.tbl_islist(t)
     -- TODO(bfredl): in the future, we will always be inside nvim
     -- then this check can be deleted.
     if vim._empty_dict_mt == nil then
-      return nil
+      return false
     end
     return getmetatable(t) ~= vim._empty_dict_mt
   end
@@ -544,7 +544,8 @@ end
 ---@return string %-escaped pattern string
 function vim.pesc(s)
   vim.validate({ s = { s, 's' } })
-  return s:gsub('[%(%)%.%%%+%-%*%?%[%]%^%$]', '%%%1')
+  local result = s:gsub('[%(%)%.%%%+%-%*%?%[%]%^%$]', '%%%1')
+  return result
 end
 
 --- Tests if `s` starts with `prefix`.
