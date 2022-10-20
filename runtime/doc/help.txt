@@ -60,7 +60,7 @@ ABOUT NVIM				*reference_toc* *doc-file-list* *Q_ct*
 ------------------------------------------------------------------------------
 GENERAL
 
-|intro.txt|		Introduction to Vim; notation used in help files
+|intro|			Introduction to Vim; notation used in help files
 |helphelp|		Using the :help files
 |index|			Index of all commands
 |tips|			Various tips on using Vim
