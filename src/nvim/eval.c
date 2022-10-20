@@ -489,7 +489,7 @@ void eval_clear(void)
 
 /// Set an internal variable to a string value. Creates the variable if it does
 /// not already exist.
-void set_internal_string_var(const char *name, char *value)
+void set_internal_string_var(const char *name, char *value)  // NOLINT(readability-non-const-parameter)
   FUNC_ATTR_NONNULL_ARG(1)
 {
   typval_T tv = {
@@ -8311,7 +8311,7 @@ repeat:
 /// "flags" can be "g" to do a global substitute.
 ///
 /// @return  an allocated string, NULL for error.
-char *do_string_sub(char *str, char *pat, char *sub, typval_T *expr, char *flags)
+char *do_string_sub(char *str, char *pat, char *sub, typval_T *expr, const char *flags)
 {
   int sublen;
   regmatch_T regmatch;

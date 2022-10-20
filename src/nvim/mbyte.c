@@ -2301,7 +2301,7 @@ void *my_iconv_open(char_u *to, char_u *from)
 // sequence and set "*unconvlenp" to the length of it.
 // Returns the converted string in allocated memory.  NULL for an error.
 // If resultlenp is not NULL, sets it to the result length in bytes.
-static char_u *iconv_string(const vimconv_T *const vcp, char_u *str, size_t slen,
+static char_u *iconv_string(const vimconv_T *const vcp, const char_u *str, size_t slen,
                             size_t *unconvlenp, size_t *resultlenp)
 {
   const char *from;

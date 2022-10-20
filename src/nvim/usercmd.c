@@ -1077,7 +1077,7 @@ bool uc_split_args_iter(const char *arg, size_t arglen, size_t *end, char *buf, 
 }
 
 /// split and quote args for <f-args>
-static char *uc_split_args(char *arg, char **args, size_t *arglens, size_t argc, size_t *lenp)
+static char *uc_split_args(char *arg, char **args, const size_t *arglens, size_t argc, size_t *lenp)
 {
   char *buf;
   char *p;

@@ -3485,7 +3485,7 @@ static void long_to_char(long n, char_u *s)
   s[3] = (char_u)(n & 0xff);
 }
 
-static long char_to_long(char_u *s)
+static long char_to_long(const char_u *s)
 {
   long retval;
 

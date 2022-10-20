@@ -3066,7 +3066,7 @@ static void nv_gd(oparg_T *oap, int nchar, int thisblock)
 
 /// @return true if line[offset] is not inside a C-style comment or string,
 ///         false otherwise.
-static bool is_ident(char_u *line, int offset)
+static bool is_ident(const char_u *line, int offset)
 {
   bool incomment = false;
   int instring = 0;

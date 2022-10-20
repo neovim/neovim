@@ -819,7 +819,7 @@ endOK:
 
 // Fill in the wordcount fields for a trie.
 // Returns the total number of words.
-static void tree_count_words(char_u *byts, idx_T *idxs)
+static void tree_count_words(const char_u *byts, idx_T *idxs)
 {
   int depth;
   idx_T arridx[MAXWLEN];
@@ -3962,8 +3962,8 @@ static int store_word(spellinfo_T *spin, char_u *word, int flags, int region, co
 // When "flags" < 0 we are adding to the prefix tree where "flags" is used for
 // "rare" and "region" is the condition nr.
 // Returns FAIL when out of memory.
-static int tree_add_word(spellinfo_T *spin, char_u *word, wordnode_T *root, int flags, int region,
-                         int affixID)
+static int tree_add_word(spellinfo_T *spin, const char_u *word, wordnode_T *root, int flags,
+                         int region, int affixID)
 {
   wordnode_T *node = root;
   wordnode_T *np;
@@ -5742,7 +5742,7 @@ static void init_spellfile(void)
 /// Set the spell character tables from strings in the .spl file.
 ///
 /// @param cnt  length of "flags"
-static void set_spell_charflags(char_u *flags, int cnt, char_u *fol)
+static void set_spell_charflags(const char_u *flags, int cnt, char_u *fol)
 {
   // We build the new tables here first, so that we can compare with the
   // previous one.

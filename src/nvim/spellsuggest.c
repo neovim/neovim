@@ -3530,7 +3530,7 @@ static int soundalike_score(char *goodstart, char *badstart)
 /// The implementation of the algorithm comes from Aspell editdist.cpp,
 /// edit_distance().  It has been converted from C++ to C and modified to
 /// support multi-byte characters.
-static int spell_edit_score(slang_T *slang, char_u *badword, char_u *goodword)
+static int spell_edit_score(slang_T *slang, const char_u *badword, const char_u *goodword)
 {
   int *cnt;
   int j, i;
@@ -3635,7 +3635,8 @@ static int spell_edit_score_limit(slang_T *slang, char_u *badword, char_u *goodw
 
 /// Multi-byte version of spell_edit_score_limit().
 /// Keep it in sync with the above!
-static int spell_edit_score_limit_w(slang_T *slang, char_u *badword, char_u *goodword, int limit)
+static int spell_edit_score_limit_w(slang_T *slang, const char_u *badword, const char_u *goodword,
+                                    int limit)
 {
   limitscore_T stack[10];               // allow for over 3 * 2 edits
   int stackidx;

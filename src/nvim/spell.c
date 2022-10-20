@@ -960,7 +960,7 @@ bool can_compound(slang_T *slang, const char_u *word, const char_u *flags)
 // compound rule.  This is used to stop trying a compound if the flags
 // collected so far can't possibly match any compound rule.
 // Caller must check that slang->sl_comprules is not NULL.
-bool match_compoundrule(slang_T *slang, char_u *compflags)
+bool match_compoundrule(slang_T *slang, const char_u *compflags)
 {
   // loop over all the COMPOUNDRULE entries
   for (char_u *p = slang->sl_comprules; *p != NUL; p++) {
@@ -2184,7 +2184,7 @@ static void use_midword(slang_T *lp, win_T *wp)
 // Find the region "region[2]" in "rp" (points to "sl_regions").
 // Each region is simply stored as the two characters of its name.
 // Returns the index if found (first is 0), REGION_ALL if not found.
-static int find_region(char_u *rp, char_u *region)
+static int find_region(const char_u *rp, const char_u *region)
 {
   int i;
 
@@ -2209,7 +2209,7 @@ static int find_region(char_u *rp, char_u *region)
 /// @param[in]  end  End of word or NULL for NUL delimited string
 ///
 /// @returns  Case type of word
-int captype(char_u *word, char_u *end)
+int captype(char_u *word, const char_u *end)
   FUNC_ATTR_NONNULL_ARG(1)
 {
   char_u *p;
@@ -2814,7 +2814,7 @@ static void spell_soundfold_sofo(slang_T *slang, char_u *inword, char_u *res)
 
 // Turn "inword" into its sound-a-like equivalent in "res[MAXWLEN]".
 // Multi-byte version of spell_soundfold().
-static void spell_soundfold_wsal(slang_T *slang, char_u *inword, char_u *res)
+static void spell_soundfold_wsal(slang_T *slang, const char_u *inword, char_u *res)
 {
   salitem_T *smp = (salitem_T *)slang->sl_sal.ga_data;
   int word[MAXWLEN] = { 0 };

@@ -343,7 +343,7 @@ RuntimeSearchPath copy_runtime_search_path(const RuntimeSearchPath src)
   return dst;
 }
 
-void runtime_search_path_unref(RuntimeSearchPath path, int *ref)
+void runtime_search_path_unref(RuntimeSearchPath path, const int *ref)
   FUNC_ATTR_NONNULL_ALL
 {
   if (*ref) {

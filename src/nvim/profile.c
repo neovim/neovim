@@ -398,7 +398,7 @@ bool prof_def_func(void)
 /// Print the count and times for one function or function line.
 ///
 /// @param prefer_self  when equal print only self time
-static void prof_func_line(FILE *fd, int count, proftime_T *total, proftime_T *self,
+static void prof_func_line(FILE *fd, int count, const proftime_T *total, const proftime_T *self,
                            bool prefer_self)
 {
   if (count > 0) {
@@ -684,7 +684,7 @@ void script_prof_save(proftime_T *tm)
 }
 
 /// Count time spent in children after invoking another script or function.
-void script_prof_restore(proftime_T *tm)
+void script_prof_restore(const proftime_T *tm)
 {
   scriptitem_T *si;
 

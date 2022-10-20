@@ -229,7 +229,7 @@ bool findpar(bool *pincl, int dir, long count, int what, bool both)
 }
 
 /// check if the string 's' is a nroff macro that is in option 'opt'
-static bool inmacro(char_u *opt, char_u *s)
+static bool inmacro(char_u *opt, const char_u *s)
 {
   char_u *macro;
 

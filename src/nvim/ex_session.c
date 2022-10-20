@@ -240,7 +240,7 @@ static int ses_arglist(FILE *fd, char *cmd, garray_T *gap, int fullname, unsigne
 }
 
 /// @return  the buffer name for `buf`.
-static char *ses_get_fname(buf_T *buf, unsigned *flagp)
+static char *ses_get_fname(buf_T *buf, const unsigned *flagp)
 {
   // Use the short file name if the current directory is known at the time
   // the session file will be sourced.

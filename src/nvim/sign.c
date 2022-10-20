@@ -1271,7 +1271,7 @@ static void sign_place_cmd(buf_T *buf, linenr_T lnum, char *sign_name, int id, c
 }
 
 /// ":sign unplace" command
-static void sign_unplace_cmd(buf_T *buf, linenr_T lnum, char *sign_name, int id, char *group)
+static void sign_unplace_cmd(buf_T *buf, linenr_T lnum, const char *sign_name, int id, char *group)
 {
   if (lnum >= 0 || sign_name != NULL || (group != NULL && *group == '\0')) {
     emsg(_(e_invarg));
@@ -1328,7 +1328,7 @@ static void sign_unplace_cmd(buf_T *buf, linenr_T lnum, char *sign_name, int id,
 ///   :sign jump {id} buffer={nr}
 ///   :sign jump {id} group={group} file={fname}
 ///   :sign jump {id} group={group} buffer={nr}
-static void sign_jump_cmd(buf_T *buf, linenr_T lnum, char *sign_name, int id, char *group)
+static void sign_jump_cmd(buf_T *buf, linenr_T lnum, const char *sign_name, int id, char *group)
 {
   if (sign_name == NULL && group == NULL && id == -1) {
     emsg(_(e_argreq));

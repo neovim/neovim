@@ -563,7 +563,7 @@ static size_t efm_regpat_bufsz(char *efm)
 }
 
 /// Return the length of a 'errorformat' option part (separated by ",").
-static int efm_option_part_len(char *efm)
+static int efm_option_part_len(const char *efm)
 {
   int len;
 
@@ -5257,7 +5257,7 @@ static bool vgr_match_buflines(qf_list_T *qfl, char *fname, buf_T *buf, char *sp
 
 /// Jump to the first match and update the directory.
 static void vgr_jump_to_match(qf_info_T *qi, int forceit, bool *redraw_for_dummy,
-                              buf_T *first_match_buf, char *target_dir)
+                              buf_T *first_match_buf, char *target_dir)  // NOLINT(readability-non-const-parameter)
 {
   buf_T *buf = curbuf;
   qf_jump(qi, 0, 0, forceit);

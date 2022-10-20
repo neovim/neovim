@@ -1886,7 +1886,7 @@ static int check_simplify_modifier(int max_offset)
 /// - When there is no match yet, return map_result_nomatch, need to get more
 ///   typeahead.
 /// - On failure (out of memory) return map_result_fail.
-static int handle_mapping(int *keylenp, bool *timedout, int *mapdepth)
+static int handle_mapping(int *keylenp, const bool *timedout, int *mapdepth)
 {
   mapblock_T *mp = NULL;
   mapblock_T *mp2;
