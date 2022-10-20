@@ -13,7 +13,7 @@ BREAKING CHANGES                                                *news-breaking*
 
 The following changes may require adaptations in user config or plugins.
 
-• Cscope is now removed (see |cscope| and |nvim-features-removed|):
+• Cscope support is now removed (see |cscope| and |nvim-features-removed|):
   - Commands removed:
     - `:cscope`
     - `:lcscope`
@@ -39,7 +39,8 @@ NEW FEATURES                                                    *news-features*
 
 The following new APIs or features were added.
 
-|nvim_select_popupmenu_item()| now supports |cmdline-completion| popup menu.
+• 'splitkeep' option to control the scroll behavior of horizontal splits.
+• |nvim_select_popupmenu_item()| now supports |cmdline-completion| popup menu.
 
 ==============================================================================
 CHANGED FEATURES                                                 *news-changes*

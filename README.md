@@ -39,8 +39,7 @@ Features
 - [XDG base directories](https://github.com/neovim/neovim/pull/3470) support
 - Compatible with most Vim plugins, including Ruby and Python plugins
 
-See [`:help nvim-features`][nvim-features] for the full list, and `[:help
-news][nvim-news]` for noteworthy changes in the latest version!
+See [`:help nvim-features`][nvim-features] for the full list, and [`:help news`][nvim-news] for noteworthy changes in the latest version!
 
 Install from package
 --------------------

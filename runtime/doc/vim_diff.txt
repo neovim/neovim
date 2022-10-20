@@ -707,7 +707,7 @@ TUI:
 
 Cscope:
                                                                       *cscope*
-  Cscope has been removed in favour of LSP based solutions.
+  Cscope support has been removed in favour of LSP based solutions.
 
 ==============================================================================
  vim:tw=78:ts=8:sw=2:et:ft=help:norl:
