@@ -959,8 +959,6 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
 
   static char *at_end_str = "";       // used for p_extra when displaying curwin->w_p_lcs_chars.eol
                                       // at end-of-line
-  bool has_fold = foldinfo.fi_level != 0 && foldinfo.fi_lines > 0;
-
   int n_attr = 0;                       // chars with special attr
   int saved_attr2 = 0;                  // char_attr saved for n_attr
   int n_attr3 = 0;                      // chars with overruling special attr
@@ -1067,12 +1065,15 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
   buf_T *buf = wp->w_buffer;
   bool end_fill = (lnum == buf->b_ml.ml_line_count + 1);
 
+  const bool has_fold = foldinfo.fi_level != 0 && foldinfo.fi_lines > 0;
+  const bool has_foldtext = has_fold && *wp->w_p_fdt != NUL;
+
   if (!number_only) {
     // To speed up the loop below, set extra_check when there is linebreak,
     // trailing white space and/or syntax processing to be done.
     extra_check = wp->w_p_lbr;
     if (syntax_present(wp) && !wp->w_s->b_syn_error && !wp->w_s->b_syn_slow
-        && !has_fold && !end_fill) {
+        && !has_foldtext && !end_fill) {
       // Prepare for syntax highlighting in this line.  When there is an
       // error, stop syntax highlighting.
       save_did_emsg = did_emsg;
@@ -1110,7 +1111,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
     }
 
     if (wp->w_p_spell
-        && !has_fold
+        && !has_foldtext
         && !end_fill
         && *wp->w_s->b_p_spl != NUL
         && !GA_EMPTY(&wp->w_s->b_langp)
@@ -1214,7 +1215,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
       // handle 'incsearch' and ":s///c" highlighting
     } else if (highlight_match
                && wp == curwin
-               && !has_fold
+               && !has_foldtext
                && lnum >= curwin->w_cursor.lnum
                && lnum <= curwin->w_cursor.lnum + search_match_lines) {
       if (lnum == curwin->w_cursor.lnum) {
@@ -1367,7 +1368,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
   int lcs_eol_one = wp->w_p_lcs_chars.eol;     // 'eol'  until it's been used
   int lcs_prec_todo = wp->w_p_lcs_chars.prec;  // 'prec' until it's been used
 
-  if (wp->w_p_list && !has_fold && !end_fill) {
+  if (wp->w_p_list && !has_foldtext && !end_fill) {
     if (wp->w_p_lcs_chars.space
         || wp->w_p_lcs_chars.multispace != NULL
         || wp->w_p_lcs_chars.leadmultispace != NULL
@@ -1499,7 +1500,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
     }
   }
 
-  if (!number_only && !has_fold && !end_fill) {
+  if (!number_only && !has_foldtext && !end_fill) {
     v = ptr - line;
     area_highlighting |= prepare_search_hl_line(wp, lnum, (colnr_T)v,
                                                 &line, &screen_search_hl, &search_attr,
@@ -1661,11 +1662,19 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
 
     if (wlv.draw_state == WL_LINE
         && has_fold
+        && !has_foldtext
+        && wlv.col == win_col_offset
+        && wlv.n_extra == 0
+        && wlv.row == startrow + wlv.filler_lines) {
+      wlv.line_attr_lowprio = win_hl_attr(wp, HLF_FL);
+    }
+
+    if (wlv.draw_state == WL_LINE
+        && has_foldtext
         && wlv.col == win_col_offset
         && wlv.n_extra == 0
         && wlv.row == startrow + wlv.filler_lines) {
       wlv.char_attr = win_hl_attr(wp, HLF_FL);
-
       linenr_T lnume = lnum + foldinfo.fi_lines - 1;
       memset(buf_fold, ' ', FOLD_TEXT_LEN);
       wlv.p_extra = get_foldtext(wp, lnum, lnume, foldinfo, buf_fold);
@@ -1685,7 +1694,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
     }
 
     if (wlv.draw_state == WL_LINE
-        && has_fold
+        && has_foldtext
         && wlv.col < grid->cols
         && wlv.n_extra == 0
         && wlv.row == startrow + wlv.filler_lines) {
@@ -1697,7 +1706,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
     }
 
     if (wlv.draw_state == WL_LINE
-        && has_fold
+        && has_foldtext
         && wlv.col >= grid->cols
         && wlv.n_extra != 0
         && wlv.row == startrow + wlv.filler_lines) {
@@ -1847,7 +1856,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
         wlv.p_extra++;
       }
       wlv.n_extra--;
-    } else if (foldinfo.fi_lines > 0) {
+    } else if (has_foldtext && foldinfo.fi_lines > 0) {
       // skip writing the buffer line itself
       c = NUL;
     } else {
@@ -2569,7 +2578,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
           // Add a blank character to highlight.
           schar_from_ascii(linebuf_char[wlv.off], ' ');
         }
-        if (area_attr == 0 && !has_fold) {
+        if (area_attr == 0 && !has_foldtext) {
           // Use attributes from match with highest priority among
           // 'search_hl' and the match list.
           get_search_match_hl(wp,
@@ -2734,7 +2743,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
         && !wp->w_p_wrap
         && wlv.filler_todo <= 0
         && (wp->w_p_rl ? wlv.col == 0 : wlv.col == grid->cols - 1)
-        && !has_fold
+        && !has_foldtext
         && (*ptr != NUL
             || lcs_eol_one > 0
             || (wlv.n_extra && (wlv.c_extra != NUL || *wlv.p_extra != NUL)))) {
@@ -2913,7 +2922,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
     // At end of screen line and there is more to come: Display the line
     // so far.  If there is no more to display it is caught above.
     if ((wp->w_p_rl ? (wlv.col < 0) : (wlv.col >= grid->cols))
-        && (!has_fold || virt_line_offset >= 0)
+        && (!has_foldtext || virt_line_offset >= 0)
         && (wlv.draw_state != WL_LINE
             || *ptr != NUL
             || wlv.filler_todo > 0
