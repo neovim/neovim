@@ -602,6 +602,12 @@ func Test_eval_after_if()
   call assert_equal('b', s:val)
 endfunc
 
+func Test_divide_by_zero()
+  " only tests that this doesn't crash, the result is not important
+  echo 0 / 0
+  echo 0 / 0 / -1
+endfunc
+
 " Test for command-line completion of expressions
 func Test_expr_completion()
   CheckFeature cmdline_compl
