@@ -1573,7 +1573,7 @@ gsplit({s}, {sep}, {plain})                                     *vim.gsplit()*
     Parameters: ~
       • {s}      (string) String to split
       • {sep}    (string) Separator or pattern
-      • {plain}  (boolean) If `true` use `sep` literally (passed to
+      • {plain}  (boolean|nil) If `true` use `sep` literally (passed to
                  string.find)
 
     Return: ~
@@ -1645,15 +1645,11 @@ split({s}, {sep}, {kwargs})                                      *vim.split()*
       split("|x|y|z|", "|", {trimempty=true}) => {'x', 'y', 'z'}
 <
 
-    @alias split_kwargs {plain: boolean, trimempty: boolean} | boolean | nil
-
-    See also: ~
-        |vim.gsplit()|
-
     Parameters: ~
       • {s}       (string) String to split
       • {sep}     (string) Separator or pattern
-      • {kwargs}  (table|nil) Keyword arguments:
+      • {kwargs}  ({plain: boolean, trimempty: boolean}|nil) Keyword
+                  arguments:
                   • plain: (boolean) If `true` use `sep` literally (passed to
                     string.find)
                   • trimempty: (boolean) If `true` remove empty items from the
@@ -1661,6 +1657,9 @@ split({s}, {sep}, {kwargs})                                      *vim.split()*
 
     Return: ~
         string[] List of split components
+
+    See also: ~
+        |vim.gsplit()|
 
 startswith({s}, {prefix})                                   *vim.startswith()*
     Tests if `s` starts with `prefix`.
