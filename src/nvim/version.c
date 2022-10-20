@@ -2218,7 +2218,7 @@ void intro_message(int colon)
   int sponsor;
   char *p;
   static char *(lines[]) = {
-    N_(NVIM_VERSION_LONG),
+    N_(NVIM_VERSION_LONG),  // NOLINT(bugprone-suspicious-missing-comma)
     "",
     N_("Nvim is open source and freely distributable"),
     N_("https://neovim.io/#chat"),
