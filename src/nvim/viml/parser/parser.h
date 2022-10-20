@@ -202,7 +202,7 @@ static inline void viml_parser_advance(ParserState *const pstate, const size_t l
 
 static inline void viml_parser_highlight(ParserState *pstate,
                                          ParserPosition start,
-                                         size_t end_col,
+                                         size_t len,
                                          const char *group)
   REAL_FATTR_ALWAYS_INLINE REAL_FATTR_NONNULL_ALL;
 
