@@ -349,35 +349,6 @@ func Test_highlight_completion()
   call assert_equal([], getcompletion('A', 'highlight'))
 endfunc
 
-func Test_expr_completion()
-  if !has('cmdline_compl')
-    return
-  endif
-  for cmd in [
-	\ 'let a = ',
-	\ 'const a = ',
-	\ 'if',
-	\ 'elseif',
-	\ 'while',
-	\ 'for',
-	\ 'echo',
-	\ 'echon',
-	\ 'execute',
-	\ 'echomsg',
-	\ 'echoerr',
-	\ 'call',
-	\ 'return',
-	\ 'cexpr',
-	\ 'caddexpr',
-	\ 'cgetexpr',
-	\ 'lexpr',
-	\ 'laddexpr',
-	\ 'lgetexpr']
-    call feedkeys(":" . cmd . " getl\<Tab>\<Home>\"\<CR>", 'xt')
-    call assert_equal('"' . cmd . ' getline(', getreg(':'))
-  endfor
-endfunc
-
 func Test_getcompletion()
   if !has('cmdline_compl')
     return
