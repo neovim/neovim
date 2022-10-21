@@ -40,7 +40,7 @@ jobs:
         id: update-version
         run: |
           git checkout -b ${VERSION_BRANCH}
-          nvim -i NONE -u NONE --headless +'luafile scripts/vimpatch.lua' +q
+          nvim -V1 -es -i NONE +'luafile scripts/vimpatch.lua' +q
           printf '::set-output name=NEW_PATCHES::%s\n' $([ -z "$(git diff)" ]; echo $?)
 
       - name: Automatic PR
