@@ -196,9 +196,6 @@ function M.conf(path, bufnr)
   if vim.fn.did_filetype() ~= 0 or path:find(vim.g.ft_ignore_pat) then
     return
   end
-  if findany(path, { '%.aws/config$', '%.aws/credentials$', }) then
-      return 'conf'
-  end
   for _, line in ipairs(getlines(bufnr, 1, 5)) do
     if line:find('^#') then
       return 'conf'
