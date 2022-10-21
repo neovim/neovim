@@ -14,7 +14,7 @@ extern char *longVersion;
 
 // Values that change for a new release
 #define VIM_VERSION_MAJOR                8
-#define VIM_VERSION_MINOR                0
+#define VIM_VERSION_MINOR                1
 
 // Values based on the above
 #define VIM_VERSION_MAJOR_STR STR(VIM_VERSION_MAJOR)
