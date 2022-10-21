@@ -35,7 +35,7 @@ usage() {
   echo "    -m {vim-revision}  List previous (older) missing Vim patches."
   echo "    -M                 List all merged patch-numbers (at current v:version)."
   echo "    -p {vim-revision}  Download and generate a Vim patch. vim-revision"
-  echo "                       can be a Vim version (8.0.xxx) or a Git hash."
+  echo "                       can be a Vim version (8.1.xxx) or a Git hash."
   echo "    -P {vim-revision}  Download, generate and apply a Vim patch."
   echo "    -g {vim-revision}  Download a Vim patch."
   echo "    -s [pr args]       Create a vim-patch pull request."
@@ -470,7 +470,7 @@ submit_pr() {
 
 # Gets all Vim commits since the "start" commit.
 list_vim_commits() { (
-  cd "${VIM_SOURCE_DIR}" && git log --reverse v8.0.0000..HEAD "$@"
+  cd "${VIM_SOURCE_DIR}" && git log --reverse v8.1.0000..HEAD "$@"
 ) }
 
 # Prints all (sorted) "vim-patch:xxx" tokens found in the Nvim git log.
@@ -488,7 +488,7 @@ list_vimpatch_tokens() {
 list_vimpatch_numbers() {
   # Transform "vim-patch:X.Y.ZZZZ" to "ZZZZ".
   list_vimpatch_tokens | while read -r vimpatch_token; do
-    echo "$vimpatch_token" | grep '8\.0\.' | sed 's/.*vim-patch:8\.0\.\([0-9a-z]\+\).*/\1/'
+    echo "$vimpatch_token" | grep '8\.1\.' | sed -E 's/.*vim-patch:8\.1\.([0-9a-z]+).*/\1/'
   done
 }
 
@@ -585,7 +585,7 @@ _set_missing_vimpatches() {
     else
       info=${line#* }
       if [[ -n $info ]]; then
-        # Remove any "patch 8.0.0902: " prefixes, and prefix with ": ".
+        # Remove any "patch 8.1.0902: " prefixes, and prefix with ": ".
         info=": ${info#patch*: }"
       fi
     fi
@@ -628,7 +628,7 @@ show_vimpatches() {
 
 Instructions:
   To port one of the above patches to Neovim, execute this script with the patch revision as argument and follow the instructions, e.g.
-  '${BASENAME} -p v8.0.1234', or '${BASENAME} -P v8.0.1234'
+  '${BASENAME} -p v8.1.1234', or '${BASENAME} -P v8.1.1234'
 
   NOTE: Please port the _oldest_ patch if you possibly can.
         You can use '${BASENAME} -l path/to/file' to see what patches are missing for a file.
