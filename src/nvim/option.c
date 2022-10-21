@@ -3256,7 +3256,7 @@ static void showoptions(int all, int opt_flags)
 }
 
 /// Return true if option "p" has its default value.
-static int optval_default(vimoption_T *p, char_u *varp)
+static int optval_default(vimoption_T *p, const char_u *varp)
 {
   if (varp == NULL) {
     return true;            // hidden option is always at default
@@ -4889,7 +4889,7 @@ static void option_value2string(vimoption_T *opp, int opt_flags)
 /// Return true if "varp" points to 'wildchar' or 'wildcharm' and it can be
 /// printed as a keyname.
 /// "*wcp" is set to the value of the option if it's 'wildchar' or 'wildcharm'.
-static int wc_use_keyname(char_u *varp, long *wcp)
+static int wc_use_keyname(const char_u *varp, long *wcp)
 {
   if (((long *)varp == &p_wc) || ((long *)varp == &p_wcm)) {
     *wcp = *(long *)varp;

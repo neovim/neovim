@@ -1350,7 +1350,7 @@ int ExpandMappings(regmatch_T *regmatch, int *num_file, char ***file)
     char **ptr3 = ptr1 + count;
 
     while (ptr2 < ptr3) {
-      if (strcmp(*ptr1, *ptr2)) {
+      if (strcmp(*ptr1, *ptr2) != 0) {
         *++ptr1 = *ptr2++;
       } else {
         xfree(*ptr2++);

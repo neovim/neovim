@@ -1361,7 +1361,7 @@ void tv_list_reverse(list_T *const l)
 ///               true list will not be modified. Must be initialized to false
 ///               by the caller.
 void tv_list_item_sort(list_T *const l, ListSortItem *const ptrs,
-                       const ListSorter item_compare_func, bool *errp)
+                       const ListSorter item_compare_func, const bool *errp)
   FUNC_ATTR_NONNULL_ARG(3, 4)
 {
   const int len = tv_list_len(l);

@@ -509,7 +509,7 @@ void AppendToRedobuffLit(const char *str, int len)
       s--;
     }
     if (s > start) {
-      add_buff(&redobuff, start, (long)(s - start));
+      add_buff(&redobuff, start, s - start);
     }
 
     if (*s == NUL || (len >= 0 && s - str >= len)) {
@@ -1886,7 +1886,7 @@ static int check_simplify_modifier(int max_offset)
 /// - When there is no match yet, return map_result_nomatch, need to get more
 ///   typeahead.
 /// - On failure (out of memory) return map_result_fail.
-static int handle_mapping(int *keylenp, bool *timedout, int *mapdepth)
+static int handle_mapping(int *keylenp, const bool *timedout, int *mapdepth)
 {
   mapblock_T *mp = NULL;
   mapblock_T *mp2;

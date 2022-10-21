@@ -42,7 +42,7 @@ static char *get_locale_val(int what)
 
 /// @return  true when "lang" starts with a valid language name.
 ///          Rejects NULL, empty string, "C", "C.UTF-8" and others.
-static bool is_valid_mess_lang(char *lang)
+static bool is_valid_mess_lang(const char *lang)
 {
   return lang != NULL && ASCII_ISALPHA(lang[0]) && ASCII_ISALPHA(lang[1]);
 }

@@ -1933,7 +1933,7 @@ bool is_dev_fd_file(char *fname)
 /// @param linecnt  line count before reading more bytes
 /// @param p        start of more bytes read
 /// @param endp     end of more bytes read
-static linenr_T readfile_linenr(linenr_T linecnt, char_u *p, char_u *endp)
+static linenr_T readfile_linenr(linenr_T linecnt, char_u *p, const char_u *endp)
 {
   char_u *s;
   linenr_T lnum;
@@ -4097,7 +4097,7 @@ static int get_fio_flags(const char_u *name)
 ///
 /// @return  the name of the encoding and set "*lenp" to the length or,
 ///          NULL when no BOM found.
-static char_u *check_for_bom(char_u *p, long size, int *lenp, int flags)
+static char_u *check_for_bom(const char_u *p, long size, int *lenp, int flags)
 {
   char *name = NULL;
   int len = 2;

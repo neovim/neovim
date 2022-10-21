@@ -1193,7 +1193,7 @@ void call_user_func(ufunc_T *fp, int argcount, typval_T *argvars, typval_T *rett
 /// For the first we only count the name stored in func_hashtab as a reference,
 /// using function() does not count as a reference, because the function is
 /// looked up by name.
-static bool func_name_refcount(char_u *name)
+static bool func_name_refcount(const char_u *name)
 {
   return isdigit(*name) || *name == '<';
 }

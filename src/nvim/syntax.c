@@ -5304,7 +5304,7 @@ void ex_ownsyntax(exarg_T *eap)
     curwin->w_s = xcalloc(1, sizeof(synblock_T));
     hash_init(&curwin->w_s->b_keywtab);
     hash_init(&curwin->w_s->b_keywtab_ic);
-    // TODO: Keep the spell checking as it was. NOLINT(readability/todo)
+    // TODO(vim): Keep the spell checking as it was.
     curwin->w_p_spell = false;  // No spell checking
     // make sure option values are "empty_option" instead of NULL
     clear_string_option(&curwin->w_s->b_p_spc);

@@ -318,7 +318,7 @@ bool msg_attr_keep(const char *s, int attr, bool keep, bool multiline)
       || (*s != '<'
           && last_msg_hist != NULL
           && last_msg_hist->msg != NULL
-          && strcmp(s, last_msg_hist->msg))) {
+          && strcmp(s, last_msg_hist->msg) != 0)) {
     add_msg_hist(s, -1, attr, multiline);
   }
 

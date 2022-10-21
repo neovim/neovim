@@ -322,7 +322,7 @@ void vim_beep(unsigned val)
 
       // Only beep up to three times per half a second,
       // otherwise a sequence of beeps would freeze Vim.
-      if (start_time == 0 || os_hrtime() - start_time > 500000000u) {
+      if (start_time == 0 || os_hrtime() - start_time > 500000000U) {
         beeps = 0;
         start_time = os_hrtime();
       }
@@ -452,7 +452,7 @@ void ui_line(ScreenGrid *grid, int row, int startcol, int endcol, int clearcol, 
                              MIN(clearcol, (int)grid->cols - 1));
     ui_call_flush();
     uint64_t wd = (uint64_t)labs(p_wd);
-    os_microdelay(wd * 1000u, true);
+    os_microdelay(wd * 1000U, true);
     pending_cursor_update = true;  // restore the cursor later
   }
 }

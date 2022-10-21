@@ -101,7 +101,7 @@ bool tabstop_set(char *var, long **array)
 /// Calculate the number of screen spaces a tab will occupy.
 /// If "vts" is set then the tab widths are taken from that array,
 /// otherwise the value of ts is used.
-int tabstop_padding(colnr_T col, long ts_arg, long *vts)
+int tabstop_padding(colnr_T col, long ts_arg, const long *vts)
 {
   long ts = ts_arg == 0 ? 8 : ts_arg;
   colnr_T tabcol = 0;
@@ -129,7 +129,7 @@ int tabstop_padding(colnr_T col, long ts_arg, long *vts)
 }
 
 /// Find the size of the tab that covers a particular column.
-int tabstop_at(colnr_T col, long ts, long *vts)
+int tabstop_at(colnr_T col, long ts, const long *vts)
 {
   colnr_T tabcol = 0;
   int t;
@@ -178,7 +178,7 @@ colnr_T tabstop_start(colnr_T col, long ts, long *vts)
 
 /// Find the number of tabs and spaces necessary to get from one column
 /// to another.
-void tabstop_fromto(colnr_T start_col, colnr_T end_col, long ts_arg, long *vts, int *ntabs,
+void tabstop_fromto(colnr_T start_col, colnr_T end_col, long ts_arg, const long *vts, int *ntabs,
                     int *nspcs)
 {
   int spaces = end_col - start_col;
@@ -242,7 +242,7 @@ void tabstop_fromto(colnr_T start_col, colnr_T end_col, long ts_arg, long *vts, 
 }
 
 /// See if two tabstop arrays contain the same values.
-bool tabstop_eq(long *ts1, long *ts2)
+bool tabstop_eq(const long *ts1, const long *ts2)
 {
   int t;
 
@@ -266,7 +266,7 @@ bool tabstop_eq(long *ts1, long *ts2)
 }
 
 /// Copy a tabstop array, allocating space for the new array.
-int *tabstop_copy(long *oldts)
+int *tabstop_copy(const long *oldts)
 {
   long *newts;
   int t;

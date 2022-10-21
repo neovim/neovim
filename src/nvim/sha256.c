@@ -339,7 +339,7 @@ bool sha256_self_test(void)
       }
     }
 
-    if (memcmp(output, sha_self_test_vector[i], SHA256_BUFFER_SIZE)) {
+    if (memcmp(output, sha_self_test_vector[i], SHA256_BUFFER_SIZE) != 0) {
       failures = true;
       output[sizeof(output) - 1] = '\0';
 

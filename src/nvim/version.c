@@ -34,7 +34,7 @@
   "." STR(NVIM_VERSION_MINOR) "." STR(NVIM_VERSION_PATCH) \
   NVIM_VERSION_PRERELEASE
 #endif
-#define NVIM_VERSION_LONG "NVIM " NVIM_VERSION_MEDIUM
+#define NVIM_VERSION_LONG "NVIM " NVIM_VERSION_MEDIUM  // NOLINT(bugprone-suspicious-missing-comma)
 
 char *Version = VIM_VERSION_SHORT;
 char *longVersion = NVIM_VERSION_LONG;
@@ -2813,7 +2813,7 @@ void intro_message(int colon)
   size_t lines_size = ARRAY_SIZE(lines);
   assert(lines_size <= LONG_MAX);
 
-  blanklines = Rows - ((long)lines_size - 1l);
+  blanklines = Rows - ((long)lines_size - 1L);
 
   // Don't overwrite a statusline.  Depends on 'cmdheight'.
   if (p_ls > 1) {

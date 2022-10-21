@@ -1059,7 +1059,7 @@ static int current_tab_nr(tabpage_T *tab)
 #define LAST_TAB_NR current_tab_nr(NULL)
 
 /// Figure out the address type for ":wincmd".
-static void get_wincmd_addr_type(char *arg, exarg_T *eap)
+static void get_wincmd_addr_type(const char *arg, exarg_T *eap)
 {
   switch (*arg) {
   case 'S':
@@ -2837,7 +2837,7 @@ theend:
 /// @param pp   start of command
 /// @param cmd  name of command
 /// @param len  required length
-bool checkforcmd(char **pp, char *cmd, int len)
+bool checkforcmd(char **pp, const char *cmd, int len)
 {
   int i;
 
@@ -5654,7 +5654,7 @@ void do_sleep(long msec)
 {
   ui_flush();  // flush before waiting
   for (long left = msec; !got_int && left > 0; left -= 1000L) {
-    int next = left > 1000l ? 1000 : (int)left;
+    int next = left > 1000L ? 1000 : (int)left;
     LOOP_PROCESS_EVENTS_UNTIL(&main_loop, main_loop.events, (int)next, got_int);
     os_breakcheck();
   }
@@ -6559,7 +6559,7 @@ static void ex_tag(exarg_T *eap)
   ex_tag_cmd(eap, cmdnames[eap->cmdidx].cmd_name);
 }
 
-static void ex_tag_cmd(exarg_T *eap, char *name)
+static void ex_tag_cmd(exarg_T *eap, const char *name)
 {
   int cmd;
 
@@ -6685,8 +6685,8 @@ ssize_t find_cmdline_var(const char_u *src, size_t *usedlen)
 /// @return          an allocated string if a valid match was found.
 ///                  Returns NULL if no match was found.  "usedlen" then still contains the
 ///                  number of characters to skip.
-char_u *eval_vars(char_u *src, char_u *srcstart, size_t *usedlen, linenr_T *lnump, char **errormsg,
-                  int *escaped, bool empty_is_error)
+char_u *eval_vars(char_u *src, const char_u *srcstart, size_t *usedlen, linenr_T *lnump,
+                  char **errormsg, int *escaped, bool empty_is_error)
 {
   char *result;
   char *resultbuf = NULL;
@@ -7266,7 +7266,7 @@ static void ex_terminal(exarg_T *eap)
 
 void verify_command(char *cmd)
 {
-  if (strcmp("smile", cmd)) {
+  if (strcmp("smile", cmd) != 0) {
     return;  // acceptable non-existing command
   }
   msg(" #xxn`          #xnxx`        ,+x@##@Mz;`        .xxx"

@@ -1012,7 +1012,7 @@ Integer nvim_open_term(Buffer buffer, DictionaryOf(LuaRef) opts, Error *err)
   return (Integer)chan->id;
 }
 
-static void term_write(char *buf, size_t size, void *data)
+static void term_write(char *buf, size_t size, void *data)  // NOLINT(readability-non-const-parameter)
 {
   Channel *chan = data;
   LuaRef cb = chan->stream.internal.cb;
@@ -2125,7 +2125,7 @@ Dictionary nvim_eval_statusline(String str, Dict(eval_statusline) *opts, Error *
   bool use_tabline = false;
   bool highlights = false;
 
-  if (str.size < 2 || memcmp(str.data, "%!", 2)) {
+  if (str.size < 2 || memcmp(str.data, "%!", 2) != 0) {
     const char *const errmsg = check_stl_option(str.data);
     if (errmsg) {
       api_set_error(err, kErrorTypeValidation, "%s", errmsg);
