@@ -69,8 +69,7 @@ EXTERN char *msg_qflist INIT(= N_("[Quickfix List]"));
 # include "buffer.h.generated.h"
 #endif
 
-static inline void buf_set_changedtick(buf_T *buf,
-                                       varnumber_T changedtick)
+static inline void buf_set_changedtick(buf_T *buf, varnumber_T changedtick)
   REAL_FATTR_NONNULL_ALL REAL_FATTR_ALWAYS_INLINE;
 
 /// Set b:changedtick, also checking b: for consistency in debug build
