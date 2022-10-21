@@ -923,9 +923,7 @@ end
 --- exit cleanly this could leave behind orphaned server processes.
 ---
 ---@param workspace_folders (table) List of workspace folders passed to the
---- language server. For backwards compatibility rootUri and rootPath will be
---- derived from the first workspace folder in this list. See `workspaceFolders` in
---- the LSP spec.
+--- language server.  See `workspaceFolders` in the LSP spec.
 ---
 ---@param capabilities Map overriding the default capabilities defined by
 --- |vim.lsp.protocol.make_client_capabilities()|, passed to the language
@@ -1000,8 +998,7 @@ end
 ---       exit cleanly after sending the "shutdown" request before sending kill -15.
 ---       If set to false, nvim exits immediately after sending the "shutdown" request to the server.
 ---
----@param root_dir string Directory where the LSP
---- server will base its workspaceFolders, rootUri, and rootPath
+---@param root_dir string Directory where the language server will base its workspaceFolders
 --- on initialization.
 ---
 ---@returns Client id. |vim.lsp.get_client_by_id()| Note: client may not be
@@ -1221,25 +1218,17 @@ function lsp.start_client(config)
     local version = vim.version()
 
     local workspace_folders
-    local root_uri
-    local root_path
-    if config.workspace_folders or config.root_dir then
-      if config.root_dir and not config.workspace_folders then
-        workspace_folders = {
-          {
-            uri = vim.uri_from_fname(config.root_dir),
-            name = string.format('%s', config.root_dir),
-          },
-        }
-      else
-        workspace_folders = config.workspace_folders
-      end
-      root_uri = workspace_folders[1].uri
-      root_path = vim.uri_to_fname(root_uri)
+    if config.workspace_folders then
+      workspace_folders = config.workspace_folders
+    elseif config.root_dir then
+      workspace_folders = {
+        {
+          uri = vim.uri_from_fname(config.root_dir),
+          name = string.format('%s', config.root_dir),
+        },
+      }
     else
       workspace_folders = nil
-      root_uri = nil
-      root_path = nil
     end
 
     local initialize_params = {
@@ -1254,13 +1243,6 @@ function lsp.start_client(config)
         name = 'Neovim',
         version = string.format('%s.%s.%s', version.major, version.minor, version.patch),
       },
-      -- The rootPath of the workspace. Is null if no folder is open.
-      --
-      -- @deprecated in favour of rootUri.
-      rootPath = root_path or vim.NIL,
-      -- The rootUri of the workspace. Is null if no folder is open. If both
-      -- `rootPath` and `rootUri` are set `rootUri` wins.
-      rootUri = root_uri or vim.NIL,
       -- The workspace folders configured in the client when the server starts.
       -- This property is only available if the client supports workspace folders.
       -- It can be `null` if the client supports workspace folders but none are
