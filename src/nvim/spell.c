@@ -66,6 +66,7 @@
 #include <wctype.h>
 
 #include "hunspell/hunspell_wrapper.h"
+#include "klib/kvec.h"
 #include "nvim/ascii.h"           // for NUL, ascii_isdigit, ascii_iswhite
 #include "nvim/autocmd.h"         // for apply_autocmds
 #include "nvim/buffer.h"          // for bufref_valid, set_bufref, buf_is_empty
@@ -84,7 +85,6 @@
 #include "nvim/hashtab.h"         // for hash_clear_all, hash_init, has...
 #include "nvim/highlight_defs.h"  // for HLF_COUNT, hlf_T, HLF_SPB, HLF...
 #include "nvim/insexpand.h"       // for ins_compl_add_infercase, ins_c...
-#include "nvim/lib/kvec.h"
 #include "nvim/log.h"             // for ELOG
 #include "nvim/macros.h"          // for MB_PTR_ADV, MB_PTR_BACK, ASCII...
 #include "nvim/mark.h"            // for clearpos

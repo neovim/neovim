@@ -233,6 +233,7 @@
 #include <wctype.h>
 
 #include "hunspell/hunspell_wrapper.h"
+#include "klib/kvec.h"
 #include "nvim/arglist.h"
 #include "nvim/ascii.h"
 #include "nvim/buffer.h"
@@ -242,7 +243,6 @@
 #include "nvim/ex_cmds2.h"
 #include "nvim/fileio.h"
 #include "nvim/globals.h"
-#include "klib/kvec.h"
 #include "nvim/memline.h"
 #include "nvim/memory.h"
 #include "nvim/option.h"
