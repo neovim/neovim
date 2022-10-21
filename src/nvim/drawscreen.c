@@ -125,6 +125,8 @@ void conceal_check_cursor_line(void)
 /// default_grid.Columns to access items in default_grid.chars[].  Use Rows
 /// and Columns for positioning text etc. where the final size of the screen is
 /// needed.
+///
+/// @return  whether resizing has been done
 bool default_grid_alloc(void)
 {
   static bool resizing = false;
@@ -264,17 +266,28 @@ void screen_resize(int width, int height)
   p_lines = Rows;
   p_columns = Columns;
 
-  // was invoked recursively from a VimResized autocmd, handled as a loop below
-  if (resizing_autocmd) {
-    return;
-  }
+  ui_call_grid_resize(1, width, height);
 
   int retry_count = 0;
   resizing_autocmd = true;
 
-  bool retry_resize = true;
-  while (retry_resize) {
-    retry_resize = default_grid_alloc();
+  // In rare cases, autocommands may have altered Rows or Columns,
+  // so retry to check if we need to allocate the screen again.
+  while (default_grid_alloc()) {
+    // win_new_screensize will recompute floats position, but tell the
+    // compositor to not redraw them yet
+    ui_comp_set_screen_valid(false);
+    if (msg_grid.chars) {
+      msg_grid_invalid = true;
+    }
+
+    RedrawingDisabled++;
+
+    win_new_screensize();      // fit the windows in the new sized screen
+
+    comp_col();           // recompute columns for shown command and ruler
+
+    RedrawingDisabled--;
 
     // Do not apply autocommands more than 3 times to avoid an endless loop
     // in case applying autocommands always changes Rows or Columns.
@@ -282,33 +295,10 @@ void screen_resize(int width, int height)
       break;
     }
 
-    if (retry_resize) {
-      // In rare cases, autocommands may have altered Rows or Columns,
-      // retry to check if we need to allocate the screen again.
-      apply_autocmds(EVENT_VIMRESIZED, NULL, NULL, false, curbuf);
-    }
+    apply_autocmds(EVENT_VIMRESIZED, NULL, NULL, false, curbuf);
   }
 
   resizing_autocmd = false;
-
-  ui_call_grid_resize(1, width, height);
-
-  // win_new_screensize will recompute floats position, but tell the
-  // compositor to not redraw them yet
-  ui_comp_set_screen_valid(false);
-  if (msg_grid.chars) {
-    msg_grid_invalid = true;
-  }
-
-  // Note that the window sizes are updated before reallocating the arrays,
-  // thus we must not redraw here!
-  RedrawingDisabled++;
-
-  win_new_screensize();      // fit the windows in the new sized screen
-
-  comp_col();           // recompute columns for shown command and ruler
-
-  RedrawingDisabled--;
   redraw_all_later(UPD_CLEAR);
 
   if (starting != NO_SCREEN) {

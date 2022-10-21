@@ -894,6 +894,31 @@ local function screen_tests(linegrid)
         :ls^         |
       ]])
     end)
+
+    it('VimResized autocommand does not cause invalid UI events #20692 #20759', function()
+      feed('<Esc>')
+      command([[autocmd VimResized * redrawtabline]])
+      command([[autocmd VimResized * lua vim.api.nvim_echo({ { 'Hello' } }, false, {})]])
+      command([[autocmd VimResized * let g:echospace = v:echospace]])
+      meths.set_option('showtabline', 2)
+      screen:expect([[
+        {2: + [No Name] }{3:            }|
+        resiz^e                   |
+        {0:~                        }|
+        {0:~                        }|
+                                 |
+      ]])
+      screen:try_resize(30, 6)
+      screen:expect([[
+        {2: + [No Name] }{3:                 }|
+        resiz^e                        |
+        {0:~                             }|
+        {0:~                             }|
+        {0:~                             }|
+                                      |
+      ]])
+      eq(29, meths.get_var('echospace'))
+    end)
   end)
 
   describe('press enter', function()
