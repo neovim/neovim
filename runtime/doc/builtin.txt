@@ -4010,10 +4010,10 @@ hlget([{name} [, {resolve}]])				*hlget()*
 				See |:highlight-link|.
 			name	highlight group name. See |group-name|.
 
-		The 'cterm' and 'gui' items in the above Dictionary
+		The "cterm" and "gui" items in the above Dictionary
 		have a dictionary value with the following optional boolean
-		items: 'bold', 'standout', 'underline', 'undercurl', 'italic',
-		'reverse', 'inverse' and 'strikethrough'.
+		items: "bold", "standout", "underline", "undercurl", "italic",
+		"reverse", "inverse" and "strikethrough".
 
 		Example(s): >
 			:echo hlget()
@@ -4029,18 +4029,18 @@ hlset({list})						*hlset()*
 		attributes of a highlight group. See |hlget()| for the list of
 		supported items in this dictionary.
 
-		The highlight group is identified using the 'name' item and
-		the 'id' item (if supplied) is ignored.  If a highlight group
+		The highlight group is identified using the "name" item and
+		the "id" item (if supplied) is ignored.  If a highlight group
 		with a specified name doesn't exist, then it is created.
 		Otherwise the attributes of an existing highlight group are
 		modified.
 
-		If an empty dictionary value is used for the 'cterm'
-		or 'gui' entries, then the corresponding attributes are
-		cleared.  If the 'cleared' item is set to v:true, then all the
+		If an empty dictionary value is used for the "cterm"
+		or "gui" entries, then the corresponding attributes are
+		cleared.  If the "cleared" item is set to v:true, then all the
 		attributes of the highlight group are cleared.
 
-		The 'linksto' item can be used to link a highlight group to
+		The "linksto" item can be used to link a highlight group to
 		another highlight group.  See |:highlight-link|.
 
 		Returns zero for success, -1 for failure.
