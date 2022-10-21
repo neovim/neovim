@@ -16,7 +16,9 @@ endif()
 # `git describe` annotates the most recent tagged release; for pre-release
 # builds we append that to the dev version.
 if(NVIM_VERSION_PRERELEASE)
+  # Extract pre-release info: "v0.8.0-145-g0f9113907" => "145-g0f9113907"
   string(REGEX REPLACE "^v[0-9]+.[0-9]+.[0-9]+-" "" NVIM_VERSION_GIT "${GIT_TAG}")
+  # Replace "-" with "+": "145-g0f9113907" => "145+g0f9113907"
   string(REGEX REPLACE "^([0-9]+)-([a-z0-9]+)" "\\1+\\2" NVIM_VERSION_GIT "${NVIM_VERSION_GIT}")
   set(NVIM_VERSION "${NVIM_VERSION}-${NVIM_VERSION_GIT}")
 endif()
