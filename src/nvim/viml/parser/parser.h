@@ -127,8 +127,7 @@ static inline void viml_parser_destroy(ParserState *const pstate)
   kvi_destroy(pstate->stack);
 }
 
-static inline void viml_preader_get_line(ParserInputReader *preader,
-                                         ParserLine *ret_pline)
+static inline void viml_preader_get_line(ParserInputReader *preader, ParserLine *ret_pline)
   REAL_FATTR_NONNULL_ALL;
 
 /// Get one line from ParserInputReader
@@ -152,8 +151,7 @@ static inline void viml_preader_get_line(ParserInputReader *const preader,
   *ret_pline = pline;
 }
 
-static inline bool viml_parser_get_remaining_line(ParserState *pstate,
-                                                  ParserLine *ret_pline)
+static inline bool viml_parser_get_remaining_line(ParserState *pstate, ParserLine *ret_pline)
   REAL_FATTR_ALWAYS_INLINE REAL_FATTR_WARN_UNUSED_RESULT REAL_FATTR_NONNULL_ALL;
 
 /// Get currently parsed line, shifted to pstate->pos.col
@@ -178,8 +176,7 @@ static inline bool viml_parser_get_remaining_line(ParserState *const pstate,
   return ret_pline->data != NULL;
 }
 
-static inline void viml_parser_advance(ParserState *pstate,
-                                       size_t len)
+static inline void viml_parser_advance(ParserState *pstate, size_t len)
   REAL_FATTR_ALWAYS_INLINE REAL_FATTR_NONNULL_ALL;
 
 /// Advance position by a given number of bytes
@@ -200,9 +197,7 @@ static inline void viml_parser_advance(ParserState *const pstate, const size_t l
   }
 }
 
-static inline void viml_parser_highlight(ParserState *pstate,
-                                         ParserPosition start,
-                                         size_t len,
+static inline void viml_parser_highlight(ParserState *pstate, ParserPosition start, size_t len,
                                          const char *group)
   REAL_FATTR_ALWAYS_INLINE REAL_FATTR_NONNULL_ALL;
 

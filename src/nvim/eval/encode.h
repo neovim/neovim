@@ -15,9 +15,7 @@
 /// @param[in]  objname  Object name, used for error message.
 ///
 /// @return OK in case of success, FAIL otherwise.
-int encode_vim_to_msgpack(msgpack_packer *packer,
-                          typval_T *tv,
-                          const char *objname);
+int encode_vim_to_msgpack(msgpack_packer *packer, typval_T *tv, const char *objname);
 
 /// Convert VimL value to :echo output
 ///
@@ -26,9 +24,7 @@ int encode_vim_to_msgpack(msgpack_packer *packer,
 /// @param[in]  objname  Object name, used for error message.
 ///
 /// @return OK in case of success, FAIL otherwise.
-int encode_vim_to_echo(garray_T *packer,
-                       typval_T *tv,
-                       const char *objname);
+int encode_vim_to_echo(garray_T *packer, typval_T *tv, const char *objname);
 
 /// Structure defining state for read_from_list()
 typedef struct {
