@@ -19,3 +19,5 @@ set_target_properties(
 include_directories(src)
 
 install(TARGETS parser LIBRARY DESTINATION lib/nvim/parser)
+
+# vim: set ft=cmake:

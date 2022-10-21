@@ -82,3 +82,5 @@ if(Perl_FOUND)
       DEPENDS ${header_path} ${perl_header_path})
   endforeach()
 endif()
+
+# vim: set ft=cmake:

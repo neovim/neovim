@@ -19,3 +19,5 @@ install(FILES
 include(GNUInstallDirs)
 install(TARGETS tree-sitter
   LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR})
+
+# vim: set ft=cmake:
