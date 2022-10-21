@@ -43,10 +43,8 @@ static inline ListLog *list_log_new(const size_t size)
   return ret;
 }
 
-static inline void list_log(const list_T *const l,
-                            const listitem_T *const li1,
-                            const listitem_T *const li2,
-                            const char *const action)
+static inline void list_log(const list_T *const l, const listitem_T *const li1,
+                            const listitem_T *const li2, const char *const action)
   REAL_FATTR_ALWAYS_INLINE;
 
 /// Add new entry to log
@@ -488,8 +486,7 @@ extern bool tv_in_free_unref_items;
     } \
   })
 
-static inline bool tv_get_float_chk(const typval_T *tv,
-                                    float_T *ret_f)
+static inline bool tv_get_float_chk(const typval_T *tv, float_T *ret_f)
   REAL_FATTR_NONNULL_ALL REAL_FATTR_WARN_UNUSED_RESULT;
 
 /// Get the float value

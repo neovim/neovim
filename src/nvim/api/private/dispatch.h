@@ -3,10 +3,7 @@
 
 #include "nvim/api/private/defs.h"
 
-typedef Object (*ApiDispatchWrapper)(uint64_t channel_id,
-                                     Array args,
-                                     Arena *arena,
-                                     Error *error);
+typedef Object (*ApiDispatchWrapper)(uint64_t channel_id, Array args, Arena *arena, Error *error);
 
 /// The rpc_method_handlers table, used in msgpack_rpc_dispatch(), stores
 /// functions of this type.

@@ -439,8 +439,7 @@ static int insert_check(VimState *state)
     s->mincol = curwin->w_wcol;
     validate_cursor_col();
 
-    if (
-        curwin->w_wcol < s->mincol - tabstop_at(get_nolist_virtcol(),
+    if (curwin->w_wcol < s->mincol - tabstop_at(get_nolist_virtcol(),
                                                 curbuf->b_p_ts,
                                                 curbuf->b_p_vts_array)
         && curwin->w_wrow == curwin->w_winrow

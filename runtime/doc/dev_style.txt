@@ -782,55 +782,6 @@ example, `"\uFEFF"`, is the Unicode zero-width no-break space character, which
 would be invisible if included in the source as straight UTF-8.
 
 
-Function Declarations and Definitions ~
-
-Return type on the same line as function name, parameters on the same line if
-they fit.
-
-Functions look like this: >
-
-    ReturnType function_name(Type par_name1, Type par_name2)
-    {
-      do_something();
-      ...
-    }
-
-If you have too much text to fit on one line: >
-
-    ReturnType really_long_function_name(Type par_name1, Type par_name2,
-                                         Type par_name3)
-    {
-      do_something();
-      ...
-    }
-
-or if you cannot fit even the first parameter (but only then): >
-
-    ReturnType really_really_really_long_function_name(
-        Type par_name1,  // 4 space indent
-        Type par_name2,
-        Type par_name3)
-    {
-      do_something();  // 2 space indent
-      ...
-    }
-
-Some points to note:
-
-- The open parenthesis is always on the same line as the function name.
-- There is never a space between the function name and the open parenthesis.
-- There is never a space between the parentheses and the parameters.
-- The open curly brace is always on the next line.
-- The close curly brace is always on the last line by itself.
-- There should be a space between the close parenthesis and the open curly
-  brace.
-- All parameters should be named, with identical names in the declaration and
-  implementation.
-- All parameters should be aligned if possible.
-- Default indentation is 2 spaces.
-- Wrapped parameters have a 4 space indent.
-
-
 Function Calls ~
 
 On one line if it fits; otherwise, wrap arguments at the parenthesis.
@@ -889,18 +840,6 @@ no name, assume a zero-length name. >
           interiorwrappinglist2 } };
 
 
-Conditionals ~
-
-Don't use spaces inside parentheses. >
-
-    if (condition) {  // no spaces inside parentheses
-      ...  // 2 space indent.
-    } else if (...) {  // The else goes on the same line as the closing brace.
-      ...
-    } else {
-      ...
-    }
-
 Loops and Switch Statements ~
 
 Annotate non-trivial fall-through between cases.
@@ -920,39 +859,6 @@ execute, simply `assert`: >
       default:
         assert(false);
     }
-
-Pointer Expressions ~
-
-No spaces around period or arrow. Pointer operators do not have trailing
-spaces.
-
-The following are examples of correctly-formatted pointer and reference
-expressions: >
-
-    x = *p;
-    p = &x;
-    x = r.y;
-    x = r->y;
-
-Note that:
-
-    - There are no spaces around the period or arrow when accessing a member.
-    - Pointer operators have no space after the * or &.
-
-Boolean Expressions ~
-
-When you have a boolean expression that is longer than the standard line
-length, keep operators at the start of the line. >
-
-    if (this_one_thing > this_other_thing
-        && a_third_thing == a_fourth_thing
-        && yet_another && last_one) {
-      ...
-    }
-
-Also note that you should always use the punctuation operators, such as `&&`
-and `~`, rather than the word operators, such as `and` and `compl`.
-
 
 Return Values ~
 
@@ -1001,8 +907,6 @@ Use of horizontal whitespace depends on location.
         x = -5;           // No spaces separating unary operators and their
         x++;              // arguments.
         if (x && !y)
-          ...
-        i = (int)d;       // No spaces after a cast operator.
 <
 
 Vertical Whitespace ~

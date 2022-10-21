@@ -1413,8 +1413,7 @@ char_u *find_file_in_path_option(char_u *ptr, size_t len, int options, int first
         // When the file doesn't exist, try adding parts of 'suffixesadd'.
         buf = (char *)suffixes;
         for (;;) {
-          if (
-              (os_path_exists(NameBuff)
+          if ((os_path_exists(NameBuff)
                && (find_what == FINDFILE_BOTH
                    || ((find_what == FINDFILE_DIR)
                        == os_isdir(NameBuff))))) {

@@ -1557,6 +1557,18 @@ static ShaDaWriteResult shada_pack_entry(msgpack_packer *const packer, ShadaEntr
   (sd_default_values[(entry).type].data.attr == (entry).data.attr)
 #define ONE_IF_NOT_DEFAULT(entry, attr) \
   ((size_t)(!CHECK_DEFAULT(entry, attr)))
+
+#define PACK_BOOL(entry, name, attr) \
+  do { \
+    if (!CHECK_DEFAULT(entry, search_pattern.attr)) { \
+      PACK_STATIC_STR(name); \
+      if (sd_default_values[(entry).type].data.search_pattern.attr) { \
+        msgpack_pack_false(spacker); \
+      } else { \
+        msgpack_pack_true(spacker); \
+      } \
+    } \
+  } while (0)
   switch (entry.type) {
   case kSDItemMissing:
     abort();
@@ -1640,17 +1652,6 @@ static ShaDaWriteResult shada_pack_entry(msgpack_packer *const packer, ShadaEntr
     msgpack_pack_map(spacker, map_size);
     PACK_STATIC_STR(SEARCH_KEY_PAT);
     PACK_BIN(cstr_as_string(entry.data.search_pattern.pat));
-#define PACK_BOOL(entry, name, attr) \
-  do { \
-    if (!CHECK_DEFAULT(entry, search_pattern.attr)) { \
-      PACK_STATIC_STR(name); \
-      if (sd_default_values[(entry).type].data.search_pattern.attr) { \
-        msgpack_pack_false(spacker); \
-      } else { \
-        msgpack_pack_true(spacker); \
-      } \
-    } \
-  } while (0)
     PACK_BOOL(entry, SEARCH_KEY_MAGIC, magic);
     PACK_BOOL(entry, SEARCH_KEY_IS_LAST_USED, is_last_used);
     PACK_BOOL(entry, SEARCH_KEY_SMARTCASE, smartcase);
@@ -1957,6 +1958,28 @@ static const char *shada_format_entry(const ShadaEntry entry)
   ret[0] = 0;
   vim_snprintf(S_LEN(ret), "%s", "[ ] ts=%" PRIu64 " ");
   //                         ^ Space for `can_free_entry`
+#define FORMAT_MARK_ENTRY(entry_name, name_fmt, name_fmt_arg) \
+  do { \
+    typval_T ad_tv = { \
+      .v_type = VAR_DICT, \
+      .vval.v_dict = entry.data.filemark.additional_data \
+    }; \
+    size_t ad_len; \
+    char *const ad = encode_tv2string(&ad_tv, &ad_len); \
+    vim_snprintf_add(S_LEN(ret), \
+                     entry_name " {" name_fmt " file=[%zu]\"%.512s\", " \
+                     "pos={l=%" PRIdLINENR ",c=%" PRIdCOLNR ",a=%" PRIdCOLNR "}, " \
+                     "ad={%p:[%zu]%.64s} }", \
+                     name_fmt_arg, \
+                     strlen(entry.data.filemark.fname), \
+                     entry.data.filemark.fname, \
+                     entry.data.filemark.mark.lnum, \
+                     entry.data.filemark.mark.col, \
+                     entry.data.filemark.mark.coladd, \
+                     (void *)entry.data.filemark.additional_data, \
+                     ad_len, \
+                     ad); \
+  } while (0)
   switch (entry.type) {
   case kSDItemMissing:
     vim_snprintf_add(S_LEN(ret), "Missing");
@@ -1985,28 +2008,6 @@ static const char *shada_format_entry(const ShadaEntry entry)
   case kSDItemVariable:
     vim_snprintf_add(S_LEN(ret), "Variable { TODO }");
     break;
-#define FORMAT_MARK_ENTRY(entry_name, name_fmt, name_fmt_arg) \
-  do { \
-    typval_T ad_tv = { \
-      .v_type = VAR_DICT, \
-      .vval.v_dict = entry.data.filemark.additional_data \
-    }; \
-    size_t ad_len; \
-    char *const ad = encode_tv2string(&ad_tv, &ad_len); \
-    vim_snprintf_add(S_LEN(ret), \
-                     entry_name " {" name_fmt " file=[%zu]\"%.512s\", " \
-                     "pos={l=%" PRIdLINENR ",c=%" PRIdCOLNR ",a=%" PRIdCOLNR "}, " \
-                     "ad={%p:[%zu]%.64s} }", \
-                     name_fmt_arg, \
-                     strlen(entry.data.filemark.fname), \
-                     entry.data.filemark.fname, \
-                     entry.data.filemark.mark.lnum, \
-                     entry.data.filemark.mark.col, \
-                     entry.data.filemark.mark.coladd, \
-                     (void *)entry.data.filemark.additional_data, \
-                     ad_len, \
-                     ad); \
-  } while (0)
   case kSDItemGlobalMark:
     FORMAT_MARK_ENTRY("GlobalMark", " name='%c',", entry.data.filemark.name);
     break;
@@ -2055,6 +2056,32 @@ static inline ShaDaWriteResult shada_read_when_writing(ShaDaReadDef *const sd_re
   ShaDaWriteResult ret = kSDWriteSuccessfull;
   ShadaEntry entry;
   ShaDaReadResult srni_ret;
+
+#define COMPARE_WITH_ENTRY(wms_entry_, entry) \
+  do { \
+    PossiblyFreedShadaEntry *const wms_entry = (wms_entry_); \
+    if (wms_entry->data.type != kSDItemMissing) { \
+      if (wms_entry->data.timestamp >= (entry).timestamp) { \
+        shada_free_shada_entry(&(entry)); \
+        break; \
+      } \
+      if (wms_entry->can_free_entry) { \
+        shada_free_shada_entry(&wms_entry->data); \
+      } \
+    } \
+    *wms_entry = pfs_entry; \
+  } while (0)
+
+#define FREE_POSSIBLY_FREED_SHADA_ENTRY(entry) \
+  do { \
+    if ((entry).can_free_entry) { \
+      shada_free_shada_entry(&(entry).data); \
+    } \
+  } while (0)
+
+#define SDE_TO_PFSDE(entry) \
+  ((PossiblyFreedShadaEntry) { .can_free_entry = true, .data = (entry) })
+
   while ((srni_ret = shada_read_next_item(sd_reader, &entry, srni_flags,
                                           max_kbyte))
          != kSDReadStatusFinished) {
@@ -2072,20 +2099,6 @@ static inline ShaDaWriteResult shada_read_when_writing(ShaDaReadDef *const sd_re
     case kSDReadStatusMalformed:
       continue;
     }
-#define COMPARE_WITH_ENTRY(wms_entry_, entry) \
-  do { \
-    PossiblyFreedShadaEntry *const wms_entry = (wms_entry_); \
-    if (wms_entry->data.type != kSDItemMissing) { \
-      if (wms_entry->data.timestamp >= (entry).timestamp) { \
-        shada_free_shada_entry(&(entry)); \
-        break; \
-      } \
-      if (wms_entry->can_free_entry) { \
-        shada_free_shada_entry(&wms_entry->data); \
-      } \
-    } \
-    *wms_entry = pfs_entry; \
-  } while (0)
     const PossiblyFreedShadaEntry pfs_entry = {
       .can_free_entry = true,
       .data = entry,
@@ -2225,14 +2238,6 @@ static inline ShaDaWriteResult shada_read_when_writing(ShaDaReadDef *const sd_re
           *wms_entry = pfs_entry;
         }
       } else {
-#define FREE_POSSIBLY_FREED_SHADA_ENTRY(entry) \
-  do { \
-    if ((entry).can_free_entry) { \
-      shada_free_shada_entry(&(entry).data); \
-    } \
-  } while (0)
-#define SDE_TO_PFSDE(entry) \
-  ((PossiblyFreedShadaEntry) { .can_free_entry = true, .data = (entry) })
 #define AFTERFREE_DUMMY(entry)
 #define DUMMY_IDX_ADJ(i)
         MERGE_JUMPS(filemarks->changes_size, filemarks->changes,

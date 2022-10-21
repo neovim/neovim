@@ -6518,8 +6518,7 @@ static void n_opencmd(cmdarg_T *cap)
     if (u_save((linenr_T)(curwin->w_cursor.lnum -
                           (cap->cmdchar == 'O' ? 1 : 0)),
                (linenr_T)(curwin->w_cursor.lnum +
-                          (cap->cmdchar == 'o' ? 1 : 0))
-               )
+                          (cap->cmdchar == 'o' ? 1 : 0)))
         && open_line(cap->cmdchar == 'O' ? BACKWARD : FORWARD,
                      has_format_option(FO_OPEN_COMS) ? OPENLINE_DO_COM : 0,
                      0, NULL)) {
