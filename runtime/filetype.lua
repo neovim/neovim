@@ -10,7 +10,15 @@ vim.api.nvim_create_autocmd({ 'BufRead', 'BufNewFile', 'StdinReadPost' }, {
   group = 'filetypedetect',
   callback = function(args)
     local ft, on_detect = vim.filetype.match({ filename = args.match, buf = args.buf })
-    if #ft == 0 then
+    local has_ft = false
+
+    if type(ft) == "nil" then
+      has_ft = not ft
+    elseif type(ft) == "string" then
+      has_ft = #ft == 0
+    end
+
+    if has_ft then
       -- Generic configuration file used as fallback
       ft = require('vim.filetype.detect').conf(args.file, args.buf)
       if ft then
