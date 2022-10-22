@@ -464,7 +464,7 @@ function M.apply_text_edits(text_edits, bufnr, offset_encoding)
       start_col = get_line_byte_from_position(bufnr, text_edit.range.start, offset_encoding),
       end_row = text_edit.range['end'].line,
       end_col = get_line_byte_from_position(bufnr, text_edit.range['end'], offset_encoding),
-      text = split(text_edit.newText, '\n', true),
+      text = split(text_edit.newText, '\n', { trimempty = true }),
     }
 
     local max = api.nvim_buf_line_count(bufnr)
