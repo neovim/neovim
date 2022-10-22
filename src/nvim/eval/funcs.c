@@ -2058,6 +2058,12 @@ static void f_menu_get(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 static void f_expandcmd(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
   char *errormsg = NULL;
+  bool emsgoff = true;
+
+  if (argvars[1].v_type == VAR_DICT
+      && tv_dict_get_bool(argvars[1].vval.v_dict, "errmsg", kBoolVarFalse)) {
+    emsgoff = false;
+  }
 
   rettv->v_type = VAR_STRING;
   char *cmdstr = xstrdup(tv_get_string(&argvars[0]));
@@ -2071,9 +2077,17 @@ static void f_expandcmd(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   };
   eap.argt |= EX_NOSPC;
 
-  emsg_off++;
-  expand_filename(&eap, &cmdstr, &errormsg);
-  emsg_off--;
+  if (emsgoff) {
+    emsg_off++;
+  }
+  if (expand_filename(&eap, &cmdstr, &errormsg) == FAIL) {
+    if (!emsgoff && errormsg != NULL && *errormsg != NUL) {
+      emsg(errormsg);
+    }
+  }
+  if (emsgoff) {
+    emsg_off--;
+  }
 
   rettv->vval.v_string = cmdstr;
 }

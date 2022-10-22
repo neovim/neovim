@@ -118,7 +118,7 @@ return {
     exists={args=1, base=1},
     exp={args=1, base=1, float_func="exp"},
     expand={args={1, 3}, base=1},
-    expandcmd={args=1, base=1},
+    expandcmd={args={1, 2}, base=1},
     extend={args={2, 3}, base=1},
     feedkeys={args={1, 2}, base=1},
     file_readable={args=1, base=1, func='f_filereadable'},  -- obsolete

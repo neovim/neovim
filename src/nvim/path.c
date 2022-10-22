@@ -1244,7 +1244,7 @@ int gen_expand_wildcards(int num_pat, char **pat, int *num_file, char ***file, i
       add_pat = expand_backtick(&ga, (char *)p, flags);
       if (add_pat == -1) {
         recursive = false;
-        FreeWild(ga.ga_len, ga.ga_data);
+        ga_clear_strings(&ga);
         *num_file = 0;
         *file = NULL;
         return FAIL;

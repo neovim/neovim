@@ -134,7 +134,8 @@ exists({expr})			Number	|TRUE| if {expr} exists
 exp({expr})			Float	exponential of {expr}
 expand({expr} [, {nosuf} [, {list}]])
 				any	expand special keywords in {expr}
-expandcmd({expr})		String	expand {expr} like with `:edit`
+expandcmd({string} [, {options}])
+				String	expand {string} like with `:edit`
 extend({expr1}, {expr2} [, {expr3}])
 				List/Dict insert items of {expr2} into {expr1}
 feedkeys({string} [, {mode}])	Number	add key sequence to typeahead buffer
@@ -2044,18 +2045,27 @@ expand({string} [, {nosuf} [, {list}]])				*expand()*
 		Can also be used as a |method|: >
 			Getpattern()->expand()
 
-expandcmd({string})					*expandcmd()*
+expandcmd({string} [, {options}])			*expandcmd()*
 		Expand special items in String {string} like what is done for
 		an Ex command such as `:edit`.  This expands special keywords,
 		like with |expand()|, and environment variables, anywhere in
 		{string}.  "~user" and "~/path" are only expanded at the
 		start.
+
+		The following items are supported in the {options} Dict
+		argument:
+		    errmsg	If set to TRUE, error messages are displayed
+				if an error is encountered during expansion.
+				By default, error messages are not displayed.
+
 		Returns the expanded string.  If an error is encountered
 		during expansion, the unmodified {string} is returned.
+
 		Example: >
 			:echo expandcmd('make %<.o')
-<			make /path/runtime/doc/builtin.o ~
-
+			make /path/runtime/doc/builtin.o
+			:echo expandcmd('make %<.o', {'errmsg': v:true})
+<
 		Can also be used as a |method|: >
 			GetCommand()->expandcmd()
 <
