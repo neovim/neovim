@@ -2686,7 +2686,7 @@ void ex_diffgetput(exarg_T *eap)
         }
       }
 
-      int buf_empty = buf_is_empty(curbuf);
+      bool buf_empty = buf_is_empty(curbuf);
       int added = 0;
 
       for (int i = 0; i < count; i++) {
