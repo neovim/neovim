@@ -952,7 +952,7 @@ function lsp.start(config, opts)
   for _, clients in ipairs({ uninitialized_clients, lsp.get_active_clients() }) do
     for _, client in pairs(clients) do
       if reuse_client(client, config, bufnr) then
-        local _ = log.info() and log.info('reusing found matching workspace for', client.name, 'for buffer', bufnr)
+        local _ = log.debug() and log.debug('reusing found matching workspace for', client.name, 'for buffer', bufnr)
         lsp.buf_attach_client(bufnr, client.id)
         return client.id
       end
