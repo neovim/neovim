@@ -1942,11 +1942,10 @@ bool next_for_item(void *fi_void, char *arg)
   listitem_T *item = fi->fi_lw.lw_item;
   if (item == NULL) {
     return false;
-  } else {
-    fi->fi_lw.lw_item = TV_LIST_ITEM_NEXT(fi->fi_list, item);
-    return (ex_let_vars(arg, TV_LIST_ITEM_TV(item), true,
-                        fi->fi_semicolon, fi->fi_varcount, false, NULL) == OK);
   }
+  fi->fi_lw.lw_item = TV_LIST_ITEM_NEXT(fi->fi_list, item);
+  return (ex_let_vars(arg, TV_LIST_ITEM_TV(item), true,
+                      fi->fi_semicolon, fi->fi_varcount, false, NULL) == OK);
 }
 
 // TODO(ZyX-I): move to eval/ex_cmds
@@ -7172,9 +7171,8 @@ int check_luafunc_name(const char *const str, const bool paren)
   const char *const p = skip_luafunc_name(str);
   if (*p != (paren ? '(' : NUL)) {
     return 0;
-  } else {
-    return (int)(p - str);
   }
+  return (int)(p - str);
 }
 
 /// Handle:
@@ -7920,9 +7918,8 @@ static var_flavour_T var_flavour(char *varname)
       }
     }
     return VAR_FLAVOUR_SHADA;
-  } else {
-    return VAR_FLAVOUR_DEFAULT;
   }
+  return VAR_FLAVOUR_DEFAULT;
 }
 
 /// Iterate over global variables

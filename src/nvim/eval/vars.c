@@ -380,9 +380,8 @@ const char *skip_var_list(const char *arg, int *var_count, int *semicolon)
       }
     }
     return p + 1;
-  } else {
-    return skip_var_one((char *)arg);
   }
+  return skip_var_one((char *)arg);
 }
 
 /// Skip one (assignable) variable name, including @r, $VAR, &option, d.key,
@@ -884,9 +883,8 @@ static int do_unlet_var(lval_T *lp, char *name_end, exarg_T *eap, int deep FUNC_
       lp->ll_n1++;
       if (lp->ll_li == NULL || (!lp->ll_empty2 && lp->ll_n2 < lp->ll_n1)) {
         break;
-      } else {
-        last_li = lp->ll_li;
       }
+      last_li = lp->ll_li;
     }
     tv_list_remove_items(lp->ll_list, first_li, last_li);
   } else {

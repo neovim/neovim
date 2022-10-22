@@ -2713,9 +2713,8 @@ void ex_undojoin(exarg_T *eap)
   }
   if (get_undolevel(curbuf) < 0) {
     return;                 // no entries, nothing to do
-  } else {
-    curbuf->b_u_synced = false;  // Append next change to last entry
   }
+  curbuf->b_u_synced = false;  // Append next change to last entry
 }
 
 /// Called after writing or reloading the file and setting b_changed to false.

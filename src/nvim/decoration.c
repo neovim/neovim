@@ -169,13 +169,12 @@ Decoration get_decor(mtkey_t mark)
 {
   if (mark.decor_full) {
     return *mark.decor_full;
-  } else {
-    Decoration fake = DECORATION_INIT;
-    fake.hl_id = mark.hl_id;
-    fake.priority = mark.priority;
-    fake.hl_eol = (mark.flags & MT_FLAG_HL_EOL);
-    return fake;
   }
+  Decoration fake = DECORATION_INIT;
+  fake.hl_id = mark.hl_id;
+  fake.priority = mark.priority;
+  fake.hl_eol = (mark.flags & MT_FLAG_HL_EOL);
+  return fake;
 }
 
 /// @return true if decor has a virtual position (virtual text or ui_watched)

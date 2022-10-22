@@ -3123,22 +3123,20 @@ static void syn_cmd_clear(exarg_T *eap, int syncing)
         if (id == 0) {
           semsg(_("E391: No such syntax cluster: %s"), arg);
           break;
-        } else {
-          // We can't physically delete a cluster without changing
-          // the IDs of other clusters, so we do the next best thing
-          // and make it empty.
-          int scl_id = id - SYNID_CLUSTER;
-
-          XFREE_CLEAR(SYN_CLSTR(curwin->w_s)[scl_id].scl_list);
         }
+        // We can't physically delete a cluster without changing
+        // the IDs of other clusters, so we do the next best thing
+        // and make it empty.
+        int scl_id = id - SYNID_CLUSTER;
+
+        XFREE_CLEAR(SYN_CLSTR(curwin->w_s)[scl_id].scl_list);
       } else {
         id = syn_name2id_len(arg, (size_t)(arg_end - arg));
         if (id == 0) {
           semsg(_(e_nogroup), arg);
           break;
-        } else {
-          syn_clear_one(id, syncing);
         }
+        syn_clear_one(id, syncing);
       }
       arg = skipwhite(arg_end);
     }

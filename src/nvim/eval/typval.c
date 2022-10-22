@@ -1747,9 +1747,8 @@ static bool tv_dict_watcher_matches(DictWatcher *watcher, const char *const key)
   const size_t len = watcher->key_pattern_len;
   if (len && watcher->key_pattern[len - 1] == '*') {
     return strncmp(key, watcher->key_pattern, len - 1) == 0;
-  } else {
-    return strcmp(key, watcher->key_pattern) == 0;
   }
+  return strcmp(key, watcher->key_pattern) == 0;
 }
 
 /// Send a change notification to all dictionary watchers that match given key

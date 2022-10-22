@@ -91,45 +91,55 @@ typedef struct {
 #define SUG_MAX_COUNT(su)       (SUG_CLEAN_COUNT(su) + 50)
 
 // score for various changes
-#define SCORE_SPLIT     149     // split bad word
-#define SCORE_SPLIT_NO  249     // split bad word with NOSPLITSUGS
-#define SCORE_ICASE     52      // slightly different case
-#define SCORE_REGION    200     // word is for different region
-#define SCORE_RARE      180     // rare word
-#define SCORE_SWAP      75      // swap two characters
-#define SCORE_SWAP3     110     // swap two characters in three
-#define SCORE_REP       65      // REP replacement
-#define SCORE_SUBST     93      // substitute a character
-#define SCORE_SIMILAR   33      // substitute a similar character
-#define SCORE_SUBCOMP   33      // substitute a composing character
-#define SCORE_DEL       94      // delete a character
-#define SCORE_DELDUP    66      // delete a duplicated character
-#define SCORE_DELCOMP   28      // delete a composing character
-#define SCORE_INS       96      // insert a character
-#define SCORE_INSDUP    67      // insert a duplicate character
-#define SCORE_INSCOMP   30      // insert a composing character
-#define SCORE_NONWORD   103     // change non-word to word char
+enum {
+  SCORE_SPLIT = 149,     // split bad word
+  SCORE_SPLIT_NO = 249,  // split bad word with NOSPLITSUGS
+  SCORE_ICASE = 52,      // slightly different case
+  SCORE_REGION = 200,    // word is for different region
+  SCORE_RARE = 180,      // rare word
+  SCORE_SWAP = 75,       // swap two characters
+  SCORE_SWAP3 = 110,     // swap two characters in three
+  SCORE_REP = 65,        // REP replacement
+  SCORE_SUBST = 93,      // substitute a character
+  SCORE_SIMILAR = 33,    // substitute a similar character
+  SCORE_SUBCOMP = 33,    // substitute a composing character
+  SCORE_DEL = 94,        // delete a character
+  SCORE_DELDUP = 66,     // delete a duplicated character
+  SCORE_DELCOMP = 28,    // delete a composing character
+  SCORE_INS = 96,        // insert a character
+  SCORE_INSDUP = 67,     // insert a duplicate character
+  SCORE_INSCOMP = 30,    // insert a composing character
+  SCORE_NONWORD = 103,   // change non-word to word char
+};
 
-#define SCORE_FILE      30      // suggestion from a file
-#define SCORE_MAXINIT   350     // Initial maximum score: higher == slower.
-                                // 350 allows for about three changes.
+enum {
+  SCORE_FILE = 30,      // suggestion from a file
+  SCORE_MAXINIT = 350,  // Initial maximum score: higher == slower.
+                        // 350 allows for about three changes.
+};
 
-#define SCORE_COMMON1   30      // subtracted for words seen before
-#define SCORE_COMMON2   40      // subtracted for words often seen
-#define SCORE_COMMON3   50      // subtracted for words very often seen
-#define SCORE_THRES2    10      // word count threshold for COMMON2
-#define SCORE_THRES3    100     // word count threshold for COMMON3
+enum {
+  SCORE_COMMON1 = 30,  // subtracted for words seen before
+  SCORE_COMMON2 = 40,  // subtracted for words often seen
+  SCORE_COMMON3 = 50,  // subtracted for words very often seen
+  SCORE_THRES2 = 10,   // word count threshold for COMMON2
+  SCORE_THRES3 = 100,  // word count threshold for COMMON3
+};
 
 // When trying changed soundfold words it becomes slow when trying more than
 // two changes.  With less than two changes it's slightly faster but we miss a
 // few good suggestions.  In rare cases we need to try three of four changes.
-#define SCORE_SFMAX1    200     // maximum score for first try
-#define SCORE_SFMAX2    300     // maximum score for second try
-#define SCORE_SFMAX3    400     // maximum score for third try
+enum {
+  SCORE_SFMAX1 = 200,  // maximum score for first try
+  SCORE_SFMAX2 = 300,  // maximum score for second try
+  SCORE_SFMAX3 = 400,  // maximum score for third try
+};
 
 #define SCORE_BIG       (SCORE_INS * 3)  // big difference
-#define SCORE_MAXMAX    999999           // accept any score
-#define SCORE_LIMITMAX  350              // for spell_edit_score_limit()
+enum {
+  SCORE_MAXMAX = 999999,  // accept any score
+  SCORE_LIMITMAX = 350,   // for spell_edit_score_limit()
+};
 
 // for spell_edit_score_limit() we need to know the minimum value of
 // SCORE_ICASE, SCORE_SWAP, SCORE_DEL, SCORE_SIMILAR and SCORE_INS
@@ -186,19 +196,25 @@ typedef struct trystate_S {
 } trystate_T;
 
 // values for ts_isdiff
-#define DIFF_NONE       0       // no different byte (yet)
-#define DIFF_YES        1       // different byte found
-#define DIFF_INSERT     2       // inserting character
+enum {
+  DIFF_NONE = 0,    // no different byte (yet)
+  DIFF_YES = 1,     // different byte found
+  DIFF_INSERT = 2,  // inserting character
+};
 
 // values for ts_flags
-#define TSF_PREFIXOK    1       // already checked that prefix is OK
-#define TSF_DIDSPLIT    2       // tried split at this point
-#define TSF_DIDDEL      4       // did a delete, "ts_delidx" has index
+enum {
+  TSF_PREFIXOK = 1,  // already checked that prefix is OK
+  TSF_DIDSPLIT = 2,  // tried split at this point
+  TSF_DIDDEL = 4,    // did a delete, "ts_delidx" has index
+};
 
 // special values ts_prefixdepth
-#define PFD_NOPREFIX    0xff    // not using prefixes
-#define PFD_PREFIXTREE  0xfe    // walking through the prefix tree
-#define PFD_NOTSPECIAL  0xfd    // highest value that's not special
+enum {
+  PFD_NOPREFIX = 0xff,    // not using prefixes
+  PFD_PREFIXTREE = 0xfe,  // walking through the prefix tree
+  PFD_NOTSPECIAL = 0xfd,  // highest value that's not special
+};
 
 static long spell_suggest_timeout = 5000;
 
@@ -341,9 +357,11 @@ static int bytes2offset(char_u **pp)
 }
 
 // values for sps_flags
-#define SPS_BEST    1
-#define SPS_FAST    2
-#define SPS_DOUBLE  4
+enum {
+  SPS_BEST = 1,
+  SPS_FAST = 2,
+  SPS_DOUBLE = 4,
+};
 
 static int sps_flags = SPS_BEST;  ///< flags from 'spellsuggest'
 static int sps_limit = 9999;      ///< max nr of suggestions given

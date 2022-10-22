@@ -604,10 +604,9 @@ static const void *tv_ptr(const typval_T *const tvs, int *const idxp)
   if (tvs[idx].v_type == VAR_UNKNOWN) {
     emsg(_(e_printf));
     return NULL;
-  } else {
-    (*idxp)++;
-    return tvs[idx].vval.v_string;
   }
+  (*idxp)++;
+  return tvs[idx].vval.v_string;
 }
 
 /// Get float argument from idxp entry in tvs

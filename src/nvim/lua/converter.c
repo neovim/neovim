@@ -906,9 +906,8 @@ Float nlua_pop_Float(lua_State *lstate, Error *err)
   lua_pop(lstate, 1);
   if (table_props.type != kObjectTypeFloat) {
     return 0;
-  } else {
-    return (Float)table_props.val;
   }
+  return (Float)table_props.val;
 }
 
 /// Convert lua table to array without determining whether it is array

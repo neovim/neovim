@@ -1651,9 +1651,8 @@ static void out(void *ctx, const char *str, size_t len)
       // Called by unibi_format(): avoid flush_buf() halfway an escape sequence.
       data->overflow = true;
       return;
-    } else {
-      flush_buf(ui);
     }
+    flush_buf(ui);
   }
 
   memcpy(data->buf + data->bufpos, str, len);

@@ -122,8 +122,10 @@ static const uint32_t cterm_color_16[16] = {
 
 static int current_syn_id;
 
-#define PRCOLOR_BLACK 0
-#define PRCOLOR_WHITE 0xffffff
+enum {
+  PRCOLOR_BLACK = 0,
+  PRCOLOR_WHITE = 0xffffff,
+};
 
 static TriState curr_italic;
 static TriState curr_bold;
@@ -132,13 +134,15 @@ static uint32_t curr_bg;
 static uint32_t curr_fg;
 static int page_count;
 
-#define OPT_MBFONT_USECOURIER  0
-#define OPT_MBFONT_ASCII       1
-#define OPT_MBFONT_REGULAR     2
-#define OPT_MBFONT_BOLD        3
-#define OPT_MBFONT_OBLIQUE     4
-#define OPT_MBFONT_BOLDOBLIQUE 5
-#define OPT_MBFONT_NUM_OPTIONS 6
+enum {
+  OPT_MBFONT_USECOURIER = 0,
+  OPT_MBFONT_ASCII = 1,
+  OPT_MBFONT_REGULAR = 2,
+  OPT_MBFONT_BOLD = 3,
+  OPT_MBFONT_OBLIQUE = 4,
+  OPT_MBFONT_BOLDOBLIQUE = 5,
+  OPT_MBFONT_NUM_OPTIONS = 6,
+};
 
 static option_table_T mbfont_opts[OPT_MBFONT_NUM_OPTIONS] = {
   { "c",       false, 0, NULL, 0, false },
@@ -938,8 +942,10 @@ static colnr_T hardcopy_line(prt_settings_T *psettings, int page_line, prt_pos_T
 // Some of these documents can be found in PDF form on Adobe's web site -
 // http://www.adobe.com
 
-#define PRT_PS_DEFAULT_DPI          (72)    // Default user space resolution
-#define PRT_PS_DEFAULT_FONTSIZE     (10)
+enum {
+  PRT_PS_DEFAULT_DPI = 72,  // Default user space resolution
+  PRT_PS_DEFAULT_FONTSIZE = 10,
+};
 
 #define PRT_MEDIASIZE_LEN  ARRAY_SIZE(prt_mediasize)
 
@@ -960,10 +966,12 @@ static struct prt_mediasize_S prt_mediasize[] = {
   { "tabloid",         792.0, 1224.0 }
 };
 
-#define PRT_PS_FONT_ROMAN       (0)
-#define PRT_PS_FONT_BOLD        (1)
-#define PRT_PS_FONT_OBLIQUE     (2)
-#define PRT_PS_FONT_BOLDOBLIQUE (3)
+enum {
+  PRT_PS_FONT_ROMAN = 0,
+  PRT_PS_FONT_BOLD = 1,
+  PRT_PS_FONT_OBLIQUE = 2,
+  PRT_PS_FONT_BOLDOBLIQUE = 3,
+};
 
 // Standard font metrics for Courier family
 static struct prt_ps_font_S prt_ps_courier_font = {
@@ -984,14 +992,16 @@ static struct prt_ps_font_S prt_ps_mb_font = {
 // Pointer to current font set being used
 static struct prt_ps_font_S *prt_ps_font;
 
-#define CS_JIS_C_1978   (0x01)
-#define CS_JIS_X_1983   (0x02)
-#define CS_JIS_X_1990   (0x04)
-#define CS_NEC          (0x08)
-#define CS_MSWINDOWS    (0x10)
-#define CS_CP932        (0x20)
-#define CS_KANJITALK6   (0x40)
-#define CS_KANJITALK7   (0x80)
+enum {
+  CS_JIS_C_1978 = 0x01,
+  CS_JIS_X_1983 = 0x02,
+  CS_JIS_X_1990 = 0x04,
+  CS_NEC = 0x08,
+  CS_MSWINDOWS = 0x10,
+  CS_CP932 = 0x20,
+  CS_KANJITALK6 = 0x40,
+  CS_KANJITALK7 = 0x80,
+};
 
 // Japanese encodings and charsets
 static struct prt_ps_encoding_S j_encodings[] = {
@@ -1015,13 +1025,15 @@ static struct prt_ps_charset_S j_charsets[] = {
   { "KANJITALK7",  "90pv",     CS_KANJITALK7 }
 };
 
-#define CS_GB_2312_80       (0x01)
-#define CS_GBT_12345_90     (0x02)
-#define CS_GBK2K            (0x04)
-#define CS_SC_MAC           (0x08)
-#define CS_GBT_90_MAC       (0x10)
-#define CS_GBK              (0x20)
-#define CS_SC_ISO10646      (0x40)
+enum {
+  CS_GB_2312_80 = 0x01,
+  CS_GBT_12345_90 = 0x02,
+  CS_GBK2K = 0x04,
+  CS_SC_MAC = 0x08,
+  CS_GBT_90_MAC = 0x10,
+  CS_GBK = 0x20,
+  CS_SC_ISO10646 = 0x40,
+};
 
 // Simplified Chinese encodings and charsets
 static struct prt_ps_encoding_S sc_encodings[] = {
@@ -1043,19 +1055,21 @@ static struct prt_ps_charset_S sc_charsets[] = {
   { "ISO10646",    "UniGB",    CS_SC_ISO10646 }
 };
 
-#define CS_CNS_PLANE_1      (0x01)
-#define CS_CNS_PLANE_2      (0x02)
-#define CS_CNS_PLANE_1_2    (0x04)
-#define CS_B5               (0x08)
-#define CS_ETEN             (0x10)
-#define CS_HK_GCCS          (0x20)
-#define CS_HK_SCS           (0x40)
-#define CS_HK_SCS_ETEN      (0x80)
-#define CS_MTHKL            (0x100)
-#define CS_MTHKS            (0x200)
-#define CS_DLHKL            (0x400)
-#define CS_DLHKS            (0x800)
-#define CS_TC_ISO10646      (0x1000)
+enum {
+  CS_CNS_PLANE_1 = 0x01,
+  CS_CNS_PLANE_2 = 0x02,
+  CS_CNS_PLANE_1_2 = 0x04,
+  CS_B5 = 0x08,
+  CS_ETEN = 0x10,
+  CS_HK_GCCS = 0x20,
+  CS_HK_SCS = 0x40,
+  CS_HK_SCS_ETEN = 0x80,
+  CS_MTHKL = 0x100,
+  CS_MTHKS = 0x200,
+  CS_DLHKL = 0x400,
+  CS_DLHKS = 0x800,
+  CS_TC_ISO10646 = 0x1000,
+};
 
 // Traditional Chinese encodings and charsets
 static struct prt_ps_encoding_S tc_encodings[] = {
@@ -1087,10 +1101,12 @@ static struct prt_ps_charset_S tc_charsets[] = {
   { "ISO10646",    "UniCNS",   CS_TC_ISO10646 }
 };
 
-#define CS_KR_X_1992        (0x01)
-#define CS_KR_MAC           (0x02)
-#define CS_KR_X_1992_MS     (0x04)
-#define CS_KR_ISO10646      (0x08)
+enum {
+  CS_KR_X_1992 = 0x01,
+  CS_KR_MAC = 0x02,
+  CS_KR_X_1992_MS = 0x04,
+  CS_KR_ISO10646 = 0x08,
+};
 
 // Korean encodings and charsets
 static struct prt_ps_encoding_S k_encodings[] = {
@@ -1169,10 +1185,12 @@ static struct prt_ps_mbfont_S prt_ps_mbfonts[] = {
 
 // Data for table based DSC comment recognition, easy to extend if VIM needs to
 // read more comments.
-#define PRT_DSC_MISC_TYPE           (-1)
-#define PRT_DSC_TITLE_TYPE          (1)
-#define PRT_DSC_VERSION_TYPE        (2)
-#define PRT_DSC_ENDCOMMENTS_TYPE    (3)
+enum {
+  PRT_DSC_MISC_TYPE = -1,
+  PRT_DSC_TITLE_TYPE = 1,
+  PRT_DSC_VERSION_TYPE = 2,
+  PRT_DSC_ENDCOMMENTS_TYPE = 3,
+};
 
 #define PRT_DSC_TITLE               "%%Title:"
 #define PRT_DSC_VERSION             "%%Version:"

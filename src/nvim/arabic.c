@@ -27,70 +27,72 @@
 #include "nvim/vim.h"
 
 // Unicode values for Arabic characters.
-#define a_HAMZA                         0x0621
-#define a_ALEF_MADDA                    0x0622
-#define a_ALEF_HAMZA_ABOVE              0x0623
-#define a_WAW_HAMZA                     0x0624
-#define a_ALEF_HAMZA_BELOW              0x0625
-#define a_YEH_HAMZA                     0x0626
-#define a_ALEF                          0x0627
-#define a_BEH                           0x0628
-#define a_TEH_MARBUTA                   0x0629
-#define a_TEH                           0x062a
-#define a_THEH                          0x062b
-#define a_JEEM                          0x062c
-#define a_HAH                           0x062d
-#define a_KHAH                          0x062e
-#define a_DAL                           0x062f
-#define a_THAL                          0x0630
-#define a_REH                           0x0631
-#define a_ZAIN                          0x0632
-#define a_SEEN                          0x0633
-#define a_SHEEN                         0x0634
-#define a_SAD                           0x0635
-#define a_DAD                           0x0636
-#define a_TAH                           0x0637
-#define a_ZAH                           0x0638
-#define a_AIN                           0x0639
-#define a_GHAIN                         0x063a
-#define a_TATWEEL                       0x0640
-#define a_FEH                           0x0641
-#define a_QAF                           0x0642
-#define a_KAF                           0x0643
-#define a_LAM                           0x0644
-#define a_MEEM                          0x0645
-#define a_NOON                          0x0646
-#define a_HEH                           0x0647
-#define a_WAW                           0x0648
-#define a_ALEF_MAKSURA                  0x0649
-#define a_YEH                           0x064a
-#define a_FATHATAN                      0x064b
-#define a_DAMMATAN                      0x064c
-#define a_KASRATAN                      0x064d
-#define a_FATHA                         0x064e
-#define a_DAMMA                         0x064f
-#define a_KASRA                         0x0650
-#define a_SHADDA                        0x0651
-#define a_SUKUN                         0x0652
-#define a_MADDA_ABOVE                   0x0653
-#define a_HAMZA_ABOVE                   0x0654
-#define a_HAMZA_BELOW                   0x0655
+enum {
+  a_HAMZA = 0x0621,
+  a_ALEF_MADDA = 0x0622,
+  a_ALEF_HAMZA_ABOVE = 0x0623,
+  a_WAW_HAMZA = 0x0624,
+  a_ALEF_HAMZA_BELOW = 0x0625,
+  a_YEH_HAMZA = 0x0626,
+  a_ALEF = 0x0627,
+  a_BEH = 0x0628,
+  a_TEH_MARBUTA = 0x0629,
+  a_TEH = 0x062a,
+  a_THEH = 0x062b,
+  a_JEEM = 0x062c,
+  a_HAH = 0x062d,
+  a_KHAH = 0x062e,
+  a_DAL = 0x062f,
+  a_THAL = 0x0630,
+  a_REH = 0x0631,
+  a_ZAIN = 0x0632,
+  a_SEEN = 0x0633,
+  a_SHEEN = 0x0634,
+  a_SAD = 0x0635,
+  a_DAD = 0x0636,
+  a_TAH = 0x0637,
+  a_ZAH = 0x0638,
+  a_AIN = 0x0639,
+  a_GHAIN = 0x063a,
+  a_TATWEEL = 0x0640,
+  a_FEH = 0x0641,
+  a_QAF = 0x0642,
+  a_KAF = 0x0643,
+  a_LAM = 0x0644,
+  a_MEEM = 0x0645,
+  a_NOON = 0x0646,
+  a_HEH = 0x0647,
+  a_WAW = 0x0648,
+  a_ALEF_MAKSURA = 0x0649,
+  a_YEH = 0x064a,
+  a_FATHATAN = 0x064b,
+  a_DAMMATAN = 0x064c,
+  a_KASRATAN = 0x064d,
+  a_FATHA = 0x064e,
+  a_DAMMA = 0x064f,
+  a_KASRA = 0x0650,
+  a_SHADDA = 0x0651,
+  a_SUKUN = 0x0652,
+  a_MADDA_ABOVE = 0x0653,
+  a_HAMZA_ABOVE = 0x0654,
+  a_HAMZA_BELOW = 0x0655,
 
-#define a_PEH                           0x067e
-#define a_TCHEH                         0x0686
-#define a_JEH                           0x0698
-#define a_FKAF                          0x06a9
-#define a_GAF                           0x06af
-#define a_FYEH                          0x06cc
+  a_PEH = 0x067e,
+  a_TCHEH = 0x0686,
+  a_JEH = 0x0698,
+  a_FKAF = 0x06a9,
+  a_GAF = 0x06af,
+  a_FYEH = 0x06cc,
 
-#define a_s_LAM_ALEF_MADDA_ABOVE        0xfef5
-#define a_f_LAM_ALEF_MADDA_ABOVE        0xfef6
-#define a_s_LAM_ALEF_HAMZA_ABOVE        0xfef7
-#define a_f_LAM_ALEF_HAMZA_ABOVE        0xfef8
-#define a_s_LAM_ALEF_HAMZA_BELOW        0xfef9
-#define a_f_LAM_ALEF_HAMZA_BELOW        0xfefa
-#define a_s_LAM_ALEF                    0xfefb
-#define a_f_LAM_ALEF                    0xfefc
+  a_s_LAM_ALEF_MADDA_ABOVE = 0xfef5,
+  a_f_LAM_ALEF_MADDA_ABOVE = 0xfef6,
+  a_s_LAM_ALEF_HAMZA_ABOVE = 0xfef7,
+  a_f_LAM_ALEF_HAMZA_ABOVE = 0xfef8,
+  a_s_LAM_ALEF_HAMZA_BELOW = 0xfef9,
+  a_f_LAM_ALEF_HAMZA_BELOW = 0xfefa,
+  a_s_LAM_ALEF = 0xfefb,
+  a_f_LAM_ALEF = 0xfefc,
+};
 
 static struct achar {
   unsigned c;

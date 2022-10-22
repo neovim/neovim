@@ -439,9 +439,8 @@ char *xstrdupnul(const char *const str)
 {
   if (str == NULL) {
     return xmallocz(0);
-  } else {
-    return xstrdup(str);
   }
+  return xstrdup(str);
 }
 
 /// A version of memchr that starts the search at `src + len`.

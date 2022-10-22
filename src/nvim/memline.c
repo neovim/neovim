@@ -83,10 +83,12 @@ typedef struct pointer_block PTR_BL;        // contents of a pointer block
 typedef struct data_block DATA_BL;          // contents of a data block
 typedef struct pointer_entry PTR_EN;        // block/line-count pair
 
-#define DATA_ID        (('d' << 8) + 'a')   // data block id
-#define PTR_ID         (('p' << 8) + 't')   // pointer block id
-#define BLOCK0_ID0     'b'                  // block 0 id 0
-#define BLOCK0_ID1     '0'                  // block 0 id 1
+enum {
+  DATA_ID = (('d' << 8) + 'a'),  // data block id
+  PTR_ID = (('p' << 8) + 't'),   // pointer block id
+  BLOCK0_ID0 = 'b',              // block 0 id 0
+  BLOCK0_ID1 = '0',              // block 0 id 1
+};
 
 // pointer to a block, used in a pointer block
 struct pointer_entry {
@@ -134,18 +136,22 @@ struct data_block {
 #define INDEX_SIZE  (sizeof(unsigned))      // size of one db_index entry
 #define HEADER_SIZE (sizeof(DATA_BL) - INDEX_SIZE)  // size of data block header
 
-#define B0_FNAME_SIZE_ORG       900     // what it was in older versions
-#define B0_FNAME_SIZE_NOCRYPT   898     // 2 bytes used for other things
-#define B0_FNAME_SIZE_CRYPT     890     // 10 bytes used for other things
-#define B0_UNAME_SIZE           40
-#define B0_HNAME_SIZE           40
+enum {
+  B0_FNAME_SIZE_ORG = 900,      // what it was in older versions
+  B0_FNAME_SIZE_NOCRYPT = 898,  // 2 bytes used for other things
+  B0_FNAME_SIZE_CRYPT = 890,    // 10 bytes used for other things
+  B0_UNAME_SIZE = 40,
+  B0_HNAME_SIZE = 40,
+};
 // Restrict the numbers to 32 bits, otherwise most compilers will complain.
 // This won't detect a 64 bit machine that only swaps a byte in the top 32
 // bits, but that is crazy anyway.
-#define B0_MAGIC_LONG   0x30313233L
-#define B0_MAGIC_INT    0x20212223L
-#define B0_MAGIC_SHORT  0x10111213L
-#define B0_MAGIC_CHAR   0x55
+enum {
+  B0_MAGIC_LONG = 0x30313233L,
+  B0_MAGIC_INT = 0x20212223L,
+  B0_MAGIC_SHORT = 0x10111213L,
+  B0_MAGIC_CHAR = 0x55,
+};
 
 // Block zero holds all info about the swap file.
 //
@@ -205,10 +211,12 @@ struct block0 {
 static linenr_T lowest_marked = 0;
 
 // arguments for ml_find_line()
-#define ML_DELETE       0x11        // delete line
-#define ML_INSERT       0x12        // insert line
-#define ML_FIND         0x13        // just find the line
-#define ML_FLUSH        0x02        // flush locked block
+enum {
+  ML_DELETE = 0x11,  // delete line
+  ML_INSERT = 0x12,  // insert line
+  ML_FIND = 0x13,    // just find the line
+  ML_FLUSH = 0x02,   // flush locked block
+};
 #define ML_SIMPLE(x)    ((x) & 0x10)  // DEL, INS or FIND
 
 // argument for ml_upd_block0()
@@ -271,7 +279,7 @@ int ml_open(buf_T *buf)
   b0p->b0_id[0] = BLOCK0_ID0;
   b0p->b0_id[1] = BLOCK0_ID1;
   b0p->b0_magic_long = B0_MAGIC_LONG;
-  b0p->b0_magic_int = (int)B0_MAGIC_INT;
+  b0p->b0_magic_int = B0_MAGIC_INT;
   b0p->b0_magic_short = (int16_t)B0_MAGIC_SHORT;
   b0p->b0_magic_char = B0_MAGIC_CHAR;
   xstrlcpy(xstpcpy((char *)b0p->b0_version, "VIM "), Version, 6);
@@ -3375,7 +3383,7 @@ static char *findswapname(buf_T *buf, char **dirp, char *old_fname, bool *found_
 static int b0_magic_wrong(ZERO_BL *b0p)
 {
   return b0p->b0_magic_long != B0_MAGIC_LONG
-         || b0p->b0_magic_int != (int)B0_MAGIC_INT
+         || b0p->b0_magic_int != B0_MAGIC_INT
          || b0p->b0_magic_short != (int16_t)B0_MAGIC_SHORT
          || b0p->b0_magic_char != B0_MAGIC_CHAR;
 }
@@ -3525,8 +3533,10 @@ void ml_setflags(buf_T *buf)
   }
 }
 
-#define MLCS_MAXL 800   // max no of lines in chunk
-#define MLCS_MINL 400   // should be half of MLCS_MAXL
+enum {
+  MLCS_MAXL = 800,  // max no of lines in chunk
+  MLCS_MINL = 400,  // should be half of MLCS_MAXL
+};
 
 /// Keep information for finding byte offset of a line
 ///

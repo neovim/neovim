@@ -896,9 +896,8 @@ int inindent(int extra)
 
   if (col >= curwin->w_cursor.col + extra) {
     return true;
-  } else {
-    return false;
   }
+  return false;
 }
 
 /// @return  true if the conditions are OK for smart indenting.

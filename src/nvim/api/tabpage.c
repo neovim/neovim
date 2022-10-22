@@ -110,15 +110,14 @@ Window nvim_tabpage_get_win(Tabpage tabpage, Error *err)
 
   if (tab == curtab) {
     return nvim_get_current_win();
-  } else {
-    FOR_ALL_WINDOWS_IN_TAB(wp, tab) {
-      if (wp == tab->tp_curwin) {
-        return wp->handle;
-      }
-    }
-    // There should always be a current window for a tabpage
-    abort();
   }
+  FOR_ALL_WINDOWS_IN_TAB(wp, tab) {
+    if (wp == tab->tp_curwin) {
+      return wp->handle;
+    }
+  }
+  // There should always be a current window for a tabpage
+  abort();
 }
 
 /// Gets the tabpage number

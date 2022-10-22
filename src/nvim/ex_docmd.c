@@ -4357,9 +4357,8 @@ char *check_nextcmd(char *p)
 
   if (*s == '|' || *s == '\n') {
     return s + 1;
-  } else {
-    return NULL;
   }
+  return NULL;
 }
 
 /// - if there are more files to edit
@@ -4758,9 +4757,8 @@ static void ex_only(exarg_T *eap)
     for (wp = firstwin; --wnr > 0;) {
       if (wp->w_next == NULL) {
         break;
-      } else {
-        wp = wp->w_next;
       }
+      wp = wp->w_next;
     }
   } else {
     wp = curwin;

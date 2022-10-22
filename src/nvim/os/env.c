@@ -837,10 +837,9 @@ const void *vim_env_iter(const char delim, const char *const val, const void *co
   if (dirend == NULL) {
     *len = strlen(varval);
     return NULL;
-  } else {
-    *len = (size_t)(dirend - varval);
-    return dirend + 1;
   }
+  *len = (size_t)(dirend - varval);
+  return dirend + 1;
 }
 
 /// Iterates $PATH-like delimited list `val` in reverse order.
@@ -870,11 +869,10 @@ const void *vim_env_iter_rev(const char delim, const char *const val, const void
     *len = varlen;
     *dir = val;
     return NULL;
-  } else {
-    *dir = colon + 1;
-    *len = (size_t)(varend - colon);
-    return colon - 1;
   }
+  *dir = colon + 1;
+  *len = (size_t)(varend - colon);
+  return colon - 1;
 }
 
 /// @param[out] exe_name should be at least MAXPATHL in size

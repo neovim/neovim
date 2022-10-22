@@ -23,9 +23,11 @@
 
 /// \addtogroup SG_SET
 /// @{
-#define SG_CTERM        2       // cterm has been set
-#define SG_GUI          4       // gui has been set
-#define SG_LINK         8       // link has been set
+enum {
+  SG_CTERM = 2,  // cterm has been set
+  SG_GUI = 4,    // gui has been set
+  SG_LINK = 8,   // link has been set
+};
 /// @}
 
 #define MAX_SYN_NAME 200
@@ -1729,9 +1731,8 @@ int syn_name2id(const char *name)
   if (name[0] == '@') {
     // if we look up @aaa.bbb, we have to consider @aaa as well
     return syn_check_group(name, strlen(name));
-  } else {
-    return syn_name2id_len(name, strlen(name));
   }
+  return syn_name2id_len(name, strlen(name));
 }
 
 /// Lookup a highlight group name and return its ID.

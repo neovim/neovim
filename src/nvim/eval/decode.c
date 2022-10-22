@@ -284,13 +284,12 @@ typval_T decode_string(const char *const s, const size_t len, const TriState has
       }
     }
     return tv;
-  } else {
-    return (typval_T) {
-      .v_type = VAR_STRING,
-      .v_lock = VAR_UNLOCKED,
-      .vval = { .v_string = ((s == NULL || s_allocated) ? (char *)s : xmemdupz(s, len)) },
-    };
   }
+  return (typval_T) {
+    .v_type = VAR_STRING,
+    .v_lock = VAR_UNLOCKED,
+    .vval = { .v_string = ((s == NULL || s_allocated) ? (char *)s : xmemdupz(s, len)) },
+  };
 }
 
 /// Parse JSON double-quoted string

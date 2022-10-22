@@ -87,10 +87,12 @@ typedef struct insert_state {
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "edit.c.generated.h"
 #endif
-#define BACKSPACE_CHAR              1
-#define BACKSPACE_WORD              2
-#define BACKSPACE_WORD_NOT_SPACE    3
-#define BACKSPACE_LINE              4
+enum {
+  BACKSPACE_CHAR = 1,
+  BACKSPACE_WORD = 2,
+  BACKSPACE_WORD_NOT_SPACE = 3,
+  BACKSPACE_LINE = 4,
+};
 
 /// Set when doing something for completion that may call edit() recursively,
 /// which is not allowed.
@@ -1227,9 +1229,8 @@ bool edit(int cmdchar, bool startln, long count)
       restart_edit = 'i';
       force_restart_edit = true;
       return false;
-    } else {
-      return terminal_enter();
     }
+    return terminal_enter();
   }
 
   // Don't allow inserting in the sandbox.
