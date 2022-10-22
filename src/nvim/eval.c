@@ -663,7 +663,9 @@ int eval_printexpr(const char *const fname, const char *const args)
   return OK;
 }
 
-void eval_diff(const char *const origfile, const char *const newfile, const char *const outfile)
+void eval_diff_expr(const char *const origfile,
+                    const char *const newfile,
+                    const char *const outfile)
 {
   bool err = false;
 
@@ -674,6 +676,17 @@ void eval_diff(const char *const origfile, const char *const newfile, const char
   set_vim_var_string(VV_FNAME_IN, NULL, -1);
   set_vim_var_string(VV_FNAME_NEW, NULL, -1);
   set_vim_var_string(VV_FNAME_OUT, NULL, -1);
+}
+
+// Return (owned) list of chunks calculated by user.
+list_T *eval_diff_fn(const int idx_orig, const int idx_new, char_u *fn_name)
+{
+  typval_T args[2];
+  args[0].v_type = VAR_NUMBER;
+  args[1].v_type = VAR_NUMBER;
+  args[0].vval.v_number = idx_orig;
+  args[1].vval.v_number = idx_new;
+  return call_func_retlist(fn_name, 2, args);
 }
 
 void eval_patch(const char *const origfile, const char *const difffile, const char *const outfile)
