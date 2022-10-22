@@ -19,7 +19,7 @@
 -- types: bool, number, string
 -- lists: (nil), comma, onecomma, flags, flagscomma
 -- scopes: global, buffer, window
--- redraw options: statuslines, current_window, curent_window_only,
+-- redraw options: statuslines, tabline, current_window, curent_window_only,
 --                 current_buffer, all_windows, curswant
 -- defaults: {condition=#if condition, if_true=default, if_false=default}
 -- #if condition:
@@ -2407,7 +2407,7 @@ return {
       short_desc=N_("custom format for the console tab pages line"),
       type='string', scope={'global'},
       modelineexpr=true,
-      redraw={'statuslines'},
+      redraw={'tabline'},
       varname='p_tal',
       defaults={if_true=""}
     },
