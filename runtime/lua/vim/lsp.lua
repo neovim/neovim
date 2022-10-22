@@ -821,10 +821,8 @@ local function resolve_workspace(markers, bufnr)
   bufnr = resolve_bufnr(bufnr)
   local bufname = vim.api.nvim_buf_get_name(bufnr)
   local buf_path = vim.fs.dirname(bufname)
-  local anchor = vim.fs.find(
-    markers,
-    { path = buf_path, stop = vim.loop.os_homedir(), upward = true }
-  )[1]
+  local anchor =
+    vim.fs.find(markers, { path = buf_path, stop = vim.loop.os_homedir(), upward = true })[1]
   if not anchor then
     return
   end
@@ -952,7 +950,8 @@ function lsp.start(config, opts)
   for _, clients in ipairs({ uninitialized_clients, lsp.get_active_clients() }) do
     for _, client in pairs(clients) do
       if reuse_client(client, config, bufnr) then
-        local _ = log.debug() and log.debug('reusing found matching workspace for', client.name, 'for buffer', bufnr)
+        local _ = log.debug()
+          and log.debug('reusing found matching workspace for', client.name, 'for buffer', bufnr)
         lsp.buf_attach_client(bufnr, client.id)
         return client.id
       end
@@ -1409,10 +1408,10 @@ function lsp.start_client(config)
 
       ---@param folder string|table
       client.add_workspace_folder = function(folder)
-        if type(folder) == "string" then
+        if type(folder) == 'string' then
           folder = {
-          uri = vim.uri_from_fname(folder),
-          name = folder,
+            uri = vim.uri_from_fname(folder),
+            name = folder,
           }
         end
         client.workspace_folders = client.workspace_folders or {}
@@ -1431,14 +1430,14 @@ function lsp.start_client(config)
 
       ---@param folder string|table
       client.remove_workspace_folder = function(folder)
-        if type(folder) == "string" then
+        if type(folder) == 'string' then
           folder = {
-          uri = vim.uri_from_fname(folder),
-          name = folder,
+            uri = vim.uri_from_fname(folder),
+            name = folder,
           }
         end
         client.workspace_folders = client.workspace_folders or {}
-        local params = { event = { added = { }, removed = {folder } } }
+        local params = { event = { added = {}, removed = { folder } } }
         for idx, entry in ipairs(client.workspace_folders) do
           if entry.uri == folder.uri then
             client.workspace_folders[idx] = nil
@@ -2447,7 +2446,7 @@ function lsp.list_workspace_folders(filter)
   local workspace_folders = {}
   for _, client in ipairs(lsp.get_active_clients(filter)) do
     for _, folder in ipairs(client.workspace_folders or {}) do
-      workspace_folders[client.name] =workspace_folders[client.name] or {}
+      workspace_folders[client.name] = workspace_folders[client.name] or {}
       table.insert(workspace_folders[client.name], folder)
     end
   end
