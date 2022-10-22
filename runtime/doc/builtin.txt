@@ -4048,7 +4048,7 @@ hlset({list})						*hlset()*
 		Example(s): >
 			" add bold attribute to the Visual highlight group
 			:call hlset([#{name: 'Visual',
-					\ term: #{reverse: 1 , bold: 1}}])
+					\ cterm: #{reverse: 1 , bold: 1}}])
 			:call hlset([#{name: 'Type', guifg: 'DarkGreen'}])
 			:let l = hlget()
 			:call hlset(l)

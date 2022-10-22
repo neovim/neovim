@@ -2901,9 +2901,9 @@ RgbValue name_to_color(const char *name, int *idx)
   return -1;
 }
 
-// Convert each of the highlight attribute bits (bold, standout, underline,
-// etc.) set in 'hlattr' into a separate boolean item in a Dictionary with
-// the attribute name as the key.
+/// Convert each of the highlight attribute bits (bold, standout, underline,
+/// etc.) set in 'hlattr' into a separate boolean item in a Dictionary with
+/// the attribute name as the key.
 
 static dict_T *highlight_get_attr_dict(int hlattr)
 {
@@ -2922,9 +2922,9 @@ static dict_T *highlight_get_attr_dict(int hlattr)
   return dict;
 }
 
-// Return the attributes of the highlight group at index 'hl_idx' as a
-// Dictionary. If 'resolve_link' is true, then resolves the highlight group
-// links recursively.
+/// Return the attributes of the highlight group at index 'hl_idx' as a
+/// Dictionary. If 'resolve_link' is true, then resolves the highlight group
+/// links recursively.
 
 static dict_T *highlight_get_info(int hl_idx, bool resolve_link)
 {
@@ -3020,9 +3020,9 @@ error:
   return NULL;
 }
 
-// "hlget([name])" function
-// Return the attributes of a specific highlight group (if specified) or all
-// the highlight groups.
+/// "hlget([name])" function
+/// Return the attributes of a specific highlight group (if specified) or all
+/// the highlight groups.
 
 void f_hlget(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
@@ -3068,9 +3068,9 @@ void f_hlget(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   }
 }
 
-// Returns the string value at 'dict[key]'. Returns NULL, if 'key' is not in
-// 'dict' or the value is not a string type. If the value is not a string type
-// or is NULL, then 'error' is set to true.
+/// Returns the string value at 'dict[key]'. Returns NULL, if 'key' is not in
+/// 'dict' or the value is not a string type. If the value is not a string type
+/// or is NULL, then 'error' is set to true.
 
 static char_u *hldict_get_string(dict_T *dict, char_u *key, int *error)
 {
@@ -3091,9 +3091,9 @@ static char_u *hldict_get_string(dict_T *dict, char_u *key, int *error)
   return (char_u *)di->di_tv.vval.v_string;
 }
 
-// Convert the highlight attribute Dictionary at 'dict[key]' into a string
-// value in 'attr_str' of length 'len'. Returns false if 'dict[key]' is not a
-// Dictionary or is NULL.
+/// Convert the highlight attribute Dictionary at 'dict[key]' into a string
+/// value in 'attr_str' of length 'len'. Returns false if 'dict[key]' is not a
+/// Dictionary or is NULL.
 
 static int hldict_attr_to_str(dict_T *dict, char_u *key, char_u *attr_str, int len)
 {
@@ -3132,8 +3132,8 @@ static int hldict_attr_to_str(dict_T *dict, char_u *key, char_u *attr_str, int l
   return true;
 }
 
-// Add or update a highlight group using 'dict' items. Returns true if
-// successfully updated the highlight group.
+/// Add or update a highlight group using 'dict' items. Returns true if
+/// successfully updated the highlight group.
 
 static int hlg_add_or_update(dict_T *dict)
 {
@@ -3244,8 +3244,8 @@ static int hlg_add_or_update(dict_T *dict)
   return true;
 }
 
-// "hlset([{highlight_attr}])" function
-// Add or modify highlight groups
+/// "hlset([{highlight_attr}])" function
+/// Add or modify highlight groups
 
 void f_hlset(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
