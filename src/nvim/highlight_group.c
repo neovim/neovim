@@ -3008,7 +3008,7 @@ static dict_T *highlight_get_info(int hl_idx, bool resolve_link)
       goto error;
     }
   }
-  if (dict->dv_hashtab.ht_used == 2) {
+  if (tv_dict_len(dict) == 2) {
     // If only 'name' is present, then the highlight group is cleared.
     tv_dict_add_bool(dict, S_LEN("cleared"), kBoolVarTrue);
   }
@@ -3114,7 +3114,7 @@ static int hldict_attr_to_str(dict_T *dict, char_u *key, char_u *attr_str, int l
   attrdict = di->di_tv.vval.v_dict;
 
   // If the attribute dict is empty, then return NONE to clear the attributes
-  if (attrdict->dv_hashtab.ht_used == 0) {
+  if (tv_dict_len(attrdict) == 0) {
     STRCAT(attr_str, (char_u *)"NONE");
     return true;
   }
@@ -3160,8 +3160,8 @@ static int hlg_add_or_update(dict_T *dict)
       return false;
     }
 
-    vim_snprintf((char *)IObuff, IOSIZE, "link %s %s", name, linksto);
-    do_highlight((char *)IObuff, false, false);
+    vim_snprintf(IObuff, IOSIZE, "link %s %s", name, linksto);
+    do_highlight(IObuff, false, false);
 
     return true;
   }
