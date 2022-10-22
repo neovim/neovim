@@ -3047,11 +3047,10 @@ void f_hlget(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     }
 
     if (argvars[1].v_type != VAR_UNKNOWN) {
-      if (argvars[1].v_type == VAR_BOOL) {
-        resolve_link = argvars[1].vval.v_bool == kBoolVarTrue ? true : false;
-      } else if (argvars[1].v_type == VAR_NUMBER) {
-        resolve_link = argvars[1].vval.v_number == 1 ? true : false;
-      } else {
+      bool error = false;
+
+      resolve_link = tv_get_bool_chk(&argvars[1], &error);
+      if (error) {
         return;
       }
     }
@@ -3121,7 +3120,7 @@ static int hldict_attr_to_str(dict_T *dict, char_u *key, char_u *attr_str, int l
   }
 
   for (i = 0; i < (int)(sizeof(hl_name_table)/sizeof(hl_name_table[0])); i++) {
-    if (tv_dict_get_number(attrdict, (const char *)hl_name_table[i]) == 1) {
+    if (tv_dict_get_number(attrdict, (const char *)hl_name_table[i]) > 0) {
       if (attr_str[0] != NUL) {
         STRCAT(attr_str, (char_u *)",");
       }

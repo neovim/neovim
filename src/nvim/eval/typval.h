@@ -556,6 +556,9 @@ EXTERN const size_t kTVCstring INIT(= TV_CSTRING);
 EXTERN const size_t kTVTranslate INIT(= TV_TRANSLATE);
 #endif
 
+// tv_get_get_number_chk and tv_get_bool_chk only differ for vim9
+#define tv_get_bool_chk tv_get_number_chk
+
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "eval/typval.h.generated.h"
 #endif
