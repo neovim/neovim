@@ -176,7 +176,7 @@ static void showmap(mapblock_T *mp, bool local)
   // Display the LHS.  Get length of what we write.
   len = (size_t)msg_outtrans_special((char *)mp->m_keys, true, 0);
   do {
-    msg_putchar(' ');                   // padd with blanks
+    msg_putchar(' ');                   // pad with blanks
     len++;
   } while (len < 12);
 

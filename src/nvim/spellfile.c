@@ -4089,7 +4089,7 @@ static int tree_add_word(spellinfo_T *spin, const char_u *word, wordnode_T *root
   // 3. When compressed before, added "compress_added" words
   //    (si_compress_cnt == 1) and the number of free nodes drops below the
   //    maximum word length.
-#ifndef SPELL_COMPRESS_ALLWAYS
+#ifndef SPELL_COMPRESS_ALWAYS
   if (spin->si_compress_cnt == 1       // NOLINT(readability/braces)
       ? spin->si_free_count < MAXWLEN
       : spin->si_blocks_cnt >= compress_start)

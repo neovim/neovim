@@ -5212,7 +5212,7 @@ void do_exedit(exarg_T *eap, win_T *old_curwin)
                   old_curwin == NULL ? curwin : NULL);
   } else if ((eap->cmdidx != CMD_split && eap->cmdidx != CMD_vsplit)
              || *eap->arg != NUL) {
-    // Can't edit another file when "curbuf->b_ro_lockec" is set.  Only ":edit"
+    // Can't edit another file when "curbuf->b_ro_locked" is set.  Only ":edit"
     // can bring us here, others are stopped earlier.
     if (*eap->arg != NUL && curbuf_locked()) {
       return;

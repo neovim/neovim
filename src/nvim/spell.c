@@ -50,7 +50,7 @@
 // Use SPELL_PRINTTREE for debugging: dump the word tree after adding a word.
 // Only use it for small word lists!
 
-// Use SPELL_COMPRESS_ALLWAYS for debugging: compress the word tree after
+// Use SPELL_COMPRESS_ALWAYS for debugging: compress the word tree after
 // adding a word.  Only use it for small word lists!
 
 // Use DEBUG_TRIEWALK to print the changes made in suggest_trie_walk() for a
@@ -160,7 +160,7 @@ typedef struct matchinf_S {
   win_T *mi_win;                  // buffer being checked
 
   // for NOBREAK
-  int mi_result2;                       // "mi_resul" without following word
+  int mi_result2;                       // "mi_result" without following word
   char_u *mi_end2;                 // "mi_end" without following word
 } matchinf_T;
 

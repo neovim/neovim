@@ -1066,7 +1066,7 @@ describe('nvim_buf_set_keymap, nvim_buf_del_keymap', function()
     eq({'rhs'}, bufmeths.get_lines(0, 0, 1, 1))
   end)
 
-  it("does not crash when setting keymap in a non-existing buffer #13541", function()
+  it("does not crash when setting mapping in a non-existing buffer #13541", function()
     pcall_err(bufmeths.set_keymap, 100, '', 'lsh', 'irhs<Esc>', {})
     helpers.assert_alive()
   end)
