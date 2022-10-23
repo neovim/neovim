@@ -2499,8 +2499,6 @@ static bool valid_diff(diff_T *diff)
 /// @param eap
 void ex_diffgetput(exarg_T *eap)
 {
-  linenr_T off = 0;
-  aco_save_T aco;
   int idx_other;
 
   // Find the current buffer in the list of diff buffers.
@@ -2600,21 +2598,18 @@ void ex_diffgetput(exarg_T *eap)
     }
   }
 
-  int idx_from;
-  int idx_to;
-  if (eap->cmdidx == CMD_diffget) {
-    idx_from = idx_other;
-    idx_to = idx_cur;
-  } else {
-    idx_from = idx_cur;
-    idx_to = idx_other;
+  aco_save_T aco;
 
+  if (eap->cmdidx != CMD_diffget) {
     // Need to make the other buffer the current buffer to be able to make
     // changes in it.
 
     // set curwin/curbuf to buf and save a few things
     aucmd_prepbuf(&aco, curtab->tp_diffbuf[idx_other]);
   }
+
+  const int idx_from = eap->cmdidx == CMD_diffget ? idx_other : idx_cur;
+  const int idx_to   = eap->cmdidx == CMD_diffget ? idx_cur   : idx_other;
 
   // May give the warning for a changed buffer here, which can trigger the
   // FileChangedRO autocommand, which may do nasty things and mess
@@ -2627,10 +2622,55 @@ void ex_diffgetput(exarg_T *eap)
     }
   }
 
+  diffgetput(eap->addr_count, idx_cur, idx_from, idx_to, eap->line1, eap->line2);
+
+  // restore curwin/curbuf and a few other things
+  if (eap->cmdidx != CMD_diffget) {
+    // Syncing undo only works for the current buffer, but we change
+    // another buffer.  Sync undo if the command was typed.  This isn't
+    // 100% right when ":diffput" is used in a function or mapping.
+    if (KeyTyped) {
+      u_sync(false);
+    }
+    aucmd_restbuf(&aco);
+  }
+
+theend:
+  diff_busy = false;
+
+  if (diff_need_update) {
+    ex_diffupdate(NULL);
+  }
+
+  // Check that the cursor is on a valid character and update its
+  // position.  When there were filler lines the topline has become
+  // invalid.
+  check_cursor();
+  changed_line_abv_curs();
+
+  if (diff_need_update) {
+    // redraw already done by ex_diffupdate()
+    diff_need_update = false;
+  } else {
+    // Also need to redraw the other buffers.
+    diff_redraw(false);
+    apply_autocmds(EVENT_DIFFUPDATED, NULL, NULL, false, curbuf);
+  }
+}
+
+/// Apply diffget/diffput to buffers and diffblocks
+///
+/// @param idx_cur   index of "curbuf" before aucmd_prepbuf() in the list of diff buffers
+/// @param idx_from  index of the buffer to read from in the list of diff buffers
+/// @param idx_to    index of the buffer to modify in the list of diff buffers
+static void diffgetput(const int addr_count, const int idx_cur, const int idx_from,
+                       const int idx_to, const linenr_T line1, const linenr_T line2)
+{
+  linenr_T off = 0;
   diff_T *dprev = NULL;
 
   for (diff_T *dp = curtab->tp_first_diff; dp != NULL;) {
-    if (dp->df_lnum[idx_cur] > eap->line2 + off) {
+    if (dp->df_lnum[idx_cur] > line2 + off) {
       // past the range that was specified
       break;
     }
@@ -2638,15 +2678,15 @@ void ex_diffgetput(exarg_T *eap)
     linenr_T lnum = dp->df_lnum[idx_to];
     linenr_T count = dp->df_count[idx_to];
 
-    if ((dp->df_lnum[idx_cur] + dp->df_count[idx_cur] > eap->line1 + off)
+    if ((dp->df_lnum[idx_cur] + dp->df_count[idx_cur] > line1 + off)
         && (u_save(lnum - 1, lnum + count) != FAIL)) {
       // Inside the specified range and saving for undo worked.
       linenr_T start_skip = 0;
       linenr_T end_skip = 0;
 
-      if (eap->addr_count > 0) {
+      if (addr_count > 0) {
         // A range was specified: check if lines need to be skipped.
-        start_skip = eap->line1 + off - dp->df_lnum[idx_cur];
+        start_skip = line1 + off - dp->df_lnum[idx_cur];
         if (start_skip > 0) {
           // range starts below start of current diff block
           if (start_skip > count) {
@@ -2661,7 +2701,7 @@ void ex_diffgetput(exarg_T *eap)
         }
 
         end_skip = dp->df_lnum[idx_cur] + dp->df_count[idx_cur] - 1
-                   - (eap->line2 + off);
+                   - (line2 + off);
 
         if (end_skip > 0) {
           // range ends above end of current/from diff block
@@ -2785,38 +2825,6 @@ void ex_diffgetput(exarg_T *eap)
       dprev = dp;
       dp = dp->df_next;
     }
-  }
-
-  // restore curwin/curbuf and a few other things
-  if (eap->cmdidx != CMD_diffget) {
-    // Syncing undo only works for the current buffer, but we change
-    // another buffer.  Sync undo if the command was typed.  This isn't
-    // 100% right when ":diffput" is used in a function or mapping.
-    if (KeyTyped) {
-      u_sync(false);
-    }
-    aucmd_restbuf(&aco);
-  }
-
-theend:
-  diff_busy = false;
-  if (diff_need_update) {
-    ex_diffupdate(NULL);
-  }
-
-  // Check that the cursor is on a valid character and update its
-  // position.  When there were filler lines the topline has become
-  // invalid.
-  check_cursor();
-  changed_line_abv_curs();
-
-  if (diff_need_update) {
-    // redraw already done by ex_diffupdate()
-    diff_need_update = false;
-  } else {
-    // Also need to redraw the other buffers.
-    diff_redraw(false);
-    apply_autocmds(EVENT_DIFFUPDATED, NULL, NULL, false, curbuf);
   }
 }
 
