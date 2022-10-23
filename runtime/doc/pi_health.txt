@@ -21,8 +21,8 @@ Plugin authors are encouraged to write new healthchecks. |health-dev|
 ==============================================================================
 Commands                                *health-commands*
 
-                                        *:checkhealth* *:CheckHealth*
-:checkhealth    Run all healthchecks.
+                                        *:che* *:checkhealth* *:CheckHealth*
+:che[ckhealth]  Run all healthchecks.
                                         *E5009*
                 Nvim depends on |$VIMRUNTIME|, 'runtimepath' and 'packpath' to
                 find the standard "runtime files" for syntax highlighting,
@@ -30,7 +30,7 @@ Commands                                *health-commands*
                 :checkhealth).  If the runtime files cannot be found then
                 those features will not work.
 
-:checkhealth {plugins}
+:che[ckhealth] {plugins}
                 Run healthcheck(s) for one or more plugins. E.g. to run only
                 the standard Nvim healthcheck: >
                         :checkhealth nvim

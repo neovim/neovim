@@ -1208,8 +1208,8 @@ tag		command		action ~
 |:cgetfile|	:cg[etfile]	read file with error messages
 |:changes|	:changes	print the change list
 |:chdir|	:chd[ir]	change directory
-|:checkhealth|	:checkh[ealth]	run healthchecks
-|:checkpath|	:che[ckpath]	list included files
+|:checkhealth|	:che[ckhealth]	run healthchecks
+|:checkpath|	:checkp[ath]	list included files
 |:checktime|	:checkt[ime]	check timestamp of loaded buffers
 |:chistory|	:chi[story]	list the error lists
 |:clast|	:cla[st]	go to the specified error, default last one
