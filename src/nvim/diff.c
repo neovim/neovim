@@ -26,6 +26,7 @@
 #include "nvim/ex_docmd.h"
 #include "nvim/fileio.h"
 #include "nvim/fold.h"
+#include "nvim/garray.h"
 #include "nvim/mark.h"
 #include "nvim/mbyte.h"
 #include "nvim/memline.h"
@@ -710,7 +711,7 @@ static void clear_diffin(diffin_T *din)
 static void clear_diffout(diffout_T *dout)
 {
   if (dout->dout_fname == NULL) {
-    ga_clear_strings(&dout->dout_ga);
+    ga_clear(&dout->dout_ga);
   } else {
     os_remove(dout->dout_fname);
   }
@@ -820,7 +821,7 @@ static int diff_write(buf_T *buf, diffin_T *din)
 static void diff_try_update(diffio_T *dio, int idx_orig, exarg_T *eap)
 {
   if (dio->dio_internal) {
-    ga_init(&dio->dio_diff.dout_ga, sizeof(char *), 1000);
+    ga_init(&dio->dio_diff.dout_ga, sizeof(diffhunk_T), 100);
   } else {
     // We need three temp file names.
     dio->dio_orig.din_fname = vim_tempname();
@@ -1552,18 +1553,14 @@ static void diff_read(int idx_orig, int idx_new, diffio_T *dio)
     }
   }
 
-  diffhunk_T *hunk = NULL;
-
-  if (!dio->dio_internal) {
-    hunk = xmalloc(sizeof(*hunk));
-  }
+  diffhunk_T hunk;
 
   for (;;) {
     if (dio->dio_internal) {
       if (line_idx >= dout->dout_ga.ga_len) {
         break;      // did last line
       }
-      hunk = ((diffhunk_T **)dout->dout_ga.ga_data)[line_idx++];
+      hunk = ((diffhunk_T *)dout->dout_ga.ga_data)[line_idx++];
     } else {
       char *line;
       char linebuf[LBUFLEN];  // only need to hold the diff line
@@ -1611,7 +1608,7 @@ static void diff_read(int idx_orig, int idx_new, diffio_T *dio)
         if (!isdigit(*line)) {
           continue;   // not the start of a diff block
         }
-        if (parse_diff_ed(line, hunk) == FAIL) {
+        if (parse_diff_ed(line, &hunk) == FAIL) {
           continue;
         }
       } else {
@@ -1619,7 +1616,7 @@ static void diff_read(int idx_orig, int idx_new, diffio_T *dio)
         if (STRNCMP(line, "@@ ", 3) != 0) {
           continue;   // not the start of a diff block
         }
-        if (parse_diff_unified(line, hunk) == FAIL) {
+        if (parse_diff_unified(line, &hunk) == FAIL) {
           continue;
         }
       }
@@ -1628,7 +1625,7 @@ static void diff_read(int idx_orig, int idx_new, diffio_T *dio)
     // Go over blocks before the change, for which orig and new are equal.
     // Copy blocks from orig to new.
     while (dp != NULL
-           && hunk->lnum_orig > dp->df_lnum[idx_orig] + dp->df_count[idx_orig]) {
+           && hunk.lnum_orig > dp->df_lnum[idx_orig] + dp->df_count[idx_orig]) {
       if (notset) {
         diff_copy_entry(dprev, dp, idx_orig, idx_new);
       }
@@ -1638,20 +1635,20 @@ static void diff_read(int idx_orig, int idx_new, diffio_T *dio)
     }
 
     if ((dp != NULL)
-        && (hunk->lnum_orig <= dp->df_lnum[idx_orig] + dp->df_count[idx_orig])
-        && (hunk->lnum_orig + hunk->count_orig >= dp->df_lnum[idx_orig])) {
+        && (hunk.lnum_orig <= dp->df_lnum[idx_orig] + dp->df_count[idx_orig])
+        && (hunk.lnum_orig + hunk.count_orig >= dp->df_lnum[idx_orig])) {
       // New block overlaps with existing block(s).
       // First find last block that overlaps.
       diff_T *dpl;
       for (dpl = dp; dpl->df_next != NULL; dpl = dpl->df_next) {
-        if (hunk->lnum_orig + hunk->count_orig < dpl->df_next->df_lnum[idx_orig]) {
+        if (hunk.lnum_orig + hunk.count_orig < dpl->df_next->df_lnum[idx_orig]) {
           break;
         }
       }
 
       // If the newly found block starts before the old one, set the
       // start back a number of lines.
-      linenr_T off = dp->df_lnum[idx_orig] - hunk->lnum_orig;
+      linenr_T off = dp->df_lnum[idx_orig] - hunk.lnum_orig;
 
       if (off > 0) {
         for (int i = idx_orig; i < idx_new; i++) {
@@ -1659,15 +1656,15 @@ static void diff_read(int idx_orig, int idx_new, diffio_T *dio)
             dp->df_lnum[i] -= off;
           }
         }
-        dp->df_lnum[idx_new] = hunk->lnum_new;
-        dp->df_count[idx_new] = (linenr_T)hunk->count_new;
+        dp->df_lnum[idx_new] = hunk.lnum_new;
+        dp->df_count[idx_new] = (linenr_T)hunk.count_new;
       } else if (notset) {
         // new block inside existing one, adjust new block
-        dp->df_lnum[idx_new] = hunk->lnum_new + off;
-        dp->df_count[idx_new] = (linenr_T)hunk->count_new - off;
+        dp->df_lnum[idx_new] = hunk.lnum_new + off;
+        dp->df_count[idx_new] = (linenr_T)hunk.count_new - off;
       } else {
         // second overlap of new block with existing block
-        dp->df_count[idx_new] += (linenr_T)hunk->count_new - (linenr_T)hunk->count_orig
+        dp->df_count[idx_new] += (linenr_T)hunk.count_new - (linenr_T)hunk.count_orig
                                  + dpl->df_lnum[idx_orig] +
                                  dpl->df_count[idx_orig]
                                  - (dp->df_lnum[idx_orig] +
@@ -1676,7 +1673,7 @@ static void diff_read(int idx_orig, int idx_new, diffio_T *dio)
 
       // Adjust the size of the block to include all the lines to the
       // end of the existing block or the new diff, whatever ends last.
-      off = (hunk->lnum_orig + (linenr_T)hunk->count_orig)
+      off = (hunk.lnum_orig + (linenr_T)hunk.count_orig)
             - (dpl->df_lnum[idx_orig] + dpl->df_count[idx_orig]);
 
       if (off < 0) {
@@ -1708,10 +1705,10 @@ static void diff_read(int idx_orig, int idx_new, diffio_T *dio)
       // Allocate a new diffblock.
       dp = diff_alloc_new(curtab, dprev, dp);
 
-      dp->df_lnum[idx_orig] = hunk->lnum_orig;
-      dp->df_count[idx_orig] = (linenr_T)hunk->count_orig;
-      dp->df_lnum[idx_new] = hunk->lnum_new;
-      dp->df_count[idx_new] = (linenr_T)hunk->count_new;
+      dp->df_lnum[idx_orig] = hunk.lnum_orig;
+      dp->df_count[idx_orig] = (linenr_T)hunk.count_orig;
+      dp->df_lnum[idx_new] = hunk.lnum_new;
+      dp->df_count[idx_new] = (linenr_T)hunk.count_new;
 
       // Set values for other buffers, these must be equal to the
       // original buffer, otherwise there would have been a change
@@ -1733,10 +1730,6 @@ static void diff_read(int idx_orig, int idx_new, diffio_T *dio)
     dprev = dp;
     dp = dp->df_next;
     notset = true;
-  }
-
-  if (!dio->dio_internal) {
-    xfree(hunk);
   }
 
   if (fd != NULL) {
@@ -3155,13 +3148,11 @@ static int parse_diff_unified(char *line, diffhunk_T *hunk)
 static int xdiff_out(long start_a, long count_a, long start_b, long count_b, void *priv)
 {
   diffout_T *dout = (diffout_T *)priv;
-  diffhunk_T *p = xmalloc(sizeof(*p));
-
-  ga_grow(&dout->dout_ga, 1);
-  p->lnum_orig  = (linenr_T)start_a + 1;
-  p->count_orig = count_a;
-  p->lnum_new   = (linenr_T)start_b + 1;
-  p->count_new  = count_b;
-  ((diffhunk_T **)dout->dout_ga.ga_data)[dout->dout_ga.ga_len++] = p;
+  GA_APPEND(diffhunk_T, &(dout->dout_ga), ((diffhunk_T){
+    .lnum_orig  = (linenr_T)start_a + 1,
+    .count_orig = count_a,
+    .lnum_new   = (linenr_T)start_b + 1,
+    .count_new  = count_b,
+  }));
   return 0;
 }
