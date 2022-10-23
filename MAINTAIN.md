@@ -98,6 +98,36 @@ These dependencies are "vendored" (inlined), we must update the sources manually
 
 We may maintain forks, if we are waiting on upstream changes: https://github.com/neovim/neovim/wiki/Deps
 
+CI
+--------------
+
+### General
+
+As our CI is primarily dependent on GitHub Actions at the moment, then so will
+our CI strategy be. The following guidelines have worked well for us so far:
+
+* Never use a macOS runner if an Ubuntu or a Windows runner can be used
+  instead. This is because macOS runners have a [tighter restrictions on the
+  number of concurrent jobs](https://docs.github.com/en/actions/learn-github-actions/usage-limits-billing-and-administration#usage-limits).
+
+### Runner versions
+
+* For special-purpose jobs where the runner version doesn't really matter,
+  prefer `-latest` tags so we don't need to manually bump the versions. An
+  example of a special-purpose workflow is `labeler.yml`.
+
+* For our testing jobs, which is currently only `ci.yml`, prefer to use the
+  latest stable (i.e. non-beta) version explicitly. Avoid using the `-latest`
+  tags here as it makes it difficult to determine from an unrelated PR if a
+  failure is due to the PR itself or due to GitHub bumping the `-latest` tag
+  without our knowledge. There's also a high risk that automatic bumping the CI
+  versions will fail due to manual work being required from experience.
+
+* For our release job, which is `release.yml`, prefer to use the oldest stable
+  (i.e. non-deprecated) versions available. The reason is that we're trying to
+  produce images that work in the broadest number of environments, and
+  therefore want to use older releases.
+
 See also
 --------
 
