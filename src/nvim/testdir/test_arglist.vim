@@ -550,7 +550,7 @@ func Test_argdo()
   bwipe Xa.c Xb.c Xc.c
 endfunc
 
-" Test for quiting Vim with unedited files in the argument list
+" Test for quitting Vim with unedited files in the argument list
 func Test_quit_with_arglist()
   if !CanRunVimInTerminal()
     throw 'Skipped: cannot run vim in terminal'

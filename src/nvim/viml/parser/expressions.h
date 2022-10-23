@@ -357,7 +357,7 @@ typedef struct {
   int arg_len;
 } ExprASTError;
 
-/// Structure representing complety AST for one expression
+/// Structure representing complete AST for one expression
 typedef struct {
   /// When AST is not correct this message will be printed.
   ///

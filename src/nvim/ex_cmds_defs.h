@@ -62,7 +62,7 @@
 #define EX_FLAGS        0x200000u  // allow flags after count in argument
 #define EX_LOCK_OK     0x1000000u  // command can be executed when textlock is
                                    // set; when missing disallows editing another
-                                   // buffer when current buffer is locked
+                                   // buffer when curbuf->b_ro_locked is set
 #define EX_KEEPSCRIPT  0x4000000u  // keep sctx of where command was invoked
 #define EX_PREVIEW     0x8000000u  // allow incremental command preview
 #define EX_FILES (EX_XFILE | EX_EXTRA)  // multiple extra files allowed

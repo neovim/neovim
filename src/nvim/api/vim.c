@@ -1685,7 +1685,7 @@ Array nvim_call_atomic(uint64_t channel_id, Array calls, Arena *arena, Error *er
       // error handled after loop
       break;
     }
-    // TODO(bfredl): wastefull copy. It could be avoided to encoding to msgpack
+    // TODO(bfredl): wasteful copy. It could be avoided to encoding to msgpack
     // directly here. But `result` might become invalid when next api function
     // is called in the loop.
     ADD_C(results, copy_object(result, arena));

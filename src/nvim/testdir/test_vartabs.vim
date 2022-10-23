@@ -97,7 +97,7 @@ func Test_vartabs()
   .retab!
   call assert_equal("\t\t\t\tl", getline(1))
 
-  " Test for 'retab' with same vlaues as vts
+  " Test for 'retab' with same values as vts
   set ts=8 sts=0 vts=5,3,6,2 vsts=
   exe "norm! S                l"
   .retab! 5,3,6,2
