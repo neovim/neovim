@@ -74,13 +74,13 @@ static TriState diff_a_works = kNone;
 
 // used for diff input
 typedef struct {
-  char_u *din_fname;   // used for external diff
+  char *din_fname;   // used for external diff
   mmfile_t din_mmfile;  // used for internal diff
 } diffin_T;
 
 // used for diff result
 typedef struct {
-  char_u *dout_fname;  // used for external diff
+  char *dout_fname;  // used for external diff
   garray_T dout_ga;     // used for internal diff
 } diffout_T;
 
@@ -703,7 +703,7 @@ static void clear_diffin(diffin_T *din)
   if (din->din_fname == NULL) {
     XFREE_CLEAR(din->din_mmfile.ptr);
   } else {
-    os_remove((char *)din->din_fname);
+    os_remove(din->din_fname);
   }
 }
 
@@ -712,7 +712,7 @@ static void clear_diffout(diffout_T *dout)
   if (dout->dout_fname == NULL) {
     ga_clear_strings(&dout->dout_ga);
   } else {
-    os_remove((char *)dout->dout_fname);
+    os_remove(dout->dout_fname);
   }
 }
 
@@ -730,7 +730,7 @@ static int diff_write_buffer(buf_T *buf, diffin_T *din)
   for (linenr_T lnum = 1; lnum <= buf->b_ml.ml_line_count; lnum++) {
     len += (long)strlen(ml_get_buf(buf, lnum, false)) + 1;
   }
-  char_u *ptr = try_malloc((size_t)len);
+  char *ptr = try_malloc((size_t)len);
   if (ptr == NULL) {
     // Allocating memory failed.  This can happen, because we try to read
     // the whole buffer text into memory.  Set the failed flag, the diff
@@ -744,12 +744,12 @@ static int diff_write_buffer(buf_T *buf, diffin_T *din)
     }
     return FAIL;
   }
-  din->din_mmfile.ptr = (char *)ptr;
+  din->din_mmfile.ptr = ptr;
   din->din_mmfile.size = len;
 
   len = 0;
   for (linenr_T lnum = 1; lnum <= buf->b_ml.ml_line_count; lnum++) {
-    for (char_u *s = (char_u *)ml_get_buf(buf, lnum, false); *s != NUL;) {
+    for (char *s = ml_get_buf(buf, lnum, false); *s != NUL;) {
       if (diff_flags & DIFF_ICASE) {
         int c;
         char cbuf[MB_MAXBYTES + 1];
@@ -758,11 +758,11 @@ static int diff_write_buffer(buf_T *buf, diffin_T *din)
           c = NUL;
         } else {
           // xdiff doesn't support ignoring case, fold-case the text.
-          c = utf_ptr2char((char *)s);
+          c = utf_ptr2char(s);
           c = utf_fold(c);
         }
-        const int orig_len = utfc_ptr2len((char *)s);
-        if (utf_char2bytes(c, (char *)cbuf) != orig_len) {
+        const int orig_len = utfc_ptr2len(s);
+        if (utf_char2bytes(c, cbuf) != orig_len) {
           // TODO(Bram): handle byte length difference
           memmove(ptr + len, s, (size_t)orig_len);
         } else {
@@ -802,7 +802,7 @@ static int diff_write(buf_T *buf, diffin_T *din)
   // Writing the buffer is an implementation detail of performing the diff,
   // so it shouldn't update the '[ and '] marks.
   cmdmod.cmod_flags |= CMOD_LOCKMARKS;
-  int r = buf_write(buf, (char *)din->din_fname, NULL,
+  int r = buf_write(buf, din->din_fname, NULL,
                     (linenr_T)1, buf->b_ml.ml_line_count,
                     NULL, false, false, false, true);
   cmdmod.cmod_flags = save_cmod_flags;
@@ -823,9 +823,9 @@ static void diff_try_update(diffio_T *dio, int idx_orig, exarg_T *eap)
     ga_init(&dio->dio_diff.dout_ga, sizeof(char *), 1000);
   } else {
     // We need three temp file names.
-    dio->dio_orig.din_fname = (char_u *)vim_tempname();
-    dio->dio_new.din_fname = (char_u *)vim_tempname();
-    dio->dio_diff.dout_fname = (char_u *)vim_tempname();
+    dio->dio_orig.din_fname = vim_tempname();
+    dio->dio_new.din_fname = vim_tempname();
+    dio->dio_diff.dout_fname = vim_tempname();
     if (dio->dio_orig.din_fname == NULL
         || dio->dio_new.din_fname == NULL
         || dio->dio_diff.dout_fname == NULL) {
@@ -991,7 +991,7 @@ static int check_external_diff(diffio_T *diffio)
   TriState ok = kFalse;
   for (;;) {
     ok = kFalse;
-    FILE *fd = os_fopen((char *)diffio->dio_orig.din_fname, "w");
+    FILE *fd = os_fopen(diffio->dio_orig.din_fname, "w");
 
     if (fd == NULL) {
       io_error = true;
@@ -1000,7 +1000,7 @@ static int check_external_diff(diffio_T *diffio)
         io_error = true;
       }
       fclose(fd);
-      fd = os_fopen((char *)diffio->dio_new.din_fname, "w");
+      fd = os_fopen(diffio->dio_new.din_fname, "w");
 
       if (fd == NULL) {
         io_error = true;
@@ -1011,18 +1011,18 @@ static int check_external_diff(diffio_T *diffio)
         fclose(fd);
         fd = NULL;
         if (diff_file(diffio) == OK) {
-          fd = os_fopen((char *)diffio->dio_diff.dout_fname, "r");
+          fd = os_fopen(diffio->dio_diff.dout_fname, "r");
         }
 
         if (fd == NULL) {
           io_error = true;
         } else {
-          char_u linebuf[LBUFLEN];
+          char linebuf[LBUFLEN];
 
           for (;;) {
             // For normal diff there must be a line that contains
             // "1c1".  For unified diff "@@ -1 +1 @@".
-            if (vim_fgets(linebuf, LBUFLEN, fd)) {
+            if (vim_fgets((char_u *)linebuf, LBUFLEN, fd)) {
               break;
             }
 
@@ -1033,10 +1033,10 @@ static int check_external_diff(diffio_T *diffio)
           }
           fclose(fd);
         }
-        os_remove((char *)diffio->dio_diff.dout_fname);
-        os_remove((char *)diffio->dio_new.din_fname);
+        os_remove(diffio->dio_diff.dout_fname);
+        os_remove(diffio->dio_new.din_fname);
       }
-      os_remove((char *)diffio->dio_orig.din_fname);
+      os_remove(diffio->dio_orig.din_fname);
     }
 
     // When using 'diffexpr' break here.
@@ -1114,9 +1114,9 @@ static int diff_file_internal(diffio_T *diffio)
 /// @return OK or FAIL
 static int diff_file(diffio_T *dio)
 {
-  char *tmp_orig = (char *)dio->dio_orig.din_fname;
-  char *tmp_new = (char *)dio->dio_new.din_fname;
-  char *tmp_diff = (char *)dio->dio_diff.dout_fname;
+  char *tmp_orig = dio->dio_orig.din_fname;
+  char *tmp_new = dio->dio_new.din_fname;
+  char *tmp_diff = dio->dio_diff.dout_fname;
   if (*p_dex != NUL) {
     // Use 'diffexpr' to generate the diff file.
     eval_diff(tmp_orig, tmp_new, tmp_diff);
@@ -1166,10 +1166,10 @@ static int diff_file(diffio_T *dio)
 /// @param eap
 void ex_diffpatch(exarg_T *eap)
 {
-  char_u *buf = NULL;
+  char *buf = NULL;
   win_T *old_curwin = curwin;
   char *newname = NULL;  // name of patched file buffer
-  char_u *esc_name = NULL;
+  char *esc_name = NULL;
 
 #ifdef UNIX
   char *fullname = NULL;
@@ -1177,16 +1177,16 @@ void ex_diffpatch(exarg_T *eap)
 
   // We need two temp file names.
   // Name of original temp file.
-  char_u *tmp_orig = (char_u *)vim_tempname();
+  char *tmp_orig = vim_tempname();
   // Name of patched temp file.
-  char_u *tmp_new = (char_u *)vim_tempname();
+  char *tmp_new = vim_tempname();
 
   if ((tmp_orig == NULL) || (tmp_new == NULL)) {
     goto theend;
   }
 
   // Write the current buffer to "tmp_orig".
-  if (buf_write(curbuf, (char *)tmp_orig, NULL,
+  if (buf_write(curbuf, tmp_orig, NULL,
                 (linenr_T)1, curbuf->b_ml.ml_line_count,
                 NULL, false, false, false, true) == FAIL) {
     goto theend;
@@ -1196,7 +1196,7 @@ void ex_diffpatch(exarg_T *eap)
   // Get the absolute path of the patchfile, changing directory below.
   fullname = FullName_save(eap->arg, false);
   esc_name =
-    vim_strsave_shellescape((char_u *)(fullname != NULL ? fullname : eap->arg), true, true);
+    (char *)vim_strsave_shellescape((char_u *)(fullname != NULL ? fullname : eap->arg), true, true);
 #else
   esc_name = vim_strsave_shellescape(eap->arg, true, true);
 #endif
@@ -1204,14 +1204,14 @@ void ex_diffpatch(exarg_T *eap)
   buf = xmalloc(buflen);
 
 #ifdef UNIX
-  char_u dirbuf[MAXPATHL];
+  char dirbuf[MAXPATHL];
   // Temporarily chdir to /tmp, to avoid patching files in the current
   // directory when the patch file contains more than one patch.  When we
   // have our own temp dir use that instead, it will be cleaned up when we
   // exit (any .rej files created).  Don't change directory if we can't
   // return to the current.
-  if ((os_dirname(dirbuf, MAXPATHL) != OK)
-      || (os_chdir((char *)dirbuf) != 0)) {
+  if ((os_dirname((char_u *)dirbuf, MAXPATHL) != OK)
+      || (os_chdir(dirbuf) != 0)) {
     dirbuf[0] = NUL;
   } else {
     char *tempdir = vim_gettempdir();
@@ -1226,24 +1226,22 @@ void ex_diffpatch(exarg_T *eap)
   if (*p_pex != NUL) {
     // Use 'patchexpr' to generate the new file.
 #ifdef UNIX
-    eval_patch((char *)tmp_orig,
-               (fullname != NULL ? fullname : eap->arg),
-               (char *)tmp_new);
+    eval_patch(tmp_orig, (fullname != NULL ? fullname : eap->arg), tmp_new);
 #else
-    eval_patch((char *)tmp_orig, (char *)eap->arg, (char *)tmp_new);
+    eval_patch(tmp_orig, eap->arg, tmp_new);
 #endif
   } else {
     // Build the patch command and execute it. Ignore errors.
-    vim_snprintf((char *)buf, buflen, "patch -o %s %s < %s",
+    vim_snprintf(buf, buflen, "patch -o %s %s < %s",
                  tmp_new, tmp_orig, esc_name);
     block_autocmds();  // Avoid ShellCmdPost stuff
-    (void)call_shell(buf, kShellOptFilter, NULL);
+    (void)call_shell((char_u *)buf, kShellOptFilter, NULL);
     unblock_autocmds();
   }
 
 #ifdef UNIX
   if (dirbuf[0] != NUL) {
-    if (os_chdir((char *)dirbuf) != 0) {
+    if (os_chdir(dirbuf) != 0) {
       emsg(_(e_prev_dir));
     }
     shorten_fnames(true);
@@ -1253,14 +1251,14 @@ void ex_diffpatch(exarg_T *eap)
   // Delete any .orig or .rej file created.
   STRCPY(buf, tmp_new);
   STRCAT(buf, ".orig");
-  os_remove((char *)buf);
+  os_remove(buf);
   STRCPY(buf, tmp_new);
   STRCAT(buf, ".rej");
-  os_remove((char *)buf);
+  os_remove(buf);
 
   // Only continue if the output file was created.
   FileInfo file_info;
-  bool info_ok = os_fileinfo((char *)tmp_new, &file_info);
+  bool info_ok = os_fileinfo(tmp_new, &file_info);
   uint64_t filesize = os_fileinfo_size(&file_info);
   if (!info_ok || filesize == 0) {
     emsg(_("E816: Cannot read patch output"));
@@ -1276,7 +1274,7 @@ void ex_diffpatch(exarg_T *eap)
     if (win_split(0, (diff_flags & DIFF_VERTICAL) ? WSP_VERT : 0) != FAIL) {
       // Pretend it was a ":split fname" command
       eap->cmdidx = CMD_split;
-      eap->arg = (char *)tmp_new;
+      eap->arg = tmp_new;
       do_exedit(eap, old_curwin);
 
       // check that split worked and editing tmp_new
@@ -1301,12 +1299,12 @@ void ex_diffpatch(exarg_T *eap)
 
 theend:
   if (tmp_orig != NULL) {
-    os_remove((char *)tmp_orig);
+    os_remove(tmp_orig);
   }
   xfree(tmp_orig);
 
   if (tmp_new != NULL) {
-    os_remove((char *)tmp_new);
+    os_remove(tmp_new);
   }
   xfree(tmp_new);
   xfree(newname);
@@ -1547,7 +1545,7 @@ static void diff_read(int idx_orig, int idx_new, diffio_T *dio)
   if (dout->dout_fname == NULL) {
     diffstyle = DIFF_UNIFIED;
   } else {
-    fd = os_fopen((char *)dout->dout_fname, "r");
+    fd = os_fopen(dout->dout_fname, "r");
     if (fd == NULL) {
       emsg(_("E98: Cannot read diff output"));
       return;
@@ -1613,7 +1611,7 @@ static void diff_read(int idx_orig, int idx_new, diffio_T *dio)
         if (!isdigit(*line)) {
           continue;   // not the start of a diff block
         }
-        if (parse_diff_ed((char_u *)line, hunk) == FAIL) {
+        if (parse_diff_ed(line, hunk) == FAIL) {
           continue;
         }
       } else {
@@ -1621,7 +1619,7 @@ static void diff_read(int idx_orig, int idx_new, diffio_T *dio)
         if (STRNCMP(line, "@@ ", 3) != 0) {
           continue;   // not the start of a diff block
         }
-        if (parse_diff_unified((char_u *)line, hunk) == FAIL) {
+        if (parse_diff_unified(line, hunk) == FAIL) {
           continue;
         }
       }
@@ -1934,24 +1932,24 @@ static bool diff_equal_entry(diff_T *dp, int idx1, int idx2)
 
 // Compare the characters at "p1" and "p2".  If they are equal (possibly
 // ignoring case) return true and set "len" to the number of bytes.
-static bool diff_equal_char(const char_u *const p1, const char_u *const p2, int *const len)
+static bool diff_equal_char(const char *const p1, const char *const p2, int *const len)
 {
-  const int l = utfc_ptr2len((char *)p1);
+  const int l = utfc_ptr2len(p1);
 
-  if (l != utfc_ptr2len((char *)p2)) {
+  if (l != utfc_ptr2len(p2)) {
     return false;
   }
   if (l > 1) {
     if (STRNCMP(p1, p2, l) != 0
         && (!(diff_flags & DIFF_ICASE)
-            || utf_fold(utf_ptr2char((char *)p1)) != utf_fold(utf_ptr2char((char *)p2)))) {
+            || utf_fold(utf_ptr2char(p1)) != utf_fold(utf_ptr2char(p2)))) {
       return false;
     }
     *len = l;
   } else {
     if ((*p1 != *p2)
         && (!(diff_flags & DIFF_ICASE)
-            || TOLOWER_LOC(*p1) != TOLOWER_LOC(*p2))) {
+            || TOLOWER_LOC((uint8_t)(*p1)) != TOLOWER_LOC((uint8_t)(*p2)))) {
       return false;
     }
     *len = 1;
@@ -1978,7 +1976,7 @@ static int diff_cmp(char *s1, char *s2)
   }
 
   if ((diff_flags & DIFF_ICASE) && !(diff_flags & ALL_WHITE_DIFF)) {
-    return mb_stricmp((const char *)s1, (const char *)s2);
+    return mb_stricmp(s1, s2);
   }
 
   char *p1 = s1;
@@ -1994,7 +1992,7 @@ static int diff_cmp(char *s1, char *s2)
       p2 = skipwhite(p2);
     } else {
       int l;
-      if (!diff_equal_char((char_u *)p1, (char_u *)p2, &l)) {
+      if (!diff_equal_char(p1, p2, &l)) {
         break;
       }
       p1 += l;
@@ -2334,7 +2332,7 @@ bool diff_find_change(win_T *wp, linenr_T lnum, int *startp, int *endp)
           si_new = (int)(skipwhite(line_new + si_new) - line_new);
         } else {
           int l;
-          if (!diff_equal_char((char_u *)line_org + si_org, (char_u *)line_new + si_new, &l)) {
+          if (!diff_equal_char(line_org + si_org, line_new + si_new, &l)) {
             break;
           }
           si_org += l;
@@ -2374,11 +2372,11 @@ bool diff_find_change(win_T *wp, linenr_T lnum, int *startp, int *endp)
               ei_new--;
             }
           } else {
-            const char_u *p1 = (char_u *)line_org + ei_org;
-            const char_u *p2 = (char_u *)line_new + ei_new;
+            const char *p1 = line_org + ei_org;
+            const char *p2 = line_new + ei_new;
 
-            p1 -= utf_head_off(line_org, (char *)p1);
-            p2 -= utf_head_off(line_new, (char *)p2);
+            p1 -= utf_head_off(line_org, p1);
+            p2 -= utf_head_off(line_new, p2);
 
             int l;
             if (!diff_equal_char(p1, p2, &l)) {
@@ -3049,7 +3047,7 @@ linenr_T diff_lnum_win(linenr_T lnum, win_T *wp)
 /// Handle an ED style diff line.
 /// Return FAIL if the line does not contain diff info.
 ///
-static int parse_diff_ed(char_u *line, diffhunk_T *hunk)
+static int parse_diff_ed(char *line, diffhunk_T *hunk)
 {
   long l1, l2;
 
@@ -3057,7 +3055,7 @@ static int parse_diff_ed(char_u *line, diffhunk_T *hunk)
   // change: {first}[,{last}]c{first}[,{last}]
   // append: {first}a{first}[,{last}]
   // delete: {first}[,{last}]d{first}
-  char *p = (char *)line;
+  char *p = line;
   linenr_T f1 = getdigits_int32(&p, true, 0);
   if (*p == ',') {
     p++;
@@ -3101,11 +3099,11 @@ static int parse_diff_ed(char_u *line, diffhunk_T *hunk)
 /// Parses unified diff with zero(!) context lines.
 /// Return FAIL if there is no diff information in "line".
 ///
-static int parse_diff_unified(char_u *line, diffhunk_T *hunk)
+static int parse_diff_unified(char *line, diffhunk_T *hunk)
 {
   // Parse unified diff hunk header:
   // @@ -oldline,oldcount +newline,newcount @@
-  char *p = (char *)line;
+  char *p = line;
   if (*p++ == '@' && *p++ == '@' && *p++ == ' ' && *p++ == '-') {
     long oldcount;
     long newline;
