@@ -101,6 +101,12 @@ typedef struct {
   int dio_internal;  // using internal diff
 } diffio_T;
 
+typedef enum {
+  DIFF_ED,
+  DIFF_UNIFIED,
+  DIFF_NONE,
+} diffstyle_T;
+
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "diff.c.generated.h"
 #endif
@@ -1524,6 +1530,74 @@ void ex_diffoff(exarg_T *eap)
   }
 }
 
+static bool extract_hunk_internal(diffout_T *dout, diffhunk_T *hunk, int *line_idx)
+{
+  bool eof = *line_idx >= dout->dout_ga.ga_len;
+  if (!eof) {
+    *hunk = ((diffhunk_T *)dout->dout_ga.ga_data)[(*line_idx)++];
+  }
+  return eof;
+}
+
+// Extract hunk by parsing the diff output from file and calculate the diffstyle.
+static bool extract_hunk(FILE *fd, diffhunk_T *hunk, diffstyle_T *diffstyle)
+{
+  for (;;) {
+    char line[LBUFLEN];  // only need to hold the diff line
+    if (vim_fgets((char_u *)line, LBUFLEN, fd)) {
+      return true;  // end of file
+    }
+
+    if (*diffstyle == DIFF_NONE) {
+      // Determine diff style.
+      // ed like diff looks like this:
+      // {first}[,{last}]c{first}[,{last}]
+      // {first}a{first}[,{last}]
+      // {first}[,{last}]d{first}
+      //
+      // unified diff looks like this:
+      // --- file1       2018-03-20 13:23:35.783153140 +0100
+      // +++ file2       2018-03-20 13:23:41.183156066 +0100
+      // @@ -1,3 +1,5 @@
+      if (isdigit(*line)) {
+        *diffstyle = DIFF_ED;
+      } else if ((STRNCMP(line, "@@ ", 3) == 0)) {
+        *diffstyle = DIFF_UNIFIED;
+      } else if ((STRNCMP(line, "--- ", 4) == 0)  // -V501
+                 && (vim_fgets((char_u *)line, LBUFLEN, fd) == 0)  // -V501
+                 && (STRNCMP(line, "+++ ", 4) == 0)
+                 && (vim_fgets((char_u *)line, LBUFLEN, fd) == 0)  // -V501
+                 && (STRNCMP(line, "@@ ", 3) == 0)) {
+        *diffstyle = DIFF_UNIFIED;
+      } else {
+        // Format not recognized yet, skip over this line.  Cygwin diff
+        // may put a warning at the start of the file.
+        continue;
+      }
+    }
+
+    if (*diffstyle == DIFF_ED) {
+      if (!isdigit(*line)) {
+        continue;   // not the start of a diff block
+      }
+      if (parse_diff_ed(line, hunk) == FAIL) {
+        continue;
+      }
+    } else {
+      assert(*diffstyle == DIFF_UNIFIED);
+      if (STRNCMP(line, "@@ ", 3) != 0) {
+        continue;   // not the start of a diff block
+      }
+      if (parse_diff_unified(line, hunk) == FAIL) {
+        continue;
+      }
+    }
+
+    // Successfully parsed diff output, can return
+    return false;
+  }
+}
+
 /// Read the diff output and add each entry to the diff list.
 ///
 /// @param idx_orig idx of original file
@@ -1537,13 +1611,9 @@ static void diff_read(int idx_orig, int idx_new, diffio_T *dio)
   diff_T *dp = curtab->tp_first_diff;
   diffout_T *dout = &dio->dio_diff;
   int notset = true;  // block "*dp" not set yet
-  enum {
-    DIFF_ED,
-    DIFF_UNIFIED,
-    DIFF_NONE,
-  } diffstyle = DIFF_NONE;
+  diffstyle_T diffstyle = DIFF_NONE;
 
-  if (dout->dout_fname == NULL) {
+  if (dio->dio_internal) {
     diffstyle = DIFF_UNIFIED;
   } else {
     fd = os_fopen(dout->dout_fname, "r");
@@ -1553,73 +1623,14 @@ static void diff_read(int idx_orig, int idx_new, diffio_T *dio)
     }
   }
 
-  diffhunk_T hunk;
-
   for (;;) {
-    if (dio->dio_internal) {
-      if (line_idx >= dout->dout_ga.ga_len) {
-        break;      // did last line
-      }
-      hunk = ((diffhunk_T *)dout->dout_ga.ga_data)[line_idx++];
-    } else {
-      char *line;
-      char linebuf[LBUFLEN];  // only need to hold the diff line
-      if (fd == NULL) {
-        if (line_idx >= dout->dout_ga.ga_len) {
-          break;      // did last line
-        }
-        line = ((char **)dout->dout_ga.ga_data)[line_idx++];
-      } else {
-        if (vim_fgets((char_u *)linebuf, LBUFLEN, fd)) {
-          break;      // end of file
-        }
-        line = linebuf;
-      }
+    diffhunk_T hunk = { 0 };
+    bool eof = dio->dio_internal
+               ? extract_hunk_internal(dout, &hunk, &line_idx)
+               : extract_hunk(fd, &hunk, &diffstyle);
 
-      if (diffstyle == DIFF_NONE) {
-        // Determine diff style.
-        // ed like diff looks like this:
-        // {first}[,{last}]c{first}[,{last}]
-        // {first}a{first}[,{last}]
-        // {first}[,{last}]d{first}
-        //
-        // unified diff looks like this:
-        // --- file1       2018-03-20 13:23:35.783153140 +0100
-        // +++ file2       2018-03-20 13:23:41.183156066 +0100
-        // @@ -1,3 +1,5 @@
-        if (isdigit(*line)) {
-          diffstyle = DIFF_ED;
-        } else if ((STRNCMP(line, "@@ ", 3) == 0)) {
-          diffstyle = DIFF_UNIFIED;
-        } else if ((STRNCMP(line, "--- ", 4) == 0)  // -V501
-                   && (vim_fgets((char_u *)linebuf, LBUFLEN, fd) == 0)  // -V501
-                   && (STRNCMP(line, "+++ ", 4) == 0)
-                   && (vim_fgets((char_u *)linebuf, LBUFLEN, fd) == 0)  // -V501
-                   && (STRNCMP(line, "@@ ", 3) == 0)) {
-          diffstyle = DIFF_UNIFIED;
-        } else {
-          // Format not recognized yet, skip over this line.  Cygwin diff
-          // may put a warning at the start of the file.
-          continue;
-        }
-      }
-
-      if (diffstyle == DIFF_ED) {
-        if (!isdigit(*line)) {
-          continue;   // not the start of a diff block
-        }
-        if (parse_diff_ed(line, &hunk) == FAIL) {
-          continue;
-        }
-      } else {
-        assert(diffstyle == DIFF_UNIFIED);
-        if (STRNCMP(line, "@@ ", 3) != 0) {
-          continue;   // not the start of a diff block
-        }
-        if (parse_diff_unified(line, &hunk) == FAIL) {
-          continue;
-        }
-      }
+    if (eof) {
+      break;
     }
 
     // Go over blocks before the change, for which orig and new are equal.
