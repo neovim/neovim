@@ -571,7 +571,10 @@ file(MAKE_DIRECTORY ${BINARY_LIB_DIR})
 
 # install treesitter parser if bundled
 if(EXISTS ${DEPS_PREFIX}/lib/nvim/parser)
-  file(COPY ${DEPS_PREFIX}/lib/nvim/parser DESTINATION ${BINARY_LIB_DIR})
+  glob_wrapper(TREESITTER_PARSERS ${DEPS_PREFIX}/lib/nvim/parser/*)
+  foreach(parser_lib ${TREESITTER_PARSERS})
+    file(COPY ${parser_lib} DESTINATION ${BINARY_LIB_DIR}/parser)
+  endforeach()
 endif()
 
 install(DIRECTORY ${BINARY_LIB_DIR}
