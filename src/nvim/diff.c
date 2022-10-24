@@ -1715,9 +1715,7 @@ static void diff_read(int idx_orig, int idx_new, diffio_T *dio)
   bool notset = true;  // block "*dp" not set yet
   diffstyle_T diffstyle = DIFF_NONE;
 
-  if (dio->dio_internal) {
-    diffstyle = DIFF_UNIFIED;
-  } else {
+  if (!dio->dio_internal) {
     fd = os_fopen(dout->dout_fname, "r");
     if (fd == NULL) {
       emsg(_("E98: Cannot read diff output"));
