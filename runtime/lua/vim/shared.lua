@@ -62,7 +62,7 @@ end)()
 ---
 ---@param s string String to split
 ---@param sep string Separator or pattern
----@param plain boolean If `true` use `sep` literally (passed to string.find)
+---@param plain (boolean|nil) If `true` use `sep` literally (passed to string.find)
 ---@return fun():string (function) Iterator over the split components
 function vim.gsplit(s, sep, plain)
   vim.validate({ s = { s, 's' }, sep = { sep, 's' }, plain = { plain, 'b', true } })
@@ -108,11 +108,9 @@ end
 ---
 ---@see |vim.gsplit()|
 ---
----@alias split_kwargs {plain: boolean, trimempty: boolean} | boolean | nil
----
 ---@param s string String to split
 ---@param sep string Separator or pattern
----@param kwargs? {plain: boolean, trimempty: boolean} (table|nil) Keyword arguments:
+---@param kwargs ({plain: boolean, trimempty: boolean}|nil) Keyword arguments:
 ---       - plain: (boolean) If `true` use `sep` literally (passed to string.find)
 ---       - trimempty: (boolean) If `true` remove empty items from the front
 ---         and back of the list
@@ -159,8 +157,8 @@ end
 ---
 ---@see From https://github.com/premake/premake-core/blob/master/src/base/table.lua
 ---
----@param t table<T, any> (table) Table
 ---@generic T: table
+---@param t table<T, any> (table) Table
 ---@return T[] (list) List of keys
 function vim.tbl_keys(t)
   assert(type(t) == 'table', string.format('Expected table, got %s', type(t)))
@@ -417,8 +415,8 @@ end
 ---@generic T: table
 ---@param dst T List which will be modified and appended to
 ---@param src table List from which values will be inserted
----@param start? number Start index on src. Defaults to 1
----@param finish? number Final index on src. Defaults to `#src`
+---@param start (number|nil) Start index on src. Defaults to 1
+---@param finish (number|nil) Final index on src. Defaults to `#src`
 ---@return T dst
 function vim.list_extend(dst, src, start, finish)
   vim.validate({
@@ -486,7 +484,7 @@ function vim.tbl_islist(t)
     -- TODO(bfredl): in the future, we will always be inside nvim
     -- then this check can be deleted.
     if vim._empty_dict_mt == nil then
-      return nil
+      return false
     end
     return getmetatable(t) ~= vim._empty_dict_mt
   end
@@ -544,7 +542,7 @@ end
 ---@return string %-escaped pattern string
 function vim.pesc(s)
   vim.validate({ s = { s, 's' } })
-  return s:gsub('[%(%)%.%%%+%-%*%?%[%]%^%$]', '%%%1')
+  return (s:gsub('[%(%)%.%%%+%-%*%?%[%]%^%$]', '%%%1'))
 end
 
 --- Tests if `s` starts with `prefix`.
