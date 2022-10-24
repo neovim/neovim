@@ -727,15 +727,15 @@ static void clear_diffout(diffout_T *dout)
 /// @param din
 ///
 /// @return FAIL for failure.
-static int diff_write_buffer(buf_T *buf, diffin_T *din)
+static int diff_write_buffer(buf_T *buf, mmfile_t *m)
 {
-  long len = 0;
+  size_t len = 0;
 
   // xdiff requires one big block of memory with all the text.
   for (linenr_T lnum = 1; lnum <= buf->b_ml.ml_line_count; lnum++) {
-    len += (long)strlen(ml_get_buf(buf, lnum, false)) + 1;
+    len += strlen(ml_get_buf(buf, lnum, false)) + 1;
   }
-  char *ptr = try_malloc((size_t)len);
+  char *ptr = try_malloc(len);
   if (ptr == NULL) {
     // Allocating memory failed.  This can happen, because we try to read
     // the whole buffer text into memory.  Set the failed flag, the diff
@@ -749,37 +749,32 @@ static int diff_write_buffer(buf_T *buf, diffin_T *din)
     }
     return FAIL;
   }
-  din->din_mmfile.ptr = ptr;
-  din->din_mmfile.size = len;
+  m->ptr = ptr;
+  m->size = (long)len;
 
   len = 0;
   for (linenr_T lnum = 1; lnum <= buf->b_ml.ml_line_count; lnum++) {
-    for (char *s = ml_get_buf(buf, lnum, false); *s != NUL;) {
-      if (diff_flags & DIFF_ICASE) {
-        int c;
+    char *s = ml_get_buf(buf, lnum, false);
+    if (diff_flags & DIFF_ICASE) {
+      while (*s != NUL) {
         char cbuf[MB_MAXBYTES + 1];
 
-        if (*s == NL) {
-          c = NUL;
-        } else {
-          // xdiff doesn't support ignoring case, fold-case the text.
-          c = utf_ptr2char(s);
-          c = utf_fold(c);
-        }
+        // xdiff doesn't support ignoring case, fold-case the text.
+        int c = *s == NL ? NUL : utf_fold(utf_ptr2char(s));
         const int orig_len = utfc_ptr2len(s);
-        if (utf_char2bytes(c, cbuf) != orig_len) {
-          // TODO(Bram): handle byte length difference
-          memmove(ptr + len, s, (size_t)orig_len);
-        } else {
-          memmove(ptr + len, cbuf, (size_t)orig_len);
-        }
 
+        // TODO(Bram): handle byte length difference
+        char *s1 = (utf_char2bytes(c, cbuf) != orig_len) ? s : cbuf;
+        memmove(ptr + len, s1, (size_t)orig_len);
         s += orig_len;
-        len += orig_len;
-      } else {
-        ptr[len++] = *s == NL ? NUL : *s;
-        s++;
+        len += (size_t)orig_len;
       }
+    } else {
+      size_t slen = strlen(s);
+      memmove(ptr + len, s, slen);
+      // NUL is represented as NL; convert
+      memchrsub(ptr + len, NL, NUL, slen);
+      len += slen;
     }
     ptr[len++] = NL;
   }
@@ -797,7 +792,7 @@ static int diff_write_buffer(buf_T *buf, diffin_T *din)
 static int diff_write(buf_T *buf, diffin_T *din)
 {
   if (din->din_fname == NULL) {
-    return diff_write_buffer(buf, din);
+    return diff_write_buffer(buf, &din->din_mmfile);
   }
 
   // Always use 'fileformat' set to "unix".
