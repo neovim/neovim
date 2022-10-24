@@ -542,8 +542,7 @@ end
 ---@return string %-escaped pattern string
 function vim.pesc(s)
   vim.validate({ s = { s, 's' } })
-  local result = s:gsub('[%(%)%.%%%+%-%*%?%[%]%^%$]', '%%%1')
-  return result
+  return (s:gsub('[%(%)%.%%%+%-%*%?%[%]%^%$]', '%%%1'))
 end
 
 --- Tests if `s` starts with `prefix`.
