@@ -1598,6 +1598,114 @@ static bool extract_hunk(FILE *fd, diffhunk_T *hunk, diffstyle_T *diffstyle)
   }
 }
 
+static void process_hunk(diff_T **dpp, diff_T **dprevp, int idx_orig, int idx_new, diffhunk_T *hunk,
+                         bool *notsetp)
+{
+  diff_T *dp = *dpp;
+  diff_T *dprev = *dprevp;
+
+  // Go over blocks before the change, for which orig and new are equal.
+  // Copy blocks from orig to new.
+  while (dp != NULL
+         && hunk->lnum_orig > dp->df_lnum[idx_orig] + dp->df_count[idx_orig]) {
+    if (*notsetp) {
+      diff_copy_entry(dprev, dp, idx_orig, idx_new);
+    }
+    dprev = dp;
+    dp = dp->df_next;
+    *notsetp = true;
+  }
+
+  if ((dp != NULL)
+      && (hunk->lnum_orig <= dp->df_lnum[idx_orig] + dp->df_count[idx_orig])
+      && (hunk->lnum_orig + hunk->count_orig >= dp->df_lnum[idx_orig])) {
+    // New block overlaps with existing block(s).
+    // First find last block that overlaps.
+    diff_T *dpl;
+    for (dpl = dp; dpl->df_next != NULL; dpl = dpl->df_next) {
+      if (hunk->lnum_orig + hunk->count_orig < dpl->df_next->df_lnum[idx_orig]) {
+        break;
+      }
+    }
+
+    // If the newly found block starts before the old one, set the
+    // start back a number of lines.
+    linenr_T off = dp->df_lnum[idx_orig] - hunk->lnum_orig;
+
+    if (off > 0) {
+      for (int i = idx_orig; i < idx_new; i++) {
+        if (curtab->tp_diffbuf[i] != NULL) {
+          dp->df_lnum[i] -= off;
+        }
+      }
+      dp->df_lnum[idx_new] = hunk->lnum_new;
+      dp->df_count[idx_new] = (linenr_T)hunk->count_new;
+    } else if (*notsetp) {
+      // new block inside existing one, adjust new block
+      dp->df_lnum[idx_new] = hunk->lnum_new + off;
+      dp->df_count[idx_new] = (linenr_T)hunk->count_new - off;
+    } else {
+      // second overlap of new block with existing block
+      dp->df_count[idx_new] += (linenr_T)hunk->count_new - (linenr_T)hunk->count_orig
+                               + dpl->df_lnum[idx_orig] +
+                               dpl->df_count[idx_orig]
+                               - (dp->df_lnum[idx_orig] +
+                                  dp->df_count[idx_orig]);
+    }
+
+    // Adjust the size of the block to include all the lines to the
+    // end of the existing block or the new diff, whatever ends last.
+    off = (hunk->lnum_orig + (linenr_T)hunk->count_orig)
+          - (dpl->df_lnum[idx_orig] + dpl->df_count[idx_orig]);
+
+    if (off < 0) {
+      // new change ends in existing block, adjust the end if not
+      // done already
+      if (*notsetp) {
+        dp->df_count[idx_new] += -off;
+      }
+      off = 0;
+    }
+
+    for (int i = idx_orig; i < idx_new; i++) {
+      if (curtab->tp_diffbuf[i] != NULL) {
+        dp->df_count[i] = dpl->df_lnum[i] + dpl->df_count[i]
+                          - dp->df_lnum[i] + off;
+      }
+    }
+
+    // Delete the diff blocks that have been merged into one.
+    diff_T *dn = dp->df_next;
+    dp->df_next = dpl->df_next;
+
+    while (dn != dp->df_next) {
+      dpl = dn->df_next;
+      xfree(dn);
+      dn = dpl;
+    }
+  } else {
+    // Allocate a new diffblock.
+    dp = diff_alloc_new(curtab, dprev, dp);
+
+    dp->df_lnum[idx_orig] = hunk->lnum_orig;
+    dp->df_count[idx_orig] = (linenr_T)hunk->count_orig;
+    dp->df_lnum[idx_new] = hunk->lnum_new;
+    dp->df_count[idx_new] = (linenr_T)hunk->count_new;
+
+    // Set values for other buffers, these must be equal to the
+    // original buffer, otherwise there would have been a change
+    // already.
+    for (int i = idx_orig + 1; i < idx_new; i++) {
+      if (curtab->tp_diffbuf[i] != NULL) {
+        diff_copy_entry(dprev, dp, idx_orig, i);
+      }
+    }
+  }
+  *notsetp = false;  // "*dp" has been set
+  *dpp = dp;
+  *dprevp = dprev;
+}
+
 /// Read the diff output and add each entry to the diff list.
 ///
 /// @param idx_orig idx of original file
@@ -1610,7 +1718,7 @@ static void diff_read(int idx_orig, int idx_new, diffio_T *dio)
   diff_T *dprev = NULL;
   diff_T *dp = curtab->tp_first_diff;
   diffout_T *dout = &dio->dio_diff;
-  int notset = true;  // block "*dp" not set yet
+  bool notset = true;  // block "*dp" not set yet
   diffstyle_T diffstyle = DIFF_NONE;
 
   if (dio->dio_internal) {
@@ -1633,104 +1741,7 @@ static void diff_read(int idx_orig, int idx_new, diffio_T *dio)
       break;
     }
 
-    // Go over blocks before the change, for which orig and new are equal.
-    // Copy blocks from orig to new.
-    while (dp != NULL
-           && hunk.lnum_orig > dp->df_lnum[idx_orig] + dp->df_count[idx_orig]) {
-      if (notset) {
-        diff_copy_entry(dprev, dp, idx_orig, idx_new);
-      }
-      dprev = dp;
-      dp = dp->df_next;
-      notset = true;
-    }
-
-    if ((dp != NULL)
-        && (hunk.lnum_orig <= dp->df_lnum[idx_orig] + dp->df_count[idx_orig])
-        && (hunk.lnum_orig + hunk.count_orig >= dp->df_lnum[idx_orig])) {
-      // New block overlaps with existing block(s).
-      // First find last block that overlaps.
-      diff_T *dpl;
-      for (dpl = dp; dpl->df_next != NULL; dpl = dpl->df_next) {
-        if (hunk.lnum_orig + hunk.count_orig < dpl->df_next->df_lnum[idx_orig]) {
-          break;
-        }
-      }
-
-      // If the newly found block starts before the old one, set the
-      // start back a number of lines.
-      linenr_T off = dp->df_lnum[idx_orig] - hunk.lnum_orig;
-
-      if (off > 0) {
-        for (int i = idx_orig; i < idx_new; i++) {
-          if (curtab->tp_diffbuf[i] != NULL) {
-            dp->df_lnum[i] -= off;
-          }
-        }
-        dp->df_lnum[idx_new] = hunk.lnum_new;
-        dp->df_count[idx_new] = (linenr_T)hunk.count_new;
-      } else if (notset) {
-        // new block inside existing one, adjust new block
-        dp->df_lnum[idx_new] = hunk.lnum_new + off;
-        dp->df_count[idx_new] = (linenr_T)hunk.count_new - off;
-      } else {
-        // second overlap of new block with existing block
-        dp->df_count[idx_new] += (linenr_T)hunk.count_new - (linenr_T)hunk.count_orig
-                                 + dpl->df_lnum[idx_orig] +
-                                 dpl->df_count[idx_orig]
-                                 - (dp->df_lnum[idx_orig] +
-                                    dp->df_count[idx_orig]);
-      }
-
-      // Adjust the size of the block to include all the lines to the
-      // end of the existing block or the new diff, whatever ends last.
-      off = (hunk.lnum_orig + (linenr_T)hunk.count_orig)
-            - (dpl->df_lnum[idx_orig] + dpl->df_count[idx_orig]);
-
-      if (off < 0) {
-        // new change ends in existing block, adjust the end if not
-        // done already
-        if (notset) {
-          dp->df_count[idx_new] += -off;
-        }
-        off = 0;
-      }
-
-      for (int i = idx_orig; i < idx_new; i++) {
-        if (curtab->tp_diffbuf[i] != NULL) {
-          dp->df_count[i] = dpl->df_lnum[i] + dpl->df_count[i]
-                            - dp->df_lnum[i] + off;
-        }
-      }
-
-      // Delete the diff blocks that have been merged into one.
-      diff_T *dn = dp->df_next;
-      dp->df_next = dpl->df_next;
-
-      while (dn != dp->df_next) {
-        dpl = dn->df_next;
-        xfree(dn);
-        dn = dpl;
-      }
-    } else {
-      // Allocate a new diffblock.
-      dp = diff_alloc_new(curtab, dprev, dp);
-
-      dp->df_lnum[idx_orig] = hunk.lnum_orig;
-      dp->df_count[idx_orig] = (linenr_T)hunk.count_orig;
-      dp->df_lnum[idx_new] = hunk.lnum_new;
-      dp->df_count[idx_new] = (linenr_T)hunk.count_new;
-
-      // Set values for other buffers, these must be equal to the
-      // original buffer, otherwise there would have been a change
-      // already.
-      for (int i = idx_orig + 1; i < idx_new; i++) {
-        if (curtab->tp_diffbuf[i] != NULL) {
-          diff_copy_entry(dprev, dp, idx_orig, i);
-        }
-      }
-    }
-    notset = false;  // "*dp" has been set
+    process_hunk(&dp, &dprev, idx_orig, idx_new, &hunk, &notset);
   }
 
   // for remaining diff blocks orig and new are equal
