@@ -430,6 +430,8 @@ describe('lua stdlib', function()
   it('vim.pesc', function()
     eq('foo%-bar', exec_lua([[return vim.pesc('foo-bar')]]))
     eq('foo%%%-bar', exec_lua([[return vim.pesc(vim.pesc('foo-bar'))]]))
+    -- pesc() returns one result. #20751
+    eq({'x'}, exec_lua([[return {vim.pesc('x')}]]))
 
     -- Validates args.
     matches('s: expected string, got number',
