@@ -17,12 +17,16 @@ local clear = helpers.clear
 local eq = helpers.eq
 local exc_exec = helpers.exc_exec
 local exec = helpers.exec
+local exec_lua = helpers.exec_lua
 local exec_capture = helpers.exec_capture
 local eval = helpers.eval
 local command = helpers.command
 local write_file = helpers.write_file
 local meths = helpers.meths
 local sleep = helpers.sleep
+local matches = helpers.matches
+local pcall_err = helpers.pcall_err
+local assert_alive = helpers.assert_alive
 local poke_eventloop = helpers.poke_eventloop
 local feed = helpers.feed
 
@@ -249,15 +253,44 @@ describe("uncaught exception", function()
   end)
 end)
 
-describe('lambda function', function()
+describe('listing functions using :function', function()
   before_each(clear)
 
-  it('can be shown using :function followed by <lambda> #20466', function()
+  it('works for lambda functions with <lambda> #20466', function()
     command('let A = {-> 1}')
     local num = exec_capture('echo A'):match("function%('<lambda>(%d+)'%)")
     eq(([[
    function <lambda>%s(...)
 1  return 1
    endfunction]]):format(num), exec_capture(('function <lambda>%s'):format(num)))
+  end)
+
+  -- FIXME: If the same function is deleted, the crash still happens. #20790
+  it('does not crash if another function is deleted while listing', function()
+    local screen = Screen.new(80, 24)
+    screen:attach()
+    matches('.*: Vim%(function%):E454: function list was modified', pcall_err(exec_lua, [=[
+      vim.cmd([[
+        func Func1()
+        endfunc
+        func Func2()
+        endfunc
+        func Func3()
+        endfunc
+      ]])
+
+      local ns = vim.api.nvim_create_namespace('test')
+
+      vim.ui_attach(ns, { ext_messages = true }, function(event, _, content)
+        if event == 'msg_show' and content[1][2] == 'function Func1()'  then
+          vim.cmd('delfunc Func3')
+        end
+      end)
+
+      vim.cmd('function')
+
+      vim.ui_detach(ns)
+    ]=]))
+    assert_alive()
   end)
 end)
