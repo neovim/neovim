@@ -14,6 +14,10 @@
    "`" @conceal (#set! conceal "")
    text: (_) @text.literal)
 (codeblock) @text.literal
+(codeblock
+   ">" @conceal (#set! conceal ""))
+(block
+   "<" @conceal (#set! conceal ""))
 (argument) @parameter
 (keycode) @string.special
 (url) @text.uri
