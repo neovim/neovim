@@ -84,3 +84,39 @@ describe('ui/ext_tabline', function()
     end}
   end)
 end)
+
+describe("tabline", function()
+  local screen
+
+  before_each(function()
+    clear()
+    screen = Screen.new(42, 5)
+    screen:attach()
+  end)
+
+  it('redraws when tabline option is set', function()
+    command('set tabline=asdf')
+    command('set showtabline=2')
+    screen:expect{grid=[[
+      {1:asdf                                      }|
+      ^                                          |
+      {2:~                                         }|
+      {2:~                                         }|
+                                                |
+    ]], attr_ids={
+      [1] = {reverse = true};
+      [2] = {bold = true, foreground = Screen.colors.Blue1};
+    }}
+    command('set tabline=jkl')
+    screen:expect{grid=[[
+      {1:jkl                                       }|
+      ^                                          |
+      {2:~                                         }|
+      {2:~                                         }|
+                                                |
+    ]], attr_ids={
+      [1] = {reverse = true};
+      [2] = {bold = true, foreground = Screen.colors.Blue};
+    }}
+  end)
+end)

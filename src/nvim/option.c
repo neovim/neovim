@@ -2648,6 +2648,10 @@ void check_redraw(uint32_t flags)
     status_redraw_all();
   }
 
+  if ((flags & P_RTABL) || all) {  // mark tablines dirty
+    redraw_tabline = true;
+  }
+
   if ((flags & P_RBUF) || (flags & P_RWIN) || all) {
     changed_window_setting();
   }
