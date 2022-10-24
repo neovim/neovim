@@ -1877,6 +1877,36 @@ theend:
 
 #define MAX_FUNC_NESTING 50
 
+/// List functions.
+///
+/// @param regmatch  When NULL, all of them.
+///                  Otherwise functions matching "regmatch".
+static void list_functions(regmatch_T *regmatch)
+{
+  const size_t used = func_hashtab.ht_used;
+  size_t todo = used;
+  const hashitem_T *const ht_array = func_hashtab.ht_array;
+
+  for (const hashitem_T *hi = ht_array; todo > 0 && !got_int; hi++) {
+    if (!HASHITEM_EMPTY(hi)) {
+      ufunc_T *fp = HI2UF(hi);
+      todo--;
+      if ((fp->uf_flags & FC_DEAD) == 0
+          && (regmatch == NULL
+              ? (!message_filtered((char *)fp->uf_name)
+                 && !func_name_refcount(fp->uf_name))
+              : (!isdigit(*fp->uf_name)
+                 && vim_regexec(regmatch, (char *)fp->uf_name, 0)))) {
+        list_func_head(fp, false, false);
+        if (used != func_hashtab.ht_used || ht_array != func_hashtab.ht_array) {
+          emsg(_("E454: function list was modified"));
+          return;
+        }
+      }
+    }
+  }
+}
+
 /// ":function"
 void ex_function(exarg_T *eap)
 {
@@ -1903,7 +1933,6 @@ void ex_function(exarg_T *eap)
   static int func_nr = 0;           // number for nameless function
   int paren;
   hashtab_T *ht;
-  int todo;
   hashitem_T *hi;
   linenr_T sourcing_lnum_off;
   linenr_T sourcing_lnum_top;
@@ -1916,19 +1945,7 @@ void ex_function(exarg_T *eap)
   // ":function" without argument: list functions.
   if (ends_excmd(*eap->arg)) {
     if (!eap->skip) {
-      todo = (int)func_hashtab.ht_used;
-      for (hi = func_hashtab.ht_array; todo > 0 && !got_int; hi++) {
-        if (!HASHITEM_EMPTY(hi)) {
-          todo--;
-          fp = HI2UF(hi);
-          if (message_filtered((char *)fp->uf_name)) {
-            continue;
-          }
-          if (!func_name_refcount(fp->uf_name)) {
-            list_func_head(fp, false, false);
-          }
-        }
-      }
+      list_functions(NULL);
     }
     eap->nextcmd = check_nextcmd(eap->arg);
     return;
@@ -1946,18 +1963,7 @@ void ex_function(exarg_T *eap)
       *p = c;
       if (regmatch.regprog != NULL) {
         regmatch.rm_ic = p_ic;
-
-        todo = (int)func_hashtab.ht_used;
-        for (hi = func_hashtab.ht_array; todo > 0 && !got_int; hi++) {
-          if (!HASHITEM_EMPTY(hi)) {
-            todo--;
-            fp = HI2UF(hi);
-            if (!isdigit(*fp->uf_name)
-                && vim_regexec(&regmatch, (char *)fp->uf_name, 0)) {
-              list_func_head(fp, false, false);
-            }
-          }
-        }
+        list_functions(&regmatch);
         vim_regfree(regmatch.regprog);
       }
     }
