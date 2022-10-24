@@ -211,13 +211,7 @@ static void diff_buf_clear(void)
 /// @return Its index or DB_COUNT if not found.
 static int diff_buf_idx(buf_T *buf)
 {
-  int idx;
-  for (idx = 0; idx < DB_COUNT; idx++) {
-    if (curtab->tp_diffbuf[idx] == buf) {
-      break;
-    }
-  }
-  return idx;
+  return diff_buf_idx_tp(buf, curtab);
 }
 
 /// Find buffer "buf" in the list of diff buffers for tab page "tp".
