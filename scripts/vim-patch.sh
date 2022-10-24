@@ -279,6 +279,53 @@ preprocess_patch() {
     "$file" > "$file".tmp && mv "$file".tmp "$file"
 }
 
+uncrustify_patch() {
+  local commit="$1"
+  local changed_files=()
+  while IFS='' read -r file; do changed_files+=("$file"); done < <(git diff-tree --name-only --no-commit-id -r "${commit}")
+
+  local patch_path=$NVIM_SOURCE_DIR/build/vim_patch
+  rm -rf "$patch_path"
+  mkdir -p "$patch_path"/{before,after,patch}
+
+  git checkout --quiet "$commit"~
+  for file in "${changed_files[@]}"; do
+    if [[ -e $file ]]; then
+      cp "$file" "$patch_path"/before
+    fi
+  done
+
+  git checkout --quiet "$commit"
+  for file in "${changed_files[@]}"; do
+    if [[ -e $file ]]; then
+      cp "$file" "$patch_path"/after
+    fi
+  done
+
+  # If the difference are drastic enough uncrustify may need to be used more
+  # than once. This is obviously a bug that needs to be fixed on uncrustify's
+  # end, but in the meantime this workaround is sufficient.
+  for _ in {1..2}; do
+    uncrustify -c "$NVIM_SOURCE_DIR"/src/uncrustify.cfg -q --replace --no-backup "$patch_path"/{before,after}/*.[ch]
+  done
+
+  for file in "${changed_files[@]}"; do
+    local basename
+    basename=$(basename "$file")
+    local before=$patch_path/before/$basename
+    local after=$patch_path/after/$basename
+    local patchfile="$patch_path"/patch/"$basename".patch
+    if [[ ! -e $before ]] || [[ ! -e $after ]]; then
+      continue
+    fi
+    git --no-pager diff --no-index --patch --unified=5 --color=never "$before" "$after" > "$patchfile"
+    sed -E "s|$before|/$file|g" -i "$patchfile"
+    sed -E "s|$after|/$file|g" -i "$patchfile"
+  done
+
+  cat "$patch_path"/patch/*.patch
+}
+
 get_vimpatch() {
   get_vim_sources
 
@@ -287,7 +334,12 @@ get_vimpatch() {
   msg_ok "Found Vim revision '${vim_commit}'."
 
   local patch_content
-  patch_content="$(git --no-pager show --unified=5 --color=never -1 --pretty=medium "${vim_commit}")"
+  if check_executable uncrustify; then
+    patch_content="$(uncrustify_patch "${vim_commit}")"
+    git switch --quiet master
+  else
+    patch_content="$(git --no-pager show --unified=5 --color=never -1 --pretty=medium "${vim_commit}")"
+  fi
 
   cd "${NVIM_SOURCE_DIR}"
 
