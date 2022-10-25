@@ -978,38 +978,28 @@ retry:
           if (read_buf_lnum > from) {
             size = 0;
           } else {
-            int n, ni;
-            long tlen;
-
-            tlen = 0;
+            size_t tlen = 0;
             for (;;) {
               p = (char_u *)ml_get(read_buf_lnum) + read_buf_col;
-              n = (int)STRLEN(p);
-              if ((int)tlen + n + 1 > size) {
+              size_t n = STRLEN(p);
+              if (tlen + n + 1 > (size_t)size) {
                 // Filled up to "size", append partial line.
                 // Change NL to NUL to reverse the effect done
                 // below.
-                n = (int)(size - tlen);
-                for (ni = 0; ni < n; ni++) {
-                  if (p[ni] == NL) {
-                    ptr[tlen++] = NUL;
-                  } else {
-                    ptr[tlen++] = (char)p[ni];
-                  }
-                }
+                n = (size_t)size - tlen;
+                memmove(ptr + tlen, p, n);
+                // NUL is represented as NL; convert
+                memchrsub(ptr + len, NL, NUL, n);
+                tlen += n;
                 read_buf_col += n;
                 break;
               }
 
               // Append whole line and new-line.  Change NL
               // to NUL to reverse the effect done below.
-              for (ni = 0; ni < n; ni++) {
-                if (p[ni] == NL) {
-                  ptr[tlen++] = NUL;
-                } else {
-                  ptr[tlen++] = (char)p[ni];
-                }
-              }
+              memmove(ptr + tlen, p, n);
+              memchrsub(ptr + len, NL, NUL, n);
+              tlen += n;
               ptr[tlen++] = NL;
               read_buf_col = 0;
               if (++read_buf_lnum > from) {
@@ -1018,7 +1008,7 @@ retry:
                 if (!curbuf->b_p_eol) {
                   tlen--;
                 }
-                size = tlen;
+                size = (int)tlen;
                 break;
               }
             }
@@ -3768,7 +3758,7 @@ static bool time_differs(const FileInfo *file_info, long mtime, long mtime_ns) F
          || file_info->stat.st_mtim.tv_sec - mtime > 1
          || mtime - file_info->stat.st_mtim.tv_sec > 1;
 #else
-         || (long)file_info->stat.st_mtim.tv_sec != mtime;
+         || file_info->stat.st_mtim.tv_sec != mtime;
 #endif
 }
 
