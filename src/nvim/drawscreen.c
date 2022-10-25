@@ -625,9 +625,6 @@ static void redr_title_texts(win_T *wp, ScreenGrid *grid, int col)
     int cell = (int)mb_string2cells(text);
     int hl_id = title_chunks.items[i].hl_id;
     int attr = hl_id ? syn_id2attr(hl_id) : 0;
-    if (title_chunks.size == 1) {
-      attr = wp->w_float_config.title_attr;
-    }
     grid_puts(grid, text, 0, col, attr);
     col += cell;
   }

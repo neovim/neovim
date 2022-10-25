@@ -349,21 +349,20 @@ static bool parse_float_bufpos(Array bufpos, lpos_T *out)
   return true;
 }
 
-static void parse_border_title(Object title, Object title_pos, Object width, FloatConfig *fconfig,
-                               Error *err)
+static void parse_border_title(Object title, Object title_pos, FloatConfig *fconfig, Error *err)
 {
   if (!parse_title_pos(title_pos, fconfig, err)) {
     return;
   }
 
-  int win_width = (int)width.data.integer;
   if (title.type == kObjectTypeString) {
     if (title.data.string.size == 0) {
       fconfig->title = false;
       return;
     }
+    int hl_id = syn_check_group(S_LEN("FloatBorderTitle"));
     kv_push(fconfig->title_chunks, ((VirtTextChunk){ .text = xstrdup(title.data.string.data),
-                                                     .hl_id = 0 }));
+                                                     .hl_id = hl_id }));
     fconfig->title_width = (int)mb_string2cells(title.data.string.data);
     fconfig->title = true;
     return;
@@ -379,8 +378,8 @@ static void parse_border_title(Object title, Object title_pos, Object width, Flo
     return;
   }
 
-  fconfig->title_chunks = parse_virt_text(title.data.array, err, &win_width);
-  fconfig->title_width = win_width;
+  fconfig->title_width = 0;
+  fconfig->title_chunks = parse_virt_text(title.data.array, err, &fconfig->title_width);
 
   fconfig->title = true;
   return;
@@ -405,11 +404,11 @@ static bool parse_title_pos(Object title_pos, FloatConfig *fconfig, Error *err)
 
   char *pos = title_pos.data.string.data;
 
-  if (striequal(pos, "left")) {
+  if (strequal(pos, "left")) {
     fconfig->title_pos = kAlignLeft;
-  } else if (striequal(pos, "center")) {
+  } else if (strequal(pos, "center")) {
     fconfig->title_pos = kAlignCenter;
-  } else if (striequal(pos, "right")) {
+  } else if (strequal(pos, "right")) {
     fconfig->title_pos = kAlignRight;
   } else {
     api_set_error(err, kErrorTypeValidation, "invalid title_pos value");
@@ -502,7 +501,7 @@ static void parse_border_style(Object style,  FloatConfig *fconfig, Error *err)
     String str = style.data.string;
     if (str.size == 0 || strequal(str.data, "none")) {
       fconfig->border = false;
-      // title should not work with border equal none
+      // title does not work with border equal none
       fconfig->title = false;
       return;
     }
@@ -706,7 +705,7 @@ static bool parse_float_config(Dict(float_config) *config, FloatConfig *fconfig,
       api_set_error(err, kErrorTypeException, "title must set with border");
       return false;
     }
-    parse_border_title(config->title, config->title_pos, config->width, fconfig, err);
+    parse_border_title(config->title, config->title_pos, fconfig, err);
     if (ERROR_SET(err)) {
       return false;
     }
