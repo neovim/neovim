@@ -127,8 +127,8 @@ Display matches for a search pattern while you type.
 
 This defines a key mapping.  More about that in the next section.  This
 defines the "Q" command to do formatting with the "gq" operator.  This is how
-it worked before Vim 5.0.  Otherwise the "Q" command starts Ex mode, but you
-will not need it.
+it worked before Vim 5.0.  Otherwise the "Q" command repeats the last recorded
+register.
 
 >
 	vnoremap _g y:exe "grep /" .. escape(@", '\\/') .. "/ *.c *.h"<CR>
