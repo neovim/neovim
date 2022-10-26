@@ -27,6 +27,7 @@ func Test_unlet_fails()
   call assert_fails("unlet l['k'", 'E111:')
   let d = {'k' : 1}
   call assert_fails("unlet d.k2", 'E716:')
+  call assert_fails("unlet {a};", 'E488:')
 endfunc
 
 func Test_unlet_env()

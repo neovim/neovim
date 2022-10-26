@@ -1658,6 +1658,20 @@ func Test_compound_assignment_operators()
       call assert_fails('let x .= "f"', 'E734')
       let x = !3.14
       call assert_equal(0.0, x)
+
+      " integer and float operations
+      let x = 1
+      let x *= 2.1
+      call assert_equal(2.1, x)
+      let x = 1
+      let x /= 0.25
+      call assert_equal(4.0, x)
+      let x = 1
+      call assert_fails('let x %= 0.25', 'E734:')
+      let x = 1
+      call assert_fails('let x .= 0.25', 'E734:')
+      let x = 1.0
+      call assert_fails('let x += [1.1]', 'E734:')
     endif
 
     " Test for environment variable
@@ -1839,6 +1853,9 @@ func Test_missing_end()
 
   " Missing 'in' in a :for statement
   call assert_fails('for i range(1) | endfor', 'E690:')
+
+  " Incorrect number of variables in for
+  call assert_fails('for [i,] in range(3) | endfor', 'E475:')
 endfunc
 
 " Test for deep nesting of if/for/while/try statements              {{{1

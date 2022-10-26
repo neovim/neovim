@@ -623,17 +623,17 @@ func Test_usercmd_custom()
     return "a\nb\n"
   endfunc
   command -nargs=* -complete=customlist,T1 TCmd1
-  call feedkeys(":T1 \<C-A>\<C-B>\"\<CR>", 'xt')
-  call assert_equal('"T1 ', @:)
+  call feedkeys(":TCmd1 \<C-A>\<C-B>\"\<CR>", 'xt')
+  call assert_equal('"TCmd1 ', @:)
   delcommand TCmd1
   delfunc T1
 
   func T2(a, c, p)
-    return ['a', 'b', 'c']
+    return {}
   endfunc
   command -nargs=* -complete=customlist,T2 TCmd2
-  call feedkeys(":T2 \<C-A>\<C-B>\"\<CR>", 'xt')
-  call assert_equal('"T2 ', @:)
+  call feedkeys(":TCmd2 \<C-A>\<C-B>\"\<CR>", 'xt')
+  call assert_equal('"TCmd2 ', @:)
   delcommand TCmd2
   delfunc T2
 endfunc

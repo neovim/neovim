@@ -2490,10 +2490,14 @@ bool tv_dict_equal(dict_T *const d1, dict_T *const d2, const bool ic, const bool
   if (d1 == d2) {
     return true;
   }
-  if (d1 == NULL || d2 == NULL) {
+  if (tv_dict_len(d1) != tv_dict_len(d2)) {
     return false;
   }
-  if (tv_dict_len(d1) != tv_dict_len(d2)) {
+  if (tv_dict_len(d1) == 0) {
+    // empty and NULL dicts are considered equal
+    return true;
+  }
+  if (d1 == NULL || d2 == NULL) {
     return false;
   }
 

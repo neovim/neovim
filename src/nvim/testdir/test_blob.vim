@@ -209,6 +209,7 @@ func Test_blob_add()
   call assert_equal(0z001122, b)
   call add(b, '51')
   call assert_equal(0z00112233, b)
+  call assert_equal(1, add(v:_null_blob, 0x22))
 
   call assert_fails('call add(b, [9])', 'E745:')
   call assert_fails('call add("", 0x01)', 'E897:')

@@ -1449,6 +1449,7 @@ char *get_lval(char *const name, typval_T *const rettv, lval_T *const lp, const 
           key[len] = prevval;
         }
         if (wrong) {
+          tv_clear(&var1);
           return NULL;
         }
       }
