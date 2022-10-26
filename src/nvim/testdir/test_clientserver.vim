@@ -147,7 +147,7 @@ func Test_client_server()
 
     " Edit files in separate tab pages
     call system(cmd .. ' --remote-tab Xfile1 Xfile2 Xfile3')
-    call assert_equal('3', remote_expr(name, 'tabpagenr("$")'))
+    call WaitForAssert({-> assert_equal('3', remote_expr(name, 'tabpagenr("$")'))})
     call assert_equal('Xfile2', remote_expr(name, 'bufname(tabpagebuflist(2)[0])'))
     eval name->remote_send(":%bw!\<CR>")
 
