@@ -1335,10 +1335,10 @@ void free_all_functions(void)
 /// @param[in]   len    length of "name", or -1 for NUL terminated.
 ///
 /// @return true if "name" looks like a builtin function name: starts with a
-/// lower case letter and doesn't contain AUTOLOAD_CHAR.
+/// lower case letter and doesn't contain AUTOLOAD_CHAR or ':'.
 static bool builtin_function(const char *name, int len)
 {
-  if (!ASCII_ISLOWER(name[0])) {
+  if (!ASCII_ISLOWER(name[0]) || name[1] == ':') {
     return false;
   }
 

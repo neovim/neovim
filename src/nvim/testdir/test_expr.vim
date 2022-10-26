@@ -46,6 +46,7 @@ func Test_dict()
   call assert_equal('zero', d[0])
   call assert_true(has_key(d, ''))
   call assert_true(has_key(d, 'a'))
+  call assert_fails("let i = has_key([], 'a')", 'E715:')
 
   let d[''] = 'none'
   let d['a'] = 'aaa'

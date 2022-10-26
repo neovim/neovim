@@ -32,6 +32,7 @@ func Test_list_slice()
   call assert_equal([1, 'as''d', [1, 2, function('strlen')], {'a': 1}], l[0:8])
   call assert_equal([], l[8:-1])
   call assert_equal([], l[0:-10])
+  call assert_equal([], v:_null_list[:2])
 endfunc
 
 " List identity
@@ -169,6 +170,19 @@ func Test_dict()
   call filter(d, 'v:key =~ ''[ac391]''')
   call assert_equal({'c': 'ccc', '1': 99, '3': 33, '-1': {'a': 1}}, d)
 
+  " duplicate key
+  call assert_fails("let d = {'k' : 10, 'k' : 20}", 'E721:')
+  " missing comma
+  call assert_fails("let d = {'k' : 10 'k' : 20}", 'E722:')
+  " missing curly brace
+  call assert_fails("let d = {'k' : 10,", 'E723:')
+  " invalid key
+  call assert_fails('let d = #{++ : 10}', 'E15:')
+  " wrong type for key
+  call assert_fails('let d={[] : 10}', 'E730:')
+  " undefined variable as value
+  call assert_fails("let d={'k' : i}", 'E121:')
+
   " allow key starting with number at the start, not a curly expression
   call assert_equal({'1foo': 77}, #{1foo: 77})
 
@@ -269,7 +283,7 @@ func Test_script_local_dict_func()
   unlet g:dict
 endfunc
 
-" Test removing items in la dictionary
+" Test removing items in a dictionary
 func Test_dict_func_remove()
   let d = {1:'a', 2:'b', 3:'c'}
   call assert_equal('b', remove(d, 2))
@@ -643,6 +657,11 @@ func Test_reverse_sort_uniq()
 
   call assert_fails('call reverse("")', 'E899:')
   call assert_fails('call uniq([1, 2], {x, y -> []})', 'E882:')
+  call assert_fails("call sort([1, 2], function('min'), 1)", "E715:")
+  call assert_fails("call sort([1, 2], function('invalid_func'))", "E700:")
+  call assert_fails("call sort([1, 2], function('min'))", "E702:")
+  call assert_equal(0, sort(v:_null_list))
+  call assert_equal(0, uniq(v:_null_list))
 endfunc
 
 " reduce a list or a blob
@@ -942,6 +961,9 @@ func Test_listdict_index()
   call assert_fails("let v = range(5)[2:[]]", 'E730:')
   call assert_fails("let v = range(5)[2:{-> 2}(]", 'E116:')
   call assert_fails("let v = range(5)[2:3", 'E111:')
+  call assert_fails("let l = insert([1,2,3], 4, 10)", 'E684:')
+  call assert_fails("let l = insert([1,2,3], 4, -10)", 'E684:')
+  call assert_fails("let l = insert([1,2,3], 4, [])", 'E745:')
 endfunc
 
 " Test for a null list
@@ -979,6 +1001,16 @@ func Test_null_list()
   lockvar l
   call assert_equal(1, islocked('l'))
   unlockvar l
+endfunc
+
+" Test for a null dict
+func Test_null_dict()
+  call assert_equal(0, items(v:_null_dict))
+  call assert_equal(0, keys(v:_null_dict))
+  call assert_equal(0, values(v:_null_dict))
+  call assert_false(has_key(v:_null_dict, 'k'))
+  call assert_fails("let l = [] + v:_null_list", 'E15:')
+  call assert_fails("let l = v:_null_list + []", 'E15:')
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab

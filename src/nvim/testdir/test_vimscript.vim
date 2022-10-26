@@ -1958,6 +1958,86 @@ func Test_float_conversion_errors()
   endif
 endfunc
 
+func Test_invalid_function_names()
+  " function name not starting with capital
+  let caught_e128 = 0
+  try
+    func! g:test()
+      echo "test"
+    endfunc
+  catch /E128:/
+    let caught_e128 = 1
+  endtry
+  call assert_equal(1, caught_e128)
+
+  " function name includes a colon
+  let caught_e884 = 0
+  try
+    func! b:test()
+      echo "test"
+    endfunc
+  catch /E884:/
+    let caught_e884 = 1
+  endtry
+  call assert_equal(1, caught_e884)
+
+  " function name folowed by #
+  let caught_e128 = 0
+  try
+    func! test2() "#
+      echo "test2"
+    endfunc
+  catch /E128:/
+    let caught_e128 = 1
+  endtry
+  call assert_equal(1, caught_e128)
+
+  " function name starting with/without "g:", buffer-local funcref.
+  function! g:Foo(n)
+    return 'called Foo(' . a:n . ')'
+  endfunction
+  let b:my_func = function('Foo')
+  call assert_equal('called Foo(1)', b:my_func(1))
+  call assert_equal('called Foo(2)', g:Foo(2))
+  call assert_equal('called Foo(3)', Foo(3))
+  delfunc g:Foo
+
+  " script-local function used in Funcref must exist.
+  let lines =<< trim END
+    func s:Testje()
+      return "foo"
+    endfunc
+    let Bar = function('s:Testje')
+    call assert_equal(0, exists('s:Testje'))
+    call assert_equal(1, exists('*s:Testje'))
+    call assert_equal(1, exists('Bar'))
+    call assert_equal(1, exists('*Bar'))
+  END
+  call writefile(lines, 'Xscript')
+  source Xscript
+  call delete('Xscript')
+endfunc
+
+" substring and variable name
+func Test_substring_var()
+  let str = 'abcdef'
+  let n = 3
+  call assert_equal('def', str[n:])
+  call assert_equal('abcd', str[:n])
+  call assert_equal('d', str[n:n])
+  unlet n
+  let nn = 3
+  call assert_equal('def', str[nn:])
+  call assert_equal('abcd', str[:nn])
+  call assert_equal('d', str[nn:nn])
+  unlet nn
+  let b:nn = 4
+  call assert_equal('ef', str[b:nn:])
+  call assert_equal('abcde', str[:b:nn])
+  call assert_equal('e', str[b:nn:b:nn])
+  unlet b:nn
+endfunc
+
 func Test_for_over_string()
   let res = ''
   for c in 'aéc̀d'

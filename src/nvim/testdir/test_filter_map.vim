@@ -86,6 +86,10 @@ func Test_map_filter_fails()
   call assert_fails('call filter([1], "42 +")', 'E15:')
   call assert_fails("let l = map('abc', '\"> \" . v:val')", 'E896:')
   call assert_fails("let l = filter('abc', '\"> \" . v:val')", 'E896:')
+  call assert_fails("let l = filter([1, 2, 3], '{}')", 'E728:')
+  call assert_fails("let l = filter({'k' : 10}, '{}')", 'E728:')
+  call assert_equal(0, map(v:_null_list, '"> " .. v:val'))
+  call assert_equal(0, map(v:_null_dict, '"> " .. v:val'))
 endfunc
 
 func Test_map_and_modify()

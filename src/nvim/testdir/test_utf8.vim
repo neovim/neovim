@@ -131,9 +131,13 @@ func Test_list2str_str2list_latin1()
 
   let save_encoding = &encoding
   " set encoding=latin1
-
+  
   let lres = str2list(s, 1)
   let sres = list2str(l, 1)
+  call assert_equal([65, 66, 67], str2list("ABC"))
+
+  " Try converting a list to a string in latin-1 encoding
+  call assert_equal([1, 2, 3], str2list(list2str([1, 2, 3])))
 
   let &encoding = save_encoding
   call assert_equal(l, lres)

@@ -1094,7 +1094,9 @@ static int item_compare2(const void *s1, const void *s2, bool keep_zero)
   tv_clear(&argv[1]);
 
   if (res == FAIL) {
+    // XXX: ITEM_COMPARE_FAIL is unused
     res = ITEM_COMPARE_FAIL;
+    sortinfo->item_compare_func_err = true;
   } else {
     res = (int)tv_get_number_chk(&rettv, &sortinfo->item_compare_func_err);
     if (res > 0) {
@@ -1257,7 +1259,7 @@ static void do_sort_uniq(typval_T *argvars, typval_T *rettv, bool sort)
         } else {
           li = TV_LIST_ITEM_NEXT(l, li);
         }
-        if (info.item_compare_func_err) {  // -V547
+        if (info.item_compare_func_err) {
           emsg(_("E882: Uniq compare function failed"));
           break;
         }
