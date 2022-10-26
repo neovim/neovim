@@ -1908,6 +1908,13 @@ int do_write(exarg_T *eap)
       fname = curbuf->b_sfname;
     }
 
+    if (eap->mkdir_p) {
+      if (os_mkdir_if_absent(ffname) < 0) {
+        retval = FAIL;
+        goto theend;
+      }
+    }
+
     name_was_missing = curbuf->b_ffname == NULL;
     retval = buf_write(curbuf, ffname, fname, eap->line1, eap->line2,
                        eap, eap->append, eap->forceit, true, false);
