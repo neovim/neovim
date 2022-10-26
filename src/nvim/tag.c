@@ -3289,10 +3289,12 @@ int set_tagstack(win_T *wp, const dict_T *d, int action)
   if ((di = tv_dict_find(d, "curidx", -1)) != NULL) {
     tagstack_set_curidx(wp, (int)tv_get_number(&di->di_tv) - 1);
   }
+
   if (action == 't') {  // truncate the stack
     taggy_T *const tagstack = wp->w_tagstack;
     const int tagstackidx = wp->w_tagstackidx;
     int tagstacklen = wp->w_tagstacklen;
+
     // delete all the tag stack entries above the current entry
     while (tagstackidx < tagstacklen) {
       tagstack_clear_entry(&tagstack[--tagstacklen]);

@@ -1915,6 +1915,268 @@ func Test_bufadd_bufload()
   call delete('XotherName')
 endfunc
 
+func Test_range()
+  " destructuring
+  let [x, y] = range(2)
+  call assert_equal([0, 1], [x, y])
+
+  " index
+  call assert_equal(4, range(1, 10)[3])
+
+  " add()
+  call assert_equal([0, 1, 2, 3], add(range(3), 3))
+  call assert_equal([0, 1, 2, [0, 1, 2]], add([0, 1, 2], range(3)))
+  call assert_equal([0, 1, 2, [0, 1, 2]], add(range(3), range(3)))
+
+  " append()
+  new
+  call append('.', range(5))
+  call assert_equal(['', '0', '1', '2', '3', '4'], getline(1, '$'))
+  bwipe!
+
+  " appendbufline()
+  new
+  call appendbufline(bufnr(''), '.', range(5))
+  call assert_equal(['0', '1', '2', '3', '4', ''], getline(1, '$'))
+  bwipe!
+
+  " call()
+  func TwoArgs(a, b)
+    return [a:a, a:b]
+  endfunc
+  call assert_equal([0, 1], call('TwoArgs', range(2)))
+
+  " col()
+  new
+  call setline(1, ['foo', 'bar'])
+  call assert_equal(2, col(range(1, 2)))
+  bwipe!
+
+  " complete()
+  execute "normal! a\<C-r>=[complete(col('.'), range(10)), ''][1]\<CR>"
+  " complete_info()
+  execute "normal! a\<C-r>=[complete(col('.'), range(10)), ''][1]\<CR>\<C-r>=[complete_info(range(5)), ''][1]\<CR>"
+
+  " copy()
+  call assert_equal([1, 2, 3], copy(range(1, 3)))
+
+  " count()
+  call assert_equal(0, count(range(0), 3))
+  call assert_equal(0, count(range(2), 3))
+  call assert_equal(1, count(range(5), 3))
+
+  " cursor()
+  new
+  call setline(1, ['aaa', 'bbb', 'ccc'])
+  call cursor(range(1, 2))
+  call assert_equal([2, 1], [col('.'), line('.')])
+  bwipe!
+
+  " deepcopy()
+  call assert_equal([1, 2, 3], deepcopy(range(1, 3)))
+
+  " empty()
+  call assert_true(empty(range(0)))
+  call assert_false(empty(range(2)))
+
+  " execute()
+  new
+  call setline(1, ['aaa', 'bbb', 'ccc'])
+  call execute(range(3))
+  call assert_equal(2, line('.'))
+  bwipe!
+
+  " extend()
+  call assert_equal([1, 2, 3, 4], extend([1], range(2, 4)))
+  call assert_equal([1, 2, 3, 4], extend(range(1, 1), range(2, 4)))
+  call assert_equal([1, 2, 3, 4], extend(range(1, 1), [2, 3, 4]))
+
+  " filter()
+  call assert_equal([1, 3], filter(range(5), 'v:val % 2'))
+
+  " funcref()
+  call assert_equal([0, 1], funcref('TwoArgs', range(2))())
+
+  " function()
+  call assert_equal([0, 1], function('TwoArgs', range(2))())
+
+  " garbagecollect()
+  let thelist = [1, range(2), 3]
+  let otherlist = range(3)
+  call test_garbagecollect_now()
+
+  " get()
+  call assert_equal(4, get(range(1, 10), 3))
+  call assert_equal(-1, get(range(1, 10), 42, -1))
+
+  " index()
+  call assert_equal(1, index(range(1, 5), 2))
+
+  " inputlist()
+  " call test_feedinput("1\<CR>")
+  call nvim_input('1<CR>')
+  call assert_equal(1, inputlist(range(10)))
+  " call test_feedinput("1\<CR>")
+  call nvim_input('1<CR>')
+  call assert_equal(1, inputlist(range(3, 10)))
+
+  " call assert_equal('[0,1,2,3]', json_encode(range(4)))
+  call assert_equal('[0, 1, 2, 3]', json_encode(range(4)))
+
+  " insert()
+  call assert_equal([42, 1, 2, 3, 4, 5], insert(range(1, 5), 42))
+  call assert_equal([42, 1, 2, 3, 4, 5], insert(range(1, 5), 42, 0))
+  call assert_equal([1, 42, 2, 3, 4, 5], insert(range(1, 5), 42, 1))
+  call assert_equal([1, 2, 3, 4, 42, 5], insert(range(1, 5), 42, 4))
+  call assert_equal([1, 2, 3, 4, 42, 5], insert(range(1, 5), 42, -1))
+  call assert_equal([1, 2, 3, 4, 5, 42], insert(range(1, 5), 42, 5))
+
+  " join()
+  call assert_equal('0 1 2 3 4', join(range(5)))
+
+  " len()
+  call assert_equal(0, len(range(0)))
+  call assert_equal(2, len(range(2)))
+  call assert_equal(5, len(range(0, 12, 3)))
+  call assert_equal(4, len(range(3, 0, -1)))
+
+  " list2str()
+  call assert_equal('ABC', list2str(range(65, 67)))
+
+  " lock()
+  let thelist = range(5)
+  lockvar thelist
+
+  " map()
+  call assert_equal([0, 2, 4, 6, 8], map(range(5), 'v:val * 2'))
+
+  " match()
+  call assert_equal(3, match(range(5), 3))
+
+  " matchaddpos()
+  highlight MyGreenGroup ctermbg=green guibg=green
+  call matchaddpos('MyGreenGroup', range(line('.'), line('.')))
+
+  " matchend()
+  call assert_equal(4, matchend(range(5), '4'))
+  call assert_equal(3, matchend(range(1, 5), '4'))
+  call assert_equal(-1, matchend(range(1, 5), '42'))
+
+  " matchstrpos()
+  call assert_equal(['4', 4, 0, 1], matchstrpos(range(5), '4'))
+  call assert_equal(['4', 3, 0, 1], matchstrpos(range(1, 5), '4'))
+  call assert_equal(['', -1, -1, -1], matchstrpos(range(1, 5), '42'))
+
+  " max() reverse()
+  call assert_equal(0, max(range(0)))
+  call assert_equal(0, max(range(10, 9)))
+  call assert_equal(9, max(range(10)))
+  call assert_equal(18, max(range(0, 20, 3)))
+  call assert_equal(20, max(range(20, 0, -3)))
+  call assert_equal(99999, max(range(100000)))
+  call assert_equal(99999, max(range(99999, 0, -1)))
+  call assert_equal(99999, max(reverse(range(100000))))
+  call assert_equal(99999, max(reverse(range(99999, 0, -1))))
+
+  " min() reverse()
+  call assert_equal(0, min(range(0)))
+  call assert_equal(0, min(range(10, 9)))
+  call assert_equal(5, min(range(5, 10)))
+  call assert_equal(5, min(range(5, 10, 3)))
+  call assert_equal(2, min(range(20, 0, -3)))
+  call assert_equal(0, min(range(100000)))
+  call assert_equal(0, min(range(99999, 0, -1)))
+  call assert_equal(0, min(reverse(range(100000))))
+  call assert_equal(0, min(reverse(range(99999, 0, -1))))
+
+  " remove()
+  call assert_equal(1, remove(range(1, 10), 0))
+  call assert_equal(2, remove(range(1, 10), 1))
+  call assert_equal(9, remove(range(1, 10), 8))
+  call assert_equal(10, remove(range(1, 10), 9))
+  call assert_equal(10, remove(range(1, 10), -1))
+  call assert_equal([3, 4, 5], remove(range(1, 10), 2, 4))
+
+  " repeat()
+  call assert_equal([0, 1, 2, 0, 1, 2], repeat(range(3), 2))
+  call assert_equal([0, 1, 2], repeat(range(3), 1))
+  call assert_equal([], repeat(range(3), 0))
+  call assert_equal([], repeat(range(5, 4), 2))
+  call assert_equal([], repeat(range(5, 4), 0))
+
+  " reverse()
+  call assert_equal([2, 1, 0], reverse(range(3)))
+  call assert_equal([0, 1, 2, 3], reverse(range(3, 0, -1)))
+  call assert_equal([9, 8, 7, 6, 5, 4, 3, 2, 1, 0], reverse(range(10)))
+  call assert_equal([20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10], reverse(range(10, 20)))
+  call assert_equal([16, 13, 10], reverse(range(10, 18, 3)))
+  call assert_equal([19, 16, 13, 10], reverse(range(10, 19, 3)))
+  call assert_equal([19, 16, 13, 10], reverse(range(10, 20, 3)))
+  call assert_equal([11, 14, 17, 20], reverse(range(20, 10, -3)))
+  call assert_equal([], reverse(range(0)))
+
+  " TODO: setpos()
+  " new
+  " call setline(1, repeat([''], bufnr('')))
+  " call setline(bufnr('') + 1, repeat('x', bufnr('') * 2 + 6))
+  " call setpos('x', range(bufnr(''), bufnr('') + 3))
+  " bwipe!
+
+  " setreg()
+  call setreg('a', range(3))
+  call assert_equal("0\n1\n2\n", getreg('a'))
+
+  " settagstack()
+  call settagstack(1, #{items : range(4)})
+  
+  " sign_define()
+  call assert_fails("call sign_define(range(5))", "E715:")
+  call assert_fails("call sign_placelist(range(5))", "E715:")
+
+  " sign_undefine()
+  " call assert_fails("call sign_undefine(range(5))", "E908:")
+  call assert_fails("call sign_undefine(range(5))", "E155:")
+
+  " sign_unplacelist()
+  call assert_fails("call sign_unplacelist(range(5))", "E715:")
+
+  " sort()
+  call assert_equal([0, 1, 2, 3, 4, 5], sort(range(5, 0, -1)))
+
+  " 'spellsuggest'
+  func MySuggest()
+    return range(3)
+  endfunc
+  set spell spellsuggest=expr:MySuggest()
+  call assert_equal([], spellsuggest('baord', 3))
+  set nospell spellsuggest&
+
+  " string()
+  call assert_equal('[0, 1, 2, 3, 4]', string(range(5)))
+
+  " taglist() with 'tagfunc'
+  func TagFunc(pattern, flags, info)
+    return range(10)
+  endfunc
+  set tagfunc=TagFunc
+  call assert_fails("call taglist('asdf')", 'E987:')
+  set tagfunc=
+  
+  " term_start()
+  if has('terminal')
+    call assert_fails('call term_start(range(3, 4))', 'E474:')
+    let g:terminal_ansi_colors = range(16)
+    call assert_fails('call term_start("ls", #{term_finish: "close"})', 'E475:')
+    unlet g:terminal_ansi_colors
+  endif
+
+  " type()
+  call assert_equal(v:t_list, type(range(5)))
+
+  " uniq()
+  call assert_equal([0, 1, 2, 3, 4], uniq(range(5)))
+endfunc
+
 " Test for the eval() function
 func Test_eval()
   call assert_fails("call eval('5 a')", 'E488:')
