@@ -87,6 +87,9 @@ func Test_user_func()
   call assert_fails("call extend(g:, {'max': function('min')})", 'E704')
   call assert_equal(3, max([1, 2, 3]))
 
+  " Try to overwrite an user defined function with a function reference
+  call assert_fails("let Expr1 = function('min')", 'E705:')
+
   " Regression: the first line below used to throw ?E110: Missing ')'?
   " Second is here just to prove that this line is correct when not skipping
   " rhs of &&.

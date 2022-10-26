@@ -31,6 +31,7 @@ func Test_list_slice()
   call assert_equal([1, 'as''d', [1, 2, function('strlen')]], l[:-2])
   call assert_equal([1, 'as''d', [1, 2, function('strlen')], {'a': 1}], l[0:8])
   call assert_equal([], l[8:-1])
+  call assert_equal([], l[0:-10])
 endfunc
 
 " List identity
@@ -104,6 +105,8 @@ func Test_list_range_assign()
   let l = [0]
   let l[:] = [1, 2]
   call assert_equal([1, 2], l)
+  let l[-4:-1] = [5, 6]
+  call assert_equal([5, 6], l)
 endfunc
 
 " Test removing items in list
@@ -574,6 +577,18 @@ func Test_let_lock_list()
   unlet l
 endfunc
 
+" Locking part of the list
+func Test_let_lock_list_items()
+  let l = [1, 2, 3, 4]
+  lockvar l[2:]
+  call assert_equal(0, islocked('l[0]'))
+  call assert_equal(1, islocked('l[2]'))
+  call assert_equal(1, islocked('l[3]'))
+  call assert_fails('let l[2] = 10', 'E741:')
+  call assert_fails('let l[3] = 20', 'E741:')
+  unlet l
+endfunc
+
 " lockvar/islocked() triggering script autoloading
 func Test_lockvar_script_autoload()
   let old_rtp = &rtp
@@ -697,6 +712,12 @@ func Test_listdict_compare()
   call assert_true(d == d)
   call assert_false(l != deepcopy(l))
   call assert_false(d != deepcopy(d))
+
+  " comparison errors
+  call assert_fails('echo [1, 2] =~ {}', 'E691:')
+  call assert_fails('echo [1, 2] =~ [1, 2]', 'E692:')
+  call assert_fails('echo {} =~ 5', 'E735:')
+  call assert_fails('echo {} =~ {}', 'E736:')
 endfunc
 
   " compare complex recursively linked list and dict
@@ -870,6 +891,59 @@ func Test_scope_dict()
   call s:check_scope_dict('v', v:true)
 endfunc
 
+" Test for deep nesting of lists (> 100)
+func Test_deep_nested_list()
+  let deep_list = []
+  let l = deep_list
+  for i in range(102)
+    let newlist = []
+    call add(l, newlist)
+    let l = newlist
+  endfor
+  call add(l, 102)
+
+  call assert_fails('let m = deepcopy(deep_list)', 'E698:')
+  call assert_fails('lockvar 110 deep_list', 'E743:')
+  call assert_fails('unlockvar 110 deep_list', 'E743:')
+  " Nvim implements :echo very differently
+  " call assert_fails('let x = execute("echo deep_list")', 'E724:')
+  call test_garbagecollect_now()
+  unlet deep_list
+endfunc
+
+" Test for deep nesting of dicts (> 100)
+func Test_deep_nested_dict()
+  let deep_dict = {}
+  let d = deep_dict
+  for i in range(102)
+    let newdict = {}
+    let d.k = newdict
+    let d = newdict
+  endfor
+  let d.k = 'v'
+
+  call assert_fails('let m = deepcopy(deep_dict)', 'E698:')
+  call assert_fails('lockvar 110 deep_dict', 'E743:')
+  call assert_fails('unlockvar 110 deep_dict', 'E743:')
+  " Nvim implements :echo very differently
+  " call assert_fails('let x = execute("echo deep_dict")', 'E724:')
+  call test_garbagecollect_now()
+  unlet deep_dict
+endfunc
+
+" List and dict indexing tests
+func Test_listdict_index()
+  call assert_fails('echo function("min")[0]', 'E695:')
+  call assert_fails('echo v:true[0]', 'E909:')
+  let d = {'k' : 10}
+  call assert_fails('echo d.', 'E15:')
+  call assert_fails('echo d[1:2]', 'E719:')
+  call assert_fails("let v = [4, 6][{-> 1}]", 'E729:')
+  call assert_fails("let v = range(5)[2:[]]", 'E730:')
+  call assert_fails("let v = range(5)[2:{-> 2}(]", 'E116:')
+  call assert_fails("let v = range(5)[2:3", 'E111:')
+endfunc
+
 " Test for a null list
 func Test_null_list()
   let l = v:_null_list
@@ -906,3 +980,5 @@ func Test_null_list()
   call assert_equal(1, islocked('l'))
   unlockvar l
 endfunc
+
+" vim: shiftwidth=2 sts=2 expandtab

@@ -617,6 +617,27 @@ func Test_command_list()
   call assert_equal("\nNo user-defined commands found", execute('command'))
 endfunc
 
+" Test for a custom user completion returning the wrong value type
+func Test_usercmd_custom()
+  func T1(a, c, p)
+    return "a\nb\n"
+  endfunc
+  command -nargs=* -complete=customlist,T1 TCmd1
+  call feedkeys(":T1 \<C-A>\<C-B>\"\<CR>", 'xt')
+  call assert_equal('"T1 ', @:)
+  delcommand TCmd1
+  delfunc T1
+
+  func T2(a, c, p)
+    return ['a', 'b', 'c']
+  endfunc
+  command -nargs=* -complete=customlist,T2 TCmd2
+  call feedkeys(":T2 \<C-A>\<C-B>\"\<CR>", 'xt')
+  call assert_equal('"T2 ', @:)
+  delcommand TCmd2
+  delfunc T2
+endfunc
+
 func Test_delcommand_buffer()
   command Global echo 'global'
   command -buffer OneBuffer echo 'one'

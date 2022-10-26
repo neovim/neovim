@@ -1198,6 +1198,33 @@ func Test_diff_maintains_change_mark()
   delfunc DiffMaintainsChangeMark
 endfunc
 
+" Test for 'patchexpr'
+func Test_patchexpr()
+  let g:patch_args = []
+  func TPatch()
+    call add(g:patch_args, readfile(v:fname_in))
+    call add(g:patch_args, readfile(v:fname_diff))
+    call writefile(['output file'], v:fname_out)
+  endfunc
+  set patchexpr=TPatch()
+
+  call writefile(['input file'], 'Xinput')
+  call writefile(['diff file'], 'Xdiff')
+  %bwipe!
+  edit Xinput
+  diffpatch Xdiff
+  call assert_equal('output file', getline(1))
+  call assert_equal('Xinput.new', bufname())
+  call assert_equal(2, winnr('$'))
+  call assert_true(&diff)
+
+  call delete('Xinput')
+  call delete('Xdiff')
+  set patchexpr&
+  delfunc TPatch
+  %bwipe!
+endfunc
+
 func Test_diff_rnu()
   CheckScreendump
 

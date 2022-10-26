@@ -35,6 +35,7 @@ func Test_list_method()
   call assert_equal(v:t_list, l->type())
   call assert_equal([1, 2, 3], [1, 1, 2, 3, 3]->uniq())
   call assert_fails('eval l->values()', 'E715:')
+  call assert_fails('echo []->len', 'E107:')
 endfunc
 
 func Test_dict_method()

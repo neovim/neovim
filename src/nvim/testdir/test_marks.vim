@@ -91,6 +91,15 @@ func Test_setpos()
   call assert_equal([0, 1, 21341234, 0], getpos("'a"))
   call assert_equal(4, virtcol("'a"))
 
+  " Test with invalid buffer number, line number and column number
+  call cursor(2, 2)
+  call setpos('.', [-1, 1, 1, 0])
+  call assert_equal([2, 2], [line('.'), col('.')])
+  call setpos('.', [0, -1, 1, 0])
+  call assert_equal([2, 2], [line('.'), col('.')])
+  call setpos('.', [0, 1, -1, 0])
+  call assert_equal([2, 2], [line('.'), col('.')])
+
   bwipe!
   call win_gotoid(twowin)
   bwipe!
