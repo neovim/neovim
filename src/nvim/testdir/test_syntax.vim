@@ -171,6 +171,10 @@ func Test_syntax_list()
   let a = execute('syntax list')
   call assert_equal("\nNo Syntax items defined for this buffer", a)
 
+  syntax keyword Type int containedin=g1 skipwhite skipempty skipnl nextgroup=Abc
+  let exp = "Type           xxx containedin=g1  nextgroup=Abc  skipnl skipwhite skipempty int"
+  call assert_equal(exp, split(execute("syntax list"), "\n")[1])
+
   bd
 endfunc
 

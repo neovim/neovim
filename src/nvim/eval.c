@@ -1449,6 +1449,7 @@ char *get_lval(char *const name, typval_T *const rettv, lval_T *const lp, const 
           key[len] = prevval;
         }
         if (wrong) {
+          tv_clear(&var1);
           return NULL;
         }
       }
@@ -4785,20 +4786,20 @@ void filter_map(typval_T *argvars, typval_T *rettv, int map)
   int save_did_emsg;
   int idx = 0;
 
+  // Always return the first argument, also on failure.
+  tv_copy(&argvars[0], rettv);
+
   if (argvars[0].v_type == VAR_BLOB) {
-    tv_copy(&argvars[0], rettv);
     if ((b = argvars[0].vval.v_blob) == NULL) {
       return;
     }
   } else if (argvars[0].v_type == VAR_LIST) {
-    tv_copy(&argvars[0], rettv);
     if ((l = argvars[0].vval.v_list) == NULL
         || (!map
             && var_check_lock(tv_list_locked(l), arg_errmsg, TV_TRANSLATE))) {
       return;
     }
   } else if (argvars[0].v_type == VAR_DICT) {
-    tv_copy(&argvars[0], rettv);
     if ((d = argvars[0].vval.v_dict) == NULL
         || (!map && var_check_lock(d->dv_lock, arg_errmsg, TV_TRANSLATE))) {
       return;

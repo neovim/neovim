@@ -46,6 +46,7 @@ func Test_dict()
   call assert_equal('zero', d[0])
   call assert_true(has_key(d, ''))
   call assert_true(has_key(d, 'a'))
+  call assert_fails("let i = has_key([], 'a')", 'E715:')
 
   let d[''] = 'none'
   let d['a'] = 'aaa'
@@ -96,13 +97,6 @@ func Test_loop_over_null_list()
   for i in null_list
     call assert_report('should not get here')
   endfor
-endfunc
-
-func Test_compare_null_dict()
-  call assert_fails('let x = v:_null_dict[10]')
-  call assert_equal({}, {})
-  call assert_equal(v:_null_dict, v:_null_dict)
-  call assert_notequal({}, v:_null_dict)
 endfunc
 
 func Test_set_reg_null_list()

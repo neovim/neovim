@@ -1094,7 +1094,9 @@ static int item_compare2(const void *s1, const void *s2, bool keep_zero)
   tv_clear(&argv[1]);
 
   if (res == FAIL) {
+    // XXX: ITEM_COMPARE_FAIL is unused
     res = ITEM_COMPARE_FAIL;
+    sortinfo->item_compare_func_err = true;
   } else {
     res = (int)tv_get_number_chk(&rettv, &sortinfo->item_compare_func_err);
     if (res > 0) {
@@ -1257,7 +1259,7 @@ static void do_sort_uniq(typval_T *argvars, typval_T *rettv, bool sort)
         } else {
           li = TV_LIST_ITEM_NEXT(l, li);
         }
-        if (info.item_compare_func_err) {  // -V547
+        if (info.item_compare_func_err) {
           emsg(_("E882: Uniq compare function failed"));
           break;
         }
@@ -2488,10 +2490,14 @@ bool tv_dict_equal(dict_T *const d1, dict_T *const d2, const bool ic, const bool
   if (d1 == d2) {
     return true;
   }
-  if (d1 == NULL || d2 == NULL) {
+  if (tv_dict_len(d1) != tv_dict_len(d2)) {
     return false;
   }
-  if (tv_dict_len(d1) != tv_dict_len(d2)) {
+  if (tv_dict_len(d1) == 0) {
+    // empty and NULL dicts are considered equal
+    return true;
+  }
+  if (d1 == NULL || d2 == NULL) {
     return false;
   }
 
