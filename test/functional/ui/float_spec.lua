@@ -1718,11 +1718,11 @@ describe('float window', function()
 
     it('validates title title_pos', function()
       local buf = meths.create_buf(false,false)
-      eq("title must set with border",
+      eq("title requires border to be set",
          pcall_err(meths.open_win,buf, false, {
           relative='editor', width=9, height=2, row=2, col=5, title='Title',
          }))
-      eq("title_pos must set with title",
+      eq("title_pos requires title to be set",
          pcall_err(meths.open_win,buf, false, {
           relative='editor', width=9, height=2, row=2, col=5,
           border='single', title_pos='left',

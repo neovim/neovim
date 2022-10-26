@@ -616,7 +616,7 @@ int update_screen(void)
   return OK;
 }
 
-static void redr_title_texts(win_T *wp, ScreenGrid *grid, int col)
+static void win_border_redr_title(win_T *wp, ScreenGrid *grid, int col)
 {
   VirtText title_chunks = wp->w_float_config.title_chunks;
 
@@ -652,30 +652,22 @@ static void win_redr_border(win_T *wp)
       grid_put_schar(grid, 0, 0, chars[0], attrs[0]);
     }
 
+    for (int i = 0; i < icol; i++) {
+      grid_put_schar(grid, 0, i + adj[3], chars[1], attrs[1]);
+    }
+
     if (wp->w_float_config.title) {
       int title_col = 0;
       int title_width = wp->w_float_config.title_width;
       AlignTextPos title_pos = wp->w_float_config.title_pos;
 
-      if (title_pos == kAlignLeft || title_pos == kAlignRight) {
+      if (title_pos == kAlignCenter) {
+        title_col = (icol - title_width) / 2 + 1;
+      } else {
         title_col = title_pos == kAlignLeft ? 1 : icol - title_width + 1;
-        int start_col = title_pos == kAlignLeft ? title_width : 0;
-
-        for (int i = start_col; i < icol; i++) {
-          grid_put_schar(grid, 0, i + adj[3], chars[1], attrs[1]);
-        }
-      } else if (title_pos == kAlignCenter) {
-        int text_center = title_width / 2;
-        int col_center = icol / 2;
-        title_col = col_center - text_center + 1;
-        for (int i = 0; i < icol; i++) {
-          if (i < title_col || i >= title_col + title_width - 1) {
-            grid_put_schar(grid, 0, i + adj[3], chars[1], attrs[1]);
-          }
-        }
       }
 
-      redr_title_texts(wp, grid, title_col);
+      win_border_redr_title(wp, grid, title_col);
     } else {
       for (int i = 0; i < icol; i++) {
         grid_put_schar(grid, 0, i + adj[3], chars[1], attrs[1]);
