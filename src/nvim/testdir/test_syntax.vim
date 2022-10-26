@@ -363,6 +363,64 @@ func Test_syntax_invalid_arg()
   call assert_fails('syntax sync x', 'E404:')
   call assert_fails('syntax keyword Abc a[', 'E789:')
   call assert_fails('syntax keyword Abc a[bc]d', 'E890:')
+
+  let caught_393 = 0
+  try
+    syntax keyword cMyItem grouphere G1
+  catch /E393:/
+    let caught_393 = 1
+  endtry
+  call assert_equal(1, caught_393)
+
+  let caught_394 = 0
+  try
+    syntax sync match Abc grouphere MyItem "abc"'
+  catch /E394:/
+    let caught_394 = 1
+  endtry
+  call assert_equal(1, caught_394)
+
+  " Test for too many \z\( and unmatched \z\(
+  " Not able to use assert_fails() here because both E50:/E879: and E475:
+  " messages are emitted.
+  set regexpengine=1
+  let caught_52 = 0
+  try
+    syntax region MyRegion start='\z\(' end='\*/'
+  catch /E52:/
+    let caught_52 = 1
+  endtry
+  call assert_equal(1, caught_52)
+
+  let caught_50 = 0
+  try
+    let cmd = "syntax region MyRegion start='"
+    let cmd ..= repeat("\\z\\(.\\)", 10) .. "' end='\*/'"
+    exe cmd
+  catch /E50:/
+    let caught_50 = 1
+  endtry
+  call assert_equal(1, caught_50)
+
+  set regexpengine=2
+  let caught_54 = 0
+  try
+    syntax region MyRegion start='\z\(' end='\*/'
+  catch /E54:/
+    let caught_54 = 1
+  endtry
+  call assert_equal(1, caught_54)
+
+  let caught_879 = 0
+  try
+    let cmd = "syntax region MyRegion start='"
+    let cmd ..= repeat("\\z\\(.\\)", 10) .. "' end='\*/'"
+    exe cmd
+  catch /E879:/
+    let caught_879 = 1
+  endtry
+  call assert_equal(1, caught_879)
+  set regexpengine&
 endfunc
 
 func Test_syn_sync()
