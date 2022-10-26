@@ -2250,7 +2250,7 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char_u *fword, bool so
         ftp = (fromto_T *)gap->ga_data + sp->ts_curi++;
         if (*ftp->ft_from != *p) {
           // past possible matching entries
-          sp->ts_curi = (char_u)gap->ga_len;
+          sp->ts_curi = (int16_t)gap->ga_len;
           break;
         }
         if (STRNCMP(ftp->ft_from, p, STRLEN(ftp->ft_from)) == 0
