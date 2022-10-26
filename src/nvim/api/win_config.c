@@ -694,7 +694,7 @@ static bool parse_float_config(Dict(float_config) *config, FloatConfig *fconfig,
 
   if (HAS_KEY(config->title_pos)) {
     if (!HAS_KEY(config->title)) {
-      api_set_error(err, kErrorTypeException, "title_pos must set with title");
+      api_set_error(err, kErrorTypeException, "title_pos requires title to be set");
       return false;
     }
   }
