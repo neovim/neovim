@@ -7,6 +7,12 @@ func Test_read_only()
   catch
     call assert_true(v:exception =~ ':E795:')
   endtry
+  try
+    " this caused a crash
+    unlet v:errmsg
+  catch
+    call assert_true(v:exception =~ ':E795:')
+  endtry
 endfunc
 
 func Test_existing()
