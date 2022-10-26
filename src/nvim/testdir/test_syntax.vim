@@ -666,6 +666,24 @@ func Test_syntax_c()
   call delete('Xtest.c')
 endfun
 
+" Test \z(...) along with \z1
+func Test_syn_zsub()
+  new
+  syntax on
+  call setline(1,  'xxx start foo xxx not end foo xxx end foo xxx')
+  let l:expected = '    ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ    '
+
+  for l:re in [0, 1, 2]
+    " Example taken from :help :syn-ext-match
+    syntax region Z start="start \z(\I\i*\)" skip="not end \z1" end="end \z1"
+    eval AssertHighlightGroups(1, 1, l:expected, 1, 'regexp=' .. l:re)
+    syntax clear Z
+  endfor
+
+  set re&
+  bw!
+endfunc
+
 " Using \z() in a region with NFA failing should not crash.
 func Test_syn_wrong_z_one()
   new
