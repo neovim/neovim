@@ -2038,15 +2038,10 @@ func Test_range()
   call assert_equal(1, index(range(1, 5), 2))
 
   " inputlist()
-  " call test_feedinput("1\<CR>")
-  call nvim_input('1<CR>')
-  call assert_equal(1, inputlist(range(10)))
-  " call test_feedinput("1\<CR>")
-  call nvim_input('1<CR>')
-  call assert_equal(1, inputlist(range(3, 10)))
-
-  " call assert_equal('[0,1,2,3]', json_encode(range(4)))
-  call assert_equal('[0, 1, 2, 3]', json_encode(range(4)))
+  call feedkeys(":let result = inputlist(range(10))\<CR>1\<CR>", 'x')
+  call assert_equal(1, result)
+  call feedkeys(":let result = inputlist(range(3, 10))\<CR>1\<CR>", 'x')
+  call assert_equal(1, result)
 
   " insert()
   call assert_equal([42, 1, 2, 3, 4, 5], insert(range(1, 5), 42))
@@ -2058,6 +2053,10 @@ func Test_range()
 
   " join()
   call assert_equal('0 1 2 3 4', join(range(5)))
+
+  " json_encode()
+  " call assert_equal('[0,1,2,3]', json_encode(range(4)))
+  call assert_equal('[0, 1, 2, 3]', json_encode(range(4)))
 
   " len()
   call assert_equal(0, len(range(0)))
