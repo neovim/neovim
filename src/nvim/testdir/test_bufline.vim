@@ -2,6 +2,7 @@
 
 source shared.vim
 source screendump.vim
+source check.vim
 
 func Test_setbufline_getbufline()
   new
@@ -130,9 +131,8 @@ func Test_deletebufline()
 endfunc
 
 func Test_appendbufline_redraw()
-  if !CanRunVimInTerminal()
-    throw 'Skipped: cannot make screendumps'
-  endif
+  CheckScreendump
+
   let lines =<< trim END
     new foo
     let winnr = 'foo'->bufwinnr()

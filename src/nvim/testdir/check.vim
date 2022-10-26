@@ -39,6 +39,22 @@ func CheckFunction(name)
   endif
 endfunc
 
+" Command to check for the presence of an Ex command
+command -nargs=1 CheckCommand call CheckCommand(<f-args>)
+func CheckCommand(name)
+  if !exists(':' .. a:name)
+    throw 'Skipped: ' .. a:name .. ' command not supported'
+  endif
+endfunc
+
+" Command to check for the presence of a shell command
+command -nargs=1 CheckExecutable call CheckExecutable(<f-args>)
+func CheckExecutable(name)
+  if !executable(a:name)
+    throw 'Skipped: ' .. a:name .. ' program not executable'
+  endif
+endfunc
+
 " Command to check for the presence of python.  Argument should have been
 " obtained with PythonProg()
 func CheckPython(name)

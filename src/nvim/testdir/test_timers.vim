@@ -264,8 +264,9 @@ endfunc
 
 func Test_timer_peek_and_get_char()
   if !has('unix') && !has('gui_running')
-    return
+    throw 'Skipped: cannot feed low-level input'
   endif
+
   call timer_start(0, 'FeedAndPeek')
   let intr = timer_start(100, 'Interrupt')
   let c = getchar()
@@ -275,9 +276,9 @@ endfunc
 
 func Test_timer_getchar_zero()
   if has('win32') && !has('gui_running')
-    " Console: no low-level input
-    return
+    throw 'Skipped: cannot feed low-level input'
   endif
+  CheckFunction reltimefloat
 
   " Measure the elapsed time to avoid a hang when it fails.
   let start = reltime()

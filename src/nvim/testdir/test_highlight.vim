@@ -536,9 +536,7 @@ func Test_termguicolors()
 endfunc
 
 func Test_cursorline_after_yank()
-  if !CanRunVimInTerminal()
-    throw 'Skipped: cannot make screendumps'
-  endif
+  CheckScreendump
 
   call writefile([
 	\ 'set cul rnu',
@@ -578,9 +576,7 @@ func Test_put_before_cursorline()
 endfunc
 
 func Test_cursorline_with_visualmode()
-  if !CanRunVimInTerminal()
-    throw 'Skipped: cannot make screendumps'
-  endif
+  CheckScreendump
 
   call writefile([
 	\ 'set cul',

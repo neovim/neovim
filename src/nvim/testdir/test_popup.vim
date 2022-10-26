@@ -677,9 +677,9 @@ func Test_complete_CTRLN_startofbuffer()
 endfunc
 
 func Test_popup_and_window_resize()
-  if !has('terminal') || has('gui_running')
-    return
-  endif
+  CheckFeature terminal
+  CheckNotGui
+
   let h = winheight(0)
   if h < 15
     return
@@ -948,9 +948,9 @@ func Test_complete_o_tab()
 endfunc
 
 func Test_menu_only_exists_in_terminal()
-  if !exists(':tlmenu') || has('gui_running')
-    return
-  endif
+  CheckCommand tlmenu
+  CheckNotGui
+
   tlnoremenu  &Edit.&Paste<Tab>"+gP  <C-W>"+
   aunmenu *
   try
