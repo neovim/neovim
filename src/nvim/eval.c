@@ -7025,6 +7025,9 @@ char *set_cmdarg(exarg_T *eap, char *oldarg)
   if (eap->bad_char != 0) {
     len += 7 + 4;  // " ++bad=" + "keep" or "drop"
   }
+  if (eap->mkdir_p != 0) {
+    len += 4;
+  }
 
   const size_t newval_len = len + 1;
   char *newval = xmalloc(newval_len);
@@ -7058,6 +7061,11 @@ char *set_cmdarg(exarg_T *eap, char *oldarg)
     snprintf(newval + strlen(newval), newval_len, " ++bad=%c",
              eap->bad_char);
   }
+
+  if (eap->mkdir_p) {
+    STRCAT(newval, " ++p");
+  }
+
   vimvars[VV_CMDARG].vv_str = newval;
   return oldval;
 }
