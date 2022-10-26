@@ -1320,6 +1320,9 @@ func Test_balloon_show()
 
   " This won't do anything but must not crash either.
   call balloon_show('hi!')
+  if !has('gui_running')
+    call balloon_show(range(3))
+  endif
 endfunc
 
 func Test_shellescape()
