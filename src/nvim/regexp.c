@@ -240,7 +240,7 @@ static int get_char_class(char **pp)
  * Specific version of character class functions.
  * Using a table to keep this fast.
  */
-static short class_tab[256];
+static int16_t class_tab[256];
 
 #define     RI_DIGIT    0x01
 #define     RI_HEX      0x02
