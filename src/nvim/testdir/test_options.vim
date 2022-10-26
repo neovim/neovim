@@ -432,9 +432,8 @@ endfunc
 
 " Must be executed before other tests that set 'term'.
 func Test_000_term_option_verbose()
-  if has('nvim') || has('gui_running')
-    return
-  endif
+  throw "Skipped: Nvim does not support setting 'term'"
+  CheckNotGui
 
   call CheckWasNotSet('t_cm')
 

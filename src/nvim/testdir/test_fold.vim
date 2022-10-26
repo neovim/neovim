@@ -1,5 +1,6 @@
 " Test for folding
 
+source check.vim
 source view_util.vim
 source screendump.vim
 
@@ -727,9 +728,7 @@ func Test_fold_last_line_with_pagedown()
 endfunc
 
 func Test_folds_with_rnu()
-  if !CanRunVimInTerminal()
-    throw 'Skipped: cannot make screendumps'
-  endif
+  CheckScreendump
 
   call writefile([
 	\ 'set fdm=marker rnu foldcolumn=2',

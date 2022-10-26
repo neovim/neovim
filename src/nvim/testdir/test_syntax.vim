@@ -489,9 +489,8 @@ func Test_conceal()
 endfunc
 
 func Test_bg_detection()
-  if has('gui_running')
-    return
-  endif
+  CheckNotGui
+
   " auto-detection of &bg, make sure sure it isn't set anywhere before
   " this test
   hi Normal ctermbg=0

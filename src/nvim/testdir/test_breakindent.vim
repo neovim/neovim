@@ -4,9 +4,8 @@
 " while the test is run, the breakindent caching gets in its way.
 " It helps to change the tabstop setting and force a redraw (e.g. see
 " Test_breakindent08())
-if !exists('+breakindent')
-  throw 'Skipped: breakindent option not supported'
-endif
+source check.vim
+CheckOption breakindent
 
 source view_util.vim
 

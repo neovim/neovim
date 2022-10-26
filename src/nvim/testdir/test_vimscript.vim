@@ -1747,10 +1747,7 @@ func Test_funccall_garbage_collect()
 endfunc
 
 func Test_function_defined_line()
-    if has('gui_running')
-        " Can't catch the output of gvim.
-        return
-    endif
+    CheckNotGui
 
     let lines =<< trim [CODE]
     " F1

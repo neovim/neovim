@@ -16,8 +16,9 @@ endfunc
 " Test signal WINCH (window resize signal)
 func Test_signal_WINCH()
   throw 'skipped: Nvim cannot avoid terminal resize'
-  if has('gui_running') || !HasSignal('WINCH')
-    return
+  CheckNotGui
+  if !HasSignal('WINCH')
+    throw 'Skipped: WINCH signal not supported'
   endif
 
   " We do not actually want to change the size of the terminal.

@@ -1745,9 +1745,8 @@ endfunc
 func Test_confirm()
   " requires a UI to be active
   throw 'Skipped: use test/functional/vimscript/input_spec.lua'
-  if !has('unix') || has('gui_running')
-    return
-  endif
+  CheckUnix
+  CheckNotGui
 
   call feedkeys('o', 'L')
   let a = confirm('Press O to proceed')
