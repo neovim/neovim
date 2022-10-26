@@ -620,6 +620,12 @@ func Test_invalid_args()
   endfor
 
   if has('gui_gtk')
+    let out = split(system(GetVimCommand() .. ' --socketid'), "\n")
+    call assert_equal(1, v:shell_error)
+    call assert_match('^VIM - Vi IMproved .* (.*)$',          out[0])
+    call assert_equal('Argument missing after: "--socketid"', out[1])
+    call assert_equal('More info with: "vim -h"',             out[2])
+
     for opt in ['--socketid x', '--socketid 0xg']
       let out = split(system(GetVimCommand() .. ' ' .. opt), "\n")
       call assert_equal(1, v:shell_error)
@@ -627,6 +633,7 @@ func Test_invalid_args()
       call assert_equal('Invalid argument for: "--socketid"', out[1])
       call assert_equal('More info with: "vim -h"',           out[2])
     endfor
+
   endif
 endfunc
 
