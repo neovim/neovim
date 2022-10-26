@@ -1656,6 +1656,8 @@ func Test_compound_assignment_operators()
       call assert_equal(4.2, x)
       call assert_fails('let x %= 0.5', 'E734')
       call assert_fails('let x .= "f"', 'E734')
+      let x = !3.14
+      call assert_equal(0.0, x)
     endif
 
     " Test for environment variable
@@ -1940,6 +1942,20 @@ func Test_sfile_in_function()
   endfunc
   call Xfunc()
   delfunc Xfunc
+endfunc
+
+" Test for errors in converting to float from various types         {{{1
+func Test_float_conversion_errors()
+  if has('float')
+    call assert_fails('let x = 4.0 % 2.0', 'E804')
+    call assert_fails('echo 1.1[0]', 'E806')
+    call assert_fails('echo sort([function("min"), 1], "f")', 'E891:')
+    call assert_fails('echo 3.2 == "vim"', 'E892:')
+    call assert_fails('echo sort([[], 1], "f")', 'E893:')
+    call assert_fails('echo sort([{}, 1], "f")', 'E894:')
+    call assert_fails('echo 3.2 == v:true', 'E362:')
+    " call assert_fails('echo 3.2 == v:none', 'E907:')
+  endif
 endfunc
 
 func Test_for_over_string()

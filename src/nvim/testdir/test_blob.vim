@@ -88,6 +88,7 @@ func Test_blob_get_range()
   call assert_equal(0z0011223344, b[:])
   call assert_equal(0z0011223344, b[:-1])
   call assert_equal(0z, b[5:6])
+  call assert_equal(0z0011, b[-10:1])
 endfunc
 
 func Test_blob_get()

@@ -63,6 +63,7 @@ function Test_lambda_fails()
   call assert_equal(3, {a, b -> a + b}(1, 2))
   call assert_fails('echo {a, a -> a + a}(1, 2)', 'E853:')
   call assert_fails('echo {a, b -> a + b)}(1, 2)', 'E15:')
+  echo assert_fails('echo 10->{a -> a + 2}', 'E107:')
 endfunc
 
 func Test_not_lambda()

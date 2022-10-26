@@ -1199,6 +1199,7 @@ func Test_col()
   norm gg4|mx6|mY2|
   call assert_equal(2, col('.'))
   call assert_equal(7, col('$'))
+  call assert_equal(2, col('v'))
   call assert_equal(4, col("'x"))
   call assert_equal(6, col("'Y"))
   call assert_equal(2, [1, 2]->col())
@@ -1209,6 +1210,19 @@ func Test_col()
   call assert_equal(0, col([2, '$']))
   call assert_equal(0, col([1, 100]))
   call assert_equal(0, col([1]))
+
+  " test for getting the visual start column
+  func T()
+    let g:Vcol = col('v')
+    return ''
+  endfunc
+  let g:Vcol = 0
+  xmap <expr> <F2> T()
+  exe "normal gg3|ve\<F2>"
+  call assert_equal(3, g:Vcol)
+  xunmap <F2>
+  delfunc T
+
   bw!
 endfunc
 

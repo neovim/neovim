@@ -592,6 +592,11 @@ func Test_window_contents()
   call assert_equal(59, line("w0"))
   call assert_equal('59 ', s3)
 
+  %d
+  call setline(1, ['one', 'two', 'three'])
+  call assert_equal(1, line('w0'))
+  call assert_equal(3, line('w$'))
+
   bwipeout!
   call test_garbagecollect_now()
 endfunc

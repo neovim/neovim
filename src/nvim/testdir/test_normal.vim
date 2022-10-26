@@ -514,6 +514,7 @@ func Test_normal10_expand()
 
   " Test expand(`=...`) i.e. backticks expression expansion
   call assert_equal('5', expand('`=2+3`'))
+  call assert_equal('3.14', expand('`=3.14`'))
 
   " clean up
   bw!

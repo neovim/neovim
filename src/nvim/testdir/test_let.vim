@@ -276,6 +276,17 @@ func Test_let_errors()
   let s = "var"
   let var = 1
   call assert_fails('let {s}.1 = 2', 'E18:')
+  call assert_fails('let a[1] = 5', 'E121:')
+  let l = [[1,2]]
+  call assert_fails('let l[:][0] = [5]', 'E708:')
+  let d = {'k' : 4}
+  call assert_fails('let d.# = 5', 'E713:')
+  call assert_fails('let d.m += 5', 'E734:')
+  let l = [1, 2]
+  call assert_fails('let l[2] = 0', 'E684:')
+  call assert_fails('let l[0:1] = [1, 2, 3]', 'E710:')
+  call assert_fails('let l[-2:-3] = [3, 4]', 'E684:')
+  call assert_fails('let l[0:4] = [5, 6]', 'E711:')
 
   " This test works only when the language is English
   if v:lang == "C" || v:lang =~ '^[Ee]n'

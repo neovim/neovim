@@ -31,6 +31,7 @@ func Test_list_slice()
   call assert_equal([1, 'as''d', [1, 2, function('strlen')]], l[:-2])
   call assert_equal([1, 'as''d', [1, 2, function('strlen')], {'a': 1}], l[0:8])
   call assert_equal([], l[8:-1])
+  call assert_equal([], l[0:-10])
 endfunc
 
 " List identity
@@ -104,6 +105,8 @@ func Test_list_range_assign()
   let l = [0]
   let l[:] = [1, 2]
   call assert_equal([1, 2], l)
+  let l[-4:-1] = [5, 6]
+  call assert_equal([5, 6], l)
 endfunc
 
 " Test removing items in list
@@ -709,6 +712,12 @@ func Test_listdict_compare()
   call assert_true(d == d)
   call assert_false(l != deepcopy(l))
   call assert_false(d != deepcopy(d))
+
+  " comparison errors
+  call assert_fails('echo [1, 2] =~ {}', 'E691:')
+  call assert_fails('echo [1, 2] =~ [1, 2]', 'E692:')
+  call assert_fails('echo {} =~ 5', 'E735:')
+  call assert_fails('echo {} =~ {}', 'E736:')
 endfunc
 
   " compare complex recursively linked list and dict
@@ -920,6 +929,19 @@ func Test_deep_nested_dict()
   " call assert_fails('let x = execute("echo deep_dict")', 'E724:')
   call test_garbagecollect_now()
   unlet deep_dict
+endfunc
+
+" List and dict indexing tests
+func Test_listdict_index()
+  call assert_fails('echo function("min")[0]', 'E695:')
+  call assert_fails('echo v:true[0]', 'E909:')
+  let d = {'k' : 10}
+  call assert_fails('echo d.', 'E15:')
+  call assert_fails('echo d[1:2]', 'E719:')
+  call assert_fails("let v = [4, 6][{-> 1}]", 'E729:')
+  call assert_fails("let v = range(5)[2:[]]", 'E730:')
+  call assert_fails("let v = range(5)[2:{-> 2}(]", 'E116:')
+  call assert_fails("let v = range(5)[2:3", 'E111:')
 endfunc
 
 " Test for a null list

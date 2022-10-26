@@ -21,6 +21,12 @@ endfunc
 func Test_unlet_fails()
   call assert_fails('unlet v:["count"]', 'E46:')
   call assert_fails('unlet $', 'E475:')
+  let v = {}
+  call assert_fails('unlet v[:]', 'E719:')
+  let l = []
+  call assert_fails("unlet l['k'", 'E111:')
+  let d = {'k' : 1}
+  call assert_fails("unlet d.k2", 'E716:')
 endfunc
 
 func Test_unlet_env()
