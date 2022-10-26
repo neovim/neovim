@@ -702,7 +702,7 @@ static bool parse_float_config(Dict(float_config) *config, FloatConfig *fconfig,
   if (HAS_KEY(config->title)) {
     // title only work with border
     if (!HAS_KEY(config->border)) {
-      api_set_error(err, kErrorTypeException, "title must set with border");
+      api_set_error(err, kErrorTypeException, "title requires border to be set");
       return false;
     }
     parse_border_title(config->title, config->title_pos, fconfig, err);
