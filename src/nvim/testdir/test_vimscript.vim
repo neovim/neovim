@@ -1495,58 +1495,6 @@ func Test_bitwise_functions()
     call assert_fails("call invert({})", 'E728:')
 endfunc
 
-" Test trailing text after :endfunction				    {{{1
-func Test_endfunction_trailing()
-    call assert_false(exists('*Xtest'))
-
-    exe "func Xtest()\necho 'hello'\nendfunc\nlet done = 'yes'"
-    call assert_true(exists('*Xtest'))
-    call assert_equal('yes', done)
-    delfunc Xtest
-    unlet done
-
-    exe "func Xtest()\necho 'hello'\nendfunc|let done = 'yes'"
-    call assert_true(exists('*Xtest'))
-    call assert_equal('yes', done)
-    delfunc Xtest
-    unlet done
-
-    " trailing line break
-    exe "func Xtest()\necho 'hello'\nendfunc\n"
-    call assert_true(exists('*Xtest'))
-    delfunc Xtest
-
-    set verbose=1
-    exe "func Xtest()\necho 'hello'\nendfunc \" garbage"
-    call assert_notmatch('W22:', split(execute('1messages'), "\n")[0])
-    call assert_true(exists('*Xtest'))
-    delfunc Xtest
-
-    exe "func Xtest()\necho 'hello'\nendfunc garbage"
-    call assert_match('W22:', split(execute('1messages'), "\n")[0])
-    call assert_true(exists('*Xtest'))
-    delfunc Xtest
-    set verbose=0
-
-    function Foo()
-	echo 'hello'
-    endfunction | echo 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
-    delfunc Foo
-endfunc
-
-func Test_delfunction_force()
-    delfunc! Xtest
-    delfunc! Xtest
-    func Xtest()
-	echo 'nothing'
-    endfunc
-    delfunc! Xtest
-    delfunc! Xtest
-
-    " Try deleting the current function
-    call assert_fails('delfunc Test_delfunction_force', 'E131:')
-endfunc
-
 " Test using bang after user command				    {{{1
 func Test_user_command_with_bang()
     command -bang Nieuw let nieuw = 1
@@ -1554,26 +1502,6 @@ func Test_user_command_with_bang()
     call assert_equal(1, nieuw)
     unlet nieuw
     delcommand Nieuw
-endfunc
-
-" Test for script-local function
-func <SID>DoLast()
-  call append(line('$'), "last line")
-endfunc
-
-func s:DoNothing()
-  call append(line('$'), "nothing line")
-endfunc
-
-func Test_script_local_func()
-  set nocp nomore viminfo+=nviminfo
-  new
-  nnoremap <buffer> _x	:call <SID>DoNothing()<bar>call <SID>DoLast()<bar>delfunc <SID>DoNothing<bar>delfunc <SID>DoLast<cr>
-
-  normal _x
-  call assert_equal('nothing line', getline(2))
-  call assert_equal('last line', getline(3))
-  enew! | close
 endfunc
 
 func Test_script_expand_sfile()
@@ -1735,84 +1663,6 @@ func Test_unlet_env()
     call assert_equal('', $TESTVAR)
 endfunc
 
-func Test_funccall_garbage_collect()
-    func Func(x, ...)
-        call add(a:x, a:000)
-    endfunc
-    call Func([], [])
-    " Must not crash cause by invalid freeing
-    call test_garbagecollect_now()
-    call assert_true(v:true)
-    delfunc Func
-endfunc
-
-func Test_function_defined_line()
-    CheckNotGui
-
-    let lines =<< trim [CODE]
-    " F1
-    func F1()
-        " F2
-        func F2()
-            "
-            "
-            "
-            return
-        endfunc
-        " F3
-        execute "func F3()\n\n\n\nreturn\nendfunc"
-        " F4
-        execute "func F4()\n
-                    \\n
-                    \\n
-                    \\n
-                    \return\n
-                    \endfunc"
-    endfunc
-    " F5
-    execute "func F5()\n\n\n\nreturn\nendfunc"
-    " F6
-    execute "func F6()\n
-                \\n
-                \\n
-                \\n
-                \return\n
-                \endfunc"
-    call F1()
-    verbose func F1
-    verbose func F2
-    verbose func F3
-    verbose func F4
-    verbose func F5
-    verbose func F6
-    qall!
-    [CODE]
-
-    call writefile(lines, 'Xtest.vim')
-    let res = system(GetVimCommandClean() .. ' -es -X -S Xtest.vim')
-    call assert_equal(0, v:shell_error)
-
-    let m = matchstr(res, 'function F1()[^[:print:]]*[[:print:]]*')
-    call assert_match(' line 2$', m)
-
-    let m = matchstr(res, 'function F2()[^[:print:]]*[[:print:]]*')
-    call assert_match(' line 4$', m)
-
-    let m = matchstr(res, 'function F3()[^[:print:]]*[[:print:]]*')
-    call assert_match(' line 11$', m)
-
-    let m = matchstr(res, 'function F4()[^[:print:]]*[[:print:]]*')
-    call assert_match(' line 13$', m)
-
-    let m = matchstr(res, 'function F5()[^[:print:]]*[[:print:]]*')
-    call assert_match(' line 21$', m)
-
-    let m = matchstr(res, 'function F6()[^[:print:]]*[[:print:]]*')
-    call assert_match(' line 23$', m)
-
-    call delete('Xtest.vim')
-endfunc
-
 " Test for missing :endif, :endfor, :endwhile and :endtry           {{{1
 func Test_missing_end()
   call writefile(['if 2 > 1', 'echo ">"'], 'Xscript')
@@ -1946,16 +1796,6 @@ func Test_deep_nest()
 
   call StopVimInTerminal(buf)
   call delete('Xscript')
-endfunc
-
-" Test for <sfile>, <slnum> in a function                           {{{1
-func Test_sfile_in_function()
-  func Xfunc()
-    call assert_match('..Test_sfile_in_function\[5]..Xfunc', expand('<sfile>'))
-    call assert_equal('2', expand('<slnum>'))
-  endfunc
-  call Xfunc()
-  delfunc Xfunc
 endfunc
 
 " Test for errors in converting to float from various types         {{{1

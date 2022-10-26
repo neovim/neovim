@@ -351,6 +351,18 @@ func Test_syntax_arg_skipped()
   syn clear
 endfunc
 
+" Check for an error. Used when multiple errors are thrown and we are checking
+" for an earliest error.
+func AssertFails(cmd, errcode)
+  let save_exception = ''
+  try
+    exe a:cmd
+  catch
+    let save_exception = v:exception
+  endtry
+  call assert_match(a:errcode, save_exception)
+endfunc
+
 func Test_syntax_invalid_arg()
   call assert_fails('syntax case asdf', 'E390:')
   if has('conceal')
@@ -358,11 +370,49 @@ func Test_syntax_invalid_arg()
   endif
   call assert_fails('syntax spell asdf', 'E390:')
   call assert_fails('syntax clear @ABCD', 'E391:')
-  call assert_fails('syntax include @Xxx', 'E397:')
-  call assert_fails('syntax region X start="{"', 'E399:')
+  call assert_fails('syntax include random_file', 'E484:')
+  call assert_fails('syntax include <afile>', 'E495:')
   call assert_fails('syntax sync x', 'E404:')
   call assert_fails('syntax keyword Abc a[', 'E789:')
   call assert_fails('syntax keyword Abc a[bc]d', 'E890:')
+  call assert_fails('syntax cluster Abc add=A add=', 'E475:')
+
+  " Test for too many \z\( and unmatched \z\(
+  " Not able to use assert_fails() here because both E50:/E879: and E475:
+  " messages are emitted.
+  set regexpengine=1
+  call AssertFails("syntax region MyRegion start='\\z\\(' end='\\*/'", 'E52:')
+
+  let cmd = "syntax region MyRegion start='"
+  let cmd ..= repeat("\\z\\(.\\)", 10) .. "' end='\*/'"
+  call AssertFails(cmd, 'E50:')
+
+  set regexpengine=2
+  call AssertFails("syntax region MyRegion start='\\z\\(' end='\\*/'", 'E54:')
+
+  let cmd = "syntax region MyRegion start='"
+  let cmd ..= repeat("\\z\\(.\\)", 10) .. "' end='\*/'"
+  call AssertFails(cmd, 'E879:')
+  set regexpengine&
+
+  call AssertFails('syntax keyword cMyItem grouphere G1', 'E393:')
+  call AssertFails('syntax sync match Abc grouphere MyItem "abc"', 'E394:')
+  call AssertFails('syn keyword Type contains int', 'E395:')
+  call assert_fails('syntax include @Xxx', 'E397:')
+  call AssertFails('syntax region X start', 'E398:')
+  call assert_fails('syntax region X start="{"', 'E399:')
+  call AssertFails('syntax cluster contains=Abc', 'E400:')
+  call AssertFails("syntax match Character /'.'", 'E401:')
+  call AssertFails("syntax match Character /'.'/a", 'E402:')
+  call assert_fails('syntax sync linecont /pat', 'E404:')
+  call assert_fails('syntax sync linecont', 'E404:')
+  call assert_fails('syntax sync linecont /pat1/ linecont /pat2/', 'E403:')
+  call assert_fails('syntax sync minlines=a', 'E404:')
+  call AssertFails('syntax match ABC /x/ contains=', 'E406:')
+  call AssertFails("syntax match Character contains /'.'/", 'E405:')
+  call AssertFails('syntax match ccFoo "Foo" nextgroup=ALLBUT,F', 'E407:')
+  call AssertFails('syntax region Block start="{" contains=F,ALLBUT', 'E408:')
+  call AssertFails("syntax match Characters contains=a.*x /'.'/", 'E409:')
 endfunc
 
 func Test_syn_sync()
@@ -390,6 +440,7 @@ func Test_syn_clear()
   hi clear Foo
   call assert_equal('Foo', synIDattr(hlID("Foo"), "name"))
   hi clear Bar
+  call assert_fails('syntax clear invalid_syngroup', 'E28:')
 endfunc
 
 func Test_invalid_name()
@@ -482,6 +533,8 @@ func Test_conceal()
   set conceallevel=3
   call assert_match('16     ', ScreenLines(2, 7)[0])
   call assert_equal([[0, '', 0], [1, '', 1], [1, '', 1], [1, '', 2], [1, '', 2], [0, '', 0]], map(range(1, 6), 'synconcealed(2, v:val)'))
+
+  call AssertFails("syntax match Entity '&amp;' conceal cchar=\<Tab>", 'E844:')
 
   syn clear
   set conceallevel&

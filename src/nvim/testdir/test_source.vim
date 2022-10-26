@@ -87,4 +87,10 @@ func Test_source_autocmd_sfile()
   call delete('Xscript.vim')
 endfunc
 
+func Test_source_error()
+  call assert_fails('scriptencoding utf-8', 'E167:')
+  call assert_fails('finish', 'E168:')
+  " call assert_fails('scriptversion 2', 'E984:')
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab
