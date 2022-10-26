@@ -225,6 +225,17 @@ func Test_endfunction_trailing()
   delfunc Xtest
   set verbose=0
 
+  func Xtest(a1, a2)
+    echo a:a1 .. a:a2
+  endfunc
+  set verbose=15
+  redir @a
+  call Xtest(123, repeat('x', 100))
+  redir END
+  call assert_match('calling Xtest(123, ''xxxxxxx.*x\.\.\.x.*xxxx'')', getreg('a'))
+  delfunc Xtest
+  set verbose=0
+
   function Foo()
     echo 'hello'
   endfunction | echo 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
