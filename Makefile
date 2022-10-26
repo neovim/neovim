@@ -53,7 +53,6 @@ ifeq (,$(BUILD_TOOL))
   endif
 endif
 
-
 # Only need to handle Ninja here.  Make will inherit the VERBOSE variable, and the -j, -l, and -n flags.
 ifeq ($(CMAKE_GENERATOR),Ninja)
   ifneq ($(VERBOSE),)
@@ -66,8 +65,7 @@ ifeq ($(CMAKE_GENERATOR),Ninja)
 endif
 
 DEPS_CMAKE_FLAGS ?=
-# Back-compat: USE_BUNDLED_DEPS was the old name.
-USE_BUNDLED ?= $(USE_BUNDLED_DEPS)
+USE_BUNDLED ?=
 
 ifneq (,$(USE_BUNDLED))
   BUNDLED_CMAKE_FLAG := -DUSE_BUNDLED=$(USE_BUNDLED)
@@ -127,10 +125,13 @@ endif
 src/nvim/testdir/%.vim: phony_force
 	+$(SINGLE_MAKE) -C src/nvim/testdir NVIM_PRG=$(NVIM_PRG) SCRIPTS= $(MAKEOVERRIDES) $(patsubst src/nvim/testdir/%.vim,%,$@)
 
-functionaltest functionaltest-lua unittest benchmark: | nvim
+functionaltest-lua: | nvim
 	$(BUILD_TOOL) -C build $@
 
-lintlua lintsh lintpy lintuncrustify lintc lintcfull check-single-includes generated-sources lintcommit lint formatc formatlua format: | build/.ran-cmake
+FORMAT=format formatc formatlua
+LINT=check-single-includes lint lintc lintcfull lintcommit lintlua lintpy lintsh lintuncrustify
+TEST=functionaltest unittest
+$(FORMAT) $(LINT) $(TEST) generated-sources benchmark: | build/.ran-cmake
 	$(CMAKE_PRG) --build build --target $@
 
 test: functionaltest unittest
@@ -166,4 +167,4 @@ $(DEPS_BUILD_DIR)/%: phony_force
 	$(BUILD_TOOL) -C $(DEPS_BUILD_DIR) $(patsubst $(DEPS_BUILD_DIR)/%,%,$@)
 endif
 
-.PHONY: test lintlua lintpy lintsh functionaltest unittest lint lintc clean distclean nvim libnvim cmake deps install appimage checkprefix lintcommit formatc formatlua format
+.PHONY: test clean distclean nvim libnvim cmake deps install appimage checkprefix $(FORMAT) $(LINT) $(TEST)
