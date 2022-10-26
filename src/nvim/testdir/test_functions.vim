@@ -2128,7 +2128,7 @@ func Test_range()
 
   " settagstack()
   call settagstack(1, #{items : range(4)})
-  
+
   " sign_define()
   call assert_fails("call sign_define(range(5))", "E715:")
   call assert_fails("call sign_placelist(range(5))", "E715:")
@@ -2161,12 +2161,17 @@ func Test_range()
   set tagfunc=TagFunc
   call assert_fails("call taglist('asdf')", 'E987:')
   set tagfunc=
-  
+
   " term_start()
-  if has('terminal')
+  if has('terminal') && has('termguicolors')
     call assert_fails('call term_start(range(3, 4))', 'E474:')
     let g:terminal_ansi_colors = range(16)
-    call assert_fails('call term_start("ls", #{term_finish: "close"})', 'E475:')
+    if has('win32')
+      let cmd = "cmd /c dir"
+    else
+      let cmd = "ls"
+    endif
+    call assert_fails('call term_start("' .. cmd .. '", #{term_finish: "close"})', 'E475:')
     unlet g:terminal_ansi_colors
   endif
 
