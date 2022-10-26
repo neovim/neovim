@@ -35,6 +35,7 @@ typedef enum {
                      ///< be used with kFileCreateOnly.
   kFileNonBlocking = 128,  ///< Do not restart read() or write() syscall if
                            ///< EAGAIN was encountered.
+  kFileMkDir = 256,
 } FileOpenFlags;
 
 static inline bool file_eof(const FileDescriptor *fp)
