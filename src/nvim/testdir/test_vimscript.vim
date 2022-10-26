@@ -1542,6 +1542,9 @@ func Test_delfunction_force()
     endfunc
     delfunc! Xtest
     delfunc! Xtest
+
+    " Try deleting the current function
+    call assert_fails('delfunc Test_delfunction_force', 'E131:')
 endfunc
 
 " Test using bang after user command				    {{{1

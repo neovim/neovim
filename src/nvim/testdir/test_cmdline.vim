@@ -1077,6 +1077,40 @@ func Test_cmdline_complete_various()
   " completion for the expression register
   call feedkeys(":\"\<C-R>=float2\t\"\<C-B>\"\<CR>", 'xt')
   call assert_equal('"float2nr("', @=)
+
+  " completion for :language command with an invalid argument
+  call feedkeys(":language dummy \t\<C-B>\"\<CR>", 'xt')
+  call assert_equal("\"language dummy \t", @:)
+
+  " completion for commands after a :global command
+  call feedkeys(":g/a\\xb/call float2\t\<C-B>\"\<CR>", 'xt')
+  call assert_equal('"g/a\xb/call float2nr(', @:)
+
+  " completion with ambiguous user defined commands
+  com TCmd1 echo 'TCmd1'
+  com TCmd2 echo 'TCmd2'
+  call feedkeys(":TCmd \t\<C-B>\"\<CR>", 'xt')
+  call assert_equal('"TCmd ', @:)
+  delcom TCmd1
+  delcom TCmd2
+
+  " completion after a range followed by a pipe (|) character
+  call feedkeys(":1,10 | chist\t\<C-B>\"\<CR>", 'xt')
+  call assert_equal('"1,10 | chistory', @:)
+
+  " completion for window local variables
+  let w:wvar1 = 10
+  let w:wvar2 = 10
+  call feedkeys(":echo w:wvar\<C-A>\<C-B>\"\<CR>", 'xt')
+  call assert_equal('"echo w:wvar1 w:wvar2', @:)
+  unlet w:wvar1 w:wvar2
+
+  " completion for tab local variables
+  let t:tvar1 = 10
+  let t:tvar2 = 10
+  call feedkeys(":echo t:tvar\<C-A>\<C-B>\"\<CR>", 'xt')
+  call assert_equal('"echo t:tvar1 t:tvar2', @:)
+  unlet t:tvar1 t:tvar2
 endfunc
 
 func Test_cmdline_write_alternatefile()
@@ -1682,16 +1716,16 @@ func Test_wildmode()
   " Test for wildmode=longest with 'fileignorecase' set
   set wildmode=longest
   set fileignorecase
-  argadd AA AAA AAAA
-  call feedkeys(":buffer \t\<C-B>\"\<CR>", 'xt')
-  call assert_equal('"buffer AA', @:)
+  argadd AAA AAAA AAAAA
+  call feedkeys(":buffer a\t\<C-B>\"\<CR>", 'xt')
+  call assert_equal('"buffer AAA', @:)
   set fileignorecase&
 
   " Test for listing files with wildmode=list
   set wildmode=list
   let g:Sline = ''
   call feedkeys(":b A\t\t\<F2>\<C-B>\"\<CR>", 'xt')
-  call assert_equal('AA    AAA   AAAA', g:Sline)
+  call assert_equal('AAA    AAAA   AAAAA', g:Sline)
   call assert_equal('"b A', @:)
 
   %argdelete

@@ -20,6 +20,7 @@ endfunc
 
 func Test_unlet_fails()
   call assert_fails('unlet v:["count"]', 'E46:')
+  call assert_fails('unlet $', 'E475:')
 endfunc
 
 func Test_unlet_env()
@@ -55,3 +56,5 @@ func Test_unlet_complete()
   call feedkeys(":unlet $FOO\t\n", 'tx')
   call assert_true(!exists('$FOOBAR') || empty($FOOBAR))
 endfunc
+
+" vim: shiftwidth=2 sts=2 expandtab

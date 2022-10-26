@@ -804,6 +804,10 @@ func Test_getbufvar()
   call assert_equal(0, getbufvar(bnr, '&autoindent'))
   call assert_equal(0, getbufvar(bnr, '&autoindent', 1))
 
+  " Set and get a buffer-local variable
+  call setbufvar(bnr, 'bufvar_test', ['one', 'two'])
+  call assert_equal(['one', 'two'], getbufvar(bnr, 'bufvar_test'))
+
   " Open new window with forced option values
   set fileformats=unix,dos
   new ++ff=dos ++bin ++enc=iso-8859-2
@@ -1633,6 +1637,10 @@ func Test_func_sandbox()
 
   call assert_fails('call Fsandbox()', 'E48:')
   delfunc Fsandbox
+
+  " From a sandbox try to set a predefined variable (which cannot be modified
+  " from a sandbox)
+  call assert_fails('sandbox let v:lnum = 10', 'E794:')
 endfunc
 
 func EditAnotherFile()
@@ -2142,14 +2150,6 @@ func Test_range()
 
   " sort()
   call assert_equal([0, 1, 2, 3, 4, 5], sort(range(5, 0, -1)))
-
-  " 'spellsuggest'
-  func MySuggest()
-    return range(3)
-  endfunc
-  set spell spellsuggest=expr:MySuggest()
-  call assert_equal([], spellsuggest('baord', 3))
-  set nospell spellsuggest&
 
   " string()
   call assert_equal('[0, 1, 2, 3, 4]', string(range(5)))

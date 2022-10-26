@@ -479,12 +479,21 @@ endfunc
 func Test_redir_cmd()
   call assert_fails('redir @@', 'E475:')
   call assert_fails('redir abc', 'E475:')
+  call assert_fails('redir => 1abc', 'E474:')
+  call assert_fails('redir => a b', 'E488:')
+  call assert_fails('redir => abc[1]', 'E475:')
+  let b=0zFF
+  call assert_fails('redir =>> b', 'E734:')
+  unlet b
+
   if has('unix')
+    " Redirecting to a directory name
     call mkdir('Xdir')
     call assert_fails('redir > Xdir', 'E17:')
     call delete('Xdir', 'd')
   endif
   if !has('bsd')
+    " Redirecting to a read-only file
     call writefile([], 'Xfile')
     call setfperm('Xfile', 'r--r--r--')
     call assert_fails('redir! > Xfile', 'E190:')

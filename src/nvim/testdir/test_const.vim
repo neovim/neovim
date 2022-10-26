@@ -231,6 +231,14 @@ func Test_const_with_special_variables()
     call assert_fails('const &filetype = "vim"', 'E996:')
     call assert_fails('const &l:filetype = "vim"', 'E996:')
     call assert_fails('const &g:encoding = "utf-8"', 'E996:')
+
+    call assert_fails('const [a, $CONST_FOO] = [369, "abc"]', 'E996:')
+    call assert_equal(369, a)
+    call assert_equal(v:null, getenv("CONST_FOO"))
+
+    call assert_fails('const [b; $CONST_FOO] = [246, 2, "abc"]', 'E996:')
+    call assert_equal(246, b)
+    call assert_equal(v:null, getenv("CONST_FOO"))
 endfunc
 
 func Test_const_with_eval_name()
@@ -274,3 +282,5 @@ func Test_lock_depth_is_2()
     const d2 = #{a: 0, b: lvar, c: 4}
     let d2.b[1] = 'd'
 endfunc
+
+" vim: shiftwidth=2 sts=2 expandtab
