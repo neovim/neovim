@@ -36,8 +36,8 @@ jobs:
         id: build
         run: |
           CC=gcc-10 make CMAKE_BUILD_TYPE=${NVIM_BUILD_TYPE} CMAKE_EXTRA_FLAGS="-DCMAKE_INSTALL_PREFIX:PATH="
-          printf '::set-output name=version::%s\n' "$(./build/bin/nvim --version | head -n 3 | sed -z 's/\n/%0A/g')"
-          printf '::set-output name=release::%s\n' "$(./build/bin/nvim --version | head -n 1)"
+          printf 'version=%s\n' "$(./build/bin/nvim --version | head -n 3 | sed -z 's/\n/%0A/g')" >> $GITHUB_OUTPUT
+          printf 'release=%s\n' "$(./build/bin/nvim --version | head -n 1)" >> $GITHUB_OUTPUT
           make DESTDIR="$GITHUB_WORKSPACE/build/release/nvim-linux64" install
           cd "$GITHUB_WORKSPACE/build/"
           cpack -C $NVIM_BUILD_TYPE
@@ -241,6 +241,7 @@ jobs:
           if [ "$TAG_NAME" != "nightly" ]; then
             gh release create stable $PRERELEASE --notes-file "$RUNNER_TEMP/notes.md" --title "$SUBJECT" --target $GITHUB_SHA nvim-macos/* nvim-linux64/* appimage/* nvim-win64/*
           fi
+
   publish-winget:
     needs: publish
     runs-on: windows-latest
@@ -259,7 +260,7 @@ jobs:
           Invoke-WebRequest https://github.com/neovim/neovim/releases/download/nightly/nvim-win64.msi -OutFile setup.msi
           Install-Module -Name 'Carbon.Windows.Installer' -Force
           $VERSION = (Get-CMsi (Resolve-Path .\setup.msi).Path).ProductVersion
-          echo "::set-output name=version::$VERSION"
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
       - if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && github.event.inputs.tag_name == 'nightly')
         name: Publish nightly
         uses: vedantmgoyal2009/winget-releaser@v1
