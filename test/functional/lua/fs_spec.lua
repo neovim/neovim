@@ -12,6 +12,27 @@ local nvim_prog = helpers.nvim_prog
 
 local nvim_prog_basename = iswin() and 'nvim.exe' or 'nvim'
 
+local test_basename_dirname_eq = {
+  '~/foo/',
+  '~/foo',
+  '~/foo/bar.lua',
+  'foo.lua',
+  '.',
+  '..',
+  '../',
+  '~',
+  '/usr/bin',
+  '/usr/bin/gcc',
+  '/',
+  '/usr/',
+  '/usr',
+  'c:/usr',
+  'c:/',
+  'c:/users/foo',
+  'c:/users/foo/bar.lua',
+  'c:/users/foo/bar/../',
+}
+
 before_each(clear)
 
 describe('vim.fs', function()
@@ -41,6 +62,20 @@ describe('vim.fs', function()
         local nvim_dir = ...
         return vim.fs.dirname(nvim_dir)
       ]], nvim_dir))
+
+      for _, path in ipairs(test_basename_dirname_eq) do
+        eq(
+          exec_lua([[
+            local path = ...
+            return vim.fn.fnamemodify(path,':h'):gsub('\\', '/')
+          ]], path),
+          exec_lua([[
+            local path = ...
+            return vim.fs.dirname(path)
+          ]], path),
+          path
+        )
+      end
     end)
   end)
 
@@ -50,6 +85,20 @@ describe('vim.fs', function()
         local nvim_prog = ...
         return vim.fs.basename(nvim_prog)
       ]], nvim_prog))
+
+      for _, path in ipairs(test_basename_dirname_eq) do
+        eq(
+          exec_lua([[
+            local path = ...
+            return vim.fn.fnamemodify(path,':t'):gsub('\\', '/')
+          ]], path),
+          exec_lua([[
+            local path = ...
+            return vim.fs.basename(path)
+          ]], path),
+          path
+        )
+      end
     end)
   end)
 
