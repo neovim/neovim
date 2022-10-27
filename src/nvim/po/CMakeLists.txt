@@ -49,7 +49,8 @@ if(HAVE_WORKING_LIBINTL AND GETTEXT_FOUND AND XGETTEXT_PRG AND ICONV_PRG)
   add_custom_command(
     OUTPUT ${NVIM_POT}
     COMMAND ${XGETTEXT_PRG} -o ${NVIM_POT} --default-domain=nvim
-      --add-comments --keyword=_ --keyword=N_ -D ${CMAKE_CURRENT_SOURCE_DIR}
+      --add-comments --keyword=_ --keyword=N_ --keyword=NGETTEXT:1,2
+      -D ${CMAKE_CURRENT_SOURCE_DIR}
       ${NVIM_RELATIVE_SOURCES}
     DEPENDS ${NVIM_SOURCES})
 
