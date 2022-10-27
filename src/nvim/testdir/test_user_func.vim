@@ -420,6 +420,11 @@ func Test_del_func()
   call assert_fails('delfunction Xabc', 'E130:')
   let d = {'a' : 10}
   call assert_fails('delfunc d.a', 'E718:')
+  func d.fn()
+    return 1
+  endfunc
+  delfunc d.fn
+  call assert_equal({'a' : 10}, d)
 endfunc
 
 " Test for calling return outside of a function
@@ -451,11 +456,12 @@ func Test_func_dict()
     return len(self)
   endfunc
 
-  call assert_equal("{'a': 'b', 'somefunc': function('2')}", string(mydict))
+  call assert_equal("{'a': 'b', 'somefunc': function('3')}", string(mydict))
   call assert_equal(2, mydict.somefunc())
   call assert_match("^\n   function \\d\\\+() dict"
   \              .. "\n1      return len(self)"
   \              .. "\n   endfunction$", execute('func mydict.somefunc'))
+  call assert_fails('call mydict.nonexist()', 'E716:')
 endfunc
 
 func Test_func_range()
