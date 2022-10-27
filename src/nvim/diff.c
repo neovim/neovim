@@ -462,9 +462,7 @@ static void diff_mark_adjust_tp(tabpage_T *tp, int idx, linenr_T line1, linenr_T
           dprev->df_count[i] += dp->df_count[i];
         }
       }
-      dprev->df_next = dp->df_next;
-      xfree(dp);
-      dp = dprev->df_next;
+      dp = diff_free(tp, dprev, dp);
     } else {
       // Advance to next entry.
       dprev = dp;
@@ -485,15 +483,7 @@ static void diff_mark_adjust_tp(tabpage_T *tp, int idx, linenr_T line1, linenr_T
     }
 
     if (i == DB_COUNT) {
-      diff_T *dnext = dp->df_next;
-      xfree(dp);
-      dp = dnext;
-
-      if (dprev == NULL) {
-        tp->tp_first_diff = dnext;
-      } else {
-        dprev->df_next = dnext;
-      }
+      dp = diff_free(tp, dprev, dp);
     } else {
       // Advance to next entry.
       dprev = dp;
@@ -531,6 +521,20 @@ static diff_T *diff_alloc_new(tabpage_T *tp, diff_T *dprev, diff_T *dp)
   }
 
   return dnew;
+}
+
+static diff_T *diff_free(tabpage_T *tp, diff_T *dprev, diff_T *dp)
+{
+  diff_T *ret = dp->df_next;
+  xfree(dp);
+
+  if (dprev == NULL) {
+    tp->tp_first_diff = ret;
+  } else {
+    dprev->df_next = ret;
+  }
+
+  return ret;
 }
 
 /// Check if the diff block "dp" can be made smaller for lines at the start and
@@ -723,15 +727,15 @@ static void clear_diffout(diffout_T *dout)
 /// @param din
 ///
 /// @return FAIL for failure.
-static int diff_write_buffer(buf_T *buf, diffin_T *din)
+static int diff_write_buffer(buf_T *buf, mmfile_t *m)
 {
-  long len = 0;
+  size_t len = 0;
 
   // xdiff requires one big block of memory with all the text.
   for (linenr_T lnum = 1; lnum <= buf->b_ml.ml_line_count; lnum++) {
-    len += (long)strlen(ml_get_buf(buf, lnum, false)) + 1;
+    len += strlen(ml_get_buf(buf, lnum, false)) + 1;
   }
-  char *ptr = try_malloc((size_t)len);
+  char *ptr = try_malloc(len);
   if (ptr == NULL) {
     // Allocating memory failed.  This can happen, because we try to read
     // the whole buffer text into memory.  Set the failed flag, the diff
@@ -745,37 +749,32 @@ static int diff_write_buffer(buf_T *buf, diffin_T *din)
     }
     return FAIL;
   }
-  din->din_mmfile.ptr = ptr;
-  din->din_mmfile.size = len;
+  m->ptr = ptr;
+  m->size = (long)len;
 
   len = 0;
   for (linenr_T lnum = 1; lnum <= buf->b_ml.ml_line_count; lnum++) {
-    for (char *s = ml_get_buf(buf, lnum, false); *s != NUL;) {
-      if (diff_flags & DIFF_ICASE) {
-        int c;
+    char *s = ml_get_buf(buf, lnum, false);
+    if (diff_flags & DIFF_ICASE) {
+      while (*s != NUL) {
         char cbuf[MB_MAXBYTES + 1];
 
-        if (*s == NL) {
-          c = NUL;
-        } else {
-          // xdiff doesn't support ignoring case, fold-case the text.
-          c = utf_ptr2char(s);
-          c = utf_fold(c);
-        }
+        // xdiff doesn't support ignoring case, fold-case the text.
+        int c = *s == NL ? NUL : utf_fold(utf_ptr2char(s));
         const int orig_len = utfc_ptr2len(s);
-        if (utf_char2bytes(c, cbuf) != orig_len) {
-          // TODO(Bram): handle byte length difference
-          memmove(ptr + len, s, (size_t)orig_len);
-        } else {
-          memmove(ptr + len, cbuf, (size_t)orig_len);
-        }
 
+        // TODO(Bram): handle byte length difference
+        char *s1 = (utf_char2bytes(c, cbuf) != orig_len) ? s : cbuf;
+        memmove(ptr + len, s1, (size_t)orig_len);
         s += orig_len;
-        len += orig_len;
-      } else {
-        ptr[len++] = *s == NL ? NUL : *s;
-        s++;
+        len += (size_t)orig_len;
       }
+    } else {
+      size_t slen = strlen(s);
+      memmove(ptr + len, s, slen);
+      // NUL is represented as NL; convert
+      memchrsub(ptr + len, NL, NUL, slen);
+      len += slen;
     }
     ptr[len++] = NL;
   }
@@ -793,7 +792,7 @@ static int diff_write_buffer(buf_T *buf, diffin_T *din)
 static int diff_write(buf_T *buf, diffin_T *din)
 {
   if (din->din_fname == NULL) {
-    return diff_write_buffer(buf, din);
+    return diff_write_buffer(buf, &din->din_mmfile);
   }
 
   // Always use 'fileformat' set to "unix".
@@ -2777,13 +2776,6 @@ static void diffgetput(const int addr_count, const int idx_cur, const int idx_fr
         if (i == DB_COUNT) {
           // delete the diff entry, the buffers are now equal here
           dfree = dp;
-          dp = dp->df_next;
-
-          if (dprev == NULL) {
-            curtab->tp_first_diff = dp;
-          } else {
-            dprev->df_next = dp;
-          }
         }
       }
 
@@ -2802,10 +2794,10 @@ static void diffgetput(const int addr_count, const int idx_cur, const int idx_fr
       }
       changed_lines(lnum, 0, lnum + count, added, true);
 
-      if (dfree != NULL) {
+      if (dfree == dp) {
         // Diff is deleted, update folds in other windows.
         diff_fold_update(dfree, idx_to);
-        xfree(dfree);
+        dp = diff_free(curtab, dprev, dp);
       }
 
       // mark_adjust() may have made "dp" invalid.  We don't know where
