@@ -126,7 +126,7 @@ func Test_lambda_closure_counter()
   endfunc
 
   let l:F = s:foo()
-  call garbagecollect()
+  call test_garbagecollect_now()
   call assert_equal(1, l:F())
   call assert_equal(2, l:F())
   call assert_equal(3, l:F())
@@ -209,9 +209,9 @@ func Test_lambda_circular_reference()
   endfunc
 
   call s:Foo()
-  call garbagecollect()
+  call test_garbagecollect_now()
   let i = 0 | while i < 10000 | call s:Foo() | let i+= 1 | endwhile
-  call garbagecollect()
+  call test_garbagecollect_now()
 endfunc
 
 func Test_lambda_combination()
@@ -240,7 +240,7 @@ func Test_closure_counter()
   endfunc
 
   let l:F = s:foo()
-  call garbagecollect()
+  call test_garbagecollect_now()
   call assert_equal(1, l:F())
   call assert_equal(2, l:F())
   call assert_equal(3, l:F())
@@ -258,7 +258,7 @@ func Test_closure_unlet()
   endfunc
 
   call assert_false(has_key(s:foo(), 'x'))
-  call garbagecollect()
+  call test_garbagecollect_now()
 endfunc
 
 func LambdaFoo()
@@ -295,7 +295,7 @@ func Test_named_function_closure()
   endfunc
   call Afoo()
   call assert_equal(14, s:Abar())
-  call garbagecollect()
+  call test_garbagecollect_now()
   call assert_equal(14, s:Abar())
 endfunc
 
