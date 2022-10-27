@@ -3502,6 +3502,19 @@ static void f_glob2regpat(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   rettv->vval.v_string = (pat == NULL) ? NULL : file_pat_to_reg_pat(pat, NULL, NULL, false);
 }
 
+/// "gettext()" function
+static void f_gettext(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
+{
+  if (argvars[0].v_type != VAR_STRING
+      || argvars[0].vval.v_string == NULL
+      || *argvars[0].vval.v_string == NUL) {
+    semsg(_(e_invarg2), tv_get_string(&argvars[0]));
+  } else {
+    rettv->v_type = VAR_STRING;
+    rettv->vval.v_string = xstrdup(_(argvars[0].vval.v_string));
+  }
+}
+
 /// "has()" function
 static void f_has(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
