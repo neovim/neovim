@@ -989,6 +989,7 @@ local extension = {
   swift = 'swift',
   svh = 'systemverilog',
   sv = 'systemverilog',
+  tape = 'vhs',
   tak = 'tak',
   task = 'taskedit',
   tm = 'tcl',
