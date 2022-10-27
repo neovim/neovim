@@ -17,6 +17,8 @@ local test_basename_dirname_eq = {
   '~/foo',
   '~/foo/bar.lua',
   'foo.lua',
+  ' ',
+  '',
   '.',
   '..',
   '../',

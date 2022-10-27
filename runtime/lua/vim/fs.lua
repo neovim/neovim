@@ -40,6 +40,7 @@ function M.dirname(file)
   if file == nil then
     return nil
   end
+  vim.validate({ file = { file, 's' } })
   if not file:match('[\\/]') then
     return '.'
   elseif file == '/' or file:gsub('\\', '/'):match('^%w:$') then
@@ -55,7 +56,11 @@ end
 ---@param file (string) File or directory
 ---@return (string) Basename of {file}
 function M.basename(file)
-  return file:match('[/\\]$') and '' or file:match('[^\\/]+$')
+  if file == nil then
+    return nil
+  end
+  vim.validate({ file = { file, 's' } })
+  return file:match('[/\\]$') and '' or file:match('[^\\/]*$')
 end
 
 --- Return an iterator over the files and directories located in {path}
