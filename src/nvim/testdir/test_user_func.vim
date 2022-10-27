@@ -445,4 +445,36 @@ func Test_func_arg_error()
   delfunc Xfunc
 endfunc
 
+func Test_func_dict()
+  let mydict = {'a': 'b'}
+  function mydict.somefunc() dict
+    return len(self)
+  endfunc
+
+  call assert_equal("{'a': 'b', 'somefunc': function('2')}", string(mydict))
+  call assert_equal(2, mydict.somefunc())
+  call assert_match("^\n   function \\d\\\+() dict"
+  \              .. "\n1      return len(self)"
+  \              .. "\n   endfunction$", execute('func mydict.somefunc'))
+endfunc
+
+func Test_func_range()
+  new
+  call setline(1, range(1, 8))
+  func FuncRange() range
+    echo a:firstline
+    echo a:lastline
+  endfunc
+  3
+  call assert_equal("\n3\n3", execute('call FuncRange()'))
+  call assert_equal("\n4\n6", execute('4,6 call FuncRange()'))
+  call assert_equal("\n   function FuncRange() range"
+  \              .. "\n1      echo a:firstline"
+  \              .. "\n2      echo a:lastline"
+  \              .. "\n   endfunction",
+  \                 execute('function FuncRange'))
+
+  bwipe!
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab

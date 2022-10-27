@@ -245,6 +245,11 @@ func Test_closure_counter()
   call assert_equal(2, l:F())
   call assert_equal(3, l:F())
   call assert_equal(4, l:F())
+
+  call assert_match("^\n   function <SNR>\\d\\+_bar() closure"
+  \              .. "\n1        let x += 1"
+  \              .. "\n2        return x"
+  \              .. "\n   endfunction$", execute('func s:bar'))
 endfunc
 
 func Test_closure_unlet()
