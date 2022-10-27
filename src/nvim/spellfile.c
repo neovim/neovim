@@ -415,7 +415,7 @@ struct wordnode_S {
   // "wn_region" the LSW of the wordnr.
   char_u wn_affixID;            // supported/required prefix ID or 0
   uint16_t wn_flags;            // WF_ flags
-  short wn_region;              // region mask
+  int16_t wn_region;            // region mask
 
 #ifdef SPELL_PRINTTREE
   int wn_nr;                    // sequence nr for printing

@@ -169,7 +169,7 @@ struct block0 {
   char_u b0_fname[B0_FNAME_SIZE_ORG];        // name of file being edited
   long b0_magic_long;           // check for byte order of long
   int b0_magic_int;             // check for byte order of int
-  short b0_magic_short;         // check for byte order of short
+  int16_t b0_magic_short;       // check for byte order of short
   char_u b0_magic_char;         // check for last char
 };
 
@@ -272,7 +272,7 @@ int ml_open(buf_T *buf)
   b0p->b0_id[1] = BLOCK0_ID1;
   b0p->b0_magic_long = B0_MAGIC_LONG;
   b0p->b0_magic_int = (int)B0_MAGIC_INT;
-  b0p->b0_magic_short = (short)B0_MAGIC_SHORT;
+  b0p->b0_magic_short = (int16_t)B0_MAGIC_SHORT;
   b0p->b0_magic_char = B0_MAGIC_CHAR;
   xstrlcpy(xstpcpy((char *)b0p->b0_version, "VIM "), Version, 6);
   long_to_char((long)mfp->mf_page_size, b0p->b0_page_size);
@@ -3376,7 +3376,7 @@ static int b0_magic_wrong(ZERO_BL *b0p)
 {
   return b0p->b0_magic_long != B0_MAGIC_LONG
          || b0p->b0_magic_int != (int)B0_MAGIC_INT
-         || b0p->b0_magic_short != (short)B0_MAGIC_SHORT
+         || b0p->b0_magic_short != (int16_t)B0_MAGIC_SHORT
          || b0p->b0_magic_char != B0_MAGIC_CHAR;
 }
 
