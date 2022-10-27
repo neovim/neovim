@@ -120,6 +120,13 @@ func Test_readfile_binary()
   call delete('XReadfile_bin')
 endfunc
 
+func Test_readfile_binary_empty()
+  call writefile([], 'Xempty-file')
+  " This used to compare uninitialized memory in Vim <= 8.2.4065
+  call assert_equal([''], readfile('Xempty-file', 'b'))
+  call delete('Xempty-file')
+endfunc
+
 func Test_readfile_bom()
   call writefile(["\ufeffFOO", "FOO\ufeffBAR"], 'XReadfile_bom')
   call assert_equal(['FOO', 'FOOBAR'], readfile('XReadfile_bom'))
@@ -358,6 +365,11 @@ func Test_curly_assignment()
   unlet s:svar
   unlet s:gvar
   unlet g:gvar
+endfunc
+
+func Test_deep_recursion()
+  " this was running out of stack
+  call assert_fails("exe 'if ' .. repeat('(', 1002)", 'E1169: Expression too recursive: ((')
 endfunc
 
 " K_SPECIAL in the modified character used be escaped, which causes

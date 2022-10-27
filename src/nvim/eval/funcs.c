@@ -5921,7 +5921,7 @@ static void f_readfile(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     for (p = buf, start = buf;
          p < buf + readlen || (readlen <= 0 && (prevlen > 0 || binary));
          p++) {
-      if (*p == '\n' || readlen <= 0) {
+      if (readlen <= 0 || *p == '\n') {
         char *s  = NULL;
         size_t len = (size_t)(p - start);
 

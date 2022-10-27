@@ -65,6 +65,7 @@ static char *e_nowhitespace
   = N_("E274: No white space allowed before parenthesis");
 static char *e_write2 = N_("E80: Error while writing: %s");
 static char *e_string_list_or_blob_required = N_("E1098: String, List or Blob required");
+static char e_expression_too_recursive_str[] = N_("E1169: Expression too recursive: %s");
 
 static char * const namespace_char = "abglstvw";
 
@@ -2911,6 +2912,7 @@ static int eval7(char **arg, typval_T *rettv, int evaluate, int want_string)
   const char *start_leader, *end_leader;
   int ret = OK;
   char *alias;
+  static int recurse = 0;
 
   // Initialise variable so that tv_clear() can't mistake this for a
   // string and free a string that isn't there.
@@ -2922,6 +2924,20 @@ static int eval7(char **arg, typval_T *rettv, int evaluate, int want_string)
     *arg = skipwhite(*arg + 1);
   }
   end_leader = *arg;
+
+  // Limit recursion to 1000 levels.  At least at 10000 we run out of stack
+  // and crash.  With MSVC the stack is smaller.
+  if (recurse ==
+#ifdef _MSC_VER
+      300
+#else
+      1000
+#endif
+      ) {
+    semsg(_(e_expression_too_recursive_str), *arg);
+    return FAIL;
+  }
+  recurse++;
 
   switch (**arg) {
   // Number constant.
@@ -3127,6 +3143,8 @@ static int eval7(char **arg, typval_T *rettv, int evaluate, int want_string)
   if (ret == OK && evaluate && end_leader > start_leader) {
     ret = eval7_leader(rettv, (char *)start_leader, &end_leader);
   }
+
+  recurse--;
   return ret;
 }
 
