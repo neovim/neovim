@@ -668,10 +668,6 @@ static void win_redr_border(win_T *wp)
       }
 
       win_border_redr_title(wp, grid, title_col);
-    } else {
-      for (int i = 0; i < icol; i++) {
-        grid_put_schar(grid, 0, i + adj[3], chars[1], attrs[1]);
-      }
     }
     if (adj[1]) {
       grid_put_schar(grid, 0, icol + adj[3], chars[2], attrs[2]);
