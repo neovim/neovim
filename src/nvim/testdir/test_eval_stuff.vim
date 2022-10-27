@@ -367,6 +367,11 @@ func Test_curly_assignment()
   unlet g:gvar
 endfunc
 
+func Test_deep_recursion()
+  " this was running out of stack
+  call assert_fails("exe 'if ' .. repeat('(', 1002)", 'E1169: Expression too recursive: ((')
+endfunc
+
 " K_SPECIAL in the modified character used be escaped, which causes
 " double-escaping with feedkeys() or as the return value of an <expr> mapping,
 " and doesn't match what getchar() returns,
