@@ -3587,7 +3587,7 @@ gettagstack([{winnr}])					*gettagstack()*
 
 
 gettext({text})						*gettext()*
-		Translate {text} if possible.
+		Translate String {text} if possible.
 		This is mainly for use in the distributed Vim scripts.  When
 		generating message translations the {text} is extracted by
 		xgettext, the translator can add the translated message in the

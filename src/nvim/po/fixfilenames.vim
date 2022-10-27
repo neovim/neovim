@@ -5,7 +5,7 @@ set shortmess+=A
 
 for name in argv()[1:]
   let jsname = fnamemodify(name, ":t:r") .. ".js"
-  exe "%s+" .. jsname .. "+" .. name .. "+"
+  exe "%s+" .. jsname .. "+" .. substitute(name, '\\', '/', 'g') .. "+"
 endfor
 
 write
