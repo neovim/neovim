@@ -8,15 +8,10 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - if: inputs.type != 'docker'
-      id: sudo
-      run: echo "::set-output name=sudo::sudo"
-      shell: bash
-
     - if: runner.os == 'Linux'
       run: |
-        ${{ steps.sudo.outputs.sudo }} apt-get update
-        ${{ steps.sudo.outputs.sudo }} apt-get install -y $DEPENDENCIES ${{ inputs.additional_packages }}
+        sudo apt-get update
+        sudo apt-get install -y $DEPENDENCIES ${{ inputs.additional_packages }}
       env:
         DEPENDENCIES: |
           autoconf
@@ -34,9 +29,9 @@ runs:
 
     - if: runner.os == 'Linux' && inputs.type == 'system'
       run: |
-        ${{ steps.sudo.outputs.sudo }} add-apt-repository ppa:neovim-ppa/stable
-        ${{ steps.sudo.outputs.sudo }} apt-get update
-        ${{ steps.sudo.outputs.sudo }} apt-get install -y $DEPENDENCIES
+        sudo add-apt-repository ppa:neovim-ppa/stable
+        sudo apt-get update
+        sudo apt-get install -y $DEPENDENCIES
       env:
         DEPENDENCIES: |
           libluajit-5.1-dev
