@@ -14,6 +14,9 @@
 # include "testing.c.generated.h"
 #endif
 
+static char e_calling_test_garbagecollect_now_while_v_testing_is_not_set[]
+  = N_("E1142: Calling test_garbagecollect_now() while v:testing is not set");
+
 /// Prepare "gap" for an assert error and add the sourcing position.
 static void prepare_assert_error(garray_T *gap)
 {
@@ -614,7 +617,11 @@ void f_test_garbagecollect_now(typval_T *argvars, typval_T *rettv, EvalFuncData 
 {
   // This is dangerous, any Lists and Dicts used internally may be freed
   // while still in use.
-  garbage_collect(true);
+  if (!get_vim_var_nr(VV_TESTING)) {
+    emsg(_(e_calling_test_garbagecollect_now_while_v_testing_is_not_set));
+  } else {
+    garbage_collect(true);
+  }
 }
 
 /// "test_write_list_log()" function
