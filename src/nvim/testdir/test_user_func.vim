@@ -149,8 +149,8 @@ func Test_default_arg()
   call assert_equal(res.optional, 2)
   call assert_equal(res['0'], 1)
 
-  call assert_fails("call MakeBadFunc()", 'E989')
-  call assert_fails("fu F(a=1 ,) | endf", 'E475')
+  call assert_fails("call MakeBadFunc()", 'E989:')
+  call assert_fails("fu F(a=1 ,) | endf", 'E1068:')
 
   " Since neovim does not have v:none, the ability to use the default
   " argument with the intermediate argument set to v:none has been omitted.
