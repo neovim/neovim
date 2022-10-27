@@ -149,8 +149,8 @@ func Test_default_arg()
   call assert_equal(res.optional, 2)
   call assert_equal(res['0'], 1)
 
-  call assert_fails("call MakeBadFunc()", 'E989')
-  call assert_fails("fu F(a=1 ,) | endf", 'E475')
+  call assert_fails("call MakeBadFunc()", 'E989:')
+  call assert_fails("fu F(a=1 ,) | endf", 'E1068:')
 
   " Since neovim does not have v:none, the ability to use the default
   " argument with the intermediate argument set to v:none has been omitted.
@@ -443,6 +443,38 @@ func Test_func_arg_error()
   endfunc
   call assert_fails('call Xfunc()', 'E725:')
   delfunc Xfunc
+endfunc
+
+func Test_func_dict()
+  let mydict = {'a': 'b'}
+  function mydict.somefunc() dict
+    return len(self)
+  endfunc
+
+  call assert_equal("{'a': 'b', 'somefunc': function('2')}", string(mydict))
+  call assert_equal(2, mydict.somefunc())
+  call assert_match("^\n   function \\d\\\+() dict"
+  \              .. "\n1      return len(self)"
+  \              .. "\n   endfunction$", execute('func mydict.somefunc'))
+endfunc
+
+func Test_func_range()
+  new
+  call setline(1, range(1, 8))
+  func FuncRange() range
+    echo a:firstline
+    echo a:lastline
+  endfunc
+  3
+  call assert_equal("\n3\n3", execute('call FuncRange()'))
+  call assert_equal("\n4\n6", execute('4,6 call FuncRange()'))
+  call assert_equal("\n   function FuncRange() range"
+  \              .. "\n1      echo a:firstline"
+  \              .. "\n2      echo a:lastline"
+  \              .. "\n   endfunction",
+  \                 execute('function FuncRange'))
+
+  bwipe!
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab

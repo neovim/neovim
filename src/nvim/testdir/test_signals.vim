@@ -129,8 +129,7 @@ func Test_deadly_signal_TERM()
   call assert_equal(['foo'], getline(1, '$'))
 
   let result = readfile('XautoOut')
-  call assert_match('VimLeavePre triggered', result[0])
-  call assert_match('VimLeave triggered', result[1])
+  call assert_equal(["VimLeavePre triggered", "VimLeave triggered"], result)
 
   %bwipe!
   call delete('.Xsig_TERM.swp')
