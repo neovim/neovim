@@ -40,7 +40,14 @@ function M.dirname(file)
   if file == nil then
     return nil
   end
-  return vim.fn.fnamemodify(file, ':h')
+  if not file:match('[\\/]') then
+    return '.'
+  elseif file == '/' or file:gsub('\\', '/'):match('^%w:$') then
+    return file
+  elseif file:match('^/[^/]+$') then
+    return '/'
+  end
+  return file:match('[/\\]$') and file:sub(1, #file - 1) or file:match('^([/\\]?.+)[/\\]')
 end
 
 --- Return the basename of the given file or directory
@@ -48,7 +55,7 @@ end
 ---@param file (string) File or directory
 ---@return (string) Basename of {file}
 function M.basename(file)
-  return vim.fn.fnamemodify(file, ':t')
+  return file:match('[/\\]$') and '' or file:match('[^\\/]+$')
 end
 
 --- Return an iterator over the files and directories located in {path}
@@ -227,7 +234,12 @@ end
 ---@return (string) Normalized path
 function M.normalize(path)
   vim.validate({ path = { path, 's' } })
-  return (path:gsub('^~/', vim.env.HOME .. '/'):gsub('%$([%w_]+)', vim.env):gsub('\\', '/'))
+  return (
+    path
+      :gsub('^~/', vim.loop.os_homedir() .. '/')
+      :gsub('%$([%w_]+)', vim.loop.os_getenv)
+      :gsub('\\', '/')
+  )
 end
 
 return M
