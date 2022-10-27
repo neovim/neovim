@@ -43,7 +43,7 @@
 static char e_string_required_for_argument_nr[]
   = N_("E1174: String required for argument %d");
 static char e_non_empty_string_required_for_argument_nr[]
-  = N_("E1142: Non-empty string required for argument %d");
+  = N_("E1175: Non-empty string required for argument %d");
 static char e_number_required_for_argument_nr[]
   = N_("E1210: Number required for argument %d");
 

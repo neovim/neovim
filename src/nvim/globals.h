@@ -997,8 +997,6 @@ EXTERN char e_luv_api_disabled[] INIT(= N_("E5560: %s must not be called in a lu
 EXTERN char e_floatonly[] INIT(= N_("E5601: Cannot close window, only floating window would remain"));
 EXTERN char e_floatexchange[] INIT(= N_("E5602: Cannot exchange or rotate float"));
 
-EXTERN char e_non_empty_string_required[] INIT(= N_("E1142: Non-empty string required"));
-
 EXTERN char e_cannot_define_autocommands_for_all_events[] INIT(= N_("E1155: Cannot define autocommands for ALL events"));
 
 EXTERN char e_resulting_text_too_long[] INIT(= N_("E1240: Resulting text too long"));

@@ -23,7 +23,7 @@ describe('exepath()', function()
     for _, input in ipairs({'v:null', 'v:true', 'v:false', '{}', '[]'}) do
       eq('Vim(call):E1174: String required for argument 1', exc_exec('call exepath('..input..')'))
     end
-    eq('Vim(call):E1142: Non-empty string required for argument 1', exc_exec('call exepath("")'))
+    eq('Vim(call):E1175: Non-empty string required for argument 1', exc_exec('call exepath("")'))
     command('let $PATH = fnamemodify("./test/functional/fixtures/bin", ":p")')
     for _, input in ipairs({'v:null', 'v:true', 'v:false'}) do
       eq('Vim(call):E1174: String required for argument 1', exc_exec('call exepath('..input..')'))
