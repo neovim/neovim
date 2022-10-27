@@ -120,6 +120,13 @@ func Test_readfile_binary()
   call delete('XReadfile_bin')
 endfunc
 
+func Test_readfile_binary_empty()
+  call writefile([], 'Xempty-file')
+  " This used to compare uninitialized memory in Vim <= 8.2.4065
+  call assert_equal([''], readfile('Xempty-file', 'b'))
+  call delete('Xempty-file')
+endfunc
+
 func Test_readfile_bom()
   call writefile(["\ufeffFOO", "FOO\ufeffBAR"], 'XReadfile_bom')
   call assert_equal(['FOO', 'FOOBAR'], readfile('XReadfile_bom'))
