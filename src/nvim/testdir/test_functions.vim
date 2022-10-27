@@ -2206,6 +2206,12 @@ func Test_range()
   call assert_equal([0, 1, 2, 3, 4], uniq(range(5)))
 endfunc
 
+func Test_garbagecollect_now_fails()
+  let v:testing = 0
+  call assert_fails('call test_garbagecollect_now()', 'E1142:')
+  let v:testing = 1
+endfunc
+
 " Test for the eval() function
 func Test_eval()
   call assert_fails("call eval('5 a')", 'E488:')
