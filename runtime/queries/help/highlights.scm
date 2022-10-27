@@ -2,6 +2,8 @@
 (h2) @text.title
 (h3) @text.title
 (column_heading) @text.title
+(column_heading
+   "~" @conceal (#set! conceal ""))
 (tag
    "*" @conceal (#set! conceal "")
    text: (_) @label)
