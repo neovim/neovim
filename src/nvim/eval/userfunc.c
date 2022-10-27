@@ -2704,6 +2704,13 @@ void ex_delfunction(exarg_T *eap)
     *p = NUL;
   }
 
+  if (isdigit(*name) && fudi.fd_dict == NULL) {
+    if (!eap->skip) {
+      semsg(_(e_invarg2), eap->arg);
+    }
+    xfree(name);
+    return;
+  }
   if (!eap->skip) {
     fp = find_func(name);
   }
