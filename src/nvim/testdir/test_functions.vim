@@ -1018,7 +1018,9 @@ func Test_charidx()
   call assert_equal(2, charidx(a, 4))
   call assert_equal(3, charidx(a, 7))
   call assert_equal(-1, charidx(a, 8))
+  call assert_equal(-1, charidx(a, -1))
   call assert_equal(-1, charidx('', 0))
+  call assert_equal(-1, charidx(v:_null_string, 0))
 
   " count composing characters
   call assert_equal(0, charidx(a, 0, 1))

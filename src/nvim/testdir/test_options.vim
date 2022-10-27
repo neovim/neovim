@@ -1116,6 +1116,35 @@ func Test_opt_reset_scroll()
   call delete('Xscroll')
 endfunc
 
+" Check that VIM_POSIX env variable influences default value of 'cpo' and 'shm'
+func Test_VIM_POSIX()
+  throw 'Skipped: Nvim does not support $VIM_POSIX'
+  let saved_VIM_POSIX = getenv("VIM_POSIX")
+
+  call setenv('VIM_POSIX', "1")
+  let after =<< trim [CODE]
+    call writefile([&cpo, &shm], 'X_VIM_POSIX')
+    qall
+  [CODE]
+  if RunVim([], after, '')
+    call assert_equal(['aAbBcCdDeEfFgHiIjJkKlLmMnoOpPqrRsStuvwWxXyZ$!%*-+<>#{|&/\.;',
+          \            'AS'], readfile('X_VIM_POSIX'))
+  endif
+
+  call setenv('VIM_POSIX', v:null)
+  let after =<< trim [CODE]
+    call writefile([&cpo, &shm], 'X_VIM_POSIX')
+    qall
+  [CODE]
+  if RunVim([], after, '')
+    call assert_equal(['aAbBcCdDeEfFgHiIjJkKlLmMnoOpPqrRsStuvwWxXyZ$!%*-+<>;',
+          \            'S'], readfile('X_VIM_POSIX'))
+  endif
+
+  call delete('X_VIM_POSIX')
+  call setenv('VIM_POSIX', saved_VIM_POSIX)
+endfunc
+
 " Test for setting an option to a Vi or Vim default
 func Test_opt_default()
   throw 'Skipped: Nvim has different defaults'
