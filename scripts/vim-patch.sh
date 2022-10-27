@@ -315,12 +315,11 @@ uncrustify_patch() {
     local before=$patch_path/before/$basename
     local after=$patch_path/after/$basename
     local patchfile="$patch_path"/patch/"$basename".patch
-    if [[ ! -e $before ]] || [[ ! -e $after ]]; then
-      continue
-    fi
+    [[ ! -e $before ]] && before=/dev/null
+    [[ ! -e $after ]] && after=/dev/null
     git --no-pager diff --no-index --patch --unified=5 --color=never "$before" "$after" > "$patchfile"
-    sed -E "s|$before|/$file|g" -i "$patchfile"
-    sed -E "s|$after|/$file|g" -i "$patchfile"
+    [[ "$before" != /dev/null ]] && sed -E "s|$before|/$file|g" -i "$patchfile"
+    [[ "$after" != /dev/null ]] && sed -E "s|$after|/$file|g" -i "$patchfile"
   done
 
   cat "$patch_path"/patch/*.patch
