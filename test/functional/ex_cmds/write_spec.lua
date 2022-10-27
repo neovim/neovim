@@ -20,6 +20,9 @@ describe(':write', function()
     os.remove('test_bkc_file.txt')
     os.remove('test_bkc_link.txt')
     os.remove('test_fifo')
+    os.remove('test/write/p_opt.txt')
+    os.remove('test/write')
+    os.remove('test')
     os.remove(fname)
     os.remove(fname_bak)
     os.remove(fname_broken)
@@ -92,6 +95,16 @@ describe(':write', function()
     local fifo = assert(io.open("test_fifo"))
     eq(text.."\n", fifo:read("*all"))
     fifo:close()
+  end)
+
+  it("creates missing parent directories", function()
+    command("write ++p test/write/p_opt.txt")
+    source([[
+      edit test/write/p_opt.txt
+      call setline(1, ['line1'])
+      write
+    ]])
+    eq(eval("['line1']"), eval("readfile('test/write/p_opt.txt')"))
   end)
 
   it('errors out correctly', function()
