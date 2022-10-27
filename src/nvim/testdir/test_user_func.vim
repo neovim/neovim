@@ -423,6 +423,11 @@ func Test_del_func()
   func d.fn()
     return 1
   endfunc
+
+  " cannot delete the dict function by number
+  let nr = substitute(execute('echo d'), '.*function(''\(\d\+\)'').*', '\1', '')
+  call assert_fails('delfunction g:' .. nr, 'E475: Invalid argument: g:')
+
   delfunc d.fn
   call assert_equal({'a' : 10}, d)
 endfunc
