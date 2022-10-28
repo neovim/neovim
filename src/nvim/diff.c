@@ -2678,7 +2678,8 @@ static void diffgetput(const int addr_count, const int idx_cur, const int idx_fr
       // past the range that was specified
       break;
     }
-    diff_T *dfree = NULL;
+    diff_T dfree = { 0 };
+    bool did_free = false;
     linenr_T lnum = dp->df_lnum[idx_to];
     linenr_T count = dp->df_count[idx_to];
 
@@ -2775,7 +2776,9 @@ static void diffgetput(const int addr_count, const int idx_cur, const int idx_fr
 
         if (i == DB_COUNT) {
           // delete the diff entry, the buffers are now equal here
-          dfree = dp;
+          dfree = *dp;
+          did_free = true;
+          dp = diff_free(curtab, dprev, dp);
         }
       }
 
@@ -2794,10 +2797,9 @@ static void diffgetput(const int addr_count, const int idx_cur, const int idx_fr
       }
       changed_lines(lnum, 0, lnum + count, added, true);
 
-      if (dfree == dp) {
+      if (did_free) {
         // Diff is deleted, update folds in other windows.
-        diff_fold_update(dfree, idx_to);
-        dp = diff_free(curtab, dprev, dp);
+        diff_fold_update(&dfree, idx_to);
       }
 
       // mark_adjust() may have made "dp" invalid.  We don't know where
@@ -2806,7 +2808,7 @@ static void diffgetput(const int addr_count, const int idx_cur, const int idx_fr
         break;
       }
 
-      if (dfree == NULL) {
+      if (!did_free) {
         // mark_adjust() may have changed the count in a wrong way
         dp->df_count[idx_to] = new_count;
       }
@@ -2818,7 +2820,7 @@ static void diffgetput(const int addr_count, const int idx_cur, const int idx_fr
     }
 
     // If before the range or not deleted, go to next diff.
-    if (dfree == NULL) {
+    if (!did_free) {
       dprev = dp;
       dp = dp->df_next;
     }
