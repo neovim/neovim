@@ -797,7 +797,7 @@ function M.get_prev_pos(opts)
 end
 
 --- Move to the previous diagnostic in the current buffer.
----@param opts table See |vim.diagnostic.goto_next()|
+---@param opts table|nil See |vim.diagnostic.goto_next()|
 function M.goto_prev(opts)
   return diagnostic_move_pos(opts, M.get_prev_pos(opts))
 end
