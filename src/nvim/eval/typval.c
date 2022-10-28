@@ -1841,6 +1841,7 @@ dictitem_T *tv_dict_item_alloc_len(const char *const key, const size_t key_len)
   di->di_key[key_len] = NUL;
   di->di_flags = DI_FLAGS_ALLOC;
   di->di_tv.v_lock = VAR_UNLOCKED;
+  di->di_tv.v_type = VAR_UNKNOWN;
   return di;
 }
 
