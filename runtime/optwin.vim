@@ -248,7 +248,7 @@ call <SID>OptionG("hf", &hf)
 
 call <SID>Header("moving around, searching and patterns")
 call append("$", "whichwrap\tlist of flags specifying which commands wrap to another line")
-call <SID>OptionG("ww")
+call <SID>OptionG("ww", &ww)
 call append("$", "startofline\tmany jump commands move the cursor to the first non-blank")
 call append("$", "\tcharacter of a line")
 call <SID>BinOptionG("sol", &sol)
