@@ -401,6 +401,13 @@ cleanup:
 ///   pattern = { "*.py", "*.pyi" }
 /// </pre>
 ///
+/// Note: The `pattern` is passed to callbacks and commands as a literal string; environment
+/// variables like `$HOME` and `~` are not automatically expanded as they are by |:autocmd|.
+/// Instead, |expand()| such variables explicitly:
+/// <pre>
+///   pattern = vim.fn.expand("~") .. "/some/path/*.py"
+/// </pre>
+///
 /// Example values for event:
 /// <pre>
 ///   "BufWritePre"
@@ -411,7 +418,7 @@ cleanup:
 /// @param opts Dictionary of autocommand options:
 ///             - group (string|integer) optional: the autocommand group name or
 ///             id to match against.
-///             - pattern (string|array) optional: pattern or patterns to match
+///             - pattern (string|array) optional: pattern or patterns to match literally
 ///             against |autocmd-pattern|.
 ///             - buffer (integer) optional: buffer number for buffer local autocommands
 ///             |autocmd-buflocal|. Cannot be used with {pattern}.
