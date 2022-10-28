@@ -213,11 +213,11 @@ jobs:
       matrix:
         include:
           - flavor: asan
-            cc: clang-13
+            cc: clang
             runner: ubuntu-22.04
             os: linux
           - flavor: tsan
-            cc: clang-13
+            cc: clang
             runner: ubuntu-22.04
             os: linux
           - flavor: uchar
@@ -273,14 +273,6 @@ jobs:
             echo "Unexpected CMake version: $cmake_version"
             exit 1
           }
-
-      - name: Install new clang
-        if: matrix.flavor == 'asan' || matrix.flavor == 'tsan'
-        run: |
-          wget https://apt.llvm.org/llvm.sh
-          chmod a+x llvm.sh
-          sudo ./llvm.sh 13
-          rm llvm.sh
 
       - name: Install brew packages
         if: matrix.os == 'osx'
