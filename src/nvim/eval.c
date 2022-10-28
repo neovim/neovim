@@ -1760,11 +1760,7 @@ void set_var_lval(lval_T *lp, char *endp, typval_T *rettv, int copy, const bool 
         semsg(_(e_dictkey), lp->ll_newkey);
         return;
       }
-      if ((lp->ll_tv->vval.v_dict == &globvardict
-           // || lp->ll_tv->vval.v_dict == &SCRIPT_ITEM(current_sctx.sc_sid)->sn_vars->sv_dict
-           )
-          && (rettv->v_type == VAR_FUNC || rettv->v_type == VAR_PARTIAL)
-          && var_wrong_func_name(lp->ll_newkey, true)) {
+      if (tv_dict_wrong_func_name(lp->ll_tv->vval.v_dict, rettv, lp->ll_newkey)) {
         return;
       }
 

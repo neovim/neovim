@@ -2488,6 +2488,11 @@ func Test_builtin_check()
   call assert_fails('let g:.trim = {x -> " " .. x}', 'E704:')
   call assert_fails('let s:["trim"] = {x -> " " .. x}', 'E704:')
   call assert_fails('let s:.trim = {x -> " " .. x}', 'E704:')
+
+  call assert_fails('call extend(g:, #{foo: { -> "foo" }})', 'E704:')
+  let g:bar = 123
+  call extend(g:, #{bar: { -> "foo" }}, "keep")
+  call assert_fails('call extend(g:, #{bar: { -> "foo" }}, "force")', 'E704:')
 endfunc
 
 

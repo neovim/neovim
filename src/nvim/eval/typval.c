@@ -2206,6 +2206,18 @@ bool tv_dict_get_callback(dict_T *const d, const char *const key, const ptrdiff_
   return res;
 }
 
+/// Check for adding a function to g: or s:.
+/// If the name is wrong give an error message and return true.
+int tv_dict_wrong_func_name(dict_T *d, typval_T *tv, const char *name)
+{
+  return (d == &globvardict
+          // || (SCRIPT_ID_VALID(current_sctx.sc_sid)
+          //     && d == &SCRIPT_ITEM(current_sctx.sc_sid)->sn_vars->sv_dict)
+          )
+         && (tv->v_type == VAR_FUNC || tv->v_type == VAR_PARTIAL)
+         && var_wrong_func_name(name, true);
+}
+
 //{{{2 dict_add*
 
 /// Add item to dictionary
@@ -2217,6 +2229,9 @@ bool tv_dict_get_callback(dict_T *const d, const char *const key, const ptrdiff_
 int tv_dict_add(dict_T *const d, dictitem_T *const item)
   FUNC_ATTR_NONNULL_ALL
 {
+  if (tv_dict_wrong_func_name(d, &item->di_tv, (const char *)item->di_key)) {
+    return FAIL;
+  }
   return hash_add(&d->dv_hashtab, item->di_key);
 }
 
@@ -2475,6 +2490,9 @@ void tv_dict_extend(dict_T *const d1, dict_T *const d2, const char *const action
 
       if (var_check_lock(di1->di_tv.v_lock, arg_errmsg, arg_errmsg_len)
           || var_check_ro(di1->di_flags, arg_errmsg, arg_errmsg_len)) {
+        break;
+      }
+      if (tv_dict_wrong_func_name(d1, &di2->di_tv, (const char *)di2->di_key)) {
         break;
       }
 
