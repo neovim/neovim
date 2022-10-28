@@ -80,7 +80,7 @@ int file_open(FileDescriptor *const ret_fp, const char *const fname, const int f
   (void)wr;
 
   if (flags & kFileMkDir) {
-    int mkdir_ret = os_mkdir_if_absent((char *)fname);
+    int mkdir_ret = os_file_mkdir((char *)fname);
     if (mkdir_ret < 0) {
       return mkdir_ret;
     }

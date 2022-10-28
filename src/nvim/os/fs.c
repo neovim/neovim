@@ -952,7 +952,7 @@ int os_mkdir_recurse(const char *const dir, int32_t mode, char **const failed_di
 ///                  we want to create
 ///
 /// @return `0` for success, libuv error code for failure.
-int os_mkdir_if_absent(char *fname)
+int os_file_mkdir(char *fname)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
   if (!dir_of_file_exists((char_u *)fname)) {
