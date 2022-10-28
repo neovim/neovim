@@ -1841,6 +1841,7 @@ dictitem_T *tv_dict_item_alloc_len(const char *const key, const size_t key_len)
   di->di_key[key_len] = NUL;
   di->di_flags = DI_FLAGS_ALLOC;
   di->di_tv.v_lock = VAR_UNLOCKED;
+  di->di_tv.v_type = VAR_UNKNOWN;
   return di;
 }
 
@@ -2436,7 +2437,7 @@ void tv_dict_extend(dict_T *const d1, dict_T *const d2, const char *const action
       // Check the key to be valid when adding to any scope.
       if (d1->dv_scope == VAR_DEF_SCOPE
           && tv_is_func(di2->di_tv)
-          && !var_check_func_name((const char *)di2->di_key, di1 == NULL)) {
+          && var_wrong_func_name((const char *)di2->di_key, di1 == NULL)) {
         break;
       }
       if (!valid_varname((const char *)di2->di_key)) {
