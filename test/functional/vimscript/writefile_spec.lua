@@ -112,7 +112,6 @@ describe('writefile()', function()
   end)
 
   it('creates missing parent directories', function()
-    os.remove(ddname)
     os.remove(dname)
     eq(nil, read_file(dfname))
     eq(0, funcs.writefile({'abc', 'def', 'ghi'}, dfname, 'p'))
@@ -122,6 +121,14 @@ describe('writefile()', function()
     eq(nil, read_file(dfname))
     eq(0, funcs.writefile({'\na\nb\n'}, dfname, 'pb'))
     eq('\0a\0b\0', read_file(dfname))
+    os.remove(dfname)
+    os.remove(dname)
+    eq('Vim(call):E32: No file name',
+      pcall_err(command, ('call writefile([], "%s", "p")'):format(dfname .. '.d/')))
+    eq(('Vim(call):E482: Can\'t open file ./ for writing: illegal operation on a directory'),
+      pcall_err(command, 'call writefile([], "./", "p")'))
+    eq(('Vim(call):E482: Can\'t open file . for writing: illegal operation on a directory'),
+      pcall_err(command, 'call writefile([], ".", "p")'))
   end)
 
   it('errors out with invalid arguments', function()

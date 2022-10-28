@@ -97,14 +97,26 @@ describe(':write', function()
     fifo:close()
   end)
 
-  it("creates missing parent directories", function()
+  it("++p creates missing parent directories", function()
+    eq(0, eval("filereadable('p_opt.txt')"))
+    command("write ++p p_opt.txt")
+    eq(1, eval("filereadable('p_opt.txt')"))
+    os.remove("p_opt.txt")
+
+    eq(0, eval("filereadable('p_opt.txt')"))
+    command("write ++p ./p_opt.txt")
+    eq(1, eval("filereadable('p_opt.txt')"))
+    os.remove("p_opt.txt")
+
+    eq(0, eval("filereadable('test/write/p_opt.txt')"))
     command("write ++p test/write/p_opt.txt")
-    source([[
-      edit test/write/p_opt.txt
-      call setline(1, ['line1'])
-      write
-    ]])
-    eq(eval("['line1']"), eval("readfile('test/write/p_opt.txt')"))
+    eq(1, eval("filereadable('test/write/p_opt.txt')"))
+
+    eq(('Vim(write):E32: No file name'), pcall_err(command, 'write ++p test_write/'))
+    eq(('Vim(write):E17: "'..funcs.fnamemodify('.', ':p:h')..'" is a directory'),
+      pcall_err(command, 'write ++p .'))
+    eq(('Vim(write):E17: "'..funcs.fnamemodify('.', ':p:h')..'" is a directory'),
+      pcall_err(command, 'write ++p ./'))
   end)
 
   it('errors out correctly', function()
