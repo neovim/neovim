@@ -608,7 +608,6 @@ endif()
 #
 find_program(LUACHECK_PRG luacheck)
 find_program(STYLUA_PRG stylua)
-find_program(FLAKE8_PRG flake8)
 find_program(UNCRUSTIFY_PRG uncrustify)
 find_program(SHELLCHECK_PRG shellcheck)
 
@@ -635,14 +634,6 @@ add_custom_target(lintlua)
 add_dependencies(lintlua lintlua-luacheck lintlua-stylua)
 
 include(InstallHelpers)
-add_glob_targets(
-  TARGET lintpy
-  COMMAND ${FLAKE8_PRG}
-  FLAGS --max-line-length 100
-  GLOB_DIRS contrib scripts src test
-  GLOB_PAT *.py
-  TOUCH_STRATEGY SINGLE
-  )
 
 add_glob_targets(
   TARGET lintsh
@@ -658,7 +649,7 @@ add_custom_target(lintcommit
 add_dependencies(lintcommit nvim)
 
 add_custom_target(lint)
-add_dependencies(lint check-single-includes lintc lintlua lintpy lintsh lintcommit lintuncrustify)
+add_dependencies(lint check-single-includes lintc lintlua lintsh lintcommit lintuncrustify)
 
 #
 # Format

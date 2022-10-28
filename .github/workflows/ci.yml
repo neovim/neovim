@@ -38,7 +38,6 @@ jobs:
             automake \
             build-essential \
             cmake \
-            flake8 \
             gettext \
             libluajit-5.1-dev \
             libmsgpack-dev \
@@ -105,10 +104,6 @@ jobs:
       - if: "!cancelled()"
         name: lintlua
         run: make lintlua
-
-      - if: "!cancelled()"
-        name: lintpy
-        run: make lintpy
 
       - if: "!cancelled()"
         name: lintsh
