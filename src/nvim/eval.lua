@@ -185,6 +185,7 @@ return {
     gettabvar={args={2, 3}, base=1},
     gettabwinvar={args={3, 4}, base=1},
     gettagstack={args={0, 1}, base=1},
+    gettext={args=1, base=1},
     getwininfo={args={0, 1}, base=1},
     getwinpos={args={0, 1}, base=1},
     getwinposx={},

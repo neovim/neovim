@@ -149,13 +149,13 @@ exe $OPTWIN_CMD . ' new option-window'
 setlocal ts=15 tw=0 noro buftype=nofile
 
 " Insert help and a "set" command for each option.
-call append(0, '" Each "set" line shows the current value of an option (on the left).')
-call append(1, '" Hit <CR> on a "set" line to execute it.')
-call append(2, '"            A boolean option will be toggled.')
-call append(3, '"            For other options you can edit the value before hitting <CR>.')
-call append(4, '" Hit <CR> on a help line to open a help window on this option.')
-call append(5, '" Hit <CR> on an index line to jump there.')
-call append(6, '" Hit <Space> on a "set" line to refresh it.')
+call append(0, gettext('" Each "set" line shows the current value of an option (on the left).'))
+call append(1, gettext('" Hit <Enter> on a "set" line to execute it.'))
+call append(2, gettext('"            A boolean option will be toggled.'))
+call append(3, gettext('"            For other options you can edit the value before hitting <Enter>.'))
+call append(4, gettext('" Hit <Enter> on a help line to open a help window on this option.'))
+call append(5, gettext('" Hit <Enter> on an index line to jump there.'))
+call append(6, gettext('" Hit <Space> on a "set" line to refresh it.'))
 
 " These functions are called often below.  Keep them fast!
 
