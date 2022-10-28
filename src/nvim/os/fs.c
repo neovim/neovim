@@ -957,6 +957,11 @@ int os_file_mkdir(char *fname)
 {
   if (!dir_of_file_exists((char_u *)fname)) {
     char *tail = path_tail_with_sep(fname);
+    char *last_char = tail + strlen(tail) - 1;
+    if (vim_ispathsep(*last_char)) {
+      emsg(_(e_noname));
+      return -1;
+    }
     char c = *tail;
     *tail = NUL;
     int r;

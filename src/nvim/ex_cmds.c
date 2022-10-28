@@ -1909,7 +1909,7 @@ int do_write(exarg_T *eap)
     }
 
     if (eap->mkdir_p) {
-      if (os_file_mkdir(ffname) < 0) {
+      if (os_file_mkdir(fname) < 0) {
         retval = FAIL;
         goto theend;
       }
