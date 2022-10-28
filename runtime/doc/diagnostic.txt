@@ -519,7 +519,7 @@ goto_prev({opts})                                 *vim.diagnostic.goto_prev()*
     Move to the previous diagnostic in the current buffer.
 
     Parameters: ~
-      • {opts}  (table) See |vim.diagnostic.goto_next()|
+      • {opts}  (table|nil) See |vim.diagnostic.goto_next()|
 
 hide({namespace}, {bufnr})                             *vim.diagnostic.hide()*
     Hide currently displayed diagnostics.
