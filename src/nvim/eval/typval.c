@@ -2210,10 +2210,7 @@ bool tv_dict_get_callback(dict_T *const d, const char *const key, const ptrdiff_
 /// If the name is wrong give an error message and return true.
 int tv_dict_wrong_func_name(dict_T *d, typval_T *tv, const char *name)
 {
-  return (d == &globvardict
-          // || (SCRIPT_ID_VALID(current_sctx.sc_sid)
-          //     && d == &SCRIPT_ITEM(current_sctx.sc_sid)->sn_vars->sv_dict)
-          )
+  return (d == &globvardict || &d->dv_hashtab == get_funccal_local_ht())
          && (tv->v_type == VAR_FUNC || tv->v_type == VAR_PARTIAL)
          && var_wrong_func_name(name, true);
 }
