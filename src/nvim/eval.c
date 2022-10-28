@@ -1444,7 +1444,7 @@ char *get_lval(char *const name, typval_T *const rettv, lval_T *const lp, const 
         }
         wrong = ((lp->ll_dict->dv_scope == VAR_DEF_SCOPE
                   && tv_is_func(*rettv)
-                  && !var_check_func_name((const char *)key, lp->ll_di == NULL))
+                  && var_wrong_func_name((const char *)key, lp->ll_di == NULL))
                  || !valid_varname((const char *)key));
         if (len != -1) {
           key[len] = prevval;

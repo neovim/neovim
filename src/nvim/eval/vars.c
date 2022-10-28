@@ -1257,7 +1257,7 @@ void set_var_const(const char *name, const size_t name_len, typval_T *const tv, 
     v = find_var_in_scoped_ht(name, name_len, true);
   }
 
-  if (tv_is_func(*tv) && !var_check_func_name(name, v == NULL)) {
+  if (tv_is_func(*tv) && var_wrong_func_name(name, v == NULL)) {
     return;
   }
 
@@ -1445,9 +1445,9 @@ bool var_check_fixed(const int flags, const char *name, size_t name_len)
 /// @param[in]  name  Possible function/funcref name.
 /// @param[in]  new_var  True if it is a name for a variable.
 ///
-/// @return false in case of error, true in case of success. Also gives an
+/// @return false in case of success, true in case of failure. Also gives an
 ///         error message if appropriate.
-bool var_check_func_name(const char *const name, const bool new_var)
+bool var_wrong_func_name(const char *const name, const bool new_var)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
   // Allow for w: b: s: and t:.
@@ -1455,16 +1455,16 @@ bool var_check_func_name(const char *const name, const bool new_var)
       && !ASCII_ISUPPER((name[0] != NUL && name[1] == ':')
                         ? name[2] : name[0])) {
     semsg(_("E704: Funcref variable name must start with a capital: %s"), name);
-    return false;
+    return true;
   }
   // Don't allow hiding a function.  When "v" is not NULL we might be
   // assigning another function to the same var, the type is checked
   // below.
   if (new_var && function_exists(name, false)) {
     semsg(_("E705: Variable name conflicts with existing function: %s"), name);
-    return false;
+    return true;
   }
-  return true;
+  return false;
 }
 
 // TODO(ZyX-I): move to eval/expressions
