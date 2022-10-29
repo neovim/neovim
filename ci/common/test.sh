@@ -1,12 +1,6 @@
 . "${CI_DIR}/common/build.sh"
 . "${CI_DIR}/common/suite.sh"
 
-submit_coverage() {
-  if [ -n "${GCOV}" ]; then
-    "${CI_DIR}/common/submit_coverage.sh" "$@" || echo 'codecov upload failed.'
-  fi
-}
-
 print_core() {
   local app="$1"
   local core="$2"
@@ -91,7 +85,6 @@ unittests() {(
   if ! build_make unittest ; then
     fail 'unittests' 'Unit tests failed'
   fi
-  submit_coverage unittest
   check_core_dumps "$(command -v luajit)"
 )}
 
@@ -100,7 +93,6 @@ functionaltests() {(
   if ! build_make ${FUNCTIONALTEST}; then
     fail 'functionaltests' 'Functional tests failed'
   fi
-  submit_coverage functionaltest
   check_sanitizer "${LOG_DIR}"
   valgrind_check "${LOG_DIR}"
   check_core_dumps
@@ -112,7 +104,6 @@ oldtests() {(
     reset
     fail 'oldtests' 'Legacy tests failed'
   fi
-  submit_coverage oldtest
   check_sanitizer "${LOG_DIR}"
   valgrind_check "${LOG_DIR}"
   check_core_dumps
