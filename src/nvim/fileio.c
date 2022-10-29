@@ -525,6 +525,7 @@ int readfile(char *fname, char *sfname, linenr_T from, linenr_T lines_to_skip,
     // correctly set when reading stdin.
     if (!read_buffer) {
       curbuf->b_p_eol = true;
+      curbuf->b_p_eof = false;
       curbuf->b_start_eol = true;
     }
     curbuf->b_p_bomb = false;
@@ -1629,12 +1630,13 @@ failed:
       && !got_int
       && linerest != 0
       && !(!curbuf->b_p_bin
-           && fileformat == EOL_DOS
-           && *line_start == Ctrl_Z
-           && ptr == line_start + 1)) {
+           && fileformat == EOL_DOS)) {
     // remember for when writing
     if (set_options) {
       curbuf->b_p_eol = false;
+      if (*line_start == Ctrl_Z && ptr == line_start + 1) {
+        curbuf->b_p_eof = false;
+      }
     }
     *ptr = NUL;
     len = (colnr_T)(ptr - line_start + 1);
@@ -3191,6 +3193,11 @@ restore_backup:
         len = 0;
         write_info.bw_start_lnum = lnum;
       }
+      if (!buf->b_p_fixeol && buf->b_p_eof) {
+        // write trailing CTRL-Z
+        (void)write_eintr(write_info.bw_fd, "\x1a", 1);
+      }
+
       // write failed or last line has no EOL: stop here
       if (end == 0
           || (lnum == end

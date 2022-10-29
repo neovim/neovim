@@ -641,6 +641,15 @@ return {
       defaults={if_true=macros('ENC_DFLT')}
     },
     {
+      full_name='endoffile', abbreviation='eof',
+      short_desc=N_("write CTRL-Z for last line in file"),
+      type='bool', scope={'buffer'},
+      no_mkrc=true,
+      redraw={'statuslines'},
+      varname='p_eof',
+      defaults={if_true=true}
+    },
+    {
       full_name='endofline', abbreviation='eol',
       short_desc=N_("write <EOL> for last line in file"),
       type='bool', scope={'buffer'},

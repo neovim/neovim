@@ -497,6 +497,7 @@ EXTERN char_u *p_ef;            // 'errorfile'
 EXTERN char *p_efm;             // 'errorformat'
 EXTERN char *p_gefm;            // 'grepformat'
 EXTERN char *p_gp;              // 'grepprg'
+EXTERN int p_eof;               ///< 'endoffile'
 EXTERN int p_eol;               ///< 'endofline'
 EXTERN char *p_ei;              // 'eventignore'
 EXTERN int p_et;                ///< 'expandtab'
@@ -858,6 +859,7 @@ enum {
   BV_CFU,
   BV_DEF,
   BV_INC,
+  BV_EOF,
   BV_EOL,
   BV_FIXEOL,
   BV_EP,

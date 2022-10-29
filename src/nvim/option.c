@@ -3978,6 +3978,8 @@ static char_u *get_varp(vimoption_T *p)
     return (char_u *)&(curbuf->b_p_cfu);
   case PV_OFU:
     return (char_u *)&(curbuf->b_p_ofu);
+  case PV_EOF:
+    return (char_u *)&(curbuf->b_p_eof);
   case PV_EOL:
     return (char_u *)&(curbuf->b_p_eol);
   case PV_FIXEOL:

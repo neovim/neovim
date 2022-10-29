@@ -1,16 +1,17 @@
-" Tests for 'fixeol' and 'eol'
+" Tests for 'fixeol', 'eof' and 'eol'
+
 func Test_fixeol()
   " first write two test files – with and without trailing EOL
   " use Unix fileformat for consistency
   set ff=unix
   enew!
-  call setline('.', 'with eol')
+  call setline('.', 'with eol or eof')
   w! XXEol
   enew!
-  set noeol nofixeol
-  call setline('.', 'without eol')
+  set noeof noeol nofixeol
+  call setline('.', 'without eol or eof')
   w! XXNoEol
-  set eol fixeol
+  set eol eof fixeol
   bwipe XXEol XXNoEol
 
   " try editing files with 'fixeol' disabled
@@ -43,6 +44,8 @@ func Test_fixeol()
   call delete('XXNoEol')
   call delete('XXTestEol')
   call delete('XXTestNoEol')
-  set ff& fixeol& eol&
+  set ff& fixeol& eof& eol&
   enew!
 endfunc
+
+" vim: shiftwidth=2 sts=2 expandtab

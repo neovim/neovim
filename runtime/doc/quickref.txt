@@ -689,6 +689,7 @@ Short explanation of each option:		*option-list*
 'display'	  'dy'	    list of flags for how to display text
 'eadirection'	  'ead'     in which direction 'equalalways' works
 'encoding'	  'enc'     encoding used internally
+'endoffile'	  'eof'     write CTRL-Z at end of the file
 'endofline'	  'eol'     write <EOL> for last line in file
 'equalalways'	  'ea'	    windows are automatically made the same size
 'equalprg'	  'ep'	    external program to use for "=" command
