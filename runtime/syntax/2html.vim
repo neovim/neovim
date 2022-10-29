@@ -815,202 +815,204 @@ endif
 
 " HTML header, with the title and generator ;-). Left free space for the CSS,
 " to be filled at the end.
-call extend(s:lines, [
-      \ "<html>",
-      \ "<head>"])
-" include encoding as close to the top as possible, but only if not already
-" contained in XML information (to avoid haggling over content type)
-if s:settings.encoding != "" && !s:settings.use_xhtml
-  if s:html5
-    call add(s:lines, '<meta charset="' . s:settings.encoding . '"' . s:tag_close)
-  else
-    call add(s:lines, "<meta http-equiv=\"content-type\" content=\"text/html; charset=" . s:settings.encoding . '"' . s:tag_close)
-  endif
-endif
-call extend(s:lines, [
-      \ ("<title>".expand("%:p:~")."</title>"),
-      \ ("<meta name=\"Generator\" content=\"Vim/".v:version/100.".".v:version%100.'"'.s:tag_close),
-      \ ("<meta name=\"plugin-version\" content=\"".s:pluginversion.'"'.s:tag_close)
-      \ ])
-call add(s:lines, '<meta name="syntax" content="'.s:current_syntax.'"'.s:tag_close)
-call add(s:lines, '<meta name="settings" content="'.
-      \ join(filter(keys(s:settings),'s:settings[v:val]'),',').
-      \ ',prevent_copy='.s:settings.prevent_copy.
-      \ ',use_input_for_pc='.s:settings.use_input_for_pc.
-      \ '"'.s:tag_close)
-call add(s:lines, '<meta name="colorscheme" content="'.
-      \ (exists('g:colors_name')
-      \ ? g:colors_name
-      \ : 'none'). '"'.s:tag_close)
-
-if s:settings.use_css
+if !s:settings.no_doc
   call extend(s:lines, [
-	\ "<style" . (s:html5 ? "" : " type=\"text/css\"") . ">",
-	\ s:settings.use_xhtml ? "" : "<!--"])
-  let s:ieonly = []
-  if s:settings.dynamic_folds
-    if s:settings.hover_unfold
-      " if we are doing hover_unfold, use css 2 with css 1 fallback for IE6
-      call extend(s:lines, [
-	    \ ".FoldColumn { text-decoration: none; white-space: pre; }",
-	    \ "",
-	    \ "body * { margin: 0; padding: 0; }", "",
-	    \ ".open-fold   > span.Folded { display: none;  }",
-	    \ ".open-fold   > .fulltext   { display: inline; }",
-	    \ ".closed-fold > .fulltext   { display: none;  }",
-	    \ ".closed-fold > span.Folded { display: inline; }",
-	    \ "",
-	    \ ".open-fold   > .toggle-open   { display: none;   }",
-	    \ ".open-fold   > .toggle-closed { display: inline; }",
-	    \ ".closed-fold > .toggle-open   { display: inline; }",
-	    \ ".closed-fold > .toggle-closed { display: none;   }",
-	    \ "", "",
-	    \ '/* opening a fold while hovering won''t be supported by IE6 and other',
-	    \ "similar browsers, but it should fail gracefully. */",
-	    \ ".closed-fold:hover > .fulltext      { display: inline; }",
-	    \ ".closed-fold:hover > .toggle-filler { display: none; }",
-	    \ ".closed-fold:hover > .Folded        { display: none; }"])
-      " TODO: IE6 is REALLY old and I can't even test it anymore. Maybe we
-      " should remove this? Leave it in for now, it was working at one point,
-      " and doesn't affect any modern browsers. Even newer IE versions should
-      " support the above code and ignore the following.
-      let s:ieonly = [
-	    \ "<!--[if lt IE 7]><style type=\"text/css\">",
-	    \ ".open-fold   .fulltext      { display: inline; }",
-	    \ ".open-fold   span.Folded    { display: none; }",
-	    \ ".open-fold   .toggle-open   { display: none; }",
-	    \ ".open-fold   .toggle-closed { display: inline; }",
-	    \ "",
-	    \ ".closed-fold .fulltext      { display: none; }",
-	    \ ".closed-fold span.Folded    { display: inline; }",
-	    \ ".closed-fold .toggle-open   { display: inline; }",
-	    \ ".closed-fold .toggle-closed { display: none; }",
-	    \ "</style>",
-	    \ "<![endif]-->",
-	    \]
+	\ "<html>",
+	\ "<head>"])
+  " include encoding as close to the top as possible, but only if not already
+  " contained in XML information (to avoid haggling over content type)
+  if s:settings.encoding != "" && !s:settings.use_xhtml
+    if s:html5
+      call add(s:lines, '<meta charset="' . s:settings.encoding . '"' . s:tag_close)
     else
-      " if we aren't doing hover_unfold, use CSS 1 only
-      call extend(s:lines, [
-	    \ ".FoldColumn { text-decoration: none; white-space: pre; }",
-	    \ ".open-fold   .fulltext      { display: inline; }",
-	    \ ".open-fold   span.Folded    { display: none; }",
-	    \ ".open-fold   .toggle-open   { display: none; }",
-	    \ ".open-fold   .toggle-closed { display: inline; }",
-	    \ "",
-	    \ ".closed-fold .fulltext      { display: none; }",
-	    \ ".closed-fold span.Folded    { display: inline; }",
-	    \ ".closed-fold .toggle-open   { display: inline; }",
-	    \ ".closed-fold .toggle-closed { display: none; }",
-	    \])
+      call add(s:lines, "<meta http-equiv=\"content-type\" content=\"text/html; charset=" . s:settings.encoding . '"' . s:tag_close)
     endif
   endif
-  " else we aren't doing any dynamic folding, no need for any special rules
-
   call extend(s:lines, [
-	  \ s:settings.use_xhtml ? "" : '-->',
-	  \ "</style>",
-	  \])
-  call extend(s:lines, s:ieonly)
-  unlet s:ieonly
-endif
-
-let s:uses_script = s:settings.dynamic_folds || s:settings.line_ids
-
-" insert script tag if needed
-if s:uses_script
-  call extend(s:lines, [
-        \ "",
-        \ "<script" . (s:html5 ? "" : " type='text/javascript'") . ">",
-        \ s:settings.use_xhtml ? '//<![CDATA[' : "<!--"])
-endif
-
-" insert javascript to toggle folds open and closed
-if s:settings.dynamic_folds
-  call extend(s:lines, [
-	\ "",
-	\ "function toggleFold(objID)",
-	\ "{",
-	\ "  var fold;",
-	\ "  fold = document.getElementById(objID);",
-	\ "  if (fold.className == 'closed-fold')",
-	\ "  {",
-	\ "    fold.className = 'open-fold';",
-	\ "  }",
-	\ "  else if (fold.className == 'open-fold')",
-	\ "  {",
-	\ "    fold.className = 'closed-fold';",
-	\ "  }",
-	\ "}"
+	\ ("<title>".expand("%:p:~")."</title>"),
+	\ ("<meta name=\"Generator\" content=\"Vim/".v:version/100.".".v:version%100.'"'.s:tag_close),
+	\ ("<meta name=\"plugin-version\" content=\"".s:pluginversion.'"'.s:tag_close)
 	\ ])
-endif
+  call add(s:lines, '<meta name="syntax" content="'.s:current_syntax.'"'.s:tag_close)
+  call add(s:lines, '<meta name="settings" content="'.
+	\ join(filter(keys(s:settings),'s:settings[v:val]'),',').
+	\ ',prevent_copy='.s:settings.prevent_copy.
+	\ ',use_input_for_pc='.s:settings.use_input_for_pc.
+	\ '"'.s:tag_close)
+  call add(s:lines, '<meta name="colorscheme" content="'.
+	\ (exists('g:colors_name')
+	\ ? g:colors_name
+	\ : 'none'). '"'.s:tag_close)
 
-if s:settings.line_ids
-  " insert javascript to get IDs from line numbers, and to open a fold before
-  " jumping to any lines contained therein
-  call extend(s:lines, [
-	\ "",
-	\ "/* function to open any folds containing a jumped-to line before jumping to it */",
-	\ "function JumpToLine()",
-	\ "{",
-	\ "  var lineNum;",
-	\ "  lineNum = window.location.hash;",
-	\ "  lineNum = lineNum.substr(1); /* strip off '#' */",
-	\ "",
-	\ "  if (lineNum.indexOf('L') == -1) {",
-	\ "    lineNum = 'L'+lineNum;",
-	\ "  }",
-	\ "  var lineElem = document.getElementById(lineNum);"
-	\ ])
+  if s:settings.use_css
+    call extend(s:lines, [
+	  \ "<style" . (s:html5 ? "" : " type=\"text/css\"") . ">",
+	  \ s:settings.use_xhtml ? "" : "<!--"])
+    let s:ieonly = []
+    if s:settings.dynamic_folds
+      if s:settings.hover_unfold
+	" if we are doing hover_unfold, use css 2 with css 1 fallback for IE6
+	call extend(s:lines, [
+	      \ ".FoldColumn { text-decoration: none; white-space: pre; }",
+	      \ "",
+	      \ "body * { margin: 0; padding: 0; }", "",
+	      \ ".open-fold   > span.Folded { display: none;  }",
+	      \ ".open-fold   > .fulltext   { display: inline; }",
+	      \ ".closed-fold > .fulltext   { display: none;  }",
+	      \ ".closed-fold > span.Folded { display: inline; }",
+	      \ "",
+	      \ ".open-fold   > .toggle-open   { display: none;   }",
+	      \ ".open-fold   > .toggle-closed { display: inline; }",
+	      \ ".closed-fold > .toggle-open   { display: inline; }",
+	      \ ".closed-fold > .toggle-closed { display: none;   }",
+	      \ "", "",
+	      \ '/* opening a fold while hovering won''t be supported by IE6 and other',
+	      \ "similar browsers, but it should fail gracefully. */",
+	      \ ".closed-fold:hover > .fulltext      { display: inline; }",
+	      \ ".closed-fold:hover > .toggle-filler { display: none; }",
+	      \ ".closed-fold:hover > .Folded        { display: none; }"])
+	" TODO: IE6 is REALLY old and I can't even test it anymore. Maybe we
+	" should remove this? Leave it in for now, it was working at one point,
+	" and doesn't affect any modern browsers. Even newer IE versions should
+	" support the above code and ignore the following.
+	let s:ieonly = [
+	      \ "<!--[if lt IE 7]><style type=\"text/css\">",
+	      \ ".open-fold   .fulltext      { display: inline; }",
+	      \ ".open-fold   span.Folded    { display: none; }",
+	      \ ".open-fold   .toggle-open   { display: none; }",
+	      \ ".open-fold   .toggle-closed { display: inline; }",
+	      \ "",
+	      \ ".closed-fold .fulltext      { display: none; }",
+	      \ ".closed-fold span.Folded    { display: inline; }",
+	      \ ".closed-fold .toggle-open   { display: inline; }",
+	      \ ".closed-fold .toggle-closed { display: none; }",
+	      \ "</style>",
+	      \ "<![endif]-->",
+	      \]
+      else
+	" if we aren't doing hover_unfold, use CSS 1 only
+	call extend(s:lines, [
+	      \ ".FoldColumn { text-decoration: none; white-space: pre; }",
+	      \ ".open-fold   .fulltext      { display: inline; }",
+	      \ ".open-fold   span.Folded    { display: none; }",
+	      \ ".open-fold   .toggle-open   { display: none; }",
+	      \ ".open-fold   .toggle-closed { display: inline; }",
+	      \ "",
+	      \ ".closed-fold .fulltext      { display: none; }",
+	      \ ".closed-fold span.Folded    { display: inline; }",
+	      \ ".closed-fold .toggle-open   { display: inline; }",
+	      \ ".closed-fold .toggle-closed { display: none; }",
+	      \])
+      endif
+    endif
+    " else we aren't doing any dynamic folding, no need for any special rules
 
+    call extend(s:lines, [
+	    \ s:settings.use_xhtml ? "" : '-->',
+	    \ "</style>",
+	    \])
+    call extend(s:lines, s:ieonly)
+    unlet s:ieonly
+  endif
+
+  let s:uses_script = s:settings.dynamic_folds || s:settings.line_ids
+
+  " insert script tag if needed
+  if s:uses_script
+    call extend(s:lines, [
+	  \ "",
+	  \ "<script" . (s:html5 ? "" : " type='text/javascript'") . ">",
+	  \ s:settings.use_xhtml ? '//<![CDATA[' : "<!--"])
+  endif
+
+  " insert javascript to toggle folds open and closed
   if s:settings.dynamic_folds
     call extend(s:lines, [
 	  \ "",
-	  \ "  /* navigate upwards in the DOM tree to open all folds containing the line */",
-	  \ "  var node = lineElem;",
-	  \ "  while (node && node.id != 'vimCodeElement".s:settings.id_suffix."')",
+	  \ "function toggleFold(objID)",
+	  \ "{",
+	  \ "  var fold;",
+	  \ "  fold = document.getElementById(objID);",
+	  \ "  if (fold.className == 'closed-fold')",
 	  \ "  {",
-	  \ "    if (node.className == 'closed-fold')",
-	  \ "    {",
-	  \ "      node.className = 'open-fold';",
-	  \ "    }",
-	  \ "    node = node.parentNode;",
+	  \ "    fold.className = 'open-fold';",
 	  \ "  }",
+	  \ "  else if (fold.className == 'open-fold')",
+	  \ "  {",
+	  \ "    fold.className = 'closed-fold';",
+	  \ "  }",
+	  \ "}"
 	  \ ])
   endif
-  call extend(s:lines, [
-	\ "  /* Always jump to new location even if the line was hidden inside a fold, or",
-	\ "   * we corrected the raw number to a line ID.",
-	\ "   */",
-	\ "  if (lineElem) {",
-	\ "    lineElem.scrollIntoView(true);",
-	\ "  }",
-	\ "  return true;",
-	\ "}",
-	\ "if ('onhashchange' in window) {",
-	\ "  window.onhashchange = JumpToLine;",
-	\ "}"
-	\ ])
-endif
 
-" insert script closing tag if needed
-if s:uses_script
-  call extend(s:lines, [
-        \ '',
-        \ s:settings.use_xhtml ? '//]]>' : '-->',
-        \ "</script>"
-        \ ])
-endif
+  if s:settings.line_ids
+    " insert javascript to get IDs from line numbers, and to open a fold before
+    " jumping to any lines contained therein
+    call extend(s:lines, [
+	  \ "",
+	  \ "/* function to open any folds containing a jumped-to line before jumping to it */",
+	  \ "function JumpToLine()",
+	  \ "{",
+	  \ "  var lineNum;",
+	  \ "  lineNum = window.location.hash;",
+	  \ "  lineNum = lineNum.substr(1); /* strip off '#' */",
+	  \ "",
+	  \ "  if (lineNum.indexOf('L') == -1) {",
+	  \ "    lineNum = 'L'+lineNum;",
+	  \ "  }",
+	  \ "  var lineElem = document.getElementById(lineNum);"
+	  \ ])
 
-call extend(s:lines, ["</head>",
-      \ "<body".(s:settings.line_ids ? " onload='JumpToLine();'" : "").">"])
+    if s:settings.dynamic_folds
+      call extend(s:lines, [
+	    \ "",
+	    \ "  /* navigate upwards in the DOM tree to open all folds containing the line */",
+	    \ "  var node = lineElem;",
+	    \ "  while (node && node.id != 'vimCodeElement".s:settings.id_suffix."')",
+	    \ "  {",
+	    \ "    if (node.className == 'closed-fold')",
+	    \ "    {",
+	    \ "      node.className = 'open-fold';",
+	    \ "    }",
+	    \ "    node = node.parentNode;",
+	    \ "  }",
+	    \ ])
+    endif
+    call extend(s:lines, [
+	  \ "  /* Always jump to new location even if the line was hidden inside a fold, or",
+	  \ "   * we corrected the raw number to a line ID.",
+	  \ "   */",
+	  \ "  if (lineElem) {",
+	  \ "    lineElem.scrollIntoView(true);",
+	  \ "  }",
+	  \ "  return true;",
+	  \ "}",
+	  \ "if ('onhashchange' in window) {",
+	  \ "  window.onhashchange = JumpToLine;",
+	  \ "}"
+	  \ ])
+  endif
+
+  " insert script closing tag if needed
+  if s:uses_script
+    call extend(s:lines, [
+	  \ '',
+	  \ s:settings.use_xhtml ? '//]]>' : '-->',
+	  \ "</script>"
+	  \ ])
+  endif
+
+  call extend(s:lines, ["</head>",
+	\ "<body".(s:settings.line_ids ? " onload='JumpToLine();'" : "").">"])
+endif
 
 if s:settings.no_pre
   " if we're not using CSS we use a font tag which can't have a div inside
   if s:settings.use_css
-    call extend(s:lines, ["<div id='vimCodeElement".s:settings.id_suffix."'>"])
+    call extend(s:lines, ["<div id='vimCodeElement" .. s:settings.id_suffix .. "'>"])
   endif
 else
-  call extend(s:lines, ["<pre id='vimCodeElement".s:settings.id_suffix."'>"])
+  call extend(s:lines, ["<pre id='vimCodeElement" .. s:settings.id_suffix .. "'>"])
 endif
 
 exe s:orgwin . "wincmd w"
@@ -1721,12 +1723,15 @@ endif
 if s:settings.no_pre
   if !s:settings.use_css
     " Close off the font tag that encapsulates the whole <body>
-    call extend(s:lines, ["</font>", "</body>", "</html>"])
+    call extend(s:lines, ["</font>"])
   else
-    call extend(s:lines, ["</div>", "</body>", "</html>"])
+    call extend(s:lines, ["</div>"])
   endif
 else
-  call extend(s:lines, ["</pre>", "</body>", "</html>"])
+  call extend(s:lines, ["</pre>"])
+endif
+if !s:settings.no_doc
+  call extend(s:lines, ["</body>", "</html>"])
 endif
 
 exe s:newwin . "wincmd w"
@@ -1742,15 +1747,15 @@ unlet s:lines
 " The generated HTML is admittedly ugly and takes a LONG time to fold.
 " Make sure the user doesn't do syntax folding when loading a generated file,
 " using a modeline.
-call append(line('$'), "<!-- vim: set foldmethod=manual : -->")
-
-" Now, when we finally know which, we define the colors and styles
-if s:settings.use_css
-  1;/<style\>/+1
+if !s:settings.no_modeline
+  call append(line('$'), "<!-- vim: set foldmethod=manual : -->")
 endif
 
-" Normal/global attributes
-if s:settings.use_css
+" Now, when we finally know which, we define the colors and styles
+if s:settings.use_css && !s:settings.no_doc
+  1;/<style\>/+1
+
+  " Normal/global attributes
   if s:settings.no_pre
     call append('.', "body { color: " . s:fgc . "; background-color: " . s:bgc . "; font-family: ". s:htmlfont ."; }")
     +
@@ -1874,7 +1879,9 @@ if s:settings.use_css
       endif
     endif
   endif
-else
+endif
+
+if !s:settings.use_css && !s:settings_no_doc
   " For Netscape 4, set <body> attributes too, though, strictly speaking, it's
   " incorrect.
   execute '%s:<body\([^>]*\):<body bgcolor="' . s:bgc . '" text="' . s:fgc . '"\1>\r<font face="'. s:htmlfont .'"'
@@ -1882,7 +1889,7 @@ endif
 
 " Gather attributes for all other classes. Do diff first so that normal
 " highlight groups are inserted before it.
-if s:settings.use_css
+if s:settings.use_css && !s:settings.no_doc
   if s:diff_mode
     call append('.', filter(map(keys(s:diffstylelist), "s:diffstylelist[v:val]"), 'v:val != ""'))
   endif
@@ -1892,20 +1899,22 @@ if s:settings.use_css
 endif
 
 " Add hyperlinks
-" TODO: add option to not do this? Maybe just make the color the same as the
-" text highlight group normally is?
-%s+\(https\=://\S\{-}\)\(\([.,;:}]\=\(\s\|$\)\)\|[\\"'<>]\|&gt;\|&lt;\|&quot;\)+<a href="\1">\1</a>\2+ge
-
-" The DTD
-if s:settings.use_xhtml
-  exe "normal! gg$a\n<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Transitional//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd\">"
-elseif s:html5
-  exe "normal! gg0i<!DOCTYPE html>\n"
-else
-  exe "normal! gg0i<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\" \"http://www.w3.org/TR/html4/loose.dtd\">\n"
+if !s:settings.no_links
+  %s+\(https\=://\S\{-}\)\(\([.,;:}]\=\(\s\|$\)\)\|[\\"'<>]\|&gt;\|&lt;\|&quot;\)+<a href="\1">\1</a>\2+ge
 endif
 
-if s:settings.use_xhtml
+" The DTD
+if !s:settings.no_doc
+  if s:settings.use_xhtml
+    exe "normal! gg$a\n<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Transitional//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd\">"
+  elseif s:html5
+    exe "normal! gg0i<!DOCTYPE html>\n"
+  else
+    exe "normal! gg0i<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\" \"http://www.w3.org/TR/html4/loose.dtd\">\n"
+  endif
+endif
+
+if s:settings.use_xhtml && !s:settings.no_doc
   exe "normal! gg/<html/e\na xmlns=\"http://www.w3.org/1999/xhtml\"\e"
 endif
 

@@ -2099,7 +2099,7 @@ static void augment_terminfo(TUIData *data, const char *term, long vte_version, 
   // Dickey ncurses terminfo does not include the setrgbf and setrgbb
   // capabilities, proposed by Rüdiger Sonderfeld on 2013-10-15.  Adding
   // them here when terminfo lacks them is an augmentation, not a fixup.
-  // https://gist.github.com/XVilka/8346728
+  // https://github.com/termstandard/colors
 
   // At this time (2017-07-12) it seems like all terminals that support rgb
   // color codes can use semicolons in the terminal code and be fine.

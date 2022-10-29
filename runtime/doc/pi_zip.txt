@@ -39,7 +39,7 @@ Copyright: Copyright (C) 2005-2015 Charles E Campbell	 *zip-copyright*
 
    OPTIONS~
 
-   							*g:zip_nomax*
+							*g:zip_nomax*
 
    If this variable exists and is true, the file window will not be
    automatically maximized when opened.
@@ -54,21 +54,21 @@ Copyright: Copyright (C) 2005-2015 Charles E Campbell	 *zip-copyright*
    under Windows (").  If you'd rather have no quotes, simply set
    g:zip_shq to the empty string (let g:zip_shq= "") in your <.vimrc>.
 
-   							*g:zip_unzipcmd*
+							*g:zip_unzipcmd*
    Use this option to specify the program which does the duty of "unzip".
    It's used during browsing. By default: >
-   	let g:zip_unzipcmd= "unzip"
+	let g:zip_unzipcmd= "unzip"
 <
 							*g:zip_zipcmd*
    Use this option to specify the program which does the duty of "zip".
    It's used during the writing (updating) of a file already in a zip
    file; by default: >
-   	let g:zip_zipcmd= "zip"
+	let g:zip_zipcmd= "zip"
 <
 							*g:zip_extractcmd*
    This option specifies the program (and any options needed) used to
    extract a file from a zip archive.  By default, >
-   	let g:zip_extractcmd= g:zip_unzipcmd
+	let g:zip_extractcmd= g:zip_unzipcmd
 <
    PREVENTING LOADING~
 
@@ -103,14 +103,14 @@ Copyright: Copyright (C) 2005-2015 Charles E Campbell	 *zip-copyright*
 ==============================================================================
 4. History							*zip-history* {{{1
    v32 Oct 22, 2021 * to avoid an issue with a vim 8.2 patch, zipfile: has
-   		      been changed to zipfile:// . This often shows up
+		      been changed to zipfile:// . This often shows up
 		      as zipfile:/// with zipped files that are root-based.
    v29 Apr 02, 2017 * (Klartext) reported that an encrypted zip file could
-   		      opened but the swapfile held unencrypted contents.
+		      opened but the swapfile held unencrypted contents.
 		      The solution is to edit the contents of a zip file
 		      using the |:noswapfile| modifier.
    v28 Oct 08, 2014 * changed the sanity checks for executables to reflect
-   		      the command actually to be attempted in zip#Read()
+		      the command actually to be attempted in zip#Read()
 		      and zip#Write()
 		    * added the extraction of a file capability
        Nov 30, 2015 * added *.epub to the |g:zipPlugin_ext| list
