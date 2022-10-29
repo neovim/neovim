@@ -1119,9 +1119,15 @@ size_t home_replace(const buf_T *const buf, const char *src, char *const dst, si
       len = envlen;
     }
 
+    if (dstlen == 0) {
+      break;  // Avoid overflowing below.
+    }
     // if (!one) skip to separator: space or comma.
     while (*src && (one || (*src != ',' && *src != ' ')) && --dstlen > 0) {
       *dst_p++ = *src++;
+    }
+    if (dstlen == 0) {
+      break;  // Avoid overflowing below.
     }
     // Skip separator.
     while ((*src == ' ' || *src == ',') && --dstlen > 0) {
