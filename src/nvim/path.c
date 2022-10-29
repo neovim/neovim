@@ -2362,16 +2362,9 @@ static int path_to_absolute(const char *fname, char *buf, size_t len, int force)
     }
 #endif
     if (p != NULL) {
-      // relative to root
-      if (p == fname) {
-        // only one path component
-        relative_directory[0] = PATHSEP;
-        relative_directory[1] = NUL;
-      } else {
-        assert(p >= fname);
-        memcpy(relative_directory, fname, (size_t)(p - fname));
-        relative_directory[p - fname] = NUL;
-      }
+      assert(p >= fname);
+      memcpy(relative_directory, fname, (size_t)(p - fname + 1));
+      relative_directory[p - fname + 1] = NUL;
       end_of_path = p + 1;
     } else {
       relative_directory[0] = NUL;
