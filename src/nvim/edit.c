@@ -4147,7 +4147,7 @@ static void ins_mousescroll(int dir)
     if (dir == MSCR_DOWN || dir == MSCR_UP) {
       if (mod_mask & (MOD_MASK_SHIFT | MOD_MASK_CTRL)) {
         scroll_redraw(dir, (long)(curwin->w_botline - curwin->w_topline));
-      } else {
+      } else if (p_mousescroll_vert > 0) {
         scroll_redraw(dir, p_mousescroll_vert);
       }
     } else {
