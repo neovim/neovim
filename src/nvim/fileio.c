@@ -524,8 +524,9 @@ int readfile(char *fname, char *sfname, linenr_T from, linenr_T lines_to_skip,
     // Don't change 'eol' if reading from buffer as it will already be
     // correctly set when reading stdin.
     if (!read_buffer) {
-      curbuf->b_p_eol = true;
       curbuf->b_p_eof = false;
+      curbuf->b_start_eof = false;
+      curbuf->b_p_eol = true;
       curbuf->b_start_eol = true;
     }
     curbuf->b_p_bomb = false;
@@ -1629,13 +1630,16 @@ failed:
   if (!error
       && !got_int
       && linerest != 0
+      // TODO(vim): should we handle CTRL-Z differently here for 'endoffile'?
       && !(!curbuf->b_p_bin
-           && fileformat == EOL_DOS)) {
+           && fileformat == EOL_DOS
+           && *line_start == Ctrl_Z
+           && ptr == line_start + 1)) {
     // remember for when writing
     if (set_options) {
       curbuf->b_p_eol = false;
       if (*line_start == Ctrl_Z && ptr == line_start + 1) {
-        curbuf->b_p_eof = false;
+        curbuf->b_p_eof = true;
       }
     }
     *ptr = NUL;

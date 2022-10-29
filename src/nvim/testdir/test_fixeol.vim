@@ -34,10 +34,10 @@ func Test_fixeol()
   w >>XXTestEol
   w >>XXTestNoEol
 
-  call assert_equal(['with eol', 'END'], readfile('XXEol'))
-  call assert_equal(['without eolEND'], readfile('XXNoEol'))
-  call assert_equal(['with eol', 'stays eol', 'END'], readfile('XXTestEol'))
-  call assert_equal(['without eol', 'stays withoutEND'],
+  call assert_equal(['with eol or eof', 'END'], readfile('XXEol'))
+  call assert_equal(['without eol or eofEND'], readfile('XXNoEol'))
+  call assert_equal(['with eol or eof', 'stays eol', 'END'], readfile('XXTestEol'))
+  call assert_equal(['without eol or eof', 'stays withoutEND'],
 	      \ readfile('XXTestNoEol'))
 
   call delete('XXEol')

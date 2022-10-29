@@ -539,6 +539,7 @@ void unchanged(buf_T *buf, int ff, bool always_inc_changedtick)
 void save_file_ff(buf_T *buf)
 {
   buf->b_start_ffc = (unsigned char)(*buf->b_p_ff);
+  buf->b_start_eof = buf->b_p_eof;
   buf->b_start_eol = buf->b_p_eol;
   buf->b_start_bomb = buf->b_p_bomb;
 
@@ -573,7 +574,8 @@ bool file_ff_differs(buf_T *buf, bool ignore_empty)
   if (buf->b_start_ffc != *buf->b_p_ff) {
     return true;
   }
-  if ((buf->b_p_bin || !buf->b_p_fixeol) && buf->b_start_eol != buf->b_p_eol) {
+  if ((buf->b_p_bin || !buf->b_p_fixeol)
+      && (buf->b_start_eof != buf->b_p_eof || buf->b_start_eol != buf->b_p_eol)) {
     return true;
   }
   if (!buf->b_p_bin && buf->b_start_bomb != buf->b_p_bomb) {
