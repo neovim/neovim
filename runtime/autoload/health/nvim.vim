@@ -235,7 +235,7 @@ function! s:check_tmux() abort
   endif
 
   " check for RGB capabilities
-  let info = system(['tmux', 'server-info'])
+  let info = system(['tmux', 'show-messages', '-JT'])
   let has_tc = stridx(info, " Tc: (flag) true") != -1
   let has_rgb = stridx(info, " RGB: (flag) true") != -1
   if !has_tc && !has_rgb
