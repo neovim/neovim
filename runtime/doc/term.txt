@@ -380,6 +380,8 @@ and then drag) will result in whole words to be selected.  This continues
 until the button is released, at which point the selection is per character
 again.
 
+For scrolling with the mouse see |scroll-mouse-wheel|.
+
 In Insert mode, when a selection is started, Vim goes into Normal mode
 temporarily.  When Visual or Select mode ends, it returns to Insert mode.
 This is like using CTRL-O in Insert mode.  Select mode is used when the

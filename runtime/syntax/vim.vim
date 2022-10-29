@@ -619,7 +619,7 @@ syn match	vimCtrlChar	"[--]"
 
 " Beginners - Patterns that involve ^ {{{2
 " =========
-syn match	vimLineComment	+^[ \t:]*"\("[^"]*"\|[^"]\)*$+	contains=@vimCommentGroup,vimCommentString,vimCommentTitle
+syn match	vimLineComment	+^[ \t:]*".*$+	contains=@vimCommentGroup,vimCommentString,vimCommentTitle
 syn match	vim9LineComment	+^[ \t:]\+#.*$+	contains=@vimCommentGroup,vimCommentString,vimCommentTitle
 syn match	vimCommentTitle	'"\s*\%([sS]:\|\h\w*#\)\=\u\w*\(\s\+\u\w*\)*:'hs=s+1	contained contains=vimCommentTitleLeader,vimTodo,@vimCommentGroup
 syn match	vimContinue	"^\s*\\"
