@@ -3417,7 +3417,7 @@ static void nv_mousescroll(cmdarg_T *cap)
   if (cap->arg == MSCR_UP || cap->arg == MSCR_DOWN) {
     if (mod_mask & (MOD_MASK_SHIFT | MOD_MASK_CTRL)) {
       (void)onepage(cap->arg ? FORWARD : BACKWARD, 1L);
-    } else {
+    } else if (p_mousescroll_vert > 0) {
       cap->count1 = p_mousescroll_vert;
       cap->count0 = p_mousescroll_vert;
       nv_scroll_line(cap);
