@@ -3,68 +3,134 @@ local health = require('vim.health')
 
 local suggest_faq = 'https://github.com/neovim/neovim/wiki/FAQ'
 
+local function check_runtime()
+  health.report_start('Runtime')
+  -- Files from an old installation.
+  local bad_files = {
+    ['plugin/man.vim'] = false,
+    ['scripts.vim'] = false,
+    ['autoload/man.vim'] = false,
+  }
+  local bad_files_msg = ''
+  for k, _ in pairs(bad_files) do
+    local path = ('%s/%s'):format(vim.env.VIMRUNTIME, k)
+    if vim.loop.fs_stat(path) then
+      bad_files[k] = true
+      bad_files_msg = ('%s%s\n'):format(bad_files_msg, path)
+    end
+  end
+
+  local ok = (bad_files_msg == '')
+  local info = ok and health.report_ok or health.report_info
+  info(string.format('$VIMRUNTIME: %s', vim.env.VIMRUNTIME))
+  if not ok then
+    health.report_error(
+      string.format(
+        '$VIMRUNTIME has files from an old installation (this can cause weird behavior):\n%s',
+        bad_files_msg
+      ),
+      { 'Delete $VIMRUNTIME (or uninstall Nvim), then reinstall Nvim.' }
+    )
+  end
+end
+
 local function check_config()
   health.report_start('Configuration')
   local ok = true
-  local empty = function(o) return 0 ~= vim.fn.empty(o) end
-  local filereadable = function(o) return 0 ~= vim.fn.filereadable(o) end
-  local filewritable = function(o) return 0 ~= vim.fn.filewritable(o) end
+  local empty = function(o)
+    return 0 ~= vim.fn.empty(o)
+  end
+  local filereadable = function(o)
+    return 0 ~= vim.fn.filereadable(o)
+  end
+  local filewritable = function(o)
+    return 0 ~= vim.fn.filewritable(o)
+  end
 
-  local vimrc = empty(vim.env.MYVIMRC) and vim.fn.stdpath('config')..'/init.vim' or vim.env.MYVIMRC
+  local vimrc = (
+    empty(vim.env.MYVIMRC) and vim.fn.stdpath('config') .. '/init.vim' or vim.env.MYVIMRC
+  )
   if not filereadable(vimrc) then
     ok = false
     local has_vim = filereadable(vim.fn.expand('~/.vimrc'))
-    health.report_warn((-1 == vim.fn.getfsize(vimrc) and 'Missing' or 'Unreadable')..' user config file: '..vimrc,
-      { has_vim and ':help nvim-from-vim' or ':help init.vim' })
+    health.report_warn(
+      (-1 == vim.fn.getfsize(vimrc) and 'Missing' or 'Unreadable') .. ' user config file: ' .. vimrc,
+      { has_vim and ':help nvim-from-vim' or ':help init.vim' }
+    )
   end
 
   -- If $VIM is empty we don't care. Else make sure it is valid.
-  if not empty(vim.env.VIM) and not filereadable(vim.env.VIM..'/runtime/doc/nvim.txt') then
+  if not empty(vim.env.VIM) and not filereadable(vim.env.VIM .. '/runtime/doc/nvim.txt') then
     ok = false
-    health.report_error('$VIM is invalid: '..vim.env.VIM)
+    health.report_error('$VIM is invalid: ' .. vim.env.VIM)
   end
 
   if 1 == vim.fn.exists('$NVIM_TUI_ENABLE_CURSOR_SHAPE') then
     ok = false
-    health.report_warn('$NVIM_TUI_ENABLE_CURSOR_SHAPE is ignored in Nvim 0.2+',
-      { "Use the 'guicursor' option to configure cursor shape. :help 'guicursor'",
-        'https://github.com/neovim/neovim/wiki/Following-HEAD#20170402' })
+    health.report_warn('$NVIM_TUI_ENABLE_CURSOR_SHAPE is ignored in Nvim 0.2+', {
+      "Use the 'guicursor' option to configure cursor shape. :help 'guicursor'",
+      'https://github.com/neovim/neovim/wiki/Following-HEAD#20170402',
+    })
   end
 
   if vim.v.ctype == 'C' then
     ok = false
-    health.report_error('Locale does not support UTF-8. Unicode characters may not display correctly.'
-      ..("\n$LANG=%s $LC_ALL=%s $LC_CTYPE=%s"):format(vim.env.LANG, vim.env.LC_ALL, vim.env.LC_CTYPE),
-      { 'If using tmux, try the -u option.',
-        'Ensure that your terminal/shell/tmux/etc inherits the environment, or set $LANG explicitly.' ,
-        'Configure your system locale.' })
+    health.report_error(
+      'Locale does not support UTF-8. Unicode characters may not display correctly.'
+        .. ('\n$LANG=%s $LC_ALL=%s $LC_CTYPE=%s'):format(
+          vim.env.LANG,
+          vim.env.LC_ALL,
+          vim.env.LC_CTYPE
+        ),
+      {
+        'If using tmux, try the -u option.',
+        'Ensure that your terminal/shell/tmux/etc inherits the environment, or set $LANG explicitly.',
+        'Configure your system locale.',
+      }
+    )
   end
 
   if vim.o.paste == 1 then
     ok = false
-    health.report_error("'paste' is enabled. This option is only for pasting text.\nIt should not be set in your config.",
-      { 'Remove `set paste` from your init.vim, if applicable.',
-        'Check `:verbose set paste?` to see if a plugin or script set the option.', })
+    health.report_error(
+      "'paste' is enabled. This option is only for pasting text.\nIt should not be set in your config.",
+      {
+        'Remove `set paste` from your init.vim, if applicable.',
+        'Check `:verbose set paste?` to see if a plugin or script set the option.',
+      }
+    )
   end
 
   local writeable = true
   local shadaopt = vim.fn.split(vim.o.shada, ',')
-  local shadafile = (empty(vim.o.shada)
-    and vim.o.shada
-    or vim.fn.substitute(vim.fn.matchstr(shadaopt[#shadaopt], '^n.\\+'), '^n', '', ''))
-  shadafile = (empty(vim.o.shadafile)
-    and (empty(shadafile) and vim.fn.stdpath('state')..'/shada/main.shada' or vim.fn.expand(shadafile))
-    or  (vim.o.shadafile == 'NONE' and '' or vim.o.shadafile))
+  local shadafile = (
+    empty(vim.o.shada) and vim.o.shada
+    or vim.fn.substitute(vim.fn.matchstr(shadaopt[#shadaopt], '^n.\\+'), '^n', '', '')
+  )
+  shadafile = (
+    empty(vim.o.shadafile)
+      and (empty(shadafile) and vim.fn.stdpath('state') .. '/shada/main.shada' or vim.fn.expand(
+        shadafile
+      ))
+    or (vim.o.shadafile == 'NONE' and '' or vim.o.shadafile)
+  )
   if not empty(shadafile) and empty(vim.fn.glob(shadafile)) then
     -- Since this may be the first time Nvim has been run, try to create a shada file.
     if not pcall(vim.cmd.wshada) then
       writeable = false
     end
   end
-  if not writeable or (not empty(shadafile) and (not filereadable(shadafile) or not filewritable(shadafile))) then
+  if
+    not writeable
+    or (not empty(shadafile) and (not filereadable(shadafile) or not filewritable(shadafile)))
+  then
     ok = false
-    health.report_error('shada file is not '
-      ..((not writeable or filereadable(shadafile)) and 'writeable' or 'readable')..':\n'..shadafile)
+    health.report_error(
+      'shada file is not '
+        .. ((not writeable or filereadable(shadafile)) and 'writeable' or 'readable')
+        .. ':\n'
+        .. shadafile
+    )
   end
 
   if ok then
@@ -75,7 +141,7 @@ end
 local function check_performance()
   vim.api.nvim_exec([=[
   func! s:check_performance() abort
-    let s:suggest_faq = ']=]..suggest_faq..[=['
+    let s:suggest_faq = ']=] .. suggest_faq .. [=['
 
     call health#report_start('Performance')
 
@@ -105,13 +171,13 @@ local function check_performance()
   endf
 
   call s:check_performance()
-  ]=],
-  false)
+  ]=], false)
 end
 
 -- Load the remote plugin manifest file and check for unregistered plugins
 local function check_rplugin_manifest()
-  vim.api.nvim_exec([=[
+  vim.api.nvim_exec(
+    [=[
   func! s:check_rplugin_manifest() abort
     call health#report_start('Remote Plugins')
     let existing_rplugins = {}
@@ -172,13 +238,13 @@ local function check_rplugin_manifest()
 
   call s:check_rplugin_manifest()
   ]=],
-  false)
+    false
+  )
 end
-
 
 local function check_tmux()
   vim.api.nvim_exec([=[
-  let s:suggest_faq = ']=]..suggest_faq..[=['
+  let s:suggest_faq = ']=] .. suggest_faq .. [=['
 
   func! s:get_tmux_option(option) abort
     let cmd = 'tmux show-option -qvg '.a:option  " try global scope
@@ -258,7 +324,7 @@ local function check_tmux()
     endif
 
     " check for RGB capabilities
-    let info = system(['tmux', 'server-info'])
+    let info = system(['tmux', 'show-messages', '-JT'])
     let has_tc = stridx(info, " Tc: (flag) true") != -1
     let has_rgb = stridx(info, " RGB: (flag) true") != -1
     if !has_tc && !has_rgb
@@ -270,12 +336,12 @@ local function check_tmux()
   endf
 
   call s:check_tmux()
-  ]=],
-  false)
+  ]=], false)
 end
 
 local function check_terminal()
-  vim.api.nvim_exec([=[
+  vim.api.nvim_exec(
+    [=[
   func! s:check_terminal() abort
     if !executable('infocmp')
       return
@@ -307,11 +373,13 @@ local function check_terminal()
 
   call s:check_terminal()
   ]=],
-  false)
+    false
+  )
 end
 
 function M.check()
   check_config()
+  check_runtime()
   check_performance()
   check_rplugin_manifest()
   check_terminal()

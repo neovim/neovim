@@ -5,7 +5,7 @@ local Screen = require('test.functional.ui.screen')
 local clear = helpers.clear
 local curbuf_contents = helpers.curbuf_contents
 local command = helpers.command
-local eq, neq = helpers.eq, helpers.neq
+local eq, neq, matches = helpers.eq, helpers.neq, helpers.matches
 local getcompletion = helpers.funcs.getcompletion
 
 describe(':checkhealth', function()
@@ -29,8 +29,7 @@ describe(':checkhealth', function()
     -- Do this after startup, otherwise it just breaks $VIMRUNTIME.
     command("let $VIM='zub'")
     command("checkhealth nvim")
-    eq("ERROR: $VIM is invalid: zub",
-       string.match(curbuf_contents(), "ERROR: $VIM .* zub"))
+    matches('ERROR: $VIM .* zub', curbuf_contents())
   end)
   it('completions can be listed via getcompletion()', function()
     clear()

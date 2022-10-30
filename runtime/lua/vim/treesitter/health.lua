@@ -20,7 +20,9 @@ function M.check()
     local is_loadable, ret = pcall(ts.language.require_language, parsername)
 
     if not is_loadable or not ret then
-      health.report_error(string.format('Parser "%s" failed to load (path: %s): %s', parsername, parser, ret or '?'))
+      health.report_error(
+        string.format('Parser "%s" failed to load (path: %s): %s', parsername, parser, ret or '?')
+      )
     elseif ret then
       local lang = ts.language.inspect_language(parsername)
       health.report_ok(
