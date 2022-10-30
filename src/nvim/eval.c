@@ -7063,7 +7063,7 @@ char *set_cmdarg(exarg_T *eap, char *oldarg)
   }
 
   if (eap->mkdir_p) {
-    STRCAT(newval, " ++p");
+    strcat(newval, " ++p");
   }
 
   vimvars[VV_CMDARG].vv_str = newval;
