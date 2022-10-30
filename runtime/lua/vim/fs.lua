@@ -1,5 +1,7 @@
 local M = {}
 
+local iswin = package.config:sub(1, 1) == '\\'
+
 --- Iterate over all the parents of the given file or directory.
 ---
 --- Example:
@@ -43,12 +45,16 @@ function M.dirname(file)
   vim.validate({ file = { file, 's' } })
   if not file:match('[\\/]') then
     return '.'
-  elseif file == '/' or file:gsub('\\', '/'):match('^%w:$') then
-    return file
-  elseif file:match('^/[^/]+$') then
+  elseif file:match('^/[^/]+$') or file == '/' then
     return '/'
+  elseif file:match('^%w:[\\/]$') then
+    return iswin and file:gsub('\\', '/') or file:sub(1, 2)
   end
-  return file:match('[/\\]$') and file:sub(1, #file - 1) or file:match('^([/\\]?.+)[/\\]')
+  local dir = file:match('[/\\]$') and file:sub(1, #file - 1) or file:match('^([/\\]?.+)[/\\]')
+  if iswin and dir:match('^%w:$') then
+    return dir .. '/'
+  end
+  return (dir:gsub('\\', '/'))
 end
 
 --- Return the basename of the given file or directory
@@ -60,7 +66,10 @@ function M.basename(file)
     return nil
   end
   vim.validate({ file = { file, 's' } })
-  return file:match('[/\\]$') and '' or file:match('[^\\/]*$')
+  if iswin and file == '^%w:$' then
+    return ''
+  end
+  return file:match('[/\\]$') and '' or (file:match('[^\\/]*$'):gsub('\\', '/'))
 end
 
 --- Return an iterator over the files and directories located in {path}
