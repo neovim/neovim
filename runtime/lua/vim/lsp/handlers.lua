@@ -519,15 +519,15 @@ M['window/showDocument'] = function(_, result, ctx, _)
     -- TODO(lvimuser): ask the user for confirmation
     local cmd
     if vim.fn.has('win32') == 1 then
-      cmd = { 'cmd.exe', '/c', 'start', '""', vim.fn.shellescape(uri) }
+      cmd = { 'cmd.exe', '/c', 'start', '""', uri }
     elseif vim.fn.has('macunix') == 1 then
-      cmd = { 'open', vim.fn.shellescape(uri) }
+      cmd = { 'open', uri }
     else
-      cmd = { 'xdg-open', vim.fn.shellescape(uri) }
+      cmd = { 'xdg-open', uri }
     end
 
     local ret = vim.fn.system(cmd)
-    if vim.v.shellerror ~= 0 then
+    if vim.v.shell_error ~= 0 then
       return {
         success = false,
         error = {
