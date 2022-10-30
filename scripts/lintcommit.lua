@@ -99,11 +99,14 @@ local function validate_commit(commit_message)
     end
 
     local alternative_scope = {
-      ['filetype.vim'] = 'filetype',
+      ['clint'] = 'lint',
+      ['clint.py'] = 'lint',
       ['filetype.lua'] = 'filetype',
+      ['filetype.vim'] = 'filetype',
+      ['hl'] = 'highlight',
+      ['stulya'] = 'stylua',
       ['tree-sitter'] = 'treesitter',
       ['ts'] = 'treesitter',
-      ['hl'] = 'highlight',
     }
 
     if alternative_scope[scope] then
