@@ -10,6 +10,7 @@ local read_file = helpers.read_file
 local write_file = helpers.write_file
 local pcall_err = helpers.pcall_err
 local command = helpers.command
+local iswin = helpers.iswin
 
 local fname = 'Xtest-functional-eval-writefile'
 local dname = fname .. '.d'
@@ -111,7 +112,7 @@ describe('writefile()', function()
        pcall_err(command, ('call writefile([42], %s)'):format(ddname_tail)))
   end)
 
-  it('creates missing parent directories', function()
+  it('writefile(..., "p") creates missing parent directories', function()
     os.remove(dname)
     eq(nil, read_file(dfname))
     eq(0, funcs.writefile({'abc', 'def', 'ghi'}, dfname, 'p'))
@@ -127,8 +128,10 @@ describe('writefile()', function()
       pcall_err(command, ('call writefile([], "%s", "p")'):format(dfname .. '.d/')))
     eq(('Vim(call):E482: Can\'t open file ./ for writing: illegal operation on a directory'),
       pcall_err(command, 'call writefile([], "./", "p")'))
-    eq(('Vim(call):E482: Can\'t open file . for writing: illegal operation on a directory'),
-      pcall_err(command, 'call writefile([], ".", "p")'))
+    if not iswin() then
+      eq(('Vim(call):E482: Can\'t open file . for writing: illegal operation on a directory'),
+        pcall_err(command, 'call writefile([], ".", "p")'))
+    end
   end)
 
   it('errors out with invalid arguments', function()

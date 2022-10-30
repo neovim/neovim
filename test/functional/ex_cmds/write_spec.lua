@@ -113,10 +113,12 @@ describe(':write', function()
     eq(1, eval("filereadable('test/write/p_opt.txt')"))
 
     eq(('Vim(write):E32: No file name'), pcall_err(command, 'write ++p test_write/'))
-    eq(('Vim(write):E17: "'..funcs.fnamemodify('.', ':p:h')..'" is a directory'),
-      pcall_err(command, 'write ++p .'))
-    eq(('Vim(write):E17: "'..funcs.fnamemodify('.', ':p:h')..'" is a directory'),
-      pcall_err(command, 'write ++p ./'))
+    if not iswin() then
+      eq(('Vim(write):E17: "'..funcs.fnamemodify('.', ':p:h')..'" is a directory'),
+        pcall_err(command, 'write ++p .'))
+      eq(('Vim(write):E17: "'..funcs.fnamemodify('.', ':p:h')..'" is a directory'),
+        pcall_err(command, 'write ++p ./'))
+    end
   end)
 
   it('errors out correctly', function()
