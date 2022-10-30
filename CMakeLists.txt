@@ -638,7 +638,13 @@ include(InstallHelpers)
 add_glob_target(
   TARGET lintsh
   COMMAND ${SHELLCHECK_PRG}
-  FILES scripts/vim-patch.sh
+  FLAGS -x -a
+  GLOB_DIRS scripts ci
+  GLOB_PAT *.sh
+  EXCLUDE
+    scripts/pvscheck.sh
+    ci/common
+    ci/snap
   TOUCH_STRATEGY SINGLE
   )
 

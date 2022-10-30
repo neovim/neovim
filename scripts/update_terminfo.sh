@@ -35,7 +35,7 @@ readonly -A entries=(
 db="$(mktemp -du)"
 
 print_bold() {
-  printf "\\e[1m$*\\e[0m"
+  printf "\\e[1m%b\\e[0m" "$*"
 }
 
 cd "$(git rev-parse --show-toplevel)"
