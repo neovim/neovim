@@ -950,9 +950,10 @@ int os_mkdir_recurse(const char *const dir, int32_t mode, char **const failed_di
 ///
 /// @param[in] fname Full path of the file name whose parent directories
 ///                  we want to create
+/// @param[in] mode  Permissions for the newly-created directory.
 ///
 /// @return `0` for success, libuv error code for failure.
-int os_file_mkdir(char *fname)
+int os_file_mkdir(char *fname, int32_t mode)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
   if (!dir_of_file_exists((char_u *)fname)) {
@@ -966,7 +967,7 @@ int os_file_mkdir(char *fname)
     *tail = NUL;
     int r;
     char *failed_dir;
-    if ((r = os_mkdir_recurse(fname, 0755, &failed_dir) < 0)) {
+    if ((r = os_mkdir_recurse(fname, mode, &failed_dir) < 0)) {
       semsg(_(e_mkdir), failed_dir, os_strerror(r));
       xfree(failed_dir);
     }
