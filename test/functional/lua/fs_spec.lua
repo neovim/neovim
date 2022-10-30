@@ -30,9 +30,19 @@ local test_basename_dirname_eq = {
   '/usr',
   'c:/usr',
   'c:/',
+  'c:',
   'c:/users/foo',
   'c:/users/foo/bar.lua',
   'c:/users/foo/bar/../',
+}
+
+local tests_windows_paths = {
+  'c:\\usr',
+  'c:\\',
+  'c:',
+  'c:\\users\\foo',
+  'c:\\users\\foo\\bar.lua',
+  'c:\\users\\foo\\bar\\..\\',
 }
 
 before_each(clear)
@@ -65,18 +75,25 @@ describe('vim.fs', function()
         return vim.fs.dirname(nvim_dir)
       ]], nvim_dir))
 
-      for _, path in ipairs(test_basename_dirname_eq) do
-        eq(
-          exec_lua([[
-            local path = ...
-            return vim.fn.fnamemodify(path,':h'):gsub('\\', '/')
-          ]], path),
-          exec_lua([[
-            local path = ...
-            return vim.fs.dirname(path)
-          ]], path),
-          path
-        )
+      local function test_paths(paths)
+        for _, path in ipairs(paths) do
+          eq(
+            exec_lua([[
+              local path = ...
+              return vim.fn.fnamemodify(path,':h'):gsub('\\', '/')
+            ]], path),
+            exec_lua([[
+              local path = ...
+              return vim.fs.dirname(path)
+            ]], path),
+            path
+          )
+        end
+      end
+
+      test_paths(test_basename_dirname_eq)
+      if iswin() then
+        test_paths(tests_windows_paths)
       end
     end)
   end)
@@ -88,18 +105,25 @@ describe('vim.fs', function()
         return vim.fs.basename(nvim_prog)
       ]], nvim_prog))
 
-      for _, path in ipairs(test_basename_dirname_eq) do
-        eq(
-          exec_lua([[
-            local path = ...
-            return vim.fn.fnamemodify(path,':t'):gsub('\\', '/')
-          ]], path),
-          exec_lua([[
-            local path = ...
-            return vim.fs.basename(path)
-          ]], path),
-          path
-        )
+      local function test_paths(paths)
+        for _, path in ipairs(paths) do
+          eq(
+            exec_lua([[
+              local path = ...
+              return vim.fn.fnamemodify(path,':t'):gsub('\\', '/')
+            ]], path),
+            exec_lua([[
+              local path = ...
+              return vim.fs.basename(path)
+            ]], path),
+            path
+          )
+        end
+      end
+
+      test_paths(test_basename_dirname_eq)
+      if iswin() then
+        test_paths(tests_windows_paths)
       end
     end)
   end)
