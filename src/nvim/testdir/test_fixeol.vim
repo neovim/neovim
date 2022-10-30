@@ -1,16 +1,17 @@
-" Tests for 'fixeol' and 'eol'
+" Tests for 'fixeol', 'eof' and 'eol'
+
 func Test_fixeol()
   " first write two test files – with and without trailing EOL
   " use Unix fileformat for consistency
   set ff=unix
   enew!
-  call setline('.', 'with eol')
+  call setline('.', 'with eol or eof')
   w! XXEol
   enew!
-  set noeol nofixeol
-  call setline('.', 'without eol')
+  set noeof noeol nofixeol
+  call setline('.', 'without eol or eof')
   w! XXNoEol
-  set eol fixeol
+  set eol eof fixeol
   bwipe XXEol XXNoEol
 
   " try editing files with 'fixeol' disabled
@@ -33,16 +34,18 @@ func Test_fixeol()
   w >>XXTestEol
   w >>XXTestNoEol
 
-  call assert_equal(['with eol', 'END'], readfile('XXEol'))
-  call assert_equal(['without eolEND'], readfile('XXNoEol'))
-  call assert_equal(['with eol', 'stays eol', 'END'], readfile('XXTestEol'))
-  call assert_equal(['without eol', 'stays withoutEND'],
+  call assert_equal(['with eol or eof', 'END'], readfile('XXEol'))
+  call assert_equal(['without eol or eofEND'], readfile('XXNoEol'))
+  call assert_equal(['with eol or eof', 'stays eol', 'END'], readfile('XXTestEol'))
+  call assert_equal(['without eol or eof', 'stays withoutEND'],
 	      \ readfile('XXTestNoEol'))
 
   call delete('XXEol')
   call delete('XXNoEol')
   call delete('XXTestEol')
   call delete('XXTestNoEol')
-  set ff& fixeol& eol&
+  set ff& fixeol& eof& eol&
   enew!
 endfunc
+
+" vim: shiftwidth=2 sts=2 expandtab

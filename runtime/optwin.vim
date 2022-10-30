@@ -1,7 +1,7 @@
 " These commands create the option window.
 "
 " Maintainer:	Bram Moolenaar <Bram@vim.org>
-" Last Change:	2022 Oct 15
+" Last Change:	2022 Oct 28
 
 " If there already is an option window, jump to that one.
 let buf = bufnr('option-window')
@@ -956,6 +956,9 @@ call <SID>BinOptionL("bin")
 call <SID>AddOption("endofline", gettext("last line in the file has an end-of-line"))
 call append("$", "\t" .. s:local_to_buffer)
 call <SID>BinOptionL("eol")
+call <SID>AddOption("endoffile", gettext("last line in the file followed by CTRL-Z"))
+call append("$", "\t" .. s:local_to_buffer)
+call <SID>BinOptionL("eof")
 call <SID>AddOption("fixendofline", gettext("fixes missing end-of-line at end of text file"))
 call append("$", "\t" .. s:local_to_buffer)
 call <SID>BinOptionL("fixeol")

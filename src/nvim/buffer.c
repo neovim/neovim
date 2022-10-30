@@ -689,6 +689,8 @@ void buf_clear_file(buf_T *buf)
 {
   buf->b_ml.ml_line_count = 1;
   unchanged(buf, true, true);
+  buf->b_p_eof = false;
+  buf->b_start_eof = false;
   buf->b_p_eol = true;
   buf->b_start_eol = true;
   buf->b_p_bomb = false;
