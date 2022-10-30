@@ -80,8 +80,7 @@
 // one for other searches.  last_idx points to the one that was used the last
 // time.
 
-static struct spat spats[2] =
-{
+static struct spat spats[2] = {
   // Last used search pattern
   [0] = { NULL, true, false, 0, { '/', false, false, 0L }, NULL },
   // Last used substitute pattern

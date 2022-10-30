@@ -1041,7 +1041,7 @@ int vim_vsnprintf_typval(char *str, size_t str_m, const char *fmt, va_list ap, t
             break;
           }
           if (arg > 0) {
-            arg_sign =  1;
+            arg_sign = 1;
           } else if (arg < 0) {
             arg_sign = -1;
           }

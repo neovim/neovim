@@ -1083,7 +1083,7 @@ static int foldLevelWin(win_T *wp, linenr_T lnum)
 {
   fold_T *fp;
   linenr_T lnum_rel = lnum;
-  int level =  0;
+  int level = 0;
 
   // Recursively search for a fold that contains "lnum".
   garray_T *gap = &wp->w_folds;

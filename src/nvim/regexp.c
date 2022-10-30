@@ -181,8 +181,7 @@ static int backslash_trans(int c)
 /// recognized.  Otherwise "pp" is advanced to after the item.
 static int get_char_class(char **pp)
 {
-  static const char *(class_names[]) =
-  {
+  static const char *(class_names[]) = {
     "alnum:]",
 #define CLASS_ALNUM 0
     "alpha:]",
@@ -1328,8 +1327,7 @@ typedef struct {
 } decomp_T;
 
 // 0xfb20 - 0xfb4f
-static decomp_T decomp_table[0xfb4f - 0xfb20 + 1] =
-{
+static decomp_T decomp_table[0xfb4f - 0xfb20 + 1] = {
   { 0x5e2, 0, 0 },          // 0xfb20       alt ayin
   { 0x5d0, 0, 0 },          // 0xfb21       alt alef
   { 0x5d3, 0, 0 },          // 0xfb22       alt dalet
@@ -2276,16 +2274,14 @@ list_T *reg_submatch_list(int no)
 # include "nvim/regexp_nfa.c"
 #endif
 
-static regengine_T bt_regengine =
-{
+static regengine_T bt_regengine = {
   bt_regcomp,
   bt_regfree,
   bt_regexec_nl,
   bt_regexec_multi,
 };
 
-static regengine_T nfa_regengine =
-{
+static regengine_T nfa_regengine = {
   nfa_regcomp,
   nfa_regfree,
   nfa_regexec_nl,

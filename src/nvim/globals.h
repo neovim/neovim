@@ -613,7 +613,7 @@ EXTERN int State INIT(= MODE_NORMAL);
 EXTERN bool debug_mode INIT(= false);
 EXTERN bool finish_op INIT(= false);    // true while an operator is pending
 EXTERN long opcount INIT(= 0);          // count for pending operator
-EXTERN int motion_force INIT(=0);       // motion force for pending operator
+EXTERN int motion_force INIT(= 0);       // motion force for pending operator
 
 // Ex Mode (Q) state
 EXTERN bool exmode_active INIT(= false);  // true if Ex mode is active
@@ -621,7 +621,7 @@ EXTERN bool exmode_active INIT(= false);  // true if Ex mode is active
 /// Flag set when normal_check() should return 0 when entering Ex mode.
 EXTERN bool pending_exmode_active INIT(= false);
 
-EXTERN bool ex_no_reprint INIT(=false);   // No need to print after z or p.
+EXTERN bool ex_no_reprint INIT(= false);   // No need to print after z or p.
 
 // 'inccommand' command preview state
 EXTERN bool cmdpreview INIT(= false);

@@ -998,7 +998,7 @@ void call_user_func(ufunc_T *fp, int argcount, typval_T *argvars, typval_T *rett
       listitem_T *li = &fc->l_listitems[ai];
 
       *TV_LIST_ITEM_TV(li) = argvars[i];
-      TV_LIST_ITEM_TV(li)->v_lock =  VAR_FIXED;
+      TV_LIST_ITEM_TV(li)->v_lock = VAR_FIXED;
       tv_list_append(&fc->l_varlist, li);
     }
   }

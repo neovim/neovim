@@ -400,7 +400,7 @@ static int nlua_wait(lua_State *lstate)
 
   bool fast_only = false;
   if (lua_top >= 4) {
-    fast_only =  lua_toboolean(lstate, 4);
+    fast_only = lua_toboolean(lstate, 4);
   }
 
   MultiQueue *loop_events = fast_only || in_fast_callback > 0

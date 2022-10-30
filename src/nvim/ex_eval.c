@@ -1083,7 +1083,7 @@ void ex_endwhile(exarg_T *eap)
       }
       // Try to find the matching ":while" and report what's missing.
       for (idx = cstack->cs_idx; idx > 0; idx--) {
-        fl =  cstack->cs_flags[idx];
+        fl = cstack->cs_flags[idx];
         if ((fl & CSF_TRY) && !(fl & CSF_FINALLY)) {
           // Give up at a try conditional not in its finally clause.
           // Ignore the ":endwhile"/":endfor".

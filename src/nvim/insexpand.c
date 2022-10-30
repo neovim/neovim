@@ -77,8 +77,7 @@
 #define CTRL_X_MSG(i) ctrl_x_msgs[(i) & ~CTRL_X_WANT_IDENT]
 
 /// Message for CTRL-X mode, index is ctrl_x_mode.
-static char *ctrl_x_msgs[] =
-{
+static char *ctrl_x_msgs[] = {
   N_(" Keyword completion (^N^P)"),  // CTRL_X_NORMAL, ^P/^N compl.
   N_(" ^X mode (^]^D^E^F^I^K^L^N^O^Ps^U^V^Y)"),
   NULL,  // CTRL_X_SCROLL: depends on state

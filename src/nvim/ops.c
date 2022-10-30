@@ -95,8 +95,7 @@ struct block_def {
 // The names of operators.
 // IMPORTANT: Index must correspond with defines in vim.h!!!
 // The third field indicates whether the operator always works on lines.
-static char opchars[][3] =
-{
+static char opchars[][3] = {
   { NUL, NUL, 0 },                       // OP_NOP
   { 'd', NUL, OPF_CHANGE },              // OP_DELETE
   { 'y', NUL, 0 },                       // OP_YANK
