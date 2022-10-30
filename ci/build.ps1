@@ -15,29 +15,10 @@ $ProgressPreference = 'SilentlyContinue'
 $projectDir = [System.IO.Path]::GetFullPath("$(Get-Location)")
 $buildDir = Join-Path -Path $projectDir -ChildPath "build"
 
-# $env:CMAKE_BUILD_TYPE is ignored by cmake when not using ninja
-$cmakeBuildType = $(if ($null -ne $env:CMAKE_BUILD_TYPE) {$env:CMAKE_BUILD_TYPE} else {'RelWithDebInfo'});
-$depsCmakeVars = @{
-  CMAKE_BUILD_TYPE=$cmakeBuildType;
-}
-$nvimCmakeVars = @{
-  CMAKE_BUILD_TYPE=$cmakeBuildType;
-  BUSTED_OUTPUT_TYPE = 'nvim';
-  DEPS_PREFIX=$(if ($null -ne $env:DEPS_PREFIX) {$env:DEPS_PREFIX} else {".deps/usr"});
-}
-if ($null -eq $env:DEPS_BUILD_DIR) {
-  $env:DEPS_BUILD_DIR = Join-Path -Path $projectDir -ChildPath ".deps"
-}
-$uploadToCodeCov = $false
-
 function exitIfFailed() {
   if ($LastExitCode -ne 0) {
     exit $LastExitCode
   }
-}
-
-function convertToCmakeArgs($vars) {
-  return $vars.GetEnumerator() | ForEach-Object { "-D$($_.Key)=$($_.Value)" }
 }
 
 $installationPath = vswhere.exe -latest -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
@@ -49,26 +30,13 @@ if ($installationPath -and (Test-Path "$installationPath\Common7\Tools\vsdevcmd.
 }
 
 function BuildDeps {
-
-  if (Test-Path -PathType container $env:DEPS_BUILD_DIR) {
-    $cachedBuildTypeStr = $(Get-Content $env:DEPS_BUILD_DIR\CMakeCache.txt | Select-String -Pattern "CMAKE_BUILD_TYPE.*=($cmakeBuildType)")
-    if (-not $cachedBuildTypeStr) {
-      Write-Warning " unable to validate build type from cache dir ${env:DEPS_BUILD_DIR}"
-    }
-  }
-
-  # we currently can't use ninja for cmake.deps, see #19405
-  $depsCmakeGenerator = "Visual Studio 16 2019"
-  $depsCmakeGeneratorPlf = "x64"
-  cmake -S "$projectDir\cmake.deps" -B $env:DEPS_BUILD_DIR -G $depsCmakeGenerator -A $depsCmakeGeneratorPlf $(convertToCmakeArgs($depsCmakeVars)); exitIfFailed
-
-  $depsCmakeNativeToolOptions= @('/verbosity:normal', '/m')
-  cmake --build $env:DEPS_BUILD_DIR --config $cmakeBuildType -- $depsCmakeNativeToolOptions; exitIfFailed
+  cmake -S "$projectDir\cmake.deps" -B $env:DEPS_BUILD_DIR -G Ninja -DCMAKE_BUILD_TYPE='RelWithDebInfo'; exitIfFailed
+  cmake --build $env:DEPS_BUILD_DIR; exitIfFailed
 }
 
 function Build {
-  cmake -S $projectDir -B $buildDir $(convertToCmakeArgs($nvimCmakeVars)) -G Ninja; exitIfFailed
-  cmake --build $buildDir --config $cmakeBuildType; exitIfFailed
+  cmake -S $projectDir -B $buildDir -G Ninja -DCMAKE_BUILD_TYPE='RelWithDebInfo' -DDEPS_PREFIX="$env:DEPS_PREFIX"; exitIfFailed
+  cmake --build $buildDir; exitIfFailed
 }
 
 function EnsureTestDeps {
@@ -90,10 +58,6 @@ function EnsureTestDeps {
   npm.cmd install -g neovim; exitIfFailed
   Get-Command -CommandType Application neovim-node-host.cmd; exitIfFailed
   npm.cmd link neovim
-
-  if ($env:USE_LUACOV -eq 1) {
-    & $env:DEPS_PREFIX\luarocks\luarocks.bat install cluacov
-  }
 }
 
 function Test {
@@ -110,14 +74,6 @@ function Test {
   if ($failed) {
     exit $LastExitCode
   }
-
-  if (-not $uploadToCodecov) {
-    return
-  }
-  if ($env:USE_LUACOV -eq 1) {
-    & $env:DEPS_PREFIX\bin\luacov.bat
-  }
-  bash -l /c/projects/neovim/ci/common/submit_coverage.sh functionaltest
 }
 
 function TestOld {
@@ -128,15 +84,10 @@ function TestOld {
   $env:PATH = "C:\msys64\usr\bin;$env:PATH"
   & "C:\msys64\mingw64\bin\mingw32-make.exe" -C $(Convert-Path $projectDir\src\nvim\testdir) VERBOSE=1; exitIfFailed
   $env:PATH = $OldPath
-
-  if ($uploadToCodecov) {
-    bash -l /c/projects/neovim/ci/common/submit_coverage.sh oldtest
-  }
 }
 
-
 function Package {
-  cmake -S $projectDir -B $buildDir $(convertToCmakeArgs($nvimCmakeVars)) -G Ninja; exitIfFailed
+  cmake -S $projectDir -B $buildDir -G Ninja -DCMAKE_BUILD_TYPE='RelWithDebInfo' -DDEPS_PREFIX="$env:DEPS_PREFIX"; exitIfFailed
   cmake --build $buildDir --target package; exitIfFailed
 }
 
