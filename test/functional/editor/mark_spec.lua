@@ -330,7 +330,7 @@ describe('named marks view', function()
     os.remove(file2)
   end)
 
-  it('is restored', function()
+  it('is restored in normal mode but not op-pending mode', function()
       local screen = Screen.new(5, 8)
       screen:attach()
       command("edit " .. file1)
@@ -356,6 +356,18 @@ describe('named marks view', function()
       6 line      |
       7 line      |
       8 line      |
+                  |
+      ]])
+      -- not in op-pending mode #20886
+      feed("ggj=`a")
+      screen:expect([[
+      1 line      |
+      ^2 line      |
+      3 line      |
+      4 line      |
+      5 line      |
+      6 line      |
+      7 line      |
                   |
       ]])
   end)
