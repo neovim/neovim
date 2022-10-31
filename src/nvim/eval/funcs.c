@@ -113,6 +113,8 @@ PRAGMA_DIAG_POP
 static char *e_listblobarg = N_("E899: Argument of %s must be a List or Blob");
 static char *e_invalwindow = N_("E957: Invalid window number");
 static char *e_reduceempty = N_("E998: Reduce of an empty %s with no initial value");
+static char e_cannot_resize_window_in_another_tab_page[]
+  = N_("E1308: Cannot resize a window in another tab page");
 
 /// Dummy va_list for passing to vim_snprintf
 ///
@@ -9702,6 +9704,10 @@ static void f_win_move_statusline(typval_T *argvars, typval_T *rettv, EvalFuncDa
 
   wp = find_win_by_nr_or_id(&argvars[0]);
   if (wp == NULL || wp->w_floating) {
+    return;
+  }
+  if (!win_valid(wp)) {
+    emsg(_(e_cannot_resize_window_in_another_tab_page));
     return;
   }
 
