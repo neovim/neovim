@@ -4195,6 +4195,7 @@ static int leave_tabpage(buf_T *new_curbuf, bool trigger_leave_autocmds)
 {
   tabpage_T *tp = curtab;
 
+  reset_mouse_got_click();
   leaving_window(curwin);
   reset_VIsual_and_resel();     // stop Visual mode
   if (trigger_leave_autocmds) {
@@ -4392,6 +4393,7 @@ void goto_tabpage_tp(tabpage_T *tp, bool trigger_enter_autocmds, bool trigger_le
   // Don't repeat a message in another tab page.
   set_keep_msg(NULL, 0);
 
+  reset_mouse_got_click();
   skip_win_fix_scroll = true;
   if (tp != curtab && leave_tabpage(tp->tp_curwin->w_buffer,
                                     trigger_leave_autocmds) == OK) {
