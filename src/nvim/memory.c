@@ -577,14 +577,13 @@ void alloc_block(Arena *arena)
   blk->prev = prev_blk;
 }
 
-static size_t arena_align_offset(void *ptr, size_t alignment)
+static size_t arena_align_offset(uint64_t off)
 {
-  uintptr_t uptr = (uintptr_t)ptr;
-  return ((uptr + (alignment - 1)) & ~(alignment - 1)) - uptr;
+  return ((off + (ARENA_ALIGN - 1)) & ~(ARENA_ALIGN - 1));
 }
 
 /// @param arena if NULL, do a global allocation. caller must then free the value!
-/// @param size if zero, will still return a non-null pointer, but not a unique one
+/// @param size if zero, will still return a non-null pointer, but not a usable or unique one
 void *arena_alloc(Arena *arena, size_t size, bool align)
 {
   if (!arena) {
@@ -593,30 +592,33 @@ void *arena_alloc(Arena *arena, size_t size, bool align)
   if (!arena->cur_blk) {
     alloc_block(arena);
   }
-  size_t align_pos = align ? arena_align_offset(arena->cur_blk + arena->pos, ARENA_ALIGN) : 0;
-  if (arena->pos + align_pos + size > arena->size) {
-    if (size + (align ? (ARENA_ALIGN - 1) : 0) > (ARENA_BLOCK_SIZE - sizeof(struct consumed_blk))
-        >> 1) {
+  size_t alloc_pos = align ? arena_align_offset(arena->pos) : arena->pos;
+  if (alloc_pos + size > arena->size) {
+    if (size > (ARENA_BLOCK_SIZE - sizeof(struct consumed_blk)) >> 1) {
       // if allocation is too big, allocate a large block with the requested
       // size, but still with block pointer head. We do this even for
       // arena->size / 2, as there likely is space left for the next
       // small allocation in the current block.
       arena_alloc_count++;
-      char *alloc = xmalloc(size + sizeof(struct consumed_blk) + (align ? (ARENA_ALIGN - 1) : 0));
+      size_t hdr_size = sizeof(struct consumed_blk);
+      size_t aligned_hdr_size = (align ? arena_align_offset(hdr_size) : hdr_size);
+      char *alloc = xmalloc(size + aligned_hdr_size);
+
+      // to simplify free-list management, arena->cur_blk must
+      // always be a normal, ARENA_BLOCK_SIZE sized, block
       struct consumed_blk *cur_blk = (struct consumed_blk *)arena->cur_blk;
       struct consumed_blk *fix_blk = (struct consumed_blk *)alloc;
       fix_blk->prev = cur_blk->prev;
       cur_blk->prev = fix_blk;
-      char *mem = (alloc + sizeof(struct consumed_blk));
-      return mem + (align ? arena_align_offset(mem, ARENA_ALIGN) : 0);
+      return alloc + aligned_hdr_size;
     } else {
-      alloc_block(arena);
-      align_pos = align ? arena_align_offset(arena->cur_blk + arena->pos, ARENA_ALIGN) : 0;
+      alloc_block(arena);  // resets arena->pos
+      alloc_pos = align ? arena_align_offset(arena->pos) : arena->pos;
     }
   }
 
-  char *mem = arena->cur_blk + arena->pos + align_pos;
-  arena->pos += (size + align_pos);
+  char *mem = arena->cur_blk + alloc_pos;
+  arena->pos = alloc_pos + size;
   return mem;
 }
 
