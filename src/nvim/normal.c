@@ -5697,6 +5697,10 @@ static void nv_gomark(cmdarg_T *cap)
 {
   int name;
   MarkMove flags = jop_flags & JOP_VIEW ? kMarkSetView : 0;  // flags for moving to the mark
+  if (cap->oap->op_type != OP_NOP) {
+    // When there is a pending operator, do not restore the view as this is usually unexpected.
+    flags = 0;
+  }
   MarkMoveRes move_res = 0;  // Result from moving to the mark
   const bool old_KeyTyped = KeyTyped;  // getting file may reset it
 
