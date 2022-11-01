@@ -9690,6 +9690,10 @@ static void f_win_move_separator(typval_T *argvars, typval_T *rettv, EvalFuncDat
   if (wp == NULL || wp->w_floating) {
     return;
   }
+  if (!win_valid(wp)) {
+    emsg(_(e_cannot_resize_window_in_another_tab_page));
+    return;
+  }
 
   int offset = (int)tv_get_number(&argvars[1]);
   win_drag_vsep_line(wp, offset);
