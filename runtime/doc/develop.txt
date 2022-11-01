@@ -74,7 +74,7 @@ NVIM IS... MAINTAINABLE					*design-maintain*
 NVIM IS... NOT						*design-not*
 
 Nvim is not an operating system; instead it should be composed with other
-tools or hosted as a component. Marvim once said: "Unlike Emacs, Nvim does not
+tools or hosted as a component. Marvim once said: "Unlike Emacs, Vim does not
 include the kitchen sink... but it's good for plumbing."
 
 
