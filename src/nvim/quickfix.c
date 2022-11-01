@@ -337,8 +337,7 @@ static const size_t LINE_MAXLEN = 4096;
 static struct fmtpattern {
   char convchar;
   char *pattern;
-} fmt_pat[FMT_PATTERNS] =
-{
+} fmt_pat[FMT_PATTERNS] = {
   { 'f', ".\\+" },      // only used when at end
   { 'n', "\\d\\+" },    // 1
   { 'l', "\\d\\+" },    // 2
@@ -7066,7 +7065,7 @@ static void hgr_search_in_rtp(qf_list_T *qfl, regmatch_T *p_regmatch, const char
 void ex_helpgrep(exarg_T *eap)
 {
   qf_info_T *qi = &ql_info;
-  char *au_name =  NULL;
+  char *au_name = NULL;
 
   switch (eap->cmdidx) {
   case CMD_helpgrep:

@@ -36,8 +36,7 @@ static char e_no_such_user_defined_command_in_current_buffer_str[]
 
 /// List of names for completion for ":command" with the EXPAND_ flag.
 /// Must be alphabetical for completion.
-static const char *command_complete[] =
-{
+static const char *command_complete[] = {
   [EXPAND_ARGLIST] = "arglist",
   [EXPAND_AUGROUP] = "augroup",
   [EXPAND_BEHAVE] = "behave",
@@ -86,8 +85,7 @@ static struct {
   cmd_addr_T expand;
   char *name;
   char *shortname;
-} addr_type_complete[] =
-{
+} addr_type_complete[] = {
   { ADDR_ARGUMENTS, "arguments", "arg" },
   { ADDR_LINES, "lines", "line" },
   { ADDR_LOADED_BUFFERS, "loaded_buffers", "load" },

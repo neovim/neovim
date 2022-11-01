@@ -1404,7 +1404,9 @@ struct window_S {
 };
 
 /// Macros defined in Vim, but not in Neovim
+// uncrustify:off
 #define CHANGEDTICK(buf) \
   (=== Include buffer.h & use buf_(get|set|inc) _changedtick ===)
+// uncrustify:on
 
 #endif  // NVIM_BUFFER_DEFS_H

@@ -157,7 +157,6 @@ _ERROR_CATEGORIES = [
     'build/printf_format',
     'build/storage_class',
     'readability/bool',
-    'readability/braces',
     'readability/multiline_comment',
     'readability/multiline_string',
     'readability/nul',
@@ -2305,213 +2304,36 @@ def CheckBraces(filename, clean_lines, linenum, error):
         prevline = GetPreviousNonBlankLine(clean_lines, linenum)[0]
         if (not Search(r'[,;:}{(]\s*$', prevline) and
                 not Match(r'\s*#', prevline)):
-            error(filename, linenum, 'whitespace/braces', 4,
-                  '{ should almost always be at the end'
-                  ' of the previous line')
+            return
 
     # Brace must appear after function signature, but on the *next* line
     if Match(r'^(?:\w+(?: ?\*+)? )+\w+\(', line):
         pos = line.find('(')
-        (endline, end_linenum, endpos) = CloseExpression(
-            clean_lines, linenum, pos)
+        (endline, end_linenum, _) = CloseExpression(clean_lines, linenum, pos)
         if endline.endswith('{'):
-            error(filename, end_linenum, 'readability/braces', 5,
-                  'Brace starting function body must be placed on its own line')
-        else:
-            func_start_linenum = end_linenum + 1
-            while not clean_lines.lines[func_start_linenum] == "{":
-                attrline = Match(
-                    r'^((?!# *define).*?)'
-                    r'(?:FUNC_ATTR|FUNC_API|REAL_FATTR)_\w+'
-                    r'(?:\(\d+(, \d+)*\))?',
-                    clean_lines.lines[func_start_linenum],
-                )
-                if attrline:
-                    if len(attrline.group(1)) != 2:
-                        error(filename, func_start_linenum,
-                              'whitespace/indent', 5,
-                              'Function attribute line should have 2-space '
-                              'indent')
+            return
 
-                    func_start_linenum += 1
-                else:
-                    func_start = clean_lines.lines[func_start_linenum]
-                    if not func_start.startswith('enum ') and func_start.endswith('{'):
-                        error(filename, func_start_linenum,
-                              'readability/braces', 5,
-                              'Brace starting function body must be placed '
-                              'after the function signature')
-                    break
+        func_start_linenum = end_linenum + 1
+        while not clean_lines.lines[func_start_linenum] == "{":
+            attrline = Match(
+                r'^((?!# *define).*?)'
+                r'(?:FUNC_ATTR|FUNC_API|REAL_FATTR)_\w+'
+                r'(?:\(\d+(, \d+)*\))?',
+                clean_lines.lines[func_start_linenum],
+            )
+            if attrline:
+                if len(attrline.group(1)) != 2:
+                    error(filename, func_start_linenum,
+                          'whitespace/indent', 5,
+                          'Function attribute line should have 2-space '
+                          'indent')
 
-    # An else clause should be on the same line as the preceding closing brace.
-    # If there is no preceding closing brace, there should be one.
-    if Match(r'\s*else\s*', line):
-        prevline = GetPreviousNonBlankLine(clean_lines, linenum)[0]
-        if Match(r'\s*}\s*$', prevline):
-            error(filename, linenum, 'whitespace/newline', 4,
-                  'An else should appear on the same line as the preceding }')
-        else:
-            error(filename, linenum, 'readability/braces', 5,
-                  'An else should always have braces before it')
-
-    # If should always have a brace
-    for blockstart in ('if', 'while', 'for'):
-        if Match(r'\s*{0}(?!\w)[^{{]*$'.format(blockstart), line):
-            pos = line.find(blockstart)
-            pos = line.find('(', pos)
-            if pos > 0:
-                (endline, _, endpos) = CloseExpression(
-                    clean_lines, linenum, pos)
-                if endline[endpos:].find('{') == -1:
-                    error(filename, linenum, 'readability/braces', 5,
-                          '{} should always use braces'.format(blockstart))
-
-    # If braces come on one side of an else, they should be on both.
-    # However, we have to worry about "else if" that spans multiple lines!
-    if Search(r'}\s*else[^{]*$', line) or Match(r'[^}]*else\s*{', line):
-        if Search(r'}\s*else if([^{]*)$', line):       # could be multi-line if
-            # find the ( after the if
-            pos = line.find('else if')
-            pos = line.find('(', pos)
-            if pos > 0:
-                (endline, _, endpos) = CloseExpression(
-                    clean_lines, linenum, pos)
-                # must be brace after if
-                if endline[endpos:].find('{') == -1:
-                    error(filename, linenum, 'readability/braces', 5,
-                          'If an else has a brace on one side,'
-                          ' it should have it on both')
-        else:            # common case: else not followed by a multi-line if
-            error(filename, linenum, 'readability/braces', 5,
-                  'If an else has a brace on one side,'
-                  ' it should have it on both')
-
-    # Likewise, an else should never have the else clause on the same line
-    if Search(r'\belse [^\s{]', line) and not Search(r'\belse if\b', line):
-        error(filename, linenum, 'whitespace/newline', 4,
-              'Else clause should never be on same line as else (use 2 lines)')
-
-    # In the same way, a do/while should never be on one line
-    if Match(r'\s*do [^\s{]', line):
-        error(filename, linenum, 'whitespace/newline', 4,
-              'do/while clauses should not be on a single line')
-
-    # Block bodies should not be followed by a semicolon.  Due to C++11
-    # brace initialization, there are more places where semicolons are
-    # required than not, so we use a whitelist approach to check these
-    # rather than a blacklist.  These are the places where "};" should
-    # be replaced by just "}":
-    # 1. Some flavor of block following closing parenthesis:
-    #    for (;;) {};
-    #    while (...) {};
-    #    switch (...) {};
-    #    Function(...) {};
-    #    if (...) {};
-    #    if (...) else if (...) {};
-    #
-    # 2. else block:
-    #    if (...) else {};
-    #
-    # 3. const member function:
-    #    Function(...) const {};
-    #
-    # 4. Block following some statement:
-    #    x = 42;
-    #    {};
-    #
-    # 5. Block at the beginning of a function:
-    #    Function(...) {
-    #      {};
-    #    }
-    #
-    #    Note that naively checking for the preceding "{" will also match
-    #    braces inside multi-dimensional arrays, but this is fine since
-    #    that expression will not contain semicolons.
-    #
-    # 6. Block following another block:
-    #    while (true) {}
-    #    {};
-    #
-    # 7. End of namespaces:
-    #    namespace {};
-    #
-    #    These semicolons seems far more common than other kinds of
-    #    redundant semicolons, possibly due to people converting classes
-    #    to namespaces.  For now we do not warn for this case.
-    #
-    # Try matching case 1 first.
-    match = Match(r'^(.*\)\s*)\{', line)
-    if match:
-        # Matched closing parenthesis (case 1).  Check the token before the
-        # matching opening parenthesis, and don't warn if it looks like a
-        # macro.  This avoids these false positives:
-        #  - macro that defines a base class
-        #  - multi-line macro that defines a base class
-        #  - macro that defines the whole class-head
-        #
-        # But we still issue warnings for macros that we know are safe to
-        # warn, specifically:
-        #  - TEST, TEST_F, TEST_P, MATCHER, MATCHER_P
-        #  - TYPED_TEST
-        #  - INTERFACE_DEF
-        #  - EXCLUSIVE_LOCKS_REQUIRED, SHARED_LOCKS_REQUIRED, LOCKS_EXCLUDED:
-        #
-        # We implement a whitelist of safe macros instead of a blacklist of
-        # unsafe macros, even though the latter appears less frequently in
-        # google code and would have been easier to implement.  This is because
-        # the downside for getting the whitelist wrong means some extra
-        # semicolons, while the downside for getting the blacklist wrong
-        # would result in compile errors.
-        #
-        # In addition to macros, we also don't want to warn on compound
-        # literals.
-        closing_brace_pos = match.group(1).rfind(')')
-        opening_parenthesis = ReverseCloseExpression(
-            clean_lines, linenum, closing_brace_pos)
-        if opening_parenthesis[2] > -1:
-            line_prefix = opening_parenthesis[0][0:opening_parenthesis[2]]
-            macro = Search(r'\b([A-Z_]+)\s*$', line_prefix)
-            if ((macro and
-                 macro.group(1) not in (
-                     'TEST', 'TEST_F', 'MATCHER', 'MATCHER_P', 'TYPED_TEST',
-                     'EXCLUSIVE_LOCKS_REQUIRED', 'SHARED_LOCKS_REQUIRED',
-                     'LOCKS_EXCLUDED', 'INTERFACE_DEF')) or
-                    Search(r'\s+=\s*$', line_prefix) or
-                    Search(r'^\s*return\s*$', line_prefix)):
-                match = None
-
-    else:
-        # Try matching cases 2-3.
-        match = Match(r'^(.*(?:else|\)\s*const)\s*)\{', line)
-        if not match:
-            # Try matching cases 4-6.  These are always matched on separate
-            # lines.
-            #
-            # Note that we can't simply concatenate the previous line to the
-            # current line and do a single match, otherwise we may output
-            # duplicate warnings for the blank line case:
-            #   if (cond) {
-            #     // blank line
-            #   }
-            prevline = GetPreviousNonBlankLine(clean_lines, linenum)[0]
-            if prevline and Search(r'[;{}]\s*$', prevline):
-                match = Match(r'^(\s*)\{', line)
-
-    # Check matching closing brace
-    if match:
-        (endline, endlinenum, endpos) = CloseExpression(
-            clean_lines, linenum, len(match.group(1)))
-        if endpos > -1 and Match(r'^\s*;', endline[endpos:]):
-            # Current {} pair is eligible for semicolon check, and we have found
-            # the redundant semicolon, output warning here.
-            #
-            # Note: because we are scanning forward for opening braces, and
-            # outputting warnings for the matching closing brace, if there are
-            # nested blocks with trailing semicolons, we will get the error
-            # messages in reversed order.
-            error(filename, endlinenum, 'readability/braces', 4,
-                  "You don't need a ; after a }")
-
+                func_start_linenum += 1
+            else:
+                func_start = clean_lines.lines[func_start_linenum]
+                if not func_start.startswith('enum ') and func_start.endswith('{'):
+                    return
+                break
 
 def CheckStyle(filename, clean_lines, linenum, error):
     """Checks rules from the 'C++ style rules' section of cppguide.html.
@@ -2681,8 +2503,7 @@ def CheckLanguage(filename, clean_lines, linenum, error):
     # Check for suspicious usage of "if" like
     # } if (a == b) {
     if Search(r'\}\s*if\s*\(', line):
-        error(filename, linenum, 'readability/braces', 4,
-              'Did you mean "else if"? If not, start a new line for "if".')
+      return
 
     # Check for potential format string bugs like printf(foo).
     # We constrain the pattern not to pick things like DocidForPrintf(foo).

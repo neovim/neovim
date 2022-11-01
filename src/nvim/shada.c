@@ -1476,7 +1476,7 @@ static char *shada_filename(const char *file)
       file = p_shadafile;
     } else {
       if ((file = (char *)find_shada_parameter('n')) == NULL || *file == NUL) {
-        file =  shada_get_default_file();
+        file = shada_get_default_file();
       }
       // XXX It used to be one level lower, so that whatever is in
       //     `p_shadafile` was expanded. I intentionally moved it here

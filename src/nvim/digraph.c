@@ -52,7 +52,6 @@ static garray_T user_digraphs = { 0, 0, (int)sizeof(digr_T), 10, NULL };
 /// Note: Characters marked with XX are not included literally, because some
 /// compilers cannot handle them (Amiga SAS/C is the most picky one).
 static digr_T digraphdefault[] =
-
 // digraphs for Unicode from RFC1345
 // (also work for ISO-8859-1 aka latin1)
 {

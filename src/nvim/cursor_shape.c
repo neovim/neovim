@@ -19,8 +19,7 @@
 #endif
 
 /// Handling of cursor and mouse pointer shapes in various modes.
-cursorentry_T shape_table[SHAPE_IDX_COUNT] =
-{
+cursorentry_T shape_table[SHAPE_IDX_COUNT] = {
   // Values are set by 'guicursor' and 'mouseshape'.
   // Adjust the SHAPE_IDX_ defines when changing this!
   { "normal", 0, 0, 0, 700L, 400L, 250L, 0, 0, "n", SHAPE_CURSOR + SHAPE_MOUSE },

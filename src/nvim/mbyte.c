@@ -136,8 +136,7 @@ const uint8_t utf8len_tab_zero[] = {
 // "iso-8859-n" is handled by enc_canonize() directly.
 static struct
 {   const char *name;   int prop;              int codepage; }
-enc_canon_table[] =
-{
+enc_canon_table[] = {
 #define IDX_LATIN_1     0
   { "latin1",          ENC_8BIT + ENC_LATIN1,  1252 },
 #define IDX_ISO_2       1
@@ -270,8 +269,7 @@ enc_canon_table[] =
 // Aliases for encoding names.
 static struct
 {   const char *name; int canon; }
-enc_alias_table[] =
-{
+enc_alias_table[] = {
   { "ansi",            IDX_LATIN_1 },
   { "iso-8859-1",      IDX_LATIN_1 },
   { "latin2",          IDX_ISO_2 },
@@ -1024,8 +1022,7 @@ bool utf_printable(int c)
 {
   // Sorted list of non-overlapping intervals.
   // 0xd800-0xdfff is reserved for UTF-16, actually illegal.
-  static struct interval nonprint[] =
-  {
+  static struct interval nonprint[] = {
     { 0x070f, 0x070f }, { 0x180b, 0x180e }, { 0x200b, 0x200f }, { 0x202a, 0x202e },
     { 0x2060, 0x206f }, { 0xd800, 0xdfff }, { 0xfeff, 0xfeff }, { 0xfff9, 0xfffb },
     { 0xfffe, 0xffff }

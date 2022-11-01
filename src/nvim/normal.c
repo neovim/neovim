@@ -144,8 +144,7 @@ static const struct nv_cmd {
   nv_func_T cmd_func;           ///< function for this command
   uint16_t cmd_flags;           ///< NV_ flags
   int16_t cmd_arg;              ///< value for ca.arg
-} nv_cmds[] =
-{
+} nv_cmds[] = {
   { NUL,       nv_error,       0,                      0 },
   { Ctrl_A,    nv_addsub,      0,                      0 },
   { Ctrl_B,    nv_page,        NV_STS,                 BACKWARD },
@@ -4896,7 +4895,7 @@ static void nv_pcmark(cmdarg_T *cap)
       fm = get_changelist(curbuf, curwin, (int)cap->count1);
     } else {
       fm = get_jumplist(curwin, (int)cap->count1);
-      flags |=  KMarkNoContext | kMarkJumpList;
+      flags |= KMarkNoContext | kMarkJumpList;
     }
     // Changelist and jumplist have their own error messages. Therefore avoid
     // calling nv_mark_move_to() when not found to avoid incorrect error

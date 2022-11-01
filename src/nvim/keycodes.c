@@ -46,8 +46,7 @@ static const struct modmasktable {
 
 #define MOD_KEYS_ENTRY_SIZE 5
 
-static char_u modifier_keys_table[] =
-{
+static char_u modifier_keys_table[] = {
   //  mod mask      with modifier               without modifier
   MOD_MASK_SHIFT, '&', '9',                   '@', '1',         // begin
   MOD_MASK_SHIFT, '&', '0',                   '@', '2',         // cancel
@@ -347,8 +346,7 @@ static struct mousetable {
   int button;                 // Which mouse button is it?
   bool is_click;              // Is it a mouse button click event?
   bool is_drag;               // Is it a mouse drag event?
-} mouse_table[] =
-{
+} mouse_table[] = {
   { KE_LEFTMOUSE,        MOUSE_LEFT,     true,   false },
   { KE_LEFTDRAG,         MOUSE_LEFT,     false,  true },
   { KE_LEFTRELEASE,      MOUSE_LEFT,     false,  false },

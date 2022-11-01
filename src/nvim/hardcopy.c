@@ -140,8 +140,7 @@ static int page_count;
 #define OPT_MBFONT_BOLDOBLIQUE 5
 #define OPT_MBFONT_NUM_OPTIONS 6
 
-static option_table_T mbfont_opts[OPT_MBFONT_NUM_OPTIONS] =
-{
+static option_table_T mbfont_opts[OPT_MBFONT_NUM_OPTIONS] = {
   { "c",       false, 0, NULL, 0, false },
   { "a",       false, 0, NULL, 0, false },
   { "r",       false, 0, NULL, 0, false },
@@ -208,8 +207,7 @@ typedef enum {
 } PrtResourceType;
 
 // String versions of PS resource types
-static const char *const prt_resource_types[] =
-{
+static const char *const prt_resource_types[] = {
   [PRT_RESOURCE_TYPE_PROCSET] = "procset",
   [PRT_RESOURCE_TYPE_ENCODING] = "encoding",
   [PRT_RESOURCE_TYPE_CMAP] = "cmap",
@@ -945,8 +943,7 @@ static colnr_T hardcopy_line(prt_settings_T *psettings, int page_line, prt_pos_T
 
 #define PRT_MEDIASIZE_LEN  ARRAY_SIZE(prt_mediasize)
 
-static struct prt_mediasize_S prt_mediasize[] =
-{
+static struct prt_mediasize_S prt_mediasize[] = {
   { "A4",              595.0,  842.0 },
   { "letter",          612.0,  792.0 },
   { "10x14",           720.0, 1008.0 },
@@ -969,8 +966,7 @@ static struct prt_mediasize_S prt_mediasize[] =
 #define PRT_PS_FONT_BOLDOBLIQUE (3)
 
 // Standard font metrics for Courier family
-static struct prt_ps_font_S prt_ps_courier_font =
-{
+static struct prt_ps_font_S prt_ps_courier_font = {
   600,
   -100, 50,
   -250, 805,
@@ -978,8 +974,7 @@ static struct prt_ps_font_S prt_ps_courier_font =
 };
 
 // Generic font metrics for multi-byte fonts
-static struct prt_ps_font_S prt_ps_mb_font =
-{
+static struct prt_ps_font_S prt_ps_mb_font = {
   1000,
   -100, 50,
   -250, 805,
@@ -999,8 +994,7 @@ static struct prt_ps_font_S *prt_ps_font;
 #define CS_KANJITALK7   (0x80)
 
 // Japanese encodings and charsets
-static struct prt_ps_encoding_S j_encodings[] =
-{
+static struct prt_ps_encoding_S j_encodings[] = {
   { "iso-2022-jp", NULL,       (CS_JIS_C_1978|CS_JIS_X_1983|CS_JIS_X_1990|
                                 CS_NEC) },
   { "euc-jp",      "EUC",      (CS_JIS_C_1978|CS_JIS_X_1983|CS_JIS_X_1990) },
@@ -1010,8 +1004,7 @@ static struct prt_ps_encoding_S j_encodings[] =
   { "ucs-2",       "UCS2",     CS_JIS_X_1990 },
   { "utf-8",       "UTF8",    CS_JIS_X_1990 }
 };
-static struct prt_ps_charset_S j_charsets[] =
-{
+static struct prt_ps_charset_S j_charsets[] = {
   { "JIS_C_1978",  "78",       CS_JIS_C_1978 },
   { "JIS_X_1983",  NULL,       CS_JIS_X_1983 },
   { "JIS_X_1990",  "Hojo",     CS_JIS_X_1990 },
@@ -1031,8 +1024,7 @@ static struct prt_ps_charset_S j_charsets[] =
 #define CS_SC_ISO10646      (0x40)
 
 // Simplified Chinese encodings and charsets
-static struct prt_ps_encoding_S sc_encodings[] =
-{
+static struct prt_ps_encoding_S sc_encodings[] = {
   { "iso-2022",    NULL,       (CS_GB_2312_80|CS_GBT_12345_90) },
   { "gb18030",     NULL,       CS_GBK2K },
   { "euc-cn",      "EUC",      (CS_GB_2312_80|CS_GBT_12345_90|CS_SC_MAC|
@@ -1041,8 +1033,7 @@ static struct prt_ps_encoding_S sc_encodings[] =
   { "ucs-2",       "UCS2",     CS_SC_ISO10646 },
   { "utf-8",       "UTF8",     CS_SC_ISO10646 }
 };
-static struct prt_ps_charset_S sc_charsets[] =
-{
+static struct prt_ps_charset_S sc_charsets[] = {
   { "GB_2312-80",  "GB",       CS_GB_2312_80 },
   { "GBT_12345-90", "GBT",      CS_GBT_12345_90 },
   { "MAC",         "GBpc",     CS_SC_MAC },
@@ -1067,8 +1058,7 @@ static struct prt_ps_charset_S sc_charsets[] =
 #define CS_TC_ISO10646      (0x1000)
 
 // Traditional Chinese encodings and charsets
-static struct prt_ps_encoding_S tc_encodings[] =
-{
+static struct prt_ps_encoding_S tc_encodings[] = {
   { "iso-2022",    NULL,       (CS_CNS_PLANE_1|CS_CNS_PLANE_2) },
   { "euc-tw",      "EUC",      CS_CNS_PLANE_1_2 },
   { "big5",        "B5",       (CS_B5|CS_ETEN|CS_HK_GCCS|CS_HK_SCS|
@@ -1080,8 +1070,7 @@ static struct prt_ps_encoding_S tc_encodings[] =
   { "utf-16",      "UTF16",    CS_TC_ISO10646 },
   { "utf-32",      "UTF32",    CS_TC_ISO10646 }
 };
-static struct prt_ps_charset_S tc_charsets[] =
-{
+static struct prt_ps_charset_S tc_charsets[] = {
   { "CNS_1992_1",  "CNS1",     CS_CNS_PLANE_1 },
   { "CNS_1992_2",  "CNS2",     CS_CNS_PLANE_2 },
   { "CNS_1993",    "CNS",      CS_CNS_PLANE_1_2 },
@@ -1104,8 +1093,7 @@ static struct prt_ps_charset_S tc_charsets[] =
 #define CS_KR_ISO10646      (0x08)
 
 // Korean encodings and charsets
-static struct prt_ps_encoding_S k_encodings[] =
-{
+static struct prt_ps_encoding_S k_encodings[] = {
   { "iso-2022-kr", NULL,       CS_KR_X_1992 },
   { "euc-kr",      "EUC",      (CS_KR_X_1992|CS_KR_MAC) },
   { "johab",       "Johab",    CS_KR_X_1992 },
@@ -1115,8 +1103,7 @@ static struct prt_ps_encoding_S k_encodings[] =
   { "ucs-2",       "UCS2",     CS_KR_ISO10646 },
   { "utf-8",       "UTF8",     CS_KR_ISO10646 }
 };
-static struct prt_ps_charset_S k_charsets[] =
-{
+static struct prt_ps_charset_S k_charsets[] = {
   { "KS_X_1992",   "KSC",      CS_KR_X_1992 },
   { "CP1361",      "KSC",      CS_KR_X_1992 },
   { "MAC",         "KSCpc",    CS_KR_MAC },
@@ -1126,8 +1113,7 @@ static struct prt_ps_charset_S k_charsets[] =
   { "ISO10646",    "UniKS",    CS_KR_ISO10646 }
 };
 
-static struct prt_ps_mbfont_S prt_ps_mbfonts[] =
-{
+static struct prt_ps_mbfont_S prt_ps_mbfonts[] = {
   {
     ARRAY_SIZE(j_encodings),
     j_encodings,
@@ -1193,8 +1179,7 @@ static struct prt_ps_mbfont_S prt_ps_mbfonts[] =
 #define PRT_DSC_ENDCOMMENTS         "%%EndComments:"
 
 #define SIZEOF_CSTR(s)      (sizeof(s) - 1)
-static struct prt_dsc_comment_S prt_dsc_table[] =
-{
+static struct prt_dsc_comment_S prt_dsc_table[] = {
   { PRT_DSC_TITLE,       SIZEOF_CSTR(PRT_DSC_TITLE),     PRT_DSC_TITLE_TYPE },
   { PRT_DSC_VERSION,     SIZEOF_CSTR(PRT_DSC_VERSION),
     PRT_DSC_VERSION_TYPE },

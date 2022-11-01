@@ -3344,8 +3344,7 @@ static int last_matchgroup;
 static void syn_list_one(const int id, const bool syncing, const bool link_only)
 {
   bool did_header = false;
-  static struct name_list namelist1[] =
-  {
+  static struct name_list namelist1[] = {
     { HL_DISPLAY, "display" },
     { HL_CONTAINED, "contained" },
     { HL_ONELINE, "oneline" },
@@ -3358,8 +3357,7 @@ static void syn_list_one(const int id, const bool syncing, const bool link_only)
     { HL_CONCEALENDS, "concealends" },
     { 0, NULL }
   };
-  static struct name_list namelist2[] =
-  {
+  static struct name_list namelist2[] = {
     { HL_SKIPWHITE, "skipwhite" },
     { HL_SKIPNL, "skipnl" },
     { HL_SKIPEMPTY, "skipempty" },
@@ -5238,8 +5236,7 @@ struct subcommand {
   void (*func)(exarg_T *, int);              // function to call
 };
 
-static struct subcommand subcommands[] =
-{
+static struct subcommand subcommands[] = {
   { "case",      syn_cmd_case },
   { "clear",     syn_cmd_clear },
   { "cluster",   syn_cmd_cluster },
