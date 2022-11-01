@@ -291,6 +291,7 @@ return {
     perleval={args=1, base=1},
     rand={args={0, 1}, base=1},
     range={args={1, 3}, base=1},
+    readblob={args=1, base=1},
     readdir={args={1, 2}, base=1},
     readfile={args={1, 3}, base=1},
     reduce={args={2, 3}, base=1},

@@ -851,9 +851,7 @@ func Test_mksession_shortmess_with_A()
   edit Xtestfile
   write
   let fname = swapname('%')
-  " readblob() needs patch 8.2.2343
-  " let cont = readblob(fname)
-  let cont = readfile(fname, 'B')
+  let cont = readblob(fname)
   set sessionoptions-=options
   mksession Xtestsession
   bwipe!
