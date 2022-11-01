@@ -288,7 +288,7 @@ Dictionary nvim_win_get_config(Window window, Error *err)
           Array tuple = ARRAY_DICT_INIT;
           ADD(tuple, CSTR_TO_OBJ((const char *)title_datas.items[i].text));
           ADD(titles, ARRAY_OBJ(tuple));
-          if (title_datas.items->hl_id > 0 ) {
+          if (title_datas.items->hl_id > 0) {
             ADD(tuple,
                 STRING_OBJ(cstr_to_string((const char *)syn_id2name(title_datas.items->hl_id))));
           }
