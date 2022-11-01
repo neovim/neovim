@@ -818,6 +818,7 @@ System functions and manipulation of files:
 	setenv()		set an environment variable
 	hostname()		name of the system
 	readfile()		read a file into a List of lines
+	readblob()		read a file into a Blob
 	readdir()		get a List of file names in a directory
 	writefile()		write a List of lines or Blob into a file
 
