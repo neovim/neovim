@@ -1624,23 +1624,31 @@ failed:
     error = false;
   }
 
+  // In Dos format ignore a trailing CTRL-Z, unless 'binary' is set.
+  // In old days the file length was in sector count and the CTRL-Z the
+  // marker where the file really ended.  Assuming we write it to a file
+  // system that keeps file length properly the CTRL-Z should be dropped.
+  // Set the 'endoffile' option so the user can decide what to write later.
+  // In Unix format the CTRL-Z is just another character.
+  if (linerest != 0
+      && !curbuf->b_p_bin
+      && fileformat == EOL_DOS
+      && ptr[-1] == Ctrl_Z) {
+    ptr--;
+    linerest--;
+    if (set_options) {
+      curbuf->b_p_eof = true;
+    }
+  }
+
   // If we get EOF in the middle of a line, note the fact and
   // complete the line ourselves.
-  // In Dos format ignore a trailing CTRL-Z, unless 'binary' set.
   if (!error
       && !got_int
-      && linerest != 0
-      // TODO(vim): should we handle CTRL-Z differently here for 'endoffile'?
-      && !(!curbuf->b_p_bin
-           && fileformat == EOL_DOS
-           && *line_start == Ctrl_Z
-           && ptr == line_start + 1)) {
+      && linerest != 0) {
     // remember for when writing
     if (set_options) {
       curbuf->b_p_eol = false;
-      if (*line_start == Ctrl_Z && ptr == line_start + 1) {
-        curbuf->b_p_eof = true;
-      }
     }
     *ptr = NUL;
     len = (colnr_T)(ptr - line_start + 1);
@@ -3197,11 +3205,6 @@ restore_backup:
         len = 0;
         write_info.bw_start_lnum = lnum;
       }
-      if (!buf->b_p_fixeol && buf->b_p_eof) {
-        // write trailing CTRL-Z
-        (void)write_eintr(write_info.bw_fd, "\x1a", 1);
-      }
-
       // write failed or last line has no EOL: stop here
       if (end == 0
           || (lnum == end
@@ -3251,6 +3254,11 @@ restore_backup:
         end = 0;                      // write error
       }
       nchars += len;
+    }
+
+    if (!buf->b_p_fixeol && buf->b_p_eof) {
+      // write trailing CTRL-Z
+      (void)write_eintr(write_info.bw_fd, "\x1a", 1);
     }
 
     // Stop when writing done or an error was encountered.
