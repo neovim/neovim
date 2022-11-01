@@ -365,7 +365,6 @@ static void parse_border_title(Object title, Object title_pos, FloatConfig *fcon
       return;
     }
     int hl_id = syn_check_group(S_LEN("FloatBorderTitle"));
-    kv_init(fconfig->title_chunks);
     kv_push(fconfig->title_chunks, ((VirtTextChunk){ .text = xstrdup(title.data.string.data),
                                                      .hl_id = hl_id }));
     fconfig->title_width = (int)mb_string2cells(title.data.string.data);
@@ -709,6 +708,10 @@ static bool parse_float_config(Dict(float_config) *config, FloatConfig *fconfig,
     if (!HAS_KEY(config->border)) {
       api_set_error(err, kErrorTypeException, "title requires border to be set");
       return false;
+    }
+
+    if (fconfig->title) {
+      clear_virttext(&fconfig->title_chunks);
     }
     parse_border_title(config->title, config->title_pos, fconfig, err);
     if (ERROR_SET(err)) {
