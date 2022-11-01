@@ -287,11 +287,11 @@ Dictionary nvim_win_get_config(Window window, Error *err)
         for (size_t i = 0; i < title_datas.size; i++) {
           Array tuple = ARRAY_DICT_INIT;
           ADD(tuple, CSTR_TO_OBJ((const char *)title_datas.items[i].text));
-          ADD(titles, ARRAY_OBJ(tuple));
-          if (title_datas.items->hl_id > 0) {
+          if (title_datas.items[i].hl_id > 0) {
             ADD(tuple,
-                STRING_OBJ(cstr_to_string((const char *)syn_id2name(title_datas.items->hl_id))));
+                STRING_OBJ(cstr_to_string((const char *)syn_id2name(title_datas.items[i].hl_id))));
           }
+          ADD(titles, ARRAY_OBJ(tuple));
         }
         PUT(rv, "title", ARRAY_OBJ(titles));
         PUT(rv, "title_pos", INTEGER_OBJ(config->title_pos));
