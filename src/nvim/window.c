@@ -4195,7 +4195,6 @@ static int leave_tabpage(buf_T *new_curbuf, bool trigger_leave_autocmds)
 {
   tabpage_T *tp = curtab;
 
-  reset_mouse_got_click();
   leaving_window(curwin);
   reset_VIsual_and_resel();     // stop Visual mode
   if (trigger_leave_autocmds) {
@@ -4214,6 +4213,8 @@ static int leave_tabpage(buf_T *new_curbuf, bool trigger_leave_autocmds)
       return FAIL;
     }
   }
+
+  reset_mouse_got_click();
   tp->tp_curwin = curwin;
   tp->tp_prevwin = prevwin;
   tp->tp_firstwin = firstwin;
@@ -4275,6 +4276,10 @@ static void enter_tabpage(tabpage_T *tp, buf_T *old_curbuf, bool trigger_enter_a
   if (row < cmdline_row && cmdline_row <= Rows - p_ch) {
     clear_cmdline = true;
   }
+
+  // If there was a click in a window, it won't be usable for a following
+  // drag.
+  reset_mouse_got_click();
 
   // The tabpage line may have appeared or disappeared, may need to resize the frames for that.
   // When the Vim window was resized or ROWS_AVAIL changed need to update frame sizes too.
@@ -4393,7 +4398,6 @@ void goto_tabpage_tp(tabpage_T *tp, bool trigger_enter_autocmds, bool trigger_le
   // Don't repeat a message in another tab page.
   set_keep_msg(NULL, 0);
 
-  reset_mouse_got_click();
   skip_win_fix_scroll = true;
   if (tp != curtab && leave_tabpage(tp->tp_curwin->w_buffer,
                                     trigger_leave_autocmds) == OK) {
