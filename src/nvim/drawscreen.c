@@ -628,7 +628,6 @@ static void win_border_redr_title(win_T *wp, ScreenGrid *grid, int col)
     grid_puts(grid, text, 0, col, attr);
     col += cell;
   }
-  clear_virttext(&wp->w_float_config.title_chunks);
 }
 
 static void win_redr_border(win_T *wp)

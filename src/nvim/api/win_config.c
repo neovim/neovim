@@ -288,6 +288,10 @@ Dictionary nvim_win_get_config(Window window, Error *err)
           Array tuple = ARRAY_DICT_INIT;
           ADD(tuple, CSTR_TO_OBJ((const char *)title_datas.items[i].text));
           ADD(titles, ARRAY_OBJ(tuple));
+          if (title_datas.items->hl_id > 0 ) {
+            ADD(tuple,
+                STRING_OBJ(cstr_to_string((const char *)syn_id2name(title_datas.items->hl_id))));
+          }
         }
         PUT(rv, "title", ARRAY_OBJ(titles));
         PUT(rv, "title_pos", INTEGER_OBJ(config->title_pos));
@@ -361,6 +365,7 @@ static void parse_border_title(Object title, Object title_pos, FloatConfig *fcon
       return;
     }
     int hl_id = syn_check_group(S_LEN("FloatBorderTitle"));
+    kv_init(fconfig->title_chunks);
     kv_push(fconfig->title_chunks, ((VirtTextChunk){ .text = xstrdup(title.data.string.data),
                                                      .hl_id = hl_id }));
     fconfig->title_width = (int)mb_string2cells(title.data.string.data);

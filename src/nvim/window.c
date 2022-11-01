@@ -789,6 +789,8 @@ void win_config_float(win_T *wp, FloatConfig fconfig)
                                   wp->w_float_config.border_hl_ids,
                                   sizeof fconfig.border_hl_ids) != 0);
 
+  clear_virttext(&wp->w_float_config.title_chunks);
+
   wp->w_float_config = fconfig;
 
   bool has_border = wp->w_floating && wp->w_float_config.border;
