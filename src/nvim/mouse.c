@@ -969,6 +969,14 @@ static bool mouse_model_popup(void)
   return p_mousem[0] == 'p';
 }
 
+static win_T *dragwin = NULL;  ///< window being dragged
+
+/// Reset the window being dragged.  To be called when switching tab page.
+void reset_dragwin(void)
+{
+  dragwin = NULL;
+}
+
 /// Move the cursor to the specified row and column on the screen.
 /// Change current window if necessary. Returns an integer with the
 /// CURSOR_MOVED bit set if the cursor has moved or unset otherwise.
@@ -1005,7 +1013,6 @@ int jump_to_mouse(int flags, bool *inclusive, int which_button)
   static bool on_winbar = false;
   static int prev_row = -1;
   static int prev_col = -1;
-  static win_T *dragwin = NULL;         // window being dragged
   static int did_drag = false;          // drag was noticed
 
   win_T *wp, *old_curwin;

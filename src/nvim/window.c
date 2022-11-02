@@ -4213,6 +4213,8 @@ static int leave_tabpage(buf_T *new_curbuf, bool trigger_leave_autocmds)
       return FAIL;
     }
   }
+
+  reset_dragwin();
   tp->tp_curwin = curwin;
   tp->tp_prevwin = prevwin;
   tp->tp_firstwin = firstwin;
@@ -4274,6 +4276,10 @@ static void enter_tabpage(tabpage_T *tp, buf_T *old_curbuf, bool trigger_enter_a
   if (row < cmdline_row && cmdline_row <= Rows - p_ch) {
     clear_cmdline = true;
   }
+
+  // If there was a click in a window, it won't be usable for a following
+  // drag.
+  reset_dragwin();
 
   // The tabpage line may have appeared or disappeared, may need to resize the frames for that.
   // When the Vim window was resized or ROWS_AVAIL changed need to update frame sizes too.
