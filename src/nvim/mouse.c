@@ -227,15 +227,6 @@ static int get_fpos_of_mouse(pos_T *mpos)
   return IN_BUFFER;
 }
 
-static bool mouse_got_click = false;  ///< got a click some time back
-
-/// Reset the flag that a mouse click was seen.  To be called when switching tab
-/// page.
-void reset_mouse_got_click(void)
-{
-  mouse_got_click = false;
-}
-
 /// Do the appropriate action for the current mouse click in the current mode.
 /// Not used for Command-line mode.
 ///
@@ -277,6 +268,8 @@ void reset_mouse_got_click(void)
 /// @return           true if start_arrow() should be called for edit mode.
 bool do_mouse(oparg_T *oap, int c, int dir, long count, bool fixindent)
 {
+  static bool got_click = false;        // got a click some time back
+
   int which_button;             // MOUSE_LEFT, _MIDDLE or _RIGHT
   bool is_click;                // If false it's a drag or release event
   bool is_drag;                 // If true it's a drag event
@@ -335,13 +328,13 @@ bool do_mouse(oparg_T *oap, int c, int dir, long count, bool fixindent)
 
   // Ignore drag and release events if we didn't get a click.
   if (is_click) {
-    mouse_got_click = true;
+    got_click = true;
   } else {
-    if (!mouse_got_click) {             // didn't get click, ignore
+    if (!got_click) {                   // didn't get click, ignore
       return false;
     }
-    if (!is_drag) {                     // release, reset mouse_got_click
-      mouse_got_click = false;
+    if (!is_drag) {                     // release, reset got_click
+      got_click = false;
       if (in_tab_line) {
         in_tab_line = false;
         return false;
@@ -358,7 +351,7 @@ bool do_mouse(oparg_T *oap, int c, int dir, long count, bool fixindent)
       stuffnumReadbuff(count);
     }
     stuffcharReadbuff(Ctrl_T);
-    mouse_got_click = false;  // ignore drag&release now
+    got_click = false;                  // ignore drag&release now
     return false;
   }
 
@@ -581,7 +574,7 @@ bool do_mouse(oparg_T *oap, int c, int dir, long count, bool fixindent)
         ui_flush();  // Update before showing popup menu
       }
       show_popupmenu();
-      mouse_got_click = false;  // ignore release events
+      got_click = false;  // ignore release events
       return (jump_flags & CURSOR_MOVED) != 0;
     }
     if (which_button == MOUSE_LEFT
@@ -620,7 +613,7 @@ bool do_mouse(oparg_T *oap, int c, int dir, long count, bool fixindent)
 
   // If an operator is pending, ignore all drags and releases until the next mouse click.
   if (!is_drag && oap != NULL && oap->op_type != OP_NOP) {
-    mouse_got_click = false;
+    got_click = false;
     oap->motion_type = kMTCharWise;
   }
 
@@ -822,7 +815,7 @@ bool do_mouse(oparg_T *oap, int c, int dir, long count, bool fixindent)
     } else {                                    // location list window
       do_cmdline_cmd(".ll");
     }
-    mouse_got_click = false;  // ignore drag&release now
+    got_click = false;                  // ignore drag&release now
   } else if ((mod_mask & MOD_MASK_CTRL)
              || (curbuf->b_help && (mod_mask & MOD_MASK_MULTI_CLICK) == MOD_MASK_2CLICK)) {
     // Ctrl-Mouse click (or double click in a help window) jumps to the tag
@@ -831,7 +824,7 @@ bool do_mouse(oparg_T *oap, int c, int dir, long count, bool fixindent)
       stuffcharReadbuff(Ctrl_O);
     }
     stuffcharReadbuff(Ctrl_RSB);
-    mouse_got_click = false;  // ignore drag&release now
+    got_click = false;                  // ignore drag&release now
   } else if ((mod_mask & MOD_MASK_SHIFT)) {
     // Shift-Mouse click searches for the next occurrence of the word under
     // the mouse pointer
@@ -976,6 +969,14 @@ static bool mouse_model_popup(void)
   return p_mousem[0] == 'p';
 }
 
+static win_T *dragwin = NULL;  ///< window being dragged
+
+/// Reset the window being dragged.  To be called when switching tab page.
+void reset_dragwin(void)
+{
+  dragwin = NULL;
+}
+
 /// Move the cursor to the specified row and column on the screen.
 /// Change current window if necessary. Returns an integer with the
 /// CURSOR_MOVED bit set if the cursor has moved or unset otherwise.
@@ -1012,7 +1013,6 @@ int jump_to_mouse(int flags, bool *inclusive, int which_button)
   static bool on_winbar = false;
   static int prev_row = -1;
   static int prev_col = -1;
-  static win_T *dragwin = NULL;         // window being dragged
   static int did_drag = false;          // drag was noticed
 
   win_T *wp, *old_curwin;
