@@ -19,7 +19,7 @@
 -- types: bool, number, string
 -- lists: (nil), comma, onecomma, flags, flagscomma
 -- scopes: global, buffer, window
--- redraw options: statuslines, tabline, current_window, curent_window_only,
+-- redraw options: statuslines, tabline, current_window, current_window_only,
 --                 current_buffer, all_windows, curswant
 -- defaults: {condition=#if condition, if_true=default, if_false=default}
 -- #if condition:

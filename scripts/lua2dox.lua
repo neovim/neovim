@@ -497,14 +497,14 @@ function TLua2DoX_filter.readfile(this, AppStamp, Filename)
         else
           this:warning(inStream:getLineNo(), 'something weird here')
         end
-        fn_magic = nil -- mustn't indavertently use it again
+        fn_magic = nil -- mustn't inadvertently use it again
 
       -- TODO: If we can make this learn how to generate these, that would be helpful.
       -- elseif string.find(line, "^M%['.*'%] = function") then
       --   state = 'in_function'  -- it's a function
       --   outStream:writeln("function textDocument/publishDiagnostics(...){}")
 
-      --   fn_magic = nil -- mustn't indavertently use it again
+      --   fn_magic = nil -- mustn't inadvertently use it again
       else
         state = '' -- unknown
         if #line > 0 then -- we don't know what this line means, so just comment it out

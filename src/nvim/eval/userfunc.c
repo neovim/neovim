@@ -460,7 +460,7 @@ int get_func_tv(const char_u *name, int len, typval_T *rettv, char **arg, funcex
     int i = 0;
 
     if (get_vim_var_nr(VV_TESTING)) {
-      // Prepare for calling garbagecollect_for_testing(), need to know
+      // Prepare for calling test_garbagecollect_now(), need to know
       // what variables are used on the call stack.
       if (funcargs.ga_itemsize == 0) {
         ga_init(&funcargs, (int)sizeof(typval_T *), 50);

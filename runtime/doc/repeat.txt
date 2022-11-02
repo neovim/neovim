@@ -689,7 +689,7 @@ found automatically.  Your package would have these files:
 <	pack/foo/start/lib/autoload/foolib.vim >
 		func foolib#getit()
 
-This works, because start packages will be searchd for autoload files, when
+This works, because start packages will be searched for autoload files, when
 sourcing the plugins.
 
 ==============================================================================

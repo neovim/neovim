@@ -2470,7 +2470,7 @@ describe('LSP', function()
                 },
                 uri = "file:///test_a"
               },
-              contanerName = "TestAContainer"
+              containerName = "TestAContainer"
             },
             {
               deprecated = false,
@@ -2489,7 +2489,7 @@ describe('LSP', function()
                 },
                 uri = "file:///test_b"
               },
-              contanerName = "TestBContainer"
+              containerName = "TestBContainer"
             }
           }
           return vim.lsp.util.symbols_to_items(sym_info, nil)

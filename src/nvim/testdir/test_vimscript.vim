@@ -1443,7 +1443,7 @@ endfunc
 "	    Undefined behavior was detected by ubsan with line continuation
 "	    after an empty line.
 "-------------------------------------------------------------------------------
-func Test_script_emty_line_continuation()
+func Test_script_empty_line_continuation()
 
     \
 endfunc

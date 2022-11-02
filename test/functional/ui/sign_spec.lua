@@ -158,7 +158,7 @@ describe('Signs', function()
       ]])
     end)
 
-    it('higlights the cursorline sign with culhl', function()
+    it('highlights the cursorline sign with culhl', function()
       feed('ia<cr>b<cr>c<esc>')
       command('sign define piet text=>> texthl=Search culhl=ErrorMsg')
       command('sign place 1 line=1 name=piet buffer=1')
