@@ -95,6 +95,11 @@ jobs:
         run: ./ci/before_script.sh
 
       - if: "!cancelled()"
+        name: Determine if run should be aborted
+        id: abort_job
+        run: echo "status=${{ job.status }}" >> $GITHUB_OUTPUT
+
+      - if: success() || failure() && steps.abort_job.outputs.status == 'success'
         name: lintstylua
         uses: JohnnyMorganz/stylua-action@v1
         with:
@@ -102,20 +107,20 @@ jobs:
           version: latest
           args: --check runtime/
 
-      - if: "!cancelled()"
+      - if: success() || failure() && steps.abort_job.outputs.status == 'success'
         name: lintlua
         run: make lintlua
 
-      - if: "!cancelled()"
+      - if: success() || failure() && steps.abort_job.outputs.status == 'success'
         name: lintsh
         run: make lintsh
 
-      - if: "!cancelled()"
+      - if: success() || failure() && steps.abort_job.outputs.status == 'success'
         name: uncrustify
         run: |
           ${{ env.CACHE_UNCRUSTIFY }} -c ./src/uncrustify.cfg -q --replace --no-backup $(find ./src/nvim -name "*.[ch]")
 
-      - if: "!cancelled()"
+      - if: success() || failure() && steps.abort_job.outputs.status == 'success'
         name: suggester / uncrustify
         uses: reviewdog/action-suggester@v1
         with:
@@ -123,7 +128,7 @@ jobs:
           tool_name: uncrustify
           cleanup: false
 
-      - if: "!cancelled()"
+      - if: success() || failure() && steps.abort_job.outputs.status == 'success'
         name: check uncrustify
         run: |
           git diff --color --exit-code
@@ -192,10 +197,15 @@ jobs:
         run: ./ci/run_tests.sh build_nvim
 
       - if: "!cancelled()"
+        name: Determine if run should be aborted
+        id: abort_job
+        run: echo "status=${{ job.status }}" >> $GITHUB_OUTPUT
+
+      - if: success() || failure() && steps.abort_job.outputs.status == 'success'
         name: lintc
         run: make lintc
 
-      - if: "!cancelled()"
+      - if: success() || failure() && steps.abort_job.outputs.status == 'success'
         name: check-single-includes
         run: make check-single-includes
 
@@ -292,19 +302,24 @@ jobs:
       - name: Build
         run: ./ci/run_tests.sh build_nvim
 
-      - if: matrix.flavor != 'tsan' && matrix.flavor != 'functionaltest-lua' && !cancelled()
+      - if: "!cancelled()"
+        name: Determine if run should be aborted
+        id: abort_job
+        run: echo "status=${{ job.status }}" >> $GITHUB_OUTPUT
+
+      - if: matrix.flavor != 'tsan' && matrix.flavor != 'functionaltest-lua' && (success() || failure() && steps.abort_job.outputs.status == 'success')
         name: Unittests
         run: ./ci/run_tests.sh unittests
 
-      - if: matrix.flavor != 'tsan' && !cancelled()
+      - if: matrix.flavor != 'tsan' && (success() || failure() && steps.abort_job.outputs.status == 'success')
         name: Functionaltests
         run: ./ci/run_tests.sh functionaltests
 
-      - if: "!cancelled()"
+      - if: success() || failure() && steps.abort_job.outputs.status == 'success'
         name: Oldtests
         run: ./ci/run_tests.sh oldtests
 
-      - if: "!cancelled()"
+      - if: success() || failure() && steps.abort_job.outputs.status == 'success'
         name: Install nvim
         run: ./ci/run_tests.sh install_nvim
 
@@ -336,9 +351,15 @@ jobs:
         run: .\ci\build.ps1 -EnsureTestDeps
 
       - if: "!cancelled()"
+        name: Determine if run should be aborted
+        id: abort_job
+        run: |
+          "status=${{ job.status }}" >> $env:GITHUB_OUTPUT
+
+      - if: success() || failure() && steps.abort_job.outputs.status == 'success'
         name: Run tests
         run: .\ci\build.ps1 -Test
 
-      - if: "!cancelled()"
+      - if: success() || failure() && steps.abort_job.outputs.status == 'success'
         name: Run old tests
         run: .\ci\build.ps1 -TestOld
