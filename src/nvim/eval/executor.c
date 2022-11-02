@@ -122,8 +122,8 @@ int eexe_mod_op(typval_T *const tv1, const typval_T *const tv2, const char *cons
         break;
       }
       const float_T f = (tv2->v_type == VAR_FLOAT
-                           ? tv2->vval.v_float
-                           : (float_T)tv_get_number(tv2));
+                         ? tv2->vval.v_float
+                         : (float_T)tv_get_number(tv2));
       switch (*op) {
       case '+':
         tv1->vval.v_float += f; break;

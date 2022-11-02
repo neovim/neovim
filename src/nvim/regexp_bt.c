@@ -1,137 +1,130 @@
 // This is an open source non-commercial project. Dear PVS-Studio, please check
 // it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
-/*
- *
- * Backtracking regular expression implementation.
- *
- * This file is included in "regexp.c".
- *
- * NOTICE:
- *
- * This is NOT the original regular expression code as written by Henry
- * Spencer.  This code has been modified specifically for use with the VIM
- * editor, and should not be used separately from Vim.  If you want a good
- * regular expression library, get the original code.  The copyright notice
- * that follows is from the original.
- *
- * END NOTICE
- *
- *      Copyright (c) 1986 by University of Toronto.
- *      Written by Henry Spencer.  Not derived from licensed software.
- *
- *      Permission is granted to anyone to use this software for any
- *      purpose on any computer system, and to redistribute it freely,
- *      subject to the following restrictions:
- *
- *      1. The author is not responsible for the consequences of use of
- *              this software, no matter how awful, even if they arise
- *              from defects in it.
- *
- *      2. The origin of this software must not be misrepresented, either
- *              by explicit claim or by omission.
- *
- *      3. Altered versions must be plainly marked as such, and must not
- *              be misrepresented as being the original software.
- *
- * Beware that some of this code is subtly aware of the way operator
- * precedence is structured in regular expressions.  Serious changes in
- * regular-expression syntax might require a total rethink.
- *
- * Changes have been made by Tony Andrews, Olaf 'Rhialto' Seibert, Robert
- * Webb, Ciaran McCreesh and Bram Moolenaar.
- * Named character class support added by Walter Briscoe (1998 Jul 01)
- */
+// Backtracking regular expression implementation.
+//
+// This file is included in "regexp.c".
+//
+// NOTICE:
+//
+// This is NOT the original regular expression code as written by Henry
+// Spencer.  This code has been modified specifically for use with the VIM
+// editor, and should not be used separately from Vim.  If you want a good
+// regular expression library, get the original code.  The copyright notice
+// that follows is from the original.
+//
+// END NOTICE
+//
+//      Copyright (c) 1986 by University of Toronto.
+//      Written by Henry Spencer.  Not derived from licensed software.
+//
+//      Permission is granted to anyone to use this software for any
+//      purpose on any computer system, and to redistribute it freely,
+//      subject to the following restrictions:
+//
+//      1. The author is not responsible for the consequences of use of
+//              this software, no matter how awful, even if they arise
+//              from defects in it.
+//
+//      2. The origin of this software must not be misrepresented, either
+//              by explicit claim or by omission.
+//
+//      3. Altered versions must be plainly marked as such, and must not
+//              be misrepresented as being the original software.
+//
+// Beware that some of this code is subtly aware of the way operator
+// precedence is structured in regular expressions.  Serious changes in
+// regular-expression syntax might require a total rethink.
+//
+// Changes have been made by Tony Andrews, Olaf 'Rhialto' Seibert, Robert
+// Webb, Ciaran McCreesh and Bram Moolenaar.
+// Named character class support added by Walter Briscoe (1998 Jul 01)
 
-/*
- * The "internal use only" fields in regexp_defs.h are present to pass info from
- * compile to execute that permits the execute phase to run lots faster on
- * simple cases.  They are:
- *
- * regstart     char that must begin a match; NUL if none obvious; Can be a
- *              multi-byte character.
- * reganch      is the match anchored (at beginning-of-line only)?
- * regmust      string (pointer into program) that match must include, or NULL
- * regmlen      length of regmust string
- * regflags     RF_ values or'ed together
- *
- * Regstart and reganch permit very fast decisions on suitable starting points
- * for a match, cutting down the work a lot.  Regmust permits fast rejection
- * of lines that cannot possibly match.  The regmust tests are costly enough
- * that vim_regcomp() supplies a regmust only if the r.e. contains something
- * potentially expensive (at present, the only such thing detected is * or +
- * at the start of the r.e., which can involve a lot of backup).  Regmlen is
- * supplied because the test in vim_regexec() needs it and vim_regcomp() is
- * computing it anyway.
- */
+// The "internal use only" fields in regexp_defs.h are present to pass info from
+// compile to execute that permits the execute phase to run lots faster on
+// simple cases.  They are:
+//
+// regstart     char that must begin a match; NUL if none obvious; Can be a
+//              multi-byte character.
+// reganch      is the match anchored (at beginning-of-line only)?
+// regmust      string (pointer into program) that match must include, or NULL
+// regmlen      length of regmust string
+// regflags     RF_ values or'ed together
+//
+// Regstart and reganch permit very fast decisions on suitable starting points
+// for a match, cutting down the work a lot.  Regmust permits fast rejection
+// of lines that cannot possibly match.  The regmust tests are costly enough
+// that vim_regcomp() supplies a regmust only if the r.e. contains something
+// potentially expensive (at present, the only such thing detected is * or +
+// at the start of the r.e., which can involve a lot of backup).  Regmlen is
+// supplied because the test in vim_regexec() needs it and vim_regcomp() is
+// computing it anyway.
 
-/*
- * Structure for regexp "program".  This is essentially a linear encoding
- * of a nondeterministic finite-state machine (aka syntax charts or
- * "railroad normal form" in parsing technology).  Each node is an opcode
- * plus a "next" pointer, possibly plus an operand.  "Next" pointers of
- * all nodes except BRANCH and BRACES_COMPLEX implement concatenation; a "next"
- * pointer with a BRANCH on both ends of it is connecting two alternatives.
- * (Here we have one of the subtle syntax dependencies: an individual BRANCH
- * (as opposed to a collection of them) is never concatenated with anything
- * because of operator precedence).  The "next" pointer of a BRACES_COMPLEX
- * node points to the node after the stuff to be repeated.
- * The operand of some types of node is a literal string; for others, it is a
- * node leading into a sub-FSM.  In particular, the operand of a BRANCH node
- * is the first node of the branch.
- * (NB this is *not* a tree structure: the tail of the branch connects to the
- * thing following the set of BRANCHes.)
- *
- * pattern      is coded like:
- *
- *                        +-----------------+
- *                        |                 V
- * <aa>\|<bb>   BRANCH <aa> BRANCH <bb> --> END
- *                   |      ^    |          ^
- *                   +------+    +----------+
- *
- *
- *                     +------------------+
- *                     V                  |
- * <aa>*        BRANCH BRANCH <aa> --> BACK BRANCH --> NOTHING --> END
- *                   |      |               ^                      ^
- *                   |      +---------------+                      |
- *                   +---------------------------------------------+
- *
- *
- *                     +----------------------+
- *                     V                      |
- * <aa>\+       BRANCH <aa> --> BRANCH --> BACK  BRANCH --> NOTHING --> END
- *                   |               |           ^                      ^
- *                   |               +-----------+                      |
- *                   +--------------------------------------------------+
- *
- *
- *                                      +-------------------------+
- *                                      V                         |
- * <aa>\{}      BRANCH BRACE_LIMITS --> BRACE_COMPLEX <aa> --> BACK  END
- *                   |                              |                ^
- *                   |                              +----------------+
- *                   +-----------------------------------------------+
- *
- *
- * <aa>\@!<bb>  BRANCH NOMATCH <aa> --> END  <bb> --> END
- *                   |       |                ^       ^
- *                   |       +----------------+       |
- *                   +--------------------------------+
- *
- *                                                    +---------+
- *                                                    |         V
- * \z[abc]      BRANCH BRANCH  a  BRANCH  b  BRANCH  c  BRANCH  NOTHING --> END
- *                   |      |          |          |     ^                   ^
- *                   |      |          |          +-----+                   |
- *                   |      |          +----------------+                   |
- *                   |      +---------------------------+                   |
- *                   +------------------------------------------------------+
- *
- * They all start with a BRANCH for "\|" alternatives, even when there is only
- * one alternative.
- */
+// Structure for regexp "program".  This is essentially a linear encoding
+// of a nondeterministic finite-state machine (aka syntax charts or
+// "railroad normal form" in parsing technology).  Each node is an opcode
+// plus a "next" pointer, possibly plus an operand.  "Next" pointers of
+// all nodes except BRANCH and BRACES_COMPLEX implement concatenation; a "next"
+// pointer with a BRANCH on both ends of it is connecting two alternatives.
+// (Here we have one of the subtle syntax dependencies: an individual BRANCH
+// (as opposed to a collection of them) is never concatenated with anything
+// because of operator precedence).  The "next" pointer of a BRACES_COMPLEX
+// node points to the node after the stuff to be repeated.
+// The operand of some types of node is a literal string; for others, it is a
+// node leading into a sub-FSM.  In particular, the operand of a BRANCH node
+// is the first node of the branch.
+// (NB this is *not* a tree structure: the tail of the branch connects to the
+// thing following the set of BRANCHes.)
+//
+// pattern      is coded like:
+//
+//                        +-----------------+
+//                        |                 V
+// <aa>\|<bb>   BRANCH <aa> BRANCH <bb> --> END
+//                   |      ^    |          ^
+//                   +------+    +----------+
+//
+//
+//                     +------------------+
+//                     V                  |
+// <aa>*        BRANCH BRANCH <aa> --> BACK BRANCH --> NOTHING --> END
+//                   |      |               ^                      ^
+//                   |      +---------------+                      |
+//                   +---------------------------------------------+
+//
+//
+//                     +----------------------+
+//                     V                      |
+// <aa>\+       BRANCH <aa> --> BRANCH --> BACK  BRANCH --> NOTHING --> END
+//                   |               |           ^                      ^
+//                   |               +-----------+                      |
+//                   +--------------------------------------------------+
+//
+//
+//                                      +-------------------------+
+//                                      V                         |
+// <aa>\{}      BRANCH BRACE_LIMITS --> BRACE_COMPLEX <aa> --> BACK  END
+//                   |                              |                ^
+//                   |                              +----------------+
+//                   +-----------------------------------------------+
+//
+//
+// <aa>\@!<bb>  BRANCH NOMATCH <aa> --> END  <bb> --> END
+//                   |       |                ^       ^
+//                   |       +----------------+       |
+//                   +--------------------------------+
+//
+//                                                    +---------+
+//                                                    |         V
+// \z[abc]      BRANCH BRANCH  a  BRANCH  b  BRANCH  c  BRANCH  NOTHING --> END
+//                   |      |          |          |     ^                   ^
+//                   |      |          |          +-----+                   |
+//                   |      |          +----------------+                   |
+//                   |      +---------------------------+                   |
+//                   +------------------------------------------------------+
+//
+// They all start with a BRANCH for "\|" alternatives, even when there is only
+// one alternative.
 
 #include <assert.h>
 #include <inttypes.h>
@@ -141,9 +134,7 @@
 #include "nvim/garray.h"
 #include "nvim/regexp.h"
 
-/*
- * The opcodes are:
- */
+// The opcodes are:
 
 // definition   number             opnd?    meaning
 #define END             0       //      End of program or NOMATCH operand.
@@ -240,9 +231,7 @@
 #define RE_VISUAL       208     //      Match Visual area
 #define RE_COMPOSING    209     // any composing characters
 
-/*
- * Flags to be passed up and down.
- */
+// Flags to be passed up and down.
 #define HASWIDTH        0x1     // Known never to match null string.
 #define SIMPLE          0x2     // Simple enough to be STAR/PLUS operand.
 #define SPSTART         0x4     // Starts with * or +.
@@ -273,10 +262,8 @@ static int classcodes[] = {
   UPPER, NUPPER
 };
 
-/*
- * When regcode is set to this value, code is not emitted and size is computed
- * instead.
- */
+// When regcode is set to this value, code is not emitted and size is computed
+// instead.
 #define JUST_CALC_SIZE  ((char_u *)-1)
 
 // Values for rs_state in regitem_T.
@@ -297,11 +284,9 @@ typedef enum regstate_E {
   RS_STAR_SHORT,  // STAR/PLUS/BRACE_SIMPLE shortest match
 } regstate_T;
 
-/*
- * Structure used to save the current input state, when it needs to be
- * restored after trying a match.  Used by reg_save() and reg_restore().
- * Also stores the length of "backpos".
- */
+// Structure used to save the current input state, when it needs to be
+// restored after trying a match.  Used by reg_save() and reg_restore().
+// Also stores the length of "backpos".
 typedef struct {
   union {
     char_u *ptr;       // rex.input pointer, for single-line regexp
@@ -327,12 +312,10 @@ typedef struct regbehind_S {
   save_se_T save_end[NSUBEXP];
 } regbehind_T;
 
-/*
- * When there are alternatives a regstate_T is put on the regstack to remember
- * what we are doing.
- * Before it may be another type of item, depending on rs_state, to remember
- * more things.
- */
+// When there are alternatives a regstate_T is put on the regstack to remember
+// what we are doing.
+// Before it may be another type of item, depending on rs_state, to remember
+// more things.
 typedef struct regitem_S {
   regstate_T rs_state;         // what we are doing, one of RS_ above
   int16_t rs_no;            // submatch nr or BEHIND/NOBEHIND
@@ -359,69 +342,63 @@ typedef struct backpos_S {
   regsave_T bp_pos;           // last input position
 } backpos_T;
 
-/*
- * "regstack" and "backpos" are used by regmatch().  They are kept over calls
- * to avoid invoking malloc() and free() often.
- * "regstack" is a stack with regitem_T items, sometimes preceded by regstar_T
- * or regbehind_T.
- * "backpos_T" is a table with backpos_T for BACK
- */
+// "regstack" and "backpos" are used by regmatch().  They are kept over calls
+// to avoid invoking malloc() and free() often.
+// "regstack" is a stack with regitem_T items, sometimes preceded by regstar_T
+// or regbehind_T.
+// "backpos_T" is a table with backpos_T for BACK
 static garray_T regstack = GA_EMPTY_INIT_VALUE;
 static garray_T backpos = GA_EMPTY_INIT_VALUE;
 
 static regsave_T behind_pos;
 
-/*
- * Both for regstack and backpos tables we use the following strategy of
- * allocation (to reduce malloc/free calls):
- * - Initial size is fairly small.
- * - When needed, the tables are grown bigger (8 times at first, double after
- *   that).
- * - After executing the match we free the memory only if the array has grown.
- *   Thus the memory is kept allocated when it's at the initial size.
- * This makes it fast while not keeping a lot of memory allocated.
- * A three times speed increase was observed when using many simple patterns.
- */
+// Both for regstack and backpos tables we use the following strategy of
+// allocation (to reduce malloc/free calls):
+// - Initial size is fairly small.
+// - When needed, the tables are grown bigger (8 times at first, double after
+//   that).
+// - After executing the match we free the memory only if the array has grown.
+//   Thus the memory is kept allocated when it's at the initial size.
+// This makes it fast while not keeping a lot of memory allocated.
+// A three times speed increase was observed when using many simple patterns.
 #define REGSTACK_INITIAL        2048
 #define BACKPOS_INITIAL         64
 
-/*
- * Opcode notes:
- *
- * BRANCH       The set of branches constituting a single choice are hooked
- *              together with their "next" pointers, since precedence prevents
- *              anything being concatenated to any individual branch.  The
- *              "next" pointer of the last BRANCH in a choice points to the
- *              thing following the whole choice.  This is also where the
- *              final "next" pointer of each individual branch points; each
- *              branch starts with the operand node of a BRANCH node.
- *
- * BACK         Normal "next" pointers all implicitly point forward; BACK
- *              exists to make loop structures possible.
- *
- * STAR,PLUS    '=', and complex '*' and '+', are implemented as circular
- *              BRANCH structures using BACK.  Simple cases (one character
- *              per match) are implemented with STAR and PLUS for speed
- *              and to minimize recursive plunges.
- *
- * BRACE_LIMITS This is always followed by a BRACE_SIMPLE or BRACE_COMPLEX
- *              node, and defines the min and max limits to be used for that
- *              node.
- *
- * MOPEN,MCLOSE ...are numbered at compile time.
- * ZOPEN,ZCLOSE ...ditto
- */
-
-/*
- * A node is one char of opcode followed by two chars of "next" pointer.
- * "Next" pointers are stored as two 8-bit bytes, high order first.  The
- * value is a positive offset from the opcode of the node containing it.
- * An operand, if any, simply follows the node.  (Note that much of the
- * code generation knows about this implicit relationship.)
- *
- * Using two bytes for the "next" pointer is vast overkill for most things,
- * but allows patterns to get big without disasters.
- */
+// Opcode notes:
+//
+// BRANCH       The set of branches constituting a single choice are hooked
+//              together with their "next" pointers, since precedence prevents
+//              anything being concatenated to any individual branch.  The
+//              "next" pointer of the last BRANCH in a choice points to the
+//              thing following the whole choice.  This is also where the
+//              final "next" pointer of each individual branch points; each
+//              branch starts with the operand node of a BRANCH node.
+//
+// BACK         Normal "next" pointers all implicitly point forward; BACK
+//              exists to make loop structures possible.
+//
+// STAR,PLUS    '=', and complex '*' and '+', are implemented as circular
+//              BRANCH structures using BACK.  Simple cases (one character
+//              per match) are implemented with STAR and PLUS for speed
+//              and to minimize recursive plunges.
+//
+// BRACE_LIMITS This is always followed by a BRACE_SIMPLE or BRACE_COMPLEX
+//              node, and defines the min and max limits to be used for that
+//              node.
+//
+// MOPEN,MCLOSE ...are numbered at compile time.
+// ZOPEN,ZCLOSE ...ditto
+///
+//
+//
+// A node is one char of opcode followed by two chars of "next" pointer.
+// "Next" pointers are stored as two 8-bit bytes, high order first.  The
+// value is a positive offset from the opcode of the node containing it.
+// An operand, if any, simply follows the node.  (Note that much of the
+// code generation knows about this implicit relationship.)
+//
+// Using two bytes for the "next" pointer is vast overkill for most things,
+// but allows patterns to get big without disasters.
 #define OP(p)           ((int)(*(p)))
 #define NEXT(p)         (((*((p) + 1) & 0377) << 8) + (*((p) + 2) & 0377))
 #define OPERAND(p)      ((p) + 3)
@@ -449,9 +426,7 @@ static int regnarrate = 0;
 # include "regexp_bt.c.generated.h"
 #endif
 
-/*
- * Setup to parse the regexp.  Used once to get the length and once to do it.
- */
+// Setup to parse the regexp.  Used once to get the length and once to do it.
 static void regcomp_start(char_u *expr, int re_flags)                        // see vim_regcomp()
 {
   initchr(expr);
@@ -484,9 +459,7 @@ static bool use_multibytecode(int c)
              || utf_iscomposing(c));
 }
 
-/*
- * Emit (if appropriate) a byte of code
- */
+// Emit (if appropriate) a byte of code
 static void regc(int b)
 {
   if (regcode == JUST_CALC_SIZE) {
@@ -496,9 +469,7 @@ static void regc(int b)
   }
 }
 
-/*
- * Emit (if appropriate) a multi-byte character of code
- */
+// Emit (if appropriate) a multi-byte character of code
 static void regmbc(int c)
 {
   if (regcode == JUST_CALC_SIZE) {
@@ -508,11 +479,9 @@ static void regmbc(int c)
   }
 }
 
-/*
- * Produce the bytes for equivalence class "c".
- * Currently only handles latin1, latin9 and utf-8.
- * NOTE: When changing this function, also change nfa_emit_equi_class()
- */
+// Produce the bytes for equivalence class "c".
+// Currently only handles latin1, latin9 and utf-8.
+// NOTE: When changing this function, also change nfa_emit_equi_class()
 static void reg_equi_class(int c)
 {
   {
@@ -1481,10 +1450,8 @@ static void reg_equi_class(int c)
   regmbc(c);
 }
 
-/*
- * Emit a node.
- * Return pointer to generated code.
- */
+// Emit a node.
+// Return pointer to generated code.
 static char_u *regnode(int op)
 {
   char_u *ret;
@@ -1500,9 +1467,7 @@ static char_u *regnode(int op)
   return ret;
 }
 
-/*
- * Write a four bytes number at "p" and return pointer to the next char.
- */
+// Write a four bytes number at "p" and return pointer to the next char.
 static char_u *re_put_uint32(char_u *p, uint32_t val)
 {
   *p++ = (char_u)((val >> 24) & 0377);
@@ -1512,11 +1477,9 @@ static char_u *re_put_uint32(char_u *p, uint32_t val)
   return p;
 }
 
-/*
- * regnext - dig the "next" pointer out of a node
- * Returns NULL when calculating size, when there is no next item and when
- * there is an error.
- */
+// regnext - dig the "next" pointer out of a node
+// Returns NULL when calculating size, when there is no next item and when
+// there is an error.
 static char_u *regnext(char_u *p)
   FUNC_ATTR_NONNULL_ALL
 {
@@ -1573,9 +1536,7 @@ static void regtail(char_u *p, char_u *val)
   }
 }
 
-/*
- * Like regtail, on item after a BRANCH; nop if none.
- */
+// Like regtail, on item after a BRANCH; nop if none.
 static void regoptail(char_u *p, char_u *val)
 {
   // When op is neither BRANCH nor BRACE_COMPLEX0-9, it is "operandless"
@@ -1587,11 +1548,9 @@ static void regoptail(char_u *p, char_u *val)
   regtail(OPERAND(p), val);
 }
 
-/*
- * Insert an operator in front of already-emitted operand
- *
- * Means relocating the operand.
- */
+// Insert an operator in front of already-emitted operand
+//
+// Means relocating the operand.
 static void reginsert(int op, char_u *opnd)
 {
   char_u *src;
@@ -1615,10 +1574,8 @@ static void reginsert(int op, char_u *opnd)
   *place = NUL;
 }
 
-/*
- * Insert an operator in front of already-emitted operand.
- * Add a number to the operator.
- */
+// Insert an operator in front of already-emitted operand.
+// Add a number to the operator.
 static void reginsert_nr(int op, long val, char_u *opnd)
 {
   char_u *src;
@@ -1644,12 +1601,10 @@ static void reginsert_nr(int op, long val, char_u *opnd)
   re_put_uint32(place, (uint32_t)val);
 }
 
-/*
- * Insert an operator in front of already-emitted operand.
- * The operator has the given limit values as operands.  Also set next pointer.
- *
- * Means relocating the operand.
- */
+// Insert an operator in front of already-emitted operand.
+// The operator has the given limit values as operands.  Also set next pointer.
+//
+// Means relocating the operand.
 static void reginsert_limits(int op, long minval, long maxval, char_u *opnd)
 {
   char_u *src;
@@ -1704,13 +1659,11 @@ static int seen_endbrace(int refnum)
   return true;
 }
 
-/*
- * Parse the lowest level.
- *
- * Optimization:  gobbles an entire sequence of ordinary characters so that
- * it can turn them into a single node, which is smaller to store and
- * faster to run.  Don't do this when one_exactly is set.
- */
+// Parse the lowest level.
+//
+// Optimization:  gobbles an entire sequence of ordinary characters so that
+// it can turn them into a single node, which is smaller to store and
+// faster to run.  Don't do this when one_exactly is set.
 static char_u *regatom(int *flagp)
 {
   char_u *ret;
@@ -2289,8 +2242,7 @@ collection:
               if (c_class != 0) {
                 // produce equivalence class
                 reg_equi_class(c_class);
-              } else if ((c_class =
-                            get_coll_element(&regparse)) != 0) {
+              } else if ((c_class = get_coll_element(&regparse)) != 0) {
                 // produce a collating element
                 regmbc(c_class);
               } else {
@@ -2466,7 +2418,7 @@ do_multibyte:
     for (len = 0; c != NUL && (len == 0
                                || (re_multi_type(peekchr()) == NOT_MULTI
                                    && !one_exactly
-                                   && !is_Magic(c))); ++len) {
+                                   && !is_Magic(c))); len++) {
       c = no_Magic(c);
       {
         regmbc(c);
@@ -2500,15 +2452,13 @@ do_multibyte:
   return ret;
 }
 
-/*
- * Parse something followed by possible [*+=].
- *
- * Note that the branching code sequences used for = and the general cases
- * of * and + are somewhat optimized:  they use the same NOTHING node as
- * both the endmarker for their branch list and the body of the last branch.
- * It might seem that this node could be dispensed with entirely, but the
- * endmarker role is not redundant.
- */
+// Parse something followed by possible [*+=].
+//
+// Note that the branching code sequences used for = and the general cases
+// of * and + are somewhat optimized:  they use the same NOTHING node as
+// both the endmarker for their branch list and the body of the last branch.
+// It might seem that this node could be dispensed with entirely, but the
+// endmarker role is not redundant.
 static char_u *regpiece(int *flagp)
 {
   char_u *ret;
@@ -2644,10 +2594,8 @@ static char_u *regpiece(int *flagp)
   return ret;
 }
 
-/*
- * Parse one alternative of an | or & operator.
- * Implements the concatenation operator.
- */
+// Parse one alternative of an | or & operator.
+// Implements the concatenation operator.
 static char_u *regconcat(int *flagp)
 {
   char_u *first = NULL;
@@ -2722,10 +2670,8 @@ static char_u *regconcat(int *flagp)
   return first;
 }
 
-/*
- * Parse one alternative of an | operator.
- * Implements the & operator.
- */
+// Parse one alternative of an | operator.
+// Implements the & operator.
 static char_u *regbranch(int *flagp)
 {
   char_u *ret;
@@ -2874,27 +2820,25 @@ static char_u *reg(int paren, int *flagp)
   return ret;
 }
 
-/*
- * bt_regcomp() - compile a regular expression into internal code for the
- * traditional back track matcher.
- * Returns the program in allocated space.  Returns NULL for an error.
- *
- * We can't allocate space until we know how big the compiled form will be,
- * but we can't compile it (and thus know how big it is) until we've got a
- * place to put the code.  So we cheat:  we compile it twice, once with code
- * generation turned off and size counting turned on, and once "for real".
- * This also means that we don't allocate space until we are sure that the
- * thing really will compile successfully, and we never have to move the
- * code and thus invalidate pointers into it.  (Note that it has to be in
- * one piece because free() must be able to free it all.)
- *
- * Whether upper/lower case is to be ignored is decided when executing the
- * program, it does not matter here.
- *
- * Beware that the optimization-preparation code in here knows about some
- * of the structure of the compiled regexp.
- * "re_flags": RE_MAGIC and/or RE_STRING.
- */
+// bt_regcomp() - compile a regular expression into internal code for the
+// traditional back track matcher.
+// Returns the program in allocated space.  Returns NULL for an error.
+//
+// We can't allocate space until we know how big the compiled form will be,
+// but we can't compile it (and thus know how big it is) until we've got a
+// place to put the code.  So we cheat:  we compile it twice, once with code
+// generation turned off and size counting turned on, and once "for real".
+// This also means that we don't allocate space until we are sure that the
+// thing really will compile successfully, and we never have to move the
+// code and thus invalidate pointers into it.  (Note that it has to be in
+// one piece because free() must be able to free it all.)
+//
+// Whether upper/lower case is to be ignored is decided when executing the
+// program, it does not matter here.
+//
+// Beware that the optimization-preparation code in here knows about some
+// of the structure of the compiled regexp.
+// "re_flags": RE_MAGIC and/or RE_STRING.
 static regprog_T *bt_regcomp(char_u *expr, int re_flags)
 {
   char_u *scan;
@@ -2999,19 +2943,15 @@ static regprog_T *bt_regcomp(char_u *expr, int re_flags)
   return (regprog_T *)r;
 }
 
-/*
- * Check if during the previous call to vim_regcomp the EOL item "$" has been
- * found.  This is messy, but it works fine.
- */
+// Check if during the previous call to vim_regcomp the EOL item "$" has been
+// found.  This is messy, but it works fine.
 int vim_regcomp_had_eol(void)
 {
   return had_eol;
 }
 
-/*
- * Get a number after a backslash that is inside [].
- * When nothing is recognized return a backslash.
- */
+// Get a number after a backslash that is inside [].
+// When nothing is recognized return a backslash.
 static int coll_get_char(void)
 {
   int64_t nr = -1;
@@ -3037,9 +2977,7 @@ static int coll_get_char(void)
   return (int)nr;
 }
 
-/*
- * Free a compiled regexp program, returned by bt_regcomp().
- */
+// Free a compiled regexp program, returned by bt_regcomp().
 static void bt_regfree(regprog_T *prog)
 {
   xfree(prog);
@@ -3047,11 +2985,9 @@ static void bt_regfree(regprog_T *prog)
 
 #define ADVANCE_REGINPUT() MB_PTR_ADV(rex.input)
 
-/*
- * The arguments from BRACE_LIMITS are stored here.  They are actually local
- * to regmatch(), but they are here to reduce the amount of stack space used
- * (it can be called recursively many times).
- */
+// The arguments from BRACE_LIMITS are stored here.  They are actually local
+// to regmatch(), but they are here to reduce the amount of stack space used
+// (it can be called recursively many times).
 static long bl_minval;
 static long bl_maxval;
 
@@ -3108,13 +3044,11 @@ static bool reg_save_equal(const regsave_T *save)
   else  /* NOLINT */ \
   *(pp) = (savep)->se_u.ptr; }
 
-/*
- * Tentatively set the sub-expression start to the current position (after
- * calling regmatch() they will have changed).  Need to save the existing
- * values for when there is no match.
- * Use se_save() to use pointer (save_se_multi()) or position (save_se_one()),
- * depending on REG_MULTI.
- */
+// Tentatively set the sub-expression start to the current position (after
+// calling regmatch() they will have changed).  Need to save the existing
+// values for when there is no match.
+// Use se_save() to use pointer (save_se_multi()) or position (save_se_one()),
+// depending on REG_MULTI.
 static void save_se_multi(save_se_T *savep, lpos_T *posp)
 {
   savep->se_u.pos = *posp;
@@ -3494,10 +3428,8 @@ do_class:
   return (int)count;
 }
 
-/*
- * Push an item onto the regstack.
- * Returns pointer to new item.  Returns NULL when out of memory.
- */
+// Push an item onto the regstack.
+// Returns pointer to new item.  Returns NULL when out of memory.
 static regitem_T *regstack_push(regstate_T state, char_u *scan)
 {
   regitem_T *rp;
@@ -3516,9 +3448,7 @@ static regitem_T *regstack_push(regstate_T state, char_u *scan)
   return rp;
 }
 
-/*
- * Pop an item from the regstack.
- */
+// Pop an item from the regstack.
 static void regstack_pop(char_u **scan)
 {
   regitem_T *rp;
@@ -4643,7 +4573,7 @@ static bool regmatch(char_u *scan, proftime_T *tm, int *timed_out)
         // Pop the state.  Restore pointers when there is no match.
         if (status == RA_NOMATCH) {
           reg_restore(&rp->rs_un.regsave, &backpos);
-          --brace_count[rp->rs_no];             // decrement match count
+          brace_count[rp->rs_no]--;             // decrement match count
         }
         regstack_pop(&scan);
         break;
@@ -4653,7 +4583,7 @@ static bool regmatch(char_u *scan, proftime_T *tm, int *timed_out)
         if (status == RA_NOMATCH) {
           // There was no match, but we did find enough matches.
           reg_restore(&rp->rs_un.regsave, &backpos);
-          --brace_count[rp->rs_no];
+          brace_count[rp->rs_no]--;
           // continue with the items after "\{}"
           status = RA_CONT;
         }
@@ -5247,9 +5177,7 @@ static long bt_regexec_multi(regmmatch_T *rmp, win_T *win, buf_T *buf, linenr_T 
   return bt_regexec_both(NULL, col, tm, timed_out);
 }
 
-/*
- * Compare a number with the operand of RE_LNUM, RE_COL or RE_VCOL.
- */
+// Compare a number with the operand of RE_LNUM, RE_COL or RE_VCOL.
 static int re_num_cmp(uint32_t val, char_u *scan)
 {
   uint32_t n = (uint32_t)OPERAND_MIN(scan);
@@ -5265,9 +5193,7 @@ static int re_num_cmp(uint32_t val, char_u *scan)
 
 #ifdef BT_REGEXP_DUMP
 
-/*
- * regdump - dump a regexp onto stdout in vaguely comprehensible form
- */
+// regdump - dump a regexp onto stdout in vaguely comprehensible form
 static void regdump(char_u *pattern, bt_regprog_T *r)
 {
   char_u *s;
@@ -5353,9 +5279,7 @@ static void regdump(char_u *pattern, bt_regprog_T *r)
 
 #ifdef REGEXP_DEBUG
 
-/*
- * regprop - printable representation of opcode
- */
+// regprop - printable representation of opcode
 static char_u *regprop(char_u *op)
 {
   char *p;
