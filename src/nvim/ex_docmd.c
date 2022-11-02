@@ -5698,19 +5698,21 @@ static void ex_winsize(exarg_T *eap)
 
 static void ex_wincmd(exarg_T *eap)
 {
+  char *arg = eap->argc > 0 ? eap->args[0] : eap->arg;
+
   int xchar = NUL;
   char *p;
 
-  if (*eap->arg == 'g' || *eap->arg == Ctrl_G) {
+  if (*arg == 'g' || *arg == Ctrl_G) {
     // CTRL-W g and CTRL-W CTRL-G  have an extra command character
-    if (eap->arg[1] == NUL) {
+    if (arg[1] == NUL) {
       emsg(_(e_invarg));
       return;
     }
-    xchar = (uint8_t)eap->arg[1];
-    p = eap->arg + 2;
+    xchar = (uint8_t)arg[1];
+    p = arg + 2;
   } else {
-    p = eap->arg + 1;
+    p = arg + 1;
   }
 
   eap->nextcmd = check_nextcmd(p);
@@ -5721,7 +5723,7 @@ static void ex_wincmd(exarg_T *eap)
     // Pass flags on for ":vertical wincmd ]".
     postponed_split_flags = cmdmod.cmod_split;
     postponed_split_tab = cmdmod.cmod_tab;
-    do_window(*eap->arg, eap->addr_count > 0 ? eap->line2 : 0L, xchar);
+    do_window(*arg, eap->addr_count > 0 ? eap->line2 : 0L, xchar);
     postponed_split_flags = 0;
     postponed_split_tab = 0;
   }

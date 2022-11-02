@@ -3164,7 +3164,7 @@ module.cmds = {
   },
   {
     command='wincmd',
-    flags=bit.bor(NEEDARG, WORD1, RANGE, COUNT, CMDWIN, LOCK_OK),
+    flags=bit.bor(NEEDARG, WORD1, RANGE, COUNT, CMDWIN, LOCK_OK, OPTCMDSTR),
     addr_type='ADDR_OTHER',
     func='ex_wincmd',
   },
