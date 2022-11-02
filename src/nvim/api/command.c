@@ -650,10 +650,20 @@ String nvim_cmd(uint64_t channel_id, Dict(cmd) *cmd, Dict(cmd_opts) *opts, Error
     }
   }
 
-  // Finally, build the command line string that will be stored inside ea.cmdlinep.
+  // Finally, build the command line string (if it is required) and store in ea.cmdlinep.
   // This also sets the values of ea.cmd, ea.arg, ea.args and ea.arglens.
-  build_cmdline_str(&cmdline, &ea, &cmdinfo, args);
-  ea.cmdlinep = &cmdline;
+  // If command line string isn't required, then just set ea.argc, ea.args and ea.arglens
+  if ((ea.argt & EX_OPTCMDSTR) > 0 || (ea.argt & EX_EXTRA) == 0) {
+    ea.argc = args.size;
+    ea.args = ea.argc > 0 ? xcalloc(ea.argc, sizeof(char *)) : NULL;
+    ea.arglens = ea.argc > 0 ? xcalloc(ea.argc, sizeof(size_t)) : NULL;
+    for (size_t i = 0; i < ea.argc; i++) {
+      ea.args[i] = args.items[i].data.string.data;
+      ea.arglens[i] = args.items[i].data.string.size;
+    }
+  } else {
+    build_cmdline_str(&cmdline, &ea, &cmdinfo, args);
+  }
 
   garray_T capture_local;
   const int save_msg_silent = msg_silent;

@@ -4416,7 +4416,9 @@ char *get_command_name(expand_T *xp, int idx)
 
 static void ex_colorscheme(exarg_T *eap)
 {
-  if (*eap->arg == NUL) {
+  char *arg = eap->argc > 0 ? eap->args[0] : eap->arg;
+
+  if (*arg == NUL) {
     char *expr = xstrdup("g:colors_name");
 
     emsg_off++;
@@ -4430,8 +4432,8 @@ static void ex_colorscheme(exarg_T *eap)
     } else {
       msg("default");
     }
-  } else if (load_colors((char_u *)eap->arg) == FAIL) {
-    semsg(_("E185: Cannot find color scheme '%s'"), eap->arg);
+  } else if (load_colors((char_u *)arg) == FAIL) {
+    semsg(_("E185: Cannot find color scheme '%s'"), arg);
   }
 }
 

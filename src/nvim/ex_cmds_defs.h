@@ -65,6 +65,7 @@
                                    // buffer when curbuf->b_ro_locked is set
 #define EX_KEEPSCRIPT  0x4000000u  // keep sctx of where command was invoked
 #define EX_PREVIEW     0x8000000u  // allow incremental command preview
+#define EX_OPTCMDSTR  0x10000000u  // command string is not needed (for use with nvim_cmd)
 #define EX_FILES (EX_XFILE | EX_EXTRA)  // multiple extra files allowed
 #define EX_FILE1 (EX_FILES | EX_NOSPC)  // 1 file, defaults to current file
 #define EX_WORD1 (EX_EXTRA | EX_NOSPC)  // one extra word allowed

@@ -28,6 +28,7 @@ local MODIFY     =  0x100000
 local FLAGS      =  0x200000
 local LOCK_OK    = 0x1000000
 local PREVIEW    = 0x8000000
+local OPTCMDSTR  = 0x10000000
 local FILES      = bit.bor(XFILE, EXTRA)
 local WORD1      = bit.bor(EXTRA, NOSPC)
 local FILE1      = bit.bor(FILES, NOSPC)
@@ -60,7 +61,7 @@ module.cmds = {
   },
   {
     command='aboveleft',
-    flags=bit.bor(NEEDARG, EXTRA, NOTRLCOM),
+    flags=bit.bor(NEEDARG, EXTRA, NOTRLCOM, OPTCMDSTR),
     addr_type='ADDR_NONE',
     func='ex_wrongmodifier',
   },
@@ -204,7 +205,7 @@ module.cmds = {
   },
   {
     command='belowright',
-    flags=bit.bor(NEEDARG, EXTRA, NOTRLCOM),
+    flags=bit.bor(NEEDARG, EXTRA, NOTRLCOM, OPTCMDSTR),
     addr_type='ADDR_NONE',
     func='ex_wrongmodifier',
   },
@@ -234,7 +235,7 @@ module.cmds = {
   },
   {
     command='botright',
-    flags=bit.bor(NEEDARG, EXTRA, NOTRLCOM),
+    flags=bit.bor(NEEDARG, EXTRA, NOTRLCOM, OPTCMDSTR),
     addr_type='ADDR_NONE',
     func='ex_wrongmodifier',
   },
@@ -276,7 +277,7 @@ module.cmds = {
   },
   {
     command='browse',
-    flags=bit.bor(NEEDARG, EXTRA, NOTRLCOM, CMDWIN, LOCK_OK),
+    flags=bit.bor(NEEDARG, EXTRA, NOTRLCOM, CMDWIN, LOCK_OK, OPTCMDSTR),
     addr_type='ADDR_NONE',
     func='ex_wrongmodifier',
   },
@@ -524,7 +525,7 @@ module.cmds = {
   },
   {
     command='close',
-    flags=bit.bor(BANG, RANGE, COUNT, TRLBAR, CMDWIN, LOCK_OK),
+    flags=bit.bor(BANG, RANGE, COUNT, TRLBAR, CMDWIN, LOCK_OK, OPTCMDSTR),
     addr_type='ADDR_WINDOWS',
     func='ex_close',
   },
@@ -602,7 +603,7 @@ module.cmds = {
   },
   {
     command='colorscheme',
-    flags=bit.bor(WORD1, TRLBAR, CMDWIN, LOCK_OK),
+    flags=bit.bor(OPTCMDSTR, WORD1, TRLBAR, CMDWIN, LOCK_OK),
     addr_type='ADDR_NONE',
     func='ex_colorscheme',
   },
@@ -632,7 +633,7 @@ module.cmds = {
   },
   {
     command='confirm',
-    flags=bit.bor(NEEDARG, EXTRA, NOTRLCOM, CMDWIN, LOCK_OK),
+    flags=bit.bor(NEEDARG, EXTRA, NOTRLCOM, CMDWIN, LOCK_OK, OPTCMDSTR),
     addr_type='ADDR_NONE',
     func='ex_wrongmodifier',
   },
@@ -974,7 +975,7 @@ module.cmds = {
   },
   {
     command='filter',
-    flags=bit.bor(BANG, NEEDARG, EXTRA, NOTRLCOM),
+    flags=bit.bor(BANG, NEEDARG, EXTRA, NOTRLCOM, OPTCMDSTR),
     addr_type='ADDR_NONE',
     func='ex_wrongmodifier',
   },
@@ -1118,7 +1119,7 @@ module.cmds = {
   },
   {
     command='hide',
-    flags=bit.bor(BANG, RANGE, COUNT, EXTRA, TRLBAR),
+    flags=bit.bor(BANG, RANGE, COUNT, EXTRA, TRLBAR, OPTCMDSTR),
     addr_type='ADDR_WINDOWS',
     func='ex_hide',
   },
@@ -1130,7 +1131,7 @@ module.cmds = {
   },
   {
     command='horizontal',
-    flags=bit.bor(NEEDARG, EXTRA, NOTRLCOM),
+    flags=bit.bor(NEEDARG, EXTRA, NOTRLCOM, OPTCMDSTR),
     addr_type='ADDR_NONE',
     func='ex_wrongmodifier',
   },
@@ -1262,25 +1263,25 @@ module.cmds = {
   },
   {
     command='keepmarks',
-    flags=bit.bor(NEEDARG, EXTRA, NOTRLCOM),
+    flags=bit.bor(NEEDARG, EXTRA, NOTRLCOM, OPTCMDSTR),
     addr_type='ADDR_NONE',
     func='ex_wrongmodifier',
   },
   {
     command='keepjumps',
-    flags=bit.bor(NEEDARG, EXTRA, NOTRLCOM),
+    flags=bit.bor(NEEDARG, EXTRA, NOTRLCOM, OPTCMDSTR),
     addr_type='ADDR_NONE',
     func='ex_wrongmodifier',
   },
   {
     command='keeppatterns',
-    flags=bit.bor(NEEDARG, EXTRA, NOTRLCOM),
+    flags=bit.bor(NEEDARG, EXTRA, NOTRLCOM, OPTCMDSTR),
     addr_type='ADDR_NONE',
     func='ex_wrongmodifier',
   },
   {
     command='keepalt',
-    flags=bit.bor(NEEDARG, EXTRA, NOTRLCOM),
+    flags=bit.bor(NEEDARG, EXTRA, NOTRLCOM, OPTCMDSTR),
     addr_type='ADDR_NONE',
     func='ex_wrongmodifier',
   },
@@ -1406,7 +1407,7 @@ module.cmds = {
   },
   {
     command='leftabove',
-    flags=bit.bor(NEEDARG, EXTRA, NOTRLCOM),
+    flags=bit.bor(NEEDARG, EXTRA, NOTRLCOM, OPTCMDSTR),
     addr_type='ADDR_NONE',
     func='ex_wrongmodifier',
   },
@@ -1558,7 +1559,7 @@ module.cmds = {
   },
   {
     command='lockmarks',
-    flags=bit.bor(NEEDARG, EXTRA, NOTRLCOM),
+    flags=bit.bor(NEEDARG, EXTRA, NOTRLCOM, OPTCMDSTR),
     addr_type='ADDR_NONE',
     func='ex_wrongmodifier',
   },
@@ -1810,7 +1811,7 @@ module.cmds = {
   },
   {
     command='noautocmd',
-    flags=bit.bor(NEEDARG, EXTRA, NOTRLCOM),
+    flags=bit.bor(NEEDARG, EXTRA, NOTRLCOM, OPTCMDSTR),
     addr_type='ADDR_NONE',
     func='ex_wrongmodifier',
   },
@@ -1834,7 +1835,7 @@ module.cmds = {
   },
   {
     command='noswapfile',
-    flags=bit.bor(NEEDARG, EXTRA, NOTRLCOM),
+    flags=bit.bor(NEEDARG, EXTRA, NOTRLCOM, OPTCMDSTR),
     addr_type='ADDR_NONE',
     func='ex_wrongmodifier',
   },
@@ -2254,7 +2255,7 @@ module.cmds = {
   },
   {
     command='rightbelow',
-    flags=bit.bor(NEEDARG, EXTRA, NOTRLCOM),
+    flags=bit.bor(NEEDARG, EXTRA, NOTRLCOM, OPTCMDSTR),
     addr_type='ADDR_NONE',
     func='ex_wrongmodifier',
   },
@@ -2327,7 +2328,7 @@ module.cmds = {
   },
   {
     command='sandbox',
-    flags=bit.bor(NEEDARG, EXTRA, NOTRLCOM),
+    flags=bit.bor(NEEDARG, EXTRA, NOTRLCOM, OPTCMDSTR),
     addr_type='ADDR_NONE',
     func='ex_wrongmodifier',
   },
@@ -2453,7 +2454,7 @@ module.cmds = {
   },
   {
     command='silent',
-    flags=bit.bor(NEEDARG, EXTRA, BANG, NOTRLCOM, SBOXOK, CMDWIN, LOCK_OK),
+    flags=bit.bor(NEEDARG, EXTRA, BANG, NOTRLCOM, SBOXOK, CMDWIN, LOCK_OK, OPTCMDSTR),
     addr_type='ADDR_NONE',
     func='ex_wrongmodifier',
   },
@@ -2731,7 +2732,7 @@ module.cmds = {
   },
   {
     command='tab',
-    flags=bit.bor(NEEDARG, EXTRA, NOTRLCOM),
+    flags=bit.bor(NEEDARG, EXTRA, NOTRLCOM, OPTCMDSTR),
     addr_type='ADDR_NONE',
     func='ex_wrongmodifier',
   },
@@ -2917,7 +2918,7 @@ module.cmds = {
   },
   {
     command='topleft',
-    flags=bit.bor(NEEDARG, EXTRA, NOTRLCOM),
+    flags=bit.bor(NEEDARG, EXTRA, NOTRLCOM, OPTCMDSTR),
     addr_type='ADDR_NONE',
     func='ex_wrongmodifier',
   },
@@ -3013,7 +3014,7 @@ module.cmds = {
   },
   {
     command='unsilent',
-    flags=bit.bor(NEEDARG, EXTRA, NOTRLCOM, SBOXOK, CMDWIN, LOCK_OK),
+    flags=bit.bor(NEEDARG, EXTRA, NOTRLCOM, SBOXOK, CMDWIN, LOCK_OK, OPTCMDSTR),
     addr_type='ADDR_NONE',
     func='ex_wrongmodifier',
   },
@@ -3037,13 +3038,13 @@ module.cmds = {
   },
   {
     command='verbose',
-    flags=bit.bor(NEEDARG, RANGE, EXTRA, NOTRLCOM, SBOXOK, CMDWIN, LOCK_OK),
+    flags=bit.bor(NEEDARG, RANGE, EXTRA, NOTRLCOM, SBOXOK, CMDWIN, LOCK_OK, OPTCMDSTR),
     addr_type='ADDR_OTHER',
     func='ex_wrongmodifier',
   },
   {
     command='vertical',
-    flags=bit.bor(NEEDARG, EXTRA, NOTRLCOM),
+    flags=bit.bor(NEEDARG, EXTRA, NOTRLCOM, OPTCMDSTR),
     addr_type='ADDR_NONE',
     func='ex_wrongmodifier',
   },
