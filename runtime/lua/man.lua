@@ -457,7 +457,7 @@ local function get_page(path, silent)
 end
 
 local function put_page(page)
-  vim.bo.modified = true
+  vim.bo.modifiable = true
   vim.bo.readonly = false
   vim.bo.swapfile = false
 
