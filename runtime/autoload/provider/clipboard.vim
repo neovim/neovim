@@ -97,18 +97,18 @@ function! provider#clipboard#Executable() abort
     let s:copy['*'] = ['wl-copy', '--foreground', '--primary', '--type', 'text/plain']
     let s:paste['*'] = ['wl-paste', '--no-newline', '--primary']
     return 'wl-copy'
-  elseif !empty($DISPLAY) && executable('xclip')
-    let s:copy['+'] = ['xclip', '-quiet', '-i', '-selection', 'clipboard']
-    let s:paste['+'] = ['xclip', '-o', '-selection', 'clipboard']
-    let s:copy['*'] = ['xclip', '-quiet', '-i', '-selection', 'primary']
-    let s:paste['*'] = ['xclip', '-o', '-selection', 'primary']
-    return 'xclip'
   elseif !empty($DISPLAY) && executable('xsel') && s:cmd_ok('xsel -o -b')
     let s:copy['+'] = ['xsel', '--nodetach', '-i', '-b']
     let s:paste['+'] = ['xsel', '-o', '-b']
     let s:copy['*'] = ['xsel', '--nodetach', '-i', '-p']
     let s:paste['*'] = ['xsel', '-o', '-p']
     return 'xsel'
+  elseif !empty($DISPLAY) && executable('xclip')
+    let s:copy['+'] = ['xclip', '-quiet', '-i', '-selection', 'clipboard']
+    let s:paste['+'] = ['xclip', '-o', '-selection', 'clipboard']
+    let s:copy['*'] = ['xclip', '-quiet', '-i', '-selection', 'primary']
+    let s:paste['*'] = ['xclip', '-o', '-selection', 'primary']
+    return 'xclip'
   elseif executable('lemonade')
     let s:copy['+'] = ['lemonade', 'copy']
     let s:paste['+'] = ['lemonade', 'paste']
