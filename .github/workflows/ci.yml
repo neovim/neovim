@@ -84,12 +84,7 @@ jobs:
           mkdir -p $HOME/.cache
           cp $build_dir/uncrustify ${{ env.CACHE_UNCRUSTIFY }}
 
-      - name: Cache artifacts
-        uses: actions/cache@v3
-        with:
-          path: |
-            ${{ env.CACHE_NVIM_DEPS_DIR }}
-          key: lint-${{ hashFiles('cmake/*', '**/CMakeLists.txt', '!cmake.deps/**CMakeLists.txt') }}-${{ github.base_ref }}
+      - uses: ./.github/actions/cache
 
       - name: Build third-party deps
         run: ./ci/before_script.sh
@@ -183,12 +178,7 @@ jobs:
             ninja-build \
             pkg-config
 
-      - name: Cache artifacts
-        uses: actions/cache@v3
-        with:
-          path: |
-            ${{ env.CACHE_NVIM_DEPS_DIR }}
-          key: lint-${{ hashFiles('cmake/*', '**/CMakeLists.txt', '!cmake.deps/**CMakeLists.txt') }}-${{ github.base_ref }}
+      - uses: ./.github/actions/cache
 
       - name: Build third-party deps
         run: ./ci/before_script.sh
@@ -289,12 +279,7 @@ jobs:
       - name: Setup interpreter packages
         run: ./ci/install.sh
 
-      - name: Cache dependencies
-        uses: actions/cache@v3
-        with:
-          path: |
-            ${{ env.CACHE_NVIM_DEPS_DIR }}
-          key: ${{ matrix.runner }}-${{ matrix.flavor }}-${{ matrix.cc }}-${{ hashFiles('cmake/*', 'cmake.deps/**', '**/CMakeLists.txt') }}-${{ github.base_ref }}
+      - uses: ./.github/actions/cache
 
       - name: Build third-party deps
         run: ./ci/before_script.sh
@@ -331,15 +316,13 @@ jobs:
     timeout-minutes: 45
     env:
       DEPS_BUILD_DIR: ${{ github.workspace }}/nvim-deps
+      CACHE_NVIM_DEPS_DIR: ${{ github.workspace }}/nvim-deps
       DEPS_PREFIX: ${{ github.workspace }}/nvim-deps/usr
     name: windows (MSVC_64)
     steps:
       - uses: actions/checkout@v3
 
-      - uses: actions/cache@v3
-        with:
-          path: ${{ env.DEPS_BUILD_DIR }}
-          key: windows-${{ hashFiles('cmake.deps/**') }}
+      - uses: ./.github/actions/cache
 
       - name: Set env
         run: ./.github/workflows/env.ps1
