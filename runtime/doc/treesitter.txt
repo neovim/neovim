@@ -380,6 +380,8 @@ The following captures are linked by default to standard |group-name|s:
     @text.uri          Underlined
     @text.underline    Underlined
     @text.todo         Todo
+    @text.emphasis     Underlined
+    @text.strong       Todo
 
     @comment           Comment
     @punctuation       Delimiter

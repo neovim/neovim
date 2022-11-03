@@ -191,6 +191,8 @@ static const char *highlight_init_both[] = {
   "default link @text.uri Underlined",
   "default link @text.underline Underlined",
   "default link @text.todo Todo",
+  "default link @text.emphasis Underlined",
+  "default link @text.strong Todo",
 
   // Miscs
   "default link @comment Comment",
