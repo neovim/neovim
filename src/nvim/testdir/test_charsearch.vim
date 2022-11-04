@@ -51,7 +51,7 @@ func Test_csearch_virtualedit()
   normal! tb
   call assert_equal([0, 1, 2, 6], getpos('.'))
   set virtualedit&
-  close!
+  bw!
 endfunc
 
 " Test for character search failure in latin1 encoding
@@ -65,7 +65,34 @@ func Test_charsearch_latin1()
   call assert_beeps('normal $Fz')
   call assert_beeps('normal $Tx')
   let &encoding = save_enc
-  close!
+  bw!
+endfunc
+
+" Test for using character search to find a multibyte character with composing
+" characters.
+func Test_charsearch_composing_char()
+  new
+  call setline(1, "one two thq\u0328\u0301r\u0328\u0301ree")
+  call feedkeys("fr\u0328\u0301", 'xt')
+  call assert_equal([0, 1, 16, 0, 12], getcurpos())
+
+  " use character search with a multi-byte character followed by a
+  " non-composing character
+  call setline(1, "abc deȉf ghi")
+  call feedkeys("ggcf\u0209\u0210", 'xt')
+  call assert_equal("\u0210f ghi", getline(1))
+  bw!
+endfunc
+
+" Test for character search with 'hkmap'
+func Test_charsearch_hkmap()
+  new
+  set hkmap
+  call setline(1, "ùðáâ÷ëòéïçìêöî")
+  call feedkeys("fë", 'xt')
+  call assert_equal([0, 1, 11, 0, 6], getcurpos())
+  set hkmap&
+  bw!
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab

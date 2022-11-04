@@ -120,6 +120,39 @@ func Test_normal01_keymodel()
   call feedkeys("Vkk\<Up>yy", 'tx')
   call assert_equal(['47', '48', '49', '50'], getreg(0, 0, 1))
 
+  " Test for using special keys to start visual selection
+  %d
+  call setline(1, ['red fox tail', 'red fox tail', 'red fox tail'])
+  set keymodel=startsel
+  " Test for <S-PageUp> and <S-PageDown>
+  call cursor(1, 1)
+  call feedkeys("\<S-PageDown>y", 'xt')
+  call assert_equal([0, 1, 1, 0], getpos("'<"))
+  call assert_equal([0, 3, 1, 0], getpos("'>"))
+  call feedkeys("Gz\<CR>8|\<S-PageUp>y", 'xt')
+  call assert_equal([0, 2, 1, 0], getpos("'<"))
+  call assert_equal([0, 3, 8, 0], getpos("'>"))
+  " Test for <S-C-Home> and <S-C-End>
+  call cursor(2, 12)
+  call feedkeys("\<S-C-Home>y", 'xt')
+  call assert_equal([0, 1, 1, 0], getpos("'<"))
+  call assert_equal([0, 2, 12, 0], getpos("'>"))
+  call cursor(1, 4)
+  call feedkeys("\<S-C-End>y", 'xt')
+  call assert_equal([0, 1, 4, 0], getpos("'<"))
+  call assert_equal([0, 3, 13, 0], getpos("'>"))
+  " Test for <S-C-Left> and <S-C-Right>
+  call cursor(2, 5)
+  call feedkeys("\<S-C-Right>y", 'xt')
+  call assert_equal([0, 2, 5, 0], getpos("'<"))
+  call assert_equal([0, 2, 9, 0], getpos("'>"))
+  call cursor(2, 9)
+  call feedkeys("\<S-C-Left>y", 'xt')
+  call assert_equal([0, 2, 5, 0], getpos("'<"))
+  call assert_equal([0, 2, 9, 0], getpos("'>"))
+
+  set keymodel&
+
   " clean up
   bw!
 endfunc
@@ -509,6 +542,14 @@ func Test_normal10_expand()
     call assert_equal(expected[i], expand('<cexpr>'), 'i == ' . i)
   endfor
 
+  " Test for <cexpr> in state.val and ptr->val
+  call setline(1, 'x = state.val;')
+  call cursor(1, 10)
+  call assert_equal('state.val', expand('<cexpr>'))
+  call setline(1, 'x = ptr->val;')
+  call cursor(1, 9)
+  call assert_equal('ptr->val', expand('<cexpr>'))
+
   if executable('echo')
     " Test expand(`...`) i.e. backticks command expansion.
     " MS-Windows has a trailing space.
@@ -520,6 +561,19 @@ func Test_normal10_expand()
   call assert_equal('3.14', expand('`=3.14`'))
 
   " clean up
+  bw!
+endfunc
+
+" Test for expand() in latin1 encoding
+func Test_normal_expand_latin1()
+  new
+  let save_enc = &encoding
+  " set encoding=latin1
+  call setline(1, 'val = item->color;')
+  call cursor(1, 11)
+  call assert_equal('color', expand("<cword>"))
+  call assert_equal('item->color', expand("<cexpr>"))
+  let &encoding = save_enc
   bw!
 endfunc
 
@@ -547,6 +601,13 @@ func Test_normal11_showcmd()
   redraw!
   call assert_match('1-3$', Screenline(&lines))
   call feedkeys("v", 'xt')
+  " test for visually selecting the end of line
+  call setline(1, ["foobar"])
+  call feedkeys("$vl", 'xt')
+  redraw!
+  call assert_match('2$', Screenline(&lines))
+  call feedkeys("y", 'xt')
+  call assert_equal("r\n", @")
   bw!
 endfunc
 
@@ -2160,6 +2221,13 @@ func Test_normal31_r_cmd()
   call setline(1, ["a\tb", "c\td", "e\tf"])
   normal gglvjjrx
   call assert_equal(['axx', 'xxx', 'xxf'], getline(1, '$'))
+
+  " replace with a multibyte character (with multiple composing characters)
+  %d
+  new
+  call setline(1, 'aaa')
+  exe "normal $ra\u0328\u0301"
+  call assert_equal("aaa\u0328\u0301", getline(1))
 
   " clean up
   set noautoindent
