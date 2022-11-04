@@ -1,4 +1,4 @@
--- Test for benchmarking RE engine.
+-- Test for benchmarking the RE engine.
 
 local helpers = require('test.functional.helpers')(after_each)
 local insert, source = helpers.insert, helpers.source
@@ -13,13 +13,13 @@ local sample_file = 'src/nvim/testdir/samples/re.freeze.txt'
 local measure_cmd =
     [[call Measure(%d, ']] .. sample_file .. [[', '\s\+\%%#\@<!$', '+5')]]
 local measure_script = [[
-    func! Measure(re, file, pattern, arg)
-      let sstart=reltime()
+    func Measure(re, file, pattern, arg)
+      let sstart = reltime()
 
-      execute 'set re=' . a:re
+      execute 'set re=' .. a:re
       execute 'split' a:arg a:file
       call search(a:pattern, '', '', 10000)
-      q!
+      quit!
 
       $put =printf('file: %s, re: %d, time: %s', a:file, a:re, reltimestr(reltime(sstart)))
     endfunc]]

@@ -19,8 +19,19 @@ func Test_setbufline_getbufline()
   call setline(1, ['a', 'b', 'c'])
   let b = bufnr('%')
   wincmd w
+
+  call assert_equal(1, setbufline(b, 5, 'x'))
   call assert_equal(1, setbufline(b, 5, ['x']))
+  call assert_equal(1, setbufline(b, 5, []))
+  call assert_equal(1, setbufline(b, 5, v:_null_list))
+
+  call assert_equal(1, 'x'->setbufline(bufnr('$') + 1, 1))
   call assert_equal(1, ['x']->setbufline(bufnr('$') + 1, 1))
+  call assert_equal(1, []->setbufline(bufnr('$') + 1, 1))
+  call assert_equal(1, v:_null_list->setbufline(bufnr('$') + 1, 1))
+
+  call assert_equal(['a', 'b', 'c'], getbufline(b, 1, '$'))
+
   call assert_equal(0, setbufline(b, 4, ['d', 'e']))
   call assert_equal(['c'], b->getbufline(3))
   call assert_equal(['d'], getbufline(b, 4))
@@ -84,9 +95,29 @@ func Test_appendbufline()
   call setline(1, ['a', 'b', 'c'])
   let b = bufnr('%')
   wincmd w
+
+  call assert_equal(1, appendbufline(b, -1, 'x'))
   call assert_equal(1, appendbufline(b, -1, ['x']))
+  call assert_equal(1, appendbufline(b, -1, []))
+  call assert_equal(1, appendbufline(b, -1, v:_null_list))
+
+  call assert_equal(1, appendbufline(b, 4, 'x'))
   call assert_equal(1, appendbufline(b, 4, ['x']))
+  call assert_equal(1, appendbufline(b, 4, []))
+  call assert_equal(1, appendbufline(b, 4, v:_null_list))
+
+  call assert_equal(1, appendbufline(1234, 1, 'x'))
   call assert_equal(1, appendbufline(1234, 1, ['x']))
+  call assert_equal(1, appendbufline(1234, 1, []))
+  call assert_equal(1, appendbufline(1234, 1, v:_null_list))
+
+  call assert_equal(0, appendbufline(b, 1, []))
+  call assert_equal(0, appendbufline(b, 1, v:_null_list))
+  call assert_equal(1, appendbufline(b, 3, []))
+  call assert_equal(1, appendbufline(b, 3, v:_null_list))
+
+  call assert_equal(['a', 'b', 'c'], getbufline(b, 1, '$'))
+
   call assert_equal(0, appendbufline(b, 3, ['d', 'e']))
   call assert_equal(['c'], getbufline(b, 3))
   call assert_equal(['d'], getbufline(b, 4))

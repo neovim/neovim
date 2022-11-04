@@ -5581,6 +5581,13 @@ void set_buffer_lines(buf_T *buf, linenr_T lnum_arg, bool append, const typval_T
   const char *line = NULL;
   if (lines->v_type == VAR_LIST) {
     l = lines->vval.v_list;
+    if (l == NULL || tv_list_len(l) == 0) {
+      // set proper return code
+      if (lnum > curbuf->b_ml.ml_line_count) {
+        rettv->vval.v_number = 1;       // FAIL
+      }
+      goto done;
+    }
     li = tv_list_first(l);
   } else {
     line = tv_get_string_chk(lines);
@@ -5651,6 +5658,7 @@ void set_buffer_lines(buf_T *buf, linenr_T lnum_arg, bool append, const typval_T
     update_topline(curwin);
   }
 
+done:
   if (!is_curbuf) {
     curbuf = curbuf_save;
     curwin = curwin_save;
