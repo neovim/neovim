@@ -41,8 +41,16 @@ The following new APIs or features were added.
 
 • When using Nvim inside tmux 3.2 or later, the default clipboard provider
   will now copy to the system clipboard. |provider-clipboard|
+
 • 'splitkeep' option to control the scroll behavior of horizontal splits.
+
 • |nvim_select_popupmenu_item()| now supports |cmdline-completion| popup menu.
+
+• |'diffopt'| now includes a `linematch` option to enable a second-stage diff
+  on individual hunks to provide much more accurate diffs. This option is also
+  available to |vim.diff()|
+
+  See https://github.com/neovim/neovim/pull/14537.
 
 ==============================================================================
 CHANGED FEATURES                                                 *news-changes*
