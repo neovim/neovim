@@ -80,6 +80,10 @@ func Test_edit_change()
   call setline(1, "\t⒌")
   normal Cx
   call assert_equal('x', getline(1))
+  " Do a visual block change
+  call setline(1, ['a', 'b', 'c'])
+  exe "normal gg3l\<C-V>2jcx"
+  call assert_equal(['a  x', 'b  x', 'c  x'], getline(1, '$'))
   bwipe!
   set virtualedit=
 endfunc
@@ -289,6 +293,16 @@ func Test_replace_after_eol()
   call append(0, '"r"')
   normal gg$5lrxa
   call assert_equal('"r"    x', getline(1))
+  " visual block replace
+  %d _
+  call setline(1, ['a', '', 'b'])
+  exe "normal 2l\<C-V>2jrx"
+  call assert_equal(['a x', '  x', 'b x'], getline(1, '$'))
+  " visual characterwise selection replace after eol
+  %d _
+  call setline(1, 'a')
+  normal 4lv2lrx
+  call assert_equal('a   xxx', getline(1))
   bwipe!
   set virtualedit=
 endfunc
@@ -373,6 +387,19 @@ func Test_ve_backspace()
   set backspace&
   set virtualedit&
   close!
+endfunc
+
+" Test for delete (x) on EOL character and after EOL
+func Test_delete_past_eol()
+  new
+  call setline(1, "ab")
+  set virtualedit=all
+  exe "normal 2lx"
+  call assert_equal('ab', getline(1))
+  exe "normal 10lx"
+  call assert_equal('ab', getline(1))
+  set virtualedit&
+  bw!
 endfunc
 
 " After calling s:TryVirtualeditReplace(), line 1 will contain one of these

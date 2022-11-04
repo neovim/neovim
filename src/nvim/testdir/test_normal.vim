@@ -2125,6 +2125,16 @@ func Test_normal30_changecase()
   call assert_equal(['aaaaaa', 'AAAAaa'], getline(1, 2))
   set whichwrap&
 
+  " try changing the case with a double byte encoding (DBCS)
+  %bw!
+  let enc = &enc
+  " set encoding=cp932
+  call setline(1, "\u8470")
+  normal ~
+  normal gU$gu$gUgUg~g~gugu
+  call assert_equal("\u8470", getline(1))
+  let &encoding = enc
+
   " clean up
   bw!
 endfunc
@@ -3497,6 +3507,27 @@ func Test_normal_percent_jump()
   call assert_equal(50, line('.'))
   call assert_equal(-1, foldclosedend(50))
   close!
+endfunc
+
+" Test for << and >> commands to shift text by 'shiftwidth'
+func Test_normal_shift_rightleft()
+  new
+  call setline(1, ['one', '', "\t", '  two', "\tthree", '      four'])
+  set shiftwidth=2 tabstop=8
+  normal gg6>>
+  call assert_equal(['  one', '', "\t  ", '    two', "\t  three", "\tfour"],
+        \ getline(1, '$'))
+  normal ggVG2>>
+  call assert_equal(['      one', '', "\t      ", "\ttwo",
+        \ "\t      three", "\t    four"], getline(1, '$'))
+  normal gg6<<
+  call assert_equal(['    one', '', "\t    ", '      two', "\t    three",
+        \ "\t  four"], getline(1, '$'))
+  normal ggVG2<<
+  call assert_equal(['one', '', "\t", '  two', "\tthree", '      four'],
+        \ getline(1, '$'))
+  set shiftwidth& tabstop&
+  bw!
 endfunc
 
 " Some commands like yy, cc, dd, >>, << and !! accept a count after

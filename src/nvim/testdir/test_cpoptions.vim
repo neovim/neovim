@@ -167,6 +167,7 @@ func Test_cpo_E()
   call assert_beeps('normal "ayl')
   " change an empty line
   call assert_beeps('normal lcTa')
+  call assert_beeps('normal 0c0')
   " delete an empty line
   call assert_beeps('normal D')
   call assert_beeps('normal dl')
