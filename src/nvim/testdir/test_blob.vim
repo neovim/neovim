@@ -252,6 +252,7 @@ func Test_blob_func_remove()
   call assert_fails("call remove(b, 3, 2)", 'E979:')
   call assert_fails("call remove(1, 0)", 'E896:')
   call assert_fails("call remove(b, b)", 'E974:')
+  call assert_fails("call remove(b, 1, [])", 'E745:')
   call assert_fails("call remove(v:_null_blob, 1, 2)", 'E979:')
 
   " Translated from v8.2.3284

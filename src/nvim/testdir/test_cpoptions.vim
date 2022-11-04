@@ -248,6 +248,7 @@ func Test_cpo_H()
 endfunc
 
 " TODO: Add a test for the 'i' flag in 'cpo'
+" Interrupting the reading of a file will leave it modified.
 
 " Test for the 'I' flag in 'cpo' (deleting autoindent when using arrow keys)
 func Test_cpo_I()
@@ -296,9 +297,12 @@ func Test_cpo_J()
   let &cpo = save_cpo
 endfunc
 
-" TODO: Add a test for the 'k' flag in 'cpo'
+" TODO: Add a test for the 'k' flag in 'cpo'.
+" Disable the recognition of raw key codes in mappings, abbreviations, and the
+" "to" part of menu commands.
 
-" TODO: Add a test for the 'K' flag in 'cpo'
+" TODO: Add a test for the 'K' flag in 'cpo'.
+" Don't wait for a key code to complete when it is halfway a mapping.
 
 " Test for the 'l' flag in 'cpo' (backslash in a [] range)
 func Test_cpo_l()
@@ -336,7 +340,9 @@ func Test_cpo_L()
   let &cpo = save_cpo
 endfunc
 
-" TODO: Add a test for the 'm' flag in 'cpo'
+" TODO: Add a test for the 'm' flag in 'cpo'.
+" When included, a showmatch will always wait half a second.  When not
+" included, a showmatch will wait half a second or until a character is typed.
 
 " Test for the 'M' flag in 'cpo' (% with escape parenthesis)
 func Test_cpo_M()
@@ -500,7 +506,9 @@ func Test_cpo_R()
   let &cpo = save_cpo
 endfunc
 
-" TODO: Add a test for the 's' flag in 'cpo'
+" TODO: Add a test for the 's' flag in 'cpo'.
+" Set buffer options when entering the buffer for the first time.  If not
+" present the options are set when the buffer is created.
 
 " Test for the 'S' flag in 'cpo' (copying buffer options)
 func Test_cpo_S()
@@ -545,8 +553,8 @@ func Test_cpo_u()
   let &cpo = save_cpo
 endfunc
 
-" TODO: Add a test for the 'v' flag in 'cpo' (backspace doesn't remove
-" characters from the screen)
+" TODO: Add a test for the 'v' flag in 'cpo'.
+" Backspaced characters remain visible on the screen in Insert mode.
 
 " Test for the 'w' flag in 'cpo' ('cw' on a blank character changes only one
 " character)
