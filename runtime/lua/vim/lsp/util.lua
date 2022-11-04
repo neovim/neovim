@@ -1248,6 +1248,8 @@ function M.stylize_markdown(bufnr, contents, opts)
   })
   opts = opts or {}
 
+  local maximumRowLength = 0
+
   -- table of fence types to {ft, begin, end}
   -- when ft is nil, we get the ft from the regex match
   local matchers = {
@@ -1334,7 +1336,13 @@ function M.stylize_markdown(bufnr, contents, opts)
         end
         i = i + 1
       end
+
+      if #line > maximumRowLength then
+        maximumRowLength = #line
+      end
     end
+
+    return maximumRowLength, #contents
   end
 
   -- Compute size of float needed to show (wrapped) lines
@@ -2100,3 +2108,4 @@ M.buf_versions = {}
 
 return M
 -- vim:sw=2 ts=2 et
+
