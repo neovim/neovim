@@ -2931,20 +2931,6 @@ func Test_normal52_rl()
   bw!
 endfunc
 
-func Test_normal53_digraph()
-  CheckFeature digraphs
-  new
-  call setline(1, 'abcdefgh|')
-  exe "norm! 1gg0f\<c-k>!!"
-  call assert_equal(9, col('.'))
-  set cpo+=D
-  exe "norm! 1gg0f\<c-k>!!"
-  call assert_equal(1, col('.'))
-
-  set cpo-=D
-  bw!
-endfunc
-
 func Test_normal54_Ctrl_bsl()
   new
   call setline(1, 'abcdefghijklmn')
@@ -3265,46 +3251,6 @@ func Test_normal_gk_gj()
   set cpoptions& number& numberwidth& wrap&
 endfunc
 
-" Test for cursor movement with '-' in 'cpoptions'
-func Test_normal_cpo_minus()
-  throw 'Skipped: Nvim does not support cpoptions flag "-"'
-  new
-  call setline(1, ['foo', 'bar', 'baz'])
-  let save_cpo = &cpo
-  set cpo+=-
-  call assert_beeps('normal 10j')
-  call assert_equal(1, line('.'))
-  normal G
-  call assert_beeps('normal 10k')
-  call assert_equal(3, line('.'))
-  call assert_fails(10, 'E16:')
-  let &cpo = save_cpo
-  close!
-endfunc
-
-" Test for displaying dollar when changing text ('$' flag in 'cpoptions')
-func Test_normal_cpo_dollar()
-  throw 'Skipped: use test/functional/legacy/cpoptions_spec.lua'
-  new
-  let g:Line = ''
-  func SaveFirstLine()
-    let g:Line = Screenline(1)
-    return ''
-  endfunc
-  inoremap <expr> <buffer> <F2> SaveFirstLine()
-  call test_override('redraw_flag', 1)
-  set cpo+=$
-  call setline(1, 'one two three')
-  redraw!
-  exe "normal c2w\<F2>vim"
-  call assert_equal('one tw$ three', g:Line)
-  call assert_equal('vim three', getline(1))
-  set cpo-=$
-  call test_override('ALL', 0)
-  delfunc SaveFirstLine
-  %bw!
-endfunc
-
 " Test for using : to run a multi-line Ex command in operator pending mode
 func Test_normal_yank_with_excmd()
   new
@@ -3384,31 +3330,6 @@ func Test_normal_delete_cmd()
   " delete to a readonly register
   call setline(1, ['abcd'])
   call assert_beeps('normal ":d2l')
-  close!
-endfunc
-
-" Test for the 'E' flag in 'cpo' with yank, change, delete, etc. operators
-func Test_empty_region_error()
-  new
-  call setline(1, '')
-  set cpo+=E
-  " yank an empty line
-  call assert_beeps('normal "ayl')
-  " change an empty line
-  call assert_beeps('normal lcTa')
-  " delete an empty line
-  call assert_beeps('normal D')
-  call assert_beeps('normal dl')
-  call assert_equal('', getline(1))
-  " change case of an empty line
-  call assert_beeps('normal gul')
-  call assert_beeps('normal gUl')
-  " replace a character
-  call assert_beeps('normal vrx')
-  " increment and decrement
-  call assert_beeps('exe "normal v\<C-A>"')
-  call assert_beeps('exe "normal v\<C-X>"')
-  set cpo-=E
   close!
 endfunc
 

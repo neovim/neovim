@@ -1724,40 +1724,6 @@ func Test_edit_illegal_filename()
   close!
 endfunc
 
-" Test for inserting text in a line with only spaces ('H' flag in 'cpoptions')
-func Test_edit_cpo_H()
-  throw 'Skipped: Nvim does not support cpoptions flag "H"'
-  new
-  call setline(1, '    ')
-  normal! Ia
-  call assert_equal('    a', getline(1))
-  set cpo+=H
-  call setline(1, '    ')
-  normal! Ia
-  call assert_equal('   a ', getline(1))
-  set cpo-=H
-  close!
-endfunc
-
-" Test for inserting tab in virtual replace mode ('L' flag in 'cpoptions')
-func Test_edit_cpo_L()
-  new
-  call setline(1, 'abcdefghijklmnopqr')
-  exe "normal 0gR\<Tab>"
-  call assert_equal("\<Tab>ijklmnopqr", getline(1))
-  set cpo+=L
-  set list
-  call setline(1, 'abcdefghijklmnopqr')
-  exe "normal 0gR\<Tab>"
-  call assert_equal("\<Tab>cdefghijklmnopqr", getline(1))
-  set nolist
-  call setline(1, 'abcdefghijklmnopqr')
-  exe "normal 0gR\<Tab>"
-  call assert_equal("\<Tab>ijklmnopqr", getline(1))
-  set cpo-=L
-  %bw!
-endfunc
-
 " Test for editing a directory
 func Test_edit_is_a_directory()
   CheckEnglish
