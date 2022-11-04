@@ -100,6 +100,8 @@ func Test_setpos()
   call setpos('.', [0, 1, -1, 0])
   call assert_equal([2, 2], [line('.'), col('.')])
 
+  call assert_fails("call setpos('ab', [0, 1, 1, 0])", 'E474:')
+
   bwipe!
   call win_gotoid(twowin)
   bwipe!

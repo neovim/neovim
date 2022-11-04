@@ -1430,3 +1430,5 @@ let g:test_data_aff_sal = [
       \"SAL ZZ-                  _",
       \"SAL Z                    S",
       \ ]
+
+" vim: shiftwidth=2 sts=2 expandtab

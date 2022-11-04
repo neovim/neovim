@@ -65,6 +65,8 @@ func Test_strgetchar()
   call assert_equal(-1, strgetchar('axb', -1))
   call assert_equal(-1, strgetchar('axb', 3))
   call assert_equal(-1, strgetchar('', 0))
+  call assert_fails("let c=strgetchar([], 1)", 'E730:')
+  call assert_fails("let c=strgetchar('axb', [])", 'E745:')
 endfunc
 
 func Test_strcharpart()
@@ -502,6 +504,9 @@ func Test_substitute_expr()
   endfunc
   " recursive call works
   call assert_equal('-y-x-', substitute('xxx', 'x\(.\)x', {-> '-' . Recurse() . '-' . submatch(1) . '-'}, ''))
+
+  call assert_fails("let s=submatch([])", 'E745:')
+  call assert_fails("let s=submatch(2, [])", 'E745:')
 endfunc
 
 func Test_invalid_submatch()
