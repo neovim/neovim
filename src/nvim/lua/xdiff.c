@@ -60,8 +60,8 @@ static void get_linematch_results(lua_State *lstate, mmfile_t *ma, mmfile_t *mb,
   const char *diff_begin[2] = { ma->ptr, mb->ptr };
   int diff_length[2] = { (int)count_a, (int)count_b };
 
-  fastforward_buf_to_lnum(&diff_begin[0], (size_t)start_a);
-  fastforward_buf_to_lnum(&diff_begin[1], (size_t)start_b);
+  fastforward_buf_to_lnum(&diff_begin[0], start_a);
+  fastforward_buf_to_lnum(&diff_begin[1], start_b);
 
   int *decisions = NULL;
   size_t decisions_length = linematch_nbuffers(diff_begin, diff_length, 2, &decisions, iwhite);

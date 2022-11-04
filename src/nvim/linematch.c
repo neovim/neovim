@@ -149,10 +149,9 @@ static int count_n_matched_chars(const char **sp, const size_t n, bool iwhite)
   return matched_chars;
 }
 
-void fastforward_buf_to_lnum(const char **s, size_t lnum)
+void fastforward_buf_to_lnum(const char **s, long lnum)
 {
-  assert(lnum > 0);
-  for (size_t j = 0; j < lnum - 1; j++) {
+  for (long i = 0; i < lnum - 1; i++) {
     *s = strchr(*s, '\n');
     (*s)++;
   }
@@ -185,7 +184,7 @@ static void try_possible_paths(const int *df_iters, const size_t *paths, const i
         if ((*choice) & (1 << k)) {
           from_vals[k]--;
           const char *p = diff_blk[k];
-          fastforward_buf_to_lnum(&p, (size_t)df_iters[k]);
+          fastforward_buf_to_lnum(&p, df_iters[k]);
           current_lines[k] = p;
         } else {
           current_lines[k] = NULL;
