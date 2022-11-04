@@ -2246,6 +2246,24 @@ A jump table for the options with a short description can be found at |Q_op|.
 	This option is reset when the 'paste' option is set and restored when
 	the 'paste' option is reset.
 
+					*'exrc'* *'ex'* *'noexrc'* *'noex'*
+'exrc' 'ex'		boolean (default off)
+			global
+	Enables the reading of .nvimrc and .exrc files in the current
+	directory.
+
+	When a .nvimrc or .exrc file is found in the current directory, the
+	user is prompted whether or not to trust the file. The file contents
+	are only sourced if the user indicates the file should be trusted. The
+	user's decision is remembered by writing the full file path of the
+	file along with the SHA256 hash of its contents to a "trust database"
+	at $XDG_STATE_HOME/nvim/trust.
+
+	See also |vim.readsecure()|.
+
+	This option cannot be set from a |modeline| or in the |sandbox|, for
+	security reasons.
+
 				*'fileencoding'* *'fenc'* *E213*
 'fileencoding' 'fenc'	string (default: "")
 			local to buffer

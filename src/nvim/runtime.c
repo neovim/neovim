@@ -5,9 +5,12 @@
 ///
 /// Management of runtime files (including packages)
 
+#include "nvim/api/buffer.h"
 #include "nvim/api/private/helpers.h"
+#include "nvim/api/vim.h"
 #include "nvim/ascii.h"
 #include "nvim/autocmd.h"
+#include "nvim/buffer.h"
 #include "nvim/charset.h"
 #include "nvim/cmdexpand.h"
 #include "nvim/debugger.h"
@@ -24,6 +27,7 @@
 #include "nvim/os/os.h"
 #include "nvim/profile.h"
 #include "nvim/runtime.h"
+#include "nvim/sha256.h"
 #include "nvim/vim.h"
 
 /// Structure used to store info for each sourced file.
@@ -1839,6 +1843,218 @@ static void cmd_source_buffer(const exarg_T *const eap)
                             ":source (no file)");
   }
   ga_clear(&ga);
+}
+
+/// Read a file, prompting the user if the file should be trusted or not.
+///
+/// Maintain a "trust database" at stdpath('state')/trust containing a sequence
+/// of [hash, path] pairs. A path can be marked as blacklisted by using a '!'
+/// character for the hash.
+///
+/// @param path[in] Path to file
+/// @param len[out] Pointer which is populated with the length of the returned contents without the
+///                 trailing NUL byte.
+///
+/// @return A pointer to file contents if the file should be trusted, or NULL
+///         otherwise. Caller owns returned memory.
+char *read_secure(const char *path, size_t *len)
+  FUNC_ATTR_NONNULL_ALL
+{
+  ssize_t fsize = 0;
+  char *contents = NULL;
+
+  // Exit early if file can't be read
+  FILE *fp = fopen(path, "r");
+  if (!fp) {
+    return NULL;
+  }
+
+  PMap(cstr_t) file_hashes = MAP_INIT;
+  char *fullpath = os_realpath(path, NULL);
+  char *trustdb = stdpaths_user_state_subpath("trust", 0, false);
+  FILE *trust_fp = os_fopen(trustdb, "r");
+  if (trust_fp) {
+    // Pre-allocate space for file path, 64 char hash, one space, one newline, and one null byte
+    int size = MAXPATHL + 64 + 3;
+    char *line = xcalloc((size_t)size, sizeof(char));
+    while (fgets(line, size, trust_fp) != NULL) {
+      char *s = line;
+      char *h = strsep(&s, " \n");
+      char *p = strsep(&s, "\n");
+      if (h == NULL || p == NULL) {
+        // Malformed line
+        continue;
+      }
+
+      // The trust database should not contain multiple entries for the same file, but if it does
+      // avoid making a duplicate copy of the file path (which would leak memory) and assume that
+      // the first hash read for the file is the "real" one.
+      if (!pmap_has(cstr_t)(&file_hashes, p)) {
+        (void)pmap_put(cstr_t)(&file_hashes, xstrdup(p), xstrdup(h));
+      }
+    }
+
+    xfree(line);
+    fclose(trust_fp);
+  }
+
+  const char *curhash = pmap_get(cstr_t)(&file_hashes, fullpath);
+  if (curhash != NULL && strcmp(curhash, "!") == 0) {
+    // File is blacklisted
+    goto out;
+  }
+
+  fseek(fp, 0, SEEK_END);
+  fsize = ftell(fp);
+  fseek(fp, 0, SEEK_SET);
+  assert(fsize >= 0);
+
+  contents = xcalloc((size_t)fsize, sizeof(char));
+  if (fread(contents, sizeof(char), (size_t)fsize, fp) != (size_t)fsize) {
+    XFREE_CLEAR(contents);
+    goto out;
+  }
+
+  const char *hash = sha256_bytes((uint8_t *)contents, (size_t)fsize, NULL, 0);
+  if (curhash && strcmp(curhash, hash) == 0) {
+    // File is trusted
+    goto out;
+  }
+
+  // File does not yet exist in trust database or hash did not match
+  // Prompt user for action
+  snprintf(IObuff, IOSIZE, "%s is untrusted", fullpath);
+  int choice = do_dialog(VIM_QUESTION, NULL, IObuff, "&ignore\n&view\n&blacklist\n&trust", 1, NULL,
+                         false);
+  switch (choice) {
+  case 0:
+  case 1:
+    // Cancelled or ignored
+    XFREE_CLEAR(contents);
+    goto out;
+  case 2: {
+    // View
+    Error err = ERROR_INIT;
+    Buffer buf = nvim_create_buf(false, true, &err);
+    if (ERROR_SET(&err)) {
+      XFREE_CLEAR(contents);
+      goto out;
+    }
+
+    nvim_buf_set_name(buf, cstr_as_string(fullpath), &err);
+    if (ERROR_SET(&err)) {
+      XFREE_CLEAR(contents);
+      goto out;
+    }
+
+    if (do_buffer(DOBUF_SPLIT, DOBUF_FIRST, FORWARD, buf, false) == FAIL) {
+      XFREE_CLEAR(contents);
+      goto out;
+    }
+
+    if (contents[fsize - 1] == '\n') {
+      contents[fsize - 1] = '\0';
+    }
+
+    Array lines = ARRAY_DICT_INIT;
+    char *str = contents;
+    char *line = NULL;
+    while ((line = strsep(&str, "\n")) != NULL) {
+      ADD(lines, CSTR_TO_OBJ(line));
+    }
+
+    nvim_buf_set_lines(INTERNAL_CALL_MASK, 0, 0, 1, false, lines, &err);
+    api_free_array(lines);
+    if (ERROR_SET(&err)) {
+      XFREE_CLEAR(contents);
+      goto out;
+    }
+
+    set_option_value_give_err("filetype", 0, "vim", OPT_LOCAL);
+    set_option_value_give_err("readonly", 1, NULL, OPT_LOCAL);
+    set_option_value_give_err("modifiable", 0, NULL, OPT_LOCAL);
+
+    XFREE_CLEAR(contents);
+    goto out;
+  }
+  case 3: {
+    // Blacklist
+
+    // Only duplicate the file path if it does not already exist in the map
+    char **k = (char **)pmap_ref(cstr_t)(&file_hashes, fullpath, false);
+    if (k == NULL) {
+      k = (char **)pmap_ref(cstr_t)(&file_hashes, xstrdup(fullpath), true);
+    }
+
+    *k = xstrdup("!");
+
+    XFREE_CLEAR(contents);
+    break;
+  }
+  case 4: {
+    // Trust
+
+    // Only duplicate the file path if it does not already exist in the map
+    char **k = (char **)pmap_ref(cstr_t)(&file_hashes, fullpath, false);
+    if (k == NULL) {
+      k = (char **)pmap_ref(cstr_t)(&file_hashes, xstrdup(fullpath), true);
+    }
+
+    *k = xstrdup(hash);
+
+    break;
+  }
+  case 5:
+    // Unreachable
+    assert(false);
+    XFREE_CLEAR(contents);
+    goto out;
+  }
+
+  trust_fp = os_fopen(trustdb, "w");
+  if (!trust_fp) {
+    semsg("Failed to open trust database %s\n", trustdb);
+    if (contents) {
+      XFREE_CLEAR(contents);
+    }
+    goto out;
+  }
+
+  {
+    const char *p;
+    char *h;
+    map_foreach(&file_hashes, p, h, {
+      fprintf(trust_fp, "%s %s\n", h, p);
+    })
+  }
+
+out:
+  xfree(fullpath);
+  xfree(trustdb);
+  fclose(fp);
+
+  if (trust_fp) {
+    fclose(trust_fp);
+  }
+
+  {
+    const char *p;
+    char *h;
+    map_foreach(&file_hashes, p, h, {
+      xfree((void *)p);
+      xfree(h);
+    })
+  }
+  pmap_destroy(cstr_t)(&file_hashes);
+
+  if (contents != NULL) {
+    // Subtract one for trailing null byte
+    *len = (size_t)fsize;
+  } else {
+    *len = 0;
+  }
+
+  return contents;
 }
 
 /// Executes lines in `src` as Ex commands.
