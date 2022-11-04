@@ -34,6 +34,9 @@ func Test_selectmode_start()
   set selectmode=cmd
   call feedkeys('gvabc', 'xt')
   call assert_equal('abctdef', getline(1))
+  " arrow keys without shift should not start selection
+  call feedkeys("A\<Home>\<Right>\<Left>ro", 'xt')
+  call assert_equal('roabctdef', getline(1))
   set selectmode= keymodel=
   bw!
 endfunc

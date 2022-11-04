@@ -225,6 +225,15 @@ func Test_virtual_replace()
   exe "normal iabcdefghijklmnopqrst\<Esc>0gRAB\tIJKLMNO\tQR"
   call assert_equal(['AB......CDEFGHI.Jkl',
 	      \ 'AB	IJKLMNO	QRst'], getline(12, 13))
+
+  " Test inserting Tab with 'noexpandtab' and 'softabstop' set to 4
+  %d
+  call setline(1, 'aaaaaaaaaaaaa')
+  set softtabstop=4
+  exe "normal gggR\<Tab>\<Tab>x"
+  call assert_equal("\txaaaa", getline(1))
+  set softtabstop&
+
   enew!
   set noai bs&vim
   if exists('save_t_kD')
