@@ -146,6 +146,10 @@ func Test_regexp_single_line_pat()
   call add(tl, [2, 'c*', 'abdef', ''])
   call add(tl, [2, 'bc\+', 'abccccdef', 'bcccc'])
   call add(tl, [2, 'bc\+', 'abdef']) " no match
+  " match escape character in a string
+  call add(tl, [2, '.\e.', "one\<Esc>two", "e\<Esc>t"])
+  " match backspace character in a string
+  call add(tl, [2, '.\b.', "one\<C-H>two", "e\<C-H>t"])
   " match newline character in a string
   call add(tl, [2, 'o\nb', "foo\nbar", "o\nb"])
 
@@ -895,6 +899,8 @@ func Test_regexp_error()
   call assert_fails("call matchlist('x x', '\\%#=2 \\zs*')", 'E888:')
   call assert_fails("call matchlist('x x', '\\%#=2 \\ze*')", 'E888:')
   call assert_fails('exe "normal /\\%#=1\\%[x\\%[x]]\<CR>"', 'E369:')
+  call assert_fails("call matchstr('abcd', '\\%o841\\%o142')", 'E678:')
+  call assert_equal('', matchstr('abcd', '\%o181\%o142'))
 endfunc
 
 " Test for using the last substitute string pattern (~)
