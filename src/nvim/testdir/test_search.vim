@@ -1752,6 +1752,25 @@ func Test_invalid_regexp()
   call assert_fails("call search('\\%#=3ab')", 'E864:')
 endfunc
 
+" Test for searching a very complex pattern in a string. Should switch the
+" regexp engine from NFA to the old engine.
+func Test_regexp_switch_engine()
+  let l = readfile('samples/re.freeze.txt')
+  let v = substitute(l[4], '..\@<!', '', '')
+  call assert_equal(l[4], v)
+endfunc
+
+" Test for the \%V atom to search within visually selected text
+func Test_search_in_visual_area()
+  new
+  call setline(1, ['foo bar1', 'foo bar2', 'foo bar3', 'foo bar4'])
+  exe "normal 2GVjo/\\%Vbar\<CR>\<Esc>"
+  call assert_equal([2, 5], [line('.'), col('.')])
+  exe "normal 2GVj$?\\%Vbar\<CR>\<Esc>"
+  call assert_equal([3, 5], [line('.'), col('.')])
+  close!
+endfunc
+
 " Test for searching with 'smartcase' and 'ignorecase'
 func Test_search_smartcase()
   new

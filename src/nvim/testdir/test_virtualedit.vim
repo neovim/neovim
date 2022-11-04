@@ -346,6 +346,17 @@ func Test_yank_paste_small_del_reg()
   set virtualedit=
 endfunc
 
+" Test for delete that breaks a tab into spaces
+func Test_delete_break_tab()
+  new
+  call setline(1, "one\ttwo")
+  set virtualedit=all
+  normal v3ld
+  call assert_equal('    two', getline(1))
+  set virtualedit&
+  close!
+endfunc
+
 " After calling s:TryVirtualeditReplace(), line 1 will contain one of these
 " two strings, depending on whether virtual editing is on or off.
 let s:result_ve_on  = 'a      x'
