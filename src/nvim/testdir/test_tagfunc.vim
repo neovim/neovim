@@ -85,7 +85,7 @@ func Test_tagfunc()
     return v:null
   endfunc
   set tags= tfu=NullTagFunc
-  call assert_fails('tag nothing', 'E426')
+  call assert_fails('tag nothing', 'E433')
   delf NullTagFunc
 
   bwipe!

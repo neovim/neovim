@@ -262,7 +262,7 @@ func Test_let_errors()
   let l = [1, 2, 3]
   call assert_fails('let l[:] = 5', 'E709:')
 
-  call assert_fails('let x:lnum=5', 'E488:')
+  call assert_fails('let x:lnum=5', ['E121:', 'E488:'])
   call assert_fails('let v:=5', 'E461:')
   call assert_fails('let [a]', 'E474:')
   call assert_fails('let [a, b] = [', 'E697:')

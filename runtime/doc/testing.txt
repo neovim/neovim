@@ -101,8 +101,23 @@ assert_exception({error} [, {msg}])			*assert_exception()*
 
 assert_fails({cmd} [, {error} [, {msg}]])			*assert_fails()*
 		Run {cmd} and add an error message to |v:errors| if it does
-		NOT produce an error.  Also see |assert-return|.
-		When {error} is given it must match in |v:errmsg|.
+		NOT produce an error or when {error} is not found in the
+		error message.  Also see |assert-return|.
+
+		When {error} is a string it must be found literally in the
+		first reported error. Most often this will be the error code,
+		including the colon, e.g. "E123:". >
+			assert_fails('bad cmd', 'E987:')
+<
+		When {error} is a |List| with one or two strings, these are
+		used as patterns.  The first pattern is matched against the
+		first reported error: >
+			assert_fails('cmd', ['E987:.*expected bool'])
+<		The second pattern, if present, is matched against the last
+		reported error.  To only match the last error use an empty
+		string for the first error: >
+			assert_fails('cmd', ['', 'E987:'])
+<
 		Note that beeping is not considered an error, and some failing
 		commands only beep.  Use |assert_beeps()| for those.
 

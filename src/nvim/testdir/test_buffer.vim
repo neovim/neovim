@@ -76,7 +76,7 @@ func Test_bunload_with_offset()
     let caught_E90 = 1
   endtry
   call assert_equal(1, caught_E90)
-  call assert_fails('$bunload', 'E515:')
+  call assert_fails('$bunload', 'E90:')
 endfunc
 
 " Test for :buffer, :bnext, :bprevious, :brewind, :blast and :bmodified
@@ -282,7 +282,7 @@ func Test_goto_buf_with_confirm()
   call assert_equal(1, &modified)
   call assert_equal('', @%)
   call feedkeys('y', 'L')
-  call assert_fails('confirm b Xfile', 'E37:')
+  call assert_fails('confirm b Xfile', ['', 'E37:'])
   call assert_equal(1, &modified)
   call assert_equal('', @%)
   call feedkeys('n', 'L')

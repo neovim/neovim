@@ -325,7 +325,7 @@ func Test_write_autocmd_unloadbuf_lockmark()
     autocmd BufWritePre Xfile enew | write
   augroup END
   e Xfile
-  call assert_fails('lockmarks write', 'E203:')
+  call assert_fails('lockmarks write', ['E32', 'E203:'])
   augroup WriteTest
     au!
   augroup END

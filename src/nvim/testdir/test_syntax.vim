@@ -378,7 +378,7 @@ func Test_syntax_invalid_arg()
   call assert_fails('syntax sync x', 'E404:')
   call assert_fails('syntax keyword Abc a[', 'E789:')
   call assert_fails('syntax keyword Abc a[bc]d', 'E890:')
-  call assert_fails('syntax cluster Abc add=A add=', 'E475:')
+  call assert_fails('syntax cluster Abc add=A add=', 'E406:')
 
   " Test for too many \z\( and unmatched \z\(
   " Not able to use assert_fails() here because both E50:/E879: and E475:

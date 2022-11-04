@@ -545,7 +545,7 @@ int var_redir_start(char *name, int append)
 
   // check if we can write to the variable: set it to or append an empty
   // string
-  int save_emsg = did_emsg;
+  const int called_emsg_before = called_emsg;
   did_emsg = false;
   typval_T tv;
   tv.v_type = VAR_STRING;
@@ -556,9 +556,7 @@ int var_redir_start(char *name, int append)
     set_var_lval(redir_lval, redir_endp, &tv, true, false, "=");
   }
   clear_lval(redir_lval);
-  int err = did_emsg;
-  did_emsg |= save_emsg;
-  if (err) {
+  if (called_emsg > called_emsg_before) {
     redir_endp = NULL;      // don't store a value, only cleanup
     var_redir_stop();
     return FAIL;
@@ -2185,7 +2183,7 @@ char *get_user_var_name(expand_T *xp, int idx)
 /// Does not use 'cpo' and always uses 'magic'.
 ///
 /// @return  true if "pat" matches "text".
-int pattern_match(char *pat, char *text, bool ic)
+int pattern_match(const char *pat, const char *text, bool ic)
 {
   int matches = 0;
   regmatch_T regmatch;
@@ -2193,7 +2191,7 @@ int pattern_match(char *pat, char *text, bool ic)
   // avoid 'l' flag in 'cpoptions'
   char *save_cpo = p_cpo;
   p_cpo = empty_option;
-  regmatch.regprog = vim_regcomp(pat, RE_MAGIC + RE_STRING);
+  regmatch.regprog = vim_regcomp((char *)pat, RE_MAGIC + RE_STRING);
   if (regmatch.regprog != NULL) {
     regmatch.rm_ic = ic;
     matches = vim_regexec_nl(&regmatch, (char_u *)text, (colnr_T)0);
@@ -8881,7 +8879,7 @@ int typval_compare(typval_T *typ1, typval_T *typ2, exprtype_T type, bool ic)
 
     case EXPR_MATCH:
     case EXPR_NOMATCH:
-      n1 = pattern_match((char *)s2, (char *)s1, ic);
+      n1 = pattern_match(s2, s1, ic);
       if (type == EXPR_NOMATCH) {
         n1 = !n1;
       }

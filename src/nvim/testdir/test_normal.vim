@@ -1650,7 +1650,7 @@ func Test_normal23_K()
   call setline(1, '---')
   call assert_fails('normal! ggv2lK', 'E349:')
   call setline(1, ['abc', 'xyz'])
-  call assert_fails("normal! gg2lv2h\<C-]>", 'E426:')
+  call assert_fails("normal! gg2lv2h\<C-]>", 'E433:')
   call assert_beeps("normal! ggVjK")
 
   " clean up

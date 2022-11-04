@@ -495,7 +495,7 @@ func Test_spellsuggest_expr_errors()
     return [[{}, {}]]
   endfunc
   set spellsuggest=expr:MySuggest3()
-  call assert_fails("call spellsuggest('baord')", 'E728:')
+  call assert_fails("call spellsuggest('baord')", 'E731:')
 
   set nospell spellsuggest&
   delfunc MySuggest

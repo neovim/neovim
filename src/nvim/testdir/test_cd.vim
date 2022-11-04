@@ -5,7 +5,7 @@ source check.vim
 
 func Test_cd_large_path()
   " This used to crash with a heap write overflow.
-  call assert_fails('cd ' . repeat('x', 5000), 'E472:')
+  call assert_fails('cd ' . repeat('x', 5000), 'E344:')
 endfunc
 
 func Test_cd_up_and_down()
@@ -45,9 +45,7 @@ func Test_cd_minus()
   call assert_equal(path, getcwd())
 
   " Test for :cd - after a failed :cd
-  " v8.2.1183 is not ported yet
-  " call assert_fails('cd /nonexistent', 'E344:')
-  call assert_fails('cd /nonexistent', 'E472:')
+  call assert_fails('cd /nonexistent', 'E344:')
   call assert_equal(path, getcwd())
   cd -
   call assert_equal(path_dotdot, getcwd())
@@ -103,7 +101,7 @@ func Test_chdir_func()
   call assert_equal('testdir', fnamemodify(getcwd(1, 1), ':t'))
 
   " Error case
-  call assert_fails("call chdir('dir-abcd')", 'E472:')
+  call assert_fails("call chdir('dir-abcd')", 'E344:')
   silent! let d = chdir("dir_abcd")
   call assert_equal("", d)
   " Should not crash

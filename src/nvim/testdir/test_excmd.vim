@@ -481,8 +481,8 @@ func Test_redir_cmd()
   call assert_fails('redir abc', 'E475:')
   call assert_fails('redir => 1abc', 'E474:')
   call assert_fails('redir => a b', 'E488:')
-  call assert_fails('redir => abc[1]', 'E475:')
-  let b=0zFF
+  call assert_fails('redir => abc[1]', 'E121:')
+  let b = 0zFF
   call assert_fails('redir =>> b', 'E734:')
   unlet b
 

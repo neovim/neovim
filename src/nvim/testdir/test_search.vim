@@ -1647,8 +1647,8 @@ func Test_search_with_no_last_pat()
     call assert_fails(";//p", 'E35:')
     call assert_fails("??p", 'E35:')
     call assert_fails(";??p", 'E35:')
-    call assert_fails('g//p', 'E476:')
-    call assert_fails('v//p', 'E476:')
+    call assert_fails('g//p', ['E35:', 'E476:'])
+    call assert_fails('v//p', ['E35:', 'E476:'])
     call writefile(v:errors, 'Xresult')
     qall!
   [SCRIPT]
@@ -1669,8 +1669,8 @@ func Test_search_tilde_pat()
     call assert_fails('exe "normal /~\<CR>"', 'E33:')
     call assert_fails('exe "normal ?~\<CR>"', 'E33:')
     set regexpengine=2
-    call assert_fails('exe "normal /~\<CR>"', 'E383:')
-    call assert_fails('exe "normal ?~\<CR>"', 'E383:')
+    call assert_fails('exe "normal /~\<CR>"', ['E33:', 'E383:'])
+    call assert_fails('exe "normal ?~\<CR>"', ['E33:', 'E383:'])
     set regexpengine&
     call writefile(v:errors, 'Xresult')
     qall!

@@ -6,9 +6,7 @@ source check.vim
 " Test for matchfuzzy()
 func Test_matchfuzzy()
   call assert_fails('call matchfuzzy(10, "abc")', 'E686:')
-  " Needs v8.2.1183; match the final error that's thrown for now
-  " call assert_fails('call matchfuzzy(["abc"], [])', 'E730:')
-  call assert_fails('call matchfuzzy(["abc"], [])', 'E475:')
+  call assert_fails('call matchfuzzy(["abc"], [])', 'E730:')
   call assert_fails("let x = matchfuzzy(v:_null_list, 'foo')", 'E686:')
   call assert_fails('call matchfuzzy(["abc"], v:_null_string)', 'E475:')
   call assert_equal([], matchfuzzy([], 'abc'))
@@ -75,12 +73,9 @@ func Test_matchfuzzy()
   call assert_fails("let x = matchfuzzy(l, 'day', {'text_cb' : {a, b -> 1}})", 'E119:')
   call assert_equal([], matchfuzzy(l, 'cam'))
   " Nvim's callback implementation is different, so E6000 is expected instead,
-  " but we need v8.2.1183 to assert it
   " call assert_fails("let x = matchfuzzy(l, 'cam', {'text_cb' : []})", 'E921:')
-  " call assert_fails("let x = matchfuzzy(l, 'cam', {'text_cb' : []})", 'E6000:')
-  call assert_fails("let x = matchfuzzy(l, 'cam', {'text_cb' : []})", 'E475:')
-  " call assert_fails("let x = matchfuzzy(l, 'foo', {'key' : []})", 'E730:')
-  call assert_fails("let x = matchfuzzy(l, 'foo', {'key' : []})", 'E475:')
+  call assert_fails("let x = matchfuzzy(l, 'cam', {'text_cb' : []})", 'E6000:')
+  call assert_fails("let x = matchfuzzy(l, 'foo', {'key' : []})", 'E730:')
   call assert_fails("let x = matchfuzzy(l, 'cam', v:_null_dict)", 'E715:')
   call assert_fails("let x = matchfuzzy(l, 'foo', {'key' : v:_null_string})", 'E475:')
   " Nvim doesn't have null functions
@@ -155,12 +150,9 @@ func Test_matchfuzzypos()
   call assert_fails("let x = matchfuzzypos(l, 'day', {'text_cb' : {a, b -> 1}})", 'E119:')
   call assert_equal([[], [], []], matchfuzzypos(l, 'cam'))
   " Nvim's callback implementation is different, so E6000 is expected instead,
-  " but we need v8.2.1183 to assert it
   " call assert_fails("let x = matchfuzzypos(l, 'cam', {'text_cb' : []})", 'E921:')
-  " call assert_fails("let x = matchfuzzypos(l, 'cam', {'text_cb' : []})", 'E6000:')
-  call assert_fails("let x = matchfuzzypos(l, 'cam', {'text_cb' : []})", 'E475:')
-  " call assert_fails("let x = matchfuzzypos(l, 'foo', {'key' : []})", 'E730:')
-  call assert_fails("let x = matchfuzzypos(l, 'foo', {'key' : []})", 'E475:')
+  call assert_fails("let x = matchfuzzypos(l, 'cam', {'text_cb' : []})", 'E6000:')
+  call assert_fails("let x = matchfuzzypos(l, 'foo', {'key' : []})", 'E730:')
   call assert_fails("let x = matchfuzzypos(l, 'cam', v:_null_dict)", 'E715:')
   call assert_fails("let x = matchfuzzypos(l, 'foo', {'key' : v:_null_string})", 'E475:')
   " Nvim doesn't have null functions

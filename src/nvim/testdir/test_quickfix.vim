@@ -740,7 +740,7 @@ func s:test_xhelpgrep(cchar)
   " Search for non existing help string
   call assert_fails('Xhelpgrep a1b2c3', 'E480:')
   " Invalid regular expression
-  call assert_fails('Xhelpgrep \@<!', 'E480:')
+  call assert_fails('Xhelpgrep \@<!', 'E866:')
 endfunc
 
 func Test_helpgrep()
@@ -4101,8 +4101,8 @@ endfunc
 
 func Test_lvimgrep_crash2()
   au BufNewFile x sfind
-  call assert_fails('lvimgrep x x', 'E480:')
-  call assert_fails('lvimgrep x x x', 'E480:')
+  call assert_fails('lvimgrep x x', 'E471:')
+  call assert_fails('lvimgrep x x x', 'E471:')
 
   au! BufNewFile
 endfunc

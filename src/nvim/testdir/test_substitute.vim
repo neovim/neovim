@@ -446,7 +446,7 @@ func Test_substitute_errors()
 
   call assert_fails('s/FOO/bar/', 'E486:')
   call assert_fails('s/foo/bar/@', 'E488:')
-  call assert_fails('s/\(/bar/', 'E476:')
+  call assert_fails('s/\(/bar/', 'E54:')
   call assert_fails('s afooabara', 'E146:')
   call assert_fails('s\\a', 'E10:')
 
@@ -841,9 +841,9 @@ endfunc
 func Test_sub_with_no_last_pat()
   let lines =<< trim [SCRIPT]
     call assert_fails('~', 'E33:')
-    call assert_fails('s//abc/g', 'E476:')
-    call assert_fails('s\/bar', 'E476:')
-    call assert_fails('s\&bar&', 'E476:')
+    call assert_fails('s//abc/g', 'E35:')
+    call assert_fails('s\/bar', 'E35:')
+    call assert_fails('s\&bar&', 'E33:')
     call writefile(v:errors, 'Xresult')
     qall!
   [SCRIPT]

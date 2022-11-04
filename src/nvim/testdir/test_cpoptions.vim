@@ -104,7 +104,7 @@ func Test_cpo_C()
   source Xfile
   call assert_equal([1, 2], g:l)
   set cpo+=C
-  call assert_fails('source Xfile', 'E10:')
+  call assert_fails('source Xfile', ['E697:', 'E10:'])
   call delete('Xfile')
   let &cpo = save_cpo
 endfunc
