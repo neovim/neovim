@@ -41,6 +41,15 @@ typedef struct {
 
 static void lua_pushhunk(lua_State *lstate, long start_a, long count_a, long start_b, long count_b)
 {
+  // Mimic extra offsets done by xdiff, see:
+  // src/xdiff/xemit.c:284
+  // src/xdiff/xutils.c:(356,368)
+  if (count_a > 0) {
+    start_a += 1;
+  }
+  if (count_b > 0) {
+    start_b += 1;
+  }
   lua_createtable(lstate, 0, 0);
   lua_pushinteger(lstate, start_a);
   lua_rawseti(lstate, -2, 1);
@@ -116,15 +125,6 @@ static int write_string(void *priv, mmbuffer_t *mb, int nbuf)
 // hunk_func callback used when opts.hunk_lines = true
 static int hunk_locations_cb(long start_a, long count_a, long start_b, long count_b, void *cb_data)
 {
-  // Mimic extra offsets done by xdiff, see:
-  // src/xdiff/xemit.c:284
-  // src/xdiff/xutils.c:(356,368)
-  if (count_a > 0) {
-    start_a += 1;
-  }
-  if (count_b > 0) {
-    start_b += 1;
-  }
   hunkpriv_t *priv = (hunkpriv_t *)cb_data;
   lua_State *lstate = priv->lstate;
   if (priv->linematch) {
