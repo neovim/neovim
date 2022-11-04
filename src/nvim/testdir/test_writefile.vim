@@ -260,6 +260,13 @@ func Test_write_errors()
   close
 
   call delete('Xfile')
+
+  " Nvim treats NULL list/blob more like empty list/blob
+  " call writefile(v:_null_list, 'Xfile')
+  " call assert_false(filereadable('Xfile'))
+  " call writefile(v:_null_blob, 'Xfile')
+  " call assert_false(filereadable('Xfile'))
+  call assert_fails('call writefile([], "")', 'E482:')
 endfunc
 
 " Test for writing a file using invalid file encoding

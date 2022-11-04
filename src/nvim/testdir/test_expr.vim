@@ -528,6 +528,7 @@ func Test_setmatches()
   endif
   eval set->setmatches()
   call assert_equal(exp, getmatches())
+  call assert_fails('let m = setmatches([], [])', 'E957:')
 endfunc
 
 func Test_empty_concatenate()
