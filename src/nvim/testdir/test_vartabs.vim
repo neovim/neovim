@@ -379,6 +379,8 @@ func Test_vartabs_shiftwidth()
   let lines = ScreenLines([1, 3], winwidth(0))
   call s:compare_lines(expect4, lines)
 
+  call assert_fails('call shiftwidth([])', 'E745:')
+
   " cleanup
   bw!
   bw!

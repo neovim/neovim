@@ -4,6 +4,9 @@ source term_util.vim
 " Command to check for the presence of a feature.
 command -nargs=1 CheckFeature call CheckFeature(<f-args>)
 func CheckFeature(name)
+  " if !has(a:name, 1)
+  "   throw 'Checking for non-existent feature ' .. a:name
+  " endif
   if !has(a:name)
     throw 'Skipped: ' .. a:name .. ' feature missing'
   endif

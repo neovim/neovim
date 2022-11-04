@@ -263,8 +263,16 @@ func Test_get_register()
   call assert_equal('', getreg("\<C-F>"))
   call assert_equal('', getreg("\<C-W>"))
   call assert_equal('', getreg("\<C-L>"))
+  " Change the last used register to '"' for the next test
+  normal! ""yy
+  let @" = 'happy'
+  call assert_equal('happy', getreg())
+  call assert_equal('happy', getreg(''))
 
   call assert_equal('', getregtype('!'))
+  call assert_fails('echo getregtype([])', 'E730:')
+  call assert_equal('v', getregtype())
+  call assert_equal('v', getregtype(''))
 
   " Test for inserting an invalid register content
   call assert_beeps('exe "normal i\<C-R>!"')
@@ -348,6 +356,12 @@ func Test_set_register()
   call assert_equal('abcabc', getline(1))
   normal 0".gP
   call assert_equal('abcabcabc', getline(1))
+
+  let @"=''
+  call setreg('', '1')
+  call assert_equal('1', @")
+  call setreg('@', '2')
+  call assert_equal('2', @")
 
   enew!
 endfunc

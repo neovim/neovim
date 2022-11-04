@@ -453,6 +453,11 @@ func Test_substitute_errors()
   setl nomodifiable
   call assert_fails('s/foo/bar/', 'E21:')
 
+  call assert_fails("let s=substitute([], 'a', 'A', 'g')", 'E730:')
+  call assert_fails("let s=substitute('abcda', [], 'A', 'g')", 'E730:')
+  call assert_fails("let s=substitute('abcda', 'a', [], 'g')", 'E730:')
+  call assert_fails("let s=substitute('abcda', 'a', 'A', [])", 'E730:')
+
   bwipe!
 endfunc
 

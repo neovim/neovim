@@ -139,6 +139,7 @@ func Test_expand_wildignore()
   call assert_equal('test_expand_func.vim', expand('test_expand_func.vim', 1))
   call assert_equal(['test_expand_func.vim'],
         \ expand('test_expand_func.vim', 1, 1))
+  call assert_fails("call expand('*', [])", 'E745:')
   set wildignore&
 endfunc
 

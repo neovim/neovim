@@ -542,6 +542,7 @@ func Test_window_newtab()
   call assert_equal(2, tabpagenr('$'))
   call assert_equal(['Xb', 'Xa'], map(tabpagebuflist(1), 'bufname(v:val)'))
   call assert_equal(['Xc'      ], map(2->tabpagebuflist(), 'bufname(v:val)'))
+  call assert_equal(['Xc'      ], map(tabpagebuflist(), 'bufname(v:val)'))
 
   %bw!
 endfunc

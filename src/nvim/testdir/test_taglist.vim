@@ -36,6 +36,8 @@ func Test_taglist()
   call assert_equal('d', cmd[0]['kind'])
   call assert_equal('call cursor(3, 4)', cmd[0]['cmd'])
 
+  call assert_fails("let l=taglist([])", 'E730:')
+
   call delete('Xtags')
   set tags&
   bwipe

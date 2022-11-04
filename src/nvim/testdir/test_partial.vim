@@ -82,6 +82,9 @@ func Test_partial_dict()
 
   let dict = {"tr": function('tr', ['hello', 'h', 'H'])}
   call assert_equal("Hello", dict.tr())
+
+  call assert_fails("let F=function('setloclist', 10)", "E923:")
+  call assert_fails("let F=function('setloclist', [], [])", "E922:")
 endfunc
 
 func Test_partial_implicit()
@@ -354,3 +357,5 @@ func Test_compare_partials()
   call assert_true(F1 isnot# F1d1)  " Partial /= non-partial
   call assert_true(d1.f1 isnot# d1.f1)  " handle_subscript creates new partial each time
 endfunc
+
+" vim: shiftwidth=2 sts=2 expandtab

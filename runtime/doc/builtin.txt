@@ -7261,6 +7261,7 @@ setqflist({list} [, {action} [, {what}]])		*setqflist()*
 							*setreg()*
 setreg({regname}, {value} [, {options}])
 		Set the register {regname} to {value}.
+		If {regname} is "" or "@", the unnamed register '"' is used.
 		The {regname} argument is a string.
 
 		{value} may be any value returned by |getreg()| or

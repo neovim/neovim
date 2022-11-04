@@ -623,6 +623,8 @@ func Test_synstack_synIDtrans()
   call assert_equal(['cComment', 'cTodo'], map(synstack(line("."), col(".")), 'synIDattr(v:val, "name")'))
   call assert_equal(['Comment', 'Todo'],   map(synstack(line("."), col(".")), 'synIDattr(synIDtrans(v:val), "name")'))
 
+  call assert_fails("let n=synIDtrans([])", 'E745:')
+
   syn clear
   bw!
 endfunc
