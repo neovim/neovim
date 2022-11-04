@@ -1,6 +1,7 @@
-" Test for various 'cpoptions' (cpo) flags
+" Test for the various 'cpoptions' (cpo) flags
 
 source check.vim
+source shared.vim
 source view_util.vim
 
 " Test for the 'a' flag in 'cpo'. Reading a file should set the alternate
@@ -60,6 +61,24 @@ func Test_cpo_b()
   call assert_equal(':pwd\<CR>|let i = 1', maparg('<F5>'))
   let &cpo = save_cpo
   nunmap <F5>
+endfunc
+
+" Test for the 'B' flag in 'cpo'. A backslash in mappings, abbreviations, user
+" commands and menu commands has no special meaning.
+func Test_cpo_B()
+  let save_cpo = &cpo
+  new
+  set cpo-=B
+  iabbr <buffer> abc ab\<BS>d
+  exe "normal iabc "
+  call assert_equal('ab<BS>d ', getline(1))
+  %d
+  set cpo+=B
+  iabbr <buffer> abc ab\<BS>d
+  exe "normal iabc "
+  call assert_equal('abd ', getline(1))
+  close!
+  let &cpo = save_cpo
 endfunc
 
 " Test for the 'c' flag in 'cpo'.
@@ -228,6 +247,8 @@ func Test_cpo_H()
   let &cpo = save_cpo
 endfunc
 
+" TODO: Add a test for the 'i' flag in 'cpo'
+
 " Test for the 'I' flag in 'cpo' (deleting autoindent when using arrow keys)
 func Test_cpo_I()
   let save_cpo = &cpo
@@ -243,6 +264,8 @@ func Test_cpo_I()
   close!
   let &cpo = save_cpo
 endfunc
+
+" Test for the 'j' flag in 'cpo' is in the test_join.vim file.
 
 " Test for the 'J' flag in 'cpo' (two spaces after a sentence)
 func Test_cpo_J()
@@ -273,9 +296,9 @@ func Test_cpo_J()
   let &cpo = save_cpo
 endfunc
 
-" TODO: Add a test for 'k' in 'cpo'
+" TODO: Add a test for the 'k' flag in 'cpo'
 
-" TODO: Add a test for 'K' in 'cpo'
+" TODO: Add a test for the 'K' flag in 'cpo'
 
 " Test for the 'l' flag in 'cpo' (backslash in a [] range)
 func Test_cpo_l()
@@ -313,7 +336,7 @@ func Test_cpo_L()
   let &cpo = save_cpo
 endfunc
 
-" TODO: This test doesn't work.
+" TODO: Add a test for the 'm' flag in 'cpo'
 
 " Test for the 'M' flag in 'cpo' (% with escape parenthesis)
 func Test_cpo_M()
@@ -398,6 +421,8 @@ func Test_cpo_O()
   let &cpo = save_cpo
 endfunc
 
+" Test for the 'p' flag in 'cpo' is in the test_lispwords.vim file.
+
 " Test for the 'P' flag in 'cpo' (appending to a file sets the current file
 " name)
 func Test_cpo_P()
@@ -475,6 +500,8 @@ func Test_cpo_R()
   let &cpo = save_cpo
 endfunc
 
+" TODO: Add a test for the 's' flag in 'cpo'
+
 " Test for the 'S' flag in 'cpo' (copying buffer options)
 func Test_cpo_S()
   let save_cpo = &cpo
@@ -499,6 +526,8 @@ func Test_cpo_S()
   let &cpo = save_cpo
 endfunc
 
+" Test for the 't' flag in 'cpo' is in the test_tagjump.vim file.
+
 " Test for the 'u' flag in 'cpo' (Vi-compatible undo)
 func Test_cpo_u()
   let save_cpo = &cpo
@@ -515,6 +544,33 @@ func Test_cpo_u()
   close!
   let &cpo = save_cpo
 endfunc
+
+" TODO: Add a test for the 'v' flag in 'cpo' (backspace doesn't remove
+" characters from the screen)
+
+" Test for the 'w' flag in 'cpo' ('cw' on a blank character changes only one
+" character)
+func Test_cpo_w()
+  throw 'Skipped: Nvim does not support cpoptions flag "w"'
+  let save_cpo = &cpo
+  new
+  set cpo+=w
+  call setline(1, 'here      are   some words')
+  norm! 1gg0elcwZZZ
+  call assert_equal('hereZZZ     are   some words', getline('.'))
+  norm! 1gg2elcWYYY
+  call assert_equal('hereZZZ     areYYY  some words', getline('.'))
+  set cpo-=w
+  call setline(1, 'here      are   some words')
+  norm! 1gg0elcwZZZ
+  call assert_equal('hereZZZare   some words', getline('.'))
+  norm! 1gg2elcWYYY
+  call assert_equal('hereZZZare   someYYYwords', getline('.'))
+  close!
+  let &cpo = save_cpo
+endfunc
+
+" Test for the 'W' flag in 'cpo' is in the test_writefile.vim file
 
 " Test for the 'x' flag in 'cpo' (Esc on command-line executes command)
 func Test_cpo_x()
@@ -588,22 +644,7 @@ func Test_cpo_Z()
   let &cpo = save_cpo
 endfunc
 
-" Test for cursor movement with '-' in 'cpoptions'
-func Test_cpo_minus()
-  throw 'Skipped: Nvim does not support cpoptions flag "-"'
-  new
-  call setline(1, ['foo', 'bar', 'baz'])
-  let save_cpo = &cpo
-  set cpo+=-
-  call assert_beeps('normal 10j')
-  call assert_equal(1, line('.'))
-  normal G
-  call assert_beeps('normal 10k')
-  call assert_equal(3, line('.'))
-  call assert_fails(10, 'E16:')
-  let &cpo = save_cpo
-  close!
-endfunc
+" Test for the '!' flag in 'cpo' is in the test_normal.vim file
 
 " Test for displaying dollar when changing text ('$' flag in 'cpoptions')
 func Test_cpo_dollar()
@@ -626,6 +667,252 @@ func Test_cpo_dollar()
   call test_override('ALL', 0)
   delfunc SaveFirstLine
   %bw!
+endfunc
+
+" Test for the '%' flag in 'cpo' (parenthesis matching inside strings)
+func Test_cpo_percent()
+  let save_cpo = &cpo
+  new
+  call setline(1, '    if (strcmp("ab)cd(", s))')
+  set cpo-=%
+  normal 8|%
+  call assert_equal(28, col('.'))
+  normal 15|%
+  call assert_equal(27, col('.'))
+  normal 27|%
+  call assert_equal(15, col('.'))
+  call assert_beeps("normal 19|%")
+  call assert_beeps("normal 22|%")
+  set cpo+=%
+  normal 8|%
+  call assert_equal(28, col('.'))
+  normal 15|%
+  call assert_equal(19, col('.'))
+  normal 27|%
+  call assert_equal(22, col('.'))
+  normal 19|%
+  call assert_equal(15, col('.'))
+  normal 22|%
+  call assert_equal(27, col('.'))
+  close!
+  let &cpo = save_cpo
+endfunc
+
+" Test for cursor movement with '-' in 'cpoptions'
+func Test_cpo_minus()
+  throw 'Skipped: Nvim does not support cpoptions flag "-"'
+  new
+  call setline(1, ['foo', 'bar', 'baz'])
+  let save_cpo = &cpo
+  set cpo+=-
+  call assert_beeps('normal 10j')
+  call assert_equal(1, line('.'))
+  normal G
+  call assert_beeps('normal 10k')
+  call assert_equal(3, line('.'))
+  call assert_fails(10, 'E16:')
+  close!
+  let &cpo = save_cpo
+endfunc
+
+" Test for the '+' flag in 'cpo' ('write file' command resets the 'modified'
+" flag)
+func Test_cpo_plus()
+  let save_cpo = &cpo
+  call writefile([], 'Xfile')
+  new Xfile
+  call setline(1, 'foo')
+  write X1
+  call assert_equal(1, &modified)
+  set cpo+=+
+  write X2
+  call assert_equal(0, &modified)
+  close!
+  call delete('Xfile')
+  call delete('X1')
+  call delete('X2')
+  let &cpo = save_cpo
+endfunc
+
+" Test for the '*' flag in 'cpo' (':*' is same as ':@')
+func Test_cpo_star()
+  throw 'Skipped: Nvim does not support cpoptions flag "*"'
+  let save_cpo = &cpo
+  let x = 0
+  new
+  set cpo-=*
+  let @a = 'let x += 1'
+  call assert_fails('*a', 'E20:')
+  set cpo+=*
+  *a
+  call assert_equal(1, x)
+  close!
+  let &cpo = save_cpo
+endfunc
+
+" Test for the '<' flag in 'cpo' is in the test_mapping.vim file
+
+" Test for the '>' flag in 'cpo' (use a new line when appending to a register)
+func Test_cpo_gt()
+  let save_cpo = &cpo
+  new
+  call setline(1, 'one two')
+  set cpo-=>
+  let @r = ''
+  normal gg"Rye
+  normal "Rye
+  call assert_equal("oneone", @r)
+  set cpo+=>
+  let @r = ''
+  normal gg"Rye
+  normal "Rye
+  call assert_equal("\none\none", @r)
+  close!
+  let &cpo = save_cpo
+endfunc
+
+" Test for the ';' flag in 'cpo'
+" Test for t,f,F,T movement commands and 'cpo-;' setting
+func Test_cpo_semicolon()
+  let save_cpo = &cpo
+  new
+  call append(0, ["aaa two three four", "    zzz", "yyy   ",
+	      \ "bbb yee yoo four", "ccc two three four",
+	      \ "ddd yee yoo four"])
+  set cpo-=;
+  1
+  normal! 0tt;D
+  2
+  normal! 0fz;D
+  3
+  normal! $Fy;D
+  4
+  normal! $Ty;D
+  set cpo+=;
+  5
+  normal! 0tt;;D
+  6
+  normal! $Ty;;D
+
+  call assert_equal('aaa two', getline(1))
+  call assert_equal('    z', getline(2))
+  call assert_equal('y', getline(3))
+  call assert_equal('bbb y', getline(4))
+  call assert_equal('ccc', getline(5))
+  call assert_equal('ddd yee y', getline(6))
+  close!
+  let &cpo = save_cpo
+endfunc
+
+" Test for the '#' flag in 'cpo' (count before 'D', 'o' and 'O' operators)
+func Test_cpo_hash()
+  throw 'Skipped: Nvim does not support cpoptions flag "#"'
+  let save_cpo = &cpo
+  new
+  set cpo-=#
+  call setline(1, ['one', 'two', 'three'])
+  normal gg2D
+  call assert_equal(['three'], getline(1, '$'))
+  normal gg2ofour
+  call assert_equal(['three', 'four', 'four'], getline(1, '$'))
+  normal gg2Otwo
+  call assert_equal(['two', 'two', 'three', 'four', 'four'], getline(1, '$'))
+  %d
+  set cpo+=#
+  call setline(1, ['one', 'two', 'three'])
+  normal gg2D
+  call assert_equal(['', 'two', 'three'], getline(1, '$'))
+  normal gg2oone
+  call assert_equal(['', 'one', 'two', 'three'], getline(1, '$'))
+  normal gg2Ozero
+  call assert_equal(['zero', '', 'one', 'two', 'three'], getline(1, '$'))
+  close!
+  let &cpo = save_cpo
+endfunc
+
+" Test for the '&' flag in 'cpo'. The swap file is kept when a buffer is still
+" loaded and ':preserve' is used.
+func Test_cpo_ampersand()
+  throw 'Skipped: Nvim does not support cpoptions flag "&"'
+  call writefile(['one'], 'Xfile')
+  let after =<< trim [CODE]
+    set cpo+=&
+    preserve
+    qall
+  [CODE]
+  if RunVim([], after, 'Xfile')
+    call assert_equal(1, filereadable('.Xfile.swp'))
+    call delete('.Xfile.swp')
+  endif
+  call delete('Xfile')
+endfunc
+
+" Test for the '\' flag in 'cpo' (backslash in a [] range in a search pattern)
+func Test_cpo_backslash()
+  throw 'Skipped: Nvim does not support cpoptions flag "\"'
+  let save_cpo = &cpo
+  new
+  call setline(1, ['', " \\-string"])
+  set cpo-=\
+  exe 'normal gg/[ \-]' .. "\<CR>n"
+  call assert_equal(3, col('.'))
+  set cpo+=\
+  exe 'normal gg/[ \-]' .. "\<CR>n"
+  call assert_equal(2, col('.'))
+  close!
+  let &cpo = save_cpo
+endfunc
+
+" Test for the '/' flag in 'cpo' is in the test_substitute.vim file
+
+" Test for the '{' flag in 'cpo' (the "{" and "}" commands stop at a {
+" character at the start of a line)
+func Test_cpo_brace()
+  throw 'Skipped: Nvim does not support cpoptions flag "{"'
+  let save_cpo = &cpo
+  new
+  call setline(1, ['', '{', '    int i;', '}', ''])
+  set cpo-={
+  normal gg}
+  call assert_equal(5, line('.'))
+  normal G{
+  call assert_equal(1, line('.'))
+  set cpo+={
+  normal gg}
+  call assert_equal(2, line('.'))
+  normal G{
+  call assert_equal(2, line('.'))
+  close!
+  let &cpo = save_cpo
+endfunc
+
+" Test for the '.' flag in 'cpo' (:cd command fails if the current buffer is
+" modified)
+func Test_cpo_dot()
+  throw 'Skipped: Nvim does not support cpoptions flag "."'
+  let save_cpo = &cpo
+  new Xfoo
+  call setline(1, 'foo')
+  let save_dir = getcwd()
+  set cpo+=.
+
+  " :cd should fail when buffer is modified and 'cpo' contains dot.
+  call assert_fails('cd ..', 'E747:')
+  call assert_equal(save_dir, getcwd())
+
+  " :cd with exclamation mark should succeed.
+  cd! ..
+  call assert_notequal(save_dir, getcwd())
+
+  " :cd should succeed when buffer has been written.
+  w!
+  exe 'cd ' .. fnameescape(save_dir)
+  call assert_equal(save_dir, getcwd())
+
+  call delete('Xfoo')
+  set cpo&
+  close!
+  let &cpo = save_cpo
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab

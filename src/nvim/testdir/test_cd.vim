@@ -68,30 +68,6 @@ func Test_cd_minus()
   call delete('Xresult')
 endfunc
 
-func Test_cd_with_cpo_chdir()
-  e Xfoo
-  call setline(1, 'foo')
-  let path = getcwd()
-  " set cpo+=.
-
-  " :cd should fail when buffer is modified and 'cpo' contains dot.
-  " call assert_fails('cd ..', 'E747:')
-  call assert_equal(path, getcwd())
-
-  " :cd with exclamation mark should succeed.
-  cd! ..
-  call assert_notequal(path, getcwd())
-
-  " :cd should succeed when buffer has been written.
-  w!
-  exe 'cd ' .. fnameescape(path)
-  call assert_equal(path, getcwd())
-
-  call delete('Xfoo')
-  set cpo&
-  bw!
-endfunc
-
 " Test for chdir()
 func Test_chdir_func()
   let topdir = getcwd()
