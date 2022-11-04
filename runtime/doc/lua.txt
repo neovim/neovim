@@ -784,6 +784,15 @@ vim.empty_dict()                                            *vim.empty_dict()*
     Note: If numeric keys are present in the table, Nvim ignores the metatable
     marker and converts the dict to a list/array anyway.
 
+vim.readsecure({path})                                      *vim.readsecure()*
+    Read the file at {path}, prompting the user if the file should be trusted.
+    The user is given the option to mark the file as trusted, blacklist the
+    file, view the file contents in a buffer, or do nothing. If the user
+    chooses to trust or blacklist the file, this decision is saved by writing
+    the full file path and the SHA256 hash of the file contents to a "trust
+    database" at $XDG_STATE_HOME/nvim/trust. Further calls to this function
+    with a matching content hash will not re-prompt the user.
+
 vim.rpcnotify({channel}, {method} [, {args}...])             *vim.rpcnotify()*
     Sends {event} to {channel} via |RPC| and returns immediately. If {channel}
     is 0, the event is broadcast to all channels.

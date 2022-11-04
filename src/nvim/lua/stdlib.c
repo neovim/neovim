@@ -41,6 +41,7 @@
 #include "nvim/os/os.h"
 #include "nvim/regexp.h"
 #include "nvim/regexp_defs.h"
+#include "nvim/runtime.h"
 #include "nvim/screen.h"
 #include "nvim/types.h"
 #include "nvim/undo.h"
@@ -541,6 +542,32 @@ static int nlua_iconv(lua_State *lstate)
 
 #endif
 
+int nlua_read_secure(lua_State *L)
+{
+  if (lua_gettop(L) < 1) {
+    return luaL_error(L, "Expected 1 argument");
+  }
+
+  if (lua_type(L, 1) != LUA_TSTRING) {
+    luaL_argerror(L, 1, "expected string");
+  }
+
+  char *contents = NULL;
+  size_t len = 0;
+  const char *path = lua_tolstring(L, 1, &len);
+  if (path != NULL) {
+    contents = read_secure(path, &len);
+  }
+
+  if (contents != NULL) {
+    lua_pushlstring(L, contents, len);
+    xfree(contents);
+    return 1;
+  }
+
+  return 0;
+}
+
 void nlua_state_add_stdlib(lua_State *const lstate, bool is_thread)
 {
   if (!is_thread) {
@@ -615,6 +642,10 @@ void nlua_state_add_stdlib(lua_State *const lstate, bool is_thread)
   // vim.json
   lua_cjson_new(lstate);
   lua_setfield(lstate, -2, "json");
+
+  // vim.readsecure
+  lua_pushcfunction(lstate, &nlua_read_secure);
+  lua_setfield(lstate, -2, "readsecure");
 }
 
 /// like luaL_error, but allow cleanup
