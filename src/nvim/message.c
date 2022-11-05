@@ -665,6 +665,7 @@ static bool emsg_multiline(const char *s, bool multiline)
 
     if (emsg_assert_fails_used && emsg_assert_fails_msg == NULL) {
       emsg_assert_fails_msg = xstrdup(s);
+      emsg_assert_fails_lnum = SOURCING_LNUM;
     }
 
     // set "v:errmsg", also when using ":silent! cmd"

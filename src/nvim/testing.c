@@ -124,7 +124,10 @@ static void fill_assert_error(garray_T *gap, typval_T *opt_msg_tv, char_u *exp_s
   bool did_copy = false;
   int omitted = 0;
 
-  if (opt_msg_tv->v_type != VAR_UNKNOWN) {
+  if (opt_msg_tv->v_type != VAR_UNKNOWN
+      && !(opt_msg_tv->v_type == VAR_STRING
+           && (opt_msg_tv->vval.v_string == NULL
+               || *opt_msg_tv->vval.v_string == NUL))) {
     tofree = (char_u *)encode_tv2echo(opt_msg_tv, NULL);
     ga_concat(gap, (char *)tofree);
     xfree(tofree);
@@ -497,6 +500,7 @@ void f_assert_fails(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     char buf[NUMBUFLEN];
     const char *expected;
     bool error_found = false;
+    bool lnum_error_found = false;
     char *actual = emsg_assert_fails_msg == NULL ? "[unknown]" : emsg_assert_fails_msg;
 
     if (argvars[1].v_type == VAR_STRING) {
@@ -525,12 +529,25 @@ void f_assert_fails(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
       goto theend;
     }
 
+    if (!error_found && argvars[3].v_type == VAR_NUMBER
+        && argvars[3].vval.v_number >= 0
+        && argvars[3].vval.v_number != emsg_assert_fails_lnum) {
+      error_found = true;
+      lnum_error_found = true;
+    }
+
     if (error_found) {
       typval_T actual_tv;
-      actual_tv.v_type = VAR_STRING;
-      actual_tv.vval.v_string = actual;
       prepare_assert_error(&ga);
-      fill_assert_error(&ga, &argvars[2], NULL, &argvars[1],
+      if (lnum_error_found) {
+        actual_tv.v_type = VAR_NUMBER;
+        actual_tv.vval.v_number = emsg_assert_fails_lnum;
+      } else {
+        actual_tv.v_type = VAR_STRING;
+        actual_tv.vval.v_string = actual;
+      }
+      fill_assert_error(&ga, &argvars[2], NULL,
+                        &argvars[lnum_error_found ? 3 : 1],
                         &actual_tv, ASSERT_OTHER);
       ga_concat(&ga, ": ");
       assert_append_cmd_or_arg(&ga, argvars, cmd);
