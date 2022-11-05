@@ -5325,10 +5325,8 @@ static int vgr_process_args(exarg_T *eap, vgr_args_T *args)
   }
 
   // Parse the list of arguments, wildcards have already been expanded.
-  if (get_arglist_exp(p, &args->fcount, &args->fnames, true) == FAIL) {
-    return FAIL;
-  }
-  if (args->fcount == 0) {
+  if (get_arglist_exp(p, &args->fcount, &args->fnames, true) == FAIL
+      || args->fcount == 0) {
     emsg(_(e_nomatch));
     return FAIL;
   }
