@@ -372,6 +372,7 @@ func Test_getsettagstack()
   call assert_fails("call settagstack(1, {'items' : 10})", 'E714')
   call assert_fails("call settagstack(1, {'items' : []}, 10)", 'E928')
   call assert_fails("call settagstack(1, {'items' : []}, 'b')", 'E962')
+  call assert_equal(-1, settagstack(0, v:_null_dict))
 
   set tags=Xtags
   call writefile(["!_TAG_FILE_ENCODING\tutf-8\t//",

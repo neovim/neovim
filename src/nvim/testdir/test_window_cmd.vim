@@ -1142,6 +1142,18 @@ func Test_split_cmds_with_no_room()
   call Run_noroom_for_newwindow_test('v')
 endfunc
 
+" Test for various wincmd failures
+func Test_wincmd_fails()
+  only!
+  call assert_beeps("normal \<C-W>w")
+  call assert_beeps("normal \<C-W>p")
+  call assert_beeps("normal \<C-W>gk")
+  call assert_beeps("normal \<C-W>r")
+  call assert_beeps("normal \<C-W>K")
+  call assert_beeps("normal \<C-W>H")
+  call assert_beeps("normal \<C-W>2gt")
+endfunc
+
 func Test_window_resize()
   " Vertical :resize (absolute, relative, min and max size).
   vsplit

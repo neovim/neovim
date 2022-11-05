@@ -798,16 +798,39 @@ func Test_mode()
   delfunction OperatorFunc
 endfunc
 
+" Test for append()
 func Test_append()
   enew!
   split
   call append(0, ["foo"])
+  call append(1, [])
+  call append(1, v:_null_list)
+  call assert_equal(['foo', ''], getline(1, '$'))
   split
   only
+  undo
   undo
 
   " Using $ instead of '$' must give an error
   call assert_fails("call append($, 'foobar')", 'E116:')
+endfunc
+
+" Test for setline()
+func Test_setline()
+  new
+  call setline(0, ["foo"])
+  call setline(0, [])
+  call setline(0, v:_null_list)
+  call setline(1, ["bar"])
+  call setline(1, [])
+  call setline(1, v:_null_list)
+  call setline(2, [])
+  call setline(2, v:_null_list)
+  call setline(3, [])
+  call setline(3, v:_null_list)
+  call setline(2, ["baz"])
+  call assert_equal(['bar', 'baz'], getline(1, '$'))
+  close!
 endfunc
 
 func Test_getbufvar()
@@ -917,6 +940,7 @@ func Test_match_func()
   call assert_equal(-1, match(['a', 'b', 'c', 'a'], 'a', 5))
   call assert_equal(4,  match('testing', 'ing', -1))
   call assert_fails("let x=match('testing', 'ing', 0, [])", 'E745:')
+  call assert_equal(-1, match(v:_null_list, 2))
 endfunc
 
 func Test_matchend()
@@ -1922,6 +1946,7 @@ func Test_call()
   call assert_equal(3, 'len'->call([123]))
   call assert_fails("call call('len', 123)", 'E714:')
   call assert_equal(0, call('', []))
+  call assert_equal(0, call('len', v:_null_list))
 
   function Mylen() dict
      return len(self.data)

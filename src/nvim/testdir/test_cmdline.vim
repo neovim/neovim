@@ -1270,6 +1270,11 @@ func Test_verbosefile()
   let log = readfile('Xlog')
   call assert_match("foo\nbar", join(log, "\n"))
   call delete('Xlog')
+  call mkdir('Xdir')
+  if !has('win32')  " FIXME: no error on Windows, libuv bug?
+  call assert_fails('set verbosefile=Xdir', 'E474:')
+  endif
+  call delete('Xdir', 'd')
 endfunc
 
 func Test_verbose_option()
