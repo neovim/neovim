@@ -6694,7 +6694,8 @@ const char *find_name_end(const char *arg, const char **expr_start, const char *
   for (p = arg; *p != NUL
        && (eval_isnamec(*p)
            || *p == '{'
-           || ((flags & FNE_INCL_BR) && (*p == '[' || *p == '.'))
+           || ((flags & FNE_INCL_BR) && (*p == '['
+                                         || (*p == '.' && eval_isnamec1(p[1]))))
            || mb_nest != 0
            || br_nest != 0); MB_PTR_ADV(p)) {
     if (*p == '\'') {

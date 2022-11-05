@@ -231,10 +231,12 @@ static void ex_let_const(exarg_T *eap, const bool is_const)
           expr++;
         }
       }
-      expr = skipwhite(expr + 2);
+      expr += 2;
     } else {
-      expr = skipwhite(expr + 1);
+      expr += 1;
     }
+
+    expr = skipwhite(expr);
 
     if (eap->skip) {
       emsg_skip++;
