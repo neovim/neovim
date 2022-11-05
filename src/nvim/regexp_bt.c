@@ -2091,6 +2091,7 @@ static char_u *regatom(int *flagp)
         uint32_t n = 0;
         int cmp;
         bool cur = false;
+        bool got_digit = false;
 
         cmp = c;
         if (cmp == '<' || cmp == '>') {
@@ -2101,6 +2102,7 @@ static char_u *regatom(int *flagp)
           c = getchr();
         }
         while (ascii_isdigit(c)) {
+          got_digit = true;
           n = n * 10 + (uint32_t)(c - '0');
           c = getchr();
         }
@@ -2115,7 +2117,7 @@ static char_u *regatom(int *flagp)
             *regcode++ = (char_u)cmp;
           }
           break;
-        } else if (c == 'l' || c == 'c' || c == 'v') {
+        } else if ((c == 'l' || c == 'c' || c == 'v') && (cur || got_digit)) {
           if (cur && n) {
             semsg(_(e_regexp_number_after_dot_pos_search_chr), no_Magic(c));
             rc_did_emsg = true;

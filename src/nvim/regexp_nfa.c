@@ -2141,6 +2141,7 @@ static int nfa_regatom(void)
       int64_t n = 0;
       const int cmp = c;
       bool cur = false;
+      bool got_digit = false;
 
       if (c == '<' || c == '>') {
         c = getchr();
@@ -2161,11 +2162,12 @@ static int nfa_regatom(void)
         }
         n = n * 10 + (c - '0');
         c = getchr();
+        got_digit = true;
       }
       if (c == 'l' || c == 'c' || c == 'v') {
         int32_t limit = INT32_MAX;
 
-        if (!cur && n == 0) {
+        if (!cur && !got_digit) {
           semsg(_(e_nfa_regexp_missing_value_in_chr), no_Magic(c));
           return FAIL;
         }
