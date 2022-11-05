@@ -112,6 +112,8 @@ static char e_regexp_number_after_dot_pos_search_chr[]
   = N_("E1204: No Number allowed after .: '\\%%%c'");
 static char e_nfa_regexp_missing_value_in_chr[]
   = N_("E1273: (NFA regexp) missing value in '\\%%%c'");
+static char e_atom_engine_must_be_at_start_of_pattern[]
+  = N_("E1281: Atom '\\%%#=%c' must be at the start of the pattern");
 static char e_substitute_nesting_too_deep[] = N_("E1290: substitute nesting too deep");
 
 #define NOT_MULTI       0
