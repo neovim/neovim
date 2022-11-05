@@ -74,4 +74,4 @@ tags
 # vim patches
 /vim-*.patch
 
-/CMakeUserPresets.json
+CMakeUserPresets.json
