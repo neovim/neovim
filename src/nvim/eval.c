@@ -5200,6 +5200,7 @@ linenr_T tv_get_lnum_buf(const typval_T *const tv, const buf_T *const buf)
   if (tv->v_type == VAR_STRING
       && tv->vval.v_string != NULL
       && tv->vval.v_string[0] == '$'
+      && tv->vval.v_string[1] == NUL
       && buf != NULL) {
     return buf->b_ml.ml_line_count;
   }
