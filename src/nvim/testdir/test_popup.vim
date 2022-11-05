@@ -359,7 +359,7 @@ func Test_completefunc_opens_new_window_one()
   /^one
   call assert_fails('call feedkeys("A\<C-X>\<C-U>\<C-N>\<Esc>", "x")', 'E565:')
   call assert_equal(winid, win_getid())
-  call assert_equal('oneDEF', getline(1))
+  call assert_equal('onedef', getline(1))
   q!
 endfunc
 
@@ -384,9 +384,7 @@ func Test_completefunc_opens_new_window_two()
   /^two
   call assert_fails('call feedkeys("A\<C-X>\<C-U>\<C-N>\<Esc>", "x")', 'E565:')
   call assert_equal(winid, win_getid())
-  " v8.2.1919 hasn't been ported yet
-  " call assert_equal('twodef', getline(1))
-  call assert_equal('twoDEF', getline(1))
+  call assert_equal('twodef', getline(1))
   q!
 endfunc
 

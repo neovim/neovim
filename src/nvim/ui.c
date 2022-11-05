@@ -315,7 +315,7 @@ void vim_beep(unsigned val)
 {
   called_vim_beep = true;
 
-  if (emsg_silent == 0) {
+  if (emsg_silent == 0 && !in_assert_fails) {
     if (!((bo_flags & val) || (bo_flags & BO_ALL))) {
       static int beeps = 0;
       static uint64_t start_time = 0;

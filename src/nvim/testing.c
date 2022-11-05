@@ -6,6 +6,8 @@
 #include "nvim/eval.h"
 #include "nvim/eval/encode.h"
 #include "nvim/ex_docmd.h"
+#include "nvim/globals.h"
+#include "nvim/message.h"
 #include "nvim/os/os.h"
 #include "nvim/runtime.h"
 #include "nvim/testing.h"
@@ -491,8 +493,8 @@ void f_assert_fails(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   // trylevel must be zero for a ":throw" command to be considered failed
   trylevel = 0;
   suppress_errthrow = true;
-  emsg_silent = true;
-  emsg_assert_fails_used = true;
+  in_assert_fails = true;
+  no_wait_return++;
 
   do_cmdline_cmd(cmd);
   if (called_emsg == called_emsg_before) {
@@ -584,9 +586,14 @@ void f_assert_fails(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 theend:
   trylevel = save_trylevel;
   suppress_errthrow = false;
-  emsg_silent = false;
+  in_assert_fails = false;
+  did_emsg = false;
+  msg_col = 0;
+  no_wait_return--;
+  need_wait_return = false;
   emsg_on_display = false;
-  emsg_assert_fails_used = false;
+  msg_reset_scroll();
+  lines_left = Rows;
   XFREE_CLEAR(emsg_assert_fails_msg);
   set_vim_var_string(VV_ERRMSG, NULL, 0);
   if (wrong_arg_msg != NULL) {

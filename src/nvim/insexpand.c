@@ -454,7 +454,7 @@ bool check_compl_option(bool dict_opt)
     msg_attr((dict_opt
               ? _("'dictionary' option is empty")
               : _("'thesaurus' option is empty")), HL_ATTR(HLF_E));
-    if (emsg_silent == 0) {
+    if (emsg_silent == 0 && !in_assert_fails) {
       vim_beep(BO_COMPL);
       setcursor();
       ui_flush();

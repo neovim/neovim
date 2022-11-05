@@ -664,7 +664,7 @@ static bool emsg_multiline(const char *s, bool multiline)
       return true;
     }
 
-    if (emsg_assert_fails_used && emsg_assert_fails_msg == NULL) {
+    if (in_assert_fails && emsg_assert_fails_msg == NULL) {
       emsg_assert_fails_msg = xstrdup(s);
       emsg_assert_fails_lnum = SOURCING_LNUM;
       xfree(emsg_assert_fails_context);
