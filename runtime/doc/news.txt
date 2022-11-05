@@ -39,6 +39,8 @@ NEW FEATURES                                                    *news-features*
 
 The following new APIs or features were added.
 
+• When using Nvim inside tmux 3.2 or later, the default clipboard provider
+  will now copy to the system clipboard. |provider-clipboard|
 • 'splitkeep' option to control the scroll behavior of horizontal splits.
 • |nvim_select_popupmenu_item()| now supports |cmdline-completion| popup menu.
 
