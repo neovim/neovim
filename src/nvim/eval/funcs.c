@@ -1360,7 +1360,7 @@ static void f_deepcopy(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   int noref = 0;
 
   if (argvars[1].v_type != VAR_UNKNOWN) {
-    noref = (int)tv_get_number_chk(&argvars[1], NULL);
+    noref = (int)tv_get_bool_chk(&argvars[1], NULL);
   }
   if (noref < 0 || noref > 1) {
     semsg(_(e_using_number_as_bool_nr), noref);

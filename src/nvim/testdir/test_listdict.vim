@@ -336,12 +336,12 @@ func Test_dict_deepcopy()
   let l = [4, d, 6]
   let d[3] = l
   let dc = deepcopy(d)
-  call assert_fails('call deepcopy(d, 1)', 'E698')
+  call assert_fails('call deepcopy(d, 1)', 'E698:')
   let l2 = [0, l, l, 3]
   let l[1] = l2
   let l3 = deepcopy(l2)
   call assert_true(l3[1] is l3[2])
-  call assert_fails("call deepcopy([1, 2], 2)", 'E474:')
+  call assert_fails("call deepcopy([1, 2], 2)", 'E1023:')
 endfunc
 
 " Locked variables
