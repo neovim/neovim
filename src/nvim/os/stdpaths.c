@@ -87,6 +87,9 @@ char *stdpaths_get_xdg_var(const XDGVarType idx)
   } else if (idx == kXDGRuntimeDir) {
     // Special-case: stdpath('run') is defined at startup.
     ret = vim_gettempdir();
+    if (ret == NULL) {
+      ret = "/tmp/";
+    }
     size_t len = strlen(ret);
     ret = xstrndup(ret, len >= 2 ? len - 1 : 0);  // Trim trailing slash.
   }
