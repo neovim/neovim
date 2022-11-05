@@ -2764,6 +2764,1153 @@ func Test_throw_across_script()
 endfunc
 
 "-------------------------------------------------------------------------------
+" Test 52:  Uncaught exceptions						    {{{1
+"
+"	    When an exception is thrown but not caught, an error message is
+"	    displayed when the script is terminated.  In case of an interrupt
+"	    or error exception, the normal interrupt or error message(s) are
+"	    displayed.
+"-------------------------------------------------------------------------------
+
+func Test_uncaught_exception_1()
+  CheckEnglish
+
+  let test =<< trim [CODE]
+    Xpath 'a'
+    throw "arrgh"
+    call assert_report('should not get here')`
+  [CODE]
+  let verify =<< trim [CODE]
+    call assert_equal('E605: Exception not caught: arrgh', v:errmsg)
+    call assert_equal('a', g:Xpath)
+  [CODE]
+  call RunInNewVim(test, verify)
+endfunc
+
+func Test_uncaught_exception_2()
+  CheckEnglish
+
+  let test =<< trim [CODE]
+    try
+      Xpath 'a'
+      throw "oops"
+      call assert_report('should not get here')`
+    catch /arrgh/
+      call assert_report('should not get here')`
+    endtry
+    call assert_report('should not get here')`
+  [CODE]
+  let verify =<< trim [CODE]
+    call assert_equal('E605: Exception not caught: oops', v:errmsg)
+    call assert_equal('a', g:Xpath)
+  [CODE]
+  call RunInNewVim(test, verify)
+endfunc
+
+func Test_uncaught_exception_3()
+  CheckEnglish
+
+  let test =<< trim [CODE]
+    func T()
+      Xpath 'c'
+      throw "brrr"
+      call assert_report('should not get here')`
+    endfunc
+
+    try
+      Xpath 'a'
+      throw "arrgh"
+      call assert_report('should not get here')`
+    catch /.*/
+      Xpath 'b'
+      call T()
+      call assert_report('should not get here')`
+    endtry
+    call assert_report('should not get here')`
+  [CODE]
+  let verify =<< trim [CODE]
+    call assert_equal('E605: Exception not caught: brrr', v:errmsg)
+    call assert_equal('abc', g:Xpath)
+  [CODE]
+  call RunInNewVim(test, verify)
+endfunc
+
+func Test_uncaught_exception_4()
+  CheckEnglish
+
+  let test =<< trim [CODE]
+    try
+      Xpath 'a'
+      throw "arrgh"
+      call assert_report('should not get here')`
+    finally
+      Xpath 'b'
+      throw "brrr"
+      call assert_report('should not get here')`
+    endtry
+    call assert_report('should not get here')`
+  [CODE]
+  let verify =<< trim [CODE]
+    call assert_equal('E605: Exception not caught: brrr', v:errmsg)
+    call assert_equal('ab', g:Xpath)
+  [CODE]
+  call RunInNewVim(test, verify)
+endfunc
+
+func Test_uncaught_exception_5()
+  CheckEnglish
+
+  " Need to catch and handle interrupt, otherwise the test will wait for the
+  " user to press <Enter> to continue
+  let test =<< trim [CODE]
+    try
+      try
+        Xpath 'a'
+        call interrupt()
+        call assert_report('should not get here')
+      endtry
+      call assert_report('should not get here')
+    catch /^Vim:Interrupt$/
+      Xpath 'b'
+    endtry
+  [CODE]
+  let verify =<< trim [CODE]
+    call assert_equal('ab', g:Xpath)
+  [CODE]
+  call RunInNewVim(test, verify)
+endfunc
+
+func Test_uncaught_exception_6()
+  CheckEnglish
+
+  let test =<< trim [CODE]
+    try
+      Xpath 'a'
+      let x = novar	" error E121; exception: E121
+    catch /E15:/	" should not catch
+      call assert_report('should not get here')
+    endtry
+    call assert_report('should not get here')
+  [CODE]
+  let verify =<< trim [CODE]
+    call assert_equal('a', g:Xpath)
+    call assert_equal('E121: Undefined variable: novar', v:errmsg)
+  [CODE]
+  call RunInNewVim(test, verify)
+endfunc
+
+func Test_uncaught_exception_7()
+  CheckEnglish
+
+  let test =<< trim [CODE]
+    try
+      Xpath 'a'
+      " error E108/E488; exception: E488
+      unlet novar #
+    catch /E108:/       " should not catch
+      call assert_report('should not get here')
+    endtry
+    call assert_report('should not get here')
+  [CODE]
+  let verify =<< trim [CODE]
+    call assert_equal('a', g:Xpath)
+    call assert_equal('E488: Trailing characters: #', v:errmsg)
+  [CODE]
+  call RunInNewVim(test, verify)
+endfunc
+
+"-------------------------------------------------------------------------------
+" Test 53:  Nesting errors: :endif/:else/:elseif			    {{{1
+"
+"	    For nesting errors of :if conditionals the correct error messages
+"	    should be given.
+"-------------------------------------------------------------------------------
+
+func Test_nested_if_else_errors()
+  CheckEnglish
+
+  " :endif without :if
+  let code =<< trim END
+    endif
+  END
+  call writefile(code, 'Xtest')
+  call AssertException(['source Xtest'], 'Vim(endif):E580: :endif without :if')
+
+  " :endif without :if
+  let code =<< trim END
+    while 1
+      endif
+    endwhile
+  END
+  call writefile(code, 'Xtest')
+  call AssertException(['source Xtest'], 'Vim(endif):E580: :endif without :if')
+
+  " :endif without :if
+  let code =<< trim END
+    try
+    finally
+      endif
+    endtry
+  END
+  call writefile(code, 'Xtest')
+  call AssertException(['source Xtest'], 'Vim(endif):E580: :endif without :if')
+
+  " :endif without :if
+  let code =<< trim END
+    try
+      endif
+    endtry
+  END
+  call writefile(code, 'Xtest')
+  call AssertException(['source Xtest'], 'Vim(endif):E580: :endif without :if')
+
+  " :endif without :if
+  let code =<< trim END
+    try
+      throw "a"
+    catch /a/
+      endif
+    endtry
+  END
+  call writefile(code, 'Xtest')
+  call AssertException(['source Xtest'], 'Vim(endif):E580: :endif without :if')
+
+  " :else without :if
+  let code =<< trim END
+    else
+  END
+  call writefile(code, 'Xtest')
+  call AssertException(['source Xtest'], 'Vim(else):E581: :else without :if')
+
+  " :else without :if
+  let code =<< trim END
+    while 1
+      else
+    endwhile
+  END
+  call writefile(code, 'Xtest')
+  call AssertException(['source Xtest'], 'Vim(else):E581: :else without :if')
+
+  " :else without :if
+  let code =<< trim END
+    try
+    finally
+      else
+    endtry
+  END
+  call writefile(code, 'Xtest')
+  call AssertException(['source Xtest'], 'Vim(else):E581: :else without :if')
+
+  " :else without :if
+  let code =<< trim END
+    try
+      else
+    endtry
+  END
+  call writefile(code, 'Xtest')
+  call AssertException(['source Xtest'], 'Vim(else):E581: :else without :if')
+
+  " :else without :if
+  let code =<< trim END
+    try
+      throw "a"
+    catch /a/
+      else
+    endtry
+  END
+  call writefile(code, 'Xtest')
+  call AssertException(['source Xtest'], 'Vim(else):E581: :else without :if')
+
+  " :elseif without :if
+  let code =<< trim END
+    elseif
+  END
+  call writefile(code, 'Xtest')
+  call AssertException(['source Xtest'], 'Vim(elseif):E582: :elseif without :if')
+
+  " :elseif without :if
+  let code =<< trim END
+    while 1
+      elseif
+    endwhile
+  END
+  call writefile(code, 'Xtest')
+  call AssertException(['source Xtest'], 'Vim(elseif):E582: :elseif without :if')
+
+  " :elseif without :if
+  let code =<< trim END
+    try
+    finally
+      elseif
+    endtry
+  END
+  call writefile(code, 'Xtest')
+  call AssertException(['source Xtest'], 'Vim(elseif):E582: :elseif without :if')
+
+  " :elseif without :if
+  let code =<< trim END
+    try
+      elseif
+    endtry
+  END
+  call writefile(code, 'Xtest')
+  call AssertException(['source Xtest'], 'Vim(elseif):E582: :elseif without :if')
+
+  " :elseif without :if
+  let code =<< trim END
+    try
+      throw "a"
+    catch /a/
+      elseif
+    endtry
+  END
+  call writefile(code, 'Xtest')
+  call AssertException(['source Xtest'], 'Vim(elseif):E582: :elseif without :if')
+
+  " multiple :else
+  let code =<< trim END
+    if 1
+    else
+    else
+    endif
+  END
+  call writefile(code, 'Xtest')
+  call AssertException(['source Xtest'], 'Vim(else):E583: multiple :else')
+
+  " :elseif after :else
+  let code =<< trim END
+    if 1
+    else
+    elseif 1
+    endif
+  END
+  call writefile(code, 'Xtest')
+  call AssertException(['source Xtest'], 'Vim(elseif):E584: :elseif after :else')
+
+  call delete('Xtest')
+endfunc
+
+"-------------------------------------------------------------------------------
+" Test 54:  Nesting errors: :while/:endwhile				    {{{1
+"
+"	    For nesting errors of :while conditionals the correct error messages
+"	    should be given.
+"
+"	    This test reuses the function MESSAGES() from the previous test.
+"	    This functions checks the messages in g:msgfile.
+"-------------------------------------------------------------------------------
+
+func Test_nested_while_error()
+  CheckEnglish
+
+  " :endwhile without :while
+  let code =<< trim END
+    endwhile
+  END
+  call writefile(code, 'Xtest')
+  call AssertException(['source Xtest'], 'Vim(endwhile):E588: :endwhile without :while')
+
+  " :endwhile without :while
+  let code =<< trim END
+    if 1
+      endwhile
+    endif
+  END
+  call writefile(code, 'Xtest')
+  call AssertException(['source Xtest'], 'Vim(endwhile):E588: :endwhile without :while')
+
+  " Missing :endif
+  let code =<< trim END
+    while 1
+      if 1
+    endwhile
+  END
+  call writefile(code, 'Xtest')
+  call AssertException(['source Xtest'], 'Vim(endwhile):E171: Missing :endif')
+
+  " :endwhile without :while
+  let code =<< trim END
+    try
+    finally
+      endwhile
+    endtry
+  END
+  call writefile(code, 'Xtest')
+  call AssertException(['source Xtest'], 'Vim(endwhile):E588: :endwhile without :while')
+
+  " Missing :endtry
+  let code =<< trim END
+    while 1
+      try
+      finally
+    endwhile
+  END
+  call writefile(code, 'Xtest')
+  call AssertException(['source Xtest'], 'Vim(endwhile):E600: Missing :endtry')
+
+  " Missing :endtry
+  let code =<< trim END
+    while 1
+      if 1
+        try
+        finally
+    endwhile
+  END
+  call writefile(code, 'Xtest')
+  call AssertException(['source Xtest'], 'Vim(endwhile):E600: Missing :endtry')
+
+  " Missing :endif
+  let code =<< trim END
+    while 1
+      try
+      finally
+        if 1
+    endwhile
+  END
+  call writefile(code, 'Xtest')
+  call AssertException(['source Xtest'], 'Vim(endwhile):E171: Missing :endif')
+
+  " :endwhile without :while
+  let code =<< trim END
+    try
+      endwhile
+    endtry
+  END
+  call writefile(code, 'Xtest')
+  call AssertException(['source Xtest'], 'Vim(endwhile):E588: :endwhile without :while')
+
+  " :endwhile without :while
+  let code =<< trim END
+    while 1
+      try
+        endwhile
+      endtry
+    endwhile
+  END
+  call writefile(code, 'Xtest')
+  call AssertException(['source Xtest'], 'Vim(endwhile):E588: :endwhile without :while')
+
+  " :endwhile without :while
+  let code =<< trim END
+    try
+      throw "a"
+    catch /a/
+      endwhile
+    endtry
+  END
+  call writefile(code, 'Xtest')
+  call AssertException(['source Xtest'], 'Vim(endwhile):E588: :endwhile without :while')
+
+  " :endwhile without :while
+  let code =<< trim END
+    while 1
+      try
+        throw "a"
+      catch /a/
+        endwhile
+      endtry
+    endwhile
+  END
+  call writefile(code, 'Xtest')
+  call AssertException(['source Xtest'], 'Vim(endwhile):E588: :endwhile without :while')
+
+  call delete('Xtest')
+endfunc
+
+"-------------------------------------------------------------------------------
+" Test 55:  Nesting errors: :continue/:break				    {{{1
+"
+"	    For nesting errors of :continue and :break commands the correct
+"	    error messages should be given.
+"
+"	    This test reuses the function MESSAGES() from the previous test.
+"	    This functions checks the messages in g:msgfile.
+"-------------------------------------------------------------------------------
+
+func Test_nested_cont_break_error()
+  CheckEnglish
+
+  " :continue without :while
+  let code =<< trim END
+    continue
+  END
+  call writefile(code, 'Xtest')
+  call AssertException(['source Xtest'], 'Vim(continue):E586: :continue without :while or :for')
+
+  " :continue without :while
+  let code =<< trim END
+    if 1
+      continue
+    endif
+  END
+  call writefile(code, 'Xtest')
+  call AssertException(['source Xtest'], 'Vim(continue):E586: :continue without :while or :for')
+
+  " :continue without :while
+  let code =<< trim END
+    try
+    finally
+      continue
+    endtry
+  END
+  call writefile(code, 'Xtest')
+  call AssertException(['source Xtest'], 'Vim(continue):E586: :continue without :while or :for')
+
+  " :continue without :while
+  let code =<< trim END
+    try
+      continue
+    endtry
+  END
+  call writefile(code, 'Xtest')
+  call AssertException(['source Xtest'], 'Vim(continue):E586: :continue without :while or :for')
+
+  " :continue without :while
+  let code =<< trim END
+    try
+      throw "a"
+    catch /a/
+      continue
+    endtry
+  END
+  call writefile(code, 'Xtest')
+  call AssertException(['source Xtest'], 'Vim(continue):E586: :continue without :while or :for')
+
+  " :break without :while
+  let code =<< trim END
+    break
+  END
+  call writefile(code, 'Xtest')
+  call AssertException(['source Xtest'], 'Vim(break):E587: :break without :while or :for')
+
+  " :break without :while
+  let code =<< trim END
+    if 1
+      break
+    endif
+  END
+  call writefile(code, 'Xtest')
+  call AssertException(['source Xtest'], 'Vim(break):E587: :break without :while or :for')
+
+  " :break without :while
+  let code =<< trim END
+    try
+    finally
+      break
+    endtry
+  END
+  call writefile(code, 'Xtest')
+  call AssertException(['source Xtest'], 'Vim(break):E587: :break without :while or :for')
+
+  " :break without :while
+  let code =<< trim END
+    try
+      break
+    endtry
+  END
+  call writefile(code, 'Xtest')
+  call AssertException(['source Xtest'], 'Vim(break):E587: :break without :while or :for')
+
+  " :break without :while
+  let code =<< trim END
+    try
+      throw "a"
+    catch /a/
+      break
+    endtry
+  END
+  call writefile(code, 'Xtest')
+  call AssertException(['source Xtest'], 'Vim(break):E587: :break without :while or :for')
+
+  call delete('Xtest')
+endfunc
+
+"-------------------------------------------------------------------------------
+" Test 56:  Nesting errors: :endtry					    {{{1
+"
+"	    For nesting errors of :try conditionals the correct error messages
+"	    should be given.
+"
+"	    This test reuses the function MESSAGES() from the previous test.
+"	    This functions checks the messages in g:msgfile.
+"-------------------------------------------------------------------------------
+
+func Test_nested_endtry_error()
+  CheckEnglish
+
+  " :endtry without :try
+  let code =<< trim END
+    endtry
+  END
+  call writefile(code, 'Xtest')
+  call AssertException(['source Xtest'], 'Vim(endtry):E602: :endtry without :try')
+
+  " :endtry without :try
+  let code =<< trim END
+    if 1
+      endtry
+    endif
+  END
+  call writefile(code, 'Xtest')
+  call AssertException(['source Xtest'], 'Vim(endtry):E602: :endtry without :try')
+
+  " :endtry without :try
+  let code =<< trim END
+    while 1
+      endtry
+    endwhile
+  END
+  call writefile(code, 'Xtest')
+  call AssertException(['source Xtest'], 'Vim(endtry):E602: :endtry without :try')
+
+  " Missing :endif
+  let code =<< trim END
+    try
+        if 1
+    endtry
+  END
+  call writefile(code, 'Xtest')
+  call AssertException(['source Xtest'], 'Vim(endtry):E171: Missing :endif')
+
+  " Missing :endwhile
+  let code =<< trim END
+    try
+      while 1
+    endtry
+  END
+  call writefile(code, 'Xtest')
+  call AssertException(['source Xtest'], 'Vim(endtry):E170: Missing :endwhile')
+
+  " Missing :endif
+  let code =<< trim END
+    try
+    finally
+      if 1
+    endtry
+  END
+  call writefile(code, 'Xtest')
+  call AssertException(['source Xtest'], 'Vim(endtry):E171: Missing :endif')
+
+  " Missing :endwhile
+  let code =<< trim END
+    try
+    finally
+      while 1
+    endtry
+  END
+  call writefile(code, 'Xtest')
+  call AssertException(['source Xtest'], 'Vim(endtry):E170: Missing :endwhile')
+
+  " Missing :endif
+  let code =<< trim END
+    try
+      throw "a"
+    catch /a/
+      if 1
+    endtry
+  END
+  call writefile(code, 'Xtest')
+  call AssertException(['source Xtest'], 'Vim(endtry):E171: Missing :endif')
+
+  " Missing :endwhile
+  let code =<< trim END
+    try
+      throw "a"
+    catch /a/
+      while 1
+    endtry
+  END
+  call writefile(code, 'Xtest')
+  call AssertException(['source Xtest'], 'Vim(endtry):E170: Missing :endwhile')
+
+  call delete('Xtest')
+endfunc
+
+"-------------------------------------------------------------------------------
+" Test 57:  v:exception and v:throwpoint for user exceptions		    {{{1
+"
+"	    v:exception evaluates to the value of the exception that was caught
+"	    most recently and is not finished.  (A caught exception is finished
+"	    when the next ":catch", ":finally", or ":endtry" is reached.)
+"	    v:throwpoint evaluates to the script/function name and line number
+"	    where that exception has been thrown.
+"-------------------------------------------------------------------------------
+
+func Test_user_exception_info()
+  CheckEnglish
+
+  XpathINIT
+  XloopINIT
+
+  func FuncException()
+    let g:exception = v:exception
+  endfunc
+
+  func FuncThrowpoint()
+    let g:throwpoint = v:throwpoint
+  endfunc
+
+  let scriptException  = MakeScript("FuncException")
+  let scriptThrowPoint = MakeScript("FuncThrowpoint")
+
+  command! CmdException  let g:exception  = v:exception
+  command! CmdThrowpoint let g:throwpoint = v:throwpoint
+
+  func T(arg, line)
+    if a:line == 2
+      throw a:arg		" in line 2
+    elseif a:line == 4
+      throw a:arg		" in line 4
+    elseif a:line == 6
+      throw a:arg		" in line 6
+    elseif a:line == 8
+      throw a:arg		" in line 8
+    endif
+  endfunc
+
+  func G(arg, line)
+    call T(a:arg, a:line)
+  endfunc
+
+  func F(arg, line)
+    call G(a:arg, a:line)
+  endfunc
+
+  let scriptT = MakeScript("T")
+  let scriptG = MakeScript("G", scriptT)
+  let scriptF = MakeScript("F", scriptG)
+
+  try
+    Xpath 'a'
+    call F("oops", 2)
+  catch /.*/
+    Xpath 'b'
+    let exception  = v:exception
+    let throwpoint = v:throwpoint
+    call assert_equal("oops", v:exception)
+    call assert_match('\<F\[1]\.\.G\[1]\.\.T\>', v:throwpoint)
+    call assert_match('\<2\>', v:throwpoint)
+
+    exec "let exception  = v:exception"
+    exec "let throwpoint = v:throwpoint"
+    call assert_equal("oops", v:exception)
+    call assert_match('\<F\[1]\.\.G\[1]\.\.T\>', v:throwpoint)
+    call assert_match('\<2\>', v:throwpoint)
+
+    CmdException
+    CmdThrowpoint
+    call assert_equal("oops", v:exception)
+    call assert_match('\<F\[1]\.\.G\[1]\.\.T\>', v:throwpoint)
+    call assert_match('\<2\>', v:throwpoint)
+
+    call FuncException()
+    call FuncThrowpoint()
+    call assert_equal("oops", v:exception)
+    call assert_match('\<F\[1]\.\.G\[1]\.\.T\>', v:throwpoint)
+    call assert_match('\<2\>', v:throwpoint)
+
+    exec "source" scriptException
+    exec "source" scriptThrowPoint
+    call assert_equal("oops", v:exception)
+    call assert_match('\<F\[1]\.\.G\[1]\.\.T\>', v:throwpoint)
+    call assert_match('\<2\>', v:throwpoint)
+
+    try
+      Xpath 'c'
+      call G("arrgh", 4)
+    catch /.*/
+      Xpath 'd'
+      let exception  = v:exception
+      let throwpoint = v:throwpoint
+      call assert_equal("arrgh", v:exception)
+      call assert_match('\<G\[1]\.\.T\>', v:throwpoint)
+      call assert_match('\<4\>', v:throwpoint)
+
+      try
+        Xpath 'e'
+        let g:arg = "autsch"
+        let g:line = 6
+        exec "source" scriptF
+      catch /.*/
+        Xpath 'f'
+        let exception  = v:exception
+        let throwpoint = v:throwpoint
+        call assert_equal("autsch", v:exception)
+        call assert_match(fnamemodify(scriptT, ':t'), v:throwpoint)
+        call assert_match('\<6\>', v:throwpoint)
+      finally
+        Xpath 'g'
+        let exception  = v:exception
+        let throwpoint = v:throwpoint
+        call assert_equal("arrgh", v:exception)
+        call assert_match('\<G\[1]\.\.T\>', v:throwpoint)
+        call assert_match('\<4\>', v:throwpoint)
+        try
+          Xpath 'h'
+          let g:arg = "brrrr"
+          let g:line = 8
+          exec "source" scriptG
+        catch /.*/
+          Xpath 'i'
+          let exception  = v:exception
+          let throwpoint = v:throwpoint
+          " Resolve scriptT for matching it against v:throwpoint.
+          call assert_equal("brrrr", v:exception)
+          call assert_match(fnamemodify(scriptT, ':t'), v:throwpoint)
+          call assert_match('\<8\>', v:throwpoint)
+        finally
+          Xpath 'j'
+          let exception  = v:exception
+          let throwpoint = v:throwpoint
+          call assert_equal("arrgh", v:exception)
+          call assert_match('\<G\[1]\.\.T\>', v:throwpoint)
+          call assert_match('\<4\>', v:throwpoint)
+        endtry
+        Xpath 'k'
+        let exception  = v:exception
+        let throwpoint = v:throwpoint
+        call assert_equal("arrgh", v:exception)
+        call assert_match('\<G\[1]\.\.T\>', v:throwpoint)
+        call assert_match('\<4\>', v:throwpoint)
+      endtry
+      Xpath 'l'
+      let exception  = v:exception
+      let throwpoint = v:throwpoint
+      call assert_equal("arrgh", v:exception)
+      call assert_match('\<G\[1]\.\.T\>', v:throwpoint)
+      call assert_match('\<4\>', v:throwpoint)
+    finally
+      Xpath 'm'
+      let exception  = v:exception
+      let throwpoint = v:throwpoint
+      call assert_equal("oops", v:exception)
+      call assert_match('\<F\[1]\.\.G\[1]\.\.T\>', v:throwpoint)
+      call assert_match('\<2\>', v:throwpoint)
+    endtry
+    Xpath 'n'
+    let exception  = v:exception
+    let throwpoint = v:throwpoint
+    call assert_equal("oops", v:exception)
+    call assert_match('\<F\[1]\.\.G\[1]\.\.T\>', v:throwpoint)
+    call assert_match('\<2\>', v:throwpoint)
+  finally
+    Xpath 'o'
+    let exception  = v:exception
+    let throwpoint = v:throwpoint
+    call assert_equal("", v:exception)
+    call assert_match('^$', v:throwpoint)
+    call assert_match('^$', v:throwpoint)
+  endtry
+
+  call assert_equal('abcdefghijklmno', g:Xpath)
+
+  unlet exception throwpoint
+  delfunction FuncException
+  delfunction FuncThrowpoint
+  call delete(scriptException)
+  call delete(scriptThrowPoint)
+  unlet scriptException scriptThrowPoint
+  delcommand CmdException
+  delcommand CmdThrowpoint
+  delfunction T
+  delfunction G
+  delfunction F
+  call delete(scriptT)
+  call delete(scriptG)
+  call delete(scriptF)
+  unlet scriptT scriptG scriptF
+endfunc
+
+"-------------------------------------------------------------------------------
+"
+" Test 58:  v:exception and v:throwpoint for error/interrupt exceptions	    {{{1
+"
+"	    v:exception and v:throwpoint work also for error and interrupt
+"	    exceptions.
+"-------------------------------------------------------------------------------
+
+func Test_execption_info_for_error()
+  CheckEnglish
+
+  let test =<< trim [CODE]
+    func T(line)
+      if a:line == 2
+        delfunction T		" error (function in use) in line 2
+      elseif a:line == 4
+        call interrupt()
+      endif
+    endfunc
+
+    while 1
+      try
+        Xpath 'a'
+        call T(2)
+        call assert_report('should not get here')
+      catch /.*/
+        Xpath 'b'
+        if v:exception !~ 'Vim(delfunction):'
+          call assert_report('should not get here')
+        endif
+        if v:throwpoint !~ '\<T\>'
+          call assert_report('should not get here')
+        endif
+        if v:throwpoint !~ '\<2\>'
+          call assert_report('should not get here')
+        endif
+      finally
+        Xpath 'c'
+        if v:exception != ""
+          call assert_report('should not get here')
+        endif
+        if v:throwpoint != ""
+          call assert_report('should not get here')
+        endif
+        break
+      endtry
+    endwhile
+
+    Xpath 'd'
+    if v:exception != ""
+      call assert_report('should not get here')
+    endif
+    if v:throwpoint != ""
+      call assert_report('should not get here')
+    endif
+
+    while 1
+      try
+        Xpath 'e'
+        call T(4)
+        call assert_report('should not get here')
+      catch /.*/
+        Xpath 'f'
+        if v:exception != 'Vim:Interrupt'
+          call assert_report('should not get here')
+        endif
+        if v:throwpoint !~ 'function T'
+          call assert_report('should not get here')
+        endif
+        if v:throwpoint !~ '\<4\>'
+          call assert_report('should not get here')
+        endif
+      finally
+        Xpath 'g'
+        if v:exception != ""
+          call assert_report('should not get here')
+        endif
+        if v:throwpoint != ""
+          call assert_report('should not get here')
+        endif
+        break
+      endtry
+    endwhile
+
+    Xpath 'h'
+    if v:exception != ""
+      call assert_report('should not get here')
+    endif
+    if v:throwpoint != ""
+      call assert_report('should not get here')
+    endif
+  [CODE]
+  let verify =<< trim [CODE]
+    call assert_equal('abcdefgh', g:Xpath)
+  [CODE]
+  call RunInNewVim(test, verify)
+endfunc
+
+"-------------------------------------------------------------------------------
+" Test 61:  Catching interrupt exceptions				    {{{1
+"
+"	    When an interrupt occurs inside a :try/:endtry region, an
+"	    interrupt exception is thrown and can be caught.  Its value is
+"	    "Vim:Interrupt".  If the interrupt occurs after an error or a :throw
+"	    but before a matching :catch is reached, all following :catches of
+"	    that try block are ignored, but the interrupt exception can be
+"	    caught by the next surrounding try conditional.  An interrupt is
+"	    ignored when there is a previous interrupt that has not been caught
+"	    or causes a :finally clause to be executed.
+"-------------------------------------------------------------------------------
+
+func Test_catch_intr_exception()
+  let test =<< trim [CODE]
+    while 1
+      try
+        try
+          Xpath 'a'
+          call interrupt()
+          call assert_report('should not get here')
+        catch /^Vim:Interrupt$/
+          Xpath 'b'
+        finally
+          Xpath 'c'
+        endtry
+      catch /.*/
+        call assert_report('should not get here')
+      finally
+        Xpath 'd'
+        break
+      endtry
+    endwhile
+
+    while 1
+      try
+        try
+          try
+            Xpath 'e'
+            asdf
+            call assert_report('should not get here')
+          catch /do_not_catch/
+            call assert_report('should not get here')
+          catch /.*/
+            Xpath 'f'
+            call interrupt()
+            call assert_report('should not get here')
+          catch /.*/
+            call assert_report('should not get here')
+          finally
+            Xpath 'g'
+            call interrupt()
+            call assert_report('should not get here')
+          endtry
+        catch /^Vim:Interrupt$/
+          Xpath 'h'
+        finally
+          Xpath 'i'
+        endtry
+      catch /.*/
+        call assert_report('should not get here')
+      finally
+        Xpath 'j'
+        break
+      endtry
+    endwhile
+
+    while 1
+      try
+        try
+          try
+            Xpath 'k'
+            throw "x"
+            call assert_report('should not get here')
+          catch /do_not_catch/
+            call assert_report('should not get here')
+          catch /x/
+            Xpath 'l'
+            call interrupt()
+            call assert_report('should not get here')
+          catch /.*/
+            call assert_report('should not get here')
+          endtry
+        catch /^Vim:Interrupt$/
+          Xpath 'm'
+        finally
+          Xpath 'n'
+        endtry
+      catch /.*/
+        call assert_report('should not get here')
+      finally
+        Xpath 'o'
+        break
+      endtry
+    endwhile
+
+    while 1
+      try
+        try
+          Xpath 'p'
+          call interrupt()
+          call assert_report('should not get here')
+        catch /do_not_catch/
+          call interrupt()
+          call assert_report('should not get here')
+        catch /^Vim:Interrupt$/
+          Xpath 'q'
+        finally
+          Xpath 'r'
+        endtry
+      catch /.*/
+        call assert_report('should not get here')
+      finally
+        Xpath 's'
+        break
+      endtry
+    endwhile
+
+    Xpath 't'
+  [CODE]
+  let verify =<< trim [CODE]
+    call assert_equal('abcdefghijklmnopqrst', g:Xpath)
+  [CODE]
+  call RunInNewVim(test, verify)
+endfunc
+
+"-------------------------------------------------------------------------------
+" Test 65:  Errors in the /pattern/ argument of a :catch		    {{{1
+"
+"	    On an error in the /pattern/ argument of a :catch, the :catch does
+"	    not match.  Any following :catches of the same :try/:endtry don't
+"	    match either.  Finally clauses are executed.
+"-------------------------------------------------------------------------------
+
+func Test_catch_pattern_error()
+  CheckEnglish
+  XpathINIT
+
+  try
+    try
+      Xpath 'a'
+      throw "oops"
+    catch /^oops$/
+      Xpath 'b'
+    catch /\)/		" not checked; exception has already been caught
+      call assert_report('should not get here')
+    endtry
+    Xpath 'c'
+  catch /.*/
+    call assert_report('should not get here')
+  endtry
+  call assert_equal('abc', g:Xpath)
+
+  XpathINIT
+  func F()
+    try
+      try
+        try
+          Xpath 'a'
+          throw "ab"
+        catch /abc/	" does not catch
+          call assert_report('should not get here')
+        catch /\)/	" error; discards exception
+          call assert_report('should not get here')
+        catch /.*/	" not checked
+          call assert_report('should not get here')
+        finally
+          Xpath 'b'
+        endtry
+        call assert_report('should not get here')
+      catch /^ab$/	" checked, but original exception is discarded
+        call assert_report('should not get here')
+      catch /^Vim(catch):/
+        Xpath 'c'
+        call assert_match('Vim(catch):E475: Invalid argument:', v:exception)
+      finally
+        Xpath 'd'
+      endtry
+      Xpath 'e'
+    catch /.*/
+      call assert_report('should not get here')
+    endtry
+    Xpath 'f'
+  endfunc
+
+  call F()
+  call assert_equal('abcdef', g:Xpath)
+
+  delfunc F
+endfunc
+
+"-------------------------------------------------------------------------------
 " Test 87   using (expr) ? funcref : funcref				    {{{1
 "
 "	    Vim needs to correctly parse the funcref and even when it does
