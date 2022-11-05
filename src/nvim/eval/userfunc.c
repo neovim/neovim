@@ -1964,7 +1964,7 @@ void ex_function(exarg_T *eap)
 
   // ":function /pat": list functions matching pattern.
   if (*eap->arg == '/') {
-    p = skip_regexp(eap->arg + 1, '/', true, NULL);
+    p = skip_regexp(eap->arg + 1, '/', true);
     if (!eap->skip) {
       regmatch_T regmatch;
 

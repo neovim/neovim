@@ -2670,7 +2670,7 @@ static int jumpto_tag(const char_u *lbuf_arg, int forceit, int keep_help)
     // anything following.
     str = pbuf;
     if (pbuf[0] == '/' || pbuf[0] == '?') {
-      str = (char_u *)skip_regexp((char *)pbuf + 1, pbuf[0], false, NULL) + 1;
+      str = (char_u *)skip_regexp((char *)pbuf + 1, pbuf[0], false) + 1;
     }
     if (str > pbuf_end - 1) {   // search command with nothing following
       save_p_ws = p_ws;
@@ -2883,7 +2883,7 @@ static int find_extra(char_u **pp)
     if (ascii_isdigit(*str)) {
       str = (char_u *)skipdigits((char *)str + 1);
     } else if (*str == '/' || *str == '?') {
-      str = (char_u *)skip_regexp((char *)str + 1, *str, false, NULL);
+      str = (char_u *)skip_regexp((char *)str + 1, *str, false);
       if (*str != first_char) {
         str = NULL;
       } else {

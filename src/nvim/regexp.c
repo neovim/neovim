@@ -484,10 +484,17 @@ static char_u *skip_anyof(char *p)
 /// Stop at end of "startp" or where "dirc" is found ('/', '?', etc).
 /// Take care of characters with a backslash in front of it.
 /// Skip strings inside [ and ].
+char *skip_regexp(char *startp, int dirc, int magic)
+{
+  return skip_regexp_ex(startp, dirc, magic, NULL, NULL);
+}
+
+/// skip_regexp() with extra arguments:
 /// When "newp" is not NULL and "dirc" is '?', make an allocated copy of the
 /// expression and change "\?" to "?".  If "*newp" is not NULL the expression
 /// is changed in-place.
-char *skip_regexp(char *startp, int dirc, int magic, char **newp)
+/// If a "\?" is changed to "?" then "dropped" is incremented, unless NULL.
+char *skip_regexp_ex(char *startp, int dirc, int magic, char **newp, int *dropped)
 {
   int mymagic;
   char *p = startp;
@@ -515,6 +522,9 @@ char *skip_regexp(char *startp, int dirc, int magic, char **newp)
         if (*newp == NULL) {
           *newp = xstrdup(startp);
           p = *newp + (p - startp);
+        }
+        if (dropped != NULL) {
+          (*dropped)++;
         }
         STRMOVE(p, p + 1);
       } else {

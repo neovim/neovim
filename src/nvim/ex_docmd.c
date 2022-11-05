@@ -3351,7 +3351,7 @@ static linenr_T get_address(exarg_T *eap, char **ptr, cmd_addr_T addr_type, int 
         goto error;
       }
       if (skip) {                       // skip "/pat/"
-        cmd = skip_regexp(cmd, c, p_magic, NULL);
+        cmd = skip_regexp(cmd, c, p_magic);
         if (*cmd == c) {
           cmd++;
         }
@@ -6494,7 +6494,7 @@ static void ex_findpat(exarg_T *eap)
   if (*eap->arg == '/') {   // Match regexp, not just whole words
     whole = false;
     eap->arg++;
-    char *p = skip_regexp(eap->arg, '/', p_magic, NULL);
+    char *p = skip_regexp(eap->arg, '/', p_magic);
     if (*p) {
       *p++ = NUL;
       p = skipwhite(p);

@@ -504,7 +504,7 @@ void ex_sort(exarg_T *eap)
       eap->nextcmd = check_nextcmd(p);
       break;
     } else if (!ASCII_ISALPHA(*p) && regmatch.regprog == NULL) {
-      s = skip_regexp(p + 1, *p, true, NULL);
+      s = skip_regexp(p + 1, *p, true);
       if (*s != *p) {
         emsg(_(e_invalpat));
         goto sortend;
@@ -3503,7 +3503,7 @@ static int do_sub(exarg_T *eap, proftime_T timeout, long cmdpreview_ns, handle_T
       which_pat = RE_LAST;                  // use last used regexp
       delimiter = (char_u)(*cmd++);                   // remember delimiter character
       pat = cmd;                            // remember start of search pat
-      cmd = skip_regexp(cmd, delimiter, p_magic, &eap->arg);
+      cmd = skip_regexp_ex(cmd, delimiter, p_magic, &eap->arg, NULL);
       if (cmd[0] == delimiter) {            // end delimiter found
         *cmd++ = NUL;                       // replace it with a NUL
         has_second_delim = true;
@@ -4536,7 +4536,7 @@ void ex_global(exarg_T *eap)
     delim = *cmd;               // get the delimiter
     cmd++;                      // skip delimiter if there is one
     pat = cmd;                  // remember start of pattern
-    cmd = skip_regexp(cmd, delim, p_magic, &eap->arg);
+    cmd = skip_regexp_ex(cmd, delim, p_magic, &eap->arg, NULL);
     if (cmd[0] == delim) {                  // end delimiter found
       *cmd++ = NUL;                         // replace it with a NUL
     }
@@ -4849,7 +4849,7 @@ char *skip_vimgrep_pat(char *p, char **s, int *flags)
       *s = p + 1;
     }
     c = (char_u)(*p);
-    p = skip_regexp(p + 1, c, true, NULL);
+    p = skip_regexp(p + 1, c, true);
     if (*p != c) {
       return NULL;
     }

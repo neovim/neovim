@@ -1296,7 +1296,7 @@ void ex_catch(exarg_T *eap)
     eap->nextcmd = find_nextcmd(eap->arg);
   } else {
     pat = eap->arg + 1;
-    end = skip_regexp(pat, *eap->arg, true, NULL);
+    end = skip_regexp(pat, *eap->arg, true);
   }
 
   if (!give_up) {
