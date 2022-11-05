@@ -1024,6 +1024,7 @@ endfunc
 
 " Test for using the 'exrc' option
 func Test_exrc()
+  throw 'skipped: Nvim requires exrc file to be trusted'
   let after =<< trim [CODE]
     call assert_equal(1, &exrc)
     call assert_equal(1, &secure)
