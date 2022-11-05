@@ -1246,7 +1246,7 @@ static const char *set_context_by_cmdname(const char *cmd, cmdidx_T cmdidx, cons
       arg = (const char *)skipwhite(skiptowhite(arg));
       if (*arg != NUL) {
         xp->xp_context = EXPAND_NOTHING;
-        arg = (const char *)skip_regexp((char *)arg + 1, (uint8_t)(*arg), p_magic, NULL);
+        arg = (const char *)skip_regexp((char *)arg + 1, (uint8_t)(*arg), p_magic);
       }
     }
     return (const char *)find_nextcmd(arg);
@@ -1285,7 +1285,7 @@ static const char *set_context_by_cmdname(const char *cmd, cmdidx_T cmdidx, cons
     if (delim) {
       // Skip "from" part.
       arg++;
-      arg = (const char *)skip_regexp((char *)arg, delim, p_magic, NULL);
+      arg = (const char *)skip_regexp((char *)arg, delim, p_magic);
     }
     // Skip "to" part.
     while (arg[0] != NUL && (uint8_t)arg[0] != delim) {

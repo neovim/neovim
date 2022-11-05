@@ -900,12 +900,12 @@ void ex_else(exarg_T *eap)
   if (eap->cmdidx == CMD_elseif) {
     bool error;
     result = eval_to_bool(eap->arg, &error, &eap->nextcmd, skip);
+
     // When throwing error exceptions, we want to throw always the first
     // of several errors in a row.  This is what actually happens when
     // a conditional error was detected above and there is another failure
     // when parsing the expression.  Since the skip flag is set in this
     // case, the parsing error will be ignored by emsg().
-
     if (!skip && !error) {
       if (result) {
         cstack->cs_flags[cstack->cs_idx] = CSF_ACTIVE | CSF_TRUE;
@@ -1296,7 +1296,10 @@ void ex_catch(exarg_T *eap)
     eap->nextcmd = find_nextcmd(eap->arg);
   } else {
     pat = eap->arg + 1;
-    end = skip_regexp(pat, *eap->arg, true, NULL);
+    end = skip_regexp_err(pat, *eap->arg, true);
+    if (end == NULL) {
+      give_up = true;
+    }
   }
 
   if (!give_up) {

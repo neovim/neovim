@@ -1360,7 +1360,7 @@ func Test_sort_cmd()
   call setline(1, ['line1', 'line2'])
   call assert_fails('sort no', 'E474:')
   call assert_fails('sort c', 'E475:')
-  call assert_fails('sort #pat%', 'E682:')
+  call assert_fails('sort #pat%', 'E654:')
 
   enew!
 endfunc

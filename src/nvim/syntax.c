@@ -4749,7 +4749,7 @@ static char *get_syn_pattern(char *arg, synpat_T *ci)
     return NULL;
   }
 
-  end = skip_regexp(arg + 1, *arg, true, NULL);
+  end = skip_regexp(arg + 1, *arg, true);
   if (*end != *arg) {                       // end delimiter not found
     semsg(_("E401: Pattern delimiter not found: %s"), arg);
     return NULL;
@@ -4902,7 +4902,7 @@ static void syn_cmd_sync(exarg_T *eap, int syncing)
         finished = true;
         break;
       }
-      arg_end = skip_regexp(next_arg + 1, *next_arg, true, NULL);
+      arg_end = skip_regexp(next_arg + 1, *next_arg, true);
       if (*arg_end != *next_arg) {          // end delimiter not found
         illegal = true;
         break;
