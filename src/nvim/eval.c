@@ -1757,7 +1757,7 @@ void set_var_lval(lval_T *lp, char *endp, typval_T *rettv, int copy, const bool 
     // Assign to a List or Dictionary item.
     if (lp->ll_newkey != NULL) {
       if (op != NULL && *op != '=') {
-        semsg(_(e_letwrong), op);
+        semsg(_(e_dictkey), lp->ll_newkey);
         return;
       }
 
