@@ -24,7 +24,7 @@ describe('autocmd TermClose', function()
   local function test_termclose_delete_own_buf()
     command('autocmd TermClose * bdelete!')
     command('terminal')
-    matches('^Vim%(bdelete%):E937: Attempt to delete a buffer that is in use: term://',
+    matches('^TermClose Autocommands for "%*": Vim%(bdelete%):E937: Attempt to delete a buffer that is in use: term://',
             pcall_err(command, 'bdelete!'))
     assert_alive()
   end
