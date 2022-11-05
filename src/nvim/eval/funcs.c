@@ -112,6 +112,8 @@ PRAGMA_DIAG_POP
 static char *e_listblobarg = N_("E899: Argument of %s must be a List or Blob");
 static char *e_invalwindow = N_("E957: Invalid window number");
 static char *e_reduceempty = N_("E998: Reduce of an empty %s with no initial value");
+static char e_using_number_as_bool_nr[]
+  = N_("E1023: Using a Number as a Bool: %d");
 static char e_cannot_resize_window_in_another_tab_page[]
   = N_("E1308: Cannot resize a window in another tab page");
 
@@ -1361,7 +1363,7 @@ static void f_deepcopy(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     noref = (int)tv_get_number_chk(&argvars[1], NULL);
   }
   if (noref < 0 || noref > 1) {
-    emsg(_(e_invarg));
+    semsg(_(e_using_number_as_bool_nr), noref);
   } else {
     var_item_copy(NULL, &argvars[0], rettv, true, (noref == 0
                                                    ? get_copyID()
@@ -8457,7 +8459,7 @@ static void f_strchars(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     skipcc = (int)tv_get_number_chk(&argvars[1], NULL);
   }
   if (skipcc < 0 || skipcc > 1) {
-    emsg(_(e_invarg));
+    semsg(_(e_using_number_as_bool_nr), skipcc);
   } else {
     func_mb_ptr2char_adv = skipcc ? mb_ptr2char_adv : mb_cptr2char_adv;
     while (*s != NUL) {
