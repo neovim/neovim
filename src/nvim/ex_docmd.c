@@ -807,6 +807,7 @@ int do_cmdline(char *cmdline, LineGetter fgetline, void *cookie, int flags)
           next = messages->next;
           emsg(messages->msg);
           xfree(messages->msg);
+          xfree(messages->sfile);
           xfree(messages);
           messages = next;
         } while (messages != NULL);
