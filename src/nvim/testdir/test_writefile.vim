@@ -260,6 +260,193 @@ func Test_write_errors()
   close
 
   call delete('Xfile')
+
+  " Nvim treats NULL list/blob more like empty list/blob
+  " call writefile(v:_null_list, 'Xfile')
+  " call assert_false(filereadable('Xfile'))
+  " call writefile(v:_null_blob, 'Xfile')
+  " call assert_false(filereadable('Xfile'))
+  call assert_fails('call writefile([], "")', 'E482:')
+
+  " very long file name
+  let long_fname = repeat('n', 5000)
+  call assert_fails('exe "w " .. long_fname', 'E75:')
+  call assert_fails('call writefile([], long_fname)', 'E482:')
+endfunc
+
+" Test for writing to a file which is modified after Vim read it
+func Test_write_file_mtime()
+  CheckEnglish
+  CheckRunVimInTerminal
+
+  " First read the file into a buffer
+  call writefile(["Line1", "Line2"], 'Xfile')
+  let old_ftime = getftime('Xfile')
+  let buf = RunVimInTerminal('Xfile', #{rows : 10})
+  call term_wait(buf)
+  call term_sendkeys(buf, ":set noswapfile\<CR>")
+  call term_wait(buf)
+
+  " Modify the file directly.  Make sure the file modification time is
+  " different. Note that on Linux/Unix, the file is considered modified
+  " outside, only if the difference is 2 seconds or more
+  sleep 1
+  call writefile(["Line3", "Line4"], 'Xfile')
+  let new_ftime = getftime('Xfile')
+  while new_ftime - old_ftime < 2
+    sleep 100m
+    call writefile(["Line3", "Line4"], 'Xfile')
+    let new_ftime = getftime('Xfile')
+  endwhile
+
+  " Try to overwrite the file and check for the prompt
+  call term_sendkeys(buf, ":w\<CR>")
+  call term_wait(buf)
+  call WaitForAssert({-> assert_equal("WARNING: The file has been changed since reading it!!!", term_getline(buf, 9))})
+  call assert_equal("Do you really want to write to it (y/n)?",
+        \ term_getline(buf, 10))
+  call term_sendkeys(buf, "n\<CR>")
+  call term_wait(buf)
+  call assert_equal(new_ftime, getftime('Xfile'))
+  call term_sendkeys(buf, ":w\<CR>")
+  call term_wait(buf)
+  call term_sendkeys(buf, "y\<CR>")
+  call term_wait(buf)
+  call WaitForAssert({-> assert_equal('Line2', readfile('Xfile')[1])})
+
+  " clean up
+  call StopVimInTerminal(buf)
+  call delete('Xfile')
+endfunc
+
+" Test for an autocmd unloading a buffer during a write command
+func Test_write_autocmd_unloadbuf_lockmark()
+  augroup WriteTest
+    autocmd BufWritePre Xfile enew | write
+  augroup END
+  e Xfile
+  call assert_fails('lockmarks write', 'E203:')
+  augroup WriteTest
+    au!
+  augroup END
+  augroup! WriteTest
+endfunc
+
+" Test for writing a buffer with 'acwrite' but without autocmds
+func Test_write_acwrite_error()
+  new Xfile
+  call setline(1, ['line1', 'line2', 'line3'])
+  set buftype=acwrite
+  call assert_fails('write', 'E676:')
+  call assert_fails('1,2write!', 'E676:')
+  call assert_fails('w >>', 'E676:')
+  close!
+endfunc
+
+" Test for adding and removing lines from an autocmd when writing a buffer
+func Test_write_autocmd_add_remove_lines()
+  new Xfile
+  call setline(1, ['aaa', 'bbb', 'ccc', 'ddd'])
+
+  " Autocmd deleting lines from the file when writing a partial file
+  augroup WriteTest2
+    au!
+    autocmd FileWritePre Xfile 1,2d
+  augroup END
+  call assert_fails('2,3w!', 'E204:')
+
+  " Autocmd adding lines to a file when writing a partial file
+  augroup WriteTest2
+    au!
+    autocmd FileWritePre Xfile call append(0, ['xxx', 'yyy'])
+  augroup END
+  %d
+  call setline(1, ['aaa', 'bbb', 'ccc', 'ddd'])
+  1,2w!
+  call assert_equal(['xxx', 'yyy', 'aaa', 'bbb'], readfile('Xfile'))
+
+  " Autocmd deleting lines from the file when writing the whole file
+  augroup WriteTest2
+    au!
+    autocmd BufWritePre Xfile 1,2d
+  augroup END
+  %d
+  call setline(1, ['aaa', 'bbb', 'ccc', 'ddd'])
+  w
+  call assert_equal(['ccc', 'ddd'], readfile('Xfile'))
+
+  augroup WriteTest2
+    au!
+  augroup END
+  augroup! WriteTest2
+
+  close!
+  call delete('Xfile')
+endfunc
+
+" Test for writing to a readonly file
+func Test_write_readonly()
+  " In Cirrus-CI, the freebsd tests are run under a root account. So this test
+  " doesn't fail.
+  CheckNotBSD
+  call writefile([], 'Xfile')
+  call setfperm('Xfile', "r--------")
+  edit Xfile
+  set noreadonly
+  call assert_fails('write', 'E505:')
+  let save_cpo = &cpo
+  set cpo+=W
+  call assert_fails('write!', 'E504:')
+  let &cpo = save_cpo
+  call setline(1, ['line1'])
+  write!
+  call assert_equal(['line1'], readfile('Xfile'))
+  call delete('Xfile')
+endfunc
+
+" Test for 'patchmode'
+func Test_patchmode()
+  CheckNotBSD
+  call writefile(['one'], 'Xfile')
+  set patchmode=.orig nobackup writebackup
+  new Xfile
+  call setline(1, 'two')
+  " first write should create the .orig file
+  write
+  " TODO: Xfile.orig is not created in Cirrus FreeBSD CI test
+  call assert_equal(['one'], readfile('Xfile.orig'))
+  call setline(1, 'three')
+  " subsequent writes should not create/modify the .orig file
+  write
+  call assert_equal(['one'], readfile('Xfile.orig'))
+  set patchmode& backup& writebackup&
+  call delete('Xfile')
+  call delete('Xfile.orig')
+endfunc
+
+" Test for writing to a file in a readonly directory
+func Test_write_readonly_dir()
+  if !has('unix') || has('bsd')
+    " On MS-Windows, modifying files in a read-only directory is allowed.
+    " In Cirrus-CI for Freebsd, tests are run under a root account where
+    " modifying files in a read-only directory are allowed.
+    return
+  endif
+  call mkdir('Xdir')
+  call writefile(['one'], 'Xdir/Xfile1')
+  call setfperm('Xdir', 'r-xr--r--')
+  " try to create a new file in the directory
+  new Xdir/Xfile2
+  call setline(1, 'two')
+  call assert_fails('write', 'E212:')
+  " try to create a backup file in the directory
+  edit! Xdir/Xfile1
+  set backupdir=./Xdir
+  set patchmode=.orig
+  call assert_fails('write', 'E509:')
+  call setfperm('Xdir', 'rwxr--r--')
+  call delete('Xdir', 'rf')
+  set backupdir& patchmode&
 endfunc
 
 " Test for writing a file using invalid file encoding

@@ -195,8 +195,6 @@ func Test_edit_long_file_name()
 
   call VerifyScreenDump(buf, 'Test_long_file_name_1', {})
 
-  call term_sendkeys(buf, ":q\<cr>")
-
   " clean up
   call StopVimInTerminal(buf)
   call delete(longName)

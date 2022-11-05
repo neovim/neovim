@@ -29,6 +29,8 @@ func Test_has()
     call assert_equal(0, and(has('ttyout'), 0))
     call assert_equal(1, has('multi_byte_encoding'))
   endif
+  call assert_equal(1, has('vcon', 1))
+  call assert_equal(1, has('mouse_gpm_enabled', 1))
 
   call assert_equal(0, has('nonexistent'))
   call assert_equal(0, has('nonexistent', 1))
@@ -1331,12 +1333,15 @@ endfunc
 
 " Test for the inputdialog() function
 func Test_inputdialog()
-  CheckNotGui
-
-  call feedkeys(":let v=inputdialog('Q:', 'xx', 'yy')\<CR>\<CR>", 'xt')
-  call assert_equal('xx', v)
-  call feedkeys(":let v=inputdialog('Q:', 'xx', 'yy')\<CR>\<Esc>", 'xt')
-  call assert_equal('yy', v)
+  if has('gui_running')
+    call assert_fails('let v=inputdialog([], "xx")', 'E730:')
+    call assert_fails('let v=inputdialog("Q", [])', 'E730:')
+  else
+    call feedkeys(":let v=inputdialog('Q:', 'xx', 'yy')\<CR>\<CR>", 'xt')
+    call assert_equal('xx', v)
+    call feedkeys(":let v=inputdialog('Q:', 'xx', 'yy')\<CR>\<Esc>", 'xt')
+    call assert_equal('yy', v)
+  endif
 endfunc
 
 " Test for inputlist()
@@ -1387,6 +1392,7 @@ func Test_balloon_show()
   call balloon_show('hi!')
   if !has('gui_running')
     call balloon_show(range(3))
+    call balloon_show([])
   endif
 endfunc
 
@@ -2271,6 +2277,9 @@ func Test_range()
   call assert_fails('let x=range(2, 8, 0)', 'E726:')
   call assert_fails('let x=range(3, 1)', 'E727:')
   call assert_fails('let x=range(1, 3, -2)', 'E727:')
+  call assert_fails('let x=range([])', 'E745:')
+  call assert_fails('let x=range(1, [])', 'E745:')
+  call assert_fails('let x=range(1, 4, [])', 'E745:')
 endfunc
 
 func Test_garbagecollect_now_fails()

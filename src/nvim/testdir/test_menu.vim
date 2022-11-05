@@ -252,6 +252,7 @@ func Test_menu_info()
   nmenu Test.abc  <Nop>
   call assert_equal('<Nop>', menu_info('Test.abc').rhs)
   call assert_fails('call menu_info([])', 'E730:')
+  call assert_fails('call menu_info("", [])', 'E730:')
   nunmenu Test
 
   " Test for defining menus in different modes

@@ -26,6 +26,7 @@ func Test_setbufline_getbufline()
   call assert_equal(['d'], getbufline(b, 4))
   call assert_equal(['e'], getbufline(b, 5))
   call assert_equal([], getbufline(b, 6))
+  call assert_equal([], getbufline(b, 2, 1))
   exe "bwipe! " . b
 endfunc
 

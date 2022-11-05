@@ -501,10 +501,13 @@ func Test_win_screenpos()
   call assert_equal([1, 32], win_screenpos(2))
   call assert_equal([12, 1], win_screenpos(3))
   call assert_equal([0, 0], win_screenpos(4))
+  call assert_fails('let l = win_screenpos([])', 'E745:')
   only
 endfunc
 
 func Test_window_jump_tag()
+  CheckFeature quickfix
+
   help
   /iccf
   call assert_match('^|iccf|',  getline('.'))
@@ -734,6 +737,7 @@ func Test_relative_cursor_position_in_one_line_window()
 
   only!
   bwipe!
+  call assert_fails('call winrestview(v:_null_dict)', 'E474:')
 endfunc
 
 func Test_relative_cursor_position_after_move_and_resize()
@@ -910,6 +914,10 @@ func Test_winnr()
   call assert_fails("echo winnr('ll')", 'E15:')
   call assert_fails("echo winnr('5')", 'E15:')
   call assert_equal(4, winnr('0h'))
+  call assert_fails("let w = winnr([])", 'E730:')
+  call assert_equal('unknown', win_gettype(-1))
+  call assert_equal(-1, winheight(-1))
+  call assert_equal(-1, winwidth(-1))
 
   tabnew
   call assert_equal(8, tabpagewinnr(1, 'j'))
@@ -930,9 +938,12 @@ func Test_winrestview()
   call assert_equal(view, winsaveview())
 
   bwipe!
+  call assert_fails('call winrestview(v:_null_dict)', 'E474:')
 endfunc
 
 func Test_win_splitmove()
+  CheckFeature quickfix
+
   edit a
   leftabove split b
   leftabove vsplit c
@@ -958,6 +969,7 @@ func Test_win_splitmove()
   call assert_equal(bufname(winbufnr(2)), 'b')
   call assert_equal(bufname(winbufnr(3)), 'a')
   call assert_equal(bufname(winbufnr(4)), 'd')
+  call assert_fails('call win_splitmove(winnr(), winnr("k"), v:_null_dict)', 'E474:')
   only | bd
 
   call assert_fails('call win_splitmove(winnr(), 123)', 'E957:')

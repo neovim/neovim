@@ -1,5 +1,7 @@
 " Test using the window ID.
 
+source check.vim
+
 func Test_win_getid()
   edit one
   let id1 = win_getid()
@@ -90,10 +92,16 @@ func Test_win_getid()
   split
   call assert_equal(sort([id5, win_getid()]), sort(win_findbuf(bufnr5)))
 
+  call assert_fails('let w = win_getid([])', 'E745:')
+  call assert_equal(0, win_getid(-1))
+  call assert_equal(-1, win_getid(1, -1))
+
   only!
 endfunc
 
 func Test_win_getid_curtab()
+  CheckFeature quickfix
+
   tabedit X
   tabfirst
   copen
@@ -127,4 +135,8 @@ func Test_winlayout()
   let w2 = win_getid()
   call assert_equal(['leaf', w2], 2->winlayout())
   tabclose
+
+  call assert_equal([], winlayout(-1))
 endfunc
+
+" vim: shiftwidth=2 sts=2 expandtab

@@ -63,9 +63,7 @@ func Test_read_fifo_utf8()
 endfunc
 
 func Test_detect_ambiwidth()
-  if !CanRunVimInTerminal()
-    throw 'Skipped: cannot run Vim in a terminal window'
-  endif
+  CheckRunVimInTerminal
 
   " Use the title termcap entries to output the escape sequence.
   call writefile([

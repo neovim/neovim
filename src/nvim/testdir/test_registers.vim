@@ -285,7 +285,9 @@ func Test_get_register()
 
   " Test for inserting a multi-line register in the command line
   call feedkeys(":\<C-R>r\<Esc>", 'xt')
-  call assert_equal("a\rb", histget(':', -1))  " Modified because of #6137
+  " Nvim: no trailing CR because of #6137
+  " call assert_equal("a\rb\r", histget(':', -1))
+  call assert_equal("a\rb", histget(':', -1))
 
   call assert_fails('let r = getreg("=", [])', 'E745:')
   call assert_fails('let r = getreg("=", 1, [])', 'E745:')

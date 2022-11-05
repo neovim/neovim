@@ -160,12 +160,14 @@ endfunc
 func Test_matchadd_error()
   call clearmatches()
   " Nvim: not an error anymore:
+  " call assert_fails("call matchadd('GroupDoesNotExist', 'X')", 'E28:')
   call matchadd('GroupDoesNotExist', 'X')
   call assert_equal([{'group': 'GroupDoesNotExist', 'pattern': 'X', 'priority': 10, 'id': 1206}], getmatches())
   call assert_fails("call matchadd('Search', '\\(')", 'E475:')
   call assert_fails("call matchadd('Search', 'XXX', 1, 123, 1)", 'E715:')
   call assert_fails("call matchadd('Error', 'XXX', 1, 3)", 'E798:')
   call assert_fails("call matchadd('Error', 'XXX', 1, 0)", 'E799:')
+  call assert_fails("call matchadd('Error', 'XXX', [], 0)", 'E745:')
 endfunc
 
 func Test_matchaddpos()
@@ -305,7 +307,10 @@ func Test_matchaddpos_error()
   call assert_fails("call matchaddpos('Error', [1], 1, 123, 1)", 'E715:')
   call assert_fails("call matchaddpos('Error', [1], 1, 5, {'window':12345})", 'E957:')
   " Why doesn't the following error have an error code E...?
+  " call assert_fails("call matchaddpos('Error', [{}])", 'E290:')
   call assert_fails("call matchaddpos('Error', [{}])", 'E5031:')
+  call assert_equal(-1, matchaddpos('Error', v:_null_list))
+  call assert_fails("call matchaddpos('Error', [1], [], 1)", 'E745:')
 endfunc
 
 func OtherWindowCommon()
@@ -338,9 +343,7 @@ func Test_matchdelete_error()
 endfunc
 
 func Test_matchclear_other_window()
-  if !CanRunVimInTerminal()
-    throw 'Skipped: cannot make screendumps'
-  endif
+  CheckRunVimInTerminal
   let buf = OtherWindowCommon()
   call term_sendkeys(buf, ":call clearmatches(winid)\<CR>")
   call VerifyScreenDump(buf, 'Test_matchclear_1', {})
@@ -350,9 +353,7 @@ func Test_matchclear_other_window()
 endfunc
 
 func Test_matchadd_other_window()
-  if !CanRunVimInTerminal()
-    throw 'Skipped: cannot make screendumps'
-  endif
+  CheckRunVimInTerminal
   let buf = OtherWindowCommon()
   call term_sendkeys(buf, ":call matchadd('Search', 'Hello', 1, -1, #{window: winid})\<CR>")
   call term_sendkeys(buf, ":\<CR>")
@@ -361,6 +362,5 @@ func Test_matchadd_other_window()
   call StopVimInTerminal(buf)
   call delete('XscriptMatchCommon')
 endfunc
-
 
 " vim: shiftwidth=2 sts=2 expandtab
