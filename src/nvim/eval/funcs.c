@@ -112,6 +112,8 @@ PRAGMA_DIAG_POP
 static char *e_listblobarg = N_("E899: Argument of %s must be a List or Blob");
 static char *e_invalwindow = N_("E957: Invalid window number");
 static char *e_reduceempty = N_("E998: Reduce of an empty %s with no initial value");
+static char e_using_number_as_bool_nr[]
+  = N_("E1023: Using a Number as a Bool: %d");
 static char e_cannot_resize_window_in_another_tab_page[]
   = N_("E1308: Cannot resize a window in another tab page");
 
@@ -906,7 +908,7 @@ static void f_charidx(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     countcc = (int)tv_get_number(&argvars[2]);
   }
   if (countcc < 0 || countcc > 1) {
-    emsg(_(e_invarg));
+    semsg(_(e_using_number_as_bool_nr), countcc);
     return;
   }
 
@@ -1358,10 +1360,10 @@ static void f_deepcopy(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   int noref = 0;
 
   if (argvars[1].v_type != VAR_UNKNOWN) {
-    noref = (int)tv_get_number_chk(&argvars[1], NULL);
+    noref = (int)tv_get_bool_chk(&argvars[1], NULL);
   }
   if (noref < 0 || noref > 1) {
-    emsg(_(e_invarg));
+    semsg(_(e_using_number_as_bool_nr), noref);
   } else {
     var_item_copy(NULL, &argvars[0], rettv, true, (noref == 0
                                                    ? get_copyID()
@@ -2056,6 +2058,12 @@ static void f_menu_get(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 static void f_expandcmd(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
   char *errormsg = NULL;
+  bool emsgoff = true;
+
+  if (argvars[1].v_type == VAR_DICT
+      && tv_dict_get_bool(argvars[1].vval.v_dict, "errmsg", kBoolVarFalse)) {
+    emsgoff = false;
+  }
 
   rettv->v_type = VAR_STRING;
   char *cmdstr = xstrdup(tv_get_string(&argvars[0]));
@@ -2069,9 +2077,17 @@ static void f_expandcmd(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   };
   eap.argt |= EX_NOSPC;
 
-  emsg_off++;
-  expand_filename(&eap, &cmdstr, &errormsg);
-  emsg_off--;
+  if (emsgoff) {
+    emsg_off++;
+  }
+  if (expand_filename(&eap, &cmdstr, &errormsg) == FAIL) {
+    if (!emsgoff && errormsg != NULL && *errormsg != NUL) {
+      emsg(errormsg);
+    }
+  }
+  if (emsgoff) {
+    emsg_off--;
+  }
 
   rettv->vval.v_string = cmdstr;
 }
@@ -8160,7 +8176,7 @@ static void f_split(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
       typeerr = true;
     }
     if (argvars[2].v_type != VAR_UNKNOWN) {
-      keepempty = (bool)tv_get_number_chk(&argvars[2], &typeerr);
+      keepempty = (bool)tv_get_bool_chk(&argvars[2], &typeerr);
     }
   }
   if (pat == NULL || *pat == NUL) {
@@ -8290,7 +8306,7 @@ static void f_str2nr(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
       emsg(_(e_invarg));
       return;
     }
-    if (argvars[2].v_type != VAR_UNKNOWN && tv_get_number(&argvars[2])) {
+    if (argvars[2].v_type != VAR_UNKNOWN && tv_get_bool(&argvars[2])) {
       what |= STR2NR_QUOTE;
     }
   }
@@ -8445,26 +8461,38 @@ static void f_strlen(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   rettv->vval.v_number = (varnumber_T)strlen(tv_get_string(&argvars[0]));
 }
 
-/// "strchars()" function
-static void f_strchars(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
+static void strchar_common(typval_T *argvars, typval_T *rettv, bool skipcc)
 {
   const char *s = tv_get_string(&argvars[0]);
-  int skipcc = 0;
   varnumber_T len = 0;
   int (*func_mb_ptr2char_adv)(const char_u **pp);
 
+  func_mb_ptr2char_adv = skipcc ? mb_ptr2char_adv : mb_cptr2char_adv;
+  while (*s != NUL) {
+    func_mb_ptr2char_adv((const char_u **)&s);
+    len++;
+  }
+  rettv->vval.v_number = len;
+}
+
+/// "strcharlen()" function
+static void f_strcharlen(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
+{
+  strchar_common(argvars, rettv, true);
+}
+
+/// "strchars()" function
+static void f_strchars(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
+{
+  int skipcc = false;
+
   if (argvars[1].v_type != VAR_UNKNOWN) {
-    skipcc = (int)tv_get_number_chk(&argvars[1], NULL);
+    skipcc = (int)tv_get_bool(&argvars[1]);
   }
   if (skipcc < 0 || skipcc > 1) {
-    emsg(_(e_invarg));
+    semsg(_(e_using_number_as_bool_nr), skipcc);
   } else {
-    func_mb_ptr2char_adv = skipcc ? mb_ptr2char_adv : mb_cptr2char_adv;
-    while (*s != NUL) {
-      func_mb_ptr2char_adv((const char_u **)&s);
-      len++;
-    }
-    rettv->vval.v_number = len;
+    strchar_common(argvars, rettv, skipcc);
   }
 }
 

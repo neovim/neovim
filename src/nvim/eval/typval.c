@@ -2061,9 +2061,24 @@ int tv_dict_get_tv(dict_T *d, const char *const key, typval_T *rettv)
 varnumber_T tv_dict_get_number(const dict_T *const d, const char *const key)
   FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
+  return tv_dict_get_number_def(d, key, 0);
+}
+
+/// Get a number item from a dictionary.
+///
+/// Returns "def" if the entry doesn't exist.
+///
+/// @param[in]  d  Dictionary to get item from.
+/// @param[in]  key  Key to find in dictionary.
+/// @param[in]  def  Default value.
+///
+/// @return Dictionary item.
+varnumber_T tv_dict_get_number_def(const dict_T *const d, const char *const key, const int def)
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
+{
   dictitem_T *const di = tv_dict_find(d, key, -1);
   if (di == NULL) {
-    return 0;
+    return def;
   }
   return tv_get_number(&di->di_tv);
 }

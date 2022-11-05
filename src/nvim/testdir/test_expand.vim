@@ -90,14 +90,26 @@ func Test_expandcmd()
   " Test for expression expansion `=
   let $FOO= "blue"
   call assert_equal("blue sky", expandcmd("`=$FOO .. ' sky'`"))
+  let x = expandcmd("`=axbycz`")
+  call assert_equal('`=axbycz`', x)
+  call assert_fails('let x = expandcmd("`=axbycz`", #{errmsg: 1})', 'E121:')
+  let x = expandcmd("`=axbycz`", #{abc: []})
+  call assert_equal('`=axbycz`', x)
 
   " Test for env variable with spaces
   let $FOO= "foo bar baz"
   call assert_equal("e foo bar baz", expandcmd("e $FOO"))
 
-  if has('unix')
-    " test for using the shell to expand a command argument
-    call assert_equal('{1..4}', expandcmd('{1..4}'))
+  if has('unix') && executable('bash')
+    " test for using the shell to expand a command argument.
+    " only bash supports the {..} syntax
+    set shell=bash
+    let x = expandcmd('{1..4}')
+    call assert_equal('{1..4}', x)
+    call assert_fails("let x = expandcmd('{1..4}', #{errmsg: v:true})", 'E77:')
+    let x = expandcmd('{1..4}', #{error: v:true})
+    call assert_equal('{1..4}', x)
+    set shell&
   endif
 
   unlet $FOO

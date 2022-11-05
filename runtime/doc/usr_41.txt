@@ -619,7 +619,8 @@ String manipulation:					*string-functions*
 	stridx()		first index of a short string in a long string
 	strridx()		last index of a short string in a long string
 	strlen()		length of a string in bytes
-	strchars()		length of a string in characters
+	strcharlen()		length of a string in characters
+	strchars()		number of characters in a string
 	strwidth()		size of string when displayed
 	strdisplaywidth()	size of string when displayed, deals with tabs
 	setcellwidths()		set character cell width overrides

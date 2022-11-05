@@ -134,7 +134,8 @@ exists({expr})			Number	|TRUE| if {expr} exists
 exp({expr})			Float	exponential of {expr}
 expand({expr} [, {nosuf} [, {list}]])
 				any	expand special keywords in {expr}
-expandcmd({expr})		String	expand {expr} like with `:edit`
+expandcmd({string} [, {options}])
+				String	expand {string} like with `:edit`
 extend({expr1}, {expr2} [, {expr3}])
 				List/Dict insert items of {expr2} into {expr1}
 feedkeys({string} [, {mode}])	Number	add key sequence to typeahead buffer
@@ -466,10 +467,11 @@ str2list({expr} [, {utf8}])	List	convert each character of {expr} to
 					ASCII/UTF-8 value
 str2nr({expr} [, {base} [, {quoted}]])
 				Number	convert String to Number
+strcharlen({expr})		Number	character length of the String {expr}
 strcharpart({str}, {start} [, {len}])
 				String	{len} characters of {str} at
 					character {start}
-strchars({expr} [, {skipcc}])	Number	character length of the String {expr}
+strchars({expr} [, {skipcc}])	Number	character count of the String {expr}
 strdisplaywidth({expr} [, {col}]) Number display length of the String {expr}
 strftime({format} [, {time}])	String	format time with a specified format
 strgetchar({str}, {index})	Number	get char {index} from {str}
@@ -2043,18 +2045,27 @@ expand({string} [, {nosuf} [, {list}]])				*expand()*
 		Can also be used as a |method|: >
 			Getpattern()->expand()
 
-expandcmd({string})					*expandcmd()*
+expandcmd({string} [, {options}])			*expandcmd()*
 		Expand special items in String {string} like what is done for
 		an Ex command such as `:edit`.  This expands special keywords,
 		like with |expand()|, and environment variables, anywhere in
 		{string}.  "~user" and "~/path" are only expanded at the
 		start.
+
+		The following items are supported in the {options} Dict
+		argument:
+		    errmsg	If set to TRUE, error messages are displayed
+				if an error is encountered during expansion.
+				By default, error messages are not displayed.
+
 		Returns the expanded string.  If an error is encountered
 		during expansion, the unmodified {string} is returned.
+
 		Example: >
 			:echo expandcmd('make %<.o')
-<			make /path/runtime/doc/builtin.o ~
-
+			make /path/runtime/doc/builtin.o
+			:echo expandcmd('make %<.o', {'errmsg': v:true})
+<
 		Can also be used as a |method|: >
 			GetCommand()->expandcmd()
 <
@@ -7836,6 +7847,21 @@ str2nr({string} [, {base}])			*str2nr()*
 		Can also be used as a |method|: >
 			GetText()->str2nr()
 
+
+strcharlen({string})					*strcharlen()*
+		The result is a Number, which is the number of characters
+		in String {string}.  Composing characters are ignored.
+		|strchars()| can count the number of characters, counting
+		composing characters separately.
+
+		Returns 0 if {string} is empty or on error.
+
+		Also see |strlen()|, |strdisplaywidth()| and |strwidth()|.
+
+		Can also be used as a |method|: >
+			GetText()->strcharlen()
+
+
 strcharpart({src}, {start} [, {len}])			*strcharpart()*
 		Like |strpart()| but using character index and length instead
 		of byte index and length.  Composing characters are counted
@@ -7850,12 +7876,14 @@ strcharpart({src}, {start} [, {len}])			*strcharpart()*
 		Can also be used as a |method|: >
 			GetText()->strcharpart(5)
 
+
 strchars({string} [, {skipcc}])					*strchars()*
 		The result is a Number, which is the number of characters
 		in String {string}.
 		When {skipcc} is omitted or zero, composing characters are
 		counted separately.
 		When {skipcc} set to 1, Composing characters are ignored.
+		|strcharlen()| always does this.
 
 		Returns zero on error.
 
