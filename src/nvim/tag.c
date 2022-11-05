@@ -106,6 +106,8 @@ static char_u *recurmsg
   = (char_u *)N_("E986: cannot modify the tag stack within tagfunc");
 static char_u *tfu_inv_ret_msg
   = (char_u *)N_("E987: invalid return value from tagfunc");
+static char e_window_unexpectedly_close_while_searching_for_tags[]
+  = N_("E1299: Window unexpectedly closed while searching for tags");
 
 static char *tagmatchname = NULL;   // name of last used tag
 
@@ -499,6 +501,15 @@ void do_tag(char *tag, int type, int count, int forceit, int verbose)
           && new_num_matches < max_num_matches) {
         max_num_matches = MAXCOL;  // If less than max_num_matches
                                    // found: all matches found.
+      }
+
+      // A tag function may do anything, which may cause various
+      // information to become invalid.  At least check for the tagstack
+      // to still be the same.
+      if (tagstack != curwin->w_tagstack) {
+        emsg(_(e_window_unexpectedly_close_while_searching_for_tags));
+        FreeWild(new_num_matches, new_matches);
+        break;
       }
 
       // If there already were some matches for the same name, move them
