@@ -23,6 +23,7 @@ com! -nargs=1	     Xout     call Xout(<args>)
 " file. If the test passes successfully, then Xtest.out should be empty.
 func RunInNewVim(test, verify)
   let init =<< trim END
+    set cpo-=C            " support line-continuation in sourced script
     source script_util.vim
     XpathINIT
     XloopINIT
@@ -3720,6 +3721,381 @@ func Test_execption_info_for_error()
 endfunc
 
 "-------------------------------------------------------------------------------
+"
+" Test 59:  v:exception and v:throwpoint when discarding exceptions	    {{{1
+"
+"	    When a :catch clause is left by a ":break" etc or an error or
+"	    interrupt exception, v:exception and v:throwpoint are reset.  They
+"	    are not affected by an exception that is discarded before being
+"	    caught.
+"-------------------------------------------------------------------------------
+func Test_exception_info_on_discard()
+  CheckEnglish
+
+  let test =<< trim [CODE]
+    let sfile = expand("<sfile>")
+
+    while 1
+      try
+        throw "x1"
+      catch /.*/
+        break
+      endtry
+    endwhile
+    call assert_equal('', v:exception)
+    call assert_equal('', v:throwpoint)
+
+    while 1
+      try
+        throw "x2"
+      catch /.*/
+        break
+      finally
+        call assert_equal('', v:exception)
+        call assert_equal('', v:throwpoint)
+      endtry
+      break
+    endwhile
+    call assert_equal('', v:exception)
+    call assert_equal('', v:throwpoint)
+
+    while 1
+      try
+        let errcaught = 0
+        try
+          try
+            throw "x3"
+          catch /.*/
+            let lnum = expand("<sflnum>")
+            asdf
+          endtry
+        catch /.*/
+          let errcaught = 1
+          call assert_match('Vim:E492: Not an editor command:', v:exception)
+          call assert_match('line ' .. (lnum + 1), v:throwpoint)
+        endtry
+      finally
+        call assert_equal(1, errcaught)
+        break
+      endtry
+    endwhile
+    call assert_equal('', v:exception)
+    call assert_equal('', v:throwpoint)
+
+    Xpath 'a'
+
+    while 1
+      try
+        let intcaught = 0
+        try
+          try
+            throw "x4"
+          catch /.*/
+            let lnum = expand("<sflnum>")
+            call interrupt()
+          endtry
+        catch /.*/
+          let intcaught = 1
+          call assert_match('Vim:Interrupt', v:exception)
+          call assert_match('line ' .. (lnum + 1), v:throwpoint)
+        endtry
+      finally
+        call assert_equal(1, intcaught)
+        break
+      endtry
+    endwhile
+    call assert_equal('', v:exception)
+    call assert_equal('', v:throwpoint)
+
+    Xpath 'b'
+
+    while 1
+      try
+        let errcaught = 0
+        try
+          try
+            if 1
+              let lnum = expand("<sflnum>")
+              throw "x5"
+            " missing endif
+          catch /.*/
+            call assert_report('should not get here')
+          endtry
+        catch /.*/
+          let errcaught = 1
+          call assert_match('Vim(catch):E171: Missing :endif:', v:exception)
+          call assert_match('line ' .. (lnum + 3), v:throwpoint)
+        endtry
+      finally
+        call assert_equal(1, errcaught)
+        break
+      endtry
+    endwhile
+    call assert_equal('', v:exception)
+    call assert_equal('', v:throwpoint)
+
+    Xpath 'c'
+
+    try
+      while 1
+        try
+          throw "x6"
+        finally
+          break
+        endtry
+        break
+      endwhile
+    catch /.*/
+      call assert_report('should not get here')
+    endtry
+    call assert_equal('', v:exception)
+    call assert_equal('', v:throwpoint)
+
+    try
+      while 1
+        try
+          throw "x7"
+        finally
+          break
+        endtry
+        break
+      endwhile
+    catch /.*/
+      call assert_report('should not get here')
+    finally
+      call assert_equal('', v:exception)
+      call assert_equal('', v:throwpoint)
+    endtry
+    call assert_equal('', v:exception)
+    call assert_equal('', v:throwpoint)
+
+    while 1
+      try
+        let errcaught = 0
+        try
+          try
+            throw "x8"
+          finally
+            let lnum = expand("<sflnum>")
+            asdf
+          endtry
+        catch /.*/
+          let errcaught = 1
+          call assert_match('Vim:E492: Not an editor command:', v:exception)
+          call assert_match('line ' .. (lnum + 1), v:throwpoint)
+        endtry
+      finally
+        call assert_equal(1, errcaught)
+        break
+      endtry
+    endwhile
+    call assert_equal('', v:exception)
+    call assert_equal('', v:throwpoint)
+
+    Xpath 'd'
+
+    while 1
+      try
+        let intcaught = 0
+        try
+          try
+            throw "x9"
+          finally
+            let lnum = expand("<sflnum>")
+            call interrupt()
+          endtry
+        catch /.*/
+          let intcaught = 1
+          call assert_match('Vim:Interrupt', v:exception)
+          call assert_match('line ' .. (lnum + 1), v:throwpoint)
+        endtry
+      finally
+        call assert_equal(1, intcaught)
+        break
+      endtry
+    endwhile
+    call assert_equal('', v:exception)
+    call assert_equal('', v:throwpoint)
+
+    Xpath 'e'
+
+    while 1
+      try
+        let errcaught = 0
+        try
+          try
+            if 1
+              let lnum = expand("<sflnum>")
+              throw "x10"
+            " missing endif
+          finally
+            call assert_equal('', v:exception)
+            call assert_equal('', v:throwpoint)
+          endtry
+        catch /.*/
+          let errcaught = 1
+          call assert_match('Vim(finally):E171: Missing :endif:', v:exception)
+          call assert_match('line ' .. (lnum + 3), v:throwpoint)
+        endtry
+      finally
+        call assert_equal(1, errcaught)
+        break
+      endtry
+    endwhile
+    call assert_equal('', v:exception)
+    call assert_equal('', v:throwpoint)
+
+    Xpath 'f'
+
+    while 1
+      try
+        let errcaught = 0
+        try
+          try
+            if 1
+              let lnum = expand("<sflnum>")
+              throw "x11"
+            " missing endif
+          endtry
+        catch /.*/
+          let errcaught = 1
+          call assert_match('Vim(endtry):E171: Missing :endif:', v:exception)
+          call assert_match('line ' .. (lnum + 3), v:throwpoint)
+        endtry
+      finally
+        call assert_equal(1, errcaught)
+        break
+      endtry
+    endwhile
+    call assert_equal('', v:exception)
+    call assert_equal('', v:throwpoint)
+
+    Xpath 'g'
+  [CODE]
+  let verify =<< trim [CODE]
+    call assert_equal('abcdefg', g:Xpath)
+  [CODE]
+  call RunInNewVim(test, verify)
+endfunc
+
+"-------------------------------------------------------------------------------
+"
+" Test 60:  (Re)throwing v:exception; :echoerr.				    {{{1
+"
+"	    A user exception can be rethrown after catching by throwing
+"	    v:exception.  An error or interrupt exception cannot be rethrown
+"	    because Vim exceptions cannot be faked.  A Vim exception using the
+"	    value of v:exception can, however, be triggered by the :echoerr
+"	    command.
+"-------------------------------------------------------------------------------
+
+func Test_rethrow_exception_1()
+  XpathINIT
+  try
+    try
+      Xpath 'a'
+      throw "oops"
+    catch /oops/
+      Xpath 'b'
+      throw v:exception	" rethrow user exception
+    catch /.*/
+      call assert_report('should not get here')
+    endtry
+  catch /^oops$/			" catches rethrown user exception
+    Xpath 'c'
+  catch /.*/
+    call assert_report('should not get here')
+  endtry
+  call assert_equal('abc', g:Xpath)
+endfunc
+
+func Test_rethrow_exception_2()
+  XpathINIT
+  try
+    let caught = 0
+    try
+      Xpath 'a'
+      write /n/o/n/w/r/i/t/a/b/l/e/_/f/i/l/e
+      call assert_report('should not get here')
+    catch /^Vim(write):/
+      let caught = 1
+      throw v:exception	" throw error: cannot fake Vim exception
+    catch /.*/
+      call assert_report('should not get here')
+    finally
+      Xpath 'b'
+      call assert_equal(1, caught)
+    endtry
+  catch /^Vim(throw):/	" catches throw error
+    let caught = caught + 1
+  catch /.*/
+    call assert_report('should not get here')
+  finally
+    Xpath 'c'
+    call assert_equal(2, caught)
+  endtry
+  call assert_equal('abc', g:Xpath)
+endfunc
+
+func Test_rethrow_exception_3()
+  XpathINIT
+  try
+    let caught = 0
+    try
+      Xpath 'a'
+      asdf
+    catch /^Vim/		" catch error exception
+      let caught = 1
+      " Trigger Vim error exception with value specified after :echoerr
+      let value = substitute(v:exception, '^Vim\((.*)\)\=:', '', "")
+      echoerr value
+    catch /.*/
+      call assert_report('should not get here')
+    finally
+      Xpath 'b'
+      call assert_equal(1, caught)
+    endtry
+  catch /^Vim(echoerr):/
+    let caught = caught + 1
+    call assert_match(value, v:exception)
+  catch /.*/
+    call assert_report('should not get here')
+  finally
+    Xpath 'c'
+    call assert_equal(2, caught)
+  endtry
+  call assert_equal('abc', g:Xpath)
+endfunc
+
+func Test_rethrow_exception_3()
+  XpathINIT
+  try
+    let errcaught = 0
+    try
+      Xpath 'a'
+      let intcaught = 0
+      call interrupt()
+    catch /^Vim:/		" catch interrupt exception
+      let intcaught = 1
+      " Trigger Vim error exception with value specified after :echoerr
+      echoerr substitute(v:exception, '^Vim\((.*)\)\=:', '', "")
+    catch /.*/
+      call assert_report('should not get here')
+    finally
+      Xpath 'b'
+      call assert_equal(1, intcaught)
+    endtry
+  catch /^Vim(echoerr):/
+    let errcaught = 1
+    call assert_match('Interrupt', v:exception)
+  finally
+    Xpath 'c'
+    call assert_equal(1, errcaught)
+  endtry
+  call assert_equal('abc', g:Xpath)
+endfunc
+
+"-------------------------------------------------------------------------------
 " Test 61:  Catching interrupt exceptions				    {{{1
 "
 "	    When an interrupt occurs inside a :try/:endtry region, an
@@ -3846,6 +4222,513 @@ func Test_catch_intr_exception()
 endfunc
 
 "-------------------------------------------------------------------------------
+" Test 62:  Catching error exceptions					    {{{1
+"
+"	    An error inside a :try/:endtry region is converted to an exception
+"	    and can be caught.  The error exception has a "Vim(cmdname):" prefix
+"	    where cmdname is the name of the failing command, or a "Vim:" prefix
+"	    if no command name is known.  The "Vim" prefixes cannot be faked.
+"-------------------------------------------------------------------------------
+
+func Test_catch_err_exception_1()
+  XpathINIT
+  while 1
+    try
+      try
+        let caught = 0
+        unlet novar
+      catch /^Vim(unlet):/
+        Xpath 'a'
+        let caught = 1
+        let v:errmsg = substitute(v:exception, '^Vim(unlet):', '', "")
+      finally
+        Xpath 'b'
+        call assert_equal(1, caught)
+        call assert_match('E108: No such variable: "novar"', v:errmsg)
+      endtry
+    catch /.*/
+      call assert_report('should not get here')
+    finally
+      Xpath 'c'
+      break
+    endtry
+    call assert_report('should not get here')
+  endwhile
+  call assert_equal('abc', g:Xpath)
+endfunc
+
+func Test_catch_err_exception_2()
+  XpathINIT
+  while 1
+    try
+      try
+        let caught = 0
+        throw novar			" error in :throw
+      catch /^Vim(throw):/
+        Xpath 'a'
+        let caught = 1
+        let v:errmsg = substitute(v:exception, '^Vim(throw):', '', "")
+      finally
+        Xpath 'b'
+        call assert_equal(1, caught)
+        call assert_match('E121: Undefined variable: novar', v:errmsg)
+      endtry
+    catch /.*/
+      call assert_report('should not get here')
+    finally
+      Xpath 'c'
+      break
+    endtry
+    call assert_report('should not get here')
+  endwhile
+  call assert_equal('abc', g:Xpath)
+endfunc
+
+func Test_catch_err_exception_3()
+  XpathINIT
+  while 1
+    try
+      try
+        let caught = 0
+        throw "Vim:faked"		" error: cannot fake Vim exception
+      catch /^Vim(throw):/
+        Xpath 'a'
+        let caught = 1
+        let v:errmsg = substitute(v:exception, '^Vim(throw):', '', "")
+      finally
+        Xpath 'b'
+        call assert_equal(1, caught)
+        call assert_match("E608: Cannot :throw exceptions with 'Vim' prefix",
+              \ v:errmsg)
+      endtry
+    catch /.*/
+      call assert_report('should not get here')
+    finally
+      Xpath 'c'
+      break
+    endtry
+    call assert_report('should not get here')
+  endwhile
+  call assert_equal('abc', g:Xpath)
+endfunc
+
+func Test_catch_err_exception_4()
+  XpathINIT
+  func F()
+    while 1
+    " Missing :endwhile
+  endfunc
+
+  while 1
+    try
+      try
+        let caught = 0
+        call F()
+      catch /^Vim(endfunction):/
+        Xpath 'a'
+        let caught = 1
+        let v:errmsg = substitute(v:exception, '^Vim(endfunction):', '', "")
+      finally
+        Xpath 'b'
+        call assert_equal(1, caught)
+        call assert_match("E170: Missing :endwhile", v:errmsg)
+      endtry
+    catch /.*/
+      call assert_report('should not get here')
+    finally
+      Xpath 'c'
+      break
+    endtry
+    call assert_report('should not get here')
+  endwhile
+  call assert_equal('abc', g:Xpath)
+  delfunc F
+endfunc
+
+func Test_catch_err_exception_5()
+  XpathINIT
+  func F()
+    while 1
+    " Missing :endwhile
+  endfunc
+
+  while 1
+    try
+      try
+        let caught = 0
+        ExecAsScript F
+      catch /^Vim:/
+        Xpath 'a'
+        let caught = 1
+        let v:errmsg = substitute(v:exception, '^Vim:', '', "")
+      finally
+        Xpath 'b'
+        call assert_equal(1, caught)
+        call assert_match("E170: Missing :endwhile", v:errmsg)
+      endtry
+    catch /.*/
+      call assert_report('should not get here')
+    finally
+      Xpath 'c'
+      break
+    endtry
+    call assert_report('should not get here')
+  endwhile
+  call assert_equal('abc', g:Xpath)
+  delfunc F
+endfunc
+
+func Test_catch_err_exception_6()
+  XpathINIT
+  func G()
+    call G()
+  endfunc
+
+  while 1
+    try
+      let mfd_save = &mfd
+      set mfd=3
+      try
+        let caught = 0
+        call G()
+      catch /^Vim(call):/
+        Xpath 'a'
+        let caught = 1
+        let v:errmsg = substitute(v:exception, '^Vim(call):', '', "")
+      finally
+        Xpath 'b'
+        call assert_equal(1, caught)
+        call assert_match("E132: Function call depth is higher than 'maxfuncdepth'", v:errmsg)
+      endtry
+    catch /.*/
+      call assert_report('should not get here')
+    finally
+      Xpath 'c'
+      let &mfd = mfd_save
+      break
+    endtry
+    call assert_report('should not get here')
+  endwhile
+  call assert_equal('abc', g:Xpath)
+  delfunc G
+endfunc
+
+func Test_catch_err_exception_7()
+  XpathINIT
+  func H()
+    return H()
+  endfunc
+
+  while 1
+    try
+      let mfd_save = &mfd
+      set mfd=3
+      try
+        let caught = 0
+        call H()
+      catch /^Vim(return):/
+        Xpath 'a'
+        let caught = 1
+        let v:errmsg = substitute(v:exception, '^Vim(return):', '', "")
+      finally
+        Xpath 'b'
+        call assert_equal(1, caught)
+        call assert_match("E132: Function call depth is higher than 'maxfuncdepth'", v:errmsg)
+      endtry
+    catch /.*/
+      call assert_report('should not get here')
+    finally
+      Xpath 'c'
+      let &mfd = mfd_save
+      break		" discard error for $VIMNOERRTHROW
+    endtry
+    call assert_report('should not get here')
+  endwhile
+
+  call assert_equal('abc', g:Xpath)
+  delfunc H
+endfunc
+
+"-------------------------------------------------------------------------------
+" Test 63:  Suppressing error exceptions by :silent!.			    {{{1
+"
+"	    A :silent! command inside a :try/:endtry region suppresses the
+"	    conversion of errors to an exception and the immediate abortion on
+"	    error.  When the commands executed by the :silent! themselves open
+"	    a new :try/:endtry region, conversion of errors to exception and
+"	    immediate abortion is switched on again - until the next :silent!
+"	    etc.  The :silent! has the effect of setting v:errmsg to the error
+"	    message text (without displaying it) and continuing with the next
+"	    script line.
+"
+"	    When a command triggering autocommands is executed by :silent!
+"	    inside a :try/:endtry, the autocommand execution is not suppressed
+"	    on error.
+"
+"	    This test reuses the function MSG() from the previous test.
+"-------------------------------------------------------------------------------
+
+func Test_silent_exception()
+  XpathINIT
+  XloopINIT
+  let g:taken = ""
+
+  func S(n) abort
+    XloopNEXT
+    let g:taken = g:taken . "E" . a:n
+    let v:errmsg = ""
+    exec "asdf" . a:n
+
+    " Check that ":silent!" continues:
+    Xloop 'a'
+
+    " Check that ":silent!" sets "v:errmsg":
+    call assert_match("E492: Not an editor command", v:errmsg)
+  endfunc
+
+  func Foo()
+    while 1
+      try
+        try
+          let caught = 0
+          " This is not silent:
+          call S(3)
+        catch /^Vim:/
+          Xpath 'b'
+          let caught = 1
+          let errmsg3 = substitute(v:exception, '^Vim:', '', "")
+          silent! call S(4)
+        finally
+          call assert_equal(1, caught)
+          Xpath 'c'
+          call assert_match("E492: Not an editor command", errmsg3)
+          silent! call S(5)
+          " Break out of try conditionals that cover ":silent!".  This also
+          " discards the aborting error when $VIMNOERRTHROW is non-zero.
+          break
+        endtry
+      catch /.*/
+        call assert_report('should not get here')
+      endtry
+    endwhile
+    " This is a double ":silent!" (see caller).
+    silent! call S(6)
+  endfunc
+
+  func Bar()
+    try
+      silent! call S(2)
+      silent! execute "call Foo() | call S(7)"
+      silent! call S(8)
+    endtry	" normal end of try cond that covers ":silent!"
+    " This has a ":silent!" from the caller:
+    call S(9)
+  endfunc
+
+  silent! call S(1)
+  silent! call Bar()
+  silent! call S(10)
+
+  call assert_equal("E1E2E3E4E5E6E7E8E9E10", g:taken)
+
+  augroup TMP
+    au!
+    autocmd BufWritePost * Xpath 'd'
+  augroup END
+
+  Xpath 'e'
+  silent! write /i/m/p/o/s/s/i/b/l/e
+  Xpath 'f'
+
+  call assert_equal('a2a3ba5ca6a7a8a9a10a11edf', g:Xpath)
+
+  augroup TMP
+    au!
+  augroup END
+  augroup! TMP
+  delfunction S
+  delfunction Foo
+  delfunction Bar
+endfunc
+
+"-------------------------------------------------------------------------------
+" Test 64:  Error exceptions after error, interrupt or :throw		    {{{1
+"
+"	    When an error occurs after an interrupt or a :throw but before
+"	    a matching :catch is reached, all following :catches of that try
+"	    block are ignored, but the error exception can be caught by the next
+"	    surrounding try conditional.  Any previous error exception is
+"	    discarded.  An error is ignored when there is a previous error that
+"	    has not been caught.
+"-------------------------------------------------------------------------------
+
+func Test_exception_after_error_1()
+  XpathINIT
+  while 1
+    try
+      try
+        Xpath 'a'
+        let caught = 0
+        while 1
+          if 1
+          " Missing :endif
+        endwhile	" throw error exception
+      catch /^Vim(/
+        Xpath 'b'
+        let caught = 1
+      finally
+        Xpath 'c'
+        call assert_equal(1, caught)
+      endtry
+    catch /.*/
+      call assert_report('should not get here')
+    finally
+      Xpath 'd'
+      break
+    endtry
+    call assert_report('should not get here')
+  endwhile
+  call assert_equal('abcd', g:Xpath)
+endfunc
+
+func Test_exception_after_error_2()
+  XpathINIT
+  while 1
+    try
+      try
+        Xpath 'a'
+        let caught = 0
+        try
+          if 1
+          " Missing :endif
+        catch /.*/	" throw error exception
+          call assert_report('should not get here')
+        catch /.*/
+          call assert_report('should not get here')
+        endtry
+      catch /^Vim(/
+        Xpath 'b'
+        let caught = 1
+      finally
+        Xpath 'c'
+        call assert_equal(1, caught)
+      endtry
+    catch /.*/
+      call assert_report('should not get here')
+    finally
+      Xpath 'd'
+      break
+    endtry
+    call assert_report('should not get here')
+  endwhile
+  call assert_equal('abcd', g:Xpath)
+endfunc
+
+func Test_exception_after_error_3()
+  XpathINIT
+  while 1
+    try
+      try
+        let caught = 0
+        try
+          Xpath 'a'
+          call interrupt()
+        catch /do_not_catch/
+          call assert_report('should not get here')
+          if 1
+          " Missing :endif
+        catch /.*/	" throw error exception
+          call assert_report('should not get here')
+        catch /.*/
+          call assert_report('should not get here')
+        endtry
+      catch /^Vim(/
+        Xpath 'b'
+        let caught = 1
+      finally
+        Xpath 'c'
+        call assert_equal(1, caught)
+      endtry
+    catch /.*/
+      call assert_report('should not get here')
+    finally
+      Xpath 'd'
+      break
+    endtry
+    call assert_report('should not get here')
+  endwhile
+  call assert_equal('abcd', g:Xpath)
+endfunc
+
+func Test_exception_after_error_4()
+  XpathINIT
+  while 1
+    try
+      try
+        let caught = 0
+        try
+          Xpath 'a'
+          throw "x"
+        catch /do_not_catch/
+          call assert_report('should not get here')
+          if 1
+          " Missing :endif
+        catch /x/	" throw error exception
+          call assert_report('should not get here')
+        catch /.*/
+          call assert_report('should not get here')
+        endtry
+      catch /^Vim(/
+        Xpath 'b'
+        let caught = 1
+      finally
+        Xpath 'c'
+        call assert_equal(1, caught)
+      endtry
+    catch /.*/
+      call assert_report('should not get here')
+    finally
+      Xpath 'd'
+      break
+    endtry
+    call assert_report('should not get here')
+  endwhile
+  call assert_equal('abcd', g:Xpath)
+endfunc
+
+func Test_exception_after_error_5()
+  XpathINIT
+  while 1
+    try
+      try
+        let caught = 0
+        Xpath 'a'
+        endif		" :endif without :if; throw error exception
+        if 1
+        " Missing :endif
+      catch /do_not_catch/ " ignore new error
+        call assert_report('should not get here')
+      catch /^Vim(endif):/
+        Xpath 'b'
+        let caught = 1
+      catch /^Vim(/
+        call assert_report('should not get here')
+      finally
+        Xpath 'c'
+        call assert_equal(1, caught)
+      endtry
+    catch /.*/
+      call assert_report('should not get here')
+    finally
+      Xpath 'd'
+      break
+    endtry
+    call assert_report('should not get here')
+  endwhile
+  call assert_equal('abcd', g:Xpath)
+endfunc
+
+"-------------------------------------------------------------------------------
 " Test 65:  Errors in the /pattern/ argument of a :catch		    {{{1
 "
 "	    On an error in the /pattern/ argument of a :catch, the :catch does
@@ -3908,6 +4791,1104 @@ func Test_catch_pattern_error()
   call assert_equal('abcdef', g:Xpath)
 
   delfunc F
+endfunc
+
+"-------------------------------------------------------------------------------
+" Test 66:  Stop range :call on error, interrupt, or :throw		    {{{1
+"
+"	    When a function which is multiply called for a range since it
+"	    doesn't handle the range itself has an error in a command
+"	    dynamically enclosed by :try/:endtry or gets an interrupt or
+"	    executes a :throw, no more calls for the remaining lines in the
+"	    range are made.  On an error in a command not dynamically enclosed
+"	    by :try/:endtry, the function is executed again for the remaining
+"	    lines in the range.
+"-------------------------------------------------------------------------------
+
+func Test_stop_range_on_error()
+  let test =<< trim [CODE]
+    let file = tempname()
+    exec "edit" file
+    call setline(1, ['line 1', 'line 2', 'line 3'])
+    let taken = ""
+    let expected = "G1EF1E(1)F1E(2)F1E(3)G2EF2E(1)G3IF3I(1)G4TF4T(1)G5AF5A(1)"
+
+    func F(reason, n) abort
+      let g:taken = g:taken .. "F" .. a:n ..
+                          \ substitute(a:reason, '\(\l\).*', '\u\1', "") ..
+                          \ "(" .. line(".") .. ")"
+
+      if a:reason == "error"
+        asdf
+      elseif a:reason == "interrupt"
+        call interrupt()
+      elseif a:reason == "throw"
+        throw "xyz"
+      elseif a:reason == "aborting error"
+        XloopNEXT
+        call assert_equal(g:taken, g:expected)
+        try
+          bwipeout!
+          call delete(g:file)
+          asdf
+        endtry
+      endif
+    endfunc
+
+    func G(reason, n)
+      let g:taken = g:taken .. "G" .. a:n ..
+                              \ substitute(a:reason, '\(\l\).*', '\u\1', "")
+      1,3call F(a:reason, a:n)
+    endfunc
+
+    Xpath 'a'
+    call G("error", 1)
+    try
+      Xpath 'b'
+      try
+        call G("error", 2)
+        call assert_report('should not get here')
+      finally
+        Xpath 'c'
+        try
+          call G("interrupt", 3)
+          call assert_report('should not get here')
+        finally
+          Xpath 'd'
+          try
+            call G("throw", 4)
+            call assert_report('should not get here')
+          endtry
+        endtry
+      endtry
+    catch /xyz/
+      Xpath 'e'
+    catch /.*/
+      call assert_report('should not get here')
+    endtry
+    Xpath 'f'
+    call G("aborting error", 5)
+    call assert_report('should not get here')
+  [CODE]
+  let verify =<< trim [CODE]
+    call assert_equal('abcdef', g:Xpath)
+  [CODE]
+  call RunInNewVim(test, verify)
+endfunc
+
+"-------------------------------------------------------------------------------
+" Test 67:  :throw across :call command					    {{{1
+"
+"	    On a call command, an exception might be thrown when evaluating the
+"	    function name, during evaluation of the arguments, or when the
+"	    function is being executed.  The exception can be caught by the
+"	    caller.
+"-------------------------------------------------------------------------------
+
+func THROW(x, n)
+  if a:n == 1
+    Xpath 'A'
+  elseif a:n == 2
+    Xpath 'B'
+  elseif a:n == 3
+    Xpath 'C'
+  endif
+  throw a:x
+endfunc
+
+func NAME(x, n)
+  if a:n == 1
+    call assert_report('should not get here')
+  elseif a:n == 2
+    Xpath 'D'
+  elseif a:n == 3
+    Xpath 'E'
+  elseif a:n == 4
+    Xpath 'F'
+  endif
+  return a:x
+endfunc
+
+func ARG(x, n)
+  if a:n == 1
+    call assert_report('should not get here')
+  elseif a:n == 2
+    call assert_report('should not get here')
+  elseif a:n == 3
+    Xpath 'G'
+  elseif a:n == 4
+    Xpath 'I'
+  endif
+  return a:x
+endfunc
+
+func Test_throw_across_call_cmd()
+  XpathINIT
+
+  func F(x, n)
+    if a:n == 2
+      call assert_report('should not get here')
+    elseif a:n == 4
+      Xpath 'a'
+    endif
+  endfunc
+
+  while 1
+    try
+      let v:errmsg = ""
+
+      while 1
+        try
+          Xpath 'b'
+          call {NAME(THROW("name", 1), 1)}(ARG(4711, 1), 1)
+          call assert_report('should not get here')
+        catch /^name$/
+          Xpath 'c'
+        catch /.*/
+          call assert_report('should not get here')
+        finally
+          call assert_equal("", v:errmsg)
+          let v:errmsg = ""
+          break
+        endtry
+      endwhile
+
+      while 1
+        try
+          Xpath 'd'
+          call {NAME("F", 2)}(ARG(THROW("arg", 2), 2), 2)
+          call assert_report('should not get here')
+        catch /^arg$/
+          Xpath 'e'
+        catch /.*/
+          call assert_report('should not get here')
+        finally
+          call assert_equal("", v:errmsg)
+          let v:errmsg = ""
+          break
+        endtry
+      endwhile
+
+      while 1
+        try
+          Xpath 'f'
+          call {NAME("THROW", 3)}(ARG("call", 3), 3)
+          call assert_report('should not get here')
+        catch /^call$/
+          Xpath 'g'
+        catch /^0$/	    " default return value
+          call assert_report('should not get here')
+        catch /.*/
+          call assert_report('should not get here')
+        finally
+          call assert_equal("", v:errmsg)
+          let v:errmsg = ""
+          break
+        endtry
+      endwhile
+
+      while 1
+        try
+          Xpath 'h'
+          call {NAME("F", 4)}(ARG(4711, 4), 4)
+          Xpath 'i'
+        catch /.*/
+          call assert_report('should not get here')
+        finally
+          call assert_equal("", v:errmsg)
+          let v:errmsg = ""
+          break
+        endtry
+      endwhile
+
+    catch /^0$/	    " default return value
+      call assert_report('should not get here')
+    catch /.*/
+      call assert_report('should not get here')
+    finally
+      call assert_equal("", v:errmsg)
+      let v:errmsg = ""
+      break
+    endtry
+  endwhile
+
+  call assert_equal('bAcdDBefEGCghFIai', g:Xpath)
+  delfunction F
+endfunc
+
+"-------------------------------------------------------------------------------
+" Test 68:  :throw across function calls in expressions			    {{{1
+"
+"	    On a function call within an expression, an exception might be
+"	    thrown when evaluating the function name, during evaluation of the
+"	    arguments, or when the function is being executed.  The exception
+"	    can be caught by the caller.
+"
+"	    This test reuses the functions THROW(), NAME(), and ARG() from the
+"	    previous test.
+"-------------------------------------------------------------------------------
+
+func Test_throw_across_call_expr()
+  XpathINIT
+
+  func F(x, n)
+    if a:n == 2
+      call assert_report('should not get here')
+    elseif a:n == 4
+      Xpath 'a'
+    endif
+    return a:x
+  endfunction
+
+  while 1
+    try
+      let error = 0
+      let v:errmsg = ""
+
+      while 1
+        try
+          Xpath 'b'
+          let var1 = {NAME(THROW("name", 1), 1)}(ARG(4711, 1), 1)
+          call assert_report('should not get here')
+        catch /^name$/
+          Xpath 'c'
+        catch /.*/
+          call assert_report('should not get here')
+        finally
+          call assert_equal("", v:errmsg)
+          let v:errmsg = ""
+          break
+        endtry
+      endwhile
+      call assert_true(!exists('var1'))
+
+      while 1
+        try
+          Xpath 'd'
+          let var2 = {NAME("F", 2)}(ARG(THROW("arg", 2), 2), 2)
+          call assert_report('should not get here')
+        catch /^arg$/
+          Xpath 'e'
+        catch /.*/
+          call assert_report('should not get here')
+        finally
+          call assert_equal("", v:errmsg)
+          let v:errmsg = ""
+          break
+        endtry
+      endwhile
+      call assert_true(!exists('var2'))
+
+      while 1
+        try
+          Xpath 'f'
+          let var3 = {NAME("THROW", 3)}(ARG("call", 3), 3)
+          call assert_report('should not get here')
+        catch /^call$/
+          Xpath 'g'
+        catch /^0$/	    " default return value
+          call assert_report('should not get here')
+        catch /.*/
+          call assert_report('should not get here')
+        finally
+          call assert_equal("", v:errmsg)
+          let v:errmsg = ""
+          break
+        endtry
+      endwhile
+      call assert_true(!exists('var3'))
+
+      while 1
+        try
+          Xpath 'h'
+          let var4 = {NAME("F", 4)}(ARG(4711, 4), 4)
+          Xpath 'i'
+        catch /.*/
+          call assert_report('should not get here')
+        finally
+          call assert_equal("", v:errmsg)
+          let v:errmsg = ""
+          break
+        endtry
+      endwhile
+      call assert_true(exists('var4') && var4 == 4711)
+
+    catch /^0$/	    " default return value
+      call assert_report('should not get here')
+    catch /.*/
+      call assert_report('should not get here')
+    finally
+      call assert_equal("", v:errmsg)
+      break
+    endtry
+  endwhile
+
+  call assert_equal('bAcdDBefEGCghFIai', g:Xpath)
+  delfunc F
+endfunc
+
+"-------------------------------------------------------------------------------
+" Test 76:  Errors, interrupts, :throw during expression evaluation	    {{{1
+"
+"	    When a function call made during expression evaluation is aborted
+"	    due to an error inside a :try/:endtry region or due to an interrupt
+"	    or a :throw, the expression evaluation is aborted as well.	No
+"	    message is displayed for the cancelled expression evaluation.  On an
+"	    error not inside :try/:endtry, the expression evaluation continues.
+"-------------------------------------------------------------------------------
+
+func Test_expr_eval_error()
+  let test =<< trim [CODE]
+    let taken = ""
+
+    func ERR(n)
+      let g:taken = g:taken .. "E" .. a:n
+      asdf
+    endfunc
+
+    func ERRabort(n) abort
+      let g:taken = g:taken .. "A" .. a:n
+      asdf
+    endfunc	" returns -1; may cause follow-up msg for illegal var/func name
+
+    func WRAP(n, arg)
+      let g:taken = g:taken .. "W" .. a:n
+      let g:saved_errmsg = v:errmsg
+      return arg
+    endfunc
+
+    func INT(n)
+      let g:taken = g:taken .. "I" .. a:n
+      call interrupt()
+    endfunc
+
+    func THR(n)
+      let g:taken = g:taken .. "T" .. a:n
+      throw "should not be caught"
+    endfunc
+
+    func CONT(n)
+      let g:taken = g:taken .. "C" .. a:n
+    endfunc
+
+    func MSG(n)
+      let g:taken = g:taken .. "M" .. a:n
+      let errmsg = (a:n >= 37 && a:n <= 44) ? g:saved_errmsg : v:errmsg
+      let msgptn = (a:n >= 10 && a:n <= 27) ? "^$" : "asdf"
+      call assert_match(msgptn, errmsg)
+      let v:errmsg = ""
+      let g:saved_errmsg = ""
+    endfunc
+
+    let v:errmsg = ""
+
+    try
+      let t = 1
+      while t <= 9
+        Xloop 'a'
+        try
+          if t == 1
+            let v{ERR(t) + CONT(t)} = 0
+          elseif t == 2
+            let v{ERR(t) + CONT(t)}
+          elseif t == 3
+            let var = exists('v{ERR(t) + CONT(t)}')
+          elseif t == 4
+            unlet v{ERR(t) + CONT(t)}
+          elseif t == 5
+            function F{ERR(t) + CONT(t)}()
+            endfunction
+          elseif t == 6
+            function F{ERR(t) + CONT(t)}
+          elseif t == 7
+            let var = exists('*F{ERR(t) + CONT(t)}')
+          elseif t == 8
+            delfunction F{ERR(t) + CONT(t)}
+          elseif t == 9
+            let var = ERR(t) + CONT(t)
+          endif
+        catch /asdf/
+          " v:errmsg is not set when the error message is converted to an
+          " exception.  Set it to the original error message.
+          let v:errmsg = substitute(v:exception, '^Vim:', '', "")
+        catch /^Vim\((\a\+)\)\=:/
+          " An error exception has been thrown after the original error.
+          let v:errmsg = ""
+        finally
+          call MSG(t)
+          let t = t + 1
+          XloopNEXT
+          continue	" discard an aborting error
+        endtry
+      endwhile
+    catch /.*/
+      call assert_report('should not get here')
+    endtry
+
+    try
+      let t = 10
+      while t <= 18
+        Xloop 'b'
+        try
+          if t == 10
+            let v{INT(t) + CONT(t)} = 0
+          elseif t == 11
+            let v{INT(t) + CONT(t)}
+          elseif t == 12
+            let var = exists('v{INT(t) + CONT(t)}')
+          elseif t == 13
+            unlet v{INT(t) + CONT(t)}
+          elseif t == 14
+            function F{INT(t) + CONT(t)}()
+            endfunction
+          elseif t == 15
+            function F{INT(t) + CONT(t)}
+          elseif t == 16
+            let var = exists('*F{INT(t) + CONT(t)}')
+          elseif t == 17
+            delfunction F{INT(t) + CONT(t)}
+          elseif t == 18
+            let var = INT(t) + CONT(t)
+          endif
+        catch /^Vim\((\a\+)\)\=:\(Interrupt\)\@!/
+          " An error exception has been triggered after the interrupt.
+          let v:errmsg = substitute(v:exception, '^Vim\((\a\+)\)\=:', '', "")
+        finally
+          call MSG(t)
+          let t = t + 1
+          XloopNEXT
+          continue	" discard interrupt
+        endtry
+      endwhile
+    catch /.*/
+      call assert_report('should not get here')
+    endtry
+
+    try
+      let t = 19
+      while t <= 27
+        Xloop 'c'
+        try
+          if t == 19
+            let v{THR(t) + CONT(t)} = 0
+          elseif t == 20
+            let v{THR(t) + CONT(t)}
+          elseif t == 21
+            let var = exists('v{THR(t) + CONT(t)}')
+          elseif t == 22
+            unlet v{THR(t) + CONT(t)}
+          elseif t == 23
+            function F{THR(t) + CONT(t)}()
+            endfunction
+          elseif t == 24
+            function F{THR(t) + CONT(t)}
+          elseif t == 25
+            let var = exists('*F{THR(t) + CONT(t)}')
+          elseif t == 26
+            delfunction F{THR(t) + CONT(t)}
+          elseif t == 27
+            let var = THR(t) + CONT(t)
+          endif
+        catch /^Vim\((\a\+)\)\=:/
+          " An error exception has been triggered after the :throw.
+          let v:errmsg = substitute(v:exception, '^Vim\((\a\+)\)\=:', '', "")
+        finally
+          call MSG(t)
+          let t = t + 1
+          XloopNEXT
+          continue	" discard exception
+        endtry
+      endwhile
+    catch /.*/
+      call assert_report('should not get here')
+    endtry
+
+    let v{ERR(28) + CONT(28)} = 0
+    call MSG(28)
+    let v{ERR(29) + CONT(29)}
+    call MSG(29)
+    let var = exists('v{ERR(30) + CONT(30)}')
+    call MSG(30)
+    unlet v{ERR(31) + CONT(31)}
+    call MSG(31)
+    function F{ERR(32) + CONT(32)}()
+    endfunction
+    call MSG(32)
+    function F{ERR(33) + CONT(33)}
+    call MSG(33)
+    let var = exists('*F{ERR(34) + CONT(34)}')
+    call MSG(34)
+    delfunction F{ERR(35) + CONT(35)}
+    call MSG(35)
+    let var = ERR(36) + CONT(36)
+    call MSG(36)
+
+    let saved_errmsg = ""
+
+    let v{WRAP(37, ERRabort(37)) + CONT(37)} = 0
+    call MSG(37)
+    let v{WRAP(38, ERRabort(38)) + CONT(38)}
+    call MSG(38)
+    let var = exists('v{WRAP(39, ERRabort(39)) + CONT(39)}')
+    call MSG(39)
+    unlet v{WRAP(40, ERRabort(40)) + CONT(40)}
+    call MSG(40)
+    function F{WRAP(41, ERRabort(41)) + CONT(41)}()
+    endfunction
+    call MSG(41)
+    function F{WRAP(42, ERRabort(42)) + CONT(42)}
+    call MSG(42)
+    let var = exists('*F{WRAP(43, ERRabort(43)) + CONT(43)}')
+    call MSG(43)
+    delfunction F{WRAP(44, ERRabort(44)) + CONT(44)}
+    call MSG(44)
+    let var = ERRabort(45) + CONT(45)
+    call MSG(45)
+    Xpath 'd'
+
+    let expected = ""
+          \ .. "E1M1E2M2E3M3E4M4E5M5E6M6E7M7E8M8E9M9"
+          \ .. "I10M10I11M11I12M12I13M13I14M14I15M15I16M16I17M17I18M18"
+          \ .. "T19M19T20M20T21M21T22M22T23M23T24M24T25M25T26M26T27M27"
+          \ .. "E28C28M28E29C29M29E30C30M30E31C31M31E32C32M32E33C33M33"
+          \ .. "E34C34M34E35C35M35E36C36M36"
+          \ .. "A37W37C37M37A38W38C38M38A39W39C39M39A40W40C40M40A41W41C41M41"
+          \ .. "A42W42C42M42A43W43C43M43A44W44C44M44A45C45M45"
+    call assert_equal(expected, taken)
+  [CODE]
+  let verify =<< trim [CODE]
+    let expected = "a1a2a3a4a5a6a7a8a9"
+                      \ .. "b10b11b12b13b14b15b16b17b18"
+                      \ .. "c19c20c21c22c23c24c25c26c27d"
+    call assert_equal(expected, g:Xpath)
+  [CODE]
+  call RunInNewVim(test, verify)
+endfunc
+
+"-------------------------------------------------------------------------------
+" Test 77:  Errors, interrupts, :throw in name{brace-expression}	    {{{1
+"
+"	    When a function call made during evaluation of an expression in
+"	    braces as part of a function name after ":function" is aborted due
+"	    to an error inside a :try/:endtry region or due to an interrupt or
+"	    a :throw, the expression evaluation is aborted as well, and the
+"	    function definition is ignored, skipping all commands to the
+"	    ":endfunction".  On an error not inside :try/:endtry, the expression
+"	    evaluation continues and the function gets defined, and can be
+"	    called and deleted.
+"-------------------------------------------------------------------------------
+func Test_brace_expr_error()
+  let test =<< trim [CODE]
+    func ERR() abort
+      Xloop 'a'
+      asdf
+    endfunc					" returns -1
+
+    func OK()
+      Xloop 'b'
+      let v:errmsg = ""
+      return 0
+    endfunc
+
+    let v:errmsg = ""
+
+    Xpath 'c'
+    func F{1 + ERR() + OK()}(arg)
+      " F0 should be defined.
+      if exists("a:arg") && a:arg == "calling"
+        Xpath 'd'
+      else
+        call assert_report('should not get here')
+      endif
+    endfunction
+    call assert_equal("", v:errmsg)
+    XloopNEXT
+
+    Xpath 'e'
+    call F{1 + ERR() + OK()}("calling")
+    call assert_equal("", v:errmsg)
+    XloopNEXT
+
+    Xpath 'f'
+    delfunction F{1 + ERR() + OK()}
+    call assert_equal("", v:errmsg)
+    XloopNEXT
+
+    try
+      while 1
+        try
+          Xpath 'g'
+          func G{1 + ERR() + OK()}(arg)
+            " G0 should not be defined, and the function body should be
+            " skipped.
+            call assert_report('should not get here')
+            " Use an unmatched ":finally" to check whether the body is
+            " skipped when an error occurs in ERR().  This works whether or
+            " not the exception is converted to an exception.
+            finally
+              call assert_report('should not get here')
+            endtry
+          try
+            call assert_report('should not get here')
+          endfunction
+
+          call assert_report('should not get here')
+        catch /asdf/
+          " Jumped to when the function is not defined and the body is
+          " skipped.
+          Xpath 'h'
+        catch /.*/
+          call assert_report('should not get here')
+        finally
+          Xpath 'i'
+          break
+        endtry			" jumped to when the body is not skipped
+      endwhile
+    catch /.*/
+      call assert_report('should not get here')
+    endtry
+  [CODE]
+  let verify =<< trim [CODE]
+    call assert_equal('ca1b1ea2b2dfa3b3ga4hi', g:Xpath)
+  [CODE]
+  call RunInNewVim(test, verify)
+endfunc
+
+"-------------------------------------------------------------------------------
+" Test 78:  Messages on parsing errors in expression evaluation		    {{{1
+"
+"	    When an expression evaluation detects a parsing error, an error
+"	    message is given and converted to an exception, and the expression
+"	    evaluation is aborted.
+"-------------------------------------------------------------------------------
+func Test_expr_eval_error_msg()
+  CheckEnglish
+
+  let test =<< trim [CODE]
+    let taken = ""
+
+    func F(n)
+      let g:taken = g:taken . "F" . a:n
+    endfunc
+
+    func MSG(n, enr, emsg)
+      let g:taken = g:taken . "M" . a:n
+      call assert_match('^' .. a:enr .. ':', v:errmsg)
+      call assert_match(a:emsg, v:errmsg)
+    endfunc
+
+    func CONT(n)
+      let g:taken = g:taken . "C" . a:n
+    endfunc
+
+    let v:errmsg = ""
+    try
+      let t = 1
+      while t <= 14
+        let g:taken = g:taken . "T" . t
+        let v:errmsg = ""
+        try
+          if t == 1
+            let v{novar + CONT(t)} = 0
+          elseif t == 2
+            let v{novar + CONT(t)}
+          elseif t == 3
+            let var = exists('v{novar + CONT(t)}')
+          elseif t == 4
+            unlet v{novar + CONT(t)}
+          elseif t == 5
+            function F{novar + CONT(t)}()
+            endfunction
+          elseif t == 6
+            function F{novar + CONT(t)}
+          elseif t == 7
+            let var = exists('*F{novar + CONT(t)}')
+          elseif t == 8
+            delfunction F{novar + CONT(t)}
+          elseif t == 9
+            echo novar + CONT(t)
+          elseif t == 10
+            echo v{novar + CONT(t)}
+          elseif t == 11
+            echo F{novar + CONT(t)}
+          elseif t == 12
+            let var = novar + CONT(t)
+          elseif t == 13
+            let var = v{novar + CONT(t)}
+          elseif t == 14
+            let var = F{novar + CONT(t)}()
+          endif
+        catch /^Vim\((\a\+)\)\=:/
+          Xloop 'a'
+          " v:errmsg is not set when the error message is converted to an
+          " exception.  Set it to the original error message.
+          let v:errmsg = substitute(v:exception, '^Vim\((\a\+)\)\=:', '', "")
+        finally
+          Xloop 'b'
+          if t <= 8 && t != 3 && t != 7
+            call MSG(t, 'E475', 'Invalid argument\>')
+          else
+            call MSG(t, 'E121', "Undefined variable")
+          endif
+          let t = t + 1
+          XloopNEXT
+          continue	" discard an aborting error
+        endtry
+      endwhile
+    catch /.*/
+      call assert_report('should not get here')
+    endtry
+
+    func T(n, expr, enr, emsg)
+      try
+        let g:taken = g:taken . "T" . a:n
+        let v:errmsg = ""
+        try
+          execute "let var = " . a:expr
+        catch /^Vim\((\a\+)\)\=:/
+          Xloop 'c'
+          " v:errmsg is not set when the error message is converted to an
+          " exception.  Set it to the original error message.
+          let v:errmsg = substitute(v:exception, '^Vim\((\a\+)\)\=:', '', "")
+        finally
+          Xloop 'd'
+          call MSG(a:n, a:enr, a:emsg)
+          XloopNEXT
+          " Discard an aborting error:
+          return
+        endtry
+      catch /.*/
+        call assert_report('should not get here')
+      endtry
+    endfunc
+
+    call T(15, 'Nofunc() + CONT(15)',	'E117',	"Unknown function")
+    call T(16, 'F(1 2 + CONT(16))',	'E116',	"Invalid arguments")
+    call T(17, 'F(1, 2) + CONT(17)',	'E118',	"Too many arguments")
+    call T(18, 'F() + CONT(18)',	'E119',	"Not enough arguments")
+    call T(19, '{(1} + CONT(19)',	'E110',	"Missing ')'")
+    call T(20, '("abc"[1) + CONT(20)',	'E111',	"Missing ']'")
+    call T(21, '(1 +) + CONT(21)',	'E15',	"Invalid expression")
+    call T(22, '1 2 + CONT(22)',	'E15',	"Invalid expression")
+    call T(23, '(1 ? 2) + CONT(23)',	'E109',	"Missing ':' after '?'")
+    call T(24, '("abc) + CONT(24)',	'E114',	"Missing quote")
+    call T(25, "('abc) + CONT(25)",	'E115',	"Missing quote")
+    call T(26, '& + CONT(26)',		'E112', "Option name missing")
+    call T(27, '&asdf + CONT(27)',	'E113', "Unknown option")
+
+    let expected = ""
+      \ .. "T1M1T2M2T3M3T4M4T5M5T6M6T7M7T8M8T9M9T10M10T11M11T12M12T13M13T14M14"
+      \ .. "T15M15T16M16T17M17T18M18T19M19T20M20T21M21T22M22T23M23T24M24T25M25"
+      \ .. "T26M26T27M27"
+
+    call assert_equal(expected, taken)
+  [CODE]
+  let verify =<< trim [CODE]
+    let expected = "a1b1a2b2a3b3a4b4a5b5a6b6a7b7a8b8a9b9a10b10a11b11a12b12"
+                  \ .. "a13b13a14b14c15d15c16d16c17d17c18d18c19d19c20d20"
+                  \ .. "c21d21c22d22c23d23c24d24c25d25c26d26c27d27"
+    call assert_equal(expected, g:Xpath)
+  [CODE]
+  call RunInNewVim(test, verify)
+endfunc
+
+"-------------------------------------------------------------------------------
+" Test 79:  Throwing one of several errors for the same command		    {{{1
+"
+"	    When several errors appear in a row (for instance during expression
+"	    evaluation), the first as the most specific one is used when
+"	    throwing an error exception.  If, however, a syntax error is
+"	    detected afterwards, this one is used for the error exception.
+"	    On a syntax error, the next command is not executed, on a normal
+"	    error, however, it is (relevant only in a function without the
+"	    "abort" flag).  v:errmsg is not set.
+"
+"	    If throwing error exceptions is configured off, v:errmsg is always
+"	    set to the latest error message, that is, to the more general
+"	    message or the syntax error, respectively.
+"-------------------------------------------------------------------------------
+func Test_throw_multi_error()
+  CheckEnglish
+
+  let test =<< trim [CODE]
+    func NEXT(cmd)
+      exec a:cmd . " | Xloop 'a'"
+    endfun
+
+    call NEXT('echo novar')			" (checks nextcmd)
+    XloopNEXT
+    call NEXT('let novar #')			" (skips nextcmd)
+    XloopNEXT
+    call NEXT('unlet novar #')			" (skips nextcmd)
+    XloopNEXT
+    call NEXT('let {novar}')			" (skips nextcmd)
+    XloopNEXT
+    call NEXT('unlet{ novar}')			" (skips nextcmd)
+
+    call assert_equal('a1', g:Xpath)
+    XpathINIT
+    XloopINIT
+
+    func EXEC(cmd)
+      exec a:cmd
+    endfunc
+
+    try
+      while 1				" dummy loop
+        try
+          let v:errmsg = ""
+          call EXEC('echo novar')	" normal error
+        catch /^Vim\((\a\+)\)\=:/
+          Xpath 'b'
+          call assert_match('E121: Undefined variable: novar', v:exception)
+        finally
+          Xpath 'c'
+          call assert_equal("", v:errmsg)
+          break
+        endtry
+      endwhile
+
+      Xpath 'd'
+      let cmd = "let"
+      while cmd != ""
+        try
+          let v:errmsg = ""
+          call EXEC(cmd . ' novar #')		" normal plus syntax error
+        catch /^Vim\((\a\+)\)\=:/
+          Xloop 'e'
+          call assert_match('E488: Trailing characters', v:exception)
+        finally
+          Xloop 'f'
+          call assert_equal("", v:errmsg)
+          if cmd == "let"
+            let cmd = "unlet"
+          else
+            let cmd = ""
+          endif
+          XloopNEXT
+          continue
+        endtry
+      endwhile
+
+      Xpath 'g'
+      let cmd = "let"
+      while cmd != ""
+        try
+          let v:errmsg = ""
+          call EXEC(cmd . ' {novar}')		" normal plus syntax error
+        catch /^Vim\((\a\+)\)\=:/
+          Xloop 'h'
+          call assert_match('E475: Invalid argument: {novar}', v:exception)
+        finally
+          Xloop 'i'
+          call assert_equal("", v:errmsg)
+          if cmd == "let"
+            let cmd = "unlet"
+          else
+            let cmd = ""
+          endif
+          XloopNEXT
+          continue
+        endtry
+      endwhile
+    catch /.*/
+      call assert_report('should not get here')
+    endtry
+    Xpath 'j'
+  [CODE]
+  let verify =<< trim [CODE]
+    call assert_equal('bcde1f1e2f2gh3i3h4i4j', g:Xpath)
+  [CODE]
+  call RunInNewVim(test, verify)
+endfunc
+
+"-------------------------------------------------------------------------------
+" Test 80:  Syntax error in expression for illegal :elseif		    {{{1
+"
+"	    If there is a syntax error in the expression after an illegal
+"	    :elseif, an error message is given (or an error exception thrown)
+"	    for the illegal :elseif rather than the expression error.
+"-------------------------------------------------------------------------------
+func Test_if_syntax_error()
+  CheckEnglish
+
+  let test =<< trim [CODE]
+    let v:errmsg = ""
+    if 0
+    else
+    elseif 1 ||| 2
+    endif
+    Xpath 'a'
+    call assert_match('E584: :elseif after :else', v:errmsg)
+
+    let v:errmsg = ""
+    if 1
+    else
+    elseif 1 ||| 2
+    endif
+    Xpath 'b'
+    call assert_match('E584: :elseif after :else', v:errmsg)
+
+    let v:errmsg = ""
+    elseif 1 ||| 2
+    Xpath 'c'
+    call assert_match('E582: :elseif without :if', v:errmsg)
+
+    let v:errmsg = ""
+    while 1
+      elseif 1 ||| 2
+    endwhile
+    Xpath 'd'
+    call assert_match('E582: :elseif without :if', v:errmsg)
+
+    while 1
+      try
+        try
+          let v:errmsg = ""
+          if 0
+          else
+          elseif 1 ||| 2
+          endif
+        catch /^Vim\((\a\+)\)\=:/
+          Xpath 'e'
+          call assert_match('E584: :elseif after :else', v:exception)
+        finally
+          Xpath 'f'
+          call assert_equal("", v:errmsg)
+        endtry
+      catch /.*/
+      call assert_report('should not get here')
+      finally
+        Xpath 'g'
+        break
+      endtry
+    endwhile
+
+    while 1
+      try
+        try
+          let v:errmsg = ""
+          if 1
+          else
+          elseif 1 ||| 2
+          endif
+        catch /^Vim\((\a\+)\)\=:/
+          Xpath 'h'
+          call assert_match('E584: :elseif after :else', v:exception)
+        finally
+          Xpath 'i'
+          call assert_equal("", v:errmsg)
+        endtry
+      catch /.*/
+        call assert_report('should not get here')
+      finally
+        Xpath 'j'
+        break
+      endtry
+    endwhile
+
+    while 1
+      try
+        try
+          let v:errmsg = ""
+          elseif 1 ||| 2
+        catch /^Vim\((\a\+)\)\=:/
+          Xpath 'k'
+          call assert_match('E582: :elseif without :if', v:exception)
+        finally
+          Xpath 'l'
+          call assert_equal("", v:errmsg)
+        endtry
+      catch /.*/
+        call assert_report('should not get here')
+      finally
+        Xpath 'm'
+        break
+      endtry
+    endwhile
+
+    while 1
+      try
+        try
+          let v:errmsg = ""
+          while 1
+              elseif 1 ||| 2
+          endwhile
+        catch /^Vim\((\a\+)\)\=:/
+          Xpath 'n'
+          call assert_match('E582: :elseif without :if', v:exception)
+        finally
+          Xpath 'o'
+          call assert_equal("", v:errmsg)
+        endtry
+      catch /.*/
+        call assert_report('should not get here')
+      finally
+        Xpath 'p'
+        break
+      endtry
+    endwhile
+    Xpath 'q'
+  [CODE]
+  let verify =<< trim [CODE]
+    call assert_equal('abcdefghijklmnopq', g:Xpath)
+  [CODE]
+  call RunInNewVim(test, verify)
+endfunc
+
+"-------------------------------------------------------------------------------
+" Test 81:  Discarding exceptions after an error or interrupt		    {{{1
+"
+"	    When an exception is thrown from inside a :try conditional without
+"	    :catch and :finally clauses and an error or interrupt occurs before
+"	    the :endtry is reached, the exception is discarded.
+"-------------------------------------------------------------------------------
+
+func Test_discard_exception_after_error_1()
+  let test =<< trim [CODE]
+    try
+      Xpath 'a'
+      try
+        Xpath 'b'
+        throw "arrgh"
+        call assert_report('should not get here')
+        if 1
+        call assert_report('should not get here')
+        " error after :throw: missing :endif
+      endtry
+      call assert_report('should not get here')
+    catch /arrgh/
+      call assert_report('should not get here')
+    endtry
+    call assert_report('should not get here')
+  [CODE]
+  let verify =<< trim [CODE]
+    call assert_equal('ab', g:Xpath)
+  [CODE]
+  call RunInNewVim(test, verify)
+endfunc
+
+" TODO: Not able inject an interrupt after throwing an exception
+func Disable_Test_discard_exception_after_error_2()
+  let test =<< trim [CODE]
+    try
+      Xpath 'a'
+      try
+        Xpath 'b'
+        throw "arrgh"
+        call interrupt()    " FIXME: throw is not interrupted here
+        call assert_report('should not get here')
+      endtry
+      call assert_report('should not get here')
+    catch /arrgh/
+      call assert_report('should not get here')
+    endtry
+    call assert_report('should not get here')
+  [CODE]
+  let verify =<< trim [CODE]
+    call assert_equal('ab', g:Xpath)
+  [CODE]
+  call RunInNewVim(test, verify)
 endfunc
 
 "-------------------------------------------------------------------------------
