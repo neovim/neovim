@@ -1780,7 +1780,7 @@ describe('float window', function()
         ]]}
       end
 
-      meths.win_set_config(win, {border="double",title= "Center",title_pos="center"})
+      meths.win_set_config(win, {title= "Center",title_pos="center"})
       if multigrid then
         screen:expect{grid=[[
         ## grid 1
@@ -1823,7 +1823,7 @@ describe('float window', function()
         ]]}
       end
 
-      meths.win_set_config(win, {border="double",title= "Right",title_pos="right"})
+      meths.win_set_config(win, {title= "Right",title_pos="right"})
       if multigrid then
         screen:expect{grid=[[
         ## grid 1
@@ -1866,7 +1866,7 @@ describe('float window', function()
         ]]}
       end
 
-      meths.win_set_config(win, {border="double",title= { {"🦄"},{"BB"}},title_pos="right"})
+      meths.win_set_config(win, {title= { {"🦄"},{"BB"}},title_pos="right"})
       if multigrid then
         screen:expect{grid=[[
         ## grid 1
