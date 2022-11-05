@@ -1886,6 +1886,27 @@ theend:
   return (char_u *)name;
 }
 
+/// Call trans_function_name(), except that a lambda is returned as-is.
+/// Returns the name in allocated memory.
+char *save_function_name(char **name, bool skip, int flags, funcdict_T *fudi)
+{
+  char *p = *name;
+  char *saved;
+
+  if (strncmp(p, "<lambda>", 8) == 0) {
+    p += 8;
+    (void)getdigits(&p, false, 0);
+    saved = xstrndup(*name, (size_t)(p - *name));
+    if (fudi != NULL) {
+      CLEAR_POINTER(fudi);
+    }
+  } else {
+    saved = (char *)trans_function_name(&p, skip, flags, fudi, NULL);
+  }
+  *name = p;
+  return saved;
+}
+
 #define MAX_FUNC_NESTING 50
 
 /// List functions.
@@ -2000,14 +2021,7 @@ void ex_function(exarg_T *eap)
   // s:func      script-local function name
   // g:func      global function name, same as "func"
   p = eap->arg;
-  if (strncmp(p, "<lambda>", 8) == 0) {
-    p += 8;
-    (void)getdigits(&p, false, 0);
-    name = xstrndup(eap->arg, (size_t)(p - eap->arg));
-    CLEAR_FIELD(fudi);
-  } else {
-    name = (char *)trans_function_name(&p, eap->skip, TFN_NO_AUTOLOAD, &fudi, NULL);
-  }
+  name = save_function_name(&p, eap->skip, TFN_NO_AUTOLOAD, &fudi);
   paren = (vim_strchr(p, '(') != NULL);
   if (name == NULL && (fudi.fd_dict == NULL || !paren) && !eap->skip) {
     // Return on an invalid expression in braces, unless the expression

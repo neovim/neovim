@@ -5029,9 +5029,8 @@ void common_function(typval_T *argvars, typval_T *rettv, bool is_funcref)
 
   if ((use_string && vim_strchr(s, AUTOLOAD_CHAR) == NULL) || is_funcref) {
     name = s;
-    trans_name = (char *)trans_function_name(&name, false,
-                                             TFN_INT | TFN_QUIET | TFN_NO_AUTOLOAD
-                                             | TFN_NO_DEREF, NULL, NULL);
+    trans_name = save_function_name(&name, false,
+                                    TFN_INT | TFN_QUIET | TFN_NO_AUTOLOAD | TFN_NO_DEREF, NULL);
     if (*name != NUL) {
       s = NULL;
     }
