@@ -38,7 +38,7 @@ return {
     assert_equal={args={2, 3}, base=2},
     assert_equalfile={args={2, 3}, base=1},
     assert_exception={args={1, 2}},
-    assert_fails={args={1, 4}, base=1},
+    assert_fails={args={1, 5}, base=1},
     assert_false={args={1, 2}, base=1},
     assert_inrange={args={3, 4}, base=3},
     assert_match={args={2, 3}, base=2},

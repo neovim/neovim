@@ -100,7 +100,7 @@ assert_exception({error} [, {msg}])			*assert_exception()*
 			endtry
 <
 							*assert_fails()*
-assert_fails({cmd} [, {error} [, {msg} [, {lnum}]]])
+assert_fails({cmd} [, {error} [, {msg} [, {lnum} [, {context}]]]])
 		Run {cmd} and add an error message to |v:errors| if it does
 		NOT produce an error or when {error} is not found in the
 		error message.  Also see |assert-return|.
@@ -126,6 +126,10 @@ assert_fails({cmd} [, {error} [, {msg} [, {lnum}]]])
 		argument is present and matches, then this is compared with
 		the line number at which the error was reported. That can be
 		the line number in a function or in a script.
+
+		When {context} is present it is used as a pattern and matched
+		against the context (script name or function name) where
+		{lnum} is located in.
 
 		Note that beeping is not considered an error, and some failing
 		commands only beep.  Use |assert_beeps()| for those.

@@ -198,6 +198,7 @@ EXTERN bool emsg_severe INIT(= false);      // use message of next of several
 EXTERN bool emsg_assert_fails_used INIT(= false);
 EXTERN char *emsg_assert_fails_msg INIT(= NULL);
 EXTERN long emsg_assert_fails_lnum INIT(= 0);
+EXTERN char *emsg_assert_fails_context INIT(= NULL);
 
 EXTERN bool did_endif INIT(= false);        // just had ":endif"
 EXTERN dict_T vimvardict;                   // Dictionary with v: variables
