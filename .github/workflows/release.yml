@@ -150,10 +150,16 @@ jobs:
       - uses: actions/checkout@v3
         with:
           fetch-depth: 0
+      - name: Set env
+        run: ./.github/workflows/env.ps1
       - name: Build deps
-        run: .\ci\build.ps1 -BuildDeps
+        run: |
+          cmake -S cmake.deps -B $env:DEPS_BUILD_DIR -G Ninja -DCMAKE_BUILD_TYPE='RelWithDebInfo'
+          cmake --build $env:DEPS_BUILD_DIR
       - name: build package
-        run: .\ci\build.ps1 -Package
+        run: |
+          cmake -B build -G Ninja -DCMAKE_BUILD_TYPE='RelWithDebInfo' -DDEPS_PREFIX="$env:DEPS_PREFIX"
+          cmake --build build --target package
       - uses: actions/upload-artifact@v3
         with:
           name: nvim-win64
