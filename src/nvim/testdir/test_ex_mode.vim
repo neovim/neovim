@@ -97,7 +97,6 @@ func Test_Ex_substitute()
   call term_sendkeys(buf, ":vi\<CR>")
   call WaitForAssert({-> assert_match('foo bar', term_getline(buf, 1))}, 1000)
 
-  call term_sendkeys(buf, ":q!\n")
   call StopVimInTerminal(buf)
 endfunc
 
