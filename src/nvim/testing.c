@@ -14,6 +14,12 @@
 # include "testing.c.generated.h"
 #endif
 
+static char e_assert_fails_second_arg[]
+  = N_("E856: assert_fails() second argument must be a string or a list with one or two strings");
+static char e_assert_fails_fourth_argument[]
+  = N_("E1115: assert_fails() fourth argument must be a number");
+static char e_assert_fails_fifth_argument[]
+  = N_("E1116: assert_fails() fifth argument must be a string");
 static char e_calling_test_garbagecollect_now_while_v_testing_is_not_set[]
   = N_("E1142: Calling test_garbagecollect_now() while v:testing is not set");
 
@@ -480,7 +486,7 @@ void f_assert_fails(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   garray_T ga;
   int save_trylevel = trylevel;
   const int called_emsg_before = called_emsg;
-  bool wrong_arg = false;
+  char *wrong_arg_msg = NULL;
 
   // trylevel must be zero for a ":throw" command to be considered failed
   trylevel = 0;
@@ -509,7 +515,7 @@ void f_assert_fails(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     } else if (argvars[1].v_type == VAR_LIST) {
       const list_T *const list = argvars[1].vval.v_list;
       if (list == NULL || tv_list_len(list) < 1 || tv_list_len(list) > 2) {
-        wrong_arg = true;
+        wrong_arg_msg = e_assert_fails_second_arg;
         goto theend;
       }
       const typval_T *tv = TV_LIST_ITEM_TV(tv_list_first(list));
@@ -525,23 +531,30 @@ void f_assert_fails(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
         }
       }
     } else {
-      wrong_arg = true;
+      wrong_arg_msg = e_assert_fails_second_arg;
       goto theend;
     }
 
     if (!error_found && argvars[2].v_type != VAR_UNKNOWN
-        && argvars[3].v_type == VAR_NUMBER) {
-      if (argvars[3].vval.v_number >= 0
-          && argvars[3].vval.v_number != emsg_assert_fails_lnum) {
+        && argvars[3].v_type != VAR_UNKNOWN) {
+      if (argvars[3].v_type != VAR_NUMBER) {
+        wrong_arg_msg = e_assert_fails_fourth_argument;
+        goto theend;
+      } else if (argvars[3].vval.v_number >= 0
+                 && argvars[3].vval.v_number != emsg_assert_fails_lnum) {
         error_found = true;
         error_found_index = 3;
       }
-      if (!error_found && argvars[4].v_type == VAR_STRING
-          && argvars[4].vval.v_string != NULL
-          && !pattern_match(argvars[4].vval.v_string,
-                            emsg_assert_fails_context, false)) {
-        error_found = true;
-        error_found_index = 4;
+      if (!error_found && argvars[4].v_type != VAR_UNKNOWN) {
+        if (argvars[4].v_type != VAR_STRING) {
+          wrong_arg_msg = e_assert_fails_fifth_argument;
+          goto theend;
+        } else if (argvars[4].vval.v_string != NULL
+                   && !pattern_match(argvars[4].vval.v_string,
+                                     emsg_assert_fails_context, false)) {
+          error_found = true;
+          error_found_index = 4;
+        }
       }
     }
 
@@ -576,9 +589,8 @@ theend:
   emsg_assert_fails_used = false;
   XFREE_CLEAR(emsg_assert_fails_msg);
   set_vim_var_string(VV_ERRMSG, NULL, 0);
-  if (wrong_arg) {
-    emsg(_(
-          "E856: assert_fails() second argument must be a string or a list with one or two strings"));
+  if (wrong_arg_msg != NULL) {
+    emsg(_(wrong_arg_msg));
   }
 }
 
