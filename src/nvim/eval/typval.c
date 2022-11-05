@@ -2206,12 +2206,12 @@ bool tv_dict_get_callback(dict_T *const d, const char *const key, const ptrdiff_
   return res;
 }
 
-/// Check for adding a function to g: or s:.
+/// Check for adding a function to g: or l:.
 /// If the name is wrong give an error message and return true.
 int tv_dict_wrong_func_name(dict_T *d, typval_T *tv, const char *name)
 {
   return (d == &globvardict || &d->dv_hashtab == get_funccal_local_ht())
-         && (tv->v_type == VAR_FUNC || tv->v_type == VAR_PARTIAL)
+         && tv_is_func(*tv)
          && var_wrong_func_name(name, true);
 }
 
@@ -2459,17 +2459,9 @@ void tv_dict_extend(dict_T *const d1, dict_T *const d2, const char *const action
 
   TV_DICT_ITER(d2, di2, {
     dictitem_T *const di1 = tv_dict_find(d1, (const char *)di2->di_key, -1);
-    if (d1->dv_scope != VAR_NO_SCOPE) {
-      // Disallow replacing a builtin function in l: and g:.
-      // Check the key to be valid when adding to any scope.
-      if (d1->dv_scope == VAR_DEF_SCOPE
-          && tv_is_func(di2->di_tv)
-          && var_wrong_func_name((const char *)di2->di_key, di1 == NULL)) {
-        break;
-      }
-      if (!valid_varname((const char *)di2->di_key)) {
-        break;
-      }
+    // Check the key to be valid when adding to any scope.
+    if (d1->dv_scope != VAR_NO_SCOPE && !valid_varname((const char *)di2->di_key)) {
+      break;
     }
     if (di1 == NULL) {
       dictitem_T *const new_di = tv_dict_item_copy(di2);
@@ -2489,6 +2481,7 @@ void tv_dict_extend(dict_T *const d1, dict_T *const d2, const char *const action
           || var_check_ro(di1->di_flags, arg_errmsg, arg_errmsg_len)) {
         break;
       }
+      // Disallow replacing a builtin function.
       if (tv_dict_wrong_func_name(d1, &di2->di_tv, (const char *)di2->di_key)) {
         break;
       }
