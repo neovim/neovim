@@ -398,7 +398,55 @@ func Test_write_readonly()
   set cpo+=W
   call assert_fails('write!', 'E504:')
   let &cpo = save_cpo
+  call setline(1, ['line1'])
+  write!
+  call assert_equal(['line1'], readfile('Xfile'))
   call delete('Xfile')
+endfunc
+
+" Test for 'patchmode'
+func Test_patchmode()
+  CheckNotBSD
+  call writefile(['one'], 'Xfile')
+  set patchmode=.orig nobackup writebackup
+  new Xfile
+  call setline(1, 'two')
+  " first write should create the .orig file
+  write
+  " TODO: Xfile.orig is not created in Cirrus FreeBSD CI test
+  call assert_equal(['one'], readfile('Xfile.orig'))
+  call setline(1, 'three')
+  " subsequent writes should not create/modify the .orig file
+  write
+  call assert_equal(['one'], readfile('Xfile.orig'))
+  set patchmode& backup& writebackup&
+  call delete('Xfile')
+  call delete('Xfile.orig')
+endfunc
+
+" Test for writing to a file in a readonly directory
+func Test_write_readonly_dir()
+  if !has('unix') || has('bsd')
+    " On MS-Windows, modifying files in a read-only directory is allowed.
+    " In Cirrus-CI for Freebsd, tests are run under a root account where
+    " modifying files in a read-only directory are allowed.
+    return
+  endif
+  call mkdir('Xdir')
+  call writefile(['one'], 'Xdir/Xfile1')
+  call setfperm('Xdir', 'r-xr--r--')
+  " try to create a new file in the directory
+  new Xdir/Xfile2
+  call setline(1, 'two')
+  call assert_fails('write', 'E212:')
+  " try to create a backup file in the directory
+  edit! Xdir/Xfile1
+  set backupdir=./Xdir
+  set patchmode=.orig
+  call assert_fails('write', 'E509:')
+  call setfperm('Xdir', 'rwxr--r--')
+  call delete('Xdir', 'rf')
+  set backupdir& patchmode&
 endfunc
 
 " Test for writing a file using invalid file encoding
