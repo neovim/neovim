@@ -1810,6 +1810,7 @@ func Test_float_conversion_errors()
   endif
 endfunc
 
+" invalid function names               {{{1
 func Test_invalid_function_names()
   " function name not starting with capital
   let caught_e128 = 0
@@ -1870,7 +1871,7 @@ func Test_invalid_function_names()
   call delete('Xscript')
 endfunc
 
-" substring and variable name
+" substring and variable name              {{{1
 func Test_substring_var()
   let str = 'abcdef'
   let n = 3
@@ -1888,6 +1889,20 @@ func Test_substring_var()
   call assert_equal('abcde', str[:b:nn])
   call assert_equal('e', str[b:nn:b:nn])
   unlet b:nn
+endfunc
+
+" Test using s: with a typed command              {{{1
+func Test_typed_script_var()
+  CheckRunVimInTerminal
+
+  let buf = RunVimInTerminal('', {'rows': 6})
+
+  " Deep nesting of if ... endif
+  call term_sendkeys(buf, ":echo get(s:, 'foo', 'x')\n")
+  call TermWait(buf)
+  call WaitForAssert({-> assert_match('^E116:', term_getline(buf, 5))})
+
+  call StopVimInTerminal(buf)
 endfunc
 
 func Test_for_over_string()
