@@ -68,7 +68,7 @@ static void ga_concat_esc(garray_T *gap, const char_u *p, int clen)
     case '\\':
       ga_concat(gap, "\\\\"); break;
     default:
-      if (*p < ' ') {
+      if (*p < ' ' || *p == 0x7f) {
         vim_snprintf((char *)buf, NUMBUFLEN, "\\x%02x", *p);
         ga_concat(gap, (char *)buf);
       } else {
@@ -244,12 +244,12 @@ static int assert_match_common(typval_T *argvars, assert_type_T atype)
 {
   char buf1[NUMBUFLEN];
   char buf2[NUMBUFLEN];
+  const int called_emsg_before = called_emsg;
   const char *const pat = tv_get_string_buf_chk(&argvars[0], buf1);
   const char *const text = tv_get_string_buf_chk(&argvars[1], buf2);
 
-  if (pat == NULL || text == NULL) {
-    emsg(_(e_invarg));
-  } else if (pattern_match(pat, text, false) != (atype == ASSERT_MATCH)) {
+  if (called_emsg == called_emsg_before
+      && pattern_match(pat, text, false) != (atype == ASSERT_MATCH)) {
     garray_T ga;
     prepare_assert_error(&ga);
     fill_assert_error(&ga, &argvars[2], NULL, &argvars[0], &argvars[1], atype);
@@ -350,11 +350,12 @@ static int assert_equalfile(typval_T *argvars)
 {
   char buf1[NUMBUFLEN];
   char buf2[NUMBUFLEN];
+  const int called_emsg_before = called_emsg;
   const char *const fname1 = tv_get_string_buf_chk(&argvars[0], buf1);
   const char *const fname2 = tv_get_string_buf_chk(&argvars[1], buf2);
   garray_T ga;
 
-  if (fname1 == NULL || fname2 == NULL) {
+  if (called_emsg > called_emsg_before) {
     return 0;
   }
 
