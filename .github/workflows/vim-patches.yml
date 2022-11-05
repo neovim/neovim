@@ -41,7 +41,7 @@ jobs:
         run: |
           git checkout -b ${VERSION_BRANCH}
           nvim -V1 -es -i NONE +'luafile scripts/vimpatch.lua' +q
-          printf '::set-output name=NEW_PATCHES::%s\n' $([ -z "$(git diff)" ]; echo $?)
+          printf 'NEW_PATCHES=%s\n' $([ -z "$(git diff)" ]; echo $?) >> $GITHUB_OUTPUT
 
       - name: Automatic PR
         if: ${{ steps.update-version.outputs.NEW_PATCHES != 0 }}

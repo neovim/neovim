@@ -52,7 +52,7 @@ jobs:
         run: |
           git checkout -b ${DOC_BRANCH}
           python3 scripts/gen_vimdoc.py
-          printf '::set-output name=UPDATED_DOCS::%s\n' $([ -z "$(git diff)" ]; echo $?)
+          printf 'UPDATED_DOCS=%s\n' $([ -z "$(git diff)" ]; echo $?) >> $GITHUB_OUTPUT
 
       - name: FAIL, PR has not committed doc changes
         if: ${{ steps.docs.outputs.UPDATED_DOCS != 0 && inputs.check_only }}
