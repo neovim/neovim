@@ -2354,4 +2354,20 @@ parents({start})                                            *vim.fs.parents()*
     Return: ~
         (function) Iterator
 
+
+==============================================================================
+Lua module: secure                                                *lua-secure*
+
+read({path})                                               *vim.secure.read()*
+    Attempt to read the file at {path} prompting the user if the file should
+    be trusted. The user's choice is persisted in a trust database at
+    $XDG_STATE_HOME/nvim/trust.
+
+    Parameters: ~
+      • {path}  (string) Path to a file to read.
+
+    Return: ~
+        (string|nil) The contents of the given file if it exists and is
+        trusted, or nil otherwise.
+
  vim:tw=78:ts=8:sw=4:sts=4:et:ft=help:norl:
