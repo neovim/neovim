@@ -370,16 +370,22 @@ static void f_append(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   set_buffer_lines(curbuf, lnum, true, &argvars[1], rettv);
 }
 
-/// "appendbufline(buf, lnum, string/list)" function
-static void f_appendbufline(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
+/// Set or append lines to a buffer.
+static void buf_set_append_line(typval_T *argvars, typval_T *rettv, bool append)
 {
   buf_T *const buf = tv_get_buf(&argvars[0], false);
   if (buf == NULL) {
     rettv->vval.v_number = 1;  // FAIL
   } else {
     const linenr_T lnum = tv_get_lnum_buf(&argvars[1], buf);
-    set_buffer_lines(buf, lnum, true, &argvars[2], rettv);
+    set_buffer_lines(buf, lnum, append, &argvars[2], rettv);
   }
+}
+
+/// "appendbufline(buf, lnum, string/list)" function
+static void f_appendbufline(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
+{
+  buf_set_append_line(argvars, rettv, true);
 }
 
 /// "atan2()" function
@@ -7501,16 +7507,7 @@ static void f_serverstop(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 /// "setbufline()" function
 static void f_setbufline(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
-  linenr_T lnum;
-  buf_T *buf;
-
-  buf = tv_get_buf(&argvars[0], false);
-  if (buf == NULL) {
-    rettv->vval.v_number = 1;  // FAIL
-  } else {
-    lnum = tv_get_lnum_buf(&argvars[1], buf);
-    set_buffer_lines(buf, lnum, false, &argvars[2], rettv);
-  }
+  buf_set_append_line(argvars, rettv, false);
 }
 
 /// Set the cursor or mark position.
