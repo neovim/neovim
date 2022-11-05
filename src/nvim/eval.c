@@ -2277,10 +2277,15 @@ int eval0(char *arg, typval_T *rettv, char **nextcmd, int evaluate)
   char *p;
   const int did_emsg_before = did_emsg;
   const int called_emsg_before = called_emsg;
+  bool end_error = false;
 
   p = skipwhite(arg);
   ret = eval1(&p, rettv, evaluate);
-  if (ret == FAIL || !ends_excmd(*p)) {
+
+  if (ret != FAIL) {
+    end_error = !ends_excmd(*p);
+  }
+  if (ret == FAIL || end_error) {
     if (ret != FAIL) {
       tv_clear(rettv);
     }
@@ -2290,7 +2295,11 @@ int eval0(char *arg, typval_T *rettv, char **nextcmd, int evaluate)
     // Also check called_emsg for when using assert_fails().
     if (!aborting() && did_emsg == did_emsg_before
         && called_emsg == called_emsg_before) {
-      semsg(_(e_invexpr2), arg);
+      if (end_error) {
+        semsg(_(e_trailing_arg), p);
+      } else {
+        semsg(_(e_invexpr2), arg);
+      }
     }
     ret = FAIL;
   }

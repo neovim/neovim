@@ -297,6 +297,7 @@ func Test_let_errors()
     let ch = test_null_channel()
     call assert_fails('let ch += 1', 'E734:')
   endif
+  call assert_fails('let name = "a" .. "b",', 'E488: Trailing characters: ,')
 
   " This test works only when the language is English
   if v:lang == "C" || v:lang =~ '^[Ee]n'
