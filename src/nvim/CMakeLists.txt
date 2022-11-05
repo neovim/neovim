@@ -772,7 +772,7 @@ add_custom_target(uncrustify-version
     -D CONFIG_FILE=${PROJECT_SOURCE_DIR}/src/uncrustify.cfg
     -P ${PROJECT_SOURCE_DIR}/cmake/CheckUncrustifyVersion.cmake)
 
-add_glob_targets(
+add_glob_target(
   TARGET lintuncrustify
   COMMAND ${UNCRUSTIFY_PRG}
   FLAGS -c "${PROJECT_SOURCE_DIR}/src/uncrustify.cfg" -q --check

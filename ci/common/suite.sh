@@ -9,12 +9,12 @@ fail() {
   local test_name="$1"
   local message="$2"
 
-  : ${message:=Test $test_name failed}
+  : "${message:=Test $test_name failed}"
 
   local full_msg="$test_name :: $message"
   echo "${full_msg}" >> "${FAIL_SUMMARY_FILE}"
   echo "Failed: $full_msg"
-  FAILED=1
+  export FAILED=1
 }
 
 ended_successfully() {

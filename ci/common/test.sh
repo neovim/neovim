@@ -57,6 +57,7 @@ check_core_dumps() {
 
 check_logs() {
   # Iterate through each log to remove an useless warning.
+  # shellcheck disable=SC2044
   for log in $(find "${1}" -type f -name "${2}"); do
     sed -i "${log}" \
       -e '/Warning: noted but unhandled ioctl/d' \
@@ -66,6 +67,7 @@ check_logs() {
 
   # Now do it again, but only consider files with size > 0.
   local err=""
+  # shellcheck disable=SC2044
   for log in $(find "${1}" -type f -name "${2}" -size +0); do
     cat "${log}"
     err=1
@@ -97,7 +99,7 @@ unittests() {(
 
 functionaltests() {(
   ulimit -c unlimited || true
-  if ! build_make ${FUNCTIONALTEST}; then
+  if ! build_make "${FUNCTIONALTEST}"; then
     fail 'functionaltests' 'Functional tests failed'
   fi
   submit_coverage functionaltest
@@ -132,7 +134,7 @@ check_runtime_files() {(
       fail "$test_name" "It appears that $file is only a part of the file name"
     fi
     if ! test "$tst" "$INSTALL_PREFIX/share/nvim/runtime/$file" ; then
-      fail "$test_name" "$(printf "$message" "$file")"
+      fail "$test_name" "$(printf "%s%s" "$message" "$file")"
     fi
   done
 )}

@@ -7,7 +7,7 @@ _stat() {
 }
 
 top_make() {
-  printf '%78s\n' | tr ' ' '='
+  printf '%78s\n' ' ' | tr ' ' '='
   ninja "$@"
 }
 
@@ -33,6 +33,7 @@ build_deps() {
   # update CMake configuration and update to newer deps versions.
   cd "${DEPS_BUILD_DIR}"
   echo "Configuring with '${DEPS_CMAKE_FLAGS}'."
+  # shellcheck disable=SC2086
   CC= cmake -G Ninja ${DEPS_CMAKE_FLAGS} "${CI_BUILD_DIR}/cmake.deps/"
 
   if ! top_make; then
@@ -51,9 +52,9 @@ build_nvim() {
 
   mkdir -p "${BUILD_DIR}"
   cd "${BUILD_DIR}"
-  echo "Configuring with '${CMAKE_FLAGS} $@'."
+  echo "Configuring with '${CMAKE_FLAGS} $*'."
+  # shellcheck disable=SC2086
   cmake -G Ninja ${CMAKE_FLAGS} "$@" "${CI_BUILD_DIR}"
-
 
   echo "Building nvim."
   if ! top_make nvim ; then

@@ -49,12 +49,13 @@
 #             simple be added to FILES
 # GLOB_DIRS - The directories to recursively search for files with extension
 #             GLOB_PAT
-#
-function(add_glob_targets)
+# EXCLUDE   - List of paths to skip (regex). Works on both directories and
+#             files.
+function(add_glob_target)
   cmake_parse_arguments(ARG
     "REQUIRED"
     "TARGET;COMMAND;GLOB_PAT;TOUCH_STRATEGY"
-    "FLAGS;FILES;GLOB_DIRS"
+    "FLAGS;FILES;GLOB_DIRS;EXCLUDE"
     ${ARGN}
   )
 
@@ -72,7 +73,15 @@ function(add_glob_targets)
   endif()
 
   foreach(gd ${ARG_GLOB_DIRS})
-    file(GLOB_RECURSE globfiles ${PROJECT_SOURCE_DIR}/${gd}/${ARG_GLOB_PAT})
+    file(GLOB_RECURSE globfiles_unnormalized ${PROJECT_SOURCE_DIR}/${gd}/${ARG_GLOB_PAT})
+    set(globfiles)
+    foreach(f ${globfiles_unnormalized})
+      file(TO_CMAKE_PATH "${f}" f)
+      list(APPEND globfiles ${f})
+    endforeach()
+    foreach(exclude_pattern ${ARG_EXCLUDE})
+      list(FILTER globfiles EXCLUDE REGEX ${exclude_pattern})
+    endforeach()
     list(APPEND ARG_FILES ${globfiles})
   endforeach()
 

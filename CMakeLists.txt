@@ -611,7 +611,7 @@ find_program(STYLUA_PRG stylua)
 find_program(UNCRUSTIFY_PRG uncrustify)
 find_program(SHELLCHECK_PRG shellcheck)
 
-add_glob_targets(
+add_glob_target(
   REQUIRED
   TARGET lintlua-luacheck
   COMMAND ${LUACHECK_PRG}
@@ -621,7 +621,7 @@ add_glob_targets(
   TOUCH_STRATEGY SINGLE
   )
 
-add_glob_targets(
+add_glob_target(
   TARGET lintlua-stylua
   COMMAND ${STYLUA_PRG}
   FLAGS --color=always --check
@@ -635,10 +635,16 @@ add_dependencies(lintlua lintlua-luacheck lintlua-stylua)
 
 include(InstallHelpers)
 
-add_glob_targets(
+add_glob_target(
   TARGET lintsh
   COMMAND ${SHELLCHECK_PRG}
-  FILES scripts/vim-patch.sh
+  FLAGS -x -a
+  GLOB_DIRS scripts ci
+  GLOB_PAT *.sh
+  EXCLUDE
+    scripts/pvscheck.sh
+    ci/common
+    ci/snap
   TOUCH_STRATEGY SINGLE
   )
 
