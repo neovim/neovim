@@ -8162,7 +8162,7 @@ static void f_split(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
       typeerr = true;
     }
     if (argvars[2].v_type != VAR_UNKNOWN) {
-      keepempty = (bool)tv_get_number_chk(&argvars[2], &typeerr);
+      keepempty = (bool)tv_get_bool_chk(&argvars[2], &typeerr);
     }
   }
   if (pat == NULL || *pat == NUL) {
@@ -8292,7 +8292,7 @@ static void f_str2nr(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
       emsg(_(e_invarg));
       return;
     }
-    if (argvars[2].v_type != VAR_UNKNOWN && tv_get_number(&argvars[2])) {
+    if (argvars[2].v_type != VAR_UNKNOWN && tv_get_bool(&argvars[2])) {
       what |= STR2NR_QUOTE;
     }
   }
@@ -8451,12 +8451,12 @@ static void f_strlen(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 static void f_strchars(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
   const char *s = tv_get_string(&argvars[0]);
-  int skipcc = 0;
+  int skipcc = false;
   varnumber_T len = 0;
   int (*func_mb_ptr2char_adv)(const char_u **pp);
 
   if (argvars[1].v_type != VAR_UNKNOWN) {
-    skipcc = (int)tv_get_number_chk(&argvars[1], NULL);
+    skipcc = (int)tv_get_bool(&argvars[1]);
   }
   if (skipcc < 0 || skipcc > 1) {
     semsg(_(e_using_number_as_bool_nr), skipcc);
