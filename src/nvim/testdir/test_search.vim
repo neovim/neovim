@@ -897,9 +897,7 @@ func Test_incsearch_cmdline_modifier()
 endfunc
 
 func Test_incsearch_scrolling()
-  if !CanRunVimInTerminal()
-    throw 'Skipped: cannot make screendumps'
-  endif
+  CheckRunVimInTerminal
   call assert_equal(0, &scrolloff)
   call writefile([
 	\ 'let dots = repeat(".", 120)',

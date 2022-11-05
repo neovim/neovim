@@ -809,9 +809,7 @@ func Test_issue_3969()
 endfunc
 
 func Test_start_with_tabs()
-  if !CanRunVimInTerminal()
-    return
-  endif
+  CheckRunVimInTerminal
 
   let buf = RunVimInTerminal('-p a b c', {})
   call VerifyScreenDump(buf, 'Test_start_with_tabs', {})
@@ -968,9 +966,7 @@ endfunc
 
 " Test for specifying a non-existing vimrc file using "-u"
 func Test_missing_vimrc()
-  if !CanRunVimInTerminal()
-    throw 'Skipped: cannot run vim in terminal'
-  endif
+  CheckRunVimInTerminal
   let after =<< trim [CODE]
     call assert_match('^E282:', v:errmsg)
     call writefile(v:errors, 'Xtestout')

@@ -343,9 +343,7 @@ func Test_matchdelete_error()
 endfunc
 
 func Test_matchclear_other_window()
-  if !CanRunVimInTerminal()
-    throw 'Skipped: cannot make screendumps'
-  endif
+  CheckRunVimInTerminal
   let buf = OtherWindowCommon()
   call term_sendkeys(buf, ":call clearmatches(winid)\<CR>")
   call VerifyScreenDump(buf, 'Test_matchclear_1', {})
@@ -355,9 +353,7 @@ func Test_matchclear_other_window()
 endfunc
 
 func Test_matchadd_other_window()
-  if !CanRunVimInTerminal()
-    throw 'Skipped: cannot make screendumps'
-  endif
+  CheckRunVimInTerminal
   let buf = OtherWindowCommon()
   call term_sendkeys(buf, ":call matchadd('Search', 'Hello', 1, -1, #{window: winid})\<CR>")
   call term_sendkeys(buf, ":\<CR>")

@@ -1741,9 +1741,7 @@ endfunc
 
 " Test for correct cursor position after the sign column appears or disappears.
 func Test_sign_cursor_position()
-  if !CanRunVimInTerminal()
-    throw 'Skipped: cannot make screendumps'
-  endif
+  CheckRunVimInTerminal
 
   let lines =<< trim END
 	call setline(1, [repeat('x', 75), 'mmmm', 'yyyy'])

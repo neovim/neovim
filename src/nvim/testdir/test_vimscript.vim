@@ -1707,9 +1707,7 @@ endfunc
 
 " Test for deep nesting of if/for/while/try statements              {{{1
 func Test_deep_nest()
-  if !CanRunVimInTerminal()
-    throw 'Skipped: cannot run vim in terminal'
-  endif
+  CheckRunVimInTerminal
 
   let lines =<< trim [SCRIPT]
     " Deep nesting of if ... endif

@@ -81,6 +81,7 @@ endfunc
 
 " Test signal INT. Handler sets got_int. It should be like typing CTRL-C.
 func Test_signal_INT()
+  CheckRunVimInTerminal
   if !HasSignal('INT')
     throw 'Skipped: INT signal not supported'
   endif
@@ -92,9 +93,6 @@ func Test_signal_INT()
     throw 'Skipped: cannot test signal INT with valgrind'
   endif
 
-  if !CanRunVimInTerminal()
-    throw 'Skipped: cannot run vim in terminal'
-  endif
   let buf = RunVimInTerminal('', {'rows': 6})
   let pid_vim = term_getjob(buf)->job_info().process
 
@@ -121,9 +119,7 @@ func Test_deadly_signal_TERM()
   if !HasSignal('TERM')
     throw 'Skipped: TERM signal not supported'
   endif
-  if !CanRunVimInTerminal()
-    throw 'Skipped: cannot run vim in terminal'
-  endif
+  CheckRunVimInTerminal
   let cmd = GetVimCommand()
   if cmd =~ 'valgrind'
     throw 'Skipped: cannot test signal TERM with valgrind'
