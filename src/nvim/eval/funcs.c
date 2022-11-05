@@ -8447,13 +8447,30 @@ static void f_strlen(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   rettv->vval.v_number = (varnumber_T)strlen(tv_get_string(&argvars[0]));
 }
 
+static void strchar_common(typval_T *argvars, typval_T *rettv, bool skipcc)
+{
+  const char *s = tv_get_string(&argvars[0]);
+  varnumber_T len = 0;
+  int (*func_mb_ptr2char_adv)(const char_u **pp);
+
+  func_mb_ptr2char_adv = skipcc ? mb_ptr2char_adv : mb_cptr2char_adv;
+  while (*s != NUL) {
+    func_mb_ptr2char_adv((const char_u **)&s);
+    len++;
+  }
+  rettv->vval.v_number = len;
+}
+
+/// "strcharlen()" function
+static void f_strcharlen(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
+{
+  strchar_common(argvars, rettv, true);
+}
+
 /// "strchars()" function
 static void f_strchars(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
-  const char *s = tv_get_string(&argvars[0]);
   int skipcc = false;
-  varnumber_T len = 0;
-  int (*func_mb_ptr2char_adv)(const char_u **pp);
 
   if (argvars[1].v_type != VAR_UNKNOWN) {
     skipcc = (int)tv_get_bool(&argvars[1]);
@@ -8461,12 +8478,7 @@ static void f_strchars(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   if (skipcc < 0 || skipcc > 1) {
     semsg(_(e_using_number_as_bool_nr), skipcc);
   } else {
-    func_mb_ptr2char_adv = skipcc ? mb_ptr2char_adv : mb_cptr2char_adv;
-    while (*s != NUL) {
-      func_mb_ptr2char_adv((const char_u **)&s);
-      len++;
-    }
-    rettv->vval.v_number = len;
+    strchar_common(argvars, rettv, skipcc);
   }
 }
 

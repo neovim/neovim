@@ -376,6 +376,7 @@ return {
     str2float={args=1, base=1},
     str2list={args={1, 2}, base=1},
     str2nr={args={1, 3}, base=1},
+    strcharlen={args=1, base=1},
     strcharpart={args={2, 3}, base=1},
     strchars={args={1, 2}, base=1},
     strdisplaywidth={args={1, 2}, base=1},
