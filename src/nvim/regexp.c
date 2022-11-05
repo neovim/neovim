@@ -481,12 +481,25 @@ static char_u *skip_anyof(char *p)
 }
 
 /// Skip past regular expression.
-/// Stop at end of "startp" or where "dirc" is found ('/', '?', etc).
+/// Stop at end of "startp" or where "delim" is found ('/', '?', etc).
 /// Take care of characters with a backslash in front of it.
 /// Skip strings inside [ and ].
-char *skip_regexp(char *startp, int dirc, int magic)
+char *skip_regexp(char *startp, int delim, int magic)
 {
-  return skip_regexp_ex(startp, dirc, magic, NULL, NULL);
+  return skip_regexp_ex(startp, delim, magic, NULL, NULL);
+}
+
+/// Call skip_regexp() and when the delimiter does not match give an error and
+/// return NULL.
+char *skip_regexp_err(char *startp, int delim, int magic)
+{
+  char *p = skip_regexp(startp, delim, magic);
+
+  if (*p != delim) {
+    semsg(_("E654: missing delimiter after search pattern: %s"), startp);
+    return NULL;
+  }
+  return p;
 }
 
 /// skip_regexp() with extra arguments:

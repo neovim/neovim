@@ -504,9 +504,8 @@ void ex_sort(exarg_T *eap)
       eap->nextcmd = check_nextcmd(p);
       break;
     } else if (!ASCII_ISALPHA(*p) && regmatch.regprog == NULL) {
-      s = skip_regexp(p + 1, *p, true);
-      if (*s != *p) {
-        emsg(_(e_invalpat));
+      s = skip_regexp_err(p + 1, *p, true);
+      if (s == NULL) {
         goto sortend;
       }
       *s = NUL;

@@ -851,7 +851,7 @@ void do_highlight(const char *line, const bool forceit, const bool init)
   bool did_highlight_changed = false;
 
   // If no argument, list current highlighting.
-  if (ends_excmd((uint8_t)(*line))) {
+  if (!init && ends_excmd((uint8_t)(*line))) {
     for (int i = 1; i <= highlight_ga.ga_len && !got_int; i++) {
       // TODO(brammool): only call when the group has attributes set
       highlight_list_one(i);
