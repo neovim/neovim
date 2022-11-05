@@ -105,6 +105,31 @@ func Test_multi_failure()
   set re=0
 endfunc
 
+func Test_column_success_failure()
+  new
+  call setline(1, 'xbar')
+
+  set re=1
+  %s/\%>0v./A/
+  call assert_equal('Abar', getline(1))
+  call assert_fails('/\%v', 'E71:')
+  call assert_fails('/\%>v', 'E71:')
+  call assert_fails('/\%c', 'E71:')
+  call assert_fails('/\%<c', 'E71:')
+  call assert_fails('/\%l', 'E71:')
+  set re=2
+  %s/\%>0v./B/
+  call assert_equal('Bbar', getline(1))
+  call assert_fails('/\%v', 'E1273:')
+  call assert_fails('/\%>v', 'E1273:')
+  call assert_fails('/\%c', 'E1273:')
+  call assert_fails('/\%<c', 'E1273:')
+  call assert_fails('/\%l', 'E1273:')
+
+  set re=0
+  bwipe!
+endfunc
+
 func Test_recursive_addstate()
   throw 'skipped: TODO: '
   " This will call addstate() recursively until it runs into the limit.
@@ -1030,6 +1055,28 @@ func Test_using_invalid_visual_position()
   new
   exe "norm 0o000\<Esc>0\<C-V>$s0"
   /\%V
+  bwipe!
+endfunc
+
+func Test_using_two_engines_pattern()
+  new
+  call setline(1, ['foobar=0', 'foobar=1', 'foobar=2'])
+  " \%#= at the end of the pattern
+  for i in range(0, 2)
+    for j in range(0, 2)
+      exe "set re=" .. i
+      call cursor(j + 1, 7)
+      call assert_fails("%s/foobar\\%#=" .. j, 'E1281:')
+    endfor
+  endfor
+  set re=0
+
+  " \%#= at the start of the pattern
+  for i in range(0, 2)
+    call cursor(i + 1, 7)
+    exe ":%s/\\%#=" .. i .. "foobar=" .. i .. "/xx"
+  endfor
+  call assert_equal(['xx', 'xx', 'xx'], getline(1, '$'))
   bwipe!
 endfunc
 

@@ -2094,6 +2094,12 @@ static int nfa_regatom(void)
       break;
 
     case '#':
+      if (regparse[0] == '=' && regparse[1] >= 48
+          && regparse[1] <= 50) {
+        // misplaced \%#=1
+        semsg(_(e_atom_engine_must_be_at_start_of_pattern), regparse[1]);
+        return FAIL;
+      }
       EMIT(NFA_CURSOR);
       break;
 
@@ -2141,6 +2147,7 @@ static int nfa_regatom(void)
       int64_t n = 0;
       const int cmp = c;
       bool cur = false;
+      bool got_digit = false;
 
       if (c == '<' || c == '>') {
         c = getchr();
@@ -2151,7 +2158,7 @@ static int nfa_regatom(void)
       }
       while (ascii_isdigit(c)) {
         if (cur) {
-          semsg(_(e_regexp_number_after_dot_pos_search), no_Magic(c));
+          semsg(_(e_regexp_number_after_dot_pos_search_chr), no_Magic(c));
           return FAIL;
         }
         if (n > (INT32_MAX - (c - '0')) / 10) {
@@ -2161,10 +2168,15 @@ static int nfa_regatom(void)
         }
         n = n * 10 + (c - '0');
         c = getchr();
+        got_digit = true;
       }
       if (c == 'l' || c == 'c' || c == 'v') {
         int32_t limit = INT32_MAX;
 
+        if (!cur && !got_digit) {
+          semsg(_(e_nfa_regexp_missing_value_in_chr), no_Magic(c));
+          return FAIL;
+        }
         if (c == 'l') {
           if (cur) {
             n = curwin->w_cursor.lnum;

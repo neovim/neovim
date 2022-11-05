@@ -1971,6 +1971,11 @@ static char_u *regatom(int *flagp)
       break;
 
     case '#':
+      if (regparse[0] == '=' && regparse[1] >= 48 && regparse[1] <= 50) {
+        // misplaced \%#=1
+        semsg(_(e_atom_engine_must_be_at_start_of_pattern), regparse[1]);
+        return FAIL;
+      }
       ret = regnode(CURSOR);
       break;
 
@@ -2091,6 +2096,7 @@ static char_u *regatom(int *flagp)
         uint32_t n = 0;
         int cmp;
         bool cur = false;
+        bool got_digit = false;
 
         cmp = c;
         if (cmp == '<' || cmp == '>') {
@@ -2101,6 +2107,7 @@ static char_u *regatom(int *flagp)
           c = getchr();
         }
         while (ascii_isdigit(c)) {
+          got_digit = true;
           n = n * 10 + (uint32_t)(c - '0');
           c = getchr();
         }
@@ -2115,9 +2122,9 @@ static char_u *regatom(int *flagp)
             *regcode++ = (char_u)cmp;
           }
           break;
-        } else if (c == 'l' || c == 'c' || c == 'v') {
+        } else if ((c == 'l' || c == 'c' || c == 'v') && (cur || got_digit)) {
           if (cur && n) {
-            semsg(_(e_regexp_number_after_dot_pos_search), no_Magic(c));
+            semsg(_(e_regexp_number_after_dot_pos_search_chr), no_Magic(c));
             rc_did_emsg = true;
             return NULL;
           }
