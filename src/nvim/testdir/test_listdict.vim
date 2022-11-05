@@ -289,6 +289,13 @@ func Test_dict_func()
   call assert_equal('xxx3', Fn('xxx'))
 endfunc
 
+func Test_dict_assign()
+  let d = {}
+  let d.1 = 1
+  let d._ = 2
+  call assert_equal({'1': 1, '_': 2}, d)
+endfunc
+
 " Function in script-local List or Dict
 func Test_script_local_dict_func()
   let g:dict = {}

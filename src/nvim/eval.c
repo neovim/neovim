@@ -3418,7 +3418,7 @@ static int eval_index(char **arg, typval_T *rettv, int evaluate, int verbose)
   if (**arg == '.') {
     // dict.name
     key = *arg + 1;
-    for (len = 0; ASCII_ISALNUM(key[len]) || key[len] == '_'; len++) {}
+    for (len = 0; eval_isdictc(key[len]); len++) {}
     if (len == 0) {
       return FAIL;
     }
@@ -6695,7 +6695,7 @@ const char *find_name_end(const char *arg, const char **expr_start, const char *
        && (eval_isnamec(*p)
            || *p == '{'
            || ((flags & FNE_INCL_BR) && (*p == '['
-                                         || (*p == '.' && eval_isnamec1(p[1]))))
+                                         || (*p == '.' && eval_isdictc(p[1]))))
            || mb_nest != 0
            || br_nest != 0); MB_PTR_ADV(p)) {
     if (*p == '\'') {
@@ -6808,16 +6808,23 @@ static char *make_expanded_name(const char *in_start, char *expr_start, char *ex
 
 /// @return  true if character "c" can be used in a variable or function name.
 ///          Does not include '{' or '}' for magic braces.
-int eval_isnamec(int c)
+bool eval_isnamec(int c)
 {
   return ASCII_ISALNUM(c) || c == '_' || c == ':' || c == AUTOLOAD_CHAR;
 }
 
 /// @return  true if character "c" can be used as the first character in a
 ///          variable or function name (excluding '{' and '}').
-int eval_isnamec1(int c)
+bool eval_isnamec1(int c)
 {
   return ASCII_ISALPHA(c) || c == '_';
+}
+
+/// @return  true if character "c" can be used as the first character of a
+///          dictionary key.
+bool eval_isdictc(int c)
+{
+  return ASCII_ISALNUM(c) || c == '_';
 }
 
 /// Get typval_T v: variable value.
