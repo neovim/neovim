@@ -199,6 +199,7 @@ void do_tag(char *tag, int type, int count, int forceit, int verbose)
   int skip_msg = false;
   char_u *buf_ffname = (char_u *)curbuf->b_ffname;  // name for priority computation
   int use_tfu = 1;
+  char *tofree = NULL;
 
   // remember the matches for the last used tag
   static int num_matches = 0;
@@ -450,7 +451,10 @@ void do_tag(char *tag, int type, int count, int forceit, int verbose)
 
     // When desired match not found yet, try to find it (and others).
     if (use_tagstack) {
-      name = tagstack[tagstackidx].tagname;
+      // make a copy, the tagstack may change in 'tagfunc'
+      name = xstrdup(tagstack[tagstackidx].tagname);
+      xfree(tofree);
+      tofree = name;
     } else if (g_do_tagpreview != 0) {
       name = ptag_entry.tagname;
     } else {
@@ -681,6 +685,7 @@ end_do_tag:
   }
   postponed_split = 0;          // don't split next time
   g_do_tagpreview = 0;          // don't do tag preview next time
+  xfree(tofree);
 }
 
 // List all the matching tags.
