@@ -743,6 +743,7 @@ bool briopt_check(win_T *wp)
   int bri_min = 20;
   bool bri_sbr = false;
   int bri_list = 0;
+  int bri_vcol = 0;
 
   char *p = wp->w_p_briopt;
   while (*p != NUL) {
@@ -759,6 +760,9 @@ bool briopt_check(win_T *wp)
     } else if (STRNCMP(p, "list:", 5) == 0) {
       p += 5;
       bri_list = (int)getdigits(&p, false, 0);
+    } else if (STRNCMP(p, "column:", 7) == 0) {
+      p += 7;
+      bri_vcol = (int)getdigits(&p, false, 0);
     }
     if (*p != ',' && *p != NUL) {
       return false;
@@ -771,7 +775,8 @@ bool briopt_check(win_T *wp)
   wp->w_briopt_shift = bri_shift;
   wp->w_briopt_min = bri_min;
   wp->w_briopt_sbr = bri_sbr;
-  wp->w_briopt_list  = bri_list;
+  wp->w_briopt_list = bri_list;
+  wp->w_briopt_vcol = bri_vcol;
 
   return true;
 }
@@ -810,16 +815,18 @@ int get_breakindent_win(win_T *wp, char_u *line)
     prev_ts = wp->w_buffer->b_p_ts;
     prev_tick = buf_get_changedtick(wp->w_buffer);
     prev_vts = wp->w_buffer->b_p_vts_array;
-    prev_indent = get_indent_str_vtab((char *)line,
-                                      wp->w_buffer->b_p_ts,
-                                      wp->w_buffer->b_p_vts_array,
-                                      wp->w_p_list);
+    if (wp->w_briopt_vcol == 0) {
+      prev_indent = get_indent_str_vtab((char *)line,
+                                        wp->w_buffer->b_p_ts,
+                                        wp->w_buffer->b_p_vts_array,
+                                        wp->w_p_list);
+    }
     prev_listopt = wp->w_briopt_list;
     prev_list = 0;
     xfree(prev_flp);
     prev_flp = xstrdup(get_flp_value(wp->w_buffer));
     // add additional indent for numbered lists
-    if (wp->w_briopt_list != 0) {
+    if (wp->w_briopt_list != 0 && wp->w_briopt_vcol == 0) {
       regmatch_T regmatch = {
         .regprog = vim_regcomp(prev_flp, RE_MAGIC + RE_STRING + RE_AUTO + RE_STRICT),
       };
@@ -836,7 +843,13 @@ int get_breakindent_win(win_T *wp, char_u *line)
       }
     }
   }
-  bri = prev_indent + wp->w_briopt_shift;
+  if (wp->w_briopt_vcol != 0) {
+    // column value has priority
+    bri = wp->w_briopt_vcol;
+    prev_list = 0;
+  } else {
+    bri = prev_indent + wp->w_briopt_shift;
+  }
 
   // Add offset for number column, if 'n' is in 'cpoptions'
   bri += win_col_off2(wp);
