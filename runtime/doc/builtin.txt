@@ -654,9 +654,10 @@ appendbufline({buf}, {lnum}, {text})			*appendbufline()*
 
 		For the use of {buf}, see |bufname()|.
 
-		{lnum} is used like with |append()|.  Note that using |line()|
-		would use the current buffer, not the one appending to.
-		Use "$" to append at the end of the buffer.
+		{lnum} is the line number to append below.  Note that using
+		|line()| would use the current buffer, not the one appending
+		to.  Use "$" to append at the end of the buffer.  Other string
+		values are not supported.
 
 		On success 0 is returned, on failure 1 is returned.
 
