@@ -2,7 +2,6 @@
 /venv/
 compile_commands.json
 /.luarc.json
-CMakeUserPresets.json
 
 # IDEs
 /.vs/
@@ -74,3 +73,5 @@ tags
 
 # vim patches
 /vim-*.patch
+
+CMakeUserPresets.json
