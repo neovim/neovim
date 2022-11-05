@@ -1101,8 +1101,8 @@ func Test_charidx()
   call assert_fails('let x = charidx([], 1)', 'E474:')
   call assert_fails('let x = charidx("abc", [])', 'E474:')
   call assert_fails('let x = charidx("abc", 1, [])', 'E474:')
-  call assert_fails('let x = charidx("abc", 1, -1)', 'E474:')
-  call assert_fails('let x = charidx("abc", 1, 2)', 'E474:')
+  call assert_fails('let x = charidx("abc", 1, -1)', 'E1023:')
+  call assert_fails('let x = charidx("abc", 1, 2)', 'E1023:')
 endfunc
 
 func Test_count()

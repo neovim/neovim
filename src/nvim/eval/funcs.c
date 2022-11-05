@@ -908,7 +908,7 @@ static void f_charidx(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     countcc = (int)tv_get_number(&argvars[2]);
   }
   if (countcc < 0 || countcc > 1) {
-    emsg(_(e_invarg));
+    semsg(_(e_using_number_as_bool_nr), countcc);
     return;
   }
 
