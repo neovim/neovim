@@ -743,6 +743,7 @@ bool briopt_check(win_T *wp)
   int bri_min = 20;
   bool bri_sbr = false;
   int bri_list = 0;
+  int bri_vcol = 0;
 
   char *p = wp->w_p_briopt;
   while (*p != NUL) {
@@ -759,6 +760,9 @@ bool briopt_check(win_T *wp)
     } else if (STRNCMP(p, "list:", 5) == 0) {
       p += 5;
       bri_list = (int)getdigits(&p, false, 0);
+    } else if (STRNCMP(p, "column:", 7) == 0) {
+      p += 7;
+      bri_vcol = (int)getdigits(&p, false, 0);
     }
     if (*p != ',' && *p != NUL) {
       return false;
@@ -771,7 +775,8 @@ bool briopt_check(win_T *wp)
   wp->w_briopt_shift = bri_shift;
   wp->w_briopt_min = bri_min;
   wp->w_briopt_sbr = bri_sbr;
-  wp->w_briopt_list  = bri_list;
+  wp->w_briopt_list = bri_list;
+  wp->w_briopt_vcol = bri_vcol;
 
   return true;
 }
@@ -783,51 +788,78 @@ int get_breakindent_win(win_T *wp, char_u *line)
   FUNC_ATTR_NONNULL_ALL
 {
   static int prev_indent = 0;  // Cached indent value.
-  static long prev_ts = 0;  // Cached tabstop value.
+  static long prev_ts = 0L;  // Cached tabstop value.
   static const char_u *prev_line = NULL;  // cached pointer to line.
   static varnumber_T prev_tick = 0;  // Changedtick of cached value.
-  static long *prev_vts = NULL;    // Cached vartabs values.
+  static long *prev_vts = NULL;  // Cached vartabs values.
+  static int prev_list = 0;  // cached list value
+  static int prev_listopt = 0;  // cached w_p_briopt_list value
+  static char *prev_flp = NULL;  // cached formatlistpat value
   int bri = 0;
   // window width minus window margin space, i.e. what rests for text
   const int eff_wwidth = wp->w_width_inner -
                          ((wp->w_p_nu || wp->w_p_rnu)
                           && (vim_strchr(p_cpo, CPO_NUMCOL) == NULL) ? number_width(wp) + 1 : 0);
 
-  // used cached indent, unless pointer or 'tabstop' changed
+  // used cached indent, unless
+  // - line pointer changed
+  // - 'tabstop' changed
+  // - 'briopt_list changed' changed or
+  // - 'formatlistpattern' changed
   if (prev_line != line || prev_ts != wp->w_buffer->b_p_ts
       || prev_tick != buf_get_changedtick(wp->w_buffer)
+      || prev_listopt != wp->w_briopt_list
+      || (prev_flp == NULL || (strcmp(prev_flp, get_flp_value(wp->w_buffer)) != 0))
       || prev_vts != wp->w_buffer->b_p_vts_array) {
     prev_line = line;
     prev_ts = wp->w_buffer->b_p_ts;
     prev_tick = buf_get_changedtick(wp->w_buffer);
     prev_vts = wp->w_buffer->b_p_vts_array;
-    prev_indent = get_indent_str_vtab((char *)line,
-                                      wp->w_buffer->b_p_ts,
-                                      wp->w_buffer->b_p_vts_array,
-                                      wp->w_p_list);
+    if (wp->w_briopt_vcol == 0) {
+      prev_indent = get_indent_str_vtab((char *)line,
+                                        wp->w_buffer->b_p_ts,
+                                        wp->w_buffer->b_p_vts_array,
+                                        wp->w_p_list);
+    }
+    prev_listopt = wp->w_briopt_list;
+    prev_list = 0;
+    xfree(prev_flp);
+    prev_flp = xstrdup(get_flp_value(wp->w_buffer));
+    // add additional indent for numbered lists
+    if (wp->w_briopt_list != 0 && wp->w_briopt_vcol == 0) {
+      regmatch_T regmatch = {
+        .regprog = vim_regcomp(prev_flp, RE_MAGIC + RE_STRING + RE_AUTO + RE_STRICT),
+      };
+      if (regmatch.regprog != NULL) {
+        regmatch.rm_ic = false;
+        if (vim_regexec(&regmatch, (char *)line, 0)) {
+          if (wp->w_briopt_list > 0) {
+            prev_list += wp->w_briopt_list;
+          } else {
+            prev_list = (int)(*regmatch.endp - *regmatch.startp);
+          }
+        }
+        vim_regfree(regmatch.regprog);
+      }
+    }
   }
-  bri = prev_indent + wp->w_briopt_shift;
+  if (wp->w_briopt_vcol != 0) {
+    // column value has priority
+    bri = wp->w_briopt_vcol;
+    prev_list = 0;
+  } else {
+    bri = prev_indent + wp->w_briopt_shift;
+  }
 
   // Add offset for number column, if 'n' is in 'cpoptions'
   bri += win_col_off2(wp);
 
   // add additional indent for numbered lists
   if (wp->w_briopt_list != 0) {
-    regmatch_T regmatch = {
-      .regprog = vim_regcomp(curbuf->b_p_flp,
-                             RE_MAGIC + RE_STRING + RE_AUTO + RE_STRICT),
-    };
-
-    if (regmatch.regprog != NULL) {
-      regmatch.rm_ic = false;
-      if (vim_regexec(&regmatch, (char *)line, 0)) {
-        if (wp->w_briopt_list > 0) {
-          bri += wp->w_briopt_list;
-        } else {
-          bri = (int)(*regmatch.endp - *regmatch.startp);
-        }
-      }
-      vim_regfree(regmatch.regprog);
+    if (wp->w_briopt_list > 0) {
+      bri += prev_list;
+    } else {
+      bri = prev_list;
     }
   }
 
