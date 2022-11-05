@@ -663,6 +663,13 @@ static bool emsg_multiline(const char *s, bool multiline)
       return true;
     }
 
+    if (emsg_assert_fails_used && emsg_assert_fails_msg == NULL) {
+      emsg_assert_fails_msg = xstrdup(s);
+      emsg_assert_fails_lnum = SOURCING_LNUM;
+      xfree(emsg_assert_fails_context);
+      emsg_assert_fails_context = xstrdup(SOURCING_NAME == NULL ? "" : SOURCING_NAME);
+    }
+
     // set "v:errmsg", also when using ":silent! cmd"
     set_vim_var_string(VV_ERRMSG, s, -1);
 

@@ -211,7 +211,7 @@ func Test_str2nr()
   if has('float')
     call assert_fails('call str2nr(1.2)', 'E806:')
   endif
-  call assert_fails('call str2nr(10, [])', 'E474:')
+  call assert_fails('call str2nr(10, [])', 'E745:')
 endfunc
 
 func Test_strftime()
@@ -1728,11 +1728,11 @@ func Test_libcall_libcallnr()
   call assert_equal(4, 'abcd'->libcallnr(libc, 'strlen'))
   call assert_equal(char2nr('A'), char2nr('a')->libcallnr(libc, 'toupper'))
 
-  call assert_fails("call libcall(libc, 'Xdoesnotexist_', '')", 'E364:')
-  call assert_fails("call libcallnr(libc, 'Xdoesnotexist_', '')", 'E364:')
+  call assert_fails("call libcall(libc, 'Xdoesnotexist_', '')", ['', 'E364:'])
+  call assert_fails("call libcallnr(libc, 'Xdoesnotexist_', '')", ['', 'E364:'])
 
-  call assert_fails("call libcall('Xdoesnotexist_', 'getenv', 'HOME')", 'E364:')
-  call assert_fails("call libcallnr('Xdoesnotexist_', 'strlen', 'abcd')", 'E364:')
+  call assert_fails("call libcall('Xdoesnotexist_', 'getenv', 'HOME')", ['', 'E364:'])
+  call assert_fails("call libcallnr('Xdoesnotexist_', 'strlen', 'abcd')", ['', 'E364:'])
 endfunc
 
 sandbox function Fsandbox()

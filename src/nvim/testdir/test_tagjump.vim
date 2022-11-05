@@ -8,7 +8,7 @@ func Test_ptag_with_notagstack()
   CheckFeature quickfix
 
   set notagstack
-  call assert_fails('ptag does_not_exist_tag_name', 'E426')
+  call assert_fails('ptag does_not_exist_tag_name', 'E433')
   set tagstack&vim
 endfunc
 
@@ -346,7 +346,7 @@ func Test_tagjump_etags()
         \ "Xmain.c,64",
         \ ";;;;\x7f1,0",
 	\ ], 'Xtags')
-  call assert_fails('tag foo', 'E426:')
+  call assert_fails('tag foo', 'E431:')
 
   call delete('Xtags')
   call delete('Xtags2')

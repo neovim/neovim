@@ -194,6 +194,12 @@ EXTERN int emsg_skip INIT(= 0);             // don't display errors for
                                             // expression that is skipped
 EXTERN bool emsg_severe INIT(= false);      // use message of next of several
                                             //  emsg() calls for throw
+// used by assert_fails()
+EXTERN bool emsg_assert_fails_used INIT(= false);
+EXTERN char *emsg_assert_fails_msg INIT(= NULL);
+EXTERN long emsg_assert_fails_lnum INIT(= 0);
+EXTERN char *emsg_assert_fails_context INIT(= NULL);
+
 EXTERN bool did_endif INIT(= false);        // just had ":endif"
 EXTERN dict_T vimvardict;                   // Dictionary with v: variables
 EXTERN dict_T globvardict;                  // Dictionary with g: variables

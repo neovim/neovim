@@ -33,11 +33,11 @@ func Test_Rand()
   endif
   call assert_fails('echo srand([1])', 'E745:')
   call assert_fails('echo rand("burp")', 'E475:')
-  call assert_fails('echo rand([1, 2, 3])', 'E475:')
-  call assert_fails('echo rand([[1], 2, 3, 4])', 'E475:')
-  call assert_fails('echo rand([1, [2], 3, 4])', 'E475:')
-  call assert_fails('echo rand([1, 2, [3], 4])', 'E475:')
-  call assert_fails('echo rand([1, 2, 3, [4]])', 'E475:')
+  call assert_fails('echo rand([1, 2, 3])', 'E730:')
+  call assert_fails('echo rand([[1], 2, 3, 4])', 'E730:')
+  call assert_fails('echo rand([1, [2], 3, 4])', 'E730:')
+  call assert_fails('echo rand([1, 2, [3], 4])', 'E730:')
+  call assert_fails('echo rand([1, 2, 3, [4]])', 'E730:')
 
   " call test_settime(0)
 endfunc
