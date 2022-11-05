@@ -3,13 +3,11 @@
 
 source check.vim
 source shared.vim
+source script_util.vim
 
 "-------------------------------------------------------------------------------
 " Test environment							    {{{1
 "-------------------------------------------------------------------------------
-
-com!		   XpathINIT  let g:Xpath = ''
-com! -nargs=1 -bar Xpath      let g:Xpath = g:Xpath . <args>
 
 " Append a message to the "messages" file
 func Xout(text)
@@ -20,66 +18,29 @@ endfunc
 
 com! -nargs=1	     Xout     call Xout(<args>)
 
-" MakeScript() - Make a script file from a function.			    {{{2
-"
-" Create a script that consists of the body of the function a:funcname.
-" Replace any ":return" by a ":finish", any argument variable by a global
-" variable, and every ":call" by a ":source" for the next following argument
-" in the variable argument list.  This function is useful if similar tests are
-" to be made for a ":return" from a function call or a ":finish" in a script
-" file.
-func MakeScript(funcname, ...)
-    let script = tempname()
-    execute "redir! >" . script
-    execute "function" a:funcname
-    redir END
-    execute "edit" script
-    " Delete the "function" and the "endfunction" lines.  Do not include the
-    " word "function" in the pattern since it might be translated if LANG is
-    " set.  When MakeScript() is being debugged, this deletes also the debugging
-    " output of its line 3 and 4.
-    exec '1,/.*' . a:funcname . '(.*)/d'
-    /^\d*\s*endfunction\>/,$d
-    %s/^\d*//e
-    %s/return/finish/e
-    %s/\<a:\(\h\w*\)/g:\1/ge
-    normal gg0
-    let cnt = 0
-    while search('\<call\s*\%(\u\|s:\)\w*\s*(.*)', 'W') > 0
-	let cnt = cnt + 1
-	s/\<call\s*\%(\u\|s:\)\w*\s*(.*)/\='source ' . a:{cnt}/
-    endwhile
-    g/^\s*$/d
-    write
-    bwipeout
-    return script
+" Create a new instance of Vim and run the commands in 'test' and then 'verify'
+" The commands in 'test' are expected to store the test results in the Xtest.out
+" file. If the test passes successfully, then Xtest.out should be empty.
+func RunInNewVim(test, verify)
+  let init =<< trim END
+    source script_util.vim
+    XpathINIT
+    XloopINIT
+  END
+  let cleanup =<< trim END
+    call writefile(v:errors, 'Xtest.out')
+    qall
+  END
+  call writefile(init, 'Xtest.vim')
+  call writefile(a:test, 'Xtest.vim', 'a')
+  call writefile(a:verify, 'Xverify.vim')
+  call writefile(cleanup, 'Xverify.vim', 'a')
+  call RunVim([], [], "-S Xtest.vim -S Xverify.vim")
+  call assert_equal([], readfile('Xtest.out'))
+  call delete('Xtest.out')
+  call delete('Xtest.vim')
+  call delete('Xverify.vim')
 endfunc
-
-" ExecAsScript - Source a temporary script made from a function.	    {{{2
-"
-" Make a temporary script file from the function a:funcname, ":source" it, and
-" delete it afterwards.  However, if an exception is thrown the file may remain,
-" the caller should call DeleteTheScript() afterwards.
-let s:script_name = ''
-function! ExecAsScript(funcname)
-    " Make a script from the function passed as argument.
-    let s:script_name = MakeScript(a:funcname)
-
-    " Source and delete the script.
-    exec "source" s:script_name
-    call delete(s:script_name)
-    let s:script_name = ''
-endfunction
-
-function! DeleteTheScript()
-    if s:script_name
-	call delete(s:script_name)
-	let s:script_name = ''
-    endif
-endfunc
-
-com! -nargs=1 -bar ExecAsScript call ExecAsScript(<f-args>)
-
 
 "-------------------------------------------------------------------------------
 " Test 1:   :endwhile in function					    {{{1
@@ -90,7 +51,7 @@ com! -nargs=1 -bar ExecAsScript call ExecAsScript(<f-args>)
 "	    tests will hang.
 "-------------------------------------------------------------------------------
 
-function! T1_F()
+func T1_F()
     Xpath 'a'
     let first = 1
     while 1
@@ -104,9 +65,9 @@ function! T1_F()
 	    return
 	endif
     endwhile
-endfunction
+endfunc
 
-function! T1_G()
+func T1_G()
     Xpath 'h'
     let first = 1
     while 1
@@ -121,7 +82,7 @@ function! T1_G()
 	endif
 	if 1	" unmatched :if
     endwhile
-endfunction
+endfunc
 
 func Test_endwhile_function()
   XpathINIT
@@ -175,7 +136,7 @@ endfunc
 " Test 3:   :if, :elseif, :while, :continue, :break			    {{{1
 "-------------------------------------------------------------------------------
 
-function Test_if_while()
+func Test_if_while()
     XpathINIT
     if 1
 	Xpath 'a'
@@ -235,7 +196,7 @@ endfunc
 " Test 4:   :return							    {{{1
 "-------------------------------------------------------------------------------
 
-function! T4_F()
+func T4_F()
     if 1
 	Xpath 'a'
 	let loops = 3
@@ -253,15 +214,15 @@ function! T4_F()
     else
 	Xpath 'g'
     endif
-endfunction
+endfunc
 
-function Test_return()
+func Test_return()
     XpathINIT
     call T4_F()
     Xpath '4'
 
     call assert_equal('ab3e3b2c24', g:Xpath)
-endfunction
+endfunc
 
 
 "-------------------------------------------------------------------------------
@@ -271,14 +232,14 @@ endfunction
 "	    test as a script file (:return replaced by :finish).
 "-------------------------------------------------------------------------------
 
-function Test_finish()
+func Test_finish()
     XpathINIT
     ExecAsScript T4_F
     Xpath '5'
     call DeleteTheScript()
 
     call assert_equal('ab3e3b2c25', g:Xpath)
-endfunction
+endfunc
 
 
 
@@ -412,7 +373,7 @@ delfunction G31
 delfunction G32
 delfunction G33
 
-function Test_defining_functions()
+func Test_defining_functions()
     call assert_equal('ade2ie3ibcg0h1g1h2g2h3fg0h1g1h2g2h3m', g:test6_result)
     call assert_equal('F1G1F2G21G22G23F3G31G32G33', g:test6_calls)
 endfunc
@@ -476,7 +437,7 @@ endfunc
 
 XpathINIT
 
-function! T8_F()
+func T8_F()
     if 1
 	Xpath 'a'
 	while 1
@@ -508,9 +469,9 @@ function! T8_F()
     return novar		" returns (default return value 0)
     Xpath 'q'
     return 1			" not reached
-endfunction
+endfunc
 
-function! T8_G() abort
+func T8_G() abort
     if 1
 	Xpath 'r'
 	while 1
@@ -524,9 +485,9 @@ function! T8_G() abort
     Xpath 'x'
 
     return -4			" not reached
-endfunction
+endfunc
 
-function! T8_H() abort
+func T8_H() abort
     while 1
 	Xpath 'A'
 	if 1
@@ -540,7 +501,7 @@ function! T8_H() abort
     Xpath 'F'
 
     return -4			" not reached
-endfunction
+endfunc
 
 " Aborted functions (T8_G and T8_H) return -1.
 let g:test8_sum = (T8_F() + 1) - 4 * T8_G() - 8 * T8_H()
@@ -567,7 +528,7 @@ endfunc
 
 XpathINIT
 
-function! F() abort
+func F() abort
     Xpath 'a'
     let result = G()	" not aborted
     Xpath 'b'
@@ -575,30 +536,30 @@ function! F() abort
 	Xpath 'c'
     endif
     return 1
-endfunction
+endfunc
 
-function! G()		" no abort attribute
+func G()		" no abort attribute
     Xpath 'd'
     if H() != -1	" aborted
 	Xpath 'e'
     endif
     Xpath 'f'
     return 2
-endfunction
+endfunc
 
-function! H() abort
+func H() abort
     Xpath 'g'
     call I()		" aborted
     Xpath 'h'
     return 4
-endfunction
+endfunc
 
-function! I() abort
+func I() abort
     Xpath 'i'
     asdf		" error
     Xpath 'j'
     return 8
-endfunction
+endfunc
 
 if F() != 1
     Xpath 'k'
@@ -626,7 +587,7 @@ endfunc
 
 XpathINIT
 
-function! MSG(enr, emsg)
+func MSG(enr, emsg)
     let english = v:lang == "C" || v:lang =~ '^[Ee]n'
     if a:enr == ""
 	Xout "TODO: Add message number for:" a:emsg
@@ -710,10 +671,10 @@ XpathINIT
 
 let calls = 0
 
-function! P(num)
+func P(num)
     let g:calls = g:calls + a:num   " side effect on call
     return 0
-endfunction
+endfunc
 
 if 1
     Xpath 'a'
@@ -1092,7 +1053,1716 @@ func Test_unmatched_if_in_while()
 endfunc
 
 "-------------------------------------------------------------------------------
+" Test 18:  Interrupt (Ctrl-C pressed)					    {{{1
+"
+"	    On an interrupt, the script processing is terminated immediately.
 "-------------------------------------------------------------------------------
+
+func Test_interrupt_while_if()
+  let test =<< trim [CODE]
+    try
+      if 1
+        Xpath 'a'
+        while 1
+          Xpath 'b'
+          if 1
+            Xpath 'c'
+            call interrupt()
+            call assert_report('should not get here')
+            break
+            finish
+          endif | call assert_report('should not get here')
+          call assert_report('should not get here')
+        endwhile | call assert_report('should not get here')
+        call assert_report('should not get here')
+      endif | call assert_report('should not get here')
+      call assert_report('should not get here')
+    catch /^Vim:Interrupt$/
+      Xpath 'd'
+    endtry | Xpath 'e'
+    Xpath 'f'
+  [CODE]
+  let verify =<< trim [CODE]
+    call assert_equal('abcdef', g:Xpath)
+  [CODE]
+  call RunInNewVim(test, verify)
+endfunc
+
+func Test_interrupt_try()
+  let test =<< trim [CODE]
+    try
+      try
+        Xpath 'a'
+        call interrupt()
+        call assert_report('should not get here')
+      endtry | call assert_report('should not get here')
+      call assert_report('should not get here')
+    catch /^Vim:Interrupt$/
+      Xpath 'b'
+    endtry | Xpath 'c'
+    Xpath 'd'
+  [CODE]
+  let verify =<< trim [CODE]
+    call assert_equal('abcd', g:Xpath)
+  [CODE]
+  call RunInNewVim(test, verify)
+endfunc
+
+func Test_interrupt_func_while_if()
+  let test =<< trim [CODE]
+    func F()
+      if 1
+        Xpath 'a'
+        while 1
+          Xpath 'b'
+          if 1
+            Xpath 'c'
+            call interrupt()
+            call assert_report('should not get here')
+            break
+            return
+          endif | call assert_report('should not get here')
+          call assert_report('should not get here')
+        endwhile | call assert_report('should not get here')
+        call assert_report('should not get here')
+      endif | call assert_report('should not get here')
+      call assert_report('should not get here')
+    endfunc
+
+    Xpath 'd'
+    try
+      call F() | call assert_report('should not get here')
+    catch /^Vim:Interrupt$/
+      Xpath 'e'
+    endtry | Xpath 'f'
+    Xpath 'g'
+  [CODE]
+  let verify =<< trim [CODE]
+    call assert_equal('dabcefg', g:Xpath)
+  [CODE]
+  call RunInNewVim(test, verify)
+endfunc
+
+func Test_interrupt_func_try()
+  let test =<< trim [CODE]
+    func G()
+      try
+        Xpath 'a'
+        call interrupt()
+        call assert_report('should not get here')
+      endtry | call assert_report('should not get here')
+      call assert_report('should not get here')
+    endfunc
+
+    Xpath 'b'
+    try
+      call G() | call assert_report('should not get here')
+    catch /^Vim:Interrupt$/
+      Xpath 'c'
+    endtry | Xpath 'd'
+    Xpath 'e'
+  [CODE]
+  let verify =<< trim [CODE]
+    call assert_equal('bacde', g:Xpath)
+  [CODE]
+  call RunInNewVim(test, verify)
+endfunc
+
+"-------------------------------------------------------------------------------
+" Test 19:  Aborting on errors inside :try/:endtry			    {{{1
+"
+"	    An error in a command dynamically enclosed in a :try/:endtry region
+"	    aborts script processing immediately.  It does not matter whether
+"	    the failing command is outside or inside a function and whether a
+"	    function has an "abort" attribute.
+"-------------------------------------------------------------------------------
+
+func Test_try_error_abort_1()
+  let test =<< trim [CODE]
+    func F() abort
+      Xpath 'a'
+      asdf
+      call assert_report('should not get here')
+    endfunc
+
+    try
+      Xpath 'b'
+      call F()
+      call assert_report('should not get here')
+    endtry | call assert_report('should not get here')
+    call assert_report('should not get here')
+  [CODE]
+  let verify =<< trim [CODE]
+    call assert_equal('ba', g:Xpath)
+  [CODE]
+  call RunInNewVim(test, verify)
+endfunc
+
+func Test_try_error_abort_2()
+  let test =<< trim [CODE]
+    func G()
+      Xpath 'a'
+      asdf
+      call assert_report('should not get here')
+    endfunc
+
+    try
+      Xpath 'b'
+      call G()
+      call assert_report('should not get here')
+    endtry | call assert_report('should not get here')
+    call assert_report('should not get here')
+  [CODE]
+  let verify =<< trim [CODE]
+    call assert_equal('ba', g:Xpath)
+  [CODE]
+  call RunInNewVim(test, verify)
+endfunc
+
+func Test_try_error_abort_3()
+  let test =<< trim [CODE]
+    try
+      Xpath 'a'
+      asdf
+      call assert_report('should not get here')
+    endtry | call assert_report('should not get here')
+    call assert_report('should not get here')
+  [CODE]
+  let verify =<< trim [CODE]
+    call assert_equal('a', g:Xpath)
+  [CODE]
+  call RunInNewVim(test, verify)
+endfunc
+
+func Test_try_error_abort_4()
+  let test =<< trim [CODE]
+    if 1
+      try
+        Xpath 'a'
+        asdf
+        call assert_report('should not get here')
+      endtry | call assert_report('should not get here')
+    endif | call assert_report('should not get here')
+    call assert_report('should not get here')
+  [CODE]
+  let verify =<< trim [CODE]
+    call assert_equal('a', g:Xpath)
+  [CODE]
+  call RunInNewVim(test, verify)
+endfunc
+
+func Test_try_error_abort_5()
+  let test =<< trim [CODE]
+    let p = 1
+    while p
+      let p = 0
+      try
+        Xpath 'a'
+        asdf
+        call assert_report('should not get here')
+      endtry | call assert_report('should not get here')
+    endwhile | call assert_report('should not get here')
+    call assert_report('should not get here')
+  [CODE]
+  let verify =<< trim [CODE]
+    call assert_equal('a', g:Xpath)
+  [CODE]
+  call RunInNewVim(test, verify)
+endfunc
+
+func Test_try_error_abort_6()
+  let test =<< trim [CODE]
+    let p = 1
+    Xpath 'a'
+    while p
+      Xpath 'b'
+      let p = 0
+      try
+        Xpath 'c'
+    endwhile | call assert_report('should not get here')
+    call assert_report('should not get here')
+  [CODE]
+  let verify =<< trim [CODE]
+    call assert_equal('abc', g:Xpath)
+  [CODE]
+  call RunInNewVim(test, verify)
+endfunc
+
+"-------------------------------------------------------------------------------
+" Test 20:  Aborting on errors after :try/:endtry			    {{{1
+"
+"	    When an error occurs after the last active :try/:endtry region has
+"	    been left, termination behavior is as if no :try/:endtry has been
+"	    seen.
+"-------------------------------------------------------------------------------
+
+func Test_error_after_try_1()
+  let test =<< trim [CODE]
+    let p = 1
+    while p
+      let p = 0
+      Xpath 'a'
+      try
+        Xpath 'b'
+      endtry
+      asdf
+      call assert_report('should not get here')
+    endwhile | call assert_report('should not get here')
+    Xpath 'c'
+  [CODE]
+  let verify =<< trim [CODE]
+    call assert_equal('abc', g:Xpath)
+  [CODE]
+  call RunInNewVim(test, verify)
+endfunc
+
+func Test_error_after_try_2()
+  let test =<< trim [CODE]
+    while 1
+      try
+        Xpath 'a'
+        break
+        call assert_report('should not get here')
+      endtry
+    endwhile
+    Xpath 'b'
+    asdf
+    Xpath 'c'
+  [CODE]
+  let verify =<< trim [CODE]
+    call assert_equal('abc', g:Xpath)
+  [CODE]
+  call RunInNewVim(test, verify)
+endfunc
+
+func Test_error_after_try_3()
+  let test =<< trim [CODE]
+    while 1
+      try
+        Xpath 'a'
+        break
+        call assert_report('should not get here')
+      finally
+        Xpath 'b'
+      endtry
+    endwhile
+    Xpath 'c'
+    asdf
+    Xpath 'd'
+  [CODE]
+  let verify =<< trim [CODE]
+    call assert_equal('abcd', g:Xpath)
+  [CODE]
+  call RunInNewVim(test, verify)
+endfunc
+
+func Test_error_after_try_4()
+  let test =<< trim [CODE]
+    while 1
+      try
+        Xpath 'a'
+      finally
+        Xpath 'b'
+        break
+        call assert_report('should not get here')
+      endtry
+    endwhile
+    Xpath 'c'
+    asdf
+    Xpath 'd'
+  [CODE]
+  let verify =<< trim [CODE]
+    call assert_equal('abcd', g:Xpath)
+  [CODE]
+  call RunInNewVim(test, verify)
+endfunc
+
+func Test_error_after_try_5()
+  let test =<< trim [CODE]
+    let p = 1
+    while p
+      let p = 0
+      try
+        Xpath 'a'
+        continue
+        call assert_report('should not get here')
+      endtry
+    endwhile
+    Xpath 'b'
+    asdf
+    Xpath 'c'
+  [CODE]
+  let verify =<< trim [CODE]
+    call assert_equal('abc', g:Xpath)
+  [CODE]
+  call RunInNewVim(test, verify)
+endfunc
+
+func Test_error_after_try_6()
+  let test =<< trim [CODE]
+    let p = 1
+    while p
+      let p = 0
+      try
+        Xpath 'a'
+        continue
+        call assert_report('should not get here')
+      finally
+        Xpath 'b'
+      endtry
+    endwhile
+    Xpath 'c'
+    asdf
+    Xpath 'd'
+  [CODE]
+  let verify =<< trim [CODE]
+    call assert_equal('abcd', g:Xpath)
+  [CODE]
+  call RunInNewVim(test, verify)
+endfunc
+
+func Test_error_after_try_7()
+  let test =<< trim [CODE]
+    let p = 1
+    while p
+      let p = 0
+      try
+        Xpath 'a'
+      finally
+        Xpath 'b'
+        continue
+        call assert_report('should not get here')
+      endtry
+    endwhile
+    Xpath 'c'
+    asdf
+    Xpath 'd'
+  [CODE]
+  let verify =<< trim [CODE]
+    call assert_equal('abcd', g:Xpath)
+  [CODE]
+  call RunInNewVim(test, verify)
+endfunc
+
+"-------------------------------------------------------------------------------
+" Test 21:  :finally for :try after :continue/:break/:return/:finish	    {{{1
+"
+"	    If a :try conditional stays inactive due to a preceding :continue,
+"	    :break, :return, or :finish, its :finally clause should not be
+"	    executed.
+"-------------------------------------------------------------------------------
+
+func Test_finally_after_loop_ctrl_statement()
+  let test =<< trim [CODE]
+    func F()
+      let loops = 2
+      while loops > 0
+        XloopNEXT
+        let loops = loops - 1
+        try
+          if loops == 1
+            Xloop 'a'
+            continue
+            call assert_report('should not get here')
+          elseif loops == 0
+            Xloop 'b'
+            break
+            call assert_report('should not get here')
+          endif
+
+          try		" inactive
+            call assert_report('should not get here')
+          finally
+            call assert_report('should not get here')
+          endtry
+        finally
+          Xloop 'c'
+        endtry
+        call assert_report('should not get here')
+      endwhile
+
+      try
+        Xpath 'd'
+        return
+        call assert_report('should not get here')
+        try		    " inactive
+          call assert_report('should not get here')
+        finally
+          call assert_report('should not get here')
+        endtry
+      finally
+        Xpath 'e'
+      endtry
+      call assert_report('should not get here')
+    endfunc
+
+    try
+      Xpath 'f'
+      call F()
+      Xpath 'g'
+      finish
+      call assert_report('should not get here')
+      try		" inactive
+        call assert_report('should not get here')
+      finally
+        call assert_report('should not get here')
+      endtry
+    finally
+      Xpath 'h'
+    endtry
+    call assert_report('should not get here')
+  [CODE]
+  let verify =<< trim [CODE]
+    call assert_equal('fa2c2b3c3degh', g:Xpath)
+  [CODE]
+  call RunInNewVim(test, verify)
+endfunc
+
+"-------------------------------------------------------------------------------
+" Test 22:  :finally for a :try after an error/interrupt/:throw		    {{{1
+"
+"	    If a :try conditional stays inactive due to a preceding error or
+"	    interrupt or :throw, its :finally clause should not be executed.
+"-------------------------------------------------------------------------------
+
+func Test_finally_after_error_in_func()
+  let test =<< trim [CODE]
+    func Error()
+      try
+        Xpath 'b'
+        asdf    " aborting error, triggering error exception
+        call assert_report('should not get here')
+      endtry
+      call assert_report('should not get here')
+    endfunc
+
+    Xpath 'a'
+    call Error()
+    call assert_report('should not get here')
+
+    if 1	" not active due to error
+      try	" not active since :if inactive
+        call assert_report('should not get here')
+      finally
+        call assert_report('should not get here')
+      endtry
+    endif
+
+    try		" not active due to error
+      call assert_report('should not get here')
+    finally
+      call assert_report('should not get here')
+    endtry
+  [CODE]
+  let verify =<< trim [CODE]
+    call assert_equal('ab', g:Xpath)
+  [CODE]
+  call RunInNewVim(test, verify)
+endfunc
+
+func Test_finally_after_interrupt()
+  let test =<< trim [CODE]
+    func Interrupt()
+      try
+        Xpath 'a'
+        call interrupt()            " triggering interrupt exception
+        call assert_report('should not get here')
+      endtry
+    endfunc
+
+    Xpath 'b'
+    try
+      call Interrupt()
+    catch /^Vim:Interrupt$/
+      Xpath 'c'
+      finish
+    endtry
+    call assert_report('should not get here')
+
+    if 1	" not active due to interrupt
+      try	" not active since :if inactive
+        call assert_report('should not get here')
+      finally
+        call assert_report('should not get here')
+      endtry
+    endif
+
+    try		" not active due to interrupt
+      call assert_report('should not get here')
+    finally
+      call assert_report('should not get here')
+    endtry
+  [CODE]
+  let verify =<< trim [CODE]
+    call assert_equal('bac', g:Xpath)
+  [CODE]
+  call RunInNewVim(test, verify)
+endfunc
+
+func Test_finally_after_throw()
+  let test =<< trim [CODE]
+    func Throw()
+      Xpath 'a'
+      throw 'xyz'
+    endfunc
+
+    Xpath 'b'
+    call Throw()
+    call assert_report('should not get here')
+
+    if 1	" not active due to :throw
+      try	" not active since :if inactive
+        call assert_report('should not get here')
+      finally
+        call assert_report('should not get here')
+      endtry
+    endif
+
+    try		" not active due to :throw
+      call assert_report('should not get here')
+    finally
+      call assert_report('should not get here')
+    endtry
+  [CODE]
+  let verify =<< trim [CODE]
+    call assert_equal('ba', g:Xpath)
+  [CODE]
+  call RunInNewVim(test, verify)
+endfunc
+
+"-------------------------------------------------------------------------------
+" Test 23:  :catch clauses for a :try after a :throw			    {{{1
+"
+"	    If a :try conditional stays inactive due to a preceding :throw,
+"	    none of its :catch clauses should be executed.
+"-------------------------------------------------------------------------------
+
+func Test_catch_after_throw()
+  let test =<< trim [CODE]
+    try
+      Xpath 'a'
+      throw "xyz"
+      call assert_report('should not get here')
+
+      if 1	" not active due to :throw
+        try	" not active since :if inactive
+          call assert_report('should not get here')
+        catch /xyz/
+          call assert_report('should not get here')
+        endtry
+      endif
+    catch /xyz/
+      Xpath 'b'
+    endtry
+
+    Xpath 'c'
+    throw "abc"
+    call assert_report('should not get here')
+
+    try		" not active due to :throw
+      call assert_report('should not get here')
+    catch /abc/
+      call assert_report('should not get here')
+    endtry
+  [CODE]
+  let verify =<< trim [CODE]
+    call assert_equal('abc', g:Xpath)
+  [CODE]
+  call RunInNewVim(test, verify)
+endfunc
+
+"-------------------------------------------------------------------------------
+" Test 24:  :endtry for a :try after a :throw				    {{{1
+"
+"	    If a :try conditional stays inactive due to a preceding :throw,
+"	    its :endtry should not rethrow the exception to the next surrounding
+"	    active :try conditional.
+"-------------------------------------------------------------------------------
+
+func Test_endtry_after_throw()
+  let test =<< trim [CODE]
+    try			" try 1
+      try		" try 2
+        Xpath 'a'
+        throw "xyz"	" makes try 2 inactive
+        call assert_report('should not get here')
+
+        try		" try 3
+          call assert_report('should not get here')
+        endtry	" no rethrow to try 1
+      catch /xyz/	" should catch although try 2 inactive
+        Xpath 'b'
+      endtry
+    catch /xyz/		" try 1 active, but exception already caught
+      call assert_report('should not get here')
+    endtry
+    Xpath 'c'
+  [CODE]
+  let verify =<< trim [CODE]
+    call assert_equal('abc', g:Xpath)
+  [CODE]
+  call RunInNewVim(test, verify)
+endfunc
+
+"-------------------------------------------------------------------------------
+" Test 27:  Executing :finally clauses after :return			    {{{1
+"
+"	    For a :return command dynamically enclosed in a :try/:endtry region,
+"	    :finally clauses are executed and the called function is ended.
+"-------------------------------------------------------------------------------
+
+func T27_F()
+  try
+    Xpath 'a'
+    try
+      Xpath 'b'
+      return
+      call assert_report('should not get here')
+    finally
+      Xpath 'c'
+    endtry
+    Xpath 'd'
+  finally
+    Xpath 'e'
+  endtry
+  call assert_report('should not get here')
+endfunc
+
+func T27_G()
+  try
+    Xpath 'f'
+    return
+    call assert_report('should not get here')
+  finally
+    Xpath 'g'
+    call T27_F()
+    Xpath 'h'
+  endtry
+  call assert_report('should not get here')
+endfunc
+
+func T27_H()
+  try
+    Xpath 'i'
+    call T27_G()
+    Xpath 'j'
+  finally
+    Xpath 'k'
+    return
+    call assert_report('should not get here')
+  endtry
+  call assert_report('should not get here')
+endfunction
+
+func Test_finally_after_return()
+  XpathINIT
+  try
+      Xpath 'l'
+      call T27_H()
+      Xpath 'm'
+  finally
+      Xpath 'n'
+  endtry
+  call assert_equal('lifgabcehjkmn', g:Xpath)
+endfunc
+
+"-------------------------------------------------------------------------------
+" Test 28:  Executing :finally clauses after :finish			    {{{1
+"
+"	    For a :finish command dynamically enclosed in a :try/:endtry region,
+"	    :finally clauses are executed and the sourced file is finished.
+"
+"	    This test executes the bodies of the functions F, G, and H from the
+"	    previous test as script files (:return replaced by :finish).
+"-------------------------------------------------------------------------------
+
+func Test_finally_after_finish()
+  XpathINIT
+
+  let scriptF = MakeScript("T27_F")
+  let scriptG = MakeScript("T27_G", scriptF)
+  let scriptH = MakeScript("T27_H", scriptG)
+
+  try
+    Xpath 'A'
+    exec "source" scriptH
+    Xpath 'B'
+  finally
+    Xpath 'C'
+  endtry
+  Xpath 'D'
+  call assert_equal('AifgabcehjkBCD', g:Xpath)
+  call delete(scriptF)
+  call delete(scriptG)
+  call delete(scriptH)
+endfunc
+
+"-------------------------------------------------------------------------------
+" Test 29:  Executing :finally clauses on errors			    {{{1
+"
+"	    After an error in a command dynamically enclosed in a :try/:endtry
+"	    region, :finally clauses are executed and the script processing is
+"	    terminated.
+"-------------------------------------------------------------------------------
+
+func Test_finally_after_error_1()
+  let test =<< trim [CODE]
+    func F()
+      while 1
+        try
+          Xpath 'a'
+          while 1
+            try
+              Xpath 'b'
+              asdf	    " error
+              call assert_report('should not get here')
+            finally
+              Xpath 'c'
+            endtry | call assert_report('should not get here')
+            call assert_report('should not get here')
+            break
+          endwhile
+          call assert_report('should not get here')
+        finally
+          Xpath 'd'
+        endtry | call assert_report('should not get here')
+        call assert_report('should not get here')
+        break
+      endwhile
+      call assert_report('should not get here')
+    endfunc
+
+    while 1
+      try
+        Xpath 'e'
+        while 1
+          call F()
+          call assert_report('should not get here')
+          break
+        endwhile  | call assert_report('should not get here')
+        call assert_report('should not get here')
+      finally
+        Xpath 'f'
+      endtry | call assert_report('should not get here')
+    endwhile | call assert_report('should not get here')
+    call assert_report('should not get here')
+  [CODE]
+  let verify =<< trim [CODE]
+    call assert_equal('eabcdf', g:Xpath)
+  [CODE]
+  call RunInNewVim(test, verify)
+endfunc
+
+func Test_finally_after_error_2()
+  let test =<< trim [CODE]
+    func G() abort
+      if 1
+        try
+          Xpath 'a'
+          asdf	    " error
+          call assert_report('should not get here')
+        finally
+          Xpath 'b'
+        endtry | Xpath 'c'
+      endif | Xpath 'd'
+      call assert_report('should not get here')
+    endfunc
+
+    if 1
+      try
+        Xpath 'e'
+        call G()
+        call assert_report('should not get here')
+      finally
+        Xpath 'f'
+      endtry | call assert_report('should not get here')
+    endif | call assert_report('should not get here')
+    call assert_report('should not get here')
+  [CODE]
+  let verify =<< trim [CODE]
+    call assert_equal('eabf', g:Xpath)
+  [CODE]
+  call RunInNewVim(test, verify)
+endfunc
+
+"-------------------------------------------------------------------------------
+" Test 30:  Executing :finally clauses on interrupt			    {{{1
+"
+"	    After an interrupt in a command dynamically enclosed in
+"	    a :try/:endtry region, :finally clauses are executed and the
+"	    script processing is terminated.
+"-------------------------------------------------------------------------------
+
+func Test_finally_on_interrupt()
+  let test =<< trim [CODE]
+    func F()
+      try
+        Xloop 'a'
+        call interrupt()
+        call assert_report('should not get here')
+      finally
+        Xloop 'b'
+      endtry
+      call assert_report('should not get here')
+    endfunc
+
+    try
+      try
+        Xpath 'c'
+        try
+          Xpath 'd'
+          call interrupt()
+          call assert_report('should not get here')
+        finally
+          Xpath 'e'
+          try
+            Xpath 'f'
+            try
+              Xpath 'g'
+            finally
+              Xpath 'h'
+              try
+                Xpath 'i'
+                call interrupt()
+                call assert_report('should not get here')
+              endtry
+              call assert_report('should not get here')
+            endtry
+            call assert_report('should not get here')
+          endtry
+          call assert_report('should not get here')
+        endtry
+        call assert_report('should not get here')
+      finally
+        Xpath 'j'
+        try
+          Xpath 'k'
+          call F()
+          call assert_report('should not get here')
+        finally
+          Xpath 'l'
+          try
+            Xpath 'm'
+            XloopNEXT
+            ExecAsScript F
+            call assert_report('should not get here')
+          finally
+            Xpath 'n'
+          endtry
+          call assert_report('should not get here')
+        endtry
+        call assert_report('should not get here')
+      endtry
+      call assert_report('should not get here')
+    catch /^Vim:Interrupt$/
+      Xpath 'o'
+    endtry
+  [CODE]
+  let verify =<< trim [CODE]
+    call assert_equal('cdefghijka1b1lma2b2no', g:Xpath)
+  [CODE]
+  call RunInNewVim(test, verify)
+endfunc
+
+"-------------------------------------------------------------------------------
+" Test 31:  Executing :finally clauses after :throw			    {{{1
+"
+"	    After a :throw dynamically enclosed in a :try/:endtry region,
+"	    :finally clauses are executed and the script processing is
+"	    terminated.
+"-------------------------------------------------------------------------------
+
+func Test_finally_after_throw_2()
+  let test =<< trim [CODE]
+    func F()
+      try
+        Xloop 'a'
+        throw "exception"
+        call assert_report('should not get here')
+      finally
+        Xloop 'b'
+      endtry
+      call assert_report('should not get here')
+    endfunc
+
+    try
+      Xpath 'c'
+      try
+        Xpath 'd'
+        throw "exception"
+        call assert_report('should not get here')
+      finally
+        Xpath 'e'
+        try
+          Xpath 'f'
+          try
+            Xpath 'g'
+          finally
+            Xpath 'h'
+            try
+              Xpath 'i'
+              throw "exception"
+              call assert_report('should not get here')
+            endtry
+            call assert_report('should not get here')
+          endtry
+          call assert_report('should not get here')
+        endtry
+        call assert_report('should not get here')
+      endtry
+      call assert_report('should not get here')
+    finally
+      Xpath 'j'
+      try
+        Xpath 'k'
+        call F()
+        call assert_report('should not get here')
+      finally
+        Xpath 'l'
+        try
+          Xpath 'm'
+          XloopNEXT
+          ExecAsScript F
+          call assert_report('should not get here')
+        finally
+          Xpath 'n'
+        endtry
+        call assert_report('should not get here')
+      endtry
+      call assert_report('should not get here')
+    endtry
+    call assert_report('should not get here')
+  [CODE]
+  let verify =<< trim [CODE]
+    call assert_equal('cdefghijka1b1lma2b2n', g:Xpath)
+  [CODE]
+  call RunInNewVim(test, verify)
+endfunc
+
+"-------------------------------------------------------------------------------
+" Test 34:  :finally reason discarded by :continue			    {{{1
+"
+"	    When a :finally clause is executed due to a :continue, :break,
+"	    :return, :finish, error, interrupt or :throw, the jump reason is
+"	    discarded by a :continue in the finally clause.
+"-------------------------------------------------------------------------------
+
+func Test_finally_after_continue()
+  let test =<< trim [CODE]
+    func C(jump)
+      XloopNEXT
+      let loop = 0
+      while loop < 2
+        let loop = loop + 1
+        if loop == 1
+          try
+            if a:jump == "continue"
+              continue
+            elseif a:jump == "break"
+              break
+            elseif a:jump == "return" || a:jump == "finish"
+              return
+            elseif a:jump == "error"
+              asdf
+            elseif a:jump == "interrupt"
+              call interrupt()
+              let dummy = 0
+            elseif a:jump == "throw"
+              throw "abc"
+            endif
+          finally
+            continue	" discards jump that caused the :finally
+            call assert_report('should not get here')
+          endtry
+          call assert_report('should not get here')
+        elseif loop == 2
+          Xloop 'a'
+        endif
+      endwhile
+    endfunc
+
+    call C("continue")
+    Xpath 'b'
+    call C("break")
+    Xpath 'c'
+    call C("return")
+    Xpath 'd'
+    let g:jump = "finish"
+    ExecAsScript C
+    unlet g:jump
+    Xpath 'e'
+    try
+      call C("error")
+      Xpath 'f'
+    finally
+      Xpath 'g'
+      try
+        call C("interrupt")
+        Xpath 'h'
+      finally
+        Xpath 'i'
+        call C("throw")
+        Xpath 'j'
+      endtry
+    endtry
+    Xpath 'k'
+  [CODE]
+  let verify =<< trim [CODE]
+    call assert_equal('a2ba3ca4da5ea6fga7hia8jk', g:Xpath)
+  [CODE]
+  call RunInNewVim(test, verify)
+endfunc
+
+"-------------------------------------------------------------------------------
+" Test 35:  :finally reason discarded by :break				    {{{1
+"
+"	    When a :finally clause is executed due to a :continue, :break,
+"	    :return, :finish, error, interrupt or :throw, the jump reason is
+"	    discarded by a :break in the finally clause.
+"-------------------------------------------------------------------------------
+
+func Test_finally_discard_by_break()
+  let test =<< trim [CODE]
+    func B(jump)
+      XloopNEXT
+      let loop = 0
+      while loop < 2
+        let loop = loop + 1
+        if loop == 1
+          try
+            if a:jump == "continue"
+              continue
+            elseif a:jump == "break"
+              break
+            elseif a:jump == "return" || a:jump == "finish"
+              return
+            elseif a:jump == "error"
+              asdf
+            elseif a:jump == "interrupt"
+              call interrupt()
+              let dummy = 0
+            elseif a:jump == "throw"
+              throw "abc"
+            endif
+          finally
+            break	" discards jump that caused the :finally
+            call assert_report('should not get here')
+          endtry
+        elseif loop == 2
+          call assert_report('should not get here')
+        endif
+      endwhile
+      Xloop 'a'
+    endfunc
+
+    call B("continue")
+    Xpath 'b'
+    call B("break")
+    Xpath 'c'
+    call B("return")
+    Xpath 'd'
+    let g:jump = "finish"
+    ExecAsScript B
+    unlet g:jump
+    Xpath 'e'
+    try
+      call B("error")
+      Xpath 'f'
+    finally
+      Xpath 'g'
+      try
+        call B("interrupt")
+        Xpath 'h'
+      finally
+        Xpath 'i'
+        call B("throw")
+        Xpath 'j'
+      endtry
+    endtry
+    Xpath 'k'
+  [CODE]
+  let verify =<< trim [CODE]
+    call assert_equal('a2ba3ca4da5ea6fga7hia8jk', g:Xpath)
+  [CODE]
+  call RunInNewVim(test, verify)
+endfunc
+
+"-------------------------------------------------------------------------------
+" Test 36:  :finally reason discarded by :return			    {{{1
+"
+"	    When a :finally clause is executed due to a :continue, :break,
+"	    :return, :finish, error, interrupt or :throw, the jump reason is
+"	    discarded by a :return in the finally clause.
+"-------------------------------------------------------------------------------
+
+func Test_finally_discard_by_return()
+  let test =<< trim [CODE]
+    func R(jump, retval) abort
+      let loop = 0
+      while loop < 2
+        let loop = loop + 1
+        if loop == 1
+          try
+            if a:jump == "continue"
+              continue
+            elseif a:jump == "break"
+              break
+            elseif a:jump == "return"
+              return
+            elseif a:jump == "error"
+              asdf
+            elseif a:jump == "interrupt"
+              call interrupt()
+              let dummy = 0
+            elseif a:jump == "throw"
+              throw "abc"
+            endif
+          finally
+            return a:retval	" discards jump that caused the :finally
+            call assert_report('should not get here')
+          endtry
+        elseif loop == 2
+          call assert_report('should not get here')
+        endif
+      endwhile
+      call assert_report('should not get here')
+    endfunc
+
+    let sum =  -R("continue", -8)
+    Xpath 'a'
+    let sum = sum - R("break", -16)
+    Xpath 'b'
+    let sum = sum - R("return", -32)
+    Xpath 'c'
+    try
+      let sum = sum - R("error", -64)
+      Xpath 'd'
+    finally
+      Xpath 'e'
+      try
+        let sum = sum - R("interrupt", -128)
+        Xpath 'f'
+      finally
+        Xpath 'g'
+        let sum = sum - R("throw", -256)
+        Xpath 'h'
+      endtry
+    endtry
+    Xpath 'i'
+
+    let expected = 8 + 16 + 32 + 64 + 128 + 256
+    call assert_equal(sum, expected)
+  [CODE]
+  let verify =<< trim [CODE]
+    call assert_equal('abcdefghi', g:Xpath)
+  [CODE]
+  call RunInNewVim(test, verify)
+endfunc
+
+"-------------------------------------------------------------------------------
+" Test 37:  :finally reason discarded by :finish			    {{{1
+"
+"	    When a :finally clause is executed due to a :continue, :break,
+"	    :return, :finish, error, interrupt or :throw, the jump reason is
+"	    discarded by a :finish in the finally clause.
+"-------------------------------------------------------------------------------
+
+func Test_finally_discard_by_finish()
+  let test =<< trim [CODE]
+    func F(jump)	" not executed as function, transformed to a script
+      let loop = 0
+      while loop < 2
+        let loop = loop + 1
+        if loop == 1
+          try
+            if a:jump == "continue"
+              continue
+            elseif a:jump == "break"
+              break
+            elseif a:jump == "finish"
+              finish
+            elseif a:jump == "error"
+              asdf
+            elseif a:jump == "interrupt"
+              call interrupt()
+              let dummy = 0
+            elseif a:jump == "throw"
+              throw "abc"
+            endif
+          finally
+            finish	" discards jump that caused the :finally
+            call assert_report('should not get here')
+          endtry
+        elseif loop == 2
+          call assert_report('should not get here')
+        endif
+      endwhile
+      call assert_report('should not get here')
+    endfunc
+
+    let scriptF = MakeScript("F")
+    delfunction F
+
+    let g:jump = "continue"
+    exec "source" scriptF
+    Xpath 'a'
+    let g:jump = "break"
+    exec "source" scriptF
+    Xpath 'b'
+    let g:jump = "finish"
+    exec "source" scriptF
+    Xpath 'c'
+    try
+      let g:jump = "error"
+      exec "source" scriptF
+      Xpath 'd'
+    finally
+      Xpath 'e'
+      try
+        let g:jump = "interrupt"
+        exec "source" scriptF
+        Xpath 'f'
+      finally
+        Xpath 'g'
+        try
+          let g:jump = "throw"
+          exec "source" scriptF
+          Xpath 'h'
+        finally
+          Xpath 'i'
+        endtry
+      endtry
+    endtry
+    unlet g:jump
+    call delete(scriptF)
+  [CODE]
+  let verify =<< trim [CODE]
+    call assert_equal('abcdefghi', g:Xpath)
+  [CODE]
+  call RunInNewVim(test, verify)
+endfunc
+
+"-------------------------------------------------------------------------------
+" Test 38:  :finally reason discarded by an error			    {{{1
+"
+"	    When a :finally clause is executed due to a :continue, :break,
+"	    :return, :finish, error, interrupt or :throw, the jump reason is
+"	    discarded by an error in the finally clause.
+"-------------------------------------------------------------------------------
+
+func Test_finally_discard_by_error()
+  let test =<< trim [CODE]
+    func E(jump)
+      let loop = 0
+      while loop < 2
+        let loop = loop + 1
+        if loop == 1
+          try
+            if a:jump == "continue"
+              continue
+            elseif a:jump == "break"
+              break
+            elseif a:jump == "return" || a:jump == "finish"
+              return
+            elseif a:jump == "error"
+              asdf
+            elseif a:jump == "interrupt"
+              call interrupt()
+              let dummy = 0
+            elseif a:jump == "throw"
+              throw "abc"
+            endif
+          finally
+            asdf	" error; discards jump that caused the :finally
+          endtry
+        elseif loop == 2
+          call assert_report('should not get here')
+        endif
+      endwhile
+      call assert_report('should not get here')
+    endfunc
+
+    try
+      Xpath 'a'
+      call E("continue")
+      call assert_report('should not get here')
+    finally
+      try
+        Xpath 'b'
+        call E("break")
+        call assert_report('should not get here')
+      finally
+        try
+          Xpath 'c'
+          call E("return")
+          call assert_report('should not get here')
+        finally
+          try
+            Xpath 'd'
+            let g:jump = "finish"
+            ExecAsScript E
+            call assert_report('should not get here')
+          finally
+            unlet g:jump
+            try
+              Xpath 'e'
+              call E("error")
+              call assert_report('should not get here')
+            finally
+              try
+                Xpath 'f'
+                call E("interrupt")
+                call assert_report('should not get here')
+              finally
+                try
+                  Xpath 'g'
+                  call E("throw")
+                  call assert_report('should not get here')
+                finally
+                  Xpath 'h'
+                  delfunction E
+                endtry
+              endtry
+            endtry
+          endtry
+        endtry
+      endtry
+    endtry
+    call assert_report('should not get here')
+  [CODE]
+  let verify =<< trim [CODE]
+    call assert_equal('abcdefgh', g:Xpath)
+  [CODE]
+  call RunInNewVim(test, verify)
+endfunc
+
+"-------------------------------------------------------------------------------
+" Test 39:  :finally reason discarded by an interrupt			    {{{1
+"
+"	    When a :finally clause is executed due to a :continue, :break,
+"	    :return, :finish, error, interrupt or :throw, the jump reason is
+"	    discarded by an interrupt in the finally clause.
+"-------------------------------------------------------------------------------
+
+func Test_finally_discarded_by_interrupt()
+  let test =<< trim [CODE]
+    func I(jump)
+      let loop = 0
+      while loop < 2
+        let loop = loop + 1
+        if loop == 1
+          try
+            if a:jump == "continue"
+              continue
+            elseif a:jump == "break"
+              break
+            elseif a:jump == "return" || a:jump == "finish"
+              return
+            elseif a:jump == "error"
+              asdf
+            elseif a:jump == "interrupt"
+              call interrupt()
+              let dummy = 0
+            elseif a:jump == "throw"
+              throw "abc"
+            endif
+          finally
+            call interrupt()
+            let dummy = 0
+          endtry
+        elseif loop == 2
+          call assert_report('should not get here')
+        endif
+      endwhile
+      call assert_report('should not get here')
+    endfunc
+
+    try
+      try
+        Xpath 'a'
+        call I("continue")
+        call assert_report('should not get here')
+      finally
+        try
+          Xpath 'b'
+          call I("break")
+          call assert_report('should not get here')
+        finally
+          try
+            Xpath 'c'
+            call I("return")
+            call assert_report('should not get here')
+          finally
+            try
+              Xpath 'd'
+              let g:jump = "finish"
+              ExecAsScript I
+              call assert_report('should not get here')
+            finally
+              unlet g:jump
+              try
+                Xpath 'e'
+                call I("error")
+                call assert_report('should not get here')
+              finally
+                try
+                  Xpath 'f'
+                  call I("interrupt")
+                  call assert_report('should not get here')
+                finally
+                  try
+                    Xpath 'g'
+                    call I("throw")
+                    call assert_report('should not get here')
+                  finally
+                    Xpath 'h'
+                    delfunction I
+                  endtry
+                endtry
+              endtry
+            endtry
+          endtry
+        endtry
+      endtry
+      call assert_report('should not get here')
+    catch /^Vim:Interrupt$/
+      Xpath 'A'
+    endtry
+  [CODE]
+  let verify =<< trim [CODE]
+    call assert_equal('abcdefghA', g:Xpath)
+  [CODE]
+  call RunInNewVim(test, verify)
+endfunc
+
+"-------------------------------------------------------------------------------
+" Test 40:  :finally reason discarded by :throw				    {{{1
+"
+"	    When a :finally clause is executed due to a :continue, :break,
+"	    :return, :finish, error, interrupt or :throw, the jump reason is
+"	    discarded by a :throw in the finally clause.
+"-------------------------------------------------------------------------------
+
+func Test_finally_discard_by_throw()
+  let test =<< trim [CODE]
+    func T(jump)
+      let loop = 0
+      while loop < 2
+        let loop = loop + 1
+        if loop == 1
+          try
+            if a:jump == "continue"
+              continue
+            elseif a:jump == "break"
+              break
+            elseif a:jump == "return" || a:jump == "finish"
+              return
+            elseif a:jump == "error"
+              asdf
+            elseif a:jump == "interrupt"
+              call interrupt()
+              let dummy = 0
+            elseif a:jump == "throw"
+              throw "abc"
+            endif
+          finally
+            throw "xyz"	" discards jump that caused the :finally
+          endtry
+        elseif loop == 2
+          call assert_report('should not get here')
+        endif
+      endwhile
+      call assert_report('should not get here')
+    endfunc
+
+    try
+      Xpath 'a'
+      call T("continue")
+      call assert_report('should not get here')
+    finally
+      try
+        Xpath 'b'
+        call T("break")
+        call assert_report('should not get here')
+      finally
+        try
+          Xpath 'c'
+          call T("return")
+          call assert_report('should not get here')
+        finally
+          try
+            Xpath 'd'
+            let g:jump = "finish"
+            ExecAsScript T
+            call assert_report('should not get here')
+          finally
+            unlet g:jump
+            try
+              Xpath 'e'
+              call T("error")
+              call assert_report('should not get here')
+            finally
+              try
+                Xpath 'f'
+                call T("interrupt")
+                call assert_report('should not get here')
+              finally
+                try
+                  Xpath 'g'
+                  call T("throw")
+                  call assert_report('should not get here')
+                finally
+                  Xpath 'h'
+                  delfunction T
+                endtry
+              endtry
+            endtry
+          endtry
+        endtry
+      endtry
+    endtry
+    call assert_report('should not get here')
+  [CODE]
+  let verify =<< trim [CODE]
+    call assert_equal('abcdefgh', g:Xpath)
+  [CODE]
+  call RunInNewVim(test, verify)
+endfunc
+
+"-------------------------------------------------------------------------------
+" Test 49:  Throwing exceptions across functions			    {{{1
+"
+"	    When an exception is thrown but not caught inside a function, the
+"	    caller is checked for a matching :catch clause.
+"-------------------------------------------------------------------------------
+
+func T49_C()
+  try
+    Xpath 'a'
+    throw "arrgh"
+    call assert_report('should not get here')
+  catch /arrgh/
+    Xpath 'b'
+  endtry
+  Xpath 'c'
+endfunc
+
+func T49_T1()
+  XloopNEXT
+  try
+    Xloop 'd'
+    throw "arrgh"
+    call assert_report('should not get here')
+  finally
+    Xloop 'e'
+  endtry
+  Xloop 'f'
+endfunc
+
+func T49_T2()
+  try
+    Xpath 'g'
+    call T49_T1()
+    call assert_report('should not get here')
+  finally
+    Xpath 'h'
+  endtry
+  call assert_report('should not get here')
+endfunc
+
+func Test_throw_exception_across_funcs()
+  XpathINIT
+  XloopINIT
+  try
+    Xpath 'i'
+    call T49_C()            " throw and catch
+    Xpath 'j'
+  catch /.*/
+    call assert_report('should not get here')
+  endtry
+
+  try
+    Xpath 'k'
+    call T49_T1()  " throw, one level
+    call assert_report('should not get here')
+  catch /arrgh/
+    Xpath 'l'
+  catch /.*/
+    call assert_report('should not get here')
+  endtry
+
+  try
+    Xpath 'm'
+    call T49_T2()	" throw, two levels
+    call assert_report('should not get here')
+  catch /arrgh/
+    Xpath 'n'
+  catch /.*/
+    call assert_report('should not get here')
+  endtry
+  Xpath 'o'
+
+  call assert_equal('iabcjkd2e2lmgd3e3hno', g:Xpath)
+endfunc
+
+"-------------------------------------------------------------------------------
+" Test 50:  Throwing exceptions across script files			    {{{1
+"
+"	    When an exception is thrown but not caught inside a script file,
+"	    the sourcing script or function is checked for a matching :catch
+"	    clause.
+"
+"	    This test executes the bodies of the functions C, T1, and T2 from
+"	    the previous test as script files (:return replaced by :finish).
+"-------------------------------------------------------------------------------
+
+func T50_F()
+  try
+    Xpath 'A'
+    exec "source" g:scriptC
+    Xpath 'B'
+  catch /.*/
+    call assert_report('should not get here')
+  endtry
+
+  try
+    Xpath 'C'
+    exec "source" g:scriptT1
+    call assert_report('should not get here')
+  catch /arrgh/
+    Xpath 'D'
+  catch /.*/
+    call assert_report('should not get here')
+  endtry
+endfunc
+
+func Test_throw_across_script()
+  XpathINIT
+  XloopINIT
+  let g:scriptC = MakeScript("T49_C")
+  let g:scriptT1 = MakeScript("T49_T1")
+  let scriptT2 = MakeScript("T49_T2", g:scriptT1)
+
+  try
+    Xpath 'E'
+    call T50_F()
+    Xpath 'F'
+    exec "source" scriptT2
+    call assert_report('should not get here')
+  catch /arrgh/
+    Xpath 'G'
+  catch /.*/
+    call assert_report('should not get here')
+  endtry
+  Xpath 'H'
+  call assert_equal('EAabcBCd2e2DFgd3e3hGH', g:Xpath)
+
+  call delete(g:scriptC)
+  call delete(g:scriptT1)
+  call delete(scriptT2)
+  unlet g:scriptC g:scriptT1 scriptT2
+endfunc
+
 "-------------------------------------------------------------------------------
 " Test 87   using (expr) ? funcref : funcref				    {{{1
 "
