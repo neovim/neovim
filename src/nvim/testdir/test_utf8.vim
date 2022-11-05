@@ -22,7 +22,7 @@ func Test_strchars()
     call assert_equal(exp[i][2], strchars(inp[i], 1))
   endfor
   call assert_fails("let v=strchars('abc', [])", 'E745:')
-  call assert_fails("let v=strchars('abc', 2)", 'E474:')
+  call assert_fails("let v=strchars('abc', 2)", 'E1023:')
 endfunc
 
 " Test for customlist completion
