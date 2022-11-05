@@ -105,6 +105,18 @@ func Test_multi_failure()
   set re=0
 endfunc
 
+func Test_column_failure()
+  set re=1
+  call assert_fails('/\%v', 'E71:')
+  call assert_fails('/\%c', 'E71:')
+  call assert_fails('/\%l', 'E71:')
+  set re=2
+  call assert_fails('/\%v', 'E1273:')
+  call assert_fails('/\%c', 'E1273:')
+  call assert_fails('/\%l', 'E1273:')
+  set re=0
+endfunc
+
 func Test_recursive_addstate()
   throw 'skipped: TODO: '
   " This will call addstate() recursively until it runs into the limit.

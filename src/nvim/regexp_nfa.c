@@ -2151,7 +2151,7 @@ static int nfa_regatom(void)
       }
       while (ascii_isdigit(c)) {
         if (cur) {
-          semsg(_(e_regexp_number_after_dot_pos_search), no_Magic(c));
+          semsg(_(e_regexp_number_after_dot_pos_search_chr), no_Magic(c));
           return FAIL;
         }
         if (n > (INT32_MAX - (c - '0')) / 10) {
@@ -2165,6 +2165,10 @@ static int nfa_regatom(void)
       if (c == 'l' || c == 'c' || c == 'v') {
         int32_t limit = INT32_MAX;
 
+        if (!cur && n == 0) {
+          semsg(_(e_nfa_regexp_missing_value_in_chr), no_Magic(c));
+          return FAIL;
+        }
         if (c == 'l') {
           if (cur) {
             n = curwin->w_cursor.lnum;

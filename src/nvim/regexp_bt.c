@@ -2117,7 +2117,7 @@ static char_u *regatom(int *flagp)
           break;
         } else if (c == 'l' || c == 'c' || c == 'v') {
           if (cur && n) {
-            semsg(_(e_regexp_number_after_dot_pos_search), no_Magic(c));
+            semsg(_(e_regexp_number_after_dot_pos_search_chr), no_Magic(c));
             rc_did_emsg = true;
             return NULL;
           }
