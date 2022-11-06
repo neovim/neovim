@@ -6,6 +6,10 @@ func Test_let()
   let Test104#numvar = function('tr')
   call assert_equal("function('tr')", string(Test104#numvar))
 
+  let foo#tr = function('tr')
+  call assert_equal("function('tr')", string(foo#tr))
+  unlet foo#tr
+
   let a = 1
   let b = 2
 
@@ -276,7 +280,7 @@ func Test_let_errors()
   let s = "var"
   let var = 1
   call assert_fails('let var += [1,2]', 'E734:')
-  call assert_fails('let {s}.1 = 2', 'E18:')
+  call assert_fails('let {s}.1 = 2', 'E1203:')
   call assert_fails('let a[1] = 5', 'E121:')
   let l = [[1,2]]
   call assert_fails('let l[:][0] = [5]', 'E708:')

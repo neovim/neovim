@@ -294,6 +294,9 @@ func Test_dict_assign()
   let d.1 = 1
   let d._ = 2
   call assert_equal({'1': 1, '_': 2}, d)
+
+  let n = 0
+  call assert_fails('let n.key = 3', 'E1203: Dot can only be used on a dictionary: n.key = 3')
 endfunc
 
 " Function in script-local List or Dict

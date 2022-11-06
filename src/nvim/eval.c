@@ -66,6 +66,8 @@ static char *e_nowhitespace
 static char *e_write2 = N_("E80: Error while writing: %s");
 static char *e_string_list_or_blob_required = N_("E1098: String, List or Blob required");
 static char e_expression_too_recursive_str[] = N_("E1169: Expression too recursive: %s");
+static char e_dot_can_only_be_used_on_dictionary_str[]
+  = N_("E1203: Dot can only be used on a dictionary: %s");
 
 static char * const namespace_char = "abglstvw";
 
@@ -1313,13 +1315,26 @@ char *get_lval(char *const name, typval_T *const rettv, lval_T *const lp, const 
     return NULL;
   }
 
-  // Loop until no more [idx] or .key is following.
   lp->ll_tv = &v->di_tv;
+
+  if (tv_is_luafunc(lp->ll_tv)) {
+    // For v:lua just return a pointer to the "." after the "v:lua".
+    // If the caller is trans_function_name() it will check for a Lua function name.
+    return p;
+  }
+
+  // Loop until no more [idx] or .key is following.
   typval_T var1;
   var1.v_type = VAR_UNKNOWN;
   typval_T var2;
   var2.v_type = VAR_UNKNOWN;
-  while (*p == '[' || (*p == '.' && lp->ll_tv->v_type == VAR_DICT)) {
+  while (*p == '[' || (*p == '.' && p[1] != '=' && p[1] != '.')) {
+    if (*p == '.' && lp->ll_tv->v_type != VAR_DICT) {
+      if (!quiet) {
+        semsg(_(e_dot_can_only_be_used_on_dictionary_str), name);
+      }
+      return NULL;
+    }
     if (!(lp->ll_tv->v_type == VAR_LIST && lp->ll_tv->vval.v_list != NULL)
         && !(lp->ll_tv->v_type == VAR_DICT && lp->ll_tv->vval.v_dict != NULL)
         && !(lp->ll_tv->v_type == VAR_BLOB && lp->ll_tv->vval.v_blob != NULL)) {
