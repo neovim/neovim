@@ -44,6 +44,8 @@ typedef struct {
 #include "klib/kvec.h"
 // for marktree
 #include "nvim/marktree.h"
+// for float window title
+#include "nvim/extmark_defs.h"
 
 #define GETFILE_SUCCESS(x)    ((x) <= 0)
 #define MODIFIABLE(buf) (buf->b_p_ma)
@@ -1048,6 +1050,12 @@ typedef enum {
   kWinStyleMinimal,  /// Minimal UI: no number column, eob markers, etc
 } WinStyle;
 
+typedef enum {
+  kAlignLeft   = 0,
+  kAlignCenter = 1,
+  kAlignRight  = 2,
+} AlignTextPos;
+
 typedef struct {
   Window window;
   lpos_T bufpos;
@@ -1060,10 +1068,14 @@ typedef struct {
   int zindex;
   WinStyle style;
   bool border;
+  bool title;
   bool shadow;
   schar_T border_chars[8];
   int border_hl_ids[8];
   int border_attr[8];
+  AlignTextPos title_pos;
+  VirtText title_chunks;
+  int title_width;
   bool noautocmd;
 } FloatConfig;
 

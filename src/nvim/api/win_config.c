@@ -2,14 +2,17 @@
 // it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
 #include <assert.h>
+#include <inttypes.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
 
+#include "nvim/api/extmark.h"
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/api/win_config.h"
 #include "nvim/ascii.h"
+#include "nvim/buffer_defs.h"
 #include "nvim/drawscreen.h"
 #include "nvim/highlight_group.h"
 #include "nvim/option.h"
@@ -134,6 +137,11 @@
 ///     By default, `FloatBorder` highlight is used, which links to `WinSeparator`
 ///     when not defined.  It could also be specified by character:
 ///       [ {"+", "MyCorner"}, {"x", "MyBorder"} ].
+///   - title: Title (optional) in window border, String or list.
+///     List is [text, highlight] tuples. if is string the default
+///     highlight group is `FloatBorderTitle`.
+///   - title_pos: Title position must set with title option.
+///     value can be of `left` `center` `right` default is left.
 ///   - noautocmd: If true then no buffer-related autocommand events such as
 ///                  |BufEnter|, |BufLeave| or |BufWinEnter| may fire from
 ///                  calling this function.
@@ -273,6 +281,21 @@ Dictionary nvim_win_get_config(Window window, Error *err)
         }
       }
       PUT(rv, "border", ARRAY_OBJ(border));
+      if (config->title) {
+        Array titles = ARRAY_DICT_INIT;
+        VirtText title_datas = config->title_chunks;
+        for (size_t i = 0; i < title_datas.size; i++) {
+          Array tuple = ARRAY_DICT_INIT;
+          ADD(tuple, CSTR_TO_OBJ((const char *)title_datas.items[i].text));
+          if (title_datas.items[i].hl_id > 0) {
+            ADD(tuple,
+                STRING_OBJ(cstr_to_string((const char *)syn_id2name(title_datas.items[i].hl_id))));
+          }
+          ADD(titles, ARRAY_OBJ(tuple));
+        }
+        PUT(rv, "title", ARRAY_OBJ(titles));
+        PUT(rv, "title_pos", INTEGER_OBJ(config->title_pos));
+      }
     }
   }
 
@@ -330,7 +353,75 @@ static bool parse_float_bufpos(Array bufpos, lpos_T *out)
   return true;
 }
 
-static void parse_border_style(Object style, FloatConfig *fconfig, Error *err)
+static void parse_border_title(Object title, Object title_pos, FloatConfig *fconfig, Error *err)
+{
+  if (!parse_title_pos(title_pos, fconfig, err)) {
+    return;
+  }
+
+  if (title.type == kObjectTypeString) {
+    if (title.data.string.size == 0) {
+      fconfig->title = false;
+      return;
+    }
+    int hl_id = syn_check_group(S_LEN("FloatBorderTitle"));
+    kv_push(fconfig->title_chunks, ((VirtTextChunk){ .text = xstrdup(title.data.string.data),
+                                                     .hl_id = hl_id }));
+    fconfig->title_width = (int)mb_string2cells(title.data.string.data);
+    fconfig->title = true;
+    return;
+  }
+
+  if (title.type != kObjectTypeArray) {
+    api_set_error(err, kErrorTypeValidation, "title must be string or array");
+    return;
+  }
+
+  if (title.type == kObjectTypeArray && title.data.array.size == 0) {
+    api_set_error(err, kErrorTypeValidation, "title cannot be an empty array");
+    return;
+  }
+
+  fconfig->title_width = 0;
+  fconfig->title_chunks = parse_virt_text(title.data.array, err, &fconfig->title_width);
+
+  fconfig->title = true;
+  return;
+}
+
+static bool parse_title_pos(Object title_pos, FloatConfig *fconfig, Error *err)
+{
+  if (!HAS_KEY(title_pos)) {
+    fconfig->title_pos = kAlignLeft;
+    return true;
+  }
+
+  if (title_pos.type != kObjectTypeString) {
+    api_set_error(err, kErrorTypeValidation, "title_pos must be string");
+    return false;
+  }
+
+  if (title_pos.data.string.size == 0) {
+    fconfig->title_pos = kAlignLeft;
+    return true;
+  }
+
+  char *pos = title_pos.data.string.data;
+
+  if (strequal(pos, "left")) {
+    fconfig->title_pos = kAlignLeft;
+  } else if (strequal(pos, "center")) {
+    fconfig->title_pos = kAlignCenter;
+  } else if (strequal(pos, "right")) {
+    fconfig->title_pos = kAlignRight;
+  } else {
+    api_set_error(err, kErrorTypeValidation, "invalid title_pos value");
+    return false;
+  }
+  return true;
+}
+
+static void parse_border_style(Object style,  FloatConfig *fconfig, Error *err)
 {
   struct {
     const char *name;
@@ -414,6 +505,8 @@ static void parse_border_style(Object style, FloatConfig *fconfig, Error *err)
     String str = style.data.string;
     if (str.size == 0 || strequal(str.data, "none")) {
       fconfig->border = false;
+      // title does not work with border equal none
+      fconfig->title = false;
       return;
     }
     for (size_t i = 0; defaults[i].name; i++) {
@@ -601,6 +694,29 @@ static bool parse_float_config(Dict(float_config) *config, FloatConfig *fconfig,
   } else if (HAS_KEY(config->zindex)) {
     api_set_error(err, kErrorTypeValidation, "'zindex' key must be a positive Integer");
     return false;
+  }
+
+  if (HAS_KEY(config->title_pos)) {
+    if (!HAS_KEY(config->title)) {
+      api_set_error(err, kErrorTypeException, "title_pos requires title to be set");
+      return false;
+    }
+  }
+
+  if (HAS_KEY(config->title)) {
+    // title only work with border
+    if (!HAS_KEY(config->border) && !fconfig->border) {
+      api_set_error(err, kErrorTypeException, "title requires border to be set");
+      return false;
+    }
+
+    if (fconfig->title) {
+      clear_virttext(&fconfig->title_chunks);
+    }
+    parse_border_title(config->title, config->title_pos, fconfig, err);
+    if (ERROR_SET(err)) {
+      return false;
+    }
   }
 
   if (HAS_KEY(config->border)) {
