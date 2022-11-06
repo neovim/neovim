@@ -124,8 +124,6 @@ endfunc
 func Test_helptag_cmd_readonly()
   CheckUnix
   CheckNotRoot
-  " The following tests fail on FreeBSD for some reason
-  CheckNotBSD
 
   " Read-only tags file
   call mkdir('Xdir/doc', 'p')
