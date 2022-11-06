@@ -13,8 +13,7 @@ export SHELL := sh
 export NVIM_PRG := $(NVIM_PRG)
 export TMPDIR := $(abspath Xtest-tmpdir)
 
-SCRIPTS_DEFAULT = \
-	test42.out             \
+SCRIPTS_DEFAULT =
 
 ifneq ($(OS),Windows_NT)
   SCRIPTS_DEFAULTS := $(SCRIPTS_DEFAULT) \
