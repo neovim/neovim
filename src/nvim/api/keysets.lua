@@ -50,6 +50,7 @@ return {
     "callback";
     "desc";
     "replace_keycodes";
+    "is_abbrev";
   };
   get_commands = {
     "builtin";

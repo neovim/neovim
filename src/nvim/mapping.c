@@ -2511,6 +2511,10 @@ void modify_keymap(uint64_t channel_id, Buffer buffer, bool is_unmap, String mod
 #undef KEY_TO_BOOL
   }
   parsed_args.buffer = !global;
+  bool is_abbrev = api_object_to_bool(opts->is_abbrev, "is_abbrev", false, err);
+  if (ERROR_SET(err)) {
+    goto fail_and_free;
+  }
 
   if (parsed_args.replace_keycodes && !parsed_args.expr) {
     api_set_error(err, kErrorTypeValidation,  "\"replace_keycodes\" requires \"expr\"");
@@ -2585,7 +2589,7 @@ void modify_keymap(uint64_t channel_id, Buffer buffer, bool is_unmap, String mod
     maptype_val = MAPTYPE_NOREMAP;
   }
 
-  switch (buf_do_map(maptype_val, &parsed_args, mode_val, 0, target_buf)) {
+  switch (buf_do_map(maptype_val, &parsed_args, mode_val, is_abbrev, target_buf)) {
   case 0:
     break;
   case 1:
