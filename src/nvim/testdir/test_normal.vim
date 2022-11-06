@@ -3399,6 +3399,13 @@ func Test_normal_delete_cmd()
   " delete to a readonly register
   call setline(1, ['abcd'])
   call assert_beeps('normal ":d2l')
+
+  " D and d with 'nomodifiable'
+  call setline(1, ['abcd'])
+  setlocal nomodifiable
+  call assert_fails('normal D', 'E21:')
+  call assert_fails('normal d$', 'E21:')
+
   close!
 endfunc
 

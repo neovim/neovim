@@ -1044,6 +1044,22 @@ func Test_empty_matchpairs()
   bwipe!
 endfunc
 
+func Test_mps_error()
+  let encoding_save = &encoding
+
+  " for e in ['utf-8', 'latin1']
+  for e in ['utf-8']
+    exe 'set encoding=' .. e
+
+    call assert_fails('set mps=<:', 'E474:', e)
+    call assert_fails('set mps=:>', 'E474:', e)
+    call assert_fails('set mps=<>', 'E474:', e)
+    call assert_fails('set mps=<:>_', 'E474:', e)
+  endfor
+
+  let &encoding = encoding_save
+endfunc
+
 " Test for ra on multi-byte characters
 func Test_ra_multibyte()
   new

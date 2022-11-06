@@ -31,6 +31,15 @@ func Test_fileformat_autocommand()
   bw!
 endfunc
 
+func Test_fileformat_nomodifiable()
+  new
+  setlocal nomodifiable
+
+  call assert_fails('set fileformat=latin1', 'E21:')
+
+  bw
+endfunc
+
 " Convert the contents of a file into a literal string
 func s:file2str(fname)
   let b = readfile(a:fname, 'B')
