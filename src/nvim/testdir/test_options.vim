@@ -157,6 +157,20 @@ func Test_path_keep_commas()
   set path&
 endfunc
 
+func Test_path_too_long()
+  exe 'set path=' .. repeat('x', 10000)
+  call assert_fails('find x', 'E854:')
+  set path&
+endfunc
+
+func Test_signcolumn()
+  CheckFeature signs
+  call assert_equal("auto", &signcolumn)
+  set signcolumn=yes
+  set signcolumn=no
+  call assert_fails('set signcolumn=nope')
+endfunc
+
 func Test_filetype_valid()
   set ft=valid_name
   call assert_equal("valid_name", &filetype)

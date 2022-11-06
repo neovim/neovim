@@ -329,6 +329,11 @@ func Test_spellsuggest()
   call assert_equal(['Third'], spellsuggest('THird', 1))
   call assert_equal(['All'],      spellsuggest('ALl', 1))
 
+  " Special suggestion for repeated 'the the'.
+  call assert_inrange(0, 2, index(spellsuggest('the the',   3), 'the'))
+  call assert_inrange(0, 2, index(spellsuggest('the   the', 3), 'the'))
+  call assert_inrange(0, 2, index(spellsuggest('The the',   3), 'The'))
+
   call assert_fails("call spellsuggest('maxch', [])", 'E745:')
   call assert_fails("call spellsuggest('maxch', 2, [])", 'E745:')
 
