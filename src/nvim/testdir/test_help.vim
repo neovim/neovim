@@ -98,6 +98,7 @@ func Test_help_completion()
 endfunc
 
 " Test for the :helptags command
+" NOTE: if you run tests as root this will fail.  Don't run tests as root!
 func Test_helptag_cmd()
   call mkdir('Xdir/a/doc', 'p')
 

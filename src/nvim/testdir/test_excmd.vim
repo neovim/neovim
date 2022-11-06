@@ -476,6 +476,7 @@ func Test_winsize_cmd()
 endfunc
 
 " Test for the :redir command
+" NOTE: if you run tests as root this will fail.  Don't run tests as root!
 func Test_redir_cmd()
   call assert_fails('redir @@', 'E475:')
   call assert_fails('redir abc', 'E475:')

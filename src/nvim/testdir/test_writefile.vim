@@ -419,6 +419,7 @@ func Test_patchmode()
 endfunc
 
 " Test for writing to a file in a readonly directory
+" NOTE: if you run tests as root this will fail.  Don't run tests as root!
 func Test_write_readonly_dir()
   " On MS-Windows, modifying files in a read-only directory is allowed.
   CheckUnix
