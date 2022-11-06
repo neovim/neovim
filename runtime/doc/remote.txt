@@ -21,17 +21,17 @@ The following command line arguments are available:
     argument			meaning	~
 
    --remote [+{cmd}] {file} ...					*--remote*
-				Open the file list in a remote Vim.  When
-				there is no Vim server, execute locally.
-				Vim allows one init command: +{cmd}.
-				This must be an Ex command that can be
-				followed by "|". It's not yet supported by
-				Nvim.
+				Open the file list in a remote Nvim.  When
+				there is no Nvim server, execute locally.
+                This is not yet supported by  Nvim:
+                    Vim allows one init command: +{cmd},
+                    which must be an Ex command
+                    that can be  followed by "|".
 				The rest of the command line is taken as the
 				file list.  Thus any non-file arguments must
 				come before this.
 				You cannot edit stdin this way |--|.
-				The remote Vim is raised.  If you don't want
+				The remote Nvim is raised.  If you don't want
 				this use >
 				 nvim --remote-send "<C-\><C-N>:n filename<CR>"
 <
