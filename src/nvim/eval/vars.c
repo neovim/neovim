@@ -1453,9 +1453,10 @@ bool var_wrong_func_name(const char *const name, const bool new_var)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
   // Allow for w: b: s: and t:.
+  // Allow autoload variable.
   if (!(vim_strchr("wbst", name[0]) != NULL && name[1] == ':')
-      && !ASCII_ISUPPER((name[0] != NUL && name[1] == ':')
-                        ? name[2] : name[0])) {
+      && !ASCII_ISUPPER((name[0] != NUL && name[1] == ':') ? name[2] : name[0])
+      && vim_strchr(name, '#') == NULL) {
     semsg(_("E704: Funcref variable name must start with a capital: %s"), name);
     return true;
   }

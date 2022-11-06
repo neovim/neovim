@@ -6,6 +6,10 @@ func Test_let()
   let Test104#numvar = function('tr')
   call assert_equal("function('tr')", string(Test104#numvar))
 
+  let foo#tr = function('tr')
+  call assert_equal("function('tr')", string(foo#tr))
+  unlet foo#tr
+
   let a = 1
   let b = 2
 
