@@ -4702,8 +4702,7 @@ void set_context_in_set_cmd(expand_T *xp, char_u *arg, int opt_flags)
         || p == (char_u *)&p_cdpath
         || p == (char_u *)&p_vdir) {
       xp->xp_context = EXPAND_DIRECTORIES;
-      if (p == (char_u *)&p_path
-          || p == (char_u *)&p_cdpath) {
+      if (p == (char_u *)&p_path || p == (char_u *)&p_cdpath) {
         xp->xp_backslash = XP_BS_THREE;
       } else {
         xp->xp_backslash = XP_BS_ONE;
