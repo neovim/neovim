@@ -457,6 +457,7 @@ func Test_substitute_errors()
   call assert_fails("let s=substitute('abcda', [], 'A', 'g')", 'E730:')
   call assert_fails("let s=substitute('abcda', 'a', [], 'g')", 'E730:')
   call assert_fails("let s=substitute('abcda', 'a', 'A', [])", 'E730:')
+  call assert_fails("let s=substitute('abc', '\\%(', 'A', 'g')", 'E53:')
 
   bwipe!
 endfunc

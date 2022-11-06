@@ -316,6 +316,8 @@ func Test_map_completion()
   unmap <Left>
   " set cpo-=k
 
+  call assert_fails('call feedkeys(":map \\\\%(\<Tab>\<Home>\"\<CR>", "xt")', 'E53:')
+
   unmap <Middle>x
   set cpo&vim
 endfunc

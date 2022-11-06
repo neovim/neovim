@@ -147,6 +147,7 @@ func Test_bdelete_cmd()
   %bwipe!
   call assert_fails('bdelete 5', 'E516:')
   call assert_fails('1,1bdelete 1 2', 'E488:')
+  call assert_fails('bdelete \)', 'E55:')
 
   " Deleting a unlisted and unloaded buffer
   edit Xfile1
@@ -401,12 +402,12 @@ func Test_buffer_scheme()
   set noshellslash
   %bwipe!
   let bufnames = [
-    \ #{id: 'b0', name: 'test://xyz/foo/b0'    , match: 1},
-    \ #{id: 'b1', name: 'test+abc://xyz/foo/b1', match: 0},
-    \ #{id: 'b2', name: 'test_abc://xyz/foo/b2', match: 0},
-    \ #{id: 'b3', name: 'test-abc://xyz/foo/b3', match: 1},
-    \ #{id: 'b4', name: '-test://xyz/foo/b4'   , match: 0},
-    \ #{id: 'b5', name: 'test-://xyz/foo/b5'   , match: 0},
+    \ #{id: 'ssb0', name: 'test://xyz/foo/ssb0'    , match: 1},
+    \ #{id: 'ssb1', name: 'test+abc://xyz/foo/ssb1', match: 0},
+    \ #{id: 'ssb2', name: 'test_abc://xyz/foo/ssb2', match: 0},
+    \ #{id: 'ssb3', name: 'test-abc://xyz/foo/ssb3', match: 1},
+    \ #{id: 'ssb4', name: '-test://xyz/foo/ssb4'   , match: 0},
+    \ #{id: 'ssb5', name: 'test-://xyz/foo/ssb5'   , match: 0},
     \]
   for buf in bufnames
     new `=buf.name`

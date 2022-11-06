@@ -1361,6 +1361,7 @@ func Test_sort_cmd()
   call assert_fails('sort no', 'E474:')
   call assert_fails('sort c', 'E475:')
   call assert_fails('sort #pat%', 'E654:')
+  call assert_fails('sort /\%(/', 'E53:')
 
   enew!
 endfunc

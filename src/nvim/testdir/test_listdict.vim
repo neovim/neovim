@@ -754,6 +754,7 @@ func Test_str_split()
   call assert_equal(['', 'a', '', 'b', '', 'c', ''], split('abc', '\zs', 1))
   call assert_fails("call split('abc', [])", 'E730:')
   call assert_fails("call split('abc', 'b', [])", 'E745:')
+  call assert_equal(['abc'], split('abc', '\\%('))
 endfunc
 
 " compare recursively linked list and dict
