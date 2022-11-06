@@ -298,7 +298,7 @@ func Test_write_errors()
         \ && getftype('/dev/loop0') == 'bdev' && !IsRoot()
     new
     edit /dev/loop0
-    call assert_fails('write', 'E505: ')
+    call assert_fails('write', 'E503: ')
     call assert_fails('write!', 'E503: ')
     close!
   endif
