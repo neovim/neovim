@@ -589,7 +589,7 @@ static void add_nr_var(dict_T *dp, dictitem_T *v, char *name, varnumber_T nr)
   STRCPY(v->di_key, name);
 #endif
   v->di_flags = DI_FLAGS_RO | DI_FLAGS_FIX;
-  tv_dict_add(dp, v);
+  hash_add(&dp->dv_hashtab, v->di_key);
   v->di_tv.v_type = VAR_NUMBER;
   v->di_tv.v_lock = VAR_FIXED;
   v->di_tv.vval.v_number = nr;
@@ -885,7 +885,7 @@ void call_user_func(ufunc_T *fp, int argcount, typval_T *argvars, typval_T *rett
     STRCPY(name, "self");
 #endif
     v->di_flags = DI_FLAGS_RO | DI_FLAGS_FIX;
-    tv_dict_add(&fc->l_vars, v);
+    hash_add(&fc->l_vars.dv_hashtab, v->di_key);
     v->di_tv.v_type = VAR_DICT;
     v->di_tv.v_lock = VAR_UNLOCKED;
     v->di_tv.vval.v_dict = selfdict;
@@ -911,7 +911,7 @@ void call_user_func(ufunc_T *fp, int argcount, typval_T *argvars, typval_T *rett
     STRCPY(name, "000");
 #endif
     v->di_flags = DI_FLAGS_RO | DI_FLAGS_FIX;
-    tv_dict_add(&fc->l_avars, v);
+    hash_add(&fc->l_avars.dv_hashtab, v->di_key);
     v->di_tv.v_type = VAR_LIST;
     v->di_tv.v_lock = VAR_FIXED;
     v->di_tv.vval.v_list = &fc->l_varlist;
@@ -989,9 +989,9 @@ void call_user_func(ufunc_T *fp, int argcount, typval_T *argvars, typval_T *rett
       // Named arguments can be accessed without the "a:" prefix in lambda
       // expressions. Add to the l: dict.
       tv_copy(&v->di_tv, &v->di_tv);
-      tv_dict_add(&fc->l_vars, v);
+      hash_add(&fc->l_vars.dv_hashtab, v->di_key);
     } else {
-      tv_dict_add(&fc->l_avars, v);
+      hash_add(&fc->l_avars.dv_hashtab, v->di_key);
     }
 
     if (ai >= 0 && ai < MAX_FUNC_ARGS) {

@@ -1760,6 +1760,9 @@ void set_var_lval(lval_T *lp, char *endp, typval_T *rettv, int copy, const bool 
         semsg(_(e_dictkey), lp->ll_newkey);
         return;
       }
+      if (tv_dict_wrong_func_name(lp->ll_tv->vval.v_dict, rettv, lp->ll_newkey)) {
+        return;
+      }
 
       // Need to add an item to the Dictionary.
       di = tv_dict_item_alloc((const char *)lp->ll_newkey);
