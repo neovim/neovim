@@ -1513,6 +1513,7 @@ func Test_cmdline_expand_special()
   call assert_fails('e <afile>', 'E495:')
   call assert_fails('e <abuf>', 'E496:')
   call assert_fails('e <amatch>', 'E497:')
+
   call writefile([], 'Xfile.cpp')
   call writefile([], 'Xfile.java')
   new Xfile.cpp
@@ -2004,6 +2005,26 @@ func Test_recalling_cmdline()
 
   unlet g:cmdlines
   cunmap <Plug>(save-cmdline)
+endfunc
+
+" Test for the 'suffixes' option
+func Test_suffixes_opt()
+  call writefile([], 'Xfile')
+  call writefile([], 'Xfile.c')
+  call writefile([], 'Xfile.o')
+  set suffixes=
+  call feedkeys(":e Xfi*\<C-A>\<C-B>\"\<CR>", 'xt')
+  call assert_equal('"e Xfile Xfile.c Xfile.o', @:)
+  set suffixes=.c
+  call feedkeys(":e Xfi*\<C-A>\<C-B>\"\<CR>", 'xt')
+  call assert_equal('"e Xfile Xfile.o Xfile.c', @:)
+  set suffixes=,,
+  call feedkeys(":e Xfi*\<C-A>\<C-B>\"\<CR>", 'xt')
+  call assert_equal('"e Xfile.c Xfile.o Xfile', @:)
+  set suffixes&
+  call delete('Xfile')
+  call delete('Xfile.c')
+  call delete('Xfile.o')
 endfunc
 
 " Test for using a popup menu for the command line completion matches

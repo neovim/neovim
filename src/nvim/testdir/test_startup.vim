@@ -1279,4 +1279,19 @@ func Test_progname()
   call delete('Xprogname', 'd')
 endfunc
 
+" Test for doing a write from .vimrc
+func Test_write_in_vimrc()
+  call writefile(['silent! write'], 'Xvimrc')
+  let after =<< trim [CODE]
+    call assert_match('E32: ', v:errmsg)
+    call writefile(v:errors, 'Xtestout')
+    qall
+  [CODE]
+  if RunVim([], after, '-u Xvimrc')
+    call assert_equal([], readfile('Xtestout'))
+    call delete('Xtestout')
+  endif
+  call delete('Xvimrc')
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab

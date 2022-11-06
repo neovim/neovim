@@ -434,4 +434,24 @@ func Test_buf_pattern_invalid()
   bwipe!
 endfunc
 
+" Test for the 'maxmem' and 'maxmemtot' options
+func Test_buffer_maxmem()
+  " use 1KB per buffer and 2KB for all the buffers
+  " set maxmem=1 maxmemtot=2
+  new
+  let v:errmsg = ''
+  " try opening some files
+  edit test_arglist.vim
+  call assert_equal('test_arglist.vim', bufname())
+  edit test_eval_stuff.vim
+  call assert_equal('test_eval_stuff.vim', bufname())
+  b test_arglist.vim
+  call assert_equal('test_arglist.vim', bufname())
+  b test_eval_stuff.vim
+  call assert_equal('test_eval_stuff.vim', bufname())
+  close
+  call assert_equal('', v:errmsg)
+  " set maxmem& maxmemtot&
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab
