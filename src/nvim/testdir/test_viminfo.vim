@@ -18,4 +18,9 @@ func Test_viminfo_option_error()
   call assert_fails('set viminfo=%10', 'E528:')
 endfunc
 
+func Test_viminfo_oldfiles_newfile()
+  let v:oldfiles = v:_null_list
+  call assert_equal("\nNo old files", execute('oldfiles'))
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab
