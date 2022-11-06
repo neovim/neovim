@@ -2511,7 +2511,7 @@ void modify_keymap(uint64_t channel_id, Buffer buffer, bool is_unmap, String mod
 #undef KEY_TO_BOOL
   }
   parsed_args.buffer = !global;
-  bool is_abbrev = api_object_to_bool(opts->is_abbrev, "is_abbrev", false, err);
+  bool is_abbrev = api_object_to_bool(opts->abbr, "abbr", false, err);
   if (ERROR_SET(err)) {
     goto fail_and_free;
   }
