@@ -2002,7 +2002,11 @@ static void source_startup_scripts(const mparm_T *const parmp)
 #endif
       secure = p_secure;
 
-      if (do_source(VIMRC_FILE, true, DOSO_VIMRC) == FAIL) {
+      char *str = nlua_read_secure(VIMRC_FILE);
+      if (str != NULL) {
+        do_source_str(str, VIMRC_FILE);
+        xfree(str);
+      } else {
 #if defined(UNIX)
         // if ".exrc" is not owned by user set 'secure' mode
         if (!os_file_owned(EXRC_FILE)) {
@@ -2011,7 +2015,11 @@ static void source_startup_scripts(const mparm_T *const parmp)
           secure = 0;
         }
 #endif
-        (void)do_source(EXRC_FILE, false, DOSO_NONE);
+        str = nlua_read_secure(EXRC_FILE);
+        if (str != NULL) {
+          do_source_str(str, EXRC_FILE);
+          xfree(str);
+        }
       }
     }
     if (secure == 2) {

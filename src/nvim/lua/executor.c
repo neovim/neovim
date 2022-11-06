@@ -2193,3 +2193,27 @@ plain:
   kv_printf(str, "<Lua %d>", ref);
   return str.items;
 }
+
+char *nlua_read_secure(const char *path)
+{
+  lua_State *const lstate = global_lstate;
+  lua_getglobal(lstate, "vim");
+  lua_getfield(lstate, -1, "secure");
+  lua_getfield(lstate, -1, "read");
+  lua_pushstring(lstate, path);
+  lua_call(lstate, 1, 1);
+
+  size_t len = 0;
+  const char *contents = lua_tolstring(lstate, -1, &len);
+  char *buf = NULL;
+  if (contents != NULL) {
+    // Add one to include trailing null byte
+    buf = xcalloc(len + 1, sizeof(char));
+    memcpy(buf, contents, len + 1);
+  }
+
+  // Pop return value, "vim", and "secure"
+  lua_pop(lstate, 3);
+
+  return buf;
+}
