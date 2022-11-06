@@ -895,7 +895,6 @@ endfunc
 
 " Test for the default CDPATH option
 func Test_opt_default_cdpath()
-  CheckFeature file_in_path
   let after =<< trim [CODE]
     call assert_equal(',/path/to/dir1,/path/to/dir2', &cdpath)
     call writefile(v:errors, 'Xtestout')
