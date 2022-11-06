@@ -31,7 +31,6 @@ jobs:
 
       - name: Install apt packages
         run: |
-          sudo add-apt-repository ppa:neovim-ppa/stable
           sudo apt-get update
           sudo apt-get install -y \
             autoconf \
@@ -39,23 +38,9 @@ jobs:
             build-essential \
             cmake \
             gettext \
-            libluajit-5.1-dev \
-            libmsgpack-dev \
-            libtermkey-dev \
             libtool-bin \
-            libtree-sitter-dev \
-            libunibilium-dev \
-            libuv1-dev \
-            libvterm-dev \
             locales \
-            lua-busted \
             lua-check \
-            lua-filesystem \
-            lua-inspect \
-            lua-lpeg \
-            lua-luv-dev \
-            lua-nvim \
-            luajit \
             ninja-build \
             pkg-config
 
@@ -173,7 +158,6 @@ jobs:
             libvterm-dev \
             locales \
             lua-busted \
-            lua-check \
             lua-filesystem \
             lua-inspect \
             lua-lpeg \
