@@ -207,10 +207,13 @@ function M.find(names, opts)
   return matches
 end
 
---- Normalize a path to a standard format. A tilde (~) character at the
---- beginning of the path is expanded to the user's home directory and any
---- backslash (\\) characters are converted to forward slashes (/). Environment
---- variables are also expanded.
+--- Normalize a path to a standard format.
+---
+--- A tilde (~) character at the beginning of the path is expanded to the user's
+--- home directory and any backslash (\\) characters are converted to forward
+--- slashes (/). Environment variables are expanded. If the given file or
+--- directory exists, the path is also converted to an absolute path and any
+--- symlinks are resolved.
 ---
 --- Example:
 --- <pre>
@@ -228,7 +231,11 @@ end
 ---@return (string) Normalized path
 function M.normalize(path)
   vim.validate({ path = { path, 's' } })
-  return (path:gsub('^~/', vim.env.HOME .. '/'):gsub('%$([%w_]+)', vim.env):gsub('\\', '/'))
+  local p = (path:gsub('^~/', vim.env.HOME .. '/'):gsub('%$([%w_]+)', vim.env):gsub('\\', '/'))
+
+  -- Try to also convert the path to an absolute path with symlinks resolved, but if the path does
+  -- not yet exist simply return it as-is.
+  return M.realpath(p) or p
 end
 
 --- Convert a path to an absolute path, resolving symlinks.

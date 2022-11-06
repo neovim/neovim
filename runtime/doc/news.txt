@@ -39,6 +39,7 @@ NEW FEATURES                                                    *news-features*
 
 The following new APIs or features were added.
 
+• |vim.fs.realpath()| converts a relative path to an absolute path.
 • When using Nvim inside tmux 3.2 or later, the default clipboard provider
   will now copy to the system clipboard. |provider-clipboard|
 • 'splitkeep' option to control the scroll behavior of horizontal splits.
@@ -48,6 +49,9 @@ The following new APIs or features were added.
 CHANGED FEATURES                                                 *news-changes*
 
 The following changes to existing APIs or features add new behavior.
+
+• |vim.fs.normalize()| now converts relative paths to absolute paths if the
+  given file or directory exists.
 
 ==============================================================================
 REMOVED FEATURES                                                 *news-removed*
