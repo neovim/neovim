@@ -239,4 +239,20 @@ func Test_setbufline_startup_nofile()
   call delete('Xresult')
 endfunc
 
+" Test that setbufline(), appendbufline() and deletebufline() should fail and
+" return 1 when "textlock" is active.
+func Test_change_bufline_with_textlock()
+  new
+  inoremap <buffer> <expr> <F2> setbufline('', 1, '')
+  call assert_fails("normal a\<F2>", 'E565:')
+  call assert_equal('1', getline(1))
+  inoremap <buffer> <expr> <F2> appendbufline('', 1, '')
+  call assert_fails("normal a\<F2>", 'E565:')
+  call assert_equal('11', getline(1))
+  inoremap <buffer> <expr> <F2> deletebufline('', 1)
+  call assert_fails("normal a\<F2>", 'E565:')
+  call assert_equal('111', getline(1))
+  bwipe!
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab
