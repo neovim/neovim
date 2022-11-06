@@ -114,6 +114,7 @@ void do_debug(char *cmd)
   for (;;) {
     msg_scroll = true;
     need_wait_return = false;
+
     // Save the current typeahead buffer and replace it with an empty one.
     // This makes sure we get input from the user here and don't interfere
     // with the commands being executed.  Reset "ex_normal_busy" to avoid
