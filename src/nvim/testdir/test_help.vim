@@ -1,5 +1,7 @@
 " Tests for :help
 
+source check.vim
+
 func Test_help_restore_snapshot()
   help
   set buftype=
@@ -112,33 +114,38 @@ func Test_helptag_cmd()
   call assert_equal(["help-tags\ttags\t1"], readfile('Xdir/tags'))
   call delete('Xdir/tags')
 
-  " The following tests fail on FreeBSD for some reason
-  if has('unix') && !has('bsd')
-    " Read-only tags file
-    call mkdir('Xdir/doc', 'p')
-    call writefile([''], 'Xdir/doc/tags')
-    call writefile([], 'Xdir/doc/sample.txt')
-    call setfperm('Xdir/doc/tags', 'r-xr--r--')
-    call assert_fails('helptags Xdir/doc', 'E152:', getfperm('Xdir/doc/tags'))
-
-    let rtp = &rtp
-    let &rtp = 'Xdir'
-    helptags ALL
-    let &rtp = rtp
-
-    call delete('Xdir/doc/tags')
-
-    " No permission to read the help file
-    call setfperm('Xdir/a/doc/sample.txt', '-w-------')
-    call assert_fails('helptags Xdir', 'E153:', getfperm('Xdir/a/doc/sample.txt'))
-    call delete('Xdir/a/doc/sample.txt')
-    call delete('Xdir/tags')
-  endif
-
   " Duplicate tags in the help file
   call writefile(['*tag1*', '*tag1*', '*tag2*'], 'Xdir/a/doc/sample.txt')
   call assert_fails('helptags Xdir', 'E154:')
 
+  call delete('Xdir', 'rf')
+endfunc
+
+func Test_helptag_cmd_readonly()
+  CheckUnix
+  CheckNotRoot
+  " The following tests fail on FreeBSD for some reason
+  CheckNotBSD
+
+  " Read-only tags file
+  call mkdir('Xdir/doc', 'p')
+  call writefile([''], 'Xdir/doc/tags')
+  call writefile([], 'Xdir/doc/sample.txt')
+  call setfperm('Xdir/doc/tags', 'r-xr--r--')
+  call assert_fails('helptags Xdir/doc', 'E152:', getfperm('Xdir/doc/tags'))
+
+  let rtp = &rtp
+  let &rtp = 'Xdir'
+  helptags ALL
+  let &rtp = rtp
+
+  call delete('Xdir/doc/tags')
+
+  " No permission to read the help file
+  call mkdir('Xdir/b/doc', 'p')
+  call writefile([], 'Xdir/b/doc/sample.txt')
+  call setfperm('Xdir/b/doc/sample.txt', '-w-------')
+  call assert_fails('helptags Xdir', 'E153:', getfperm('Xdir/b/doc/sample.txt'))
   call delete('Xdir', 'rf')
 endfunc
 

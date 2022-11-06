@@ -423,6 +423,9 @@ endfunc
 func Test_write_readonly_dir()
   " On MS-Windows, modifying files in a read-only directory is allowed.
   CheckUnix
+  " Root can do it too.
+  CheckNotRoot
+
   call mkdir('Xdir')
   call writefile(['one'], 'Xdir/Xfile1')
   call setfperm('Xdir', 'r-xr--r--')
