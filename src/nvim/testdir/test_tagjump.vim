@@ -184,6 +184,10 @@ function Test_keyword_jump()
   call search("start")
   exe "normal! 5\<C-W>\<C-I>"
   call assert_equal("		start OK if found this line", getline('.'))
+
+  " invalid tag search pattern
+  call assert_fails('tag /\%(/', 'E426:')
+
   enew! | only
   call delete('Xtestfile')
   call delete('Xinclude')

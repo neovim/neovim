@@ -102,3 +102,20 @@ func Test_checkpath3()
   set include&
   set includeexpr&
 endfunc
+
+" Test for invalid regex in 'include' and 'define' options
+func Test_checkpath_errors()
+  let save_include = &include
+  set include=\\%(
+  call assert_fails('checkpath', 'E53:')
+  let &include = save_include
+
+  let save_define = &define
+  set define=\\%(
+  call assert_fails('dsearch abc', 'E53:')
+  let &define = save_define
+
+  call assert_fails('psearch \%(', 'E53:')
+endfunc
+
+" vim: shiftwidth=2 sts=2 expandtab

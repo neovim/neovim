@@ -413,6 +413,9 @@ func Test_func_def_error()
   call writefile(['func foo#Bar()', 'return 1', 'endfunc'], 'Xscript')
   call assert_fails('source Xscript', 'E746:')
   call delete('Xscript')
+
+  " Try to list functions using an invalid search pattern
+  call assert_fails('function /\%(/', 'E53:')
 endfunc
 
 " Test for deleting a function

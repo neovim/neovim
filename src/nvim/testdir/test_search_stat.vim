@@ -260,6 +260,14 @@ endfunc
 
 func Test_searchcount_fails()
   call assert_fails('echo searchcount("boo!")', 'E715:')
+  call assert_fails('echo searchcount({"timeout" : []})', 'E745:')
+  call assert_fails('echo searchcount({"maxcount" : []})', 'E745:')
+  call assert_fails('echo searchcount({"pattern" : []})', 'E730:')
+  call assert_fails('echo searchcount({"pos" : 1})', 'E475:')
+  call assert_fails('echo searchcount({"pos" : [1]})', 'E475:')
+  call assert_fails('echo searchcount({"pos" : [[], 2, 3]})', 'E745:')
+  call assert_fails('echo searchcount({"pos" : [1, [], 3]})', 'E745:')
+  call assert_fails('echo searchcount({"pos" : [1, 2, []]})', 'E745:')
 endfunc
 
 func Test_searchcount_in_statusline()

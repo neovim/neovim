@@ -941,6 +941,7 @@ func Test_match_func()
   call assert_equal(4,  match('testing', 'ing', -1))
   call assert_fails("let x=match('testing', 'ing', 0, [])", 'E745:')
   call assert_equal(-1, match(v:_null_list, 2))
+  call assert_equal(-1, match('abc', '\\%('))
 endfunc
 
 func Test_matchend()
