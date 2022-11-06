@@ -1510,6 +1510,7 @@ static void f_deletebufline(typval_T *argvars, typval_T *rettv, EvalFuncData fpt
 
   buf_T *curbuf_save = NULL;
   win_T *curwin_save = NULL;
+  // After this don't use "return", goto "cleanup"!
   if (!is_curbuf) {
     VIsual_active = false;
     curbuf_save = curbuf;
@@ -1530,34 +1531,35 @@ static void f_deletebufline(typval_T *argvars, typval_T *rettv, EvalFuncData fpt
   }
 
   if (u_save(first - 1, last + 1) == FAIL) {
-    rettv->vval.v_number = 1;  // FAIL
-  } else {
-    for (linenr_T lnum = first; lnum <= last; lnum++) {
-      ml_delete(first, true);
-    }
-
-    FOR_ALL_TAB_WINDOWS(tp, wp) {
-      if (wp->w_buffer == buf) {
-        if (wp->w_cursor.lnum > last) {
-          wp->w_cursor.lnum -= (linenr_T)count;
-        } else if (wp->w_cursor.lnum > first) {
-          wp->w_cursor.lnum = first;
-        }
-        if (wp->w_cursor.lnum > wp->w_buffer->b_ml.ml_line_count) {
-          wp->w_cursor.lnum = wp->w_buffer->b_ml.ml_line_count;
-        }
-      }
-    }
-    check_cursor_col();
-    deleted_lines_mark(first, count);
+    goto cleanup;
   }
 
+  for (linenr_T lnum = first; lnum <= last; lnum++) {
+    ml_delete(first, true);
+  }
+
+  FOR_ALL_TAB_WINDOWS(tp, wp) {
+    if (wp->w_buffer == buf) {
+      if (wp->w_cursor.lnum > last) {
+        wp->w_cursor.lnum -= (linenr_T)count;
+      } else if (wp->w_cursor.lnum > first) {
+        wp->w_cursor.lnum = first;
+      }
+      if (wp->w_cursor.lnum > wp->w_buffer->b_ml.ml_line_count) {
+        wp->w_cursor.lnum = wp->w_buffer->b_ml.ml_line_count;
+      }
+    }
+  }
+  check_cursor_col();
+  deleted_lines_mark(first, count);
+  rettv->vval.v_number = 0;  // OK
+
+cleanup:
   if (!is_curbuf) {
     curbuf = curbuf_save;
     curwin = curwin_save;
     VIsual_active = save_VIsual_active;
   }
-  rettv->vval.v_number = 0;  // OK
 }
 
 /// "did_filetype()" function
