@@ -149,7 +149,7 @@ endfunc
 
 " Test for setting the 'helpheight' option in the help window
 func Test_help_window_height()
-  let &cmdheight = &lines - 24
+  let &cmdheight = &lines - 23
   set helpheight=10
   help
   set helpheight=14
