@@ -9,6 +9,9 @@ local nvim_dir = helpers.nvim_dir
 local test_build_dir = helpers.test_build_dir
 local iswin = helpers.iswin
 local nvim_prog = helpers.nvim_prog
+local command = helpers.command
+local pathsep = helpers.get_pathsep()
+local funcs = helpers.funcs
 
 local nvim_prog_basename = iswin() and 'nvim.exe' or 'nvim'
 
@@ -113,6 +116,29 @@ describe('vim.fs', function()
         vim.env.XDG_CONFIG_HOME = ...
         return vim.fs.normalize('$XDG_CONFIG_HOME/nvim')
       ]], xdg_config_home))
+    end)
+  end)
+
+  describe('realpath()', function()
+    it('returns nil if the file does not exist', function()
+      eq(helpers.NIL, exec_lua [[ return vim.fs.realpath('foo') ]])
+    end)
+
+    it('converts a relative path to an absolute path', function()
+      command('edit foo')
+      command('write')
+      eq(funcs.getcwd() .. pathsep .. 'foo', exec_lua [[ return vim.fs.realpath('foo') ]])
+      funcs.delete('foo')
+    end)
+
+    it('removes ./ and ../ from the path', function()
+      local path = table.concat({'bar', 'baz', 'foo'}, pathsep)
+      helpers.mkdir_p('bar' .. pathsep .. 'baz')
+      command('edit ' .. path)
+      command('write')
+      eq(funcs.getcwd() .. pathsep .. path, exec_lua [[ return vim.fs.realpath('./bar/baz/../../bar/baz/./foo') ]])
+      funcs.delete(path)
+      helpers.rmdir('bar')
     end)
   end)
 end)

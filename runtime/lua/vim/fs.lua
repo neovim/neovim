@@ -55,9 +55,10 @@ end
 ---
 ---@param path (string) An absolute or relative path to the directory to iterate
 ---            over. The path is first normalized |vim.fs.normalize()|.
----@return Iterator over files and directories in {path}. Each iteration yields
----        two values: name and type. Each "name" is the basename of the file or
----        directory relative to {path}. Type is one of "file" or "directory".
+---@return (function) Iterator over files and directories in {path}. Each
+---        iteration yields two values: name and type. Each "name" is the
+---        basename of the file or directory relative to {path}. Type is one of
+---        "file" or "directory".
 function M.dir(path)
   return function(fs)
     return vim.loop.fs_scandir_next(fs)
@@ -228,6 +229,15 @@ end
 function M.normalize(path)
   vim.validate({ path = { path, 's' } })
   return (path:gsub('^~/', vim.env.HOME .. '/'):gsub('%$([%w_]+)', vim.env):gsub('\\', '/'))
+end
+
+--- Convert a path to an absolute path without symlinks.
+---
+---@param path (string) Path to convert to an absolute path
+---@return (string|nil) Absolute path, or nil if the file or directory does not
+---        exist.
+function M.realpath(path)
+  return vim.loop.fs_realpath(path)
 end
 
 return M
