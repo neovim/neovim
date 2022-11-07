@@ -325,7 +325,7 @@ To configure the behavior of a builtin |lsp-handler|, the convenient method
       },
     }
 <
-  or if using 'nvim-lspconfig', you can use the {handlers} key of `setup()`:
+  or if using "nvim-lspconfig", you can use the {handlers} key of `setup()`:
   >lua
 
     require('lspconfig').rust_analyzer.setup {

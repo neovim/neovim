@@ -423,9 +423,8 @@ Note that such expressions are only supported in places where a filename is
 expected as an argument to an Ex-command.
 
 							*++opt* *[++opt]*
-The [++opt] argument can be used to force the value of 'fileformat',
-'fileencoding' or 'binary' to a value for one command, and to specify the
-behavior for bad characters.  The form is: >
+The [++opt] argument can be used to set some options for one command, and to
+specify the behavior for bad characters.  The form is: >
 	++{optname}
 Or: >
 	++{optname}={value}
@@ -436,13 +435,11 @@ Where {optname} is one of:	    *++ff* *++enc* *++bin* *++nobin* *++edit*
     bin    or  binary	    sets 'binary'
     nobin  or  nobinary	    resets 'binary'
     bad			    specifies behavior for bad characters
-    edit		    for |:read| only: keep option values as if editing
-			    a file
-    p			    creates the parent directory (or directories) of
-			    a filename if they do not exist
+    edit		    for |:read|: keeps options as if editing a file
+    p			    for |:write|: creates the file's parent directory
 
-{value} cannot contain white space.  It can be any valid value for these
-options.  Examples: >
+{value} cannot contain whitespace.  It can be any valid value for the options.
+Examples: >
 	:e ++ff=unix
 This edits the same file again with 'fileformat' set to "unix". >
 
@@ -452,8 +449,23 @@ This writes the current buffer to "newfile" in latin1 format.
 The message given when writing a file will show "[converted]" when
 'fileencoding' or the value specified with ++enc differs from 'encoding'.
 
-There may be several ++opt arguments, separated by white space.  They must all
+There may be several ++opt arguments, separated by whitespace.  They must all
 appear before any |+cmd| argument.
+
+								*++p*
+The "++p" flag creates the parent directory of the file if it does not exist.
+For example if you edit "foo/bar/file.txt", the ":write ++p" command creates
+"foo/bar/" if necessary before writing the file. >
+
+	:edit foo/bar/file.txt
+	:write ++p
+
+If you want :write (without "++p") to always create missing parent
+directories, add this autocmd to your config: >
+
+	" Auto-create parent directories (except for URIs "://").
+	au BufWritePre,FileWritePre * if @% !~# '\(://\)' | call mkdir(expand('<afile>:p:h'), 'p') | endif
+<
 
 								*++bad*
 The argument of "++bad=" specifies what happens with characters that can't be
@@ -895,11 +907,13 @@ Note: When the 'write' option is off, you are not able to write any file.
 					*E502* *E503* *E504* *E505*
 					*E512* *E514* *E667* *E949*
 :w[rite] [++opt]	Write the whole buffer to the current file.  This is
-			the normal way to save changes to a file.  It fails
-			when the 'readonly' option is set or when there is
-			another reason why the file can't be written.
-			For ++opt see |++opt|, but only ++bin, ++nobin, ++ff
-			and ++enc are effective.
+			the normal way to save changes to a file.  Fails when
+			'readonly' is set or when there is another reason why
+			the file can't be written, such as when the parent
+			directory doesn't exist (use |++p| to avoid that).
+			For ++opt see |++opt|, but only ++p, ++bin, ++nobin,
+			++ff and ++enc are effective.
+
 
 :w[rite]! [++opt]	Like ":write", but forcefully write when 'readonly' is
 			set or there is another reason why writing was

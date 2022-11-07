@@ -176,7 +176,7 @@ a |provider| which transparently uses shell commands to communicate with the
 system clipboard or any other clipboard "backend".
 
 To ALWAYS use the clipboard for ALL operations (instead of interacting with
-the '+' and/or '*' registers explicitly): >vim
+the "+" and/or "*" registers explicitly): >vim
     set clipboard+=unnamedplus
 
 See 'clipboard' for details and options.

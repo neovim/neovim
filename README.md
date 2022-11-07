@@ -2,7 +2,7 @@
   <img src="https://raw.githubusercontent.com/neovim/neovim.github.io/master/logos/neovim-logo-300x87.png" alt="Neovim">
 </h1>
 
-[Documentation](https://neovim.io/doc/general/) |
+[Documentation](https://neovim.io/doc/) |
 [Chat](https://app.element.io/#/room/#neovim:matrix.org) |
 [Twitter](https://twitter.com/Neovim)
 
@@ -107,9 +107,9 @@ Apache 2.0 license, except for contributions copied from Vim (identified by the
     encouraged to make a donation for needy children in Uganda.  Please see the
     kcc section of the vim docs or visit the ICCF web site, available at these URLs:
 
-            http://iccf-holland.org/
-            http://www.vim.org/iccf/
-            http://www.iccf.nl/
+            https://iccf-holland.org/
+            https://www.vim.org/iccf/
+            https://www.iccf.nl/
 
     You can also sponsor the development of Vim.  Vim sponsors can vote for
     features.  The money goes to Uganda anyway.
@@ -121,7 +121,7 @@ Apache 2.0 license, except for contributions copied from Vim (identified by the
 [advanced UIs]: https://github.com/neovim/neovim/wiki/Related-projects#gui
 [Managed packages]: https://github.com/neovim/neovim/wiki/Installing-Neovim#install-from-package
 [Debian]: https://packages.debian.org/testing/neovim
-[Ubuntu]: http://packages.ubuntu.com/search?keywords=neovim
+[Ubuntu]: https://packages.ubuntu.com/search?keywords=neovim
 [Fedora]: https://packages.fedoraproject.org/pkgs/neovim/neovim/
 [Arch Linux]: https://www.archlinux.org/packages/?q=neovim
 [Void Linux]: https://voidlinux.org/packages/?arch=x86_64&q=neovim

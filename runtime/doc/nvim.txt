@@ -24,8 +24,8 @@ Transitioning from Vim                          *nvim-from-vim*
 
 1. To start the transition, create your |init.vim| (user config) file: >vim
 
-    :call mkdir(stdpath('config'), 'p')
     :exe 'edit '.stdpath('config').'/init.vim'
+    :write ++p
 
 2. Add these contents to the file: >vim
 
