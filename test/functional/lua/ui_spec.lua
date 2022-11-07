@@ -120,16 +120,6 @@ describe('vim.ui', function()
       eq('on_confirm not called', exec_lua('return result'))
     end)
 
-    it('does not call on_confirm when interrupted with cancelreturn opt #18144', function()
-      feed(':lua result = "on_confirm not called"<cr>')
-      eq('on_confirm not called', exec_lua('return result'))
-      feed(':lua vim.ui.input({ cancelreturn = "CANCEL" }, function(input) result = input end)<cr>')
-      feed('Inputted Text<c-c>')
-      -- Ctrl-C would make vim.ui.input() throw, so `result = input` won't be executed
-      -- Note that the control flow logic is slightly different from the behavior with ESC
-      eq('on_confirm not called', exec_lua('return result'))
-    end)
-
     it('can return the identical object when an arbitrary opts.cancelreturn object is given', function()
       feed(':lua fn = function() return 42 end<CR>')
       eq(42, exec_lua('return fn()'))
