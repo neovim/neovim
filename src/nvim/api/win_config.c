@@ -139,7 +139,7 @@
 ///       [ {"+", "MyCorner"}, {"x", "MyBorder"} ].
 ///   - title: Title (optional) in window border, String or list.
 ///     List is [text, highlight] tuples. if is string the default
-///     highlight group is `FloatBorderTitle`.
+///     highlight group is `FloatTitle`.
 ///   - title_pos: Title position must set with title option.
 ///     value can be of `left` `center` `right` default is left.
 ///   - noautocmd: If true then no buffer-related autocommand events such as
@@ -364,7 +364,7 @@ static void parse_border_title(Object title, Object title_pos, FloatConfig *fcon
       fconfig->title = false;
       return;
     }
-    int hl_id = syn_check_group(S_LEN("FloatBorderTitle"));
+    int hl_id = syn_check_group(S_LEN("FloatTitle"));
     kv_push(fconfig->title_chunks, ((VirtTextChunk){ .text = xstrdup(title.data.string.data),
                                                      .hl_id = hl_id }));
     fconfig->title_width = (int)mb_string2cells(title.data.string.data);

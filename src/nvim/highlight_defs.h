@@ -179,7 +179,7 @@ EXTERN const char *hlf_names[] INIT(= {
   [HLF_WBR] = "WinBar",
   [HLF_WBRNC] = "WinBarNC",
   [HLF_CU] = "Cursor",
-  [HLF_BTITLE] = "FloatBorderTitle",
+  [HLF_BTITLE] = "FloatTitle",
 });
 
 EXTERN int highlight_attr[HLF_COUNT + 1];     // Highl. attr for each context.
