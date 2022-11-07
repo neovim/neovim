@@ -3203,17 +3203,9 @@ void maketitle(void)
 
     if (*p_titlestring != NUL) {
       if (stl_syntax & STL_IN_TITLE) {
-        int use_sandbox = false;
-        const int called_emsg_before = called_emsg;
-
-        use_sandbox = was_set_insecurely(curwin, "titlestring", 0);
-        build_stl_str_hl(curwin, buf, sizeof(buf),
-                         p_titlestring, use_sandbox,
-                         0, maxlen, NULL, NULL);
+        build_stl_str_hl(curwin, buf, sizeof(buf), p_titlestring,
+                         "titlestring", 0, 0, maxlen, NULL, NULL);
         title_str = buf;
-        if (called_emsg > called_emsg_before) {
-          set_string_option_direct("titlestring", -1, "", OPT_FREE, SID_ERROR);
-        }
       } else {
         title_str = p_titlestring;
       }
@@ -3317,16 +3309,8 @@ void maketitle(void)
     icon_str = buf;
     if (*p_iconstring != NUL) {
       if (stl_syntax & STL_IN_ICON) {
-        int use_sandbox = false;
-        const int called_emsg_before = called_emsg;
-
-        use_sandbox = was_set_insecurely(curwin, "iconstring", 0);
-        build_stl_str_hl(curwin, icon_str, sizeof(buf),
-                         p_iconstring, use_sandbox,
-                         0, 0, NULL, NULL);
-        if (called_emsg > called_emsg_before) {
-          set_string_option_direct("iconstring", -1, "", OPT_FREE, SID_ERROR);
-        }
+        build_stl_str_hl(curwin, icon_str, sizeof(buf), p_iconstring,
+                         "iconstring", 0, 0, 0, NULL, NULL);
       } else {
         icon_str = p_iconstring;
       }
