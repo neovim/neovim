@@ -23,11 +23,13 @@ function Main()
   set lines=25
   set columns=80
   enew
-  let job = termopen(args, s:logger)
+  " FIXME: using termopen() hangs on Windows CI
+  let job = has('win32') ? jobstart(args, s:logger) : termopen(args, s:logger)
   let results = jobwait([job], 5 * 60 * 1000)
   " TODO(ZyX-I): Get colors
   let screen = getline(1, '$')
-  bwipeout!  " kills the job always.
+  call jobstop(job)  " kills the job always.
+  bwipeout!
   let stringified_events = map(s:logger.d_events,
         \'v:val[0] . ": " . ' .
         \'join(map(v:val[1], '.
