@@ -1491,6 +1491,15 @@ func Test_completefunc_callback()
   " call assert_fails('call feedkeys("A\<C-X>\<C-U>\<Esc>", "x")', 'E117:')
   " call assert_equal([], g:MycompleteFunc2_args)
 
+  " set 'completefunc' to a non-existing function
+  set completefunc=MycompleteFunc2
+  call setline(1, 'five')
+  call assert_fails("set completefunc=function('NonExistingFunc')", 'E700:')
+  call assert_fails("let &completefunc = function('NonExistingFunc')", 'E700:')
+  let g:MycompleteFunc2_args = []
+  call feedkeys("A\<C-X>\<C-U>\<Esc>", 'x')
+  call assert_equal([[1, ''], [0, 'five']], g:MycompleteFunc2_args)
+
   " cleanup
   delfunc MycompleteFunc1
   delfunc MycompleteFunc2
@@ -1701,6 +1710,15 @@ func Test_omnifunc_callback()
   " let g:MyomniFunc2_args = []
   " call assert_fails('call feedkeys("A\<C-X>\<C-O>\<Esc>", "x")', 'E117:')
   " call assert_equal([], g:MyomniFunc2_args)
+
+  " set 'omnifunc' to a non-existing function
+  set omnifunc=MyomniFunc2
+  call setline(1, 'nine')
+  call assert_fails("set omnifunc=function('NonExistingFunc')", 'E700:')
+  call assert_fails("let &omnifunc = function('NonExistingFunc')", 'E700:')
+  let g:MyomniFunc2_args = []
+  call feedkeys("A\<C-X>\<C-O>\<Esc>", 'x')
+  call assert_equal([[1, ''], [0, 'nine']], g:MyomniFunc2_args)
 
   " cleanup
   delfunc MyomniFunc1
@@ -1939,6 +1957,16 @@ func Test_thesaurusfunc_callback()
   call feedkeys("A\<C-X>\<C-T>\<Esc>", "x")
   call assert_equal('sunday', getline(1))
   call assert_equal([[1, ''], [0, 'sun']], g:MytsrFunc4_args)
+  %bw!
+
+  " set 'thesaurusfunc' to a non-existing function
+  set thesaurusfunc=MytsrFunc2
+  call setline(1, 'ten')
+  call assert_fails("set thesaurusfunc=function('NonExistingFunc')", 'E700:')
+  call assert_fails("let &thesaurusfunc = function('NonExistingFunc')", 'E700:')
+  let g:MytsrFunc2_args = []
+  call feedkeys("A\<C-X>\<C-T>\<Esc>", 'x')
+  call assert_equal([[1, ''], [0, 'ten']], g:MytsrFunc2_args)
 
   " cleanup
   set thesaurusfunc&

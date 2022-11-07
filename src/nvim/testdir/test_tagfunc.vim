@@ -315,6 +315,11 @@ func Test_tagfunc_callback()
   " call assert_fails("tag a17", "E117:")
   " call assert_equal([], g:MytagFunc3_args)
 
+  " set 'tagfunc' to a non-existing function
+  call assert_fails("set tagfunc=function('NonExistingFunc')", 'E700:')
+  call assert_fails("let &tagfunc = function('NonExistingFunc')", 'E700:')
+  call assert_fails("tag axb123", 'E426:')
+
   " cleanup
   delfunc MytagFunc1
   delfunc MytagFunc2

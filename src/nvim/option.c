@@ -5193,7 +5193,7 @@ int option_set_callback_func(char *optval, Callback *optcb)
   }
 
   Callback cb;
-  if (!callback_from_typval(&cb, tv)) {
+  if (!callback_from_typval(&cb, tv) || cb.type == kCallbackNone) {
     tv_free(tv);
     return FAIL;
   }

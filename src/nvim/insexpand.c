@@ -2233,7 +2233,7 @@ static Callback tsrfu_cb;  ///< 'thesaurusfunc' callback function
 static void copy_global_to_buflocal_cb(Callback *globcb, Callback *bufcb)
 {
   callback_free(bufcb);
-  if (globcb->data.funcref != NULL && *globcb->data.funcref != NUL) {
+  if (globcb->type != kCallbackNone) {
     callback_copy(bufcb, globcb);
   }
 }
@@ -2290,11 +2290,9 @@ int set_thesaurusfunc_option(void)
 
   if (*curbuf->b_p_tsrfu != NUL) {
     // buffer-local option set
-    callback_free(&curbuf->b_tsrfu_cb);
     retval = option_set_callback_func(curbuf->b_p_tsrfu, &curbuf->b_tsrfu_cb);
   } else {
     // global option set
-    callback_free(&tsrfu_cb);
     retval = option_set_callback_func(p_tsrfu, &tsrfu_cb);
   }
 

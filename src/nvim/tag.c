@@ -154,7 +154,7 @@ void free_tagfunc_option(void)
 void set_buflocal_tfu_callback(buf_T *buf)
 {
   callback_free(&buf->b_tfu_cb);
-  if (tfu_cb.data.funcref != NULL && *tfu_cb.data.funcref != NUL) {
+  if (tfu_cb.type != kCallbackNone) {
     callback_copy(&buf->b_tfu_cb, &tfu_cb);
   }
 }
@@ -1153,7 +1153,7 @@ static int find_tagfunc_tags(char_u *pat, garray_T *ga, int *match_count, int fl
     }
   }
 
-  if (*curbuf->b_p_tfu == NUL) {
+  if (*curbuf->b_p_tfu == NUL || curbuf->b_tfu_cb.type == kCallbackNone) {
     return FAIL;
   }
 

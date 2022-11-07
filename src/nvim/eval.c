@@ -5860,6 +5860,7 @@ bool callback_from_typval(Callback *const callback, typval_T *const arg)
   return true;
 }
 
+/// @return  whether the callback could be called.
 bool callback_call(Callback *const callback, const int argcount_in, typval_T *const argvars_in,
                    typval_T *const rettv)
   FUNC_ATTR_NONNULL_ALL
@@ -8705,9 +8706,9 @@ bool invoke_prompt_interrupt(void)
   argv[0].v_type = VAR_UNKNOWN;
 
   got_int = false;  // don't skip executing commands
-  callback_call(&curbuf->b_prompt_interrupt, 0, argv, &rettv);
+  int ret = callback_call(&curbuf->b_prompt_interrupt, 0, argv, &rettv);
   tv_clear(&rettv);
-  return true;
+  return ret != FAIL;
 }
 
 /// Compare "typ1" and "typ2".  Put the result in "typ1".
