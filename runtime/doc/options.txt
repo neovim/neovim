@@ -313,10 +313,10 @@ Note: In the future more global options can be made |global-local|.  Using
 
 
 						*option-value-function*
-Some options ('completefunc', 'imactivatefunc', 'imstatusfunc', 'omnifunc',
-'operatorfunc', 'quickfixtextfunc', 'tagfunc' and 'thesaurusfunc') are set to
-a function name or a function reference or a lambda function.  When using a
-lambda it will be converted to the name, e.g. "<lambda>123".  Examples:
+Some options ('completefunc', 'omnifunc', 'operatorfunc', 'quickfixtextfunc',
+'tagfunc' and 'thesaurusfunc') are set to a function name or a function
+reference or a lambda function.  When using a lambda it will be converted to
+the name, e.g. "<lambda>123".  Examples:
 >
 	set opfunc=MyOpFunc
 	set opfunc=function('MyOpFunc')
