@@ -884,6 +884,7 @@ static void build_cmdline_str(char **cmdlinep, exarg_T *eap, CmdParseInfo *cmdin
 /// @param  command Replacement command to execute when this user command is executed. When called
 ///                 from Lua, the command can also be a Lua function. The function is called with a
 ///                 single table argument that contains the following keys:
+///                 - name: (string) Command name
 ///                 - args: (string) The args passed to the command, if any |<args>|
 ///                 - fargs: (table) The args split by unescaped whitespace (when more than one
 ///                 argument is allowed), if any |<f-args>|

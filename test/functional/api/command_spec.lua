@@ -114,6 +114,7 @@ describe('nvim_create_user_command', function()
     ]]
 
     eq({
+      name = "CommandWithLuaCallback",
       args = [[this\  is    a\ test]],
       fargs = {"this ", "is", "a test"},
       bang = false,
@@ -150,6 +151,7 @@ describe('nvim_create_user_command', function()
     ]=])
 
     eq({
+      name = "CommandWithLuaCallback",
       args = [[this   includes\ a backslash: \\]],
       fargs = {"this", "includes a", "backslash:", "\\"},
       bang = false,
@@ -186,6 +188,7 @@ describe('nvim_create_user_command', function()
     ]=])
 
     eq({
+      name = "CommandWithLuaCallback",
       args = "a\\b",
       fargs = {"a\\b"},
       bang = false,
@@ -222,6 +225,7 @@ describe('nvim_create_user_command', function()
     ]=])
 
     eq({
+      name = "CommandWithLuaCallback",
       args = 'h\tey ',
       fargs = {[[h]], [[ey]]},
       bang = true,
@@ -258,6 +262,7 @@ describe('nvim_create_user_command', function()
     ]=])
 
     eq({
+      name = "CommandWithLuaCallback",
       args = "h",
       fargs = {"h"},
       bang = false,
@@ -294,6 +299,7 @@ describe('nvim_create_user_command', function()
     ]])
 
     eq({
+      name = "CommandWithLuaCallback",
       args = "",
       fargs = {},  -- fargs works without args
       bang = false,
@@ -342,6 +348,7 @@ describe('nvim_create_user_command', function()
     ]]
 
     eq({
+      name = "CommandWithOneOrNoArg",
       args = "hello I'm one argument",
       fargs = {"hello I'm one argument"},  -- Doesn't split args
       bang = false,
@@ -379,6 +386,7 @@ describe('nvim_create_user_command', function()
 
     -- f-args is an empty table if no args were passed
     eq({
+      name = "CommandWithOneOrNoArg",
       args = "",
       fargs = {},
       bang = false,
@@ -427,6 +435,7 @@ describe('nvim_create_user_command', function()
       })
     ]]
     eq({
+      name = "CommandWithNoArgs",
       args = "",
       fargs = {},
       bang = false,
@@ -463,6 +472,7 @@ describe('nvim_create_user_command', function()
     ]])
     -- register can be specified
     eq({
+      name = "CommandWithNoArgs",
       args = "",
       fargs = {},
       bang = false,
