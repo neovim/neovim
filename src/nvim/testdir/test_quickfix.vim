@@ -1,6 +1,7 @@
 " Test for the quickfix feature.
 
 source check.vim
+source vim9.vim
 CheckFeature quickfix
 
 source screendump.vim
@@ -5688,6 +5689,131 @@ endfunc
 func Test_qftextfunc()
   call Xtest_qftextfunc('c')
   call Xtest_qftextfunc('l')
+endfunc
+
+func Test_qftextfunc_callback()
+  let lines =<< trim END
+    set efm=%f:%l:%c:%m
+
+    #" Test for using a function()
+    set qftf=function('g:Tqfexpr')
+    cexpr "F1:1:1:L1"
+    copen
+    call assert_equal('F1-L1C1-L1', getline(1))
+    cclose
+
+    #" Using a funcref variable to set 'quickfixtextfunc'
+    VAR Fn = function('g:Tqfexpr')
+    LET &qftf = Fn
+    cexpr "F2:2:2:L2"
+    copen
+    call assert_equal('F2-L2C2-L2', getline(1))
+    cclose
+
+    #" Using string(funcref_variable) to set 'quickfixtextfunc'
+    LET Fn = function('g:Tqfexpr')
+    LET &qftf = string(Fn)
+    cexpr "F3:3:3:L3"
+    copen
+    call assert_equal('F3-L3C3-L3', getline(1))
+    cclose
+
+    #" Test for using a funcref()
+    set qftf=funcref('g:Tqfexpr')
+    cexpr "F4:4:4:L4"
+    copen
+    call assert_equal('F4-L4C4-L4', getline(1))
+    cclose
+
+    #" Using a funcref variable to set 'quickfixtextfunc'
+    LET Fn = funcref('g:Tqfexpr')
+    LET &qftf = Fn
+    cexpr "F5:5:5:L5"
+    copen
+    call assert_equal('F5-L5C5-L5', getline(1))
+    cclose
+
+    #" Using a string(funcref_variable) to set 'quickfixtextfunc'
+    LET Fn = funcref('g:Tqfexpr')
+    LET &qftf = string(Fn)
+    cexpr "F5:5:5:L5"
+    copen
+    call assert_equal('F5-L5C5-L5', getline(1))
+    cclose
+
+    #" Test for using a lambda function with set
+    VAR optval = "LSTART a LMIDDLE Tqfexpr(a) LEND"
+    LET optval = substitute(optval, ' ', '\\ ', 'g')
+    exe "set qftf=" .. optval
+    cexpr "F6:6:6:L6"
+    copen
+    call assert_equal('F6-L6C6-L6', getline(1))
+    cclose
+
+    #" Set 'quickfixtextfunc' to a lambda expression
+    LET &qftf = LSTART a LMIDDLE Tqfexpr(a) LEND
+    cexpr "F7:7:7:L7"
+    copen
+    call assert_equal('F7-L7C7-L7', getline(1))
+    cclose
+
+    #" Set 'quickfixtextfunc' to string(lambda_expression)
+    LET &qftf = "LSTART a LMIDDLE Tqfexpr(a) LEND"
+    cexpr "F8:8:8:L8"
+    copen
+    call assert_equal('F8-L8C8-L8', getline(1))
+    cclose
+
+    #" Set 'quickfixtextfunc' to a variable with a lambda expression
+    VAR Lambda = LSTART a LMIDDLE Tqfexpr(a) LEND
+    LET &qftf = Lambda
+    cexpr "F9:9:9:L9"
+    copen
+    call assert_equal('F9-L9C9-L9', getline(1))
+    cclose
+
+    #" Set 'quickfixtextfunc' to a string(variable with a lambda expression)
+    LET Lambda = LSTART a LMIDDLE Tqfexpr(a) LEND
+    LET &qftf = string(Lambda)
+    cexpr "F9:9:9:L9"
+    copen
+    call assert_equal('F9-L9C9-L9', getline(1))
+    cclose
+  END
+  call CheckLegacyAndVim9Success(lines)
+
+  " set 'quickfixtextfunc' to a partial with dict. This used to cause a crash.
+  func SetQftfFunc()
+    let params = {'qftf': function('g:DictQftfFunc')}
+    let &quickfixtextfunc = params.qftf
+  endfunc
+  func g:DictQftfFunc(_) dict
+  endfunc
+  call SetQftfFunc()
+  new
+  call SetQftfFunc()
+  bw
+  call test_garbagecollect_now()
+  new
+  set qftf=
+  wincmd w
+  set qftf=
+  :%bw!
+
+  " set per-quickfix list 'quickfixtextfunc' to a partial with dict. This used
+  " to cause a crash.
+  let &qftf = ''
+  func SetLocalQftfFunc()
+    let params = {'qftf': function('g:DictQftfFunc')}
+    call setqflist([], 'a', {'quickfixtextfunc' : params.qftf})
+  endfunc
+  call SetLocalQftfFunc()
+  call test_garbagecollect_now()
+  call setqflist([], 'a', {'quickfixtextfunc' : ''})
+  delfunc g:DictQftfFunc
+  delfunc SetQftfFunc
+  delfunc SetLocalQftfFunc
+  set efm&
 endfunc
 
 " Test for updating a location list for some other window and check that

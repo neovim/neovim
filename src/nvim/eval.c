@@ -30,6 +30,7 @@
 #include "nvim/ex_session.h"
 #include "nvim/getchar.h"
 #include "nvim/highlight_group.h"
+#include "nvim/insexpand.h"
 #include "nvim/locale.h"
 #include "nvim/lua/executor.h"
 #include "nvim/mark.h"
@@ -49,6 +50,7 @@
 #include "nvim/search.h"
 #include "nvim/sign.h"
 #include "nvim/syntax.h"
+#include "nvim/tag.h"
 #include "nvim/ui.h"
 #include "nvim/ui_compositor.h"
 #include "nvim/undo.h"
@@ -4168,9 +4170,22 @@ bool garbage_collect(bool testing)
     ABORTING(set_ref_dict)(buf->additional_data, copyID);
 
     // buffer callback functions
-    set_ref_in_callback(&buf->b_prompt_callback, copyID, NULL, NULL);
-    set_ref_in_callback(&buf->b_prompt_interrupt, copyID, NULL, NULL);
+    ABORTING(set_ref_in_callback)(&buf->b_prompt_callback, copyID, NULL, NULL);
+    ABORTING(set_ref_in_callback)(&buf->b_prompt_interrupt, copyID, NULL, NULL);
+    ABORTING(set_ref_in_callback)(&buf->b_cfu_cb, copyID, NULL, NULL);
+    ABORTING(set_ref_in_callback)(&buf->b_ofu_cb, copyID, NULL, NULL);
+    ABORTING(set_ref_in_callback)(&buf->b_tsrfu_cb, copyID, NULL, NULL);
+    ABORTING(set_ref_in_callback)(&buf->b_tfu_cb, copyID, NULL, NULL);
   }
+
+  // 'completefunc', 'omnifunc' and 'thesaurusfunc' callbacks
+  ABORTING(set_ref_in_insexpand_funcs)(copyID);
+
+  // 'operatorfunc' callback
+  ABORTING(set_ref_in_opfunc)(copyID);
+
+  // 'tagfunc' callback
+  ABORTING(set_ref_in_tagfunc)(copyID);
 
   FOR_ALL_TAB_WINDOWS(tp, wp) {
     // window-local variables
@@ -5910,8 +5925,8 @@ bool callback_call(Callback *const callback, const int argcount_in, typval_T *co
   return call_func(name, -1, rettv, argcount_in, argvars_in, &funcexe);
 }
 
-static bool set_ref_in_callback(Callback *callback, int copyID, ht_stack_T **ht_stack,
-                                list_stack_T **list_stack)
+bool set_ref_in_callback(Callback *callback, int copyID, ht_stack_T **ht_stack,
+                         list_stack_T **list_stack)
 {
   typval_T tv;
   switch (callback->type) {

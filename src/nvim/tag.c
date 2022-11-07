@@ -149,6 +149,13 @@ void free_tagfunc_option(void)
 }
 #endif
 
+/// Mark the global 'tagfunc' callback with "copyID" so that it is not garbage
+/// collected.
+bool set_ref_in_tagfunc(int copyID)
+{
+  return set_ref_in_callback(&tfu_cb, copyID, NULL, NULL);
+}
+
 /// Copy the global 'tagfunc' callback function to the buffer-local 'tagfunc'
 /// callback for 'buf'.
 void set_buflocal_tfu_callback(buf_T *buf)
