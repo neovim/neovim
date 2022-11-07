@@ -1985,6 +1985,9 @@ int nlua_do_ucmd(ucmd_T *cmd, exarg_T *eap, bool preview)
   nlua_pushref(lstate, preview ? cmd->uc_preview_luaref : cmd->uc_luaref);
 
   lua_newtable(lstate);
+  lua_pushstring(lstate, cmd->uc_name);
+  lua_setfield(lstate, -2, "name");
+
   lua_pushboolean(lstate, eap->forceit == 1);
   lua_setfield(lstate, -2, "bang");
 
