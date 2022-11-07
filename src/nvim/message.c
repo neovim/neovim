@@ -3151,6 +3151,7 @@ int msg_end(void)
 void msg_ext_ui_flush(void)
 {
   if (!ui_has(kUIMessages)) {
+    msg_ext_kind = NULL;
     return;
   }
 
