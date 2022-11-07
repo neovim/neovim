@@ -1,7 +1,7 @@
 name: "Request reviews"
 on:
   pull_request_target:
-    types: [labeled, ready_for_review]
+    types: [labeled, ready_for_review, reopened]
 jobs:
   request-reviewer:
     if: github.event.pull_request.state == 'open' && github.event.pull_request.draft == false
