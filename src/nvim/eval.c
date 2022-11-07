@@ -3689,10 +3689,10 @@ static int eval_index(char **arg, typval_T *rettv, int evaluate, int verbose)
 int get_option_tv(const char **const arg, typval_T *const rettv, const bool evaluate)
   FUNC_ATTR_NONNULL_ARG(1)
 {
-  int opt_flags;
+  int scope;
 
   // Isolate the option name and find its value.
-  char *option_end = (char *)find_option_end(arg, &opt_flags);
+  char *option_end = (char *)find_option_end(arg, &scope);
   if (option_end == NULL) {
     if (rettv != NULL) {
       semsg(_("E112: Option name missing: %s"), *arg);
@@ -3712,7 +3712,7 @@ int get_option_tv(const char **const arg, typval_T *const rettv, const bool eval
   char c = *option_end;
   *option_end = NUL;
   getoption_T opt_type = get_option_value(*arg, &numval,
-                                          rettv == NULL ? NULL : &stringval, opt_flags);
+                                          rettv == NULL ? NULL : &stringval, NULL, scope);
 
   if (opt_type == gov_unknown) {
     if (rettv != NULL) {
@@ -7794,19 +7794,19 @@ void ex_execute(exarg_T *eap)
 ///
 /// @return  NULL when no option name found.  Otherwise pointer to the char
 ///          after the option name.
-const char *find_option_end(const char **const arg, int *const opt_flags)
+const char *find_option_end(const char **const arg, int *const scope)
 {
   const char *p = *arg;
 
   p++;
   if (*p == 'g' && p[1] == ':') {
-    *opt_flags = OPT_GLOBAL;
+    *scope = OPT_GLOBAL;
     p += 2;
   } else if (*p == 'l' && p[1] == ':') {
-    *opt_flags = OPT_LOCAL;
+    *scope = OPT_LOCAL;
     p += 2;
   } else {
-    *opt_flags = 0;
+    *scope = 0;
   }
 
   if (!ASCII_ISALPHA(*p)) {

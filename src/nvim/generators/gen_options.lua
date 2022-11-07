@@ -29,14 +29,14 @@ local type_flags={
 }
 
 local redraw_flags={
+  ui_option='P_UI_OPTION',
+  tabline='P_RTABL',
   statuslines='P_RSTAT',
-  tabline = 'P_RTABL',
   current_window='P_RWIN',
   current_window_only='P_RWINONLY',
   current_buffer='P_RBUF',
   all_windows='P_RALL',
   curswant='P_CURSWANT',
-  ui_option='P_UI_OPTION',
 }
 
 local list_flags={
@@ -78,6 +78,7 @@ local get_flags = function(o)
     {'deny_in_modelines', 'P_NO_ML'},
     {'deny_duplicates', 'P_NODUP'},
     {'modelineexpr', 'P_MLE'},
+    {'func'}
   }) do
     local key_name = flag_desc[1]
     local def_name = flag_desc[2] or ('P_' .. key_name:upper())

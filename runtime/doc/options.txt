@@ -315,7 +315,8 @@ Note: In the future more global options can be made |global-local|.  Using
 						*option-value-function*
 Some options ('completefunc', 'imactivatefunc', 'imstatusfunc', 'omnifunc',
 'operatorfunc', 'quickfixtextfunc', 'tagfunc' and 'thesaurusfunc') are set to
-a function name or a function reference or a lambda function.  Examples:
+a function name or a function reference or a lambda function.  When using a
+lambda it will be converted to the name, e.g. "<lambda>123".  Examples:
 >
 	set opfunc=MyOpFunc
 	set opfunc=function('MyOpFunc')
@@ -325,10 +326,10 @@ a function name or a function reference or a lambda function.  Examples:
 	let Fn = function('MyTagFunc')
 	let &tagfunc = string(Fn)
 	" set using a lambda expression
-	let &tagfunc = "{t -> MyTagFunc(t)}"
+	let &tagfunc = {t -> MyTagFunc(t)}
 	" set using a variable with lambda expression
 	let L = {a, b, c -> MyTagFunc(a, b , c)}
-	let &tagfunc = string(L)
+	let &tagfunc = L
 <
 
 Setting the filetype

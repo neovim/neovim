@@ -3145,7 +3145,7 @@ void ex_spelldump(exarg_T *eap)
   }
   char *spl;
   long dummy;
-  (void)get_option_value("spl", &dummy, &spl, OPT_LOCAL);
+  (void)get_option_value("spl", &dummy, &spl, NULL, OPT_LOCAL);
 
   // Create a new empty buffer in a new window.
   do_cmdline_cmd("new");

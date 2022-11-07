@@ -487,7 +487,7 @@ static getoption_T access_option_value(char *key, long *numval, char **stringval
                                        bool get, Error *err)
 {
   if (get) {
-    return get_option_value(key, numval, stringval, opt_flags);
+    return get_option_value(key, numval, stringval, NULL, opt_flags);
   } else {
     char *errmsg;
     if ((errmsg = set_option_value(key, *numval, *stringval, opt_flags))) {

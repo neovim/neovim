@@ -2842,6 +2842,7 @@ int findoption(const char *const arg)
 /// Gets the value for an option.
 ///
 /// @param stringval  NULL when only checking existence
+/// @param flagsp     set to the option flags (P_xxxx) (if not NULL)
 ///
 /// @returns:
 ///           Number option: gov_number, *numval gets value.
@@ -2851,7 +2852,8 @@ int findoption(const char *const arg)
 ///           Hidden Toggle option: gov_hidden_bool.
 ///           Hidden String option: gov_hidden_string.
 ///           Unknown option: gov_unknown.
-getoption_T get_option_value(const char *name, long *numval, char **stringval, int opt_flags)
+getoption_T get_option_value(const char *name, long *numval, char **stringval, uint32_t *flagsp,
+                             int scope)
 {
   if (get_tty_option(name, stringval)) {
     return gov_string;
@@ -2862,7 +2864,12 @@ getoption_T get_option_value(const char *name, long *numval, char **stringval, i
     return gov_unknown;
   }
 
-  char_u *varp = (char_u *)get_varp_scope(&(options[opt_idx]), opt_flags);
+  char_u *varp = (char_u *)get_varp_scope(&(options[opt_idx]), scope);
+
+  if (flagsp != NULL) {
+    // Return the P_xxxx option flags.
+    *flagsp = options[opt_idx].flags;
+  }
 
   if (options[opt_idx].flags & P_STRING) {
     if (varp == NULL) {  // hidden option
@@ -3092,7 +3099,7 @@ char *set_option_value(const char *const name, const long number, const char *co
           numval = -1;
         } else {
           char *s = NULL;
-          (void)get_option_value(name, &numval, &s, OPT_GLOBAL);
+          (void)get_option_value(name, &numval, &s, NULL, OPT_GLOBAL);
         }
       }
       if (flags & P_NUM) {
@@ -3701,15 +3708,17 @@ void unset_global_local_option(char *name, void *from)
 }
 
 /// Get pointer to option variable, depending on local or global scope.
-char *get_varp_scope(vimoption_T *p, int opt_flags)
+///
+/// @param scope  can be OPT_LOCAL, OPT_GLOBAL or a combination.
+char *get_varp_scope(vimoption_T *p, int scope)
 {
-  if ((opt_flags & OPT_GLOBAL) && p->indir != PV_NONE) {
+  if ((scope & OPT_GLOBAL) && p->indir != PV_NONE) {
     if (p->var == VAR_WIN) {
       return GLOBAL_WO(get_varp(p));
     }
     return (char *)p->var;
   }
-  if ((opt_flags & OPT_LOCAL) && ((int)p->indir & PV_BOTH)) {
+  if ((scope & OPT_LOCAL) && ((int)p->indir & PV_BOTH)) {
     switch ((int)p->indir) {
     case PV_FP:
       return (char *)&(curbuf->b_p_fp);
@@ -4863,9 +4872,9 @@ void ExpandOldSetting(int *num_file, char ***file)
 /// NameBuff[].  Must not be called with a hidden option!
 ///
 /// @param opt_flags  OPT_GLOBAL and/or OPT_LOCAL
-static void option_value2string(vimoption_T *opp, int opt_flags)
+static void option_value2string(vimoption_T *opp, int scope)
 {
-  char_u *varp = (char_u *)get_varp_scope(opp, opt_flags);
+  char_u *varp = (char_u *)get_varp_scope(opp, scope);
 
   if (opp->flags & P_NUM) {
     long wc = 0;
