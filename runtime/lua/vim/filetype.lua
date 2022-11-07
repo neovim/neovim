@@ -1057,6 +1057,7 @@ local extension = {
   hdl = 'vhdl',
   vho = 'vhdl',
   vbe = 'vhdl',
+  tape = 'vhs',
   vim = 'vim',
   vba = 'vim',
   mar = 'vmasm',
