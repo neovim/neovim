@@ -95,9 +95,7 @@ func Test_indent_fold2()
 endfunc
 
 func Test_manual_fold_with_filter()
-  if !executable('cat')
-    return
-  endif
+  CheckExecutable cat
   for type in ['manual', 'marker']
     exe 'set foldmethod=' . type
     new

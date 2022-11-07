@@ -621,9 +621,7 @@ func Test_diff_move_to()
 endfunc
 
 func Test_diffexpr()
-  if !executable('diff')
-    return
-  endif
+  CheckExecutable diff
 
   func DiffExpr()
     " Prepend some text to check diff type detection

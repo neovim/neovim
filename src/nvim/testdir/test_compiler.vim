@@ -1,9 +1,11 @@
 " Test the :compiler command
 
+source check.vim
+source shared.vim
+
 func Test_compiler()
-  if !executable('perl')
-    return
-  endif
+  CheckExecutable perl
+  CheckFeature quickfix
 
   " $LANG changes the output of Perl.
   if $LANG != ''
