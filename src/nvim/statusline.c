@@ -470,26 +470,16 @@ void win_redr_custom(win_T *wp, bool draw_winbar, bool draw_ruler)
     attr = (wp == curwin) ? win_hl_attr(wp, HLF_WBR) : win_hl_attr(wp, HLF_WBRNC);
     maxwidth = wp->w_width_inner;
     use_sandbox = was_set_insecurely(wp, "winbar", 0);
-
     stl_clear_click_defs(wp->w_winbar_click_defs, (long)wp->w_winbar_click_defs_size);
-    // Allocate / resize the click definitions array for winbar if needed.
-    if (wp->w_winbar_height && wp->w_winbar_click_defs_size < (size_t)maxwidth) {
-      xfree(wp->w_winbar_click_defs);
-      wp->w_winbar_click_defs_size = (size_t)maxwidth;
-      wp->w_winbar_click_defs = xcalloc(wp->w_winbar_click_defs_size, sizeof(StlClickRecord));
-    }
+    wp->w_winbar_click_defs = stl_alloc_click_defs(wp->w_winbar_click_defs, maxwidth,
+                                                   &wp->w_winbar_click_defs_size);
   } else {
     row = is_stl_global ? (Rows - (int)p_ch - 1) : W_ENDROW(wp);
     fillchar = fillchar_status(&attr, wp);
     maxwidth = is_stl_global ? Columns : wp->w_width;
-
     stl_clear_click_defs(wp->w_status_click_defs, (long)wp->w_status_click_defs_size);
-    // Allocate / resize the click definitions array for statusline if needed.
-    if (wp->w_status_click_defs_size < (size_t)maxwidth) {
-      xfree(wp->w_status_click_defs);
-      wp->w_status_click_defs_size = (size_t)maxwidth;
-      wp->w_status_click_defs = xcalloc(wp->w_status_click_defs_size, sizeof(StlClickRecord));
-    }
+    wp->w_status_click_defs = stl_alloc_click_defs(wp->w_status_click_defs, maxwidth,
+                                                   &wp->w_status_click_defs_size);
 
     if (draw_ruler) {
       stl = p_ruf;
@@ -597,32 +587,7 @@ void win_redr_custom(win_T *wp, bool draw_winbar, bool draw_ruler)
                                                 : draw_winbar ? wp->w_winbar_click_defs
                                                               : wp->w_status_click_defs;
 
-  if (click_defs == NULL) {
-    goto theend;
-  }
-
-  col = 0;
-  len = 0;
-  p = buf;
-  StlClickDefinition cur_click_def = {
-    .type = kStlClickDisabled,
-  };
-  for (n = 0; tabtab[n].start != NULL; n++) {
-    len += vim_strnsize(p, (int)(tabtab[n].start - p));
-    while (col < len) {
-      click_defs[col++] = cur_click_def;
-    }
-    p = (char *)tabtab[n].start;
-    cur_click_def = tabtab[n].def;
-    if ((wp != NULL) && !(cur_click_def.type == kStlClickDisabled
-                          || cur_click_def.type == kStlClickFuncRun)) {
-      // window bar and status line only support click functions
-      cur_click_def.type = kStlClickDisabled;
-    }
-  }
-  while (col < maxwidth) {
-    click_defs[col++] = cur_click_def;
-  }
+  stl_fill_click_defs(click_defs, tabtab, buf, maxwidth, wp == NULL);
 
 theend:
   entered = false;
