@@ -10,6 +10,7 @@
 --    secure=nil, gettext=nil, noglob=nil, normal_fname_chars=nil,
 --    pri_mkrc=nil, deny_in_modelines=nil, normal_dname_chars=nil,
 --    modelineexpr=nil,
+--    func=nil,
 --    expand=nil, nodefault=nil, no_mkrc=nil,
 --    alloced=nil,
 --    save_pv_indir=nil,
@@ -455,6 +456,7 @@ return {
       type='string', scope={'buffer'},
       secure=true,
       alloced=true,
+      func=true,
       varname='p_cfu',
       defaults={if_true=""}
     },
@@ -1638,6 +1640,7 @@ return {
       type='string', scope={'buffer'},
       secure=true,
       alloced=true,
+      func=true,
       varname='p_ofu',
       defaults={if_true=""}
     },
@@ -1653,6 +1656,7 @@ return {
       short_desc=N_("function to be called for |g@| operator"),
       type='string', scope={'global'},
       secure=true,
+      func=true,
       varname='p_opfunc',
       defaults={if_true=""}
     },
@@ -1835,6 +1839,8 @@ return {
       full_name='quickfixtextfunc', abbreviation='qftf',
       short_desc=N_("customize the quickfix window"),
       type='string', scope={'global'},
+      secure=true,
+      func=true,
       varname='p_qftf',
       defaults={if_true=""}
     },
@@ -2408,6 +2414,8 @@ return {
       full_name='tagfunc', abbreviation='tfu',
       short_desc=N_("function used to perform tag searches"),
       type='string', scope={'buffer'},
+      secure=true,
+      func=true,
       varname='p_tfu',
       defaults={if_true=""}
     },
@@ -2538,6 +2546,7 @@ return {
       type='string', scope={'global', 'buffer'},
       secure=true,
       alloced=true,
+      func=true,
       varname='p_tsrfu',
       defaults={if_true=""}
     },

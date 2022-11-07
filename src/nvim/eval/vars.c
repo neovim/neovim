@@ -560,8 +560,6 @@ static char *ex_let_one(char *arg, typval_T *const tv, const bool copy, const bo
 {
   char *arg_end = NULL;
   int len;
-  int opt_flags;
-  char *tofree = NULL;
 
   // ":let $VAR = expr": Set environment variable.
   if (*arg == '$') {
@@ -582,12 +580,12 @@ static char *ex_let_one(char *arg, typval_T *const tv, const bool copy, const bo
                  && vim_strchr(endchars, *skipwhite(arg)) == NULL) {
         emsg(_(e_letunexp));
       } else if (!check_secure()) {
+        char *tofree = NULL;
         const char c1 = name[len];
         name[len] = NUL;
         const char *p = tv_get_string_chk(tv);
         if (p != NULL && op != NULL && *op == '.') {
           char *s = vim_getenv(name);
-
           if (s != NULL) {
             tofree = concat_str(s, p);
             p = (const char *)tofree;
@@ -611,7 +609,8 @@ static char *ex_let_one(char *arg, typval_T *const tv, const bool copy, const bo
       return NULL;
     }
     // Find the end of the name.
-    char *const p = (char *)find_option_end((const char **)&arg, &opt_flags);
+    int scope;
+    char *const p = (char *)find_option_end((const char **)&arg, &scope);
     if (p == NULL
         || (endchars != NULL
             && vim_strchr(endchars, *skipwhite(p)) == NULL)) {
@@ -623,11 +622,13 @@ static char *ex_let_one(char *arg, typval_T *const tv, const bool copy, const bo
       char *stringval = NULL;
       const char *s = NULL;
       bool failed = false;
+      uint32_t opt_p_flags;
+      char *tofree = NULL;
 
       const char c1 = *p;
       *p = NUL;
 
-      opt_type = get_option_value(arg, &numval, &stringval, opt_flags);
+      opt_type = get_option_value(arg, &numval, &stringval, &opt_p_flags, scope);
       if (opt_type == gov_bool
           || opt_type == gov_number
           || opt_type == gov_hidden_bool
@@ -636,8 +637,13 @@ static char *ex_let_one(char *arg, typval_T *const tv, const bool copy, const bo
         n = (long)tv_get_number(tv);
       }
 
-      // Avoid setting a string option to the text "v:false" or similar.
-      if (tv->v_type != VAR_BOOL && tv->v_type != VAR_SPECIAL) {
+      if ((opt_p_flags & P_FUNC) && tv_is_func(*tv)) {
+        // If the option can be set to a function reference or a lambda
+        // and the passed value is a function reference, then convert it to
+        // the name (string) of the function reference.
+        s = tofree = encode_tv2string(tv, NULL);
+      } else if (tv->v_type != VAR_BOOL && tv->v_type != VAR_SPECIAL) {
+        // Avoid setting a string option to the text "v:false" or similar.
         s = tv_get_string_chk(tv);
       }
 
@@ -674,7 +680,7 @@ static char *ex_let_one(char *arg, typval_T *const tv, const bool copy, const bo
 
       if (!failed) {
         if (opt_type != gov_string || s != NULL) {
-          char *err = set_option_value(arg, n, s, opt_flags);
+          char *err = set_option_value(arg, n, s, scope);
           arg_end = p;
           if (err != NULL) {
             emsg(_(err));
@@ -685,6 +691,7 @@ static char *ex_let_one(char *arg, typval_T *const tv, const bool copy, const bo
       }
       *p = c1;
       xfree(stringval);
+      xfree(tofree);
     }
     // ":let @r = expr": Set register contents.
   } else if (*arg == '@') {

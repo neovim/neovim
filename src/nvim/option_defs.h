@@ -24,6 +24,7 @@
 #define P_NO_MKRC      0x200U       ///< don't include in :mkvimrc output
 
 // when option changed, what to display:
+#define P_UI_OPTION    0x400U       ///< send option to remote UI
 #define P_RTABL        0x800U       ///< redraw tabline
 #define P_RSTAT        0x1000U      ///< redraw status lines
 #define P_RWIN         0x2000U      ///< redraw current window and recompute text
@@ -50,9 +51,9 @@
 #define P_NDNAME       0x8000000U   ///< only normal dir name chars allowed
 #define P_RWINONLY     0x10000000U  ///< only redraw current window
 #define P_MLE          0x20000000U  ///< under control of 'modelineexpr'
+#define P_FUNC         0x40000000U  ///< accept a function reference or a lambda
 
-#define P_NO_DEF_EXP   0x40000000U  ///< Do not expand default value.
-#define P_UI_OPTION    0x80000000U  ///< send option to remote ui
+#define P_NO_DEF_EXP   0x80000000U  ///< Do not expand default value.
 
 /// Flags for option-setting functions
 ///

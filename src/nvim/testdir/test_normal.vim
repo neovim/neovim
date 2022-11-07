@@ -3,6 +3,7 @@
 source shared.vim
 source check.vim
 source view_util.vim
+source vim9.vim
 source screendump.vim
 
 func Setup_NewWindow()
@@ -388,70 +389,6 @@ func Test_normal09a_operatorfunc()
   norm V10j,,
   call assert_equal(22, g:a)
 
-  " Use a lambda function for 'opfunc'
-  unmap <buffer> ,,
-  call cursor(1, 1)
-  let g:a=0
-  nmap <buffer><silent> ,, :set opfunc={type\ ->\ CountSpaces(type)}<CR>g@
-  vmap <buffer><silent> ,, :<C-U>call CountSpaces(visualmode(), 1)<CR>
-  50
-  norm V2j,,
-  call assert_equal(6, g:a)
-  norm V,,
-  call assert_equal(2, g:a)
-  norm ,,l
-  call assert_equal(0, g:a)
-  50
-  exe "norm 0\<c-v>10j2l,,"
-  call assert_equal(11, g:a)
-  50
-  norm V10j,,
-  call assert_equal(22, g:a)
-
-  " use a partial function for 'opfunc'
-  let g:OpVal = 0
-  func! Test_opfunc1(x, y, type)
-    let g:OpVal =  a:x + a:y
-  endfunc
-  set opfunc=function('Test_opfunc1',\ [5,\ 7])
-  normal! g@l
-  call assert_equal(12, g:OpVal)
-  " delete the function and try to use g@
-  delfunc Test_opfunc1
-  call test_garbagecollect_now()
-  call assert_fails('normal! g@l', 'E117:')
-  set opfunc=
-
-  " use a funcref for 'opfunc'
-  let g:OpVal = 0
-  func! Test_opfunc2(x, y, type)
-    let g:OpVal =  a:x + a:y
-  endfunc
-  set opfunc=funcref('Test_opfunc2',\ [4,\ 3])
-  normal! g@l
-  call assert_equal(7, g:OpVal)
-  " delete the function and try to use g@
-  delfunc Test_opfunc2
-  call test_garbagecollect_now()
-  call assert_fails('normal! g@l', 'E933:')
-  set opfunc=
-
-  " Try to use a function with two arguments for 'operatorfunc'
-  let g:OpVal = 0
-  func! Test_opfunc3(x, y)
-    let g:OpVal = 4
-  endfunc
-  set opfunc=Test_opfunc3
-  call assert_fails('normal! g@l', 'E119:')
-  call assert_equal(0, g:OpVal)
-  set opfunc=
-  delfunc Test_opfunc3
-  unlet g:OpVal
-
-  " Try to use a lambda function with two arguments for 'operatorfunc'
-  set opfunc={x,\ y\ ->\ 'done'}
-  call assert_fails('normal! g@l', 'E119:')
-
   " clean up
   unmap <buffer> ,,
   set opfunc=
@@ -518,6 +455,182 @@ func Test_normal09c_operatorfunc()
   call assert_equal(['_____', '_____', '_____', '_____', '______'], getline(1, '$'))
   bwipe!
   set operatorfunc=
+endfunc
+
+" Test for different ways of setting the 'operatorfunc' option
+func Test_opfunc_callback()
+  new
+  func OpFunc1(callnr, type)
+    let g:OpFunc1Args = [a:callnr, a:type]
+  endfunc
+  func OpFunc2(type)
+    let g:OpFunc2Args = [a:type]
+  endfunc
+
+  let lines =<< trim END
+    #" Test for using a function name
+    LET &opfunc = 'g:OpFunc2'
+    LET g:OpFunc2Args = []
+    normal! g@l
+    call assert_equal(['char'], g:OpFunc2Args)
+
+    #" Test for using a function()
+    set opfunc=function('g:OpFunc1',\ [10])
+    LET g:OpFunc1Args = []
+    normal! g@l
+    call assert_equal([10, 'char'], g:OpFunc1Args)
+
+    #" Using a funcref variable to set 'operatorfunc'
+    VAR Fn = function('g:OpFunc1', [11])
+    LET &opfunc = Fn
+    LET g:OpFunc1Args = []
+    normal! g@l
+    call assert_equal([11, 'char'], g:OpFunc1Args)
+
+    #" Using a string(funcref_variable) to set 'operatorfunc'
+    LET Fn = function('g:OpFunc1', [12])
+    LET &operatorfunc = string(Fn)
+    LET g:OpFunc1Args = []
+    normal! g@l
+    call assert_equal([12, 'char'], g:OpFunc1Args)
+
+    #" Test for using a funcref()
+    set operatorfunc=funcref('g:OpFunc1',\ [13])
+    LET g:OpFunc1Args = []
+    normal! g@l
+    call assert_equal([13, 'char'], g:OpFunc1Args)
+
+    #" Using a funcref variable to set 'operatorfunc'
+    LET Fn = funcref('g:OpFunc1', [14])
+    LET &opfunc = Fn
+    LET g:OpFunc1Args = []
+    normal! g@l
+    call assert_equal([14, 'char'], g:OpFunc1Args)
+
+    #" Using a string(funcref_variable) to set 'operatorfunc'
+    LET Fn = funcref('g:OpFunc1', [15])
+    LET &opfunc = string(Fn)
+    LET g:OpFunc1Args = []
+    normal! g@l
+    call assert_equal([15, 'char'], g:OpFunc1Args)
+
+    #" Test for using a lambda function using set
+    VAR optval = "LSTART a LMIDDLE OpFunc1(16, a) LEND"
+    LET optval = substitute(optval, ' ', '\\ ', 'g')
+    exe "set opfunc=" .. optval
+    LET g:OpFunc1Args = []
+    normal! g@l
+    call assert_equal([16, 'char'], g:OpFunc1Args)
+
+    #" Test for using a lambda function using LET
+    LET &opfunc = LSTART a LMIDDLE OpFunc1(17, a) LEND
+    LET g:OpFunc1Args = []
+    normal! g@l
+    call assert_equal([17, 'char'], g:OpFunc1Args)
+
+    #" Set 'operatorfunc' to a string(lambda expression)
+    LET &opfunc = 'LSTART a LMIDDLE OpFunc1(18, a) LEND'
+    LET g:OpFunc1Args = []
+    normal! g@l
+    call assert_equal([18, 'char'], g:OpFunc1Args)
+
+    #" Set 'operatorfunc' to a variable with a lambda expression
+    VAR Lambda = LSTART a LMIDDLE OpFunc1(19, a) LEND
+    LET &opfunc = Lambda
+    LET g:OpFunc1Args = []
+    normal! g@l
+    call assert_equal([19, 'char'], g:OpFunc1Args)
+
+    #" Set 'operatorfunc' to a string(variable with a lambda expression)
+    LET Lambda = LSTART a LMIDDLE OpFunc1(20, a) LEND
+    LET &opfunc = string(Lambda)
+    LET g:OpFunc1Args = []
+    normal! g@l
+    call assert_equal([20, 'char'], g:OpFunc1Args)
+
+    #" Try to use 'operatorfunc' after the function is deleted
+    func g:TmpOpFunc1(type)
+      let g:TmpOpFunc1Args = [21, a:type]
+    endfunc
+    LET &opfunc = function('g:TmpOpFunc1')
+    delfunc g:TmpOpFunc1
+    call test_garbagecollect_now()
+    LET g:TmpOpFunc1Args = []
+    call assert_fails('normal! g@l', 'E117:')
+    call assert_equal([], g:TmpOpFunc1Args)
+
+    #" Try to use a function with two arguments for 'operatorfunc'
+    func g:TmpOpFunc2(x, y)
+      let g:TmpOpFunc2Args = [a:x, a:y]
+    endfunc
+    set opfunc=TmpOpFunc2
+    LET g:TmpOpFunc2Args = []
+    call assert_fails('normal! g@l', 'E119:')
+    call assert_equal([], g:TmpOpFunc2Args)
+    delfunc TmpOpFunc2
+
+    #" Try to use a lambda function with two arguments for 'operatorfunc'
+    LET &opfunc = LSTART a, b LMIDDLE OpFunc1(22, b) LEND
+    LET g:OpFunc1Args = []
+    call assert_fails('normal! g@l', 'E119:')
+    call assert_equal([], g:OpFunc1Args)
+
+    #" Test for clearing the 'operatorfunc' option
+    set opfunc=''
+    set opfunc&
+    call assert_fails("set opfunc=function('abc')", "E700:")
+    call assert_fails("set opfunc=funcref('abc')", "E700:")
+
+    #" set 'operatorfunc' to a non-existing function
+    LET &opfunc = function('g:OpFunc1', [23])
+    call assert_fails("set opfunc=function('NonExistingFunc')", 'E700:')
+    call assert_fails("LET &opfunc = function('NonExistingFunc')", 'E700:')
+    LET g:OpFunc1Args = []
+    normal! g@l
+    call assert_equal([23, 'char'], g:OpFunc1Args)
+  END
+  call CheckTransLegacySuccess(lines)
+
+  " Using Vim9 lambda expression in legacy context should fail
+  " set opfunc=(a)\ =>\ OpFunc1(24,\ a)
+  let g:OpFunc1Args = []
+  " call assert_fails('normal! g@l', 'E117:')
+  call assert_equal([], g:OpFunc1Args)
+
+  " set 'operatorfunc' to a partial with dict. This used to cause a crash.
+  func SetOpFunc()
+    let operator = {'execute': function('OperatorExecute')}
+    let &opfunc = operator.execute
+  endfunc
+  func OperatorExecute(_) dict
+  endfunc
+  call SetOpFunc()
+  call test_garbagecollect_now()
+  set operatorfunc=
+  delfunc SetOpFunc
+  delfunc OperatorExecute
+
+  " Vim9 tests
+  let lines =<< trim END
+    vim9script
+
+    # Test for using a def function with opfunc
+    def g:Vim9opFunc(val: number, type: string): void
+      g:OpFunc1Args = [val, type]
+    enddef
+    set opfunc=function('g:Vim9opFunc',\ [60])
+    g:OpFunc1Args = []
+    normal! g@l
+    assert_equal([60, 'char'], g:OpFunc1Args)
+  END
+  " call CheckScriptSuccess(lines)
+
+  " cleanup
+  set opfunc&
+  delfunc OpFunc1
+  delfunc OpFunc2
+  unlet g:OpFunc1Args g:OpFunc2Args
+  %bw!
 endfunc
 
 func Test_normal10_expand()

@@ -131,7 +131,7 @@ bool ctx_restore(Context *ctx, const int flags)
   }
 
   char *op_shada;
-  get_option_value("shada", NULL, &op_shada, OPT_GLOBAL);
+  get_option_value("shada", NULL, &op_shada, NULL, OPT_GLOBAL);
   set_option_value("shada", 0L, "!,'100,%", OPT_GLOBAL);
 
   if (flags & kCtxRegs) {

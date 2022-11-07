@@ -149,12 +149,19 @@ void free_tagfunc_option(void)
 }
 #endif
 
+/// Mark the global 'tagfunc' callback with "copyID" so that it is not garbage
+/// collected.
+bool set_ref_in_tagfunc(int copyID)
+{
+  return set_ref_in_callback(&tfu_cb, copyID, NULL, NULL);
+}
+
 /// Copy the global 'tagfunc' callback function to the buffer-local 'tagfunc'
 /// callback for 'buf'.
 void set_buflocal_tfu_callback(buf_T *buf)
 {
   callback_free(&buf->b_tfu_cb);
-  if (tfu_cb.data.funcref != NULL && *tfu_cb.data.funcref != NUL) {
+  if (tfu_cb.type != kCallbackNone) {
     callback_copy(&buf->b_tfu_cb, &tfu_cb);
   }
 }
@@ -1153,7 +1160,7 @@ static int find_tagfunc_tags(char_u *pat, garray_T *ga, int *match_count, int fl
     }
   }
 
-  if (*curbuf->b_p_tfu == NUL) {
+  if (*curbuf->b_p_tfu == NUL || curbuf->b_tfu_cb.type == kCallbackNone) {
     return FAIL;
   }
 

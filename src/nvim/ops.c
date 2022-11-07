@@ -5606,6 +5606,13 @@ void free_operatorfunc_option(void)
 }
 #endif
 
+/// Mark the global 'operatorfunc' callback with "copyID" so that it is not
+/// garbage collected.
+bool set_ref_in_opfunc(int copyID)
+{
+  return set_ref_in_callback(&opfunc_cb, copyID, NULL, NULL);
+}
+
 /// Handle the "g@" operator: call 'operatorfunc'.
 static void op_function(const oparg_T *oap)
   FUNC_ATTR_NONNULL_ALL
