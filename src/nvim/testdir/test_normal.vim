@@ -388,70 +388,6 @@ func Test_normal09a_operatorfunc()
   norm V10j,,
   call assert_equal(22, g:a)
 
-  " Use a lambda function for 'opfunc'
-  unmap <buffer> ,,
-  call cursor(1, 1)
-  let g:a=0
-  nmap <buffer><silent> ,, :set opfunc={type\ ->\ CountSpaces(type)}<CR>g@
-  vmap <buffer><silent> ,, :<C-U>call CountSpaces(visualmode(), 1)<CR>
-  50
-  norm V2j,,
-  call assert_equal(6, g:a)
-  norm V,,
-  call assert_equal(2, g:a)
-  norm ,,l
-  call assert_equal(0, g:a)
-  50
-  exe "norm 0\<c-v>10j2l,,"
-  call assert_equal(11, g:a)
-  50
-  norm V10j,,
-  call assert_equal(22, g:a)
-
-  " use a partial function for 'opfunc'
-  let g:OpVal = 0
-  func! Test_opfunc1(x, y, type)
-    let g:OpVal =  a:x + a:y
-  endfunc
-  set opfunc=function('Test_opfunc1',\ [5,\ 7])
-  normal! g@l
-  call assert_equal(12, g:OpVal)
-  " delete the function and try to use g@
-  delfunc Test_opfunc1
-  call test_garbagecollect_now()
-  call assert_fails('normal! g@l', 'E117:')
-  set opfunc=
-
-  " use a funcref for 'opfunc'
-  let g:OpVal = 0
-  func! Test_opfunc2(x, y, type)
-    let g:OpVal =  a:x + a:y
-  endfunc
-  set opfunc=funcref('Test_opfunc2',\ [4,\ 3])
-  normal! g@l
-  call assert_equal(7, g:OpVal)
-  " delete the function and try to use g@
-  delfunc Test_opfunc2
-  call test_garbagecollect_now()
-  call assert_fails('normal! g@l', 'E933:')
-  set opfunc=
-
-  " Try to use a function with two arguments for 'operatorfunc'
-  let g:OpVal = 0
-  func! Test_opfunc3(x, y)
-    let g:OpVal = 4
-  endfunc
-  set opfunc=Test_opfunc3
-  call assert_fails('normal! g@l', 'E119:')
-  call assert_equal(0, g:OpVal)
-  set opfunc=
-  delfunc Test_opfunc3
-  unlet g:OpVal
-
-  " Try to use a lambda function with two arguments for 'operatorfunc'
-  set opfunc={x,\ y\ ->\ 'done'}
-  call assert_fails('normal! g@l', 'E119:')
-
   " clean up
   unmap <buffer> ,,
   set opfunc=
@@ -518,6 +454,182 @@ func Test_normal09c_operatorfunc()
   call assert_equal(['_____', '_____', '_____', '_____', '______'], getline(1, '$'))
   bwipe!
   set operatorfunc=
+endfunc
+
+" Test for different ways of setting the 'operatorfunc' option
+func Test_opfunc_callback()
+  new
+  func MyopFunc(val, type)
+    let g:OpFuncArgs = [a:val, a:type]
+  endfunc
+
+  " Test for using a function()
+  set opfunc=function('MyopFunc',\ [11])
+  let g:OpFuncArgs = []
+  normal! g@l
+  call assert_equal([11, 'char'], g:OpFuncArgs)
+
+  " Using a funcref variable to set 'operatorfunc'
+  let Fn = function('MyopFunc', [12])
+  let &opfunc = Fn
+  let g:OpFuncArgs = []
+  normal! g@l
+  call assert_equal([12, 'char'], g:OpFuncArgs)
+
+  " Using a string(funcref_variable) to set 'operatorfunc'
+  let Fn = function('MyopFunc', [13])
+  let &operatorfunc = string(Fn)
+  let g:OpFuncArgs = []
+  normal! g@l
+  call assert_equal([13, 'char'], g:OpFuncArgs)
+
+  " Test for using a funcref()
+  set operatorfunc=funcref('MyopFunc',\ [14])
+  let g:OpFuncArgs = []
+  normal! g@l
+  call assert_equal([14, 'char'], g:OpFuncArgs)
+
+  " Using a funcref variable to set 'operatorfunc'
+  let Fn = funcref('MyopFunc', [15])
+  let &opfunc = Fn
+  let g:OpFuncArgs = []
+  normal! g@l
+  call assert_equal([15, 'char'], g:OpFuncArgs)
+
+  " Using a string(funcref_variable) to set 'operatorfunc'
+  let Fn = funcref('MyopFunc', [16])
+  let &opfunc = string(Fn)
+  let g:OpFuncArgs = []
+  normal! g@l
+  call assert_equal([16, 'char'], g:OpFuncArgs)
+
+  " Test for using a lambda function using set
+  set opfunc={a\ ->\ MyopFunc(17,\ a)}
+  let g:OpFuncArgs = []
+  normal! g@l
+  call assert_equal([17, 'char'], g:OpFuncArgs)
+
+  " Test for using a lambda function using let
+  let &opfunc = {a -> MyopFunc(18, a)}
+  let g:OpFuncArgs = []
+  normal! g@l
+  call assert_equal([18, 'char'], g:OpFuncArgs)
+
+  " Set 'operatorfunc' to a string(lambda expression)
+  let &opfunc = '{a -> MyopFunc(19, a)}'
+  let g:OpFuncArgs = []
+  normal! g@l
+  call assert_equal([19, 'char'], g:OpFuncArgs)
+
+  " Set 'operatorfunc' to a variable with a lambda expression
+  let Lambda = {a -> MyopFunc(20, a)}
+  let &opfunc = Lambda
+  let g:OpFuncArgs = []
+  normal! g@l
+  call assert_equal([20, 'char'], g:OpFuncArgs)
+
+  " Set 'operatorfunc' to a string(variable with a lambda expression)
+  let Lambda = {a -> MyopFunc(21, a)}
+  let &opfunc = string(Lambda)
+  let g:OpFuncArgs = []
+  normal! g@l
+  call assert_equal([21, 'char'], g:OpFuncArgs)
+
+  " Try to use 'operatorfunc' after the function is deleted
+  func TmpOpFunc(type)
+    let g:OpFuncArgs = [22, a:type]
+  endfunc
+  let &opfunc = function('TmpOpFunc')
+  delfunc TmpOpFunc
+  call test_garbagecollect_now()
+  let g:OpFuncArgs = []
+  call assert_fails('normal! g@l', 'E117:')
+  call assert_equal([], g:OpFuncArgs)
+
+  " Try to use a function with two arguments for 'operatorfunc'
+  func! MyopFunc2(x, y)
+    let g:OpFuncArgs = [a:x, a:y]
+  endfunc
+  set opfunc=MyopFunc2
+  let g:OpFuncArgs = []
+  call assert_fails('normal! g@l', 'E119:')
+  call assert_equal([], g:OpFuncArgs)
+
+  " Try to use a lambda function with two arguments for 'operatorfunc'
+  let &opfunc = {a, b -> MyopFunc(23, b)}
+  let g:OpFuncArgs = []
+  call assert_fails('normal! g@l', 'E119:')
+  call assert_equal([], g:OpFuncArgs)
+
+  " Test for clearing the 'operatorfunc' option
+  set opfunc=''
+  set opfunc&
+
+  call assert_fails("set opfunc=function('abc')", "E700:")
+  call assert_fails("set opfunc=funcref('abc')", "E700:")
+
+  " Using Vim9 lambda expression in legacy context should fail
+  " set opfunc=(a)\ =>\ MyopFunc(24,\ a)
+  let g:OpFuncArgs = []
+  " call assert_fails('normal! g@l', 'E117:')
+  call assert_equal([], g:OpFuncArgs)
+
+  " set 'operatorfunc' to a non-existing function
+  let &opfunc = function('MyopFunc', [25])
+  call assert_fails("set opfunc=function('NonExistingFunc')", 'E700:')
+  call assert_fails("let &opfunc = function('NonExistingFunc')", 'E700:')
+  let g:OpFuncArgs = []
+  normal! g@l
+  call assert_equal([25, 'char'], g:OpFuncArgs)
+
+  " Vim9 tests
+  let lines =<< trim END
+    vim9script
+
+    # Test for using function()
+    def g:Vim9opFunc(val: number, type: string): void
+      g:OpFuncArgs = [val, type]
+    enddef
+    set opfunc=function('g:Vim9opFunc',\ [60])
+    g:OpFuncArgs = []
+    normal! g@l
+    assert_equal([60, 'char'], g:OpFuncArgs)
+
+    # Test for using a lambda
+    &opfunc = (a) => Vim9opFunc(61, a)
+    g:OpFuncArgs = []
+    normal! g@l
+    assert_equal([61, 'char'], g:OpFuncArgs)
+
+    # Test for using a string(lambda)
+    &opfunc = '(a) => Vim9opFunc(62, a)'
+    g:OpFuncArgs = []
+    normal! g@l
+    assert_equal([62, 'char'], g:OpFuncArgs)
+
+    # Test for using a variable with a lambda expression
+    var Fn: func = (a) => Vim9opFunc(63, a)
+    &opfunc = Fn
+    g:OpFuncArgs = []
+    normal! g@l
+    assert_equal([63, 'char'], g:OpFuncArgs)
+
+    # Test for using a string(variable with a lambda expression)
+    Fn = (a) => Vim9opFunc(64, a)
+    &opfunc = string(Fn)
+    g:OpFuncArgs = []
+    normal! g@l
+    assert_equal([64, 'char'], g:OpFuncArgs)
+    bw!
+  END
+  " call CheckScriptSuccess(lines)
+
+  " cleanup
+  set opfunc&
+  delfunc MyopFunc
+  delfunc MyopFunc2
+  unlet g:OpFuncArgs
+  %bw!
 endfunc
 
 func Test_normal10_expand()
