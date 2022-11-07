@@ -1340,7 +1340,7 @@ func Test_completefunc_callback()
     call add(g:MycompleteFunc3_args, [a:findstart, a:base])
     return a:findstart ? 0 : []
   endfunc
-  set completefunc={a,\ b,\ ->\ MycompleteFunc3(a,\ b,)}
+  set completefunc={a,\ b\ ->\ MycompleteFunc3(a,\ b)}
   new | only
   call setline(1, 'five')
   let g:MycompleteFunc3_args = []
@@ -1403,26 +1403,29 @@ func Test_completefunc_callback()
     bw!
 
     # Test for using a lambda
-    def MycompleteFunc2(findstart: number, base: string): any
-      add(g:MycompleteFunc2_args, [findstart, base])
+    def LambdaComplete1(findstart: number, base: string): any
+      add(g:LambdaComplete1_args, [findstart, base])
       return findstart ? 0 : []
     enddef
-    &completefunc = '(a, b) => MycompleteFunc2(a, b)'
+    &completefunc = '(a, b) => LambdaComplete1(a, b)'
     new | only
     setline(1, 'two')
-    g:MycompleteFunc2_args = []
+    g:LambdaComplete1_args = []
     feedkeys("A\<C-X>\<C-U>\<Esc>", 'x')
-    assert_equal([[1, ''], [0, 'two']], g:MycompleteFunc2_args)
+    assert_equal([[1, ''], [0, 'two']], g:LambdaComplete1_args)
     bw!
 
     # Test for using a variable with a lambda expression
-    var Fn: func = (a, b) => MycompleteFunc2(a, b)
+    var Fn: func = (findstart, base) => {
+            add(g:LambdaComplete2_args, [findstart, base])
+            return findstart ? 0 : []
+        }
     &completefunc = string(Fn)
     new | only
     setline(1, 'three')
-    g:MycompleteFunc2_args = []
+    g:LambdaComplete2_args = []
     feedkeys("A\<C-X>\<C-U>\<Esc>", 'x')
-    assert_equal([[1, ''], [0, 'three']], g:MycompleteFunc2_args)
+    assert_equal([[1, ''], [0, 'three']], g:LambdaComplete2_args)
     bw!
   END
   " call CheckScriptSuccess(lines)
@@ -1497,7 +1500,7 @@ func Test_omnifunc_callback()
     call add(g:MyomniFunc3_args, [a:findstart, a:base])
     return a:findstart ? 0 : []
   endfunc
-  set omnifunc={a,\ b,\ ->\ MyomniFunc3(a,\ b,)}
+  set omnifunc={a,\ b\ ->\ MyomniFunc3(a,\ b)}
   new | only
   call setline(1, 'five')
   let g:MyomniFunc3_args = []
@@ -1654,7 +1657,7 @@ func Test_thesaurusfunc_callback()
     call add(g:MytsrFunc3_args, [a:findstart, a:base])
     return a:findstart ? 0 : []
   endfunc
-  set thesaurusfunc={a,\ b,\ ->\ MytsrFunc3(a,\ b,)}
+  set thesaurusfunc={a,\ b\ ->\ MytsrFunc3(a,\ b)}
   new | only
   call setline(1, 'five')
   let g:MytsrFunc3_args = []
