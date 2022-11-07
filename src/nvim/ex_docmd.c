@@ -4074,6 +4074,13 @@ static int getargopt(exarg_T *eap)
     return OK;
   }
 
+  // ":write ++p foo/bar/file
+  if (strncmp(arg, "p", 1) == 0) {
+    eap->mkdir_p = true;
+    eap->arg = skipwhite(arg + 1);
+    return OK;
+  }
+
   if (STRNCMP(arg, "ff", 2) == 0) {
     arg += 2;
     pp = &eap->force_ff;

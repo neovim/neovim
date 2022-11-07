@@ -20,6 +20,9 @@ describe(':write', function()
     os.remove('test_bkc_file.txt')
     os.remove('test_bkc_link.txt')
     os.remove('test_fifo')
+    os.remove('test/write/p_opt.txt')
+    os.remove('test/write')
+    os.remove('test')
     os.remove(fname)
     os.remove(fname_bak)
     os.remove(fname_broken)
@@ -92,6 +95,30 @@ describe(':write', function()
     local fifo = assert(io.open("test_fifo"))
     eq(text.."\n", fifo:read("*all"))
     fifo:close()
+  end)
+
+  it("++p creates missing parent directories", function()
+    eq(0, eval("filereadable('p_opt.txt')"))
+    command("write ++p p_opt.txt")
+    eq(1, eval("filereadable('p_opt.txt')"))
+    os.remove("p_opt.txt")
+
+    eq(0, eval("filereadable('p_opt.txt')"))
+    command("write ++p ./p_opt.txt")
+    eq(1, eval("filereadable('p_opt.txt')"))
+    os.remove("p_opt.txt")
+
+    eq(0, eval("filereadable('test/write/p_opt.txt')"))
+    command("write ++p test/write/p_opt.txt")
+    eq(1, eval("filereadable('test/write/p_opt.txt')"))
+
+    eq(('Vim(write):E32: No file name'), pcall_err(command, 'write ++p test_write/'))
+    if not iswin() then
+      eq(('Vim(write):E17: "'..funcs.fnamemodify('.', ':p:h')..'" is a directory'),
+        pcall_err(command, 'write ++p .'))
+      eq(('Vim(write):E17: "'..funcs.fnamemodify('.', ':p:h')..'" is a directory'),
+        pcall_err(command, 'write ++p ./'))
+    end
   end)
 
   it('errors out correctly', function()

@@ -438,6 +438,8 @@ Where {optname} is one of:	    *++ff* *++enc* *++bin* *++nobin* *++edit*
     bad			    specifies behavior for bad characters
     edit		    for |:read| only: keep option values as if editing
 			    a file
+    p			    creates the parent directory (or directories) of
+			    a filename if they do not exist
 
 {value} cannot contain white space.  It can be any valid value for these
 options.  Examples: >

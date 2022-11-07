@@ -946,6 +946,37 @@ int os_mkdir_recurse(const char *const dir, int32_t mode, char **const failed_di
   return 0;
 }
 
+/// Create the parent directory of a file if it does not exist
+///
+/// @param[in] fname Full path of the file name whose parent directories
+///                  we want to create
+/// @param[in] mode  Permissions for the newly-created directory.
+///
+/// @return `0` for success, libuv error code for failure.
+int os_file_mkdir(char *fname, int32_t mode)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  if (!dir_of_file_exists((char_u *)fname)) {
+    char *tail = path_tail_with_sep(fname);
+    char *last_char = tail + strlen(tail) - 1;
+    if (vim_ispathsep(*last_char)) {
+      emsg(_(e_noname));
+      return -1;
+    }
+    char c = *tail;
+    *tail = NUL;
+    int r;
+    char *failed_dir;
+    if ((r = os_mkdir_recurse(fname, mode, &failed_dir) < 0)) {
+      semsg(_(e_mkdir), failed_dir, os_strerror(r));
+      xfree(failed_dir);
+    }
+    *tail = c;
+    return r;
+  }
+  return 0;
+}
+
 /// Create a unique temporary directory.
 ///
 /// @param[in] template Template of the path to the directory with XXXXXX

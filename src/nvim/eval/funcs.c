@@ -9970,6 +9970,7 @@ static void f_writefile(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   bool binary = false;
   bool append = false;
   bool do_fsync = !!p_fs;
+  bool mkdir_p = false;
   if (argvars[2].v_type != VAR_UNKNOWN) {
     const char *const flags = tv_get_string_chk(&argvars[2]);
     if (flags == NULL) {
@@ -9985,6 +9986,8 @@ static void f_writefile(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
         do_fsync = true; break;
       case 'S':
         do_fsync = false; break;
+      case 'p':
+        mkdir_p = true; break;
       default:
         // Using %s, p and not %c, *p to preserve multibyte characters
         semsg(_("E5060: Unknown flag: %s"), p);
@@ -10004,6 +10007,7 @@ static void f_writefile(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     emsg(_("E482: Can't open file with an empty name"));
   } else if ((error = file_open(&fp, fname,
                                 ((append ? kFileAppend : kFileTruncate)
+                                 | (mkdir_p ? kFileMkDir : kFileCreate)
                                  | kFileCreate), 0666)) != 0) {
     semsg(_("E482: Can't open file %s for writing: %s"),
           fname, os_strerror(error));
