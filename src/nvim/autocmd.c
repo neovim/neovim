@@ -779,7 +779,7 @@ void au_event_restore(char *old_ei)
 // :autocmd * *.c               show all autocommands for *.c files.
 //
 // Mostly a {group} argument can optionally appear before <event>.
-void do_autocmd(char *arg_in, int forceit)
+void do_autocmd(exarg_T *eap, char *arg_in, int forceit)
 {
   char *arg = arg_in;
   char *envpat = NULL;
@@ -790,6 +790,7 @@ void do_autocmd(char *arg_in, int forceit)
   int group;
 
   if (*arg == '|') {
+    eap->nextcmd = arg + 1;
     arg = "";
     group = AUGROUP_ALL;  // no argument, use all groups
   } else {
@@ -806,6 +807,7 @@ void do_autocmd(char *arg_in, int forceit)
 
   pat = skipwhite(pat);
   if (*pat == '|') {
+    eap->nextcmd = pat + 1;
     pat = "";
     cmd = "";
   } else {
