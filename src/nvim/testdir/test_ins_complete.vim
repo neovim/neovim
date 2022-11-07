@@ -1290,123 +1290,136 @@ endfunc
 
 " Test for different ways of setting the 'completefunc' option
 func Test_completefunc_callback()
-  func MycompleteFunc1(val, findstart, base)
-    call add(g:MycompleteFunc1_args, [a:val, a:findstart, a:base])
+  func CompleteFunc1(callnr, findstart, base)
+    call add(g:CompleteFunc1Args, [a:callnr, a:findstart, a:base])
+    return a:findstart ? 0 : []
+  endfunc
+  func CompleteFunc2(findstart, base)
+    call add(g:CompleteFunc2Args, [a:findstart, a:base])
     return a:findstart ? 0 : []
   endfunc
 
   let lines =<< trim END
-    #" Test for using a function()
-    set completefunc=function('g:MycompleteFunc1',\ [10])
-    new | only
-    call setline(1, 'one')
-    LET g:MycompleteFunc1_args = []
+    #" Test for using a function name
+    LET &completefunc = 'g:CompleteFunc2'
+    new
+    call setline(1, 'zero')
+    LET g:CompleteFunc2Args = []
     call feedkeys("A\<C-X>\<C-U>\<Esc>", 'x')
-    call assert_equal([[10, 1, ''], [10, 0, 'one']], g:MycompleteFunc1_args)
+    call assert_equal([[1, ''], [0, 'zero']], g:CompleteFunc2Args)
+    bw!
+
+    #" Test for using a function()
+    set completefunc=function('g:CompleteFunc1',\ [10])
+    new
+    call setline(1, 'one')
+    LET g:CompleteFunc1Args = []
+    call feedkeys("A\<C-X>\<C-U>\<Esc>", 'x')
+    call assert_equal([[10, 1, ''], [10, 0, 'one']], g:CompleteFunc1Args)
     bw!
 
     #" Using a funcref variable to set 'completefunc'
-    VAR Fn = function('g:MycompleteFunc1', [11])
+    VAR Fn = function('g:CompleteFunc1', [11])
     LET &completefunc = Fn
-    new | only
+    new
     call setline(1, 'two')
-    LET g:MycompleteFunc1_args = []
+    LET g:CompleteFunc1Args = []
     call feedkeys("A\<C-X>\<C-U>\<Esc>", 'x')
-    call assert_equal([[11, 1, ''], [11, 0, 'two']], g:MycompleteFunc1_args)
+    call assert_equal([[11, 1, ''], [11, 0, 'two']], g:CompleteFunc1Args)
     bw!
 
     #" Using string(funcref_variable) to set 'completefunc'
-    LET Fn = function('g:MycompleteFunc1', [12])
+    LET Fn = function('g:CompleteFunc1', [12])
     LET &completefunc = string(Fn)
-    new | only
+    new
     call setline(1, 'two')
-    LET g:MycompleteFunc1_args = []
+    LET g:CompleteFunc1Args = []
     call feedkeys("A\<C-X>\<C-U>\<Esc>", 'x')
-    call assert_equal([[12, 1, ''], [12, 0, 'two']], g:MycompleteFunc1_args)
+    call assert_equal([[12, 1, ''], [12, 0, 'two']], g:CompleteFunc1Args)
     bw!
 
     #" Test for using a funcref()
-    set completefunc=funcref('g:MycompleteFunc1',\ [13])
-    new | only
+    set completefunc=funcref('g:CompleteFunc1',\ [13])
+    new
     call setline(1, 'three')
-    LET g:MycompleteFunc1_args = []
+    LET g:CompleteFunc1Args = []
     call feedkeys("A\<C-X>\<C-U>\<Esc>", 'x')
-    call assert_equal([[13, 1, ''], [13, 0, 'three']], g:MycompleteFunc1_args)
+    call assert_equal([[13, 1, ''], [13, 0, 'three']], g:CompleteFunc1Args)
     bw!
 
     #" Using a funcref variable to set 'completefunc'
-    LET Fn = funcref('g:MycompleteFunc1', [14])
+    LET Fn = funcref('g:CompleteFunc1', [14])
     LET &completefunc = Fn
-    new | only
+    new
     call setline(1, 'four')
-    LET g:MycompleteFunc1_args = []
+    LET g:CompleteFunc1Args = []
     call feedkeys("A\<C-X>\<C-U>\<Esc>", 'x')
-    call assert_equal([[14, 1, ''], [14, 0, 'four']], g:MycompleteFunc1_args)
+    call assert_equal([[14, 1, ''], [14, 0, 'four']], g:CompleteFunc1Args)
     bw!
 
     #" Using a string(funcref_variable) to set 'completefunc'
-    LET Fn = funcref('g:MycompleteFunc1', [15])
+    LET Fn = funcref('g:CompleteFunc1', [15])
     LET &completefunc = string(Fn)
-    new | only
+    new
     call setline(1, 'four')
-    LET g:MycompleteFunc1_args = []
+    LET g:CompleteFunc1Args = []
     call feedkeys("A\<C-X>\<C-U>\<Esc>", 'x')
-    call assert_equal([[15, 1, ''], [15, 0, 'four']], g:MycompleteFunc1_args)
+    call assert_equal([[15, 1, ''], [15, 0, 'four']], g:CompleteFunc1Args)
     bw!
 
     #" Test for using a lambda function with set
-    VAR optval = "LSTART a, b LMIDDLE MycompleteFunc1(16, a, b) LEND"
+    VAR optval = "LSTART a, b LMIDDLE CompleteFunc1(16, a, b) LEND"
     LET optval = substitute(optval, ' ', '\\ ', 'g')
     exe "set completefunc=" .. optval
-    new | only
+    new
     call setline(1, 'five')
-    LET g:MycompleteFunc1_args = []
+    LET g:CompleteFunc1Args = []
     call feedkeys("A\<C-X>\<C-U>\<Esc>", 'x')
-    call assert_equal([[16, 1, ''], [16, 0, 'five']], g:MycompleteFunc1_args)
+    call assert_equal([[16, 1, ''], [16, 0, 'five']], g:CompleteFunc1Args)
     bw!
 
     #" Set 'completefunc' to a lambda expression
-    LET &completefunc = LSTART a, b LMIDDLE MycompleteFunc1(17, a, b) LEND
-    new | only
+    LET &completefunc = LSTART a, b LMIDDLE CompleteFunc1(17, a, b) LEND
+    new
     call setline(1, 'six')
-    LET g:MycompleteFunc1_args = []
+    LET g:CompleteFunc1Args = []
     call feedkeys("A\<C-X>\<C-U>\<Esc>", 'x')
-    call assert_equal([[17, 1, ''], [17, 0, 'six']], g:MycompleteFunc1_args)
+    call assert_equal([[17, 1, ''], [17, 0, 'six']], g:CompleteFunc1Args)
     bw!
 
     #" Set 'completefunc' to string(lambda_expression)
-    LET &completefunc = 'LSTART a, b LMIDDLE MycompleteFunc1(18, a, b) LEND'
-    new | only
+    LET &completefunc = 'LSTART a, b LMIDDLE CompleteFunc1(18, a, b) LEND'
+    new
     call setline(1, 'six')
-    LET g:MycompleteFunc1_args = []
+    LET g:CompleteFunc1Args = []
     call feedkeys("A\<C-X>\<C-U>\<Esc>", 'x')
-    call assert_equal([[18, 1, ''], [18, 0, 'six']], g:MycompleteFunc1_args)
+    call assert_equal([[18, 1, ''], [18, 0, 'six']], g:CompleteFunc1Args)
     bw!
 
     #" Set 'completefunc' to a variable with a lambda expression
-    VAR Lambda = LSTART a, b LMIDDLE MycompleteFunc1(19, a, b) LEND
+    VAR Lambda = LSTART a, b LMIDDLE CompleteFunc1(19, a, b) LEND
     LET &completefunc = Lambda
-    new | only
+    new
     call setline(1, 'seven')
-    LET g:MycompleteFunc1_args = []
+    LET g:CompleteFunc1Args = []
     call feedkeys("A\<C-X>\<C-U>\<Esc>", 'x')
-    call assert_equal([[19, 1, ''], [19, 0, 'seven']], g:MycompleteFunc1_args)
+    call assert_equal([[19, 1, ''], [19, 0, 'seven']], g:CompleteFunc1Args)
     bw!
 
     #" Set 'completefunc' to a string(variable with a lambda expression)
-    LET Lambda = LSTART a, b LMIDDLE MycompleteFunc1(20, a, b) LEND
+    LET Lambda = LSTART a, b LMIDDLE CompleteFunc1(20, a, b) LEND
     LET &completefunc = string(Lambda)
-    new | only
+    new
     call setline(1, 'seven')
-    LET g:MycompleteFunc1_args = []
+    LET g:CompleteFunc1Args = []
     call feedkeys("A\<C-X>\<C-U>\<Esc>", 'x')
-    call assert_equal([[20, 1, ''], [20, 0, 'seven']], g:MycompleteFunc1_args)
+    call assert_equal([[20, 1, ''], [20, 0, 'seven']], g:CompleteFunc1Args)
     bw!
 
     #" Test for using a lambda function with incorrect return value
     LET Lambda = LSTART a, b LMIDDLE strlen(a) LEND
     LET &completefunc = Lambda
-    new | only
+    new
     call setline(1, 'eight')
     call feedkeys("A\<C-X>\<C-U>\<Esc>", 'x')
     bw!
@@ -1418,17 +1431,13 @@ func Test_completefunc_callback()
     call assert_fails("set completefunc=funcref('abc')", "E700:")
 
     #" set 'completefunc' to a non-existing function
-    func MycompleteFunc2(findstart, base)
-      call add(g:MycompleteFunc2_args, [a:findstart, a:base])
-      return a:findstart ? 0 : []
-    endfunc
-    set completefunc=MycompleteFunc2
+    set completefunc=CompleteFunc2
     call setline(1, 'five')
     call assert_fails("set completefunc=function('NonExistingFunc')", 'E700:')
     call assert_fails("LET &completefunc = function('NonExistingFunc')", 'E700:')
-    LET g:MycompleteFunc2_args = []
+    LET g:CompleteFunc2Args = []
     call feedkeys("A\<C-X>\<C-U>\<Esc>", 'x')
-    call assert_equal([[1, ''], [0, 'five']], g:MycompleteFunc2_args)
+    call assert_equal([[1, ''], [0, 'five']], g:CompleteFunc2Args)
     bw!
   END
   call CheckLegacyAndVim9Success(lines)
@@ -1437,11 +1446,11 @@ func Test_completefunc_callback()
   call feedkeys("A\<C-X>\<C-U>\<Esc>", 'x')
 
   " Using Vim9 lambda expression in legacy context should fail
-  " set completefunc=(a,\ b)\ =>\ MycompleteFunc1(21,\ a,\ b)
+  " set completefunc=(a,\ b)\ =>\ CompleteFunc1(21,\ a,\ b)
   new | only
-  let g:MycompleteFunc1_args = []
+  let g:CompleteFunc1Args = []
   " call assert_fails('call feedkeys("A\<C-X>\<C-U>\<Esc>", "x")', 'E117:')
-  call assert_equal([], g:MycompleteFunc1_args)
+  call assert_equal([], g:CompleteFunc1Args)
 
   " set 'completefunc' to a partial with dict. This used to cause a crash.
   func SetCompleteFunc()
@@ -1483,131 +1492,145 @@ func Test_completefunc_callback()
   " call CheckScriptSuccess(lines)
 
   " cleanup
-  delfunc MycompleteFunc1
-  delfunc MycompleteFunc2
   set completefunc&
+  delfunc CompleteFunc1
+  delfunc CompleteFunc2
+  unlet g:CompleteFunc1Args g:CompleteFunc2Args
   %bw!
 endfunc
 
 " Test for different ways of setting the 'omnifunc' option
 func Test_omnifunc_callback()
-  func MyomniFunc1(val, findstart, base)
-    call add(g:MyomniFunc1_args, [a:val, a:findstart, a:base])
+  func OmniFunc1(callnr, findstart, base)
+    call add(g:OmniFunc1Args, [a:callnr, a:findstart, a:base])
+    return a:findstart ? 0 : []
+  endfunc
+  func OmniFunc2(findstart, base)
+    call add(g:OmniFunc2Args, [a:findstart, a:base])
     return a:findstart ? 0 : []
   endfunc
 
   let lines =<< trim END
-    #" Test for using a function()
-    set omnifunc=function('g:MyomniFunc1',\ [10])
-    new | only
-    call setline(1, 'one')
-    LET g:MyomniFunc1_args = []
+    #" Test for using a function name
+    LET &omnifunc = 'g:OmniFunc2'
+    new
+    call setline(1, 'zero')
+    LET g:OmniFunc2Args = []
     call feedkeys("A\<C-X>\<C-O>\<Esc>", 'x')
-    call assert_equal([[10, 1, ''], [10, 0, 'one']], g:MyomniFunc1_args)
+    call assert_equal([[1, ''], [0, 'zero']], g:OmniFunc2Args)
+    bw!
+
+    #" Test for using a function()
+    set omnifunc=function('g:OmniFunc1',\ [10])
+    new
+    call setline(1, 'one')
+    LET g:OmniFunc1Args = []
+    call feedkeys("A\<C-X>\<C-O>\<Esc>", 'x')
+    call assert_equal([[10, 1, ''], [10, 0, 'one']], g:OmniFunc1Args)
     bw!
 
     #" Using a funcref variable to set 'omnifunc'
-    VAR Fn = function('g:MyomniFunc1', [11])
+    VAR Fn = function('g:OmniFunc1', [11])
     LET &omnifunc = Fn
-    new | only
+    new
     call setline(1, 'two')
-    LET g:MyomniFunc1_args = []
+    LET g:OmniFunc1Args = []
     call feedkeys("A\<C-X>\<C-O>\<Esc>", 'x')
-    call assert_equal([[11, 1, ''], [11, 0, 'two']], g:MyomniFunc1_args)
+    call assert_equal([[11, 1, ''], [11, 0, 'two']], g:OmniFunc1Args)
     bw!
 
     #" Using a string(funcref_variable) to set 'omnifunc'
-    LET Fn = function('g:MyomniFunc1', [12])
+    LET Fn = function('g:OmniFunc1', [12])
     LET &omnifunc = string(Fn)
-    new | only
+    new
     call setline(1, 'two')
-    LET g:MyomniFunc1_args = []
+    LET g:OmniFunc1Args = []
     call feedkeys("A\<C-X>\<C-O>\<Esc>", 'x')
-    call assert_equal([[12, 1, ''], [12, 0, 'two']], g:MyomniFunc1_args)
+    call assert_equal([[12, 1, ''], [12, 0, 'two']], g:OmniFunc1Args)
     bw!
 
     #" Test for using a funcref()
-    set omnifunc=funcref('g:MyomniFunc1',\ [13])
-    new | only
+    set omnifunc=funcref('g:OmniFunc1',\ [13])
+    new
     call setline(1, 'three')
-    LET g:MyomniFunc1_args = []
+    LET g:OmniFunc1Args = []
     call feedkeys("A\<C-X>\<C-O>\<Esc>", 'x')
-    call assert_equal([[13, 1, ''], [13, 0, 'three']], g:MyomniFunc1_args)
+    call assert_equal([[13, 1, ''], [13, 0, 'three']], g:OmniFunc1Args)
     bw!
 
     #" Use let to set 'omnifunc' to a funcref
-    LET Fn = funcref('g:MyomniFunc1', [14])
+    LET Fn = funcref('g:OmniFunc1', [14])
     LET &omnifunc = Fn
-    new | only
+    new
     call setline(1, 'four')
-    LET g:MyomniFunc1_args = []
+    LET g:OmniFunc1Args = []
     call feedkeys("A\<C-X>\<C-O>\<Esc>", 'x')
-    call assert_equal([[14, 1, ''], [14, 0, 'four']], g:MyomniFunc1_args)
+    call assert_equal([[14, 1, ''], [14, 0, 'four']], g:OmniFunc1Args)
     bw!
 
     #" Using a string(funcref) to set 'omnifunc'
-    LET Fn = funcref("g:MyomniFunc1", [15])
+    LET Fn = funcref("g:OmniFunc1", [15])
     LET &omnifunc = string(Fn)
-    new | only
+    new
     call setline(1, 'four')
-    LET g:MyomniFunc1_args = []
+    LET g:OmniFunc1Args = []
     call feedkeys("A\<C-X>\<C-O>\<Esc>", 'x')
-    call assert_equal([[15, 1, ''], [15, 0, 'four']], g:MyomniFunc1_args)
+    call assert_equal([[15, 1, ''], [15, 0, 'four']], g:OmniFunc1Args)
     bw!
 
     #" Test for using a lambda function with set
-    VAR optval = "LSTART a, b LMIDDLE MyomniFunc1(16, a, b) LEND"
+    VAR optval = "LSTART a, b LMIDDLE OmniFunc1(16, a, b) LEND"
     LET optval = substitute(optval, ' ', '\\ ', 'g')
     exe "set omnifunc=" .. optval
-    new | only
+    new
     call setline(1, 'five')
-    LET g:MyomniFunc1_args = []
+    LET g:OmniFunc1Args = []
     call feedkeys("A\<C-X>\<C-O>\<Esc>", 'x')
-    call assert_equal([[16, 1, ''], [16, 0, 'five']], g:MyomniFunc1_args)
+    call assert_equal([[16, 1, ''], [16, 0, 'five']], g:OmniFunc1Args)
     bw!
 
     #" Set 'omnifunc' to a lambda expression
-    LET &omnifunc = LSTART a, b LMIDDLE MyomniFunc1(17, a, b) LEND
-    new | only
+    LET &omnifunc = LSTART a, b LMIDDLE OmniFunc1(17, a, b) LEND
+    new
     call setline(1, 'six')
-    LET g:MyomniFunc1_args = []
+    LET g:OmniFunc1Args = []
     call feedkeys("A\<C-X>\<C-O>\<Esc>", 'x')
-    call assert_equal([[17, 1, ''], [17, 0, 'six']], g:MyomniFunc1_args)
+    call assert_equal([[17, 1, ''], [17, 0, 'six']], g:OmniFunc1Args)
     bw!
 
     #" Set 'omnifunc' to a string(lambda_expression)
-    LET &omnifunc = 'LSTART a, b LMIDDLE MyomniFunc1(18, a, b) LEND'
-    new | only
+    LET &omnifunc = 'LSTART a, b LMIDDLE OmniFunc1(18, a, b) LEND'
+    new
     call setline(1, 'six')
-    LET g:MyomniFunc1_args = []
+    LET g:OmniFunc1Args = []
     call feedkeys("A\<C-X>\<C-O>\<Esc>", 'x')
-    call assert_equal([[18, 1, ''], [18, 0, 'six']], g:MyomniFunc1_args)
+    call assert_equal([[18, 1, ''], [18, 0, 'six']], g:OmniFunc1Args)
     bw!
 
     #" Set 'omnifunc' to a variable with a lambda expression
-    VAR Lambda = LSTART a, b LMIDDLE MyomniFunc1(19, a, b) LEND
+    VAR Lambda = LSTART a, b LMIDDLE OmniFunc1(19, a, b) LEND
     LET &omnifunc = Lambda
-    new | only
+    new
     call setline(1, 'seven')
-    LET g:MyomniFunc1_args = []
+    LET g:OmniFunc1Args = []
     call feedkeys("A\<C-X>\<C-O>\<Esc>", 'x')
-    call assert_equal([[19, 1, ''], [19, 0, 'seven']], g:MyomniFunc1_args)
+    call assert_equal([[19, 1, ''], [19, 0, 'seven']], g:OmniFunc1Args)
     bw!
 
     #" Set 'omnifunc' to a string(variable with a lambda expression)
-    LET Lambda = LSTART a, b LMIDDLE MyomniFunc1(20, a, b) LEND
+    LET Lambda = LSTART a, b LMIDDLE OmniFunc1(20, a, b) LEND
     LET &omnifunc = string(Lambda)
-    new | only
+    new
     call setline(1, 'seven')
-    LET g:MyomniFunc1_args = []
+    LET g:OmniFunc1Args = []
     call feedkeys("A\<C-X>\<C-O>\<Esc>", 'x')
-    call assert_equal([[20, 1, ''], [20, 0, 'seven']], g:MyomniFunc1_args)
+    call assert_equal([[20, 1, ''], [20, 0, 'seven']], g:OmniFunc1Args)
     bw!
 
     #" Test for using a lambda function with incorrect return value
     LET Lambda = LSTART a, b LMIDDLE strlen(a) LEND
     LET &omnifunc = Lambda
-    new | only
+    new
     call setline(1, 'eight')
     call feedkeys("A\<C-X>\<C-O>\<Esc>", 'x')
     bw!
@@ -1619,17 +1642,13 @@ func Test_omnifunc_callback()
     call assert_fails("set omnifunc=funcref('abc')", "E700:")
 
     #" set 'omnifunc' to a non-existing function
-    func MyomniFunc2(findstart, base)
-      call add(g:MyomniFunc2_args, [a:findstart, a:base])
-      return a:findstart ? 0 : []
-    endfunc
-    set omnifunc=MyomniFunc2
+    set omnifunc=OmniFunc2
     call setline(1, 'nine')
     call assert_fails("set omnifunc=function('NonExistingFunc')", 'E700:')
     call assert_fails("LET &omnifunc = function('NonExistingFunc')", 'E700:')
-    LET g:MyomniFunc2_args = []
+    LET g:OmniFunc2Args = []
     call feedkeys("A\<C-X>\<C-O>\<Esc>", 'x')
-    call assert_equal([[1, ''], [0, 'nine']], g:MyomniFunc2_args)
+    call assert_equal([[1, ''], [0, 'nine']], g:OmniFunc2Args)
     bw!
   END
   call CheckLegacyAndVim9Success(lines)
@@ -1638,11 +1657,11 @@ func Test_omnifunc_callback()
   call feedkeys("A\<C-X>\<C-O>\<Esc>", 'x')
 
   " Using Vim9 lambda expression in legacy context should fail
-  " set omnifunc=(a,\ b)\ =>\ MyomniFunc1(21,\ a,\ b)
+  " set omnifunc=(a,\ b)\ =>\ OmniFunc1(21,\ a,\ b)
   new | only
-  let g:MyomniFunc1_args = []
+  let g:OmniFunc1Args = []
   " call assert_fails('call feedkeys("A\<C-X>\<C-O>\<Esc>", "x")', 'E117:')
-  call assert_equal([], g:MyomniFunc1_args)
+  call assert_equal([], g:OmniFunc1Args)
 
   " set 'omnifunc' to a partial with dict. This used to cause a crash.
   func SetOmniFunc()
@@ -1684,131 +1703,145 @@ func Test_omnifunc_callback()
   " call CheckScriptSuccess(lines)
 
   " cleanup
-  delfunc MyomniFunc1
-  delfunc MyomniFunc2
   set omnifunc&
+  delfunc OmniFunc1
+  delfunc OmniFunc2
+  unlet g:OmniFunc1Args g:OmniFunc2Args
   %bw!
 endfunc
 
 " Test for different ways of setting the 'thesaurusfunc' option
 func Test_thesaurusfunc_callback()
-  func MytsrFunc1(val, findstart, base)
-    call add(g:MytsrFunc1_args, [a:val, a:findstart, a:base])
+  func TsrFunc1(callnr, findstart, base)
+    call add(g:TsrFunc1Args, [a:callnr, a:findstart, a:base])
     return a:findstart ? 0 : []
+  endfunc
+  func TsrFunc2(findstart, base)
+    call add(g:TsrFunc2Args, [a:findstart, a:base])
+    return a:findstart ? 0 : ['sunday']
   endfunc
 
   let lines =<< trim END
-    #" Test for using a function()
-    set thesaurusfunc=function('g:MytsrFunc1',\ [10])
-    new | only
-    call setline(1, 'one')
-    LET g:MytsrFunc1_args = []
+    #" Test for using a function name
+    LET &thesaurusfunc = 'g:TsrFunc2'
+    new
+    call setline(1, 'zero')
+    LET g:TsrFunc2Args = []
     call feedkeys("A\<C-X>\<C-T>\<Esc>", 'x')
-    call assert_equal([[10, 1, ''], [10, 0, 'one']], g:MytsrFunc1_args)
+    call assert_equal([[1, ''], [0, 'zero']], g:TsrFunc2Args)
+    bw!
+
+    #" Test for using a function()
+    set thesaurusfunc=function('g:TsrFunc1',\ [10])
+    new
+    call setline(1, 'one')
+    LET g:TsrFunc1Args = []
+    call feedkeys("A\<C-X>\<C-T>\<Esc>", 'x')
+    call assert_equal([[10, 1, ''], [10, 0, 'one']], g:TsrFunc1Args)
     bw!
 
     #" Using a funcref variable to set 'thesaurusfunc'
-    VAR Fn = function('g:MytsrFunc1', [11])
+    VAR Fn = function('g:TsrFunc1', [11])
     LET &thesaurusfunc = Fn
-    new | only
+    new
     call setline(1, 'two')
-    LET g:MytsrFunc1_args = []
+    LET g:TsrFunc1Args = []
     call feedkeys("A\<C-X>\<C-T>\<Esc>", 'x')
-    call assert_equal([[11, 1, ''], [11, 0, 'two']], g:MytsrFunc1_args)
+    call assert_equal([[11, 1, ''], [11, 0, 'two']], g:TsrFunc1Args)
     bw!
 
     #" Using a string(funcref_variable) to set 'thesaurusfunc'
-    LET Fn = function('g:MytsrFunc1', [12])
+    LET Fn = function('g:TsrFunc1', [12])
     LET &thesaurusfunc = string(Fn)
-    new | only
+    new
     call setline(1, 'two')
-    LET g:MytsrFunc1_args = []
+    LET g:TsrFunc1Args = []
     call feedkeys("A\<C-X>\<C-T>\<Esc>", 'x')
-    call assert_equal([[12, 1, ''], [12, 0, 'two']], g:MytsrFunc1_args)
+    call assert_equal([[12, 1, ''], [12, 0, 'two']], g:TsrFunc1Args)
     bw!
 
     #" Test for using a funcref()
-    set thesaurusfunc=funcref('g:MytsrFunc1',\ [13])
-    new | only
+    set thesaurusfunc=funcref('g:TsrFunc1',\ [13])
+    new
     call setline(1, 'three')
-    LET g:MytsrFunc1_args = []
+    LET g:TsrFunc1Args = []
     call feedkeys("A\<C-X>\<C-T>\<Esc>", 'x')
-    call assert_equal([[13, 1, ''], [13, 0, 'three']], g:MytsrFunc1_args)
+    call assert_equal([[13, 1, ''], [13, 0, 'three']], g:TsrFunc1Args)
     bw!
 
     #" Using a funcref variable to set 'thesaurusfunc'
-    LET Fn = funcref('g:MytsrFunc1', [14])
+    LET Fn = funcref('g:TsrFunc1', [14])
     LET &thesaurusfunc = Fn
-    new | only
+    new
     call setline(1, 'four')
-    LET g:MytsrFunc1_args = []
+    LET g:TsrFunc1Args = []
     call feedkeys("A\<C-X>\<C-T>\<Esc>", 'x')
-    call assert_equal([[14, 1, ''], [14, 0, 'four']], g:MytsrFunc1_args)
+    call assert_equal([[14, 1, ''], [14, 0, 'four']], g:TsrFunc1Args)
     bw!
 
     #" Using a string(funcref_variable) to set 'thesaurusfunc'
-    LET Fn = funcref('g:MytsrFunc1', [15])
+    LET Fn = funcref('g:TsrFunc1', [15])
     LET &thesaurusfunc = string(Fn)
-    new | only
+    new
     call setline(1, 'four')
-    LET g:MytsrFunc1_args = []
+    LET g:TsrFunc1Args = []
     call feedkeys("A\<C-X>\<C-T>\<Esc>", 'x')
-    call assert_equal([[15, 1, ''], [15, 0, 'four']], g:MytsrFunc1_args)
+    call assert_equal([[15, 1, ''], [15, 0, 'four']], g:TsrFunc1Args)
     bw!
 
     #" Test for using a lambda function
-    VAR optval = "LSTART a, b LMIDDLE MytsrFunc1(16, a, b) LEND"
+    VAR optval = "LSTART a, b LMIDDLE TsrFunc1(16, a, b) LEND"
     LET optval = substitute(optval, ' ', '\\ ', 'g')
     exe "set thesaurusfunc=" .. optval
-    new | only
+    new
     call setline(1, 'five')
-    LET g:MytsrFunc1_args = []
+    LET g:TsrFunc1Args = []
     call feedkeys("A\<C-X>\<C-T>\<Esc>", 'x')
-    call assert_equal([[16, 1, ''], [16, 0, 'five']], g:MytsrFunc1_args)
+    call assert_equal([[16, 1, ''], [16, 0, 'five']], g:TsrFunc1Args)
     bw!
 
     #" Test for using a lambda function with set
-    LET &thesaurusfunc = LSTART a, b LMIDDLE MytsrFunc1(17, a, b) LEND
-    new | only
+    LET &thesaurusfunc = LSTART a, b LMIDDLE TsrFunc1(17, a, b) LEND
+    new
     call setline(1, 'six')
-    LET g:MytsrFunc1_args = []
+    LET g:TsrFunc1Args = []
     call feedkeys("A\<C-X>\<C-T>\<Esc>", 'x')
-    call assert_equal([[17, 1, ''], [17, 0, 'six']], g:MytsrFunc1_args)
+    call assert_equal([[17, 1, ''], [17, 0, 'six']], g:TsrFunc1Args)
     bw!
 
     #" Set 'thesaurusfunc' to a string(lambda expression)
-    LET &thesaurusfunc = 'LSTART a, b LMIDDLE MytsrFunc1(18, a, b) LEND'
-    new | only
+    LET &thesaurusfunc = 'LSTART a, b LMIDDLE TsrFunc1(18, a, b) LEND'
+    new
     call setline(1, 'six')
-    LET g:MytsrFunc1_args = []
+    LET g:TsrFunc1Args = []
     call feedkeys("A\<C-X>\<C-T>\<Esc>", 'x')
-    call assert_equal([[18, 1, ''], [18, 0, 'six']], g:MytsrFunc1_args)
+    call assert_equal([[18, 1, ''], [18, 0, 'six']], g:TsrFunc1Args)
     bw!
 
     #" Set 'thesaurusfunc' to a variable with a lambda expression
-    VAR Lambda = LSTART a, b LMIDDLE MytsrFunc1(19, a, b) LEND
+    VAR Lambda = LSTART a, b LMIDDLE TsrFunc1(19, a, b) LEND
     LET &thesaurusfunc = Lambda
-    new | only
+    new
     call setline(1, 'seven')
-    LET g:MytsrFunc1_args = []
+    LET g:TsrFunc1Args = []
     call feedkeys("A\<C-X>\<C-T>\<Esc>", 'x')
-    call assert_equal([[19, 1, ''], [19, 0, 'seven']], g:MytsrFunc1_args)
+    call assert_equal([[19, 1, ''], [19, 0, 'seven']], g:TsrFunc1Args)
     bw!
 
     #" Set 'thesaurusfunc' to a string(variable with a lambda expression)
-    LET Lambda = LSTART a, b LMIDDLE MytsrFunc1(20, a, b) LEND
+    LET Lambda = LSTART a, b LMIDDLE TsrFunc1(20, a, b) LEND
     LET &thesaurusfunc = string(Lambda)
-    new | only
+    new
     call setline(1, 'seven')
-    LET g:MytsrFunc1_args = []
+    LET g:TsrFunc1Args = []
     call feedkeys("A\<C-X>\<C-T>\<Esc>", 'x')
-    call assert_equal([[20, 1, ''], [20, 0, 'seven']], g:MytsrFunc1_args)
+    call assert_equal([[20, 1, ''], [20, 0, 'seven']], g:TsrFunc1Args)
     bw!
 
     #" Test for using a lambda function with incorrect return value
     LET Lambda = LSTART a, b LMIDDLE strlen(a) LEND
     LET &thesaurusfunc = Lambda
-    new | only
+    new
     call setline(1, 'eight')
     call feedkeys("A\<C-X>\<C-T>\<Esc>", 'x')
     bw!
@@ -1820,40 +1853,36 @@ func Test_thesaurusfunc_callback()
     call assert_fails("set thesaurusfunc=funcref('abc')", "E700:")
 
     #" set 'thesaurusfunc' to a non-existing function
-    func MytsrFunc2(findstart, base)
-      call add(g:MytsrFunc2_args, [a:findstart, a:base])
-      return a:findstart ? 0 : ['sunday']
-    endfunc
-    set thesaurusfunc=MytsrFunc2
+    set thesaurusfunc=TsrFunc2
     call setline(1, 'ten')
     call assert_fails("set thesaurusfunc=function('NonExistingFunc')", 'E700:')
     call assert_fails("LET &thesaurusfunc = function('NonExistingFunc')", 'E700:')
-    LET g:MytsrFunc2_args = []
+    LET g:TsrFunc2Args = []
     call feedkeys("A\<C-X>\<C-T>\<Esc>", 'x')
-    call assert_equal([[1, ''], [0, 'ten']], g:MytsrFunc2_args)
+    call assert_equal([[1, ''], [0, 'ten']], g:TsrFunc2Args)
     bw!
 
     #" Use a buffer-local value and a global value
     set thesaurusfunc&
-    setlocal thesaurusfunc=function('g:MytsrFunc1',\ [22])
+    setlocal thesaurusfunc=function('g:TsrFunc1',\ [22])
     call setline(1, 'sun')
-    LET g:MytsrFunc1_args = []
+    LET g:TsrFunc1Args = []
     call feedkeys("A\<C-X>\<C-T>\<Esc>", "x")
     call assert_equal('sun', getline(1))
-    call assert_equal([[22, 1, ''], [22, 0, 'sun']], g:MytsrFunc1_args)
+    call assert_equal([[22, 1, ''], [22, 0, 'sun']], g:TsrFunc1Args)
     new
     call setline(1, 'sun')
-    LET g:MytsrFunc1_args = []
+    LET g:TsrFunc1Args = []
     call feedkeys("A\<C-X>\<C-T>\<Esc>", "x")
     call assert_equal('sun', getline(1))
-    call assert_equal([], g:MytsrFunc1_args)
-    set thesaurusfunc=function('g:MytsrFunc1',\ [23])
+    call assert_equal([], g:TsrFunc1Args)
+    set thesaurusfunc=function('g:TsrFunc1',\ [23])
     wincmd w
     call setline(1, 'sun')
-    LET g:MytsrFunc1_args = []
+    LET g:TsrFunc1Args = []
     call feedkeys("A\<C-X>\<C-T>\<Esc>", "x")
     call assert_equal('sun', getline(1))
-    call assert_equal([[22, 1, ''], [22, 0, 'sun']], g:MytsrFunc1_args)
+    call assert_equal([[22, 1, ''], [22, 0, 'sun']], g:TsrFunc1Args)
     :%bw!
   END
   call CheckLegacyAndVim9Success(lines)
@@ -1862,11 +1891,11 @@ func Test_thesaurusfunc_callback()
   call feedkeys("A\<C-X>\<C-T>\<Esc>", 'x')
 
   " Using Vim9 lambda expression in legacy context should fail
-  " set thesaurusfunc=(a,\ b)\ =>\ MytsrFunc1(21,\ a,\ b)
+  " set thesaurusfunc=(a,\ b)\ =>\ TsrFunc1(21,\ a,\ b)
   new | only
-  let g:MytsrFunc1_args = []
+  let g:TsrFunc1Args = []
   " call assert_fails('call feedkeys("A\<C-X>\<C-T>\<Esc>", "x")', 'E117:')
-  call assert_equal([], g:MytsrFunc1_args)
+  call assert_equal([], g:TsrFunc1Args)
   bw!
 
   " set 'thesaurusfunc' to a partial with dict. This used to cause a crash.
@@ -1922,8 +1951,9 @@ func Test_thesaurusfunc_callback()
 
   " cleanup
   set thesaurusfunc&
-  delfunc MytsrFunc1
-  delfunc MytsrFunc2
+  delfunc TsrFunc1
+  delfunc TsrFunc2
+  unlet g:TsrFunc1Args g:TsrFunc2Args
   %bw!
 endfunc
 

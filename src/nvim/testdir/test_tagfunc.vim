@@ -127,102 +127,126 @@ endfunc
 
 " Test for different ways of setting the 'tagfunc' option
 func Test_tagfunc_callback()
-  func MytagFunc1(val, pat, flags, info)
-    let g:MytagFunc1_args = [a:val, a:pat, a:flags, a:info]
+  func TagFunc1(callnr, pat, flags, info)
+    let g:TagFunc1Args = [a:callnr, a:pat, a:flags, a:info]
+    return v:null
+  endfunc
+  func TagFunc2(pat, flags, info)
+    let g:TagFunc2Args = [a:pat, a:flags, a:info]
     return v:null
   endfunc
 
   let lines =<< trim END
+    #" Test for using a function name
+    LET &tagfunc = 'g:TagFunc2'
+    new
+    LET g:TagFunc2Args = []
+    call assert_fails('tag a10', 'E433:')
+    call assert_equal(['a10', '', {}], g:TagFunc2Args)
+    bw!
+
     #" Test for using a function()
-    set tagfunc=function('g:MytagFunc1',\ [10])
-    new | only
-    LET g:MytagFunc1_args = []
+    set tagfunc=function('g:TagFunc1',\ [10])
+    new
+    LET g:TagFunc1Args = []
     call assert_fails('tag a11', 'E433:')
-    call assert_equal([10, 'a11', '', {}], g:MytagFunc1_args)
+    call assert_equal([10, 'a11', '', {}], g:TagFunc1Args)
+    bw!
 
     #" Using a funcref variable to set 'tagfunc'
-    VAR Fn = function('g:MytagFunc1', [11])
+    VAR Fn = function('g:TagFunc1', [11])
     LET &tagfunc = Fn
-    new | only
-    LET g:MytagFunc1_args = []
+    new
+    LET g:TagFunc1Args = []
     call assert_fails('tag a12', 'E433:')
-    call assert_equal([11, 'a12', '', {}], g:MytagFunc1_args)
+    call assert_equal([11, 'a12', '', {}], g:TagFunc1Args)
+    bw!
 
     #" Using a string(funcref_variable) to set 'tagfunc'
-    LET Fn = function('g:MytagFunc1', [12])
+    LET Fn = function('g:TagFunc1', [12])
     LET &tagfunc = string(Fn)
-    new | only
-    LET g:MytagFunc1_args = []
+    new
+    LET g:TagFunc1Args = []
     call assert_fails('tag a12', 'E433:')
-    call assert_equal([12, 'a12', '', {}], g:MytagFunc1_args)
+    call assert_equal([12, 'a12', '', {}], g:TagFunc1Args)
+    bw!
 
     #" Test for using a funcref()
-    set tagfunc=funcref('g:MytagFunc1',\ [13])
-    new | only
-    LET g:MytagFunc1_args = []
+    set tagfunc=funcref('g:TagFunc1',\ [13])
+    new
+    LET g:TagFunc1Args = []
     call assert_fails('tag a13', 'E433:')
-    call assert_equal([13, 'a13', '', {}], g:MytagFunc1_args)
+    call assert_equal([13, 'a13', '', {}], g:TagFunc1Args)
+    bw!
 
     #" Using a funcref variable to set 'tagfunc'
-    LET Fn = funcref('g:MytagFunc1', [14])
+    LET Fn = funcref('g:TagFunc1', [14])
     LET &tagfunc = Fn
-    new | only
-    LET g:MytagFunc1_args = []
+    new
+    LET g:TagFunc1Args = []
     call assert_fails('tag a14', 'E433:')
-    call assert_equal([14, 'a14', '', {}], g:MytagFunc1_args)
+    call assert_equal([14, 'a14', '', {}], g:TagFunc1Args)
+    bw!
 
     #" Using a string(funcref_variable) to set 'tagfunc'
-    LET Fn = funcref('g:MytagFunc1', [15])
+    LET Fn = funcref('g:TagFunc1', [15])
     LET &tagfunc = string(Fn)
-    new | only
-    LET g:MytagFunc1_args = []
+    new
+    LET g:TagFunc1Args = []
     call assert_fails('tag a14', 'E433:')
-    call assert_equal([15, 'a14', '', {}], g:MytagFunc1_args)
+    call assert_equal([15, 'a14', '', {}], g:TagFunc1Args)
+    bw!
 
     #" Test for using a lambda function
-    VAR optval = "LSTART a, b, c LMIDDLE MytagFunc1(16, a, b, c) LEND"
+    VAR optval = "LSTART a, b, c LMIDDLE TagFunc1(16, a, b, c) LEND"
     LET optval = substitute(optval, ' ', '\\ ', 'g')
     exe "set tagfunc=" .. optval
-    new | only
-    LET g:MytagFunc1_args = []
+    new
+    LET g:TagFunc1Args = []
     call assert_fails('tag a17', 'E433:')
-    call assert_equal([16, 'a17', '', {}], g:MytagFunc1_args)
+    call assert_equal([16, 'a17', '', {}], g:TagFunc1Args)
+    bw!
 
     #" Set 'tagfunc' to a lambda expression
-    LET &tagfunc = LSTART a, b, c LMIDDLE MytagFunc1(17, a, b, c) LEND
-    new | only
-    LET g:MytagFunc1_args = []
+    LET &tagfunc = LSTART a, b, c LMIDDLE TagFunc1(17, a, b, c) LEND
+    new
+    LET g:TagFunc1Args = []
     call assert_fails('tag a18', 'E433:')
-    call assert_equal([17, 'a18', '', {}], g:MytagFunc1_args)
+    call assert_equal([17, 'a18', '', {}], g:TagFunc1Args)
+    bw!
 
     #" Set 'tagfunc' to a string(lambda expression)
-    LET &tagfunc = 'LSTART a, b, c LMIDDLE MytagFunc1(18, a, b, c) LEND'
-    new | only
-    LET g:MytagFunc1_args = []
+    LET &tagfunc = 'LSTART a, b, c LMIDDLE TagFunc1(18, a, b, c) LEND'
+    new
+    LET g:TagFunc1Args = []
     call assert_fails('tag a18', 'E433:')
-    call assert_equal([18, 'a18', '', {}], g:MytagFunc1_args)
+    call assert_equal([18, 'a18', '', {}], g:TagFunc1Args)
+    bw!
 
     #" Set 'tagfunc' to a variable with a lambda expression
-    VAR Lambda = LSTART a, b, c LMIDDLE MytagFunc1(19, a, b, c) LEND
+    VAR Lambda = LSTART a, b, c LMIDDLE TagFunc1(19, a, b, c) LEND
     LET &tagfunc = Lambda
-    new | only
-    LET g:MytagFunc1_args = []
+    new
+    LET g:TagFunc1Args = []
     call assert_fails("tag a19", "E433:")
-    call assert_equal([19, 'a19', '', {}], g:MytagFunc1_args)
+    call assert_equal([19, 'a19', '', {}], g:TagFunc1Args)
+    bw!
 
     #" Set 'tagfunc' to a string(variable with a lambda expression)
-    LET Lambda = LSTART a, b, c LMIDDLE MytagFunc1(20, a, b, c) LEND
+    LET Lambda = LSTART a, b, c LMIDDLE TagFunc1(20, a, b, c) LEND
     LET &tagfunc = string(Lambda)
-    new | only
-    LET g:MytagFunc1_args = []
+    new
+    LET g:TagFunc1Args = []
     call assert_fails("tag a19", "E433:")
-    call assert_equal([20, 'a19', '', {}], g:MytagFunc1_args)
+    call assert_equal([20, 'a19', '', {}], g:TagFunc1Args)
+    bw!
 
     #" Test for using a lambda function with incorrect return value
     LET Lambda = LSTART a, b, c LMIDDLE strlen(a) LEND
     LET &tagfunc = string(Lambda)
-    new | only
+    new
     call assert_fails("tag a20", "E987:")
+    bw!
 
     #" Test for clearing the 'tagfunc' option
     set tagfunc=''
@@ -231,10 +255,13 @@ func Test_tagfunc_callback()
     call assert_fails("set tagfunc=funcref('abc')", "E700:")
 
     #" set 'tagfunc' to a non-existing function
-    LET &tagfunc = function('g:MytagFunc1', [21])
+    LET &tagfunc = function('g:TagFunc2', [21])
+    LET g:TagFunc2Args = []
     call assert_fails("set tagfunc=function('NonExistingFunc')", 'E700:')
     call assert_fails("LET &tagfunc = function('NonExistingFunc')", 'E700:')
     call assert_fails("tag axb123", 'E426:')
+    call assert_equal([], g:TagFunc2Args)
+    bw!
   END
   call CheckLegacyAndVim9Success(lines)
 
@@ -242,11 +269,11 @@ func Test_tagfunc_callback()
   call assert_fails("echo taglist('a')", "E987:")
 
   " Using Vim9 lambda expression in legacy context should fail
-  " set tagfunc=(a,\ b,\ c)\ =>\ g:MytagFunc1(21,\ a,\ b,\ c)
+  " set tagfunc=(a,\ b,\ c)\ =>\ g:TagFunc1(21,\ a,\ b,\ c)
   new | only
-  let g:MytagFunc1_args = []
+  let g:TagFunc1Args = []
   " call assert_fails("tag a17", "E117:")
-  call assert_equal([], g:MytagFunc1_args)
+  call assert_equal([], g:TagFunc1Args)
 
   " Test for using a script local function
   set tagfunc=<SID>ScriptLocalTagFunc
@@ -309,7 +336,8 @@ func Test_tagfunc_callback()
   " call CheckScriptSuccess(lines)
 
   " cleanup
-  delfunc MytagFunc1
+  delfunc TagFunc1
+  delfunc TagFunc2
   set tagfunc&
   %bw!
 endfunc

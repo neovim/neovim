@@ -5695,6 +5695,13 @@ func Test_qftextfunc_callback()
   let lines =<< trim END
     set efm=%f:%l:%c:%m
 
+    #" Test for using a function name
+    LET &qftf = 'g:Tqfexpr'
+    cexpr "F0:0:0:L0"
+    copen
+    call assert_equal('F0-L0C0-L0', getline(1))
+    cclose
+
     #" Test for using a function()
     set qftf=function('g:Tqfexpr')
     cexpr "F1:1:1:L1"
