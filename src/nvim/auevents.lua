@@ -108,6 +108,7 @@ return {
     'TextChanged',            -- text was modified
     'TextChangedI',           -- text was modified in Insert mode(no popup)
     'TextChangedP',           -- text was modified in Insert mode(popup)
+    'TextChangedT',           -- text was modified in Terminal mode
     'TextYankPost',           -- after a yank or delete was done (y, d, c)
     'UIEnter',                -- after UI attaches
     'UILeave',                -- after UI detaches

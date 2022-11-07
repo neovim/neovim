@@ -523,6 +523,18 @@ static int terminal_check(VimState *state)
 
   if (must_redraw) {
     update_screen();
+
+    // Make sure an invoked autocmd doesn't delete the buffer (and the
+    // terminal) under our fingers.
+    curbuf->b_locked++;
+
+    // save and restore curwin and curbuf, in case the autocmd changes them
+    aco_save_T aco;
+    aucmd_prepbuf(&aco, curbuf);
+    apply_autocmds(EVENT_TEXTCHANGEDT, NULL, NULL, false, curbuf);
+    aucmd_restbuf(&aco);
+
+    curbuf->b_locked--;
   }
 
   if (need_maketitle) {  // Update title in terminal-mode. #7248
