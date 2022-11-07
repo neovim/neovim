@@ -106,6 +106,8 @@ static char_u *recurmsg
   = (char_u *)N_("E986: cannot modify the tag stack within tagfunc");
 static char_u *tfu_inv_ret_msg
   = (char_u *)N_("E987: invalid return value from tagfunc");
+static char e_window_unexpectedly_close_while_searching_for_tags[]
+  = N_("E1299: Window unexpectedly closed while searching for tags");
 
 static char *tagmatchname = NULL;   // name of last used tag
 
@@ -114,9 +116,48 @@ static char *tagmatchname = NULL;   // name of last used tag
 static taggy_T ptag_entry = { NULL, INIT_FMARK, 0, 0, NULL };
 
 static int tfu_in_use = false;  // disallow recursive call of tagfunc
+static Callback tfu_cb;         // 'tagfunc' callback function
 
 // Used instead of NUL to separate tag fields in the growarrays.
 #define TAG_SEP 0x02
+
+/// Reads the 'tagfunc' option value and convert that to a callback value.
+/// Invoked when the 'tagfunc' option is set. The option value can be a name of
+/// a function (string), or function(<name>) or funcref(<name>) or a lambda.
+int set_tagfunc_option(void)
+{
+  callback_free(&tfu_cb);
+  callback_free(&curbuf->b_tfu_cb);
+
+  if (*curbuf->b_p_tfu == NUL) {
+    return OK;
+  }
+
+  if (option_set_callback_func(curbuf->b_p_tfu, &tfu_cb) == FAIL) {
+    return FAIL;
+  }
+
+  callback_copy(&curbuf->b_tfu_cb, &tfu_cb);
+
+  return OK;
+}
+
+#if defined(EXITFREE)
+void free_tagfunc_option(void)
+{
+  callback_free(&tfu_cb);
+}
+#endif
+
+/// Copy the global 'tagfunc' callback function to the buffer-local 'tagfunc'
+/// callback for 'buf'.
+void set_buflocal_tfu_callback(buf_T *buf)
+{
+  callback_free(&buf->b_tfu_cb);
+  if (tfu_cb.data.funcref != NULL && *tfu_cb.data.funcref != NUL) {
+    callback_copy(&buf->b_tfu_cb, &tfu_cb);
+  }
+}
 
 /// Jump to tag; handling of tag commands and tag stack
 ///
@@ -160,6 +201,7 @@ void do_tag(char *tag, int type, int count, int forceit, int verbose)
   int skip_msg = false;
   char_u *buf_ffname = (char_u *)curbuf->b_ffname;  // name for priority computation
   int use_tfu = 1;
+  char *tofree = NULL;
 
   // remember the matches for the last used tag
   static int num_matches = 0;
@@ -411,7 +453,10 @@ void do_tag(char *tag, int type, int count, int forceit, int verbose)
 
     // When desired match not found yet, try to find it (and others).
     if (use_tagstack) {
-      name = tagstack[tagstackidx].tagname;
+      // make a copy, the tagstack may change in 'tagfunc'
+      name = xstrdup(tagstack[tagstackidx].tagname);
+      xfree(tofree);
+      tofree = name;
     } else if (g_do_tagpreview != 0) {
       name = ptag_entry.tagname;
     } else {
@@ -456,6 +501,15 @@ void do_tag(char *tag, int type, int count, int forceit, int verbose)
           && new_num_matches < max_num_matches) {
         max_num_matches = MAXCOL;  // If less than max_num_matches
                                    // found: all matches found.
+      }
+
+      // A tag function may do anything, which may cause various
+      // information to become invalid.  At least check for the tagstack
+      // to still be the same.
+      if (tagstack != curwin->w_tagstack) {
+        emsg(_(e_window_unexpectedly_close_while_searching_for_tags));
+        FreeWild(new_num_matches, new_matches);
+        break;
       }
 
       // If there already were some matches for the same name, move them
@@ -642,6 +696,7 @@ end_do_tag:
   }
   postponed_split = 0;          // don't split next time
   g_do_tagpreview = 0;          // don't do tag preview next time
+  xfree(tofree);
 }
 
 // List all the matching tags.
@@ -1129,7 +1184,7 @@ static int find_tagfunc_tags(char_u *pat, garray_T *ga, int *match_count, int fl
                flags & TAG_REGEXP   ? "r": "");
 
   save_pos = curwin->w_cursor;
-  result = call_vim_function(curbuf->b_p_tfu, 3, args, &rettv);
+  result = callback_call(&curbuf->b_tfu_cb, 3, args, &rettv);
   curwin->w_cursor = save_pos;  // restore the cursor position
   d->dv_refcount--;
 
