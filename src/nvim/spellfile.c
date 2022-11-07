@@ -2465,9 +2465,9 @@ static afffile_T *spell_read_aff(spellinfo_T *spin, char_u *fname)
 
             aff_entry->ae_cond = (char_u *)getroom_save(spin, (char_u *)items[4]);
             if (*items[0] == 'P') {
-              sprintf((char *)buf, "^%s", items[4]);
+              sprintf((char *)buf, "^%s", items[4]);  // NOLINT(runtime/printf)
             } else {
-              sprintf((char *)buf, "%s$", items[4]);
+              sprintf((char *)buf, "%s$", items[4]);  // NOLINT(runtime/printf)
             }
             aff_entry->ae_prog = vim_regcomp((char *)buf, RE_MAGIC + RE_STRING + RE_STRICT);
             if (aff_entry->ae_prog == NULL) {
@@ -2514,8 +2514,7 @@ static afffile_T *spell_read_aff(spellinfo_T *spin, char_u *fname)
                     onecap_copy((char_u *)items[4], buf, true);
                     aff_entry->ae_cond = (char_u *)getroom_save(spin, buf);
                     if (aff_entry->ae_cond != NULL) {
-                      sprintf((char *)buf, "^%s",
-                              aff_entry->ae_cond);
+                      sprintf((char *)buf, "^%s", aff_entry->ae_cond);  // NOLINT(runtime/printf)
                       vim_regfree(aff_entry->ae_prog);
                       aff_entry->ae_prog = vim_regcomp((char *)buf, RE_MAGIC + RE_STRING);
                     }
@@ -3614,7 +3613,7 @@ static int store_aff_word(spellinfo_T *spin, char_u *word, char_u *afflist, afff
               if (store_aff_word(spin, newword, ae->ae_flags,
                                  affile, &affile->af_suff, xht,
                                  use_condit & (xht == NULL
-                                    ? ~0 :  ~CONDIT_SUF),
+                                               ? ~0 :  ~CONDIT_SUF),
                                  use_flags, use_pfxlist, pfxlen) == FAIL) {
                 retval = FAIL;
               }

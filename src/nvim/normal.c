@@ -2266,7 +2266,7 @@ bool find_decl(char_u *ptr, size_t len, bool locally, bool thisblock, int flags_
   // Put "\V" before the pattern to avoid that the special meaning of "."
   // and "~" causes trouble.
   assert(len <= INT_MAX);
-  sprintf((char *)pat, vim_iswordp(ptr) ? "\\V\\<%.*s\\>" : "\\V%.*s",
+  sprintf((char *)pat, vim_iswordp(ptr) ? "\\V\\<%.*s\\>" : "\\V%.*s",  // NOLINT(runtime/printf)
           (int)len, ptr);
   old_pos = curwin->w_cursor;
   save_p_ws = p_ws;

@@ -2135,13 +2135,13 @@ static int ml_append_int(buf_T *buf, linenr_T lnum, char_u *line, colnr_T len, b
         buf->b_ml.ml_stack_top = stack_idx + 1;             // truncate stack
 
         if (lineadd) {
-          --(buf->b_ml.ml_stack_top);
+          (buf->b_ml.ml_stack_top)--;
           // fix line count for rest of blocks in the stack
           ml_lineadd(buf, lineadd);
           // fix stack itself
           buf->b_ml.ml_stack[buf->b_ml.ml_stack_top].ip_high +=
             lineadd;
-          ++(buf->b_ml.ml_stack_top);
+          (buf->b_ml.ml_stack_top)++;
         }
 
         // We are finished, break the loop here.
@@ -2428,7 +2428,7 @@ static int ml_delete_int(buf_T *buf, linenr_T lnum, bool message)
           buf->b_ml.ml_stack[buf->b_ml.ml_stack_top].ip_high +=
             buf->b_ml.ml_locked_lineadd;
         }
-        ++(buf->b_ml.ml_stack_top);
+        (buf->b_ml.ml_stack_top)++;
 
         break;
       }
@@ -2698,11 +2698,11 @@ static bhdr_T *ml_find_line(buf_T *buf, linenr_T lnum, int action)
         && buf->b_ml.ml_locked_high >= lnum) {
       // remember to update pointer blocks and stack later
       if (action == ML_INSERT) {
-        ++(buf->b_ml.ml_locked_lineadd);
-        ++(buf->b_ml.ml_locked_high);
+        (buf->b_ml.ml_locked_lineadd)++;
+        (buf->b_ml.ml_locked_high)++;
       } else if (action == ML_DELETE) {
-        --(buf->b_ml.ml_locked_lineadd);
-        --(buf->b_ml.ml_locked_high);
+        (buf->b_ml.ml_locked_lineadd)--;
+        (buf->b_ml.ml_locked_high)--;
       }
       return buf->b_ml.ml_locked;
     }

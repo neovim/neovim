@@ -628,8 +628,8 @@ LexExprToken viml_pexpr_next_token(ParserState *const pstate, const int flags)
     GET_CCS(ret, pline);
     ret.data.cmp.inv = (schar == '<');
     ret.data.cmp.type = ((ret.data.cmp.inv ^ haseqsign)
-                           ? kExprCmpGreaterOrEqual
-                           : kExprCmpGreater);
+                         ? kExprCmpGreaterOrEqual
+                         : kExprCmpGreater);
     break;
   }
 
@@ -1963,8 +1963,8 @@ ExprAST viml_pexpr_parse(ParserState *const pstate, const int flags)
                                                 || ((*kv_Z(ast_stack, 1))->type != kExprNodeConcat
                                                     && ((*kv_Z(ast_stack, 1))->type
                                                         != kExprNodeConcatOrSubscript))))
-           ? kELFlagAllowFloat
-           : 0));
+                                           ? kELFlagAllowFloat
+                                           : 0));
     LexExprToken cur_token = viml_pexpr_next_token(pstate,
                                                    want_node_to_lexer_flags[want_node] |
                                                    lexer_additional_flags);
@@ -2031,9 +2031,9 @@ viml_pexpr_parse_process_token:
     const bool node_is_key = (
                               is_concat_or_subscript
                               && (cur_token.type == kExprLexPlainIdentifier
-            ? (!cur_token.data.var.autoload
-               && cur_token.data.var.scope == kExprVarScopeMissing)
-            : (cur_token.type == kExprLexNumber))
+                                  ? (!cur_token.data.var.autoload
+                                     && cur_token.data.var.scope == kExprVarScopeMissing)
+                                  : (cur_token.type == kExprLexNumber))
                               && prev_token.type != kExprLexSpacing);
     if (is_concat_or_subscript && !node_is_key) {
       // Note: in Vim "d. a" (this is the reason behind `prev_token.type !=
@@ -2707,14 +2707,14 @@ viml_pexpr_parse_figure_brace_closing_error:
       break;
     case kExprLexPlainIdentifier: {
       const ExprVarScope scope = (cur_token.type == kExprLexInvalid
-                                    ? kExprVarScopeMissing
-                                    : cur_token.data.var.scope);
+                                  ? kExprVarScopeMissing
+                                  : cur_token.data.var.scope);
       if (want_node == kENodeValue) {
         want_node = kENodeOperator;
         NEW_NODE_WITH_CUR_POS(cur_node,
                               (node_is_key
-                                 ? kExprNodePlainKey
-                                 : kExprNodePlainIdentifier));
+                               ? kExprNodePlainKey
+                               : kExprNodePlainIdentifier));
         cur_node->data.var.scope = scope;
         const size_t scope_shift = (scope == kExprVarScopeMissing ? 0 : 2);
         cur_node->data.var.ident = (pline.data + cur_token.start.col
@@ -2732,8 +2732,8 @@ viml_pexpr_parse_figure_brace_closing_error:
                                                   scope_shift),
                               cur_token.len - scope_shift,
                               (node_is_key
-                                 ? HL(IdentifierKey)
-                                 : HL(IdentifierName)));
+                               ? HL(IdentifierKey)
+                               : HL(IdentifierName)));
       } else {
         if (scope == kExprVarScopeMissing) {
           // uncrustify:off
@@ -2902,15 +2902,15 @@ viml_pexpr_parse_no_paren_closing_error: {}
         // different error numbers: "E114: Missing quote" and
         // "E115: Missing quote".
         ERROR_FROM_TOKEN_AND_MSG(cur_token, (is_double
-                          ? _("E114: Missing double quote: %.*s")
-                          : _("E115: Missing single quote: %.*s")));
+                                             ? _("E114: Missing double quote: %.*s")
+                                             : _("E115: Missing single quote: %.*s")));
       }
       if (want_node == kENodeOperator) {
         OP_MISSING;
       }
       NEW_NODE_WITH_CUR_POS(cur_node, (is_double
-                       ? kExprNodeDoubleQuotedString
-                       : kExprNodeSingleQuotedString));
+                                       ? kExprNodeDoubleQuotedString
+                                       : kExprNodeSingleQuotedString));
       *top_node_p = cur_node;
       parse_quoted_string(pstate, cur_node, cur_token, &ast_stack, is_invalid);
       want_node = kENodeOperator;

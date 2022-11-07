@@ -729,7 +729,7 @@ void ex_hardcopy(exarg_T *eap)
           }
 
           assert(prtpos.bytes_printed <= SIZE_MAX / 100);
-          sprintf((char *)IObuff, _("Printing page %d (%zu%%)"),
+          sprintf((char *)IObuff, _("Printing page %d (%zu%%)"),  // NOLINT(runtime/printf)
                   page_count + 1 + side,
                   prtpos.bytes_printed * 100 / bytes_to_print);
           if (!mch_print_begin_page((char_u *)IObuff)) {
@@ -750,8 +750,7 @@ void ex_hardcopy(exarg_T *eap)
                        prtpos.file_line);
           }
 
-          for (page_line = 0; page_line < settings.lines_per_page;
-               ++page_line) {
+          for (page_line = 0; page_line < settings.lines_per_page; page_line++) {
             prtpos.column = hardcopy_line(&settings,
                                           page_line, &prtpos);
             if (prtpos.column == 0) {
@@ -2440,8 +2439,7 @@ bool mch_print_begin(prt_settings_T *psettings)
     prt_dsc_font_resource("DocumentNeededResources", &prt_ps_courier_font);
   }
   if (prt_out_mbyte) {
-    prt_dsc_font_resource((prt_use_courier ? NULL
-                                           : "DocumentNeededResources"), &prt_ps_mb_font);
+    prt_dsc_font_resource((prt_use_courier ? NULL : "DocumentNeededResources"), &prt_ps_mb_font);
     if (!prt_custom_cmap) {
       prt_dsc_resources(NULL, "cmap", prt_cmap);
     }
@@ -2990,7 +2988,7 @@ int mch_print_text_out(char_u *const textp, size_t len)
         ga_append(&prt_ps_buffer, '\\'); break;
 
       default:
-        sprintf((char *)ch_buff, "%03o", (unsigned int)ch);
+        sprintf((char *)ch_buff, "%03o", (unsigned int)ch);  // NOLINT(runtime/printf)
         ga_append(&prt_ps_buffer, (char)ch_buff[0]);
         ga_append(&prt_ps_buffer, (char)ch_buff[1]);
         ga_append(&prt_ps_buffer, (char)ch_buff[2]);
