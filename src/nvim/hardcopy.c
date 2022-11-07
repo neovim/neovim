@@ -522,7 +522,6 @@ static void prt_header(prt_settings_T *const psettings, const int pagenum, const
 
   if (*p_header != NUL) {
     linenr_T tmp_lnum, tmp_topline, tmp_botline;
-    int use_sandbox = false;
 
     // Need to (temporarily) set current line number and first/last line
     // number on the 'window'.  Since we don't know how long the page is,
@@ -536,9 +535,8 @@ static void prt_header(prt_settings_T *const psettings, const int pagenum, const
     curwin->w_botline = lnum + 63;
     printer_page_num = pagenum;
 
-    use_sandbox = was_set_insecurely(curwin, "printheader", 0);
     build_stl_str_hl(curwin, (char *)tbuf, (size_t)width + IOSIZE,
-                     (char *)p_header, use_sandbox,
+                     (char *)p_header, "printheader", 0,
                      ' ', width, NULL, NULL);
 
     // Reset line numbers
