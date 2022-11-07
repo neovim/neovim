@@ -2007,7 +2007,7 @@ return {
     },
     {
       full_name='secure',
-      short_desc=N_("mode for reading .vimrc in current dir"),
+      short_desc=N_("No description"),
       type='bool', scope={'global'},
       secure=true,
       varname='p_secure',

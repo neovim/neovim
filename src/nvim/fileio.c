@@ -2211,8 +2211,7 @@ int buf_write(buf_T *buf, char *fname, char *sfname, linenr_T start, linenr_T en
     return FAIL;
   }
 
-  // Disallow writing from .exrc and .vimrc in current directory for
-  // security reasons.
+  // Disallow writing in secure mode.
   if (check_secure()) {
     return FAIL;
   }

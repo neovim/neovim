@@ -641,6 +641,9 @@ Options:
   *'prompt'* *'noprompt'*
   *'remap'* *'noremap'*
   *'restorescreen'* *'rs'* *'norestorescreen'* *'nors'*
+  *'secure'*
+    Everything is allowed in 'exrc' files since they must be explicitly marked
+    trusted.
   *'shelltype'*
   *'shortname'* *'sn'* *'noshortname'* *'nosn'*
   *'swapsync'* *'sws'*

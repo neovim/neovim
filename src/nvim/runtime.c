@@ -1930,7 +1930,7 @@ int do_source(char *fname, int check_other, int is_vimrc)
 
   cookie.fp = fopen_noinh_readbin(fname_exp);
   if (cookie.fp == NULL && check_other) {
-    // Try again, replacing file name ".vimrc" by "_vimrc" or vice versa,
+    // Try again, replacing file name ".nvimrc" by "_nvimrc" or vice versa,
     // and ".exrc" by "_exrc" or vice versa.
     p = path_tail(fname_exp);
     if ((*p == '.' || *p == '_')
