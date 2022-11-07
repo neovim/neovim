@@ -40,7 +40,7 @@ describe('ffi.cdef', function()
           char *fmt,
           char *opt_name,
           int opt_scope,
-          char fillchar,
+          int fillchar,
           int maxwidth,
           stl_hlrec_t **hltab,
           StlClickRecord **tabtab
