@@ -267,6 +267,7 @@ Options:
   'tabline'     %@Func@foo%X can call any function on mouse-click
   'winblend'    pseudo-transparency in floating windows |api-floatwin|
   'winhighlight' window-local highlights
+  'diffopt'     has the option `linematch`.
 
 Signs:
   Signs are removed if the associated line is deleted.
