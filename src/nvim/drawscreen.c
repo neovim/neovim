@@ -518,6 +518,7 @@ int update_screen(int type)
     }
     msg_scrolled = 0;
     msg_scrolled_at_flush = 0;
+    msg_grid_scroll_discount = 0;
     need_wait_return = false;
   }
 
