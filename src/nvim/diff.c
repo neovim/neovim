@@ -1133,37 +1133,36 @@ static int diff_file(diffio_T *dio)
   // Use xdiff for generating the diff.
   if (dio->dio_internal) {
     return diff_file_internal(dio);
-  } else {
-    const size_t len = (strlen(tmp_orig) + strlen(tmp_new) + strlen(tmp_diff)
-                        + strlen(p_srr) + 27);
-    char *const cmd = xmalloc(len);
-
-    // We don't want $DIFF_OPTIONS to get in the way.
-    if (os_getenv("DIFF_OPTIONS")) {
-      os_unsetenv("DIFF_OPTIONS");
-    }
-
-    // Build the diff command and execute it.  Always use -a, binary
-    // differences are of no use.  Ignore errors, diff returns
-    // non-zero when differences have been found.
-    vim_snprintf(cmd, len, "diff %s%s%s%s%s%s%s%s %s",
-                 diff_a_works == kFalse ? "" : "-a ",
-                 "",
-                 (diff_flags & DIFF_IWHITE) ? "-b " : "",
-                 (diff_flags & DIFF_IWHITEALL) ? "-w " : "",
-                 (diff_flags & DIFF_IWHITEEOL) ? "-Z " : "",
-                 (diff_flags & DIFF_IBLANK) ? "-B " : "",
-                 (diff_flags & DIFF_ICASE) ? "-i " : "",
-                 tmp_orig, tmp_new);
-    append_redir(cmd, len, p_srr, tmp_diff);
-    block_autocmds();  // Avoid ShellCmdPost stuff
-    (void)call_shell((char_u *)cmd,
-                     kShellOptFilter | kShellOptSilent | kShellOptDoOut,
-                     NULL);
-    unblock_autocmds();
-    xfree(cmd);
-    return OK;
   }
+  const size_t len = (strlen(tmp_orig) + strlen(tmp_new) + strlen(tmp_diff)
+                      + strlen(p_srr) + 27);
+  char *const cmd = xmalloc(len);
+
+  // We don't want $DIFF_OPTIONS to get in the way.
+  if (os_getenv("DIFF_OPTIONS")) {
+    os_unsetenv("DIFF_OPTIONS");
+  }
+
+  // Build the diff command and execute it.  Always use -a, binary
+  // differences are of no use.  Ignore errors, diff returns
+  // non-zero when differences have been found.
+  vim_snprintf(cmd, len, "diff %s%s%s%s%s%s%s%s %s",
+               diff_a_works == kFalse ? "" : "-a ",
+               "",
+               (diff_flags & DIFF_IWHITE) ? "-b " : "",
+               (diff_flags & DIFF_IWHITEALL) ? "-w " : "",
+               (diff_flags & DIFF_IWHITEEOL) ? "-Z " : "",
+               (diff_flags & DIFF_IBLANK) ? "-B " : "",
+               (diff_flags & DIFF_ICASE) ? "-i " : "",
+               tmp_orig, tmp_new);
+  append_redir(cmd, len, p_srr, tmp_diff);
+  block_autocmds();  // Avoid ShellCmdPost stuff
+  (void)call_shell((char_u *)cmd,
+                   kShellOptFilter | kShellOptSilent | kShellOptDoOut,
+                   NULL);
+  unblock_autocmds();
+  xfree(cmd);
+  return OK;
 }
 
 /// Create a new version of a file from the current buffer and a diff file.

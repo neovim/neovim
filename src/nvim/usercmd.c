@@ -343,9 +343,8 @@ static char *get_command_complete(int arg)
 {
   if (arg >= (int)(ARRAY_SIZE(command_complete))) {
     return NULL;
-  } else {
-    return (char *)command_complete[arg];
   }
+  return (char *)command_complete[arg];
 }
 
 /// Function given to ExpandGeneric() to obtain the list of values for -complete.
@@ -357,9 +356,8 @@ char *get_user_cmd_complete(expand_T *xp, int idx)
   char *cmd_compl = get_command_complete(idx);
   if (cmd_compl == NULL) {
     return "";
-  } else {
-    return cmd_compl;
   }
+  return cmd_compl;
 }
 
 int cmdcomplete_str_to_type(const char *complete_str)

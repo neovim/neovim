@@ -762,12 +762,11 @@ static bool pum_set_selected(int n, int repeat)
             if (e == NULL) {
               ml_append(lnum++, (char *)p, 0, false);
               break;
-            } else {
-              *e = NUL;
-              ml_append(lnum++, (char *)p, (int)(e - p + 1), false);
-              *e = '\n';
-              p = e + 1;
             }
+            *e = NUL;
+            ml_append(lnum++, (char *)p, (int)(e - p + 1), false);
+            *e = '\n';
+            p = e + 1;
           }
 
           // Increase the height of the preview window to show the

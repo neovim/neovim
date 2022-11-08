@@ -59,8 +59,10 @@ struct msgchunk_S {
 };
 
 // Magic chars used in confirm dialog strings
-#define DLG_BUTTON_SEP  '\n'
-#define DLG_HOTKEY_CHAR '&'
+enum {
+  DLG_BUTTON_SEP = '\n',
+  DLG_HOTKEY_CHAR = '&',
+};
 
 static int confirm_msg_used = false;            // displaying confirm_msg
 #ifdef INCLUDE_GENERATED_DECLARATIONS

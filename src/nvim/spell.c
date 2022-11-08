@@ -112,11 +112,13 @@
 #include "nvim/vim.h"             // for curwin, strlen, STRLCPY, STRNCMP
 
 // Result values.  Lower number is accepted over higher one.
-#define SP_BANNED       (-1)
-#define SP_RARE         0
-#define SP_OK           1
-#define SP_LOCAL        2
-#define SP_BAD          3
+enum {
+  SP_BANNED = -1,
+  SP_RARE = 0,
+  SP_OK = 1,
+  SP_LOCAL = 2,
+  SP_BAD = 3,
+};
 
 // First language that is loaded, start of the linked list of loaded
 // languages.

@@ -324,15 +324,14 @@ static void forward_simple_utf8(TermInput *input, TermKeyKey *key)
       && map_has(KittyKey, cstr_t)(&kitty_key_map, (KittyKey)key->code.codepoint)) {
     handle_kitty_key_protocol(input, key);
     return;
-  } else {
-    while (*ptr) {
-      if (*ptr == '<') {
-        len += (size_t)snprintf(buf + len, sizeof(buf) - len, "<lt>");
-      } else {
-        buf[len++] = *ptr;
-      }
-      ptr++;
+  }
+  while (*ptr) {
+    if (*ptr == '<') {
+      len += (size_t)snprintf(buf + len, sizeof(buf) - len, "<lt>");
+    } else {
+      buf[len++] = *ptr;
     }
+    ptr++;
   }
 
   tinput_enqueue(input, buf, len);
@@ -355,21 +354,20 @@ static void forward_modified_utf8(TermInput *input, TermKeyKey *key)
                                      (KittyKey)key->code.codepoint)) {
       handle_kitty_key_protocol(input, key);
       return;
-    } else {
-      // Termkey doesn't include the S- modifier for ASCII characters (e.g.,
-      // ctrl-shift-l is <C-L> instead of <C-S-L>.  Vim, on the other hand,
-      // treats <C-L> and <C-l> the same, requiring the S- modifier.
-      len = termkey_strfkey(input->tk, buf, sizeof(buf), key, TERMKEY_FORMAT_VIM);
-      if ((key->modifiers & TERMKEY_KEYMOD_CTRL)
-          && !(key->modifiers & TERMKEY_KEYMOD_SHIFT)
-          && ASCII_ISUPPER(key->code.codepoint)) {
-        assert(len <= 62);
-        // Make room for the S-
-        memmove(buf + 3, buf + 1, len - 1);
-        buf[1] = 'S';
-        buf[2] = '-';
-        len += 2;
-      }
+    }
+    // Termkey doesn't include the S- modifier for ASCII characters (e.g.,
+    // ctrl-shift-l is <C-L> instead of <C-S-L>.  Vim, on the other hand,
+    // treats <C-L> and <C-l> the same, requiring the S- modifier.
+    len = termkey_strfkey(input->tk, buf, sizeof(buf), key, TERMKEY_FORMAT_VIM);
+    if ((key->modifiers & TERMKEY_KEYMOD_CTRL)
+        && !(key->modifiers & TERMKEY_KEYMOD_SHIFT)
+        && ASCII_ISUPPER(key->code.codepoint)) {
+      assert(len <= 62);
+      // Make room for the S-
+      memmove(buf + 3, buf + 1, len - 1);
+      buf[1] = 'S';
+      buf[2] = '-';
+      len += 2;
     }
   }
 

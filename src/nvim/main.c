@@ -88,16 +88,20 @@
 #include "nvim/api/extmark.h"
 
 // values for "window_layout"
-#define WIN_HOR     1       // "-o" horizontally split windows
-#define WIN_VER     2       // "-O" vertically split windows
-#define WIN_TABS    3       // "-p" windows on tab pages
+enum {
+  WIN_HOR = 1,   // "-o" horizontally split windows
+  WIN_VER = 2,   // "-O" vertically split windows
+  WIN_TABS = 3,  // "-p" windows on tab pages
+};
 
 // Values for edit_type.
-#define EDIT_NONE   0       // no edit type yet
-#define EDIT_FILE   1       // file name argument[s] given, use argument list
-#define EDIT_STDIN  2       // read file from stdin
-#define EDIT_TAG    3       // tag name argument given, use tagname
-#define EDIT_QF     4       // start in quickfix mode
+enum {
+  EDIT_NONE = 0,   // no edit type yet
+  EDIT_FILE = 1,   // file name argument[s] given, use argument list
+  EDIT_STDIN = 2,  // read file from stdin
+  EDIT_TAG = 3,    // tag name argument given, use tagname
+  EDIT_QF = 4,     // start in quickfix mode
+};
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "main.c.generated.h"

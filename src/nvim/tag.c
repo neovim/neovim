@@ -81,14 +81,16 @@ typedef struct {
 // ht_match[] is used to find duplicates, ga_match[] to keep them in sequence.
 // At the end, the matches from ga_match[] are concatenated, to make a list
 // sorted on priority.
-#define MT_ST_CUR       0               // static match in current file
-#define MT_GL_CUR       1               // global match in current file
-#define MT_GL_OTH       2               // global match in other file
-#define MT_ST_OTH       3               // static match in other file
-#define MT_IC_OFF       4               // add for icase match
-#define MT_RE_OFF       8               // add for regexp match
-#define MT_MASK         7               // mask for printing priority
-#define MT_COUNT        16
+enum {
+  MT_ST_CUR = 0,  // static match in current file
+  MT_GL_CUR = 1,  // global match in current file
+  MT_GL_OTH = 2,  // global match in other file
+  MT_ST_OTH = 3,  // static match in other file
+  MT_IC_OFF = 4,  // add for icase match
+  MT_RE_OFF = 8,  // add for regexp match
+  MT_MASK = 7,    // mask for printing priority
+  MT_COUNT = 16,
+};
 
 static char *mt_names[MT_COUNT/2] =
 { "FSC", "F C", "F  ", "FS ", " SC", "  C", "   ", " S " };
@@ -1657,9 +1659,8 @@ int find_tags(char *pat, int *num_matches, char ***matchesp, int flags, int minc
                                               - search_info.low_offset) / 2);
           if (offset == search_info.curr_offset) {
             break;              // End the binary search without a match.
-          } else {
-            search_info.curr_offset = offset;
           }
+          search_info.curr_offset = offset;
         } else if (state == TS_SKIP_BACK) {
           // Skipping back (after a match during binary search).
           search_info.curr_offset -= lbuf_size * 2;

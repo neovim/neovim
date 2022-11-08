@@ -33,8 +33,10 @@
 #include "nvim/vim.h"
 #include "nvim/window.h"
 
-#define URL_SLASH       1               // path_is_url() has found ":/"
-#define URL_BACKSLASH   2               // path_is_url() has found ":\\"
+enum {
+  URL_SLASH = 1,      // path_is_url() has found ":/"
+  URL_BACKSLASH = 2,  // path_is_url() has found ":\\"
+};
 
 #ifdef gen_expand_wildcards
 # undef gen_expand_wildcards

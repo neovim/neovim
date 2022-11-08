@@ -815,8 +815,10 @@ static bool mf_do_open(memfile_T *mfp, char *fname, int flags)
 /// The number of buckets in the hashtable is increased by a factor of
 /// MHT_GROWTH_FACTOR when the average number of items per bucket
 /// exceeds 2 ^ MHT_LOG_LOAD_FACTOR.
-#define MHT_LOG_LOAD_FACTOR 6
-#define MHT_GROWTH_FACTOR   2   // must be a power of two
+enum {
+  MHT_LOG_LOAD_FACTOR = 6,
+  MHT_GROWTH_FACTOR = 2,  // must be a power of two
+};
 
 /// Initialize an empty hash table.
 static void mf_hash_init(mf_hashtab_T *mht)

@@ -1479,9 +1479,8 @@ const void *mark_jumplist_iter(const void *const iter, const win_T *const win, x
   *fm = *iter_mark;
   if (iter_mark == &(win->w_jumplist[win->w_jumplistlen - 1])) {
     return NULL;
-  } else {
-    return iter_mark + 1;
   }
+  return iter_mark + 1;
 }
 
 /// Iterate over global marks

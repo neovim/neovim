@@ -378,15 +378,14 @@ int nlua_setvar(lua_State *lstate)
     if (di == NULL) {
       // Doesn't exist, nothing to do
       return 0;
-    } else {
-      // Notify watchers
-      if (watched) {
-        tv_dict_watcher_notify(dict, key.data, NULL, &di->di_tv);
-      }
-
-      // Delete the entry
-      tv_dict_item_remove(dict, di);
     }
+    // Notify watchers
+    if (watched) {
+      tv_dict_watcher_notify(dict, key.data, NULL, &di->di_tv);
+    }
+
+    // Delete the entry
+    tv_dict_item_remove(dict, di);
   } else {
     // Update the key
     typval_T tv;

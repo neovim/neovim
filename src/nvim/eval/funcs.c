@@ -5240,10 +5240,9 @@ static void f_mkdir(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
         xfree(failed_dir);
         rettv->vval.v_number = FAIL;
         return;
-      } else {
-        rettv->vval.v_number = OK;
-        return;
       }
+      rettv->vval.v_number = OK;
+      return;
     }
   }
   rettv->vval.v_number = vim_mkdir_emsg(dir, prot);
@@ -7485,9 +7484,8 @@ static void f_serverstart(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     if (argvars[0].v_type != VAR_STRING) {
       emsg(_(e_invarg));
       return;
-    } else {
-      address = xstrdup(tv_get_string(argvars));
     }
+    address = xstrdup(tv_get_string(argvars));
   } else {
     address = server_address_new(NULL);
   }

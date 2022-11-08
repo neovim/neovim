@@ -258,50 +258,55 @@
 
 // Special byte values for <byte>.  Some are only used in the tree for
 // postponed prefixes, some only in the other trees.  This is a bit messy...
-#define BY_NOFLAGS      0       // end of word without flags or region; for
-                                // postponed prefix: no <pflags>
-#define BY_INDEX        1       // child is shared, index follows
-#define BY_FLAGS        2       // end of word, <flags> byte follows; for
-                                // postponed prefix: <pflags> follows
-#define BY_FLAGS2       3       // end of word, <flags> and <flags2> bytes
-                                // follow; never used in prefix tree
-#define BY_SPECIAL  BY_FLAGS2   // highest special byte value
+enum {
+  BY_NOFLAGS = 0,  // end of word without flags or region; for postponed prefix: no <pflags>
+  BY_INDEX = 1,    // child is shared, index follows
+  BY_FLAGS = 2,    // end of word, <flags> byte follows; for postponed prefix: <pflags> follows
+  BY_FLAGS2 = 3,   // end of word, <flags> and <flags2> bytes follow; never used in prefix tree
+  BY_SPECIAL = BY_FLAGS2,  // highest special byte value
+};
 
 #define ZERO_FLAG   65009       // used when flag is zero: "0"
 
 // Flags used in .spl file for soundsalike flags.
-#define SAL_F0LLOWUP            1
-#define SAL_COLLAPSE            2
-#define SAL_REM_ACCENTS         4
+enum {
+  SAL_F0LLOWUP = 1,
+  SAL_COLLAPSE = 2,
+  SAL_REM_ACCENTS = 4,
+};
 
 #define VIMSPELLMAGIC "VIMspell"  // string at start of Vim spell file
 #define VIMSPELLMAGICL (sizeof(VIMSPELLMAGIC) - 1)
 #define VIMSPELLVERSION 50
 
 // Section IDs.  Only renumber them when VIMSPELLVERSION changes!
-#define SN_REGION       0       // <regionname> section
-#define SN_CHARFLAGS    1       // charflags section
-#define SN_MIDWORD      2       // <midword> section
-#define SN_PREFCOND     3       // <prefcond> section
-#define SN_REP          4       // REP items section
-#define SN_SAL          5       // SAL items section
-#define SN_SOFO         6       // soundfolding section
-#define SN_MAP          7       // MAP items section
-#define SN_COMPOUND     8       // compound words section
-#define SN_SYLLABLE     9       // syllable section
-#define SN_NOBREAK      10      // NOBREAK section
-#define SN_SUGFILE      11      // timestamp for .sug file
-#define SN_REPSAL       12      // REPSAL items section
-#define SN_WORDS        13      // common words
-#define SN_NOSPLITSUGS  14      // don't split word for suggestions
-#define SN_INFO         15      // info section
-#define SN_NOCOMPOUNDSUGS 16    // don't compound for suggestions
-#define SN_END          255     // end of sections
+enum {
+  SN_REGION = 0,           // <regionname> section
+  SN_CHARFLAGS = 1,        // charflags section
+  SN_MIDWORD = 2,          // <midword> section
+  SN_PREFCOND = 3,         // <prefcond> section
+  SN_REP = 4,              // REP items section
+  SN_SAL = 5,              // SAL items section
+  SN_SOFO = 6,             // soundfolding section
+  SN_MAP = 7,              // MAP items section
+  SN_COMPOUND = 8,         // compound words section
+  SN_SYLLABLE = 9,         // syllable section
+  SN_NOBREAK = 10,         // NOBREAK section
+  SN_SUGFILE = 11,         // timestamp for .sug file
+  SN_REPSAL = 12,          // REPSAL items section
+  SN_WORDS = 13,           // common words
+  SN_NOSPLITSUGS = 14,     // don't split word for suggestions
+  SN_INFO = 15,            // info section
+  SN_NOCOMPOUNDSUGS = 16,  // don't compound for suggestions
+  SN_END = 255,            // end of sections
+};
 
 #define SNF_REQUIRED    1       // <sectionflags>: required section
 
-#define CF_WORD         0x01
-#define CF_UPPER        0x02
+enum {
+  CF_WORD = 0x01,
+  CF_UPPER = 0x02,
+};
 
 static char *e_spell_trunc = N_("E758: Truncated spell file");
 static char *e_illegal_character_in_word = N_("E1280: Illegal character in word");

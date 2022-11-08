@@ -532,7 +532,7 @@ Dictionary nvim_parse_expression(String expr, String flags, Boolean highlight, E
       kv_drop(ast_conv_stack, 1);
     } else {
       if (cur_item.ret_node_p->type == kObjectTypeNil) {
-        size_t items_size = (size_t)(3  // "type", "start" and "len"
+        size_t items_size = (size_t)(3  // "type", "start" and "len"  // NOLINT(bugprone-misplaced-widening-cast)
                                      + (node->children != NULL)  // "children"
                                      + (node->type == kExprNodeOption
                                         || node->type == kExprNodePlainIdentifier)  // "scope"

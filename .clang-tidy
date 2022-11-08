@@ -1,5 +1,3 @@
----
-
 Checks: >
   -*,
 
@@ -16,8 +14,6 @@ Checks: >
   -bugprone-easily-swappable-parameters,
   -bugprone-implicit-widening-of-multiplication-result,
   -bugprone-macro-parentheses,
-  -bugprone-misplaced-widening-cast,
-  -bugprone-narrowing-conversions,
   -bugprone-narrowing-conversions,
   -bugprone-not-null-terminated-result,
   -bugprone-reserved-identifier,
@@ -32,6 +28,7 @@ Checks: >
   -misc-unused-parameters,
   -modernize-macro-to-enum,
   -performance-no-int-to-ptr,
+  -readability-avoid-const-params-in-decls,
   -readability-braces-around-statements,
   -readability-else-after-return,
   -readability-function-cognitive-complexity,
@@ -43,8 +40,3 @@ Checks: >
   -readability-redundant-declaration,
   -readability-redundant-function-ptr-dereference,
   -readability-suspicious-call-argument,
-
-WarningsAsErrors: ''
-
-HeaderFilterRegex: "(src/[cjson|klib|mpack|unicode|xdiff]/).*\\.h$"
-...

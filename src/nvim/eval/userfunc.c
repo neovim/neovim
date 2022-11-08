@@ -2051,9 +2051,8 @@ void ex_function(exarg_T *eap)
       }
       xfree(fudi.fd_newkey);
       return;
-    } else {
-      eap->skip = true;
     }
+    eap->skip = true;
   }
 
   // An error in a function call during evaluation of an expression in magic

@@ -121,9 +121,8 @@ bool os_isrealdir(const char *name)
   fs_loop_unlock();
   if (S_ISLNK(request.statbuf.st_mode)) {
     return false;
-  } else {
-    return S_ISDIR(request.statbuf.st_mode);
   }
+  return S_ISDIR(request.statbuf.st_mode);
 }
 
 /// Check if the given path exists and is a directory.
@@ -249,9 +248,8 @@ bool os_can_exe(const char *name, char **abspath, bool use_path)
         && is_executable(name, abspath)) {
 #endif
       return true;
-    } else {
-      return false;
     }
+    return false;
   }
 
   return is_executable_in_path(name, abspath);
@@ -756,9 +754,8 @@ int32_t os_getperm(const char *name)
   int stat_result = os_stat(name, &statbuf);
   if (stat_result == kLibuvSuccess) {
     return (int32_t)statbuf.st_mode;
-  } else {
-    return stat_result;
   }
+  return stat_result;
 }
 
 /// Set the permission of a file.

@@ -2960,15 +2960,13 @@ int get_option_value_strict(char *name, int64_t *numval, char **stringval, int o
     if (p->indir & PV_WIN) {
       if (opt_type == SREQ_BUF) {
         return 0;  // Requested buffer-local, not window-local option
-      } else {
-        rv |= SOPT_WIN;
       }
+      rv |= SOPT_WIN;
     } else if (p->indir & PV_BUF) {
       if (opt_type == SREQ_WIN) {
         return 0;  // Requested window-local, not buffer-local option
-      } else {
-        rv |= SOPT_BUF;
       }
+      rv |= SOPT_BUF;
     }
   }
 
@@ -2979,9 +2977,8 @@ int get_option_value_strict(char *name, int64_t *numval, char **stringval, int o
   if (opt_type == SREQ_GLOBAL) {
     if (p->var == VAR_WIN) {
       return 0;
-    } else {
-      varp = p->var;
     }
+    varp = p->var;
   } else {
     if (opt_type == SREQ_BUF) {
       // Special case: 'modified' is b_changed, but we also want to
@@ -3104,9 +3101,8 @@ char *set_option_value(const char *const name, const long number, const char *co
       }
       if (flags & P_NUM) {
         return set_num_option(opt_idx, varp, numval, NULL, 0, opt_flags);
-      } else {
-        return set_bool_option(opt_idx, varp, (int)numval, opt_flags);
       }
+      return set_bool_option(opt_idx, varp, (int)numval, opt_flags);
     }
   }
   return NULL;

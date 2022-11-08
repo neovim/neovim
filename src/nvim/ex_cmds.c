@@ -2159,9 +2159,8 @@ static int check_readonly(int *forceit, buf_T *buf)
         // Set forceit, to force the writing of a readonly file
         *forceit = true;
         return false;
-      } else {
-        return true;
       }
+      return true;
     } else if (buf->b_p_ro) {
       emsg(_(e_readonly));
     } else {

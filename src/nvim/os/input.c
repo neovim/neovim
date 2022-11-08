@@ -469,9 +469,8 @@ static InbufPollResult inbuf_poll(int ms, MultiQueue *events)
 
   if (input_ready(events)) {
     return kInputAvail;
-  } else {
-    return input_eof ? kInputEof : kInputNone;
   }
+  return input_eof ? kInputEof : kInputNone;
 }
 
 void input_done(void)

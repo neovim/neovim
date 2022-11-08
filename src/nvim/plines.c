@@ -238,9 +238,8 @@ int win_chartabsize(win_T *wp, char *p, colnr_T col)
   buf_T *buf = wp->w_buffer;
   if (*p == TAB && (!wp->w_p_list || wp->w_p_lcs_chars.tab1)) {
     return tabstop_padding(col, buf->b_p_ts, buf->b_p_vts_array);
-  } else {
-    return ptr2cells(p);
   }
+  return ptr2cells(p);
 }
 
 /// Return the number of characters the string 's' will take on the screen,

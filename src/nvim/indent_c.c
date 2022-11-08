@@ -458,9 +458,8 @@ bool cin_iscase(const char_u *s, bool strict)
         // JS etc.
         if (strict) {
           return false;                 // stop at string
-        } else {
-          return true;
         }
+        return true;
       }
     }
     return false;
@@ -2877,14 +2876,13 @@ int get_c_indent(void)
               // Line below current line is the one that starts a
               // (possibly broken) line ending in a comma.
               break;
-            } else {
-              amount = get_indent();
-              if (curwin->w_cursor.lnum - 1 == ourscope) {
-                // line above is start of the scope, thus current
-                // line is the one that stars a (possibly broken)
-                // line ending in a comma.
-                break;
-              }
+            }
+            amount = get_indent();
+            if (curwin->w_cursor.lnum - 1 == ourscope) {
+              // line above is start of the scope, thus current
+              // line is the one that stars a (possibly broken)
+              // line ending in a comma.
+              break;
             }
           }
 
