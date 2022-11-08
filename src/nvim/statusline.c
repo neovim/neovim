@@ -172,19 +172,7 @@ void win_redr_winbar(win_T *wp)
   if (wp->w_winbar_height == 0 || !redrawing()) {
     // Do nothing.
   } else if (*p_wbr != NUL || *wp->w_p_wbr != NUL) {
-    int saved_did_emsg = did_emsg;
-
-    did_emsg = false;
     win_redr_custom(wp, true, false);
-    if (did_emsg) {
-      // When there is an error disable the winbar, otherwise the
-      // display is messed up with errors and a redraw triggers the problem
-      // again and again.
-      set_string_option_direct("winbar", -1, "",
-                               OPT_FREE | (*wp->w_p_stl != NUL
-                                           ? OPT_LOCAL : OPT_GLOBAL), SID_ERROR);
-    }
-    did_emsg |= saved_did_emsg;
   }
   entered = false;
 }
