@@ -66,6 +66,8 @@ EXTERN ScreenGrid msg_grid_adj INIT(= SCREEN_GRID_INIT);
 // value of msg_scrolled at latest msg_scroll_flush.
 EXTERN int msg_scrolled_at_flush INIT(= 0);
 
+EXTERN int msg_grid_scroll_discount INIT(= 0);
+
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "message.h.generated.h"
 #endif
