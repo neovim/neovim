@@ -6,8 +6,6 @@
 // for FILE
 #include <stdio.h>
 
-#include "grid_defs.h"
-
 typedef struct file_buffer buf_T;  // Forward declaration
 
 // Reference to a buffer that stores the value of buf_free_count.
@@ -1100,6 +1098,24 @@ typedef struct {
   pos_T w_cursor_save;  // original cursor position
   pos_T w_cursor_corr;  // corrected cursor position
 } pos_save_T;
+
+/// Status line click definition
+typedef struct {
+  enum {
+    kStlClickDisabled = 0,  ///< Clicks to this area are ignored.
+    kStlClickTabSwitch,     ///< Switch to the given tab.
+    kStlClickTabClose,      ///< Close given tab.
+    kStlClickFuncRun,       ///< Run user function.
+  } type;      ///< Type of the click.
+  int tabnr;   ///< Tab page number.
+  char *func;  ///< Function to run.
+} StlClickDefinition;
+
+/// Used for tabline clicks
+typedef struct {
+  StlClickDefinition def;  ///< Click definition.
+  const char *start;       ///< Location where region starts.
+} StlClickRecord;
 
 /// Structure which contains all information that belongs to a window.
 ///

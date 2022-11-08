@@ -78,6 +78,7 @@
 #include "nvim/spell.h"
 #include "nvim/spellfile.h"
 #include "nvim/state.h"
+#include "nvim/statusline.h"
 #include "nvim/strings.h"
 #include "nvim/syntax.h"
 #include "nvim/tag.h"
