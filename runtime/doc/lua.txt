@@ -1979,7 +1979,8 @@ input({opts}, {on_confirm})                                   *vim.ui.input()*
                         highlighting user inputs.
       • {on_confirm}  (function) ((input|nil) -> ()) Called once the user
                       confirms or abort the input. `input` is what the user
-                      typed. `nil` if the user aborted the dialog.
+                      typed (it might be an empty string if nothing was
+                      entered), or `nil` if the user aborted the dialog.
 
 select({items}, {opts}, {on_choice})                         *vim.ui.select()*
     Prompts the user to pick a single item from a collection of entries
