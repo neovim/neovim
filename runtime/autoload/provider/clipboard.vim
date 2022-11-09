@@ -139,8 +139,8 @@ function! provider#clipboard#Executable() abort
     let s:paste['*'] = s:paste['+']
     return 'termux-clipboard'
   elseif !empty($TMUX) && executable('tmux')
-    let [major, minor] = matchlist(systemlist(['tmux', '-V'])[0], 'tmux \(\d\+\)\.\(\d\+\)')[1:2]
-    if major > 3 || (major == 3 && minor >= 2)
+    let ver = matchlist(systemlist(['tmux', '-V'])[0], '\vtmux %(next-)?(\d+)\.(\d+)')
+    if len(ver) >= 3 && (ver[1] > 3 || (ver[1] == 3 && ver[2] >= 2))
       let s:copy['+'] = ['tmux', 'load-buffer', '-w', '-']
     else
       let s:copy['+'] = ['tmux', 'load-buffer', '-']
