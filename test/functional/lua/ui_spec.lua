@@ -111,13 +111,11 @@ describe('vim.ui', function()
       eq('CANCEL', exec_lua('return result'))
     end)
 
-    it('does not call on_confirm when interrupted with Ctrl-C #18144', function()
+    it('can return nil when interrupted with Ctrl-C #18144', function()
       feed(':lua result = "on_confirm not called"<cr>')
-      eq('on_confirm not called', exec_lua('return result'))
       feed(':lua vim.ui.input({}, function(input) result = input end)<cr>')
       feed('Inputted Text<c-c>')
-      -- Ctrl-C would make vim.ui.input() throw, so `result = input` won't be executed
-      eq('on_confirm not called', exec_lua('return result'))
+      eq(true, exec_lua('return (nil == result)'))
     end)
 
     it('can return the identical object when an arbitrary opts.cancelreturn object is given', function()

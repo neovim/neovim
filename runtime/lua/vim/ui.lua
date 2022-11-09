@@ -95,8 +95,8 @@ function M.input(opts, on_confirm)
   local _canceled = vim.NIL
   opts = vim.tbl_extend('keep', opts, { cancelreturn = _canceled })
 
-  local input = vim.fn.input(opts)
-  if input == _canceled then
+  local ok, input = pcall(vim.fn.input, opts)
+  if not ok or input == _canceled then
     on_confirm(nil)
   else
     on_confirm(input)
