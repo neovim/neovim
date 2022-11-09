@@ -10,9 +10,11 @@ local async_meths = helpers.async_meths
 local test_build_dir = helpers.test_build_dir
 local nvim_prog = helpers.nvim_prog
 local iswin = helpers.iswin
+local exec = helpers.exec
 local exc_exec = helpers.exc_exec
 local exec_lua = helpers.exec_lua
 local poke_eventloop = helpers.poke_eventloop
+local assert_alive = helpers.assert_alive
 
 describe('ui/ext_messages', function()
   local screen
@@ -1234,6 +1236,17 @@ vimComment     xxx match /\s"[^\-:.%#=*].*$/ms=s+1,lc=1  excludenl contains=@vim
       bar^                                                         |
     ]])
   end)
+end)
+
+it('calling screenstring() after redrawing between messages without UI #20999', function()
+  clear()
+  exec([[
+    echo repeat('a', 100)
+    redraw
+    echo "\n"
+    call screenstring(1, 1)
+  ]])
+  assert_alive()
 end)
 
 describe('ui/ext_messages', function()
