@@ -534,7 +534,7 @@ used.
 For example, to set the dialect to a default of "fblite" but still allow for
 any #lang directive overrides, use the following command: >
 
-     let g:freebasic_lang = "fblite"
+	let g:freebasic_lang = "fblite"
 
 
 GIT COMMIT                                              *ft-gitcommit-plugin*

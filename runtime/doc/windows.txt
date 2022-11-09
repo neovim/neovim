@@ -537,9 +537,9 @@ CTRL-W =	Make all windows (almost) equally high and wide, but use
 		Windows with 'winfixheight' set keep their height and windows
 		with 'winfixwidth' set keep their width.
 		To equalize only vertically (make window equally high) use
-		`vertical wincmd =`
+		`vertical wincmd =` .
 		To equalize only horizontally (make window equally wide) use
-		`horizontal wincmd =`
+		`horizontal wincmd =` .
 
 :res[ize] -N					*:res* *:resize* *CTRL-W_-*
 CTRL-W -	Decrease current window height by N (default 1).

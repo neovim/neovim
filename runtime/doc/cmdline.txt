@@ -758,7 +758,7 @@ always be swapped then.
 
 Count and Range						*N:*
 
-When giving a count before entering ":", this is translated into:
+When giving a count before entering ":", this is translated into: >
 		:.,.+(count - 1)
 In words: The "count" lines at and after the cursor.  Example: To delete
 three lines: >

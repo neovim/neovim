@@ -7,7 +7,7 @@
 " Contributor:  Leonard Ehrenfried <leonard.ehrenfried@web.de>	
 " Contributor:  Karsten Hopp <karsten@redhat.com>
 " Originally:	2009-07-09
-" Last Change:	2021-03-29
+" Last Change:	2022 Nov 09
 " SSH Version:	8.5p1
 "
 
@@ -59,12 +59,12 @@ syn match sshdconfigCiphers "\<aes256-gcm@openssh\.com\>"
 syn match sshdconfigCiphers "\<chacha20-poly1305@openssh\.com\>"
 
 syn keyword sshdconfigMAC hmac-sha1
-syn keyword sshdconfigMAC mac-sha1-96
-syn keyword sshdconfigMAC mac-sha2-256
-syn keyword sshdconfigMAC mac-sha2-512
-syn keyword sshdconfigMAC mac-md5
-syn keyword sshdconfigMAC mac-md5-96
-syn keyword sshdconfigMAC mac-ripemd160
+syn keyword sshdconfigMAC hmac-sha1-96
+syn keyword sshdconfigMAC hmac-sha2-256
+syn keyword sshdconfigMAC hmac-sha2-512
+syn keyword sshdconfigMAC hmac-md5
+syn keyword sshdconfigMAC hmac-md5-96
+syn keyword sshdconfigMAC hmac-ripemd160
 syn match   sshdconfigMAC "\<hmac-ripemd160@openssh\.com\>"
 syn match   sshdconfigMAC "\<umac-64@openssh\.com\>"
 syn match   sshdconfigMAC "\<umac-128@openssh\.com\>"
@@ -258,6 +258,8 @@ syn keyword sshdconfigKeyword Subsystem
 syn keyword sshdconfigKeyword SyslogFacility
 syn keyword sshdconfigKeyword TCPKeepAlive
 syn keyword sshdconfigKeyword TrustedUserCAKeys
+syn keyword sshdconfigKeyword UseBlacklist
+syn keyword sshdconfigKeyword UseBlocklist
 syn keyword sshdconfigKeyword UseDNS
 syn keyword sshdconfigKeyword UseLogin
 syn keyword sshdconfigKeyword UsePAM

@@ -224,7 +224,7 @@ you can see?  This figure shows the three commands you can use:
 			+---------------------------+
 
 Hints: "H" stands for Home, "M" for Middle and "L" for Last.  Alternatively,
-"H" for high, "M" for Middle and "L" for low.
+"H" for High, "M" for Middle and "L" for Low.
 
 ==============================================================================
 *03.6*	Telling where you are

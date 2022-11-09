@@ -6,9 +6,10 @@
 " Contributor:  Leonard Ehrenfried <leonard.ehrenfried@web.de>
 " Contributor:  Karsten Hopp <karsten@redhat.com>
 " Contributor:  Dean, Adam Kenneth <adam.ken.dean@hpe.com>
-" Last Change:	2021 Mar 29
+" Last Change:	2022 Nov 09
 "		Added RemoteCommand from pull request #4809
 "		Included additional keywords from Martin.
+"		Included PR #5753
 " SSH Version:	8.5p1
 "
 
@@ -57,12 +58,12 @@ syn match sshconfigCiphers "\<aes256-gcm@openssh\.com\>"
 syn match sshconfigCiphers "\<chacha20-poly1305@openssh\.com\>"
 
 syn keyword sshconfigMAC hmac-sha1
-syn keyword sshconfigMAC mac-sha1-96
-syn keyword sshconfigMAC mac-sha2-256
-syn keyword sshconfigMAC mac-sha2-512
-syn keyword sshconfigMAC mac-md5
-syn keyword sshconfigMAC mac-md5-96
-syn keyword sshconfigMAC mac-ripemd160
+syn keyword sshconfigMAC hmac-sha1-96
+syn keyword sshconfigMAC hmac-sha2-256
+syn keyword sshconfigMAC hmac-sha2-512
+syn keyword sshconfigMAC hmac-md5
+syn keyword sshconfigMAC hmac-md5-96
+syn keyword sshconfigMAC hmac-ripemd160
 syn match   sshconfigMAC "\<hmac-ripemd160@openssh\.com\>"
 syn match   sshconfigMAC "\<umac-64@openssh\.com\>"
 syn match   sshconfigMAC "\<umac-128@openssh\.com\>"
@@ -78,16 +79,24 @@ syn match   sshconfigMAC "\<umac-128-etm@openssh\.com\>"
 
 syn keyword sshconfigHostKeyAlgo ssh-ed25519
 syn match sshconfigHostKeyAlgo "\<ssh-ed25519-cert-v01@openssh\.com\>"
+syn match sshconfigHostKeyAlgo "\<sk-ssh-ed25519@openssh\.com\>"
+syn match sshconfigHostKeyAlgo "\<sk-ssh-ed25519-cert-v01@openssh\.com\>"
 syn keyword sshconfigHostKeyAlgo ssh-rsa
+syn keyword sshconfigHostKeyAlgo rsa-sha2-256
+syn keyword sshconfigHostKeyAlgo rsa-sha2-512
 syn keyword sshconfigHostKeyAlgo ssh-dss
 syn keyword sshconfigHostKeyAlgo ecdsa-sha2-nistp256
 syn keyword sshconfigHostKeyAlgo ecdsa-sha2-nistp384
 syn keyword sshconfigHostKeyAlgo ecdsa-sha2-nistp521
+syn match sshconfigHostKeyAlgo "\<sk-ecdsa-sha2-nistp256@openssh\.com\>"
 syn match sshconfigHostKeyAlgo "\<ssh-rsa-cert-v01@openssh\.com\>"
+syn match sshconfigHostKeyAlgo "\<rsa-sha2-256-cert-v01@openssh\.com\>"
+syn match sshconfigHostKeyAlgo "\<rsa-sha2-512-cert-v01@openssh\.com\>"
 syn match sshconfigHostKeyAlgo "\<ssh-dss-cert-v01@openssh\.com\>"
 syn match sshconfigHostKeyAlgo "\<ecdsa-sha2-nistp256-cert-v01@openssh\.com\>"
 syn match sshconfigHostKeyAlgo "\<ecdsa-sha2-nistp384-cert-v01@openssh\.com\>"
 syn match sshconfigHostKeyAlgo "\<ecdsa-sha2-nistp521-cert-v01@openssh\.com\>"
+syn match sshconfigHostKeyAlgo "\<sk-ecdsa-sha2-nistp256-cert-v01@openssh\.com\>"
 
 syn keyword sshconfigPreferredAuth hostbased publickey password gssapi-with-mic
 syn keyword sshconfigPreferredAuth keyboard-interactive
