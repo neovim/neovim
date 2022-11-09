@@ -3,6 +3,8 @@ local thelpers = require('test.functional.terminal.helpers')
 local clear, eq, eval = helpers.clear, helpers.eq, helpers.eval
 local feed, nvim, command = helpers.feed, helpers.nvim, helpers.command
 local feed_data = thelpers.feed_data
+local iswin = helpers.iswin
+local skip = helpers.skip
 
 describe(':terminal mouse', function()
   local screen
@@ -66,7 +68,7 @@ describe(':terminal mouse', function()
     end)
 
     it('does not leave terminal mode on left-release', function()
-      if helpers.pending_win32(pending) then return end
+      skip(iswin())
       feed('<LeftRelease>')
       eq('t', eval('mode(1)'))
     end)
@@ -87,7 +89,7 @@ describe(':terminal mouse', function()
       end)
 
       it('will forward mouse press, drag and release to the program', function()
-        if helpers.pending_win32(pending) then return end
+        skip(iswin())
         feed('<LeftMouse><1,2>')
         screen:expect([[
           line27                                            |
@@ -131,7 +133,7 @@ describe(':terminal mouse', function()
       end)
 
       it('will forward mouse scroll to the program', function()
-        if helpers.pending_win32(pending) then return end
+        skip(iswin())
         feed('<ScrollWheelUp><0,0>')
         screen:expect([[
           line27                                            |
@@ -145,7 +147,7 @@ describe(':terminal mouse', function()
       end)
 
       it('dragging and scrolling do not interfere with each other', function()
-        if helpers.pending_win32(pending) then return end
+        skip(iswin())
         feed('<LeftMouse><1,2>')
         screen:expect([[
           line27                                            |
@@ -199,7 +201,7 @@ describe(':terminal mouse', function()
       end)
 
       it('will forward mouse clicks to the program with the correct even if set nu', function()
-        if helpers.pending_win32(pending) then return end
+        skip(iswin())
         command('set number')
         -- When the display area such as a number is clicked, it returns to the
         -- normal mode.
@@ -230,7 +232,7 @@ describe(':terminal mouse', function()
     end)
 
     describe('with a split window and other buffer', function()
-      if helpers.pending_win32(pending) then return end
+      skip(iswin())
       before_each(function()
         feed('<c-\\><c-n>:vsp<cr>')
         screen:expect([[

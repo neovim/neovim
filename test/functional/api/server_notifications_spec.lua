@@ -7,6 +7,7 @@ local exec_lua = helpers.exec_lua
 local retry = helpers.retry
 local isCI = helpers.isCI
 local assert_alive = helpers.assert_alive
+local skip = helpers.skip
 
 describe('notify', function()
   local channel
@@ -78,13 +79,7 @@ describe('notify', function()
   end)
 
   it('cancels stale events on channel close', function()
-    if isCI() then
-      pending('hangs on CI #14083 #15251')
-      return
-    elseif helpers.skip_fragile(pending) then
-      return
-    end
-    if helpers.pending_win32(pending) then return end
+    skip(isCI(), 'hangs on CI #14083 #15251')
     local catchan = eval("jobstart(['cat'], {'rpc': v:true})")
     local catpath = eval('exepath("cat")')
     eq({id=catchan, argv={catpath}, stream='job', mode='rpc', client = {}}, exec_lua ([[

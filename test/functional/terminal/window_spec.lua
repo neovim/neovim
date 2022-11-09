@@ -8,6 +8,7 @@ local command = helpers.command
 local retry = helpers.retry
 local eq = helpers.eq
 local eval = helpers.eval
+local skip = helpers.skip
 
 describe(':terminal window', function()
   local screen
@@ -18,7 +19,7 @@ describe(':terminal window', function()
   end)
 
   it('sets topline correctly #8556', function()
-    if helpers.pending_win32(pending) then return end
+    skip(iswin())
     -- Test has hardcoded assumptions of dimensions.
     eq(7, eval('&lines'))
     feed_data('\n\n\n')  -- Add blank lines.
@@ -54,9 +55,7 @@ describe(':terminal window', function()
         {3:-- TERMINAL --}                                    |
       ]])
 
-      if iswin() then
-        return  -- win: :terminal resize is unreliable #7007
-      end
+      skip(iswin(), 'win: :terminal resize is unreliable #7007')
 
       -- numberwidth=9
       feed([[<C-\><C-N>]])

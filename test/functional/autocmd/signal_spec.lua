@@ -5,11 +5,10 @@ local command = helpers.command
 local eq = helpers.eq
 local funcs = helpers.funcs
 local next_msg = helpers.next_msg
+local iswin = helpers.iswin
+local skip = helpers.skip
 
-if helpers.pending_win32(pending) then
-  -- Only applies to POSIX systems.
-  return
-end
+if skip(iswin(), 'Only applies to POSIX systems') then return end
 
 local function posix_kill(signame, pid)
   os.execute('kill -s '..signame..' -- '..pid..' >/dev/null')

@@ -19,13 +19,15 @@ local read_file = require('test.helpers').read_file
 local write_file = require('test.helpers').write_file
 local isCI = helpers.isCI
 local meths = helpers.meths
+local iswin = helpers.iswin
+local skip = helpers.skip
 
 -- Use these to get access to a coroutine so that I can run async tests and use
 -- yield.
 local run, stop = helpers.run, helpers.stop
 
 -- TODO(justinmk): hangs on Windows https://github.com/neovim/neovim/pull/11837
-if helpers.pending_win32(pending) then return end
+if skip(iswin()) then return end
 
 -- Fake LSP server.
 local fake_lsp_code = 'test/functional/fixtures/fake-lsp-server.lua'

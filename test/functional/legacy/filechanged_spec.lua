@@ -1,6 +1,8 @@
 local helpers = require('test.functional.helpers')(after_each)
 local clear, source = helpers.clear, helpers.source
 local call, eq, meths = helpers.call, helpers.eq, helpers.meths
+local iswin = helpers.iswin
+local skip = helpers.skip
 
 local function expected_empty()
   eq({}, meths.get_vvar('errors'))
@@ -15,7 +17,7 @@ describe('file changed dialog', function()
   end)
 
   it('works', function()
-    if helpers.pending_win32(pending) then return end
+    skip(iswin())
     source([[
       func Test_file_changed_dialog()
         au! FileChangedShell

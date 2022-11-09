@@ -12,6 +12,8 @@ local retry = helpers.retry
 local expect_twostreams = helpers.expect_twostreams
 local assert_alive = helpers.assert_alive
 local pcall_err = helpers.pcall_err
+local iswin = helpers.iswin
+local skip = helpers.skip
 
 describe('channels', function()
   local init = [[
@@ -145,7 +147,7 @@ describe('channels', function()
   end
 
   it('can use stdio channel with pty', function()
-    if helpers.pending_win32(pending) then return end
+    skip(iswin())
     source([[
       let g:job_opts = {
       \ 'on_stdout': function('OnEvent'),
@@ -199,7 +201,7 @@ describe('channels', function()
 
 
   it('stdio channel can use rpc and stderr simultaneously', function()
-    if helpers.pending_win32(pending) then return end
+    skip(iswin())
     source([[
       let g:job_opts = {
       \ 'on_stderr': function('OnEvent'),

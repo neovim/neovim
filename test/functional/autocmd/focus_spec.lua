@@ -6,7 +6,7 @@ local nvim_prog = helpers.nvim_prog
 local feed_command = helpers.feed_command
 local feed_data = thelpers.feed_data
 
-if helpers.pending_win32(pending) then return end
+if helpers.skip(helpers.iswin()) then return end
 
 describe('autoread TUI FocusGained/FocusLost', function()
   local f1 = 'xtest-foo'

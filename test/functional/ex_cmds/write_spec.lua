@@ -10,6 +10,7 @@ local funcs = helpers.funcs
 local meths = helpers.meths
 local iswin = helpers.iswin
 local isCI = helpers.isCI
+local skip = helpers.skip
 
 local fname = 'Xtest-functional-ex_cmds-write'
 local fname_bak = fname .. '~'
@@ -56,9 +57,7 @@ describe(':write', function()
   end)
 
   it('&backupcopy=no replaces symlink with new file', function()
-    if isCI('cirrus') then
-      pending('FIXME: cirrus')
-    end
+    skip(isCI('cirrus'))
     command('set backupcopy=no')
     write_file('test_bkc_file.txt', 'content0')
     if iswin() then
@@ -122,9 +121,7 @@ describe(':write', function()
   end)
 
   it('errors out correctly', function()
-    if isCI('cirrus') then
-      pending('FIXME: cirrus')
-    end
+    skip(isCI('cirrus'))
     command('let $HOME=""')
     eq(funcs.fnamemodify('.', ':p:h'), funcs.fnamemodify('.', ':p:h:~'))
     -- Message from check_overwrite
@@ -155,8 +152,7 @@ describe(':write', function()
       eq(true, os.remove(fname_bak))
     end
     write_file(fname_bak, 'TTYX')
-    -- FIXME: exc_exec('write!') outputs 0 in Windows
-    if iswin() then return end
+    skip(iswin(), [[FIXME: exc_exec('write!') outputs 0 in Windows]])
     lfs.link(fname_bak .. ('/xxxxx'):rep(20), fname, true)
     eq('Vim(write):E166: Can\'t open linked file for writing',
        pcall_err(command, 'write!'))

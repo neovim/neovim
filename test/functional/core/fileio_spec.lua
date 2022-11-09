@@ -28,6 +28,7 @@ local write_file = helpers.write_file
 local Screen = require('test.functional.ui.screen')
 local feed_command = helpers.feed_command
 local isCI = helpers.isCI
+local skip = helpers.skip
 
 describe('fileio', function()
   before_each(function()
@@ -89,9 +90,7 @@ describe('fileio', function()
   end)
 
   it('backup #9709', function()
-    if isCI('cirrus') then
-      pending('FIXME: cirrus')
-    end
+    skip(isCI('cirrus'))
     clear({ args={ '-i', 'Xtest_startup_shada',
                    '--cmd', 'set directory=Xtest_startup_swapdir' } })
 
@@ -111,9 +110,7 @@ describe('fileio', function()
   end)
 
   it('backup with full path #11214', function()
-    if isCI('cirrus') then
-      pending('FIXME: cirrus')
-    end
+    skip(isCI('cirrus'))
     clear()
     mkdir('Xtest_backupdir')
     command('set backup')
@@ -135,9 +132,7 @@ describe('fileio', function()
   end)
 
   it('backup symlinked files #11349', function()
-    if isCI('cirrus') then
-      pending('FIXME: cirrus')
-    end
+    skip(isCI('cirrus'))
     clear()
 
     local initial_content = 'foo'
@@ -159,9 +154,7 @@ describe('fileio', function()
 
 
   it('backup symlinked files in first avialable backupdir #11349', function()
-    if isCI('cirrus') then
-      pending('FIXME: cirrus')
-    end
+    skip(isCI('cirrus'))
     clear()
 
     local initial_content = 'foo'
@@ -306,9 +299,7 @@ describe('tmpdir', function()
     end)
 
     -- "…/nvim.<user>/" has wrong permissions:
-    if iswin() then
-      return  -- TODO(justinmk): need setfperm/getfperm on Windows. #8244
-    end
+    skip(iswin(), 'TODO(justinmk): need setfperm/getfperm on Windows. #8244')
     os.remove(testlog)
     os.remove(tmproot)
     mkdir(tmproot)

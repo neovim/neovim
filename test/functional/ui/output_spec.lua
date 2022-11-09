@@ -13,6 +13,7 @@ local testprg = helpers.testprg
 local nvim_dir = helpers.nvim_dir
 local has_powershell = helpers.has_powershell
 local set_shell_powershell = helpers.set_shell_powershell
+local skip = helpers.skip
 
 describe("shell command :!", function()
   local screen
@@ -36,7 +37,7 @@ describe("shell command :!", function()
   end)
 
   it("displays output without LF/EOF. #4646 #4569 #3772", function()
-    if helpers.pending_win32(pending) then return end
+    skip(iswin())
     -- NOTE: We use a child nvim (within a :term buffer)
     --       to avoid triggering a UI flush.
     child_session.feed_data(":!printf foo; sleep 200\n")
@@ -52,9 +53,7 @@ describe("shell command :!", function()
   end)
 
   it("throttles shell-command output greater than ~10KB", function()
-    if 'openbsd' == helpers.uname() then
-      pending('FIXME #10804')
-    end
+    skip('openbsd' == helpers.uname(), 'FIXME #10804')
     child_session.feed_data((":!%s REP 30001 foo\n"):format(testprg('shell-test')))
 
     -- If we observe any line starting with a dot, then throttling occurred.
@@ -96,9 +95,7 @@ describe("shell command :!", function()
   end)
 
   it('handles control codes', function()
-    if iswin() then
-      pending('missing printf')
-    end
+    skip(iswin(), 'missing printf')
     local screen = Screen.new(50, 4)
     screen:set_default_attr_ids {
       [1] = {bold = true, reverse = true};

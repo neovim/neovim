@@ -7,6 +7,7 @@ local meths = helpers.meths
 local iswin = helpers.iswin
 local testprg = helpers.testprg
 local thelpers = require('test.functional.terminal.helpers')
+local skip = helpers.skip
 
 describe('ext_hlstate detailed highlights', function()
   local screen
@@ -182,7 +183,7 @@ describe('ext_hlstate detailed highlights', function()
   end)
 
   it("work with :terminal", function()
-    if helpers.pending_win32(pending) then return end
+    skip(iswin())
 
     screen:set_default_attr_ids({
       [1] = {{}, {{hi_name = "TermCursorNC", ui_name = "TermCursorNC", kind = "ui"}}},
