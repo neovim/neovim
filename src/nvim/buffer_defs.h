@@ -44,6 +44,8 @@ typedef struct {
 #include "nvim/marktree.h"
 // for float window title
 #include "nvim/extmark_defs.h"
+// for click definitions
+#include "nvim/statusline_defs.h"
 
 #define GETFILE_SUCCESS(x)    ((x) <= 0)
 #define MODIFIABLE(buf) (buf->b_p_ma)
@@ -1098,24 +1100,6 @@ typedef struct {
   pos_T w_cursor_save;  // original cursor position
   pos_T w_cursor_corr;  // corrected cursor position
 } pos_save_T;
-
-/// Status line click definition
-typedef struct {
-  enum {
-    kStlClickDisabled = 0,  ///< Clicks to this area are ignored.
-    kStlClickTabSwitch,     ///< Switch to the given tab.
-    kStlClickTabClose,      ///< Close given tab.
-    kStlClickFuncRun,       ///< Run user function.
-  } type;      ///< Type of the click.
-  int tabnr;   ///< Tab page number.
-  char *func;  ///< Function to run.
-} StlClickDefinition;
-
-/// Used for tabline clicks
-typedef struct {
-  StlClickDefinition def;  ///< Click definition.
-  const char *start;       ///< Location where region starts.
-} StlClickRecord;
 
 /// Structure which contains all information that belongs to a window.
 ///

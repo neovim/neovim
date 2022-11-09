@@ -437,10 +437,6 @@ EXTERN tabpage_T *first_tabpage;
 EXTERN tabpage_T *curtab;
 EXTERN tabpage_T *lastused_tabpage;
 EXTERN bool redraw_tabline INIT(= false);  // need to redraw tabline
-/// Array defining what should be done when tabline is clicked
-EXTERN StlClickDefinition *tab_page_click_defs INIT(= NULL);
-/// Size of the tab_page_click_defs array
-EXTERN size_t tab_page_click_defs_size INIT(= 0);
 
 // Iterates over all tabs in the tab list
 #define FOR_ALL_TABS(tp) for (tabpage_T *(tp) = first_tabpage; (tp) != NULL; (tp) = (tp)->tp_next)

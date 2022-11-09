@@ -61,6 +61,7 @@
 #include "nvim/shada.h"
 #include "nvim/sign.h"
 #include "nvim/state.h"
+#include "nvim/statusline.h"
 #include "nvim/strings.h"
 #include "nvim/syntax.h"
 #include "nvim/ui.h"
