@@ -12,7 +12,7 @@ local function man_error(msg)
 end
 
 -- Run a system command and timeout after 30 seconds.
-local function system(cmd, silent, env)
+local function system(cmd_, silent, env)
   local stdout_data = {}
   local stderr_data = {}
   local stdout = vim.loop.new_pipe(false)
@@ -21,11 +21,23 @@ local function system(cmd, silent, env)
   local done = false
   local exit_code
 
+  -- We use the `env` command here rather than the env option to vim.loop.spawn since spawn will
+  -- completely overwrite the environment when we just want to modify the existing one.
+  --
+  -- Overwriting mainly causes problems NixOS which relies heavily on a non-standard environment.
+  local cmd
+  if env then
+    cmd = { 'env' }
+    vim.list_extend(cmd, env)
+    vim.list_extend(cmd, cmd_)
+  else
+    cmd = cmd_
+  end
+
   local handle
   handle = vim.loop.spawn(cmd[1], {
     args = vim.list_slice(cmd, 2),
     stdio = { nil, stdout, stderr },
-    env = env,
   }, function(code)
     exit_code = code
     stdout:close()
