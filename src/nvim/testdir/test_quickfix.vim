@@ -3441,9 +3441,9 @@ func Xmultidirstack_tests(cchar)
 
   let l1 = g:Xgetlist({'nr':1, 'items':1})
   let l2 = g:Xgetlist({'nr':2, 'items':1})
-  call assert_equal(expand('Xone/a/one.txt'), bufname(l1.items[1].bufnr))
+  call assert_equal('Xone/a/one.txt', bufname(l1.items[1].bufnr))
   call assert_equal(3, l1.items[1].lnum)
-  call assert_equal(expand('Xtwo/a/two.txt'), bufname(l2.items[1].bufnr))
+  call assert_equal('Xtwo/a/two.txt', bufname(l2.items[1].bufnr))
   call assert_equal(5, l2.items[1].lnum)
 endfunc
 
