@@ -6,8 +6,6 @@
 // for FILE
 #include <stdio.h>
 
-#include "grid_defs.h"
-
 typedef struct file_buffer buf_T;  // Forward declaration
 
 // Reference to a buffer that stores the value of buf_free_count.
@@ -46,6 +44,8 @@ typedef struct {
 #include "nvim/marktree.h"
 // for float window title
 #include "nvim/extmark_defs.h"
+// for click definitions
+#include "nvim/statusline_defs.h"
 
 #define GETFILE_SUCCESS(x)    ((x) <= 0)
 #define MODIFIABLE(buf) (buf->b_p_ma)

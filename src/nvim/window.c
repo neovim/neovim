@@ -52,6 +52,7 @@
 #include "nvim/regexp.h"
 #include "nvim/search.h"
 #include "nvim/state.h"
+#include "nvim/statusline.h"
 #include "nvim/strings.h"
 #include "nvim/syntax.h"
 #include "nvim/terminal.h"
@@ -5027,10 +5028,10 @@ static void win_free(win_T *wp, tabpage_T *tp)
   xfree(wp->w_localdir);
   xfree(wp->w_prevdir);
 
-  stl_clear_click_defs(wp->w_status_click_defs, (long)wp->w_status_click_defs_size);
+  stl_clear_click_defs(wp->w_status_click_defs, wp->w_status_click_defs_size);
   xfree(wp->w_status_click_defs);
 
-  stl_clear_click_defs(wp->w_winbar_click_defs, (long)wp->w_winbar_click_defs_size);
+  stl_clear_click_defs(wp->w_winbar_click_defs, wp->w_winbar_click_defs_size);
   xfree(wp->w_winbar_click_defs);
 
   // Remove the window from the b_wininfo lists, it may happen that the
@@ -6584,7 +6585,7 @@ static void win_remove_status_line(win_T *wp, bool add_hsep)
   }
   comp_col();
 
-  stl_clear_click_defs(wp->w_status_click_defs, (long)wp->w_status_click_defs_size);
+  stl_clear_click_defs(wp->w_status_click_defs, wp->w_status_click_defs_size);
   xfree(wp->w_status_click_defs);
   wp->w_status_click_defs_size = 0;
   wp->w_status_click_defs = NULL;
@@ -6720,7 +6721,7 @@ int set_winbar_win(win_T *wp, bool make_room, bool valid_cursor)
 
     if (winbar_height == 0) {
       // When removing winbar, deallocate the w_winbar_click_defs array
-      stl_clear_click_defs(wp->w_winbar_click_defs, (long)wp->w_winbar_click_defs_size);
+      stl_clear_click_defs(wp->w_winbar_click_defs, wp->w_winbar_click_defs_size);
       xfree(wp->w_winbar_click_defs);
       wp->w_winbar_click_defs_size = 0;
       wp->w_winbar_click_defs = NULL;

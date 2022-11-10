@@ -25,6 +25,7 @@
 #include "nvim/plines.h"
 #include "nvim/search.h"
 #include "nvim/state.h"
+#include "nvim/statusline.h"
 #include "nvim/strings.h"
 #include "nvim/syntax.h"
 #include "nvim/ui.h"
