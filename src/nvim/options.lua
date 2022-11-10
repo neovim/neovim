@@ -2298,6 +2298,15 @@ return {
       defaults={if_true=false}
     },
     {
+      full_name='statuscolumn', abbreviation='stc',
+      short_desc=N_("custom format for the status column"),
+      type='string', scope={'window'},
+      redraw={'current_window'},
+      secure=true,
+      alloced=true,
+      defaults={if_true=""}
+    },
+    {
       full_name='statusline', abbreviation='stl',
       short_desc=N_("custom format for the status line"),
       type='string', scope={'global', 'window'},

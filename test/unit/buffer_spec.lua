@@ -238,6 +238,7 @@ describe('buffer functions', function()
                                      fillchar,
                                      maximum_cell_count,
                                      NULL,
+                                     NULL,
                                      NULL)
     end
 

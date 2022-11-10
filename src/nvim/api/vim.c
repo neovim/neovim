@@ -2238,6 +2238,7 @@ Dictionary nvim_eval_statusline(String str, Dict(eval_statusline) *opts, Error *
                                fillchar,
                                maxwidth,
                                hltab_ptr,
+                               NULL,
                                NULL);
 
   PUT(result, "width", INTEGER_OBJ(width));

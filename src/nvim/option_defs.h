@@ -337,6 +337,8 @@ enum {
   STL_ARGLISTSTAT     = 'a',  ///< Argument list status as (x of y).
   STL_PAGENUM         = 'N',  ///< Page number (when printing).
   STL_SHOWCMD         = 'S',  ///< 'showcmd' buffer
+  STL_FOLDCOL         = 'C',  ///< Fold column for 'statuscolumn'
+  STL_SIGNCOL         = 's',  ///< Sign column for 'statuscolumn'
   STL_VIM_EXPR        = '{',  ///< Start of expression to substitute.
   STL_SEPARATE        = '=',  ///< Separation between alignment sections.
   STL_TRUNCMARK       = '<',  ///< Truncation mark if line is too long.
@@ -354,8 +356,9 @@ enum {
     STL_HELPFLAG, STL_HELPFLAG_ALT, STL_FILETYPE, STL_FILETYPE_ALT, \
     STL_PREVIEWFLAG, STL_PREVIEWFLAG_ALT, STL_MODIFIED, STL_MODIFIED_ALT, \
     STL_QUICKFIX, STL_PERCENTAGE, STL_ALTPERCENT, STL_ARGLISTSTAT, STL_PAGENUM, \
-    STL_SHOWCMD, STL_VIM_EXPR, STL_SEPARATE, STL_TRUNCMARK, STL_USER_HL, \
-    STL_HIGHLIGHT, STL_TABPAGENR, STL_TABCLOSENR, STL_CLICK_FUNC, \
+    STL_SHOWCMD, STL_FOLDCOL, STL_SIGNCOL, STL_VIM_EXPR, STL_SEPARATE, \
+    STL_TRUNCMARK, STL_USER_HL, STL_HIGHLIGHT, STL_TABPAGENR, STL_TABCLOSENR, \
+    STL_CLICK_FUNC, STL_TABPAGENR, STL_TABCLOSENR, STL_CLICK_FUNC, \
     0, \
   })
 
@@ -955,6 +958,7 @@ enum {
   WV_CULOPT,
   WV_CC,
   WV_SBR,
+  WV_STC,
   WV_STL,
   WV_WFH,
   WV_WFW,

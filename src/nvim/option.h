@@ -19,6 +19,8 @@ typedef enum {
 #define BCO_ALWAYS      2       // always copy the options
 #define BCO_NOHELP      4       // don't touch the help related options
 
+#define MAX_NUMBERWIDTH 20      // used for 'numberwidth' and 'statuscolumn'
+
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "option.h.generated.h"
 #endif

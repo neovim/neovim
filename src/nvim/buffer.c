@@ -3236,7 +3236,7 @@ void maketitle(void)
     if (*p_titlestring != NUL) {
       if (stl_syntax & STL_IN_TITLE) {
         build_stl_str_hl(curwin, buf, sizeof(buf), p_titlestring,
-                         "titlestring", 0, 0, maxlen, NULL, NULL);
+                         "titlestring", 0, 0, maxlen, NULL, NULL, NULL);
         title_str = buf;
       } else {
         title_str = p_titlestring;
@@ -3342,7 +3342,7 @@ void maketitle(void)
     if (*p_iconstring != NUL) {
       if (stl_syntax & STL_IN_ICON) {
         build_stl_str_hl(curwin, icon_str, sizeof(buf), p_iconstring,
-                         "iconstring", 0, 0, 0, NULL, NULL);
+                         "iconstring", 0, 0, 0, NULL, NULL, NULL);
       } else {
         icon_str = p_iconstring;
       }

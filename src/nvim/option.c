@@ -2094,6 +2094,9 @@ static char *set_bool_option(const int opt_idx, char_u *const varp, const int va
     if (curwin->w_p_spell) {
       errmsg = did_set_spelllang(curwin);
     }
+  } else if (((int *)varp == &curwin->w_p_nu || (int *)varp == &curwin->w_p_rnu)
+             && *curwin->w_p_stc != NUL) {  // '(relative)number' + 'statuscolumn'
+    curwin->w_nrwidth_line_count = 0;
   }
 
   if ((int *)varp == &curwin->w_p_arab) {
@@ -2314,7 +2317,7 @@ static char *set_num_option(int opt_idx, char_u *varp, long value, char *errbuf,
   } else if (pp == &curwin->w_p_nuw || pp == &curwin->w_allbuf_opt.wo_nuw) {
     if (value < 1) {
       errmsg = e_positive;
-    } else if (value > 20) {
+    } else if (value > MAX_NUMBERWIDTH) {
       errmsg = e_invarg;
     }
   } else if (pp == &curbuf->b_p_iminsert || pp == &p_iminsert) {
@@ -3628,6 +3631,9 @@ void unset_global_local_option(char *name, void *from)
     clear_string_option(&((win_T *)from)->w_p_ve);
     ((win_T *)from)->w_ve_flags = 0;
     break;
+  case PV_STC:
+    clear_string_option(&((win_T *)from)->w_p_stc);
+    break;
   }
 }
 
@@ -4012,6 +4018,8 @@ static char_u *get_varp(vimoption_T *p)
     return (char_u *)&(curwin->w_p_winhl);
   case PV_WINBL:
     return (char_u *)&(curwin->w_p_winbl);
+  case PV_STC:
+    return (char_u *)&(curwin->w_p_stc);
   default:
     iemsg(_("E356: get_varp ERROR"));
   }
@@ -4100,6 +4108,7 @@ void copy_winopt(winopt_T *from, winopt_T *to)
   to->wo_scl = copy_option_val(from->wo_scl);
   to->wo_winhl = copy_option_val(from->wo_winhl);
   to->wo_winbl = from->wo_winbl;
+  to->wo_stc = copy_option_val(from->wo_stc);
 
   // Copy the script context so that we know were the value was last set.
   memmove(to->wo_script_ctx, from->wo_script_ctx, sizeof(to->wo_script_ctx));
@@ -4137,6 +4146,7 @@ static void check_winopt(winopt_T *wop)
   check_string_option(&wop->wo_fcs);
   check_string_option(&wop->wo_ve);
   check_string_option(&wop->wo_wbr);
+  check_string_option(&wop->wo_stc);
 }
 
 /// Free the allocated memory inside a winopt_T.
@@ -4163,6 +4173,7 @@ void clear_winopt(winopt_T *wop)
   clear_string_option(&wop->wo_fcs);
   clear_string_option(&wop->wo_ve);
   clear_string_option(&wop->wo_wbr);
+  clear_string_option(&wop->wo_stc);
 }
 
 void didset_window_options(win_T *wp, bool valid_cursor)

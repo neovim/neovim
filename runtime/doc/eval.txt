@@ -2001,10 +2001,10 @@ v:lc_time	The current locale setting for time messages of the runtime
 		command.  See |multi-lang|.
 
 						*v:lnum* *lnum-variable*
-v:lnum		Line number for the 'foldexpr' |fold-expr|, 'formatexpr' and
-		'indentexpr' expressions, tab page number for 'guitablabel'
-		and 'guitabtooltip'.  Only valid while one of these
-		expressions is being evaluated.  Read-only when in the
+v:lnum		Line number for the 'foldexpr' |fold-expr|, 'formatexpr',
+		'indentexpr' and 'statuscolumn' expressions, tab page number
+		for 'guitablabel' and 'guitabtooltip'.  Only valid while one of
+		these expressions is being evaluated.  Read-only when in the
 		|sandbox|.
 
 						*v:lua* *lua-variable*
@@ -2137,6 +2137,10 @@ v:register	The name of the register in effect for the current normal mode
 		'clipboard' contains "unnamed" or "unnamedplus", then it is
 		'*' or '+'.
 		Also see |getreg()| and |setreg()|
+
+					*v:relnum* *relnum-variable*
+v:relnum	Relative line number for the 'statuscolumn' expression.
+		Read-only.
 
 					*v:scrollstart* *scrollstart-variable*
 v:scrollstart	String describing the script or function that caused the
@@ -2293,6 +2297,11 @@ v:version	Vim version number: major version times 100 plus minor
 
 				*v:vim_did_enter* *vim_did_enter-variable*
 v:vim_did_enter	0 during startup, 1 just before |VimEnter|.
+		Read-only.
+
+						*v:wrap* *wrap-variable*
+v:wrap		Boolean indicating whether 'statuscolumn' is being evaluated
+		for the wrapped part of a line.
 		Read-only.
 
 					*v:warningmsg* *warningmsg-variable*
