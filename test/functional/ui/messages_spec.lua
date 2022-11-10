@@ -1236,6 +1236,34 @@ vimComment     xxx match /\s"[^\-:.%#=*].*$/ms=s+1,lc=1  excludenl contains=@vim
       bar^                                                         |
     ]])
   end)
+
+  it('consecutive calls to win_move_statusline() work after multiline message #21014',function()
+    async_meths.exec([[
+      echo "\n"
+      call win_move_statusline(0, -4)
+      call win_move_statusline(0, 4)
+    ]], false)
+    screen:expect([[
+                                                                  |
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {3:                                                            }|
+                                                                  |
+      {4:Press ENTER or type command to continue}^                     |
+    ]])
+    feed('<CR>')
+    screen:expect([[
+      ^                                                            |
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+                                                                  |
+    ]])
+    eq(1, meths.get_option('cmdheight'))
+  end)
 end)
 
 it('calling screenstring() after redrawing between messages without UI #20999', function()
