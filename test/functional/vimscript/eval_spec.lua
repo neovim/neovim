@@ -71,13 +71,13 @@ describe("backtick expansion", function()
   end)
 
   it("with default 'shell'", function()
-    if helpers.iswin() then
+    if helpers.is_os('win') then
       command(":silent args `dir /b *2`")
     else
       command(":silent args `echo ***2`")
     end
     eq({ "file2", }, eval("argv()"))
-    if helpers.iswin() then
+    if helpers.is_os('win') then
       command(":silent args `dir /s/b *4`")
       eq({ "subdir\\file4", }, eval("map(argv(), 'fnamemodify(v:val, \":.\")')"))
     else

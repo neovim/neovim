@@ -15,7 +15,7 @@ local matches = helpers.matches
 local exec_lua = helpers.exec_lua
 local sleep = helpers.sleep
 local funcs = helpers.funcs
-local iswin = helpers.iswin
+local is_os = helpers.is_os
 local skip = helpers.skip
 
 describe(':terminal buffer', function()
@@ -202,7 +202,7 @@ describe(':terminal buffer', function()
 
     -- Save the buffer number of the terminal for later testing.
     local tbuf = eval('bufnr("%")')
-    local exitcmd = helpers.iswin()
+    local exitcmd = helpers.is_os('win')
       and "['cmd', '/c', 'exit']"
       or "['sh', '-c', 'exit']"
     source([[
@@ -264,7 +264,7 @@ describe(':terminal buffer', function()
   end)
 
   it('it works with set rightleft #11438', function()
-    skip(iswin())
+    skip(is_os('win'))
     local columns = eval('&columns')
     feed(string.rep('a', columns))
     command('set rightleft')

@@ -54,7 +54,6 @@ if module.nvim_dir == module.nvim_prog then
   module.nvim_dir = "."
 end
 
-local iswin = global_helpers.iswin
 local prepend_argv
 
 if os.getenv('VALGRIND') then
@@ -557,7 +556,7 @@ function module.source(code)
 end
 
 function module.has_powershell()
-  return module.eval('executable("'..(iswin() and 'powershell' or 'pwsh')..'")') == 1
+  return module.eval('executable("'..(is_os('win') and 'powershell' or 'pwsh')..'")') == 1
 end
 
 --- Sets Nvim shell to powershell.
@@ -570,9 +569,9 @@ function module.set_shell_powershell(fake)
   if not fake then
     assert(found)
   end
-  local shell = found and (iswin() and 'powershell' or 'pwsh') or module.testprg('pwsh-test')
+  local shell = found and (is_os('win') and 'powershell' or 'pwsh') or module.testprg('pwsh-test')
   local set_encoding = '[Console]::InputEncoding=[Console]::OutputEncoding=[System.Text.UTF8Encoding]::new();'
-  local cmd = set_encoding..'Remove-Item -Force '..table.concat(iswin()
+  local cmd = set_encoding..'Remove-Item -Force '..table.concat(is_os('win')
     and {'alias:cat', 'alias:echo', 'alias:sleep', 'alias:sort'}
     or  {'alias:echo'}, ',')..';'
   module.exec([[
@@ -854,13 +853,13 @@ function module.exec_lua(code, ...)
 end
 
 function module.get_pathsep()
-  return iswin() and '\\' or '/'
+  return is_os('win') and '\\' or '/'
 end
 
 --- Gets the filesystem root dir, namely "/" or "C:/".
 function module.pathroot()
   local pathsep = package.config:sub(1,1)
-  return iswin() and (module.nvim_dir:sub(1,2)..pathsep) or '/'
+  return is_os('win') and (module.nvim_dir:sub(1,2)..pathsep) or '/'
 end
 
 --- Gets the full `…/build/bin/{name}` path of a test program produced by
@@ -868,7 +867,7 @@ end
 ---
 --- @param name (string) Name of the test program.
 function module.testprg(name)
-  local ext = module.iswin() and '.exe' or ''
+  local ext = module.is_os('win') and '.exe' or ''
   return ('%s/%s%s'):format(module.nvim_dir, name, ext)
 end
 
@@ -895,7 +894,7 @@ function module.missing_provider(provider)
 end
 
 function module.alter_slashes(obj)
-  if not iswin() then
+  if not is_os('win') then
     return obj
   end
   if type(obj) == 'string' then
@@ -913,7 +912,7 @@ function module.alter_slashes(obj)
 end
 
 local load_factor = 1
-if global_helpers.isCI() then
+if global_helpers.is_ci() then
   -- Compute load factor only once (but outside of any tests).
   module.clear()
   module.request('nvim_command', 'source src/nvim/testdir/load.vim')
@@ -946,14 +945,14 @@ end
 
 -- Kill process with given pid
 function module.os_kill(pid)
-  return os.execute((iswin()
+  return os.execute((is_os('win')
     and 'taskkill /f /t /pid '..pid..' > nul'
     or  'kill -9 '..pid..' > /dev/null'))
 end
 
 -- Create folder with non existing parents
 function module.mkdir_p(path)
-  return os.execute((iswin()
+  return os.execute((is_os('win')
     and 'mkdir '..path
     or 'mkdir -p '..path))
 end

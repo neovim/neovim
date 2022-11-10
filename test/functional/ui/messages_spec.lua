@@ -9,12 +9,13 @@ local meths = helpers.meths
 local async_meths = helpers.async_meths
 local test_build_dir = helpers.test_build_dir
 local nvim_prog = helpers.nvim_prog
-local iswin = helpers.iswin
 local exec = helpers.exec
 local exc_exec = helpers.exc_exec
 local exec_lua = helpers.exec_lua
 local poke_eventloop = helpers.poke_eventloop
 local assert_alive = helpers.assert_alive
+local is_os = helpers.is_os
+local is_ci = helpers.is_ci
 
 describe('ui/ext_messages', function()
   local screen
@@ -1496,7 +1497,7 @@ describe('ui/msg_puts_printf', function()
     screen = Screen.new(25, 5)
     screen:attach()
 
-    if iswin() then
+    if is_os('win') then
       if os.execute('chcp 932 > NUL 2>&1') ~= 0 then
         pending('missing japanese language features', function() end)
         return
@@ -1507,7 +1508,7 @@ describe('ui/msg_puts_printf', function()
       if (exc_exec('lang ja_JP.UTF-8') ~= 0) then
         pending('Locale ja_JP.UTF-8 not supported', function() end)
         return
-      elseif helpers.isCI() then
+      elseif is_ci() then
         -- Fails non--Windows CI. Message catalog directory issue?
         pending('fails on unix CI', function() end)
         return

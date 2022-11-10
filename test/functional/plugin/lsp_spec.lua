@@ -17,9 +17,9 @@ local retry = helpers.retry
 local NIL = helpers.NIL
 local read_file = require('test.helpers').read_file
 local write_file = require('test.helpers').write_file
-local isCI = helpers.isCI
+local is_ci = helpers.is_ci
 local meths = helpers.meths
-local iswin = helpers.iswin
+local is_os = helpers.is_os
 local skip = helpers.skip
 
 -- Use these to get access to a coroutine so that I can run async tests and use
@@ -27,7 +27,7 @@ local skip = helpers.skip
 local run, stop = helpers.run, helpers.stop
 
 -- TODO(justinmk): hangs on Windows https://github.com/neovim/neovim/pull/11837
-if skip(iswin()) then return end
+if skip(is_os('win')) then return end
 
 -- Fake LSP server.
 local fake_lsp_code = 'test/functional/fixtures/fake-lsp-server.lua'
@@ -318,7 +318,7 @@ describe('LSP', function()
     end)
 
     it('should succeed with manual shutdown', function()
-      if isCI() then
+      if is_ci() then
         pending('hangs the build on CI #14028, re-enable with freeze timeout #14204')
         return
       elseif helpers.skip_fragile(pending) then

@@ -5,8 +5,8 @@ local feed, command = helpers.feed, helpers.command
 local insert = helpers.insert
 local eq = helpers.eq
 local eval = helpers.eval
-local iswin = helpers.iswin
 local funcs, meths, exec_lua = helpers.funcs, helpers.meths, helpers.exec_lua
+local is_os = helpers.is_os
 
 describe('screen', function()
   local screen
@@ -128,18 +128,18 @@ local function screen_tests(linegrid)
     end)
 
     it('has correct default title with named file', function()
-      local expected = (iswin() and 'myfile (C:\\mydir) - NVIM' or 'myfile (/mydir) - NVIM')
+      local expected = (is_os('win') and 'myfile (C:\\mydir) - NVIM' or 'myfile (/mydir) - NVIM')
       command('set title')
-      command(iswin() and 'file C:\\mydir\\myfile' or 'file /mydir/myfile')
+      command(is_os('win') and 'file C:\\mydir\\myfile' or 'file /mydir/myfile')
       screen:expect(function()
         eq(expected, screen.title)
       end)
     end)
 
     describe('is not changed by', function()
-      local file1 = iswin() and 'C:\\mydir\\myfile1' or '/mydir/myfile1'
-      local file2 = iswin() and 'C:\\mydir\\myfile2' or '/mydir/myfile2'
-      local expected = (iswin() and 'myfile1 (C:\\mydir) - NVIM' or 'myfile1 (/mydir) - NVIM')
+      local file1 = is_os('win') and 'C:\\mydir\\myfile1' or '/mydir/myfile1'
+      local file2 = is_os('win') and 'C:\\mydir\\myfile2' or '/mydir/myfile2'
+      local expected = (is_os('win') and 'myfile1 (C:\\mydir) - NVIM' or 'myfile1 (/mydir) - NVIM')
       local buf2
 
       before_each(function()

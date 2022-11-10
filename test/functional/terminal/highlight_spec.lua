@@ -7,7 +7,7 @@ local nvim_prog_abs = helpers.nvim_prog_abs
 local eq, eval = helpers.eq, helpers.eval
 local funcs = helpers.funcs
 local nvim_set = helpers.nvim_set
-local iswin = helpers.iswin
+local is_os = helpers.is_os
 local skip = helpers.skip
 
 describe(':terminal highlight', function()
@@ -60,7 +60,7 @@ describe(':terminal highlight', function()
       end)
 
       local function pass_attrs()
-        skip(iswin())
+        skip(is_os('win'))
         screen:expect(sub([[
           tty ready                                         |
           {NUM:text}text{10: }                                         |
@@ -75,7 +75,7 @@ describe(':terminal highlight', function()
       it('will pass the corresponding attributes', pass_attrs)
 
       it('will pass the corresponding attributes on scrollback', function()
-        skip(iswin())
+        skip(is_os('win'))
         pass_attrs()
         local lines = {}
         for i = 1, 8 do
@@ -199,7 +199,7 @@ describe(':terminal highlight forwarding', function()
   end)
 
   it('will handle cterm and rgb attributes', function()
-    skip(iswin())
+    skip(is_os('win'))
     thelpers.set_fg(3)
     thelpers.feed_data('text')
     thelpers.feed_termcode('[38:2:255:128:0m')
@@ -251,7 +251,7 @@ describe(':terminal highlight with custom palette', function()
   end)
 
   it('will use the custom color', function()
-    skip(iswin())
+    skip(is_os('win'))
     thelpers.set_fg(3)
     thelpers.feed_data('text')
     thelpers.clear_attrs()

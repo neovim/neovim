@@ -3,15 +3,14 @@ local clear = helpers.clear
 local eval = helpers.eval
 local eq = helpers.eq
 local feed_command = helpers.feed_command
-local iswin = helpers.iswin
 local retry = helpers.retry
 local ok = helpers.ok
 local source = helpers.source
 local poke_eventloop = helpers.poke_eventloop
-local uname = helpers.uname
 local load_adjust = helpers.load_adjust
 local write_file = helpers.write_file
-local isCI = helpers.isCI
+local is_os = helpers.is_os
+local is_ci = helpers.is_ci
 
 local function isasan()
   local version = eval('execute("version")')
@@ -22,8 +21,8 @@ clear()
 if isasan() then
   pending('ASAN build is difficult to estimate memory usage', function() end)
   return
-elseif iswin() then
-  if isCI('github') then
+elseif is_os('win') then
+  if is_ci('github') then
     pending('Windows runners in Github Actions do not have a stable environment to estimate memory usage', function() end)
     return
   elseif eval("executable('wmic')") == 0 then
@@ -38,7 +37,7 @@ end
 local monitor_memory_usage = {
   memory_usage = function(self)
     local handle
-    if iswin() then
+    if is_os('win') then
       handle = io.popen('wmic process where processid=' ..self.pid..' get WorkingSetSize')
     else
       handle = io.popen('ps -o rss= -p '..self.pid)
@@ -169,7 +168,7 @@ describe('memory usage', function()
     -- Allow for 20% tolerance at the upper limit. That's very permissive, but
     -- otherwise the test fails sometimes.  On Sourcehut CI with FreeBSD we need to
     -- be even much more permissive.
-    local upper_multiplier = uname() == 'freebsd' and 19 or 12
+    local upper_multiplier = is_os('freebsd') and 19 or 12
     local lower = before.last * 8 / 10
     local upper = load_adjust((after.max + (after.last - before.last)) * upper_multiplier / 10)
     check_result({before=before, after=after, last=last},
@@ -179,7 +178,7 @@ describe('memory usage', function()
   end)
 
   it('releases memory when closing windows when folds exist', function()
-    if helpers.is_os('mac') then
+    if is_os('mac') then
       pending('macOS memory compression causes flakiness')
     end
     local pid = eval('getpid()')

@@ -20,11 +20,11 @@ local read_file = helpers.read_file
 local retry = helpers.retry
 local rmdir = helpers.rmdir
 local sleep = helpers.sleep
-local iswin = helpers.iswin
 local startswith = helpers.startswith
 local write_file = helpers.write_file
 local meths = helpers.meths
 local alter_slashes = helpers.alter_slashes
+local is_os = helpers.is_os
 
 local testfile = 'Xtest_startuptime'
 after_each(function()
@@ -79,7 +79,7 @@ describe('startup', function()
   it('in a TTY: has("ttyin")==1 has("ttyout")==1', function()
     local screen = Screen.new(25, 4)
     screen:attach()
-    if iswin() then
+    if is_os('win') then
       command([[set shellcmdflag=/s\ /c shellxquote=\"]])
     end
     -- Running in :terminal
@@ -95,7 +95,7 @@ describe('startup', function()
     ]])
   end)
   it('output to pipe: has("ttyin")==1 has("ttyout")==0', function()
-    if iswin() then
+    if is_os('win') then
       command([[set shellcmdflag=/s\ /c shellxquote=\"]])
     end
     -- Running in :terminal
@@ -111,7 +111,7 @@ describe('startup', function()
     end)
   end)
   it('input from pipe: has("ttyin")==0 has("ttyout")==1', function()
-    if iswin() then
+    if is_os('win') then
       command([[set shellcmdflag=/s\ /c shellxquote=\"]])
     end
     -- Running in :terminal
@@ -130,7 +130,7 @@ describe('startup', function()
   it('input from pipe (implicit) #7679', function()
     local screen = Screen.new(25, 4)
     screen:attach()
-    if iswin() then
+    if is_os('win') then
       command([[set shellcmdflag=/s\ /c shellxquote=\"]])
     end
     -- Running in :terminal
@@ -665,7 +665,7 @@ describe('runtime:', function()
   end)
 
   it('loads plugin/*.lua from site packages', function()
-    local nvimdata = iswin() and "nvim-data" or "nvim"
+    local nvimdata = is_os('win') and "nvim-data" or "nvim"
     local plugin_path = table.concat({xdata, nvimdata, 'site', 'pack', 'xa', 'start', 'yb'}, pathsep)
     local plugin_folder_path = table.concat({plugin_path, 'plugin'}, pathsep)
     local plugin_after_path = table.concat({plugin_path, 'after', 'plugin'}, pathsep)

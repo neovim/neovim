@@ -3,16 +3,16 @@ local clear = helpers.clear
 local eq = helpers.eq
 local eval = helpers.eval
 local command = helpers.command
-local iswin = helpers.iswin
 local insert = helpers.insert
 local feed = helpers.feed
+local is_os = helpers.is_os
 
 describe('path collapse', function()
   local targetdir
   local expected_path
 
   local function join_path(...)
-    local pathsep = (iswin() and '\\' or '/')
+    local pathsep = (is_os('win') and '\\' or '/')
     return table.concat({...}, pathsep)
   end
 

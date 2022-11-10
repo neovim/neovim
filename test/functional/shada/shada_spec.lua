@@ -5,7 +5,7 @@ local meths, nvim_command, funcs, eq =
 local write_file, spawn, set_session, nvim_prog, exc_exec =
   helpers.write_file, helpers.spawn, helpers.set_session, helpers.nvim_prog,
   helpers.exc_exec
-local iswin = helpers.iswin
+local is_os = helpers.is_os
 local skip = helpers.skip
 
 local lfs = require('lfs')
@@ -250,7 +250,7 @@ describe('ShaDa support code', function()
   end)
 
   it('does not crash when ShaDa file directory is not writable', function()
-    skip(iswin())
+    skip(is_os('win'))
 
     funcs.mkdir(dirname, '', 0)
     eq(0, funcs.filewritable(dirname))

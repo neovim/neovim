@@ -3,7 +3,6 @@ local helpers = require('test.functional.helpers')(after_each)
 local thelpers = require('test.functional.terminal.helpers')
 local clear, eq, curbuf = helpers.clear, helpers.eq, helpers.curbuf
 local feed, testprg, feed_command = helpers.feed, helpers.testprg, helpers.feed_command
-local iswin = helpers.iswin
 local eval = helpers.eval
 local command = helpers.command
 local matches = helpers.matches
@@ -16,6 +15,7 @@ local pcall_err = helpers.pcall_err
 local exec_lua = helpers.exec_lua
 local assert_alive = helpers.assert_alive
 local skip = helpers.skip
+local is_os = helpers.is_os
 
 describe(':terminal scrollback', function()
   local screen
@@ -140,7 +140,7 @@ describe(':terminal scrollback', function()
 
 
     describe('and height decreased by 1', function()
-      if skip(iswin()) then return end
+      if skip(is_os('win')) then return end
       local function will_hide_top_line()
         feed([[<C-\><C-N>]])
         screen:try_resize(screen._width - 2, screen._height - 1)
@@ -186,7 +186,7 @@ describe(':terminal scrollback', function()
     -- XXX: Can't test this reliably on Windows unless the cursor is _moved_
     --      by the resize. http://docs.libuv.org/en/v1.x/signal.html
     --      See also: https://github.com/rprichard/winpty/issues/110
-    if skip(iswin()) then return end
+    if skip(is_os('win')) then return end
 
     describe('and the height is decreased by 2', function()
       before_each(function()
@@ -265,7 +265,7 @@ describe(':terminal scrollback', function()
       -- XXX: Can't test this reliably on Windows unless the cursor is _moved_
       --      by the resize. http://docs.libuv.org/en/v1.x/signal.html
       --      See also: https://github.com/rprichard/winpty/issues/110
-      if skip(iswin()) then return end
+      if skip(is_os('win')) then return end
       local function pop_then_push()
         screen:try_resize(screen._width, screen._height + 1)
         screen:expect([[
@@ -347,7 +347,7 @@ end)
 
 describe(':terminal prints more lines than the screen height and exits', function()
   it('will push extra lines to scrollback', function()
-    skip(iswin())
+    skip(is_os('win'))
     clear()
     local screen = Screen.new(30, 7)
     screen:attach({rgb=false})
@@ -397,21 +397,21 @@ describe("'scrollback' option", function()
 
   it('set to 0 behaves as 1', function()
     local screen
-    if iswin() then
+    if is_os('win') then
       screen = thelpers.screen_setup(nil, "['cmd.exe']", 30)
     else
       screen = thelpers.screen_setup(nil, "['sh']", 30)
     end
 
     curbufmeths.set_option('scrollback', 0)
-    feed_data(('%s REP 31 line%s'):format(testprg('shell-test'), iswin() and '\r' or '\n'))
+    feed_data(('%s REP 31 line%s'):format(testprg('shell-test'), is_os('win') and '\r' or '\n'))
     screen:expect{any='30: line                      '}
     retry(nil, nil, function() expect_lines(7) end)
   end)
 
   it('deletes lines (only) if necessary', function()
     local screen
-    if iswin() then
+    if is_os('win') then
       command([[let $PROMPT='$$']])
       screen = thelpers.screen_setup(nil, "['cmd.exe']", 30)
     else
@@ -424,7 +424,7 @@ describe("'scrollback' option", function()
     -- Wait for prompt.
     screen:expect{any='%$'}
 
-    feed_data(('%s REP 31 line%s'):format(testprg('shell-test'), iswin() and '\r' or '\n'))
+    feed_data(('%s REP 31 line%s'):format(testprg('shell-test'), is_os('win') and '\r' or '\n'))
     screen:expect{any='30: line                      '}
 
     retry(nil, nil, function() expect_lines(33, 2) end)
@@ -437,8 +437,8 @@ describe("'scrollback' option", function()
     -- 'scrollback' option is synchronized with the internal sb_buffer.
     command('sleep 100m')
 
-    feed_data(('%s REP 41 line%s'):format(testprg('shell-test'), iswin() and '\r' or '\n'))
-    if iswin() then
+    feed_data(('%s REP 41 line%s'):format(testprg('shell-test'), is_os('win') and '\r' or '\n'))
+    if is_os('win') then
       screen:expect{grid=[[
         37: line                      |
         38: line                      |
@@ -462,8 +462,8 @@ describe("'scrollback' option", function()
     expect_lines(58)
 
     -- Verify off-screen state
-    matches((iswin() and '^36: line[ ]*$' or '^35: line[ ]*$'), eval("getline(line('w0') - 1)"))
-    matches((iswin() and '^27: line[ ]*$' or '^26: line[ ]*$'), eval("getline(line('w0') - 10)"))
+    matches((is_os('win') and '^36: line[ ]*$' or '^35: line[ ]*$'), eval("getline(line('w0') - 1)"))
+    matches((is_os('win') and '^27: line[ ]*$' or '^26: line[ ]*$'), eval("getline(line('w0') - 10)"))
   end)
 
   it('deletes extra lines immediately', function()
@@ -607,7 +607,7 @@ describe("pending scrollback line handling", function()
   end)
 
   it("does not crash after nvim_buf_call #14891", function()
-    skip(iswin())
+    skip(is_os('win'))
     exec_lua [[
       local a = vim.api
       local bufnr = a.nvim_create_buf(false, true)

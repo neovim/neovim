@@ -3,12 +3,12 @@ local helpers = require('test.functional.helpers')(after_each)
 local clear = helpers.clear
 local eq = helpers.eq
 local funcs = helpers.funcs
-local iswin = helpers.iswin
 local neq = helpers.neq
 local nvim_argv = helpers.nvim_argv
 local request = helpers.request
 local retry = helpers.retry
 local NIL = helpers.NIL
+local is_os = helpers.is_os
 
 describe('API', function()
   before_each(clear)
@@ -62,7 +62,7 @@ describe('API', function()
     it('returns process info', function()
       local pid = funcs.getpid()
       local pinfo = request('nvim_get_proc', pid)
-      eq((iswin() and 'nvim.exe' or 'nvim'), pinfo.name)
+      eq((is_os('win') and 'nvim.exe' or 'nvim'), pinfo.name)
       eq(pid, pinfo.pid)
       eq('number', type(pinfo.ppid))
       neq(pid, pinfo.ppid)

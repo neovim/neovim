@@ -14,9 +14,9 @@ local eval = helpers.eval
 local exec_capture = helpers.exec_capture
 local neq = helpers.neq
 local matches = helpers.matches
-local iswin = helpers.iswin
 local mkdir = helpers.mkdir
 local rmdir = helpers.rmdir
+local is_os = helpers.is_os
 
 describe(':source', function()
   before_each(function()
@@ -44,7 +44,7 @@ describe(':source', function()
   end)
 
   it("changing 'shellslash' changes the result of expand()", function()
-    if not iswin() then
+    if not is_os('win') then
       pending("'shellslash' only works on Windows")
       return
     end
