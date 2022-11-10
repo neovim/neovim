@@ -992,8 +992,8 @@ Note: even when using "num" or "long" the number of flags available to
 compounding and prefixes is limited to about 250.
 
 
-AFFIXES
-					    *spell-PFX* *spell-SFX*
+AFFIXES						*spell-PFX* *spell-SFX*
+
 The usual PFX (prefix) and SFX (suffix) lines are supported (see the Myspell
 documentation or the Aspell manual:
 http://aspell.net/man-html/Affix-Compression.html).

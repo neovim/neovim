@@ -82,7 +82,7 @@ Copyright 2005-2017:					*tar-copyright*
    <.vimrc> file.
 			 Default
    Variable		  Value   Explanation
-   *g:tar_browseoptions*  "Ptf"   used to get a list of contents
+   *g:tar_browseoptions*    "Ptf"   used to get a list of contents
    *g:tar_readoptions*	  "OPxf"  used to extract a file from a tarball
    *g:tar_cmd*		  "tar"   the name of the tar program
    *g:tar_nomax*	    0	  if true, file window will not be maximized
@@ -98,7 +98,7 @@ Copyright 2005-2017:					*tar-copyright*
 					"-"
 				  Not all tar's support the "--" which is why
 				  it isn't default.
-   *g:tar_writeoptions*   "uf"    used to update/replace a file
+   *g:tar_writeoptions*	  "uf"    used to update/replace a file
 
 
 ==============================================================================

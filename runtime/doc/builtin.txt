@@ -920,7 +920,8 @@ bufwinid({buf})						*bufwinid()*
 
 	echo "A window containing buffer 1 is " .. (bufwinid(1))
 <
-		Only deals with the current tab page.
+		Only deals with the current tab page.  See |win_findbuf()| for
+		finding more.
 
 		Can also be used as a |method|: >
 			FindBuffer()->bufwinid()
@@ -1204,7 +1205,7 @@ col({expr})	The result is a Number, which is the byte index of the column
 		column is one higher if the cursor is after the end of the
 		line.  Also, when using a <Cmd> mapping the cursor isn't
 		moved, this can be used to obtain the column in Insert mode: >
-			:imap <F2> <Cmd>echo col(".")<CR>
+			:imap <F2> <Cmd>echo col(".").."\n"<CR>
 
 <		Can also be used as a |method|: >
 			GetPos()->col()
@@ -2291,7 +2292,7 @@ flatten({list} [, {maxdepth}])					*flatten()*
 float2nr({expr})					*float2nr()*
 		Convert {expr} to a Number by omitting the part after the
 		decimal point.
-		{expr} must evaluate to a |Float| or a Number.
+		{expr} must evaluate to a |Float| or a |Number|.
 		Returns 0 if {expr} is not a |Float| or a |Number|.
 		When the value of {expr} is out of range for a |Number| the
 		result is truncated to 0x7fffffff or -0x7fffffff (or when
@@ -9034,6 +9035,7 @@ win_move_separator({nr}, {offset})			*win_move_separator()*
 		FALSE otherwise.
 		This will fail for the rightmost window and a full-width
 		window, since it has no separator on the right.
+		Only works for the current tab page. *E1308*
 
 		Can also be used as a |method|: >
 			GetWinnr()->win_move_separator(offset)
@@ -9048,6 +9050,7 @@ win_move_statusline({nr}, {offset})			*win_move_statusline()*
 		movement may be smaller than specified (e.g., as a consequence
 		of maintaining 'winminheight'). Returns TRUE if the window can
 		be found and FALSE otherwise.
+		Only works for the current tab page.
 
 		Can also be used as a |method|: >
 			GetWinnr()->win_move_statusline(offset)

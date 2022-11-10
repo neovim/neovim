@@ -2,7 +2,7 @@
 " Language:     Debian sources.list
 " Maintainer:   Debian Vim Maintainers
 " Former Maintainer: Matthijs Mohlmann <matthijs@cacholong.nl>
-" Last Change: 2022 Jul 25
+" Last Change: 2022 Oct 29
 " URL: https://salsa.debian.org/vim-team/vim-debian/blob/master/syntax/debsources.vim
 
 " Standard syntax initialization
@@ -23,9 +23,9 @@ let s:cpo = &cpo
 set cpo-=C
 let s:supported = [
       \ 'oldstable', 'stable', 'testing', 'unstable', 'experimental', 'sid', 'rc-buggy',
-      \ 'buster', 'bullseye', 'bookworm', 'trixie',
+      \ 'buster', 'bullseye', 'bookworm', 'trixie', 'forky',
       \
-      \ 'trusty', 'xenial', 'bionic', 'focal', 'jammy', 'kinetic',
+      \ 'trusty', 'xenial', 'bionic', 'focal', 'jammy', 'kinetic', 'lunar',
       \ 'devel'
       \ ]
 let s:unsupported = [
