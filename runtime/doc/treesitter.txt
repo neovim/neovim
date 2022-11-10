@@ -239,7 +239,7 @@ The following predicates are built in:
     `contains?`                                *treesitter-predicate-contains?*
         Match a string against parts of the text corresponding to a node: >
             ((identifier) @foo (#contains? @foo "foo"))
-            ((identifier) @foo-bar (#contains @foo-bar "foo" "bar"))
+            ((identifier) @foo-bar (#contains? @foo-bar "foo" "bar"))
 <
     `any-of?`                                    *treesitter-predicate-any-of?*
         Match any of the given strings against the text corresponding to
