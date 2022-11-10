@@ -131,6 +131,7 @@ CONFIG = {
             'filetype.lua',
             'keymap.lua',
             'fs.lua',
+            'semver.lua'
         ],
         'files': [
             'runtime/lua/vim/_editor.lua',
@@ -140,6 +141,7 @@ CONFIG = {
             'runtime/lua/vim/filetype.lua',
             'runtime/lua/vim/keymap.lua',
             'runtime/lua/vim/fs.lua',
+            'runtime/lua/vim/semver.lua',
         ],
         'file_patterns': '*.lua',
         'fn_name_prefix': '',
@@ -166,6 +168,7 @@ CONFIG = {
             'filetype': 'vim.filetype',
             'keymap': 'vim.keymap',
             'fs': 'vim.fs',
+            'semver': 'vim.semver',
         },
         'append_only': [
             'shared.lua',

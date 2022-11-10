@@ -36,6 +36,7 @@ for k, v in pairs({
   ui = true,
   health = true,
   fs = true,
+  semver = true,
 }) do
   vim._submodules[k] = v
 end
