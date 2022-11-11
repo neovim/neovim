@@ -5555,13 +5555,22 @@ static void op_colon(oparg_T *oap)
     } else {
       stuffnumReadbuff((long)oap->start.lnum);
     }
-    if (oap->end.lnum != oap->start.lnum) {
+
+    // When using !! on a closed fold the range ".!" works best to operate
+    // on, it will be made the whole closed fold later.
+    linenr_T endOfStartFold = oap->start.lnum;
+    (void)hasFolding(oap->start.lnum, NULL, &endOfStartFold);
+    if (oap->end.lnum != oap->start.lnum && oap->end.lnum != endOfStartFold) {
+      // Make it a range with the end line.
       stuffcharReadbuff(',');
       if (oap->end.lnum == curwin->w_cursor.lnum) {
         stuffcharReadbuff('.');
       } else if (oap->end.lnum == curbuf->b_ml.ml_line_count) {
         stuffcharReadbuff('$');
-      } else if (oap->start.lnum == curwin->w_cursor.lnum) {
+      } else if (oap->start.lnum == curwin->w_cursor.lnum
+                 // do not use ".+number" for a closed fold, it would count
+                 // folded lines twice
+                 && !hasFolding(oap->end.lnum, NULL, NULL)) {
         stuffReadbuff(".+");
         stuffnumReadbuff(oap->line_count - 1);
       } else {

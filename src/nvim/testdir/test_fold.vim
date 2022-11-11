@@ -72,6 +72,54 @@ func Test_address_fold()
   quit!
 endfunc
 
+func Test_address_offsets()
+  " check the help for :range-closed-fold
+  enew
+  call setline(1, [
+        \ '1 one',
+        \ '2 two',
+        \ '3 three',
+        \ '4 four FOLDED',
+        \ '5 five FOLDED',
+        \ '6 six',
+        \ '7 seven',
+        \ '8 eight',
+        \])
+  set foldmethod=manual
+  normal 4Gvjzf
+  3,4+2yank
+  call assert_equal([
+        \ '3 three',
+        \ '4 four FOLDED',
+        \ '5 five FOLDED',
+        \ '6 six',
+        \ '7 seven',
+        \ ], getreg(0,1,1))
+
+  enew!
+  call setline(1, [
+        \ '1 one',
+        \ '2 two',
+        \ '3 three FOLDED',
+        \ '4 four FOLDED',
+        \ '5 five FOLDED',
+        \ '6 six FOLDED',
+        \ '7 seven',
+        \ '8 eight',
+        \])
+  normal 3Gv3jzf
+  2,4-1yank
+  call assert_equal([
+        \ '2 two',
+        \ '3 three FOLDED',
+        \ '4 four FOLDED',
+        \ '5 five FOLDED',
+        \ '6 six FOLDED',
+        \ ], getreg(0,1,1))
+
+  bwipe!
+endfunc
+
 func Test_indent_fold()
     new
     call setline(1, ['', 'a', '    b', '    c'])
