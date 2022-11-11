@@ -984,6 +984,12 @@ LanguageTree:register_cbs({self}, {cbs})         *LanguageTree:register_cbs()*
                   the tree.
       • {self}
 
+                                        *LanguageTree:set_custom_injections()*
+LanguageTree:set_custom_injections({self}, {injections})
+    Parameters: ~
+      • {injections}  table<string, table> table of lang to list of regions
+      • {self}
+
 LanguageTree:source({self})                            *LanguageTree:source()*
     Returns the source content of the language tree (bufnr or string).
 

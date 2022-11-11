@@ -11,6 +11,7 @@ local language = require('vim.treesitter.language')
 ---@field _regions table List of regions this tree should manage and parse
 ---@field _lang string Language name
 ---@field _regions table
+---@field _custom_injections table<string, table> table of lang to list of regions
 ---@field _source (number|string) Buffer or string to parse
 ---@field _trees userdata[] Reference to parsed |tstree| (one for each language)
 ---@field _valid boolean If the parsed tree is valid
@@ -51,6 +52,7 @@ function LanguageTree.new(source, lang, opts)
     _injection_query = injections[lang] and query.parse_query(lang, injections[lang])
       or query.get_query(lang, 'injections'),
     _valid = false,
+    _custom_injections = {},
     _parser = vim._create_ts_parser(lang),
     _callbacks = {
       changedtree = {},
@@ -76,6 +78,11 @@ function LanguageTree:invalidate(reload)
   for _, child in ipairs(self._children) do
     child:invalidate(reload)
   end
+end
+
+---@param injections table<string, table> table of lang to list of regions
+function LanguageTree:set_custom_injections(injections)
+  self._custom_injections = injections
 end
 
 --- Returns all trees this language tree contains.
@@ -335,8 +342,14 @@ end
 ---       instead of using the entire nodes range.
 ---@private
 function LanguageTree:_get_injections()
+  local result = {}
+
+  for lang, regions in pairs(self._custom_injections) do
+    result[lang] = vim.deepcopy(regions)
+  end
+
   if not self._injection_query then
-    return {}
+    return result
   end
 
   local injections = {}
@@ -416,8 +429,6 @@ function LanguageTree:_get_injections()
       table.insert(injections[tree_index][lang][pattern].regions, ranges)
     end
   end
-
-  local result = {}
 
   -- Generate a map by lang of node lists.
   -- Each list is a set of ranges that should be parsed together.
