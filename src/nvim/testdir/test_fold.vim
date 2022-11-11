@@ -986,4 +986,40 @@ func Test_indent_append_blank_small_fold_close()
   bw!
 endfunc
 
+func Test_sort_closed_fold()
+  CheckExecutable sort
+
+  call setline(1, [
+        \ 'Section 1',
+        \ '   how',
+        \ '   now',
+        \ '   brown',
+        \ '   cow',
+        \ 'Section 2',
+        \ '   how',
+        \ '   now',
+        \ '   brown',
+        \ '   cow',
+        \])
+  setlocal foldmethod=indent sw=3
+  normal 2G
+
+  " The "!!" expands to ".,.+3" and must only sort four lines
+  call feedkeys("!!sort\<CR>", 'xt')
+  call assert_equal([
+        \ 'Section 1',
+        \ '   brown',
+        \ '   cow',
+        \ '   how',
+        \ '   now',
+        \ 'Section 2',
+        \ '   how',
+        \ '   now',
+        \ '   brown',
+        \ '   cow',
+        \ ], getline(1, 10))
+
+  bwipe!
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab
