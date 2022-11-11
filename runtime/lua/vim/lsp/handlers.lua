@@ -81,22 +81,38 @@ M['window/workDoneProgress/create'] = function(_, result, ctx)
 end
 
 --see: https://microsoft.github.io/language-server-protocol/specifications/specification-current/#window_showMessageRequest
+---@param result lsp.ShowMessageRequestParams
 M['window/showMessageRequest'] = function(_, result)
-  local actions = result.actions
-  print(result.message)
-  local option_strings = { result.message, '\nRequest Actions:' }
-  for i, action in ipairs(actions) do
-    local title = action.title:gsub('\r\n', '\\r\\n')
-    title = title:gsub('\n', '\\n')
-    table.insert(option_strings, string.format('%d. %s', i, title))
-  end
-
-  -- window/showMessageRequest can return either MessageActionItem[] or null.
-  local choice = vim.fn.inputlist(option_strings)
-  if choice < 1 or choice > #actions then
-    return vim.NIL
+  local actions = result.actions or {}
+  local co, is_main = coroutine.running()
+  if co and not is_main then
+    local opts = {
+      prompt = result.message .. ': ',
+      format_item = function(action)
+        return (action.title:gsub('\r\n', '\\r\\n')):gsub('\n', '\\n')
+      end,
+    }
+    vim.ui.select(actions, opts, function(choice)
+      -- schedule to ensure resume doesn't happen _before_ yield with
+      -- default synchronous vim.ui.select
+      vim.schedule(function()
+        coroutine.resume(co, choice or vim.NIL)
+      end)
+    end)
+    return coroutine.yield()
   else
-    return actions[choice]
+    local option_strings = { result.message, '\nRequest Actions:' }
+    for i, action in ipairs(actions) do
+      local title = action.title:gsub('\r\n', '\\r\\n')
+      title = title:gsub('\n', '\\n')
+      table.insert(option_strings, string.format('%d. %s', i, title))
+    end
+    local choice = vim.fn.inputlist(option_strings)
+    if choice < 1 or choice > #actions then
+      return vim.NIL
+    else
+      return actions[choice]
+    end
   end
 end
 
