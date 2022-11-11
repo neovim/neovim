@@ -813,6 +813,8 @@ func Test_append()
 
   " Using $ instead of '$' must give an error
   call assert_fails("call append($, 'foobar')", 'E116:')
+
+  call assert_fails("call append({}, '')", ['E728:', 'E728:'])
 endfunc
 
 " Test for setline()
