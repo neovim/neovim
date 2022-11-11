@@ -611,6 +611,7 @@ static bool normal_need_redraw_mode_message(NormalState *s)
           && stuff_empty()
           && typebuf_typed()
           && emsg_silent == 0
+          && !in_assert_fails
           && !did_wait_return
           && s->oa.op_type == OP_NOP);
 }

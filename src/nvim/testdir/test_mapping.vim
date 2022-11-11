@@ -779,7 +779,7 @@ func Test_expr_abbr()
   " invalid <expr> abbreviation
   abbr <expr> hte GetAbbr()
   call assert_fails('normal ihte ', 'E117:')
-  call assert_equal(' ', getline(1))
+  call assert_equal('', getline(1))
   unabbr <expr> hte
 
   close!

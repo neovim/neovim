@@ -4946,7 +4946,7 @@ int buf_check_timestamp(buf_T *buf)
         }
         msg_clr_eos();
         (void)msg_end();
-        if (emsg_silent == 0) {
+        if (emsg_silent == 0 && !in_assert_fails) {
           ui_flush();
           // give the user some time to think about it
           os_delay(1004L, true);

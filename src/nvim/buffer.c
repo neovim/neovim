@@ -1842,7 +1842,7 @@ buf_T *buflist_new(char *ffname_arg, char *sfname_arg, linenr_T lnum, int flags)
     pmap_put(handle_T)(&buffer_handles, buf->b_fnum, buf);
     if (top_file_num < 0) {  // wrap around (may cause duplicates)
       emsg(_("W14: Warning: List of file names overflow"));
-      if (emsg_silent == 0) {
+      if (emsg_silent == 0 && !in_assert_fails) {
         ui_flush();
         os_delay(3001L, true);  // make sure it is noticed
       }
