@@ -196,7 +196,7 @@ void msg_grid_validate(void)
     msg_grid_set_pos(max_rows, false);
   }
 
-  if (msg_grid.chars && cmdline_row < msg_grid_pos) {
+  if (msg_grid.chars && !msg_scrolled && cmdline_row < msg_grid_pos) {
     // TODO(bfredl): this should already be the case, but fails in some
     // "batched" executions where compute_cmdrow() use stale positions or
     // something.
