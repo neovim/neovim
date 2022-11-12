@@ -899,7 +899,13 @@ void ex_else(exarg_T *eap)
 
   if (eap->cmdidx == CMD_elseif) {
     bool error;
-    result = eval_to_bool(eap->arg, &error, &eap->nextcmd, skip);
+    // When skipping we ignore most errors, but a missing expression is
+    // wrong, perhaps it should have been "else".
+    if (skip && ends_excmd(*eap->arg)) {
+      semsg(_(e_invexpr2), eap->arg);
+    } else {
+      result = eval_to_bool(eap->arg, &error, &eap->nextcmd, skip);
+    }
 
     // When throwing error exceptions, we want to throw always the first
     // of several errors in a row.  This is what actually happens when
