@@ -862,7 +862,6 @@ func Test_popup_position()
 endfunc
 
 func Test_popup_command()
-  CheckScreendump
   CheckFeature menu
 
   menu Test.Foo Foo
@@ -870,13 +869,18 @@ func Test_popup_command()
   call assert_fails('popup Test.Foo.X', 'E327:')
   call assert_fails('popup Foo', 'E337:')
   unmenu Test.Foo
+endfunc
+
+func Test_popup_command_dump()
+  CheckFeature menu
+  CheckScreendump
 
   let script =<< trim END
     func StartTimer()
       call timer_start(100, {-> ChangeMenu()})
     endfunc
     func ChangeMenu()
-      nunmenu PopUp.&Paste
+      aunmenu PopUp.&Paste
       nnoremenu 1.40 PopUp.&Paste :echomsg "pasted"<CR>
       echomsg 'changed'
     endfunc

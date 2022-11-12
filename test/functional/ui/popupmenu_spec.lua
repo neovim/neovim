@@ -3039,17 +3039,8 @@ describe('builtin popupmenu', function()
     eq('bar', meths.get_var('menustr'))
   end)
 
-  -- oldtest: Test_popup_command()
+  -- oldtest: Test_popup_command_dump()
   it(':popup command', function()
-    exec([[
-      menu Test.Foo Foo
-      call assert_fails('popup Test.Foo', 'E336:')
-      call assert_fails('popup Test.Foo.X', 'E327:')
-      call assert_fails('popup Foo', 'E337:')
-      unmenu Test.Foo
-    ]])
-    eq({}, meths.get_vvar('errors'))
-
     exec([[
       func ChangeMenu()
         aunmenu PopUp.&Paste
