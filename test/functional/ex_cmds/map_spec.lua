@@ -161,6 +161,7 @@ describe('Screen', function()
     ]])
   end)
 
+  -- oldtest: Test_expr_map_restore_cursor()
   it('cursor is restored after :map <expr> which redraws statusline vim-patch:8.1.2336', function()
     exec([[
       call setline(1, ['one', 'two', 'three'])
@@ -246,6 +247,7 @@ describe('Screen', function()
     ]])
   end)
 
+  -- oldtest: Test_map_listing()
   it('listing mappings clears command line vim-patch:8.2.4401', function()
     screen:try_resize(40, 5)
     command('nmap a b')

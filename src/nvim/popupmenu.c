@@ -1043,10 +1043,16 @@ void pum_show_popupmenu(vimmenu_T *menu)
   pumitem_T *array = (pumitem_T *)xcalloc((size_t)pum_size, sizeof(pumitem_T));
 
   for (vimmenu_T *mp = menu->children; mp != NULL; mp = mp->next) {
+    char *s = NULL;
+    // Make a copy of the text, the menu may be redefined in a callback.
     if (menu_is_separator(mp->dname)) {
-      array[idx++].pum_text = (char_u *)"";
+      s = "";
     } else if (mp->modes & mp->enabled & mode) {
-      array[idx++].pum_text = (char_u *)mp->dname;
+      s = mp->dname;
+    }
+    if (s != NULL) {
+      s = xstrdup(s);
+      array[idx++].pum_text = (char_u *)s;
     }
   }
 
@@ -1117,6 +1123,9 @@ void pum_show_popupmenu(vimmenu_T *menu)
     }
   }
 
+  for (idx = 0; idx < pum_size; idx++) {
+    xfree(array[idx].pum_text);
+  }
   xfree(array);
   pum_undisplay(true);
   if (!p_mousemev) {

@@ -1048,6 +1048,7 @@ describe('CursorLine and CursorLineNr highlights', function()
     ]])
   end)
 
+  -- oldtest: Test_cursorline_after_yank()
   it('always updated. vim-patch:8.1.0849', function()
     local screen = Screen.new(50,5)
     screen:set_default_attr_ids({
@@ -1081,6 +1082,7 @@ describe('CursorLine and CursorLineNr highlights', function()
     ]])
   end)
 
+  -- oldtest: Test_cursorline_with_visualmode()
   it('with visual area. vim-patch:8.1.1001', function()
     local screen = Screen.new(50,5)
     screen:set_default_attr_ids({
@@ -1108,6 +1110,7 @@ describe('CursorLine and CursorLineNr highlights', function()
     ]])
   end)
 
+  -- oldtest: Test_cursorline_callback()
   it('is updated if cursor is moved up from timer vim-patch:8.2.4591', function()
     local screen = Screen.new(50, 8)
     screen:set_default_attr_ids({
@@ -1237,6 +1240,7 @@ describe('CursorLine and CursorLineNr highlights', function()
     })
   end)
 
+  -- oldtest: Test_diff_with_cursorline_number()
   it('CursorLineNr shows correctly just below filler lines', function()
     local screen = Screen.new(50,12)
     screen:set_default_attr_ids({
@@ -1357,6 +1361,7 @@ describe('CursorColumn highlight', function()
     ]])
   end)
 
+  -- oldtest: Test_cursorcolumn_callback()
   it('is updated if cursor is moved from timer', function()
     exec([[
       call setline(1, ['aaaaa', 'bbbbb', 'ccccc', 'ddddd'])
@@ -1412,6 +1417,7 @@ describe('ColorColumn highlight', function()
     screen:attach()
   end)
 
+  -- oldtest: Test_colorcolumn()
   it('when entering a buffer vim-patch:8.1.2073', function()
     exec([[
       set nohidden
@@ -1443,6 +1449,7 @@ describe('ColorColumn highlight', function()
     ]])
   end)
 
+  -- oldtest: Test_colorcolumn_bri()
   it("in 'breakindent' vim-patch:8.2.1689", function()
     exec([[
       call setline(1, 'The quick brown fox jumped over the lazy dogs')
@@ -1467,6 +1474,7 @@ describe('ColorColumn highlight', function()
     ]])
   end)
 
+  -- oldtest: Test_colorcolumn_sbr()
   it("in 'showbreak' vim-patch:8.2.1689", function()
     exec([[
       call setline(1, 'The quick brown fox jumped over the lazy dogs')
@@ -1686,6 +1694,7 @@ describe("'number' and 'relativenumber' highlight", function()
     ]])
   end)
 
+  -- oldtest: Test_relativenumber_callback()
   it('relative number highlight is updated if cursor is moved from timer', function()
     local screen = Screen.new(50, 8)
     screen:set_default_attr_ids({
