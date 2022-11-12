@@ -2071,6 +2071,8 @@ void highlight_changed(void)
     }
   }
   highlight_ga.ga_len = hlcnt;
+
+  decor_provider_invalidate_hl();
 }
 
 /// Handle command line completion for :highlight command.

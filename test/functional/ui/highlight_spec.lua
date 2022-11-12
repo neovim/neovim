@@ -1745,38 +1745,40 @@ describe("'winhighlight' highlight", function()
     clear()
     screen = Screen.new(20,8)
     screen:attach()
-    screen:set_default_attr_ids({
-      [0] = {bold=true, foreground=Screen.colors.Blue},
-      [1] = {background = Screen.colors.DarkBlue},
-      [2] = {background = Screen.colors.DarkBlue, bold = true, foreground = Screen.colors.Blue1},
-      [3] = {bold = true, reverse = true},
-      [4] = {reverse = true},
-      [5] = {background = Screen.colors.DarkGreen},
-      [6] = {background = Screen.colors.DarkGreen, bold = true, foreground = Screen.colors.Blue1},
-      [7] = {background = Screen.colors.DarkMagenta},
-      [8] = {background = Screen.colors.DarkMagenta, bold = true, foreground = Screen.colors.Blue1},
-      [9] = {foreground = Screen.colors.Brown},
-      [10] = {foreground = Screen.colors.Brown, background = Screen.colors.DarkBlue},
-      [11] = {background = Screen.colors.DarkBlue, bold = true, reverse = true},
-      [12] = {background = Screen.colors.DarkGreen, reverse = true},
-      [13] = {background = Screen.colors.Magenta4, reverse = true},
-      [14] = {background = Screen.colors.DarkBlue, reverse = true},
-      [15] = {foreground = Screen.colors.Grey100, background = Screen.colors.Red},
-      [16] = {foreground = Screen.colors.Blue1},
-      [17] = {background = Screen.colors.LightRed},
-      [18] = {background = Screen.colors.Gray90},
-      [19] = {foreground = Screen.colors.LightGrey, background = Screen.colors.DarkGray},
-      [20] = {background = Screen.colors.LightGrey, underline = true},
-      [21] = {bold = true},
-      [22] = {bold = true, foreground = Screen.colors.SeaGreen4},
-      [23] = {background = Screen.colors.LightMagenta},
-      [24] = {background = Screen.colors.WebGray},
-      [25] = {bold = true, foreground = Screen.colors.Green1},
-      [26] = {background = Screen.colors.Red},
-      [27] = {background = Screen.colors.DarkBlue, bold = true, foreground = Screen.colors.Green1},
-      [28] = {bold = true, foreground = Screen.colors.Brown},
+    screen:set_default_attr_ids {
+      [0] = {bold=true, foreground=Screen.colors.Blue};
+      [1] = {background = Screen.colors.DarkBlue};
+      [2] = {background = Screen.colors.DarkBlue, bold = true, foreground = Screen.colors.Blue1};
+      [3] = {bold = true, reverse = true};
+      [4] = {reverse = true};
+      [5] = {background = Screen.colors.DarkGreen};
+      [6] = {background = Screen.colors.DarkGreen, bold = true, foreground = Screen.colors.Blue1};
+      [7] = {background = Screen.colors.DarkMagenta};
+      [8] = {background = Screen.colors.DarkMagenta, bold = true, foreground = Screen.colors.Blue1};
+      [9] = {foreground = Screen.colors.Brown};
+      [10] = {foreground = Screen.colors.Brown, background = Screen.colors.DarkBlue};
+      [11] = {background = Screen.colors.DarkBlue, bold = true, reverse = true};
+      [12] = {background = Screen.colors.DarkGreen, reverse = true};
+      [13] = {background = Screen.colors.Magenta4, reverse = true};
+      [14] = {background = Screen.colors.DarkBlue, reverse = true};
+      [15] = {foreground = Screen.colors.Grey100, background = Screen.colors.Red};
+      [16] = {foreground = Screen.colors.Blue1};
+      [17] = {background = Screen.colors.LightRed};
+      [18] = {background = Screen.colors.Gray90};
+      [19] = {foreground = Screen.colors.LightGrey, background = Screen.colors.DarkGray};
+      [20] = {background = Screen.colors.LightGrey, underline = true};
+      [21] = {bold = true};
+      [22] = {bold = true, foreground = Screen.colors.SeaGreen4};
+      [23] = {background = Screen.colors.LightMagenta};
+      [24] = {background = Screen.colors.WebGray};
+      [25] = {bold = true, foreground = Screen.colors.Green1};
+      [26] = {background = Screen.colors.Red};
+      [27] = {background = Screen.colors.DarkBlue, bold = true, foreground = Screen.colors.Green1};
+      [28] = {bold = true, foreground = Screen.colors.Brown};
       [29] = {foreground = Screen.colors.Blue1, background = Screen.colors.Red, bold = true};
-    })
+      [30] = {background = tonumber('0xff8800')};
+      [31] = {background = tonumber('0xff8800'), bold = true, foreground = Screen.colors.Blue};
+    }
     command("hi Background1 guibg=DarkBlue")
     command("hi Background2 guibg=DarkGreen")
   end)
@@ -2019,6 +2021,33 @@ describe("'winhighlight' highlight", function()
       {4:[No Name]           }|
                           |
     ]])
+  end)
+
+  it('updates background to changed linked group', function()
+    command("split")
+    command("setlocal winhl=Normal:FancyGroup") -- does not yet exist
+    screen:expect{grid=[[
+      ^                    |
+      {0:~                   }|
+      {0:~                   }|
+      {3:[No Name]           }|
+                          |
+      {0:~                   }|
+      {4:[No Name]           }|
+                          |
+    ]]}
+
+    command("hi FancyGroup guibg=#FF8800") -- nice orange
+    screen:expect{grid=[[
+      {30:^                    }|
+      {31:~                   }|
+      {31:~                   }|
+      {3:[No Name]           }|
+                          |
+      {0:~                   }|
+      {4:[No Name]           }|
+                          |
+    ]]}
   end)
 
   it('background applies also to non-text', function()
