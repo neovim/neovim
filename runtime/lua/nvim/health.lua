@@ -359,14 +359,12 @@ local function check_terminal()
           \                   ..'\%(conemu\|vtpcon\|win32con\)')))
       call health#report_error('command failed: '.cmd."\n".out)
     else
-      call health#report_info('key_backspace (kbs) terminfo entry: '
-            \ .(empty(kbs_entry) ? '? (not found)' : kbs_entry))
-      call health#report_info('key_dc (kdch1) terminfo entry: '
-            \ .(empty(kbs_entry) ? '? (not found)' : kdch1_entry))
+      call health#report_info(printf('key_backspace (kbs) terminfo entry: `%s`', (empty(kbs_entry) ? '? (not found)' : kbs_entry)))
+      call health#report_info(printf('key_dc (kdch1) terminfo entry: `%s`', (empty(kbs_entry) ? '? (not found)' : kdch1_entry)))
     endif
     for env_var in ['XTERM_VERSION', 'VTE_VERSION', 'TERM_PROGRAM', 'COLORTERM', 'SSH_TTY']
       if exists('$'.env_var)
-        call health#report_info(printf("$%s='%s'", env_var, eval('$'.env_var)))
+        call health#report_info(printf('$%s="%s"', env_var, eval('$'.env_var)))
       endif
     endfor
   endf

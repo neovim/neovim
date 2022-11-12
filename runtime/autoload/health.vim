@@ -5,8 +5,13 @@ function! health#check(plugin_names) abort
         \ ? s:discover_healthchecks()
         \ : s:get_healthcheck(a:plugin_names)
 
-  " create scratch-buffer
-  execute 'tab sbuffer' nvim_create_buf(v:true, v:true)
+  " Create buffer and open in a tab, unless this is the default buffer when Nvim starts.
+  let emptybuf = (bufnr('$') == 1 && empty(getline(1)) && 1 == line('$'))
+  execute (emptybuf ? 'buffer' : 'tab sbuffer') nvim_create_buf(v:true, v:true)
+  if bufexists('health://')
+    bwipe health://
+  endif
+  file health://
   setfiletype checkhealth
 
   if empty(healthchecks)
@@ -38,7 +43,7 @@ function! health#check(plugin_names) abort
                 \ name, v:throwpoint, v:exception))
         endif
       endtry
-      let header = [name. ': ' . func, repeat('=', 72)]
+      let header = [repeat('=', 78), name .. ': ' .. func, '']
       " remove empty line after header from report_start
       let s:output = s:output[0] == '' ? s:output[1:] : s:output
       let s:output = header + s:output + ['']
@@ -47,8 +52,7 @@ function! health#check(plugin_names) abort
     endfor
   endif
 
-  " needed for plasticboy/vim-markdown, because it uses fdm=expr
-  normal! zR
+  " Clear the 'Running healthchecks...' message.
   redraw|echo ''
 endfunction
 
@@ -58,7 +62,7 @@ endfunction
 
 " Starts a new report.
 function! health#report_start(name) abort
-  call s:collect_output("\n## " . a:name)
+  call s:collect_output(printf("\n%s ~", a:name))
 endfunction
 
 " Indents lines *except* line 1 of a string if it contains newlines.
@@ -81,7 +85,7 @@ endfunction
 " Format a message for a specific report item.
 " a:1: Optional advice (string or list)
 function! s:format_report_message(status, msg, ...) abort " {{{
-  let output = '  - ' . a:status . ': ' . s:indent_after_line1(a:msg, 4)
+  let output = '- ' .. a:status .. (empty(a:status) ? '' : ' ') .. s:indent_after_line1(a:msg, 2)
 
   " Optional parameters
   if a:0 > 0
@@ -92,9 +96,9 @@ function! s:format_report_message(status, msg, ...) abort " {{{
 
     " Report each suggestion
     if !empty(advice)
-      let output .= "\n    - ADVICE:"
+      let output .= "\n  - ADVICE:"
       for suggestion in advice
-        let output .= "\n      - " . s:indent_after_line1(suggestion, 10)
+        let output .= "\n    - " . s:indent_after_line1(suggestion, 6)
       endfor
     endif
   endif
@@ -102,9 +106,9 @@ function! s:format_report_message(status, msg, ...) abort " {{{
   return s:help_to_link(output)
 endfunction " }}}
 
-" Use {msg} to report information in the current section
+" Reports a message as a listitem in the current section.
 function! health#report_info(msg) abort " {{{
-  call s:collect_output(s:format_report_message('INFO', a:msg))
+  call s:collect_output(s:format_report_message('', a:msg))
 endfunction " }}}
 
 " Reports a successful healthcheck.
