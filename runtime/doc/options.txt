@@ -2164,7 +2164,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	See 'fileencoding' to control file-content encoding.
 
 			*'endoffile'* *'eof'* *'noendoffile'* *'noeof'*
-'endoffile' 'eof'	boolean	(default on)
+'endoffile' 'eof'	boolean	(default off)
 			local to buffer
 	Indicates that a CTRL-Z character was found at the end of the file
 	when reading it.  Normally only happens when 'fileformat' is "dos".

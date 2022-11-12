@@ -649,7 +649,7 @@ return {
       no_mkrc=true,
       redraw={'statuslines'},
       varname='p_eof',
-      defaults={if_true=true}
+      defaults={if_true=false}
     },
     {
       full_name='endofline', abbreviation='eol',

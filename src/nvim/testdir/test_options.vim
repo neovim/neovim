@@ -1264,5 +1264,17 @@ func Test_keywordprg_empty()
   let &keywordprg = k
 endfunc
 
+" check that the very first buffer created does not have 'endoffile' set
+func Test_endoffile_default()
+  let after =<< trim [CODE]
+    call writefile([execute('set eof?')], 'Xtestout')
+    qall!
+  [CODE]
+  if RunVim([], after, '')
+    call assert_equal(["\nnoendoffile"], readfile('Xtestout'))
+  endif
+  call delete('Xtestout')
+endfunc
+
 
 " vim: shiftwidth=2 sts=2 expandtab
