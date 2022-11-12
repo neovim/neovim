@@ -5,6 +5,12 @@
 
 # Version should match the tested CMAKE_URL in .github/workflows/ci.yml.
 cmake_minimum_required(VERSION 3.10)
+
+# Can be removed once minimum version is at least 3.15
+if(POLICY CMP0092)
+  cmake_policy(SET CMP0092 NEW)
+endif()
+
 project(nvim C)
 
 if(POLICY CMP0075)
@@ -270,7 +276,7 @@ int main(void)
 option(ENABLE_COMPILER_SUGGESTIONS "Enable -Wsuggest compiler warnings" OFF)
 if(MSVC)
   # XXX: /W4 gives too many warnings. #3241
-  add_compile_options(/W3)
+  add_compile_options(-W1 -wd4311)
   add_definitions(-D_CRT_SECURE_NO_WARNINGS -D_CRT_NONSTDC_NO_DEPRECATE)
   add_definitions(-DMSWIN)
 else()
@@ -364,10 +370,14 @@ option(CI_BUILD "CI, extra flags will be set" OFF)
 
 if(CI_BUILD)
   message(STATUS "CI build enabled")
-  add_compile_options(-Werror)
-  if(DEFINED ENV{BUILD_UCHAR})
-    # Get some test coverage for unsigned char
-    add_compile_options(-funsigned-char)
+  if(MSVC)
+    add_compile_options(-WX)
+  else()
+    add_compile_options(-Werror)
+    if(DEFINED ENV{BUILD_UCHAR})
+      # Get some test coverage for unsigned char
+      add_compile_options(-funsigned-char)
+    endif()
   endif()
 endif()
 

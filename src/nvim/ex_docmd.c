@@ -1639,6 +1639,7 @@ int execute_cmd(exarg_T *eap, CmdParseInfo *cmdinfo, bool preview)
   char *errormsg = NULL;
   int retv = 0;
 
+#undef ERROR
 #define ERROR(msg) \
   do { \
     errormsg = msg; \
