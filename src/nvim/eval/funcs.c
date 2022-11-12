@@ -846,9 +846,32 @@ static void f_char2nr(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 ///          otherwise the byte index of the column.
 static void get_col(typval_T *argvars, typval_T *rettv, bool charcol)
 {
+  if (tv_check_for_string_or_list_arg(argvars, 0) == FAIL
+      || tv_check_for_opt_number_arg(argvars, 1) == FAIL) {
+    return;
+  }
+
+  switchwin_T switchwin;
+  bool winchanged = false;
+
+  if (argvars[1].v_type != VAR_UNKNOWN) {
+    // use the window specified in the second argument
+    tabpage_T *tp;
+    win_T *wp = win_id2wp_tp((int)tv_get_number(&argvars[1]), &tp);
+    if (wp == NULL || tp == NULL) {
+      return;
+    }
+
+    if (switch_win_noblock(&switchwin, wp, tp, true) != OK) {
+      return;
+    }
+
+    check_cursor();
+    winchanged = true;
+  }
+
   colnr_T col = 0;
   int fnum = curbuf->b_fnum;
-
   pos_T *fp = var2fpos(&argvars[0], false, &fnum, charcol);
   if (fp != NULL && fnum == curbuf->b_fnum) {
     if (fp->col == MAXCOL) {
@@ -876,6 +899,10 @@ static void get_col(typval_T *argvars, typval_T *rettv, bool charcol)
     }
   }
   rettv->vval.v_number = col;
+
+  if (winchanged) {
+    restore_win_noblock(&switchwin, true);
+  }
 }
 
 /// "charcol()" function
