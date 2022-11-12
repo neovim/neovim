@@ -4,6 +4,7 @@ local exec_lua = helpers.exec_lua
 local clear = helpers.clear
 local feed = helpers.feed
 local eval = helpers.eval
+local poke_eventloop = helpers.poke_eventloop
 
 describe('vim.ui', function()
   before_each(function()
@@ -114,6 +115,7 @@ describe('vim.ui', function()
     it('can return nil when interrupted with Ctrl-C #18144', function()
       feed(':lua result = "on_confirm not called"<cr>')
       feed(':lua vim.ui.input({}, function(input) result = input end)<cr>')
+      poke_eventloop()  -- This is needed because Ctrl-C flushes input
       feed('Inputted Text<c-c>')
       eq(true, exec_lua('return (nil == result)'))
     end)
