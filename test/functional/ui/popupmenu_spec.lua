@@ -967,6 +967,7 @@ describe('builtin popupmenu', function()
       [4] = {bold = true, reverse = true},
       [5] = {bold = true, foreground = Screen.colors.SeaGreen},
       [6] = {foreground = Screen.colors.Grey100, background = Screen.colors.Red},
+      [7] = {background = Screen.colors.Yellow},  -- Search
     })
   end)
 
@@ -3036,6 +3037,165 @@ describe('builtin popupmenu', function()
     ]])
     eq(false, screen.options.mousemoveevent)
     eq('bar', meths.get_var('menustr'))
+  end)
+
+  -- oldtest: Test_popup_command()
+  it(':popup command', function()
+    exec([[
+      menu Test.Foo Foo
+      call assert_fails('popup Test.Foo', 'E336:')
+      call assert_fails('popup Test.Foo.X', 'E327:')
+      call assert_fails('popup Foo', 'E337:')
+      unmenu Test.Foo
+    ]])
+    eq({}, meths.get_vvar('errors'))
+
+    exec([[
+      func ChangeMenu()
+        aunmenu PopUp.&Paste
+        nnoremenu 1.40 PopUp.&Paste :echomsg "pasted"<CR>
+        echomsg 'changed'
+        return "\<Ignore>"
+      endfunc
+
+      let lines =<< trim END
+        one two three four five
+        and one two Xthree four five
+        one more two three four five
+      END
+      call setline(1, lines)
+
+      aunmenu *
+      source $VIMRUNTIME/menu.vim
+    ]])
+    feed('/X<CR>:popup PopUp<CR>')
+    screen:expect([[
+      one two three four five         |
+      and one two {7:^X}three four five    |
+      one more tw{n: Undo             }   |
+      {1:~          }{n:                  }{1:   }|
+      {1:~          }{n: Paste            }{1:   }|
+      {1:~          }{n:                  }{1:   }|
+      {1:~          }{n: Select Word      }{1:   }|
+      {1:~          }{n: Select Sentence  }{1:   }|
+      {1:~          }{n: Select Paragraph }{1:   }|
+      {1:~          }{n: Select Line      }{1:   }|
+      {1:~          }{n: Select Block     }{1:   }|
+      {1:~          }{n: Select All       }{1:   }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      :popup PopUp                    |
+    ]])
+
+    -- go to the Paste entry in the menu
+    feed('jj')
+    screen:expect([[
+      one two three four five         |
+      and one two {7:^X}three four five    |
+      one more tw{n: Undo             }   |
+      {1:~          }{n:                  }{1:   }|
+      {1:~          }{s: Paste            }{1:   }|
+      {1:~          }{n:                  }{1:   }|
+      {1:~          }{n: Select Word      }{1:   }|
+      {1:~          }{n: Select Sentence  }{1:   }|
+      {1:~          }{n: Select Paragraph }{1:   }|
+      {1:~          }{n: Select Line      }{1:   }|
+      {1:~          }{n: Select Block     }{1:   }|
+      {1:~          }{n: Select All       }{1:   }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      :popup PopUp                    |
+    ]])
+
+    -- Select a word
+    feed('j')
+    screen:expect([[
+      one two three four five         |
+      and one two {7:^X}three four five    |
+      one more tw{n: Undo             }   |
+      {1:~          }{n:                  }{1:   }|
+      {1:~          }{n: Paste            }{1:   }|
+      {1:~          }{n:                  }{1:   }|
+      {1:~          }{s: Select Word      }{1:   }|
+      {1:~          }{n: Select Sentence  }{1:   }|
+      {1:~          }{n: Select Paragraph }{1:   }|
+      {1:~          }{n: Select Line      }{1:   }|
+      {1:~          }{n: Select Block     }{1:   }|
+      {1:~          }{n: Select All       }{1:   }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      :popup PopUp                    |
+    ]])
+
+    feed('<Esc>')
+
+    -- Set an <expr> mapping to change a menu entry while it's displayed.
+    -- The text should not change but the command does.
+    -- Also verify that "changed" shows up, which means the mapping triggered.
+    command('nnoremap <expr> <F2> ChangeMenu()')
+    feed('/X<CR>:popup PopUp<CR><F2>')
+    screen:expect([[
+      one two three four five         |
+      and one two {7:^X}three four five    |
+      one more tw{n: Undo             }   |
+      {1:~          }{n:                  }{1:   }|
+      {1:~          }{n: Paste            }{1:   }|
+      {1:~          }{n:                  }{1:   }|
+      {1:~          }{n: Select Word      }{1:   }|
+      {1:~          }{n: Select Sentence  }{1:   }|
+      {1:~          }{n: Select Paragraph }{1:   }|
+      {1:~          }{n: Select Line      }{1:   }|
+      {1:~          }{n: Select Block     }{1:   }|
+      {1:~          }{n: Select All       }{1:   }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      changed                         |
+    ]])
+
+    -- Select the Paste entry, executes the changed menu item.
+    feed('jj<CR>')
+    screen:expect([[
+      one two three four five         |
+      and one two {7:^X}three four five    |
+      one more two three four five    |
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      pasted                          |
+    ]])
   end)
 end)
 

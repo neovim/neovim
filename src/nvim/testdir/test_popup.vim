@@ -871,18 +871,30 @@ func Test_popup_command()
   call assert_fails('popup Foo', 'E337:')
   unmenu Test.Foo
 
+  let script =<< trim END
+    func StartTimer()
+      call timer_start(100, {-> ChangeMenu()})
+    endfunc
+    func ChangeMenu()
+      nunmenu PopUp.&Paste
+      nnoremenu 1.40 PopUp.&Paste :echomsg "pasted"<CR>
+      echomsg 'changed'
+    endfunc
+  END
+  call writefile(script, 'XtimerScript')
+
   let lines =<< trim END
 	one two three four five
 	and one two Xthree four five
 	one more two three four five
   END
   call writefile(lines, 'Xtest')
-  let buf = RunVimInTerminal('Xtest', {})
+  let buf = RunVimInTerminal('-S XtimerScript Xtest', {})
   call term_sendkeys(buf, ":source $VIMRUNTIME/menu.vim\<CR>")
   call term_sendkeys(buf, "/X\<CR>:popup PopUp\<CR>")
   call VerifyScreenDump(buf, 'Test_popup_command_01', {})
 
-  " Select a word
+  " go to the Paste entry in the menu
   call term_sendkeys(buf, "jj")
   call VerifyScreenDump(buf, 'Test_popup_command_02', {})
 
@@ -891,8 +903,20 @@ func Test_popup_command()
   call VerifyScreenDump(buf, 'Test_popup_command_03', {})
 
   call term_sendkeys(buf, "\<Esc>")
+
+  " Set a timer to change a menu entry while it's displayed.  The text should
+  " not change but the command does.  Making the screendump also verifies that
+  " "changed" shows up, which means the timer triggered
+  call term_sendkeys(buf, "/X\<CR>:call StartTimer() | popup PopUp\<CR>")
+  call VerifyScreenDump(buf, 'Test_popup_command_04', {})
+
+  " Select the Paste entry, executes the changed menu item.
+  call term_sendkeys(buf, "jj\<CR>")
+  call VerifyScreenDump(buf, 'Test_popup_command_05', {})
+
   call StopVimInTerminal(buf)
   call delete('Xtest')
+  call delete('XtimerScript')
 endfunc
 
 func Test_popup_complete_backwards()
