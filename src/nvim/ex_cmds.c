@@ -1135,10 +1135,12 @@ void do_bang(int addr_count, exarg_T *eap, bool forceit, bool do_in, bool do_out
     msg_scroll = scroll_save;
   }
 
-  // Try to find an embedded bang, like in :!<cmd> ! [args]
-  // (:!! is indicated by the 'forceit' variable)
+  // Try to find an embedded bang, like in ":!<cmd> ! [args]"
+  // ":!!" is indicated by the 'forceit' variable.
   bool ins_prevcmd = forceit;
-  trailarg = arg;
+
+  // Skip leading white space to avoid a strange error with some shells.
+  trailarg = skipwhite(arg);
   do {
     len = strlen(trailarg) + 1;
     if (newcmd != NULL) {
