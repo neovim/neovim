@@ -33,6 +33,7 @@
 #include "nvim/spell.h"
 #include "nvim/state.h"
 #include "nvim/syntax.h"
+#include "nvim/types.h"
 #include "nvim/undo.h"
 #include "nvim/window.h"
 
@@ -1722,9 +1723,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
             decor_conceal = 2;  // really??
           }
 
-          if (decor_state.spell) {
-            can_spell = true;
-          }
+          can_spell = TRISTATE_TO_BOOL(decor_state.spell, can_spell);
         }
 
         // Check spelling (unless at the end of the line).

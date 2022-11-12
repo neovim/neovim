@@ -721,8 +721,12 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer line, Integer
   bool ephemeral = false;
   OPTION_TO_BOOL(ephemeral, ephemeral, false);
 
-  OPTION_TO_BOOL(decor.spell, spell, false);
-  if (decor.spell) {
+  if (opts->spell.type == kObjectTypeNil) {
+    decor.spell = kNone;
+  } else {
+    bool spell = false;
+    OPTION_TO_BOOL(spell, spell, false);
+    decor.spell = spell ? kTrue : kFalse;
     has_decor = true;
   }
 

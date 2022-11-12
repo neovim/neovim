@@ -164,7 +164,7 @@ function TSHighlighter:get_query(lang)
 end
 
 ---@private
-local function on_line_impl(self, buf, line, spell)
+local function on_line_impl(self, buf, line, is_spell_nav)
   self.tree:for_each_tree(function(tstree, tree)
     if not tstree then
       return
@@ -201,17 +201,26 @@ local function on_line_impl(self, buf, line, spell)
       local start_row, start_col, end_row, end_col = node:range()
       local hl = highlighter_query.hl_cache[capture]
 
-      local is_spell = highlighter_query:query().captures[capture] == 'spell'
+      local capture_name = highlighter_query:query().captures[capture]
+      local spell = nil
+      if capture_name == 'spell' then
+        spell = true
+      elseif capture_name == 'nospell' then
+        spell = false
+      end
 
-      if hl and end_row >= line and (not spell or is_spell) then
+      -- Give nospell a higher priority so it always overrides spell captures.
+      local spell_pri_offset = capture_name == 'nospell' and 1 or 0
+
+      if hl and end_row >= line and (not is_spell_nav or spell ~= nil) then
         a.nvim_buf_set_extmark(buf, ns, start_row, start_col, {
           end_line = end_row,
           end_col = end_col,
           hl_group = hl,
           ephemeral = true,
-          priority = tonumber(metadata.priority) or 100, -- Low but leaves room below
+          priority = (tonumber(metadata.priority) or 100) + spell_pri_offset, -- Low but leaves room below
           conceal = metadata.conceal,
-          spell = is_spell,
+          spell = spell,
         })
       end
       if start_row > line then
