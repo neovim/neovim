@@ -20,6 +20,7 @@
 #include "nvim/ex_getln.h"
 #include "nvim/garray.h"
 #include "nvim/getchar.h"
+#include "nvim/grid.h"
 #include "nvim/help.h"
 #include "nvim/highlight_group.h"
 #include "nvim/locale.h"
@@ -34,6 +35,7 @@
 #include "nvim/screen.h"
 #include "nvim/search.h"
 #include "nvim/sign.h"
+#include "nvim/statusline.h"
 #include "nvim/strings.h"
 #include "nvim/syntax.h"
 #include "nvim/tag.h"
@@ -273,6 +275,236 @@ void cmdline_pum_cleanup(CmdlineInfo *cclp)
 {
   cmdline_pum_remove();
   wildmenu_cleanup(cclp);
+}
+
+/// Return the number of characters that should be skipped in the wildmenu
+/// These are backslashes used for escaping.  Do show backslashes in help tags.
+static int skip_wildmenu_char(expand_T *xp, char_u *s)
+{
+  if ((rem_backslash((char *)s) && xp->xp_context != EXPAND_HELP)
+      || ((xp->xp_context == EXPAND_MENUS || xp->xp_context == EXPAND_MENUNAMES)
+          && (s[0] == '\t' || (s[0] == '\\' && s[1] != NUL)))) {
+#ifndef BACKSLASH_IN_FILENAME
+    // TODO(bfredl): Why in the actual fuck are we special casing the
+    // shell variety deep in the redraw logic? Shell special snowflakiness
+    // should already be eliminated multiple layers before reaching the
+    // screen infracstructure.
+    if (xp->xp_shell && csh_like_shell() && s[1] == '\\' && s[2] == '!') {
+      return 2;
+    }
+#endif
+    return 1;
+  }
+  return 0;
+}
+
+/// Get the length of an item as it will be shown in the status line.
+static int wildmenu_match_len(expand_T *xp, char_u *s)
+{
+  int len = 0;
+
+  int emenu = (xp->xp_context == EXPAND_MENUS
+               || xp->xp_context == EXPAND_MENUNAMES);
+
+  // Check for menu separators - replace with '|'.
+  if (emenu && menu_is_separator((char *)s)) {
+    return 1;
+  }
+
+  while (*s != NUL) {
+    s += skip_wildmenu_char(xp, s);
+    len += ptr2cells((char *)s);
+    MB_PTR_ADV(s);
+  }
+
+  return len;
+}
+
+/// Show wildchar matches in the status line.
+/// Show at least the "match" item.
+/// We start at item "first_match" in the list and show all matches that fit.
+///
+/// If inversion is possible we use it. Else '=' characters are used.
+///
+/// @param matches  list of matches
+static void redraw_wildmenu(expand_T *xp, int num_matches, char **matches, int match, int showtail)
+{
+#define L_MATCH(m) (showtail ? showmatches_gettail(matches[m], false) : matches[m])
+  int row;
+  char_u *buf;
+  int len;
+  int clen;                     // length in screen cells
+  int fillchar;
+  int attr;
+  int i;
+  bool highlight = true;
+  char_u *selstart = NULL;
+  int selstart_col = 0;
+  char_u *selend = NULL;
+  static int first_match = 0;
+  bool add_left = false;
+  char_u *s;
+  int emenu;
+  int l;
+
+  if (matches == NULL) {        // interrupted completion?
+    return;
+  }
+
+  buf = xmalloc((size_t)Columns * MB_MAXBYTES + 1);
+
+  if (match == -1) {    // don't show match but original text
+    match = 0;
+    highlight = false;
+  }
+  // count 1 for the ending ">"
+  clen = wildmenu_match_len(xp, (char_u *)L_MATCH(match)) + 3;
+  if (match == 0) {
+    first_match = 0;
+  } else if (match < first_match) {
+    // jumping left, as far as we can go
+    first_match = match;
+    add_left = true;
+  } else {
+    // check if match fits on the screen
+    for (i = first_match; i < match; i++) {
+      clen += wildmenu_match_len(xp, (char_u *)L_MATCH(i)) + 2;
+    }
+    if (first_match > 0) {
+      clen += 2;
+    }
+    // jumping right, put match at the left
+    if ((long)clen > Columns) {
+      first_match = match;
+      // if showing the last match, we can add some on the left
+      clen = 2;
+      for (i = match; i < num_matches; i++) {
+        clen += wildmenu_match_len(xp, (char_u *)L_MATCH(i)) + 2;
+        if ((long)clen >= Columns) {
+          break;
+        }
+      }
+      if (i == num_matches) {
+        add_left = true;
+      }
+    }
+  }
+  if (add_left) {
+    while (first_match > 0) {
+      clen += wildmenu_match_len(xp, (char_u *)L_MATCH(first_match - 1)) + 2;
+      if ((long)clen >= Columns) {
+        break;
+      }
+      first_match--;
+    }
+  }
+
+  fillchar = fillchar_status(&attr, curwin);
+
+  if (first_match == 0) {
+    *buf = NUL;
+    len = 0;
+  } else {
+    STRCPY(buf, "< ");
+    len = 2;
+  }
+  clen = len;
+
+  i = first_match;
+  while (clen + wildmenu_match_len(xp, (char_u *)L_MATCH(i)) + 2 < Columns) {
+    if (i == match) {
+      selstart = buf + len;
+      selstart_col = clen;
+    }
+
+    s = (char_u *)L_MATCH(i);
+    // Check for menu separators - replace with '|'
+    emenu = (xp->xp_context == EXPAND_MENUS
+             || xp->xp_context == EXPAND_MENUNAMES);
+    if (emenu && menu_is_separator((char *)s)) {
+      STRCPY(buf + len, transchar('|'));
+      l = (int)STRLEN(buf + len);
+      len += l;
+      clen += l;
+    } else {
+      for (; *s != NUL; s++) {
+        s += skip_wildmenu_char(xp, s);
+        clen += ptr2cells((char *)s);
+        if ((l = utfc_ptr2len((char *)s)) > 1) {
+          STRNCPY(buf + len, s, l);  // NOLINT(runtime/printf)
+          s += l - 1;
+          len += l;
+        } else {
+          STRCPY(buf + len, transchar_byte(*s));
+          len += (int)STRLEN(buf + len);
+        }
+      }
+    }
+    if (i == match) {
+      selend = buf + len;
+    }
+
+    *(buf + len++) = ' ';
+    *(buf + len++) = ' ';
+    clen += 2;
+    if (++i == num_matches) {
+      break;
+    }
+  }
+
+  if (i != num_matches) {
+    *(buf + len++) = '>';
+    clen++;
+  }
+
+  buf[len] = NUL;
+
+  row = cmdline_row - 1;
+  if (row >= 0) {
+    if (wild_menu_showing == 0 || wild_menu_showing == WM_LIST) {
+      if (msg_scrolled > 0) {
+        // Put the wildmenu just above the command line.  If there is
+        // no room, scroll the screen one line up.
+        if (cmdline_row == Rows - 1) {
+          msg_scroll_up(false, false);
+          msg_scrolled++;
+        } else {
+          cmdline_row++;
+          row++;
+        }
+        wild_menu_showing = WM_SCROLLED;
+      } else {
+        // Create status line if needed by setting 'laststatus' to 2.
+        // Set 'winminheight' to zero to avoid that the window is
+        // resized.
+        if (lastwin->w_status_height == 0 && global_stl_height() == 0) {
+          save_p_ls = (int)p_ls;
+          save_p_wmh = (int)p_wmh;
+          p_ls = 2;
+          p_wmh = 0;
+          last_status(false);
+        }
+        wild_menu_showing = WM_SHOWN;
+      }
+    }
+
+    // Tricky: wildmenu can be drawn either over a status line, or at empty
+    // scrolled space in the message output
+    ScreenGrid *grid = (wild_menu_showing == WM_SCROLLED)
+                        ? &msg_grid_adj : &default_grid;
+
+    grid_puts(grid, (char *)buf, row, 0, attr);
+    if (selstart != NULL && highlight) {
+      *selend = NUL;
+      grid_puts(grid, (char *)selstart, row, selstart_col, HL_ATTR(HLF_WM));
+    }
+
+    grid_fill(grid, row, row + 1, clen, Columns,
+              fillchar, fillchar, attr);
+  }
+
+  win_redraw_last_status(topframe);
+  xfree(buf);
 }
 
 /// Get the next or prev cmdline completion match. The index of the match is set
@@ -563,7 +795,8 @@ int showmatches(expand_T *xp, int wildmenu)
 {
   CmdlineInfo *const ccline = get_cmdline_info();
 #define L_SHOWFILE(m) (showtail \
-                       ? sm_gettail(files_found[m], false) : files_found[m])
+                       ? showmatches_gettail(files_found[m], false) \
+                       : files_found[m])
   int num_files;
   char **files_found;
   int i, j, k;
@@ -606,7 +839,7 @@ int showmatches(expand_T *xp, int wildmenu)
         .pum_kind = NULL,
       };
     }
-    char *endpos = (showtail ? sm_gettail(xp->xp_pattern, true) : xp->xp_pattern);
+    char *endpos = showtail ? showmatches_gettail(xp->xp_pattern, true) : xp->xp_pattern;
     if (ui_has(kUICmdline)) {
       compl_startcol = (int)(endpos - ccline->cmdbuff);
     } else {
@@ -739,9 +972,9 @@ int showmatches(expand_T *xp, int wildmenu)
   return EXPAND_OK;
 }
 
-/// Private path_tail for showmatches() (and redraw_wildmenu()):
-/// Find tail of file name path, but ignore trailing "/".
-char *sm_gettail(char *s, bool eager)
+/// path_tail() version for showmatches() and redraw_wildmenu():
+/// Return the tail of file name path "s", ignoring a trailing "/".
+static char *showmatches_gettail(char *s, bool eager)
 {
   char_u *p;
   char_u *t = (char_u *)s;
