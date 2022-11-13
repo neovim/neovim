@@ -693,8 +693,17 @@ void ex_next(exarg_T *eap)
 void ex_argdedupe(exarg_T *eap FUNC_ATTR_UNUSED)
 {
   for (int i = 0; i < ARGCOUNT; i++) {
+    // Expand each argument to a full path to catch different paths leading
+    // to the same file.
+    char *firstFullname = FullName_save(ARGLIST[i].ae_fname, false);
+
     for (int j = i + 1; j < ARGCOUNT; j++) {
-      if (path_fnamecmp(ARGLIST[i].ae_fname, ARGLIST[j].ae_fname) == 0) {
+      char *secondFullname = FullName_save(ARGLIST[j].ae_fname, false);
+      bool areNamesDuplicate = path_fnamecmp(firstFullname, secondFullname) == 0;
+      xfree(secondFullname);
+
+      if (areNamesDuplicate) {
+        // remove one duplicate argument
         xfree(ARGLIST[j].ae_fname);
         memmove(ARGLIST + j, ARGLIST + j + 1,
                 (size_t)(ARGCOUNT - j - 1) * sizeof(aentry_T));
@@ -709,6 +718,8 @@ void ex_argdedupe(exarg_T *eap FUNC_ATTR_UNUSED)
         j--;
       }
     }
+
+    xfree(firstFullname);
   }
 }
 
