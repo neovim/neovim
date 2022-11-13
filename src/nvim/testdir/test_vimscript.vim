@@ -193,6 +193,16 @@ func Test_if_while()
     call assert_equal('ab3j3b2c2b1f1h1km', g:Xpath)
 endfunc
 
+" Check double quote after skipped "elseif" does not give error E15
+func Test_skipped_elseif()
+  if "foo" ==? "foo"
+      let result = "first"
+  elseif "foo" ==? "foo"
+      let result = "second"
+  endif
+  call assert_equal('first', result)
+endfunc
+
 "-------------------------------------------------------------------------------
 " Test 4:   :return							    {{{1
 "-------------------------------------------------------------------------------
@@ -3024,7 +3034,7 @@ func Test_nested_if_else_errors()
 
   " :elseif without :if
   let code =<< trim END
-    elseif
+    elseif 1
   END
   call writefile(code, 'Xtest')
   call AssertException(['source Xtest'], 'Vim(elseif):E582: :elseif without :if')
@@ -3032,7 +3042,7 @@ func Test_nested_if_else_errors()
   " :elseif without :if
   let code =<< trim END
     while 1
-      elseif
+      elseif 1
     endwhile
   END
   call writefile(code, 'Xtest')
@@ -3042,7 +3052,7 @@ func Test_nested_if_else_errors()
   let code =<< trim END
     try
     finally
-      elseif
+      elseif 1
     endtry
   END
   call writefile(code, 'Xtest')
@@ -3051,7 +3061,7 @@ func Test_nested_if_else_errors()
   " :elseif without :if
   let code =<< trim END
     try
-      elseif
+      elseif 1
     endtry
   END
   call writefile(code, 'Xtest')
@@ -3062,7 +3072,7 @@ func Test_nested_if_else_errors()
     try
       throw "a"
     catch /a/
-      elseif
+      elseif 1
     endtry
   END
   call writefile(code, 'Xtest')
