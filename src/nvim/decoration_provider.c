@@ -194,6 +194,25 @@ void decor_providers_invoke_end(DecorProviders *providers, char **err)
   }
 }
 
+/// Mark all cached state of per-namespace highlights as invalid. Revalidate
+/// current namespace.
+///
+/// Expensive! Should on be called by an already throttled validity check
+/// like highlight_changed() (throttled to the next redraw or mode change)
+void decor_provider_invalidate_hl(void)
+{
+  size_t len = kv_size(decor_providers);
+  for (size_t i = 0; i < len; i++) {
+    DecorProvider *item = &kv_A(decor_providers, i);
+    item->hl_cached = false;
+  }
+
+  if (ns_hl_active) {
+    ns_hl_active = -1;
+    hl_check_ns();
+  }
+}
+
 DecorProvider *get_decor_provider(NS ns_id, bool force)
 {
   assert(ns_id > 0);
