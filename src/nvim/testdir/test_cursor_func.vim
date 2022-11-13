@@ -241,8 +241,9 @@ endfunc
 
 " Test for the charcol() function
 func Test_charcol()
-  call assert_fails('call charcol({})', 'E731:')
-  call assert_equal(0, charcol(0))
+  call assert_fails('call charcol({})', 'E1222:')
+  call assert_fails('call charcol(".", [])', 'E1210:')
+  call assert_fails('call charcol(0)', 'E1222:')
   new
   call setline(1, ['', "01\tà4è678", 'Ⅵ', '012345678'])
 
@@ -297,6 +298,25 @@ func Test_charcol()
   exe "normal 2G6li\<F3>"
   call assert_equal([1, 10, 2, 10, 7], g:InsertCurrentCol)
   iunmap <F3>
+
+  " Test for getting the column number in another window.
+  let winid = win_getid()
+  new
+  call win_execute(winid, 'normal 1G')
+  call assert_equal(1, charcol('.', winid))
+  call assert_equal(1, charcol('$', winid))
+  call win_execute(winid, 'normal 2G6l')
+  call assert_equal(7, charcol('.', winid))
+  call assert_equal(10, charcol('$', winid))
+
+  " calling from another tab page also works
+  tabnew
+  call assert_equal(7, charcol('.', winid))
+  call assert_equal(10, charcol('$', winid))
+  tabclose
+
+  " unknown window ID
+  call assert_equal(0, charcol('.', 10001))
 
   %bw!
 endfunc

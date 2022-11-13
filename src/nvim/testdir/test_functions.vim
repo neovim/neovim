@@ -1288,6 +1288,9 @@ func Test_col()
   call assert_equal(0, col([2, '$']))
   call assert_equal(0, col([1, 100]))
   call assert_equal(0, col([1]))
+  call assert_equal(0, col(v:_null_list))
+  call assert_fails('let c = col({})', 'E1222:')
+  call assert_fails('let c = col(".", [])', 'E1210:')
 
   " test for getting the visual start column
   func T()
@@ -1316,6 +1319,15 @@ func Test_col()
   call cursor(1, 10)
   call assert_equal(4, col('.'))
   set virtualedit&
+
+  " Test for getting the column number in another window
+  let winid = win_getid()
+  new
+  call win_execute(winid, 'normal 1G$')
+  call assert_equal(3, col('.', winid))
+  call win_execute(winid, 'normal 2G')
+  call assert_equal(8, col('$', winid))
+  call assert_equal(0, col('.', 5001))
 
   bw!
 endfunc

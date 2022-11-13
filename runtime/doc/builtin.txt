@@ -78,13 +78,13 @@ chanclose({id} [, {stream}])	Number	Closes a channel or one of its streams
 chansend({id}, {data})		Number	Writes {data} to channel
 char2nr({expr} [, {utf8}])	Number	ASCII/UTF-8 value of first char in {expr}
 charclass({string})		Number	character class of {string}
-charcol({expr})			Number	column number of cursor or mark
+charcol({expr} [, {winid}])	Number	column number of cursor or mark
 charidx({string}, {idx} [, {countcc}])
 				Number	char index of byte {idx} in {string}
 chdir({dir})			String	change current working directory
 cindent({lnum})			Number	C indent for line {lnum}
 clearmatches([{win}])		none	clear all matches
-col({expr})			Number	column byte index of cursor or mark
+col({expr} [, {winid}])		Number	column byte index of cursor or mark
 complete({startcol}, {matches}) none	set Insert mode completion
 complete_add({expr})		Number	add completion match
 complete_check()		Number	check for key typed during completion
@@ -1089,8 +1089,8 @@ charclass({string})					*charclass()*
 		Returns 0 if {string} is not a |String|.
 
 
-							*charcol()*
-charcol({expr})	Same as |col()| but returns the character index of the column
+charcol({expr} [, {winid}])				*charcol()*
+		Same as |col()| but returns the character index of the column
 		position given with {expr} instead of the byte position.
 
 		Example:
@@ -1172,8 +1172,8 @@ clearmatches([{win}])					*clearmatches()*
 		Can also be used as a |method|: >
 			GetWin()->clearmatches()
 <
-							*col()*
-col({expr})	The result is a Number, which is the byte index of the column
+col({expr} [, {winid})					*col()*
+		The result is a Number, which is the byte index of the column
 		position given with {expr}.  The accepted positions are:
 		    .	    the cursor position
 		    $	    the end of the cursor line (the result is the
@@ -1188,6 +1188,8 @@ col({expr})	The result is a Number, which is the byte index of the column
 		and column number. Most useful when the column is "$", to get
 		the last column of a specific line.  When "lnum" or "col" is
 		out of range then col() returns zero.
+		With the optional {winid} argument the values are obtained for
+		that window instead of the current window.
 		To get the line number use |line()|.  To get both use
 		|getpos()|.
 		For the screen column position use |virtcol()|.  For the
@@ -1198,7 +1200,8 @@ col({expr})	The result is a Number, which is the byte index of the column
 			col("$")		length of cursor line plus one
 			col("'t")		column of mark t
 			col("'" .. markname)	column of mark markname
-<		The first column is 1.  Returns 0 if {expr} is invalid.
+<		The first column is 1.  Returns 0 if {expr} is invalid or when
+		the window with ID {winid} is not found.
 		For an uppercase mark the column may actually be in another
 		buffer.
 		For the cursor position, when 'virtualedit' is active, the
