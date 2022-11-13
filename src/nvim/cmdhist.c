@@ -116,56 +116,58 @@ void init_history(void)
   int newlen = (int)p_hi;
   int oldlen = hislen;
 
+  if (newlen == oldlen) {  // history length didn't change
+    return;
+  }
+
   // If history tables size changed, reallocate them.
   // Tables are circular arrays (current position marked by hisidx[type]).
   // On copying them to the new arrays, we take the chance to reorder them.
-  if (newlen != oldlen) {
-    for (int type = 0; type < HIST_COUNT; type++) {
-      histentry_T *temp = (newlen
-                           ? xmalloc((size_t)newlen * sizeof(*temp))
-                           : NULL);
+  for (int type = 0; type < HIST_COUNT; type++) {
+    histentry_T *temp = (newlen
+                         ? xmalloc((size_t)newlen * sizeof(*temp))
+                         : NULL);
 
-      int j = hisidx[type];
-      if (j >= 0) {
-        // old array gets partitioned this way:
-        // [0       , i1     ) --> newest entries to be deleted
-        // [i1      , i1 + l1) --> newest entries to be copied
-        // [i1 + l1 , i2     ) --> oldest entries to be deleted
-        // [i2      , i2 + l2) --> oldest entries to be copied
-        int l1 = MIN(j + 1, newlen);             // how many newest to copy
-        int l2 = MIN(newlen, oldlen) - l1;       // how many oldest to copy
-        int i1 = j + 1 - l1;                     // copy newest from here
-        int i2 = MAX(l1, oldlen - newlen + l1);  // copy oldest from here
+    int j = hisidx[type];
+    if (j >= 0) {
+      // old array gets partitioned this way:
+      // [0       , i1     ) --> newest entries to be deleted
+      // [i1      , i1 + l1) --> newest entries to be copied
+      // [i1 + l1 , i2     ) --> oldest entries to be deleted
+      // [i2      , i2 + l2) --> oldest entries to be copied
+      int l1 = MIN(j + 1, newlen);             // how many newest to copy
+      int l2 = MIN(newlen, oldlen) - l1;       // how many oldest to copy
+      int i1 = j + 1 - l1;                     // copy newest from here
+      int i2 = MAX(l1, oldlen - newlen + l1);  // copy oldest from here
 
-        // copy as much entries as they fit to new table, reordering them
-        if (newlen) {
-          // copy oldest entries
-          memcpy(&temp[0], &history[type][i2], (size_t)l2 * sizeof(*temp));
-          // copy newest entries
-          memcpy(&temp[l2], &history[type][i1], (size_t)l1 * sizeof(*temp));
-        }
-
-        // delete entries that don't fit in newlen, if any
-        for (int i = 0; i < i1; i++) {
-          hist_free_entry(history[type] + i);
-        }
-        for (int i = i1 + l1; i < i2; i++) {
-          hist_free_entry(history[type] + i);
-        }
-      }
-
-      // clear remaining space, if any
-      int l3 = j < 0 ? 0 : MIN(newlen, oldlen);  // number of copied entries
+      // copy as much entries as they fit to new table, reordering them
       if (newlen) {
-        memset(temp + l3, 0, (size_t)(newlen - l3) * sizeof(*temp));
+        // copy oldest entries
+        memcpy(&temp[0], &history[type][i2], (size_t)l2 * sizeof(*temp));
+        // copy newest entries
+        memcpy(&temp[l2], &history[type][i1], (size_t)l1 * sizeof(*temp));
       }
 
-      hisidx[type] = l3 - 1;
-      xfree(history[type]);
-      history[type] = temp;
+      // delete entries that don't fit in newlen, if any
+      for (int i = 0; i < i1; i++) {
+        hist_free_entry(history[type] + i);
+      }
+      for (int i = i1 + l1; i < i2; i++) {
+        hist_free_entry(history[type] + i);
+      }
     }
-    hislen = newlen;
+
+    // clear remaining space, if any
+    int l3 = j < 0 ? 0 : MIN(newlen, oldlen);  // number of copied entries
+    if (newlen) {
+      memset(temp + l3, 0, (size_t)(newlen - l3) * sizeof(*temp));
+    }
+
+    hisidx[type] = l3 - 1;
+    xfree(history[type]);
+    history[type] = temp;
   }
+  hislen = newlen;
 }
 
 static inline void hist_free_entry(histentry_T *hisptr)
@@ -215,24 +217,25 @@ static int in_history(int type, char *str, int move_to_front, int sep)
     }
   } while (i != hisidx[type]);
 
-  if (last_i >= 0) {
-    list_T *const list = history[type][i].additional_elements;
-    str = history[type][i].hisstr;
-    while (i != hisidx[type]) {
-      if (++i >= hislen) {
-        i = 0;
-      }
-      history[type][last_i] = history[type][i];
-      last_i = i;
-    }
-    tv_list_unref(list);
-    history[type][i].hisnum = ++hisnum[type];
-    history[type][i].hisstr = str;
-    history[type][i].timestamp = os_time();
-    history[type][i].additional_elements = NULL;
-    return true;
+  if (last_i < 0) {
+    return false;
   }
-  return false;
+
+  list_T *const list = history[type][i].additional_elements;
+  str = history[type][i].hisstr;
+  while (i != hisidx[type]) {
+    if (++i >= hislen) {
+      i = 0;
+    }
+    history[type][last_i] = history[type][i];
+    last_i = i;
+  }
+  tv_list_unref(list);
+  history[type][i].hisnum = ++hisnum[type];
+  history[type][i].hisstr = str;
+  history[type][i].timestamp = os_time();
+  history[type][i].additional_elements = NULL;
+  return true;
 }
 
 /// Convert history name to its HIST_ equivalent
@@ -304,24 +307,27 @@ void add_to_history(int histype, char *new_entry, int in_map, int sep)
     }
     last_maptick = -1;
   }
-  if (!in_history(histype, new_entry, true, sep)) {
-    if (++hisidx[histype] == hislen) {
-      hisidx[histype] = 0;
-    }
-    hisptr = &history[histype][hisidx[histype]];
-    hist_free_entry(hisptr);
 
-    // Store the separator after the NUL of the string.
-    size_t len = strlen(new_entry);
-    hisptr->hisstr = xstrnsave(new_entry, len + 2);
-    hisptr->timestamp = os_time();
-    hisptr->additional_elements = NULL;
-    hisptr->hisstr[len + 1] = (char)sep;
+  if (in_history(histype, new_entry, true, sep)) {
+    return;
+  }
 
-    hisptr->hisnum = ++hisnum[histype];
-    if (histype == HIST_SEARCH && in_map) {
-      last_maptick = maptick;
-    }
+  if (++hisidx[histype] == hislen) {
+    hisidx[histype] = 0;
+  }
+  hisptr = &history[histype][hisidx[histype]];
+  hist_free_entry(hisptr);
+
+  // Store the separator after the NUL of the string.
+  size_t len = strlen(new_entry);
+  hisptr->hisstr = xstrnsave(new_entry, len + 2);
+  hisptr->timestamp = os_time();
+  hisptr->additional_elements = NULL;
+  hisptr->hisstr[len + 1] = (char)sep;
+
+  hisptr->hisnum = ++hisnum[histype];
+  if (histype == HIST_SEARCH && in_map) {
+    last_maptick = maptick;
   }
 }
 
@@ -504,16 +510,19 @@ void f_histadd(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   }
   const char *str = tv_get_string_chk(&argvars[0]);  // NULL on type error
   histype = str != NULL ? get_histtype(str, strlen(str), false) : HIST_INVALID;
-  if (histype != HIST_INVALID) {
-    char buf[NUMBUFLEN];
-    str = tv_get_string_buf(&argvars[1], buf);
-    if (*str != NUL) {
-      init_history();
-      add_to_history(histype, (char *)str, false, NUL);
-      rettv->vval.v_number = true;
-      return;
-    }
+  if (histype == HIST_INVALID) {
+    return;
   }
+
+  char buf[NUMBUFLEN];
+  str = tv_get_string_buf(&argvars[1], buf);
+  if (*str == NUL) {
+    return;
+  }
+
+  init_history();
+  add_to_history(histype, (char *)str, false, NUL);
+  rettv->vval.v_number = true;
 }
 
 /// "histdel()" function
