@@ -23,7 +23,7 @@ local read_file = helpers.read_file
 local funcs = helpers.funcs
 local meths = helpers.meths
 
-if helpers.pending_win32(pending) then return end
+if helpers.skip(helpers.iswin()) then return end
 
 describe('TUI', function()
   local screen

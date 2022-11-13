@@ -11,6 +11,7 @@ local feed = helpers.feed
 local pcall_err = helpers.pcall_err
 local assert_alive = helpers.assert_alive
 local iswin = helpers.iswin
+local skip = helpers.skip
 
 describe('autocmd TermClose', function()
   before_each(function()
@@ -55,7 +56,7 @@ describe('autocmd TermClose', function()
   end)
 
   it('kills job trapping SIGTERM', function()
-    if iswin() then return end
+    skip(iswin())
     nvim('set_option', 'shell', 'sh')
     nvim('set_option', 'shellcmdflag', '-c')
     command([[ let g:test_job = jobstart('trap "" TERM && echo 1 && sleep 60', { ]]
@@ -75,7 +76,7 @@ describe('autocmd TermClose', function()
   end)
 
   it('kills PTY job trapping SIGHUP and SIGTERM', function()
-    if iswin() then return end
+    skip(iswin())
     nvim('set_option', 'shell', 'sh')
     nvim('set_option', 'shellcmdflag', '-c')
     command([[ let g:test_job = jobstart('trap "" HUP TERM && echo 1 && sleep 60', { ]]

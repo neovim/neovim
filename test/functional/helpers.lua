@@ -763,13 +763,10 @@ function module.create_callindex(func)
   return table
 end
 
--- Helper to skip tests. Returns true in Windows systems.
--- pending_fn is pending() from busted
-function module.pending_win32(pending_fn)
-  if iswin() then
-    if pending_fn ~= nil then
-      pending_fn('FIXME: Windows', function() end)
-    end
+function module.skip(cond, reason)
+  if cond then
+    local pending = getfenv(2).pending
+    pending(reason or 'FIXME')
     return true
   else
     return false

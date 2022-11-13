@@ -15,6 +15,8 @@ local matches = helpers.matches
 local exec_lua = helpers.exec_lua
 local sleep = helpers.sleep
 local funcs = helpers.funcs
+local iswin = helpers.iswin
+local skip = helpers.skip
 
 describe(':terminal buffer', function()
   local screen
@@ -262,7 +264,7 @@ describe(':terminal buffer', function()
   end)
 
   it('it works with set rightleft #11438', function()
-    if helpers.pending_win32(pending) then return end
+    skip(iswin())
     local columns = eval('&columns')
     feed(string.rep('a', columns))
     command('set rightleft')

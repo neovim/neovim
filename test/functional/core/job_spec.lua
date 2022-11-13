@@ -23,6 +23,7 @@ local expect_msg_seq = helpers.expect_msg_seq
 local pcall_err = helpers.pcall_err
 local matches = helpers.matches
 local Screen = require('test.functional.ui.screen')
+local skip = helpers.skip
 
 describe('jobs', function()
   local channel
@@ -87,7 +88,7 @@ describe('jobs', function()
   end)
 
   it('append environment with pty #env', function()
-    if helpers.pending_win32(pending) then return end
+    skip(iswin())
     nvim('command', "let $VAR = 'abc'")
     nvim('command', "let $TOTO = 'goodbye world'")
     nvim('command', "let g:job_opts.pty = v:true")
@@ -225,7 +226,7 @@ describe('jobs', function()
   end)
 
   it('error on non-executable `cwd`', function()
-    if iswin() then return end  -- N/A for Windows
+    skip(iswin(), 'Not applicable for Windows')
 
     local dir = 'Xtest_not_executable_dir'
     mkdir(dir)
@@ -805,7 +806,7 @@ describe('jobs', function()
     end)
 
     it('can be called recursively', function()
-      if helpers.pending_win32(pending) then return end  -- TODO: Need `cat`.
+      skip(iswin(), "TODO: Need `cat`")
       source([[
       let g:opts = {}
       let g:counter = 0
@@ -1027,7 +1028,7 @@ describe('jobs', function()
   end)
 
   describe('running tty-test program', function()
-    if helpers.pending_win32(pending) then return end
+    if skip(iswin()) then return end
     local function next_chunk()
       local rv
       while true do
@@ -1124,7 +1125,7 @@ describe("pty process teardown", function()
   end)
 
   it("does not prevent/delay exit. #4798 #4900", function()
-    if helpers.pending_win32(pending) then return end
+    skip(iswin())
     -- Use a nested nvim (in :term) to test without --headless.
     feed_command(":terminal '"..helpers.nvim_prog
       .."' -u NONE -i NONE --cmd '"..nvim_set.."' "

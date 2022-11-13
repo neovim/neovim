@@ -14,6 +14,7 @@ local pesc = helpers.pesc
 local rmdir = helpers.rmdir
 local sleep = helpers.sleep
 local meths = helpers.meths
+local skip = helpers.skip
 
 local file_prefix = 'Xtest-functional-ex_cmds-mksession_spec'
 
@@ -194,10 +195,7 @@ describe(':mksession', function()
   end)
 
   it('restores CWD for :terminal buffer at root directory #16988', function()
-    if iswin() then
-      pending('N/A for Windows')
-      return
-    end
+    skip(iswin(), 'N/A for Windows')
 
     local screen
     local cwd_dir = funcs.fnamemodify('.', ':p:~'):gsub([[[\/]*$]], '')

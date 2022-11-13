@@ -5,6 +5,8 @@ local meths, nvim_command, funcs, eq =
 local write_file, spawn, set_session, nvim_prog, exc_exec =
   helpers.write_file, helpers.spawn, helpers.set_session, helpers.nvim_prog,
   helpers.exc_exec
+local iswin = helpers.iswin
+local skip = helpers.skip
 
 local lfs = require('lfs')
 local paths = require('test.cmakeconfig.paths')
@@ -248,7 +250,7 @@ describe('ShaDa support code', function()
   end)
 
   it('does not crash when ShaDa file directory is not writable', function()
-    if helpers.pending_win32(pending) then return end
+    skip(iswin())
 
     funcs.mkdir(dirname, '', 0)
     eq(0, funcs.filewritable(dirname))

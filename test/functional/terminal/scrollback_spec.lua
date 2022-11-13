@@ -15,6 +15,7 @@ local feed_data = thelpers.feed_data
 local pcall_err = helpers.pcall_err
 local exec_lua = helpers.exec_lua
 local assert_alive = helpers.assert_alive
+local skip = helpers.skip
 
 describe(':terminal scrollback', function()
   local screen
@@ -139,7 +140,7 @@ describe(':terminal scrollback', function()
 
 
     describe('and height decreased by 1', function()
-      if helpers.pending_win32(pending) then return end
+      if skip(iswin()) then return end
       local function will_hide_top_line()
         feed([[<C-\><C-N>]])
         screen:try_resize(screen._width - 2, screen._height - 1)
@@ -185,7 +186,7 @@ describe(':terminal scrollback', function()
     -- XXX: Can't test this reliably on Windows unless the cursor is _moved_
     --      by the resize. http://docs.libuv.org/en/v1.x/signal.html
     --      See also: https://github.com/rprichard/winpty/issues/110
-    if helpers.pending_win32(pending) then return end
+    if skip(iswin()) then return end
 
     describe('and the height is decreased by 2', function()
       before_each(function()
@@ -264,7 +265,7 @@ describe(':terminal scrollback', function()
       -- XXX: Can't test this reliably on Windows unless the cursor is _moved_
       --      by the resize. http://docs.libuv.org/en/v1.x/signal.html
       --      See also: https://github.com/rprichard/winpty/issues/110
-      if helpers.pending_win32(pending) then return end
+      if skip(iswin()) then return end
       local function pop_then_push()
         screen:try_resize(screen._width, screen._height + 1)
         screen:expect([[
@@ -346,7 +347,7 @@ end)
 
 describe(':terminal prints more lines than the screen height and exits', function()
   it('will push extra lines to scrollback', function()
-    if helpers.pending_win32(pending) then return end
+    skip(iswin())
     clear()
     local screen = Screen.new(30, 7)
     screen:attach({rgb=false})
@@ -606,7 +607,7 @@ describe("pending scrollback line handling", function()
   end)
 
   it("does not crash after nvim_buf_call #14891", function()
-    if helpers.pending_win32(pending) then return end
+    skip(iswin())
     exec_lua [[
       local a = vim.api
       local bufnr = a.nvim_create_buf(false, true)

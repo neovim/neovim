@@ -30,6 +30,7 @@ local exec_lua = helpers.exec_lua
 local exc_exec = helpers.exc_exec
 local insert = helpers.insert
 local expect_exit = helpers.expect_exit
+local skip = helpers.skip
 
 local pcall_err = helpers.pcall_err
 local format_string = helpers.format_string
@@ -2729,7 +2730,7 @@ describe('API', function()
       eq({}, meths.get_runtime_file("foobarlang/", true))
     end)
     it('can handle bad patterns', function()
-      if helpers.pending_win32(pending) then return end
+      skip(iswin())
 
       eq("Vim:E220: Missing }.", pcall_err(meths.get_runtime_file, "{", false))
 
