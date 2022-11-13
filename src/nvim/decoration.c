@@ -69,7 +69,11 @@ void bufhl_add_hl_pos_offset(buf_T *buf, int src_id, int hl_id, lpos_T pos_start
 void decor_redraw(buf_T *buf, int row1, int row2, Decoration *decor)
 {
   if (row2 >= row1) {
-    if (!decor || decor->hl_id || decor_has_sign(decor) || decor->conceal || decor->spell) {
+    if (!decor
+        || decor->hl_id
+        || decor_has_sign(decor)
+        || decor->conceal
+        || decor->spell != kNone) {
       redraw_buf_range_later(buf, row1 + 1, row2 + 1);
     }
   }
@@ -310,7 +314,7 @@ next_mark:
   bool conceal = 0;
   int conceal_char = 0;
   int conceal_attr = 0;
-  bool spell = false;
+  TriState spell = kNone;
 
   for (size_t i = 0; i < kv_size(state->active); i++) {
     DecorRange item = kv_A(state->active, i);
@@ -344,8 +348,8 @@ next_mark:
         conceal_attr = item.attr_id;
       }
     }
-    if (active && item.decor.spell) {
-      spell = true;
+    if (active && item.decor.spell != kNone) {
+      spell = item.decor.spell;
     }
     if ((item.start_row == state->row && item.start_col <= col)
         && decor_virt_pos(item.decor)

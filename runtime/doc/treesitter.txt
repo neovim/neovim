@@ -432,6 +432,9 @@ capture marks comments as to be checked: >
 
     (comment) @spell
 <
+
+There is also `@nospell` which disables spellchecking regions with `@spell`.
+
                                                 *treesitter-highlight-conceal*
 Treesitter highlighting supports |conceal| via the `conceal` metadata. By
 convention, nodes to be concealed are captured as `@conceal`, but any capture
