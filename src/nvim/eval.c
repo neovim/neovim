@@ -1075,11 +1075,11 @@ int get_spellword(list_T *const list, const char **ret_word)
   return (int)tv_list_find_nr(list, -1, NULL);
 }
 
-// Call some vim script function and return the result in "*rettv".
-// Uses argv[0] to argv[argc-1] for the function arguments. argv[argc]
-// should have type VAR_UNKNOWN.
-//
-// @return  OK or FAIL.
+/// Call some Vim script function and return the result in "*rettv".
+/// Uses argv[0] to argv[argc - 1] for the function arguments. argv[argc]
+/// should have type VAR_UNKNOWN.
+///
+/// @return  OK or FAIL.
 int call_vim_function(const char *func, int argc, typval_T *argv, typval_T *rettv)
   FUNC_ATTR_NONNULL_ALL
 {
@@ -1113,7 +1113,9 @@ fail:
   return ret;
 }
 
-/// Call Vim script function and return the result as a string
+/// Call Vim script function and return the result as a string.
+/// Uses "argv[0]" to "argv[argc - 1]" for the function arguments. "argv[argc]"
+/// should have type VAR_UNKNOWN.
 ///
 /// @param[in]  func  Function name.
 /// @param[in]  argc  Number of arguments.
@@ -1136,7 +1138,8 @@ char *call_func_retstr(const char *const func, int argc, typval_T *argv)
   return retval;
 }
 
-/// Call Vim script function and return the result as a List
+/// Call Vim script function and return the result as a List.
+/// Uses "argv" and "argc" as call_func_retstr().
 ///
 /// @param[in]  func  Function name.
 /// @param[in]  argc  Number of arguments.
