@@ -3012,7 +3012,7 @@ int get_option_value_strict(char *name, int64_t *numval, char **stringval, int o
 
   if (varp != NULL) {
     if (p->flags & P_STRING) {
-      *stringval = xstrdup(*(char **)(varp));
+      *stringval = *(char **)(varp);
     } else if (p->flags & P_NUM) {
       *numval = *(long *)varp;
     } else {

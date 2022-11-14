@@ -256,7 +256,7 @@ void nvim_set_option(uint64_t channel_id, String name, Object value, Error *err)
 /// @param name     Option name
 /// @param[out] err Error details, if any
 /// @return         Option value (global)
-Object nvim_get_option(String name, Error *err)
+Object nvim_get_option(String name, Arena *arena, Error *err)
   FUNC_API_SINCE(1)
 {
   return get_option_from(NULL, SREQ_GLOBAL, name, err);
@@ -268,7 +268,7 @@ Object nvim_get_option(String name, Error *err)
 /// @param name       Option name
 /// @param[out] err   Error details, if any
 /// @return Option value
-Object nvim_buf_get_option(Buffer buffer, String name, Error *err)
+Object nvim_buf_get_option(Buffer buffer, String name, Arena *arena, Error *err)
   FUNC_API_SINCE(1)
 {
   buf_T *buf = find_buffer_by_handle(buffer, err);
@@ -306,7 +306,7 @@ void nvim_buf_set_option(uint64_t channel_id, Buffer buffer, String name, Object
 /// @param name     Option name
 /// @param[out] err Error details, if any
 /// @return Option value
-Object nvim_win_get_option(Window window, String name, Error *err)
+Object nvim_win_get_option(Window window, String name, Arena *arena, Error *err)
   FUNC_API_SINCE(1)
 {
   win_T *win = find_window_by_handle(window, err);
@@ -346,7 +346,7 @@ void nvim_win_set_option(uint64_t channel_id, Window window, String name, Object
 /// @param name The option name
 /// @param[out] err Details of an error that may have occurred
 /// @return the option value
-Object get_option_from(void *from, int type, String name, Error *err)
+static Object get_option_from(void *from, int type, String name, Error *err)
 {
   Object rv = OBJECT_INIT;
 
@@ -358,8 +358,7 @@ Object get_option_from(void *from, int type, String name, Error *err)
   // Return values
   int64_t numval;
   char *stringval = NULL;
-  int flags = get_option_value_strict(name.data, &numval, &stringval,
-                                      type, from);
+  int flags = get_option_value_strict(name.data, &numval, &stringval, type, from);
 
   if (!flags) {
     api_set_error(err, kErrorTypeValidation, "Invalid option name: '%s'",

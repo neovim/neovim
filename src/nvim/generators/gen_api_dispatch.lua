@@ -78,6 +78,10 @@ for i = 6, #arg do
         fn.arena_return = true
         fn.parameters[#fn.parameters] = nil
       end
+      if #fn.parameters ~= 0 and fn.parameters[#fn.parameters][1] == 'lstate' then
+        fn.has_lua_imp = true
+        fn.parameters[#fn.parameters] = nil
+      end
     end
   end
   input:close()
@@ -329,6 +333,14 @@ for i = 1, #functions do
         output:write(', arena')
     end
 
+    if fn.has_lua_imp then
+      if #args > 0 then
+        output:write(', NULL')
+      else
+        output:write('NULL')
+      end
+    end
+
     if fn.can_fail then
       -- if the function can fail, also pass a pointer to the local error object
       if #args > 0 then
@@ -497,6 +509,10 @@ local function process_function(fn)
     ]])
   end
 
+  if fn.has_lua_imp then
+    cparams = cparams .. 'lstate, '
+  end
+
   if fn.can_fail then
     cparams = cparams .. '&err'
   else
@@ -539,13 +555,27 @@ local function process_function(fn)
     end
     write_shifted_output(output, string.format([[
     const %s ret = %s(%s);
+    ]], fn.return_type, fn.name, cparams))
+
+    if fn.has_lua_imp then
+      -- only push onto the Lua stack if we haven't already
+      write_shifted_output(output, string.format([[
+    if (lua_gettop(lstate) == 0) {
+      nlua_push_%s(lstate, ret, true);
+    }
+      ]], return_type))
+    else
+      write_shifted_output(output, string.format([[
     nlua_push_%s(lstate, ret, true);
+      ]], return_type))
+    end
+
+    write_shifted_output(output, string.format([[
   %s
   %s
   %s
     return 1;
-    ]], fn.return_type, fn.name, cparams, return_type,
-        free_retval, free_at_exit_code, err_throw_code))
+    ]], free_retval, free_at_exit_code, err_throw_code))
   else
     write_shifted_output(output, string.format([[
     %s(%s);

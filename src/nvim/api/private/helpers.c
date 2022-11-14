@@ -394,6 +394,12 @@ String cstrn_to_string(const char *str, size_t maxsize)
   return cbuf_to_string(str, STRNLEN(str, maxsize));
 }
 
+String cstrn_as_string(char *str, size_t maxsize)
+  FUNC_ATTR_NONNULL_ALL
+{
+  return cbuf_as_string(str, STRNLEN(str, maxsize));
+}
+
 /// Creates a String using the given C string. Unlike
 /// cstr_to_string this function DOES NOT copy the C string.
 ///
@@ -462,53 +468,15 @@ Array string_to_array(const String input, bool crlf)
   return ret;
 }
 
-/// Collects `n` buffer lines into array `l`, optionally replacing newlines
-/// with NUL.
-///
-/// @param buf Buffer to get lines from
-/// @param n Number of lines to collect
-/// @param replace_nl Replace newlines ("\n") with NUL
-/// @param start Line number to start from
-/// @param[out] l Lines are copied here
-/// @param err[out] Error, if any
-/// @return true unless `err` was set
-bool buf_collect_lines(buf_T *buf, size_t n, int64_t start, bool replace_nl, Array *l, Error *err)
-{
-  for (size_t i = 0; i < n; i++) {
-    int64_t lnum = start + (int64_t)i;
-
-    if (lnum >= MAXLNUM) {
-      if (err != NULL) {
-        api_set_error(err, kErrorTypeValidation, "Line index is too high");
-      }
-      return false;
-    }
-
-    const char *bufstr = ml_get_buf(buf, (linenr_T)lnum, false);
-    Object str = STRING_OBJ(cstr_to_string(bufstr));
-
-    if (replace_nl) {
-      // Vim represents NULs as NLs, but this may confuse clients.
-      strchrsub(str.data.string.data, '\n', '\0');
-    }
-
-    l->items[i] = str;
-  }
-
-  return true;
-}
-
 /// Returns a substring of a buffer line
 ///
 /// @param buf          Buffer handle
 /// @param lnum         Line number (1-based)
 /// @param start_col    Starting byte offset into line (0-based)
 /// @param end_col      Ending byte offset into line (0-based, exclusive)
-/// @param replace_nl   Replace newlines ('\n') with null ('\0')
 /// @param err          Error object
 /// @return The text between start_col and end_col on line lnum of buffer buf
-String buf_get_text(buf_T *buf, int64_t lnum, int64_t start_col, int64_t end_col, bool replace_nl,
-                    Error *err)
+String buf_get_text(buf_T *buf, int64_t lnum, int64_t start_col, int64_t end_col, Error *err)
 {
   String rv = STRING_INIT;
 
@@ -517,7 +485,7 @@ String buf_get_text(buf_T *buf, int64_t lnum, int64_t start_col, int64_t end_col
     return rv;
   }
 
-  const char *bufstr = ml_get_buf(buf, (linenr_T)lnum, false);
+  char *bufstr = ml_get_buf(buf, (linenr_T)lnum, false);
   size_t line_length = strlen(bufstr);
 
   start_col = start_col < 0 ? (int64_t)line_length + start_col + 1 : start_col;
@@ -537,12 +505,7 @@ String buf_get_text(buf_T *buf, int64_t lnum, int64_t start_col, int64_t end_col
     return rv;
   }
 
-  rv = cstrn_to_string(&bufstr[start_col], (size_t)(end_col - start_col));
-  if (replace_nl) {
-    strchrsub(rv.data, '\n', '\0');
-  }
-
-  return rv;
+  return cstrn_as_string((char *)&bufstr[start_col], (size_t)(end_col - start_col));
 }
 
 void api_free_string(String value)

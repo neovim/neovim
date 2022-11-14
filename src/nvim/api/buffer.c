@@ -271,6 +271,7 @@ ArrayOf(String) nvim_buf_get_lines(uint64_t channel_id,
                                    Integer start,
                                    Integer end,
                                    Boolean strict_indexing,
+                                   lua_State *lstate,
                                    Error *err)
   FUNC_API_SINCE(1)
 {
@@ -300,21 +301,18 @@ ArrayOf(String) nvim_buf_get_lines(uint64_t channel_id,
     return rv;
   }
 
-  rv.size = (size_t)(end - start);
-  rv.items = xcalloc(rv.size, sizeof(Object));
+  size_t size = (size_t)(end - start);
 
-  if (!buf_collect_lines(buf, rv.size, start,
-                         (channel_id != VIML_INTERNAL_CALL), &rv, err)) {
+  init_line_array(lstate, &rv, size);
+
+  if (!buf_collect_lines(buf, size, (linenr_T)start, (channel_id != VIML_INTERNAL_CALL), &rv,
+                         lstate, err)) {
     goto end;
   }
 
 end:
   if (ERROR_SET(err)) {
-    for (size_t i = 0; i < rv.size; i++) {
-      xfree(rv.items[i].data.string.data);
-    }
-
-    xfree(rv.items);
+    api_free_array(rv);
     rv.items = NULL;
   }
 
@@ -790,7 +788,8 @@ early_end:
 ArrayOf(String) nvim_buf_get_text(uint64_t channel_id, Buffer buffer,
                                   Integer start_row, Integer start_col,
                                   Integer end_row, Integer end_col,
-                                  Dictionary opts, Error *err)
+                                  Dictionary opts, lua_State *lstate,
+                                  Error *err)
   FUNC_API_SINCE(9)
 {
   Array rv = ARRAY_DICT_INIT;
@@ -830,33 +829,38 @@ ArrayOf(String) nvim_buf_get_text(uint64_t channel_id, Buffer buffer,
 
   bool replace_nl = (channel_id != VIML_INTERNAL_CALL);
 
-  if (start_row == end_row) {
-    String line = buf_get_text(buf, start_row, start_col, end_col, replace_nl, err);
-    if (ERROR_SET(err)) {
-      return rv;
-    }
+  size_t size = (size_t)(end_row - start_row) + 1;
 
-    ADD(rv, STRING_OBJ(line));
+  init_line_array(lstate, &rv, size);
+
+  if (start_row == end_row) {
+    String line = buf_get_text(buf, start_row, start_col, end_col, err);
+    if (ERROR_SET(err)) {
+      goto end;
+    }
+    push_linestr(lstate, &rv, line.data, line.size, 0, replace_nl);
     return rv;
   }
 
-  rv.size = (size_t)(end_row - start_row) + 1;
-  rv.items = xcalloc(rv.size, sizeof(Object));
+  String str = buf_get_text(buf, start_row, start_col, MAXCOL - 1, err);
 
-  rv.items[0] = STRING_OBJ(buf_get_text(buf, start_row, start_col, MAXCOL - 1, replace_nl, err));
+  push_linestr(lstate, &rv, str.data, str.size, 0, replace_nl);
+
   if (ERROR_SET(err)) {
     goto end;
   }
 
-  if (rv.size > 2) {
+  if (size > 2) {
     Array tmp = ARRAY_DICT_INIT;
     tmp.items = &rv.items[1];
-    if (!buf_collect_lines(buf, rv.size - 2, start_row + 1, replace_nl, &tmp, err)) {
+    if (!buf_collect_lines(buf, size - 2, (linenr_T)start_row + 1, replace_nl, &tmp, lstate, err)) {
       goto end;
     }
   }
 
-  rv.items[rv.size - 1] = STRING_OBJ(buf_get_text(buf, end_row, 0, end_col, replace_nl, err));
+  str = buf_get_text(buf, end_row, 0, end_col, err);
+  push_linestr(lstate, &rv, str.data, str.size, (int)(size - 1), replace_nl);
+
   if (ERROR_SET(err)) {
     goto end;
   }
@@ -1389,4 +1393,91 @@ static int64_t normalize_index(buf_T *buf, int64_t index, bool end_exclusive, bo
   // Convert the index to a vim line number
   index++;
   return index;
+}
+
+/// Initialise a string array either:
+/// - on the Lua stack (as a table) (if lstate is not NULL)
+/// - as an API array object (if lstate is NULL).
+///
+/// @param lstate  Lua state. When NULL the Array is initialized instead.
+/// @param a       Array to initialize
+/// @param size    Size of array
+static inline void init_line_array(lua_State *lstate, Array *a, size_t size)
+{
+  if (lstate) {
+    lua_createtable(lstate, (int)size, 0);
+  } else {
+    a->size = size;
+    a->items = xcalloc(a->size, sizeof(Object));
+  }
+}
+
+/// Push a string onto either the Lua stack (as a table element) or an API array object.
+///
+/// For Lua, a table of the correct size must be created first.
+/// API array objects must be pre allocated.
+///
+/// @param lstate      Lua state. When NULL the Array is pushed to instead.
+/// @param a           Array to push onto when not using Lua
+/// @param s           String to push
+/// @param len         Size of string
+/// @param idx         0-based index to place s
+/// @param replace_nl  Replace newlines ('\n') with null ('\0')
+static void push_linestr(lua_State *lstate, Array *a, const char *s, size_t len, int idx,
+                         bool replace_nl)
+{
+  if (lstate) {
+    // Vim represents NULs as NLs
+    if (s && replace_nl && strchr(s, '\n')) {
+      char *tmp = xmemdupz(s, len);
+      strchrsub(tmp, '\n', '\0');
+      lua_pushlstring(lstate, tmp, len);
+      xfree(tmp);
+    } else {
+      lua_pushlstring(lstate, s, len);
+    }
+    lua_rawseti(lstate, -2, idx + 1);
+  } else {
+    String str = STRING_INIT;
+    if (s) {
+      str = cbuf_to_string(s, len);
+      if (replace_nl) {
+        // Vim represents NULs as NLs, but this may confuse clients.
+        strchrsub(str.data, '\n', '\0');
+      }
+    }
+
+    a->items[idx] = STRING_OBJ(str);
+  }
+}
+
+/// Collects `n` buffer lines into array `l` and/or lua_State `lstate`, optionally replacing
+/// newlines with NUL.
+///
+/// @param buf Buffer to get lines from
+/// @param n Number of lines to collect
+/// @param replace_nl Replace newlines ("\n") with NUL
+/// @param start Line number to start from
+/// @param[out] l If not NULL, Lines are copied here
+/// @param[out] lstate If not NULL, Lines are pushed into a table onto the stack
+/// @param err[out] Error, if any
+/// @return true unless `err` was set
+bool buf_collect_lines(buf_T *buf, size_t n, linenr_T start, bool replace_nl, Array *l,
+                       lua_State *lstate, Error *err)
+{
+  for (size_t i = 0; i < n; i++) {
+    linenr_T lnum = start + (linenr_T)i;
+
+    if (lnum >= MAXLNUM) {
+      if (err != NULL) {
+        api_set_error(err, kErrorTypeValidation, "Line index is too high");
+      }
+      return false;
+    }
+
+    char *bufstr = ml_get_buf(buf, lnum, false);
+    push_linestr(lstate, l, bufstr, strlen(bufstr), (int)i, replace_nl);
+  }
+
+  return true;
 }

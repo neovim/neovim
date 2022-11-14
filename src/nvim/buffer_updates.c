@@ -1,6 +1,7 @@
 // This is an open source non-commercial project. Dear PVS-Studio, please check
 // it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
+#include "nvim/api/buffer.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/assert.h"
 #include "nvim/buffer.h"
@@ -34,12 +35,10 @@ bool buf_updates_register(buf_T *buf, uint64_t channel_id, BufUpdateCallbacks cb
 
   // count how many channels are currently watching the buffer
   size_t size = kv_size(buf->update_channels);
-  if (size) {
-    for (size_t i = 0; i < size; i++) {
-      if (kv_A(buf->update_channels, i) == channel_id) {
-        // buffer is already registered ... nothing to do
-        return true;
-      }
+  for (size_t i = 0; i < size; i++) {
+    if (kv_A(buf->update_channels, i) == channel_id) {
+      // buffer is already registered ... nothing to do
+      return true;
     }
   }
 
@@ -69,7 +68,7 @@ bool buf_updates_register(buf_T *buf, uint64_t channel_id, BufUpdateCallbacks cb
       linedata.size = line_count;
       linedata.items = xcalloc(line_count, sizeof(Object));
 
-      buf_collect_lines(buf, line_count, 1, true, &linedata, NULL);
+      buf_collect_lines(buf, line_count, 1, true, &linedata, NULL, NULL);
     }
 
     args.items[4] = ARRAY_OBJ(linedata);
@@ -231,7 +230,7 @@ void buf_updates_send_changes(buf_T *buf, linenr_T firstline, int64_t num_added,
       linedata.size = (size_t)num_added;
       linedata.items = xcalloc((size_t)num_added, sizeof(Object));
       buf_collect_lines(buf, (size_t)num_added, firstline, true, &linedata,
-                        NULL);
+                        NULL, NULL);
     }
     args.items[4] = ARRAY_OBJ(linedata);
     args.items[5] = BOOLEAN_OBJ(false);
