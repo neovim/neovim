@@ -741,8 +741,18 @@ endfunc
 " Test for :highlight command errors
 func Test_highlight_cmd_errors()
   if has('gui_running') || has('nvim')
+    " This test doesn't fail in the MS-Windows console version.
+    call assert_fails('hi Xcomment ctermfg=fg', 'E419:')
+    call assert_fails('hi Xcomment ctermfg=bg', 'E420:')
     call assert_fails('hi ' .. repeat('a', 201) .. ' ctermfg=black', 'E1249:')
   endif
+
+  " Try using a very long terminal code. Define a dummy terminal code for this
+  " test.
+  let &t_fo = "\<Esc>1;"
+  let c = repeat("t_fo,", 100) . "t_fo"
+  " call assert_fails('exe "hi Xgroup1 start=" . c', 'E422:')
+  let &t_fo = ""
 endfunc
 
 " Test for using RGB color values in a highlight group
