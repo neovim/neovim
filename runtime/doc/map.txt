@@ -215,6 +215,9 @@ The search string will not be echoed when using this mapping.  Messages from
 the executed command are still given though.  To shut them up too, add a
 ":silent" in the executed command: >
 	:map <silent> ,h :exe ":silent normal /Header\r"<CR>
+Note that the effect of a command might also be silenced, e.g., when the
+mapping selects another entry for command line completion it won't be
+displayed.
 Prompts will still be given, e.g., for inputdialog().
 Using "<silent>" for an abbreviation is possible, but will cause redrawing of
 the command line to fail.

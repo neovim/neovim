@@ -173,7 +173,9 @@ int nextwild(expand_T *xp, int type, int options, bool escape)
     return FAIL;
   }
 
-  if (!(ui_has(kUICmdline) || ui_has(kUIWildmenu))) {
+  // If cmd_silent is set then don't show the dots, because redrawcmd() below
+  // won't remove them.
+  if (!cmd_silent && !(ui_has(kUICmdline) || ui_has(kUIWildmenu))) {
     msg_puts("...");  // show that we are busy
     ui_flush();
   }
