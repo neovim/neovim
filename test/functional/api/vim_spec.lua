@@ -2324,12 +2324,6 @@ describe('API', function()
       meths.set_option('isident', '')
     end)
 
-    local it_maybe_pending = it
-    if helpers.isCI() and os.getenv('CONFIGURATION') == 'MSVC_32' then
-      -- For "works with &opt" (flaky on MSVC_32), but not easy to skip alone.  #10241
-      it_maybe_pending = pending
-    end
-
     local function simplify_east_api_node(line, east_api_node)
       if east_api_node == NIL then
         return nil
@@ -2526,7 +2520,7 @@ describe('API', function()
       end
     end
     require('test.unit.viml.expressions.parser_tests')(
-        it_maybe_pending, _check_parsing, hl, fmtn)
+        it, _check_parsing, hl, fmtn)
   end)
 
   describe('nvim_list_uis', function()
