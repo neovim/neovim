@@ -7,6 +7,7 @@
 typedef struct {
   char *text;
   int hl_id;
+  char __pad[4];
 } VirtTextChunk;
 
 typedef kvec_t(VirtTextChunk) VirtText;

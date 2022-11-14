@@ -37,6 +37,7 @@ typedef struct {
   tabpage_T *sw_curtab;
   bool sw_same_win;  ///< VIsual_active was not reset
   bool sw_visual_active;
+  char __pad[6];
 } switchwin_T;
 
 /// Execute a block of code in the context of window `wp` in tabpage `tp`.

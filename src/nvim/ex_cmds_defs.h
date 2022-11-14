@@ -141,6 +141,7 @@ typedef struct cmdname {
 typedef struct eslist_elem eslist_T;
 struct eslist_elem {
   int saved_emsg_silent;  // saved value of "emsg_silent"
+  char __pad[4];
   eslist_T *next;         // next element on the list
 };
 
@@ -153,6 +154,7 @@ enum {
 typedef struct {
   int cs_flags[CSTACK_LEN];         // CSF_ flags
   char cs_pending[CSTACK_LEN];      // CSTP_: what's pending in ":finally"
+  char __pad[6];
   union {
     void *csp_rv[CSTACK_LEN];       // return typeval for pending return
     void *csp_ex[CSTACK_LEN];       // exception for pending throw
@@ -162,8 +164,8 @@ typedef struct {
   int cs_idx;                       // current entry, or -1 if none
   int cs_looplevel;                 // nr of nested ":while"s and ":for"s
   int cs_trylevel;                  // nr of nested ":try"s
-  eslist_T *cs_emsg_silent_list;    // saved values of "emsg_silent"
   int cs_lflags;                    // loop flags: CSL_ flags
+  eslist_T *cs_emsg_silent_list;    // saved values of "emsg_silent"
 } cstack_T;
 #define cs_rettv       cs_pend.csp_rv
 #define cs_exception   cs_pend.csp_ex
@@ -194,8 +196,8 @@ struct exarg {
   linenr_T line2;               ///< the second line number or count
   cmd_addr_T addr_type;         ///< type of the count/range
   int flags;                    ///< extra flags after count: EXFLAG_
-  char *do_ecmd_cmd;            ///< +command arg to be used in edited file
   linenr_T do_ecmd_lnum;        ///< the line number in an edited file
+  char *do_ecmd_cmd;            ///< +command arg to be used in edited file
   int append;                   ///< true with ":w >>file" command
   int usefilter;                ///< true with ":w !command" and ":r!command"
   int amount;                   ///< number of '>' or '<' for shift command
@@ -207,6 +209,7 @@ struct exarg {
   int force_enc;                ///< ++enc= argument (index in cmd[])
   int bad_char;                 ///< BAD_KEEP, BAD_DROP or replacement byte
   int useridx;                  ///< user command index
+  char __pad[4];
   char *errmsg;                 ///< returned error message
   LineGetter getline;           ///< Function used to get the next line
   void *cookie;                 ///< argument for getline()

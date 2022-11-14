@@ -63,6 +63,7 @@ static inline bool is_internal_call(const uint64_t channel_id)
 
 typedef struct {
   ErrorType type;
+  char __pad[4];
   char *msg;
 } Error;
 

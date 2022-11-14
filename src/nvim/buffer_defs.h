@@ -128,6 +128,7 @@ typedef struct buffheader buffheader_T;
 struct buffblock {
   buffblock_T *b_next;  // pointer to next buffblock
   char b_str[1];        // contents (actually longer)
+  char __pad[7];
 };
 
 // header used for the stuff buffer and the redo buffer
@@ -273,11 +274,12 @@ struct wininfo_S {
   wininfo_T *wi_prev;         // previous entry or NULL for first entry
   win_T *wi_win;          // pointer to window that did set wi_mark
   fmark_T wi_mark;                // last cursor mark in the file
-  bool wi_optset;               // true when wi_opt has useful values
   winopt_T wi_opt;              // local window options
+  bool wi_optset;               // true when wi_opt has useful values
   bool wi_fold_manual;          // copy of w_fold_manual
-  garray_T wi_folds;            // clone of w_folds
+  char __pad[2];
   int wi_changelistidx;         // copy of w_changelistidx
+  garray_T wi_folds;            // clone of w_folds
 };
 
 // Argument list: Array of file names.
@@ -320,6 +322,7 @@ typedef struct {
   int tb_silent;                // nr of silently mapped bytes in tb_buf[]
   int tb_no_abbr_cnt;           // nr of bytes without abbrev. in tb_buf[]
   int tb_change_cnt;            // nr of time tb_buf was changed; never zero
+  char __pad[4];
 } typebuf_T;
 
 // Struct to hold the saved typeahead for save_typeahead().
@@ -349,9 +352,10 @@ struct mapblock {
   char m_silent;                // <silent> used, don't echo commands
   char m_nowait;                // <nowait> used
   char m_expr;                  // <expr> used, m_str is an expression
-  sctx_T m_script_ctx;          // SCTX where map was defined
-  char *m_desc;                 // description of mapping
   bool m_replace_keycodes;      // replace keycodes in result of expression
+  sctx_T m_script_ctx;          // SCTX where map was defined
+  char __pad[4];
+  char *m_desc;                 // description of mapping
 };
 
 /// Used for highlighting in the status line.
@@ -485,6 +489,7 @@ typedef struct {
   LuaRef on_reload;
   bool utf_sizes;
   bool preview;
+  char __pad[2];
 } BufUpdateCallbacks;
 #define BUF_UPDATE_CALLBACKS_INIT { LUA_NOREF, LUA_NOREF, LUA_NOREF, \
                                     LUA_NOREF, LUA_NOREF, false, false }
@@ -902,6 +907,7 @@ struct diffblock_S {
   linenr_T df_count[DB_COUNT];          // nr of inserted/changed lines
   bool is_linematched;  // has the linematch algorithm ran on this diff hunk to divide it into
                         // smaller diff hunks?
+  char __pad[7];
 };
 
 #define SNAP_HELP_IDX   0
@@ -915,6 +921,7 @@ struct diffblock_S {
 typedef struct tabpage_S tabpage_T;
 struct tabpage_S {
   handle_T handle;
+  char __pad[4];
   tabpage_T *tp_next;      ///< next tabpage or NULL
   frame_T *tp_topframe;    ///< topframe for the windows
   win_T *tp_curwin;        ///< current window in this Tab page
@@ -957,11 +964,12 @@ typedef struct w_line {
 // Windows are kept in a tree of frames.  Each frame has a column (FR_COL)
 // or row (FR_ROW) layout or is a leaf, which has a window.
 struct frame_S {
-  char fr_layout;               // FR_LEAF, FR_COL or FR_ROW
   int fr_width;
   int fr_newwidth;              // new width used in win_equal_rec()
   int fr_height;
   int fr_newheight;             // new height used in win_equal_rec()
+  char fr_layout;               // FR_LEAF, FR_COL or FR_ROW
+  char __pad0[7];
   frame_T *fr_parent;       // containing frame or NULL
   frame_T *fr_next;         // frame right or below in same parent, NULL
                             // for last
@@ -993,6 +1001,7 @@ typedef struct {
   colnr_T endcol;       // in win_line() points to char where HL ends
   bool is_addpos;       // position specified directly by matchaddpos()
   bool has_cursor;      // true if the cursor is inside the match, used for CurSearch
+  char __pad[6];
   proftime_T tm;        // for a time limit
 } match_T;
 

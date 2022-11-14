@@ -277,6 +277,7 @@ else()
   add_compile_options(-Wall -Wextra -pedantic -Wno-unused-parameter
     -Wstrict-prototypes -std=gnu99 -Wshadow -Wconversion
     -Wdouble-promotion
+    -Wpadded
     -Wmissing-noreturn
     -Wmissing-format-attribute
     -Wmissing-prototypes)

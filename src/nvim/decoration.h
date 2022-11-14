@@ -30,7 +30,11 @@ EXTERN const char *const hl_mode_str[] INIT(= { "", "replace", "combine", "blend
 
 #define VIRTTEXT_EMPTY ((VirtText)KV_INITIAL_VALUE)
 
-typedef kvec_t(struct virt_line { VirtText line; bool left_col; }) VirtLines;
+typedef kvec_t(struct virt_line {
+  VirtText line;
+  bool left_col;
+  char __pad[7];
+}) VirtLines;
 
 struct Decoration {
   VirtText virt_text;
@@ -48,6 +52,7 @@ struct Decoration {
   TriState spell;
   // TODO(bfredl): style, etc
   DecorPriority priority;
+  char __pad0[2];
   int col;  // fixed col value, like win_col
   int virt_text_width;  // width of virt_text
   char_u *sign_text;
@@ -59,6 +64,7 @@ struct Decoration {
   // probably want some kind of glyph cache for that..
   int conceal_char;
   bool ui_watched;  // watched for win_extmark
+  char __pad1[3];
 };
 #define DECORATION_INIT { KV_INITIAL_VALUE, KV_INITIAL_VALUE, 0, kVTEndOfLine, \
                           kHlModeUnknown, false, false, false, false, kNone, \

@@ -11,8 +11,9 @@
 // Sign group
 typedef struct signgroup_S {
   uint16_t sg_refcount;   // number of signs in this group
-  int sg_next_sign_id;    // next sign id for this group
   char sg_name[1];        // sign group name
+  char __pad2[1];
+  int sg_next_sign_id;    // next sign id for this group
 } signgroup_T;
 
 // Macros to get the sign group structure from the group name
@@ -26,6 +27,7 @@ struct sign_entry {
   int se_typenr;           // typenr of sign
   int se_priority;         // priority for highlighting
   bool se_has_text_or_icon;  // has text or icon
+  char __pad[7];
   linenr_T se_lnum;             // line number which has this sign
   signgroup_T *se_group;            // sign group
   sign_entry_T *se_next;             // next entry in a list of signs

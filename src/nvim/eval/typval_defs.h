@@ -299,6 +299,7 @@ struct funccall_S {
   linenr_T breakpoint;  ///< Next line with breakpoint or zero.
   int dbg_tick;  ///< debug_tick when breakpoint was set.
   int level;  ///< Top nesting level of executed function.
+  char __pad[4];
   proftime_T prof_child;  ///< Time spent in a child.
   funccall_T *caller;  ///< Calling function or NULL; or next funccal in
                        ///< list pointed to by previous_funccal.

@@ -64,6 +64,7 @@ struct regprog {
   unsigned re_engine;  ///< Automatic, backtracking or NFA engine.
   unsigned re_flags;   ///< Second argument for vim_regcomp().
   bool re_in_use;      ///< prog is being executed
+  char __pad[3];
 };
 
 // Structure used by the back track matcher.
@@ -136,6 +137,7 @@ typedef struct {
 // from 1 to zero the matches need to be freed.
 struct reg_extmatch {
   int16_t refcnt;
+  char __pad[6];
   char_u *matches[NSUBEXP];
 };
 

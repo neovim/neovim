@@ -25,11 +25,10 @@ struct u_entry {
   linenr_T ue_top;              // number of line above undo block
   linenr_T ue_bot;              // number of line below undo block
   linenr_T ue_lcount;           // linecount when u_save called
+  int ue_magic;                 // magic number to check allocation
+                                // Used as padding when U_DEBUG is undefined
   char **ue_array;              // array of lines in undo block
   long ue_size;                 // number of lines in ue_array
-#ifdef U_DEBUG
-  int ue_magic;                 // magic number to check allocation
-#endif
 };
 
 struct u_header {
@@ -52,21 +51,20 @@ struct u_header {
     long seq;
   } uh_alt_prev;
   long uh_seq;                  // sequence number, higher == newer undo
-  int uh_walk;                  // used by undo_time()
   u_entry_T *uh_entry;        // pointer to first entry
   u_entry_T *uh_getbot_entry;   // pointer to where ue_bot must be set
   pos_T uh_cursor;              // cursor position before saving
+  int uh_walk;                  // used by undo_time()
   long uh_cursor_vcol;
   int uh_flags;                 // see below
+  int uh_magic;                 // magic number to check allocation
+                                // Used as padding when U_DEBUG is undefined
   fmark_T uh_namedm[NMARKS];    // marks before undo/after redo
   extmark_undo_vec_t uh_extmark;  // info to move extmarks
   visualinfo_T uh_visual;       // Visual areas before undo/after redo
   time_t uh_time;               // timestamp when the change was made
   long uh_save_nr;              // set when the file was saved after the
                                 // changes in this block
-#ifdef U_DEBUG
-  int uh_magic;                 // magic number to check allocation
-#endif
 };
 
 // values for uh_flags
