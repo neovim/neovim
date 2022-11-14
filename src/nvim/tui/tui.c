@@ -76,6 +76,7 @@ struct TUIData {
   Loop *loop;
   unibi_var_t params[9];
   char buf[OUTBUF_SIZE];
+  char __pad;
   size_t bufpos;
   char norm[CNORM_COMMAND_MAX_SIZE];
   char invis[CNORM_COMMAND_MAX_SIZE];
@@ -88,18 +89,18 @@ struct TUIData {
     uv_pipe_t pipe;
   } output_handle;
   bool out_isatty;
-  SignalWatcher winch_handle, cont_handle;
   bool cont_received;
-  UGrid grid;
-  kvec_t(Rect) invalid_regions;
-  int row, col;
-  int out_fd;
   bool scroll_region_is_full_screen;
   bool can_change_scroll_region;
   bool can_set_lr_margin;  // smglr
   bool can_set_left_right_margin;
   bool can_scroll;
   bool can_erase_chars;
+  SignalWatcher winch_handle, cont_handle;
+  UGrid grid;
+  kvec_t(Rect) invalid_regions;
+  int row, col;
+  int out_fd;
   bool immediate_wrap_after_last_column;
   bool bce;
   bool mouse_enabled;
@@ -108,13 +109,14 @@ struct TUIData {
   bool cork, overflow;
   bool cursor_color_changed;
   bool is_starting;
+  bool default_attr;
+  bool can_clear_attr;
+  char __pad1[7];
   FILE *screenshot;
   cursorentry_T cursor_shapes[SHAPE_IDX_COUNT];
   HlAttrs clear_attrs;
-  kvec_t(HlAttrs) attrs;
   int print_attr_id;
-  bool default_attr;
-  bool can_clear_attr;
+  kvec_t(HlAttrs) attrs;
   ModeShape showing_mode;
   struct {
     int enable_mouse, disable_mouse;

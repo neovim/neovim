@@ -13,23 +13,25 @@
 // not the current buffer.
 typedef struct {
   buf_T *save_curbuf;             ///< saved curbuf
-  bool use_aucmd_win;             ///< using aucmd_win
   handle_T save_curwin_handle;    ///< ID of saved curwin
   handle_T new_curwin_handle;     ///< ID of new curwin
   handle_T save_prevwin_handle;   ///< ID of saved prevwin
   bufref_T new_curbuf;            ///< new curbuf
   char *globaldir;                ///< saved value of globaldir
   bool save_VIsual_active;        ///< saved VIsual_active
+  bool use_aucmd_win;             ///< using aucmd_win
+  char __pad0[6];
 } aco_save_T;
 
 typedef struct AutoCmd_S AutoCmd;
 struct AutoCmd_S {
   AucmdExecutable exec;
+  int64_t id;                           // ID used for uniquely tracking an autocmd.
+  sctx_T script_ctx;                    // script context where it is defined
   bool once;                            // "One shot": removed after execution
   bool nested;                          // If autocommands nest here
   bool last;                            // last command in list
-  int64_t id;                           // ID used for uniquely tracking an autocmd.
-  sctx_T script_ctx;                    // script context where it is defined
+  char __pad;
   char *desc;                           // Description for the autocmd.
   AutoCmd *next;                        // Next AutoCmd in list
 };
@@ -47,6 +49,7 @@ struct AutoPat_S {
   int buflocal_nr;                      // !=0 for buffer-local AutoPat
   char allow_dirs;                      // Pattern may match whole path
   char last;                            // last pattern for apply_autocmds()
+  char __pad[2];
 };
 
 /// Struct used to keep status while executing autocommands for an event.
@@ -54,13 +57,13 @@ typedef struct AutoPatCmd_S AutoPatCmd;
 struct AutoPatCmd_S {
   AutoPat *curpat;          // next AutoPat to examine
   AutoCmd *nextcmd;         // next AutoCmd to execute
-  int group;                // group being used
   char *fname;              // fname to match with
   char *sfname;             // sfname to match with
   char *tail;               // tail of fname
   event_T event;            // current event
   sctx_T script_ctx;        // script context where it is defined
   int arg_bufnr;            // initially equal to <abuf>, set to zero when buf is deleted
+  int group;                // group being used
   Object *data;             // arbitrary data
   AutoPatCmd *next;         // chain of active apc-s for auto-invalidation
 };

@@ -6,15 +6,15 @@
 typedef struct ucmd {
   char *uc_name;                // The command name
   uint32_t uc_argt;             // The argument type
+  int uc_compl;                 // completion type
   char *uc_rep;                 // The command's replacement string
   long uc_def;                  // The default value for a range/count
-  int uc_compl;                 // completion type
   cmd_addr_T uc_addr_type;      // The command's address type
   sctx_T uc_script_ctx;         // SCTX where the command was defined
-  char *uc_compl_arg;           // completion argument if any
   LuaRef uc_compl_luaref;       // Reference to Lua completion function
   LuaRef uc_preview_luaref;     // Reference to Lua preview function
   LuaRef uc_luaref;             // Reference to Lua function
+  char *uc_compl_arg;           // completion argument if any
 } ucmd_T;
 
 #define UC_BUFFER       1       // -buffer: local to current buffer

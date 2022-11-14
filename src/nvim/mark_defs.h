@@ -73,6 +73,7 @@ typedef struct filemark {
   int fnum;             ///< File number.
   Timestamp timestamp;  ///< Time when this mark was last set.
   fmarkv_T view;  ///< View the mark was created on
+  char __pad[4];
   dict_T *additional_data;  ///< Additional data from ShaDa file.
 } fmark_T;
 

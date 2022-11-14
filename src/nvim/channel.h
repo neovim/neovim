@@ -53,6 +53,7 @@ typedef struct {
   garray_T buffer;
   bool eof;
   bool buffered;
+  char __pad[6];
   const char *type;
 } CallbackReader;
 

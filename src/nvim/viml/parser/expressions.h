@@ -143,6 +143,7 @@ typedef struct {
     struct {
       ExprVarScope scope;  ///< Scope character or 0 if not present.
       bool autoload;  ///< Has autoload characters.
+      char __pad[3];
     } var;  ///< For kExprLexPlainIdentifier
 
     struct {

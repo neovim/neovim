@@ -14,6 +14,7 @@ struct time_watcher {
   time_cb cb, close_cb;
   MultiQueue *events;
   bool blockable;
+  char __pad[7];
 };
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS

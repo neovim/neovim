@@ -13,10 +13,12 @@ typedef struct info_pointer {
   linenr_T ip_low;              // lowest lnum in this block
   linenr_T ip_high;             // highest lnum in this block
   int ip_index;                 // index for block with current lnum
+  char __pad[4];
 } infoptr_T;    // block/index pair
 
 typedef struct ml_chunksize {
   int mlcs_numlines;
+  char __pad[4];
   long mlcs_totalsize;
 } chunksize_T;
 
@@ -41,8 +43,6 @@ typedef struct ml_chunksize {
 ///             moves, where N is the height (typically 1-3).
 ///
 typedef struct memline {
-  linenr_T ml_line_count;       // number of lines in the buffer
-
   memfile_T *ml_mfp;          // pointer to associated memfile
 
   infoptr_T *ml_stack;        // stack of pointer blocks (array of IPTRs)
@@ -60,10 +60,12 @@ typedef struct memline {
   size_t ml_line_offset;        // cached byte offset of ml_line_lnum
   int ml_line_offset_ff;        // fileformat of cached line
 
+  linenr_T ml_line_count;       // number of lines in the buffer
   bhdr_T *ml_locked;       // block used by last ml_get
   linenr_T ml_locked_low;       // first line in ml_locked
   linenr_T ml_locked_high;      // last line in ml_locked
   int ml_locked_lineadd;        // number of lines inserted in ml_locked
+  char __pad[4];
   chunksize_T *ml_chunksize;
   int ml_numchunks;
   int ml_usedchunks;

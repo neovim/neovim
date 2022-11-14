@@ -27,8 +27,8 @@ typedef struct {
 typedef struct {
   mtpos_t pos;
   int lvl;
-  mtnode_t *node;
   int i;
+  mtnode_t *node;
   iterstate_t s[MT_MAX_DEPTH];
 } MarkTreeIter;
 

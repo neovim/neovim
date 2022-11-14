@@ -45,8 +45,6 @@ enum {
 /// screen width.
 typedef struct ScreenGrid ScreenGrid;
 struct ScreenGrid {
-  handle_T handle;
-
   schar_T *chars;
   sattr_T *attrs;
   size_t *line_offset;
@@ -60,13 +58,6 @@ struct ScreenGrid {
   int rows;
   int cols;
 
-  // The state of the grid is valid. Otherwise it needs to be redrawn.
-  bool valid;
-
-  // only draw internally and don't send updates yet to the compositor or
-  // external UI.
-  bool throttled;
-
   // TODO(bfredl): maybe physical grids and "views" (i e drawing
   // specifications) should be two separate types?
   // offsets for the grid relative to another grid. Used for grids
@@ -74,6 +65,13 @@ struct ScreenGrid {
   int row_offset;
   int col_offset;
   ScreenGrid *target;
+
+  // The state of the grid is valid. Otherwise it needs to be redrawn.
+  bool valid;
+
+  // only draw internally and don't send updates yet to the compositor or
+  // external UI.
+  bool throttled;
 
   // whether the compositor should blend the grid with the background grid
   bool blending;
@@ -104,11 +102,12 @@ struct ScreenGrid {
   // compositor should momentarily ignore the grid. Used internally when
   // moving around grids etc.
   bool comp_disabled;
+
+  char __pad[3];
+  handle_T handle;
 };
 
-#define SCREEN_GRID_INIT { 0, NULL, NULL, NULL, NULL, NULL, 0, 0, false, \
-                           false, 0, 0, NULL, false, true, 0, \
-                           0, 0, 0, 0, 0,  false }
+#define SCREEN_GRID_INIT { 0 }
 
 typedef struct {
   int args[3];

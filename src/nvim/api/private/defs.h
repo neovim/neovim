@@ -109,6 +109,7 @@ typedef enum {
 
 struct object {
   ObjectType type;
+  char __pad[4];
   union {
     Boolean boolean;
     Integer integer;

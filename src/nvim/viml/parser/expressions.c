@@ -1573,6 +1573,7 @@ typedef struct {
   size_t orig_len;  ///< Length of orininal string (e.g. 4 for "\x80").
   size_t act_len;  ///< Length of resulting character(s) (e.g. 1 for "\x80").
   bool escape_not_known;  ///< True if escape sequence in original is not known.
+  char __pad[7];
 } StringShift;
 
 /// Parse and highlight single- or double-quoted string

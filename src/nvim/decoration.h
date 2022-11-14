@@ -68,7 +68,7 @@ struct Decoration {
 };
 #define DECORATION_INIT { KV_INITIAL_VALUE, KV_INITIAL_VALUE, 0, kVTEndOfLine, \
                           kHlModeUnknown, false, false, false, false, kNone, \
-                          DECOR_PRIORITY_BASE, 0, 0, NULL, 0, 0, 0, 0, 0, false }
+                          DECOR_PRIORITY_BASE, 0, 0, 0, NULL, 0, 0, 0, 0, 0, false, 0 }
 
 typedef struct {
   int start_row;

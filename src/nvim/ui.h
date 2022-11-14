@@ -52,10 +52,12 @@ struct ui_t {
   bool override;  ///< Force highest-requested UI capabilities.
   bool composed;
   bool ui_ext[kUIExtCount];  ///< Externalized UI capabilities.
+  char __pad0[3];
   int width;
   int height;
   int pum_nlines;  /// actual nr. lines shown in PUM
   bool pum_pos;  /// UI reports back pum position?
+  char __pad1[3];
   double pum_row;
   double pum_col;
   double pum_height;
@@ -72,6 +74,7 @@ struct ui_t {
 typedef struct ui_event_callback {
   LuaRef cb;
   bool ext_widgets[kUIGlobalCount];
+  char __pad[3];
 } UIEventCallback;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS

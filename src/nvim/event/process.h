@@ -17,10 +17,16 @@ typedef void (*internal_process_cb)(Process *proc);
 
 struct process {
   ProcessType type;
+  int pid;
   Loop *loop;
   void *data;
-  int pid, status, refcount;
+  int status;
+  int refcount;
   uint8_t exit_signal;  // Signal used when killing (on Windows).
+  bool closed;
+  bool detach;
+  bool overlapped;
+  char __pad0[4];
   uint64_t stopped_time;  // process_stop() timestamp
   const char *cwd;
   char **argv;
@@ -29,7 +35,6 @@ struct process {
   /// Exit handler. If set, user must call process_free().
   process_exit_cb cb;
   internal_process_cb internal_exit_cb, internal_close_cb;
-  bool closed, detach, overlapped;
   MultiQueue *events;
 };
 
@@ -37,12 +42,15 @@ static inline Process process_init(Loop *loop, ProcessType type, void *data)
 {
   return (Process) {
     .type = type,
+    .pid = 0,
     .data = data,
     .loop = loop,
     .events = NULL,
-    .pid = 0,
     .status = -1,
     .refcount = 0,
+    .closed = false,
+    .detach = false,
+    .overlapped = false,
     .stopped_time = 0,
     .cwd = NULL,
     .argv = NULL,
@@ -50,10 +58,8 @@ static inline Process process_init(Loop *loop, ProcessType type, void *data)
     .out = { .closed = false },
     .err = { .closed = false },
     .cb = NULL,
-    .closed = false,
     .internal_close_cb = NULL,
     .internal_exit_cb = NULL,
-    .detach = false
   };
 }
 

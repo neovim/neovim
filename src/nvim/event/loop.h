@@ -41,6 +41,7 @@ typedef struct loop {
   uv_async_t async;
   uv_mutex_t mutex;
   int recursive;
+  char __pad[4];
 } Loop;
 
 #define CREATE_EVENT(multiqueue, handler, argc, ...) \

@@ -28,8 +28,6 @@ typedef void (*stream_write_cb)(Stream *stream, void *data, int status);
 typedef void (*stream_close_cb)(Stream *stream, void *data);
 
 struct stream {
-  bool closed;
-  bool did_eof;
   union {
     uv_pipe_t pipe;
     uv_tcp_t tcp;
@@ -42,6 +40,9 @@ struct stream {
   uv_buf_t uvbuf;
   RBuffer *buffer;
   uv_file fd;
+  bool closed;
+  bool did_eof;
+  char __pad1[2];
   stream_read_cb read_cb;
   stream_write_cb write_cb;
   void *cb_data;

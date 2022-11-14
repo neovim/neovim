@@ -67,6 +67,7 @@ typedef struct {
     LuaRef luaref;
   } data;
   CallbackType type;
+  char __pad[4];
 } Callback;
 
 #define CALLBACK_INIT { .type = kCallbackNone }
@@ -206,6 +207,7 @@ typedef struct {
   struct { \
     typval_T di_tv;  /* Structure that holds scope dictionary itself. */ \
     uint8_t di_flags;  /* Flags. */ \
+    char __pad1[6]; \
     char_u di_key[__VA_ARGS__];  /* Key value. */ \
   }
 
@@ -247,6 +249,7 @@ struct dictvar_S {
   QUEUE watchers;         ///< Dictionary key watchers set by user code.
 
   LuaRef lua_table_ref;
+  char __pad[4];
 };
 
 /// Structure to hold info about a Blob
@@ -314,6 +317,7 @@ struct ufunc {
   int uf_flags;
   int uf_calls;         ///< nr of active calls
   bool uf_cleared;       ///< func_clear() was already called
+  char __pad0[3];
   garray_T uf_args;          ///< arguments
   garray_T uf_def_args;      ///< default argument expressions
   garray_T uf_lines;         ///< function lines
@@ -347,11 +351,12 @@ struct ufunc {
 
 struct partial_S {
   int pt_refcount;    ///< Reference count.
+  int pt_argc;        ///< Number of arguments.
   char *pt_name;      ///< Function name; when NULL use pt_func->name.
   ufunc_T *pt_func;   ///< Function pointer; when NULL lookup function with pt_name.
   bool pt_auto;       ///< When true the partial was created by using dict.member
                       ///< in handle_subscript().
-  int pt_argc;        ///< Number of arguments.
+  char __pad[7];
   typval_T *pt_argv;  ///< Arguments in allocated array.
   dict_T *pt_dict;    ///< Dict for "self".
 };

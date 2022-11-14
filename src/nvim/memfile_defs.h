@@ -91,6 +91,7 @@ typedef struct memfile {
   char *mf_fname;                    /// name of the file
   char_u *mf_ffname;                 /// idem, full path
   int mf_fd;                         /// file descriptor
+  char __pad0[4];
   bhdr_T *mf_free_first;             /// first block header in free list
   bhdr_T *mf_used_first;             /// mru block header in used list
   bhdr_T *mf_used_last;              /// lru block header in used list
@@ -102,6 +103,7 @@ typedef struct memfile {
   blocknr_T mf_infile_count;         /// number of pages in the file
   unsigned mf_page_size;             /// number of bytes in a page
   bool mf_dirty;                     /// true if there are dirty blocks
+  char __pad1[3];
 } memfile_T;
 
 #endif  // NVIM_MEMFILE_DEFS_H
