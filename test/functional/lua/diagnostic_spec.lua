@@ -1776,7 +1776,7 @@ end)
         return lines
       ]])
 
-      eq("Error executing lua: .../diagnostic.lua:0: prefix: expected 'string' or 'table' or 'function', got 42",
+      eq(".../diagnostic.lua:0: prefix: expected 'string' or 'table' or 'function', got 42",
         pcall_err(exec_lua, [[ vim.diagnostic.open_float({ prefix = 42 }) ]]))
     end)
 

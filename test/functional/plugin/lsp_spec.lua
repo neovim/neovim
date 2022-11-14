@@ -238,9 +238,9 @@ describe('LSP', function()
     end)
 
     it('should invalid cmd argument', function()
-      eq('Error executing lua: .../lsp.lua:0: cmd: expected list, got nvim',
+      eq('.../lsp.lua:0: cmd: expected list, got nvim',
         pcall_err(_cmd_parts, 'nvim'))
-      eq('Error executing lua: .../lsp.lua:0: cmd argument: expected string, got number',
+      eq('.../lsp.lua:0: cmd argument: expected string, got number',
         pcall_err(_cmd_parts, {'nvim', 1}))
     end)
   end)

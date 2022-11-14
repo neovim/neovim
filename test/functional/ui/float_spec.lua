@@ -93,7 +93,7 @@ describe('float window', function()
   end)
 
   it('closed immediately by autocmd #11383', function()
-    eq('Error executing lua: [string "<nvim>"]:0: Window was closed immediately',
+    eq('Window was closed immediately',
       pcall_err(exec_lua, [[
         local a = vim.api
         local function crashes(contents)
@@ -118,7 +118,7 @@ describe('float window', function()
   end)
 
   it('closed immediately by autocmd after win_enter #15548', function()
-    eq('Error executing lua: [string "<nvim>"]:0: Window was closed immediately',
+    eq('Window was closed immediately',
       pcall_err(exec_lua, [[
         vim.cmd "autocmd BufLeave * ++once quit!"
         local buf = vim.api.nvim_create_buf(true, true)

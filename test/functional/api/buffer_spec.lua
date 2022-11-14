@@ -3,6 +3,7 @@ local Screen = require('test.functional.ui.screen')
 local clear, nvim, buffer = helpers.clear, helpers.nvim, helpers.buffer
 local curbuf, curwin, eq = helpers.curbuf, helpers.curwin, helpers.eq
 local curbufmeths, ok = helpers.curbufmeths, helpers.ok
+local describe_lua_and_rpc = helpers.describe_lua_and_rpc(describe)
 local meths = helpers.meths
 local funcs = helpers.funcs
 local request = helpers.request
@@ -579,9 +580,8 @@ describe('api/buf', function()
     end)
   end)
 
-  describe('nvim_buf_get_text', function()
-    local get_text = curbufmeths.get_text
-
+  describe_lua_and_rpc('nvim_buf_get_text', function(api)
+    local get_text = api.curbufmeths.get_text
     before_each(function()
       insert([[
       hello foo!

@@ -195,7 +195,7 @@ describe('listing functions using :function', function()
   it('does not crash if another function is deleted while listing', function()
     local screen = Screen.new(80, 24)
     screen:attach()
-    matches('.*: Vim%(function%):E454: function list was modified', pcall_err(exec_lua, [=[
+    matches('Vim%(function%):E454: function list was modified', pcall_err(exec_lua, [=[
       vim.cmd([[
         func Func1()
         endfunc
