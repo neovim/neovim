@@ -596,8 +596,6 @@ EXTERN char *p_menc;            // 'makeencoding'
 EXTERN char *p_mef;             // 'makeef'
 EXTERN char_u *p_mp;            // 'makeprg'
 EXTERN char *p_mps;             ///< 'matchpairs'
-EXTERN char_u *p_cc;            // 'colorcolumn'
-EXTERN int p_cc_cols[256];      // array for 'colorcolumn' columns
 EXTERN long p_mat;              // 'matchtime'
 EXTERN long p_mco;              // 'maxcombine'
 EXTERN long p_mfd;              // 'maxfuncdepth'
