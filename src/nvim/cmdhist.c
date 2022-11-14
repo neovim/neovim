@@ -124,7 +124,7 @@ void init_history(void)
   // Tables are circular arrays (current position marked by hisidx[type]).
   // On copying them to the new arrays, we take the chance to reorder them.
   for (int type = 0; type < HIST_COUNT; type++) {
-    histentry_T *temp = (newlen
+    histentry_T *temp = (newlen > 0
                          ? xmalloc((size_t)newlen * sizeof(*temp))
                          : NULL);
 
@@ -159,7 +159,7 @@ void init_history(void)
 
     // clear remaining space, if any
     int l3 = j < 0 ? 0 : MIN(newlen, oldlen);  // number of copied entries
-    if (newlen) {
+    if (newlen > 0) {
       memset(temp + l3, 0, (size_t)(newlen - l3) * sizeof(*temp));
     }
 
