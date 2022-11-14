@@ -242,7 +242,6 @@ static expand_T compl_xp;
 
 // List of flags for method of completion.
 static int compl_cont_status = 0;
-
 #define CONT_ADDING    1        ///< "normal" or "adding" expansion
 #define CONT_INTRPT    (2 + 4)  ///< a ^X interrupted the current expansion
                                 ///< it's set only iff N_ADDS is set
@@ -422,7 +421,7 @@ void compl_status_clear(void)
   compl_cont_status = 0;
 }
 
-// @return  true if completion is using the forward direction matches
+/// @return  true if completion is using the forward direction matches
 static bool compl_dir_forward(void)
 {
   return compl_direction == FORWARD;
@@ -3297,7 +3296,7 @@ static int ins_compl_get_exp(pos_T *ini)
   assert(st.ins_buf != NULL);
 
   compl_old_match = compl_curr_match;   // remember the last current match
-  st.cur_match_pos = (compl_dir_forward() ? &st.last_match_pos : &st.first_match_pos);
+  st.cur_match_pos = compl_dir_forward() ? &st.last_match_pos : &st.first_match_pos;
 
   // For ^N/^P loop over all the flags/windows/buffers in 'complete'
   for (;;) {
