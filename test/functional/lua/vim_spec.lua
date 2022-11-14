@@ -419,6 +419,12 @@ describe('lua stdlib', function()
       return getmetatable(t2) == mt
     ]]))
 
+    ok(exec_lua([[
+      local t1 = {a = vim.NIL}
+      local t2 = vim.deepcopy(t1)
+      return t2.a == vim.NIL
+    ]]))
+
     matches('Cannot deepcopy object of type thread',
       pcall_err(exec_lua, [[
         local thread = coroutine.create(function () return 0 end)

@@ -49,6 +49,9 @@ vim.deepcopy = (function()
     if f then
       return f(orig, cache or {})
     else
+      if type(orig) == 'userdata' and orig == vim.NIL then
+        return vim.NIL
+      end
       error('Cannot deepcopy object of type ' .. type(orig))
     end
   end
