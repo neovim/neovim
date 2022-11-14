@@ -270,7 +270,6 @@ void ex_language(exarg_T *eap)
 
 static char **locales = NULL;       // Array of all available locales
 
-# ifndef MSWIN
 static bool did_init_locales = false;
 
 /// @return  an array of strings for all available locales + NULL for the
@@ -279,44 +278,63 @@ static bool did_init_locales = false;
 static char **find_locales(void)
 {
   garray_T locales_ga;
-  char *loc;
+  char *locale_list;
   char *saveptr = NULL;
 
+# ifndef MSWIN
   // Find all available locales by running command "locale -a".  If this
   // doesn't work we won't have completion.
-  char *locale_a = (char *)get_cmd_output((char_u *)"locale -a", NULL,
-                                          kShellOptSilent, NULL);
-  if (locale_a == NULL) {
+  locale_list = (char *)get_cmd_output((char_u *)"locale -a", NULL, kShellOptSilent, NULL);
+# else
+  // Add a dummy input, that will be skipped later but we need to
+  // have something in locale_list so that the C locale is added at
+  // the end.
+  locale_list = xstrdup(".\n");
+# endif
+  if (locale_list == NULL) {
     return NULL;
   }
   ga_init(&locales_ga, sizeof(char_u *), 20);
 
-  // Transform locale_a string where each locale is separated by "\n"
+  // Transform locale_list string where each locale is separated by "\n"
   // into an array of locale strings.
-  loc = os_strtok(locale_a, "\n", &saveptr);
+  char *loc = os_strtok(locale_list, "\n", &saveptr);
 
   while (loc != NULL) {
-    loc = xstrdup(loc);
-    GA_APPEND(char *, &locales_ga, loc);
+    bool ignore = false;
+
+# ifdef MSWIN
+    // skip locales with a dot (which indicates the charset)
+    if (vim_strchr(loc, '.') != NULL) {
+      ignore = true;
+    }
+# endif
+    if (!ignore) {
+      loc = xstrdup(loc);
+      GA_APPEND(char *, &locales_ga, loc);
+    }
     loc = os_strtok(NULL, "\n", &saveptr);
   }
-  xfree(locale_a);
+
+# ifdef MSWIN
+  // Add the C locale
+  GA_APPEND(char *, &locales_ga, xstrdup("C"));
+# endif
+
+  xfree(locale_list);
   // Guarantee that .ga_data is NULL terminated
   ga_grow(&locales_ga, 1);
   ((char_u **)locales_ga.ga_data)[locales_ga.ga_len] = NULL;
   return locales_ga.ga_data;
 }
-# endif
 
 /// Lazy initialization of all available locales.
 static void init_locales(void)
 {
-# ifndef MSWIN
   if (!did_init_locales) {
     did_init_locales = true;
     locales = find_locales();
   }
-# endif
 }
 
 # if defined(EXITFREE)
