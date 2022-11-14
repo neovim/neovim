@@ -110,6 +110,7 @@
 #include "nvim/types.h"           // for char_u
 #include "nvim/undo.h"            // for u_save_cursor
 #include "nvim/vim.h"             // for curwin, strlen, STRLCPY, STRNCMP
+#include "nvim/window.h"          // for win_valid_any_tab
 
 // Result values.  Lower number is accepted over higher one.
 enum {
@@ -1965,8 +1966,8 @@ char *did_set_spelllang(win_T *wp)
       } else {
         spell_load_lang((char_u *)lang);
         // SpellFileMissing autocommands may do anything, including
-        // destroying the buffer we are using...
-        if (!bufref_valid(&bufref)) {
+        // destroying the buffer we are using or closing the window.
+        if (!bufref_valid(&bufref) || !win_valid_any_tab(wp)) {
           ret_msg = N_("E797: SpellFileMissing autocommand deleted buffer");
           goto theend;
         }
