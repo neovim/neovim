@@ -1273,7 +1273,7 @@ scripterror:
             vim_snprintf((char *)IObuff, IOSIZE,
                          _("Attempt to open script file again: \"%s %s\"\n"),
                          argv[-1], argv[0]);
-            mch_errmsg((const char *)IObuff);
+            mch_errmsg(IObuff);
             os_exit(2);
           }
           int error;
@@ -1292,7 +1292,7 @@ scripterror:
             vim_snprintf((char *)IObuff, IOSIZE,
                          _("Cannot open for reading: \"%s\": %s\n"),
                          argv[0], os_strerror(error));
-            mch_errmsg((const char *)IObuff);
+            mch_errmsg(IObuff);
             os_exit(2);
           }
           save_typebuf();
@@ -2055,7 +2055,7 @@ static void mainerr(const char *errstr, const char *str)
   mch_errmsg(_(errstr));
   if (str != NULL) {
     mch_errmsg(": \"");
-    mch_errmsg(str);
+    mch_errmsg((char *)str);
     mch_errmsg("\"");
   }
   mch_errmsg(_("\nMore info with \""));

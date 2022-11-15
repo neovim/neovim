@@ -1867,7 +1867,7 @@ char *fix_fname(const char *fname)
   fname = xstrdup(fname);
 
 # ifdef USE_FNAME_CASE
-  path_fix_case(fname);  // set correct case for file name
+  path_fix_case((char *)fname);  // set correct case for file name
 # endif
 
   return (char *)fname;

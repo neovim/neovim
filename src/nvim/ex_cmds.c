@@ -1512,7 +1512,7 @@ static char *find_pipe(const char *cmd)
 
   for (const char *p = cmd; *p != NUL; p++) {
     if (!inquote && *p == '|') {
-      return p;
+      return (char *)p;
     }
     if (*p == '"') {
       inquote = !inquote;
