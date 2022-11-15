@@ -14,8 +14,6 @@ describe('treesitter parser API', function()
   clear()
 
   it('parses buffer', function()
-    skip(iswin())
-
     insert([[
       int main() {
         int x = 3;
