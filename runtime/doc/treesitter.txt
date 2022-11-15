@@ -212,7 +212,7 @@ treesitter queries from Lua.
 TREESITTER QUERY PREDICATES                            *treesitter-predicates*
 
 Predicates are special scheme nodes that are evaluated to conditionally capture
-nodes. For example, the |eq?| predicate can be used as follows: >
+nodes. For example, the `eq?` predicate can be used as follows: >
 
     ((identifier) @foo (#eq? @foo "foo"))
 <
@@ -261,7 +261,7 @@ predicates.
 TREESITTER QUERY DIRECTIVES                            *treesitter-directives*
 
 Treesitter directives store metadata for a node or match and perform side
-effects. For example, the |set!| predicate sets metadata on the match or node: >
+effects. For example, the `set!` directive sets metadata on the match or node: >
 
         ((identifier) @foo (#set! "type" "parameter"))
 <
