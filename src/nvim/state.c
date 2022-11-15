@@ -13,9 +13,11 @@
 #include "nvim/insexpand.h"
 #include "nvim/log.h"
 #include "nvim/main.h"
+#include "nvim/normal.h"
 #include "nvim/option.h"
 #include "nvim/option_defs.h"
 #include "nvim/os/input.h"
+#include "nvim/profile.h"
 #include "nvim/state.h"
 #include "nvim/ui.h"
 #include "nvim/vim.h"
@@ -62,6 +64,16 @@ getkey:
       }
       // Flush screen updates before blocking
       ui_flush();
+
+      // Entered idle state. Skip everything before the first screen update to prevent
+      // closing the startup log file when input() is called in VimEnter autocommand.
+      if (time_fd != NULL && did_first_redraw) {
+        TIME_MSG("--- NVIM IDLE ---");
+        // Now that we are idle, close any file for startup messages.
+        fclose(time_fd);
+        time_fd = NULL;
+      }
+
       // Call `os_inchar` directly to block for events or user input without
       // consuming anything from `input_buffer`(os/input.c) or calling the
       // mapping engine.

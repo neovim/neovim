@@ -94,6 +94,8 @@ typedef struct normal_state {
 
 static int VIsual_mode_orig = NUL;              // saved Visual mode
 
+bool did_first_redraw = false;
+
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "normal.c.generated.h"
 #endif
@@ -1381,13 +1383,12 @@ static int normal_check(VimState *state)
     normal_redraw(s);
     do_redraw = false;
 
-    // Now that we have drawn the first screen all the startup stuff
-    // has been done, close any file for startup messages.
-    if (time_fd != NULL) {
+    // Measure the first screen update in --startuptime
+    if (time_fd != NULL && !did_first_redraw) {
+      did_first_redraw = true;
       TIME_MSG("first screen update");
       TIME_MSG("--- NVIM STARTED ---");
-      fclose(time_fd);
-      time_fd = NULL;
+      fflush(time_fd);
     }
   }
 
