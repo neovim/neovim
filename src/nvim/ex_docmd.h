@@ -1,6 +1,9 @@
 #ifndef NVIM_EX_DOCMD_H
 #define NVIM_EX_DOCMD_H
 
+#include <stdbool.h>
+
+#include "nvim/buffer_defs.h"
 #include "nvim/ex_cmds_defs.h"
 #include "nvim/globals.h"
 

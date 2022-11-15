@@ -1,4 +1,10 @@
+#include <assert.h>
+#include <stdbool.h>
+#include <stddef.h>
+#include <string.h>
+
 #include "nvim/linematch.h"
+#include "nvim/macros.h"
 #include "nvim/memory.h"
 #include "nvim/vim.h"
 

@@ -6,6 +6,7 @@
 #include "nvim/buffer_defs.h"
 #include "nvim/ex_cmds_defs.h"
 #include "nvim/globals.h"
+#include "nvim/macros.h"
 
 #define HL_CONTAINED   0x01    // not used on toplevel
 #define HL_TRANSP      0x02    // has no highlighting

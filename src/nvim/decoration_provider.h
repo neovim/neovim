@@ -1,7 +1,12 @@
 #ifndef NVIM_DECORATION_PROVIDER_H
 #define NVIM_DECORATION_PROVIDER_H
 
+#include <stdbool.h>
+
+#include "klib/kvec.h"
 #include "nvim/buffer_defs.h"
+#include "nvim/macros.h"
+#include "nvim/types.h"
 
 typedef struct {
   NS ns_id;

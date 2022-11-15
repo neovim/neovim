@@ -27,6 +27,31 @@ local hashy = require'generators.hashy'
 
 local hashpipe = io.open(funcsfname, 'wb')
 
+hashpipe:write([[
+#include "nvim/arglist.h"
+#include "nvim/cmdexpand.h"
+#include "nvim/cmdhist.h"
+#include "nvim/digraph.h"
+#include "nvim/eval/funcs.h"
+#include "nvim/eval/typval.h"
+#include "nvim/eval/vars.h"
+#include "nvim/ex_docmd.h"
+#include "nvim/ex_getln.h"
+#include "nvim/fold.h"
+#include "nvim/getchar.h"
+#include "nvim/insexpand.h"
+#include "nvim/mapping.h"
+#include "nvim/match.h"
+#include "nvim/mbyte.h"
+#include "nvim/menu.h"
+#include "nvim/move.h"
+#include "nvim/quickfix.h"
+#include "nvim/search.h"
+#include "nvim/sign.h"
+#include "nvim/testing.h"
+
+]])
+
 local funcs = require('eval').funcs
 for _, func in pairs(funcs) do
   if func.float_func then

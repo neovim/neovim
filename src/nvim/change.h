@@ -1,8 +1,8 @@
 #ifndef NVIM_CHANGE_H
 #define NVIM_CHANGE_H
 
-#include "nvim/buffer_defs.h"  // for buf_T
-#include "nvim/pos.h"  // for linenr_T
+#include "nvim/buffer_defs.h"
+#include "nvim/pos.h"
 
 // flags for open_line()
 #define OPENLINE_DELSPACES  0x01  // delete spaces after cursor

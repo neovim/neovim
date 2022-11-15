@@ -3,17 +3,18 @@
 
 #include <assert.h>
 #include <stdbool.h>
+#include <stddef.h>
 #include <stdint.h>
-#include <stdlib.h>
 #include <uv.h>
 
-#include "nvim/ascii.h"
 #include "nvim/event/loop.h"
 #include "nvim/event/rstream.h"
+#include "nvim/event/stream.h"
 #include "nvim/log.h"
+#include "nvim/macros.h"
 #include "nvim/main.h"
-#include "nvim/memory.h"
-#include "nvim/vim.h"
+#include "nvim/os/os_defs.h"
+#include "nvim/rbuffer.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "event/rstream.c.generated.h"

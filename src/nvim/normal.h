@@ -3,7 +3,7 @@
 
 #include <stdbool.h>
 
-#include "nvim/buffer_defs.h"  // for win_T
+#include "nvim/buffer_defs.h"
 #include "nvim/pos.h"
 
 // Values for find_ident_under_cursor()

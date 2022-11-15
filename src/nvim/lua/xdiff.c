@@ -1,19 +1,20 @@
 // This is an open source non-commercial project. Dear PVS-Studio, please check
 // it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
-#include <errno.h>
 #include <lauxlib.h>
 #include <lua.h>
-#include <lualib.h>
-#include <stdio.h>
-#include <stdlib.h>
+#include <stdbool.h>
 #include <string.h>
 
+#include "luaconf.h"
+#include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/linematch.h"
 #include "nvim/lua/converter.h"
 #include "nvim/lua/executor.h"
 #include "nvim/lua/xdiff.h"
+#include "nvim/macros.h"
+#include "nvim/memory.h"
 #include "nvim/vim.h"
 #include "xdiff/xdiff.h"
 

@@ -1,26 +1,28 @@
 // This is an open source non-commercial project. Dear PVS-Studio, please check
 // it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
-#include <assert.h>
 #include <stdbool.h>
 #include <stdint.h>
+#include <stdlib.h>
 
-#include "nvim/api/private/dispatch.h"
 #include "nvim/api/private/helpers.h"
+#include "nvim/event/loop.h"
+#include "nvim/event/multiqueue.h"
+#include "nvim/globals.h"
 #include "nvim/highlight.h"
 #include "nvim/log.h"
-#include "nvim/map.h"
+#include "nvim/main.h"
+#include "nvim/memory.h"
 #include "nvim/msgpack_rpc/channel.h"
-#include "nvim/screen.h"
 #include "nvim/ui.h"
 #include "nvim/ui_client.h"
-#include "nvim/vim.h"
 
+// uncrustify:off
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "ui_client.c.generated.h"
-
 # include "ui_events_client.generated.h"
 #endif
+// uncrustify:on
 
 void ui_client_init(uint64_t chan)
 {

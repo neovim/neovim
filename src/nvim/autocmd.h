@@ -1,8 +1,20 @@
 #ifndef NVIM_AUTOCMD_H
 #define NVIM_AUTOCMD_H
 
+#include <stdbool.h>
+#include <stdint.h>
+
+#include "nvim/api/private/defs.h"
 #include "nvim/buffer_defs.h"
+#include "nvim/eval/typval_defs.h"
 #include "nvim/ex_cmds_defs.h"
+#include "nvim/macros.h"
+#include "nvim/regexp_defs.h"
+#include "nvim/types.h"
+
+struct AutoCmd_S;
+struct AutoPatCmd_S;
+struct AutoPat_S;
 
 // event_T definition
 #ifdef INCLUDE_GENERATED_DECLARATIONS

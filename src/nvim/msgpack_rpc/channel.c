@@ -1,36 +1,42 @@
 // This is an open source non-commercial project. Dear PVS-Studio, please check
 // it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
+#include <assert.h>
 #include <inttypes.h>
-#include <msgpack.h>
+#include <msgpack/object.h>
+#include <msgpack/pack.h>
+#include <msgpack/sbuffer.h>
+#include <msgpack/unpack.h>
 #include <stdbool.h>
-#include <string.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <uv.h>
 
 #include "klib/kvec.h"
+#include "nvim/api/private/defs.h"
+#include "nvim/api/private/dispatch.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/api/ui.h"
-#include "nvim/api/vim.h"
-#include "nvim/ascii.h"
 #include "nvim/channel.h"
-#include "nvim/eval.h"
-#include "nvim/event/libuv_process.h"
+#include "nvim/event/defs.h"
 #include "nvim/event/loop.h"
 #include "nvim/event/rstream.h"
-#include "nvim/event/socket.h"
+#include "nvim/event/stream.h"
 #include "nvim/event/wstream.h"
+#include "nvim/globals.h"
 #include "nvim/log.h"
 #include "nvim/main.h"
 #include "nvim/map.h"
 #include "nvim/memory.h"
-#include "nvim/message.h"
 #include "nvim/msgpack_rpc/channel.h"
+#include "nvim/msgpack_rpc/channel_defs.h"
 #include "nvim/msgpack_rpc/helpers.h"
 #include "nvim/msgpack_rpc/unpacker.h"
 #include "nvim/os/input.h"
-#include "nvim/os_unix.h"
+#include "nvim/rbuffer.h"
+#include "nvim/types.h"
 #include "nvim/ui.h"
-#include "nvim/vim.h"
+#include "nvim/ui_client.h"
 
 #if MIN_LOG_LEVEL > LOGLVL_DBG
 # define log_client_msg(...)

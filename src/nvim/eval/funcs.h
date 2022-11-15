@@ -1,9 +1,14 @@
 #ifndef NVIM_EVAL_FUNCS_H
 #define NVIM_EVAL_FUNCS_H
 
+#include <stdbool.h>
+#include <stdint.h>
+
 #include "nvim/api/private/dispatch.h"
 #include "nvim/buffer_defs.h"
 #include "nvim/eval/typval.h"
+#include "nvim/eval/typval_defs.h"
+#include "nvim/types.h"
 
 /// Prototype of C function that implements VimL function
 typedef void (*VimLFunc)(typval_T *args, typval_T *rvar, EvalFuncData data);

@@ -10,23 +10,28 @@
 #include <assert.h>
 #include <inttypes.h>
 #include <math.h>
-#include <msgpack.h>
+#include <stdbool.h>
 #include <stddef.h>
+#include <stdlib.h>
+#include <string.h>
 
 #include "klib/kvec.h"
+#include "msgpack/pack.h"
 #include "nvim/ascii.h"
-#include "nvim/buffer_defs.h"
-#include "nvim/charset.h"  // vim_isprintc()
 #include "nvim/eval.h"
 #include "nvim/eval/encode.h"
 #include "nvim/eval/typval.h"
 #include "nvim/eval/typval_encode.h"
 #include "nvim/garray.h"
+#include "nvim/gettext.h"
+#include "nvim/hashtab.h"
 #include "nvim/macros.h"
 #include "nvim/math.h"
 #include "nvim/mbyte.h"
 #include "nvim/memory.h"
 #include "nvim/message.h"
+#include "nvim/strings.h"
+#include "nvim/types.h"
 #include "nvim/vim.h"  // For _()
 
 const char *const encode_bool_var_names[] = {

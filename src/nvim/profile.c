@@ -3,20 +3,34 @@
 
 #include <assert.h>
 #include <math.h>
+#include <stdbool.h>
+#include <stdint.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
-#include "nvim/assert.h"
+#include "nvim/ascii.h"
 #include "nvim/charset.h"
 #include "nvim/debugger.h"
 #include "nvim/eval.h"
+#include "nvim/eval/typval_defs.h"
 #include "nvim/eval/userfunc.h"
+#include "nvim/ex_cmds_defs.h"
 #include "nvim/fileio.h"
-#include "nvim/func_attr.h"
-#include "nvim/globals.h"  // for the global `time_fd` (startuptime)
+#include "nvim/garray.h"
+#include "nvim/gettext.h"
+#include "nvim/globals.h"
+#include "nvim/hashtab.h"
+#include "nvim/keycodes.h"
+#include "nvim/memory.h"
+#include "nvim/message.h"
+#include "nvim/option_defs.h"
 #include "nvim/os/os.h"
 #include "nvim/os/time.h"
+#include "nvim/pos.h"
 #include "nvim/profile.h"
 #include "nvim/runtime.h"
+#include "nvim/types.h"
 #include "nvim/vim.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS

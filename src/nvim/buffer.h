@@ -1,12 +1,20 @@
 #ifndef NVIM_BUFFER_H
 #define NVIM_BUFFER_H
 
+#include <assert.h>
+#include <stdbool.h>
+#include <stddef.h>
+
+#include "nvim/buffer_defs.h"
 #include "nvim/eval/typval.h"
+#include "nvim/eval/typval_defs.h"
 #include "nvim/ex_cmds_defs.h"
 #include "nvim/func_attr.h"
+#include "nvim/grid_defs.h"  // for StlClickRecord
 #include "nvim/macros.h"
 #include "nvim/memline.h"
-#include "nvim/pos.h"  // for linenr_T
+#include "nvim/memline_defs.h"
+#include "nvim/pos.h"
 
 // Values for buflist_getfile()
 enum getf_values {

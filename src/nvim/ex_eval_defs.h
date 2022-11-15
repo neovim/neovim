@@ -1,7 +1,7 @@
 #ifndef NVIM_EX_EVAL_DEFS_H
 #define NVIM_EX_EVAL_DEFS_H
 
-#include "nvim/pos.h"           // for linenr_T
+#include "nvim/pos.h"
 
 /// There is no CSF_IF, the lack of CSF_WHILE, CSF_FOR and CSF_TRY means ":if"
 /// was used.

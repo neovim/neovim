@@ -1,6 +1,8 @@
 #ifndef NVIM_POPUPMENU_H
 #define NVIM_POPUPMENU_H
 
+#include <stdbool.h>
+
 #include "nvim/grid_defs.h"
 #include "nvim/macros.h"
 #include "nvim/types.h"

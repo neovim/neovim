@@ -3,9 +3,11 @@
 
 #include <assert.h>
 #include <stdbool.h>
-#include <stdio.h>
+#include <stddef.h>
 #include <uv.h>
+#include <uv/version.h>
 
+#include "nvim/event/loop.h"
 #include "nvim/event/stream.h"
 #include "nvim/log.h"
 #include "nvim/macros.h"

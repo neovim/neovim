@@ -2,11 +2,16 @@
 // it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
 #include <assert.h>
-#include <inttypes.h>
+#include <ctype.h>
+#include <limits.h>
 #include <stdbool.h>
+#include <stddef.h>
 #include <stdlib.h>
+#include <string.h>
 
+#include "auto/config.h"
 #include "nvim/ascii.h"
+#include "nvim/buffer_defs.h"
 #include "nvim/charset.h"
 #include "nvim/cmdexpand.h"
 #include "nvim/eval.h"
@@ -14,21 +19,21 @@
 #include "nvim/file_search.h"
 #include "nvim/fileio.h"
 #include "nvim/garray.h"
-#include "nvim/memfile.h"
-#include "nvim/memline.h"
+#include "nvim/gettext.h"
+#include "nvim/globals.h"
+#include "nvim/macros.h"
+#include "nvim/mbyte.h"
 #include "nvim/memory.h"
 #include "nvim/message.h"
 #include "nvim/option.h"
+#include "nvim/os/fs_defs.h"
 #include "nvim/os/input.h"
 #include "nvim/os/os.h"
 #include "nvim/os/shell.h"
-#include "nvim/os_unix.h"
 #include "nvim/path.h"
-#include "nvim/quickfix.h"
+#include "nvim/pos.h"
 #include "nvim/regexp.h"
-#include "nvim/screen.h"
 #include "nvim/strings.h"
-#include "nvim/tag.h"
 #include "nvim/types.h"
 #include "nvim/vim.h"
 #include "nvim/window.h"

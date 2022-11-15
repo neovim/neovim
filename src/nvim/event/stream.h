@@ -6,7 +6,10 @@
 #include <uv.h>
 
 #include "nvim/event/loop.h"
+#include "nvim/event/multiqueue.h"
 #include "nvim/rbuffer.h"
+
+struct stream;
 
 typedef struct stream Stream;
 /// Type of function called when the Stream buffer is filled with data

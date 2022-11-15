@@ -3,14 +3,32 @@
 
 // testing.c: Support for tests
 
+#include <inttypes.h>
+#include <stdbool.h>
+#include <stddef.h>
+#include <stdio.h>
+#include <string.h>
+
+#include "nvim/ascii.h"
 #include "nvim/eval.h"
 #include "nvim/eval/encode.h"
+#include "nvim/eval/typval.h"
+#include "nvim/eval/typval_defs.h"
 #include "nvim/ex_docmd.h"
+#include "nvim/garray.h"
+#include "nvim/gettext.h"
 #include "nvim/globals.h"
+#include "nvim/hashtab.h"
+#include "nvim/macros.h"
+#include "nvim/mbyte.h"
+#include "nvim/memory.h"
 #include "nvim/message.h"
 #include "nvim/os/os.h"
 #include "nvim/runtime.h"
+#include "nvim/strings.h"
 #include "nvim/testing.h"
+#include "nvim/types.h"
+#include "nvim/vim.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "testing.c.generated.h"

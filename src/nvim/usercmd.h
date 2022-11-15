@@ -1,7 +1,12 @@
 #ifndef NVIM_USERCMD_H
 #define NVIM_USERCMD_H
 
+#include <stdint.h>
+
+#include "nvim/eval/typval_defs.h"
 #include "nvim/ex_cmds_defs.h"
+#include "nvim/garray.h"
+#include "nvim/types.h"
 
 typedef struct ucmd {
   char *uc_name;                // The command name

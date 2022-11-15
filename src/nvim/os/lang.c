@@ -7,16 +7,16 @@
 # include <CoreServices/CoreServices.h>
 # undef Boolean
 # undef FileInfo
-#endif
 
-#include "auto/config.h"
+# include "auto/config.h"
+# ifdef HAVE_LOCALE_H
+#  include <locale.h>
+# endif
+# include "nvim/os/os.h"
 
-#ifdef HAVE_LOCALE_H
-# include <locale.h>
 #endif
 
 #include "nvim/os/lang.h"
-#include "nvim/os/os.h"
 
 void lang_init(void)
 {

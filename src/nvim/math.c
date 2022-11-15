@@ -10,7 +10,7 @@
 #include "nvim/math.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "math.c.generated.h"
+# include "math.c.generated.h"  // IWYU pragma: export
 #endif
 
 int xfpclassify(double d)

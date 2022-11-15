@@ -6,9 +6,9 @@
 /// Some more functions for command line commands
 
 #include <assert.h>
-#include <fcntl.h>
 #include <inttypes.h>
 #include <stdbool.h>
+#include <stdio.h>
 #include <string.h>
 
 #include "nvim/arglist.h"
@@ -16,30 +16,33 @@
 #include "nvim/autocmd.h"
 #include "nvim/buffer.h"
 #include "nvim/change.h"
-#include "nvim/charset.h"
+#include "nvim/channel.h"
 #include "nvim/eval.h"
+#include "nvim/eval/typval.h"
+#include "nvim/eval/typval_defs.h"
 #include "nvim/eval/vars.h"
 #include "nvim/ex_cmds.h"
 #include "nvim/ex_cmds2.h"
+#include "nvim/ex_cmds_defs.h"
 #include "nvim/ex_docmd.h"
-#include "nvim/ex_eval.h"
 #include "nvim/ex_getln.h"
 #include "nvim/fileio.h"
+#include "nvim/gettext.h"
 #include "nvim/globals.h"
+#include "nvim/highlight_defs.h"
+#include "nvim/macros.h"
 #include "nvim/mark.h"
-#include "nvim/mbyte.h"
+#include "nvim/memline_defs.h"
 #include "nvim/memory.h"
 #include "nvim/message.h"
 #include "nvim/move.h"
 #include "nvim/normal.h"
-#include "nvim/ops.h"
 #include "nvim/option.h"
-#include "nvim/os/fs_defs.h"
-#include "nvim/os_unix.h"
+#include "nvim/os/os_defs.h"
 #include "nvim/path.h"
+#include "nvim/pos.h"
 #include "nvim/quickfix.h"
 #include "nvim/runtime.h"
-#include "nvim/strings.h"
 #include "nvim/undo.h"
 #include "nvim/vim.h"
 #include "nvim/window.h"

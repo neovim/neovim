@@ -132,6 +132,7 @@
 #include <string.h>
 
 #include "nvim/garray.h"
+#include "nvim/profile.h"
 #include "nvim/regexp.h"
 
 // The opcodes are:

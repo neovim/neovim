@@ -1,11 +1,18 @@
 #ifndef NVIM_EXTMARK_H
 #define NVIM_EXTMARK_H
 
+#include <stdbool.h>
+#include <stddef.h>
+#include <stdint.h>
+
+#include "klib/kvec.h"
 #include "nvim/buffer_defs.h"
 #include "nvim/decoration.h"
 #include "nvim/extmark_defs.h"
+#include "nvim/macros.h"
 #include "nvim/marktree.h"
 #include "nvim/pos.h"
+#include "nvim/types.h"
 
 EXTERN int extmark_splice_pending INIT(= 0);
 

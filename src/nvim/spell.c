@@ -56,61 +56,58 @@
 // Use DEBUG_TRIEWALK to print the changes made in suggest_trie_walk() for a
 // specific word.
 
-#include <assert.h>               // for assert
-#include <inttypes.h>             // for uint32_t, uint16_t, uint8_t
-#include <limits.h>               // for INT_MAX
-#include <stdbool.h>              // for false, true, bool
-#include <stddef.h>               // for NULL, size_t, ptrdiff_t
-#include <stdio.h>                // for snprintf
-#include <string.h>               // for memmove, strstr, memcpy, memset
+#include <assert.h>
+#include <inttypes.h>
+#include <limits.h>
+#include <stdbool.h>
+#include <stddef.h>
+#include <stdio.h>
+#include <string.h>
 
-#include "nvim/ascii.h"           // for NUL, ascii_isdigit, ascii_iswhite
-#include "nvim/autocmd.h"         // for apply_autocmds
-#include "nvim/buffer.h"          // for bufref_valid, set_bufref, buf_is_empty
-#include "nvim/buffer_defs.h"     // for win_T, synblock_T, buf_T, w_p_...
-#include "nvim/change.h"          // for changed_bytes
-#include "nvim/charset.h"         // for skipwhite, getwhitecols, skipbin
-#include "nvim/cursor.h"          // for get_cursor_line_ptr
+#include "nvim/ascii.h"
+#include "nvim/autocmd.h"
+#include "nvim/buffer.h"
+#include "nvim/change.h"
+#include "nvim/charset.h"
+#include "nvim/cursor.h"
 #include "nvim/decoration.h"
-#include "nvim/drawscreen.h"      // for NOT_VALID, redraw_later
-#include "nvim/eval/typval.h"     // for semsg
-#include "nvim/ex_cmds.h"         // for do_sub_msg
-#include "nvim/ex_cmds_defs.h"    // for exarg_T
-#include "nvim/ex_docmd.h"        // for do_cmdline_cmd
-#include "nvim/garray.h"          // for garray_T, GA_EMPTY, GA_APPEND_...
-#include "nvim/gettext.h"         // for _, N_
-#include "nvim/hashtab.h"         // for hash_clear_all, hash_init, has...
-#include "nvim/highlight_defs.h"  // for HLF_COUNT, hlf_T, HLF_SPB, HLF...
-#include "nvim/insexpand.h"       // for ins_compl_add_infercase, ins_c...
-#include "nvim/log.h"             // for ELOG
-#include "nvim/macros.h"          // for MB_PTR_ADV, MB_PTR_BACK, ASCII...
-#include "nvim/mark.h"            // for clearpos
-#include "nvim/mbyte.h"           // for utf_ptr2char, utf_char2bytes
-#include "nvim/memline.h"         // for ml_append, ml_get_buf, ml_close
-#include "nvim/memline_defs.h"    // for memline_T
-#include "nvim/memory.h"          // for xfree, xmalloc, xcalloc, xstrdup
-#include "nvim/message.h"         // for emsg, msg_puts, give_warning
-#include "nvim/option.h"          // for copy_option_part, set_option_v...
-#include "nvim/option_defs.h"     // for p_ws, OPT_LOCAL, p_enc, SHM_SE...
-#include "nvim/os/fs.h"           // for os_remove
-#include "nvim/os/input.h"        // for line_breakcheck
-#include "nvim/os/os_defs.h"      // for MAXPATHL
-#include "nvim/path.h"            // for path_full_compare, path_tail...
-#include "nvim/pos.h"             // for pos_T, colnr_T, linenr_T
-#include "nvim/regexp.h"          // for vim_regfree, vim_regexec, vim_...
-#include "nvim/regexp_defs.h"     // for regmatch_T, regprog_T
-#include "nvim/runtime.h"         // for DIP_ALL, do_in_runtimepath
-#include "nvim/search.h"          // for SEARCH_KEEP, for do_search
-#include "nvim/spell.h"           // for FUNC_ATTR_NONNULL_ALL, FUNC_AT...
-#include "nvim/spell_defs.h"      // for slang_T, langp_T, MAXWLEN, sal...
-#include "nvim/spellfile.h"       // for spell_load_file
-#include "nvim/spellsuggest.h"    // for spell_suggest_list
-#include "nvim/strings.h"         // for vim_strchr, vim_snprintf, conc...
-#include "nvim/syntax.h"          // for syn_get_id, syntax_present
-#include "nvim/types.h"           // for char_u
-#include "nvim/undo.h"            // for u_save_cursor
-#include "nvim/vim.h"             // for curwin, strlen, STRLCPY, STRNCMP
-#include "nvim/window.h"          // for win_valid_any_tab
+#include "nvim/decoration_provider.h"
+#include "nvim/drawscreen.h"
+#include "nvim/ex_cmds.h"
+#include "nvim/ex_cmds_defs.h"
+#include "nvim/ex_docmd.h"
+#include "nvim/garray.h"
+#include "nvim/gettext.h"
+#include "nvim/globals.h"
+#include "nvim/hashtab.h"
+#include "nvim/highlight_defs.h"
+#include "nvim/insexpand.h"
+#include "nvim/log.h"
+#include "nvim/macros.h"
+#include "nvim/mark.h"
+#include "nvim/mbyte.h"
+#include "nvim/memline.h"
+#include "nvim/memory.h"
+#include "nvim/message.h"
+#include "nvim/option.h"
+#include "nvim/os/fs.h"
+#include "nvim/os/input.h"
+#include "nvim/os/os_defs.h"
+#include "nvim/path.h"
+#include "nvim/pos.h"
+#include "nvim/regexp.h"
+#include "nvim/runtime.h"
+#include "nvim/search.h"
+#include "nvim/spell.h"
+#include "nvim/spell_defs.h"
+#include "nvim/spellfile.h"
+#include "nvim/spellsuggest.h"
+#include "nvim/strings.h"
+#include "nvim/syntax.h"
+#include "nvim/types.h"
+#include "nvim/undo.h"
+#include "nvim/vim.h"
+#include "nvim/window.h"
 
 // Result values.  Lower number is accepted over higher one.
 enum {

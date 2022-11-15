@@ -1,10 +1,10 @@
 #ifndef NVIM_FILE_SEARCH_H
 #define NVIM_FILE_SEARCH_H
 
-#include <stdlib.h>  // for size_t
+#include <stdlib.h>
 
-#include "nvim/globals.h"  // for CdScope
-#include "nvim/types.h"  // for char_u
+#include "nvim/globals.h"
+#include "nvim/types.h"
 
 // Flags for find_file_*() functions.
 #define FINDFILE_FILE   0       // only files

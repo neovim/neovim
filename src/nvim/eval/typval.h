@@ -4,14 +4,19 @@
 #include <assert.h>
 #include <stdbool.h>
 #include <stddef.h>
+#include <stdint.h>
 #include <string.h>
 
 #include "nvim/eval/typval_defs.h"
 #include "nvim/func_attr.h"
+#include "nvim/garray.h"
 #include "nvim/gettext.h"
+#include "nvim/hashtab.h"
+#include "nvim/lib/queue.h"
 #include "nvim/macros.h"
 #include "nvim/mbyte_defs.h"
 #include "nvim/message.h"
+#include "nvim/types.h"
 
 #ifdef LOG_LIST_ACTIONS
 # include "nvim/memory.h"

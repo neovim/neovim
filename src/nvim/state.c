@@ -1,27 +1,38 @@
 // This is an open source non-commercial project. Dear PVS-Studio, please check
 // it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
-#include <assert.h>
+#include <stdbool.h>
+#include <stddef.h>
+#include <string.h>
 
-#include "klib/kvec.h"
 #include "nvim/ascii.h"
 #include "nvim/autocmd.h"
+#include "nvim/buffer_defs.h"
 #include "nvim/drawscreen.h"
 #include "nvim/eval.h"
-#include "nvim/ex_docmd.h"
+#include "nvim/eval/typval.h"
+#include "nvim/eval/typval_defs.h"
+#include "nvim/event/defs.h"
+#include "nvim/event/loop.h"
+#include "nvim/event/multiqueue.h"
 #include "nvim/getchar.h"
+#include "nvim/globals.h"
 #include "nvim/insexpand.h"
+#include "nvim/keycodes.h"
 #include "nvim/log.h"
+#include "nvim/macros.h"
 #include "nvim/main.h"
 #include "nvim/option.h"
-#include "nvim/option_defs.h"
 #include "nvim/os/input.h"
+#include "nvim/screen.h"
 #include "nvim/state.h"
+#include "nvim/strings.h"
+#include "nvim/types.h"
 #include "nvim/ui.h"
 #include "nvim/vim.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "state.c.generated.h"
+# include "state.c.generated.h"  // IWYU pragma: export
 #endif
 
 void state_enter(VimState *s)

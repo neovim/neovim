@@ -5,22 +5,17 @@
 ///
 /// Functions for handling growing arrays.
 
-#include <inttypes.h>
 #include <string.h>
 
-#include "nvim/ascii.h"
 #include "nvim/garray.h"
 #include "nvim/log.h"
 #include "nvim/memory.h"
 #include "nvim/path.h"
 #include "nvim/strings.h"
-#include "nvim/vim.h"
-
-// #include "nvim/globals.h"
-#include "nvim/memline.h"
+#include "nvim/types.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "garray.c.generated.h"
+# include "garray.c.generated.h"  // IWYU pragma: export
 #endif
 
 /// Clear an allocated growing array.

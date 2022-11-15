@@ -1,15 +1,23 @@
 // This is an open source non-commercial project. Dear PVS-Studio, please check
 // it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
+#include <inttypes.h>
+#include <stdlib.h>
+
 #include "nvim/eval.h"
 #include "nvim/eval/executor.h"
 #include "nvim/eval/typval.h"
+#include "nvim/eval/typval_defs.h"
+#include "nvim/garray.h"
+#include "nvim/gettext.h"
 #include "nvim/globals.h"
 #include "nvim/message.h"
+#include "nvim/strings.h"
+#include "nvim/types.h"
 #include "nvim/vim.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "eval/executor.c.generated.h"
+# include "eval/executor.c.generated.h"  // IWYU pragma: export
 #endif
 
 char *e_listidx = N_("E684: list index out of range: %" PRId64);

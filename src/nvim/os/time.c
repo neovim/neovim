@@ -1,22 +1,34 @@
 // This is an open source non-commercial project. Dear PVS-Studio, please check
 // it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
-#include <assert.h>
+#include <inttypes.h>
 #include <limits.h>
+#include <stdbool.h>
+#include <stdlib.h>
+#include <string.h>
+#include <time.h>
+
 #include <uv.h>
 
-#include "nvim/assert.h"
+#include "auto/config.h"
 #include "nvim/event/loop.h"
+#include "nvim/gettext.h"
+#include "nvim/globals.h"
+#include "nvim/log.h"
+#include "nvim/macros.h"
 #include "nvim/main.h"
+#include "nvim/memory.h"
 #include "nvim/os/input.h"
 #include "nvim/os/os.h"
 #include "nvim/os/time.h"
+
+struct tm;
 
 static uv_mutex_t delay_mutex;
 static uv_cond_t delay_cond;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "os/time.c.generated.h"
+# include "os/time.c.generated.h"  // IWYU pragma: export
 #endif
 
 /// Initializes the time module

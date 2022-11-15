@@ -1,25 +1,22 @@
 // This is an open source non-commercial project. Dear PVS-Studio, please check
 // it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
-#include <assert.h>
 #include <inttypes.h>
-#include <stdlib.h>
+#include <stdbool.h>
+#include <stdio.h>
 #include <string.h>
+#include <uv.h>
 
-#include "nvim/ascii.h"
+#include "nvim/channel.h"
 #include "nvim/eval.h"
 #include "nvim/event/socket.h"
-#include "nvim/fileio.h"
 #include "nvim/garray.h"
 #include "nvim/log.h"
 #include "nvim/main.h"
 #include "nvim/memory.h"
-#include "nvim/msgpack_rpc/channel.h"
 #include "nvim/msgpack_rpc/server.h"
 #include "nvim/os/os.h"
-#include "nvim/path.h"
-#include "nvim/strings.h"
-#include "nvim/vim.h"
+#include "nvim/os/stdpaths_defs.h"
 
 #define MAX_CONNECTIONS 32
 #define ENV_LISTEN "NVIM_LISTEN_ADDRESS"  // deprecated

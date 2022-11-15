@@ -1,9 +1,12 @@
 #ifndef NVIM_MARK_H
 #define NVIM_MARK_H
 
+#include <stdbool.h>
+#include <stddef.h>
+
 #include "nvim/ascii.h"
 #include "nvim/buffer_defs.h"
-#include "nvim/ex_cmds_defs.h"  // for exarg_T
+#include "nvim/ex_cmds_defs.h"
 #include "nvim/extmark_defs.h"
 #include "nvim/func_attr.h"
 #include "nvim/macros.h"

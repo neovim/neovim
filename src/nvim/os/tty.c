@@ -5,11 +5,11 @@
 // Terminal/console utils
 //
 
-#include "nvim/os/os.h"
+#include "nvim/os/os.h"  // IWYU pragma: keep (Windows)
 #include "nvim/os/tty.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "os/tty.c.generated.h"
+# include "os/tty.c.generated.h"  // IWYU pragma: export
 #endif
 
 #ifdef MSWIN

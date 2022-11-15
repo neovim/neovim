@@ -3,7 +3,6 @@
 
 #include <stdbool.h>
 #include <stdint.h>
-// for FILE
 #include <stdio.h>
 
 typedef struct file_buffer buf_T;  // Forward declaration
@@ -16,36 +15,23 @@ typedef struct {
   int br_buf_free_count;
 } bufref_T;
 
-// for garray_T
-#include "nvim/garray.h"
-// for ScreenGrid
-#include "nvim/grid_defs.h"
-// for HLF_COUNT
-#include "nvim/highlight_defs.h"
-// for pos_T, lpos_T and linenr_T
-#include "nvim/pos.h"
-// for the number window-local and buffer-local options
-#include "nvim/option_defs.h"
-// for jump list and tag stack sizes in a buffer and mark types
-#include "nvim/mark_defs.h"
-// for u_header_T
-#include "nvim/undo_defs.h"
-// for hashtab_T
-#include "nvim/hashtab.h"
-// for dict_T
-#include "nvim/eval/typval.h"
-// for String
-#include "nvim/api/private/defs.h"
-// for Map(K, V)
-#include "nvim/map.h"
-// for kvec
 #include "klib/kvec.h"
-// for marktree
+#include "nvim/api/private/defs.h"
+#include "nvim/eval/typval.h"
+#include "nvim/garray.h"
+#include "nvim/grid_defs.h"
+#include "nvim/hashtab.h"
+#include "nvim/highlight_defs.h"
+#include "nvim/map.h"
+#include "nvim/mark_defs.h"
 #include "nvim/marktree.h"
 // for float window title
 #include "nvim/extmark_defs.h"
 // for click definitions
+#include "nvim/option_defs.h"
+#include "nvim/pos.h"
 #include "nvim/statusline_defs.h"
+#include "nvim/undo_defs.h"
 
 #define GETFILE_SUCCESS(x)    ((x) <= 0)
 #define MODIFIABLE(buf) (buf->b_p_ma)
@@ -100,17 +86,12 @@ typedef struct wininfo_S wininfo_T;
 typedef struct frame_S frame_T;
 typedef uint64_t disptick_T;  // display tick type
 
-// for struct memline (it needs memfile_T)
 #include "nvim/memline_defs.h"
-
-// for regprog_T. Needs win_T and buf_T.
+#include "nvim/os/fs_defs.h"
 #include "nvim/regexp_defs.h"
-// for synstate_T (needs reg_extmatch_T, win_T, buf_T)
-#include "nvim/syntax_defs.h"
-// for sign_entry_T
-#include "nvim/os/fs_defs.h"    // for FileID
 #include "nvim/sign_defs.h"
-#include "nvim/terminal.h"      // for Terminal
+#include "nvim/syntax_defs.h"
+#include "nvim/terminal.h"
 
 // The taggy struct is used to store the information about a :tag command.
 typedef struct taggy {

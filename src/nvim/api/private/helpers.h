@@ -1,11 +1,17 @@
 #ifndef NVIM_API_PRIVATE_HELPERS_H
 #define NVIM_API_PRIVATE_HELPERS_H
 
+#include <stdbool.h>
+#include <stddef.h>
+
 #include "klib/kvec.h"
 #include "nvim/api/private/defs.h"
 #include "nvim/decoration.h"
 #include "nvim/ex_eval_defs.h"
 #include "nvim/getchar.h"
+#include "nvim/globals.h"
+#include "nvim/macros.h"
+#include "nvim/map.h"
 #include "nvim/memory.h"
 #include "nvim/vim.h"
 

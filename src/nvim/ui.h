@@ -6,9 +6,14 @@
 #include <stdint.h>
 
 #include "nvim/api/private/defs.h"
+#include "nvim/event/multiqueue.h"
 #include "nvim/globals.h"
 #include "nvim/highlight_defs.h"
+#include "nvim/macros.h"
 #include "nvim/memory.h"
+#include "nvim/types.h"
+
+struct ui_t;
 
 typedef enum {
   kUICmdline = 0,
@@ -74,11 +79,12 @@ typedef struct ui_event_callback {
   bool ext_widgets[kUIGlobalCount];
 } UIEventCallback;
 
+// uncrustify:off
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "ui.h.generated.h"
-
 # include "ui_events_call.h.generated.h"
 #endif
+// uncrustify:on
 
 EXTERN MultiQueue *resize_events;
 #endif  // NVIM_UI_H

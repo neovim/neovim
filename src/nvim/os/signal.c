@@ -3,23 +3,20 @@
 
 #include <assert.h>
 #include <stdbool.h>
-#include <uv.h>
+#include <stdio.h>
 #ifndef MSWIN
 # include <signal.h>  // for sigset_t
 #endif
 
-#include "nvim/ascii.h"
 #include "nvim/autocmd.h"
+#include "nvim/buffer_defs.h"
 #include "nvim/eval.h"
-#include "nvim/event/loop.h"
 #include "nvim/event/signal.h"
 #include "nvim/globals.h"
 #include "nvim/log.h"
 #include "nvim/main.h"
 #include "nvim/memline.h"
-#include "nvim/memory.h"
 #include "nvim/os/signal.h"
-#include "nvim/vim.h"
 
 static SignalWatcher spipe, shup, squit, sterm, susr1, swinch;
 #ifdef SIGPWR

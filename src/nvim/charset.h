@@ -1,6 +1,8 @@
 #ifndef NVIM_CHARSET_H
 #define NVIM_CHARSET_H
 
+#include <stdbool.h>
+
 #include "nvim/buffer_defs.h"
 #include "nvim/eval/typval.h"
 #include "nvim/option_defs.h"

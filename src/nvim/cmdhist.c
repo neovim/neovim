@@ -3,14 +3,30 @@
 
 // cmdhist.c: Functions for the history of the command-line.
 
+#include <assert.h>
+#include <limits.h>
+#include <stdbool.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <string.h>
+
 #include "nvim/ascii.h"
 #include "nvim/charset.h"
 #include "nvim/cmdhist.h"
+#include "nvim/eval/typval.h"
 #include "nvim/ex_cmds.h"
+#include "nvim/ex_cmds_defs.h"
 #include "nvim/ex_getln.h"
+#include "nvim/gettext.h"
+#include "nvim/globals.h"
+#include "nvim/macros.h"
+#include "nvim/memory.h"
+#include "nvim/message.h"
+#include "nvim/option_defs.h"
+#include "nvim/pos.h"
 #include "nvim/regexp.h"
 #include "nvim/strings.h"
-#include "nvim/ui.h"
+#include "nvim/types.h"
 #include "nvim/vim.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS

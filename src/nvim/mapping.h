@@ -1,6 +1,10 @@
 #ifndef NVIM_MAPPING_H
 #define NVIM_MAPPING_H
 
+#include <stdbool.h>
+#include <stddef.h>
+
+#include "lauxlib.h"
 #include "nvim/buffer_defs.h"
 #include "nvim/ex_cmds_defs.h"
 #include "nvim/types.h"

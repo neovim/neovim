@@ -1,8 +1,11 @@
 #ifndef NVIM_UI_CLIENT_H
 #define NVIM_UI_CLIENT_H
 
+#include <stddef.h>
+
 #include "nvim/api/private/defs.h"
 #include "nvim/grid_defs.h"
+#include "nvim/macros.h"
 
 typedef struct {
   const char *name;

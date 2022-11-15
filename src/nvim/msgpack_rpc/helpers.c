@@ -1,21 +1,25 @@
 // This is an open source non-commercial project. Dear PVS-Studio, please check
 // it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
-#include <inttypes.h>
-#include <msgpack.h>
+#include <msgpack/object.h>
+#include <msgpack/sbuffer.h>
+#include <msgpack/unpack.h>
+#include <msgpack/zone.h>
 #include <stdbool.h>
+#include <stddef.h>
+#include <stdint.h>
 
 #include "klib/kvec.h"
-#include "nvim/api/private/dispatch.h"
+#include "msgpack/pack.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/assert.h"
-#include "nvim/log.h"
+#include "nvim/event/wstream.h"
 #include "nvim/memory.h"
 #include "nvim/msgpack_rpc/helpers.h"
-#include "nvim/vim.h"
+#include "nvim/types.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "keysets.generated.h"
+# include "keysets.generated.h"  // IWYU pragma: export
 # include "msgpack_rpc/helpers.c.generated.h"
 #endif
 

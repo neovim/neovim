@@ -1,7 +1,7 @@
 #ifndef NVIM_VIM_H
 #define NVIM_VIM_H
 
-#include "nvim/pos.h"  // for linenr_T, MAXCOL, etc...
+#include "nvim/pos.h"
 #include "nvim/types.h"
 
 // Some defines from the old feature.h

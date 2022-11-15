@@ -1,14 +1,14 @@
 // This is an open source non-commercial project. Dear PVS-Studio, please check
 // it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
-#include <assert.h>
+#include <stdint.h>
 #include <uv.h>
 
+#include "nvim/eval/typval.h"
 #include "nvim/event/libuv_process.h"
 #include "nvim/event/loop.h"
 #include "nvim/event/process.h"
-#include "nvim/event/rstream.h"
-#include "nvim/event/wstream.h"
+#include "nvim/event/stream.h"
 #include "nvim/log.h"
 #include "nvim/macros.h"
 #include "nvim/os/os.h"
