@@ -17,6 +17,7 @@ describe('ui mode_change event', function()
       [1] = {bold=true, reverse=true},
       [2] = {bold=true},
       [3] = {reverse=true},
+      [4] = {background=Screen.colors.Red, foreground=Screen.colors.White},  -- ErrorMsg
     })
   end)
 
@@ -42,6 +43,25 @@ describe('ui mode_change event', function()
       {0:~                        }|
       {0:~                        }|
                                |
+    ]], mode="normal"}
+
+    screen:try_resize(50, 4)
+    command('set nomodifiable')
+
+    feed('c')
+    screen:expect{grid=[[
+      ^                                                  |
+      {0:~                                                 }|
+      {0:~                                                 }|
+                                                        |
+    ]], mode="operator"}
+
+    feed('c')
+    screen:expect{grid=[[
+      ^                                                  |
+      {0:~                                                 }|
+      {0:~                                                 }|
+      {4:E21: Cannot make changes, 'modifiable' is off}     |
     ]], mode="normal"}
   end)
 
