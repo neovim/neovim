@@ -2483,7 +2483,13 @@ int op_change(oparg_T *oap)
     fix_indent();
   }
 
+  // Reset finish_op now, don't want it set inside edit().
+  const bool save_finish_op = finish_op;
+  finish_op = false;
+
   retval = edit(NUL, false, (linenr_T)1);
+
+  finish_op = save_finish_op;
 
   // In Visual block mode, handle copying the new text to all lines of the
   // block.
@@ -5635,8 +5641,6 @@ bool set_ref_in_opfunc(int copyID)
 static void op_function(const oparg_T *oap)
   FUNC_ATTR_NONNULL_ALL
 {
-  const TriState save_virtual_op = virtual_op;
-  const bool save_finish_op = finish_op;
   const pos_T orig_start = curbuf->b_op_start;
   const pos_T orig_end = curbuf->b_op_end;
 
@@ -5663,9 +5667,11 @@ static void op_function(const oparg_T *oap)
 
     // Reset virtual_op so that 'virtualedit' can be changed in the
     // function.
+    const TriState save_virtual_op = virtual_op;
     virtual_op = kNone;
 
     // Reset finish_op so that mode() returns the right value.
+    const bool save_finish_op = finish_op;
     finish_op = false;
 
     typval_T rettv;
@@ -6205,8 +6211,6 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
         // Restore linebreak, so that when the user edits it looks as before.
         restore_lbr(lbr_saved);
 
-        // Reset finish_op now, don't want it set inside edit().
-        finish_op = false;
         if (op_change(oap)) {           // will call edit()
           cap->retval |= CA_COMMAND_BUSY;
         }

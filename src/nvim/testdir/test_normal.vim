@@ -3713,4 +3713,37 @@ func Test_normal_count_out_of_range()
   bwipe!
 endfunc
 
+" Test that mouse shape is restored to Normal mode after failed "c" operation.
+func Test_mouse_shape_after_failed_change()
+  CheckFeature mouseshape
+  CheckCanRunGui
+
+  let lines =<< trim END
+    set mouseshape+=o:busy
+    setlocal nomodifiable
+    let g:mouse_shapes = []
+
+    func SaveMouseShape(timer)
+      let g:mouse_shapes += [getmouseshape()]
+    endfunc
+
+    func SaveAndQuit(timer)
+      call writefile(g:mouse_shapes, 'Xmouseshapes')
+      quit
+    endfunc
+
+    call timer_start(50, {_ -> feedkeys('c')})
+    call timer_start(100, 'SaveMouseShape')
+    call timer_start(150, {_ -> feedkeys('c')})
+    call timer_start(200, 'SaveMouseShape')
+    call timer_start(250, 'SaveAndQuit')
+  END
+  call writefile(lines, 'Xmouseshape.vim', 'D')
+  call RunVim([], [], "-g -S Xmouseshape.vim")
+  sleep 300m
+  call assert_equal(['busy', 'arrow'], readfile('Xmouseshapes'))
+
+  call delete('Xmouseshapes')
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab
