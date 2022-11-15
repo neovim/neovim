@@ -81,7 +81,7 @@ bool buf_updates_register(buf_T *buf, uint64_t channel_id, BufUpdateCallbacks cb
       linedata.size = line_count;
       linedata.items = xcalloc(line_count, sizeof(Object));
 
-      buf_collect_lines(buf, line_count, 1, true, &linedata, NULL, NULL);
+      buf_collect_lines(buf, line_count, 1, 0, true, &linedata, NULL, NULL);
     }
 
     args.items[4] = ARRAY_OBJ(linedata);
@@ -242,7 +242,7 @@ void buf_updates_send_changes(buf_T *buf, linenr_T firstline, int64_t num_added,
       STATIC_ASSERT(SIZE_MAX >= MAXLNUM, "size_t smaller than MAXLNUM");
       linedata.size = (size_t)num_added;
       linedata.items = xcalloc((size_t)num_added, sizeof(Object));
-      buf_collect_lines(buf, (size_t)num_added, firstline, true, &linedata,
+      buf_collect_lines(buf, (size_t)num_added, firstline, 0, true, &linedata,
                         NULL, NULL);
     }
     args.items[4] = ARRAY_OBJ(linedata);

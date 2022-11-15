@@ -586,7 +586,8 @@ describe('api/buf', function()
     before_each(function()
       insert([[
       hello foo!
-      text]])
+      text
+      more]])
     end)
 
     it('works', function()
@@ -594,16 +595,17 @@ describe('api/buf', function()
       eq({'hello foo!'}, get_text(0, 0, 0, 42, {}))
       eq({'foo!'}, get_text(0, 6, 0, 10, {}))
       eq({'foo!', 'tex'}, get_text(0, 6, 1, 3, {}))
-      eq({'foo!', 'tex'}, get_text(-2, 6, -1, 3, {}))
+      eq({'foo!', 'tex'}, get_text(-3, 6, -2, 3, {}))
       eq({''}, get_text(0, 18, 0, 20, {}))
-      eq({'ext'}, get_text(-1, 1, -1, 4, {}))
+      eq({'ext'}, get_text(-2, 1, -2, 4, {}))
+      eq({'hello foo!', 'text', 'm'}, get_text(0, 0, 2, 1, {}))
     end)
 
     it('errors on out-of-range', function()
-      eq('Index out of bounds', pcall_err(get_text, 2, 0, 3, 0, {}))
-      eq('Index out of bounds', pcall_err(get_text, -3, 0, 0, 0, {}))
-      eq('Index out of bounds', pcall_err(get_text, 0, 0, 2, 0, {}))
-      eq('Index out of bounds', pcall_err(get_text, 0, 0, -3, 0, {}))
+      eq('Index out of bounds', pcall_err(get_text, 2, 0, 4, 0, {}))
+      eq('Index out of bounds', pcall_err(get_text, -4, 0, 0, 0, {}))
+      eq('Index out of bounds', pcall_err(get_text, 0, 0, 3, 0, {}))
+      eq('Index out of bounds', pcall_err(get_text, 0, 0, -4, 0, {}))
       -- no ml_get errors should happen #19017
       eq('', meths.get_vvar('errmsg'))
     end)
