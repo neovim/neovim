@@ -266,7 +266,7 @@ jobs:
           Invoke-WebRequest https://github.com/neovim/neovim/releases/download/nightly/nvim-win64.msi -OutFile setup.msi
           Install-Module -Name 'Carbon.Windows.Installer' -Force
           $VERSION = (Get-CMsi (Resolve-Path .\setup.msi).Path).ProductVersion
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          "version=$VERSION" >> $env:GITHUB_OUTPUT
       - if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && github.event.inputs.tag_name == 'nightly')
         name: Publish nightly
         uses: vedantmgoyal2009/winget-releaser@v1
