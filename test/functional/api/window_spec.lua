@@ -229,6 +229,46 @@ describe('API/win', function()
                                                                     |
       ]])
     end)
+
+    it('updates cursorcolumn in non-current window', function()
+      local screen = Screen.new(60, 8)
+      screen:set_default_attr_ids({
+        [1] = {bold = true, foreground = Screen.colors.Blue},  -- NonText
+        [2] = {background = Screen.colors.Grey90},  -- CursorColumn
+        [3] = {bold = true, reverse = true},  -- StatusLine
+        [4] = {reverse = true},  -- StatusLineNC
+      })
+      screen:attach()
+      command('set cursorcolumn')
+      insert([[
+        aaa
+        bbb
+        ccc
+        ddd]])
+      local oldwin = curwin()
+      command('vsplit')
+      screen:expect([[
+        aa{2:a}                           │aa{2:a}                          |
+        bb{2:b}                           │bb{2:b}                          |
+        cc{2:c}                           │cc{2:c}                          |
+        dd^d                           │ddd                          |
+        {1:~                             }│{1:~                            }|
+        {1:~                             }│{1:~                            }|
+        {3:[No Name] [+]                  }{4:[No Name] [+]                }|
+                                                                    |
+      ]])
+      window('set_cursor', oldwin, {2, 0})
+      screen:expect([[
+        aa{2:a}                           │{2:a}aa                          |
+        bb{2:b}                           │bbb                          |
+        cc{2:c}                           │{2:c}cc                          |
+        dd^d                           │{2:d}dd                          |
+        {1:~                             }│{1:~                            }|
+        {1:~                             }│{1:~                            }|
+        {3:[No Name] [+]                  }{4:[No Name] [+]                }|
+                                                                    |
+      ]])
+    end)
   end)
 
   describe('{get,set}_height', function()

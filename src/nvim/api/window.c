@@ -118,8 +118,13 @@ void nvim_win_set_cursor(Window window, ArrayOf(Integer, 2) pos, Error *err)
   // Make sure we stick in this column.
   win->w_set_curswant = true;
 
-  // make sure cursor is in visible range even if win != curwin
-  update_topline_win(win);
+  // make sure cursor is in visible range and
+  // cursorcolumn and cursorline are updated even if win != curwin
+  switchwin_T switchwin;
+  switch_win(&switchwin, win, NULL, true);
+  update_topline(curwin);
+  validate_cursor();
+  restore_win(&switchwin, true);
 
   redraw_later(win, UPD_VALID);
   win->w_redr_status = true;

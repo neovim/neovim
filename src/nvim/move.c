@@ -341,15 +341,6 @@ void update_topline(win_T *wp)
   *so_ptr = save_so;
 }
 
-// Update win->w_topline to move the cursor onto the screen.
-void update_topline_win(win_T *win)
-{
-  switchwin_T switchwin;
-  switch_win(&switchwin, win, NULL, true);
-  update_topline(curwin);
-  restore_win(&switchwin, true);
-}
-
 // Return the scrolljump value to use for the current window.
 // When 'scrolljump' is positive use it as-is.
 // When 'scrolljump' is negative use it as a percentage of the window height.
