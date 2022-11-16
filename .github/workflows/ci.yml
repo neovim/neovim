@@ -52,8 +52,9 @@ jobs:
           # Ensure that the "win32" feature is set.
           for (($i = 0); $i -lt 1000; $i++)
           {    
-           "`$i:$i"
+           "`$i:$i - before"
            & build\bin\nvim -u NONE --headless -c 'exe !has(\"win32\").\"cq\"'
+           "`$i:$i - after"
           }
 
           python -m pip install pynvim
