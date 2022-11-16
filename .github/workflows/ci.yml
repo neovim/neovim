@@ -47,10 +47,14 @@ jobs:
 
       - name: Install test deps
         run: |
-          build\bin\nvim.exe "--version"
+          & build\bin\nvim.exe "--version"
 
           # Ensure that the "win32" feature is set.
-          build\bin\nvim -u NONE --headless -c 'exe !has(\"win32\").\"cq\"'
+          for (($i = 0); $i -lt 1000; $i++)
+          {    
+           "`$i:$i"
+           & build\bin\nvim -u NONE --headless -c 'exe !has(\"win32\").\"cq\"'
+          }
 
           python -m pip install pynvim
           # Sanity check
