@@ -17,6 +17,7 @@ jobs:
           days-before-stale: -1
           stale-issue-label: needs:response
           stale-pr-label: needs:response
+          remove-stale-when-updated: false
           close-issue-message: "This issue has been closed since a request for
             information has not been answered for 30 days. It can be reopened
             when the requested information is provided."
