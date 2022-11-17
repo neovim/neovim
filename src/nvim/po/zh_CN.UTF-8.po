@@ -17,7 +17,7 @@ msgstr ""
 "Project-Id-Version: Vim(Simplified Chinese)\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2022-11-17 08:00+0800\n"
-"PO-Revision-Date: 2022-11-17 21:05+0800\n"
+"PO-Revision-Date: 2022-11-17 22:29+0800\n"
 "Last-Translator: Sizhe Zhao <prc.zhao@outlook.com>\n"
 "Language-Team: Simplified Chinese <i18n-translation@lists.linux.net.cn>\n"
 "Language: zh_CN\n"
@@ -5169,11 +5169,11 @@ msgstr "E663: 已在改变列表的末尾处"
 
 #: ../normal.c:6081
 msgid "Type  :qa!  and press <Enter> to abandon all changes and exit Nvim"
-msgstr "输入  :qa!  并按 <Enter> 来放弃所有更改并退出 Vim"
+msgstr "输入  :qa!  并按 <Enter> 来放弃所有更改并退出 Nvim"
 
 #: ../normal.c:6084
 msgid "Type  :qa  and press <Enter> to exit Nvim"
-msgstr "输入  :qa  并按 <Enter> 退出 Vim"
+msgstr "输入  :qa  并按 <Enter> 退出 Nvim"
 
 #: ../ops.c:263
 #, fuzzy, c-format
