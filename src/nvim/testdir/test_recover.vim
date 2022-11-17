@@ -395,4 +395,48 @@ func Test_recover_symbolic_link()
   call delete('.Xfile1.swp')
 endfunc
 
+" Test for recovering a file when an autocmd moves the cursor to an invalid
+" line. This used to result in an internal error (E315) which is fixed
+" by 8.2.2966.
+func Test_recover_invalid_cursor_pos()
+  call writefile([], 'Xfile1')
+  edit Xfile1
+  preserve
+  let b = readblob('.Xfile1.swp')
+  bw!
+  augroup Test
+    au!
+    au BufReadPost Xfile1 normal! 3G
+  augroup END
+  call writefile(range(1, 3), 'Xfile1')
+  call writefile(b, '.Xfile1.swp')
+  try
+    recover Xfile1
+  catch /E308:/
+    " this test is for the :E315 internal error.
+    " ignore the 'E308: Original file may have been changed' error
+  endtry
+  redraw!
+  augroup Test
+    au!
+  augroup END
+  augroup! Test
+  call delete('Xfile1')
+  call delete('.Xfile1.swp')
+endfunc
+
+" Test for recovering a buffer without a name
+func Test_noname_buffer()
+  new
+  call setline(1, ['one', 'two'])
+  preserve
+  let sn = swapname('')
+  let b = readblob(sn)
+  bw!
+  call writefile(b, sn)
+  exe "recover " .. sn
+  call assert_equal(['one', 'two'], getline(1, '$'))
+  call delete(sn)
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab
