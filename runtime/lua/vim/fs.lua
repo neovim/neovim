@@ -55,9 +55,10 @@ end
 ---
 ---@param path (string) An absolute or relative path to the directory to iterate
 ---            over. The path is first normalized |vim.fs.normalize()|.
----@return Iterator over files and directories in {path}. Each iteration yields
----        two values: name and type. Each "name" is the basename of the file or
----        directory relative to {path}. Type is one of "file" or "directory".
+---@return (function) Iterator over files and directories in {path}. Each
+---        iteration yields two values: name and type. Each "name" is the
+---        basename of the file or directory relative to {path}. Type is one of
+---        "file" or "directory".
 function M.dir(path)
   return function(fs)
     return vim.loop.fs_scandir_next(fs)
@@ -206,10 +207,13 @@ function M.find(names, opts)
   return matches
 end
 
---- Normalize a path to a standard format. A tilde (~) character at the
---- beginning of the path is expanded to the user's home directory and any
---- backslash (\\) characters are converted to forward slashes (/). Environment
---- variables are also expanded.
+--- Normalize a path to a standard format.
+---
+--- A tilde (~) character at the beginning of the path is expanded to the user's
+--- home directory and any backslash (\\) characters are converted to forward
+--- slashes (/). Environment variables are expanded. If the given file or
+--- directory exists, the path is also converted to an absolute path and any
+--- symlinks are resolved.
 ---
 --- Example:
 --- <pre>
@@ -227,7 +231,20 @@ end
 ---@return (string) Normalized path
 function M.normalize(path)
   vim.validate({ path = { path, 's' } })
-  return (path:gsub('^~/', vim.env.HOME .. '/'):gsub('%$([%w_]+)', vim.env):gsub('\\', '/'))
+  local p = (path:gsub('^~/', vim.env.HOME .. '/'):gsub('%$([%w_]+)', vim.env):gsub('\\', '/'))
+
+  -- Try to also convert the path to an absolute path with symlinks resolved, but if the path does
+  -- not yet exist simply return it as-is.
+  return M.realpath(p) or p
+end
+
+--- Convert a path to an absolute path, resolving symlinks.
+---
+---@param path (string) Path to convert to an absolute path
+---@return (string|nil) Absolute path, or nil if the file or directory does not
+---        exist.
+function M.realpath(path)
+  return vim.loop.fs_realpath(path)
 end
 
 return M

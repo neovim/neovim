@@ -2258,9 +2258,10 @@ dir({path})                                                     *vim.fs.dir()*
                 |vim.fs.normalize()|.
 
     Return: ~
-        Iterator over files and directories in {path}. Each iteration yields
-        two values: name and type. Each "name" is the basename of the file or
-        directory relative to {path}. Type is one of "file" or "directory".
+        (function) Iterator over files and directories in {path}. Each
+        iteration yields two values: name and type. Each "name" is the
+        basename of the file or directory relative to {path}. Type is one of
+        "file" or "directory".
 
 dirname({file})                                             *vim.fs.dirname()*
     Return the parent directory of the given file or directory
@@ -2307,10 +2308,13 @@ find({names}, {opts})                                          *vim.fs.find()*
         (table) The paths of all matching files or directories
 
 normalize({path})                                         *vim.fs.normalize()*
-    Normalize a path to a standard format. A tilde (~) character at the
-    beginning of the path is expanded to the user's home directory and any
-    backslash (\) characters are converted to forward slashes (/). Environment
-    variables are also expanded.
+    Normalize a path to a standard format.
+
+    A tilde (~) character at the beginning of the path is expanded to the
+    user's home directory and any backslash (\) characters are converted to
+    forward slashes (/). Environment variables are expanded. If the given file
+    or directory exists, the path is also converted to an absolute path and
+    any symlinks are resolved.
 
     Example: >
 
@@ -2353,5 +2357,15 @@ parents({start})                                            *vim.fs.parents()*
 
     Return: ~
         (function) Iterator
+
+realpath({path})                                           *vim.fs.realpath()*
+    Convert a path to an absolute path, resolving symlinks.
+
+    Parameters: ~
+      • {path}  (string) Path to convert to an absolute path
+
+    Return: ~
+        (string|nil) Absolute path, or nil if the file or directory does not
+        exist.
 
  vim:tw=78:ts=8:sw=4:sts=4:et:ft=help:norl:
