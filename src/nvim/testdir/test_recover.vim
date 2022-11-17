@@ -175,6 +175,12 @@ func Test_recover_empty_swap_file()
   call assert_match('Unable to read block 0 from .Xfile1.swp', msg)
   call assert_equal('Xfile1', @%)
   bw!
+
+  " make sure there are no old swap files laying around
+  for f in glob('.sw?', 0, 1)
+    call delete(f)
+  endfor
+
   " :recover from an empty buffer
   call assert_fails('recover', 'E305:')
   call delete('.Xfile1.swp')
