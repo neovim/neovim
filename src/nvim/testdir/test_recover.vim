@@ -126,7 +126,6 @@ func Test_nocatch_process_still_running()
   call test_override("uptime", 0)
   sleep 1
 
-  call rename('Xswap', swname)
   call feedkeys('e', 'tL')
   redir => editOutput
   edit Xswaptest
@@ -332,6 +331,7 @@ endfunc
 
 " Test for :recover using an encrypted swap file
 func Test_recover_encrypted_swap_file()
+  CheckFeature cryptv
   CheckUnix
 
   " Recover an encrypted file from the swap file without the original file
