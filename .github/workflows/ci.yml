@@ -340,6 +340,8 @@ jobs:
 
       - name: Install test deps
         run: |
+          $PSNativeCommandArgumentPassing = 'Legacy'
+
           & build\bin\nvim.exe "--version"
 
           # Ensure that the "win32" feature is set.
