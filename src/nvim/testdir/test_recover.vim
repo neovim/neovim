@@ -207,10 +207,16 @@ func Test_recover_corrupted_swap_file()
   " Not all fields are written in a system-independent manner.  Detect whether
   " the test is running on a little or big-endian system, so the correct
   " corruption values can be set.
-  let little_endian = b[1008:1015] == 0z33323130.00000000
+  let little_endian = b[1008:1011] == 0z33323130
+  " The swap file header fields can be either 32-bit or 64-bit.
+  let system_64bit = b[1012:1015] == 0z00000000
 
   " clear the B0_MAGIC_LONG field
-  let b[1008:1015] = 0z0000000000000000
+  if system_64bit
+    let b[1008:1015] = 0z00000000.00000000
+  else
+    let b[1008:1011] = 0z00000000
+  endif
   call writefile(b, sn)
   let msg = execute('recover Xfile1')
   call assert_match('the file has been damaged', msg)
@@ -248,7 +254,11 @@ func Test_recover_corrupted_swap_file()
 
   " set the block number in a pointer entry to a negative number
   let b = copy(save_b)
-  let b[4104:4111] = little_endian ? 0z00000000.00000080 : 0z80000000.00000000
+  if system_64bit
+    let b[4104:4111] = little_endian ? 0z00000000.00000080 : 0z80000000.00000000
+  else
+    let b[4104:4107] = little_endian ? 0z00000080 : 0z80000000
+  endif
   call writefile(b, sn)
   call assert_fails('recover Xfile1', 'E312:')
   call assert_equal('Xfile1', @%)
@@ -266,7 +276,11 @@ func Test_recover_corrupted_swap_file()
 
   " set the number of lines in the data block to zero
   let b = copy(save_b)
-  let b[8208:8215] = 0z00000000.00000000
+  if system_64bit
+    let b[8208:8215] = 0z00000000.00000000
+  else
+    let b[8208:8211] = 0z00000000
+  endif
   call writefile(b, sn)
   call assert_fails('recover Xfile1', 'E312:')
   call assert_equal('Xfile1', @%)
@@ -276,7 +290,11 @@ func Test_recover_corrupted_swap_file()
 
   " use an invalid text start for the lines in a data block
   let b = copy(save_b)
-  let b[8216:8219] = 0z00000000
+  if system_64bit
+    let b[8216:8219] = 0z00000000
+  else
+    let b[8212:8215] = 0z00000000
+  endif
   call writefile(b, sn)
   call assert_fails('recover Xfile1', 'E312:')
   call assert_equal('Xfile1', @%)
