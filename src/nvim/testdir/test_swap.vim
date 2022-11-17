@@ -203,8 +203,8 @@ func Test_swapfile_delete()
   " This test won't work as root because root can successfully run kill(1, 0)
   if !IsRoot()
     " Write the swapfile with a modified PID, now it will be automatically
-    " deleted. Process one should never be Vim.
-    let swapfile_bytes[24:27] = 0z01000000
+    " deleted. Process 0x3fffffff most likely does not exist.
+    let swapfile_bytes[24:27] = 0zffffff3f
     call writefile(swapfile_bytes, swapfile_name)
     let s:swapname = ''
     split XswapfileText
