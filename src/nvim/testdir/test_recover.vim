@@ -213,9 +213,11 @@ func Test_recover_corrupted_swap_file()
   " Not all fields are written in a system-independent manner.  Detect whether
   " the test is running on a little or big-endian system, so the correct
   " corruption values can be set.
-  let little_endian = b[1008:1011] == 0z33323130
-  " The swap file header fields can be either 32-bit or 64-bit.
-  let system_64bit = b[1012:1015] == 0z00000000
+  " The B0_MAGIC_LONG field may be 32-bit or 64-bit, depending on the system,
+  " even though the value stored is only 32-bits.  Therefore, need to check
+  " both the high and low 32-bits to compute these values.
+  let little_endian = (b[1008:1011] == 0z33323130) || (b[1012:1015] == 0z33323130)
+  let system_64bit = little_endian ? (b[1012:1015] == 0z00000000) : (b[1008:1011] == 0z00000000)
 
   " clear the B0_MAGIC_LONG field
   if system_64bit
