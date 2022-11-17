@@ -82,10 +82,18 @@ func Test_swap_file()
 endfunc
 
 func Test_nocatch_process_still_running()
+  let g:skipped_reason = 'test_override() is N/A'
+  return
   " sysinfo.uptime probably only works on Linux
-  CheckLinux
+  if !has('linux')
+    let g:skipped_reason = 'only works on Linux'
+    return
+  endif
   " the GUI dialog can't be handled
-  CheckNotGui
+  if has('gui_running')
+    let g:skipped_reason = 'only works in the terminal'
+    return
+  endif
 
   " don't intercept existing swap file here
   au! SwapExists
