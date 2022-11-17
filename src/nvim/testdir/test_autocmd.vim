@@ -31,19 +31,18 @@ func Test_CursorHold_autocmd()
   END
   call writefile(before, 'Xinit')
   let buf = RunVimInTerminal('-S Xinit Xfile', {})
-  call term_wait(buf)
+  call term_sendkeys(buf, "G")
+  call term_wait(buf, 20)
   call term_sendkeys(buf, "gg")
   call term_wait(buf)
-  sleep 50m
+  call WaitForAssert({-> assert_equal(['1'], readfile('Xoutput')[-1:-1])})
   call term_sendkeys(buf, "j")
   call term_wait(buf)
-  sleep 50m
+  call WaitForAssert({-> assert_equal(['1', '2'], readfile('Xoutput')[-2:-1])})
   call term_sendkeys(buf, "j")
   call term_wait(buf)
-  sleep 50m
+  call WaitForAssert({-> assert_equal(['1', '2', '3'], readfile('Xoutput')[-3:-1])})
   call StopVimInTerminal(buf)
-
-  call assert_equal(['1', '2', '3'], readfile('Xoutput')[-3:-1])
 
   call delete('Xinit')
   call delete('Xoutput')
