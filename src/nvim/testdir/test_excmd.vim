@@ -78,6 +78,14 @@ func Test_file_cmd()
   call assert_fails('3file', 'E474:')
   call assert_fails('0,0file', 'E474:')
   call assert_fails('0file abc', 'E474:')
+  if !has('win32')
+    " Change the name of the buffer to the same name
+    new Xfile1
+    file Xfile1
+    call assert_equal('Xfile1', @%)
+    call assert_equal('Xfile1', @#)
+    bw!
+  endif
 endfunc
 
 " Test for the :drop command
