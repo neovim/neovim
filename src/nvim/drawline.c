@@ -332,46 +332,37 @@ static void get_sign_display_info(bool nrcol, win_T *wp, linenr_T lnum, SignText
   }
 
   if (row == startrow + filler_lines && filler_todo <= 0) {
-    SignTextAttrs *sattr = sign_get_attr(sign_idx, sattrs, wp->w_scwidth);
-    if (sattr != NULL) {
-      *pp_extra = (char_u *)sattr->text;
-      if (*pp_extra != NULL) {
-        *c_extrap = NUL;
-        *c_finalp = NUL;
+    get_sign_text(pp_extra, wp, lnum, sign_idx, char_attrp, cul_attr, sattrs);
+    if (*pp_extra != NULL) {
+      *c_extrap = NUL;
+      *c_finalp = NUL;
 
-        if (nrcol) {
-          int n, width = number_width(wp) - 2;
-          for (n = 0; n < width; n++) {
-            extra[n] = ' ';
-          }
-          extra[n] = NUL;
-          STRCAT(extra, *pp_extra);
-          STRCAT(extra, " ");
-          *pp_extra = extra;
-          *n_extrap = (int)STRLEN(*pp_extra);
-        } else {
-          size_t symbol_blen = STRLEN(*pp_extra);
-
-          // TODO(oni-link): Is sign text already extended to
-          // full cell width?
-          assert((size_t)win_signcol_width(wp) >= mb_string2cells((char *)(*pp_extra)));
-          // symbol(s) bytes + (filling spaces) (one byte each)
-          *n_extrap = (int)symbol_blen + win_signcol_width(wp) -
-                      (int)mb_string2cells((char *)(*pp_extra));
-
-          assert(extra_size > symbol_blen);
-          memset(extra, ' ', extra_size);
-          memcpy(extra, *pp_extra, symbol_blen);
-
-          *pp_extra = extra;
-          (*pp_extra)[*n_extrap] = NUL;
+      if (nrcol) {
+        int n, width = number_width(wp) - 2;
+        for (n = 0; n < width; n++) {
+          extra[n] = ' ';
         }
-      }
-
-      if (use_cursor_line_sign(wp, lnum) && cul_attr > 0) {
-        *char_attrp = cul_attr;
+        extra[n] = NUL;
+        STRCAT(extra, *pp_extra);
+        STRCAT(extra, " ");
+        *pp_extra = extra;
+        *n_extrap = (int)STRLEN(*pp_extra);
       } else {
-        *char_attrp = sattr->hl_attr_id;
+        size_t symbol_blen = STRLEN(*pp_extra);
+
+        // TODO(oni-link): Is sign text already extended to
+        // full cell width?
+        assert((size_t)win_signcol_width(wp) >= mb_string2cells((char *)(*pp_extra)));
+        // symbol(s) bytes + (filling spaces) (one byte each)
+        *n_extrap = (int)symbol_blen + win_signcol_width(wp) -
+                    (int)mb_string2cells((char *)(*pp_extra));
+
+        assert(extra_size > symbol_blen);
+        memset(extra, ' ', extra_size);
+        memcpy(extra, *pp_extra, symbol_blen);
+
+        *pp_extra = extra;
+        (*pp_extra)[*n_extrap] = NUL;
       }
     }
   }
@@ -395,6 +386,26 @@ static int get_sign_attrs(buf_T *buf, linenr_T lnum, SignTextAttrs *sattrs, int 
   return num_signs;
 }
 
+static void get_sign_text(char_u **bufp, win_T *wp, linenr_T lnum, int sign_idx, int *attrp,
+                          int cul_attr, SignTextAttrs sattrs[])
+{
+  SignTextAttrs *sattr = sign_get_attr(sign_idx, sattrs, wp->w_scwidth);
+
+  if (sattr != NULL) {
+    *bufp = (char_u *)sattr->text;
+    *attrp = (use_cursor_line_sign(wp, lnum) && cul_attr > 0) ? cul_attr : sattr->hl_attr_id;
+  }
+}
+
+static int get_fold_text(char_u *buf, win_T *wp, foldinfo_T foldinfo, linenr_T lnum, int *attrp)
+{
+  *attrp = win_hl_attr(wp, use_cursor_line_sign(wp, lnum) ? HLF_CLF : HLF_FC);
+  int n = (int)fill_foldcolumn(buf, wp, foldinfo, lnum);
+  buf[n] = NUL;
+
+  return n;
+}
+
 /// Return true if CursorLineNr highlight is to be used for the number column.
 ///
 /// - 'cursorline' must be set
@@ -414,25 +425,16 @@ static bool use_cursor_line_nr(win_T *wp, linenr_T lnum, int row, int startrow, 
                  && (wp->w_p_culopt_flags & CULOPT_LINE)));
 }
 
-static inline void get_line_number_str(win_T *wp, linenr_T lnum, char_u *buf, size_t buf_len)
+static inline void get_line_number_text(win_T *wp, linenr_T lnum, char_u *buf, size_t buf_len,
+                                        int row, int startrow, int filler_lines, int num_attr,
+                                        int *attrp)
 {
-  long num;
-  char *fmt = "%*ld ";
-
-  if (wp->w_p_nu && !wp->w_p_rnu) {
-    // 'number' + 'norelativenumber'
-    num = (long)lnum;
-  } else {
-    // 'relativenumber', don't use negative numbers
-    num = labs((long)get_cursor_rel_lnum(wp, lnum));
-    if (num == 0 && wp->w_p_nu && wp->w_p_rnu) {
-      // 'number' + 'relativenumber'
-      num = lnum;
-      fmt = "%-*ld ";
-    }
-  }
+  long relnum = wp->w_p_rnu ? labs((long)get_cursor_rel_lnum(wp, lnum)) : 0;
+  long num = (!wp->w_p_rnu || (wp->w_p_nu && !relnum)) ? lnum : relnum;
+  char *fmt = (wp->w_p_rnu && wp->w_p_nu && !relnum) ? "%-*ld " : "%*ld ";
 
   snprintf((char *)buf, buf_len, fmt, number_width(wp), num);
+  *attrp = num_attr ? num_attr : get_line_number_attr(wp, lnum, row, startrow, filler_lines);
 }
 
 static int get_line_number_attr(win_T *wp, linenr_T lnum, int row, int startrow, int filler_lines)
@@ -1133,16 +1135,10 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
           // already be in use.
           xfree(p_extra_free);
           p_extra_free = xmalloc(MAX_MCO * (size_t)fdc + 1);
-          n_extra = (int)fill_foldcolumn(p_extra_free, wp, foldinfo, lnum);
-          p_extra_free[n_extra] = NUL;
+          n_extra = get_fold_text(p_extra_free, wp, foldinfo, lnum, &char_attr);
           p_extra = p_extra_free;
           c_extra = NUL;
           c_final = NUL;
-          if (use_cursor_line_sign(wp, lnum)) {
-            char_attr = win_hl_attr(wp, HLF_CLF);
-          } else {
-            char_attr = win_hl_attr(wp, HLF_FC);
-          }
         }
       }
 
@@ -1184,7 +1180,8 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
           } else {
             // Draw the line number (empty space after wrapping).
             if (row == startrow + filler_lines) {
-              get_line_number_str(wp, lnum, (char_u *)extra, sizeof(extra));
+              get_line_number_text(wp, lnum, (char_u *)extra, sizeof(extra), row,
+                                   startrow, filler_lines, sign_num_attr, &char_attr);
               if (wp->w_skipcol > 0) {
                 for (p_extra = extra; *p_extra == ' '; p_extra++) {
                   *p_extra = '-';
