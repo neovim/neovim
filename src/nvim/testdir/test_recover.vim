@@ -151,6 +151,16 @@ func Test_recover_multiple_swap_files()
   %bw!
   call feedkeys(":recover Xfile1\<CR>3\<CR>q", 'xt')
   call assert_equal(['a', 'b', 'c'], getline(1, '$'))
+  " try using out-of-range number to select a swap file
+  bw!
+  call feedkeys(":recover Xfile1\<CR>4\<CR>q", 'xt')
+  call assert_equal('Xfile1', @%)
+  call assert_equal([''], getline(1, '$'))
+  bw!
+  call feedkeys(":recover Xfile1\<CR>0\<CR>q", 'xt')
+  call assert_equal('Xfile1', @%)
+  call assert_equal([''], getline(1, '$'))
+  bw!
 
   call delete('.Xfile1.swm')
   call delete('.Xfile1.swn')
@@ -171,6 +181,8 @@ func Test_recover_empty_swap_file()
 endfunc
 
 " Test for :recover using a corrupted swap file
+" Refer to the comments in the memline.c file for the swap file headers
+" definition.
 func Test_recover_corrupted_swap_file()
   CheckUnix
 
@@ -202,6 +214,18 @@ func Test_recover_corrupted_swap_file()
     call writefile(b, sn)
     let msg = execute('recover Xfile1')
     call assert_match('the file has been damaged', msg)
+    call assert_equal('Xfile1', @%)
+    call assert_equal([''], getline(1, '$'))
+    bw!
+
+    " reduce the page size
+    let b = copy(save_b)
+    let b[12:15] = 0z00010000
+    call writefile(b, sn)
+    let msg = execute('recover Xfile1')
+    call assert_match('page size is smaller than minimum value', msg)
+    call assert_equal('Xfile1', @%)
+    call assert_equal([''], getline(1, '$'))
     bw!
 
     " clear the pointer ID
@@ -209,6 +233,26 @@ func Test_recover_corrupted_swap_file()
     let b[4096:4097] = 0z0000
     call writefile(b, sn)
     call assert_fails('recover Xfile1', 'E310:')
+    call assert_equal('Xfile1', @%)
+    call assert_equal([''], getline(1, '$'))
+    bw!
+
+    " set the number of pointers in a pointer block to zero
+    let b = copy(save_b)
+    let b[4098:4099] = 0z0000
+    call writefile(b, sn)
+    call assert_fails('recover Xfile1', 'E312:')
+    call assert_equal('Xfile1', @%)
+    call assert_equal(['???EMPTY BLOCK'], getline(1, '$'))
+    bw!
+
+    " set the block number in a pointer entry to a negative number
+    let b = copy(save_b)
+    let b[4104:4111] = 0z00000000.00000080
+    call writefile(b, sn)
+    call assert_fails('recover Xfile1', 'E312:')
+    call assert_equal('Xfile1', @%)
+    call assert_equal(['???LINES MISSING'], getline(1, '$'))
     bw!
 
     " clear the data block ID
@@ -216,12 +260,45 @@ func Test_recover_corrupted_swap_file()
     let b[8192:8193] = 0z0000
     call writefile(b, sn)
     call assert_fails('recover Xfile1', 'E312:')
+    call assert_equal('Xfile1', @%)
+    call assert_equal(['???BLOCK MISSING'], getline(1, '$'))
+    bw!
+
+    " set the number of lines in the data block to zero
+    let b = copy(save_b)
+    let b[8208:8211] = 0z00000000
+    call writefile(b, sn)
+    call assert_fails('recover Xfile1', 'E312:')
+    call assert_equal('Xfile1', @%)
+    call assert_equal(['??? from here until ???END lines may have been inserted/deleted',
+          \ '???END'], getline(1, '$'))
+    bw!
+
+    " use an invalid text start for the lines in a data block
+    let b = copy(save_b)
+    let b[8216:8219] = 0z00000000
+    call writefile(b, sn)
+    call assert_fails('recover Xfile1', 'E312:')
+    call assert_equal('Xfile1', @%)
+    call assert_equal(['???'], getline(1, '$'))
+    bw!
+
+    " use an incorrect text end (db_txt_end) for the data block
+    let b = copy(save_b)
+    let b[8204:8207] = 0z80000000
+    call writefile(b, sn)
+    call assert_fails('recover Xfile1', 'E312:')
+    call assert_equal('Xfile1', @%)
+    call assert_equal(['??? from here until ???END lines may be messed up', '',
+          \ '???END'], getline(1, '$'))
     bw!
 
     " remove the data block
     let b = copy(save_b)
     call writefile(b[:8191], sn)
     call assert_fails('recover Xfile1', 'E312:')
+    call assert_equal('Xfile1', @%)
+    call assert_equal(['???MANY LINES MISSING'], getline(1, '$'))
   endif
 
   bw!
@@ -293,6 +370,29 @@ func Test_recover_unmodified_file()
   bw!
   call delete('Xfile1')
   call delete('.Xfile1.swz')
+endfunc
+
+" Test for recovering a file when editing a symbolically linked file
+func Test_recover_symbolic_link()
+  CheckUnix
+  call writefile(['aaa', 'bbb', 'ccc'], 'Xfile1')
+  silent !ln -s Xfile1 Xfile2
+  edit Xfile2
+  call assert_equal('.Xfile1.swp', fnamemodify(swapname(''), ':t'))
+  preserve
+  let b = readblob('.Xfile1.swp')
+  %bw!
+  call writefile([], 'Xfile1')
+  call writefile(b, '.Xfile1.swp')
+  silent! recover Xfile2
+  call assert_equal(['aaa', 'bbb', 'ccc'], getline(1, '$'))
+  call assert_true(&modified)
+  update
+  %bw!
+  call assert_equal(['aaa', 'bbb', 'ccc'], readfile('Xfile1'))
+  call delete('Xfile1')
+  call delete('Xfile2')
+  call delete('.Xfile1.swp')
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab
