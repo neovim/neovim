@@ -82,8 +82,9 @@ func Test_swap_file()
 endfunc
 
 func Test_nocatch_process_still_running()
-  " assume Unix means sysinfo.uptime can be used
-  CheckUnix
+  " sysinfo.uptime probably only works on Linux
+  CheckLinux
+  " the GUI dialog can't be handled
   CheckNotGui
 
   " don't intercept existing swap file here
