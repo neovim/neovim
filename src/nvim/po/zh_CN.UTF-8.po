@@ -8,6 +8,7 @@
 # TRANSLATORS
 #   Edyfox <edyfox@gmail.com>
 #   Yuheng Xie <elephant@linux.net.cn>
+#   Sizhe Zhao <prc.zhao@outlook.com>
 #
 # Original translations.
 #
@@ -16,13 +17,13 @@ msgstr ""
 "Project-Id-Version: Vim(Simplified Chinese)\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2022-11-17 08:00+0800\n"
-"PO-Revision-Date: 2006-04-21 14:00+0800\n"
-"Last-Translator: Yuheng Xie <elephant@linux.net.cn>\n"
+"PO-Revision-Date: 2022-11-17 08:24+0800\n"
+"Last-Translator: Sizhe Zhao <prc.zhao@outlook.com>\n"
 "Language-Team: Simplified Chinese <i18n-translation@lists.linux.net.cn>\n"
-"Language: \n"
+"Language: zh_CN\n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=utf-8\n"
-"Content-Transfer-Encoding: 8-bit\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 
 #: ../../../runtime/optwin.vim:72
