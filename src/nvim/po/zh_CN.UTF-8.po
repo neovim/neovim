@@ -17,7 +17,7 @@ msgstr ""
 "Project-Id-Version: Vim(Simplified Chinese)\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2022-11-17 08:00+0800\n"
-"PO-Revision-Date: 2022-11-17 11:45+0800\n"
+"PO-Revision-Date: 2022-11-17 12:00+0800\n"
 "Last-Translator: Sizhe Zhao <prc.zhao@outlook.com>\n"
 "Language-Team: Simplified Chinese <i18n-translation@lists.linux.net.cn>\n"
 "Language: zh_CN\n"
@@ -391,9 +391,9 @@ msgstr "进入调试模式。输入 \"cont\" 继续运行。"
 
 # do not translate
 #: ../debugger.c:109
-#, fuzzy, c-format
+#, c-format
 msgid "Oldval = \"%s\""
-msgstr "dlerror = \"%s\""
+msgstr ""
 
 #: ../debugger.c:114
 #, c-format
@@ -2518,9 +2518,8 @@ msgstr ""
 # do not translate to avoid writing Chinese in files
 #. Create empty command-line buffer.
 #: ../ex_getln.c:4223
-#, fuzzy
 msgid "[Command Line]"
-msgstr "命令行"
+msgstr ""
 
 #: ../ex_getln.c:4331
 msgid "E199: Active window or buffer deleted"
@@ -4708,27 +4707,23 @@ msgstr "E309: 无法从 %s 读取块 1"
 
 # do not translate to avoid writing Chinese in files
 #: ../memline.c:962
-#, fuzzy
 msgid "???MANY LINES MISSING"
-msgstr "???缺少了太多行"
+msgstr ""
 
 # do not translate to avoid writing Chinese in files
 #: ../memline.c:974
-#, fuzzy
 msgid "???LINE COUNT WRONG"
-msgstr "???行数错误"
+msgstr ""
 
 # do not translate to avoid writing Chinese in files
 #: ../memline.c:980
-#, fuzzy
 msgid "???EMPTY BLOCK"
-msgstr "???空的块"
+msgstr ""
 
 # do not translate to avoid writing Chinese in files
 #: ../memline.c:1000
-#, fuzzy
 msgid "???LINES MISSING"
-msgstr "???缺少了一些行"
+msgstr ""
 
 #: ../memline.c:1023
 #, c-format
@@ -4737,27 +4732,23 @@ msgstr "E310: 块 1 ID 错误 (%s 不是交换文件？)"
 
 # do not translate to avoid writing Chinese in files
 #: ../memline.c:1028
-#, fuzzy
 msgid "???BLOCK MISSING"
-msgstr "???缺少块"
+msgstr ""
 
 # do not translate to avoid writing Chinese in files
 #: ../memline.c:1038
-#, fuzzy
 msgid "??? from here until ???END lines may be messed up"
-msgstr "??? 从这里到 ???END 的行可能已混乱"
+msgstr ""
 
 # do not translate to avoid writing Chinese in files
 #: ../memline.c:1052
-#, fuzzy
 msgid "??? from here until ???END lines may have been inserted/deleted"
-msgstr "??? 从这里到 ???END 的行可能已被插入/删除过"
+msgstr ""
 
 # do not translate to avoid writing Chinese in files
 #: ../memline.c:1071
-#, fuzzy
 msgid "???END"
-msgstr "???END"
+msgstr ""
 
 #: ../memline.c:1125
 msgid "E311: Recovery Interrupted"
@@ -5592,7 +5583,7 @@ msgstr "E537: 'commentstring' 必须为空或包含 %s"
 #: ../os/dl.c:53 ../os/dl.c:61
 #, c-format
 msgid "dlerror = \"%s\""
-msgstr "dlerror = \"%s\""
+msgstr ""
 
 #: ../os/fileio.c:434
 #, fuzzy, c-format
@@ -9096,9 +9087,8 @@ msgstr "更新交换文件前所需的毫秒数"
 
 # do not translate to avoid writing Chinese in files
 #: ../../../runtime/optwin.vim:1015
-#, fuzzy
 msgid "command line editing"
-msgstr "命令行"
+msgstr ""
 
 #: ../../../runtime/optwin.vim:1016
 msgid "how many command lines are remembered"
