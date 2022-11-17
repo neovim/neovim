@@ -17,7 +17,7 @@ msgstr ""
 "Project-Id-Version: Vim(Simplified Chinese)\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2022-11-17 08:00+0800\n"
-"PO-Revision-Date: 2022-11-17 12:00+0800\n"
+"PO-Revision-Date: 2022-11-17 14:00+0800\n"
 "Last-Translator: Sizhe Zhao <prc.zhao@outlook.com>\n"
 "Language-Team: Simplified Chinese <i18n-translation@lists.linux.net.cn>\n"
 "Language: zh_CN\n"
@@ -27,9 +27,8 @@ msgstr ""
 "Plural-Forms: nplurals=1; plural=0;\n"
 
 #: ../arglist.c:67
-#, fuzzy
 msgid "E1156: Cannot change the argument list recursively"
-msgstr "E659: 不能递归调用 Python"
+msgstr "E1156: 不能递归修改参数列表"
 
 #: ../arglist.c:628
 msgid "E163: There is only one file to edit"
@@ -222,14 +221,12 @@ msgid "E37: No write since last change (add ! to override)"
 msgstr "E37: 已修改但尚未保存 (可用 ! 强制执行)"
 
 #: ../buffer.c:1709
-#, fuzzy
 msgid "E948: Job still running"
-msgstr " (仍在运行)"
+msgstr "E948: 任务仍在运行"
 
 #: ../buffer.c:1711
-#, fuzzy
 msgid "E37: No write since last change"
-msgstr "[已修改但尚未保存]\n"
+msgstr "E37: 已修改但尚未保存"
 
 #. wrap around (may cause duplicates)
 #: ../buffer.c:1858
@@ -455,9 +452,8 @@ msgid "Not enough memory to use internal diff for buffer \"%s\""
 msgstr "为缓冲区 \"%s\" 使用内部比对（diff）时无足够的内存"
 
 #: ../diff.c:1082
-#, fuzzy
 msgid "E810: Cannot read or write temp files"
-msgstr "E557: 无法打开 termcap 文件"
+msgstr "E810: 无法读写临时文件"
 
 #: ../diff.c:1084
 msgid "E97: Cannot create diffs"
@@ -478,20 +474,19 @@ msgstr "E98: 无法读取 diff 的输出"
 
 #: ../diff.c:2847
 msgid "E99: Current buffer is not in diff mode"
-msgstr "E99: 当前缓冲区不在 diff 模式"
+msgstr "E99: 当前缓冲区不在差异模式"
 
 #: ../diff.c:2867
-#, fuzzy
 msgid "E793: No other buffer in diff mode is modifiable"
-msgstr "E100: 没有其它处于 diff 模式的缓冲区"
+msgstr "E793: 没有其它处于差异模式的缓冲区可修改"
 
 #: ../diff.c:2869
 msgid "E100: No other buffer in diff mode"
-msgstr "E100: 没有其它处于 diff 模式的缓冲区"
+msgstr "E100: 没有其它处于差异模式的缓冲区"
 
 #: ../diff.c:2880
 msgid "E101: More than two buffers in diff mode, don't know which one to use"
-msgstr "E101: 有两个以上的缓冲区处于 diff 模式，不能决定用哪一个"
+msgstr "E101: 有两个以上的缓冲区处于差异模式，不能决定用哪一个"
 
 #: ../diff.c:2909
 #, c-format
@@ -501,7 +496,7 @@ msgstr "E102: 找不到缓冲区 \"%s\""
 #: ../diff.c:2920
 #, c-format
 msgid "E103: Buffer \"%s\" is not in diff mode"
-msgstr "E103: 缓冲区 \"%s\" 不在 diff 模式"
+msgstr "E103: 缓冲区 \"%s\" 不处于差异模式"
 
 #: ../diff.c:2960
 msgid "E787: Buffer changed unexpectedly"
@@ -524,7 +519,7 @@ msgstr "E1216: digraph_setlist() 参数必须是包含两项的列表的列表"
 
 #: ../digraph.c:1664
 msgid "E104: Escape not allowed in digraph"
-msgstr "E104: 复合字符(digraph)中不能使用 Escape"
+msgstr "E104: 二合字符中不能使用 Escape"
 
 #: ../digraph.c:1737
 msgid "Custom"
@@ -661,14 +656,13 @@ msgid "E80: Error while writing: %s"
 msgstr "E80: 写入出错"
 
 #: ../eval.c:97
-#, fuzzy
 msgid "E1098: String, List or Blob required"
-msgstr "E521: = 后面需要数字"
+msgstr "E1098: 需要字符串、列表或 Blob"
 
 #: ../eval.c:98
-#, fuzzy, c-format
+#, c-format
 msgid "E1169: Expression too recursive: %s"
-msgstr "E169: 命令递归层数过多"
+msgstr "E1169: 表达式递归层数过多：%s"
 
 #: ../eval.c:100
 #, fuzzy, c-format
@@ -687,9 +681,8 @@ msgid "E121: Undefined variable: %.*s"
 msgstr "E121: 未定义的变量: %s"
 
 #: ../eval.c:1358
-#, fuzzy
 msgid "E689: Can only index a List, Dictionary or Blob"
-msgstr "E689: 只能索引 List 或 Dictionary"
+msgstr "E689: 只能索引列表、字典或 Blob"
 
 #: ../eval.c:1364
 msgid "E708: [:] must come last"
@@ -707,12 +700,11 @@ msgstr "E709: [:] 需要一个 List 值"
 
 #: ../eval.c:1665
 msgid "E972: Blob value does not have the right number of bytes"
-msgstr "E972: blob 值的字节数不对"
+msgstr "E972: Blob 值的字节数不对"
 
 #: ../eval.c:1728
-#, fuzzy
 msgid "E996: Cannot lock a range"
-msgstr "E784: 不能关闭最后一个 tab 页"
+msgstr "E996: 不能锁定范围"
 
 #: ../eval.c:1771
 msgid "E710: List value has more items than target"
@@ -723,9 +715,8 @@ msgid "E711: List value has not enough items"
 msgstr "E711: List 值没有足够多的项"
 
 #: ../eval.c:1784
-#, fuzzy
 msgid "E996: Cannot lock a list or dict"
-msgstr "E90: 无法释放最后一个缓冲区"
+msgstr "E996: 不能锁定列表或字典"
 
 #: ../eval.c:1866
 msgid "E690: Missing \"in\" after :for"
@@ -742,7 +733,7 @@ msgstr "E719: 不能对 Dictionary 使用 [:]"
 
 #: ../eval.c:3037
 msgid "E973: Blob literal should have an even number of hex characters"
-msgstr "E973: blob 字面量应该有偶数个十六进制字符"
+msgstr "E973: Blob 字面量应该有偶数个十六进制字符"
 
 #: ../eval.c:3137
 msgid "E110: Missing ')'"
@@ -755,42 +746,41 @@ msgstr "E526: <%s> 后面缺少数字"
 
 #: ../eval.c:3431
 msgid "E695: Cannot index a Funcref"
-msgstr "E695: 不能索引一个 Funcref"
+msgstr "E695: 不能索引 Funcref"
 
 #: ../eval.c:3442
-#, fuzzy
 msgid "E909: Cannot index a special variable"
-msgstr "E695: 不能索引一个 Funcref"
+msgstr "E909: 不能索引特殊变量"
 
 #: ../eval.c:3730
 #, c-format
 msgid "E112: Option name missing: %s"
-msgstr "E112: 缺少选项名称: %s"
+msgstr "E112: 缺少选项名称：%s"
 
 #: ../eval.c:3751
 #, c-format
 msgid "E113: Unknown option: %s"
-msgstr "E113: 未知的选项: %s"
+msgstr "E113: 未知的选项：%s"
 
 #: ../eval.c:3798
 #, c-format
 msgid "E114: Missing quote: %s"
-msgstr "E114: 缺少引号: %s"
+msgstr "E114: 缺少引号：%s"
 
 #: ../eval.c:3936
 #, c-format
 msgid "E115: Missing quote: %s"
-msgstr "E115: 缺少引号: %s"
+msgstr "E115: 缺少引号：%s"
 
 #: ../eval.c:4031
 #, c-format
 msgid "E696: Missing comma in List: %s"
-msgstr "E696: List 中缺少逗号: %s"
+msgstr "E696: 列表中缺少逗号：%s"
 
 #: ../eval.c:4038
 #, c-format
 msgid "E697: Missing end of List ']': %s"
-msgstr "E697: List 缺少结束符 ']': %s"
+msgstr "E697: 列表缺少结束符 ']'：%s"
 
 #: ../eval.c:4338
 msgid "Not enough memory to set references, garbage collection aborted!"
@@ -874,21 +864,18 @@ msgid "E5009: Invalid $VIMRUNTIME: %s"
 msgstr ""
 
 #: ../eval.c:8696
-#, fuzzy
 msgid "E5009: Invalid 'runtimepath'"
-msgstr "E598: 无效的 Fontset"
+msgstr "E5009: 无效的 'runtimepath'"
 
 #: ../eval.c:8783
-#, fuzzy
 msgid "E977: Can only compare Blob with Blob"
-msgstr "E691: 只能比较 List 和 List"
+msgstr "E977: Blob 只能和 Blob 比较"
 
 #: ../eval.c:8806
 msgid "E691: Can only compare List with List"
 msgstr "E691: 只能比较 List 和 List"
 
 #: ../eval.c:8808
-#, fuzzy
 msgid "E692: Invalid operation for List"
 msgstr "E692: 对 List 无效的操作"
 
@@ -967,24 +954,24 @@ msgid "E474: Expected string end: %.*s"
 msgstr "E415: 不该有的等号: %s"
 
 #: ../eval/decode.c:555
-#, fuzzy, c-format
+#, c-format
 msgid "E474: Leading zeroes are not allowed: %.*s"
-msgstr "E786: 不允许的范围"
+msgstr "E474: 不允许前导零：%.*s"
 
 #: ../eval/decode.c:584
-#, fuzzy, c-format
+#, c-format
 msgid "E474: Missing number after minus sign: %.*s"
-msgstr "E526: <%s> 后面缺少数字"
+msgstr "E474: 负号后缺少数字：%.*s"
 
 #: ../eval/decode.c:587
-#, fuzzy, c-format
+#, c-format
 msgid "E474: Missing number after decimal dot: %.*s"
-msgstr "E526: <%s> 后面缺少数字"
+msgstr "E474: 小数点后缺少数字：%.*s"
 
 #: ../eval/decode.c:590
-#, fuzzy, c-format
+#, c-format
 msgid "E474: Missing exponent: %.*s"
-msgstr "E114: 缺少引号: %s"
+msgstr "E474: 缺少指数：%.*s"
 
 #: ../eval/decode.c:602
 #, c-format
@@ -1057,7 +1044,7 @@ msgstr "E722: Dictionary 中缺少逗号: %s"
 #: ../eval/decode.c:740
 #, c-format
 msgid "E474: Leading comma: %.*s"
-msgstr ""
+msgstr "E474: 前导逗号：%.*s"
 
 #: ../eval/decode.c:748
 #, fuzzy, c-format
@@ -1224,9 +1211,8 @@ msgid "E899: Argument of %s must be a List or Blob"
 msgstr "E686: %s 的参数必须是 List"
 
 #: ../eval/funcs.c:148 ../match.c:45
-#, fuzzy
 msgid "E957: Invalid window number"
-msgstr "E534: 无效的宽字体"
+msgstr "E957: 无效的窗口号"
 
 #: ../eval/funcs.c:149
 #, c-format
@@ -1234,9 +1220,9 @@ msgid "E998: Reduce of an empty %s with no initial value"
 msgstr "E998: 在没有初始值的情况下 reduce 空的 %s"
 
 #: ../eval/funcs.c:151
-#, fuzzy, c-format
+#, c-format
 msgid "E1023: Using a Number as a Bool: %d"
-msgstr "E703: 将函数当做数字使用"
+msgstr "E1023: 将整数作布尔值使用：%d"
 
 #: ../eval/funcs.c:153
 #, fuzzy
@@ -1376,9 +1362,9 @@ msgid "E5010: List item %d of the second argument is not a string"
 msgstr ""
 
 #: ../eval/funcs.c:7916
-#, fuzzy, c-format
+#, c-format
 msgid "E962: Invalid action: '%s'"
-msgstr "E383: 无效的查找字符串: %s"
+msgstr "E962: 无效的动作：'%s'"
 
 #: ../eval/funcs.c:8056
 #, fuzzy, c-format
@@ -1429,14 +1415,14 @@ msgid "E80: Error when closing file %s: %s"
 msgstr "E209: 关闭文件 \"%s\" 出错"
 
 #: ../eval/typval.c:44
-#, fuzzy, c-format
+#, c-format
 msgid "E1174: String required for argument %d"
-msgstr "E466: :winpos 需要两个数字参数"
+msgstr "E1174: 参数 %d 需要字符串"
 
 #: ../eval/typval.c:46
-#, fuzzy, c-format
+#, c-format
 msgid "E1175: Non-empty string required for argument %d"
-msgstr "E467: Custom 补全需要一个函数参数"
+msgstr "E1175: 参数 %d 需要非空字符串"
 
 #: ../eval/typval.c:48
 #, fuzzy, c-format
@@ -1488,16 +1474,16 @@ msgstr ""
 #: ../eval/typval.c:2476
 #, c-format
 msgid "E737: Key already exists: %s"
-msgstr "E737: 键已存在: %s"
+msgstr "E737: 键已存在：%s"
 
 #: ../eval/typval.c:3315
 msgid "E743: variable nested too deep for (un)lock"
-msgstr "E743: (un)lock 的变量嵌套过深"
+msgstr "E743: 变量嵌套过深，无法锁定/解锁"
 
 #: ../eval/typval.c:3455
-#, fuzzy, c-format
+#, c-format
 msgid "E741: Value is locked: %.*s"
-msgstr "E741: 值已锁定: %s"
+msgstr "E741: 值已锁定：%.*s"
 
 #: ../eval/typval.c:3458
 #, fuzzy, c-format
@@ -1509,114 +1495,100 @@ msgid "Unknown"
 msgstr "未知"
 
 #: ../eval/typval.c:3591
-#, fuzzy
 msgid "E805: Expected a Number or a String, Float found"
-msgstr "E807: 期盼浮点数作为printf()参数"
+msgstr "E805: 需要整数或字符串，但是提供了浮点数"
 
 #: ../eval/typval.c:3595
 msgid "E703: Expected a Number or a String, Funcref found"
-msgstr ""
+msgstr "E703: 需要整数或字符串，但是提供了 Funcref"
 
 #: ../eval/typval.c:3598
-#, fuzzy
 msgid "E745: Expected a Number or a String, List found"
-msgstr "E807: 期盼浮点数作为printf()参数"
+msgstr "E745: 需要整数或字符串，但是提供了列表"
 
 #: ../eval/typval.c:3601
 msgid "E728: Expected a Number or a String, Dictionary found"
-msgstr ""
+msgstr "E728: 需要整数或字符串，但是提供了字典"
 
 #: ../eval/typval.c:3604
 msgid "E974: Expected a Number or a String, Blob found"
-msgstr ""
+msgstr "E974: 需要整数或字符串，但是提供了 Blob"
 
 #: ../eval/typval.c:3607
 msgid "E5299: Expected a Number or a String, Boolean found"
-msgstr ""
+msgstr "E5299: 需要整数或字符串，但是提供了布尔值"
 
 #: ../eval/typval.c:3610
-#, fuzzy
 msgid "E5300: Expected a Number or a String"
-msgstr "E807: 期盼浮点数作为printf()参数"
+msgstr "E5300: 需要整数或字符串"
 
 #: ../eval/typval.c:3625
 msgid "E745: Using a List as a Number"
-msgstr "E745: 将列表当做数字使用"
+msgstr "E745: 将列表当作整数使用"
 
 #: ../eval/typval.c:3626
 msgid "E728: Using a Dictionary as a Number"
-msgstr "E728: 将字典当做数字使用"
+msgstr "E728: 将字典当作整数使用"
 
 #: ../eval/typval.c:3627
-#, fuzzy
 msgid "E805: Using a Float as a Number"
-msgstr "E805: 将浮点数当做数字使用"
+msgstr "E805: 将浮点数当作整数使用"
 
 #: ../eval/typval.c:3628
-#, fuzzy
 msgid "E974: Using a Blob as a Number"
-msgstr "E745: 将列表当做数字使用"
+msgstr "E974: 将 Blob 当作整数使用"
 
 #: ../eval/typval.c:3629
-#, fuzzy
 msgid "E685: using an invalid value as a Number"
-msgstr "E805: 将浮点数当做数字使用"
+msgstr "E685: 将无效值当作整数使用"
 
 #: ../eval/typval.c:3670
 msgid "E730: using List as a String"
-msgstr "E730: 将列表当做字符串使用"
+msgstr "E730: 将列表当作字符串使用"
 
 #: ../eval/typval.c:3671
 msgid "E731: using Dictionary as a String"
-msgstr "E731: 将字典当做字符串使用"
+msgstr "E731: 将字典当作字符串使用"
 
 #: ../eval/typval.c:3673
-#, fuzzy
 msgid "E976: using Blob as a String"
-msgstr "E730: 将 List 作 String 使用"
+msgstr "E976: 将 Blob 当作字符串使用"
 
 #: ../eval/typval.c:3674
-#, fuzzy
 msgid "E908: using an invalid value as a String"
-msgstr "E730: 将 List 作 String 使用"
+msgstr "E908: 将无效值当作字符串使用"
 
 #: ../eval/typval.c:3815
-#, fuzzy
 msgid "E891: Using a Funcref as a Float"
-msgstr "E703: 将函数当做数字使用"
+msgstr "E891: 将 Funcref 当作浮点数使用"
 
 #: ../eval/typval.c:3818
-#, fuzzy
 msgid "E892: Using a String as a Float"
-msgstr "E728: 将字典当做数字使用"
+msgstr "E892: 将字符串当作浮点数使用"
 
 #: ../eval/typval.c:3821
-#, fuzzy
 msgid "E893: Using a List as a Float"
-msgstr "E745: 将列表当做数字使用"
+msgstr "E893: 将列表当作浮点数使用"
 
 #: ../eval/typval.c:3824
-#, fuzzy
 msgid "E894: Using a Dictionary as a Float"
-msgstr "E728: 将字典当做数字使用"
+msgstr "E894: 将字典当作浮点数使用"
 
 #: ../eval/typval.c:3827
 msgid "E362: Using a boolean value as a Float"
-msgstr "E362: 将布尔值用作浮点数"
+msgstr "E362: 将布尔值当作浮点数使用"
 
 #: ../eval/typval.c:3830
 msgid "E907: Using a special value as a Float"
-msgstr "E907: 将特殊值作为浮点数使用"
+msgstr "E907: 将特殊值当作浮点数使用"
 
 #: ../eval/typval.c:3833
-#, fuzzy
 msgid "E975: Using a Blob as a Float"
-msgstr "E805: 将浮点数当做数字使用"
+msgstr "E975: 将 Blob 当作浮点数使用"
 
 #: ../eval/typval.h:515
-#, fuzzy
 msgid "E808: Number or Float required"
-msgstr "E521: = 后面需要数字"
+msgstr "E808: 需要整数或浮点数"
 
 #: ../eval/userfunc.c:67
 #, c-format
@@ -1625,7 +1597,7 @@ msgstr "E122: 函数 %s 已存在，请加 ! 强制替换"
 
 #: ../eval/userfunc.c:68
 msgid "E717: Dictionary entry already exists"
-msgstr "E717: Dictionary 项已存在"
+msgstr "E717: 字典项已存在"
 
 #: ../eval/userfunc.c:69
 msgid "E718: Funcref required"
@@ -1647,23 +1619,23 @@ msgid "E125: Illegal argument: %s"
 msgstr "E125: 无效的参数: %s"
 
 #: ../eval/userfunc.c:137
-#, fuzzy, c-format
+#, c-format
 msgid "E853: Duplicate argument name: %s"
-msgstr "E125: 无效的参数: %s"
+msgstr "E853: 重复的参数名：%s"
 
 #: ../eval/userfunc.c:171
 msgid "E989: Non-default argument follows default argument"
 msgstr "E989: 默认参数后有非默认参数"
 
 #: ../eval/userfunc.c:498
-#, fuzzy, c-format
+#, c-format
 msgid "E740: Too many arguments for function %s"
-msgstr "E118: 函数的参数过多: %s"
+msgstr "E740: 函数 %s 的参数过多"
 
 #: ../eval/userfunc.c:500
-#, fuzzy, c-format
+#, c-format
 msgid "E116: Invalid arguments for function %s"
-msgstr "E118: 函数的参数过多: %s"
+msgstr "E116: 函数 %s 的参数无效"
 
 #: ../eval/userfunc.c:859
 msgid "E132: Function call depth is higher than 'maxfuncdepth'"
@@ -1699,24 +1671,24 @@ msgid "E699: Too many arguments"
 msgstr "E699: 参数过多"
 
 #: ../eval/userfunc.c:1441
-#, fuzzy, c-format
+#, c-format
 msgid "E117: Unknown function: %s"
-msgstr "E130: 未知的函数: %s"
+msgstr "E117: 未知的函数：%s"
 
 #: ../eval/userfunc.c:1444
-#, fuzzy, c-format
+#, c-format
 msgid "E276: Cannot use function as a method: %s"
-msgstr "E127: 函数 %s 正在使用中，不能重新定义"
+msgstr "E276: 不能将函数用作方法：%s"
 
 #: ../eval/userfunc.c:1447
-#, fuzzy, c-format
+#, c-format
 msgid "E933: Function was deleted: %s"
-msgstr "E129: 需要函数名"
+msgstr "E933: 函数已被删除：%s"
 
 #: ../eval/userfunc.c:1453
 #, c-format
 msgid "E119: Not enough arguments for function: %s"
-msgstr "E119: 函数 %s 的参数太少"
+msgstr "E119: 函数 %s 的参数不足"
 
 #: ../eval/userfunc.c:1457
 #, c-format
@@ -1744,7 +1716,7 @@ msgstr "E128: 函数名必须以大写字母开头或者包含冒号: %s"
 
 #: ../eval/userfunc.c:1972
 msgid "E454: function list was modified"
-msgstr ""
+msgstr "E454: 函数列表已被修改"
 
 #: ../eval/userfunc.c:2125
 #, c-format
@@ -1754,12 +1726,11 @@ msgstr "E123: 函数 %s 尚未定义"
 #: ../eval/userfunc.c:2135
 #, c-format
 msgid "E124: Missing '(': %s"
-msgstr "E124: 缺少 '(': %s"
+msgstr "E124: 缺少 '('：%s"
 
 #: ../eval/userfunc.c:2167
-#, fuzzy
 msgid "E862: Cannot use g: here"
-msgstr "E284: 不能设定 IC 值"
+msgstr "E862: 这里不能使用 g:"
 
 #: ../eval/userfunc.c:2197
 #, c-format
@@ -1776,9 +1747,8 @@ msgid "W22: Text found after :endfunction: %s"
 msgstr "E123: 函数 %s 尚未定义"
 
 #: ../eval/userfunc.c:2363
-#, fuzzy
 msgid "E1058: function nesting too deep"
-msgstr "E218: 自动命令嵌套层数过深"
+msgstr "E1058: 函数嵌套层数过深"
 
 #: ../eval/userfunc.c:2472
 #, fuzzy, c-format
@@ -1816,29 +1786,26 @@ msgid "E18: Unexpected characters in :let"
 msgstr "E18: :let 中出现异常字符"
 
 #: ../eval/vars.c:53
-#, fuzzy, c-format
+#, c-format
 msgid "E940: Cannot lock or unlock variable %s"
-msgstr "E46: 不能改变只读变量 \"%s\""
+msgstr "E940: 不能锁定或解锁变量 %s"
 
 #: ../eval/vars.c:77
-#, fuzzy
 msgid "E991: cannot use =<< here"
-msgstr "E284: 不能设定 IC 值"
+msgstr "E991: 此处不能使用 =<<"
 
 #: ../eval/vars.c:109
-#, fuzzy
 msgid "E221: Marker cannot start with lower case letter"
-msgstr "E183: 用户自定义命令必须以大写字母开头"
+msgstr "E221: 标记不能以小写字母开头"
 
 #: ../eval/vars.c:113
-#, fuzzy
 msgid "E172: Missing marker"
-msgstr "E170: 缺少 :endfor"
+msgstr "E172: 缺少标记"
 
 #: ../eval/vars.c:124
-#, fuzzy, c-format
+#, c-format
 msgid "E990: Missing end marker '%s'"
-msgstr "E769: %s[ 后缺少 ]"
+msgstr "E990: 缺少结束标记 '%s'"
 
 #: ../eval/vars.c:311
 msgid "E687: Less targets than List items"
@@ -1849,9 +1816,8 @@ msgid "E688: More targets than List items"
 msgstr "E688: 目标比 List 项数多"
 
 #: ../eval/vars.c:391
-#, fuzzy
 msgid "E452: Double ; in list of variables"
-msgstr "变量列表中出现两个 ;"
+msgstr "E452: 变量列表中出现两个 ;"
 
 #: ../eval/vars.c:532
 #, c-format
@@ -1859,23 +1825,21 @@ msgid "E738: Can't list variables for %s"
 msgstr "E738: 无法列出 %s 的变量"
 
 #: ../eval/vars.c:584
-#, fuzzy
 msgid "E996: Cannot lock an environment variable"
-msgstr "环境变量"
+msgstr "E996: 不能锁定环境变量"
 
 #: ../eval/vars.c:625
 msgid "E996: Cannot lock an option"
 msgstr "E996: 不能锁定选项"
 
 #: ../eval/vars.c:716
-#, fuzzy
 msgid "E996: Cannot lock a register"
-msgstr "E90: 无法释放最后一个缓冲区"
+msgstr "E996: 不能锁定寄存器"
 
 #: ../eval/vars.c:1015
 #, c-format
 msgid "E108: No such variable: \"%s\""
-msgstr "E108: 无此变量: \"%s\""
+msgstr "E108: 无此变量：\"%s\""
 
 #: ../eval/vars.c:1331
 #, c-format
@@ -2120,9 +2084,9 @@ msgid "Close \"%s\"?"
 msgstr "关闭"
 
 #: ../ex_cmds2.c:380
-#, fuzzy, c-format
+#, c-format
 msgid "E947: Job still running in buffer \"%s\""
-msgstr "E94: 没有匹配的缓冲区 %s"
+msgstr "E947: 任务仍在缓冲区 \"%s\" 中运行"
 
 #: ../ex_cmds2.c:381
 #, c-format
@@ -2151,9 +2115,8 @@ msgid "E498: no :source file name to substitute for \"<sfile>\""
 msgstr "E498: 没有用于替换 \"<sfile>\" 的 :source 文件名"
 
 #: ../ex_docmd.c:96
-#, fuzzy
 msgid "E489: no call stack to substitute for \"<stack>\""
-msgstr "E498: 没有用于替换 \"<sfile>\" 的 :source 文件名"
+msgstr "E489: 没有用于替换 \"<stack>\" 的调用栈"
 
 #: ../ex_docmd.c:98
 #, fuzzy
@@ -2317,9 +2280,8 @@ msgid "E842: no line number to use for \"<slnum>\""
 msgstr "E498: 没有用于替换 \"<sfile>\" 的 :source 文件名"
 
 #: ../ex_docmd.c:6893
-#, fuzzy
 msgid "E961: no line number to use for \"<sflnum>\""
-msgstr "E498: 没有用于替换 \"<sfile>\" 的 :source 文件名"
+msgstr "E961: 没有用于替换 \"<sflnum>\" 的行号"
 
 #: ../ex_docmd.c:6942
 #, fuzzy, no-c-format
@@ -3070,19 +3032,19 @@ msgid "E475: Invalid argument: %s"
 msgstr "E475: 无效的参数: %s"
 
 #: ../globals.h:882
-#, fuzzy, c-format
+#, c-format
 msgid "E475: Invalid value for argument %s"
-msgstr "E475: 无效的参数: %s"
+msgstr "E475: 参数 %s 的值无效"
 
 #: ../globals.h:883
-#, fuzzy, c-format
+#, c-format
 msgid "E475: Invalid value for argument %s: %s"
-msgstr "E475: 无效的参数: %s"
+msgstr "E475: 参数 %s 的值无效：%s"
 
 #: ../globals.h:884
-#, fuzzy, c-format
+#, c-format
 msgid "E983: Duplicate argument: %s"
-msgstr "E125: 无效的参数: %s"
+msgstr "E983: 重复的参数：%s"
 
 #: ../globals.h:885
 #, c-format
@@ -3254,9 +3216,9 @@ msgid "E484: Can't open file %s"
 msgstr "E484: 无法打开文件 %s"
 
 #: ../globals.h:923
-#, fuzzy, c-format
+#, c-format
 msgid "E484: Can't open file %s: %s"
-msgstr "E484: 无法打开文件 %s"
+msgstr "E484: 无法打开文件 %s：%s"
 
 #: ../globals.h:924
 #, c-format
@@ -3328,9 +3290,8 @@ msgid "E461: Illegal variable name: %s"
 msgstr "E461: 无效的变量名: %s"
 
 #: ../globals.h:941
-#, fuzzy
 msgid "E995: Cannot modify existing variable"
-msgstr "E738: 无法列出 %s 的变量"
+msgstr "E995: 不能修改已有变量"
 
 #: ../globals.h:942
 #, fuzzy, c-format
@@ -3347,19 +3308,18 @@ msgid "E715: Dictionary required"
 msgstr "E715: 需要 Dictionary"
 
 #: ../globals.h:945
-#, fuzzy, c-format
+#, c-format
 msgid "E979: Blob index out of range: %<PRId64>"
-msgstr "E684: List 索引超出范围: %<PRId64>"
+msgstr "E979: Blob 索引超出范围：%<PRId64>"
 
 #: ../globals.h:946
-#, fuzzy
 msgid "E978: Invalid operation for Blob"
-msgstr "E692: 对 List 无效的操作"
+msgstr "E978: 对 Blob 无效的操作"
 
 #: ../globals.h:947
 #, c-format
 msgid "E118: Too many arguments for function: %s"
-msgstr "E118: 函数的参数过多: %s"
+msgstr "E118: 函数 %s 的参数过多"
 
 #: ../globals.h:948
 #, fuzzy, c-format
@@ -3447,9 +3407,9 @@ msgid "E488: Trailing characters"
 msgstr "E488: 多余的尾部字符"
 
 #: ../globals.h:968
-#, fuzzy, c-format
+#, c-format
 msgid "E488: Trailing characters: %s"
-msgstr "E488: 多余的尾部字符"
+msgstr "E488: 多余的尾部字符：%s"
 
 #: ../globals.h:969
 msgid "E78: Unknown mark"
@@ -3483,7 +3443,7 @@ msgstr "E81: 在脚本环境外使用了 <SID>"
 #: ../globals.h:976
 #, c-format
 msgid "E107: Missing parentheses: %s"
-msgstr "E107: 缺少括号: %s"
+msgstr "E107: 缺少括号：%s"
 
 #: ../globals.h:977
 msgid "E363: pattern uses more memory than 'maxmempattern'"
@@ -3582,9 +3542,8 @@ msgid "E5560: %s must not be called in a lua loop callback"
 msgstr ""
 
 #: ../globals.h:1004
-#, fuzzy
 msgid "E5601: Cannot close window, only floating window would remain"
-msgstr "E444: 不能关闭最后一个窗口"
+msgstr "E5601: 无法关闭窗口，不然就只剩下浮动窗口了"
 
 #: ../globals.h:1005
 #, fuzzy
@@ -3592,9 +3551,8 @@ msgid "E5602: Cannot exchange or rotate float"
 msgstr "E557: 无法打开 termcap 文件"
 
 #: ../globals.h:1007
-#, fuzzy
 msgid "E1155: Cannot define autocommands for ALL events"
-msgstr "E217: 不能对所有事件执行自动命令"
+msgstr "E1155: 不能对所有事件定义自动命令"
 
 #: ../globals.h:1009
 #, fuzzy
@@ -3830,9 +3788,8 @@ msgid "E415: unexpected equal sign: %s"
 msgstr "E415: 不该有的等号: %s"
 
 #: ../highlight_group.c:1051 ../highlight_group.c:1099
-#, fuzzy
 msgid "E423: Illegal argument"
-msgstr "E423: 无效的参数: %s"
+msgstr "E423: 无效的参数"
 
 #: ../highlight_group.c:1072
 #, c-format
@@ -4544,9 +4501,9 @@ msgid "E798: ID is reserved for \"match\": %<PRId64>"
 msgstr ""
 
 #: ../mbyte.c:98
-#, fuzzy, c-format
+#, c-format
 msgid "E1109: List item %d is not a List"
-msgstr "E711: List 值没有足够多的项"
+msgstr "E1109: 列表项 %d 不是列表"
 
 #: ../mbyte.c:100
 #, c-format
@@ -5446,9 +5403,8 @@ msgid "E520: Not allowed in a modeline"
 msgstr "E520: 不允许在 modeline 中使用"
 
 #: ../option.c:111
-#, fuzzy
 msgid "E992: Not allowed in a modeline when 'modelineexpr' is off"
-msgstr "E520: 不允许在 modeline 中使用"
+msgstr "E992: 当 'modelineexpr' 关闭时不允许在 modeline 中使用"
 
 #: ../option.c:113
 msgid "E846: Key code not set"
@@ -5747,9 +5703,8 @@ msgid "E769: Missing ] after %s["
 msgstr "E769: %s[ 后缺少 ]"
 
 #: ../regexp.c:108
-#, fuzzy
 msgid "E944: Reverse range in character class"
-msgstr "E488: 多余的尾部字符"
+msgstr "E944: 字符类中有逆向范围"
 
 #: ../regexp.c:109
 msgid "E945: Range too large in character class"
@@ -5790,9 +5745,8 @@ msgid "E70: Empty %s%%[]"
 msgstr "E70: 空的 %s%%[]"
 
 #: ../regexp.c:117
-#, fuzzy
 msgid "E956: Cannot use pattern recursively"
-msgstr "E659: 不能递归调用 Python"
+msgstr "E956: 不能递归地使用模式"
 
 #: ../regexp.c:119
 #, c-format
@@ -7101,9 +7055,8 @@ msgid "E986: cannot modify the tag stack within tagfunc"
 msgstr ""
 
 #: ../tag.c:122
-#, fuzzy
 msgid "E987: invalid return value from tagfunc"
-msgstr "E178: 无效的计数默认值"
+msgstr "E987: tagfunc 返回了无效的值"
 
 #: ../tag.c:124
 msgid "E1299: Window unexpectedly closed while searching for tags"
@@ -7213,15 +7166,15 @@ msgstr ""
 
 #: ../testing.c:40
 msgid "E1115: assert_fails() fourth argument must be a number"
-msgstr ""
+msgstr "E1115: assert_fails() 的第四个参数必须是整数"
 
 #: ../testing.c:42
 msgid "E1116: assert_fails() fifth argument must be a string"
-msgstr ""
+msgstr "E1116: assert_fails() 的第五个参数必须是字符串"
 
 #: ../testing.c:44
 msgid "E1142: Calling test_garbagecollect_now() while v:testing is not set"
-msgstr "E1142: 在 v:testing 未设置的时候调用 test_garbagecollect_now()"
+msgstr "E1142: 调用 test_garbagecollect_now()，但 v:testing 未设置"
 
 #: ../ui.c:342
 msgid "Beep!"
@@ -7582,9 +7535,9 @@ msgid "E15: Invalid control character present in input: %.*s"
 msgstr "E71: %s%% 后面有无效的字符"
 
 #: ../viml/parser/expressions.c:519
-#, fuzzy, c-format
+#, c-format
 msgid "E112: Option name missing: %.*s"
-msgstr "E112: 缺少选项名称: %s"
+msgstr "E112: 缺少选项名称：%.*s"
 
 #: ../viml/parser/expressions.c:678 ../viml/parser/expressions.c:694
 #, fuzzy, c-format
@@ -7736,14 +7689,14 @@ msgid "E15: Expected value, got question mark: %.*s"
 msgstr "E415: 不该有的等号: %s"
 
 #: ../viml/parser/expressions.c:2911
-#, fuzzy, c-format
+#, c-format
 msgid "E114: Missing double quote: %.*s"
-msgstr "E114: 缺少引号: %s"
+msgstr "E114: 缺少双引号：%.*s"
 
 #: ../viml/parser/expressions.c:2912
-#, fuzzy, c-format
+#, c-format
 msgid "E115: Missing single quote: %.*s"
-msgstr "E115: 缺少引号: %s"
+msgstr "E115: 缺少单引号：%.*s"
 
 #: ../viml/parser/expressions.c:2931
 #, c-format
@@ -7766,19 +7719,19 @@ msgid "E15: Expected value, got EOC: %.*s"
 msgstr "E415: 不该有的等号: %s"
 
 #: ../viml/parser/expressions.c:2988
-#, fuzzy, c-format
+#, c-format
 msgid "E116: Missing closing parenthesis for function call: %.*s"
-msgstr "E118: 函数的参数过多: %s"
+msgstr "E116: 函数调用缺少结束括号：%.*s"
 
 #: ../viml/parser/expressions.c:2993
-#, fuzzy, c-format
+#, c-format
 msgid "E110: Missing closing parenthesis for nested expression: %.*s"
-msgstr "E107: 缺少括号: %s"
+msgstr "E110: 嵌套表达式缺少结束括号：%.*s"
 
 #: ../viml/parser/expressions.c:3001
-#, fuzzy, c-format
+#, c-format
 msgid "E697: Missing end of List ']': %.*s"
-msgstr "E697: List 缺少结束符 ']': %s"
+msgstr "E697: List 缺少结束符 ']': %.*s"
 
 #: ../viml/parser/expressions.c:3008
 #, fuzzy, c-format
@@ -7797,14 +7750,13 @@ msgstr ""
 
 #. Actually Vim throws E109 in more cases.
 #: ../viml/parser/expressions.c:3068
-#, fuzzy, c-format
+#, c-format
 msgid "E109: Missing ':' after '?': %.*s"
-msgstr "E109: '?' 后缺少 ':'"
+msgstr "E109: '?' 后缺少 ':'：%.*s"
 
 #: ../window.c:97
-#, fuzzy
 msgid "E1159: Cannot split a window when closing the buffer"
-msgstr "E90: 无法释放最后一个缓冲区"
+msgstr "E1159: 关闭缓冲区时不能分割窗口"
 
 #: ../window.c:99
 msgid "Already only one window"
