@@ -17,7 +17,7 @@ msgstr ""
 "Project-Id-Version: Vim(Simplified Chinese)\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2022-11-17 08:00+0800\n"
-"PO-Revision-Date: 2022-11-17 15:16+0800\n"
+"PO-Revision-Date: 2022-11-17 21:05+0800\n"
 "Last-Translator: Sizhe Zhao <prc.zhao@outlook.com>\n"
 "Language-Team: Simplified Chinese <i18n-translation@lists.linux.net.cn>\n"
 "Language: zh_CN\n"
@@ -94,9 +94,9 @@ msgid "E217: Can't execute autocommands for ALL events"
 msgstr "E217: 不能对所有事件执行自动命令"
 
 #: ../autocmd.c:1276
-#, fuzzy, c-format
+#, c-format
 msgid "No matching autocommands: %s"
-msgstr "没有匹配的自动命令"
+msgstr "没有匹配的自动命令：%s"
 
 #: ../autocmd.c:1693
 msgid "E218: autocommand nesting too deep"
@@ -207,9 +207,9 @@ msgid ""
 msgstr "E89: 缓冲区 %<PRId64> 已修改但尚未保存 (请加 ! 强制执行)"
 
 #: ../buffer.c:1290
-#, fuzzy, c-format
+#, c-format
 msgid "E89: %s will be killed (add ! to override)"
-msgstr "E189: \"%s\" 已存在 (请加 ! 强制执行)"
+msgstr "E89: \"%s\" 会被结束 (请加 ! 强制执行)"
 
 #: ../buffer.c:1698
 msgid "E948: Job still running (add ! to end the job)"
@@ -330,24 +330,23 @@ msgstr "[Quickfix 列表]"
 
 #: ../change.c:68
 msgid "W10: Warning: Changing a readonly file"
-msgstr "W10: 警告: 正在修改一个只读文件"
+msgstr "W10: 警告: 正在修改只读文件"
 
 #: ../channel.c:499
 msgid "can only be opened in headless mode"
 msgstr ""
 
 #: ../channel.c:504
-#, fuzzy
 msgid "channel was already open"
-msgstr "此文件创建于 "
+msgstr "channel 已打开"
 
 #: ../channel.c:550 ../channel.c:564 ../channel.c:574
 msgid "Can't send data to closed stream"
-msgstr ""
+msgstr "无法将数据发送到关闭的 stream"
 
 #: ../channel.c:560 ../channel.c:579
 msgid "Can't send raw data to rpc channel"
-msgstr ""
+msgstr "无法将 raw data 发送到 rpc channel"
 
 #: ../cmdexpand.c:925
 msgid "tagname"
@@ -441,9 +440,9 @@ msgid "%3d  expr %s"
 msgstr "%3d  表达式 %s"
 
 #: ../diff.c:206
-#, fuzzy, c-format
+#, c-format
 msgid "E96: Cannot diff more than %<PRId64> buffers"
-msgstr "E96: 不能比较(diff) %<PRId64> 个以上的缓冲区"
+msgstr "E96: 不能比较 %<PRId64> 个以上的缓冲区"
 
 #: ../diff.c:767
 #, c-format
@@ -536,14 +535,12 @@ msgid "Cyrillic"
 msgstr "西里尔文"
 
 #: ../digraph.c:1797
-#, fuzzy
 msgid "Hebrew"
-msgstr " Hebrew"
+msgstr "希伯来文"
 
 #: ../digraph.c:1798
-#, fuzzy
 msgid "Arabic"
-msgstr " Arabic"
+msgstr "阿拉伯文"
 
 #: ../digraph.c:1799
 msgid "Latin extended"
@@ -554,9 +551,8 @@ msgid "Greek extended"
 msgstr "希腊文扩展"
 
 #: ../digraph.c:1801
-#, fuzzy
 msgid "Punctuation"
-msgstr "函数 "
+msgstr "标点符号"
 
 #: ../digraph.c:1802
 msgid "Super- and subscripts"
@@ -725,9 +721,8 @@ msgid "E109: Missing ':' after '?'"
 msgstr "E109: '?' 后缺少 ':'"
 
 #: ../eval.c:2893
-#, fuzzy
 msgid "E804: Cannot use '%' with Float"
-msgstr "E719: 不能对 Dictionary 使用 [:]"
+msgstr "E804: 不能对浮点数使用 '%'"
 
 #: ../eval.c:3037
 msgid "E973: Blob literal should have an even number of hex characters"
@@ -830,9 +825,9 @@ msgid "E5050: {opts} must be the only argument"
 msgstr "E5050: {opts} 必须是唯一的参数"
 
 #: ../eval.c:5794 ../os/shell.c:718
-#, fuzzy, c-format
+#, c-format
 msgid "Executing command: \"%s\""
-msgstr "执行 %s"
+msgstr "执行命令：\"%s\""
 
 #: ../eval.c:5902
 msgid "E921: Invalid callback argument"
@@ -898,9 +893,9 @@ msgid "E474: Expected colon before dictionary value: %s"
 msgstr "E474: 字典值前应有冒号：%s"
 
 #: ../eval/decode.c:167
-#, fuzzy, c-format
+#, c-format
 msgid "E474: Expected string key: %s"
-msgstr "E415: 不该有的等号: %s"
+msgstr "E474: 需要字符串键：%s"
 
 #: ../eval/decode.c:173
 #, c-format
@@ -1093,9 +1088,9 @@ msgid "E474: Trailing characters: %.*s"
 msgstr "E488: 多余的尾部字符"
 
 #: ../eval/decode.c:906
-#, fuzzy, c-format
+#, c-format
 msgid "E474: Unexpected end of input: %.*s"
-msgstr "E415: 不该有的等号: %s"
+msgstr "E474: 输入意外结束：%.*s"
 
 #: ../eval/encode.c:123
 #, c-format
@@ -1110,16 +1105,16 @@ msgstr ""
 #: ../eval/encode.c:125
 #, c-format
 msgid "index %i"
-msgstr ""
+msgstr "索引 %i"
 
 #: ../eval/encode.c:126
 msgid "partial"
-msgstr ""
+msgstr "部分"
 
 #: ../eval/encode.c:127
-#, fuzzy, c-format
+#, c-format
 msgid "argument %i"
-msgstr "-c 参数"
+msgstr "参数 %i"
 
 #: ../eval/encode.c:128
 msgid "partial self dictionary"
@@ -1147,19 +1142,18 @@ msgstr "E474: 在 JSON 中无法表示无穷大"
 #, c-format
 msgid ""
 "E474: String \"%.*s\" contains byte that does not start any UTF-8 character"
-msgstr ""
+msgstr "E474: 字符串 \"%.*s\" 包含不起始任何 UTF-8 字符的字节"
 
 #: ../eval/encode.c:642
 #, c-format
 msgid ""
 "E474: UTF-8 string contains code point which belongs to a surrogate pair: "
 "%.*s"
-msgstr ""
+msgstr "E474: UTF-8 字符串包含属于代理对的码点：%.*s"
 
 #: ../eval/encode.c:724
-#, fuzzy
 msgid "E474: Unable to convert EXT string to JSON"
-msgstr "E620: 无法转换至打印编码 \"%s\""
+msgstr "E474: 无法将 EXT 字符串转换为 JSON"
 
 #: ../eval/encode.c:752
 #, c-format
@@ -1172,29 +1166,26 @@ msgid "E474: Invalid key in special dictionary"
 msgstr "E736: 对 Dictionary 无效的操作"
 
 #: ../eval/encode.c:853
-#, fuzzy
 msgid "encode_tv2string() argument"
-msgstr "extend() 参数"
+msgstr "encode_tv2string() 参数"
 
 #: ../eval/encode.c:881
-#, fuzzy
 msgid ":echo argument"
-msgstr "-c 参数"
+msgstr ":echo 参数"
 
 #: ../eval/encode.c:905
-#, fuzzy
 msgid "encode_tv2json() argument"
-msgstr "extend() 参数"
+msgstr "encode_tv2json() 参数"
 
 #: ../eval/encode.c:966
 #, c-format
 msgid "E5004: Error while dumping %s, %s: attempt to dump function reference"
-msgstr ""
+msgstr "E5004: dump %s, %s 时出错：试图 dump 函数引用"
 
 #: ../eval/encode.c:1018
 #, c-format
 msgid "E5005: Unable to dump %s: container references itself in %s"
-msgstr ""
+msgstr "E5005: 无法 dump %s：容器在 %s 中引用了自己"
 
 #: ../eval/executor.c:23
 #, c-format
@@ -1227,12 +1218,11 @@ msgstr "E1308: 不能修改其他标签页中窗口的大小"
 #: ../eval/funcs.c:328 ../eval/funcs.c:7006
 #, c-format
 msgid "Error converting the call result: %s"
-msgstr ""
+msgstr "转换调用结果时出错：%s"
 
 #: ../eval/funcs.c:366 ../eval/funcs.c:374
-#, fuzzy
 msgid "add() argument"
-msgstr "-c 参数"
+msgstr "add() 参数"
 
 #: ../eval/funcs.c:679 ../sign.c:1451
 #, c-format
@@ -1240,32 +1230,29 @@ msgid "E158: Invalid buffer name: %s"
 msgstr "E158: 缓冲区名无效：%s"
 
 #: ../eval/funcs.c:814
-#, fuzzy, c-format
+#, c-format
 msgid "Invalid channel stream \"%s\""
-msgstr "E71: %s%% 后面有无效的字符"
+msgstr "channel stream \"%s\" 无效"
 
 #: ../eval/funcs.c:1109
 msgid "&Ok"
 msgstr "确定(&O)"
 
 #: ../eval/funcs.c:1239
-#, fuzzy
 msgid "Context stack is empty"
-msgstr "E73: tag 堆栈为空"
+msgstr "上下文堆栈为空"
 
 #: ../eval/funcs.c:1483
-#, fuzzy
 msgid "dictwatcheradd() argument"
-msgstr "-c 参数"
+msgstr "dictwatcheradd() 参数"
 
 #: ../eval/funcs.c:2178
 msgid "E900: maxdepth must be non-negative number"
 msgstr "E900: maxdepth 必须是非负整数"
 
 #: ../eval/funcs.c:2186
-#, fuzzy
 msgid "flatten() argument"
-msgstr "filter() 参数"
+msgstr "flatten() 参数"
 
 #: ../eval/funcs.c:2197 ../eval/typval.c:2458
 msgid "extend() argument"
@@ -1277,7 +1264,7 @@ msgstr "E5000: 找不到标签页号。"
 
 #: ../eval/funcs.c:2885 ../eval/funcs.c:3899
 msgid "E5001: Higher scope cannot be -1 if lower scope is >= 0."
-msgstr ""
+msgstr "E5001: 低边界 >= 0 时高边界不能为 -1。"
 
 #: ../eval/funcs.c:2892 ../eval/funcs.c:3906
 msgid "E5002: Cannot find window number."
@@ -1288,9 +1275,8 @@ msgid "called inputrestore() more often than inputsave()"
 msgstr "inputrestore() 的调用次数多于 inputsave()"
 
 #: ../eval/funcs.c:4153 ../eval/funcs.c:4190
-#, fuzzy
 msgid "insert() argument"
-msgstr "-c 参数"
+msgstr "insert() 参数"
 
 #: ../eval/funcs.c:4260
 msgid "E786: Range not allowed"
@@ -1310,18 +1296,18 @@ msgid "E701: Invalid type for len()"
 msgstr "E701: len() 的类型无效"
 
 #: ../eval/funcs.c:5348
-#, fuzzy, c-format
+#, c-format
 msgid "msgpackdump() argument, index %i"
-msgstr "map() 参数"
+msgstr "msgpackdump() 参数，索引 %i"
 
 #: ../eval/funcs.c:5517
 msgid "E5070: Character number must not be less than zero"
-msgstr ""
+msgstr "E5070: 字符数不能小于零"
 
 #: ../eval/funcs.c:5521
 #, c-format
 msgid "E5071: Character number must not be greater than INT_MAX (%i)"
-msgstr ""
+msgstr "E5071: 字符数不能大于 INT_MAX (%i)"
 
 #: ../eval/funcs.c:5907
 msgid "E726: Stride is zero"
@@ -1336,33 +1322,31 @@ msgid "<empty>"
 msgstr "<空>"
 
 #: ../eval/funcs.c:6329
-#, fuzzy
 msgid "remove() argument"
-msgstr "--cmd 参数"
+msgstr "remove() 参数"
 
 #: ../eval/funcs.c:6447
 msgid "E655: Too many symbolic links (cycle?)"
 msgstr "E655: 符号连接过多(循环？)"
 
 #: ../eval/funcs.c:6577
-#, fuzzy
 msgid "reverse() argument"
-msgstr "-c 参数"
+msgstr "reverse() 参数"
 
 #: ../eval/funcs.c:7040
 #, c-format
 msgid "E5010: List item %d of the second argument is not a string"
-msgstr ""
+msgstr "E5010: 第二个参数的列表项 %d 不是字符串"
 
 #: ../eval/funcs.c:7916
 #, c-format
 msgid "E962: Invalid action: '%s'"
-msgstr "E962: 无效的动作：'%s'"
+msgstr "E962: 动作无效：'%s'"
 
 #: ../eval/funcs.c:8056
-#, fuzzy, c-format
+#, c-format
 msgid "connection failed: %s"
-msgstr "XSMP SmcOpenConnection 调用失败: %s"
+msgstr "连接失败：%s"
 
 #: ../eval/funcs.c:8328
 #, fuzzy, c-format
@@ -1380,7 +1364,7 @@ msgstr "E935: 子匹配号无效：%d"
 
 #: ../eval/funcs.c:9213
 msgid "Can only call this function in an unmodified buffer"
-msgstr ""
+msgstr "只能在未修改的缓冲区中调用这个函数"
 
 #: ../eval/funcs.c:10026
 msgid "writefile() first argument must be a List or a Blob"
@@ -1397,9 +1381,9 @@ msgid "E482: Can't open file with an empty name"
 msgstr "E482: 无法打开名称为空的文件"
 
 #: ../eval/funcs.c:10072
-#, fuzzy, c-format
+#, c-format
 msgid "E482: Can't open file %s for writing: %s"
-msgstr "E212: 无法打开并写入文件"
+msgstr ""
 
 #: ../eval/funcs.c:10085
 #, c-format
@@ -1442,14 +1426,12 @@ msgid "E5144: Failed to close file %s: %s"
 msgstr "E5144: 无法关闭文件 %s：%s"
 
 #: ../eval/typval.c:1150
-#, fuzzy
 msgid "sort() argument"
-msgstr "-c 参数"
+msgstr "sort() 参数"
 
 #: ../eval/typval.c:1151
-#, fuzzy
 msgid "uniq() argument"
-msgstr "-c 参数"
+msgstr "uniq() 参数"
 
 #: ../eval/typval.c:1242
 msgid "E702: Sort compare function failed"
@@ -1478,9 +1460,9 @@ msgid "E741: Value is locked: %.*s"
 msgstr "E741: 值已锁定：%.*s"
 
 #: ../eval/typval.c:3458
-#, fuzzy, c-format
+#, c-format
 msgid "E742: Cannot change value of %.*s"
-msgstr "E742: 无法改变 %s 的值"
+msgstr "E742: 无法改变 %.*s 的值"
 
 #: ../eval/typval.c:3464 ../message.c:2469
 msgid "Unknown"
@@ -1613,7 +1595,7 @@ msgstr "E125: 参数无效: %s"
 #: ../eval/userfunc.c:137
 #, c-format
 msgid "E853: Duplicate argument name: %s"
-msgstr "E853: 重复的参数名：%s"
+msgstr "E853: 参数名重复：%s"
 
 #: ../eval/userfunc.c:171
 msgid "E989: Non-default argument follows default argument"
@@ -1699,12 +1681,12 @@ msgstr "E129: 需要函数名"
 #: ../eval/userfunc.c:1895
 #, c-format
 msgid "E128: Function name must start with a capital or \"s:\": %s"
-msgstr "E128: 函数名必须以大写字母或 “s:” 开头：%s"
+msgstr "E128: 函数名必须以大写字母或 \"s:\" 开头：%s"
 
 #: ../eval/userfunc.c:1904
-#, fuzzy, c-format
+#, c-format
 msgid "E884: Function name cannot contain a colon: %s"
-msgstr "E128: 函数名必须以大写字母开头或者包含冒号: %s"
+msgstr "E884: 函数名不能包含冒号：%s"
 
 #: ../eval/userfunc.c:1972
 msgid "E454: function list was modified"
@@ -1734,18 +1716,18 @@ msgid "E126: Missing :endfunction"
 msgstr "E126: 缺少 :endfunction"
 
 #: ../eval/userfunc.c:2327
-#, fuzzy, c-format
+#, c-format
 msgid "W22: Text found after :endfunction: %s"
-msgstr "E123: 函数 %s 尚未定义"
+msgstr "W22: :endfunction 后有文本：%s"
 
 #: ../eval/userfunc.c:2363
 msgid "E1058: function nesting too deep"
 msgstr "E1058: 函数嵌套层数过深"
 
 #: ../eval/userfunc.c:2472
-#, fuzzy, c-format
+#, c-format
 msgid "E707: Function name conflicts with variable: %s"
-msgstr "E746: 函数名与脚本文件名不匹配: %s"
+msgstr "E707: 函数名与变量名冲突：%s"
 
 #: ../eval/userfunc.c:2488
 #, c-format
@@ -1763,9 +1745,9 @@ msgid "E131: Cannot delete function %s: It is in use"
 msgstr "E131: 函数 %s 正在使用中，不能删除"
 
 #: ../eval/userfunc.c:2784
-#, fuzzy, c-format
+#, c-format
 msgid "Cannot delete function %s: It is being used internally"
-msgstr "E131: 无法删除函数 %s: 正在使用中"
+msgstr "无法删除函数 %s，内部使用这个函数"
 
 #: ../eval/userfunc.c:2916
 msgid "E133: :return not inside a function"
@@ -1836,17 +1818,17 @@ msgstr "E108: 无此变量：\"%s\""
 #: ../eval/vars.c:1331
 #, c-format
 msgid "E963: setting %s to value with wrong type"
-msgstr ""
+msgstr "E963: 将 %s 设置为类型错误的值"
 
 #: ../eval/vars.c:1414
-#, fuzzy, c-format
+#, c-format
 msgid "E794: Cannot set variable in the sandbox: \"%.*s\""
-msgstr "E46: 不能在 sandbox 中设定变量: \"%s\""
+msgstr "E794: 不能在沙盒中设置变量：\"%.*s\""
 
 #: ../eval/vars.c:1460
-#, fuzzy, c-format
+#, c-format
 msgid "E795: Cannot delete variable %.*s"
-msgstr "E738: 无法列出 %s 的变量"
+msgstr "E795: 无法删除变量 %.*s"
 
 #: ../eval/vars.c:1483
 #, c-format
@@ -1860,21 +1842,20 @@ msgstr "E705: 变量名与已有函数名冲突: %s"
 
 #: ../event/socket.c:220
 msgid "tcp address must be host:port"
-msgstr ""
+msgstr "TCP 地址必须为 host:port"
 
 #: ../event/socket.c:231
 msgid "failed to lookup host or port"
-msgstr ""
+msgstr "无法查找主机或端口"
 
 #: ../event/socket.c:256
-#, fuzzy
 msgid "connection refused"
-msgstr "cscope 连接已关闭"
+msgstr "连接被拒绝"
 
 #: ../ex_cmds.c:164
-#, fuzzy, c-format
+#, c-format
 msgid "<%s>%s%s  %d,  Hex %02x,  Oct %03o, Digr %s"
-msgstr "<%s>%s%s  %d,  十六进制 %02x,  八进制 %03o"
+msgstr "<%s>%s%s  %d,  十六进制 %02x,  八进制 %03o, 二合字符 %s"
 
 #: ../ex_cmds.c:169
 #, c-format
@@ -1882,14 +1863,14 @@ msgid "<%s>%s%s  %d,  Hex %02x,  Octal %03o"
 msgstr "<%s>%s%s  %d,  十六进制 %02x,  八进制 %03o"
 
 #: ../ex_cmds.c:213
-#, fuzzy, c-format
+#, c-format
 msgid "> %d, Hex %04x, Oct %o, Digr %s"
-msgstr "> %d, 十六进制 %04x, 八进制 %o"
+msgstr "> %d, 十六进制 %04x, 八进制 %o, 二合字符 %s"
 
 #: ../ex_cmds.c:214
-#, fuzzy, c-format
+#, c-format
 msgid "> %d, Hex %08x, Oct %o, Digr %s"
-msgstr "> %d, 十六进制 %08x, 八进制 %o"
+msgstr "> %d, 十六进制 %08x, 八进制 %o, 二合字符 %s"
 
 #: ../ex_cmds.c:220
 #, c-format
@@ -1906,10 +1887,10 @@ msgid "E134: Cannot move a range of lines into itself"
 msgstr "E134: 不能把一系列行移动到自身当中"
 
 #: ../ex_cmds.c:1021
-#, fuzzy, c-format
+#, c-format
 msgid "1 line moved"
 msgid_plural "%<PRId64> lines moved"
-msgstr[0] "移动了 1 行"
+msgstr[0] "移动了 %<PRId64> 行"
 
 #. will call wait_return()
 #: ../ex_cmds.c:1335
@@ -1931,9 +1912,9 @@ msgid "[No write since last change]\n"
 msgstr "[已修改但尚未保存]\n"
 
 #: ../ex_cmds.c:1793
-#, fuzzy, c-format
+#, c-format
 msgid "E503: \"%s\" is not a file or writable device"
-msgstr "不是文件或可写的设备"
+msgstr "E503: \"%s\" 不是文件或可写的设备"
 
 #: ../ex_cmds.c:1877
 msgid "Write partial file?"
@@ -2054,14 +2035,13 @@ msgid "Pattern found in every line: %s"
 msgstr "每行都匹配表达式: %s"
 
 #: ../ex_cmds.c:4612
-#, fuzzy, c-format
+#, c-format
 msgid "Pattern not found: %s"
-msgstr "找不到模式"
+msgstr "找不到模式：%s"
 
 #: ../ex_cmds.c:4921
-#, fuzzy
 msgid "No old files"
-msgstr "没有包含文件"
+msgstr "没有旧文件"
 
 #: ../ex_cmds2.c:204
 #, c-format
@@ -2069,9 +2049,9 @@ msgid "Save changes to \"%s\"?"
 msgstr "将改变保存到 \"%s\" 吗？"
 
 #: ../ex_cmds2.c:255
-#, fuzzy, c-format
+#, c-format
 msgid "Close \"%s\"?"
-msgstr "关闭"
+msgstr "关闭 \"%s\"？"
 
 #: ../ex_cmds2.c:380
 #, c-format
@@ -2123,14 +2103,13 @@ msgid "E501: At end-of-file"
 msgstr "E501: 已到文件末尾"
 
 #: ../ex_docmd.c:267
-#, fuzzy, c-format
+#, c-format
 msgid "Executing: %s"
-msgstr "执行 %s"
+msgstr "执行：%s"
 
 #: ../ex_docmd.c:269
-#, fuzzy
 msgid "line %"
-msgstr "第 %4ld 行:"
+msgstr "在行号 %"
 
 #: ../ex_docmd.c:781
 #, c-format
@@ -2263,9 +2242,8 @@ msgid "E497: no autocommand match name to substitute for \"<amatch>\""
 msgstr "E497: 没有用于替换 \"<amatch>\" 的自动命令匹配名"
 
 #: ../ex_docmd.c:6884
-#, fuzzy
 msgid "E842: no line number to use for \"<slnum>\""
-msgstr "E498: 没有用于替换 \"<sfile>\" 的 :source 文件名"
+msgstr "E842: 没有行号可用于替换 \"<slnum>\""
 
 #: ../ex_docmd.c:6893
 msgid "E961: no line number to use for \"<sflnum>\""
@@ -2319,9 +2297,9 @@ msgid "%s made pending"
 msgstr "%s 待定"
 
 #: ../ex_eval.c:691
-#, fuzzy, c-format
+#, c-format
 msgid "%s resumed"
-msgstr " 已返回\n"
+msgstr "%s 已恢复"
 
 #: ../ex_eval.c:695
 #, c-format
@@ -2421,9 +2399,8 @@ msgid "E193: :endfunction not inside a function"
 msgstr "E193: :endfunction 不在函数内"
 
 #: ../ex_getln.c:2661
-#, fuzzy
 msgid "E811: Not allowed to change buffer information now"
-msgstr "E788: 目前不允许编辑别的缓冲区"
+msgstr "E811: 目前不允许更改缓冲区的信息"
 
 #: ../ex_getln.c:2939
 #, c-format
@@ -2437,12 +2414,12 @@ msgstr ""
 
 #: ../ex_getln.c:2986
 msgid "E5400: Callback should return list"
-msgstr ""
+msgstr "E5400: 回调应返回列表"
 
 #: ../ex_getln.c:2996
 #, c-format
 msgid "E5401: List item %i is not a List"
-msgstr ""
+msgstr "E5401: 列表项 %i 不是列表"
 
 #: ../ex_getln.c:3001
 #, c-format
@@ -2507,14 +2484,13 @@ msgid "E347: No more file \"%s\" found in path"
 msgstr "E347: 在路径中找不到更多的文件 \"%s\""
 
 #: ../fileio.c:126
-#, fuzzy
 msgid "E812: Autocommands changed buffer or buffer name"
-msgstr "E135: *Filter* 自动命令不可以改变当前缓冲区"
+msgstr "E812: 自动命令改变了缓冲区或者缓冲区名称"
 
 #: ../fileio.c:128
-#, fuzzy, c-format
+#, c-format
 msgid "E676: No matching autocommands for buftype=%s buffer"
-msgstr "E676: 找不到 acwrite 缓冲区对应的自动命令"
+msgstr ""
 
 #: ../fileio.c:262 ../fileio.c:2499 ../fileio.c:2529
 msgid "is a directory"
@@ -2569,9 +2545,8 @@ msgstr "[socket]"
 
 #. or character special
 #: ../fileio.c:1771
-#, fuzzy
 msgid "[character special]"
-msgstr "1 个字符"
+msgstr "[字符设备]"
 
 #: ../fileio.c:1785
 msgid "[CR missing]"
@@ -2640,9 +2615,9 @@ msgid "is read-only (add ! to override)"
 msgstr "只读 (请加 ! 强制执行)"
 
 #: ../fileio.c:2701 ../fileio.c:2852
-#, fuzzy, c-format
+#, c-format
 msgid "E303: Unable to create directory \"%s\" for backup file: %s"
-msgstr "E303: 无法打开 \"%s\" 的交换文件，恢复将不可能"
+msgstr "E303: 无法为备份文件创建目录 \"%s\"：%s"
 
 #: ../fileio.c:2792 ../fileio.c:2813
 msgid "E509: Cannot create backup file (add ! to override)"
@@ -2666,9 +2641,9 @@ msgid "E166: Can't open linked file for writing"
 msgstr "E166: 无法打开并写入链接文件"
 
 #: ../fileio.c:3084
-#, fuzzy, c-format
+#, c-format
 msgid "E212: Can't open file for writing: %s"
-msgstr "E212: 无法打开并写入文件"
+msgstr "E212: 无法打开并写入文件：%s"
 
 #: ../fileio.c:3324
 #, c-format
@@ -2681,9 +2656,8 @@ msgstr "E513: 写入错误，转换失败 (请将 'fenc' 置空以强制执行)"
 
 #. NOLINT(runtime/printf)
 #: ../fileio.c:3369
-#, fuzzy
 msgid "E513: write error, conversion failed in line %"
-msgstr "E513: 写入错误，转换失败 (请将 'fenc' 置空以强制执行)"
+msgstr ""
 
 #: ../fileio.c:3376
 msgid "E514: write error (file system full?)"
@@ -2768,16 +2742,16 @@ msgid "[unix format]"
 msgstr "[unix 格式]"
 
 #: ../fileio.c:3753
-#, fuzzy, c-format
+#, c-format
 msgid "%<PRId64> line, "
 msgid_plural "%<PRId64> lines, "
 msgstr[0] "%<PRId64> 行，"
 
 #: ../fileio.c:3757
-#, fuzzy, c-format
+#, c-format
 msgid "%<PRId64> byte"
 msgid_plural "%<PRId64> bytes"
-msgstr[0] "%<PRId64> 个匹配，"
+msgstr[0] "%<PRId64> 字节"
 
 #: ../fileio.c:3766
 msgid "[noeol]"
@@ -2901,7 +2875,7 @@ msgid "E351: Cannot delete fold with current 'foldmethod'"
 msgstr "E351: 不能在当前的 'foldmethod' 下删除折叠"
 
 #: ../fold.c:1789
-#, fuzzy, c-format
+#, c-format
 msgid "+--%3ld line folded"
 msgid_plural "+--%3ld lines folded "
 msgstr[0] "+--已折叠 %3ld 行"
@@ -3051,47 +3025,42 @@ msgid "E17: \"%s\" is a directory"
 msgstr "E17: \"%s\" 是目录"
 
 #: ../globals.h:889
-#, fuzzy
 msgid "E756: Spell checking is not possible"
-msgstr "E756: 拼写检查未启用"
+msgstr "E756: 拼写检查不可能"
 
 #: ../globals.h:890
-#, fuzzy
 msgid "E900: Invalid channel id"
-msgstr "E49: 无效的滚动大小"
+msgstr "E900: channel id 无效"
 
 #: ../globals.h:891
-#, fuzzy
 msgid "E900: Invalid channel id: not a job"
-msgstr "E49: 无效的滚动大小"
+msgstr "E900: channel id 无效：不是任务"
 
 #: ../globals.h:892
 msgid "E901: Job table is full"
-msgstr "E901: 任务表已经满"
+msgstr "E901: 任务表已满"
 
 #: ../globals.h:893
 #, c-format
 msgid "E903: Process failed to start: %s: \"%s\""
-msgstr ""
+msgstr "E903: 进程启动失败：%s：\"%s\""
 
 #: ../globals.h:894
-#, fuzzy
 msgid "E904: channel is not a pty"
-msgstr "E664: 改变列表为空"
+msgstr "E664: channel 不是 pty"
 
 #: ../globals.h:895
-#, fuzzy, c-format
+#, c-format
 msgid "E905: Couldn't open stdio channel: %s"
-msgstr "E456: 无法打开文件 \"%s\""
+msgstr "E905: 无法打开 stdio channel：%s"
 
 #: ../globals.h:896
-#, fuzzy
 msgid "E906: invalid stream for channel"
-msgstr "E701: len() 的类型无效"
+msgstr "E906: stream 对 channel 无效"
 
 #: ../globals.h:897
 msgid "E906: invalid stream for rpc channel, use 'rpc'"
-msgstr ""
+msgstr "E906: stream 对 rpc channel 无效，请使用 'rpc'"
 
 #: ../globals.h:898
 #, c-format
@@ -3105,14 +3074,14 @@ msgid "E364: Library call failed for \"%s()\""
 msgstr "E364: 调用函数库 \"%s()\" 失败"
 
 #: ../globals.h:900
-#, fuzzy, c-format
+#, c-format
 msgid "E667: Fsync failed: %s"
-msgstr "E667: 同步失败"
+msgstr "E667: Fsync 失败：%s"
 
 #: ../globals.h:901
-#, fuzzy, c-format
+#, c-format
 msgid "E739: Cannot create directory %s: %s"
-msgstr "E739: 无法创建目录: %s"
+msgstr "E739: 无法创建目录 %s：%s"
 
 #: ../globals.h:902
 msgid "E19: Mark has invalid line number"
@@ -3325,9 +3294,9 @@ msgid "E712: Argument of %s must be a List or Dictionary"
 msgstr "E712: %s 的参数必须是 List 或者 Dictionary"
 
 #: ../globals.h:952
-#, fuzzy, c-format
+#, c-format
 msgid "E896: Argument of %s must be a List, Dictionary or Blob"
-msgstr "E712: %s 的参数必须是 List 或者 Dictionary"
+msgstr "E896: %s 的参数必须是列表、字典或 Blob"
 
 #: ../globals.h:953
 msgid "E47: Error while reading errorfile"
@@ -3415,9 +3384,8 @@ msgid "E80: Error while writing"
 msgstr "E80: 写入出错"
 
 #: ../globals.h:974
-#, fuzzy
 msgid "E939: Positive count required"
-msgstr "E397: 需要文件名称"
+msgstr "E939: 需要正的计数"
 
 #: ../globals.h:975
 msgid "E81: Using <SID> not in a script context"
@@ -3560,9 +3528,8 @@ msgid "search hit BOTTOM, continuing at TOP"
 msgstr "已查找到文件结尾，再从开头继续查找"
 
 #: ../globals.h:1023
-#, fuzzy
 msgid " line "
-msgstr "1 行，"
+msgstr " 行 "
 
 #: ../hardcopy.c:309
 msgid "E550: Missing colon"
@@ -3586,14 +3553,14 @@ msgid "No text to be printed"
 msgstr "没有要打印的文字"
 
 #: ../hardcopy.c:744
-#, fuzzy, c-format
+#, c-format
 msgid "Printing page %d (%zu%%)"
-msgstr "正在打印第 %d 页 (%d%%)"
+msgstr "正在打印第 %d 页 (%zu%%)"
 
 #: ../hardcopy.c:753
 #, c-format
 msgid " Copy %d of %d"
-msgstr "复制 %d / %d"
+msgstr " 副本 %d / %d"
 
 #: ../hardcopy.c:808
 #, c-format
@@ -3704,9 +3671,9 @@ msgid "Sorry, help file \"%s\" not found"
 msgstr "抱歉，找不到帮助文件 \"%s\""
 
 #: ../help.c:900 ../help.c:1094
-#, fuzzy, c-format
+#, c-format
 msgid "E151: No match: %s"
-msgstr "E480: 没有匹配: %s"
+msgstr "E151: 没有匹配：%s"
 
 #: ../help.c:920
 #, c-format
@@ -3807,14 +3774,12 @@ msgid "E849: Too many highlight and syntax groups"
 msgstr "E849: 高亮和语法组过多"
 
 #: ../input.c:232
-#, fuzzy
 msgid "Type number and <Enter> or click with the mouse (q or empty cancels): "
-msgstr "请输入数字或点击鼠标 (<Enter> 取消): "
+msgstr "输入数字并按 <Enter> 或点击鼠标（q 或空取消）："
 
 #: ../input.c:235
-#, fuzzy
 msgid "Type number and <Enter> (q or empty cancels): "
-msgstr "请选择数字 (<Enter> 取消): "
+msgstr "输入数字并按 <Enter>（q 或空取消）："
 
 #: ../insexpand.c:99
 msgid " Keyword completion (^N^P)"
@@ -3921,9 +3886,8 @@ msgid "Scanning tags."
 msgstr "扫描标签."
 
 #: ../insexpand.c:3465
-#, fuzzy
 msgid "match in file"
-msgstr "Patch 文件"
+msgstr "在文件中匹配"
 
 #: ../insexpand.c:4198
 msgid " Adding"
@@ -3995,11 +3959,11 @@ msgstr ""
 
 #: ../lua/executor.c:782
 msgid "E970: Failed to initialize lua interpreter\n"
-msgstr ""
+msgstr "E970: 无法初始化 Lua 解释器\n"
 
 #: ../lua/executor.c:787
 msgid "E970: Failed to initialize builtin lua modules\n"
-msgstr ""
+msgstr "E970: 无法初始化内置 Lua 模块\n"
 
 #: ../lua/executor.c:972
 #, c-format
@@ -4103,19 +4067,19 @@ msgid "Too many \"+command\", \"-c command\" or \"--cmd command\" arguments"
 msgstr "\"+command\"、\"-c command\" 或 \"--cmd command\" 参数过多"
 
 #: ../main.c:1004
-#, fuzzy, c-format
+#, c-format
 msgid "E5421: Failed to open stdin: %s"
-msgstr "E286: 无法打开输入法"
+msgstr "E5421: 无法打开标准输入：%s"
 
 #: ../main.c:1284
-#, fuzzy, c-format
+#, c-format
 msgid "Attempt to open script file again: \"%s %s\"\n"
-msgstr "试图再次打开脚本文件: \""
+msgstr "试图再次打开脚本文件：\"%s %s\"\n"
 
 #: ../main.c:1303
-#, fuzzy, c-format
+#, c-format
 msgid "Cannot open for reading: \"%s\": %s\n"
-msgstr "无法打开并读取: \""
+msgstr "无法打开并读取：\"%s\"：%s\n"
 
 #: ../main.c:1337
 msgid "Cannot open for script output: \""
@@ -4151,103 +4115,84 @@ msgstr ""
 
 #. kill us with CTRL-C here, if you like
 #: ../main.c:2094
-#, fuzzy
 msgid "Usage:\n"
-msgstr ""
-"\n"
-"\n"
-"用法:"
+msgstr "用法：\n"
 
 #: ../main.c:2095
-#, fuzzy
 msgid "  nvim [options] [file ...]      Edit file(s)\n"
-msgstr "[文件 ..]       编辑指定的文件"
+msgstr "  nvim [options] [文件 ..]       编辑指定的文件\n"
 
 #: ../main.c:2096
-#, fuzzy
 msgid "  nvim [options] -t <tag>        Edit file where tag is defined\n"
-msgstr "-t tag          编辑 tag 定义处的文件"
+msgstr "  nvim [options] -t tag          编辑 tag 定义处的文件\n"
 
 #: ../main.c:2097
-#, fuzzy
 msgid "  nvim [options] -q [errorfile]  Edit file with first error\n"
-msgstr "-q [errorfile]  编辑第一个出错处的文件"
+msgstr "  nvim [options] -q [errorfile]  编辑第一个出错处的文件\n"
 
 #: ../main.c:2098
-#, fuzzy
 msgid ""
 "\n"
 "Options:\n"
 msgstr ""
 "\n"
-"--- 选项 ---"
+"选项：\n"
 
 #: ../main.c:2099
-#, fuzzy
 msgid "  --                    Only file names after this\n"
-msgstr "--\t\t\t在这以后只有文件名"
+msgstr "  --                    在这以后只有文件名\n"
 
 #: ../main.c:2100
-#, fuzzy
 msgid "  +                     Start at end of file\n"
-msgstr " # pid    数据库名称                          prepend path\n"
+msgstr "  +                     从文件末尾开始\n"
 
 #: ../main.c:2101
-#, fuzzy
 msgid "  --cmd <cmd>           Execute <cmd> before any config\n"
-msgstr "--cmd <command>\t加载任何 vimrc 文件前执行 <command>"
+msgstr "  --cmd <cmd>           加载任何配置前执行 <cmd>\n"
 
 #: ../main.c:2102
-#, fuzzy
 msgid "  +<cmd>, -c <cmd>      Execute <cmd> after config and first file\n"
-msgstr "-c <command>\t\t加载第一个文件后执行 <command>"
+msgstr "  +<cmd>, -c <cmd>      加载第一个配置和第一个文件后执行 <cmd>\n"
 
 #: ../main.c:2104
-#, fuzzy
 msgid "  -b                    Binary mode\n"
-msgstr " # pid    数据库名称                          prepend path\n"
+msgstr "  -b                    二进制模式\n"
 
 #: ../main.c:2105
-#, fuzzy
 msgid "  -d                    Diff mode\n"
-msgstr " # pid    数据库名称                          prepend path\n"
+msgstr "  -d                    差异模式\n"
 
 #: ../main.c:2106
-#, fuzzy
 msgid "  -e, -E                Ex mode\n"
-msgstr "-               从标准输入(stdin)读取文本"
+msgstr "  -e, -E                Ex 模式\n"
 
 #: ../main.c:2107
 msgid "  -es, -Es              Silent (batch) mode\n"
-msgstr ""
+msgstr "  -es, -Es              安静（批处理）模式\n"
 
 #: ../main.c:2108
 msgid "  -h, --help            Print this help message\n"
-msgstr ""
+msgstr "  -h, --help            打印此帮助信息\n"
 
 #: ../main.c:2109
 msgid "  -i <shada>            Use this shada file\n"
-msgstr ""
+msgstr "  -i <shada>            使用这个 shada 文件\n"
 
 #: ../main.c:2110
-#, fuzzy
 msgid "  -m                    Modifications (writing files) not allowed\n"
-msgstr "-m\t\t\t不可修改(写入文件)"
+msgstr "  -m                    不可修改（写入文件）\n"
 
 #: ../main.c:2111
-#, fuzzy
 msgid "  -M                    Modifications in text not allowed\n"
-msgstr "-M\t\t\t文本不可修改"
+msgstr "  -M                    文本不可修改\n"
 
 #: ../main.c:2112
-#, fuzzy
 msgid "  -n                    No swap file, use memory only\n"
-msgstr "-n\t\t\t不使用交换文件，只使用内存"
+msgstr "  -n                    不使用交换文件，只使用内存\n"
 
 #: ../main.c:2113
-#, fuzzy
 msgid "  -o[N]                 Open N windows (default: one per file)\n"
-msgstr "-o[N]\t\t打开 N 个窗口 (默认值: 每个文件一个)"
+msgstr "  -o[N]                 打开 N 个窗口（默认：每个文件一个）\n"
 
 #: ../main.c:2114
 #, fuzzy
@@ -4256,55 +4201,51 @@ msgid ""
 msgstr "-o[N]\t\t打开 N 个窗口 (默认值: 每个文件一个)"
 
 #: ../main.c:2115
-#, fuzzy
 msgid "  -p[N]                 Open N tab pages (default: one per file)\n"
-msgstr "-P[N]\t\t打开 N 个标签页 (默认值: 每个文件一个)"
+msgstr "  -p[N]                 打开 N 个标签页（默认：每个文件一个）\n"
 
 #: ../main.c:2116
 msgid "  -r, -L                List swap files\n"
-msgstr ""
+msgstr "  -r, -L                列出交换文件\n"
 
 #: ../main.c:2117
 msgid "  -r <file>             Recover edit state for this file\n"
-msgstr ""
+msgstr "  -r <file>             恢复这个文件的编辑状态\n"
 
 #: ../main.c:2118
-#, fuzzy
 msgid "  -R                    Read-only mode\n"
-msgstr " # pid    数据库名称                          prepend path\n"
+msgstr "  -R                    只读模式\n"
 
 #: ../main.c:2119
-#, fuzzy
 msgid "  -S <session>          Source <session> after loading the first file\n"
-msgstr "-S <session>\t\t加载第一个文件后执行文件 <session>"
+msgstr "  -S <session>          加载第一个文件后执行文件 <session>\n"
 
 #: ../main.c:2120
-#, fuzzy
 msgid "  -s <scriptin>         Read Normal mode commands from <scriptin>\n"
-msgstr "-s <scriptin>\t从文件 <scriptin> 读入正常模式的命令"
+msgstr "  -s <scriptin>         从文件 <scriptin> 读入正常模式的命令\n"
 
 #: ../main.c:2121
 msgid "  -u <config>           Use this config file\n"
-msgstr ""
+msgstr "  -u <config>           使用此配置文件\n"
 
 #: ../main.c:2122
-#, fuzzy
 msgid "  -v, --version         Print version information\n"
-msgstr "--version\t\t打印版本信息并退出"
+msgstr "  -v, --version         打印版本信息\n"
 
 #: ../main.c:2123
 msgid "  -V[N][file]           Verbose [level][file]\n"
-msgstr ""
+msgstr "  -V[N][file]           啰嗦 [等级][文件]\n"
 
 #: ../main.c:2125
 msgid "  --api-info            Write msgpack-encoded API metadata to stdout\n"
-msgstr ""
+msgstr "  --api-info            将 msgpack 编码的 API 元数据写入标准输出\n"
 
 #: ../main.c:2126
 msgid ""
 "  --clean               \"Factory defaults\" (skip user config and plugins, "
 "shada)\n"
 msgstr ""
+"  --clean               \"出厂设置\"（跳过用户配置、plugin 和 shada）\n"
 
 #: ../main.c:2127
 msgid "  --embed               Use stdin/stdout as a msgpack-rpc channel\n"
@@ -4312,16 +4253,15 @@ msgstr ""
 
 #: ../main.c:2128
 msgid "  --headless            Don't start a user interface\n"
-msgstr ""
+msgstr "  --headless            不要启动用户界面\n"
 
 #: ../main.c:2129
 msgid "  --listen <address>    Serve RPC API from this address\n"
-msgstr ""
+msgstr "  --listen <address>    在这个地址提供 RPC API\n"
 
 #: ../main.c:2130
-#, fuzzy
 msgid "  --noplugin            Don't load plugins\n"
-msgstr "--noplugin\t\t不加载 plugin 脚本"
+msgstr "  --noplugin            不加载 plugin 脚本\n"
 
 #: ../main.c:2131
 msgid "  --remote[-subcommand] Execute commands remotely on a server\n"
@@ -4332,9 +4272,8 @@ msgid "  --server <address>    Specify RPC server to send commands to\n"
 msgstr ""
 
 #: ../main.c:2133
-#, fuzzy
 msgid "  --startuptime <file>  Write startup timing messages to <file>\n"
-msgstr "--startuptime <file>\t将启动时间信息写入到文件 <file>"
+msgstr "  --startuptime <file>  将启动时间信息写入到文件 <file>\n"
 
 #: ../main.c:2134
 msgid ""
@@ -4376,7 +4315,7 @@ msgstr "E228: makemap: 无效的模式"
 
 #: ../mapping.c:2181
 msgid "E460: entries missing in mapset() dict argument"
-msgstr ""
+msgstr "E460: mapset() dict 参数缺少项"
 
 #: ../mapping.c:2389
 #, c-format
@@ -4427,12 +4366,12 @@ msgstr ""
 #: ../match.c:73
 #, c-format
 msgid "E799: Invalid ID: %<PRId64> (must be greater than or equal to 1)"
-msgstr ""
+msgstr "E799: ID 无效：%<PRId64>（必须大于等于 1）"
 
 #: ../match.c:85
-#, fuzzy, c-format
+#, c-format
 msgid "E801: ID already taken: %<PRId64>"
-msgstr "E157: 无效的 sign ID: %<PRId64>"
+msgstr "E801: ID 已被使用：%<PRId64>"
 
 #: ../match.c:140
 #, c-format
@@ -4440,19 +4379,19 @@ msgid "E5030: Empty list at position %d"
 msgstr ""
 
 #: ../match.c:182
-#, fuzzy, c-format
+#, c-format
 msgid "E5031: List or number required at position %d"
-msgstr "E521: = 后面需要数字"
+msgstr "E5031: 位置 %d 需要列表或整数"
 
 #: ../match.c:252
 #, c-format
 msgid "E802: Invalid ID: %<PRId64> (must be greater than or equal to 1)"
-msgstr ""
+msgstr "E802: 无效的 ID：%<PRId64>（必须大于等于 1）"
 
 #: ../match.c:263
-#, fuzzy, c-format
+#, c-format
 msgid "E803: ID not found: %<PRId64>"
-msgstr "E320: 找不到第 %<PRId64> 行"
+msgstr "E803: 找不到 ID：%<PRId64>"
 
 #: ../match.c:978
 #, c-format
@@ -4467,12 +4406,12 @@ msgstr ""
 #: ../match.c:1093
 #, c-format
 msgid "E798: ID is reserved for \":match\": %<PRId64>"
-msgstr ""
+msgstr "E798: ID 为 \":match\" 保留：%<PRId64>"
 
 #: ../match.c:1144
 #, c-format
 msgid "E798: ID is reserved for \"match\": %<PRId64>"
-msgstr ""
+msgstr "E798: ID 为 \"match\" 保留：%<PRId64>"
 
 #: ../mbyte.c:98
 #, c-format
@@ -4707,22 +4646,21 @@ msgstr ""
 "(你可能想要将这个文件另存为别的文件名\n"
 
 #: ../memline.c:1137
-#, fuzzy
 msgid "and run diff with the original file to check for changes)"
-msgstr "再运行 diff 与原文件比较以检查是否有改变)\n"
+msgstr "再运行 diff 与原文件比较以检查是否有改变)"
 
 #: ../memline.c:1139
 msgid "Recovery completed. Buffer contents equals file contents."
 msgstr "恢复完成。缓冲区内容与文件内容相同。"
 
 #: ../memline.c:1141
-#, fuzzy
 msgid ""
 "\n"
 "You may want to delete the .swp file now.\n"
 "\n"
 msgstr ""
-"然后把 .swp 文件删掉。\n"
+"\n"
+"你现在可以删除 .swp 文件了。\n"
 "\n"
 
 #. use msg() to start the scrolling properly
@@ -4944,7 +4882,6 @@ msgstr "      比交换文件新！\n"
 #. Some of these messages are long to allow translation to
 #. other languages.
 #: ../memline.c:3094
-#, fuzzy
 msgid ""
 "\n"
 "(1) Another program may be editing the same file.  If this is the case,\n"
@@ -4954,14 +4891,11 @@ msgstr ""
 "\n"
 "(1) 另一个程序可能也在编辑同一个文件。\n"
 "    如果是这样，修改时请注意避免同一个文件产生两个不同的版本。\n"
-"\n"
+"    退出，或者小心地继续。\n"
 
 #: ../memline.c:3098
-#, fuzzy
 msgid "(2) An edit session for this file crashed.\n"
-msgstr ""
-"\n"
-"(2) 上次编辑此文件时崩溃。\n"
+msgstr "(2) 上次编辑此文件时崩溃。\n"
 
 #: ../memline.c:3099
 msgid "    If this is the case, use \":recover\" or \"vim -r "
@@ -5044,15 +4978,15 @@ msgid "E326: Too many swap files found"
 msgstr "E326: 找到太多交换文件"
 
 #: ../memline.c:3386
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "E303: Unable to create directory \"%s\" for swap file, recovery impossible: "
 "%s"
-msgstr "E303: 无法打开 \"%s\" 的交换文件，恢复将不可能"
+msgstr "E303: 无法为交换文件创建目录 \"%s\"，恢复将不可能：%s"
 
 #: ../memory.c:197
 msgid "Vim: Data too large to fit into virtual memory space\n"
-msgstr ""
+msgstr "Vim：数据太大无法放入虚拟内存空间\n"
 
 #: ../memory.c:527
 #, c-format
@@ -5142,16 +5076,16 @@ msgid "Press ENTER or type command to continue"
 msgstr "请按 ENTER 或其它命令继续"
 
 #: ../message.c:1367
-#, fuzzy, c-format
+#, c-format
 msgid "%ld more line"
 msgid_plural "%ld more lines"
-msgstr[0] "多了 1 行"
+msgstr[0] "多了 %ld 行"
 
 #: ../message.c:1371
-#, fuzzy, c-format
+#, c-format
 msgid "%ld line less"
 msgid_plural "%ld fewer lines"
-msgstr[0] "少了 1 行"
+msgstr[0] "少了 %ld 行"
 
 #: ../message.c:1375
 msgid " (Interrupted)"
@@ -5235,12 +5169,11 @@ msgstr "E663: 已在改变列表的末尾处"
 
 #: ../normal.c:6081
 msgid "Type  :qa!  and press <Enter> to abandon all changes and exit Nvim"
-msgstr ""
+msgstr "输入  :qa!  并按 <Enter> 来放弃所有更改并退出 Vim"
 
 #: ../normal.c:6084
-#, fuzzy
 msgid "Type  :qa  and press <Enter> to exit Nvim"
-msgstr "输入  :quit<Enter>  退出 Vim"
+msgstr "输入  :qa  并按 <Enter> 退出 Vim"
 
 #: ../ops.c:263
 #, fuzzy, c-format
@@ -5260,7 +5193,7 @@ msgid "%<PRId64> lines to indent... "
 msgstr "缩进 %<PRId64> 行…… "
 
 #: ../ops.c:705
-#, fuzzy, c-format
+#, c-format
 msgid "%<PRId64> line indented "
 msgid_plural "%<PRId64> lines indented "
 msgstr[0] "缩进了 %<PRId64> 行 "
@@ -5270,7 +5203,7 @@ msgid "E748: No previously used register"
 msgstr "E748: 没有前一个使用的寄存器"
 
 #: ../ops.c:2122
-#, fuzzy, c-format
+#, c-format
 msgid "%<PRId64> line changed"
 msgid_plural "%<PRId64> lines changed"
 msgstr[0] "改变了 %<PRId64> 行"
@@ -5307,7 +5240,7 @@ msgstr ""
 "类型 名称 内容"
 
 #: ../ops.c:4453
-#, fuzzy, c-format
+#, c-format
 msgid "%<PRId64> lines changed"
 msgid_plural "%<PRId64> lines changed"
 msgstr[0] "改变了 %<PRId64> 行"
@@ -5316,7 +5249,7 @@ msgstr[0] "改变了 %<PRId64> 行"
 msgid ""
 "E883: search pattern and expression register may not contain two or more "
 "lines"
-msgstr ""
+msgstr "E883: 搜索模式和表达式寄存器只能包含一行文本"
 
 #: ../ops.c:5462
 #, c-format
@@ -5415,9 +5348,9 @@ msgstr "E355: 未知的选项: %s"
 #. is empty.  In both cases, we are trying to set a
 #. num option using a string.
 #: ../option.c:3092
-#, fuzzy, c-format
+#, c-format
 msgid "E521: Number required: &%s = '%s'"
-msgstr "E521: = 后面需要数字"
+msgstr "E521: 需要整数：&%s = '%s'"
 
 #: ../option.c:3198
 msgid ""
@@ -5521,7 +5454,7 @@ msgstr "E5420: 无法写入文件：%s"
 
 #: ../os/input.c:564
 msgid "Vim: Error reading input, exiting...\n"
-msgstr "Vim: 读错误，退出中...\n"
+msgstr "Vim：读取输入时出错，正在退出……\n"
 
 #: ../os/shell.c:696
 msgid ""
@@ -5529,20 +5462,22 @@ msgid ""
 "shell returned "
 msgstr ""
 "\n"
-"Shell 已返回"
+"Shell 返回了 "
 
 #: ../os/shell.c:878
 msgid ""
 "\n"
 "shell failed to start: "
 msgstr ""
+"\n"
+"Shell 无法启动："
 
 #. Can happen if system() tries to send input to a shell command that was
 #. backgrounded (:call system("cat - &", "foo")). #3529 #5241
 #: ../os/shell.c:1316
-#, fuzzy, c-format
+#, c-format
 msgid "E5677: Error writing input to shell-command: %s"
-msgstr "E677: 写临时文件出错"
+msgstr "E5677: 向 Shell 命令输入时出错：%s"
 
 #: ../os/time.c:191
 msgid "%a %b %d %H:%M:%S %Y"
@@ -5622,9 +5557,9 @@ msgid " (line deleted)"
 msgstr " (行已删除)"
 
 #: ../quickfix.c:3252
-#, fuzzy, c-format
+#, c-format
 msgid "%serror list %d of %d; %d errors "
-msgstr "错误列表 %d / %d；共 %d 个错误"
+msgstr "%s 错误列表 %d / %d；共 %d 个错误"
 
 #: ../quickfix.c:3287
 msgid "E380: At bottom of quickfix stack"
@@ -5749,9 +5684,9 @@ msgid "E554: Syntax error in %s{...}"
 msgstr "E554: %s{...} 中语法错误"
 
 #: ../regexp.c:1294
-#, fuzzy, c-format
+#, c-format
 msgid "E888: (NFA regexp) cannot repeat %s"
-msgstr "E866: (NFA regexp) %c 放错了位置"
+msgstr "E888: (NFA regexp) 不能重复 %s"
 
 #: ../regexp.c:2302
 msgid ""
@@ -5774,19 +5709,19 @@ msgid "Searching for \"%s\""
 msgstr "正在查找 \"%s\""
 
 #: ../runtime.c:334
-#, fuzzy, c-format
+#, c-format
 msgid "not found in '%s': \"%s\""
-msgstr "在 'runtimepath' 中找不到 \"%s\""
+msgstr "在 '%s' 中找不到：\"%s\""
 
 #: ../runtime.c:400
-#, fuzzy, c-format
+#, c-format
 msgid "Searching for \"%s\" in runtime path"
-msgstr "正在查找 \"%s\"，在 \"%s\" 中"
+msgstr "正在查找 \"%s\"，在 runtime path 中"
 
 #: ../runtime.c:464
-#, fuzzy, c-format
+#, c-format
 msgid "not found in runtime path: \"%s\""
-msgstr "在 'runtimepath' 中找不到 \"%s\""
+msgstr "在 runtime path 中找不到：\"%s\""
 
 #: ../runtime.c:1912
 #, c-format
@@ -5844,7 +5779,7 @@ msgstr "改变了窗口大小"
 
 #: ../runtime.c:2222
 msgid "Lua"
-msgstr ""
+msgstr "Lua"
 
 #: ../runtime.c:2224
 #, c-format
@@ -5882,7 +5817,7 @@ msgstr "E835: 与'fillchars'中的值冲突"
 
 #: ../screen.c:521
 msgid " TERMINAL"
-msgstr ""
+msgstr " 终端"
 
 #: ../screen.c:523
 msgid " VREPLACE"
@@ -5902,7 +5837,7 @@ msgstr " 插入"
 
 #: ../screen.c:534
 msgid " (terminal)"
-msgstr ""
+msgstr " (终端)"
 
 #: ../screen.c:536
 msgid " (insert)"
@@ -5918,11 +5853,11 @@ msgstr " (V-替换)"
 
 #: ../screen.c:544
 msgid " Hebrew"
-msgstr " Hebrew"
+msgstr " 希伯来文"
 
 #: ../screen.c:548
 msgid " Arabic"
-msgstr " Arabic"
+msgstr " 阿拉伯文"
 
 #: ../screen.c:555
 msgid " (paste)"
@@ -6035,9 +5970,9 @@ msgid "too few bytes read"
 msgstr ""
 
 #: ../shada.c:721
-#, fuzzy, c-format
+#, c-format
 msgid "System error while skipping in ShaDa file: %s"
-msgstr "E782: 当读取.sug 文件时错误"
+msgstr ""
 
 #: ../shada.c:725 ../shada.c:3271
 #, c-format
@@ -6047,19 +5982,19 @@ msgid ""
 msgstr ""
 
 #: ../shada.c:770
-#, fuzzy, c-format
+#, c-format
 msgid "System error while closing ShaDa file: %s"
-msgstr "E782: 当读取.sug 文件时错误"
+msgstr ""
 
 #: ../shada.c:805
-#, fuzzy, c-format
+#, c-format
 msgid "System error while writing ShaDa file: %s"
-msgstr "E782: 当读取.sug 文件时错误"
+msgstr ""
 
 #: ../shada.c:841
-#, fuzzy, c-format
+#, c-format
 msgid "Reading ShaDa file \"%s\"%s%s%s%s"
-msgstr "读取 viminfo 文件 \"%s\"%s%s%s"
+msgstr "读取 ShaDa 文件 \"%s\"%s%s%s%s"
 
 #: ../shada.c:843
 msgid " info"
@@ -6070,9 +6005,8 @@ msgid " marks"
 msgstr " 标记"
 
 #: ../shada.c:845
-#, fuzzy
 msgid " oldfiles"
-msgstr "没有包含文件"
+msgstr " 旧文件"
 
 #: ../shada.c:846
 msgid " FAILED"
@@ -6131,9 +6065,9 @@ msgid "E138: All %s.tmp.X files exist, cannot write ShaDa file!"
 msgstr ""
 
 #: ../shada.c:3032
-#, fuzzy, c-format
+#, c-format
 msgid "System error while opening temporary ShaDa file %s for writing: %s"
-msgstr "E214: 找不到用于写入的临时文件"
+msgstr ""
 
 #: ../shada.c:3047
 #, c-format
@@ -6146,19 +6080,19 @@ msgid "System error while opening ShaDa file %s for writing: %s"
 msgstr ""
 
 #: ../shada.c:3077
-#, fuzzy, c-format
+#, c-format
 msgid "Writing ShaDa file \"%s\""
-msgstr "写入 viminfo 文件 \"%s\""
+msgstr "写入 ShaDa 文件 \"%s\""
 
 #: ../shada.c:3104
-#, fuzzy, c-format
+#, c-format
 msgid "E137: ShaDa file is not writable: %s"
-msgstr "E137: Viminfo 文件不可写入: %s"
+msgstr "E137: ShaDa 文件不可写入：%s"
 
 #: ../shada.c:3116
-#, fuzzy, c-format
+#, c-format
 msgid "Failed setting uid and gid for file %s: %s"
-msgstr "结束执行 %s"
+msgstr "无法为文件 %s 设置 uid 和 gid：%s"
 
 #: ../shada.c:3124
 #, c-format
@@ -6166,9 +6100,9 @@ msgid "Can't rename ShaDa file from %s to %s!"
 msgstr ""
 
 #: ../shada.c:3132
-#, fuzzy, c-format
+#, c-format
 msgid "Did not rename %s because %s does not look like a ShaDa file"
-msgstr "         [不像是 Vim 交换文件]"
+msgstr ""
 
 #: ../shada.c:3135
 #, c-format
@@ -6181,14 +6115,14 @@ msgid "Do not forget to remove %s or rename it manually to %s."
 msgstr ""
 
 #: ../shada.c:3267
-#, fuzzy, c-format
+#, c-format
 msgid "System error while reading ShaDa file: %s"
-msgstr "E782: 当读取.sug 文件时错误"
+msgstr ""
 
 #: ../shada.c:3304
-#, fuzzy, c-format
+#, c-format
 msgid "System error while reading integer from ShaDa file: %s"
-msgstr "E782: 当读取.sug 文件时错误"
+msgstr ""
 
 #: ../shada.c:3308
 #, c-format
@@ -6272,9 +6206,9 @@ msgid "  group=%s"
 msgstr "  组=%s"
 
 #: ../sign.c:736
-#, fuzzy, c-format
+#, c-format
 msgid "    line=%ld  id=%d%s  name=%s  priority=%d"
-msgstr "    行=%<PRId64>  id=%d  名称=%s"
+msgstr "    行=%ld  id=%d%s  名称=%s  优先级=%d"
 
 #: ../sign.c:879
 msgid "E612: Too many signs defined"
@@ -6337,9 +6271,8 @@ msgid "Warning: Cannot find word list \"%s.%s.spl\" or \"%s.ascii.spl\""
 msgstr "警告: 找不到单词列表 \"%s.%s.spl\" or \"%s.ascii.spl\""
 
 #: ../spell.c:1968
-#, fuzzy
 msgid "E797: SpellFileMissing autocommand deleted buffer"
-msgstr "E246: FileChangedShell 自动命令删除了缓冲区"
+msgstr "E797: SpellFileMissing 自动命令删除了缓冲区"
 
 #. This is probably an error.  Give a warning and
 #. accept the words anyway.
@@ -6389,9 +6322,9 @@ msgid "E757: This does not look like a spell file"
 msgstr "E757: 这看起来不像是拼写文件"
 
 #: ../spellfile.c:650
-#, fuzzy, c-format
+#, c-format
 msgid "E5042: Failed to read spell file %s: %s"
-msgstr "E482: 无法创建文件 %s"
+msgstr "E5042: 无法读取拼写文件 %s：%s"
 
 #: ../spellfile.c:658
 msgid "E771: Old spell file, needs to be updated"
@@ -6472,9 +6405,9 @@ msgstr ""
 "在 PFX 项之后定义 COMPOUNDPERMITFLAG （%s 第 %d 行）可能会给出错误的结果"
 
 #: ../spellfile.c:2261
-#, fuzzy, c-format
+#, c-format
 msgid "Wrong COMPOUNDRULES value in %s line %d: %s"
-msgstr "%s 第 %d 行，错误的 COMPOUNDMIN 值: %s"
+msgstr "%s 第 %d 行，错误的 COMPOUNDRULES 值: %s"
 
 #: ../spellfile.c:2285
 #, c-format
@@ -6597,9 +6530,9 @@ msgid "E760: No word count in %s"
 msgstr "E760: %s 中没有单词计数"
 
 #: ../spellfile.c:3214
-#, fuzzy, c-format
+#, c-format
 msgid "line %6d, word %6ld - %s"
-msgstr "第 %6d 行，第 %6d 个单词 - %s"
+msgstr "第 %6d 行，第 %6ld 个单词 - %s"
 
 #: ../spellfile.c:3237
 #, c-format
@@ -6627,44 +6560,44 @@ msgid "Reading word file %s..."
 msgstr "读取单词文件 %s ……"
 
 #: ../spellfile.c:3723
-#, fuzzy, c-format
+#, c-format
 msgid "Conversion failure for word in %s line %ld: %s"
-msgstr "单词 %s 转换失败，第 %d 行: %s"
+msgstr "单词 %s 转换失败，第 %ld 行: %s"
 
 #: ../spellfile.c:3737
-#, fuzzy, c-format
+#, c-format
 msgid "Duplicate /encoding= line ignored in %s line %ld: %s"
 msgstr "%s 第 %ld 行，重复的 /encoding= 行已被忽略: %s"
 
 #: ../spellfile.c:3740
-#, fuzzy, c-format
+#, c-format
 msgid "/encoding= line after word ignored in %s line %ld: %s"
-msgstr "%s 第 %d 行，单词后的 /encoding= 行已被忽略: %s"
+msgstr "%s 第 %ld 行，单词后的 /encoding= 行已被忽略: %s"
 
 #: ../spellfile.c:3761
-#, fuzzy, c-format
+#, c-format
 msgid "Duplicate /regions= line ignored in %s line %ld: %s"
-msgstr "%s 第 %d 行，重复的 /regions= 行已被忽略: %s"
+msgstr "%s 第 %ld 行，重复的 /regions= 行已被忽略: %s"
 
 #: ../spellfile.c:3766
-#, fuzzy, c-format
+#, c-format
 msgid "Too many regions in %s line %ld: %s"
-msgstr "%s 第 %d 行，太多区域: %s"
+msgstr "%s 第 %ld 行，太多区域: %s"
 
 #: ../spellfile.c:3779
-#, fuzzy, c-format
+#, c-format
 msgid "/ line ignored in %s line %ld: %s"
-msgstr "%s 第 %d 行，/ 行已被忽略: %s"
+msgstr "%s 第 %ld 行，/ 行已被忽略: %s"
 
 #: ../spellfile.c:3806
-#, fuzzy, c-format
+#, c-format
 msgid "Invalid region nr in %s line %ld: %s"
-msgstr "%s 第 %d 行，无效的区域号: %s"
+msgstr "%s 第 %ld 行，区域号无效：%s"
 
 #: ../spellfile.c:3812
-#, fuzzy, c-format
+#, c-format
 msgid "Unrecognized flags in %s line %ld: %s"
-msgstr "%s 第 %d 行，不可识别的标志: %s"
+msgstr "%s 第 %ld 行，不可识别的标志: %s"
 
 #: ../spellfile.c:3839
 #, c-format
@@ -6672,9 +6605,9 @@ msgid "Ignored %d words with non-ASCII characters"
 msgstr "忽略了含有非 ASCII 字符的 %d 个单词"
 
 #: ../spellfile.c:4231
-#, fuzzy, c-format
+#, c-format
 msgid "Compressed %s of %ld nodes; %ld (%ld%%) remaining"
-msgstr "压缩了 %d/%d 个节点；剩余 %d (%d%%)"
+msgstr "压缩了 %s / %ld 个节点；剩余 %ld (%ld%%)"
 
 #: ../spellfile.c:4933
 msgid "Reading back spell file..."
@@ -6711,9 +6644,9 @@ msgid "E751: Output file name must not have region name"
 msgstr "E751: 输出文件名不能含有区域名"
 
 #: ../spellfile.c:5355
-#, fuzzy, c-format
+#, c-format
 msgid "E754: Only up to %d regions supported"
-msgstr "E754: 最多只支持 8 个区域"
+msgstr "E754: 最多只支持 %d 个区域"
 
 #: ../spellfile.c:5379
 #, c-format
@@ -6739,19 +6672,18 @@ msgid "E765: 'spellfile' does not have %<PRId64> entries"
 msgstr "E765: 'spellfile' 没有 %<PRId64> 项"
 
 #: ../spellfile.c:5621
-#, fuzzy, c-format
+#, c-format
 msgid "Word '%.*s' removed from %s"
-msgstr "从 %s 中删除了单词"
+msgstr "单词 '%.*s' 从 %s 中删除了"
 
 #: ../spellfile.c:5625
-#, fuzzy
 msgid "Seek error in spellfile"
-msgstr "E294: 交换文件读取定位错误"
+msgstr "拼写文件中定位错误"
 
 #: ../spellfile.c:5671
-#, fuzzy, c-format
+#, c-format
 msgid "Word '%.*s' added to %s"
-msgstr "向 %s 中添加了单词"
+msgstr "单词 '%.*s' 添加到了 %s"
 
 #: ../spellfile.c:5803
 msgid "E763: Word characters differ between spell files"
@@ -6835,9 +6767,8 @@ msgid "no syncing"
 msgstr "没有同步"
 
 #: ../syntax.c:3243
-#, fuzzy
 msgid "syncing starts at the first line"
-msgstr "同步开始"
+msgstr "同步开始于第一行"
 
 #: ../syntax.c:3245
 msgid "syncing starts "
@@ -6877,9 +6808,8 @@ msgid "E392: No such syntax cluster: %s"
 msgstr "E392: 无此语法 cluster: \"%s\""
 
 #: ../syntax.c:3303
-#, fuzzy
 msgid "from the first line"
-msgstr "另一行的词"
+msgstr "从第一行"
 
 #: ../syntax.c:3306
 msgid "minimal "
@@ -6890,23 +6820,20 @@ msgid "maximal "
 msgstr "最大"
 
 #: ../syntax.c:3324
-#, fuzzy
 msgid "; match "
-msgstr "匹配 %d"
+msgstr "；匹配 "
 
 #: ../syntax.c:3326
-#, fuzzy
 msgid " line breaks"
-msgstr "少于一行"
+msgstr " 个换行"
 
 #: ../syntax.c:3875
 msgid "E395: contains argument not accepted here"
 msgstr "E395: 使用了不正确的参数"
 
 #: ../syntax.c:3894
-#, fuzzy
 msgid "E844: invalid cchar value"
-msgstr "E474: 无效的参数"
+msgstr "E844: cchar 值无效"
 
 #: ../syntax.c:3905
 msgid "E393: group[t]here not accepted here"
@@ -6922,14 +6849,13 @@ msgid "E397: Filename required"
 msgstr "E397: 需要文件名称"
 
 #: ../syntax.c:4019
-#, fuzzy
 msgid "E847: Too many syntax includes"
-msgstr "E77: 文件名过多"
+msgstr "E847: syntax include 过多"
 
 #: ../syntax.c:4107
 #, c-format
 msgid "E789: Missing ']': %s"
-msgstr "E789: 缺少 ‘]’：%s"
+msgstr "E789: 缺少 ']'：%s"
 
 #: ../syntax.c:4112
 #, c-format
@@ -6947,9 +6873,8 @@ msgid "E399: Not enough arguments: syntax region %s"
 msgstr "E399: syntax region %s 的参数太少"
 
 #: ../syntax.c:4629
-#, fuzzy
 msgid "E848: Too many syntax clusters"
-msgstr "E391: 无此语法 cluster: \"%s\""
+msgstr "E848: syntax cluster 过多"
 
 #: ../syntax.c:4714
 msgid "E400: No cluster specified"
@@ -7021,7 +6946,7 @@ msgstr "E556: 已在 tag 堆栈顶部"
 
 #: ../tag.c:120
 msgid "E986: cannot modify the tag stack within tagfunc"
-msgstr ""
+msgstr "E986: 在 tagfunc 中不能修改 tag 堆栈"
 
 #: ../tag.c:122
 msgid "E987: invalid return value from tagfunc"
@@ -7123,15 +7048,16 @@ msgid "E435: Couldn't find tag, just guessing!"
 msgstr "E435: 找不到 tag，试着猜！"
 
 #: ../tag.c:3070
-#, fuzzy, c-format
+#, c-format
 msgid "Duplicate field name: %s"
-msgstr "%s 第 %d 行，重复的附加项: %s"
+msgstr "字段名重复：%s"
 
 #: ../testing.c:38
 msgid ""
 "E856: assert_fails() second argument must be a string or a list with one or "
 "two strings"
 msgstr ""
+"E856: assert_fails() 的第二个参数必须是字符串或包含一或两个字符串的列表"
 
 #: ../testing.c:40
 msgid "E1115: assert_fails() fourth argument must be a number"
@@ -7161,9 +7087,9 @@ msgid "E828: Cannot open undo file for writing: %s"
 msgstr "E828: 无法打开并写入撤销文件：%s"
 
 #: ../undo.c:710
-#, fuzzy, c-format
+#, c-format
 msgid "E5003: Unable to create directory \"%s\" for undo file: %s"
-msgstr "E346: 在路径中找不到更多的文件 \"%s\""
+msgstr "E303: 无法为交换文件创建目录 \"%s\"：%s"
 
 #: ../undo.c:749
 #, c-format
@@ -7189,24 +7115,24 @@ msgid "Skipping undo file write, nothing to undo"
 msgstr "跳过写入撤销文件，没有任何撤销"
 
 #: ../undo.c:1252
-#, fuzzy, c-format
+#, c-format
 msgid "Writing undo file: %s"
-msgstr "写入 viminfo 文件 \"%s\""
+msgstr "写入撤销文件：%s"
 
 #: ../undo.c:1340
-#, fuzzy, c-format
+#, c-format
 msgid "E829: write error in undo file: %s"
-msgstr "E297: 交换文件写入错误"
+msgstr "E829: 撤销文件写入错误：%s"
 
 #: ../undo.c:1387
 #, c-format
 msgid "Not reading undo file, owner differs: %s"
-msgstr "不能读取撤销文件, 所有者不同: %s"
+msgstr "不能读取撤销文件，所有者不同：%s"
 
 #: ../undo.c:1400
-#, fuzzy, c-format
+#, c-format
 msgid "Reading undo file: %s"
-msgstr "读取单词文件 %s ……"
+msgstr "读取撤销文件：%s"
 
 #: ../undo.c:1407
 #, c-format
@@ -7228,9 +7154,9 @@ msgid "File contents changed, cannot use undo info"
 msgstr "文件内容已改变，不能使用撤销信息"
 
 #: ../undo.c:1636
-#, fuzzy, c-format
+#, c-format
 msgid "Finished reading undo file %s"
-msgstr "结束执行 %s"
+msgstr "读取撤销文件 %s 结束"
 
 #: ../undo.c:1871 ../undo.c:2106
 msgid "Already at oldest change"
@@ -7287,10 +7213,10 @@ msgid "after"
 msgstr "after"
 
 #: ../undo.c:2613
-#, fuzzy, c-format
+#, c-format
 msgid "%<PRId64> second ago"
 msgid_plural "%<PRId64> seconds ago"
-msgstr[0] "%<PRId64> 列; "
+msgstr[0] "%<PRId64> 秒前"
 
 #: ../undo.c:2697
 msgid "Nothing to undo"
@@ -7301,9 +7227,8 @@ msgid "number changes  when               saved"
 msgstr "  编号    变更  时间                保存"
 
 #: ../undo.c:2724
-#, fuzzy
 msgid "E790: undojoin is not allowed after undo"
-msgstr "E407: %s 不能在此出现"
+msgstr "E790: undo 后不允许 undojoin"
 
 #: ../undo.c:2807
 msgid "E439: undo list corrupt"
@@ -7328,7 +7253,6 @@ msgid "E1237: No such user-defined command in current buffer: %s"
 msgstr "E1237: 当前缓冲区中无此用户定义命令：%s"
 
 #: ../usercmd.c:416
-#, fuzzy
 msgid ""
 "\n"
 "    Name              Args Address Complete    Definition"
@@ -7341,14 +7265,14 @@ msgid "No user-defined commands found"
 msgstr "找不到用户自定义命令"
 
 #: ../usercmd.c:585
-#, fuzzy, c-format
+#, c-format
 msgid "E180: Invalid address type value: %s"
-msgstr "E180: 无效的补全类型: %s"
+msgstr "E180: 无效的地址类型：%s"
 
 #: ../usercmd.c:633
 #, c-format
 msgid "E180: Invalid complete value: %s"
-msgstr "E180: 无效的补全类型: %s"
+msgstr "E180: 无效的补全类型：%s"
 
 #: ../usercmd.c:639
 msgid "E468: Completion argument only allowed for custom completion"
@@ -7379,9 +7303,8 @@ msgid "E179: argument required for -complete"
 msgstr "E179: -complete 需要参数"
 
 #: ../usercmd.c:774
-#, fuzzy
 msgid "E179: argument required for -addr"
-msgstr "E179: -complete 需要参数"
+msgstr "E179: -addr 需要参数"
 
 #: ../usercmd.c:786
 #, c-format
@@ -7389,9 +7312,9 @@ msgid "E181: Invalid attribute: %s"
 msgstr "E181: 无效的属性: %s"
 
 #: ../usercmd.c:866
-#, fuzzy, c-format
+#, c-format
 msgid "E174: Command already exists: add ! to replace it: %s"
-msgstr "E174: 命令已存在: 请加 ! 强制替换"
+msgstr "E174: 命令已存在：请加 ! 强制替换：%s"
 
 #: ../usercmd.c:955
 msgid "E182: Invalid command name"
@@ -7402,9 +7325,8 @@ msgid "E183: User defined commands must start with an uppercase letter"
 msgstr "E183: 用户自定义命令必须以大写字母开头"
 
 #: ../usercmd.c:968
-#, fuzzy
 msgid "E841: Reserved name, cannot be used for user defined command"
-msgstr "E464: 不确定的用户自定义命令"
+msgstr "E841: 名称已被保留，不能用于用户自定义命令"
 
 #: ../version.c:2636
 msgid ""
@@ -7412,6 +7334,9 @@ msgid ""
 "\n"
 "Features: "
 msgstr ""
+"\n"
+"\n"
+"功能: "
 
 #: ../version.c:2740
 msgid ""
@@ -7438,37 +7363,32 @@ msgid " f-b for $VIMRUNTIME: \""
 msgstr "  $VIMRUNTIME 预设值: \""
 
 #: ../version.c:2805
-#, fuzzy
 msgid "Nvim is open source and freely distributable"
-msgstr "Vim 是可自由分发的开放源代码软件"
+msgstr "Nvim 是可自由分发的开放源代码软件"
 
 #: ../version.c:2806
 msgid "https://neovim.io/#chat"
 msgstr ""
 
 #: ../version.c:2808
-#, fuzzy
 msgid "type  :help nvim<Enter>       if you are new! "
-msgstr "输入  :help iccf<Enter>       查看说明        "
+msgstr ""
 
 #: ../version.c:2809
-#, fuzzy
 msgid "type  :checkhealth<Enter>     to optimize Nvim"
-msgstr "输入  :quit<Enter>  退出 Vim"
+msgstr ""
 
 #: ../version.c:2810
 msgid "type  :q<Enter>               to exit         "
 msgstr "输入  :q<Enter>               退出            "
 
 #: ../version.c:2811
-#, fuzzy
 msgid "type  :help<Enter>            for help        "
-msgstr "输入  :q<Enter>               退出            "
+msgstr ""
 
 #: ../version.c:2813
-#, fuzzy
 msgid "type  :help news<Enter> to see changes in"
-msgstr "输入  :help version7<Enter>   查看版本信息    "
+msgstr ""
 
 #: ../version.c:2816
 msgid "Help poor children in Uganda!"
@@ -7499,9 +7419,9 @@ msgid "menu  Help->Sponsor/Register  for information    "
 msgstr "菜单  Help->Sponsor/Register  查看说明           "
 
 #: ../viml/parser/expressions.c:292
-#, fuzzy, c-format
+#, c-format
 msgid "E15: Invalid control character present in input: %.*s"
-msgstr "E71: %s%% 后面有无效的字符"
+msgstr ""
 
 #: ../viml/parser/expressions.c:519
 #, c-format
@@ -7509,14 +7429,14 @@ msgid "E112: Option name missing: %.*s"
 msgstr "E112: 缺少选项名称：%.*s"
 
 #: ../viml/parser/expressions.c:678 ../viml/parser/expressions.c:694
-#, fuzzy, c-format
+#, c-format
 msgid "E15: Unexpected EOC character: %.*s"
-msgstr "E18: :let 中出现异常字符"
+msgstr ""
 
 #: ../viml/parser/expressions.c:706
-#, fuzzy, c-format
+#, c-format
 msgid "E15: Unidentified character: %.*s"
-msgstr "E121: 未定义的变量: %s"
+msgstr ""
 
 #: ../viml/parser/expressions.c:1335
 #, c-format
@@ -7535,14 +7455,14 @@ msgstr ""
 #. Multiple expressions allowed, return without calling
 #. viml_parser_advance().
 #: ../viml/parser/expressions.c:1440
-#, fuzzy, c-format
+#, c-format
 msgid "E15: Missing operator: %.*s"
-msgstr "E115: 缺少引号: %s"
+msgstr ""
 
 #: ../viml/parser/expressions.c:2081
-#, fuzzy, c-format
+#, c-format
 msgid "E15: Expected lambda arguments list or arrow: %.*s"
-msgstr "E807: 期盼浮点数作为printf()参数"
+msgstr ""
 
 #: ../viml/parser/expressions.c:2101
 #, c-format
@@ -7555,9 +7475,8 @@ msgid "E15: Expected assignment operator or subscript: %.*s"
 msgstr ""
 
 #: ../viml/parser/expressions.c:2171
-#, fuzzy
 msgid "E15: Unexpected "
-msgstr "E548: 此处需要数字"
+msgstr ""
 
 #: ../viml/parser/expressions.c:2181
 #, c-format
@@ -7565,9 +7484,8 @@ msgid "E15: Unexpected multiplication-like operator: %.*s"
 msgstr ""
 
 #: ../viml/parser/expressions.c:2241
-#, fuzzy
 msgid "E15: Environment variable name missing"
-msgstr "环境变量"
+msgstr "E15: 缺少环境变量名称"
 
 #: ../viml/parser/expressions.c:2259
 #, c-format
@@ -7577,9 +7495,9 @@ msgstr ""
 #. Value level: comma appearing here is not valid.
 #. Note: in Vim string(,x) will give E116, this is not the case here.
 #: ../viml/parser/expressions.c:2286
-#, fuzzy, c-format
+#, c-format
 msgid "E15: Expected value, got comma: %.*s"
-msgstr "E415: 不该有的等号: %s"
+msgstr ""
 
 #: ../viml/parser/expressions.c:2320
 #, c-format
@@ -7597,14 +7515,14 @@ msgid "E15: Expected value, got closing bracket: %.*s"
 msgstr ""
 
 #: ../viml/parser/expressions.c:2464
-#, fuzzy, c-format
+#, c-format
 msgid "E475: Unable to assign to empty list: %.*s"
-msgstr "E241: 无法发送到 %s"
+msgstr "E475: 无法赋值给空列表：%.*s"
 
 #: ../viml/parser/expressions.c:2474 ../viml/parser/expressions.c:2609
-#, fuzzy, c-format
+#, c-format
 msgid "E15: Unexpected closing figure brace: %.*s"
-msgstr "E415: 不该有的等号: %s"
+msgstr ""
 
 #: ../viml/parser/expressions.c:2507
 #, c-format
@@ -7623,9 +7541,9 @@ msgstr ""
 
 #. Only first branch is valid.
 #: ../viml/parser/expressions.c:2706
-#, fuzzy, c-format
+#, c-format
 msgid "E15: Unexpected arrow: %.*s"
-msgstr "E415: 不该有的等号: %s"
+msgstr ""
 
 #: ../viml/parser/expressions.c:2707
 #, c-format
@@ -7633,9 +7551,9 @@ msgid "E15: Arrow outside of lambda: %.*s"
 msgstr ""
 
 #: ../viml/parser/expressions.c:2788
-#, fuzzy, c-format
+#, c-format
 msgid "E15: Unexpected dot: %.*s"
-msgstr "E415: 不该有的等号: %s"
+msgstr ""
 
 #: ../viml/parser/expressions.c:2791
 #, c-format
@@ -7643,19 +7561,19 @@ msgid "E15: Cannot concatenate in assignments: %.*s"
 msgstr ""
 
 #: ../viml/parser/expressions.c:2813
-#, fuzzy, c-format
+#, c-format
 msgid "E15: Expected value, got parenthesis: %.*s"
-msgstr "E415: 不该有的等号: %s"
+msgstr ""
 
 #: ../viml/parser/expressions.c:2846
-#, fuzzy, c-format
+#, c-format
 msgid "E15: Unexpected closing parenthesis: %.*s"
-msgstr "E415: 不该有的等号: %s"
+msgstr ""
 
 #: ../viml/parser/expressions.c:2889
-#, fuzzy, c-format
+#, c-format
 msgid "E15: Expected value, got question mark: %.*s"
-msgstr "E415: 不该有的等号: %s"
+msgstr ""
 
 #: ../viml/parser/expressions.c:2911
 #, c-format
@@ -7673,19 +7591,19 @@ msgid "E475: Expected closing bracket to end list assignment lvalue: %.*s"
 msgstr ""
 
 #: ../viml/parser/expressions.c:2934
-#, fuzzy, c-format
+#, c-format
 msgid "E15: Misplaced assignment: %.*s"
-msgstr "E125: 无效的参数: %s"
+msgstr ""
 
 #: ../viml/parser/expressions.c:2938
-#, fuzzy, c-format
+#, c-format
 msgid "E15: Unexpected assignment: %.*s"
-msgstr "E415: 不该有的等号: %s"
+msgstr ""
 
 #: ../viml/parser/expressions.c:2965
-#, fuzzy, c-format
+#, c-format
 msgid "E15: Expected value, got EOC: %.*s"
-msgstr "E415: 不该有的等号: %s"
+msgstr ""
 
 #: ../viml/parser/expressions.c:2988
 #, c-format
@@ -7703,14 +7621,14 @@ msgid "E697: Missing end of List ']': %.*s"
 msgstr "E697: List 缺少结束符 ']': %.*s"
 
 #: ../viml/parser/expressions.c:3008
-#, fuzzy, c-format
+#, c-format
 msgid "E723: Missing end of Dictionary '}': %.*s"
-msgstr "E723: Dictionary 缺少结束符 '}': %s"
+msgstr "E723: 字典缺少结束符 '}'：%.*s"
 
 #: ../viml/parser/expressions.c:3013
-#, fuzzy, c-format
+#, c-format
 msgid "E15: Missing closing figure brace: %.*s"
-msgstr "E159: 缺少 sign 号"
+msgstr ""
 
 #: ../viml/parser/expressions.c:3018
 #, c-format
@@ -7736,9 +7654,8 @@ msgid "E441: There is no preview window"
 msgstr "E441: 没有预览窗口"
 
 #: ../window.c:988
-#, fuzzy
 msgid "E242: Can't split a window while closing another"
-msgstr "E345: 在路径中找不到文件 \"%s\""
+msgstr "E242: 在关闭窗口时不能分割另一个窗口"
 
 #: ../window.c:1025
 msgid "E442: Can't split topleft and botright at the same time"
@@ -7753,9 +7670,8 @@ msgid "E444: Cannot close last window"
 msgstr "E444: 不能关闭最后一个窗口"
 
 #: ../window.c:2671
-#, fuzzy
 msgid "E814: Cannot close window, only autocmd window would remain"
-msgstr "E444: 不能关闭最后一个窗口"
+msgstr "E814: 无法关闭窗口，不然就只剩下自动命令窗口了"
 
 #: ../window.c:3867
 msgid "E445: Other window contains changes"
@@ -7766,9 +7682,8 @@ msgid "E446: No file name under cursor"
 msgstr "E446: 光标处没有文件名"
 
 #: ../../../runtime/optwin.vim:72
-#, fuzzy
 msgid "(local to window)"
-msgstr "已经只剩一个窗口了"
+msgstr "(局部于窗口)"
 
 #: ../../../runtime/optwin.vim:73
 msgid "(local to buffer)"
@@ -7916,9 +7831,8 @@ msgid "pattern for a macro definition line"
 msgstr "宏定义行的模式"
 
 #: ../../../runtime/optwin.vim:289
-#, fuzzy
 msgid "pattern for an include-file line"
-msgstr "每行都匹配表达式: %s"
+msgstr "包含文件行的模式"
 
 #: ../../../runtime/optwin.vim:292
 msgid "expression used to transform an include line to a file name"
@@ -7929,9 +7843,8 @@ msgid "tags"
 msgstr "标签"
 
 #: ../../../runtime/optwin.vim:299
-#, fuzzy
 msgid "use binary searching in tags files"
-msgstr "查找 tag 文件 %s"
+msgstr "在标签文件中使用二分法查找"
 
 #: ../../../runtime/optwin.vim:301
 msgid "number of significant characters in a tag name or zero"
@@ -7978,9 +7891,8 @@ msgid "number of screen lines to show around the cursor"
 msgstr "在光标周围显示的屏幕行数"
 
 #: ../../../runtime/optwin.vim:328
-#, fuzzy
 msgid "long lines wrap"
-msgstr "[长行分割]"
+msgstr "长行自动换行"
 
 #: ../../../runtime/optwin.vim:331
 msgid "wrap long lines at a character in 'breakat'"
@@ -8027,9 +7939,8 @@ msgid "number of lines used for the command-line"
 msgstr "用于命令行的行数"
 
 #: ../../../runtime/optwin.vim:354
-#, fuzzy
 msgid "width of the display"
-msgstr "没有 display"
+msgstr "显示的宽度"
 
 #: ../../../runtime/optwin.vim:356
 msgid "number of lines in the display"
@@ -8062,9 +7973,8 @@ msgid "list of strings used for list mode"
 msgstr "用于 list 模式的字符串列表"
 
 #: ../../../runtime/optwin.vim:373
-#, fuzzy
 msgid "show the line number for each line"
-msgstr "行号超出范围"
+msgstr "对每一行显示行号"
 
 #: ../../../runtime/optwin.vim:376
 msgid "show the relative line number for each line"
@@ -8164,7 +8074,7 @@ msgstr "多个窗口"
 
 #: ../../../runtime/optwin.vim:452
 msgid "0, 1, 2 or 3; when to use a status line for the last window"
-msgstr ""
+msgstr "0、1、2 或 3；何时为最后一个窗口使用状态行"
 
 #: ../../../runtime/optwin.vim:455
 msgid "alternate format to be used for a status line"
@@ -8207,14 +8117,12 @@ msgid "initial height of the help window"
 msgstr "帮助窗口的初始高度"
 
 #: ../../../runtime/optwin.vim:481
-#, fuzzy
 msgid "default height for the preview window"
-msgstr "E441: 没有预览窗口"
+msgstr "预览窗口的默认高度"
 
 #: ../../../runtime/optwin.vim:483
-#, fuzzy
 msgid "identifies the preview window"
-msgstr "E441: 没有预览窗口"
+msgstr "标识预览窗口"
 
 #: ../../../runtime/optwin.vim:487
 msgid "don't unload a buffer when no longer shown in a window"
@@ -8271,9 +8179,8 @@ msgid "maximum number of tab pages to open for -p and \"tab all\""
 msgstr "-p 和 \"tab all\" 打开的最大标签页数"
 
 #: ../../../runtime/optwin.vim:520
-#, fuzzy
 msgid "custom tab pages line"
-msgstr "无法获取行"
+msgstr "自定义标签页行"
 
 #: ../../../runtime/optwin.vim:523
 msgid "custom tab page label for the GUI"
@@ -8358,9 +8265,8 @@ msgid "list of font names to be used in the GUI"
 msgstr "在 GUI 中使用的字体名称列表"
 
 #: ../../../runtime/optwin.vim:581
-#, fuzzy
 msgid "pair of fonts to be used, for multibyte editing"
-msgstr "E675: 没有指定多字节打印的默认字体"
+msgstr "用于多字节编辑的字体对"
 
 #: ../../../runtime/optwin.vim:584
 msgid "list of font names to be used for double-wide characters"
@@ -8417,9 +8323,8 @@ msgid "expression to show in balloon eval"
 msgstr "在气泡求值中显示的表达式"
 
 #: ../../../runtime/optwin.vim:631
-#, fuzzy
 msgid "printing"
-msgstr "打印 '%s'"
+msgstr "打印"
 
 #: ../../../runtime/optwin.vim:632
 msgid "list of items that control the format of :hardcopy output"
@@ -8442,9 +8347,8 @@ msgid "format of the header used for :hardcopy"
 msgstr "用于 :hardcopy 的标头格式"
 
 #: ../../../runtime/optwin.vim:645
-#, fuzzy
 msgid "encoding used to print the PostScript file for :hardcopy"
-msgstr "E365: 无法打印 PostScript 文件"
+msgstr "用于 :hardcopy 打印 PostScript 文件的编码"
 
 #: ../../../runtime/optwin.vim:648
 msgid "the CJK character set to be used for CJK output from :hardcopy"
@@ -8519,9 +8423,8 @@ msgid "list of preferred languages for finding help"
 msgstr "查找帮助的首选语言列表"
 
 #: ../../../runtime/optwin.vim:697
-#, fuzzy
 msgid "selecting text"
-msgstr "选择"
+msgstr "选择文本"
 
 #: ../../../runtime/optwin.vim:698
 msgid "\"old\", \"inclusive\" or \"exclusive\"; how selecting text behaves"
@@ -8762,9 +8665,8 @@ msgid "preserve kind of whitespace when changing indent"
 msgstr "在更改缩进时保留空白类型"
 
 #: ../../../runtime/optwin.vim:865
-#, fuzzy
 msgid "enable lisp mode"
-msgstr "-l\t\t\tLisp 模式"
+msgstr "启用 lisp 模式"
 
 #: ../../../runtime/optwin.vim:868
 msgid "words that change how lisp indenting works"
@@ -8772,12 +8674,11 @@ msgstr "改变 lisp 如何缩进的单词"
 
 #: ../../../runtime/optwin.vim:870
 msgid "options for Lisp indenting"
-msgstr ""
+msgstr "Lisp 缩进选项"
 
 #: ../../../runtime/optwin.vim:876
-#, fuzzy
 msgid "folding"
-msgstr "记录中"
+msgstr "折叠"
 
 #: ../../../runtime/optwin.vim:877
 msgid "unset to display all folds open"
@@ -8852,19 +8753,16 @@ msgid "options for using diff mode"
 msgstr "使用差异模式的选项"
 
 #: ../../../runtime/optwin.vim:925
-#, fuzzy
 msgid "expression used to obtain a diff file"
-msgstr "编译时没有启用表达式"
+msgstr "用于获取差异文件的表达式"
 
 #: ../../../runtime/optwin.vim:927
-#, fuzzy
 msgid "expression used to patch a file"
-msgstr "编译时没有启用表达式"
+msgstr "用于给文件打补丁的表达式"
 
 #: ../../../runtime/optwin.vim:932
-#, fuzzy
 msgid "mapping"
-msgstr "找不到映射"
+msgstr "映射"
 
 #: ../../../runtime/optwin.vim:933
 msgid "maximum depth of mapping"
@@ -8887,9 +8785,8 @@ msgid "time in msec for 'ttimeout'"
 msgstr "'ttimeout' 的时间（以毫秒计）"
 
 #: ../../../runtime/optwin.vim:945
-#, fuzzy
 msgid "reading and writing files"
-msgstr "读取字典文件 %s ……"
+msgstr "读写文件"
 
 #: ../../../runtime/optwin.vim:946
 msgid "enable using settings from modelines when reading a file"
@@ -8932,9 +8829,8 @@ msgid "list of file formats to look for when editing a file"
 msgstr "编辑文件时要检查的文件格式列表"
 
 #: ../../../runtime/optwin.vim:973
-#, fuzzy
 msgid "writing files is allowed"
-msgstr "-m\t\t\t不可修改(写入文件)"
+msgstr "允许写入文件"
 
 #: ../../../runtime/optwin.vim:975
 msgid "write a backup file before overwriting a file"
@@ -8985,18 +8881,16 @@ msgid "forcibly sync the file to disk after writing it"
 msgstr "文件写入后强制同步到磁盘"
 
 #: ../../../runtime/optwin.vim:1003
-#, fuzzy
 msgid "the swap file"
-msgstr "无交换文件"
+msgstr "交换文件"
 
 #: ../../../runtime/optwin.vim:1004
 msgid "list of directories for the swap file"
 msgstr "交换文件的目录列表"
 
 #: ../../../runtime/optwin.vim:1006
-#, fuzzy
 msgid "use a swap file for this buffer"
-msgstr "这个缓冲区没有定义任何语法项"
+msgstr "对这个缓冲区使用交换文件"
 
 #: ../../../runtime/optwin.vim:1009
 msgid "number of characters typed to cause a swap file update"
@@ -9024,9 +8918,8 @@ msgid "like 'wildchar' but can also be used in a mapping"
 msgstr "类似 'wildchar'，但也可以在映射中使用"
 
 #: ../../../runtime/optwin.vim:1022
-#, fuzzy
 msgid "specifies how command line completion works"
-msgstr " 命令行补全 (^V^N^P)"
+msgstr "指定命令行如何补全"
 
 #: ../../../runtime/optwin.vim:1025
 msgid "empty or \"tagfile\" to list file name of matching tags"
@@ -9065,9 +8958,8 @@ msgid "height of the command-line window"
 msgstr "命令行窗口的高度"
 
 #: ../../../runtime/optwin.vim:1053
-#, fuzzy
 msgid "executing external commands"
-msgstr "'columns' 不是 80, 不能执行外部命令"
+msgstr "执行外部命令"
 
 #: ../../../runtime/optwin.vim:1054
 msgid "name of the shell program used for external commands"
@@ -9166,9 +9058,8 @@ msgid "language specific"
 msgstr "语言特定"
 
 #: ../../../runtime/optwin.vim:1114
-#, fuzzy
 msgid "specifies the characters in a file name"
-msgstr "E18: :let 中出现异常字符"
+msgstr "指定文件名中的字符"
 
 #: ../../../runtime/optwin.vim:1116
 msgid "specifies the characters in an identifier"
@@ -9179,9 +9070,8 @@ msgid "specifies the characters in a keyword"
 msgstr "指定关键字中的字符"
 
 #: ../../../runtime/optwin.vim:1121
-#, fuzzy
 msgid "specifies printable characters"
-msgstr "E595: 包含不可显示字符或宽字符"
+msgstr "指定可打印字符"
 
 #: ../../../runtime/optwin.vim:1124
 msgid "specifies escape characters in a string"
@@ -9264,13 +9154,12 @@ msgid "function to enable/disable IME"
 msgstr "启用/禁用输入法的函数"
 
 #: ../../../runtime/optwin.vim:1185
-#, fuzzy
 msgid "multi-byte characters"
-msgstr "1 个字符"
+msgstr "多字节字符"
 
 #: ../../../runtime/optwin.vim:1186
 msgid "character encoding used in Nvim: \"utf-8\""
-msgstr ""
+msgstr "Nvim 中使用的字符编码：\"utf-8\""
 
 #: ../../../runtime/optwin.vim:1188
 msgid "character encoding for the current file"
@@ -9356,7 +9245,7 @@ msgstr ":mkview 存放文件的目录"
 
 #: ../../../runtime/optwin.vim:1239
 msgid "list that specifies what to write in the ShaDa file"
-msgstr ""
+msgstr "指定在 ShaDa 文件中写入的内容的列表"
 
 #: ../../../runtime/optwin.vim:1243
 msgid "what happens with a buffer when it's no longer in a window"
