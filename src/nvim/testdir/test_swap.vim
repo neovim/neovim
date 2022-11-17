@@ -421,6 +421,52 @@ func Test_swap_symlink()
   call delete('Xswapdir', 'rf')
 endfunc
 
+func Test_swap_auto_delete()
+  " Create a valid swapfile by editing a file with a special extension.
+  split Xtest.scr
+  call setline(1, ['one', 'two', 'three'])
+  write  " file is written, not modified
+  write  " write again to make sure the swapfile is created
+  " read the swapfile as a Blob
+  let swapfile_name = swapname('%')
+  let swapfile_bytes = readfile(swapfile_name, 'B')
+
+  " Forget about the file, recreate the swap file, then edit it again.  The
+  " swap file should be automatically deleted.
+  bwipe!
+  " change the process ID to avoid the "still running" warning
+  let swapfile_bytes[24] = 0x99
+  call writefile(swapfile_bytes, swapfile_name)
+  edit Xtest.scr
+  " will end up using the same swap file after deleting the existing one
+  call assert_equal(swapfile_name, swapname('%'))
+  bwipe!
+
+  " create the swap file again, but change the host name so that it won't be
+  " deleted
+  autocmd! SwapExists
+  augroup test_swap_recover_ext
+    autocmd!
+    autocmd SwapExists * let v:swapchoice = 'e'
+  augroup END
+
+  " change the host name
+  let swapfile_bytes[28 + 40] = 0x89
+  call writefile(swapfile_bytes, swapfile_name)
+  edit Xtest.scr
+  call assert_equal(1, filereadable(swapfile_name))
+  " will use another same swap file name
+  call assert_notequal(swapfile_name, swapname('%'))
+  bwipe!
+
+  call delete('Xtest.scr')
+  call delete(swapfile_name)
+  augroup test_swap_recover_ext
+    autocmd!
+  augroup END
+  augroup! test_swap_recover_ext
+endfunc
+
 func Test_no_swap_file()
   call assert_equal("\nNo swap file", execute('swapname'))
 endfunc
