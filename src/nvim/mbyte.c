@@ -71,10 +71,6 @@
 # include <locale.h>
 #endif
 
-#ifdef __STDC_ISO_10646__
-# include <stdc-predef.h>
-#endif
-
 typedef struct {
   int rangeStart;
   int rangeEnd;
@@ -1235,12 +1231,9 @@ int mb_toupper(int a)
     return TOUPPER_ASC(a);
   }
 
-#if defined(__STDC_ISO_10646__)
-  // If towupper() is available and handles Unicode, use it.
   if (!(cmp_flags & CMP_INTERNAL)) {
     return (int)towupper((wint_t)a);
   }
-#endif
 
   // For characters below 128 use locale sensitive toupper().
   if (a < 128) {
@@ -1266,12 +1259,9 @@ int mb_tolower(int a)
     return TOLOWER_ASC(a);
   }
 
-#if defined(__STDC_ISO_10646__)
-  // If towlower() is available and handles Unicode, use it.
   if (!(cmp_flags & CMP_INTERNAL)) {
     return (int)towlower((wint_t)a);
   }
-#endif
 
   // For characters below 128 use locale sensitive tolower().
   if (a < 128) {
