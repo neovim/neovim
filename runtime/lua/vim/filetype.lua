@@ -257,6 +257,7 @@ local extension = {
   cc = function(path, bufnr)
     return vim.g.cynlib_syntax_for_cc and 'cynlib' or 'cpp'
   end,
+  cql = 'cqlang',
   crm = 'crm',
   csx = 'cs',
   cs = 'cs',
