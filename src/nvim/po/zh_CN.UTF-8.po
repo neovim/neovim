@@ -26,1622 +26,6 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 
-#: ../../../runtime/optwin.vim:72
-#, fuzzy
-msgid "(local to window)"
-msgstr "已经只剩一个窗口了"
-
-#: ../../../runtime/optwin.vim:73
-msgid "(local to buffer)"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:74
-msgid "(global or local to buffer)"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:153
-msgid ""
-"\" Each \"set\" line shows the current value of an option (on the left)."
-msgstr ""
-
-#: ../../../runtime/optwin.vim:154
-msgid "\" Hit <Enter> on a \"set\" line to execute it."
-msgstr ""
-
-#: ../../../runtime/optwin.vim:155
-msgid "\"            A boolean option will be toggled."
-msgstr ""
-
-#: ../../../runtime/optwin.vim:156
-msgid ""
-"\"            For other options you can edit the value before hitting "
-"<Enter>."
-msgstr ""
-
-#: ../../../runtime/optwin.vim:157
-msgid "\" Hit <Enter> on a help line to open a help window on this option."
-msgstr ""
-
-#: ../../../runtime/optwin.vim:158
-msgid "\" Hit <Enter> on an index line to jump there."
-msgstr ""
-
-#: ../../../runtime/optwin.vim:159
-msgid "\" Hit <Space> on a \"set\" line to refresh it."
-msgstr ""
-
-#: ../../../runtime/optwin.vim:228
-msgid "important"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:229
-msgid "behave very Vi compatible (not advisable)"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:231
-msgid "list of flags to specify Vi compatibility"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:233
-msgid "paste mode, insert typed text literally"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:235
-msgid "key sequence to toggle paste mode"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:241
-msgid "list of directories used for runtime files and plugins"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:243
-msgid "list of directories used for plugin packages"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:245
-msgid "name of the main help file"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:249
-msgid "moving around, searching and patterns"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:250
-msgid "list of flags specifying which commands wrap to another line"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:252
-msgid ""
-"many jump commands move the cursor to the first non-blank\n"
-"character of a line"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:254
-msgid "nroff macro names that separate paragraphs"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:256
-msgid "nroff macro names that separate sections"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:258
-msgid "list of directory names used for file searching"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:261
-msgid ":cd without argument goes to the home directory"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:263
-msgid "list of directory names used for :cd"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:266
-msgid "change to directory of file in buffer"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:269
-msgid "search commands wrap around the end of the buffer"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:271
-msgid "show match for partly typed search command"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:273
-msgid "change the way backslashes are used in search patterns"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:275
-msgid "select the default regexp engine used"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:277
-msgid "ignore case when using a search pattern"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:279
-msgid "override 'ignorecase' when pattern has upper case characters"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:281
-msgid "what method to use for changing case of letters"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:283
-msgid "maximum amount of memory in Kbyte used for pattern matching"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:285
-msgid "pattern for a macro definition line"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:289
-#, fuzzy
-msgid "pattern for an include-file line"
-msgstr "每行都匹配表达式: %s"
-
-#: ../../../runtime/optwin.vim:292
-msgid "expression used to transform an include line to a file name"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:298
-msgid "tags"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:299
-#, fuzzy
-msgid "use binary searching in tags files"
-msgstr "查找 tag 文件 %s"
-
-#: ../../../runtime/optwin.vim:301
-msgid "number of significant characters in a tag name or zero"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:303
-msgid "list of file names to search for tags"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:306
-msgid ""
-"how to handle case when searching in tags files:\n"
-"\"followic\" to follow 'ignorecase', \"ignore\" or \"match\""
-msgstr ""
-
-#: ../../../runtime/optwin.vim:309
-msgid "file names in a tags file are relative to the tags file"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:311
-msgid "a :tag command will use the tagstack"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:313
-msgid "when completing tags in Insert mode show more info"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:316
-msgid "a function to be used to perform tag searches"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:322
-msgid "displaying text"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:323
-msgid "number of lines to scroll for CTRL-U and CTRL-D"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:326
-msgid "number of screen lines to show around the cursor"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:328
-#, fuzzy
-msgid "long lines wrap"
-msgstr "[长行分割]"
-
-#: ../../../runtime/optwin.vim:331
-msgid "wrap long lines at a character in 'breakat'"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:334
-msgid "preserve indentation in wrapped text"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:337
-msgid "adjust breakindent behaviour"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:340
-msgid "which characters might cause a line break"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:342
-msgid "string to put before wrapped screen lines"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:344
-msgid "minimal number of columns to scroll horizontally"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:346
-msgid "minimal number of columns to keep left and right of the cursor"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:348
-msgid ""
-"include \"lastline\" to show the last line even if it doesn't fit\n"
-"include \"uhex\" to show unprintable characters as a hex number"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:350
-msgid "characters to use for the status line, folds and filler lines"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:352
-msgid "number of lines used for the command-line"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:354
-#, fuzzy
-msgid "width of the display"
-msgstr "没有 display"
-
-#: ../../../runtime/optwin.vim:356
-msgid "number of lines in the display"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:358
-msgid "number of lines to scroll for CTRL-F and CTRL-B"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:360
-msgid "don't redraw while executing macros"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:363
-msgid "timeout for 'hlsearch' and :match highlighting in msec"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:366
-msgid ""
-"delay in msec for each char written to the display\n"
-"(for debugging)"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:368
-msgid "show <Tab> as ^I and end-of-line as $"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:371
-msgid "list of strings used for list mode"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:373
-#, fuzzy
-msgid "show the line number for each line"
-msgstr "行号超出范围"
-
-#: ../../../runtime/optwin.vim:376
-msgid "show the relative line number for each line"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:380
-msgid "number of columns to use for the line number"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:385
-msgid "controls whether concealable text is hidden"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:388
-msgid "modes in which text in the cursor line can be concealed"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:394
-msgid "syntax, highlighting and spelling"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:395
-msgid "\"dark\" or \"light\"; the background color brightness"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:397
-msgid "type of file; triggers the FileType event when set"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:401
-msgid "name of syntax highlighting used"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:404
-msgid "maximum column to look for syntax items"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:408
-msgid "which highlighting to use for various occasions"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:410
-msgid "highlight all matches for the last used search pattern"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:413
-msgid "use GUI colors for the terminal"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:417
-msgid "highlight the screen column of the cursor"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:420
-msgid "highlight the screen line of the cursor"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:423
-msgid "specifies which area 'cursorline' highlights"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:426
-msgid "columns to highlight"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:429
-msgid "highlight spelling mistakes"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:432
-msgid "list of accepted languages"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:435
-msgid "file that \"zg\" adds good words to"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:438
-msgid "pattern to locate the end of a sentence"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:441
-msgid "flags to change how spell checking works"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:444
-msgid "methods used to suggest corrections"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:446
-msgid "amount of memory used by :mkspell before compressing"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:451
-msgid "multiple windows"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:452
-msgid "0, 1, 2 or 3; when to use a status line for the last window"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:455
-msgid "alternate format to be used for a status line"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:458
-msgid "make all windows the same size when adding/removing windows"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:460
-msgid "in which direction 'equalalways' works: \"ver\", \"hor\" or \"both\""
-msgstr ""
-
-#: ../../../runtime/optwin.vim:462
-msgid "minimal number of lines used for the current window"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:464
-msgid "minimal number of lines used for any window"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:466
-msgid "keep the height of the window"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:469
-msgid "keep the width of the window"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:472
-msgid "minimal number of columns used for the current window"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:474
-msgid "minimal number of columns used for any window"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:476
-msgid "initial height of the help window"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:481
-#, fuzzy
-msgid "default height for the preview window"
-msgstr "E441: 没有预览窗口"
-
-#: ../../../runtime/optwin.vim:483
-#, fuzzy
-msgid "identifies the preview window"
-msgstr "E441: 没有预览窗口"
-
-#: ../../../runtime/optwin.vim:487
-msgid "don't unload a buffer when no longer shown in a window"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:489
-msgid ""
-"\"useopen\" and/or \"split\"; which window to use when jumping\n"
-"to a buffer"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:491
-msgid "a new window is put below the current one"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:493
-msgid "determines scroll behavior for split windows"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:495
-msgid "a new window is put right of the current one"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:497
-msgid "this window scrolls together with other bound windows"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:500
-msgid "\"ver\", \"hor\" and/or \"jump\"; list of options for 'scrollbind'"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:502
-msgid "this window's cursor moves together with other bound windows"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:506
-msgid "size of a terminal window"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:509
-msgid "key that precedes Vim commands in a terminal window"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:515
-msgid "multiple tab pages"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:516
-msgid "0, 1 or 2; when to use a tab pages line"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:518
-msgid "maximum number of tab pages to open for -p and \"tab all\""
-msgstr ""
-
-#: ../../../runtime/optwin.vim:520
-#, fuzzy
-msgid "custom tab pages line"
-msgstr "无法获取行"
-
-#: ../../../runtime/optwin.vim:523
-msgid "custom tab page label for the GUI"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:525
-msgid "custom tab page tooltip for the GUI"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:530
-msgid "terminal"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:531
-msgid "minimal number of lines to scroll at a time"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:534
-msgid "specifies what the cursor looks like in different modes"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:539
-msgid "show info in the window title"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:542
-msgid "percentage of 'columns' used for the window title"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:544
-msgid "when not empty, string to be used for the window title"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:546
-msgid "string to restore the title to when exiting Vim"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:549
-msgid "set the text of the icon for this window"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:552
-msgid "when not empty, text for the icon of this window"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:557
-msgid "using the mouse"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:558
-msgid "list of flags for using the mouse"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:561
-msgid "the window with the mouse pointer becomes the current one"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:563
-msgid "hide the mouse pointer while typing"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:566
-msgid ""
-"\"extend\", \"popup\" or \"popup_setpos\"; what the right\n"
-"mouse button is used for"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:568
-msgid "maximum time in msec to recognize a double-click"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:571
-msgid "what the mouse pointer looks like in different modes"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:577
-msgid "GUI"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:578
-msgid "list of font names to be used in the GUI"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:581
-#, fuzzy
-msgid "pair of fonts to be used, for multibyte editing"
-msgstr "E675: 没有指定多字节打印的默认字体"
-
-#: ../../../runtime/optwin.vim:584
-msgid "list of font names to be used for double-wide characters"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:586
-msgid "list of flags that specify how the GUI works"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:589
-msgid "\"icons\", \"text\" and/or \"tooltips\"; how to show the toolbar"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:592
-msgid "size of toolbar icons"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:597
-msgid ""
-"\"last\", \"buffer\" or \"current\": which directory used for the file "
-"browser"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:601
-msgid "language to be used for the menus"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:604
-msgid "maximum number of items in one menu"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:607
-msgid "\"no\", \"yes\" or \"menu\"; how to use the ALT key"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:610
-msgid "number of pixel lines to use between characters"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:613
-msgid "delay in milliseconds before a balloon may pop up"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:616
-msgid "use balloon evaluation in the GUI"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:620
-msgid "use balloon evaluation in the terminal"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:624
-msgid "expression to show in balloon eval"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:631
-#, fuzzy
-msgid "printing"
-msgstr "打印 '%s'"
-
-#: ../../../runtime/optwin.vim:632
-msgid "list of items that control the format of :hardcopy output"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:634
-msgid "name of the printer to be used for :hardcopy"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:637
-msgid "expression used to print the PostScript file for :hardcopy"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:640
-msgid "name of the font to be used for :hardcopy"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:642
-msgid "format of the header used for :hardcopy"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:645
-#, fuzzy
-msgid "encoding used to print the PostScript file for :hardcopy"
-msgstr "E365: 无法打印 PostScript 文件"
-
-#: ../../../runtime/optwin.vim:648
-msgid "the CJK character set to be used for CJK output from :hardcopy"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:650
-msgid "list of font names to be used for CJK output from :hardcopy"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:654
-msgid "messages and info"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:655
-msgid "add 's' flag in 'shortmess' (don't show search message)"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:657
-msgid "list of flags to make messages shorter"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:659
-msgid "show (partial) command keys in the status line"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:663
-msgid "display the current mode in the status line"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:665
-msgid "show cursor position below each window"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:670
-msgid "alternate format to be used for the ruler"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:673
-msgid "threshold for reporting number of changed lines"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:675
-msgid "the higher the more messages are given"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:677
-msgid "file to write messages in"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:679
-msgid "pause listings when the screen is full"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:682
-msgid "start a dialog when a command fails"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:685
-msgid "ring the bell for error messages"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:687
-msgid "use a visual bell instead of beeping"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:689
-msgid "do not ring the bell for these reasons"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:692
-msgid "list of preferred languages for finding help"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:697
-#, fuzzy
-msgid "selecting text"
-msgstr "选择"
-
-#: ../../../runtime/optwin.vim:698
-msgid "\"old\", \"inclusive\" or \"exclusive\"; how selecting text behaves"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:700
-msgid ""
-"\"mouse\", \"key\" and/or \"cmd\"; when to start Select mode\n"
-"instead of Visual mode"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:703
-msgid ""
-"\"unnamed\" to use the * register like unnamed register\n"
-"\"autoselect\" to always put selected text on the clipboard"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:706
-msgid "\"startsel\" and/or \"stopsel\"; what special keys can do"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:710
-msgid "editing text"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:711
-msgid "maximum number of changes that can be undone"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:714
-msgid "automatically save and restore undo history"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:716
-msgid "list of directories for undo files"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:718
-msgid "maximum number lines to save for undo on a buffer reload"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:720
-msgid "changes have been made and not written to a file"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:723
-msgid "buffer is not to be written"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:726
-msgid "changes to the text are possible"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:729
-msgid "line length above which to break a line"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:732
-msgid "margin from the right in which to break a line"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:735
-msgid "specifies what <BS>, CTRL-W, etc. can do in Insert mode"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:737
-msgid "definition of what comment lines look like"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:740
-msgid "list of flags that tell how automatic formatting works"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:743
-msgid "pattern to recognize a numbered list"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:747
-msgid "expression used for \"gq\" to format lines"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:752
-msgid "specifies how Insert mode completion works for CTRL-N and CTRL-P"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:755
-msgid "whether to use a popup menu for Insert mode completion"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:757
-msgid "maximum height of the popup menu"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:759
-msgid "minimum width of the popup menu"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:761
-msgid "user defined function for Insert mode completion"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:764
-msgid "function for filetype-specific Insert mode completion"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:767
-msgid "list of dictionary files for keyword completion"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:770
-msgid "list of thesaurus files for keyword completion"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:773
-msgid "function used for thesaurus completion"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:777
-msgid "adjust case of a keyword completion match"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:781
-msgid "enable entering digraphs with c1 <BS> c2"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:784
-msgid "the \"~\" command behaves like an operator"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:786
-msgid "function called for the \"g@\" operator"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:788
-msgid "when inserting a bracket, briefly jump to its match"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:790
-msgid "tenth of a second to show a match for 'showmatch'"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:792
-msgid "list of pairs that match for the \"%\" command"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:795
-msgid "use two spaces after '.' when joining a line"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:797
-msgid ""
-"\"alpha\", \"octal\", \"hex\", \"bin\" and/or \"unsigned\"; number formats\n"
-"recognized for CTRL-A and CTRL-X commands"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:802
-msgid "tabs and indenting"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:803
-msgid "number of spaces a <Tab> in the text stands for"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:806
-msgid "number of spaces used for each step of (auto)indent"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:810
-msgid "list of number of spaces a tab counts for"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:813
-msgid "list of number of spaces a soft tabsstop counts for"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:817
-msgid "a <Tab> in an indent inserts 'shiftwidth' spaces"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:819
-msgid "if non-zero, number of spaces to insert for a <Tab>"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:822
-msgid "round to 'shiftwidth' for \"<<\" and \">>\""
-msgstr ""
-
-#: ../../../runtime/optwin.vim:824
-msgid "expand <Tab> to spaces in Insert mode"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:827
-msgid "automatically set the indent of a new line"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:831
-msgid "do clever autoindenting"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:836
-msgid "enable specific indenting for C code"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:839
-msgid "options for C-indenting"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:842
-msgid "keys that trigger C-indenting in Insert mode"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:845
-msgid "list of words that cause more C-indent"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:848
-msgid "list of scope declaration names used by cino-g"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:851
-msgid "expression used to obtain the indent of a line"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:854
-msgid "keys that trigger indenting with 'indentexpr' in Insert mode"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:858
-msgid "copy whitespace for indenting from previous line"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:861
-msgid "preserve kind of whitespace when changing indent"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:865
-#, fuzzy
-msgid "enable lisp mode"
-msgstr "-l\t\t\tLisp 模式"
-
-#: ../../../runtime/optwin.vim:868
-msgid "words that change how lisp indenting works"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:870
-msgid "options for Lisp indenting"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:876
-#, fuzzy
-msgid "folding"
-msgstr "记录中"
-
-#: ../../../runtime/optwin.vim:877
-msgid "unset to display all folds open"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:880
-msgid "folds with a level higher than this number will be closed"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:883
-msgid "value for 'foldlevel' when starting to edit a file"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:885
-msgid "width of the column used to indicate folds"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:888
-msgid "expression used to display the text of a closed fold"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:891
-msgid "set to \"all\" to close a fold when the cursor leaves it"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:893
-msgid "specifies for which commands a fold will be opened"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:895
-msgid "minimum number of screen lines for a fold to be closed"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:898
-msgid "template for comments; used to put the marker in"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:900
-msgid ""
-"folding type: \"manual\", \"indent\", \"expr\", \"marker\",\n"
-"\"syntax\" or \"diff\""
-msgstr ""
-
-#: ../../../runtime/optwin.vim:903
-msgid "expression used when 'foldmethod' is \"expr\""
-msgstr ""
-
-#: ../../../runtime/optwin.vim:906
-msgid "used to ignore lines when 'foldmethod' is \"indent\""
-msgstr ""
-
-#: ../../../runtime/optwin.vim:909
-msgid "markers used when 'foldmethod' is \"marker\""
-msgstr ""
-
-#: ../../../runtime/optwin.vim:912
-msgid "maximum fold depth for when 'foldmethod' is \"indent\" or \"syntax\""
-msgstr ""
-
-#: ../../../runtime/optwin.vim:919
-msgid "diff mode"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:920
-msgid "use diff mode for the current window"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:923
-msgid "options for using diff mode"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:925
-#, fuzzy
-msgid "expression used to obtain a diff file"
-msgstr "编译时没有启用表达式"
-
-#: ../../../runtime/optwin.vim:927
-#, fuzzy
-msgid "expression used to patch a file"
-msgstr "编译时没有启用表达式"
-
-#: ../../../runtime/optwin.vim:932
-#, fuzzy
-msgid "mapping"
-msgstr "找不到映射"
-
-#: ../../../runtime/optwin.vim:933
-msgid "maximum depth of mapping"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:935
-msgid "allow timing out halfway into a mapping"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:937
-msgid "allow timing out halfway into a key code"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:939
-msgid "time in msec for 'timeout'"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:941
-msgid "time in msec for 'ttimeout'"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:945
-#, fuzzy
-msgid "reading and writing files"
-msgstr "读取字典文件 %s ……"
-
-#: ../../../runtime/optwin.vim:946
-msgid "enable using settings from modelines when reading a file"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:949
-msgid "allow setting expression options from a modeline"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:951
-msgid "number of lines to check for modelines"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:953
-msgid "binary file editing"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:956
-msgid "last line in the file has an end-of-line"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:959
-msgid "last line in the file followed by CTRL-Z"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:962
-msgid "fixes missing end-of-line at end of text file"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:965
-msgid "prepend a Byte Order Mark to the file"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:968
-msgid "end-of-line format: \"dos\", \"unix\" or \"mac\""
-msgstr ""
-
-#: ../../../runtime/optwin.vim:971
-msgid "list of file formats to look for when editing a file"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:973
-#, fuzzy
-msgid "writing files is allowed"
-msgstr "-m\t\t\t不可修改(写入文件)"
-
-#: ../../../runtime/optwin.vim:975
-msgid "write a backup file before overwriting a file"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:977
-msgid "keep a backup after overwriting a file"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:979
-msgid "patterns that specify for which files a backup is not made"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:981
-msgid "whether to make the backup as a copy or rename the existing file"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:984
-msgid "list of directories to put backup files in"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:986
-msgid "file name extension for the backup file"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:988
-msgid "automatically write a file when leaving a modified buffer"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:990
-msgid "as 'autowrite', but works with more commands"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:992
-msgid "always write without asking for confirmation"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:994
-msgid "automatically read a file when it was modified outside of Vim"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:997
-msgid "keep oldest version of a file; specifies file name extension"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:999
-msgid "forcibly sync the file to disk after writing it"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:1003
-#, fuzzy
-msgid "the swap file"
-msgstr "无交换文件"
-
-#: ../../../runtime/optwin.vim:1004
-msgid "list of directories for the swap file"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:1006
-#, fuzzy
-msgid "use a swap file for this buffer"
-msgstr "这个缓冲区没有定义任何语法项"
-
-#: ../../../runtime/optwin.vim:1009
-msgid "number of characters typed to cause a swap file update"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:1011
-msgid "time in msec after which the swap file will be updated"
-msgstr ""
-
-# do not translate to avoid writing Chinese in files
-#: ../../../runtime/optwin.vim:1015
-#, fuzzy
-msgid "command line editing"
-msgstr "命令行"
-
-#: ../../../runtime/optwin.vim:1016
-msgid "how many command lines are remembered"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:1018
-msgid "key that triggers command-line expansion"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:1020
-msgid "like 'wildchar' but can also be used in a mapping"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:1022
-#, fuzzy
-msgid "specifies how command line completion works"
-msgstr " 命令行补全 (^V^N^P)"
-
-#: ../../../runtime/optwin.vim:1025
-msgid "empty or \"tagfile\" to list file name of matching tags"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:1028
-msgid "list of file name extensions that have a lower priority"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:1031
-msgid "list of file name extensions added when searching for a file"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:1036
-msgid "list of patterns to ignore files for file name completion"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:1039
-msgid "ignore case when using file names"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:1041
-msgid "ignore case when completing file names"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:1044
-msgid "command-line completion shows a list of matches"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:1047
-msgid "key used to open the command-line window"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:1049
-msgid "height of the command-line window"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:1053
-#, fuzzy
-msgid "executing external commands"
-msgstr "'columns' 不是 80, 不能执行外部命令"
-
-#: ../../../runtime/optwin.vim:1054
-msgid "name of the shell program used for external commands"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:1056
-msgid "character(s) to enclose a shell command in"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:1058
-msgid "like 'shellquote' but include the redirection"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:1060
-msgid "characters to escape when 'shellxquote' is ("
-msgstr ""
-
-#: ../../../runtime/optwin.vim:1062
-msgid "argument for 'shell' to execute a command"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:1064
-msgid "used to redirect command output to a file"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:1066
-msgid "use a temp file for shell commands instead of using a pipe"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:1068
-msgid "program used for \"=\" command"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:1071
-msgid "program used to format lines with \"gq\" command"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:1073
-msgid "program used for the \"K\" command"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:1075
-msgid "warn when using a shell command and a buffer has changes"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:1080
-msgid "running make and jumping to errors (quickfix)"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:1081
-msgid "name of the file that contains error messages"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:1083
-msgid "list of formats for error messages"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:1086
-msgid "program used for the \":make\" command"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:1089
-msgid "string used to put the output of \":make\" in the error file"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:1091
-msgid "name of the errorfile for the 'makeprg' command"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:1093
-msgid "program used for the \":grep\" command"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:1096
-msgid "list of formats for output of 'grepprg'"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:1098
-msgid "encoding of the \":make\" and \":grep\" output"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:1105
-msgid "system specific"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:1106
-msgid "use forward slashes in file names; for Unix-like shells"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:1108
-msgid "specifies slash/backslash used for completion"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:1113
-msgid "language specific"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:1114
-#, fuzzy
-msgid "specifies the characters in a file name"
-msgstr "E18: :let 中出现异常字符"
-
-#: ../../../runtime/optwin.vim:1116
-msgid "specifies the characters in an identifier"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:1118
-msgid "specifies the characters in a keyword"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:1121
-#, fuzzy
-msgid "specifies printable characters"
-msgstr "E595: 包含不可显示字符或宽字符"
-
-#: ../../../runtime/optwin.vim:1124
-msgid "specifies escape characters in a string"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:1129
-msgid "display the buffer right-to-left"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:1132
-msgid "when to edit the command-line right-to-left"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:1135
-msgid "insert characters backwards"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:1137
-msgid "allow CTRL-_ in Insert and Command-line mode to toggle 'revins'"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:1139
-msgid "the ASCII code for the first letter of the Hebrew alphabet"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:1141
-msgid "use Hebrew keyboard mapping"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:1143
-msgid "use phonetic Hebrew keyboard mapping"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:1147
-msgid "prepare for editing Arabic text"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:1150
-msgid "perform shaping of Arabic characters"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:1152
-msgid "terminal will perform bidi handling"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:1156
-msgid "name of a keyboard mapping"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:1160
-msgid "list of characters that are translated in Normal mode"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:1162
-msgid "apply 'langmap' to mapped characters"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:1166
-msgid "when set never use IM; overrules following IM options"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:1169
-msgid "in Insert mode: 1: use :lmap; 2: use IM; 0: neither"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:1172
-msgid "entering a search pattern: 1: use :lmap; 2: use IM; 0: neither"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:1176
-msgid "when set always use IM when starting to edit a command line"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:1178
-msgid "function to obtain IME status"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:1180
-msgid "function to enable/disable IME"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:1185
-#, fuzzy
-msgid "multi-byte characters"
-msgstr "1 个字符"
-
-#: ../../../runtime/optwin.vim:1186
-msgid "character encoding used in Nvim: \"utf-8\""
-msgstr ""
-
-#: ../../../runtime/optwin.vim:1188
-msgid "character encoding for the current file"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:1191
-msgid "automatically detected character encodings"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:1193
-msgid "expression used for character encoding conversion"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:1195
-msgid "delete combining (composing) characters on their own"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:1197
-msgid "maximum number of combining (composing) characters displayed"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:1200
-msgid "key that activates the X input method"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:1203
-msgid "width of ambiguous width characters"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:1205
-msgid "emoji characters are full width"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:1209
-msgid "various"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:1210
-msgid ""
-"when to use virtual editing: \"block\", \"insert\", \"all\"\n"
-"and/or \"onemore\""
-msgstr ""
-
-#: ../../../runtime/optwin.vim:1212
-msgid "list of autocommand events which are to be ignored"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:1214
-msgid "load plugin scripts when starting up"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:1216
-msgid "enable reading .vimrc/.exrc/.gvimrc in the current directory"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:1218
-msgid "safer working with script files in the current directory"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:1220
-msgid "use the 'g' flag for \":substitute\""
-msgstr ""
-
-#: ../../../runtime/optwin.vim:1223
-msgid "allow reading/writing devices"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:1227
-msgid "maximum depth of function calls"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:1231
-msgid "list of words that specifies what to put in a session file"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:1233
-msgid "list of words that specifies what to save for :mkview"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:1235
-msgid "directory where to store files with :mkview"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:1239
-msgid "list that specifies what to write in the ShaDa file"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:1243
-msgid "what happens with a buffer when it's no longer in a window"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:1246
-msgid "empty, \"nofile\", \"nowrite\", \"quickfix\", etc.: type of buffer"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:1250
-msgid "whether the buffer shows up in the buffer list"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:1253
-msgid "set to \"msg\" to see all error messages"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:1255
-msgid "whether to show the signcolumn"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:1282
-msgid "name of the MzScheme dynamic library"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:1284
-msgid "name of the MzScheme GC dynamic library"
-msgstr ""
-
-#: ../../../runtime/optwin.vim:1288
-msgid "whether to use Python 2 or 3"
-msgstr ""
-
 #: ../arglist.c:67
 #, fuzzy
 msgid "E1156: Cannot change the argument list recursively"
@@ -1691,7 +75,7 @@ msgstr "E351: 不能在当前的 'foldmethod' 下删除折叠"
 
 #: ../autocmd.c:513
 msgid "W19: Deleting augroup that is still in use"
-msgstr ""
+msgstr "W19: 删除依旧在使用中的自动组"
 
 #. Highlight title
 #: ../autocmd.c:896
@@ -1757,7 +141,7 @@ msgstr "E855: 自动命令导致命令被停止"
 #: ../buffer.c:111
 #, c-format
 msgid "E937: Attempt to delete a buffer that is in use: %s"
-msgstr ""
+msgstr "E937: 试图删除使用中的缓冲区：%s"
 
 #: ../buffer.c:219
 msgid "E82: Cannot allocate any buffer, exiting..."
@@ -1831,7 +215,7 @@ msgstr "E189: \"%s\" 已存在 (请加 ! 强制执行)"
 
 #: ../buffer.c:1698
 msgid "E948: Job still running (add ! to end the job)"
-msgstr ""
+msgstr "E948: 任务仍在运行（添加 ! 来结束此任务）"
 
 #: ../buffer.c:1700
 msgid "E37: No write since last change (add ! to override)"
@@ -1934,11 +318,11 @@ msgstr "E382: 无法写入，已设定选项 'buftype'"
 
 #: ../buffer.c:3954
 msgid "[Prompt]"
-msgstr ""
+msgstr "[提示符]"
 
 #: ../buffer.c:3956
 msgid "[Scratch]"
-msgstr ""
+msgstr "[涂鸦]"
 
 #: ../buffer.h:72
 msgid "[Location List]"
@@ -2014,7 +398,7 @@ msgstr "dlerror = \"%s\""
 #: ../debugger.c:114
 #, c-format
 msgid "Newval = \"%s\""
-msgstr ""
+msgstr "新值 = \"%s\""
 
 #: ../debugger.c:124 ../debugger.c:388
 #, c-format
@@ -2034,7 +418,7 @@ msgstr "E726: 步长为零"
 #: ../debugger.c:354
 #, c-format
 msgid "frame at highest level: %d"
-msgstr ""
+msgstr "帧级别最高：%d"
 
 #: ../debugger.c:434
 #, c-format
@@ -2058,7 +442,7 @@ msgstr "%3d  %s %s  第 %<PRId64> 行"
 #: ../debugger.c:731
 #, c-format
 msgid "%3d  expr %s"
-msgstr ""
+msgstr "%3d  表达式 %s"
 
 #: ../diff.c:206
 #, fuzzy, c-format
@@ -2068,7 +452,7 @@ msgstr "E96: 不能比较(diff) %<PRId64> 个以上的缓冲区"
 #: ../diff.c:767
 #, c-format
 msgid "Not enough memory to use internal diff for buffer \"%s\""
-msgstr ""
+msgstr "为缓冲区 \"%s\" 使用内部比对（diff）时无足够的内存"
 
 #: ../diff.c:1082
 #, fuzzy
@@ -2081,7 +465,7 @@ msgstr "E97: 无法创建 diff"
 
 #: ../diff.c:1125
 msgid "E960: Problem creating the internal diff"
-msgstr ""
+msgstr "E960: 创建内部 diff 时遇到问题"
 
 #: ../diff.c:1284
 #, fuzzy
@@ -2126,17 +510,17 @@ msgstr "E787: 意外地改变了缓冲区"
 #: ../digraph.c:50
 #, c-format
 msgid "E1214: Digraph must be just two characters: %s"
-msgstr ""
+msgstr "E1214: 二合字符必须只有两个字符：%s"
 
 #: ../digraph.c:52
 #, c-format
 msgid "E1215: Digraph must be one character: %s"
-msgstr ""
+msgstr "E1215: 二合字符必须是一个字符：%s"
 
 #: ../digraph.c:54
 msgid ""
 "E1216: digraph_setlist() argument must be a list of lists with two items"
-msgstr ""
+msgstr "E1216: digraph_setlist() 参数必须是包含两项的列表的列表"
 
 #: ../digraph.c:1664
 msgid "E104: Escape not allowed in digraph"
@@ -2144,19 +528,19 @@ msgstr "E104: 复合字符(digraph)中不能使用 Escape"
 
 #: ../digraph.c:1737
 msgid "Custom"
-msgstr ""
+msgstr "自定义"
 
 #: ../digraph.c:1794
 msgid "Latin supplement"
-msgstr ""
+msgstr "拉丁文补充"
 
 #: ../digraph.c:1795
 msgid "Greek and Coptic"
-msgstr ""
+msgstr "希腊和科普特文"
 
 #: ../digraph.c:1796
 msgid "Cyrillic"
-msgstr ""
+msgstr "西里尔文"
 
 #: ../digraph.c:1797
 #, fuzzy
@@ -2170,11 +554,11 @@ msgstr " Arabic"
 
 #: ../digraph.c:1799
 msgid "Latin extended"
-msgstr ""
+msgstr "拉丁文扩展"
 
 #: ../digraph.c:1800
 msgid "Greek extended"
-msgstr ""
+msgstr "希腊文扩展"
 
 #: ../digraph.c:1801
 #, fuzzy
@@ -2183,67 +567,67 @@ msgstr "函数 "
 
 #: ../digraph.c:1802
 msgid "Super- and subscripts"
-msgstr ""
+msgstr "上下标"
 
 #: ../digraph.c:1803
 msgid "Currency"
-msgstr ""
+msgstr "货币符号"
 
 #: ../digraph.c:1804 ../digraph.c:1809 ../digraph.c:1819
 msgid "Other"
-msgstr ""
+msgstr "其他"
 
 #: ../digraph.c:1805
 msgid "Roman numbers"
-msgstr ""
+msgstr "罗马数字"
 
 #: ../digraph.c:1806
 msgid "Arrows"
-msgstr ""
+msgstr "箭头"
 
 #: ../digraph.c:1807
 msgid "Mathematical operators"
-msgstr ""
+msgstr "数学运算符"
 
 #: ../digraph.c:1808
 msgid "Technical"
-msgstr ""
+msgstr "技术符号"
 
 #: ../digraph.c:1810
 msgid "Box drawing"
-msgstr ""
+msgstr "方框绘图"
 
 #: ../digraph.c:1811
 msgid "Block elements"
-msgstr ""
+msgstr "块状元素"
 
 #: ../digraph.c:1812
 msgid "Geometric shapes"
-msgstr ""
+msgstr "几何形状"
 
 #: ../digraph.c:1813
 msgid "Symbols"
-msgstr ""
+msgstr "符号"
 
 #: ../digraph.c:1814
 msgid "Dingbats"
-msgstr ""
+msgstr "杂锦字符"
 
 #: ../digraph.c:1815
 msgid "CJK symbols and punctuation"
-msgstr ""
+msgstr "中日韩标点符号"
 
 #: ../digraph.c:1816
 msgid "Hiragana"
-msgstr ""
+msgstr "日文平假名"
 
 #: ../digraph.c:1817
 msgid "Katakana"
-msgstr ""
+msgstr "日文片假名"
 
 #: ../digraph.c:1818
 msgid "Bopomofo"
-msgstr ""
+msgstr "注音符号"
 
 #: ../digraph.c:2062
 msgid "E544: Keymap file not found"
@@ -2269,7 +653,7 @@ msgstr "E719: 不能对 Dictionary 使用 [:]"
 
 #: ../eval.c:95
 msgid "E274: No white space allowed before parenthesis"
-msgstr ""
+msgstr "E274: 小括号前不允许空白字符"
 
 #: ../eval.c:96
 #, fuzzy, c-format
@@ -2323,7 +707,7 @@ msgstr "E709: [:] 需要一个 List 值"
 
 #: ../eval.c:1665
 msgid "E972: Blob value does not have the right number of bytes"
-msgstr ""
+msgstr "E972: blob 值的字节数不对"
 
 #: ../eval.c:1728
 #, fuzzy
@@ -2358,7 +742,7 @@ msgstr "E719: 不能对 Dictionary 使用 [:]"
 
 #: ../eval.c:3037
 msgid "E973: Blob literal should have an even number of hex characters"
-msgstr ""
+msgstr "E973: blob 字面量应该有偶数个十六进制字符"
 
 #: ../eval.c:3137
 msgid "E110: Missing ')'"
@@ -2410,7 +794,7 @@ msgstr "E697: List 缺少结束符 ']': %s"
 
 #: ../eval.c:4338
 msgid "Not enough memory to set references, garbage collection aborted!"
-msgstr ""
+msgstr "没有足够的内存来设置引用，垃圾回收已中止！"
 
 #: ../eval.c:4687
 #, c-format
@@ -2847,7 +1231,7 @@ msgstr "E534: 无效的宽字体"
 #: ../eval/funcs.c:149
 #, c-format
 msgid "E998: Reduce of an empty %s with no initial value"
-msgstr ""
+msgstr "E998: 在没有初始值的情况下 reduce 空的 %s"
 
 #: ../eval/funcs.c:151
 #, fuzzy, c-format
@@ -2895,7 +1279,7 @@ msgstr "-c 参数"
 
 #: ../eval/funcs.c:2178
 msgid "E900: maxdepth must be non-negative number"
-msgstr ""
+msgstr "E900: maxdepth 必须是非负整数"
 
 #: ../eval/funcs.c:2186
 #, fuzzy
@@ -3021,7 +1405,7 @@ msgstr ""
 
 #: ../eval/funcs.c:10026
 msgid "writefile() first argument must be a List or a Blob"
-msgstr ""
+msgstr "writefile() 的第一个参数必须是列表或者 blob"
 
 #. Using %s, p and not %c, *p to preserve multibyte characters
 #: ../eval/funcs.c:10053
@@ -3218,11 +1602,11 @@ msgstr "E728: 将字典当做数字使用"
 
 #: ../eval/typval.c:3827
 msgid "E362: Using a boolean value as a Float"
-msgstr ""
+msgstr "E362: 将布尔值用作浮点数"
 
 #: ../eval/typval.c:3830
 msgid "E907: Using a special value as a Float"
-msgstr ""
+msgstr "E907: 将特殊值作为浮点数使用"
 
 #: ../eval/typval.c:3833
 #, fuzzy
@@ -3255,7 +1639,7 @@ msgstr "E130: 未知的函数: %s"
 #: ../eval/userfunc.c:72
 #, c-format
 msgid "E1068: No white space allowed before '%s': %s"
-msgstr ""
+msgstr "E1068: '%s' 前不允许有空白：%s"
 
 #: ../eval/userfunc.c:124
 #, c-format
@@ -3269,7 +1653,7 @@ msgstr "E125: 无效的参数: %s"
 
 #: ../eval/userfunc.c:171
 msgid "E989: Non-default argument follows default argument"
-msgstr ""
+msgstr "E989: 默认参数后有非默认参数"
 
 #: ../eval/userfunc.c:498
 #, fuzzy, c-format
@@ -3380,7 +1764,7 @@ msgstr "E284: 不能设定 IC 值"
 #: ../eval/userfunc.c:2197
 #, c-format
 msgid "E932: Closure function should not be at top level: %s"
-msgstr ""
+msgstr "E932: 闭包函数不能位于顶层：%s"
 
 #: ../eval/userfunc.c:2272
 msgid "E126: Missing :endfunction"
@@ -3481,7 +1865,7 @@ msgstr "环境变量"
 
 #: ../eval/vars.c:625
 msgid "E996: Cannot lock an option"
-msgstr ""
+msgstr "E996: 不能锁定选项"
 
 #: ../eval/vars.c:716
 #, fuzzy
@@ -3813,6 +2197,7 @@ msgstr "函数结束"
 msgid ""
 "INTERNAL: Cannot use EX_DFLALL with ADDR_NONE, ADDR_UNSIGNED or ADDR_QUICKFIX"
 msgstr ""
+"内部信息：不能使用 EX_DFLALL 与 ADDR_NONE, ADDR_UNSIGNED 或 ADDR_QUICKFIX"
 
 #: ../ex_docmd.c:2118
 msgid "E493: Backwards range given"
@@ -3960,13 +2345,13 @@ msgstr "抛出异常: %s"
 
 #: ../ex_eval.c:553
 #, c-format
-msgid "Exception discarded: %s"
-msgstr "丢弃异常: %s"
+msgid "Exception finished: %s"
+msgstr "完成异常: %s"
 
 #: ../ex_eval.c:553
 #, c-format
-msgid "Exception finished: %s"
-msgstr "完成异常: %s"
+msgid "Exception discarded: %s"
+msgstr "丢弃异常: %s"
 
 #: ../ex_eval.c:597 ../ex_eval.c:647
 #, c-format
@@ -4282,12 +2667,12 @@ msgid "can't read output of 'charconvert'"
 msgstr "无法读取 'charconvert' 的输出"
 
 #: ../fileio.c:2116
-msgid "[New File]"
-msgstr "[新文件]"
-
-#: ../fileio.c:2116
 msgid "[New]"
 msgstr "[新]"
+
+#: ../fileio.c:2116
+msgid "[New File]"
+msgstr "[新文件]"
 
 #: ../fileio.c:2416
 msgid "E203: Autocommands deleted or unloaded buffer to be written"
@@ -4410,28 +2795,28 @@ msgid "don't quit the editor until the file is successfully written!"
 msgstr "在文件正确写入前请勿退出编辑器！"
 
 #: ../fileio.c:3721
-msgid "[dos format]"
-msgstr "[dos 格式]"
-
-#: ../fileio.c:3721
 msgid "[dos]"
 msgstr "[dos]"
 
-#: ../fileio.c:3726
-msgid "[mac format]"
-msgstr "[mac 格式]"
+#: ../fileio.c:3721
+msgid "[dos format]"
+msgstr "[dos 格式]"
 
 #: ../fileio.c:3726
 msgid "[mac]"
 msgstr "[mac]"
 
-#: ../fileio.c:3731
-msgid "[unix format]"
-msgstr "[unix 格式]"
+#: ../fileio.c:3726
+msgid "[mac format]"
+msgstr "[mac 格式]"
 
 #: ../fileio.c:3731
 msgid "[unix]"
 msgstr "[unix]"
+
+#: ../fileio.c:3731
+msgid "[unix format]"
+msgstr "[unix 格式]"
 
 #: ../fileio.c:3753
 #, fuzzy, c-format
@@ -4446,12 +2831,12 @@ msgid_plural "%<PRId64> bytes"
 msgstr[0] "%<PRId64> 个匹配，"
 
 #: ../fileio.c:3766
-msgid "[Incomplete last line]"
-msgstr "[最后一行不完整]"
-
-#: ../fileio.c:3766
 msgid "[noeol]"
 msgstr "[noeol]"
+
+#: ../fileio.c:3766
+msgid "[Incomplete last line]"
+msgstr "[最后一行不完整]"
 
 #. Don't overwrite messages here.
 #. Must give this prompt.
@@ -4532,6 +2917,9 @@ msgid ""
 "&Load File\n"
 "Load File &and Options"
 msgstr ""
+"确定(&O)\n"
+"加载文件(&L)\n"
+"加载文件和选项(&A)"
 
 #: ../fileio.c:5050
 #, c-format
@@ -6164,26 +4552,26 @@ msgstr "E711: List 值没有足够多的项"
 #: ../mbyte.c:100
 #, c-format
 msgid "E1110: List item %d does not contain 3 numbers"
-msgstr ""
+msgstr "E1110: 列表项 %d 不包含三个整数"
 
 #: ../mbyte.c:102
 #, c-format
 msgid "E1111: List item %d range invalid"
-msgstr ""
+msgstr "E1111: 列表项 %d 范围无效"
 
 #: ../mbyte.c:104
 #, c-format
 msgid "E1112: List item %d cell width invalid"
-msgstr ""
+msgstr "E1112: 列表项 %d 单元格宽度无效"
 
 #: ../mbyte.c:106
 #, c-format
 msgid "E1113: Overlapping ranges for 0x%lx"
-msgstr ""
+msgstr "E1113: 重叠范围为 0x%lx"
 
 #: ../mbyte.c:108
 msgid "E1114: Only values of 0x100 and higher supported"
-msgstr ""
+msgstr "E1114: 只支持 0x100 或更高的值"
 
 #: ../memfile.c:334
 msgid "E293: block was not locked"
@@ -6510,7 +4898,7 @@ msgstr ""
 
 #: ../memline.c:1482
 msgid " (STILL RUNNING)"
-msgstr ""
+msgstr " （还！在！运！行！）"
 
 #: ../memline.c:1488
 msgid ""
@@ -6679,7 +5067,7 @@ msgstr ""
 
 #: ../memline.c:3270
 msgid "Found a swap file that is not useful, deleting it"
-msgstr ""
+msgstr "找到一个没用的交换文件，删了"
 
 #: ../memline.c:3296
 msgid "Swap file \""
@@ -6968,7 +5356,7 @@ msgstr[0] "改变了 %<PRId64> 行"
 #: ../ops.c:2786
 #, c-format
 msgid " into \"%c"
-msgstr ""
+msgstr "进 \"%c "
 
 #: ../ops.c:2795
 #, fuzzy, c-format
@@ -6993,6 +5381,8 @@ msgid ""
 "\n"
 "Type Name Content"
 msgstr ""
+"\n"
+"类型 名称 内容"
 
 #: ../ops.c:4453
 #, fuzzy, c-format
@@ -7161,7 +5551,7 @@ msgstr "E539: 无效的字符 <%s>"
 #: ../optionstr.c:337
 #, c-format
 msgid "For option %s"
-msgstr ""
+msgstr "对选项 %s"
 
 #: ../optionstr.c:959
 msgid "E524: Missing colon"
@@ -7236,7 +5626,7 @@ msgstr "E677: 写临时文件出错"
 
 #: ../os/time.c:191
 msgid "%a %b %d %H:%M:%S %Y"
-msgstr ""
+msgstr "%Y-%m-%d %H:%M:%S"
 
 #: ../path.c:1711
 #, c-format
@@ -7254,11 +5644,11 @@ msgstr "E553: 没有更多的项"
 
 #: ../quickfix.c:278
 msgid "E925: Current quickfix list was changed"
-msgstr ""
+msgstr "E925: 当前 quickfix 列表已改变"
 
 #: ../quickfix.c:280
 msgid "E926: Current location list was changed"
-msgstr ""
+msgstr "E926: 当前位置列表已改变"
 
 #. Each errorformat pattern can occur only once
 #: ../quickfix.c:382
@@ -7301,7 +5691,7 @@ msgstr "E379: 找不到目录名称或是空的目录名称"
 
 #: ../quickfix.c:2737
 msgid "E924: Current window was closed"
-msgstr ""
+msgstr "E924: 当前窗口已关闭"
 
 #: ../quickfix.c:2809
 #, c-format
@@ -7327,7 +5717,7 @@ msgstr "E381: Quickfix 堆栈顶端"
 
 #: ../quickfix.c:3327
 msgid "No entries"
-msgstr ""
+msgstr "没有项目"
 
 #: ../quickfix.c:5335
 msgid "E683: File name missing or invalid pattern"
@@ -7340,7 +5730,7 @@ msgstr "无法打开文件 \"%s\""
 
 #: ../quickfix.c:6680
 msgid "cannot have both a list and a \"what\" argument"
-msgstr ""
+msgstr "不能同时有列表和 \"what\" 参数"
 
 #: ../quickfix.c:6796
 msgid "E681: Buffer is not loaded"
@@ -7372,7 +5762,7 @@ msgstr "E488: 多余的尾部字符"
 
 #: ../regexp.c:109
 msgid "E945: Range too large in character class"
-msgstr ""
+msgstr "E945: 字符类中的范围太大了"
 
 #: ../regexp.c:110
 #, c-format
@@ -7416,7 +5806,7 @@ msgstr "E659: 不能递归调用 Python"
 #: ../regexp.c:119
 #, c-format
 msgid "E1204: No Number allowed after .: '\\%%%c'"
-msgstr ""
+msgstr "E1204: . 后不能加整数: '\\%%%c'"
 
 #: ../regexp.c:121
 #, fuzzy, c-format
@@ -7426,7 +5816,7 @@ msgstr "E866: (NFA regexp) %c 放错了位置"
 #: ../regexp.c:123
 #, c-format
 msgid "E1281: Atom '\\%%#=%c' must be at the start of the pattern"
-msgstr ""
+msgstr "E1281: 原子 '\\%%#=%c' 必须位于模式的开头"
 
 #: ../regexp.c:124
 #, fuzzy
@@ -7456,7 +5846,7 @@ msgstr "E864: \\%#= 后面只能是0，1，或者2。自动引擎将会被使用
 
 #: ../regexp.c:2383
 msgid "Switching to backtracking RE engine for pattern: "
-msgstr ""
+msgstr "为此模式切换到回溯正则引擎："
 
 #: ../runtime.c:266
 #, c-format
@@ -7535,7 +5925,7 @@ msgstr "错误的处理程序"
 
 #: ../runtime.c:2220
 msgid "changed window size"
-msgstr ""
+msgstr "改变了窗口大小"
 
 #: ../runtime.c:2222
 msgid "Lua"
@@ -7964,7 +6354,7 @@ msgstr "%s 的 Signs:"
 #: ../sign.c:730
 #, c-format
 msgid "  group=%s"
-msgstr ""
+msgstr "  组=%s"
 
 #: ../sign.c:736
 #, fuzzy, c-format
@@ -7988,7 +6378,7 @@ msgstr "E155: 未知的 sign: %s"
 #: ../sign.c:1114
 #, c-format
 msgid "E885: Not possible to change sign %s"
-msgstr ""
+msgstr "E885: 不可能改变标号 %s"
 
 #: ../sign.c:1161
 msgid "E159: Missing sign number"
@@ -8001,7 +6391,7 @@ msgstr "E157: 无效的 sign ID: %<PRId64>"
 
 #: ../sign.c:1182
 msgid "E934: Cannot jump to a buffer that does not have a name"
-msgstr ""
+msgstr "E934: 无法跳转到没有名字的缓冲区"
 
 #: ../sign.c:1476
 #, c-format
@@ -8511,11 +6901,11 @@ msgstr "这个缓冲区没有定义任何语法项"
 
 #: ../syntax.c:2706
 msgid "'redrawtime' exceeded, syntax highlighting disabled"
-msgstr ""
+msgstr "'redrawtime' 已过，语法高亮被禁用"
 
 #: ../syntax.c:2941
 msgid "syntax iskeyword not set"
-msgstr ""
+msgstr "syntax iskeyword 未设置"
 
 #: ../syntax.c:3118
 #, c-format
@@ -8840,7 +7230,7 @@ msgstr ""
 
 #: ../testing.c:44
 msgid "E1142: Calling test_garbagecollect_now() while v:testing is not set"
-msgstr ""
+msgstr "E1142: 在 v:testing 未设置的时候调用 test_garbagecollect_now()"
 
 #: ../ui.c:342
 msgid "Beep!"
@@ -8976,12 +7366,12 @@ msgid "%<PRId64> %s; %s #%<PRId64>  %s"
 msgstr "%<PRId64> %s；%s #%<PRId64>  %s"
 
 #: ../undo.c:2592
-msgid "after"
-msgstr "after"
-
-#: ../undo.c:2592
 msgid "before"
 msgstr "before"
+
+#: ../undo.c:2592
+msgid "after"
+msgstr "after"
 
 #: ../undo.c:2613
 #, fuzzy, c-format
@@ -9012,7 +7402,7 @@ msgstr "E440: 找不到要撤销的行"
 
 #: ../usercmd.c:46
 msgid "E1208: -complete used without allowing arguments"
-msgstr ""
+msgstr "E1208: 用了 -complete 却不允许使用参数"
 
 #: ../usercmd.c:48
 #, c-format
@@ -9462,6 +7852,1632 @@ msgstr "E445: 其它窗口有改变的内容"
 #: ../window.c:6498
 msgid "E446: No file name under cursor"
 msgstr "E446: 光标处没有文件名"
+
+#: ../../../runtime/optwin.vim:72
+#, fuzzy
+msgid "(local to window)"
+msgstr "已经只剩一个窗口了"
+
+#: ../../../runtime/optwin.vim:73
+msgid "(local to buffer)"
+msgstr "(局部于缓冲区)"
+
+#: ../../../runtime/optwin.vim:74
+msgid "(global or local to buffer)"
+msgstr "(全局或局部于缓冲区)"
+
+#: ../../../runtime/optwin.vim:153
+msgid ""
+"\" Each \"set\" line shows the current value of an option (on the left)."
+msgstr "\" 每个 \"set\" 行显示左侧选项的当前值"
+
+#: ../../../runtime/optwin.vim:154
+msgid "\" Hit <Enter> on a \"set\" line to execute it."
+msgstr "\" 在 \"set\" 行上按 <回车> 来执行。"
+
+#: ../../../runtime/optwin.vim:155
+msgid "\"            A boolean option will be toggled."
+msgstr "\"            布尔选项将被切换。"
+
+#: ../../../runtime/optwin.vim:156
+msgid ""
+"\"            For other options you can edit the value before hitting "
+"<Enter>."
+msgstr "\"            对于其他选项，您可以在按 <回车> 之前编辑该值。"
+
+#: ../../../runtime/optwin.vim:157
+msgid "\" Hit <Enter> on a help line to open a help window on this option."
+msgstr "\" 在帮助行上按 <回车> 来打开关于此选项的帮助窗口。"
+
+#: ../../../runtime/optwin.vim:158
+msgid "\" Hit <Enter> on an index line to jump there."
+msgstr "\" 在索引行上按 <回车> 来跳转到那里。"
+
+#: ../../../runtime/optwin.vim:159
+msgid "\" Hit <Space> on a \"set\" line to refresh it."
+msgstr "\" 在 \"set\" 行上按 <空格> 来刷新。 "
+
+#: ../../../runtime/optwin.vim:228
+msgid "important"
+msgstr "重要选项"
+
+#: ../../../runtime/optwin.vim:229
+msgid "behave very Vi compatible (not advisable)"
+msgstr "非常兼容 Vi（不建议）"
+
+#: ../../../runtime/optwin.vim:231
+msgid "list of flags to specify Vi compatibility"
+msgstr "指定 Vi 兼容性的标志列表"
+
+#: ../../../runtime/optwin.vim:233
+msgid "paste mode, insert typed text literally"
+msgstr "粘贴模式，按本义插入输入的文本"
+
+#: ../../../runtime/optwin.vim:235
+msgid "key sequence to toggle paste mode"
+msgstr "切换粘贴模式的按键序列"
+
+#: ../../../runtime/optwin.vim:241
+msgid "list of directories used for runtime files and plugins"
+msgstr "运行时文件和插件使用的目录列表"
+
+#: ../../../runtime/optwin.vim:243
+msgid "list of directories used for plugin packages"
+msgstr "插件包使用的目录列表"
+
+#: ../../../runtime/optwin.vim:245
+msgid "name of the main help file"
+msgstr "主帮助文件的名称"
+
+#: ../../../runtime/optwin.vim:249
+msgid "moving around, searching and patterns"
+msgstr "移动、搜索以及正则表达式"
+
+#: ../../../runtime/optwin.vim:250
+msgid "list of flags specifying which commands wrap to another line"
+msgstr "指定哪些命令折行的标志列表"
+
+#: ../../../runtime/optwin.vim:252
+msgid ""
+"many jump commands move the cursor to the first non-blank\n"
+"character of a line"
+msgstr "许多跳转命令将光标移动到第一个非空的位置行中的字符"
+
+#: ../../../runtime/optwin.vim:254
+msgid "nroff macro names that separate paragraphs"
+msgstr "用于分隔段落的 nroff 宏名"
+
+#: ../../../runtime/optwin.vim:256
+msgid "nroff macro names that separate sections"
+msgstr "用于分隔小节的 nroff 宏名"
+
+#: ../../../runtime/optwin.vim:258
+msgid "list of directory names used for file searching"
+msgstr "用于文件搜索的目录名称列表"
+
+#: ../../../runtime/optwin.vim:261
+msgid ":cd without argument goes to the home directory"
+msgstr "不带参数的 :cd 进入主目录"
+
+#: ../../../runtime/optwin.vim:263
+msgid "list of directory names used for :cd"
+msgstr "目录名称列表用于 :cd"
+
+#: ../../../runtime/optwin.vim:266
+msgid "change to directory of file in buffer"
+msgstr "切换到缓冲区的文件所在的目录"
+
+#: ../../../runtime/optwin.vim:269
+msgid "search commands wrap around the end of the buffer"
+msgstr "搜索在缓冲区折行的命令"
+
+#: ../../../runtime/optwin.vim:271
+msgid "show match for partly typed search command"
+msgstr "显示匹配部分键入的搜索命令"
+
+#: ../../../runtime/optwin.vim:273
+msgid "change the way backslashes are used in search patterns"
+msgstr "改变反斜杠在搜索模式中的使用方式"
+
+#: ../../../runtime/optwin.vim:275
+msgid "select the default regexp engine used"
+msgstr "选择默认的正则表达式引擎"
+
+#: ../../../runtime/optwin.vim:277
+msgid "ignore case when using a search pattern"
+msgstr "使用搜索模式时忽略大小写"
+
+#: ../../../runtime/optwin.vim:279
+msgid "override 'ignorecase' when pattern has upper case characters"
+msgstr "当模式包含大写字符时，覆盖 'ignorecase'"
+
+#: ../../../runtime/optwin.vim:281
+msgid "what method to use for changing case of letters"
+msgstr "用什么方法来改变字母的大小写"
+
+#: ../../../runtime/optwin.vim:283
+msgid "maximum amount of memory in Kbyte used for pattern matching"
+msgstr "模式匹配使用的最大内存（以千字节为单位）"
+
+#: ../../../runtime/optwin.vim:285
+msgid "pattern for a macro definition line"
+msgstr "宏定义行的模式"
+
+#: ../../../runtime/optwin.vim:289
+#, fuzzy
+msgid "pattern for an include-file line"
+msgstr "每行都匹配表达式: %s"
+
+#: ../../../runtime/optwin.vim:292
+msgid "expression used to transform an include line to a file name"
+msgstr "用于将包含行转换为文件名的表达式"
+
+#: ../../../runtime/optwin.vim:298
+msgid "tags"
+msgstr "标签"
+
+#: ../../../runtime/optwin.vim:299
+#, fuzzy
+msgid "use binary searching in tags files"
+msgstr "查找 tag 文件 %s"
+
+#: ../../../runtime/optwin.vim:301
+msgid "number of significant characters in a tag name or zero"
+msgstr "标签名称中的有效字符数，默认为零"
+
+#: ../../../runtime/optwin.vim:303
+msgid "list of file names to search for tags"
+msgstr "用于搜索标签的文件名列表"
+
+#: ../../../runtime/optwin.vim:306
+msgid ""
+"how to handle case when searching in tags files:\n"
+"\"followic\" to follow 'ignorecase', \"ignore\" or \"match\""
+msgstr ""
+"在标签文件中搜索如何处理大小写: \"followic\" 跟随 'ignorecase', \"ignore\" 或"
+"者 \"match\""
+
+#: ../../../runtime/optwin.vim:309
+msgid "file names in a tags file are relative to the tags file"
+msgstr "标签文件里的文件名是相对于标签文件的路径"
+
+#: ../../../runtime/optwin.vim:311
+msgid "a :tag command will use the tagstack"
+msgstr ":tag 命令将使用 tagstack"
+
+#: ../../../runtime/optwin.vim:313
+msgid "when completing tags in Insert mode show more info"
+msgstr "在插入模式补全标签时显示更多信息"
+
+#: ../../../runtime/optwin.vim:316
+msgid "a function to be used to perform tag searches"
+msgstr "用于执行标签搜索的函数"
+
+#: ../../../runtime/optwin.vim:322
+msgid "displaying text"
+msgstr "显示文本"
+
+#: ../../../runtime/optwin.vim:323
+msgid "number of lines to scroll for CTRL-U and CTRL-D"
+msgstr "按 CTRL-U 和 CTRL-D 滚动的行数"
+
+#: ../../../runtime/optwin.vim:326
+msgid "number of screen lines to show around the cursor"
+msgstr "在光标周围显示的屏幕行数"
+
+#: ../../../runtime/optwin.vim:328
+#, fuzzy
+msgid "long lines wrap"
+msgstr "[长行分割]"
+
+#: ../../../runtime/optwin.vim:331
+msgid "wrap long lines at a character in 'breakat'"
+msgstr "在 'breakat' 中的字符处对长行折行"
+
+#: ../../../runtime/optwin.vim:334
+msgid "preserve indentation in wrapped text"
+msgstr "在折行文本中保持缩进"
+
+#: ../../../runtime/optwin.vim:337
+msgid "adjust breakindent behaviour"
+msgstr "调整 breakindent 的行为"
+
+#: ../../../runtime/optwin.vim:340
+msgid "which characters might cause a line break"
+msgstr "哪些字符可能导致换行"
+
+#: ../../../runtime/optwin.vim:342
+msgid "string to put before wrapped screen lines"
+msgstr "放在折回的屏幕行之前的字符串"
+
+#: ../../../runtime/optwin.vim:344
+msgid "minimal number of columns to scroll horizontally"
+msgstr "水平滚动的最小列数"
+
+#: ../../../runtime/optwin.vim:346
+msgid "minimal number of columns to keep left and right of the cursor"
+msgstr "保留在光标左右的最小列数"
+
+#: ../../../runtime/optwin.vim:348
+msgid ""
+"include \"lastline\" to show the last line even if it doesn't fit\n"
+"include \"uhex\" to show unprintable characters as a hex number"
+msgstr ""
+"包含 \"lastline\" 来显示最后一行，即使它显示不下\n"
+"包含 \"uhex\" 以十六进制显示不可打印字符"
+
+#: ../../../runtime/optwin.vim:350
+msgid "characters to use for the status line, folds and filler lines"
+msgstr "用于状态行、折叠和填充行的字符"
+
+#: ../../../runtime/optwin.vim:352
+msgid "number of lines used for the command-line"
+msgstr "用于命令行的行数"
+
+#: ../../../runtime/optwin.vim:354
+#, fuzzy
+msgid "width of the display"
+msgstr "没有 display"
+
+#: ../../../runtime/optwin.vim:356
+msgid "number of lines in the display"
+msgstr "显示的行数"
+
+#: ../../../runtime/optwin.vim:358
+msgid "number of lines to scroll for CTRL-F and CTRL-B"
+msgstr "按 CTRL-F 和 CTRL-B 滚动的行数"
+
+#: ../../../runtime/optwin.vim:360
+msgid "don't redraw while executing macros"
+msgstr "在执行宏时不要重新绘制"
+
+#: ../../../runtime/optwin.vim:363
+msgid "timeout for 'hlsearch' and :match highlighting in msec"
+msgstr "'hlsearch' 和 :match 高亮的超时时间（以毫秒计）"
+
+#: ../../../runtime/optwin.vim:366
+msgid ""
+"delay in msec for each char written to the display\n"
+"(for debugging)"
+msgstr "每个字符写到显示的延时（以毫秒计；用于调试）"
+
+#: ../../../runtime/optwin.vim:368
+msgid "show <Tab> as ^I and end-of-line as $"
+msgstr "以 ^I 显示 <Tab>, 以 $ 显示行尾"
+
+#: ../../../runtime/optwin.vim:371
+msgid "list of strings used for list mode"
+msgstr "用于 list 模式的字符串列表"
+
+#: ../../../runtime/optwin.vim:373
+#, fuzzy
+msgid "show the line number for each line"
+msgstr "行号超出范围"
+
+#: ../../../runtime/optwin.vim:376
+msgid "show the relative line number for each line"
+msgstr "显示每行的相对行号"
+
+#: ../../../runtime/optwin.vim:380
+msgid "number of columns to use for the line number"
+msgstr "用于行号的列数"
+
+#: ../../../runtime/optwin.vim:385
+msgid "controls whether concealable text is hidden"
+msgstr "控制是否隐藏可隐藏文本"
+
+#: ../../../runtime/optwin.vim:388
+msgid "modes in which text in the cursor line can be concealed"
+msgstr "可隐藏光标行的文本的模式"
+
+#: ../../../runtime/optwin.vim:394
+msgid "syntax, highlighting and spelling"
+msgstr "语法、高亮和拼写"
+
+#: ../../../runtime/optwin.vim:395
+msgid "\"dark\" or \"light\"; the background color brightness"
+msgstr "\"dark\" 或者 \"light\"；背景色亮度"
+
+#: ../../../runtime/optwin.vim:397
+msgid "type of file; triggers the FileType event when set"
+msgstr "文件类型; 在设置时触发 FileType 事件"
+
+#: ../../../runtime/optwin.vim:401
+msgid "name of syntax highlighting used"
+msgstr "使用中的语法高亮显示的名称"
+
+#: ../../../runtime/optwin.vim:404
+msgid "maximum column to look for syntax items"
+msgstr "寻找语法项的最大列"
+
+#: ../../../runtime/optwin.vim:408
+msgid "which highlighting to use for various occasions"
+msgstr "在不同场合使用哪些高亮提示"
+
+#: ../../../runtime/optwin.vim:410
+msgid "highlight all matches for the last used search pattern"
+msgstr "高亮显示最后使用的搜索模式的所有匹配项"
+
+#: ../../../runtime/optwin.vim:413
+msgid "use GUI colors for the terminal"
+msgstr "为终端使用 GUI 颜色"
+
+#: ../../../runtime/optwin.vim:417
+msgid "highlight the screen column of the cursor"
+msgstr "突出显示光标的屏幕列"
+
+#: ../../../runtime/optwin.vim:420
+msgid "highlight the screen line of the cursor"
+msgstr "突出显示光标的屏幕行"
+
+#: ../../../runtime/optwin.vim:423
+msgid "specifies which area 'cursorline' highlights"
+msgstr "指定 'cursorline' 高亮显示的区域"
+
+#: ../../../runtime/optwin.vim:426
+msgid "columns to highlight"
+msgstr "要高亮的列"
+
+#: ../../../runtime/optwin.vim:429
+msgid "highlight spelling mistakes"
+msgstr "高亮拼写错误"
+
+#: ../../../runtime/optwin.vim:432
+msgid "list of accepted languages"
+msgstr "接受的语言列表"
+
+#: ../../../runtime/optwin.vim:435
+msgid "file that \"zg\" adds good words to"
+msgstr "\"zg\" 添加正确单词的文件"
+
+#: ../../../runtime/optwin.vim:438
+msgid "pattern to locate the end of a sentence"
+msgstr "定位句子尾部的模式"
+
+#: ../../../runtime/optwin.vim:441
+msgid "flags to change how spell checking works"
+msgstr "更改拼写检查工作方式的标志"
+
+#: ../../../runtime/optwin.vim:444
+msgid "methods used to suggest corrections"
+msgstr "用于建议修正的方法"
+
+#: ../../../runtime/optwin.vim:446
+msgid "amount of memory used by :mkspell before compressing"
+msgstr ":mkspell 在压缩前使用的内存量"
+
+#: ../../../runtime/optwin.vim:451
+msgid "multiple windows"
+msgstr "多个窗口"
+
+#: ../../../runtime/optwin.vim:452
+msgid "0, 1, 2 or 3; when to use a status line for the last window"
+msgstr ""
+
+#: ../../../runtime/optwin.vim:455
+msgid "alternate format to be used for a status line"
+msgstr "用于状态行的替代格式"
+
+#: ../../../runtime/optwin.vim:458
+msgid "make all windows the same size when adding/removing windows"
+msgstr "当添加/删除窗口时，使所有窗口的大小相同"
+
+#: ../../../runtime/optwin.vim:460
+msgid "in which direction 'equalalways' works: \"ver\", \"hor\" or \"both\""
+msgstr "'equalalways' 的工作方向：\"ver\", \"hor\" 或者 \"both\""
+
+#: ../../../runtime/optwin.vim:462
+msgid "minimal number of lines used for the current window"
+msgstr "当前窗口的最小行数"
+
+#: ../../../runtime/optwin.vim:464
+msgid "minimal number of lines used for any window"
+msgstr "任何窗口的最小行数"
+
+#: ../../../runtime/optwin.vim:466
+msgid "keep the height of the window"
+msgstr "保持窗口的高度"
+
+#: ../../../runtime/optwin.vim:469
+msgid "keep the width of the window"
+msgstr "保持窗口的宽度"
+
+#: ../../../runtime/optwin.vim:472
+msgid "minimal number of columns used for the current window"
+msgstr "当前窗口的最小列数"
+
+#: ../../../runtime/optwin.vim:474
+msgid "minimal number of columns used for any window"
+msgstr "任何窗口的最小列数"
+
+#: ../../../runtime/optwin.vim:476
+msgid "initial height of the help window"
+msgstr "帮助窗口的初始高度"
+
+#: ../../../runtime/optwin.vim:481
+#, fuzzy
+msgid "default height for the preview window"
+msgstr "E441: 没有预览窗口"
+
+#: ../../../runtime/optwin.vim:483
+#, fuzzy
+msgid "identifies the preview window"
+msgstr "E441: 没有预览窗口"
+
+#: ../../../runtime/optwin.vim:487
+msgid "don't unload a buffer when no longer shown in a window"
+msgstr "当缓冲区不再显示在窗口中时，不要卸载它"
+
+#: ../../../runtime/optwin.vim:489
+msgid ""
+"\"useopen\" and/or \"split\"; which window to use when jumping\n"
+"to a buffer"
+msgstr "当向缓冲区跳转时可使用窗口: \"useopen\" 和/或 \"split\""
+
+#: ../../../runtime/optwin.vim:491
+msgid "a new window is put below the current one"
+msgstr "新窗口放在当前窗口的下面"
+
+#: ../../../runtime/optwin.vim:493
+msgid "determines scroll behavior for split windows"
+msgstr ""
+
+#: ../../../runtime/optwin.vim:495
+msgid "a new window is put right of the current one"
+msgstr "新窗口放在当前窗口的右边"
+
+#: ../../../runtime/optwin.vim:497
+msgid "this window scrolls together with other bound windows"
+msgstr "此窗口与其他已绑定的窗口一起滚动"
+
+#: ../../../runtime/optwin.vim:500
+msgid "\"ver\", \"hor\" and/or \"jump\"; list of options for 'scrollbind'"
+msgstr "'scrollbind' 的选项列表: \"ver\", \"hor\" 和/或 \"jump\""
+
+#: ../../../runtime/optwin.vim:502
+msgid "this window's cursor moves together with other bound windows"
+msgstr "此窗口的光标与其他已绑定的窗口一起移动"
+
+#: ../../../runtime/optwin.vim:506
+msgid "size of a terminal window"
+msgstr "终端窗口的大小"
+
+#: ../../../runtime/optwin.vim:509
+msgid "key that precedes Vim commands in a terminal window"
+msgstr "终端窗口中 Vim 命令的前导键"
+
+#: ../../../runtime/optwin.vim:515
+msgid "multiple tab pages"
+msgstr "多个标签页"
+
+#: ../../../runtime/optwin.vim:516
+msgid "0, 1 or 2; when to use a tab pages line"
+msgstr "0, 1 或 2; 何时使用标签页行"
+
+#: ../../../runtime/optwin.vim:518
+msgid "maximum number of tab pages to open for -p and \"tab all\""
+msgstr "-p 和 \"tab all\" 打开的最大标签页数"
+
+#: ../../../runtime/optwin.vim:520
+#, fuzzy
+msgid "custom tab pages line"
+msgstr "无法获取行"
+
+#: ../../../runtime/optwin.vim:523
+msgid "custom tab page label for the GUI"
+msgstr "为 GUI 自定义标签页的标签"
+
+#: ../../../runtime/optwin.vim:525
+msgid "custom tab page tooltip for the GUI"
+msgstr "为 GUI 自定义标签页的工具提示"
+
+#: ../../../runtime/optwin.vim:530
+msgid "terminal"
+msgstr "终端"
+
+#: ../../../runtime/optwin.vim:531
+msgid "minimal number of lines to scroll at a time"
+msgstr "一次滚动的最少行数"
+
+#: ../../../runtime/optwin.vim:534
+msgid "specifies what the cursor looks like in different modes"
+msgstr "指定光标在不同模式下的样子"
+
+#: ../../../runtime/optwin.vim:539
+msgid "show info in the window title"
+msgstr "在窗口标题中显示信息"
+
+#: ../../../runtime/optwin.vim:542
+msgid "percentage of 'columns' used for the window title"
+msgstr "窗口标题的 'columns' 的百分比"
+
+#: ../../../runtime/optwin.vim:544
+msgid "when not empty, string to be used for the window title"
+msgstr "非空时，用于窗口标题的字符串"
+
+#: ../../../runtime/optwin.vim:546
+msgid "string to restore the title to when exiting Vim"
+msgstr "退出 Vim 时用于恢复标题的字符串"
+
+#: ../../../runtime/optwin.vim:549
+msgid "set the text of the icon for this window"
+msgstr "设置此窗口图标的文本"
+
+#: ../../../runtime/optwin.vim:552
+msgid "when not empty, text for the icon of this window"
+msgstr "非空时，设置此窗口图标的文本"
+
+#: ../../../runtime/optwin.vim:557
+msgid "using the mouse"
+msgstr "使用鼠标"
+
+#: ../../../runtime/optwin.vim:558
+msgid "list of flags for using the mouse"
+msgstr "使用鼠标时的标志列表"
+
+#: ../../../runtime/optwin.vim:561
+msgid "the window with the mouse pointer becomes the current one"
+msgstr "带有鼠标指针的窗口成为当前窗口"
+
+#: ../../../runtime/optwin.vim:563
+msgid "hide the mouse pointer while typing"
+msgstr "在输入时隐藏鼠标指针"
+
+#: ../../../runtime/optwin.vim:566
+msgid ""
+"\"extend\", \"popup\" or \"popup_setpos\"; what the right\n"
+"mouse button is used for"
+msgstr "\"extend\", \"popup\" 或 \"popup_setpos\"; 鼠标右键用于什么"
+
+#: ../../../runtime/optwin.vim:568
+msgid "maximum time in msec to recognize a double-click"
+msgstr "识别双击的最大时间（以毫秒计）"
+
+#: ../../../runtime/optwin.vim:571
+msgid "what the mouse pointer looks like in different modes"
+msgstr "鼠标指针在不同模式下的样子"
+
+#: ../../../runtime/optwin.vim:577
+msgid "GUI"
+msgstr "图形用户界面"
+
+#: ../../../runtime/optwin.vim:578
+msgid "list of font names to be used in the GUI"
+msgstr "在 GUI 中使用的字体名称列表"
+
+#: ../../../runtime/optwin.vim:581
+#, fuzzy
+msgid "pair of fonts to be used, for multibyte editing"
+msgstr "E675: 没有指定多字节打印的默认字体"
+
+#: ../../../runtime/optwin.vim:584
+msgid "list of font names to be used for double-wide characters"
+msgstr "用于双宽度字符的字体名称列表"
+
+#: ../../../runtime/optwin.vim:586
+msgid "list of flags that specify how the GUI works"
+msgstr "指定 GUI 工作方式的标志列表"
+
+#: ../../../runtime/optwin.vim:589
+msgid "\"icons\", \"text\" and/or \"tooltips\"; how to show the toolbar"
+msgstr "\"icons\", \"text\" 和/或 \"tooltips\"; 如何显示工具栏"
+
+#: ../../../runtime/optwin.vim:592
+msgid "size of toolbar icons"
+msgstr "工具栏图标大小"
+
+#: ../../../runtime/optwin.vim:597
+msgid ""
+"\"last\", \"buffer\" or \"current\": which directory used for the file "
+"browser"
+msgstr "\"last\", \"buffer\" 或 \"current\"; 文件浏览器使用哪个目录"
+
+#: ../../../runtime/optwin.vim:601
+msgid "language to be used for the menus"
+msgstr "菜单使用的语言"
+
+#: ../../../runtime/optwin.vim:604
+msgid "maximum number of items in one menu"
+msgstr "单个菜单中的最大项目数量"
+
+#: ../../../runtime/optwin.vim:607
+msgid "\"no\", \"yes\" or \"menu\"; how to use the ALT key"
+msgstr "\"no\", \"yes\" 或 \"menu\"; 如何使用 ALT 键"
+
+#: ../../../runtime/optwin.vim:610
+msgid "number of pixel lines to use between characters"
+msgstr "字符之间使用的像素行数"
+
+#: ../../../runtime/optwin.vim:613
+msgid "delay in milliseconds before a balloon may pop up"
+msgstr "延迟指定毫秒后，气泡可能会弹出"
+
+#: ../../../runtime/optwin.vim:616
+msgid "use balloon evaluation in the GUI"
+msgstr "在 GUI 中使用气泡求值"
+
+#: ../../../runtime/optwin.vim:620
+msgid "use balloon evaluation in the terminal"
+msgstr "在终端中使用气泡求值"
+
+#: ../../../runtime/optwin.vim:624
+msgid "expression to show in balloon eval"
+msgstr "在气泡求值中显示的表达式"
+
+#: ../../../runtime/optwin.vim:631
+#, fuzzy
+msgid "printing"
+msgstr "打印 '%s'"
+
+#: ../../../runtime/optwin.vim:632
+msgid "list of items that control the format of :hardcopy output"
+msgstr "控制 :hardcopy 输出格式的项目列表"
+
+#: ../../../runtime/optwin.vim:634
+msgid "name of the printer to be used for :hardcopy"
+msgstr "用于 :hardcopy 的打印机名称"
+
+#: ../../../runtime/optwin.vim:637
+msgid "expression used to print the PostScript file for :hardcopy"
+msgstr "用于 :hardcopy 打印 PostScript 文件的表达式"
+
+#: ../../../runtime/optwin.vim:640
+msgid "name of the font to be used for :hardcopy"
+msgstr ":hardcopy 使用的字体名称"
+
+#: ../../../runtime/optwin.vim:642
+msgid "format of the header used for :hardcopy"
+msgstr "用于 :hardcopy 的标头格式"
+
+#: ../../../runtime/optwin.vim:645
+#, fuzzy
+msgid "encoding used to print the PostScript file for :hardcopy"
+msgstr "E365: 无法打印 PostScript 文件"
+
+#: ../../../runtime/optwin.vim:648
+msgid "the CJK character set to be used for CJK output from :hardcopy"
+msgstr ":hardcopy 用于 CJK 输出的 CJK 字符集"
+
+#: ../../../runtime/optwin.vim:650
+msgid "list of font names to be used for CJK output from :hardcopy"
+msgstr ":hardcopy 用于 CJK 输出的字体名称列表"
+
+#: ../../../runtime/optwin.vim:654
+msgid "messages and info"
+msgstr "消息和信息"
+
+#: ../../../runtime/optwin.vim:655
+msgid "add 's' flag in 'shortmess' (don't show search message)"
+msgstr "在 'shortmess' 中添加 's' 标志（不显示搜索消息）"
+
+#: ../../../runtime/optwin.vim:657
+msgid "list of flags to make messages shorter"
+msgstr "使消息更短的标志列表"
+
+#: ../../../runtime/optwin.vim:659
+msgid "show (partial) command keys in the status line"
+msgstr "在状态行中显示（不完整的）命令键"
+
+#: ../../../runtime/optwin.vim:663
+msgid "display the current mode in the status line"
+msgstr "在状态行中显示当前模式"
+
+#: ../../../runtime/optwin.vim:665
+msgid "show cursor position below each window"
+msgstr "在每个窗口下方显示光标的位置"
+
+#: ../../../runtime/optwin.vim:670
+msgid "alternate format to be used for the ruler"
+msgstr "ruler 的替代格式"
+
+#: ../../../runtime/optwin.vim:673
+msgid "threshold for reporting number of changed lines"
+msgstr "报告已更改行数的阈值"
+
+#: ../../../runtime/optwin.vim:675
+msgid "the higher the more messages are given"
+msgstr "等级越高，给出的信息越多"
+
+#: ../../../runtime/optwin.vim:677
+msgid "file to write messages in"
+msgstr "用于写入消息的文件"
+
+#: ../../../runtime/optwin.vim:679
+msgid "pause listings when the screen is full"
+msgstr "当屏幕满时暂停显示清单"
+
+#: ../../../runtime/optwin.vim:682
+msgid "start a dialog when a command fails"
+msgstr "当命令失败时开启对话框"
+
+#: ../../../runtime/optwin.vim:685
+msgid "ring the bell for error messages"
+msgstr "错误信息响铃"
+
+#: ../../../runtime/optwin.vim:687
+msgid "use a visual bell instead of beeping"
+msgstr "使用视觉铃声代替响铃"
+
+#: ../../../runtime/optwin.vim:689
+msgid "do not ring the bell for these reasons"
+msgstr "不要为这些原因响铃"
+
+#: ../../../runtime/optwin.vim:692
+msgid "list of preferred languages for finding help"
+msgstr "查找帮助的首选语言列表"
+
+#: ../../../runtime/optwin.vim:697
+#, fuzzy
+msgid "selecting text"
+msgstr "选择"
+
+#: ../../../runtime/optwin.vim:698
+msgid "\"old\", \"inclusive\" or \"exclusive\"; how selecting text behaves"
+msgstr "\"old\", \"inclusive\" 或 \"exclusive\"; 如何选择文本"
+
+#: ../../../runtime/optwin.vim:700
+msgid ""
+"\"mouse\", \"key\" and/or \"cmd\"; when to start Select mode\n"
+"instead of Visual mode"
+msgstr "\"mouse\", \"key\" 和/或 \"cmd\"; 何时启动选择模式而不是可视模式"
+
+#: ../../../runtime/optwin.vim:703
+msgid ""
+"\"unnamed\" to use the * register like unnamed register\n"
+"\"autoselect\" to always put selected text on the clipboard"
+msgstr ""
+"\"unnamed\": 像无名寄存器一样使用 * 寄存器\n"
+"\"autoselect\": 将选择的文本始终放在剪贴板上"
+
+#: ../../../runtime/optwin.vim:706
+msgid "\"startsel\" and/or \"stopsel\"; what special keys can do"
+msgstr "\"startsel\" 和/或 \"stopsel\"; 特殊键可以做"
+
+#: ../../../runtime/optwin.vim:710
+msgid "editing text"
+msgstr "编辑文本"
+
+#: ../../../runtime/optwin.vim:711
+msgid "maximum number of changes that can be undone"
+msgstr "可以撤销的最大更改数"
+
+#: ../../../runtime/optwin.vim:714
+msgid "automatically save and restore undo history"
+msgstr "自动保存和恢复撤销历史"
+
+#: ../../../runtime/optwin.vim:716
+msgid "list of directories for undo files"
+msgstr "撤销文件的目录列表"
+
+#: ../../../runtime/optwin.vim:718
+msgid "maximum number lines to save for undo on a buffer reload"
+msgstr "缓冲区重新加载时为撤销保存的最大行数"
+
+#: ../../../runtime/optwin.vim:720
+msgid "changes have been made and not written to a file"
+msgstr "已经做出了修改，但没有被写入文件"
+
+#: ../../../runtime/optwin.vim:723
+msgid "buffer is not to be written"
+msgstr "缓冲区不会被写入"
+
+#: ../../../runtime/optwin.vim:726
+msgid "changes to the text are possible"
+msgstr "可以对文本进行更改"
+
+#: ../../../runtime/optwin.vim:729
+msgid "line length above which to break a line"
+msgstr "超过行长度就断行"
+
+#: ../../../runtime/optwin.vim:732
+msgid "margin from the right in which to break a line"
+msgstr "断行开始的右边距"
+
+#: ../../../runtime/optwin.vim:735
+msgid "specifies what <BS>, CTRL-W, etc. can do in Insert mode"
+msgstr "指定 <BS>, CTRL-W 等在插入模式下可以做什么"
+
+#: ../../../runtime/optwin.vim:737
+msgid "definition of what comment lines look like"
+msgstr "定义注释行长什么样"
+
+#: ../../../runtime/optwin.vim:740
+msgid "list of flags that tell how automatic formatting works"
+msgstr "控制自动格式化如何工作的标志列表"
+
+#: ../../../runtime/optwin.vim:743
+msgid "pattern to recognize a numbered list"
+msgstr "识别编号列表的模式"
+
+#: ../../../runtime/optwin.vim:747
+msgid "expression used for \"gq\" to format lines"
+msgstr "用 \"gq\" 格式化行时使用的表达式"
+
+#: ../../../runtime/optwin.vim:752
+msgid "specifies how Insert mode completion works for CTRL-N and CTRL-P"
+msgstr "指定使用 CTRL-N 和 CTRL-P 进行插入模式补全的工作方式"
+
+#: ../../../runtime/optwin.vim:755
+msgid "whether to use a popup menu for Insert mode completion"
+msgstr "是否在插入模式补全时使用弹出菜单"
+
+#: ../../../runtime/optwin.vim:757
+msgid "maximum height of the popup menu"
+msgstr "弹出菜单的最大高度"
+
+#: ../../../runtime/optwin.vim:759
+msgid "minimum width of the popup menu"
+msgstr "弹出菜单的最小宽度"
+
+#: ../../../runtime/optwin.vim:761
+msgid "user defined function for Insert mode completion"
+msgstr "用于插入模式补全的用户定义函数"
+
+#: ../../../runtime/optwin.vim:764
+msgid "function for filetype-specific Insert mode completion"
+msgstr "用于特定文件类型的插入模式补全的函数"
+
+#: ../../../runtime/optwin.vim:767
+msgid "list of dictionary files for keyword completion"
+msgstr "用于关键字补全的字典文件列表"
+
+#: ../../../runtime/optwin.vim:770
+msgid "list of thesaurus files for keyword completion"
+msgstr "用于关键字补全的同义词字典文件列表"
+
+#: ../../../runtime/optwin.vim:773
+msgid "function used for thesaurus completion"
+msgstr "用于同义词字典补全的函数"
+
+#: ../../../runtime/optwin.vim:777
+msgid "adjust case of a keyword completion match"
+msgstr "调整关键字补全匹配的大小写"
+
+#: ../../../runtime/optwin.vim:781
+msgid "enable entering digraphs with c1 <BS> c2"
+msgstr "支持使用 c1 <BS> c2 输入二合字符"
+
+#: ../../../runtime/optwin.vim:784
+msgid "the \"~\" command behaves like an operator"
+msgstr "\"~\"命令表现得像操作符"
+
+#: ../../../runtime/optwin.vim:786
+msgid "function called for the \"g@\" operator"
+msgstr "\"g@\" 操作符调用的函数"
+
+#: ../../../runtime/optwin.vim:788
+msgid "when inserting a bracket, briefly jump to its match"
+msgstr "当插入括号时，短暂地跳转到匹配它的括号"
+
+#: ../../../runtime/optwin.vim:790
+msgid "tenth of a second to show a match for 'showmatch'"
+msgstr "显示 'showmatch' 的匹配的时长（以十分之一秒计）"
+
+#: ../../../runtime/optwin.vim:792
+msgid "list of pairs that match for the \"%\" command"
+msgstr "\"%\" 命令匹配的对列表"
+
+#: ../../../runtime/optwin.vim:795
+msgid "use two spaces after '.' when joining a line"
+msgstr "连接行时，在 '.' 后面添加两个空格"
+
+#: ../../../runtime/optwin.vim:797
+msgid ""
+"\"alpha\", \"octal\", \"hex\", \"bin\" and/or \"unsigned\"; number formats\n"
+"recognized for CTRL-A and CTRL-X commands"
+msgstr ""
+"\"alpha\", \"octal\", \"hex\", \"bin\" 和/或 \"unsigned\"\n"
+"CTRL-A 和 CTRL-X 命令识别的数字的格式"
+
+#: ../../../runtime/optwin.vim:802
+msgid "tabs and indenting"
+msgstr "Tab 和缩进"
+
+#: ../../../runtime/optwin.vim:803
+msgid "number of spaces a <Tab> in the text stands for"
+msgstr "<Tab> 在文本中代表的空格数"
+
+#: ../../../runtime/optwin.vim:806
+msgid "number of spaces used for each step of (auto)indent"
+msgstr "每步（自动）缩进所使用的空格数"
+
+#: ../../../runtime/optwin.vim:810
+msgid "list of number of spaces a tab counts for"
+msgstr "tab 代表的空格数的列表"
+
+#: ../../../runtime/optwin.vim:813
+msgid "list of number of spaces a soft tabsstop counts for"
+msgstr "软制表符代表的空格数的列表"
+
+#: ../../../runtime/optwin.vim:817
+msgid "a <Tab> in an indent inserts 'shiftwidth' spaces"
+msgstr "用 <Tab> 键缩进时插入 'shiftwidth' 个空格"
+
+#: ../../../runtime/optwin.vim:819
+msgid "if non-zero, number of spaces to insert for a <Tab>"
+msgstr "如果非零，为 <Tab> 插入的空格数"
+
+#: ../../../runtime/optwin.vim:822
+msgid "round to 'shiftwidth' for \"<<\" and \">>\""
+msgstr "用 \"<<\" 和 \">>\" 缩进时，插入 'shiftwidth' 整数倍个空格"
+
+#: ../../../runtime/optwin.vim:824
+msgid "expand <Tab> to spaces in Insert mode"
+msgstr "在插入模式下将 <Tab> 展开为空格"
+
+#: ../../../runtime/optwin.vim:827
+msgid "automatically set the indent of a new line"
+msgstr "自动设置新行缩进"
+
+#: ../../../runtime/optwin.vim:831
+msgid "do clever autoindenting"
+msgstr "智能自动缩进"
+
+#: ../../../runtime/optwin.vim:836
+msgid "enable specific indenting for C code"
+msgstr "为 C 代码启用特定的缩进"
+
+#: ../../../runtime/optwin.vim:839
+msgid "options for C-indenting"
+msgstr "C 风格缩进的选项"
+
+#: ../../../runtime/optwin.vim:842
+msgid "keys that trigger C-indenting in Insert mode"
+msgstr "在插入模式下触发 C 风格缩进的键"
+
+#: ../../../runtime/optwin.vim:845
+msgid "list of words that cause more C-indent"
+msgstr "导致更多 C 风格缩进的单词列表"
+
+#: ../../../runtime/optwin.vim:848
+msgid "list of scope declaration names used by cino-g"
+msgstr "cino-g 使用的作用域声明名称列表"
+
+#: ../../../runtime/optwin.vim:851
+msgid "expression used to obtain the indent of a line"
+msgstr "用于获取一行缩进的表达式"
+
+#: ../../../runtime/optwin.vim:854
+msgid "keys that trigger indenting with 'indentexpr' in Insert mode"
+msgstr "在插入模式下使用 'indentexpr' 触发缩进的键"
+
+#: ../../../runtime/optwin.vim:858
+msgid "copy whitespace for indenting from previous line"
+msgstr "为缩进从上一行复制空白字符"
+
+#: ../../../runtime/optwin.vim:861
+msgid "preserve kind of whitespace when changing indent"
+msgstr "在更改缩进时保留空白类型"
+
+#: ../../../runtime/optwin.vim:865
+#, fuzzy
+msgid "enable lisp mode"
+msgstr "-l\t\t\tLisp 模式"
+
+#: ../../../runtime/optwin.vim:868
+msgid "words that change how lisp indenting works"
+msgstr "改变 lisp 如何缩进的单词"
+
+#: ../../../runtime/optwin.vim:870
+msgid "options for Lisp indenting"
+msgstr ""
+
+#: ../../../runtime/optwin.vim:876
+#, fuzzy
+msgid "folding"
+msgstr "记录中"
+
+#: ../../../runtime/optwin.vim:877
+msgid "unset to display all folds open"
+msgstr "取消设置以打开所有折叠"
+
+#: ../../../runtime/optwin.vim:880
+msgid "folds with a level higher than this number will be closed"
+msgstr "等级比这个数字高的折叠将被关闭"
+
+#: ../../../runtime/optwin.vim:883
+msgid "value for 'foldlevel' when starting to edit a file"
+msgstr "开始编辑文件时，'foldlevel' 的值"
+
+#: ../../../runtime/optwin.vim:885
+msgid "width of the column used to indicate folds"
+msgstr "用来指示折叠的列的宽度"
+
+#: ../../../runtime/optwin.vim:888
+msgid "expression used to display the text of a closed fold"
+msgstr "用于显示已关闭折叠的表达式"
+
+#: ../../../runtime/optwin.vim:891
+msgid "set to \"all\" to close a fold when the cursor leaves it"
+msgstr "设置为 \"all\" 来在光标离开时关闭折叠"
+
+#: ../../../runtime/optwin.vim:893
+msgid "specifies for which commands a fold will be opened"
+msgstr "指定会打开折叠的命令"
+
+#: ../../../runtime/optwin.vim:895
+msgid "minimum number of screen lines for a fold to be closed"
+msgstr "可关闭折叠所需的最小屏幕行数"
+
+#: ../../../runtime/optwin.vim:898
+msgid "template for comments; used to put the marker in"
+msgstr "注释的模板，用于放置折叠标记"
+
+#: ../../../runtime/optwin.vim:900
+msgid ""
+"folding type: \"manual\", \"indent\", \"expr\", \"marker\",\n"
+"\"syntax\" or \"diff\""
+msgstr ""
+"折叠类型：\"manual\", \"indent\", \"expr\", \"marker\", \n"
+"\"syntax\" 或者 \"diff\""
+
+#: ../../../runtime/optwin.vim:903
+msgid "expression used when 'foldmethod' is \"expr\""
+msgstr "当 'foldmethod' 为 \"expr\" 时使用的表达式"
+
+#: ../../../runtime/optwin.vim:906
+msgid "used to ignore lines when 'foldmethod' is \"indent\""
+msgstr "当 'foldmethod' 为 \"indent\" 时用于忽略行"
+
+#: ../../../runtime/optwin.vim:909
+msgid "markers used when 'foldmethod' is \"marker\""
+msgstr "当 'foldmethod' 为 \"marker\" 时所使用的标记"
+
+#: ../../../runtime/optwin.vim:912
+msgid "maximum fold depth for when 'foldmethod' is \"indent\" or \"syntax\""
+msgstr "当 'foldmethod' 为 \"indent\" 或 \"syntax\" 时的最大折叠深度"
+
+#: ../../../runtime/optwin.vim:919
+msgid "diff mode"
+msgstr "差异模式"
+
+#: ../../../runtime/optwin.vim:920
+msgid "use diff mode for the current window"
+msgstr "对当前窗口使用差异模式"
+
+#: ../../../runtime/optwin.vim:923
+msgid "options for using diff mode"
+msgstr "使用差异模式的选项"
+
+#: ../../../runtime/optwin.vim:925
+#, fuzzy
+msgid "expression used to obtain a diff file"
+msgstr "编译时没有启用表达式"
+
+#: ../../../runtime/optwin.vim:927
+#, fuzzy
+msgid "expression used to patch a file"
+msgstr "编译时没有启用表达式"
+
+#: ../../../runtime/optwin.vim:932
+#, fuzzy
+msgid "mapping"
+msgstr "找不到映射"
+
+#: ../../../runtime/optwin.vim:933
+msgid "maximum depth of mapping"
+msgstr "最大映射深度"
+
+#: ../../../runtime/optwin.vim:935
+msgid "allow timing out halfway into a mapping"
+msgstr "允许在映射中途超时"
+
+#: ../../../runtime/optwin.vim:937
+msgid "allow timing out halfway into a key code"
+msgstr "允许在键码中途超时"
+
+#: ../../../runtime/optwin.vim:939
+msgid "time in msec for 'timeout'"
+msgstr "'timeout' 的时间（以毫秒计）"
+
+#: ../../../runtime/optwin.vim:941
+msgid "time in msec for 'ttimeout'"
+msgstr "'ttimeout' 的时间（以毫秒计）"
+
+#: ../../../runtime/optwin.vim:945
+#, fuzzy
+msgid "reading and writing files"
+msgstr "读取字典文件 %s ……"
+
+#: ../../../runtime/optwin.vim:946
+msgid "enable using settings from modelines when reading a file"
+msgstr "读取文件时是否使用 modeline 里的设置"
+
+#: ../../../runtime/optwin.vim:949
+msgid "allow setting expression options from a modeline"
+msgstr "允许从 modeline 中设置表达式选项"
+
+#: ../../../runtime/optwin.vim:951
+msgid "number of lines to check for modelines"
+msgstr "为 modeline 而检查的行数"
+
+#: ../../../runtime/optwin.vim:953
+msgid "binary file editing"
+msgstr "二进制文件编辑"
+
+#: ../../../runtime/optwin.vim:956
+msgid "last line in the file has an end-of-line"
+msgstr "文件的最后一行有换行符"
+
+#: ../../../runtime/optwin.vim:959
+msgid "last line in the file followed by CTRL-Z"
+msgstr ""
+
+#: ../../../runtime/optwin.vim:962
+msgid "fixes missing end-of-line at end of text file"
+msgstr "修复文本文件末尾缺少换行符的问题"
+
+#: ../../../runtime/optwin.vim:965
+msgid "prepend a Byte Order Mark to the file"
+msgstr "在文件前加上字节顺序标记"
+
+#: ../../../runtime/optwin.vim:968
+msgid "end-of-line format: \"dos\", \"unix\" or \"mac\""
+msgstr "换行符格式： \"dos\", \"unix\" 或 \"mac\""
+
+#: ../../../runtime/optwin.vim:971
+msgid "list of file formats to look for when editing a file"
+msgstr "编辑文件时要检查的文件格式列表"
+
+#: ../../../runtime/optwin.vim:973
+#, fuzzy
+msgid "writing files is allowed"
+msgstr "-m\t\t\t不可修改(写入文件)"
+
+#: ../../../runtime/optwin.vim:975
+msgid "write a backup file before overwriting a file"
+msgstr "覆盖文件前先写入备份文件"
+
+#: ../../../runtime/optwin.vim:977
+msgid "keep a backup after overwriting a file"
+msgstr "覆盖文件后保留备份"
+
+#: ../../../runtime/optwin.vim:979
+msgid "patterns that specify for which files a backup is not made"
+msgstr "不备份的文件的模式"
+
+#: ../../../runtime/optwin.vim:981
+msgid "whether to make the backup as a copy or rename the existing file"
+msgstr "通过复制还是重命名已有文件进行备份"
+
+#: ../../../runtime/optwin.vim:984
+msgid "list of directories to put backup files in"
+msgstr "存放备份文件的目录列表"
+
+#: ../../../runtime/optwin.vim:986
+msgid "file name extension for the backup file"
+msgstr "备份文件使用的扩展名"
+
+#: ../../../runtime/optwin.vim:988
+msgid "automatically write a file when leaving a modified buffer"
+msgstr "在离开修改过的缓冲区时自动写入文件"
+
+#: ../../../runtime/optwin.vim:990
+msgid "as 'autowrite', but works with more commands"
+msgstr "类似于 'autowrite'，但适用于更多命令"
+
+#: ../../../runtime/optwin.vim:992
+msgid "always write without asking for confirmation"
+msgstr "写文件时总是不需要确认"
+
+#: ../../../runtime/optwin.vim:994
+msgid "automatically read a file when it was modified outside of Vim"
+msgstr "在 Vim 之外修改了文件时，自动读取文件"
+
+#: ../../../runtime/optwin.vim:997
+msgid "keep oldest version of a file; specifies file name extension"
+msgstr "保存最旧版本的文件；指定文件扩展名"
+
+#: ../../../runtime/optwin.vim:999
+msgid "forcibly sync the file to disk after writing it"
+msgstr "文件写入后强制同步到磁盘"
+
+#: ../../../runtime/optwin.vim:1003
+#, fuzzy
+msgid "the swap file"
+msgstr "无交换文件"
+
+#: ../../../runtime/optwin.vim:1004
+msgid "list of directories for the swap file"
+msgstr "交换文件的目录列表"
+
+#: ../../../runtime/optwin.vim:1006
+#, fuzzy
+msgid "use a swap file for this buffer"
+msgstr "这个缓冲区没有定义任何语法项"
+
+#: ../../../runtime/optwin.vim:1009
+msgid "number of characters typed to cause a swap file update"
+msgstr "导致交换文件更新的字符数"
+
+#: ../../../runtime/optwin.vim:1011
+msgid "time in msec after which the swap file will be updated"
+msgstr "更新交换文件前所需的毫秒数"
+
+# do not translate to avoid writing Chinese in files
+#: ../../../runtime/optwin.vim:1015
+#, fuzzy
+msgid "command line editing"
+msgstr "命令行"
+
+#: ../../../runtime/optwin.vim:1016
+msgid "how many command lines are remembered"
+msgstr "记住的命令行数"
+
+#: ../../../runtime/optwin.vim:1018
+msgid "key that triggers command-line expansion"
+msgstr "触发命令行扩展的键"
+
+#: ../../../runtime/optwin.vim:1020
+msgid "like 'wildchar' but can also be used in a mapping"
+msgstr "类似 'wildchar'，但也可以在映射中使用"
+
+#: ../../../runtime/optwin.vim:1022
+#, fuzzy
+msgid "specifies how command line completion works"
+msgstr " 命令行补全 (^V^N^P)"
+
+#: ../../../runtime/optwin.vim:1025
+msgid "empty or \"tagfile\" to list file name of matching tags"
+msgstr "空或 \"tagfile\" 来列出匹配标签的文件名"
+
+#: ../../../runtime/optwin.vim:1028
+msgid "list of file name extensions that have a lower priority"
+msgstr "优先级低的文件扩展名列表"
+
+#: ../../../runtime/optwin.vim:1031
+msgid "list of file name extensions added when searching for a file"
+msgstr "搜索文件时添加的文件扩展名列表"
+
+#: ../../../runtime/optwin.vim:1036
+msgid "list of patterns to ignore files for file name completion"
+msgstr "文件名补全所忽略文件的模式列表"
+
+#: ../../../runtime/optwin.vim:1039
+msgid "ignore case when using file names"
+msgstr "使用文件名时忽略大小写"
+
+#: ../../../runtime/optwin.vim:1041
+msgid "ignore case when completing file names"
+msgstr "补全文件名时忽略大小写"
+
+#: ../../../runtime/optwin.vim:1044
+msgid "command-line completion shows a list of matches"
+msgstr "命令行补全时显示匹配列表"
+
+#: ../../../runtime/optwin.vim:1047
+msgid "key used to open the command-line window"
+msgstr "用于打开命令行窗口的键"
+
+#: ../../../runtime/optwin.vim:1049
+msgid "height of the command-line window"
+msgstr "命令行窗口的高度"
+
+#: ../../../runtime/optwin.vim:1053
+#, fuzzy
+msgid "executing external commands"
+msgstr "'columns' 不是 80, 不能执行外部命令"
+
+#: ../../../runtime/optwin.vim:1054
+msgid "name of the shell program used for external commands"
+msgstr "用于外部命令的 shell 程序的名称"
+
+#: ../../../runtime/optwin.vim:1056
+msgid "character(s) to enclose a shell command in"
+msgstr "用于包围 shell 命令的字符"
+
+#: ../../../runtime/optwin.vim:1058
+msgid "like 'shellquote' but include the redirection"
+msgstr "类似 'shellquote'，但包含重定向"
+
+#: ../../../runtime/optwin.vim:1060
+msgid "characters to escape when 'shellxquote' is ("
+msgstr "'shellxquote' 为 ( 时需要转义的字符"
+
+#: ../../../runtime/optwin.vim:1062
+msgid "argument for 'shell' to execute a command"
+msgstr "'shell' 执行命令的参数"
+
+#: ../../../runtime/optwin.vim:1064
+msgid "used to redirect command output to a file"
+msgstr "用于将命令输出重定向到文件"
+
+#: ../../../runtime/optwin.vim:1066
+msgid "use a temp file for shell commands instead of using a pipe"
+msgstr "对 shell 命令使用临时文件而不是管道"
+
+#: ../../../runtime/optwin.vim:1068
+msgid "program used for \"=\" command"
+msgstr "用于 \"=\" 命令的程序"
+
+#: ../../../runtime/optwin.vim:1071
+msgid "program used to format lines with \"gq\" command"
+msgstr "用 \"gq\" 命令格式化代码时使用的程序"
+
+#: ../../../runtime/optwin.vim:1073
+msgid "program used for the \"K\" command"
+msgstr "用于 \"K\" 命令的程序"
+
+#: ../../../runtime/optwin.vim:1075
+msgid "warn when using a shell command and a buffer has changes"
+msgstr "当使用 shell 命令并且缓冲区有修改时发出警告"
+
+#: ../../../runtime/optwin.vim:1080
+msgid "running make and jumping to errors (quickfix)"
+msgstr "运行 make 并跳到错误（快速修复）"
+
+#: ../../../runtime/optwin.vim:1081
+msgid "name of the file that contains error messages"
+msgstr "包含错误消息的文件的名称"
+
+#: ../../../runtime/optwin.vim:1083
+msgid "list of formats for error messages"
+msgstr "错误消息的格式列表"
+
+#: ../../../runtime/optwin.vim:1086
+msgid "program used for the \":make\" command"
+msgstr "用于 \":make\" 命令的程序"
+
+#: ../../../runtime/optwin.vim:1089
+msgid "string used to put the output of \":make\" in the error file"
+msgstr "用于将 \":make\" 的输出放在错误文件中的字符串"
+
+#: ../../../runtime/optwin.vim:1091
+msgid "name of the errorfile for the 'makeprg' command"
+msgstr "'makeprg' 命令的错误文件的名称"
+
+#: ../../../runtime/optwin.vim:1093
+msgid "program used for the \":grep\" command"
+msgstr "用于 \":grep\" 命令的程序"
+
+#: ../../../runtime/optwin.vim:1096
+msgid "list of formats for output of 'grepprg'"
+msgstr "'grepprg' 的输出格式列表"
+
+#: ../../../runtime/optwin.vim:1098
+msgid "encoding of the \":make\" and \":grep\" output"
+msgstr "\":make\" 和 \":grep\" 输出的编码"
+
+#: ../../../runtime/optwin.vim:1105
+msgid "system specific"
+msgstr "系统特定"
+
+#: ../../../runtime/optwin.vim:1106
+msgid "use forward slashes in file names; for Unix-like shells"
+msgstr "在文件名中使用正斜杠；用于类 Unix shell"
+
+#: ../../../runtime/optwin.vim:1108
+msgid "specifies slash/backslash used for completion"
+msgstr "指定补全时使用的斜杠/反斜杠"
+
+#: ../../../runtime/optwin.vim:1113
+msgid "language specific"
+msgstr "语言特定"
+
+#: ../../../runtime/optwin.vim:1114
+#, fuzzy
+msgid "specifies the characters in a file name"
+msgstr "E18: :let 中出现异常字符"
+
+#: ../../../runtime/optwin.vim:1116
+msgid "specifies the characters in an identifier"
+msgstr "指定标识符中的字符"
+
+#: ../../../runtime/optwin.vim:1118
+msgid "specifies the characters in a keyword"
+msgstr "指定关键字中的字符"
+
+#: ../../../runtime/optwin.vim:1121
+#, fuzzy
+msgid "specifies printable characters"
+msgstr "E595: 包含不可显示字符或宽字符"
+
+#: ../../../runtime/optwin.vim:1124
+msgid "specifies escape characters in a string"
+msgstr "指定字符串中的转义字符"
+
+#: ../../../runtime/optwin.vim:1129
+msgid "display the buffer right-to-left"
+msgstr "从右到左显示缓冲区"
+
+#: ../../../runtime/optwin.vim:1132
+msgid "when to edit the command-line right-to-left"
+msgstr "何时从右到左编辑命令行"
+
+#: ../../../runtime/optwin.vim:1135
+msgid "insert characters backwards"
+msgstr "倒序插入字符"
+
+#: ../../../runtime/optwin.vim:1137
+msgid "allow CTRL-_ in Insert and Command-line mode to toggle 'revins'"
+msgstr "在插入和命令行模式下允许 CTRL-_ 切换 'revins'"
+
+#: ../../../runtime/optwin.vim:1139
+msgid "the ASCII code for the first letter of the Hebrew alphabet"
+msgstr "希伯来字母表第一个字母的 ASCII 码"
+
+#: ../../../runtime/optwin.vim:1141
+msgid "use Hebrew keyboard mapping"
+msgstr "使用希伯来语键盘映射"
+
+#: ../../../runtime/optwin.vim:1143
+msgid "use phonetic Hebrew keyboard mapping"
+msgstr "使用希伯来语的语音键盘映射"
+
+#: ../../../runtime/optwin.vim:1147
+msgid "prepare for editing Arabic text"
+msgstr "准备编辑阿拉伯语文本"
+
+#: ../../../runtime/optwin.vim:1150
+msgid "perform shaping of Arabic characters"
+msgstr "阿拉伯语的字形重整"
+
+#: ../../../runtime/optwin.vim:1152
+msgid "terminal will perform bidi handling"
+msgstr "终端支持双向文本"
+
+#: ../../../runtime/optwin.vim:1156
+msgid "name of a keyboard mapping"
+msgstr "键盘映射名称"
+
+#: ../../../runtime/optwin.vim:1160
+msgid "list of characters that are translated in Normal mode"
+msgstr "在普通模式下转换的字符列表"
+
+#: ../../../runtime/optwin.vim:1162
+msgid "apply 'langmap' to mapped characters"
+msgstr "对映射的字符应用 'langmap'"
+
+#: ../../../runtime/optwin.vim:1166
+msgid "when set never use IM; overrules following IM options"
+msgstr "设置时总不使用输入法；覆盖以下输入法选项"
+
+#: ../../../runtime/optwin.vim:1169
+msgid "in Insert mode: 1: use :lmap; 2: use IM; 0: neither"
+msgstr "插入模式：1：使用 :lamp；2：使用输入法；0：都不用"
+
+#: ../../../runtime/optwin.vim:1172
+msgid "entering a search pattern: 1: use :lmap; 2: use IM; 0: neither"
+msgstr "输入搜索模式时：1：使用 :lamp；2：使用输入法；0：都不用"
+
+#: ../../../runtime/optwin.vim:1176
+msgid "when set always use IM when starting to edit a command line"
+msgstr "如果设置，开始编辑命令行时总是使用输入法"
+
+#: ../../../runtime/optwin.vim:1178
+msgid "function to obtain IME status"
+msgstr "获取输入法状态的函数"
+
+#: ../../../runtime/optwin.vim:1180
+msgid "function to enable/disable IME"
+msgstr "启用/禁用输入法的函数"
+
+#: ../../../runtime/optwin.vim:1185
+#, fuzzy
+msgid "multi-byte characters"
+msgstr "1 个字符"
+
+#: ../../../runtime/optwin.vim:1186
+msgid "character encoding used in Nvim: \"utf-8\""
+msgstr ""
+
+#: ../../../runtime/optwin.vim:1188
+msgid "character encoding for the current file"
+msgstr "当前文件的字符编码"
+
+#: ../../../runtime/optwin.vim:1191
+msgid "automatically detected character encodings"
+msgstr "自动检测字符编码"
+
+#: ../../../runtime/optwin.vim:1193
+msgid "expression used for character encoding conversion"
+msgstr "用于字符编码转换的表达式"
+
+#: ../../../runtime/optwin.vim:1195
+msgid "delete combining (composing) characters on their own"
+msgstr "删除组合字符本身"
+
+#: ../../../runtime/optwin.vim:1197
+msgid "maximum number of combining (composing) characters displayed"
+msgstr "显示的最大字符组合数"
+
+#: ../../../runtime/optwin.vim:1200
+msgid "key that activates the X input method"
+msgstr "激活 X 输入方法的键"
+
+#: ../../../runtime/optwin.vim:1203
+msgid "width of ambiguous width characters"
+msgstr "宽度有歧义字符的宽度"
+
+#: ../../../runtime/optwin.vim:1205
+msgid "emoji characters are full width"
+msgstr "表情字符视作全宽"
+
+#: ../../../runtime/optwin.vim:1209
+msgid "various"
+msgstr "杂项"
+
+#: ../../../runtime/optwin.vim:1210
+msgid ""
+"when to use virtual editing: \"block\", \"insert\", \"all\"\n"
+"and/or \"onemore\""
+msgstr "何时使用虚拟编辑：\"block\", \"insert\", \"all\" 和/或 \"onemore\""
+
+#: ../../../runtime/optwin.vim:1212
+msgid "list of autocommand events which are to be ignored"
+msgstr "要忽略的自动命令事件列表"
+
+#: ../../../runtime/optwin.vim:1214
+msgid "load plugin scripts when starting up"
+msgstr "启动时加载插件脚本"
+
+#: ../../../runtime/optwin.vim:1216
+msgid "enable reading .vimrc/.exrc/.gvimrc in the current directory"
+msgstr "启用读取在当前目录下的 .vimrc/.exrc/.gvimrc"
+
+#: ../../../runtime/optwin.vim:1218
+msgid "safer working with script files in the current directory"
+msgstr "在当前目录下使用脚本文件时更安全"
+
+#: ../../../runtime/optwin.vim:1220
+msgid "use the 'g' flag for \":substitute\""
+msgstr "打开 \":substitute\" 的 'g' 标志"
+
+#: ../../../runtime/optwin.vim:1223
+msgid "allow reading/writing devices"
+msgstr "允许读写设备"
+
+#: ../../../runtime/optwin.vim:1227
+msgid "maximum depth of function calls"
+msgstr "函数调用的最大深度"
+
+#: ../../../runtime/optwin.vim:1231
+msgid "list of words that specifies what to put in a session file"
+msgstr "指定放入会话文件的内容的单词列表"
+
+#: ../../../runtime/optwin.vim:1233
+msgid "list of words that specifies what to save for :mkview"
+msgstr "指定 :mkview 保存的内容的单词列表"
+
+#: ../../../runtime/optwin.vim:1235
+msgid "directory where to store files with :mkview"
+msgstr ":mkview 存放文件的目录"
+
+#: ../../../runtime/optwin.vim:1239
+msgid "list that specifies what to write in the ShaDa file"
+msgstr ""
+
+#: ../../../runtime/optwin.vim:1243
+msgid "what happens with a buffer when it's no longer in a window"
+msgstr "当缓冲区不再位于窗口中时，会发生什么"
+
+#: ../../../runtime/optwin.vim:1246
+msgid "empty, \"nofile\", \"nowrite\", \"quickfix\", etc.: type of buffer"
+msgstr "空, \"nofile\", \"nowrite\", \"quickfix\" 等; 缓冲区类型"
+
+#: ../../../runtime/optwin.vim:1250
+msgid "whether the buffer shows up in the buffer list"
+msgstr "缓冲区是否显示在缓冲区列表中"
+
+#: ../../../runtime/optwin.vim:1253
+msgid "set to \"msg\" to see all error messages"
+msgstr "设置为 \"msg\" 以查看所有错误消息"
+
+#: ../../../runtime/optwin.vim:1255
+msgid "whether to show the signcolumn"
+msgstr "是否显示标号列"
+
+#: ../../../runtime/optwin.vim:1282
+msgid "name of the MzScheme dynamic library"
+msgstr "MzScheme 动态库的名字"
+
+#: ../../../runtime/optwin.vim:1284
+msgid "name of the MzScheme GC dynamic library"
+msgstr "MzScheme GC 动态库的名字"
+
+#: ../../../runtime/optwin.vim:1288
+msgid "whether to use Python 2 or 3"
+msgstr "是否使用 Python 2 和 3"
 
 #~ msgid "\t\t\t  (Unimplemented)\n"
 #~ msgstr "\t\t\t  (尚未实现)\n"
