@@ -39,6 +39,9 @@ NEW FEATURES                                                    *news-features*
 
 The following new APIs or features were added.
 
+• |vim.secure.read()| reads a file and prompts the user if it should be
+  trusted and, if so, returns the file's contents.
+
 • When using Nvim inside tmux 3.2 or later, the default clipboard provider
   will now copy to the system clipboard. |provider-clipboard|
 
@@ -56,6 +59,8 @@ The following new APIs or features were added.
 CHANGED FEATURES                                                 *news-changes*
 
 The following changes to existing APIs or features add new behavior.
+
+• 'exrc' is no longer marked deprecated.
 
 ==============================================================================
 REMOVED FEATURES                                                 *news-removed*

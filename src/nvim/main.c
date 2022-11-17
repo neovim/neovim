@@ -1989,35 +1989,22 @@ static void source_startup_scripts(const mparm_T *const parmp)
     do_system_initialization();
 
     if (do_user_initialization()) {
-      // Read initialization commands from ".vimrc" or ".exrc" in current
+      // Read initialization commands from ".nvimrc" or ".exrc" in current
       // directory.  This is only done if the 'exrc' option is set.
-      // Because of security reasons we disallow shell and write commands
-      // now, except for unix if the file is owned by the user or 'secure'
-      // option has been reset in environment of global "exrc" or "vimrc".
       // Only do this if VIMRC_FILE is not the same as vimrc file sourced in
       // do_user_initialization.
-#if defined(UNIX)
-      // If vimrc file is not owned by user, set 'secure' mode.
-      if (!os_file_owned(VIMRC_FILE))  // NOLINT(readability/braces)
-#endif
-      secure = p_secure;
-
-      if (do_source(VIMRC_FILE, true, DOSO_VIMRC) == FAIL) {
-#if defined(UNIX)
-        // if ".exrc" is not owned by user set 'secure' mode
-        if (!os_file_owned(EXRC_FILE)) {
-          secure = p_secure;
-        } else {
-          secure = 0;
+      char *str = nlua_read_secure(VIMRC_FILE);
+      if (str != NULL) {
+        do_source_str(str, VIMRC_FILE);
+        xfree(str);
+      } else {
+        str = nlua_read_secure(EXRC_FILE);
+        if (str != NULL) {
+          do_source_str(str, EXRC_FILE);
+          xfree(str);
         }
-#endif
-        (void)do_source(EXRC_FILE, false, DOSO_NONE);
       }
     }
-    if (secure == 2) {
-      need_wait_return = true;
-    }
-    secure = 0;
   }
   TIME_MSG("sourcing vimrc file(s)");
 }

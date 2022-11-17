@@ -4223,8 +4223,7 @@ theend:
 
 static void ex_autocmd(exarg_T *eap)
 {
-  // Disallow autocommands from .exrc and .vimrc in current
-  // directory for security reasons.
+  // Disallow autocommands in secure mode.
   if (secure) {
     secure = 2;
     eap->errmsg = _(e_curdir);

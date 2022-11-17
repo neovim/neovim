@@ -1024,6 +1024,7 @@ endfunc
 
 " Test for using the 'exrc' option
 func Test_exrc()
+  throw 'Skipped: Nvim requires user input for the exrc option'
   let after =<< trim [CODE]
     call assert_equal(1, &exrc)
     call assert_equal(1, &secure)

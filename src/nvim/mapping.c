@@ -2446,8 +2446,7 @@ void ex_abbreviate(exarg_T *eap)
 /// ":map" and friends.
 void ex_map(exarg_T *eap)
 {
-  // If we are sourcing .exrc or .vimrc in current directory we
-  // print the mappings for security reasons.
+  // If we are in a secure mode we print the mappings for security reasons.
   if (secure) {
     secure = 2;
     msg_outtrans(eap->cmd);

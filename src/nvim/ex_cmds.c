@@ -1134,8 +1134,7 @@ void do_bang(int addr_count, exarg_T *eap, bool forceit, bool do_in, bool do_out
   int scroll_save = msg_scroll;
 
   //
-  // Disallow shell commands from .exrc and .vimrc in current directory for
-  // security reasons.
+  // Disallow shell commands in secure mode
   //
   if (check_secure()) {
     return;
@@ -1477,8 +1476,7 @@ filterend:
 /// @param flags  may be SHELL_DOOUT when output is redirected
 void do_shell(char *cmd, int flags)
 {
-  // Disallow shell commands from .exrc and .vimrc in current directory for
-  // security reasons.
+  // Disallow shell commands in secure mode
   if (check_secure()) {
     msg_end();
     return;
@@ -3215,8 +3213,7 @@ void ex_z(exarg_T *eap)
   ex_no_reprint = true;
 }
 
-/// @return  true if the secure flag is set (.exrc or .vimrc in current directory)
-///          and also give an error message.
+/// @return  true if the secure flag is set and also give an error message.
 ///          Otherwise, return false.
 bool check_secure(void)
 {

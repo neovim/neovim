@@ -489,8 +489,7 @@ EXTERN int stdin_fd INIT(= -1);
 // true when doing full-screen output, otherwise only writing some messages.
 EXTERN int full_screen INIT(= false);
 
-/// Non-zero when only "safe" commands are allowed, e.g. when sourcing .exrc or
-/// .vimrc in current directory.
+/// Non-zero when only "safe" commands are allowed
 EXTERN int secure INIT(= 0);
 
 /// Non-zero when changing text and jumping to another window or editing another buffer is not
@@ -864,7 +863,7 @@ EXTERN char e_api_spawn_failed[] INIT(= N_("E903: Could not spawn API job"));
 EXTERN char e_argreq[] INIT(= N_("E471: Argument required"));
 EXTERN char e_backslash[] INIT(= N_("E10: \\ should be followed by /, ? or &"));
 EXTERN char e_cmdwin[] INIT(= N_("E11: Invalid in command-line window; <CR> executes, CTRL-C quits"));
-EXTERN char e_curdir[] INIT(= N_("E12: Command not allowed from exrc/vimrc in current dir or tag search"));
+EXTERN char e_curdir[] INIT(= N_("E12: Command not allowed in secure mode in current dir or tag search"));
 EXTERN char e_command_too_recursive[] INIT(= N_("E169: Command too recursive"));
 EXTERN char e_endif[] INIT(= N_("E171: Missing :endif"));
 EXTERN char e_endtry[] INIT(= N_("E600: Missing :endtry"));
