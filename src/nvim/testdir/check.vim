@@ -90,6 +90,14 @@ func CheckUnix()
   endif
 endfunc
 
+" Command to check for running on Linux
+command CheckLinux call CheckLinux()
+func CheckLinux()
+  if !has('linux')
+    throw 'Skipped: only works on Linux'
+  endif
+endfunc
+
 " Command to check that making screendumps is supported.
 " Caller must source screendump.vim
 command CheckScreendump call CheckScreendump()

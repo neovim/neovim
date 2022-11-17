@@ -174,7 +174,12 @@ func RunTheTest(test)
   if a:test =~ 'Test_nocatch_'
     " Function handles errors itself.  This avoids skipping commands after the
     " error.
+    let g:skipped_reason = ''
     exe 'call ' . a:test
+    if g:skipped_reason != ''
+      call add(s:messages, '    Skipped')
+      call add(s:skipped, 'SKIPPED ' . a:test . ': ' . g:skipped_reason)
+    endif
   else
     try
       let s:test = a:test

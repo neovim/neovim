@@ -1,12 +1,14 @@
 local Screen = require('test.functional.ui.screen')
 local helpers = require('test.functional.helpers')(after_each)
 local lfs = require('lfs')
+local luv = require('luv')
 local eq, eval, expect, exec =
   helpers.eq, helpers.eval, helpers.expect, helpers.exec
 local assert_alive = helpers.assert_alive
 local clear = helpers.clear
 local command = helpers.command
 local feed = helpers.feed
+local funcs = helpers.funcs
 local nvim_prog = helpers.nvim_prog
 local ok = helpers.ok
 local rmdir = helpers.rmdir
@@ -100,7 +102,7 @@ describe('swapfile detection', function()
   -- attempt to create a swapfile in different directory.
   local init = [[
     set directory^=]]..swapdir:gsub([[\]], [[\\]])..[[//
-    set swapfile fileformat=unix undolevels=-1 hidden
+    set swapfile fileformat=unix nomodified undolevels=-1 nohidden
   ]]
   before_each(function()
     nvim0 = spawn(new_argv())
@@ -262,5 +264,80 @@ describe('swapfile detection', function()
       hello                                                                      |
     ]])
     nvim2:close()
+  end)
+
+  -- oldtest: Test_nocatch_process_still_running()
+  it('allows deleting swapfile created before boot vim-patch:8.2.2586', function()
+    local screen = Screen.new(75, 30)
+    screen:set_default_attr_ids({
+      [0] = {bold = true, foreground = Screen.colors.Blue},  -- NonText
+      [1] = {bold = true, foreground = Screen.colors.SeaGreen},  -- MoreMsg
+      [2] = {background = Screen.colors.Red, foreground = Screen.colors.White},  -- ErrorMsg
+    })
+    screen:attach()
+
+    exec(init)
+    command('set nohidden')
+
+    exec([=[
+      " Make a copy of the current swap file to "Xswap".
+      " Return the name of the swap file.
+      func CopySwapfile()
+        preserve
+        " get the name of the swap file
+        let swname = split(execute("swapname"))[0]
+        let swname = substitute(swname, '[[:blank:][:cntrl:]]*\(.\{-}\)[[:blank:][:cntrl:]]*$', '\1', '')
+        " make a copy of the swap file in Xswap
+        set binary
+        exe 'sp ' . fnameescape(swname)
+        w! Xswap
+        set nobinary
+        return swname
+      endfunc
+    ]=])
+
+    -- Edit a file and grab its swapfile.
+    exec([[
+      edit Xswaptest
+      call setline(1, ['a', 'b', 'c'])
+    ]])
+    local swname = funcs.CopySwapfile()
+
+    -- Forget we edited this file
+    exec([[
+      new
+      only!
+      bwipe! Xswaptest
+    ]])
+
+    os.rename('Xswap', swname)
+
+    feed(':edit Xswaptest<CR>')
+    screen:expect({any = table.concat({
+      pesc('{2:E325: ATTENTION}'),
+      'file name: .*Xswaptest',
+      'process ID: %d* %(STILL RUNNING%)',
+      pesc('{1:[O]pen Read-Only, (E)dit anyway, (R)ecover, (Q)uit, (A)bort: }^'),
+    }, '.*')})
+
+    feed('e')
+
+    -- Forget we edited this file
+    exec([[
+      new
+      only!
+      bwipe! Xswaptest
+    ]])
+
+    -- pretend that the swapfile was created before boot
+    lfs.touch(swname, os.time() - luv.uptime() - 10)
+
+    feed(':edit Xswaptest<CR>')
+    screen:expect({any = table.concat({
+      pesc('{2:E325: ATTENTION}'),
+      pesc('{1:[O]pen Read-Only, (E)dit anyway, (R)ecover, (D)elete it, (Q)uit, (A)bort: }^'),
+    }, '.*')})
+
+    feed('e')
   end)
 end)
