@@ -17,7 +17,7 @@ msgstr ""
 "Project-Id-Version: Vim(Simplified Chinese)\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2022-11-17 08:00+0800\n"
-"PO-Revision-Date: 2022-11-17 08:24+0800\n"
+"PO-Revision-Date: 2022-11-17 11:45+0800\n"
 "Last-Translator: Sizhe Zhao <prc.zhao@outlook.com>\n"
 "Language-Team: Simplified Chinese <i18n-translation@lists.linux.net.cn>\n"
 "Language: zh_CN\n"
@@ -6514,7 +6514,7 @@ msgstr "E781: .sug 文件不能匹配 .spl 文件: %s"
 #: ../spellfile.c:964
 #, c-format
 msgid "E782: error while reading .sug file: %s"
-msgstr "E782: 当读取.sug 文件时错误"
+msgstr "E782: 读取 .sug 文件时出错：%s"
 
 #: ../spellfile.c:2067
 #, c-format
@@ -6547,7 +6547,7 @@ msgid ""
 "Defining COMPOUNDFORBIDFLAG after PFX item may give wrong results in %s line "
 "%d"
 msgstr ""
-"在 PFX 项之后定义 COMPOUNDFORBIDFLAG （%s 第%d行）可能会给出错误的结果%d"
+"在 PFX 项之后定义 COMPOUNDFORBIDFLAG （%s 第 %d 行）可能会给出错误的结果"
 
 #: ../spellfile.c:2246
 #, c-format
@@ -6555,7 +6555,7 @@ msgid ""
 "Defining COMPOUNDPERMITFLAG after PFX item may give wrong results in %s line "
 "%d"
 msgstr ""
-"在 PFX 项之后定义 COMPOUNDPERMITFLAG （%s 第%d行）可能会给出错误的结果%d"
+"在 PFX 项之后定义 COMPOUNDPERMITFLAG （%s 第 %d 行）可能会给出错误的结果"
 
 #: ../spellfile.c:2261
 #, fuzzy, c-format
@@ -7245,7 +7245,7 @@ msgstr "E881: 行数意外地改变了"
 #: ../undo.c:628
 #, c-format
 msgid "E828: Cannot open undo file for writing: %s"
-msgstr "E828: 无法打开撤销文件去写入"
+msgstr "E828: 无法打开并写入撤销文件：%s"
 
 #: ../undo.c:710
 #, fuzzy, c-format
