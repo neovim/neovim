@@ -504,18 +504,18 @@ endfunc
 " Test for renaming a buffer when the swap file is deleted out-of-band
 func Test_missing_swap_file()
   CheckUnix
-  new Xfile1
+  new Xfile2
   call delete(swapname(''))
-  call assert_fails('file Xfile2', 'E301:')
-  call assert_equal('Xfile2', bufname())
-  call assert_true(bufexists('Xfile1'))
+  call assert_fails('file Xfile3', 'E301:')
+  call assert_equal('Xfile3', bufname())
   call assert_true(bufexists('Xfile2'))
+  call assert_true(bufexists('Xfile3'))
   %bw!
 endfunc
 
 " Test for :preserve command
 func Test_preserve()
-  new Xfile1
+  new Xfile4
   setlocal noswapfile
   call assert_fails('preserve', 'E313:')
   bw!
@@ -523,8 +523,8 @@ endfunc
 
 " Test for the v:swapchoice variable
 func Test_swapchoice()
-  call writefile(['aaa', 'bbb'], 'Xfile1')
-  edit Xfile1
+  call writefile(['aaa', 'bbb'], 'Xfile5')
+  edit Xfile5
   preserve
   let swapfname = swapname('')
   let b = readblob(swapfname)
@@ -538,7 +538,7 @@ func Test_swapchoice()
     autocmd!
     autocmd SwapExists * let v:swapchoice = 'o'
   augroup END
-  edit Xfile1
+  edit Xfile5
   call assert_true(&readonly)
   call assert_equal(['aaa', 'bbb'], getline(1, '$'))
   %bw!
@@ -550,11 +550,11 @@ func Test_swapchoice()
     autocmd SwapExists * let v:swapchoice = 'a'
   augroup END
   try
-    edit Xfile1
+    edit Xfile5
   catch /^Vim:Interrupt$/
   endtry
   call assert_equal('', @%)
-  call assert_true(bufexists('Xfile1'))
+  call assert_true(bufexists('Xfile5'))
   %bw!
   call assert_true(filereadable(swapfname))
 
@@ -563,12 +563,12 @@ func Test_swapchoice()
     autocmd!
     autocmd SwapExists * let v:swapchoice = 'd'
   augroup END
-  edit Xfile1
-  call assert_equal('Xfile1', @%)
+  edit Xfile5
+  call assert_equal('Xfile5', @%)
   %bw!
   call assert_false(filereadable(swapfname))
 
-  call delete('Xfile1')
+  call delete('Xfile5')
   call delete(swapfname)
   augroup test_swapchoice
     autocmd!
