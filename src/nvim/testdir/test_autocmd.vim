@@ -4,6 +4,7 @@ source shared.vim
 source check.vim
 source term_util.vim
 source screendump.vim
+source load.vim
 
 func s:cleanup_buffers() abort
   for bnr in range(1, bufnr('$'))
@@ -20,8 +21,36 @@ func Test_vim_did_enter()
   " becomes one.
 endfunc
 
+" Test for the CursorHold autocmd
+func Test_CursorHold_autocmd()
+  CheckRunVimInTerminal
+  call writefile(['one', 'two', 'three'], 'Xfile')
+  let before =<< trim END
+    set updatetime=10
+    au CursorHold * call writefile([line('.')], 'Xoutput', 'a')
+  END
+  call writefile(before, 'Xinit')
+  let buf = RunVimInTerminal('-S Xinit Xfile', {})
+  call term_wait(buf)
+  call term_sendkeys(buf, "gg")
+  call term_wait(buf)
+  sleep 50m
+  call term_sendkeys(buf, "j")
+  call term_wait(buf)
+  sleep 50m
+  call term_sendkeys(buf, "j")
+  call term_wait(buf)
+  sleep 50m
+  call StopVimInTerminal(buf)
+
+  call assert_equal(['1', '2', '3'], readfile('Xoutput')[-3:-1])
+
+  call delete('Xinit')
+  call delete('Xoutput')
+  call delete('Xfile')
+endfunc
+
 if has('timers')
-  source load.vim
 
   func ExitInsertMode(id)
     call feedkeys("\<Esc>")
