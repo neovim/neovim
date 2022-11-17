@@ -435,7 +435,7 @@ func Test_swap_auto_delete()
   " swap file should be automatically deleted.
   bwipe!
   " change the process ID to avoid the "still running" warning
-  let swapfile_bytes[24] = 0x99
+  let swapfile_bytes[24] = swapfile_bytes[24] + 1
   call writefile(swapfile_bytes, swapfile_name)
   edit Xtest.scr
   " will end up using the same swap file after deleting the existing one
@@ -451,7 +451,7 @@ func Test_swap_auto_delete()
   augroup END
 
   " change the host name
-  let swapfile_bytes[28 + 40] = 0x89
+  let swapfile_bytes[28 + 40] = swapfile_bytes[28 + 40] + 2
   call writefile(swapfile_bytes, swapfile_name)
   edit Xtest.scr
   call assert_equal(1, filereadable(swapfile_name))
