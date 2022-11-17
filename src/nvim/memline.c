@@ -1138,7 +1138,14 @@ void ml_recover(bool checkext)
     } else {
       msg(_("Recovery completed. Buffer contents equals file contents."));
     }
-    msg_puts(_("\nYou may want to delete the .swp file now.\n\n"));
+    msg_puts(_("\nYou may want to delete the .swp file now."));
+    if (os_proc_running((int)char_to_long(b0p->b0_pid))) {
+      // Warn there could be an active Vim on the same file, the user may
+      // want to kill it.
+      msg_puts(_("\nNote: process STILL RUNNING: "));
+      msg_outnum(char_to_long(b0p->b0_pid));
+    }
+    msg_puts("\n\n");
     cmdline_row = msg_row;
   }
   redraw_curbuf_later(UPD_NOT_VALID);
@@ -1533,14 +1540,28 @@ static bool swapfile_unchanged(char *fname)
     ret = false;
   }
 
+  // Host name must be known and must equal the current host name, otherwise
+  // comparing pid is meaningless.
+  if (*(b0.b0_hname) == NUL) {
+    ret = false;
+  } else {
+    char hostname[B0_HNAME_SIZE];
+    os_get_hostname(hostname, B0_HNAME_SIZE);
+    hostname[B0_HNAME_SIZE - 1] = NUL;
+    b0.b0_hname[B0_HNAME_SIZE - 1] = NUL;  // in case of corruption
+    if (STRICMP(b0.b0_hname, hostname) != 0) {
+      ret = false;
+    }
+  }
+
   // process must be known and not running.
   long pid = char_to_long(b0.b0_pid);
   if (pid == 0L || os_proc_running((int)pid)) {
     ret = false;
   }
 
-  // TODO(bram): Should we check if the swap file was created on the current
-  // system?  And the current user?
+  // We do not check the user, it should be irrelevant for whether the swap
+  // file is still useful.
 
   close(fd);
   return ret;

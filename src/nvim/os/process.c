@@ -264,5 +264,16 @@ Dictionary os_proc_info(int pid)
 /// Return true if process `pid` is running.
 bool os_proc_running(int pid)
 {
-  return uv_kill(pid, 0) == 0;
+  int err = uv_kill(pid, 0);
+  // If there is no error the process must be running.
+  if (err == 0) {
+    return true;
+  }
+  // If the error is ESRCH then the process is not running.
+  if (err == UV_ESRCH) {
+    return false;
+  }
+  // If the process is running and owned by another user we get EPERM.  With
+  // other errors the process might be running, assuming it is then.
+  return true;
 }
