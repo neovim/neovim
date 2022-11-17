@@ -1018,7 +1018,9 @@ int do_move(linenr_T line1, linenr_T line2, linenr_T dest)
     ml_delete(line1 + extra, true);
   }
   if (!global_busy && num_lines > p_report) {
-    smsg(NGETTEXT("1 line moved", "%" PRId64 " lines moved", num_lines), (int64_t)num_lines);
+    smsg(NGETTEXT("%" PRId64 " line moved",
+                  "%" PRId64 " lines moved", num_lines),
+         (int64_t)num_lines);
   }
 
   extmark_move_region(curbuf, line1 - 1, 0, start_byte,
