@@ -138,4 +138,131 @@ func Test_nocatch_process_still_running()
   call delete(swname)
 endfunc
 
+" Test for :recover with multiple swap files
+func Test_recover_multiple_swap_files()
+  CheckUnix
+  new Xfile1
+  call setline(1, ['a', 'b', 'c'])
+  preserve
+  let b = readblob('.Xfile1.swp')
+  call writefile(b, '.Xfile1.swm')
+  call writefile(b, '.Xfile1.swn')
+  call writefile(b, '.Xfile1.swo')
+  %bw!
+  call feedkeys(":recover Xfile1\<CR>3\<CR>q", 'xt')
+  call assert_equal(['a', 'b', 'c'], getline(1, '$'))
+
+  call delete('.Xfile1.swm')
+  call delete('.Xfile1.swn')
+  call delete('.Xfile1.swo')
+endfunc
+
+" Test for :recover using an empty swap file
+func Test_recover_empty_swap_file()
+  CheckUnix
+  call writefile([], '.Xfile1.swp')
+  let msg = execute('recover Xfile1')
+  call assert_match('Unable to read block 0 from .Xfile1.swp', msg)
+  call assert_equal('Xfile1', @%)
+  bw!
+  " :recover from an empty buffer
+  call assert_fails('recover', 'E305:')
+  call delete('.Xfile1.swp')
+endfunc
+
+" Test for :recover using a corrupted swap file
+func Test_recover_corrupted_swap_file()
+  CheckUnix
+  " recover using a partial swap file
+  call writefile(0z1234, '.Xfile1.swp')
+  call assert_fails('recover Xfile1', 'E295:')
+  bw!
+
+  " recover using invalid content in the swap file
+  call writefile([repeat('1', 2*1024)], '.Xfile1.swp')
+  call assert_fails('recover Xfile1', 'E307:')
+  call delete('.Xfile1.swp')
+
+  " :recover using a swap file with a corrupted header
+  edit Xfile1
+  preserve
+  let sn = swapname('')
+  let b = readblob(sn)
+  bw!
+  " clear the B0_MAGIC_LONG field
+  let b[1008:1011] = 0z00000000
+  call writefile(b, sn)
+  let msg = execute('recover Xfile1')
+  call assert_match('the file has been damaged', msg)
+  bw!
+  call delete(sn)
+endfunc
+
+" Test for :recover using an encrypted swap file
+func Test_recover_encrypted_swap_file()
+  CheckUnix
+
+  " Recover an encrypted file from the swap file without the original file
+  new Xfile1
+  call feedkeys(":X\<CR>vim\<CR>vim\<CR>", 'xt')
+  call setline(1, ['aaa', 'bbb', 'ccc'])
+  preserve
+  let b = readblob('.Xfile1.swp')
+  call writefile(b, '.Xfile1.swm')
+  bw!
+  call feedkeys(":recover Xfile1\<CR>vim\<CR>\<CR>", 'xt')
+  call assert_equal(['aaa', 'bbb', 'ccc'], getline(1, '$'))
+  bw!
+  call delete('.Xfile1.swm')
+
+  " Recover an encrypted file from the swap file with the original file
+  new Xfile1
+  call feedkeys(":X\<CR>vim\<CR>vim\<CR>", 'xt')
+  call setline(1, ['aaa', 'bbb', 'ccc'])
+  update
+  call setline(1, ['111', '222', '333'])
+  preserve
+  let b = readblob('.Xfile1.swp')
+  call writefile(b, '.Xfile1.swm')
+  bw!
+  call feedkeys(":recover Xfile1\<CR>vim\<CR>\<CR>", 'xt')
+  call assert_equal(['111', '222', '333'], getline(1, '$'))
+  call assert_true(&modified)
+  bw!
+  call delete('.Xfile1.swm')
+  call delete('Xfile1')
+endfunc
+
+" Test for :recover using a unreadable swap file
+func Test_recover_unreadble_swap_file()
+  CheckUnix
+  CheckNotRoot
+  new Xfile1
+  let b = readblob('.Xfile1.swp')
+  call writefile(b, '.Xfile1.swm')
+  bw!
+  call setfperm('.Xfile1.swm', '-w-------')
+  call assert_fails('recover Xfile1', 'E306:')
+  call delete('.Xfile1.swm')
+endfunc
+
+" Test for using :recover when the original file and the swap file have the
+" same contents.
+func Test_recover_unmodified_file()
+  CheckUnix
+  call writefile(['aaa', 'bbb', 'ccc'], 'Xfile1')
+  edit Xfile1
+  preserve
+  let b = readblob('.Xfile1.swp')
+  %bw!
+  call writefile(b, '.Xfile1.swz')
+  let msg = execute('recover Xfile1')
+  call assert_equal(['aaa', 'bbb', 'ccc'], getline(1, '$'))
+  call assert_false(&modified)
+  call assert_match('Buffer contents equals file contents', msg)
+  bw!
+  call delete('Xfile1')
+  call delete('.Xfile1.swz')
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab
