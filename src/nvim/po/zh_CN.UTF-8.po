@@ -8,6 +8,8 @@
 # TRANSLATORS
 #   Edyfox <edyfox@gmail.com>
 #   Yuheng Xie <elephant@linux.net.cn>
+#   lilydjwg <lilydjwg@gmail.com>
+#   Ada (Haowen) Yu <me@yuhaowen.com>
 #   Sizhe Zhao <prc.zhao@outlook.com>
 #
 # Original translations.
