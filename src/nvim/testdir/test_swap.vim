@@ -505,7 +505,7 @@ endfunc
 func Test_missing_swap_file()
   CheckUnix
   new Xfile1
-  call delete('.Xfile1.swp')
+  call delete(swapname(''))
   call assert_fails('file Xfile2', 'E301:')
   call assert_equal('Xfile2', bufname())
   call assert_true(bufexists('Xfile1'))

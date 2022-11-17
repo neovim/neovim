@@ -144,7 +144,7 @@ func Test_recover_multiple_swap_files()
   new Xfile1
   call setline(1, ['a', 'b', 'c'])
   preserve
-  let b = readblob('.Xfile1.swp')
+  let b = readblob(swapname(''))
   call writefile(b, '.Xfile1.swm')
   call writefile(b, '.Xfile1.swn')
   call writefile(b, '.Xfile1.swo')
@@ -173,6 +173,7 @@ endfunc
 " Test for :recover using a corrupted swap file
 func Test_recover_corrupted_swap_file()
   CheckUnix
+
   " recover using a partial swap file
   call writefile(0z1234, '.Xfile1.swp')
   call assert_fails('recover Xfile1', 'E295:')
@@ -188,12 +189,41 @@ func Test_recover_corrupted_swap_file()
   preserve
   let sn = swapname('')
   let b = readblob(sn)
+  let save_b = copy(b)
   bw!
-  " clear the B0_MAGIC_LONG field
-  let b[1008:1011] = 0z00000000
-  call writefile(b, sn)
-  let msg = execute('recover Xfile1')
-  call assert_match('the file has been damaged', msg)
+  " Run these tests only on little-endian systems. These tests fail on a
+  " big-endian system (IBM S390x system).
+  if b[1008:1011] == 0z33323130
+        \ && b[4096:4097] == 0z7470
+        \ && b[8192:8193] == 0z6164
+
+    " clear the B0_MAGIC_LONG field
+    let b[1008:1011] = 0z00000000
+    call writefile(b, sn)
+    let msg = execute('recover Xfile1')
+    call assert_match('the file has been damaged', msg)
+    bw!
+
+    " clear the pointer ID
+    let b = copy(save_b)
+    let b[4096:4097] = 0z0000
+    call writefile(b, sn)
+    call assert_fails('recover Xfile1', 'E310:')
+    bw!
+
+    " clear the data block ID
+    let b = copy(save_b)
+    let b[8192:8193] = 0z0000
+    call writefile(b, sn)
+    call assert_fails('recover Xfile1', 'E312:')
+    bw!
+
+    " remove the data block
+    let b = copy(save_b)
+    call writefile(b[:8191], sn)
+    call assert_fails('recover Xfile1', 'E312:')
+  endif
+
   bw!
   call delete(sn)
 endfunc
