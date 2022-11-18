@@ -98,8 +98,8 @@ function! provider#clipboard#Executable() abort
     let s:paste['*'] = ['wl-paste', '--no-newline', '--primary']
     return 'wl-copy'
   elseif !empty($WAYLAND_DISPLAY) && executable('waycopy') && executable('waypaste')
-    let s:copy['+'] = ['waycopy']
-    let s:paste['+'] = ['waypaste']
+    let s:copy['+'] = ['waycopy', '-t', 'text/plain']
+    let s:paste['+'] = ['waypaste', '-t', 'text/plain']
     let s:copy['*'] = s:copy['+']
     let s:paste['*'] = s:paste['+']
     return 'wayclip'
