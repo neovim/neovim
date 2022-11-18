@@ -112,8 +112,11 @@ static char *nofile_fname = NULL;       // fname for NOTAGFILE error
 
 /// State information used during a tag search
 typedef struct {
-  char *tag_fname;               ///< name of tag file
+  char *tag_fname;               ///< name of the tag file
   pat_T orgpat;                  ///< holds unconverted pattern info
+  bool name_only;                ///< get only tag names
+  bool get_searchpat;            ///< used for 'showfulltag'
+  bool help_only;                ///< only search for help tags
   char *help_lang_find;          ///< lang to be found
   bool is_txt;                   ///< flag of file extension
   bool did_open;                 ///< did open a tag file
@@ -1374,7 +1377,7 @@ static int find_tagfunc_tags(char_u *pat, garray_T *ga, int *match_count, int fl
 }
 
 /// Initialize the state used by find_tags()
-static void findtags_state_init(findtags_state_T *st, char *pat, int mincount)
+static void findtags_state_init(findtags_state_T *st, char *pat, int flags, int mincount)
 {
   st->tag_fname = xmalloc(MAXPATHL + 1);
   st->orgpat.pat = (char_u *)pat;
@@ -1383,6 +1386,9 @@ static void findtags_state_init(findtags_state_T *st, char *pat, int mincount)
   st->help_lang_find = NULL;
   st->is_txt = false;
   st->did_open = false;
+  st->help_only = (flags & TAG_HELP);
+  st->name_only = (flags & TAG_NAMES);
+  st->get_searchpat = false;
   st->mincount = mincount;
   st->lbuf_size = LSIZE;
   st->lbuf = xmalloc((size_t)st->lbuf_size);
@@ -1395,6 +1401,278 @@ static void findtags_state_init(findtags_state_T *st, char *pat, int mincount)
   }
 }
 
+/// Free the state used by find_tags()
+static void findtags_state_free(findtags_state_T *st)
+{
+  xfree(st->tag_fname);
+  xfree(st->lbuf);
+  vim_regfree(st->orgpat.regmatch.regprog);
+}
+
+/// Initialize the state for searching tags in a Vim help file.
+/// Returns true to process the help file and false to skip the file.
+static bool findtags_in_help_init(findtags_state_T *st, int flags, char *help_lang, int *help_pri)
+{
+  int i;
+
+  // Keep en if the file extension is .txt
+  if (st->is_txt) {
+    STRCPY(help_lang, "en");
+  } else {
+    // Prefer help tags according to 'helplang'.  Put the
+    // two-letter language name in help_lang[].
+    i = (int)STRLEN(st->tag_fname);
+    if (i > 3 && st->tag_fname[i - 3] == '-') {
+      STRCPY(help_lang, st->tag_fname + i - 2);
+    } else {
+      STRCPY(help_lang, "en");
+    }
+  }
+  // When searching for a specific language skip tags files
+  // for other languages.
+  if (st->help_lang_find != NULL
+      && STRICMP(help_lang, st->help_lang_find) != 0) {
+    return false;
+  }
+
+  // For CTRL-] in a help file prefer a match with the same
+  // language.
+  if ((flags & TAG_KEEP_LANG)
+      && st->help_lang_find == NULL
+      && curbuf->b_fname != NULL
+      && (i = (int)strlen(curbuf->b_fname)) > 4
+      && curbuf->b_fname[i - 1] == 'x'
+      && curbuf->b_fname[i - 4] == '.'
+      && STRNICMP(curbuf->b_fname + i - 3, help_lang, 2) == 0) {
+    *help_pri = 0;
+  } else {
+    *help_pri = 1;
+    char *s;
+    for (s = (char *)p_hlg; *s != NUL; s++) {
+      if (STRNICMP(s, help_lang, 2) == 0) {
+        break;
+      }
+      (*help_pri)++;
+      if ((s = vim_strchr(s, ',')) == NULL) {
+        break;
+      }
+    }
+    if (s == NULL || *s == NUL) {
+      // Language not in 'helplang': use last, prefer English,
+      // unless found already.
+      (*help_pri)++;
+      if (STRICMP(help_lang, "en") != 0) {
+        (*help_pri)++;
+      }
+    }
+  }
+
+  return true;
+}
+
+/// Use the 'tagfunc' (if configured and enabled) to get the tags.
+/// Return OK if at least 1 tag has been successfully found, NOTDONE if the
+/// 'tagfunc' is not used or the 'tagfunc' returns v:null and FAIL otherwise.
+static int findtags_apply_tfu(char *pat, findtags_state_T *st, int flags, char *buf_ffname)
+{
+  const bool use_tfu = ((flags & TAG_NO_TAGFUNC) == 0);
+
+  if (!use_tfu || tfu_in_use || *curbuf->b_p_tfu == NUL) {
+    return NOTDONE;
+  }
+
+  tfu_in_use = true;
+  int retval = find_tagfunc_tags((char_u *)pat, st->ga_match, &st->match_count,
+                                 flags, (char_u *)buf_ffname);
+  tfu_in_use = false;
+
+  return retval;
+}
+
+/// Parse a tags file header line in "st->lbuf".
+/// Returns true to read the next header line and false to process the line.
+static bool tags_file_hdr_parse(findtags_state_T *st, vimconv_T *vcp, int *sorted_file)
+{
+  if (strncmp(st->lbuf, "!_TAG_", 6) != 0) {
+    // Non-header item before the header, e.g. "!" itself.
+    return false;
+  }
+
+  // Read header line.
+  if (strncmp(st->lbuf, "!_TAG_FILE_SORTED\t", 18) == 0) {
+    *sorted_file = (uint8_t)st->lbuf[18];
+  }
+  if (strncmp(st->lbuf, "!_TAG_FILE_ENCODING\t", 20) == 0) {
+    // Prepare to convert every line from the specified
+    // encoding to 'encoding'.
+    char *p;
+    for (p = st->lbuf + 20; *p > ' ' && *p < 127; p++) {}
+    *p = NUL;
+    convert_setup(vcp, st->lbuf + 20, p_enc);
+  }
+
+  // Read the next line.  Unrecognized flags are ignored.
+  return true;
+}
+
+/// Convert the encoding of a line read from a tags file in "st->lbuf".
+/// Converting the pattern from 'enc' to the tags file encoding doesn't work,
+/// because characters are not recognized.
+static void findtags_string_convert(findtags_state_T *st, vimconv_T *vcp)
+{
+  char *conv_line = string_convert(vcp, st->lbuf, NULL);
+  if (conv_line == NULL) {
+    return;
+  }
+
+  // Copy or swap lbuf and conv_line.
+  int len = (int)strlen(conv_line) + 1;
+  if (len > st->lbuf_size) {
+    xfree(st->lbuf);
+    st->lbuf = conv_line;
+    st->lbuf_size = len;
+  } else {
+    STRCPY(st->lbuf, conv_line);
+    xfree(conv_line);
+  }
+}
+
+static void findtags_add_match(findtags_state_T *st, tagptrs_T *tagp, char *buf_ffname, int flags,
+                               hash_T *hash, bool match_re, bool match_no_ic, bool matchoff,
+                               char *help_lang, int help_pri)
+{
+  int mtt;
+  size_t len = 0;
+  bool is_current;             // file name matches
+  bool is_static;              // current tag line is static
+  char *mfp;
+  char *p;
+  char_u *s;
+
+  // Decide in which array to store this match.
+  is_current = test_for_current((char *)tagp->fname, (char *)tagp->fname_end,
+                                st->tag_fname,
+                                buf_ffname);
+  is_static = test_for_static(tagp);
+
+  // Decide in which of the sixteen tables to store this match.
+  if (is_static) {
+    if (is_current) {
+      mtt = MT_ST_CUR;
+    } else {
+      mtt = MT_ST_OTH;
+    }
+  } else {
+    if (is_current) {
+      mtt = MT_GL_CUR;
+    } else {
+      mtt = MT_GL_OTH;
+    }
+  }
+  if (st->orgpat.regmatch.rm_ic && !match_no_ic) {
+    mtt += MT_IC_OFF;
+  }
+  if (match_re) {
+    mtt += MT_RE_OFF;
+  }
+
+  // Add the found match in ht_match[mtt] and ga_match[mtt].
+  // Store the info we need later, which depends on the kind of
+  // tags we are dealing with.
+  if (st->help_only) {
+#define ML_EXTRA 3
+    // Append the help-heuristic number after the tagname, for
+    // sorting it later.  The heuristic is ignored for
+    // detecting duplicates.
+    // The format is {tagname}@{lang}NUL{heuristic}NUL
+    *tagp->tagname_end = NUL;
+    len = (size_t)(tagp->tagname_end - (char_u *)tagp->tagname);
+    mfp = xmalloc(sizeof(char) + len + 10 + ML_EXTRA + 1);
+
+    p = mfp;
+    STRCPY(p, tagp->tagname);
+    p[len] = '@';
+    STRCPY(p + len + 1, help_lang);
+    snprintf(p + len + 1 + ML_EXTRA, strlen(p) + len + 1 + ML_EXTRA, "%06d",
+             help_heuristic(tagp->tagname,
+                            match_re ? matchoff : 0, !match_no_ic) + help_pri);
+
+    *tagp->tagname_end = TAB;
+  } else if (st->name_only) {
+    if (st->get_searchpat) {
+      char_u *temp_end = tagp->command;
+
+      if (*temp_end == '/') {
+        while (*temp_end && *temp_end != '\r'
+               && *temp_end != '\n'
+               && *temp_end != '$') {
+          temp_end++;
+        }
+      }
+
+      if (tagp->command + 2 < temp_end) {
+        len = (size_t)(temp_end - tagp->command - 2);
+        mfp = xmalloc(len + 2);
+        STRLCPY(mfp, tagp->command + 2, len + 1);
+      } else {
+        mfp = NULL;
+      }
+      st->get_searchpat = false;
+    } else {
+      len = (size_t)((char *)tagp->tagname_end - tagp->tagname);
+      mfp = xmalloc(sizeof(char) + len + 1);
+      STRLCPY(mfp, tagp->tagname, len + 1);
+
+      // if wanted, re-read line to get long form too
+      if (State & MODE_INSERT) {
+        st->get_searchpat = p_sft;
+      }
+    }
+  } else {
+    size_t tag_fname_len = strlen(st->tag_fname);
+    // Save the tag in a buffer.
+    // Use 0x02 to separate fields (Can't use NUL, because the
+    // hash key is terminated by NUL).
+    // Emacs tag: <mtt><tag_fname><0x02><ebuf><0x02><lbuf><NUL>
+    // other tag: <mtt><tag_fname><0x02><0x02><lbuf><NUL>
+    // without Emacs tags: <mtt><tag_fname><0x02><lbuf><NUL>
+    // Here <mtt> is the "mtt" value plus 1 to avoid NUL.
+    len = tag_fname_len + strlen(st->lbuf) + 3;
+    mfp = xmalloc(sizeof(char) + len + 1);
+    p = mfp;
+    p[0] = (char)(mtt + 1);
+    STRCPY(p + 1, st->tag_fname);
+#ifdef BACKSLASH_IN_FILENAME
+    // Ignore differences in slashes, avoid adding
+    // both path/file and path\file.
+    slash_adjust(p + 1);
+#endif
+    p[tag_fname_len + 1] = TAG_SEP;
+    s = (char_u *)p + 1 + tag_fname_len + 1;
+    STRCPY(s, st->lbuf);
+  }
+
+  if (mfp != NULL) {
+    hashitem_T *hi;
+
+    // Don't add identical matches.
+    // "mfp" is used as a hash key, there is a NUL byte to end
+    // the part that matters for comparing, more bytes may
+    // follow after it.  E.g. help tags store the priority
+    // after the NUL.
+    *hash = hash_hash((char_u *)mfp);
+    hi = hash_lookup(&st->ht_match[mtt], (const char *)mfp, strlen(mfp), *hash);
+    if (HASHITEM_EMPTY(hi)) {
+      hash_add_item(&st->ht_match[mtt], hi, (char_u *)mfp, *hash);
+      GA_APPEND(char *, &st->ga_match[mtt], mfp);
+      st->match_count++;
+    } else {
+      // duplicate tag, drop it
+      xfree(mfp);
+    }
+  }
+}
+
 /// Search for tags matching "st->orgpat.pat" in the "st->tag_fname" tags file.
 /// Information needed to search for the tags is in the "st" state structure.
 /// The matching tags are returned in "st".
@@ -1402,14 +1680,10 @@ static void find_tags_in_file(findtags_state_T *st, int flags, char *buf_ffname)
 {
   FILE *fp = NULL;
   tagptrs_T tagp;
-  int is_static;                        // current tag line is static
-  int is_current;                       // file name matches
   bool eof = false;                     // found end-of-file
-  char *p;
-  char_u *s;
   int i;
   int help_pri = 0;
-  char_u help_lang[3] = "";             // lang of current tags file
+  char help_lang[3] = "";               // lang of current tags file
   int tag_file_sorted = NUL;            // !_TAG_FILE_SORTED value
   int tagcmp;
   off_T offset;
@@ -1438,8 +1712,6 @@ static void find_tags_in_file(findtags_state_T *st, int flags, char *buf_ffname)
   int match_re;                 // match with regexp
   int matchoff = 0;
 
-  char *mfp;
-  int mtt;
   hash_T hash = 0;
 
   bool sort_error = false;                      // tags file not sorted
@@ -1447,9 +1719,6 @@ static void find_tags_in_file(findtags_state_T *st, int flags, char *buf_ffname)
   int noic = (flags & TAG_NOIC);
   bool line_error = false;                      // syntax error
   int has_re = (flags & TAG_REGEXP);            // regexp used
-  int help_only = (flags & TAG_HELP);
-  int name_only = (flags & TAG_NAMES);
-  int get_it_again = false;
   vimconv_T vimconv;
 
   vimconv.vc_type = CONV_NONE;
@@ -1461,56 +1730,8 @@ static void find_tags_in_file(findtags_state_T *st, int flags, char *buf_ffname)
   // A file that doesn't exist is silently ignored.  Only when not a
   // single file is found, an error message is given (further on).
   if (curbuf->b_help) {
-    // Keep en if the file extension is .txt
-    if (st->is_txt) {
-      STRCPY(help_lang, "en");
-    } else {
-      // Prefer help tags according to 'helplang'.  Put the
-      // two-letter language name in help_lang[].
-      i = (int)STRLEN(st->tag_fname);
-      if (i > 3 && st->tag_fname[i - 3] == '-') {
-        STRCPY(help_lang, st->tag_fname + i - 2);
-      } else {
-        STRCPY(help_lang, "en");
-      }
-    }
-
-    // When searching for a specific language skip tags files
-    // for other languages.
-    if (st->help_lang_find != NULL
-        && STRICMP(help_lang, st->help_lang_find) != 0) {
+    if (!findtags_in_help_init(st, flags, help_lang, &help_pri)) {
       return;
-    }
-
-    // For CTRL-] in a help file prefer a match with the same
-    // language.
-    if ((flags & TAG_KEEP_LANG)
-        && st->help_lang_find == NULL
-        && curbuf->b_fname != NULL
-        && (i = (int)strlen(curbuf->b_fname)) > 4
-        && curbuf->b_fname[i - 1] == 'x'
-        && curbuf->b_fname[i - 4] == '.'
-        && STRNICMP(curbuf->b_fname + i - 3, help_lang, 2) == 0) {
-      help_pri = 0;
-    } else {
-      help_pri = 1;
-      for (s = p_hlg; *s != NUL; s++) {
-        if (STRNICMP(s, help_lang, 2) == 0) {
-          break;
-        }
-        help_pri++;
-        if ((s = (char_u *)vim_strchr((char *)s, ',')) == NULL) {
-          break;
-        }
-      }
-      if (s == NULL || *s == NUL) {
-        // Language not in 'helplang': use last, prefer English,
-        // unless found already.
-        help_pri++;
-        if (STRICMP(help_lang, "en") != 0) {
-          help_pri++;
-        }
-      }
     }
   }
 
@@ -1547,9 +1768,9 @@ static void find_tags_in_file(findtags_state_T *st, int flags, char *buf_ffname)
     // found (for completion).
     if (st->mincount == TAG_MANY && st->match_count >= TAG_MANY) {
       st->stop_searching = true;
-      return;
+      break;
     }
-    if (get_it_again) {
+    if (st->get_searchpat) {
       goto line_read_in;
     }
     // For binary search: compute the next offset to use.
@@ -1608,31 +1829,13 @@ static void find_tags_in_file(findtags_state_T *st, int flags, char *buf_ffname)
       } while (!eof && vim_isblankline(st->lbuf));
 
       if (eof) {
-        break;                                  // end of file
+        break;  // end of file
       }
     }
 line_read_in:
 
     if (vimconv.vc_type != CONV_NONE) {
-      char *conv_line;
-      int len;
-
-      // Convert every line.  Converting the pattern from 'enc' to
-      // the tags file encoding doesn't work, because characters are
-      // not recognized.
-      conv_line = string_convert(&vimconv, st->lbuf, NULL);
-      if (conv_line != NULL) {
-        // Copy or swap lbuf and conv_line.
-        len = (int)strlen(conv_line) + 1;
-        if (len > st->lbuf_size) {
-          xfree(st->lbuf);
-          st->lbuf = conv_line;
-          st->lbuf_size = len;
-        } else {
-          STRCPY(st->lbuf, conv_line);
-          xfree(conv_line);
-        }
-      }
+      findtags_string_convert(st, &vimconv);
     }
 
     // When still at the start of the file, check for Emacs tags file
@@ -1642,25 +1845,12 @@ line_read_in:
       // case is folded lower case letters sort before "_".
       if (strncmp(st->lbuf, "!_TAG_", 6) <= 0
           || (st->lbuf[0] == '!' && ASCII_ISLOWER(st->lbuf[1]))) {
-        if (strncmp(st->lbuf, "!_TAG_", 6) != 0) {
-          // Non-header item before the header, e.g. "!" itself.
-          goto parse_line;
+        if (tags_file_hdr_parse(st, &vimconv, &tag_file_sorted)) {
+          // Read the next line.  Unrecognized flags are ignored.
+          continue;
         }
 
-        // Read header line.
-        if (strncmp(st->lbuf, "!_TAG_FILE_SORTED\t", 18) == 0) {
-          tag_file_sorted = (uint8_t)st->lbuf[18];
-        }
-        if (strncmp(st->lbuf, "!_TAG_FILE_ENCODING\t", 20) == 0) {
-          // Prepare to convert every line from the specified
-          // encoding to 'encoding'.
-          for (p = st->lbuf + 20; *p > ' ' && *p < 127; p++) {}
-          *p = NUL;
-          convert_setup(&vimconv, st->lbuf + 20, p_enc);
-        }
-
-        // Read the next line.  Unrecognized flags are ignored.
-        continue;
+        goto parse_line;
       }
 
       // Headers ends.
@@ -1854,10 +2044,10 @@ parse_line:
       // Can be a matching tag, isolate the file name and command.
       tagp.fname = tagp.tagname_end + 1;
       tagp.fname_end = (char_u *)vim_strchr((char *)tagp.fname, TAB);
-      tagp.command = tagp.fname_end + 1;
       if (tagp.fname_end == NULL) {
         i = FAIL;
       } else {
+        tagp.command = tagp.fname_end + 1;
         i = OK;
       }
     } else {
@@ -1912,130 +2102,8 @@ parse_line:
 
     // If a match is found, add it to ht_match[] and ga_match[].
     if (match) {
-      size_t len = 0;
-
-      // Decide in which array to store this match.
-      is_current = test_for_current((char *)tagp.fname, (char *)tagp.fname_end,
-                                    st->tag_fname,
-                                    buf_ffname);
-      is_static = test_for_static(&tagp);
-
-      // Decide in which of the sixteen tables to store this match.
-      if (is_static) {
-        if (is_current) {
-          mtt = MT_ST_CUR;
-        } else {
-          mtt = MT_ST_OTH;
-        }
-      } else {
-        if (is_current) {
-          mtt = MT_GL_CUR;
-        } else {
-          mtt = MT_GL_OTH;
-        }
-      }
-      if (st->orgpat.regmatch.rm_ic && !match_no_ic) {
-        mtt += MT_IC_OFF;
-      }
-      if (match_re) {
-        mtt += MT_RE_OFF;
-      }
-
-      // Add the found match in ht_match[mtt] and ga_match[mtt].
-      // Store the info we need later, which depends on the kind of
-      // tags we are dealing with.
-      if (help_only) {
-#define ML_EXTRA 3
-        // Append the help-heuristic number after the tagname, for
-        // sorting it later.  The heuristic is ignored for
-        // detecting duplicates.
-        // The format is {tagname}@{lang}NUL{heuristic}NUL
-        *tagp.tagname_end = NUL;
-        len = (size_t)(tagp.tagname_end - (char_u *)tagp.tagname);
-        mfp = xmalloc(sizeof(char) + len + 10 + ML_EXTRA + 1);
-
-        p = mfp;
-        STRCPY(p, tagp.tagname);
-        p[len] = '@';
-        STRCPY(p + len + 1, help_lang);
-        snprintf(p + len + 1 + ML_EXTRA, strlen(p) + len + 1 + ML_EXTRA, "%06d",
-                 help_heuristic(tagp.tagname,
-                                match_re ? matchoff : 0, !match_no_ic) + help_pri);
-
-        *tagp.tagname_end = TAB;
-      } else if (name_only) {
-        if (get_it_again) {
-          char_u *temp_end = tagp.command;
-
-          if (*temp_end == '/') {
-            while (*temp_end && *temp_end != '\r'
-                   && *temp_end != '\n'
-                   && *temp_end != '$') {
-              temp_end++;
-            }
-          }
-
-          if (tagp.command + 2 < temp_end) {
-            len = (size_t)(temp_end - tagp.command - 2);
-            mfp = xmalloc(len + 2);
-            STRLCPY(mfp, tagp.command + 2, len + 1);
-          } else {
-            mfp = NULL;
-          }
-          get_it_again = false;
-        } else {
-          len = (size_t)(tagp.tagname_end - (char_u *)tagp.tagname);
-          mfp = xmalloc(sizeof(char) + len + 1);
-          STRLCPY(mfp, tagp.tagname, len + 1);
-
-          // if wanted, re-read line to get long form too
-          if (State & MODE_INSERT) {
-            get_it_again = p_sft;
-          }
-        }
-      } else {
-        size_t tag_fname_len = strlen(st->tag_fname);
-        // Save the tag in a buffer.
-        // Use 0x02 to separate fields (Can't use NUL, because the
-        // hash key is terminated by NUL).
-        // Emacs tag: <mtt><tag_fname><0x02><ebuf><0x02><lbuf><NUL>
-        // other tag: <mtt><tag_fname><0x02><0x02><lbuf><NUL>
-        // without Emacs tags: <mtt><tag_fname><0x02><lbuf><NUL>
-        // Here <mtt> is the "mtt" value plus 1 to avoid NUL.
-        len = tag_fname_len + strlen(st->lbuf) + 3;
-        mfp = xmalloc(sizeof(char) + len + 1);
-        p = mfp;
-        p[0] = (char)(mtt + 1);
-        STRCPY(p + 1, st->tag_fname);
-#ifdef BACKSLASH_IN_FILENAME
-        // Ignore differences in slashes, avoid adding
-        // both path/file and path\file.
-        slash_adjust(p + 1);
-#endif
-        p[tag_fname_len + 1] = TAG_SEP;
-        s = (char_u *)p + 1 + tag_fname_len + 1;
-        STRCPY(s, st->lbuf);
-      }
-
-      if (mfp != NULL) {
-        hashitem_T *hi;
-
-        // Don't add identical matches.
-        // "mfp" is used as a hash key, there is a NUL byte to end
-        // the part that matters for comparing, more bytes may
-        // follow after it.  E.g. help tags store the priority
-        // after the NUL.
-        hash = hash_hash((char_u *)mfp);
-        hi = hash_lookup(&st->ht_match[mtt], (const char *)mfp, strlen(mfp), hash);
-        if (HASHITEM_EMPTY(hi)) {
-          hash_add_item(&st->ht_match[mtt], hi, (char_u *)mfp, hash);
-          GA_APPEND(char *, &st->ga_match[mtt], mfp);
-          st->match_count++;
-        } else {
-          // duplicate tag, drop it
-          xfree(mfp);
-        }
-      }
+      findtags_add_match(st, &tagp, buf_ffname, flags, &hash,
+                         match_re, match_no_ic, matchoff, help_lang, help_pri);
     }
   }   // forever
 
@@ -2064,8 +2132,7 @@ parse_line:
 }
 
 /// Copy the tags found by find_tags() to "matchesp".
-static void findtags_copy_matches(findtags_state_T *st, char ***matchesp, int *num_matches,
-                                  int name_only)
+static void findtags_copy_matches(findtags_state_T *st, char ***matchesp, int *num_matches)
 {
   char **matches;
   int mtt;
@@ -2085,7 +2152,7 @@ static void findtags_copy_matches(findtags_state_T *st, char ***matchesp, int *n
       if (matches == NULL) {
         xfree(mfp);
       } else {
-        if (!name_only) {
+        if (!st->name_only) {
           // Change mtt back to zero-based.
           *mfp = (char)(*mfp - 1);
 
@@ -2156,11 +2223,8 @@ int find_tags(char *pat, int *num_matches, char ***matchesp, int flags, int minc
 
   int findall = (mincount == MAXCOL || mincount == TAG_MANY);  // find all matching tags
   int has_re = (flags & TAG_REGEXP);            // regexp used
-  int help_only = (flags & TAG_HELP);
-  int name_only = (flags & TAG_NAMES);
   int noic = (flags & TAG_NOIC);
   int verbose = (flags & TAG_VERBOSE);
-  int use_tfu = ((flags & TAG_NO_TAGFUNC) == 0);
   int save_p_ic = p_ic;
 
   // Change the value of 'ignorecase' according to 'tagcase' for the
@@ -2186,10 +2250,10 @@ int find_tags(char *pat, int *num_matches, char ***matchesp, int flags, int minc
 
   help_save = curbuf->b_help;
 
-  findtags_state_init(&st, pat, mincount);
+  findtags_state_init(&st, pat, flags, mincount);
 
   // Initialize a few variables
-  if (help_only) {                              // want tags from help file
+  if (st.help_only) {                           // want tags from help file
     curbuf->b_help = true;                      // will be restored later
   }
 
@@ -2217,14 +2281,21 @@ int find_tags(char *pat, int *num_matches, char ***matchesp, int flags, int minc
     goto findtag_end;
   }
 
-  if (*curbuf->b_p_tfu != NUL && use_tfu && !tfu_in_use) {
-    tfu_in_use = true;
-    retval = find_tagfunc_tags((char_u *)pat, &st.ga_match[0], &st.match_count, flags,
-                               (char_u *)buf_ffname);
-    tfu_in_use = false;
-    if (retval != NOTDONE) {
-      goto findtag_end;
-    }
+  retval = findtags_apply_tfu(pat, &st, flags, buf_ffname);
+  if (retval != NOTDONE) {
+    goto findtag_end;
+  }
+
+  // re-initialize the default return value
+  retval = FAIL;
+
+  // Set a flag if the file extension is .txt
+  if ((flags & TAG_KEEP_LANG)
+      && st.help_lang_find == NULL
+      && curbuf->b_fname != NULL
+      && (i = (int)strlen(curbuf->b_fname)) > 4
+      && STRICMP(curbuf->b_fname + i - 4, ".txt") == 0) {
+    st.is_txt = true;
   }
 
   // When finding a specified number of matches, first try with matching
@@ -2235,15 +2306,6 @@ int find_tags(char *pat, int *num_matches, char ***matchesp, int flags, int minc
   // tags files twice.
   // When the tag file is case-fold sorted, it is either one or the other.
   // Only ignore case when TAG_NOIC not used or 'ignorecase' set.
-
-  // Set a flag if the file extension is .txt
-  if ((flags & TAG_KEEP_LANG)
-      && st.help_lang_find == NULL
-      && curbuf->b_fname != NULL
-      && (i = (int)strlen(curbuf->b_fname)) > 4
-      && STRICMP(curbuf->b_fname + i - 4, ".txt") == 0) {
-    st.is_txt = true;
-  }
   st.orgpat.regmatch.rm_ic = ((p_ic || !noic)
                               && (findall || st.orgpat.headlen == 0 || !p_tbs));
   for (round = 1; round <= 2; round++) {
@@ -2281,9 +2343,7 @@ int find_tags(char *pat, int *num_matches, char ***matchesp, int flags, int minc
   }
 
 findtag_end:
-  xfree(st.tag_fname);
-  xfree(st.lbuf);
-  vim_regfree(st.orgpat.regmatch.regprog);
+  findtags_state_free(&st);
 
   // Move the matches from the ga_match[] arrays into one list of
   // matches.  When retval == FAIL, free the matches.
@@ -2291,7 +2351,7 @@ findtag_end:
     st.match_count = 0;
   }
 
-  findtags_copy_matches(&st, matchesp, num_matches, name_only);
+  findtags_copy_matches(&st, matchesp, num_matches);
 
   curbuf->b_help = help_save;
   xfree(saved_pat);
