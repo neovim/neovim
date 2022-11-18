@@ -2700,6 +2700,123 @@ static void f_getbufoneline(typval_T *argvars, typval_T *rettv, EvalFuncData fpt
   getbufline(argvars, rettv, false);
 }
 
+/// Copy a block range into String.
+static String block_def_to_string(struct block_def *bd)
+{
+  size_t startspaces = (size_t)bd->startspaces;
+  size_t endspaces = (size_t)bd->endspaces;
+  size_t textlen = (size_t)bd->textlen;
+  size_t size = startspaces + endspaces + textlen;
+  char *data = xmallocz(size);
+  char *p = data;
+
+  memset(p, ' ', startspaces);
+  p += bd->startspaces;
+  memmove(p, bd->textstart, textlen);
+  p += bd->textlen;
+  memset(p, ' ', endspaces);
+  return (String) {
+    .data = data,
+    .size = size,
+  };
+}
+
+static void get_selected_lines(typval_T *rettv)
+{
+  pos_T p1, p2;
+  linenr_T lnum;
+  struct block_def bd;
+
+  if (!VIsual_active) {
+    tv_list_alloc_ret(rettv, 0);
+    return;
+  }
+
+  if (lt(VIsual, curwin->w_cursor)) {
+    p1 = VIsual;
+    p2 = curwin->w_cursor;
+  } else {
+    p1 = curwin->w_cursor;
+    p2 = VIsual;
+  }
+
+  if (VIsual_mode != 'V') {
+    // handle 'selection' == "exclusive"
+    if (*p_sel == 'e' && !equalpos(p1, p2)) {
+      if (p2.coladd > 0) {
+        p2.coladd--;
+      } else if (p2.col > 0) {
+        p2.col--;
+        mark_mb_adjustpos(curbuf, &p2);
+      } else if (p2.lnum > 1) {
+        p2.lnum--;
+        p2.col = (colnr_T)strlen(ml_get(p2.lnum));
+        if (p2.col > 0) {
+          p2.col--;
+          mark_mb_adjustpos(curbuf, &p2);
+        }
+      }
+    }
+  }
+
+  // Include the trailing byte of a multi-byte char.
+  const int l = utfc_ptr2len(ml_get_pos(&p2));
+  if (l > 1) {
+    p2.col += l - 1;
+  }
+
+  tv_list_alloc_ret(rettv, p2.lnum - p1.lnum + 1);
+
+  virtual_op = virtual_active();
+
+  for (lnum = p1.lnum; lnum <= p2.lnum; lnum++) {
+    String akt;
+    switch (VIsual_mode) {
+    case 'V':
+      akt = cstr_to_string(ml_get(lnum));
+      break;
+
+    case 'v':
+      if (p1.lnum < lnum && lnum < p2.lnum) {
+        akt = cstr_to_string(ml_get(lnum));
+      } else {
+        charwise_block_prep(p1, p2, &bd, lnum, true);
+        akt = block_def_to_string(&bd);
+      }
+      break;
+
+    case Ctrl_V: {
+      colnr_T sc1, ec1, sc2, ec2;
+      getvvcol(curwin, &p1, &sc1, NULL, &ec1);
+      getvvcol(curwin, &p2, &sc2, NULL, &ec2);
+      oparg_T oap = {
+        .motion_type = OP_NOP,
+        .start = p1,
+        .end = p2,
+        .start_vcol = MIN(sc1, sc2),
+        .end_vcol = MAX(ec1, ec2),
+        .inclusive = true,
+      };
+      block_prep(&oap, &bd, lnum, false);
+      akt = block_def_to_string(&bd);
+      break;
+    }
+
+    // NOTREACHED
+    default:
+      abort();
+    }
+
+    tv_list_append_allocated_string(rettv->vval.v_list, akt.data);
+  }
+}
+
+/// "selectedlines()" function
+static void f_selectedlines(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
+{
+  get_selected_lines(rettv);
+}
+
 /// "getchangelist()" function
 static void f_getchangelist(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {

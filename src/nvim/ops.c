@@ -74,25 +74,6 @@ static bool clipboard_delay_update = false;  // delay clipboard update
 static bool clipboard_needs_update = false;  // clipboard was updated
 static bool clipboard_didwarn = false;
 
-// structure used by block_prep, op_delete and op_yank for blockwise operators
-// also op_change, op_shift, op_insert, op_replace - AKelly
-struct block_def {
-  int startspaces;              // 'extra' cols before first char
-  int endspaces;                // 'extra' cols after last char
-  int textlen;                  // chars in block
-  char *textstart;              // pointer to 1st char (partially) in block
-  colnr_T textcol;              // index of chars (partially) in block
-  colnr_T start_vcol;           // start col of 1st char wholly inside block
-  colnr_T end_vcol;             // start col of 1st char wholly after block
-  int is_short;                 // true if line is too short to fit in block
-  int is_MAX;                   // true if curswant==MAXCOL when starting
-  int is_oneChar;               // true if block within one character
-  int pre_whitesp;              // screen cols of ws before block
-  int pre_whitesp_c;            // chars of ws before block
-  colnr_T end_char_vcols;       // number of vcols of post-block char
-  colnr_T start_char_vcols;     // number of vcols of pre-block char
-};
-
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "ops.c.generated.h"
 #endif
@@ -2618,7 +2599,6 @@ static void op_yank_reg(oparg_T *oap, bool message, yankreg_T *reg, bool append)
   MotionType yank_type = oap->motion_type;
   size_t yanklines = (size_t)oap->line_count;
   linenr_T yankendlnum = oap->end.lnum;
-  char *p;
   char_u *pnew;
   struct block_def bd;
 
@@ -2673,67 +2653,10 @@ static void op_yank_reg(oparg_T *oap, bool message, yankreg_T *reg, bool append)
       reg->y_array[y_idx] = xstrdup(ml_get(lnum));
       break;
 
-    case kMTCharWise: {
-      colnr_T startcol = 0, endcol = MAXCOL;
-      int is_oneChar = false;
-      colnr_T cs, ce;
-      p = ml_get(lnum);
-      bd.startspaces = 0;
-      bd.endspaces = 0;
-
-      if (lnum == oap->start.lnum) {
-        startcol = oap->start.col;
-        if (virtual_op) {
-          getvcol(curwin, &oap->start, &cs, NULL, &ce);
-          if (ce != cs && oap->start.coladd > 0) {
-            // Part of a tab selected -- but don't double-count it.
-            bd.startspaces = (ce - cs + 1)
-                             - oap->start.coladd;
-            startcol++;
-          }
-        }
-      }
-
-      if (lnum == oap->end.lnum) {
-        endcol = oap->end.col;
-        if (virtual_op) {
-          getvcol(curwin, &oap->end, &cs, NULL, &ce);
-          if (p[endcol] == NUL || (cs + oap->end.coladd < ce
-                                   // Don't add space for double-wide
-                                   // char; endcol will be on last byte
-                                   // of multi-byte char.
-                                   && utf_head_off(p, p + endcol) == 0)) {
-            if (oap->start.lnum == oap->end.lnum
-                && oap->start.col == oap->end.col) {
-              // Special case: inside a single char
-              is_oneChar = true;
-              bd.startspaces = oap->end.coladd
-                               - oap->start.coladd + oap->inclusive;
-              endcol = startcol;
-            } else {
-              bd.endspaces = oap->end.coladd
-                             + oap->inclusive;
-              endcol -= oap->inclusive;
-            }
-          }
-        }
-      }
-      if (endcol == MAXCOL) {
-        endcol = (colnr_T)strlen(p) - 1;
-        if (endcol > 0 && inclusive) {
-          endcol--;
-        }
-      }
-      if (startcol > endcol
-          || is_oneChar) {
-        bd.textlen = 0;
-      } else {
-        bd.textlen = endcol - startcol + oap->inclusive;
-      }
-      bd.textstart = p + startcol;
+    case kMTCharWise:
+      charwise_block_prep(oap->start, oap->end, &bd, lnum, oap->inclusive);
       yank_copy_line(reg, &bd, y_idx, false);
       break;
-    }
     // NOTREACHED
     case kMTUnknown:
       abort();
@@ -4226,7 +4149,7 @@ static void restore_lbr(bool lbr_saved)
 /// - textlen includes the first/last char to be wholly yanked
 /// - start/endspaces is the number of columns of the first/last yanked char
 ///   that are to be yanked.
-static void block_prep(oparg_T *oap, struct block_def *bdp, linenr_T lnum, bool is_del)
+void block_prep(oparg_T *oap, struct block_def *bdp, linenr_T lnum, bool is_del)
 {
   int incr = 0;
   char *pend;
@@ -4351,6 +4274,65 @@ static void block_prep(oparg_T *oap, struct block_def *bdp, linenr_T lnum, bool 
   bdp->textcol = (colnr_T)(pstart - line);
   bdp->textstart = pstart;
   restore_lbr(lbr_saved);
+}
+
+void charwise_block_prep(pos_T start, pos_T end, struct block_def *bdp, linenr_T lnum,
+                         bool inclusive)
+{
+  colnr_T startcol = 0, endcol = MAXCOL;
+  bool is_oneChar = false;
+  colnr_T cs, ce;
+  char *p = ml_get(lnum);
+  bdp->startspaces = 0;
+  bdp->endspaces = 0;
+
+  if (lnum == start.lnum) {
+    startcol = start.col;
+    if (virtual_op) {
+      getvcol(curwin, &start, &cs, NULL, &ce);
+      if (ce != cs && start.coladd > 0) {
+        // Part of a tab selected but don't double-count it.
+        bdp->startspaces = (ce - cs + 1) - start.coladd;
+        startcol++;
+      }
+    }
+  }
+
+  if (lnum == end.lnum) {
+    endcol = end.col;
+    if (virtual_op) {
+      getvcol(curwin, &end, &cs, NULL, &ce);
+      if (p[endcol] == NUL || (cs + end.coladd < ce
+                               // Don't add space for double-wide
+                               // char; endcol will be on last byte
+                               // of multi-byte char.
+                               && utf_head_off(p, p + endcol) == 0)) {
+        if (start.lnum == end.lnum
+            && start.col == end.col) {
+          // Special case: inside a single char
+          is_oneChar = true;
+          bdp->startspaces = end.coladd - start.coladd + inclusive;
+          endcol = startcol;
+        } else {
+          bdp->endspaces = end.coladd + inclusive;
+          endcol -= inclusive;
+        }
+      }
+    }
+  }
+  if (endcol == MAXCOL) {
+    endcol = (colnr_T)strlen(p);
+    if (endcol > 0 && inclusive) {
+      endcol--;
+    }
+  }
+  if (startcol > endcol
+      || is_oneChar) {
+    bdp->textlen = 0;
+  } else {
+    bdp->textlen = endcol - startcol + inclusive;
+  }
+  bdp->textstart = p + startcol;
 }
 
 /// Handle the add/subtract operator.
@@ -5907,8 +5889,7 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
       } else if (VIsual_mode == 'v') {
         // If 'selection' is "exclusive", backup one character for
         // charwise selections.
-        include_line_break =
-          unadjust_for_sel();
+        include_line_break = unadjust_for_sel();
       }
 
       oap->start = VIsual;

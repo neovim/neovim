@@ -326,6 +326,7 @@ return {
     searchpair={args={3, 7}},
     searchpairpos={args={3, 7}},
     searchpos={args={1, 5}, base=1},
+    selectedlines={},
     serverlist={},
     serverstart={args={0, 1}},
     serverstop={args=1},
