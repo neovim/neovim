@@ -2719,7 +2719,10 @@ static void op_yank_reg(oparg_T *oap, bool message, yankreg_T *reg, bool append)
         }
       }
       if (endcol == MAXCOL) {
-        endcol = (colnr_T)strlen(p);
+        endcol = (colnr_T)strlen(p) - 1;
+        if (endcol > 0 && inclusive) {
+          endcol--;
+        }
       }
       if (startcol > endcol
           || is_oneChar) {
