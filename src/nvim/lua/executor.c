@@ -2217,3 +2217,17 @@ char *nlua_read_secure(const char *path)
 
   return buf;
 }
+
+void nlua_trust(const char *set, const char *path)
+{
+  lua_State *const lstate = global_lstate;
+  lua_getglobal(lstate, "vim");
+  lua_getfield(lstate, -1, "secure");
+  lua_getfield(lstate, -1, "trust");
+  lua_pushstring(lstate, path);
+  if (strcmp(set, "allow"))
+    lua_pushboolean(lstate, 1);
+  else if (strcmp(set, "deny"))
+    lua_pushboolean(lstate, 0);
+  lua_call(lstate, 2, 0);
+}

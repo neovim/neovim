@@ -168,4 +168,50 @@ describe('vim.secure', function()
       eq(false, curbufmeths.get_option('modifiable'))
     end)
   end)
+
+  describe('trust()', function()
+    local xstate = 'Xstate'
+
+    setup(function()
+      helpers.mkdir_p(xstate .. pathsep .. (iswin and 'nvim-data' or 'nvim'))
+    end)
+
+    teardown(function()
+      helpers.rmdir(xstate)
+    end)
+
+    before_each(function()
+      helpers.write_file('test_file', 'test')
+    end)
+
+    after_each(function()
+      os.remove('test_file')
+    end)
+
+    it('sets file as trusted then denied', function()
+      local cwd = funcs.getcwd()
+      local hash = funcs.sha256(helpers.read_file('test_file'))
+
+      exec_lua([[vim.secure.trust('test_file', true)]])
+      local trust = helpers.read_file(funcs.stdpath('state') .. pathsep .. 'trust')
+      eq(string.format('%s %s', hash, cwd .. pathsep .. 'test_file'), vim.trim(trust))
+
+      exec_lua([[vim.secure.trust('test_file', false)]])
+      local trust = helpers.read_file(funcs.stdpath('state') .. pathsep .. 'trust')
+      eq(string.format('! %s', cwd .. pathsep .. 'test_file'), vim.trim(trust))
+    end)
+
+    it('sets file as denied then trusted', function()
+      local cwd = funcs.getcwd()
+      local hash = funcs.sha256(helpers.read_file('test_file'))
+
+      exec_lua([[vim.secure.trust('test_file', false)]])
+      local trust = helpers.read_file(funcs.stdpath('state') .. pathsep .. 'trust')
+      eq(string.format('! %s', cwd .. pathsep .. 'test_file'), vim.trim(trust))
+
+      exec_lua([[vim.secure.trust('test_file', true)]])
+      local trust = helpers.read_file(funcs.stdpath('state') .. pathsep .. 'trust')
+      eq(string.format('%s %s', hash, cwd .. pathsep .. 'test_file'), vim.trim(trust))
+    end)
+  end)
 end)

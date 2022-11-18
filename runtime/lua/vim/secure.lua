@@ -1,5 +1,45 @@
 local M = {}
 
+--- Reads trust database from $XDG_STATE_HOME/nvim/trust.
+---
+--- @return (table) Contents of trust database, if it exists. Empty table otherwise.
+local function read_trust()
+  local trust = {}
+  local f = io.open(vim.fn.stdpath('state') .. '/trust', 'r')
+  if f then
+    local contents = f:read('*a')
+    if contents then
+      for line in vim.gsplit(contents, '\n') do
+        local hash, file = string.match(line, '^(%S+) (.+)$')
+        if hash and file then
+          trust[file] = hash
+        end
+      end
+    end
+    f:close()
+  end
+  return trust
+end
+
+--- Writes provided {trust} table to trust database at
+--- $XDG_STATE_HOME/nvim/trust.
+---
+--- @param trust (table) Trust table to write
+local function write_trust(trust)
+  vim.validate({ trust = { trust, 't' } })
+  local f, err = io.open(vim.fn.stdpath('state') .. '/trust', 'w')
+  if not f then
+    error(err)
+  end
+
+  local t = {}
+  for p, h in pairs(trust) do
+    t[#t + 1] = string.format('%s %s\n', h, p)
+  end
+  f:write(table.concat(t))
+  f:close()
+end
+
 --- Attempt to read the file at {path} prompting the user if the file should be
 --- trusted. The user's choice is persisted in a trust database at
 --- $XDG_STATE_HOME/nvim/trust.
@@ -15,22 +55,7 @@ function M.read(path)
     return nil
   end
 
-  local trust = {}
-  do
-    local f = io.open(vim.fn.stdpath('state') .. '/trust', 'r')
-    if f then
-      local contents = f:read('*a')
-      if contents then
-        for line in vim.gsplit(contents, '\n') do
-          local hash, file = string.match(line, '^(%S+) (.+)$')
-          if hash and file then
-            trust[file] = hash
-          end
-        end
-      end
-      f:close()
-    end
-  end
+  local trust = read_trust()
 
   if trust[fullpath] == '!' then
     -- File is denied
@@ -86,21 +111,57 @@ function M.read(path)
     trust[fullpath] = hash
   end
 
-  do
-    local f, err = io.open(vim.fn.stdpath('state') .. '/trust', 'w')
-    if not f then
-      error(err)
-    end
-
-    local t = {}
-    for p, h in pairs(trust) do
-      t[#t + 1] = string.format('%s %s\n', h, p)
-    end
-    f:write(table.concat(t))
-    f:close()
-  end
+  write_trust(trust)
 
   return contents
+end
+
+--- Update the trust status of file at path in the trust database at
+--- $XDG_STATE_HOME/nvim/trust.
+---
+--- @param path (string) Path to a file to update status for.
+--- @param allow (boolean) If true, set status to allow, otherwise set to deny.
+function M.trust(path, allow)
+  vim.validate({ path = { path, 's' } })
+  vim.validate({ allow = { allow, 'b' } })
+
+  local fullpath = vim.loop.fs_realpath(vim.fs.normalize(path))
+  if not fullpath then
+    return
+  end
+
+  local trust = read_trust()
+
+  if trust[fullpath] == '!' and not allow then
+    -- File is already denied - nothing to do
+    return
+  end
+
+  local hash
+  do
+    local f = io.open(fullpath, 'r')
+    if not f then
+      return nil
+    end
+    local contents = f:read('*a')
+    f:close()
+    hash = vim.fn.sha256(contents)
+  end
+
+  if trust[fullpath] == hash and allow then
+    -- File already exists in trust database - nothing to do
+    return
+  end
+
+  if allow then
+    -- Allow
+    trust[fullpath] = hash
+  else
+    -- Deny
+    trust[fullpath] = '!'
+  end
+
+  write_trust(trust)
 end
 
 return M
