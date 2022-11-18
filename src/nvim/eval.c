@@ -269,6 +269,7 @@ static struct vimvar {
   VV(VV__NULL_DICT,       "_null_dict",       VAR_DICT, VV_RO),
   VV(VV__NULL_BLOB,       "_null_blob",       VAR_BLOB, VV_RO),
   VV(VV_LUA,              "lua",              VAR_PARTIAL, VV_RO),
+  VV(VV_EVENT_CANCEL,     "event_cancel",     VAR_BOOL, 0),
 };
 #undef VV
 
@@ -6892,6 +6893,12 @@ typval_T *get_vim_var_tv(int idx)
 varnumber_T get_vim_var_nr(int idx) FUNC_ATTR_PURE
 {
   return vimvars[idx].vv_nr;
+}
+
+/// Get bool v: variable value.
+BoolVarValue get_vim_var_bool(int idx) FUNC_ATTR_PURE
+{
+  return vimvars[idx].vv_bool;
 }
 
 /// Get string v: variable value.  Uses a static buffer, can only be used once.
