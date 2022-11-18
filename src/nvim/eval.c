@@ -90,6 +90,7 @@
 #define DICT_MAXNEST 100        // maximum nesting of lists and dicts
 
 static char *e_missbrac = N_("E111: Missing ']'");
+static char *e_list_end = N_("E697: Missing end of List ']': %s");
 static char *e_dictrange = N_("E719: Cannot use [:] with a Dictionary");
 static char *e_nowhitespace
   = N_("E274: No white space allowed before parenthesis");
@@ -4035,7 +4036,7 @@ static int get_list_tv(char **arg, typval_T *rettv, int evaluate)
   }
 
   if (**arg != ']') {
-    semsg(_("E697: Missing end of List ']': %s"), *arg);
+    semsg(_(e_list_end), *arg);
 failret:
     if (evaluate) {
       tv_list_free(l);

@@ -297,6 +297,7 @@ int get_lambda_tv(char **arg, typval_T *rettv, bool evaluate)
   e = (char_u *)(*arg);
   *arg = skipwhite(*arg);
   if (**arg != '}') {
+    semsg(_("E451: Expected }: %s"), *arg);
     goto errret;
   }
   (*arg)++;
