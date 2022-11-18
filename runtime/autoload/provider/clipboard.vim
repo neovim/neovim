@@ -97,6 +97,12 @@ function! provider#clipboard#Executable() abort
     let s:copy['*'] = ['wl-copy', '--foreground', '--primary', '--type', 'text/plain']
     let s:paste['*'] = ['wl-paste', '--no-newline', '--primary']
     return 'wl-copy'
+  elseif !empty($WAYLAND_DISPLAY) && executable('waycopy') && executable('waypaste')
+    let s:copy['+'] = ['waycopy', '-t', 'text/plain']
+    let s:paste['+'] = ['waypaste', '-t', 'text/plain']
+    let s:copy['*'] = s:copy['+']
+    let s:paste['*'] = s:paste['+']
+    return 'wayclip'
   elseif !empty($DISPLAY) && executable('xsel') && s:cmd_ok('xsel -o -b')
     let s:copy['+'] = ['xsel', '--nodetach', '-i', '-b']
     let s:paste['+'] = ['xsel', '-o', '-b']
