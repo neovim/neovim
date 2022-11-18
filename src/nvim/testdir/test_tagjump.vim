@@ -1448,6 +1448,11 @@ func Test_tagfile_errors()
   endtry
   call assert_equal(v:true, caught_431)
 
+  " tag name and file name are not separated by a tab
+  call writefile(["!_TAG_FILE_ENCODING\tutf-8\t//",
+        \ "foo Xfile 1"], 'Xtags')
+  call assert_fails('tag foo', 'E431:')
+
   call delete('Xtags')
   call delete('Xfile')
   set tags&

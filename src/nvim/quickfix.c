@@ -4308,10 +4308,17 @@ void ex_make(exarg_T *eap)
 
   incr_quickfix_busy();
 
-  int res = qf_init(wp, fname, (eap->cmdidx != CMD_make
-                                && eap->cmdidx != CMD_lmake) ? p_gefm : p_efm,
-                    (eap->cmdidx != CMD_grepadd && eap->cmdidx != CMD_lgrepadd),
-                    qf_cmdtitle(*eap->cmdlinep), enc);
+  char *errorformat = p_efm;
+  bool newlist = true;
+
+  if (eap->cmdidx != CMD_make && eap->cmdidx != CMD_lmake) {
+    errorformat = p_gefm;
+  }
+  if (eap->cmdidx == CMD_grepadd || eap->cmdidx == CMD_lgrepadd) {
+    newlist = false;
+  }
+
+  int res = qf_init(wp, fname, errorformat, newlist, qf_cmdtitle(*eap->cmdlinep), enc);
 
   qf_info_T *qi = &ql_info;
   if (wp != NULL) {
