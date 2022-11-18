@@ -1581,13 +1581,13 @@ static tags_read_status_T findtags_get_next_line(findtags_state_T *st, tagsearch
   if (st->state == TS_BINARY || st->state == TS_SKIP_BACK) {
     // Adjust the search file offset to the correct position
     sinfo_p->curr_offset_used = sinfo_p->curr_offset;
-    vim_fseek(st->fp, sinfo_p->curr_offset, SEEK_SET);
+    vim_ignored = vim_fseek(st->fp, sinfo_p->curr_offset, SEEK_SET);
     eof = vim_fgets((char_u *)st->lbuf, st->lbuf_size, st->fp);
     if (!eof && sinfo_p->curr_offset != 0) {
       sinfo_p->curr_offset = vim_ftell(st->fp);
       if (sinfo_p->curr_offset == sinfo_p->high_offset) {
         // oops, gone a bit too far; try from low offset
-        vim_fseek(st->fp, sinfo_p->low_offset, SEEK_SET);
+        vim_ignored = vim_fseek(st->fp, sinfo_p->low_offset, SEEK_SET);
         sinfo_p->curr_offset = sinfo_p->low_offset;
       }
       eof = vim_fgets((char_u *)st->lbuf, st->lbuf_size, st->fp);
@@ -1706,7 +1706,7 @@ static bool findtags_start_state_handler(findtags_state_T *st, bool *sortic,
       // Don't use lseek(), it doesn't work
       // properly on MacOS Catalina.
       const off_T filesize = vim_ftell(st->fp);
-      vim_fseek(st->fp, 0, SEEK_SET);
+      vim_ignored = vim_fseek(st->fp, 0, SEEK_SET);
 
       // Calculate the first read offset in the file.  Start
       // the search in the middle of the file.
@@ -2163,7 +2163,7 @@ line_read_in:
 
       if (st->state == TS_STEP_FORWARD) {
         // Seek to the same position to read the same line again
-        vim_fseek(st->fp, search_info.curr_offset, SEEK_SET);
+        vim_ignored = vim_fseek(st->fp, search_info.curr_offset, SEEK_SET);
       }
       // this will try the same thing again, make sure the offset is
       // different
@@ -2233,8 +2233,8 @@ static void findtags_in_file(findtags_state_T *st, int flags, char *buf_ffname)
 
   if (st->fp != NULL) {
     fclose(st->fp);
+    st->fp = NULL;
   }
-  st->fp = NULL;
   if (st->vimconv.vc_type != CONV_NONE) {
     convert_setup(&st->vimconv, NULL, NULL);
   }
