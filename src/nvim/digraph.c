@@ -1652,7 +1652,7 @@ static void registerdigraph(int char1, int char2, int n)
 /// Check the characters are valid for a digraph.
 /// If they are valid, returns true; otherwise, give an error message and
 /// returns false.
-bool check_digraph_chars_valid(int char1, int char2)
+static bool check_digraph_chars_valid(int char1, int char2)
 {
   if (char2 == 0) {
     char_u msg[MB_MAXBYTES + 1];
@@ -1760,7 +1760,7 @@ static void digraph_getlist_appendpair(const digr_T *dp, list_T *l)
   tv_list_append_string(l2, (char *)buf, -1);
 }
 
-void digraph_getlist_common(bool list_all, typval_T *rettv)
+static void digraph_getlist_common(bool list_all, typval_T *rettv)
 {
   tv_list_alloc_ret(rettv, (int)sizeof(digraphdefault) + user_digraphs.ga_len);
 
@@ -1787,7 +1787,7 @@ void digraph_getlist_common(bool list_all, typval_T *rettv)
   }
 }
 
-struct dg_header_entry {
+static struct dg_header_entry {
   int dg_start;
   const char *dg_header;
 } header_table[] = {

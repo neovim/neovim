@@ -2960,7 +2960,7 @@ void u_clearall(buf_T *buf)
 }
 
 /// save the line "lnum" for the "U" command
-void u_saveline(linenr_T lnum)
+static void u_saveline(linenr_T lnum)
 {
   if (lnum == curbuf->b_u_line_lnum) {      // line is already saved
     return;

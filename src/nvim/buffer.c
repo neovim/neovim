@@ -1583,7 +1583,7 @@ void set_curbuf(buf_T *buf, int action)
 /// Enter a new current buffer.
 /// Old curbuf must have been abandoned already!  This also means "curbuf" may
 /// be pointing to freed memory.
-void enter_buffer(buf_T *buf)
+static void enter_buffer(buf_T *buf)
 {
   // when closing the current buffer stop Visual mode
   if (VIsual_active
@@ -2103,7 +2103,7 @@ int buflist_getfile(int n, linenr_T lnum, int options, int forceit)
 }
 
 /// Go to the last known line number for the current buffer.
-void buflist_getfpos(void)
+static void buflist_getfpos(void)
 {
   pos_T *fpos;
 
@@ -3959,30 +3959,6 @@ char *buf_spname(buf_T *buf)
     return buf_get_fname(buf);
   }
   return NULL;
-}
-
-/// Find a window for buffer "buf".
-/// If found true is returned and "wp" and "tp" are set to
-/// the window and tabpage.
-/// If not found, false is returned.
-///
-/// @param       buf  buffer to find a window for
-/// @param[out]  wp   stores the found window
-/// @param[out]  tp   stores the found tabpage
-///
-/// @return  true if a window was found for the buffer.
-bool find_win_for_buf(buf_T *buf, win_T **wp, tabpage_T **tp)
-{
-  *wp = NULL;
-  *tp = NULL;
-  FOR_ALL_TAB_WINDOWS(tp2, wp2) {
-    if (wp2->w_buffer == buf) {
-      *tp = tp2;
-      *wp = wp2;
-      return true;
-    }
-  }
-  return false;
 }
 
 static int buf_signcols_inner(buf_T *buf, int maximum)

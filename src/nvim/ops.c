@@ -774,7 +774,7 @@ char *get_expr_line(void)
 }
 
 /// Get the '=' register expression itself, without evaluating it.
-char *get_expr_line_src(void)
+static char *get_expr_line_src(void)
 {
   if (expr_line == NULL) {
     return NULL;
@@ -3729,7 +3729,7 @@ void adjust_cursor_eol(void)
 }
 
 /// @return  true if lines starting with '#' should be left aligned.
-int preprocs_left(void)
+static int preprocs_left(void)
 {
   return ((curbuf->b_p_si && !curbuf->b_p_cin)
           || (curbuf->b_p_cin && in_cinkeys('#', ' ', true)

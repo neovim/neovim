@@ -135,7 +135,7 @@ static size_t last_recorded_len = 0;      // number of last recorded chars
 #endif
 
 // Free and clear a buffer.
-void free_buff(buffheader_T *buf)
+static void free_buff(buffheader_T *buf)
 {
   buffblock_T *p, *np;
 
@@ -575,7 +575,7 @@ void stuffRedoReadbuff(const char *s)
   add_buff(&readbuf2, s, -1L);
 }
 
-void stuffReadbuffLen(const char *s, long len)
+static void stuffReadbuffLen(const char *s, long len)
 {
   add_buff(&readbuf1, s, len);
 }
@@ -1147,7 +1147,7 @@ void may_sync_undo(void)
 }
 
 // Make "typebuf" empty and allocate new buffers.
-void alloc_typebuf(void)
+static void alloc_typebuf(void)
 {
   typebuf.tb_buf = xmalloc(TYPELEN_INIT);
   typebuf.tb_noremap = xmalloc(TYPELEN_INIT);
@@ -1163,7 +1163,7 @@ void alloc_typebuf(void)
 }
 
 // Free the buffers of "typebuf".
-void free_typebuf(void)
+static void free_typebuf(void)
 {
   if (typebuf.tb_buf == typebuf_init) {
     internal_error("Free typebuf 1");

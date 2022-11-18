@@ -314,7 +314,7 @@ int get_sw_value(buf_T *buf)
 }
 
 /// Idem, using "pos".
-long get_sw_value_pos(buf_T *buf, pos_T *pos)
+static long get_sw_value_pos(buf_T *buf, pos_T *pos)
 {
   pos_T save_cursor = curwin->w_cursor;
   long sw_value;

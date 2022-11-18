@@ -633,7 +633,7 @@ void msg_source(int attr)
 ///            If "emsg_off" is set: no error messages at the moment.
 ///            If "msg" is in 'debug': do error message but without side effects.
 ///            If "emsg_skip" is set: never do error messages.
-int emsg_not_now(void)
+static int emsg_not_now(void)
 {
   if ((emsg_off > 0 && vim_strchr(p_debug, 'm') == NULL
        && vim_strchr(p_debug, 't') == NULL)
@@ -2010,7 +2010,7 @@ void msg_outtrans_long_attr(char *longstr, int attr)
   msg_outtrans_long_len_attr(longstr, (int)strlen(longstr), attr);
 }
 
-void msg_outtrans_long_len_attr(char *longstr, int len, int attr)
+static void msg_outtrans_long_len_attr(char *longstr, int len, int attr)
 {
   int slen = len;
   int room;
@@ -3051,7 +3051,7 @@ static void msg_screen_putchar(int c, int attr)
   }
 }
 
-void msg_moremsg(int full)
+static void msg_moremsg(int full)
 {
   int attr;
   char *s = _("-- More --");
@@ -3751,7 +3751,7 @@ static void copy_hotkeys_and_msg(const char *message, char *buttons, int default
 }
 
 /// Display the ":confirm" message.  Also called when screen resized.
-void display_confirm_msg(void)
+static void display_confirm_msg(void)
 {
   // Avoid that 'q' at the more prompt truncates the message here.
   confirm_msg_used++;

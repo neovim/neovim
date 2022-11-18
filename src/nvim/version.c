@@ -2792,7 +2792,7 @@ void maybe_intro_message(void)
 /// Or with the ":intro" command (for Sven :-).
 ///
 /// @param colon true for ":intro"
-void intro_message(int colon)
+static void intro_message(int colon)
 {
   int i;
   long row;

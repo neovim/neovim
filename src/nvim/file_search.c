@@ -932,7 +932,7 @@ fail:
 
 /// Free the list of lists of visited files and directories
 /// Can handle it if the passed search_context is NULL;
-void vim_findfile_free_visited(void *search_ctx_arg)
+static void vim_findfile_free_visited(void *search_ctx_arg)
 {
   ff_search_ctx_T *search_ctx;
 

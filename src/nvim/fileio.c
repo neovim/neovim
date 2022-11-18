@@ -127,7 +127,7 @@ static char *e_auchangedbuf = N_("E812: Autocommands changed buffer or buffer na
 static char e_no_matching_autocommands_for_buftype_str_buffer[]
   = N_("E676: No matching autocommands for buftype=%s buffer");
 
-void filemess(buf_T *buf, char *name, char *s, int attr)
+static void filemess(buf_T *buf, char *name, char *s, int attr)
 {
   int msg_scroll_save;
 
