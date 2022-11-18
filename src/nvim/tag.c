@@ -112,6 +112,7 @@ static char *nofile_fname = NULL;       // fname for NOTAGFILE error
 
 /// State information used during a tag search
 typedef struct {
+  char *tag_fname;               ///< name of tag file
   pat_T orgpat;                  ///< holds unconverted pattern info
   char *help_lang_find;          ///< lang to be found
   bool is_txt;                   ///< flag of file extension
@@ -1375,6 +1376,7 @@ static int find_tagfunc_tags(char_u *pat, garray_T *ga, int *match_count, int fl
 /// Initialize the state used by find_tags()
 static void findtags_state_init(findtags_state_T *st, char *pat, int mincount)
 {
+  st->tag_fname = xmalloc(MAXPATHL + 1);
   st->orgpat.pat = (char_u *)pat;
   st->orgpat.len = (int)strlen(pat);
   st->orgpat.regmatch.regprog = NULL;
@@ -1393,12 +1395,12 @@ static void findtags_state_init(findtags_state_T *st, char *pat, int mincount)
   }
 }
 
-/// Search for tags in the "tag_fname" tags file.
+/// Search for tags matching "st->orgpat.pat" in the "st->tag_fname" tags file.
 /// Information needed to search for the tags is in the "st" state structure.
 /// The matching tags are returned in "st".
-static void find_tags_in_file(char *tag_fname, findtags_state_T *st, int flags, char *buf_ffname)
+static void find_tags_in_file(findtags_state_T *st, int flags, char *buf_ffname)
 {
-  FILE *fp;
+  FILE *fp = NULL;
   tagptrs_T tagp;
   int is_static;                        // current tag line is static
   int is_current;                       // file name matches
@@ -1407,7 +1409,7 @@ static void find_tags_in_file(char *tag_fname, findtags_state_T *st, int flags, 
   char_u *s;
   int i;
   int help_pri = 0;
-  char_u help_lang[3];                  // lang of current tags file
+  char_u help_lang[3] = "";             // lang of current tags file
   int tag_file_sorted = NUL;            // !_TAG_FILE_SORTED value
   int tagcmp;
   off_T offset;
@@ -1465,9 +1467,9 @@ static void find_tags_in_file(char *tag_fname, findtags_state_T *st, int flags, 
     } else {
       // Prefer help tags according to 'helplang'.  Put the
       // two-letter language name in help_lang[].
-      i = (int)STRLEN(tag_fname);
-      if (i > 3 && tag_fname[i - 3] == '-') {
-        STRCPY(help_lang, tag_fname + i - 2);
+      i = (int)STRLEN(st->tag_fname);
+      if (i > 3 && st->tag_fname[i - 3] == '-') {
+        STRCPY(help_lang, st->tag_fname + i - 2);
       } else {
         STRCPY(help_lang, "en");
       }
@@ -1512,13 +1514,13 @@ static void find_tags_in_file(char *tag_fname, findtags_state_T *st, int flags, 
     }
   }
 
-  if ((fp = os_fopen(tag_fname, "r")) == NULL) {
+  if ((fp = os_fopen(st->tag_fname, "r")) == NULL) {
     return;
   }
 
   if (p_verbose >= 5) {
     verbose_enter();
-    smsg(_("Searching tags file %s"), tag_fname);
+    smsg(_("Searching tags file %s"), st->tag_fname);
     verbose_leave();
   }
 
@@ -1914,7 +1916,7 @@ parse_line:
 
       // Decide in which array to store this match.
       is_current = test_for_current((char *)tagp.fname, (char *)tagp.fname_end,
-                                    tag_fname,
+                                    st->tag_fname,
                                     buf_ffname);
       is_static = test_for_static(&tagp);
 
@@ -1992,7 +1994,7 @@ parse_line:
           }
         }
       } else {
-        size_t tag_fname_len = strlen(tag_fname);
+        size_t tag_fname_len = strlen(st->tag_fname);
         // Save the tag in a buffer.
         // Use 0x02 to separate fields (Can't use NUL, because the
         // hash key is terminated by NUL).
@@ -2004,7 +2006,7 @@ parse_line:
         mfp = xmalloc(sizeof(char) + len + 1);
         p = mfp;
         p[0] = (char)(mtt + 1);
-        STRCPY(p + 1, tag_fname);
+        STRCPY(p + 1, st->tag_fname);
 #ifdef BACKSLASH_IN_FILENAME
         // Ignore differences in slashes, avoid adding
         // both path/file and path\file.
@@ -2038,7 +2040,7 @@ parse_line:
   }   // forever
 
   if (line_error) {
-    semsg(_("E431: Format error in tags file \"%s\""), tag_fname);
+    semsg(_("E431: Format error in tags file \"%s\""), st->tag_fname);
     semsg(_("Before byte %" PRId64), (int64_t)vim_ftell(fp));
     st->stop_searching = true;
     line_error = false;
@@ -2051,7 +2053,7 @@ parse_line:
 
   tag_file_sorted = NUL;
   if (sort_error) {
-    semsg(_("E432: Tags file not sorted: %s"), tag_fname);
+    semsg(_("E432: Tags file not sorted: %s"), st->tag_fname);
     sort_error = false;
   }
 
@@ -2141,7 +2143,6 @@ int find_tags(char *pat, int *num_matches, char ***matchesp, int flags, int minc
               char *buf_ffname)
 {
   findtags_state_T st;
-  char *tag_fname;                      // name of tag file
   tagname_T tn;                         // info for get_tagfname()
   int first_file;                       // trying first tag file
   int retval = FAIL;                    // return value
@@ -2184,9 +2185,6 @@ int find_tags(char *pat, int *num_matches, char ***matchesp, int flags, int minc
   }
 
   help_save = curbuf->b_help;
-
-  // Allocate memory for the buffers that are used
-  tag_fname = xmalloc(MAXPATHL + 1);
 
   findtags_state_init(&st, pat, mincount);
 
@@ -2253,9 +2251,9 @@ int find_tags(char *pat, int *num_matches, char ***matchesp, int flags, int minc
 
     // Try tag file names from tags option one by one.
     for (first_file = true;
-         get_tagfname(&tn, first_file, tag_fname) == OK;
+         get_tagfname(&tn, first_file, st.tag_fname) == OK;
          first_file = false) {
-      find_tags_in_file(tag_fname, &st, flags, buf_ffname);
+      find_tags_in_file(&st, flags, buf_ffname);
       if (st.stop_searching) {
         retval = OK;
         break;
@@ -2283,9 +2281,9 @@ int find_tags(char *pat, int *num_matches, char ***matchesp, int flags, int minc
   }
 
 findtag_end:
+  xfree(st.tag_fname);
   xfree(st.lbuf);
   vim_regfree(st.orgpat.regmatch.regprog);
-  xfree(tag_fname);
 
   // Move the matches from the ga_match[] arrays into one list of
   // matches.  When retval == FAIL, free the matches.
