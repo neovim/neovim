@@ -264,8 +264,15 @@ func Test_tag_complete_with_overlong_line()
   call writefile(tagslines, 'Xtags')
   set tags=Xtags
 
+  " try with binary search
+  set tagbsearch
   call feedkeys(":tag inbou\<C-A>\<C-B>\"\<CR>", 'xt')
   call assert_equal('"tag inboundGSV inboundGovernor inboundGovernorCounters', @:)
+  " try with linear search
+  set notagbsearch
+  call feedkeys(":tag inbou\<C-A>\<C-B>\"\<CR>", 'xt')
+  call assert_equal('"tag inboundGSV inboundGovernor inboundGovernorCounters', @:)
+  set tagbsearch&
 
   call delete('Xtags')
   set tags&
