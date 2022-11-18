@@ -241,4 +241,23 @@ func Test_tag_complete_wildoptions()
   set tags&
 endfunc
 
+func Test_tag_complete_with_overlong_line()
+  let tagslines =<< trim END
+      !_TAG_FILE_FORMAT	2	//
+      !_TAG_FILE_SORTED	1	//
+      !_TAG_FILE_ENCODING	utf-8	//
+      inboundGSV	a	1;"	r
+      inboundGovernor	a	2;"	kind:⊢	type:forall (muxMode :: MuxMode) socket peerAddr versionNumber m a b. (MonadAsync m, MonadCatch m, MonadEvaluate m, MonadThrow m, MonadThrow (STM m), MonadTime m, MonadTimer m, MonadMask m, Ord peerAddr, HasResponder muxMode ~ True) => Tracer m (RemoteTransitionTrace peerAddr) -> Tracer m (InboundGovernorTrace peerAddr) -> ServerControlChannel muxMode peerAddr ByteString m a b -> DiffTime -> MuxConnectionManager muxMode socket peerAddr versionNumber ByteString m a b -> StrictTVar m InboundGovernorObservableState -> m Void
+      inboundGovernorCounters	a	3;"	kind:⊢	type:InboundGovernorState muxMode peerAddr m a b -> InboundGovernorCounters
+  END
+  call writefile(tagslines, 'Xtags')
+  set tags=Xtags
+
+  call feedkeys(":tag inbou\<C-A>\<C-B>\"\<CR>", 'xt')
+  call assert_equal('"tag inboundGSV inboundGovernor inboundGovernorCounters', @:)
+
+  call delete('Xtags')
+  set tags&
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab

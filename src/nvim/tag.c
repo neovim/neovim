@@ -1691,8 +1691,6 @@ int find_tags(char *pat, int *num_matches, char ***matchesp, int flags, int minc
           vim_fseek(fp, search_info.curr_offset, SEEK_SET);
           eof = vim_fgets((char_u *)lbuf, lbuf_size, fp);
           if (!eof && search_info.curr_offset != 0) {
-            // The explicit cast is to work around a bug in gcc 3.4.2
-            // (repeated below).
             search_info.curr_offset = vim_ftell(fp);
             if (search_info.curr_offset == search_info.high_offset) {
               // oops, gone a bit too far; try from low offset
@@ -1718,6 +1716,7 @@ int find_tags(char *pat, int *num_matches, char ***matchesp, int flags, int minc
 
           // skip empty and blank lines
           do {
+            search_info.curr_offset = vim_ftell(fp);
             eof = vim_fgets((char_u *)lbuf, lbuf_size, fp);
           } while (!eof && vim_isblankline(lbuf));
 
@@ -1840,6 +1839,11 @@ parse_line:
           lbuf_size *= 2;
           xfree(lbuf);
           lbuf = xmalloc((size_t)lbuf_size);
+
+          if (state == TS_STEP_FORWARD) {
+            // Seek to the same position to read the same line again
+            vim_fseek(fp, search_info.curr_offset, SEEK_SET);
+          }
           // this will try the same thing again, make sure the offset is
           // different
           search_info.curr_offset = 0;
