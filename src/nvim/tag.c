@@ -1609,7 +1609,6 @@ static tags_read_status_T findtags_get_next_line(findtags_state_T *st, tagsearch
 
     // skip empty and blank lines
     do {
-      sinfo_p->curr_offset = vim_ftell(st->fp);
       eof = vim_fgets((char_u *)st->lbuf, st->lbuf_size, st->fp);
     } while (!eof && vim_isblankline(st->lbuf));
 
@@ -2161,7 +2160,7 @@ line_read_in:
       xfree(st->lbuf);
       st->lbuf = xmalloc((size_t)st->lbuf_size);
 
-      if (st->state == TS_STEP_FORWARD) {
+      if (st->state == TS_STEP_FORWARD || st->state == TS_LINEAR) {
         // Seek to the same position to read the same line again
         vim_ignored = vim_fseek(st->fp, search_info.curr_offset, SEEK_SET);
       }
