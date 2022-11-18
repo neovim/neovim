@@ -1468,7 +1468,7 @@ static void findtags_state_free(findtags_state_T *st)
 
 /// Initialize the language and priority used for searching tags in a Vim help
 /// file.
-/// Returns true to process the help file and false to skip the file.
+/// Returns true to process the help file for tags and false to skip the file.
 static bool findtags_in_help_init(findtags_state_T *st)
 {
   int i;
@@ -1481,7 +1481,7 @@ static bool findtags_in_help_init(findtags_state_T *st)
     // language name in help_lang[].
     i = (int)STRLEN(st->tag_fname);
     if (i > 3 && st->tag_fname[i - 3] == '-') {
-      STRCPY(st->help_lang, st->tag_fname + i - 2);
+      STRLCPY(st->help_lang, st->tag_fname + i - 2, 3);
     } else {
       STRCPY(st->help_lang, "en");
     }
@@ -1659,8 +1659,8 @@ static bool findtags_start_state_handler(findtags_state_T *st, bool *sortic,
 {
   const bool noic = (st->flags & TAG_NOIC);
 
-  // The header ends when the line sorts below "!_TAG_".  When
-  // case is folded lower case letters sort before "_".
+  // The header ends when the line sorts below "!_TAG_".  When case is
+  // folded lower case letters sort before "_".
   if (strncmp(st->lbuf, "!_TAG_", 6) <= 0
       || (st->lbuf[0] == '!' && ASCII_ISLOWER(st->lbuf[1]))) {
     return findtags_hdr_parse(st);
@@ -1724,7 +1724,7 @@ static bool findtags_start_state_handler(findtags_state_T *st, bool *sortic,
 
 /// Parse a tag line read from a tags file.
 /// Returns OK if a tags line is successfully parsed.
-/// Returns FAIL if an error is encountered.
+/// Returns FAIL if a format error is encountered.
 static int findtags_parse_line(findtags_state_T *st, tagptrs_T *tagpp)
 {
   int status;
@@ -2092,10 +2092,9 @@ static void findtags_add_match(findtags_state_T *st, tagptrs_T *tagpp, findtags_
 }
 
 /// Read and get all the tags from file st->tag_fname.
-/// Returns OK if all the tags are processed successfully and FAIL is a tag
-/// format error is encountered.
-static int findtags_get_all_tags(findtags_state_T *st, findtags_match_args_T *margs,
-                                 char *buf_ffname)
+/// Sets "st->stop_searching" to true to stop searching for additional tags.
+static void findtags_get_all_tags(findtags_state_T *st, findtags_match_args_T *margs,
+                                  char *buf_ffname)
 {
   tagptrs_T tagp;
   tagsearch_info_T search_info;
@@ -2173,7 +2172,10 @@ line_read_in:
     }
 
     if (findtags_parse_line(st, &tagp) == FAIL) {
-      return FAIL;
+      semsg(_("E431: Format error in tags file \"%s\""), st->tag_fname);
+      semsg(_("Before byte %" PRId64), (int64_t)vim_ftell(st->fp));
+      st->stop_searching = true;
+      return;
     }
 
     retval = (int)findtags_match_tag(st, &tagp, margs, &search_info);
@@ -2189,17 +2191,15 @@ line_read_in:
       findtags_add_match(st, &tagp, margs, buf_ffname, &hash);
     }
   }  // forever
-
-  return OK;
 }
 
 /// Search for tags matching "st->orgpat.pat" in the "st->tag_fname" tags file.
 /// Information needed to search for the tags is in the "st" state structure.
-/// The matching tags are returned in "st".
+/// The matching tags are returned in "st". If an error is encountered, then
+/// "st->stop_searching" is set to true.
 static void findtags_in_file(findtags_state_T *st, int flags, char *buf_ffname)
 {
   findtags_match_args_T margs;
-  bool line_error = false;  // syntax error
 
   st->vimconv.vc_type = CONV_NONE;
   st->tag_file_sorted = NUL;
@@ -2229,20 +2229,12 @@ static void findtags_in_file(findtags_state_T *st, int flags, char *buf_ffname)
   st->state = TS_START;  // we're at the start of the file
 
   // Read and parse the lines in the file one by one
-  if (findtags_get_all_tags(st, &margs, buf_ffname) == FAIL) {
-    line_error = true;
-  }
-
-  if (line_error) {
-    semsg(_("E431: Format error in tags file \"%s\""), st->tag_fname);
-    semsg(_("Before byte %" PRId64), (int64_t)vim_ftell(st->fp));
-    st->stop_searching = true;
-    line_error = false;
-  }
+  findtags_get_all_tags(st, &margs, buf_ffname);
 
   if (st->fp != NULL) {
     fclose(st->fp);
   }
+  st->fp = NULL;
   if (st->vimconv.vc_type != CONV_NONE) {
     convert_setup(&st->vimconv, NULL, NULL);
   }

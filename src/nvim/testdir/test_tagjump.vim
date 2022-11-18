@@ -1598,6 +1598,15 @@ func Test_tagbsearch()
   call assert_equal(3, line('.'))
   %bw!
 
+  " Binary search fails on EOF
+  call writefile([
+        \ "!_TAG_FILE_ENCODING\tutf-8\t//",
+        \ "!_TAG_FILE_SORTED\t1\t/0=unsorted, 1=sorted, 2=foldcase/",
+        \ "bar\tXfoo\t1",
+        \ "foo\tXfoo\t2"],
+        \ 'Xtags')
+  call assert_fails('tag bbb', 'E426:')
+
   call delete('Xtags')
   call delete('Xfoo')
   set tags& tagbsearch&
