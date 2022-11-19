@@ -220,6 +220,7 @@ Terminal *terminal_open(buf_T *buf, TerminalOptions opts)
   // Set up screen
   rv->vts = vterm_obtain_screen(rv->vt);
   vterm_screen_enable_altscreen(rv->vts, true);
+  vterm_screen_enable_reflow(rv->vts, true);
   // delete empty lines at the end of the buffer
   vterm_screen_set_callbacks(rv->vts, &vterm_screen_callbacks, rv);
   vterm_screen_set_damage_merge(rv->vts, VTERM_DAMAGE_SCROLL);
