@@ -53,6 +53,7 @@
 #include "nvim/highlight_group.h"
 #include "nvim/indent.h"
 #include "nvim/input.h"
+#include "nvim/lua/executor.h"
 #include "nvim/macros.h"
 #include "nvim/main.h"
 #include "nvim/mark.h"
@@ -4959,4 +4960,21 @@ void ex_oldfiles(exarg_T *eap)
       }
     }
   }
+}
+
+void ex_trust(exarg_T *eap)
+{
+  char *p = skiptowhite(eap->arg);
+  size_t len = (size_t)(p - eap->arg);
+  char *mode = xcalloc(len + 1, sizeof(char));
+  memcpy(mode, eap->arg, len);
+
+  char *path = skipwhite(p);
+  char *errmsg = nlua_trust(path, mode);
+  if (errmsg != NULL) {
+    semsg(errmsg);
+    xfree(errmsg);
+  }
+
+  xfree(mode);
 }

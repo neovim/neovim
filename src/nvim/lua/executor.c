@@ -2218,16 +2218,30 @@ char *nlua_read_secure(const char *path)
   return buf;
 }
 
-void nlua_trust(const char *set, const char *path)
+char *nlua_trust(const char *path, const char *mode)
 {
   lua_State *const lstate = global_lstate;
   lua_getglobal(lstate, "vim");
   lua_getfield(lstate, -1, "secure");
   lua_getfield(lstate, -1, "trust");
   lua_pushstring(lstate, path);
-  if (strcmp(set, "allow"))
-    lua_pushboolean(lstate, 1);
-  else if (strcmp(set, "deny"))
-    lua_pushboolean(lstate, 0);
-  lua_call(lstate, 2, 0);
+  lua_pushstring(lstate, mode);
+  if (nlua_pcall(lstate, 2, 2)) {
+    nlua_error(lstate, _("Error executing vim.secure.trust: %.*s"));
+    return NULL;
+  }
+
+  char *errmsg = NULL;
+  size_t len = 0;
+  const char *contents = lua_tolstring(lstate, -1, &len);
+  if (contents != NULL) {
+    // Add one to include trailing null byte
+    errmsg = xcalloc(len + 1, sizeof(char));
+    memcpy(errmsg, contents, len + 1);
+  }
+
+  // Pop return values, "vim" and "secure"
+  lua_pop(lstate, 4);
+
+  return errmsg;
 }
