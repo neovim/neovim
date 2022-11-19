@@ -10,7 +10,7 @@
     {
       overlay = final: prev: rec {
         neovim-unwrapped = prev.neovim-unwrapped.override ({
-          libvterm-neovim = prev.libvterm-neovim.overrideAttrs (old: {
+          libvterm-neovim = final.libvterm-neovim.overrideAttrs (old: {
             version = "0.3";
             src = builtins.fetchTarball {
               url = "https://www.leonerd.org.uk/code/libvterm/libvterm-0.3.tar.gz";
