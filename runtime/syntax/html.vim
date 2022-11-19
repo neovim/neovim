@@ -3,7 +3,7 @@
 " Maintainer:		Doug Kearns <dougkearns@gmail.com>
 " Previous Maintainers: Jorge Maldonado Ventura <jorgesumle@freakspot.net>
 "			Claudio Fleiner <claudio@fleiner.com>
-" Last Change:		2022 Jul 20
+" Last Change:		2022 Nov 18
 
 " Please check :help html.vim for some comments and a description of the options
 
@@ -270,6 +270,16 @@ if main_syntax == "html"
   syn sync match htmlHighlight groupthere javaScript "<script"
   syn sync match htmlHighlightSkip "^.*['\"].*$"
   syn sync minlines=10
+endif
+
+" Folding
+" Originally by Ingo Karkat and Marcus Zanona
+if get(g:, "html_syntax_folding", 0)
+  syn region htmlFold start="<\z(\<\%(area\|base\|br\|col\|command\|embed\|hr\|img\|input\|keygen\|link\|meta\|param\|source\|track\|wbr\>\)\@![a-z-]\+\>\)\%(\_s*\_[^/]\?>\|\_s\_[^>]*\_[^>/]>\)" end="</\z1\_s*>" fold transparent keepend extend containedin=htmlHead,htmlH\d
+  " fold comments (the real ones and the old Netscape ones)
+  if exists("html_wrong_comments")
+    syn region htmlComment start=+<!--+ end=+--\s*>\%(\n\s*<!--\)\@!+ contains=@Spell fold
+  endif
 endif
 
 " The default highlighting.

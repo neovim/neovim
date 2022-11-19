@@ -1854,6 +1854,16 @@ following two lines to the syntax coloring file for that language
 Now you just need to make sure that you add all regions that contain
 the preprocessor language to the cluster htmlPreproc.
 
+							*html-folding*
+The HTML syntax file provides syntax |folding| (see |:syn-fold|) between start
+and end tags.  This can be turned on by >
+
+	:let g:html_syntax_folding = 1
+	:set foldmethod=syntax
+
+Note: Syntax folding might slow down syntax highlighting significantly,
+especially for large files.
+
 
 HTML/OS (by Aestiva)				*htmlos.vim* *ft-htmlos-syntax*
 

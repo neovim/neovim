@@ -7,7 +7,7 @@
 " Contributor:  Leonard Ehrenfried <leonard.ehrenfried@web.de>	
 " Contributor:  Karsten Hopp <karsten@redhat.com>
 " Originally:	2009-07-09
-" Last Change:	2022 Nov 09
+" Last Change:	2022 Nov 10
 " SSH Version:	8.5p1
 "
 
@@ -221,6 +221,7 @@ syn keyword sshdconfigKeyword Match
 syn keyword sshdconfigKeyword MaxAuthTries
 syn keyword sshdconfigKeyword MaxSessions
 syn keyword sshdconfigKeyword MaxStartups
+syn keyword sshdconfigKeyword ModuliFile
 syn keyword sshdconfigKeyword PasswordAuthentication
 syn keyword sshdconfigKeyword PerSourceMaxStartups
 syn keyword sshdconfigKeyword PerSourceNetBlockSize
@@ -244,6 +245,7 @@ syn keyword sshdconfigKeyword PubkeyAuthentication
 syn keyword sshdconfigKeyword PubkeyAuthOptions
 syn keyword sshdconfigKeyword RSAAuthentication
 syn keyword sshdconfigKeyword RekeyLimit
+syn keyword sshdconfigKeyword RequiredRSASize
 syn keyword sshdconfigKeyword RevokedKeys
 syn keyword sshdconfigKeyword RDomain
 syn keyword sshdconfigKeyword RhostsRSAAuthentication

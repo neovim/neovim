@@ -6,7 +6,7 @@
 " Contributor:  Leonard Ehrenfried <leonard.ehrenfried@web.de>
 " Contributor:  Karsten Hopp <karsten@redhat.com>
 " Contributor:  Dean, Adam Kenneth <adam.ken.dean@hpe.com>
-" Last Change:	2022 Nov 09
+" Last Change:	2022 Nov 10
 "		Added RemoteCommand from pull request #4809
 "		Included additional keywords from Martin.
 "		Included PR #5753
@@ -171,6 +171,7 @@ syn keyword sshconfigKeyword EnableSSHKeysign
 syn keyword sshconfigKeyword EscapeChar
 syn keyword sshconfigKeyword ExitOnForwardFailure
 syn keyword sshconfigKeyword FingerprintHash
+syn keyword sshconfigKeyword ForkAfterAuthentication
 syn keyword sshconfigKeyword ForwardAgent
 syn keyword sshconfigKeyword ForwardX11
 syn keyword sshconfigKeyword ForwardX11Timeout
@@ -221,13 +222,16 @@ syn keyword sshconfigKeyword RekeyLimit
 syn keyword sshconfigKeyword RemoteCommand
 syn keyword sshconfigKeyword RemoteForward
 syn keyword sshconfigKeyword RequestTTY
+syn keyword sshconfigKeyword RequiredRSASize
 syn keyword sshconfigKeyword RevokedHostKeys
 syn keyword sshconfigKeyword SecurityKeyProvider
 syn keyword sshconfigKeyword SendEnv
 syn keyword sshconfigKeyword ServerAliveCountMax
 syn keyword sshconfigKeyword ServerAliveInterval
+syn keyword sshconfigKeyword SessionType
 syn keyword sshconfigKeyword SmartcardDevice
 syn keyword sshconfigKeyword SetEnv
+syn keyword sshconfigKeyword StdinNull
 syn keyword sshconfigKeyword StreamLocalBindMask
 syn keyword sshconfigKeyword StreamLocalBindUnlink
 syn keyword sshconfigKeyword StrictHostKeyChecking
