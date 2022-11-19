@@ -8,6 +8,9 @@ local exec_lua = helpers.exec_lua
 local feed_command, nvim = helpers.feed_command, helpers.nvim
 
 local function feed_data(data)
+  if type(data) == 'table' then
+      data = table.concat(data, '\n')
+  end
   exec_lua('vim.api.nvim_chan_send(vim.b.terminal_job_id, ...)', data)
 end
 
