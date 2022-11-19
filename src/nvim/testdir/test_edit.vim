@@ -1863,11 +1863,9 @@ func Test_edit_insertmode_ex_edit()
   call writefile(lines, 'Xtest_edit_insertmode_ex_edit')
 
   let buf = RunVimInTerminal('-S Xtest_edit_insertmode_ex_edit', #{rows: 6})
-  call TermWait(buf, 50)
-  call assert_match('^-- INSERT --\s*$', term_getline(buf, 6))
+  call WaitForAssert({-> assert_match('^-- INSERT --\s*$', term_getline(buf, 6))})
   call term_sendkeys(buf, "\<C-B>\<C-L>")
-  call TermWait(buf, 50)
-  call assert_notmatch('^-- INSERT --\s*$', term_getline(buf, 6))
+  call WaitForAssert({-> assert_notmatch('^-- INSERT --\s*$', term_getline(buf, 6))})
 
   " clean up
   call StopVimInTerminal(buf)
@@ -1875,15 +1873,16 @@ func Test_edit_insertmode_ex_edit()
 endfunc
 
 " Pressing escape in 'insertmode' should beep
-func Test_edit_insertmode_esc_beeps()
-  throw "Skipped: Nvim does not support 'insertmode'"
+" FIXME: Execute this later, when using valgrind it makes the next test
+" Test_edit_insertmode_ex_edit() fail.
+func Test_z_edit_insertmode_esc_beeps()
   new
-  set insertmode
-  call assert_beeps("call feedkeys(\"one\<Esc>\", 'xt')")
+  " set insertmode
+  " call assert_beeps("call feedkeys(\"one\<Esc>\", 'xt')")
   set insertmode&
-  " unsupported CTRL-G command should beep in insert mode.
+  " unsupported "CTRL-G l" command should beep in insert mode.
   call assert_beeps("normal i\<C-G>l")
-  close!
+  bwipe!
 endfunc
 
 " Test for 'hkmap' and 'hkmapp'
