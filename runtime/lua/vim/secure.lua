@@ -29,10 +29,7 @@ end
 ---@param trust (table) Trust table to write
 local function write_trust(trust)
   vim.validate({ trust = { trust, 't' } })
-  local f, err = io.open(vim.fn.stdpath('state') .. '/trust', 'w')
-  if not f then
-    error(err)
-  end
+  local f = assert(io.open(vim.fn.stdpath('state') .. '/trust', 'w'))
 
   local t = {}
   for p, h in pairs(trust) do

@@ -40,11 +40,11 @@ describe(':trust', function()
     eq(string.format('%s %s', hash, cwd .. pathsep .. 'test_file'), vim.trim(trust))
 
     command('trust deny test_file')
-    local trust = helpers.read_file(funcs.stdpath('state') .. pathsep .. 'trust')
+    trust = helpers.read_file(funcs.stdpath('state') .. pathsep .. 'trust')
     eq(string.format('! %s', cwd .. pathsep .. 'test_file'), vim.trim(trust))
 
     command('trust forget test_file')
-    local trust = helpers.read_file(funcs.stdpath('state') .. pathsep .. 'trust')
+    trust = helpers.read_file(funcs.stdpath('state') .. pathsep .. 'trust')
     eq(string.format(''), vim.trim(trust))
   end)
 
@@ -57,11 +57,11 @@ describe(':trust', function()
     eq(string.format('! %s', cwd .. pathsep .. 'test_file'), vim.trim(trust))
 
     command('trust allow test_file')
-    local trust = helpers.read_file(funcs.stdpath('state') .. pathsep .. 'trust')
+    trust = helpers.read_file(funcs.stdpath('state') .. pathsep .. 'trust')
     eq(string.format('%s %s', hash, cwd .. pathsep .. 'test_file'), vim.trim(trust))
 
     command('trust forget test_file')
-    local trust = helpers.read_file(funcs.stdpath('state') .. pathsep .. 'trust')
+    trust = helpers.read_file(funcs.stdpath('state') .. pathsep .. 'trust')
     eq(string.format(''), vim.trim(trust))
   end)
 end)
