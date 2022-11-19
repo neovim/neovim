@@ -1,9 +1,9 @@
 local M = {}
 
---- @private
+---@private
 --- Reads trust database from $XDG_STATE_HOME/nvim/trust.
 ---
---- @return (table) Contents of trust database, if it exists. Empty table otherwise.
+---@return (table) Contents of trust database, if it exists. Empty table otherwise.
 local function read_trust()
   local trust = {}
   local f = io.open(vim.fn.stdpath('state') .. '/trust', 'r')
@@ -22,11 +22,11 @@ local function read_trust()
   return trust
 end
 
---- @private
+---@private
 --- Writes provided {trust} table to trust database at
 --- $XDG_STATE_HOME/nvim/trust.
 ---
---- @param trust (table) Trust table to write
+---@param trust (table) Trust table to write
 local function write_trust(trust)
   vim.validate({ trust = { trust, 't' } })
   local f, err = io.open(vim.fn.stdpath('state') .. '/trust', 'w')
@@ -121,12 +121,12 @@ end
 --- Update the trust status of file at path in the trust database at
 --- $XDG_STATE_HOME/nvim/trust.
 ---
---- @param path (string) Path to a file to update status for.
---- @param mode (string) One of the following:
+---@param path (string) Path to a file to update status for.
+---@param mode (string) One of the following:
 ---   - 'allow': Add file to trust database and set it as trusted
 ---   - 'deny': Add file to trust database and set it as denied
 ---   - 'forget': Remove file from trust database
---- @return (boolean, string|nil) success, errmsg: true and nil if the operation was successful,
+---@return (boolean, string|nil) success, errmsg: true and nil if the operation was successful,
 ---   otherwise false and an error message.
 function M.trust(path, mode)
   vim.validate({
@@ -174,13 +174,10 @@ function M.trust(path, mode)
   end
 
   if mode == 'allow' then
-    -- Allow
     trust[fullpath] = hash
   elseif mode == 'deny' then
-    -- Deny
     trust[fullpath] = '!'
   elseif mode == 'forget' then
-    -- Forget
     trust[fullpath] = nil
   end
 
