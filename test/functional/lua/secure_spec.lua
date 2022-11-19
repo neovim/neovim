@@ -192,11 +192,11 @@ describe('vim.secure', function()
       local cwd = funcs.getcwd()
       local hash = funcs.sha256(helpers.read_file('test_file'))
 
-      exec_lua([[vim.secure.trust('test_file', true)]])
+      eq({true, nil}, exec_lua([[return {vim.secure.trust('test_file', 'allow')}]]))
       local trust = helpers.read_file(funcs.stdpath('state') .. pathsep .. 'trust')
       eq(string.format('%s %s', hash, cwd .. pathsep .. 'test_file'), vim.trim(trust))
 
-      exec_lua([[vim.secure.trust('test_file', false)]])
+      eq({true, nil}, exec_lua([[return {vim.secure.trust('test_file', 'deny')}]]))
       local trust = helpers.read_file(funcs.stdpath('state') .. pathsep .. 'trust')
       eq(string.format('! %s', cwd .. pathsep .. 'test_file'), vim.trim(trust))
     end)
@@ -205,13 +205,47 @@ describe('vim.secure', function()
       local cwd = funcs.getcwd()
       local hash = funcs.sha256(helpers.read_file('test_file'))
 
-      exec_lua([[vim.secure.trust('test_file', false)]])
+      eq({true, nil}, exec_lua([[return {vim.secure.trust('test_file', 'deny')}]]))
       local trust = helpers.read_file(funcs.stdpath('state') .. pathsep .. 'trust')
       eq(string.format('! %s', cwd .. pathsep .. 'test_file'), vim.trim(trust))
 
-      exec_lua([[vim.secure.trust('test_file', true)]])
+      eq({true, nil}, exec_lua([[return {vim.secure.trust('test_file', 'allow')}]]))
       local trust = helpers.read_file(funcs.stdpath('state') .. pathsep .. 'trust')
       eq(string.format('%s %s', hash, cwd .. pathsep .. 'test_file'), vim.trim(trust))
+    end)
+
+    it('forgets a trusted file', function()
+      local cwd = funcs.getcwd()
+      local hash = funcs.sha256(helpers.read_file('test_file'))
+
+      exec_lua([[vim.secure.trust('test_file', 'allow')]])
+      local trust = helpers.read_file(funcs.stdpath('state') .. pathsep .. 'trust')
+
+      eq({true, nil}, exec_lua([[return {vim.secure.trust('test_file', 'forget')}]]))
+      local trust = helpers.read_file(funcs.stdpath('state') .. pathsep .. 'trust')
+      eq(string.format(''), vim.trim(trust))
+    end)
+
+    it('forgets a denied file', function()
+      local cwd = funcs.getcwd()
+      local hash = funcs.sha256(helpers.read_file('test_file'))
+
+      exec_lua([[vim.secure.trust('test_file', 'deny')]])
+      local trust = helpers.read_file(funcs.stdpath('state') .. pathsep .. 'trust')
+
+      eq({true, nil}, exec_lua([[return {vim.secure.trust('test_file', 'forget')}]]))
+      local trust = helpers.read_file(funcs.stdpath('state') .. pathsep .. 'trust')
+      eq(string.format(''), vim.trim(trust))
+    end)
+
+    it('returns error message when passing invalid mode', function()
+      eq({false, 'invalid mode: invalid'},
+        exec_lua([[return {vim.secure.trust('test_file', 'invalid')}]]))
+    end)
+
+    it('returns error message when file does not exist', function()
+      eq({false, 'invalid path: invalid_file'},
+        exec_lua([[return {vim.secure.trust('invalid_file', 'allow')}]]))
     end)
   end)
 end)

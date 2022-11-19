@@ -1,5 +1,6 @@
 local M = {}
 
+--- @private
 --- Reads trust database from $XDG_STATE_HOME/nvim/trust.
 ---
 --- @return (table) Contents of trust database, if it exists. Empty table otherwise.
@@ -21,6 +22,7 @@ local function read_trust()
   return trust
 end
 
+--- @private
 --- Writes provided {trust} table to trust database at
 --- $XDG_STATE_HOME/nvim/trust.
 ---
@@ -120,48 +122,66 @@ end
 --- $XDG_STATE_HOME/nvim/trust.
 ---
 --- @param path (string) Path to a file to update status for.
---- @param allow (boolean) If true, set status to allow, otherwise set to deny.
-function M.trust(path, allow)
+--- @param mode (string) One of the following:
+---   - 'allow': Add file to trust database and set it as trusted
+---   - 'deny': Add file to trust database and set it as denied
+---   - 'forget': Remove file from trust database
+--- @return (boolean, string|nil) success, errmsg: true and nil if the operation was successful,
+---   otherwise false and an error message.
+function M.trust(path, mode)
   vim.validate({ path = { path, 's' } })
-  vim.validate({ allow = { allow, 'b' } })
+  vim.validate({ allow = { mode, 's' } })
+  if mode ~= 'allow' and mode ~= 'deny' and mode ~= 'forget' then
+    return false, string.format('invalid mode: %s', mode)
+  end
 
   local fullpath = vim.loop.fs_realpath(vim.fs.normalize(path))
   if not fullpath then
-    return
+    return false, string.format('invalid path: %s', path)
   end
 
   local trust = read_trust()
 
-  if trust[fullpath] == '!' and not allow then
+  if not trust[fullpath] and mode == 'forget' then
+    -- File is not in trust database - nothing to do
+    return true, nil
+  end
+
+  if trust[fullpath] == '!' and mode == 'deny' then
     -- File is already denied - nothing to do
-    return
+    return true, nil
   end
 
   local hash
   do
     local f = io.open(fullpath, 'r')
     if not f then
-      return nil
+      return false, 'file does not exist: ' .. path
     end
     local contents = f:read('*a')
     f:close()
     hash = vim.fn.sha256(contents)
   end
 
-  if trust[fullpath] == hash and allow then
+  if trust[fullpath] == hash and mode == 'allow' then
     -- File already exists in trust database - nothing to do
-    return
+    return true, nil
   end
 
-  if allow then
+  if mode == 'allow' then
     -- Allow
     trust[fullpath] = hash
-  else
+  elseif mode == 'deny' then
     -- Deny
     trust[fullpath] = '!'
+  elseif mode == 'forget' then
+    -- Forget
+    trust[fullpath] = nil
   end
 
   write_trust(trust)
+
+  return true, nil
 end
 
 return M
