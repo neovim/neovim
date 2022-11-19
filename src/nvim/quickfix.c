@@ -1338,9 +1338,9 @@ static int qf_parse_fmt_t(regmatch_T *rmp, int midx, qffields_T *fields)
   return QF_OK;
 }
 
-/// Parse the match for '%+' format pattern. The whole matching line is included
-/// in the error string.  Return the matched line in "fields->errmsg".
-static void qf_parse_fmt_plus(const char *linebuf, size_t linelen, qffields_T *fields)
+/// Copy a non-error line into the error string.  Return the matched line in
+/// "fields->errmsg".
+static int copy_nonerror_line(const char *linebuf, size_t linelen, qffields_T *fields)
   FUNC_ATTR_NONNULL_ALL
 {
   if (linelen >= fields->errmsglen) {
@@ -1348,7 +1348,10 @@ static void qf_parse_fmt_plus(const char *linebuf, size_t linelen, qffields_T *f
     fields->errmsg = xrealloc(fields->errmsg, linelen + 1);
     fields->errmsglen = linelen + 1;
   }
+  // copy whole line to error message
   STRLCPY(fields->errmsg, linebuf, linelen + 1);
+
+  return QF_OK;
 }
 
 /// Parse the match for error message ('%m') pattern in regmatch.
@@ -1495,7 +1498,7 @@ static int qf_parse_match(char *linebuf, size_t linelen, efm_T *fmt_ptr, regmatc
       status = qf_parse_fmt_f(regmatch, midx, fields, idx);
     } else if (i == FMT_PATTERN_M) {
       if (fmt_ptr->flags == '+' && !qf_multiscan) {  // %+
-        qf_parse_fmt_plus(linebuf, linelen, fields);
+        status = copy_nonerror_line(linebuf, linelen, fields);
       } else if (midx > 0) {  // %m
         status = qf_parse_fmt_m(regmatch, midx, fields);
       }
@@ -1603,15 +1606,8 @@ static int qf_parse_line_nomatch(char *linebuf, size_t linelen, qffields_T *fiel
   fields->namebuf[0] = NUL;   // no match found, remove file name
   fields->lnum = 0;           // don't jump to this line
   fields->valid = false;
-  if (linelen >= fields->errmsglen) {
-    // linelen + null terminator
-    fields->errmsg = xrealloc(fields->errmsg, linelen + 1);
-    fields->errmsglen = linelen + 1;
-  }
-  // copy whole line to error message
-  STRLCPY(fields->errmsg, linebuf, linelen + 1);
 
-  return QF_OK;
+  return copy_nonerror_line(linebuf, linelen, fields);
 }
 
 /// Parse multi-line error format prefixes (%C and %Z)
