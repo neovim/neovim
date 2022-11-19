@@ -24,6 +24,8 @@ end
 local function test_selection(cursorpos, selection_macro, expected_inclusive, expected_exclusive, virtual)
   if virtual then
     exec_lua[[vim.o.virtualedit = 'all']]
+  else
+    exec_lua[[vim.o.virtualedit = '']]
   end
 
   exec_lua[[vim.o.selection = 'inclusive']]
@@ -79,16 +81,13 @@ describe('selectedlines() function', function()
   end)
   it('visual charwise multi line empty line start', function()
     test_selection({5, 1}, 'vj5l',
-                    {'', '    uv'},
-                    {'', '    u'})
+                   {'', '    uv'},
+                   {'', '    u'})
   end)
   it('visual charwise multi line empty line end', function()
     test_selection({2, 2}, 'v3j',
-                    {'defgh', input[3], input[4], ''},
-                    {'defgh', input[3], input[4]})
-    test_selection({8, 2}, 'v3j',
-                    {'ƃĉđē', ''},
-                    {'ƃĉđē' }, true)
+                   {'defgh', input[3], input[4], ''},
+                   {'defgh', input[3], input[4]})
   end)
   it('visual charwise double-width chars', function()
     test_selection({7, 2}, 'v2l', {''}, {''})
@@ -97,10 +96,10 @@ describe('selectedlines() function', function()
     test_selection({8, 2}, 'v2l', {'ƃĉđ'}, {'ƃĉ'})
   end)
   it('blockwise single line', function()
-    test_selection({2,2}, '3l', {'defg'}, {'def'})
+    test_selection({2, 2}, '3l', {'defg'}, {'def'})
   end)
   it('blockwise multi line', function()
-    test_selection({1,2}, '7j2l',
+    test_selection({1, 2}, '7j2l',
                    {'b', 'def', 'jk', 'mno', '   ', '   ', ' ', 'ƃĉđ'},
                    {'b', 'de', 'jk', 'mn', '  ', '  ', '  ', 'ƃĉ'})
   end)
@@ -116,29 +115,32 @@ describe('selectedlines() function', function()
     test_selection({2, 5}, 'v3l', {'gh  '}, {'gh '}, true)
     test_selection({1, 1}, '7lv3l', {'    '}, {'   '}, true)
   end)
-  it('visual charwise multi line empty line start', function()
+  it('visual charwise multi line empty line start virtual', function()
     test_selection({5, 1}, 'vj5l',
-                    {'', '    uv'},
-                    {'', '    u'}, true)
+                   {'', '    uv'},
+                   {'', '    u'}, true)
   end)
-  it('visual charwise multi line empty line end', function()
+  it('visual charwise multi line empty line end virtual', function()
     test_selection({2, 2}, 'v3j0',
-                    {'defgh', input[3], input[4], ' '},
-                    {'defgh', input[3], input[4]}, true)
-    test_selection({8, 2}, 'v3j0',
-                    {'ƃĉđē', ' '},
-                    {'ƃĉđē' }, true)
+                   {'defgh', input[3], input[4], ' '},
+                   {'defgh', input[3], input[4]}, true)
+    test_selection({8, 2}, 'vj0',
+                   {'ƃĉđē', ' '},
+                   {'ƃĉđē' }, true)
+    test_selection({8, 2}, 'vj',
+                   {'ƃĉđē', '  '},
+                   {'ƃĉđē', ' ' }, true)
   end)
   it('charwise multi line virtual', function()
-    test_selection({1,1}, '7lvj',
+    test_selection({1, 1}, '7lvj',
                    {'', 'cdefgh  '},
                    {'', 'cdefgh '}, true)
   end)
   it('blockwise multi line virtual', function()
-    test_selection({1,2}, '7j2l',
+    test_selection({1, 2}, '7j2l',
                    {'b  ', 'def', 'jk ', 'mno', '   ', '   ', ' ', 'ƃĉđ'},
                    {'b ', 'de', 'jk', 'mn', '  ', '  ', '  ', 'ƃĉ'}, true)
-    test_selection({1,1}, '4l7j2l',
+    test_selection({1, 1}, '4l7j2l',
                    {'   ', 'gh ', '   ', 'pqr', '   ', 'uvw', ' ', 'ē  '},
                    {'  ', 'gh', '  ', 'pq', '  ', 'uv', '', 'ē '}, true)
   end)

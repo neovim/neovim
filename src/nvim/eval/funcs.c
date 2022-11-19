@@ -2721,16 +2721,19 @@ static String block_def_to_string(struct block_def *bd)
   };
 }
 
-static void get_selected_lines(typval_T *rettv)
+void get_selected_lines(typval_T *rettv)
 {
   pos_T p1, p2;
   linenr_T lnum;
   struct block_def bd;
+  bool inclusive = true;
 
   if (!VIsual_active) {
     tv_list_alloc_ret(rettv, 0);
     return;
   }
+
+  virtual_op = virtual_active();
 
   if (lt(VIsual, curwin->w_cursor)) {
     p1 = VIsual;
@@ -2757,6 +2760,12 @@ static void get_selected_lines(typval_T *rettv)
         }
       }
     }
+    if (VIsual_mode == 'v') {
+      // if p2 is on NUL (empty line) inclusive becomes false
+      if (*ml_get_pos(&p2) == NUL && !virtual_op) {
+        inclusive = false;
+      }
+    }
   }
 
   // Include the trailing byte of a multi-byte char.
@@ -2766,8 +2775,6 @@ static void get_selected_lines(typval_T *rettv)
   }
 
   tv_list_alloc_ret(rettv, p2.lnum - p1.lnum + 1);
-
-  virtual_op = virtual_active();
 
   for (lnum = p1.lnum; lnum <= p2.lnum; lnum++) {
     String akt;
@@ -2780,7 +2787,7 @@ static void get_selected_lines(typval_T *rettv)
       if (p1.lnum < lnum && lnum < p2.lnum) {
         akt = cstr_to_string(ml_get(lnum));
       } else {
-        charwise_block_prep(p1, p2, &bd, lnum, true);
+        charwise_block_prep(p1, p2, &bd, lnum, inclusive);
         akt = block_def_to_string(&bd);
       }
       break;
@@ -2809,6 +2816,7 @@ static void get_selected_lines(typval_T *rettv)
 
     tv_list_append_allocated_string(rettv->vval.v_list, akt.data);
   }
+  virtual_op = kNone;
 }
 
 /// "selectedlines()" function
