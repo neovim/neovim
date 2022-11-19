@@ -2698,6 +2698,8 @@ text...
 			Unlock the internal variable {name}.  Does the
 			opposite of |:lockvar|.
 
+			No error is given if {name} does not exist.
+
 :if {expr1}			*:if* *:end* *:endif* *:en* *E171* *E579* *E580*
 :en[dif]		Execute the commands until the next matching `:else`
 			or `:endif` if {expr1} evaluates to non-zero.

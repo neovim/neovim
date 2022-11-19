@@ -355,6 +355,20 @@ TermdebugStopPost		After debugging has ended, gdb-related windows
 				the state before the debugging was restored.
 
 
+Customizing ~
+				*termdebug-customizing* *g:termdebug_config*
+In the past several global variables were used for configuration.  These are
+deprecated and using the g:termdebug_config dictionary is preferred.  When
+g:termdebug_config exists the other global variables will NOT be used.
+The recommended way is to start with an empty dictionary: >
+	let g:termdebug_config = {}
+
+Then you can add entries to the dictionary as mentioned below.  The
+deprecated global variable names are mentioned for completeness.  If you are
+switching over to using g:termdebug_config you can find the old variable name
+and take over the value, then delete the deprecated variable.
+
+
 Prompt mode ~
 						*termdebug-prompt*
 When on MS-Windows, gdb will run in a buffer with 'buftype' set to "prompt".
@@ -368,13 +382,13 @@ This works slightly differently:
 						*termdebug_use_prompt*
 Prompt mode can be used with: >
 	let g:termdebug_config['use_prompt'] = 1
-Or if there is no g:termdebug_config: >
+If there is no g:termdebug_config you can use: >
 	let g:termdebug_use_prompt = 1
 <
 						*termdebug_map_K*
 The K key is normally mapped to :Evaluate. If you do not want this use: >
 	let g:termdebug_config['map_K'] = 0
-Or if there is no g:termdebug_config: >
+If there is no g:termdebug_config you can use: >
 	let g:termdebug_map_K = 0
 <
 						*termdebug_disasm_window*
@@ -382,7 +396,7 @@ If you want the Asm window shown by default, set the flag to 1.
 the "disasm_window_height" entry can be used to set the window height: >
 	let g:termdebug_config['disasm_window'] = 1
 	let g:termdebug_config['disasm_window_height'] = 15
-or, if there is no g:termdebug_config: >
+If there is no g:termdebug_config you can use: >
 	let g:termdebug_disasm_window = 15
 Any value greater than 1 will set the Asm window height to that value.
 
@@ -400,25 +414,18 @@ interrupt the running program.  But after using the MI command
 communication channel.
 
 
-Customizing ~
-				*termdebug-customizing* *g:termdebug_config*
-In the past several global variables were used for configuration.  These are
-deprecated, using the g:termdebug_config dictionary is preferred.  When
-g:termdebug_config exists the other global variables will not be used.
-
-
 GDB command ~
 							*g:termdebugger*
 To change the name of the gdb command, set "debugger" entry in
 g:termdebug_config or the "g:termdebugger" variable before invoking
 `:Termdebug`: >
 	let g:termdebug_config['command'] = "mygdb"
-Or if there is no g:termdebug_config: >
+If there is no g:termdebug_config you can use: >
 	let g:termdebugger = "mygdb"
 
 If the command needs an argument use a List: >
 	let g:termdebug_config['command'] = ['rr', 'replay', '--']
-Or if there is no g:termdebug_config: >
+If there is no g:termdebug_config you can use: >
 	let g:termdebugger = ['rr', 'replay', '--']
 
 To not use neovim floating windows for previewing variable evaluation, set the
@@ -451,7 +458,7 @@ Then your gdb is too old.
 
 
 Colors ~
-						*hl-debugPC* *hl-debugBreakpoint*
+					*hl-debugPC* *hl-debugBreakpoint*
 The color of the signs can be adjusted with these highlight groups:
 - debugPC		the current position
 - debugBreakpoint	a breakpoint
@@ -467,7 +474,6 @@ When 'background' is "dark":
 
 Shortcuts ~
 							*termdebug_shortcuts*
-
 You can define your own shortcuts (mappings) to control gdb, that can work in
 any window, using the TermDebugSendCommand() function.  Example: >
 	map ,w :call TermDebugSendCommand('where')<CR>
@@ -476,7 +482,6 @@ The argument is the gdb command.
 
 Popup menu ~
 							*termdebug_popup*
-
 By default the Termdebug plugin sets 'mousemodel' to "popup_setpos" and adds
 these entries to the popup menu:
 	Set breakpoint		`:Break`
@@ -484,17 +489,16 @@ these entries to the popup menu:
 	Evaluate		`:Evaluate`
 If you don't want this then disable it with: >
 	let g:termdebug_config['popup'] = 0
-or if there is no g:termdebug_config: >
+If there is no g:termdebug_config you can use: >
 	let g:termdebug_popup = 0
 
 
 Vim window width ~
 							*termdebug_wide*
-
 To change the width of the Vim window when debugging starts and use a vertical
 split: >
 	let g:termdebug_config['wide'] = 163
-Or if there is no g:termdebug_config: >
+If there is no g:termdebug_config you can use: >
 	let g:termdebug_wide = 163
 
 This will set 'columns' to 163 when `:Termdebug` is used.  The value is

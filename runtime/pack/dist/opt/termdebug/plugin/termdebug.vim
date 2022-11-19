@@ -2,7 +2,7 @@
 "
 " Author: Bram Moolenaar
 " Copyright: Vim license applies, see ":help license"
-" Last Change: 2022 Jun 24
+" Last Change: 2022 Nov 10
 "
 " WORK IN PROGRESS - The basics works stable, more to come
 " Note: In general you need at least GDB 7.12 because this provides the
@@ -154,10 +154,16 @@ func s:StartDebug_internal(dict)
 
   let s:save_columns = 0
   let s:allleft = 0
-  if exists('g:termdebug_wide')
-    if &columns < g:termdebug_wide
+  let wide = 0
+  if exists('g:termdebug_config')
+    let wide = get(g:termdebug_config, 'wide', 0)
+  elseif exists('g:termdebug_wide')
+    let wide = g:termdebug_wide
+  endif
+  if wide > 0
+    if &columns < wide
       let s:save_columns = &columns
-      let &columns = g:termdebug_wide
+      let &columns = wide
       " If we make the Vim window wider, use the whole left half for the debug
       " windows.
       let s:allleft = 1
@@ -168,7 +174,12 @@ func s:StartDebug_internal(dict)
   endif
 
   " Override using a terminal window by setting g:termdebug_use_prompt to 1.
-  let use_prompt = exists('g:termdebug_use_prompt') && g:termdebug_use_prompt
+  let use_prompt = 0
+  if exists('g:termdebug_config')
+    let use_prompt = get(g:termdebug_config, 'use_prompt', 0)
+  elseif exists('g:termdebug_use_prompt')
+    let use_prompt = g:termdebug_use_prompt
+  endif
   if !has('win32') && !use_prompt
     let s:way = 'terminal'
    else
@@ -903,7 +914,14 @@ func s:InstallCommands()
   endif
 
   if has('menu') && &mouse != ''
-    call s:InstallWinbar()
+    " install the window toolbar by default, can be disabled in the config
+    let winbar = 1
+    if exists('g:termdebug_config')
+      let winbar = get(g:termdebug_config, 'winbar', 1)
+    endif
+    if winbar
+      call s:InstallWinbar()
+    endif
 
     let popup = 1
     if exists('g:termdebug_config')
