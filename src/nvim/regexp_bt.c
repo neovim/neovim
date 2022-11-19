@@ -5164,17 +5164,7 @@ static int bt_regexec_nl(regmatch_T *rmp, char_u *line, colnr_T col, bool line_l
 static long bt_regexec_multi(regmmatch_T *rmp, win_T *win, buf_T *buf, linenr_T lnum, colnr_T col,
                              proftime_T *tm, int *timed_out)
 {
-  rex.reg_match = NULL;
-  rex.reg_mmatch = rmp;
-  rex.reg_buf = buf;
-  rex.reg_win = win;
-  rex.reg_firstlnum = lnum;
-  rex.reg_maxline = rex.reg_buf->b_ml.ml_line_count - lnum;
-  rex.reg_line_lbr = false;
-  rex.reg_ic = rmp->rmm_ic;
-  rex.reg_icombine = false;
-  rex.reg_maxcol = rmp->rmm_maxcol;
-
+  init_regexec_multi(rmp, win, buf, lnum);
   return bt_regexec_both(NULL, col, tm, timed_out);
 }
 

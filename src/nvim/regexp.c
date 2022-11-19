@@ -2241,6 +2241,25 @@ list_T *reg_submatch_list(int no)
   return list;
 }
 
+/// Initialize the values used for matching against multiple lines
+///
+/// @param win   window in which to search or NULL
+/// @param buf   buffer in which to search
+/// @param lnum  nr of line to start looking for match
+static void init_regexec_multi(regmmatch_T *rmp, win_T *win, buf_T *buf, linenr_T lnum)
+{
+  rex.reg_match = NULL;
+  rex.reg_mmatch = rmp;
+  rex.reg_buf = buf;
+  rex.reg_win = win;
+  rex.reg_firstlnum = lnum;
+  rex.reg_maxline = rex.reg_buf->b_ml.ml_line_count - lnum;
+  rex.reg_line_lbr = false;
+  rex.reg_ic = rmp->rmm_ic;
+  rex.reg_icombine = false;
+  rex.reg_maxcol = rmp->rmm_maxcol;
+}
+
 // XXX Do not allow headers generator to catch definitions from regexp_nfa.c
 #ifndef DO_NOT_DEFINE_EMPTY_ATTRIBUTES
 # include "nvim/regexp_bt.c"
