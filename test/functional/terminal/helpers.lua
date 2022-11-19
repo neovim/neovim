@@ -12,7 +12,7 @@ local function feed_data(data)
 end
 
 local function feed_termcode(data)
-  feed_data('\x1b' .. data)
+  feed_data('\027' .. data)
 end
 
 local function make_lua_executor(session)
