@@ -391,44 +391,46 @@ function Client:handle_body(body)
     -- Schedule here so that the users functions don't trigger an error and
     -- we can still use the result.
     schedule(function()
-      local status, result
-      status, result, err = self:try_call(
-        client_errors.SERVER_REQUEST_HANDLER_ERROR,
-        self.dispatchers.server_request,
-        decoded.method,
-        decoded.params
-      )
-      local _ = log.debug()
-        and log.debug(
-          'server_request: callback result',
-          { status = status, result = result, err = err }
+      coroutine.wrap(function()
+        local status, result
+        status, result, err = self:try_call(
+          client_errors.SERVER_REQUEST_HANDLER_ERROR,
+          self.dispatchers.server_request,
+          decoded.method,
+          decoded.params
         )
-      if status then
-        if result == nil and err == nil then
-          error(
-            string.format(
-              'method %q: either a result or an error must be sent to the server in response',
-              decoded.method
+        local _ = log.debug()
+          and log.debug(
+            'server_request: callback result',
+            { status = status, result = result, err = err }
+          )
+        if status then
+          if result == nil and err == nil then
+            error(
+              string.format(
+                'method %q: either a result or an error must be sent to the server in response',
+                decoded.method
+              )
             )
-          )
+          end
+          if err then
+            assert(
+              type(err) == 'table',
+              'err must be a table. Use rpc_response_error to help format errors.'
+            )
+            local code_name = assert(
+              protocol.ErrorCodes[err.code],
+              'Errors must use protocol.ErrorCodes. Use rpc_response_error to help format errors.'
+            )
+            err.message = err.message or code_name
+          end
+        else
+          -- On an exception, result will contain the error message.
+          err = rpc_response_error(protocol.ErrorCodes.InternalError, result)
+          result = nil
         end
-        if err then
-          assert(
-            type(err) == 'table',
-            'err must be a table. Use rpc_response_error to help format errors.'
-          )
-          local code_name = assert(
-            protocol.ErrorCodes[err.code],
-            'Errors must use protocol.ErrorCodes. Use rpc_response_error to help format errors.'
-          )
-          err.message = err.message or code_name
-        end
-      else
-        -- On an exception, result will contain the error message.
-        err = rpc_response_error(protocol.ErrorCodes.InternalError, result)
-        result = nil
-      end
-      self:send_response(decoded.id, err, result)
+        self:send_response(decoded.id, err, result)
+      end)()
     end)
     -- This works because we are expecting vim.NIL here
   elseif decoded.id and (decoded.result ~= vim.NIL or decoded.error ~= vim.NIL) then
