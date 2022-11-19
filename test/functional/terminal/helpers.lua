@@ -4,19 +4,31 @@
 local helpers = require('test.functional.helpers')(nil)
 local Screen = require('test.functional.ui.screen')
 local testprg = helpers.testprg
+local exec_lua = helpers.exec_lua
 local feed_command, nvim = helpers.feed_command, helpers.nvim
 
 local function feed_data(data)
-  -- A string containing NUL bytes is not converted to a Blob when
-  -- calling nvim_set_var() API, so convert it using Lua instead.
-  nvim('exec_lua', 'vim.g.term_data = ...', {data})
-  nvim('command', 'call jobsend(b:terminal_job_id, term_data)')
+  if type(data) == 'table' then
+      data = table.concat(data, '\n')
+  end
+  exec_lua('vim.api.nvim_chan_send(vim.b.terminal_job_id, ...)', data)
 end
 
 local function feed_termcode(data)
-  -- feed with the job API
-  nvim('command', 'call jobsend(b:terminal_job_id, "\\x1b'..data..'")')
+  feed_data('\027' .. data)
 end
+
+local function make_lua_executor(session)
+  return function(code, ...)
+    local status, rv = session:request('nvim_exec_lua', code, {...})
+    if not status then
+      session:stop()
+      error(rv[2])
+    end
+    return rv
+  end
+end
+
 -- some helpers for controlling the terminal. the codes were taken from
 -- infocmp xterm-256color which is less what libvterm understands
 -- civis/cnorm
@@ -109,6 +121,7 @@ end
 return {
   feed_data = feed_data,
   feed_termcode = feed_termcode,
+  make_lua_executor = make_lua_executor,
   hide_cursor = hide_cursor,
   show_cursor = show_cursor,
   enter_altscreen = enter_altscreen,
