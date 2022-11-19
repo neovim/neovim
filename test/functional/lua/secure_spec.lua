@@ -238,11 +238,6 @@ describe('vim.secure', function()
       eq(string.format(''), vim.trim(trust))
     end)
 
-    it('returns error message when passing invalid mode', function()
-      eq({false, 'invalid mode: invalid'},
-        exec_lua([[return {vim.secure.trust('test_file', 'invalid')}]]))
-    end)
-
     it('returns error message when file does not exist', function()
       eq({false, 'invalid path: invalid_file'},
         exec_lua([[return {vim.secure.trust('invalid_file', 'allow')}]]))

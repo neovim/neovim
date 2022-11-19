@@ -129,11 +129,16 @@ end
 --- @return (boolean, string|nil) success, errmsg: true and nil if the operation was successful,
 ---   otherwise false and an error message.
 function M.trust(path, mode)
-  vim.validate({ path = { path, 's' } })
-  vim.validate({ allow = { mode, 's' } })
-  if mode ~= 'allow' and mode ~= 'deny' and mode ~= 'forget' then
-    return false, string.format('invalid mode: %s', mode)
-  end
+  vim.validate({
+    path = { path, 's' },
+    mode = {
+      mode,
+      function(m)
+        return m == 'allow' or m == 'deny' or m == 'forget'
+      end,
+      [['allow' or 'deny' or 'forget']],
+    },
+  })
 
   local fullpath = vim.loop.fs_realpath(vim.fs.normalize(path))
   if not fullpath then
