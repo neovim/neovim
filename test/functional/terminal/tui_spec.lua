@@ -28,6 +28,7 @@ if helpers.skip(helpers.iswin()) then return end
 describe('TUI', function()
   local screen
   local child_session
+  local child_exec_lua
 
   before_each(function()
     clear()
@@ -45,6 +46,7 @@ describe('TUI', function()
       {3:-- TERMINAL --}                                    |
     ]])
     child_session = helpers.connect(child_server)
+    child_exec_lua = thelpers.make_lua_executor(child_session)
   end)
 
   -- Wait for mode in the child Nvim (avoid "typeahead race" #10826).
@@ -823,8 +825,8 @@ describe('TUI', function()
         pending("tty-test complains about not owning the terminal -- actions/runner#241")
         return
     end
-    feed_data(':set statusline=^^^^^^^\n')
-    feed_data(':terminal '..testprg('tty-test')..'\n')
+    child_exec_lua('vim.o.statusline="^^^^^^^"')
+    child_exec_lua('vim.cmd.terminal(...)', testprg('tty-test'))
     feed_data('i')
     screen:expect{grid=[[
       tty ready                                         |
@@ -1340,12 +1342,9 @@ describe('TUI', function()
       [5] = {{foreground = tonumber('0xff8000')}, {}},
     })
 
-    feed_data(':set statusline=^^^^^^^\n')
-    feed_data(':set termguicolors\n')
-    feed_data(':terminal '..testprg('tty-test')..'\n')
-    -- Depending on platform the above might or might not fit in the cmdline
-    -- so clear it for consistent behavior.
-    feed_data(':\027')
+    child_exec_lua('vim.o.statusline="^^^^^^^"')
+    child_exec_lua('vim.o.termguicolors=true')
+    child_exec_lua('vim.cmd.terminal(...)', testprg('tty-test'))
     screen:expect{grid=[[
       {1:t}ty ready                                         |
                                                         |

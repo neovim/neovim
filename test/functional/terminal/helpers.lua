@@ -14,6 +14,18 @@ end
 local function feed_termcode(data)
   feed_data('\x1b' .. data)
 end
+
+local function make_lua_executor(session)
+  return function(code, ...)
+    local status, rv = session:request('nvim_exec_lua', code, {...})
+    if not status then
+      session:stop()
+      error(rv[2])
+    end
+    return rv
+  end
+end
+
 -- some helpers for controlling the terminal. the codes were taken from
 -- infocmp xterm-256color which is less what libvterm understands
 -- civis/cnorm
@@ -106,6 +118,7 @@ end
 return {
   feed_data = feed_data,
   feed_termcode = feed_termcode,
+  make_lua_executor = make_lua_executor,
   hide_cursor = hide_cursor,
   show_cursor = show_cursor,
   enter_altscreen = enter_altscreen,
