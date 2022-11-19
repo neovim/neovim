@@ -1,4 +1,4 @@
-local if_nil = vim.F.if_nil
+local api, if_nil = vim.api, vim.F.if_nil
 
 local M = {}
 
@@ -47,11 +47,11 @@ local bufnr_and_namespace_cacher_mt = {
 
 local diagnostic_cache
 do
-  local group = vim.api.nvim_create_augroup('DiagnosticBufWipeout', {})
+  local group = api.nvim_create_augroup('DiagnosticBufWipeout', {})
   diagnostic_cache = setmetatable({}, {
     __index = function(t, bufnr)
       assert(bufnr > 0, 'Invalid buffer number')
-      vim.api.nvim_create_autocmd('BufWipeout', {
+      api.nvim_create_autocmd('BufWipeout', {
         group = group,
         buffer = bufnr,
         callback = function()
@@ -245,7 +245,7 @@ end)()
 ---@private
 local function get_bufnr(bufnr)
   if not bufnr or bufnr == 0 then
-    return vim.api.nvim_get_current_buf()
+    return api.nvim_get_current_buf()
   end
   return bufnr
 end
@@ -299,7 +299,7 @@ end
 ---@private
 local function restore_extmarks(bufnr, last)
   for ns, extmarks in pairs(diagnostic_cache_extmarks[bufnr]) do
-    local extmarks_current = vim.api.nvim_buf_get_extmarks(bufnr, ns, 0, -1, { details = true })
+    local extmarks_current = api.nvim_buf_get_extmarks(bufnr, ns, 0, -1, { details = true })
     local found = {}
     for _, extmark in ipairs(extmarks_current) do
       -- nvim_buf_set_lines will move any extmark to the line after the last
@@ -312,7 +312,7 @@ local function restore_extmarks(bufnr, last)
       if not found[extmark[1]] then
         local opts = extmark[4]
         opts.id = extmark[1]
-        pcall(vim.api.nvim_buf_set_extmark, bufnr, ns, extmark[2], extmark[3], opts)
+        pcall(api.nvim_buf_set_extmark, bufnr, ns, extmark[2], extmark[3], opts)
       end
     end
   end
@@ -322,7 +322,7 @@ end
 local function save_extmarks(namespace, bufnr)
   bufnr = get_bufnr(bufnr)
   if not diagnostic_attached_buffers[bufnr] then
-    vim.api.nvim_buf_attach(bufnr, false, {
+    api.nvim_buf_attach(bufnr, false, {
       on_lines = function(_, _, _, _, _, last)
         restore_extmarks(bufnr, last - 1)
       end,
@@ -333,7 +333,7 @@ local function save_extmarks(namespace, bufnr)
     diagnostic_attached_buffers[bufnr] = true
   end
   diagnostic_cache_extmarks[bufnr][namespace] =
-    vim.api.nvim_buf_get_extmarks(bufnr, namespace, 0, -1, { details = true })
+    api.nvim_buf_get_extmarks(bufnr, namespace, 0, -1, { details = true })
 end
 
 local registered_autocmds = {}
@@ -366,8 +366,8 @@ local function schedule_display(namespace, bufnr, args)
 
   local key = make_augroup_key(namespace, bufnr)
   if not registered_autocmds[key] then
-    local group = vim.api.nvim_create_augroup(key, { clear = true })
-    vim.api.nvim_create_autocmd(insert_leave_auto_cmds, {
+    local group = api.nvim_create_augroup(key, { clear = true })
+    api.nvim_create_autocmd(insert_leave_auto_cmds, {
       group = group,
       buffer = bufnr,
       callback = function()
@@ -384,7 +384,7 @@ local function clear_scheduled_display(namespace, bufnr)
   local key = make_augroup_key(namespace, bufnr)
 
   if registered_autocmds[key] then
-    vim.api.nvim_del_augroup_by_name(key)
+    api.nvim_del_augroup_by_name(key)
     registered_autocmds[key] = nil
   end
 end
@@ -399,7 +399,7 @@ local function get_diagnostics(bufnr, opts, clamp)
   -- Memoized results of buf_line_count per bufnr
   local buf_line_count = setmetatable({}, {
     __index = function(t, k)
-      t[k] = vim.api.nvim_buf_line_count(k)
+      t[k] = api.nvim_buf_line_count(k)
       return rawget(t, k)
     end,
   })
@@ -407,7 +407,7 @@ local function get_diagnostics(bufnr, opts, clamp)
   ---@private
   local function add(b, d)
     if not opts.lnum or d.lnum == opts.lnum then
-      if clamp and vim.api.nvim_buf_is_loaded(b) then
+      if clamp and api.nvim_buf_is_loaded(b) then
         local line_count = buf_line_count[b] - 1
         if
           d.lnum > line_count
@@ -471,7 +471,7 @@ local function set_list(loclist, opts)
   local winnr = opts.winnr or 0
   local bufnr
   if loclist then
-    bufnr = vim.api.nvim_win_get_buf(winnr)
+    bufnr = api.nvim_win_get_buf(winnr)
   end
   -- Don't clamp line numbers since the quickfix list can already handle line
   -- numbers beyond the end of the buffer
@@ -483,7 +483,7 @@ local function set_list(loclist, opts)
     vim.fn.setqflist({}, ' ', { title = title, items = items })
   end
   if open then
-    vim.api.nvim_command(loclist and 'lopen' or 'botright copen')
+    api.nvim_command(loclist and 'lopen' or 'botright copen')
   end
 end
 
@@ -492,7 +492,7 @@ local function next_diagnostic(position, search_forward, bufnr, opts, namespace)
   position[1] = position[1] - 1
   bufnr = get_bufnr(bufnr)
   local wrap = vim.F.if_nil(opts.wrap, true)
-  local line_count = vim.api.nvim_buf_line_count(bufnr)
+  local line_count = api.nvim_buf_line_count(bufnr)
   local diagnostics =
     get_diagnostics(bufnr, vim.tbl_extend('keep', opts, { namespace = namespace }), true)
   local line_diagnostics = diagnostic_lines(diagnostics)
@@ -506,7 +506,7 @@ local function next_diagnostic(position, search_forward, bufnr, opts, namespace)
       lnum = (lnum + line_count) % line_count
     end
     if line_diagnostics[lnum] and not vim.tbl_isempty(line_diagnostics[lnum]) then
-      local line_length = #vim.api.nvim_buf_get_lines(bufnr, lnum, lnum + 1, true)[1]
+      local line_length = #api.nvim_buf_get_lines(bufnr, lnum, lnum + 1, true)[1]
       local sort_diagnostics, is_next
       if search_forward then
         sort_diagnostics = function(a, b)
@@ -542,17 +542,17 @@ local function diagnostic_move_pos(opts, pos)
   opts = opts or {}
 
   local float = vim.F.if_nil(opts.float, true)
-  local win_id = opts.win_id or vim.api.nvim_get_current_win()
+  local win_id = opts.win_id or api.nvim_get_current_win()
 
   if not pos then
-    vim.api.nvim_echo({ { 'No more valid diagnostics to move to', 'WarningMsg' } }, true, {})
+    api.nvim_echo({ { 'No more valid diagnostics to move to', 'WarningMsg' } }, true, {})
     return
   end
 
-  vim.api.nvim_win_call(win_id, function()
+  api.nvim_win_call(win_id, function()
     -- Save position in the window's jumplist
     vim.cmd("normal! m'")
-    vim.api.nvim_win_set_cursor(win_id, { pos[1] + 1, pos[2] })
+    api.nvim_win_set_cursor(win_id, { pos[1] + 1, pos[2] })
     -- Open folds under the cursor
     vim.cmd('normal! zv')
   end)
@@ -561,7 +561,7 @@ local function diagnostic_move_pos(opts, pos)
     local float_opts = type(float) == 'table' and float or {}
     vim.schedule(function()
       M.open_float(vim.tbl_extend('keep', float_opts, {
-        bufnr = vim.api.nvim_win_get_buf(win_id),
+        bufnr = api.nvim_win_get_buf(win_id),
         scope = 'cursor',
         focus = false,
       }))
@@ -666,13 +666,13 @@ function M.config(opts, namespace)
 
   if namespace then
     for bufnr, v in pairs(diagnostic_cache) do
-      if vim.api.nvim_buf_is_loaded(bufnr) and v[namespace] then
+      if api.nvim_buf_is_loaded(bufnr) and v[namespace] then
         M.show(namespace, bufnr)
       end
     end
   else
     for bufnr, v in pairs(diagnostic_cache) do
-      if vim.api.nvim_buf_is_loaded(bufnr) then
+      if api.nvim_buf_is_loaded(bufnr) then
         for ns in pairs(v) do
           M.show(ns, bufnr)
         end
@@ -707,11 +707,11 @@ function M.set(namespace, bufnr, diagnostics, opts)
     set_diagnostic_cache(namespace, bufnr, diagnostics)
   end
 
-  if vim.api.nvim_buf_is_loaded(bufnr) then
+  if api.nvim_buf_is_loaded(bufnr) then
     M.show(namespace, bufnr, nil, opts)
   end
 
-  vim.api.nvim_exec_autocmds('DiagnosticChanged', {
+  api.nvim_exec_autocmds('DiagnosticChanged', {
     modeline = false,
     buffer = bufnr,
     data = { diagnostics = diagnostics },
@@ -726,7 +726,7 @@ function M.get_namespace(namespace)
   vim.validate({ namespace = { namespace, 'n' } })
   if not all_namespaces[namespace] then
     local name
-    for k, v in pairs(vim.api.nvim_get_namespaces()) do
+    for k, v in pairs(api.nvim_get_namespaces()) do
       if namespace == v then
         name = k
         break
@@ -776,9 +776,9 @@ end
 function M.get_prev(opts)
   opts = opts or {}
 
-  local win_id = opts.win_id or vim.api.nvim_get_current_win()
-  local bufnr = vim.api.nvim_win_get_buf(win_id)
-  local cursor_position = opts.cursor_position or vim.api.nvim_win_get_cursor(win_id)
+  local win_id = opts.win_id or api.nvim_get_current_win()
+  local bufnr = api.nvim_win_get_buf(win_id)
+  local cursor_position = opts.cursor_position or api.nvim_win_get_cursor(win_id)
 
   return next_diagnostic(cursor_position, false, bufnr, opts, opts.namespace)
 end
@@ -809,9 +809,9 @@ end
 function M.get_next(opts)
   opts = opts or {}
 
-  local win_id = opts.win_id or vim.api.nvim_get_current_win()
-  local bufnr = vim.api.nvim_win_get_buf(win_id)
-  local cursor_position = opts.cursor_position or vim.api.nvim_win_get_cursor(win_id)
+  local win_id = opts.win_id or api.nvim_get_current_win()
+  local bufnr = api.nvim_win_get_buf(win_id)
+  local cursor_position = opts.cursor_position or api.nvim_win_get_cursor(win_id)
 
   return next_diagnostic(cursor_position, true, bufnr, opts, opts.namespace)
 end
@@ -931,7 +931,7 @@ M.handlers.underline = {
 
     local ns = M.get_namespace(namespace)
     if not ns.user_data.underline_ns then
-      ns.user_data.underline_ns = vim.api.nvim_create_namespace('')
+      ns.user_data.underline_ns = api.nvim_create_namespace('')
     end
 
     local underline_ns = ns.user_data.underline_ns
@@ -958,7 +958,7 @@ M.handlers.underline = {
     local ns = M.get_namespace(namespace)
     if ns.user_data.underline_ns then
       diagnostic_cache_extmarks[bufnr][ns.user_data.underline_ns] = {}
-      vim.api.nvim_buf_clear_namespace(bufnr, ns.user_data.underline_ns, 0, -1)
+      api.nvim_buf_clear_namespace(bufnr, ns.user_data.underline_ns, 0, -1)
     end
   end,
 }
@@ -997,7 +997,7 @@ M.handlers.virtual_text = {
 
     local ns = M.get_namespace(namespace)
     if not ns.user_data.virt_text_ns then
-      ns.user_data.virt_text_ns = vim.api.nvim_create_namespace('')
+      ns.user_data.virt_text_ns = api.nvim_create_namespace('')
     end
 
     local virt_text_ns = ns.user_data.virt_text_ns
@@ -1009,7 +1009,7 @@ M.handlers.virtual_text = {
       local virt_texts = M._get_virt_text_chunks(line_diagnostics, opts.virtual_text)
 
       if virt_texts then
-        vim.api.nvim_buf_set_extmark(bufnr, virt_text_ns, line, 0, {
+        api.nvim_buf_set_extmark(bufnr, virt_text_ns, line, 0, {
           hl_mode = 'combine',
           virt_text = virt_texts,
         })
@@ -1021,7 +1021,7 @@ M.handlers.virtual_text = {
     local ns = M.get_namespace(namespace)
     if ns.user_data.virt_text_ns then
       diagnostic_cache_extmarks[bufnr][ns.user_data.virt_text_ns] = {}
-      vim.api.nvim_buf_clear_namespace(bufnr, ns.user_data.virt_text_ns, 0, -1)
+      api.nvim_buf_clear_namespace(bufnr, ns.user_data.virt_text_ns, 0, -1)
     end
   end,
 }
@@ -1153,7 +1153,7 @@ function M.show(namespace, bufnr, diagnostics, opts)
   if opts.update_in_insert then
     clear_scheduled_display(namespace, bufnr)
   else
-    local mode = vim.api.nvim_get_mode()
+    local mode = api.nvim_get_mode()
     if string.sub(mode.mode, 1, 1) == 'i' then
       schedule_display(namespace, bufnr, opts)
       return
@@ -1251,7 +1251,7 @@ function M.open_float(opts, ...)
   local lnum, col
   if scope == 'line' or scope == 'cursor' then
     if not opts.pos then
-      local pos = vim.api.nvim_win_get_cursor(0)
+      local pos = api.nvim_win_get_cursor(0)
       lnum = pos[1] - 1
       col = pos[2]
     elseif type(opts.pos) == 'number' then
@@ -1273,7 +1273,7 @@ function M.open_float(opts, ...)
     end, diagnostics)
   elseif scope == 'cursor' then
     -- LSP servers can send diagnostics with `end_col` past the length of the line
-    local line_length = #vim.api.nvim_buf_get_lines(bufnr, lnum, lnum + 1, true)[1]
+    local line_length = #api.nvim_buf_get_lines(bufnr, lnum, lnum + 1, true)[1]
     diagnostics = vim.tbl_filter(function(d)
       return d.lnum == lnum
         and math.min(d.col, line_length - 1) <= col
@@ -1305,9 +1305,7 @@ function M.open_float(opts, ...)
     vim.validate({
       header = {
         header,
-        function(v)
-          return type(v) == 'string' or type(v) == 'table'
-        end,
+        { 'string', 'table' },
         "'string' or 'table'",
       },
     })
@@ -1341,9 +1339,7 @@ function M.open_float(opts, ...)
     vim.validate({
       prefix = {
         prefix_opt,
-        function(v)
-          return type(v) == 'string' or type(v) == 'table' or type(v) == 'function'
-        end,
+        { 'string', 'table', 'function' },
         "'string' or 'table' or 'function'",
       },
     })
@@ -1377,9 +1373,9 @@ function M.open_float(opts, ...)
   for i, hi in ipairs(highlights) do
     local prefixlen, hiname, prefix_hiname = unpack(hi)
     if prefix_hiname then
-      vim.api.nvim_buf_add_highlight(float_bufnr, -1, prefix_hiname, i - 1, 0, prefixlen)
+      api.nvim_buf_add_highlight(float_bufnr, -1, prefix_hiname, i - 1, 0, prefixlen)
     end
-    vim.api.nvim_buf_add_highlight(float_bufnr, -1, hiname, i - 1, prefixlen, -1)
+    api.nvim_buf_add_highlight(float_bufnr, -1, hiname, i - 1, prefixlen, -1)
   end
 
   return float_bufnr, winnr
@@ -1410,7 +1406,7 @@ function M.reset(namespace, bufnr)
       M.hide(iter_namespace, iter_bufnr)
     end
 
-    vim.api.nvim_exec_autocmds('DiagnosticChanged', {
+    api.nvim_exec_autocmds('DiagnosticChanged', {
       modeline = false,
       buffer = iter_bufnr,
       data = { diagnostics = {} },
