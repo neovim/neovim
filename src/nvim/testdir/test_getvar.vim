@@ -133,11 +133,20 @@ func Test_get_lambda()
   call assert_equal([], get(l:L, 'args'))
 endfunc
 
+func s:FooBar()
+endfunc
+
 " get({func}, {what} [, {default}])
 func Test_get_func()
   let l:F = function('tr')
   call assert_equal('tr', get(l:F, 'name'))
   call assert_equal(l:F, get(l:F, 'func'))
+
+  let Fb_func = function('s:FooBar')
+  call assert_match('<SNR>\d\+_FooBar', get(Fb_func, 'name'))
+  let Fb_ref = funcref('s:FooBar')
+  call assert_match('<SNR>\d\+_FooBar', get(Fb_ref, 'name'))
+
   call assert_equal({'func has': 'no dict'}, get(l:F, 'dict', {'func has': 'no dict'}))
   call assert_equal(0, get(l:F, 'dict'))
   call assert_equal([], get(l:F, 'args'))

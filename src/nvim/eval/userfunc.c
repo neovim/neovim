@@ -1652,6 +1652,11 @@ theend:
   return ret;
 }
 
+char_u *printable_func_name(ufunc_T *fp)
+{
+  return fp->uf_name_exp != NULL ? fp->uf_name_exp : fp->uf_name;
+}
+
 /// List the head of the function: "name(arg1, arg2)".
 ///
 /// @param[in]  fp      Function pointer.
