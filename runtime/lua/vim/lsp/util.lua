@@ -1054,7 +1054,7 @@ function M.make_floating_popup_options(width, height, opts)
   local title_pos
 
   if title then
-    title_pos = opts.title_pos and opts.title_pos or 'center'
+    title_pos = opts.title_pos or 'center'
   end
 
   return {
