@@ -1850,6 +1850,11 @@ func Test_cmdline_expr()
   call assert_equal("\"e \<C-\>\<C-Y>", @:)
 endfunc
 
+" This was making the insert position negative
+func Test_cmdline_expr_register()
+  exe "sil! norm! ?\<C-\>e0\<C-R>0\<Esc>?\<C-\>e0\<CR>"
+endfunc
+
 " Test for 'imcmdline' and 'imsearch'
 " This test doesn't actually test the input method functionality.
 func Test_cmdline_inputmethod()

@@ -1613,6 +1613,8 @@ static int command_line_handle_key(CommandLineState *s)
     return 0;                         // back to cmd mode
 
   case Ctrl_R: {                      // insert register
+    const int save_new_cmdpos = new_cmdpos;
+
     putcmdline('"', true);
     no_mapping++;
     allow_keys++;
@@ -1627,8 +1629,6 @@ static int command_line_handle_key(CommandLineState *s)
     no_mapping--;
     allow_keys--;
     // Insert the result of an expression.
-    // Need to save the current command line, to be able to enter
-    // a new one...
     new_cmdpos = -1;
     if (s->c == '=') {
       if (ccline.cmdfirstc == '='   // can't do this recursively
@@ -1660,8 +1660,12 @@ static int command_line_handle_key(CommandLineState *s)
         }
       }
     }
+    new_cmdpos = save_new_cmdpos;
+
+    // remove the double quote
     ccline.special_char = NUL;
     redrawcmd();
+
     return command_line_changed(s);
   }
 
