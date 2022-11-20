@@ -5,12 +5,7 @@ local clear = helpers.clear
 local command = helpers.command
 local pathsep = helpers.get_pathsep()
 local iswin = helpers.iswin()
-local curbufmeths = helpers.curbufmeths
-local exec_lua = helpers.exec_lua
-local feed_command = helpers.feed_command
-local feed = helpers.feed
 local funcs = helpers.funcs
-local pcall_err = helpers.pcall_err
 
 describe(':trust', function()
   local xstate = 'Xstate'
@@ -25,6 +20,7 @@ describe(':trust', function()
 
   before_each(function()
     helpers.write_file('test_file', 'test')
+    clear{env={XDG_STATE_HOME=xstate}}
   end)
 
   after_each(function()
