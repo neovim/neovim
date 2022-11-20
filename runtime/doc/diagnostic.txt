@@ -618,6 +618,9 @@ open_float({opts}, {...})                        *vim.diagnostic.open_float()*
                   {prefix} is a string, it is prepended to each diagnostic in
                   the window with no highlight. Overrides the setting from
                   |vim.diagnostic.config()|.
+                • suffix: Same as {prefix}, but appends the text to the
+                  diagnostic instead of prepending it. Overrides the setting
+                  from |vim.diagnostic.config()|.
 
     Return: ~
         tuple ({float_bufnr}, {win_id})
