@@ -1161,6 +1161,44 @@ end)
       eq(" some_linter: 👀 Warning", result[1][2][1])
       eq(" another_linter: 🔥 Error", result[2][2][1])
     end)
+
+    it('can add a suffix to virtual text', function()
+      eq(' Some error ✘',  exec_lua [[
+        local diagnostics = {
+          make_error('Some error', 0, 0, 0, 0),
+        }
+
+        vim.diagnostic.set(diagnostic_ns, diagnostic_bufnr, diagnostics, {
+          underline = false,
+          virtual_text = {
+            prefix = '',
+            suffix = ' ✘',
+          }
+        })
+
+        local extmarks = get_virt_text_extmarks(diagnostic_ns)
+        local virt_text = extmarks[1][4].virt_text[2][1]
+        return virt_text
+      ]])
+
+      eq(' Some error [err-code]',  exec_lua [[
+        local diagnostics = {
+          make_error('Some error', 0, 0, 0, 0, nil, 'err-code'),
+        }
+
+        vim.diagnostic.set(diagnostic_ns, diagnostic_bufnr, diagnostics, {
+          underline = false,
+          virtual_text = {
+            prefix = '',
+            suffix = function(diag) return string.format(' [%s]', diag.code) end,
+          }
+        })
+
+        local extmarks = get_virt_text_extmarks(diagnostic_ns)
+        local virt_text = extmarks[1][4].virt_text[2][1]
+        return virt_text
+      ]])
+    end)
   end)
 
   describe('set()', function()
