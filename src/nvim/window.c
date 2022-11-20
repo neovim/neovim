@@ -5263,35 +5263,60 @@ void win_new_screen_cols(void)
   win_reconfig_floats();  // The size of floats might change
 }
 
-/// Trigger WinScrolled for "curwin" if needed.
+/// Make a snapshot of all the window scroll positions and sizes of the current
+/// tab page.
+static void snapshot_windows_scroll_size(void)
+{
+  FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+    wp->w_last_topline = wp->w_topline;
+    wp->w_last_leftcol = wp->w_leftcol;
+    wp->w_last_skipcol = wp->w_skipcol;
+    wp->w_last_width = wp->w_width;
+    wp->w_last_height = wp->w_height;
+  }
+}
+
+static bool did_initial_scroll_size_snapshot = false;
+
+void may_make_initial_scroll_size_snapshot(void)
+{
+  if (!did_initial_scroll_size_snapshot) {
+    did_initial_scroll_size_snapshot = true;
+    snapshot_windows_scroll_size();
+  }
+}
+
+/// Trigger WinScrolled if any window scrolled or changed size.
 void may_trigger_winscrolled(void)
 {
   static bool recursive = false;
 
-  if (recursive || !has_event(EVENT_WINSCROLLED)) {
+  if (recursive
+      || !has_event(EVENT_WINSCROLLED)
+      || !did_initial_scroll_size_snapshot) {
     return;
   }
 
-  win_T *wp = curwin;
-  if (wp->w_last_topline != wp->w_topline
-      || wp->w_last_leftcol != wp->w_leftcol
-      || wp->w_last_skipcol != wp->w_skipcol
-      || wp->w_last_width != wp->w_width
-      || wp->w_last_height != wp->w_height) {
-    char winid[NUMBUFLEN];
-    vim_snprintf(winid, sizeof(winid), "%d", wp->handle);
+  FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+    if (wp->w_last_topline != wp->w_topline
+        || wp->w_last_leftcol != wp->w_leftcol
+        || wp->w_last_skipcol != wp->w_skipcol
+        || wp->w_last_width != wp->w_width
+        || wp->w_last_height != wp->w_height) {
+      // WinScrolled is triggered only once, even when multiple windows
+      // scrolled or changed size.  Store the current values before
+      // triggering the event, if a scroll or resize happens as a side
+      // effect then WinScrolled is triggered again later.
+      snapshot_windows_scroll_size();
 
-    recursive = true;
-    apply_autocmds(EVENT_WINSCROLLED, winid, winid, false, wp->w_buffer);
-    recursive = false;
+      char winid[NUMBUFLEN];
+      vim_snprintf(winid, sizeof(winid), "%d", wp->handle);
 
-    // an autocmd may close the window, "wp" may be invalid now
-    if (win_valid_any_tab(wp)) {
-      wp->w_last_topline = wp->w_topline;
-      wp->w_last_leftcol = wp->w_leftcol;
-      wp->w_last_skipcol = wp->w_skipcol;
-      wp->w_last_width = wp->w_width;
-      wp->w_last_height = wp->w_height;
+      recursive = true;
+      apply_autocmds(EVENT_WINSCROLLED, winid, winid, false, wp->w_buffer);
+      recursive = false;
+
+      break;
     }
   }
 }

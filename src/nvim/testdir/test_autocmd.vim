@@ -311,7 +311,7 @@ func Test_WinScrolled()
     au WinScrolled * let g:amatch = str2nr(expand('<amatch>'))
     au WinScrolled * let g:afile = str2nr(expand('<afile>'))
   END
-  call writefile(lines, 'Xtest_winscrolled')
+  call writefile(lines, 'Xtest_winscrolled', 'D')
   let buf = RunVimInTerminal('-S Xtest_winscrolled', {'rows': 6})
 
   call term_sendkeys(buf, ":echo g:scrolled\<CR>")
@@ -346,7 +346,36 @@ func Test_WinScrolled()
   call WaitForAssert({-> assert_match('^v:true ', term_getline(buf, 6))}, 1000)
 
   call StopVimInTerminal(buf)
-  call delete('Xtest_winscrolled')
+endfunc
+
+func Test_WinScrolled_mouse()
+  CheckRunVimInTerminal
+
+  let lines =<< trim END
+    set nowrap scrolloff=0
+    set mouse=a term=xterm ttymouse=sgr mousetime=200 clipboard=
+    call setline(1, ['foo']->repeat(32))
+    split
+    let g:scrolled = 0
+    au WinScrolled * let g:scrolled += 1
+  END
+  call writefile(lines, 'Xtest_winscrolled_mouse', 'D')
+  let buf = RunVimInTerminal('-S Xtest_winscrolled_mouse', {'rows': 10})
+
+  " With the upper split focused, send a scroll-down event to the unfocused one.
+  call test_setmouse(7, 1)
+  call term_sendkeys(buf, "\<ScrollWheelDown>")
+  call TermWait(buf)
+  call term_sendkeys(buf, ":echo g:scrolled\<CR>")
+  call WaitForAssert({-> assert_match('^1', term_getline(buf, 10))}, 1000)
+
+  " Again, but this time while we're in insert mode.
+  call term_sendkeys(buf, "i\<ScrollWheelDown>\<Esc>")
+  call TermWait(buf)
+  call term_sendkeys(buf, ":echo g:scrolled\<CR>")
+  call WaitForAssert({-> assert_match('^2', term_getline(buf, 10))}, 1000)
+
+  call StopVimInTerminal(buf)
 endfunc
 
 func Test_WinScrolled_close_curwin()
@@ -359,7 +388,7 @@ func Test_WinScrolled_close_curwin()
     au WinScrolled * close
     au VimLeave * call writefile(['123456'], 'Xtestout')
   END
-  call writefile(lines, 'Xtest_winscrolled_close_curwin')
+  call writefile(lines, 'Xtest_winscrolled_close_curwin', 'D')
   let buf = RunVimInTerminal('-S Xtest_winscrolled_close_curwin', {'rows': 6})
 
   " This was using freed memory
@@ -367,10 +396,36 @@ func Test_WinScrolled_close_curwin()
   call TermWait(buf)
   call StopVimInTerminal(buf)
 
+  " check the startup script finished to the end
   call assert_equal(['123456'], readfile('Xtestout'))
-
-  call delete('Xtest_winscrolled_close_curwin')
   call delete('Xtestout')
+endfunc
+
+func Test_WinScrolled_once_only()
+  CheckRunVimInTerminal
+
+  let lines =<< trim END
+      set cmdheight=2
+      call setline(1, ['aaa', 'bbb'])
+      let trigger_count = 0
+      func ShowInfo(id)
+        echo g:trigger_count g:winid winlayout()
+      endfunc
+
+      vsplit
+      split
+      " use a timer to show the info after a redraw
+      au WinScrolled * let trigger_count += 1 | let winid = expand('<amatch>') | call timer_start(100, 'ShowInfo')
+      wincmd j
+      wincmd l
+  END
+  call writefile(lines, 'Xtest_winscrolled_once', 'D')
+  let buf = RunVimInTerminal('-S Xtest_winscrolled_once', #{rows: 10, cols: 60, statusoff: 2})
+
+  call term_sendkeys(buf, "\<C-E>")
+  call VerifyScreenDump(buf, 'Test_winscrolled_once_only_1', {})
+
+  call StopVimInTerminal(buf)
 endfunc
 
 func Test_WinScrolled_long_wrapped()
@@ -385,7 +440,7 @@ func Test_WinScrolled_long_wrapped()
     call setline(1, repeat('foo', height * width))
     call cursor(1, height * width)
   END
-  call writefile(lines, 'Xtest_winscrolled_long_wrapped')
+  call writefile(lines, 'Xtest_winscrolled_long_wrapped', 'D')
   let buf = RunVimInTerminal('-S Xtest_winscrolled_long_wrapped', {'rows': 6})
 
   call term_sendkeys(buf, ":echo g:scrolled\<CR>")
@@ -402,8 +457,6 @@ func Test_WinScrolled_long_wrapped()
   call term_sendkeys(buf, '$')
   call term_sendkeys(buf, ":echo g:scrolled\<CR>")
   call WaitForAssert({-> assert_match('^3 ', term_getline(buf, 6))}, 1000)
-
-  call delete('Xtest_winscrolled_long_wrapped')
 endfunc
 
 func Test_WinClosed()
@@ -2788,6 +2841,7 @@ func Test_SpellFileMissing_bwipe()
   call assert_fails('set spell spelllang=0', 'E937:')
 
   au! SpellFileMissing
+  set nospell spelllang=en
   bwipe
 endfunc
 
