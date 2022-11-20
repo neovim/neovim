@@ -613,6 +613,10 @@ end
 ---                       * spacing: (number) Amount of empty spaces inserted at the beginning
 ---                                  of the virtual text.
 ---                       * prefix: (string) Prepend diagnostic message with prefix.
+---                       * suffix: (string or function) Append diagnostic message with suffix.
+---                                 If a function, it must have the signature (diagnostic) ->
+---                                 string, where {diagnostic} is of type |diagnostic-structure|.
+---                                 This can be used to render an LSP diagnostic error code.
 ---                       * format: (function) A function that takes a diagnostic as input and
 ---                                 returns a string. The return value is the text used to display
 ---                                 the diagnostic. Example:
@@ -1039,6 +1043,7 @@ function M._get_virt_text_chunks(line_diags, opts)
 
   opts = opts or {}
   local prefix = opts.prefix or '■'
+  local suffix = opts.suffix or ''
   local spacing = opts.spacing or 4
 
   -- Create a little more space between virtual text and contents
@@ -1052,8 +1057,11 @@ function M._get_virt_text_chunks(line_diags, opts)
   -- TODO(tjdevries): Allow different servers to be shown first somehow?
   -- TODO(tjdevries): Display server name associated with these?
   if last.message then
+    if type(suffix) == 'function' then
+      suffix = suffix(last) or ''
+    end
     table.insert(virt_texts, {
-      string.format('%s %s', prefix, last.message:gsub('\r', ''):gsub('\n', '  ')),
+      string.format('%s %s%s', prefix, last.message:gsub('\r', ''):gsub('\n', '  '), suffix),
       virtual_text_highlight_map[last.severity],
     })
 

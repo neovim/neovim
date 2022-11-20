@@ -16,7 +16,7 @@ describe('vim.diagnostic', function()
     exec_lua [[
       require('vim.diagnostic')
 
-      function make_diagnostic(msg, x1, y1, x2, y2, severity, source)
+      function make_diagnostic(msg, x1, y1, x2, y2, severity, source, code)
         return {
           lnum = x1,
           col = y1,
@@ -25,23 +25,24 @@ describe('vim.diagnostic', function()
           message = msg,
           severity = severity,
           source = source,
+          code = code,
         }
       end
 
-      function make_error(msg, x1, y1, x2, y2, source)
-        return make_diagnostic(msg, x1, y1, x2, y2, vim.diagnostic.severity.ERROR, source)
+      function make_error(msg, x1, y1, x2, y2, source, code)
+        return make_diagnostic(msg, x1, y1, x2, y2, vim.diagnostic.severity.ERROR, source, code)
       end
 
-      function make_warning(msg, x1, y1, x2, y2, source)
-        return make_diagnostic(msg, x1, y1, x2, y2, vim.diagnostic.severity.WARN, source)
+      function make_warning(msg, x1, y1, x2, y2, source, code)
+        return make_diagnostic(msg, x1, y1, x2, y2, vim.diagnostic.severity.WARN, source, code)
       end
 
-      function make_info(msg, x1, y1, x2, y2, source)
-        return make_diagnostic(msg, x1, y1, x2, y2, vim.diagnostic.severity.INFO, source)
+      function make_info(msg, x1, y1, x2, y2, source, code)
+        return make_diagnostic(msg, x1, y1, x2, y2, vim.diagnostic.severity.INFO, source, code)
       end
 
-      function make_hint(msg, x1, y1, x2, y2, source)
-        return make_diagnostic(msg, x1, y1, x2, y2, vim.diagnostic.severity.HINT, source)
+      function make_hint(msg, x1, y1, x2, y2, source, code)
+        return make_diagnostic(msg, x1, y1, x2, y2, vim.diagnostic.severity.HINT, source, code)
       end
 
       function count_diagnostics(bufnr, severity, namespace)
@@ -1159,6 +1160,44 @@ end)
       ]]
       eq(" some_linter: 👀 Warning", result[1][2][1])
       eq(" another_linter: 🔥 Error", result[2][2][1])
+    end)
+
+    it('can add a suffix to virtual text', function()
+      eq(' Some error ✘',  exec_lua [[
+        local diagnostics = {
+          make_error('Some error', 0, 0, 0, 0),
+        }
+
+        vim.diagnostic.set(diagnostic_ns, diagnostic_bufnr, diagnostics, {
+          underline = false,
+          virtual_text = {
+            prefix = '',
+            suffix = ' ✘',
+          }
+        })
+
+        local extmarks = get_virt_text_extmarks(diagnostic_ns)
+        local virt_text = extmarks[1][4].virt_text[2][1]
+        return virt_text
+      ]])
+
+      eq(' Some error [err-code]',  exec_lua [[
+        local diagnostics = {
+          make_error('Some error', 0, 0, 0, 0, nil, 'err-code'),
+        }
+
+        vim.diagnostic.set(diagnostic_ns, diagnostic_bufnr, diagnostics, {
+          underline = false,
+          virtual_text = {
+            prefix = '',
+            suffix = function(diag) return string.format(' [%s]', diag.code) end,
+          }
+        })
+
+        local extmarks = get_virt_text_extmarks(diagnostic_ns)
+        local virt_text = extmarks[1][4].virt_text[2][1]
+        return virt_text
+      ]])
     end)
   end)
 
