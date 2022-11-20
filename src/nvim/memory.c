@@ -553,7 +553,7 @@ static void arena_free_reuse_blks(void)
   }
 }
 
-/// Finnish the allocations in an arena.
+/// Finish the allocations in an arena.
 ///
 /// This does not immediately free the memory, but leaves existing allocated
 /// objects valid, and returns an opaque ArenaMem handle, which can be used to

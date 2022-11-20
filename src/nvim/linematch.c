@@ -290,18 +290,18 @@ static void populate_tensor(int *df_iters, const size_t ch_dim, diffcmppath_T *d
 
 /// algorithm to find an optimal alignment of lines of a diff block with 2 or
 /// more files. The algorithm is generalized to work for any number of files
-/// which corresponds to another dimmension added to the tensor used in the
+/// which corresponds to another dimension added to the tensor used in the
 /// algorithm
 ///
 /// for questions and information about the linematch algorithm please contact
 /// Jonathon White (jonathonwhite@protonmail.com)
 ///
-/// for explanation, a summary of the algorithm in 3 dimmensions (3 files
+/// for explanation, a summary of the algorithm in 3 dimensions (3 files
 ///     compared) follows
 ///
 /// The 3d case (for 3 buffers) of the algorithm implemented when diffopt
 /// 'linematch' is enabled. The algorithm constructs a 3d tensor to
-/// compare a diff between 3 buffers. The dimmensions of the tensor are
+/// compare a diff between 3 buffers. The dimensions of the tensor are
 /// the length of the diff in each buffer plus 1 A path is constructed by
 /// moving from one edge of the cube/3d tensor to the opposite edge.
 /// Motions from one cell of the cube to the next represent decisions. In
@@ -324,7 +324,7 @@ static void populate_tensor(int *df_iters, const size_t ch_dim, diffcmppath_T *d
 /// the one which results in the local highest score.  The total highest
 /// scored path is, then in the end represented by the cell in the
 /// opposite corner from the start location.  The entire algorithm
-/// consits of populating the 3d cube with the optimal paths from which
+/// consists of populating the 3d cube with the optimal paths from which
 /// it may have came.
 ///
 /// Optimizations:

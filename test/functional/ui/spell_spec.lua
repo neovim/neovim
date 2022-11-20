@@ -70,7 +70,7 @@ describe("'spell'", function()
     "with missing caps here.",                                                      |
     ^                                                                                |
                                                                                     |
-      ]])
+    ]])
   end)
 
   it('"noplainbuffer" and syntax #20385', function()

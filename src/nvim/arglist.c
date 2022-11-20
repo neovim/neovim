@@ -1092,7 +1092,7 @@ static void do_arg_all(int count, int forceit, int keep_tabs)
   last_curtab = curtab;
   win_enter(lastwin, false);
 
-  // Open upto "count" windows.
+  // Open up to "count" windows.
   arg_all_open_windows(&aall, count);
 
   // Remove the "lock" on the argument list.
