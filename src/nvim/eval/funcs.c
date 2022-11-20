@@ -2727,6 +2727,7 @@ void get_selected_lines(typval_T *rettv)
   linenr_T lnum;
   struct block_def bd;
   bool inclusive = true;
+  oparg_T oap;
 
   if (!VIsual_active) {
     tv_list_alloc_ret(rettv, 0);
@@ -2743,7 +2744,7 @@ void get_selected_lines(typval_T *rettv)
     p2 = VIsual;
   }
 
-  if (VIsual_mode != 'V') {
+  if (VIsual_mode == 'v') {
     // handle 'selection' == "exclusive"
     if (*p_sel == 'e' && !equalpos(p1, p2)) {
       if (p2.coladd > 0) {
@@ -2760,11 +2761,23 @@ void get_selected_lines(typval_T *rettv)
         }
       }
     }
-    if (VIsual_mode == 'v') {
-      // if p2 is on NUL (empty line) inclusive becomes false
-      if (*ml_get_pos(&p2) == NUL && !virtual_op) {
-        inclusive = false;
-      }
+    // if p2 is on NUL (empty line) inclusive becomes false
+    if (*ml_get_pos(&p2) == NUL && !virtual_op) {
+      inclusive = false;
+    }
+  } else if (VIsual_mode == Ctrl_V) {
+    colnr_T sc1, ec1, sc2, ec2;
+    getvvcol(curwin, &p1, &sc1, NULL, &ec1);
+    getvvcol(curwin, &p2, &sc2, NULL, &ec2);
+    oap.motion_type = OP_NOP;
+    oap.inclusive = true;
+    oap.start = p1;
+    oap.end = p2;
+    oap.start_vcol = MIN(sc1, sc2);
+    if (*p_sel == 'e' && ec1 < sc2 && 0 < sc2 && ec2 > ec1) {
+      oap.end_vcol = sc2 - 1;
+    } else {
+      oap.end_vcol = MAX(ec1, ec2);
     }
   }
 
@@ -2792,22 +2805,10 @@ void get_selected_lines(typval_T *rettv)
       }
       break;
 
-    case Ctrl_V: {
-      colnr_T sc1, ec1, sc2, ec2;
-      getvvcol(curwin, &p1, &sc1, NULL, &ec1);
-      getvvcol(curwin, &p2, &sc2, NULL, &ec2);
-      oparg_T oap = {
-        .motion_type = OP_NOP,
-        .start = p1,
-        .end = p2,
-        .start_vcol = MIN(sc1, sc2),
-        .end_vcol = MAX(ec1, ec2),
-        .inclusive = true,
-      };
+    case Ctrl_V:
       block_prep(&oap, &bd, lnum, false);
       akt = block_def_to_string(&bd);
       break;
-    }
 
     // NOTREACHED
     default:

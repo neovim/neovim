@@ -167,7 +167,7 @@ describe('selectedlines() function', function()
                    { 'b ', 'de', 'jk', 'mn', '  ', '  ', '  ', 'ƃĉ' }, true)
     test_selection({ 1, 4 }, { 8, 2 }, '',
                    { 'b  ', 'def', 'jk ', 'mno', '   ', '   ', ' ', 'ƃĉđ' },
-                   { 'b  ', 'def', 'jk ', 'mno', '   ', '   ', ' ', 'ƃĉđ' }, true) -- strange case
+                   { 'b  ', 'def', 'jk ', 'mno', '   ', '   ', ' ', 'ƃĉđ' }, true)
     test_selection({ 1, 5 }, { 8, 7 }, '',
                    { '   ', 'gh ', '   ', 'pqr', '   ', 'uvw', ' ', 'ē  ' },
                    { '  ', 'gh', '  ', 'pq', '  ', 'uv', '', 'ē ' }, true)
