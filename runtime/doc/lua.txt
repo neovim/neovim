@@ -2184,7 +2184,7 @@ set({mode}, {lhs}, {rhs}, {opts})                           *vim.keymap.set()*
     Add a new |mapping|. Examples: >
 
        -- Can add mapping to Lua functions
-       vim.keymap.set('n', 'lhs', function() print("real lua function") end)
+       vim.keymap.set('n', '<f1>', function() print("real lua function") end)
 
        -- Can use it to map multiple modes
        vim.keymap.set({'n', 'v'}, '<leader>lr', vim.lsp.buf.references, { buffer=true })
@@ -2202,14 +2202,14 @@ set({mode}, {lhs}, {rhs}, {opts})                           *vim.keymap.set()*
 
     Note that in a mapping like: >
 
-        vim.keymap.set('n', 'asdf', require('jkl').my_fun)
+        vim.keymap.set('n', '<f2>', require('my_module').my_fun)
 <
 
-    the `require('jkl')` gets evaluated during this call in order to access the function. If you
+    the `require('my_module')` gets evaluated during this call in order to access the function. If you
     want to avoid this cost at startup you can wrap it in a function, for
     example: >
 
-        vim.keymap.set('n', 'asdf', function() return require('jkl').my_fun() end)
+        vim.keymap.set('n', '<f2>', function() return require('my_module').my_fun() end)
 <
 
     Parameters: ~

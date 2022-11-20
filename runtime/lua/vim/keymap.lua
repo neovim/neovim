@@ -4,7 +4,7 @@ local keymap = {}
 --- Examples:
 --- <pre>
 ---   -- Can add mapping to Lua functions
----   vim.keymap.set('n', 'lhs', function() print("real lua function") end)
+---   vim.keymap.set('n', '<f1>', function() print("real lua function") end)
 ---
 ---   -- Can use it to map multiple modes
 ---   vim.keymap.set({'n', 'v'}, '<leader>lr', vim.lsp.buf.references, { buffer=true })
@@ -22,13 +22,13 @@ local keymap = {}
 ---
 --- Note that in a mapping like:
 --- <pre>
----    vim.keymap.set('n', 'asdf', require('jkl').my_fun)
+---    vim.keymap.set('n', '<f2>', require('my_module').my_fun)
 --- </pre>
 ---
---- the ``require('jkl')`` gets evaluated during this call in order to access the function.
+--- the ``require('my_module')`` gets evaluated during this call in order to access the function.
 --- If you want to avoid this cost at startup you can wrap it in a function, for example:
 --- <pre>
----    vim.keymap.set('n', 'asdf', function() return require('jkl').my_fun() end)
+---    vim.keymap.set('n', '<f2>', function() return require('my_module').my_fun() end)
 --- </pre>
 ---
 ---@param mode string|table    Same mode short names as |nvim_set_keymap()|.
