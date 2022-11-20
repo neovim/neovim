@@ -130,6 +130,9 @@ describe('selectedlines() function', function()
     test_selection({ 1, 2 }, { 8, 4 }, '',
                    { 'b', 'def', 'jk', 'mno', '   ', '   ', ' ', 'ƃĉđ' },
                    { 'b', 'de', 'jk', 'mn', '  ', '  ', '  ', 'ƃĉ' })
+    test_selection({ 8, 2 }, { 4, 5 }, '',
+                   { 'mnop', '    ', '   u', '  ', 'ƃĉđē' },
+                   { 'mnop', '    ', '   u', '  ', 'ƃĉđē' })
   end)
 
   -- virtualedit
@@ -162,6 +165,9 @@ describe('selectedlines() function', function()
     test_selection({ 1, 2 }, { 8, 4 }, '',
                    { 'b  ', 'def', 'jk ', 'mno', '   ', '   ', ' ', 'ƃĉđ' },
                    { 'b ', 'de', 'jk', 'mn', '  ', '  ', '  ', 'ƃĉ' }, true)
+    test_selection({ 1, 4 }, { 8, 2 }, '',
+                   { 'b  ', 'def', 'jk ', 'mno', '   ', '   ', ' ', 'ƃĉđ' },
+                   { 'b  ', 'def', 'jk ', 'mno', '   ', '   ', ' ', 'ƃĉđ' }, true) -- strange case
     test_selection({ 1, 5 }, { 8, 7 }, '',
                    { '   ', 'gh ', '   ', 'pqr', '   ', 'uvw', ' ', 'ē  ' },
                    { '  ', 'gh', '  ', 'pq', '  ', 'uv', '', 'ē ' }, true)
