@@ -81,9 +81,11 @@ end
      Examples: >
        lua = vim.fs.find('aFileOrDirectoryNextToNeovim')
        => 'C:/Users/jdoe/aFileOrDirectoryNextToNeovim'
+
        lua = vim.fs.find('allFilesOrDirectoriesAboveNeovim', {upward = true, limit = math.huge})
        => '/home/jdoe/allFilesOrDirectoriesAboveNeovim'
        => '/home/allFilesOrDirectoriesAboveNeovim'
+
        lua = vim.fs.find('aFileInHomeDirectory', {path = '/home'})
        => '/home/jdoe/archive/aFileInHomeDirectory'
 <
