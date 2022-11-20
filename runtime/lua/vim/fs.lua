@@ -65,39 +65,55 @@ function M.dir(path)
     vim.loop.fs_scandir(M.normalize(path))
 end
 
---- Find files or directories in the given path.
----
---- Finds any files or directories given in {names} starting from {path}. If
---- {upward} is "true" then the search traverses upward through parent
---- directories; otherwise, the search traverses downward. Note that downward
---- searches are recursive and may search through many directories! If {stop}
---- is non-nil, then the search stops when the directory given in {stop} is
---- reached. The search terminates when {limit} (default 1) matches are found.
---- The search can be narrowed to find only files or or only directories by
---- specifying {type} to be "file" or "directory", respectively.
----
----@param names (string|table|fun(name: string): boolean) Names of the files
----             and directories to find.
----             Must be base names, paths and globs are not supported.
----             If a function it is called per file and dir within the
----             traversed directories to test if they match.
----@param opts (table) Optional keyword arguments:
----                       - path (string): Path to begin searching from. If
----                              omitted, the current working directory is used.
----                       - upward (boolean, default false): If true, search
----                                upward through parent directories. Otherwise,
----                                search through child directories
----                                (recursively).
----                       - stop (string): Stop searching when this directory is
----                              reached. The directory itself is not searched.
----                       - type (string): Find only files ("file") or
----                              directories ("directory"). If omitted, both
----                              files and directories that match {name} are
----                              included.
----                       - limit (number, default 1): Stop the search after
----                               finding this many matches. Use `math.huge` to
----                               place no limit on the number of matches.
----@return (table) The paths of all matching files or directories
+--[[
+
+    Find files or directories in the given path.
+
+    Finds any files or directories given in {names} starting from {path} (if given). If
+    {upward} is "true" then the search traverses upward through parent
+    directories; otherwise, the search traverses downward. Note that downward
+    searches are recursive and may search through many directories! If {stop}
+    is given, then the search stops when the directory given in {stop} is
+    reached. The search terminates when {limit} (1 if omitted) matches are found.
+    The search can be narrowed to find only files or only directories by
+    specifying {type} to be either 'file' or 'directory', respectively.
+    
+     Examples: >
+       lua = vim.fs.find('aFileOrDirectoryNextToNeovim')
+       => 'C:/Users/jdoe/aFileOrDirectoryNextToNeovim'
+       lua = vim.fs.find('allFilesOrDirectoriesAboveNeovim', {upward = true, limit = math.huge})
+       => '/home/jdoe/allFilesOrDirectoriesAboveNeovim'
+       => '/home/allFilesOrDirectoriesAboveNeovim'
+       lua = vim.fs.find('aFileInHomeDirectory', {path = '/home'})
+       => '/home/jdoe/archive/aFileInHomeDirectory'
+<
+
+
+      • @param names  (string or table/array or fun(name: string): boolean) Names of the files
+                 and directories to find. Must be base names, paths and globs
+                 are not supported. The function is called per file and
+                 directory within the traversed directories to test if they match with {names}.
+		 
+      • @param opts  (table/array) Optional keyword arguments:
+                 • path (string): Path to begin searching from. If omitted,
+                   the current working directory ("nvim" executable) is used.
+                 • upward (boolean, default false): If true, search upward
+                   through parent directories. Otherwise, search through child
+                   directories (recursively).
+                 • stop (string): Stop searching when this directory is
+                   reached. The directory itself is not searched.
+                 • type (string): Find only files ("file") or directories
+                   ("directory"). If omitted, both files and directories that
+                   match {names} are included.
+                 • limit (number, 1 if omitted): Stop the search after finding
+                   {limit} match(es). Use `math.huge` to place no limit on the
+                   number of matches.
+
+    
+        @return (table) The normalized (see below) paths of all matching files or directories in {names}
+
+--]]
+
 function M.find(names, opts)
   opts = opts or {}
   vim.validate({
@@ -208,18 +224,18 @@ end
 
 --- Normalize a path to a standard format. A tilde (~) character at the
 --- beginning of the path is expanded to the user's home directory and any
---- backslash (\\) characters are converted to forward slashes (/). Environment
+--- backslash (\ or \\) characters are converted to forward slashes (/). Environment
 --- variables are also expanded.
 ---
 --- Example:
 --- <pre>
---- vim.fs.normalize('C:\\Users\\jdoe')
+--- lua = vim.fs.normalize('C:\Users\\jdoe')
 --- => 'C:/Users/jdoe'
 ---
---- vim.fs.normalize('~/src/neovim')
+--- lua = vim.fs.normalize('~/src/neovim')
 --- => '/home/jdoe/src/neovim'
 ---
---- vim.fs.normalize('$XDG_CONFIG_HOME/nvim/init.vim')
+--- lua = vim.fs.normalize('$XDG_CONFIG_HOME/nvim/init.vim')
 --- => '/Users/jdoe/.config/nvim/init.vim'
 --- </pre>
 ---
