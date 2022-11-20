@@ -22,6 +22,7 @@ local ok = helpers.ok
 local read_file = helpers.read_file
 local funcs = helpers.funcs
 local meths = helpers.meths
+local isCI = helpers.isCI
 
 if helpers.skip(helpers.iswin()) then return end
 
@@ -821,9 +822,8 @@ describe('TUI', function()
   end)
 
   it('paste: terminal mode', function()
-    if os.getenv('GITHUB_ACTIONS') ~= nil then
+    if isCI('github') then
         pending("tty-test complains about not owning the terminal -- actions/runner#241")
-        return
     end
     child_exec_lua('vim.o.statusline="^^^^^^^"')
     child_exec_lua('vim.cmd.terminal(...)', testprg('tty-test'))
@@ -1329,9 +1329,8 @@ describe('TUI', function()
   end)
 
   it('forwards :term palette colors with termguicolors', function()
-    if os.getenv('GITHUB_ACTIONS') ~= nil then
+    if isCI('github') then
         pending("tty-test complains about not owning the terminal -- actions/runner#241")
-        return
     end
     screen:set_rgb_cterm(true)
     screen:set_default_attr_ids({
