@@ -79,11 +79,12 @@ end
 ---@param names (string|table|fun(name: string): boolean) Names of the files
 ---             and directories to find.
 ---             Must be base names, paths and globs are not supported.
----             If a function it is called per file and dir within the
----             traversed directories to test if they match.
+---             The function is called per file and directory within the
+---             traversed directories to test if they match {names}.
+---
 ---@param opts (table) Optional keyword arguments:
 ---                       - path (string): Path to begin searching from. If
----                              omitted, the current working directory is used.
+---                              omitted, the |current-directory| is used.
 ---                       - upward (boolean, default false): If true, search
 ---                                upward through parent directories. Otherwise,
 ---                                search through child directories
@@ -92,12 +93,13 @@ end
 ---                              reached. The directory itself is not searched.
 ---                       - type (string): Find only files ("file") or
 ---                              directories ("directory"). If omitted, both
----                              files and directories that match {name} are
+---                              files and directories that match {names} are
 ---                              included.
 ---                       - limit (number, default 1): Stop the search after
 ---                               finding this many matches. Use `math.huge` to
 ---                               place no limit on the number of matches.
----@return (table) The paths of all matching files or directories
+---
+---@return (table) The normalized paths |vim.fs.normalize()| of all matching files or directories
 function M.find(names, opts)
   opts = opts or {}
   vim.validate({
@@ -211,16 +213,16 @@ end
 --- backslash (\\) characters are converted to forward slashes (/). Environment
 --- variables are also expanded.
 ---
---- Example:
+--- Examples:
 --- <pre>
---- vim.fs.normalize('C:\\Users\\jdoe')
---- => 'C:/Users/jdoe'
+---   vim.fs.normalize('C:\\Users\\jdoe')
+---   => 'C:/Users/jdoe'
 ---
---- vim.fs.normalize('~/src/neovim')
---- => '/home/jdoe/src/neovim'
+---   vim.fs.normalize('~/src/neovim')
+---   => '/home/jdoe/src/neovim'
 ---
---- vim.fs.normalize('$XDG_CONFIG_HOME/nvim/init.vim')
---- => '/Users/jdoe/.config/nvim/init.vim'
+---   vim.fs.normalize('$XDG_CONFIG_HOME/nvim/init.vim')
+---   => '/Users/jdoe/.config/nvim/init.vim'
 --- </pre>
 ---
 ---@param path (string) Path to normalize
