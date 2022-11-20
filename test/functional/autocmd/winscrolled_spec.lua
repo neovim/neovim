@@ -104,6 +104,7 @@ describe('WinScrolled', function()
       let g:scrolled = 0
       au WinScrolled * let g:scrolled += 1
     ]])
+    eq(0, eval('g:scrolled'))
 
     -- With the upper split focused, send a scroll-down event to the unfocused one.
     meths.input_mouse('wheel', 'down', '', 0, 6, 0)

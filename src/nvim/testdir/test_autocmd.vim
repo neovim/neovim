@@ -428,6 +428,32 @@ func Test_WinScrolled_once_only()
   call StopVimInTerminal(buf)
 endfunc
 
+" Check that WinScrolled is not triggered immediately when defined and there
+" are split windows.
+func Test_WinScrolled_not_when_defined()
+  CheckRunVimInTerminal
+
+  let lines =<< trim END
+      call setline(1, ['aaa', 'bbb'])
+      echo 'nothing happened'
+      func ShowTriggered(id)
+        echo 'triggered'
+      endfunc
+  END
+  call writefile(lines, 'Xtest_winscrolled_not', 'D')
+  let buf = RunVimInTerminal('-S Xtest_winscrolled_not', #{rows: 10, cols: 60, statusoff: 2})
+  call term_sendkeys(buf, ":split\<CR>")
+  call TermWait(buf)
+  " use a timer to show the message after redrawing
+  call term_sendkeys(buf, ":au WinScrolled * call timer_start(100, 'ShowTriggered')\<CR>")
+  call VerifyScreenDump(buf, 'Test_winscrolled_not_when_defined_1', {})
+
+  call term_sendkeys(buf, "\<C-E>")
+  call VerifyScreenDump(buf, 'Test_winscrolled_not_when_defined_2', {})
+
+  call StopVimInTerminal(buf)
+endfunc
+
 func Test_WinScrolled_long_wrapped()
   CheckRunVimInTerminal
 
