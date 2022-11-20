@@ -130,4 +130,33 @@ describe('WinScrolled', function()
     feed('<C-E>')
     assert_alive()
   end)
+
+  it('is triggered by mouse scrolling in unfocused floating window #18222', function()
+    local screen = Screen.new(80, 24)
+    screen:attach()
+    local buf = meths.create_buf(true, true)
+    meths.buf_set_lines(buf, 0, -1, false, {'a', 'b', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n'})
+    local win = meths.open_win(buf, false, {
+      height = 5,
+      width = 10,
+      col = 0,
+      row = 1,
+      relative = 'editor',
+      style = 'minimal'
+    })
+    exec([[
+      let g:scrolled = 0
+      autocmd WinScrolled * let g:scrolled += 1
+      autocmd WinScrolled * let g:amatch = expand('<amatch>')
+    ]])
+    eq(0, eval('g:scrolled'))
+
+    meths.input_mouse('wheel', 'down', '', 0, 3, 3)
+    eq(1, eval('g:scrolled'))
+    eq(tostring(win.id), eval('g:amatch'))
+
+    meths.input_mouse('wheel', 'down', '', 0, 3, 3)
+    eq(2, eval('g:scrolled'))
+    eq(tostring(win.id), eval('g:amatch'))
+  end)
 end)
