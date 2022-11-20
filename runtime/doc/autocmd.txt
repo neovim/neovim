@@ -1096,22 +1096,35 @@ WinNew				When a new window was created.  Not done for
 
 							*WinScrolled*
 WinScrolled			After scrolling the content of a window or
-				resizing a window.
-				The pattern is matched against the
-				|window-ID|.  Both <amatch> and <afile> are
-				set to the |window-ID|.
-				Non-recursive (the event cannot trigger
-				itself).  However, if the command causes the
-				window to scroll or change size another
+				resizing a window in the current tab page.
+
+				When more than one window scrolled or resized
+				only one WinScrolled event is triggered.  You
+				can use the `winlayout()` and `getwininfo()`
+				functions to see what changed.
+
+				The pattern is matched against the |window-ID|
+				of the first window that scrolled or resized.
+				Both <amatch> and <afile> are set to the
+				|window-ID|.
+
+				Only starts triggering after startup finished
+				and the first screen redraw was done.
+
+				Non-recursive: the event will not trigger
+				while executing commands for the WinScrolled
+				event.  However, if the command causes a
+				window to scroll or change size, then another
 				WinScrolled event will be triggered later.
+
 				Does not trigger when the command is added,
 				only after the first scroll or resize.
 
 ==============================================================================
 6. Patterns					*autocmd-pattern* *{aupat}*
 
-The {aupat} argument of `:autocmd` can be a comma-separated list.  This works
-as if the command was given with each pattern separately.  Thus this command: >
+The {aupat} argument of `:autocmd` can be a comma-separated list.  This works as
+if the command was given with each pattern separately.  Thus this command: >
 	:autocmd BufRead *.txt,*.info set et
 Is equivalent to: >
 	:autocmd BufRead *.txt set et

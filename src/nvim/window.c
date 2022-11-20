@@ -3868,6 +3868,27 @@ void close_others(int message, int forceit)
   }
 }
 
+/// Store the relevant window pointers for tab page "tp".  To be used before
+/// use_tabpage().
+void unuse_tabpage(tabpage_T *tp)
+{
+  tp->tp_topframe = topframe;
+  tp->tp_firstwin = firstwin;
+  tp->tp_lastwin = lastwin;
+  tp->tp_curwin = curwin;
+}
+
+/// Set the relevant pointers to use tab page "tp".  May want to call
+/// unuse_tabpage() first.
+void use_tabpage(tabpage_T *tp)
+{
+  curtab = tp;
+  topframe = curtab->tp_topframe;
+  firstwin = curtab->tp_firstwin;
+  lastwin = curtab->tp_lastwin;
+  curwin = curtab->tp_curwin;
+}
+
 // Allocate the first window and put an empty buffer in it.
 // Only called from main().
 void win_alloc_first(void)
@@ -3878,11 +3899,8 @@ void win_alloc_first(void)
   }
 
   first_tabpage = alloc_tabpage();
-  first_tabpage->tp_topframe = topframe;
   curtab = first_tabpage;
-  curtab->tp_firstwin = firstwin;
-  curtab->tp_lastwin = lastwin;
-  curtab->tp_curwin = curwin;
+  unuse_tabpage(first_tabpage);
 }
 
 // Init `aucmd_win`. This can only be done after the first window
@@ -4253,10 +4271,7 @@ static void enter_tabpage(tabpage_T *tp, buf_T *old_curbuf, bool trigger_enter_a
   win_T *next_prevwin = tp->tp_prevwin;
   tabpage_T *old_curtab = curtab;
 
-  curtab = tp;
-  firstwin = tp->tp_firstwin;
-  lastwin = tp->tp_lastwin;
-  topframe = tp->tp_topframe;
+  use_tabpage(tp);
 
   if (old_curtab != curtab) {
     tabpage_check_windows(old_curtab);
@@ -5263,35 +5278,60 @@ void win_new_screen_cols(void)
   win_reconfig_floats();  // The size of floats might change
 }
 
-/// Trigger WinScrolled for "curwin" if needed.
+/// Make a snapshot of all the window scroll positions and sizes of the current
+/// tab page.
+void snapshot_windows_scroll_size(void)
+{
+  FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+    wp->w_last_topline = wp->w_topline;
+    wp->w_last_leftcol = wp->w_leftcol;
+    wp->w_last_skipcol = wp->w_skipcol;
+    wp->w_last_width = wp->w_width;
+    wp->w_last_height = wp->w_height;
+  }
+}
+
+static bool did_initial_scroll_size_snapshot = false;
+
+void may_make_initial_scroll_size_snapshot(void)
+{
+  if (!did_initial_scroll_size_snapshot) {
+    did_initial_scroll_size_snapshot = true;
+    snapshot_windows_scroll_size();
+  }
+}
+
+/// Trigger WinScrolled if any window scrolled or changed size.
 void may_trigger_winscrolled(void)
 {
   static bool recursive = false;
 
-  if (recursive || !has_event(EVENT_WINSCROLLED)) {
+  if (recursive
+      || !has_event(EVENT_WINSCROLLED)
+      || !did_initial_scroll_size_snapshot) {
     return;
   }
 
-  win_T *wp = curwin;
-  if (wp->w_last_topline != wp->w_topline
-      || wp->w_last_leftcol != wp->w_leftcol
-      || wp->w_last_skipcol != wp->w_skipcol
-      || wp->w_last_width != wp->w_width
-      || wp->w_last_height != wp->w_height) {
-    char winid[NUMBUFLEN];
-    vim_snprintf(winid, sizeof(winid), "%d", wp->handle);
+  FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+    if (wp->w_last_topline != wp->w_topline
+        || wp->w_last_leftcol != wp->w_leftcol
+        || wp->w_last_skipcol != wp->w_skipcol
+        || wp->w_last_width != wp->w_width
+        || wp->w_last_height != wp->w_height) {
+      // WinScrolled is triggered only once, even when multiple windows
+      // scrolled or changed size.  Store the current values before
+      // triggering the event, if a scroll or resize happens as a side
+      // effect then WinScrolled is triggered again later.
+      snapshot_windows_scroll_size();
 
-    recursive = true;
-    apply_autocmds(EVENT_WINSCROLLED, winid, winid, false, wp->w_buffer);
-    recursive = false;
+      char winid[NUMBUFLEN];
+      vim_snprintf(winid, sizeof(winid), "%d", wp->handle);
 
-    // an autocmd may close the window, "wp" may be invalid now
-    if (win_valid_any_tab(wp)) {
-      wp->w_last_topline = wp->w_topline;
-      wp->w_last_leftcol = wp->w_leftcol;
-      wp->w_last_skipcol = wp->w_skipcol;
-      wp->w_last_width = wp->w_width;
-      wp->w_last_height = wp->w_height;
+      recursive = true;
+      apply_autocmds(EVENT_WINSCROLLED, winid, winid, false, wp->w_buffer);
+      recursive = false;
+
+      break;
     }
   }
 }

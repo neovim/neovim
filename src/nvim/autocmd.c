@@ -1142,13 +1142,17 @@ int autocmd_register(int64_t id, event_T event, char *pat, int patlen, int group
     }
 
     // Initialize the fields checked by the WinScrolled trigger to
-    // stop it from firing right after the first autocmd is defined.
+    // prevent it from firing right after the first autocmd is
+    // defined.
     if (event == EVENT_WINSCROLLED && !has_event(EVENT_WINSCROLLED)) {
-      curwin->w_last_topline = curwin->w_topline;
-      curwin->w_last_leftcol = curwin->w_leftcol;
-      curwin->w_last_skipcol = curwin->w_skipcol;
-      curwin->w_last_width = curwin->w_width;
-      curwin->w_last_height = curwin->w_height;
+      tabpage_T *save_curtab = curtab;
+      FOR_ALL_TABS(tp) {
+        unuse_tabpage(curtab);
+        use_tabpage(tp);
+        snapshot_windows_scroll_size();
+      }
+      unuse_tabpage(curtab);
+      use_tabpage(save_curtab);
     }
 
     ap->cmds = NULL;

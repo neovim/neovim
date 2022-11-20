@@ -1,8 +1,10 @@
 local helpers = require('test.functional.helpers')(after_each)
+local Screen = require('test.functional.ui.screen')
 
 local clear = helpers.clear
 local eq = helpers.eq
 local eval = helpers.eval
+local exec = helpers.exec
 local command = helpers.command
 local feed = helpers.feed
 local meths = helpers.meths
@@ -89,11 +91,72 @@ describe('WinScrolled', function()
   end)
 end)
 
-it('closing window in WinScrolled does not cause use-after-free #13265', function()
-  local lines = {'aaa', 'bbb'}
-  meths.buf_set_lines(0, 0, -1, true, lines)
-  command('vsplit')
-  command('autocmd WinScrolled * close')
-  feed('<C-E>')
-  assert_alive()
+describe('WinScrolled', function()
+  -- oldtest: Test_WinScrolled_mouse()
+  it('is triggered by mouse scrolling in another window', function()
+    local screen = Screen.new(75, 10)
+    screen:attach()
+    exec([[
+      set nowrap scrolloff=0
+      set mouse=a
+      call setline(1, ['foo']->repeat(32))
+      split
+      let g:scrolled = 0
+      au WinScrolled * let g:scrolled += 1
+    ]])
+    eq(0, eval('g:scrolled'))
+
+    -- With the upper split focused, send a scroll-down event to the unfocused one.
+    meths.input_mouse('wheel', 'down', '', 0, 6, 0)
+    eq(1, eval('g:scrolled'))
+
+    -- Again, but this time while we're in insert mode.
+    feed('i')
+    meths.input_mouse('wheel', 'down', '', 0, 6, 0)
+    feed('<Esc>')
+    eq(2, eval('g:scrolled'))
+  end)
+
+  -- oldtest: Test_WinScrolled_close_curwin()
+  it('closing window does not cause use-after-free #13265', function()
+    exec([[
+      set nowrap scrolloff=0
+      call setline(1, ['aaa', 'bbb'])
+      vsplit
+      au WinScrolled * close
+    ]])
+
+    -- This was using freed memory
+    feed('<C-E>')
+    assert_alive()
+  end)
+
+  it('is triggered by mouse scrolling in unfocused floating window #18222', function()
+    local screen = Screen.new(80, 24)
+    screen:attach()
+    local buf = meths.create_buf(true, true)
+    meths.buf_set_lines(buf, 0, -1, false, {'a', 'b', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n'})
+    local win = meths.open_win(buf, false, {
+      height = 5,
+      width = 10,
+      col = 0,
+      row = 1,
+      relative = 'editor',
+      style = 'minimal'
+    })
+    exec([[
+      let g:scrolled = 0
+      autocmd WinScrolled * let g:scrolled += 1
+      autocmd WinScrolled * let g:amatch = expand('<amatch>')
+    ]])
+    eq(0, eval('g:scrolled'))
+
+    meths.input_mouse('wheel', 'down', '', 0, 3, 3)
+    eq(1, eval('g:scrolled'))
+    eq(tostring(win.id), eval('g:amatch'))
+
+    meths.input_mouse('wheel', 'down', '', 0, 3, 3)
+    eq(2, eval('g:scrolled'))
+    eq(tostring(win.id), eval('g:amatch'))
+  end)
 end)

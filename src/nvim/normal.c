@@ -1397,6 +1397,9 @@ static int normal_check(VimState *state)
       fclose(time_fd);
       time_fd = NULL;
     }
+    // After the first screen update may start triggering WinScrolled
+    // autocmd events.  Store all the scroll positions and sizes now.
+    may_make_initial_scroll_size_snapshot();
   }
 
   // May perform garbage collection when waiting for a character, but
