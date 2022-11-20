@@ -1220,6 +1220,8 @@ end
 ---                      string, it is prepended to each diagnostic in the window with no
 ---                      highlight.
 ---                      Overrides the setting from |vim.diagnostic.config()|.
+---            - suffix: Same as {prefix}, but appends the text to the diagnostic instead of
+---                      prepending it. Overrides the setting from |vim.diagnostic.config()|.
 ---@return tuple ({float_bufnr}, {win_id})
 function M.open_float(opts, ...)
   -- Support old (bufnr, opts) signature
@@ -1313,11 +1315,11 @@ function M.open_float(opts, ...)
       -- Don't insert any lines for an empty string
       if string.len(if_nil(header[1], '')) > 0 then
         table.insert(lines, header[1])
-        table.insert(highlights, { 0, header[2] or 'Bold' })
+        table.insert(highlights, { hlname = header[2] or 'Bold' })
       end
     elseif #header > 0 then
       table.insert(lines, header)
-      table.insert(highlights, { 0, 'Bold' })
+      table.insert(highlights, { hlname = 'Bold' })
     end
   end
 
@@ -1350,18 +1352,52 @@ function M.open_float(opts, ...)
     end
   end
 
+  local suffix_opt = if_nil(opts.suffix, function(diagnostic)
+    return diagnostic.code and string.format(' [%s]', diagnostic.code) or ''
+  end)
+
+  local suffix, suffix_hl_group
+  if suffix_opt then
+    vim.validate({
+      suffix = {
+        suffix_opt,
+        { 'string', 'table', 'function' },
+        "'string' or 'table' or 'function'",
+      },
+    })
+    if type(suffix_opt) == 'string' then
+      suffix, suffix_hl_group = suffix_opt, 'NormalFloat'
+    elseif type(suffix_opt) == 'table' then
+      suffix, suffix_hl_group = suffix_opt[1] or '', suffix_opt[2] or 'NormalFloat'
+    end
+  end
+
   for i, diagnostic in ipairs(diagnostics) do
     if prefix_opt and type(prefix_opt) == 'function' then
       prefix, prefix_hl_group = prefix_opt(diagnostic, i, #diagnostics)
       prefix, prefix_hl_group = prefix or '', prefix_hl_group or 'NormalFloat'
     end
+    if suffix_opt and type(suffix_opt) == 'function' then
+      suffix, suffix_hl_group = suffix_opt(diagnostic, i, #diagnostics)
+      suffix, suffix_hl_group = suffix or '', suffix_hl_group or 'NormalFloat'
+    end
     local hiname = floating_highlight_map[diagnostic.severity]
     local message_lines = vim.split(diagnostic.message, '\n')
-    table.insert(lines, prefix .. message_lines[1])
-    table.insert(highlights, { #prefix, hiname, prefix_hl_group })
-    for j = 2, #message_lines do
-      table.insert(lines, string.rep(' ', #prefix) .. message_lines[j])
-      table.insert(highlights, { 0, hiname })
+    for j = 1, #message_lines do
+      local pre = j == 1 and prefix or string.rep(' ', #prefix)
+      local suf = j == #message_lines and suffix or ''
+      table.insert(lines, pre .. message_lines[j] .. suf)
+      table.insert(highlights, {
+        hlname = hiname,
+        prefix = {
+          length = j == 1 and #prefix or 0,
+          hlname = prefix_hl_group,
+        },
+        suffix = {
+          length = j == #message_lines and #suffix or 0,
+          hlname = suffix_hl_group,
+        },
+      })
     end
   end
 
@@ -1370,12 +1406,17 @@ function M.open_float(opts, ...)
     opts.focus_id = scope
   end
   local float_bufnr, winnr = require('vim.lsp.util').open_floating_preview(lines, 'plaintext', opts)
-  for i, hi in ipairs(highlights) do
-    local prefixlen, hiname, prefix_hiname = unpack(hi)
-    if prefix_hiname then
-      api.nvim_buf_add_highlight(float_bufnr, -1, prefix_hiname, i - 1, 0, prefixlen)
+  for i, hl in ipairs(highlights) do
+    local line = lines[i]
+    local prefix_len = hl.prefix and hl.prefix.length or 0
+    local suffix_len = hl.suffix and hl.suffix.length or 0
+    if prefix_len > 0 then
+      api.nvim_buf_add_highlight(float_bufnr, -1, hl.prefix.hlname, i - 1, 0, prefix_len)
     end
-    api.nvim_buf_add_highlight(float_bufnr, -1, hiname, i - 1, prefixlen, -1)
+    api.nvim_buf_add_highlight(float_bufnr, -1, hl.hlname, i - 1, prefix_len, #line - suffix_len)
+    if suffix_len > 0 then
+      api.nvim_buf_add_highlight(float_bufnr, -1, hl.suffix.hlname, i - 1, #line - suffix_len, -1)
+    end
   end
 
   return float_bufnr, winnr
