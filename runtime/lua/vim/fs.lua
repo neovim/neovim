@@ -222,25 +222,32 @@ function M.find(names, opts)
   return matches
 end
 
---- Normalize a path to a standard format. A tilde (~) character at the
---- beginning of the path is expanded to the user's home directory and any
---- backslash (\ or \\) characters are converted to forward slashes (/). Environment
---- variables are also expanded.
----
---- Example:
---- <pre>
---- lua = vim.fs.normalize('C:\Users\\jdoe')
---- => 'C:/Users/jdoe'
----
---- lua = vim.fs.normalize('~/src/neovim')
---- => '/home/jdoe/src/neovim'
----
---- lua = vim.fs.normalize('$XDG_CONFIG_HOME/nvim/init.vim')
---- => '/Users/jdoe/.config/nvim/init.vim'
---- </pre>
----
----@param path (string) Path to normalize
----@return (string) Normalized path
+
+--[[
+
+    Normalize a path to standard format. A tilde (~) character at the
+    beginning of the path is expanded to the user's home directory and any
+    backslash (\ or \\) characters are converted to forward slashes (/). Environment
+    variables are also expanded.
+
+    Examples:
+
+      lua = vim.fs.normalize('C:\Users\\jdoe')
+      => 'C:/Users/jdoe'
+
+      lua = vim.fs.normalize('~/src/neovim')
+      => '/home/jdoe/src/neovim'
+
+      lua = vim.fs.normalize('$XDG_CONFIG_HOME/nvim/init.vim')
+      => '/Users/jdoe/.config/nvim/init.vim'
+
+
+    @param path (string) Path to normalize
+
+    @return (string) Normalized path
+
+--]]
+
 function M.normalize(path)
   vim.validate({ path = { path, 's' } })
   return (path:gsub('^~/', vim.env.HOME .. '/'):gsub('%$([%w_]+)', vim.env):gsub('\\', '/'))
