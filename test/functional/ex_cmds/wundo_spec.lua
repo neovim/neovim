@@ -1,6 +1,6 @@
 -- Specs for :wundo and underlying functions
 
-local helpers = require('test.functional.helpers')(after_each)
+local helpers = require('test.functional.helpers')()
 local command, clear, eval, spawn, nvim_prog, set_session =
   helpers.command, helpers.clear, helpers.eval, helpers.spawn,
   helpers.nvim_prog, helpers.set_session

@@ -1,4 +1,4 @@
-local helpers = require('test.functional.helpers')(after_each)
+local helpers = require('test.functional.helpers')()
 local clear, nvim, eq, assert_alive = helpers.clear, helpers.nvim, helpers.eq, helpers.assert_alive
 
 describe('sign', function()

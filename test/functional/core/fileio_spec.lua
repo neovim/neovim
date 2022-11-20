@@ -1,5 +1,5 @@
 local lfs = require('lfs')
-local helpers = require('test.functional.helpers')(after_each)
+local helpers = require('test.functional.helpers')()
 
 local assert_log = helpers.assert_log
 local assert_nolog = helpers.assert_nolog

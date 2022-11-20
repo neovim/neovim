@@ -1,5 +1,5 @@
 local luv = require('luv')
-local helpers = require('test.functional.helpers')(after_each)
+local helpers = require('test.functional.helpers')()
 
 local clear, command, nvim, testprg =
   helpers.clear, helpers.command, helpers.nvim, helpers.testprg

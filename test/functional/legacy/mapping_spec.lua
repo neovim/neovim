@@ -1,6 +1,6 @@
 -- Test for mappings and abbreviations
 
-local helpers = require('test.functional.helpers')(after_each)
+local helpers = require('test.functional.helpers')()
 local clear, feed, insert = helpers.clear, helpers.feed, helpers.insert
 local expect, poke_eventloop = helpers.expect, helpers.poke_eventloop
 local command, eq, eval, meths = helpers.command, helpers.eq, helpers.eval, helpers.meths

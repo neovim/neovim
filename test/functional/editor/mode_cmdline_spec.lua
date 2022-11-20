@@ -1,6 +1,6 @@
 -- Cmdline-mode tests.
 
-local helpers = require('test.functional.helpers')(after_each)
+local helpers = require('test.functional.helpers')()
 local clear, insert, funcs, eq, feed =
   helpers.clear, helpers.insert, helpers.funcs, helpers.eq, helpers.feed
 local eval = helpers.eval

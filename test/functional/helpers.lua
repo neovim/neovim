@@ -959,7 +959,8 @@ end
 
 module = global_helpers.tbl_extend('error', module, global_helpers)
 
-return function(after_each)
+return function()
+  local after_each = getfenv(2).after_each
   if after_each then
     after_each(function()
       check_logs()

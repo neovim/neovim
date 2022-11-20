@@ -1,4 +1,4 @@
-local helpers = require('test.functional.helpers')(after_each)
+local helpers = require('test.functional.helpers')()
 
 local bufmeths = helpers.bufmeths
 local clear = helpers.clear

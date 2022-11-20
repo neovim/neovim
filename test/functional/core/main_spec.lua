@@ -1,5 +1,5 @@
 local lfs = require('lfs')
-local helpers = require('test.functional.helpers')(after_each)
+local helpers = require('test.functional.helpers')()
 local Screen = require('test.functional.ui.screen')
 
 local eq = helpers.eq

@@ -1,4 +1,4 @@
-local helpers = require('test.functional.helpers')(after_each)
+local helpers = require('test.functional.helpers')()
 local lfs = require('lfs')
 local eq, eval, clear, write_file, source, insert =
   helpers.eq, helpers.eval, helpers.clear, helpers.write_file,

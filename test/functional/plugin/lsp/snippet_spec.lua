@@ -1,4 +1,4 @@
-local helpers = require('test.functional.helpers')(after_each)
+local helpers = require('test.functional.helpers')()
 local snippet = require('vim.lsp._snippet')
 
 local eq = helpers.eq

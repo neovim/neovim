@@ -1,6 +1,6 @@
 -- Tests for using Ctrl-A/Ctrl-X on visual selections
 
-local helpers = require('test.functional.helpers')(after_each)
+local helpers = require('test.functional.helpers')()
 local source, command = helpers.source, helpers.command
 local call, clear = helpers.call, helpers.clear
 local eq, nvim = helpers.eq, helpers.meths

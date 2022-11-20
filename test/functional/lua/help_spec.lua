@@ -2,7 +2,7 @@
 --
 -- TODO: extract parts of gen_help_html.lua into Nvim stdlib?
 
-local helpers = require('test.functional.helpers')(after_each)
+local helpers = require('test.functional.helpers')()
 local clear = helpers.clear
 local exec_lua = helpers.exec_lua
 local eq = helpers.eq

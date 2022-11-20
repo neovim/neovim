@@ -1,6 +1,6 @@
 -- Tests for :setlocal and :setglobal
 
-local helpers = require('test.functional.helpers')(after_each)
+local helpers = require('test.functional.helpers')()
 local clear, feed_command, eval, eq, meths =
   helpers.clear, helpers.feed_command, helpers.eval, helpers.eq, helpers.meths
 

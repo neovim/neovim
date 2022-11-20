@@ -1,4 +1,4 @@
-local helpers = require('test.functional.helpers')(after_each)
+local helpers = require('test.functional.helpers')()
 local clear, eq, meths = helpers.clear, helpers.eq, helpers.meths
 local command, funcs = helpers.command, helpers.funcs
 

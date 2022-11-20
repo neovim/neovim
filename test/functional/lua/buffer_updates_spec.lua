@@ -1,5 +1,5 @@
 -- Test suite for testing interactions with API bindings
-local helpers = require('test.functional.helpers')(after_each)
+local helpers = require('test.functional.helpers')()
 local lfs = require('lfs')
 
 local command = helpers.command

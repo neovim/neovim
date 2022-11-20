@@ -1,5 +1,5 @@
 -- Test suite for testing interactions with API bindings
-local helpers = require('test.functional.helpers')(after_each)
+local helpers = require('test.functional.helpers')()
 local Screen = require('test.functional.ui.screen')
 local funcs = helpers.funcs
 local meths = helpers.meths

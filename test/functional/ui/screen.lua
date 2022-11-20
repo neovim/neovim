@@ -70,7 +70,7 @@
 -- To help write screen tests, see Screen:snapshot_util().
 -- To debug screen tests, see Screen:redraw_debug().
 
-local helpers = require('test.functional.helpers')(nil)
+local helpers = require('test.functional.helpers')()
 local busted = require('busted')
 local deepcopy = helpers.deepcopy
 local shallowcopy = helpers.shallowcopy

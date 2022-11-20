@@ -1,7 +1,7 @@
 -- Tests for ":highlight".
 
 local Screen = require('test.functional.ui.screen')
-local helpers = require('test.functional.helpers')(after_each)
+local helpers = require('test.functional.helpers')()
 local clear, feed = helpers.clear, helpers.feed
 local expect = helpers.expect
 local eq = helpers.eq

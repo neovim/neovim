@@ -1,5 +1,5 @@
 -- ShaDa history saving/reading support
-local helpers = require('test.functional.helpers')(after_each)
+local helpers = require('test.functional.helpers')()
 local nvim_command, funcs, meths, nvim_feed, eq =
   helpers.command, helpers.funcs, helpers.meths, helpers.feed, helpers.eq
 local assert_alive = helpers.assert_alive

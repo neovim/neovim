@@ -1,6 +1,6 @@
 -- Insert-mode tests.
 
-local helpers = require('test.functional.helpers')(after_each)
+local helpers = require('test.functional.helpers')()
 local clear, feed, insert = helpers.clear, helpers.feed, helpers.insert
 local expect = helpers.expect
 local command = helpers.command

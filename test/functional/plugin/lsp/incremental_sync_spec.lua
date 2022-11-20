@@ -1,5 +1,5 @@
 -- Test suite for testing interactions with the incremental sync algorithms powering the LSP client
-local helpers = require('test.functional.helpers')(after_each)
+local helpers = require('test.functional.helpers')()
 
 local meths = helpers.meths
 local clear = helpers.clear

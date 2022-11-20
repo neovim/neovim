@@ -1,4 +1,4 @@
-local helpers = require('test.functional.helpers')(after_each)
+local helpers = require('test.functional.helpers')()
 local clear, nvim = helpers.clear, helpers.nvim
 local Screen = require('test.functional.ui.screen')
 local eq, eval = helpers.eq, helpers.eval

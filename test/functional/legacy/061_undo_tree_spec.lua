@@ -1,5 +1,5 @@
 -- Tests for undo tree and :earlier and :later.
-local helpers = require('test.functional.helpers')(after_each)
+local helpers = require('test.functional.helpers')()
 
 local feed_command = helpers.feed_command
 local write_file = helpers.write_file

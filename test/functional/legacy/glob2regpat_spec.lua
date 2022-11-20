@@ -1,6 +1,6 @@
 -- Tests for signs
 
-local helpers = require('test.functional.helpers')(after_each)
+local helpers = require('test.functional.helpers')()
 local clear, exc_exec = helpers.clear, helpers.exc_exec
 local eq, eval = helpers.eq, helpers.eval
 

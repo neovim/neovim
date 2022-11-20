@@ -1,4 +1,4 @@
-local helpers = require('test.functional.helpers')(after_each)
+local helpers = require('test.functional.helpers')()
 local clear, feed_command = helpers.clear, helpers.feed_command
 local feed, next_msg, eq = helpers.feed, helpers.next_msg, helpers.eq
 local command = helpers.command

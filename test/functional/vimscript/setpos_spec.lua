@@ -1,4 +1,4 @@
-local helpers = require('test.functional.helpers')(after_each)
+local helpers = require('test.functional.helpers')()
 local setpos = helpers.funcs.setpos
 local getpos = helpers.funcs.getpos
 local insert = helpers.insert

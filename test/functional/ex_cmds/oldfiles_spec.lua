@@ -1,5 +1,5 @@
 local Screen = require('test.functional.ui.screen')
-local helpers = require('test.functional.helpers')(after_each)
+local helpers = require('test.functional.helpers')()
 
 local clear = helpers.clear
 local buf, eq, feed_command = helpers.curbufmeths, helpers.eq, helpers.feed_command

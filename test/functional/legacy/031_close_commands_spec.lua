@@ -9,7 +9,7 @@
 -- :buf
 -- :edit
 
-local helpers = require('test.functional.helpers')(after_each)
+local helpers = require('test.functional.helpers')()
 
 local feed = helpers.feed
 local clear = helpers.clear

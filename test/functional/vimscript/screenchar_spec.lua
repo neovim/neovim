@@ -1,4 +1,4 @@
-local helpers = require('test.functional.helpers')(after_each)
+local helpers = require('test.functional.helpers')()
 local clear, eq, neq = helpers.clear, helpers.eq, helpers.neq
 local command, meths, funcs = helpers.command, helpers.meths, helpers.funcs
 local tbl_deep_extend = helpers.tbl_deep_extend

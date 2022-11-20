@@ -1,6 +1,6 @@
 -- Test for t movement command and 'cpo-;' setting
 
-local helpers = require('test.functional.helpers')(after_each)
+local helpers = require('test.functional.helpers')()
 local clear, feed, insert = helpers.clear, helpers.feed, helpers.insert
 local feed_command, expect = helpers.feed_command, helpers.expect
 

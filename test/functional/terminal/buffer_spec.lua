@@ -1,4 +1,4 @@
-local helpers = require('test.functional.helpers')(after_each)
+local helpers = require('test.functional.helpers')()
 local thelpers = require('test.functional.terminal.helpers')
 local assert_alive = helpers.assert_alive
 local feed, clear, nvim = helpers.feed, helpers.clear, helpers.nvim

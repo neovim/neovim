@@ -1,5 +1,5 @@
 local lfs = require('lfs')
-local helpers = require('test.functional.helpers')(after_each)
+local helpers = require('test.functional.helpers')()
 local clear, command, eval, eq = helpers.clear, helpers.command, helpers.eval, helpers.eq
 
 before_each(function()

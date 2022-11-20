@@ -1,4 +1,4 @@
-local helpers = require('test.functional.helpers')(after_each)
+local helpers = require('test.functional.helpers')()
 local clear, nvim, eq = helpers.clear, helpers.nvim, helpers.eq
 
 describe('TabClosed', function()

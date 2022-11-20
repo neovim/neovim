@@ -1,6 +1,6 @@
 -- Tests for Unicode manipulations
 
-local helpers = require('test.functional.helpers')(after_each)
+local helpers = require('test.functional.helpers')()
 local clear, feed, insert = helpers.clear, helpers.feed, helpers.insert
 local command, expect = helpers.command, helpers.expect
 local eq, eval = helpers.eq, helpers.eval
