@@ -2,6 +2,7 @@ local api, if_nil = vim.api, vim.F.if_nil
 
 local M = {}
 
+---@enum DiagnosticSeverity
 M.severity = {
   ERROR = 1,
   WARN = 2,
@@ -755,6 +756,18 @@ function M.get_namespaces()
   return vim.deepcopy(all_namespaces)
 end
 
+---@class Diagnostic
+---@field buffer number
+---@field lnum number 0-indexed
+---@field end_lnum nil|number 0-indexed
+---@field col number 0-indexed
+---@field end_col nil|number 0-indexed
+---@field severity DiagnosticSeverity
+---@field message string
+---@field source nil|string
+---@field code nil|string
+---@field user_data nil|any arbitrary data plugins can add
+
 --- Get current diagnostics.
 ---
 ---@param bufnr number|nil Buffer number to get diagnostics from. Use 0 for
@@ -763,7 +776,7 @@ end
 ---                        - namespace: (number) Limit diagnostics to the given namespace.
 ---                        - lnum: (number) Limit diagnostics to the given line number.
 ---                        - severity: See |diagnostic-severity|.
----@return table A list of diagnostic items |diagnostic-structure|.
+---@return Diagnostic[] table A list of diagnostic items |diagnostic-structure|.
 function M.get(bufnr, opts)
   vim.validate({
     bufnr = { bufnr, 'n', true },
@@ -775,8 +788,8 @@ end
 
 --- Get the previous diagnostic closest to the cursor position.
 ---
----@param opts table See |vim.diagnostic.goto_next()|
----@return table Previous diagnostic
+---@param opts nil|table See |vim.diagnostic.goto_next()|
+---@return Diagnostic|nil Previous diagnostic
 function M.get_prev(opts)
   opts = opts or {}
 
@@ -789,8 +802,9 @@ end
 
 --- Return the position of the previous diagnostic in the current buffer.
 ---
----@param opts table See |vim.diagnostic.goto_next()|
----@return table Previous diagnostic position as a (row, col) tuple.
+---@param opts table|nil See |vim.diagnostic.goto_next()|
+---@return table|false Previous diagnostic position as a (row, col) tuple or false if there is no
+---                    prior diagnostic
 function M.get_prev_pos(opts)
   local prev = M.get_prev(opts)
   if not prev then
@@ -808,8 +822,8 @@ end
 
 --- Get the next diagnostic closest to the cursor position.
 ---
----@param opts table See |vim.diagnostic.goto_next()|
----@return table Next diagnostic
+---@param opts table|nil See |vim.diagnostic.goto_next()|
+---@return Diagnostic|nil Next diagnostic
 function M.get_next(opts)
   opts = opts or {}
 
@@ -822,8 +836,9 @@ end
 
 --- Return the position of the next diagnostic in the current buffer.
 ---
----@param opts table See |vim.diagnostic.goto_next()|
----@return table Next diagnostic position as a (row, col) tuple.
+---@param opts table|nil See |vim.diagnostic.goto_next()|
+---@return table|false Next diagnostic position as a (row, col) tuple or false if no next
+---                    diagnostic.
 function M.get_next_pos(opts)
   local next = M.get_next(opts)
   if not next then
@@ -1230,7 +1245,7 @@ end
 ---                      Overrides the setting from |vim.diagnostic.config()|.
 ---            - suffix: Same as {prefix}, but appends the text to the diagnostic instead of
 ---                      prepending it. Overrides the setting from |vim.diagnostic.config()|.
----@return tuple ({float_bufnr}, {win_id})
+---@return number|nil, number|nil: ({float_bufnr}, {win_id})
 function M.open_float(opts, ...)
   -- Support old (bufnr, opts) signature
   local bufnr
@@ -1578,7 +1593,7 @@ end
 ---@param defaults table|nil Table of default values for any fields not listed in {groups}.
 ---                          When omitted, numeric values default to 0 and "severity" defaults to
 ---                          ERROR.
----@return diagnostic |diagnostic-structure| or `nil` if {pat} fails to match {str}.
+---@return Diagnostic|nil: |diagnostic-structure| or `nil` if {pat} fails to match {str}.
 function M.match(str, pat, groups, severity_map, defaults)
   vim.validate({
     str = { str, 's' },
@@ -1625,7 +1640,7 @@ local errlist_type_map = {
 --- passed to |setqflist()| or |setloclist()|.
 ---
 ---@param diagnostics table List of diagnostics |diagnostic-structure|.
----@return array of quickfix list items |setqflist-what|
+---@return table[] of quickfix list items |setqflist-what|
 function M.toqflist(diagnostics)
   vim.validate({
     diagnostics = {
@@ -1662,7 +1677,7 @@ end
 ---
 ---@param list table A list of quickfix items from |getqflist()| or
 ---            |getloclist()|.
----@return array of diagnostics |diagnostic-structure|
+---@return Diagnostic[] array of |diagnostic-structure|
 function M.fromqflist(list)
   vim.validate({
     list = {
