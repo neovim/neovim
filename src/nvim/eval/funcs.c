@@ -2671,8 +2671,9 @@ static void get_buffer_lines(buf_T *buf, linenr_T start, linenr_T end, int retli
   }
 }
 
-/// "getbufline()" function
-static void f_getbufline(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
+/// @param retlist  true: "getbufline()" function
+///                 false: "getbufoneline()" function
+static void getbufline(typval_T *argvars, typval_T *rettv, bool retlist)
 {
   const int did_emsg_before = did_emsg;
   buf_T *const buf = tv_get_buf_from_arg(&argvars[0]);
@@ -2684,7 +2685,19 @@ static void f_getbufline(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
                         ? lnum
                         : tv_get_lnum_buf(&argvars[2], buf));
 
-  get_buffer_lines(buf, lnum, end, true, rettv);
+  get_buffer_lines(buf, lnum, end, retlist, rettv);
+}
+
+/// "getbufline()" function
+static void f_getbufline(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
+{
+  getbufline(argvars, rettv, true);
+}
+
+/// "getbufoneline()" function
+static void f_getbufoneline(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
+{
+  getbufline(argvars, rettv, false);
 }
 
 /// "getchangelist()" function

@@ -5592,9 +5592,9 @@ void screenchar_adjust(ScreenGrid **grid, int *row, int *col)
   *col -= (*grid)->comp_col;
 }
 
-/// Set line or list of lines in buffer "buf".
-void set_buffer_lines(buf_T *buf, linenr_T lnum_arg, bool append, const typval_T *lines,
-                      typval_T *rettv)
+/// Set line or list of lines in buffer "buf" to "lines".
+/// Any type is allowed and converted to a string.
+void set_buffer_lines(buf_T *buf, linenr_T lnum_arg, bool append, typval_T *lines, typval_T *rettv)
   FUNC_ATTR_NONNULL_ARG(4, 5)
 {
   linenr_T lnum = lnum_arg + (append ? 1 : 0);
@@ -5632,7 +5632,7 @@ void set_buffer_lines(buf_T *buf, linenr_T lnum_arg, bool append, const typval_T
 
   list_T *l = NULL;
   listitem_T *li = NULL;
-  const char *line = NULL;
+  char *line = NULL;
   if (lines->v_type == VAR_LIST) {
     l = lines->vval.v_list;
     if (l == NULL || tv_list_len(l) == 0) {
@@ -5644,7 +5644,7 @@ void set_buffer_lines(buf_T *buf, linenr_T lnum_arg, bool append, const typval_T
     }
     li = tv_list_first(l);
   } else {
-    line = tv_get_string_chk(lines);
+    line = typval_tostring(lines, false);
   }
 
   // Default result is zero == OK.
@@ -5654,7 +5654,8 @@ void set_buffer_lines(buf_T *buf, linenr_T lnum_arg, bool append, const typval_T
       if (li == NULL) {
         break;
       }
-      line = tv_get_string_chk(TV_LIST_ITEM_TV(li));
+      xfree(line);
+      line = typval_tostring(TV_LIST_ITEM_TV(li), false);
       li = TV_LIST_ITEM_NEXT(l, li);
     }
 
@@ -5674,7 +5675,7 @@ void set_buffer_lines(buf_T *buf, linenr_T lnum_arg, bool append, const typval_T
       // Existing line, replace it.
       int old_len = (int)strlen(ml_get(lnum));
       if (u_savesub(lnum) == OK
-          && ml_replace(lnum, (char *)line, true) == OK) {
+          && ml_replace(lnum, line, true) == OK) {
         inserted_bytes(lnum, 0, old_len, (int)strlen(line));
         if (is_curbuf && lnum == curwin->w_cursor.lnum) {
           check_cursor_col();
@@ -5684,7 +5685,7 @@ void set_buffer_lines(buf_T *buf, linenr_T lnum_arg, bool append, const typval_T
     } else if (added > 0 || u_save(lnum - 1, lnum) == OK) {
       // append the line.
       added++;
-      if (ml_append(lnum - 1, (char *)line, 0, false) == OK) {
+      if (ml_append(lnum - 1, line, 0, false) == OK) {
         rettv->vval.v_number = 0;  // OK
       }
     }
@@ -5694,6 +5695,7 @@ void set_buffer_lines(buf_T *buf, linenr_T lnum_arg, bool append, const typval_T
     }
     lnum++;
   }
+  xfree(line);
 
   if (added > 0) {
     appended_lines_mark(append_lnum, added);
@@ -8965,10 +8967,16 @@ int typval_compare(typval_T *typ1, typval_T *typ2, exprtype_T type, bool ic)
   return OK;
 }
 
-char *typval_tostring(typval_T *arg)
+/// Convert any type to a string, never give an error.
+/// When "quotes" is true add quotes to a string.
+/// Returns an allocated string.
+char *typval_tostring(typval_T *arg, bool quotes)
 {
   if (arg == NULL) {
     return xstrdup("(does not exist)");
+  }
+  if (!quotes && arg->v_type == VAR_STRING) {
+    return xstrdup(arg->vval.v_string == NULL ? "" : arg->vval.v_string);
   }
   return encode_tv2string(arg, NULL);
 }

@@ -146,6 +146,7 @@ return {
     get={args={2, 3}, base=1},
     getbufinfo={args={0, 1}, base=1},
     getbufline={args={2, 3}, base=1},
+    getbufoneline={args=2, base=1},
     getbufvar={args={2, 3}, base=1},
     getchangelist={args={0, 1}, base=1},
     getchar={args={0, 1}},
