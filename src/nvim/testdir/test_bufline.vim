@@ -40,11 +40,13 @@ func Test_setbufline_getbufline()
   call assert_equal([], getbufline(b, 6))
   call assert_equal([], getbufline(b, 2, 1))
 
-  call setbufline(b, 2, [function('eval'), #{key: 123}, test_null_job()])
-  call assert_equal(["function('eval')",
-                  \ "{'key': 123}",
-                  \ "no process"],
-                  \ getbufline(b, 2, 4))
+  if has('job')
+    call setbufline(b, 2, [function('eval'), #{key: 123}, test_null_job()])
+    call assert_equal(["function('eval')",
+                    \ "{'key': 123}",
+                    \ "no process"],
+                    \ getbufline(b, 2, 4))
+  endif
   exe "bwipe! " . b
 endfunc
 
