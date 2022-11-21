@@ -638,6 +638,7 @@ append({lnum}, {text})					*append()*
 		text line below line {lnum} in the current buffer.
 		Otherwise append {text} as one text line below line {lnum} in
 		the current buffer.
+		Any type of item is accepted and converted to a String.
 		{lnum} can be zero to insert a line before the first one.
 		{lnum} is used like with |getline()|.
 		Returns 1 for failure ({lnum} out of range or out of memory),
@@ -7054,6 +7055,8 @@ setline({lnum}, {text})					*setline()*
 		{lnum} is used like with |getline()|.
 		When {lnum} is just below the last line the {text} will be
 		added below the last line.
+		{text} can be any type or a List of any type, each item is
+		converted to a String.
 
 		If this succeeds, FALSE is returned.  If this fails (most likely
 		because {lnum} is invalid) TRUE is returned.
