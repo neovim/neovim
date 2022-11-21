@@ -1050,6 +1050,13 @@ function M.make_floating_popup_options(width, height, opts)
     col = 1
   end
 
+  local title = (opts.border and opts.title) and opts.title or nil
+  local title_pos
+
+  if title then
+    title_pos = opts.title_pos or 'center'
+  end
+
   return {
     anchor = anchor,
     col = col + (opts.offset_x or 0),
@@ -1061,6 +1068,8 @@ function M.make_floating_popup_options(width, height, opts)
     width = width,
     border = opts.border or default_border,
     zindex = opts.zindex or 50,
+    title = title,
+    title_pos = title_pos,
   }
 end
 

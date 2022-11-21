@@ -317,7 +317,9 @@ end
 --- vim.lsp.handlers["textDocument/hover"] = vim.lsp.with(
 ---   vim.lsp.handlers.hover, {
 ---     -- Use a sharp border with `FloatBorder` highlights
----     border = "single"
+---     border = "single",
+---     -- add the title in hover float window
+---     title = "hover"
 ---   }
 --- )
 --- </pre>
