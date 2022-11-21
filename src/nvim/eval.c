@@ -1236,8 +1236,6 @@ int eval_foldexpr(char *arg, int *cp)
   return (int)retval;
 }
 
-// TODO(ZyX-I): move to eval/executor
-
 /// Get an lvalue
 ///
 /// Lvalue may be
@@ -1622,16 +1620,12 @@ char *get_lval(char *const name, typval_T *const rettv, lval_T *const lp, const 
   return p;
 }
 
-// TODO(ZyX-I): move to eval/executor
-
 /// Clear lval "lp" that was filled by get_lval().
 void clear_lval(lval_T *lp)
 {
   xfree(lp->ll_exp_name);
   xfree(lp->ll_newkey);
 }
-
-// TODO(ZyX-I): move to eval/executor
 
 /// Set a variable that was parsed by get_lval() to "rettv".
 ///
@@ -1840,8 +1834,6 @@ notify:
   }
 }
 
-// TODO(ZyX-I): move to eval/ex_cmds
-
 /// Evaluate the expression used in a ":for var in expr" command.
 /// "arg" points to "var".
 ///
@@ -1917,8 +1909,6 @@ void *eval_for_line(const char *arg, bool *errp, char **nextcmdp, int skip)
   return fi;
 }
 
-// TODO(ZyX-I): move to eval/ex_cmds
-
 /// Use the first item in a ":for" list.  Advance to the next.
 /// Assign the values to the variable (list).  "arg" points to the first one.
 ///
@@ -1964,8 +1954,6 @@ bool next_for_item(void *fi_void, char *arg)
   return (ex_let_vars(arg, TV_LIST_ITEM_TV(item), true,
                       fi->fi_semicolon, fi->fi_varcount, false, NULL) == OK);
 }
-
-// TODO(ZyX-I): move to eval/ex_cmds
 
 /// Free the structure used to store info used by ":for".
 void free_for_info(void *fi_void)
@@ -2212,8 +2200,6 @@ char *get_user_var_name(expand_T *xp, int idx)
   return NULL;
 }
 
-// TODO(ZyX-I): move to eval/expressions
-
 /// Does not use 'cpo' and always uses 'magic'.
 ///
 /// @return  true if "pat" matches "text".
@@ -2293,8 +2279,6 @@ static int eval_func(char **const arg, char *const name, const int name_len, typ
   return ret;
 }
 
-// TODO(ZyX-I): move to eval/expressions
-
 /// The "evaluate" argument: When false, the argument is only parsed but not
 /// executed.  The function may return OK, but the rettv will be of type
 /// VAR_UNKNOWN.  The function still returns FAIL for a syntax error.
@@ -2343,8 +2327,6 @@ int eval0(char *arg, typval_T *rettv, char **nextcmd, int evaluate)
 
   return ret;
 }
-
-// TODO(ZyX-I): move to eval/expressions
 
 /// Handle top level expression:
 ///      expr2 ? expr1 : expr1
@@ -2410,8 +2392,6 @@ int eval1(char **arg, typval_T *rettv, int evaluate)
   return OK;
 }
 
-// TODO(ZyX-I): move to eval/expressions
-
 /// Handle first level expression:
 ///      expr2 || expr2 || expr2     logical OR
 ///
@@ -2469,8 +2449,6 @@ static int eval2(char **arg, typval_T *rettv, int evaluate)
   return OK;
 }
 
-// TODO(ZyX-I): move to eval/expressions
-
 /// Handle second level expression:
 ///      expr3 && expr3 && expr3     logical AND
 ///
@@ -2527,8 +2505,6 @@ static int eval3(char **arg, typval_T *rettv, int evaluate)
 
   return OK;
 }
-
-// TODO(ZyX-I): move to eval/expressions
 
 /// Handle third level expression:
 ///      var1 == var2
@@ -2632,8 +2608,6 @@ static int eval4(char **arg, typval_T *rettv, int evaluate)
 
   return OK;
 }
-
-// TODO(ZyX-I): move to eval/expressions
 
 /// Handle fourth level expression:
 ///      +       number addition
@@ -2796,8 +2770,6 @@ static int eval5(char **arg, typval_T *rettv, int evaluate)
   return OK;
 }
 
-// TODO(ZyX-I): move to eval/expressions
-
 /// Handle fifth level expression:
 ///  - *  number multiplication
 ///  - /  number division
@@ -2912,8 +2884,6 @@ static int eval6(char **arg, typval_T *rettv, int evaluate, int want_string)
 
   return OK;
 }
-
-// TODO(ZyX-I): move to eval/expressions
 
 /// Handle sixth level expression:
 ///  number  number constant
@@ -3408,8 +3378,6 @@ static int eval_method(char **const arg, typval_T *const rettv, const bool evalu
   return ret;
 }
 
-// TODO(ZyX-I): move to eval/expressions
-
 /// Evaluate an "[expr]" or "[expr:expr]" index.  Also "dict.key".
 /// "*arg" points to the '[' or '.'.
 ///
@@ -3709,8 +3677,6 @@ static int eval_index(char **arg, typval_T *rettv, int evaluate, int verbose)
   return OK;
 }
 
-// TODO(ZyX-I): move to eval/executor
-
 /// Get an option value
 ///
 /// @param[in,out] arg  Points to the '&' or '+' before the option name. Is
@@ -3974,8 +3940,6 @@ char *partial_name(partial_T *pt)
   return (char *)pt->pt_func->uf_name;
 }
 
-// TODO(ZyX-I): Move to eval/typval.h
-
 static void partial_free(partial_T *pt)
 {
   for (int i = 0; i < pt->pt_argc; i++) {
@@ -3991,8 +3955,6 @@ static void partial_free(partial_T *pt)
   }
   xfree(pt);
 }
-
-// TODO(ZyX-I): Move to eval/typval.h
 
 /// Unreference a closure: decrement the reference count and free it when it
 /// becomes zero.
