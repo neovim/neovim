@@ -170,6 +170,7 @@ get({func}, {what})		any	get property of funcref/partial {func}
 getbufinfo([{buf}])		List	information about buffers
 getbufline({buf}, {lnum} [, {end}])
 				List	lines {lnum} to {end} of buffer {buf}
+getbufoneline({buf}, {lnum})	String	line {lnum} of buffer {buf}
 getbufvar({buf}, {varname} [, {def}])
 				any	variable {varname} in buffer {buf}
 getchangelist([{buf}])		List	list of change list items
@@ -2685,11 +2686,13 @@ getbufinfo([{dict}])
 		Can also be used as a |method|: >
 			GetBufnr()->getbufinfo()
 <
+
 							*getbufline()*
 getbufline({buf}, {lnum} [, {end}])
 		Return a |List| with the lines starting from {lnum} to {end}
 		(inclusive) in the buffer {buf}.  If {end} is omitted, a
-		|List| with only the line {lnum} is returned.
+		|List| with only the line {lnum} is returned.  See
+		`getbufoneline()` for only getting the line.
 
 		For the use of {buf}, see |bufname()| above.
 
@@ -2712,6 +2715,11 @@ getbufline({buf}, {lnum} [, {end}])
 
 <		Can also be used as a |method|: >
 			GetBufnr()->getbufline(lnum)
+<
+							*getbufoneline()*
+getbufoneline({buf}, {lnum})
+		Just like `getbufline()` but only get one line and return it
+		as a string.
 
 getbufvar({buf}, {varname} [, {def}])				*getbufvar()*
 		The result is the value of option or local buffer variable
@@ -3199,7 +3207,8 @@ getline({lnum} [, {end}])
 <		Can also be used as a |method|: >
 			ComputeLnum()->getline()
 
-<		To get lines from another buffer see |getbufline()|
+<		To get lines from another buffer see |getbufline()| and
+		|getbufoneline()|
 
 getloclist({nr} [, {what}])				*getloclist()*
 		Returns a |List| with all the entries in the location list for

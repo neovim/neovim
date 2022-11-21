@@ -785,6 +785,13 @@ Working with text in the current buffer:		*text-functions*
 	getcharsearch()		return character search information
 	setcharsearch()		set character search information
 
+Working with text in another buffer:
+	getbufline()		get a list of lines from the specified buffer
+	getbufoneline()		get a one line from the specified buffer
+	setbufline()		replace a line in the specified buffer
+	appendbufline()		append a list of lines in the specified buffer
+	deletebufline()		delete lines from a specified buffer
+
 					*system-functions* *file-functions*
 System functions and manipulation of files:
 	glob()			expand wildcards
@@ -838,8 +845,10 @@ Buffers, windows and the argument list:
 	argidx()		current position in the argument list
 	arglistid()		get id of the argument list
 	argv()			get one entry from the argument list
+	bufadd()		add a file to the list of buffers
 	bufexists()		check if a buffer exists
 	buflisted()		check if a buffer exists and is listed
+	bufload()		ensure a buffer is loaded
 	bufloaded()		check if a buffer exists and is loaded
 	bufname()		get the name of a specific buffer
 	bufnr()			get the buffer number of a specific buffer
@@ -850,10 +859,6 @@ Buffers, windows and the argument list:
 	bufwinid()		get the window ID of a specific buffer
 	bufwinnr()		get the window number of a specific buffer
 	winbufnr()		get the buffer number of a specific window
-	getbufline()		get a list of lines from the specified buffer
-	setbufline()		replace a line in the specified buffer
-	appendbufline()		append a list of lines in the specified buffer
-	deletebufline()		delete lines from a specified buffer
 	win_findbuf()		find windows containing a buffer
 	win_getid()		get window ID of a window
 	win_gettype()		get type of window
