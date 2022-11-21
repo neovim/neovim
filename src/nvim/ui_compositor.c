@@ -716,6 +716,11 @@ static void ui_comp_event(UI *ui, char *name, Array args)
       handled = true;
     }
   })
+  if (err.type != kErrorTypeNone) {
+    ELOG("Error while executing ui_comp_event callback: %s", err.msg);
+  } else {
+    api_clear_error(&err);
+  }
 
   if (!handled) {
     ui_composed_call_event(name, args);
