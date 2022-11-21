@@ -382,7 +382,7 @@ static void parse_border_title(Object title, Object title_pos, FloatConfig *fcon
     return;
   }
 
-  if (title.type == kObjectTypeArray && title.data.array.size == 0) {
+  if (title.data.array.size == 0) {
     api_set_error(err, kErrorTypeValidation, "title cannot be an empty array");
     return;
   }
@@ -391,7 +391,6 @@ static void parse_border_title(Object title, Object title_pos, FloatConfig *fcon
   fconfig->title_chunks = parse_virt_text(title.data.array, err, &fconfig->title_width);
 
   fconfig->title = true;
-  return;
 }
 
 static bool parse_title_pos(Object title_pos, FloatConfig *fconfig, Error *err)
