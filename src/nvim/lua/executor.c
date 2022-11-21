@@ -2250,7 +2250,7 @@ void ex_trust(exarg_T *eap)
       char *errmsg = xcalloc(len + 1, sizeof(char));
       memcpy(errmsg, contents, len + 1);
       if (errmsg != NULL) {
-        semsg(errmsg);
+        semsg("Error: %s", errmsg);
         xfree(errmsg);
       }
     }

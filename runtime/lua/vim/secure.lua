@@ -115,7 +115,7 @@ function M.read(path)
   return contents
 end
 
---- Update the trust status of file at path in the trust database at
+--- Update the trust status of file at {path} in the trust database at
 --- $XDG_STATE_HOME/nvim/trust.
 ---
 ---@param path (string) Path to a file to update status for.
