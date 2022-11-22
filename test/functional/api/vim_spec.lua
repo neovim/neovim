@@ -12,7 +12,6 @@ local exec = helpers.exec
 local eval = helpers.eval
 local expect = helpers.expect
 local funcs = helpers.funcs
-local iswin = helpers.iswin
 local meths = helpers.meths
 local matches = helpers.matches
 local pesc = helpers.pesc
@@ -400,7 +399,7 @@ describe('API', function()
     end)
 
     it('returns shell |:!| output', function()
-      local win_lf = iswin() and '\r' or ''
+      local win_lf = is_os('win') and '\r' or ''
       eq(':!echo foo\r\n\nfoo'..win_lf..'\n', nvim('command_output', [[!echo foo]]))
     end)
 
@@ -2125,7 +2124,7 @@ describe('API', function()
         pty='?',
       }
       local event = meths.get_var("opened_event")
-      if not iswin() then
+      if not is_os('win') then
         info.pty = event.info.pty
         neq(nil, string.match(info.pty, "^/dev/"))
       end
@@ -2141,7 +2140,7 @@ describe('API', function()
         stream = 'job',
         id = 4,
         argv = (
-          iswin() and {
+          is_os('win') and {
             eval('&shell'),
             '/s',
             '/c',
@@ -2163,7 +2162,7 @@ describe('API', function()
       -- :terminal with args + stopped process.
       eq(1, eval('jobstop(&channel)'))
       eval('jobwait([&channel], 1000)')  -- Wait.
-      expected2.pty = (iswin() and '?' or '')  -- pty stream was closed.
+      expected2.pty = (is_os('win') and '?' or '')  -- pty stream was closed.
       eq(expected2, eval('nvim_get_chan_info(&channel)'))
     end)
   end)
@@ -2724,7 +2723,7 @@ describe('API', function()
       eq({}, meths.get_runtime_file("foobarlang/", true))
     end)
     it('can handle bad patterns', function()
-      skip(iswin())
+      skip(is_os('win'))
 
       eq("Vim:E220: Missing }.", pcall_err(meths.get_runtime_file, "{", false))
 

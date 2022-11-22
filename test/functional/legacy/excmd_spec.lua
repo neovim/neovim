@@ -7,12 +7,12 @@ local exec_lua = helpers.exec_lua
 local expect_exit = helpers.expect_exit
 local feed = helpers.feed
 local funcs = helpers.funcs
-local iswin = helpers.iswin
 local meths = helpers.meths
 local read_file = helpers.read_file
 local source = helpers.source
 local eq = helpers.eq
 local write_file = helpers.write_file
+local is_os = helpers.is_os
 
 local function sizeoflong()
   if not exec_lua('return pcall(require, "ffi")') then
@@ -376,7 +376,7 @@ describe(':confirm command dialog', function()
       {3:(Y)es, [N]o: }^                                                              |
     ]])
     feed('Y')
-    if iswin() then
+    if is_os('win') then
       screen:expect([[
         foobar                                                                     |
         {0:~                                                                          }|
@@ -416,7 +416,7 @@ describe(':confirm command dialog', function()
       {3:(Y)es, [N]o: }^                                                              |
     ]])
     feed('Y')
-    if iswin() then
+    if is_os('win') then
       screen:expect([[
         foobar                                                                     |
         {1:                                                                           }|
@@ -493,7 +493,7 @@ describe(':confirm command dialog', function()
       {3:(Y)es, [N]o: }^                                                              |
     ]])
     feed('Y')
-    if iswin() then
+    if is_os('win') then
       screen:expect([[
         a                                                                          |
         b                                                                          |

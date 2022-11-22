@@ -10,7 +10,7 @@ describe('glob() and globpath()', function()
   setup(clear)
 
   setup(function()
-    if helpers.iswin() then
+    if helpers.is_os('win') then
       os.execute("md sautest\\autoload")
       os.execute(".>sautest\\autoload\\Test104.vim 2>nul")
       os.execute(".>sautest\\autoload\\footest.vim 2>nul")
@@ -28,7 +28,7 @@ describe('glob() and globpath()', function()
     -- Consistent sorting of file names
     command('set nofileignorecase')
 
-    if helpers.iswin() then
+    if helpers.is_os('win') then
       command([[$put =glob('Xxx{')]])
       command([[$put =glob('Xxx$')]])
 
@@ -72,7 +72,7 @@ describe('glob() and globpath()', function()
   end)
 
   teardown(function()
-    if helpers.iswin() then
+    if helpers.is_os('win') then
       os.execute('del /q/f Xxx{ Xxx$')
       os.execute('rd /q /s sautest')
     else

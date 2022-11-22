@@ -2140,7 +2140,7 @@ end)
 
 describe('plugin/shada.vim', function()
   local epoch = os.date('%Y-%m-%dT%H:%M:%S', 0)
-  local eol = helpers.iswin() and '\r\n' or '\n'
+  local eol = helpers.is_os('win') and '\r\n' or '\n'
   before_each(function()
     -- Note: reset() is called explicitly in each test.
     os.remove(fname)

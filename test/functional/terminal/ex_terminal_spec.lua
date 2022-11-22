@@ -8,10 +8,10 @@ local feed_command, eval = helpers.feed_command, helpers.eval
 local funcs = helpers.funcs
 local retry = helpers.retry
 local ok = helpers.ok
-local iswin = helpers.iswin
 local command = helpers.command
-local isCI = helpers.isCI
 local skip = helpers.skip
+local is_os = helpers.is_os
+local is_ci = helpers.is_ci
 
 describe(':terminal', function()
   local screen
@@ -47,8 +47,8 @@ describe(':terminal', function()
   end)
 
   it("reads output buffer on terminal reporting #4151", function()
-    skip(isCI('cirrus') or iswin())
-    if iswin() then
+    skip(is_ci('cirrus') or is_os('win'))
+    if is_os('win') then
       feed_command([[terminal powershell -NoProfile -NoLogo -Command Write-Host -NoNewline "\"$([char]27)[6n\""; Start-Sleep -Milliseconds 500 ]])
     else
       feed_command([[terminal printf '\e[6n'; sleep 0.5 ]])
@@ -57,7 +57,7 @@ describe(':terminal', function()
   end)
 
   it("in normal-mode :split does not move cursor", function()
-    if iswin() then
+    if is_os('win') then
       feed_command([[terminal for /L \\%I in (1,0,2) do ( echo foo & ping -w 100 -n 1 127.0.0.1 > nul )]])
     else
       feed_command([[terminal while true; do echo foo; sleep .1; done]])
@@ -144,7 +144,7 @@ describe(':terminal (with fake shell)', function()
   end
 
   it('with no argument, acts like termopen()', function()
-    skip(iswin())
+    skip(is_os('win'))
     terminal_with_fake_shell()
     retry(nil, 4 * screen.timeout, function()
     screen:expect([[
@@ -168,7 +168,7 @@ describe(':terminal (with fake shell)', function()
   end)
 
   it("with no argument, but 'shell' has arguments, acts like termopen()", function()
-    skip(iswin())
+    skip(is_os('win'))
     nvim('set_option', 'shell', testprg('shell-test')..' -t jeff')
     terminal_with_fake_shell()
     screen:expect([[
@@ -180,7 +180,7 @@ describe(':terminal (with fake shell)', function()
   end)
 
   it('executes a given command through the shell', function()
-    skip(iswin())
+    skip(is_os('win'))
     command('set shellxquote=')   -- win: avoid extra quotes
     terminal_with_fake_shell('echo hi')
     screen:expect([[
@@ -192,7 +192,7 @@ describe(':terminal (with fake shell)', function()
   end)
 
   it("executes a given command through the shell, when 'shell' has arguments", function()
-    skip(iswin())
+    skip(is_os('win'))
     nvim('set_option', 'shell', testprg('shell-test')..' -t jeff')
     command('set shellxquote=')   -- win: avoid extra quotes
     terminal_with_fake_shell('echo hi')
@@ -205,7 +205,7 @@ describe(':terminal (with fake shell)', function()
   end)
 
   it('allows quotes and slashes', function()
-    skip(iswin())
+    skip(is_os('win'))
     command('set shellxquote=')   -- win: avoid extra quotes
     terminal_with_fake_shell([[echo 'hello' \ "world"]])
     screen:expect([[
@@ -242,7 +242,7 @@ describe(':terminal (with fake shell)', function()
   end)
 
   it('works with :find', function()
-    skip(iswin())
+    skip(is_os('win'))
     terminal_with_fake_shell()
     screen:expect([[
       ^ready $                                           |
@@ -253,7 +253,7 @@ describe(':terminal (with fake shell)', function()
     eq('term://', string.match(eval('bufname("%")'), "^term://"))
     feed([[<C-\><C-N>]])
     feed_command([[find */shadacat.py]])
-    if iswin() then
+    if is_os('win') then
       eq('scripts\\shadacat.py', eval('bufname("%")'))
     else
       eq('scripts/shadacat.py', eval('bufname("%")'))
@@ -261,7 +261,7 @@ describe(':terminal (with fake shell)', function()
   end)
 
   it('works with gf', function()
-    skip(iswin())
+    skip(is_os('win'))
     command('set shellxquote=')   -- win: avoid extra quotes
     terminal_with_fake_shell([[echo "scripts/shadacat.py"]])
     retry(nil, 4 * screen.timeout, function()

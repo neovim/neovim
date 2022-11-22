@@ -48,7 +48,7 @@ describe('Test for delete()', function()
 
   it('symlink directory delete', function()
     command("call mkdir('Xdir1')")
-    if helpers.iswin() then
+    if helpers.is_os('win') then
       command("silent !mklink /j Xlink Xdir1")
     else
       command("silent !ln -s Xdir1 Xlink")

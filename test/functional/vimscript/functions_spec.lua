@@ -9,12 +9,12 @@ local helpers = require('test.functional.helpers')(after_each)
 
 local clear = helpers.clear
 local eval = helpers.eval
-local iswin = helpers.iswin
 local matches = helpers.matches
+local is_os = helpers.is_os
 
 before_each(clear)
 
 it('windowsversion()', function()
   clear()
-  matches(iswin() and '^%d+%.%d+$' or '^$', eval('windowsversion()'))
+  matches(is_os('win') and '^%d+%.%d+$' or '^$', eval('windowsversion()'))
 end)

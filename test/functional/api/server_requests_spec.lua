@@ -250,7 +250,7 @@ describe('server -> client', function()
       pcall(funcs.jobstop, jobid)
     end)
 
-    if helpers.skip(helpers.iswin()) then return end
+    if helpers.skip(helpers.is_os('win')) then return end
 
     it('rpc and text stderr can be combined', function()
       local status, rv = pcall(funcs.rpcrequest, jobid, 'poll')

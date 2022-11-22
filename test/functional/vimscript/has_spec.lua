@@ -2,7 +2,7 @@ local helpers = require('test.functional.helpers')(after_each)
 local eq = helpers.eq
 local clear = helpers.clear
 local funcs = helpers.funcs
-local iswin = helpers.iswin
+local is_os = helpers.is_os
 
 describe('has()', function()
   before_each(clear)
@@ -51,7 +51,7 @@ describe('has()', function()
   end)
 
   it('"unnamedplus"', function()
-    if (not iswin()) and funcs.has("clipboard") == 1 then
+    if (not is_os('win')) and funcs.has("clipboard") == 1 then
       eq(1, funcs.has("unnamedplus"))
     else
       eq(0, funcs.has("unnamedplus"))

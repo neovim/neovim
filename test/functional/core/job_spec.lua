@@ -13,7 +13,6 @@ local retry = helpers.retry
 local meths = helpers.meths
 local NIL = helpers.NIL
 local poke_eventloop = helpers.poke_eventloop
-local iswin = helpers.iswin
 local get_pathsep = helpers.get_pathsep
 local pathroot = helpers.pathroot
 local exec_lua = helpers.exec_lua
@@ -24,6 +23,7 @@ local pcall_err = helpers.pcall_err
 local matches = helpers.matches
 local Screen = require('test.functional.ui.screen')
 local skip = helpers.skip
+local is_os = helpers.is_os
 
 describe('jobs', function()
   local channel
@@ -56,7 +56,7 @@ describe('jobs', function()
   it('must specify env option as a dict', function()
     command("let g:job_opts.env = v:true")
     local _, err = pcall(function()
-      if iswin() then
+      if is_os('win') then
         nvim('command', "let j = jobstart('set', g:job_opts)")
       else
         nvim('command', "let j = jobstart('env', g:job_opts)")
@@ -69,7 +69,7 @@ describe('jobs', function()
     nvim('command', "let $VAR = 'abc'")
     nvim('command', "let $TOTO = 'goodbye world'")
     nvim('command', "let g:job_opts.env = {'TOTO': 'hello world'}")
-    if iswin() then
+    if is_os('win') then
       nvim('command', [[call jobstart('echo %TOTO% %VAR%', g:job_opts)]])
     else
       nvim('command', [[call jobstart('echo $TOTO $VAR', g:job_opts)]])
@@ -88,12 +88,12 @@ describe('jobs', function()
   end)
 
   it('append environment with pty #env', function()
-    skip(iswin())
+    skip(is_os('win'))
     nvim('command', "let $VAR = 'abc'")
     nvim('command', "let $TOTO = 'goodbye world'")
     nvim('command', "let g:job_opts.pty = v:true")
     nvim('command', "let g:job_opts.env = {'TOTO': 'hello world'}")
-    if iswin() then
+    if is_os('win') then
       nvim('command', [[call jobstart('echo %TOTO% %VAR%', g:job_opts)]])
     else
       nvim('command', [[call jobstart('echo $TOTO $VAR', g:job_opts)]])
@@ -123,7 +123,7 @@ describe('jobs', function()
     --
     -- Rather than expecting a completely empty environment, ensure that $VAR
     -- is *not* in the environment but $TOTO is.
-    if iswin() then
+    if is_os('win') then
       nvim('command', [[call jobstart('echo %TOTO% %VAR%', g:job_opts)]])
       expect_msg_seq({
         {'notification', 'stdout', {0, {'hello world %VAR%', ''}}}
@@ -142,7 +142,7 @@ describe('jobs', function()
     -- Since $Toto is being set in the job, it should take precedence over the
     -- global $TOTO on Windows
     nvim('command', "let g:job_opts = {'env': {'Toto': 'def'}, 'stdout_buffered': v:true}")
-    if iswin() then
+    if is_os('win') then
       nvim('command', [[let j = jobstart('set | find /I "toto="', g:job_opts)]])
     else
       nvim('command', [[let j = jobstart('env | grep -i toto=', g:job_opts)]])
@@ -151,7 +151,7 @@ describe('jobs', function()
     nvim('command', "let g:output = Normalize(g:job_opts.stdout)")
     local actual = eval('g:output')
     local expected
-    if iswin() then
+    if is_os('win') then
       -- Toto is normalized to TOTO so we can detect duplicates, and because
       -- Windows doesn't care about case
       expected = {'TOTO=def', ''}
@@ -165,7 +165,7 @@ describe('jobs', function()
 
   it('uses &shell and &shellcmdflag if passed a string', function()
     nvim('command', "let $VAR = 'abc'")
-    if iswin() then
+    if is_os('win') then
       nvim('command', "let j = jobstart('echo %VAR%', g:job_opts)")
     else
       nvim('command', "let j = jobstart('echo $VAR', g:job_opts)")
@@ -177,7 +177,7 @@ describe('jobs', function()
 
   it('changes to given / directory', function()
     nvim('command', "let g:job_opts.cwd = '/'")
-    if iswin() then
+    if is_os('win') then
       nvim('command', "let j = jobstart('cd', g:job_opts)")
     else
       nvim('command', "let j = jobstart('pwd', g:job_opts)")
@@ -192,7 +192,7 @@ describe('jobs', function()
     local dir = eval("resolve(tempname())"):gsub("/", get_pathsep())
     mkdir(dir)
     nvim('command', "let g:job_opts.cwd = '" .. dir .. "'")
-    if iswin() then
+    if is_os('win') then
       nvim('command', "let j = jobstart('cd', g:job_opts)")
     else
       nvim('command', "let j = jobstart('pwd', g:job_opts)")
@@ -216,7 +216,7 @@ describe('jobs', function()
     local dir = eval('resolve(tempname())."-bogus"')
     local _, err = pcall(function()
       nvim('command', "let g:job_opts.cwd = '" .. dir .. "'")
-      if iswin() then
+      if is_os('win') then
         nvim('command', "let j = jobstart('cd', g:job_opts)")
       else
         nvim('command', "let j = jobstart('pwd', g:job_opts)")
@@ -226,7 +226,7 @@ describe('jobs', function()
   end)
 
   it('error on non-executable `cwd`', function()
-    skip(iswin(), 'Not applicable for Windows')
+    skip(is_os('win'), 'Not applicable for Windows')
 
     local dir = 'Xtest_not_executable_dir'
     mkdir(dir)
@@ -249,7 +249,7 @@ describe('jobs', function()
     end
     local executable_jobid = new_job()
 
-    local exe = iswin() and './test/functional/fixtures' or './test/functional/fixtures/non_executable.txt'
+    local exe = is_os('win') and './test/functional/fixtures' or './test/functional/fixtures/non_executable.txt'
     eq("Vim:E475: Invalid value for argument cmd: '"..exe.."' is not executable",
       pcall_err(eval, "jobstart(['"..exe.."'])"))
     eq("", eval("v:errmsg"))
@@ -703,7 +703,7 @@ describe('jobs', function()
 
   describe('jobwait', function()
     before_each(function()
-      if iswin() then
+      if is_os('win') then
         helpers.set_shell_powershell()
       end
     end)
@@ -787,7 +787,7 @@ describe('jobs', function()
       feed_command('call rpcnotify(g:channel, "ready") | '..
               'call rpcnotify(g:channel, "wait", '..
               'jobwait([jobstart("'..
-              (iswin() and 'Start-Sleep 10' or 'sleep 10')..
+              (is_os('win') and 'Start-Sleep 10' or 'sleep 10')..
               '; exit 55")]))')
       eq({'notification', 'ready', {}}, next_msg())
       feed('<c-c>')
@@ -798,7 +798,7 @@ describe('jobs', function()
       feed_command('call rpcnotify(g:channel, "ready") | '..
               'call rpcnotify(g:channel, "wait", '..
               'jobwait([jobstart("'..
-              (iswin() and 'Start-Sleep 10' or 'sleep 10')..
+              (is_os('win') and 'Start-Sleep 10' or 'sleep 10')..
               '; exit 55")], 10000))')
       eq({'notification', 'ready', {}}, next_msg())
       feed('<c-c>')
@@ -806,7 +806,7 @@ describe('jobs', function()
     end)
 
     it('can be called recursively', function()
-      skip(iswin(), "TODO: Need `cat`")
+      skip(is_os('win'), "TODO: Need `cat`")
       source([[
       let g:opts = {}
       let g:counter = 0
@@ -931,7 +931,7 @@ describe('jobs', function()
     --                ..c.."', '-c', '"..c.."'])")
 
     -- Create child with several descendants.
-    if iswin() then
+    if is_os('win') then
       source([[
       function! s:formatprocs(pid, prefix)
         let result = ''
@@ -980,13 +980,13 @@ describe('jobs', function()
       endfunction
       ]])
     end
-    local sleep_cmd = (iswin()
+    local sleep_cmd = (is_os('win')
       and 'ping -n 31 127.0.0.1'
       or  'sleep 30')
     local j = eval("jobstart('"..sleep_cmd..' | '..sleep_cmd..' | '..sleep_cmd.."')")
     local ppid = funcs.jobpid(j)
     local children
-    if iswin() then
+    if is_os('win') then
       local status, result = pcall(retry, nil, nil, function()
         children = meths.get_proc_children(ppid)
         -- On Windows conhost.exe may exist, and
@@ -1007,7 +1007,7 @@ describe('jobs', function()
     -- Assert that nvim_get_proc() sees the children.
     for _, child_pid in ipairs(children) do
       local info = meths.get_proc(child_pid)
-      -- eq((iswin() and 'nvim.exe' or 'nvim'), info.name)
+      -- eq((is_os('win') and 'nvim.exe' or 'nvim'), info.name)
       eq(ppid, info.ppid)
     end
     -- Kill the root of the tree.
@@ -1028,7 +1028,7 @@ describe('jobs', function()
   end)
 
   describe('running tty-test program', function()
-    if skip(iswin()) then return end
+    if skip(is_os('win')) then return end
     local function next_chunk()
       local rv
       while true do
@@ -1125,7 +1125,7 @@ describe("pty process teardown", function()
   end)
 
   it("does not prevent/delay exit. #4798 #4900", function()
-    skip(iswin())
+    skip(is_os('win'))
     -- Use a nested nvim (in :term) to test without --headless.
     feed_command(":terminal '"..helpers.nvim_prog
       .."' -u NONE -i NONE --cmd '"..nvim_set.."' "

@@ -6,7 +6,7 @@ local feed_data = thelpers.feed_data
 local enter_altscreen = thelpers.enter_altscreen
 local exit_altscreen = thelpers.exit_altscreen
 
-if helpers.skip(helpers.iswin()) then return end
+if helpers.skip(helpers.is_os('win')) then return end
 
 describe(':terminal altscreen', function()
   local screen

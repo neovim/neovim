@@ -2,7 +2,7 @@ local helpers = require('test.functional.helpers')(after_each)
 local clear = helpers.clear
 local exec_lua = helpers.exec_lua
 local eq = helpers.eq
-local iswin = helpers.iswin
+local is_os = helpers.is_os
 local skip = helpers.skip
 local write_file = require('test.helpers').write_file
 
@@ -169,7 +169,7 @@ describe('URI methods', function()
 
   describe('uri from bufnr', function()
     it('Windows paths should not be treated as uris', function()
-      skip(not iswin(), "Not applicable on non-Windows")
+      skip(not is_os('win'), "Not applicable on non-Windows")
 
       local file = helpers.tmpname()
       write_file(file, 'Test content')

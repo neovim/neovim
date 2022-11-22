@@ -9,9 +9,9 @@ local command = helpers.command
 local insert = helpers.insert
 local expect = helpers.expect
 local exc_exec = helpers.exc_exec
-local iswin = helpers.iswin
 local os_kill = helpers.os_kill
 local pcall_err = helpers.pcall_err
+local is_os = helpers.is_os
 
 local Screen = require('test.functional.ui.screen')
 
@@ -85,7 +85,7 @@ describe('system()', function()
     end)
 
     it('does NOT run in shell', function()
-      if iswin() then
+      if is_os('win') then
         eq("%PATH%\n", eval("system(['powershell', '-NoProfile', '-NoLogo', '-ExecutionPolicy', 'RemoteSigned', '-Command', 'Write-Output', '%PATH%'])"))
       else
         eq("* $PATH %PATH%\n", eval("system(['echo', '*', '$PATH', '%PATH%'])"))
@@ -94,7 +94,7 @@ describe('system()', function()
   end)
 
   it('sets v:shell_error', function()
-    if iswin() then
+    if is_os('win') then
       eval([[system("cmd.exe /c exit")]])
       eq(0, eval('v:shell_error'))
       eval([[system("cmd.exe /c exit 1")]])
@@ -123,7 +123,7 @@ describe('system()', function()
       screen:attach()
     end)
 
-    if iswin() then
+    if is_os('win') then
       local function test_more()
         eq('root = true', eval([[get(split(system('"more" ".editorconfig"'), "\n"), 0, '')]]))
       end
@@ -184,7 +184,7 @@ describe('system()', function()
       -- * on Windows, expected to default to Western European enc
       -- * on Linux, expected to default to UTF8
       command([[let &shellcmdflag = '-NoLogo -NoProfile -ExecutionPolicy RemoteSigned -Command ']])
-      eq(iswin() and '??\n' or 'ああ\n', eval([[system('Write-Output "ああ"')]]))
+      eq(is_os('win') and '??\n' or 'ああ\n', eval([[system('Write-Output "ああ"')]]))
     end)
 
     it('`echo` and waits for its return', function()
@@ -213,7 +213,7 @@ describe('system()', function()
 
       screen:try_resize(72, 14)
       feed(':4verbose echo system("echo hi")<cr>')
-      if iswin() then
+      if is_os('win') then
         screen:expect{any=[[Executing command: "'fake_shell' 'cmdflag' '"echo hi"'"]]}
       else
         screen:expect{any=[[Executing command: "'fake_shell' 'cmdflag' 'echo hi'"]]}
@@ -243,7 +243,7 @@ describe('system()', function()
     end)
 
     it('`yes` interrupted with CTRL-C', function()
-      feed(':call system("' .. (iswin()
+      feed(':call system("' .. (is_os('win')
         and 'for /L %I in (1,0,2) do @echo y'
         or  'yes') .. '")<cr>')
       screen:expect([[
@@ -260,7 +260,7 @@ describe('system()', function()
         ~                                                    |
         ~                                                    |
         ~                                                    |
-]] .. (iswin()
+]] .. (is_os('win')
         and [[
         :call system("for /L %I in (1,0,2) do @echo y")      |]]
         or  [[
@@ -286,7 +286,7 @@ describe('system()', function()
 
     it('`yes` interrupted with mapped CTRL-C', function()
       command('nnoremap <C-C> i')
-      feed(':call system("' .. (iswin()
+      feed(':call system("' .. (is_os('win')
         and 'for /L %I in (1,0,2) do @echo y'
         or  'yes') .. '")<cr>')
       screen:expect([[
@@ -303,7 +303,7 @@ describe('system()', function()
         ~                                                    |
         ~                                                    |
         ~                                                    |
-]] .. (iswin()
+]] .. (is_os('win')
         and [[
         :call system("for /L %I in (1,0,2) do @echo y")      |]]
         or  [[
@@ -330,7 +330,7 @@ describe('system()', function()
 
   describe('passing no input', function()
     it('returns the program output', function()
-      if iswin() then
+      if is_os('win') then
         eq("echoed\n", eval('system("echo echoed")'))
       else
         eq("echoed", eval('system("echo -n echoed")'))
@@ -438,7 +438,7 @@ describe('systemlist()', function()
   before_each(clear)
 
   it('sets v:shell_error', function()
-    if iswin() then
+    if is_os('win') then
       eval([[systemlist("cmd.exe /c exit")]])
       eq(0, eval('v:shell_error'))
       eval([[systemlist("cmd.exe /c exit 1")]])
@@ -617,12 +617,12 @@ describe('systemlist()', function()
       return
     end
     helpers.set_shell_powershell()
-    eq({iswin() and 'あ\r' or 'あ'}, eval([[systemlist('Write-Output あ')]]))
+    eq({is_os('win') and 'あ\r' or 'あ'}, eval([[systemlist('Write-Output あ')]]))
     -- Sanity test w/ default encoding
     -- * on Windows, expected to default to Western European enc
     -- * on Linux, expected to default to UTF8
     command([[let &shellcmdflag = '-NoLogo -NoProfile -ExecutionPolicy RemoteSigned -Command ']])
-    eq({iswin() and '?\r' or 'あ'}, eval([[systemlist('Write-Output あ')]]))
+    eq({is_os('win') and '?\r' or 'あ'}, eval([[systemlist('Write-Output あ')]]))
   end)
 
 end)
@@ -639,7 +639,7 @@ describe('shell :!', function()
       1
       4
       2]])
-    if iswin() then
+    if is_os('win') then
       feed(':4verbose %!sort /R<cr>')
       screen:expect{
         any=[[Executing command: .?& { Get%-Content .* | & sort /R } 2>&1 | Out%-File %-Encoding UTF8 .*; exit $LastExitCode"]]

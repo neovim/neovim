@@ -2,7 +2,7 @@ local helpers = require('test.functional.helpers')(after_each)
 local child_session = require('test.functional.terminal.helpers')
 local ok = helpers.ok
 
-if helpers.skip(helpers.iswin()) then return end
+if helpers.skip(helpers.is_os('win')) then return end
 
 describe('api', function()
   local screen

@@ -21,14 +21,14 @@ local read_file = helpers.read_file
 local tmpname = helpers.tmpname
 local trim = helpers.trim
 local currentdir = helpers.funcs.getcwd
-local iswin = helpers.iswin
 local assert_alive = helpers.assert_alive
 local expect_exit = helpers.expect_exit
 local write_file = helpers.write_file
 local Screen = require('test.functional.ui.screen')
 local feed_command = helpers.feed_command
-local isCI = helpers.isCI
 local skip = helpers.skip
+local is_os = helpers.is_os
+local is_ci = helpers.is_ci
 
 describe('fileio', function()
   before_each(function()
@@ -90,7 +90,7 @@ describe('fileio', function()
   end)
 
   it('backup #9709', function()
-    skip(isCI('cirrus'))
+    skip(is_ci('cirrus'))
     clear({ args={ '-i', 'Xtest_startup_shada',
                    '--cmd', 'set directory=Xtest_startup_swapdir' } })
 
@@ -110,7 +110,7 @@ describe('fileio', function()
   end)
 
   it('backup with full path #11214', function()
-    skip(isCI('cirrus'))
+    skip(is_ci('cirrus'))
     clear()
     mkdir('Xtest_backupdir')
     command('set backup')
@@ -123,7 +123,7 @@ describe('fileio', function()
 
     -- Backup filename = fullpath, separators replaced with "%".
     local backup_file_name = string.gsub(currentdir()..'/Xtest_startup_file1',
-      iswin() and '[:/\\]' or '/', '%%') .. '~'
+      is_os('win') and '[:/\\]' or '/', '%%') .. '~'
     local foo_contents = trim(read_file('Xtest_backupdir/'..backup_file_name))
     local foobar_contents = trim(read_file('Xtest_startup_file1'))
 
@@ -132,7 +132,7 @@ describe('fileio', function()
   end)
 
   it('backup symlinked files #11349', function()
-    skip(isCI('cirrus'))
+    skip(is_ci('cirrus'))
     clear()
 
     local initial_content = 'foo'
@@ -154,7 +154,7 @@ describe('fileio', function()
 
 
   it('backup symlinked files in first avialable backupdir #11349', function()
-    skip(isCI('cirrus'))
+    skip(is_ci('cirrus'))
     clear()
 
     local initial_content = 'foo'
@@ -299,7 +299,7 @@ describe('tmpdir', function()
     end)
 
     -- "…/nvim.<user>/" has wrong permissions:
-    skip(iswin(), 'TODO(justinmk): need setfperm/getfperm on Windows. #8244')
+    skip(is_os('win'), 'TODO(justinmk): need setfperm/getfperm on Windows. #8244')
     os.remove(testlog)
     os.remove(tmproot)
     mkdir(tmproot)

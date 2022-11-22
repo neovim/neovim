@@ -12,13 +12,13 @@ local eq = helpers.eq
 local ok = helpers.ok
 local funcs = helpers.funcs
 local insert = helpers.insert
-local iswin = helpers.iswin
 local neq = helpers.neq
 local mkdir = helpers.mkdir
 local rmdir = helpers.rmdir
 local alter_slashes = helpers.alter_slashes
 local tbl_contains = helpers.tbl_contains
 local expect_exit = helpers.expect_exit
+local is_os = helpers.is_os
 
 describe('startup defaults', function()
   describe(':filetype', function()
@@ -240,7 +240,7 @@ describe('startup defaults', function()
 
   describe('$NVIM_LOG_FILE', function()
     local xdgdir = 'Xtest-startup-xdg-logpath'
-    local xdgstatedir = iswin() and xdgdir..'/nvim-data' or xdgdir..'/nvim'
+    local xdgstatedir = is_os('win') and xdgdir..'/nvim-data' or xdgdir..'/nvim'
     after_each(function()
       os.remove('Xtest-logpath')
       rmdir(xdgdir)
@@ -279,7 +279,7 @@ describe('XDG defaults', function()
     clear()
     local rtp = eval('split(&runtimepath, ",")')
     local rv = {}
-    local expected = (iswin()
+    local expected = (is_os('win')
                       and { [[\nvim-data\site]], [[\nvim-data\site\after]], }
                       or { '/nvim/site', '/nvim/site/after', })
 
@@ -327,10 +327,10 @@ describe('XDG defaults', function()
     return vimruntime, libdir
   end
 
-  local env_sep = iswin() and ';' or ':'
-  local data_dir = iswin() and 'nvim-data' or 'nvim'
-  local state_dir = iswin() and 'nvim-data' or 'nvim'
-  local root_path = iswin() and 'C:' or ''
+  local env_sep = is_os('win') and ';' or ':'
+  local data_dir = is_os('win') and 'nvim-data' or 'nvim'
+  local state_dir = is_os('win') and 'nvim-data' or 'nvim'
+  local root_path = is_os('win') and 'C:' or ''
 
   describe('with too long XDG variables', function()
     before_each(function()
@@ -497,7 +497,7 @@ describe('XDG defaults', function()
 
     it('are escaped properly', function()
       local vimruntime, libdir = vimruntime_and_libdir()
-      local path_sep = iswin() and '\\' or '/'
+      local path_sep = is_os('win') and '\\' or '/'
       eq(('\\, \\, \\,' .. path_sep .. 'nvim'
           .. ',\\,-\\,-\\,' .. path_sep .. 'nvim'
           .. ',-\\,-\\,-' .. path_sep .. 'nvim'
@@ -549,9 +549,9 @@ end)
 describe('stdpath()', function()
   -- Windows appends 'nvim-data' instead of just 'nvim' to prevent collisions
   -- due to XDG_CONFIG_HOME, XDG_DATA_HOME and XDG_STATE_HOME being the same.
-  local datadir = iswin() and 'nvim-data' or 'nvim'
-  local statedir = iswin() and 'nvim-data' or 'nvim'
-  local env_sep = iswin() and ';' or ':'
+  local datadir = is_os('win') and 'nvim-data' or 'nvim'
+  local statedir = is_os('win') and 'nvim-data' or 'nvim'
+  local env_sep = is_os('win') and ';' or ':'
 
   it('acceptance', function()
     clear()  -- Do not explicitly set any env vars.
@@ -704,7 +704,7 @@ describe('stdpath()', function()
   context('returns a List', function()
     -- Some OS specific variables the system would have set.
     local function base_env()
-      if iswin() then
+      if is_os('win') then
         return {
           HOME='C:\\Users\\docwhat', -- technically, is not a usual PATH
           HOMEDRIVE='C:',

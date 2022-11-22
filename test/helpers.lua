@@ -269,14 +269,10 @@ function module.check_logs()
     table.concat(runtime_errors, ', ')))
 end
 
-function module.iswin()
-  return package.config:sub(1,1) == '\\'
-end
-
--- Gets (lowercase) OS name from CMake, uname, or "win" if iswin().
-module.uname = (function()
+-- Gets (lowercase) OS name from CMake, uname, or manually check if on Windows
+do
   local platform = nil
-  return (function()
+  function module.uname()
     if platform then
       return platform
     end
@@ -290,22 +286,28 @@ module.uname = (function()
     if status then
       platform = string.lower(f:read("*l"))
       f:close()
-    elseif module.iswin() then
+    elseif package.config:sub(1,1) == '\\' then
       platform = 'windows'
     else
       error('unknown platform')
     end
     return platform
-  end)
-end)()
+  end
+end
 
 function module.is_os(s)
-  if not (s == 'win' or s == 'mac' or s == 'unix') then
+  if not (s == 'win'
+    or s == 'mac'
+    or s == 'freebsd'
+    or s == 'openbsd'
+    or s == 'bsd') then
     error('unknown platform: '..tostring(s))
   end
-  return ((s == 'win' and module.iswin())
+  return ((s == 'win' and module.uname() == 'windows')
     or (s == 'mac' and module.uname() == 'darwin')
-    or (s == 'unix'))
+    or (s == 'freebsd' and module.uname() == 'freebsd')
+    or (s == 'openbsd' and module.uname() == 'openbsd')
+    or (s == 'bsd' and string.find(module.uname(), 'bsd')))
 end
 
 local function tmpdir_get()
@@ -331,11 +333,11 @@ module.tmpname = (function()
       return fname
     else
       local fname = os.tmpname()
-      if module.uname() == 'windows' and fname:sub(1, 2) == '\\s' then
+      if module.is_os('win') and fname:sub(1, 2) == '\\s' then
         -- In Windows tmpname() returns a filename starting with
         -- special sequence \s, prepend $TEMP path
         return tmpdir..fname
-      elseif fname:match('^/tmp') and module.uname() == 'darwin' then
+      elseif fname:match('^/tmp') and module.is_os('mac') then
         -- In OS X /tmp links to /private/tmp
         return '/private'..fname
       else
@@ -378,14 +380,14 @@ function module.check_cores(app, force)
     exc_re = { os.getenv('NVIM_TEST_CORE_EXC_RE'), local_tmpdir }
     db_cmd = os.getenv('NVIM_TEST_CORE_DB_CMD') or gdb_db_cmd
     random_skip = os.getenv('NVIM_TEST_CORE_RANDOM_SKIP')
-  elseif 'darwin' == module.uname() then
+  elseif module.is_os('mac') then
     initial_path = '/cores'
     re = nil
     exc_re = { local_tmpdir }
     db_cmd = lldb_db_cmd
   else
     initial_path = '.'
-    if 'freebsd' == module.uname() then
+    if module.is_os('freebsd') then
       re = '/nvim.core$'
     else
       re = '/core[^/]*$'
@@ -800,7 +802,7 @@ function module.write_file(name, text, no_dedent, append)
   file:close()
 end
 
-function module.isCI(name)
+function module.is_ci(name)
   local any = (name == nil)
   assert(any or name == 'github' or name == 'cirrus')
   local gh = ((any or name == 'github') and nil ~= os.getenv('GITHUB_ACTIONS'))
@@ -812,7 +814,7 @@ end
 -- Also moves the file to "${NVIM_LOG_FILE}.displayed" on CI environments.
 function module.read_nvim_log(logfile, ci_rename)
   logfile = logfile or os.getenv('NVIM_LOG_FILE') or '.nvimlog'
-  local is_ci = module.isCI()
+  local is_ci = module.is_ci()
   local keep = is_ci and 100 or 10
   local lines = module.read_file_list(logfile, -keep) or {}
   local log = (('-'):rep(78)..'\n'
