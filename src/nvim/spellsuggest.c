@@ -641,7 +641,7 @@ void spell_suggest(int count)
     }
 
     // Replace the word.
-    p = xmalloc(STRLEN(line) - (size_t)stp->st_orglen + (size_t)stp->st_wordlen + 1);
+    p = xmalloc(strlen(line) - (size_t)stp->st_orglen + (size_t)stp->st_wordlen + 1);
     c = (int)(sug.su_badptr - (char_u *)line);
     memmove(p, line, (size_t)c);
     STRCPY(p + c, stp->st_word);
@@ -880,7 +880,7 @@ static void spell_suggest_file(suginfo_T *su, char_u *fname)
   }
 
   // Read it line by line.
-  while (!vim_fgets(line, MAXWLEN * 2, fd) && !got_int) {
+  while (!vim_fgets((char *)line, MAXWLEN * 2, fd) && !got_int) {
     line_breakcheck();
 
     p = (char_u *)vim_strchr((char *)line, '/');

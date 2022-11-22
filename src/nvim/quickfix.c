@@ -2784,7 +2784,7 @@ static void qf_jump_goto_line(linenr_T qf_lnum, int qf_col, char qf_viscol, char
     // Move the cursor to the first line in the buffer
     pos_T save_cursor = curwin->w_cursor;
     curwin->w_cursor.lnum = 0;
-    if (!do_search(NULL, '/', '/', (char_u *)qf_pattern, (long)1, SEARCH_KEEP, NULL)) {
+    if (!do_search(NULL, '/', '/', qf_pattern, (long)1, SEARCH_KEEP, NULL)) {
       curwin->w_cursor = save_cursor;
     }
   }
@@ -6993,7 +6993,7 @@ static void hgr_search_file(qf_list_T *qfl, char *fname, regmatch_T *p_regmatch)
   }
 
   linenr_T lnum = 1;
-  while (!vim_fgets((char_u *)IObuff, IOSIZE, fd) && !got_int) {
+  while (!vim_fgets(IObuff, IOSIZE, fd) && !got_int) {
     char *line = (char *)IObuff;
 
     if (vim_regexec(p_regmatch, line, (colnr_T)0)) {

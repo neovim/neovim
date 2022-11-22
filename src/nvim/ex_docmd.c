@@ -3378,7 +3378,7 @@ static linenr_T get_address(exarg_T *eap, char **ptr, cmd_addr_T addr_type, int 
         }
         searchcmdlen = 0;
         flags = silent ? 0 : SEARCH_HIS | SEARCH_MSG;
-        if (!do_search(NULL, c, c, (char_u *)cmd, 1L, flags, NULL)) {
+        if (!do_search(NULL, c, c, cmd, 1L, flags, NULL)) {
           curwin->w_cursor = pos;
           cmd = NULL;
           goto error;
@@ -3831,7 +3831,7 @@ int expand_filename(exarg_T *eap, char **cmdlinep, char **errormsgp)
       // if there are still wildcards present.
       if (vim_strchr(eap->arg, '$') != NULL
           || vim_strchr(eap->arg, '~') != NULL) {
-        expand_env_esc((char_u *)eap->arg, (char_u *)NameBuff, MAXPATHL, true, true, NULL);
+        expand_env_esc(eap->arg, NameBuff, MAXPATHL, true, true, NULL);
         has_wildcards = path_has_wildcard(NameBuff);
         p = (char *)NameBuff;
       } else {
@@ -5541,7 +5541,7 @@ bool changedir_func(char *new_dir, CdScope scope)
   bool dir_differs = pdir == NULL || pathcmp(pdir, new_dir, -1) != 0;
   if (dir_differs) {
     do_autocmd_dirchanged(new_dir, scope, kCdCauseManual, true);
-    if (vim_chdir((char_u *)new_dir) != 0) {
+    if (vim_chdir(new_dir) != 0) {
       emsg(_(e_failed));
       xfree(pdir);
       return false;

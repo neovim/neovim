@@ -741,9 +741,9 @@ char *did_set_string_option(int opt_idx, char **varp, char *oldval, char *errbuf
     }
   } else if (varp == &curwin->w_p_cc) {  // 'colorcolumn'
     errmsg = check_colorcolumn(curwin);
-  } else if (varp == (char **)&p_hlg) {  // 'helplang'
+  } else if (varp == &p_hlg) {  // 'helplang'
     // Check for "", "ab", "ab,cd", etc.
-    for (s = (char *)p_hlg; *s != NUL; s += 3) {
+    for (s = p_hlg; *s != NUL; s += 3) {
       if (s[1] == NUL || ((s[2] != ',' || s[3] == NUL) && s[2] != NUL)) {
         errmsg = e_invarg;
         break;

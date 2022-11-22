@@ -274,7 +274,7 @@ int buf_init_chartab(buf_T *buf, int global)
 /// @param bufsize
 void trans_characters(char *buf, int bufsize)
 {
-  char_u *trs;                 // translated character
+  char *trs;                   // translated character
   int len = (int)strlen(buf);  // length of string needing translation
   int room = bufsize - len;    // room in buffer after string
 
@@ -284,8 +284,8 @@ void trans_characters(char *buf, int bufsize)
     if ((trs_len = utfc_ptr2len(buf)) > 1) {
       len -= trs_len;
     } else {
-      trs = transchar_byte((uint8_t)(*buf));
-      trs_len = (int)STRLEN(trs);
+      trs = (char *)transchar_byte((uint8_t)(*buf));
+      trs_len = (int)strlen(trs);
 
       if (trs_len > 1) {
         room -= trs_len - 1;

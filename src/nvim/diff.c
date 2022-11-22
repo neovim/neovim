@@ -1043,7 +1043,7 @@ static int check_external_diff(diffio_T *diffio)
           for (;;) {
             // For normal diff there must be a line that contains
             // "1c1".  For unified diff "@@ -1 +1 @@".
-            if (vim_fgets((char_u *)linebuf, LBUFLEN, fd)) {
+            if (vim_fgets(linebuf, LBUFLEN, fd)) {
               break;
             }
 
@@ -1218,9 +1218,9 @@ void ex_diffpatch(exarg_T *eap)
   esc_name =
     (char *)vim_strsave_shellescape((char_u *)(fullname != NULL ? fullname : eap->arg), true, true);
 #else
-  esc_name = vim_strsave_shellescape(eap->arg, true, true);
+  esc_name = (char *)vim_strsave_shellescape(eap->arg, true, true);
 #endif
-  size_t buflen = STRLEN(tmp_orig) + STRLEN(esc_name) + STRLEN(tmp_new) + 16;
+  size_t buflen = strlen(tmp_orig) + strlen(esc_name) + strlen(tmp_new) + 16;
   buf = xmalloc(buflen);
 
 #ifdef UNIX
@@ -1557,7 +1557,7 @@ static bool extract_hunk(FILE *fd, diffhunk_T *hunk, diffstyle_T *diffstyle)
 {
   for (;;) {
     char line[LBUFLEN];  // only need to hold the diff line
-    if (vim_fgets((char_u *)line, LBUFLEN, fd)) {
+    if (vim_fgets(line, LBUFLEN, fd)) {
       return true;  // end of file
     }
 
@@ -1577,9 +1577,9 @@ static bool extract_hunk(FILE *fd, diffhunk_T *hunk, diffstyle_T *diffstyle)
       } else if ((STRNCMP(line, "@@ ", 3) == 0)) {
         *diffstyle = DIFF_UNIFIED;
       } else if ((STRNCMP(line, "--- ", 4) == 0)  // -V501
-                 && (vim_fgets((char_u *)line, LBUFLEN, fd) == 0)  // -V501
+                 && (vim_fgets(line, LBUFLEN, fd) == 0)  // -V501
                  && (STRNCMP(line, "+++ ", 4) == 0)
-                 && (vim_fgets((char_u *)line, LBUFLEN, fd) == 0)  // -V501
+                 && (vim_fgets(line, LBUFLEN, fd) == 0)  // -V501
                  && (STRNCMP(line, "@@ ", 3) == 0)) {
         *diffstyle = DIFF_UNIFIED;
       } else {

@@ -1003,7 +1003,7 @@ static int cin_iswhileofdo(const char_u *p, linenr_T lnum)  // XXX
       curwin->w_cursor.col++;
     }
     if ((trypos = findmatchlimit(NULL, 0, 0, curbuf->b_ind_maxparen)) != NULL
-        && *cin_skipcomment(ml_get_pos(trypos) + 1) == ';') {
+        && *cin_skipcomment((char_u *)ml_get_pos(trypos) + 1) == ';') {
       retval = true;
     }
     curwin->w_cursor = cursor_save;

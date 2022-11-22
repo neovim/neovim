@@ -419,7 +419,7 @@ static int str_to_mapargs(const char_u *strargs, bool is_unmap, MapArguments *ma
 
   // {lhs_end} is a pointer to the "terminating whitespace" after {lhs}.
   // Use that to initialize {rhs_start}.
-  const char_u *rhs_start = (char_u *)skipwhite((char *)lhs_end);
+  const char *rhs_start = skipwhite((char *)lhs_end);
 
   // Given {lhs} might be larger than MAXMAPLEN before replace_termcodes
   // (e.g. "<Space>" is longer than ' '), so first copy into a buffer.
@@ -430,9 +430,9 @@ static int str_to_mapargs(const char_u *strargs, bool is_unmap, MapArguments *ma
   char_u lhs_to_replace[256];
   STRLCPY(lhs_to_replace, to_parse, orig_lhs_len + 1);
 
-  size_t orig_rhs_len = STRLEN(rhs_start);
+  size_t orig_rhs_len = strlen(rhs_start);
   if (!set_maparg_lhs_rhs((char *)lhs_to_replace, orig_lhs_len,
-                          (char *)rhs_start, orig_rhs_len, LUA_NOREF,
+                          rhs_start, orig_rhs_len, LUA_NOREF,
                           CPO_TO_CPO_FLAGS, mapargs)) {
     return 1;
   }
@@ -471,7 +471,7 @@ static void map_add(buf_T *buf, mapblock_T **map_table, mapblock_T **abbr_table,
     args->orig_rhs = NULL;
     args->rhs_lua = LUA_NOREF;
   }
-  mp->m_keylen = (int)STRLEN(mp->m_keys);
+  mp->m_keylen = (int)strlen((char *)mp->m_keys);
   mp->m_noremap = noremap;
   mp->m_nowait = args->nowait;
   mp->m_silent = args->silent;
@@ -1392,7 +1392,7 @@ bool check_abbr(int c, char_u *ptr, int col, int mincol)
   int len;
   int scol;                     // starting column of the abbr.
   int j;
-  char_u *s;
+  char *s;
   char_u tb[MB_MAXBYTES + 4];
   mapblock_T *mp;
   mapblock_T *mp2;
@@ -1462,7 +1462,7 @@ bool check_abbr(int c, char_u *ptr, int col, int mincol)
         // Might have K_SPECIAL escaped mp->m_keys.
         q = xstrdup((char *)mp->m_keys);
         vim_unescape_ks((char_u *)q);
-        qlen = (int)STRLEN(q);
+        qlen = (int)strlen(q);
       }
       // find entries with right mode and keys
       match = (mp->m_mode & State)
@@ -1505,9 +1505,9 @@ bool check_abbr(int c, char_u *ptr, int col, int mincol)
           int newlen = utf_char2bytes(c, (char *)tb + j);
           tb[j + newlen] = NUL;
           // Need to escape K_SPECIAL.
-          char_u *escaped = (char_u *)vim_strsave_escape_ks((char *)tb + j);
+          char *escaped = vim_strsave_escape_ks((char *)tb + j);
           if (escaped != NULL) {
-            newlen = (int)STRLEN(escaped);
+            newlen = (int)strlen(escaped);
             memmove(tb + j, escaped, (size_t)newlen);
             j += newlen;
             xfree(escaped);
@@ -1518,15 +1518,15 @@ bool check_abbr(int c, char_u *ptr, int col, int mincol)
         (void)ins_typebuf((char *)tb, 1, 0, true, mp->m_silent);
       }
       if (mp->m_expr) {
-        s = (char_u *)eval_map_expr(mp, c);
+        s = eval_map_expr(mp, c);
       } else {
-        s = (char_u *)mp->m_str;
+        s = mp->m_str;
       }
       if (s != NULL) {
         // insert the to string
-        (void)ins_typebuf((char *)s, mp->m_noremap, 0, true, mp->m_silent);
+        (void)ins_typebuf(s, mp->m_noremap, 0, true, mp->m_silent);
         // no abbrev. for these chars
-        typebuf.tb_no_abbr_cnt += (int)STRLEN(s) + j + 1;
+        typebuf.tb_no_abbr_cnt += (int)strlen(s) + j + 1;
         if (mp->m_expr) {
           xfree(s);
         }
@@ -1597,7 +1597,7 @@ char *eval_map_expr(mapblock_T *mp, int c)
   char *res = NULL;
 
   if (mp->m_replace_keycodes) {
-    replace_termcodes(p, STRLEN(p), &res, REPTERM_DO_LT, NULL, CPO_TO_CPO_FLAGS);
+    replace_termcodes(p, strlen(p), &res, REPTERM_DO_LT, NULL, CPO_TO_CPO_FLAGS);
   } else {
     // Escape K_SPECIAL in the result to be able to use the string as typeahead.
     res = vim_strsave_escape_ks(p);
@@ -1926,14 +1926,14 @@ int put_escstr(FILE *fd, char_u *strstart, int what)
 /// @param abbr  do abbreviations
 /// @param mp_ptr  return: pointer to mapblock or NULL
 /// @param local_ptr  return: buffer-local mapping or NULL
-char_u *check_map(char_u *keys, int mode, int exact, int ign_mod, int abbr, mapblock_T **mp_ptr,
-                  int *local_ptr, int *rhs_lua)
+char *check_map(char *keys, int mode, int exact, int ign_mod, int abbr, mapblock_T **mp_ptr,
+                int *local_ptr, int *rhs_lua)
 {
   int len, minlen;
   mapblock_T *mp;
   *rhs_lua = LUA_NOREF;
 
-  len = (int)STRLEN(keys);
+  len = (int)strlen(keys);
   for (int local = 1; local >= 0; local--) {
     // loop over all hash lists
     for (int hash = 0; hash < 256; hash++) {
@@ -1970,7 +1970,7 @@ char_u *check_map(char_u *keys, int mode, int exact, int ign_mod, int abbr, mapb
               *local_ptr = local;
             }
             *rhs_lua = mp->m_luaref;
-            return mp->m_luaref == LUA_NOREF ? (char_u *)mp->m_str : NULL;
+            return mp->m_luaref == LUA_NOREF ? mp->m_str : NULL;
           }
         }
       }
@@ -2104,7 +2104,8 @@ static void get_maparg(typval_T *argvars, typval_T *rettv, int exact)
   mapblock_T *mp = NULL;
   int buffer_local;
   LuaRef rhs_lua;
-  char_u *rhs = check_map(keys_simplified, mode, exact, false, abbr, &mp, &buffer_local, &rhs_lua);
+  char *rhs = check_map((char *)keys_simplified, mode, exact, false, abbr, &mp, &buffer_local,
+                        &rhs_lua);
   if (did_simplify) {
     // When the lhs is being simplified the not-simplified keys are
     // preferred for printing, like in do_map().
@@ -2112,7 +2113,7 @@ static void get_maparg(typval_T *argvars, typval_T *rettv, int exact)
                             strlen(keys),
                             &alt_keys_buf, flags | REPTERM_NO_SIMPLIFY, NULL,
                             CPO_TO_CPO_FLAGS);
-    rhs = check_map((char_u *)alt_keys_buf, mode, exact, false, abbr, &mp, &buffer_local, &rhs_lua);
+    rhs = check_map(alt_keys_buf, mode, exact, false, abbr, &mp, &buffer_local, &rhs_lua);
   }
 
   if (!get_dict) {
@@ -2121,7 +2122,7 @@ static void get_maparg(typval_T *argvars, typval_T *rettv, int exact)
       if (*rhs == NUL) {
         rettv->vval.v_string = xstrdup("<Nop>");
       } else {
-        rettv->vval.v_string = str2special_save((char *)rhs, false, false);
+        rettv->vval.v_string = str2special_save(rhs, false, false);
       }
     } else if (rhs_lua != LUA_NOREF) {
       rettv->vval.v_string = nlua_funcref_str(mp->m_luaref);

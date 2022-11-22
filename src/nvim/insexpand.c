@@ -1463,12 +1463,12 @@ static void ins_compl_files(int count, char **files, int thesaurus, int flags, r
 
     // Read dictionary file line by line.
     // Check each line for a match.
-    while (!got_int && !compl_interrupted && !vim_fgets(buf, LSIZE, fp)) {
+    while (!got_int && !compl_interrupted && !vim_fgets((char *)buf, LSIZE, fp)) {
       ptr = buf;
       while (vim_regexec(regmatch, (char *)buf, (colnr_T)(ptr - buf))) {
         ptr = (char_u *)regmatch->startp[0];
         if (ctrl_x_mode_line_or_eval()) {
-          ptr = find_line_end(ptr);
+          ptr = (char_u *)find_line_end((char *)ptr);
         } else {
           ptr = find_word_end(ptr);
         }
@@ -1529,12 +1529,13 @@ char_u *find_word_end(char_u *ptr)
 }
 
 /// Find the end of the line, omitting CR and NL at the end.
-/// Returns a pointer to just after the line.
-static char_u *find_line_end(char_u *ptr)
+///
+/// @return  a pointer to just after the line.
+static char *find_line_end(char *ptr)
 {
-  char_u *s;
+  char *s;
 
-  s = ptr + STRLEN(ptr);
+  s = ptr + strlen(ptr);
   while (s > ptr && (s[-1] == CAR || s[-1] == NL)) {
     s--;
   }

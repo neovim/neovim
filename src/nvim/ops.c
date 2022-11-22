@@ -80,7 +80,7 @@ struct block_def {
   int startspaces;              // 'extra' cols before first char
   int endspaces;                // 'extra' cols after last char
   int textlen;                  // chars in block
-  char_u *textstart;       // pointer to 1st char (partially) in block
+  char *textstart;              // pointer to 1st char (partially) in block
   colnr_T textcol;              // index of chars (partially) in block
   colnr_T start_vcol;           // start col of 1st char wholly inside block
   colnr_T end_vcol;             // start col of 1st char wholly after block
@@ -90,7 +90,7 @@ struct block_def {
   int pre_whitesp;              // screen cols of ws before block
   int pre_whitesp_c;            // chars of ws before block
   colnr_T end_char_vcols;       // number of vcols of post-block char
-  colnr_T start_char_vcols;       // number of vcols of pre-block char
+  colnr_T start_char_vcols;     // number of vcols of pre-block char
 };
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
@@ -358,7 +358,7 @@ static void shift_block(oparg_T *oap, int amount)
     return;   // multiplication overflow
   }
 
-  char_u *const oldp = (char_u *)get_cursor_line_ptr();
+  char *const oldp = get_cursor_line_ptr();
 
   int startcol, oldlen, newlen;
 
@@ -369,9 +369,9 @@ static void shift_block(oparg_T *oap, int amount)
     //  4. Construct new string
     total += bd.pre_whitesp;    // all virtual WS up to & incl a split TAB
     colnr_T ws_vcol = bd.start_vcol - bd.pre_whitesp;
-    char_u *old_textstart = bd.textstart;
+    char *old_textstart = bd.textstart;
     if (bd.startspaces) {
-      if (utfc_ptr2len((char *)bd.textstart) == 1) {
+      if (utfc_ptr2len(bd.textstart) == 1) {
         bd.textstart++;
       } else {
         ws_vcol = 0;
@@ -382,13 +382,13 @@ static void shift_block(oparg_T *oap, int amount)
     // TODO(vim): is passing bd.textstart for start of the line OK?
     chartabsize_T cts;
     init_chartabsize_arg(&cts, curwin, curwin->w_cursor.lnum,
-                         bd.start_vcol, (char *)bd.textstart, (char *)bd.textstart);
+                         bd.start_vcol, bd.textstart, bd.textstart);
     while (ascii_iswhite(*cts.cts_ptr)) {
       incr = lbr_chartabsize_adv(&cts);
       total += incr;
       cts.cts_vcol += incr;
     }
-    bd.textstart = (char_u *)cts.cts_ptr;
+    bd.textstart = cts.cts_ptr;
     bd.start_vcol = cts.cts_vcol;
     clear_chartabsize_arg(&cts);
 
@@ -403,7 +403,7 @@ static void shift_block(oparg_T *oap, int amount)
     // if we're splitting a TAB, allow for it
     int col_pre = bd.pre_whitesp_c - (bd.startspaces != 0);
     bd.textcol -= col_pre;
-    const int len = (int)STRLEN(bd.textstart) + 1;
+    const int len = (int)strlen(bd.textstart) + 1;
     int col = bd.textcol + i + j + len;
     assert(col >= 0);
     newp = (char_u *)xmalloc((size_t)col);
@@ -419,14 +419,14 @@ static void shift_block(oparg_T *oap, int amount)
   } else {  // left
     colnr_T destination_col;      // column to which text in block will
                                   // be shifted
-    char_u *verbatim_copy_end;    // end of the part of the line which is
+    char *verbatim_copy_end;      // end of the part of the line which is
                                   // copied verbatim
     colnr_T verbatim_copy_width;  // the (displayed) width of this part
                                   // of line
     size_t fill;                  // nr of spaces that replace a TAB
     size_t new_line_len;          // the length of the line after the
                                   // block shift
-    char *non_white = (char *)bd.textstart;
+    char *non_white = bd.textstart;
 
     // Firstly, let's find the first non-whitespace character that is
     // displayed after the block's start column and the character's column
@@ -446,7 +446,7 @@ static void shift_block(oparg_T *oap, int amount)
 
     chartabsize_T cts;
     init_chartabsize_arg(&cts, curwin, curwin->w_cursor.lnum,
-                         non_white_col, (char *)bd.textstart, non_white);
+                         non_white_col, bd.textstart, non_white);
     while (ascii_iswhite(*cts.cts_ptr)) {
       incr = lbr_chartabsize_adv(&cts);
       cts.cts_vcol += incr;
@@ -475,7 +475,7 @@ static void shift_block(oparg_T *oap, int amount)
       verbatim_copy_width -= bd.start_char_vcols;
     }
     init_chartabsize_arg(&cts, curwin, 0, verbatim_copy_width,
-                         (char *)bd.textstart, (char *)verbatim_copy_end);
+                         bd.textstart, verbatim_copy_end);
     while (cts.cts_vcol < destination_col) {
       incr = lbr_chartabsize(&cts);
       if (cts.cts_vcol + incr > destination_col) {
@@ -485,7 +485,7 @@ static void shift_block(oparg_T *oap, int amount)
       MB_PTR_ADV(cts.cts_ptr);
     }
     verbatim_copy_width = cts.cts_vcol;
-    verbatim_copy_end = (char_u *)cts.cts_ptr;
+    verbatim_copy_end = cts.cts_ptr;
     clear_chartabsize_arg(&cts);
 
     // If "destination_col" is different from the width of the initial
@@ -504,7 +504,7 @@ static void shift_block(oparg_T *oap, int amount)
 
     newp = (char_u *)xmalloc(new_line_len);
     startcol = (int)verbatim_diff;
-    oldlen = bd.textcol + (int)(non_white - (char *)bd.textstart) - (int)verbatim_diff;
+    oldlen = bd.textcol + (int)(non_white - bd.textstart) - (int)verbatim_diff;
     newlen = (int)fill;
     memmove(newp, oldp, verbatim_diff);
     memset(newp + verbatim_diff, ' ', fill);
@@ -2095,7 +2095,7 @@ void op_tilde(oparg_T *oap)
       for (;;) {
         did_change |= swapchars(oap->op_type, &pos,
                                 pos.lnum == oap->end.lnum ? oap->end.col + 1 :
-                                (int)STRLEN(ml_get_pos(&pos)));
+                                (int)strlen(ml_get_pos(&pos)));
         if (ltoreq(oap->end, pos) || inc(&pos) == -1) {
           break;
         }
@@ -2138,7 +2138,7 @@ static int swapchars(int op_type, pos_T *pos, int length)
   int did_change = 0;
 
   for (int todo = length; todo > 0; todo--) {
-    const int len = utfc_ptr2len((char *)ml_get_pos(pos));
+    const int len = utfc_ptr2len(ml_get_pos(pos));
 
     // we're counting bytes, not characters
     if (len > 0) {
@@ -2727,7 +2727,7 @@ static void op_yank_reg(oparg_T *oap, bool message, yankreg_T *reg, bool append)
       } else {
         bd.textlen = endcol - startcol + oap->inclusive;
       }
-      bd.textstart = (char_u *)p + startcol;
+      bd.textstart = p + startcol;
       yank_copy_line(reg, &bd, y_idx, false);
       break;
     }
@@ -2838,7 +2838,7 @@ static void yank_copy_line(yankreg_T *reg, struct block_def *bd, size_t y_idx,
     int s = bd->textlen + bd->endspaces;
 
     while (s > 0 && ascii_iswhite(*(bd->textstart + s - 1))) {
-      s = s - utf_head_off((char *)bd->textstart, (char *)bd->textstart + s - 1) - 1;
+      s = s - utf_head_off(bd->textstart, bd->textstart + s - 1) - 1;
       pnew--;
     }
   }
@@ -4346,7 +4346,7 @@ static void block_prep(oparg_T *oap, struct block_def *bdp, linenr_T lnum, bool 
     bdp->textlen = (int)(pend - pstart);
   }
   bdp->textcol = (colnr_T)(pstart - line);
-  bdp->textstart = (char_u *)pstart;
+  bdp->textstart = pstart;
   restore_lbr(lbr_saved);
 }
 
@@ -5403,7 +5403,7 @@ void cursor_pos_info(dict_T *dict)
           virtual_op = virtual_active();
           block_prep(&oparg, &bd, lnum, false);
           virtual_op = kNone;
-          s = (char *)bd.textstart;
+          s = bd.textstart;
           len = (long)bd.textlen;
           break;
         case 'V':
@@ -6085,7 +6085,7 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
 
     // Include the trailing byte of a multi-byte char.
     if (oap->inclusive) {
-      const int l = utfc_ptr2len((char *)ml_get_pos(&oap->end));
+      const int l = utfc_ptr2len(ml_get_pos(&oap->end));
       if (l > 1) {
         oap->end.col += l - 1;
       }

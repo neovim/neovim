@@ -1217,7 +1217,7 @@ static void shada_read(ShaDaReadDef *const sd_reader, const int flags)
           .end = cur_entry.data.search_pattern.place_cursor_at_end,
           .off = cur_entry.data.search_pattern.offset,
         },
-        .pat = (char_u *)cur_entry.data.search_pattern.pat,
+        .pat = cur_entry.data.search_pattern.pat,
         .additional_data = cur_entry.data.search_pattern.additional_data,
         .timestamp = cur_entry.timestamp,
       };
@@ -2379,7 +2379,7 @@ static inline void add_search_pattern(PossiblyFreedShadaEntry *const ret_pse,
             .is_substitute_pattern = is_substitute_pattern,
             .highlighted = ((is_substitute_pattern ^ search_last_used)
                             && search_highlighted),
-            .pat = (char *)pat.pat,
+            .pat = pat.pat,
             .additional_data = pat.additional_data,
             .search_backward = (!is_substitute_pattern && pat.off.dir == '?'),
           }

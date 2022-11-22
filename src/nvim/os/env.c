@@ -554,7 +554,7 @@ char *expand_env_save(char *src)
 char_u *expand_env_save_opt(char_u *src, bool one)
 {
   char_u *p = xmalloc(MAXPATHL);
-  expand_env_esc(src, p, MAXPATHL, false, one, NULL);
+  expand_env_esc((char *)src, (char *)p, MAXPATHL, false, one, NULL);
   return p;
 }
 
@@ -568,7 +568,7 @@ char_u *expand_env_save_opt(char_u *src, bool one)
 /// @param dstlen     Maximum length of the result
 void expand_env(char *src, char *dst, int dstlen)
 {
-  expand_env_esc((char_u *)src, (char_u *)dst, dstlen, false, false, NULL);
+  expand_env_esc(src, dst, dstlen, false, false, NULL);
 }
 
 /// Expand environment variable with path name and escaping.
@@ -580,34 +580,34 @@ void expand_env(char *src, char *dst, int dstlen)
 /// @param esc        Escape spaces in expanded variables
 /// @param one        `srcp` is a single filename
 /// @param prefix     Start again after this (can be NULL)
-void expand_env_esc(char_u *restrict srcp, char_u *restrict dst, int dstlen, bool esc, bool one,
-                    char_u *prefix)
+void expand_env_esc(char *restrict srcp, char *restrict dst, int dstlen, bool esc, bool one,
+                    char *prefix)
   FUNC_ATTR_NONNULL_ARG(1, 2)
 {
-  char_u *tail;
-  char_u *var;
+  char *tail;
+  char *var;
   bool copy_char;
   bool mustfree;  // var was allocated, need to free it later
   bool at_start = true;  // at start of a name
 
-  int prefix_len = (prefix == NULL) ? 0 : (int)STRLEN(prefix);
+  int prefix_len = (prefix == NULL) ? 0 : (int)strlen(prefix);
 
-  char *src = skipwhite((char *)srcp);
+  char *src = skipwhite(srcp);
   dstlen--;  // leave one char space for "\,"
   while (*src && dstlen > 0) {
     // Skip over `=expr`.
     if (src[0] == '`' && src[1] == '=') {
-      var = (char_u *)src;
+      var = src;
       src += 2;
       (void)skip_expr(&src);
       if (*src == '`') {
         src++;
       }
-      size_t len = (size_t)(src - (char *)var);
+      size_t len = (size_t)(src - var);
       if (len > (size_t)dstlen) {
         len = (size_t)dstlen;
       }
-      memcpy((char *)dst, (char *)var, len);
+      memcpy(dst, var, len);
       dst += len;
       dstlen -= (int)len;
       continue;
@@ -620,7 +620,7 @@ void expand_env_esc(char_u *restrict srcp, char_u *restrict dst, int dstlen, boo
       // The variable name is copied into dst temporarily, because it may
       // be a string in read-only memory and a NUL needs to be appended.
       if (*src != '~') {  // environment var
-        tail = (char_u *)src + 1;
+        tail = src + 1;
         var = dst;
         int c = dstlen - 1;
 
@@ -649,7 +649,7 @@ void expand_env_esc(char_u *restrict srcp, char_u *restrict dst, int dstlen, boo
           }
 #endif
         *var = NUL;
-        var = (char_u *)vim_getenv((char *)dst);
+        var = vim_getenv(dst);
         mustfree = true;
 #if defined(UNIX)
       }
@@ -657,12 +657,12 @@ void expand_env_esc(char_u *restrict srcp, char_u *restrict dst, int dstlen, boo
       } else if (src[1] == NUL  // home directory
                  || vim_ispathsep(src[1])
                  || vim_strchr(" ,\t\n", src[1]) != NULL) {
-        var = (char_u *)homedir;
-        tail = (char_u *)src + 1;
+        var = homedir;
+        tail = src + 1;
       } else {  // user directory
 #if defined(UNIX)
         // Copy ~user to dst[], so we can put a NUL after it.
-        tail = (char_u *)src;
+        tail = src;
         var = dst;
         int c = dstlen - 1;
         while (c-- > 0
@@ -675,15 +675,15 @@ void expand_env_esc(char_u *restrict srcp, char_u *restrict dst, int dstlen, boo
         // Get the user directory. If this fails the shell is used to expand
         // ~user, which is slower and may fail on old versions of /bin/sh.
         var = (*dst == NUL) ? NULL
-                            : (char_u *)os_get_userdir((char *)dst + 1);
+                            : os_get_userdir(dst + 1);
         mustfree = true;
         if (var == NULL) {
           expand_T xpc;
 
           ExpandInit(&xpc);
           xpc.xp_context = EXPAND_FILES;
-          var = (char_u *)ExpandOne(&xpc, (char *)dst, NULL,
-                                    WILD_ADD_SLASH|WILD_SILENT, WILD_EXPAND_FREE);
+          var = ExpandOne(&xpc, dst, NULL,
+                          WILD_ADD_SLASH|WILD_SILENT, WILD_EXPAND_FREE);
           mustfree = true;
         }
 #else
@@ -710,8 +710,8 @@ void expand_env_esc(char_u *restrict srcp, char_u *restrict dst, int dstlen, boo
 
       // If "var" contains white space, escape it with a backslash.
       // Required for ":e ~/tt" when $HOME includes a space.
-      if (esc && var != NULL && strpbrk((char *)var, " \t") != NULL) {
-        char_u *p = vim_strsave_escaped(var, (char_u *)" \t");
+      if (esc && var != NULL && strpbrk(var, " \t") != NULL) {
+        char *p = (char *)vim_strsave_escaped((char_u *)var, (char_u *)" \t");
 
         if (mustfree) {
           xfree(var);
@@ -721,13 +721,13 @@ void expand_env_esc(char_u *restrict srcp, char_u *restrict dst, int dstlen, boo
       }
 
       if (var != NULL && *var != NUL
-          && (STRLEN(var) + STRLEN(tail) + 1 < (unsigned)dstlen)) {
+          && (strlen(var) + strlen(tail) + 1 < (unsigned)dstlen)) {
         STRCPY(dst, var);
-        dstlen -= (int)STRLEN(var);
-        int c = (int)STRLEN(var);
+        dstlen -= (int)strlen(var);
+        int c = (int)strlen(var);
         // if var[] ends in a path separator and tail[] starts
         // with it, skip a character
-        if (after_pathsep((char *)dst, (char *)dst + c)
+        if (after_pathsep(dst, dst + c)
 #if defined(BACKSLASH_IN_FILENAME)
             && dst[-1] != ':'
 #endif
@@ -735,7 +735,7 @@ void expand_env_esc(char_u *restrict srcp, char_u *restrict dst, int dstlen, boo
           tail++;
         }
         dst += c;
-        src = (char *)tail;
+        src = tail;
         copy_char = false;
       }
       if (mustfree) {
@@ -749,17 +749,17 @@ void expand_env_esc(char_u *restrict srcp, char_u *restrict dst, int dstlen, boo
       // ":edit foo ~ foo".
       at_start = false;
       if (src[0] == '\\' && src[1] != NUL) {
-        *dst++ = (char_u)(*src++);
+        *dst++ = *src++;
         dstlen--;
       } else if ((src[0] == ' ' || src[0] == ',') && !one) {
         at_start = true;
       }
       if (dstlen > 0) {
-        *dst++ = (char_u)(*src++);
+        *dst++ = *src++;
         dstlen--;
 
         if (prefix != NULL
-            && src - prefix_len >= (char *)srcp
+            && src - prefix_len >= srcp
             && STRNCMP(src - prefix_len, prefix, prefix_len) == 0) {
           at_start = true;
         }

@@ -439,7 +439,7 @@ static void may_do_incsearch_highlighting(int firstc, long count, incsearch_stat
       .sa_tm = &tm,
     };
     found = do_search(NULL, firstc == ':' ? '/' : firstc, search_delim,
-                      (char_u *)ccline.cmdbuff + skiplen, count,
+                      ccline.cmdbuff + skiplen, count,
                       search_flags, &sia);
     ccline.cmdbuff[skiplen + patlen] = next_char;
     emsg_off--;

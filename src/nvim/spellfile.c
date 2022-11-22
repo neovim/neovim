@@ -2086,7 +2086,7 @@ static afffile_T *spell_read_aff(spellinfo_T *spin, char_u *fname)
   hash_init(&aff->af_comp);
 
   // Read all the lines in the file one by one.
-  while (!vim_fgets(rline, MAXLINELEN, fd) && !got_int) {
+  while (!vim_fgets((char *)rline, MAXLINELEN, fd) && !got_int) {
     line_breakcheck();
     lnum++;
 
@@ -3146,14 +3146,14 @@ static int spell_read_dic(spellinfo_T *spin, char_u *fname, afffile_T *affile)
   spin->si_msg_count = 999999;
 
   // Read and ignore the first line: word count.
-  if (vim_fgets(line, MAXLINELEN, fd) || !ascii_isdigit(*skipwhite((char *)line))) {
+  if (vim_fgets((char *)line, MAXLINELEN, fd) || !ascii_isdigit(*skipwhite((char *)line))) {
     semsg(_("E760: No word count in %s"), fname);
   }
 
   // Read all the lines in the file one by one.
   // The words are converted to 'encoding' here, before being added to
   // the hashtable.
-  while (!vim_fgets(line, MAXLINELEN, fd) && !got_int) {
+  while (!vim_fgets((char *)line, MAXLINELEN, fd) && !got_int) {
     line_breakcheck();
     lnum++;
     if (line[0] == '#' || line[0] == '/') {
@@ -3696,7 +3696,7 @@ static int spell_read_wordfile(spellinfo_T *spin, char_u *fname)
   spell_message(spin, (char *)IObuff);
 
   // Read all the lines in the file one by one.
-  while (!vim_fgets(rline, MAXLINELEN, fd) && !got_int) {
+  while (!vim_fgets((char *)rline, MAXLINELEN, fd) && !got_int) {
     line_breakcheck();
     lnum++;
 
@@ -5598,7 +5598,7 @@ void spell_add_word(char_u *word, int len, SpellAddType what, int idx, bool undo
     // since its flags sort before the one with WF_BANNED.
     fd = os_fopen(fname, "r");
     if (fd != NULL) {
-      while (!vim_fgets(line, MAXWLEN * 2, fd)) {
+      while (!vim_fgets((char *)line, MAXWLEN * 2, fd)) {
         fpos = fpos_next;
         fpos_next = ftell(fd);
         if (fpos_next < 0) {
