@@ -1376,7 +1376,12 @@ function M.open_float(opts, ...)
   end
 
   local suffix_opt = if_nil(opts.suffix, function(diagnostic)
-    return diagnostic.code and string.format(' [%s]', diagnostic.code) or ''
+    if diagnostic.code then
+      local hlgroup = floating_highlight_map[diagnostic.severity]
+      return string.format(' [%s]', diagnostic.code), hlgroup
+    else
+      return ''
+    end
   end)
 
   local suffix, suffix_hl_group
