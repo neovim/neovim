@@ -56,7 +56,7 @@ end
 
 local function selected_lines()
   local m = mode()
-  local lines = exec_lua([[return vim.fn.selectedlines()]])
+  local lines = exec_lua([[return vim.fn.visualtext()]])
   eq(m, mode())
   return lines
 end
@@ -85,7 +85,7 @@ local function test_selection(
   end
 end
 
-describe('selectedlines() function', function()
+describe('visualtext() function', function()
   before_each(function()
     clear()
     curbuf('set_lines', 0, 1, true, input)

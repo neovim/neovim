@@ -2721,7 +2721,8 @@ static String block_def_to_string(struct block_def *bd)
   };
 }
 
-void get_selected_lines(typval_T *rettv)
+/// "visualtext()" function
+static void f_visualtext(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
   pos_T p1, p2;
   linenr_T lnum;
@@ -2818,12 +2819,6 @@ void get_selected_lines(typval_T *rettv)
     tv_list_append_allocated_string(rettv->vval.v_list, akt.data);
   }
   virtual_op = kNone;
-}
-
-/// "selectedlines()" function
-static void f_selectedlines(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
-{
-  get_selected_lines(rettv);
 }
 
 /// "getchangelist()" function
