@@ -711,16 +711,17 @@ static void ui_comp_event(UI *ui, char *name, Array args)
   bool handled = false;
 
   map_foreach_value(&ui_event_cbs, event_cb, {
+    err.type = kErrorTypeNone;
+    err.msg = NULL;
     Object res = nlua_call_ref(event_cb->cb, name, args, false, &err);
     if (res.type == kObjectTypeBoolean && res.data.boolean == true) {
       handled = true;
     }
+    if (err.type != kErrorTypeNone) {
+      ELOG("Error while executing ui_comp_event callback: %s", err.msg);
+    }
   })
-  if (err.type != kErrorTypeNone) {
-    ELOG("Error while executing ui_comp_event callback: %s", err.msg);
-  } else {
-    api_clear_error(&err);
-  }
+  api_clear_error(&err);
 
   if (!handled) {
     ui_composed_call_event(name, args);
