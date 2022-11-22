@@ -269,7 +269,7 @@ function module.check_logs()
     table.concat(runtime_errors, ', ')))
 end
 
--- Gets (lowercase) OS name from CMake, uname, or manually check if on Windows
+-- Gets (lowercase) OS name from CMAKE_HOST_SYSTEM_NAME or luv.os_uname
 do
   local platform = nil
   function module.uname()
@@ -277,21 +277,11 @@ do
       return platform
     end
 
-    if os.getenv("SYSTEM_NAME") then  -- From CMAKE_HOST_SYSTEM_NAME.
-      platform = string.lower(os.getenv("SYSTEM_NAME"))
-      return platform
+    platform = os.getenv('SYSTEM_NAME') -- From CMAKE_HOST_SYSTEM_NAME
+    if not platform or platform == '' then
+      platform = luv.os_uname().sysname
     end
-
-    local status, f = pcall(module.popen_r, 'uname', '-s')
-    if status then
-      platform = string.lower(f:read("*l"))
-      f:close()
-    elseif package.config:sub(1,1) == '\\' then
-      platform = 'windows'
-    else
-      error('unknown platform')
-    end
-    return platform
+    return platform:lower()
   end
 end
 
