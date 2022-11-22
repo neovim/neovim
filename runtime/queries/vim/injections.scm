@@ -1,13 +1,14 @@
 (lua_statement (script (body) @lua))
 (lua_statement (chunk) @lua)
-; (ruby_statement (script (body) @ruby))
-; (ruby_statement (chunk) @ruby)
-; (python_statement (script (body) @python))
-; (python_statement (chunk) @python)
+(ruby_statement (script (body) @ruby))
+(ruby_statement (chunk) @ruby)
+(python_statement (script (body) @python))
+(python_statement (chunk) @python)
+;; If we support perl at some point...
 ;; (perl_statement (script (body) @perl))
 ;; (perl_statement (chunk) @perl)
 
-; (autocmd_statement (pattern) @regex)
+(autocmd_statement (pattern) @regex)
 
 ((set_item
    option: (option_name) @_option
@@ -23,4 +24,5 @@
     "patchexpr" "pex"
     "charconvert" "ccv"))
 
-; (comment) @comment
+(comment) @comment
+(line_continuation_comment) @comment
