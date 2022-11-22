@@ -558,8 +558,6 @@ static const char *list_arg_vars(exarg_T *eap, const char *arg, int *first)
   return arg;
 }
 
-// TODO(ZyX-I): move to eval/ex_cmds
-
 /// Set one item of `:let var = expr` or `:let [v1, v2] = list` to its value
 ///
 /// @param[in]  arg  Start of the variable name.
@@ -769,8 +767,6 @@ void ex_unlet(exarg_T *eap)
   ex_unletlock(eap, eap->arg, 0, do_unlet_var);
 }
 
-// TODO(ZyX-I): move to eval/ex_cmds
-
 /// ":lockvar" and ":unlockvar" commands
 void ex_lockvar(exarg_T *eap)
 {
@@ -786,8 +782,6 @@ void ex_lockvar(exarg_T *eap)
 
   ex_unletlock(eap, arg, deep, do_lock_var);
 }
-
-// TODO(ZyX-I): move to eval/ex_cmds
 
 /// Common parsing logic for :unlet, :lockvar and :unlockvar.
 ///
@@ -852,8 +846,6 @@ static void ex_unletlock(exarg_T *eap, char *argstart, int deep, ex_unletlock_ca
 
   eap->nextcmd = check_nextcmd(arg);
 }
-
-// TODO(ZyX-I): move to eval/ex_cmds
 
 /// Unlet a variable indicated by `lp`.
 ///
@@ -944,8 +936,6 @@ static int do_unlet_var(lval_T *lp, char *name_end, exarg_T *eap, int deep FUNC_
   return ret;
 }
 
-// TODO(ZyX-I): move to eval/ex_cmds
-
 /// unlet a variable
 ///
 /// @param[in]  name  Variable name to unlet.
@@ -1015,8 +1005,6 @@ int do_unlet(const char *const name, const size_t name_len, const bool forceit)
   semsg(_("E108: No such variable: \"%s\""), name);
   return FAIL;
 }
-
-// TODO(ZyX-I): move to eval/ex_cmds
 
 /// Lock or unlock variable indicated by `lp`.
 ///
@@ -1463,8 +1451,6 @@ bool var_check_fixed(const int flags, const char *name, size_t name_len)
   return false;
 }
 
-// TODO(ZyX-I): move to eval/expressions
-
 /// Check if name is a valid name to assign funcref to
 ///
 /// @param[in]  name  Possible function/funcref name.
@@ -1492,8 +1478,6 @@ bool var_wrong_func_name(const char *const name, const bool new_var)
   }
   return false;
 }
-
-// TODO(ZyX-I): move to eval/expressions
 
 /// Check if a variable name is valid
 ///

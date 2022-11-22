@@ -2960,8 +2960,6 @@ void ex_return(exarg_T *eap)
   }
 }
 
-// TODO(ZyX-I): move to eval/ex_cmds
-
 /// ":1,25call func(arg1, arg2)" function call.
 void ex_call(exarg_T *eap)
 {
