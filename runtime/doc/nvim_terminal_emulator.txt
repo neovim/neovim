@@ -27,12 +27,12 @@ There are several ways to create a terminal buffer:
 
 - Run the |:terminal| command.
 - Call the |nvim_open_term()| or |termopen()| function.
-- Edit a "term://" buffer. Examples: >
+- Edit a "term://" buffer. Examples: >vim
     :edit term://bash
     :vsplit term://top
 
 <    Note: To open a "term://" buffer from an autocmd, the |autocmd-nested|
-    modifier is required. >
+    modifier is required. >vim
         autocmd VimEnter * ++nested split term://sh
 <    (This is only mentioned for reference; use |:terminal| instead.)
 
@@ -62,13 +62,13 @@ Terminal-mode forces these local options:
 Terminal-mode has its own |:tnoremap| namespace for mappings, this can be used
 to automate any terminal interaction.
 
-To map <Esc> to exit terminal-mode: >
+To map <Esc> to exit terminal-mode: >vim
     :tnoremap <Esc> <C-\><C-n>
 
-To simulate |i_CTRL-R| in terminal-mode: >
+To simulate |i_CTRL-R| in terminal-mode: >vim
     :tnoremap <expr> <C-R> '<C-\><C-N>"'.nr2char(getchar()).'pi'
 
-To use `ALT+{h,j,k,l}` to navigate windows from any mode: >
+To use `ALT+{h,j,k,l}` to navigate windows from any mode: >vim
     :tnoremap <A-h> <C-\><C-N><C-w>h
     :tnoremap <A-j> <C-\><C-N><C-w>j
     :tnoremap <A-k> <C-\><C-N><C-w>k
@@ -109,7 +109,7 @@ global configuration.
 - 'list' is disabled
 - 'wrap' is disabled
 
-You can change the defaults with a TermOpen autocommand: >
+You can change the defaults with a TermOpen autocommand: >vim
     au TermOpen * setlocal list
 
 TERMINAL COLORS ~
@@ -117,7 +117,7 @@ TERMINAL COLORS ~
 The `{g,b}:terminal_color_x` variables control the terminal color palette,
 where `x` is the color index between 0 and 255 inclusive.  The variables are
 read during |TermOpen|. The value must be a color name or hexadecimal string.
-Example: >
+Example: >vim
     let g:terminal_color_4 = '#ff0000'
     let g:terminal_color_5 = 'green'
 Only works for RGB UIs (see 'termguicolors'); for 256-color terminals the
@@ -131,7 +131,7 @@ Status Variables				*terminal-status*
 
 Terminal buffers maintain some buffer-local variables and options. The values
 are initialized before TermOpen, so you can use them in a local 'statusline'.
-Example: >
+Example: >vim
     :autocmd TermOpen * setlocal statusline=%{b:term_title}
 
 - *b:term_title*  Terminal title (user-writable), typically displayed in the
@@ -141,10 +141,10 @@ Example: >
   input to the terminal.
 - The |TermClose| event gives the terminal job exit code in the |v:event|
   "status" field. For example, this autocmd closes terminal buffers if the job
-  exited without error: >
+  exited without error: >vim
     autocmd TermClose * if !v:event.status | exe 'bdelete! '..expand('<abuf>') | endif
 
-Use |jobwait()| to check if the terminal job has finished: >
+Use |jobwait()| to check if the terminal job has finished: >vim
     let running = jobwait([&channel], 0)[0] == -1
 
 ==============================================================================
@@ -156,11 +156,11 @@ Vim this also works remotely over an ssh connection.
 
 Starting ~
 							*termdebug-starting*
-Load the plugin with this command: >
+Load the plugin with this command: >vim
 	packadd termdebug
 <							*:Termdebug*
 To start debugging use `:Termdebug` or `:TermdebugCommand` followed by the
-command name, for example: >
+command name, for example: >vim
 	:Termdebug vim
 
 This opens two windows:
@@ -189,16 +189,16 @@ Only one debugger can be active at a time.
 							*:TermdebugCommand*
 If you want to give specific commands to the command being debugged, you can
 use the `:TermdebugCommand` command followed by the command name and
-additional parameters. >
+additional parameters. >vim
 	:TermdebugCommand vim --clean -c ':set nu'
 
 Both the `:Termdebug` and `:TermdebugCommand` support an optional "!" bang
 argument to start the command right away, without pausing at the gdb window
-(and cursor will be in the debugged window).  For example: >
+(and cursor will be in the debugged window).  For example: >vim
 	:TermdebugCommand! vim --clean
 
 To attach gdb to an already running executable or use a core file, pass extra
-arguments.  E.g.: >
+arguments.  E.g.: >vim
 	:Termdebug vim core
 	:Termdebug vim 98343
 
@@ -212,7 +212,7 @@ Start in the Vim "src" directory and build Vim: >
 	% make
 Start Vim: >
 	% ./vim
-Load the termdebug plugin and start debugging Vim: >
+Load the termdebug plugin and start debugging Vim: >vim
 	:packadd termdebug
 	:Termdebug vim
 You should now have three windows:
@@ -223,7 +223,7 @@ You should now have three windows:
 Put focus on the gdb window and type: >
 	break ex_help
 	run
-Vim will start running in the program window. Put focus there and type: >
+Vim will start running in the program window. Put focus there and type: >vim
 	:help gui
 Gdb will run into the ex_help breakpoint.  The source window now shows the
 ex_cmds.c file.  A red "1 " marker will appear in the signcolumn where the
@@ -329,7 +329,7 @@ Other commands ~
 
 Events ~
 							*termdebug-events*
-Four autocommands can be used: >
+Four autocommands can be used: >vim
 	au User TermdebugStartPre  echomsg 'debugging starting'
 	au User TermdebugStartPost echomsg 'debugging started'
 	au User TermdebugStopPre   echomsg 'debugging stopping'
@@ -360,7 +360,7 @@ Customizing ~
 In the past several global variables were used for configuration.  These are
 deprecated and using the g:termdebug_config dictionary is preferred.  When
 g:termdebug_config exists the other global variables will NOT be used.
-The recommended way is to start with an empty dictionary: >
+The recommended way is to start with an empty dictionary: >vim
 	let g:termdebug_config = {}
 
 Then you can add entries to the dictionary as mentioned below.  The
@@ -380,23 +380,23 @@ This works slightly differently:
 - A separate :terminal window will be opened to run the debugged program in.
 
 						*termdebug_use_prompt*
-Prompt mode can be used with: >
+Prompt mode can be used with: >vim
 	let g:termdebug_config['use_prompt'] = 1
-If there is no g:termdebug_config you can use: >
+If there is no g:termdebug_config you can use: >vim
 	let g:termdebug_use_prompt = 1
 <
 						*termdebug_map_K*
-The K key is normally mapped to :Evaluate. If you do not want this use: >
+The K key is normally mapped to :Evaluate. If you do not want this use: >vim
 	let g:termdebug_config['map_K'] = 0
-If there is no g:termdebug_config you can use: >
+If there is no g:termdebug_config you can use: >vim
 	let g:termdebug_map_K = 0
 <
 						*termdebug_disasm_window*
 If you want the Asm window shown by default, set the flag to 1.
-the "disasm_window_height" entry can be used to set the window height: >
+the "disasm_window_height" entry can be used to set the window height: >vim
 	let g:termdebug_config['disasm_window'] = 1
 	let g:termdebug_config['disasm_window_height'] = 15
-If there is no g:termdebug_config you can use: >
+If there is no g:termdebug_config you can use: >vim
 	let g:termdebug_disasm_window = 15
 Any value greater than 1 will set the Asm window height to that value.
 
@@ -418,34 +418,34 @@ GDB command ~
 							*g:termdebugger*
 To change the name of the gdb command, set "debugger" entry in
 g:termdebug_config or the "g:termdebugger" variable before invoking
-`:Termdebug`: >
+`:Termdebug`: >vim
 	let g:termdebug_config['command'] = "mygdb"
-If there is no g:termdebug_config you can use: >
+If there is no g:termdebug_config you can use: >vim
 	let g:termdebugger = "mygdb"
 
-If the command needs an argument use a List: >
+If the command needs an argument use a List: >vim
 	let g:termdebug_config['command'] = ['rr', 'replay', '--']
-If there is no g:termdebug_config you can use: >
+If there is no g:termdebug_config you can use: >vim
 	let g:termdebugger = ['rr', 'replay', '--']
 
 To not use neovim floating windows for previewing variable evaluation, set the
-`g:termdebug_useFloatingHover` variable like this: >
+`g:termdebug_useFloatingHover` variable like this: >vim
 	let g:termdebug_useFloatingHover = 0
 
 If you are a mouse person, you can also define a mapping using your right
 click to one of the terminal command like evaluate the variable under the
-cursor: >
+cursor: >vim
       	nnoremap <RightMouse> :Evaluate<CR>
-or set/unset a breakpoint: >
+or set/unset a breakpoint: >vim
 	nnoremap <RightMouse> :Break<CR>
 
 
 Several arguments will be added to make gdb work well for the debugger.
-If you want to modify them, add a function to filter the argument list: >
+If you want to modify them, add a function to filter the argument list: >vim
 	let g:termdebug_config['command_filter'] = MyDebugFilter
 
 If you do not want the arguments to be added, but you do need to set the
-"pty", use a function to add the necessary arguments: >
+"pty", use a function to add the necessary arguments: >vim
 	let g:termdebug_config['command_add_args'] = MyAddArguments
 The function will be called with the list of arguments so far, and a second
 argument that is the name of the pty.
@@ -475,7 +475,7 @@ When 'background' is "dark":
 Shortcuts ~
 							*termdebug_shortcuts*
 You can define your own shortcuts (mappings) to control gdb, that can work in
-any window, using the TermDebugSendCommand() function.  Example: >
+any window, using the TermDebugSendCommand() function.  Example: >vim
 	map ,w :call TermDebugSendCommand('where')<CR>
 The argument is the gdb command.
 
@@ -487,18 +487,18 @@ these entries to the popup menu:
 	Set breakpoint		`:Break`
 	Clear breakpoint	`:Clear`
 	Evaluate		`:Evaluate`
-If you don't want this then disable it with: >
+If you don't want this then disable it with: >vim
 	let g:termdebug_config['popup'] = 0
-If there is no g:termdebug_config you can use: >
+If there is no g:termdebug_config you can use: >vim
 	let g:termdebug_popup = 0
 
 
 Vim window width ~
 							*termdebug_wide*
 To change the width of the Vim window when debugging starts and use a vertical
-split: >
+split: >vim
 	let g:termdebug_config['wide'] = 163
-If there is no g:termdebug_config you can use: >
+If there is no g:termdebug_config you can use: >vim
 	let g:termdebug_wide = 163
 
 This will set 'columns' to 163 when `:Termdebug` is used.  The value is

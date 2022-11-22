@@ -51,7 +51,7 @@ Connecting to the socket is the easiest way a programmer can test the API,
 which can be done through any msgpack-rpc client library or full-featured
 |api-client|. Here's a Ruby script that prints "hello world!" in the current
 Nvim instance:
->
+>ruby
     #!/usr/bin/env ruby
     # Requires msgpack-rpc: gem install msgpack-rpc
     #
@@ -79,7 +79,7 @@ functions can be called interactively:
 <
 You can also embed Nvim via |jobstart()|, and communicate using |rpcrequest()|
 and |rpcnotify()|:
->
+>vim
     let nvim = jobstart(['nvim', '--embed'], {'rpc': v:true})
     echo rpcrequest(nvim, 'nvim_eval', '"Hello " . "world!"')
     call jobstop(nvim)
@@ -201,9 +201,9 @@ any of these approaches:
      Example (requires Python "pyyaml" and "msgpack-python" modules): >
      nvim --api-info | python -c 'import msgpack, sys, yaml; yaml.dump(msgpack.unpackb(sys.stdin.buffer.read()), sys.stdout)'
 <
-  3. Use the |api_info()| Vimscript function. >
+  3. Use the |api_info()| Vimscript function. >vim
      :lua print(vim.inspect(vim.fn.api_info()))
-<     Example using |filter()| to exclude non-deprecated API functions: >
+<     Example using |filter()| to exclude non-deprecated API functions: >vim
      :new|put =map(filter(api_info().functions, '!has_key(v:val,''deprecated_since'')'), 'v:val.name')
 
 ==============================================================================
@@ -361,10 +361,10 @@ callbacks. These callbacks are called frequently in various contexts;
 receive parameters ("lines", {buf}, {changedtick}, {firstline}, {lastline},
 {new_lastline}, {old_byte_size} [, {old_utf32_size}, {old_utf16_size}]).
 Unlike remote channel events the text contents are not passed. The new text can
-be accessed inside the callback as
+be accessed inside the callback as >lua
 
-    `vim.api.nvim_buf_get_lines(buf, firstline, new_lastline, true)`
-
+    vim.api.nvim_buf_get_lines(buf, firstline, new_lastline, true)
+<
 {old_byte_size} is the total size of the replaced region {firstline} to
 {lastline} in bytes, including the final newline after {lastline}. if
 `utf_sizes` is set to true in |nvim_buf_attach()| keyword args, then the
@@ -400,7 +400,7 @@ performance can be improved by calling |nvim_buf_add_highlight()| as an
 asynchronous notification, after first (synchronously) requesting a source id.
 
 Example using the Python API client (|pynvim|):
->
+>python
     src = vim.new_highlight_source()
     buf = vim.current.buffer
     for i in range(5):
@@ -414,7 +414,7 @@ clear highlights from a specific source, in a specific line range or the
 entire buffer by passing in the line range 0, -1 (the latter is the default in
 python as used above).
 
-Example using the API from Vimscript: >
+Example using the API from Vimscript: >vim
 
     call nvim_buf_set_lines(0, 0, 0, v:true, ["test text"])
     let src = nvim_buf_add_highlight(0, 0, "String", 1, 0, 4)
@@ -438,7 +438,7 @@ Two ways to create a floating window:
 To close it use |nvim_win_close()| or a command such as |:close|.
 
 To check whether a window is floating, check whether the `relative` option in
-its config is non-empty: >
+its config is non-empty: >lua
 
     if vim.api.nvim_win_get_config(window_id).relative ~= '' then
       -- window with this window_id is floating
@@ -456,7 +456,7 @@ Currently, floating windows don't support some widgets like scrollbar.
 The output of |:mksession| does not include commands for restoring floating
 windows.
 
-Example: create a float with scratch buffer: >
+Example: create a float with scratch buffer: >vim
 
     let buf = nvim_create_buf(v:false, v:true)
     call nvim_buf_set_lines(buf, 0, -1, v:true, ["test", "text"])
@@ -510,19 +510,20 @@ Let's set an extmark at the first row (row=0) and third column (column=2).
       01 2345678
     0 ex|ample..
         ^ extmark position
-
+<
+>vim
     let g:mark_ns = nvim_create_namespace('myplugin')
     let g:mark_id = nvim_buf_set_extmark(0, g:mark_ns, 0, 2, {})
 <
-We can get the mark by its id: >
+We can get the mark by its id: >vim
 
     echo nvim_buf_get_extmark_by_id(0, g:mark_ns, g:mark_id, {})
-    => [0, 2]
+    " => [0, 2]
 
-We can get all marks in a buffer by |namespace| (or by a range): >
+We can get all marks in a buffer by |namespace| (or by a range): >vim
 
     echo nvim_buf_get_extmarks(0, g:mark_ns, 0, -1, {})
-    => [[1, 0, 2]]
+    " => [[1, 0, 2]]
 
 Deleting all surrounding text does NOT remove an extmark! To remove extmarks
 use |nvim_buf_del_extmark()|. Deleting "x" in our example: >
@@ -530,9 +531,10 @@ use |nvim_buf_del_extmark()|. Deleting "x" in our example: >
       0 12345678
     0 e|ample..
        ^ extmark position
-
+<
+>vim
     echo nvim_buf_get_extmark_by_id(0, g:mark_ns, g:mark_id, {})
-    => [0, 1]
+    " => [0, 1]
 <
     Note: Extmark "gravity" decides how it will shift after a text edit.
           See |nvim_buf_set_extmark()|

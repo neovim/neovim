@@ -38,7 +38,7 @@ All header files should have `#define` guards to prevent multiple inclusion.
 The format of the symbol name should be `NVIM_<DIRECTORY>_<FILE>_H`.
 
     In foo/bar.h:
->
+>c
         #ifndef NVIM_FOO_BAR_H
         #define NVIM_FOO_BAR_H
 
@@ -71,7 +71,7 @@ C99 allows you to declare variables anywhere in a function. Declare them in as
 local a scope as possible, and as close to the first use as possible. This
 makes it easier for the reader to find the declaration and see what type the
 variable is and what it was initialized to. In particular, initialization
-should be used instead of declaration and assignment, e.g. >
+should be used instead of declaration and assignment, e.g. >c
 
     int i;
     i = f();      // BAD: initialization separate from declaration.
@@ -110,7 +110,7 @@ Variable-length arrays can cause hard to detect stack overflows.
 
 Postincrement and Postdecrement ~
 
-Use postfix form (`i++`) in statements. >
+Use postfix form (`i++`) in statements. >c
 
     for (int i = 0; i < 3; i++) { }
     int j = ++i;  // OK: ++i is used as an expression.
@@ -136,7 +136,7 @@ Use `const` pointers whenever possible. Avoid `const` on non-pointer parameter d
     before the "noun" (`int`).
 
     That said, while we encourage putting `const` first, we do not require it.
-    But be consistent with the code around you! >
+    But be consistent with the code around you! >c
 
     void foo(const char *p, int i);
     }
@@ -176,14 +176,14 @@ Type		unsigned    signed
 
 Booleans ~
 
-Use `bool` to represent boolean values. >
+Use `bool` to represent boolean values. >c
 
     int loaded = 1;  // BAD: loaded should have type bool.
 
 
 Conditions ~
 
-Don't use "yoda-conditions". Use at most one assignment per condition. >
+Don't use "yoda-conditions". Use at most one assignment per condition. >c
 
     if (1 == x) {
 
@@ -196,7 +196,7 @@ Function declarations ~
 
 Every function must not have a separate declaration.
 
-Function declarations are created by the gendeclarations.lua script. >
+Function declarations are created by the gendeclarations.lua script. >c
 
     static void f(void);
 
@@ -209,7 +209,7 @@ Function declarations are created by the gendeclarations.lua script. >
 General translation unit layout ~
 
 The definitions of public functions precede the definitions of static
-functions. >
+functions. >c
 
     <HEADER>
 
@@ -230,7 +230,7 @@ if .c file does not contain any static functions.
 Included file name consists of the .c file name without extension, preceded by
 the directory name relative to src/nvim. Name of the file containing static
 functions declarations ends with `.c.generated.h`, `*.h.generated.h` files
-contain only non-static function declarations. >
+contain only non-static function declarations. >c
 
     // src/nvim/foo.c file
     #include <stddef.h>
@@ -274,7 +274,7 @@ comparisons, and structure alignment.
   `#pragma pack()` and `__declspec(align())`.
 
 - Use the `LL` or `ULL` suffixes as needed to create 64-bit constants. For
-  example: >
+  example: >c
 
     int64_t my_value = 0x123456789LL;
     uint64_t my_mask = 3ULL << 48;
@@ -288,7 +288,7 @@ Use `sizeof(varname)` when you take the size of a particular variable.
 `sizeof(varname)` will update appropriately if someone changes the variable
 type either now or later. You may use `sizeof(type)` for code unrelated to any
 particular variable, such as code that manages an external or internal data
-format where a variable of an appropriate C type is not convenient. >
+format where a variable of an appropriate C type is not convenient. >c
 
     Struct data;
     memset(&data, 0, sizeof(data));
@@ -324,7 +324,7 @@ Give as descriptive a name as possible, within reason. Do not worry about
 saving horizontal space as it is far more important to make your code
 immediately understandable by a new reader. Do not use abbreviations that are
 ambiguous or unfamiliar to readers outside your project, and do not abbreviate
-by deleting letters within a word. >
+by deleting letters within a word. >c
 
     int price_count_reader;    // No abbreviation.
     int num_errors;            // "num" is a widespread convention.
@@ -361,7 +361,7 @@ Typedef-ed structs and enums start with a capital letter and have a capital
 letter for each new word, with no underscores: `MyExcitingStruct`.
 
 Non-Typedef-ed structs and enums are all lowercase with underscores between
-words: `struct my_exciting_struct` . >
+words: `struct my_exciting_struct` . >c
 
     struct my_struct {
       ...
@@ -376,7 +376,7 @@ instance: `my_exciting_local_variable`.
 
     Common Variable names ~
 
-    For example: >
+    For example: >c
 
         string table_name;  // OK: uses underscore.
         string tablename;   // OK: all lowercase.
@@ -386,7 +386,7 @@ instance: `my_exciting_local_variable`.
 
     Struct Variables ~
 
-    Data members in structs should be named like regular variables. >
+    Data members in structs should be named like regular variables. >c
 
         struct url_table_properties {
           string name;
@@ -406,7 +406,7 @@ Use a `k` followed by mixed case: `kDaysInAWeek`.
 
 All compile-time constants, whether they are declared locally or globally,
 follow a slightly different naming convention from other variables. Use a `k`
-followed by words with uppercase first letters: >
+followed by words with uppercase first letters: >c
 
     const int kDaysInAWeek = 7;
 
@@ -416,7 +416,7 @@ Function names are all lowercase, with underscores between words. For
 instance: `my_exceptional_function()`. All functions in the same header file
 should have a common prefix.
 
-In `os_unix.h`: >
+In `os_unix.h`: >c
 
     void unix_open(const char *path);
     void unix_user_id(void);
@@ -429,7 +429,7 @@ normal operation.
 
 Enumerator Names ~
 
-Enumerators should be named like constants: `kEnumName`. >
+Enumerators should be named like constants: `kEnumName`. >c
 
     enum url_table_errors {
       kOK = 0,
@@ -440,7 +440,7 @@ Enumerators should be named like constants: `kEnumName`. >
 
 Macro Names ~
 
-They're like this: `MY_MACRO_THAT_SCARES_CPP_DEVELOPERS`. >
+They're like this: `MY_MACRO_THAT_SCARES_CPP_DEVELOPERS`. >c
 
     #define ROUND(x) ...
     #define PI_ROUNDED 5.0
@@ -461,7 +461,7 @@ Nvim uses Doxygen comments.
 
 Comment Style ~
 
-Use the `//`-style syntax only. >
+Use the `//`-style syntax only. >c
 
     // This is a comment spanning
     // multiple lines
@@ -489,7 +489,7 @@ Start each file with a description of its contents.
     mention in the `.c` that the documentation is in the `.h` file.
 
     Do not duplicate comments in both the `.h` and the `.c`. Duplicated
-    comments diverge. >
+    comments diverge. >c
 
     /// A brief description of this file.
     ///
@@ -500,7 +500,7 @@ Start each file with a description of its contents.
 Struct Comments ~
 
 Every struct definition should have accompanying comments that describes what
-it is for and how it should be used. >
+it is for and how it should be used. >c
 
     /// Window info stored with a buffer.
     ///
@@ -522,7 +522,7 @@ it is for and how it should be used. >
     };
 
 If the field comments are short, you can also put them next to the field. But
-be consistent within one struct, and follow the necessary doxygen style. >
+be consistent within one struct, and follow the necessary doxygen style. >c
 
     struct wininfo_S {
       WinInfo *wi_next;  ///< Next entry or NULL for last entry.
@@ -560,8 +560,7 @@ of a function describe operation.
     - If the function allocates memory that the caller must free.
     - Whether any of the arguments can be a null pointer.
     - If there are any performance implications of how a function is used.
-    - If the function is re-entrant. What are its synchronization assumptions?
-      >
+    - If the function is re-entrant. What are its synchronization assumptions? >c
     /// Brief description of the function.
     ///
     /// Detailed description.
@@ -589,7 +588,7 @@ of a function describe operation.
     Note you should not just repeat the comments given with the function
     declaration, in the `.h` file or wherever. It's okay to recapitulate
     briefly what the function does, but the focus of the comments should be on
-    how it does it. >
+    how it does it. >c
 
     // Note that we don't use Doxygen comments here.
     Iterator *get_iterator(void *arg1, void *arg2)
@@ -607,7 +606,7 @@ comments are required.
     Global Variables ~
 
     All global variables should have a comment describing what they are and
-    what they are used for. For example: >
+    what they are used for. For example: >c
 
         /// The total number of tests cases that we run
         /// through in this regression test.
@@ -623,7 +622,7 @@ interesting, or important parts of your code.
 
     Also, lines that are non-obvious should get a comment at the end of the
     line. These end-of-line comments should be separated from the code by 2
-    spaces. Example: >
+    spaces. Example: >c
 
         // If we have enough memory, mmap the data portion too.
         mmap_budget = max<int64>(0, mmap_budget - index_->length());
@@ -636,7 +635,7 @@ interesting, or important parts of your code.
     function returns.
 
     If you have several comments on subsequent lines, it can often be more
-    readable to line them up: >
+    readable to line them up: >c
 
         do_something();                      // Comment here so the comments line up.
         do_something_else_that_is_longer();  // Comment here so there are two spaces between
@@ -652,7 +651,7 @@ interesting, or important parts of your code.
     When you pass in a null pointer, boolean, or literal integer values to
     functions, you should consider adding a comment about what they are, or
     make your code self-documenting by using constants. For example, compare:
-    >
+    >c
 
         bool success = calculate_something(interesting_value,
                                            10,
@@ -660,7 +659,7 @@ interesting, or important parts of your code.
                                            NULL);  // What are these arguments??
 <
 
-    versus: >
+    versus: >c
 
         bool success = calculate_something(interesting_value,
                                            10,     // Default base value.
@@ -668,7 +667,7 @@ interesting, or important parts of your code.
                                            NULL);  // No callback.
 <
 
-    Or alternatively, constants or self-describing variables: >
+    Or alternatively, constants or self-describing variables: >c
 
         const int kDefaultBaseValue = 10;
         const bool kFirstTimeCalling = false;
@@ -683,7 +682,7 @@ interesting, or important parts of your code.
 
     Note that you should never describe the code itself. Assume that the
     person reading the code knows C better than you do, even though he or she
-    does not know what you are trying to do: >
+    does not know what you are trying to do: >c
 
         // Now go through the b array and make sure that if i occurs,
         // the next element is i+1.
@@ -718,7 +717,7 @@ about the problem referenced by the `TODO`. The main purpose is to have a
 consistent `TODO` format that can be searched to find the person who can
 provide more details upon request. A `TODO` is not a commitment that the
 person referenced will fix the problem. Thus when you create a `TODO`, it is
-almost always your name that is given. >
+almost always your name that is given. >c
 
     // TODO(kl@gmail.com): Use a "*" here for concatenation operator.
     // TODO(Zeke): change this to use relations.
@@ -786,19 +785,19 @@ Function Calls ~
 
 On one line if it fits; otherwise, wrap arguments at the parenthesis.
 
-Function calls have the following format: >
+Function calls have the following format: >c
 
     bool retval = do_something(argument1, argument2, argument3);
 
 If the arguments do not all fit on one line, they should be broken up onto
 multiple lines, with each subsequent line aligned with the first argument. Do
-not add spaces after the open paren or before the close paren: >
+not add spaces after the open paren or before the close paren: >c
 
     bool retval = do_something(averyveryveryverylongargument1,
                                argument2, argument3);
 
 If the function has many arguments, consider having one per line if this makes
-the code more readable: >
+the code more readable: >c
 
     bool retval = do_something(argument1,
                                argument2,
@@ -806,7 +805,7 @@ the code more readable: >
                                argument4);
 
 Arguments may optionally all be placed on subsequent lines, with one line per
-argument: >
+argument: >c
 
     if (...) {
       ...
@@ -830,7 +829,7 @@ place but with one space after the `{` and one space before the `}`
 
 If the braced list follows a name (e.g. a type or variable name), format as if
 the `{}` were the parentheses of a function call with that name. If there is
-no name, assume a zero-length name. >
+no name, assume a zero-length name. >c
 
     struct my_struct m = {  // Here, you could also break before {.
         superlongvariablename1,
@@ -847,7 +846,7 @@ Annotate non-trivial fall-through between cases.
 If not conditional on an enumerated value, switch statements should always
 have a `default` case (in the case of an enumerated value, the compiler will
 warn you if any values are not handled). If the default case should never
-execute, simply `assert`: >
+execute, simply `assert`: >c
 
     switch (var) {
       case 0:
@@ -865,7 +864,7 @@ Return Values ~
 Do not needlessly surround the `return` expression with parentheses.
 
 Use parentheses in `return expr`; only where you would use them in `x =
-expr;`. >
+expr;`. >c
 
     return result;
     return (some_long_condition && another_condition);
@@ -879,12 +878,12 @@ Horizontal Whitespace ~
 Use of horizontal whitespace depends on location.
 
     General ~
->
+>c
         int x[] = { 0 };  // Spaces inside braces for braced-init-list.
 <
 
     Variables ~
->
+>c
         int long_variable = 0;  // Don't align assignments.
         int i             = 1;
 
@@ -901,7 +900,7 @@ Use of horizontal whitespace depends on location.
 
 
     Operators ~
->
+>c
         x = 0;            // Assignment operators always have spaces around
                           // them.
         x = -5;           // No spaces separating unary operators and their

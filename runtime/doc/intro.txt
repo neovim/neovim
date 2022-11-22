@@ -408,12 +408,12 @@ the ":map" command.  The rules are:
 The <> notation uses <lt> to escape the special meaning of key names.  Using a
 backslash also works, but only when 'cpoptions' does not include the 'B' flag.
 
-Examples for mapping CTRL-H to the six characters "<Home>": >
+Examples for mapping CTRL-H to the six characters "<Home>": >vim
 	:imap <C-H> \<Home>
 	:imap <C-H> <lt>Home>
 The first one only works when the 'B' flag is not in 'cpoptions'.  The second
 one always works.
-To get a literal "<lt>" in a mapping: >
+To get a literal "<lt>" in a mapping: >vim
 	:map <C-L> <lt>lt>
 
 The notation can be used in a double quoted strings, using "\<" at the start,

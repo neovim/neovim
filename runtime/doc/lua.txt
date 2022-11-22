@@ -361,17 +361,17 @@ Vimscript v:lua interface                                         *v:lua-call*
 
 From Vimscript the special `v:lua` prefix can be used to call Lua functions
 which are global or accessible from global tables. The expression >vim
-    v:lua.func(arg1, arg2)
+    call v:lua.func(arg1, arg2)
 is equivalent to the Lua chunk >lua
     return func(...)
 where the args are converted to Lua values. The expression >vim
-    v:lua.somemod.func(args)
+    call v:lua.somemod.func(args)
 is equivalent to the Lua chunk >lua
     return somemod.func(...)
 
 In addition, functions of packages can be accessed like >vim
-    v:lua.require'mypack'.func(arg1, arg2)
-    v:lua.require'mypack.submod'.func(arg1, arg2)
+    call v:lua.require'mypack'.func(arg1, arg2)
+    call v:lua.require'mypack.submod'.func(arg1, arg2)
 Note: Only single quote form without parens is allowed. Using
 `require"mypack"` or `require('mypack')` as prefixes do NOT work (the latter
 is still valid as a function call of itself, in case require returns a useful
@@ -379,7 +379,7 @@ value).
 
 The `v:lua` prefix may be used to call Lua functions as |method|s. For
 example: >vim
-    arg1->v:lua.somemod.func(arg2)
+    :eval arg1->v:lua.somemod.func(arg2)
 <
 You can use `v:lua` in "func" options like 'tagfunc', 'omnifunc', etc.
 For example consider the following Lua omnifunc handler: >lua
@@ -646,20 +646,19 @@ vim.diff({a}, {b}, {opts})                                        *vim.diff()*
     Run diff on strings {a} and {b}. Any indices returned by this function,
     either directly or via callback arguments, are 1-based.
 
-    Examples: >
-
+    Examples: >lua
         vim.diff('a\n', 'b\nc\n')
-        =>
-        @@ -1 +1,2 @@
-        -a
-        +b
-        +c
+        -- =>
+        -- @@ -1 +1,2 @@
+        -- -a
+        -- +b
+        -- +c
 
         vim.diff('a\n', 'b\nc\n', {result_type = 'indices'})
-        =>
-        {
-            {1, 1, 1, 2}
-        }
+        -- =>
+        -- {
+        --   {1, 1, 1, 2}
+        -- }
 <
     Parameters: ~
       • {a}      First string to compare
@@ -730,13 +729,12 @@ vim.spell.check({str})                                     *vim.spell.check()*
     'spellfile', 'spellcapcheck' and 'spelloptions' which can all be local to
     the buffer. Consider calling this with |nvim_buf_call()|.
 
-    Example: >
-
+    Example: >lua
         vim.spell.check("the quik brown fox")
-        =>
-        {
-            {'quik', 'bad', 4}
-        }
+        -- =>
+        -- {
+        --     {'quik', 'bad', 4}
+        -- }
 <
     Parameters: ~
       • {str}    String to spell check.
@@ -1171,37 +1169,37 @@ offers object-oriented method for adding and removing entries.
     Examples: ~
 
     The following methods of setting a list-style option are equivalent:
-        In Vimscript:
-            `set wildignore=*.o,*.a,__pycache__`
-
-        In Lua using `vim.o`:
-            `vim.o.wildignore = '*.o,*.a,__pycache__'`
-
-        In Lua using `vim.opt`:
-            `vim.opt.wildignore = { '*.o', '*.a', '__pycache__' }`
-
-    To replicate the behavior of |:set+=|, use: >
+        In Vimscript: >vim
+            set wildignore=*.o,*.a,__pycache__
+<
+        In Lua using `vim.o`: >lua
+            vim.o.wildignore = '*.o,*.a,__pycache__'
+<
+        In Lua using `vim.opt`: >lua
+            vim.opt.wildignore = { '*.o', '*.a', '__pycache__' }
+<
+    To replicate the behavior of |:set+=|, use: >lua
 
         vim.opt.wildignore:append { "*.pyc", "node_modules" }
 <
-    To replicate the behavior of |:set^=|, use: >
+    To replicate the behavior of |:set^=|, use: >lua
 
         vim.opt.wildignore:prepend { "new_first_value" }
 <
-    To replicate the behavior of |:set-=|, use: >
+    To replicate the behavior of |:set-=|, use: >lua
 
         vim.opt.wildignore:remove { "node_modules" }
 <
     The following methods of setting a map-style option are equivalent:
-        In Vimscript:
-            `set listchars=space:_,tab:>~`
-
-        In Lua using `vim.o`:
-            `vim.o.listchars = 'space:_,tab:>~'`
-
-        In Lua using `vim.opt`:
-            `vim.opt.listchars = { space = '_', tab = '>~' }`
-
+        In Vimscript: >vim
+            set listchars=space:_,tab:>~
+<
+        In Lua using `vim.o`: >lua
+            vim.o.listchars = 'space:_,tab:>~'
+<
+        In Lua using `vim.opt`: >lua
+            vim.opt.listchars = { space = '_', tab = '>~' }
+<
 
 Note that |vim.opt| returns an `Option` object, not the value of the option,
 which is accessed through |vim.opt:get()|:
@@ -1209,15 +1207,15 @@ which is accessed through |vim.opt:get()|:
     Examples: ~
 
     The following methods of getting a list-style option are equivalent:
-        In Vimscript:
-            `echo wildignore`
-
-        In Lua using `vim.o`:
-            `print(vim.o.wildignore)`
-
-        In Lua using `vim.opt`:
-            `vim.pretty_print(vim.opt.wildignore:get())`
-
+        In Vimscript: >vim
+            echo wildignore
+<
+        In Lua using `vim.o`: >lua
+            print(vim.o.wildignore)
+<
+        In Lua using `vim.opt`: >lua
+            vim.pretty_print(vim.opt.wildignore:get())
+<
 
 In any of the above examples, to replicate the behavior |:setlocal|, use
 `vim.opt_local`. Additionally, to replicate the behavior of |:setglobal|, use
@@ -1272,28 +1270,28 @@ Option:append(value)
 
     Append a value to string-style options. See |:set+=|
 
-    These are equivalent:
-        `vim.opt.formatoptions:append('j')`
-        `vim.opt.formatoptions = vim.opt.formatoptions + 'j'`
-
+    These are equivalent: >lua
+        vim.opt.formatoptions:append('j')
+        vim.opt.formatoptions = vim.opt.formatoptions + 'j'
+<
                                                            *vim.opt:prepend()*
 Option:prepend(value)
 
     Prepend a value to string-style options. See |:set^=|
 
-    These are equivalent:
-        `vim.opt.wildignore:prepend('*.o')`
-        `vim.opt.wildignore = vim.opt.wildignore ^ '*.o'`
-
+    These are equivalent: >lua
+        vim.opt.wildignore:prepend('*.o')
+        vim.opt.wildignore = vim.opt.wildignore ^ '*.o'
+<
                                                             *vim.opt:remove()*
 Option:remove(value)
 
     Remove a value from string-style options. See |:set-=|
 
-    These are equivalent:
-        `vim.opt.wildignore:remove('*.pyc')`
-        `vim.opt.wildignore = vim.opt.wildignore - '*.pyc'`
-
+    These are equivalent: >lua
+        vim.opt.wildignore:remove('*.pyc')
+        vim.opt.wildignore = vim.opt.wildignore - '*.pyc'
+<
 
 ==============================================================================
 Lua module: vim                                                      *lua-vim*
