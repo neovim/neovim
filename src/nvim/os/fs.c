@@ -974,7 +974,7 @@ int os_file_mkdir(char *fname, int32_t mode)
     *tail = NUL;
     int r;
     char *failed_dir;
-    if ((r = os_mkdir_recurse(fname, mode, &failed_dir) < 0)) {
+    if (((r = os_mkdir_recurse(fname, mode, &failed_dir)) < 0)) {
       semsg(_(e_mkdir), failed_dir, os_strerror(r));
       xfree(failed_dir);
     }

@@ -380,6 +380,7 @@ bool unpacker_parse_redraw(Unpacker *p)
   size_t size = p->read_size;
   GridLineEvent *g = p->grid_line_event;
 
+// -V:NEXT_TYPE:501
 #define NEXT_TYPE(tok, typ) \
   result = mpack_rtoken(&data, &size, &tok); \
   if (result == MPACK_EOF) { \

@@ -862,7 +862,7 @@ void ex_endif(exarg_T *eap)
 /// Handle ":else" and ":elseif".
 void ex_else(exarg_T *eap)
 {
-  int result;
+  bool result = false;
   cstack_T *const cstack = eap->cstack;
 
   bool skip = CHECK_SKIP;

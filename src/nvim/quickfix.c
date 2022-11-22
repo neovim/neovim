@@ -6711,7 +6711,7 @@ static bool mark_quickfix_ctx(qf_info_T *qi, int copyID)
     typval_T *ctx = qi->qf_lists[i].qf_ctx;
     if (ctx != NULL && ctx->v_type != VAR_NUMBER
         && ctx->v_type != VAR_STRING && ctx->v_type != VAR_FLOAT) {
-      abort = abort || set_ref_in_item(ctx, copyID, NULL, NULL);
+      abort = set_ref_in_item(ctx, copyID, NULL, NULL);
     }
 
     Callback *cb = &qi->qf_lists[i].qf_qftf_cb;
