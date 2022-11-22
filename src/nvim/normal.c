@@ -1230,8 +1230,7 @@ static void normal_check_interrupt(NormalState *s)
 static void normal_check_window_scrolled(NormalState *s)
 {
   if (!finish_op) {
-    // Trigger Scroll if the viewport changed.
-    may_trigger_winscrolled();
+    may_trigger_win_scrolled_resized();
   }
 }
 

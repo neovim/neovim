@@ -607,6 +607,51 @@ it).
 The minimal height and width of a window is set with 'winminheight' and
 'winminwidth'.  These are hard values, a window will never become smaller.
 
+
+WinScrolled and WinResized autocommands ~
+						*win-scrolled-resized*
+If you want to get notified of changes in window sizes, the |WinResized|
+autocommand event can be used.
+If you want to get notified of text in windows scrolling vertically or
+horizontally, the |WinScrolled| autocommand event can be used.  This will also
+trigger in window size changes.
+							*WinResized-event*
+The |WinResized| event is triggered after updating the display, several
+windows may have changed size then.  A list of the IDs of windows that changed
+since last time is provided in the v:event.windows variable, for example:
+	[1003, 1006]
+							*WinScrolled-event*
+The |WinScrolled| event is triggered after |WinResized|, and also if a window
+was scrolled.  That can be vertically (the text at the top of the window
+changed) or horizontally (when 'wrap' is off or when the first displayed part
+of the first line changes).  Note that |WinScrolled| will trigger many more
+times than |WinResized|, it may slow down editing a bit.
+
+The information provided by |WinScrolled| is a dictionary for each window that
+has changes, using the window ID as the key, and a total count of the changes
+with the key "all".  Example value for |v:event|:
+	{
+	   all: {width: 0, height: 2, leftcol: 0, topline: 1, skipcol: 0},
+	   1003: {width: 0, height: -1, leftcol: 0, topline: 0, skipcol: 0},
+	   1006: {width: 0, height: 1, leftcol: 0, topline: 1, skipcol: 0},
+	}
+
+Note that the "all" entry has the absolute values of the individual windows
+accumulated.
+
+If you need more information about what changed, or you want to "debounce" the
+events (not handle every event to avoid doing too much work), you may want to
+use the `winlayout()` and `getwininfo()` functions.
+
+|WinScrolled| and |WinResized| do not trigger when the first autocommand is
+added, only after the first scroll or resize.  They may trigger when switching
+to another tab page.
+
+The commands executed are expected to not cause window size or scroll changes.
+If this happens anyway, the event will trigger again very soon.  In other
+words: Just before triggering the event, the current sizes and scroll
+positions are stored and used to decide whether there was a change.
+
 ==============================================================================
 7. Argument and buffer list commands			*buffer-list*
 

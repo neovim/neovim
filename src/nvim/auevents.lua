@@ -123,7 +123,8 @@ return {
     'WinEnter',               -- after entering a window
     'WinLeave',               -- before leaving a window
     'WinNew',                 -- when entering a new window
-    'WinScrolled',            -- after scrolling a window
+    'WinResized',             -- after a window was resized
+    'WinScrolled',            -- after a window was scrolled or resized
   },
   aliases = {
     BufCreate = 'BufAdd',

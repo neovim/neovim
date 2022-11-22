@@ -1141,10 +1141,11 @@ int autocmd_register(int64_t id, event_T event, char *pat, int patlen, int group
       curwin->w_last_cursormoved = curwin->w_cursor;
     }
 
-    // Initialize the fields checked by the WinScrolled trigger to
-    // prevent it from firing right after the first autocmd is
-    // defined.
-    if (event == EVENT_WINSCROLLED && !has_event(EVENT_WINSCROLLED)) {
+    // Initialize the fields checked by the WinScrolled and
+    // WinResized trigger to prevent them from firing right after
+    // the first autocmd is defined.
+    if ((event == EVENT_WINSCROLLED || event == EVENT_WINRESIZED)
+        && !(has_event(EVENT_WINSCROLLED) || has_event(EVENT_WINRESIZED))) {
       tabpage_T *save_curtab = curtab;
       FOR_ALL_TABS(tp) {
         unuse_tabpage(curtab);
@@ -1781,7 +1782,7 @@ bool apply_autocmds_group(event_T event, char *fname, char *fname_io, bool force
         || event == EVENT_SIGNAL || event == EVENT_SPELLFILEMISSING
         || event == EVENT_SYNTAX || event == EVENT_TABCLOSED
         || event == EVENT_USER || event == EVENT_WINCLOSED
-        || event == EVENT_WINSCROLLED) {
+        || event == EVENT_WINRESIZED || event == EVENT_WINSCROLLED) {
       fname = xstrdup(fname);
     } else {
       fname = FullName_save(fname, false);
