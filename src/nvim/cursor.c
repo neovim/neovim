@@ -456,12 +456,13 @@ bool leftcol_changed(void)
 
   // If the cursor is right or left of the screen, move it to last or first
   // character.
-  if (curwin->w_virtcol > (colnr_T)(lastcol - p_siso)) {
+  long siso = get_sidescrolloff_value(curwin);
+  if (curwin->w_virtcol > (colnr_T)(lastcol - siso)) {
     retval = true;
-    coladvance((colnr_T)(lastcol - p_siso));
-  } else if (curwin->w_virtcol < curwin->w_leftcol + p_siso) {
+    coladvance((colnr_T)(lastcol - siso));
+  } else if (curwin->w_virtcol < curwin->w_leftcol + siso) {
     retval = true;
-    coladvance((colnr_T)(curwin->w_leftcol + p_siso));
+    coladvance((colnr_T)(curwin->w_leftcol + siso));
   }
 
   // If the start of the character under the cursor is not on the screen,
