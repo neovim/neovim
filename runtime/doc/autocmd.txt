@@ -1095,21 +1095,24 @@ WinNew				When a new window was created.  Not done for
 				Before WinEnter.
 
 							*WinScrolled*
-WinScrolled			After scrolling the content of a window or
-				resizing a window in the current tab page.
-
-				When more than one window scrolled or resized
-				only one WinScrolled event is triggered.  You
-				can use the `winlayout()` and `getwininfo()`
-				functions to see what changed.
+WinScrolled			After any window in the current tab page
+				scrolled the text (horizontally or vertically)
+				or changed width or height.  See
+				|win-scrolled-resized|.
 
 				The pattern is matched against the |window-ID|
 				of the first window that scrolled or resized.
 				Both <amatch> and <afile> are set to the
 				|window-ID|.
 
+				|v:event| is set with information about size
+				and scroll changes. |WinScrolled-event|
+
 				Only starts triggering after startup finished
 				and the first screen redraw was done.
+				Does not trigger when defining the first
+				WinScrolled or WinResized event, but may
+				trigger when adding more.
 
 				Non-recursive: the event will not trigger
 				while executing commands for the WinScrolled
@@ -1117,8 +1120,17 @@ WinScrolled			After scrolling the content of a window or
 				window to scroll or change size, then another
 				WinScrolled event will be triggered later.
 
-				Does not trigger when the command is added,
-				only after the first scroll or resize.
+
+							*WinResized*
+WinResized			After a window in the current tab page changed
+				width or height.
+				See |win-scrolled-resized|.
+
+				|v:event| is set with information about size
+				changes. |WinResized-event|
+
+				Same behavior as |WinScrolled| for the
+				pattern, triggering and recursiveness.
 
 ==============================================================================
 6. Patterns					*autocmd-pattern* *{aupat}*

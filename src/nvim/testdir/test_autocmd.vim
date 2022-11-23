@@ -295,6 +295,61 @@ func Test_win_tab_autocmd()
   unlet g:record
 endfunc
 
+func Test_WinResized()
+  CheckRunVimInTerminal
+
+  let lines =<< trim END
+    set scrolloff=0
+    call setline(1, ['111', '222'])
+    vnew
+    call setline(1, ['aaa', 'bbb'])
+    new
+    call setline(1, ['foo', 'bar'])
+
+    let g:resized = 0
+    au WinResized * let g:resized += 1
+
+    func WriteResizedEvent()
+      call writefile([json_encode(v:event)], 'XresizeEvent')
+    endfunc
+    au WinResized * call WriteResizedEvent()
+  END
+  call writefile(lines, 'Xtest_winresized', 'D')
+  let buf = RunVimInTerminal('-S Xtest_winresized', {'rows': 10})
+
+  " redraw now to avoid a redraw after the :echo command
+  call term_sendkeys(buf, ":redraw!\<CR>")
+  call TermWait(buf)
+
+  call term_sendkeys(buf, ":echo g:resized\<CR>")
+  call WaitForAssert({-> assert_match('^0$', term_getline(buf, 10))}, 1000)
+
+  " increase window height, two windows will be reported
+  call term_sendkeys(buf, "\<C-W>+")
+  call TermWait(buf)
+  call term_sendkeys(buf, ":echo g:resized\<CR>")
+  call WaitForAssert({-> assert_match('^1$', term_getline(buf, 10))}, 1000)
+
+  let event = readfile('XresizeEvent')[0]->json_decode()
+  call assert_equal({
+        \ 'windows': [1002, 1001],
+        \ }, event)
+
+  " increase window width, three windows will be reported
+  call term_sendkeys(buf, "\<C-W>>")
+  call TermWait(buf)
+  call term_sendkeys(buf, ":echo g:resized\<CR>")
+  call WaitForAssert({-> assert_match('^2$', term_getline(buf, 10))}, 1000)
+
+  let event = readfile('XresizeEvent')[0]->json_decode()
+  call assert_equal({
+        \ 'windows': [1002, 1001, 1000],
+        \ }, event)
+
+  call delete('XresizeEvent')
+  call StopVimInTerminal(buf)
+endfunc
+
 func Test_WinScrolled()
   CheckRunVimInTerminal
 
@@ -305,11 +360,15 @@ func Test_WinScrolled()
     endfor
     let win_id = win_getid()
     let g:matched = v:false
+    func WriteScrollEvent()
+      call writefile([json_encode(v:event)], 'XscrollEvent')
+    endfunc
     execute 'au WinScrolled' win_id 'let g:matched = v:true'
     let g:scrolled = 0
     au WinScrolled * let g:scrolled += 1
     au WinScrolled * let g:amatch = str2nr(expand('<amatch>'))
     au WinScrolled * let g:afile = str2nr(expand('<afile>'))
+    au WinScrolled * call WriteScrollEvent()
   END
   call writefile(lines, 'Xtest_winscrolled', 'D')
   let buf = RunVimInTerminal('-S Xtest_winscrolled', {'rows': 6})
@@ -321,14 +380,32 @@ func Test_WinScrolled()
   call term_sendkeys(buf, "zlzh:echo g:scrolled\<CR>")
   call WaitForAssert({-> assert_match('^2 ', term_getline(buf, 6))}, 1000)
 
+  let event = readfile('XscrollEvent')[0]->json_decode()
+  call assert_equal({
+        \ 'all': {'leftcol': 1, 'topline': 0, 'width': 0, 'height': 0, 'skipcol': 0},
+        \ '1000': {'leftcol': -1, 'topline': 0, 'width': 0, 'height': 0, 'skipcol': 0}
+        \ }, event)
+
   " Scroll up/down in Normal mode.
   call term_sendkeys(buf, "\<c-e>\<c-y>:echo g:scrolled\<CR>")
   call WaitForAssert({-> assert_match('^4 ', term_getline(buf, 6))}, 1000)
+
+  let event = readfile('XscrollEvent')[0]->json_decode()
+  call assert_equal({
+        \ 'all': {'leftcol': 0, 'topline': 1, 'width': 0, 'height': 0, 'skipcol': 0},
+        \ '1000': {'leftcol': 0, 'topline': -1, 'width': 0, 'height': 0, 'skipcol': 0}
+        \ }, event)
 
   " Scroll up/down in Insert mode.
   call term_sendkeys(buf, "Mi\<c-x>\<c-e>\<Esc>i\<c-x>\<c-y>\<Esc>")
   call term_sendkeys(buf, ":echo g:scrolled\<CR>")
   call WaitForAssert({-> assert_match('^6 ', term_getline(buf, 6))}, 1000)
+
+  let event = readfile('XscrollEvent')[0]->json_decode()
+  call assert_equal({
+        \ 'all': {'leftcol': 0, 'topline': 1, 'width': 0, 'height': 0, 'skipcol': 0},
+        \ '1000': {'leftcol': 0, 'topline': -1, 'width': 0, 'height': 0, 'skipcol': 0}
+        \ }, event)
 
   " Scroll the window horizontally to focus the last letter of the third line
   " containing only six characters. Moving to the previous and shorter lines
@@ -336,6 +413,12 @@ func Test_WinScrolled()
   call term_sendkeys(buf, "5zl2k")
   call term_sendkeys(buf, ":echo g:scrolled\<CR>")
   call WaitForAssert({-> assert_match('^8 ', term_getline(buf, 6))}, 1000)
+
+  let event = readfile('XscrollEvent')[0]->json_decode()
+  call assert_equal({
+        \ 'all': {'leftcol': 5, 'topline': 0, 'width': 0, 'height': 0, 'skipcol': 0},
+        \ '1000': {'leftcol': -5, 'topline': 0, 'width': 0, 'height': 0, 'skipcol': 0}
+        \ }, event)
 
   " Ensure the command was triggered for the specified window ID.
   call term_sendkeys(buf, ":echo g:matched\<CR>")
@@ -345,6 +428,7 @@ func Test_WinScrolled()
   call term_sendkeys(buf, ":echo g:amatch == win_id && g:afile == win_id\<CR>")
   call WaitForAssert({-> assert_match('^v:true ', term_getline(buf, 6))}, 1000)
 
+  call delete('XscrollEvent')
   call StopVimInTerminal(buf)
 endfunc
 

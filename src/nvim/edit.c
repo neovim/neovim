@@ -1339,8 +1339,7 @@ void ins_redraw(bool ready)
   }
 
   if (ready) {
-    // Trigger Scroll if viewport changed.
-    may_trigger_winscrolled();
+    may_trigger_win_scrolled_resized();
   }
 
   // Trigger BufModified if b_changed_invalid is set.

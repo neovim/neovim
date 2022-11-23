@@ -2446,10 +2446,10 @@ void tv_dict_clear(dict_T *const d)
 ///
 /// @param  d1  Dictionary to extend.
 /// @param[in]  d2  Dictionary to extend with.
-/// @param[in]  action  "error", "force", "keep":
-///
+/// @param[in]  action  "error", "force", "move", "keep":
 ///                     e*, including "error": duplicate key gives an error.
 ///                     f*, including "force": duplicate d2 keys override d1.
+///                     m*, including "move": move items instead of copying.
 ///                     other, including "keep": duplicate d2 keys ignored.
 void tv_dict_extend(dict_T *const d1, dict_T *const d2, const char *const action)
   FUNC_ATTR_NONNULL_ALL
@@ -2458,19 +2458,31 @@ void tv_dict_extend(dict_T *const d1, dict_T *const d2, const char *const action
   const char *const arg_errmsg = _("extend() argument");
   const size_t arg_errmsg_len = strlen(arg_errmsg);
 
-  TV_DICT_ITER(d2, di2, {
+  if (*action == 'm') {
+    hash_lock(&d2->dv_hashtab);  // don't rehash on hash_remove()
+  }
+
+  HASHTAB_ITER(&d2->dv_hashtab, hi2, {
+    dictitem_T *const di2 = TV_DICT_HI2DI(hi2);
     dictitem_T *const di1 = tv_dict_find(d1, (const char *)di2->di_key, -1);
     // Check the key to be valid when adding to any scope.
     if (d1->dv_scope != VAR_NO_SCOPE && !valid_varname((const char *)di2->di_key)) {
       break;
     }
     if (di1 == NULL) {
-      dictitem_T *const new_di = tv_dict_item_copy(di2);
-      if (tv_dict_add(d1, new_di) == FAIL) {
-        tv_dict_item_free(new_di);
-      } else if (watched) {
-        tv_dict_watcher_notify(d1, (const char *)new_di->di_key, &new_di->di_tv,
-                               NULL);
+      if (*action == 'm') {
+        // cheap way to move a dict item from "d2" to "d1"
+        dictitem_T *const new_di = di2;
+        tv_dict_add(d1, new_di);
+        hash_remove(&d2->dv_hashtab, hi2);
+        tv_dict_watcher_notify(d1, (const char *)new_di->di_key, &new_di->di_tv, NULL);
+      } else {
+        dictitem_T *const new_di = tv_dict_item_copy(di2);
+        if (tv_dict_add(d1, new_di) == FAIL) {
+          tv_dict_item_free(new_di);
+        } else if (watched) {
+          tv_dict_watcher_notify(d1, (const char *)new_di->di_key, &new_di->di_tv, NULL);
+        }
       }
     } else if (*action == 'e') {
       semsg(_("E737: Key already exists: %s"), di2->di_key);
@@ -2501,6 +2513,10 @@ void tv_dict_extend(dict_T *const d1, dict_T *const d2, const char *const action
       }
     }
   });
+
+  if (*action == 'm') {
+    hash_unlock(&d2->dv_hashtab);
+  }
 }
 
 /// Compare two dictionaries
