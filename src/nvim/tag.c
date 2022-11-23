@@ -1475,7 +1475,7 @@ static bool findtags_in_help_init(findtags_state_T *st)
 {
   int i;
 
-  // Keep 'en' as the language if the file extension is '.txt'
+  // Keep "en" as the language if the file extension is ".txt"
   if (st->is_txt) {
     STRCPY(st->help_lang, "en");
   } else {
@@ -1724,6 +1724,14 @@ static bool findtags_start_state_handler(findtags_state_T *st, bool *sortic,
 }
 
 /// Parse a tag line read from a tags file.
+/// Also compares the tag name in "tagpp->tagname" with a search pattern in
+/// "st->orgpat->head" as a quick check if the tag may match.
+/// Returns:
+/// - TAG_MATCH_SUCCESS if the tag may match
+/// - TAG_MATCH_FAIL if the tag doesn't match
+/// - TAG_MATCH_NEXT to look for the next matching tag (used in a binary search)
+/// - TAG_MATCH_STOP if all the tags are processed without a match.
+/// Uses the values in "margs" for doing the comparison.
 static tagmatch_status_T findtags_parse_line(findtags_state_T *st, tagptrs_T *tagpp,
                                              findtags_match_args_T *margs,
                                              tagsearch_info_T *sinfo_p)
@@ -1875,13 +1883,10 @@ static void findtags_matchargs_init(findtags_match_args_T *margs, int flags)
 }
 
 /// Compares the tag name in "tagpp->tagname" with a search pattern in
-/// "st->orgpat.head".
-/// Returns TAG_MATCH_SUCCESS if the tag matches, TAG_MATCH_FAIL if the tag
-/// doesn't match, TAG_MATCH_NEXT to look for the next matching tag (used in a
-/// binary search) and TAG_MATCH_STOP if all the tags are processed without a
-/// match. Uses the values in "margs" for doing the comparison.
-static tagmatch_status_T findtags_match_tag(findtags_state_T *st, tagptrs_T *tagpp,
-                                            findtags_match_args_T *margs)
+/// "st->orgpat->pat".
+/// Returns true if the tag matches, false if the tag doesn't match.
+/// Uses the values in "margs" for doing the comparison.
+static bool findtags_match_tag(findtags_state_T *st, tagptrs_T *tagpp, findtags_match_args_T *margs)
 {
   bool match = false;
 
@@ -1925,7 +1930,7 @@ static tagmatch_status_T findtags_match_tag(findtags_state_T *st, tagptrs_T *tag
     margs->match_re = true;
   }
 
-  return match ? TAG_MATCH_SUCCESS : TAG_MATCH_FAIL;
+  return match;
 }
 
 /// Convert the encoding of a line read from a tags file in "st->lbuf".
@@ -2182,16 +2187,8 @@ line_read_in:
       return;
     }
 
-    retval = (int)findtags_match_tag(st, &tagp, margs);
-    if (retval == TAG_MATCH_NEXT) {
-      continue;
-    }
-    if (retval == TAG_MATCH_STOP) {
-      break;
-    }
-
     // If a match is found, add it to ht_match[] and ga_match[].
-    if (retval == TAG_MATCH_SUCCESS) {
+    if (findtags_match_tag(st, &tagp, margs)) {
       findtags_add_match(st, &tagp, margs, buf_ffname, &hash);
     }
   }  // forever
