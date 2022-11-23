@@ -269,19 +269,10 @@ function module.check_logs()
     table.concat(runtime_errors, ', ')))
 end
 
--- Gets (lowercase) OS name from CMAKE_HOST_SYSTEM_NAME or luv.os_uname
-do
-  local platform = nil
-  function module.uname()
-    if platform then
-      return platform
-    end
-
-    platform = os.getenv('SYSTEM_NAME') -- From CMAKE_HOST_SYSTEM_NAME
-    if not platform or platform == '' then
-      platform = luv.os_uname().sysname
-    end
-    return platform:lower()
+function module.uname()
+  local platform = luv.os_uname()
+  if platform and platform.sysname then
+    return platform.sysname:lower()
   end
 end
 
