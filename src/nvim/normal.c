@@ -2768,7 +2768,7 @@ static void nv_zet(cmdarg_T *cap)
   long old_fdl = curwin->w_p_fdl;
   int old_fen = curwin->w_p_fen;
 
-  int l_p_siso = (int)get_sidescrolloff_value(curwin);
+  int siso = (int)get_sidescrolloff_value(curwin);
 
   if (ascii_isdigit(nchar) && !nv_z_get_count(cap, &nchar)) {
     return;
@@ -2898,8 +2898,8 @@ static void nv_zet(cmdarg_T *cap)
       } else {
         getvcol(curwin, &curwin->w_cursor, &col, NULL, NULL);
       }
-      if (col > l_p_siso) {
-        col -= l_p_siso;
+      if (col > siso) {
+        col -= siso;
       } else {
         col = 0;
       }
@@ -2919,10 +2919,10 @@ static void nv_zet(cmdarg_T *cap)
         getvcol(curwin, &curwin->w_cursor, NULL, NULL, &col);
       }
       n = curwin->w_width_inner - curwin_col_off();
-      if (col + l_p_siso < n) {
+      if (col + siso < n) {
         col = 0;
       } else {
-        col = col + l_p_siso - n + 1;
+        col = col + siso - n + 1;
       }
       if (curwin->w_leftcol != col) {
         curwin->w_leftcol = col;
