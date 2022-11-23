@@ -4,6 +4,7 @@ local lsp_rpc = require('vim.lsp.rpc')
 local protocol = require('vim.lsp.protocol')
 local util = require('vim.lsp.util')
 local sync = require('vim.lsp.sync')
+local semantic_tokens = require('vim.lsp.semantic_tokens')
 
 local api = vim.api
 local nvim_err_writeln, nvim_buf_get_lines, nvim_command, nvim_buf_get_option, nvim_exec_autocmds =
@@ -25,6 +26,7 @@ local lsp = {
   buf = require('vim.lsp.buf'),
   diagnostic = require('vim.lsp.diagnostic'),
   codelens = require('vim.lsp.codelens'),
+  semantic_tokens = semantic_tokens,
   util = util,
 
   -- Allow raw RPC access.
@@ -56,6 +58,8 @@ lsp._request_name_to_capability = {
   ['textDocument/formatting'] = { 'documentFormattingProvider' },
   ['textDocument/completion'] = { 'completionProvider' },
   ['textDocument/documentHighlight'] = { 'documentHighlightProvider' },
+  ['textDocument/semanticTokens/full'] = { 'semanticTokensProvider' },
+  ['textDocument/semanticTokens/full/delta'] = { 'semanticTokensProvider' },
 }
 
 -- TODO improve handling of scratch buffers with LSP attached.
@@ -1526,6 +1530,11 @@ function lsp.start_client(config)
       -- TODO(ashkan) handle errors.
       pcall(config.on_attach, client, bufnr)
     end
+
+    if vim.tbl_get(client.server_capabilities, 'semanticTokensProvider', 'full') then
+      semantic_tokens.start(bufnr, client.id)
+    end
+
     client.attached_buffers[bufnr] = true
   end
 

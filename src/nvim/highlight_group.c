@@ -258,12 +258,23 @@ static const char *highlight_init_both[] = {
   "default link @type Type",
   "default link @type.definition Typedef",
   "default link @storageclass StorageClass",
-  "default link @structure Structure",
   "default link @namespace Identifier",
   "default link @include Include",
   "default link @preproc PreProc",
   "default link @debug Debug",
   "default link @tag Tag",
+
+  // LSP semantic tokens
+  "default link @class Structure",
+  "default link @struct Structure",
+  "default link @enum Type",
+  "default link @enumMember Constant",
+  "default link @event Identifier",
+  "default link @interface Identifier",
+  "default link @modifier Identifier",
+  "default link @regexp SpecialChar",
+  "default link @typeParameter Type",
+  "default link @decorator Identifier",
   NULL
 };
 

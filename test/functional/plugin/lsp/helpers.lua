@@ -1,4 +1,4 @@
-local helpers = require('test.functional.helpers')(after_each)
+local helpers = require('test.functional.helpers')(nil)
 
 local clear = helpers.clear
 local exec_lua = helpers.exec_lua
