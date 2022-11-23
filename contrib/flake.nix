@@ -9,15 +9,6 @@
   outputs = { self, nixpkgs, flake-utils }:
     {
       overlay = final: prev: rec {
-        neovim-unwrapped = prev.neovim-unwrapped.override ({
-          libvterm-neovim = prev.libvterm-neovim.overrideAttrs (old: {
-            version = "0.3";
-            src = builtins.fetchTarball {
-              url = "https://www.leonerd.org.uk/code/libvterm/libvterm-0.3.tar.gz";
-              sha256 = "0zg6sn5brwrnqaab883pdj0l2swk5askbbwbdam0zq55ikbrzgar";
-            };
-          });
-        });
 
         neovim = final.neovim-unwrapped.overrideAttrs (oa: {
           version = "master";
