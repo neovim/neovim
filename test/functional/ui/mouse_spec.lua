@@ -968,6 +968,49 @@ describe('ui/mouse/input', function()
     ]])
   end)
 
+  it("'sidescrolloff' applies to horizontal scrolling", function()
+    command('set nowrap')
+    command('set sidescrolloff=4')
+
+    feed("I <esc>020ib<esc>0")
+    screen:expect([[
+      testing                  |
+      mouse                    |
+      ^bbbbbbbbbbbbbbbbbbbb supp|
+      {0:~                        }|
+                               |
+    ]])
+
+    meths.input_mouse('wheel', 'right', '', 0, 0, 27)
+    screen:expect([[
+      g                        |
+                               |
+      bbbb^bbbbbbbbbb support an|
+      {0:~                        }|
+                               |
+    ]])
+
+    -- window-local 'sidescrolloff' should override global value. #21162
+    command('setlocal sidescrolloff=2')
+    feed('0')
+    screen:expect([[
+      testing                  |
+      mouse                    |
+      ^bbbbbbbbbbbbbbbbbbbb supp|
+      {0:~                        }|
+                               |
+    ]])
+
+    meths.input_mouse('wheel', 'right', '', 0, 0, 27)
+    screen:expect([[
+      g                        |
+                               |
+      bb^bbbbbbbbbbbb support an|
+      {0:~                        }|
+                               |
+    ]])
+  end)
+
   describe('on concealed text', function()
     -- Helpful for reading the test expectations:
     -- :match Error /\^/
