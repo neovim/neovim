@@ -162,11 +162,11 @@ end
 ---         Predicate used to filter clients. Receives a client as argument and must return a
 ---         boolean. Clients matching the predicate are included. Example:
 ---
----         <pre>
----         -- Never request typescript-language-server for formatting
----         vim.lsp.buf.format {
----           filter = function(client) return client.name ~= "tsserver" end
----         }
+---         <pre>lua
+---           -- Never request typescript-language-server for formatting
+---           vim.lsp.buf.format {
+---             filter = function(client) return client.name ~= "tsserver" end
+---           }
 ---         </pre>
 ---
 ---     - async boolean|nil
@@ -555,11 +555,10 @@ end
 --- Send request to the server to resolve document highlights for the current
 --- text document position. This request can be triggered by a  key mapping or
 --- by events such as `CursorHold`, e.g.:
----
---- <pre>
---- autocmd CursorHold  <buffer> lua vim.lsp.buf.document_highlight()
---- autocmd CursorHoldI <buffer> lua vim.lsp.buf.document_highlight()
---- autocmd CursorMoved <buffer> lua vim.lsp.buf.clear_references()
+--- <pre>vim
+---   autocmd CursorHold  <buffer> lua vim.lsp.buf.document_highlight()
+---   autocmd CursorHoldI <buffer> lua vim.lsp.buf.document_highlight()
+---   autocmd CursorMoved <buffer> lua vim.lsp.buf.clear_references()
 --- </pre>
 ---
 --- Note: Usage of |vim.lsp.buf.document_highlight()| requires the following highlight groups

@@ -1302,7 +1302,7 @@ cmd({command})                                                     *vim.cmd()*
     Note that `vim.cmd` can be indexed with a command name to return a
     callable function to the command.
 
-    Example: >
+    Example: >lua
 
        vim.cmd('echo 42')
        vim.cmd([[
@@ -1436,7 +1436,7 @@ paste({lines}, {phase})                                          *vim.paste()*
     Paste handler, invoked by |nvim_paste()| when a conforming UI (such as the
     |TUI|) pastes text into the editor.
 
-    Example: To remove ANSI color codes when pasting: >
+    Example: To remove ANSI color codes when pasting: >lua
 
      vim.paste = (function(overridden)
        return function(lines, phase)
@@ -1465,7 +1465,7 @@ paste({lines}, {phase})                                          *vim.paste()*
         |paste| @alias paste_phase -1 | 1 | 2 | 3
 
 pretty_print({...})                                       *vim.pretty_print()*
-    Prints given arguments in human-readable format. Example: >
+    Prints given arguments in human-readable format. Example: >lua
       -- Print highlight group Normal and store it's contents in a variable.
       local hl_normal = vim.pretty_print(vim.api.nvim_get_hl_by_name("Normal", true))
 <
@@ -1544,10 +1544,11 @@ defaulttable({create})                                    *vim.defaulttable()*
     If {create} is `nil`, this will create a defaulttable whose constructor
     function is this function, effectively allowing to create nested tables on
     the fly:
->
 
-    local a = vim.defaulttable()
-    a.b.c = 1
+    >lua
+
+     local a = vim.defaulttable()
+     a.b.c = 1
 <
 
     Parameters: ~
@@ -1637,12 +1638,12 @@ pesc({s})                                                         *vim.pesc()*
 split({s}, {sep}, {kwargs})                                      *vim.split()*
     Splits a string at each instance of a separator.
 
-    Examples: >
+    Examples: >lua
 
-      split(":aa::b:", ":")     => {'','aa','','b',''}
-      split("axaby", "ab?")     => {'','x','y'}
-      split("x*yz*o", "*", {plain=true})  => {'x','yz','o'}
-      split("|x|y|z|", "|", {trimempty=true}) => {'x', 'y', 'z'}
+      split(":aa::b:", ":")                   --> {'','aa','','b',''}
+      split("axaby", "ab?")                   --> {'','x','y'}
+      split("x*yz*o", "*", {plain=true})      --> {'x','yz','o'}
+      split("|x|y|z|", "|", {trimempty=true}) --> {'x', 'y', 'z'}
 <
 
     Parameters: ~
@@ -1695,10 +1696,11 @@ tbl_contains({t}, {value})                                *vim.tbl_contains()*
 
 tbl_count({t})                                               *vim.tbl_count()*
     Counts the number of non-nil values in table `t`.
->
 
-    vim.tbl_count({ a=1, b=2 }) => 2
-    vim.tbl_count({ 1, 2 }) => 2
+    >lua
+
+     vim.tbl_count({ a=1, b=2 })  --> 2
+     vim.tbl_count({ 1, 2 })      --> 2
 <
 
     Parameters: ~
@@ -1771,7 +1773,7 @@ tbl_get({o}, {...})                                            *vim.tbl_get()*
     Index into a table (first argument) via string keys passed as subsequent
     arguments. Return `nil` if the key does not exist.
 
-    Examples: >
+    Examples: >lua
 
       vim.tbl_get({ key = { nested_key = true }}, 'key', 'nested_key') == true
       vim.tbl_get({ key = {}}, 'key', 'nested_key') == nil
@@ -1858,7 +1860,7 @@ trim({s})                                                         *vim.trim()*
 validate({opt})                                               *vim.validate()*
     Validates a parameter specification (types and values).
 
-    Usage example: >
+    Usage example: >lua
 
       function user.new(name, age, hobbies)
         vim.validate{
@@ -1870,25 +1872,25 @@ validate({opt})                                               *vim.validate()*
       end
 <
 
-    Examples with explicit argument values (can be run directly): >
+    Examples with explicit argument values (can be run directly): >lua
 
       vim.validate{arg1={{'foo'}, 'table'}, arg2={'foo', 'string'}}
-         => NOP (success)
+         --> NOP (success)
 
       vim.validate{arg1={1, 'table'}}
-         => error('arg1: expected table, got number')
+         --> error('arg1: expected table, got number')
 
       vim.validate{arg1={3, function(a) return (a % 2) == 0 end, 'even number'}}
-         => error('arg1: expected even number, got 3')
+         --> error('arg1: expected even number, got 3')
 <
 
-    If multiple types are valid they can be given as a list. >
+    If multiple types are valid they can be given as a list. >lua
 
       vim.validate{arg1={{'foo'}, {'table', 'string'}}, arg2={'foo', {'table', 'string'}}}
-         => NOP (success)
+         --> NOP (success)
 
       vim.validate{arg1={1, {'string', table'}}}
-         => error('arg1: expected string|table, got number')
+         --> error('arg1: expected string|table, got number')
 <
 
     Parameters: ~
@@ -1957,7 +1959,7 @@ Lua module: ui                                                        *lua-ui*
 input({opts}, {on_confirm})                                   *vim.ui.input()*
     Prompts the user for input
 
-    Example: >
+    Example: >lua
 
      vim.ui.input({ prompt = 'Enter value for shiftwidth: ' }, function(input)
          vim.o.shiftwidth = tonumber(input)
@@ -1982,7 +1984,7 @@ input({opts}, {on_confirm})                                   *vim.ui.input()*
 select({items}, {opts}, {on_choice})                         *vim.ui.select()*
     Prompts the user to pick a single item from a collection of entries
 
-    Example: >
+    Example: >lua
 
      vim.ui.select({ 'tabs', 'spaces' }, {
          prompt = 'Select tabs or spaces:',
@@ -2045,7 +2047,7 @@ add({filetypes})                                          *vim.filetype.add()*
 
     See $VIMRUNTIME/lua/vim/filetype.lua for more examples.
 
-    Example: >
+    Example: >lua
 
       vim.filetype.add({
         extension = {
@@ -2081,7 +2083,7 @@ add({filetypes})                                          *vim.filetype.add()*
       })
 <
 
-    To add a fallback match on contents, use >
+    To add a fallback match on contents, use >lua
 
      vim.filetype.add {
        pattern = {
@@ -2120,19 +2122,20 @@ match({args})                                           *vim.filetype.match()*
 
     Each of the three options is specified using a key to the single argument
     of this function. Example:
->
 
-    -- Using a buffer number
-    vim.filetype.match({ buf = 42 })
+    >lua
 
-    -- Override the filename of the given buffer
-    vim.filetype.match({ buf = 42, filename = 'foo.c' })
+       -- Using a buffer number
+       vim.filetype.match({ buf = 42 })
 
-    -- Using a filename without a buffer
-    vim.filetype.match({ filename = 'main.lua' })
+       -- Override the filename of the given buffer
+       vim.filetype.match({ buf = 42, filename = 'foo.c' })
 
-    -- Using file contents
-    vim.filetype.match({ contents = {'#!/usr/bin/env bash'} })
+       -- Using a filename without a buffer
+       vim.filetype.match({ filename = 'main.lua' })
+
+       -- Using file contents
+       vim.filetype.match({ contents = {'#!/usr/bin/env bash'} })
 <
 
     Parameters: ~
@@ -2162,7 +2165,7 @@ match({args})                                           *vim.filetype.match()*
 Lua module: keymap                                                *lua-keymap*
 
 del({modes}, {lhs}, {opts})                                 *vim.keymap.del()*
-    Remove an existing mapping. Examples: >
+    Remove an existing mapping. Examples: >lua
 
        vim.keymap.del('n', 'lhs')
 
@@ -2178,7 +2181,7 @@ del({modes}, {lhs}, {opts})                                 *vim.keymap.del()*
         |vim.keymap.set()|
 
 set({mode}, {lhs}, {rhs}, {opts})                           *vim.keymap.set()*
-    Add a new |mapping|. Examples: >
+    Add a new |mapping|. Examples: >lua
 
        -- Can add mapping to Lua functions
        vim.keymap.set('n', 'lhs', function() print("real lua function") end)
@@ -2197,14 +2200,14 @@ set({mode}, {lhs}, {rhs}, {opts})                           *vim.keymap.set()*
        vim.keymap.set('n', '[%', '<Plug>(MatchitNormalMultiBackward)')
 <
 
-    Note that in a mapping like: >
+    Note that in a mapping like: >lua
 
         vim.keymap.set('n', 'asdf', require('jkl').my_fun)
 <
 
     the `require('jkl')` gets evaluated during this call in order to access the function. If you
     want to avoid this cost at startup you can wrap it in a function, for
-    example: >
+    example: >lua
 
         vim.keymap.set('n', 'asdf', function() return require('jkl').my_fun() end)
 <
@@ -2302,8 +2305,8 @@ find({names}, {opts})                                          *vim.fs.find()*
                    number of matches.
 
     Return: ~
-        (table) The normalized paths |vim.fs.normalize()| of all matching
-        files or directories
+        (table) Normalized paths |vim.fs.normalize()| of all matching files or
+        directories
 
 normalize({path})                                         *vim.fs.normalize()*
     Normalize a path to a standard format. A tilde (~) character at the
@@ -2311,16 +2314,16 @@ normalize({path})                                         *vim.fs.normalize()*
     backslash (\) characters are converted to forward slashes (/). Environment
     variables are also expanded.
 
-    Examples: >
+    Examples: >lua
 
        vim.fs.normalize('C:\Users\jdoe')
-       => 'C:/Users/jdoe'
+       --> 'C:/Users/jdoe'
 
        vim.fs.normalize('~/src/neovim')
-       => '/home/jdoe/src/neovim'
+       --> '/home/jdoe/src/neovim'
 
        vim.fs.normalize('$XDG_CONFIG_HOME/nvim/init.vim')
-       => '/Users/jdoe/.config/nvim/init.vim'
+       --> '/Users/jdoe/.config/nvim/init.vim'
 <
 
     Parameters: ~
@@ -2332,7 +2335,7 @@ normalize({path})                                         *vim.fs.normalize()*
 parents({start})                                            *vim.fs.parents()*
     Iterate over all the parents of the given file or directory.
 
-    Example: >
+    Example: >lua
 
      local root_dir
      for dir in vim.fs.parents(vim.api.nvim_buf_get_name(0)) do

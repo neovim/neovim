@@ -3,7 +3,7 @@ local M = {}
 --- Iterate over all the parents of the given file or directory.
 ---
 --- Example:
---- <pre>
+--- <pre>lua
 --- local root_dir
 --- for dir in vim.fs.parents(vim.api.nvim_buf_get_name(0)) do
 ---   if vim.fn.isdirectory(dir .. "/.git") == 1 then
@@ -98,8 +98,7 @@ end
 ---                       - limit (number, default 1): Stop the search after
 ---                               finding this many matches. Use `math.huge` to
 ---                               place no limit on the number of matches.
----
----@return (table) The normalized paths |vim.fs.normalize()| of all matching files or directories
+---@return (table) Normalized paths |vim.fs.normalize()| of all matching files or directories
 function M.find(names, opts)
   opts = opts or {}
   vim.validate({
@@ -214,15 +213,15 @@ end
 --- variables are also expanded.
 ---
 --- Examples:
---- <pre>
+--- <pre>lua
 ---   vim.fs.normalize('C:\\Users\\jdoe')
----   => 'C:/Users/jdoe'
+---   --> 'C:/Users/jdoe'
 ---
 ---   vim.fs.normalize('~/src/neovim')
----   => '/home/jdoe/src/neovim'
+---   --> '/home/jdoe/src/neovim'
 ---
 ---   vim.fs.normalize('$XDG_CONFIG_HOME/nvim/init.vim')
----   => '/Users/jdoe/.config/nvim/init.vim'
+---   --> '/Users/jdoe/.config/nvim/init.vim'
 --- </pre>
 ---
 ---@param path (string) Path to normalize

@@ -549,7 +549,7 @@ end
 --- The iterator returns three values: a numeric id identifying the capture,
 --- the captured node, and metadata from any directives processing the match.
 --- The following example shows how to get captures by name:
---- <pre>
+--- <pre>lua
 --- for id, node, metadata in query:iter_captures(tree:root(), bufnr, first, last) do
 ---   local name = query.captures[id] -- name of the capture in the query
 ---   -- typically useful info about the node:
@@ -603,7 +603,7 @@ end
 --- If the query has more than one pattern, the capture table might be sparse
 --- and e.g. `pairs()` method should be used over `ipairs`.
 --- Here is an example iterating over all captures in every match:
---- <pre>
+--- <pre>lua
 --- for pattern, match, metadata in cquery:iter_matches(tree:root(), bufnr, first, last) do
 ---   for id, node in pairs(match) do
 ---     local name = query.captures[id]

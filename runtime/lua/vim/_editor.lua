@@ -123,7 +123,7 @@ do
   --- (such as the |TUI|) pastes text into the editor.
   ---
   --- Example: To remove ANSI color codes when pasting:
-  --- <pre>
+  --- <pre>lua
   --- vim.paste = (function(overridden)
   ---   return function(lines, phase)
   ---     for i,line in ipairs(lines) do
@@ -280,7 +280,7 @@ end
 --- command.
 ---
 --- Example:
---- <pre>
+--- <pre>lua
 ---   vim.cmd('echo 42')
 ---   vim.cmd([[
 ---     augroup My_group
@@ -746,7 +746,7 @@ end
 
 ---Prints given arguments in human-readable format.
 ---Example:
----<pre>
+---<pre>lua
 ---  -- Print highlight group Normal and store it's contents in a variable.
 ---  local hl_normal = vim.pretty_print(vim.api.nvim_get_hl_by_name("Normal", true))
 ---</pre>

@@ -579,12 +579,12 @@ end
 --- followed by namespace configuration, and finally global configuration.
 ---
 --- For example, if a user enables virtual text globally with
---- <pre>
+--- <pre>lua
 ---   vim.diagnostic.config({ virtual_text = true })
 --- </pre>
 ---
 --- and a diagnostic producer sets diagnostics with
---- <pre>
+--- <pre>lua
 ---   vim.diagnostic.set(ns, 0, diagnostics, { virtual_text = false })
 --- </pre>
 ---
@@ -621,13 +621,13 @@ end
 ---                       * format: (function) A function that takes a diagnostic as input and
 ---                                 returns a string. The return value is the text used to display
 ---                                 the diagnostic. Example:
----                       <pre>
----                       function(diagnostic)
----                         if diagnostic.severity == vim.diagnostic.severity.ERROR then
----                           return string.format("E: %s", diagnostic.message)
+---                       <pre>lua
+---                         function(diagnostic)
+---                           if diagnostic.severity == vim.diagnostic.severity.ERROR then
+---                             return string.format("E: %s", diagnostic.message)
+---                           end
+---                           return diagnostic.message
 ---                         end
----                         return diagnostic.message
----                       end
 ---                       </pre>
 ---       - signs: (default true) Use signs for diagnostics. Options:
 ---                * severity: Only show signs for diagnostics matching the given severity
@@ -1577,11 +1577,11 @@ end
 ---
 --- This can be parsed into a diagnostic |diagnostic-structure|
 --- with:
---- <pre>
---- local s = "WARNING filename:27:3: Variable 'foo' does not exist"
---- local pattern = "^(%w+) %w+:(%d+):(%d+): (.+)$"
---- local groups = { "severity", "lnum", "col", "message" }
---- vim.diagnostic.match(s, pattern, groups, { WARNING = vim.diagnostic.WARN })
+--- <pre>lua
+---   local s = "WARNING filename:27:3: Variable 'foo' does not exist"
+---   local pattern = "^(%w+) %w+:(%d+):(%d+): (.+)$"
+---   local groups = { "severity", "lnum", "col", "message" }
+---   vim.diagnostic.match(s, pattern, groups, { WARNING = vim.diagnostic.WARN })
 --- </pre>
 ---
 ---@param str string String to parse diagnostics from.

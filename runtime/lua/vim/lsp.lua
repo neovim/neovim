@@ -813,8 +813,7 @@ end
 --- Attaches the current buffer to the client.
 ---
 --- Example:
----
---- <pre>
+--- <pre>lua
 --- vim.lsp.start({
 ---    name = 'my-server-name',
 ---    cmd = {'name-of-language-server-executable'},
@@ -1754,8 +1753,7 @@ end
 ---
 --- You can also use the `stop()` function on a |vim.lsp.client| object.
 --- To stop all clients:
----
---- <pre>
+--- <pre>lua
 --- vim.lsp.stop_client(vim.lsp.get_active_clients())
 --- </pre>
 ---
@@ -2239,7 +2237,7 @@ end
 ---@param fn function Function to run on each client attached to buffer
 ---                   {bufnr}. The function takes the client, client ID, and
 ---                   buffer number as arguments. Example:
----             <pre>
+---             <pre>lua
 ---               vim.lsp.for_each_buffer_client(0, function(client, client_id, bufnr)
 ---                 print(vim.inspect(client))
 ---               end)

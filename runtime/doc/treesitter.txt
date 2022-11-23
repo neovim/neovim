@@ -605,7 +605,7 @@ start({bufnr}, {lang})                                               *start()*
     required for some plugins. In this case, add `vim.bo.syntax = 'on'` after
     the call to `start`.
 
-    Example: >
+    Example: >lua
 
      vim.api.nvim_create_autocmd( 'FileType', { pattern = 'tex',
          callback = function(args)
@@ -770,7 +770,7 @@ Query:iter_captures({self}, {node}, {source}, {start}, {stop})
 
     The iterator returns three values: a numeric id identifying the capture,
     the captured node, and metadata from any directives processing the match.
-    The following example shows how to get captures by name: >
+    The following example shows how to get captures by name: >lua
 
      for id, node, metadata in query:iter_captures(tree:root(), bufnr, first, last) do
        local name = query.captures[id] -- name of the capture in the query
@@ -802,7 +802,7 @@ Query:iter_matches({self}, {node}, {source}, {start}, {stop})
     (1-based) index of the pattern in the query, a table mapping capture
     indices to nodes, and metadata from any directives processing the match.
     If the query has more than one pattern, the capture table might be sparse
-    and e.g. `pairs()` method should be used over `ipairs` . Here is an example iterating over all captures in every match: >
+    and e.g. `pairs()` method should be used over `ipairs` . Here is an example iterating over all captures in every match: >lua
 
      for pattern, match, metadata in cquery:iter_matches(tree:root(), bufnr, first, last) do
        for id, node in pairs(match) do

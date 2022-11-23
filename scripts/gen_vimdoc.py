@@ -496,7 +496,12 @@ def render_node(n, text, prefix='', indent='', width=text_width - indentation,
     if n.nodeName == 'preformatted':
         o = get_text(n, preformatted=True)
         ensure_nl = '' if o[-1] == '\n' else '\n'
-        text += '>{}{}\n<'.format(ensure_nl, o)
+        if o[0:4] == 'lua\n':
+            text += '>lua{}{}\n<'.format(ensure_nl, o[3:-1])
+        elif o[0:4] == 'vim\n':
+            text += '>vim{}{}\n<'.format(ensure_nl, o[3:-1])
+        else:
+            text += '>{}{}\n<'.format(ensure_nl, o)
 
     elif is_inline(n):
         text = doc_wrap(get_text(n), indent=indent, width=width)

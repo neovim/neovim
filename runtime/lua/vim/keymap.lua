@@ -2,7 +2,7 @@ local keymap = {}
 
 --- Add a new |mapping|.
 --- Examples:
---- <pre>
+--- <pre>lua
 ---   -- Can add mapping to Lua functions
 ---   vim.keymap.set('n', 'lhs', function() print("real lua function") end)
 ---
@@ -21,13 +21,13 @@ local keymap = {}
 --- </pre>
 ---
 --- Note that in a mapping like:
---- <pre>
+--- <pre>lua
 ---    vim.keymap.set('n', 'asdf', require('jkl').my_fun)
 --- </pre>
 ---
 --- the ``require('jkl')`` gets evaluated during this call in order to access the function.
 --- If you want to avoid this cost at startup you can wrap it in a function, for example:
---- <pre>
+--- <pre>lua
 ---    vim.keymap.set('n', 'asdf', function() return require('jkl').my_fun() end)
 --- </pre>
 ---
@@ -93,7 +93,7 @@ end
 
 --- Remove an existing mapping.
 --- Examples:
---- <pre>
+--- <pre>lua
 ---   vim.keymap.del('n', 'lhs')
 ---
 ---   vim.keymap.del({'n', 'i', 'v'}, '<leader>w', { buffer = 5 })

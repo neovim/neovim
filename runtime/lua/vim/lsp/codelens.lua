@@ -241,7 +241,8 @@ end
 ---
 --- It is recommended to trigger this using an autocmd or via keymap.
 ---
---- <pre>
+--- Example:
+--- <pre>vim
 ---   autocmd BufEnter,CursorHold,InsertLeave <buffer> lua vim.lsp.codelens.refresh()
 --- </pre>
 ---
