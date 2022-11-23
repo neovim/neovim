@@ -2471,11 +2471,13 @@ void tv_dict_extend(dict_T *const d1, dict_T *const d2, const char *const action
     }
     if (di1 == NULL) {
       if (*action == 'm') {
-        // cheap way to move a dict item from "d2" to "d1"
+        // Cheap way to move a dict item from "d2" to "d1".
+        // If dict_add() fails then "d2" won't be empty.
         dictitem_T *const new_di = di2;
-        tv_dict_add(d1, new_di);
-        hash_remove(&d2->dv_hashtab, hi2);
-        tv_dict_watcher_notify(d1, (const char *)new_di->di_key, &new_di->di_tv, NULL);
+        if (tv_dict_add(d1, new_di) == OK) {
+          hash_remove(&d2->dv_hashtab, hi2);
+          tv_dict_watcher_notify(d1, (const char *)new_di->di_key, &new_di->di_tv, NULL);
+        }
       } else {
         dictitem_T *const new_di = tv_dict_item_copy(di2);
         if (tv_dict_add(d1, new_di) == FAIL) {
