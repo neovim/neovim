@@ -5390,6 +5390,7 @@ static int check_window_scroll_resize(int *size_count, win_T **first_scroll_win,
         // tv_list_set_item(winlist, listidx++, &tv);
         tv_list_append_owned_tv(winlist, tv);
       } else if (size_count != NULL) {
+        assert(first_size_win != NULL && first_scroll_win != NULL);
         (*size_count)++;
         if (*first_size_win == NULL) {
           *first_size_win = wp;
