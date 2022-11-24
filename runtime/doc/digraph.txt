@@ -156,7 +156,7 @@ These are the RFC1345 digraphs for the one-byte characters.  See the output of
 ":digraphs" for the others.
 
 EURO
-
+							*euro* *euro-digraph*
 Exception: RFC1345 doesn't specify the euro sign.  In Vim the digraph =e was
 added for this.  Note the difference between latin1, where the digraph Cu is
 used for the currency sign, and latin9 (iso-8859-15), where the digraph =e is
