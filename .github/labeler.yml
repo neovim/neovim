@@ -63,3 +63,4 @@
 
 "filetype":
   - runtime/lua/vim/filetype.lua
+  - runtime/lua/vim/filetype/detect.lua
