@@ -39,6 +39,11 @@ NEW FEATURES                                                    *news-features*
 
 The following new APIs or features were added.
 
+• |vim.diagnostic.open_float()| (and therefore |vim.diagnostic.config()|) now
+  accepts a `suffix` option which, by default, renders LSP error codes.
+  Similarly, the `virtual_text` configuration in |vim.diagnostic.config()| now
+  has a `suffix` option which does nothing by default.
+
 • |vim.secure.read()| reads a file and prompts the user if it should be
   trusted and, if so, returns the file's contents.
 
