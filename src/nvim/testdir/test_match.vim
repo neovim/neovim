@@ -363,4 +363,41 @@ func Test_matchadd_other_window()
   call delete('XscriptMatchCommon')
 endfunc
 
+func Test_match_in_linebreak()
+  CheckRunVimInTerminal
+
+  let lines =<< trim END
+    set breakindent linebreak breakat+=]
+    call printf('%s]%s', repeat('x', 50), repeat('x', 70))->setline(1)
+    call matchaddpos('ErrorMsg', [[1, 51]])
+  END
+  call writefile(lines, 'XscriptMatchLinebreak')
+  let buf = RunVimInTerminal('-S XscriptMatchLinebreak', #{rows: 10})
+  call TermWait(buf)
+  call VerifyScreenDump(buf, 'Test_match_linebreak', {})
+
+  call StopVimInTerminal(buf)
+  call delete('XscriptMatchLinebreak')
+endfunc
+
+" Test for deleting matches outside of the screen redraw top/bottom lines
+" This should cause a redraw of those lines.
+func Test_matchdelete_redraw()
+  new
+  call setline(1, range(1, 500))
+  call cursor(250, 1)
+  let m1 = matchaddpos('Search', [[250]])
+  let m2 = matchaddpos('Search', [[10], [450]])
+  redraw!
+  let m3 = matchaddpos('Search', [[240], [260]])
+  call matchdelete(m2)
+  let m = getmatches()
+  call assert_equal(2, len(m))
+  call assert_equal([250], m[0].pos1)
+  redraw!
+  call matchdelete(m1)
+  call assert_equal(1, len(getmatches()))
+  bw!
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab

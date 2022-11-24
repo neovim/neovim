@@ -36,3 +36,32 @@ describe('matchaddpos()', function()
     ]])
   end)
 end)
+
+describe('match highlighting', function()
+  -- oldtest: Test_match_in_linebreak()
+  it('does not continue in linebreak vim-patch:8.2.3698', function()
+    local screen = Screen.new(75, 10)
+    screen:set_default_attr_ids({
+      [0] = {bold = true, foreground = Screen.colors.Blue},  -- NonText
+      [1] = {background = Screen.colors.Red, foreground = Screen.colors.White},  -- ErrorMsg
+    })
+    screen:attach()
+    exec([=[
+      set breakindent linebreak breakat+=]
+      call printf('%s]%s', repeat('x', 50), repeat('x', 70))->setline(1)
+      call matchaddpos('ErrorMsg', [[1, 51]])
+    ]=])
+    screen:expect([[
+      ^xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx{1:]}                        |
+      xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx     |
+      {0:~                                                                          }|
+      {0:~                                                                          }|
+      {0:~                                                                          }|
+      {0:~                                                                          }|
+      {0:~                                                                          }|
+      {0:~                                                                          }|
+      {0:~                                                                          }|
+                                                                                 |
+    ]])
+  end)
+end)
