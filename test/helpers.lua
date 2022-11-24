@@ -269,7 +269,7 @@ function module.check_logs()
     table.concat(runtime_errors, ', ')))
 end
 
-function module.uname()
+function module.sysname()
   local platform = luv.os_uname()
   if platform and platform.sysname then
     return platform.sysname:lower()
@@ -284,11 +284,11 @@ function module.is_os(s)
     or s == 'bsd') then
     error('unknown platform: '..tostring(s))
   end
-  return ((s == 'win' and module.uname() == 'windows')
-    or (s == 'mac' and module.uname() == 'darwin')
-    or (s == 'freebsd' and module.uname() == 'freebsd')
-    or (s == 'openbsd' and module.uname() == 'openbsd')
-    or (s == 'bsd' and string.find(module.uname(), 'bsd')))
+  return ((s == 'win' and module.sysname():match('windows'))
+    or (s == 'mac' and module.sysname() == 'darwin')
+    or (s == 'freebsd' and module.sysname() == 'freebsd')
+    or (s == 'openbsd' and module.sysname() == 'openbsd')
+    or (s == 'bsd' and module.sysname():find('bsd')))
 end
 
 local function tmpdir_get()
