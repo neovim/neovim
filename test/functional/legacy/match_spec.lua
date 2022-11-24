@@ -97,4 +97,30 @@ describe('match highlighting', function()
       :s/0^                                                                       |
     ]])
   end)
+
+  it('on a Tab vim-patch:8.2.4062', function()
+    local screen = Screen.new(75, 10)
+    screen:set_default_attr_ids({
+      [0] = {bold = true, foreground = Screen.colors.Blue},  -- NonText
+      [1] = {background = Screen.colors.Red, foreground = Screen.colors.White},  -- ErrorMsg
+    })
+    screen:attach()
+    exec([[
+      set linebreak
+      call setline(1, "\tix")
+      call matchadd('ErrorMsg', '\t')
+    ]])
+    screen:expect([[
+      {1:       ^ }ix                                                                 |
+      {0:~                                                                          }|
+      {0:~                                                                          }|
+      {0:~                                                                          }|
+      {0:~                                                                          }|
+      {0:~                                                                          }|
+      {0:~                                                                          }|
+      {0:~                                                                          }|
+      {0:~                                                                          }|
+                                                                                 |
+    ]])
+  end)
 end)

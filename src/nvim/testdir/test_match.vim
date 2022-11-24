@@ -421,4 +421,22 @@ func Test_matchdelete_redraw()
   bw!
 endfunc
 
+func Test_match_tab_with_linebreak()
+  CheckRunVimInTerminal
+
+  let lines =<< trim END
+    set linebreak
+    call setline(1, "\tix")
+    call matchadd('ErrorMsg', '\t')
+  END
+  call writefile(lines, 'XscriptMatchTabLinebreak')
+  let buf = RunVimInTerminal('-S XscriptMatchTabLinebreak', #{rows: 10})
+  call TermWait(buf)
+  call VerifyScreenDump(buf, 'Test_match_tab_linebreak', {})
+
+  call StopVimInTerminal(buf)
+  call delete('XscriptMatchTabLinebreak')
+endfunc
+
+
 " vim: shiftwidth=2 sts=2 expandtab

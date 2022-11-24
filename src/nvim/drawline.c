@@ -1844,9 +1844,10 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
               n_extra = 0;
             }
           }
-          if (on_last_col) {
+          if (on_last_col && c != TAB) {
             // Do not continue search/match highlighting over the
-            // line break.
+            // line break, but for TABs the highlighting should
+            // include the complete width of the character
             search_attr = 0;
           }
 
