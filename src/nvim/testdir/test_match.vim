@@ -380,6 +380,27 @@ func Test_match_in_linebreak()
   call delete('XscriptMatchLinebreak')
 endfunc
 
+func Test_match_with_incsearch()
+  CheckRunVimInTerminal
+
+  let lines =<< trim END
+    set incsearch
+    call setline(1, range(20))
+    call matchaddpos('ErrorMsg', [3])
+  END
+  call writefile(lines, 'XmatchWithIncsearch')
+  let buf = RunVimInTerminal('-S XmatchWithIncsearch', #{rows: 6})
+  call TermWait(buf)
+  call VerifyScreenDump(buf, 'Test_match_with_incsearch_1', {})
+
+  call term_sendkeys(buf, ":s/0")
+  call VerifyScreenDump(buf, 'Test_match_with_incsearch_2', {})
+
+  call term_sendkeys(buf, "\<CR>")
+  call StopVimInTerminal(buf)
+  call delete('XmatchWithIncsearch')
+endfunc
+
 " Test for deleting matches outside of the screen redraw top/bottom lines
 " This should cause a redraw of those lines.
 func Test_matchdelete_redraw()

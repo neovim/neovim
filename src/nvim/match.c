@@ -425,7 +425,7 @@ static void next_search_hl(win_T *win, match_T *search_hl, match_T *shl, linenr_
   const int called_emsg_before = called_emsg;
 
   // for :{range}s/pat only highlight inside the range
-  if (lnum < search_first_line || lnum > search_last_line) {
+  if ((lnum < search_first_line || lnum > search_last_line) && cur == NULL) {
     shl->lnum = 0;
     return;
   }

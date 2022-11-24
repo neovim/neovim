@@ -2,6 +2,7 @@ local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
 local clear = helpers.clear
 local exec = helpers.exec
+local feed = helpers.feed
 
 before_each(clear)
 
@@ -62,6 +63,38 @@ describe('match highlighting', function()
       {0:~                                                                          }|
       {0:~                                                                          }|
                                                                                  |
+    ]])
+  end)
+
+  it('is shown with incsearch vim-patch:8.2.3940', function()
+    local screen = Screen.new(75, 6)
+    screen:set_default_attr_ids({
+      [0] = {bold = true, foreground = Screen.colors.Blue},  -- NonText
+      [1] = {background = Screen.colors.Yellow},  -- Search
+      [2] = {background = Screen.colors.Red, foreground = Screen.colors.White},  -- ErrorMsg
+    })
+    screen:attach()
+    exec([[
+      set incsearch
+      call setline(1, range(20))
+      call matchaddpos('ErrorMsg', [3])
+    ]])
+    screen:expect([[
+      ^0                                                                          |
+      1                                                                          |
+      {2:2}                                                                          |
+      3                                                                          |
+      4                                                                          |
+                                                                                 |
+    ]])
+    feed(':s/0')
+    screen:expect([[
+      {1:0}                                                                          |
+      1                                                                          |
+      {2:2}                                                                          |
+      3                                                                          |
+      4                                                                          |
+      :s/0^                                                                       |
     ]])
   end)
 end)
