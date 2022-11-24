@@ -302,7 +302,9 @@ static bool is_executable(const char *name, char **abspath)
 static bool is_executable_ext(const char *name, char **abspath)
   FUNC_ATTR_NONNULL_ARG(1)
 {
-  const bool is_unix_shell = strstr((char *)path_tail(p_sh), "sh") != NULL;
+  const bool is_unix_shell = strstr(path_tail(p_sh), "powershell") == NULL
+                             && strstr(path_tail(p_sh), "pwsh") == NULL
+                             && strstr(path_tail(p_sh), "sh") != NULL;
   char *nameext = strrchr(name, '.');
   size_t nameext_len = nameext ? strlen(nameext) : 0;
   xstrlcpy(os_buf, name, sizeof(os_buf));
