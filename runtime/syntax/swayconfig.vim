@@ -2,7 +2,8 @@
 " Language: sway window manager config
 " Original Author: James Eapen <james.eapen@vai.org>
 " Maintainer: James Eapen <james.eapen@vai.org>
-" Version: 0.11.1
+" Version: 0.1.6
+" Reference version (jamespeapen/swayconfig.vim): 0.11.6
 " Last Change: 2022 Aug 08
 
 " References:
@@ -23,10 +24,6 @@ scriptencoding utf-8
 " Error
 "syn match swayConfigError /.*/
 
-" Group mode/bar
-syn keyword swayConfigBlockKeyword set input contained
-syn region swayConfigBlock start=+.*s\?{$+ end=+^}$+ contains=i3ConfigBlockKeyword,swayConfigBlockKeyword,i3ConfigString,i3ConfigBind,i3ConfigComment,i3ConfigFont,i3ConfigFocusWrappingType,i3ConfigColor,i3ConfigVariable transparent keepend extend
-
 " binding
 syn keyword swayConfigBindKeyword bindswitch bindgesture contained
 syn match swayConfigBind /^\s*\(bindswitch\)\s\+.*$/ contains=i3ConfigVariable,i3ConfigBindKeyword,swayConfigBindKeyword,i3ConfigVariableAndModifier,i3ConfigNumber,i3ConfigUnit,i3ConfigUnitOr,i3ConfigBindArgument,i3ConfigModifier,i3ConfigAction,i3ConfigString,i3ConfigGapStyleKeyword,i3ConfigBorderStyleKeyword
@@ -45,7 +42,7 @@ syn match swayConfigFloating /^\s*floating\s\+\(enable\|disable\|toggle\)\s*$/ c
 
 syn clear i3ConfigFloatingModifier
 syn keyword swayConfigFloatingModifier floating_modifier contained
-syn match swayConfigFloatingMouseAction /^\s\?.*floating_modifier\s.*\(normal\|inverted\)$/ contains=swayConfigFloatingModifier,i3ConfigVariable
+syn match swayConfigFloatingMouseAction /^\s\?.*floating_modifier\s\S\+\s\?\(normal\|inverted\|none\)\?$/ contains=swayConfigFloatingModifier,i3ConfigVariable
 
 " Gaps
 syn clear i3ConfigSmartBorderKeyword
@@ -57,6 +54,10 @@ syn match swayConfigSmartBorder /^\s*smart_borders\s\+\(on\|no_gaps\|off\)\s\?$/
 syn keyword swayConfigClientColorKeyword focused_tab_title contained
 syn match swayConfigClientColor /^\s*client.\w\+\s\+.*$/ contains=i3ConfigClientColorKeyword,i3ConfigColor,i3ConfigVariable,i3ConfigClientColorKeyword,swayConfigClientColorKeyword
 
+" Input config
+syn keyword swayConfigInputKeyword input contained
+syn match swayConfigInput /^\s*input\s\+.*$/ contains=swayConfigInputKeyword
+
 " set display outputs
 syn match swayConfigOutput /^\s*output\s\+.*$/ contains=i3ConfigOutput
 
@@ -65,9 +66,21 @@ syn keyword swayConfigFocusKeyword focus contained
 syn keyword swayConfigFocusType output contained
 syn match swayConfigFocus /^\s*focus\soutput\s.*$/ contains=swayConfigFocusKeyword,swayConfigFocusType
 
+" focus follows mouse
+syn clear i3ConfigFocusFollowsMouseType
+syn clear i3ConfigFocusFollowsMouse
+
+syn keyword swayConfigFocusFollowsMouseType yes no always contained
+syn match swayConfigFocusFollowsMouse /^\s*focus_follows_mouse\s\+\(yes\|no\|always\)\s\?$/ contains=i3ConfigFocusFollowsMouseKeyword,swayConfigFocusFollowsMouseType
+
+
 " xwayland 
 syn keyword swayConfigXwaylandKeyword xwayland contained
 syn match swayConfigXwaylandModifier /^\s*xwayland\s\+\(enable\|disable\|force\)\s\?$/ contains=swayConfigXwaylandKeyword
+
+" Group mode/bar
+syn clear i3ConfigBlock
+syn region swayConfigBlock start=+.*s\?{$+ end=+^}$+ contains=i3ConfigBlockKeyword,i3ConfigString,i3ConfigBind,i3ConfigInitializeKeyword,i3ConfigComment,i3ConfigFont,i3ConfigFocusWrappingType,i3ConfigColor,i3ConfigVariable,swayConfigInputKeyword,i3ConfigOutput transparent keepend extend
 
 "hi def link swayConfigError                         Error
 hi def link i3ConfigFloating                        Error
@@ -75,11 +88,12 @@ hi def link swayConfigFloating                      Type
 hi def link swayConfigFloatingMouseAction           Type
 hi def link swayConfigFocusKeyword                  Type
 hi def link swayConfigSmartBorderKeyword            Type
+hi def link swayConfigInputKeyword                  Type
+hi def link swayConfigFocusFollowsMouseType         Type
 hi def link swayConfigBindGestureCommand            Identifier
 hi def link swayConfigBindGestureDirection          Constant
 hi def link swayConfigBindGesturePinchDirection     Constant
 hi def link swayConfigBindKeyword                   Identifier
-hi def link swayConfigBlockKeyword                  Identifier
 hi def link swayConfigClientColorKeyword            Identifier
 hi def link swayConfigFloatingKeyword               Identifier
 hi def link swayConfigFloatingModifier              Identifier

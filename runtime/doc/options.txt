@@ -3349,9 +3349,13 @@ A jump table for the options with a short description can be found at |Q_op|.
 			local to buffer
 	Expression to be used to transform the string found with the 'include'
 	option to a file name.  Mostly useful to change "." to "/" for Java: >
-		:set includeexpr=substitute(v:fname,'\\.','/','g')
+		:setlocal includeexpr=substitute(v:fname,'\\.','/','g')
 <	The "v:fname" variable will be set to the file name that was detected.
-
+	Note the double backslash: the `:set` command first halves them, then
+	one remains in the value, where "\." matches a dot literally.  For
+	simple character replacements `tr()` avoids the need for escaping: >
+		:setlocal includeexpr=tr(v:fname,'.','/')
+<
 	Also used for the |gf| command if an unmodified file name can't be
 	found.  Allows doing "gf" on the name after an 'include' statement.
 	Also used for |<cfile>|.

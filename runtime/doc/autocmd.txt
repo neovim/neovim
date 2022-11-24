@@ -823,8 +823,8 @@ QuickFixCmdPre			Before a quickfix command is run (|:make|,
 QuickFixCmdPost			Like QuickFixCmdPre, but after a quickfix
 				command is run, before jumping to the first
 				location. For |:cfile| and |:lfile| commands
-				it is run after error file is read and before
-				moving to the first error.
+				it is run after the error file is read and
+				before moving to the first error.
 				See |QuickFixCmdPost-example|.
 							*QuitPre*
 QuitPre				When using `:quit`, `:wq` or `:qall`, before
@@ -1065,8 +1065,9 @@ VimResume			After Nvim resumes from |suspend| state.
 							*VimSuspend*
 VimSuspend			Before Nvim enters |suspend| state.
 							*WinClosed*
-WinClosed			After closing a window.  The pattern is
-				matched against the |window-ID|.  Both
+WinClosed			When closing a window, just before it is
+				removed from the window layout.  The pattern
+				is matched against the |window-ID|.  Both
 				<amatch> and <afile> are set to the |window-ID|.
 				After WinLeave.
 				Non-recursive (event cannot trigger itself).

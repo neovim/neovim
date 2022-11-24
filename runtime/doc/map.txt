@@ -1713,7 +1713,7 @@ When executed as: >
 This will invoke: >
 	:call Myfunc("arg1","arg2")
 
-<						*q-args-example* 
+<						*q-args-example*
 A more substantial example: >
    :function Allargs(command)
    :   let i = 0
