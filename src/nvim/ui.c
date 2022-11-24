@@ -204,7 +204,7 @@ void ui_refresh(void)
     width = MIN(ui->width, width);
     height = MIN(ui->height, height);
     for (UIExtension j = 0; (int)j < kUIExtCount; j++) {
-      bool in_compositor = ui->composed && compositor->ui_ext[j];
+      bool in_compositor = (ui->composed || j < kUIGlobalCount) && compositor->ui_ext[j];
       ext_widgets[j] &= (ui->ui_ext[j] || in_compositor || inclusive);
     }
   }
