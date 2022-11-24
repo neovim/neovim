@@ -425,7 +425,7 @@ static void next_search_hl(win_T *win, match_T *search_hl, match_T *shl, linenr_
   const int called_emsg_before = called_emsg;
 
   // for :{range}s/pat only highlight inside the range
-  if (lnum < search_first_line || lnum > search_last_line) {
+  if ((lnum < search_first_line || lnum > search_last_line) && cur == NULL) {
     shl->lnum = 0;
     return;
   }
@@ -677,9 +677,11 @@ bool prepare_search_hl_line(win_T *wp, linenr_T lnum, colnr_T mincol, char_u **l
 /// After end, check for start/end of next match.
 /// When another match, have to check for start again.
 /// Watch out for matching an empty string!
+/// "on_last_col" is set to true with non-zero search_attr and the next column
+/// is endcol.
 /// Return the updated search_attr.
 int update_search_hl(win_T *wp, linenr_T lnum, colnr_T col, char_u **line, match_T *search_hl,
-                     int *has_match_conc, int *match_conc, int lcs_eol_one,
+                     int *has_match_conc, int *match_conc, int lcs_eol_one, bool *on_last_col,
                      bool *search_attr_from_match)
 {
   matchitem_T *cur = wp->w_match_head;  // points to the match list
@@ -792,6 +794,7 @@ int update_search_hl(win_T *wp, linenr_T lnum, colnr_T col, char_u **line, match
     }
     if (shl->attr_cur != 0) {
       search_attr = shl->attr_cur;
+      *on_last_col = col + 1 >= shl->endcol;
       *search_attr_from_match = shl != search_hl;
     }
     if (shl != search_hl && cur != NULL) {

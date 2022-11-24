@@ -618,6 +618,8 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
 
   LineDrawState draw_state = WL_START;  // what to draw next
 
+  int match_conc      = 0;              ///< cchar for match functions
+  bool on_last_col    = false;
   int syntax_flags    = 0;
   int syntax_seqnr    = 0;
   int prev_syntax_id  = 0;
@@ -627,7 +629,6 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
                                         ///< force wrapping
   int vcol_off        = 0;              ///< offset for concealed characters
   int did_wcol        = false;
-  int match_conc      = 0;              ///< cchar for match functions
   int old_boguscols = 0;
 #define VCOL_HLC (vcol - vcol_off)
 #define FIX_FOR_BOGUSCOLS \
@@ -1429,8 +1430,8 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
         // When another match, have to check for start again.
         v = (ptr - line);
         search_attr = update_search_hl(wp, lnum, (colnr_T)v, &line, &screen_search_hl,
-                                       &has_match_conc,
-                                       &match_conc, lcs_eol_one, &search_attr_from_match);
+                                       &has_match_conc, &match_conc, lcs_eol_one,
+                                       &on_last_col, &search_attr_from_match);
         ptr = line + v;  // "line" may have been changed
 
         // Do not allow a conceal over EOL otherwise EOL will be missed
@@ -1842,6 +1843,12 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
             if (n_extra < 0) {
               n_extra = 0;
             }
+          }
+          if (on_last_col && c != TAB) {
+            // Do not continue search/match highlighting over the
+            // line break, but for TABs the highlighting should
+            // include the complete width of the character
+            search_attr = 0;
           }
 
           if (c == TAB && n_extra + col > grid->cols) {
