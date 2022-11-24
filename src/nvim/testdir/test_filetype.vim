@@ -623,6 +623,7 @@ let s:filename_checks = {
     \ 'vroom': ['file.vroom'],
     \ 'vue': ['file.vue'],
     \ 'wast': ['file.wast', 'file.wat'],
+    \ 'wdl': ['file.wdl'],
     \ 'webmacro': ['file.wm'],
     \ 'wget': ['.wgetrc', 'wgetrc'],
     \ 'wget2': ['.wget2rc', 'wget2rc'],

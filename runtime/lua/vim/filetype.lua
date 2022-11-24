@@ -1071,6 +1071,7 @@ local extension = {
   vue = 'vue',
   wat = 'wast',
   wast = 'wast',
+  wdl = 'wdl',
   wm = 'webmacro',
   wbt = 'winbatch',
   wml = 'wml',
