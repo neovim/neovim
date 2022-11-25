@@ -26,3 +26,22 @@ freebsd_task:
     - sudo -u cirrus gmake unittest
   oldtest_script:
     - sudo -u cirrus gmake oldtest
+
+macos_task:
+  name: macOS M1
+  macos_instance:
+    image: ghcr.io/cirruslabs/macos-ventura-xcode:latest
+  env:
+    CC: clang
+  timeout_in: 30m
+  install_script:
+    - brew update
+    - brew install automake cpanminus ninja libtool
+  build_deps_script:
+    - make deps
+  build_script:
+    - make CMAKE_EXTRA_FLAGS="${CMAKE_EXTRA_FLAGS}" nvim
+  functionaltest_script:
+    - make functionaltest
+  oldtest_script:
+    - make oldtest
