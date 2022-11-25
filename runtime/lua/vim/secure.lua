@@ -1,5 +1,4 @@
 local M = {}
-
 ---@private
 --- Reads trust database from $XDG_STATE_HOME/nvim/trust.
 ---
@@ -120,9 +119,9 @@ end
 ---
 ---@param path (string) Path to a file to update status for.
 ---@param mode (string) One of the following:
----   - 'allow': Add file to trust database and set it as trusted
----   - 'deny': Add file to trust database and set it as denied
----   - 'forget': Remove file from trust database
+---   - "allow": Add file to trust database and set it as trusted
+---   - "deny": Add file to trust database and set it as denied
+---   - "forget": Remove file from trust database
 ---@return (boolean, string|nil) success, errmsg: true and nil if the operation was successful,
 ---   otherwise false and an error message.
 function M.trust(path, mode)
@@ -133,7 +132,7 @@ function M.trust(path, mode)
       function(m)
         return m == 'allow' or m == 'deny' or m == 'forget'
       end,
-      [['allow' or 'deny' or 'forget']],
+      [["allow" or "deny" or "forget"]],
     },
   })
 
