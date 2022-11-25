@@ -92,10 +92,11 @@ func Test_getreg_empty_list()
   let y = x
   call add(x, 'foo')
   call assert_equal(['foo'], y)
+  call assert_fails('call getreg([])', 'E730:')
 endfunc
 
 func Test_loop_over_null_list()
-  let null_list = submatch(1, 1)
+  let null_list = v:_null_list
   for i in null_list
     call assert_report('should not get here')
   endfor

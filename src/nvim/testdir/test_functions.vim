@@ -110,6 +110,10 @@ func Test_max()
 
   call assert_fails('call max(1)', 'E712:')
   " call assert_fails('call max(v:none)', 'E712:')
+
+  " check we only get one error
+  call assert_fails('call max([#{}, [1]])', ['E728:', 'E728:'])
+  call assert_fails('call max(#{a: {}, b: [1]})', ['E728:', 'E728:'])
 endfunc
 
 func Test_min()
@@ -123,6 +127,11 @@ func Test_min()
 
   call assert_fails('call min(1)', 'E712:')
   " call assert_fails('call min(v:none)', 'E712:')
+  call assert_fails('call min([1, {}])', 'E728:')
+
+  " check we only get one error
+  call assert_fails('call min([[1], #{}])', ['E745:', 'E745:'])
+  call assert_fails('call min(#{a: [1], b: #{}})', ['E745:', 'E745:'])
 endfunc
 
 func Test_strwidth()
@@ -583,6 +592,7 @@ func Test_tr()
   call assert_fails("let s=tr('abcd', 'abcd', 'def')", 'E475:')
   call assert_equal('hEllO', tr('hello', 'eo', 'EO'))
   call assert_equal('hello', tr('hello', 'xy', 'ab'))
+  call assert_fails('call tr("abc", "123", "₁₂")', 'E475:')
   set encoding=utf8
 endfunc
 
