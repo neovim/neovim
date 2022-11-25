@@ -1166,13 +1166,14 @@ function M.sh(path, contents, name)
       vim.b[b].is_bash = nil
       vim.b[b].is_sh = nil
     end
-  elseif vim.g.bash_is_sh or matchregex(name, [[\<bash\>]]) or matchregex(name, [[\<bash2\>]]) then
+  elseif vim.g.bash_is_sh or matchregex(name, [[\<\(bash\|bash2\)\>]]) then
     on_detect = function(b)
       vim.b[b].is_bash = 1
       vim.b[b].is_kornshell = nil
       vim.b[b].is_sh = nil
     end
-  elseif matchregex(name, [[\<sh\>]]) then
+    -- Ubuntu links sh to dash
+  elseif matchregex(name, [[\<\(sh\|dash\)\>]]) then
     on_detect = function(b)
       vim.b[b].is_sh = 1
       vim.b[b].is_kornshell = nil
@@ -1460,8 +1461,8 @@ local function match_from_hashbang(contents, path)
     name = 'wish'
   end
 
-  if matchregex(name, [[^\(bash\d*\|\|ksh\d*\|sh\)\>]]) then
-    -- Bourne-like shell scripts: bash bash2 ksh ksh93 sh
+  if matchregex(name, [[^\(bash\d*\|dash\|ksh\d*\|sh\)\>]]) then
+    -- Bourne-like shell scripts: bash bash2 dash ksh ksh93 sh
     return require('vim.filetype.detect').sh(path, contents, first_line)
   elseif matchregex(name, [[^csh\>]]) then
     return require('vim.filetype.detect').shell(path, contents, vim.g.filetype_csh or 'csh')
