@@ -565,6 +565,60 @@ func Test_fold_manual()
   normal zc
   call assert_equal('1 aa', getline(foldclosed('.')))
 
+  " Create a fold inside a closed fold after setting 'foldlevel'
+  %d _
+  call setline(1, range(1, 5))
+  1,5fold
+  normal zR
+  2,4fold
+  set foldlevel=1
+  3fold
+  call assert_equal([1, 3, 3, 3, 1], map(range(1, 5), {->foldlevel(v:val)}))
+  set foldlevel&
+
+  " Create overlapping folds (at the start and at the end)
+  normal zE
+  2,3fold
+  normal zR
+  3,4fold
+  call assert_equal([0, 2, 2, 1, 0], map(range(1, 5), {->foldlevel(v:val)}))
+  normal zE
+  3,4fold
+  normal zR
+  2,3fold
+  call assert_equal([0, 1, 2, 2, 0], map(range(1, 5), {->foldlevel(v:val)}))
+
+  " Create a nested fold across two non-adjoining folds
+  %d _
+  call setline(1, range(1, 7))
+  1,2fold
+  normal zR
+  4,5fold
+  normal zR
+  6,7fold
+  normal zR
+  1,5fold
+  call assert_equal([2, 2, 1, 2, 2, 1, 1],
+        \ map(range(1, 7), {->foldlevel(v:val)}))
+
+  " A newly created nested fold should be closed
+  %d _
+  call setline(1, range(1, 6))
+  1,6fold
+  normal zR
+  3,4fold
+  normal zR
+  2,5fold
+  call assert_equal([1, 2, 3, 3, 2, 1], map(range(1, 6), {->foldlevel(v:val)}))
+  call assert_equal(2, foldclosed(4))
+  call assert_equal(5, foldclosedend(4))
+
+  " Test zO, zC and zA on a line with no folds.
+  normal zE
+  call assert_fails('normal zO', 'E490:')
+  call assert_fails('normal zC', 'E490:')
+  call assert_fails('normal zA', 'E490:')
+
   set fdm&
   bw!
 endfunc
@@ -884,6 +938,30 @@ func Test_fold_delete_first_line()
   set foldmethod&
 endfunc
 
+" Add a test for deleting the outer fold of a nested fold and promoting the
+" inner folds to one level up with already a fold at that level following the
+" nested fold.
+func Test_fold_delete_recursive_fold()
+  new
+  call setline(1, range(1, 7))
+  2,3fold
+  normal zR
+  4,5fold
+  normal zR
+  1,5fold
+  normal zR
+  6,7fold
+  normal zR
+  normal 1Gzd
+  normal 1Gzj
+  call assert_equal(2, line('.'))
+  normal zj
+  call assert_equal(4, line('.'))
+  normal zj
+  call assert_equal(6, line('.'))
+  bw!
+endfunc
+
 " Test for errors in 'foldexpr'
 func Test_fold_expr_error()
   new
@@ -1075,6 +1153,10 @@ func Test_foldclose_opt()
   call term_sendkeys(buf, "1G")
   call WaitForAssert({-> assert_equal('four', term_getline(buf, 3))})
   call term_sendkeys(buf, ":call XsaveFoldLevels()\n")
+  call term_sendkeys(buf, "2G")
+  call WaitForAssert({-> assert_equal('two', term_getline(buf, 2))})
+  call term_sendkeys(buf, "k")
+  call WaitForAssert({-> assert_equal('four', term_getline(buf, 3))})
 
   " clean up
   call StopVimInTerminal(buf)
@@ -1150,6 +1232,44 @@ func Test_fold_move_foldlevel()
   call assert_equal([0, 1, 1, 2, 2], [foldlevel(1), foldlevel(2),
         \ foldlevel(3), foldlevel(4), foldlevel(5)])
 
+  bw!
+endfunc
+
+" Test for using zj and zk to move downwards and upwards to the start and end
+" of the next fold.
+" Test for using [z and ]z in a closed fold to jump to the beginning and end
+" of the fold.
+func Test_fold_jump()
+  new
+  call setline(1, ["\t1", "\t2", "\t\t3", "\t\t4", "\t\t\t5", "\t\t\t6", "\t\t7", "\t\t8", "\t9", "\t10"])
+  setlocal foldmethod=indent
+  normal zR
+  normal zj
+  call assert_equal(3, line('.'))
+  normal zj
+  call assert_equal(5, line('.'))
+  call assert_beeps('normal zj')
+  call assert_equal(5, line('.'))
+  call assert_beeps('normal 9Gzj')
+  call assert_equal(9, line('.'))
+  normal Gzk
+  call assert_equal(8, line('.'))
+  normal zk
+  call assert_equal(6, line('.'))
+  call assert_beeps('normal zk')
+  call assert_equal(6, line('.'))
+  call assert_beeps('normal 2Gzk')
+  call assert_equal(2, line('.'))
+
+  " Using [z or ]z in a closed fold should not move the cursor
+  %d _
+  call setline(1, ["1", "\t2", "\t3", "\t4", "\t5", "\t6", "7"])
+  normal zR4Gzc
+  call assert_equal(4, line('.'))
+  call assert_beeps('normal [z')
+  call assert_equal(4, line('.'))
+  call assert_beeps('normal ]z')
+  call assert_equal(4, line('.'))
   bw!
 endfunc
 

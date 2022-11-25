@@ -309,5 +309,27 @@ describe('folding', function()
       {1:~                                            }|
                                                    |
     ]])
+    feed('2G')
+    screen:expect([[
+      one                                          |
+      ^two                                          |
+      three                                        |
+      four                                         |
+      {1:~                                            }|
+      {1:~                                            }|
+      {1:~                                            }|
+                                                   |
+    ]])
+    feed('k')
+    screen:expect([[
+      ^one                                          |
+      {2:+--  2 lines: two····························}|
+      four                                         |
+      {1:~                                            }|
+      {1:~                                            }|
+      {1:~                                            }|
+      {1:~                                            }|
+                                                   |
+    ]])
   end)
 end)
