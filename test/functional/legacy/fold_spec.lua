@@ -4,6 +4,8 @@ local Screen = require('test.functional.ui.screen')
 local helpers = require('test.functional.helpers')(after_each)
 local feed, insert, feed_command, expect_any =
   helpers.feed, helpers.insert, helpers.feed_command, helpers.expect_any
+local command = helpers.command
+local exec = helpers.exec
 
 describe('folding', function()
   local screen
@@ -11,7 +13,13 @@ describe('folding', function()
   before_each(function()
     helpers.clear()
 
-    screen = Screen.new(20, 8)
+    screen = Screen.new(45, 8)
+    screen:set_default_attr_ids({
+      [1] = {bold = true, foreground = Screen.colors.Blue},  -- NonText
+      [2] = {foreground = Screen.colors.DarkBlue, background = Screen.colors.LightGrey},  -- Folded
+      [3] = {foreground = Screen.colors.DarkBlue, background = Screen.colors.Grey},  -- FoldColumn
+      [4] = {foreground = Screen.colors.Brown},  -- LineNr
+    })
     screen:attach()
   end)
 
@@ -210,5 +218,96 @@ describe('folding', function()
       Test fdm=indent and :move bug END
       line2]])
   end)
-end)
 
+  -- oldtest: Test_folds_with_rnu()
+  it('with relative line numbers', function()
+    command('set fdm=marker rnu foldcolumn=2')
+    command('call setline(1, ["{{{1", "nline 1", "{{{1", "line 2"])')
+
+    screen:expect([[
+      {3:+ }{4:  0 }{2:^+--  2 lines: ·························}|
+      {3:+ }{4:  1 }{2:+--  2 lines: ·························}|
+      {1:~                                            }|
+      {1:~                                            }|
+      {1:~                                            }|
+      {1:~                                            }|
+      {1:~                                            }|
+                                                   |
+    ]])
+    feed("j")
+    screen:expect([[
+      {3:+ }{4:  1 }{2:+--  2 lines: ·························}|
+      {3:+ }{4:  0 }{2:^+--  2 lines: ·························}|
+      {1:~                                            }|
+      {1:~                                            }|
+      {1:~                                            }|
+      {1:~                                            }|
+      {1:~                                            }|
+                                                   |
+    ]])
+  end)
+
+  -- oldtest: Test_foldclose_opt()
+  it('foldclose=all', function()
+    exec([[
+      set foldmethod=manual foldclose=all foldopen=all
+      call setline(1, ['one', 'two', 'three', 'four'])
+      2,3fold
+    ]])
+
+    screen:expect([[
+      ^one                                          |
+      {2:+--  2 lines: two····························}|
+      four                                         |
+      {1:~                                            }|
+      {1:~                                            }|
+      {1:~                                            }|
+      {1:~                                            }|
+                                                   |
+    ]])
+    feed('2G')
+    screen:expect([[
+      one                                          |
+      ^two                                          |
+      three                                        |
+      four                                         |
+      {1:~                                            }|
+      {1:~                                            }|
+      {1:~                                            }|
+                                                   |
+    ]])
+    feed('4G')
+    screen:expect([[
+      one                                          |
+      {2:+--  2 lines: two····························}|
+      ^four                                         |
+      {1:~                                            }|
+      {1:~                                            }|
+      {1:~                                            }|
+      {1:~                                            }|
+                                                   |
+    ]])
+    feed('3G')
+    screen:expect([[
+      one                                          |
+      two                                          |
+      ^three                                        |
+      four                                         |
+      {1:~                                            }|
+      {1:~                                            }|
+      {1:~                                            }|
+                                                   |
+    ]])
+    feed('1G')
+    screen:expect([[
+      ^one                                          |
+      {2:+--  2 lines: two····························}|
+      four                                         |
+      {1:~                                            }|
+      {1:~                                            }|
+      {1:~                                            }|
+      {1:~                                            }|
+                                                   |
+    ]])
+  end)
+end)
