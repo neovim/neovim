@@ -655,6 +655,8 @@ int searchit(win_T *win, buf_T *buf, pos_T *pos, pos_T *end_pos, Direction dir, 
           // match (this is vi compatible) or on the next char.
           if (dir == FORWARD && at_first_line) {
             match_ok = true;
+            matchcol = col;
+
             // When the match starts in a next line it's certainly
             // past the start position.
             // When match lands on a NUL the cursor will be put
@@ -679,20 +681,21 @@ int searchit(win_T *win, buf_T *buf, pos_T *pos, pos_T *end_pos, Direction dir, 
                   break;
                 }
                 matchcol = endpos.col;
-                // for empty match (matchcol == matchpos.col): advance one char
+                // for empty match: advance one char
+                if (matchcol == matchpos.col && ptr[matchcol] != NUL) {
+                  matchcol += utfc_ptr2len(ptr + matchcol);
+                }
               } else {
-                // Prepare to start after first matched character.
-                matchcol = matchpos.col;
+                // Advance "matchcol" to the next character.
+                // This does not use matchpos.col, because
+                // "\zs" may have have set it.
+                if (ptr[matchcol] != NUL) {
+                  matchcol += utfc_ptr2len(ptr + matchcol);
+                }
               }
-
-              if (matchcol == matchpos.col && ptr[matchcol] != NUL) {
-                matchcol += utfc_ptr2len(ptr + matchcol);
-              }
-
               if (matchcol == 0 && (options & SEARCH_START)) {
                 break;
               }
-
               if (ptr[matchcol] == NUL
                   || (nmatched = vim_regexec_multi(&regmatch, win, buf,
                                                    lnum, matchcol, tm,
