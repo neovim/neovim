@@ -188,6 +188,7 @@ char *os_ctime_r(const time_t *restrict clock, char *restrict result, size_t res
   if (clock_local_ptr == NULL) {
     xstrlcpy(result, _("(Invalid)"), result_len);
   } else {
+    // xgettext:no-c-format
     strftime(result, result_len, _("%a %b %d %H:%M:%S %Y"), clock_local_ptr);
   }
   xstrlcat(result, "\n", result_len);
