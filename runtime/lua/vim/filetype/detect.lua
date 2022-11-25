@@ -1166,14 +1166,14 @@ function M.sh(path, contents, name)
       vim.b[b].is_bash = nil
       vim.b[b].is_sh = nil
     end
-  elseif vim.g.bash_is_sh or matchregex(name, [[\<bash|bash2\>]]) then
+  elseif vim.g.bash_is_sh or matchregex(name, [[\<\(bash|bash2\)\>]]) then
     on_detect = function(b)
       vim.b[b].is_bash = 1
       vim.b[b].is_kornshell = nil
       vim.b[b].is_sh = nil
     end
     -- Ubuntu links sh to dash
-  elseif matchregex(name, [[\<sh|dash\>]]) then
+  elseif matchregex(name, [[\<\(sh|dash\)\>]]) then
     on_detect = function(b)
       vim.b[b].is_sh = 1
       vim.b[b].is_kornshell = nil
