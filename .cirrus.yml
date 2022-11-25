@@ -19,9 +19,34 @@ freebsd_task:
     # permission-related tests to work correctly.
     - pw useradd cirrus -m
     - chown -R cirrus:cirrus .
-  functionaltest_script:
-    - sudo -u cirrus gmake functionaltest
-  unittest_script:
-    - sudo -u cirrus gmake unittest
-  oldtest_script:
-    - sudo -u cirrus gmake oldtest
+  always:
+    unittest_script:
+      - sudo -u cirrus gmake unittest
+    functionaltest_script:
+      - sudo -u cirrus gmake functionaltest
+    oldtest_script:
+      - sudo -u cirrus gmake oldtest
+
+macos_task:
+  name: macOS M1
+  macos_instance:
+    image: ghcr.io/cirruslabs/macos-ventura-xcode:latest
+  env:
+    CC: clang
+  timeout_in: 30m
+  install_script:
+    - brew update
+    - brew install cpanminus ninja
+  build_deps_script:
+    - cmake -S cmake.deps -B .deps -G Ninja
+    - cmake --build .deps
+  build_script:
+    - cmake --preset ci
+    - cmake --build build
+  always:
+    unittest_script:
+      - make unittest
+    functionaltest_script:
+      - make functionaltest
+    oldtest_script:
+      - make oldtest
