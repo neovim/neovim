@@ -990,6 +990,38 @@ func Test_altfile()
   call assert_equal('Xtwoalt', bufname('#'))
   only
   bwipe!
+  call delete('Xtest_altfile')
+endfunc
+
+" Test for creating views with manual folds
+func Test_mkview_manual_fold()
+  call writefile(range(1,10), 'Xfile')
+  new Xfile
+  " create recursive folds
+  5,6fold
+  4,7fold
+  mkview Xview
+  normal zE
+  source Xview
+  call assert_equal([-1, 4, 4, 4, 4, -1], [foldclosed(3), foldclosed(4),
+        \ foldclosed(5), foldclosed(6), foldclosed(7), foldclosed(8)])
+  " open one level of fold
+  4foldopen
+  mkview! Xview
+  normal zE
+  source Xview
+  call assert_equal([-1, -1, 5, 5, -1, -1], [foldclosed(3), foldclosed(4),
+        \ foldclosed(5), foldclosed(6), foldclosed(7), foldclosed(8)])
+  " open all the folds
+  %foldopen!
+  mkview! Xview
+  normal zE
+  source Xview
+  call assert_equal([-1, -1, -1, -1, -1, -1], [foldclosed(3), foldclosed(4),
+        \ foldclosed(5), foldclosed(6), foldclosed(7), foldclosed(8)])
+  call delete('Xfile')
+  call delete('Xview')
+  bw!
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab
