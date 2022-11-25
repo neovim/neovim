@@ -73,7 +73,7 @@ end
 --- searches are recursive and may search through many directories! If {stop}
 --- is non-nil, then the search stops when the directory given in {stop} is
 --- reached. The search terminates when {limit} (default 1) matches are found.
---- The search can be narrowed to find only files or or only directories by
+--- The search can be narrowed to find only files or only directories by
 --- specifying {type} to be "file" or "directory", respectively.
 ---
 ---@param names (string|table|fun(name: string): boolean) Names of the files

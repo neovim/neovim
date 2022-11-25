@@ -1192,7 +1192,7 @@ endfunc
 
 " Test for merging two recursive folds when an intermediate line with no fold
 " is removed
-func Test_fold_merge_recrusive()
+func Test_fold_merge_recursive()
   new
   call setline(1, ['  one', '    two', 'xxxx', '    three',
         \ '      four', "\tfive"])
