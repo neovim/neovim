@@ -499,6 +499,13 @@ func Test_get_reginfo()
   nunmap <F2>
   unlet g:RegInfo
 
+  " The type of "isunnamed" was VAR_SPECIAL but should be VAR_BOOL.  Can only
+  " be noticed when using json_encod().
+  call setreg('a', 'foo')
+  let reginfo = getreginfo('a')
+  let expected = #{regcontents: ['foo'], isunnamed: v:false, regtype: 'v'}
+  call assert_equal(json_encode(expected), json_encode(reginfo))
+
   bwipe!
 endfunc
 
