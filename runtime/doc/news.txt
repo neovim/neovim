@@ -39,6 +39,16 @@ NEW FEATURES                                                    *news-features*
 
 The following new APIs or features were added.
 
+• Treesitter syntax highlighting for `help` files now supports highlighted
+  code examples. To enable, create a `.config/nvim/ftplugin/help.lua` with
+  the contents >lua
+    vim.treesitter.start()
+<
+  Note: Highlighted code examples are only available in the Nvim manual, not
+  in help files taken from Vim. The treesitter `help` parser is also work in
+  progress and not guaranteed to correctly highlight every help file in the
+  wild.
+
 • |vim.secure.trust()|, |:trust| allows the user to manage files in trust
   database.
 
