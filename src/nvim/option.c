@@ -1465,10 +1465,10 @@ skip:
         IObuff[i + (arg - startarg)] = NUL;
       }
       // make sure all characters are printable
-      trans_characters((char *)IObuff, IOSIZE);
+      trans_characters(IObuff, IOSIZE);
 
       no_wait_return++;         // wait_return() done later
-      emsg((char *)IObuff);     // show error highlighted
+      emsg(IObuff);             // show error highlighted
       no_wait_return--;
 
       return FAIL;
@@ -3159,7 +3159,7 @@ static void showoptions(int all, int opt_flags)
           len = 1;                      // a toggle option fits always
         } else {
           option_value2string(p, opt_flags);
-          len = (int)strlen(p->fullname) + vim_strsize((char *)NameBuff) + 1;
+          len = (int)strlen(p->fullname) + vim_strsize(NameBuff) + 1;
         }
         if ((len <= INC - GAP && run == 1)
             || (len > INC - GAP && run == 2)) {
@@ -3270,7 +3270,7 @@ static void showoneopt(vimoption_T *p, int opt_flags)
     msg_putchar('=');
     // put value string in NameBuff
     option_value2string(p, opt_flags);
-    msg_outtrans((char *)NameBuff);
+    msg_outtrans(NameBuff);
   }
 
   silent_mode = save_silent;
@@ -4808,7 +4808,7 @@ static void option_value2string(vimoption_T *opp, int scope)
     } else if (wc != 0) {
       xstrlcpy(NameBuff, (char *)transchar((int)wc), sizeof(NameBuff));
     } else {
-      snprintf((char *)NameBuff,
+      snprintf(NameBuff,
                sizeof(NameBuff),
                "%" PRId64,
                (int64_t)(*(long *)varp));
@@ -4821,7 +4821,7 @@ static void option_value2string(vimoption_T *opp, int scope)
       home_replace(NULL, varp, (char *)NameBuff, MAXPATHL, false);
       // Translate 'pastetoggle' into special key names.
     } else if ((char **)opp->var == &p_pt) {
-      str2specialbuf((const char *)p_pt, (char *)NameBuff, MAXPATHL);
+      str2specialbuf((const char *)p_pt, NameBuff, MAXPATHL);
     } else {
       xstrlcpy(NameBuff, varp, MAXPATHL);
     }

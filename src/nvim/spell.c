@@ -3231,8 +3231,8 @@ void spell_dump_compl(char *pat, int ic, Direction *dir, int dumpflags_arg)
 
   if (do_region && region_names != NULL) {
     if (pat == NULL) {
-      vim_snprintf((char *)IObuff, IOSIZE, "/regions=%s", region_names);
-      ml_append(lnum++, (char *)IObuff, (colnr_T)0, false);
+      vim_snprintf(IObuff, IOSIZE, "/regions=%s", region_names);
+      ml_append(lnum++, IObuff, (colnr_T)0, false);
     }
   } else {
     do_region = false;
@@ -3247,8 +3247,8 @@ void spell_dump_compl(char *pat, int ic, Direction *dir, int dumpflags_arg)
     }
 
     if (pat == NULL) {
-      vim_snprintf((char *)IObuff, IOSIZE, "# file: %s", slang->sl_fname);
-      ml_append(lnum++, (char *)IObuff, (colnr_T)0, false);
+      vim_snprintf(IObuff, IOSIZE, "# file: %s", slang->sl_fname);
+      ml_append(lnum++, IObuff, (colnr_T)0, false);
     }
 
     // When matching with a pattern and there are no prefixes only use
@@ -3411,7 +3411,7 @@ static void dump_word(slang_T *slang, char *word, char *pat, Direction *dir, int
       // Include the word count for ":spelldump!".
       hi = hash_find(&slang->sl_wordcount, tw);
       if (!HASHITEM_EMPTY(hi)) {
-        vim_snprintf((char *)IObuff, IOSIZE, "%s\t%d",
+        vim_snprintf(IObuff, IOSIZE, "%s\t%d",
                      tw, HI2WC(hi)->wc_count);
         p = IObuff;
       }

@@ -394,12 +394,12 @@ static int assert_equalfile(typval_T *argvars)
   char line2[200];
   ptrdiff_t lineidx = 0;
   if (fd1 == NULL) {
-    snprintf((char *)IObuff, IOSIZE, (char *)e_notread, fname1);
+    snprintf(IObuff, IOSIZE, (char *)e_notread, fname1);
   } else {
     FILE *const fd2 = os_fopen(fname2, READBIN);
     if (fd2 == NULL) {
       fclose(fd1);
-      snprintf((char *)IObuff, IOSIZE, (char *)e_notread, fname2);
+      snprintf(IObuff, IOSIZE, (char *)e_notread, fname2);
     } else {
       int64_t linecount = 1;
       for (int64_t count = 0;; count++) {
@@ -418,7 +418,7 @@ static int assert_equalfile(typval_T *argvars)
           line2[lineidx] = (char)c2;
           lineidx++;
           if (c1 != c2) {
-            snprintf((char *)IObuff, IOSIZE,
+            snprintf(IObuff, IOSIZE,
                      "difference at byte %" PRId64 ", line %" PRId64,
                      count, linecount);
             break;
@@ -445,7 +445,7 @@ static int assert_equalfile(typval_T *argvars)
       xfree(tofree);
       ga_concat(&ga, ": ");
     }
-    ga_concat(&ga, (char *)IObuff);
+    ga_concat(&ga, IObuff);
     if (lineidx > 0) {
       line1[lineidx] = NUL;
       line2[lineidx] = NUL;

@@ -2442,8 +2442,8 @@ void path_guess_exepath(const char *argv0, char *buf, size_t bufsize)
       xstrlcpy(NameBuff, dir, dir_len + 1);
       xstrlcat(NameBuff, PATHSEPSTR, sizeof(NameBuff));
       xstrlcat(NameBuff, argv0, sizeof(NameBuff));
-      if (os_can_exe((char *)NameBuff, NULL, false)) {
-        xstrlcpy(buf, (char *)NameBuff, bufsize);
+      if (os_can_exe(NameBuff, NULL, false)) {
+        xstrlcpy(buf, NameBuff, bufsize);
         return;
       }
     } while (iter != NULL);

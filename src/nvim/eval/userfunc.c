@@ -259,13 +259,13 @@ int get_lambda_tv(char **arg, typval_T *rettv, bool evaluate)
   partial_T *pt = NULL;
   int varargs;
   int ret;
-  char_u *start = (char_u *)skipwhite(*arg + 1);
+  char *start = skipwhite(*arg + 1);
   char *s, *e;
   bool *old_eval_lavars = eval_lavars_used;
   bool eval_lavars = false;
 
   // First, check if this is a lambda expression. "->" must exists.
-  ret = get_function_args((char **)&start, '-', NULL, NULL, NULL, true);
+  ret = get_function_args(&start, '-', NULL, NULL, NULL, true);
   if (ret == FAIL || *start != '>') {
     return NOTDONE;
   }
@@ -2765,7 +2765,7 @@ char *get_user_func_name(expand_T *xp, int idx)
         STRCAT(IObuff, ")");
       }
     }
-    return (char *)IObuff;
+    return IObuff;
   }
   return NULL;
 }
@@ -2950,7 +2950,7 @@ static int can_free_funccal(funccall_T *fc, int copyID)
 /// ":return [expr]"
 void ex_return(exarg_T *eap)
 {
-  char_u *arg = (char_u *)eap->arg;
+  char *arg = eap->arg;
   typval_T rettv;
   int returning = false;
 
@@ -2965,7 +2965,7 @@ void ex_return(exarg_T *eap)
 
   eap->nextcmd = NULL;
   if ((*arg != NUL && *arg != '|' && *arg != '\n')
-      && eval0((char *)arg, &rettv, &eap->nextcmd, !eap->skip) != FAIL) {
+      && eval0(arg, &rettv, &eap->nextcmd, !eap->skip) != FAIL) {
     if (!eap->skip) {
       returning = do_return(eap, false, true, &rettv);
     } else {
@@ -2988,7 +2988,7 @@ void ex_return(exarg_T *eap)
   if (returning) {
     eap->nextcmd = NULL;
   } else if (eap->nextcmd == NULL) {          // no argument
-    eap->nextcmd = check_nextcmd((char *)arg);
+    eap->nextcmd = check_nextcmd(arg);
   }
 
   if (eap->skip) {
@@ -2999,9 +2999,9 @@ void ex_return(exarg_T *eap)
 /// ":1,25call func(arg1, arg2)" function call.
 void ex_call(exarg_T *eap)
 {
-  char_u *arg = (char_u *)eap->arg;
-  char_u *startarg;
-  char_u *name;
+  char *arg = eap->arg;
+  char *startarg;
+  char *name;
   char *tofree;
   int len;
   typval_T rettv;
@@ -3023,7 +3023,7 @@ void ex_call(exarg_T *eap)
     return;
   }
 
-  tofree = (char *)trans_function_name((char **)&arg, false, TFN_INT, &fudi, &partial);
+  tofree = (char *)trans_function_name(&arg, false, TFN_INT, &fudi, &partial);
   if (fudi.fd_newkey != NULL) {
     // Still need to give an error message for missing key.
     semsg(_(e_dictkey), fudi.fd_newkey);
@@ -3043,11 +3043,11 @@ void ex_call(exarg_T *eap)
   // contents. For VAR_PARTIAL get its partial, unless we already have one
   // from trans_function_name().
   len = (int)strlen(tofree);
-  name = deref_func_name(tofree, &len, partial != NULL ? NULL : &partial, false);
+  name = (char *)deref_func_name(tofree, &len, partial != NULL ? NULL : &partial, false);
 
   // Skip white space to allow ":call func ()".  Not good, but required for
   // backward compatibility.
-  startarg = (char_u *)skipwhite((char *)arg);
+  startarg = skipwhite(arg);
   rettv.v_type = VAR_UNKNOWN;  // tv_clear() uses this.
 
   if (*startarg != '(') {
@@ -3077,7 +3077,7 @@ void ex_call(exarg_T *eap)
     funcexe.fe_evaluate = true;
     funcexe.fe_partial = partial;
     funcexe.fe_selfdict = fudi.fd_dict;
-    if (get_func_tv(name, -1, &rettv, (char **)&arg, &funcexe) == FAIL) {
+    if (get_func_tv((char_u *)name, -1, &rettv, &arg, &funcexe) == FAIL) {
       failed = true;
       break;
     }
@@ -3114,7 +3114,7 @@ void ex_call(exarg_T *eap)
         semsg(_(e_trailing_arg), arg);
       }
     } else {
-      eap->nextcmd = check_nextcmd((char *)arg);
+      eap->nextcmd = check_nextcmd(arg);
     }
   }
 
@@ -3219,7 +3219,7 @@ char *get_return_cmd(void *rettv)
     STRCPY(IObuff + IOSIZE - 4, "...");
   }
   xfree(tofree);
-  return xstrdup((char *)IObuff);
+  return xstrdup(IObuff);
 }
 
 /// Get next function line.
@@ -3296,21 +3296,21 @@ int func_has_abort(void *cookie)
 /// Changes "rettv" in-place.
 void make_partial(dict_T *const selfdict, typval_T *const rettv)
 {
-  char_u *fname;
-  char_u *tofree = NULL;
+  char *fname;
+  char *tofree = NULL;
   ufunc_T *fp;
-  char_u fname_buf[FLEN_FIXED + 1];
+  char fname_buf[FLEN_FIXED + 1];
   int error;
 
   if (rettv->v_type == VAR_PARTIAL && rettv->vval.v_partial->pt_func != NULL) {
     fp = rettv->vval.v_partial->pt_func;
   } else {
     fname = rettv->v_type == VAR_FUNC || rettv->v_type == VAR_STRING
-                                      ? (char_u *)rettv->vval.v_string
-                                      : (char_u *)rettv->vval.v_partial->pt_name;
+                                      ? rettv->vval.v_string
+                                      : rettv->vval.v_partial->pt_name;
     // Translate "s:func" to the stored function name.
-    fname = (char_u *)fname_trans_sid((char *)fname, (char *)fname_buf, (char **)&tofree, &error);
-    fp = find_func(fname);
+    fname = fname_trans_sid(fname, (char *)fname_buf, &tofree, &error);
+    fp = find_func((char_u *)fname);
     xfree(tofree);
   }
 
@@ -3646,17 +3646,17 @@ bool set_ref_in_func(char_u *name, ufunc_T *fp_in, int copyID)
   ufunc_T *fp = fp_in;
   funccall_T *fc;
   int error = FCERR_NONE;
-  char_u fname_buf[FLEN_FIXED + 1];
-  char_u *tofree = NULL;
-  char_u *fname;
+  char fname_buf[FLEN_FIXED + 1];
+  char *tofree = NULL;
+  char *fname;
   bool abort = false;
   if (name == NULL && fp_in == NULL) {
     return false;
   }
 
   if (fp_in == NULL) {
-    fname = (char_u *)fname_trans_sid((char *)name, (char *)fname_buf, (char **)&tofree, &error);
-    fp = find_func(fname);
+    fname = fname_trans_sid((char *)name, (char *)fname_buf, &tofree, &error);
+    fp = find_func((char_u *)fname);
   }
   if (fp != NULL) {
     for (fc = fp->uf_scoped; fc != NULL; fc = fc->func->uf_scoped) {

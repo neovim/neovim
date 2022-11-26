@@ -589,13 +589,13 @@ static int buf_do_map(int maptype, MapArguments *args, int mode, bool is_abbrev,
         // vi-compatible way.
         int same = -1;
 
-        const int first = vim_iswordp((char_u *)lhs);
+        const int first = vim_iswordp(lhs);
         int last = first;
         p = (char *)lhs + utfc_ptr2len((char *)lhs);
         n = 1;
         while (p < (char *)lhs + len) {
           n++;                                  // nr of (multi-byte) chars
-          last = vim_iswordp((char_u *)p);                // type of last char
+          last = vim_iswordp(p);                // type of last char
           if (same == -1 && last != first) {
             same = n - 1;                       // count of same char type
           }
@@ -1419,18 +1419,18 @@ bool check_abbr(int c, char *ptr, int col, int mincol)
   {
     bool vim_abbr;
     char_u *p = mb_prevptr((char_u *)ptr, (char_u *)ptr + col);
-    if (!vim_iswordp(p)) {
+    if (!vim_iswordp((char *)p)) {
       vim_abbr = true;    // Vim added abbr.
     } else {
       vim_abbr = false;   // vi compatible abbr.
       if (p > (char_u *)ptr) {
-        is_id = vim_iswordp(mb_prevptr((char_u *)ptr, p));
+        is_id = vim_iswordp((char *)mb_prevptr((char_u *)ptr, p));
       }
     }
     clen = 1;
     while (p > (char_u *)ptr + mincol) {
       p = mb_prevptr((char_u *)ptr, p);
-      if (ascii_isspace(*p) || (!vim_abbr && is_id != vim_iswordp(p))) {
+      if (ascii_isspace(*p) || (!vim_abbr && is_id != vim_iswordp((char *)p))) {
         p += utfc_ptr2len((char *)p);
         break;
       }

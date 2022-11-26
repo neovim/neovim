@@ -1089,7 +1089,7 @@ char *do_bufdel(int command, char *arg, int addr_count, int start_bnr, int end_b
       } else {
         STRCPY(IObuff, _("E517: No buffers were wiped out"));
       }
-      errormsg = (char *)IObuff;
+      errormsg = IObuff;
     } else if (deleted >= p_report) {
       if (command == DOBUF_UNLOAD) {
         smsg(NGETTEXT("%d buffer unloaded", "%d buffers unloaded", deleted),
@@ -2762,7 +2762,7 @@ void buflist_list(exarg_T *eap)
     if (buf_spname(buf) != NULL) {
       xstrlcpy(NameBuff, buf_spname(buf), MAXPATHL);
     } else {
-      home_replace(buf, buf->b_fname, (char *)NameBuff, MAXPATHL, true);
+      home_replace(buf, buf->b_fname, NameBuff, MAXPATHL, true);
     }
 
     if (message_filtered(NameBuff)) {
@@ -2778,7 +2778,7 @@ void buflist_list(exarg_T *eap)
     }
 
     msg_putchar('\n');
-    len = vim_snprintf((char *)IObuff, IOSIZE - 20, "%3d%c%c%c%c%c \"%s\"",
+    len = vim_snprintf(IObuff, IOSIZE - 20, "%3d%c%c%c%c%c \"%s\"",
                        buf->b_fnum,
                        buf->b_p_bl ? ' ' : 'u',
                        buf == curbuf ? '%' : (curwin->w_alt_fnum == buf->b_fnum ? '#' : ' '),
@@ -2792,18 +2792,18 @@ void buflist_list(exarg_T *eap)
     }
 
     // put "line 999" in column 40 or after the file name
-    i = 40 - vim_strsize((char *)IObuff);
+    i = 40 - vim_strsize(IObuff);
     do {
       IObuff[len++] = ' ';
     } while (--i > 0 && len < IOSIZE - 18);
     if (vim_strchr(eap->arg, 't') && buf->b_last_used) {
-      undo_fmt_time((char_u *)IObuff + len, (size_t)(IOSIZE - len), buf->b_last_used);
+      undo_fmt_time(IObuff + len, (size_t)(IOSIZE - len), buf->b_last_used);
     } else {
-      vim_snprintf((char *)IObuff + len, (size_t)(IOSIZE - len), _("line %" PRId64),
+      vim_snprintf(IObuff + len, (size_t)(IOSIZE - len), _("line %" PRId64),
                    buf == curbuf ? (int64_t)curwin->w_cursor.lnum : (int64_t)buflist_findlnum(buf));
     }
 
-    msg_outtrans((char *)IObuff);
+    msg_outtrans(IObuff);
     line_breakcheck();
   }
 

@@ -1275,7 +1275,7 @@ void openscript(char *name, bool directly)
   // use NameBuff for expanded name
   expand_env(name, NameBuff, MAXPATHL);
   int error;
-  if ((scriptin[curscript] = file_open_new(&error, (char *)NameBuff,
+  if ((scriptin[curscript] = file_open_new(&error, NameBuff,
                                            kFileReadOnly, 0)) == NULL) {
     semsg(_(e_notopen_2), name, os_strerror(error));
     if (curscript) {

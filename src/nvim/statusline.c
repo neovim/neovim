@@ -155,7 +155,7 @@ void win_redr_status(win_T *wp)
     grid_fill(&default_grid, row, row + 1, len + col,
               this_ru_col + col, fillchar, fillchar, attr);
 
-    if (get_keymap_str(wp, "<%s>", (char *)NameBuff, MAXPATHL)
+    if (get_keymap_str(wp, "<%s>", NameBuff, MAXPATHL)
         && this_ru_col - len > (int)(strlen(NameBuff) + 1)) {
       grid_puts(&default_grid, NameBuff, row,
                 (int)((size_t)this_ru_col - strlen(NameBuff) - 1), attr);
@@ -666,7 +666,7 @@ static void ui_ext_tabline_update(void)
 
     win_T *cwp = (tp == curtab) ? curwin : tp->tp_curwin;
     get_trans_bufname(cwp->w_buffer);
-    PUT_C(tab_info, "name", STRING_OBJ(arena_string(&arena, cstr_as_string((char *)NameBuff))));
+    PUT_C(tab_info, "name", STRING_OBJ(arena_string(&arena, cstr_as_string(NameBuff))));
 
     ADD_C(tabs, DICTIONARY_OBJ(tab_info));
   }
@@ -687,7 +687,7 @@ static void ui_ext_tabline_update(void)
     PUT_C(buffer_info, "buffer", BUFFER_OBJ(buf->handle));
 
     get_trans_bufname(buf);
-    PUT_C(buffer_info, "name", STRING_OBJ(arena_string(&arena, cstr_as_string((char *)NameBuff))));
+    PUT_C(buffer_info, "name", STRING_OBJ(arena_string(&arena, cstr_as_string(NameBuff))));
 
     ADD_C(buffers, DICTIONARY_OBJ(buffer_info));
   }
@@ -787,7 +787,7 @@ void draw_tabline(void)
 
       if (modified || wincount > 1) {
         if (wincount > 1) {
-          vim_snprintf((char *)NameBuff, MAXPATHL, "%d", wincount);
+          vim_snprintf(NameBuff, MAXPATHL, "%d", wincount);
           len = (int)strlen(NameBuff);
           if (col + len >= Columns - 3) {
             break;
@@ -807,7 +807,7 @@ void draw_tabline(void)
         // Get buffer name in NameBuff[]
         get_trans_bufname(cwp->w_buffer);
         shorten_dir(NameBuff);
-        len = vim_strsize((char *)NameBuff);
+        len = vim_strsize(NameBuff);
         p = (char_u *)NameBuff;
         while (len > room) {
           len -= ptr2cells((char *)p);
@@ -1353,13 +1353,13 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, char *opt_n
       } else {
         char *t = (opt == STL_FULLPATH) ? wp->w_buffer->b_ffname
                                           : wp->w_buffer->b_fname;
-        home_replace(wp->w_buffer, t, (char *)NameBuff, MAXPATHL, true);
+        home_replace(wp->w_buffer, t, NameBuff, MAXPATHL, true);
       }
-      trans_characters((char *)NameBuff, MAXPATHL);
+      trans_characters(NameBuff, MAXPATHL);
       if (opt != STL_FILENAME) {
-        str = (char *)NameBuff;
+        str = NameBuff;
       } else {
-        str = path_tail((char *)NameBuff);
+        str = path_tail(NameBuff);
       }
       break;
     case STL_VIM_EXPR:     // '{'

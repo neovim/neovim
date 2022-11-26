@@ -264,10 +264,10 @@ void op_shift(oparg_T *oap, int curs_top, int amount)
                                      "%" PRId64 " line %sed %d times", amount);
     char *msg_line_plural = NGETTEXT("%" PRId64 " lines %sed %d time",
                                      "%" PRId64 " lines %sed %d times", amount);
-    vim_snprintf((char *)IObuff, IOSIZE,
+    vim_snprintf(IObuff, IOSIZE,
                  NGETTEXT(msg_line_single, msg_line_plural, oap->line_count),
                  (int64_t)oap->line_count, op, amount);
-    msg_attr_keep((char *)IObuff, 0, true, false);
+    msg_attr_keep(IObuff, 0, true, false);
   }
 
   if ((cmdmod.cmod_flags & CMOD_LOCKMARKS) == 0) {
@@ -5467,7 +5467,7 @@ void cursor_pos_info(dict_T *dict)
 
         if (char_count_cursor == byte_count_cursor
             && char_count == byte_count) {
-          vim_snprintf((char *)IObuff, IOSIZE,
+          vim_snprintf(IObuff, IOSIZE,
                        _("Selected %s%" PRId64 " of %" PRId64 " Lines;"
                          " %" PRId64 " of %" PRId64 " Words;"
                          " %" PRId64 " of %" PRId64 " Bytes"),
@@ -5476,7 +5476,7 @@ void cursor_pos_info(dict_T *dict)
                        (int64_t)word_count_cursor, (int64_t)word_count,
                        (int64_t)byte_count_cursor, (int64_t)byte_count);
         } else {
-          vim_snprintf((char *)IObuff, IOSIZE,
+          vim_snprintf(IObuff, IOSIZE,
                        _("Selected %s%" PRId64 " of %" PRId64 " Lines;"
                          " %" PRId64 " of %" PRId64 " Words;"
                          " %" PRId64 " of %" PRId64 " Chars;"
@@ -5496,7 +5496,7 @@ void cursor_pos_info(dict_T *dict)
 
         if (char_count_cursor == byte_count_cursor
             && char_count == byte_count) {
-          vim_snprintf((char *)IObuff, IOSIZE,
+          vim_snprintf(IObuff, IOSIZE,
                        _("Col %s of %s; Line %" PRId64 " of %" PRId64 ";"
                          " Word %" PRId64 " of %" PRId64 ";"
                          " Byte %" PRId64 " of %" PRId64 ""),
@@ -5506,7 +5506,7 @@ void cursor_pos_info(dict_T *dict)
                        (int64_t)word_count_cursor, (int64_t)word_count,
                        (int64_t)byte_count_cursor, (int64_t)byte_count);
         } else {
-          vim_snprintf((char *)IObuff, IOSIZE,
+          vim_snprintf(IObuff, IOSIZE,
                        _("Col %s of %s; Line %" PRId64 " of %" PRId64 ";"
                          " Word %" PRId64 " of %" PRId64 ";"
                          " Char %" PRId64 " of %" PRId64 ";"
@@ -5524,7 +5524,7 @@ void cursor_pos_info(dict_T *dict)
     bom_count = bomb_size();
     if (dict == NULL && bom_count > 0) {
       const size_t len = strlen(IObuff);
-      vim_snprintf((char *)IObuff + len, IOSIZE - len,
+      vim_snprintf(IObuff + len, IOSIZE - len,
                    _("(+%" PRId64 " for BOM)"), (int64_t)bom_count);
     }
     if (dict == NULL) {
@@ -5535,7 +5535,7 @@ void cursor_pos_info(dict_T *dict)
         msg_start();
         msg_scroll = true;
       }
-      msg((char *)IObuff);
+      msg(IObuff);
       p_shm = p;
     }
   }

@@ -887,18 +887,18 @@ void ml_recover(bool checkext)
   // If .swp file name given directly, use name from swap file for buffer.
   if (directly) {
     expand_env((char *)b0p->b0_fname, NameBuff, MAXPATHL);
-    if (setfname(curbuf, (char *)NameBuff, NULL, true) == FAIL) {
+    if (setfname(curbuf, NameBuff, NULL, true) == FAIL) {
       goto theend;
     }
   }
 
-  home_replace(NULL, mfp->mf_fname, (char *)NameBuff, MAXPATHL, true);
+  home_replace(NULL, mfp->mf_fname, NameBuff, MAXPATHL, true);
   smsg(_("Using swap file \"%s\""), NameBuff);
 
   if (buf_spname(curbuf) != NULL) {
     xstrlcpy(NameBuff, buf_spname(curbuf), MAXPATHL);
   } else {
-    home_replace(NULL, curbuf->b_ffname, (char *)NameBuff, MAXPATHL, true);
+    home_replace(NULL, curbuf->b_ffname, NameBuff, MAXPATHL, true);
   }
   smsg(_("Original file \"%s\""), NameBuff);
   msg_putchar('\n');

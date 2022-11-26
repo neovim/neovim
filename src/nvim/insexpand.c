@@ -653,7 +653,7 @@ static char_u *ins_compl_infercase_gettext(const char_u *str, int char_len, int 
 
   // Generate encoding specific output from wide character array.
   garray_T gap;
-  char *p = (char *)IObuff;
+  char *p = IObuff;
   int i = 0;
   ga_init(&gap, 1, 500);
   while (i < char_len) {
@@ -662,7 +662,7 @@ static char_u *ins_compl_infercase_gettext(const char_u *str, int char_len, int 
       assert(gap.ga_data != NULL);  // suppress clang "Dereference of NULL pointer"
       p = (char *)gap.ga_data + gap.ga_len;
       gap.ga_len += utf_char2bytes(wca[i++], p);
-    } else if ((p - (char *)IObuff) + 6 >= IOSIZE) {
+    } else if ((p - IObuff) + 6 >= IOSIZE) {
       // Multi-byte characters can occupy up to five bytes more than
       // ASCII characters, and we also need one byte for NUL, so when
       // getting to six bytes from the edge of IObuff switch to using a
@@ -1452,9 +1452,9 @@ static void ins_compl_files(int count, char **files, int thesaurus, int flags, r
     fp = os_fopen(files[i], "r");  // open dictionary file
     if (flags != DICT_EXACT && !shortmess(SHM_COMPLETIONSCAN)) {
       msg_hist_off = true;  // reset in msg_trunc_attr()
-      vim_snprintf((char *)IObuff, IOSIZE,
+      vim_snprintf(IObuff, IOSIZE,
                    _("Scanning dictionary: %s"), files[i]);
-      (void)msg_trunc_attr((char *)IObuff, true, HL_ATTR(HLF_R));
+      (void)msg_trunc_attr(IObuff, true, HL_ATTR(HLF_R));
     }
 
     if (fp == NULL) {
@@ -2880,13 +2880,13 @@ static int process_next_cpt_value(ins_compl_next_state_T *st, int *compl_type_ar
     }
     if (!shortmess(SHM_COMPLETIONSCAN)) {
       msg_hist_off = true;  // reset in msg_trunc_attr()
-      vim_snprintf((char *)IObuff, IOSIZE, _("Scanning: %s"),
+      vim_snprintf(IObuff, IOSIZE, _("Scanning: %s"),
                    st->ins_buf->b_fname == NULL
                    ? buf_spname(st->ins_buf)
                    : st->ins_buf->b_sfname == NULL
                    ? st->ins_buf->b_fname
                    : st->ins_buf->b_sfname);
-      (void)msg_trunc_attr((char *)IObuff, true, HL_ATTR(HLF_R));
+      (void)msg_trunc_attr(IObuff, true, HL_ATTR(HLF_R));
     }
   } else if (*st->e_cpt == NUL) {
     status = INS_COMPL_CPT_END;
@@ -2911,15 +2911,15 @@ static int process_next_cpt_value(ins_compl_next_state_T *st, int *compl_type_ar
       compl_type = CTRL_X_TAGS;
       if (!shortmess(SHM_COMPLETIONSCAN)) {
         msg_hist_off = true;  // reset in msg_trunc_attr()
-        vim_snprintf((char *)IObuff, IOSIZE, "%s", _("Scanning tags."));
-        (void)msg_trunc_attr((char *)IObuff, true, HL_ATTR(HLF_R));
+        vim_snprintf(IObuff, IOSIZE, "%s", _("Scanning tags."));
+        (void)msg_trunc_attr(IObuff, true, HL_ATTR(HLF_R));
       }
     } else {
       compl_type = -1;
     }
 
     // in any case e_cpt is advanced to the next entry
-    (void)copy_option_part(&st->e_cpt, (char *)IObuff, IOSIZE, ",");
+    (void)copy_option_part(&st->e_cpt, IObuff, IOSIZE, ",");
 
     st->found_all = true;
     if (compl_type == -1) {
@@ -3019,7 +3019,7 @@ static void get_next_cmdline_completion(void)
 {
   char **matches;
   int num_matches;
-  if (expand_cmdline(&compl_xp, (char_u *)compl_pattern,
+  if (expand_cmdline(&compl_xp, compl_pattern,
                      (int)strlen(compl_pattern),
                      &num_matches, &matches) == EXPAND_OK) {
     ins_compl_add_matches(num_matches, matches, false);
@@ -3067,7 +3067,7 @@ static char_u *ins_comp_get_next_word_or_line(buf_T *ins_buf, pos_T *cur_match_p
     if (compl_status_adding() && compl_length <= (int)strlen(tmp_ptr)) {
       tmp_ptr += compl_length;
       // Skip if already inside a word.
-      if (vim_iswordp((char_u *)tmp_ptr)) {
+      if (vim_iswordp(tmp_ptr)) {
         return NULL;
       }
       // Find start of next word.
@@ -3483,9 +3483,9 @@ static void ins_compl_show_filename(void)
     }
   }
   msg_hist_off = true;
-  vim_snprintf((char *)IObuff, IOSIZE, "%s %s%s", lead,
+  vim_snprintf(IObuff, IOSIZE, "%s %s%s", lead,
                s > compl_shown_match->cp_fname ? "<" : "", s);
-  msg((char *)IObuff);
+  msg(IObuff);
   msg_hist_off = false;
   redraw_cmdline = false;  // don't overwrite!
 }
@@ -3824,7 +3824,7 @@ static int get_normal_compl_info(char *line, int startcol, colnr_T curs_col)
       compl_length = curs_col - startcol;
     }
     if (p_ic) {
-      compl_pattern = (char *)str_foldcase((char_u *)line + compl_col, compl_length, NULL, 0);
+      compl_pattern = str_foldcase(line + compl_col, compl_length, NULL, 0);
     } else {
       compl_pattern = xstrnsave(line + compl_col, (size_t)compl_length);
     }
@@ -3833,16 +3833,16 @@ static int get_normal_compl_info(char *line, int startcol, colnr_T curs_col)
 
     // we need up to 2 extra chars for the prefix
     compl_pattern = xmalloc(quote_meta(NULL, (char_u *)line + compl_col, compl_length) + 2);
-    if (!vim_iswordp((char_u *)line + compl_col)
+    if (!vim_iswordp(line + compl_col)
         || (compl_col > 0
-            && (vim_iswordp(mb_prevptr((char_u *)line, (char_u *)line + compl_col))))) {
+            && (vim_iswordp((char *)mb_prevptr((char_u *)line, (char_u *)line + compl_col))))) {
       prefix = "";
     }
     STRCPY(compl_pattern, prefix);
     (void)quote_meta((char_u *)compl_pattern + strlen(prefix),
                      (char_u *)line + compl_col, compl_length);
   } else if (--startcol < 0
-             || !vim_iswordp(mb_prevptr((char_u *)line, (char_u *)line + startcol + 1))) {
+             || !vim_iswordp((char *)mb_prevptr((char_u *)line, (char_u *)line + startcol + 1))) {
     // Match any word of at least two chars
     compl_pattern = xstrdup("\\<\\k\\k");
     compl_col += curs_col;
@@ -3891,7 +3891,7 @@ static int get_wholeline_compl_info(char *line, colnr_T curs_col)
     compl_length = 0;
   }
   if (p_ic) {
-    compl_pattern = (char *)str_foldcase((char_u *)line + compl_col, compl_length, NULL, 0);
+    compl_pattern = str_foldcase(line + compl_col, compl_length, NULL, 0);
   } else {
     compl_pattern = xstrnsave(line + compl_col, (size_t)compl_length);
   }

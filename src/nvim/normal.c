@@ -2285,7 +2285,7 @@ bool find_decl(char_u *ptr, size_t len, bool locally, bool thisblock, int flags_
   // Put "\V" before the pattern to avoid that the special meaning of "."
   // and "~" causes trouble.
   assert(len <= INT_MAX);
-  sprintf((char *)pat, vim_iswordp(ptr) ? "\\V\\<%.*s\\>" : "\\V%.*s",  // NOLINT(runtime/printf)
+  sprintf((char *)pat, vim_iswordp((char *)ptr) ? "\\V\\<%.*s\\>" : "\\V%.*s",  // NOLINT(runtime/printf)
           (int)len, ptr);
   old_pos = curwin->w_cursor;
   save_p_ws = p_ws;
@@ -3467,7 +3467,7 @@ static void nv_ident(cmdarg_T *cap)
     setpcmark();
     curwin->w_cursor.col = (colnr_T)(ptr - get_cursor_line_ptr());
 
-    if (!g_cmd && vim_iswordp((char_u *)ptr)) {
+    if (!g_cmd && vim_iswordp(ptr)) {
       STRCPY(buf, "\\<");
     }
     no_smartcase = true;                // don't use 'smartcase' now
@@ -3549,7 +3549,7 @@ static void nv_ident(cmdarg_T *cap)
   // Execute the command.
   if (cmdchar == '*' || cmdchar == '#') {
     if (!g_cmd
-        && vim_iswordp(mb_prevptr((char_u *)get_cursor_line_ptr(), (char_u *)ptr))) {
+        && vim_iswordp((char *)mb_prevptr((char_u *)get_cursor_line_ptr(), (char_u *)ptr))) {
       STRCAT(buf, "\\>");
     }
 

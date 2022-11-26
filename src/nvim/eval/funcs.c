@@ -169,13 +169,13 @@ char *get_function_name(expand_T *xp, int idx)
     intidx = -1;
   }
   if (intidx < 0) {
-    char_u *name = (char_u *)get_user_func_name(xp, idx);
+    char *name = get_user_func_name(xp, idx);
     if (name != NULL) {
       if (*name != NUL && *name != '<'
           && strncmp("g:", xp->xp_pattern, 2) == 0) {
-        return cat_prefix_varname('g', (char *)name);
+        return cat_prefix_varname('g', name);
       }
-      return (char *)name;
+      return name;
     }
   }
 
@@ -192,7 +192,7 @@ char *get_function_name(expand_T *xp, int idx)
   } else {
     IObuff[key_len + 1] = NUL;
   }
-  return (char *)IObuff;
+  return IObuff;
 }
 
 /// Function given to ExpandGeneric() to obtain the list of internal or
@@ -205,9 +205,9 @@ char *get_expr_name(expand_T *xp, int idx)
     intidx = -1;
   }
   if (intidx < 0) {
-    char_u *name = (char_u *)get_function_name(xp, idx);
+    char *name = get_function_name(xp, idx);
     if (name != NULL) {
-      return (char *)name;
+      return name;
     }
   }
   return get_user_var_name(xp, ++intidx);
@@ -548,19 +548,19 @@ static void f_call(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   }
 
   bool owned = false;
-  char_u *func;
+  char *func;
   partial_T *partial = NULL;
   if (argvars[0].v_type == VAR_FUNC) {
-    func = (char_u *)argvars[0].vval.v_string;
+    func = argvars[0].vval.v_string;
   } else if (argvars[0].v_type == VAR_PARTIAL) {
     partial = argvars[0].vval.v_partial;
-    func = (char_u *)partial_name(partial);
+    func = partial_name(partial);
   } else if (nlua_is_table_from_lua(&argvars[0])) {
     // TODO(tjdevries): UnifiedCallback
-    func = nlua_register_table_as_callable(&argvars[0]);
+    func = (char *)nlua_register_table_as_callable(&argvars[0]);
     owned = true;
   } else {
-    func = (char_u *)tv_get_string(&argvars[0]);
+    func = (char *)tv_get_string(&argvars[0]);
   }
 
   if (*func == NUL) {
@@ -572,16 +572,16 @@ static void f_call(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     if (argvars[2].v_type != VAR_DICT) {
       emsg(_(e_dictreq));
       if (owned) {
-        func_unref(func);
+        func_unref((char_u *)func);
       }
       return;
     }
     selfdict = argvars[2].vval.v_dict;
   }
 
-  func_call(func, &argvars[1], partial, selfdict, rettv);
+  func_call((char_u *)func, &argvars[1], partial, selfdict, rettv);
   if (owned) {
-    func_unref(func);
+    func_unref((char_u *)func);
   }
 }
 
@@ -949,7 +949,7 @@ static void f_count(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 
   if (argvars[0].v_type == VAR_STRING) {
     const char *expr = tv_get_string_chk(&argvars[1]);
-    const char_u *p = (char_u *)argvars[0].vval.v_string;
+    const char *p = argvars[0].vval.v_string;
 
     if (!error && expr != NULL && *expr != NUL && p != NULL) {
       if (ic) {
@@ -964,8 +964,8 @@ static void f_count(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
           }
         }
       } else {
-        char_u *next;
-        while ((next = (char_u *)strstr((char *)p, (char *)expr)) != NULL) {
+        char *next;
+        while ((next = strstr((char *)p, (char *)expr)) != NULL) {
           n++;
           p = next + strlen(expr);
         }
@@ -1531,14 +1531,14 @@ static void f_escape(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 /// "getenv()" function
 static void f_getenv(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
-  char_u *p = (char_u *)vim_getenv(tv_get_string(&argvars[0]));
+  char *p = vim_getenv(tv_get_string(&argvars[0]));
 
   if (p == NULL) {
     rettv->v_type = VAR_SPECIAL;
     rettv->vval.v_special = kSpecialVarNull;
     return;
   }
-  rettv->vval.v_string = (char *)p;
+  rettv->vval.v_string = p;
   rettv->v_type = VAR_STRING;
 }
 
@@ -1771,7 +1771,7 @@ static void f_expand(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     }
     size_t len;
     char *errormsg = NULL;
-    char_u *result = eval_vars((char_u *)s, (char_u *)s, &len, NULL, &errormsg, NULL, false);
+    char *result = (char *)eval_vars((char_u *)s, (char_u *)s, &len, NULL, &errormsg, NULL, false);
     if (p_verbose == 0) {
       emsg_off--;
     } else if (errormsg != NULL) {
@@ -1784,7 +1784,7 @@ static void f_expand(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
       }
       XFREE_CLEAR(result);
     } else {
-      rettv->vval.v_string = (char *)result;
+      rettv->vval.v_string = result;
     }
   } else {
     // When the optional second argument is non-zero, don't remove matches
@@ -2022,8 +2022,8 @@ static void f_filewritable(typval_T *argvars, typval_T *rettv, EvalFuncData fptr
 
 static void findfilendir(typval_T *argvars, typval_T *rettv, int find_what)
 {
-  char_u *fresult = NULL;
-  char_u *path = *curbuf->b_p_path == NUL ? p_path : (char_u *)curbuf->b_p_path;
+  char *fresult = NULL;
+  char *path = *curbuf->b_p_path == NUL ? (char *)p_path : curbuf->b_p_path;
   int count = 1;
   bool first = true;
   bool error = false;
@@ -2040,7 +2040,7 @@ static void findfilendir(typval_T *argvars, typval_T *rettv, int find_what)
       error = true;
     } else {
       if (*p != NUL) {
-        path = (char_u *)p;
+        path = (char *)p;
       }
 
       if (argvars[2].v_type != VAR_UNKNOWN) {
@@ -2058,13 +2058,13 @@ static void findfilendir(typval_T *argvars, typval_T *rettv, int find_what)
       if (rettv->v_type == VAR_STRING || rettv->v_type == VAR_LIST) {
         xfree(fresult);
       }
-      fresult = (char_u *)find_file_in_path_option(first ? (char *)fname : NULL,
-                                                   first ? strlen(fname) : 0,
-                                                   0, first, (char *)path,
-                                                   find_what, curbuf->b_ffname,
-                                                   (find_what == FINDFILE_DIR
-                                                    ? ""
-                                                    : curbuf->b_p_sua));
+      fresult = find_file_in_path_option(first ? (char *)fname : NULL,
+                                         first ? strlen(fname) : 0,
+                                         0, first, path,
+                                         find_what, curbuf->b_ffname,
+                                         (find_what == FINDFILE_DIR
+                                          ? ""
+                                          : curbuf->b_p_sua));
       first = false;
 
       if (fresult != NULL && rettv->v_type == VAR_LIST) {
@@ -2074,7 +2074,7 @@ static void findfilendir(typval_T *argvars, typval_T *rettv, int find_what)
   }
 
   if (rettv->v_type == VAR_STRING) {
-    rettv->vval.v_string = (char *)fresult;
+    rettv->vval.v_string = fresult;
   }
 }
 
@@ -2138,7 +2138,7 @@ static void f_fnameescape(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 /// "fnamemodify({fname}, {mods})" function
 static void f_fnamemodify(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
-  char_u *fbuf = NULL;
+  char *fbuf = NULL;
   size_t len = 0;
   char buf[NUMBUFLEN];
   const char *fname = tv_get_string_chk(&argvars[0]);
@@ -2150,7 +2150,7 @@ static void f_fnamemodify(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     if (*mods != NUL) {
       size_t usedlen = 0;
       (void)modify_fname((char *)mods, false, &usedlen,
-                         (char **)&fname, (char **)&fbuf, &len);
+                         (char **)&fname, &fbuf, &len);
     }
   }
 
@@ -2545,7 +2545,7 @@ static void f_getfontname(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 static void f_getfperm(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
   char *perm = NULL;
-  char_u flags[] = "rwx";
+  char flags[] = "rwx";
 
   const char *filename = tv_get_string(&argvars[0]);
   int32_t file_perm = os_getperm(filename);
@@ -2553,7 +2553,7 @@ static void f_getfperm(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     perm = xstrdup("---------");
     for (int i = 0; i < 9; i++) {
       if (file_perm & (1 << (8 - i))) {
-        perm[i] = (char)flags[i % 3];
+        perm[i] = flags[i % 3];
       }
     }
   }
@@ -6780,14 +6780,14 @@ long do_searchpair(const char *spat, const char *mpat, const char *epat, int dir
   // Make two search patterns: start/end (pat2, for in nested pairs) and
   // start/middle/end (pat3, for the top pair).
   const size_t pat2_len = strlen(spat) + strlen(epat) + 17;
-  char_u *pat2 = xmalloc(pat2_len);
+  char *pat2 = xmalloc(pat2_len);
   const size_t pat3_len = strlen(spat) + strlen(mpat) + strlen(epat) + 25;
-  char_u *pat3 = xmalloc(pat3_len);
-  snprintf((char *)pat2, pat2_len, "\\m\\(%s\\m\\)\\|\\(%s\\m\\)", spat, epat);
+  char *pat3 = xmalloc(pat3_len);
+  snprintf(pat2, pat2_len, "\\m\\(%s\\m\\)\\|\\(%s\\m\\)", spat, epat);
   if (*mpat == NUL) {
     STRCPY(pat3, pat2);
   } else {
-    snprintf((char *)pat3, pat3_len,
+    snprintf(pat3, pat3_len,
              "\\m\\(%s\\m\\)\\|\\(%s\\m\\)\\|\\(%s\\m\\)", spat, epat, mpat);
   }
   if (flags & SP_START) {
@@ -6804,14 +6804,14 @@ long do_searchpair(const char *spat, const char *mpat, const char *epat, int dir
   clearpos(&firstpos);
   pos_T foundpos;
   clearpos(&foundpos);
-  char_u *pat = pat3;
+  char *pat = pat3;
   for (;;) {
     searchit_arg_T sia = {
       .sa_stop_lnum = lnum_stop,
       .sa_tm = &tm,
     };
 
-    int n = searchit(curwin, curbuf, &pos, NULL, dir, pat, 1L,
+    int n = searchit(curwin, curbuf, &pos, NULL, dir, (char_u *)pat, 1L,
                      options, RE_SEARCH, &sia);
     if (n == FAIL || (firstpos.lnum != 0 && equalpos(pos, firstpos))) {
       // didn't find it or found the first match again: FAIL
@@ -7755,10 +7755,10 @@ static void f_str2float(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 static void f_str2list(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
   tv_list_alloc_ret(rettv, kListLenUnknown);
-  const char_u *p = (const char_u *)tv_get_string(&argvars[0]);
+  const char *p = tv_get_string(&argvars[0]);
 
-  for (; *p != NUL; p += utf_ptr2len((char *)p)) {
-    tv_list_append_number(rettv->vval.v_list, utf_ptr2char((char *)p));
+  for (; *p != NUL; p += utf_ptr2len(p)) {
+    tv_list_append_number(rettv->vval.v_list, utf_ptr2char(p));
   }
 }
 
@@ -7779,10 +7779,10 @@ static void f_str2nr(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     }
   }
 
-  char_u *p = (char_u *)skipwhite(tv_get_string(&argvars[0]));
+  char *p = skipwhite(tv_get_string(&argvars[0]));
   bool isneg = (*p == '-');
   if (*p == '+' || *p == '-') {
-    p = (char_u *)skipwhite((char *)p + 1);
+    p = skipwhite(p + 1);
   }
   switch (base) {
   case 2:
@@ -7796,7 +7796,7 @@ static void f_str2nr(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     break;
   }
   varnumber_T n;
-  vim_str2nr((char *)p, NULL, NULL, what, &n, NULL, 0, false);
+  vim_str2nr(p, NULL, NULL, what, &n, NULL, 0, false);
   // Text after the number is silently ignored.
   if (isneg) {
     rettv->vval.v_number = -n;
@@ -8372,7 +8372,7 @@ static void f_synconcealed(typval_T *argvars, typval_T *rettv, EvalFuncData fptr
   int syntax_flags = 0;
   int cchar;
   int matchid = 0;
-  char_u str[NUMBUFLEN];
+  char str[NUMBUFLEN];
 
   tv_list_set_ret(rettv, NULL);
 
@@ -8396,7 +8396,7 @@ static void f_synconcealed(typval_T *argvars, typval_T *rettv, EvalFuncData fptr
           : curwin->w_p_lcs_chars.conceal;
       }
       if (cchar != NUL) {
-        utf_char2bytes(cchar, (char *)str);
+        utf_char2bytes(cchar, str);
       }
     }
   }
@@ -8404,7 +8404,7 @@ static void f_synconcealed(typval_T *argvars, typval_T *rettv, EvalFuncData fptr
   tv_list_alloc_ret(rettv, 3);
   tv_list_append_number(rettv->vval.v_list, (syntax_flags & HL_CONCEAL) != 0);
   // -1 to auto-determine strlen
-  tv_list_append_string(rettv->vval.v_list, (const char *)str, -1);
+  tv_list_append_string(rettv->vval.v_list, str, -1);
   tv_list_append_number(rettv->vval.v_list, matchid);
 }
 
@@ -8497,7 +8497,7 @@ static void f_taglist(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     fname = tv_get_string(&argvars[1]);
   }
   (void)get_tags(tv_list_alloc_ret(rettv, kListLenUnknown),
-                 (char_u *)tag_pattern, (char_u *)fname);
+                 (char *)tag_pattern, (char *)fname);
 }
 
 /// "tempname()" function
@@ -8591,9 +8591,9 @@ static void f_termopen(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   int pid = chan->stream.pty.process.pid;
 
   // "./…" => "/home/foo/…"
-  vim_FullName(cwd, (char *)NameBuff, sizeof(NameBuff), false);
+  vim_FullName(cwd, NameBuff, sizeof(NameBuff), false);
   // "/home/foo/…" => "~/…"
-  size_t len = home_replace(NULL, (char *)NameBuff, (char *)IObuff, sizeof(IObuff), true);
+  size_t len = home_replace(NULL, NameBuff, IObuff, sizeof(IObuff), true);
   // Trim slash.
   if (len != 1 && (IObuff[len - 1] == '\\' || IObuff[len - 1] == '/')) {
     IObuff[len - 1] = '\0';
@@ -8606,14 +8606,14 @@ static void f_termopen(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   }
 
   // Terminal URI: "term://$CWD//$PID:$CMD"
-  snprintf((char *)NameBuff, sizeof(NameBuff), "term://%s//%d:%s",
-           (char *)IObuff, pid, cmd);
+  snprintf(NameBuff, sizeof(NameBuff), "term://%s//%d:%s",
+           IObuff, pid, cmd);
   // at this point the buffer has no terminal instance associated yet, so unset
   // the 'swapfile' option to ensure no swap file will be created
   curbuf->b_p_swf = false;
 
   apply_autocmds(EVENT_BUFFILEPRE, NULL, NULL, false, curbuf);
-  (void)setfname(curbuf, (char *)NameBuff, NULL, true);
+  (void)setfname(curbuf, NameBuff, NULL, true);
   apply_autocmds(EVENT_BUFFILEPOST, NULL, NULL, false, curbuf);
 
   // Save the job id and pid in b:terminal_job_{id,pid}

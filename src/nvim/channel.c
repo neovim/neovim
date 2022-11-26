@@ -215,7 +215,7 @@ void channel_create_event(Channel *chan, const char *ext_source)
     // external events should be included.
     source = ext_source;
   } else {
-    eval_fmt_source_name_line((char *)IObuff, sizeof(IObuff));
+    eval_fmt_source_name_line(IObuff, sizeof(IObuff));
     source = (const char *)IObuff;
   }
 
