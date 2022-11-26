@@ -53,6 +53,7 @@
 #include "nvim/highlight_group.h"
 #include "nvim/indent.h"
 #include "nvim/input.h"
+#include "nvim/lua/executor.h"
 #include "nvim/macros.h"
 #include "nvim/main.h"
 #include "nvim/mark.h"
@@ -4959,4 +4960,28 @@ void ex_oldfiles(exarg_T *eap)
       }
     }
   }
+}
+
+void ex_trust(exarg_T *eap)
+{
+  char *p = skiptowhite(eap->arg);
+  size_t len = (size_t)(p - eap->arg);
+  char *arg1 = xcalloc(len + 1, sizeof(char));
+  memcpy(arg1, eap->arg, len);
+
+  char *errmsg;
+  if (STRNCMP(arg1, "++deny", len) == 0) {
+    errmsg = nlua_trust("deny", atoi(skipwhite(p)));
+  } else if (STRNCMP(arg1, "++remove", len) == 0) {
+    errmsg = nlua_trust("remove", atoi(skipwhite(p)));
+  } else {
+    errmsg = nlua_trust("remove", atoi(skipwhite(eap->arg)));
+  }
+
+  if (errmsg != NULL) {
+    semsg("Error: %s", errmsg);
+  }
+
+  xfree(arg1);
+  xfree(errmsg);
 }

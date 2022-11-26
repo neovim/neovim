@@ -2935,7 +2935,7 @@ module.cmds = {
   },
   {
     command='trust',
-    flags=bit.bor(EXTRA, FILE1, NEEDARG, TRLBAR, LOCK_OK),
+    flags=bit.bor(EXTRA, FILE1, TRLBAR, LOCK_OK),
     addr_type='ADDR_NONE',
     func='ex_trust',
   },

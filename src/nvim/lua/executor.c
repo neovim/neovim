@@ -19,7 +19,6 @@
 #include "nvim/ascii.h"
 #include "nvim/buffer_defs.h"
 #include "nvim/change.h"
-#include "nvim/charset.h"
 #include "nvim/cursor.h"
 #include "nvim/drawscreen.h"
 #include "nvim/eval.h"
@@ -2219,45 +2218,37 @@ char *nlua_read_secure(const char *path)
   return buf;
 }
 
-void ex_trust(exarg_T *eap)
+char *nlua_trust(const char *action, int bufnr)
 {
-  char *mode;
-  char *path;
-  {
-    char *p = skiptowhite(eap->arg);
-    size_t len = (size_t)(p - eap->arg);
-    mode = xcalloc(len + 1, sizeof(char));
-    memcpy(mode, eap->arg, len);
-    path = skipwhite(p);
-  }
-
-  {
     lua_State *const lstate = global_lstate;
     lua_getglobal(lstate, "vim");
     lua_getfield(lstate, -1, "secure");
     lua_getfield(lstate, -1, "trust");
-    lua_pushstring(lstate, path);
-    lua_pushstring(lstate, mode);
-    if (nlua_pcall(lstate, 2, 2)) {
+
+    lua_newtable(lstate);
+    lua_pushstring(lstate, "action");
+    lua_pushstring(lstate, action);
+    lua_settable(lstate, -3);
+    lua_pushstring(lstate, "bufnr");
+    lua_pushnumber(lstate, bufnr);
+    lua_settable(lstate, -3);
+
+    if (nlua_pcall(lstate, 1, 2)) {
       nlua_error(lstate, _("Error executing vim.secure.trust: %.*s"));
-      return;
+      return NULL;
     }
 
     size_t len = 0;
     const char *contents = lua_tolstring(lstate, -1, &len);
+    char *errmsg = NULL;
     if (contents != NULL) {
       // Add one to include trailing null byte
-      char *errmsg = xcalloc(len + 1, sizeof(char));
+      errmsg = xcalloc(len + 1, sizeof(char));
       memcpy(errmsg, contents, len + 1);
-      if (errmsg != NULL) {
-        semsg("Error: %s", errmsg);
-        xfree(errmsg);
-      }
     }
 
     // Pop return values, "vim" and "secure"
     lua_pop(lstate, 4);
-  }
 
-  xfree(mode);
+    return errmsg;
 }
