@@ -958,10 +958,12 @@ static unsigned reg_tofreelen;
 typedef struct {
   regmatch_T *reg_match;
   regmmatch_T *reg_mmatch;
+
   char_u **reg_startp;
   char_u **reg_endp;
   lpos_T *reg_startpos;
   lpos_T *reg_endpos;
+
   win_T *reg_win;
   buf_T *reg_buf;
   linenr_T reg_firstlnum;

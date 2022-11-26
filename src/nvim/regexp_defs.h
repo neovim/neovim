@@ -49,6 +49,8 @@ typedef struct {
   regprog_T *regprog;
   lpos_T startpos[NSUBEXP];
   lpos_T endpos[NSUBEXP];
+
+  colnr_T rmm_matchcol;  ///< match start without "\zs"
   int rmm_ic;
   colnr_T rmm_maxcol;  /// when not zero: maximum column
 } regmmatch_T;
@@ -128,6 +130,8 @@ typedef struct {
   regprog_T *regprog;
   char *startp[NSUBEXP];
   char *endp[NSUBEXP];
+
+  colnr_T rm_matchcol;  ///< match start without "\zs"
   bool rm_ic;
 } regmatch_T;
 
