@@ -591,7 +591,7 @@ void cleanup_help_tags(int num_file, char **file)
       for (j = 0; j < num_file; j++) {
         if (j != i
             && (int)strlen(file[j]) == len + 3
-            && STRNCMP(file[i], file[j], len + 1) == 0) {
+            && strncmp(file[i], file[j], (size_t)len + 1) == 0) {
           break;
         }
       }
@@ -1041,7 +1041,7 @@ static void helptags_one(char *dir, const char *ext, const char *tagfname, bool 
     // Write the tags into the file.
     for (int i = 0; i < ga.ga_len; i++) {
       s = ((char **)ga.ga_data)[i];
-      if (STRNCMP(s, "help-tags\t", 10) == 0) {
+      if (strncmp(s, "help-tags\t", 10) == 0) {
         // help-tags entry was added in formatted form
         fputs(s, fd_tags);
       } else {
@@ -1122,7 +1122,7 @@ static void do_helptags(char *dirname, bool add_help_tags, bool ignore_writeerr)
 
     // Did we find this language already?
     for (j = 0; j < ga.ga_len; j += 2) {
-      if (STRNCMP(lang, ((char_u *)ga.ga_data) + j, 2) == 0) {
+      if (strncmp(lang, ((char *)ga.ga_data) + j, 2) == 0) {
         break;
       }
     }
@@ -1170,7 +1170,7 @@ void ex_helptags(exarg_T *eap)
   bool add_help_tags = false;
 
   // Check for ":helptags ++t {dir}".
-  if (STRNCMP(eap->arg, "++t", 3) == 0 && ascii_iswhite(eap->arg[3])) {
+  if (strncmp(eap->arg, "++t", 3) == 0 && ascii_iswhite(eap->arg[3])) {
     add_help_tags = true;
     eap->arg = skipwhite(eap->arg + 3);
   }

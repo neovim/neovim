@@ -756,20 +756,20 @@ bool briopt_check(win_T *wp)
 
   char *p = wp->w_p_briopt;
   while (*p != NUL) {
-    if (STRNCMP(p, "shift:", 6) == 0
+    if (strncmp(p, "shift:", 6) == 0
         && ((p[6] == '-' && ascii_isdigit(p[7])) || ascii_isdigit(p[6]))) {
       p += 6;
       bri_shift = getdigits_int(&p, true, 0);
-    } else if (STRNCMP(p, "min:", 4) == 0 && ascii_isdigit(p[4])) {
+    } else if (strncmp(p, "min:", 4) == 0 && ascii_isdigit(p[4])) {
       p += 4;
       bri_min = getdigits_int(&p, true, 0);
-    } else if (STRNCMP(p, "sbr", 3) == 0) {
+    } else if (strncmp(p, "sbr", 3) == 0) {
       p += 3;
       bri_sbr = true;
-    } else if (STRNCMP(p, "list:", 5) == 0) {
+    } else if (strncmp(p, "list:", 5) == 0) {
       p += 5;
       bri_list = (int)getdigits(&p, false, 0);
-    } else if (STRNCMP(p, "column:", 7) == 0) {
+    } else if (strncmp(p, "column:", 7) == 0) {
       p += 7;
       bri_vcol = (int)getdigits(&p, false, 0);
     }
@@ -1091,7 +1091,7 @@ int get_lisp_indent(void)
         // (let ((a 1))    instead    (let ((a 1))
         //   (...))       of       (...))
         if (!vi_lisp && ((*that == '(') || (*that == '['))
-            && lisp_match(that + 1)) {
+            && lisp_match((char *)that + 1)) {
           amount += 2;
         } else {
           if (*that != NUL) {
@@ -1169,7 +1169,7 @@ int get_lisp_indent(void)
   return amount;
 }
 
-static int lisp_match(char_u *p)
+static int lisp_match(char *p)
 {
   char buf[LSIZE];
   int len;
@@ -1179,7 +1179,7 @@ static int lisp_match(char_u *p)
     (void)copy_option_part(&word, buf, LSIZE, ",");
     len = (int)strlen(buf);
 
-    if ((STRNCMP(buf, p, len) == 0) && ascii_iswhite_or_nul(p[len])) {
+    if ((strncmp(buf, p, (size_t)len) == 0) && ascii_iswhite_or_nul(p[len])) {
       return true;
     }
   }

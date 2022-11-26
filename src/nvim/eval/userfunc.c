@@ -118,8 +118,8 @@ static int get_function_args(char **argp, char_u endchar, garray_T *newargs, int
         p++;
       }
       if (arg == p || isdigit(*arg)
-          || (p - arg == 9 && STRNCMP(arg, "firstline", 9) == 0)
-          || (p - arg == 8 && STRNCMP(arg, "lastline", 8) == 0)) {
+          || (p - arg == 9 && strncmp(arg, "firstline", 9) == 0)
+          || (p - arg == 8 && strncmp(arg, "lastline", 8) == 0)) {
         if (!skip) {
           semsg(_("E125: Illegal argument: %s"), arg);
         }
@@ -887,7 +887,7 @@ void call_user_func(ufunc_T *fp, int argcount, typval_T *argvars, typval_T *rett
   ga_init(&fc->fc_funcs, sizeof(ufunc_T *), 1);
   func_ptr_ref(fp);
 
-  if (STRNCMP(fp->uf_name, "<lambda>", 8) == 0) {
+  if (strncmp(fp->uf_name, "<lambda>", 8) == 0) {
     islambda = true;
   }
 
@@ -1846,7 +1846,7 @@ char_u *trans_function_name(char **pp, bool skip, int flags, funcdict_T *fdp, pa
   if (name != NULL) {
     name = xstrdup(name);
     *pp = (char *)end;
-    if (STRNCMP(name, "<SNR>", 5) == 0) {
+    if (strncmp(name, "<SNR>", 5) == 0) {
       // Change "<SNR>" to the byte sequence.
       name[0] = (char)K_SPECIAL;
       name[1] = (char)KS_EXTRA;
@@ -2187,16 +2187,16 @@ void ex_function(exarg_T *eap)
   // find extra arguments "range", "dict", "abort" and "closure"
   for (;;) {
     p = skipwhite(p);
-    if (STRNCMP(p, "range", 5) == 0) {
+    if (strncmp(p, "range", 5) == 0) {
       flags |= FC_RANGE;
       p += 5;
-    } else if (STRNCMP(p, "dict", 4) == 0) {
+    } else if (strncmp(p, "dict", 4) == 0) {
       flags |= FC_DICT;
       p += 4;
-    } else if (STRNCMP(p, "abort", 5) == 0) {
+    } else if (strncmp(p, "abort", 5) == 0) {
       flags |= FC_ABORT;
       p += 5;
-    } else if (STRNCMP(p, "closure", 7) == 0) {
+    } else if (strncmp(p, "closure", 7) == 0) {
       flags |= FC_CLOSURE;
       p += 7;
       if (current_funccal == NULL) {
@@ -2298,7 +2298,7 @@ void ex_function(exarg_T *eap)
       // * ":let {var-name} =<< [trim] {marker}" and "{marker}"
       if (heredoc_trimmed == NULL
           || (is_heredoc && skipwhite(theline) == theline)
-          || STRNCMP(theline, heredoc_trimmed,
+          || strncmp(theline, heredoc_trimmed,
                      strlen(heredoc_trimmed)) == 0) {
         if (heredoc_trimmed == NULL) {
           p = theline;
@@ -2348,12 +2348,12 @@ void ex_function(exarg_T *eap)
 
       // Increase indent inside "if", "while", "for" and "try", decrease
       // at "end".
-      if (indent > 2 && STRNCMP(p, "end", 3) == 0) {
+      if (indent > 2 && strncmp(p, "end", 3) == 0) {
         indent -= 2;
-      } else if (STRNCMP(p, "if", 2) == 0
-                 || STRNCMP(p, "wh", 2) == 0
-                 || STRNCMP(p, "for", 3) == 0
-                 || STRNCMP(p, "try", 3) == 0) {
+      } else if (strncmp(p, "if", 2) == 0
+                 || strncmp(p, "wh", 2) == 0
+                 || strncmp(p, "for", 3) == 0
+                 || strncmp(p, "try", 3) == 0) {
         indent += 2;
       }
 
@@ -2381,7 +2381,7 @@ void ex_function(exarg_T *eap)
               && (!ASCII_ISALPHA(p[1])
                   || (p[1] == 'h' && (!ASCII_ISALPHA(p[2])
                                       || (p[2] == 'a'
-                                          && (STRNCMP(&p[3], "nge", 3) != 0
+                                          && (strncmp(&p[3], "nge", 3) != 0
                                               || !ASCII_ISALPHA(p[6])))))))
           || (p[0] == 'i'
               && (!ASCII_ISALPHA(p[1]) || (p[1] == 'n'
@@ -2432,7 +2432,7 @@ void ex_function(exarg_T *eap)
                 && (!ASCII_ISALNUM(p[2])
                     || (p[2] == 't' && !ASCII_ISALNUM(p[3]))))) {
           p = skipwhite(arg + 3);
-          if (STRNCMP(p, "trim", 4) == 0) {
+          if (strncmp(p, "trim", 4) == 0) {
             // Ignore leading white space.
             p = skipwhite(p + 4);
             heredoc_trimmed = xstrnsave(theline, (size_t)(skipwhite(theline) - theline));
@@ -2714,7 +2714,7 @@ char *get_user_func_name(expand_T *xp, int idx)
     fp = HI2UF(hi);
 
     if ((fp->uf_flags & FC_DICT)
-        || STRNCMP(fp->uf_name, "<lambda>", 8) == 0) {
+        || strncmp(fp->uf_name, "<lambda>", 8) == 0) {
       return "";       // don't show dict and lambda functions
     }
 

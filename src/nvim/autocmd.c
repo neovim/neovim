@@ -304,7 +304,7 @@ static void au_show_for_event(int group, event_T event, char *pat)
         // all buffer-local patterns.
         if ((group == AUGROUP_ALL || ap->group == group)
             && ap->patlen == patlen
-            && STRNCMP(pat, ap->pat, patlen) == 0) {
+            && strncmp(pat, ap->pat, (size_t)patlen) == 0) {
           // Show autocmd's for this autopat, or buflocals <buffer=X>
           aupat_show(ap, event, previous_group);
           previous_group = ap->group;
@@ -1002,7 +1002,7 @@ int do_autocmd_event(event_T event, char *pat, bool once, int nested, char *cmd,
           // all buffer-local patterns.
           if (ap->group == findgroup
               && ap->patlen == patlen
-              && STRNCMP(pat, ap->pat, patlen) == 0) {
+              && strncmp(pat, ap->pat, (size_t)patlen) == 0) {
             // Remove existing autocommands.
             // If adding any new autocmd's for this AutoPat, don't
             // delete the pattern from the autopat list, append to
@@ -1086,7 +1086,7 @@ int autocmd_register(int64_t id, event_T event, char *pat, int patlen, int group
       // all buffer-local patterns.
       if (ap->group == findgroup
           && ap->patlen == patlen
-          && STRNCMP(pat, ap->pat, patlen) == 0) {
+          && strncmp(pat, ap->pat, (size_t)patlen) == 0) {
         if (ap->next == NULL) {
           // Add autocmd to this autopat, if it's the last one.
           break;
@@ -1349,7 +1349,7 @@ void ex_doautoall(exarg_T *eap)
 bool check_nomodeline(char **argp)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  if (STRNCMP(*argp, "<nomodeline>", 12) == 0) {
+  if (strncmp(*argp, "<nomodeline>", 12) == 0) {
     *argp = skipwhite(*argp + 12);
     return false;
   }
@@ -2459,7 +2459,7 @@ bool aupat_is_buflocal(char *pat, int patlen)
   FUNC_ATTR_PURE
 {
   return patlen >= 8
-         && STRNCMP(pat, "<buffer", 7) == 0
+         && strncmp(pat, "<buffer", 7) == 0
          && (pat)[patlen - 1] == '>';
 }
 
@@ -2665,7 +2665,7 @@ static int arg_augroup_get(char **argp)
 /// Handles grabbing arguments from `:autocmd` such as ++once and ++nested
 static bool arg_autocmd_flag_get(bool *flag, char **cmd_ptr, char *pattern, int len)
 {
-  if (STRNCMP(*cmd_ptr, pattern, len) == 0 && ascii_iswhite((*cmd_ptr)[len])) {
+  if (strncmp(*cmd_ptr, pattern, (size_t)len) == 0 && ascii_iswhite((*cmd_ptr)[len])) {
     if (*flag) {
       semsg(_(e_duparg2), pattern);
       return true;

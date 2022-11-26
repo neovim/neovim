@@ -1342,7 +1342,7 @@ int open_line(int dir, int flags, int second_line_indent, bool *did_do_comment)
         // the comment leader.
         if (dir == FORWARD) {
           for (p = saved_line + lead_len; *p; p++) {
-            if (STRNCMP(p, lead_end, n) == 0) {
+            if (strncmp(p, lead_end, n) == 0) {
               comment_end = p;
               lead_len = 0;
               break;
@@ -2217,7 +2217,7 @@ int get_last_leader_offset(char *line, char **flags)
         // beginning the com_leader.
         for (off = (len2 > i ? i : len2); off > 0 && off + len1 > len2;) {
           off--;
-          if (!STRNCMP(string + off, com_leader, len2 - off)) {
+          if (!strncmp(string + off, com_leader, (size_t)(len2 - off))) {
             if (i - off < lower_check_bound) {
               lower_check_bound = i - off;
             }

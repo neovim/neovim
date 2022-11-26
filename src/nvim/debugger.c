@@ -515,18 +515,18 @@ static int dbg_parsearg(char *arg, garray_T *gap)
   struct debuggy *bp = &DEBUGGY(gap, gap->ga_len);
 
   // Find "func" or "file".
-  if (STRNCMP(p, "func", 4) == 0) {
+  if (strncmp(p, "func", 4) == 0) {
     bp->dbg_type = DBG_FUNC;
-  } else if (STRNCMP(p, "file", 4) == 0) {
+  } else if (strncmp(p, "file", 4) == 0) {
     bp->dbg_type = DBG_FILE;
-  } else if (gap != &prof_ga && STRNCMP(p, "here", 4) == 0) {
+  } else if (gap != &prof_ga && strncmp(p, "here", 4) == 0) {
     if (curbuf->b_ffname == NULL) {
       emsg(_(e_noname));
       return FAIL;
     }
     bp->dbg_type = DBG_FILE;
     here = true;
-  } else if (gap != &prof_ga && STRNCMP(p, "expr", 4) == 0) {
+  } else if (gap != &prof_ga && strncmp(p, "expr", 4) == 0) {
     bp->dbg_type = DBG_EXPR;
   } else {
     semsg(_(e_invarg2), p);

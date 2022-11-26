@@ -173,7 +173,7 @@ char *get_function_name(expand_T *xp, int idx)
     char_u *name = (char_u *)get_user_func_name(xp, idx);
     if (name != NULL) {
       if (*name != NUL && *name != '<'
-          && STRNCMP("g:", xp->xp_pattern, 2) == 0) {
+          && strncmp("g:", xp->xp_pattern, 2) == 0) {
         return cat_prefix_varname('g', (char *)name);
       }
       return (char *)name;
@@ -9476,7 +9476,7 @@ static void f_tr(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     int fromlen;
     for (const char *p = fromstr; *p != NUL; p += fromlen) {
       fromlen = utfc_ptr2len(p);
-      if (fromlen == inlen && STRNCMP(in_str, p, inlen) == 0) {
+      if (fromlen == inlen && strncmp(in_str, p, (size_t)inlen) == 0) {
         int tolen;
         for (p = tostr; *p != NUL; p += tolen) {
           tolen = utfc_ptr2len(p);

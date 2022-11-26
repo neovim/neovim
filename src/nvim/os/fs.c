@@ -180,7 +180,7 @@ int os_nodetype(const char *name)
   // Edge case from Vim os_win32.c:
   // We can't open a file with a name "\\.\con" or "\\.\prn", trying to read
   // from it later will cause Vim to hang. Thus return NODE_WRITABLE here.
-  if (STRNCMP(name, "\\\\.\\", 4) == 0) {
+  if (strncmp(name, "\\\\.\\", 4) == 0) {
     return NODE_WRITABLE;
   }
 

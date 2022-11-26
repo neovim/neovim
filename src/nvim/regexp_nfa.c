@@ -3332,10 +3332,10 @@ static void nfa_print_state2(FILE *debugf, nfa_state_T *state, garray_T *indent)
     int last = indent->ga_len - 3;
     char_u save[2];
 
-    STRNCPY(save, &p[last], 2);  // NOLINT(runtime/printf)
+    strncpy(save, &p[last], 2);  // NOLINT(runtime/printf)
     memcpy(&p[last], "+-", 2);
     fprintf(debugf, " %s", p);
-    STRNCPY(&p[last], save, 2);  // NOLINT(runtime/printf)
+    strncpy(&p[last], save, 2);  // NOLINT(runtime/printf)
   } else {
     fprintf(debugf, " %s", p);
   }

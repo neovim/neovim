@@ -1080,7 +1080,7 @@ static char_u *execreg_line_continuation(char **lines, size_t *idx)
 /// @return FAIL for failure, OK otherwise
 int do_execreg(int regname, int colon, int addcr, int silent)
 {
-  char_u *p;
+  char *p;
   int retval = OK;
 
   if (regname == '@') {                 // repeat previous one
@@ -1109,34 +1109,34 @@ int do_execreg(int regname, int colon, int addcr, int silent)
     // don't keep the cmdline containing @:
     XFREE_CLEAR(new_last_cmdline);
     // Escape all control characters with a CTRL-V
-    p = vim_strsave_escaped_ext((char_u *)last_cmdline,
-                                (char_u *)"\001\002\003\004\005\006\007"
-                                "\010\011\012\013\014\015\016\017"
-                                "\020\021\022\023\024\025\026\027"
-                                "\030\031\032\033\034\035\036\037",
-                                Ctrl_V, false);
+    p = (char *)vim_strsave_escaped_ext((char_u *)last_cmdline,
+                                        (char_u *)"\001\002\003\004\005\006\007"
+                                        "\010\011\012\013\014\015\016\017"
+                                        "\020\021\022\023\024\025\026\027"
+                                        "\030\031\032\033\034\035\036\037",
+                                        Ctrl_V, false);
     // When in Visual mode "'<,'>" will be prepended to the command.
     // Remove it when it's already there.
-    if (VIsual_active && STRNCMP(p, "'<,'>", 5) == 0) {
-      retval = put_in_typebuf(p + 5, true, true, silent);
+    if (VIsual_active && strncmp(p, "'<,'>", 5) == 0) {
+      retval = put_in_typebuf((char_u *)p + 5, true, true, silent);
     } else {
-      retval = put_in_typebuf(p, true, true, silent);
+      retval = put_in_typebuf((char_u *)p, true, true, silent);
     }
     xfree(p);
   } else if (regname == '=') {
-    p = (char_u *)get_expr_line();
+    p = get_expr_line();
     if (p == NULL) {
       return FAIL;
     }
-    retval = put_in_typebuf(p, true, colon, silent);
+    retval = put_in_typebuf((char_u *)p, true, colon, silent);
     xfree(p);
   } else if (regname == '.') {        // use last inserted text
-    p = get_last_insert_save();
+    p = (char *)get_last_insert_save();
     if (p == NULL) {
       emsg(_(e_noinstext));
       return FAIL;
     }
-    retval = put_in_typebuf(p, false, colon, silent);
+    retval = put_in_typebuf((char_u *)p, false, colon, silent);
     xfree(p);
   } else {
     yankreg_T *reg = get_yank_register(regname, YREG_PASTE);
@@ -1162,7 +1162,7 @@ int do_execreg(int regname, int colon, int addcr, int silent)
       char_u *str = (char_u *)reg->y_array[i];
       bool free_str = false;
       if (colon && i > 0) {
-        p = (char_u *)skipwhite((char *)str);
+        p = skipwhite((char *)str);
         if (*p == '\\' || (p[0] == '"' && p[1] == '\\' && p[2] == ' ')) {
           str = execreg_line_continuation(reg->y_array, &i);
           free_str = true;

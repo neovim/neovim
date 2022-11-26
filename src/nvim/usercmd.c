@@ -406,7 +406,7 @@ static void uc_list(char *name, size_t name_len)
 
       // Skip commands which don't match the requested prefix and
       // commands filtered out.
-      if (STRNCMP(name, cmd->uc_name, name_len) != 0
+      if (strncmp(name, cmd->uc_name, name_len) != 0
           || message_filtered(cmd->uc_name)) {
         continue;
       }
@@ -570,7 +570,7 @@ int parse_addr_type_arg(char *value, int vallen, cmd_addr_T *addr_type_arg)
 
   for (i = 0; addr_type_complete[i].expand != ADDR_NONE; i++) {
     a = (int)strlen(addr_type_complete[i].name) == vallen;
-    b = STRNCMP(value, addr_type_complete[i].name, vallen) == 0;
+    b = strncmp(value, addr_type_complete[i].name, (size_t)vallen) == 0;
     if (a && b) {
       *addr_type_arg = addr_type_complete[i].expand;
       break;
@@ -618,7 +618,7 @@ int parse_compl_arg(const char *value, int vallen, int *complp, uint32_t *argt, 
       continue;
     }
     if ((int)strlen(command_complete[i]) == valend
-        && STRNCMP(value, command_complete[i], valend) == 0) {
+        && strncmp(value, command_complete[i], (size_t)valend) == 0) {
       *complp = i;
       if (i == EXPAND_BUFFERS) {
         *argt |= EX_BUFNAME;
@@ -848,7 +848,7 @@ int uc_add_command(char *name, size_t name_len, const char *rep, uint32_t argt, 
 
     cmd = USER_CMD_GA(gap, i);
     len = strlen(cmd->uc_name);
-    cmp = STRNCMP(name, cmd->uc_name, name_len);
+    cmp = strncmp(name, cmd->uc_name, name_len);
     if (cmp == 0) {
       if (name_len < len) {
         cmp = -1;
@@ -964,7 +964,7 @@ void ex_command(exarg_T *eap)
     uc_list(name, name_len);
   } else if (!ASCII_ISUPPER(*name)) {
     emsg(_("E183: User defined commands must start with an uppercase letter"));
-  } else if (name_len <= 4 && STRNCMP(name, "Next", name_len) == 0) {
+  } else if (name_len <= 4 && strncmp(name, "Next", name_len) == 0) {
     emsg(_("E841: Reserved name, cannot be used for user defined command"));
   } else if (compl > 0 && (argt & EX_EXTRA) == 0) {
     emsg(_(e_complete_used_without_allowing_arguments));
@@ -1007,7 +1007,7 @@ void ex_delcommand(exarg_T *eap)
   const char *arg = eap->arg;
   bool buffer_only = false;
 
-  if (STRNCMP(arg, "-buffer", 7) == 0 && ascii_iswhite(arg[7])) {
+  if (strncmp(arg, "-buffer", 7) == 0 && ascii_iswhite(arg[7])) {
     buffer_only = true;
     arg = skipwhite(arg + 7);
   }

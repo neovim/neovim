@@ -2150,7 +2150,7 @@ static void msg_puts_display(const char *str, int maxlen, int attr, int recurse)
       msg_ext_last_attr = attr;
     }
     // Concat pieces with the same highlight
-    size_t len = STRNLEN(str, maxlen);             // -V781
+    size_t len = strnlen(str, (size_t)maxlen);  // -V781
     ga_concat_len(&msg_ext_last_chunk, (char *)str, len);
     msg_ext_cur_len += len;
     return;

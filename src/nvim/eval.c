@@ -2084,7 +2084,7 @@ void del_menutrans_vars(void)
 {
   hash_lock(&globvarht);
   HASHTAB_ITER(&globvarht, hi, {
-    if (STRNCMP(hi->hi_key, "menutrans_", 10) == 0) {
+    if (strncmp(hi->hi_key, "menutrans_", 10) == 0) {
       delete_var(&globvarht, hi);
     }
   });
@@ -2142,7 +2142,7 @@ char *get_user_var_name(expand_T *xp, int idx)
     while (HASHITEM_EMPTY(hi)) {
       hi++;
     }
-    if (STRNCMP("g:", xp->xp_pattern, 2) == 0) {
+    if (strncmp("g:", xp->xp_pattern, 2) == 0) {
       return cat_prefix_varname('g', hi->hi_key);
     }
     return hi->hi_key;
@@ -3323,7 +3323,7 @@ static int eval_method(char **const arg, typval_T *const rettv, const bool evalu
   int len;
   char *name = *arg;
   char *lua_funcname = NULL;
-  if (STRNCMP(name, "v:lua.", 6) == 0) {
+  if (strncmp(name, "v:lua.", 6) == 0) {
     lua_funcname = name + 6;
     *arg = (char *)skip_luafunc_name((const char *)lua_funcname);
     *arg = skipwhite(*arg);  // to detect trailing whitespace later
@@ -5041,7 +5041,7 @@ void common_function(typval_T *argvars, typval_T *rettv, bool is_funcref)
     int dict_idx = 0;
     int arg_idx = 0;
     list_T *list = NULL;
-    if (STRNCMP(s, "s:", 2) == 0 || STRNCMP(s, "<SID>", 5) == 0) {
+    if (strncmp(s, "s:", 2) == 0 || strncmp(s, "<SID>", 5) == 0) {
       char sid_buf[25];
       int off = *s == 's' ? 2 : 5;
 

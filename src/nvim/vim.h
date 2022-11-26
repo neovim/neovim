@@ -195,13 +195,11 @@ enum { FOLD_TEXT_LEN = 51, };  //!< buffer size for get_foldtext()
 // defines to avoid typecasts from (char_u *) to (char *) and back
 // (vim_strchr() is now in strings.c)
 
-#ifdef HAVE_STRNLEN
-# define STRNLEN(s, n)     strnlen((char *)(s), (size_t)(n))
-#else
-# define STRNLEN(s, n)     xstrnlen((char *)(s), (size_t)(n))
+#ifndef HAVE_STRNLEN
+# define strnlen xstrnlen  // Older versions of SunOS may not have strnlen
 #endif
-#define STRCPY(d, s)        strcpy((char *)(d), (char *)(s))
-#define STRNCPY(d, s, n)    strncpy((char *)(d), (char *)(s), (size_t)(n))
+
+#define STRCPY(d, s)        strcpy((char *)(d), (char *)(s))  // NOLINT(runtime/printf)
 #define STRLCPY(d, s, n)    xstrlcpy((char *)(d), (char *)(s), (size_t)(n))
 #define STRNCMP(d, s, n)    strncmp((char *)(d), (char *)(s), (size_t)(n))
 #ifdef HAVE_STRCASECMP

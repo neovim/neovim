@@ -2164,8 +2164,9 @@ char *reg_submatch(int no)
           len++;
         }
         if (round == 2) {
-          STRNCPY(retval + len, reg_getline_submatch(lnum),  // NOLINT(runtime/printf)
-                  rsm.sm_mmatch->endpos[no].col);
+          strncpy(retval + len,  // NOLINT(runtime/printf)
+                  reg_getline_submatch(lnum),
+                  (size_t)rsm.sm_mmatch->endpos[no].col);
         }
         len += rsm.sm_mmatch->endpos[no].col;
         if (round == 2) {

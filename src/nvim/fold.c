@@ -1653,7 +1653,7 @@ static void foldDelMarker(buf_T *buf, linenr_T lnum, char *marker, size_t marker
   char *cms = buf->b_p_cms;
   char *line = ml_get_buf(buf, lnum, false);
   for (char *p = line; *p != NUL; p++) {
-    if (STRNCMP(p, marker, markerlen) != 0) {
+    if (strncmp(p, marker, markerlen) != 0) {
       continue;
     }
     // Found the marker, include a digit if it's there.
@@ -1665,8 +1665,8 @@ static void foldDelMarker(buf_T *buf, linenr_T lnum, char *marker, size_t marker
       // Also delete 'commentstring' if it matches.
       char *cms2 = strstr(cms, "%s");
       if (p - line >= cms2 - cms
-          && STRNCMP(p - (cms2 - cms), cms, cms2 - cms) == 0
-          && STRNCMP(p + len, cms2 + 2, strlen(cms2 + 2)) == 0) {
+          && strncmp(p - (cms2 - cms), cms, (size_t)(cms2 - cms)) == 0
+          && strncmp(p + len, cms2 + 2, strlen(cms2 + 2)) == 0) {
         p -= cms2 - cms;
         len += strlen(cms) - 2;
       }
@@ -1829,9 +1829,9 @@ static void foldtext_cleanup(char *str)
 
   for (char *s = str; *s != NUL;) {
     size_t len = 0;
-    if (STRNCMP(s, curwin->w_p_fmr, foldstartmarkerlen) == 0) {
+    if (strncmp(s, curwin->w_p_fmr, foldstartmarkerlen) == 0) {
       len = foldstartmarkerlen;
-    } else if (STRNCMP(s, foldendmarker, foldendmarkerlen) == 0) {
+    } else if (strncmp(s, foldendmarker, foldendmarkerlen) == 0) {
       len = foldendmarkerlen;
     }
     if (len > 0) {
@@ -1844,16 +1844,16 @@ static void foldtext_cleanup(char *str)
       char *p;
       for (p = s; p > str && ascii_iswhite(p[-1]); p--) {}
       if (p >= str + cms_slen
-          && STRNCMP(p - cms_slen, cms_start, cms_slen) == 0) {
+          && strncmp(p - cms_slen, cms_start, cms_slen) == 0) {
         len += (size_t)(s - p) + cms_slen;
         s = p - cms_slen;
       }
     } else if (cms_end != NULL) {
-      if (!did1 && cms_slen > 0 && STRNCMP(s, cms_start, cms_slen) == 0) {
+      if (!did1 && cms_slen > 0 && strncmp(s, cms_start, cms_slen) == 0) {
         len = cms_slen;
         did1 = true;
       } else if (!did2 && cms_elen > 0
-                 && STRNCMP(s, cms_end, cms_elen) == 0) {
+                 && strncmp(s, cms_end, cms_elen) == 0) {
         len = cms_elen;
         did2 = true;
       }
@@ -3024,7 +3024,7 @@ static void foldlevelMarker(fline_T *flp)
   char *s = ml_get_buf(flp->wp->w_buffer, flp->lnum + flp->off, false);
   while (*s) {
     if (*s == cstart
-        && STRNCMP(s + 1, startmarker, foldstartmarkerlen - 1) == 0) {
+        && strncmp(s + 1, startmarker, foldstartmarkerlen - 1) == 0) {
       // found startmarker: set flp->lvl
       s += foldstartmarkerlen;
       if (ascii_isdigit(*s)) {
@@ -3044,7 +3044,7 @@ static void foldlevelMarker(fline_T *flp)
         flp->start++;
       }
     } else if (*s == cend
-               && STRNCMP(s + 1, foldendmarker + 1, foldendmarkerlen - 1) == 0) {
+               && strncmp(s + 1, foldendmarker + 1, foldendmarkerlen - 1) == 0) {
       // found endmarker: set flp->lvl_next
       s += foldendmarkerlen;
       if (ascii_isdigit(*s)) {

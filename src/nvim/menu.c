@@ -56,7 +56,7 @@ static char e_nomenu[] = N_("E329: No menu \"%s\"");
 static bool menu_is_winbar(const char *const name)
   FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
 {
-  return (STRNCMP(name, "WinBar", 6) == 0);
+  return (strncmp(name, "WinBar", 6) == 0);
 }
 
 static vimmenu_T **get_root_menu(const char *const name)
@@ -88,17 +88,17 @@ void ex_menu(exarg_T *eap)
   arg = eap->arg;
 
   for (;;) {
-    if (STRNCMP(arg, "<script>", 8) == 0) {
+    if (strncmp(arg, "<script>", 8) == 0) {
       noremap = REMAP_SCRIPT;
       arg = skipwhite(arg + 8);
       continue;
     }
-    if (STRNCMP(arg, "<silent>", 8) == 0) {
+    if (strncmp(arg, "<silent>", 8) == 0) {
       silent = true;
       arg = skipwhite(arg + 8);
       continue;
     }
-    if (STRNCMP(arg, "<special>", 9) == 0) {
+    if (strncmp(arg, "<special>", 9) == 0) {
       // Ignore obsolete "<special>" modifier.
       arg = skipwhite(arg + 9);
       continue;
@@ -108,7 +108,7 @@ void ex_menu(exarg_T *eap)
 
   // Locate an optional "icon=filename" argument
   // TODO(nvim): Currently this is only parsed. Should expose it to UIs.
-  if (STRNCMP(arg, "icon=", 5) == 0) {
+  if (strncmp(arg, "icon=", 5) == 0) {
     arg += 5;
     while (*arg != NUL && *arg != ' ') {
       if (*arg == '\\') {
@@ -151,10 +151,10 @@ void ex_menu(exarg_T *eap)
   pri_tab[MENUDEPTH] = -1;              // mark end of the table
 
   // Check for "disable" or "enable" argument.
-  if (STRNCMP(arg, "enable", 6) == 0 && ascii_iswhite(arg[6])) {
+  if (strncmp(arg, "enable", 6) == 0 && ascii_iswhite(arg[6])) {
     enable = kTrue;
     arg = skipwhite(arg + 6);
-  } else if (STRNCMP(arg, "disable", 7) == 0 && ascii_iswhite(arg[7])) {
+  } else if (strncmp(arg, "disable", 7) == 0 && ascii_iswhite(arg[7])) {
     enable = kFalse;
     arg = skipwhite(arg + 7);
   }
@@ -916,10 +916,10 @@ char *set_context_in_menu_cmd(expand_T *xp, const char *cmd, char *arg, bool for
   }
 
   if (!ascii_iswhite(*p)) {
-    if (STRNCMP(arg, "enable", 6) == 0
+    if (strncmp(arg, "enable", 6) == 0
         && (arg[6] == NUL || ascii_iswhite(arg[6]))) {
       p = arg + 6;
-    } else if (STRNCMP(arg, "disable", 7) == 0
+    } else if (strncmp(arg, "disable", 7) == 0
                && (arg[7] == NUL || ascii_iswhite(arg[7]))) {
       p = arg + 7;
     } else {
@@ -1361,14 +1361,14 @@ bool menu_is_menubar(const char *const name)
 bool menu_is_popup(const char *const name)
   FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
 {
-  return STRNCMP(name, "PopUp", 5) == 0;
+  return strncmp(name, "PopUp", 5) == 0;
 }
 
 // Return true if "name" is a toolbar menu name.
 bool menu_is_toolbar(const char *const name)
   FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
 {
-  return STRNCMP(name, "ToolBar", 7) == 0;
+  return strncmp(name, "ToolBar", 7) == 0;
 }
 
 /// Return true if the name is a menu separator identifier: Starts and ends
@@ -1443,7 +1443,7 @@ void show_popupmenu(void)
   vimmenu_T *menu;
 
   for (menu = root_menu; menu != NULL; menu = menu->next) {
-    if (STRNCMP("PopUp", menu->name, 5) == 0 && STRNCMP(menu->name + 5, mode, mode_len) == 0) {
+    if (strncmp("PopUp", menu->name, 5) == 0 && strncmp(menu->name + 5, mode, mode_len) == 0) {
       break;
     }
   }
@@ -1727,7 +1727,7 @@ void ex_menutranslate(exarg_T *eap)
   }
 
   // ":menutrans clear": clear all translations.
-  if (STRNCMP(arg, "clear", 5) == 0 && ends_excmd(*skipwhite(arg + 5))) {
+  if (strncmp(arg, "clear", 5) == 0 && ends_excmd(*skipwhite(arg + 5))) {
     GA_DEEP_CLEAR(&menutrans_ga, menutrans_T, FREE_MENUTRANS);
 
     // Delete all "menutrans_" global variables.

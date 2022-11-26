@@ -276,16 +276,16 @@ static bool do_incsearch_highlighting(int firstc, int *search_delim, incsearch_s
     goto theend;
   }
 
-  if (STRNCMP(cmd, "substitute", p - cmd) == 0
-      || STRNCMP(cmd, "smagic", p - cmd) == 0
-      || STRNCMP(cmd, "snomagic", MAX(p - cmd, 3)) == 0
-      || STRNCMP(cmd, "vglobal", p - cmd) == 0) {
+  if (strncmp(cmd, "substitute", (size_t)(p - cmd)) == 0
+      || strncmp(cmd, "smagic", (size_t)(p - cmd)) == 0
+      || strncmp(cmd, "snomagic", (size_t)MAX(p - cmd, 3)) == 0
+      || strncmp(cmd, "vglobal", (size_t)(p - cmd)) == 0) {
     if (*cmd == 's' && cmd[1] == 'm') {
       p_magic = true;
     } else if (*cmd == 's' && cmd[1] == 'n') {
       p_magic = false;
     }
-  } else if (STRNCMP(cmd, "sort", MAX(p - cmd, 3)) == 0) {
+  } else if (strncmp(cmd, "sort", (size_t)MAX(p - cmd, 3)) == 0) {
     // skip over ! and flags
     if (*p == '!') {
       p = skipwhite(p + 1);
@@ -296,11 +296,11 @@ static bool do_incsearch_highlighting(int firstc, int *search_delim, incsearch_s
     if (*p == NUL) {
       goto theend;
     }
-  } else if (STRNCMP(cmd, "vimgrep", MAX(p - cmd, 3)) == 0
-             || STRNCMP(cmd, "vimgrepadd", MAX(p - cmd, 8)) == 0
-             || STRNCMP(cmd, "lvimgrep", MAX(p - cmd, 2)) == 0
-             || STRNCMP(cmd, "lvimgrepadd", MAX(p - cmd, 9)) == 0
-             || STRNCMP(cmd, "global", p - cmd) == 0) {
+  } else if (strncmp(cmd, "vimgrep", (size_t)MAX(p - cmd, 3)) == 0
+             || strncmp(cmd, "vimgrepadd", (size_t)MAX(p - cmd, 8)) == 0
+             || strncmp(cmd, "lvimgrep", (size_t)MAX(p - cmd, 2)) == 0
+             || strncmp(cmd, "lvimgrepadd", (size_t)MAX(p - cmd, 9)) == 0
+             || strncmp(cmd, "global", (size_t)(p - cmd)) == 0) {
     // skip over "!/".
     if (*p == '!') {
       p++;
@@ -1456,7 +1456,7 @@ static void command_line_next_histidx(CommandLineState *s, bool next_match)
 
     if ((s->c != K_UP && s->c != K_DOWN)
         || s->hiscnt == s->save_hiscnt
-        || STRNCMP(get_histentry(s->histype)[s->hiscnt].hisstr,
+        || strncmp(get_histentry(s->histype)[s->hiscnt].hisstr,
                    s->lookfor, (size_t)j) == 0) {
       break;
     }
@@ -2573,13 +2573,13 @@ int check_opt_wim(void)
     if (p[i] != NUL && p[i] != ',' && p[i] != ':') {
       return FAIL;
     }
-    if (i == 7 && STRNCMP(p, "longest", 7) == 0) {
+    if (i == 7 && strncmp(p, "longest", 7) == 0) {
       new_wim_flags[idx] |= WIM_LONGEST;
-    } else if (i == 4 && STRNCMP(p, "full", 4) == 0) {
+    } else if (i == 4 && strncmp(p, "full", 4) == 0) {
       new_wim_flags[idx] |= WIM_FULL;
-    } else if (i == 4 && STRNCMP(p, "list", 4) == 0) {
+    } else if (i == 4 && strncmp(p, "list", 4) == 0) {
       new_wim_flags[idx] |= WIM_LIST;
-    } else if (i == 8 && STRNCMP(p, "lastused", 8) == 0) {
+    } else if (i == 8 && strncmp(p, "lastused", 8) == 0) {
       new_wim_flags[idx] |= WIM_BUFLASTUSED;
     } else {
       return FAIL;
@@ -3580,19 +3580,19 @@ static bool cmdline_paste(int regname, bool literally, bool remcr)
     // part of the word.
     p = (char_u *)arg;
     if (p_is && regname == Ctrl_W) {
-      char_u *w;
+      char *w;
       int len;
 
       // Locate start of last word in the cmd buffer.
-      for (w = (char_u *)ccline.cmdbuff + ccline.cmdpos; w > (char_u *)ccline.cmdbuff;) {
-        len = utf_head_off(ccline.cmdbuff, (char *)w - 1) + 1;
-        if (!vim_iswordc(utf_ptr2char((char *)w - len))) {
+      for (w = ccline.cmdbuff + ccline.cmdpos; w > ccline.cmdbuff;) {
+        len = utf_head_off(ccline.cmdbuff, w - 1) + 1;
+        if (!vim_iswordc(utf_ptr2char(w - len))) {
           break;
         }
         w -= len;
       }
-      len = (int)(((char_u *)ccline.cmdbuff + ccline.cmdpos) - w);
-      if (p_ic ? STRNICMP(w, arg, len) == 0 : STRNCMP(w, arg, len) == 0) {
+      len = (int)((ccline.cmdbuff + ccline.cmdpos) - w);
+      if (p_ic ? STRNICMP(w, arg, len) == 0 : strncmp(w, arg, (size_t)len) == 0) {
         p += len;
       }
     }

@@ -98,7 +98,7 @@ static int last_idx = 0;        // index in spats[] for RE_LAST
 static char_u lastc[2] = { NUL, NUL };    // last character searched for
 static Direction lastcdir = FORWARD;      // last direction of character search
 static int last_t_cmd = true;             // last search t_cmd
-static char_u lastc_bytes[MB_MAXBYTES + 1];
+static char lastc_bytes[MB_MAXBYTES + 1];
 static int lastc_bytelen = 1;             // >1 for multi-byte char
 
 // copy of spats[], for keeping the search patterns while executing autocmds
@@ -404,7 +404,7 @@ bool pat_has_uppercase(char_u *pat)
 const char *last_csearch(void)
   FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  return (const char *)lastc_bytes;
+  return lastc_bytes;
 }
 
 int last_csearch_forward(void)
@@ -1410,11 +1410,11 @@ end_do_search:
 // contain the position of the match found.    Blank lines match only if
 // ADDING is set.  If p_ic is set then the pattern must be in lowercase.
 // Return OK for success, or FAIL if no line found.
-int search_for_exact_line(buf_T *buf, pos_T *pos, Direction dir, char_u *pat)
+int search_for_exact_line(buf_T *buf, pos_T *pos, Direction dir, char *pat)
 {
   linenr_T start = 0;
-  char_u *ptr;
-  char_u *p;
+  char *ptr;
+  char *p;
 
   if (buf->b_ml.ml_line_count == 0) {
     return FAIL;
@@ -1448,8 +1448,8 @@ int search_for_exact_line(buf_T *buf, pos_T *pos, Direction dir, char_u *pat)
     if (start == 0) {
       start = pos->lnum;
     }
-    ptr = (char_u *)ml_get_buf(buf, pos->lnum, false);
-    p = (char_u *)skipwhite((char *)ptr);
+    ptr = ml_get_buf(buf, pos->lnum, false);
+    p = skipwhite(ptr);
     pos->col = (colnr_T)(p - ptr);
 
     // when adding lines the matching line may be empty but it is not
@@ -1461,8 +1461,8 @@ int search_for_exact_line(buf_T *buf, pos_T *pos, Direction dir, char_u *pat)
     } else if (*p != NUL) {  // Ignore empty lines.
       // Expanding lines or words.
       assert(ins_compl_len() >= 0);
-      if ((p_ic ? mb_strnicmp((char *)p, (char *)pat, (size_t)ins_compl_len())
-           : STRNCMP(p, pat, ins_compl_len())) == 0) {
+      if ((p_ic ? mb_strnicmp(p, pat, (size_t)ins_compl_len())
+           : strncmp(p, pat, (size_t)ins_compl_len())) == 0) {
         return OK;
       }
     }
@@ -1492,13 +1492,13 @@ int searchc(cmdarg_T *cap, int t_cmd)
       *lastc = (char_u)c;
       set_csearch_direction(dir);
       set_csearch_until(t_cmd);
-      lastc_bytelen = utf_char2bytes(c, (char *)lastc_bytes);
+      lastc_bytelen = utf_char2bytes(c, lastc_bytes);
       if (cap->ncharC1 != 0) {
         lastc_bytelen += utf_char2bytes(cap->ncharC1,
-                                        (char *)lastc_bytes + lastc_bytelen);
+                                        lastc_bytes + lastc_bytelen);
         if (cap->ncharC2 != 0) {
           lastc_bytelen += utf_char2bytes(cap->ncharC2,
-                                          (char *)lastc_bytes + lastc_bytelen);
+                                          lastc_bytes + lastc_bytelen);
         }
       }
     }
@@ -1550,7 +1550,7 @@ int searchc(cmdarg_T *cap, int t_cmd)
         if (p[col] == c && stop) {
           break;
         }
-      } else if (STRNCMP(p + col, lastc_bytes, lastc_bytelen) == 0 && stop) {
+      } else if (strncmp(p + col, lastc_bytes, (size_t)lastc_bytelen) == 0 && stop) {
         break;
       }
       stop = true;
@@ -1621,7 +1621,7 @@ static bool find_rawstring_end(char *linep, pos_T *startpos, pos_T *endpos)
         break;
       }
       if (*p == ')'
-          && STRNCMP(delim_copy, p + 1, delim_len) == 0
+          && strncmp(delim_copy, p + 1, delim_len) == 0
           && p[delim_len + 1] == '"') {
         found = true;
         break;
@@ -1765,9 +1765,9 @@ pos_T *findmatchlimit(oparg_T *oap, int initc, int flags, int64_t maxtravel)
         ptr = skipwhite(linep);
         if (*ptr == '#' && pos.col <= (colnr_T)(ptr - linep)) {
           ptr = skipwhite(ptr + 1);
-          if (STRNCMP(ptr, "if", 2) == 0
-              || STRNCMP(ptr, "endif", 5) == 0
-              || STRNCMP(ptr, "el", 2) == 0) {
+          if (strncmp(ptr, "if", 2) == 0
+              || strncmp(ptr, "endif", 5) == 0
+              || strncmp(ptr, "el", 2) == 0) {
             hash_dir = 1;
           }
         } else if (linep[pos.col] == '/') {  // Are we on a comment?
@@ -1838,9 +1838,9 @@ pos_T *findmatchlimit(oparg_T *oap, int initc, int flags, int64_t maxtravel)
       }
       if (initc != '#') {
         ptr = skipwhite(skipwhite(linep) + 1);
-        if (STRNCMP(ptr, "if", 2) == 0 || STRNCMP(ptr, "el", 2) == 0) {
+        if (strncmp(ptr, "if", 2) == 0 || strncmp(ptr, "el", 2) == 0) {
           hash_dir = 1;
-        } else if (STRNCMP(ptr, "endif", 5) == 0) {
+        } else if (strncmp(ptr, "endif", 5) == 0) {
           hash_dir = -1;
         } else {
           return NULL;
@@ -1865,29 +1865,29 @@ pos_T *findmatchlimit(oparg_T *oap, int initc, int flags, int64_t maxtravel)
         pos.col = (colnr_T)(ptr - linep);
         ptr = skipwhite(ptr + 1);
         if (hash_dir > 0) {
-          if (STRNCMP(ptr, "if", 2) == 0) {
+          if (strncmp(ptr, "if", 2) == 0) {
             count++;
-          } else if (STRNCMP(ptr, "el", 2) == 0) {
+          } else if (strncmp(ptr, "el", 2) == 0) {
             if (count == 0) {
               return &pos;
             }
-          } else if (STRNCMP(ptr, "endif", 5) == 0) {
+          } else if (strncmp(ptr, "endif", 5) == 0) {
             if (count == 0) {
               return &pos;
             }
             count--;
           }
         } else {
-          if (STRNCMP(ptr, "if", 2) == 0) {
+          if (strncmp(ptr, "if", 2) == 0) {
             if (count == 0) {
               return &pos;
             }
             count--;
-          } else if (initc == '#' && STRNCMP(ptr, "el", 2) == 0) {
+          } else if (initc == '#' && strncmp(ptr, "el", 2) == 0) {
             if (count == 0) {
               return &pos;
             }
-          } else if (STRNCMP(ptr, "endif", 5) == 0) {
+          } else if (strncmp(ptr, "endif", 5) == 0) {
             count++;
           }
         }
@@ -3418,7 +3418,7 @@ static char_u *get_line_and_copy(linenr_T lnum, char_u *buf)
 /// @param action         What to do when we find it
 /// @param start_lnum     first line to start searching
 /// @param end_lnum       last line for searching
-void find_pattern_in_path(char_u *ptr, Direction dir, size_t len, bool whole, bool skip_comments,
+void find_pattern_in_path(char *ptr, Direction dir, size_t len, bool whole, bool skip_comments,
                           int type, long count, int action, linenr_T start_lnum, linenr_T end_lnum)
 {
   SearchedFile *files;                  // Stack of included files
@@ -3699,9 +3699,9 @@ search_line:
           // compare the first "len" chars from "ptr"
           startp = skipwhite(p);
           if (p_ic) {
-            matched = !mb_strnicmp(startp, (char *)ptr, len);
+            matched = !mb_strnicmp(startp, ptr, len);
           } else {
-            matched = !STRNCMP(startp, ptr, len);
+            matched = !strncmp(startp, ptr, len);
           }
           if (matched && define_matched && whole
               && vim_iswordc((uint8_t)startp[len])) {
@@ -3716,7 +3716,7 @@ search_line:
           // is not considered to be a comment line.
           if (skip_comments) {
             if ((*line != '#'
-                 || STRNCMP(skipwhite((char *)line + 1), "define", 6) != 0)
+                 || strncmp(skipwhite(line + 1), "define", 6) != 0)
                 && get_leader_len(line, NULL, false, true)) {
               matched = false;
             }
@@ -3769,8 +3769,8 @@ search_line:
         i = (int)(p - aux);
 
         if (compl_status_adding() && i == ins_compl_len()) {
-          // IOSIZE > compl_length, so the STRNCPY works
-          STRNCPY(IObuff, aux, i);  // NOLINT(runtime/printf)
+          // IOSIZE > compl_length, so the strncpy works
+          strncpy(IObuff, aux, (size_t)i);  // NOLINT(runtime/printf)
 
           // Get the next line: when "depth" < 0  from the current
           // buffer, otherwise from the included file.  Jump to
@@ -3808,7 +3808,7 @@ search_line:
             if (p - aux >= IOSIZE - i) {
               p = aux + IOSIZE - i - 1;
             }
-            STRNCPY(IObuff + i, aux, p - aux);  // NOLINT(runtime/printf)
+            strncpy(IObuff + i, aux, (size_t)(p - aux));  // NOLINT(runtime/printf)
             i += (int)(p - aux);
             cont_s_ipos = true;
           }

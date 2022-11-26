@@ -297,7 +297,7 @@ void ex_profile(exarg_T *eap)
   len = (int)(e - eap->arg);
   e = skipwhite(e);
 
-  if (len == 5 && STRNCMP(eap->arg, "start", 5) == 0 && *e != NUL) {
+  if (len == 5 && strncmp(eap->arg, "start", 5) == 0 && *e != NUL) {
     xfree(profile_fname);
     profile_fname = (char *)expand_env_save_opt((char_u *)e, true);
     do_profiling = PROF_YES;
