@@ -681,7 +681,7 @@ static void recording_mode(int attr)
 void get_trans_bufname(buf_T *buf)
 {
   if (buf_spname(buf) != NULL) {
-    STRLCPY(NameBuff, buf_spname(buf), MAXPATHL);
+    xstrlcpy(NameBuff, buf_spname(buf), MAXPATHL);
   } else {
     home_replace(buf, buf->b_fname, (char *)NameBuff, MAXPATHL, true);
   }

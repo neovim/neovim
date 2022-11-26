@@ -32,11 +32,11 @@ struct map_arguments {
   /// vim limits this to MAXMAPLEN characters, allowing us to use a static
   /// buffer. Setting lhs_len to a value larger than MAXMAPLEN can signal
   /// that {lhs} was too long and truncated.
-  char_u lhs[MAXMAPLEN + 1];
+  char lhs[MAXMAPLEN + 1];
   size_t lhs_len;
 
   /// Unsimplifed {lhs} of the mapping. If no simplification has been done then alt_lhs_len is 0.
-  char_u alt_lhs[MAXMAPLEN + 1];
+  char alt_lhs[MAXMAPLEN + 1];
   size_t alt_lhs_len;
 
   char *rhs;  /// The {rhs} of the mapping.
@@ -44,7 +44,7 @@ struct map_arguments {
   LuaRef rhs_lua;  /// lua function as {rhs}
   bool rhs_is_noop;  /// True when the {rhs} should be <Nop>.
 
-  char_u *orig_rhs;  /// The original text of the {rhs}.
+  char *orig_rhs;  /// The original text of the {rhs}.
   size_t orig_rhs_len;
   char *desc;  /// map description
 };

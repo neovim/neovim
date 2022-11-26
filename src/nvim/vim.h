@@ -200,7 +200,6 @@ enum { FOLD_TEXT_LEN = 51, };  //!< buffer size for get_foldtext()
 #endif
 
 #define STRCPY(d, s)        strcpy((char *)(d), (char *)(s))  // NOLINT(runtime/printf)
-#define STRLCPY(d, s, n)    xstrlcpy((char *)(d), (char *)(s), (size_t)(n))
 #ifdef HAVE_STRCASECMP
 # define STRICMP(d, s)      strcasecmp((char *)(d), (char *)(s))
 #else

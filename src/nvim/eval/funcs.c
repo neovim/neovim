@@ -822,7 +822,7 @@ static void f_chdir(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 
   // Return the current directory
   char *cwd = xmalloc(MAXPATHL);
-  if (os_dirname((char_u *)cwd, MAXPATHL) != FAIL) {
+  if (os_dirname(cwd, MAXPATHL) != FAIL) {
 #ifdef BACKSLASH_IN_FILENAME
     slash_adjust(cwd);
 #endif
@@ -2517,13 +2517,13 @@ static void f_getcwd(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     }
     FALLTHROUGH;            // In global directory, just need to get OS CWD.
   case kCdScopeInvalid:     // If called without any arguments, get OS CWD.
-    if (os_dirname((char_u *)cwd, MAXPATHL) == FAIL) {
+    if (os_dirname(cwd, MAXPATHL) == FAIL) {
       from = "";  // Return empty string on failure.
     }
   }
 
   if (from) {
-    STRLCPY(cwd, from, MAXPATHL);
+    xstrlcpy(cwd, from, MAXPATHL);
   }
 
   rettv->vval.v_string = xstrdup(cwd);

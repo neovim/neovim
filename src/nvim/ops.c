@@ -2440,7 +2440,7 @@ int op_change(oparg_T *oap)
   long pre_indent = 0;
   char_u *newp;
   char *firstline;
-  char_u *ins_text;
+  char *ins_text;
   char *oldp;
   struct block_def bd;
 
@@ -2510,8 +2510,8 @@ int op_change(oparg_T *oap)
     if (ins_len > 0) {
       // Subsequent calls to ml_get() flush the firstline data - take a
       // copy of the inserted text.
-      ins_text = (char_u *)xmalloc((size_t)(ins_len + 1));
-      STRLCPY(ins_text, firstline + bd.textcol, ins_len + 1);
+      ins_text = xmalloc((size_t)(ins_len + 1));
+      xstrlcpy(ins_text, firstline + bd.textcol, (size_t)ins_len + 1);
       for (linenr = oap->start.lnum + 1; linenr <= oap->end.lnum;
            linenr++) {
         block_prep(oap, &bd, linenr, true);

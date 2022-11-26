@@ -5104,7 +5104,7 @@ static void ex_tabs(exarg_T *eap)
       msg_putchar(bufIsChanged(wp->w_buffer) ? '+' : ' ');
       msg_putchar(' ');
       if (buf_spname(wp->w_buffer) != NULL) {
-        STRLCPY(IObuff, buf_spname(wp->w_buffer), IOSIZE);
+        xstrlcpy(IObuff, buf_spname(wp->w_buffer), IOSIZE);
       } else {
         home_replace(wp->w_buffer, wp->w_buffer->b_fname, (char *)IObuff, IOSIZE, true);
       }
@@ -5497,7 +5497,7 @@ static void post_chdir(CdScope scope, bool trigger_dirchanged)
   }
 
   char cwd[MAXPATHL];
-  if (os_dirname((char_u *)cwd, MAXPATHL) != OK) {
+  if (os_dirname(cwd, MAXPATHL) != OK) {
     return;
   }
   switch (scope) {
@@ -5544,7 +5544,7 @@ bool changedir_func(char *new_dir, CdScope scope)
     new_dir = pdir;
   }
 
-  if (os_dirname((char_u *)NameBuff, MAXPATHL) == OK) {
+  if (os_dirname(NameBuff, MAXPATHL) == OK) {
     pdir = xstrdup(NameBuff);
   } else {
     pdir = NULL;
@@ -5627,7 +5627,7 @@ void ex_cd(exarg_T *eap)
 /// ":pwd".
 static void ex_pwd(exarg_T *eap)
 {
-  if (os_dirname((char_u *)NameBuff, MAXPATHL) == OK) {
+  if (os_dirname(NameBuff, MAXPATHL) == OK) {
 #ifdef BACKSLASH_IN_FILENAME
     slash_adjust(NameBuff);
 #endif
@@ -6851,7 +6851,7 @@ char_u *eval_vars(char_u *src, const char_u *srcstart, size_t *usedlen, linenr_T
         // postponed to avoid a delay when <afile> is not used.
         result = FullName_save(autocmd_fname, false);
         // Copy into `autocmd_fname`, don't reassign it. #8165
-        STRLCPY(autocmd_fname, result, MAXPATHL);
+        xstrlcpy(autocmd_fname, result, MAXPATHL);
         xfree(result);
       }
       result = autocmd_fname;

@@ -1007,7 +1007,7 @@ void ex_mkrc(exarg_T *eap)
         //
         // Change to session file's dir.
         //
-        if (os_dirname(dirnow, MAXPATHL) == FAIL
+        if (os_dirname((char *)dirnow, MAXPATHL) == FAIL
             || os_chdir((char *)dirnow) != 0) {
           *dirnow = NUL;
         }

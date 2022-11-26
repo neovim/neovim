@@ -290,7 +290,7 @@ void *vim_findfile_init(char *path, char *filename, char *stopdirs, int level, i
 
     if (!vim_isAbsName((char_u *)rel_fname) && len + 1 < MAXPATHL) {
       // Make the start dir an absolute path name.
-      STRLCPY(ff_expand_buffer, rel_fname, len + 1);
+      xstrlcpy(ff_expand_buffer, rel_fname, len + 1);
       search_ctx->ffsc_start_dir = FullName_save(ff_expand_buffer, false);
     } else {
       search_ctx->ffsc_start_dir = xstrnsave(rel_fname, len);
@@ -315,7 +315,7 @@ void *vim_findfile_init(char *path, char *filename, char *stopdirs, int level, i
       path += 2;
     } else  // NOLINT(readability/braces)
 #endif
-    if (os_dirname((char_u *)ff_expand_buffer, MAXPATHL) == FAIL) {
+    if (os_dirname(ff_expand_buffer, MAXPATHL) == FAIL) {
       goto error_return;
     }
 
@@ -815,7 +815,7 @@ char_u *vim_findfile(void *search_ctx_arg)
                 if (!path_with_url(file_path)) {
                   simplify_filename((char_u *)file_path);
                 }
-                if (os_dirname((char_u *)ff_expand_buffer, MAXPATHL) == OK) {
+                if (os_dirname(ff_expand_buffer, MAXPATHL) == OK) {
                   p = path_shorten_fname(file_path, ff_expand_buffer);
                   if (p != NULL) {
                     STRMOVE(file_path, p);
@@ -1071,7 +1071,7 @@ static int ff_check_visited(ff_visited_T **visited_list, char *fname, char *wc_p
   // For a URL we only compare the name, otherwise we compare the
   // device/inode.
   if (path_with_url(fname)) {
-    STRLCPY(ff_expand_buffer, fname, MAXPATHL);
+    xstrlcpy(ff_expand_buffer, fname, MAXPATHL);
     url = true;
   } else {
     ff_expand_buffer[0] = NUL;
@@ -1580,10 +1580,10 @@ int vim_chdirfile(char *fname, CdCause cause)
 {
   char dir[MAXPATHL];
 
-  STRLCPY(dir, fname, MAXPATHL);
+  xstrlcpy(dir, fname, MAXPATHL);
   *path_tail_with_sep(dir) = NUL;
 
-  if (os_dirname((char_u *)NameBuff, sizeof(NameBuff)) != OK) {
+  if (os_dirname(NameBuff, sizeof(NameBuff)) != OK) {
     NameBuff[0] = NUL;
   }
 

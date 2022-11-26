@@ -640,7 +640,7 @@ static void set_b0_fname(ZERO_BL *b0p, buf_T *buf)
       size_t ulen = strlen(uname);
       size_t flen = strlen(b0p->b0_fname);
       if (retval == FAIL || ulen + flen > B0_FNAME_SIZE_CRYPT - 1) {
-        STRLCPY(b0p->b0_fname, buf->b_ffname, B0_FNAME_SIZE_CRYPT);
+        xstrlcpy(b0p->b0_fname, buf->b_ffname, B0_FNAME_SIZE_CRYPT);
       } else {
         memmove(b0p->b0_fname + ulen + 1, b0p->b0_fname + 1, flen);
         memmove(b0p->b0_fname + 1, uname, ulen);
@@ -896,7 +896,7 @@ void ml_recover(bool checkext)
   smsg(_("Using swap file \"%s\""), NameBuff);
 
   if (buf_spname(curbuf) != NULL) {
-    STRLCPY(NameBuff, buf_spname(curbuf), MAXPATHL);
+    xstrlcpy(NameBuff, buf_spname(curbuf), MAXPATHL);
   } else {
     home_replace(NULL, curbuf->b_ffname, (char *)NameBuff, MAXPATHL, true);
   }
@@ -2966,7 +2966,7 @@ int resolve_symlink(const char *fname, char *buf)
   }
 
   // Put the result so far in tmp[], starting with the original name.
-  STRLCPY(tmp, fname, MAXPATHL);
+  xstrlcpy(tmp, fname, MAXPATHL);
 
   for (;;) {
     // Limit symlink depth to 100, catch recursive loops.

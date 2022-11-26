@@ -654,8 +654,8 @@ static void expand_pack_entry(RuntimeSearchPath *search_path, Map(String, handle
     if (pack_entry_len + strlen(start_pat[i]) + 1 > sizeof buf) {
       continue;
     }
-    STRLCPY(buf, pack_entry, sizeof buf);
-    STRLCPY(buf + pack_entry_len, start_pat[i], sizeof buf - pack_entry_len);
+    xstrlcpy(buf, pack_entry, sizeof buf);
+    xstrlcpy(buf + pack_entry_len, start_pat[i], sizeof buf - pack_entry_len);
     expand_rtp_entry(search_path, rtp_used, buf, false);
     size_t after_size = strlen(buf) + 7;
     char *after = xmallocz(after_size);
@@ -1085,7 +1085,7 @@ static void add_pack_start_dir(char *fname, void *cookie)
     if (strlen(fname) + strlen(start_pat[i]) + 1 > MAXPATHL) {
       continue;
     }
-    STRLCPY(buf, fname, MAXPATHL);
+    xstrlcpy(buf, fname, MAXPATHL);
     xstrlcat(buf, start_pat[i], sizeof buf);
     if (pack_has_entries(buf)) {
       add_pack_dir_to_rtp(buf, true);

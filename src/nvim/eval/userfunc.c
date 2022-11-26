@@ -260,7 +260,7 @@ int get_lambda_tv(char **arg, typval_T *rettv, bool evaluate)
   int varargs;
   int ret;
   char_u *start = (char_u *)skipwhite(*arg + 1);
-  char_u *s, *e;
+  char *s, *e;
   bool *old_eval_lavars = eval_lavars_used;
   bool eval_lavars = false;
 
@@ -289,12 +289,12 @@ int get_lambda_tv(char **arg, typval_T *rettv, bool evaluate)
 
   // Get the start and the end of the expression.
   *arg = skipwhite((*arg) + 1);
-  s = (char_u *)(*arg);
+  s = *arg;
   ret = skip_expr(arg);
   if (ret == FAIL) {
     goto errret;
   }
-  e = (char_u *)(*arg);
+  e = *arg;
   *arg = skipwhite(*arg);
   if (**arg != '}') {
     semsg(_("E451: Expected }: %s"), *arg);
@@ -304,7 +304,7 @@ int get_lambda_tv(char **arg, typval_T *rettv, bool evaluate)
 
   if (evaluate) {
     int flags = 0;
-    char_u *p;
+    char *p;
     garray_T newlines;
 
     char *name = (char *)get_lambda_name();
@@ -317,11 +317,11 @@ int get_lambda_tv(char **arg, typval_T *rettv, bool evaluate)
 
     // Add "return " before the expression.
     size_t len = (size_t)(7 + e - s + 1);
-    p = (char_u *)xmalloc(len);
-    ((char **)(newlines.ga_data))[newlines.ga_len++] = (char *)p;
+    p = xmalloc(len);
+    ((char **)(newlines.ga_data))[newlines.ga_len++] = p;
     STRCPY(p, "return ");
-    STRLCPY(p + 7, s, e - s + 1);
-    if (strstr((char *)p + 7, "a:") == NULL) {
+    xstrlcpy(p + 7, s, (size_t)(e - s) + 1);
+    if (strstr(p + 7, "a:") == NULL) {
       // No a: variables are used for sure.
       flags |= FC_NOARGS;
     }
@@ -3214,7 +3214,7 @@ char *get_return_cmd(void *rettv)
   }
 
   STRCPY(IObuff, ":return ");
-  STRLCPY(IObuff + 8, s, IOSIZE - 8);
+  xstrlcpy(IObuff + 8, s, IOSIZE - 8);
   if (strlen(s) + 8 >= IOSIZE) {
     STRCPY(IObuff + IOSIZE - 4, "...");
   }

@@ -569,7 +569,7 @@ void ui_comp_msg_set_pos(Integer grid, Integer row, Boolean scrolled, String sep
   if (scrolled && row > 0) {
     msg_sep_row = (int)row - 1;
     if (sep_char.data) {
-      STRLCPY(msg_sep_char, sep_char.data, sizeof(msg_sep_char));
+      xstrlcpy(msg_sep_char, sep_char.data, sizeof(msg_sep_char));
     }
   } else {
     msg_sep_row = -1;

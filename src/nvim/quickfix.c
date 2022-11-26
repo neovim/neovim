@@ -712,8 +712,8 @@ static int qf_get_next_list_line(qfstate_T *state)
     state->linelen = len;
   }
 
-  STRLCPY(state->linebuf, TV_LIST_ITEM_TV(p_li)->vval.v_string,
-          state->linelen + 1);
+  xstrlcpy(state->linebuf, TV_LIST_ITEM_TV(p_li)->vval.v_string,
+           state->linelen + 1);
 
   state->p_li = TV_LIST_ITEM_NEXT(state->p_list, p_li);
   return QF_OK;
@@ -736,7 +736,7 @@ static int qf_get_next_buf_line(qfstate_T *state)
     state->linebuf = (char *)IObuff;
     state->linelen = len;
   }
-  STRLCPY(state->linebuf, p_buf, state->linelen + 1);
+  xstrlcpy(state->linebuf, p_buf, state->linelen + 1);
 
   return QF_OK;
 }
@@ -818,7 +818,7 @@ retry:
     char *line = string_convert(&state->vc, state->linebuf, &state->linelen);
     if (line != NULL) {
       if (state->linelen < IOSIZE) {
-        STRLCPY(state->linebuf, line, state->linelen + 1);
+        xstrlcpy(state->linebuf, line, state->linelen + 1);
         xfree(line);
       } else {
         xfree(state->growbuf);
@@ -1195,7 +1195,7 @@ static void qf_store_title(qf_list_T *qfl, const char *title)
     char *p = xmallocz(len);
 
     qfl->qf_title = p;
-    STRLCPY(p, title, len + 1);
+    xstrlcpy(p, title, len + 1);
   }
 }
 
@@ -1350,7 +1350,7 @@ static int copy_nonerror_line(const char *linebuf, size_t linelen, qffields_T *f
     fields->errmsglen = linelen + 1;
   }
   // copy whole line to error message
-  STRLCPY(fields->errmsg, linebuf, linelen + 1);
+  xstrlcpy(fields->errmsg, linebuf, linelen + 1);
 
   return QF_OK;
 }
@@ -1368,7 +1368,7 @@ static int qf_parse_fmt_m(regmatch_T *rmp, int midx, qffields_T *fields)
     fields->errmsg = xrealloc(fields->errmsg, len + 1);
     fields->errmsglen = len + 1;
   }
-  STRLCPY(fields->errmsg, rmp->startp[midx], len + 1);
+  xstrlcpy(fields->errmsg, rmp->startp[midx], len + 1);
   return QF_OK;
 }
 
@@ -3941,18 +3941,18 @@ static int qf_buf_add_line(qf_list_T *qfl, buf_T *buf, linenr_T lnum, const qfli
   // If the 'quickfixtextfunc' function returned a non-empty custom string
   // for this entry, then use it.
   if (qftf_str != NULL && *qftf_str != NUL) {
-    STRLCPY(IObuff, qftf_str, IOSIZE);
+    xstrlcpy(IObuff, qftf_str, IOSIZE);
   } else {
     buf_T *errbuf;
     int len;
     if (qfp->qf_module != NULL) {
-      STRLCPY(IObuff, qfp->qf_module, IOSIZE);
+      xstrlcpy(IObuff, qfp->qf_module, IOSIZE);
       len = (int)strlen(IObuff);
     } else if (qfp->qf_fnum != 0
                && (errbuf = buflist_findnr(qfp->qf_fnum)) != NULL
                && errbuf->b_fname != NULL) {
       if (qfp->qf_type == 1) {  // :helpgrep
-        STRLCPY(IObuff, path_tail(errbuf->b_fname), IOSIZE);
+        xstrlcpy(IObuff, path_tail(errbuf->b_fname), IOSIZE);
       } else {
         // Shorten the file name if not done already.
         // For optimization, do this only for the first entry in a
@@ -3961,11 +3961,11 @@ static int qf_buf_add_line(qf_list_T *qfl, buf_T *buf, linenr_T lnum, const qfli
             && (errbuf->b_sfname == NULL
                 || path_is_absolute((char_u *)errbuf->b_sfname))) {
           if (*dirname == NUL) {
-            os_dirname((char_u *)dirname, MAXPATHL);
+            os_dirname(dirname, MAXPATHL);
           }
           shorten_buf_fname(errbuf, (char_u *)dirname, false);
         }
-        STRLCPY(IObuff, errbuf->b_fname, IOSIZE);
+        xstrlcpy(IObuff, errbuf->b_fname, IOSIZE);
       }
       len = (int)strlen(IObuff);
     } else {
@@ -5370,7 +5370,7 @@ static int vgr_process_files(win_T *wp, qf_info_T *qi, vgr_args_T *cmd_args, boo
 
   // Remember the current directory, because a BufRead autocommand that does
   // ":lcd %:p:h" changes the meaning of short path names.
-  os_dirname((char_u *)dirname_start, MAXPATHL);
+  os_dirname(dirname_start, MAXPATHL);
 
   time_t seconds = (time_t)0;
   for (int fi = 0; fi < cmd_args->fcount && !got_int && cmd_args->tomatch > 0; fi++) {
@@ -5581,7 +5581,7 @@ static void restore_start_dir(char *dirname_start)
 {
   char *dirname_now = xmalloc(MAXPATHL);
 
-  os_dirname((char_u *)dirname_now, MAXPATHL);
+  os_dirname(dirname_now, MAXPATHL);
   if (strcmp(dirname_start, dirname_now) != 0) {
     // If the directory has changed, change it back by building up an
     // appropriate ex command and executing it.
@@ -5675,7 +5675,7 @@ static buf_T *load_dummy_buffer(char *fname, char *dirname_start, char *resultin
   // When autocommands/'autochdir' option changed directory: go back.
   // Let the caller know what the resulting dir was first, in case it is
   // important.
-  os_dirname((char_u *)resulting_dir, MAXPATHL);
+  os_dirname(resulting_dir, MAXPATHL);
   restore_start_dir(dirname_start);
 
   if (!bufref_valid(&newbufref)) {

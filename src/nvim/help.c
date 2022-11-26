@@ -880,7 +880,7 @@ static void helptags_one(char *dir, const char *ext, const char *tagfname, bool 
   bool mix = false;             // detected mixed encodings
 
   // Find all *.txt files.
-  size_t dirlen = STRLCPY(NameBuff, dir, sizeof(NameBuff));
+  size_t dirlen = xstrlcpy(NameBuff, dir, sizeof(NameBuff));
   if (dirlen >= MAXPATHL
       || xstrlcat(NameBuff, "/**/*", sizeof(NameBuff)) >= MAXPATHL  // NOLINT
       || xstrlcat(NameBuff, ext, sizeof(NameBuff)) >= MAXPATHL) {
@@ -1089,7 +1089,7 @@ static void do_helptags(char *dirname, bool add_help_tags, bool ignore_writeerr)
   char **files;
 
   // Get a list of all files in the help directory and in subdirectories.
-  STRLCPY(NameBuff, dirname, sizeof(NameBuff));
+  xstrlcpy(NameBuff, dirname, sizeof(NameBuff));
   if (!add_pathsep((char *)NameBuff)
       || xstrlcat(NameBuff, "**", sizeof(NameBuff)) >= MAXPATHL) {
     emsg(_(e_fnametoolong));

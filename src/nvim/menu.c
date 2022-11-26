@@ -960,7 +960,7 @@ char *set_context_in_menu_cmd(expand_T *xp, const char *cmd, char *arg, bool for
     if (after_dot > arg) {
       size_t path_len = (size_t)(after_dot - arg);
       path_name = xmalloc(path_len);
-      STRLCPY(path_name, arg, path_len);
+      xstrlcpy(path_name, arg, path_len);
     }
     name = path_name;
     while (name != NULL && *name) {
@@ -1075,9 +1075,9 @@ char *get_menu_names(expand_T *xp, int idx)
   if (menu->modes & expand_modes) {
     if (menu->children != NULL) {
       if (should_advance) {
-        STRLCPY(tbuffer, menu->en_dname, TBUFFER_LEN);
+        xstrlcpy(tbuffer, menu->en_dname, TBUFFER_LEN);
       } else {
-        STRLCPY(tbuffer, menu->dname,  TBUFFER_LEN);
+        xstrlcpy(tbuffer, menu->dname,  TBUFFER_LEN);
         if (menu->en_dname == NULL) {
           should_advance = true;
         }
