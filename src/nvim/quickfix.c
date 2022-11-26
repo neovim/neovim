@@ -4242,7 +4242,7 @@ static char *make_get_auname(cmdidx_T cmdidx)
 static char *make_get_fullcmd(const char *makecmd, const char *fname)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_NONNULL_RET
 {
-  size_t len = STRLEN(p_shq) * 2 + strlen(makecmd) + 1;
+  size_t len = strlen(p_shq) * 2 + strlen(makecmd) + 1;
   if (*p_sp != NUL) {
     len += strlen(p_sp) + strlen(fname) + 3;
   }

@@ -1228,7 +1228,7 @@ static int match_with_backref(linenr_T start_lnum, colnr_T start_col, linenr_T e
   linenr_T clnum = start_lnum;
   colnr_T ccol = start_col;
   int len;
-  char_u *p;
+  char *p;
 
   if (bytelen != NULL) {
     *bytelen = 0;
@@ -1237,7 +1237,7 @@ static int match_with_backref(linenr_T start_lnum, colnr_T start_col, linenr_T e
     // Since getting one line may invalidate the other, need to make copy.
     // Slow!
     if (rex.line != reg_tofree) {
-      len = (int)STRLEN(rex.line);
+      len = (int)strlen((char *)rex.line);
       if (reg_tofree == NULL || len >= (int)reg_tofreelen) {
         len += 50;              // get some extra
         xfree(reg_tofree);
@@ -1250,16 +1250,16 @@ static int match_with_backref(linenr_T start_lnum, colnr_T start_col, linenr_T e
     }
 
     // Get the line to compare with.
-    p = reg_getline(clnum);
+    p = (char *)reg_getline(clnum);
     assert(p);
 
     if (clnum == end_lnum) {
       len = end_col - ccol;
     } else {
-      len = (int)STRLEN(p + ccol);
+      len = (int)strlen(p + ccol);
     }
 
-    if (cstrncmp((char *)p + ccol, (char *)rex.input, &len) != 0) {
+    if (cstrncmp(p + ccol, (char *)rex.input, &len) != 0) {
       return RA_NOMATCH;  // doesn't match
     }
     if (bytelen != NULL) {
@@ -1651,7 +1651,7 @@ int vim_regsub(regmatch_T *rmp, char_u *source, typval_T *expr, char_u *dest, in
   rex.reg_maxline = 0;
   rex.reg_buf = curbuf;
   rex.reg_line_lbr = true;
-  int result = vim_regsub_both(source, expr, dest, destlen, flags);
+  int result = vim_regsub_both((char *)source, expr, (char *)dest, destlen, flags);
 
   rex_in_use = rex_in_use_save;
   if (rex_in_use) {
@@ -1679,7 +1679,7 @@ int vim_regsub_multi(regmmatch_T *rmp, linenr_T lnum, char_u *source, char_u *de
   rex.reg_firstlnum = lnum;
   rex.reg_maxline = curbuf->b_ml.ml_line_count - lnum;
   rex.reg_line_lbr = false;
-  int result = vim_regsub_both(source, NULL, dest, destlen, flags);
+  int result = vim_regsub_both((char *)source, NULL, (char *)dest, destlen, flags);
 
   rex_in_use = rex_in_use_save;
   if (rex_in_use) {
@@ -1702,11 +1702,11 @@ void free_resub_eval_result(void)
 }
 #endif
 
-static int vim_regsub_both(char_u *source, typval_T *expr, char_u *dest, int destlen, int flags)
+static int vim_regsub_both(char *source, typval_T *expr, char *dest, int destlen, int flags)
 {
-  char_u *src;
-  char_u *dst;
-  char_u *s;
+  char *src;
+  char *dst;
+  char *s;
   int c;
   int cc;
   int no = -1;
@@ -1782,14 +1782,14 @@ static int vim_regsub_both(char_u *source, typval_T *expr, char_u *dest, int des
         funcexe.fe_argv_func = fill_submatch_list;
         funcexe.fe_evaluate = true;
         if (expr->v_type == VAR_FUNC) {
-          s = (char_u *)expr->vval.v_string;
-          call_func((char *)s, -1, &rettv, 1, argv, &funcexe);
+          s = expr->vval.v_string;
+          call_func(s, -1, &rettv, 1, argv, &funcexe);
         } else if (expr->v_type == VAR_PARTIAL) {
           partial_T *partial = expr->vval.v_partial;
 
-          s = (char_u *)partial_name(partial);
+          s = partial_name(partial);
           funcexe.fe_partial = partial;
-          call_func((char *)s, -1, &rettv, 1, argv, &funcexe);
+          call_func(s, -1, &rettv, 1, argv, &funcexe);
         }
         if (tv_list_len(&matchList.sl_list) > 0) {
           // fill_submatch_list() was called.
@@ -1807,14 +1807,14 @@ static int vim_regsub_both(char_u *source, typval_T *expr, char_u *dest, int des
         }
         tv_clear(&rettv);
       } else {
-        eval_result[nested] = eval_to_string((char *)source + 2, NULL, true);
+        eval_result[nested] = eval_to_string(source + 2, NULL, true);
       }
       nesting--;
 
       if (eval_result[nested] != NULL) {
         int had_backslash = false;
 
-        for (s = (char_u *)eval_result[nested]; *s != NUL; MB_PTR_ADV(s)) {
+        for (s = eval_result[nested]; *s != NUL; MB_PTR_ADV(s)) {
           // Change NL to CR, so that it becomes a line break,
           // unless called from vim_regexec_nl().
           // Skip over a backslashed character.
@@ -1835,9 +1835,9 @@ static int vim_regsub_both(char_u *source, typval_T *expr, char_u *dest, int des
         }
         if (had_backslash && (flags & REGSUB_BACKSLASH)) {
           // Backslashes will be consumed, need to double them.
-          s = vim_strsave_escaped((char_u *)eval_result[nested], (char_u *)"\\");
+          s = (char *)vim_strsave_escaped((char_u *)eval_result[nested], (char_u *)"\\");
           xfree(eval_result[nested]);
-          eval_result[nested] = (char *)s;
+          eval_result[nested] = s;
         }
 
         dst += strlen(eval_result[nested]);
@@ -1849,7 +1849,7 @@ static int vim_regsub_both(char_u *source, typval_T *expr, char_u *dest, int des
       }
     }
   } else {
-    while ((c = *src++) != NUL) {
+    while ((c = (uint8_t)(*src++)) != NUL) {
       if (c == '&' && (flags & REGSUB_MAGIC)) {
         no = 0;
       } else if (c == '\\' && *src != NUL) {
@@ -1887,7 +1887,7 @@ static int vim_regsub_both(char_u *source, typval_T *expr, char_u *dest, int des
               iemsg("vim_regsub_both(): not enough space");
               return 0;
             }
-            *dst++ = (char_u)c;
+            *dst++ = (char)c;
             *dst++ = *src++;
             *dst++ = *src++;
           } else {
@@ -1924,10 +1924,10 @@ static int vim_regsub_both(char_u *source, typval_T *expr, char_u *dest, int des
               }
               dst++;
             }
-            c = *src++;
+            c = (uint8_t)(*src++);
           }
         } else {
-          c = utf_ptr2char((char *)src - 1);
+          c = utf_ptr2char(src - 1);
         }
         // Write to buffer, if copy is set.
         if (func_one != NULL) {
@@ -1939,7 +1939,7 @@ static int vim_regsub_both(char_u *source, typval_T *expr, char_u *dest, int des
           cc = c;
         }
 
-        int totlen = utfc_ptr2len((char *)src - 1);
+        int totlen = utfc_ptr2len(src - 1);
         int charlen = utf_char2len(cc);
 
         if (copy) {
@@ -1947,10 +1947,10 @@ static int vim_regsub_both(char_u *source, typval_T *expr, char_u *dest, int des
             iemsg("vim_regsub_both(): not enough space");
             return 0;
           }
-          utf_char2bytes(cc, (char *)dst);
+          utf_char2bytes(cc, dst);
         }
         dst += charlen - 1;
-        int clen = utf_ptr2len((char *)src - 1);
+        int clen = utf_ptr2len(src - 1);
 
         // If the character length is shorter than "totlen", there
         // are composing characters; copy them as-is.
@@ -1972,20 +1972,20 @@ static int vim_regsub_both(char_u *source, typval_T *expr, char_u *dest, int des
           if (clnum < 0 || rex.reg_mmatch->endpos[no].lnum < 0) {
             s = NULL;
           } else {
-            s = reg_getline(clnum) + rex.reg_mmatch->startpos[no].col;
+            s = (char *)reg_getline(clnum) + rex.reg_mmatch->startpos[no].col;
             if (rex.reg_mmatch->endpos[no].lnum == clnum) {
               len = rex.reg_mmatch->endpos[no].col
                     - rex.reg_mmatch->startpos[no].col;
             } else {
-              len = (int)STRLEN(s);
+              len = (int)strlen(s);
             }
           }
         } else {
-          s = (char_u *)rex.reg_match->startp[no];
+          s = rex.reg_match->startp[no];
           if (rex.reg_match->endp[no] == NULL) {
             s = NULL;
           } else {
-            len = (int)(rex.reg_match->endp[no] - (char *)s);
+            len = (int)(rex.reg_match->endp[no] - s);
           }
         }
         if (s != NULL) {
@@ -2003,11 +2003,11 @@ static int vim_regsub_both(char_u *source, typval_T *expr, char_u *dest, int des
                   *dst = CAR;
                 }
                 dst++;
-                s = reg_getline(++clnum);
+                s = (char *)reg_getline(++clnum);
                 if (rex.reg_mmatch->endpos[no].lnum == clnum) {
                   len = rex.reg_mmatch->endpos[no].col;
                 } else {
-                  len = (int)STRLEN(s);
+                  len = (int)strlen(s);
                 }
               } else {
                 break;
@@ -2033,7 +2033,7 @@ static int vim_regsub_both(char_u *source, typval_T *expr, char_u *dest, int des
                 }
                 dst += 2;
               } else {
-                c = utf_ptr2char((char *)s);
+                c = utf_ptr2char(s);
 
                 if (func_one != (fptr_T)NULL) {
                   // Turbo C complains without the typecast
@@ -2051,7 +2051,7 @@ static int vim_regsub_both(char_u *source, typval_T *expr, char_u *dest, int des
 
                   // Copy composing characters separately, one
                   // at a time.
-                  l = utf_ptr2len((char *)s) - 1;
+                  l = utf_ptr2len(s) - 1;
 
                   s += l;
                   len -= l;
@@ -2061,7 +2061,7 @@ static int vim_regsub_both(char_u *source, typval_T *expr, char_u *dest, int des
                       iemsg("vim_regsub_both(): not enough space");
                       return 0;
                     }
-                    utf_char2bytes(cc, (char *)dst);
+                    utf_char2bytes(cc, dst);
                   }
                   dst += charlen - 1;
                 }

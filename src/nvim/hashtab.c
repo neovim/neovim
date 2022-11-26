@@ -201,15 +201,15 @@ void hash_debug_results(void)
 ///
 /// @return OK   if success.
 ///         FAIL if key already present
-int hash_add(hashtab_T *ht, char_u *key)
+int hash_add(hashtab_T *ht, char *key)
 {
-  hash_T hash = hash_hash(key);
-  hashitem_T *hi = hash_lookup(ht, (const char *)key, STRLEN(key), hash);
+  hash_T hash = hash_hash((char_u *)key);
+  hashitem_T *hi = hash_lookup(ht, key, strlen(key), hash);
   if (!HASHITEM_EMPTY(hi)) {
     internal_error("hash_add()");
     return FAIL;
   }
-  hash_add_item(ht, hi, key, hash);
+  hash_add_item(ht, hi, (char_u *)key, hash);
   return OK;
 }
 
@@ -226,7 +226,7 @@ void hash_add_item(hashtab_T *ht, hashitem_T *hi, char_u *key, hash_T hash)
   if (hi->hi_key == NULL) {
     ht->ht_filled++;
   }
-  hi->hi_key = key;
+  hi->hi_key = (char *)key;
   hi->hi_hash = hash;
 
   // When the space gets low may resize the array.
@@ -449,5 +449,5 @@ hash_T hash_hash_len(const char *key, const size_t len)
 const char_u *_hash_key_removed(void)
   FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  return HI_KEY_REMOVED;
+  return (char_u *)HI_KEY_REMOVED;
 }

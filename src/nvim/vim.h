@@ -195,7 +195,6 @@ enum { FOLD_TEXT_LEN = 51, };  //!< buffer size for get_foldtext()
 // defines to avoid typecasts from (char_u *) to (char *) and back
 // (vim_strchr() is now in strings.c)
 
-#define STRLEN(s)           strlen((char *)(s))
 #ifdef HAVE_STRNLEN
 # define STRNLEN(s, n)     strnlen((char *)(s), (size_t)(n))
 #else
@@ -216,7 +215,7 @@ enum { FOLD_TEXT_LEN = 51, };  //!< buffer size for get_foldtext()
 #endif
 
 // Like strcpy() but allows overlapped source and destination.
-#define STRMOVE(d, s)       memmove((d), (s), STRLEN(s) + 1)
+#define STRMOVE(d, s)       memmove((d), (s), strlen(s) + 1)
 
 #ifdef HAVE_STRNCASECMP
 # define STRNICMP(d, s, n)  strncasecmp((char *)(d), (char *)(s), (size_t)(n))

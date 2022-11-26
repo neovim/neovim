@@ -449,7 +449,7 @@ static void redraw_wildmenu(expand_T *xp, int num_matches, char **matches, int m
              || xp->xp_context == EXPAND_MENUNAMES);
     if (emenu && menu_is_separator((char *)s)) {
       STRCPY(buf + len, transchar('|'));
-      l = (int)STRLEN(buf + len);
+      l = (int)strlen((char *)buf + len);
       len += l;
       clen += l;
     } else {
@@ -462,7 +462,7 @@ static void redraw_wildmenu(expand_T *xp, int num_matches, char **matches, int m
           len += l;
         } else {
           STRCPY(buf + len, transchar_byte(*s));
-          len += (int)STRLEN(buf + len);
+          len += (int)strlen((char *)buf + len);
         }
       }
     }

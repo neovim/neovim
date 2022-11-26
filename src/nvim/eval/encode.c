@@ -136,9 +136,9 @@ static int conv_error(const char *const msg, const MPConvStack *const mpstack,
       typval_T key_tv = {
         .v_type = VAR_STRING,
         .vval = { .v_string =
-                    (char *)(v.data.d.hi ==
-                             NULL ? v.data.d.dict->dv_hashtab.ht_array : (v.data.d.hi -
-                                                                          1))->hi_key },
+                    (v.data.d.hi ==
+                     NULL ? v.data.d.dict->dv_hashtab.ht_array : (v.data.d.hi -
+                                                                  1))->hi_key },
       };
       char *const key = encode_tv2string(&key_tv, NULL);
       vim_snprintf((char *)IObuff, IOSIZE, key_msg, key);

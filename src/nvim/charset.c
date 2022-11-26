@@ -423,7 +423,7 @@ char *transstr(const char *const s, bool untab)
 ///
 /// When "buf" is NULL, return an allocated string.
 /// Otherwise, put the result in buf, limited by buflen, and return buf.
-char_u *str_foldcase(char_u *str, int orglen, char_u *buf, int buflen)
+char_u *str_foldcase(char_u *str, int orglen, char *buf, int buflen)
   FUNC_ATTR_NONNULL_RET
 {
   garray_T ga;
@@ -431,7 +431,7 @@ char_u *str_foldcase(char_u *str, int orglen, char_u *buf, int buflen)
   int len = orglen;
 
 #define GA_CHAR(i) ((char *)ga.ga_data)[i]
-#define GA_PTR(i) ((char_u *)ga.ga_data + (i))
+#define GA_PTR(i) ((char *)ga.ga_data + (i))
 #define STR_CHAR(i) (buf == NULL ? GA_CHAR(i) : buf[i])
 #define STR_PTR(i) (buf == NULL ? GA_PTR(i) : buf + (i))
 
@@ -459,8 +459,8 @@ char_u *str_foldcase(char_u *str, int orglen, char_u *buf, int buflen)
   // Make each character lower case.
   i = 0;
   while (STR_CHAR(i) != NUL) {
-    int c = utf_ptr2char((char *)STR_PTR(i));
-    int olen = utf_ptr2len((char *)STR_PTR(i));
+    int c = utf_ptr2char(STR_PTR(i));
+    int olen = utf_ptr2len(STR_PTR(i));
     int lc = mb_tolower(c);
 
     // Only replace the character when it is not an invalid
@@ -494,17 +494,17 @@ char_u *str_foldcase(char_u *str, int orglen, char_u *buf, int buflen)
           }
         }
       }
-      (void)utf_char2bytes(lc, (char *)STR_PTR(i));
+      (void)utf_char2bytes(lc, STR_PTR(i));
     }
 
     // skip to next multi-byte char
-    i += utfc_ptr2len((char *)STR_PTR(i));
+    i += utfc_ptr2len(STR_PTR(i));
   }
 
   if (buf == NULL) {
     return (char_u *)ga.ga_data;
   }
-  return buf;
+  return (char_u *)buf;
 }
 
 // Catch 22: g_chartab[] can't be initialized before the options are

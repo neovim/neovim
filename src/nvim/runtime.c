@@ -105,8 +105,7 @@ estack_T *estack_push(etype_T type, char *name, linenr_T lnum)
 void estack_push_ufunc(ufunc_T *ufunc, linenr_T lnum)
 {
   estack_T *entry = estack_push(ETYPE_UFUNC,
-                                (char *)(ufunc->uf_name_exp != NULL
-                                         ? ufunc->uf_name_exp : ufunc->uf_name),
+                                ufunc->uf_name_exp != NULL ? (char *)ufunc->uf_name_exp : ufunc->uf_name,
                                 lnum);
   if (entry != NULL) {
     entry->es_info.ufunc = ufunc;

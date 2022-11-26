@@ -1481,7 +1481,7 @@ static bool findtags_in_help_init(findtags_state_T *st)
   } else {
     // Prefer help tags according to 'helplang'.  Put the two-letter
     // language name in help_lang[].
-    i = (int)STRLEN(st->tag_fname);
+    i = (int)strlen(st->tag_fname);
     if (i > 3 && st->tag_fname[i - 3] == '-') {
       STRLCPY(st->help_lang, st->tag_fname + i - 2, 3);
     } else {
@@ -2599,7 +2599,7 @@ int get_tagfname(tagname_T *tnp, int first, char *buf)
       // move the filename one char forward and truncate the
       // filepath with a NUL
       filename = (char_u *)path_tail(buf);
-      STRMOVE(filename + 1, filename);
+      STRMOVE(filename + 1, (char *)filename);
       *filename++ = NUL;
 
       tnp->tn_search_ctx = vim_findfile_init(buf, (char *)filename,

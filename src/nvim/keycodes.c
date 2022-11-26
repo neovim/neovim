@@ -889,7 +889,7 @@ char *replace_termcodes(const char *const from, const size_t from_len, char **co
   size_t dlen = 0;
   const char_u *src;
   const char_u *const end = (char_u *)from + from_len - 1;
-  char_u *result;          // buffer for resulting string
+  char *result;          // buffer for resulting string
 
   const bool do_backslash = !(cpo_flags & FLAG_CPO_BSLASH);  // backslash is a special character
   const bool do_special = !(flags & REPTERM_NO_SPECIAL);
@@ -906,12 +906,12 @@ char *replace_termcodes(const char *const from, const size_t from_len, char **co
   // Check for #n at start only: function key n
   if ((flags & REPTERM_FROM_PART) && from_len > 1 && src[0] == '#'
       && ascii_isdigit(src[1])) {  // function key
-    result[dlen++] = K_SPECIAL;
+    result[dlen++] = (char)K_SPECIAL;
     result[dlen++] = 'k';
     if (src[1] == '0') {
       result[dlen++] = ';';     // #0 is F10 is "k;"
     } else {
-      result[dlen++] = src[1];  // #3 is F3 is "k3"
+      result[dlen++] = (char)src[1];  // #3 is F3 is "k3"
     }
     src += 2;
   }
@@ -931,18 +931,18 @@ char *replace_termcodes(const char *const from, const size_t from_len, char **co
           emsg(_(e_usingsid));
         } else {
           src += 5;
-          result[dlen++] = K_SPECIAL;
-          result[dlen++] = KS_EXTRA;
+          result[dlen++] = (char)K_SPECIAL;
+          result[dlen++] = (char)KS_EXTRA;
           result[dlen++] = KE_SNR;
-          snprintf((char *)result + dlen, buf_len - dlen, "%" PRId64,
+          snprintf(result + dlen, buf_len - dlen, "%" PRId64,
                    (int64_t)current_sctx.sc_sid);
-          dlen += STRLEN(result + dlen);
+          dlen += strlen(result + dlen);
           result[dlen++] = '_';
           continue;
         }
       }
 
-      slen = trans_special(&src, (size_t)(end - src) + 1, result + dlen,
+      slen = trans_special(&src, (size_t)(end - src) + 1, (char_u *)result + dlen,
                            FSK_KEYCODE | ((flags & REPTERM_NO_SIMPLIFY) ? 0 : FSK_SIMPLIFY),
                            true, did_simplify);
       if (slen) {
@@ -952,17 +952,18 @@ char *replace_termcodes(const char *const from, const size_t from_len, char **co
     }
 
     if (do_special) {
-      char_u *p, *s, len;
+      char *p, *s;
+      int len;
 
       // Replace <Leader> by the value of "mapleader".
       // Replace <LocalLeader> by the value of "maplocalleader".
       // If "mapleader" or "maplocalleader" isn't set use a backslash.
       if (end - src >= 7 && STRNICMP(src, "<Leader>", 8) == 0) {
         len = 8;
-        p = get_var_value("g:mapleader");
+        p = (char *)get_var_value("g:mapleader");
       } else if (end - src >= 12 && STRNICMP(src, "<LocalLeader>", 13) == 0) {
         len = 13;
-        p = get_var_value("g:maplocalleader");
+        p = (char *)get_var_value("g:maplocalleader");
       } else {
         len = 0;
         p = NULL;
@@ -970,8 +971,8 @@ char *replace_termcodes(const char *const from, const size_t from_len, char **co
 
       if (len != 0) {
         // Allow up to 8 * 6 characters for "mapleader".
-        if (p == NULL || *p == NUL || STRLEN(p) > 8 * 6) {
-          s = (char_u *)"\\";
+        if (p == NULL || *p == NUL || strlen(p) > 8 * 6) {
+          s = "\\";
         } else {
           s = p;
         }
@@ -992,7 +993,7 @@ char *replace_termcodes(const char *const from, const size_t from_len, char **co
       src++;  // skip CTRL-V or backslash
       if (src > end) {
         if (flags & REPTERM_FROM_PART) {
-          result[dlen++] = key;
+          result[dlen++] = (char)key;
         }
         break;
       }
@@ -1003,11 +1004,11 @@ char *replace_termcodes(const char *const from, const size_t from_len, char **co
       // If the character is K_SPECIAL, replace it with K_SPECIAL
       // KS_SPECIAL KE_FILLER.
       if (*src == K_SPECIAL) {
-        result[dlen++] = K_SPECIAL;
-        result[dlen++] = KS_SPECIAL;
+        result[dlen++] = (char)K_SPECIAL;
+        result[dlen++] = (char)KS_SPECIAL;
         result[dlen++] = KE_FILLER;
       } else {
-        result[dlen++] = *src;
+        result[dlen++] = (char)(*src);
       }
       src++;
     }

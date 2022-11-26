@@ -1174,7 +1174,7 @@ void delete_var(hashtab_T *ht, hashitem_T *hi)
 static void list_one_var(dictitem_T *v, const char *prefix, int *first)
 {
   char *const s = encode_tv2echo(&v->di_tv, NULL);
-  list_one_var_a(prefix, (const char *)v->di_key, (ptrdiff_t)STRLEN(v->di_key),
+  list_one_var_a(prefix, (const char *)v->di_key, (ptrdiff_t)strlen((char *)v->di_key),
                  v->di_tv.v_type, (s == NULL ? "" : s), first);
   xfree(s);
 }
@@ -1342,7 +1342,7 @@ void set_var_const(const char *name, const size_t name_len, typval_T *const tv, 
 
     v = xmalloc(sizeof(dictitem_T) + strlen(varname));
     STRCPY(v->di_key, varname);
-    if (hash_add(ht, v->di_key) == FAIL) {
+    if (hash_add(ht, (char *)v->di_key) == FAIL) {
       xfree(v);
       return;
     }

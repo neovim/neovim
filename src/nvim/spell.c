@@ -137,7 +137,7 @@ typedef struct matchinf_S {
                                    // mi_capflags
 
   // case-folded text
-  char_u mi_fword[MAXWLEN + 1];         // mi_word case-folded
+  char mi_fword[MAXWLEN + 1];           // mi_word case-folded
   int mi_fwordlen;                      // nr of valid bytes in mi_fword
 
   // for when checking word after a prefix
@@ -300,9 +300,9 @@ size_t spell_check(win_T *wp, char_u *ptr, hlf_T *attrp, int *capcol, bool docou
     MB_PTR_ADV(mi.mi_fend);
   }
 
-  (void)spell_casefold(wp, ptr, (int)(mi.mi_fend - ptr), mi.mi_fword,
+  (void)spell_casefold(wp, ptr, (int)(mi.mi_fend - ptr), (char_u *)mi.mi_fword,
                        MAXWLEN + 1);
-  mi.mi_fwordlen = (int)STRLEN(mi.mi_fword);
+  mi.mi_fwordlen = (int)strlen(mi.mi_fword);
 
   if (camel_case && mi.mi_fwordlen > 0) {
     // introduce a fake word end space into the folded word.
@@ -388,14 +388,14 @@ size_t spell_check(win_T *wp, char_u *ptr, hlf_T *attrp, int *capcol, bool docou
       mi.mi_lp = LANGP_ENTRY(wp->w_s->b_langp, 0);
       if (mi.mi_lp->lp_slang->sl_fidxs != NULL) {
         p = mi.mi_word;
-        fp = mi.mi_fword;
+        fp = (char_u *)mi.mi_fword;
         for (;;) {
           MB_PTR_ADV(p);
           MB_PTR_ADV(fp);
           if (p >= mi.mi_end) {
             break;
           }
-          mi.mi_compoff = (int)(fp - mi.mi_fword);
+          mi.mi_compoff = (int)(fp - (char_u *)mi.mi_fword);
           find_word(&mi, FIND_COMPOUND);
           if (mi.mi_result != SP_BAD) {
             mi.mi_end = p;
@@ -453,7 +453,7 @@ static void find_word(matchinf_T *mip, int mode)
     }
   } else {
     // Check for case-folded in case-folded tree.
-    ptr = mip->mi_fword;
+    ptr = (char_u *)mip->mi_fword;
     flen = mip->mi_fwordlen;        // available case-folded bytes
     byts = slang->sl_fbyts;
     idxs = slang->sl_fidxs;
@@ -749,7 +749,7 @@ static void find_word(matchinf_T *mip, int mode)
               STRLCPY(fword, ptr, endlen[endidxcnt] + 1);
             }
           }
-          if (!can_compound(slang, fword, mip->mi_compflags)) {
+          if (!can_compound(slang, (char *)fword, mip->mi_compflags)) {
             continue;
           }
         } else if (slang->sl_comprules != NULL
@@ -786,12 +786,12 @@ static void find_word(matchinf_T *mip, int mode)
           // byte length in keep-case word.  Length may change when
           // folding case.  This can be slow, take a shortcut when
           // the case-folded word is equal to the keep-case word.
-          p = mip->mi_fword;
+          p = (char_u *)mip->mi_fword;
           if (STRNCMP(ptr, p, wlen) != 0) {
             for (char_u *s = ptr; s < ptr + wlen; MB_PTR_ADV(s)) {
               MB_PTR_ADV(p);
             }
-            mip->mi_compoff = (int)(p - mip->mi_fword);
+            mip->mi_compoff = (int)(p - (char_u *)mip->mi_fword);
           }
         }
 #if 0
@@ -925,9 +925,9 @@ bool match_checkcompoundpattern(char_u *ptr, int wlen, garray_T *gap)
   return false;
 }
 
-// Returns true if "flags" is a valid sequence of compound flags and "word"
-// does not have too many syllables.
-bool can_compound(slang_T *slang, const char_u *word, const char_u *flags)
+/// @return  true if "flags" is a valid sequence of compound flags and "word"
+///          does not have too many syllables.
+bool can_compound(slang_T *slang, const char *word, const uint8_t *flags)
   FUNC_ATTR_NONNULL_ALL
 {
   char_u uflags[MAXWLEN * 2] = { 0 };
@@ -950,8 +950,8 @@ bool can_compound(slang_T *slang, const char_u *word, const char_u *flags)
   // are too many syllables AND the number of compound words is above
   // COMPOUNDWORDMAX then compounding is not allowed.
   if (slang->sl_compsylmax < MAXWLEN
-      && count_syllables(slang, word) > slang->sl_compsylmax) {
-    return (int)STRLEN(flags) < slang->sl_compmax;
+      && count_syllables(slang, (char_u *)word) > slang->sl_compsylmax) {
+    return (int)strlen((char *)flags) < slang->sl_compmax;
   }
   return true;
 }
@@ -1067,7 +1067,7 @@ static void find_prefix(matchinf_T *mip, int mode)
   }
   // We use the case-folded word here, since prefixes are always
   // case-folded.
-  char_u *ptr = mip->mi_fword;
+  char_u *ptr = (char_u *)mip->mi_fword;
   int flen = mip->mi_fwordlen;      // available case-folded bytes
   if (mode == FIND_COMPOUND) {
     // Skip over the previously found word(s).
@@ -1110,7 +1110,7 @@ static void find_prefix(matchinf_T *mip, int mode)
       }
 
       // Case-folded length may differ from original length.
-      mip->mi_cprefixlen = nofold_len(mip->mi_fword, mip->mi_prefixlen,
+      mip->mi_cprefixlen = nofold_len((char_u *)mip->mi_fword, mip->mi_prefixlen,
                                       mip->mi_word);
       find_word(mip, FIND_PREFIX);
 
@@ -1168,9 +1168,9 @@ static int fold_more(matchinf_T *mip)
   }
 
   (void)spell_casefold(mip->mi_win, p, (int)(mip->mi_fend - p),
-                       mip->mi_fword + mip->mi_fwordlen,
+                       (char_u *)mip->mi_fword + mip->mi_fwordlen,
                        MAXWLEN - mip->mi_fwordlen);
-  int flen = (int)STRLEN(mip->mi_fword + mip->mi_fwordlen);
+  int flen = (int)strlen(mip->mi_fword + mip->mi_fwordlen);
   mip->mi_fwordlen += flen;
   return flen;
 }
@@ -2600,7 +2600,7 @@ void ex_spellrepall(exarg_T *eap)
     char *line = get_cursor_line_ptr();
     if (addlen <= 0 || STRNCMP(line + curwin->w_cursor.col,
                                repl_to, strlen(repl_to)) != 0) {
-      char_u *p = xmalloc(STRLEN(line) + (size_t)addlen + 1);
+      char_u *p = xmalloc(strlen(line) + (size_t)addlen + 1);
       memmove(p, line, (size_t)curwin->w_cursor.col);
       STRCPY(p + curwin->w_cursor.col, repl_to);
       STRCAT(p, line + curwin->w_cursor.col + strlen(repl_from));
@@ -2721,7 +2721,7 @@ char *eval_soundfold(const char *const word)
       if (!GA_EMPTY(&lp->lp_slang->sl_sal)) {
         // soundfold the word
         char_u sound[MAXWLEN];
-        spell_soundfold(lp->lp_slang, (char_u *)word, false, sound);
+        spell_soundfold(lp->lp_slang, (char *)word, false, (char *)sound);
         return xstrdup((const char *)sound);
       }
     }
@@ -2746,23 +2746,23 @@ char *eval_soundfold(const char *const word)
 /// @param[in]  inword  word to soundfold
 /// @param[in]  folded  whether inword is already case-folded
 /// @param[in,out]  res  destination for soundfolded word
-void spell_soundfold(slang_T *slang, char_u *inword, bool folded, char_u *res)
+void spell_soundfold(slang_T *slang, char *inword, bool folded, char *res)
 {
   if (slang->sl_sofo) {
     // SOFOFROM and SOFOTO used
-    spell_soundfold_sofo(slang, inword, res);
+    spell_soundfold_sofo(slang, (char_u *)inword, (char_u *)res);
   } else {
-    char_u fword[MAXWLEN];
-    char_u *word;
+    char fword[MAXWLEN];
+    char *word;
     // SAL items used.  Requires the word to be case-folded.
     if (folded) {
       word = inword;
     } else {
-      (void)spell_casefold(curwin, inword, (int)STRLEN(inword), fword, MAXWLEN);
+      (void)spell_casefold(curwin, (char_u *)inword, (int)strlen(inword), (char_u *)fword, MAXWLEN);
       word = fword;
     }
 
-    spell_soundfold_wsal(slang, word, res);
+    spell_soundfold_wsal(slang, (char_u *)word, (char_u *)res);
   }
 }
 
@@ -3208,7 +3208,7 @@ void spell_dump_compl(char *pat, int ic, Direction *dir, int dumpflags_arg)
       if (n == WF_ONECAP) {
         dumpflags |= DUMPFLAG_ONECAP;
       } else if (n == WF_ALLCAP
-                 && (int)STRLEN(pat) > utfc_ptr2len(pat)) {
+                 && (int)strlen(pat) > utfc_ptr2len(pat)) {
         dumpflags |= DUMPFLAG_ALLCAP;
       }
     }
@@ -3311,8 +3311,7 @@ void spell_dump_compl(char *pat, int ic, Direction *dir, int dumpflags_arg)
               // when it's the first one.
               c = (int)((unsigned)flags >> 24);
               if (c == 0 || curi[depth] == 2) {
-                dump_word(slang, (char_u *)word, (char_u *)pat, dir,
-                          dumpflags, flags, lnum);
+                dump_word(slang, word, pat, dir, dumpflags, flags, lnum);
                 if (pat == NULL) {
                   lnum++;
                 }
@@ -3348,15 +3347,15 @@ void spell_dump_compl(char *pat, int ic, Direction *dir, int dumpflags_arg)
   }
 }
 
-// Dumps one word: apply case modifications and append a line to the buffer.
-// When "lnum" is zero add insert mode completion.
-static void dump_word(slang_T *slang, char_u *word, char_u *pat, Direction *dir, int dumpflags,
+/// Dumps one word: apply case modifications and append a line to the buffer.
+/// When "lnum" is zero add insert mode completion.
+static void dump_word(slang_T *slang, char *word, char *pat, Direction *dir, int dumpflags,
                       int wordflags, linenr_T lnum)
 {
   bool keepcap = false;
-  char_u *p;
-  char_u cword[MAXWLEN];
-  char_u badword[MAXWLEN + 10];
+  char *p;
+  char cword[MAXWLEN];
+  char badword[MAXWLEN + 10];
   int flags = wordflags;
 
   if (dumpflags & DUMPFLAG_ONECAP) {
@@ -3368,17 +3367,17 @@ static void dump_word(slang_T *slang, char_u *word, char_u *pat, Direction *dir,
 
   if ((dumpflags & DUMPFLAG_KEEPCASE) == 0 && (flags & WF_CAPMASK) != 0) {
     // Need to fix case according to "flags".
-    make_case_word(word, cword, flags);
+    make_case_word((char_u *)word, (char_u *)cword, flags);
     p = cword;
   } else {
     p = word;
     if ((dumpflags & DUMPFLAG_KEEPCASE)
-        && ((captype(word, NULL) & WF_KEEPCAP) == 0
+        && ((captype((char_u *)word, NULL) & WF_KEEPCAP) == 0
             || (flags & WF_FIXCAP) != 0)) {
       keepcap = true;
     }
   }
-  char_u *tw = p;
+  char *tw = p;
 
   if (pat == NULL) {
     // Add flags and regions after a slash.
@@ -3396,8 +3395,8 @@ static void dump_word(slang_T *slang, char_u *word, char_u *pat, Direction *dir,
       if (flags & WF_REGION) {
         for (int i = 0; i < 7; i++) {
           if (flags & (0x10000 << i)) {
-            const size_t badword_len = STRLEN(badword);
-            snprintf((char *)badword + badword_len,
+            const size_t badword_len = strlen(badword);
+            snprintf(badword + badword_len,
                      sizeof(badword) - badword_len,
                      "%d", i + 1);
           }
@@ -3410,19 +3409,19 @@ static void dump_word(slang_T *slang, char_u *word, char_u *pat, Direction *dir,
       hashitem_T *hi;
 
       // Include the word count for ":spelldump!".
-      hi = hash_find(&slang->sl_wordcount, (char *)tw);
+      hi = hash_find(&slang->sl_wordcount, tw);
       if (!HASHITEM_EMPTY(hi)) {
         vim_snprintf((char *)IObuff, IOSIZE, "%s\t%d",
                      tw, HI2WC(hi)->wc_count);
-        p = (char_u *)IObuff;
+        p = IObuff;
       }
     }
 
-    ml_append(lnum, (char *)p, (colnr_T)0, false);
+    ml_append(lnum, p, (colnr_T)0, false);
   } else if (((dumpflags & DUMPFLAG_ICASE)
-              ? mb_strnicmp((char *)p, (char *)pat, STRLEN(pat)) == 0
-              : STRNCMP(p, pat, STRLEN(pat)) == 0)
-             && ins_compl_add_infercase(p, (int)STRLEN(p),
+              ? mb_strnicmp(p, pat, strlen(pat)) == 0
+              : STRNCMP(p, pat, strlen(pat)) == 0)
+             && ins_compl_add_infercase((char_u *)p, (int)strlen(p),
                                         p_ic, NULL, *dir, false) == OK) {
     // if dir was BACKWARD then honor it just once
     *dir = FORWARD;
@@ -3488,7 +3487,7 @@ static linenr_T dump_prefixes(slang_T *slang, char_u *word, char_u *pat, Directi
           c = valid_word_prefix(i, n, flags, word, slang, false);
           if (c != 0) {
             STRLCPY(prefix + depth, word, MAXWLEN - depth);
-            dump_word(slang, prefix, pat, dir, dumpflags,
+            dump_word(slang, (char *)prefix, (char *)pat, dir, dumpflags,
                       (c & WF_RAREPFX) ? (flags | WF_RARE) : flags, lnum);
             if (lnum != 0) {
               lnum++;
@@ -3503,7 +3502,7 @@ static linenr_T dump_prefixes(slang_T *slang, char_u *word, char_u *pat, Directi
                                   true);
             if (c != 0) {
               STRLCPY(prefix + depth, word_up, MAXWLEN - depth);
-              dump_word(slang, prefix, pat, dir, dumpflags,
+              dump_word(slang, (char *)prefix, (char *)pat, dir, dumpflags,
                         (c & WF_RAREPFX) ? (flags | WF_RARE) : flags, lnum);
               if (lnum != 0) {
                 lnum++;

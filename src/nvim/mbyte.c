@@ -1987,7 +1987,7 @@ void mb_check_adjust_col(void *win_)
   // Column 0 is always valid.
   if (oldcol != 0) {
     char *p = ml_get_buf(win->w_buffer, win->w_cursor.lnum, false);
-    colnr_T len = (colnr_T)STRLEN(p);
+    colnr_T len = (colnr_T)strlen(p);
 
     // Empty line or invalid column?
     if (len == 0 || oldcol < 0) {
@@ -2127,7 +2127,7 @@ char *enc_canonize(char *enc)
   }
 
   // copy "enc" to allocated memory, with room for two '-'
-  char *r = xmalloc(STRLEN(enc) + 3);
+  char *r = xmalloc(strlen(enc) + 3);
   // Make it all lower case and replace '_' with '-'.
   p = r;
   for (s = enc; *s != NUL; s++) {
@@ -2492,7 +2492,7 @@ char_u *string_convert_ext(const vimconv_T *const vcp, char_u *ptr, size_t *lenp
 
   size_t len;
   if (lenp == NULL) {
-    len = STRLEN(ptr);
+    len = strlen((char *)ptr);
   } else {
     len = *lenp;
   }

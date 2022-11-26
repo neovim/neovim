@@ -407,11 +407,11 @@ void eval_init(void)
 
     // add to v: scope dict, unless the value is not always available
     if (p->vv_type != VAR_UNKNOWN) {
-      hash_add(&vimvarht, p->vv_di.di_key);
+      hash_add(&vimvarht, (char *)p->vv_di.di_key);
     }
     if (p->vv_flags & VV_COMPAT) {
       // add to compat scope dict
-      hash_add(&compat_hashtab, p->vv_di.di_key);
+      hash_add(&compat_hashtab, (char *)p->vv_di.di_key);
     }
   }
   vimvars[VV_VERSION].vv_nr = VIM_VERSION_100;
@@ -1012,7 +1012,7 @@ void prepare_vimvar(int idx, typval_T *save_tv)
 {
   *save_tv = vimvars[idx].vv_tv;
   if (vimvars[idx].vv_type == VAR_UNKNOWN) {
-    hash_add(&vimvarht, vimvars[idx].vv_di.di_key);
+    hash_add(&vimvarht, (char *)vimvars[idx].vv_di.di_key);
   }
 }
 
@@ -2143,9 +2143,9 @@ char *get_user_var_name(expand_T *xp, int idx)
       hi++;
     }
     if (STRNCMP("g:", xp->xp_pattern, 2) == 0) {
-      return cat_prefix_varname('g', (char *)hi->hi_key);
+      return cat_prefix_varname('g', hi->hi_key);
     }
-    return (char *)hi->hi_key;
+    return hi->hi_key;
   }
 
   // b: variables
@@ -2159,7 +2159,7 @@ char *get_user_var_name(expand_T *xp, int idx)
     while (HASHITEM_EMPTY(hi)) {
       hi++;
     }
-    return cat_prefix_varname('b', (char *)hi->hi_key);
+    return cat_prefix_varname('b', hi->hi_key);
   }
 
   // w: variables
@@ -2173,7 +2173,7 @@ char *get_user_var_name(expand_T *xp, int idx)
     while (HASHITEM_EMPTY(hi)) {
       hi++;
     }
-    return cat_prefix_varname('w', (char *)hi->hi_key);
+    return cat_prefix_varname('w', hi->hi_key);
   }
 
   // t: variables
@@ -2187,7 +2187,7 @@ char *get_user_var_name(expand_T *xp, int idx)
     while (HASHITEM_EMPTY(hi)) {
       hi++;
     }
-    return cat_prefix_varname('t', (char *)hi->hi_key);
+    return cat_prefix_varname('t', hi->hi_key);
   }
 
   // v: variables
@@ -7947,7 +7947,7 @@ const void *var_shada_iter(const void *const iter, const char **const name, typv
     hi = globvarht.ht_array;
     while ((size_t)(hi - hifirst) < hinum
            && (HASHITEM_EMPTY(hi)
-               || !(var_flavour((char *)hi->hi_key) & flavour))) {
+               || !(var_flavour(hi->hi_key) & flavour))) {
       hi++;
     }
     if ((size_t)(hi - hifirst) == hinum) {
@@ -7959,7 +7959,7 @@ const void *var_shada_iter(const void *const iter, const char **const name, typv
   *name = (char *)TV_DICT_HI2DI(hi)->di_key;
   tv_copy(&TV_DICT_HI2DI(hi)->di_tv, rettv);
   while ((size_t)(++hi - hifirst) < hinum) {
-    if (!HASHITEM_EMPTY(hi) && (var_flavour((char *)hi->hi_key) & flavour)) {
+    if (!HASHITEM_EMPTY(hi) && (var_flavour(hi->hi_key) & flavour)) {
       return hi;
     }
   }
@@ -8352,7 +8352,7 @@ repeat:
     if (c != NUL) {
       (*fnamep)[*fnamelen] = NUL;
     }
-    p = (char *)vim_strsave_shellescape((char_u *)(*fnamep), false, false);
+    p = vim_strsave_shellescape(*fnamep, false, false);
     if (c != NUL) {
       (*fnamep)[*fnamelen] = (char)c;
     }

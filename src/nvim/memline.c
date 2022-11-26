@@ -187,7 +187,7 @@ struct block0 {
   char_u b0_pid[4];             // process id of creator (or 0)
   char_u b0_uname[B0_UNAME_SIZE];        // name of user (uid if no name)
   char_u b0_hname[B0_HNAME_SIZE];        // host name (if it has a name)
-  char_u b0_fname[B0_FNAME_SIZE_ORG];        // name of file being edited
+  char b0_fname[B0_FNAME_SIZE_ORG];      // name of file being edited
   long b0_magic_long;           // check for byte order of long
   int b0_magic_int;             // check for byte order of int
   int16_t b0_magic_short;       // check for byte order of short
@@ -302,7 +302,7 @@ int ml_open(buf_T *buf)
 
   if (!buf->b_spell) {
     b0p->b0_dirty = buf->b_changed ? B0_DIRTY : 0;
-    b0p->b0_flags = (uint8_t)(get_fileformat(buf) + 1);
+    b0p->b0_flags = (char)(get_fileformat(buf) + 1);
     set_b0_fname(b0p, buf);
     (void)os_get_username((char *)b0p->b0_uname, B0_UNAME_SIZE);
     b0p->b0_uname[B0_UNAME_SIZE - 1] = NUL;
@@ -639,7 +639,7 @@ static void set_b0_fname(ZERO_BL *b0p, buf_T *buf)
       // If there is no user name or it is too long, don't use "~/"
       int retval = os_get_username(uname, B0_UNAME_SIZE);
       size_t ulen = strlen(uname);
-      size_t flen = STRLEN(b0p->b0_fname);
+      size_t flen = strlen(b0p->b0_fname);
       if (retval == FAIL || ulen + flen > B0_FNAME_SIZE_CRYPT - 1) {
         STRLCPY(b0p->b0_fname, buf->b_ffname, B0_FNAME_SIZE_CRYPT);
       } else {
@@ -679,7 +679,7 @@ static void set_b0_dir_flag(ZERO_BL *b0p, buf_T *buf)
   if (same_directory((char_u *)buf->b_ml.ml_mfp->mf_fname, (char_u *)buf->b_ffname)) {
     b0p->b0_flags |= B0_SAME_DIR;
   } else {
-    b0p->b0_flags &= (uint8_t) ~B0_SAME_DIR;
+    b0p->b0_flags = (char)(b0p->b0_flags & ~B0_SAME_DIR);
   }
 }
 
@@ -689,8 +689,8 @@ static void add_b0_fenc(ZERO_BL *b0p, buf_T *buf)
   const int size = B0_FNAME_SIZE_NOCRYPT;
 
   int n = (int)strlen(buf->b_p_fenc);
-  if ((int)STRLEN(b0p->b0_fname) + n + 1 > size) {
-    b0p->b0_flags &= (uint8_t) ~B0_HAS_FENC;
+  if ((int)strlen(b0p->b0_fname) + n + 1 > size) {
+    b0p->b0_flags = (char)(b0p->b0_flags & ~B0_HAS_FENC);
   } else {
     memmove((char *)b0p->b0_fname + size - n,
             buf->b_p_fenc, (size_t)n);
@@ -923,8 +923,8 @@ void ml_recover(bool checkext)
   if (b0p->b0_flags & B0_HAS_FENC) {
     int fnsize = B0_FNAME_SIZE_NOCRYPT;
 
-    for (p = (char *)b0p->b0_fname + fnsize; (char_u *)p > b0p->b0_fname && p[-1] != NUL; p--) {}
-    b0_fenc = xstrnsave(p, (size_t)(b0p->b0_fname + fnsize - (char_u *)p));
+    for (p = (char *)b0p->b0_fname + fnsize; p > b0p->b0_fname && p[-1] != NUL; p--) {}
+    b0_fenc = xstrnsave(p, (size_t)(b0p->b0_fname + fnsize - p));
   }
 
   mf_put(mfp, hp, false, false);        // release block 0
@@ -1603,7 +1603,7 @@ static int recov_file_names(char **names, char *path, int prepend_dot)
   names[num_names] = concat_fnames(path, ".sw?", false);
   if (num_names >= 1) {     // check if we have the same name twice
     char *p = names[num_names - 1];
-    int i = (int)STRLEN(names[num_names - 1]) - (int)STRLEN(names[num_names]);
+    int i = (int)strlen(names[num_names - 1]) - (int)strlen(names[num_names]);
     if (i > 0) {
       p += i;               // file name has been expanded to full path
     }
@@ -1822,16 +1822,16 @@ errorret:
     DATA_BL *dp = hp->bh_data;
 
     char *ptr = (char *)dp + (dp->db_index[lnum - buf->b_ml.ml_locked_low] & DB_INDEX_MASK);
-    buf->b_ml.ml_line_ptr = (char_u *)ptr;
+    buf->b_ml.ml_line_ptr = ptr;
     buf->b_ml.ml_line_lnum = lnum;
     buf->b_ml.ml_flags &= ~ML_LINE_DIRTY;
   }
   if (will_change) {
     buf->b_ml.ml_flags |= (ML_LOCKED_DIRTY | ML_LOCKED_POS);
-    ml_add_deleted_len_buf(buf, (char *)buf->b_ml.ml_line_ptr, -1);
+    ml_add_deleted_len_buf(buf, buf->b_ml.ml_line_ptr, -1);
   }
 
-  return (char *)buf->b_ml.ml_line_ptr;
+  return buf->b_ml.ml_line_ptr;
 }
 
 /// Check if a line that was just obtained by a call to ml_get
@@ -1866,7 +1866,7 @@ int ml_append(linenr_T lnum, char *line, colnr_T len, bool newfile)
   if (curbuf->b_ml.ml_line_lnum != 0) {
     ml_flush_line(curbuf);
   }
-  return ml_append_int(curbuf, lnum, (char_u *)line, len, newfile, false);
+  return ml_append_int(curbuf, lnum, line, len, newfile, false);
 }
 
 /// Like ml_append() but for an arbitrary buffer.  The buffer must already have
@@ -1886,7 +1886,7 @@ int ml_append_buf(buf_T *buf, linenr_T lnum, char_u *line, colnr_T len, bool new
   if (buf->b_ml.ml_line_lnum != 0) {
     ml_flush_line(buf);
   }
-  return ml_append_int(buf, lnum, line, len, newfile, false);
+  return ml_append_int(buf, lnum, (char *)line, len, newfile, false);
 }
 
 /// @param lnum  append after this line (can be 0)
@@ -1894,8 +1894,7 @@ int ml_append_buf(buf_T *buf, linenr_T lnum, char_u *line, colnr_T len, bool new
 /// @param len  length of line, including NUL, or 0
 /// @param newfile  flag, see above
 /// @param mark  mark the new line
-static int ml_append_int(buf_T *buf, linenr_T lnum, char_u *line, colnr_T len, bool newfile,
-                         int mark)
+static int ml_append_int(buf_T *buf, linenr_T lnum, char *line, colnr_T len, bool newfile, int mark)
 {
   // lnum out of range
   if (lnum > buf->b_ml.ml_line_count || buf->b_ml.ml_mfp == NULL) {
@@ -1907,7 +1906,7 @@ static int ml_append_int(buf_T *buf, linenr_T lnum, char_u *line, colnr_T len, b
   }
 
   if (len == 0) {
-    len = (colnr_T)STRLEN(line) + 1;            // space needed for the text
+    len = (colnr_T)strlen(line) + 1;            // space needed for the text
   }
   int space_needed = len + (int)INDEX_SIZE;     // space needed for text + index
 
@@ -2312,7 +2311,7 @@ void ml_add_deleted_len_buf(buf_T *buf, char *ptr, ssize_t len)
   if (inhibit_delete_count) {
     return;
   }
-  ssize_t maxlen = (ssize_t)STRLEN(ptr);
+  ssize_t maxlen = (ssize_t)strlen(ptr);
   if (len == -1 || len > maxlen) {
     len = maxlen;
   }
@@ -2362,7 +2361,7 @@ int ml_replace_buf(buf_T *buf, linenr_T lnum, char *line, bool copy)
   if (buf->b_ml.ml_line_lnum != lnum) {  // other line buffered
     ml_flush_line(buf);  // flush it
   } else if (buf->b_ml.ml_flags & ML_LINE_DIRTY) {  // same line allocated
-    ml_add_deleted_len_buf(buf, (char *)buf->b_ml.ml_line_ptr, -1);
+    ml_add_deleted_len_buf(buf, buf->b_ml.ml_line_ptr, -1);
     readlen = false;  // already added the length
 
     xfree(buf->b_ml.ml_line_ptr);  // free it
@@ -2372,7 +2371,7 @@ int ml_replace_buf(buf_T *buf, linenr_T lnum, char *line, bool copy)
     ml_add_deleted_len_buf(buf, ml_get_buf(buf, lnum, false), -1);
   }
 
-  buf->b_ml.ml_line_ptr = (char_u *)line;
+  buf->b_ml.ml_line_ptr = line;
   buf->b_ml.ml_line_lnum = lnum;
   buf->b_ml.ml_flags = (buf->b_ml.ml_flags | ML_LINE_DIRTY) & ~ML_EMPTY;
 
@@ -2634,7 +2633,7 @@ static void ml_flush_line(buf_T *buf)
     buf->flush_count++;
 
     linenr_T lnum = buf->b_ml.ml_line_lnum;
-    char_u *new_line = buf->b_ml.ml_line_ptr;
+    char *new_line = buf->b_ml.ml_line_ptr;
 
     bhdr_T *hp = ml_find_line(buf, lnum, ML_FIND);
     if (hp == NULL) {
@@ -2650,7 +2649,7 @@ static void ml_flush_line(buf_T *buf)
       } else {  // text of previous line follows
         old_len = (int)(dp->db_index[idx - 1] & DB_INDEX_MASK) - start;
       }
-      colnr_T new_len = (colnr_T)STRLEN(new_line) + 1;
+      colnr_T new_len = (colnr_T)strlen(new_line) + 1;
       int extra = new_len - old_len;            // negative if lines gets smaller
 
       // if new line fits in data block, replace directly
@@ -3021,41 +3020,41 @@ int resolve_symlink(const char *fname, char *buf)
 /// Make swap file name out of the file name and a directory name.
 ///
 /// @return  pointer to allocated memory or NULL.
-char_u *makeswapname(char_u *fname, char_u *ffname, buf_T *buf, char_u *dir_name)
+char *makeswapname(char *fname, char *ffname, buf_T *buf, char *dir_name)
 {
-  char_u *fname_res = fname;
+  char *fname_res = fname;
 #ifdef HAVE_READLINK
-  char_u fname_buf[MAXPATHL];
+  char fname_buf[MAXPATHL];
 
   // Expand symlink in the file name, so that we put the swap file with the
   // actual file instead of with the symlink.
-  if (resolve_symlink((char *)fname, (char *)fname_buf) == OK) {
+  if (resolve_symlink(fname, (char *)fname_buf) == OK) {
     fname_res = fname_buf;
   }
 #endif
-  int len = (int)STRLEN(dir_name);
+  int len = (int)strlen(dir_name);
 
-  char_u *s = dir_name + len;
-  if (after_pathsep((char *)dir_name, (char *)s)
+  char *s = dir_name + len;
+  if (after_pathsep(dir_name, s)
       && len > 1
       && s[-1] == s[-2]) {  // Ends with '//', Use Full path
-    char_u *r = NULL;
-    s = (char_u *)make_percent_swname((char *)dir_name, (char *)fname_res);
+    char *r = NULL;
+    s = make_percent_swname(dir_name, fname_res);
     if (s != NULL) {
-      r = (char_u *)modname((char *)s, ".swp", false);
+      r = modname(s, ".swp", false);
       xfree(s);
     }
     return r;
   }
 
   // Prepend a '.' to the swap file name for the current directory.
-  char_u *r = (char_u *)modname((char *)fname_res, ".swp",
+  char_u *r = (char_u *)modname(fname_res, ".swp",
                                 dir_name[0] == '.' && dir_name[1] == NUL);
   if (r == NULL) {          // out of memory
     return NULL;
   }
 
-  s = (char_u *)get_file_in_dir((char *)r, (char *)dir_name);
+  s = get_file_in_dir((char *)r, dir_name);
   xfree(r);
   return s;
 }
@@ -3221,8 +3220,7 @@ static char *findswapname(buf_T *buf, char **dirp, char *old_fname, bool *found_
   (void)copy_option_part(dirp, dir_name, dir_len, ",");
 
   // we try different names until we find one that does not exist yet
-  char *fname = (char *)makeswapname((char_u *)buf_fname, (char_u *)buf->b_ffname, buf,
-                                     (char_u *)dir_name);
+  char *fname = makeswapname(buf_fname, buf->b_ffname, buf, dir_name);
 
   for (;;) {
     if (fname == NULL) {        // must be out of memory
@@ -3576,7 +3574,7 @@ void ml_setflags(buf_T *buf)
     if (hp->bh_bnum == 0) {
       b0p = hp->bh_data;
       b0p->b0_dirty = buf->b_changed ? B0_DIRTY : 0;
-      b0p->b0_flags = (uint8_t)((b0p->b0_flags & ~B0_FF_MASK) | (uint8_t)(get_fileformat(buf) + 1));
+      b0p->b0_flags = (char)((b0p->b0_flags & ~B0_FF_MASK) | (uint8_t)(get_fileformat(buf) + 1));
       add_b0_fenc(b0p, buf);
       hp->bh_flags |= BH_DIRTY;
       mf_sync(buf->b_ml.ml_mfp, MFS_ZERO);
@@ -3628,7 +3626,7 @@ static void ml_updatechunk(buf_T *buf, linenr_T line, long len, int updtype)
     buf->b_ml.ml_usedchunks = 1;
     buf->b_ml.ml_chunksize[0].mlcs_numlines = 1;
     buf->b_ml.ml_chunksize[0].mlcs_totalsize =
-      (long)STRLEN(buf->b_ml.ml_line_ptr) + 1;
+      (long)strlen(buf->b_ml.ml_line_ptr) + 1;
     return;
   }
 

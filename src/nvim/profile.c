@@ -444,7 +444,7 @@ static void prof_sort_list(FILE *fd, ufunc_T **sorttab, int st_len, char *title,
     fp = sorttab[i];
     prof_func_line(fd, fp->uf_tm_count, &fp->uf_tm_total, &fp->uf_tm_self,
                    prefer_self);
-    if (fp->uf_name[0] == K_SPECIAL) {
+    if ((uint8_t)fp->uf_name[0] == K_SPECIAL) {
       fprintf(fd, " <SNR>%s()\n", fp->uf_name + 3);
     } else {
       fprintf(fd, " %s()\n", fp->uf_name);
@@ -615,7 +615,7 @@ static void func_dump_profile(FILE *fd)
       if (fp->uf_prof_initialized) {
         sorttab[st_len++] = fp;
 
-        if (fp->uf_name[0] == K_SPECIAL) {
+        if ((uint8_t)fp->uf_name[0] == K_SPECIAL) {
           fprintf(fd, "FUNCTION  <SNR>%s()\n", fp->uf_name + 3);
         } else {
           fprintf(fd, "FUNCTION  %s()\n", fp->uf_name);

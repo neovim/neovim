@@ -137,15 +137,16 @@ char *vim_strnsave_unquoted(const char *const string, const size_t length)
   return ret;
 }
 
-// Escape "string" for use as a shell argument with system().
-// This uses single quotes, except when we know we need to use double quotes
-// (MS-Windows without 'shellslash' set).
-// Escape a newline, depending on the 'shell' option.
-// When "do_special" is true also replace "!", "%", "#" and things starting
-// with "<" like "<cfile>".
-// When "do_newline" is false do not escape newline unless it is csh shell.
-// Returns the result in allocated memory.
-char_u *vim_strsave_shellescape(const char_u *string, bool do_special, bool do_newline)
+/// Escape "string" for use as a shell argument with system().
+/// This uses single quotes, except when we know we need to use double quotes
+/// (MS-Windows without 'shellslash' set).
+/// Escape a newline, depending on the 'shell' option.
+/// When "do_special" is true also replace "!", "%", "#" and things starting
+/// with "<" like "<cfile>".
+/// When "do_newline" is false do not escape newline unless it is csh shell.
+///
+/// @return  the result in allocated memory.
+char *vim_strsave_shellescape(const char *string, bool do_special, bool do_newline)
   FUNC_ATTR_NONNULL_RET FUNC_ATTR_MALLOC FUNC_ATTR_NONNULL_ALL
 {
   char *d;
@@ -165,8 +166,8 @@ char_u *vim_strsave_shellescape(const char_u *string, bool do_special, bool do_n
   fish_like = fish_like_shell();
 
   // First count the number of extra bytes required.
-  size_t length = STRLEN(string) + 3;       // two quotes and a trailing NUL
-  for (const char_u *p = string; *p != NUL; MB_PTR_ADV(p)) {
+  size_t length = strlen(string) + 3;       // two quotes and a trailing NUL
+  for (const char_u *p = (char_u *)string; *p != NUL; MB_PTR_ADV(p)) {
 #ifdef MSWIN
     if (!p_ssl) {
       if (*p == '"') {
@@ -258,7 +259,7 @@ char_u *vim_strsave_shellescape(const char_u *string, bool do_special, bool do_n
   *d++ = '\'';
   *d = NUL;
 
-  return escaped_string;
+  return (char *)escaped_string;
 }
 
 // Like vim_strsave(), but make all characters uppercase.
@@ -338,12 +339,12 @@ char *strcase_save(const char *const orig, bool upper)
 }
 
 // delete spaces at the end of a string
-void del_trailing_spaces(char_u *ptr)
+void del_trailing_spaces(char *ptr)
   FUNC_ATTR_NONNULL_ALL
 {
-  char_u *q;
+  char *q;
 
-  q = ptr + STRLEN(ptr);
+  q = ptr + strlen(ptr);
   while (--q > ptr && ascii_iswhite(q[0]) && q[-1] != '\\' && q[-1] != Ctrl_V) {
     *q = NUL;
   }

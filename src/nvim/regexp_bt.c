@@ -2928,9 +2928,9 @@ static regprog_T *bt_regcomp(char_u *expr, int re_flags)
       longest = NULL;
       len = 0;
       for (; scan != NULL; scan = regnext(scan)) {
-        if (OP(scan) == EXACTLY && STRLEN(OPERAND(scan)) >= (size_t)len) {
+        if (OP(scan) == EXACTLY && strlen((char *)OPERAND(scan)) >= (size_t)len) {
           longest = OPERAND(scan);
-          len = (int)STRLEN(OPERAND(scan));
+          len = (int)strlen((char *)OPERAND(scan));
         }
       }
       r->regmust = longest;
@@ -3658,7 +3658,7 @@ static bool regmatch(char_u *scan, proftime_T *tm, int *timed_out)
             pos = &fm->mark;
             const colnr_T pos_col = pos->lnum == rex.lnum + rex.reg_firstlnum
                                     && pos->col == MAXCOL
-              ? (colnr_T)STRLEN(reg_getline(pos->lnum - rex.reg_firstlnum))
+              ? (colnr_T)strlen((char *)reg_getline(pos->lnum - rex.reg_firstlnum))
               : pos->col;
 
             if (pos->lnum == rex.lnum + rex.reg_firstlnum
@@ -3976,7 +3976,7 @@ static bool regmatch(char_u *scan, proftime_T *tm, int *timed_out)
               len = 1;  // matched a single byte above
             } else {
               // Need to match first byte again for multi-byte.
-              len = (int)STRLEN(opnd);
+              len = (int)strlen((char *)opnd);
               if (cstrncmp((char *)opnd, (char *)rex.input, &len) != 0) {
                 status = RA_NOMATCH;
               }
@@ -4257,7 +4257,7 @@ static bool regmatch(char_u *scan, proftime_T *tm, int *timed_out)
           no = op - ZREF;
           if (re_extmatch_in != NULL
               && re_extmatch_in->matches[no] != NULL) {
-            int len = (int)STRLEN(re_extmatch_in->matches[no]);
+            int len = (int)strlen((char *)re_extmatch_in->matches[no]);
             if (cstrncmp((char *)re_extmatch_in->matches[no], (char *)rex.input, &len) != 0) {
               status = RA_NOMATCH;
             } else {
@@ -4683,7 +4683,7 @@ static bool regmatch(char_u *scan, proftime_T *tm, int *timed_out)
             if (limit > 0
                 && ((rp->rs_un.regsave.rs_u.pos.lnum
                      < behind_pos.rs_u.pos.lnum
-                     ? (colnr_T)STRLEN(rex.line)
+                     ? (colnr_T)strlen((char *)rex.line)
                      : behind_pos.rs_u.pos.col)
                     - rp->rs_un.regsave.rs_u.pos.col >= limit)) {
               no = FAIL;
@@ -4696,7 +4696,7 @@ static bool regmatch(char_u *scan, proftime_T *tm, int *timed_out)
               } else {
                 reg_restore(&rp->rs_un.regsave, &backpos);
                 rp->rs_un.regsave.rs_u.pos.col =
-                  (colnr_T)STRLEN(rex.line);
+                  (colnr_T)strlen((char *)rex.line);
               }
             } else {
               const char_u *const line =
@@ -4787,7 +4787,7 @@ static bool regmatch(char_u *scan, proftime_T *tm, int *timed_out)
                 if (rex.line == NULL) {
                   break;
                 }
-                rex.input = rex.line + STRLEN(rex.line);
+                rex.input = rex.line + strlen((char *)rex.line);
                 fast_breakcheck();
               } else {
                 MB_PTR_BACK(rex.line, rex.input);

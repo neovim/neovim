@@ -1215,8 +1215,7 @@ void ex_diffpatch(exarg_T *eap)
 #ifdef UNIX
   // Get the absolute path of the patchfile, changing directory below.
   fullname = FullName_save(eap->arg, false);
-  esc_name =
-    (char *)vim_strsave_shellescape((char_u *)(fullname != NULL ? fullname : eap->arg), true, true);
+  esc_name = vim_strsave_shellescape(fullname != NULL ? fullname : eap->arg, true, true);
 #else
   esc_name = (char *)vim_strsave_shellescape(eap->arg, true, true);
 #endif

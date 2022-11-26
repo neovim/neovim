@@ -263,12 +263,12 @@ static inline void ctx_save_funcs(Context *ctx, bool scriptonly)
   Error err = ERROR_INIT;
 
   HASHTAB_ITER(func_tbl_get(), hi, {
-    const char_u *const name = hi->hi_key;
+    const char *const name = hi->hi_key;
     bool islambda = (STRNCMP(name, "<lambda>", 8) == 0);
-    bool isscript = (name[0] == K_SPECIAL);
+    bool isscript = ((uint8_t)name[0] == K_SPECIAL);
 
     if (!islambda && (!scriptonly || isscript)) {
-      size_t cmd_len = sizeof("func! ") + STRLEN(name);
+      size_t cmd_len = sizeof("func! ") + strlen(name);
       char *cmd = xmalloc(cmd_len);
       snprintf(cmd, cmd_len, "func! %s", name);
       String func_body = nvim_exec(VIML_INTERNAL_CALL, cstr_as_string(cmd),

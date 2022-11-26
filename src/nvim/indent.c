@@ -561,7 +561,7 @@ int set_indent(int size, int flags)
   } else {
     p = skipwhite(p);
   }
-  line_len = (int)STRLEN(p) + 1;
+  line_len = (int)strlen(p) + 1;
 
   // If 'preserveindent' and 'expandtab' are both set keep the original
   // characters and allocate accordingly.  We will fill the rest with spaces

@@ -877,7 +877,7 @@ int del_bytes(colnr_T count, bool fixpos_arg, bool use_delcombine)
   bool was_alloced = ml_line_alloced();     // check if oldp was allocated
   char *newp;
   if (was_alloced) {
-    ml_add_deleted_len((char *)curbuf->b_ml.ml_line_ptr, oldlen);
+    ml_add_deleted_len(curbuf->b_ml.ml_line_ptr, oldlen);
     newp = oldp;                            // use same allocated memory
   } else {                                  // need to allocate a new line
     newp = xmalloc((size_t)(oldlen + 1 - count));

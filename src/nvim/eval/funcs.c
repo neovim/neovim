@@ -7996,8 +7996,7 @@ static void f_shellescape(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   const bool do_special = non_zero_arg(&argvars[1]);
 
   rettv->vval.v_string =
-    (char *)vim_strsave_shellescape((const char_u *)tv_get_string(&argvars[0]), do_special,
-                                    do_special);
+    vim_strsave_shellescape(tv_get_string(&argvars[0]), do_special, do_special);
   rettv->v_type = VAR_STRING;
 }
 
