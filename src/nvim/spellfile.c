@@ -899,7 +899,7 @@ void suggest_load_files(void)
   slang_T *slang;
   char *dotp;
   FILE *fd;
-  char_u buf[MAXWLEN];
+  char buf[MAXWLEN];
   int i;
   time_t timestamp;
   int wcount;
@@ -929,9 +929,9 @@ void suggest_load_files(void)
 
       // <SUGHEADER>: <fileID> <versionnr> <timestamp>
       for (i = 0; i < VIMSUGMAGICL; i++) {
-        buf[i] = (char_u)getc(fd);                              // <fileID>
+        buf[i] = (char)getc(fd);                              // <fileID>
       }
-      if (STRNCMP(buf, VIMSUGMAGIC, VIMSUGMAGICL) != 0) {
+      if (strncmp(buf, VIMSUGMAGIC, VIMSUGMAGICL) != 0) {
         semsg(_("E778: This does not look like a .sug file: %s"),
               slang->sl_fname);
         goto nextone;
@@ -1147,14 +1147,14 @@ static int read_rep_section(FILE *fd, garray_T *gap, int16_t *first)
   for (; gap->ga_len < cnt; ++gap->ga_len) {
     int c;
     ftp = &((fromto_T *)gap->ga_data)[gap->ga_len];
-    ftp->ft_from = read_cnt_string(fd, 1, &c);
+    ftp->ft_from = (char *)read_cnt_string(fd, 1, &c);
     if (c < 0) {
       return c;
     }
     if (c == 0) {
       return SP_FORMERROR;
     }
-    ftp->ft_to = read_cnt_string(fd, 1, &c);
+    ftp->ft_to = (char *)read_cnt_string(fd, 1, &c);
     if (c <= 0) {
       xfree(ftp->ft_from);
       if (c < 0) {
@@ -1170,8 +1170,8 @@ static int read_rep_section(FILE *fd, garray_T *gap, int16_t *first)
   }
   for (int i = 0; i < gap->ga_len; i++) {
     ftp = &((fromto_T *)gap->ga_data)[i];
-    if (first[*ftp->ft_from] == -1) {
-      first[*ftp->ft_from] = (int16_t)i;
+    if (first[(uint8_t)(*ftp->ft_from)] == -1) {
+      first[(uint8_t)(*ftp->ft_from)] = (int16_t)i;
     }
   }
   return 0;
@@ -3057,9 +3057,9 @@ static void add_fromto(spellinfo_T *spin, garray_T *gap, char *from, char *to)
 
   fromto_T *ftp = GA_APPEND_VIA_PTR(fromto_T, gap);
   (void)spell_casefold(curwin, (char_u *)from, (int)strlen(from), word, MAXWLEN);
-  ftp->ft_from = (char_u *)getroom_save(spin, (char *)word);
+  ftp->ft_from = getroom_save(spin, (char *)word);
   (void)spell_casefold(curwin, (char_u *)to, (int)strlen(to), word, MAXWLEN);
-  ftp->ft_to = (char_u *)getroom_save(spin, (char *)word);
+  ftp->ft_to = getroom_save(spin, (char *)word);
 }
 
 /// Converts a boolean argument in a SAL line to true or false;
@@ -4360,7 +4360,7 @@ static int rep_compare(const void *s1, const void *s2)
   fromto_T *p1 = (fromto_T *)s1;
   fromto_T *p2 = (fromto_T *)s2;
 
-  return strcmp((char *)p1->ft_from, (char *)p2->ft_from);
+  return strcmp(p1->ft_from, p2->ft_from);
 }
 
 /// Write the Vim .spl file "fname".
@@ -4516,8 +4516,8 @@ static int write_vim_spell(spellinfo_T *spin, char *fname)
     assert(gap->ga_len >= 0);
     for (size_t i = 0; i < (size_t)gap->ga_len; i++) {
       fromto_T *ftp = &((fromto_T *)gap->ga_data)[i];
-      l += 1 + strlen((char *)ftp->ft_from);  // count <*fromlen> and <*from>
-      l += 1 + strlen((char *)ftp->ft_to);    // count <*tolen> and <*to>
+      l += 1 + strlen(ftp->ft_from);  // count <*fromlen> and <*from>
+      l += 1 + strlen(ftp->ft_to);    // count <*tolen> and <*to>
     }
     if (round == 2) {
       l++;                            // count <salflags>
@@ -4544,7 +4544,7 @@ static int write_vim_spell(spellinfo_T *spin, char *fname)
       // <sal> : <salfromlen> <salfrom> <saltolen> <salto>
       fromto_T *ftp = &((fromto_T *)gap->ga_data)[i];
       for (unsigned int rr = 1; rr <= 2; rr++) {
-        char *p = rr == 1 ? (char *)ftp->ft_from : (char *)ftp->ft_to;
+        char *p = rr == 1 ? ftp->ft_from : ftp->ft_to;
         l = strlen(p);
         assert(l < INT_MAX);
         putc((int)l, fd);
@@ -5516,7 +5516,7 @@ static void spell_message(const spellinfo_T *spin, char *str)
 // ":[count]spellrare  {word}"
 void ex_spell(exarg_T *eap)
 {
-  spell_add_word((char_u *)eap->arg, (int)strlen(eap->arg),
+  spell_add_word(eap->arg, (int)strlen(eap->arg),
                  eap->cmdidx == CMD_spellwrong ? SPELL_ADD_BAD :
                  eap->cmdidx == CMD_spellrare ? SPELL_ADD_RARE : SPELL_ADD_GOOD,
                  eap->forceit ? 0 : (int)eap->line2,
@@ -5528,19 +5528,19 @@ void ex_spell(exarg_T *eap)
 /// @param what  SPELL_ADD_ values
 /// @param idx  "zG" and "zW": zero, otherwise index in 'spellfile'
 /// @param bool  // true for "zug", "zuG", "zuw" and "zuW"
-void spell_add_word(char_u *word, int len, SpellAddType what, int idx, bool undo)
+void spell_add_word(char *word, int len, SpellAddType what, int idx, bool undo)
 {
   FILE *fd = NULL;
   buf_T *buf = NULL;
   bool new_spf = false;
   char *fname;
   char_u *fnamebuf = NULL;
-  char_u line[MAXWLEN * 2];
+  char line[MAXWLEN * 2];
   long fpos, fpos_next = 0;
   int i;
   char_u *spf;
 
-  if (!valid_spell_word((char *)word, (char *)word + len)) {
+  if (!valid_spell_word(word, word + len)) {
     emsg(_(e_illegal_character_in_word));
     return;
   }
@@ -5603,8 +5603,8 @@ void spell_add_word(char_u *word, int len, SpellAddType what, int idx, bool undo
         if (fpos_next < 0) {
           break;  // should never happen
         }
-        if (STRNCMP(word, line, len) == 0
-            && (line[len] == '/' || line[len] < ' ')) {
+        if (strncmp(word, line, (size_t)len) == 0
+            && (line[len] == '/' || (uint8_t)line[len] < ' ')) {
           // Found duplicate word.  Remove it by writing a '#' at
           // the start of the line.  Mixing reading and writing
           // doesn't work for all systems, close the file first.

@@ -2751,7 +2751,7 @@ static int nv_zg_zw(cmdarg_T *cap, int nchar)
     return FAIL;
   }
   assert(len <= INT_MAX);
-  spell_add_word((char_u *)ptr, (int)len,
+  spell_add_word(ptr, (int)len,
                  nchar == 'w' || nchar == 'W' ? SPELL_ADD_BAD : SPELL_ADD_GOOD,
                  (nchar == 'G' || nchar == 'W') ? 0 : (int)cap->count1,
                  undo);

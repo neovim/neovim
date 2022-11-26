@@ -2777,7 +2777,7 @@ static bool echeck_abbr(int c)
     return false;
   }
 
-  return check_abbr(c, (char_u *)get_cursor_line_ptr(), curwin->w_cursor.col,
+  return check_abbr(c, get_cursor_line_ptr(), curwin->w_cursor.col,
                     curwin->w_cursor.lnum == Insstart.lnum ? Insstart.col : 0);
 }
 
@@ -3018,11 +3018,11 @@ bool cindent_on(void)
 /// @param  line_is_empty  when true, accept keys with '0' before them.
 bool in_cinkeys(int keytyped, int when, bool line_is_empty)
 {
-  uint8_t *look;
+  char *look;
   int try_match;
   int try_match_word;
-  uint8_t *p;
-  uint8_t *line;
+  char *p;
+  char *line;
   bool icase;
 
   if (keytyped == NUL) {
@@ -3031,9 +3031,9 @@ bool in_cinkeys(int keytyped, int when, bool line_is_empty)
   }
 
   if (*curbuf->b_p_inde != NUL) {
-    look = (uint8_t *)curbuf->b_p_indk;            // 'indentexpr' set: use 'indentkeys'
+    look = curbuf->b_p_indk;            // 'indentexpr' set: use 'indentkeys'
   } else {
-    look = (uint8_t *)curbuf->b_p_cink;            // 'indentexpr' empty: use 'cinkeys'
+    look = curbuf->b_p_cink;            // 'indentexpr' empty: use 'cinkeys'
   }
   while (*look) {
     // Find out if we want to try a match with this key, depending on
@@ -3086,9 +3086,9 @@ bool in_cinkeys(int keytyped, int when, bool line_is_empty)
       // cursor.
     } else if (*look == 'e') {
       if (try_match && keytyped == 'e' && curwin->w_cursor.col >= 4) {
-        p = (uint8_t *)get_cursor_line_ptr();
-        if ((uint8_t *)skipwhite((char *)p) == p + curwin->w_cursor.col - 4
-            && STRNCMP(p + curwin->w_cursor.col - 4, "else", 4) == 0) {
+        p = get_cursor_line_ptr();
+        if (skipwhite(p) == p + curwin->w_cursor.col - 4
+            && strncmp(p + curwin->w_cursor.col - 4, "else", 4) == 0) {
           return true;
         }
       }
@@ -3099,12 +3099,12 @@ bool in_cinkeys(int keytyped, int when, bool line_is_empty)
       // class::method for C++).
     } else if (*look == ':') {
       if (try_match && keytyped == ':') {
-        p = (uint8_t *)get_cursor_line_ptr();
+        p = get_cursor_line_ptr();
         if (cin_iscase((char_u *)p, false) || cin_isscopedecl((char_u *)p) || cin_islabel()) {
           return true;
         }
         // Need to get the line again after cin_islabel().
-        p = (uint8_t *)get_cursor_line_ptr();
+        p = get_cursor_line_ptr();
         if (curwin->w_cursor.col > 2
             && p[curwin->w_cursor.col - 1] == ':'
             && p[curwin->w_cursor.col - 2] == ':') {
@@ -3112,7 +3112,7 @@ bool in_cinkeys(int keytyped, int when, bool line_is_empty)
           const bool i = cin_iscase((char_u *)p, false)
                          || cin_isscopedecl((char_u *)p)
                          || cin_islabel();
-          p = (uint8_t *)get_cursor_line_ptr();
+          p = get_cursor_line_ptr();
           p[curwin->w_cursor.col - 1] = ':';
           if (i) {
             return true;
@@ -3151,22 +3151,22 @@ bool in_cinkeys(int keytyped, int when, bool line_is_empty)
       } else {
         icase = false;
       }
-      p = (uint8_t *)vim_strchr((char *)look, ',');
+      p = vim_strchr(look, ',');
       if (p == NULL) {
-        p = look + strlen((char *)look);
+        p = look + strlen(look);
       }
       if ((try_match || try_match_word)
           && curwin->w_cursor.col >= (colnr_T)(p - look)) {
         bool match = false;
 
         if (keytyped == KEY_COMPLETE) {
-          uint8_t *n, *s;
+          char *n, *s;
 
           // Just completed a word, check if it starts with "look".
           // search back for the start of a word.
-          line = (uint8_t *)get_cursor_line_ptr();
+          line = get_cursor_line_ptr();
           for (s = line + curwin->w_cursor.col; s > line; s = n) {
-            n = mb_prevptr((char_u *)line, (char_u *)s);
+            n = (char *)mb_prevptr((char_u *)line, (char_u *)s);
             if (!vim_iswordp((char_u *)n)) {
               break;
             }
@@ -3174,22 +3174,22 @@ bool in_cinkeys(int keytyped, int when, bool line_is_empty)
           assert(p >= look && (uintmax_t)(p - look) <= SIZE_MAX);
           if (s + (p - look) <= line + curwin->w_cursor.col
               && (icase
-                  ? mb_strnicmp((char *)s, (char *)look, (size_t)(p - look))
-                  : STRNCMP(s, look, p - look)) == 0) {
+                  ? mb_strnicmp(s, look, (size_t)(p - look))
+                  : strncmp(s, look, (size_t)(p - look))) == 0) {
             match = true;
           }
         } else {
           // TODO(@brammool): multi-byte
-          if (keytyped == (int)p[-1]
+          if (keytyped == (int)(uint8_t)p[-1]
               || (icase && keytyped < 256
                   && TOLOWER_LOC(keytyped) == TOLOWER_LOC((int)p[-1]))) {
-            line = (uint8_t *)get_cursor_pos_ptr();
+            line = get_cursor_pos_ptr();
             assert(p >= look && (uintmax_t)(p - look) <= SIZE_MAX);
             if ((curwin->w_cursor.col == (colnr_T)(p - look)
-                 || !vim_iswordc(line[-(p - look) - 1]))
+                 || !vim_iswordc((uint8_t)line[-(p - look) - 1]))
                 && (icase
-                    ? mb_strnicmp((char *)line - (p - look), (char *)look, (size_t)(p - look))
-                    : STRNCMP(line - (p - look), look, p - look)) == 0) {
+                    ? mb_strnicmp(line - (p - look), look, (size_t)(p - look))
+                    : strncmp(line - (p - look), look, (size_t)(p - look))) == 0) {
               match = true;
             }
           }
@@ -3210,7 +3210,7 @@ bool in_cinkeys(int keytyped, int when, bool line_is_empty)
 
       // Ok, it's a boring generic character.
     } else {
-      if (try_match && *look == keytyped) {
+      if (try_match && (uint8_t)(*look) == keytyped) {
         return true;
       }
       if (*look != NUL) {
@@ -3219,7 +3219,7 @@ bool in_cinkeys(int keytyped, int when, bool line_is_empty)
     }
 
     // Skip over ", ".
-    look = (uint8_t *)skip_to_option_part((char *)look);
+    look = skip_to_option_part(look);
   }
   return false;
 }

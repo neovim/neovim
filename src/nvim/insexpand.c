@@ -893,7 +893,7 @@ static int ins_compl_add(char *const str, int len, char *const fname, char *cons
 /// @param  match  completion match
 /// @param  str    character string to check
 /// @param  len    length of "str"
-static bool ins_compl_equal(compl_T *match, char_u *str, size_t len)
+static bool ins_compl_equal(compl_T *match, char *str, size_t len)
   FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
 {
   if (match->cp_flags & CP_EQUAL) {
@@ -902,7 +902,7 @@ static bool ins_compl_equal(compl_T *match, char_u *str, size_t len)
   if (match->cp_flags & CP_ICASE) {
     return STRNICMP(match->cp_str, str, len) == 0;
   }
-  return STRNCMP(match->cp_str, str, len) == 0;
+  return strncmp(match->cp_str, str, len) == 0;
 }
 
 /// Reduce the longest common string for match "match".
@@ -1151,7 +1151,7 @@ static int ins_compl_build_pum(void)
   do {
     if (!match_at_original_text(compl)
         && (compl_leader == NULL
-            || ins_compl_equal(compl, (char_u *)compl_leader, (size_t)lead_len))) {
+            || ins_compl_equal(compl, compl_leader, (size_t)lead_len))) {
       compl_match_arraysize++;
     }
     compl = compl->cp_next;
@@ -1176,7 +1176,7 @@ static int ins_compl_build_pum(void)
   do {
     if (!match_at_original_text(compl)
         && (compl_leader == NULL
-            || ins_compl_equal(compl, (char_u *)compl_leader, (size_t)lead_len))) {
+            || ins_compl_equal(compl, compl_leader, (size_t)lead_len))) {
       if (!shown_match_ok) {
         if (compl == compl_shown_match || did_find_shown_match) {
           // This item is the shown match or this is the
@@ -1823,7 +1823,7 @@ void ins_compl_addfrommatch(void)
     for (cp = compl_shown_match->cp_next; cp != NULL
          && !is_first_match(cp); cp = cp->cp_next) {
       if (compl_leader == NULL
-          || ins_compl_equal(cp, (char_u *)compl_leader, strlen(compl_leader))) {
+          || ins_compl_equal(cp, compl_leader, strlen(compl_leader))) {
         p = cp->cp_str;
         break;
       }
@@ -3404,7 +3404,7 @@ static int ins_compl_get_exp(pos_T *ini)
 static void ins_compl_update_shown_match(void)
 {
   while (!ins_compl_equal(compl_shown_match,
-                          (char_u *)compl_leader, strlen(compl_leader))
+                          compl_leader, strlen(compl_leader))
          && compl_shown_match->cp_next != NULL
          && !is_first_match(compl_shown_match->cp_next)) {
     compl_shown_match = compl_shown_match->cp_next;
@@ -3413,10 +3413,10 @@ static void ins_compl_update_shown_match(void)
   // If we didn't find it searching forward, and compl_shows_dir is
   // backward, find the last match.
   if (compl_shows_dir_backward()
-      && !ins_compl_equal(compl_shown_match, (char_u *)compl_leader, strlen(compl_leader))
+      && !ins_compl_equal(compl_shown_match, compl_leader, strlen(compl_leader))
       && (compl_shown_match->cp_next == NULL
           || is_first_match(compl_shown_match->cp_next))) {
-    while (!ins_compl_equal(compl_shown_match, (char_u *)compl_leader, strlen(compl_leader))
+    while (!ins_compl_equal(compl_shown_match, compl_leader, strlen(compl_leader))
            && compl_shown_match->cp_prev != NULL
            && !is_first_match(compl_shown_match->cp_prev)) {
       compl_shown_match = compl_shown_match->cp_prev;
@@ -3561,7 +3561,7 @@ static int find_next_completion_match(bool allow_get_expansion, int todo, bool a
     if (!match_at_original_text(compl_shown_match)
         && compl_leader != NULL
         && !ins_compl_equal(compl_shown_match,
-                            (char_u *)compl_leader, strlen(compl_leader))) {
+                            compl_leader, strlen(compl_leader))) {
       todo++;
     } else {
       // Remember a matching item.

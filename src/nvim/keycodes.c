@@ -570,7 +570,7 @@ char_u *get_special_key_name(int c, int modifiers)
 /// @param[out]  did_simplify  found <C-H>, etc.
 ///
 /// @return Number of characters added to dst, zero for no match.
-unsigned int trans_special(const char_u **const srcp, const size_t src_len, char_u *const dst,
+unsigned int trans_special(const char **const srcp, const size_t src_len, char_u *const dst,
                            const int flags, const bool escape_ks, bool *const did_simplify)
   FUNC_ATTR_NONNULL_ARG(1, 3) FUNC_ATTR_WARN_UNUSED_RESULT
 {
@@ -623,7 +623,7 @@ unsigned int special_to_buf(int key, int modifiers, bool escape_ks, char_u *dst)
 /// @param[out]  did_simplify  FSK_SIMPLIFY and found <C-H>, etc.
 ///
 /// @return Key and modifiers or 0 if there is no match.
-int find_special_key(const char_u **const srcp, const size_t src_len, int *const modp,
+int find_special_key(const char **const srcp, const size_t src_len, int *const modp,
                      const int flags, bool *const did_simplify)
   FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ARG(1, 3)
 {
@@ -631,7 +631,7 @@ int find_special_key(const char_u **const srcp, const size_t src_len, int *const
   const char_u *end_of_name;
   const char_u *src;
   const char_u *bp;
-  const char_u *const end = *srcp + src_len - 1;
+  const char_u *const end = (char_u *)(*srcp) + src_len - 1;
   const bool in_string = flags & FSK_IN_STRING;
   int modifiers;
   int bit;
@@ -643,7 +643,7 @@ int find_special_key(const char_u **const srcp, const size_t src_len, int *const
     return 0;
   }
 
-  src = *srcp;
+  src = (char_u *)(*srcp);
   if (src[0] != '<') {
     return 0;
   }
@@ -751,7 +751,7 @@ int find_special_key(const char_u **const srcp, const size_t src_len, int *const
         }
 
         *modp = modifiers;
-        *srcp = end_of_name;
+        *srcp = (char *)end_of_name;
         return key;
       }  // else { ELOG("unknown key: '%s'", src); }
     }
@@ -885,10 +885,10 @@ char *replace_termcodes(const char *const from, const size_t from_len, char **co
 {
   ssize_t i;
   size_t slen;
-  char_u key;
+  char key;
   size_t dlen = 0;
-  const char_u *src;
-  const char_u *const end = (char_u *)from + from_len - 1;
+  const char *src;
+  const char *const end = from + from_len - 1;
   char *result;          // buffer for resulting string
 
   const bool do_backslash = !(cpo_flags & FLAG_CPO_BSLASH);  // backslash is a special character
@@ -901,7 +901,7 @@ char *replace_termcodes(const char *const from, const size_t from_len, char **co
   const size_t buf_len = allocated ? from_len * 6 + 1 : 128;
   result = allocated ? xmalloc(buf_len) : *bufp;
 
-  src = (char_u *)from;
+  src = from;
 
   // Check for #n at start only: function key n
   if ((flags & REPTERM_FROM_PART) && from_len > 1 && src[0] == '#'
@@ -911,7 +911,7 @@ char *replace_termcodes(const char *const from, const size_t from_len, char **co
     if (src[1] == '0') {
       result[dlen++] = ';';     // #0 is F10 is "k;"
     } else {
-      result[dlen++] = (char)src[1];  // #3 is F3 is "k3"
+      result[dlen++] = src[1];  // #3 is F3 is "k3"
     }
     src += 2;
   }
@@ -923,7 +923,7 @@ char *replace_termcodes(const char *const from, const size_t from_len, char **co
     }
     // Check for special <> keycodes, like "<C-S-LeftMouse>"
     if (do_special && ((flags & REPTERM_DO_LT) || ((end - src) >= 3
-                                                   && STRNCMP(src, "<lt>", 4) != 0))) {
+                                                   && strncmp(src, "<lt>", 4) != 0))) {
       // Replace <SID> by K_SNR <script-nr> _.
       // (room: 5 * 6 = 30 bytes; needed: 3 + <nr> + 1 <= 14)
       if (end - src >= 4 && STRNICMP(src, "<SID>", 5) == 0) {
@@ -993,7 +993,7 @@ char *replace_termcodes(const char *const from, const size_t from_len, char **co
       src++;  // skip CTRL-V or backslash
       if (src > end) {
         if (flags & REPTERM_FROM_PART) {
-          result[dlen++] = (char)key;
+          result[dlen++] = key;
         }
         break;
       }
@@ -1003,12 +1003,12 @@ char *replace_termcodes(const char *const from, const size_t from_len, char **co
     for (i = utfc_ptr2len_len((char *)src, (int)(end - src) + 1); i > 0; i--) {
       // If the character is K_SPECIAL, replace it with K_SPECIAL
       // KS_SPECIAL KE_FILLER.
-      if (*src == K_SPECIAL) {
+      if (*src == (char)K_SPECIAL) {
         result[dlen++] = (char)K_SPECIAL;
         result[dlen++] = (char)KS_SPECIAL;
         result[dlen++] = KE_FILLER;
       } else {
-        result[dlen++] = (char)(*src);
+        result[dlen++] = *src;
       }
       src++;
     }
