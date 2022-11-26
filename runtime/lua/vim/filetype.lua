@@ -1909,6 +1909,7 @@ local pattern = {
   ['Prl.*%..*'] = starsetf('jam'),
   ['.*%.properties_..'] = 'jproperties',
   ['.*%.properties_.._..'] = 'jproperties',
+  ['org%.eclipse%..*%.prefs'] = 'jproperties',
   ['.*%.properties_.._.._.*'] = starsetf('jproperties'),
   ['Kconfig%..*'] = starsetf('kconfig'),
   ['.*%.[Ss][Uu][Bb]'] = 'krl',
