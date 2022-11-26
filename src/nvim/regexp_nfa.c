@@ -7385,7 +7385,13 @@ static long nfa_regexec_both(char_u *line, colnr_T startcol, proftime_T *tm, int
     // If match_text is set it contains the full text that must match.
     // Nothing else to try. Doesn't handle combining chars well.
     if (prog->match_text != NULL && !rex.reg_icombine) {
-      return find_match_text(col, prog->regstart, prog->match_text);
+      retval = find_match_text(col, prog->regstart, prog->match_text);
+      if (REG_MULTI) {
+        rex.reg_mmatch->rmm_matchcol = col;
+      } else {
+        rex.reg_match->rm_matchcol = col;
+      }
+      return retval;
     }
   }
 
@@ -7421,10 +7427,18 @@ theend:
           || (end->lnum == start->lnum && end->col < start->col)) {
         rex.reg_mmatch->endpos[0] = rex.reg_mmatch->startpos[0];
       }
+
+      // startpos[0] may be set by "\zs", also return the column where
+      // the whole pattern matched.
+      rex.reg_mmatch->rmm_matchcol = col;
     } else {
       if (rex.reg_match->endp[0] < rex.reg_match->startp[0]) {
         rex.reg_match->endp[0] = rex.reg_match->startp[0];
       }
+
+      // startpos[0] may be set by "\zs", also return the column where
+      // the whole pattern matched.
+      rex.reg_match->rm_matchcol = col;
     }
   }
 
