@@ -12,6 +12,7 @@ local eval = helpers.eval
 local exec_lua = helpers.exec_lua
 local feed = helpers.feed
 local funcs = helpers.funcs
+local pesc = helpers.pesc
 local mkdir = helpers.mkdir
 local mkdir_p = helpers.mkdir_p
 local nvim_prog = helpers.nvim_prog
@@ -576,7 +577,66 @@ describe('user config init', function()
     eq(funcs.fnamemodify(init_lua_path, ':p'), eval('$MYVIMRC'))
   end)
 
-  describe 'with explicitly provided config'(function()
+  describe('with existing .exrc in cwd', function()
+    local exrc_path = '.exrc'
+    local xstate = 'Xstate'
+
+    before_each(function()
+      write_file(init_lua_path, [[
+        vim.o.exrc = true
+        vim.g.from_exrc = 0
+      ]])
+      mkdir_p(xstate .. pathsep .. (is_os('win') and 'nvim-data' or 'nvim'))
+      write_file(exrc_path, [[
+        let g:from_exrc = 1
+      ]])
+    end)
+
+    after_each(function()
+      os.remove(exrc_path)
+      rmdir(xstate)
+    end)
+
+    it('loads .exrc #13501', function()
+      clear{ args_rm = {'-u'}, env={ XDG_CONFIG_HOME=xconfig, XDG_STATE_HOME=xstate } }
+      -- The .exrc file is not trusted, and the prompt is skipped because there is no UI.
+      eq(0, eval('g:from_exrc'))
+
+      local screen = Screen.new(50, 8)
+      screen:attach()
+      funcs.termopen({nvim_prog})
+      screen:expect({ any = pesc('[i]gnore, (v)iew, (d)eny, (a)llow:') })
+      -- `i` to enter Terminal mode, `a` to allow
+      feed('ia')
+      screen:expect([[
+                                                          |
+        ~                                                 |
+        ~                                                 |
+        ~                                                 |
+        ~                                                 |
+        [No Name]                       0,0-1          All|
+                                                          |
+        -- TERMINAL --                                    |
+      ]])
+      feed(':echo g:from_exrc<CR>')
+      screen:expect([[
+                                                          |
+        ~                                                 |
+        ~                                                 |
+        ~                                                 |
+        ~                                                 |
+        [No Name]                       0,0-1          All|
+        1                                                 |
+        -- TERMINAL --                                    |
+      ]])
+
+      clear{ args_rm = {'-u'}, env={ XDG_CONFIG_HOME=xconfig, XDG_STATE_HOME=xstate } }
+      -- The .exrc file is now trusted.
+      eq(1, eval('g:from_exrc'))
+    end)
+  end)
+
+  describe('with explicitly provided config', function()
     local custom_lua_path = table.concat({xhome, 'custom.lua'}, pathsep)
     before_each(function()
       write_file(custom_lua_path, [[
@@ -591,7 +651,7 @@ describe('user config init', function()
     end)
   end)
 
-  describe 'VIMRC also exists'(function()
+  describe('VIMRC also exists', function()
     before_each(function()
       write_file(table.concat({xconfig, 'nvim', 'init.vim'}, pathsep), [[
       let g:vim_rc = 1

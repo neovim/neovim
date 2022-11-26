@@ -1919,7 +1919,8 @@ static bool do_user_initialization(void)
 
     xfree(user_vimrc);
     xfree(init_lua_path);
-    return false;
+    do_exrc = p_exrc;
+    return do_exrc;
   }
   xfree(init_lua_path);
 
