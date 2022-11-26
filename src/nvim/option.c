@@ -889,7 +889,7 @@ static int do_set_string(int opt_idx, int opt_flags, char **argp, int nextchar, 
       if (*arg == '\\' && arg[1] != NUL
 #ifdef BACKSLASH_IN_FILENAME
           && !((flags & P_EXPAND)
-               && vim_isfilec(arg[1])
+               && vim_isfilec((uint8_t)arg[1])
                && !ascii_iswhite(arg[1])
                && (arg[1] != '\\'
                    || (s == newval && arg[2] != '\\')))
@@ -4752,7 +4752,7 @@ int ExpandSettings(expand_T *xp, regmatch_T *regmatch, int *num_file, char ***fi
 
 void ExpandOldSetting(int *num_file, char ***file)
 {
-  char_u *var = NULL;
+  char *var = NULL;
 
   *num_file = 0;
   *file = xmalloc(sizeof(char_u *));
@@ -4765,14 +4765,14 @@ void ExpandOldSetting(int *num_file, char ***file)
   if (expand_option_idx >= 0) {
     // Put string of option value in NameBuff.
     option_value2string(&options[expand_option_idx], expand_option_flags);
-    var = (char_u *)NameBuff;
+    var = NameBuff;
   } else {
-    var = (char_u *)"";
+    var = "";
   }
 
   // A backslash is required before some characters.  This is the reverse of
   // what happens in do_set().
-  char_u *buf = vim_strsave_escaped(var, escape_chars);
+  char_u *buf = vim_strsave_escaped((char_u *)var, escape_chars);
 
 #ifdef BACKSLASH_IN_FILENAME
   // For MS-Windows et al. we don't double backslashes at the start and
@@ -4781,7 +4781,7 @@ void ExpandOldSetting(int *num_file, char ***file)
     if (var[0] == '\\' && var[1] == '\\'
         && expand_option_idx >= 0
         && (options[expand_option_idx].flags & P_EXPAND)
-        && vim_isfilec(var[2])
+        && vim_isfilec((uint8_t)var[2])
         && (var[2] != '\\' || (var == buf && var[4] != '\\'))) {
       STRMOVE(var, var + 1);
     }

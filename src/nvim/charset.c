@@ -1721,7 +1721,7 @@ bool rem_backslash(const char *str)
              || (str[1] != NUL
                  && str[1] != '*'
                  && str[1] != '?'
-                 && !vim_isfilec(str[1])));
+                 && !vim_isfilec((uint8_t)str[1])));
 
 #else  // ifdef BACKSLASH_IN_FILENAME
   return str[0] == '\\' && str[1] != NUL;

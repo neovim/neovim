@@ -55,7 +55,7 @@ static const struct modmasktable {
 
 #define MOD_KEYS_ENTRY_SIZE 5
 
-static char_u modifier_keys_table[] = {
+static uint8_t modifier_keys_table[] = {
   //  mod mask      with modifier               without modifier
   MOD_MASK_SHIFT, '&', '9',                   '@', '1',         // begin
   MOD_MASK_SHIFT, '&', '0',                   '@', '2',         // cancel

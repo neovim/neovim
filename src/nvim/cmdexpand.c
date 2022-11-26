@@ -370,7 +370,7 @@ static void redraw_wildmenu(expand_T *xp, int num_matches, char **matches, int m
   char_u *selend = NULL;
   static int first_match = 0;
   bool add_left = false;
-  char_u *s;
+  char *s;
   int emenu;
   int l;
 
@@ -444,25 +444,25 @@ static void redraw_wildmenu(expand_T *xp, int num_matches, char **matches, int m
       selstart_col = clen;
     }
 
-    s = (char_u *)L_MATCH(i);
+    s = L_MATCH(i);
     // Check for menu separators - replace with '|'
     emenu = (xp->xp_context == EXPAND_MENUS
              || xp->xp_context == EXPAND_MENUNAMES);
-    if (emenu && menu_is_separator((char *)s)) {
+    if (emenu && menu_is_separator(s)) {
       STRCPY(buf + len, transchar('|'));
       l = (int)strlen((char *)buf + len);
       len += l;
       clen += l;
     } else {
       for (; *s != NUL; s++) {
-        s += skip_wildmenu_char(xp, s);
-        clen += ptr2cells((char *)s);
-        if ((l = utfc_ptr2len((char *)s)) > 1) {
-          strncpy((char *)buf + len, (char *)s, (size_t)l);  // NOLINT(runtime/printf)
+        s += skip_wildmenu_char(xp, (char_u *)s);
+        clen += ptr2cells(s);
+        if ((l = utfc_ptr2len(s)) > 1) {
+          strncpy((char *)buf + len, s, (size_t)l);  // NOLINT(runtime/printf)
           s += l - 1;
           len += l;
         } else {
-          STRCPY(buf + len, transchar_byte(*s));
+          STRCPY(buf + len, transchar_byte((uint8_t)(*s)));
           len += (int)strlen((char *)buf + len);
         }
       }

@@ -2124,11 +2124,11 @@ void insertchar(int c, int flags, int second_indent)
       && !cindent_on()
       && !p_ri) {
 #define INPUT_BUFLEN 100
-    char_u buf[INPUT_BUFLEN + 1];
+    char buf[INPUT_BUFLEN + 1];
     int i;
     colnr_T virtcol = 0;
 
-    buf[0] = (char_u)c;
+    buf[0] = (char)c;
     i = 1;
     if (textwidth > 0) {
       virtcol = get_nolist_virtcol();
@@ -2144,27 +2144,27 @@ void insertchar(int c, int flags, int second_indent)
            && MB_BYTE2LEN(c) == 1
            && i < INPUT_BUFLEN
            && (textwidth == 0
-               || (virtcol += byte2cells(buf[i - 1])) < (colnr_T)textwidth)
-           && !(!no_abbr && !vim_iswordc(c) && vim_iswordc(buf[i - 1]))) {
+               || (virtcol += byte2cells((uint8_t)buf[i - 1])) < (colnr_T)textwidth)
+           && !(!no_abbr && !vim_iswordc(c) && vim_iswordc((uint8_t)buf[i - 1]))) {
       c = vgetc();
       if (p_hkmap && KeyTyped) {
         c = hkmap(c);                       // Hebrew mode mapping
       }
-      buf[i++] = (char_u)c;
+      buf[i++] = (char)c;
     }
 
     do_digraph(-1);                     // clear digraphs
-    do_digraph(buf[i - 1]);               // may be the start of a digraph
+    do_digraph((uint8_t)buf[i - 1]);               // may be the start of a digraph
     buf[i] = NUL;
-    ins_str((char *)buf);
+    ins_str(buf);
     if (flags & INSCHAR_CTRLV) {
-      redo_literal(*buf);
+      redo_literal((uint8_t)(*buf));
       i = 1;
     } else {
       i = 0;
     }
     if (buf[i] != NUL) {
-      AppendToRedobuffLit((char *)buf + i, -1);
+      AppendToRedobuffLit(buf + i, -1);
     }
   } else {
     int cc;
@@ -2172,7 +2172,7 @@ void insertchar(int c, int flags, int second_indent)
     if ((cc = utf_char2len(c)) > 1) {
       char buf[MB_MAXBYTES + 1];
 
-      utf_char2bytes(c, (char *)buf);
+      utf_char2bytes(c, buf);
       buf[cc] = NUL;
       ins_char_bytes(buf, (size_t)cc);
       AppendCharToRedobuff(c);

@@ -137,39 +137,39 @@ static void margin_columns_win(win_T *wp, int *left_col, int *right_col)
 /// Handles composing chars and arabic shaping state.
 static int line_putchar(buf_T *buf, LineState *s, schar_T *dest, int maxcells, bool rl, int vcol)
 {
-  const char_u *p = (char_u *)s->p;
-  int cells = utf_ptr2cells((char *)p);
-  int c_len = utfc_ptr2len((char *)p);
+  const char *p = s->p;
+  int cells = utf_ptr2cells(p);
+  int c_len = utfc_ptr2len(p);
   int u8c, u8cc[MAX_MCO];
   if (cells > maxcells) {
     return -1;
   }
-  u8c = utfc_ptr2char((char *)p, u8cc);
+  u8c = utfc_ptr2char(p, u8cc);
   if (*p == TAB) {
     cells = MIN(tabstop_padding(vcol, buf->b_p_ts, buf->b_p_vts_array), maxcells);
     for (int c = 0; c < cells; c++) {
       schar_from_ascii(dest[c], ' ');
     }
     goto done;
-  } else if (*p < 0x80 && u8cc[0] == 0) {
-    schar_from_ascii(dest[0], (char)(*p));
+  } else if ((uint8_t)(*p) < 0x80 && u8cc[0] == 0) {
+    schar_from_ascii(dest[0], *p);
     s->prev_c = u8c;
   } else {
     if (p_arshape && !p_tbidi && ARABIC_CHAR(u8c)) {
       // Do Arabic shaping.
       int pc, pc1, nc;
       int pcc[MAX_MCO];
-      int firstbyte = *p;
+      int firstbyte = (uint8_t)(*p);
 
       // The idea of what is the previous and next
       // character depends on 'rightleft'.
       if (rl) {
         pc = s->prev_c;
         pc1 = s->prev_c1;
-        nc = utf_ptr2char((char *)p + c_len);
+        nc = utf_ptr2char(p + c_len);
         s->prev_c1 = u8cc[0];
       } else {
-        pc = utfc_ptr2char((char *)p + c_len, pcc);
+        pc = utfc_ptr2char(p + c_len, pcc);
         nc = s->prev_c;
         pc1 = pcc[0];
       }

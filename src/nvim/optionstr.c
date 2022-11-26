@@ -1034,7 +1034,7 @@ char *did_set_string_option(int opt_idx, char **varp, char *oldval, char *errbuf
           if (errbuf != NULL) {
             vim_snprintf(errbuf, errbuflen,
                          _("E526: Missing number after <%s>"),
-                         transchar_byte(*(s - 1)));
+                         transchar_byte((uint8_t)(*(s - 1))));
             errmsg = errbuf;
           } else {
             errmsg = "";

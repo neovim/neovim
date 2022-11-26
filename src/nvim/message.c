@@ -1530,7 +1530,7 @@ char *msg_outtrans_one(char *p, int attr)
     msg_outtrans_len_attr(p, l, attr);
     return p + l;
   }
-  msg_puts_attr((const char *)transchar_byte(*p), attr);
+  msg_puts_attr((const char *)transchar_byte((uint8_t)(*p)), attr);
   return p + 1;
 }
 
