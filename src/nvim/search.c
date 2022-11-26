@@ -655,7 +655,6 @@ int searchit(win_T *win, buf_T *buf, pos_T *pos, pos_T *end_pos, Direction dir, 
           // match (this is vi compatible) or on the next char.
           if (dir == FORWARD && at_first_line) {
             match_ok = true;
-            matchcol = col;
 
             // When the match starts in a next line it's certainly
             // past the start position.
@@ -687,8 +686,9 @@ int searchit(win_T *win, buf_T *buf, pos_T *pos, pos_T *end_pos, Direction dir, 
                 }
               } else {
                 // Advance "matchcol" to the next character.
-                // This does not use matchpos.col, because
-                // "\zs" may have have set it.
+                // This uses rmm_matchcol, the actual start of
+                // the match, ignoring "\zs".
+                matchcol = regmatch.rmm_matchcol;
                 if (ptr[matchcol] != NUL) {
                   matchcol += utfc_ptr2len(ptr + matchcol);
                 }
