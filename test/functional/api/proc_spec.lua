@@ -19,26 +19,26 @@ describe('API', function()
 
       -- Might be non-zero already (left-over from some other test?),
       -- but this is not what is tested here.
-      local initial_childs = request('nvim_get_proc_children', this_pid)
+      local initial_children = request('nvim_get_proc_children', this_pid)
 
       local job1 = funcs.jobstart(nvim_argv)
       retry(nil, nil, function()
-        eq(#initial_childs + 1, #request('nvim_get_proc_children', this_pid))
+        eq(#initial_children + 1, #request('nvim_get_proc_children', this_pid))
       end)
 
       local job2 = funcs.jobstart(nvim_argv)
       retry(nil, nil, function()
-        eq(#initial_childs + 2, #request('nvim_get_proc_children', this_pid))
+        eq(#initial_children + 2, #request('nvim_get_proc_children', this_pid))
       end)
 
       funcs.jobstop(job1)
       retry(nil, nil, function()
-        eq(#initial_childs + 1, #request('nvim_get_proc_children', this_pid))
+        eq(#initial_children + 1, #request('nvim_get_proc_children', this_pid))
       end)
 
       funcs.jobstop(job2)
       retry(nil, nil, function()
-        eq(#initial_childs, #request('nvim_get_proc_children', this_pid))
+        eq(#initial_children, #request('nvim_get_proc_children', this_pid))
       end)
     end)
 

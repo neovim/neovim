@@ -810,7 +810,7 @@ describe('API: buffer events:', function()
         local newlines = args[5]
 
         -- Size of the contained nvim instance is 23 lines, this might change
-        -- with the test setup. Note updates are continguous.
+        -- with the test setup. Note updates are contiguous.
         assert(#newlines <= 23)
 
         for i = 1,#newlines do

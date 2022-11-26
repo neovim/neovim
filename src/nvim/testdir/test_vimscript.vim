@@ -6642,7 +6642,7 @@ func Test_invalid_function_names()
   endtry
   call assert_equal(1, caught_e884)
 
-  " function name folowed by #
+  " function name followed by #
   let caught_e128 = 0
   try
     func! test2() "#

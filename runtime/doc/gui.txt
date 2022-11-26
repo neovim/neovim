@@ -450,8 +450,8 @@ The default "PopUp" menu is: >
     anoremenu PopUp.Paste                       "+gP
     vnoremenu PopUp.Paste                       "+P
     vnoremenu PopUp.Delete                      "_x
-    nnoremenu PopUp.Select\ All>                ggVG
-    vnoremenu PopUp.Select\ All>                gg0oG$
+    nnoremenu PopUp.Select\ All                 ggVG
+    vnoremenu PopUp.Select\ All                 gg0oG$
     inoremenu PopUp.Select\ All                 <C-Home><C-O>VG
     anoremenu PopUp.-1-                         <Nop>
     anoremenu PopUp.How-to\ disable\ mouse      <Cmd>help disable-mouse<CR>

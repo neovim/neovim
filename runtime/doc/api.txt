@@ -809,7 +809,7 @@ nvim_feedkeys({keys}, {mode}, {escape_ks})                   *nvim_feedkeys()*
     Parameters: ~
       • {keys}       to be typed
       • {mode}       behavior flags, see |feedkeys()|
-      • {escape_ks}  If true, escape K_SPECIAL bytes in `keys` This should be
+      • {escape_ks}  If true, escape K_SPECIAL bytes in `keys`. This should be
                      false if you already used |nvim_replace_termcodes()|, and
                      true otherwise.
 

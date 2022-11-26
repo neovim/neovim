@@ -153,7 +153,7 @@ describe('fileio', function()
   end)
 
 
-  it('backup symlinked files in first avialable backupdir #11349', function()
+  it('backup symlinked files in first available backupdir #11349', function()
     skip(is_ci('cirrus'))
     clear()
 

@@ -3042,7 +3042,7 @@ describe('API', function()
       meths.buf_set_mark(buf, 'F', 2, 2, {})
       meths.buf_set_name(buf, "mybuf")
       local mark = meths.get_mark('F', {})
-      -- Compare the path tail ony
+      -- Compare the path tail only
       assert(string.find(mark[4], "mybuf$"))
       eq({2, 2, buf.id, mark[4]}, mark)
     end)

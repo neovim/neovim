@@ -236,7 +236,7 @@ void nvim_set_hl_ns_fast(Integer ns_id, Error *err)
 ///
 /// @param keys         to be typed
 /// @param mode         behavior flags, see |feedkeys()|
-/// @param escape_ks    If true, escape K_SPECIAL bytes in `keys`
+/// @param escape_ks    If true, escape K_SPECIAL bytes in `keys`.
 ///                     This should be false if you already used
 ///                     |nvim_replace_termcodes()|, and true otherwise.
 /// @see feedkeys()
