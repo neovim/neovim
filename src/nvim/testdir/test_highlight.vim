@@ -819,11 +819,11 @@ func Test_highlight_clear_restores_context()
   let patContextDefault = fnamemodify(scriptContextDefault, ':t') .. ' line 1'
   let patContextRelink = fnamemodify(scriptContextRelink, ':t') .. ' line 2'
 
-  exec "source" scriptContextDefault
+  exec 'source ' .. scriptContextDefault
   let hlContextDefault = execute("verbose hi Context")
   call assert_match(patContextDefault, hlContextDefault)
 
-  exec "source" scriptContextRelink
+  exec 'source ' .. scriptContextRelink
   let hlContextRelink = execute("verbose hi Context")
   call assert_match(patContextRelink, hlContextRelink)
 
