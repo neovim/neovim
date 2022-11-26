@@ -683,7 +683,7 @@ static void fname2fnum(xfmark_T *fm)
 // Used for marks that come from the .shada file.
 void fmarks_check_names(buf_T *buf)
 {
-  char_u *name = (char_u *)buf->b_ffname;
+  char *name = buf->b_ffname;
   int i;
 
   if (buf->b_ffname == NULL) {
@@ -691,12 +691,12 @@ void fmarks_check_names(buf_T *buf)
   }
 
   for (i = 0; i < NGLOBALMARKS; i++) {
-    fmarks_check_one(&namedfm[i], (char *)name, buf);
+    fmarks_check_one(&namedfm[i], name, buf);
   }
 
   FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
     for (i = 0; i < wp->w_jumplistlen; i++) {
-      fmarks_check_one(&wp->w_jumplist[i], (char *)name, buf);
+      fmarks_check_one(&wp->w_jumplist[i], name, buf);
     }
   }
 }
@@ -781,12 +781,12 @@ void clrallmarks(buf_T *const buf)
 // Get name of file from a filemark.
 // When it's in the current buffer, return the text at the mark.
 // Returns an allocated string.
-char_u *fm_getname(fmark_T *fmark, int lead_len)
+char *fm_getname(fmark_T *fmark, int lead_len)
 {
   if (fmark->fnum == curbuf->b_fnum) {              // current buffer
-    return (char_u *)mark_line(&(fmark->mark), lead_len);
+    return mark_line(&(fmark->mark), lead_len);
   }
-  return (char_u *)buflist_nr2name(fmark->fnum, false, true);
+  return buflist_nr2name(fmark->fnum, false, true);
 }
 
 /// Return the line at mark "mp".  Truncate to fit in window.
@@ -818,9 +818,9 @@ static char *mark_line(pos_T *mp, int lead_len)
 // print the marks
 void ex_marks(exarg_T *eap)
 {
-  char_u *arg = (char_u *)eap->arg;
+  char *arg = eap->arg;
   int i;
-  char_u *name;
+  char *name;
   pos_T *posp, *startp, *endp;
 
   if (arg != NULL && *arg == NUL) {
@@ -833,9 +833,9 @@ void ex_marks(exarg_T *eap)
   }
   for (i = 0; i < NGLOBALMARKS; i++) {
     if (namedfm[i].fmark.fnum != 0) {
-      name = fm_getname(&namedfm[i].fmark, 15);
+      name = (char *)fm_getname(&namedfm[i].fmark, 15);
     } else {
-      name = (char_u *)namedfm[i].fname;
+      name = namedfm[i].fname;
     }
     if (name != NULL) {
       show_one_mark(i >= NMARKS ? i - NMARKS + '0' : i + 'A',
@@ -867,11 +867,11 @@ void ex_marks(exarg_T *eap)
 }
 
 /// @param current  in current file
-static void show_one_mark(int c, char_u *arg, pos_T *p, char_u *name_arg, int current)
+static void show_one_mark(int c, char *arg, pos_T *p, char *name_arg, int current)
 {
   static bool did_title = false;
   bool mustfree = false;
-  char_u *name = name_arg;
+  char *name = name_arg;
 
   if (c == -1) {  // finish up
     if (did_title) {
@@ -884,14 +884,14 @@ static void show_one_mark(int c, char_u *arg, pos_T *p, char_u *name_arg, int cu
       }
     }
   } else if (!got_int
-             && (arg == NULL || vim_strchr((char *)arg, c) != NULL)
+             && (arg == NULL || vim_strchr(arg, c) != NULL)
              && p->lnum != 0) {
     // don't output anything if 'q' typed at --more-- prompt
     if (name == NULL && current) {
-      name = (char_u *)mark_line(p, 15);
+      name = mark_line(p, 15);
       mustfree = true;
     }
-    if (!message_filtered((char *)name)) {
+    if (!message_filtered(name)) {
       if (!did_title) {
         // Highlight title
         msg_puts_title(_("\nmark line  col file/text"));
@@ -902,7 +902,7 @@ static void show_one_mark(int c, char_u *arg, pos_T *p, char_u *name_arg, int cu
         snprintf(IObuff, IOSIZE, " %c %6" PRIdLINENR " %4d ", c, p->lnum, p->col);
         msg_outtrans(IObuff);
         if (name != NULL) {
-          msg_outtrans_attr((char *)name, current ? HL_ATTR(HLF_D) : 0);
+          msg_outtrans_attr(name, current ? HL_ATTR(HLF_D) : 0);
         }
       }
     }
@@ -1050,7 +1050,7 @@ void ex_clearjumps(exarg_T *eap)
 void ex_changes(exarg_T *eap)
 {
   int i;
-  char_u *name;
+  char *name;
 
   // Highlight title
   msg_puts_title(_("\nchange line  col text"));
@@ -1067,8 +1067,8 @@ void ex_changes(exarg_T *eap)
                (long)curbuf->b_changelist[i].mark.lnum,
                curbuf->b_changelist[i].mark.col);
       msg_outtrans(IObuff);
-      name = (char_u *)mark_line(&curbuf->b_changelist[i].mark, 17);
-      msg_outtrans_attr((char *)name, HL_ATTR(HLF_D));
+      name = mark_line(&curbuf->b_changelist[i].mark, 17);
+      msg_outtrans_attr(name, HL_ATTR(HLF_D));
       xfree(name);
       os_breakcheck();
     }

@@ -740,8 +740,8 @@ static int syn_match_linecont(linenr_T lnum)
   if (syn_block->b_syn_linecont_prog != NULL) {
     regmmatch_T regmatch;
     // chartab array for syn iskeyword
-    char_u buf_chartab[32];
-    save_chartab((char *)buf_chartab);
+    char buf_chartab[32];
+    save_chartab(buf_chartab);
 
     regmatch.rmm_ic = syn_block->b_syn_linecont_ic;
     regmatch.regprog = syn_block->b_syn_linecont_prog;
@@ -749,7 +749,7 @@ static int syn_match_linecont(linenr_T lnum)
                         IF_SYN_TIME(&syn_block->b_syn_linecont_time));
     syn_block->b_syn_linecont_prog = regmatch.regprog;
 
-    restore_chartab((char *)buf_chartab);
+    restore_chartab(buf_chartab);
     return r;
   }
   return false;
@@ -1507,8 +1507,8 @@ static int syn_current_attr(const bool syncing, const bool displaying, bool *con
   regmmatch_T regmatch;
   lpos_T pos;
   reg_extmatch_T *cur_extmatch = NULL;
-  char_u buf_chartab[32];  // chartab array for syn iskeyword
-  char_u *line;            // current line.  NOTE: becomes invalid after
+  char buf_chartab[32];    // chartab array for syn iskeyword
+  char *line;              // current line.  NOTE: becomes invalid after
                            // looking for a pattern match!
 
   // variables for zero-width matches that have a "nextgroup" argument
@@ -1518,7 +1518,7 @@ static int syn_current_attr(const bool syncing, const bool displaying, bool *con
 
   // No character, no attributes!  Past end of line?
   // Do try matching with an empty line (could be the start of a region).
-  line = (char_u *)syn_getcurline();
+  line = syn_getcurline();
   if (line[current_col] == NUL && current_col != 0) {
     // If we found a match after the last column, use it.
     if (next_match_idx >= 0 && next_match_col >= (int)current_col
@@ -1555,7 +1555,7 @@ static int syn_current_attr(const bool syncing, const bool displaying, bool *con
   ga_init(&zero_width_next_ga, (int)sizeof(int), 10);
 
   // use syntax iskeyword option
-  save_chartab((char *)buf_chartab);
+  save_chartab(buf_chartab);
 
   // Repeat matching keywords and patterns, to find contained items at the
   // same column.  This stops when there are no extra matches at the current
@@ -1581,14 +1581,14 @@ static int syn_current_attr(const bool syncing, const bool displaying, bool *con
       // 2. Check for keywords, if on a keyword char after a non-keyword
       //          char.  Don't do this when syncing.
       if (do_keywords) {
-        line = (char_u *)syn_getcurline();
-        const char_u *cur_pos = line + current_col;
-        if (vim_iswordp_buf((char *)cur_pos, syn_buf)
+        line = syn_getcurline();
+        const char *cur_pos = line + current_col;
+        if (vim_iswordp_buf(cur_pos, syn_buf)
             && (current_col == 0
-                || !vim_iswordp_buf((char *)cur_pos - 1 -
-                                    utf_head_off((char *)line, (char *)cur_pos - 1),
+                || !vim_iswordp_buf(cur_pos - 1 -
+                                    utf_head_off(line, cur_pos - 1),
                                     syn_buf))) {
-          syn_id = check_keyword_id((char *)line, (int)current_col, &endcol, &flags,
+          syn_id = check_keyword_id(line, (int)current_col, &endcol, &flags,
                                     &next_list, cur_si, &cchar);
           if (syn_id != 0) {
             push_current_state(KEYWORD_IDX);
@@ -1827,7 +1827,7 @@ static int syn_current_attr(const bool syncing, const bool displaying, bool *con
       // - this is an empty line and the "skipempty" option was given
       // - we are on white space and the "skipwhite" option was given
       if (!found_match) {
-        line = (char_u *)syn_getcurline();
+        line = syn_getcurline();
         if (((current_next_flags & HL_SKIPWHITE)
              && ascii_iswhite(line[current_col]))
             || ((current_next_flags & HL_SKIPEMPTY)
@@ -1850,7 +1850,7 @@ static int syn_current_attr(const bool syncing, const bool displaying, bool *con
     }
   } while (found_match);
 
-  restore_chartab((char *)buf_chartab);
+  restore_chartab(buf_chartab);
 
   // Use attributes from the current state, if within its highlighting.
   // If not, use attributes from the current-but-one state, etc.
@@ -1944,7 +1944,7 @@ static int syn_current_attr(const bool syncing, const bool displaying, bool *con
 
   // nextgroup ends at end of line, unless "skipnl" or "skipempty" present
   if (current_next_list != NULL
-      && (line = (char_u *)syn_getcurline())[current_col] != NUL
+      && (line = syn_getcurline())[current_col] != NUL
       && line[current_col + 1] == NUL
       && !(current_next_flags & (HL_SKIPNL | HL_SKIPEMPTY))) {
     current_next_list = NULL;
@@ -2362,7 +2362,7 @@ static void find_endpos(int idx, lpos_T *startpos, lpos_T *m_endpos, lpos_T *hl_
   lpos_T pos;
   char *line;
   bool had_match = false;
-  char_u buf_chartab[32];  // chartab array for syn option iskeyword
+  char buf_chartab[32];  // chartab array for syn option iskeyword
 
   // just in case we are invoked for a keyword
   if (idx < 0) {
@@ -2404,7 +2404,7 @@ static void find_endpos(int idx, lpos_T *startpos, lpos_T *m_endpos, lpos_T *hl_
   best_regmatch.startpos[0].col = 0;            // avoid compiler warning
 
   // use syntax iskeyword option
-  save_chartab((char *)buf_chartab);
+  save_chartab(buf_chartab);
 
   for (;;) {
     // Find end pattern that matches first after "matchcol".
@@ -2545,7 +2545,7 @@ static void find_endpos(int idx, lpos_T *startpos, lpos_T *m_endpos, lpos_T *hl_
     m_endpos->lnum = 0;
   }
 
-  restore_chartab((char *)buf_chartab);
+  restore_chartab(buf_chartab);
 
   // Remove external matches.
   unref_extmatch(re_extmatch_in);
@@ -2584,8 +2584,8 @@ static void syn_add_end_off(lpos_T *result, regmmatch_T *regmatch, synpat_T *spp
 {
   int col;
   int off;
-  char_u *base;
-  char_u *p;
+  char *base;
+  char *p;
 
   if (spp->sp_off_flags & (1 << idx)) {
     result->lnum = regmatch->startpos[0].lnum;
@@ -2601,7 +2601,7 @@ static void syn_add_end_off(lpos_T *result, regmmatch_T *regmatch, synpat_T *spp
   if (result->lnum > syn_buf->b_ml.ml_line_count) {
     col = 0;
   } else if (off != 0) {
-    base = (char_u *)ml_get_buf(syn_buf, result->lnum, false);
+    base = ml_get_buf(syn_buf, result->lnum, false);
     p = base + col;
     if (off > 0) {
       while (off-- > 0 && *p != NUL) {
@@ -2628,8 +2628,8 @@ static void syn_add_start_off(lpos_T *result, regmmatch_T *regmatch, synpat_T *s
 {
   int col;
   int off;
-  char_u *base;
-  char_u *p;
+  char *base;
+  char *p;
 
   if (spp->sp_off_flags & (1 << (idx + SPO_COUNT))) {
     result->lnum = regmatch->endpos[0].lnum;
@@ -2646,7 +2646,7 @@ static void syn_add_start_off(lpos_T *result, regmmatch_T *regmatch, synpat_T *s
     col = (int)strlen(ml_get_buf(syn_buf, result->lnum, false));
   }
   if (off != 0) {
-    base = (char_u *)ml_get_buf(syn_buf, result->lnum, false);
+    base = ml_get_buf(syn_buf, result->lnum, false);
     p = base + col;
     if (off > 0) {
       while (off-- && *p != NUL) {
@@ -2795,15 +2795,15 @@ static keyentry_T *match_keyword(char *keyword, hashtab_T *ht, stateitem_T *cur_
 // Handle ":syntax conceal" command.
 static void syn_cmd_conceal(exarg_T *eap, int syncing)
 {
-  char_u *arg = (char_u *)eap->arg;
-  char_u *next;
+  char *arg = eap->arg;
+  char *next;
 
-  eap->nextcmd = find_nextcmd((char *)arg);
+  eap->nextcmd = find_nextcmd(arg);
   if (eap->skip) {
     return;
   }
 
-  next = (char_u *)skiptowhite((char *)arg);
+  next = skiptowhite(arg);
   if (*arg == NUL) {
     if (curwin->w_s->b_syn_conceal) {
       msg("syntax conceal on");
@@ -2849,10 +2849,10 @@ static void syn_cmd_case(exarg_T *eap, int syncing)
 /// Handle ":syntax foldlevel" command.
 static void syn_cmd_foldlevel(exarg_T *eap, int syncing)
 {
-  char_u *arg = (char_u *)eap->arg;
-  char_u *arg_end;
+  char *arg = eap->arg;
+  char *arg_end;
 
-  eap->nextcmd = find_nextcmd((char *)arg);
+  eap->nextcmd = find_nextcmd(arg);
   if (eap->skip) {
     return;
   }
@@ -2869,7 +2869,7 @@ static void syn_cmd_foldlevel(exarg_T *eap, int syncing)
     return;
   }
 
-  arg_end = (char_u *)skiptowhite((char *)arg);
+  arg_end = skiptowhite(arg);
   if (STRNICMP(arg, "start", 5) == 0 && arg_end - arg == 5) {
     curwin->w_s->b_syn_foldlevel = SYNFLD_START;
   } else if (STRNICMP(arg, "minimum", 7) == 0 && arg_end - arg == 7) {
@@ -2879,7 +2879,7 @@ static void syn_cmd_foldlevel(exarg_T *eap, int syncing)
     return;
   }
 
-  arg = (char_u *)skipwhite((char *)arg_end);
+  arg = skipwhite(arg_end);
   if (*arg != NUL) {
     semsg(_(e_illegal_arg), arg);
   }
@@ -3216,10 +3216,10 @@ void syn_maybe_enable(void)
 /// @param syncing  when true: list syncing items
 static void syn_cmd_list(exarg_T *eap, int syncing)
 {
-  char_u *arg = (char_u *)eap->arg;
-  char_u *arg_end;
+  char *arg = eap->arg;
+  char *arg_end;
 
-  eap->nextcmd = find_nextcmd((char *)arg);
+  eap->nextcmd = find_nextcmd(arg);
   if (eap->skip) {
     return;
   }
@@ -3272,26 +3272,26 @@ static void syn_cmd_list(exarg_T *eap, int syncing)
   } else {
     // List the group IDs and syntax clusters that are in the argument.
     while (!ends_excmd(*arg) && !got_int) {
-      arg_end = (char_u *)skiptowhite((char *)arg);
+      arg_end = skiptowhite(arg);
       if (*arg == '@') {
-        int id = syn_scl_namen2id((char *)arg + 1, (int)(arg_end - arg - 1));
+        int id = syn_scl_namen2id(arg + 1, (int)(arg_end - arg - 1));
         if (id == 0) {
           semsg(_("E392: No such syntax cluster: %s"), arg);
         } else {
           syn_list_cluster(id - SYNID_CLUSTER);
         }
       } else {
-        int id = syn_name2id_len((char *)arg, (size_t)(arg_end - arg));
+        int id = syn_name2id_len(arg, (size_t)(arg_end - arg));
         if (id == 0) {
           semsg(_(e_nogroup), arg);
         } else {
           syn_list_one(id, syncing, true);
         }
       }
-      arg = (char_u *)skipwhite((char *)arg_end);
+      arg = skipwhite(arg_end);
     }
   }
-  eap->nextcmd = check_nextcmd((char *)arg);
+  eap->nextcmd = check_nextcmd(arg);
 }
 
 static void syn_lines_msg(void)

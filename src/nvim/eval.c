@@ -8007,7 +8007,7 @@ repeat:
       s++;
     }
 
-    int sep = (char_u)(*s++);
+    int sep = (uint8_t)(*s++);
     if (sep) {
       // find end of pattern
       p = vim_strchr(s, sep);
@@ -8040,7 +8040,7 @@ repeat:
 
   if (src[*usedlen] == ':' && src[*usedlen + 1] == 'S') {
     // vim_strsave_shellescape() needs a NUL terminated string.
-    c = (char_u)(*fnamep)[*fnamelen];
+    c = (uint8_t)(*fnamep)[*fnamelen];
     if (c != NUL) {
       (*fnamep)[*fnamelen] = NUL;
     }

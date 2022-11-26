@@ -2254,7 +2254,7 @@ int check_linecomment(const char *line)
           }
         } else if (!in_str && ((p - line) < 2
                                || (*(p - 1) != '\\' && *(p - 2) != '#'))
-                   && !is_pos_in_string((char_u *)line, (colnr_T)(p - line))) {
+                   && !is_pos_in_string(line, (colnr_T)(p - line))) {
           break;                // found!
         }
         p++;
@@ -2268,7 +2268,7 @@ int check_linecomment(const char *line)
       // because * / / * is an end and start of a C comment.  Only
       // accept the position if it is not inside a string.
       if (p[1] == '/' && (p == line || p[-1] != '*' || p[2] != '*')
-          && !is_pos_in_string((char_u *)line, (colnr_T)(p - line))) {
+          && !is_pos_in_string(line, (colnr_T)(p - line))) {
         break;
       }
       p++;

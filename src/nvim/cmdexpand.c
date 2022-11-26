@@ -458,12 +458,12 @@ static void redraw_wildmenu(expand_T *xp, int num_matches, char **matches, int m
         s += skip_wildmenu_char(xp, (char_u *)s);
         clen += ptr2cells(s);
         if ((l = utfc_ptr2len(s)) > 1) {
-          strncpy((char *)buf + len, s, (size_t)l);  // NOLINT(runtime/printf)
+          strncpy(buf + len, s, (size_t)l);  // NOLINT(runtime/printf)
           s += l - 1;
           len += l;
         } else {
           STRCPY(buf + len, transchar_byte((uint8_t)(*s)));
-          len += (int)strlen((char *)buf + len);
+          len += (int)strlen(buf + len);
         }
       }
     }
