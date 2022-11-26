@@ -124,60 +124,67 @@ end
 ---   - "forget": Remove file from trust database
 ---@return (boolean, string|nil) success, errmsg: true and nil if the operation was successful,
 ---   otherwise false and an error message.
-function M.trust(path, mode)
+function M.trust(opts)
   vim.validate({
-    path = { path, 's' },
-    mode = {
-      mode,
+    path = { opts.path, 's', true },
+    bufnr = { opts.bufnr, 'n', true },
+    action = {
+      opts.action,
       function(m)
-        return m == 'allow' or m == 'deny' or m == 'forget'
+        return m == 'allow' or m == 'deny' or m == 'remove'
       end,
-      [["allow" or "deny" or "forget"]],
+      [["allow" or "deny" or "remove"]],
     },
   })
 
-  local fullpath = vim.loop.fs_realpath(vim.fs.normalize(path))
+  local path = opts.path
+  local bufnr = opts.bufnr
+  local action = opts.action
+
+  if path and bufnr then
+    return false, 'path and bufnr are mutually exclusive'
+  end
+
+  local fullpath
+  if path then
+    fullpath = vim.loop.fs_realpath(vim.fs.normalize(path))
+  else
+    local bufname = vim.api.nvim_buf_get_name(bufnr)
+    if bufname == '' then
+      return false, 'buffer is not associated with a file'
+    end
+    fullpath = vim.loop.fs_realpath(vim.fs.normalize(bufname))
+  end
+
   if not fullpath then
     return false, string.format('invalid path: %s', path)
   end
 
   local trust = read_trust()
 
-  if not trust[fullpath] and mode == 'forget' then
-    -- File is not in trust database - nothing to do
-    return true, nil
-  end
-
-  if trust[fullpath] == '!' and mode == 'deny' then
-    -- File is already denied - nothing to do
-    return true, nil
-  end
-
-  local hash
-  do
-    local f = io.open(fullpath, 'r')
-    if not f then
-      return false, 'file does not exist: ' .. path
+  if action == 'allow' then
+    if not bufnr then
+      return false, 'allow operates on buffers - bufnr is required'
     end
-    local contents = f:read('*a')
-    f:close()
-    hash = vim.fn.sha256(contents)
-  end
 
-  if trust[fullpath] == hash and mode == 'allow' then
-    -- File already exists in trust database - nothing to do
-    return true, nil
-  end
+    local contents = table.concat(vim.api.nvim_buf_get_lines(bufnr, 0, -1, false))
+    local hash = vim.fn.sha256(contents)
 
-  if mode == 'allow' then
-    trust[fullpath] = hash
-  elseif mode == 'deny' then
-    trust[fullpath] = '!'
-  elseif mode == 'forget' then
-    trust[fullpath] = nil
+    if trust[fullpath] ~= hash then
+      trust[fullpath] = hash
+      write_trust(trust)
+    end
+  elseif action == 'deny' then
+    if trust[fullpath] ~= '!' then
+      trust[fullpath] = '!'
+      write_trust(trust)
+    end
+  elseif action == 'remove' then
+    if trust[fullpath] then
+      trust[fullpath] = nil
+      write_trust(trust)
+    end
   end
-
-  write_trust(trust)
 
   return true, nil
 end
