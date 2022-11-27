@@ -2372,19 +2372,25 @@ read({path})                                               *vim.secure.read()*
         (string|nil) The contents of the given file if it exists and is
         trusted, or nil otherwise.
 
+    See also: ~
+        vim.secure.trust()
+        :trust
+
 trust({opts})                                             *vim.secure.trust()*
-    Update the trust status of file at {path} in the trust database at
-    $XDG_STATE_HOME/nvim/trust.
+    Manage the trust database.
+
+    The trust database is located at |$XDG_STATE_HOME|/nvim/trust.
 
     Parameters: ~
       • {opts}  (table)
                 • action (string): "allow" to add a file to the trust database
                   and trust it, "deny" to add a file to the trust database and
                   deny it, "remove" to remove file from the trust database
-                • path (string|nil): Path to a file to update. If nil, must
-                  provide bufnr
-                • bufnr (number|nil): Buffer number to update. If nil, must
-                  provide path. For "allow", must provide bufnr.
+                • path (string|nil): Path to a file to update. Mutually
+                  exclusive with {bufnr}. Cannot be used when {action} is
+                  "allow".
+                • bufnr (number|nil): Buffer number to update. Mutually
+                  exclusive with {path}.
 
     Return: ~
         (boolean, string) success, msg:
