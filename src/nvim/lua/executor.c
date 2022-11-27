@@ -2218,7 +2218,7 @@ char *nlua_read_secure(const char *path)
   return buf;
 }
 
-bool nlua_trust(const char *action, const char *path, char **msg)
+bool nlua_trust(const char *action, const char *path)
 {
   lua_State *const lstate = global_lstate;
   lua_getglobal(lstate, "vim");
@@ -2245,12 +2245,19 @@ bool nlua_trust(const char *action, const char *path, char **msg)
   }
 
   bool success = lua_toboolean(lstate, -2);
-  size_t len = 0;
-  const char *contents = lua_tolstring(lstate, -1, &len);
-  if (contents != NULL) {
-    // Add one to include trailing null byte
-    *msg = xcalloc(len + 1, sizeof(char));
-    memcpy(*msg, contents, len + 1);
+  const char *msg = lua_tostring(lstate, -1);
+  if (msg != NULL) {
+    if (success) {
+      if (strcmp(action, "allow") == 0) {
+        smsg("\"%s\" trusted.", msg);
+      } else if (strcmp(action, "deny") == 0) {
+        smsg("\"%s\" denied.", msg);
+      } else if (strcmp(action, "remove") == 0) {
+        smsg("\"%s\" removed.", msg);
+      }
+    } else {
+      semsg(e_trustfile, msg);
+    }
   }
 
   // Pop return values, "vim" and "secure"

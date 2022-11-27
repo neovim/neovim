@@ -4968,49 +4968,25 @@ void ex_trust(exarg_T *eap)
   size_t len = (size_t)(p - eap->arg);
   char *arg1 = xmemdupz(eap->arg, len);
 
-  bool success = false;
-  bool action_allow = false;
-  bool action_deny = false;
-  bool action_remove = false;
-  char *msg = NULL;
-
   if (len > 2 && strcmp(arg1, "++deny") == 0) {
     char *path = skipwhite(p);
     if (path[0] == '\0') {
       path = NULL;
     }
-    success = nlua_trust("deny", path, &msg);
-    action_deny = 1;
+    nlua_trust("deny", path);
   } else if (len > 2 && strcmp(arg1, "++remove") == 0) {
     char *path = skipwhite(p);
     if (path[0] == '\0') {
       path = NULL;
     }
-    success = nlua_trust("remove", path, &msg);
-    action_remove = 1;
+    nlua_trust("remove", path);
   } else {
     char *path = skipwhite(eap->arg);
     if (path[0] == '\0') {
       path = NULL;
     }
-    success = nlua_trust("allow", path, &msg);
-    action_allow = 1;
-  }
-
-  if (msg != NULL) {
-    if (success) {
-      if (action_allow) {
-        smsg("\"%s\" trusted.", msg);
-      } else if (action_deny) {
-        smsg("\"%s\" denied.", msg);
-      } else if (action_remove) {
-        smsg("\"%s\" removed.", msg);
-      }
-    } else {
-      semsg(e_trustfile, msg);
-    }
+    nlua_trust("allow", path);
   }
 
   xfree(arg1);
-  xfree(msg);
 }
