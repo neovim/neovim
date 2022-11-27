@@ -2218,7 +2218,7 @@ char *nlua_read_secure(const char *path)
   return buf;
 }
 
-char *nlua_trust(const char *action, int bufnr)
+int nlua_trust(const char *action, int bufnr, char **msg)
 {
     lua_State *const lstate = global_lstate;
     lua_getglobal(lstate, "vim");
@@ -2235,20 +2235,20 @@ char *nlua_trust(const char *action, int bufnr)
 
     if (nlua_pcall(lstate, 1, 2)) {
       nlua_error(lstate, _("Error executing vim.secure.trust: %.*s"));
-      return NULL;
+      return FAIL;
     }
 
+    int success = lua_toboolean(lstate, -2);
     size_t len = 0;
     const char *contents = lua_tolstring(lstate, -1, &len);
-    char *errmsg = NULL;
     if (contents != NULL) {
       // Add one to include trailing null byte
-      errmsg = xcalloc(len + 1, sizeof(char));
-      memcpy(errmsg, contents, len + 1);
+      *msg = xcalloc(len + 1, sizeof(char));
+      memcpy(*msg, contents, len + 1);
     }
 
     // Pop return values, "vim" and "secure"
     lua_pop(lstate, 4);
 
-    return errmsg;
+    return success;
 }

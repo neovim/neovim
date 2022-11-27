@@ -4969,19 +4969,36 @@ void ex_trust(exarg_T *eap)
   char *arg1 = xcalloc(len + 1, sizeof(char));
   memcpy(arg1, eap->arg, len);
 
-  char *errmsg;
-  if (STRNCMP(arg1, "++deny", len) == 0) {
-    errmsg = nlua_trust("deny", atoi(skipwhite(p)));
-  } else if (STRNCMP(arg1, "++remove", len) == 0) {
-    errmsg = nlua_trust("remove", atoi(skipwhite(p)));
+  int success = 0;
+  int action_allow = 0, action_deny = 0, action_remove = 0;
+  char *msg = NULL;
+  if (len > 0 && STRNCMP(arg1, "++deny", len) == 0) {
+    success = nlua_trust("deny", atoi(skipwhite(p)), &msg);
+    action_deny = 1;
+  } else if (len > 0 && STRNCMP(arg1, "++remove", len) == 0) {
+    success = nlua_trust("remove", atoi(skipwhite(p)), &msg);
+    action_remove = 1;
   } else {
-    errmsg = nlua_trust("remove", atoi(skipwhite(eap->arg)));
+    success = nlua_trust("allow", atoi(skipwhite(eap->arg)), &msg);
+    action_allow = 1;
   }
 
-  if (errmsg != NULL) {
-    semsg("Error: %s", errmsg);
+  if (msg != NULL) {
+    if (success) {
+      msg_putchar('"');
+      msg_puts(msg);
+      if (action_allow) {
+        msg_puts("\" trusted.");
+      } else if (action_deny) {
+        msg_puts("\" denied.");
+      } else if (action_remove) {
+        msg_puts("\" removed.");
+      }
+    } else {
+      semsg("Error: %s", msg);
+    }
   }
 
   xfree(arg1);
-  xfree(errmsg);
+  xfree(msg);
 }

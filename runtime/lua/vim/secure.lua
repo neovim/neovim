@@ -124,8 +124,9 @@ end
 ---    - path (string|nil): Path to a file to update. If nil, must provide bufnr
 ---    - bufnr (number|nil): Buffer number to update. If nil, must provide path.
 ---      For "allow", must provide bufnr.
----@return (boolean, string|nil) success, errmsg: true and nil if the operation was successful,
----   otherwise false and an error message.
+---@return (boolean, string) success, msg:
+---    - true and full path of target file if operation was successful
+---    - false and error message on failure
 function M.trust(opts)
   vim.validate({
     path = { opts.path, 's', true },
@@ -186,7 +187,7 @@ function M.trust(opts)
   end
 
   write_trust(trust)
-  return true, nil
+  return true, fullpath
 end
 
 return M
