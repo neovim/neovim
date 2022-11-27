@@ -58,8 +58,8 @@ end
 ---@param path string Path to file
 ---@return string URI
 local function uri_from_fname(path)
-  local volume_path, fname = path:match('^([a-zA-Z]:)(.*)')
   if is_windows then
+    local volume_path, fname = path:match('^([a-zA-Z]:)(.*)')
     path = volume_path .. uri_encode(fname:gsub('\\', '/'))
   else
     path = uri_encode(path)
