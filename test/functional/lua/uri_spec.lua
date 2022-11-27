@@ -3,7 +3,7 @@ local clear = helpers.clear
 local exec_lua = helpers.exec_lua
 local eq = helpers.eq
 local write_file = require('test.helpers').write_file
-local is_win = helpers.iswin()
+local is_win = helpers.is_os('win')
 
 describe('URI methods', function()
   before_each(function()
