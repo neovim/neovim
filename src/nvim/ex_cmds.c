@@ -4997,8 +4997,6 @@ void ex_trust(exarg_T *eap)
 
   if (msg != NULL) {
     if (success) {
-      msg_putchar('"');
-      msg_puts(msg);
       if (action_allow) {
         smsg("\"%s\" trusted.", msg);
       } else if (action_deny) {
