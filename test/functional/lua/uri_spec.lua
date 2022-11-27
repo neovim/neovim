@@ -17,20 +17,26 @@ describe('URI methods', function()
       it('file path includes only ascii characters', function()
         exec_lua("filepath = '/Foo/Bar/Baz.txt'")
 
-        eq('file:///Foo/Bar/Baz.txt', exec_lua("return vim.uri_from_fname(filepath)"))
+        if not is_win then
+          eq('file:///Foo/Bar/Baz.txt', exec_lua("return vim.uri_from_fname(filepath)"))
+        end
       end)
 
       it('file path including white space', function()
         exec_lua("filepath = '/Foo /Bar/Baz.txt'")
 
-        eq('file:///Foo%20/Bar/Baz.txt', exec_lua("return vim.uri_from_fname(filepath)"))
+        if not is_win then
+          eq('file:///Foo%20/Bar/Baz.txt', exec_lua("return vim.uri_from_fname(filepath)"))
+        end
       end)
 
       it('file path including Unicode characters', function()
         exec_lua("filepath = '/xy/åäö/ɧ/汉语/↥/🤦/🦄/å/بِيَّ.txt'")
 
         -- The URI encoding should be case-insensitive
-        eq('file:///xy/%c3%a5%c3%a4%c3%b6/%c9%a7/%e6%b1%89%e8%af%ad/%e2%86%a5/%f0%9f%a4%a6/%f0%9f%a6%84/a%cc%8a/%d8%a8%d9%90%d9%8a%d9%8e%d9%91.txt', exec_lua("return vim.uri_from_fname(filepath)"))
+        if not is_win then
+          eq('file:///xy/%c3%a5%c3%a4%c3%b6/%c9%a7/%e6%b1%89%e8%af%ad/%e2%86%a5/%f0%9f%a4%a6/%f0%9f%a6%84/a%cc%8a/%d8%a8%d9%90%d9%8a%d9%8e%d9%91.txt', exec_lua("return vim.uri_from_fname(filepath)"))
+        end
       end)
     end)
 
