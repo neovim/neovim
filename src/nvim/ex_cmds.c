@@ -4966,16 +4966,15 @@ void ex_trust(exarg_T *eap)
 {
   char *p = skiptowhite(eap->arg);
   size_t len = (size_t)(p - eap->arg);
-  char *arg1 = xcalloc(len + 1, sizeof(char));
-  memcpy(arg1, eap->arg, len);
+  char *arg1 = xmemdupz(eap->arg, len);
 
-  int success = 0;
-  int action_allow = 0, action_deny = 0, action_remove = 0;
+  bool success = false;
+  bool action_allow = false, action_deny = false, action_remove = false;
   char *msg = NULL;
-  if (len > 0 && STRNCMP(arg1, "++deny", len) == 0) {
+  if (len > 2 && STRNCMP(arg1, "++deny", len) == 0) {
     success = nlua_trust("deny", atoi(skipwhite(p)), &msg);
     action_deny = 1;
-  } else if (len > 0 && STRNCMP(arg1, "++remove", len) == 0) {
+  } else if (len > 2 && STRNCMP(arg1, "++remove", len) == 0) {
     success = nlua_trust("remove", atoi(skipwhite(p)), &msg);
     action_remove = 1;
   } else {

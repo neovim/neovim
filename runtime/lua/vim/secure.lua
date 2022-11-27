@@ -173,17 +173,11 @@ function M.trust(opts)
     local contents = table.concat(vim.api.nvim_buf_get_lines(bufnr, 0, -1, false))
     local hash = vim.fn.sha256(contents)
 
-    if trust[fullpath] ~= hash then
-      trust[fullpath] = hash
-    end
+    trust[fullpath] = hash
   elseif action == 'deny' then
-    if trust[fullpath] ~= '!' then
-      trust[fullpath] = '!'
-    end
+    trust[fullpath] = '!'
   elseif action == 'remove' then
-    if trust[fullpath] then
-      trust[fullpath] = nil
-    end
+    trust[fullpath] = nil
   end
 
   write_trust(trust)
