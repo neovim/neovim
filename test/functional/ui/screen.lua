@@ -101,13 +101,10 @@ end
 
 local default_screen_timeout = default_timeout_factor * 3500
 
-do
-  local spawn, nvim_prog = helpers.spawn, helpers.nvim_prog
-  local session = spawn({nvim_prog, '-u', 'NONE', '-i', 'NONE', '-N', '--embed'})
+function Screen._init_colors(session)
   local status, rv = session:request('nvim_get_color_map')
   if not status then
-    print('failed to get color map')
-    os.exit(1)
+    error('failed to get color map')
   end
   local colors = rv
   local colornames = {}
@@ -116,12 +113,15 @@ do
     -- this is just a helper to get any canonical name of a color
     colornames[rgb] = name
   end
-  session:close()
   Screen.colors = colors
   Screen.colornames = colornames
 end
 
 function Screen.new(width, height)
+  if not Screen.colors then
+    Screen._init_colors(get_session())
+  end
+
   if not width then
     width = 53
   end

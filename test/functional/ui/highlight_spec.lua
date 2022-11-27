@@ -1403,7 +1403,7 @@ describe('ColorColumn highlight', function()
   before_each(function()
     clear()
     screen = Screen.new(40, 15)
-    Screen:set_default_attr_ids({
+    screen:set_default_attr_ids({
       [1] = {background = Screen.colors.LightRed},  -- ColorColumn
       [2] = {background = Screen.colors.Grey90},  -- CursorLine
       [3] = {foreground = Screen.colors.Brown},  -- LineNr
