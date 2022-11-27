@@ -103,67 +103,42 @@ describe('URI methods', function()
 
     describe('decode Windows filepath', function()
       it('file path includes only ascii charactors', function()
-        local test_case = [[
-        local uri = 'file:///C:/Foo/Bar/Baz.txt'
-        return vim.uri_to_fname(uri)
-        ]]
+        exec_lua("filepath = 'file:///C:/Foo/Bar/Baz.txt'")
 
         if is_win then
-          eq('C:\\Foo\\Bar\\Baz.txt', exec_lua(test_case))
-        else
-          eq('/C:/Foo/Bar/Baz.txt', exec_lua(test_case))
+          eq('C:\\Foo\\Bar\\Baz.txt', exec_lua('return vim.uri_to_fname(filepath)'))
         end
       end)
 
       it('local file path without hostname', function()
-        local test_case = [[
-          local uri = 'file:/C:/Foo/Bar/Baz.txt'
-          return vim.uri_to_fname(uri)
-        ]]
+        exec_lua("filepath = 'file:/C:/Foo/Bar/Baz.txt'")
 
         if is_win then
-          eq('C:\\Foo\\Bar\\Baz.txt', exec_lua(test_case))
-        else
-          eq('/C:/Foo/Bar/Baz.txt', exec_lua(test_case))
+          eq('C:\\Foo\\Bar\\Baz.txt', exec_lua('return vim.uri_to_fname(filepath)'))
         end
       end)
 
       it('file path includes only ascii characters with encoded colon character', function()
-        local test_case = [[
-        local uri = 'file:///C%3A/Foo/Bar/Baz.txt'
-        return vim.uri_to_fname(uri)
-        ]]
+        exec_lua("filepath = 'file:///C%3A/Foo/Bar/Baz.txt'")
 
         if is_win then
-          eq('C:\\Foo\\Bar\\Baz.txt', exec_lua(test_case))
-        else
-          eq('/C:/Foo/Bar/Baz.txt', exec_lua(test_case))
+          eq('C:\\Foo\\Bar\\Baz.txt', exec_lua('return vim.uri_to_fname(filepath)'))
         end
       end)
 
       it('file path including white space', function()
-        local test_case = [[
-        local uri = 'file:///C:/Foo%20/Bar/Baz.txt'
-        return vim.uri_to_fname(uri)
-        ]]
+        exec_lua("filepath = 'file:///C:/Foo%20/Bar/Baz.txt'")
 
         if is_win then
-          eq('C:\\Foo \\Bar\\Baz.txt', exec_lua(test_case))
-        else
-          eq('/C:/Foo /Bar/Baz.txt', exec_lua(test_case))
+          eq('C:\\Foo \\Bar\\Baz.txt', exec_lua('return vim.uri_to_fname(filepath)'))
         end
       end)
 
       it('file path including Unicode charactors', function()
-        local test_case = [[
-          local uri = 'file:///C:/xy/%C3%A5%C3%A4%C3%B6/%C9%A7/%E6%B1%89%E8%AF%AD/%E2%86%A5/%F0%9F%A4%A6/%F0%9F%A6%84/a%CC%8A/%D8%A8%D9%90%D9%8A%D9%8E%D9%91.txt'
-          return vim.uri_to_fname(uri)
-        ]]
+        exec_lua("filepath = 'file:///C:/xy/%C3%A5%C3%A4%C3%B6/%C9%A7/%E6%B1%89%E8%AF%AD/%E2%86%A5/%F0%9F%A4%A6/%F0%9F%A6%84/a%CC%8A/%D8%A8%D9%90%D9%8A%D9%8E%D9%91.txt'")
 
         if is_win then
-          eq('C:\\xy\\åäö\\ɧ\\汉语\\↥\\🤦\\🦄\\å\\بِيَّ.txt', exec_lua(test_case))
-        else
-          eq('/C:/xy/åäö/ɧ/汉语/↥/🤦/🦄/å/بِيَّ.txt', exec_lua(test_case))
+          eq('C:\\xy\\åäö\\ɧ\\汉语\\↥\\🤦\\🦄\\å\\بِيَّ.txt', exec_lua('return vim.uri_to_fname(filepath)'))
         end
       end)
     end)
