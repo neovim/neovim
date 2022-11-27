@@ -3,7 +3,7 @@ local clear = helpers.clear
 local exec_lua = helpers.exec_lua
 local eq = helpers.eq
 local write_file = require('test.helpers').write_file
-local is_win = helpers.iswin
+local is_win = helpers.iswin()
 
 describe('URI methods', function()
   before_each(function()
@@ -34,22 +34,17 @@ describe('URI methods', function()
 
     describe('encode Windows filepath', function()
       it('file path includes only ascii charactors', function()
-        local result = exec_lua[[
-          local filepath = 'C:\\Foo\\Bar\\Baz.txt'
-          return vim.uri_from_fname(filepath)
-        ]]
+        exec_lua([[filepath = 'C:\\Foo\\Bar\\Baz.txt']])
 
-        if is_win() then
-          eq('file:///C:/Foo/Bar/Baz.txt', result)
-        else
-          eq('file://C:%5cFoo%5cBar%5cBaz.txt', result)
+        if is_win then
+          eq('file:///C:/Foo/Bar/Baz.txt', exec_lua("return vim.uri_from_fname(filepath)"))
         end
       end)
 
       it('file path including white space', function()
         exec_lua([[filepath = 'C:\\Foo \\Bar\\Baz.txt']])
 
-        if is_win() then
+        if is_win then
           eq('file:///C:/Foo%20/Bar/Baz.txt', exec_lua("return vim.uri_from_fname(filepath)"))
         else
           eq('file://C:%5cFoo%20%5cBar%5cBaz.txt', exec_lua("return vim.uri_from_fname(filepath)"))
@@ -59,7 +54,7 @@ describe('URI methods', function()
       it('file path including Unicode charactors', function()
         exec_lua([[filepath = 'C:\\xy\\åäö\\ɧ\\汉语\\↥\\🤦\\🦄\\å\\بِيَّ.txt']])
 
-        if is_win() then
+        if is_win then
           eq('file:///C:/xy/%c3%a5%c3%a4%c3%b6/%c9%a7/%e6%b1%89%e8%af%ad/%e2%86%a5/%f0%9f%a4%a6/%f0%9f%a6%84/a%cc%8a/%d8%a8%d9%90%d9%8a%d9%8e%d9%91.txt', exec_lua("return vim.uri_from_fname(filepath)"))
         else
           eq('file://C:%5cxy%5c%c3%a5%c3%a4%c3%b6%5c%c9%a7%5c%e6%b1%89%e8%af%ad%5c%e2%86%a5%5c%f0%9f%a4%a6%5c%f0%9f%a6%84%5ca%cc%8a%5c%d8%a8%d9%90%d9%8a%d9%8e%d9%91.txt', exec_lua("return vim.uri_from_fname(filepath)"))
@@ -73,13 +68,17 @@ describe('URI methods', function()
       it('file path includes only ascii characters', function()
         exec_lua("uri = 'file:///Foo/Bar/Baz.txt'")
 
-        eq('/Foo/Bar/Baz.txt', exec_lua("return vim.uri_to_fname(uri)"))
+        if not is_win then
+          eq('/Foo/Bar/Baz.txt', exec_lua("return vim.uri_to_fname(uri)"))
+        end
       end)
 
       it('local file path without hostname', function()
         exec_lua("uri = 'file:/Foo/Bar/Baz.txt'")
 
-        eq('/Foo/Bar/Baz.txt', exec_lua("return vim.uri_to_fname(uri)"))
+        if not is_win then
+          eq('/Foo/Bar/Baz.txt', exec_lua("return vim.uri_to_fname(uri)"))
+        end
       end)
 
       it('file path including white space', function()
@@ -94,7 +93,9 @@ describe('URI methods', function()
         return vim.uri_to_fname(uri)
         ]]
 
-        eq('/xy/åäö/ɧ/汉语/↥/🤦/🦄/å/بِيَّ.txt', exec_lua(test_case))
+        if not is_win then
+          eq('/xy/åäö/ɧ/汉语/↥/🤦/🦄/å/بِيَّ.txt', exec_lua(test_case))
+        end
       end)
     end)
 
@@ -105,7 +106,7 @@ describe('URI methods', function()
         return vim.uri_to_fname(uri)
         ]]
 
-        if is_win() then
+        if is_win then
           eq('C:\\Foo\\Bar\\Baz.txt', exec_lua(test_case))
         else
           eq('/C:/Foo/Bar/Baz.txt', exec_lua(test_case))
@@ -118,7 +119,7 @@ describe('URI methods', function()
           return vim.uri_to_fname(uri)
         ]]
 
-        if is_win() then
+        if is_win then
           eq('C:\\Foo\\Bar\\Baz.txt', exec_lua(test_case))
         else
           eq('/C:/Foo/Bar/Baz.txt', exec_lua(test_case))
@@ -131,7 +132,7 @@ describe('URI methods', function()
         return vim.uri_to_fname(uri)
         ]]
 
-        if is_win() then
+        if is_win then
           eq('C:\\Foo\\Bar\\Baz.txt', exec_lua(test_case))
         else
           eq('/C:/Foo/Bar/Baz.txt', exec_lua(test_case))
@@ -144,7 +145,7 @@ describe('URI methods', function()
         return vim.uri_to_fname(uri)
         ]]
 
-        if is_win() then
+        if is_win then
           eq('C:\\Foo \\Bar\\Baz.txt', exec_lua(test_case))
         else
           eq('/C:/Foo /Bar/Baz.txt', exec_lua(test_case))
@@ -157,7 +158,7 @@ describe('URI methods', function()
           return vim.uri_to_fname(uri)
         ]]
 
-        if is_win() then
+        if is_win then
           eq('C:\\xy\\åäö\\ɧ\\汉语\\↥\\🤦\\🦄\\å\\بِيَّ.txt', exec_lua(test_case))
         else
           eq('/C:/xy/åäö/ɧ/汉语/↥/🤦/🦄/å/بِيَّ.txt', exec_lua(test_case))
