@@ -1615,7 +1615,7 @@ There are three different types of searching:
    directory or in the directory of the current file (if the relative path
    starts with './' and 'd' is not included in 'cpoptions').
 
-   If Vim's current path is /u/user_x/work/release and you do >
+   If Vim's cu rrent path is /u/user_x/work/release and you do >
 	:set path=include;/u/user_x
 <  and then search for a file with |gf| the file is searched in: >
 	/u/user_x/work/release/include
@@ -1651,3 +1651,21 @@ There are three different types of searching:
    with depth limiter (/usr/**2) or upward search (;) notations.
 
  vim:tw=78:ts=8:noet:ft=help:norl:
+
+==============================================================================
+11. Secure Files						*secure*
+
+Secure Files are used to manage files that in a trust database, allowing
+trusted files to be sourced via |exrc|.
+
+							*:trust* *E5570*
+:trust [++deny] [++remove] [{file}]
+			Manage file in the trust database. Without any options,
+			`:trust` will mark file associated with current buffer
+			as trusted.
+			`++deny` will mark a file as denied and you won't be
+			asked if you wan't to source that file.
+			`++remove` will remove the file from the trust database.
+			`++deny` and `++remove` accept optional parameter
+			`{file}`, that is path to the file to be denied or
+			removed.

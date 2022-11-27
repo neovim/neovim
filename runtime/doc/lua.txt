@@ -2387,7 +2387,8 @@ trust({opts})                                             *vim.secure.trust()*
                   provide path. For "allow", must provide bufnr.
 
     Return: ~
-        (boolean, string|nil) success, errmsg: true and nil if the operation
-        was successful, otherwise false and an error message.
+        (boolean, string) success, msg:
+        • true and full path of target file if operation was successful
+        • false and error message on failure
 
  vim:tw=78:ts=8:sw=4:sts=4:et:ft=help:norl:
