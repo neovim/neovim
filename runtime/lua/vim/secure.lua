@@ -1,4 +1,5 @@
 local M = {}
+
 ---@private
 --- Reads trust database from $XDG_STATE_HOME/nvim/trust.
 ---
@@ -41,6 +42,9 @@ end
 --- Attempt to read the file at {path} prompting the user if the file should be
 --- trusted. The user's choice is persisted in a trust database at
 --- $XDG_STATE_HOME/nvim/trust.
+---
+---@see vim.secure.trust()
+---@see :trust
 ---
 ---@param path (string) Path to a file to read.
 ---
@@ -114,16 +118,17 @@ function M.read(path)
   return contents
 end
 
---- Update the trust status of file at {path} in the trust database at
---- $XDG_STATE_HOME/nvim/trust.
+--- Manage the trust database.
+---
+--- The trust database is located at |$XDG_STATE_HOME|/nvim/trust.
 ---
 ---@param opts (table):
 ---    - action (string): "allow" to add a file to the trust database and trust it,
 ---      "deny" to add a file to the trust database and deny it,
 ---      "remove" to remove file from the trust database
----    - path (string|nil): Path to a file to update. If nil, must provide bufnr
----    - bufnr (number|nil): Buffer number to update. If nil, must provide path.
----      For "allow", must provide bufnr.
+---    - path (string|nil): Path to a file to update. Mutually exclusive with {bufnr}.
+---      Cannot be used when {action} is "allow".
+---    - bufnr (number|nil): Buffer number to update. Mutually exclusive with {path}.
 ---@return (boolean, string) success, msg:
 ---    - true and full path of target file if operation was successful
 ---    - false and error message on failure

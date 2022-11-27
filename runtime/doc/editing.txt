@@ -1653,19 +1653,28 @@ There are three different types of searching:
  vim:tw=78:ts=8:noet:ft=help:norl:
 
 ==============================================================================
-11. Secure Files						*secure*
+11. Trusted Files						*trust*
 
-Secure Files are used to manage files that in a trust database, allowing
-trusted files to be sourced via |exrc|.
+Nvim has the ability to execute arbitrary code through the 'exrc' option. In
+order to prevent executing code from untrusted sources, Nvim has the concept of
+"trusted files". An untrusted file will not be executed without the user's
+consent, and a user can permanently mark a file as trusted or untrusted using
+the |:trust| command or the |vim.secure.read()| function.
 
 							*:trust* *E5570*
 :trust [++deny] [++remove] [{file}]
-			Manage file in the trust database. Without any options,
-			`:trust` will mark file associated with current buffer
-			as trusted.
-			`++deny` will mark a file as denied and you won't be
-			asked if you wan't to source that file.
-			`++remove` will remove the file from the trust database.
-			`++deny` and `++remove` accept optional parameter
-			`{file}`, that is path to the file to be denied or
-			removed.
+
+			Manage files in the trust database. Without any options
+			or arguments
+			`:trust` adds the file associated with the current
+			buffer to the trust database, along with the SHA256
+			hash of its contents.
+			`++deny` marks the file associated with the current
+			buffer (or {file}, if given) as denied; no prompts will
+			be displayed to the user and the file will never be
+			executed.
+			`++remove` removes the file associated with the current
+			buffer (or {file}, if given) from the trust database.
+			Future attempts to read the file in a secure setting
+			(i.e. with 'exrc' or |vim.secure.read()|) will prompt
+			the user if the file is trusted.
