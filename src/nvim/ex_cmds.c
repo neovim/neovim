@@ -4964,29 +4964,24 @@ void ex_oldfiles(exarg_T *eap)
 
 void ex_trust(exarg_T *eap)
 {
-  char *p = skiptowhite(eap->arg);
-  size_t len = (size_t)(p - eap->arg);
-  char *arg1 = xmemdupz(eap->arg, len);
+  const char *const p = skiptowhite(eap->arg);
+  char *arg1 = xmemdupz(eap->arg, (size_t)(p - eap->arg));
+  const char *action = "allow";
+  const char *path = eap->arg;
 
-  if (len > 2 && strcmp(arg1, "++deny") == 0) {
-    char *path = skipwhite(p);
-    if (path[0] == '\0') {
-      path = NULL;
-    }
-    nlua_trust("deny", path);
-  } else if (len > 2 && strcmp(arg1, "++remove") == 0) {
-    char *path = skipwhite(p);
-    if (path[0] == '\0') {
-      path = NULL;
-    }
-    nlua_trust("remove", path);
-  } else {
-    char *path = skipwhite(eap->arg);
-    if (path[0] == '\0') {
-      path = NULL;
-    }
-    nlua_trust("allow", path);
+  if (strcmp(arg1, "++deny") == 0) {
+    path = skipwhite(p);
+    action = "deny";
+  } else if (strcmp(arg1, "++remove") == 0) {
+    path = skipwhite(p);
+    action = "remove";
   }
+
+  if (path[0] == '\0') {
+    path = NULL;
+  }
+
+  nlua_trust(action, path);
 
   xfree(arg1);
 }
