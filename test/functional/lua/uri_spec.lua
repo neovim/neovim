@@ -210,7 +210,9 @@ describe('URI methods', function()
         local uri = '%s'
         return vim.uri_from_bufnr(vim.uri_to_bufnr(uri))
       ]], uri)
-      eq(uri, exec_lua(test_case))
+      if not is_win then
+        eq(uri, exec_lua(test_case))
+      end
     end)
 
     it('uri_to_bufnr & uri_from_bufnr returns original uri for non-file uris without authority', function()
@@ -219,7 +221,9 @@ describe('URI methods', function()
         local uri = '%s'
         return vim.uri_from_bufnr(vim.uri_to_bufnr(uri))
       ]], uri)
-      eq(uri, exec_lua(test_case))
+      if not is_win then
+        eq(uri, exec_lua(test_case))
+      end
     end)
   end)
 end)
