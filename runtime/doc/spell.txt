@@ -482,7 +482,7 @@ You can create a Vim spell file from the .aff and .dic files that Myspell
 uses.  Myspell is used by OpenOffice.org and Mozilla. The OpenOffice .oxt
 files are zip files which contain the .aff and .dic files. You should be able
 to find them here:
-	http://extensions.services.openoffice.org/dictionary
+	https://extensions.services.openoffice.org/dictionary
 The older, OpenOffice 2 files may be used if this doesn't work:
 	http://wiki.services.openoffice.org/wiki/Dictionaries
 You can also use a plain word list.  The results are the same, the choice
@@ -764,13 +764,13 @@ them before the Vim word list is made.  The tools for this can be found in the
 The format for the affix and word list files is based on what Myspell uses
 (the spell checker of Mozilla and OpenOffice.org).  A description can be found
 here:
-	http://lingucomponent.openoffice.org/affix.readme ~
+	https://lingucomponent.openoffice.org/affix.readme ~
 Note that affixes are case sensitive, this isn't obvious from the description.
 
 Vim supports quite a few extras.  They are described below |spell-affix-vim|.
 Attempts have been made to keep this compatible with other spell checkers, so
 that the same files can often be used.  One other project that offers more
-than Myspell is Hunspell ( http://hunspell.sf.net ).
+than Myspell is Hunspell ( https://hunspell.github.io ).
 
 
 WORD LIST FORMAT				*spell-dic-format*
@@ -886,7 +886,7 @@ right encoding.
 				*spell-AUTHOR* *spell-EMAIL* *spell-COPYRIGHT*
 	NAME		Name of the language
 	VERSION		1.0.1  with fixes
-	HOME		http://www.myhome.eu
+	HOME		https://www.example.com
 	AUTHOR		John Doe
 	EMAIL		john AT Doe DOT net
 	COPYRIGHT	LGPL
@@ -992,8 +992,8 @@ Note: even when using "num" or "long" the number of flags available to
 compounding and prefixes is limited to about 250.
 
 
-AFFIXES
-					    *spell-PFX* *spell-SFX*
+AFFIXES						*spell-PFX* *spell-SFX*
+
 The usual PFX (prefix) and SFX (suffix) lines are supported (see the Myspell
 documentation or the Aspell manual:
 http://aspell.net/man-html/Affix-Compression.html).
@@ -1583,7 +1583,7 @@ CHECKCOMPOUNDTRIPLE  (Hunspell)			*spell-CHECKCOMPOUNDTRIPLE*
 		Forbid three identical characters when compounding.  Not
 		supported.
 
-CHECKSHARPS  (Hunspell))			*spell-CHECKSHARPS*
+CHECKSHARPS  (Hunspell)				*spell-CHECKSHARPS*
 		SS letter pair in uppercased (German) words may be upper case
 		sharp s (ß). Not supported.
 

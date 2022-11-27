@@ -181,7 +181,7 @@ function M.cls(bufnr)
     return vim.g.filetype_cls
   end
   local line = getlines(bufnr, 1)
-  if line:find('^%%') then
+  if line:find('^[%%\\]') then
     return 'tex'
   elseif line:find('^#') and line:lower():find('rexx') then
     return 'rexx'
@@ -632,6 +632,19 @@ function M.lpc(bufnr)
     end
   end
   return 'c'
+end
+
+function M.lsl(bufnr)
+  if vim.g.filetype_lsl then
+    return vim.g.filetype_lsl
+  end
+
+  local line = nextnonblank(bufnr, 1)
+  if findany(line, { '^%s*%%', ':%s*trait%s*$' }) then
+    return 'larch'
+  else
+    return 'lsl'
+  end
 end
 
 function M.m(bufnr)
@@ -1153,13 +1166,14 @@ function M.sh(path, contents, name)
       vim.b[b].is_bash = nil
       vim.b[b].is_sh = nil
     end
-  elseif vim.g.bash_is_sh or matchregex(name, [[\<bash\>]]) or matchregex(name, [[\<bash2\>]]) then
+  elseif vim.g.bash_is_sh or matchregex(name, [[\<\(bash\|bash2\)\>]]) then
     on_detect = function(b)
       vim.b[b].is_bash = 1
       vim.b[b].is_kornshell = nil
       vim.b[b].is_sh = nil
     end
-  elseif matchregex(name, [[\<sh\>]]) then
+    -- Ubuntu links sh to dash
+  elseif matchregex(name, [[\<\(sh\|dash\)\>]]) then
     on_detect = function(b)
       vim.b[b].is_sh = 1
       vim.b[b].is_kornshell = nil
@@ -1192,6 +1206,19 @@ function M.shell(path, contents, name)
     end
   end
   return name
+end
+
+-- Swift Intermediate Language or SILE
+function M.sil(bufnr)
+  for _, line in ipairs(getlines(bufnr, 1, 100)) do
+    if line:find('^%s*[\\%%]') then
+      return 'sile'
+    elseif line:find('^%s*%S') then
+      return 'sil'
+    end
+  end
+  -- No clue, default to "sil"
+  return 'sil'
 end
 
 -- SMIL or SNMP MIB file
@@ -1434,8 +1461,8 @@ local function match_from_hashbang(contents, path)
     name = 'wish'
   end
 
-  if matchregex(name, [[^\(bash\d*\|\|ksh\d*\|sh\)\>]]) then
-    -- Bourne-like shell scripts: bash bash2 ksh ksh93 sh
+  if matchregex(name, [[^\(bash\d*\|dash\|ksh\d*\|sh\)\>]]) then
+    -- Bourne-like shell scripts: bash bash2 dash ksh ksh93 sh
     return require('vim.filetype.detect').sh(path, contents, first_line)
   elseif matchregex(name, [[^csh\>]]) then
     return require('vim.filetype.detect').shell(path, contents, vim.g.filetype_csh or 'csh')

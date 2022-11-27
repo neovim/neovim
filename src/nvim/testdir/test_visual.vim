@@ -225,6 +225,15 @@ func Test_virtual_replace()
   exe "normal iabcdefghijklmnopqrst\<Esc>0gRAB\tIJKLMNO\tQR"
   call assert_equal(['AB......CDEFGHI.Jkl',
 	      \ 'AB	IJKLMNO	QRst'], getline(12, 13))
+
+  " Test inserting Tab with 'noexpandtab' and 'softabstop' set to 4
+  %d
+  call setline(1, 'aaaaaaaaaaaaa')
+  set softtabstop=4
+  exe "normal gggR\<Tab>\<Tab>x"
+  call assert_equal("\txaaaa", getline(1))
+  set softtabstop&
+
   enew!
   set noai bs&vim
   if exists('save_t_kD')
@@ -472,6 +481,18 @@ func Test_visual_block_put()
   call feedkeys("jl\<C-V>ljp", 'xt')
   call assert_equal(['One', 'T', 'Tee', 'One', ''], getline(1, '$'))
   bw!
+endfunc
+
+func Test_visual_block_put_invalid()
+  enew!
+  behave mswin
+  norm yy
+  norm v)Ps/^/	
+  " this was causing the column to become negative
+  silent norm ggv)P
+
+  bwipe!
+  behave xterm
 endfunc
 
 " Visual modes (v V CTRL-V) followed by an operator; count; repeating
@@ -1269,7 +1290,7 @@ func Test_visual_block_with_virtualedit()
 endfunc
 
 func Test_visual_block_ctrl_w_f()
-  " Emtpy block selected in new buffer should not result in an error.
+  " Empty block selected in new buffer should not result in an error.
   au! BufNew foo sil norm f
   edit foo
 
@@ -1491,6 +1512,5 @@ func Test_switch_buffer_ends_visual_mode()
   bwipe!
   exe 'bwipe!' buf2
 endfunc
-
 
 " vim: shiftwidth=2 sts=2 expandtab

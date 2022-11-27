@@ -1,7 +1,7 @@
 #ifndef NVIM_OPTION_H
 #define NVIM_OPTION_H
 
-#include "nvim/ex_cmds_defs.h"  // for exarg_T
+#include "nvim/ex_cmds_defs.h"
 
 /// Returned by get_option_value().
 typedef enum {

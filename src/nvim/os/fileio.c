@@ -11,22 +11,19 @@
 #include <fcntl.h>
 #include <stdbool.h>
 #include <stddef.h>
-
-#include "auto/config.h"
-
-#ifdef HAVE_SYS_UIO_H
-# include <sys/uio.h>
-#endif
-
+#include <stdint.h>
 #include <uv.h>
 
-#include "nvim/globals.h"
+#include "auto/config.h"
+#include "nvim/gettext.h"
 #include "nvim/macros.h"
 #include "nvim/memory.h"
 #include "nvim/message.h"
 #include "nvim/os/fileio.h"
 #include "nvim/os/os.h"
+#include "nvim/os/os_defs.h"
 #include "nvim/rbuffer.h"
+#include "nvim/types.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "os/fileio.c.generated.h"
@@ -71,12 +68,20 @@ int file_open(FileDescriptor *const ret_fp, const char *const fname, const int f
   FLAG(flags, kFileReadOnly, O_RDONLY, kFalse, wr != kTrue);
 #ifdef O_NOFOLLOW
   FLAG(flags, kFileNoSymlink, O_NOFOLLOW, kNone, true);
+  FLAG(flags, kFileMkDir, O_CREAT|O_WRONLY, kTrue, !(flags & kFileCreateOnly));
 #endif
 #undef FLAG
   // wr is used for kFileReadOnly flag, but on
   // QB:neovim-qb-slave-ubuntu-12-04-64bit it still errors out with
   // `error: variable ‘wr’ set but not used [-Werror=unused-but-set-variable]`
   (void)wr;
+
+  if (flags & kFileMkDir) {
+    int mkdir_ret = os_file_mkdir((char *)fname, 0755);
+    if (mkdir_ret < 0) {
+      return mkdir_ret;
+    }
+  }
 
   const int fd = os_open(fname, os_open_flags, mode);
 

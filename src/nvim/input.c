@@ -4,21 +4,29 @@
 // input.c: high level functions for prompting the user or input
 // like yes/no or number prompts.
 
-#include <inttypes.h>
 #include <stdbool.h>
+#include <string.h>
 
+#include "nvim/ascii.h"
+#include "nvim/event/multiqueue.h"
 #include "nvim/func_attr.h"
 #include "nvim/getchar.h"
+#include "nvim/gettext.h"
+#include "nvim/globals.h"
+#include "nvim/highlight_defs.h"
 #include "nvim/input.h"
+#include "nvim/keycodes.h"
 #include "nvim/mbyte.h"
 #include "nvim/memory.h"
+#include "nvim/message.h"
 #include "nvim/mouse.h"
 #include "nvim/os/input.h"
+#include "nvim/types.h"
 #include "nvim/ui.h"
 #include "nvim/vim.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "input.c.generated.h"
+# include "input.c.generated.h"  // IWYU pragma: export
 #endif
 
 /// Ask for a reply from the user, 'y' or 'n'
@@ -46,7 +54,7 @@ int ask_yesno(const char *const str, const bool direct)
 
   int r = ' ';
   while (r != 'y' && r != 'n') {
-    // Same highlighting as for wait_return.
+    // same highlighting as for wait_return()
     smsg_attr(HL_ATTR(HLF_R), "%s (y/n)?", str);
     if (direct) {
       r = get_keystroke(NULL);
@@ -83,7 +91,6 @@ int get_keystroke(MultiQueue *events)
   int len = 0;
   int n;
   int save_mapped_ctrl_c = mapped_ctrl_c;
-  int waited = 0;
 
   mapped_ctrl_c = 0;        // mappings are not used here
   for (;;) {
@@ -110,10 +117,8 @@ int get_keystroke(MultiQueue *events)
       // Replace zero and K_SPECIAL by a special key code.
       n = fix_input_buffer(buf + len, n);
       len += n;
-      waited = 0;
-    } else if (len > 0) {
-      waited++;             // keep track of the waiting time
     }
+
     if (n > 0) {  // found a termcode: adjust length
       len = n;
     }

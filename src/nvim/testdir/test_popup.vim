@@ -359,7 +359,7 @@ func Test_completefunc_opens_new_window_one()
   /^one
   call assert_fails('call feedkeys("A\<C-X>\<C-U>\<C-N>\<Esc>", "x")', 'E565:')
   call assert_equal(winid, win_getid())
-  call assert_equal('oneDEF', getline(1))
+  call assert_equal('onedef', getline(1))
   q!
 endfunc
 
@@ -384,9 +384,7 @@ func Test_completefunc_opens_new_window_two()
   /^two
   call assert_fails('call feedkeys("A\<C-X>\<C-U>\<C-N>\<Esc>", "x")', 'E565:')
   call assert_equal(winid, win_getid())
-  " v8.2.1919 hasn't been ported yet
-  " call assert_equal('twodef', getline(1))
-  call assert_equal('twoDEF', getline(1))
+  call assert_equal('twodef', getline(1))
   q!
 endfunc
 
@@ -677,9 +675,9 @@ func Test_complete_CTRLN_startofbuffer()
 endfunc
 
 func Test_popup_and_window_resize()
-  if !has('terminal') || has('gui_running')
-    return
-  endif
+  CheckFeature terminal
+  CheckNotGui
+
   let h = winheight(0)
   if h < 15
     return
@@ -864,7 +862,6 @@ func Test_popup_position()
 endfunc
 
 func Test_popup_command()
-  CheckScreendump
   CheckFeature menu
 
   menu Test.Foo Foo
@@ -872,6 +869,23 @@ func Test_popup_command()
   call assert_fails('popup Test.Foo.X', 'E327:')
   call assert_fails('popup Foo', 'E337:')
   unmenu Test.Foo
+endfunc
+
+func Test_popup_command_dump()
+  CheckFeature menu
+  CheckScreendump
+
+  let script =<< trim END
+    func StartTimer()
+      call timer_start(100, {-> ChangeMenu()})
+    endfunc
+    func ChangeMenu()
+      aunmenu PopUp.&Paste
+      nnoremenu 1.40 PopUp.&Paste :echomsg "pasted"<CR>
+      echomsg 'changed'
+    endfunc
+  END
+  call writefile(script, 'XtimerScript')
 
   let lines =<< trim END
 	one two three four five
@@ -879,12 +893,12 @@ func Test_popup_command()
 	one more two three four five
   END
   call writefile(lines, 'Xtest')
-  let buf = RunVimInTerminal('Xtest', {})
+  let buf = RunVimInTerminal('-S XtimerScript Xtest', {})
   call term_sendkeys(buf, ":source $VIMRUNTIME/menu.vim\<CR>")
   call term_sendkeys(buf, "/X\<CR>:popup PopUp\<CR>")
   call VerifyScreenDump(buf, 'Test_popup_command_01', {})
 
-  " Select a word
+  " go to the Paste entry in the menu
   call term_sendkeys(buf, "jj")
   call VerifyScreenDump(buf, 'Test_popup_command_02', {})
 
@@ -893,8 +907,20 @@ func Test_popup_command()
   call VerifyScreenDump(buf, 'Test_popup_command_03', {})
 
   call term_sendkeys(buf, "\<Esc>")
+
+  " Set a timer to change a menu entry while it's displayed.  The text should
+  " not change but the command does.  Making the screendump also verifies that
+  " "changed" shows up, which means the timer triggered
+  call term_sendkeys(buf, "/X\<CR>:call StartTimer() | popup PopUp\<CR>")
+  call VerifyScreenDump(buf, 'Test_popup_command_04', {})
+
+  " Select the Paste entry, executes the changed menu item.
+  call term_sendkeys(buf, "jj\<CR>")
+  call VerifyScreenDump(buf, 'Test_popup_command_05', {})
+
   call StopVimInTerminal(buf)
   call delete('Xtest')
+  call delete('XtimerScript')
 endfunc
 
 func Test_popup_complete_backwards()
@@ -948,9 +974,9 @@ func Test_complete_o_tab()
 endfunc
 
 func Test_menu_only_exists_in_terminal()
-  if !exists(':tlmenu') || has('gui_running')
-    return
-  endif
+  CheckCommand tlmenu
+  CheckNotGui
+
   tlnoremenu  &Edit.&Paste<Tab>"+gP  <C-W>"+
   aunmenu *
   try
@@ -1129,15 +1155,15 @@ func Test_CompleteChanged()
 
   autocmd! AAAAA_Group
   set complete& completeopt&
-  delfunc! OnPumchange
+  delfunc! OnPumChange
   bw!
 endfunc
 
-function! GetPumPosition()
+func GetPumPosition()
   call assert_true( pumvisible() )
   let g:pum_pos = pum_getpos()
   return ''
-endfunction
+endfunc
 
 func Test_pum_getpos()
   new

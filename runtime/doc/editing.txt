@@ -438,6 +438,8 @@ Where {optname} is one of:	    *++ff* *++enc* *++bin* *++nobin* *++edit*
     bad			    specifies behavior for bad characters
     edit		    for |:read| only: keep option values as if editing
 			    a file
+    p			    creates the parent directory (or directories) of
+			    a filename if they do not exist
 
 {value} cannot contain white space.  It can be any valid value for these
 options.  Examples: >
@@ -544,6 +546,44 @@ Before editing binary, executable or Vim script files you should set the
 'binary' option.  A simple way to do this is by starting Vim with the "-b"
 option.  This will avoid the use of 'fileformat'.  Without this you risk that
 single <NL> characters are unexpectedly replaced with <CR><NL>.
+
+END OF LINE AND END OF FILE				*eol-and-eof*
+
+Vim has several options to control the file format:
+	'fileformat'	the <EOL> style: Unix, DOS, Mac
+	'endofline'	whether the last line ends with a <EOL>
+	'endoffile'	whether the file ends with a CTRL-Z
+	'fixendofline'	whether to fix eol and eof
+
+The first three values are normally detected automatically when reading the
+file and are used when writing the text to a file.  While editing the buffer
+it looks like every line has a line ending and the CTRL-Z isn't there (an
+exception is when 'binary' is set, it works differently then).
+
+The 'fixendofline' option can be used to choose what to write.  You can also
+change the option values to write the file differently than how it was read.
+
+Here are some examples how to use them.
+
+If you want files in Unix format (every line NL terminated): >
+	setl ff=unix fixeol
+You should probably do this on any Unix-like system.  Also modern MS-Windows
+systems tend to work well with this.  It is recommended to always use this
+format for Vim scripts.
+
+If you want to use an old MS-DOS file in a modern environment, fixing line
+endings and dropping CTRL-Z, but keeping the <CR><NL> style <EOL>: >
+	setl ff=dos fixeol
+This is useful for many MS-Windows programs, they regularly expect the
+<CR><NL> line endings.
+
+If you want to drop the final <EOL> and add a final CTRL-Z (e.g. for an old
+system like CP/M): >
+	setl ff=dos nofixeol noeol eof
+
+If you want to preserve the fileformat exactly as-is, including any final
+<EOL> and final CTRL-Z: >
+	setl nofixeol
 
 ==============================================================================
 3. The argument list				*argument-list* *arglist*
@@ -941,7 +981,7 @@ WRITING WITH MULTIPLE BUFFERS				*buffer-write*
 
 
 Vim will warn you if you try to overwrite a file that has been changed
-elsewhere.  See |timestamp|.
+elsewhere (unless "!" was used).  See |timestamp|.
 
 			    *backup* *E207* *E506* *E507* *E508* *E509* *E510*
 If you write to an existing file (but do not append) while the 'backup',
@@ -1481,8 +1521,8 @@ doing something there and closing it should be OK (if there are no side
 effects from other autocommands).  Closing unrelated windows and buffers will
 get you into trouble.
 
-Before writing a file the timestamp is checked.  If it has changed, Vim will
-ask if you really want to overwrite the file:
+Before writing a file, the timestamp is checked (unless "!" was used).
+If it has changed, Vim will ask if you really want to overwrite the file:
 
 	WARNING: The file has been changed since reading it!!!
 	Do you really want to write to it (y/n)?

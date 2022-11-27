@@ -243,6 +243,36 @@ func Test_diffput_two()
   bwipe! b
 endfunc
 
+" Test for :diffget/:diffput with a range that is inside a diff chunk
+func Test_diffget_diffput_range()
+  call setline(1, range(1, 10))
+  new
+  call setline(1, range(11, 20))
+  windo diffthis
+  3,5diffget
+  call assert_equal(['13', '14', '15'], getline(3, 5))
+  call setline(1, range(1, 10))
+  4,8diffput
+  wincmd p
+  call assert_equal(['13', '4', '5', '6', '7', '8', '19'], getline(3, 9))
+  %bw!
+endfunc
+
+" Test for :diffget/:diffput with an empty buffer and a non-empty buffer
+func Test_diffget_diffput_empty_buffer()
+  %d _
+  new
+  call setline(1, 'one')
+  windo diffthis
+  diffget
+  call assert_equal(['one'], getline(1, '$'))
+  %d _
+  diffput
+  wincmd p
+  call assert_equal([''], getline(1, '$'))
+  %bw!
+endfunc
+
 " :diffput and :diffget completes names of buffers which
 " are in diff mode and which are different then current buffer.
 " No completion when the current window is not in diff mode.
@@ -621,9 +651,7 @@ func Test_diff_move_to()
 endfunc
 
 func Test_diffexpr()
-  if !executable('diff')
-    return
-  endif
+  CheckExecutable diff
 
   func DiffExpr()
     " Prepend some text to check diff type detection
@@ -647,7 +675,11 @@ func Test_diffexpr()
   call assert_equal(normattr, screenattr(1, 1))
   call assert_equal(normattr, screenattr(2, 1))
   call assert_notequal(normattr, screenattr(3, 1))
+  diffoff!
 
+  " Try using an non-existing function for 'diffexpr'.
+  set diffexpr=NewDiffFunc()
+  call assert_fails('windo diffthis', ['E117:', 'E97:'])
   diffoff!
   %bwipe!
   set diffexpr& diffopt&
@@ -744,17 +776,13 @@ func Test_diff_hlID()
 
   call diff_hlID(-1, 1)->synIDattr("name")->assert_equal("")
 
-  call assert_equal(diff_hlID(1, 1), hlID("DiffChange"))
   call diff_hlID(1, 1)->synIDattr("name")->assert_equal("DiffChange")
-  call assert_equal(diff_hlID(1, 2), hlID("DiffText"))
   call diff_hlID(1, 2)->synIDattr("name")->assert_equal("DiffText")
   call diff_hlID(2, 1)->synIDattr("name")->assert_equal("")
-  call assert_equal(diff_hlID(3, 1), hlID("DiffAdd"))
   call diff_hlID(3, 1)->synIDattr("name")->assert_equal("DiffAdd")
-  call diff_hlID(4, 1)->synIDattr("name")->assert_equal("")
+  eval 4->diff_hlID(1)->synIDattr("name")->assert_equal("")
 
   wincmd w
-  call assert_equal(diff_hlID(1, 1), hlID("DiffChange"))
   call assert_equal(synIDattr(diff_hlID(1, 1), "name"), "DiffChange")
   call assert_equal(synIDattr(diff_hlID(2, 1), "name"), "")
   call assert_equal(synIDattr(diff_hlID(3, 1), "name"), "")
@@ -1202,6 +1230,33 @@ func Test_diff_maintains_change_mark()
   delfunc DiffMaintainsChangeMark
 endfunc
 
+" Test for 'patchexpr'
+func Test_patchexpr()
+  let g:patch_args = []
+  func TPatch()
+    call add(g:patch_args, readfile(v:fname_in))
+    call add(g:patch_args, readfile(v:fname_diff))
+    call writefile(['output file'], v:fname_out)
+  endfunc
+  set patchexpr=TPatch()
+
+  call writefile(['input file'], 'Xinput')
+  call writefile(['diff file'], 'Xdiff')
+  %bwipe!
+  edit Xinput
+  diffpatch Xdiff
+  call assert_equal('output file', getline(1))
+  call assert_equal('Xinput.new', bufname())
+  call assert_equal(2, winnr('$'))
+  call assert_true(&diff)
+
+  call delete('Xinput')
+  call delete('Xdiff')
+  set patchexpr&
+  delfunc TPatch
+  %bwipe!
+endfunc
+
 func Test_diff_rnu()
   CheckScreendump
 
@@ -1295,6 +1350,89 @@ func Test_diff_filler_cursorcolumn()
   call delete('Xtest_diff_cuc')
 endfunc
 
+" Test for adding/removing lines inside diff chunks, between diff chunks
+" and before diff chunks
+func Test_diff_modify_chunks()
+  enew!
+  let w2_id = win_getid()
+  call setline(1, ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i'])
+  new
+  let w1_id = win_getid()
+  call setline(1, ['a', '2', '3', 'd', 'e', 'f', '7', '8', 'i'])
+  windo diffthis
+
+  " remove a line between two diff chunks and create a new diff chunk
+  call win_gotoid(w2_id)
+  5d
+  call win_gotoid(w1_id)
+  call diff_hlID(5, 1)->synIDattr('name')->assert_equal('DiffAdd')
+
+  " add a line between two diff chunks
+  call win_gotoid(w2_id)
+  normal! 4Goe
+  call win_gotoid(w1_id)
+  call diff_hlID(4, 1)->synIDattr('name')->assert_equal('')
+  call diff_hlID(5, 1)->synIDattr('name')->assert_equal('')
+
+  " remove all the lines in a diff chunk.
+  call win_gotoid(w2_id)
+  7,8d
+  call win_gotoid(w1_id)
+  let hl = range(1, 9)->map({_, lnum -> diff_hlID(lnum, 1)->synIDattr('name')})
+  call assert_equal(['', 'DiffText', 'DiffText', '', '', '', 'DiffAdd',
+        \ 'DiffAdd', ''], hl)
+
+  " remove lines from one diff chunk to just before the next diff chunk
+  call win_gotoid(w2_id)
+  call setline(1, ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i'])
+  2,6d
+  call win_gotoid(w1_id)
+  let hl = range(1, 9)->map({_, lnum -> diff_hlID(lnum, 1)->synIDattr('name')})
+  call assert_equal(['', 'DiffText', 'DiffText', 'DiffAdd', 'DiffAdd',
+        \ 'DiffAdd', 'DiffAdd', 'DiffAdd', ''], hl)
+
+  " remove lines just before the top of a diff chunk
+  call win_gotoid(w2_id)
+  call setline(1, ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i'])
+  5,6d
+  call win_gotoid(w1_id)
+  let hl = range(1, 9)->map({_, lnum -> diff_hlID(lnum, 1)->synIDattr('name')})
+  call assert_equal(['', 'DiffText', 'DiffText', '', 'DiffText', 'DiffText',
+        \ 'DiffAdd', 'DiffAdd', ''], hl)
+
+  " remove line after the end of a diff chunk
+  call win_gotoid(w2_id)
+  call setline(1, ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i'])
+  4d
+  call win_gotoid(w1_id)
+  let hl = range(1, 9)->map({_, lnum -> diff_hlID(lnum, 1)->synIDattr('name')})
+  call assert_equal(['', 'DiffText', 'DiffText', 'DiffAdd', '', '', 'DiffText',
+        \ 'DiffText', ''], hl)
+
+  " remove lines starting from the end of one diff chunk and ending inside
+  " another diff chunk
+  call win_gotoid(w2_id)
+  call setline(1, ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i'])
+  4,7d
+  call win_gotoid(w1_id)
+  let hl = range(1, 9)->map({_, lnum -> diff_hlID(lnum, 1)->synIDattr('name')})
+  call assert_equal(['', 'DiffText', 'DiffText', 'DiffText', 'DiffAdd',
+        \ 'DiffAdd', 'DiffAdd', 'DiffAdd', ''], hl)
+
+  " removing the only remaining diff chunk should make the files equal
+  call win_gotoid(w2_id)
+  call setline(1, ['a', '2', '3', 'x', 'd', 'e', 'f', 'x', '7', '8', 'i'])
+  8d
+  let hl = range(1, 10)->map({_, lnum -> diff_hlID(lnum, 1)->synIDattr('name')})
+  call assert_equal(['', '', '', 'DiffAdd', '', '', '', '', '', ''], hl)
+  call win_gotoid(w2_id)
+  4d
+  call win_gotoid(w1_id)
+  let hl = range(1, 9)->map({_, lnum -> diff_hlID(lnum, 1)->synIDattr('name')})
+  call assert_equal(['', '', '', '', '', '', '', '', ''], hl)
+
+  %bw!
+endfunc
 
 func Test_diff_binary()
   CheckScreendump

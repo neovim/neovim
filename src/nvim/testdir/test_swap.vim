@@ -2,6 +2,7 @@
 
 source check.vim
 source shared.vim
+source term_util.vim
 
 func s:swapname()
   return trim(execute('swapname'))
@@ -202,8 +203,8 @@ func Test_swapfile_delete()
   " This test won't work as root because root can successfully run kill(1, 0)
   if !IsRoot()
     " Write the swapfile with a modified PID, now it will be automatically
-    " deleted. Process one should never be Vim.
-    let swapfile_bytes[24:27] = 0z01000000
+    " deleted. Process 0x3fffffff most likely does not exist.
+    let swapfile_bytes[24:27] = 0zffffff3f
     call writefile(swapfile_bytes, swapfile_name)
     let s:swapname = ''
     split XswapfileText
@@ -374,24 +375,26 @@ func Test_swap_prompt_splitwin()
   call WaitForAssert({-> assert_match('^1$', term_getline(buf, 20))})
   call StopVimInTerminal(buf)
 
-  " This caused Vim to crash when typing "q".
-  " TODO: it does not actually reproduce the crash.
-  call writefile(['au BufAdd * set virtualedit=all'], 'Xvimrc')
-
-  let buf = RunVimInTerminal('-u Xvimrc Xfile1', {'rows': 20, 'wait_for_ruler': 0})
-  call TermWait(buf)
-  call WaitForAssert({-> assert_match('^\[O\]pen Read-Only, (E)dit anyway, (R)ecover, (Q)uit, (A)bort:', term_getline(buf, 20))})
+  " This caused Vim to crash when typing "q" at the swap file prompt.
+  let buf = RunVimInTerminal('-c "au bufadd * let foo_w = wincol()"', {'rows': 18})
+  call term_sendkeys(buf, ":e Xfile1\<CR>")
+  call WaitForAssert({-> assert_match('More', term_getline(buf, 18))})
+  call term_sendkeys(buf, " ")
+  call WaitForAssert({-> assert_match('^\[O\]pen Read-Only, (E)dit anyway, (R)ecover, (Q)uit, (A)bort:', term_getline(buf, 18))})
   call term_sendkeys(buf, "q")
+  call TermWait(buf)
+  " check that Vim is still running
+  call term_sendkeys(buf, ":echo 'hello'\<CR>")
+  call WaitForAssert({-> assert_match('^hello', term_getline(buf, 18))})
+  call term_sendkeys(buf, ":%bwipe!\<CR>")
+  call StopVimInTerminal(buf)
 
   %bwipe!
   call delete('Xfile1')
-  call delete('Xvimrc')
 endfunc
 
 func Test_swap_symlink()
-  if !has("unix")
-    return
-  endif
+  CheckUnix
 
   call writefile(['text'], 'Xtestfile')
   silent !ln -s -f Xtestfile Xtestlink
@@ -416,6 +419,161 @@ func Test_swap_symlink()
   call delete('Xtestfile')
   call delete('Xtestlink')
   call delete('Xswapdir', 'rf')
+endfunc
+
+func s:get_unused_pid(base)
+  if has('job')
+    " Execute 'echo' as a temporary job, and return its pid as an unused pid.
+    if has('win32')
+      let cmd = 'cmd /c echo'
+    else
+      let cmd = 'echo'
+    endif
+    let j = job_start(cmd)
+    while job_status(j) ==# 'run'
+      sleep 10m
+    endwhile
+    if job_status(j) ==# 'dead'
+      return job_info(j).process
+    endif
+  endif
+  " Must add four for MS-Windows to see it as a different one.
+  return a:base + 4
+endfunc
+
+func s:blob_to_pid(b)
+  return a:b[3] * 16777216 + a:b[2] * 65536 + a:b[1] * 256 + a:b[0]
+endfunc
+
+func s:pid_to_blob(i)
+  let b = 0z
+  let b[0] = and(a:i, 0xff)
+  let b[1] = and(a:i / 256, 0xff)
+  let b[2] = and(a:i / 65536, 0xff)
+  let b[3] = and(a:i / 16777216, 0xff)
+  return b
+endfunc
+
+func Test_swap_auto_delete()
+  " Create a valid swapfile by editing a file with a special extension.
+  split Xtest.scr
+  call setline(1, ['one', 'two', 'three'])
+  write  " file is written, not modified
+  write  " write again to make sure the swapfile is created
+  " read the swapfile as a Blob
+  let swapfile_name = swapname('%')
+  let swapfile_bytes = readfile(swapfile_name, 'B')
+
+  " Forget about the file, recreate the swap file, then edit it again.  The
+  " swap file should be automatically deleted.
+  bwipe!
+  " Change the process ID to avoid the "still running" warning.
+  let swapfile_bytes[24:27] = s:pid_to_blob(s:get_unused_pid(
+        \ s:blob_to_pid(swapfile_bytes[24:27])))
+  call writefile(swapfile_bytes, swapfile_name)
+  edit Xtest.scr
+  " will end up using the same swap file after deleting the existing one
+  call assert_equal(swapfile_name, swapname('%'))
+  bwipe!
+
+  " create the swap file again, but change the host name so that it won't be
+  " deleted
+  autocmd! SwapExists
+  augroup test_swap_recover_ext
+    autocmd!
+    autocmd SwapExists * let v:swapchoice = 'e'
+  augroup END
+
+  " change the host name
+  let swapfile_bytes[28 + 40] = swapfile_bytes[28 + 40] + 2
+  call writefile(swapfile_bytes, swapfile_name)
+  edit Xtest.scr
+  call assert_equal(1, filereadable(swapfile_name))
+  " will use another same swap file name
+  call assert_notequal(swapfile_name, swapname('%'))
+  bwipe!
+
+  call delete('Xtest.scr')
+  call delete(swapfile_name)
+  augroup test_swap_recover_ext
+    autocmd!
+  augroup END
+  augroup! test_swap_recover_ext
+endfunc
+
+" Test for renaming a buffer when the swap file is deleted out-of-band
+func Test_missing_swap_file()
+  CheckUnix
+  new Xfile2
+  call delete(swapname(''))
+  call assert_fails('file Xfile3', 'E301:')
+  call assert_equal('Xfile3', bufname())
+  call assert_true(bufexists('Xfile2'))
+  call assert_true(bufexists('Xfile3'))
+  %bw!
+endfunc
+
+" Test for :preserve command
+func Test_preserve()
+  new Xfile4
+  setlocal noswapfile
+  call assert_fails('preserve', 'E313:')
+  bw!
+endfunc
+
+" Test for the v:swapchoice variable
+func Test_swapchoice()
+  call writefile(['aaa', 'bbb'], 'Xfile5')
+  edit Xfile5
+  preserve
+  let swapfname = swapname('')
+  let b = readblob(swapfname)
+  bw!
+  call writefile(b, swapfname)
+
+  autocmd! SwapExists
+
+  " Test for v:swapchoice = 'o' (readonly)
+  augroup test_swapchoice
+    autocmd!
+    autocmd SwapExists * let v:swapchoice = 'o'
+  augroup END
+  edit Xfile5
+  call assert_true(&readonly)
+  call assert_equal(['aaa', 'bbb'], getline(1, '$'))
+  %bw!
+  call assert_true(filereadable(swapfname))
+
+  " Test for v:swapchoice = 'a' (abort)
+  augroup test_swapchoice
+    autocmd!
+    autocmd SwapExists * let v:swapchoice = 'a'
+  augroup END
+  try
+    edit Xfile5
+  catch /^Vim:Interrupt$/
+  endtry
+  call assert_equal('', @%)
+  call assert_true(bufexists('Xfile5'))
+  %bw!
+  call assert_true(filereadable(swapfname))
+
+  " Test for v:swapchoice = 'd' (delete)
+  augroup test_swapchoice
+    autocmd!
+    autocmd SwapExists * let v:swapchoice = 'd'
+  augroup END
+  edit Xfile5
+  call assert_equal('Xfile5', @%)
+  %bw!
+  call assert_false(filereadable(swapfname))
+
+  call delete('Xfile5')
+  call delete(swapfname)
+  augroup test_swapchoice
+    autocmd!
+  augroup END
+  augroup! test_swapchoice
 endfunc
 
 func Test_no_swap_file()

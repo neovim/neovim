@@ -59,19 +59,19 @@ msgstr "無法傳送回應訊息"
 
 #: ../api/private/helpers.c:204
 msgid "internal error: unknown option type"
-msgstr ""
+msgstr "內部錯誤: 未知的選項類型"
 
 #: ../buffer.c:92
 msgid "[Location List]"
-msgstr ""
+msgstr "[Location 列表]"
 
 #: ../buffer.c:93
 msgid "[Quickfix List]"
-msgstr ""
+msgstr "[Quickfix 列表]"
 
 #: ../buffer.c:94
 msgid "E855: Autocommands caused command to abort"
-msgstr ""
+msgstr "E855: 自動命令導致命令被停止"
 
 #: ../buffer.c:135
 msgid "E82: Cannot allocate any buffer, exiting..."
@@ -349,7 +349,7 @@ msgstr "E103: 緩衝區 \"%s\" 不是在 diff 模式"
 
 #: ../diff.c:2193
 msgid "E787: Buffer changed unexpectedly"
-msgstr ""
+msgstr "E787: 意外地改變了緩衝區"
 
 #: ../digraph.c:1598
 msgid "E104: Escape not allowed in digraph"
@@ -365,7 +365,7 @@ msgstr "E105: 使用 :loadkeymap "
 
 #: ../digraph.c:1821
 msgid "E791: Empty keymap entry"
-msgstr ""
+msgstr "E791: 空的鍵位映射項"
 
 #: ../edit.c:82
 msgid " Keyword completion (^N^P)"
@@ -434,11 +434,11 @@ msgstr "已到段落結尾"
 
 #: ../edit.c:101
 msgid "E839: Completion function changed window"
-msgstr ""
+msgstr "E839: 補全函式更改了窗口"
 
 #: ../edit.c:102
 msgid "E840: Completion function deleted text"
-msgstr ""
+msgstr "E840: 補全函式刪除了文本"
 
 #: ../edit.c:1847
 msgid "'dictionary' option is empty"
@@ -556,7 +556,7 @@ msgstr "E118: 函式 %s 的引數過多"
 #: ../eval.c:148
 #, c-format
 msgid "E716: Key not present in Dictionary: %s"
-msgstr ""
+msgstr "E716: 鍵在字典中不存在: %s"
 
 #: ../eval.c:150
 #, c-format
@@ -581,7 +581,7 @@ msgstr "E360: 不能用 -f 選項執行 shell"
 #: ../eval.c:154
 #, c-format
 msgid "E734: Wrong variable type for %s="
-msgstr ""
+msgstr "E734: 錯誤的變數類型: %s="
 
 #: ../eval.c:155
 #, fuzzy, c-format
@@ -595,19 +595,19 @@ msgstr "E461: 不合法的變數名稱: %s"
 
 #: ../eval.c:157
 msgid "E806: using Float as a String"
-msgstr ""
+msgstr "E806: 使用浮點數作為字串"
 
 #: ../eval.c:1830
 msgid "E687: Less targets than List items"
-msgstr ""
+msgstr "E687: 目標比列表項數少"
 
 #: ../eval.c:1834
 msgid "E688: More targets than List items"
-msgstr ""
+msgstr "E688: 目標比列表項數多"
 
 #: ../eval.c:1906
 msgid "Double ; in list of variables"
-msgstr ""
+msgstr "變數列表出現兩個 ;"
 
 #: ../eval.c:2078
 #, fuzzy, c-format
@@ -616,23 +616,23 @@ msgstr "E138: 無法寫入 viminfo 檔案 %s !"
 
 #: ../eval.c:2391
 msgid "E689: Can only index a List or Dictionary"
-msgstr ""
+msgstr "E689: 只能索引一個列表或者字典"
 
 #: ../eval.c:2396
 msgid "E708: [:] must come last"
-msgstr ""
+msgstr "E708: [:] 必須在最後"
 
 #: ../eval.c:2439
 msgid "E709: [:] requires a List value"
-msgstr ""
+msgstr "E709: [:] 需要一個列表值"
 
 #: ../eval.c:2674
 msgid "E710: List value has more items than target"
-msgstr ""
+msgstr "E710: 列表值的項比目標多"
 
 #: ../eval.c:2678
 msgid "E711: List value has not enough items"
-msgstr ""
+msgstr "E711: 列表值沒有足夠多的項"
 
 #: ../eval.c:2867
 #, fuzzy
@@ -651,7 +651,7 @@ msgstr "E108: 無此變數: \"%s\""
 
 #: ../eval.c:3333
 msgid "E743: variable nested too deep for (un)lock"
-msgstr ""
+msgstr "E743: (un)lock 的變數嵌套過深"
 
 #: ../eval.c:3630
 msgid "E109: Missing ':' after '?'"
@@ -659,7 +659,7 @@ msgstr "E109: '?' 後缺少 ':'"
 
 #: ../eval.c:3893
 msgid "E691: Can only compare List with List"
-msgstr ""
+msgstr "E691: 只能比較列表和列表"
 
 #: ../eval.c:3895
 #, fuzzy
@@ -668,7 +668,7 @@ msgstr "E449: 收到不正確的運算式"
 
 #: ../eval.c:3915
 msgid "E735: Can only compare Dictionary with Dictionary"
-msgstr ""
+msgstr "E735: 只能比較字典和字典"
 
 #: ../eval.c:3917
 #, fuzzy
@@ -677,7 +677,7 @@ msgstr "E116: 函式 %s 的引數不正確"
 
 #: ../eval.c:3932
 msgid "E693: Can only compare Funcref with Funcref"
-msgstr ""
+msgstr "E693: 只能比較Funcref 和 Funcref"
 
 #: ../eval.c:3934
 #, fuzzy
@@ -736,7 +736,7 @@ msgstr "E242: 找不到顏色: %s"
 #: ../eval.c:6499
 #, c-format
 msgid "E721: Duplicate key in Dictionary: \"%s\""
-msgstr ""
+msgstr "E721: Dictionary 中出現重複的鍵: \"%s\""
 
 #: ../eval.c:6517
 #, fuzzy, c-format
@@ -781,7 +781,7 @@ msgstr "E120: <SID> 不能在 script 本文外使用: %s"
 #: ../eval.c:7391
 #, c-format
 msgid "E725: Calling dict function without Dictionary: %s"
-msgstr ""
+msgstr "E725: 調用字典函式但是沒有字典: %s"
 
 #: ../eval.c:7453
 #, fuzzy
@@ -814,16 +814,15 @@ msgstr "E227: %s 的 mapping 已經存在"
 
 #: ../eval.c:8692
 msgid "extend() argument"
-msgstr ""
+msgstr "extend() 參數"
 
 #: ../eval.c:8915
-#, fuzzy
 msgid "map() argument"
-msgstr "vim [參數] "
+msgstr "map() 參數"
 
 #: ../eval.c:8916
 msgid "filter() argument"
-msgstr ""
+msgstr "filter() 參數"
 
 #: ../eval.c:9229
 #, c-format
@@ -857,19 +856,19 @@ msgstr "E596: 不正確的字型"
 
 #: ../eval.c:11980
 msgid "E726: Stride is zero"
-msgstr ""
+msgstr "E726: 步長為零"
 
 #: ../eval.c:11982
 msgid "E727: Start past end"
-msgstr ""
+msgstr "E727: 起始值在終止值後"
 
 #: ../eval.c:12024 ../eval.c:15297
 msgid "<empty>"
-msgstr ""
+msgstr "<空>"
 
 #: ../eval.c:12282
 msgid "remove() argument"
-msgstr ""
+msgstr "remove() 參數"
 
 #: ../eval.c:12466
 msgid "E655: Too many symbolic links (cycle?)"
@@ -877,11 +876,11 @@ msgstr "E655: 太多層的符號鏈結(symlink) (循環?)"
 
 #: ../eval.c:12593
 msgid "reverse() argument"
-msgstr ""
+msgstr "reverse() 參數"
 
 #: ../eval.c:13721
 msgid "sort() argument"
-msgstr ""
+msgstr "sort() 參數"
 
 #: ../eval.c:13721
 #, fuzzy
@@ -895,7 +894,7 @@ msgstr "E237: 無法選擇此印表機"
 
 #: ../eval.c:13806
 msgid "E882: Uniq compare function failed"
-msgstr ""
+msgstr "E882: Uniq 比較函式失敗"
 
 #: ../eval.c:14085
 msgid "(Invalid)"
@@ -908,32 +907,31 @@ msgstr "E208: 寫入檔案 \"%s\" 錯誤"
 
 #: ../eval.c:16159
 msgid "E805: Using a Float as a Number"
-msgstr ""
+msgstr "E805: 將浮點數當做數字使用"
 
 #: ../eval.c:16162
 msgid "E703: Using a Funcref as a Number"
-msgstr ""
+msgstr "E703: 將函式當做數字使用"
 
 #: ../eval.c:16170
 msgid "E745: Using a List as a Number"
-msgstr ""
+msgstr "E745: 將列表當做數字使用"
 
 #: ../eval.c:16173
 msgid "E728: Using a Dictionary as a Number"
-msgstr ""
+msgstr "E728: 將字典當做數字使用"
 
 #: ../eval.c:16259
 msgid "E729: using Funcref as a String"
-msgstr ""
+msgstr "E729: 將函式當做字串使用"
 
 #: ../eval.c:16262
-#, fuzzy
 msgid "E730: using List as a String"
-msgstr "E374: 格式化字串裡少了 ]"
+msgstr "E730: 將列表當做字串使用"
 
 #: ../eval.c:16265
 msgid "E731: using Dictionary as a String"
-msgstr ""
+msgstr "E731: 將字典當做字串使用"
 
 #: ../eval.c:16619
 #, fuzzy, c-format
@@ -953,12 +951,12 @@ msgstr "E128: 函式名稱第一個字母必須大寫: %s"
 #: ../eval.c:16732
 #, c-format
 msgid "E705: Variable name conflicts with existing function: %s"
-msgstr ""
+msgstr "E705: 變數名與已有函式名衝突: %s"
 
 #: ../eval.c:16763
 #, c-format
 msgid "E741: Value is locked: %s"
-msgstr ""
+msgstr "E741: 值已鎖定: %s"
 
 #: ../eval.c:16764 ../eval.c:16769 ../message.c:1839
 msgid "Unknown"
@@ -971,7 +969,7 @@ msgstr "E284: 不能設定 IC 數值"
 
 #: ../eval.c:16838
 msgid "E698: variable nested too deep for making a copy"
-msgstr ""
+msgstr "E698: 變數嵌套過深無法複製"
 
 #: ../eval.c:17249
 #, c-format
@@ -1216,7 +1214,7 @@ msgstr "要覆寫已存在的檔案 \"%.*s\"？"
 #: ../ex_cmds.c:2317
 #, c-format
 msgid "Swap file \"%s\" exists, overwrite anyway?"
-msgstr ""
+msgstr "交換文件 \"%s\" 已存在，確實需要覆蓋嗎？"
 
 #: ../ex_cmds.c:2326
 #, fuzzy, c-format
@@ -1456,7 +1454,7 @@ msgstr "%3d  %s %s  第 %<PRId64> 行 "
 
 #: ../ex_cmds2.c:942
 msgid "E750: First use \":profile start {fname}\""
-msgstr ""
+msgstr "E750: 請先使用 :profile start <fname>"
 
 #: ../ex_cmds2.c:1269
 #, fuzzy, c-format
@@ -1555,7 +1553,7 @@ msgstr "vim [參數] "
 
 #: ../ex_cmds2.c:2771
 msgid "environment variable"
-msgstr ""
+msgstr "環境變數"
 
 #: ../ex_cmds2.c:2773
 #, fuzzy
@@ -2047,7 +2045,7 @@ msgstr "E199: 已刪除掉作用中的視窗或暫存區"
 
 #: ../file_search.c:203
 msgid "E854: path too long for completion"
-msgstr ""
+msgstr "E854: 補全用的路徑太長了"
 
 #: ../file_search.c:446
 #, c-format
@@ -2099,11 +2097,11 @@ msgstr "[未命名]"
 
 #: ../fileio.c:511
 msgid "[New DIRECTORY]"
-msgstr ""
+msgstr "[新目錄]"
 
 #: ../fileio.c:529 ../fileio.c:532
 msgid "[File too big]"
-msgstr ""
+msgstr "[文件太大]"
 
 #: ../fileio.c:534
 msgid "[Permission Denied]"
@@ -2265,7 +2263,7 @@ msgstr "E513: 無法寫入 -- 轉換失敗"
 msgid ""
 "E513: write error, conversion failed in line %<PRId64> (make 'fenc' empty to "
 "override)"
-msgstr ""
+msgstr "E513: 寫入錯誤，轉換失敗 (請將 'fenc' 置空以強制執行)"
 
 #: ../fileio.c:3448
 msgid "E514: write error (file system full?)"
@@ -2720,7 +2718,7 @@ msgstr "E49: 錯誤的捲動大小"
 
 #: ../globals.h:1021
 msgid "E901: Job table is full"
-msgstr ""
+msgstr "E901: 任務表已經滿"
 
 #: ../globals.h:1024
 #, c-format
@@ -2877,7 +2875,7 @@ msgstr "E42: 沒有錯誤"
 
 #: ../globals.h:1067
 msgid "E776: No location list"
-msgstr ""
+msgstr "E776: 沒有位置列表"
 
 #: ../globals.h:1068
 msgid "E43: Damaged match string"
@@ -2992,7 +2990,7 @@ msgstr "E473: 內部錯誤"
 
 #: ../globals.h:1104
 msgid "E363: pattern uses more memory than 'maxmempattern'"
-msgstr ""
+msgstr "E363: 表達式的內存超出 'maxmempattern'"
 
 #: ../globals.h:1105
 #, fuzzy
@@ -3097,15 +3095,15 @@ msgstr "E621: \"%s\" 資源檔版本錯誤"
 
 #: ../hardcopy.c:2225
 msgid "E673: Incompatible multi-byte encoding and character set."
-msgstr ""
+msgstr "E673: 不兼容的多字節編碼和字元集"
 
 #: ../hardcopy.c:2238
 msgid "E674: printmbcharset cannot be empty with multi-byte encoding."
-msgstr ""
+msgstr "E674: printmbcharset 在多字節編碼下不能為空"
 
 #: ../hardcopy.c:2254
 msgid "E675: No default font specified for multi-byte printing."
-msgstr ""
+msgstr "E675: 沒有指定多字節打印的默認字型"
 
 #: ../hardcopy.c:2426
 msgid "E324: Can't open PostScript output file"
@@ -3267,6 +3265,7 @@ msgstr "%-5s: %-30s (用法: %s)"
 #: ../if_cscope.c:1155
 msgid ""
 "\n"
+"       a: Find assignments to this symbol\n"
 "       c: Find functions calling this function\n"
 "       d: Find functions called by this function\n"
 "       e: Find this egrep pattern\n"
@@ -3276,6 +3275,16 @@ msgid ""
 "       s: Find this C symbol\n"
 "       t: Find this text string\n"
 msgstr ""
+"\n"
+"       a: 搜索對此符號的賦值\n"
+"       c: 搜索調用此函式的函式\n"
+"       d: 搜索此函式調用的函式\n"
+"       e: 搜索此 egrep 模式\n"
+"       f: 搜索此文件\n"
+"       g: 搜索此定義\n"
+"       i: 搜索包含此文件的文件\n"
+"       s: 搜索此 C 符号\n"
+"       t: 搜索此文本字串\n"
 
 #: ../if_cscope.c:1226
 msgid "E568: duplicate cscope database not added"
@@ -3509,7 +3518,7 @@ msgstr "-N\t\t\t'nocompatible' 不完全與傳統 Vi 相容，可使用 Vim 加�
 
 #: ../main.c:2215
 msgid "-V[N][fname]\t\tBe verbose [level N] [log messages to fname]"
-msgstr ""
+msgstr "-V[N][fname]\t\t詳細 [level N] [log messages to fname]"
 
 #: ../main.c:2216
 msgid "-D\t\t\tDebugging mode"
@@ -3602,7 +3611,7 @@ msgstr "-W <scriptout>\t對檔案 <scriptout> 寫入所有輸入的命令"
 
 #: ../main.c:2240
 msgid "--startuptime <file>\tWrite startup timing messages to <file>"
-msgstr ""
+msgstr "--startuptime <file>\t將啟動時間寫入到文件 <file>"
 
 #: ../main.c:2242
 msgid "-i <viminfo>\t\tUse <viminfo> instead of .viminfo"
@@ -3794,7 +3803,7 @@ msgstr ""
 
 #: ../memline.c:945
 msgid " has been damaged (page size is smaller than minimum value).\n"
-msgstr ""
+msgstr "已损坏（頁面大小小於最小值）。\n"
 
 #: ../memline.c:974
 #, c-format
@@ -4082,7 +4091,7 @@ msgstr "E317: 指標區塊 id 錯 2"
 #: ../memline.c:3070
 #, c-format
 msgid "E773: Symlink loop for \"%s\""
-msgstr ""
+msgstr "E773: \"%s\" 符號鏈接出現循環"
 
 #: ../memline.c:3221
 msgid "E325: ATTENTION"
@@ -4231,7 +4240,7 @@ msgstr "E329: 沒有那樣的選單"
 #. Only a mnemonic or accelerator is not valid.
 #: ../menu.c:329
 msgid "E792: Empty menu name"
-msgstr ""
+msgstr "E792: 空的菜單名稱"
 
 #: ../menu.c:340
 msgid "E330: Menu path must not lead to a sub-menu"
@@ -4312,7 +4321,7 @@ msgstr "-- 尚有 --"
 
 #: ../message.c:2398
 msgid " SPACE/d/j: screen/page/line down, b/u/k: up, q: quit "
-msgstr ""
+msgstr " 空格/d/j: 屏幕/頁/行 下翻，b/u/k: 上翻，q: 退出 "
 
 #: ../message.c:3021 ../message.c:3031
 msgid "Question"
@@ -4357,7 +4366,7 @@ msgstr "E116: 函式 %s 的引數不正確"
 
 #: ../message.c:3119
 msgid "E807: Expected Float argument for printf()"
-msgstr ""
+msgstr "E807: 期盼浮點數作為printf()參數"
 
 #: ../message.c:3873
 #, fuzzy
@@ -4370,11 +4379,11 @@ msgstr "W10: 注意: 你正在修改一個唯讀檔"
 
 #: ../misc1.c:2537
 msgid "Type number and <Enter> or click with mouse (empty cancels): "
-msgstr ""
+msgstr "請輸入數字並<Enter>或點擊鼠標（空白取消）: "
 
 #: ../misc1.c:2539
 msgid "Type number and <Enter> (empty cancels): "
-msgstr ""
+msgstr "請選擇數字並(<Enter> 取消): "
 
 #: ../misc1.c:2585
 msgid "1 more line"
@@ -4400,7 +4409,7 @@ msgstr " (已中斷)"
 
 #: ../misc1.c:2635
 msgid "Beep!"
-msgstr ""
+msgstr "Beep!"
 
 #: ../misc2.c:738
 #, c-format
@@ -4617,7 +4626,7 @@ msgstr "E520: 不能在 Modeline 裡出現"
 
 #: ../option.c:2815
 msgid "E846: Key code not set"
-msgstr ""
+msgstr "E846: 未設置鍵位代碼"
 
 #: ../option.c:2924
 msgid "E521: Number required after ="
@@ -4642,11 +4651,11 @@ msgstr "E589: 'backupext' 跟 'patchmode' 是一樣的"
 
 #: ../option.c:3964
 msgid "E834: Conflicts with value of 'listchars'"
-msgstr ""
+msgstr "E834: 與'listchars'中的值發生衝突"
 
 #: ../option.c:3966
 msgid "E835: Conflicts with value of 'fillchars'"
-msgstr ""
+msgstr "E835: 與'fillchars'中的值發生衝突"
 
 #: ../option.c:4163
 msgid "E524: Missing colon"
@@ -4884,7 +4893,7 @@ msgstr "E382: 無法寫入，'buftype' 選項已設定"
 
 #: ../quickfix.c:2812
 msgid "E683: File name missing or invalid pattern"
-msgstr ""
+msgstr "E683: 缺少文件名或模式無效"
 
 #: ../quickfix.c:2911
 #, fuzzy, c-format
@@ -5022,25 +5031,26 @@ msgid ""
 "E864: \\%#= can only be followed by 0, 1, or 2. The automatic engine will be "
 "used "
 msgstr ""
+"E864: \\%#= 後面只能是0，1，或者2。自動引擎將會被使用"
 
 #: ../regexp_nfa.c:239
 msgid "E865: (NFA) Regexp end encountered prematurely"
-msgstr ""
+msgstr "E865: (NFA) 過早的遇到了正則表達式的結尾"
 
 #: ../regexp_nfa.c:240
 #, c-format
 msgid "E866: (NFA regexp) Misplaced %c"
-msgstr ""
+msgstr "E866: (NFA regexp) %c 放錯了位置"
 
 #: ../regexp_nfa.c:242
 #, c-format
 msgid "E877: (NFA regexp) Invalid character class: %<PRId64>"
-msgstr ""
+msgstr "E877: (NFA regexp) 不可用的字元類: %<PRId64>"
 
 #: ../regexp_nfa.c:1261
 #, c-format
 msgid "E867: (NFA) Unknown operator '\\z%c'"
-msgstr ""
+msgstr "E867: (NFA) 未知的操作符 '\\z%c'"
 
 #: ../regexp_nfa.c:1387
 #, c-format
@@ -5050,21 +5060,21 @@ msgstr ""
 #: ../regexp_nfa.c:1802
 #, c-format
 msgid "E869: (NFA) Unknown operator '\\@%c'"
-msgstr ""
+msgstr "E869: (NFA) 未知的操作符 '\\%%%c'"
 
 #: ../regexp_nfa.c:1831
 msgid "E870: (NFA regexp) Error reading repetition limits"
-msgstr ""
+msgstr "E870: (NFA regexp) 读取重复限制时出错"
 
 #. Can't have a multi follow a multi.
 #: ../regexp_nfa.c:1895
 msgid "E871: (NFA regexp) Can't have a multi follow a multi !"
-msgstr ""
+msgstr "E871: (NFA regexp) 不能多个跟多个！"
 
 #. Too many `('
 #: ../regexp_nfa.c:2037
 msgid "E872: (NFA regexp) Too many '('"
-msgstr ""
+msgstr "E872: (NFA regexp) 太多 '('"
 
 #: ../regexp_nfa.c:2042
 #, fuzzy
@@ -5073,31 +5083,32 @@ msgstr "E50: 太多 \\z("
 
 #: ../regexp_nfa.c:2066
 msgid "E873: (NFA regexp) proper termination error"
-msgstr ""
+msgstr "E873: (NFA regexp) 未適當終止"
 
 #: ../regexp_nfa.c:2599
 msgid "E874: (NFA) Could not pop the stack !"
-msgstr ""
+msgstr "E874: (NFA) 無法出棧！"
 
 #: ../regexp_nfa.c:3298
 msgid ""
 "E875: (NFA regexp) (While converting from postfix to NFA), too many states "
 "left on stack"
-msgstr ""
+msgstr "E875: (NFA regexp) （從後綴轉到 NFA 时），棧上遺留了太多狀態"
 
 #: ../regexp_nfa.c:3302
 msgid "E876: (NFA regexp) Not enough space to store the whole NFA "
-msgstr ""
+msgstr "E876: (NFA regexp) 沒有足夠的空間存儲NFA "
 
 #: ../regexp_nfa.c:4571 ../regexp_nfa.c:4869
 msgid ""
 "Could not open temporary log file for writing, displaying on stderr ... "
 msgstr ""
+"無法打開臨時日志文件進行寫入，顯示在stderr中..."
 
 #: ../regexp_nfa.c:4840
 #, c-format
 msgid "(NFA) COULD NOT OPEN %s !"
-msgstr ""
+msgstr "(NFA) 不能打开 %s !"
 
 #: ../regexp_nfa.c:6049
 #, fuzzy
@@ -5270,17 +5281,17 @@ msgstr "E297: 暫存檔寫入錯誤"
 
 #: ../spell.c:952
 msgid "E758: Truncated spell file"
-msgstr ""
+msgstr "E758: 已截斷的拼寫文件"
 
 #: ../spell.c:953
 #, c-format
 msgid "Trailing text in %s line %d: %s"
-msgstr ""
+msgstr "%s 第 %d 行，多餘的後續文本: %s"
 
 #: ../spell.c:954
 #, c-format
 msgid "Affix name too long in %s line %d: %s"
-msgstr ""
+msgstr "%s 第 %d 行，附加項名字太長: %s"
 
 #: ../spell.c:955
 #, fuzzy
@@ -5289,20 +5300,20 @@ msgstr "E431: Tag 檔 \"%s\" 格式錯誤"
 
 #: ../spell.c:957
 msgid "E762: Character in FOL, LOW or UPP is out of range"
-msgstr ""
+msgstr "E762: FOL、LOW 或 UPP 中字元超出範圍"
 
 #: ../spell.c:958
 msgid "Compressing word tree..."
-msgstr ""
+msgstr "壓縮單詞樹……"
 
 #: ../spell.c:1951
 msgid "E756: Spell checking is not enabled"
-msgstr ""
+msgstr "E756: 拼寫檢查未啟用"
 
 #: ../spell.c:2249
 #, c-format
 msgid "Warning: Cannot find word list \"%s.%s.spl\" or \"%s.ascii.spl\""
-msgstr ""
+msgstr "警告: 找不到單詞列表 \"%s.%s.spl\" or \"%s.ascii.spl\""
 
 #: ../spell.c:2473
 #, fuzzy, c-format
@@ -5316,11 +5327,11 @@ msgstr "E307: %s 看起來不像是 Vim 暫存檔"
 
 #: ../spell.c:2501
 msgid "E771: Old spell file, needs to be updated"
-msgstr ""
+msgstr "E771: 舊的拼寫文件，需要更新"
 
 #: ../spell.c:2504
 msgid "E772: Spell file is for newer version of Vim"
-msgstr ""
+msgstr "E772: 為更高版本的 Vim 所使用的拼寫文件"
 
 #: ../spell.c:2602
 #, fuzzy
@@ -5340,66 +5351,68 @@ msgstr "搜尋 tag 檔案 \"%s\""
 #: ../spell.c:4589 ../spell.c:5635 ../spell.c:6140
 #, c-format
 msgid "Conversion failure for word in %s line %d: %s"
-msgstr ""
+msgstr "單詞 %s 轉換失敗，第 %d 行: %s"
 
 #: ../spell.c:4630 ../spell.c:6170
 #, c-format
 msgid "Conversion in %s not supported: from %s to %s"
-msgstr ""
+msgstr "不支持 %s 中的轉換: 从 %s 到 %s"
 
 #: ../spell.c:4642
 #, c-format
 msgid "Invalid value for FLAG in %s line %d: %s"
-msgstr ""
+msgstr "%s 第 %d 行，FLAG 的值无效: %s"
 
 #: ../spell.c:4655
 #, c-format
 msgid "FLAG after using flags in %s line %d: %s"
-msgstr ""
+msgstr "%s 第 %d 行，在使用標志後出現 FLAG: %s"
 
 #: ../spell.c:4723
 #, c-format
 msgid ""
 "Defining COMPOUNDFORBIDFLAG after PFX item may give wrong results in %s line "
 "%d"
-msgstr ""
+msgstr "在 PFX 項之後定義 COMPOUNDFORBIDFLAG （%s 第%d行）可能會給出的錯誤結果"
+"%d"
 
 #: ../spell.c:4731
 #, c-format
 msgid ""
 "Defining COMPOUNDPERMITFLAG after PFX item may give wrong results in %s line "
 "%d"
-msgstr ""
+msgstr "在 PFX 項之後定義 COMPOUNDFORBIDFLAG （%s 第%d行）可能會給出的錯誤結果"
+"%d"
 
 #: ../spell.c:4747
 #, c-format
 msgid "Wrong COMPOUNDRULES value in %s line %d: %s"
-msgstr ""
+msgstr "%s 第 %d 行，错误的 COMPOUNDMIN 值: %s"
 
 #: ../spell.c:4771
 #, c-format
 msgid "Wrong COMPOUNDWORDMAX value in %s line %d: %s"
-msgstr ""
+msgstr "%s 第 %d 行，错误的 COMPOUNDWORDMAX 值: %s"
 
 #: ../spell.c:4777
 #, c-format
 msgid "Wrong COMPOUNDMIN value in %s line %d: %s"
-msgstr ""
+msgstr "%s 第 %d 行，错误的 COMPOUNDMIN 值: %s"
 
 #: ../spell.c:4783
 #, c-format
 msgid "Wrong COMPOUNDSYLMAX value in %s line %d: %s"
-msgstr ""
+msgstr "%s 第 %d 行，错误的 COMPOUNDSYLMAX 值: %s"
 
 #: ../spell.c:4795
 #, c-format
 msgid "Wrong CHECKCOMPOUNDPATTERN value in %s line %d: %s"
-msgstr ""
+msgstr "%s 第 %d 行，错误的 CHECKCOMPOUNDPATTERN 值: %s"
 
 #: ../spell.c:4847
 #, c-format
 msgid "Different combining flag in continued affix block in %s line %d: %s"
-msgstr ""
+msgstr "%s 第 %d 行，在連續的附加塊種出現不同的組合標誌: %s"
 
 #: ../spell.c:4850
 #, fuzzy, c-format
@@ -5412,45 +5425,47 @@ msgid ""
 "Affix also used for BAD/RARE/KEEPCASE/NEEDAFFIX/NEEDCOMPOUND/NOSUGGEST in %s "
 "line %d: %s"
 msgstr ""
+"%s 第 %d 行，附加項被 BAD/RARE/KEEPCASE/NEEDAFFIX/NEEDCOMPOUND/NOSUGGEST 使"
+"用: %s"
 
 #: ../spell.c:4893
 #, c-format
 msgid "Expected Y or N in %s line %d: %s"
-msgstr ""
+msgstr "%s 第 %d 行，此處需要 Y 或 N: %s"
 
 #: ../spell.c:4968
 #, c-format
 msgid "Broken condition in %s line %d: %s"
-msgstr ""
+msgstr "%s 第 %d 行，錯誤的條件: %s"
 
 #: ../spell.c:5091
 #, c-format
 msgid "Expected REP(SAL) count in %s line %d"
-msgstr ""
+msgstr "%s 第 %d 行，此處需要 REP(SAL) 計數"
 
 #: ../spell.c:5120
 #, c-format
 msgid "Expected MAP count in %s line %d"
-msgstr ""
+msgstr "%s 第 %d 行，此處需要 MAP 計數"
 
 #: ../spell.c:5132
 #, c-format
 msgid "Duplicate character in MAP in %s line %d"
-msgstr ""
+msgstr "%s 第 %d 行，MAP 中存在重複的字元"
 
 #: ../spell.c:5176
 #, c-format
 msgid "Unrecognized or duplicate item in %s line %d: %s"
-msgstr ""
+msgstr "%s 第 %d 行，無法識別或重複的項: %s"
 
 #: ../spell.c:5197
 #, c-format
 msgid "Missing FOL/LOW/UPP line in %s"
-msgstr ""
+msgstr "%s 中缺少 FOL/LOW/UPP 行"
 
 #: ../spell.c:5220
 msgid "COMPOUNDSYLMAX used without SYLLABLE"
-msgstr ""
+msgstr "在没有 SYLLABLE 的情況下使用了 COMPOUNDSYLMAX"
 
 #: ../spell.c:5236
 #, fuzzy
@@ -5464,32 +5479,32 @@ msgstr "太多編輯參數"
 
 #: ../spell.c:5240
 msgid "Too many postponed prefixes and/or compound flags"
-msgstr ""
+msgstr "太多延遲前綴和/或組合標誌"
 
 #: ../spell.c:5250
 #, c-format
 msgid "Missing SOFO%s line in %s"
-msgstr ""
+msgstr "%s 中缺少 SOFO%s 行"
 
 #: ../spell.c:5253
 #, c-format
 msgid "Both SAL and SOFO lines in %s"
-msgstr ""
+msgstr "%s 同時出現 SAL 和 SOFO 行"
 
 #: ../spell.c:5331
 #, c-format
 msgid "Flag is not a number in %s line %d: %s"
-msgstr ""
+msgstr "%s 第 %d 行，標誌不是數字: %s"
 
 #: ../spell.c:5334
 #, c-format
 msgid "Illegal flag in %s line %d: %s"
-msgstr ""
+msgstr "%s 第 %d 行，無效的標誌: %s"
 
 #: ../spell.c:5493 ../spell.c:5501
 #, c-format
 msgid "%s value differs from what is used in another .aff file"
-msgstr ""
+msgstr "%s 的值與另一個 .aff 文件中使用的值不相同"
 
 #: ../spell.c:5602
 #, fuzzy, c-format
@@ -5499,12 +5514,12 @@ msgstr "掃瞄字典: %s"
 #: ../spell.c:5611
 #, c-format
 msgid "E760: No word count in %s"
-msgstr ""
+msgstr "E760: %s 中没有單詞計數"
 
 #: ../spell.c:5669
 #, c-format
 msgid "line %6d, word %6d - %s"
-msgstr ""
+msgstr "第 %6d 行，第 %6d 个單詞 - %s"
 
 #: ../spell.c:5691
 #, fuzzy, c-format
@@ -5514,17 +5529,17 @@ msgstr "每一行都找不到: %s"
 #: ../spell.c:5694
 #, c-format
 msgid "First duplicate word in %s line %d: %s"
-msgstr ""
+msgstr "%s 第 %d 行，首次出現重複的單詞: %s"
 
 #: ../spell.c:5746
 #, c-format
 msgid "%d duplicate word(s) in %s"
-msgstr ""
+msgstr "存在 %d 个重複的單詞，在 %s 中"
 
 #: ../spell.c:5748
 #, c-format
 msgid "Ignored %d word(s) with non-ASCII characters in %s"
-msgstr ""
+msgstr "忽略了含有非 ASCII 字元的 %d 个單詞，在 %s 中"
 
 #: ../spell.c:6115
 #, fuzzy, c-format
@@ -5534,42 +5549,42 @@ msgstr "從標準輸入讀取..."
 #: ../spell.c:6155
 #, c-format
 msgid "Duplicate /encoding= line ignored in %s line %d: %s"
-msgstr ""
+msgstr "%s 第 %ld 行，重复的 /encoding= 行已被忽略: %s"
 
 #: ../spell.c:6159
 #, c-format
 msgid "/encoding= line after word ignored in %s line %d: %s"
-msgstr ""
+msgstr "%s 第 %d 行，单词后的 /encoding= 行已被忽略: %s"
 
 #: ../spell.c:6180
 #, c-format
 msgid "Duplicate /regions= line ignored in %s line %d: %s"
-msgstr ""
+msgstr "%s 第 %d 行，重复的 /regions= 行已被忽略: %s"
 
 #: ../spell.c:6185
 #, c-format
 msgid "Too many regions in %s line %d: %s"
-msgstr ""
+msgstr "%s 第 %d 行，太多區域: %s"
 
 #: ../spell.c:6198
 #, c-format
 msgid "/ line ignored in %s line %d: %s"
-msgstr ""
+msgstr "%s 第 %d 行，/ 行已被忽略: %s"
 
 #: ../spell.c:6224
 #, fuzzy, c-format
 msgid "Invalid region nr in %s line %d: %s"
-msgstr "E573: 不正確的伺服器 id : %s"
+msgstr "%s 第 %d 行，無效的區域號: %s"
 
 #: ../spell.c:6230
 #, c-format
 msgid "Unrecognized flags in %s line %d: %s"
-msgstr ""
+msgstr "%s 第 %d 行，不可識別的標誌: %s"
 
 #: ../spell.c:6257
 #, c-format
 msgid "Ignored %d words with non-ASCII characters"
-msgstr ""
+msgstr "忽略了含有非 ASCII 字元的 %d 个單詞"
 
 #: ../spell.c:6656
 #, c-format
@@ -5578,23 +5593,23 @@ msgstr ""
 
 #: ../spell.c:7340
 msgid "Reading back spell file..."
-msgstr ""
+msgstr "读取拼寫文件……"
 
 #. Go through the trie of good words, soundfold each word and add it to
 #. the soundfold trie.
 #: ../spell.c:7357
 msgid "Performing soundfolding..."
-msgstr ""
+msgstr "正在 soundfolding……"
 
 #: ../spell.c:7368
 #, c-format
 msgid "Number of words after soundfolding: %<PRId64>"
-msgstr ""
+msgstr "soundfolding 后的單詞数: %<PRId64>"
 
 #: ../spell.c:7476
 #, c-format
 msgid "Total number of words: %d"
-msgstr ""
+msgstr "單詞总数: %d"
 
 #: ../spell.c:7655
 #, fuzzy, c-format
@@ -5604,11 +5619,11 @@ msgstr "寫入 viminfo 檔案 \"%s\" 中"
 #: ../spell.c:7707 ../spell.c:7927
 #, c-format
 msgid "Estimated runtime memory use: %d bytes"
-msgstr ""
+msgstr "估計運行時的內存用量: %d 位元"
 
 #: ../spell.c:7820
 msgid "E751: Output file name must not have region name"
-msgstr ""
+msgstr "E751: 輸出文件不能含有區域名"
 
 #: ../spell.c:7822
 #, fuzzy
@@ -5622,7 +5637,7 @@ msgstr "E15: 不正確的運算式: %s"
 
 #: ../spell.c:7907
 msgid "Warning: both compounding and NOBREAK specified"
-msgstr ""
+msgstr "警告: 同時指定了 compounding 和 NOBREAK"
 
 #: ../spell.c:7920
 #, fuzzy, c-format
@@ -5631,30 +5646,30 @@ msgstr "寫入 viminfo 檔案 \"%s\" 中"
 
 #: ../spell.c:7925
 msgid "Done!"
-msgstr ""
+msgstr "完成！"
 
 #: ../spell.c:8034
 #, c-format
 msgid "E765: 'spellfile' does not have %<PRId64> entries"
-msgstr ""
+msgstr "E765: 'spellfile' 没有 %<PRId64> 項"
 
 #: ../spell.c:8074
 #, c-format
 msgid "Word '%.*s' removed from %s"
-msgstr ""
+msgstr "从 %s 中删除了單詞"
 
 #: ../spell.c:8117
 #, c-format
 msgid "Word '%.*s' added to %s"
-msgstr ""
+msgstr "向 %s 中添加了單詞"
 
 #: ../spell.c:8381
 msgid "E763: Word characters differ between spell files"
-msgstr ""
+msgstr "E763: 拼寫文件之間的字元不相同"
 
 #: ../spell.c:8684
 msgid "Sorry, no suggestions"
-msgstr ""
+msgstr "抱歉，没有建议"
 
 #: ../spell.c:8687
 #, fuzzy, c-format
@@ -5671,7 +5686,7 @@ msgstr "將變動存儲至 \"%.*s\"?"
 #: ../spell.c:8737
 #, c-format
 msgid " < \"%.*s\""
-msgstr ""
+msgstr " < \"%.*s\""
 
 #: ../spell.c:8882
 #, fuzzy
@@ -5691,28 +5706,28 @@ msgstr "E307: %s 看起來不像是 Vim 暫存檔"
 #: ../spell.c:9282
 #, c-format
 msgid "E779: Old .sug file, needs to be updated: %s"
-msgstr ""
+msgstr "E779: 舊的.sug 文件，需要更新: %s"
 
 #: ../spell.c:9286
 #, c-format
 msgid "E780: .sug file is for newer version of Vim: %s"
-msgstr ""
+msgstr "E780: .sug 文件適用於較新的 Vim 版本: %s"
 
 #: ../spell.c:9295
 #, c-format
 msgid "E781: .sug file doesn't match .spl file: %s"
-msgstr ""
+msgstr "E781: .sug 文件不能匹配 .spl 文件: %s"
 
 #: ../spell.c:9305
 #, fuzzy, c-format
 msgid "E782: error while reading .sug file: %s"
-msgstr "E47: 讀取錯誤檔案失敗"
+msgstr "E782: 當讀取.sug 文件時錯誤"
 
 #. This should have been checked when generating the .spl
 #. file.
 #: ../spell.c:11575
 msgid "E783: duplicate char in MAP entry"
-msgstr ""
+msgstr "E783: MAP 條目中有重複的字元"
 
 #: ../syntax.c:266
 msgid "No Syntax items defined for this buffer"
@@ -5894,10 +5909,11 @@ msgstr "E410: 不正確的 :syntax 子命令: %s"
 msgid ""
 "  TOTAL      COUNT  MATCH   SLOWEST     AVERAGE   NAME               PATTERN"
 msgstr ""
+"  總 計      計 數  匹 配   最 慢 的    平   均   名 字              模   式"
 
 #: ../syntax.c:6146
 msgid "E679: recursive loop loading syncolor.vim"
-msgstr ""
+msgstr "E679: 加載 syncolor.vim 时出現嵌套循環"
 
 #: ../syntax.c:6256
 #, c-format
@@ -5969,13 +5985,13 @@ msgstr "E424: 使用了過多相異的高亮度屬性"
 msgid "E669: Unprintable character in group name"
 msgstr "E669: 群組名稱中有無法列印的字元"
 
-#: ../syntax.c:7434
-msgid "W18: Invalid character in group name"
-msgstr "W18: 群組名稱中有不正確的字元"
+#: ../highlight_group.c:1756
+msgid "E5248: Invalid character in group name"
+msgstr "E5248: 群組名稱中有不正確的字元"
 
 #: ../syntax.c:7448
 msgid "E849: Too many highlight and syntax groups"
-msgstr ""
+msgstr "E849: 高亮和語法組過多"
 
 #: ../tag.c:104
 msgid "E555: at bottom of tag stack"
@@ -6083,7 +6099,7 @@ msgstr "E435: 找不到 tag, 用猜的!"
 #: ../tag.c:2797
 #, c-format
 msgid "Duplicate field name: %s"
-msgstr ""
+msgstr "重複的字段名: %s"
 
 #: ../term.c:1442
 msgid "' not known. Available builtin terminals are:"
@@ -6131,35 +6147,35 @@ msgstr "Vim: 讀取輸入錯誤，離開中...\n"
 #. * file in a way it becomes shorter.
 #: ../undo.c:379
 msgid "E881: Line count changed unexpectedly"
-msgstr ""
+msgstr "E881: 行數意外地改變了"
 
 #: ../undo.c:627
-#, fuzzy, c-format
+#, c-format
 msgid "E828: Cannot open undo file for writing: %s"
-msgstr "E212: 無法以寫入模式開啟"
+msgstr "E828: 無法打開撤銷文件去寫入"
 
 #: ../undo.c:717
 #, c-format
 msgid "E825: Corrupted undo file (%s): %s"
-msgstr ""
+msgstr "E825: 已損壞的撤銷文件 (%s): %s"
 
 #: ../undo.c:1039
 msgid "Cannot write undo file in any directory in 'undodir'"
-msgstr ""
+msgstr "不能寫入撤銷文件到 'undodir' 中的任何文件夾"
 
 #: ../undo.c:1074
 #, c-format
 msgid "Will not overwrite with undo file, cannot read: %s"
-msgstr ""
+msgstr "不能寫入撤銷文件，不可讀取: %s"
 
 #: ../undo.c:1092
 #, c-format
 msgid "Will not overwrite, this is not an undo file: %s"
-msgstr ""
+msgstr "不會覆蓋，這不是撤銷文件: %s"
 
 #: ../undo.c:1108
 msgid "Skipping undo file write, nothing to undo"
-msgstr ""
+msgstr "跳過撤消文件寫入，沒有可撤消的內容"
 
 #: ../undo.c:1121
 #, fuzzy, c-format
@@ -6174,7 +6190,7 @@ msgstr "E297: 暫存檔寫入錯誤"
 #: ../undo.c:1280
 #, c-format
 msgid "Not reading undo file, owner differs: %s"
-msgstr ""
+msgstr "不能讀取撤銷文件，擁有者不同: %s"
 
 #: ../undo.c:1292
 #, fuzzy, c-format
@@ -6198,7 +6214,7 @@ msgstr "E484: 無法開啟檔案 %s"
 
 #: ../undo.c:1328
 msgid "File contents changed, cannot use undo info"
-msgstr ""
+msgstr "文件內容已經改變，不能使用撤銷信息"
 
 #: ../undo.c:1497
 #, fuzzy, c-format
@@ -6207,11 +6223,11 @@ msgstr "結束執行 %s"
 
 #: ../undo.c:1586 ../undo.c:1812
 msgid "Already at oldest change"
-msgstr ""
+msgstr "已經在最早的改變"
 
 #: ../undo.c:1597 ../undo.c:1814
 msgid "Already at newest change"
-msgstr ""
+msgstr "已經在最新的改變"
 
 #: ../undo.c:1806
 #, fuzzy, c-format
@@ -6259,11 +6275,11 @@ msgstr "%<PRId64> 行 %s 過 %d 次"
 
 #: ../undo.c:2228
 msgid "before"
-msgstr ""
+msgstr "之前"
 
 #: ../undo.c:2228
 msgid "after"
-msgstr ""
+msgstr "之後"
 
 #: ../undo.c:2325
 #, fuzzy
@@ -6272,7 +6288,7 @@ msgstr "沒有這個 mapping 對應"
 
 #: ../undo.c:2330
 msgid "number changes  when               saved"
-msgstr ""
+msgstr " 編號    改變  時間                 保存"
 
 #: ../undo.c:2360
 #, fuzzy, c-format

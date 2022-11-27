@@ -391,8 +391,8 @@ implemented by libuv, the platform layer used by Nvim.
 
 Since Nvim inherited its code from Vim, the states are not prepared to receive
 "arbitrary events", so we use a special key to represent those (When a state
-receives an "arbitrary event", it normally doesn't do anything other update the
-screen).
+receives an "arbitrary event", it normally doesn't do anything other than
+update the screen).
 
 Main loop
 ---------

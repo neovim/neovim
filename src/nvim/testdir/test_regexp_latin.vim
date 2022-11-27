@@ -101,8 +101,33 @@ func Test_multi_failure()
   set re=2
   call assert_fails('/a**', 'E871:')
   call assert_fails('/a*\+', 'E871:')
-  call assert_fails('/a\{a}', 'E870:')
+  call assert_fails('/a\{a}', 'E554:')
   set re=0
+endfunc
+
+func Test_column_success_failure()
+  new
+  call setline(1, 'xbar')
+
+  set re=1
+  %s/\%>0v./A/
+  call assert_equal('Abar', getline(1))
+  call assert_fails('/\%v', 'E71:')
+  call assert_fails('/\%>v', 'E71:')
+  call assert_fails('/\%c', 'E71:')
+  call assert_fails('/\%<c', 'E71:')
+  call assert_fails('/\%l', 'E71:')
+  set re=2
+  %s/\%>0v./B/
+  call assert_equal('Bbar', getline(1))
+  call assert_fails('/\%v', 'E1273:')
+  call assert_fails('/\%>v', 'E1273:')
+  call assert_fails('/\%c', 'E1273:')
+  call assert_fails('/\%<c', 'E1273:')
+  call assert_fails('/\%l', 'E1273:')
+
+  set re=0
+  bwipe!
 endfunc
 
 func Test_recursive_addstate()
@@ -146,6 +171,10 @@ func Test_regexp_single_line_pat()
   call add(tl, [2, 'c*', 'abdef', ''])
   call add(tl, [2, 'bc\+', 'abccccdef', 'bcccc'])
   call add(tl, [2, 'bc\+', 'abdef']) " no match
+  " match escape character in a string
+  call add(tl, [2, '.\e.', "one\<Esc>two", "e\<Esc>t"])
+  " match backspace character in a string
+  call add(tl, [2, '.\b.', "one\<C-H>two", "e\<C-H>t"])
   " match newline character in a string
   call add(tl, [2, 'o\nb', "foo\nbar", "o\nb"])
 
@@ -895,6 +924,8 @@ func Test_regexp_error()
   call assert_fails("call matchlist('x x', '\\%#=2 \\zs*')", 'E888:')
   call assert_fails("call matchlist('x x', '\\%#=2 \\ze*')", 'E888:')
   call assert_fails('exe "normal /\\%#=1\\%[x\\%[x]]\<CR>"', 'E369:')
+  call assert_fails("call matchstr('abcd', '\\%o841\\%o142')", 'E678:')
+  call assert_equal('', matchstr('abcd', '\%o181\%o142'))
 endfunc
 
 " Test for using the last substitute string pattern (~)
@@ -1024,6 +1055,28 @@ func Test_using_invalid_visual_position()
   new
   exe "norm 0o000\<Esc>0\<C-V>$s0"
   /\%V
+  bwipe!
+endfunc
+
+func Test_using_two_engines_pattern()
+  new
+  call setline(1, ['foobar=0', 'foobar=1', 'foobar=2'])
+  " \%#= at the end of the pattern
+  for i in range(0, 2)
+    for j in range(0, 2)
+      exe "set re=" .. i
+      call cursor(j + 1, 7)
+      call assert_fails("%s/foobar\\%#=" .. j, 'E1281:')
+    endfor
+  endfor
+  set re=0
+
+  " \%#= at the start of the pattern
+  for i in range(0, 2)
+    call cursor(i + 1, 7)
+    exe ":%s/\\%#=" .. i .. "foobar=" .. i .. "/xx"
+  endfor
+  call assert_equal(['xx', 'xx', 'xx'], getline(1, '$'))
   bwipe!
 endfunc
 

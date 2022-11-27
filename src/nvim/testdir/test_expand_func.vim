@@ -107,10 +107,15 @@ endfunc
 
 func Test_expand()
   new
-  call assert_equal("",  expand('%:S'))
+  call assert_equal("", expand('%:S'))
   call assert_equal('3', '<slnum>'->expand())
   call assert_equal(['4'], expand('<slnum>', v:false, v:true))
   " Don't add any line above this, otherwise <slnum> will change.
+  call assert_equal("", expand('%'))
+  set verbose=1
+  call assert_equal("", expand('%'))
+  set verbose=0
+  call assert_equal("", expand('%:p'))
   quit
 endfunc
 
@@ -134,6 +139,7 @@ func Test_expand_wildignore()
   call assert_equal('test_expand_func.vim', expand('test_expand_func.vim', 1))
   call assert_equal(['test_expand_func.vim'],
         \ expand('test_expand_func.vim', 1, 1))
+  call assert_fails("call expand('*', [])", 'E745:')
   set wildignore&
 endfunc
 

@@ -1,11 +1,11 @@
 local helpers = require('test.functional.helpers')(after_each)
 local eq, neq, eval = helpers.eq, helpers.neq, helpers.eval
 local clear, funcs, meths = helpers.clear, helpers.funcs, helpers.meths
-local iswin = helpers.iswin
 local ok = helpers.ok
 local matches = helpers.matches
 local pcall_err = helpers.pcall_err
 local mkdir = helpers.mkdir
+local is_os = helpers.is_os
 
 local function clear_serverlist()
   for _, server in pairs(funcs.serverlist()) do
@@ -19,7 +19,7 @@ describe('server', function()
     mkdir(dir)
     clear({ env={ XDG_RUNTIME_DIR=dir } })
     matches(dir, funcs.stdpath('run'))
-    if not iswin() then
+    if not is_os('win') then
       matches(dir, funcs.serverstart())
     end
   end)
@@ -65,7 +65,7 @@ describe('server', function()
     eq('', meths.get_vvar('servername'))
 
     -- v:servername and $NVIM take the next available server.
-    local servername = (iswin() and [[\\.\pipe\Xtest-functional-server-pipe]]
+    local servername = (is_os('win') and [[\\.\pipe\Xtest-functional-server-pipe]]
                                 or './Xtest-functional-server-socket')
     funcs.serverstart(servername)
     eq(servername, meths.get_vvar('servername'))
@@ -130,7 +130,7 @@ describe('server', function()
     local n = eval('len(serverlist())')
 
     -- Add some servers.
-    local servs = (iswin()
+    local servs = (is_os('win')
       and { [[\\.\pipe\Xtest-pipe0934]], [[\\.\pipe\Xtest-pipe4324]] }
       or  { [[./Xtest-pipe0934]], [[./Xtest-pipe4324]] })
     for _, s in ipairs(servs) do
@@ -164,7 +164,7 @@ describe('startup --listen', function()
   end)
 
   it('sets v:servername, overrides $NVIM_LISTEN_ADDRESS', function()
-    local addr = (iswin() and [[\\.\pipe\Xtest-listen-pipe]]
+    local addr = (is_os('win') and [[\\.\pipe\Xtest-listen-pipe]]
                           or './Xtest-listen-pipe')
     clear({ env={ NVIM_LISTEN_ADDRESS='./Xtest-env-pipe' },
             args={ '--listen', addr } })

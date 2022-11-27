@@ -16,7 +16,7 @@ describe("'autochdir'", function()
 
     -- With 'autochdir' on, we should get the directory of tty-test.c.
     clear('--cmd', 'set autochdir', targetdir..'/tty-test.c')
-    eq(helpers.iswin() and expected:gsub('/', '\\') or expected, funcs.getcwd())
+    eq(helpers.is_os('win') and expected:gsub('/', '\\') or expected, funcs.getcwd())
   end)
 
   it('is not overwritten by getwinvar() call #17609',function()

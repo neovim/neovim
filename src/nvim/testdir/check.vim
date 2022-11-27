@@ -4,6 +4,9 @@ source term_util.vim
 " Command to check for the presence of a feature.
 command -nargs=1 CheckFeature call CheckFeature(<f-args>)
 func CheckFeature(name)
+  " if !has(a:name, 1)
+  "   throw 'Checking for non-existent feature ' .. a:name
+  " endif
   if !has(a:name)
     throw 'Skipped: ' .. a:name .. ' feature missing'
   endif
@@ -39,6 +42,22 @@ func CheckFunction(name)
   endif
 endfunc
 
+" Command to check for the presence of an Ex command
+command -nargs=1 CheckCommand call CheckCommand(<f-args>)
+func CheckCommand(name)
+  if !exists(':' .. a:name)
+    throw 'Skipped: ' .. a:name .. ' command not supported'
+  endif
+endfunc
+
+" Command to check for the presence of a shell command
+command -nargs=1 CheckExecutable call CheckExecutable(<f-args>)
+func CheckExecutable(name)
+  if !executable(a:name)
+    throw 'Skipped: ' .. a:name .. ' program not executable'
+  endif
+endfunc
+
 " Command to check for the presence of python.  Argument should have been
 " obtained with PythonProg()
 func CheckPython(name)
@@ -71,12 +90,11 @@ func CheckUnix()
   endif
 endfunc
 
-" Command to check for not running on a BSD system.
-" TODO: using this checks should not be needed
-command CheckNotBSD call CheckNotBSD()
-func CheckNotBSD()
-  if has('bsd')
-    throw 'Skipped: does not work on BSD'
+" Command to check for running on Linux
+command CheckLinux call CheckLinux()
+func CheckLinux()
+  if !has('linux')
+    throw 'Skipped: only works on Linux'
   endif
 endfunc
 

@@ -2,10 +2,14 @@
 #define NVIM_TUI_INPUT_H
 
 #include <stdbool.h>
+#include <stdint.h>
 #include <termkey.h>
+#include <uv.h>
 
+#include "nvim/event/loop.h"
 #include "nvim/event/stream.h"
 #include "nvim/event/time.h"
+#include "nvim/rbuffer.h"
 #include "nvim/tui/input_defs.h"
 #include "nvim/tui/tui.h"
 
@@ -26,9 +30,7 @@ typedef struct term_input {
   ExtkeysType extkeys_type;
   long ttimeoutlen;
   TermKey *tk;
-#if TERMKEY_VERSION_MAJOR > 0 || TERMKEY_VERSION_MINOR > 18
   TermKey_Terminfo_Getstr_Hook *tk_ti_hook_fn;  ///< libtermkey terminfo hook
-#endif
   TimeWatcher timer_handle;
   Loop *loop;
   Stream read_stream;

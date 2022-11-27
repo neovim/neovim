@@ -5,6 +5,8 @@ local meths, nvim_command, funcs, eq =
 local write_file, spawn, set_session, nvim_prog, exc_exec =
   helpers.write_file, helpers.spawn, helpers.set_session, helpers.nvim_prog,
   helpers.exc_exec
+local is_os = helpers.is_os
+local skip = helpers.skip
 
 local lfs = require('lfs')
 local paths = require('test.cmakeconfig.paths')
@@ -238,8 +240,17 @@ describe('ShaDa support code', function()
     eq('', meths.get_option('shada'))
   end)
 
+  it('setting &shada gives proper error message on missing number', function()
+    eq([[Vim(set):E526: Missing number after <">: shada="]],
+       exc_exec([[set shada=\"]]))
+    for _, c in ipairs({"'", "/", ":", "<", "@", "s"}) do
+      eq(([[Vim(set):E526: Missing number after <%s>: shada=%s]]):format(c, c),
+         exc_exec(([[set shada=%s]]):format(c)))
+    end
+  end)
+
   it('does not crash when ShaDa file directory is not writable', function()
-    if helpers.pending_win32(pending) then return end
+    skip(is_os('win'))
 
     funcs.mkdir(dirname, '', 0)
     eq(0, funcs.filewritable(dirname))

@@ -119,7 +119,7 @@ windows.
 
 							*filler-lines*
 The lines after the last buffer line in a window are called filler lines.  By
-default, these lines start with a tilde (~) character. The 'eob' item in the
+default, these lines start with a tilde (~) character. The "eob" item in the
 'fillchars' option can be used to change this character. By default, these
 characters are highlighted as NonText (|hl-NonText|). The EndOfBuffer
 highlight group (|hl-EndOfBuffer|) can be used to change the highlighting of
@@ -148,7 +148,7 @@ CTRL-W CTRL-S						*CTRL-W_CTRL-S*
 		Note: CTRL-S does not work on all terminals and might block
 		further input, use CTRL-Q to get going again.
 		Also see |++opt| and |+cmd|.
-							*E242*
+							*E242* *E1159*
 		Be careful when splitting a window in an autocommand, it may
 		mess up the window layout if this happens while making other
 		window layout changes.
@@ -163,6 +163,8 @@ CTRL-W v						*CTRL-W_v*
 		3. 'eadirection' isn't "ver", and
 		4. one of the other windows is wider than the current or new
 		   window.
+		If N was given make the new window N columns wide, if
+		possible.
 		Note: In other places CTRL-Q does the same as CTRL-V, but here
 		it doesn't!
 
@@ -233,8 +235,15 @@ and 'winminwidth' are relevant.
 						*:vert* *:vertical*
 :vert[ical] {cmd}
 		Execute {cmd}.  If it contains a command that splits a window,
-		it will be split vertically.
+		it will be split vertically.  For `vertical wincmd =` windows
+		will be equalized only vertically.
 		Doesn't work for |:execute| and |:normal|.
+
+						*:hor* *:horizontal*
+:hor[izontal] {cmd}
+		Execute {cmd}.  Currently only makes a difference for
+		`horizontal wincmd =`, which will equalize windows only
+		horizontally.
 
 :lefta[bove] {cmd}				*:lefta* *:leftabove*
 :abo[veleft] {cmd}				*:abo* *:aboveleft*
@@ -282,9 +291,8 @@ Closing a window
 :{count}q[uit]						*:count_quit*
 CTRL-W q						*CTRL-W_q*
 CTRL-W CTRL-Q						*CTRL-W_CTRL-Q*
-		Without {count}: Quit the current window. If {count} is
-		given quit the {count} window
-
+		Without {count}: Quit the current window.  If {count} is
+		given quit the {count} window.
 							*edit-window*
 		When quitting the last edit window (not counting help or
 		preview windows), exit Vim.
@@ -343,7 +351,7 @@ CTRL-W CTRL-C						*CTRL-W_CTRL-C*
 		window, but that does not work, because the CTRL-C cancels the
 		command.
 
-                                                                *:hide*
+							*:hide*
 :hid[e]
 :{count}hid[e]
 		Without {count}: Quit the current window, unless it is the
@@ -528,6 +536,10 @@ CTRL-W =	Make all windows (almost) equally high and wide, but use
 		'winheight' and 'winwidth' for the current window.
 		Windows with 'winfixheight' set keep their height and windows
 		with 'winfixwidth' set keep their width.
+		To equalize only vertically (make window equally high) use
+		`vertical wincmd =` .
+		To equalize only horizontally (make window equally wide) use
+		`horizontal wincmd =` .
 
 :res[ize] -N					*:res* *:resize* *CTRL-W_-*
 CTRL-W -	Decrease current window height by N (default 1).
@@ -594,6 +606,51 @@ it).
 
 The minimal height and width of a window is set with 'winminheight' and
 'winminwidth'.  These are hard values, a window will never become smaller.
+
+
+WinScrolled and WinResized autocommands ~
+						*win-scrolled-resized*
+If you want to get notified of changes in window sizes, the |WinResized|
+autocommand event can be used.
+If you want to get notified of text in windows scrolling vertically or
+horizontally, the |WinScrolled| autocommand event can be used.  This will also
+trigger in window size changes.
+							*WinResized-event*
+The |WinResized| event is triggered after updating the display, several
+windows may have changed size then.  A list of the IDs of windows that changed
+since last time is provided in the v:event.windows variable, for example:
+	[1003, 1006]
+							*WinScrolled-event*
+The |WinScrolled| event is triggered after |WinResized|, and also if a window
+was scrolled.  That can be vertically (the text at the top of the window
+changed) or horizontally (when 'wrap' is off or when the first displayed part
+of the first line changes).  Note that |WinScrolled| will trigger many more
+times than |WinResized|, it may slow down editing a bit.
+
+The information provided by |WinScrolled| is a dictionary for each window that
+has changes, using the window ID as the key, and a total count of the changes
+with the key "all".  Example value for |v:event|:
+	{
+	   all: {width: 0, height: 2, leftcol: 0, topline: 1, skipcol: 0},
+	   1003: {width: 0, height: -1, leftcol: 0, topline: 0, skipcol: 0},
+	   1006: {width: 0, height: 1, leftcol: 0, topline: 1, skipcol: 0},
+	}
+
+Note that the "all" entry has the absolute values of the individual windows
+accumulated.
+
+If you need more information about what changed, or you want to "debounce" the
+events (not handle every event to avoid doing too much work), you may want to
+use the `winlayout()` and `getwininfo()` functions.
+
+|WinScrolled| and |WinResized| do not trigger when the first autocommand is
+added, only after the first scroll or resize.  They may trigger when switching
+to another tab page.
+
+The commands executed are expected to not cause window size or scroll changes.
+If this happens anyway, the event will trigger again very soon.  In other
+words: Just before triggering the event, the current sizes and scroll
+positions are stored and used to decide whether there was a change.
 
 ==============================================================================
 7. Argument and buffer list commands			*buffer-list*
@@ -738,6 +795,7 @@ can also get to them with the buffer list commands, like ":bnext".
 			the current window.
 			{cmd} can contain '|' to concatenate several commands.
 			{cmd} must not open or close windows or reorder them.
+
 			Also see |:tabdo|, |:argdo|, |:bufdo|, |:cdo|, |:ldo|,
 			|:cfdo| and |:lfdo|.
 
@@ -765,6 +823,7 @@ can also get to them with the buffer list commands, like ":bnext".
 			autocommand event is disabled by adding it to
 			'eventignore'.  This considerably speeds up editing
 			each buffer.
+
 			Also see |:tabdo|, |:argdo|, |:windo|, |:cdo|, |:ldo|,
 			|:cfdo| and |:lfdo|.
 

@@ -2,37 +2,35 @@
 // it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
 #include <assert.h>
-#include <inttypes.h>
 #include <limits.h>
 #include <stdbool.h>
-#include <string.h>
+#include <stddef.h>
+#include <stdint.h>
+#include <stdlib.h>
 
+#include "auto/config.h"
+#include "klib/kvec.h"
 #include "nvim/ascii.h"
 #include "nvim/autocmd.h"
-#include "nvim/charset.h"
-#include "nvim/cursor.h"
+#include "nvim/buffer_defs.h"
 #include "nvim/cursor_shape.h"
-#include "nvim/diff.h"
 #include "nvim/drawscreen.h"
+#include "nvim/event/defs.h"
 #include "nvim/event/loop.h"
 #include "nvim/ex_getln.h"
-#include "nvim/fold.h"
-#include "nvim/garray.h"
+#include "nvim/gettext.h"
+#include "nvim/globals.h"
 #include "nvim/grid.h"
 #include "nvim/highlight.h"
+#include "nvim/highlight_defs.h"
 #include "nvim/log.h"
 #include "nvim/main.h"
-#include "nvim/mbyte.h"
 #include "nvim/memory.h"
-#include "nvim/move.h"
+#include "nvim/message.h"
 #include "nvim/msgpack_rpc/channel.h"
-#include "nvim/normal.h"
 #include "nvim/option.h"
-#include "nvim/os/input.h"
-#include "nvim/os/signal.h"
 #include "nvim/os/time.h"
-#include "nvim/os_unix.h"
-#include "nvim/popupmenu.h"
+#include "nvim/strings.h"
 #include "nvim/ui.h"
 #include "nvim/ui_compositor.h"
 #include "nvim/vim.h"
@@ -198,13 +196,16 @@ void ui_refresh(void)
     ext_widgets[i] = true;
   }
 
+  UI *compositor = uis[0];
+
   bool inclusive = ui_override();
-  for (size_t i = 0; i < ui_count; i++) {
+  for (size_t i = 1; i < ui_count; i++) {
     UI *ui = uis[i];
     width = MIN(ui->width, width);
     height = MIN(ui->height, height);
     for (UIExtension j = 0; (int)j < kUIExtCount; j++) {
-      ext_widgets[j] &= (ui->ui_ext[j] || inclusive);
+      bool in_compositor = (ui->composed || j < kUIGlobalCount) && compositor->ui_ext[j];
+      ext_widgets[j] &= (ui->ui_ext[j] || in_compositor || inclusive);
     }
   }
 
@@ -312,14 +313,14 @@ void vim_beep(unsigned val)
 {
   called_vim_beep = true;
 
-  if (emsg_silent == 0) {
+  if (emsg_silent == 0 && !in_assert_fails) {
     if (!((bo_flags & val) || (bo_flags & BO_ALL))) {
       static int beeps = 0;
       static uint64_t start_time = 0;
 
       // Only beep up to three times per half a second,
       // otherwise a sequence of beeps would freeze Vim.
-      if (start_time == 0 || os_hrtime() - start_time > 500000000u) {
+      if (start_time == 0 || os_hrtime() - start_time > 500000000U) {
         beeps = 0;
         start_time = os_hrtime();
       }
@@ -336,7 +337,7 @@ void vim_beep(unsigned val)
     // When 'debug' contains "beep" produce a message.  If we are sourcing
     // a script or executing a function give the user a hint where the beep
     // comes from.
-    if (vim_strchr((char *)p_debug, 'e') != NULL) {
+    if (vim_strchr(p_debug, 'e') != NULL) {
       msg_source(HL_ATTR(HLF_W));
       msg_attr(_("Beep!"), HL_ATTR(HLF_W));
     }
@@ -449,7 +450,7 @@ void ui_line(ScreenGrid *grid, int row, int startcol, int endcol, int clearcol, 
                              MIN(clearcol, (int)grid->cols - 1));
     ui_call_flush();
     uint64_t wd = (uint64_t)labs(p_wd);
-    os_microdelay(wd * 1000u, true);
+    os_microdelay(wd * 1000U, true);
     pending_cursor_update = true;  // restore the cursor later
   }
 }
@@ -507,7 +508,7 @@ void ui_flush(void)
     return;
   }
   cmdline_ui_flush();
-  win_ui_flush();
+  win_ui_flush(false);
   msg_ext_ui_flush();
   msg_scroll_flush();
 
@@ -517,11 +518,10 @@ void ui_flush(void)
   }
   if (pending_mode_info_update) {
     Arena arena = ARENA_EMPTY;
-    arena_start(&arena, &ui_ext_fixblk);
     Array style = mode_style_array(&arena);
     bool enabled = (*p_guicursor != NUL);
     ui_call_mode_info_set(enabled, style);
-    arena_mem_free(arena_finish(&arena), &ui_ext_fixblk);
+    arena_mem_free(arena_finish(&arena));
     pending_mode_info_update = false;
   }
   if (pending_mode_update && !starting) {
@@ -566,7 +566,7 @@ void ui_check_mouse(void)
   // - 'a' is in 'mouse' and "c" is in MOUSE_A, or
   // - the current buffer is a help file and 'h' is in 'mouse' and we are in a
   //   normal editing mode (not at hit-return message).
-  for (char_u *p = p_mouse; *p; p++) {
+  for (char *p = p_mouse; *p; p++) {
     switch (*p) {
     case 'a':
       if (vim_strchr(MOUSE_A, checkfor) != NULL) {
@@ -610,12 +610,6 @@ void ui_cursor_shape(void)
 bool ui_has(UIExtension ext)
 {
   return ui_ext[ext];
-}
-
-/// Returns true if the UI has messages area.
-bool ui_has_messages(void)
-{
-  return p_ch > 0 || ui_has(kUIMessages);
 }
 
 Array ui_array(void)

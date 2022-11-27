@@ -267,10 +267,9 @@ endfunc
 
 " Test the -V[N] argument to set the 'verbose' option to [N]
 func Test_V_arg()
-  if has('gui_running')
-    " Can't catch the output of gvim.
-    return
-  endif
+  " Can't catch the output of gvim.
+  CheckNotGui
+
   let out = system(GetVimCommand() . ' --clean -es -X -V0 -c "set verbose?" -cq')
   call assert_equal("  verbose=0\n", out)
 
@@ -431,7 +430,7 @@ endfunction
 " Test the -reverse and +reverse arguments (for GUI only).
 func Test_reverse()
   CheckCanRunGui
-  CheckAnyOf Feature:gui_gtk Feature:gui_motif Feature:gui_athena
+  CheckAnyOf Feature:gui_gtk Feature:gui_motif
 
   let after =<< trim [CODE]
     call writefile([&background], "Xtest_reverse")
@@ -452,7 +451,7 @@ endfunc
 " Test the -background and -foreground arguments (for GUI only).
 func Test_background_foreground()
   CheckCanRunGui
-  CheckAnyOf Feature:gui_gtk Feature:gui_motif Feature:gui_athena
+  CheckAnyOf Feature:gui_gtk Feature:gui_motif
 
   " Is there a better way to check the effect of -background & -foreground
   " other than merely looking at &background (dark or light)?
@@ -479,7 +478,7 @@ func Test_font()
 
   if has('gui_gtk')
     let font = 'Courier 14'
-  elseif has('gui_motif') || has('gui_athena')
+  elseif has('gui_motif')
     let font = '-misc-fixed-bold-*'
   else
     throw 'Skipped: test does not set a valid font for this GUI'
@@ -501,10 +500,10 @@ endfunc
 " Test the -geometry argument (for GUI only).
 func Test_geometry()
   CheckCanRunGui
-  CheckAnyOf Feature:gui_gtk Feature:gui_motif Feature:gui_athena
+  CheckAnyOf Feature:gui_gtk Feature:gui_motif
 
-  if has('gui_motif') || has('gui_athena')
-    " FIXME: With GUI Athena or Motif, the value of getwinposx(),
+  if has('gui_motif')
+    " FIXME: With GUI Motif the value of getwinposx(),
     "        getwinposy() and getwinpos() do not match exactly the
     "        value given in -geometry. Why?
     "        So only check &columns and &lines for those GUIs.
@@ -533,7 +532,7 @@ endfunc
 " Test the -iconic argument (for GUI only).
 func Test_iconic()
   CheckCanRunGui
-  CheckAnyOf Feature:gui_gtk Feature:gui_motif Feature:gui_athena
+  CheckAnyOf Feature:gui_gtk Feature:gui_motif
 
   call RunVim([], [], '-f -g -iconic -cq')
 
@@ -543,10 +542,9 @@ endfunc
 
 
 func Test_invalid_args()
-  if !has('unix') || has('gui_running')
-    " can't get output of Vim.
-    return
-  endif
+  " must be able to get the output of Vim.
+  CheckUnix
+  CheckNotGui
 
   for opt in ['-Y', '--does-not-exist']
     let out = split(system(GetVimCommand() .. ' ' .. opt), "\n")
@@ -603,7 +601,7 @@ func Test_invalid_args()
   call assert_equal(0, v:shell_error)
 
   if has('quickfix')
-    " Detect invalid repeated arguments '-t foo -t foo", '-q foo -q foo'.
+    " Detect invalid repeated arguments '-t foo -t foo', '-q foo -q foo'.
     for opt in ['-t', '-q']
       let out = split(system(GetVimCommand() .. repeat(' ' .. opt .. ' foo', 2)), "\n")
       call assert_equal(1, v:shell_error)
@@ -622,6 +620,12 @@ func Test_invalid_args()
   endfor
 
   if has('gui_gtk')
+    let out = split(system(GetVimCommand() .. ' --socketid'), "\n")
+    call assert_equal(1, v:shell_error)
+    call assert_match('^VIM - Vi IMproved .* (.*)$',          out[0])
+    call assert_equal('Argument missing after: "--socketid"', out[1])
+    call assert_equal('More info with: "vim -h"',             out[2])
+
     for opt in ['--socketid x', '--socketid 0xg']
       let out = split(system(GetVimCommand() .. ' ' .. opt), "\n")
       call assert_equal(1, v:shell_error)
@@ -629,6 +633,7 @@ func Test_invalid_args()
       call assert_equal('Invalid argument for: "--socketid"', out[1])
       call assert_equal('More info with: "vim -h"',           out[2])
     endfor
+
   endif
 endfunc
 
@@ -747,10 +752,9 @@ func Test_progpath()
 endfunc
 
 func Test_silent_ex_mode()
-  if !has('unix') || has('gui_running')
-    " can't get output of Vim.
-    return
-  endif
+  " must be able to get the output of Vim.
+  CheckUnix
+  CheckNotGui
 
   " This caused an ml_get error.
   let out = system(GetVimCommand() . ' -u NONE -es -c''set verbose=1|h|exe "%norm\<c-y>\<c-d>"'' -c cq')
@@ -758,10 +762,9 @@ func Test_silent_ex_mode()
 endfunc
 
 func Test_default_term()
-  if !has('unix') || has('gui_running')
-    " can't get output of Vim.
-    return
-  endif
+  " must be able to get the output of Vim.
+  CheckUnix
+  CheckNotGui
 
   let save_term = $TERM
   let $TERM = 'unknownxxx'
@@ -796,10 +799,17 @@ func Test_zzz_startinsert()
   call delete('Xtestout')
 endfunc
 
+func Test_issue_3969()
+  " Can't catch the output of gvim.
+  CheckNotGui
+
+  " Check that message is not truncated.
+  let out = system(GetVimCommand() . ' -es -X -V1 -c "echon ''hello''" -cq')
+  call assert_equal('hello', out)
+endfunc
+
 func Test_start_with_tabs()
-  if !CanRunVimInTerminal()
-    return
-  endif
+  CheckRunVimInTerminal
 
   let buf = RunVimInTerminal('-p a b c', {})
   call VerifyScreenDump(buf, 'Test_start_with_tabs', {})
@@ -855,7 +865,7 @@ func Test_t_arg()
   call writefile(['    first', '    second', '    third'], 'Xfile1')
 
   for t_arg in ['-t second', '-tsecond']
-    if RunVim(before, after, '-t second')
+    if RunVim(before, after, t_arg)
       call assert_equal(['Xfile1:L2C5'], readfile('Xtestout'), t_arg)
       call delete('Xtestout')
     endif
@@ -956,9 +966,7 @@ endfunc
 
 " Test for specifying a non-existing vimrc file using "-u"
 func Test_missing_vimrc()
-  if !CanRunVimInTerminal()
-    throw 'Skipped: cannot run vim in terminal'
-  endif
+  CheckRunVimInTerminal
   let after =<< trim [CODE]
     call assert_match('^E282:', v:errmsg)
     call writefile(v:errors, 'Xtestout')
@@ -1016,6 +1024,7 @@ endfunc
 
 " Test for using the 'exrc' option
 func Test_exrc()
+  throw 'Skipped: Nvim requires user input for the exrc option'
   let after =<< trim [CODE]
     call assert_equal(1, &exrc)
     call assert_equal(1, &secure)
@@ -1269,6 +1278,21 @@ func Test_progname()
 
   call delete('Xprogname_after')
   call delete('Xprogname', 'd')
+endfunc
+
+" Test for doing a write from .vimrc
+func Test_write_in_vimrc()
+  call writefile(['silent! write'], 'Xvimrc')
+  let after =<< trim [CODE]
+    call assert_match('E32: ', v:errmsg)
+    call writefile(v:errors, 'Xtestout')
+    qall
+  [CODE]
+  if RunVim([], after, '-u Xvimrc')
+    call assert_equal([], readfile('Xtestout'))
+    call delete('Xtestout')
+  endif
+  call delete('Xvimrc')
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab

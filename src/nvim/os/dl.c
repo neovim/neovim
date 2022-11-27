@@ -4,13 +4,14 @@
 /// Functions for using external native libraries
 
 #include <stdbool.h>
+#include <stddef.h>
 #include <stdint.h>
 #include <uv.h>
 
+#include "nvim/gettext.h"
 #include "nvim/memory.h"
 #include "nvim/message.h"
 #include "nvim/os/dl.h"
-#include "nvim/os/os.h"
 
 /// possible function prototypes that can be called by os_libcall()
 /// int -> int

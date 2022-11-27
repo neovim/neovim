@@ -3,16 +3,28 @@
 
 // Context: snapshot of the entire editor state as one big object/map
 
+#include <assert.h>
+#include <stdbool.h>
+#include <stdio.h>
+
 #include "nvim/api/private/converter.h"
 #include "nvim/api/private/helpers.h"
-#include "nvim/api/vim.h"
 #include "nvim/api/vimscript.h"
 #include "nvim/context.h"
 #include "nvim/eval/encode.h"
+#include "nvim/eval/typval.h"
+#include "nvim/eval/typval_defs.h"
 #include "nvim/eval/userfunc.h"
 #include "nvim/ex_docmd.h"
+#include "nvim/gettext.h"
+#include "nvim/hashtab.h"
+#include "nvim/keycodes.h"
+#include "nvim/memory.h"
+#include "nvim/message.h"
 #include "nvim/option.h"
 #include "nvim/shada.h"
+#include "nvim/types.h"
+#include "nvim/vim.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "context.c.generated.h"
@@ -131,7 +143,7 @@ bool ctx_restore(Context *ctx, const int flags)
   }
 
   char *op_shada;
-  get_option_value("shada", NULL, &op_shada, OPT_GLOBAL);
+  get_option_value("shada", NULL, &op_shada, NULL, OPT_GLOBAL);
   set_option_value("shada", 0L, "!,'100,%", OPT_GLOBAL);
 
   if (flags & kCtxRegs) {
@@ -251,12 +263,12 @@ static inline void ctx_save_funcs(Context *ctx, bool scriptonly)
   Error err = ERROR_INIT;
 
   HASHTAB_ITER(func_tbl_get(), hi, {
-    const char_u *const name = hi->hi_key;
+    const char *const name = hi->hi_key;
     bool islambda = (STRNCMP(name, "<lambda>", 8) == 0);
-    bool isscript = (name[0] == K_SPECIAL);
+    bool isscript = ((uint8_t)name[0] == K_SPECIAL);
 
     if (!islambda && (!scriptonly || isscript)) {
-      size_t cmd_len = sizeof("func! ") + STRLEN(name);
+      size_t cmd_len = sizeof("func! ") + strlen(name);
       char *cmd = xmalloc(cmd_len);
       snprintf(cmd, cmd_len, "func! %s", name);
       String func_body = nvim_exec(VIML_INTERNAL_CALL, cstr_as_string(cmd),
@@ -345,7 +357,7 @@ Dictionary ctx_to_dict(Context *ctx)
   PUT(rv, "jumps", ARRAY_OBJ(sbuf_to_array(ctx->jumps)));
   PUT(rv, "bufs", ARRAY_OBJ(sbuf_to_array(ctx->bufs)));
   PUT(rv, "gvars", ARRAY_OBJ(sbuf_to_array(ctx->gvars)));
-  PUT(rv, "funcs", ARRAY_OBJ(copy_array(ctx->funcs)));
+  PUT(rv, "funcs", ARRAY_OBJ(copy_array(ctx->funcs, NULL)));
 
   return rv;
 }
@@ -381,7 +393,7 @@ int ctx_from_dict(Dictionary dict, Context *ctx)
       ctx->gvars = array_to_sbuf(item.value.data.array);
     } else if (strequal(item.key.data, "funcs")) {
       types |= kCtxFuncs;
-      ctx->funcs = copy_object(item.value).data.array;
+      ctx->funcs = copy_object(item.value, NULL).data.array;
     }
   }
 

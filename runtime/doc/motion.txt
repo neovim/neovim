@@ -309,7 +309,7 @@ g<Down>			[count] display lines downward.  |exclusive| motion.
 			an operator, because it's not linewise.
 
 							*-*
--  <minus>		[count] lines upward, on the first non-blank
+`-`  <minus>		[count] lines upward, on the first non-blank
 			character |linewise|.
 
 +		or					*+*
@@ -831,12 +831,12 @@ deletes the lines from the cursor position to mark 't'.  Hint: Use mark 't' for
 Top, 'b' for Bottom, etc..  Lowercase marks are restored when using undo and
 redo.
 
-Uppercase marks 'A to 'Z include the file name.
-You can use them to jump from file to file.  You can only use an uppercase
-mark with an operator if the mark is in the current file.  The line number of
-the mark remains correct, even if you insert/delete lines or edit another file
-for a moment.  When the 'shada' option is not empty, uppercase marks are
-kept in the .shada file.  See |shada-file-marks|.
+Uppercase marks 'A to 'Z include the file name.  You can use them to jump from
+file to file.  You can only use an uppercase mark with an operator if the mark
+is in the current file.  The line number of the mark remains correct, even if
+you insert/delete lines or edit another file for a moment.  When the 'shada'
+option is not empty, uppercase marks are kept in the .shada file.  See
+|shada-file-marks|.
 
 Numbered marks '0 to '9 are quite different.  They can not be set directly.
 They are only present when using a shada file |shada-file|.  Basically '0
@@ -1172,7 +1172,7 @@ g;			Go to [count] older position in change list.
 			(not a motion command)
 
 							*g,* *E663*
-g,			Go to [count] newer cursor position in change list.
+g,			Go to [count] newer position in change list.
 			Just like |g;| but in the opposite direction.
 			(not a motion command)
 

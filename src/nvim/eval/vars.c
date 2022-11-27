@@ -3,24 +3,42 @@
 
 // eval/vars.c: functions for dealing with variables
 
+#include <assert.h>
+#include <ctype.h>
+#include <stdbool.h>
+#include <stddef.h>
+#include <stdint.h>
+#include <string.h>
+
 #include "nvim/ascii.h"
 #include "nvim/autocmd.h"
-#include "nvim/buffer.h"
+#include "nvim/buffer_defs.h"
 #include "nvim/charset.h"
 #include "nvim/drawscreen.h"
 #include "nvim/eval.h"
 #include "nvim/eval/encode.h"
 #include "nvim/eval/funcs.h"
 #include "nvim/eval/typval.h"
+#include "nvim/eval/typval_defs.h"
 #include "nvim/eval/userfunc.h"
 #include "nvim/eval/vars.h"
 #include "nvim/ex_cmds.h"
+#include "nvim/ex_cmds_defs.h"
 #include "nvim/ex_docmd.h"
 #include "nvim/ex_eval.h"
+#include "nvim/gettext.h"
+#include "nvim/globals.h"
+#include "nvim/hashtab.h"
+#include "nvim/macros.h"
+#include "nvim/memory.h"
+#include "nvim/message.h"
 #include "nvim/ops.h"
 #include "nvim/option.h"
-#include "nvim/screen.h"
+#include "nvim/os/os.h"
 #include "nvim/search.h"
+#include "nvim/strings.h"
+#include "nvim/types.h"
+#include "nvim/vim.h"
 #include "nvim/window.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
@@ -81,7 +99,7 @@ static list_T *heredoc_get(exarg_T *eap, char *cmd)
   // The marker is the next word.
   if (*cmd != NUL && *cmd != '"') {
     marker = skipwhite(cmd);
-    p = (char *)skiptowhite((char_u *)marker);
+    p = skiptowhite(marker);
     if (*skipwhite(p) != NUL && *skipwhite(p) != '"') {
       semsg(_(e_trailing_arg), p);
       return NULL;
@@ -113,7 +131,7 @@ static list_T *heredoc_get(exarg_T *eap, char *cmd)
         && STRNCMP(theline, *eap->cmdlinep, marker_indent_len) == 0) {
       mi = marker_indent_len;
     }
-    if (STRCMP(marker, theline + mi) == 0) {
+    if (strcmp(marker, theline + mi) == 0) {
       xfree(theline);
       break;
     }
@@ -207,7 +225,7 @@ static void ex_let_const(exarg_T *eap, const bool is_const)
       list_func_vars(&first);
       list_vim_vars(&first);
     }
-    eap->nextcmd = (char *)check_nextcmd((char_u *)arg);
+    eap->nextcmd = check_nextcmd(arg);
   } else if (expr[0] == '=' && expr[1] == '<' && expr[2] == '<') {
     // HERE document
     list_T *l = heredoc_get(eap, expr + 3);
@@ -231,10 +249,12 @@ static void ex_let_const(exarg_T *eap, const bool is_const)
           expr++;
         }
       }
-      expr = skipwhite(expr + 2);
+      expr += 2;
     } else {
-      expr = skipwhite(expr + 1);
+      expr += 1;
     }
+
+    expr = skipwhite(expr);
 
     if (eap->skip) {
       emsg_skip++;
@@ -378,9 +398,8 @@ const char *skip_var_list(const char *arg, int *var_count, int *semicolon)
       }
     }
     return p + 1;
-  } else {
-    return skip_var_one((char *)arg);
   }
+  return skip_var_one((char *)arg);
 }
 
 /// Skip one (assignable) variable name, including @r, $VAR, &option, d.key,
@@ -413,7 +432,7 @@ void list_hashtable_vars(hashtab_T *ht, const char *prefix, int empty, int *firs
       // apply :filter /pat/ to variable name
       xstrlcpy(buf, prefix, IOSIZE);
       xstrlcat(buf, (char *)di->di_key, IOSIZE);
-      if (message_filtered((char_u *)buf)) {
+      if (message_filtered(buf)) {
         continue;
       }
 
@@ -539,8 +558,6 @@ static const char *list_arg_vars(exarg_T *eap, const char *arg, int *first)
   return arg;
 }
 
-// TODO(ZyX-I): move to eval/ex_cmds
-
 /// Set one item of `:let var = expr` or `:let [v1, v2] = list` to its value
 ///
 /// @param[in]  arg  Start of the variable name.
@@ -558,8 +575,6 @@ static char *ex_let_one(char *arg, typval_T *const tv, const bool copy, const bo
 {
   char *arg_end = NULL;
   int len;
-  int opt_flags;
-  char *tofree = NULL;
 
   // ":let $VAR = expr": Set environment variable.
   if (*arg == '$') {
@@ -580,14 +595,14 @@ static char *ex_let_one(char *arg, typval_T *const tv, const bool copy, const bo
                  && vim_strchr(endchars, *skipwhite(arg)) == NULL) {
         emsg(_(e_letunexp));
       } else if (!check_secure()) {
+        char *tofree = NULL;
         const char c1 = name[len];
         name[len] = NUL;
         const char *p = tv_get_string_chk(tv);
         if (p != NULL && op != NULL && *op == '.') {
           char *s = vim_getenv(name);
-
           if (s != NULL) {
-            tofree = (char *)concat_str((const char_u *)s, (const char_u *)p);
+            tofree = concat_str(s, p);
             p = (const char *)tofree;
             xfree(s);
           }
@@ -609,7 +624,8 @@ static char *ex_let_one(char *arg, typval_T *const tv, const bool copy, const bo
       return NULL;
     }
     // Find the end of the name.
-    char *const p = (char *)find_option_end((const char **)&arg, &opt_flags);
+    int scope;
+    char *const p = (char *)find_option_end((const char **)&arg, &scope);
     if (p == NULL
         || (endchars != NULL
             && vim_strchr(endchars, *skipwhite(p)) == NULL)) {
@@ -621,11 +637,13 @@ static char *ex_let_one(char *arg, typval_T *const tv, const bool copy, const bo
       char *stringval = NULL;
       const char *s = NULL;
       bool failed = false;
+      uint32_t opt_p_flags;
+      char *tofree = NULL;
 
       const char c1 = *p;
       *p = NUL;
 
-      opt_type = get_option_value(arg, &numval, &stringval, opt_flags);
+      opt_type = get_option_value(arg, &numval, &stringval, &opt_p_flags, scope);
       if (opt_type == gov_bool
           || opt_type == gov_number
           || opt_type == gov_hidden_bool
@@ -634,8 +652,13 @@ static char *ex_let_one(char *arg, typval_T *const tv, const bool copy, const bo
         n = (long)tv_get_number(tv);
       }
 
-      // Avoid setting a string option to the text "v:false" or similar.
-      if (tv->v_type != VAR_BOOL && tv->v_type != VAR_SPECIAL) {
+      if ((opt_p_flags & P_FUNC) && tv_is_func(*tv)) {
+        // If the option can be set to a function reference or a lambda
+        // and the passed value is a function reference, then convert it to
+        // the name (string) of the function reference.
+        s = tofree = encode_tv2string(tv, NULL);
+      } else if (tv->v_type != VAR_BOOL && tv->v_type != VAR_SPECIAL) {
+        // Avoid setting a string option to the text "v:false" or similar.
         s = tv_get_string_chk(tv);
       }
 
@@ -663,8 +686,7 @@ static char *ex_let_one(char *arg, typval_T *const tv, const bool copy, const bo
           } else if (opt_type == gov_string && stringval != NULL && s != NULL) {
             // string
             char *const oldstringval = stringval;
-            stringval = (char *)concat_str((const char_u *)stringval,
-                                           (const char_u *)s);
+            stringval = concat_str(stringval, s);
             xfree(oldstringval);
             s = stringval;
           }
@@ -673,7 +695,7 @@ static char *ex_let_one(char *arg, typval_T *const tv, const bool copy, const bo
 
       if (!failed) {
         if (opt_type != gov_string || s != NULL) {
-          char *err = set_option_value(arg, n, s, opt_flags);
+          char *err = set_option_value(arg, n, s, scope);
           arg_end = p;
           if (err != NULL) {
             emsg(_(err));
@@ -684,6 +706,7 @@ static char *ex_let_one(char *arg, typval_T *const tv, const bool copy, const bo
       }
       *p = c1;
       xfree(stringval);
+      xfree(tofree);
     }
     // ":let @r = expr": Set register contents.
   } else if (*arg == '@') {
@@ -705,14 +728,13 @@ static char *ex_let_one(char *arg, typval_T *const tv, const bool copy, const bo
       if (p != NULL && op != NULL && *op == '.') {
         s = get_reg_contents(*arg == '@' ? '"' : *arg, kGRegExprSrc);
         if (s != NULL) {
-          ptofree = (char *)concat_str((char_u *)s, (const char_u *)p);
+          ptofree = concat_str(s, p);
           p = (const char *)ptofree;
           xfree(s);
         }
       }
       if (p != NULL) {
-        write_reg_contents(*arg == '@' ? '"' : *arg,
-                           (const char_u *)p, (ssize_t)STRLEN(p), false);
+        write_reg_contents(*arg == '@' ? '"' : *arg, p, (ssize_t)strlen(p), false);
         arg_end = arg + 1;
       }
       xfree(ptofree);
@@ -745,8 +767,6 @@ void ex_unlet(exarg_T *eap)
   ex_unletlock(eap, eap->arg, 0, do_unlet_var);
 }
 
-// TODO(ZyX-I): move to eval/ex_cmds
-
 /// ":lockvar" and ":unlockvar" commands
 void ex_lockvar(exarg_T *eap)
 {
@@ -762,8 +782,6 @@ void ex_lockvar(exarg_T *eap)
 
   ex_unletlock(eap, arg, deep, do_lock_var);
 }
-
-// TODO(ZyX-I): move to eval/ex_cmds
 
 /// Common parsing logic for :unlet, :lockvar and :unlockvar.
 ///
@@ -791,6 +809,7 @@ static void ex_unletlock(exarg_T *eap, char *argstart, int deep, ex_unletlock_ca
         semsg(_(e_invarg2), arg - 1);
         return;
       }
+      assert(*lv.ll_name == '$');  // suppress clang "Uninitialized argument value"
       if (!error && !eap->skip && callback(&lv, arg, eap, deep) == FAIL) {
         error = true;
       }
@@ -825,10 +844,8 @@ static void ex_unletlock(exarg_T *eap, char *argstart, int deep, ex_unletlock_ca
     arg = skipwhite(name_end);
   } while (!ends_excmd(*arg));
 
-  eap->nextcmd = (char *)check_nextcmd((char_u *)arg);
+  eap->nextcmd = check_nextcmd(arg);
 }
-
-// TODO(ZyX-I): move to eval/ex_cmds
 
 /// Unlet a variable indicated by `lp`.
 ///
@@ -883,9 +900,8 @@ static int do_unlet_var(lval_T *lp, char *name_end, exarg_T *eap, int deep FUNC_
       lp->ll_n1++;
       if (lp->ll_li == NULL || (!lp->ll_empty2 && lp->ll_n2 < lp->ll_n1)) {
         break;
-      } else {
-        last_li = lp->ll_li;
       }
+      last_li = lp->ll_li;
     }
     tv_list_remove_items(lp->ll_list, first_li, last_li);
   } else {
@@ -919,8 +935,6 @@ static int do_unlet_var(lval_T *lp, char *name_end, exarg_T *eap, int deep FUNC_
 
   return ret;
 }
-
-// TODO(ZyX-I): move to eval/ex_cmds
 
 /// unlet a variable
 ///
@@ -991,8 +1005,6 @@ int do_unlet(const char *const name, const size_t name_len, const bool forceit)
   semsg(_("E108: No such variable: \"%s\""), name);
   return FAIL;
 }
-
-// TODO(ZyX-I): move to eval/ex_cmds
 
 /// Lock or unlock variable indicated by `lp`.
 ///
@@ -1118,7 +1130,7 @@ void vars_clear(hashtab_T *ht)
   vars_clear_ext(ht, true);
 }
 
-/// Like vars_clear(), but only free the value if "free_val" is TRUE.
+/// Like vars_clear(), but only free the value if "free_val" is true.
 void vars_clear_ext(hashtab_T *ht, int free_val)
 {
   int todo;
@@ -1162,7 +1174,7 @@ void delete_var(hashtab_T *ht, hashitem_T *hi)
 static void list_one_var(dictitem_T *v, const char *prefix, int *first)
 {
   char *const s = encode_tv2echo(&v->di_tv, NULL);
-  list_one_var_a(prefix, (const char *)v->di_key, (ptrdiff_t)STRLEN(v->di_key),
+  list_one_var_a(prefix, (const char *)v->di_key, (ptrdiff_t)strlen((char *)v->di_key),
                  v->di_tv.v_type, (s == NULL ? "" : s), first);
   xfree(s);
 }
@@ -1258,7 +1270,7 @@ void set_var_const(const char *name, const size_t name_len, typval_T *const tv, 
     v = find_var_in_scoped_ht(name, name_len, true);
   }
 
-  if (tv_is_func(*tv) && !var_check_func_name(name, v == NULL)) {
+  if (tv_is_func(*tv) && var_wrong_func_name(name, v == NULL)) {
     return;
   }
 
@@ -1300,7 +1312,7 @@ void set_var_const(const char *name, const size_t name_len, typval_T *const tv, 
           set_search_direction(v->di_tv.vval.v_number ? '/' : '?');
         } else if (strcmp(varname, "hlsearch") == 0) {
           no_hlsearch = !v->di_tv.vval.v_number;
-          redraw_all_later(SOME_VALID);
+          redraw_all_later(UPD_SOME_VALID);
         }
         return;
       } else if (v->di_tv.v_type != tv->v_type) {
@@ -1330,7 +1342,7 @@ void set_var_const(const char *name, const size_t name_len, typval_T *const tv, 
 
     v = xmalloc(sizeof(dictitem_T) + strlen(varname));
     STRCPY(v->di_key, varname);
-    if (tv_dict_add(dict, v) == FAIL) {
+    if (hash_add(ht, (char *)v->di_key) == FAIL) {
       xfree(v);
       return;
     }
@@ -1349,12 +1361,8 @@ void set_var_const(const char *name, const size_t name_len, typval_T *const tv, 
   }
 
   if (watched) {
-    if (oldtv.v_type == VAR_UNKNOWN) {
-      tv_dict_watcher_notify(dict, (char *)v->di_key, &v->di_tv, NULL);
-    } else {
-      tv_dict_watcher_notify(dict, (char *)v->di_key, &v->di_tv, &oldtv);
-      tv_clear(&oldtv);
-    }
+    tv_dict_watcher_notify(dict, (char *)v->di_key, &v->di_tv, &oldtv);
+    tv_clear(&oldtv);
   }
 
   if (is_const) {
@@ -1443,36 +1451,33 @@ bool var_check_fixed(const int flags, const char *name, size_t name_len)
   return false;
 }
 
-// TODO(ZyX-I): move to eval/expressions
-
 /// Check if name is a valid name to assign funcref to
 ///
 /// @param[in]  name  Possible function/funcref name.
 /// @param[in]  new_var  True if it is a name for a variable.
 ///
-/// @return false in case of error, true in case of success. Also gives an
+/// @return false in case of success, true in case of failure. Also gives an
 ///         error message if appropriate.
-bool var_check_func_name(const char *const name, const bool new_var)
+bool var_wrong_func_name(const char *const name, const bool new_var)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
   // Allow for w: b: s: and t:.
+  // Allow autoload variable.
   if (!(vim_strchr("wbst", name[0]) != NULL && name[1] == ':')
-      && !ASCII_ISUPPER((name[0] != NUL && name[1] == ':')
-                        ? name[2] : name[0])) {
+      && !ASCII_ISUPPER((name[0] != NUL && name[1] == ':') ? name[2] : name[0])
+      && vim_strchr(name, '#') == NULL) {
     semsg(_("E704: Funcref variable name must start with a capital: %s"), name);
-    return false;
+    return true;
   }
   // Don't allow hiding a function.  When "v" is not NULL we might be
   // assigning another function to the same var, the type is checked
   // below.
   if (new_var && function_exists(name, false)) {
     semsg(_("E705: Variable name conflicts with existing function: %s"), name);
-    return false;
+    return true;
   }
-  return true;
+  return false;
 }
-
-// TODO(ZyX-I): move to eval/expressions
 
 /// Check if a variable name is valid
 ///
@@ -1627,7 +1632,7 @@ static void set_option_from_tv(const char *varname, typval_T *varp)
     strval = tv_get_string_buf_chk(varp, nbuf);
   }
   if (!error && strval != NULL) {
-    set_option_value(varname, numval, strval, OPT_LOCAL);
+    set_option_value_give_err(varname, numval, strval, OPT_LOCAL);
   }
 }
 
@@ -1702,7 +1707,7 @@ bool var_exists(const char *var)
 }
 
 /// "gettabvar()" function
-void f_gettabvar(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+void f_gettabvar(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
   const char *const varname = tv_get_string_chk(&argvars[1]);
   tabpage_T *const tp = find_tabpage((int)tv_get_number_chk(&argvars[0], NULL));
@@ -1716,19 +1721,19 @@ void f_gettabvar(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 }
 
 /// "gettabwinvar()" function
-void f_gettabwinvar(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+void f_gettabwinvar(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
   getwinvar(argvars, rettv, 1);
 }
 
 /// "getwinvar()" function
-void f_getwinvar(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+void f_getwinvar(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
   getwinvar(argvars, rettv, 0);
 }
 
 /// "getbufvar()" function
-void f_getbufvar(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+void f_getbufvar(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
   const char *const varname = tv_get_string_chk(&argvars[1]);
   buf_T *const buf = tv_get_buf_from_arg(&argvars[0]);
@@ -1737,7 +1742,7 @@ void f_getbufvar(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 }
 
 /// "settabvar()" function
-void f_settabvar(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+void f_settabvar(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
   rettv->vval.v_number = 0;
 
@@ -1768,19 +1773,19 @@ void f_settabvar(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 }
 
 /// "settabwinvar()" function
-void f_settabwinvar(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+void f_settabwinvar(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
   setwinvar(argvars, rettv, 1);
 }
 
 /// "setwinvar()" function
-void f_setwinvar(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+void f_setwinvar(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
   setwinvar(argvars, rettv, 0);
 }
 
 /// "setbufvar()" function
-void f_setbufvar(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+void f_setbufvar(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
   if (check_secure()
       || !tv_check_str_or_nr(&argvars[0])) {
@@ -1802,7 +1807,7 @@ void f_setbufvar(typval_T *argvars, typval_T *rettv, FunPtr fptr)
       // reset notion of buffer
       aucmd_restbuf(&aco);
     } else {
-      const size_t varname_len = STRLEN(varname);
+      const size_t varname_len = strlen(varname);
       char *const bufvarname = xmalloc(varname_len + 3);
       buf_T *const save_curbuf = curbuf;
       curbuf = buf;

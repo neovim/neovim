@@ -8,9 +8,9 @@ local command = helpers.command
 local eq = helpers.eq
 local eval = helpers.eval
 local meths = helpers.meths
-local iswin = helpers.iswin
 local sleep = helpers.sleep
 local retry = helpers.retry
+local is_os = helpers.is_os
 
 describe(':terminal', function()
   local screen
@@ -96,7 +96,7 @@ describe(':terminal', function()
     local w1, h1 = screen._width - 3, screen._height - 2
     local w2, h2 = w1 - 6, h1 - 3
 
-    if iswin() then
+    if is_os('win') then
       -- win: SIGWINCH is unreliable, use a weaker test. #7506
       retry(3, 30000, function()
         screen:try_resize(w1, h1)

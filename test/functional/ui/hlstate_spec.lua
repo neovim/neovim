@@ -4,9 +4,10 @@ local Screen = require('test.functional.ui.screen')
 local clear, insert = helpers.clear, helpers.insert
 local command = helpers.command
 local meths = helpers.meths
-local iswin = helpers.iswin
 local testprg = helpers.testprg
 local thelpers = require('test.functional.terminal.helpers')
+local skip = helpers.skip
+local is_os = helpers.is_os
 
 describe('ext_hlstate detailed highlights', function()
   local screen
@@ -182,7 +183,7 @@ describe('ext_hlstate detailed highlights', function()
   end)
 
   it("work with :terminal", function()
-    if helpers.pending_win32(pending) then return end
+    skip(is_os('win'))
 
     screen:set_default_attr_ids({
       [1] = {{}, {{hi_name = "TermCursorNC", ui_name = "TermCursorNC", kind = "ui"}}},
@@ -211,7 +212,7 @@ describe('ext_hlstate detailed highlights', function()
     thelpers.set_bold()
     thelpers.feed_data('z\n')
     -- TODO(bfredl): check if this distinction makes sense
-    if iswin() then
+    if is_os('win') then
       screen:expect([[
         ^tty ready                               |
         x {5:y z}                                   |
@@ -237,7 +238,7 @@ describe('ext_hlstate detailed highlights', function()
 
     thelpers.feed_termcode("[A")
     thelpers.feed_termcode("[2C")
-    if iswin() then
+    if is_os('win') then
       screen:expect([[
         ^tty ready                               |
         x {6:y}{5: z}                                   |

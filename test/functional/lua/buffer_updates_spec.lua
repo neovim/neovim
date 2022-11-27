@@ -118,6 +118,24 @@ describe('lua buffer event callbacks: on_lines', function()
     }
     tick = tick + 1
 
+    tick = tick + 1
+    command('redo')
+    check_events {
+      { "test1", "lines", 1, tick, 3, 5, 4, 32 };
+      { "test2", "lines", 1, tick, 3, 5, 4, 32 };
+      { "test2", "changedtick", 1, tick+1 };
+    }
+    tick = tick + 1
+
+    tick = tick + 1
+    command('undo!')
+    check_events {
+      { "test1", "lines", 1, tick, 3, 4, 5, 13 };
+      { "test2", "lines", 1, tick, 3, 4, 5, 13 };
+      { "test2", "changedtick", 1, tick+1 };
+    }
+    tick = tick + 1
+
     -- simulate next callback returning true
     exec_lua("test_unreg = 'test1'")
 
@@ -315,7 +333,7 @@ describe('lua: nvim_buf_attach on_bytes', function()
       start_txt = meths.buf_get_lines(0, 0, -1, true)
     end
     local shadowbytes = table.concat(start_txt, '\n') .. '\n'
-    -- TODO: while we are brewing the real strong coffe,
+    -- TODO: while we are brewing the real strong coffee,
     -- verify should check buf_get_offset after every check_events
     if verify then
       local len = meths.buf_get_offset(0, meths.buf_line_count(0))

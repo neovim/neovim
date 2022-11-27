@@ -604,6 +604,8 @@ String manipulation:					*string-functions*
 	fnameescape()		escape a file name for use with a Vim command
 	tr()			translate characters from one set to another
 	strtrans()		translate a string to make it printable
+	keytrans()		translate internal keycodes to a form that
+				can be used by |:map|
 	tolower()		turn a string to lowercase
 	toupper()		turn a string to uppercase
 	charclass()		class of a character
@@ -617,7 +619,8 @@ String manipulation:					*string-functions*
 	stridx()		first index of a short string in a long string
 	strridx()		last index of a short string in a long string
 	strlen()		length of a string in bytes
-	strchars()		length of a string in characters
+	strcharlen()		length of a string in characters
+	strchars()		number of characters in a string
 	strwidth()		size of string when displayed
 	strdisplaywidth()	size of string when displayed, deals with tabs
 	setcellwidths()		set character cell width overrides
@@ -637,6 +640,7 @@ String manipulation:					*string-functions*
 	execute()		execute an Ex command and get the output
 	win_execute()		like execute() but in a specified window
 	trim()			trim characters from a string
+	gettext()		lookup message translation
 
 List manipulation:					*list-functions*
 	get()			get an item without error for wrong index
@@ -745,6 +749,7 @@ Cursor and mark position:		*cursor-functions* *mark-functions*
 	screencol()		get screen column of the cursor
 	screenrow()		get screen row of the cursor
 	screenpos()		screen row and col of a text character
+	virtcol2col()		byte index of a text character on screen
 	getcurpos()		get position of the cursor
 	getpos()		get position of cursor, mark, etc.
 	setpos()		set position of cursor, mark, etc.
@@ -780,6 +785,13 @@ Working with text in the current buffer:		*text-functions*
 	getcharsearch()		return character search information
 	setcharsearch()		set character search information
 
+Working with text in another buffer:
+	getbufline()		get a list of lines from the specified buffer
+	getbufoneline()		get a one line from the specified buffer
+	setbufline()		replace a line in the specified buffer
+	appendbufline()		append a list of lines in the specified buffer
+	deletebufline()		delete lines from a specified buffer
+
 					*system-functions* *file-functions*
 System functions and manipulation of files:
 	glob()			expand wildcards
@@ -814,6 +826,7 @@ System functions and manipulation of files:
 	setenv()		set an environment variable
 	hostname()		name of the system
 	readfile()		read a file into a List of lines
+	readblob()		read a file into a Blob
 	readdir()		get a List of file names in a directory
 	writefile()		write a List of lines or Blob into a file
 
@@ -832,8 +845,10 @@ Buffers, windows and the argument list:
 	argidx()		current position in the argument list
 	arglistid()		get id of the argument list
 	argv()			get one entry from the argument list
+	bufadd()		add a file to the list of buffers
 	bufexists()		check if a buffer exists
 	buflisted()		check if a buffer exists and is listed
+	bufload()		ensure a buffer is loaded
 	bufloaded()		check if a buffer exists and is loaded
 	bufname()		get the name of a specific buffer
 	bufnr()			get the buffer number of a specific buffer
@@ -844,10 +859,6 @@ Buffers, windows and the argument list:
 	bufwinid()		get the window ID of a specific buffer
 	bufwinnr()		get the window number of a specific buffer
 	winbufnr()		get the buffer number of a specific window
-	getbufline()		get a list of lines from the specified buffer
-	setbufline()		replace a line in the specified buffer
-	appendbufline()		append a list of lines in the specified buffer
-	deletebufline()		delete lines from a specified buffer
 	win_findbuf()		find windows containing a buffer
 	win_getid()		get window ID of a window
 	win_gettype()		get type of window
@@ -872,6 +883,7 @@ Command line:					*command-line-functions*
 	getcmdpos()		get position of the cursor in the command line
 	getcmdscreenpos()	get screen position of the cursor in the
 				command line
+	setcmdline()		set the current command line
 	setcmdpos()		set position of the cursor in the command line
 	getcmdtype()		return the current command-line type
 	getcmdwintype()		return the current command-line window type
@@ -1012,6 +1024,7 @@ Testing:				    *test-functions*
 	assert_beeps()		assert that a command beeps
 	assert_nobeep()		assert that a command does not cause a beep
 	assert_fails()		assert that a command fails
+	assert_report()		report a test failure
 
 Timers:						*timer-functions*
 	timer_start()		create a timer
@@ -1046,7 +1059,6 @@ Various:					*various-functions*
 	exists()		check if a variable, function, etc. exists
 	has()			check if a feature is supported in Vim
 	changenr()		return number of most recent change
-	cscope_connection()	check if a cscope connection exists
 	did_filetype()		check if a FileType autocommand was used
 	eventhandler()		check if invoked by an event handler
 	getpid()		get process ID of Vim
@@ -1069,8 +1081,8 @@ Various:					*various-functions*
 	wordcount()		get byte/word/char count of buffer
 
 	luaeval()		evaluate |Lua| expression
-	py3eval()		evaluate Python expression (|+python3|)
-	pyeval()		evaluate Python expression (|+python|)
+	py3eval()		evaluate |Python| expression
+	pyeval()		evaluate |Python| expression
 	pyxeval()		evaluate |python_x| expression
 	rubyeval()		evaluate |Ruby| expression
 
@@ -1706,7 +1718,7 @@ There is a little "catch" with comments for some commands.  Examples: >
 	:execute cmd			" do it
 	:!ls *.c			" list C files
 
-The abbreviation 'dev' will be expanded to 'development     " shorthand'.  The
+The abbreviation "dev" will be expanded to 'development     " shorthand'.  The
 mapping of <F3> will actually be the whole line after the 'o# ....' including
 the '" insert include'.  The "execute" command will give an error.  The "!"
 command will send everything after it to the shell, causing an error for an
@@ -1757,7 +1769,7 @@ does not exist as a mapped sequence.  An error will be issued, which is very
 hard to identify, because the ending whitespace character in ":unmap ,ab " is
 not visible.
 
-And this is the same as what happens when one uses a comment after an 'unmap'
+And this is the same as what happens when one uses a comment after an "unmap"
 command: >
 
 	:unmap ,ab     " comment
@@ -2619,7 +2631,7 @@ Further reading: |autoload|.
 ==============================================================================
 *41.16*	Distributing Vim scripts			*distribute-script*
 
-Vim users will look for scripts on the Vim website: http://www.vim.org.
+Vim users will look for scripts on the Vim website: https://www.vim.org.
 If you made something that is useful for others, share it!
 
 Vim scripts can be used on any system.  There might not be a tar or gzip

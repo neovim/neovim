@@ -5,7 +5,7 @@ source check.vim
 
 func Test_cd_large_path()
   " This used to crash with a heap write overflow.
-  call assert_fails('cd ' . repeat('x', 5000), 'E472:')
+  call assert_fails('cd ' . repeat('x', 5000), 'E344:')
 endfunc
 
 func Test_cd_up_and_down()
@@ -45,9 +45,7 @@ func Test_cd_minus()
   call assert_equal(path, getcwd())
 
   " Test for :cd - after a failed :cd
-  " v8.2.1183 is not ported yet
-  " call assert_fails('cd /nonexistent', 'E344:')
-  call assert_fails('cd /nonexistent', 'E472:')
+  call assert_fails('cd /nonexistent', 'E344:')
   call assert_equal(path, getcwd())
   cd -
   call assert_equal(path_dotdot, getcwd())
@@ -66,30 +64,6 @@ func Test_cd_minus()
   endif
   call delete('Xscript')
   call delete('Xresult')
-endfunc
-
-func Test_cd_with_cpo_chdir()
-  e Xfoo
-  call setline(1, 'foo')
-  let path = getcwd()
-  " set cpo+=.
-
-  " :cd should fail when buffer is modified and 'cpo' contains dot.
-  " call assert_fails('cd ..', 'E747:')
-  call assert_equal(path, getcwd())
-
-  " :cd with exclamation mark should succeed.
-  cd! ..
-  call assert_notequal(path, getcwd())
-
-  " :cd should succeed when buffer has been written.
-  w!
-  exe 'cd ' .. fnameescape(path)
-  call assert_equal(path, getcwd())
-
-  call delete('Xfoo')
-  set cpo&
-  bw!
 endfunc
 
 " Test for chdir()
@@ -113,7 +87,7 @@ func Test_chdir_func()
   call assert_equal('z', fnamemodify(3->getcwd(2), ':t'))
   tabnext | wincmd t
   call assert_match('^\[tabpage\] .*/y$', trim(execute('verbose pwd')))
-  call chdir('..')
+  eval '..'->chdir()
   call assert_equal('Xdir', fnamemodify(getcwd(1, 2), ':t'))
   call assert_equal('Xdir', fnamemodify(getcwd(2, 2), ':t'))
   call assert_equal('z', fnamemodify(getcwd(3, 2), ':t'))
@@ -127,7 +101,7 @@ func Test_chdir_func()
   call assert_equal('testdir', fnamemodify(getcwd(1, 1), ':t'))
 
   " Error case
-  call assert_fails("call chdir('dir-abcd')", 'E472:')
+  call assert_fails("call chdir('dir-abcd')", 'E344:')
   silent! let d = chdir("dir_abcd")
   call assert_equal("", d)
   " Should not crash

@@ -18,8 +18,8 @@
 #define EW_NOERROR      0x200   // no error for bad regexp
 #define EW_NOTWILD      0x400   // add match with literal name if exists
 #define EW_KEEPDOLLAR   0x800   // do not escape $, $var is expanded
-/* Note: mostly EW_NOTFOUND and EW_SILENT are mutually exclusive: EW_NOTFOUND
-* is used when executing commands and EW_SILENT for interactive expanding. */
+// Note: mostly EW_NOTFOUND and EW_SILENT are mutually exclusive: EW_NOTFOUND
+// is used when executing commands and EW_SILENT for interactive expanding.
 #define EW_ALLLINKS     0x1000   // also links not pointing to existing file
 #define EW_SHELLCMD     0x2000   // called from expand_shellcmd(), don't check
                                  //  if executable is in $PATH

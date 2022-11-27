@@ -851,9 +851,7 @@ func Test_mksession_shortmess_with_A()
   edit Xtestfile
   write
   let fname = swapname('%')
-  " readblob() needs patch 8.2.2343
-  " let cont = readblob(fname)
-  let cont = readfile(fname, 'B')
+  let cont = readblob(fname)
   set sessionoptions-=options
   mksession Xtestsession
   bwipe!
@@ -942,6 +940,19 @@ func Test_mkvimrc()
   endfor
 
   call s:ClearMappings()
+
+  " the 'pastetoggle', 'wildchar' and 'wildcharm' option values should be
+  " stored as key names in the vimrc file
+  set pastetoggle=<F5>
+  set wildchar=<F6>
+  set wildcharm=<F7>
+  call assert_fails('mkvimrc Xtestvimrc')
+  mkvimrc! Xtestvimrc
+  call assert_notequal(-1, index(readfile('Xtestvimrc'), 'set pastetoggle=<F5>'))
+  call assert_notequal(-1, index(readfile('Xtestvimrc'), 'set wildchar=<F6>'))
+  call assert_notequal(-1, index(readfile('Xtestvimrc'), 'set wildcharm=<F7>'))
+  set pastetoggle& wildchar& wildcharm&
+
   call delete('Xtestvimrc')
 endfunc
 
@@ -979,6 +990,38 @@ func Test_altfile()
   call assert_equal('Xtwoalt', bufname('#'))
   only
   bwipe!
+  call delete('Xtest_altfile')
+endfunc
+
+" Test for creating views with manual folds
+func Test_mkview_manual_fold()
+  call writefile(range(1,10), 'Xfile')
+  new Xfile
+  " create recursive folds
+  5,6fold
+  4,7fold
+  mkview Xview
+  normal zE
+  source Xview
+  call assert_equal([-1, 4, 4, 4, 4, -1], [foldclosed(3), foldclosed(4),
+        \ foldclosed(5), foldclosed(6), foldclosed(7), foldclosed(8)])
+  " open one level of fold
+  4foldopen
+  mkview! Xview
+  normal zE
+  source Xview
+  call assert_equal([-1, -1, 5, 5, -1, -1], [foldclosed(3), foldclosed(4),
+        \ foldclosed(5), foldclosed(6), foldclosed(7), foldclosed(8)])
+  " open all the folds
+  %foldopen!
+  mkview! Xview
+  normal zE
+  source Xview
+  call assert_equal([-1, -1, -1, -1, -1, -1], [foldclosed(3), foldclosed(4),
+        \ foldclosed(5), foldclosed(6), foldclosed(7), foldclosed(8)])
+  call delete('Xfile')
+  call delete('Xview')
+  bw!
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab

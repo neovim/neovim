@@ -3,7 +3,7 @@
 " Maintainer:		Ken Takata
 " URL:			https://github.com/k-takata/vim-nsis
 " Previous Maintainer:	Alex Jakushev <Alex.Jakushev@kemek.lt>
-" Last Change:		2020-10-18
+" Last Change:		2022-11-05
 
 " quit when a syntax file was already loaded
 if exists("b:current_syntax")
@@ -394,9 +394,13 @@ syn keyword nsisInstruction	contained CreateShortcut nextgroup=nsisCreateShortcu
 syn region nsisCreateShortcutOpt contained start="" end="$" transparent keepend contains=@nsisAnyOpt,nsisCreateShortcutKwd
 syn match nsisCreateShortcutKwd	 contained "/NoWorkingDir\>"
 
+syn keyword nsisInstruction	contained GetWinVer nextgroup=nsisGetWinVerOpt skipwhite
+syn region nsisGetWinVerOpt	contained start="" end="$" transparent keepend contains=@nsisAnyOpt,nsisGetWinVerKwd
+syn keyword nsisGetWinVerKwd	contained Major Minor Build ServicePack
+
 syn keyword nsisInstruction	contained GetDLLVersion GetDLLVersionLocal nextgroup=nsisGetDLLVersionOpt skipwhite
-syn region nsisGetDLLVersionOpt contained start="" end="$" transparent keepend contains=@nsisAnyOpt,nsisGetDLLVersionKwd
-syn match nsisGetDLLVersionKwd	 contained "/ProductVersion\>"
+syn region nsisGetDLLVersionOpt	contained start="" end="$" transparent keepend contains=@nsisAnyOpt,nsisGetDLLVersionKwd
+syn match nsisGetDLLVersionKwd	contained "/ProductVersion\>"
 
 syn keyword nsisInstruction	contained GetFullPathName nextgroup=nsisGetFullPathNameOpt skipwhite
 syn region nsisGetFullPathNameOpt contained start="" end="$" transparent keepend contains=@nsisAnyOpt,nsisGetFullPathNameKwd
@@ -562,10 +566,19 @@ syn match nsisSystem		contained "!execute\>"
 syn match nsisSystem		contained "!makensis\>"
 syn match nsisSystem		contained "!packhdr\>"
 syn match nsisSystem		contained "!finalize\>"
+syn match nsisSystem		contained "!uninstfinalize\>"
 syn match nsisSystem		contained "!system\>"
 syn match nsisSystem		contained "!tempfile\>"
-syn match nsisSystem		contained "!getdllversion\>"
-syn match nsisSystem		contained "!gettlbversion\>"
+
+" Add 'P' to avoid conflicts with nsisGetDLLVersionOpt. ('P' for preprocessor.)
+syn match nsisSystem		contained "!getdllversion\>" nextgroup=nsisPGetdllversionOpt skipwhite
+syn region nsisPGetdllversionOpt contained start="" end="$" transparent keepend contains=@nsisAnyOpt,nsisPGetdllversionKwd
+syn match nsisPGetdllversionKwd	contained "/\%(noerrors\|packed\|productversion\)\>"
+
+syn match nsisSystem		contained "!gettlbversion\>" nextgroup=nsisPGettlbversionOpt skipwhite
+syn region nsisPGettlbversionOpt contained start="" end="$" transparent keepend contains=@nsisAnyOpt,nsisPGettlbversionKwd
+syn match nsisPGettlbversionKwd	contained "/\%(noerrors\|packed\)\>"
+
 syn match nsisSystem		contained "!warning\>"
 
 syn match nsisSystem		contained "!pragma\>" nextgroup=nsisPragmaOpt skipwhite
@@ -581,7 +594,10 @@ syn match nsisDefine		contained "!define\>" nextgroup=nsisDefineOpt skipwhite
 syn region nsisDefineOpt	contained start="" end="$" transparent keepend contains=@nsisAnyOpt,nsisDefineKwd
 syn match nsisDefineKwd		contained "/\%(ifndef\|redef\|date\|utcdate\|file\|intfmt\|math\)\>"
 
-syn match nsisDefine		contained "!undef\>"
+syn match nsisDefine		contained "!undef\>" nextgroup=nsisUndefineOpt skipwhite
+syn region nsisUndefineOpt	contained start="" end="$" transparent keepend contains=@nsisAnyOpt,nsisUndefineKwd
+syn match nsisUndefineKwd	contained "/noerrors\>"
+
 syn match nsisPreCondit		contained "!ifdef\>"
 syn match nsisPreCondit		contained "!ifndef\>"
 
@@ -659,6 +675,7 @@ hi def link nsisWriteRegMultiStrKwd	Constant
 hi def link nsisSetRegViewKwd		Constant
 hi def link nsisCopyFilesKwd		Constant
 hi def link nsisCreateShortcutKwd	Constant
+hi def link nsisGetWinVerKwd		Constant
 hi def link nsisGetDLLVersionKwd	Constant
 hi def link nsisGetFullPathNameKwd	Constant
 hi def link nsisFileAttrib		Constant
@@ -696,9 +713,12 @@ hi def link nsisIncludeKwd		Constant
 hi def link nsisAddplugindirKwd		Constant
 hi def link nsisAppendfileKwd		Constant
 hi def link nsisDelfileKwd		Constant
+hi def link nsisPGetdllversionKwd	Constant
+hi def link nsisPGettlbversionKwd	Constant
 hi def link nsisPragmaKwd		Constant
 hi def link nsisVerboseKwd		Constant
 hi def link nsisDefineKwd		Constant
+hi def link nsisUndefineKwd		Constant
 hi def link nsisIfKwd			Constant
 hi def link nsisSearchparseKwd		Constant
 hi def link nsisSearchreplaceKwd	Constant

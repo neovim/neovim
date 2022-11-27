@@ -88,6 +88,7 @@ func Test_blob_get_range()
   call assert_equal(0z0011223344, b[:])
   call assert_equal(0z0011223344, b[:-1])
   call assert_equal(0z, b[5:6])
+  call assert_equal(0z0011, b[-10:1])
 endfunc
 
 func Test_blob_get()
@@ -208,6 +209,7 @@ func Test_blob_add()
   call assert_equal(0z001122, b)
   call add(b, '51')
   call assert_equal(0z00112233, b)
+  call assert_equal(1, add(v:_null_blob, 0x22))
 
   call assert_fails('call add(b, [9])', 'E745:')
   call assert_fails('call add("", 0x01)', 'E897:')
@@ -250,6 +252,7 @@ func Test_blob_func_remove()
   call assert_fails("call remove(b, 3, 2)", 'E979:')
   call assert_fails("call remove(1, 0)", 'E896:')
   call assert_fails("call remove(b, b)", 'E974:')
+  call assert_fails("call remove(b, 1, [])", 'E745:')
   call assert_fails("call remove(v:_null_blob, 1, 2)", 'E979:')
 
   " Translated from v8.2.3284
@@ -272,6 +275,7 @@ endfunc
 
 " filter() item in blob
 func Test_blob_filter()
+  call assert_equal(v:_null_blob, filter(v:_null_blob, '0'))
   call assert_equal(0z, filter(0zDEADBEEF, '0'))
   call assert_equal(0zADBEEF, filter(0zDEADBEEF, 'v:val != 0xDE'))
   call assert_equal(0zDEADEF, filter(0zDEADBEEF, 'v:val != 0xBE'))
@@ -294,9 +298,12 @@ func Test_blob_index()
   call assert_equal(2, index(0zDEADBEEF, 0xBE))
   call assert_equal(-1, index(0zDEADBEEF, 0))
   call assert_equal(2, index(0z11111111, 0x11, 2))
-  call assert_equal(3, index(0z11110111, 0x11, 2))
+  call assert_equal(3, 0z11110111->index(0x11, 2))
   call assert_equal(2, index(0z11111111, 0x11, -2))
   call assert_equal(3, index(0z11110111, 0x11, -2))
+  call assert_equal(0, index(0z11110111, 0x11, -10))
+  call assert_fails("echo index(0z11110111, 0x11, [])", 'E745:')
+  call assert_equal(-1, index(v:_null_blob, 1))
 
   call assert_fails('call index("asdf", 0)', 'E897:')
 endfunc
@@ -313,6 +320,9 @@ func Test_blob_insert()
   call assert_fails('call insert(b, -1)', 'E475:')
   call assert_fails('call insert(b, 257)', 'E475:')
   call assert_fails('call insert(b, 0, [9])', 'E745:')
+  call assert_fails('call insert(b, 0, -20)', 'E475:')
+  call assert_fails('call insert(b, 0, 20)', 'E475:')
+  call assert_fails('call insert(b, [])', 'E745:')
   call assert_equal(0, insert(v:_null_blob, 0x33))
 
   " Translated from v8.2.3284

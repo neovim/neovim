@@ -1,43 +1,46 @@
 #ifndef NVIM_EVAL_H
 #define NVIM_EVAL_H
 
+#include <stdbool.h>
+#include <stddef.h>
+
 #include "nvim/buffer_defs.h"
 #include "nvim/channel.h"
-#include "nvim/event/time.h"  // For TimeWatcher
-#include "nvim/ex_cmds_defs.h"  // For exarg_T
-#include "nvim/os/fileio.h"  // For FileDescriptor
-#include "nvim/os/stdpaths_defs.h"  // For XDGVarType
+#include "nvim/eval/typval_defs.h"
+#include "nvim/event/time.h"
+#include "nvim/ex_cmds_defs.h"
+#include "nvim/hashtab.h"
+#include "nvim/os/fileio.h"
+#include "nvim/os/stdpaths_defs.h"
 
 #define COPYID_INC 2
 #define COPYID_MASK (~0x1)
 
-/*
- * Structure returned by get_lval() and used by set_var_lval().
- * For a plain name:
- *      "name"      points to the variable name.
- *      "exp_name"  is NULL.
- *      "tv"        is NULL
- * For a magic braces name:
- *      "name"      points to the expanded variable name.
- *      "exp_name"  is non-NULL, to be freed later.
- *      "tv"        is NULL
- * For an index in a list:
- *      "name"      points to the (expanded) variable name.
- *      "exp_name"  NULL or non-NULL, to be freed later.
- *      "tv"        points to the (first) list item value
- *      "li"        points to the (first) list item
- *      "range", "n1", "n2" and "empty2" indicate what items are used.
- * For an existing Dict item:
- *      "name"      points to the (expanded) variable name.
- *      "exp_name"  NULL or non-NULL, to be freed later.
- *      "tv"        points to the dict item value
- *      "newkey"    is NULL
- * For a non-existing Dict item:
- *      "name"      points to the (expanded) variable name.
- *      "exp_name"  NULL or non-NULL, to be freed later.
- *      "tv"        points to the Dictionary typval_T
- *      "newkey"    is the key for the new item.
- */
+// Structure returned by get_lval() and used by set_var_lval().
+// For a plain name:
+//      "name"      points to the variable name.
+//      "exp_name"  is NULL.
+//      "tv"        is NULL
+// For a magic braces name:
+//      "name"      points to the expanded variable name.
+//      "exp_name"  is non-NULL, to be freed later.
+//      "tv"        is NULL
+// For an index in a list:
+//      "name"      points to the (expanded) variable name.
+//      "exp_name"  NULL or non-NULL, to be freed later.
+//      "tv"        points to the (first) list item value
+//      "li"        points to the (first) list item
+//      "range", "n1", "n2" and "empty2" indicate what items are used.
+// For an existing Dict item:
+//      "name"      points to the (expanded) variable name.
+//      "exp_name"  NULL or non-NULL, to be freed later.
+//      "tv"        points to the dict item value
+//      "newkey"    is NULL
+// For a non-existing Dict item:
+//      "name"      points to the (expanded) variable name.
+//      "exp_name"  NULL or non-NULL, to be freed later.
+//      "tv"        points to the Dictionary typval_T
+//      "newkey"    is the key for the new item.
 typedef struct lval_S {
   const char *ll_name;  ///< Start of variable name (can be NULL).
   size_t ll_name_len;   ///< Length of the .ll_name.

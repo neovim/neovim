@@ -1048,6 +1048,7 @@ describe('CursorLine and CursorLineNr highlights', function()
     ]])
   end)
 
+  -- oldtest: Test_cursorline_after_yank()
   it('always updated. vim-patch:8.1.0849', function()
     local screen = Screen.new(50,5)
     screen:set_default_attr_ids({
@@ -1081,6 +1082,7 @@ describe('CursorLine and CursorLineNr highlights', function()
     ]])
   end)
 
+  -- oldtest: Test_cursorline_with_visualmode()
   it('with visual area. vim-patch:8.1.1001', function()
     local screen = Screen.new(50,5)
     screen:set_default_attr_ids({
@@ -1108,6 +1110,7 @@ describe('CursorLine and CursorLineNr highlights', function()
     ]])
   end)
 
+  -- oldtest: Test_cursorline_callback()
   it('is updated if cursor is moved up from timer vim-patch:8.2.4591', function()
     local screen = Screen.new(50, 8)
     screen:set_default_attr_ids({
@@ -1237,6 +1240,7 @@ describe('CursorLine and CursorLineNr highlights', function()
     })
   end)
 
+  -- oldtest: Test_diff_with_cursorline_number()
   it('CursorLineNr shows correctly just below filler lines', function()
     local screen = Screen.new(50,12)
     screen:set_default_attr_ids({
@@ -1357,6 +1361,7 @@ describe('CursorColumn highlight', function()
     ]])
   end)
 
+  -- oldtest: Test_cursorcolumn_callback()
   it('is updated if cursor is moved from timer', function()
     exec([[
       call setline(1, ['aaaaa', 'bbbbb', 'ccccc', 'ddddd'])
@@ -1412,6 +1417,7 @@ describe('ColorColumn highlight', function()
     screen:attach()
   end)
 
+  -- oldtest: Test_colorcolumn()
   it('when entering a buffer vim-patch:8.1.2073', function()
     exec([[
       set nohidden
@@ -1443,6 +1449,7 @@ describe('ColorColumn highlight', function()
     ]])
   end)
 
+  -- oldtest: Test_colorcolumn_bri()
   it("in 'breakindent' vim-patch:8.2.1689", function()
     exec([[
       call setline(1, 'The quick brown fox jumped over the lazy dogs')
@@ -1467,6 +1474,7 @@ describe('ColorColumn highlight', function()
     ]])
   end)
 
+  -- oldtest: Test_colorcolumn_sbr()
   it("in 'showbreak' vim-patch:8.2.1689", function()
     exec([[
       call setline(1, 'The quick brown fox jumped over the lazy dogs')
@@ -1556,17 +1564,6 @@ describe("MsgSeparator highlight and msgsep fillchar", function()
     screen:expect([[
                                                         |
       {5:--------------------------------------------------}|
-      :ls                                               |
-        1 %a   "[No Name]"                    line 1    |
-      {3:Press ENTER or type command to continue}^           |
-    ]])
-
-    -- when display doesn't contain msgsep, these options have no effect
-    feed_command("set display-=msgsep")
-    feed_command("ls")
-    screen:expect([[
-      {1:~                                                 }|
-      {1:~                                                 }|
       :ls                                               |
         1 %a   "[No Name]"                    line 1    |
       {3:Press ENTER or type command to continue}^           |
@@ -1697,6 +1694,7 @@ describe("'number' and 'relativenumber' highlight", function()
     ]])
   end)
 
+  -- oldtest: Test_relativenumber_callback()
   it('relative number highlight is updated if cursor is moved from timer', function()
     local screen = Screen.new(50, 8)
     screen:set_default_attr_ids({
@@ -1745,38 +1743,40 @@ describe("'winhighlight' highlight", function()
     clear()
     screen = Screen.new(20,8)
     screen:attach()
-    screen:set_default_attr_ids({
-      [0] = {bold=true, foreground=Screen.colors.Blue},
-      [1] = {background = Screen.colors.DarkBlue},
-      [2] = {background = Screen.colors.DarkBlue, bold = true, foreground = Screen.colors.Blue1},
-      [3] = {bold = true, reverse = true},
-      [4] = {reverse = true},
-      [5] = {background = Screen.colors.DarkGreen},
-      [6] = {background = Screen.colors.DarkGreen, bold = true, foreground = Screen.colors.Blue1},
-      [7] = {background = Screen.colors.DarkMagenta},
-      [8] = {background = Screen.colors.DarkMagenta, bold = true, foreground = Screen.colors.Blue1},
-      [9] = {foreground = Screen.colors.Brown},
-      [10] = {foreground = Screen.colors.Brown, background = Screen.colors.DarkBlue},
-      [11] = {background = Screen.colors.DarkBlue, bold = true, reverse = true},
-      [12] = {background = Screen.colors.DarkGreen, reverse = true},
-      [13] = {background = Screen.colors.Magenta4, reverse = true},
-      [14] = {background = Screen.colors.DarkBlue, reverse = true},
-      [15] = {foreground = Screen.colors.Grey100, background = Screen.colors.Red},
-      [16] = {foreground = Screen.colors.Blue1},
-      [17] = {background = Screen.colors.LightRed},
-      [18] = {background = Screen.colors.Gray90},
-      [19] = {foreground = Screen.colors.LightGrey, background = Screen.colors.DarkGray},
-      [20] = {background = Screen.colors.LightGrey, underline = true},
-      [21] = {bold = true},
-      [22] = {bold = true, foreground = Screen.colors.SeaGreen4},
-      [23] = {background = Screen.colors.LightMagenta},
-      [24] = {background = Screen.colors.WebGray},
-      [25] = {bold = true, foreground = Screen.colors.Green1},
-      [26] = {background = Screen.colors.Red},
-      [27] = {background = Screen.colors.DarkBlue, bold = true, foreground = Screen.colors.Green1},
-      [28] = {bold = true, foreground = Screen.colors.Brown},
+    screen:set_default_attr_ids {
+      [0] = {bold=true, foreground=Screen.colors.Blue};
+      [1] = {background = Screen.colors.DarkBlue};
+      [2] = {background = Screen.colors.DarkBlue, bold = true, foreground = Screen.colors.Blue1};
+      [3] = {bold = true, reverse = true};
+      [4] = {reverse = true};
+      [5] = {background = Screen.colors.DarkGreen};
+      [6] = {background = Screen.colors.DarkGreen, bold = true, foreground = Screen.colors.Blue1};
+      [7] = {background = Screen.colors.DarkMagenta};
+      [8] = {background = Screen.colors.DarkMagenta, bold = true, foreground = Screen.colors.Blue1};
+      [9] = {foreground = Screen.colors.Brown};
+      [10] = {foreground = Screen.colors.Brown, background = Screen.colors.DarkBlue};
+      [11] = {background = Screen.colors.DarkBlue, bold = true, reverse = true};
+      [12] = {background = Screen.colors.DarkGreen, reverse = true};
+      [13] = {background = Screen.colors.Magenta4, reverse = true};
+      [14] = {background = Screen.colors.DarkBlue, reverse = true};
+      [15] = {foreground = Screen.colors.Grey100, background = Screen.colors.Red};
+      [16] = {foreground = Screen.colors.Blue1};
+      [17] = {background = Screen.colors.LightRed};
+      [18] = {background = Screen.colors.Gray90};
+      [19] = {foreground = Screen.colors.LightGrey, background = Screen.colors.DarkGray};
+      [20] = {background = Screen.colors.LightGrey, underline = true};
+      [21] = {bold = true};
+      [22] = {bold = true, foreground = Screen.colors.SeaGreen4};
+      [23] = {background = Screen.colors.LightMagenta};
+      [24] = {background = Screen.colors.WebGray};
+      [25] = {bold = true, foreground = Screen.colors.Green1};
+      [26] = {background = Screen.colors.Red};
+      [27] = {background = Screen.colors.DarkBlue, bold = true, foreground = Screen.colors.Green1};
+      [28] = {bold = true, foreground = Screen.colors.Brown};
       [29] = {foreground = Screen.colors.Blue1, background = Screen.colors.Red, bold = true};
-    })
+      [30] = {background = tonumber('0xff8800')};
+      [31] = {background = tonumber('0xff8800'), bold = true, foreground = Screen.colors.Blue};
+    }
     command("hi Background1 guibg=DarkBlue")
     command("hi Background2 guibg=DarkGreen")
   end)
@@ -2019,6 +2019,33 @@ describe("'winhighlight' highlight", function()
       {4:[No Name]           }|
                           |
     ]])
+  end)
+
+  it('updates background to changed linked group', function()
+    command("split")
+    command("setlocal winhl=Normal:FancyGroup") -- does not yet exist
+    screen:expect{grid=[[
+      ^                    |
+      {0:~                   }|
+      {0:~                   }|
+      {3:[No Name]           }|
+                          |
+      {0:~                   }|
+      {4:[No Name]           }|
+                          |
+    ]]}
+
+    command("hi FancyGroup guibg=#FF8800") -- nice orange
+    screen:expect{grid=[[
+      {30:^                    }|
+      {31:~                   }|
+      {31:~                   }|
+      {3:[No Name]           }|
+                          |
+      {0:~                   }|
+      {4:[No Name]           }|
+                          |
+    ]]}
   end)
 
   it('background applies also to non-text', function()
@@ -2332,6 +2359,51 @@ describe("'winhighlight' highlight", function()
     ]]}
 
     helpers.assert_alive()
+  end)
+
+  it('can redraw statusline on cursor movement', function()
+    screen:try_resize(40, 8)
+    exec [[
+      set statusline=%f%=%#Background1#%l,%c%V\ %P
+      split
+    ]]
+    insert [[
+      some text
+      more text]]
+    screen:expect{grid=[[
+      some text                               |
+      more tex^t                               |
+      {0:~                                       }|
+      {3:[No Name]                        }{1:2,9 All}|
+      some text                               |
+      more text                               |
+      {4:[No Name]                        }{1:1,1 All}|
+                                              |
+    ]]}
+
+    command 'set winhl=Background1:Background2'
+    screen:expect{grid=[[
+      some text                               |
+      more tex^t                               |
+      {0:~                                       }|
+      {3:[No Name]                        }{5:2,9 All}|
+      some text                               |
+      more text                               |
+      {4:[No Name]                        }{1:1,1 All}|
+                                              |
+    ]]}
+
+    feed 'k'
+    screen:expect{grid=[[
+      some tex^t                               |
+      more text                               |
+      {0:~                                       }|
+      {3:[No Name]                        }{5:1,9 All}|
+      some text                               |
+      more text                               |
+      {4:[No Name]                        }{1:1,1 All}|
+                                              |
+    ]]}
   end)
 end)
 

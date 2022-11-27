@@ -1,5 +1,7 @@
 " Test for delete().
 
+source check.vim
+
 func Test_file_delete()
   split Xfile
   call setline(1, ['a', 'b'])
@@ -41,9 +43,7 @@ func Test_recursive_delete()
 endfunc
 
 func Test_symlink_delete()
-  if !has('unix')
-    return
-  endif
+  CheckUnix
   split Xfile
   call setline(1, ['a', 'b'])
   wq
@@ -56,9 +56,7 @@ func Test_symlink_delete()
 endfunc
 
 func Test_symlink_dir_delete()
-  if !has('unix')
-    return
-  endif
+  CheckUnix
   call mkdir('Xdir1')
   silent !ln -s Xdir1 Xlink
   call assert_true(isdirectory('Xdir1'))
@@ -70,9 +68,7 @@ func Test_symlink_dir_delete()
 endfunc
 
 func Test_symlink_recursive_delete()
-  if !has('unix')
-    return
-  endif
+  CheckUnix
   call mkdir('Xdir3')
   call mkdir('Xdir3/subdir')
   call mkdir('Xdir4')

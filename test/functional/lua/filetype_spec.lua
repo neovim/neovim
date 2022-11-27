@@ -1,6 +1,7 @@
 local helpers = require('test.functional.helpers')(after_each)
 local exec_lua = helpers.exec_lua
 local eq = helpers.eq
+local meths = helpers.meths
 local clear = helpers.clear
 local pathroot = helpers.pathroot
 local command = helpers.command
@@ -92,5 +93,12 @@ describe('vim.filetype', function()
       })
       return vim.filetype.match({ buf = 0 })
     ]])
+  end)
+end)
+
+describe('filetype.lua', function()
+  it('does not override user autocommands that set filetype #20333', function()
+    clear({args={'--clean', '--cmd', 'autocmd BufRead *.md set filetype=notmarkdown', 'README.md'}})
+    eq('notmarkdown', meths.buf_get_option(0, 'filetype'))
   end)
 end)

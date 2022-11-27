@@ -35,6 +35,7 @@ func Test_list_method()
   call assert_equal(v:t_list, l->type())
   call assert_equal([1, 2, 3], [1, 1, 2, 3, 3]->uniq())
   call assert_fails('eval l->values()', 'E715:')
+  call assert_fails('echo []->len', 'E107:')
 endfunc
 
 func Test_dict_method()
@@ -130,9 +131,9 @@ func Test_method_syntax()
   eval [1, 2, 3]  
 	\ ->sort(
 	\ )
-  call assert_fails('eval [1, 2, 3]-> sort()', 'E260:')
+  call assert_fails('eval [1, 2, 3]-> sort()', 'E15:')
   call assert_fails('eval [1, 2, 3]->sort ()', 'E274:')
-  call assert_fails('eval [1, 2, 3]-> sort ()', 'E260:')
+  call assert_fails('eval [1, 2, 3]-> sort ()', 'E15:')
 endfunc
 
 func Test_method_lambda()
@@ -152,6 +153,22 @@ endfunc
 
 func Test_method_not_supported()
   call assert_fails('eval 123->changenr()', 'E276:')
+  call assert_fails('echo "abc"->invalidfunc()', 'E117:')
+  " Test for too many or too few arguments to a method
+  call assert_fails('let n="abc"->len(2)', 'E118:')
+  call assert_fails('let n=10->setwinvar()', 'E119:')
 endfunc
 
-" vim: shiftwidth=2 sts=2 expandtab
+" Test for passing optional arguments to methods
+func Test_method_args()
+  let v:errors = []
+  let n = 10->assert_inrange(1, 5, "Test_assert_inrange")
+  if v:errors[0] !~ 'Test_assert_inrange'
+    call assert_report(v:errors[0])
+  else
+    " Test passed
+    let v:errors = []
+  endif
+endfunc
+
+" vim: ts=8 sw=2 sts=2 expandtab tw=80 fdm=marker

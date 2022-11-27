@@ -514,18 +514,13 @@ ctags			As found on most Unix systems.  Only supports C.  Only
 universal ctags		A maintained version of ctags based on exuberant
 			ctags. See https://ctags.io.
 							*Exuberant_ctags*
-exuberant ctags		This is a very good one.  It works for C, C++, Java,
-			Fortran, Eiffel and others.  It can generate tags for
-			many items.  See http://ctags.sourceforge.net.
-			No new version since 2009.
+exuberant ctags		Works for C, C++, Java, Fortran, Eiffel and others.
+			See https://ctags.sourceforge.net. No new version
+			since 2009.
 JTags			For Java, in Java.  It can be found at
-			http://www.fleiner.com/jtags/.
+			https://www.fleiner.com/jtags/.
 ptags.py		For Python, in Python.  Found in your Python source
 			directory at Tools/scripts/ptags.py.
-ptags			For Perl, in Perl.  It can be found at
-			http://www.eleves.ens.fr:8080/home/nthiery/Tags/.
-gnatxref		For Ada.  See http://www.gnuada.org/.  gnatxref is
-			part of the gnat package.
 
 
 The lines in the tags file must have one of these two formats:
@@ -834,10 +829,10 @@ CTRL-W d		Open a new window, with the cursor on the first
 			(default: whole file).
 			See |:search-args| for [/] and [!].
 
-					*:che* *:chec* *:check* *:checkpath*
-:che[ckpath]		List all the included files that could not be found.
+							*:checkp* *:checkpath*
+:checkp[ath]		List all the included files that could not be found.
 
-:che[ckpath]!		List all the included files.
+:checkp[ath]!		List all the included files.
 
 								*:search-args*
 Common arguments for the commands above:
@@ -870,12 +865,14 @@ like |CTRL-]|.
 
 The function used for generating the taglist is specified by setting the
 'tagfunc' option.  The function will be called with three arguments:
-   a:pattern	The tag identifier or pattern used during the tag search.
-   a:flags	String containing flags to control the function behavior.
-   a:info	Dict containing the following entries:
+   pattern	The tag identifier or pattern used during the tag search.
+   flags	String containing flags to control the function behavior.
+   info		Dict containing the following entries:
 		    buf_ffname	  Full filename which can be used for priority.
 		    user_data	  Custom data String, if stored in the tag
 				  stack previously by tagfunc.
+
+Note that "a:" needs to be prepended to the argument name when using it.
 
 Currently up to three flags may be passed to the tag function:
   'c'		The function was invoked by a normal command being processed
@@ -912,6 +909,8 @@ If the function returns |v:null| instead of a List, a standard tag lookup will
 be performed instead.
 
 It is not allowed to change the tagstack from inside 'tagfunc'.  *E986* 
+It is not allowed to close a window or change window from inside 'tagfunc'.
+*E1299*
 
 The following is a hypothetical example of a function used for 'tagfunc'.  It
 uses the output of |taglist()| to generate the result: a list of tags in the

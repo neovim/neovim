@@ -5,7 +5,6 @@
 -- http://invisible-island.net/xterm/ctlseqs/ctlseqs.html#h2-Bracketed-Paste-Mode
 
 local helpers = require('test.functional.helpers')(after_each)
-local uname = helpers.uname
 local thelpers = require('test.functional.terminal.helpers')
 local Screen = require('test.functional.ui.screen')
 local assert_alive = helpers.assert_alive
@@ -21,12 +20,16 @@ local nvim_set = helpers.nvim_set
 local ok = helpers.ok
 local read_file = helpers.read_file
 local funcs = helpers.funcs
+local meths = helpers.meths
+local is_ci = helpers.is_ci
+local is_os = helpers.is_os
 
-if helpers.pending_win32(pending) then return end
+if helpers.skip(helpers.is_os('win')) then return end
 
 describe('TUI', function()
   local screen
   local child_session
+  local child_exec_lua
 
   before_each(function()
     clear()
@@ -44,6 +47,7 @@ describe('TUI', function()
       {3:-- TERMINAL --}                                    |
     ]])
     child_session = helpers.connect(child_server)
+    child_exec_lua = thelpers.make_lua_executor(child_session)
   end)
 
   -- Wait for mode in the child Nvim (avoid "typeahead race" #10826).
@@ -297,6 +301,199 @@ describe('TUI', function()
     ]], attrs)
   end)
 
+  it('accepts mouse wheel events #19992', function()
+    child_session:request('nvim_command', [[
+      set number nostartofline nowrap mousescroll=hor:1,ver:1
+      call setline(1, repeat([join(range(10), '----')], 10))
+      vsplit
+    ]])
+    screen:expect([[
+      {11:  1 }{1:0}----1----2----3----4│{11:  1 }0----1----2----3----|
+      {11:  2 }0----1----2----3----4│{11:  2 }0----1----2----3----|
+      {11:  3 }0----1----2----3----4│{11:  3 }0----1----2----3----|
+      {11:  4 }0----1----2----3----4│{11:  4 }0----1----2----3----|
+      {5:[No Name] [+]             }{1:[No Name] [+]           }|
+                                                        |
+      {3:-- TERMINAL --}                                    |
+    ]])
+    -- <ScrollWheelDown> in active window
+    feed_data('\027[<65;8;1M')
+    screen:expect([[
+      {11:  2 }{1:0}----1----2----3----4│{11:  1 }0----1----2----3----|
+      {11:  3 }0----1----2----3----4│{11:  2 }0----1----2----3----|
+      {11:  4 }0----1----2----3----4│{11:  3 }0----1----2----3----|
+      {11:  5 }0----1----2----3----4│{11:  4 }0----1----2----3----|
+      {5:[No Name] [+]             }{1:[No Name] [+]           }|
+                                                        |
+      {3:-- TERMINAL --}                                    |
+    ]])
+    -- <ScrollWheelDown> in inactive window
+    feed_data('\027[<65;48;1M')
+    screen:expect([[
+      {11:  2 }{1:0}----1----2----3----4│{11:  2 }0----1----2----3----|
+      {11:  3 }0----1----2----3----4│{11:  3 }0----1----2----3----|
+      {11:  4 }0----1----2----3----4│{11:  4 }0----1----2----3----|
+      {11:  5 }0----1----2----3----4│{11:  5 }0----1----2----3----|
+      {5:[No Name] [+]             }{1:[No Name] [+]           }|
+                                                        |
+      {3:-- TERMINAL --}                                    |
+    ]])
+    -- <ScrollWheelRight> in active window
+    feed_data('\027[<67;8;1M')
+    screen:expect([[
+      {11:  2 }{1:-}---1----2----3----4-│{11:  2 }0----1----2----3----|
+      {11:  3 }----1----2----3----4-│{11:  3 }0----1----2----3----|
+      {11:  4 }----1----2----3----4-│{11:  4 }0----1----2----3----|
+      {11:  5 }----1----2----3----4-│{11:  5 }0----1----2----3----|
+      {5:[No Name] [+]             }{1:[No Name] [+]           }|
+                                                        |
+      {3:-- TERMINAL --}                                    |
+    ]])
+    -- <ScrollWheelRight> in inactive window
+    feed_data('\027[<67;48;1M')
+    screen:expect([[
+      {11:  2 }{1:-}---1----2----3----4-│{11:  2 }----1----2----3----4|
+      {11:  3 }----1----2----3----4-│{11:  3 }----1----2----3----4|
+      {11:  4 }----1----2----3----4-│{11:  4 }----1----2----3----4|
+      {11:  5 }----1----2----3----4-│{11:  5 }----1----2----3----4|
+      {5:[No Name] [+]             }{1:[No Name] [+]           }|
+                                                        |
+      {3:-- TERMINAL --}                                    |
+    ]])
+    -- <S-ScrollWheelDown> in active window
+    feed_data('\027[<69;8;1M')
+    screen:expect([[
+      {11:  5 }{1:-}---1----2----3----4-│{11:  2 }----1----2----3----4|
+      {11:  6 }----1----2----3----4-│{11:  3 }----1----2----3----4|
+      {11:  7 }----1----2----3----4-│{11:  4 }----1----2----3----4|
+      {11:  8 }----1----2----3----4-│{11:  5 }----1----2----3----4|
+      {5:[No Name] [+]             }{1:[No Name] [+]           }|
+                                                        |
+      {3:-- TERMINAL --}                                    |
+    ]])
+    -- <S-ScrollWheelDown> in inactive window
+    feed_data('\027[<69;48;1M')
+    screen:expect([[
+      {11:  5 }{1:-}---1----2----3----4-│{11:  5 }----1----2----3----4|
+      {11:  6 }----1----2----3----4-│{11:  6 }----1----2----3----4|
+      {11:  7 }----1----2----3----4-│{11:  7 }----1----2----3----4|
+      {11:  8 }----1----2----3----4-│{11:  8 }----1----2----3----4|
+      {5:[No Name] [+]             }{1:[No Name] [+]           }|
+                                                        |
+      {3:-- TERMINAL --}                                    |
+    ]])
+    -- <S-ScrollWheelRight> in active window
+    feed_data('\027[<71;8;1M')
+    screen:expect([[
+      {11:  5 }{1:-}---6----7----8----9 │{11:  5 }----1----2----3----4|
+      {11:  6 }----6----7----8----9 │{11:  6 }----1----2----3----4|
+      {11:  7 }----6----7----8----9 │{11:  7 }----1----2----3----4|
+      {11:  8 }----6----7----8----9 │{11:  8 }----1----2----3----4|
+      {5:[No Name] [+]             }{1:[No Name] [+]           }|
+                                                        |
+      {3:-- TERMINAL --}                                    |
+    ]])
+    -- <S-ScrollWheelRight> in inactive window
+    feed_data('\027[<71;48;1M')
+    screen:expect([[
+      {11:  5 }{1:-}---6----7----8----9 │{11:  5 }5----6----7----8----|
+      {11:  6 }----6----7----8----9 │{11:  6 }5----6----7----8----|
+      {11:  7 }----6----7----8----9 │{11:  7 }5----6----7----8----|
+      {11:  8 }----6----7----8----9 │{11:  8 }5----6----7----8----|
+      {5:[No Name] [+]             }{1:[No Name] [+]           }|
+                                                        |
+      {3:-- TERMINAL --}                                    |
+    ]])
+    -- <ScrollWheelUp> in active window
+    feed_data('\027[<64;8;1M')
+    screen:expect([[
+      {11:  4 }----6----7----8----9 │{11:  5 }5----6----7----8----|
+      {11:  5 }{1:-}---6----7----8----9 │{11:  6 }5----6----7----8----|
+      {11:  6 }----6----7----8----9 │{11:  7 }5----6----7----8----|
+      {11:  7 }----6----7----8----9 │{11:  8 }5----6----7----8----|
+      {5:[No Name] [+]             }{1:[No Name] [+]           }|
+                                                        |
+      {3:-- TERMINAL --}                                    |
+    ]])
+    -- <ScrollWheelUp> in inactive window
+    feed_data('\027[<64;48;1M')
+    screen:expect([[
+      {11:  4 }----6----7----8----9 │{11:  4 }5----6----7----8----|
+      {11:  5 }{1:-}---6----7----8----9 │{11:  5 }5----6----7----8----|
+      {11:  6 }----6----7----8----9 │{11:  6 }5----6----7----8----|
+      {11:  7 }----6----7----8----9 │{11:  7 }5----6----7----8----|
+      {5:[No Name] [+]             }{1:[No Name] [+]           }|
+                                                        |
+      {3:-- TERMINAL --}                                    |
+    ]])
+    -- <ScrollWheelLeft> in active window
+    feed_data('\027[<66;8;1M')
+    screen:expect([[
+      {11:  4 }5----6----7----8----9│{11:  4 }5----6----7----8----|
+      {11:  5 }5{1:-}---6----7----8----9│{11:  5 }5----6----7----8----|
+      {11:  6 }5----6----7----8----9│{11:  6 }5----6----7----8----|
+      {11:  7 }5----6----7----8----9│{11:  7 }5----6----7----8----|
+      {5:[No Name] [+]             }{1:[No Name] [+]           }|
+                                                        |
+      {3:-- TERMINAL --}                                    |
+    ]])
+    -- <ScrollWheelLeft> in inactive window
+    feed_data('\027[<66;48;1M')
+    screen:expect([[
+      {11:  4 }5----6----7----8----9│{11:  4 }-5----6----7----8---|
+      {11:  5 }5{1:-}---6----7----8----9│{11:  5 }-5----6----7----8---|
+      {11:  6 }5----6----7----8----9│{11:  6 }-5----6----7----8---|
+      {11:  7 }5----6----7----8----9│{11:  7 }-5----6----7----8---|
+      {5:[No Name] [+]             }{1:[No Name] [+]           }|
+                                                        |
+      {3:-- TERMINAL --}                                    |
+    ]])
+    -- <S-ScrollWheelUp> in active window
+    feed_data('\027[<68;8;1M')
+    screen:expect([[
+      {11:  1 }5----6----7----8----9│{11:  4 }-5----6----7----8---|
+      {11:  2 }5----6----7----8----9│{11:  5 }-5----6----7----8---|
+      {11:  3 }5----6----7----8----9│{11:  6 }-5----6----7----8---|
+      {11:  4 }5{1:-}---6----7----8----9│{11:  7 }-5----6----7----8---|
+      {5:[No Name] [+]             }{1:[No Name] [+]           }|
+                                                        |
+      {3:-- TERMINAL --}                                    |
+    ]])
+    -- <S-ScrollWheelUp> in inactive window
+    feed_data('\027[<68;48;1M')
+    screen:expect([[
+      {11:  1 }5----6----7----8----9│{11:  1 }-5----6----7----8---|
+      {11:  2 }5----6----7----8----9│{11:  2 }-5----6----7----8---|
+      {11:  3 }5----6----7----8----9│{11:  3 }-5----6----7----8---|
+      {11:  4 }5{1:-}---6----7----8----9│{11:  4 }-5----6----7----8---|
+      {5:[No Name] [+]             }{1:[No Name] [+]           }|
+                                                        |
+      {3:-- TERMINAL --}                                    |
+    ]])
+    -- <S-ScrollWheelLeft> in active window
+    feed_data('\027[<70;8;1M')
+    screen:expect([[
+      {11:  1 }0----1----2----3----4│{11:  1 }-5----6----7----8---|
+      {11:  2 }0----1----2----3----4│{11:  2 }-5----6----7----8---|
+      {11:  3 }0----1----2----3----4│{11:  3 }-5----6----7----8---|
+      {11:  4 }0----1----2----3----{1:4}│{11:  4 }-5----6----7----8---|
+      {5:[No Name] [+]             }{1:[No Name] [+]           }|
+                                                        |
+      {3:-- TERMINAL --}                                    |
+    ]])
+    -- <S-ScrollWheelLeft> in inactive window
+    feed_data('\027[<70;48;1M')
+    screen:expect([[
+      {11:  1 }0----1----2----3----4│{11:  1 }0----1----2----3----|
+      {11:  2 }0----1----2----3----4│{11:  2 }0----1----2----3----|
+      {11:  3 }0----1----2----3----4│{11:  3 }0----1----2----3----|
+      {11:  4 }0----1----2----3----{1:4}│{11:  4 }0----1----2----3----|
+      {5:[No Name] [+]             }{1:[No Name] [+]           }|
+                                                        |
+      {3:-- TERMINAL --}                                    |
+    ]])
+  end)
+
   it('accepts keypad keys from kitty keyboard protocol #19180', function()
     feed_data('i')
     feed_data(funcs.nr2char(57399)) -- KP_0
@@ -473,6 +670,57 @@ describe('TUI', function()
     ]], attrs)
   end)
 
+  it('mouse events work with right-click menu', function()
+    child_session:request('nvim_command', [[
+      call setline(1, 'popup menu test')
+      set mouse=a mousemodel=popup
+
+      aunmenu PopUp
+      menu PopUp.foo :let g:menustr = 'foo'<CR>
+      menu PopUp.bar :let g:menustr = 'bar'<CR>
+      menu PopUp.baz :let g:menustr = 'baz'<CR>
+      highlight Pmenu ctermbg=NONE ctermfg=NONE cterm=underline,reverse
+      highlight PmenuSel ctermbg=NONE ctermfg=NONE cterm=underline,reverse,bold
+    ]])
+    local attrs = screen:get_default_attr_ids()
+    attrs[11] = {underline = true, reverse = true}
+    attrs[12] = {underline = true, reverse = true, bold = true}
+    meths.input_mouse('right', 'press', '', 0, 0, 4)
+    screen:expect([[
+      {1:p}opup menu test                                   |
+      {4:~  }{11: foo }{4:                                          }|
+      {4:~  }{11: bar }{4:                                          }|
+      {4:~  }{11: baz }{4:                                          }|
+      {5:[No Name] [+]                                     }|
+                                                        |
+      {3:-- TERMINAL --}                                    |
+    ]], attrs)
+    meths.input_mouse('right', 'release', '', 0, 0, 4)
+    screen:expect_unchanged()
+    meths.input_mouse('move', '', '', 0, 3, 6)
+    screen:expect([[
+      {1:p}opup menu test                                   |
+      {4:~  }{11: foo }{4:                                          }|
+      {4:~  }{11: bar }{4:                                          }|
+      {4:~  }{12: baz }{4:                                          }|
+      {5:[No Name] [+]                                     }|
+                                                        |
+      {3:-- TERMINAL --}                                    |
+    ]], attrs)
+    meths.input_mouse('left', 'press', '', 0, 2, 6)
+    screen:expect([[
+      {1:p}opup menu test                                   |
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {5:[No Name] [+]                                     }|
+      :let g:menustr = 'bar'                            |
+      {3:-- TERMINAL --}                                    |
+    ]], attrs)
+    meths.input_mouse('left', 'release', '', 0, 2, 6)
+    screen:expect_unchanged()
+  end)
+
   it('paste: Insert mode', function()
     -- "bracketed paste"
     feed_data('i""\027i\027[200~')
@@ -574,12 +822,11 @@ describe('TUI', function()
   end)
 
   it('paste: terminal mode', function()
-    if os.getenv('GITHUB_ACTIONS') ~= nil then
+    if is_ci('github') then
         pending("tty-test complains about not owning the terminal -- actions/runner#241")
-        return
     end
-    feed_data(':set statusline=^^^^^^^\n')
-    feed_data(':terminal '..testprg('tty-test')..'\n')
+    child_exec_lua('vim.o.statusline="^^^^^^^"')
+    child_exec_lua('vim.cmd.terminal(...)', testprg('tty-test'))
     feed_data('i')
     screen:expect{grid=[[
       tty ready                                         |
@@ -842,7 +1089,7 @@ describe('TUI', function()
     -- "bracketed paste"
     feed_data('\027[200~'..expected..'\027[201~')
     -- FIXME: Data race between the two feeds
-    if uname() == 'freebsd' then screen:sleep(1) end
+    if is_os('freebsd') then screen:sleep(1) end
     feed_data(' end')
     expected = expected..' end'
     screen:expect([[
@@ -1082,9 +1329,8 @@ describe('TUI', function()
   end)
 
   it('forwards :term palette colors with termguicolors', function()
-    if os.getenv('GITHUB_ACTIONS') ~= nil then
+    if is_ci('github') then
         pending("tty-test complains about not owning the terminal -- actions/runner#241")
-        return
     end
     screen:set_rgb_cterm(true)
     screen:set_default_attr_ids({
@@ -1095,12 +1341,9 @@ describe('TUI', function()
       [5] = {{foreground = tonumber('0xff8000')}, {}},
     })
 
-    feed_data(':set statusline=^^^^^^^\n')
-    feed_data(':set termguicolors\n')
-    feed_data(':terminal '..testprg('tty-test')..'\n')
-    -- Depending on platform the above might or might not fit in the cmdline
-    -- so clear it for consistent behavior.
-    feed_data(':\027')
+    child_exec_lua('vim.o.statusline="^^^^^^^"')
+    child_exec_lua('vim.o.termguicolors=true')
+    child_exec_lua('vim.cmd.terminal(...)', testprg('tty-test'))
     screen:expect{grid=[[
       {1:t}ty ready                                         |
                                                         |
@@ -1425,7 +1668,6 @@ end)
 -- does not initialize the TUI.
 describe("TUI 't_Co' (terminal colors)", function()
   local screen
-  local is_freebsd = (uname() == 'freebsd')
 
   local function assert_term_colors(term, colorterm, maxcolors)
     helpers.clear({env={TERM=term}, args={}})
@@ -1528,7 +1770,7 @@ describe("TUI 't_Co' (terminal colors)", function()
   -- which is raised to 16 by COLORTERM.
 
   it("TERM=screen no COLORTERM uses 8/256 colors", function()
-    if is_freebsd then
+    if is_os('freebsd') then
       assert_term_colors("screen", nil, 256)
     else
       assert_term_colors("screen", nil, 8)
@@ -1536,7 +1778,7 @@ describe("TUI 't_Co' (terminal colors)", function()
   end)
 
   it("TERM=screen COLORTERM=screen uses 16/256 colors", function()
-    if is_freebsd then
+    if is_os('freebsd') then
       assert_term_colors("screen", "screen", 256)
     else
       assert_term_colors("screen", "screen", 16)
@@ -1699,8 +1941,6 @@ end)
 -- does not initialize the TUI.
 describe("TUI 'term' option", function()
   local screen
-  local is_bsd = not not string.find(uname(), 'bsd')
-  local is_macos = not not string.find(uname(), 'darwin')
 
   local function assert_term(term_envvar, term_expected)
     clear()
@@ -1726,11 +1966,11 @@ describe("TUI 'term' option", function()
   end)
 
   it('gets system-provided term if $TERM is valid', function()
-    if uname() == "openbsd" then
+    if is_os('openbsd') then
       assert_term("xterm", "xterm")
-    elseif is_bsd then  -- BSD lacks terminfo, builtin is always used.
+    elseif is_os('bsd') then  -- BSD lacks terminfo, builtin is always used.
       assert_term("xterm", "builtin_xterm")
-    elseif is_macos then
+    elseif is_os('mac') then
       local status, _ = pcall(assert_term, "xterm", "xterm")
       if not status then
         pending("macOS: unibilium could not find terminfo")

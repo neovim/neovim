@@ -673,18 +673,6 @@ module.cmds = {
     func='ex_cc',
   },
   {
-    command='cscope',
-    flags=bit.bor(EXTRA, NOTRLCOM, XFILE),
-    addr_type='ADDR_NONE',
-    func='ex_cscope',
-  },
-  {
-    command='cstag',
-    flags=bit.bor(BANG, TRLBAR, WORD1),
-    addr_type='ADDR_NONE',
-    func='ex_cstag',
-  },
-  {
     command='cunmap',
     flags=bit.bor(EXTRA, TRLBAR, NOTRLCOM, CTRLV, CMDWIN, LOCK_OK),
     addr_type='ADDR_NONE',
@@ -1141,6 +1129,12 @@ module.cmds = {
     func='ex_history',
   },
   {
+    command='horizontal',
+    flags=bit.bor(NEEDARG, EXTRA, NOTRLCOM),
+    addr_type='ADDR_NONE',
+    func='ex_wrongmodifier',
+  },
+  {
     command='insert',
     flags=bit.bor(BANG, RANGE, TRLBAR, CMDWIN, LOCK_OK, MODIFY),
     addr_type='ADDR_LINES',
@@ -1397,12 +1391,6 @@ module.cmds = {
     flags=bit.bor(RANGE, COUNT, TRLBAR),
     addr_type='ADDR_OTHER',
     func='ex_cclose',
-  },
-  {
-    command='lcscope',
-    flags=bit.bor(EXTRA, NOTRLCOM, XFILE),
-    addr_type='ADDR_NONE',
-    func='ex_cscope',
   },
   {
     command='ldo',
@@ -2414,12 +2402,6 @@ module.cmds = {
     flags=bit.bor(WORD1, TRLBAR, CMDWIN, LOCK_OK),
     addr_type='ADDR_NONE',
     func='ex_scriptencoding',
-  },
-  {
-    command='scscope',
-    flags=bit.bor(EXTRA, NOTRLCOM),
-    addr_type='ADDR_NONE',
-    func='ex_scscope',
   },
   {
     command='set',

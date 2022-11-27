@@ -1,15 +1,23 @@
 // This is an open source non-commercial project. Dear PVS-Studio, please check
 // it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
+#include <inttypes.h>
+#include <stdlib.h>
+
 #include "nvim/eval.h"
 #include "nvim/eval/executor.h"
 #include "nvim/eval/typval.h"
+#include "nvim/eval/typval_defs.h"
+#include "nvim/garray.h"
+#include "nvim/gettext.h"
 #include "nvim/globals.h"
 #include "nvim/message.h"
+#include "nvim/strings.h"
+#include "nvim/types.h"
 #include "nvim/vim.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "eval/executor.c.generated.h"
+# include "eval/executor.c.generated.h"  // IWYU pragma: export
 #endif
 
 char *e_listidx = N_("E684: list index out of range: %" PRId64);
@@ -108,8 +116,7 @@ int eexe_mod_op(typval_T *const tv1, const typval_T *const tv2, const char *cons
         const char *tvs = tv_get_string(tv1);
         char numbuf[NUMBUFLEN];
         char *const s =
-          (char *)concat_str((const char_u *)tvs, (const char_u *)tv_get_string_buf(tv2,
-                                                                                    numbuf));
+          concat_str(tvs, tv_get_string_buf(tv2, numbuf));
         tv_clear(tv1);
         tv1->v_type = VAR_STRING;
         tv1->vval.v_string = s;
@@ -123,8 +130,8 @@ int eexe_mod_op(typval_T *const tv1, const typval_T *const tv2, const char *cons
         break;
       }
       const float_T f = (tv2->v_type == VAR_FLOAT
-                           ? tv2->vval.v_float
-                           : (float_T)tv_get_number(tv2));
+                         ? tv2->vval.v_float
+                         : (float_T)tv_get_number(tv2));
       switch (*op) {
       case '+':
         tv1->vval.v_float += f; break;

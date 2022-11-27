@@ -1,15 +1,19 @@
 local Screen = require('test.functional.ui.screen')
 local helpers = require('test.functional.helpers')(after_each)
 local lfs = require('lfs')
-local eq, eval, expect, source =
-  helpers.eq, helpers.eval, helpers.expect, helpers.source
+local luv = require('luv')
+local eq, eval, expect, exec =
+  helpers.eq, helpers.eval, helpers.expect, helpers.exec
 local assert_alive = helpers.assert_alive
 local clear = helpers.clear
 local command = helpers.command
 local feed = helpers.feed
+local funcs = helpers.funcs
 local nvim_prog = helpers.nvim_prog
 local ok = helpers.ok
 local rmdir = helpers.rmdir
+local new_argv = helpers.new_argv
+local pesc = helpers.pesc
 local os_kill = helpers.os_kill
 local set_session = helpers.set_session
 local spawn = helpers.spawn
@@ -55,11 +59,11 @@ describe(':preserve', function()
       set swapfile fileformat=unix undolevels=-1
     ]]
 
-    source(init)
+    exec(init)
     command('edit! '..testfile)
     feed('isometext<esc>')
     command('preserve')
-    source('redir => g:swapname | silent swapname | redir END')
+    exec('redir => g:swapname | silent swapname | redir END')
 
     local swappath1 = eval('g:swapname')
 
@@ -69,12 +73,12 @@ describe(':preserve', function()
                                 true)
     set_session(nvim2)
 
-    source(init)
+    exec(init)
 
     -- Use the "SwapExists" event to choose the (R)ecover choice at the dialog.
     command('autocmd SwapExists * let v:swapchoice = "r"')
     command('silent edit! '..testfile)
-    source('redir => g:swapname | silent swapname | redir END')
+    exec('redir => g:swapname | silent swapname | redir END')
 
     local swappath2 = eval('g:swapname')
 
@@ -92,25 +96,28 @@ end)
 
 describe('swapfile detection', function()
   local swapdir = lfs.currentdir()..'/Xtest_swapdialog_dir'
+  local nvim0
+  -- Put swapdir at the start of the 'directory' list. #1836
+  -- Note: `set swapfile` *must* go after `set directory`: otherwise it may
+  -- attempt to create a swapfile in different directory.
+  local init = [[
+    set directory^=]]..swapdir:gsub([[\]], [[\\]])..[[//
+    set swapfile fileformat=unix nomodified undolevels=-1 nohidden
+  ]]
   before_each(function()
-    clear()
+    nvim0 = spawn(new_argv())
+    set_session(nvim0)
     rmdir(swapdir)
     lfs.mkdir(swapdir)
   end)
   after_each(function()
+    set_session(nvim0)
     command('%bwipeout!')
     rmdir(swapdir)
   end)
 
   it('always show swapfile dialog #8840 #9027', function()
     local testfile = 'Xtest_swapdialog_file1'
-    -- Put swapdir at the start of the 'directory' list. #1836
-    -- Note: `set swapfile` *must* go after `set directory`: otherwise it may
-    -- attempt to create a swapfile in different directory.
-    local init = [[
-      set directory^=]]..swapdir:gsub([[\]], [[\\]])..[[//
-      set swapfile fileformat=unix undolevels=-1 hidden
-    ]]
 
     local expected_no_dialog = '^'..(' '):rep(256)..'|\n'
     for _=1,37 do
@@ -119,19 +126,17 @@ describe('swapfile detection', function()
     expected_no_dialog = expected_no_dialog..testfile..(' '):rep(216)..'0,0-1          All|\n'
     expected_no_dialog = expected_no_dialog..(' '):rep(256)..'|\n'
 
-    source(init)
+    exec(init)
     command('edit! '..testfile)
     feed('isometext<esc>')
     command('preserve')
 
-    os_kill(eval('getpid()'))
     -- Start another Nvim instance.
-    local nvim2 = spawn({nvim_prog, '-u', 'NONE', '-i', 'NONE', '--embed'},
-                        true)
+    local nvim2 = spawn({nvim_prog, '-u', 'NONE', '-i', 'NONE', '--embed'}, true, nil, true)
     set_session(nvim2)
     local screen2 = Screen.new(256, 40)
     screen2:attach()
-    source(init)
+    exec(init)
 
     -- With shortmess+=F
     command('set shortmess+=F')
@@ -176,5 +181,163 @@ describe('swapfile detection', function()
       }
     })
     feed('<cr>')
+
+    nvim2:close()
+  end)
+
+  -- oldtest: Test_swap_prompt_splitwin()
+  it('selecting "q" in the attention prompt', function()
+    exec(init)
+    command('edit Xfile1')
+    command('preserve')  -- should help to make sure the swap file exists
+
+    local screen = Screen.new(75, 18)
+    screen:set_default_attr_ids({
+      [0] = {bold = true, foreground = Screen.colors.Blue},  -- NonText
+      [1] = {bold = true, foreground = Screen.colors.SeaGreen},  -- MoreMsg
+    })
+
+    local nvim1 = spawn(new_argv(), true, nil, true)
+    set_session(nvim1)
+    screen:attach()
+    exec(init)
+    feed(':split Xfile1\n')
+    screen:expect({
+      any = pesc('{1:[O]pen Read-Only, (E)dit anyway, (R)ecover, (Q)uit, (A)bort: }^')
+    })
+    feed('q')
+    feed(':<CR>')
+    screen:expect([[
+      ^                                                                           |
+      {0:~                                                                          }|
+      {0:~                                                                          }|
+      {0:~                                                                          }|
+      {0:~                                                                          }|
+      {0:~                                                                          }|
+      {0:~                                                                          }|
+      {0:~                                                                          }|
+      {0:~                                                                          }|
+      {0:~                                                                          }|
+      {0:~                                                                          }|
+      {0:~                                                                          }|
+      {0:~                                                                          }|
+      {0:~                                                                          }|
+      {0:~                                                                          }|
+      {0:~                                                                          }|
+      {0:~                                                                          }|
+      :                                                                          |
+    ]])
+    nvim1:close()
+
+    local nvim2 = spawn(new_argv(), true, nil, true)
+    set_session(nvim2)
+    screen:attach()
+    exec(init)
+    command('set more')
+    command('au bufadd * let foo_w = wincol()')
+    feed(':e Xfile1<CR>')
+    screen:expect({any = pesc('{1:-- More --}^')})
+    feed('<Space>')
+    screen:expect({
+      any = pesc('{1:[O]pen Read-Only, (E)dit anyway, (R)ecover, (Q)uit, (A)bort: }^')
+    })
+    feed('q')
+    command([[echo 'hello']])
+    screen:expect([[
+      ^                                                                           |
+      {0:~                                                                          }|
+      {0:~                                                                          }|
+      {0:~                                                                          }|
+      {0:~                                                                          }|
+      {0:~                                                                          }|
+      {0:~                                                                          }|
+      {0:~                                                                          }|
+      {0:~                                                                          }|
+      {0:~                                                                          }|
+      {0:~                                                                          }|
+      {0:~                                                                          }|
+      {0:~                                                                          }|
+      {0:~                                                                          }|
+      {0:~                                                                          }|
+      {0:~                                                                          }|
+      {0:~                                                                          }|
+      hello                                                                      |
+    ]])
+    nvim2:close()
+  end)
+
+  -- oldtest: Test_nocatch_process_still_running()
+  it('allows deleting swapfile created before boot vim-patch:8.2.2586', function()
+    local screen = Screen.new(75, 30)
+    screen:set_default_attr_ids({
+      [0] = {bold = true, foreground = Screen.colors.Blue},  -- NonText
+      [1] = {bold = true, foreground = Screen.colors.SeaGreen},  -- MoreMsg
+      [2] = {background = Screen.colors.Red, foreground = Screen.colors.White},  -- ErrorMsg
+    })
+    screen:attach()
+
+    exec(init)
+    command('set nohidden')
+
+    exec([=[
+      " Make a copy of the current swap file to "Xswap".
+      " Return the name of the swap file.
+      func CopySwapfile()
+        preserve
+        " get the name of the swap file
+        let swname = split(execute("swapname"))[0]
+        let swname = substitute(swname, '[[:blank:][:cntrl:]]*\(.\{-}\)[[:blank:][:cntrl:]]*$', '\1', '')
+        " make a copy of the swap file in Xswap
+        set binary
+        exe 'sp ' . fnameescape(swname)
+        w! Xswap
+        set nobinary
+        return swname
+      endfunc
+    ]=])
+
+    -- Edit a file and grab its swapfile.
+    exec([[
+      edit Xswaptest
+      call setline(1, ['a', 'b', 'c'])
+    ]])
+    local swname = funcs.CopySwapfile()
+
+    -- Forget we edited this file
+    exec([[
+      new
+      only!
+      bwipe! Xswaptest
+    ]])
+
+    os.rename('Xswap', swname)
+
+    feed(':edit Xswaptest<CR>')
+    screen:expect({any = table.concat({
+      pesc('{2:E325: ATTENTION}'),
+      'file name: .*Xswaptest',
+      'process ID: %d* %(STILL RUNNING%)',
+      pesc('{1:[O]pen Read-Only, (E)dit anyway, (R)ecover, (Q)uit, (A)bort: }^'),
+    }, '.*')})
+
+    feed('e')
+
+    -- Forget we edited this file
+    exec([[
+      new
+      only!
+      bwipe! Xswaptest
+    ]])
+
+    -- pretend that the swapfile was created before boot
+    lfs.touch(swname, os.time() - luv.uptime() - 10)
+
+    feed(':edit Xswaptest<CR>')
+    screen:expect({any = table.concat({
+      pesc('{2:E325: ATTENTION}'),
+      pesc('{1:[O]pen Read-Only, (E)dit anyway, (R)ecover, (D)elete it, (Q)uit, (A)bort: }^'),
+    }, '.*')})
+
+    feed('e')
   end)
 end)

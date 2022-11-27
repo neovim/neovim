@@ -18,11 +18,11 @@ local clear, feed_command, expect, eq, neq, dedent, write_file, feed =
   helpers.clear, helpers.feed_command, helpers.expect, helpers.eq, helpers.neq,
   helpers.dedent, helpers.write_file, helpers.feed
 local command = helpers.command
-local iswin = helpers.iswin
 local read_file = helpers.read_file
+local is_os = helpers.is_os
 
 local function has_gzip()
-  local null = iswin() and 'nul' or '/dev/null'
+  local null = is_os('win') and 'nul' or '/dev/null'
   return os.execute('gzip --help >' .. null .. ' 2>&1') == 0
 end
 

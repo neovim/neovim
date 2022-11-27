@@ -1,7 +1,6 @@
 local log = require('vim.lsp.log')
 local protocol = require('vim.lsp.protocol')
 local util = require('vim.lsp.util')
-local vim = vim
 local api = vim.api
 
 local M = {}
@@ -82,22 +81,38 @@ M['window/workDoneProgress/create'] = function(_, result, ctx)
 end
 
 --see: https://microsoft.github.io/language-server-protocol/specifications/specification-current/#window_showMessageRequest
+---@param result lsp.ShowMessageRequestParams
 M['window/showMessageRequest'] = function(_, result)
-  local actions = result.actions
-  print(result.message)
-  local option_strings = { result.message, '\nRequest Actions:' }
-  for i, action in ipairs(actions) do
-    local title = action.title:gsub('\r\n', '\\r\\n')
-    title = title:gsub('\n', '\\n')
-    table.insert(option_strings, string.format('%d. %s', i, title))
-  end
-
-  -- window/showMessageRequest can return either MessageActionItem[] or null.
-  local choice = vim.fn.inputlist(option_strings)
-  if choice < 1 or choice > #actions then
-    return vim.NIL
+  local actions = result.actions or {}
+  local co, is_main = coroutine.running()
+  if co and not is_main then
+    local opts = {
+      prompt = result.message .. ': ',
+      format_item = function(action)
+        return (action.title:gsub('\r\n', '\\r\\n')):gsub('\n', '\\n')
+      end,
+    }
+    vim.ui.select(actions, opts, function(choice)
+      -- schedule to ensure resume doesn't happen _before_ yield with
+      -- default synchronous vim.ui.select
+      vim.schedule(function()
+        coroutine.resume(co, choice or vim.NIL)
+      end)
+    end)
+    return coroutine.yield()
   else
-    return actions[choice]
+    local option_strings = { result.message, '\nRequest Actions:' }
+    for i, action in ipairs(actions) do
+      local title = action.title:gsub('\r\n', '\\r\\n')
+      title = title:gsub('\n', '\\n')
+      table.insert(option_strings, string.format('%d. %s', i, title))
+    end
+    local choice = vim.fn.inputlist(option_strings)
+    if choice < 1 or choice > #actions then
+      return vim.NIL
+    else
+      return actions[choice]
+    end
   end
 end
 
@@ -302,7 +317,9 @@ end
 --- vim.lsp.handlers["textDocument/hover"] = vim.lsp.with(
 ---   vim.lsp.handlers.hover, {
 ---     -- Use a sharp border with `FloatBorder` highlights
----     border = "single"
+---     border = "single",
+---     -- add the title in hover float window
+---     title = "hover"
 ---   }
 --- )
 --- </pre>
@@ -313,6 +330,10 @@ end
 function M.hover(_, result, ctx, config)
   config = config or {}
   config.focus_id = ctx.method
+  if api.nvim_get_current_buf() ~= ctx.bufnr then
+    -- Ignore result since buffer changed. This happens for slow language servers.
+    return
+  end
   if not (result and result.contents) then
     vim.notify('No information available')
     return
@@ -389,10 +410,14 @@ M['textDocument/implementation'] = location_handler
 ---@param config table Configuration table.
 ---     - border:     (default=nil)
 ---         - Add borders to the floating window
----         - See |vim.api.nvim_open_win()|
+---         - See |nvim_open_win()|
 function M.signature_help(_, result, ctx, config)
   config = config or {}
   config.focus_id = ctx.method
+  if api.nvim_get_current_buf() ~= ctx.bufnr then
+    -- Ignore result since buffer changed. This happens for slow language servers.
+    return
+  end
   -- When use `autocmd CompleteDone <silent><buffer> lua vim.lsp.buf.signature_help()` to call signatureHelp handler
   -- If the completion item doesn't have signatures It will make noise. Change to use `print` that can use `<silent>` to ignore
   if not (result and result.signatures and result.signatures[1]) then
@@ -510,6 +535,52 @@ M['window/showMessage'] = function(_, result, ctx, _)
     api.nvim_out_write(string.format('LSP[%s][%s] %s\n', client_name, message_type_name, message))
   end
   return result
+end
+
+--see: https://microsoft.github.io/language-server-protocol/specifications/specification-current/#window_showDocument
+M['window/showDocument'] = function(_, result, ctx, _)
+  local uri = result.uri
+
+  if result.external then
+    -- TODO(lvimuser): ask the user for confirmation
+    local cmd
+    if vim.fn.has('win32') == 1 then
+      cmd = { 'cmd.exe', '/c', 'start', '""', uri }
+    elseif vim.fn.has('macunix') == 1 then
+      cmd = { 'open', uri }
+    else
+      cmd = { 'xdg-open', uri }
+    end
+
+    local ret = vim.fn.system(cmd)
+    if vim.v.shell_error ~= 0 then
+      return {
+        success = false,
+        error = {
+          code = protocol.ErrorCodes.UnknownErrorCode,
+          message = ret,
+        },
+      }
+    end
+
+    return { success = true }
+  end
+
+  local client_id = ctx.client_id
+  local client = vim.lsp.get_client_by_id(client_id)
+  local client_name = client and client.name or string.format('id=%d', client_id)
+  if not client then
+    err_message({ 'LSP[', client_name, '] client has shut down after sending ', ctx.method })
+    return vim.NIL
+  end
+
+  local location = {
+    uri = uri,
+    range = result.selection,
+  }
+
+  local success = util.show_document(location, client.offset_encoding, true, result.takeFocus)
+  return { success = success or false }
 end
 
 -- Add boilerplate error validation and logging for all of these.

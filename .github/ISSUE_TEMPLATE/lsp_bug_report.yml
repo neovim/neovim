@@ -31,7 +31,7 @@ body:
     attributes:
       label: 'Steps to reproduce using "nvim -u minimal_init.lua"'
       description: |
-        - Download the minimal config with `curl -LO https://raw.githubusercontent.com/neovim/nvim-lspconfig/master/test/minimal_init.lua` and modify it to include any specific commands or servers pertaining to your issues.
+        - Create a minimal_init.lua using vim.lsp.start - read `:h lsp-quickstart` and `:h vim.lsp.start` for more information.
         - _Note_: if the issue is with an autocompletion or other LSP plugin, report to that plugin's issue tracker.
     validations:
       required: true

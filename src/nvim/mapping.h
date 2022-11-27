@@ -1,6 +1,10 @@
 #ifndef NVIM_MAPPING_H
 #define NVIM_MAPPING_H
 
+#include <stdbool.h>
+#include <stddef.h>
+
+#include "lauxlib.h"
 #include "nvim/buffer_defs.h"
 #include "nvim/ex_cmds_defs.h"
 #include "nvim/types.h"
@@ -9,7 +13,7 @@
 /// All possible |:map-arguments| usable in a |:map| command.
 ///
 /// The <special> argument has no effect on mappings and is excluded from this
-/// struct declaration. |noremap| is included, since it behaves like a map
+/// struct declaration. |:noremap| is included, since it behaves like a map
 /// argument when used in a mapping.
 ///
 /// @see mapblock_T
@@ -35,7 +39,7 @@ struct map_arguments {
   char_u alt_lhs[MAXMAPLEN + 1];
   size_t alt_lhs_len;
 
-  char_u *rhs;  /// The {rhs} of the mapping.
+  char *rhs;  /// The {rhs} of the mapping.
   size_t rhs_len;
   LuaRef rhs_lua;  /// lua function as {rhs}
   bool rhs_is_noop;  /// True when the {rhs} should be <Nop>.

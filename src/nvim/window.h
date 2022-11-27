@@ -2,10 +2,14 @@
 #define NVIM_WINDOW_H
 
 #include <stdbool.h>
+#include <stddef.h>
 
+#include "nvim/buffer.h"
 #include "nvim/buffer_defs.h"
 #include "nvim/mark.h"
 #include "nvim/os/os.h"
+#include "nvim/os/os_defs.h"
+#include "nvim/vim.h"
 
 // Values for file_name_in_line()
 #define FNAME_MESS      1       // give error message
@@ -17,14 +21,15 @@
 #define FNAME_UNESC     32      // remove backslashes used for escaping
 
 // arguments for win_split()
-#define WSP_ROOM        1       // require enough room
-#define WSP_VERT        2       // split vertically
-#define WSP_TOP         4       // window at top-left of shell
-#define WSP_BOT         8       // window at bottom-right of shell
-#define WSP_HELP        16      // creating the help window
-#define WSP_BELOW       32      // put new window below/right
-#define WSP_ABOVE       64      // put new window above/left
-#define WSP_NEWLOC      128     // don't copy location list
+#define WSP_ROOM        0x01    // require enough room
+#define WSP_VERT        0x02    // split/equalize vertically
+#define WSP_HOR         0x04    // equalize horizontally
+#define WSP_TOP         0x08    // window at top-left of shell
+#define WSP_BOT         0x10    // window at bottom-right of shell
+#define WSP_HELP        0x20    // creating the help window
+#define WSP_BELOW       0x40    // put new window below/right
+#define WSP_ABOVE       0x80    // put new window above/left
+#define WSP_NEWLOC      0x100   // don't copy location list
 
 // Minimum screen size
 #define MIN_COLUMNS     12      // minimal columns for screen
@@ -44,8 +49,8 @@ typedef struct {
   do { \
     win_T *const wp_ = (wp); \
     const pos_T curpos_ = wp_->w_cursor; \
-    char_u cwd_[MAXPATHL]; \
-    char_u autocwd_[MAXPATHL]; \
+    char cwd_[MAXPATHL]; \
+    char autocwd_[MAXPATHL]; \
     bool apply_acd_ = false; \
     int cwd_status_ = FAIL; \
     /* Getting and setting directory can be slow on some systems, only do */ \
@@ -55,13 +60,13 @@ typedef struct {
         && (curwin->w_localdir != NULL || wp->w_localdir != NULL \
             || (curtab != tp && (curtab->tp_localdir != NULL || tp->tp_localdir != NULL)) \
             || p_acd)) { \
-      cwd_status_ = os_dirname(cwd_, MAXPATHL); \
+      cwd_status_ = os_dirname((char_u *)cwd_, MAXPATHL); \
     } \
     /* If 'acd' is set, check we are using that directory.  If yes, then */ \
     /* apply 'acd' afterwards, otherwise restore the current directory. */ \
     if (cwd_status_ == OK && p_acd) { \
       do_autochdir(); \
-      apply_acd_ = os_dirname(autocwd_, MAXPATHL) == OK && STRCMP(cwd_, autocwd_) == 0; \
+      apply_acd_ = os_dirname((char_u *)autocwd_, MAXPATHL) == OK && strcmp(cwd_, autocwd_) == 0; \
     } \
     switchwin_T switchwin_; \
     if (switch_win_noblock(&switchwin_, wp_, (tp), true) == OK) { \
@@ -72,7 +77,7 @@ typedef struct {
     if (apply_acd_) { \
       do_autochdir(); \
     } else if (cwd_status_ == OK) { \
-      os_chdir((char *)cwd_); \
+      os_chdir(cwd_); \
     } \
     /* Update the status line if the cursor moved. */ \
     if (win_valid(wp_) && !equalpos(curpos_, wp_->w_cursor)) { \

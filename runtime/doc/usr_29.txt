@@ -33,9 +33,8 @@ following command: >
 	ctags *.c
 
 "ctags" is a separate program.  Most Unix systems already have it installed.
-If you do not have it yet, you can find Universal/Exuberant ctags at:
-	http://ctags.io ~
-	http://ctags.sf.net ~
+If you do not have it yet, you can find Universal ctags at:
+	https://ctags.io ~
 
 Universal ctags is preferred, Exuberant ctags is no longer being developed.
 
@@ -267,9 +266,6 @@ doesn't work if the tags file isn't sorted.
 
 The 'taglength' option can be used to tell Vim the number of significant
 characters in a tag.
-
-Cscope is a free program.  It does not only find places where an identifier is
-declared, but also where it is used.  See |cscope|.
 
 ==============================================================================
 *29.2*	The preview window

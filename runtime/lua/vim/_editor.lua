@@ -12,21 +12,8 @@
 -- Guideline: "If in doubt, put it in the runtime".
 --
 -- Most functions should live directly in `vim.`, not in submodules.
--- The only "forbidden" names are those claimed by legacy `if_lua`:
---    $ vim
---    :lua for k,v in pairs(vim) do print(k) end
---    buffer
---    open
---    window
---    lastline
---    firstline
---    type
---    line
---    eval
---    dict
---    beep
---    list
---    command
+--
+-- Compatibility with Vim's `if_lua` is explicitly a non-goal.
 --
 -- Reference (#6580):
 --    - https://github.com/luafun/luafun
@@ -35,8 +22,6 @@
 --    - https://github.com/torch/paths
 --    - https://github.com/bakpakin/Fennel (pretty print, repl)
 --    - https://github.com/howl-editor/howl/tree/master/lib/howl/util
-
-local vim = assert(vim)
 
 -- These are for loading runtime modules lazily since they aren't available in
 -- the nvim binary as specified in executor.c
@@ -51,6 +36,7 @@ for k, v in pairs({
   ui = true,
   health = true,
   fs = true,
+  secure = true,
 }) do
   vim._submodules[k] = v
 end
@@ -122,9 +108,7 @@ function vim._os_proc_children(ppid)
   return children
 end
 
--- TODO(ZyX-I): Create compatibility layer.
-
---- Return a human-readable representation of the given object.
+--- Gets a human-readable representation of the given object.
 ---
 ---@see https://github.com/kikito/inspect.lua
 ---@see https://github.com/mpeterv/vinspect
@@ -152,14 +136,15 @@ do
   --- </pre>
   ---
   ---@see |paste|
+  ---@alias paste_phase -1 | 1 | 2 | 3
   ---
-  ---@param lines  |readfile()|-style list of lines to paste. |channel-lines|
-  ---@param phase  -1: "non-streaming" paste: the call contains all lines.
+  ---@param lines  string[] # |readfile()|-style list of lines to paste. |channel-lines|
+  ---@param phase paste_phase  -1: "non-streaming" paste: the call contains all lines.
   ---              If paste is "streamed", `phase` indicates the stream state:
   ---                - 1: starts the paste (exactly once)
   ---                - 2: continues the paste (zero or more times)
   ---                - 3: ends the paste (exactly once)
-  ---@returns false if client should cancel the paste.
+  ---@returns boolean # false if client should cancel the paste.
   function vim.paste(lines, phase)
     local now = vim.loop.now()
     local is_first_chunk = phase < 2
@@ -183,7 +168,8 @@ do
         local line1 = lines[1]:gsub('(%c)', '\022%1')
         -- nvim_input() is affected by mappings,
         -- so use nvim_feedkeys() with "n" flag to ignore mappings.
-        vim.api.nvim_feedkeys(line1, 'n', true)
+        -- "t" flag is also needed so the pasted text is saved in cmdline history.
+        vim.api.nvim_feedkeys(line1, 'nt', true)
       end
       return true
     end
@@ -255,6 +241,8 @@ end
 ---@see |lua-loop-callbacks|
 ---@see |vim.schedule()|
 ---@see |vim.in_fast_event()|
+---@param cb function
+---@return function
 function vim.schedule_wrap(cb)
   return function(...)
     local args = vim.F.pack_len(...)
@@ -399,11 +387,11 @@ end
 --- Get a table of lines with start, end columns for a region marked by two points
 ---
 ---@param bufnr number of buffer
----@param pos1 (line, column) tuple marking beginning of region
----@param pos2 (line, column) tuple marking end of region
----@param regtype type of selection (:help setreg)
+---@param pos1 integer[] (line, column) tuple marking beginning of region
+---@param pos2 integer[] (line, column) tuple marking end of region
+---@param regtype string type of selection, see |setreg()|
 ---@param inclusive boolean indicating whether the selection is end-inclusive
----@return region lua table of the form {linenr = {startcol,endcol}}
+---@return table<integer, {}> region lua table of the form {linenr = {startcol,endcol}}
 function vim.region(bufnr, pos1, pos2, regtype, inclusive)
   if not vim.api.nvim_buf_is_loaded(bufnr) then
     vim.fn.bufload(bufnr)
@@ -430,11 +418,16 @@ function vim.region(bufnr, pos1, pos2, regtype, inclusive)
       c2 = c1 + regtype:sub(2)
       -- and adjust for non-ASCII characters
       bufline = vim.api.nvim_buf_get_lines(bufnr, l, l + 1, true)[1]
-      if c1 < #bufline then
+      local utflen = vim.str_utfindex(bufline, #bufline)
+      if c1 <= utflen then
         c1 = vim.str_byteindex(bufline, c1)
+      else
+        c1 = #bufline + 1
       end
-      if c2 < #bufline then
+      if c2 <= utflen then
         c2 = vim.str_byteindex(bufline, c2)
+      else
+        c2 = #bufline + 1
       end
     else
       c1 = (l == pos1[1]) and pos1[2] or 0
@@ -448,11 +441,11 @@ end
 --- Defers calling `fn` until `timeout` ms passes.
 ---
 --- Use to do a one-shot timer that calls `fn`
---- Note: The {fn} is |schedule_wrap|ped automatically, so API functions are
+--- Note: The {fn} is |vim.schedule_wrap()|ped automatically, so API functions are
 --- safe to call.
----@param fn Callback to call once `timeout` expires
----@param timeout Number of milliseconds to wait before calling `fn`
----@return timer luv timer object
+---@param fn function Callback to call once `timeout` expires
+---@param timeout integer Number of milliseconds to wait before calling `fn`
+---@return table timer luv timer object
 function vim.defer_fn(fn, timeout)
   vim.validate({ fn = { fn, 'c', true } })
   local timer = vim.loop.new_timer()
@@ -758,7 +751,7 @@ end
 ---  local hl_normal = vim.pretty_print(vim.api.nvim_get_hl_by_name("Normal", true))
 ---</pre>
 ---@see |vim.inspect()|
----@return given arguments.
+---@return any # given arguments.
 function vim.pretty_print(...)
   local objects = {}
   for i = 1, select('#', ...) do

@@ -1,20 +1,31 @@
 // This is an open source non-commercial project. Dear PVS-Studio, please check
 // it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
-#include <msgpack.h>
+#include <assert.h>
+#include <msgpack/object.h>
+#include <stdbool.h>
 #include <stddef.h>
+#include <stdint.h>
+#include <stdlib.h>
+#include <string.h>
 
+#include "klib/kvec.h"
 #include "nvim/ascii.h"
-#include "nvim/charset.h"  // vim_str2nr
+#include "nvim/charset.h"
 #include "nvim/eval.h"
 #include "nvim/eval/decode.h"
 #include "nvim/eval/encode.h"
 #include "nvim/eval/typval.h"
-#include "nvim/globals.h"
-#include "nvim/lib/kvec.h"
+#include "nvim/eval/typval_defs.h"
+#include "nvim/garray.h"
+#include "nvim/gettext.h"
+#include "nvim/hashtab.h"
 #include "nvim/macros.h"
+#include "nvim/mbyte.h"
+#include "nvim/memory.h"
 #include "nvim/message.h"
-#include "nvim/vim.h"  // OK, FAIL
+#include "nvim/types.h"
+#include "nvim/vim.h"
 
 /// Helper structure for container_struct
 typedef struct {
@@ -271,11 +282,9 @@ typval_T decode_string(const char *const s, const size_t len, const TriState has
       list_T *const list = tv_list_alloc(kListLenMayKnow);
       tv_list_ref(list);
       create_special_dict(&tv, kMPString,
-                          ((typval_T){
-        .v_type = VAR_LIST,
-        .v_lock = VAR_UNLOCKED,
-        .vval = { .v_list = list },
-      }));
+                          (typval_T){ .v_type = VAR_LIST,
+                                      .v_lock = VAR_UNLOCKED,
+                                      .vval = { .v_list = list } });
       const int elw_ret = encode_list_write((void *)list, s, len);
       if (s_allocated) {
         xfree((void *)s);
@@ -286,13 +295,12 @@ typval_T decode_string(const char *const s, const size_t len, const TriState has
       }
     }
     return tv;
-  } else {
-    return (typval_T) {
-      .v_type = VAR_STRING,
-      .v_lock = VAR_UNLOCKED,
-      .vval = { .v_string = ((s == NULL || s_allocated) ? (char *)s : xmemdupz(s, len)) },
-    };
   }
+  return (typval_T) {
+    .v_type = VAR_STRING,
+    .v_lock = VAR_UNLOCKED,
+    .vval = { .v_string = ((s == NULL || s_allocated) ? (char *)s : xmemdupz(s, len)) },
+  };
 }
 
 /// Parse JSON double-quoted string
@@ -368,7 +376,7 @@ static inline int parse_json_string(const char *const buf, const size_t buf_len,
         goto parse_json_string_fail;
       }
     } else {
-      uint8_t p_byte = (uint8_t)*p;
+      uint8_t p_byte = (uint8_t)(*p);
       // unescaped = %x20-21 / %x23-5B / %x5D-10FFFF
       if (p_byte < 0x20) {
         semsg(_("E474: ASCII control characters cannot be present "
@@ -430,7 +438,7 @@ static inline int parse_json_string(const char *const buf, const size_t buf_len,
         const char ubuf[] = { t[1], t[2], t[3], t[4] };
         t += 4;
         uvarnumber_T ch;
-        vim_str2nr((char_u *)ubuf, NULL, NULL,
+        vim_str2nr(ubuf, NULL, NULL,
                    STR2NR_HEX | STR2NR_FORCE, NULL, &ch, 4, true);
         if (ch == 0) {
           hasnul = true;
@@ -469,7 +477,7 @@ static inline int parse_json_string(const char *const buf, const size_t buf_len,
           ['r'] = CAR,
           ['f'] = FF,
         };
-        *str_end++ = escapes[(int)*t];
+        *str_end++ = escapes[(int)(*t)];
         break;
       }
       default:
@@ -600,7 +608,7 @@ parse_json_number_check:
     // Convert integer
     varnumber_T nr;
     int num_len;
-    vim_str2nr((char_u *)s, NULL, &num_len, 0, &nr, NULL, (int)(p - s), true);
+    vim_str2nr(s, NULL, &num_len, 0, &nr, NULL, (int)(p - s), true);
     if ((int)exp_num_len != num_len) {
       semsg(_("E685: internal error: while converting number \"%.*s\" "
               "to integer vim_str2nr consumed %i bytes in place of %zu"),
@@ -838,12 +846,10 @@ json_decode_string_cycle_start:
         .v_lock = VAR_UNLOCKED,
         .vval = { .v_list = list },
       };
-      kv_push(container_stack, ((ContainerStackItem) {
-          .stack_index = kv_size(stack),
-          .s = p,
-          .container = tv,
-          .special_val = NULL,
-        }));
+      kv_push(container_stack, ((ContainerStackItem) { .stack_index = kv_size(stack),
+                                                       .s = p,
+                                                       .container = tv,
+                                                       .special_val = NULL }));
       kv_push(stack, OBJ(tv, false, didcomma, didcolon));
       break;
     }
@@ -862,12 +868,10 @@ json_decode_string_cycle_start:
           .vval = { .v_dict = dict },
         };
       }
-      kv_push(container_stack, ((ContainerStackItem) {
-          .stack_index = kv_size(stack),
-          .s = p,
-          .container = tv,
-          .special_val = val_list,
-        }));
+      kv_push(container_stack, ((ContainerStackItem) { .stack_index = kv_size(stack),
+                                                       .s = p,
+                                                       .container = tv,
+                                                       .special_val = val_list }));
       kv_push(stack, OBJ(tv, false, didcomma, didcolon));
       break;
     }
@@ -1089,11 +1093,9 @@ msgpack_to_vim_generic_map: {}
     tv_list_append_number(list, mobj.via.ext.type);
     list_T *const ext_val_list = tv_list_alloc(kListLenMayKnow);
     tv_list_append_list(list, ext_val_list);
-    create_special_dict(rettv, kMPExt, ((typval_T) {
-        .v_type = VAR_LIST,
-        .v_lock = VAR_UNLOCKED,
-        .vval = { .v_list = list },
-      }));
+    create_special_dict(rettv, kMPExt, ((typval_T) { .v_type = VAR_LIST,
+                                                     .v_lock = VAR_UNLOCKED,
+                                                     .vval = { .v_list = list } }));
     if (encode_list_write((void *)ext_val_list, mobj.via.ext.ptr,
                           mobj.via.ext.size) == -1) {
       return FAIL;

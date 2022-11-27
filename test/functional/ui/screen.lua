@@ -519,7 +519,7 @@ function Screen:_wait(check, flags)
   end
 
   assert(timeout >= minimal_timeout)
-  local did_miminal_timeout = false
+  local did_minimal_timeout = false
 
   local function notification_cb(method, args)
     assert(method == 'redraw', string.format(
@@ -536,7 +536,7 @@ function Screen:_wait(check, flags)
 
     if not err then
       success_seen = true
-      if did_miminal_timeout then
+      if did_minimal_timeout then
         self._session:stop()
       end
     elseif success_seen and #args > 0 then
@@ -558,7 +558,7 @@ function Screen:_wait(check, flags)
   end
 
   if not success_seen and not eof then
-    did_miminal_timeout = true
+    did_minimal_timeout = true
     eof = run_session(self._session, flags.request_cb, notification_cb, nil, timeout-minimal_timeout)
   end
 
@@ -769,6 +769,7 @@ end
 
 function Screen:_handle_grid_cursor_goto(grid, row, col)
   self._cursor.grid = grid
+  assert(row >= 0 and col >= 0)
   self._cursor.row = row + 1
   self._cursor.col = col + 1
 end

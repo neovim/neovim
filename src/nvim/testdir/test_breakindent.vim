@@ -4,11 +4,11 @@
 " while the test is run, the breakindent caching gets in its way.
 " It helps to change the tabstop setting and force a redraw (e.g. see
 " Test_breakindent08())
-if !exists('+breakindent')
-  throw 'Skipped: breakindent option not supported'
-endif
+source check.vim
+CheckOption breakindent
 
 source view_util.vim
+source screendump.vim
 
 let s:input ="\tabcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOP"
 
@@ -422,6 +422,7 @@ func Test_breakindent11()
   let width = strlen(text[1:]) + indent(2) + strlen(&sbr) * 3 " text wraps 3 times
   call assert_equal(width, strdisplaywidth(text))
   call s:close_windows('set sbr=')
+  call assert_equal(4, strdisplaywidth("\t", 4))
 endfunc
 
 func Test_breakindent11_vartabs()
@@ -876,17 +877,164 @@ endfunc
 func Test_window_resize_with_linebreak()
   new
   53vnew
-  set linebreak
-  set showbreak=>>
-  set breakindent
-  set breakindentopt=shift:4
+  setl linebreak
+  setl showbreak=>>
+  setl breakindent
+  setl breakindentopt=shift:4
   call setline(1, "\naaaaaaaaa\n\na\naaaaa\n¯aaaaaaaaaa\naaaaaaaaaaaa\naaa\n\"a:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa - aaaaaaaa\"\naaaaaaaa\n\"a")
   redraw!
   call assert_equal(["    >>aa^@\"a: "], ScreenLines(2, 14))
   vertical resize 52
   redraw!
   call assert_equal(["    >>aaa^@\"a:"], ScreenLines(2, 14))
+  set linebreak& showbreak& breakindent& breakindentopt&
   %bw!
+endfunc
+
+func Test_cursor_position_with_showbreak()
+  CheckScreendump
+
+  let lines =<< trim END
+      vim9script
+      &signcolumn = 'yes'
+      &showbreak = '+ '
+      var leftcol: number = win_getid()->getwininfo()->get(0, {})->get('textoff')
+      repeat('x', &columns - leftcol - 1)->setline(1)
+      'second line'->setline(2)
+  END
+  call writefile(lines, 'XscriptShowbreak')
+  let buf = RunVimInTerminal('-S XscriptShowbreak', #{rows: 6})
+
+  call term_sendkeys(buf, "AX")
+  call VerifyScreenDump(buf, 'Test_cursor_position_with_showbreak', {})
+
+  call StopVimInTerminal(buf)
+  call delete('XscriptShowbreak')
+endfunc
+
+func Test_no_spurious_match()
+  let s:input = printf('- y %s y %s', repeat('x', 50), repeat('x', 50))
+  call s:test_windows('setl breakindent breakindentopt=list:-1 formatlistpat=^- hls')
+  let @/ = '\%>3v[y]'
+  redraw!
+  call searchcount().total->assert_equal(1)
+  " cleanup
+  set hls&vim
+  let s:input = "\tabcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOP"
+  bwipeout!
+endfunc
+
+func Test_no_extra_indent()
+  call s:test_windows('setl breakindent breakindentopt=list:-1,min:10')
+  %d
+  let &l:formatlistpat='^\s*\d\+\.\s\+'
+  let text = 'word '
+  let len = text->strcharlen()
+  let line1 = text->repeat((winwidth(0) / len) * 2)
+  let line2 = repeat(' ', 2) .. '1. ' .. line1
+  call setline(1, [line2])
+  redraw!
+  " 1) matches formatlist pattern, so indent
+  let expect = [
+  \ "  1. word word word ",
+  \ "     word word word ",
+  \ "     word word      ",
+  \ "~                   ",
+  \ ]
+  let lines = s:screen_lines2(1, 4, 20)
+  call s:compare_lines(expect, lines)
+  " 2) change formatlist pattern
+  " -> indent adjusted
+  let &l:formatlistpat='^\s*\d\+\.'
+  let expect = [
+  \ "  1. word word word ",
+  \ "    word word word  ",
+  \ "    word word       ",
+  \ "~                   ",
+  \ ]
+  let lines = s:screen_lines2(1, 4, 20)
+  " 3) no local formatlist pattern,
+  " so use global one -> indent
+  let g_flp = &g:flp
+  let &g:formatlistpat='^\s*\d\+\.\s\+'
+  let &l:formatlistpat=''
+  let expect = [
+  \ "  1. word word word ",
+  \ "     word word word ",
+  \ "     word word      ",
+  \ "~                   ",
+  \ ]
+  let lines = s:screen_lines2(1, 4, 20)
+  call s:compare_lines(expect, lines)
+  let &g:flp = g_flp
+  let &l:formatlistpat='^\s*\d\+\.'
+  " 4) add something in front, no additional indent
+  norm! gg0
+  exe ":norm! 5iword \<esc>"
+  redraw!
+  let expect = [
+  \ "word word word word ",
+  \ "word   1. word word ",
+  \ "word word word word ",
+  \ "word word           ",
+  \ "~                   ",
+  \ ]
+  let lines = s:screen_lines2(1, 5, 20)
+  call s:compare_lines(expect, lines)
+  bwipeout!
+endfunc
+
+func Test_breakindent_column()
+  " restore original
+  let s:input ="\tabcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOP"
+  call s:test_windows('setl breakindent breakindentopt=column:10')
+  redraw!
+  " 1) default: does not indent, too wide :(
+  let expect = [
+  \ "                    ",
+  \ "    abcdefghijklmnop",
+  \ "qrstuvwxyzABCDEFGHIJ",
+  \ "KLMNOP              "
+  \ ]
+  let lines = s:screen_lines2(1, 4, 20)
+  call s:compare_lines(expect, lines)
+  " 2) lower min value, so that breakindent works
+  setl breakindentopt+=min:5
+  redraw!
+  let expect = [
+  \ "                    ",
+  \ "    abcdefghijklmnop",
+  \ "          qrstuvwxyz",
+  \ "          ABCDEFGHIJ",
+  \ "          KLMNOP    "
+  \ ]
+  let lines = s:screen_lines2(1, 5, 20)
+  " 3) set shift option -> no influence
+  setl breakindentopt+=shift:5
+  redraw!
+  let expect = [
+  \ "                    ",
+  \ "    abcdefghijklmnop",
+  \ "          qrstuvwxyz",
+  \ "          ABCDEFGHIJ",
+  \ "          KLMNOP    "
+  \ ]
+  let lines = s:screen_lines2(1, 5, 20)
+  call s:compare_lines(expect, lines)
+  " 4) add showbreak value
+  setl showbreak=++
+  redraw!
+  let expect = [
+  \ "                    ",
+  \ "    abcdefghijklmnop",
+  \ "          ++qrstuvwx",
+  \ "          ++yzABCDEF",
+  \ "          ++GHIJKLMN",
+  \ "          ++OP      "
+  \ ]
+  let lines = s:screen_lines2(1, 6, 20)
+  call s:compare_lines(expect, lines)
+  bwipeout!
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab

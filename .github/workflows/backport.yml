@@ -21,7 +21,7 @@ jobs:
           fetch-depth: 0
           ref: ${{ github.event.pull_request.head.sha }}
       - name: Create backport PRs
-        uses: zeebe-io/backport-action@v0.0.7
+        uses: zeebe-io/backport-action@v0
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           github_workspace: ${{ github.workspace }}

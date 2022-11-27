@@ -10,35 +10,44 @@
 
 #include <assert.h>
 #include <inttypes.h>
+#include <limits.h>
 #include <stdbool.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
+#include "nvim/ascii.h"
 #include "nvim/buffer.h"
 #include "nvim/charset.h"
-#include "nvim/cmdexpand.h"
 #include "nvim/cursor.h"
-#include "nvim/drawscreen.h"
 #include "nvim/eval.h"
-#include "nvim/extmark.h"
-#include "nvim/fileio.h"
 #include "nvim/fold.h"
-#include "nvim/garray.h"
 #include "nvim/getchar.h"
+#include "nvim/gettext.h"
+#include "nvim/globals.h"
 #include "nvim/grid.h"
+#include "nvim/grid_defs.h"
 #include "nvim/highlight.h"
-#include "nvim/highlight_group.h"
-#include "nvim/menu.h"
+#include "nvim/mbyte.h"
+#include "nvim/memline_defs.h"
+#include "nvim/memory.h"
+#include "nvim/message.h"
 #include "nvim/move.h"
+#include "nvim/normal.h"
 #include "nvim/option.h"
-#include "nvim/optionstr.h"
+#include "nvim/os/os.h"
+#include "nvim/os/time.h"
+#include "nvim/pos.h"
 #include "nvim/profile.h"
 #include "nvim/regexp.h"
 #include "nvim/screen.h"
 #include "nvim/search.h"
 #include "nvim/state.h"
 #include "nvim/statusline.h"
-#include "nvim/ui_compositor.h"
-#include "nvim/undo.h"
+#include "nvim/strings.h"
+#include "nvim/types.h"
+#include "nvim/ui.h"
+#include "nvim/vim.h"
 #include "nvim/window.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
@@ -69,7 +78,7 @@ bool conceal_cursor_line(const win_T *wp)
   } else {
     return false;
   }
-  return vim_strchr((char *)wp->w_p_cocu, c) != NULL;
+  return vim_strchr(wp->w_p_cocu, c) != NULL;
 }
 
 /// Whether cursorline is drawn in a special way
@@ -155,8 +164,6 @@ void win_draw_end(win_T *wp, int c1, int c2, bool draw_margin, int row, int endr
   } else {
     grid_fill(&wp->w_grid, row, endrow, n, wp->w_grid.cols, c1, c2, attr);
   }
-
-  set_empty_rows(wp, row);
 }
 
 /// Compute the width of the foldcolumn.  Based on 'foldcolumn' and how much
@@ -239,248 +246,16 @@ size_t fill_foldcolumn(char_u *p, win_T *wp, foldinfo_T foldinfo, linenr_T lnum)
 
 /// Mirror text "str" for right-left displaying.
 /// Only works for single-byte characters (e.g., numbers).
-void rl_mirror(char_u *str)
+void rl_mirror(char *str)
 {
-  char_u *p1, *p2;
-  char_u t;
+  char *p1, *p2;
+  char t;
 
-  for (p1 = str, p2 = str + STRLEN(str) - 1; p1 < p2; p1++, p2--) {
+  for (p1 = str, p2 = str + strlen(str) - 1; p1 < p2; p1++, p2--) {
     t = *p1;
     *p1 = *p2;
     *p2 = t;
   }
-}
-
-/// Get the length of an item as it will be shown in the status line.
-static int wildmenu_match_len(expand_T *xp, char_u *s)
-{
-  int len = 0;
-
-  int emenu = (xp->xp_context == EXPAND_MENUS
-               || xp->xp_context == EXPAND_MENUNAMES);
-
-  // Check for menu separators - replace with '|'.
-  if (emenu && menu_is_separator((char *)s)) {
-    return 1;
-  }
-
-  while (*s != NUL) {
-    s += skip_wildmenu_char(xp, s);
-    len += ptr2cells((char *)s);
-    MB_PTR_ADV(s);
-  }
-
-  return len;
-}
-
-/// Return the number of characters that should be skipped in the wildmenu
-/// These are backslashes used for escaping.  Do show backslashes in help tags.
-static int skip_wildmenu_char(expand_T *xp, char_u *s)
-{
-  if ((rem_backslash(s) && xp->xp_context != EXPAND_HELP)
-      || ((xp->xp_context == EXPAND_MENUS
-           || xp->xp_context == EXPAND_MENUNAMES)
-          && (s[0] == '\t'
-              || (s[0] == '\\' && s[1] != NUL)))) {
-#ifndef BACKSLASH_IN_FILENAME
-    // TODO(bfredl): Why in the actual fuck are we special casing the
-    // shell variety deep in the redraw logic? Shell special snowflakiness
-    // should already be eliminated multiple layers before reaching the
-    // screen infracstructure.
-    if (xp->xp_shell && csh_like_shell() && s[1] == '\\' && s[2] == '!') {
-      return 2;
-    }
-#endif
-    return 1;
-  }
-  return 0;
-}
-
-/// Show wildchar matches in the status line.
-/// Show at least the "match" item.
-/// We start at item 'first_match' in the list and show all matches that fit.
-///
-/// If inversion is possible we use it. Else '=' characters are used.
-///
-/// @param matches  list of matches
-void redraw_wildmenu(expand_T *xp, int num_matches, char **matches, int match, int showtail)
-{
-#define L_MATCH(m) (showtail ? sm_gettail(matches[m], false) : matches[m])
-  int row;
-  char_u *buf;
-  int len;
-  int clen;                     // length in screen cells
-  int fillchar;
-  int attr;
-  int i;
-  bool highlight = true;
-  char_u *selstart = NULL;
-  int selstart_col = 0;
-  char_u *selend = NULL;
-  static int first_match = 0;
-  bool add_left = false;
-  char_u *s;
-  int emenu;
-  int l;
-
-  if (matches == NULL) {        // interrupted completion?
-    return;
-  }
-
-  buf = xmalloc((size_t)Columns * MB_MAXBYTES + 1);
-
-  if (match == -1) {    // don't show match but original text
-    match = 0;
-    highlight = false;
-  }
-  // count 1 for the ending ">"
-  clen = wildmenu_match_len(xp, (char_u *)L_MATCH(match)) + 3;
-  if (match == 0) {
-    first_match = 0;
-  } else if (match < first_match) {
-    // jumping left, as far as we can go
-    first_match = match;
-    add_left = true;
-  } else {
-    // check if match fits on the screen
-    for (i = first_match; i < match; i++) {
-      clen += wildmenu_match_len(xp, (char_u *)L_MATCH(i)) + 2;
-    }
-    if (first_match > 0) {
-      clen += 2;
-    }
-    // jumping right, put match at the left
-    if ((long)clen > Columns) {
-      first_match = match;
-      // if showing the last match, we can add some on the left
-      clen = 2;
-      for (i = match; i < num_matches; i++) {
-        clen += wildmenu_match_len(xp, (char_u *)L_MATCH(i)) + 2;
-        if ((long)clen >= Columns) {
-          break;
-        }
-      }
-      if (i == num_matches) {
-        add_left = true;
-      }
-    }
-  }
-  if (add_left) {
-    while (first_match > 0) {
-      clen += wildmenu_match_len(xp, (char_u *)L_MATCH(first_match - 1)) + 2;
-      if ((long)clen >= Columns) {
-        break;
-      }
-      first_match--;
-    }
-  }
-
-  fillchar = fillchar_status(&attr, curwin);
-
-  if (first_match == 0) {
-    *buf = NUL;
-    len = 0;
-  } else {
-    STRCPY(buf, "< ");
-    len = 2;
-  }
-  clen = len;
-
-  i = first_match;
-  while (clen + wildmenu_match_len(xp, (char_u *)L_MATCH(i)) + 2 < Columns) {
-    if (i == match) {
-      selstart = buf + len;
-      selstart_col = clen;
-    }
-
-    s = (char_u *)L_MATCH(i);
-    // Check for menu separators - replace with '|'
-    emenu = (xp->xp_context == EXPAND_MENUS
-             || xp->xp_context == EXPAND_MENUNAMES);
-    if (emenu && menu_is_separator((char *)s)) {
-      STRCPY(buf + len, transchar('|'));
-      l = (int)STRLEN(buf + len);
-      len += l;
-      clen += l;
-    } else {
-      for (; *s != NUL; s++) {
-        s += skip_wildmenu_char(xp, s);
-        clen += ptr2cells((char *)s);
-        if ((l = utfc_ptr2len((char *)s)) > 1) {
-          STRNCPY(buf + len, s, l);  // NOLINT(runtime/printf)
-          s += l - 1;
-          len += l;
-        } else {
-          STRCPY(buf + len, transchar_byte(*s));
-          len += (int)STRLEN(buf + len);
-        }
-      }
-    }
-    if (i == match) {
-      selend = buf + len;
-    }
-
-    *(buf + len++) = ' ';
-    *(buf + len++) = ' ';
-    clen += 2;
-    if (++i == num_matches) {
-      break;
-    }
-  }
-
-  if (i != num_matches) {
-    *(buf + len++) = '>';
-    clen++;
-  }
-
-  buf[len] = NUL;
-
-  row = cmdline_row - 1;
-  if (row >= 0) {
-    if (wild_menu_showing == 0 || wild_menu_showing == WM_LIST) {
-      if (msg_scrolled > 0) {
-        // Put the wildmenu just above the command line.  If there is
-        // no room, scroll the screen one line up.
-        if (cmdline_row == Rows - 1) {
-          msg_scroll_up(false);
-          msg_scrolled++;
-        } else {
-          cmdline_row++;
-          row++;
-        }
-        wild_menu_showing = WM_SCROLLED;
-      } else {
-        // Create status line if needed by setting 'laststatus' to 2.
-        // Set 'winminheight' to zero to avoid that the window is
-        // resized.
-        if (lastwin->w_status_height == 0 && global_stl_height() == 0) {
-          save_p_ls = (int)p_ls;
-          save_p_wmh = (int)p_wmh;
-          p_ls = 2;
-          p_wmh = 0;
-          last_status(false);
-        }
-        wild_menu_showing = WM_SHOWN;
-      }
-    }
-
-    // Tricky: wildmenu can be drawn either over a status line, or at empty
-    // scrolled space in the message output
-    ScreenGrid *grid = (wild_menu_showing == WM_SCROLLED)
-                        ? &msg_grid_adj : &default_grid;
-
-    grid_puts(grid, buf, row, 0, attr);
-    if (selstart != NULL && highlight) {
-      *selend = NUL;
-      grid_puts(grid, selstart, row, selstart_col, HL_ATTR(HLF_WM));
-    }
-
-    grid_fill(grid, row, row + 1, clen, Columns,
-              fillchar, fillchar, attr);
-  }
-
-  win_redraw_last_status(topframe);
-  xfree(buf);
 }
 
 /// Only call if (wp->w_vsep_width != 0).
@@ -535,7 +310,7 @@ bool get_keymap_str(win_T *wp, char *fmt, char *buf, int len)
     curwin = old_curwin;
     if (p == NULL || *p == NUL) {
       if (wp->w_buffer->b_kmap_state & KEYMAP_LOADED) {
-        p = (char *)wp->w_buffer->b_p_keymap;
+        p = wp->w_buffer->b_p_keymap;
       } else {
         p = "lang";
       }
@@ -574,29 +349,14 @@ void check_for_delay(bool check_msg_scroll)
 {
   if ((emsg_on_display || (check_msg_scroll && msg_scroll))
       && !did_wait_return
-      && emsg_silent == 0) {
+      && emsg_silent == 0
+      && !in_assert_fails) {
     ui_flush();
     os_delay(1006L, true);
     emsg_on_display = false;
     if (check_msg_scroll) {
       msg_scroll = false;
     }
-  }
-}
-
-/// Clear status line, window bar or tab page line click definition table
-///
-/// @param[out]  tpcd  Table to clear.
-/// @param[in]  tpcd_size  Size of the table.
-void stl_clear_click_defs(StlClickDefinition *const click_defs, const long click_defs_size)
-{
-  if (click_defs != NULL) {
-    for (long i = 0; i < click_defs_size; i++) {
-      if (i == 0 || click_defs[i].func != click_defs[i - 1].func) {
-        xfree(click_defs[i].func);
-      }
-    }
-    memset(click_defs, 0, (size_t)click_defs_size * sizeof(click_defs[0]));
   }
 }
 
@@ -620,7 +380,7 @@ void setcursor_mayforce(bool force)
       // With 'rightleft' set and the cursor on a double-wide character,
       // position it on the leftmost column.
       col = curwin->w_width_inner - curwin->w_wcol
-            - ((utf_ptr2cells((char *)get_cursor_pos_ptr()) == 2
+            - ((utf_ptr2cells(get_cursor_pos_ptr()) == 2
                 && vim_isprintc(gchar_cursor())) ? 2 : 1);
     }
 
@@ -734,13 +494,13 @@ int showmode(void)
           length = (Rows - msg_row) * Columns - 3;
         }
         if (edit_submode_extra != NULL) {
-          length -= vim_strsize((char *)edit_submode_extra);
+          length -= vim_strsize(edit_submode_extra);
         }
         if (length > 0) {
           if (edit_submode_pre != NULL) {
-            length -= vim_strsize((char *)edit_submode_pre);
+            length -= vim_strsize(edit_submode_pre);
           }
-          if (length - vim_strsize((char *)edit_submode) > 0) {
+          if (length - vim_strsize(edit_submode) > 0) {
             if (edit_submode_pre != NULL) {
               msg_puts_attr((const char *)edit_submode_pre, attr);
             }
@@ -862,6 +622,7 @@ int showmode(void)
   if (redrawing() && last->w_status_height == 0 && global_stl_height() == 0) {
     win_redr_ruler(last, true);
   }
+
   redraw_cmdline = false;
   redraw_mode = false;
   clear_cmdline = false;
@@ -917,227 +678,6 @@ static void recording_mode(int attr)
   }
 }
 
-/// Draw the tab pages line at the top of the Vim window.
-void draw_tabline(void)
-{
-  int tabcount = 0;
-  int tabwidth = 0;
-  int col = 0;
-  int scol = 0;
-  int attr;
-  win_T *wp;
-  win_T *cwp;
-  int wincount;
-  int modified;
-  int c;
-  int len;
-  int attr_nosel = HL_ATTR(HLF_TP);
-  int attr_fill = HL_ATTR(HLF_TPF);
-  char_u *p;
-  int room;
-  int use_sep_chars = (t_colors < 8);
-
-  if (default_grid.chars == NULL) {
-    return;
-  }
-  redraw_tabline = false;
-
-  if (ui_has(kUITabline)) {
-    ui_ext_tabline_update();
-    return;
-  }
-
-  if (tabline_height() < 1) {
-    return;
-  }
-
-  // Init TabPageIdxs[] to zero: Clicking outside of tabs has no effect.
-  assert(Columns == tab_page_click_defs_size);
-  stl_clear_click_defs(tab_page_click_defs, tab_page_click_defs_size);
-
-  // Use the 'tabline' option if it's set.
-  if (*p_tal != NUL) {
-    int saved_did_emsg = did_emsg;
-
-    // Check for an error.  If there is one we would loop in redrawing the
-    // screen.  Avoid that by making 'tabline' empty.
-    did_emsg = false;
-    win_redr_custom(NULL, false, false);
-    if (did_emsg) {
-      set_string_option_direct("tabline", -1, "", OPT_FREE, SID_ERROR);
-    }
-    did_emsg |= saved_did_emsg;
-  } else {
-    FOR_ALL_TABS(tp) {
-      tabcount++;
-    }
-
-    if (tabcount > 0) {
-      tabwidth = (Columns - 1 + tabcount / 2) / tabcount;
-    }
-
-    if (tabwidth < 6) {
-      tabwidth = 6;
-    }
-
-    attr = attr_nosel;
-    tabcount = 0;
-
-    FOR_ALL_TABS(tp) {
-      if (col >= Columns - 4) {
-        break;
-      }
-
-      scol = col;
-
-      if (tp == curtab) {
-        cwp = curwin;
-        wp = firstwin;
-      } else {
-        cwp = tp->tp_curwin;
-        wp = tp->tp_firstwin;
-      }
-
-      if (tp->tp_topframe == topframe) {
-        attr = win_hl_attr(cwp, HLF_TPS);
-      }
-      if (use_sep_chars && col > 0) {
-        grid_putchar(&default_grid, '|', 0, col++, attr);
-      }
-
-      if (tp->tp_topframe != topframe) {
-        attr = win_hl_attr(cwp, HLF_TP);
-      }
-
-      grid_putchar(&default_grid, ' ', 0, col++, attr);
-
-      modified = false;
-
-      for (wincount = 0; wp != NULL; wp = wp->w_next, ++wincount) {
-        if (bufIsChanged(wp->w_buffer)) {
-          modified = true;
-        }
-      }
-
-      if (modified || wincount > 1) {
-        if (wincount > 1) {
-          vim_snprintf((char *)NameBuff, MAXPATHL, "%d", wincount);
-          len = (int)STRLEN(NameBuff);
-          if (col + len >= Columns - 3) {
-            break;
-          }
-          grid_puts_len(&default_grid, NameBuff, len, 0, col,
-                        hl_combine_attr(attr, win_hl_attr(cwp, HLF_T)));
-          col += len;
-        }
-        if (modified) {
-          grid_puts_len(&default_grid, (char_u *)"+", 1, 0, col++, attr);
-        }
-        grid_putchar(&default_grid, ' ', 0, col++, attr);
-      }
-
-      room = scol - col + tabwidth - 1;
-      if (room > 0) {
-        // Get buffer name in NameBuff[]
-        get_trans_bufname(cwp->w_buffer);
-        shorten_dir(NameBuff);
-        len = vim_strsize((char *)NameBuff);
-        p = NameBuff;
-        while (len > room) {
-          len -= ptr2cells((char *)p);
-          MB_PTR_ADV(p);
-        }
-        if (len > Columns - col - 1) {
-          len = Columns - col - 1;
-        }
-
-        grid_puts_len(&default_grid, p, (int)STRLEN(p), 0, col, attr);
-        col += len;
-      }
-      grid_putchar(&default_grid, ' ', 0, col++, attr);
-
-      // Store the tab page number in tab_page_click_defs[], so that
-      // jump_to_mouse() knows where each one is.
-      tabcount++;
-      while (scol < col) {
-        tab_page_click_defs[scol++] = (StlClickDefinition) {
-          .type = kStlClickTabSwitch,
-          .tabnr = tabcount,
-          .func = NULL,
-        };
-      }
-    }
-
-    if (use_sep_chars) {
-      c = '_';
-    } else {
-      c = ' ';
-    }
-    grid_fill(&default_grid, 0, 1, col, Columns, c, c, attr_fill);
-
-    // Put an "X" for closing the current tab if there are several.
-    if (first_tabpage->tp_next != NULL) {
-      grid_putchar(&default_grid, 'X', 0, Columns - 1, attr_nosel);
-      tab_page_click_defs[Columns - 1] = (StlClickDefinition) {
-        .type = kStlClickTabClose,
-        .tabnr = 999,
-        .func = NULL,
-      };
-    }
-  }
-
-  // Reset the flag here again, in case evaluating 'tabline' causes it to be
-  // set.
-  redraw_tabline = false;
-}
-
-static void ui_ext_tabline_update(void)
-{
-  Arena arena = ARENA_EMPTY;
-  arena_start(&arena, &ui_ext_fixblk);
-
-  size_t n_tabs = 0;
-  FOR_ALL_TABS(tp) {
-    n_tabs++;
-  }
-
-  Array tabs = arena_array(&arena, n_tabs);
-  FOR_ALL_TABS(tp) {
-    Dictionary tab_info = arena_dict(&arena, 2);
-    PUT_C(tab_info, "tab", TABPAGE_OBJ(tp->handle));
-
-    win_T *cwp = (tp == curtab) ? curwin : tp->tp_curwin;
-    get_trans_bufname(cwp->w_buffer);
-    PUT_C(tab_info, "name", STRING_OBJ(arena_string(&arena, cstr_as_string((char *)NameBuff))));
-
-    ADD_C(tabs, DICTIONARY_OBJ(tab_info));
-  }
-
-  size_t n_buffers = 0;
-  FOR_ALL_BUFFERS(buf) {
-    n_buffers += buf->b_p_bl ? 1 : 0;
-  }
-
-  Array buffers = arena_array(&arena, n_buffers);
-  FOR_ALL_BUFFERS(buf) {
-    // Do not include unlisted buffers
-    if (!buf->b_p_bl) {
-      continue;
-    }
-
-    Dictionary buffer_info = arena_dict(&arena, 2);
-    PUT_C(buffer_info, "buffer", BUFFER_OBJ(buf->handle));
-
-    get_trans_bufname(buf);
-    PUT_C(buffer_info, "name", STRING_OBJ(arena_string(&arena, cstr_as_string((char *)NameBuff))));
-
-    ADD_C(buffers, DICTIONARY_OBJ(buffer_info));
-  }
-
-  ui_call_tabline_update(curtab->handle, tabs, curbuf->handle, buffers);
-  arena_mem_free(arena_finish(&arena), &ui_ext_fixblk);
-}
-
 void get_trans_bufname(buf_T *buf)
 {
   if (buf_spname(buf) != NULL) {
@@ -1174,7 +714,9 @@ bool redrawing(void)
 /// Return true if printing messages should currently be done.
 bool messaging(void)
 {
-  return !(p_lz && char_avail() && !KeyTyped) && ui_has_messages();
+  // TODO(bfredl): with general support for "async" messages with p_ch,
+  // this should be re-enabled.
+  return !(p_lz && char_avail() && !KeyTyped) && (p_ch > 0 || ui_has(kUIMessages));
 }
 
 #define COL_RULER 17        // columns needed by standard ruler
@@ -1263,17 +805,15 @@ int number_width(win_T *wp)
 /// Calls mb_cptr2char_adv(p) and returns the character.
 /// If "p" starts with "\x", "\u" or "\U" the hex or unicode value is used.
 /// Returns 0 for invalid hex or invalid UTF-8 byte.
-static int get_encoded_char_adv(char_u **p)
+static int get_encoded_char_adv(const char_u **p)
 {
-  char_u *s = *p;
+  const char_u *s = *p;
 
   if (s[0] == '\\' && (s[1] == 'x' || s[1] == 'u' || s[1] == 'U')) {
     int64_t num = 0;
-    int bytes;
-    int n;
-    for (bytes = s[1] == 'x' ? 1 : s[1] == 'u' ? 2 : 4; bytes > 0; bytes--) {
+    for (int bytes = s[1] == 'x' ? 1 : s[1] == 'u' ? 2 : 4; bytes > 0; bytes--) {
       *p += 2;
-      n = hexhex2nr(*p);
+      int n = hexhex2nr((char *)(*p));
       if (n < 0) {
         return 0;
       }
@@ -1284,8 +824,8 @@ static int get_encoded_char_adv(char_u **p)
   }
 
   // TODO(bfredl): use schar_T representation and utfc_ptr2len
-  int clen = utf_ptr2len((char *)s);
-  int c = mb_cptr2char_adv((const char_u **)p);
+  int clen = utf_ptr2len((const char *)s);
+  int c = mb_cptr2char_adv(p);
   if (clen == 1 && c > 127) {  // Invalid UTF-8 byte
     return 0;
   }
@@ -1295,26 +835,22 @@ static int get_encoded_char_adv(char_u **p)
 /// Handle setting 'listchars' or 'fillchars'.
 /// Assume monocell characters
 ///
-/// @param varp either &curwin->w_p_lcs or &curwin->w_p_fcs
+/// @param varp   either the global or the window-local value.
+/// @param apply  if false, do not store the flags, only check for errors.
 /// @return error message, NULL if it's OK.
-char *set_chars_option(win_T *wp, char_u **varp, bool set)
+char *set_chars_option(win_T *wp, char **varp, bool apply)
 {
-  int round, i, len, len2, entries;
-  char_u *p, *s;
-  int c1;
-  int c2 = 0;
-  int c3 = 0;
-  char_u *last_multispace = NULL;   // Last occurrence of "multispace:"
-  char_u *last_lmultispace = NULL;  // Last occurrence of "leadmultispace:"
+  const char_u *last_multispace = NULL;   // Last occurrence of "multispace:"
+  const char_u *last_lmultispace = NULL;  // Last occurrence of "leadmultispace:"
   int multispace_len = 0;           // Length of lcs-multispace string
   int lead_multispace_len = 0;      // Length of lcs-leadmultispace string
+  const bool is_listchars = (varp == &p_lcs || varp == &wp->w_p_lcs);
 
   struct chars_tab {
-    int *cp;    ///< char value
+    int *cp;     ///< char value
     char *name;  ///< char id
-    int def;    ///< default value
+    int def;     ///< default value
   };
-  struct chars_tab *tab;
 
   // XXX: Characters taking 2 columns is forbidden (TUI limitation?). Set old defaults in this case.
   struct chars_tab fcs_tab[] = {
@@ -1335,7 +871,9 @@ char *set_chars_option(win_T *wp, char_u **varp, bool set)
     { &wp->w_p_fcs_chars.diff,       "diff",      '-' },
     { &wp->w_p_fcs_chars.msgsep,     "msgsep",    ' ' },
     { &wp->w_p_fcs_chars.eob,        "eob",       '~' },
+    { &wp->w_p_fcs_chars.lastline,   "lastline",  '@' },
   };
+
   struct chars_tab lcs_tab[] = {
     { &wp->w_p_lcs_chars.eol,     "eol",      NUL },
     { &wp->w_p_lcs_chars.ext,     "extends",  NUL },
@@ -1348,30 +886,33 @@ char *set_chars_option(win_T *wp, char_u **varp, bool set)
     { &wp->w_p_lcs_chars.conceal, "conceal",  NUL },
   };
 
-  if (varp == &p_lcs || varp == &wp->w_p_lcs) {
+  struct chars_tab *tab;
+  int entries;
+  const char_u *value = (char_u *)(*varp);
+  if (is_listchars) {
     tab = lcs_tab;
     entries = ARRAY_SIZE(lcs_tab);
     if (varp == &wp->w_p_lcs && wp->w_p_lcs[0] == NUL) {
-      varp = &p_lcs;
+      value = (char_u *)p_lcs;  // local value is empty, use the global value
     }
   } else {
     tab = fcs_tab;
     entries = ARRAY_SIZE(fcs_tab);
     if (varp == &wp->w_p_fcs && wp->w_p_fcs[0] == NUL) {
-      varp = &p_fcs;
+      value = (char_u *)p_fcs;  // local value is empty, use the global value
     }
   }
 
   // first round: check for valid value, second round: assign values
-  for (round = 0; round <= (set ? 1 : 0); round++) {
+  for (int round = 0; round <= (apply ? 1 : 0); round++) {
     if (round > 0) {
       // After checking that the value is valid: set defaults
-      for (i = 0; i < entries; i++) {
+      for (int i = 0; i < entries; i++) {
         if (tab[i].cp != NULL) {
           *(tab[i].cp) = tab[i].def;
         }
       }
-      if (varp == &p_lcs || varp == &wp->w_p_lcs) {
+      if (is_listchars) {
         wp->w_p_lcs_chars.tab1 = NUL;
         wp->w_p_lcs_chars.tab3 = NUL;
 
@@ -1393,19 +934,20 @@ char *set_chars_option(win_T *wp, char_u **varp, bool set)
         }
       }
     }
-    p = *varp;
+    const char_u *p = value;
     while (*p) {
+      int i;
       for (i = 0; i < entries; i++) {
-        len = (int)STRLEN(tab[i].name);
+        const size_t len = strlen(tab[i].name);
         if (STRNCMP(p, tab[i].name, len) == 0
             && p[len] == ':'
             && p[len + 1] != NUL) {
-          c2 = c3 = 0;
-          s = p + len + 1;
-          c1 = get_encoded_char_adv(&s);
+          const char_u *s = p + len + 1;
+          int c1 = get_encoded_char_adv(&s);
           if (c1 == 0 || char2cells(c1) > 1) {
             return e_invarg;
           }
+          int c2 = 0, c3 = 0;
           if (tab[i].cp == &wp->w_p_lcs_chars.tab2) {
             if (*s == NUL) {
               return e_invarg;
@@ -1438,19 +980,19 @@ char *set_chars_option(win_T *wp, char_u **varp, bool set)
       }
 
       if (i == entries) {
-        len = (int)STRLEN("multispace");
-        len2 = (int)STRLEN("leadmultispace");
-        if ((varp == &p_lcs || varp == &wp->w_p_lcs)
+        const size_t len = strlen("multispace");
+        const size_t len2 = strlen("leadmultispace");
+        if (is_listchars
             && STRNCMP(p, "multispace", len) == 0
             && p[len] == ':'
             && p[len + 1] != NUL) {
-          s = p + len + 1;
+          const char_u *s = p + len + 1;
           if (round == 0) {
             // Get length of lcs-multispace string in the first round
             last_multispace = p;
             multispace_len = 0;
             while (*s != NUL && *s != ',') {
-              c1 = get_encoded_char_adv(&s);
+              int c1 = get_encoded_char_adv(&s);
               if (c1 == 0 || char2cells(c1) > 1) {
                 return e_invarg;
               }
@@ -1464,24 +1006,24 @@ char *set_chars_option(win_T *wp, char_u **varp, bool set)
           } else {
             int multispace_pos = 0;
             while (*s != NUL && *s != ',') {
-              c1 = get_encoded_char_adv(&s);
+              int c1 = get_encoded_char_adv(&s);
               if (p == last_multispace) {
                 wp->w_p_lcs_chars.multispace[multispace_pos++] = c1;
               }
             }
             p = s;
           }
-        } else if ((varp == &p_lcs || varp == &wp->w_p_lcs)
+        } else if (is_listchars
                    && STRNCMP(p, "leadmultispace", len2) == 0
                    && p[len2] == ':'
                    && p[len2 + 1] != NUL) {
-          s = p + len2 + 1;
+          const char_u *s = p + len2 + 1;
           if (round == 0) {
             // get length of lcs-leadmultispace string in first round
             last_lmultispace = p;
             lead_multispace_len = 0;
             while (*s != NUL && *s != ',') {
-              c1 = get_encoded_char_adv(&s);
+              int c1 = get_encoded_char_adv(&s);
               if (c1 == 0 || char2cells(c1) > 1) {
                 return e_invarg;
               }
@@ -1495,7 +1037,7 @@ char *set_chars_option(win_T *wp, char_u **varp, bool set)
           } else {
             int multispace_pos = 0;
             while (*s != NUL && *s != ',') {
-              c1 = get_encoded_char_adv(&s);
+              int c1 = get_encoded_char_adv(&s);
               if (p == last_lmultispace) {
                 wp->w_p_lcs_chars.leadmultispace[multispace_pos++] = c1;
               }
@@ -1506,6 +1048,7 @@ char *set_chars_option(win_T *wp, char_u **varp, bool set)
           return e_invarg;
         }
       }
+
       if (*p == ',') {
         p++;
       }

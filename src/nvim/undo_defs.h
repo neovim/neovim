@@ -21,11 +21,11 @@ typedef struct {
 
 typedef struct u_entry u_entry_T;
 struct u_entry {
-  u_entry_T *ue_next;         // pointer to next entry in list
+  u_entry_T *ue_next;           // pointer to next entry in list
   linenr_T ue_top;              // number of line above undo block
   linenr_T ue_bot;              // number of line below undo block
   linenr_T ue_lcount;           // linecount when u_save called
-  char_u **ue_array;       // array of lines in undo block
+  char **ue_array;              // array of lines in undo block
   long ue_size;                 // number of lines in ue_array
 #ifdef U_DEBUG
   int ue_magic;                 // magic number to check allocation

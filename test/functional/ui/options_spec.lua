@@ -19,6 +19,7 @@ describe('UI receives option updates', function()
       linespace=0,
       pumblend=0,
       mousefocus=false,
+      mousemoveevent=false,
       showtabline=1,
       termguicolors=false,
       ttimeout=true,
@@ -131,6 +132,12 @@ describe('UI receives option updates', function()
       eq(expected, screen.options)
     end)
 
+    command("set mousemoveevent")
+    expected.mousemoveevent = true
+    screen:expect(function()
+      eq(expected, screen.options)
+    end)
+
     command("set nottimeout")
     expected.ttimeout = false
     screen:expect(function()
@@ -187,7 +194,7 @@ end)
 describe('UI can set terminal option', function()
   local screen
   before_each(function()
-    -- by default we implicity "--cmd 'set bg=light'" which ruins everything
+    -- by default we implicitly "--cmd 'set bg=light'" which ruins everything
     clear{args_rm={'--cmd'}}
     screen = Screen.new(20,5)
   end)

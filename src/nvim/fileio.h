@@ -3,6 +3,7 @@
 
 #include "nvim/buffer_defs.h"
 #include "nvim/eval/typval.h"
+#include "nvim/eval/typval_defs.h"
 #include "nvim/garray.h"
 #include "nvim/os/os.h"
 
@@ -15,6 +16,7 @@
 #define READ_KEEP_UNDO  0x20    // keep undo info
 #define READ_FIFO       0x40    // read from fifo or socket
 #define READ_NOWINENTER 0x80    // do not trigger BufWinEnter
+#define READ_NOFILE     0x100   // do not read a file, do trigger BufReadCmd
 
 #define READ_STRING(x, y) (char_u *)read_string((x), (size_t)(y))
 

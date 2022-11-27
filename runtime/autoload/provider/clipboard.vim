@@ -97,18 +97,24 @@ function! provider#clipboard#Executable() abort
     let s:copy['*'] = ['wl-copy', '--foreground', '--primary', '--type', 'text/plain']
     let s:paste['*'] = ['wl-paste', '--no-newline', '--primary']
     return 'wl-copy'
-  elseif !empty($DISPLAY) && executable('xclip')
-    let s:copy['+'] = ['xclip', '-quiet', '-i', '-selection', 'clipboard']
-    let s:paste['+'] = ['xclip', '-o', '-selection', 'clipboard']
-    let s:copy['*'] = ['xclip', '-quiet', '-i', '-selection', 'primary']
-    let s:paste['*'] = ['xclip', '-o', '-selection', 'primary']
-    return 'xclip'
+  elseif !empty($WAYLAND_DISPLAY) && executable('waycopy') && executable('waypaste')
+    let s:copy['+'] = ['waycopy', '-t', 'text/plain']
+    let s:paste['+'] = ['waypaste', '-t', 'text/plain']
+    let s:copy['*'] = s:copy['+']
+    let s:paste['*'] = s:paste['+']
+    return 'wayclip'
   elseif !empty($DISPLAY) && executable('xsel') && s:cmd_ok('xsel -o -b')
     let s:copy['+'] = ['xsel', '--nodetach', '-i', '-b']
     let s:paste['+'] = ['xsel', '-o', '-b']
     let s:copy['*'] = ['xsel', '--nodetach', '-i', '-p']
     let s:paste['*'] = ['xsel', '-o', '-p']
     return 'xsel'
+  elseif !empty($DISPLAY) && executable('xclip')
+    let s:copy['+'] = ['xclip', '-quiet', '-i', '-selection', 'clipboard']
+    let s:paste['+'] = ['xclip', '-o', '-selection', 'clipboard']
+    let s:copy['*'] = ['xclip', '-quiet', '-i', '-selection', 'primary']
+    let s:paste['*'] = ['xclip', '-o', '-selection', 'primary']
+    return 'xclip'
   elseif executable('lemonade')
     let s:copy['+'] = ['lemonade', 'copy']
     let s:paste['+'] = ['lemonade', 'paste']
@@ -139,7 +145,12 @@ function! provider#clipboard#Executable() abort
     let s:paste['*'] = s:paste['+']
     return 'termux-clipboard'
   elseif !empty($TMUX) && executable('tmux')
-    let s:copy['+'] = ['tmux', 'load-buffer', '-']
+    let ver = matchlist(systemlist(['tmux', '-V'])[0], '\vtmux %(next-)?(\d+)\.(\d+)')
+    if len(ver) >= 3 && (ver[1] > 3 || (ver[1] == 3 && ver[2] >= 2))
+      let s:copy['+'] = ['tmux', 'load-buffer', '-w', '-']
+    else
+      let s:copy['+'] = ['tmux', 'load-buffer', '-']
+    endif
     let s:paste['+'] = ['tmux', 'save-buffer', '-']
     let s:copy['*'] = s:copy['+']
     let s:paste['*'] = s:paste['+']

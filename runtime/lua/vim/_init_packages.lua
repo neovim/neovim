@@ -1,6 +1,3 @@
--- prevents luacheck from making lints for setting things on vim
-local vim = assert(vim)
-
 local pathtrails = {}
 vim._so_trails = {}
 for s in (package.cpath .. ';'):gmatch('[^;]*;') do

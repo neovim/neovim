@@ -5,11 +5,13 @@ local clear, command, nvim, testprg =
   helpers.clear, helpers.command, helpers.nvim, helpers.testprg
 local eval, eq, neq, retry =
   helpers.eval, helpers.eq, helpers.neq, helpers.retry
+local matches = helpers.matches
 local ok = helpers.ok
 local feed = helpers.feed
 local pcall_err = helpers.pcall_err
 local assert_alive = helpers.assert_alive
-local iswin = helpers.iswin
+local skip = helpers.skip
+local is_os = helpers.is_os
 
 describe('autocmd TermClose', function()
   before_each(function()
@@ -22,7 +24,8 @@ describe('autocmd TermClose', function()
   local function test_termclose_delete_own_buf()
     command('autocmd TermClose * bdelete!')
     command('terminal')
-    eq('Vim(bdelete):E937: Attempt to delete a buffer that is in use', pcall_err(command, 'bdelete!'))
+    matches('^Vim%(bdelete%):E937: Attempt to delete a buffer that is in use: term://',
+            pcall_err(command, 'bdelete!'))
     assert_alive()
   end
 
@@ -45,7 +48,7 @@ describe('autocmd TermClose', function()
   end)
 
   it('triggers when long-running terminal job gets stopped', function()
-    nvim('set_option', 'shell', iswin() and 'cmd.exe' or 'sh')
+    nvim('set_option', 'shell', is_os('win') and 'cmd.exe' or 'sh')
     command('autocmd TermClose * let g:test_termclose = 23')
     command('terminal')
     command('call jobstop(b:terminal_job_id)')
@@ -53,7 +56,7 @@ describe('autocmd TermClose', function()
   end)
 
   it('kills job trapping SIGTERM', function()
-    if iswin() then return end
+    skip(is_os('win'))
     nvim('set_option', 'shell', 'sh')
     nvim('set_option', 'shellcmdflag', '-c')
     command([[ let g:test_job = jobstart('trap "" TERM && echo 1 && sleep 60', { ]]
@@ -73,7 +76,7 @@ describe('autocmd TermClose', function()
   end)
 
   it('kills PTY job trapping SIGHUP and SIGTERM', function()
-    if iswin() then return end
+    skip(is_os('win'))
     nvim('set_option', 'shell', 'sh')
     nvim('set_option', 'shellcmdflag', '-c')
     command([[ let g:test_job = jobstart('trap "" HUP TERM && echo 1 && sleep 60', { ]]

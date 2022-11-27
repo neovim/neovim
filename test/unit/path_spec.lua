@@ -504,6 +504,16 @@ describe('path.c', function()
       eq(OK, result)
     end)
 
+    itp('does not remove trailing slash from non-existing relative directory #20847', function()
+      local expected = lfs.currentdir() .. '/non_existing_dir/'
+      local filename = 'non_existing_dir/'
+      local buflen = get_buf_len(expected, filename)
+      local do_expand = 1
+      local buf, result = vim_FullName(filename, buflen, do_expand)
+      eq(expected, ffi.string(buf))
+      eq(OK, result)
+    end)
+
     itp('expands "./" to the current directory #7117', function()
       local expected = lfs.currentdir() .. '/unit-test-directory/test.file'
       local filename = './unit-test-directory/test.file'
@@ -640,6 +650,10 @@ describe('path.c', function()
       eq(2, path_with_url([[test-abc:\\xyz\foo\b3]]))
       eq(0, path_with_url([[-test://xyz/foo/b4]]))
       eq(0, path_with_url([[test-://xyz/foo/b5]]))
+      eq(1, path_with_url([[test-C:/xyz/foo/b5]]))
+      eq(1, path_with_url([[test-custom:/xyz/foo/b5]]))
+      eq(0, path_with_url([[c:/xyz/foo/b5]]))
+      eq(0, path_with_url([[C:/xyz/foo/b5]]))
     end)
   end)
 end)

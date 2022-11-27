@@ -3,6 +3,7 @@
 source check.vim
 CheckFeature timers
 
+source screendump.vim
 source shared.vim
 source term_util.vim
 source load.vim
@@ -46,9 +47,6 @@ endfunc
 func Test_timer_repeat_many()
   let g:val = 0
   let timer = timer_start(50, 'MyHandler', {'repeat': -1})
-  if has('mac')
-    sleep 200m
-  endif
   sleep 200m
   call timer_stop(timer)
   call assert_inrange((has('mac') ? 1 : 2), LoadAdjust(5), g:val)
@@ -266,8 +264,9 @@ endfunc
 
 func Test_timer_peek_and_get_char()
   if !has('unix') && !has('gui_running')
-    return
+    throw 'Skipped: cannot feed low-level input'
   endif
+
   call timer_start(0, 'FeedAndPeek')
   let intr = timer_start(100, 'Interrupt')
   let c = getchar()
@@ -277,9 +276,9 @@ endfunc
 
 func Test_timer_getchar_zero()
   if has('win32') && !has('gui_running')
-    " Console: no low-level input
-    return
+    throw 'Skipped: cannot feed low-level input'
   endif
+  CheckFunction reltimefloat
 
   " Measure the elapsed time to avoid a hang when it fails.
   let start = reltime()
@@ -305,9 +304,7 @@ func Test_timer_ex_mode()
 endfunc
 
 func Test_timer_restore_count()
-  if !CanRunVimInTerminal()
-    throw 'Skipped: cannot run Vim in a terminal window'
-  endif
+  CheckRunVimInTerminal
   " Check that v:count is saved and restored, not changed by a timer.
   call writefile([
         \ 'nnoremap <expr><silent> L v:count ? v:count . "l" : "l"',
@@ -349,11 +346,13 @@ func Test_nocatch_timer_garbage_collect()
     let a = {'foo', 'bar'}
   endfunc
   func FeedChar(id)
-    call feedkeys('x', 't')
+    call feedkeys(":\<CR>", 't')
   endfunc
   call timer_start(300, 'FeedChar')
   call timer_start(100, 'CauseAnError')
-  let x = getchar()
+  let x = getchar()   " wait for error in timer
+  let x = getchar(0)  " read any remaining chars
+  let x = getchar(0)
 
   set ut&
   call test_override('no_wait_return', 1)
@@ -407,6 +406,30 @@ endfunc
 
 func Test_timer_invalid_callback()
   call assert_fails('call timer_start(0, "0")', 'E921')
+endfunc
+
+func Test_timer_changing_function_list()
+  CheckRunVimInTerminal
+
+  " Create a large number of functions.  Should get the "more" prompt.
+  " The typing "G" triggers the timer, which changes the function table.
+  let lines =<< trim END
+    for func in map(range(1,99), "'Func' .. v:val")
+      exe "func " .. func .. "()"
+      endfunc
+    endfor
+    au CmdlineLeave : call timer_start(0, {-> 0})
+  END
+  call writefile(lines, 'XTest_timerchange')
+  let buf = RunVimInTerminal('-S XTest_timerchange', #{rows: 10})
+  call term_sendkeys(buf, ":fu\<CR>")
+  call WaitForAssert({-> assert_match('-- More --', term_getline(buf, 10))})
+  call term_sendkeys(buf, "G")
+  call WaitForAssert({-> assert_match('E454', term_getline(buf, 9))})
+  call term_sendkeys(buf, "\<Esc>")
+
+  call StopVimInTerminal(buf)
+  call delete('XTest_timerchange')
 endfunc
 
 func Test_timer_using_win_execute_undo_sync()

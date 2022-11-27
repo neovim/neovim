@@ -114,6 +114,13 @@ if has('win32')
   let $PROMPT = '$P$G'
 endif
 
+if has('mac')
+  " In MacOS, when starting a shell in a terminal, a bash deprecation warning
+  " message is displayed. This breaks the terminal test. Disable the warning
+  " message.
+  let $BASH_SILENCE_DEPRECATION_WARNING = 1
+endif
+
 " Prepare for calling test_garbagecollect_now().
 let v:testing = 1
 
@@ -167,7 +174,12 @@ func RunTheTest(test)
   if a:test =~ 'Test_nocatch_'
     " Function handles errors itself.  This avoids skipping commands after the
     " error.
+    let g:skipped_reason = ''
     exe 'call ' . a:test
+    if g:skipped_reason != ''
+      call add(s:messages, '    Skipped')
+      call add(s:skipped, 'SKIPPED ' . a:test . ': ' . g:skipped_reason)
+    endif
   else
     try
       let s:test = a:test
@@ -418,7 +430,7 @@ for s:test in sort(s:tests)
   set belloff=all
   let prev_error = ''
   let total_errors = []
-  let run_nr = 1
+  let g:run_nr = 1
 
   " A test can set g:test_is_flaky to retry running the test.
   let g:test_is_flaky = 0
@@ -437,10 +449,10 @@ for s:test in sort(s:tests)
       call add(s:messages, 'Found errors in ' . s:test . ':')
       call extend(s:messages, v:errors)
 
-      call add(total_errors, 'Run ' . run_nr . ':')
+      call add(total_errors, 'Run ' . g:run_nr . ':')
       call extend(total_errors, v:errors)
 
-      if run_nr == 5 || prev_error == v:errors[0]
+      if g:run_nr >= 5 || prev_error == v:errors[0]
         call add(total_errors, 'Flaky test failed too often, giving up')
         let v:errors = total_errors
         break
@@ -455,7 +467,7 @@ for s:test in sort(s:tests)
 
       let prev_error = v:errors[0]
       let v:errors = []
-      let run_nr += 1
+      let g:run_nr += 1
 
       call RunTheTest(s:test)
 

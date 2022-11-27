@@ -6,23 +6,32 @@
 #include <assert.h>
 #include <inttypes.h>
 #include <stdbool.h>
+#include <stdint.h>
+#include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 #include "nvim/api/extmark.h"
 #include "nvim/arglist.h"
+#include "nvim/ascii.h"
 #include "nvim/context.h"
 #include "nvim/decoration_provider.h"
 #include "nvim/eval.h"
+#include "nvim/gettext.h"
+#include "nvim/globals.h"
 #include "nvim/highlight.h"
 #include "nvim/highlight_group.h"
 #include "nvim/insexpand.h"
 #include "nvim/lua/executor.h"
+#include "nvim/main.h"
 #include "nvim/mapping.h"
 #include "nvim/memfile.h"
 #include "nvim/memory.h"
 #include "nvim/message.h"
 #include "nvim/sign.h"
 #include "nvim/ui.h"
+#include "nvim/ui_compositor.h"
+#include "nvim/usercmd.h"
 #include "nvim/vim.h"
 
 #ifdef UNIT_TESTING
@@ -59,6 +68,8 @@ void try_to_free_memory(void)
   clear_sb_text(true);
   // Try to save all buffers and release as many blocks as possible
   mf_release_all();
+
+  arena_free_reuse_blks();
 
   trying_to_free = false;
 }
@@ -435,9 +446,8 @@ char *xstrdupnul(const char *const str)
 {
   if (str == NULL) {
     return xmallocz(0);
-  } else {
-    return xstrdup(str);
   }
+  return xstrdup(str);
 }
 
 /// A version of memchr that starts the search at `src + len`.
@@ -499,22 +509,22 @@ bool striequal(const char *a, const char *b)
   return (a == NULL && b == NULL) || (a && b && STRICMP(a, b) == 0);
 }
 
-/*
- * Avoid repeating the error message many times (they take 1 second each).
- * Did_outofmem_msg is reset when a character is read.
- */
+// Avoid repeating the error message many times (they take 1 second each).
+// Did_outofmem_msg is reset when a character is read.
 void do_outofmem_msg(size_t size)
 {
-  if (!did_outofmem_msg) {
-    // Don't hide this message
-    emsg_silent = 0;
-
-    /* Must come first to avoid coming back here when printing the error
-     * message fails, e.g. when setting v:errmsg. */
-    did_outofmem_msg = true;
-
-    semsg(_("E342: Out of memory!  (allocating %" PRIu64 " bytes)"), (uint64_t)size);
+  if (did_outofmem_msg) {
+    return;
   }
+
+  // Don't hide this message
+  emsg_silent = 0;
+
+  // Must come first to avoid coming back here when printing the error
+  // message fails, e.g. when setting v:errmsg.
+  did_outofmem_msg = true;
+
+  semsg(_("E342: Out of memory!  (allocating %" PRIu64 " bytes)"), (uint64_t)size);
 }
 
 /// Writes time_t to "buf[8]".
@@ -528,24 +538,22 @@ void time_to_bytes(time_t time_, uint8_t buf[8])
 }
 
 #define ARENA_BLOCK_SIZE 4096
+#define REUSE_MAX 4
 
-void arena_start(Arena *arena, ArenaMem *reuse_blk)
+static struct consumed_blk *arena_reuse_blk;
+static size_t arena_reuse_blk_count = 0;
+
+static void arena_free_reuse_blks(void)
 {
-  if (reuse_blk && *reuse_blk) {
-    arena->cur_blk = (char *)(*reuse_blk);
-    *reuse_blk = NULL;
-  } else {
-    arena->cur_blk = xmalloc(ARENA_BLOCK_SIZE);
+  while (arena_reuse_blk_count > 0) {
+    struct consumed_blk *blk = arena_reuse_blk;
+    arena_reuse_blk = arena_reuse_blk->prev;
+    xfree(blk);
+    arena_reuse_blk_count--;
   }
-  arena->pos = 0;
-  arena->size = ARENA_BLOCK_SIZE;
-  // address is the same as as (struct consumed_blk *)arena->cur_blk
-  struct consumed_blk *blk = arena_alloc(arena, sizeof(struct consumed_blk), true);
-  assert((char *)blk == (char *)arena->cur_blk);
-  blk->prev = NULL;
 }
 
-/// Finnish the allocations in an arena.
+/// Finish the allocations in an arena.
 ///
 /// This does not immediately free the memory, but leaves existing allocated
 /// objects valid, and returns an opaque ArenaMem handle, which can be used to
@@ -558,47 +566,79 @@ ArenaMem arena_finish(Arena *arena)
   return res;
 }
 
+void alloc_block(Arena *arena)
+{
+  struct consumed_blk *prev_blk = (struct consumed_blk *)arena->cur_blk;
+  if (arena_reuse_blk_count > 0) {
+    arena->cur_blk = (char *)arena_reuse_blk;
+    arena_reuse_blk = arena_reuse_blk->prev;
+    arena_reuse_blk_count--;
+  } else {
+    arena_alloc_count++;
+    arena->cur_blk = xmalloc(ARENA_BLOCK_SIZE);
+  }
+  arena->pos = 0;
+  arena->size = ARENA_BLOCK_SIZE;
+  struct consumed_blk *blk = arena_alloc(arena, sizeof(struct consumed_blk), true);
+  blk->prev = prev_blk;
+}
+
+static size_t arena_align_offset(uint64_t off)
+{
+  return ((off + (ARENA_ALIGN - 1)) & ~(ARENA_ALIGN - 1));
+}
+
+/// @param arena if NULL, do a global allocation. caller must then free the value!
+/// @param size if zero, will still return a non-null pointer, but not a usable or unique one
 void *arena_alloc(Arena *arena, size_t size, bool align)
 {
-  if (align) {
-    arena->pos = (arena->pos + (ARENA_ALIGN - 1)) & ~(ARENA_ALIGN - 1);
+  if (!arena) {
+    return xmalloc(size);
   }
-  if (arena->pos + size > arena->size) {
-    if (size > (arena->size - sizeof(struct consumed_blk)) >> 1) {
+  if (!arena->cur_blk) {
+    alloc_block(arena);
+  }
+  size_t alloc_pos = align ? arena_align_offset(arena->pos) : arena->pos;
+  if (alloc_pos + size > arena->size) {
+    if (size > (ARENA_BLOCK_SIZE - sizeof(struct consumed_blk)) >> 1) {
       // if allocation is too big, allocate a large block with the requested
       // size, but still with block pointer head. We do this even for
       // arena->size / 2, as there likely is space left for the next
       // small allocation in the current block.
-      char *alloc = xmalloc(size + sizeof(struct consumed_blk));
+      arena_alloc_count++;
+      size_t hdr_size = sizeof(struct consumed_blk);
+      size_t aligned_hdr_size = (align ? arena_align_offset(hdr_size) : hdr_size);
+      char *alloc = xmalloc(size + aligned_hdr_size);
+
+      // to simplify free-list management, arena->cur_blk must
+      // always be a normal, ARENA_BLOCK_SIZE sized, block
       struct consumed_blk *cur_blk = (struct consumed_blk *)arena->cur_blk;
       struct consumed_blk *fix_blk = (struct consumed_blk *)alloc;
       fix_blk->prev = cur_blk->prev;
       cur_blk->prev = fix_blk;
-      return (alloc + sizeof(struct consumed_blk));
+      return alloc + aligned_hdr_size;
     } else {
-      struct consumed_blk *prev_blk = (struct consumed_blk *)arena->cur_blk;
-      arena->cur_blk = xmalloc(ARENA_BLOCK_SIZE);
-      arena->pos = 0;
-      arena->size = ARENA_BLOCK_SIZE;
-      struct consumed_blk *blk = arena_alloc(arena, sizeof(struct consumed_blk), true);
-      blk->prev = prev_blk;
+      alloc_block(arena);  // resets arena->pos
+      alloc_pos = align ? arena_align_offset(arena->pos) : arena->pos;
     }
   }
 
-  char *mem = arena->cur_blk + arena->pos;
-  arena->pos += size;
+  char *mem = arena->cur_blk + alloc_pos;
+  arena->pos = alloc_pos + size;
   return mem;
 }
 
-void arena_mem_free(ArenaMem mem, ArenaMem *reuse_blk)
+void arena_mem_free(ArenaMem mem)
 {
   struct consumed_blk *b = mem;
   // peel of the first block, as it is guaranteed to be ARENA_BLOCK_SIZE,
   // not a custom fix_blk
-  if (reuse_blk && *reuse_blk == NULL && b != NULL) {
-    *reuse_blk = b;
+  if (arena_reuse_blk_count < REUSE_MAX && b != NULL) {
+    struct consumed_blk *reuse_blk = b;
     b = b->prev;
-    (*reuse_blk)->prev = NULL;
+    reuse_blk->prev = arena_reuse_blk;
+    arena_reuse_blk = reuse_blk;
+    arena_reuse_blk_count++;
   }
 
   while (b) {
@@ -620,7 +660,6 @@ char *arena_memdupz(Arena *arena, const char *buf, size_t size)
 
 # include "nvim/autocmd.h"
 # include "nvim/buffer.h"
-# include "nvim/charset.h"
 # include "nvim/cmdhist.h"
 # include "nvim/diff.h"
 # include "nvim/edit.h"
@@ -629,33 +668,24 @@ char *arena_memdupz(Arena *arena, const char *buf, size_t size)
 # include "nvim/ex_docmd.h"
 # include "nvim/ex_getln.h"
 # include "nvim/file_search.h"
-# include "nvim/fold.h"
 # include "nvim/getchar.h"
 # include "nvim/grid.h"
 # include "nvim/mark.h"
-# include "nvim/mbyte.h"
-# include "nvim/memline.h"
-# include "nvim/move.h"
 # include "nvim/ops.h"
 # include "nvim/option.h"
 # include "nvim/os/os.h"
-# include "nvim/os_unix.h"
-# include "nvim/path.h"
 # include "nvim/quickfix.h"
 # include "nvim/regexp.h"
 # include "nvim/search.h"
 # include "nvim/spell.h"
-# include "nvim/syntax.h"
 # include "nvim/tag.h"
 # include "nvim/window.h"
 
-/*
- * Free everything that we allocated.
- * Can be used to detect memory leaks, e.g., with ccmalloc.
- * NOTE: This is tricky!  Things are freed that functions depend on.  Don't be
- * surprised if Vim crashes...
- * Some things can't be freed, esp. things local to a library function.
- */
+// Free everything that we allocated.
+// Can be used to detect memory leaks, e.g., with ccmalloc.
+// NOTE: This is tricky!  Things are freed that functions depend on.  Don't be
+// surprised if Vim crashes...
+// Some things can't be freed, esp. things local to a library function.
 void free_all_mem(void)
 {
   buf_T *buf, *nextbuf;
@@ -797,8 +827,12 @@ void free_all_mem(void)
 
   decor_free_all_mem();
 
-  nlua_free_all_mem();
   ui_free_all_mem();
+  ui_comp_free_all_mem();
+  nlua_free_all_mem();
+
+  // should be last, in case earlier free functions deallocates arenas
+  arena_free_reuse_blks();
 }
 
 #endif

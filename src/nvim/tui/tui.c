@@ -4,40 +4,42 @@
 // Terminal UI functions. Invoked (by ui_bridge.c) on the TUI thread.
 
 #include <assert.h>
-#include <limits.h>
+#include <signal.h>
 #include <stdbool.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <unibilium.h>
 #include <uv.h>
-#if defined(HAVE_TERMIOS_H)
-# include <termios.h>
-#endif
 
-#include "nvim/api/private/helpers.h"
-#include "nvim/api/vim.h"
+#include "auto/config.h"
+#include "klib/kvec.h"
+#include "nvim/api/private/defs.h"
 #include "nvim/ascii.h"
+#include "nvim/event/defs.h"
 #include "nvim/event/loop.h"
+#include "nvim/event/multiqueue.h"
 #include "nvim/event/signal.h"
-#include "nvim/highlight.h"
-#include "nvim/lib/kvec.h"
+#include "nvim/event/stream.h"
+#include "nvim/globals.h"
+#include "nvim/grid_defs.h"
+#include "nvim/highlight_defs.h"
 #include "nvim/log.h"
 #include "nvim/main.h"
-#include "nvim/map.h"
+#include "nvim/mbyte.h"
 #include "nvim/memory.h"
+#include "nvim/message.h"
 #include "nvim/option.h"
 #include "nvim/os/input.h"
 #include "nvim/os/os.h"
 #include "nvim/os/signal.h"
-#include "nvim/os/tty.h"
 #include "nvim/ui.h"
 #include "nvim/vim.h"
-#ifdef WIN32
+#ifdef MSWIN
 # include "nvim/os/os_win_console.h"
 #endif
 #include "nvim/cursor_shape.h"
 #include "nvim/macros.h"
-#include "nvim/strings.h"
-#include "nvim/syntax.h"
 #include "nvim/tui/input.h"
 #include "nvim/tui/terminfo.h"
 #include "nvim/tui/tui.h"
@@ -103,6 +105,7 @@ struct TUIData {
   bool immediate_wrap_after_last_column;
   bool bce;
   bool mouse_enabled;
+  bool mouse_move_enabled;
   bool busy, is_invisible, want_invisible;
   bool cork, overflow;
   bool cursor_color_changed;
@@ -117,6 +120,7 @@ struct TUIData {
   ModeShape showing_mode;
   struct {
     int enable_mouse, disable_mouse;
+    int enable_mouse_move, disable_mouse_move;
     int enable_bracketed_paste, disable_bracketed_paste;
     int enable_lr_margin, disable_lr_margin;
     int enter_strikethrough_mode;
@@ -236,6 +240,8 @@ static void terminfo_start(UI *ui)
   data->showing_mode = SHAPE_IDX_N;
   data->unibi_ext.enable_mouse = -1;
   data->unibi_ext.disable_mouse = -1;
+  data->unibi_ext.enable_mouse_move = -1;
+  data->unibi_ext.disable_mouse_move = -1;
   data->unibi_ext.set_cursor_color = -1;
   data->unibi_ext.reset_cursor_color = -1;
   data->unibi_ext.enable_bracketed_paste = -1;
@@ -259,7 +265,7 @@ static void terminfo_start(UI *ui)
   data->input.tui_data = data;
 
   const char *term = os_getenv("TERM");
-#ifdef WIN32
+#ifdef MSWIN
   os_tty_guess_term(&term, data->out_fd);
   os_setenv("TERM", term, 1);
   // Old os_getenv() pointer is invalid after os_setenv(), fetch it again.
@@ -349,7 +355,7 @@ static void terminfo_start(UI *ui)
     if (ret) {
       ELOG("uv_tty_init failed: %s", uv_strerror(ret));
     }
-#ifdef WIN32
+#ifdef MSWIN
     ret = uv_tty_set_mode(&data->output_handle.tty, UV_TTY_MODE_RAW);
     if (ret) {
       ELOG("uv_tty_set_mode failed: %s", uv_strerror(ret));
@@ -481,9 +487,7 @@ static void tui_main(UIBridgeData *bridge, UI *ui)
   // TODO(bfredl): zero hl is empty, send this explicitly?
   kv_push(data->attrs, HLATTRS_INIT);
 
-#if TERMKEY_VERSION_MAJOR > 0 || TERMKEY_VERSION_MINOR > 18
   data->input.tk_ti_hook_fn = tui_tk_ti_getstr;
-#endif
   tinput_init(&data->input, &tui_loop);
   tui_terminal_start(ui);
 
@@ -1138,6 +1142,9 @@ static void tui_mouse_on(UI *ui)
   TUIData *data = ui->data;
   if (!data->mouse_enabled) {
     unibi_out_ext(ui, data->unibi_ext.enable_mouse);
+    if (data->mouse_move_enabled) {
+      unibi_out_ext(ui, data->unibi_ext.enable_mouse_move);
+    }
     data->mouse_enabled = true;
   }
 }
@@ -1146,6 +1153,9 @@ static void tui_mouse_off(UI *ui)
 {
   TUIData *data = ui->data;
   if (data->mouse_enabled) {
+    if (data->mouse_move_enabled) {
+      unibi_out_ext(ui, data->unibi_ext.disable_mouse_move);
+    }
     unibi_out_ext(ui, data->unibi_ext.disable_mouse);
     data->mouse_enabled = false;
   }
@@ -1405,13 +1415,16 @@ static void suspend_event(void **argv)
 
 static void tui_suspend(UI *ui)
 {
-#ifdef UNIX
   TUIData *data = ui->data;
+#ifdef UNIX
   // kill(0, SIGTSTP) won't stop the UI thread, so we must poll for SIGCONT
   // before continuing. This is done in another callback to avoid
   // loop_poll_events recursion
   multiqueue_put_event(data->loop->fast_events,
                        event_create(suspend_event, 1, ui));
+#else
+  // Resume the main thread as suspending isn't implemented.
+  CONTINUE(data->bridge);
 #endif
 }
 
@@ -1457,9 +1470,18 @@ static void tui_screenshot(UI *ui, String path)
 static void tui_option_set(UI *ui, String name, Object value)
 {
   TUIData *data = ui->data;
-  if (strequal(name.data, "termguicolors")) {
+  if (strequal(name.data, "mousemoveevent")) {
+    if (data->mouse_move_enabled != value.data.boolean) {
+      if (data->mouse_enabled) {
+        tui_mouse_off(ui);
+        data->mouse_move_enabled = value.data.boolean;
+        tui_mouse_on(ui);
+      } else {
+        data->mouse_move_enabled = value.data.boolean;
+      }
+    }
+  } else if (strequal(name.data, "termguicolors")) {
     ui->rgb = value.data.boolean;
-
     data->print_attr_id = -1;
     invalidate(ui, 0, data->grid.height, 0, data->grid.width);
   } else if (strequal(name.data, "ttimeout")) {
@@ -1597,7 +1619,7 @@ static void unibi_goto(UI *ui, int row, int col)
       memset(&vars, 0, sizeof(vars)); \
       data->cork = true; \
 retry: \
-      unibi_format(vars, vars + 26, str, data->params, out, ui, NULL, NULL); \
+      unibi_format(vars, vars + 26, str, data->params, out, ui, pad, ui); \
       if (data->overflow) { \
         data->bufpos = orig_pos; \
         flush_buf(ui); \
@@ -1628,15 +1650,39 @@ static void out(void *ctx, const char *str, size_t len)
 
   if (len > available) {
     if (data->cork) {
+      // Called by unibi_format(): avoid flush_buf() halfway an escape sequence.
       data->overflow = true;
       return;
-    } else {
-      flush_buf(ui);
     }
+    flush_buf(ui);
   }
 
   memcpy(data->buf + data->bufpos, str, len);
   data->bufpos += len;
+}
+
+/// Called by unibi_format() for padding instructions.
+/// The following parameter descriptions are extracted from unibi_format(3) and terminfo(5).
+///
+/// @param ctx    the same as `ctx2` passed to unibi_format()
+/// @param delay  the delay in tenths of milliseconds
+/// @param scale  padding is proportional to the number of lines affected
+/// @param force  padding is mandatory
+static void pad(void *ctx, size_t delay, int scale FUNC_ATTR_UNUSED, int force)
+{
+  if (!force) {
+    return;
+  }
+
+  UI *ui = ctx;
+  TUIData *data = ui->data;
+
+  if (data->overflow) {
+    return;
+  }
+
+  flush_buf(ui);
+  loop_uv_run(data->loop, (int)(delay / 10), false);
 }
 
 static void unibi_set_if_empty(unibi_term *ut, enum unibi_string str, const char *val)
@@ -1791,7 +1837,7 @@ static void patch_terminfo_bugs(TUIData *data, const char *term, const char *col
       }
     }
 
-#ifdef WIN32
+#ifdef MSWIN
     // XXX: workaround libuv implicit LF => CRLF conversion. #10558
     unibi_set_str(ut, unibi_cursor_down, "\x1b[B");
 #endif
@@ -2054,7 +2100,7 @@ static void augment_terminfo(TUIData *data, const char *term, long vte_version, 
   // Dickey ncurses terminfo does not include the setrgbf and setrgbb
   // capabilities, proposed by Rüdiger Sonderfeld on 2013-10-15.  Adding
   // them here when terminfo lacks them is an augmentation, not a fixup.
-  // https://gist.github.com/XVilka/8346728
+  // https://github.com/termstandard/colors
 
   // At this time (2017-07-12) it seems like all terminals that support rgb
   // color codes can use semicolons in the terminal code and be fine.
@@ -2135,13 +2181,17 @@ static void augment_terminfo(TUIData *data, const char *term, long vte_version, 
                                                         "\x1b[?1002h\x1b[?1006h");
   data->unibi_ext.disable_mouse = (int)unibi_add_ext_str(ut, "ext.disable_mouse",
                                                          "\x1b[?1002l\x1b[?1006l");
+  data->unibi_ext.enable_mouse_move = (int)unibi_add_ext_str(ut, "ext.enable_mouse_move",
+                                                             "\x1b[?1003h");
+  data->unibi_ext.disable_mouse_move = (int)unibi_add_ext_str(ut, "ext.disable_mouse_move",
+                                                              "\x1b[?1003l");
 
   // Extended underline.
   // terminfo will have Smulx for this (but no support for colors yet).
   data->unibi_ext.set_underline_style = unibi_find_ext_str(ut, "Smulx");
   if (data->unibi_ext.set_underline_style == -1) {
     int ext_bool_Su = unibi_find_ext_bool(ut, "Su");  // used by kitty
-    if (vte_version >= 5102
+    if (vte_version >= 5102 || konsolev >= 221170
         || (ext_bool_Su != -1
             && unibi_get_ext_bool(ut, (size_t)ext_bool_Su))) {
       data->unibi_ext.set_underline_style = (int)unibi_add_ext_str(ut, "ext.set_underline_style",
@@ -2230,7 +2280,6 @@ static void flush_buf(UI *ui)
   data->overflow = false;
 }
 
-#if TERMKEY_VERSION_MAJOR > 0 || TERMKEY_VERSION_MINOR > 18
 /// Try to get "kbs" code from stty because "the terminfo kbs entry is extremely
 /// unreliable." (Vim, Bash, and tmux also do this.)
 ///
@@ -2239,14 +2288,14 @@ static void flush_buf(UI *ui)
 static const char *tui_get_stty_erase(void)
 {
   static char stty_erase[2] = { 0 };
-# if defined(HAVE_TERMIOS_H)
+#if defined(HAVE_TERMIOS_H)
   struct termios t;
   if (tcgetattr(input_global_fd(), &t) != -1) {
     stty_erase[0] = (char)t.c_cc[VERASE];
     stty_erase[1] = '\0';
     DLOG("stty/termios:erase=%s", stty_erase);
   }
-# endif
+#endif
   return stty_erase;
 }
 
@@ -2280,4 +2329,3 @@ static const char *tui_tk_ti_getstr(const char *name, const char *value, void *d
 
   return value;
 }
-#endif

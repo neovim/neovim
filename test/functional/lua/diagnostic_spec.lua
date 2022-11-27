@@ -16,7 +16,7 @@ describe('vim.diagnostic', function()
     exec_lua [[
       require('vim.diagnostic')
 
-      function make_diagnostic(msg, x1, y1, x2, y2, severity, source)
+      function make_diagnostic(msg, x1, y1, x2, y2, severity, source, code)
         return {
           lnum = x1,
           col = y1,
@@ -25,23 +25,24 @@ describe('vim.diagnostic', function()
           message = msg,
           severity = severity,
           source = source,
+          code = code,
         }
       end
 
-      function make_error(msg, x1, y1, x2, y2, source)
-        return make_diagnostic(msg, x1, y1, x2, y2, vim.diagnostic.severity.ERROR, source)
+      function make_error(msg, x1, y1, x2, y2, source, code)
+        return make_diagnostic(msg, x1, y1, x2, y2, vim.diagnostic.severity.ERROR, source, code)
       end
 
-      function make_warning(msg, x1, y1, x2, y2, source)
-        return make_diagnostic(msg, x1, y1, x2, y2, vim.diagnostic.severity.WARN, source)
+      function make_warning(msg, x1, y1, x2, y2, source, code)
+        return make_diagnostic(msg, x1, y1, x2, y2, vim.diagnostic.severity.WARN, source, code)
       end
 
-      function make_info(msg, x1, y1, x2, y2, source)
-        return make_diagnostic(msg, x1, y1, x2, y2, vim.diagnostic.severity.INFO, source)
+      function make_info(msg, x1, y1, x2, y2, source, code)
+        return make_diagnostic(msg, x1, y1, x2, y2, vim.diagnostic.severity.INFO, source, code)
       end
 
-      function make_hint(msg, x1, y1, x2, y2, source)
-        return make_diagnostic(msg, x1, y1, x2, y2, vim.diagnostic.severity.HINT, source)
+      function make_hint(msg, x1, y1, x2, y2, source, code)
+        return make_diagnostic(msg, x1, y1, x2, y2, vim.diagnostic.severity.HINT, source, code)
       end
 
       function count_diagnostics(bufnr, severity, namespace)
@@ -126,6 +127,37 @@ describe('vim.diagnostic', function()
     eq(3, #result)
     eq(2, exec_lua([[return #vim.tbl_filter(function(d) return d.bufnr == diagnostic_bufnr end, ...)]], result))
     eq('Diagnostic #1', result[1].message)
+  end)
+
+  it('removes diagnostics from the cache when a buffer is removed', function()
+    eq(2, exec_lua [[
+      vim.api.nvim_win_set_buf(0, diagnostic_bufnr)
+      local other_bufnr = vim.fn.bufadd('test | test')
+      local lines = vim.api.nvim_buf_get_lines(diagnostic_bufnr, 0, -1, true)
+      vim.api.nvim_buf_set_lines(other_bufnr, 0, 1, false, lines)
+      vim.cmd('bunload! ' .. other_bufnr)
+
+      vim.diagnostic.set(diagnostic_ns, diagnostic_bufnr, {
+        make_error('Diagnostic #1', 1, 1, 1, 1),
+        make_error('Diagnostic #2', 2, 1, 2, 1),
+      })
+      vim.diagnostic.set(diagnostic_ns, other_bufnr, {
+        make_error('Diagnostic #3', 3, 1, 3, 1),
+      })
+      vim.api.nvim_set_current_buf(other_bufnr)
+      vim.opt_local.buflisted = true
+      vim.cmd('bwipeout!')
+      return #vim.diagnostic.get()
+    ]])
+    eq(2, exec_lua [[
+      vim.api.nvim_set_current_buf(diagnostic_bufnr)
+      vim.opt_local.buflisted = false
+      return #vim.diagnostic.get()
+    ]])
+    eq(0, exec_lua [[
+      vim.cmd('bwipeout!')
+      return #vim.diagnostic.get()
+    ]])
   end)
 
   it('resolves buffer number 0 to the current buffer', function()
@@ -1129,6 +1161,44 @@ end)
       eq(" some_linter: 👀 Warning", result[1][2][1])
       eq(" another_linter: 🔥 Error", result[2][2][1])
     end)
+
+    it('can add a suffix to virtual text', function()
+      eq(' Some error ✘',  exec_lua [[
+        local diagnostics = {
+          make_error('Some error', 0, 0, 0, 0),
+        }
+
+        vim.diagnostic.set(diagnostic_ns, diagnostic_bufnr, diagnostics, {
+          underline = false,
+          virtual_text = {
+            prefix = '',
+            suffix = ' ✘',
+          }
+        })
+
+        local extmarks = get_virt_text_extmarks(diagnostic_ns)
+        local virt_text = extmarks[1][4].virt_text[2][1]
+        return virt_text
+      ]])
+
+      eq(' Some error [err-code]',  exec_lua [[
+        local diagnostics = {
+          make_error('Some error', 0, 0, 0, 0, nil, 'err-code'),
+        }
+
+        vim.diagnostic.set(diagnostic_ns, diagnostic_bufnr, diagnostics, {
+          underline = false,
+          virtual_text = {
+            prefix = '',
+            suffix = function(diag) return string.format(' [%s]', diag.code) end,
+          }
+        })
+
+        local extmarks = get_virt_text_extmarks(diagnostic_ns)
+        local virt_text = extmarks[1][4].virt_text[2][1]
+        return virt_text
+      ]])
+    end)
   end)
 
   describe('set()', function()
@@ -1745,8 +1815,53 @@ end)
         return lines
       ]])
 
-      eq("Error executing lua: .../diagnostic.lua:0: prefix: expected 'string' or 'table' or 'function', got 42",
+      eq(".../diagnostic.lua:0: prefix: expected string|table|function, got number",
         pcall_err(exec_lua, [[ vim.diagnostic.open_float({ prefix = 42 }) ]]))
+    end)
+
+    it('can add a suffix to diagnostics', function()
+      -- Default is to render the diagnostic error code
+      eq({'1. Syntax error [code-x]', '2. Some warning [code-y]'}, exec_lua [[
+        local diagnostics = {
+          make_error("Syntax error", 0, 1, 0, 3, nil, "code-x"),
+          make_warning("Some warning", 1, 1, 1, 3, nil, "code-y"),
+        }
+        vim.api.nvim_win_set_buf(0, diagnostic_bufnr)
+        vim.diagnostic.set(diagnostic_ns, diagnostic_bufnr, diagnostics)
+        local float_bufnr, winnr = vim.diagnostic.open_float({header = false, scope = "buffer"})
+        local lines = vim.api.nvim_buf_get_lines(float_bufnr, 0, -1, false)
+        vim.api.nvim_win_close(winnr, true)
+        return lines
+      ]])
+
+      eq({'1. Syntax error', '2. Some warning'}, exec_lua [[
+        local diagnostics = {
+          make_error("Syntax error", 0, 1, 0, 3, nil, "code-x"),
+          make_warning("Some warning", 1, 1, 1, 3, nil, "code-y"),
+        }
+        vim.api.nvim_win_set_buf(0, diagnostic_bufnr)
+        vim.diagnostic.set(diagnostic_ns, diagnostic_bufnr, diagnostics)
+        local float_bufnr, winnr = vim.diagnostic.open_float({header = false, scope = "buffer", suffix = ""})
+        local lines = vim.api.nvim_buf_get_lines(float_bufnr, 0, -1, false)
+        vim.api.nvim_win_close(winnr, true)
+        return lines
+      ]])
+
+      -- Suffix is rendered on the last line of a multiline diagnostic
+      eq({'1. Syntax error', '   More context [code-x]'}, exec_lua [[
+        local diagnostics = {
+          make_error("Syntax error\nMore context", 0, 1, 0, 3, nil, "code-x"),
+        }
+        vim.api.nvim_win_set_buf(0, diagnostic_bufnr)
+        vim.diagnostic.set(diagnostic_ns, diagnostic_bufnr, diagnostics)
+        local float_bufnr, winnr = vim.diagnostic.open_float({header = false, scope = "buffer"})
+        local lines = vim.api.nvim_buf_get_lines(float_bufnr, 0, -1, false)
+        vim.api.nvim_win_close(winnr, true)
+        return lines
+      ]])
+
+      eq(".../diagnostic.lua:0: suffix: expected string|table|function, got number",
+        pcall_err(exec_lua, [[ vim.diagnostic.open_float({ suffix = 42 }) ]]))
     end)
 
     it('works with the old signature', function()
@@ -1952,19 +2067,26 @@ end)
     end)
 
     it('triggers the autocommand when diagnostics are set', function()
-      eq(true, exec_lua [[
+      eq({true, true}, exec_lua [[
         -- Set a different buffer as current to test that <abuf> is being set properly in
         -- DiagnosticChanged callbacks
         local tmp = vim.api.nvim_create_buf(false, true)
         vim.api.nvim_set_current_buf(tmp)
 
-        vim.g.diagnostic_autocmd_triggered = 0
-        vim.cmd('autocmd DiagnosticChanged * let g:diagnostic_autocmd_triggered = +expand("<abuf>")')
+        local triggered = {}
+        vim.api.nvim_create_autocmd('DiagnosticChanged', {
+          callback = function(args)
+            triggered = {args.buf, #args.data.diagnostics}
+          end,
+        })
         vim.api.nvim_buf_set_name(diagnostic_bufnr, "test | test")
         vim.diagnostic.set(diagnostic_ns, diagnostic_bufnr, {
           make_error('Diagnostic', 0, 0, 0, 0)
         })
-        return vim.g.diagnostic_autocmd_triggered == diagnostic_bufnr
+        return {
+          triggered[1] == diagnostic_bufnr,
+          triggered[2] == 1,
+        }
       ]])
       end)
 

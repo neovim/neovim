@@ -8,7 +8,7 @@ Neovim's license follows:
 ====
                                  Apache License
                            Version 2.0, January 2004
-                        http://www.apache.org/licenses/
+                        https://www.apache.org/licenses/
 
    TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION
 
@@ -196,10 +196,11 @@ The externally maintained libraries used by Neovim are:
   - libtermkey: MIT license
   - libuv. Copyright Joyent, Inc. and other Node contributors. Node.js license.
   - libvterm: MIT license
+  - lua-cjson: MIT license
   - lua-compat: MIT license
   - tree-sitter: MIT license
-  - xdiff: LGPL license
-  - lua-cjson: MIT license
+  - unibilium: LGPL v3
+  - xdiff: LGPL v2
 
 ====
 

@@ -67,7 +67,7 @@ void hash_clear(hashtab_T *ht)
 void hash_clear_all(hashtab_T *ht, unsigned int off)
 {
   size_t todo = ht->ht_used;
-  for (hashitem_T *hi = ht->ht_array; todo > 0; ++hi) {
+  for (hashitem_T *hi = ht->ht_array; todo > 0; hi++) {
     if (!HASHITEM_EMPTY(hi)) {
       xfree(hi->hi_key - off);
       todo--;
@@ -87,7 +87,7 @@ void hash_clear_all(hashtab_T *ht, unsigned int off)
 ///                  is changed in any way.
 hashitem_T *hash_find(const hashtab_T *const ht, const char *const key)
 {
-  return hash_lookup(ht, key, STRLEN(key), hash_hash((char_u *)key));
+  return hash_lookup(ht, key, strlen(key), hash_hash((char_u *)key));
 }
 
 /// Like hash_find, but key is not NUL-terminated
@@ -194,22 +194,22 @@ void hash_debug_results(void)
 #endif  // ifdef HT_DEBUG
 }
 
-/// Add item for key "key" to hashtable "ht".
+/// Add (empty) item for key `key` to hashtable `ht`.
 ///
 /// @param key Pointer to the key for the new item. The key has to be contained
 ///            in the new item (@see hashitem_T). Must not be NULL.
 ///
 /// @return OK   if success.
 ///         FAIL if key already present
-int hash_add(hashtab_T *ht, char_u *key)
+int hash_add(hashtab_T *ht, char *key)
 {
-  hash_T hash = hash_hash(key);
-  hashitem_T *hi = hash_lookup(ht, (const char *)key, STRLEN(key), hash);
+  hash_T hash = hash_hash((char_u *)key);
+  hashitem_T *hi = hash_lookup(ht, key, strlen(key), hash);
   if (!HASHITEM_EMPTY(hi)) {
     internal_error("hash_add()");
     return FAIL;
   }
-  hash_add_item(ht, hi, key, hash);
+  hash_add_item(ht, hi, (char_u *)key, hash);
   return OK;
 }
 
@@ -226,7 +226,7 @@ void hash_add_item(hashtab_T *ht, hashitem_T *hi, char_u *key, hash_T hash)
   if (hi->hi_key == NULL) {
     ht->ht_filled++;
   }
-  hi->hi_key = key;
+  hi->hi_key = (char *)key;
   hi->hi_hash = hash;
 
   // When the space gets low may resize the array.
@@ -265,7 +265,7 @@ void hash_unlock(hashtab_T *ht)
   hash_may_resize(ht, 0);
 }
 
-/// Resize hastable (new size can be given or automatically computed).
+/// Resize hashtable (new size can be given or automatically computed).
 ///
 /// @param minitems Minimum number of items the new table should hold.
 ///                 If zero, new size will depend on currently used items:
@@ -356,7 +356,7 @@ static void hash_may_resize(hashtab_T *ht, size_t minitems)
   hash_T newmask = newsize - 1;
   size_t todo = ht->ht_used;
 
-  for (hashitem_T *olditem = oldarray; todo > 0; ++olditem) {
+  for (hashitem_T *olditem = oldarray; todo > 0; olditem++) {
     if (HASHITEM_EMPTY(olditem)) {
       continue;
     }
@@ -449,5 +449,5 @@ hash_T hash_hash_len(const char *key, const size_t len)
 const char_u *_hash_key_removed(void)
   FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  return HI_KEY_REMOVED;
+  return (char_u *)HI_KEY_REMOVED;
 }

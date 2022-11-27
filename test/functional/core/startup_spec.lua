@@ -12,6 +12,7 @@ local eval = helpers.eval
 local exec_lua = helpers.exec_lua
 local feed = helpers.feed
 local funcs = helpers.funcs
+local pesc = helpers.pesc
 local mkdir = helpers.mkdir
 local mkdir_p = helpers.mkdir_p
 local nvim_prog = helpers.nvim_prog
@@ -20,11 +21,11 @@ local read_file = helpers.read_file
 local retry = helpers.retry
 local rmdir = helpers.rmdir
 local sleep = helpers.sleep
-local iswin = helpers.iswin
 local startswith = helpers.startswith
 local write_file = helpers.write_file
 local meths = helpers.meths
 local alter_slashes = helpers.alter_slashes
+local is_os = helpers.is_os
 
 local testfile = 'Xtest_startuptime'
 after_each(function()
@@ -79,7 +80,7 @@ describe('startup', function()
   it('in a TTY: has("ttyin")==1 has("ttyout")==1', function()
     local screen = Screen.new(25, 4)
     screen:attach()
-    if iswin() then
+    if is_os('win') then
       command([[set shellcmdflag=/s\ /c shellxquote=\"]])
     end
     -- Running in :terminal
@@ -95,7 +96,7 @@ describe('startup', function()
     ]])
   end)
   it('output to pipe: has("ttyin")==1 has("ttyout")==0', function()
-    if iswin() then
+    if is_os('win') then
       command([[set shellcmdflag=/s\ /c shellxquote=\"]])
     end
     -- Running in :terminal
@@ -111,7 +112,7 @@ describe('startup', function()
     end)
   end)
   it('input from pipe: has("ttyin")==0 has("ttyout")==1', function()
-    if iswin() then
+    if is_os('win') then
       command([[set shellcmdflag=/s\ /c shellxquote=\"]])
     end
     -- Running in :terminal
@@ -130,7 +131,7 @@ describe('startup', function()
   it('input from pipe (implicit) #7679', function()
     local screen = Screen.new(25, 4)
     screen:attach()
-    if iswin() then
+    if is_os('win') then
       command([[set shellcmdflag=/s\ /c shellxquote=\"]])
     end
     -- Running in :terminal
@@ -354,7 +355,9 @@ describe('startup', function()
 
   local function pack_clear(cmd)
     -- add packages after config dir in rtp but before config/after
-    clear{args={'--cmd', 'set packpath=test/functional/fixtures', '--cmd', 'let paths=split(&rtp, ",")', '--cmd', 'let &rtp = paths[0]..",test/functional/fixtures,test/functional/fixtures/middle,"..join(paths[1:],",")', '--cmd', cmd}, env={XDG_CONFIG_HOME='test/functional/fixtures/'}}
+    clear{args={'--cmd', 'set packpath=test/functional/fixtures', '--cmd', 'let paths=split(&rtp, ",")', '--cmd', 'let &rtp = paths[0]..",test/functional/fixtures,test/functional/fixtures/middle,"..join(paths[1:],",")', '--cmd', cmd}, env={XDG_CONFIG_HOME='test/functional/fixtures/'},
+          args_rm={'runtimepath'},
+    }
   end
 
 
@@ -574,7 +577,66 @@ describe('user config init', function()
     eq(funcs.fnamemodify(init_lua_path, ':p'), eval('$MYVIMRC'))
   end)
 
-  describe 'with explicitly provided config'(function()
+  describe('with existing .exrc in cwd', function()
+    local exrc_path = '.exrc'
+    local xstate = 'Xstate'
+
+    before_each(function()
+      write_file(init_lua_path, [[
+        vim.o.exrc = true
+        vim.g.from_exrc = 0
+      ]])
+      mkdir_p(xstate .. pathsep .. (is_os('win') and 'nvim-data' or 'nvim'))
+      write_file(exrc_path, [[
+        let g:from_exrc = 1
+      ]])
+    end)
+
+    after_each(function()
+      os.remove(exrc_path)
+      rmdir(xstate)
+    end)
+
+    it('loads .exrc #13501', function()
+      clear{ args_rm = {'-u'}, env={ XDG_CONFIG_HOME=xconfig, XDG_STATE_HOME=xstate } }
+      -- The .exrc file is not trusted, and the prompt is skipped because there is no UI.
+      eq(0, eval('g:from_exrc'))
+
+      local screen = Screen.new(50, 8)
+      screen:attach()
+      funcs.termopen({nvim_prog})
+      screen:expect({ any = pesc('[i]gnore, (v)iew, (d)eny, (a)llow:') })
+      -- `i` to enter Terminal mode, `a` to allow
+      feed('ia')
+      screen:expect([[
+                                                          |
+        ~                                                 |
+        ~                                                 |
+        ~                                                 |
+        ~                                                 |
+        [No Name]                       0,0-1          All|
+                                                          |
+        -- TERMINAL --                                    |
+      ]])
+      feed(':echo g:from_exrc<CR>')
+      screen:expect([[
+                                                          |
+        ~                                                 |
+        ~                                                 |
+        ~                                                 |
+        ~                                                 |
+        [No Name]                       0,0-1          All|
+        1                                                 |
+        -- TERMINAL --                                    |
+      ]])
+
+      clear{ args_rm = {'-u'}, env={ XDG_CONFIG_HOME=xconfig, XDG_STATE_HOME=xstate } }
+      -- The .exrc file is now trusted.
+      eq(1, eval('g:from_exrc'))
+    end)
+  end)
+
+  describe('with explicitly provided config', function()
     local custom_lua_path = table.concat({xhome, 'custom.lua'}, pathsep)
     before_each(function()
       write_file(custom_lua_path, [[
@@ -589,7 +651,7 @@ describe('user config init', function()
     end)
   end)
 
-  describe 'VIMRC also exists'(function()
+  describe('VIMRC also exists', function()
     before_each(function()
       write_file(table.concat({xconfig, 'nvim', 'init.vim'}, pathsep), [[
       let g:vim_rc = 1
@@ -635,7 +697,7 @@ describe('runtime:', function()
   end)
 
   it('loads plugin/*.lua from start packages', function()
-    local plugin_path = table.concat({xconfig, 'nvim', 'pack', 'catagory',
+    local plugin_path = table.concat({xconfig, 'nvim', 'pack', 'category',
     'start', 'test_plugin'}, pathsep)
     local plugin_folder_path = table.concat({plugin_path, 'plugin'}, pathsep)
     local plugin_file_path = table.concat({plugin_folder_path, 'plugin.lua'},
@@ -663,7 +725,7 @@ describe('runtime:', function()
   end)
 
   it('loads plugin/*.lua from site packages', function()
-    local nvimdata = iswin() and "nvim-data" or "nvim"
+    local nvimdata = is_os('win') and "nvim-data" or "nvim"
     local plugin_path = table.concat({xdata, nvimdata, 'site', 'pack', 'xa', 'start', 'yb'}, pathsep)
     local plugin_folder_path = table.concat({plugin_path, 'plugin'}, pathsep)
     local plugin_after_path = table.concat({plugin_path, 'after', 'plugin'}, pathsep)

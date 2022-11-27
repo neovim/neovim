@@ -19,7 +19,7 @@ endfunc
 " Get text on the screen, including composing characters.
 " ScreenLines(lnum, width) or
 " ScreenLines([start, end], width)
-function! ScreenLines(lnum, width) abort
+func ScreenLines(lnum, width) abort
   redraw!
   if type(a:lnum) == v:t_list
     let start = a:lnum[0]
@@ -33,9 +33,9 @@ function! ScreenLines(lnum, width) abort
     let lines += [join(map(range(1, a:width), 'screenstring(l, v:val)'), '')]
   endfor
   return lines
-endfunction
+endfunc
 
-function! ScreenAttrs(lnum, width) abort
+func ScreenAttrs(lnum, width) abort
   redraw!
   if type(a:lnum) == v:t_list
     let start = a:lnum[0]
@@ -49,16 +49,16 @@ function! ScreenAttrs(lnum, width) abort
     let attrs += [map(range(1, a:width), 'screenattr(l, v:val)')]
   endfor
   return attrs
-endfunction
+endfunc
 
-function! NewWindow(height, width) abort
+func NewWindow(height, width) abort
   exe a:height . 'new'
   exe a:width . 'vsp'
   set winfixwidth winfixheight
   redraw!
-endfunction
+endfunc
 
-function! CloseWindow() abort
+func CloseWindow() abort
   bw!
   redraw!
-endfunction
+endfunc

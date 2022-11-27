@@ -9,7 +9,7 @@ on:
       - 'master'
       - 'release-[0-9]+.[0-9]+'
     paths-ignore:
-      - 'runtime/doc/*'
+      - 'contrib/**'
 
 # Cancel any in-progress CI runs for a PR if it is updated
 concurrency:
@@ -19,7 +19,7 @@ concurrency:
 jobs:
   lint:
     if: (github.event_name == 'pull_request' && github.base_ref == 'master') || (github.event_name == 'push' && github.ref == 'refs/heads/master')
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     timeout-minutes: 10
     env:
       CC: gcc
@@ -31,32 +31,16 @@ jobs:
 
       - name: Install apt packages
         run: |
-          sudo add-apt-repository ppa:neovim-ppa/stable
           sudo apt-get update
           sudo apt-get install -y \
             autoconf \
             automake \
             build-essential \
             cmake \
-            flake8 \
             gettext \
-            libluajit-5.1-dev \
-            libmsgpack-dev \
-            libtermkey-dev \
             libtool-bin \
-            libtree-sitter-dev \
-            libunibilium-dev \
-            libuv1-dev \
-            libvterm-dev \
             locales \
-            lua-busted \
             lua-check \
-            lua-filesystem \
-            lua-inspect \
-            lua-lpeg \
-            lua-luv-dev \
-            lua-nvim \
-            luajit \
             ninja-build \
             pkg-config
 
@@ -96,30 +80,32 @@ jobs:
         run: ./ci/before_script.sh
 
       - if: "!cancelled()"
+        name: Determine if run should be aborted
+        id: abort_job
+        run: echo "status=${{ job.status }}" >> $GITHUB_OUTPUT
+
+      - if: success() || failure() && steps.abort_job.outputs.status == 'success'
         name: lintstylua
-        uses: JohnnyMorganz/stylua-action@1.0.0
+        uses: JohnnyMorganz/stylua-action@v1
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
+          version: latest
           args: --check runtime/
 
-      - if: "!cancelled()"
+      - if: success() || failure() && steps.abort_job.outputs.status == 'success'
         name: lintlua
         run: make lintlua
 
-      - if: "!cancelled()"
-        name: lintpy
-        run: make lintpy
-
-      - if: "!cancelled()"
+      - if: success() || failure() && steps.abort_job.outputs.status == 'success'
         name: lintsh
         run: make lintsh
 
-      - if: "!cancelled()"
+      - if: success() || failure() && steps.abort_job.outputs.status == 'success'
         name: uncrustify
         run: |
           ${{ env.CACHE_UNCRUSTIFY }} -c ./src/uncrustify.cfg -q --replace --no-backup $(find ./src/nvim -name "*.[ch]")
 
-      - if: "!cancelled()"
+      - if: success() || failure() && steps.abort_job.outputs.status == 'success'
         name: suggester / uncrustify
         uses: reviewdog/action-suggester@v1
         with:
@@ -127,7 +113,7 @@ jobs:
           tool_name: uncrustify
           cleanup: false
 
-      - if: "!cancelled()"
+      - if: success() || failure() && steps.abort_job.outputs.status == 'success'
         name: check uncrustify
         run: |
           git diff --color --exit-code
@@ -142,7 +128,7 @@ jobs:
     # of the bundled dependencies.
 
     if: (github.event_name == 'pull_request' && github.base_ref == 'master') || (github.event_name == 'push' && github.ref == 'refs/heads/master')
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     timeout-minutes: 10
     env:
       CC: gcc
@@ -172,7 +158,6 @@ jobs:
             libvterm-dev \
             locales \
             lua-busted \
-            lua-check \
             lua-filesystem \
             lua-inspect \
             lua-lpeg \
@@ -196,10 +181,15 @@ jobs:
         run: ./ci/run_tests.sh build_nvim
 
       - if: "!cancelled()"
+        name: Determine if run should be aborted
+        id: abort_job
+        run: echo "status=${{ job.status }}" >> $GITHUB_OUTPUT
+
+      - if: success() || failure() && steps.abort_job.outputs.status == 'success'
         name: lintc
         run: make lintc
 
-      - if: "!cancelled()"
+      - if: success() || failure() && steps.abort_job.outputs.status == 'success'
         name: check-single-includes
         run: make check-single-includes
 
@@ -213,19 +203,19 @@ jobs:
       matrix:
         include:
           - flavor: asan
-            cc: clang-13
-            runner: ubuntu-20.04
+            cc: clang
+            runner: ubuntu-22.04
             os: linux
           - flavor: tsan
-            cc: clang-13
-            runner: ubuntu-20.04
+            cc: clang
+            runner: ubuntu-22.04
             os: linux
           - flavor: uchar
             cc: gcc
-            runner: ubuntu-20.04
+            runner: ubuntu-22.04
             os: linux
           - cc: clang
-            runner: macos-11
+            runner: macos-12
             os: osx
 
             # functionaltest-lua is our dumping ground for non-mainline configurations.
@@ -236,7 +226,7 @@ jobs:
             # 3. No treesitter parsers installed.
           - flavor: functionaltest-lua
             cc: gcc
-            runner: ubuntu-20.04
+            runner: ubuntu-22.04
             os: linux
             cmake: minimum_required
     runs-on: ${{ matrix.runner }}
@@ -254,7 +244,7 @@ jobs:
         if: matrix.os == 'linux'
         run: |
           sudo apt-get update
-          sudo apt-get install -y autoconf automake build-essential cmake cpanminus cscope gcc-multilib gdb gettext language-pack-tr libtool-bin locales ninja-build pkg-config python3 python3-pip python3-setuptools unzip valgrind xclip
+          sudo apt-get install -y autoconf automake build-essential cmake cpanminus gcc-multilib gdb gettext language-pack-tr libtool-bin locales ninja-build pkg-config python3 python3-pip python3-setuptools unzip valgrind xclip
 
       - name: Install minimum required version of cmake
         if: matrix.cmake == 'minimum_required'
@@ -273,14 +263,6 @@ jobs:
             echo "Unexpected CMake version: $cmake_version"
             exit 1
           }
-
-      - name: Install new clang
-        if: matrix.flavor == 'asan' || matrix.flavor == 'tsan'
-        run: |
-          wget https://apt.llvm.org/llvm.sh
-          chmod a+x llvm.sh
-          sudo ./llvm.sh 13
-          rm llvm.sh
 
       - name: Install brew packages
         if: matrix.os == 'osx'
@@ -304,19 +286,24 @@ jobs:
       - name: Build
         run: ./ci/run_tests.sh build_nvim
 
-      - if: matrix.flavor != 'tsan' && matrix.flavor != 'functionaltest-lua' && !cancelled()
+      - if: "!cancelled()"
+        name: Determine if run should be aborted
+        id: abort_job
+        run: echo "status=${{ job.status }}" >> $GITHUB_OUTPUT
+
+      - if: matrix.flavor != 'tsan' && matrix.flavor != 'functionaltest-lua' && (success() || failure() && steps.abort_job.outputs.status == 'success')
         name: Unittests
         run: ./ci/run_tests.sh unittests
 
-      - if: matrix.flavor != 'tsan' && !cancelled()
+      - if: matrix.flavor != 'tsan' && (success() || failure() && steps.abort_job.outputs.status == 'success')
         name: Functionaltests
         run: ./ci/run_tests.sh functionaltests
 
-      - if: "!cancelled()"
+      - if: success() || failure() && steps.abort_job.outputs.status == 'success'
         name: Oldtests
         run: ./ci/run_tests.sh oldtests
 
-      - if: "!cancelled()"
+      - if: success() || failure() && steps.abort_job.outputs.status == 'success'
         name: Install nvim
         run: ./ci/run_tests.sh install_nvim
 
@@ -327,9 +314,8 @@ jobs:
     runs-on: windows-2019
     timeout-minutes: 45
     env:
-      DEPS_BUILD_DIR: ${{ format('{0}/nvim-deps', github.workspace) }}
-      DEPS_PREFIX: ${{ format('{0}/nvim-deps/usr', github.workspace) }}
-      CMAKE_BUILD_TYPE: "RelWithDebInfo"
+      DEPS_BUILD_DIR: ${{ github.workspace }}/nvim-deps
+      DEPS_PREFIX: ${{ github.workspace }}/nvim-deps/usr
     name: windows (MSVC_64)
     steps:
       - uses: actions/checkout@v3
@@ -337,22 +323,60 @@ jobs:
       - uses: actions/cache@v3
         with:
           path: ${{ env.DEPS_BUILD_DIR }}
-          key: ${{ hashFiles('cmake.deps\**') }}
+          key: windows-${{ hashFiles('cmake.deps/**') }}
+
+      - name: Set env
+        run: ./.github/workflows/env.ps1
 
       - name: Build deps
-        run: .\ci\build.ps1 -BuildDeps
+        run: |
+          cmake -S cmake.deps -B $env:DEPS_BUILD_DIR -G Ninja -DCMAKE_BUILD_TYPE='RelWithDebInfo'
+          cmake --build $env:DEPS_BUILD_DIR
 
       - name: Build nvim
-        run: .\ci\build.ps1 -Build
+        run: |
+          cmake -B build -G Ninja -DCMAKE_BUILD_TYPE='RelWithDebInfo' -DDEPS_PREFIX="$env:DEPS_PREFIX"
+          cmake --build build
 
       - name: Install test deps
-        continue-on-error: false
-        run: .\ci\build.ps1 -EnsureTestDeps
+        run: |
+          $PSNativeCommandArgumentPassing = 'Legacy'
+
+          & build\bin\nvim.exe "--version"
+
+          # Ensure that the "win32" feature is set.
+          & build\bin\nvim -u NONE --headless -c 'exe !has(\"win32\").\"cq\"'
+
+          python -m pip install pynvim
+          # Sanity check
+          python -c "import pynvim; print(str(pynvim))"
+
+          gem.cmd install --pre neovim
+          Get-Command -CommandType Application neovim-ruby-host.bat
+
+          node --version
+          npm.cmd --version
+
+          npm.cmd install -g neovim
+          Get-Command -CommandType Application neovim-node-host.cmd
+          npm.cmd link neovim
 
       - if: "!cancelled()"
-        name: Run tests
-        run: .\ci\build.ps1 -Test
+        name: Determine if run should be aborted
+        id: abort_job
+        run: |
+          "status=${{ job.status }}" >> $env:GITHUB_OUTPUT
 
-      - if: "!cancelled()"
-        name: Run old tests
-        run: .\ci\build.ps1 -TestOld
+      - if: success() || failure() && steps.abort_job.outputs.status == 'success'
+        name: Run functionaltests
+        run: cmake --build build --target functionaltest
+
+      - if: success() || failure() && steps.abort_job.outputs.status == 'success'
+        name: Run oldtests
+        run: |
+          # Add MSYS to path, required for e.g. `find` used in test scripts.
+          # But would break functionaltests, where its `more` would be used then.
+          $OldPath = $env:PATH
+          $env:PATH = "C:\msys64\usr\bin;$env:PATH"
+          & "C:\msys64\mingw64\bin\mingw32-make.exe" -C $(Convert-Path src\nvim\testdir) VERBOSE=1
+          $env:PATH = $OldPath

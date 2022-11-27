@@ -10,16 +10,22 @@
 --    test/functional/vimscript/functions_spec.lua
 
 local helpers = require('test.functional.helpers')(after_each)
+local Screen = require('test.functional.ui.screen')
 
 local lfs = require('lfs')
 local clear = helpers.clear
 local eq = helpers.eq
 local exc_exec = helpers.exc_exec
+local exec_lua = helpers.exec_lua
+local exec_capture = helpers.exec_capture
 local eval = helpers.eval
 local command = helpers.command
 local write_file = helpers.write_file
 local meths = helpers.meths
 local sleep = helpers.sleep
+local matches = helpers.matches
+local pcall_err = helpers.pcall_err
+local assert_alive = helpers.assert_alive
 local poke_eventloop = helpers.poke_eventloop
 local feed = helpers.feed
 
@@ -65,13 +71,13 @@ describe("backtick expansion", function()
   end)
 
   it("with default 'shell'", function()
-    if helpers.iswin() then
+    if helpers.is_os('win') then
       command(":silent args `dir /b *2`")
     else
       command(":silent args `echo ***2`")
     end
     eq({ "file2", }, eval("argv()"))
-    if helpers.iswin() then
+    if helpers.is_os('win') then
       command(":silent args `dir /s/b *4`")
       eq({ "subdir\\file4", }, eval("map(argv(), 'fnamemodify(v:val, \":.\")')"))
     else
@@ -142,5 +148,75 @@ describe('List support code', function()
     if t_dur >= dur / 8 then
       eq(nil, ('Took too long to cancel: %g >= %g'):format(t_dur, dur / 8))
     end
+  end)
+end)
+
+describe("uncaught exception", function()
+  before_each(clear)
+  after_each(function()
+    os.remove('throw1.vim')
+    os.remove('throw2.vim')
+    os.remove('throw3.vim')
+  end)
+
+  it('is not forgotten #13490', function()
+    command('autocmd BufWinEnter * throw "i am error"')
+    eq('i am error', exc_exec('try | new | endtry'))
+
+    -- Like Vim, throwing here aborts the processing of the script, but does not stop :runtime!
+    -- from processing the others.
+    -- Only the first thrown exception should be rethrown from the :try below, though.
+    for i = 1, 3 do
+      write_file('throw' .. i .. '.vim', ([[
+        let result ..= '%d'
+        throw 'throw%d'
+        let result ..= 'X'
+      ]]):format(i, i))
+    end
+    command('set runtimepath+=. | let result = ""')
+    eq('throw1', exc_exec('try | runtime! throw*.vim | endtry'))
+    eq('123', eval('result'))
+  end)
+end)
+
+describe('listing functions using :function', function()
+  before_each(clear)
+
+  it('works for lambda functions with <lambda> #20466', function()
+    command('let A = {-> 1}')
+    local num = exec_capture('echo A'):match("function%('<lambda>(%d+)'%)")
+    eq(([[
+   function <lambda>%s(...)
+1  return 1
+   endfunction]]):format(num), exec_capture(('function <lambda>%s'):format(num)))
+  end)
+
+  -- FIXME: If the same function is deleted, the crash still happens. #20790
+  it('does not crash if another function is deleted while listing', function()
+    local screen = Screen.new(80, 24)
+    screen:attach()
+    matches('Vim%(function%):E454: function list was modified', pcall_err(exec_lua, [=[
+      vim.cmd([[
+        func Func1()
+        endfunc
+        func Func2()
+        endfunc
+        func Func3()
+        endfunc
+      ]])
+
+      local ns = vim.api.nvim_create_namespace('test')
+
+      vim.ui_attach(ns, { ext_messages = true }, function(event, _, content)
+        if event == 'msg_show' and content[1][2] == 'function Func1()'  then
+          vim.cmd('delfunc Func3')
+        end
+      end)
+
+      vim.cmd('function')
+
+      vim.ui_detach(ns)
+    ]=]))
+    assert_alive()
   end)
 end)

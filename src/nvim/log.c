@@ -9,21 +9,27 @@
 //
 
 #include <assert.h>
+#include <errno.h>
 #include <inttypes.h>
 #include <stdarg.h>
 #include <stdbool.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <time.h>
 #include <uv.h>
 
 #include "auto/config.h"
+#include "nvim/ascii.h"
 #include "nvim/eval.h"
+#include "nvim/globals.h"
 #include "nvim/log.h"
-#include "nvim/main.h"
+#include "nvim/memory.h"
 #include "nvim/message.h"
 #include "nvim/os/os.h"
+#include "nvim/os/stdpaths_defs.h"
 #include "nvim/os/time.h"
 #include "nvim/path.h"
-#include "nvim/types.h"
 
 /// Cached location of the expanded log file path decided by log_path_init().
 static char log_file_path[MAXPATHL + 1] = { 0 };
@@ -60,16 +66,16 @@ static bool log_try_create(char *fname)
 static void log_path_init(void)
 {
   size_t size = sizeof(log_file_path);
-  expand_env((char_u *)"$" ENV_LOGFILE, (char_u *)log_file_path, (int)size - 1);
+  expand_env("$" ENV_LOGFILE, log_file_path, (int)size - 1);
   if (strequal("$" ENV_LOGFILE, log_file_path)
       || log_file_path[0] == '\0'
-      || os_isdir((char_u *)log_file_path)
+      || os_isdir(log_file_path)
       || !log_try_create(log_file_path)) {
     // Make $XDG_STATE_HOME if it does not exist.
     char *loghome = get_xdg_home(kXDGStateHome);
     char *failed_dir = NULL;
     bool log_dir_failure = false;
-    if (!os_isdir((char_u *)loghome)) {
+    if (!os_isdir(loghome)) {
       log_dir_failure = (os_mkdir_recurse(loghome, 0700, &failed_dir) != 0);
     }
     XFREE_CLEAR(loghome);

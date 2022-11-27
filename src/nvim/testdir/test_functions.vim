@@ -19,6 +19,27 @@ func Test_00_bufexists()
   call assert_equal(0, bufexists('Xfoo'))
 endfunc
 
+func Test_has()
+  throw 'Skipped: Nvim has removed some features'
+  call assert_equal(1, has('eval'))
+  call assert_equal(1, has('eval', 1))
+
+  if has('unix')
+    call assert_equal(1, or(has('ttyin'), 1))
+    call assert_equal(0, and(has('ttyout'), 0))
+    call assert_equal(1, has('multi_byte_encoding'))
+  endif
+  call assert_equal(1, has('vcon', 1))
+  call assert_equal(1, has('mouse_gpm_enabled', 1))
+
+  call assert_equal(0, has('nonexistent'))
+  call assert_equal(0, has('nonexistent', 1))
+
+  " Will we ever have patch 9999?
+  let ver = 'patch-' .. v:version / 100 .. '.' .. v:version % 100 .. '.9999'
+  call assert_equal(0, has(ver))
+endfunc
+
 func Test_empty()
   call assert_equal(1, empty(''))
   call assert_equal(0, empty('a'))
@@ -67,9 +88,11 @@ func Test_len()
   call assert_equal(2, len('ab'))
 
   call assert_equal(0, len([]))
+  call assert_equal(0, len(v:_null_list))
   call assert_equal(2, len([2, 1]))
 
   call assert_equal(0, len({}))
+  call assert_equal(0, len(v:_null_dict))
   call assert_equal(2, len({'a': 1, 'b': 2}))
 
   " call assert_fails('call len(v:none)', 'E701:')
@@ -87,6 +110,10 @@ func Test_max()
 
   call assert_fails('call max(1)', 'E712:')
   " call assert_fails('call max(v:none)', 'E712:')
+
+  " check we only get one error
+  call assert_fails('call max([#{}, [1]])', ['E728:', 'E728:'])
+  call assert_fails('call max(#{a: {}, b: [1]})', ['E728:', 'E728:'])
 endfunc
 
 func Test_min()
@@ -100,6 +127,11 @@ func Test_min()
 
   call assert_fails('call min(1)', 'E712:')
   " call assert_fails('call min(v:none)', 'E712:')
+  call assert_fails('call min([1, {}])', 'E728:')
+
+  " check we only get one error
+  call assert_fails('call min([[1], #{}])', ['E745:', 'E745:'])
+  call assert_fails('call min(#{a: [1], b: #{}})', ['E745:', 'E745:'])
 endfunc
 
 func Test_strwidth()
@@ -188,7 +220,7 @@ func Test_str2nr()
   if has('float')
     call assert_fails('call str2nr(1.2)', 'E806:')
   endif
-  call assert_fails('call str2nr(10, [])', 'E474:')
+  call assert_fails('call str2nr(10, [])', 'E745:')
 endfunc
 
 func Test_strftime()
@@ -381,6 +413,8 @@ func Test_strpart()
   call assert_equal('abcdefg', 'abcdefg'->strpart(-2))
   call assert_equal('fg', strpart('abcdefg', 5, 4))
   call assert_equal('defg', strpart('abcdefg', 3))
+  call assert_equal('', strpart('abcdefg', 10))
+  call assert_fails("let s=strpart('abcdef', [])", 'E745:')
 
   call assert_equal('lép', strpart('éléphant', 2, 4))
   call assert_equal('léphant', strpart('éléphant', 2))
@@ -462,6 +496,12 @@ func Test_tolower()
   " invalid memory.
   call tolower("\xC0\x80\xC0")
   call tolower("123\xC0\x80\xC0")
+
+  " Test in latin1 encoding
+  let save_enc = &encoding
+  " set encoding=latin1
+  call assert_equal("abc", tolower("ABC"))
+  let &encoding = save_enc
 endfunc
 
 func Test_toupper()
@@ -533,11 +573,27 @@ func Test_toupper()
   " invalid memory.
   call toupper("\xC0\x80\xC0")
   call toupper("123\xC0\x80\xC0")
+
+  " Test in latin1 encoding
+  let save_enc = &encoding
+  " set encoding=latin1
+  call assert_equal("ABC", toupper("abc"))
+  let &encoding = save_enc
 endfunc
 
 func Test_tr()
   call assert_equal('foo', tr('bar', 'bar', 'foo'))
   call assert_equal('zxy', 'cab'->tr('abc', 'xyz'))
+  call assert_fails("let s=tr([], 'abc', 'def')", 'E730:')
+  call assert_fails("let s=tr('abc', [], 'def')", 'E730:')
+  call assert_fails("let s=tr('abc', 'abc', [])", 'E730:')
+  call assert_fails("let s=tr('abcd', 'abcd', 'def')", 'E475:')
+  " set encoding=latin1
+  call assert_fails("let s=tr('abcd', 'abcd', 'def')", 'E475:')
+  call assert_equal('hEllO', tr('hello', 'eo', 'EO'))
+  call assert_equal('hello', tr('hello', 'xy', 'ab'))
+  call assert_fails('call tr("abc", "123", "₁₂")', 'E475:')
+  set encoding=utf8
 endfunc
 
 " Tests for the mode() function
@@ -752,13 +808,41 @@ func Test_mode()
   delfunction OperatorFunc
 endfunc
 
+" Test for append()
 func Test_append()
   enew!
   split
   call append(0, ["foo"])
+  call append(1, [])
+  call append(1, v:_null_list)
+  call assert_equal(['foo', ''], getline(1, '$'))
   split
   only
   undo
+  undo
+
+  " Using $ instead of '$' must give an error
+  call assert_fails("call append($, 'foobar')", 'E116:')
+
+  call assert_fails("call append({}, '')", ['E728:', 'E728:'])
+endfunc
+
+" Test for setline()
+func Test_setline()
+  new
+  call setline(0, ["foo"])
+  call setline(0, [])
+  call setline(0, v:_null_list)
+  call setline(1, ["bar"])
+  call setline(1, [])
+  call setline(1, v:_null_list)
+  call setline(2, [])
+  call setline(2, v:_null_list)
+  call setline(3, [])
+  call setline(3, v:_null_list)
+  call setline(2, ["baz"])
+  call assert_equal(['bar', 'baz'], getline(1, '$'))
+  close!
 endfunc
 
 func Test_getbufvar()
@@ -791,6 +875,10 @@ func Test_getbufvar()
 
   call assert_equal(0, getbufvar(bnr, '&autoindent'))
   call assert_equal(0, getbufvar(bnr, '&autoindent', 1))
+
+  " Set and get a buffer-local variable
+  call setbufvar(bnr, 'bufvar_test', ['one', 'two'])
+  call assert_equal(['one', 'two'], getbufvar(bnr, 'bufvar_test'))
 
   " Open new window with forced option values
   set fileformats=unix,dos
@@ -830,6 +918,8 @@ func Test_stridx()
   call assert_equal(-1, stridx('hello', 'l', 10))
   call assert_equal(2,  stridx('hello', 'll'))
   call assert_equal(-1, stridx('hello', 'hello world'))
+  call assert_fails("let n=stridx('hello', [])", 'E730:')
+  call assert_fails("let n=stridx([], 'l')", 'E730:')
 endfunc
 
 func Test_strridx()
@@ -846,6 +936,8 @@ func Test_strridx()
   call assert_equal(-1, strridx('hello', 'l', -1))
   call assert_equal(2,  strridx('hello', 'll'))
   call assert_equal(-1, strridx('hello', 'hello world'))
+  call assert_fails("let n=strridx('hello', [])", 'E730:')
+  call assert_fails("let n=strridx([], 'l')", 'E730:')
 endfunc
 
 func Test_match_func()
@@ -855,6 +947,13 @@ func Test_match_func()
   call assert_equal(-1, match('testing', 'ing', 8))
   call assert_equal(1, match(['vim', 'testing', 'execute'], 'ing'))
   call assert_equal(-1, match(['vim', 'testing', 'execute'], 'img'))
+  call assert_fails("let x=match('vim', [])", 'E730:')
+  call assert_equal(3, match(['a', 'b', 'c', 'a'], 'a', 1))
+  call assert_equal(-1, match(['a', 'b', 'c', 'a'], 'a', 5))
+  call assert_equal(4,  match('testing', 'ing', -1))
+  call assert_fails("let x=match('testing', 'ing', 0, [])", 'E745:')
+  call assert_equal(-1, match(v:_null_list, 2))
+  call assert_equal(-1, match('abc', '\\%('))
 endfunc
 
 func Test_matchend()
@@ -961,6 +1060,7 @@ func Test_byte2line_line2byte()
   bw!
 endfunc
 
+" Test for byteidx() and byteidxcomp() functions
 func Test_byteidx()
   let a = '.é.' " one char of two bytes
   call assert_equal(0, byteidx(a, 0))
@@ -980,6 +1080,7 @@ func Test_byteidx()
   call assert_equal(4, b->byteidx(2))
   call assert_equal(5, b->byteidx(3))
   call assert_equal(-1, b->byteidx(4))
+  call assert_fails("call byteidx([], 0)", 'E730:')
 
   call assert_equal(0, b->byteidxcomp(0))
   call assert_equal(1, b->byteidxcomp(1))
@@ -987,6 +1088,7 @@ func Test_byteidx()
   call assert_equal(4, b->byteidxcomp(3))
   call assert_equal(5, b->byteidxcomp(4))
   call assert_equal(-1, b->byteidxcomp(5))
+  call assert_fails("call byteidxcomp([], 0)", 'E730:')
 endfunc
 
 " Test for charidx()
@@ -997,7 +1099,9 @@ func Test_charidx()
   call assert_equal(2, charidx(a, 4))
   call assert_equal(3, charidx(a, 7))
   call assert_equal(-1, charidx(a, 8))
+  call assert_equal(-1, charidx(a, -1))
   call assert_equal(-1, charidx('', 0))
+  call assert_equal(-1, charidx(v:_null_string, 0))
 
   " count composing characters
   call assert_equal(0, charidx(a, 0, 1))
@@ -1010,8 +1114,8 @@ func Test_charidx()
   call assert_fails('let x = charidx([], 1)', 'E474:')
   call assert_fails('let x = charidx("abc", [])', 'E474:')
   call assert_fails('let x = charidx("abc", 1, [])', 'E474:')
-  call assert_fails('let x = charidx("abc", 1, -1)', 'E474:')
-  call assert_fails('let x = charidx("abc", 1, 2)', 'E474:')
+  call assert_fails('let x = charidx("abc", 1, -1)', 'E1023:')
+  call assert_fails('let x = charidx("abc", 1, 2)', 'E1023:')
 endfunc
 
 func Test_count()
@@ -1096,6 +1200,10 @@ func Test_filewritable()
 
   call assert_equal(0, filewritable('doesnotexist'))
 
+  call mkdir('Xdir')
+  call assert_equal(2, filewritable('Xdir'))
+  call delete('Xdir', 'd')
+
   call delete('Xfilewritable')
   bw!
 endfunc
@@ -1179,6 +1287,7 @@ func Test_col()
   norm gg4|mx6|mY2|
   call assert_equal(2, col('.'))
   call assert_equal(7, col('$'))
+  call assert_equal(2, col('v'))
   call assert_equal(4, col("'x"))
   call assert_equal(6, col("'Y"))
   call assert_equal(2, [1, 2]->col())
@@ -1189,6 +1298,47 @@ func Test_col()
   call assert_equal(0, col([2, '$']))
   call assert_equal(0, col([1, 100]))
   call assert_equal(0, col([1]))
+  call assert_equal(0, col(v:_null_list))
+  call assert_fails('let c = col({})', 'E1222:')
+  call assert_fails('let c = col(".", [])', 'E1210:')
+
+  " test for getting the visual start column
+  func T()
+    let g:Vcol = col('v')
+    return ''
+  endfunc
+  let g:Vcol = 0
+  xmap <expr> <F2> T()
+  exe "normal gg3|ve\<F2>"
+  call assert_equal(3, g:Vcol)
+  xunmap <F2>
+  delfunc T
+
+  " Test for the visual line start and end marks '< and '>
+  call setline(1, ['one', 'one two', 'one two three'])
+  "normal! ggVG
+  call feedkeys("ggVG\<Esc>", 'xt')
+  call assert_equal(1, col("'<"))
+  call assert_equal(14, col("'>"))
+  " Delete the last line of the visually selected region
+  $d
+  call assert_notequal(14, col("'>"))
+
+  " Test with 'virtualedit'
+  set virtualedit=all
+  call cursor(1, 10)
+  call assert_equal(4, col('.'))
+  set virtualedit&
+
+  " Test for getting the column number in another window
+  let winid = win_getid()
+  new
+  call win_execute(winid, 'normal 1G$')
+  call assert_equal(3, col('.', winid))
+  call win_execute(winid, 'normal 2G')
+  call assert_equal(8, col('$', winid))
+  call assert_equal(0, col('.', 5001))
+
   bw!
 endfunc
 
@@ -1232,12 +1382,15 @@ endfunc
 
 " Test for the inputdialog() function
 func Test_inputdialog()
-  CheckNotGui
-
-  call feedkeys(":let v=inputdialog('Q:', 'xx', 'yy')\<CR>\<CR>", 'xt')
-  call assert_equal('xx', v)
-  call feedkeys(":let v=inputdialog('Q:', 'xx', 'yy')\<CR>\<Esc>", 'xt')
-  call assert_equal('yy', v)
+  if has('gui_running')
+    call assert_fails('let v=inputdialog([], "xx")', 'E730:')
+    call assert_fails('let v=inputdialog("Q", [])', 'E730:')
+  else
+    call feedkeys(":let v=inputdialog('Q:', 'xx', 'yy')\<CR>\<CR>", 'xt')
+    call assert_equal('xx', v)
+    call feedkeys(":let v=inputdialog('Q:', 'xx', 'yy')\<CR>\<Esc>", 'xt')
+    call assert_equal('yy', v)
+  endif
 endfunc
 
 " Test for inputlist()
@@ -1270,15 +1423,11 @@ func Test_inputlist()
   call assert_equal(2, c)
 
   " Use mouse to make a selection
-  " call test_setmouse(&lines - 3, 2)
-  call nvim_input_mouse('left', 'press', '', 0, &lines - 4, 1) " set mouse position
-  call getchar() " discard mouse event but keep mouse position
+  call Ntest_setmouse(&lines - 3, 2)
   call feedkeys(":let c = inputlist(['Select color:', '1. red', '2. green', '3. blue'])\<cr>\<LeftMouse>", 'tx')
   call assert_equal(1, c)
   " Mouse click outside of the list
-  " call test_setmouse(&lines - 6, 2)
-  call nvim_input_mouse('left', 'press', '', 0, &lines - 7, 1) " set mouse position
-  call getchar() " discard mouse event but keep mouse position
+  call Ntest_setmouse(&lines - 6, 2)
   call feedkeys(":let c = inputlist(['Select color:', '1. red', '2. green', '3. blue'])\<cr>\<LeftMouse>", 'tx')
   call assert_equal(-2, c)
 
@@ -1290,6 +1439,10 @@ func Test_balloon_show()
 
   " This won't do anything but must not crash either.
   call balloon_show('hi!')
+  if !has('gui_running')
+    call balloon_show(range(3))
+    call balloon_show([])
+  endif
 endfunc
 
 func Test_shellescape()
@@ -1420,12 +1573,15 @@ func Test_trim()
   call assert_equal("vim", trim("  vim  ", " ", 0))
   call assert_equal("vim  ", trim("  vim  ", " ", 1))
   call assert_equal("  vim", trim("  vim  ", " ", 2))
-  call assert_fails('call trim("  vim  ", " ", [])', 'E745:')
-  call assert_fails('call trim("  vim  ", " ", -1)', 'E475:')
-  call assert_fails('call trim("  vim  ", " ", 3)', 'E475:')
+  call assert_fails('eval trim("  vim  ", " ", [])', 'E745:')
+  call assert_fails('eval trim("  vim  ", " ", -1)', 'E475:')
+  call assert_fails('eval trim("  vim  ", " ", 3)', 'E475:')
+  call assert_fails('eval trim("  vim  ", 0)', 'E475:')
 
   let chars = join(map(range(1, 0x20) + [0xa0], {n -> n->nr2char()}), '')
   call assert_equal("x", trim(chars . "x" . chars))
+
+  call assert_fails('let c=trim([])', 'E730:')
 endfunc
 
 " Test for reg_recording() and reg_executing()
@@ -1534,13 +1690,12 @@ func Test_getchar()
   call assert_equal(0, getchar(0))
 
   call setline(1, 'xxxx')
-  " call test_setmouse(1, 3)
-  " let v:mouse_win = 9
-  " let v:mouse_winid = 9
-  " let v:mouse_lnum = 9
-  " let v:mouse_col = 9
-  " call feedkeys("\<S-LeftMouse>", '')
-  call nvim_input_mouse('left', 'press', 'S', 0, 0, 2)
+  call Ntest_setmouse(1, 3)
+  let v:mouse_win = 9
+  let v:mouse_winid = 9
+  let v:mouse_lnum = 9
+  let v:mouse_col = 9
+  call feedkeys("\<S-LeftMouse>", '')
   call assert_equal("\<S-LeftMouse>", getchar())
   call assert_equal(1, v:mouse_win)
   call assert_equal(win_getid(1), v:mouse_winid)
@@ -1598,11 +1753,11 @@ func Test_libcall_libcallnr()
   call assert_equal(4, 'abcd'->libcallnr(libc, 'strlen'))
   call assert_equal(char2nr('A'), char2nr('a')->libcallnr(libc, 'toupper'))
 
-  call assert_fails("call libcall(libc, 'Xdoesnotexist_', '')", 'E364:')
-  call assert_fails("call libcallnr(libc, 'Xdoesnotexist_', '')", 'E364:')
+  call assert_fails("call libcall(libc, 'Xdoesnotexist_', '')", ['', 'E364:'])
+  call assert_fails("call libcallnr(libc, 'Xdoesnotexist_', '')", ['', 'E364:'])
 
-  call assert_fails("call libcall('Xdoesnotexist_', 'getenv', 'HOME')", 'E364:')
-  call assert_fails("call libcallnr('Xdoesnotexist_', 'strlen', 'abcd')", 'E364:')
+  call assert_fails("call libcall('Xdoesnotexist_', 'getenv', 'HOME')", ['', 'E364:'])
+  call assert_fails("call libcallnr('Xdoesnotexist_', 'strlen', 'abcd')", ['', 'E364:'])
 endfunc
 
 sandbox function Fsandbox()
@@ -1619,6 +1774,10 @@ func Test_func_sandbox()
 
   call assert_fails('call Fsandbox()', 'E48:')
   delfunc Fsandbox
+
+  " From a sandbox try to set a predefined variable (which cannot be modified
+  " from a sandbox)
+  call assert_fails('sandbox let v:lnum = 10', 'E794:')
 endfunc
 
 func EditAnotherFile()
@@ -1697,6 +1856,62 @@ func Test_platform_name()
   endif
 endfunc
 
+" Test confirm({msg} [, {choices} [, {default} [, {type}]]])
+func Test_confirm()
+  " requires a UI to be active
+  throw 'Skipped: use test/functional/vimscript/input_spec.lua'
+  CheckUnix
+  CheckNotGui
+
+  call feedkeys('o', 'L')
+  let a = confirm('Press O to proceed')
+  call assert_equal(1, a)
+
+  call feedkeys('y', 'L')
+  let a = 'Are you sure?'->confirm("&Yes\n&No")
+  call assert_equal(1, a)
+
+  call feedkeys('n', 'L')
+  let a = confirm('Are you sure?', "&Yes\n&No")
+  call assert_equal(2, a)
+
+  " confirm() should return 0 when pressing CTRL-C.
+  call feedkeys("\<C-C>", 'L')
+  let a = confirm('Are you sure?', "&Yes\n&No")
+  call assert_equal(0, a)
+
+  " <Esc> requires another character to avoid it being seen as the start of an
+  " escape sequence.  Zero should be harmless.
+  eval "\<Esc>0"->feedkeys('L')
+  let a = confirm('Are you sure?', "&Yes\n&No")
+  call assert_equal(0, a)
+
+  " Default choice is returned when pressing <CR>.
+  call feedkeys("\<CR>", 'L')
+  let a = confirm('Are you sure?', "&Yes\n&No")
+  call assert_equal(1, a)
+
+  call feedkeys("\<CR>", 'L')
+  let a = confirm('Are you sure?', "&Yes\n&No", 2)
+  call assert_equal(2, a)
+
+  call feedkeys("\<CR>", 'L')
+  let a = confirm('Are you sure?', "&Yes\n&No", 0)
+  call assert_equal(0, a)
+
+  " Test with the {type} 4th argument
+  for type in ['Error', 'Question', 'Info', 'Warning', 'Generic']
+    call feedkeys('y', 'L')
+    let a = confirm('Are you sure?', "&Yes\n&No\n", 1, type)
+    call assert_equal(1, a)
+  endfor
+
+  call assert_fails('call confirm([])', 'E730:')
+  call assert_fails('call confirm("Are you sure?", [])', 'E730:')
+  call assert_fails('call confirm("Are you sure?", "&Yes\n&No\n", [])', 'E745:')
+  call assert_fails('call confirm("Are you sure?", "&Yes\n&No\n", 0, [])', 'E730:')
+endfunc
+
 func Test_readdir()
   call mkdir('Xdir')
   call writefile([], 'Xdir/foo.txt')
@@ -1724,7 +1939,7 @@ func Test_readdir()
   let files = readdir('Xdir', {x -> len(add(l, x)) == 2 ? -1 : 1})
   call assert_equal(1, len(files))
 
-  call delete('Xdir', 'rf')
+  eval 'Xdir'->delete('rf')
 endfunc
 
 func Test_delete_rf()
@@ -1756,6 +1971,7 @@ func Test_call()
   call assert_equal(3, 'len'->call([123]))
   call assert_fails("call call('len', 123)", 'E714:')
   call assert_equal(0, call('', []))
+  call assert_equal(0, call('len', v:_null_list))
 
   function Mylen() dict
      return len(self.data)
@@ -1763,10 +1979,15 @@ func Test_call()
   let mydict = {'data': [0, 1, 2, 3], 'len': function("Mylen")}
   eval mydict.len->call([], mydict)->assert_equal(4)
   call assert_fails("call call('Mylen', [], 0)", 'E715:')
+  call assert_fails('call foo', 'E107:')
 endfunc
 
 func Test_char2nr()
   call assert_equal(12354, char2nr('あ', 1))
+  call assert_equal(120, 'x'->char2nr())
+  " set encoding=latin1
+  call assert_equal(120, 'x'->char2nr())
+  set encoding=utf-8
 endfunc
 
 func Test_charclass()
@@ -1819,15 +2040,333 @@ func Test_bufadd_bufload()
   exe 'bwipe ' .. buf2
   call assert_equal(0, bufexists(buf2))
 
+  " When 'buftype' is "nofile" then bufload() does not read the file.
+  " Other values too.
+  for val in [['nofile', 0],
+            \ ['nowrite', 1],
+            \ ['acwrite', 1],
+            \ ['quickfix', 0],
+            \ ['help', 1],
+            "\ ['terminal', 0],
+            \ ['prompt', 0],
+            "\ ['popup', 0],
+            \ ]
+    bwipe! XotherName
+    let buf = bufadd('XotherName')
+    call setbufvar(buf, '&bt', val[0])
+    call bufload(buf)
+    call assert_equal(val[1] ? ['some', 'text'] : [''], getbufline(buf, 1, '$'), val[0])
+  endfor
+
   bwipe someName
   bwipe XotherName
   call assert_equal(0, bufexists('someName'))
   call delete('XotherName')
 endfunc
 
+func Test_range()
+  " destructuring
+  let [x, y] = range(2)
+  call assert_equal([0, 1], [x, y])
+
+  " index
+  call assert_equal(4, range(1, 10)[3])
+
+  " add()
+  call assert_equal([0, 1, 2, 3], add(range(3), 3))
+  call assert_equal([0, 1, 2, [0, 1, 2]], add([0, 1, 2], range(3)))
+  call assert_equal([0, 1, 2, [0, 1, 2]], add(range(3), range(3)))
+
+  " append()
+  new
+  call append('.', range(5))
+  call assert_equal(['', '0', '1', '2', '3', '4'], getline(1, '$'))
+  bwipe!
+
+  " appendbufline()
+  new
+  call appendbufline(bufnr(''), '.', range(5))
+  call assert_equal(['0', '1', '2', '3', '4', ''], getline(1, '$'))
+  bwipe!
+
+  " call()
+  func TwoArgs(a, b)
+    return [a:a, a:b]
+  endfunc
+  call assert_equal([0, 1], call('TwoArgs', range(2)))
+
+  " col()
+  new
+  call setline(1, ['foo', 'bar'])
+  call assert_equal(2, col(range(1, 2)))
+  bwipe!
+
+  " complete()
+  execute "normal! a\<C-r>=[complete(col('.'), range(10)), ''][1]\<CR>"
+  " complete_info()
+  execute "normal! a\<C-r>=[complete(col('.'), range(10)), ''][1]\<CR>\<C-r>=[complete_info(range(5)), ''][1]\<CR>"
+
+  " copy()
+  call assert_equal([1, 2, 3], copy(range(1, 3)))
+
+  " count()
+  call assert_equal(0, count(range(0), 3))
+  call assert_equal(0, count(range(2), 3))
+  call assert_equal(1, count(range(5), 3))
+
+  " cursor()
+  new
+  call setline(1, ['aaa', 'bbb', 'ccc'])
+  call cursor(range(1, 2))
+  call assert_equal([2, 1], [col('.'), line('.')])
+  bwipe!
+
+  " deepcopy()
+  call assert_equal([1, 2, 3], deepcopy(range(1, 3)))
+
+  " empty()
+  call assert_true(empty(range(0)))
+  call assert_false(empty(range(2)))
+
+  " execute()
+  new
+  call setline(1, ['aaa', 'bbb', 'ccc'])
+  call execute(range(3))
+  call assert_equal(2, line('.'))
+  bwipe!
+
+  " extend()
+  call assert_equal([1, 2, 3, 4], extend([1], range(2, 4)))
+  call assert_equal([1, 2, 3, 4], extend(range(1, 1), range(2, 4)))
+  call assert_equal([1, 2, 3, 4], extend(range(1, 1), [2, 3, 4]))
+
+  " filter()
+  call assert_equal([1, 3], filter(range(5), 'v:val % 2'))
+
+  " funcref()
+  call assert_equal([0, 1], funcref('TwoArgs', range(2))())
+
+  " function()
+  call assert_equal([0, 1], function('TwoArgs', range(2))())
+
+  " garbagecollect()
+  let thelist = [1, range(2), 3]
+  let otherlist = range(3)
+  call test_garbagecollect_now()
+
+  " get()
+  call assert_equal(4, get(range(1, 10), 3))
+  call assert_equal(-1, get(range(1, 10), 42, -1))
+
+  " index()
+  call assert_equal(1, index(range(1, 5), 2))
+  call assert_fails("echo index([1, 2], 1, [])", 'E745:')
+
+  " inputlist()
+  call feedkeys(":let result = inputlist(range(10))\<CR>1\<CR>", 'x')
+  call assert_equal(1, result)
+  call feedkeys(":let result = inputlist(range(3, 10))\<CR>1\<CR>", 'x')
+  call assert_equal(1, result)
+
+  " insert()
+  call assert_equal([42, 1, 2, 3, 4, 5], insert(range(1, 5), 42))
+  call assert_equal([42, 1, 2, 3, 4, 5], insert(range(1, 5), 42, 0))
+  call assert_equal([1, 42, 2, 3, 4, 5], insert(range(1, 5), 42, 1))
+  call assert_equal([1, 2, 3, 4, 42, 5], insert(range(1, 5), 42, 4))
+  call assert_equal([1, 2, 3, 4, 42, 5], insert(range(1, 5), 42, -1))
+  call assert_equal([1, 2, 3, 4, 5, 42], insert(range(1, 5), 42, 5))
+
+  " join()
+  call assert_equal('0 1 2 3 4', join(range(5)))
+
+  " json_encode()
+  " call assert_equal('[0,1,2,3]', json_encode(range(4)))
+  call assert_equal('[0, 1, 2, 3]', json_encode(range(4)))
+
+  " len()
+  call assert_equal(0, len(range(0)))
+  call assert_equal(2, len(range(2)))
+  call assert_equal(5, len(range(0, 12, 3)))
+  call assert_equal(4, len(range(3, 0, -1)))
+
+  " list2str()
+  call assert_equal('ABC', list2str(range(65, 67)))
+  call assert_fails('let s = list2str(5)', 'E474:')
+
+  " lock()
+  let thelist = range(5)
+  lockvar thelist
+
+  " map()
+  call assert_equal([0, 2, 4, 6, 8], map(range(5), 'v:val * 2'))
+
+  " match()
+  call assert_equal(3, match(range(5), 3))
+
+  " matchaddpos()
+  highlight MyGreenGroup ctermbg=green guibg=green
+  call matchaddpos('MyGreenGroup', range(line('.'), line('.')))
+
+  " matchend()
+  call assert_equal(4, matchend(range(5), '4'))
+  call assert_equal(3, matchend(range(1, 5), '4'))
+  call assert_equal(-1, matchend(range(1, 5), '42'))
+
+  " matchstrpos()
+  call assert_equal(['4', 4, 0, 1], matchstrpos(range(5), '4'))
+  call assert_equal(['4', 3, 0, 1], matchstrpos(range(1, 5), '4'))
+  call assert_equal(['', -1, -1, -1], matchstrpos(range(1, 5), '42'))
+
+  " max() reverse()
+  call assert_equal(0, max(range(0)))
+  call assert_equal(0, max(range(10, 9)))
+  call assert_equal(9, max(range(10)))
+  call assert_equal(18, max(range(0, 20, 3)))
+  call assert_equal(20, max(range(20, 0, -3)))
+  call assert_equal(99999, max(range(100000)))
+  call assert_equal(99999, max(range(99999, 0, -1)))
+  call assert_equal(99999, max(reverse(range(100000))))
+  call assert_equal(99999, max(reverse(range(99999, 0, -1))))
+
+  " min() reverse()
+  call assert_equal(0, min(range(0)))
+  call assert_equal(0, min(range(10, 9)))
+  call assert_equal(5, min(range(5, 10)))
+  call assert_equal(5, min(range(5, 10, 3)))
+  call assert_equal(2, min(range(20, 0, -3)))
+  call assert_equal(0, min(range(100000)))
+  call assert_equal(0, min(range(99999, 0, -1)))
+  call assert_equal(0, min(reverse(range(100000))))
+  call assert_equal(0, min(reverse(range(99999, 0, -1))))
+
+  " remove()
+  call assert_equal(1, remove(range(1, 10), 0))
+  call assert_equal(2, remove(range(1, 10), 1))
+  call assert_equal(9, remove(range(1, 10), 8))
+  call assert_equal(10, remove(range(1, 10), 9))
+  call assert_equal(10, remove(range(1, 10), -1))
+  call assert_equal([3, 4, 5], remove(range(1, 10), 2, 4))
+
+  " repeat()
+  call assert_equal([0, 1, 2, 0, 1, 2], repeat(range(3), 2))
+  call assert_equal([0, 1, 2], repeat(range(3), 1))
+  call assert_equal([], repeat(range(3), 0))
+  call assert_equal([], repeat(range(5, 4), 2))
+  call assert_equal([], repeat(range(5, 4), 0))
+
+  " reverse()
+  call assert_equal([2, 1, 0], reverse(range(3)))
+  call assert_equal([0, 1, 2, 3], reverse(range(3, 0, -1)))
+  call assert_equal([9, 8, 7, 6, 5, 4, 3, 2, 1, 0], reverse(range(10)))
+  call assert_equal([20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10], reverse(range(10, 20)))
+  call assert_equal([16, 13, 10], reverse(range(10, 18, 3)))
+  call assert_equal([19, 16, 13, 10], reverse(range(10, 19, 3)))
+  call assert_equal([19, 16, 13, 10], reverse(range(10, 20, 3)))
+  call assert_equal([11, 14, 17, 20], reverse(range(20, 10, -3)))
+  call assert_equal([], reverse(range(0)))
+
+  " TODO: setpos()
+  " new
+  " call setline(1, repeat([''], bufnr('')))
+  " call setline(bufnr('') + 1, repeat('x', bufnr('') * 2 + 6))
+  " call setpos('x', range(bufnr(''), bufnr('') + 3))
+  " bwipe!
+
+  " setreg()
+  call setreg('a', range(3))
+  call assert_equal("0\n1\n2\n", getreg('a'))
+
+  " settagstack()
+  call settagstack(1, #{items : range(4)})
+
+  " sign_define()
+  call assert_fails("call sign_define(range(5))", "E715:")
+  call assert_fails("call sign_placelist(range(5))", "E715:")
+
+  " sign_undefine()
+  " call assert_fails("call sign_undefine(range(5))", "E908:")
+  call assert_fails("call sign_undefine(range(5))", "E155:")
+
+  " sign_unplacelist()
+  call assert_fails("call sign_unplacelist(range(5))", "E715:")
+
+  " sort()
+  call assert_equal([0, 1, 2, 3, 4, 5], sort(range(5, 0, -1)))
+
+  " string()
+  call assert_equal('[0, 1, 2, 3, 4]', string(range(5)))
+
+  " taglist() with 'tagfunc'
+  func TagFunc(pattern, flags, info)
+    return range(10)
+  endfunc
+  set tagfunc=TagFunc
+  call assert_fails("call taglist('asdf')", 'E987:')
+  set tagfunc=
+
+  " term_start()
+  if has('terminal') && has('termguicolors')
+    call assert_fails('call term_start(range(3, 4))', 'E474:')
+    let g:terminal_ansi_colors = range(16)
+    if has('win32')
+      let cmd = "cmd /c dir"
+    else
+      let cmd = "ls"
+    endif
+    call assert_fails('call term_start("' .. cmd .. '", #{term_finish: "close"})', 'E475:')
+    unlet g:terminal_ansi_colors
+  endif
+
+  " type()
+  call assert_equal(v:t_list, type(range(5)))
+
+  " uniq()
+  call assert_equal([0, 1, 2, 3, 4], uniq(range(5)))
+
+  " errors
+  call assert_fails('let x=range(2, 8, 0)', 'E726:')
+  call assert_fails('let x=range(3, 1)', 'E727:')
+  call assert_fails('let x=range(1, 3, -2)', 'E727:')
+  call assert_fails('let x=range([])', 'E745:')
+  call assert_fails('let x=range(1, [])', 'E745:')
+  call assert_fails('let x=range(1, 4, [])', 'E745:')
+endfunc
+
+func Test_garbagecollect_now_fails()
+  let v:testing = 0
+  call assert_fails('call test_garbagecollect_now()', 'E1142:')
+  let v:testing = 1
+endfunc
+
 " Test for the eval() function
 func Test_eval()
   call assert_fails("call eval('5 a')", 'E488:')
+endfunc
+
+" Test for the keytrans() function
+func Test_keytrans()
+  call assert_equal('<Space>', keytrans(' '))
+  call assert_equal('<lt>', keytrans('<'))
+  call assert_equal('<lt>Tab>', keytrans('<Tab>'))
+  call assert_equal('<Tab>', keytrans("\<Tab>"))
+  call assert_equal('<C-V>', keytrans("\<C-V>"))
+  call assert_equal('<BS>', keytrans("\<BS>"))
+  call assert_equal('<Home>', keytrans("\<Home>"))
+  call assert_equal('<C-Home>', keytrans("\<C-Home>"))
+  call assert_equal('<M-Home>', keytrans("\<M-Home>"))
+  call assert_equal('<C-Space>', keytrans("\<C-Space>"))
+  call assert_equal('<M-Space>', keytrans("\<*M-Space>"))
+  call assert_equal('<M-x>', "\<*M-x>"->keytrans())
+  call assert_equal('<C-I>', "\<*C-I>"->keytrans())
+  call assert_equal('<S-3>', "\<*S-3>"->keytrans())
+  call assert_equal('π', 'π'->keytrans())
+  call assert_equal('<M-π>', "\<M-π>"->keytrans())
+  call assert_equal('ě', 'ě'->keytrans())
+  call assert_equal('<M-ě>', "\<M-ě>"->keytrans())
+  call assert_equal('', ''->keytrans())
+  call assert_equal('', v:_null_string->keytrans())
+  call assert_fails('call keytrans(1)', 'E1174:')
+  call assert_fails('call keytrans()', 'E119:')
 endfunc
 
 " Test for the nr2char() function
@@ -1840,6 +2379,13 @@ func Test_nr2char()
 
   call assert_equal("\x80\xfc\b" .. nr2char(0x100000), eval('"\<M-' .. nr2char(0x100000) .. '>"'))
   call assert_equal("\x80\xfc\b" .. nr2char(0x40000000), eval('"\<M-' .. nr2char(0x40000000) .. '>"'))
+endfunc
+
+" Test for screenattr(), screenchar() and screenchars() functions
+func Test_screen_functions()
+  call assert_equal(-1, screenattr(-1, -1))
+  call assert_equal(-1, screenchar(-1, -1))
+  call assert_equal([], screenchars(-1, -1))
 endfunc
 
 " Test for getcurpos() and setpos()
@@ -1872,9 +2418,7 @@ endfunc
 func Test_getmousepos()
   enew!
   call setline(1, "\t\t\t1234")
-  " call test_setmouse(1, 1)
-  call nvim_input_mouse('left', 'press', '', 0, 0, 0)
-  call getchar() " wait for and consume the mouse press
+  call Ntest_setmouse(1, 1)
   call assert_equal(#{
         \ screenrow: 1,
         \ screencol: 1,
@@ -1884,9 +2428,7 @@ func Test_getmousepos()
         \ line: 1,
         \ column: 1,
         \ }, getmousepos())
-  " call test_setmouse(1, 25)
-  call nvim_input_mouse('left', 'press', '', 0, 0, 24)
-  call getchar() " wait for and consume the mouse press
+  call Ntest_setmouse(1, 25)
   call assert_equal(#{
         \ screenrow: 1,
         \ screencol: 25,
@@ -1896,9 +2438,7 @@ func Test_getmousepos()
         \ line: 1,
         \ column: 4,
         \ }, getmousepos())
-  " call test_setmouse(1, 50)
-  call nvim_input_mouse('left', 'press', '', 0, 0, 49)
-  call getchar() " wait for and consume the mouse press
+  call Ntest_setmouse(1, 50)
   call assert_equal(#{
         \ screenrow: 1,
         \ screencol: 50,
@@ -1911,9 +2451,7 @@ func Test_getmousepos()
 
   " If the mouse is positioned past the last buffer line, "line" and "column"
   " should act like it's positioned on the last buffer line.
-  " call test_setmouse(2, 25)
-  call nvim_input_mouse('left', 'press', '', 0, 1, 24)
-  call getchar() " wait for and consume the mouse press
+  call Ntest_setmouse(2, 25)
   call assert_equal(#{
         \ screenrow: 2,
         \ screencol: 25,
@@ -1923,9 +2461,7 @@ func Test_getmousepos()
         \ line: 1,
         \ column: 4,
         \ }, getmousepos())
-  " call test_setmouse(2, 50)
-  call nvim_input_mouse('left', 'press', '', 0, 1, 49)
-  call getchar() " wait for and consume the mouse press
+  call Ntest_setmouse(2, 50)
   call assert_equal(#{
         \ screenrow: 2,
         \ screencol: 50,
@@ -1938,6 +2474,28 @@ func Test_getmousepos()
   bwipe!
 endfunc
 
+" Test for glob()
+func Test_glob()
+  call assert_equal('', glob(v:_null_string))
+  call assert_equal('', globpath(v:_null_string, v:_null_string))
+  call assert_fails("let x = globpath(&rtp, 'syntax/c.vim', [])", 'E745:')
+
+  call writefile([], 'Xglob1')
+  call writefile([], 'XGLOB2')
+  set wildignorecase
+  " Sort output of glob() otherwise we end up with different
+  " ordering depending on whether file system is case-sensitive.
+  call assert_equal(['XGLOB2', 'Xglob1'], sort(glob('Xglob[12]', 0, 1)))
+  " wildignorecase shall be applied even when the pattern contains no wildcards.
+  call assert_equal('XGLOB2', glob('xglob2'))
+  set wildignorecase&
+
+  call delete('Xglob1')
+  call delete('XGLOB2')
+
+  call assert_fails("call glob('*', 0, {})", 'E728:')
+endfunc
+
 func HasDefault(msg = 'msg')
   return a:msg
 endfunc
@@ -1945,5 +2503,47 @@ endfunc
 func Test_default_arg_value()
   call assert_equal('msg', HasDefault())
 endfunc
+
+" Test for gettext()
+func Test_gettext()
+  call assert_fails('call gettext(1)', 'E475:')
+endfunc
+
+func Test_builtin_check()
+  call assert_fails('let g:["trim"] = {x -> " " .. x}', 'E704:')
+  call assert_fails('let g:.trim = {x -> " " .. x}', 'E704:')
+  call assert_fails('let l:["trim"] = {x -> " " .. x}', 'E704:')
+  call assert_fails('let l:.trim = {x -> " " .. x}', 'E704:')
+  let lines =<< trim END
+    vim9script
+    var s:trim = (x) => " " .. x
+  END
+  " call CheckScriptFailure(lines, 'E704:')
+
+  call assert_fails('call extend(g:, #{foo: { -> "foo" }})', 'E704:')
+  let g:bar = 123
+  call extend(g:, #{bar: { -> "foo" }}, "keep")
+  call assert_fails('call extend(g:, #{bar: { -> "foo" }}, "force")', 'E704:')
+  unlet g:bar
+
+  call assert_fails('call extend(l:, #{foo: { -> "foo" }})', 'E704:')
+  let bar = 123
+  call extend(l:, #{bar: { -> "foo" }}, "keep")
+  call assert_fails('call extend(l:, #{bar: { -> "foo" }}, "force")', 'E704:')
+  unlet bar
+
+  call assert_fails('call extend(g:, #{foo: function("extend")})', 'E704:')
+  let g:bar = 123
+  call extend(g:, #{bar: function("extend")}, "keep")
+  call assert_fails('call extend(g:, #{bar: function("extend")}, "force")', 'E704:')
+  unlet g:bar
+
+  call assert_fails('call extend(l:, #{foo: function("extend")})', 'E704:')
+  let bar = 123
+  call extend(l:, #{bar: function("extend")}, "keep")
+  call assert_fails('call extend(l:, #{bar: function("extend")}, "force")', 'E704:')
+  unlet bar
+endfunc
+
 
 " vim: shiftwidth=2 sts=2 expandtab

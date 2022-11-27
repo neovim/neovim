@@ -1,6 +1,8 @@
 #ifndef NVIM_POPUPMENU_H
 #define NVIM_POPUPMENU_H
 
+#include <stdbool.h>
+
 #include "nvim/grid_defs.h"
 #include "nvim/macros.h"
 #include "nvim/types.h"
@@ -15,6 +17,14 @@ typedef struct {
 } pumitem_T;
 
 EXTERN ScreenGrid pum_grid INIT(= SCREEN_GRID_INIT);
+
+/// state for pum_ext_select_item.
+EXTERN struct {
+  bool active;
+  int item;
+  bool insert;
+  bool finish;
+} pum_want;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "popupmenu.h.generated.h"

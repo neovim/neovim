@@ -5,7 +5,7 @@ if exists('s:did_load')
   set directory&
   set directory^=.
   set display=
-  set fillchars=vert:\|,fold:-
+  set fillchars=vert:\|,foldsep:\|,fold:-
   set formatoptions=tcq
   set fsync
   set laststatus=1
@@ -44,6 +44,11 @@ mapclear
 mapclear!
 aunmenu *
 tlunmenu *
+
+" roughly equivalent to test_setmouse() in Vim
+func Ntest_setmouse(row, col)
+  call nvim_input_mouse('move', '', '', 0, a:row - 1, a:col - 1)
+endfunc
 
 " Prevent Nvim log from writing to stderr.
 let $NVIM_LOG_FILE = exists($NVIM_LOG_FILE) ? $NVIM_LOG_FILE : 'Xnvim.log'

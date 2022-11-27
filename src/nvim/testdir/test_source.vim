@@ -1,5 +1,8 @@
 " Tests for the :source command.
 
+source check.vim
+source view_util.vim
+
 func Test_source_autocmd()
   call writefile([
 	\ 'let did_source = 1',
@@ -85,6 +88,26 @@ func Test_source_autocmd_sfile()
   call assert_equal('7', g:Slnum)
   call assert_equal('8', g:Sflnum)
   call delete('Xscript.vim')
+endfunc
+
+func Test_source_error()
+  call assert_fails('scriptencoding utf-8', 'E167:')
+  call assert_fails('finish', 'E168:')
+  " call assert_fails('scriptversion 2', 'E984:')
+endfunc
+
+" Test for sourcing a script recursively
+func Test_nested_script()
+  CheckRunVimInTerminal
+  call writefile([':source! Xscript.vim', ''], 'Xscript.vim')
+  let buf = RunVimInTerminal('', {'rows': 6})
+  call term_wait(buf)
+  call term_sendkeys(buf, ":set noruler\n")
+  call term_sendkeys(buf, ":source! Xscript.vim\n")
+  call term_wait(buf)
+  call WaitForAssert({-> assert_match('E22: Scripts nested too deep\s*', term_getline(buf, 6))})
+  call delete('Xscript.vim')
+  call StopVimInTerminal(buf)
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab

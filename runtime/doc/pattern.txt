@@ -372,7 +372,7 @@ Vim includes two regexp engines:
 1. An old, backtracking engine that supports everything.
 2. A new, NFA engine that works much faster on some patterns, possibly slower
    on some patterns.
-
+								 *E1281*
 Vim will automatically select the right engine for you.  However, if you run
 into a problem or want to specifically select one engine or the other, you can
 prepend one of the following to the pattern:

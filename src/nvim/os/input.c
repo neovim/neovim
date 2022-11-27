@@ -3,25 +3,33 @@
 
 #include <assert.h>
 #include <stdbool.h>
+#include <stdint.h>
+#include <stdio.h>
 #include <string.h>
 #include <uv.h>
 
 #include "nvim/api/private/defs.h"
 #include "nvim/ascii.h"
 #include "nvim/autocmd.h"
+#include "nvim/buffer_defs.h"
 #include "nvim/event/loop.h"
+#include "nvim/event/multiqueue.h"
 #include "nvim/event/rstream.h"
+#include "nvim/event/stream.h"
 #include "nvim/getchar.h"
+#include "nvim/gettext.h"
+#include "nvim/globals.h"
 #include "nvim/keycodes.h"
+#include "nvim/log.h"
+#include "nvim/macros.h"
 #include "nvim/main.h"
-#include "nvim/mbyte.h"
-#include "nvim/memory.h"
 #include "nvim/msgpack_rpc/channel.h"
+#include "nvim/option_defs.h"
 #include "nvim/os/input.h"
+#include "nvim/os/time.h"
 #include "nvim/profile.h"
-#include "nvim/screen.h"
+#include "nvim/rbuffer.h"
 #include "nvim/state.h"
-#include "nvim/ui.h"
 #include "nvim/vim.h"
 
 #define READ_BUFFER_SIZE 0xfff
@@ -38,6 +46,8 @@ static RBuffer *input_buffer = NULL;
 static bool input_eof = false;
 static int global_fd = -1;
 static bool blocking = false;
+static int cursorhold_time = 0;  ///< time waiting for CursorHold event
+static int cursorhold_tb_change_cnt = 0;  ///< tb_change_cnt when waiting started
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "os/input.c.generated.h"
@@ -97,13 +107,25 @@ static void create_cursorhold_event(bool events_enabled)
   multiqueue_put(main_loop.events, cursorhold_event, 0);
 }
 
+static void restart_cursorhold_wait(int tb_change_cnt)
+{
+  cursorhold_time = 0;
+  cursorhold_tb_change_cnt = tb_change_cnt;
+}
+
 /// Low level input function
 ///
 /// wait until either the input buffer is non-empty or, if `events` is not NULL
 /// until `events` is non-empty.
 int os_inchar(uint8_t *buf, int maxlen, int ms, int tb_change_cnt, MultiQueue *events)
 {
+  // This check is needed so that feeding typeahead from RPC can prevent CursorHold.
+  if (tb_change_cnt != cursorhold_tb_change_cnt) {
+    restart_cursorhold_wait(tb_change_cnt);
+  }
+
   if (maxlen && rbuffer_size(input_buffer)) {
+    restart_cursorhold_wait(tb_change_cnt);
     return (int)rbuffer_read(input_buffer, (char *)buf, (size_t)maxlen);
   }
 
@@ -118,18 +140,22 @@ int os_inchar(uint8_t *buf, int maxlen, int ms, int tb_change_cnt, MultiQueue *e
       return 0;
     }
   } else {
-    if ((result = inbuf_poll((int)p_ut, events)) == kInputNone) {
+    uint64_t wait_start = os_hrtime();
+    cursorhold_time = MIN(cursorhold_time, (int)p_ut);
+    if ((result = inbuf_poll((int)p_ut - cursorhold_time, events)) == kInputNone) {
       if (read_stream.closed && silent_mode) {
         // Drained eventloop & initial input; exit silent/batch-mode (-es/-Es).
         read_error_exit();
       }
-
+      restart_cursorhold_wait(tb_change_cnt);
       if (trigger_cursorhold() && !typebuf_changed(tb_change_cnt)) {
         create_cursorhold_event(events == main_loop.events);
       } else {
         before_blocking();
         result = inbuf_poll(-1, events);
       }
+    } else {
+      cursorhold_time += (int)((os_hrtime() - wait_start) / 1000000);
     }
   }
 
@@ -141,6 +167,7 @@ int os_inchar(uint8_t *buf, int maxlen, int ms, int tb_change_cnt, MultiQueue *e
   }
 
   if (maxlen && rbuffer_size(input_buffer)) {
+    restart_cursorhold_wait(tb_change_cnt);
     // Safe to convert rbuffer_read to int, it will never overflow since we use
     // relatively small buffers.
     return (int)rbuffer_read(input_buffer, (char *)buf, (size_t)maxlen);
@@ -287,36 +314,35 @@ static uint8_t check_multiclick(int code, int grid, int row, int col)
   static int orig_mouse_row = 0;
   static uint64_t orig_mouse_time = 0;  // time of previous mouse click
 
-  if (code == KE_LEFTRELEASE
-      || code == KE_RIGHTRELEASE
-      || code == KE_MIDDLERELEASE
-      || code == KE_MOUSEDOWN
-      || code == KE_MOUSEUP
-      || code == KE_MOUSELEFT
-      || code == KE_MOUSERIGHT) {
+  if ((code >= KE_MOUSEDOWN && code <= KE_MOUSERIGHT) || code == KE_MOUSEMOVE) {
     return 0;
   }
-  uint64_t mouse_time = os_hrtime();    // time of current mouse click (ns)
 
-  // compute the time elapsed since the previous mouse click and
-  // convert p_mouse from ms to ns
-  uint64_t timediff = mouse_time - orig_mouse_time;
-  uint64_t mouset = (uint64_t)p_mouset * 1000000;
-  if (code == orig_mouse_code
-      && timediff < mouset
-      && orig_num_clicks != 4
-      && orig_mouse_grid == grid
-      && orig_mouse_col == col
-      && orig_mouse_row == row) {
-    orig_num_clicks++;
-  } else {
-    orig_num_clicks = 1;
+  // For click events the number of clicks is updated.
+  if (code == KE_LEFTMOUSE || code == KE_RIGHTMOUSE || code == KE_MIDDLEMOUSE) {
+    uint64_t mouse_time = os_hrtime();    // time of current mouse click (ns)
+    // compute the time elapsed since the previous mouse click and
+    // convert p_mouse from ms to ns
+    uint64_t timediff = mouse_time - orig_mouse_time;
+    uint64_t mouset = (uint64_t)p_mouset * 1000000;
+    if (code == orig_mouse_code
+        && timediff < mouset
+        && orig_num_clicks != 4
+        && orig_mouse_grid == grid
+        && orig_mouse_col == col
+        && orig_mouse_row == row) {
+      orig_num_clicks++;
+    } else {
+      orig_num_clicks = 1;
+    }
+    orig_mouse_code = code;
+    orig_mouse_time = mouse_time;
   }
-  orig_mouse_code = code;
+  // For drag and release events the number of clicks is kept.
+
   orig_mouse_grid = grid;
   orig_mouse_col = col;
   orig_mouse_row = row;
-  orig_mouse_time = mouse_time;
 
   uint8_t modifiers = 0;
   if (orig_num_clicks == 2) {
@@ -347,7 +373,8 @@ static unsigned int handle_mouse_event(char **ptr, uint8_t *buf, unsigned int bu
 
   if (type != KS_EXTRA
       || !((mouse_code >= KE_LEFTMOUSE && mouse_code <= KE_RIGHTRELEASE)
-           || (mouse_code >= KE_MOUSEDOWN && mouse_code <= KE_MOUSERIGHT))) {
+           || (mouse_code >= KE_MOUSEDOWN && mouse_code <= KE_MOUSERIGHT)
+           || mouse_code == KE_MOUSEMOVE)) {
     return bufsize;
   }
 
@@ -450,9 +477,8 @@ static InbufPollResult inbuf_poll(int ms, MultiQueue *events)
 
   if (input_ready(events)) {
     return kInputAvail;
-  } else {
-    return input_eof ? kInputEof : kInputNone;
   }
+  return input_eof ? kInputEof : kInputNone;
 }
 
 void input_done(void)

@@ -15,18 +15,14 @@ function(BuildLuajit)
     set(_luajit_TARGET "luajit")
   endif()
 
+  if(USE_EXISTING_SRC_DIR)
+    unset(LUAJIT_URL)
+  endif()
   ExternalProject_Add(${_luajit_TARGET}
-    PREFIX ${DEPS_BUILD_DIR}
     URL ${LUAJIT_URL}
+    URL_HASH SHA256=${LUAJIT_SHA256}
+    DOWNLOAD_NO_PROGRESS TRUE
     DOWNLOAD_DIR ${DEPS_DOWNLOAD_DIR}/luajit
-    DOWNLOAD_COMMAND ${CMAKE_COMMAND}
-      -DPREFIX=${DEPS_BUILD_DIR}
-      -DDOWNLOAD_DIR=${DEPS_DOWNLOAD_DIR}/luajit
-      -DURL=${LUAJIT_URL}
-      -DEXPECTED_SHA256=${LUAJIT_SHA256}
-      -DTARGET=${_luajit_TARGET}
-      -DUSE_EXISTING_SRC_DIR=${USE_EXISTING_SRC_DIR}
-      -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/DownloadAndExtractFile.cmake
     CONFIGURE_COMMAND "${_luajit_CONFIGURE_COMMAND}"
     BUILD_IN_SOURCE 1
     BUILD_COMMAND "${_luajit_BUILD_COMMAND}"

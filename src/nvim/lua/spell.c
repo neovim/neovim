@@ -1,15 +1,25 @@
 // This is an open source non-commercial project. Dear PVS-Studio, please check
 // it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
+#include <assert.h>
 #include <lauxlib.h>
+#include <limits.h>
 #include <lua.h>
+#include <stdbool.h>
+#include <stddef.h>
 
+#include "nvim/ascii.h"
+#include "nvim/buffer_defs.h"
+#include "nvim/gettext.h"
+#include "nvim/globals.h"
+#include "nvim/highlight_defs.h"
 #include "nvim/lua/spell.h"
+#include "nvim/message.h"
 #include "nvim/spell.h"
-#include "nvim/vim.h"
+#include "nvim/types.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "lua/spell.c.generated.h"
+# include "lua/spell.c.generated.h"  // IWYU pragma: export
 #endif
 
 int nlua_spell_check(lua_State *lstate)

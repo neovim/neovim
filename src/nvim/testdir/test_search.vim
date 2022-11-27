@@ -294,6 +294,9 @@ func Test_searchpair()
   new
   call setline(1, ['other code', 'here [', ' [', ' " cursor here', ' ]]'])
 
+  " should not give an error for using "42"
+  call assert_equal(0, searchpair('a', 'b', 'c', '', 42))
+
   4
   call assert_equal(3, searchpair('\[', '', ']', 'bW'))
   call assert_equal([0, 3, 2, 0], getpos('.'))
@@ -897,9 +900,7 @@ func Test_incsearch_cmdline_modifier()
 endfunc
 
 func Test_incsearch_scrolling()
-  if !CanRunVimInTerminal()
-    throw 'Skipped: cannot make screendumps'
-  endif
+  CheckRunVimInTerminal
   call assert_equal(0, &scrolloff)
   call writefile([
 	\ 'let dots = repeat(".", 120)',
@@ -956,24 +957,24 @@ func Test_incsearch_search_dump()
   call delete('Xis_search_script')
 endfunc
 
-func Test_hlsearch_block_visual_match()
+func Test_hlsearch_dump()
+  CheckOption hlsearch
   CheckScreendump
 
-  let lines =<< trim END
-    set hlsearch
-    call setline(1, ['aa', 'bbbb', 'cccccc'])
-  END
-  call writefile(lines, 'Xhlsearch_block')
-  let buf = RunVimInTerminal('-S Xhlsearch_block', {'rows': 9, 'cols': 60})
+  call writefile([
+	\ 'set hlsearch cursorline',
+        \ 'call setline(1, ["xxx", "xxx", "xxx"])',
+	\ '/.*',
+	\ '2',
+	\ ], 'Xhlsearch_script')
+  let buf = RunVimInTerminal('-S Xhlsearch_script', {'rows': 6, 'cols': 50})
+  call VerifyScreenDump(buf, 'Test_hlsearch_1', {})
 
-  call term_sendkeys(buf, "G\<C-V>$kk\<Esc>")
-  sleep 100m
-  call term_sendkeys(buf, "/\\%V\<CR>")
-  sleep 100m
-  call VerifyScreenDump(buf, 'Test_hlsearch_block_visual_match', {})
+  call term_sendkeys(buf, "/\\_.*\<CR>")
+  call VerifyScreenDump(buf, 'Test_hlsearch_2', {})
 
   call StopVimInTerminal(buf)
-  call delete('Xhlsearch_block')
+  call delete('Xhlsearch_script')
 endfunc
 
 func Test_hlsearch_and_visual()
@@ -996,6 +997,26 @@ func Test_hlsearch_and_visual()
   call delete('Xhlvisual_script')
 endfunc
 
+func Test_hlsearch_block_visual_match()
+  CheckScreendump
+
+  let lines =<< trim END
+    set hlsearch
+    call setline(1, ['aa', 'bbbb', 'cccccc'])
+  END
+  call writefile(lines, 'Xhlsearch_block')
+  let buf = RunVimInTerminal('-S Xhlsearch_block', {'rows': 9, 'cols': 60})
+
+  call term_sendkeys(buf, "G\<C-V>$kk\<Esc>")
+  sleep 100m
+  call term_sendkeys(buf, "/\\%V\<CR>")
+  sleep 100m
+  call VerifyScreenDump(buf, 'Test_hlsearch_block_visual_match', {})
+
+  call StopVimInTerminal(buf)
+  call delete('Xhlsearch_block')
+endfunc
+
 func Test_incsearch_substitute()
   CheckFunction test_override
   CheckOption incsearch
@@ -1015,6 +1036,21 @@ func Test_incsearch_substitute()
   call assert_equal('foo 7', getline(7))
 
   call Incsearch_cleanup()
+endfunc
+
+func Test_incsearch_substitute_long_line()
+  CheckFunction test_override
+  new
+  call test_override("char_avail", 1)
+  set incsearch
+
+  call repeat('x', 100000)->setline(1)
+  call feedkeys(':s/\%c', 'xt')
+  redraw
+  call feedkeys("\<Esc>", 'xt')
+
+  call Incsearch_cleanup()
+  bwipe!
 endfunc
 
 func Test_hlsearch_cursearch()
@@ -1341,21 +1377,6 @@ func Test_subst_word_under_cursor()
   set noincsearch
 endfunc
 
-func Test_incsearch_substitute_long_line()
-  CheckFunction test_override
-  new
-  call test_override("char_avail", 1)
-  set incsearch
-
-  call repeat('x', 100000)->setline(1)
-  call feedkeys(':s/\%c', 'xt')
-  redraw
-  call feedkeys("\<Esc>", 'xt')
-
-  call Incsearch_cleanup()
-  bwipe!
-endfunc
-
 func Test_search_undefined_behaviour()
   CheckFeature terminal
 
@@ -1629,8 +1650,8 @@ func Test_search_with_no_last_pat()
     call assert_fails(";//p", 'E35:')
     call assert_fails("??p", 'E35:')
     call assert_fails(";??p", 'E35:')
-    call assert_fails('g//p', 'E476:')
-    call assert_fails('v//p', 'E476:')
+    call assert_fails('g//p', ['E35:', 'E476:'])
+    call assert_fails('v//p', ['E35:', 'E476:'])
     call writefile(v:errors, 'Xresult')
     qall!
   [SCRIPT]
@@ -1651,8 +1672,8 @@ func Test_search_tilde_pat()
     call assert_fails('exe "normal /~\<CR>"', 'E33:')
     call assert_fails('exe "normal ?~\<CR>"', 'E33:')
     set regexpengine=2
-    call assert_fails('exe "normal /~\<CR>"', 'E383:')
-    call assert_fails('exe "normal ?~\<CR>"', 'E383:')
+    call assert_fails('exe "normal /~\<CR>"', ['E33:', 'E383:'])
+    call assert_fails('exe "normal ?~\<CR>"', ['E33:', 'E383:'])
     set regexpengine&
     call writefile(v:errors, 'Xresult')
     qall!
@@ -1732,6 +1753,25 @@ func Test_invalid_regexp()
   call assert_fails("call search('\\%#=3ab')", 'E864:')
 endfunc
 
+" Test for searching a very complex pattern in a string. Should switch the
+" regexp engine from NFA to the old engine.
+func Test_regexp_switch_engine()
+  let l = readfile('samples/re.freeze.txt')
+  let v = substitute(l[4], '..\@<!', '', '')
+  call assert_equal(l[4], v)
+endfunc
+
+" Test for the \%V atom to search within visually selected text
+func Test_search_in_visual_area()
+  new
+  call setline(1, ['foo bar1', 'foo bar2', 'foo bar3', 'foo bar4'])
+  exe "normal 2GVjo/\\%Vbar\<CR>\<Esc>"
+  call assert_equal([2, 5], [line('.'), col('.')])
+  exe "normal 2GVj$?\\%Vbar\<CR>\<Esc>"
+  call assert_equal([3, 5], [line('.'), col('.')])
+  close!
+endfunc
+
 " Test for searching with 'smartcase' and 'ignorecase'
 func Test_search_smartcase()
   new
@@ -1776,7 +1816,7 @@ func Test_search_smartcase_utf8()
 
   set ignorecase& smartcase&
   let &encoding = save_enc
-  close!
+  bwipe!
 endfunc
 
 " Test searching past the end of a file
@@ -1785,7 +1825,29 @@ func Test_search_past_eof()
   call setline(1, ['Line'])
   exe "normal /\\n\\zs\<CR>"
   call assert_equal([1, 4], [line('.'), col('.')])
-  close!
+  bwipe!
+endfunc
+
+" Test setting the start of the match and still finding a next match in the
+" same line.
+func Test_search_set_start_same_line()
+  new
+  set cpo-=c
+
+  call setline(1, ['1', '2', '3 .', '4', '5'])
+  exe "normal /\\_s\\zs\\S\<CR>"
+  call assert_equal([2, 1], [line('.'), col('.')])
+  exe 'normal n'
+  call assert_equal([3, 1], [line('.'), col('.')])
+  exe 'normal n'
+  call assert_equal([3, 3], [line('.'), col('.')])
+  exe 'normal n'
+  call assert_equal([4, 1], [line('.'), col('.')])
+  exe 'normal n'
+  call assert_equal([5, 1], [line('.'), col('.')])
+
+  set cpo+=c
+  bwipe!
 endfunc
 
 " Test for various search offsets

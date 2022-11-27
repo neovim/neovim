@@ -17,6 +17,7 @@ local nvimdir = arg[1]
 package.path = nvimdir .. '/?.lua;' .. package.path
 
 _G.vim = loadfile(nvimdir..'/../../runtime/lua/vim/shared.lua')()
+_G.vim.inspect = loadfile(nvimdir..'/../../runtime/lua/vim/inspect.lua')()
 
 local hashy = require'generators.hashy'
 
@@ -70,6 +71,15 @@ for i = 6, #arg do
         fn.can_fail = true
         -- remove the error parameter, msgpack has it's own special field
         -- for specifying errors
+        fn.parameters[#fn.parameters] = nil
+      end
+      if #fn.parameters ~= 0 and fn.parameters[#fn.parameters][1] == 'arena' then
+        -- return value is allocated in an arena
+        fn.arena_return = true
+        fn.parameters[#fn.parameters] = nil
+      end
+      if #fn.parameters ~= 0 and fn.parameters[#fn.parameters][1] == 'lstate' then
+        fn.has_lua_imp = true
         fn.parameters[#fn.parameters] = nil
       end
     end
@@ -179,6 +189,35 @@ funcs_metadata_output:close()
 -- start building the dispatch wrapper output
 local output = io.open(dispatch_outputf, 'wb')
 
+
+-- ===========================================================================
+-- NEW API FILES MUST GO HERE.
+--
+--  When creating a new API file, you must include it here,
+--  so that the dispatcher can find the C functions that you are creating!
+-- ===========================================================================
+output:write([[
+#include "nvim/log.h"
+#include "nvim/map.h"
+#include "nvim/msgpack_rpc/helpers.h"
+#include "nvim/vim.h"
+
+#include "nvim/api/autocmd.h"
+#include "nvim/api/buffer.h"
+#include "nvim/api/command.h"
+#include "nvim/api/deprecated.h"
+#include "nvim/api/extmark.h"
+#include "nvim/api/options.h"
+#include "nvim/api/tabpage.h"
+#include "nvim/api/ui.h"
+#include "nvim/api/vim.h"
+#include "nvim/api/vimscript.h"
+#include "nvim/api/win_config.h"
+#include "nvim/api/window.h"
+#include "nvim/ui_client.h"
+
+]])
+
 local function real_type(type)
   local rv = type
   local rmatch = string.match(type, "Dict%(([_%w]+)%)")
@@ -210,7 +249,7 @@ for i = 1, #functions do
   if fn.impl_name == nil and fn.remote then
     local args = {}
 
-    output:write('Object handle_'..fn.name..'(uint64_t channel_id, Array args, Error *error)')
+    output:write('Object handle_'..fn.name..'(uint64_t channel_id, Array args, Arena* arena, Error *error)')
     output:write('\n{')
     output:write('\n#if MIN_LOG_LEVEL <= LOGLVL_DBG')
     output:write('\n  logmsg(LOGLVL_DBG, "RPC: ", NULL, -1, true, "ch %" PRIu64 ": invoke '
@@ -319,6 +358,18 @@ for i = 1, #functions do
       output:write(call_args)
     end
 
+    if fn.arena_return then
+        output:write(', arena')
+    end
+
+    if fn.has_lua_imp then
+      if #args > 0 then
+        output:write(', NULL')
+      else
+        output:write('NULL')
+      end
+    end
+
     if fn.can_fail then
       -- if the function can fail, also pass a pointer to the local error object
       if #args > 0 then
@@ -355,11 +406,12 @@ local hashorder, hashfun = hashy.hashy_hash("msgpack_rpc_get_handler_for", vim.t
   return "method_handlers["..idx.."].name"
 end)
 
-output:write("static const MsgpackRpcRequestHandler method_handlers[] = {\n")
-for _, name in ipairs(hashorder) do
+output:write("const MsgpackRpcRequestHandler method_handlers[] = {\n")
+for n, name in ipairs(hashorder) do
   local fn = remote_fns[name]
+  fn.handler_id = n-1
   output:write('  { .name = "'..name..'", .fn = handle_'..  (fn.impl_name or fn.name)..
-               ', .fast = '..tostring(fn.fast)..'},\n')
+               ', .fast = '..tostring(fn.fast)..', .arena_return = '..tostring(not not fn.arena_return)..'},\n')
 end
 output:write("};\n\n")
 output:write(hashfun)
@@ -400,6 +452,8 @@ output:write([[
 #include "nvim/api/private/helpers.h"
 #include "nvim/lua/converter.h"
 #include "nvim/lua/executor.h"
+#include "nvim/memory.h"
+
 ]])
 include_headers(output, headers)
 output:write('\n')
@@ -477,6 +531,17 @@ local function process_function(fn)
   if fn.receives_channel_id then
     cparams = 'LUA_INTERNAL_CALL, ' .. cparams
   end
+  if fn.arena_return then
+    cparams = cparams .. '&arena, '
+    write_shifted_output(output, [[
+    Arena arena = ARENA_EMPTY;
+    ]])
+  end
+
+  if fn.has_lua_imp then
+    cparams = cparams .. 'lstate, '
+  end
+
   if fn.can_fail then
     cparams = cparams .. '&err'
   else
@@ -511,15 +576,35 @@ local function process_function(fn)
     else
       return_type = fn.return_type
     end
+    local free_retval
+    if fn.arena_return then
+      free_retval = "arena_mem_free(arena_finish(&arena));"
+    else
+      free_retval = "api_free_"..return_type:lower().."(ret);"
+    end
     write_shifted_output(output, string.format([[
     const %s ret = %s(%s);
+    ]], fn.return_type, fn.name, cparams))
+
+    if fn.has_lua_imp then
+      -- only push onto the Lua stack if we haven't already
+      write_shifted_output(output, string.format([[
+    if (lua_gettop(lstate) == 0) {
+      nlua_push_%s(lstate, ret, true);
+    }
+      ]], return_type))
+    else
+      write_shifted_output(output, string.format([[
     nlua_push_%s(lstate, ret, true);
-    api_free_%s(ret);
+      ]], return_type))
+    end
+
+    write_shifted_output(output, string.format([[
+  %s
   %s
   %s
     return 1;
-    ]], fn.return_type, fn.name, cparams, return_type, return_type:lower(),
-        free_at_exit_code, err_throw_code))
+    ]], free_retval, free_at_exit_code, err_throw_code))
   else
     write_shifted_output(output, string.format([[
     %s(%s);

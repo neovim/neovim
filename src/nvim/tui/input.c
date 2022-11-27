@@ -1,21 +1,33 @@
 // This is an open source non-commercial project. Dear PVS-Studio, please check
 // it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
+#include <assert.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/api/vim.h"
 #include "nvim/ascii.h"
 #include "nvim/autocmd.h"
 #include "nvim/charset.h"
-#include "nvim/ex_docmd.h"
+#include "nvim/event/defs.h"
+#include "nvim/event/multiqueue.h"
+#include "nvim/globals.h"
+#include "nvim/log.h"
 #include "nvim/macros.h"
 #include "nvim/main.h"
+#include "nvim/map.h"
+#include "nvim/memory.h"
+#include "nvim/message.h"
 #include "nvim/option.h"
 #include "nvim/os/input.h"
 #include "nvim/os/os.h"
 #include "nvim/tui/input.h"
+#include "nvim/tui/input_defs.h"
 #include "nvim/tui/tui.h"
-#include "nvim/vim.h"
-#ifdef WIN32
+#ifdef MSWIN
 # include "nvim/os/os_win_console.h"
 #endif
 #include "nvim/event/rstream.h"
@@ -143,7 +155,7 @@ void tinput_init(TermInput *input, Loop *loop)
   // If stdin is not a pty, switch to stderr. For cases like:
   //    echo q | nvim -es
   //    ls *.md | xargs nvim
-#ifdef WIN32
+#ifdef MSWIN
   if (!os_isatty(input->in_fd)) {
     input->in_fd = os_get_conin_fd();
   }
@@ -159,14 +171,10 @@ void tinput_init(TermInput *input, Loop *loop)
     term = "";  // termkey_new_abstract assumes non-null (#2745)
   }
 
-#if TERMKEY_VERSION_MAJOR > 0 || TERMKEY_VERSION_MINOR > 18
   input->tk = termkey_new_abstract(term,
                                    TERMKEY_FLAG_UTF8 | TERMKEY_FLAG_NOSTART);
   termkey_hook_terminfo_getstr(input->tk, input->tk_ti_hook_fn, NULL);
   termkey_start(input->tk);
-#else
-  input->tk = termkey_new_abstract(term, TERMKEY_FLAG_UTF8);
-#endif
 
   int curflags = termkey_get_canonflags(input->tk);
   termkey_set_canonflags(input->tk, curflags | TERMKEY_CANON_DELBS);
@@ -233,12 +241,12 @@ static void tinput_wait_enqueue(void **argv)
       if (ui_client_channel_id) {
         Array args = ARRAY_DICT_INIT;
         Error err = ERROR_INIT;
-        ADD(args, STRING_OBJ(copy_string(keys)));
+        ADD(args, STRING_OBJ(copy_string(keys, NULL)));
         // TODO(bfredl): could be non-blocking now with paste?
         ArenaMem res_mem = NULL;
         Object result = rpc_send_call(ui_client_channel_id, "nvim_input", args, &res_mem, &err);
         consumed = result.type == kObjectTypeInteger ? (size_t)result.data.integer : 0;
-        arena_mem_free(res_mem, NULL);
+        arena_mem_free(res_mem);
       } else {
         consumed = input_enqueue(keys);
       }
@@ -328,15 +336,14 @@ static void forward_simple_utf8(TermInput *input, TermKeyKey *key)
       && map_has(KittyKey, cstr_t)(&kitty_key_map, (KittyKey)key->code.codepoint)) {
     handle_kitty_key_protocol(input, key);
     return;
-  } else {
-    while (*ptr) {
-      if (*ptr == '<') {
-        len += (size_t)snprintf(buf + len, sizeof(buf) - len, "<lt>");
-      } else {
-        buf[len++] = *ptr;
-      }
-      ptr++;
+  }
+  while (*ptr) {
+    if (*ptr == '<') {
+      len += (size_t)snprintf(buf + len, sizeof(buf) - len, "<lt>");
+    } else {
+      buf[len++] = *ptr;
     }
+    ptr++;
   }
 
   tinput_enqueue(input, buf, len);
@@ -359,21 +366,20 @@ static void forward_modified_utf8(TermInput *input, TermKeyKey *key)
                                      (KittyKey)key->code.codepoint)) {
       handle_kitty_key_protocol(input, key);
       return;
-    } else {
-      // Termkey doesn't include the S- modifier for ASCII characters (e.g.,
-      // ctrl-shift-l is <C-L> instead of <C-S-L>.  Vim, on the other hand,
-      // treats <C-L> and <C-l> the same, requiring the S- modifier.
-      len = termkey_strfkey(input->tk, buf, sizeof(buf), key, TERMKEY_FORMAT_VIM);
-      if ((key->modifiers & TERMKEY_KEYMOD_CTRL)
-          && !(key->modifiers & TERMKEY_KEYMOD_SHIFT)
-          && ASCII_ISUPPER(key->code.codepoint)) {
-        assert(len <= 62);
-        // Make room for the S-
-        memmove(buf + 3, buf + 1, len - 1);
-        buf[1] = 'S';
-        buf[2] = '-';
-        len += 2;
-      }
+    }
+    // Termkey doesn't include the S- modifier for ASCII characters (e.g.,
+    // ctrl-shift-l is <C-L> instead of <C-S-L>.  Vim, on the other hand,
+    // treats <C-L> and <C-l> the same, requiring the S- modifier.
+    len = termkey_strfkey(input->tk, buf, sizeof(buf), key, TERMKEY_FORMAT_VIM);
+    if ((key->modifiers & TERMKEY_KEYMOD_CTRL)
+        && !(key->modifiers & TERMKEY_KEYMOD_SHIFT)
+        && ASCII_ISUPPER(key->code.codepoint)) {
+      assert(len <= 62);
+      // Make room for the S-
+      memmove(buf + 3, buf + 1, len - 1);
+      buf[1] = 'S';
+      buf[2] = '-';
+      len += 2;
     }
   }
 
@@ -398,8 +404,16 @@ static void forward_mouse_event(TermInput *input, TermKeyKey *key)
     button = last_pressed_button;
   }
 
-  if (button == 0 || (ev != TERMKEY_MOUSE_PRESS && ev != TERMKEY_MOUSE_DRAG
-                      && ev != TERMKEY_MOUSE_RELEASE)) {
+  if (ev == TERMKEY_MOUSE_UNKNOWN && !(key->code.mouse[0] & 0x20)) {
+    int code = key->code.mouse[0] & ~0x3c;
+    if (code == 66 || code == 67) {
+      ev = TERMKEY_MOUSE_PRESS;
+      button = code - 60;
+    }
+  }
+
+  if ((button == 0 && ev != TERMKEY_MOUSE_RELEASE)
+      || (ev != TERMKEY_MOUSE_PRESS && ev != TERMKEY_MOUSE_DRAG && ev != TERMKEY_MOUSE_RELEASE)) {
     return;
   }
 
@@ -431,8 +445,11 @@ static void forward_mouse_event(TermInput *input, TermKeyKey *key)
     if (button == 4) {
       len += (size_t)snprintf(buf + len, sizeof(buf) - len, "ScrollWheelUp");
     } else if (button == 5) {
-      len += (size_t)snprintf(buf + len, sizeof(buf) - len,
-                              "ScrollWheelDown");
+      len += (size_t)snprintf(buf + len, sizeof(buf) - len, "ScrollWheelDown");
+    } else if (button == 6) {
+      len += (size_t)snprintf(buf + len, sizeof(buf) - len, "ScrollWheelLeft");
+    } else if (button == 7) {
+      len += (size_t)snprintf(buf + len, sizeof(buf) - len, "ScrollWheelRight");
     } else {
       len += (size_t)snprintf(buf + len, sizeof(buf) - len, "Mouse");
       last_pressed_button = button;
@@ -442,7 +459,8 @@ static void forward_mouse_event(TermInput *input, TermKeyKey *key)
     len += (size_t)snprintf(buf + len, sizeof(buf) - len, "Drag");
     break;
   case TERMKEY_MOUSE_RELEASE:
-    len += (size_t)snprintf(buf + len, sizeof(buf) - len, "Release");
+    len += (size_t)snprintf(buf + len, sizeof(buf) - len, button ? "Release" : "MouseMove");
+    last_pressed_button = 0;
     break;
   case TERMKEY_MOUSE_UNKNOWN:
     abort();

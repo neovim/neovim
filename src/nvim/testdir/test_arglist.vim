@@ -1,5 +1,6 @@
 " Test argument list commands
 
+source check.vim
 source shared.vim
 source term_util.vim
 
@@ -417,15 +418,19 @@ func Test_argdedupe()
   call Reset_arglist()
   argdedupe
   call assert_equal([], argv())
+
   args a a a aa b b a b aa
   argdedupe
   call assert_equal(['a', 'aa', 'b'], argv())
+
   args a b c
   argdedupe
   call assert_equal(['a', 'b', 'c'], argv())
+
   args a
   argdedupe
   call assert_equal(['a'], argv())
+
   args a A b B
   argdedupe
   if has('fname_case')
@@ -433,11 +438,17 @@ func Test_argdedupe()
   else
     call assert_equal(['a', 'b'], argv())
   endif
+
   args a b a c a b
   last
   argdedupe
   next
   call assert_equal('c', expand('%:t'))
+
+  args a ./a
+  argdedupe
+  call assert_equal(['a'], argv())
+
   %argd
 endfunc
 
@@ -509,18 +520,14 @@ func Test_arglist_autocmd()
   new
   " redefine arglist; go to Xxx1
   next! Xxx1 Xxx2 Xxx3
-  " open window for all args; Reading Xxx2 will change the arglist and the
-  " third window will get Xxx1:
-  "   win 1: Xxx1
-  "   win 2: Xxx2
-  "   win 3: Xxx1
-  all
+  " open window for all args; Reading Xxx2 will try to change the arglist and
+  " that will fail
+  call assert_fails("all", "E1156:")
   call assert_equal('test file Xxx1', getline(1))
   wincmd w
-  wincmd w
-  call assert_equal('test file Xxx1', getline(1))
-  rewind
   call assert_equal('test file Xxx2', getline(1))
+  wincmd w
+  call assert_equal('test file Xxx3', getline(1))
 
   autocmd! BufReadPost Xxx2
   enew! | only
@@ -554,11 +561,9 @@ func Test_argdo()
   bwipe Xa.c Xb.c Xc.c
 endfunc
 
-" Test for quiting Vim with unedited files in the argument list
+" Test for quitting Vim with unedited files in the argument list
 func Test_quit_with_arglist()
-  if !CanRunVimInTerminal()
-    throw 'Skipped: cannot run vim in terminal'
-  endif
+  CheckRunVimInTerminal
   let buf = RunVimInTerminal('', {'rows': 6})
   call term_sendkeys(buf, ":set nomore\n")
   call term_sendkeys(buf, ":args a b c\n")
@@ -589,6 +594,155 @@ func Test_quit_with_arglist()
   call delete('.a.swp')
   call delete('.b.swp')
   call delete('.c.swp')
+endfunc
+
+" Test for ":all" not working when in the cmdline window
+func Test_all_not_allowed_from_cmdwin()
+  au BufEnter * all
+  next x
+  " Use try/catch here, somehow assert_fails() doesn't work on MS-Windows
+  " console.
+  let caught = 'no'
+  try
+    exe ":norm! 7q?apat\<CR>"
+  catch /E11:/
+    let caught = 'yes'
+  endtry
+  call assert_equal('yes', caught)
+  au! BufEnter
+endfunc
+
+func Test_clear_arglist_in_all()
+  n 0 00 000 0000 00000 000000
+  au WinNew 0 n 0
+  call assert_fails("all", "E1156")
+  au! *
+endfunc
+
+" Test for the :all command
+func Test_all_command()
+  %argdelete
+
+  " :all command should not close windows with files in the argument list,
+  " but can rearrange the windows.
+  args Xargnew1 Xargnew2
+  %bw!
+  edit Xargold1
+  split Xargnew1
+  let Xargnew1_winid = win_getid()
+  split Xargold2
+  split Xargnew2
+  let Xargnew2_winid = win_getid()
+  split Xargold3
+  all
+  call assert_equal(2, winnr('$'))
+  call assert_equal([Xargnew1_winid, Xargnew2_winid],
+        \ [win_getid(1), win_getid(2)])
+  call assert_equal([bufnr('Xargnew1'), bufnr('Xargnew2')],
+        \ [winbufnr(1), winbufnr(2)])
+
+  " :all command should close windows for files which are not in the
+  " argument list in the current tab page.
+  %bw!
+  edit Xargold1
+  split Xargold2
+  tabedit Xargold3
+  split Xargold4
+  tabedit Xargold5
+  tabfirst
+  all
+  call assert_equal(3, tabpagenr('$'))
+  call assert_equal([bufnr('Xargnew1'), bufnr('Xargnew2')], tabpagebuflist(1))
+  call assert_equal([bufnr('Xargold4'), bufnr('Xargold3')], tabpagebuflist(2))
+  call assert_equal([bufnr('Xargold5')], tabpagebuflist(3))
+
+  " :tab all command should close windows for files which are not in the
+  " argument list across all the tab pages.
+  %bw!
+  edit Xargold1
+  split Xargold2
+  tabedit Xargold3
+  split Xargold4
+  tabedit Xargold5
+  tabfirst
+  args Xargnew1 Xargnew2
+  tab all
+  call assert_equal(2, tabpagenr('$'))
+  call assert_equal([bufnr('Xargnew1')], tabpagebuflist(1))
+  call assert_equal([bufnr('Xargnew2')], tabpagebuflist(2))
+
+  " If a count is specified, then :all should open only that many windows.
+  %bw!
+  args Xargnew1 Xargnew2 Xargnew3 Xargnew4 Xargnew5
+  all 3
+  call assert_equal(3, winnr('$'))
+  call assert_equal([bufnr('Xargnew1'), bufnr('Xargnew2'), bufnr('Xargnew3')],
+        \ [winbufnr(1), winbufnr(2), winbufnr(3)])
+
+  " The :all command should not open more than 'tabpagemax' tab pages.
+  " If there are more files, then they should be opened in the last tab page.
+  %bw!
+  set tabpagemax=3
+  tab all
+  call assert_equal(3, tabpagenr('$'))
+  call assert_equal([bufnr('Xargnew1')], tabpagebuflist(1))
+  call assert_equal([bufnr('Xargnew2')], tabpagebuflist(2))
+  call assert_equal([bufnr('Xargnew3'), bufnr('Xargnew4'), bufnr('Xargnew5')],
+        \ tabpagebuflist(3))
+  set tabpagemax&
+
+  " Without the 'hidden' option, modified buffers should not be closed.
+  args Xargnew1 Xargnew2
+  %bw!
+  edit Xargtemp1
+  call setline(1, 'temp buffer 1')
+  split Xargtemp2
+  call setline(1, 'temp buffer 2')
+  all
+  call assert_equal(4, winnr('$'))
+  call assert_equal([bufnr('Xargtemp2'), bufnr('Xargtemp1'), bufnr('Xargnew1'),
+        \ bufnr('Xargnew2')],
+        \ [winbufnr(1), winbufnr(2), winbufnr(3), winbufnr(4)])
+
+  " With the 'hidden' option set, both modified and unmodified buffers in
+  " closed windows should be hidden.
+  set hidden
+  all
+  call assert_equal(2, winnr('$'))
+  call assert_equal([bufnr('Xargnew1'), bufnr('Xargnew2')],
+        \ [winbufnr(1), winbufnr(2)])
+  call assert_equal([1, 1, 0, 0], [getbufinfo('Xargtemp1')[0].hidden,
+        \ getbufinfo('Xargtemp2')[0].hidden,
+        \ getbufinfo('Xargnew1')[0].hidden,
+        \ getbufinfo('Xargnew2')[0].hidden])
+  set nohidden
+
+  " When 'winheight' is set to a large value, :all should open only one
+  " window.
+  args Xargnew1 Xargnew2 Xargnew3 Xargnew4 Xargnew5
+  %bw!
+  set winheight=9999
+  call assert_fails('all', 'E36:')
+  call assert_equal([1, bufnr('Xargnew1')], [winnr('$'), winbufnr(1)])
+  set winheight&
+
+  " When 'winwidth' is set to a large value, :vert all should open only one
+  " window.
+  %bw!
+  set winwidth=9999
+  call assert_fails('vert all', 'E36:')
+  call assert_equal([1, bufnr('Xargnew1')], [winnr('$'), winbufnr(1)])
+  set winwidth&
+
+  " empty argument list tests
+  %bw!
+  %argdelete
+  call assert_equal('', execute('args'))
+  all
+  call assert_equal(1, winnr('$'))
+
+  %argdelete
+  %bw!
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab

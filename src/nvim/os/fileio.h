@@ -35,9 +35,10 @@ typedef enum {
                      ///< be used with kFileCreateOnly.
   kFileNonBlocking = 128,  ///< Do not restart read() or write() syscall if
                            ///< EAGAIN was encountered.
+  kFileMkDir = 256,
 } FileOpenFlags;
 
-static inline bool file_eof(const FileDescriptor *const fp)
+static inline bool file_eof(const FileDescriptor *fp)
   REAL_FATTR_PURE REAL_FATTR_WARN_UNUSED_RESULT REAL_FATTR_NONNULL_ALL;
 
 /// Check whether end of file was encountered
@@ -51,7 +52,7 @@ static inline bool file_eof(const FileDescriptor *const fp)
   return fp->eof && rbuffer_size(fp->rv) == 0;
 }
 
-static inline int file_fd(const FileDescriptor *const fp)
+static inline int file_fd(const FileDescriptor *fp)
   REAL_FATTR_PURE REAL_FATTR_WARN_UNUSED_RESULT REAL_FATTR_NONNULL_ALL;
 
 /// Return the file descriptor associated with the FileDescriptor structure

@@ -3,10 +3,15 @@
 
 #include <stdbool.h>
 
+#include "klib/kvec.h"
 #include "nvim/autocmd.h"
 #include "nvim/eval/typval.h"
+#include "nvim/eval/typval_defs.h"
 #include "nvim/ex_cmds_defs.h"
 #include "nvim/ex_eval_defs.h"
+#include "nvim/garray.h"
+#include "nvim/pos.h"
+#include "nvim/types.h"
 
 typedef enum {
   ETYPE_TOP,       ///< toplevel
@@ -47,10 +52,11 @@ typedef enum {
   ESTACK_NONE,
   ESTACK_SFILE,
   ESTACK_STACK,
+  ESTACK_SCRIPT,
 } estack_arg_T;
 
 typedef struct scriptitem_S {
-  char_u *sn_name;
+  char *sn_name;
   bool sn_prof_on;              ///< true when script is/was profiled
   bool sn_pr_force;             ///< forceit: profile functions in this script
   proftime_T sn_pr_child;       ///< time set when going into first child

@@ -9,32 +9,36 @@
 
 #include <assert.h>
 #include <inttypes.h>
+#include <limits.h>
 #include <stdbool.h>
-#include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 
 #include "nvim/arglist.h"
 #include "nvim/ascii.h"
 #include "nvim/buffer.h"
-#include "nvim/cursor.h"
-#include "nvim/edit.h"
 #include "nvim/eval.h"
+#include "nvim/ex_cmds_defs.h"
 #include "nvim/ex_docmd.h"
 #include "nvim/ex_getln.h"
 #include "nvim/ex_session.h"
 #include "nvim/file_search.h"
 #include "nvim/fileio.h"
 #include "nvim/fold.h"
+#include "nvim/garray.h"
+#include "nvim/gettext.h"
 #include "nvim/globals.h"
-#include "nvim/keycodes.h"
+#include "nvim/macros.h"
 #include "nvim/mapping.h"
-#include "nvim/move.h"
+#include "nvim/mark_defs.h"
+#include "nvim/memory.h"
+#include "nvim/message.h"
 #include "nvim/option.h"
-#include "nvim/os/input.h"
 #include "nvim/os/os.h"
-#include "nvim/os/time.h"
 #include "nvim/path.h"
+#include "nvim/pos.h"
 #include "nvim/runtime.h"
+#include "nvim/types.h"
 #include "nvim/vim.h"
 #include "nvim/window.h"
 
@@ -240,7 +244,7 @@ static int ses_arglist(FILE *fd, char *cmd, garray_T *gap, int fullname, unsigne
 }
 
 /// @return  the buffer name for `buf`.
-static char *ses_get_fname(buf_T *buf, unsigned *flagp)
+static char *ses_get_fname(buf_T *buf, const unsigned *flagp)
 {
   // Use the short file name if the current directory is known at the time
   // the session file will be sourced.
@@ -359,7 +363,7 @@ static int put_view(FILE *fd, win_T *wp, int add_edit, unsigned *flagp, int curr
       // Then ":help" will re-use both the buffer and the window and set
       // the options, even when "options" is not in 'sessionoptions'.
       if (0 < wp->w_tagstackidx && wp->w_tagstackidx <= wp->w_tagstacklen) {
-        curtag = (char *)wp->w_tagstack[wp->w_tagstackidx - 1].tagname;
+        curtag = wp->w_tagstack[wp->w_tagstackidx - 1].tagname;
       }
 
       if (put_line(fd, "enew | setl bt=help") == FAIL
@@ -1095,7 +1099,7 @@ static char *get_view_file(int c)
       len++;
     }
   }
-  char *retval = xmalloc(strlen(sname) + len + STRLEN(p_vdir) + 9);
+  char *retval = xmalloc(strlen(sname) + len + strlen(p_vdir) + 9);
   STRCPY(retval, p_vdir);
   add_pathsep(retval);
   char *s = retval + strlen(retval);

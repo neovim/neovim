@@ -97,7 +97,7 @@ func Test_vartabs()
   .retab!
   call assert_equal("\t\t\t\tl", getline(1))
 
-  " Test for 'retab' with same vlaues as vts
+  " Test for 'retab' with same values as vts
   set ts=8 sts=0 vts=5,3,6,2 vsts=
   exe "norm! S                l"
   .retab! 5,3,6,2
@@ -379,6 +379,8 @@ func Test_vartabs_shiftwidth()
   let lines = ScreenLines([1, 3], winwidth(0))
   call s:compare_lines(expect4, lines)
 
+  call assert_fails('call shiftwidth([])', 'E745:')
+
   " cleanup
   bw!
   bw!
@@ -427,6 +429,20 @@ func Test_varsofttabstop()
   set backspace&
   iunmap <F2>
   close!
+endfunc
+
+" Setting 'shiftwidth' to a negative value, should set it to either the value
+" of 'tabstop' (if 'vartabstop' is not set) or to the first value in
+" 'vartabstop'
+func Test_shiftwidth_vartabstop()
+  throw 'Skipped: Nvim removed this behavior in #6377'
+  setlocal tabstop=7 vartabstop=
+  call assert_fails('set shiftwidth=-1', 'E487:')
+  call assert_equal(7, &shiftwidth)
+  setlocal tabstop=7 vartabstop=5,7,10
+  call assert_fails('set shiftwidth=-1', 'E487:')
+  call assert_equal(5, &shiftwidth)
+  setlocal shiftwidth& vartabstop& tabstop&
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab

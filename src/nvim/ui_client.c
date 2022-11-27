@@ -1,26 +1,28 @@
 // This is an open source non-commercial project. Dear PVS-Studio, please check
 // it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
-#include <assert.h>
 #include <stdbool.h>
 #include <stdint.h>
+#include <stdlib.h>
 
-#include "nvim/api/private/dispatch.h"
 #include "nvim/api/private/helpers.h"
+#include "nvim/event/loop.h"
+#include "nvim/event/multiqueue.h"
+#include "nvim/globals.h"
 #include "nvim/highlight.h"
 #include "nvim/log.h"
-#include "nvim/map.h"
+#include "nvim/main.h"
+#include "nvim/memory.h"
 #include "nvim/msgpack_rpc/channel.h"
-#include "nvim/screen.h"
 #include "nvim/ui.h"
 #include "nvim/ui_client.h"
-#include "nvim/vim.h"
 
+// uncrustify:off
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "ui_client.c.generated.h"
-
 # include "ui_events_client.generated.h"
 #endif
+// uncrustify:on
 
 void ui_client_init(uint64_t chan)
 {
@@ -55,7 +57,7 @@ UIClientHandler ui_client_get_redraw_handler(const char *name, size_t name_len, 
 /// async 'redraw' events, which are expected when nvim acts as an ui client.
 /// get handled in msgpack_rpc/unpacker.c and directly dispatched to handlers
 /// of specific ui events, like ui_client_event_grid_resize and so on.
-Object handle_ui_client_redraw(uint64_t channel_id, Array args, Error *error)
+Object handle_ui_client_redraw(uint64_t channel_id, Array args, Arena *arena, Error *error)
 {
   api_set_error(error, kErrorTypeValidation, "'redraw' cannot be sent as a request");
   return NIL;

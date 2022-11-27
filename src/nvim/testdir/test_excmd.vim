@@ -78,6 +78,14 @@ func Test_file_cmd()
   call assert_fails('3file', 'E474:')
   call assert_fails('0,0file', 'E474:')
   call assert_fails('0file abc', 'E474:')
+  if !has('win32')
+    " Change the name of the buffer to the same name
+    new Xfile1
+    file Xfile1
+    call assert_equal('Xfile1', @%)
+    call assert_equal('Xfile1', @#)
+    bw!
+  endif
 endfunc
 
 " Test for the :drop command
@@ -230,7 +238,6 @@ endfunc
 " Test for the :language command
 func Test_language_cmd()
   CheckNotMSWindows  " FIXME: why does this fail on Windows CI?
-  CheckNotBSD  " FIXME: why does this fail on OpenBSD CI?
   CheckFeature multi_lang
 
   call assert_fails('language ctype non_existing_lang', 'E197:')
@@ -477,19 +484,22 @@ func Test_winsize_cmd()
 endfunc
 
 " Test for the :redir command
+" NOTE: if you run tests as root this will fail.  Don't run tests as root!
 func Test_redir_cmd()
   call assert_fails('redir @@', 'E475:')
   call assert_fails('redir abc', 'E475:')
+  call assert_fails('redir => 1abc', 'E474:')
+  call assert_fails('redir => a b', 'E488:')
+  call assert_fails('redir => abc[1]', 'E121:')
+  let b = 0zFF
+  call assert_fails('redir =>> b', 'E734:')
+  unlet b
+
   if has('unix')
+    " Redirecting to a directory name
     call mkdir('Xdir')
     call assert_fails('redir > Xdir', 'E17:')
     call delete('Xdir', 'd')
-  endif
-  if !has('bsd')
-    call writefile([], 'Xfile')
-    call setfperm('Xfile', 'r--r--r--')
-    call assert_fails('redir! > Xfile', 'E190:')
-    call delete('Xfile')
   endif
 
   " Test for redirecting to a register
@@ -501,6 +511,16 @@ func Test_redir_cmd()
   redir => color | echon 'blue ' | redir END
   redir =>> color | echon 'sky' | redir END
   call assert_equal('blue sky', color)
+endfunc
+
+func Test_redir_cmd_readonly()
+  CheckNotRoot
+
+  " Redirecting to a read-only file
+  call writefile([], 'Xfile')
+  call setfperm('Xfile', 'r--r--r--')
+  call assert_fails('redir! > Xfile', 'E190:')
+  call delete('Xfile')
 endfunc
 
 " Test for the :filetype command
@@ -568,10 +588,12 @@ endfunc
 
 " Test for the :verbose command
 func Test_verbose_cmd()
-  call assert_equal(['  verbose=1'], split(execute('verbose set vbs'), "\n"))
+  set verbose=3
+  call assert_match('  verbose=1\n\s*Last set from ', execute('verbose set vbs'), "\n")
   call assert_equal(['  verbose=0'], split(execute('0verbose set vbs'), "\n"))
-  let l = execute("4verbose set verbose | set verbose")
-  call assert_equal(['  verbose=4', '  verbose=0'], split(l, "\n"))
+  set verbose=0
+  call assert_match('  verbose=4\n\s*Last set from .*\n  verbose=0',
+        \ execute("4verbose set verbose | set verbose"))
 endfunc
 
 " Test for the :delete command and the related abbreviated commands
@@ -661,10 +683,22 @@ func Sandbox_tests()
   if has('unix')
     call assert_fails('cd `pwd`', 'E48:')
   endif
+  " some options cannot be changed in a sandbox
+  call assert_fails('set exrc', 'E48:')
+  call assert_fails('set cdpath', 'E48:')
+  if has('xim') && has('gui_gtk')
+    call assert_fails('set imstyle', 'E48:')
+  endif
 endfunc
 
 func Test_sandbox()
   sandbox call Sandbox_tests()
+endfunc
+
+func Test_command_not_implemented_E319()
+  if !has('mzscheme')
+    call assert_fails('mzscheme', 'E319:')
+  endif
 endfunc
 
 func Test_not_break_expression_register()

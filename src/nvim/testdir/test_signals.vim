@@ -16,8 +16,9 @@ endfunc
 " Test signal WINCH (window resize signal)
 func Test_signal_WINCH()
   throw 'skipped: Nvim cannot avoid terminal resize'
-  if has('gui_running') || !HasSignal('WINCH')
-    return
+  CheckNotGui
+  if !HasSignal('WINCH')
+    throw 'Skipped: WINCH signal not supported'
   endif
 
   " We do not actually want to change the size of the terminal.
@@ -52,7 +53,7 @@ endfunc
 " Test signal PWR, which should update the swap file.
 func Test_signal_PWR()
   if !HasSignal('PWR')
-    return
+    throw 'Skipped: PWR signal not supported'
   endif
 
   " Set a very large 'updatetime' and 'updatecount', so that we can be sure
@@ -78,6 +79,33 @@ func Test_signal_PWR()
   set updatetime& updatecount&
 endfunc
 
+" Test signal INT. Handler sets got_int. It should be like typing CTRL-C.
+func Test_signal_INT()
+  CheckRunVimInTerminal
+  if !HasSignal('INT')
+    throw 'Skipped: INT signal not supported'
+  endif
+
+  " Skip the rest of the test when running with valgrind as signal INT is not
+  " received somehow by Vim when running with valgrind.
+  let cmd = GetVimCommand()
+  if cmd =~ 'valgrind'
+    throw 'Skipped: cannot test signal INT with valgrind'
+  endif
+
+  let buf = RunVimInTerminal('', {'rows': 6})
+  let pid_vim = term_getjob(buf)->job_info().process
+
+  " Check that an endless loop in Vim is interrupted by signal INT.
+  call term_sendkeys(buf, ":while 1 | endwhile\n")
+  call WaitForAssert({-> assert_equal(':while 1 | endwhile', term_getline(buf, 6))})
+  exe 'silent !kill -s INT ' .. pid_vim
+  call term_sendkeys(buf, ":call setline(1, 'INTERUPTED')\n")
+  call WaitForAssert({-> assert_equal('INTERUPTED', term_getline(buf, 1))})
+
+  call StopVimInTerminal(buf)
+endfunc
+
 " Test a deadly signal.
 "
 " There are several deadly signals: SISEGV, SIBUS, SIGTERM...
@@ -91,9 +119,7 @@ func Test_deadly_signal_TERM()
   if !HasSignal('TERM')
     throw 'Skipped: TERM signal not supported'
   endif
-  if !CanRunVimInTerminal()
-    throw 'Skipped: cannot run vim in terminal'
-  endif
+  CheckRunVimInTerminal
   let cmd = GetVimCommand()
   if cmd =~ 'valgrind'
     throw 'Skipped: cannot test signal TERM with valgrind'
@@ -128,8 +154,7 @@ func Test_deadly_signal_TERM()
   call assert_equal(['foo'], getline(1, '$'))
 
   let result = readfile('XautoOut')
-  call assert_match('VimLeavePre triggered', result[0])
-  call assert_match('VimLeave triggered', result[1])
+  call assert_equal(["VimLeavePre triggered", "VimLeave triggered"], result)
 
   %bwipe!
   call delete('.Xsig_TERM.swp')

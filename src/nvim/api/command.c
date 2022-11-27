@@ -1,21 +1,36 @@
 // This is an open source non-commercial project. Dear PVS-Studio, please check
 // it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
+#include <inttypes.h>
 #include <stdbool.h>
-#include <stdint.h>
-#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
 
+#include "klib/kvec.h"
+#include "lauxlib.h"
 #include "nvim/api/command.h"
-#include "nvim/api/private/converter.h"
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"
+#include "nvim/ascii.h"
 #include "nvim/autocmd.h"
+#include "nvim/buffer_defs.h"
+#include "nvim/decoration.h"
+#include "nvim/ex_cmds.h"
 #include "nvim/ex_docmd.h"
 #include "nvim/ex_eval.h"
+#include "nvim/garray.h"
+#include "nvim/globals.h"
 #include "nvim/lua/executor.h"
+#include "nvim/macros.h"
+#include "nvim/mbyte.h"
+#include "nvim/memory.h"
 #include "nvim/ops.h"
+#include "nvim/pos.h"
 #include "nvim/regexp.h"
+#include "nvim/strings.h"
+#include "nvim/types.h"
 #include "nvim/usercmd.h"
+#include "nvim/vim.h"
 #include "nvim/window.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
@@ -31,14 +46,15 @@
 /// @param[out] err  Error details, if any.
 /// @return Dictionary containing command information, with these keys:
 ///         - cmd: (string) Command name.
-///         - range: (array) Command <range>. Can have 0-2 elements depending on how many items the
-///                          range contains. Has no elements if command doesn't accept a range or if
-///                          no range was specified, one element if only a single range item was
-///                          specified and two elements if both range items were specified.
-///         - count: (number) Any |<count>| that was supplied to the command. -1 if command cannot
-///                           take a count.
-///         - reg: (number) The optional command |<register>|, if specified. Empty string if not
-///                         specified or if command cannot take a register.
+///         - range: (array) (optional) Command range (|<line1>| |<line2>|).
+///                          Omitted if command doesn't accept a range.
+///                          Otherwise, has no elements if no range was specified, one element if
+///                          only a single range item was specified, or two elements if both range
+///                          items were specified.
+///         - count: (number) (optional) Command |<count>|.
+///                           Omitted if command cannot take a count.
+///         - reg: (string) (optional) Command |<register>|.
+///                         Omitted if command cannot take a register.
 ///         - bang: (boolean) Whether command contains a |<bang>| (!) modifier.
 ///         - args: (array) Command arguments.
 ///         - addr: (string) Value of |:command-addr|. Uses short name.
@@ -62,13 +78,14 @@
 ///             - browse: (boolean) |:browse|.
 ///             - confirm: (boolean) |:confirm|.
 ///             - hide: (boolean) |:hide|.
+///             - horizontal: (boolean) |:horizontal|.
 ///             - keepalt: (boolean) |:keepalt|.
 ///             - keepjumps: (boolean) |:keepjumps|.
 ///             - keepmarks: (boolean) |:keepmarks|.
 ///             - keeppatterns: (boolean) |:keeppatterns|.
 ///             - lockmarks: (boolean) |:lockmarks|.
 ///             - noswapfile: (boolean) |:noswapfile|.
-///             - tab: (integer) |:tab|.
+///             - tab: (integer) |:tab|. -1 when omitted.
 ///             - verbose: (integer) |:verbose|. -1 when omitted.
 ///             - vertical: (boolean) |:vertical|.
 ///             - split: (string) Split modifier string, is an empty string when there's no split
@@ -104,7 +121,7 @@ Dictionary nvim_parse_cmd(String str, Dictionary opts, Error *err)
 
   // Parse arguments
   Array args = ARRAY_DICT_INIT;
-  size_t length = STRLEN(ea.arg);
+  size_t length = strlen(ea.arg);
 
   // For nargs = 1 or '?', pass the entire argument list as a single argument,
   // otherwise split arguments by whitespace.
@@ -141,15 +158,15 @@ Dictionary nvim_parse_cmd(String str, Dictionary opts, Error *err)
     PUT(result, "cmd", CSTR_TO_OBJ((char *)get_command_name(NULL, ea.cmdidx)));
   }
 
-  if ((ea.argt & EX_RANGE) && ea.addr_count > 0) {
+  if (ea.argt & EX_RANGE) {
     Array range = ARRAY_DICT_INIT;
-    if (ea.addr_count > 1) {
-      ADD(range, INTEGER_OBJ(ea.line1));
+    if (ea.addr_count > 0) {
+      if (ea.addr_count > 1) {
+        ADD(range, INTEGER_OBJ(ea.line1));
+      }
+      ADD(range, INTEGER_OBJ(ea.line2));
     }
-    ADD(range, INTEGER_OBJ(ea.line2));
     PUT(result, "range", ARRAY_OBJ(range));
-  } else {
-    PUT(result, "range", ARRAY_OBJ(ARRAY_DICT_INIT));
   }
 
   if (ea.argt & EX_COUNT) {
@@ -160,14 +177,12 @@ Dictionary nvim_parse_cmd(String str, Dictionary opts, Error *err)
     } else {
       PUT(result, "count", INTEGER_OBJ(0));
     }
-  } else {
-    PUT(result, "count", INTEGER_OBJ(-1));
   }
 
-  char reg[2];
-  reg[0] = (char)ea.regname;
-  reg[1] = '\0';
-  PUT(result, "reg", CSTR_TO_OBJ(reg));
+  if (ea.argt & EX_REGSTR) {
+    char reg[2] = { (char)ea.regname, NUL };
+    PUT(result, "reg", CSTR_TO_OBJ(reg));
+  }
 
   PUT(result, "bang", BOOLEAN_OBJ(ea.forceit));
   PUT(result, "args", ARRAY_OBJ(args));
@@ -238,7 +253,7 @@ Dictionary nvim_parse_cmd(String str, Dictionary opts, Error *err)
   PUT(mods, "unsilent", BOOLEAN_OBJ(cmdinfo.cmdmod.cmod_flags & CMOD_UNSILENT));
   PUT(mods, "sandbox", BOOLEAN_OBJ(cmdinfo.cmdmod.cmod_flags & CMOD_SANDBOX));
   PUT(mods, "noautocmd", BOOLEAN_OBJ(cmdinfo.cmdmod.cmod_flags & CMOD_NOAUTOCMD));
-  PUT(mods, "tab", INTEGER_OBJ(cmdinfo.cmdmod.cmod_tab));
+  PUT(mods, "tab", INTEGER_OBJ(cmdinfo.cmdmod.cmod_tab - 1));
   PUT(mods, "verbose", INTEGER_OBJ(cmdinfo.cmdmod.cmod_verbose - 1));
   PUT(mods, "browse", BOOLEAN_OBJ(cmdinfo.cmdmod.cmod_flags & CMOD_BROWSE));
   PUT(mods, "confirm", BOOLEAN_OBJ(cmdinfo.cmdmod.cmod_flags & CMOD_CONFIRM));
@@ -250,6 +265,7 @@ Dictionary nvim_parse_cmd(String str, Dictionary opts, Error *err)
   PUT(mods, "lockmarks", BOOLEAN_OBJ(cmdinfo.cmdmod.cmod_flags & CMOD_LOCKMARKS));
   PUT(mods, "noswapfile", BOOLEAN_OBJ(cmdinfo.cmdmod.cmod_flags & CMOD_NOSWAPFILE));
   PUT(mods, "vertical", BOOLEAN_OBJ(cmdinfo.cmdmod.cmod_split & WSP_VERT));
+  PUT(mods, "horizontal", BOOLEAN_OBJ(cmdinfo.cmdmod.cmod_split & WSP_HOR));
 
   const char *split;
   if (cmdinfo.cmdmod.cmod_split & WSP_BOT) {
@@ -283,7 +299,11 @@ end:
 /// Unlike |nvim_command()| this command takes a structured Dictionary instead of a String. This
 /// allows for easier construction and manipulation of an Ex command. This also allows for things
 /// such as having spaces inside a command argument, expanding filenames in a command that otherwise
-/// doesn't expand filenames, etc.
+/// doesn't expand filenames, etc. Command arguments may also be Number, Boolean or String.
+///
+/// The first argument may also be used instead of count for commands that support it in order to
+/// make their usage simpler with |vim.cmd()|. For example, instead of
+/// `vim.cmd.bdelete{ count = 2 }`, you may do `vim.cmd.bdelete(2)`.
 ///
 /// On execution error: fails with VimL error, updates v:errmsg.
 ///
@@ -308,8 +328,7 @@ String nvim_cmd(uint64_t channel_id, Dict(cmd) *cmd, Dict(cmd_opts) *opts, Error
 
   char *cmdline = NULL;
   char *cmdname = NULL;
-  ArrayOf(String) args;
-  size_t argc = 0;
+  ArrayOf(String) args = ARRAY_DICT_INIT;
 
   String retv = (String)STRING_INIT;
 
@@ -381,48 +400,70 @@ String nvim_cmd(uint64_t channel_id, Dict(cmd) *cmd, Dict(cmd_opts) *opts, Error
     if (cmd->args.type != kObjectTypeArray) {
       VALIDATION_ERROR("'args' must be an Array");
     }
-    // Check if every argument is valid
+
+    // Process all arguments. Convert non-String arguments to String and check if String arguments
+    // have non-whitespace characters.
     for (size_t i = 0; i < cmd->args.data.array.size; i++) {
       Object elem = cmd->args.data.array.items[i];
-      if (elem.type != kObjectTypeString) {
-        VALIDATION_ERROR("Command argument must be a String");
-      } else if (string_iswhite(elem.data.string)) {
-        VALIDATION_ERROR("Command argument must have non-whitespace characters");
+      char *data_str;
+
+      switch (elem.type) {
+      case kObjectTypeBoolean:
+        data_str = xcalloc(2, sizeof(char));
+        data_str[0] = elem.data.boolean ? '1' : '0';
+        data_str[1] = '\0';
+        break;
+      case kObjectTypeBuffer:
+      case kObjectTypeWindow:
+      case kObjectTypeTabpage:
+      case kObjectTypeInteger:
+        data_str = xcalloc(NUMBUFLEN, sizeof(char));
+        snprintf(data_str, NUMBUFLEN, "%" PRId64, elem.data.integer);
+        break;
+      case kObjectTypeString:
+        if (string_iswhite(elem.data.string)) {
+          VALIDATION_ERROR("String command argument must have at least one non-whitespace "
+                           "character");
+        }
+        data_str = xstrndup(elem.data.string.data, elem.data.string.size);
+        break;
+      default:
+        VALIDATION_ERROR("Invalid type for command argument");
+        break;
       }
+
+      ADD(args, STRING_OBJ(cstr_as_string(data_str)));
     }
 
-    argc = cmd->args.data.array.size;
     bool argc_valid;
 
     // Check if correct number of arguments is used.
     switch (ea.argt & (EX_EXTRA | EX_NOSPC | EX_NEEDARG)) {
     case EX_EXTRA | EX_NOSPC | EX_NEEDARG:
-      argc_valid = argc == 1;
+      argc_valid = args.size == 1;
       break;
     case EX_EXTRA | EX_NOSPC:
-      argc_valid = argc <= 1;
+      argc_valid = args.size <= 1;
       break;
     case EX_EXTRA | EX_NEEDARG:
-      argc_valid = argc >= 1;
+      argc_valid = args.size >= 1;
       break;
     case EX_EXTRA:
       argc_valid = true;
       break;
     default:
-      argc_valid = argc == 0;
+      argc_valid = args.size == 0;
       break;
     }
 
     if (!argc_valid) {
       VALIDATION_ERROR("Incorrect number of arguments supplied");
     }
-
-    args = cmd->args.data.array;
   }
 
   // Simply pass the first argument (if it exists) as the arg pointer to `set_cmd_addr_type()`
   // since it only ever checks the first argument.
-  set_cmd_addr_type(&ea, argc > 0 ? args.items[0].data.string.data : NULL);
+  set_cmd_addr_type(&ea, args.size > 0 ? args.items[0].data.string.data : NULL);
 
   if (HAS_KEY(cmd->range)) {
     if (!(ea.argt & EX_RANGE)) {
@@ -557,15 +598,17 @@ String nvim_cmd(uint64_t channel_id, Dict(cmd) *cmd, Dict(cmd_opts) *opts, Error
     }
 
     if (HAS_KEY(mods.tab)) {
-      if (mods.tab.type != kObjectTypeInteger || mods.tab.data.integer < 0) {
-        VALIDATION_ERROR("'mods.tab' must be a non-negative Integer");
+      if (mods.tab.type != kObjectTypeInteger) {
+        VALIDATION_ERROR("'mods.tab' must be an Integer");
+      } else if ((int)mods.tab.data.integer >= 0) {
+        // Silently ignore negative integers to allow mods.tab to be set to -1.
+        cmdinfo.cmdmod.cmod_tab = (int)mods.tab.data.integer + 1;
       }
-      cmdinfo.cmdmod.cmod_tab = (int)mods.tab.data.integer + 1;
     }
 
     if (HAS_KEY(mods.verbose)) {
       if (mods.verbose.type != kObjectTypeInteger) {
-        VALIDATION_ERROR("'mods.verbose' must be a Integer");
+        VALIDATION_ERROR("'mods.verbose' must be an Integer");
       } else if ((int)mods.verbose.data.integer >= 0) {
         // Silently ignore negative integers to allow mods.verbose to be set to -1.
         cmdinfo.cmdmod.cmod_verbose = (int)mods.verbose.data.integer + 1;
@@ -576,6 +619,10 @@ String nvim_cmd(uint64_t channel_id, Dict(cmd) *cmd, Dict(cmd_opts) *opts, Error
     OBJ_TO_BOOL(vertical, mods.vertical, false, "'mods.vertical'");
     cmdinfo.cmdmod.cmod_split |= (vertical ? WSP_VERT : 0);
 
+    bool horizontal;
+    OBJ_TO_BOOL(horizontal, mods.horizontal, false, "'mods.horizontal'");
+    cmdinfo.cmdmod.cmod_split |= (horizontal ? WSP_HOR : 0);
+
     if (HAS_KEY(mods.split)) {
       if (mods.split.type != kObjectTypeString) {
         VALIDATION_ERROR("'mods.split' must be a String");
@@ -583,15 +630,15 @@ String nvim_cmd(uint64_t channel_id, Dict(cmd) *cmd, Dict(cmd_opts) *opts, Error
 
       if (*mods.split.data.string.data == NUL) {
         // Empty string, do nothing.
-      } else if (STRCMP(mods.split.data.string.data, "aboveleft") == 0
-                 || STRCMP(mods.split.data.string.data, "leftabove") == 0) {
+      } else if (strcmp(mods.split.data.string.data, "aboveleft") == 0
+                 || strcmp(mods.split.data.string.data, "leftabove") == 0) {
         cmdinfo.cmdmod.cmod_split |= WSP_ABOVE;
-      } else if (STRCMP(mods.split.data.string.data, "belowright") == 0
-                 || STRCMP(mods.split.data.string.data, "rightbelow") == 0) {
+      } else if (strcmp(mods.split.data.string.data, "belowright") == 0
+                 || strcmp(mods.split.data.string.data, "rightbelow") == 0) {
         cmdinfo.cmdmod.cmod_split |= WSP_BELOW;
-      } else if (STRCMP(mods.split.data.string.data, "topleft") == 0) {
+      } else if (strcmp(mods.split.data.string.data, "topleft") == 0) {
         cmdinfo.cmdmod.cmod_split |= WSP_TOP;
-      } else if (STRCMP(mods.split.data.string.data, "botright") == 0) {
+      } else if (strcmp(mods.split.data.string.data, "botright") == 0) {
         cmdinfo.cmdmod.cmod_split |= WSP_BOT;
       } else {
         VALIDATION_ERROR("Invalid value for 'mods.split'");
@@ -620,7 +667,7 @@ String nvim_cmd(uint64_t channel_id, Dict(cmd) *cmd, Dict(cmd_opts) *opts, Error
 
   // Finally, build the command line string that will be stored inside ea.cmdlinep.
   // This also sets the values of ea.cmd, ea.arg, ea.args and ea.arglens.
-  build_cmdline_str(&cmdline, &ea, &cmdinfo, args, argc);
+  build_cmdline_str(&cmdline, &ea, &cmdinfo, args);
   ea.cmdlinep = &cmdline;
 
   garray_T capture_local;
@@ -676,6 +723,7 @@ clear_ga:
     ga_clear(&capture_local);
   }
 end:
+  api_free_array(args);
   xfree(cmdline);
   xfree(cmdname);
   xfree(ea.args);
@@ -705,8 +753,9 @@ static bool string_iswhite(String str)
 
 /// Build cmdline string for command, used by `nvim_cmd()`.
 static void build_cmdline_str(char **cmdlinep, exarg_T *eap, CmdParseInfo *cmdinfo,
-                              ArrayOf(String) args, size_t argc)
+                              ArrayOf(String) args)
 {
+  size_t argc = args.size;
   StringBuilder cmdline = KV_INITIAL_VALUE;
   kv_resize(cmdline, 32);  // Make it big enough to handle most typical commands
 
@@ -753,6 +802,7 @@ static void build_cmdline_str(char **cmdlinep, exarg_T *eap, CmdParseInfo *cmdin
   } while (0)
 
   CMDLINE_APPEND_IF(cmdinfo->cmdmod.cmod_split & WSP_VERT, "vertical ");
+  CMDLINE_APPEND_IF(cmdinfo->cmdmod.cmod_split & WSP_HOR, "horizontal ");
   CMDLINE_APPEND_IF(cmdinfo->cmdmod.cmod_flags & CMOD_SANDBOX, "sandbox ");
   CMDLINE_APPEND_IF(cmdinfo->cmdmod.cmod_flags & CMOD_NOAUTOCMD, "noautocmd ");
   CMDLINE_APPEND_IF(cmdinfo->cmdmod.cmod_flags & CMOD_BROWSE, "browse ");
@@ -791,7 +841,7 @@ static void build_cmdline_str(char **cmdlinep, exarg_T *eap, CmdParseInfo *cmdin
   }
 
   eap->argc = argc;
-  eap->arglens = xcalloc(argc, sizeof(size_t));
+  eap->arglens = eap->argc > 0 ? xcalloc(argc, sizeof(size_t)) : NULL;
   size_t argstart_idx = cmdline.size;
   for (size_t i = 0; i < argc; i++) {
     String s = args.items[i].data.string;
@@ -806,7 +856,7 @@ static void build_cmdline_str(char **cmdlinep, exarg_T *eap, CmdParseInfo *cmdin
   // Now that all the arguments are appended, use the command index and argument indices to set the
   // values of eap->cmd, eap->arg and eap->args.
   eap->cmd = cmdline.items + cmdname_idx;
-  eap->args = xcalloc(argc, sizeof(char *));
+  eap->args = eap->argc > 0 ? xcalloc(argc, sizeof(char *)) : NULL;
   size_t offset = argstart_idx;
   for (size_t i = 0; i < argc; i++) {
     offset++;  // Account for space
@@ -823,13 +873,12 @@ static void build_cmdline_str(char **cmdlinep, exarg_T *eap, CmdParseInfo *cmdin
   // Replace, :make and :grep with 'makeprg' and 'grepprg'.
   char *p = replace_makeprg(eap, eap->arg, cmdlinep);
   if (p != eap->arg) {
-    // If replace_makeprg modified the cmdline string, correct the argument pointers.
+    // If replace_makeprg() modified the cmdline string, correct the eap->arg pointer.
     eap->arg = p;
-    // We can only know the position of the first argument because the argument list can be used
-    // multiple times in makeprg / grepprg.
-    if (argc >= 1) {
-      eap->args[0] = p;
-    }
+    // This cannot be a user command, so eap->args will not be used.
+    XFREE_CLEAR(eap->args);
+    XFREE_CLEAR(eap->arglens);
+    eap->argc = 0;
   }
 }
 
@@ -850,6 +899,7 @@ static void build_cmdline_str(char **cmdlinep, exarg_T *eap, CmdParseInfo *cmdin
 /// @param  command Replacement command to execute when this user command is executed. When called
 ///                 from Lua, the command can also be a Lua function. The function is called with a
 ///                 single table argument that contains the following keys:
+///                 - name: (string) Command name
 ///                 - args: (string) The args passed to the command, if any |<args>|
 ///                 - fargs: (table) The args split by unescaped whitespace (when more than one
 ///                 argument is allowed), if any |<f-args>|
@@ -929,7 +979,7 @@ void nvim_buf_del_user_command(Buffer buffer, String name, Error *err)
 
   for (int i = 0; i < gap->ga_len; i++) {
     ucmd_T *cmd = USER_CMD_GA(gap, i);
-    if (!STRCMP(name.data, cmd->uc_name)) {
+    if (!strcmp(name.data, cmd->uc_name)) {
       free_ucmd(cmd);
 
       gap->ga_len -= 1;

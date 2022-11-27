@@ -4,9 +4,10 @@ local clear, feed, eq = helpers.clear, helpers.feed, helpers.eq
 local command = helpers.command
 local feed_command = helpers.feed_command
 local insert = helpers.insert
+local expect = helpers.expect
 local funcs = helpers.funcs
 local meths = helpers.meths
-local source = helpers.source
+local exec = helpers.exec
 local assert_alive = helpers.assert_alive
 
 
@@ -194,50 +195,6 @@ describe("folded lines", function()
         {7:  }                                           |
         {1:~                                            }|
                                                      |
-        ]])
-      end
-    end)
-
-    it("highlighting with relative line numbers", function()
-      command("set relativenumber cursorline cursorlineopt=number foldmethod=marker")
-      feed_command("set foldcolumn=2")
-      funcs.setline(1, '{{{1')
-      funcs.setline(2, 'line 1')
-      funcs.setline(3, '{{{1')
-      funcs.setline(4, 'line 2')
-      feed("j")
-      if multigrid then
-        screen:expect([[
-        ## grid 1
-          [2:---------------------------------------------]|
-          [2:---------------------------------------------]|
-          [2:---------------------------------------------]|
-          [2:---------------------------------------------]|
-          [2:---------------------------------------------]|
-          [2:---------------------------------------------]|
-          [2:---------------------------------------------]|
-          [3:---------------------------------------------]|
-        ## grid 2
-          {7:+ }{8:  1 }{5:+--  2 lines: ·························}|
-          {7:+ }{9:  0 }{5:^+--  2 lines: ·························}|
-          {1:~                                            }|
-          {1:~                                            }|
-          {1:~                                            }|
-          {1:~                                            }|
-          {1:~                                            }|
-        ## grid 3
-          :set foldcolumn=2                            |
-        ]])
-      else
-        screen:expect([[
-          {7:+ }{8:  1 }{5:+--  2 lines: ·························}|
-          {7:+ }{9:  0 }{5:^+--  2 lines: ·························}|
-          {1:~                                            }|
-          {1:~                                            }|
-          {1:~                                            }|
-          {1:~                                            }|
-          {1:~                                            }|
-          :set foldcolumn=2                            |
         ]])
       end
     end)
@@ -1713,7 +1670,7 @@ describe("folded lines", function()
     end)
 
     it('does not crash when foldtext is longer than columns #12988', function()
-      source([[
+      exec([[
         function! MyFoldText() abort
           return repeat('-', &columns + 100)
         endfunction
@@ -1760,7 +1717,7 @@ describe("folded lines", function()
 
     it('work correctly with :move #18668', function()
       screen:try_resize(45, 12)
-      source([[
+      exec([[
         set foldmethod=expr foldexpr=indent(v:lnum)
         let content = ['', '', 'Line1', '  Line2', '  Line3',
               \ 'Line4', '  Line5', '  Line6',
@@ -1910,5 +1867,20 @@ describe("folded lines", function()
     command('2,3fold')
     command('%delete')
     eq(0, funcs.foldlevel(1))
+  end)
+
+  it('multibyte fold markers work #20438', function()
+    meths.win_set_option(0, 'foldmethod', 'marker')
+    meths.win_set_option(0, 'foldmarker', '«,»')
+    insert([[
+      bbbbb
+      bbbbb
+      bbbbb]])
+    feed('zfgg')
+    expect([[
+      bbbbb/*«*/
+      bbbbb
+      bbbbb/*»*/]])
+    eq(1, funcs.foldlevel(1))
   end)
 end)

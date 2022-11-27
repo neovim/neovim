@@ -79,6 +79,19 @@ function Test_cmdmods()
   call assert_equal('silent!', g:mods)
   tab MyCmd
   call assert_equal('tab', g:mods)
+  0tab MyCmd
+  call assert_equal('0tab', g:mods)
+  tab split
+  tab MyCmd
+  call assert_equal('tab', g:mods)
+  1tab MyCmd
+  call assert_equal('1tab', g:mods)
+  tabprev
+  tab MyCmd
+  call assert_equal('tab', g:mods)
+  2tab MyCmd
+  call assert_equal('2tab', g:mods)
+  2tabclose
   topleft MyCmd
   call assert_equal('topleft', g:mods)
   to MyCmd
@@ -101,6 +114,10 @@ function Test_cmdmods()
   call assert_equal('vertical', g:mods)
   vert MyCmd
   call assert_equal('vertical', g:mods)
+  horizontal MyCmd
+  call assert_equal('horizontal', g:mods)
+  hor MyCmd
+  call assert_equal('horizontal', g:mods)
 
   aboveleft belowright botright browse confirm hide keepalt keepjumps
 	      \ keepmarks keeppatterns lockmarks noautocmd noswapfile silent
@@ -598,6 +615,27 @@ func Test_command_list()
   comclear
   call assert_equal("\nNo user-defined commands found", execute(':command Xxx'))
   call assert_equal("\nNo user-defined commands found", execute('command'))
+endfunc
+
+" Test for a custom user completion returning the wrong value type
+func Test_usercmd_custom()
+  func T1(a, c, p)
+    return "a\nb\n"
+  endfunc
+  command -nargs=* -complete=customlist,T1 TCmd1
+  call feedkeys(":TCmd1 \<C-A>\<C-B>\"\<CR>", 'xt')
+  call assert_equal('"TCmd1 ', @:)
+  delcommand TCmd1
+  delfunc T1
+
+  func T2(a, c, p)
+    return {}
+  endfunc
+  command -nargs=* -complete=customlist,T2 TCmd2
+  call feedkeys(":TCmd2 \<C-A>\<C-B>\"\<CR>", 'xt')
+  call assert_equal('"TCmd2 ', @:)
+  delcommand TCmd2
+  delfunc T2
 endfunc
 
 func Test_delcommand_buffer()

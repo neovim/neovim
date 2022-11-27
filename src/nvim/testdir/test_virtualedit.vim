@@ -80,6 +80,10 @@ func Test_edit_change()
   call setline(1, "\t⒌")
   normal Cx
   call assert_equal('x', getline(1))
+  " Do a visual block change
+  call setline(1, ['a', 'b', 'c'])
+  exe "normal gg3l\<C-V>2jcx"
+  call assert_equal(['a  x', 'b  x', 'c  x'], getline(1, '$'))
   bwipe!
   set virtualedit=
 endfunc
@@ -289,6 +293,16 @@ func Test_replace_after_eol()
   call append(0, '"r"')
   normal gg$5lrxa
   call assert_equal('"r"    x', getline(1))
+  " visual block replace
+  %d _
+  call setline(1, ['a', '', 'b'])
+  exe "normal 2l\<C-V>2jrx"
+  call assert_equal(['a x', '  x', 'b x'], getline(1, '$'))
+  " visual characterwise selection replace after eol
+  %d _
+  call setline(1, 'a')
+  normal 4lv2lrx
+  call assert_equal('a   xxx', getline(1))
   bwipe!
   set virtualedit=
 endfunc
@@ -344,6 +358,48 @@ func Test_yank_paste_small_del_reg()
   call assert_equal(', foo', getline(1))
   bwipe!
   set virtualedit=
+endfunc
+
+" Test for delete that breaks a tab into spaces
+func Test_delete_break_tab()
+  new
+  call setline(1, "one\ttwo")
+  set virtualedit=all
+  normal v3ld
+  call assert_equal('    two', getline(1))
+  set virtualedit&
+  close!
+endfunc
+
+" Test for using <BS>, <C-W> and <C-U> in virtual edit mode
+" to erase character, word and line.
+func Test_ve_backspace()
+  new
+  call setline(1, 'sample')
+  set virtualedit=all
+  set backspace=indent,eol,start
+  exe "normal 15|i\<BS>\<BS>"
+  call assert_equal([0, 1, 7, 5], getpos('.'))
+  exe "normal 15|i\<C-W>"
+  call assert_equal([0, 1, 6, 0], getpos('.'))
+  exe "normal 15|i\<C-U>"
+  call assert_equal([0, 1, 1, 0], getpos('.'))
+  set backspace&
+  set virtualedit&
+  close!
+endfunc
+
+" Test for delete (x) on EOL character and after EOL
+func Test_delete_past_eol()
+  new
+  call setline(1, "ab")
+  set virtualedit=all
+  exe "normal 2lx"
+  call assert_equal('ab', getline(1))
+  exe "normal 10lx"
+  call assert_equal('ab', getline(1))
+  set virtualedit&
+  bw!
 endfunc
 
 " After calling s:TryVirtualeditReplace(), line 1 will contain one of these
@@ -480,5 +536,54 @@ func Test_global_local_virtualedit()
   setlocal virtualedit&
   set virtualedit&
 endfunc
+
+func Test_virtualedit_mouse()
+  let save_mouse = &mouse
+  set mouse=a
+  set virtualedit=all
+  new
+
+  call setline(1, ["text\tword"])
+  redraw
+  call Ntest_setmouse(1, 4)
+  call feedkeys("\<LeftMouse>", "xt")
+  call assert_equal([0, 1, 4, 0, 4], getcurpos())
+  call Ntest_setmouse(1, 5)
+  call feedkeys("\<LeftMouse>", "xt")
+  call assert_equal([0, 1, 5, 0, 5], getcurpos())
+  call Ntest_setmouse(1, 6)
+  call feedkeys("\<LeftMouse>", "xt")
+  call assert_equal([0, 1, 5, 1, 6], getcurpos())
+  call Ntest_setmouse(1, 7)
+  call feedkeys("\<LeftMouse>", "xt")
+  call assert_equal([0, 1, 5, 2, 7], getcurpos())
+  call Ntest_setmouse(1, 8)
+  call feedkeys("\<LeftMouse>", "xt")
+  call assert_equal([0, 1, 5, 3, 8], getcurpos())
+  call Ntest_setmouse(1, 9)
+  call feedkeys("\<LeftMouse>", "xt")
+  call assert_equal([0, 1, 6, 0, 9], getcurpos())
+  call Ntest_setmouse(1, 15)
+  call feedkeys("\<LeftMouse>", "xt")
+  call assert_equal([0, 1, 10, 2, 15], getcurpos())
+
+  bwipe!
+  let &mouse = save_mouse
+  set virtualedit&
+endfunc
+
+" this was replacing the NUL at the end of the line 
+func Test_virtualedit_replace_after_tab()
+  new
+  s/\v/	0
+  set ve=all
+  let @" = ''
+  sil! norm vPvr0
+  
+  call assert_equal("\t0", getline(1))
+  set ve&
+  bwipe!
+endfunc
+
 
 " vim: shiftwidth=2 sts=2 expandtab

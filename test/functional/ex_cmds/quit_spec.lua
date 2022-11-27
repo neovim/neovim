@@ -7,7 +7,7 @@ describe(':qa', function()
   end)
 
   it('verify #3334', function()
-    -- just testing if 'qa' passed as a program argument wont result in memory
+    -- just testing if 'qa' passed as a program argument won't result in memory
     -- errors
   end)
 end)

@@ -2,12 +2,17 @@
 // it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
 #include "nvim/os/input.h"
+#include "nvim/os/os.h"
 #include "nvim/os/os_win_console.h"
 #include "nvim/vim.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "os/os_win_console.c.generated.h"
 #endif
+
+static HWND hWnd = NULL;
+static HICON hOrigIconSmall = NULL;
+static HICON hOrigIcon = NULL;
 
 int os_get_conin_fd(void)
 {
@@ -44,4 +49,46 @@ void os_replace_stdout_and_stderr_to_conout(void)
   close(STDERR_FILENO);
   const int conerr_fd = _open_osfhandle((intptr_t)conout_handle, 0);
   assert(conerr_fd == STDERR_FILENO);
+}
+
+/// Sets Windows console icon, or pass NULL to restore original icon.
+void os_icon_set(HICON hIconSmall, HICON hIcon)
+{
+  if (hWnd == NULL) {
+    return;
+  }
+  hIconSmall = hIconSmall ? hIconSmall : hOrigIconSmall;
+  hIcon = hIcon ? hIcon : hOrigIcon;
+
+  if (hIconSmall != NULL) {
+    SendMessage(hWnd, WM_SETICON, (WPARAM)ICON_SMALL, (LPARAM)hIconSmall);
+  }
+  if (hIcon != NULL) {
+    SendMessage(hWnd, WM_SETICON, (WPARAM)ICON_BIG, (LPARAM)hIcon);
+  }
+}
+
+/// Sets Nvim logo as Windows console icon.
+///
+/// Saves the original icon so it can be restored at exit.
+void os_icon_init(void)
+{
+  if ((hWnd = GetConsoleWindow()) == NULL) {
+    return;
+  }
+  // Save Windows console icon to be restored later.
+  hOrigIconSmall = (HICON)SendMessage(hWnd, WM_GETICON, (WPARAM)ICON_SMALL, (LPARAM)0);
+  hOrigIcon = (HICON)SendMessage(hWnd, WM_GETICON, (WPARAM)ICON_BIG, (LPARAM)0);
+
+  const char *vimruntime = os_getenv("VIMRUNTIME");
+  if (vimruntime != NULL) {
+    snprintf(NameBuff, MAXPATHL, "%s" _PATHSEPSTR "neovim.ico", vimruntime);
+    if (!os_path_exists(NameBuff)) {
+      WLOG("neovim.ico not found: %s", NameBuff);
+    } else {
+      HICON hVimIcon = LoadImage(NULL, NameBuff, IMAGE_ICON, 64, 64,
+                                 LR_LOADFROMFILE | LR_LOADMAP3DCOLORS);
+      os_icon_set(hVimIcon, hVimIcon);
+    }
+  }
 }

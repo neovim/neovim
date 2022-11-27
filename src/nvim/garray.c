@@ -5,22 +5,17 @@
 ///
 /// Functions for handling growing arrays.
 
-#include <inttypes.h>
 #include <string.h>
 
-#include "nvim/ascii.h"
 #include "nvim/garray.h"
 #include "nvim/log.h"
 #include "nvim/memory.h"
 #include "nvim/path.h"
 #include "nvim/strings.h"
-#include "nvim/vim.h"
-
-// #include "nvim/globals.h"
-#include "nvim/memline.h"
+#include "nvim/types.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "garray.c.generated.h"
+# include "garray.c.generated.h"  // IWYU pragma: export
 #endif
 
 /// Clear an allocated growing array.
@@ -123,7 +118,7 @@ void ga_remove_duplicate_strings(garray_T *gap)
 
   // loop over the growing array in reverse
   for (int i = gap->ga_len - 1; i > 0; i--) {
-    if (FNAMECMP(fnames[i - 1], fnames[i]) == 0) {
+    if (path_fnamecmp(fnames[i - 1], fnames[i]) == 0) {
       xfree(fnames[i]);
 
       // close the gap (move all strings one slot lower)
@@ -131,7 +126,7 @@ void ga_remove_duplicate_strings(garray_T *gap)
         fnames[j - 1] = fnames[j];
       }
 
-      --gap->ga_len;
+      gap->ga_len--;
     }
   }
 }
@@ -167,7 +162,7 @@ char *ga_concat_strings_sep(const garray_T *gap, const char *sep)
     s = xstpcpy(s, strings[i]);
     s = xstpcpy(s, sep);
   }
-  strcpy(s, strings[nelem - 1]);
+  strcpy(s, strings[nelem - 1]);  // NOLINT(runtime/printf)
 
   return ret;
 }
@@ -198,7 +193,7 @@ void ga_concat(garray_T *gap, const char *restrict s)
     return;
   }
 
-  ga_concat_len(gap, s, STRLEN(s));
+  ga_concat_len(gap, s, strlen(s));
 }
 
 /// Concatenate a string to a growarray which contains characters

@@ -49,12 +49,13 @@
 #             simple be added to FILES
 # GLOB_DIRS - The directories to recursively search for files with extension
 #             GLOB_PAT
-#
-function(add_glob_targets)
+# EXCLUDE   - List of paths to skip (regex). Works on both directories and
+#             files.
+function(add_glob_target)
   cmake_parse_arguments(ARG
     "REQUIRED"
     "TARGET;COMMAND;GLOB_PAT;TOUCH_STRATEGY"
-    "FLAGS;FILES;GLOB_DIRS"
+    "FLAGS;FILES;GLOB_DIRS;EXCLUDE"
     ${ARGN}
   )
 
@@ -72,7 +73,15 @@ function(add_glob_targets)
   endif()
 
   foreach(gd ${ARG_GLOB_DIRS})
-    file(GLOB_RECURSE globfiles ${PROJECT_SOURCE_DIR}/${gd}/${ARG_GLOB_PAT})
+    file(GLOB_RECURSE globfiles_unnormalized ${PROJECT_SOURCE_DIR}/${gd}/${ARG_GLOB_PAT})
+    set(globfiles)
+    foreach(f ${globfiles_unnormalized})
+      file(TO_CMAKE_PATH "${f}" f)
+      list(APPEND globfiles ${f})
+    endforeach()
+    foreach(exclude_pattern ${ARG_EXCLUDE})
+      list(FILTER globfiles EXCLUDE REGEX ${exclude_pattern})
+    endforeach()
     list(APPEND ARG_FILES ${globfiles})
   endforeach()
 
@@ -142,4 +151,44 @@ function(add_glob_targets)
   endif()
 
   add_custom_target(${ARG_TARGET} DEPENDS ${touch_list})
+endfunction()
+
+# Set default build type to Debug. Also limit the list of allowable build types
+# to the ones defined in variable allowableBuildTypes.
+#
+# The correct way to specify build type (for example Release) for
+# single-configuration generators (Make and Ninja) is to run
+#
+# cmake -B build -D CMAKE_BUILD_TYPE=Release
+# cmake --build build
+#
+# while for multi-configuration generators (Visual Studio, Xcode and Ninja
+# Multi-Config) is to run
+#
+# cmake -B build
+# cmake --build build --config Release
+#
+# Passing CMAKE_BUILD_TYPE for multi-config generators will now not only
+# not be used, but also generate a warning for the user.
+function(set_default_buildtype)
+  set(allowableBuildTypes Debug Release MinSizeRel RelWithDebInfo)
+
+  get_property(isMultiConfig GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG)
+  if(isMultiConfig)
+    set(CMAKE_CONFIGURATION_TYPES ${allowableBuildTypes} PARENT_SCOPE)
+    if(CMAKE_BUILD_TYPE)
+      message(WARNING "CMAKE_BUILD_TYPE specified which is ignored on \
+      multi-configuration generators. Defaulting to Debug build type.")
+    endif()
+  else()
+    set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "${allowableBuildTypes}")
+    if(NOT CMAKE_BUILD_TYPE)
+      message(STATUS "CMAKE_BUILD_TYPE not specified, default is 'Debug'")
+      set(CMAKE_BUILD_TYPE Debug CACHE STRING "Choose the type of build" FORCE)
+    elseif(NOT CMAKE_BUILD_TYPE IN_LIST allowableBuildTypes)
+      message(FATAL_ERROR "Invalid build type: ${CMAKE_BUILD_TYPE}")
+    else()
+      message(STATUS "CMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}")
+    endif()
+  endif()
 endfunction()

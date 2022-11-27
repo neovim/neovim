@@ -2,15 +2,13 @@
 #define NVIM_HARDCOPY_H
 
 #include <stdint.h>
-#include <stdlib.h>  // for size_t
+#include <stdlib.h>
 
-#include "nvim/ex_cmds_defs.h"  // for exarg_T
-#include "nvim/globals.h"  // for TriState
-#include "nvim/types.h"  // for char_u
+#include "nvim/ex_cmds_defs.h"
+#include "nvim/globals.h"
+#include "nvim/types.h"
 
-/*
- * Structure to hold printing color and font attributes.
- */
+// Structure to hold printing color and font attributes.
 typedef struct {
   uint32_t fg_color;
   uint32_t bg_color;
@@ -23,9 +21,7 @@ typedef struct {
   int underdashed;
 } prt_text_attr_T;
 
-/*
- * Structure passed back to the generic printer code.
- */
+// Structure passed back to the generic printer code.
 typedef struct {
   int n_collated_copies;
   int n_uncollated_copies;
@@ -42,9 +38,7 @@ typedef struct {
   char_u *arguments;
 } prt_settings_T;
 
-/*
- * Generic option table item, only used for printer at the moment.
- */
+// Generic option table item, only used for printer at the moment.
 typedef struct {
   const char *name;
   int hasnum;

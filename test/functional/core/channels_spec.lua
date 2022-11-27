@@ -1,5 +1,4 @@
 local helpers = require('test.functional.helpers')(after_each)
-local uname = helpers.uname
 local clear, eq, eval, next_msg, ok, source = helpers.clear, helpers.eq,
    helpers.eval, helpers.next_msg, helpers.ok, helpers.source
 local command, funcs, meths = helpers.command, helpers.funcs, helpers.meths
@@ -12,6 +11,7 @@ local retry = helpers.retry
 local expect_twostreams = helpers.expect_twostreams
 local assert_alive = helpers.assert_alive
 local pcall_err = helpers.pcall_err
+local skip = helpers.skip
 
 describe('channels', function()
   local init = [[
@@ -145,7 +145,7 @@ describe('channels', function()
   end
 
   it('can use stdio channel with pty', function()
-    if helpers.pending_win32(pending) then return end
+    skip(is_os('win'))
     source([[
       let g:job_opts = {
       \ 'on_stdout': function('OnEvent'),
@@ -178,8 +178,7 @@ describe('channels', function()
 
     command("call chansend(id, 'incomplet\004')")
 
-    local is_bsd = not not string.find(uname(), 'bsd')
-    local bsdlike = is_bsd or is_os('mac')
+    local bsdlike = is_os('bsd') or is_os('mac')
     local extra = bsdlike and "^D\008\008" or ""
     expect_twoline(id, "stdout",
                    "incomplet"..extra, "[1, ['incomplet'], 'stdin']", true)
@@ -199,7 +198,7 @@ describe('channels', function()
 
 
   it('stdio channel can use rpc and stderr simultaneously', function()
-    if helpers.pending_win32(pending) then return end
+    skip(is_os('win'))
     source([[
       let g:job_opts = {
       \ 'on_stderr': function('OnEvent'),

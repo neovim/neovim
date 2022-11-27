@@ -7,6 +7,8 @@ local nvim_prog_abs = helpers.nvim_prog_abs
 local eq, eval = helpers.eq, helpers.eval
 local funcs = helpers.funcs
 local nvim_set = helpers.nvim_set
+local is_os = helpers.is_os
+local skip = helpers.skip
 
 describe(':terminal highlight', function()
   local screen
@@ -26,6 +28,8 @@ describe(':terminal highlight', function()
       [9] = {foreground = 130},
       [10] = {reverse = true},
       [11] = {background = 11},
+      [12] = {bold = true, underdouble = true},
+      [13] = {italic = true, undercurl = true},
     })
     screen:attach({rgb=false})
     command(("enew | call termopen(['%s'])"):format(testprg('tty-test')))
@@ -56,7 +60,7 @@ describe(':terminal highlight', function()
       end)
 
       local function pass_attrs()
-        if helpers.pending_win32(pending) then return end
+        skip(is_os('win'))
         screen:expect(sub([[
           tty ready                                         |
           {NUM:text}text{10: }                                         |
@@ -71,7 +75,7 @@ describe(':terminal highlight', function()
       it('will pass the corresponding attributes', pass_attrs)
 
       it('will pass the corresponding attributes on scrollback', function()
-        if helpers.pending_win32(pending) then return end
+        skip(is_os('win'))
         pass_attrs()
         local lines = {}
         for i = 1, 8 do
@@ -113,6 +117,14 @@ describe(':terminal highlight', function()
     thelpers.set_italic()
     thelpers.set_underline()
     thelpers.set_strikethrough()
+  end)
+  descr('bold and underdouble', 12, function()
+    thelpers.set_bold()
+    thelpers.set_underdouble()
+  end)
+  descr('italics and undercurl', 13, function()
+    thelpers.set_italic()
+    thelpers.set_undercurl()
   end)
 end)
 
@@ -187,7 +199,7 @@ describe(':terminal highlight forwarding', function()
   end)
 
   it('will handle cterm and rgb attributes', function()
-    if helpers.pending_win32(pending) then return end
+    skip(is_os('win'))
     thelpers.set_fg(3)
     thelpers.feed_data('text')
     thelpers.feed_termcode('[38:2:255:128:0m')
@@ -239,7 +251,7 @@ describe(':terminal highlight with custom palette', function()
   end)
 
   it('will use the custom color', function()
-    if helpers.pending_win32(pending) then return end
+    skip(is_os('win'))
     thelpers.set_fg(3)
     thelpers.feed_data('text')
     thelpers.clear_attrs()

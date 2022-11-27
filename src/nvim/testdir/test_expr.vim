@@ -1,5 +1,7 @@
 " Tests for expressions.
 
+source check.vim
+
 func Test_equal()
   let base = {}
   func base.method()
@@ -44,6 +46,7 @@ func Test_dict()
   call assert_equal('zero', d[0])
   call assert_true(has_key(d, ''))
   call assert_true(has_key(d, 'a'))
+  call assert_fails("let i = has_key([], 'a')", 'E715:')
 
   let d[''] = 'none'
   let d['a'] = 'aaa'
@@ -62,6 +65,8 @@ func Test_strgetchar()
   call assert_equal(-1, strgetchar('axb', -1))
   call assert_equal(-1, strgetchar('axb', 3))
   call assert_equal(-1, strgetchar('', 0))
+  call assert_fails("let c=strgetchar([], 1)", 'E730:')
+  call assert_fails("let c=strgetchar('axb', [])", 'E745:')
 endfunc
 
 func Test_strcharpart()
@@ -76,20 +81,25 @@ func Test_strcharpart()
   call assert_equal('', strcharpart('axb', -2, 2))
 
   call assert_equal('a', strcharpart('axb', -1, 2))
+
+  call assert_equal('edit', "editor"[-10:3])
+endfunc
+
+func Test_getreg_empty_list()
+  call assert_equal('', getreg('x'))
+  call assert_equal([], getreg('x', 1, 1))
+  let x = getreg('x', 1, 1)
+  let y = x
+  call add(x, 'foo')
+  call assert_equal(['foo'], y)
+  call assert_fails('call getreg([])', 'E730:')
 endfunc
 
 func Test_loop_over_null_list()
-  let null_list = submatch(1, 1)
+  let null_list = v:_null_list
   for i in null_list
     call assert_report('should not get here')
   endfor
-endfunc
-
-func Test_compare_null_dict()
-  call assert_fails('let x = v:_null_dict[10]')
-  call assert_equal({}, {})
-  call assert_equal(v:_null_dict, v:_null_dict)
-  call assert_notequal({}, v:_null_dict)
 endfunc
 
 func Test_set_reg_null_list()
@@ -478,49 +488,6 @@ function Test_max_min_errors()
   call assert_fails('call min(v:true)', 'min()')
 endfunc
 
-func Test_substitute_expr()
-  let g:val = 'XXX'
-  call assert_equal('XXX', substitute('yyy', 'y*', '\=g:val', ''))
-  call assert_equal('XXX', substitute('yyy', 'y*', {-> g:val}, ''))
-  call assert_equal("-\u1b \uf2-", substitute("-%1b %f2-", '%\(\x\x\)',
-			   \ '\=nr2char("0x" . submatch(1))', 'g'))
-  call assert_equal("-\u1b \uf2-", substitute("-%1b %f2-", '%\(\x\x\)',
-			   \ {-> nr2char("0x" . submatch(1))}, 'g'))
-
-  call assert_equal('231', substitute('123', '\(.\)\(.\)\(.\)',
-	\ {-> submatch(2) . submatch(3) . submatch(1)}, ''))
-
-  func Recurse()
-    return substitute('yyy', 'y\(.\)y', {-> submatch(1)}, '')
-  endfunc
-  " recursive call works
-  call assert_equal('-y-x-', substitute('xxx', 'x\(.\)x', {-> '-' . Recurse() . '-' . submatch(1) . '-'}, ''))
-endfunc
-
-func Test_invalid_submatch()
-  " This was causing invalid memory access in Vim-7.4.2232 and older
-  call assert_fails("call substitute('x', '.', {-> submatch(10)}, '')", 'E935:')
-endfunc
-
-func Test_substitute_expr_arg()
-  call assert_equal('123456789-123456789=', substitute('123456789',
-	\ '\(.\)\(.\)\(.\)\(.\)\(.\)\(.\)\(.\)\(.\)\(.\)',
-	\ {m -> m[0] . '-' . m[1] . m[2] . m[3] . m[4] . m[5] . m[6] . m[7] . m[8] . m[9] . '='}, ''))
-
-  call assert_equal('123456-123456=789', substitute('123456789',
-	\ '\(.\)\(.\)\(.\)\(a*\)\(n*\)\(.\)\(.\)\(.\)\(x*\)',
-	\ {m -> m[0] . '-' . m[1] . m[2] . m[3] . m[4] . m[5] . m[6] . m[7] . m[8] . m[9] . '='}, ''))
-
-  call assert_equal('123456789-123456789x=', substitute('123456789',
-	\ '\(.\)\(.\)\(.*\)',
-	\ {m -> m[0] . '-' . m[1] . m[2] . m[3] . 'x' . m[4] . m[5] . m[6] . m[7] . m[8] . m[9] . '='}, ''))
-
-  call assert_fails("call substitute('xxx', '.', {m -> string(add(m, 'x'))}, '')", 'E742:')
-  call assert_fails("call substitute('xxx', '.', {m -> string(insert(m, 'x'))}, '')", 'E742:')
-  call assert_fails("call substitute('xxx', '.', {m -> string(extend(m, ['x']))}, '')", 'E742:')
-  call assert_fails("call substitute('xxx', '.', {m -> string(remove(m, 1))}, '')", 'E742:')
-endfunc
-
 func Test_function_with_funcref()
   let s:f = function('type')
   let s:fref = function(s:f)
@@ -529,6 +496,14 @@ func Test_function_with_funcref()
 
   call assert_fails("call function('foo()')", 'E475:')
   call assert_fails("call function('foo()')", 'foo()')
+  call assert_fails("function('')", 'E129:')
+
+  let Len = {s -> strlen(s)}
+  call assert_equal(6, Len('foobar'))
+  let name = string(Len)
+  " can evaluate "function('<lambda>99')"
+  call execute('let Ref = ' .. name)
+  call assert_equal(4, Ref('text'))
 endfunc
 
 func Test_funcref()
@@ -547,6 +522,7 @@ func Test_funcref()
   call assert_fails('echo funcref("{")', 'E475:')
   let OneByRef = funcref("One", repeat(["foo"], 20))
   call assert_fails('let OneByRef = funcref("One", repeat(["foo"], 21))', 'E118:')
+  call assert_fails('echo function("min") =~ function("min")', 'E694:')
 endfunc
 
 func Test_setmatches()
@@ -560,6 +536,7 @@ func Test_setmatches()
   endif
   eval set->setmatches()
   call assert_equal(exp, getmatches())
+  call assert_fails('let m = setmatches([], [])', 'E745:')
 endfunc
 
 func Test_empty_concatenate()
@@ -586,3 +563,99 @@ func Test_eval_after_if()
   if 0 | eval SetVal('a') | endif | call SetVal('b')
   call assert_equal('b', s:val)
 endfunc
+
+func Test_divide_by_zero()
+  " only tests that this doesn't crash, the result is not important
+  echo 0 / 0
+  echo 0 / 0 / -1
+endfunc
+
+" Test for command-line completion of expressions
+func Test_expr_completion()
+  CheckFeature cmdline_compl
+  for cmd in [
+	\ 'let a = ',
+	\ 'const a = ',
+	\ 'if',
+	\ 'elseif',
+	\ 'while',
+	\ 'for',
+	\ 'echo',
+	\ 'echon',
+	\ 'execute',
+	\ 'echomsg',
+	\ 'echoerr',
+	\ 'call',
+	\ 'return',
+	\ 'cexpr',
+	\ 'caddexpr',
+	\ 'cgetexpr',
+	\ 'lexpr',
+	\ 'laddexpr',
+	\ 'lgetexpr']
+    call feedkeys(":" . cmd . " getl\<Tab>\<Home>\"\<CR>", 'xt')
+    call assert_equal('"' . cmd . ' getline(', getreg(':'))
+  endfor
+
+  " completion for the expression register
+  call feedkeys(":\"\<C-R>=float2\t\"\<C-B>\"\<CR>", 'xt')
+  call assert_equal('"float2nr("', @=)
+
+  " completion for window local variables
+  let w:wvar1 = 10
+  let w:wvar2 = 10
+  call feedkeys(":echo w:wvar\<C-A>\<C-B>\"\<CR>", 'xt')
+  call assert_equal('"echo w:wvar1 w:wvar2', @:)
+  unlet w:wvar1 w:wvar2
+
+  " completion for tab local variables
+  let t:tvar1 = 10
+  let t:tvar2 = 10
+  call feedkeys(":echo t:tvar\<C-A>\<C-B>\"\<CR>", 'xt')
+  call assert_equal('"echo t:tvar1 t:tvar2', @:)
+  unlet t:tvar1 t:tvar2
+
+  " completion for variables
+  let g:tvar1 = 1
+  let g:tvar2 = 2
+  call feedkeys(":let g:tv\<C-A>\<C-B>\"\<CR>", 'xt')
+  call assert_equal('"let g:tvar1 g:tvar2', @:)
+  " completion for variables after a ||
+  call feedkeys(":echo 1 || g:tv\<C-A>\<C-B>\"\<CR>", 'xt')
+  call assert_equal('"echo 1 || g:tvar1 g:tvar2', @:)
+
+  " completion for options
+  call feedkeys(":echo &compat\<C-A>\<C-B>\"\<CR>", 'xt')
+  call assert_equal('"echo &compatible', @:)
+  call feedkeys(":echo 1 && &compat\<C-A>\<C-B>\"\<CR>", 'xt')
+  call assert_equal('"echo 1 && &compatible', @:)
+  call feedkeys(":echo &g:equala\<C-A>\<C-B>\"\<CR>", 'xt')
+  call assert_equal('"echo &g:equalalways', @:)
+
+  " completion for string
+  call feedkeys(":echo \"Hello\\ World\"\<C-A>\<C-B>\"\<CR>", 'xt')
+  call assert_equal("\"echo \"Hello\\ World\"\<C-A>", @:)
+  call feedkeys(":echo 'Hello World'\<C-A>\<C-B>\"\<CR>", 'xt')
+  call assert_equal("\"echo 'Hello World'\<C-A>", @:)
+
+  " completion for command after a |
+  call feedkeys(":echo 'Hello' | cwin\<C-A>\<C-B>\"\<CR>", 'xt')
+  call assert_equal("\"echo 'Hello' | cwindow", @:)
+
+  " completion for environment variable
+  let $X_VIM_TEST_COMPLETE_ENV = 'foo'
+  call feedkeys(":let $X_VIM_TEST_COMPLETE_E\<C-A>\<C-B>\"\<CR>", 'tx')
+  call assert_match('"let $X_VIM_TEST_COMPLETE_ENV', @:)
+  unlet $X_VIM_TEST_COMPLETE_ENV
+endfunc
+
+" Test for errors in expression evaluation
+func Test_expr_eval_error()
+  call assert_fails("let i = 'abc' . []", 'E730:')
+  call assert_fails("let l = [] + 10", 'E745:')
+  call assert_fails("let v = 10 + []", 'E745:')
+  call assert_fails("let v = 10 / []", 'E745:')
+  call assert_fails("let v = -{}", 'E728:')
+endfunc
+
+" vim: shiftwidth=2 sts=2 expandtab

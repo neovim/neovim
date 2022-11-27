@@ -221,10 +221,10 @@ describe('search highlighting', function()
       feed('gg/foo\\nbar<CR>')
       screen:expect([[
         one                                     |
-        {2:^foo}                                     |
+        {2:^foo }                                    |
         {2:bar}                                     |
         baz                                     |
-        {1:foo}                                     |
+        {1:foo }                                    |
         {1:bar}                                     |
         /foo\nbar                               |
       ]])
@@ -232,20 +232,20 @@ describe('search highlighting', function()
       feed('gg/efg\\nhij<CR>')
       screen:expect([[
         ---                                     |
-        abcd{2:^efg}                                 |
+        abcd{2:^efg }                                |
         {2:hij}kl                                   |
         ---                                     |
-        abcd{1:efg}                                 |
+        abcd{1:efg }                                |
         {1:hij}kl                                   |
         /efg\nhij                               |
       ]])
       feed('n')
       screen:expect([[
         ---                                     |
-        abcd{1:efg}                                 |
+        abcd{1:efg }                                |
         {1:hij}kl                                   |
         ---                                     |
-        abcd{2:^efg}                                 |
+        abcd{2:^efg }                                |
         {2:hij}kl                                   |
         /efg\nhij                               |
       ]])
@@ -548,9 +548,9 @@ describe('search highlighting', function()
     feed('/line\\na<cr>')
     screen:expect([[
                                               |
-      a  repeated {2:^line}                        |
-      {2:a}  repeated {2:line}                        |
-      {2:a}  repeated {2:line}                        |
+      a  repeated {2:^line }                       |
+      {2:a}  repeated {2:line }                       |
+      {2:a}  repeated {2:line }                       |
       {2:a}  repeated line                        |
       {1:~                                       }|
       {4:search hit BOTTOM, continuing at TOP}    |
@@ -560,9 +560,9 @@ describe('search highlighting', function()
     feed('4Grb')
     screen:expect([[
                                               |
-      a  repeated {2:line}                        |
+      a  repeated {2:line }                       |
       {2:a}  repeated line                        |
-      ^b  repeated {2:line}                        |
+      ^b  repeated {2:line }                       |
       {2:a}  repeated line                        |
       {1:~                                       }|
       {4:search hit BOTTOM, continuing at TOP}    |

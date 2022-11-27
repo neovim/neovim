@@ -115,7 +115,7 @@ func Test_winbuf_close()
   call assert_equal('Xtest2', bufname('%'))
   quit!
   call assert_equal('Xtest3', bufname('%'))
-  call assert_fails('silent! quit!', 'E162')
+  call assert_fails('silent! quit!', 'E37')
   call assert_equal('Xtest1', bufname('%'))
 
   call delete('Xtest1')

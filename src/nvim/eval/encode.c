@@ -10,23 +10,28 @@
 #include <assert.h>
 #include <inttypes.h>
 #include <math.h>
-#include <msgpack.h>
+#include <stdbool.h>
 #include <stddef.h>
+#include <stdlib.h>
+#include <string.h>
 
+#include "klib/kvec.h"
+#include "msgpack/pack.h"
 #include "nvim/ascii.h"
-#include "nvim/buffer_defs.h"
-#include "nvim/charset.h"  // vim_isprintc()
 #include "nvim/eval.h"
 #include "nvim/eval/encode.h"
 #include "nvim/eval/typval.h"
 #include "nvim/eval/typval_encode.h"
 #include "nvim/garray.h"
-#include "nvim/lib/kvec.h"
+#include "nvim/gettext.h"
+#include "nvim/hashtab.h"
 #include "nvim/macros.h"
 #include "nvim/math.h"
 #include "nvim/mbyte.h"
 #include "nvim/memory.h"
 #include "nvim/message.h"
+#include "nvim/strings.h"
+#include "nvim/types.h"
 #include "nvim/vim.h"  // For _()
 
 const char *const encode_bool_var_names[] = {
@@ -131,9 +136,9 @@ static int conv_error(const char *const msg, const MPConvStack *const mpstack,
       typval_T key_tv = {
         .v_type = VAR_STRING,
         .vval = { .v_string =
-                    (char *)(v.data.d.hi ==
-                             NULL ? v.data.d.dict->dv_hashtab.ht_array : (v.data.d.hi -
-                                                                          1))->hi_key },
+                    (v.data.d.hi ==
+                     NULL ? v.data.d.dict->dv_hashtab.ht_array : (v.data.d.hi -
+                                                                  1))->hi_key },
       };
       char *const key = encode_tv2string(&key_tv, NULL);
       vim_snprintf((char *)IObuff, IOSIZE, key_msg, key);
@@ -144,16 +149,16 @@ static int conv_error(const char *const msg, const MPConvStack *const mpstack,
     case kMPConvPairs:
     case kMPConvList: {
       const int idx = (v.data.l.li == tv_list_first(v.data.l.list)
-                         ? 0
-                         : (v.data.l.li == NULL
-                            ? tv_list_len(v.data.l.list) - 1
-                            : (int)tv_list_idx_of_item(v.data.l.list,
-                                                       TV_LIST_ITEM_PREV(v.data.l.list,
-                                                                         v.data.l.li))));
+                       ? 0
+                       : (v.data.l.li == NULL
+                          ? tv_list_len(v.data.l.list) - 1
+                          : (int)tv_list_idx_of_item(v.data.l.list,
+                                                     TV_LIST_ITEM_PREV(v.data.l.list,
+                                                                       v.data.l.li))));
       const listitem_T *const li = (v.data.l.li == NULL
-                                      ? tv_list_last(v.data.l.list)
-                                      : TV_LIST_ITEM_PREV(v.data.l.list,
-                                                          v.data.l.li));
+                                    ? tv_list_last(v.data.l.list)
+                                    : TV_LIST_ITEM_PREV(v.data.l.list,
+                                                        v.data.l.li));
       if (v.type == kMPConvList
           || li == NULL
           || (TV_LIST_ITEM_TV(li)->v_type != VAR_LIST
@@ -219,7 +224,7 @@ bool encode_vim_list_to_buf(const list_T *const list, size_t *const ret_len, cha
     }
     len++;
     if (TV_LIST_ITEM_TV(li)->vval.v_string != NULL) {
-      len += STRLEN(TV_LIST_ITEM_TV(li)->vval.v_string);
+      len += strlen(TV_LIST_ITEM_TV(li)->vval.v_string);
     }
   });
   if (len) {
@@ -281,7 +286,7 @@ int encode_read_from_list(ListReaderState *const state, char *const buf, const s
       state->offset = 0;
       state->li_length = (TV_LIST_ITEM_TV(state->li)->vval.v_string == NULL
                           ? 0
-                          : STRLEN(TV_LIST_ITEM_TV(state->li)->vval.v_string));
+                          : strlen(TV_LIST_ITEM_TV(state->li)->vval.v_string));
     }
   }
   *read_bytes = nbuf;

@@ -536,9 +536,7 @@ func Test_termguicolors()
 endfunc
 
 func Test_cursorline_after_yank()
-  if !CanRunVimInTerminal()
-    throw 'Skipped: cannot make screendumps'
-  endif
+  CheckScreendump
 
   call writefile([
 	\ 'set cul rnu',
@@ -578,9 +576,7 @@ func Test_put_before_cursorline()
 endfunc
 
 func Test_cursorline_with_visualmode()
-  if !CanRunVimInTerminal()
-    throw 'Skipped: cannot make screendumps'
-  endif
+  CheckScreendump
 
   call writefile([
 	\ 'set cul',
@@ -722,7 +718,7 @@ func Test_1_highlight_Normalgroup_exists()
   elseif has('gui_gtk2') || has('gui_gnome') || has('gui_gtk3')
     " expect is DEFAULT_FONT of gui_gtk_x11.c
     call assert_match('hi Normal\s*font=Monospace 10', hlNormal)
-  elseif has('gui_motif') || has('gui_athena')
+  elseif has('gui_motif')
     " expect is DEFAULT_FONT of gui_x11.c
     call assert_match('hi Normal\s*font=7x13', hlNormal)
   elseif has('win32')
@@ -731,7 +727,8 @@ func Test_1_highlight_Normalgroup_exists()
   endif
 endfunc
 
-function Test_no_space_before_xxx()
+" Do this test last, sometimes restoring the columns doesn't work
+func Test_z_no_space_before_xxx()
   " Note: we need to create this highlight group in the test because it does not exist in Neovim
   execute('hi StatusLineTermNC ctermfg=green')
   let l:org_columns = &columns
@@ -739,13 +736,23 @@ function Test_no_space_before_xxx()
   let l:hi_StatusLineTermNC = join(split(execute('hi StatusLineTermNC')))
   call assert_match('StatusLineTermNC xxx', l:hi_StatusLineTermNC)
   let &columns = l:org_columns
-endfunction
+endfunc
 
 " Test for :highlight command errors
 func Test_highlight_cmd_errors()
   if has('gui_running') || has('nvim')
+    " This test doesn't fail in the MS-Windows console version.
+    call assert_fails('hi Xcomment ctermfg=fg', 'E419:')
+    call assert_fails('hi Xcomment ctermfg=bg', 'E420:')
     call assert_fails('hi ' .. repeat('a', 201) .. ' ctermfg=black', 'E1249:')
   endif
+
+  " Try using a very long terminal code. Define a dummy terminal code for this
+  " test.
+  let &t_fo = "\<Esc>1;"
+  let c = repeat("t_fo,", 100) . "t_fo"
+  " call assert_fails('exe "hi Xgroup1 start=" . c', 'E422:')
+  let &t_fo = ""
 endfunc
 
 " Test for using RGB color values in a highlight group
@@ -812,11 +819,11 @@ func Test_highlight_clear_restores_context()
   let patContextDefault = fnamemodify(scriptContextDefault, ':t') .. ' line 1'
   let patContextRelink = fnamemodify(scriptContextRelink, ':t') .. ' line 2'
 
-  exec "source" scriptContextDefault
+  exec 'source ' .. scriptContextDefault
   let hlContextDefault = execute("verbose hi Context")
   call assert_match(patContextDefault, hlContextDefault)
 
-  exec "source" scriptContextRelink
+  exec 'source ' .. scriptContextRelink
   let hlContextRelink = execute("verbose hi Context")
   call assert_match(patContextRelink, hlContextRelink)
 

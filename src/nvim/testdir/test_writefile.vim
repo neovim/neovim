@@ -57,7 +57,29 @@ func Test_writefile_fails_conversion()
   call assert_fails('write ++enc=cp932', 'E513:')
   call assert_equal(contents, readfile('Xfile'))
 
+  " With 'backupcopy' set, if there is a conversion error, the backup file is
+  " still created.
+  set backupcopy=yes writebackup& backup&
+  call delete('Xfile' .. &backupext)
+  call assert_fails('write ++enc=cp932', 'E513:')
+  call assert_equal(contents, readfile('Xfile'))
+  call assert_equal(contents, readfile('Xfile' .. &backupext))
+  set backupcopy&
+  %bw!
+
+  " Conversion error during write
+  new
+  call setline(1, ["\U10000000"])
+  let output = execute('write! ++enc=utf-16 Xfile')
+  call assert_match('CONVERSION ERROR', output)
+  let output = execute('write! ++enc=ucs-2 Xfile')
+  call assert_match('CONVERSION ERROR', output)
+  call delete('Xfilz~')
+  call delete('Xfily~')
+  %bw!
+
   call delete('Xfile')
+  call delete('Xfile' .. &backupext)
   bwipe!
   set backup& writebackup& backupdir&vim backupskip&vim
 endfunc
@@ -136,9 +158,7 @@ func Test_writefile_sync_arg()
 endfunc
 
 func Test_writefile_sync_dev_stdout()
-  if !has('unix')
-    return
-  endif
+  CheckUnix
   if filewritable('/dev/stdout')
     " Just check that this doesn't cause an error.
     call writefile(['one'], '/dev/stdout', 's')
@@ -216,6 +236,12 @@ func Test_saveas()
   syntax off
   %bw!
   call delete('Xsaveas.pl')
+
+  " :saveas fails for "nofile" buffer
+  set buftype=nofile
+  call assert_fails('saveas Xsafile', 'E676: No matching autocommands for buftype=nofile buffer')
+
+  bwipe!
 endfunc
 
 func Test_write_errors()
@@ -254,6 +280,225 @@ func Test_write_errors()
   close
 
   call delete('Xfile')
+
+  " Nvim treats NULL list/blob more like empty list/blob
+  " call writefile(v:_null_list, 'Xfile')
+  " call assert_false(filereadable('Xfile'))
+  " call writefile(v:_null_blob, 'Xfile')
+  " call assert_false(filereadable('Xfile'))
+  call assert_fails('call writefile([], "")', 'E482:')
+
+  " very long file name
+  let long_fname = repeat('n', 5000)
+  call assert_fails('exe "w " .. long_fname', 'E75:')
+  call assert_fails('call writefile([], long_fname)', 'E482:')
+
+  " Test for writing to a block device on Unix-like systems
+  if has('unix') && getfperm('/dev/loop0') != ''
+        \ && getftype('/dev/loop0') == 'bdev' && !IsRoot()
+    new
+    edit /dev/loop0
+    call assert_fails('write', 'E503: ')
+    call assert_fails('write!', 'E503: ')
+    close!
+  endif
+endfunc
+
+" Test for writing to a file which is modified after Vim read it
+func Test_write_file_mtime()
+  CheckEnglish
+  CheckRunVimInTerminal
+
+  " First read the file into a buffer
+  call writefile(["Line1", "Line2"], 'Xfile')
+  let old_ftime = getftime('Xfile')
+  let buf = RunVimInTerminal('Xfile', #{rows : 10})
+  call term_wait(buf)
+  call term_sendkeys(buf, ":set noswapfile\<CR>")
+  call term_wait(buf)
+
+  " Modify the file directly.  Make sure the file modification time is
+  " different. Note that on Linux/Unix, the file is considered modified
+  " outside, only if the difference is 2 seconds or more
+  sleep 1
+  call writefile(["Line3", "Line4"], 'Xfile')
+  let new_ftime = getftime('Xfile')
+  while new_ftime - old_ftime < 2
+    sleep 100m
+    call writefile(["Line3", "Line4"], 'Xfile')
+    let new_ftime = getftime('Xfile')
+  endwhile
+
+  " Try to overwrite the file and check for the prompt
+  call term_sendkeys(buf, ":w\<CR>")
+  call term_wait(buf)
+  call WaitForAssert({-> assert_equal("WARNING: The file has been changed since reading it!!!", term_getline(buf, 9))})
+  call assert_equal("Do you really want to write to it (y/n)?",
+        \ term_getline(buf, 10))
+  call term_sendkeys(buf, "n\<CR>")
+  call term_wait(buf)
+  call assert_equal(new_ftime, getftime('Xfile'))
+  call term_sendkeys(buf, ":w\<CR>")
+  call term_wait(buf)
+  call term_sendkeys(buf, "y\<CR>")
+  call term_wait(buf)
+  call WaitForAssert({-> assert_equal('Line2', readfile('Xfile')[1])})
+
+  " clean up
+  call StopVimInTerminal(buf)
+  call delete('Xfile')
+endfunc
+
+" Test for an autocmd unloading a buffer during a write command
+func Test_write_autocmd_unloadbuf_lockmark()
+  augroup WriteTest
+    autocmd BufWritePre Xfile enew | write
+  augroup END
+  e Xfile
+  call assert_fails('lockmarks write', ['E32', 'E203:'])
+  augroup WriteTest
+    au!
+  augroup END
+  augroup! WriteTest
+endfunc
+
+" Test for writing a buffer with 'acwrite' but without autocmds
+func Test_write_acwrite_error()
+  new Xfile
+  call setline(1, ['line1', 'line2', 'line3'])
+  set buftype=acwrite
+  call assert_fails('write', 'E676:')
+  call assert_fails('1,2write!', 'E676:')
+  call assert_fails('w >>', 'E676:')
+  close!
+endfunc
+
+" Test for adding and removing lines from an autocmd when writing a buffer
+func Test_write_autocmd_add_remove_lines()
+  new Xfile
+  call setline(1, ['aaa', 'bbb', 'ccc', 'ddd'])
+
+  " Autocmd deleting lines from the file when writing a partial file
+  augroup WriteTest2
+    au!
+    autocmd FileWritePre Xfile 1,2d
+  augroup END
+  call assert_fails('2,3w!', 'E204:')
+
+  " Autocmd adding lines to a file when writing a partial file
+  augroup WriteTest2
+    au!
+    autocmd FileWritePre Xfile call append(0, ['xxx', 'yyy'])
+  augroup END
+  %d
+  call setline(1, ['aaa', 'bbb', 'ccc', 'ddd'])
+  1,2w!
+  call assert_equal(['xxx', 'yyy', 'aaa', 'bbb'], readfile('Xfile'))
+
+  " Autocmd deleting lines from the file when writing the whole file
+  augroup WriteTest2
+    au!
+    autocmd BufWritePre Xfile 1,2d
+  augroup END
+  %d
+  call setline(1, ['aaa', 'bbb', 'ccc', 'ddd'])
+  w
+  call assert_equal(['ccc', 'ddd'], readfile('Xfile'))
+
+  augroup WriteTest2
+    au!
+  augroup END
+  augroup! WriteTest2
+
+  close!
+  call delete('Xfile')
+endfunc
+
+" Test for writing to a readonly file
+func Test_write_readonly()
+  call writefile([], 'Xfile')
+  call setfperm('Xfile', "r--------")
+  edit Xfile
+  set noreadonly backupskip=
+  call assert_fails('write', 'E505:')
+  let save_cpo = &cpo
+  set cpo+=W
+  call assert_fails('write!', 'E504:')
+  let &cpo = save_cpo
+  call setline(1, ['line1'])
+  write!
+  call assert_equal(['line1'], readfile('Xfile'))
+
+  " Auto-saving a readonly file should fail with 'autowriteall'
+  %bw!
+  e Xfile
+  set noreadonly autowriteall
+  call setline(1, ['aaaa'])
+  call assert_fails('n', 'E505:')
+  set cpo+=W
+  call assert_fails('n', 'E504:')
+  set cpo-=W
+  set autowriteall&
+
+  set backupskip&
+  call delete('Xfile')
+  %bw!
+endfunc
+
+" Test for 'patchmode'
+func Test_patchmode()
+  call writefile(['one'], 'Xfile')
+  set patchmode=.orig nobackup backupskip= writebackup
+  new Xfile
+  call setline(1, 'two')
+  " first write should create the .orig file
+  write
+  call assert_equal(['one'], readfile('Xfile.orig'))
+  call setline(1, 'three')
+  " subsequent writes should not create/modify the .orig file
+  write
+  call assert_equal(['one'], readfile('Xfile.orig'))
+
+  " use 'patchmode' with 'nobackup' and 'nowritebackup' to create an empty
+  " original file
+  call delete('Xfile')
+  call delete('Xfile.orig')
+  %bw!
+  set patchmode=.orig nobackup nowritebackup
+  edit Xfile
+  call setline(1, ['xxx'])
+  write
+  call assert_equal(['xxx'], readfile('Xfile'))
+  call assert_equal([], readfile('Xfile.orig'))
+
+  set patchmode& backup& backupskip& writebackup&
+  call delete('Xfile')
+  call delete('Xfile.orig')
+endfunc
+
+" Test for writing to a file in a readonly directory
+" NOTE: if you run tests as root this will fail.  Don't run tests as root!
+func Test_write_readonly_dir()
+  " On MS-Windows, modifying files in a read-only directory is allowed.
+  CheckUnix
+  " Root can do it too.
+  CheckNotRoot
+
+  call mkdir('Xdir/')
+  call writefile(['one'], 'Xdir/Xfile1')
+  call setfperm('Xdir', 'r-xr--r--')
+  " try to create a new file in the directory
+  new Xdir/Xfile2
+  call setline(1, 'two')
+  call assert_fails('write', 'E212:')
+  " try to create a backup file in the directory
+  edit! Xdir/Xfile1
+  set backupdir=./Xdir backupskip=
+  set patchmode=.orig
+  call assert_fails('write', 'E509:')
+  call setfperm('Xdir', 'rwxr--r--')
+  call delete('Xdir', 'rf')
+  set backupdir& backupskip& patchmode&
 endfunc
 
 " Test for writing a file using invalid file encoding
@@ -523,8 +768,165 @@ func Test_read_write_bin()
   call assert_equal(0z6E6F656F6C0A, readfile('XNoEolSetEol', 'B'))
 
   call delete('XNoEolSetEol')
-  set ff&
+  set ff& fixeol&
   bwipe! XNoEolSetEol
+endfunc
+
+" Test for the 'backupcopy' option when writing files
+func Test_backupcopy()
+  CheckUnix
+  set backupskip=
+  " With the default 'backupcopy' setting, saving a symbolic link file
+  " should not break the link.
+  set backupcopy&
+  call writefile(['1111'], 'Xfile1')
+  silent !ln -s Xfile1 Xfile2
+  new Xfile2
+  call setline(1, ['2222'])
+  write
+  close
+  call assert_equal(['2222'], readfile('Xfile1'))
+  call assert_equal('Xfile1', resolve('Xfile2'))
+  call assert_equal('link', getftype('Xfile2'))
+  call delete('Xfile1')
+  call delete('Xfile2')
+
+  " With the 'backupcopy' set to 'breaksymlink', saving a symbolic link file
+  " should break the link.
+  set backupcopy=yes,breaksymlink
+  call writefile(['1111'], 'Xfile1')
+  silent !ln -s Xfile1 Xfile2
+  new Xfile2
+  call setline(1, ['2222'])
+  write
+  close
+  call assert_equal(['1111'], readfile('Xfile1'))
+  call assert_equal(['2222'], readfile('Xfile2'))
+  call assert_equal('Xfile2', resolve('Xfile2'))
+  call assert_equal('file', getftype('Xfile2'))
+  call delete('Xfile1')
+  call delete('Xfile2')
+  set backupcopy&
+
+  " With the default 'backupcopy' setting, saving a hard link file
+  " should not break the link.
+  set backupcopy&
+  call writefile(['1111'], 'Xfile1')
+  silent !ln Xfile1 Xfile2
+  new Xfile2
+  call setline(1, ['2222'])
+  write
+  close
+  call assert_equal(['2222'], readfile('Xfile1'))
+  call delete('Xfile1')
+  call delete('Xfile2')
+
+  " With the 'backupcopy' set to 'breaksymlink', saving a hard link file
+  " should break the link.
+  set backupcopy=yes,breakhardlink
+  call writefile(['1111'], 'Xfile1')
+  silent !ln Xfile1 Xfile2
+  new Xfile2
+  call setline(1, ['2222'])
+  write
+  call assert_equal(['1111'], readfile('Xfile1'))
+  call assert_equal(['2222'], readfile('Xfile2'))
+  call delete('Xfile1')
+  call delete('Xfile2')
+
+  " If a backup file is already present, then a slightly modified filename
+  " should be used as the backup file. Try with 'backupcopy' set to 'yes' and
+  " 'no'.
+  %bw
+  call writefile(['aaaa'], 'Xfile')
+  call writefile(['bbbb'], 'Xfile.bak')
+  set backupcopy=yes backupext=.bak
+  new Xfile
+  call setline(1, ['cccc'])
+  write
+  close
+  call assert_equal(['cccc'], readfile('Xfile'))
+  call assert_equal(['bbbb'], readfile('Xfile.bak'))
+  set backupcopy=no backupext=.bak
+  new Xfile
+  call setline(1, ['dddd'])
+  write
+  close
+  call assert_equal(['dddd'], readfile('Xfile'))
+  call assert_equal(['bbbb'], readfile('Xfile.bak'))
+  call delete('Xfile')
+  call delete('Xfile.bak')
+
+  " Write to a device file (in Unix-like systems) which cannot be backed up.
+  if has('unix')
+    set writebackup backupcopy=yes nobackup
+    new
+    call setline(1, ['aaaa'])
+    let output = execute('write! /dev/null')
+    call assert_match('"/dev/null" \[Device]', output)
+    close
+    set writebackup backupcopy=no nobackup
+    new
+    call setline(1, ['aaaa'])
+    let output = execute('write! /dev/null')
+    call assert_match('"/dev/null" \[Device]', output)
+    close
+    set backup writebackup& backupcopy&
+    new
+    call setline(1, ['aaaa'])
+    let output = execute('write! /dev/null')
+    call assert_match('"/dev/null" \[Device]', output)
+    close
+  endif
+
+  set backupcopy& backupskip& backupext& backup&
+endfunc
+
+" Test for writing a file with 'encoding' set to 'utf-16'
+func Test_write_utf16()
+  new
+  call setline(1, ["\U00010001"])
+  write ++enc=utf-16 Xfile
+  bw!
+  call assert_equal(0zD800DC01, readfile('Xfile', 'B')[0:3])
+  call delete('Xfile')
+endfunc
+
+" Test for trying to save a backup file when the backup file is a symbolic
+" link to the original file. The backup file should not be modified.
+func Test_write_backup_symlink()
+  CheckUnix
+  call writefile(['1111'], 'Xfile')
+  silent !ln -s Xfile Xfile.bak
+
+  new Xfile
+  set backup backupcopy=yes backupext=.bak
+  write
+  call assert_equal('link', getftype('Xfile.bak'))
+  call assert_equal('Xfile', resolve('Xfile.bak'))
+  set backup& backupcopy& backupext&
+  close
+
+  call delete('Xfile')
+  call delete('Xfile.bak')
+endfunc
+
+" Test for ':write ++bin' and ':write ++nobin'
+func Test_write_binary_file()
+  " create a file without an eol/eof character
+  call writefile(0z616161, 'Xfile1', 'b')
+  new Xfile1
+  write ++bin Xfile2
+  write ++nobin Xfile3
+  call assert_equal(0z616161, readblob('Xfile2'))
+  if has('win32')
+    call assert_equal(0z6161610D.0A, readblob('Xfile3'))
+  else
+    call assert_equal(0z6161610A, readblob('Xfile3'))
+  endif
+  call delete('Xfile1')
+  call delete('Xfile2')
+  call delete('Xfile3')
 endfunc
 
 " Check that buffer is written before triggering QuitPre

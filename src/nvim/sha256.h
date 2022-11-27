@@ -2,9 +2,9 @@
 #define NVIM_SHA256_H
 
 #include <stddef.h>
-#include <stdint.h>      // for uint32_t
+#include <stdint.h>
 
-#include "nvim/types.h"  // for char_u
+#include "nvim/types.h"
 
 #define SHA256_BUFFER_SIZE 64
 #define SHA256_SUM_SIZE    32

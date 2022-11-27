@@ -56,7 +56,7 @@ typedef struct memline {
   int ml_flags;
 
   linenr_T ml_line_lnum;        // line number of cached line, 0 if not valid
-  char_u *ml_line_ptr;     // pointer to cached line
+  char *ml_line_ptr;            // pointer to cached line
   size_t ml_line_offset;        // cached byte offset of ml_line_lnum
   int ml_line_offset_ff;        // fileformat of cached line
 
@@ -69,4 +69,4 @@ typedef struct memline {
   int ml_usedchunks;
 } memline_T;
 
-#endif // NVIM_MEMLINE_DEFS_H
+#endif  // NVIM_MEMLINE_DEFS_H

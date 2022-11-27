@@ -1,4 +1,3 @@
-local vim = vim
 local api = vim.api
 local validate = vim.validate
 local util = require('vim.lsp.util')
@@ -111,7 +110,7 @@ end
 --- about the context in which a completion was triggered (how it was triggered,
 --- and by which trigger character, if applicable)
 ---
----@see |vim.lsp.protocol.constants.CompletionTriggerKind|
+---@see vim.lsp.protocol.constants.CompletionTriggerKind
 function M.completion(context)
   local params = util.make_position_params()
   params.context = context
@@ -119,35 +118,30 @@ function M.completion(context)
 end
 
 ---@private
---- If there is more than one client that supports the given method,
---- asks the user to select one.
---
----@returns The client that the user selected or nil
-local function select_client(method, on_choice)
-  validate({
-    on_choice = { on_choice, 'function', false },
-  })
-  local clients = vim.tbl_values(vim.lsp.buf_get_clients())
-  clients = vim.tbl_filter(function(client)
-    return client.supports_method(method)
-  end, clients)
-  -- better UX when choices are always in the same order (between restarts)
-  table.sort(clients, function(a, b)
-    return a.name < b.name
-  end)
+---@return table {start={row, col}, end={row, col}} using (1, 0) indexing
+local function range_from_selection()
+  -- TODO: Use `vim.region()` instead https://github.com/neovim/neovim/pull/13896
 
-  if #clients > 1 then
-    vim.ui.select(clients, {
-      prompt = 'Select a language server:',
-      format_item = function(client)
-        return client.name
-      end,
-    }, on_choice)
-  elseif #clients < 1 then
-    on_choice(nil)
-  else
-    on_choice(clients[1])
+  -- [bufnum, lnum, col, off]; both row and column 1-indexed
+  local start = vim.fn.getpos('v')
+  local end_ = vim.fn.getpos('.')
+  local start_row = start[2]
+  local start_col = start[3]
+  local end_row = end_[2]
+  local end_col = end_[3]
+
+  -- A user can start visual selection at the end and move backwards
+  -- Normalize the range to start < end
+  if start_row == end_row and end_col < start_col then
+    end_col, start_col = start_col, end_col
+  elseif end_row < start_row then
+    start_row, end_row = end_row, start_row
+    start_col, end_col = end_col, start_col
   end
+  return {
+    ['start'] = { start_row, start_col - 1 },
+    ['end'] = { end_row, end_col - 1 },
+  }
 end
 
 --- Formats a buffer using the attached (and optionally filtered) language
@@ -184,7 +178,12 @@ end
 ---         Restrict formatting to the client with ID (client.id) matching this field.
 ---     - name (string|nil):
 ---         Restrict formatting to the client with name (client.name) matching this field.
-
+---
+---     - range (table|nil) Range to format.
+---         Table must contain `start` and `end` keys with {row, col} tuples using
+---         (1,0) indexing.
+---         Defaults to current selection in visual mode
+---         Defaults to `nil` in other modes, formatting the full buffer
 function M.format(options)
   options = options or {}
   local bufnr = options.bufnr or api.nvim_get_current_buf()
@@ -206,16 +205,32 @@ function M.format(options)
     vim.notify('[LSP] Format request failed, no matching language servers.')
   end
 
+  local mode = api.nvim_get_mode().mode
+  local range = options.range
+  if not range and mode == 'v' or mode == 'V' then
+    range = range_from_selection()
+  end
+
+  ---@private
+  local function set_range(client, params)
+    if range then
+      local range_params =
+        util.make_given_range_params(range.start, range['end'], bufnr, client.offset_encoding)
+      params.range = range_params.range
+    end
+    return params
+  end
+
+  local method = range and 'textDocument/rangeFormatting' or 'textDocument/formatting'
   if options.async then
     local do_format
     do_format = function(idx, client)
       if not client then
         return
       end
-      local params = util.make_formatting_params(options.formatting_options)
-      client.request('textDocument/formatting', params, function(...)
-        local handler = client.handlers['textDocument/formatting']
-          or vim.lsp.handlers['textDocument/formatting']
+      local params = set_range(client, util.make_formatting_params(options.formatting_options))
+      client.request(method, params, function(...)
+        local handler = client.handlers[method] or vim.lsp.handlers[method]
         handler(...)
         do_format(next(clients, idx))
       end, bufnr)
@@ -224,8 +239,8 @@ function M.format(options)
   else
     local timeout_ms = options.timeout_ms or 1000
     for _, client in pairs(clients) do
-      local params = util.make_formatting_params(options.formatting_options)
-      local result, err = client.request_sync('textDocument/formatting', params, timeout_ms, bufnr)
+      local params = set_range(client, util.make_formatting_params(options.formatting_options))
+      local result, err = client.request_sync(method, params, timeout_ms, bufnr)
       if result and result.result then
         util.apply_text_edits(result.result, bufnr, client.offset_encoding)
       elseif err then
@@ -233,138 +248,6 @@ function M.format(options)
       end
     end
   end
-end
-
---- Formats the current buffer.
----
----@param options (table|nil) Can be used to specify FormattingOptions.
---- Some unspecified options will be automatically derived from the current
---- Neovim options.
---
----@see https://microsoft.github.io/language-server-protocol/specification#textDocument_formatting
-function M.formatting(options)
-  vim.notify_once(
-    'vim.lsp.buf.formatting is deprecated. Use vim.lsp.buf.format { async = true } instead',
-    vim.log.levels.WARN
-  )
-  local params = util.make_formatting_params(options)
-  local bufnr = api.nvim_get_current_buf()
-  select_client('textDocument/formatting', function(client)
-    if client == nil then
-      return
-    end
-
-    return client.request('textDocument/formatting', params, nil, bufnr)
-  end)
-end
-
---- Performs |vim.lsp.buf.formatting()| synchronously.
----
---- Useful for running on save, to make sure buffer is formatted prior to being
---- saved. {timeout_ms} is passed on to |vim.lsp.buf_request_sync()|. Example:
----
---- <pre>
---- autocmd BufWritePre <buffer> lua vim.lsp.buf.formatting_sync()
---- </pre>
----
----@param options table|nil with valid `FormattingOptions` entries
----@param timeout_ms (number) Request timeout
----@see |vim.lsp.buf.formatting_seq_sync|
-function M.formatting_sync(options, timeout_ms)
-  vim.notify_once(
-    'vim.lsp.buf.formatting_sync is deprecated. Use vim.lsp.buf.format instead',
-    vim.log.levels.WARN
-  )
-  local params = util.make_formatting_params(options)
-  local bufnr = api.nvim_get_current_buf()
-  select_client('textDocument/formatting', function(client)
-    if client == nil then
-      return
-    end
-
-    local result, err = client.request_sync('textDocument/formatting', params, timeout_ms, bufnr)
-    if result and result.result then
-      util.apply_text_edits(result.result, bufnr, client.offset_encoding)
-    elseif err then
-      vim.notify('vim.lsp.buf.formatting_sync: ' .. err, vim.log.levels.WARN)
-    end
-  end)
-end
-
---- Formats the current buffer by sequentially requesting formatting from attached clients.
----
---- Useful when multiple clients with formatting capability are attached.
----
---- Since it's synchronous, can be used for running on save, to make sure buffer is formatted
---- prior to being saved. {timeout_ms} is passed on to the |vim.lsp.client| `request_sync` method.
---- Example:
---- <pre>
---- vim.api.nvim_command[[autocmd BufWritePre <buffer> lua vim.lsp.buf.formatting_seq_sync()]]
---- </pre>
----
----@param options (table|nil) `FormattingOptions` entries
----@param timeout_ms (number|nil) Request timeout
----@param order (table|nil) List of client names. Formatting is requested from clients
----in the following order: first all clients that are not in the `order` list, then
----the remaining clients in the order as they occur in the `order` list.
-function M.formatting_seq_sync(options, timeout_ms, order)
-  vim.notify_once(
-    'vim.lsp.buf.formatting_seq_sync is deprecated. Use vim.lsp.buf.format instead',
-    vim.log.levels.WARN
-  )
-  local clients = vim.tbl_values(vim.lsp.buf_get_clients())
-  local bufnr = api.nvim_get_current_buf()
-
-  -- sort the clients according to `order`
-  for _, client_name in pairs(order or {}) do
-    -- if the client exists, move to the end of the list
-    for i, client in pairs(clients) do
-      if client.name == client_name then
-        table.insert(clients, table.remove(clients, i))
-        break
-      end
-    end
-  end
-
-  -- loop through the clients and make synchronous formatting requests
-  for _, client in pairs(clients) do
-    if vim.tbl_get(client.server_capabilities, 'documentFormattingProvider') then
-      local params = util.make_formatting_params(options)
-      local result, err = client.request_sync(
-        'textDocument/formatting',
-        params,
-        timeout_ms,
-        api.nvim_get_current_buf()
-      )
-      if result and result.result then
-        util.apply_text_edits(result.result, bufnr, client.offset_encoding)
-      elseif err then
-        vim.notify(
-          string.format('vim.lsp.buf.formatting_seq_sync: (%s) %s', client.name, err),
-          vim.log.levels.WARN
-        )
-      end
-    end
-  end
-end
-
---- Formats a given range.
----
----@param options Table with valid `FormattingOptions` entries.
----@param start_pos ({number, number}, optional) mark-indexed position.
----Defaults to the start of the last visual selection.
----@param end_pos ({number, number}, optional) mark-indexed position.
----Defaults to the end of the last visual selection.
-function M.range_formatting(options, start_pos, end_pos)
-  local params = util.make_given_range_params(start_pos, end_pos)
-  params.options = util.make_formatting_params(options).options
-  select_client('textDocument/rangeFormatting', function(client)
-    if client == nil then
-      return
-    end
-
-    return client.request('textDocument/rangeFormatting', params)
-  end)
 end
 
 --- Renames all references to the symbol under the cursor.
@@ -565,14 +448,14 @@ end
 
 --- Lists all the call sites of the symbol under the cursor in the
 --- |quickfix| window. If the symbol can resolve to multiple
---- items, the user can pick one in the |inputlist|.
+--- items, the user can pick one in the |inputlist()|.
 function M.incoming_calls()
   call_hierarchy('callHierarchy/incomingCalls')
 end
 
 --- Lists all the items that are called by the symbol under the
 --- cursor in the |quickfix| window. If the symbol can resolve to
---- multiple items, the user can pick one in the |inputlist|.
+--- multiple items, the user can pick one in the |inputlist()|.
 function M.outgoing_calls()
   call_hierarchy('callHierarchy/outgoingCalls')
 end
@@ -681,9 +564,9 @@ end
 ---
 --- Note: Usage of |vim.lsp.buf.document_highlight()| requires the following highlight groups
 ---       to be defined or you won't be able to see the actual highlights.
----         |LspReferenceText|
----         |LspReferenceRead|
----         |LspReferenceWrite|
+---         |hl-LspReferenceText|
+---         |hl-LspReferenceRead|
+---         |hl-LspReferenceWrite|
 function M.document_highlight()
   local params = util.make_position_params()
   request('textDocument/documentHighlight', params)
@@ -885,56 +768,13 @@ function M.code_action(options)
     local end_ = assert(options.range['end'], 'range must have a `end` property')
     params = util.make_given_range_params(start, end_)
   elseif mode == 'v' or mode == 'V' then
-    -- [bufnum, lnum, col, off]; both row and column 1-indexed
-    local start = vim.fn.getpos('v')
-    local end_ = vim.fn.getpos('.')
-    local start_row = start[2]
-    local start_col = start[3]
-    local end_row = end_[2]
-    local end_col = end_[3]
-
-    -- A user can start visual selection at the end and move backwards
-    -- Normalize the range to start < end
-    if start_row == end_row and end_col < start_col then
-      end_col, start_col = start_col, end_col
-    elseif end_row < start_row then
-      start_row, end_row = end_row, start_row
-      start_col, end_col = end_col, start_col
-    end
-    params = util.make_given_range_params({ start_row, start_col - 1 }, { end_row, end_col - 1 })
+    local range = range_from_selection()
+    params = util.make_given_range_params(range.start, range['end'])
   else
     params = util.make_range_params()
   end
   params.context = context
   code_action_request(params, options)
-end
-
---- Performs |vim.lsp.buf.code_action()| for a given range.
----
----
----@param context table|nil `CodeActionContext` of the LSP specification:
----               - diagnostics: (table|nil)
----                             LSP `Diagnostic[]`. Inferred from the current
----                             position if not provided.
----               - only: (table|nil)
----                      List of LSP `CodeActionKind`s used to filter the code actions.
----                      Most language servers support values like `refactor`
----                      or `quickfix`.
----@param start_pos ({number, number}, optional) mark-indexed position.
----Defaults to the start of the last visual selection.
----@param end_pos ({number, number}, optional) mark-indexed position.
----Defaults to the end of the last visual selection.
-function M.range_code_action(context, start_pos, end_pos)
-  vim.deprecate('vim.lsp.buf.range_code_action', 'vim.lsp.buf.code_action', '0.9.0')
-  validate({ context = { context, 't', true } })
-  context = context or {}
-  if not context.diagnostics then
-    local bufnr = api.nvim_get_current_buf()
-    context.diagnostics = vim.lsp.diagnostic.get_line_diagnostics(bufnr)
-  end
-  local params = util.make_given_range_params(start_pos, end_pos)
-  params.context = context
-  code_action_request(params)
 end
 
 --- Executes an LSP server command.

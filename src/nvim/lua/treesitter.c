@@ -6,20 +6,28 @@
 // trees and nodes, and could be broken out as a reusable lua package
 
 #include <assert.h>
-#include <inttypes.h>
 #include <lauxlib.h>
+#include <limits.h>
 #include <lua.h>
-#include <lualib.h>
 #include <stdbool.h>
 #include <stdint.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <uv.h>
 
+#include "klib/kvec.h"
 #include "nvim/api/private/helpers.h"
-#include "nvim/buffer.h"
-#include "nvim/lib/kvec.h"
+#include "nvim/buffer_defs.h"
+#include "nvim/globals.h"
 #include "nvim/lua/treesitter.h"
+#include "nvim/macros.h"
+#include "nvim/map.h"
 #include "nvim/memline.h"
+#include "nvim/memory.h"
+#include "nvim/pos.h"
+#include "nvim/strings.h"
+#include "nvim/types.h"
 #include "tree_sitter/api.h"
 
 #define TS_META_PARSER "treesitter_parser"
@@ -85,6 +93,10 @@ static struct luaL_Reg node_meta[] = {
   { "prev_sibling", node_prev_sibling },
   { "next_named_sibling", node_next_named_sibling },
   { "prev_named_sibling", node_prev_named_sibling },
+  { "named_children", node_named_children },
+  { "root", node_root },
+  { "byte_length", node_byte_length },
+
   { NULL, NULL }
 };
 
@@ -145,18 +157,27 @@ int tslua_has_language(lua_State *L)
   return 1;
 }
 
+// Creates the language into the internal language map.
+//
+// Returns true if the language is correctly loaded in the language map
 int tslua_add_language(lua_State *L)
 {
   const char *path = luaL_checkstring(L, 1);
   const char *lang_name = luaL_checkstring(L, 2);
+  const char *symbol_name = lang_name;
+
+  if (lua_gettop(L) >= 3 && !lua_isnil(L, 3)) {
+    symbol_name = luaL_checkstring(L, 3);
+  }
 
   if (pmap_has(cstr_t)(&langs, lang_name)) {
-    return 0;
+    lua_pushboolean(L, true);
+    return 1;
   }
 
 #define BUFSIZE 128
   char symbol_buf[BUFSIZE];
-  snprintf(symbol_buf, BUFSIZE, "tree_sitter_%s", lang_name);
+  snprintf(symbol_buf, BUFSIZE, "tree_sitter_%s", symbol_name);
 #undef BUFSIZE
 
   uv_lib_t lib;
@@ -179,6 +200,7 @@ int tslua_add_language(lua_State *L)
 
   TSLanguage *lang = lang_parser();
   if (lang == NULL) {
+    uv_dlclose(&lib);
     return luaL_error(L, "Failed to load parser %s: internal error", path);
   }
 
@@ -195,6 +217,19 @@ int tslua_add_language(lua_State *L)
   pmap_put(cstr_t)(&langs, xstrdup(lang_name), lang);
 
   lua_pushboolean(L, true);
+  return 1;
+}
+
+int tslua_remove_lang(lua_State *L)
+{
+  const char *lang_name = luaL_checkstring(L, 1);
+  bool present = pmap_has(cstr_t)(&langs, lang_name);
+  if (present) {
+    char *key = (char *)pmap_key(cstr_t)(&langs, lang_name);
+    pmap_del(cstr_t)(&langs, lang_name);
+    xfree(key);
+  }
+  lua_pushboolean(L, present);
   return 1;
 }
 
@@ -302,8 +337,8 @@ static const char *input_cb(void *payload, uint32_t byte_index, TSPoint position
     *bytes_read = 0;
     return "";
   }
-  char *line = (char *)ml_get_buf(bp, (linenr_T)position.row + 1, false);
-  size_t len = STRLEN(line);
+  char *line = ml_get_buf(bp, (linenr_T)position.row + 1, false);
+  size_t len = strlen(line);
   if (position.column > len) {
     *bytes_read = 0;
     return "";
@@ -593,7 +628,7 @@ void push_tree(lua_State *L, TSTree *tree, bool do_copy)
   lua_setfenv(L, -2);  // [udata]
 }
 
-static TSTree **tree_check(lua_State *L, uint16_t index)
+static TSTree **tree_check(lua_State *L, int index)
 {
   TSTree **ud = luaL_checkudata(L, index, TS_META_TREE);
   return ud;
@@ -804,7 +839,7 @@ static int node_field(lua_State *L)
     do {
       const char *current_field = ts_tree_cursor_current_field_name(&cursor);
 
-      if (current_field != NULL && !STRCMP(field_name, current_field)) {
+      if (current_field != NULL && !strcmp(field_name, current_field)) {
         push_node(L, ts_tree_cursor_current_node(&cursor), 1);  // [table, node]
         lua_rawseti(L, -2, (int)++curr_index);
       }
@@ -1036,6 +1071,57 @@ static int node_prev_named_sibling(lua_State *L)
   return 1;
 }
 
+static int node_named_children(lua_State *L)
+{
+  TSNode source;
+  if (!node_check(L, 1, &source)) {
+    return 0;
+  }
+  TSTreeCursor cursor = ts_tree_cursor_new(source);
+
+  lua_newtable(L);
+  int curr_index = 0;
+
+  if (ts_tree_cursor_goto_first_child(&cursor)) {
+    do {
+      TSNode node = ts_tree_cursor_current_node(&cursor);
+      if (ts_node_is_named(node)) {
+        push_node(L, node, 1);
+        lua_rawseti(L, -2, ++curr_index);
+      }
+    } while (ts_tree_cursor_goto_next_sibling(&cursor));
+  }
+
+  ts_tree_cursor_delete(&cursor);
+  return 1;
+}
+
+static int node_root(lua_State *L)
+{
+  TSNode node;
+  if (!node_check(L, 1, &node)) {
+    return 0;
+  }
+
+  TSNode root = ts_tree_root_node(node.tree);
+  push_node(L, root, 1);
+  return 1;
+}
+
+static int node_byte_length(lua_State *L)
+{
+  TSNode node;
+  if (!node_check(L, 1, &node)) {
+    return 0;
+  }
+
+  uint32_t start_byte = ts_node_start_byte(node);
+  uint32_t end_byte = ts_node_end_byte(node);
+
+  lua_pushnumber(L, end_byte - start_byte);
+  return 1;
+}
+
 /// assumes the match table being on top of the stack
 static void set_match(lua_State *L, TSQueryMatch *match, int nodeidx)
 {
@@ -1195,8 +1281,8 @@ int tslua_parse_query(lua_State *L)
   TSQuery *query = ts_query_new(lang, src, (uint32_t)len, &error_offset, &error_type);
 
   if (!query) {
-    return luaL_error(L, "query: %s at position %d",
-                      query_err_string(error_type), (int)error_offset);
+    return luaL_error(L, "query: %s at position %d for language %s",
+                      query_err_string(error_type), (int)error_offset, lang_name);
   }
 
   TSQuery **ud = lua_newuserdata(L, sizeof(TSQuery *));  // [udata]
@@ -1288,7 +1374,7 @@ static int query_inspect(lua_State *L)
       lua_rawseti(L, -2, nextitem++);  // [retval, patterns, pat, pred]
     }
     // last predicate should have ended with TypeDone
-    lua_pop(L, 1);  // [retval, patters, pat]
+    lua_pop(L, 1);  // [retval, patterns, pat]
     lua_rawseti(L, -2, (int)i + 1);  // [retval, patterns]
   }
   lua_setfield(L, -2, "patterns");  // [retval]

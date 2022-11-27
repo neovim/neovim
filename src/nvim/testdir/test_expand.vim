@@ -90,14 +90,26 @@ func Test_expandcmd()
   " Test for expression expansion `=
   let $FOO= "blue"
   call assert_equal("blue sky", expandcmd("`=$FOO .. ' sky'`"))
+  let x = expandcmd("`=axbycz`")
+  call assert_equal('`=axbycz`', x)
+  call assert_fails('let x = expandcmd("`=axbycz`", #{errmsg: 1})', 'E121:')
+  let x = expandcmd("`=axbycz`", #{abc: []})
+  call assert_equal('`=axbycz`', x)
 
   " Test for env variable with spaces
   let $FOO= "foo bar baz"
   call assert_equal("e foo bar baz", expandcmd("e $FOO"))
 
-  if has('unix')
-    " test for using the shell to expand a command argument
-    call assert_equal('{1..4}', expandcmd('{1..4}'))
+  if has('unix') && executable('bash')
+    " test for using the shell to expand a command argument.
+    " only bash supports the {..} syntax
+    set shell=bash
+    let x = expandcmd('{1..4}')
+    call assert_equal('{1..4}', x)
+    call assert_fails("let x = expandcmd('{1..4}', #{errmsg: v:true})", 'E77:')
+    let x = expandcmd('{1..4}', #{error: v:true})
+    call assert_equal('{1..4}', x)
+    set shell&
   endif
 
   unlet $FOO
@@ -116,13 +128,21 @@ func Test_source_sfile()
     :call assert_equal('edit <cword>', expandcmd("edit <cword>"))
     :call assert_equal('edit <cexpr>', expandcmd("edit <cexpr>"))
     :call assert_fails('autocmd User MyCmd echo "<sfile>"', 'E498:')
+    :
+    :call assert_equal('', expand('<script>'))
+    :verbose echo expand('<script>')
+    :call add(v:errors, v:errmsg)
+    :verbose echo expand('<sfile>')
+    :call add(v:errors, v:errmsg)
     :call writefile(v:errors, 'Xresult')
     :qall!
-
   [SCRIPT]
   call writefile(lines, 'Xscript')
   if RunVim([], [], '--clean -s Xscript')
-    call assert_equal([], readfile('Xresult'))
+    call assert_equal([
+          \ 'E1274: No script file name to substitute for "<script>"',
+          \ 'E498: no :source file name to substitute for "<sfile>"'],
+          \ readfile('Xresult'))
   endif
   call delete('Xscript')
   call delete('Xresult')
@@ -145,6 +165,65 @@ endfunc
 func Test_expandcmd_shell_nonomatch()
   CheckNotMSWindows
   call assert_equal('$*', expandcmd('$*'))
+endfunc
+
+func Test_expand_script_source()
+  let lines0 =<< trim [SCRIPT]
+    call extend(g:script_level, [expand('<script>:t')])
+    so Xscript1
+    func F0()
+      call extend(g:func_level, [expand('<script>:t')])
+    endfunc
+
+    au User * call extend(g:au_level, [expand('<script>:t')])
+  [SCRIPT]
+
+  let lines1 =<< trim [SCRIPT]
+    call extend(g:script_level, [expand('<script>:t')])
+    so Xscript2
+    func F1()
+      call extend(g:func_level, [expand('<script>:t')])
+    endfunc
+
+    au User * call extend(g:au_level, [expand('<script>:t')])
+  [SCRIPT]
+
+  let lines2 =<< trim [SCRIPT]
+    call extend(g:script_level, [expand('<script>:t')])
+    func F2()
+      call extend(g:func_level, [expand('<script>:t')])
+    endfunc
+
+    au User * call extend(g:au_level, [expand('<script>:t')])
+  [SCRIPT]
+
+  call writefile(lines0, 'Xscript0')
+  call writefile(lines1, 'Xscript1')
+  call writefile(lines2, 'Xscript2')
+
+  " Check the expansion of <script> at different levels.
+  let g:script_level = []
+  let g:func_level = []
+  let g:au_level = []
+
+  so Xscript0
+  call F0()
+  call F1()
+  call F2()
+  doautocmd User
+
+  call assert_equal(['Xscript0', 'Xscript1', 'Xscript2'], g:script_level)
+  call assert_equal(['Xscript0', 'Xscript1', 'Xscript2'], g:func_level)
+  call assert_equal(['Xscript2', 'Xscript1', 'Xscript0'], g:au_level)
+
+  unlet g:script_level g:func_level
+  delfunc F0
+  delfunc F1
+  delfunc F2
+
+  call delete('Xscript0')
+  call delete('Xscript1')
+  call delete('Xscript2')
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab

@@ -2353,7 +2353,7 @@ MARKED FILES: DIFF						*netrw-md* {{{2
 	    (See |netrw-mf| and |netrw-mr| for how to mark files)
 		      (uses the global marked file list)
 
-Use |vimdiff| to visualize difference between selected files (two or
+Use vimdiff to visualize difference between selected files (two or
 three may be selected for this).  Uses the global marked file list.
 
 MARKED FILES: EDITING						*netrw-me* {{{2
@@ -2782,7 +2782,7 @@ your browsing preferences.  (see also: |netrw-settings|)
 				history are saved (as .netrwbook and
 				.netrwhist).
 				Netrw uses |expand()| on the string.
-				 default: stdpath('data') (see |stdpath()|)
+				 default: stdpath("data") (see |stdpath()|)
 
   *g:netrw_keepdir*		=1 (default) keep current directory immune from
 				   the browsing directory.
@@ -3469,7 +3469,7 @@ Example: Clear netrw's marked file list via a mapping on gu >
 								*netrw-p4*
 	P4. I would like long listings to be the default.                   {{{2
 
-		Put the following statement into your |.vimrc|: >
+		Put the following statement into your |vimrc|: >
 
 			let g:netrw_liststyle= 1
 <
@@ -3482,7 +3482,7 @@ Example: Clear netrw's marked file list via a mapping on gu >
 		Does your system's strftime() accept the "%c" to yield dates
 		such as "Sun Apr 27 11:49:23 1997"?  If not, do a
 		"man strftime" and find out what option should be used.  Then
-		put it into your |.vimrc|: >
+		put it into your |vimrc|: >
 
 			let g:netrw_timefmt= "%X"  (where X is the option)
 <
@@ -3490,7 +3490,7 @@ Example: Clear netrw's marked file list via a mapping on gu >
 	P6. I want my current directory to track my browsing.               {{{2
 	    How do I do that?
 
-	    Put the following line in your |.vimrc|:
+	    Put the following line in your |vimrc|:
 >
 		let g:netrw_keepdir= 0
 <
@@ -3569,7 +3569,7 @@ Example: Clear netrw's marked file list via a mapping on gu >
   http://www.chiark.greenend.org.uk/~sgtatham/putty/0.60/htmldoc/Chapter8.html#pubkey-gettingready
 			(8.3 Getting ready for public key authentication)
 <
-		How to use a private key with 'pscp': >
+		How to use a private key with "pscp": >
 
   http://www.chiark.greenend.org.uk/~sgtatham/putty/0.60/htmldoc/Chapter5.html
 			(5.2.4 Using public key authentication with PSCP)
@@ -3839,7 +3839,7 @@ netrw:
 	   or
 	     http://vim.sourceforge.net/scripts/script.php?script_id=120
 
-	  Decho.vim is provided as a "vimball"; see |vimball-intro|.  You
+	  Decho.vim is provided as a "vimball".  You
 	  should edit the Decho.vba.gz file and source it in: >
 
 	  	vim Decho.vba.gz
@@ -3917,7 +3917,7 @@ netrw:
 				* Installed |g:netrw_clipboard| setting
 				* Installed option bypass for |'guioptions'|
 				  a/A settings
-				* Changed popup_beval() to |popup_atcursor()|
+				* Changed popup_beval() to popup_atcursor()
 				  in netrw#ErrorMsg (lacygoill). Apparently
 				  popup_beval doesn't reliably close the
 				  popup when the mouse is moved.
@@ -3943,7 +3943,7 @@ netrw:
 				  did not restore options correctly that
 				  had a single quote in the option string.
 		Apr 13, 2020	* implemented error handling via popup
-				  windows (see |popup_beval()|)
+				  windows (see popup_beval())
 		Apr 30, 2020	* (reported by Manatsu Takahashi) while
 				  using Lexplore, a modified file could
 				  be overwritten.  Sol'n: will not overwrite,

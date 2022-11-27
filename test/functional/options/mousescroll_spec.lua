@@ -97,6 +97,24 @@ describe("'mousescroll'", function()
     eq(10, screencol())
     scroll('left')
     eq(10, screencol())
+
+    -- vertical scrolling is still disabled with non-zero 'scrolloff' value
+    command('set scrolloff=1')
+
+    eq(10, screenrow())
+    scroll('up')
+    eq(10, screenrow())
+    scroll('down')
+    eq(10, screenrow())
+
+    -- also in insert mode
+    feed('i')
+
+    eq(10, screenrow())
+    scroll('up')
+    eq(10, screenrow())
+    scroll('down')
+    eq(10, screenrow())
   end)
 
   local test_vertical_scrolling = function()

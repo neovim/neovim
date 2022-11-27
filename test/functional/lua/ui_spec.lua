@@ -4,6 +4,7 @@ local exec_lua = helpers.exec_lua
 local clear = helpers.clear
 local feed = helpers.feed
 local eval = helpers.eval
+local poke_eventloop = helpers.poke_eventloop
 
 describe('vim.ui', function()
   before_each(function()
@@ -83,5 +84,50 @@ describe('vim.ui', function()
       feed('abcdefg<cr>')
       eq('abcdefg', exec_lua('return result'))
     end)
+
+    it('can input empty text #18144', function()
+      feed(':lua vim.ui.input({}, function(input) result = input end)<cr>')
+      feed('<cr>')
+      eq('', exec_lua('return result'))
+    end)
+
+    it('can input empty text with cancelreturn opt #18144', function()
+      feed(':lua vim.ui.input({ cancelreturn = "CANCEL" }, function(input) result = input end)<cr>')
+      feed('<cr>')
+      eq('', exec_lua('return result'))
+    end)
+
+    it('can return nil when aborted with ESC #18144', function()
+      feed(':lua result = "on_confirm not called"<cr>')
+      feed(':lua vim.ui.input({}, function(input) result = input end)<cr>')
+      feed('Inputted Text<esc>')
+      -- Note: When `result == nil`, exec_lua('returns result') returns vim.NIL
+      eq(true, exec_lua('return (nil == result)'))
+    end)
+
+    it('can return opts.cacelreturn when aborted with ESC with cancelreturn opt #18144', function()
+      feed(':lua result = "on_confirm not called"<cr>')
+      feed(':lua vim.ui.input({ cancelreturn = "CANCEL" }, function(input) result = input end)<cr>')
+      feed('Inputted Text<esc>')
+      eq('CANCEL', exec_lua('return result'))
+    end)
+
+    it('can return nil when interrupted with Ctrl-C #18144', function()
+      feed(':lua result = "on_confirm not called"<cr>')
+      feed(':lua vim.ui.input({}, function(input) result = input end)<cr>')
+      poke_eventloop()  -- This is needed because Ctrl-C flushes input
+      feed('Inputted Text<c-c>')
+      eq(true, exec_lua('return (nil == result)'))
+    end)
+
+    it('can return the identical object when an arbitrary opts.cancelreturn object is given', function()
+      feed(':lua fn = function() return 42 end<CR>')
+      eq(42, exec_lua('return fn()'))
+      feed(':lua vim.ui.input({ cancelreturn = fn }, function(input) result = input end)<cr>')
+      feed('cancel<esc>')
+      eq(true, exec_lua('return (result == fn)'))
+      eq(42, exec_lua('return result()'))
+    end)
+
   end)
 end)

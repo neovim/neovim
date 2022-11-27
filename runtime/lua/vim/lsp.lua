@@ -5,7 +5,6 @@ local protocol = require('vim.lsp.protocol')
 local util = require('vim.lsp.util')
 local sync = require('vim.lsp.sync')
 
-local vim = vim
 local api = vim.api
 local nvim_err_writeln, nvim_buf_get_lines, nvim_command, nvim_buf_get_option, nvim_exec_autocmds =
   api.nvim_err_writeln,
@@ -289,7 +288,12 @@ local function validate_client_config(config)
     'flags.debounce_text_changes must be a number with the debounce time in milliseconds'
   )
 
-  local cmd, cmd_args = lsp._cmd_parts(config.cmd)
+  local cmd, cmd_args
+  if type(config.cmd) == 'function' then
+    cmd = config.cmd
+  else
+    cmd, cmd_args = lsp._cmd_parts(config.cmd)
+  end
   local offset_encoding = valid_encodings.UTF16
   if config.offset_encoding then
     offset_encoding = validate_encoding(config.offset_encoding)
@@ -818,25 +822,18 @@ end
 --- })
 --- </pre>
 ---
---- See |lsp.start_client| for all available options. The most important are:
+--- See |vim.lsp.start_client()| for all available options. The most important are:
 ---
---- `name` is an arbitrary name for the LSP client. It should be unique per
---- language server.
----
---- `cmd` the command as list - used to start the language server.
---- The command must be present in the `$PATH` environment variable or an
---- absolute path to the executable. Shell constructs like `~` are *NOT* expanded.
----
---- `root_dir` path to the project root.
---- By default this is used to decide if an existing client should be re-used.
---- The example above uses |vim.fs.find| and |vim.fs.dirname| to detect the
---- root by traversing the file system upwards starting
---- from the current directory until either a `pyproject.toml` or `setup.py`
---- file is found.
----
---- `workspace_folders` a list of { uri:string, name: string } tables.
---- The project root folders used by the language server.
---- If `nil` the property is derived from the `root_dir` for convenience.
+--- - `name` arbitrary name for the LSP client. Should be unique per language server.
+--- - `cmd` command (in list form) used to start the language server. Must be absolute, or found on
+---   `$PATH`. Shell constructs like `~` are not expanded.
+--- - `root_dir` path to the project root. By default this is used to decide if an existing client
+---   should be re-used. The example above uses |vim.fs.find()| and |vim.fs.dirname()| to detect the
+---   root by traversing the file system upwards starting from the current directory until either
+---   a `pyproject.toml` or `setup.py` file is found.
+--- - `workspace_folders` list of `{ uri:string, name: string }` tables specifying the project root
+---   folders used by the language server. If `nil` the property is derived from `root_dir` for
+---   convenience.
 ---
 --- Language servers use this information to discover metadata like the
 --- dependencies of your project and they tend to index the contents within the
@@ -844,26 +841,35 @@ end
 ---
 ---
 --- To ensure a language server is only started for languages it can handle,
---- make sure to call |vim.lsp.start| within a |FileType| autocmd.
+--- make sure to call |vim.lsp.start()| within a |FileType| autocmd.
 --- Either use |:au|, |nvim_create_autocmd()| or put the call in a
 --- `ftplugin/<filetype_name>.lua` (See |ftplugin-name|)
 ---
----@param config table Same configuration as documented in |lsp.start_client()|
+---@param config table Same configuration as documented in |vim.lsp.start_client()|
 ---@param opts nil|table Optional keyword arguments:
 ---             - reuse_client (fun(client: client, config: table): boolean)
 ---                            Predicate used to decide if a client should be re-used.
 ---                            Used on all running clients.
 ---                            The default implementation re-uses a client if name
 ---                            and root_dir matches.
----@return number client_id
+---             - bufnr (number)
+---                     Buffer handle to attach to if starting or re-using a
+---                     client (0 for current).
+---@return number|nil client_id
 function lsp.start(config, opts)
   opts = opts or {}
   local reuse_client = opts.reuse_client
     or function(client, conf)
       return client.config.root_dir == conf.root_dir and client.name == conf.name
     end
-  config.name = config.name or (config.cmd[1] and vim.fs.basename(config.cmd[1])) or nil
-  local bufnr = api.nvim_get_current_buf()
+  config.name = config.name
+  if not config.name and type(config.cmd) == 'table' then
+    config.name = config.cmd[1] and vim.fs.basename(config.cmd[1]) or nil
+  end
+  local bufnr = opts.bufnr
+  if bufnr == nil or bufnr == 0 then
+    bufnr = api.nvim_get_current_buf()
+  end
   for _, clients in ipairs({ uninitialized_clients, lsp.get_active_clients() }) do
     for _, client in pairs(clients) do
       if reuse_client(client, config) then
@@ -893,8 +899,13 @@ end
 --- The following parameters describe fields in the {config} table.
 ---
 ---
----@param cmd: (required, string or list treated like |jobstart()|) Base command
---- that initiates the LSP client.
+---@param cmd: (table|string|fun(dispatchers: table):table) command string or
+--- list treated like |jobstart()|. The command must launch the language server
+--- process. `cmd` can also be a function that creates an RPC client.
+--- The function receives a dispatchers table and must return a table with the
+--- functions `request`, `notify`, `is_closing` and `terminate`
+--- See |vim.lsp.rpc.request()| and |vim.lsp.rpc.notify()|
+--- For TCP there is a built-in rpc client factory: |vim.lsp.rpc.connect()|
 ---
 ---@param cmd_cwd: (string, default=|getcwd()|) Directory to launch
 --- the `cmd` process. Not related to `root_dir`.
@@ -950,7 +961,7 @@ end
 ---@param on_error Callback with parameters (code, ...), invoked
 --- when the client operation throws an error. `code` is a number describing
 --- the error. Other arguments may be passed depending on the error kind.  See
---- |vim.lsp.rpc.client_errors| for possible errors.
+--- `vim.lsp.rpc.client_errors` for possible errors.
 --- Use `vim.lsp.rpc.client_errors[code]` to get human-friendly name.
 ---
 ---@param before_init Callback with parameters (initialize_params, config)
@@ -986,8 +997,8 @@ end
 ---       notifications to the server by the given number in milliseconds. No debounce
 ---       occurs if nil
 --- - exit_timeout (number|boolean, default false): Milliseconds to wait for server to
----       exit cleanly after sending the 'shutdown' request before sending kill -15.
----       If set to false, nvim exits immediately after sending the 'shutdown' request to the server.
+---       exit cleanly after sending the "shutdown" request before sending kill -15.
+---       If set to false, nvim exits immediately after sending the "shutdown" request to the server.
 ---
 ---@param root_dir string Directory where the LSP
 --- server will base its workspaceFolders, rootUri, and rootPath
@@ -1065,7 +1076,7 @@ function lsp.start_client(config)
   ---
   ---@param code (number) Error code
   ---@param err (...) Other arguments may be passed depending on the error kind
-  ---@see |vim.lsp.rpc.client_errors| for possible errors. Use
+  ---@see `vim.lsp.rpc.client_errors` for possible errors. Use
   ---`vim.lsp.rpc.client_errors[code]` to get a human-friendly name.
   function dispatch.on_error(code, err)
     local _ = log.error()
@@ -1134,41 +1145,47 @@ function lsp.start_client(config)
 
           local namespace = vim.lsp.diagnostic.get_namespace(client_id)
           vim.diagnostic.reset(namespace, bufnr)
-        end)
 
-        client_ids[client_id] = nil
-      end
-      if vim.tbl_isempty(client_ids) then
-        vim.schedule(function()
-          unset_defaults(bufnr)
+          client_ids[client_id] = nil
+          if vim.tbl_isempty(client_ids) then
+            unset_defaults(bufnr)
+          end
         end)
       end
     end
-    local client = active_clients[client_id] and active_clients[client_id]
-      or uninitialized_clients[client_id]
-    active_clients[client_id] = nil
-    uninitialized_clients[client_id] = nil
 
-    -- Client can be absent if executable starts, but initialize fails
-    -- init/attach won't have happened
-    if client then
-      changetracking.reset(client)
-    end
-    if code ~= 0 or (signal ~= 0 and signal ~= 15) then
-      local msg =
-        string.format('Client %s quit with exit code %s and signal %s', client_id, code, signal)
-      vim.schedule(function()
+    -- Schedule the deletion of the client object so that it exists in the execution of LspDetach
+    -- autocommands
+    vim.schedule(function()
+      local client = active_clients[client_id] and active_clients[client_id]
+        or uninitialized_clients[client_id]
+      active_clients[client_id] = nil
+      uninitialized_clients[client_id] = nil
+
+      -- Client can be absent if executable starts, but initialize fails
+      -- init/attach won't have happened
+      if client then
+        changetracking.reset(client)
+      end
+      if code ~= 0 or (signal ~= 0 and signal ~= 15) then
+        local msg =
+          string.format('Client %s quit with exit code %s and signal %s', client_id, code, signal)
         vim.notify(msg, vim.log.levels.WARN)
-      end)
-    end
+      end
+    end)
   end
 
   -- Start the RPC client.
-  local rpc = lsp_rpc.start(cmd, cmd_args, dispatch, {
-    cwd = config.cmd_cwd,
-    env = config.cmd_env,
-    detached = config.detached,
-  })
+  local rpc
+  if type(cmd) == 'function' then
+    rpc = cmd(dispatch)
+  else
+    rpc = lsp_rpc.start(cmd, cmd_args, dispatch, {
+      cwd = config.cmd_cwd,
+      env = config.cmd_env,
+      detached = config.detached,
+    })
+  end
 
   -- Return nil if client fails to start
   if not rpc then
@@ -1464,14 +1481,13 @@ function lsp.start_client(config)
   --- you request to stop a client which has previously been requested to
   --- shutdown, it will automatically escalate and force shutdown.
   ---
-  ---@param force (bool, optional)
+  ---@param force boolean|nil
   function client.stop(force)
-    local handle = rpc.handle
-    if handle:is_closing() then
+    if rpc.is_closing() then
       return
     end
     if force or not client.initialized or graceful_shutdown_failed then
-      handle:kill(15)
+      rpc.terminate()
       return
     end
     -- Sending a signal after a process has exited is acceptable.
@@ -1480,7 +1496,7 @@ function lsp.start_client(config)
         rpc.notify('exit')
       else
         -- If there was an error in the shutdown request, then term to be safe.
-        handle:kill(15)
+        rpc.terminate()
         graceful_shutdown_failed = true
       end
     end)
@@ -1492,7 +1508,7 @@ function lsp.start_client(config)
   ---@returns (bool) true if client is stopped or in the process of being
   ---stopped; false otherwise
   function client.is_stopped()
-    return rpc.handle:is_closing()
+    return rpc.is_closing()
   end
 
   ---@private
@@ -1627,6 +1643,7 @@ function lsp.buf_attach_client(bufnr, client_id)
           if vim.tbl_get(client.server_capabilities, 'textDocumentSync', 'openClose') then
             client.notify('textDocument/didClose', params)
           end
+          client.attached_buffers[bufnr] = nil
         end)
         util.buf_versions[bufnr] = nil
         all_buffer_active_clients[bufnr] = nil

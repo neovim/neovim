@@ -80,7 +80,7 @@ func Test_sort_default()
   call assert_equal(['2', 'A', 'AA', 'a', 1, 3.3], sort([3.3, 1, "2", "A", "a", "AA"], ''))
   call assert_equal(['2', 'A', 'AA', 'a', 1, 3.3], sort([3.3, 1, "2", "A", "a", "AA"], 0))
   call assert_equal(['2', 'A', 'a', 'AA', 1, 3.3], sort([3.3, 1, "2", "A", "a", "AA"], 1))
-  call assert_fails('call sort([3.3, 1, "2"], 3)', "E474")
+  call assert_fails('call sort([3.3, 1, "2"], 3)', "E474:")
 endfunc
 
 " Tests for the ":sort" command.
@@ -1360,7 +1360,8 @@ func Test_sort_cmd()
   call setline(1, ['line1', 'line2'])
   call assert_fails('sort no', 'E474:')
   call assert_fails('sort c', 'E475:')
-  call assert_fails('sort #pat%', 'E682:')
+  call assert_fails('sort #pat%', 'E654:')
+  call assert_fails('sort /\%(/', 'E53:')
 
   enew!
 endfunc

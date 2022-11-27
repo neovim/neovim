@@ -6,9 +6,14 @@
 #include <stdint.h>
 
 #include "nvim/api/private/defs.h"
+#include "nvim/event/multiqueue.h"
 #include "nvim/globals.h"
 #include "nvim/highlight_defs.h"
+#include "nvim/macros.h"
 #include "nvim/memory.h"
+#include "nvim/types.h"
+
+struct ui_t;
 
 typedef enum {
   kUICmdline = 0,
@@ -47,8 +52,6 @@ enum {
 
 typedef int LineFlags;
 
-EXTERN ArenaMem ui_ext_fixblk INIT(= NULL);
-
 struct ui_t {
   bool rgb;
   bool override;  ///< Force highest-requested UI capabilities.
@@ -71,11 +74,17 @@ struct ui_t {
   void (*inspect)(UI *ui, Dictionary *info);
 };
 
+typedef struct ui_event_callback {
+  LuaRef cb;
+  bool ext_widgets[kUIGlobalCount];
+} UIEventCallback;
+
+// uncrustify:off
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "ui.h.generated.h"
-
 # include "ui_events_call.h.generated.h"
 #endif
+// uncrustify:on
 
 EXTERN MultiQueue *resize_events;
 #endif  // NVIM_UI_H

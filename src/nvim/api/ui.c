@@ -2,26 +2,34 @@
 // it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
 #include <assert.h>
+#include <inttypes.h>
+#include <msgpack/pack.h>
 #include <stdbool.h>
-#include <stddef.h>
 #include <stdint.h>
+#include <stdlib.h>
+#include <string.h>
 
+#include "klib/kvec.h"
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/api/ui.h"
 #include "nvim/channel.h"
-#include "nvim/cursor_shape.h"
+#include "nvim/event/loop.h"
+#include "nvim/event/wstream.h"
+#include "nvim/globals.h"
 #include "nvim/grid.h"
 #include "nvim/highlight.h"
+#include "nvim/main.h"
 #include "nvim/map.h"
+#include "nvim/mbyte.h"
 #include "nvim/memory.h"
 #include "nvim/msgpack_rpc/channel.h"
+#include "nvim/msgpack_rpc/channel_defs.h"
 #include "nvim/msgpack_rpc/helpers.h"
 #include "nvim/option.h"
-#include "nvim/popupmenu.h"
+#include "nvim/types.h"
 #include "nvim/ui.h"
 #include "nvim/vim.h"
-#include "nvim/window.h"
 
 typedef struct {
   uint64_t channel_id;
@@ -122,7 +130,7 @@ static char *mpack_array_dyn16(char **buf)
 static void mpack_str(char **buf, const char *str)
 {
   assert(sizeof(schar_T) - 1 < 0x20);
-  size_t len = STRLEN(str);
+  size_t len = strlen(str);
   mpack_w(buf, 0xa0 | len);
   memcpy(*buf, str, len);
   *buf += len;
@@ -223,6 +231,7 @@ void nvim_ui_attach(uint64_t channel_id, Integer width, Integer height, Dictiona
   ui->msg_set_pos = remote_ui_msg_set_pos;
   ui->event = remote_ui_event;
   ui->inspect = remote_ui_inspect;
+  ui->win_viewport = remote_ui_win_viewport;
 
   CLEAR_FIELD(ui->ui_ext);
 
@@ -452,7 +461,7 @@ void nvim_ui_try_resize_grid(uint64_t channel_id, Integer grid, Integer width, I
   }
 }
 
-/// Tells Nvim the number of elements displaying in the popumenu, to decide
+/// Tells Nvim the number of elements displaying in the popupmenu, to decide
 /// <PageUp> and <PageDown> movement.
 ///
 /// @param channel_id
@@ -482,7 +491,7 @@ void nvim_ui_pum_set_height(uint64_t channel_id, Integer height, Error *err)
   ui->pum_nlines = (int)height;
 }
 
-/// Tells Nvim the geometry of the popumenu, to align floating windows with an
+/// Tells Nvim the geometry of the popupmenu, to align floating windows with an
 /// external popup menu.
 ///
 /// Note that this method is not to be confused with |nvim_ui_pum_set_height()|,
@@ -748,10 +757,12 @@ static void remote_ui_hl_attr_define(UI *ui, Integer id, HlAttrs rgb_attrs, HlAt
   UIData *data = ui->data;
   Array args = data->call_buf;
   ADD_C(args, INTEGER_OBJ(id));
-  MAXSIZE_TEMP_DICT(rgb, 16);
-  MAXSIZE_TEMP_DICT(cterm, 16);
-  ADD_C(args, DICTIONARY_OBJ(hlattrs2dict(&rgb, rgb_attrs, true)));
-  ADD_C(args, DICTIONARY_OBJ(hlattrs2dict(&cterm, cterm_attrs, false)));
+  MAXSIZE_TEMP_DICT(rgb, HLATTRS_DICT_SIZE);
+  MAXSIZE_TEMP_DICT(cterm, HLATTRS_DICT_SIZE);
+  hlattrs2dict(&rgb, rgb_attrs, true);
+  hlattrs2dict(&cterm, rgb_attrs, false);
+  ADD_C(args, DICTIONARY_OBJ(rgb));
+  ADD_C(args, DICTIONARY_OBJ(cterm));
 
   if (ui->ui_ext[kUIHlState]) {
     ADD_C(args, ARRAY_OBJ(info));
@@ -771,8 +782,9 @@ static void remote_ui_highlight_set(UI *ui, int id)
     return;
   }
   data->hl_id = id;
-  MAXSIZE_TEMP_DICT(dict, 16);
-  ADD_C(args, DICTIONARY_OBJ(hlattrs2dict(&dict, syn_attr2entry(id), ui->rgb)));
+  MAXSIZE_TEMP_DICT(dict, HLATTRS_DICT_SIZE);
+  hlattrs2dict(&dict, syn_attr2entry(id), ui->rgb);
+  ADD_C(args, DICTIONARY_OBJ(dict));
   push_call(ui, "highlight_set", args);
 }
 
@@ -841,7 +853,7 @@ static void remote_ui_raw_line(UI *ui, Integer grid, Integer row, Integer startc
     for (size_t i = 0; i < ncells; i++) {
       repeat++;
       if (i == ncells - 1 || attrs[i] != attrs[i + 1]
-          || STRCMP(chunk[i], chunk[i + 1])) {
+          || strcmp(chunk[i], chunk[i + 1]) != 0) {
         if (UI_BUF_SIZE - BUF_POS(data) < 2 * (1 + 2 + sizeof(schar_T) + 5 + 5)) {
           // close to overflowing the redraw buffer. finish this event,
           // flush, and start a new "grid_line" event at the current position.
@@ -952,65 +964,63 @@ static void remote_ui_flush(UI *ui)
   }
 }
 
-static Array translate_contents(UI *ui, Array contents)
+static Array translate_contents(UI *ui, Array contents, Arena *arena)
 {
-  Array new_contents = ARRAY_DICT_INIT;
+  Array new_contents = arena_array(arena, contents.size);
   for (size_t i = 0; i < contents.size; i++) {
     Array item = contents.items[i].data.array;
-    Array new_item = ARRAY_DICT_INIT;
+    Array new_item = arena_array(arena, 2);
     int attr = (int)item.items[0].data.integer;
     if (attr) {
-      Dictionary rgb_attrs = hlattrs2dict(NULL, syn_attr2entry(attr), ui->rgb);
+      Dictionary rgb_attrs = arena_dict(arena, HLATTRS_DICT_SIZE);
+      hlattrs2dict(&rgb_attrs, syn_attr2entry(attr), ui->rgb);
       ADD(new_item, DICTIONARY_OBJ(rgb_attrs));
     } else {
       ADD(new_item, DICTIONARY_OBJ((Dictionary)ARRAY_DICT_INIT));
     }
-    ADD(new_item, copy_object(item.items[1]));
+    ADD(new_item, item.items[1]);
     ADD(new_contents, ARRAY_OBJ(new_item));
   }
   return new_contents;
 }
 
-static Array translate_firstarg(UI *ui, Array args)
+static Array translate_firstarg(UI *ui, Array args, Arena *arena)
 {
-  Array new_args = ARRAY_DICT_INIT;
+  Array new_args = arena_array(arena, args.size);
   Array contents = args.items[0].data.array;
 
-  ADD(new_args, ARRAY_OBJ(translate_contents(ui, contents)));
+  ADD_C(new_args, ARRAY_OBJ(translate_contents(ui, contents, arena)));
   for (size_t i = 1; i < args.size; i++) {
-    ADD(new_args, copy_object(args.items[i]));
+    ADD(new_args, args.items[i]);
   }
   return new_args;
 }
 
 static void remote_ui_event(UI *ui, char *name, Array args)
 {
+  Arena arena = ARENA_EMPTY;
   UIData *data = ui->data;
   if (!ui->ui_ext[kUILinegrid]) {
     // the representation of highlights in cmdline changed, translate back
     // never consumes args
     if (strequal(name, "cmdline_show")) {
-      Array new_args = translate_firstarg(ui, args);
+      Array new_args = translate_firstarg(ui, args, &arena);
       push_call(ui, name, new_args);
-      api_free_array(new_args);
-      return;
+      goto free_ret;
     } else if (strequal(name, "cmdline_block_show")) {
       Array new_args = data->call_buf;
       Array block = args.items[0].data.array;
-      Array new_block = ARRAY_DICT_INIT;
+      Array new_block = arena_array(&arena, block.size);
       for (size_t i = 0; i < block.size; i++) {
-        ADD(new_block,
-            ARRAY_OBJ(translate_contents(ui, block.items[i].data.array)));
+        ADD_C(new_block, ARRAY_OBJ(translate_contents(ui, block.items[i].data.array, &arena)));
       }
       ADD_C(new_args, ARRAY_OBJ(new_block));
       push_call(ui, name, new_args);
-      api_free_array(new_block);
-      return;
+      goto free_ret;
     } else if (strequal(name, "cmdline_block_append")) {
-      Array new_args = translate_firstarg(ui, args);
+      Array new_args = translate_firstarg(ui, args, &arena);
       push_call(ui, name, new_args);
-      api_free_array(new_args);
-      return;
+      goto free_ret;
     }
   }
 
@@ -1022,19 +1032,18 @@ static void remote_ui_event(UI *ui, char *name, Array args)
       if (data->wildmenu_active) {
         Array new_args = data->call_buf;
         Array items = args.items[0].data.array;
-        Array new_items = ARRAY_DICT_INIT;
+        Array new_items = arena_array(&arena, items.size);
         for (size_t i = 0; i < items.size; i++) {
-          ADD(new_items, copy_object(items.items[i].data.array.items[0]));
+          ADD_C(new_items, items.items[i].data.array.items[0]);
         }
         ADD_C(new_args, ARRAY_OBJ(new_items));
         push_call(ui, "wildmenu_show", new_args);
-        api_free_array(new_items);
         if (args.items[1].data.integer != -1) {
           Array new_args2 = data->call_buf;
           ADD_C(new_args2, args.items[1]);
           push_call(ui, "wildmenu_select", new_args2);
         }
-        return;
+        goto free_ret;
       }
     } else if (strequal(name, "popupmenu_select")) {
       if (data->wildmenu_active) {
@@ -1048,6 +1057,10 @@ static void remote_ui_event(UI *ui, char *name, Array args)
   }
 
   push_call(ui, name, args);
+  return;
+
+free_ret:
+  arena_mem_free(arena_finish(&arena));
 }
 
 static void remote_ui_inspect(UI *ui, Dictionary *info)

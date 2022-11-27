@@ -9,6 +9,8 @@ local curbufmeths = helpers.curbufmeths
 local insert = helpers.insert
 local expect = helpers.expect
 local feed = helpers.feed
+local is_os = helpers.is_os
+local skip = helpers.skip
 
 do
   clear()
@@ -24,7 +26,7 @@ before_each(function()
 end)
 
 describe('legacy perl provider', function()
-  if helpers.pending_win32(pending) then return end
+  skip(is_os('win'))
 
   it('feature test', function()
     eq(1, eval('has("perl")'))
@@ -68,7 +70,7 @@ describe('legacy perl provider', function()
 end)
 
 describe('perl provider', function()
-  if helpers.pending_win32(pending) then return end
+  skip(is_os('win'))
   teardown(function ()
     os.remove('Xtest-perl-hello.pl')
     os.remove('Xtest-perl-hello-plugin.pl')

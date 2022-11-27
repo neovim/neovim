@@ -1,50 +1,39 @@
 // This is an open source non-commercial project. Dear PVS-Studio, please check
 // it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
+#include <assert.h>
 #include <lauxlib.h>
 #include <lua.h>
-#include <lualib.h>
+#include <stdarg.h>
+#include <stdbool.h>
+#include <stddef.h>
+#include <stdint.h>
+#include <string.h>
+#include <sys/types.h>
 
+#include "auto/config.h"
 #include "cjson/lua_cjson.h"
-#include "luv/luv.h"
 #include "mpack/lmpack.h"
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"
-#include "nvim/api/vim.h"
 #include "nvim/ascii.h"
-#include "nvim/assert.h"
 #include "nvim/buffer_defs.h"
-#include "nvim/change.h"
-#include "nvim/cursor.h"
 #include "nvim/eval.h"
-#include "nvim/eval/userfunc.h"
-#include "nvim/event/loop.h"
-#include "nvim/event/time.h"
+#include "nvim/eval/typval.h"
+#include "nvim/eval/typval_defs.h"
 #include "nvim/ex_eval.h"
-#include "nvim/ex_getln.h"
-#include "nvim/extmark.h"
-#include "nvim/func_attr.h"
-#include "nvim/garray.h"
-#include "nvim/getchar.h"
 #include "nvim/globals.h"
 #include "nvim/lua/converter.h"
-#include "nvim/lua/executor.h"
 #include "nvim/lua/spell.h"
 #include "nvim/lua/stdlib.h"
-#include "nvim/lua/treesitter.h"
 #include "nvim/lua/xdiff.h"
-#include "nvim/macros.h"
 #include "nvim/map.h"
+#include "nvim/mbyte.h"
 #include "nvim/memline.h"
-#include "nvim/message.h"
-#include "nvim/msgpack_rpc/channel.h"
-#include "nvim/os/os.h"
+#include "nvim/memory.h"
+#include "nvim/pos.h"
 #include "nvim/regexp.h"
-#include "nvim/regexp_defs.h"
-#include "nvim/screen.h"
 #include "nvim/types.h"
-#include "nvim/undo.h"
-#include "nvim/version.h"
 #include "nvim/vim.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
@@ -60,8 +49,8 @@ static int regex_match(lua_State *lstate, regprog_T **prog, char_u *str)
   *prog = rm.regprog;
 
   if (match) {
-    lua_pushinteger(lstate, (lua_Integer)(rm.startp[0] - str));
-    lua_pushinteger(lstate, (lua_Integer)(rm.endp[0] - str));
+    lua_pushinteger(lstate, (lua_Integer)(rm.startp[0] - (char *)str));
+    lua_pushinteger(lstate, (lua_Integer)(rm.endp[0] - (char *)str));
     return 2;
   }
   return 0;
@@ -111,14 +100,14 @@ static int regex_match_line(lua_State *lstate)
     return luaL_error(lstate, "invalid row");
   }
 
-  char_u *line = ml_get_buf(buf, rownr + 1, false);
-  size_t len = STRLEN(line);
+  char *line = ml_get_buf(buf, rownr + 1, false);
+  size_t len = strlen(line);
 
   if (start < 0 || (size_t)start > len) {
     return luaL_error(lstate, "invalid start");
   }
 
-  char_u save = NUL;
+  char save = NUL;
   if (end >= 0) {
     if ((size_t)end > len || end < start) {
       return luaL_error(lstate, "invalid end");
@@ -127,7 +116,7 @@ static int regex_match_line(lua_State *lstate)
     line[end] = NUL;
   }
 
-  int nret = regex_match(lstate, prog, line + start);
+  int nret = regex_match(lstate, prog, (char_u *)line + start);
 
   if (end >= 0) {
     line[end] = save;
@@ -304,8 +293,10 @@ int nlua_regex(lua_State *lstate)
     nlua_push_errstr(lstate, "couldn't parse regex: %s", err.msg);
     api_clear_error(&err);
     return lua_error(lstate);
+  } else if (prog == NULL) {
+    nlua_push_errstr(lstate, "couldn't parse regex");
+    return lua_error(lstate);
   }
-  assert(prog);
 
   regprog_T **p = lua_newuserdata(lstate, sizeof(regprog_T *));
   *p = prog;
@@ -369,15 +360,21 @@ int nlua_setvar(lua_State *lstate)
     return 0;
   }
 
+  bool watched = tv_dict_is_watched(dict);
+
   if (del) {
     // Delete the key
     if (di == NULL) {
       // Doesn't exist, nothing to do
       return 0;
-    } else {
-      // Delete the entry
-      tv_dict_item_remove(dict, di);
     }
+    // Notify watchers
+    if (watched) {
+      tv_dict_watcher_notify(dict, key.data, NULL, &di->di_tv);
+    }
+
+    // Delete the entry
+    tv_dict_item_remove(dict, di);
   } else {
     // Update the key
     typval_T tv;
@@ -388,17 +385,29 @@ int nlua_setvar(lua_State *lstate)
       return luaL_error(lstate, "Couldn't convert lua value");
     }
 
+    typval_T oldtv = TV_INITIAL_VALUE;
+
     if (di == NULL) {
       // Need to create an entry
       di = tv_dict_item_alloc_len(key.data, key.size);
       tv_dict_add(dict, di);
     } else {
+      if (watched) {
+        tv_copy(&di->di_tv, &oldtv);
+      }
       // Clear the old value
       tv_clear(&di->di_tv);
     }
 
     // Update the value
     tv_copy(&tv, &di->di_tv);
+
+    // Notify watchers
+    if (watched) {
+      tv_dict_watcher_notify(dict, key.data, &tv, &oldtv);
+      tv_clear(&oldtv);
+    }
+
     // Clear the temporary variable
     tv_clear(&tv);
   }
@@ -474,6 +483,52 @@ static int nlua_stricmp(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
   return 1;
 }
 
+#if defined(HAVE_ICONV)
+
+/// Convert string from one encoding to another
+static int nlua_iconv(lua_State *lstate)
+{
+  int narg = lua_gettop(lstate);
+
+  if (narg < 3) {
+    return luaL_error(lstate, "Expected at least 3 arguments");
+  }
+
+  for (int i = 1; i <= 3; i++) {
+    if (lua_type(lstate, i) != LUA_TSTRING) {
+      return luaL_argerror(lstate, i, "expected string");
+    }
+  }
+
+  size_t str_len = 0;
+  const char *str = lua_tolstring(lstate, 1, &str_len);
+
+  char_u *from = (char_u *)enc_canonize(enc_skip((char *)lua_tolstring(lstate, 2, NULL)));
+  char_u *to   = (char_u *)enc_canonize(enc_skip((char *)lua_tolstring(lstate, 3, NULL)));
+
+  vimconv_T vimconv;
+  vimconv.vc_type = CONV_NONE;
+  convert_setup_ext(&vimconv, (char *)from, false, (char *)to, false);
+
+  char_u *ret = (char_u *)string_convert(&vimconv, (char *)str, &str_len);
+
+  convert_setup(&vimconv, NULL, NULL);
+
+  xfree(from);
+  xfree(to);
+
+  if (ret == NULL) {
+    lua_pushnil(lstate);
+  } else {
+    lua_pushlstring(lstate, (char *)ret, str_len);
+    xfree(ret);
+  }
+
+  return 1;
+}
+
+#endif
+
 void nlua_state_add_stdlib(lua_State *const lstate, bool is_thread)
 {
   if (!is_thread) {
@@ -519,6 +574,13 @@ void nlua_state_add_stdlib(lua_State *const lstate, bool is_thread)
     // vim.spell
     luaopen_spell(lstate);
     lua_setfield(lstate, -2, "spell");
+
+#if defined(HAVE_ICONV)
+    // vim.iconv
+    // depends on p_ambw, p_emoji
+    lua_pushcfunction(lstate, &nlua_iconv);
+    lua_setfield(lstate, -2, "iconv");
+#endif
   }
 
   // vim.mpack

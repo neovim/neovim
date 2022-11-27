@@ -4,77 +4,75 @@
                             NVIM REFERENCE MANUAL
 
 
-Tree-sitter integration                                 *treesitter*
+Treesitter integration                                 *treesitter*
+
+Nvim integrates the `tree-sitter` library for incremental parsing of buffers:
+https://tree-sitter.github.io/tree-sitter/
+
+WARNING: Treesitter support is still experimental and subject to frequent
+changes. This documentation may also not fully reflect the latest changes.
 
                                       Type |gO| to see the table of contents.
 
-------------------------------------------------------------------------------
-VIM.TREESITTER                                          *lua-treesitter*
-
-Nvim integrates the tree-sitter library for incremental parsing of buffers.
-
-                                             *vim.treesitter.language_version*
-The latest parser ABI version that is supported by the bundled tree-sitter
-library.
-
-                                     *vim.treesitter.minimum_language_version*
-The earliest parser ABI version that is supported by the bundled tree-sitter
-library.
-
-Parser files                                            *treesitter-parsers*
+==============================================================================
+PARSER FILES                                              *treesitter-parsers*
 
 Parsers are the heart of tree-sitter. They are libraries that tree-sitter will
-search for in the `parser` runtime directory.  Currently Nvim does not provide
-the tree-sitter parsers, instead these must be built separately, for instance
-using the tree-sitter utility. The only exception is a C parser being included
-in official builds for testing purposes. Parsers are searched for as
-`parser/{lang}.*` in any 'runtimepath' directory.
+search for in the `parser` runtime directory. By default, Nvim bundles only
+parsers for C, Lua, and Vimscript, but parsers can be installed manually or
+via a plugin like https://github.com/nvim-treesitter/nvim-treesitter.
+Parsers are searched for as `parser/{lang}.*` in any 'runtimepath' directory.
+If multiple parsers for the same language are found, the first one is used.
+(This typically implies the priority "user config > plugins > bundled".
 A parser can also be loaded manually using a full path: >
 
     vim.treesitter.require_language("python", "/path/to/python.so")
+<
+==============================================================================
+LANGUAGE TREES                                       *treesitter-languagetree*
+                                                                *LanguageTree*
 
-<Create a parser for a buffer and a given language (if another plugin uses the
-same buffer/language combination, it will be safely reused). Use >
+As buffers can contain multiple languages (e.g., Vimscript commands in a Lua
+file), multiple parsers may be needed to parse the full buffer. These are
+combined in a |LanguageTree| object.
 
-    parser = vim.treesitter.get_parser(bufnr, lang)
+To create a LanguageTree (parser object) for a buffer and a given language,
+use >
 
-<`bufnr=0` can be used for current buffer. `lang` will default to 'filetype'.
+    tsparser = vim.treesitter.get_parser(bufnr, lang)
+<
+`bufnr=0` can be used for current buffer. `lang` will default to 'filetype'.
 Currently, the parser will be retained for the lifetime of a buffer but this
 is subject to change. A plugin should keep a reference to the parser object as
 long as it wants incremental updates.
 
-
-Parser methods                                          *lua-treesitter-parser*
-
-tsparser:parse()                                        *tsparser:parse()*
 Whenever you need to access the current syntax tree, parse the buffer: >
 
-    tstree = parser:parse()
+    tstree = tsparser:parse()
+<
+This will return a table of immutable |treesitter-tree|s that represent the
+current state of the buffer. When the plugin wants to access the state after a
+(possible) edit it should call `parse()` again. If the buffer wasn't edited,
+the same tree will be returned again without extra work. If the buffer was
+parsed before, incremental parsing will be done of the changed parts.
 
-<This will return a table of immutable trees that represent the current state
-of the buffer. When the plugin wants to access the state after a (possible)
-edit it should call `parse()` again. If the buffer wasn't edited, the same tree
-will be returned again without extra work. If the buffer was parsed before,
-incremental parsing will be done of the changed parts.
-
-Note: to use the parser directly inside a |nvim_buf_attach| Lua callback, you
-must call `get_parser()` before you register your callback. But preferably
+Note: To use the parser directly inside a |nvim_buf_attach()| Lua callback, you
+must call |get_parser()| before you register your callback. But preferably
 parsing shouldn't be done directly in the change callback anyway as they will
 be very frequent. Rather a plugin that does any kind of analysis on a tree
 should use a timer to throttle too frequent updates.
 
-tsparser:set_included_regions({region_list})  *tsparser:set_included_regions()*
-    Changes the regions the parser should consider. This is used for language
-    injection.  {region_list} should be of the form (all zero-based): >
-    {
-        {node1, node2},
-        ...
-    }
-<
-    `node1` and `node2` are both considered part of the same region and will
-    be parsed together with the parser in the same context.
+See |lua-treesitter-languagetree| for the list of available methods.
 
-Tree methods                                            *lua-treesitter-tree*
+==============================================================================
+TREESITTER TREES                                             *treesitter-tree*
+                                                                      *tstree*
+
+A "treesitter tree" represents the parsed contents of a buffer, which can be
+used to perform further analysis. It is a |luaref-userdata| reference to an
+object held by the tree-sitter library.
+
+An instance `tstree` of a treesitter tree supports the following methods.
 
 tstree:root()                                           *tstree:root()*
     Return the root node of this tree.
@@ -82,8 +80,15 @@ tstree:root()                                           *tstree:root()*
 tstree:copy()                                           *tstree:copy()*
     Returns a copy of the `tstree`.
 
+==============================================================================
+TREESITTER NODES                                             *treesitter-node*
+                                                                      *tsnode*
 
-Node methods                                            *lua-treesitter-node*
+A "treesitter node" represents one specific element of the parsed contents of
+a buffer, which can be captured by a |Query| for, e.g., highlighting. It is a
+|luaref-userdata| reference to an object held by the tree-sitter library.
+
+An instance `tsnode` of a treesitter node supports the following methods.
 
 tsnode:parent()                                         *tsnode:parent()*
     Get the node's immediate parent.
@@ -160,10 +165,10 @@ tsnode:id()                                             *tsnode:id()*
     Get an unique identifier for the node inside its own tree.
 
     No guarantees are made about this identifier's internal representation,
-    except for being a primitive lua type with value equality (so not a
+    except for being a primitive Lua type with value equality (so not a
     table). Presently it is a (non-printable) string.
 
-    Note: the id is not guaranteed to be unique for nodes from different
+    Note: The `id` is not guaranteed to be unique for nodes from different
     trees.
 
                                                 *tsnode:descendant_for_range()*
@@ -176,90 +181,93 @@ tsnode:named_descendant_for_range({start_row}, {start_col}, {end_row}, {end_col}
     Get the smallest named node within this node that spans the given range of
     (row, column) positions
 
-Query                                                   *lua-treesitter-query*
+==============================================================================
+TREESITTER QUERIES                                          *treesitter-query*
 
-Tree-sitter queries are supported, they are a way to do pattern-matching over
-a tree, using a simple to write lisp-like format. See
-https://tree-sitter.github.io/tree-sitter/using-parsers#query-syntax for more
-information on how to write queries.
+Treesitter queries are a way to extract information about a parsed |tstree|,
+e.g., for the purpose of highlighting. Briefly, a `query` consists of one or
+more patterns. A `pattern` is defined over node types in the syntax tree. A
+`match` corresponds to specific elements of the syntax tree which match a
+pattern. Patterns may optionally define captures and predicates. A `capture`
+allows you to associate names with a specific node in a pattern. A `predicate`
+adds arbitrary metadata and conditional data to a match.
 
-Note: The predicates listed in the web page above differ from those Neovim
-supports. See |lua-treesitter-predicates| for a complete list of predicates
-supported by Neovim.
+Queries are written in a lisp-like language documented in
+https://tree-sitter.github.io/tree-sitter/using-parsers#query-syntax
+Note: The predicates listed there page differ from those Nvim supports. See
+|treesitter-predicates| for a complete list of predicates supported by Nvim.
 
-A `query` consists of one or more patterns. A `pattern` is defined over node
-types in the syntax tree.  A `match` corresponds to specific elements of the
-syntax tree which match a pattern. Patterns may optionally define captures
-and predicates. A `capture` allows you to associate names with a specific
-node in a pattern. A `predicate` adds arbitrary metadata and conditional data
-to a match.
+Nvim looks for queries as `*.scm` files in a `queries` directory under
+`runtimepath`, where each file contains queries for a specific language and
+purpose, e.g., `queries/lua/highlights.scm` for highlighting Lua files.
+By default, the first query on `runtimepath` is used (which usually implies
+that user config takes precedence over plugins, which take precedence over
+queries bundled with Neovim). If a query should extend other queries instead
+of replacing them, use |treesitter-query-modeline-extends|.
 
-Treesitter Query Predicates                         *lua-treesitter-predicates*
+See |lua-treesitter-query| for the list of available methods for working with
+treesitter queries from Lua.
 
-When writing queries for treesitter, one might use `predicates`, that is,
-special scheme nodes that are evaluated to verify things on a captured node
-for example, the |eq?| predicate : >
+
+TREESITTER QUERY PREDICATES                            *treesitter-predicates*
+
+Predicates are special scheme nodes that are evaluated to conditionally capture
+nodes. For example, the `eq?` predicate can be used as follows: >
+
     ((identifier) @foo (#eq? @foo "foo"))
+<
+to only match identifier corresponding to the `"foo"` text.
 
-This will only match identifier corresponding to the `"foo"` text.
-Here is a list of built-in predicates :
+The following predicates are built in:
 
-    `eq?`                                                   *ts-predicate-eq?*
-        This predicate will check text correspondence between nodes or
-        strings: >
+    `eq?`                                            *treesitter-predicate-eq?*
+        Match a string against the text corresponding to a node: >
             ((identifier) @foo (#eq? @foo "foo"))
             ((node1) @left (node2) @right (#eq? @left @right))
 <
-    `match?`                                        *ts-predicate-match?*
-    `vim-match?`                                    *ts-predicate-vim-match?*
-        This will match if the provided vim regex matches the text
-        corresponding to a node: >
+    `match?`                                      *treesitter-predicate-match?*
+    `vim-match?`                              *treesitter-predicate-vim-match?*
+         Match a |regexp| against the text corresponding to a node: >
             ((identifier) @constant (#match? @constant "^[A-Z_]+$"))
-<       Note: the `^` and `$` anchors will respectively match the start and
-              end of the node's text.
+<         Note: The `^` and `$` anchors will match the start and end of the
+               node's text.
 
-    `lua-match?`                                    *ts-predicate-lua-match?*
-        This will match the same way than |match?| but using lua regexes.
+    `lua-match?`                              *treesitter-predicate-lua-match?*
+         Match |lua-patterns| against the text corresponding to a node,
+         similar to `match?`
 
-    `contains?`                                     *ts-predicate-contains?*
-        Will check if any of the following arguments appears in the text
-        corresponding to the node: >
+    `contains?`                                *treesitter-predicate-contains?*
+        Match a string against parts of the text corresponding to a node: >
             ((identifier) @foo (#contains? @foo "foo"))
-            ((identifier) @foo-bar (#contains @foo-bar "foo" "bar"))
+            ((identifier) @foo-bar (#contains? @foo-bar "foo" "bar"))
 <
-    `any-of?`                                       *ts-predicate-any-of?*
-        Will check if the text is the same as any of the following arguments: >
+    `any-of?`                                    *treesitter-predicate-any-of?*
+        Match any of the given strings against the text corresponding to
+        a node: >
             ((identifier) @foo (#any-of? @foo "foo" "bar"))
 <
         This is the recommended way to check if the node matches one of many
-        keywords for example, as it has been optimized for this.
-<
+        keywords, as it has been optimized for this.
+
                                                  *lua-treesitter-not-predicate*
 Each predicate has a `not-` prefixed predicate that is just the negation of
 the predicate.
 
-                                         *vim.treesitter.query.add_predicate()*
-vim.treesitter.query.add_predicate({name}, {handler})
+Further predicates can be added via `vim.treesitter.query.`|add_predicate()|.
+Use `vim.treesitter.query.`|list_predicates()| to list all available
+predicates.
 
-This adds a predicate with the name {name} to be used in queries.
-{handler} should be a function whose signature will be : >
-        handler(match, pattern, bufnr, predicate)
-<
-                                       *vim.treesitter.query.list_predicates()*
-vim.treesitter.query.list_predicates()
 
-This lists the currently available predicates to use in queries.
+TREESITTER QUERY DIRECTIVES                            *treesitter-directives*
 
-Treesitter Query Directive                          *lua-treesitter-directives*
+Treesitter directives store metadata for a node or match and perform side
+effects. For example, the `set!` directive sets metadata on the match or node: >
 
-Treesitter queries can also contain `directives`. Directives store metadata
-for a node or match and perform side effects. For example, the |set!|
-predicate sets metadata on the match or node : >
         ((identifier) @foo (#set! "type" "parameter"))
+<
+The following directives are built in:
 
-Built-in directives:
-
-    `set!`                                                  *ts-directive-set!*
+    `set!`                                          *treesitter-directive-set!*
         Sets key/value metadata for a specific match or capture. Value is
         accessible as either `metadata[key]` (match specific) or
         `metadata[capture_id][key]` (capture specific).
@@ -273,7 +281,7 @@ Built-in directives:
             ((identifier) @foo (#set! @foo "kind" "parameter"))
             ((node1) @left (node2) @right (#set! "type" "pair"))
 <
-    `offset!`                                           *ts-directive-offset!*
+    `offset!`                                      *treesitter-directive-offset!*
         Takes the range of the captured node and applies an offset. This will
         generate a new range object for the captured node as
         `metadata[capture_id].range`.
@@ -289,94 +297,340 @@ Built-in directives:
             ((identifier) @constant (#offset! @constant 0 1 0 -1))
 <
 
-Treesitter syntax highlighting (WIP)                 *lua-treesitter-highlight*
+Further directives can be added via `vim.treesitter.query.`|add_directive()|.
+Use `vim.treesitter.query.`|list_directives()| to list all available
+directives.
 
-NOTE: This is a partially implemented feature, and not usable as a default
-solution yet. What is documented here is a temporary interface intended
-for those who want to experiment with this feature and contribute to
-its development.
 
-Highlights are defined in the same query format as in the tree-sitter
-highlight crate, with some limitations and additions. Set a highlight query
-for a buffer with this code: >
+TREESITTER QUERY MODELINES                          *treesitter-query-modeline*
 
-    local query = [[
-      "for" @keyword
-      "if" @keyword
-      "return" @keyword
+Neovim supports to customize the behavior of the queries using a set of
+"modelines", that is comments in the queries starting with `;`. Here are the
+currently supported modeline alternatives:
 
-      (string_literal) @string
-      (number_literal) @number
-      (comment) @comment
+    `inherits: {lang}...`                     *treesitter-query-modeline-inherits*
+        Specifies that this query should inherit the queries from {lang}.
+        This will recursively descend in the queries of {lang} unless wrapped
+        in parentheses: `({lang})`.
+        Note: This is meant to be used to include queries from another
+        language. If you want your query to extend the queries of the same
+        language, use `extends`.
 
-      (preproc_function_def name: (identifier) @function)
+    `extends`                                  *treesitter-query-modeline-extends*
+        Specifies that this query should be used as an extension for the
+        query, i.e. that it should be merged with the others.
+        Note: The order of the extensions, and the query that will be used as
+        a base depends on your 'runtimepath' value.
 
-      ; ... more definitions
-    ]]
+Note: These modeline comments must be at the top of the query, but can be
+repeated, for example, the following two modeline blocks are both valid: >
 
-    highlighter = vim.treesitter.TSHighlighter.new(query, bufnr, lang)
-    -- alternatively, to use the current buffer and its filetype:
-    -- highlighter = vim.treesitter.TSHighlighter.new(query)
+    ;; inherits: foo,bar
+    ;; extends
 
-    -- Don't recreate the highlighter for the same buffer, instead
-    -- modify the query like this:
-    local query2 = [[ ... ]]
-    highlighter:set_query(query2)
-
-As mentioned above the supported predicate is currently only `eq?`. `match?`
-predicates behave like matching always fails. As an addition a capture which
-begin with an upper-case letter like `@WarningMsg` will map directly to this
-highlight group, if defined. Also if the predicate begins with upper-case and
-contains a dot only the part before the first will be interpreted as the
-highlight group. As an example, this warns of a binary expression with two
-identical identifiers, highlighting both as |hl-WarningMsg|: >
-
-    ((binary_expression left: (identifier) @WarningMsg.left right: (identifier) @WarningMsg.right)
-     (eq? @WarningMsg.left @WarningMsg.right))
+    ;; extends
+    ;;
+    ;; inherits: baz
 <
-Treesitter Highlighting Priority            *lua-treesitter-highlight-priority*
+==============================================================================
+TREESITTER SYNTAX HIGHLIGHTING                          *treesitter-highlight*
 
-Tree-sitter uses |nvim_buf_set_extmark()| to set highlights with a default
+Syntax highlighting is specified through queries named `highlights.scm`,
+which match a |tsnode| in the parsed |tstree| to a `capture` that can be
+assigned a highlight group. For example, the query >
+
+    (parameters (identifier) @parameter)
+<
+matches any `identifier` node inside a function `parameter` node (e.g., the
+`bar` in `foo(bar)`) to the capture named `@parameter`. It is also possible to
+match literal expressions (provided the parser returns them): >
+
+    "return" @keyword.return
+<
+Assuming a suitable parser and `highlights.scm` query is found in runtimepath,
+treesitter highlighting for the current buffer can be enabled simply via
+|vim.treesitter.start()|.
+
+                                                 *treesitter-highlight-groups*
+The capture names, with `@` included, are directly usable as highlight groups.
+For many commonly used captures, the corresponding highlight groups are linked
+to Nvim's standard |highlight-groups| by default but can be overridden in
+colorschemes.
+
+A fallback system is implemented, so that more specific groups fallback to
+more generic ones. For instance, in a language that has separate doc comments,
+`@comment.doc` could be used. If this group is not defined, the highlighting
+for an ordinary `@comment` is used. This way, existing color schemes already
+work out of the box, but it is possible to add more specific variants for
+queries that make them available.
+
+As an additional rule, capture highlights can always be specialized by
+language, by appending the language name after an additional dot. For
+instance, to highlight comments differently per language: >
+
+    hi @comment.c guifg=Blue
+    hi @comment.lua @guifg=DarkBlue
+    hi link @comment.doc.java String
+<
+The following captures are linked by default to standard |group-name|s:
+>
+    @text.literal      Comment
+    @text.reference    Identifier
+    @text.title        Title
+    @text.uri          Underlined
+    @text.underline    Underlined
+    @text.todo         Todo
+
+    @comment           Comment
+    @punctuation       Delimiter
+
+    @constant          Constant
+    @constant.builtin  Special
+    @constant.macro    Define
+    @define            Define
+    @macro             Macro
+    @string            String
+    @string.escape     SpecialChar
+    @string.special    SpecialChar
+    @character         Character
+    @character.special SpecialChar
+    @number            Number
+    @boolean           Boolean
+    @float             Float
+
+    @function          Function
+    @function.builtin  Special
+    @function.macro    Macro
+    @parameter         Identifier
+    @method            Function
+    @field             Identifier
+    @property          Identifier
+    @constructor       Special
+
+    @conditional       Conditional
+    @repeat            Repeat
+    @label             Label
+    @operator          Operator
+    @keyword           Keyword
+    @exception         Exception
+
+    @variable          Identifier
+    @type              Type
+    @type.definition   Typedef
+    @storageclass      StorageClass
+    @structure         Structure
+    @namespace         Identifier
+    @include           Include
+    @preproc           PreProc
+    @debug             Debug
+    @tag               Tag
+<
+                                                  *treesitter-highlight-spell*
+The special `@spell` capture can be used to indicate that a node should be
+spell checked by Nvim's builtin |spell| checker. For example, the following
+capture marks comments as to be checked: >
+
+    (comment) @spell
+<
+
+There is also `@nospell` which disables spellchecking regions with `@spell`.
+
+                                                *treesitter-highlight-conceal*
+Treesitter highlighting supports |conceal| via the `conceal` metadata. By
+convention, nodes to be concealed are captured as `@conceal`, but any capture
+can be used. For example, the following query can be used to hide code block
+delimiters in Markdown: >
+
+    (fenced_code_block_delimiter) @conceal (#set! conceal "")
+<
+It is also possible to replace a node with a single character, which (unlike
+legacy syntax) can be given a custom highlight. For example, the following
+(ill-advised) query replaces the `!=` operator by a Unicode glyph, which is
+still highlighted the same as other operators: >
+
+    "!=" @operator (#set! conceal "≠")
+<
+Conceals specified in this way respect 'conceallevel'.
+
+                                               *treesitter-highlight-priority*
+Treesitter uses |nvim_buf_set_extmark()| to set highlights with a default
 priority of 100. This enables plugins to set a highlighting priority lower or
 higher than tree-sitter. It is also possible to change the priority of an
 individual query pattern manually by setting its `"priority"` metadata
 attribute: >
 
-    (
-      (super_important_node) @ImportantHighlight
-      ; Give the whole query highlight priority higher than the default (100)
-      (set! "priority" 105)
-    )
+    (super_important_node) @ImportantHighlight (#set! "priority" 105)
 <
+==============================================================================
+VIM.TREESITTER                                                *lua-treesitter*
+
+The remainder of this document is a reference manual for the `vim.treesitter`
+Lua module, which is the main interface for Nvim's tree-sitter integration.
+Most of the following content is automatically generated from the function
+documentation.
+
+
+                                             *vim.treesitter.language_version*
+The latest parser ABI version that is supported by the bundled tree-sitter
+library.
+
+                                     *vim.treesitter.minimum_language_version*
+The earliest parser ABI version that is supported by the bundled tree-sitter
+library.
 
 ==============================================================================
 Lua module: vim.treesitter                               *lua-treesitter-core*
 
-get_parser({bufnr}, {lang}, {opts})                             *get_parser()*
-    Gets the parser for this bufnr / ft combination.
-
-    If needed this will create the parser. Unconditionally attach the provided
-    callback
+get_captures_at_cursor({winnr})                     *get_captures_at_cursor()*
+    Returns a list of highlight capture names under the cursor
 
     Parameters: ~
-        {bufnr}  The buffer the parser should be tied to
-        {lang}   The filetype of this parser
-        {opts}   Options object to pass to the created language tree
+      • {winnr}  (number|nil) Window handle or 0 for current window (default)
 
     Return: ~
-        The parser
+        string[] List of capture names
 
-get_string_parser({str}, {lang}, {opts})                 *get_string_parser()*
-    Gets a string parser
+get_captures_at_pos({bufnr}, {row}, {col})             *get_captures_at_pos()*
+    Returns a list of highlight captures at the given position
+
+    Each capture is represented by a table containing the capture name as a
+    string as well as a table of metadata (`priority`, `conceal`, ...; empty
+    if none are defined).
 
     Parameters: ~
-        {str}   The string to parse
-        {lang}  The language of this string
-        {opts}  Options to pass to the created language tree
+      • {bufnr}  (number) Buffer number (0 for current buffer)
+      • {row}    (number) Position row
+      • {col}    (number) Position column
+
+    Return: ~
+        table[] List of captures `{ capture = "capture name", metadata = { ...
+        } }`
+
+get_node_at_cursor({winnr})                             *get_node_at_cursor()*
+    Returns the smallest named node under the cursor
+
+    Parameters: ~
+      • {winnr}  (number|nil) Window handle or 0 for current window (default)
+
+    Return: ~
+        (string) Name of node under the cursor
+
+get_node_at_pos({bufnr}, {row}, {col}, {opts})             *get_node_at_pos()*
+    Returns the smallest named node at the given position
+
+    Parameters: ~
+      • {bufnr}  (number) Buffer number (0 for current buffer)
+      • {row}    (number) Position row
+      • {col}    (number) Position column
+      • {opts}   (table) Optional keyword arguments:
+                 • ignore_injections boolean Ignore injected languages
+                   (default true)
+
+    Return: ~
+        userdata |tsnode| under the cursor
+
+get_node_range({node_or_range})                             *get_node_range()*
+    Returns the node's range or an unpacked range table
+
+    Parameters: ~
+      • {node_or_range}  (userdata|table) |tsnode| or table of positions
+
+    Return: ~
+        (table) `{ start_row, start_col, end_row, end_col }`
+
+get_parser({bufnr}, {lang}, {opts})                             *get_parser()*
+    Returns the parser for a specific buffer and filetype and attaches it to
+    the buffer
+
+    If needed, this will create the parser.
+
+    Parameters: ~
+      • {bufnr}  (number|nil) Buffer the parser should be tied to (default:
+                 current buffer)
+      • {lang}   (string|nil) Filetype of this parser (default: buffer
+                 filetype)
+      • {opts}   (table|nil) Options to pass to the created language tree
+
+    Return: ~
+        LanguageTree |LanguageTree| object to use for parsing
+
+get_string_parser({str}, {lang}, {opts})                 *get_string_parser()*
+    Returns a string parser
+
+    Parameters: ~
+      • {str}   (string) Text to parse
+      • {lang}  (string) Language of this string
+      • {opts}  (table|nil) Options to pass to the created language tree
+
+    Return: ~
+        LanguageTree |LanguageTree| object to use for parsing
+
+is_ancestor({dest}, {source})                                  *is_ancestor()*
+    Determines whether a node is the ancestor of another
+
+    Parameters: ~
+      • {dest}    userdata Possible ancestor |tsnode|
+      • {source}  userdata Possible descendant |tsnode|
+
+    Return: ~
+        (boolean) True if {dest} is an ancestor of {source}
+
+is_in_node_range({node}, {line}, {col})                   *is_in_node_range()*
+    Determines whether (line, col) position is in node range
+
+    Parameters: ~
+      • {node}  userdata |tsnode| defining the range
+      • {line}  (number) Line (0-based)
+      • {col}   (number) Column (0-based)
+
+    Return: ~
+        (boolean) True if the position is in node range
+
+node_contains({node}, {range})                               *node_contains()*
+    Determines if a node contains a range
+
+    Parameters: ~
+      • {node}   userdata |tsnode|
+      • {range}  (table)
+
+    Return: ~
+        (boolean) True if the {node} contains the {range}
+
+start({bufnr}, {lang})                                               *start()*
+    Starts treesitter highlighting for a buffer
+
+    Can be used in an ftplugin or FileType autocommand.
+
+    Note: By default, disables regex syntax highlighting, which may be
+    required for some plugins. In this case, add `vim.bo.syntax = 'on'` after
+    the call to `start`.
+
+    Example: >
+
+     vim.api.nvim_create_autocmd( 'FileType', { pattern = 'tex',
+         callback = function(args)
+             vim.treesitter.start(args.buf, 'latex')
+             vim.bo[args.buf].syntax = 'on'  -- only if additional legacy syntax is needed
+         end
+     })
+<
+
+    Parameters: ~
+      • {bufnr}  (number|nil) Buffer to be highlighted (default: current
+                 buffer)
+      • {lang}   (string|nil) Language of the parser (default: buffer
+                 filetype)
+
+stop({bufnr})                                                         *stop()*
+    Stops treesitter highlighting for a buffer
+
+    Parameters: ~
+      • {bufnr}  (number|nil) Buffer to stop highlighting (default: current
+                 buffer)
 
 
 ==============================================================================
-Lua module: vim.treesitter.language                      *treesitter-language*
+Lua module: vim.treesitter.language                  *lua-treesitter-language*
 
 inspect_language({lang})                                  *inspect_language()*
     Inspects the provided language.
@@ -385,22 +639,32 @@ inspect_language({lang})                                  *inspect_language()*
     names, ...
 
     Parameters: ~
-        {lang}  The language.
+      • {lang}  (string) Language
 
-require_language({lang}, {path}, {silent})                *require_language()*
-    Asserts that the provided language is installed, and optionally provide a
-    path for the parser
+    Return: ~
+        (table)
 
-    Parsers are searched in the `parser` runtime directory.
+                                                          *require_language()*
+require_language({lang}, {path}, {silent}, {symbol_name})
+    Asserts that a parser for the language {lang} is installed.
+
+    Parsers are searched in the `parser` runtime directory, or the provided
+    {path}
 
     Parameters: ~
-        {lang}    The language the parser should parse
-        {path}    Optional path the parser is located at
-        {silent}  Don't throw an error if language not found
+      • {lang}         (string) Language the parser should parse
+      • {path}         (string|nil) Optional path the parser is located at
+      • {silent}       (boolean|nil) Don't throw an error if language not
+                       found
+      • {symbol_name}  (string|nil) Internal symbol name for the language to
+                       load
+
+    Return: ~
+        (boolean) If the specified language is installed
 
 
 ==============================================================================
-Lua module: vim.treesitter.query                            *treesitter-query*
+Lua module: vim.treesitter.query                        *lua-treesitter-query*
 
 add_directive({name}, {handler}, {force})                    *add_directive()*
     Adds a new directive to be used in queries
@@ -411,61 +675,74 @@ add_directive({name}, {handler}, {force})                    *add_directive()*
     `metadata[capture_id].key = value`
 
     Parameters: ~
-        {name}     the name of the directive, without leading #
-        {handler}  the handler function to be used signature will be (match,
-                   pattern, bufnr, predicate, metadata)
+      • {name}     (string) Name of the directive, without leading #
+      • {handler}  function(match:string, pattern:string, bufnr:number,
+                   predicate:function, metadata:table)
 
 add_predicate({name}, {handler}, {force})                    *add_predicate()*
     Adds a new predicate to be used in queries
 
     Parameters: ~
-        {name}     the name of the predicate, without leading #
-        {handler}  the handler function to be used signature will be (match,
-                   pattern, bufnr, predicate)
+      • {name}     (string) Name of the predicate, without leading #
+      • {handler}  function(match:string, pattern:string, bufnr:number,
+                   predicate:function)
 
-get_node_text({node}, {source})                              *get_node_text()*
+get_node_text({node}, {source}, {opts})                      *get_node_text()*
     Gets the text corresponding to a given node
 
     Parameters: ~
-        {node}    the node
-        {source}  The buffer or string from which the node is extracted
+      • {node}    userdata |tsnode|
+      • {source}  (number|string) Buffer or string from which the {node} is
+                  extracted
+      • {opts}    (table|nil) Optional parameters.
+                  • concat: (boolean) Concatenate result in a string (default
+                    true)
+
+    Return: ~
+        (string[]|string)
 
 get_query({lang}, {query_name})                                  *get_query()*
     Returns the runtime query {query_name} for {lang}.
 
     Parameters: ~
-        {lang}        The language to use for the query
-        {query_name}  The name of the query (i.e. "highlights")
+      • {lang}        (string) Language to use for the query
+      • {query_name}  (string) Name of the query (e.g. "highlights")
 
     Return: ~
-        The corresponding query, parsed.
+        Query Parsed query
 
                                                            *get_query_files()*
 get_query_files({lang}, {query_name}, {is_included})
     Gets the list of files used to make up a query
 
     Parameters: ~
-        {lang}         The language
-        {query_name}   The name of the query to load
-        {is_included}  Internal parameter, most of the time left as `nil`
+      • {lang}         (string) Language to get query for
+      • {query_name}   (string) Name of the query to load (e.g., "highlights")
+      • {is_included}  (boolean|nil) Internal parameter, most of the time left
+                       as `nil`
+
+    Return: ~
+        string[] query_files List of files to load for given query and
+        language
 
 list_directives()                                          *list_directives()*
     Lists the currently available directives to use in queries.
 
     Return: ~
-        The list of supported directives.
+        string[] List of supported directives.
 
 list_predicates()                                          *list_predicates()*
+    Lists the currently available predicates to use in queries.
+
     Return: ~
-        The list of supported predicates.
+        string[] List of supported predicates.
 
 parse_query({lang}, {query})                                   *parse_query()*
     Parse {query} as a string. (If the query is in a file, the caller should
     read the contents into a string before calling).
 
-    Returns a `Query` (see |lua-treesitter-query|) object which can be used to
-    search nodes in the syntax tree for the patterns defined in {query} using
-    `iter_*` methods below.
+    Returns a `Query` (see |lua-treesitter-query|) object which can be used to search nodes in
+    the syntax tree for the patterns defined in {query} using `iter_*` methods below.
 
     Exposes `info` and `captures` with additional context about {query}.
     • `captures` contains the list of unique capture names defined in {query}.
@@ -473,208 +750,213 @@ parse_query({lang}, {query})                                   *parse_query()*
     • `info.patterns` contains information about predicates.
 
     Parameters: ~
-        {lang}   (string) The language
-        {query}  (string) A string containing the query (s-expr syntax)
+      • {lang}   (string) Language to use for the query
+      • {query}  (string) Query in s-expr syntax
 
     Return: ~
-        The query
+        Query Parsed query
 
                                                        *Query:iter_captures()*
 Query:iter_captures({self}, {node}, {source}, {start}, {stop})
     Iterate over all captures from all matches inside {node}
 
-    {source} is needed if the query contains predicates, then the caller must
+    {source} is needed if the query contains predicates; then the caller must
     ensure to use a freshly parsed tree consistent with the current text of
     the buffer (if relevant). {start_row} and {end_row} can be used to limit
     matches inside a row range (this is typically used with root node as the
-    node, i e to get syntax highlight matches in the current viewport). When
-    omitted the start and end row values are used from the given node.
+    {node}, i.e., to get syntax highlight matches in the current viewport).
+    When omitted, the {start} and {end} row values are used from the given
+    node.
 
-    The iterator returns three values, a numeric id identifying the capture,
+    The iterator returns three values: a numeric id identifying the capture,
     the captured node, and metadata from any directives processing the match.
-    The following example shows how to get captures by name:
->
+    The following example shows how to get captures by name: >
 
-    for id, node, metadata in query:iter_captures(tree:root(), bufnr, first, last) do
-      local name = query.captures[id] -- name of the capture in the query
-      -- typically useful info about the node:
-      local type = node:type() -- type of the captured node
-      local row1, col1, row2, col2 = node:range() -- range of the capture
-      ... use the info here ...
-    end
+     for id, node, metadata in query:iter_captures(tree:root(), bufnr, first, last) do
+       local name = query.captures[id] -- name of the capture in the query
+       -- typically useful info about the node:
+       local type = node:type() -- type of the captured node
+       local row1, col1, row2, col2 = node:range() -- range of the capture
+       ... use the info here ...
+     end
 <
 
     Parameters: ~
-        {node}    The node under which the search will occur
-        {source}  The source buffer or string to extract text from
-        {start}   The starting line of the search
-        {stop}    The stopping line of the search (end-exclusive)
-        {self}
+      • {node}    userdata |tsnode| under which the search will occur
+      • {source}  (number|string) Source buffer or string to extract text from
+      • {start}   (number) Starting line for the search
+      • {stop}    (number) Stopping line for the search (end-exclusive)
+      • {self}
 
     Return: ~
-        The matching capture id
-        The captured node
+        (number) capture Matching capture id
+        (table) capture_node Capture for {node}
+        (table) metadata for the {capture}
 
                                                         *Query:iter_matches()*
 Query:iter_matches({self}, {node}, {source}, {start}, {stop})
     Iterates the matches of self on a given range.
 
-    Iterate over all matches within a node. The arguments are the same as for
-    |query:iter_captures()| but the iterated values are different: an
+    Iterate over all matches within a {node}. The arguments are the same as
+    for |Query:iter_captures()| but the iterated values are different: an
     (1-based) index of the pattern in the query, a table mapping capture
     indices to nodes, and metadata from any directives processing the match.
-    If the query has more than one pattern the capture table might be sparse,
-    and e.g. `pairs()` method should be used over `ipairs`. Here an example
-    iterating over all captures in every match:
->
+    If the query has more than one pattern, the capture table might be sparse
+    and e.g. `pairs()` method should be used over `ipairs` . Here is an example iterating over all captures in every match: >
 
-    for pattern, match, metadata in cquery:iter_matches(tree:root(), bufnr, first, last) do
-      for id, node in pairs(match) do
-        local name = query.captures[id]
-        -- `node` was captured by the `name` capture in the match
+     for pattern, match, metadata in cquery:iter_matches(tree:root(), bufnr, first, last) do
+       for id, node in pairs(match) do
+         local name = query.captures[id]
+         -- `node` was captured by the `name` capture in the match
 
-        local node_data = metadata[id] -- Node level metadata
+         local node_data = metadata[id] -- Node level metadata
 
-        ... use the info here ...
-      end
-    end
+         ... use the info here ...
+       end
+     end
 <
 
     Parameters: ~
-        {node}    The node under which the search will occur
-        {source}  The source buffer or string to search
-        {start}   The starting line of the search
-        {stop}    The stopping line of the search (end-exclusive)
-        {self}
+      • {node}    userdata |tsnode| under which the search will occur
+      • {source}  (number|string) Source buffer or string to search
+      • {start}   (number) Starting line for the search
+      • {stop}    (number) Stopping line for the search (end-exclusive)
+      • {self}
 
     Return: ~
-        The matching pattern id
-        The matching match
+        (number) pattern id
+        (table) match
+        (table) metadata
 
 set_query({lang}, {query_name}, {text})                          *set_query()*
-    Sets the runtime query {query_name} for {lang}
+    Sets the runtime query named {query_name} for {lang}
 
     This allows users to override any runtime files and/or configuration set
     by plugins.
 
     Parameters: ~
-        {lang}        string: The language to use for the query
-        {query_name}  string: The name of the query (i.e. "highlights")
-        {text}        string: The query text (unparsed).
+      • {lang}        (string) Language to use for the query
+      • {query_name}  (string) Name of the query (e.g., "highlights")
+      • {text}        (string) Query text (unparsed).
 
 
 ==============================================================================
-Lua module: vim.treesitter.highlighter                *treesitter-highlighter*
+Lua module: vim.treesitter.highlighter            *lua-treesitter-highlighter*
 
 new({tree}, {opts})                                        *highlighter.new()*
     Creates a new highlighter using
 
     Parameters: ~
-        {tree}  The language tree to use for highlighting
-        {opts}  Table used to configure the highlighter
-                • queries: Table to overwrite queries used by the highlighter
+      • {tree}  LanguageTree |LanguageTree| parser object to use for highlighting
+      • {opts}  (table|nil) Configuration of the highlighter:
+                • queries table overwrite queries used by the highlighter
+
+    Return: ~
+        TSHighlighter Created highlighter object
 
 TSHighlighter:destroy({self})                        *TSHighlighter:destroy()*
     Removes all internal references to the highlighter
 
     Parameters: ~
-        {self}
-
-TSHighlighter:get_query({self}, {lang})            *TSHighlighter:get_query()*
-    Gets the query used for
-
-    Parameters: ~
-        {lang}  A language used by the highlighter.
-        {self}
+      • {self}
 
 
 ==============================================================================
-Lua module: vim.treesitter.languagetree              *treesitter-languagetree*
-
-LanguageTree:add_child({self}, {lang})              *LanguageTree:add_child()*
-    Adds a child language to this tree.
-
-    If the language already exists as a child, it will first be removed.
-
-    Parameters: ~
-        {lang}  The language to add.
-        {self}
+Lua module: vim.treesitter.languagetree          *lua-treesitter-languagetree*
 
 LanguageTree:children({self})                        *LanguageTree:children()*
     Returns a map of language to child tree.
 
     Parameters: ~
-        {self}
+      • {self}
 
 LanguageTree:contains({self}, {range})               *LanguageTree:contains()*
-    Determines whether {range} is contained in this language tree
+    Determines whether {range} is contained in the |LanguageTree|.
 
     Parameters: ~
-        {range}  A range, that is a `{ start_line, start_col, end_line,
-                 end_col }` table.
-        {self}
+      • {range}  (table) `{ start_line, start_col, end_line, end_col }`
+      • {self}
+
+    Return: ~
+        (boolean)
 
 LanguageTree:destroy({self})                          *LanguageTree:destroy()*
-    Destroys this language tree and all its children.
+    Destroys this |LanguageTree| and all its children.
 
     Any cleanup logic should be performed here.
 
     Note: This DOES NOT remove this tree from a parent. Instead, `remove_child` must be called on the parent to remove it.
 
     Parameters: ~
-        {self}
+      • {self}
 
                                                *LanguageTree:for_each_child()*
 LanguageTree:for_each_child({self}, {fn}, {include_self})
-    Invokes the callback for each LanguageTree and it's children recursively
+    Invokes the callback for each |LanguageTree| and its children recursively
 
     Parameters: ~
-        {fn}            The function to invoke. This is invoked with arguments
-                        (tree: LanguageTree, lang: string)
-        {include_self}  Whether to include the invoking tree in the results.
-        {self}
+      • {fn}            function(tree: LanguageTree, lang: string)
+      • {include_self}  (boolean) Whether to include the invoking tree in the
+                        results
+      • {self}
 
 LanguageTree:for_each_tree({self}, {fn})        *LanguageTree:for_each_tree()*
-    Invokes the callback for each treesitter trees recursively.
+    Invokes the callback for each |LanguageTree| recursively.
 
-    Note, this includes the invoking language tree's trees as well.
+    Note: This includes the invoking tree's child trees as well.
 
     Parameters: ~
-        {fn}    The callback to invoke. The callback is invoked with arguments
-                (tree: TSTree, languageTree: LanguageTree)
-        {self}
+      • {fn}    function(tree: TSTree, languageTree: LanguageTree)
+      • {self}
 
 LanguageTree:included_regions({self})        *LanguageTree:included_regions()*
     Gets the set of included regions
 
     Parameters: ~
-        {self}
+      • {self}
 
 LanguageTree:invalidate({self}, {reload})          *LanguageTree:invalidate()*
     Invalidates this parser and all its children
 
     Parameters: ~
-        {self}
+      • {self}
 
 LanguageTree:is_valid({self})                        *LanguageTree:is_valid()*
     Determines whether this tree is valid. If the tree is invalid, call `parse()` . This will return the updated tree.
 
     Parameters: ~
-        {self}
+      • {self}
 
 LanguageTree:lang({self})                                *LanguageTree:lang()*
     Gets the language of this tree node.
 
     Parameters: ~
-        {self}
+      • {self}
 
                                            *LanguageTree:language_for_range()*
 LanguageTree:language_for_range({self}, {range})
-    Gets the appropriate language that contains {range}
+    Gets the appropriate language that contains {range}.
 
     Parameters: ~
-        {range}  A text range, see |LanguageTree:contains|
-        {self}
+      • {range}  (table) `{ start_line, start_col, end_line, end_col }`
+      • {self}
+
+    Return: ~
+        LanguageTree Managing {range}
+
+                                         *LanguageTree:named_node_for_range()*
+LanguageTree:named_node_for_range({self}, {range}, {opts})
+    Gets the smallest named node that contains {range}.
+
+    Parameters: ~
+      • {range}  (table) `{ start_line, start_col, end_line, end_col }`
+      • {opts}   (table|nil) Optional keyword arguments:
+                 • ignore_injections boolean Ignore injected languages
+                   (default true)
+      • {self}
+
+    Return: ~
+        userdata|nil Found |tsnode|
 
 LanguageTree:parse({self})                              *LanguageTree:parse()*
     Parses all defined regions using a treesitter parser for the language this
@@ -682,14 +964,18 @@ LanguageTree:parse({self})                              *LanguageTree:parse()*
     determine if any child languages should be created.
 
     Parameters: ~
-        {self}
+      • {self}
+
+    Return: ~
+        userdata[] Table of parsed |tstree|
+        (table) Change list
 
 LanguageTree:register_cbs({self}, {cbs})         *LanguageTree:register_cbs()*
-    Registers callbacks for the parser.
+    Registers callbacks for the |LanguageTree|.
 
     Parameters: ~
-        {cbs}   (table) An |nvim_buf_attach()|-like table argument with the
-                following keys :
+      • {cbs}   (table) An |nvim_buf_attach()|-like table argument with the
+                following handlers:
                 • `on_bytes` : see |nvim_buf_attach()|, but this will be called after the parsers callback.
                 • `on_changedtree` : a callback that will be called every time
                   the tree has syntactical changes. It will only be passed one
@@ -699,61 +985,50 @@ LanguageTree:register_cbs({self}, {cbs})         *LanguageTree:register_cbs()*
                   tree.
                 • `on_child_removed` : emitted when a child is removed from
                   the tree.
-        {self}
-
-LanguageTree:remove_child({self}, {lang})        *LanguageTree:remove_child()*
-    Removes a child language from this tree.
-
-    Parameters: ~
-        {lang}  The language to remove.
-        {self}
-
-                                         *LanguageTree:set_included_regions()*
-LanguageTree:set_included_regions({self}, {regions})
-    Sets the included regions that should be parsed by this parser. A region
-    is a set of nodes and/or ranges that will be parsed in the same context.
-
-    For example, `{ { node1 }, { node2} }` is two separate regions. This will
-    be parsed by the parser in two different contexts... thus resulting in two
-    separate trees.
-
-    `{ { node1, node2 } }` is a single region consisting of two nodes. This
-    will be parsed by the parser in a single context... thus resulting in a
-    single tree.
-
-    This allows for embedded languages to be parsed together across different
-    nodes, which is useful for templating languages like ERB and EJS.
-
-    Note, this call invalidates the tree and requires it to be parsed again.
-
-    Parameters: ~
-        {regions}  (table) list of regions this tree should manage and parse.
-        {self}
+      • {self}
 
 LanguageTree:source({self})                            *LanguageTree:source()*
     Returns the source content of the language tree (bufnr or string).
 
     Parameters: ~
-        {self}
+      • {self}
+
+                                               *LanguageTree:tree_for_range()*
+LanguageTree:tree_for_range({self}, {range}, {opts})
+    Gets the tree that contains {range}.
+
+    Parameters: ~
+      • {range}  (table) `{ start_line, start_col, end_line, end_col }`
+      • {opts}   (table|nil) Optional keyword arguments:
+                 • ignore_injections boolean Ignore injected languages
+                   (default true)
+      • {self}
+
+    Return: ~
+        userdata|nil Contained |tstree|
 
 LanguageTree:trees({self})                              *LanguageTree:trees()*
     Returns all trees this language tree contains. Does not include child
     languages.
 
     Parameters: ~
-        {self}
+      • {self}
 
 new({source}, {lang}, {opts})                             *languagetree.new()*
-    Represents a single treesitter parser for a language. The language can
-    contain child languages with in its range, hence the tree.
+    A |LanguageTree| holds the treesitter parser for a given language {lang}
+    used to parse a buffer. As the buffer may contain injected languages, the LanguageTree needs to store parsers for these child languages as well (which in turn
+    may contain child languages themselves, hence the name).
 
     Parameters: ~
-        {source}           Can be a bufnr or a string of text to parse
-        {lang}             The language this tree represents
-        {opts}             Options table
-        {opts.injections}  A table of language to injection query strings.
-                           This is useful for overriding the built-in runtime
-                           file searching for the injection language query per
-                           language.
+      • {source}  (number|string) Buffer or a string of text to parse
+      • {lang}    (string) Root language this tree represents
+      • {opts}    (table|nil) Optional keyword arguments:
+                  • injections table Mapping language to injection query
+                    strings. This is useful for overriding the built-in
+                    runtime file searching for the injection language query
+                    per language.
+
+    Return: ~
+        LanguageTree |LanguageTree| parser object
 
  vim:tw=78:ts=8:sw=4:sts=4:et:ft=help:norl:

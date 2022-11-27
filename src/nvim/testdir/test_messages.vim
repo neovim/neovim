@@ -171,6 +171,38 @@ func Test_echospace()
   set ruler& showcmd&
 endfunc
 
+func Test_warning_scroll()
+  CheckRunVimInTerminal
+  let lines =<< trim END
+      call test_override('ui_delay', 50)
+      set noruler
+      set readonly
+      undo
+  END
+  call writefile(lines, 'XTestWarningScroll', 'D')
+  let buf = RunVimInTerminal('', #{rows: 8})
+
+  " When the warning comes from a script, messages are scrolled so that the
+  " stacktrace is visible.
+  call term_sendkeys(buf, ":source XTestWarningScroll\n")
+  " only match the final colon in the line that shows the source
+  call WaitForAssert({-> assert_match(':$', term_getline(buf, 5))})
+  call WaitForAssert({-> assert_equal('line    4:W10: Warning: Changing a readonly file', term_getline(buf, 6))})
+  call WaitForAssert({-> assert_equal('Already at oldest change', term_getline(buf, 7))})
+  call WaitForAssert({-> assert_equal('Press ENTER or type command to continue', term_getline(buf, 8))})
+  call term_sendkeys(buf, "\n")
+
+  " When the warning does not come from a script, messages are not scrolled.
+  call term_sendkeys(buf, ":enew\n")
+  call term_sendkeys(buf, ":set readonly\n")
+  call term_sendkeys(buf, 'u')
+  call WaitForAssert({-> assert_equal('W10: Warning: Changing a readonly file', term_getline(buf, 8))})
+  call WaitForAssert({-> assert_equal('Already at oldest change', term_getline(buf, 8))})
+
+  " clean up
+  call StopVimInTerminal(buf)
+endfunc
+
 " Test more-prompt (see :help more-prompt).
 func Test_message_more()
   CheckRunVimInTerminal
@@ -284,6 +316,66 @@ func Test_message_more()
   call StopVimInTerminal(buf)
 endfunc
 
+" Test more-prompt scrollback
+func Test_message_more_scrollback()
+  CheckRunVimInTerminal
+
+  let lines =<< trim END
+      set t_ut=
+      hi Normal ctermfg=15 ctermbg=0
+      for i in range(100)
+          echo i
+      endfor
+  END
+  call writefile(lines, 'XmoreScrollback', 'D')
+  let buf = RunVimInTerminal('-S XmoreScrollback', {'rows': 10})
+  call VerifyScreenDump(buf, 'Test_more_scrollback_1', {})
+
+  call term_sendkeys(buf, 'f')
+  call TermWait(buf)
+  call term_sendkeys(buf, 'b')
+  call VerifyScreenDump(buf, 'Test_more_scrollback_2', {})
+
+  call term_sendkeys(buf, 'q')
+  call TermWait(buf)
+  call StopVimInTerminal(buf)
+endfunc
+
+" Test verbose message before echo command
+func Test_echo_verbose_system()
+  CheckRunVimInTerminal
+  CheckUnix
+
+  let buf = RunVimInTerminal('', {'rows': 10})
+  call term_sendkeys(buf, ":4 verbose echo system('seq 20')\<CR>")
+  " Note that the screendump is filtered to remove the name of the temp file
+  call VerifyScreenDump(buf, 'Test_verbose_system_1', {})
+
+  " display a page and go back, results in exactly the same view
+  call term_sendkeys(buf, ' ')
+  call TermWait(buf)
+  call term_sendkeys(buf, 'b')
+  call VerifyScreenDump(buf, 'Test_verbose_system_1', {})
+
+  " do the same with 'cmdheight' set to 2
+  call term_sendkeys(buf, 'q')
+  call TermWait(buf)
+  call term_sendkeys(buf, ":set ch=2\<CR>")
+  call TermWait(buf)
+  call term_sendkeys(buf, ":4 verbose echo system('seq 20')\<CR>")
+  call VerifyScreenDump(buf, 'Test_verbose_system_2', {})
+
+  call term_sendkeys(buf, ' ')
+  call TermWait(buf)
+  call term_sendkeys(buf, 'b')
+  call VerifyScreenDump(buf, 'Test_verbose_system_2', {})
+
+  call term_sendkeys(buf, 'q')
+  call TermWait(buf)
+  call StopVimInTerminal(buf)
+endfunc
+
+
 func Test_ask_yesno()
   CheckRunVimInTerminal
   let buf = RunVimInTerminal('', {'rows': 6})
@@ -325,14 +417,14 @@ func Test_quit_long_message()
   let content =<< trim END
     echom range(9999)->join("\x01")
   END
-  call writefile(content, 'Xtest_quit_message')
-  let buf = RunVimInTerminal('-S Xtest_quit_message', #{rows: 6})
+  call writefile(content, 'Xtest_quit_message', 'D')
+  let buf = RunVimInTerminal('-S Xtest_quit_message', #{rows: 10, wait_for_ruler: 0})
+  call WaitForAssert({-> assert_match('^-- More --', term_getline(buf, 10))})
   call term_sendkeys(buf, "q")
   call VerifyScreenDump(buf, 'Test_quit_long_message', {})
 
   " clean up
   call StopVimInTerminal(buf)
-  call delete('Xtest_quit_message')
 endfunc
 
 " this was missing a terminating NUL
@@ -398,7 +490,7 @@ func Test_cmdheight_zero()
 
   " Check change/restore cmdheight when macro
   call feedkeys("qa", "xt")
-  call assert_equal(1, &cmdheight)
+  call assert_equal(0, &cmdheight)
   call feedkeys("q", "xt")
   call assert_equal(0, &cmdheight)
 

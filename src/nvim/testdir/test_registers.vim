@@ -263,8 +263,16 @@ func Test_get_register()
   call assert_equal('', getreg("\<C-F>"))
   call assert_equal('', getreg("\<C-W>"))
   call assert_equal('', getreg("\<C-L>"))
+  " Change the last used register to '"' for the next test
+  normal! ""yy
+  let @" = 'happy'
+  call assert_equal('happy', getreg())
+  call assert_equal('happy', getreg(''))
 
   call assert_equal('', getregtype('!'))
+  call assert_fails('echo getregtype([])', 'E730:')
+  call assert_equal('v', getregtype())
+  call assert_equal('v', getregtype(''))
 
   " Test for inserting an invalid register content
   call assert_beeps('exe "normal i\<C-R>!"')
@@ -277,7 +285,9 @@ func Test_get_register()
 
   " Test for inserting a multi-line register in the command line
   call feedkeys(":\<C-R>r\<Esc>", 'xt')
-  call assert_equal("a\rb", histget(':', -1))  " Modified because of #6137
+  " Nvim: no trailing CR because of #6137
+  " call assert_equal("a\rb\r", histget(':', -1))
+  call assert_equal("a\rb", histget(':', -1))
 
   call assert_fails('let r = getreg("=", [])', 'E745:')
   call assert_fails('let r = getreg("=", 1, [])', 'E745:')
@@ -289,6 +299,7 @@ endfunc
 
 func Test_set_register()
   call assert_fails("call setreg('#', 200)", 'E86:')
+  " call assert_fails("call setreg('a', test_unknown())", 'E908:')
 
   edit Xfile_alt_1
   let b1 = bufnr('')
@@ -348,6 +359,12 @@ func Test_set_register()
   call assert_equal('abcabc', getline(1))
   normal 0".gP
   call assert_equal('abcabcabc', getline(1))
+
+  let @"=''
+  call setreg('', '1')
+  call assert_equal('1', @")
+  call setreg('@', '2')
+  call assert_equal('2', @")
 
   enew!
 endfunc
@@ -473,6 +490,21 @@ func Test_get_reginfo()
 
   let info = getreginfo('"')
   call assert_equal('z', info.points_to)
+
+  let @a="a1b2"
+  nnoremap <F2> <Cmd>let g:RegInfo = getreginfo()<CR>
+  exe "normal \"a\<F2>"
+  call assert_equal({'regcontents': ['a1b2'], 'isunnamed': v:false,
+        \ 'regtype': 'v'}, g:RegInfo)
+  nunmap <F2>
+  unlet g:RegInfo
+
+  " The type of "isunnamed" was VAR_SPECIAL but should be VAR_BOOL.  Can only
+  " be noticed when using json_encod().
+  call setreg('a', 'foo')
+  let reginfo = getreginfo('a')
+  let expected = #{regcontents: ['foo'], isunnamed: v:false, regtype: 'v'}
+  call assert_equal(json_encode(expected), json_encode(reginfo))
 
   bwipe!
 endfunc

@@ -2,14 +2,18 @@
 
 source shared.vim
 source screendump.vim
+source check.vim
 
 func Test_setbufline_getbufline()
+  " similar to Test_set_get_bufline()
   new
   let b = bufnr('%')
   hide
   call assert_equal(0, setbufline(b, 1, ['foo', 'bar']))
   call assert_equal(['foo'], getbufline(b, 1))
+  call assert_equal('foo', getbufoneline(b, 1))
   call assert_equal(['bar'], getbufline(b, '$'))
+  call assert_equal('bar', getbufoneline(b, '$'))
   call assert_equal(['foo', 'bar'], getbufline(b, 1, 2))
   exe "bd!" b
   call assert_equal([], getbufline(b, 1, 2))
@@ -18,13 +22,36 @@ func Test_setbufline_getbufline()
   call setline(1, ['a', 'b', 'c'])
   let b = bufnr('%')
   wincmd w
+
+  call assert_equal(1, setbufline(b, 5, 'x'))
   call assert_equal(1, setbufline(b, 5, ['x']))
-  call assert_equal(1, setbufline(bufnr('$') + 1, 1, ['x']))
+  call assert_equal(1, setbufline(b, 5, []))
+  call assert_equal(1, setbufline(b, 5, v:_null_list))
+
+  call assert_equal(1, 'x'->setbufline(bufnr('$') + 1, 1))
+  call assert_equal(1, ['x']->setbufline(bufnr('$') + 1, 1))
+  call assert_equal(1, []->setbufline(bufnr('$') + 1, 1))
+  call assert_equal(1, v:_null_list->setbufline(bufnr('$') + 1, 1))
+
+  call assert_equal(['a', 'b', 'c'], getbufline(b, 1, '$'))
+
   call assert_equal(0, setbufline(b, 4, ['d', 'e']))
   call assert_equal(['c'], b->getbufline(3))
+  call assert_equal('c', b->getbufoneline(3))
   call assert_equal(['d'], getbufline(b, 4))
+  call assert_equal('d', getbufoneline(b, 4))
   call assert_equal(['e'], getbufline(b, 5))
+  call assert_equal('e', getbufoneline(b, 5))
   call assert_equal([], getbufline(b, 6))
+  call assert_equal([], getbufline(b, 2, 1))
+
+  if has('job')
+    call setbufline(b, 2, [function('eval'), #{key: 123}, test_null_job()])
+    call assert_equal(["function('eval')",
+                    \ "{'key': 123}",
+                    \ "no process"],
+                    \ getbufline(b, 2, 4))
+  endif
   exe "bwipe! " . b
 endfunc
 
@@ -82,9 +109,29 @@ func Test_appendbufline()
   call setline(1, ['a', 'b', 'c'])
   let b = bufnr('%')
   wincmd w
+
+  call assert_equal(1, appendbufline(b, -1, 'x'))
   call assert_equal(1, appendbufline(b, -1, ['x']))
+  call assert_equal(1, appendbufline(b, -1, []))
+  call assert_equal(1, appendbufline(b, -1, v:_null_list))
+
+  call assert_equal(1, appendbufline(b, 4, 'x'))
   call assert_equal(1, appendbufline(b, 4, ['x']))
+  call assert_equal(1, appendbufline(b, 4, []))
+  call assert_equal(1, appendbufline(b, 4, v:_null_list))
+
+  call assert_equal(1, appendbufline(1234, 1, 'x'))
   call assert_equal(1, appendbufline(1234, 1, ['x']))
+  call assert_equal(1, appendbufline(1234, 1, []))
+  call assert_equal(1, appendbufline(1234, 1, v:_null_list))
+
+  call assert_equal(0, appendbufline(b, 1, []))
+  call assert_equal(0, appendbufline(b, 1, v:_null_list))
+  call assert_equal(1, appendbufline(b, 3, []))
+  call assert_equal(1, appendbufline(b, 3, v:_null_list))
+
+  call assert_equal(['a', 'b', 'c'], getbufline(b, 1, '$'))
+
   call assert_equal(0, appendbufline(b, 3, ['d', 'e']))
   call assert_equal(['c'], getbufline(b, 3))
   call assert_equal(['d'], getbufline(b, 4))
@@ -130,9 +177,8 @@ func Test_deletebufline()
 endfunc
 
 func Test_appendbufline_redraw()
-  if !CanRunVimInTerminal()
-    throw 'Skipped: cannot make screendumps'
-  endif
+  CheckScreendump
+
   let lines =<< trim END
     new foo
     let winnr = 'foo'->bufwinnr()
@@ -184,6 +230,42 @@ func Test_deletebufline_select_mode()
   call assert_equal(['foo', 'x'], getline(1, 2))
 
   exe "bwipe! " .. bufnr
+  bwipe!
+endfunc
+
+func Test_setbufline_startup_nofile()
+  let before =<< trim [CODE]
+    set shortmess+=F
+    file Xresult
+    set buftype=nofile
+    call setbufline('', 1, 'success')
+  [CODE]
+  let after =<< trim [CODE]
+    set buftype=
+    write
+    quit
+  [CODE]
+
+  if !RunVim(before, after, '--clean')
+    return
+  endif
+  call assert_equal(['success'], readfile('Xresult'))
+  call delete('Xresult')
+endfunc
+
+" Test that setbufline(), appendbufline() and deletebufline() should fail and
+" return 1 when "textlock" is active.
+func Test_change_bufline_with_textlock()
+  new
+  inoremap <buffer> <expr> <F2> setbufline('', 1, '')
+  call assert_fails("normal a\<F2>", 'E565:')
+  call assert_equal('1', getline(1))
+  inoremap <buffer> <expr> <F2> appendbufline('', 1, '')
+  call assert_fails("normal a\<F2>", 'E565:')
+  call assert_equal('11', getline(1))
+  inoremap <buffer> <expr> <F2> deletebufline('', 1)
+  call assert_fails("normal a\<F2>", 'E565:')
+  call assert_equal('111', getline(1))
   bwipe!
 endfunc
 

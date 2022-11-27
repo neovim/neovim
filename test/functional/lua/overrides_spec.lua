@@ -8,12 +8,12 @@ local feed = helpers.feed
 local clear = helpers.clear
 local funcs = helpers.funcs
 local meths = helpers.meths
-local iswin = helpers.iswin
 local command = helpers.command
 local write_file = helpers.write_file
 local exec_capture = helpers.exec_capture
 local exec_lua = helpers.exec_lua
 local pcall_err = helpers.pcall_err
+local is_os = helpers.is_os
 
 local screen
 
@@ -135,7 +135,7 @@ describe('print', function()
         print("very slow")
         vim.api.nvim_command("sleep 1m") -- force deferred event processing
       end
-    ]], (iswin() and "timeout 1") or "sleep 0.1")
+    ]], (is_os('win') and "timeout 1") or "sleep 0.1")
     eq('very slow\nvery fast', exec_capture('lua test()'))
   end)
 end)

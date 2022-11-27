@@ -1,9 +1,17 @@
 // This is an open source non-commercial project. Dear PVS-Studio, please check
 // it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
+#include <assert.h>
+#include <stdbool.h>
+#include <stdlib.h>
+
+#include "klib/kvec.h"
+#include "mpack/conv.h"
 #include "nvim/api/private/helpers.h"
-#include "nvim/log.h"
+#include "nvim/ascii.h"
+#include "nvim/macros.h"
 #include "nvim/memory.h"
+#include "nvim/msgpack_rpc/channel_defs.h"
 #include "nvim/msgpack_rpc/helpers.h"
 #include "nvim/msgpack_rpc/unpacker.h"
 #include "nvim/ui_client.h"
@@ -181,13 +189,11 @@ void unpacker_init(Unpacker *p)
   p->unpack_error = (Error)ERROR_INIT;
 
   p->arena = (Arena)ARENA_EMPTY;
-  p->reuse_blk = NULL;
 }
 
 void unpacker_teardown(Unpacker *p)
 {
-  arena_mem_free(p->reuse_blk, NULL);
-  arena_mem_free(arena_finish(&p->arena), NULL);
+  arena_mem_free(arena_finish(&p->arena));
 }
 
 bool unpacker_parse_header(Unpacker *p)
@@ -308,7 +314,7 @@ bool unpacker_advance(Unpacker *p)
       p->state = 10;
     } else {
       p->state = p->type == kMessageTypeResponse ? 1 : 2;
-      arena_start(&p->arena, &p->reuse_blk);
+      p->arena = (Arena)ARENA_EMPTY;
     }
   }
 
@@ -322,7 +328,7 @@ bool unpacker_advance(Unpacker *p)
       goto done;
     } else {
       // unpack other ui events using mpack_parse()
-      arena_start(&p->arena, &p->reuse_blk);
+      p->arena = (Arena)ARENA_EMPTY;
     }
   }
 
@@ -374,6 +380,7 @@ bool unpacker_parse_redraw(Unpacker *p)
   size_t size = p->read_size;
   GridLineEvent *g = p->grid_line_event;
 
+// -V:NEXT_TYPE:501
 #define NEXT_TYPE(tok, typ) \
   result = mpack_rtoken(&data, &size, &tok); \
   if (result == MPACK_EOF) { \
@@ -416,13 +423,13 @@ redo:
     if (p->ui_handler.fn != ui_client_event_grid_line) {
       p->state = 12;
       if (p->grid_line_event) {
-        arena_mem_free(arena_finish(&p->arena), &p->reuse_blk);
+        arena_mem_free(arena_finish(&p->arena));
         p->grid_line_event = NULL;
       }
       return true;
     } else {
       p->state = 13;
-      arena_start(&p->arena, &p->reuse_blk);
+      p->arena = (Arena)ARENA_EMPTY;
       p->grid_line_event = arena_alloc(&p->arena, sizeof *p->grid_line_event, true);
       g = p->grid_line_event;
     }

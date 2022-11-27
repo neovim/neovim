@@ -712,6 +712,9 @@ func! tohtml#GetUserSettings() "{{{
     call tohtml#GetOption(user_settings,     'no_foldcolumn', user_settings.ignore_folding)
     call tohtml#GetOption(user_settings,      'hover_unfold', 0 )
     call tohtml#GetOption(user_settings,            'no_pre', 0 )
+    call tohtml#GetOption(user_settings,            'no_doc', 0 )
+    call tohtml#GetOption(user_settings,          'no_links', 0 )
+    call tohtml#GetOption(user_settings,       'no_modeline', 0 )
     call tohtml#GetOption(user_settings,        'no_invalid', 0 )
     call tohtml#GetOption(user_settings,      'whole_filler', 0 )
     call tohtml#GetOption(user_settings,         'use_xhtml', 0 )
@@ -752,7 +755,7 @@ func! tohtml#GetUserSettings() "{{{
 
     " pre_wrap doesn't do anything if not using pre or not using CSS
     if user_settings.no_pre || !user_settings.use_css
-      let user_settings.pre_wrap=0
+      let user_settings.pre_wrap = 0
     endif
     "}}}
 

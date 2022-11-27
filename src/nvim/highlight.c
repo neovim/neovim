@@ -3,18 +3,31 @@
 
 // highlight.c: low level code for UI and syntax highlighting
 
+#include <assert.h>
+#include <inttypes.h>
+#include <limits.h>
+#include <string.h>
+
+#include "klib/kvec.h"
+#include "lauxlib.h"
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/decoration_provider.h"
 #include "nvim/drawscreen.h"
+#include "nvim/gettext.h"
+#include "nvim/globals.h"
 #include "nvim/highlight.h"
 #include "nvim/highlight_defs.h"
 #include "nvim/highlight_group.h"
+#include "nvim/log.h"
 #include "nvim/lua/executor.h"
+#include "nvim/macros.h"
 #include "nvim/map.h"
+#include "nvim/memory.h"
 #include "nvim/message.h"
 #include "nvim/option.h"
 #include "nvim/popupmenu.h"
+#include "nvim/types.h"
 #include "nvim/ui.h"
 #include "nvim/vim.h"
 
@@ -141,10 +154,9 @@ int hl_get_syn_attr(int ns_id, int idx, HlAttrs at_en)
       || at_en.rgb_ae_attr != 0 || ns_id != 0) {
     return get_attr_entry((HlEntry){ .attr = at_en, .kind = kHlSyntax,
                                      .id1 = idx, .id2 = ns_id });
-  } else {
-    // If all the fields are cleared, clear the attr field back to default value
-    return 0;
   }
+  // If all the fields are cleared, clear the attr field back to default value
+  return 0;
 }
 
 void ns_hl_def(NS ns_id, int hl_id, HlAttrs attrs, int link_id, Dict(highlight) *dict)
@@ -173,6 +185,11 @@ void ns_hl_def(NS ns_id, int hl_id, HlAttrs attrs, int link_id, Dict(highlight) 
 int ns_get_hl(NS *ns_hl, int hl_id, bool link, bool nodefault)
 {
   static int recursive = 0;
+
+  if (*ns_hl == 0) {
+    // ns=0 (the default namespace) does not have a provider so stop here
+    return -1;
+  }
 
   if (*ns_hl < 0) {
     if (ns_hl_active <= 0) {
@@ -218,7 +235,7 @@ int ns_get_hl(NS *ns_hl, int hl_id, bool link, bool nodefault)
       }
     }
 
-    it.attr_id = fallback ? -1 : hl_get_syn_attr((int)ns_id, hl_id, attrs);
+    it.attr_id = fallback ? -1 : hl_get_syn_attr(ns_id, hl_id, attrs);
     it.version = p->hl_valid - tmp;
     it.is_default = attrs.rgb_ae_attr & HL_DEFAULT;
     it.link_global = attrs.rgb_ae_attr & HL_GLOBAL;
@@ -233,12 +250,11 @@ int ns_get_hl(NS *ns_hl, int hl_id, bool link, bool nodefault)
   if (link) {
     if (it.attr_id >= 0) {
       return 0;
-    } else {
-      if (it.link_global) {
-        *ns_hl = 0;
-      }
-      return it.link_id;
     }
+    if (it.link_global) {
+      *ns_hl = 0;
+    }
+    return it.link_id;
   } else {
     return it.attr_id;
   }
@@ -401,8 +417,8 @@ void update_ns_hl(int ns_id)
   }
   int *hl_attrs = **alloc;
 
-  for (int hlf = 0; hlf < (int)HLF_COUNT; hlf++) {
-    int id = syn_check_group(hlf_names[hlf], STRLEN(hlf_names[hlf]));
+  for (int hlf = 0; hlf < HLF_COUNT; hlf++) {
+    int id = syn_check_group(hlf_names[hlf], strlen(hlf_names[hlf]));
     bool optional = (hlf == HLF_INACTIVE || hlf == HLF_NFLOAT);
     hl_attrs[hlf] = hl_get_ui_attr(ns_id, hlf, id, optional);
   }
@@ -724,7 +740,7 @@ static int hl_cterm2rgb_color(int nr)
     0x08, 0x12, 0x1C, 0x26, 0x30, 0x3A, 0x44, 0x4E, 0x58, 0x62, 0x6C, 0x76,
     0x80, 0x8A, 0x94, 0x9E, 0xA8, 0xB2, 0xBC, 0xC6, 0xD0, 0xDA, 0xE4, 0xEE
   };
-  static char_u ansi_table[16][4] = {
+  static uint8_t ansi_table[16][4] = {
     //  R    G    B   idx
     {   0,   0,   0,  1 },  // black
     { 224,   0,   0,  2 },  // dark red
@@ -783,7 +799,7 @@ HlAttrs syn_attr2entry(int attr)
 }
 
 /// Gets highlight description for id `attr_id` as a map.
-Dictionary hl_get_attr_by_id(Integer attr_id, Boolean rgb, Error *err)
+Dictionary hl_get_attr_by_id(Integer attr_id, Boolean rgb, Arena *arena, Error *err)
 {
   Dictionary dic = ARRAY_DICT_INIT;
 
@@ -796,25 +812,21 @@ Dictionary hl_get_attr_by_id(Integer attr_id, Boolean rgb, Error *err)
                   "Invalid attribute id: %" PRId64, attr_id);
     return dic;
   }
-
-  return hlattrs2dict(NULL, syn_attr2entry((int)attr_id), rgb);
+  Dictionary retval = arena_dict(arena, HLATTRS_DICT_SIZE);
+  hlattrs2dict(&retval, syn_attr2entry((int)attr_id), rgb);
+  return retval;
 }
 
 /// Converts an HlAttrs into Dictionary
 ///
-/// @param[out] hl optional pre-allocated dictionary for return value
-///                if present, must be allocated with at least 16 elements!
+/// @param[in/out] hl Dictionary with pre-allocated space for HLATTRS_DICT_SIZE elements
 /// @param[in] aep data to convert
 /// @param use_rgb use 'gui*' settings if true, else resorts to 'cterm*'
-Dictionary hlattrs2dict(Dictionary *hl_alloc, HlAttrs ae, bool use_rgb)
+void hlattrs2dict(Dictionary *dict, HlAttrs ae, bool use_rgb)
 {
+  assert(dict->capacity >= HLATTRS_DICT_SIZE);  // at most 16 items
+  Dictionary hl = *dict;
   int mask  = use_rgb ? ae.rgb_ae_attr : ae.cterm_ae_attr;
-  Dictionary hl = ARRAY_DICT_INIT;
-  if (hl_alloc) {
-    hl = *hl_alloc;
-  } else {
-    kv_ensure_space(hl, 16);
-  }
 
   if (mask & HL_BOLD) {
     PUT_C(hl, "bold", BOOLEAN_OBJ(true));
@@ -894,14 +906,7 @@ Dictionary hlattrs2dict(Dictionary *hl_alloc, HlAttrs ae, bool use_rgb)
     PUT_C(hl, "blend", INTEGER_OBJ(ae.hl_blend));
   }
 
-  if (hl_alloc) {
-    *hl_alloc = hl;
-    return hl;
-  } else {
-    Dictionary allocated = copy_dictionary(hl);
-    kv_destroy(hl);
-    return allocated;
-  }
+  *dict = hl;
 }
 
 HlAttrs dict2hlattrs(Dict(highlight) *dict, bool use_rgb, int *link_id, Error *err)
@@ -1081,6 +1086,7 @@ int object_to_color(Object val, char *key, bool rgb, Error *err)
 
 Array hl_inspect(int attr)
 {
+  // TODO(bfredl): use arena allocation
   Array ret = ARRAY_DICT_INIT;
   if (hlstate_active) {
     hl_inspect_impl(&ret, attr);

@@ -395,7 +395,9 @@ func Test_motionforce_omap()
 endfunc
 
 func Test_error_in_map_expr()
-  if !has('terminal') || (has('win32') && has('gui_running'))
+  " Unlike CheckRunVimInTerminal this does work in a win32 console
+  CheckFeature terminal
+  if has('win32') && has('gui_running')
     throw 'Skipped: cannot run Vim in a terminal window'
   endif
 
@@ -777,7 +779,7 @@ func Test_expr_abbr()
   " invalid <expr> abbreviation
   abbr <expr> hte GetAbbr()
   call assert_fails('normal ihte ', 'E117:')
-  call assert_equal(' ', getline(1))
+  call assert_equal('', getline(1))
   unabbr <expr> hte
 
   close!
@@ -975,6 +977,21 @@ func Test_abbreviate_multi_byte()
   bwipe!
 endfunc
 
+" Test for abbreviations with 'latin1' encoding
+func Test_abbreviate_latin1_encoding()
+  " set encoding=latin1
+  call assert_fails('abbr ab#$c ABC', 'E474:')
+  new
+  iabbr <buffer> #i #include
+  iabbr <buffer> ## #enddef
+  exe "normal i#i\<C-]>"
+  call assert_equal('#include', getline(1))
+  exe "normal 0Di##\<C-]>"
+  call assert_equal('#enddef', getline(1))
+  %bw!
+  set encoding=utf-8
+endfunc
++
 " Test for <Plug> always being mapped, even when used with "noremap".
 func Test_plug_remap()
   let g:foo = 0
@@ -1006,15 +1023,14 @@ func Test_plug_remap()
 endfunc
 
 func Test_mouse_drag_mapped_start_select()
-  CheckFunction test_setmouse
   set mouse=a
   set selectmode=key,mouse
   func ClickExpr()
-    call test_setmouse(1, 1)
+    call Ntest_setmouse(1, 1)
     return "\<LeftMouse>"
   endfunc
   func DragExpr()
-    call test_setmouse(1, 2)
+    call Ntest_setmouse(1, 2)
     return "\<LeftDrag>"
   endfunc
   nnoremap <expr> <F2> ClickExpr()
@@ -1034,16 +1050,39 @@ func Test_mouse_drag_mapped_start_select()
   set mouse&
 endfunc
 
-" Test for mapping <LeftDrag> in Insert mode
-func Test_mouse_drag_insert_map()
-  CheckFunction test_setmouse
+func Test_mouse_drag_statusline()
+  set laststatus=2
   set mouse=a
   func ClickExpr()
-    call test_setmouse(1, 1)
+    call Ntest_setmouse(&lines - 1, 1)
     return "\<LeftMouse>"
   endfunc
   func DragExpr()
-    call test_setmouse(1, 2)
+    call Ntest_setmouse(&lines - 2, 1)
+    return "\<LeftDrag>"
+  endfunc
+  nnoremap <expr> <F2> ClickExpr()
+  nnoremap <expr> <F3> DragExpr()
+
+  " this was causing a crash in win_drag_status_line()
+  call feedkeys("\<F2>:tabnew\<CR>\<F3>", 'tx')
+
+  nunmap <F2>
+  nunmap <F3>
+  delfunc ClickExpr
+  delfunc DragExpr
+  set laststatus& mouse&
+endfunc
+
+" Test for mapping <LeftDrag> in Insert mode
+func Test_mouse_drag_insert_map()
+  set mouse=a
+  func ClickExpr()
+    call Ntest_setmouse(1, 1)
+    return "\<LeftMouse>"
+  endfunc
+  func DragExpr()
+    call Ntest_setmouse(1, 2)
     return "\<LeftDrag>"
   endfunc
   inoremap <expr> <F2> ClickExpr()
@@ -1128,5 +1167,15 @@ func Test_map_after_timed_out_nop()
   call StopVimInTerminal(buf)
   call delete('Xtest_map_after_timed_out_nop')
 endfunc
+
+func Test_using_past_typeahead()
+  nnoremap :00 0
+  exe "norm :set \x80\xfb0=0\<CR>"
+  exe "sil norm :0\x0f\<C-U>\<CR>"
+
+  exe "norm :set \x80\xfb0=\<CR>"
+  nunmap :00
+endfunc
+
 
 " vim: shiftwidth=2 sts=2 expandtab

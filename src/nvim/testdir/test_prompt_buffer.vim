@@ -180,6 +180,8 @@ func Test_prompt_buffer_edit()
   call assert_beeps('normal! S')
   call assert_beeps("normal! \<C-A>")
   call assert_beeps("normal! \<C-X>")
+  call assert_beeps("normal! dp")
+  call assert_beeps("normal! do")
   " pressing CTRL-W in the prompt buffer should trigger the window commands
   call assert_equal(1, winnr())
   exe "normal A\<C-W>\<C-W>"
@@ -223,7 +225,7 @@ func Test_prompt_buffer_getbufinfo()
   %bwipe!
 endfunc
 
-function! Test_prompt_while_writing_to_hidden_buffer()
+func Test_prompt_while_writing_to_hidden_buffer()
   throw 'skipped: TODO'
   call CanTestPromptBuffer()
   CheckUnix

@@ -22,7 +22,7 @@ func Test_move_cursor()
   call cursor(3, 0)
   call assert_equal([3, 1, 0, 1], getcurpos()[1:])
   " below last line goes to last line
-  call cursor(9, 1)
+  eval [9, 1]->cursor()
   call assert_equal([4, 1, 0, 1], getcurpos()[1:])
   " pass string arguments
   call cursor('3', '3')
@@ -32,7 +32,7 @@ func Test_move_cursor()
   call cursor(1, 1, 1)
   call assert_equal([1, 1, 1], getcurpos()[1:3])
 
-  call assert_equal(-1, cursor(-1, -1))
+  call assert_fails('call cursor(-1, -1)', 'E475:')
 
   quit!
 endfunc
@@ -241,8 +241,9 @@ endfunc
 
 " Test for the charcol() function
 func Test_charcol()
-  call assert_fails('call charcol({})', 'E731:')
-  call assert_equal(0, charcol(0))
+  call assert_fails('call charcol({})', 'E1222:')
+  call assert_fails('call charcol(".", [])', 'E1210:')
+  call assert_fails('call charcol(0)', 'E1222:')
   new
   call setline(1, ['', "01\tà4è678", 'Ⅵ', '012345678'])
 
@@ -297,6 +298,25 @@ func Test_charcol()
   exe "normal 2G6li\<F3>"
   call assert_equal([1, 10, 2, 10, 7], g:InsertCurrentCol)
   iunmap <F3>
+
+  " Test for getting the column number in another window.
+  let winid = win_getid()
+  new
+  call win_execute(winid, 'normal 1G')
+  call assert_equal(1, charcol('.', winid))
+  call assert_equal(1, charcol('$', winid))
+  call win_execute(winid, 'normal 2G6l')
+  call assert_equal(7, charcol('.', winid))
+  call assert_equal(10, charcol('$', winid))
+
+  " calling from another tab page also works
+  tabnew
+  call assert_equal(7, charcol('.', winid))
+  call assert_equal(10, charcol('$', winid))
+  tabclose
+
+  " unknown window ID
+  call assert_equal(0, charcol('.', 10001))
 
   %bw!
 endfunc
@@ -353,8 +373,14 @@ func Test_setcursorcharpos()
   normal G
   call setcursorcharpos([1, 1])
   call assert_equal([1, 1], [line('.'), col('.')])
+
   call setcursorcharpos([2, 7, 0])
   call assert_equal([2, 9], [line('.'), col('.')])
+  call setcursorcharpos([0, 7, 0])
+  call assert_equal([2, 9], [line('.'), col('.')])
+  call setcursorcharpos(0, 7, 0)
+  call assert_equal([2, 9], [line('.'), col('.')])
+
   call setcursorcharpos(3, 4)
   call assert_equal([3, 1], [line('.'), col('.')])
   call setcursorcharpos([3, 1])
@@ -371,6 +397,28 @@ func Test_setcursorcharpos()
   call assert_equal([4, 1], [line('.'), col('.')])
 
   %bw!
+endfunc
+
+" Test for virtcol2col()
+func Test_virtcol2col()
+  new
+  call setline(1, ["a\tb\tc"])
+  call assert_equal(1, virtcol2col(0, 1, 1))
+  call assert_equal(2, virtcol2col(0, 1, 2))
+  call assert_equal(2, virtcol2col(0, 1, 8))
+  call assert_equal(3, virtcol2col(0, 1, 9))
+  call assert_equal(4, virtcol2col(0, 1, 10))
+  call assert_equal(4, virtcol2col(0, 1, 16))
+  call assert_equal(5, virtcol2col(0, 1, 17))
+  call assert_equal(-1, virtcol2col(10, 1, 1))
+  call assert_equal(-1, virtcol2col(0, 10, 1))
+  call assert_equal(-1, virtcol2col(0, -1, 1))
+  call assert_equal(-1, virtcol2col(0, 1, -1))
+  call assert_equal(5, virtcol2col(0, 1, 20))
+  call assert_fails('echo virtcol2col("0", 1, 20)', 'E1210:')
+  call assert_fails('echo virtcol2col(0, "1", 20)', 'E1210:')
+  call assert_fails('echo virtcol2col(0, 1, "1")', 'E1210:')
+  bw!
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab

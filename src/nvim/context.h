@@ -2,9 +2,11 @@
 #define NVIM_CONTEXT_H
 
 #include <msgpack.h>
+#include <msgpack/sbuffer.h>
+#include <stddef.h>
 
+#include "klib/kvec.h"
 #include "nvim/api/private/defs.h"
-#include "nvim/lib/kvec.h"
 
 typedef struct {
   msgpack_sbuffer regs;     ///< Registers.

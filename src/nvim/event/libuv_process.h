@@ -3,6 +3,7 @@
 
 #include <uv.h>
 
+#include "nvim/event/loop.h"
 #include "nvim/event/process.h"
 
 typedef struct libuv_process {

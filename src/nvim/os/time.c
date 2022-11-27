@@ -1,22 +1,34 @@
 // This is an open source non-commercial project. Dear PVS-Studio, please check
 // it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
-#include <assert.h>
+#include <inttypes.h>
 #include <limits.h>
+#include <stdbool.h>
+#include <stdlib.h>
+#include <string.h>
+#include <time.h>
+
 #include <uv.h>
 
-#include "nvim/assert.h"
+#include "auto/config.h"
 #include "nvim/event/loop.h"
+#include "nvim/gettext.h"
+#include "nvim/globals.h"
+#include "nvim/log.h"
+#include "nvim/macros.h"
 #include "nvim/main.h"
+#include "nvim/memory.h"
 #include "nvim/os/input.h"
 #include "nvim/os/os.h"
 #include "nvim/os/time.h"
+
+struct tm;
 
 static uv_mutex_t delay_mutex;
 static uv_cond_t delay_cond;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "os/time.c.generated.h"
+# include "os/time.c.generated.h"  // IWYU pragma: export
 #endif
 
 /// Initializes the time module
@@ -67,7 +79,7 @@ void os_delay(uint64_t ms, bool ignoreinput)
     }
     LOOP_PROCESS_EVENTS_UNTIL(&main_loop, NULL, (int)ms, got_int);
   } else {
-    os_microdelay(ms * 1000u, ignoreinput);
+    os_microdelay(ms * 1000U, ignoreinput);
   }
 }
 
@@ -80,10 +92,10 @@ void os_delay(uint64_t ms, bool ignoreinput)
 ///                    If false, waiting is aborted on any input.
 void os_microdelay(uint64_t us, bool ignoreinput)
 {
-  uint64_t elapsed = 0u;
+  uint64_t elapsed = 0U;
   uint64_t base = uv_hrtime();
   // Convert microseconds to nanoseconds, or UINT64_MAX on overflow.
-  const uint64_t ns = (us < UINT64_MAX / 1000u) ? us * 1000u : UINT64_MAX;
+  const uint64_t ns = (us < UINT64_MAX / 1000U) ? us * 1000U : UINT64_MAX;
 
   uv_mutex_lock(&delay_mutex);
 
@@ -92,7 +104,7 @@ void os_microdelay(uint64_t us, bool ignoreinput)
     // Else we check for input in ~100ms intervals.
     const uint64_t ns_delta = ignoreinput
                               ? ns - elapsed
-                              : MIN(ns - elapsed, 100000000u);  // 100ms
+                              : MIN(ns - elapsed, 100000000U);  // 100ms
 
     const int rv = uv_cond_timedwait(&delay_cond, &delay_mutex, ns_delta);
     if (0 != rv && UV_ETIMEDOUT != rv) {
@@ -176,6 +188,7 @@ char *os_ctime_r(const time_t *restrict clock, char *restrict result, size_t res
   if (clock_local_ptr == NULL) {
     xstrlcpy(result, _("(Invalid)"), result_len);
   } else {
+    // xgettext:no-c-format
     strftime(result, result_len, _("%a %b %d %H:%M:%S %Y"), clock_local_ptr);
   }
   xstrlcat(result, "\n", result_len);

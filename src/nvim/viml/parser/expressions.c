@@ -53,20 +53,24 @@
 #include <assert.h>
 #include <stdbool.h>
 #include <stddef.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
+#include "klib/kvec.h"
 #include "nvim/ascii.h"
 #include "nvim/assert.h"
 #include "nvim/charset.h"
 #include "nvim/eval/typval.h"
-#include "nvim/lib/kvec.h"
+#include "nvim/gettext.h"
+#include "nvim/keycodes.h"
+#include "nvim/macros.h"
+#include "nvim/mbyte.h"
 #include "nvim/memory.h"
 #include "nvim/types.h"
 #include "nvim/vim.h"
 #include "nvim/viml/parser/expressions.h"
 #include "nvim/viml/parser/parser.h"
-
-#define VIM_STR2NR(s, ...) vim_str2nr((const char_u *)(s), __VA_ARGS__)
 
 typedef kvec_withinit_t(ExprASTNode **, 16) ExprASTStack;
 
@@ -371,7 +375,7 @@ LexExprToken viml_pexpr_next_token(ParserState *const pstate, const int flags)
         significand_part = significand_part * 10 + (pline.data[i] - '0');
       }
       if (exp_start) {
-        VIM_STR2NR(pline.data + exp_start, NULL, NULL, 0, NULL, &exp_part,
+        vim_str2nr(pline.data + exp_start, NULL, NULL, 0, NULL, &exp_part,
                    (int)(ret.len - exp_start), false);
       }
       if (exp_negative) {
@@ -389,7 +393,7 @@ LexExprToken viml_pexpr_next_token(ParserState *const pstate, const int flags)
     } else {
       int len;
       int prep;
-      VIM_STR2NR(pline.data, &prep, &len, STR2NR_ALL, NULL,
+      vim_str2nr(pline.data, &prep, &len, STR2NR_ALL, NULL,
                  &ret.data.num.val.integer, (int)pline.size, false);
       ret.len = (size_t)len;
       const uint8_t bases[] = {
@@ -630,8 +634,8 @@ LexExprToken viml_pexpr_next_token(ParserState *const pstate, const int flags)
     GET_CCS(ret, pline);
     ret.data.cmp.inv = (schar == '<');
     ret.data.cmp.type = ((ret.data.cmp.inv ^ haseqsign)
-                           ? kExprCmpGreaterOrEqual
-                           : kExprCmpGreater);
+                         ? kExprCmpGreaterOrEqual
+                         : kExprCmpGreater);
     break;
   }
 
@@ -696,8 +700,7 @@ LexExprToken viml_pexpr_next_token(ParserState *const pstate, const int flags)
 
   // Everything else is not valid.
   default:
-    ret.len = (size_t)utfc_ptr2len_len((const char_u *)pline.data,
-                                       (int)pline.size);
+    ret.len = (size_t)utfc_ptr2len_len(pline.data, (int)pline.size);
     ret.type = kExprLexInvalid;
     ret.data.err.type = kExprLexPlainIdentifier;
     ret.data.err.msg = _("E15: Unidentified character: %.*s");
@@ -1966,8 +1969,8 @@ ExprAST viml_pexpr_parse(ParserState *const pstate, const int flags)
                                                 || ((*kv_Z(ast_stack, 1))->type != kExprNodeConcat
                                                     && ((*kv_Z(ast_stack, 1))->type
                                                         != kExprNodeConcatOrSubscript))))
-           ? kELFlagAllowFloat
-           : 0));
+                                           ? kELFlagAllowFloat
+                                           : 0));
     LexExprToken cur_token = viml_pexpr_next_token(pstate,
                                                    want_node_to_lexer_flags[want_node] |
                                                    lexer_additional_flags);
@@ -2034,9 +2037,9 @@ viml_pexpr_parse_process_token:
     const bool node_is_key = (
                               is_concat_or_subscript
                               && (cur_token.type == kExprLexPlainIdentifier
-            ? (!cur_token.data.var.autoload
-               && cur_token.data.var.scope == kExprVarScopeMissing)
-            : (cur_token.type == kExprLexNumber))
+                                  ? (!cur_token.data.var.autoload
+                                     && cur_token.data.var.scope == kExprVarScopeMissing)
+                                  : (cur_token.type == kExprLexNumber))
                               && prev_token.type != kExprLexSpacing);
     if (is_concat_or_subscript && !node_is_key) {
       // Note: in Vim "d. a" (this is the reason behind `prev_token.type !=
@@ -2123,6 +2126,22 @@ viml_pexpr_parse_process_token:
     assert(kv_size(pt_stack));
     const ExprASTParseType cur_pt = kv_last(pt_stack);
     assert(lambda_node == NULL || cur_pt == kEPTLambdaArguments);
+#define SIMPLE_UB_OP(op) \
+  case kExprLex##op: { \
+      if (want_node == kENodeValue) { \
+        /* Value level: assume unary operator. */ \
+        NEW_NODE_WITH_CUR_POS(cur_node, kExprNodeUnary##op); \
+        *top_node_p = cur_node; \
+        kvi_push(ast_stack, &cur_node->children); \
+        HL_CUR_TOKEN(Unary##op); \
+      } else { \
+        NEW_NODE_WITH_CUR_POS(cur_node, kExprNodeBinary##op); \
+        ADD_OP_NODE(cur_node); \
+        HL_CUR_TOKEN(Binary##op); \
+      } \
+      want_node = kENodeValue; \
+      break; \
+  }
     switch (tok_type) {
     case kExprLexMissing:
     case kExprLexSpacing:
@@ -2144,22 +2163,6 @@ viml_pexpr_parse_process_token:
       HL_CUR_TOKEN(Register);
       break;
     }
-#define SIMPLE_UB_OP(op) \
-  case kExprLex##op: { \
-      if (want_node == kENodeValue) { \
-        /* Value level: assume unary operator. */ \
-        NEW_NODE_WITH_CUR_POS(cur_node, kExprNodeUnary##op); \
-        *top_node_p = cur_node; \
-        kvi_push(ast_stack, &cur_node->children); \
-        HL_CUR_TOKEN(Unary##op); \
-      } else { \
-        NEW_NODE_WITH_CUR_POS(cur_node, kExprNodeBinary##op); \
-        ADD_OP_NODE(cur_node); \
-        HL_CUR_TOKEN(Binary##op); \
-      } \
-      want_node = kENodeValue; \
-      break; \
-  }
       SIMPLE_UB_OP(Plus)
       SIMPLE_UB_OP(Minus)
 #undef SIMPLE_UB_OP
@@ -2710,14 +2713,14 @@ viml_pexpr_parse_figure_brace_closing_error:
       break;
     case kExprLexPlainIdentifier: {
       const ExprVarScope scope = (cur_token.type == kExprLexInvalid
-                                    ? kExprVarScopeMissing
-                                    : cur_token.data.var.scope);
+                                  ? kExprVarScopeMissing
+                                  : cur_token.data.var.scope);
       if (want_node == kENodeValue) {
         want_node = kENodeOperator;
         NEW_NODE_WITH_CUR_POS(cur_node,
                               (node_is_key
-                                 ? kExprNodePlainKey
-                                 : kExprNodePlainIdentifier));
+                               ? kExprNodePlainKey
+                               : kExprNodePlainIdentifier));
         cur_node->data.var.scope = scope;
         const size_t scope_shift = (scope == kExprVarScopeMissing ? 0 : 2);
         cur_node->data.var.ident = (pline.data + cur_token.start.col
@@ -2735,8 +2738,8 @@ viml_pexpr_parse_figure_brace_closing_error:
                                                   scope_shift),
                               cur_token.len - scope_shift,
                               (node_is_key
-                                 ? HL(IdentifierKey)
-                                 : HL(IdentifierName)));
+                               ? HL(IdentifierKey)
+                               : HL(IdentifierName)));
       } else {
         if (scope == kExprVarScopeMissing) {
           // uncrustify:off
@@ -2905,15 +2908,15 @@ viml_pexpr_parse_no_paren_closing_error: {}
         // different error numbers: "E114: Missing quote" and
         // "E115: Missing quote".
         ERROR_FROM_TOKEN_AND_MSG(cur_token, (is_double
-                          ? _("E114: Missing double quote: %.*s")
-                          : _("E115: Missing single quote: %.*s")));
+                                             ? _("E114: Missing double quote: %.*s")
+                                             : _("E115: Missing single quote: %.*s")));
       }
       if (want_node == kENodeOperator) {
         OP_MISSING;
       }
       NEW_NODE_WITH_CUR_POS(cur_node, (is_double
-                       ? kExprNodeDoubleQuotedString
-                       : kExprNodeSingleQuotedString));
+                                       ? kExprNodeDoubleQuotedString
+                                       : kExprNodeSingleQuotedString));
       *top_node_p = cur_node;
       parse_quoted_string(pstate, cur_node, cur_token, &ast_stack, is_invalid);
       want_node = kENodeOperator;

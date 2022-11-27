@@ -51,7 +51,7 @@ for a complete list.
 To enable them, assign a value to the option.  For example, to turn one on:
  >
     > let g:ada_standard_types = 1
->
+
 To disable them use ":unlet".  Example:
 >
     > unlet g:ada_standard_types
@@ -288,7 +288,7 @@ g:ada_rainbow_color	  bool (true when exists)
 		rainbow_parenthesis for this to work.
 
 							       *g:ada_folding*
-g:ada_folding		  set ('sigpft')
+g:ada_folding		  set ("sigpft")
 		Use folding for Ada sources.
 		    's':    activate syntax folding on load
 			'p':    fold packages
@@ -296,10 +296,10 @@ g:ada_folding		  set ('sigpft')
 			't':    fold types
 			'c':    fold conditionals
 		    'g':    activate gnat pretty print folding on load
-			'i':    lone 'is' folded with line above
-			'b':	lone 'begin' folded with line above
-			'p':	lone 'private' folded with line above
-			'x':	lone 'exception' folded with line above
+			'i':    lone "is" folded with line above
+			'b':	lone "begin" folded with line above
+			'p':	lone "private" folded with line above
+			'x':	lone "exception" folded with line above
 		    'i':    activate indent folding on load
 
 		Note: Syntax folding is in an early (unusable) stage and
@@ -334,10 +334,10 @@ g:ada_omni_with_keywords
 		completion (|i_CTRL-X_CTRL-U|).
 
 						      *g:ada_extended_tagging*
-g:ada_extended_tagging	  enum ('jump', 'list')
+g:ada_extended_tagging	  enum ("jump", "list")
 		use extended tagging, two options are available
-		    'jump': use tjump to jump.
-		    'list': add tags quick fix list.
+		    "jump": use tjump to jump.
+		    "list": add tags quick fix list.
 		Normal tagging does not support function or operator
 		overloading as these features are not available in C and
 		tagging was originally developed for C.
@@ -359,8 +359,8 @@ g:ada_with_gnat_project_files	 bool (true when exists)
 
 						      *g:ada_default_compiler*
 g:ada_default_compiler	  string
-		set default compiler. Currently supported are 'gnat' and
-		'decada'.
+		set default compiler. Currently supported are "gnat" and
+		"decada".
 
 An "exists" type is a boolean considered true when the variable is defined and
 false when the variable is undefined. The value to which the variable is set
@@ -406,14 +406,14 @@ makes no difference.
 g:gnat			    object
 		Control object which manages GNAT compiles.  The object
 		is created when the first Ada source code is loaded provided
-		that |g:ada_default_compiler| is set to 'gnat'. See
+		that |g:ada_default_compiler| is set to "gnat". See
 		|gnat_members| for details.
 
 								    *g:decada*
 g:decada		      object
 		Control object which manages Dec Ada compiles.	The object
 		is created when the first Ada source code is loaded provided
-		that |g:ada_default_compiler| is set to 'decada'. See
+		that |g:ada_default_compiler| is set to "decada". See
 		|decada_members| for details.
 
 ------------------------------------------------------------------------------
@@ -459,11 +459,11 @@ ada#List_Tag([{line}, {col}])				      *ada#Listtags()*
 ada#Jump_Tag ({ident}, {mode})				      *ada#Jump_Tag()*
 		List all occurrences of the Ada entity under the cursor (or at
 		given line/column) in the tag jump list. Mode can either be
-		'tjump' or 'stjump'.
+		"tjump" or "stjump".
 
 ada#Create_Tags ({option})				   *ada#Create_Tags()*
-		Creates tag file using Ctags. The option can either be 'file'
-		for the current file, 'dir' for the directory of the current
+		Creates tag file using Ctags. The option can either be "file"
+		for the current file, "dir" for the directory of the current
 		file or a file name.
 
 gnat#Insert_Tags_Header()			   *gnat#Insert_Tags_Header()*
@@ -486,25 +486,25 @@ You can optionally install the following extra plug-ins. They work well with
 Ada and enhance the ability of the Ada mode:
 
 backup.vim
-	http://www.vim.org/scripts/script.php?script_id=1537
+	https://www.vim.org/scripts/script.php?script_id=1537
 	Keeps as many backups as you like so you don't have to.
 
-rainbow_parenthsis.vim
-	http://www.vim.org/scripts/script.php?script_id=1561
+rainbow_parenthesis.vim
+	https://www.vim.org/scripts/script.php?script_id=1561
 	Very helpful since Ada uses only '(' and ')'.
 
 nerd_comments.vim
-	http://www.vim.org/scripts/script.php?script_id=1218
+	https://www.vim.org/scripts/script.php?script_id=1218
 	Excellent commenting and uncommenting support for almost any
 	programming language.
 
 matchit.vim
-	http://www.vim.org/scripts/script.php?script_id=39
+	https://www.vim.org/scripts/script.php?script_id=39
 	'%' jumping for any language. The normal '%' jump only works for '{}'
 	style languages. The Ada mode will set the needed search patterns.
 
 taglist.vim
-	http://www.vim.org/scripts/script.php?script_id=273
+	https://www.vim.org/scripts/script.php?script_id=273
 	Source code explorer sidebar. There is a patch for Ada available.
 
 The GNU Ada Project distribution (http://gnuada.sourceforge.net) of Vim

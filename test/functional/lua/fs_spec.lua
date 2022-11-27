@@ -7,10 +7,10 @@ local mkdir_p = helpers.mkdir_p
 local rmdir = helpers.rmdir
 local nvim_dir = helpers.nvim_dir
 local test_build_dir = helpers.test_build_dir
-local iswin = helpers.iswin
 local nvim_prog = helpers.nvim_prog
+local is_os = helpers.is_os
 
-local nvim_prog_basename = iswin() and 'nvim.exe' or 'nvim'
+local nvim_prog_basename = is_os('win') and 'nvim.exe' or 'nvim'
 
 before_each(clear)
 
@@ -78,6 +78,23 @@ describe('vim.fs', function()
         return vim.fs.find(nvim, { path = dir, type = 'file' })
       ]], test_build_dir, nvim_prog_basename))
     end)
+
+    it('accepts predicate as names', function()
+      eq({test_build_dir}, exec_lua([[
+        local dir = ...
+        local opts = { path = dir, upward = true, type = 'directory' }
+        return vim.fs.find(function(x) return x == 'build' end, opts)
+      ]], nvim_dir))
+      eq({nvim_prog}, exec_lua([[
+        local dir, nvim = ...
+        return vim.fs.find(function(x) return x == nvim end, { path = dir, type = 'file' })
+      ]], test_build_dir, nvim_prog_basename))
+      eq({}, exec_lua([[
+        local dir = ...
+        local opts = { path = dir, upward = true, type = 'directory' }
+        return vim.fs.find(function(x) return x == 'no-match' end, opts)
+      ]], nvim_dir))
+    end)
   end)
 
   describe('normalize()', function()
@@ -85,7 +102,7 @@ describe('vim.fs', function()
       eq('C:/Users/jdoe', exec_lua [[ return vim.fs.normalize('C:\\Users\\jdoe') ]])
     end)
     it('works with ~', function()
-      if iswin() then
+      if is_os('win') then
         pending([[$HOME does not exist on Windows ¯\_(ツ)_/¯]])
       end
       eq(os.getenv('HOME') .. '/src/foo', exec_lua [[ return vim.fs.normalize('~/src/foo') ]])

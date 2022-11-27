@@ -3,6 +3,11 @@ local language = require('vim.treesitter.language')
 
 -- query: pattern matching on trees
 -- predicate matching is implemented in lua
+--
+---@class Query
+---@field captures string[] List of captures used in query
+---@field info table Contains used queries, predicates, directives
+---@field query userdata Parsed query
 local Query = {}
 Query.__index = Query
 
@@ -34,11 +39,24 @@ local function safe_read(filename, read_quantifier)
   return content
 end
 
+---@private
+--- Adds {ilang} to {base_langs}, only if {ilang} is different than {lang}
+---
+---@return boolean true If lang == ilang
+local function add_included_lang(base_langs, lang, ilang)
+  if lang == ilang then
+    return true
+  end
+  table.insert(base_langs, ilang)
+  return false
+end
+
 --- Gets the list of files used to make up a query
 ---
----@param lang The language
----@param query_name The name of the query to load
----@param is_included Internal parameter, most of the time left as `nil`
+---@param lang string Language to get query for
+---@param query_name string Name of the query to load (e.g., "highlights")
+---@param is_included (boolean|nil) Internal parameter, most of the time left as `nil`
+---@return string[] query_files List of files to load for given query and language
 function M.get_query_files(lang, query_name, is_included)
   local query_path = string.format('queries/%s/%s.scm', lang, query_name)
   local lang_files = dedupe_files(a.nvim_get_runtime_file(query_path, true))
@@ -46,6 +64,9 @@ function M.get_query_files(lang, query_name, is_included)
   if #lang_files == 0 then
     return {}
   end
+
+  local base_query = nil
+  local extensions = {}
 
   local base_langs = {}
 
@@ -55,27 +76,53 @@ function M.get_query_files(lang, query_name, is_included)
   --
   -- {language} ::= {lang} | ({lang})
   local MODELINE_FORMAT = '^;+%s*inherits%s*:?%s*([a-z_,()]+)%s*$'
+  local EXTENDS_FORMAT = '^;+%s*extends%s*$'
 
-  for _, file in ipairs(lang_files) do
-    local modeline = safe_read(file, '*l')
+  for _, filename in ipairs(lang_files) do
+    local file, err = io.open(filename, 'r')
+    if not file then
+      error(err)
+    end
 
-    if modeline then
+    local extension = false
+
+    for modeline in
+      function()
+        return file:read('*l')
+      end
+    do
+      if not vim.startswith(modeline, ';') then
+        break
+      end
+
       local langlist = modeline:match(MODELINE_FORMAT)
-
       if langlist then
         for _, incllang in ipairs(vim.split(langlist, ',', true)) do
           local is_optional = incllang:match('%(.*%)')
 
           if is_optional then
             if not is_included then
-              table.insert(base_langs, incllang:sub(2, #incllang - 1))
+              if add_included_lang(base_langs, lang, incllang:sub(2, #incllang - 1)) then
+                extension = true
+              end
             end
           else
-            table.insert(base_langs, incllang)
+            if add_included_lang(base_langs, lang, incllang) then
+              extension = true
+            end
           end
         end
+      elseif modeline:match(EXTENDS_FORMAT) then
+        extension = true
       end
     end
+
+    if extension then
+      table.insert(extensions, filename)
+    elseif base_query == nil then
+      base_query = filename
+    end
+    io.close(file)
   end
 
   local query_files = {}
@@ -83,7 +130,8 @@ function M.get_query_files(lang, query_name, is_included)
     local base_files = M.get_query_files(base_lang, query_name, true)
     vim.list_extend(query_files, base_files)
   end
-  vim.list_extend(query_files, lang_files)
+  vim.list_extend(query_files, { base_query })
+  vim.list_extend(query_files, extensions)
 
   return query_files
 end
@@ -109,24 +157,24 @@ local explicit_queries = setmetatable({}, {
   end,
 })
 
---- Sets the runtime query {query_name} for {lang}
+--- Sets the runtime query named {query_name} for {lang}
 ---
 --- This allows users to override any runtime files and/or configuration
 --- set by plugins.
 ---
----@param lang string: The language to use for the query
----@param query_name string: The name of the query (i.e. "highlights")
----@param text string: The query text (unparsed).
+---@param lang string Language to use for the query
+---@param query_name string Name of the query (e.g., "highlights")
+---@param text string Query text (unparsed).
 function M.set_query(lang, query_name, text)
   explicit_queries[lang][query_name] = M.parse_query(lang, text)
 end
 
 --- Returns the runtime query {query_name} for {lang}.
 ---
----@param lang The language to use for the query
----@param query_name The name of the query (i.e. "highlights")
+---@param lang string Language to use for the query
+---@param query_name string Name of the query (e.g. "highlights")
 ---
----@return The corresponding query, parsed.
+---@return Query Parsed query
 function M.get_query(lang, query_name)
   if explicit_queries[lang][query_name] then
     return explicit_queries[lang][query_name]
@@ -140,12 +188,9 @@ function M.get_query(lang, query_name)
   end
 end
 
-local query_cache = setmetatable({}, {
-  __index = function(tbl, key)
-    rawset(tbl, key, {})
-    return rawget(tbl, key)
-  end,
-})
+local query_cache = vim.defaulttable(function()
+  return setmetatable({}, { __mode = 'v' })
+end)
 
 --- Parse {query} as a string. (If the query is in a file, the caller
 --- should read the contents into a string before calling).
@@ -160,10 +205,10 @@ local query_cache = setmetatable({}, {
 ---   -` info.captures` also points to `captures`.
 ---   - `info.patterns` contains information about predicates.
 ---
----@param lang string The language
----@param query string A string containing the query (s-expr syntax)
+---@param lang string Language to use for the query
+---@param query string Query in s-expr syntax
 ---
----@returns The query
+---@return Query Parsed query
 function M.parse_query(lang, query)
   language.require_language(lang)
   local cached = query_cache[lang][query]
@@ -181,9 +226,15 @@ end
 
 --- Gets the text corresponding to a given node
 ---
----@param node the node
----@param source The buffer or string from which the node is extracted
-function M.get_node_text(node, source)
+---@param node userdata |tsnode|
+---@param source (number|string) Buffer or string from which the {node} is extracted
+---@param opts (table|nil) Optional parameters.
+---          - concat: (boolean) Concatenate result in a string (default true)
+---@return (string[]|string)
+function M.get_node_text(node, source, opts)
+  opts = opts or {}
+  local concat = vim.F.if_nil(opts.concat, true)
+
   local start_row, start_col, start_byte = node:start()
   local end_row, end_col, end_byte = node:end_()
 
@@ -210,7 +261,7 @@ function M.get_node_text(node, source)
       end
     end
 
-    return table.concat(lines, '\n')
+    return concat and table.concat(lines, '\n') or lines
   elseif type(source) == 'string' then
     return source:sub(start_byte + 1, end_byte)
   end
@@ -367,9 +418,8 @@ local directive_handlers = {
 
 --- Adds a new predicate to be used in queries
 ---
----@param name the name of the predicate, without leading #
----@param handler the handler function to be used
----      signature will be (match, pattern, bufnr, predicate)
+---@param name string Name of the predicate, without leading #
+---@param handler function(match:string, pattern:string, bufnr:number, predicate:function)
 function M.add_predicate(name, handler, force)
   if predicate_handlers[name] and not force then
     error(string.format('Overriding %s', name))
@@ -385,9 +435,8 @@ end
 --- can set node level data by using the capture id on the
 --- metadata table `metadata[capture_id].key = value`
 ---
----@param name the name of the directive, without leading #
----@param handler the handler function to be used
----      signature will be (match, pattern, bufnr, predicate, metadata)
+---@param name string Name of the directive, without leading #
+---@param handler function(match:string, pattern:string, bufnr:number, predicate:function, metadata:table)
 function M.add_directive(name, handler, force)
   if directive_handlers[name] and not force then
     error(string.format('Overriding %s', name))
@@ -397,12 +446,13 @@ function M.add_directive(name, handler, force)
 end
 
 --- Lists the currently available directives to use in queries.
----@return The list of supported directives.
+---@return string[] List of supported directives.
 function M.list_directives()
   return vim.tbl_keys(directive_handlers)
 end
 
----@return The list of supported predicates.
+--- Lists the currently available predicates to use in queries.
+---@return string[] List of supported predicates.
 function M.list_predicates()
   return vim.tbl_keys(predicate_handlers)
 end
@@ -489,17 +539,16 @@ end
 
 --- Iterate over all captures from all matches inside {node}
 ---
---- {source} is needed if the query contains predicates, then the caller
+--- {source} is needed if the query contains predicates; then the caller
 --- must ensure to use a freshly parsed tree consistent with the current
 --- text of the buffer (if relevant). {start_row} and {end_row} can be used to limit
 --- matches inside a row range (this is typically used with root node
---- as the node, i e to get syntax highlight matches in the current
---- viewport). When omitted the start and end row values are used from the given node.
+--- as the {node}, i.e., to get syntax highlight matches in the current
+--- viewport). When omitted, the {start} and {end} row values are used from the given node.
 ---
---- The iterator returns three values, a numeric id identifying the capture,
+--- The iterator returns three values: a numeric id identifying the capture,
 --- the captured node, and metadata from any directives processing the match.
 --- The following example shows how to get captures by name:
----
 --- <pre>
 --- for id, node, metadata in query:iter_captures(tree:root(), bufnr, first, last) do
 ---   local name = query.captures[id] -- name of the capture in the query
@@ -510,13 +559,14 @@ end
 --- end
 --- </pre>
 ---
----@param node The node under which the search will occur
----@param source The source buffer or string to extract text from
----@param start The starting line of the search
----@param stop The stopping line of the search (end-exclusive)
+---@param node userdata |tsnode| under which the search will occur
+---@param source (number|string) Source buffer or string to extract text from
+---@param start number Starting line for the search
+---@param stop number Stopping line for the search (end-exclusive)
 ---
----@returns The matching capture id
----@returns The captured node
+---@return number capture Matching capture id
+---@return table capture_node Capture for {node}
+---@return table metadata for the {capture}
 function Query:iter_captures(node, source, start, stop)
   if type(source) == 'number' and source == 0 then
     source = vim.api.nvim_get_current_buf()
@@ -546,14 +596,13 @@ end
 
 --- Iterates the matches of self on a given range.
 ---
---- Iterate over all matches within a node. The arguments are the same as
---- for |query:iter_captures()| but the iterated values are different:
+--- Iterate over all matches within a {node}. The arguments are the same as
+--- for |Query:iter_captures()| but the iterated values are different:
 --- an (1-based) index of the pattern in the query, a table mapping
 --- capture indices to nodes, and metadata from any directives processing the match.
---- If the query has more than one pattern the capture table might be sparse,
+--- If the query has more than one pattern, the capture table might be sparse
 --- and e.g. `pairs()` method should be used over `ipairs`.
---- Here an example iterating over all captures in every match:
----
+--- Here is an example iterating over all captures in every match:
 --- <pre>
 --- for pattern, match, metadata in cquery:iter_matches(tree:root(), bufnr, first, last) do
 ---   for id, node in pairs(match) do
@@ -567,13 +616,14 @@ end
 --- end
 --- </pre>
 ---
----@param node The node under which the search will occur
----@param source The source buffer or string to search
----@param start The starting line of the search
----@param stop The stopping line of the search (end-exclusive)
+---@param node userdata |tsnode| under which the search will occur
+---@param source (number|string) Source buffer or string to search
+---@param start number Starting line for the search
+---@param stop number Stopping line for the search (end-exclusive)
 ---
----@returns The matching pattern id
----@returns The matching match
+---@return number pattern id
+---@return table match
+---@return table metadata
 function Query:iter_matches(node, source, start, stop)
   if type(source) == 'number' and source == 0 then
     source = vim.api.nvim_get_current_buf()

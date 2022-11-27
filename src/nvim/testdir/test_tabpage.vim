@@ -591,9 +591,7 @@ func Test_tabs()
 endfunc
 
 func Test_tabpage_cmdheight()
-  if !CanRunVimInTerminal()
-    throw 'Skipped: cannot make screendumps'
-  endif
+  CheckRunVimInTerminal
   call writefile([
         \ 'set laststatus=2',
         \ 'set cmdheight=2',
@@ -621,6 +619,17 @@ func Test_tabpage_close_cmdwin()
   call feedkeys("q/:tabonly\<CR>\<Esc>", 'xt')
   call assert_equal(2, tabpagenr('$'))
   tabonly
+endfunc
+
+" Pressing <C-PageUp> in insert mode should go to the previous tab page
+" and <C-PageDown> should go to the next tab page
+func Test_tabpage_Ctrl_Pageup()
+  tabnew
+  call feedkeys("i\<C-PageUp>", 'xt')
+  call assert_equal(1, tabpagenr())
+  call feedkeys("i\<C-PageDown>", 'xt')
+  call assert_equal(2, tabpagenr())
+  %bw!
 endfunc
 
 " Return the terminal key code for selecting a tab page from the tabline. This

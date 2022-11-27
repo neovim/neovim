@@ -1,6 +1,10 @@
 #ifndef NVIM_KEYCODES_H
 #define NVIM_KEYCODES_H
 
+#include <stddef.h>
+
+#include "nvim/ascii.h"
+#include "nvim/option_defs.h"
 #include "nvim/strings.h"
 
 // Keycode definitions for special keys.

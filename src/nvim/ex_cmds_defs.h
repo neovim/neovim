@@ -6,7 +6,7 @@
 
 #include "nvim/eval/typval.h"
 #include "nvim/normal.h"
-#include "nvim/pos.h"      // for linenr_T
+#include "nvim/pos.h"
 #include "nvim/regexp_defs.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
@@ -62,7 +62,7 @@
 #define EX_FLAGS        0x200000u  // allow flags after count in argument
 #define EX_LOCK_OK     0x1000000u  // command can be executed when textlock is
                                    // set; when missing disallows editing another
-                                   // buffer when current buffer is locked
+                                   // buffer when curbuf->b_ro_locked is set
 #define EX_KEEPSCRIPT  0x4000000u  // keep sctx of where command was invoked
 #define EX_PREVIEW     0x8000000u  // allow incremental command preview
 #define EX_FILES (EX_XFILE | EX_EXTRA)  // multiple extra files allowed
@@ -188,7 +188,7 @@ struct exarg {
   cmdidx_T cmdidx;              ///< the index for the command
   uint32_t argt;                ///< flags for the command
   int skip;                     ///< don't execute the command, only parse it
-  int forceit;                  ///< TRUE if ! present
+  int forceit;                  ///< true if ! present
   int addr_count;               ///< the number of addresses given
   linenr_T line1;               ///< the first line number
   linenr_T line2;               ///< the second line number or count
@@ -196,12 +196,13 @@ struct exarg {
   int flags;                    ///< extra flags after count: EXFLAG_
   char *do_ecmd_cmd;            ///< +command arg to be used in edited file
   linenr_T do_ecmd_lnum;        ///< the line number in an edited file
-  int append;                   ///< TRUE with ":w >>file" command
-  int usefilter;                ///< TRUE with ":w !command" and ":r!command"
+  int append;                   ///< true with ":w >>file" command
+  int usefilter;                ///< true with ":w !command" and ":r!command"
   int amount;                   ///< number of '>' or '<' for shift command
   int regname;                  ///< register name (NUL if none)
   int force_bin;                ///< 0, FORCE_BIN or FORCE_NOBIN
   int read_edit;                ///< ++edit argument
+  int mkdir_p;                  ///< ++p argument
   int force_ff;                 ///< ++ff= argument (first char of argument)
   int force_enc;                ///< ++enc= argument (index in cmd[])
   int bad_char;                 ///< BAD_KEEP, BAD_DROP or replacement byte
@@ -230,13 +231,15 @@ struct expand {
   sctx_T xp_script_ctx;         // SCTX for completion function
   int xp_backslash;             // one of the XP_BS_ values
 #ifndef BACKSLASH_IN_FILENAME
-  int xp_shell;                 // TRUE for a shell command, more
+  int xp_shell;                 // true for a shell command, more
                                 // characters need to be escaped
 #endif
   int xp_numfiles;              // number of files found by file name completion
   int xp_col;                   // cursor position in line
   char **xp_files;              // list of files
   char *xp_line;                // text being completed
+#define EXPAND_BUF_LEN 256
+  char xp_buf[EXPAND_BUF_LEN];  // buffer for returned match
 };
 
 // values for xp_backslash

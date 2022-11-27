@@ -72,8 +72,8 @@ typedef int idx_T;
 // si_repsal, sl_rep, and si_sal.  Not for sl_sal!
 // One replacement: from "ft_from" to "ft_to".
 typedef struct fromto_S {
-  char_u *ft_from;
-  char_u *ft_to;
+  uint8_t *ft_from;
+  uint8_t *ft_to;
 } fromto_T;
 
 // Info from "SAL" entries in ".aff" file used in sl_sal.
@@ -115,9 +115,9 @@ typedef struct slang_S slang_T;
 
 struct slang_S {
   slang_T *sl_next;         // next language
-  char_u *sl_name;         // language name "en", "en.rare", "nl", etc.
-  char_u *sl_fname;        // name of .spl file
-  bool sl_add;                  // true if it's a .add file.
+  char *sl_name;            // language name "en", "en.rare", "nl", etc.
+  char *sl_fname;           // name of .spl file
+  bool sl_add;              // true if it's a .add file.
 
   char_u *sl_fbyts;        // case-folded word bytes
   long sl_fbyts_len;     // length of sl_fbyts
@@ -252,7 +252,7 @@ typedef struct wordcount_S {
 #define MAXWORDCOUNT 0xffff
 
 // Remember what "z?" replaced.
-extern char_u *repl_from;
-extern char_u *repl_to;
+extern char *repl_from;
+extern char *repl_to;
 
 #endif  // NVIM_SPELL_DEFS_H

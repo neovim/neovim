@@ -57,7 +57,7 @@ The special pattern <buffer> or <buffer=N> defines a buffer-local autocommand.
 See |autocmd-buflocal|.
 
 Note: The ":autocmd" command can only be followed by another command when the
-'|' appears where the pattern is expected.  This works: >
+"|" appears where the pattern is expected.  This works: >
 	:augroup mine | au! BufRead | augroup END
 But this sees "augroup" as part of the defined command: >
 	:augroup mine | au! BufRead * | augroup END
@@ -412,6 +412,8 @@ CmdwinLeave			Before leaving the command-line window.
 				|cmdwin-char|
 							*ColorScheme*
 ColorScheme			After loading a color scheme. |:colorscheme|
+				Not triggered if the color scheme is not
+				found.
 				The pattern is matched against the
 				colorscheme name. <afile> can be used for the
 				name of the actual file where this option was
@@ -588,6 +590,7 @@ FileChangedShell		When Vim notices that the modification time of
 				- executing a shell command
 				- |:checktime|
 				- |FocusGained| 
+
 				Not used when 'autoread' is set and the buffer
 				was not changed.  If a FileChangedShell
 				autocommand exists the warning message and
@@ -803,7 +806,7 @@ OptionSet			After setting an option (except during
 QuickFixCmdPre			Before a quickfix command is run (|:make|,
 				|:lmake|, |:grep|, |:lgrep|, |:grepadd|,
 				|:lgrepadd|, |:vimgrep|, |:lvimgrep|,
-				|:vimgrepadd|, |:lvimgrepadd|, |:cscope|,
+				|:vimgrepadd|, |:lvimgrepadd|,
 				|:cfile|, |:cgetfile|, |:caddfile|, |:lfile|,
 				|:lgetfile|, |:laddfile|, |:helpgrep|,
 				|:lhelpgrep|, |:cexpr|, |:cgetexpr|,
@@ -820,8 +823,8 @@ QuickFixCmdPre			Before a quickfix command is run (|:make|,
 QuickFixCmdPost			Like QuickFixCmdPre, but after a quickfix
 				command is run, before jumping to the first
 				location. For |:cfile| and |:lfile| commands
-				it is run after error file is read and before
-				moving to the first error.
+				it is run after the error file is read and
+				before moving to the first error.
 				See |QuickFixCmdPost-example|.
 							*QuitPre*
 QuitPre				When using `:quit`, `:wq` or `:qall`, before
@@ -833,13 +836,13 @@ QuitPre				When using `:quit`, `:wq` or `:qall`, before
 				See also |ExitPre|, |WinClosed|.
 							*RemoteReply*
 RemoteReply			When a reply from a Vim that functions as
-				server was received |server2client()|.  The
+				server was received server2client().  The
 				pattern is matched against the {serverid}.
 				<amatch> is equal to the {serverid} from which
 				the reply was sent, and <afile> is the actual
 				reply string.
 				Note that even if an autocommand is defined,
-				the reply should be read with |remote_read()|
+				the reply should be read with remote_read()
 				to consume it.
 							*SearchWrapped*
 SearchWrapped			After making a search with |n| or |N| if the
@@ -993,6 +996,10 @@ TextChangedP			After a change was made to the text in the
 				current buffer in Insert mode, only when the
 				popup menu is visible.  Otherwise the same as
 				TextChanged.
+							*TextChangedT*
+TextChangedT			After a change was made to the text in the
+				current buffer in |Terminal-mode|.  Otherwise
+				the same as TextChanged.
 							*TextYankPost*
 TextYankPost			Just after a |yank| or |deleting| command, but not
 				if the black hole register |quote_| is used nor
@@ -1058,8 +1065,9 @@ VimResume			After Nvim resumes from |suspend| state.
 							*VimSuspend*
 VimSuspend			Before Nvim enters |suspend| state.
 							*WinClosed*
-WinClosed			After closing a window.  The pattern is
-				matched against the |window-ID|.  Both
+WinClosed			When closing a window, just before it is
+				removed from the window layout.  The pattern
+				is matched against the |window-ID|.  Both
 				<amatch> and <afile> are set to the |window-ID|.
 				After WinLeave.
 				Non-recursive (event cannot trigger itself).
@@ -1088,23 +1096,48 @@ WinNew				When a new window was created.  Not done for
 				Before WinEnter.
 
 							*WinScrolled*
-WinScrolled			After scrolling the content of a window or
-				resizing a window.
-				The pattern is matched against the
-				|window-ID|.  Both <amatch> and <afile> are
-				set to the |window-ID|.
-				Non-recursive (the event cannot trigger
-				itself).  However, if the command causes the
-				window to scroll or change size another
+WinScrolled			After any window in the current tab page
+				scrolled the text (horizontally or vertically)
+				or changed width or height.  See
+				|win-scrolled-resized|.
+
+				The pattern is matched against the |window-ID|
+				of the first window that scrolled or resized.
+				Both <amatch> and <afile> are set to the
+				|window-ID|.
+
+				|v:event| is set with information about size
+				and scroll changes. |WinScrolled-event|
+
+				Only starts triggering after startup finished
+				and the first screen redraw was done.
+				Does not trigger when defining the first
+				WinScrolled or WinResized event, but may
+				trigger when adding more.
+
+				Non-recursive: the event will not trigger
+				while executing commands for the WinScrolled
+				event.  However, if the command causes a
+				window to scroll or change size, then another
 				WinScrolled event will be triggered later.
-				Does not trigger when the command is added,
-				only after the first scroll or resize.
+
+
+							*WinResized*
+WinResized			After a window in the current tab page changed
+				width or height.
+				See |win-scrolled-resized|.
+
+				|v:event| is set with information about size
+				changes. |WinResized-event|
+
+				Same behavior as |WinScrolled| for the
+				pattern, triggering and recursiveness.
 
 ==============================================================================
 6. Patterns					*autocmd-pattern* *{aupat}*
 
-The {aupat} argument of `:autocmd` can be a comma-separated list.  This works
-as if the command was given with each pattern separately.  Thus this command: >
+The {aupat} argument of `:autocmd` can be a comma-separated list.  This works as
+if the command was given with each pattern separately.  Thus this command: >
 	:autocmd BufRead *.txt,*.info set et
 Is equivalent to: >
 	:autocmd BufRead *.txt set et
@@ -1204,7 +1237,7 @@ still executed.
 
 ==============================================================================
 7. Buffer-local autocommands	*autocmd-buflocal* *autocmd-buffer-local*
-					*<buffer=N>* *<buffer=abuf>* *E680*
+				*<buffer>* *<buffer=N>* *<buffer=abuf>* *E680*
 
 Buffer-local autocommands are attached to a specific buffer.  They are useful
 if the buffer does not have a name and when the name does not match a specific

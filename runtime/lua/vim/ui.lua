@@ -73,7 +73,8 @@ end
 ---               user inputs.
 ---@param on_confirm function ((input|nil) -> ())
 ---               Called once the user confirms or abort the input.
----               `input` is what the user typed.
+---               `input` is what the user typed (it might be
+---               an empty string if nothing was entered), or
 ---               `nil` if the user aborted the dialog.
 ---
 --- Example:
@@ -88,11 +89,17 @@ function M.input(opts, on_confirm)
   })
 
   opts = (opts and not vim.tbl_isempty(opts)) and opts or vim.empty_dict()
-  local input = vim.fn.input(opts)
-  if #input > 0 then
-    on_confirm(input)
-  else
+
+  -- Note that vim.fn.input({}) returns an empty string when cancelled.
+  -- vim.ui.input() should distinguish aborting from entering an empty string.
+  local _canceled = vim.NIL
+  opts = vim.tbl_extend('keep', opts, { cancelreturn = _canceled })
+
+  local ok, input = pcall(vim.fn.input, opts)
+  if not ok or input == _canceled then
     on_confirm(nil)
+  else
+    on_confirm(input)
   end
 end
 

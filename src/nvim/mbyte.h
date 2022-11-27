@@ -8,15 +8,13 @@
 #include "nvim/eval/typval.h"
 #include "nvim/func_attr.h"
 #include "nvim/mbyte_defs.h"
-#include "nvim/os/os_defs.h"  // For indirect
-#include "nvim/types.h"  // for char_u
+#include "nvim/os/os_defs.h"
+#include "nvim/types.h"
 
-/*
- * Return byte length of character that starts with byte "b".
- * Returns 1 for a single-byte character.
- * MB_BYTE2LEN_CHECK() can be used to count a special key as one byte.
- * Don't call MB_BYTE2LEN(b) with b < 0 or b > 255!
- */
+// Return byte length of character that starts with byte "b".
+// Returns 1 for a single-byte character.
+// MB_BYTE2LEN_CHECK() can be used to count a special key as one byte.
+// Don't call MB_BYTE2LEN(b) with b < 0 or b > 255!
 #define MB_BYTE2LEN(b)         utf8len_tab[b]
 #define MB_BYTE2LEN_CHECK(b)   (((b) < 0 || (b) > 255) ? 1 : utf8len_tab[b])
 

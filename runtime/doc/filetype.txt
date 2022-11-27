@@ -148,6 +148,7 @@ variables can be used to overrule the filetype used for certain extensions:
 	*.fs		g:filetype_fs	|ft-forth-syntax|
 	*.i		g:filetype_i	|ft-progress-syntax|
 	*.inc		g:filetype_inc
+	*.lsl		g:filetype_lsl
 	*.m		g:filetype_m	|ft-mathematica-syntax|
 	*.mod		g:filetype_mod
 	*.p		g:filetype_p	|ft-pascal-syntax|
@@ -175,15 +176,13 @@ This means that the contents of compressed files are not inspected.
 
 							*new-filetype*
 If a file type that you want to use is not detected yet, there are a few ways
-to add it.  In any way, it's better not to modify the $VIMRUNTIME/filetype.lua
-or $VIMRUNTIME/filetype.vim files.  They will be overwritten when installing a
-new version of Nvim. The following explains the legacy Vim mechanism (enabled
-if |do_legacy_filetype| is set). For Nvim's default mechanism, see
-|vim.filetype.add()|.
+to add it.  The recommended way is to use |vim.filetype.add()| to add it to
+Nvim's builtin filetype detection mechanism.  If you want to handle the
+detection manually, proceed as follows:
 
 A. If you want to overrule all default file type checks.
    This works by writing one file for each filetype.  The disadvantage is that
-   there can be many files.  The advantage is that you can simply drop this 
+   there can be many files.  The advantage is that you can simply drop this
    file in the right directory to make it work.
 							*ftdetect*
    1. Create your user runtime directory.  You would normally use the first
@@ -273,28 +272,14 @@ D. If your filetype can only be detected by inspecting the contents of the
    means that your rules override the default rules in
    $VIMRUNTIME/scripts.vim.
 
-						*remove-filetype*
-If a file type is detected that is wrong for you, install a filetype.lua,
-filetype.vim or scripts.vim to catch it (see above).  You can set 'filetype' to
-a non-existing name to avoid that it will be set later anyway: >
-	:set filetype=ignored
+							*remove-filetype*
+If a file type is detected that is wrong for you, you can set 'filetype' to
+a non-existing name such as `ignored` to avoid that it will be set later anyway.
 
-If you are setting up a system with many users, and you don't want each user
-to add/remove the same filetypes, consider writing the filetype.vim and
-scripts.vim files in a runtime directory that is used for everybody.  Check
-the 'runtimepath' for a directory to use.  If there isn't one, set
-'runtimepath' in the |system-vimrc|.  Be careful to keep the default
-directories!
-
-						     *g:do_legacy_filetype*
-To disable Nvim's default filetype detection and revert to Vim's legacy
-filetype detection, add the following to your |init.vim|: >
-  let g:do_legacy_filetype = 1
-<						     *g:did_load_filetypes*
+						     *g:did_load_filetypes*
 The builtin filetype detection provided by Nvim can be disabled by setting
-the `did_load_filetypes` global variable. If this variable exists, neither
-the default `$VIMRUNTIME/filetype.lua` nor the legacy `$VIMRUNTIME/filetype.vim`
-will run.
+the `did_load_filetypes` global variable. If this variable exists, the default
+`$VIMRUNTIME/filetype.lua` will not run.
 
 							*plugin-details*
 The "plugin" directory can be in any of the directories in the 'runtimepath'
@@ -549,7 +534,7 @@ used.
 For example, to set the dialect to a default of "fblite" but still allow for
 any #lang directive overrides, use the following command: >
 
-     let g:freebasic_lang = "fblite"
+	let g:freebasic_lang = "fblite"
 
 
 GIT COMMIT                                              *ft-gitcommit-plugin*
@@ -586,12 +571,12 @@ Local mappings:
 	to the end of the file in Normal mode.  This means "> " is inserted in
 	each line.
 
-MAN					*ft-man-plugin* *:Man* *man.vim*
+MAN					*ft-man-plugin* *:Man* *man.lua*
 
 View manpages in Nvim. Supports highlighting, completion, locales, and
 navigation. Also see |find-manpage|.
 
-man.vim will always attempt to reuse the closest man window (above/left) but
+man.lua will always attempt to reuse the closest man window (above/left) but
 otherwise create a split.
 
 The case sensitivity of completion is controlled by 'fileignorecase'.

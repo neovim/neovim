@@ -1,21 +1,25 @@
 // This is an open source non-commercial project. Dear PVS-Studio, please check
 // it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
-#include <inttypes.h>
-#include <msgpack.h>
+#include <msgpack/object.h>
+#include <msgpack/sbuffer.h>
+#include <msgpack/unpack.h>
+#include <msgpack/zone.h>
 #include <stdbool.h>
+#include <stddef.h>
+#include <stdint.h>
 
-#include "nvim/api/private/dispatch.h"
+#include "klib/kvec.h"
+#include "msgpack/pack.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/assert.h"
-#include "nvim/lib/kvec.h"
-#include "nvim/log.h"
+#include "nvim/event/wstream.h"
 #include "nvim/memory.h"
 #include "nvim/msgpack_rpc/helpers.h"
-#include "nvim/vim.h"
+#include "nvim/types.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "keysets.generated.h"
+# include "keysets.generated.h"  // IWYU pragma: export
 # include "msgpack_rpc/helpers.c.generated.h"
 #endif
 
@@ -95,9 +99,8 @@ bool msgpack_rpc_to_object(const msgpack_object *const obj, Object *const arg)
       dest = conv(((String) { \
       .size = obj->via.attr.size, \
       .data = (obj->via.attr.ptr == NULL || obj->via.attr.size == 0 \
-                   ? xmemdupz("", 0) \
-                   : xmemdupz(obj->via.attr.ptr, obj->via.attr.size)), \
-    })); \
+               ? xmemdupz("", 0) \
+               : xmemdupz(obj->via.attr.ptr, obj->via.attr.size)), })); \
       break; \
   }
       STR_CASE(MSGPACK_OBJECT_STR, str, cur.mobj, *cur.aobj, STRING_OBJ)

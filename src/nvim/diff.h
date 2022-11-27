@@ -1,7 +1,10 @@
 #ifndef NVIM_DIFF_H
 #define NVIM_DIFF_H
 
+#include <stdbool.h>
+
 #include "nvim/ex_cmds_defs.h"
+#include "nvim/macros.h"
 #include "nvim/pos.h"
 
 // Value set from 'diffopt'.

@@ -1,17 +1,18 @@
 # CMAKE REFERENCE
 #   intro: https://codingnest.com/basic-cmake/
 #   best practices (3.0+): https://gist.github.com/mbinna/c61dbb39bca0e4fb7d1f73b0d66a4fd1
+#   pitfalls: https://izzys.casa/2019/02/everything-you-never-wanted-to-know-about-cmake/
 
 # Version should match the tested CMAKE_URL in .github/workflows/ci.yml.
 cmake_minimum_required(VERSION 3.10)
+
+# Can be removed once minimum version is at least 3.15
+if(POLICY CMP0092)
+  cmake_policy(SET CMP0092 NEW)
+endif()
+
 project(nvim C)
 
-if(POLICY CMP0065)
-  cmake_policy(SET CMP0065 NEW)
-endif()
-if(POLICY CMP0060)
-  cmake_policy(SET CMP0060 NEW)
-endif()
 if(POLICY CMP0075)
   cmake_policy(SET CMP0075 NEW)
 endif()
@@ -102,7 +103,7 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
   # Work around some old, broken detection by CMake for knowing when to use the
   # isystem flag.  Apple's compilers have supported this for quite some time
   # now.
-  if(CMAKE_COMPILER_IS_GNUCC)
+  if(CMAKE_C_COMPILER_ID MATCHES "GNU")
     set(CMAKE_INCLUDE_SYSTEM_FLAG_C "-isystem ")
   endif()
 endif()
@@ -127,39 +128,27 @@ endif()
 
 message(STATUS "CMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX}")
 
-# Build type.
-if(NOT CMAKE_BUILD_TYPE)
-  message(STATUS "CMAKE_BUILD_TYPE not specified, default is 'Debug'")
-  set(CMAKE_BUILD_TYPE "Debug" CACHE STRING "Choose the type of build" FORCE)
-else()
-  message(STATUS "CMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}")
-endif()
+set_default_buildtype()
 if(CMAKE_BUILD_TYPE MATCHES Debug)
   set(DEBUG 1)
 else()
   set(DEBUG 0)
 endif()
-# Set available build types for CMake GUIs.
-# Other build types can still be set by -DCMAKE_BUILD_TYPE=...
-set_property(CACHE CMAKE_BUILD_TYPE PROPERTY
-  STRINGS "Debug" "Release" "MinSizeRel" "RelWithDebInfo")
 
 # If not in a git repo (e.g., a tarball) these tokens define the complete
 # version string, else they are combined with the result of `git describe`.
 set(NVIM_VERSION_MAJOR 0)
-set(NVIM_VERSION_MINOR 8)
+set(NVIM_VERSION_MINOR 9)
 set(NVIM_VERSION_PATCH 0)
 set(NVIM_VERSION_PRERELEASE "-dev") # for package maintainers
 
 # API level
 set(NVIM_API_LEVEL 10)         # Bump this after any API change.
 set(NVIM_API_LEVEL_COMPAT 0)  # Adjust this after a _breaking_ API change.
-set(NVIM_API_PRERELEASE true)
+set(NVIM_API_PRERELEASE false)
 
 set(NVIM_VERSION_BUILD_TYPE "${CMAKE_BUILD_TYPE}")
 # NVIM_VERSION_CFLAGS set further below.
-
-set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 # Log level (MIN_LOG_LEVEL in log.h)
 if("${MIN_LOG_LEVEL}" MATCHES "^$")
@@ -186,7 +175,7 @@ if(CMAKE_C_FLAGS_RELEASE MATCHES "-O3")
   string(REPLACE "-O3" "-O2" CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE}")
 endif()
 
-if(CMAKE_COMPILER_IS_GNUCC)
+if(CMAKE_C_COMPILER_ID MATCHES "GNU")
   check_c_compiler_flag(-Og HAS_OG_FLAG)
 else()
   set(HAS_OG_FLAG 0)
@@ -201,6 +190,20 @@ endif()
 # We _want_ assertions in RelWithDebInfo build-type.
 if(CMAKE_C_FLAGS_RELWITHDEBINFO MATCHES DNDEBUG)
   string(REPLACE "-DNDEBUG" "" CMAKE_C_FLAGS_RELWITHDEBINFO "${CMAKE_C_FLAGS_RELWITHDEBINFO}")
+endif()
+
+option(ENABLE_IWYU "Run include-what-you-use with the compiler." OFF)
+if(ENABLE_IWYU)
+  find_program(IWYU_PRG NAMES include-what-you-use iwyu)
+  if(NOT IWYU_PRG)
+    message(FATAL_ERROR "ENABLE_IWYU is ON but include-what-you-use is not found!")
+  endif()
+  set(CMAKE_C_INCLUDE_WHAT_YOU_USE ${IWYU_PRG}
+    -Xiwyu --mapping_file=${PROJECT_SOURCE_DIR}/cmake.config/iwyu/mapping.imp
+    -Xiwyu --mapping_file=${PROJECT_SOURCE_DIR}/cmake.config/iwyu/gcc.libc.imp
+    -Xiwyu --mapping_file=${PROJECT_SOURCE_DIR}/cmake.config/iwyu/gcc.symbols.imp
+    -Xiwyu --no_default_mappings)
+  add_definitions(-DEXITFREE)
 endif()
 
 # gcc 4.0+ sets _FORTIFY_SOURCE=2 automatically.  This currently
@@ -287,9 +290,9 @@ int main(void)
 option(ENABLE_COMPILER_SUGGESTIONS "Enable -Wsuggest compiler warnings" OFF)
 if(MSVC)
   # XXX: /W4 gives too many warnings. #3241
-  add_compile_options(/W3)
+  add_compile_options(-W1 -wd4311)
   add_definitions(-D_CRT_SECURE_NO_WARNINGS -D_CRT_NONSTDC_NO_DEPRECATE)
-  add_definitions(-DWIN32)
+  add_definitions(-DMSWIN)
 else()
   add_compile_options(-Wall -Wextra -pedantic -Wno-unused-parameter
     -Wstrict-prototypes -std=gnu99 -Wshadow -Wconversion
@@ -336,6 +339,7 @@ endif()
 if(MINGW)
   # Use POSIX compatible stdio in Mingw
   add_definitions(-D__USE_MINGW_ANSI_STDIO)
+  add_definitions(-DMSWIN)
 endif()
 if(WIN32)
   # Windows Vista is the minimum supported version
@@ -380,10 +384,14 @@ option(CI_BUILD "CI, extra flags will be set" OFF)
 
 if(CI_BUILD)
   message(STATUS "CI build enabled")
-  add_compile_options(-Werror)
-  if(DEFINED ENV{BUILD_UCHAR})
-    # Get some test coverage for unsigned char
-    add_compile_options(-funsigned-char)
+  if(MSVC)
+    add_compile_options(-WX)
+  else()
+    add_compile_options(-Werror)
+    if(DEFINED ENV{BUILD_UCHAR})
+      # Get some test coverage for unsigned char
+      add_compile_options(-funsigned-char)
+    endif()
   endif()
 endif()
 
@@ -513,11 +521,11 @@ if(FEAT_TUI)
     add_definitions(-DNVIM_UNIBI_HAS_VAR_FROM)
   endif()
 
-  find_package(LibTermkey 0.18 REQUIRED)
+  find_package(LibTermkey 0.22 REQUIRED)
   include_directories(SYSTEM ${LIBTERMKEY_INCLUDE_DIRS})
 endif()
 
-find_package(LIBVTERM 0.1 REQUIRED)
+find_package(LIBVTERM 0.3 REQUIRED)
 include_directories(SYSTEM ${LIBVTERM_INCLUDE_DIRS})
 
 option(CLANG_ASAN_UBSAN "Enable Clang address & undefined behavior sanitizer for nvim binary." OFF)
@@ -624,11 +632,10 @@ endif()
 #
 find_program(LUACHECK_PRG luacheck)
 find_program(STYLUA_PRG stylua)
-find_program(FLAKE8_PRG flake8)
 find_program(UNCRUSTIFY_PRG uncrustify)
 find_program(SHELLCHECK_PRG shellcheck)
 
-add_glob_targets(
+add_glob_target(
   REQUIRED
   TARGET lintlua-luacheck
   COMMAND ${LUACHECK_PRG}
@@ -638,7 +645,7 @@ add_glob_targets(
   TOUCH_STRATEGY SINGLE
   )
 
-add_glob_targets(
+add_glob_target(
   TARGET lintlua-stylua
   COMMAND ${STYLUA_PRG}
   FLAGS --color=always --check
@@ -651,18 +658,17 @@ add_custom_target(lintlua)
 add_dependencies(lintlua lintlua-luacheck lintlua-stylua)
 
 include(InstallHelpers)
-add_glob_targets(
-  TARGET lintpy
-  COMMAND ${FLAKE8_PRG}
-  GLOB_DIRS contrib scripts src test
-  GLOB_PAT *.py
-  TOUCH_STRATEGY SINGLE
-  )
 
-add_glob_targets(
+add_glob_target(
   TARGET lintsh
   COMMAND ${SHELLCHECK_PRG}
-  FILES scripts/vim-patch.sh
+  FLAGS -x -a
+  GLOB_DIRS scripts ci
+  GLOB_PAT *.sh
+  EXCLUDE
+    scripts/pvscheck.sh
+    ci/common
+    ci/snap
   TOUCH_STRATEGY SINGLE
   )
 
@@ -673,7 +679,7 @@ add_custom_target(lintcommit
 add_dependencies(lintcommit nvim)
 
 add_custom_target(lint)
-add_dependencies(lint check-single-includes lintc lintlua lintpy lintsh lintcommit lintuncrustify)
+add_dependencies(lint check-single-includes lintc lintlua lintsh lintcommit lintuncrustify)
 
 #
 # Format
@@ -736,6 +742,7 @@ if(BUSTED_PRG)
         -DTEST_DIR=${CMAKE_CURRENT_SOURCE_DIR}/test
         -DBUILD_DIR=${CMAKE_BINARY_DIR}
         -DTEST_TYPE=unit
+        -DCIRRUS_CI=$ENV{CIRRUS_CI}
         -P ${PROJECT_SOURCE_DIR}/cmake/RunTests.cmake
       DEPENDS ${UNITTEST_PREREQS}
       ${TEST_TARGET_ARGS})
@@ -766,6 +773,7 @@ if(BUSTED_PRG)
       -DTEST_DIR=${CMAKE_CURRENT_SOURCE_DIR}/test
       -DBUILD_DIR=${CMAKE_BINARY_DIR}
       -DTEST_TYPE=functional
+      -DCIRRUS_CI=$ENV{CIRRUS_CI}
       -P ${PROJECT_SOURCE_DIR}/cmake/RunTests.cmake
     DEPENDS ${FUNCTIONALTEST_PREREQS}
     ${TEST_TARGET_ARGS})
@@ -781,6 +789,7 @@ if(BUSTED_PRG)
       -DTEST_DIR=${CMAKE_CURRENT_SOURCE_DIR}/test
       -DBUILD_DIR=${CMAKE_BINARY_DIR}
       -DTEST_TYPE=benchmark
+      -DCIRRUS_CI=$ENV{CIRRUS_CI}
       -P ${PROJECT_SOURCE_DIR}/cmake/RunTests.cmake
     DEPENDS ${BENCHMARK_PREREQS}
     ${TEST_TARGET_ARGS})
@@ -798,6 +807,7 @@ if(BUSTED_LUA_PRG)
       -DTEST_DIR=${CMAKE_CURRENT_SOURCE_DIR}/test
       -DBUILD_DIR=${CMAKE_BINARY_DIR}
       -DTEST_TYPE=functional
+      -DCIRRUS_CI=$ENV{CIRRUS_CI}
       -P ${PROJECT_SOURCE_DIR}/cmake/RunTests.cmake
     DEPENDS ${FUNCTIONALTEST_PREREQS}
     ${TEST_TARGET_ARGS})

@@ -2,14 +2,17 @@
 #define NVIM_OPS_H
 
 #include <stdbool.h>
+#include <stddef.h>
 
 #include "nvim/ascii.h"
 #include "nvim/eval/typval.h"
-#include "nvim/ex_cmds_defs.h"  // for exarg_T
+#include "nvim/eval/typval_defs.h"
+#include "nvim/ex_cmds_defs.h"
 #include "nvim/extmark.h"
 #include "nvim/macros.h"
-#include "nvim/normal.h"  // for MotionType and oparg_T
+#include "nvim/normal.h"
 #include "nvim/os/time.h"
+#include "nvim/pos.h"
 #include "nvim/types.h"
 
 typedef int (*Indenter)(void);
@@ -23,15 +26,13 @@ typedef int (*Indenter)(void);
 #define PUT_LINE_FORWARD 32     // put linewise register below Visual sel.
 #define PUT_BLOCK_INNER  64     // in block mode, do not add trailing spaces
 
-/*
- * Registers:
- *      0 = register for latest (unnamed) yank
- *   1..9 = registers '1' to '9', for deletes
- * 10..35 = registers 'a' to 'z'
- *     36 = delete register '-'
- *     37 = selection register '*'
- *     38 = clipboard register '+'
- */
+// Registers:
+//      0 = register for latest (unnamed) yank
+//   1..9 = registers '1' to '9', for deletes
+// 10..35 = registers 'a' to 'z'
+//     36 = delete register '-'
+//     37 = selection register '*'
+//     38 = clipboard register '+'
 #define DELETION_REGISTER 36
 #define NUM_SAVED_REGISTERS 37
 // The following registers should not be saved in ShaDa file:

@@ -3,6 +3,7 @@ local Screen = require('test.functional.ui.screen')
 local clear, nvim, buffer = helpers.clear, helpers.nvim, helpers.buffer
 local curbuf, curwin, eq = helpers.curbuf, helpers.curwin, helpers.eq
 local curbufmeths, ok = helpers.curbufmeths, helpers.ok
+local describe_lua_and_rpc = helpers.describe_lua_and_rpc(describe)
 local meths = helpers.meths
 local funcs = helpers.funcs
 local request = helpers.request
@@ -185,12 +186,13 @@ describe('api/buf', function()
     end)
   end)
 
-  describe('nvim_buf_get_lines, nvim_buf_set_lines', function()
-    local get_lines, set_lines = curbufmeths.get_lines, curbufmeths.set_lines
-    local line_count = curbufmeths.line_count
+  describe_lua_and_rpc('nvim_buf_get_lines, nvim_buf_set_lines', function(api)
+    local get_lines = api.curbufmeths.get_lines
+    local set_lines = api.curbufmeths.set_lines
+    local line_count = api.curbufmeths.line_count
 
     it('fails correctly when input is not valid', function()
-      eq(1, curbufmeths.get_number())
+      eq(1, api.curbufmeths.get_number())
       eq([[String cannot contain newlines]],
         pcall_err(bufmeths.set_lines, 1, 1, 2, false, {'b\na'}))
     end)
@@ -198,7 +200,7 @@ describe('api/buf', function()
     it("fails if 'nomodifiable'", function()
       command('set nomodifiable')
       eq([[Buffer is not 'modifiable']],
-        pcall_err(bufmeths.set_lines, 1, 1, 2, false, {'a','b'}))
+        pcall_err(api.bufmeths.set_lines, 1, 1, 2, false, {'a','b'}))
     end)
 
     it('has correct line_count when inserting and deleting', function()
@@ -354,7 +356,7 @@ describe('api/buf', function()
         Who would win?
         A real window
         with proper text]])
-      local buf = meths.create_buf(false,true)
+      local buf = api.meths.create_buf(false,true)
       screen:expect([[
         Who would win?      |
         A real window       |
@@ -363,7 +365,7 @@ describe('api/buf', function()
                             |
       ]])
 
-      meths.buf_set_lines(buf, 0, -1, true, {'or some', 'scratchy text'})
+      api.meths.buf_set_lines(buf, 0, -1, true, {'or some', 'scratchy text'})
       feed('i') -- provoke redraw
       screen:expect([[
         Who would win?      |
@@ -379,15 +381,15 @@ describe('api/buf', function()
         visible buffer line 1
         line 2
       ]])
-      local hiddenbuf = meths.create_buf(false,true)
+      local hiddenbuf = api.meths.create_buf(false,true)
       command('vsplit')
       command('vsplit')
       feed('<c-w>l<c-w>l<c-w>l')
       eq(3, funcs.winnr())
       feed('<c-w>h')
       eq(2, funcs.winnr())
-      meths.buf_set_lines(hiddenbuf, 0, -1, true,
-                          {'hidden buffer line 1', 'line 2'})
+      api.meths.buf_set_lines(hiddenbuf, 0, -1, true,
+                              {'hidden buffer line 1', 'line 2'})
       feed('<c-w>p')
       eq(3, funcs.winnr())
     end)
@@ -579,13 +581,13 @@ describe('api/buf', function()
     end)
   end)
 
-  describe('nvim_buf_get_text', function()
-    local get_text = curbufmeths.get_text
-
+  describe_lua_and_rpc('nvim_buf_get_text', function(api)
+    local get_text = api.curbufmeths.get_text
     before_each(function()
       insert([[
       hello foo!
-      text]])
+      text
+      more]])
     end)
 
     it('works', function()
@@ -593,16 +595,17 @@ describe('api/buf', function()
       eq({'hello foo!'}, get_text(0, 0, 0, 42, {}))
       eq({'foo!'}, get_text(0, 6, 0, 10, {}))
       eq({'foo!', 'tex'}, get_text(0, 6, 1, 3, {}))
-      eq({'foo!', 'tex'}, get_text(-2, 6, -1, 3, {}))
+      eq({'foo!', 'tex'}, get_text(-3, 6, -2, 3, {}))
       eq({''}, get_text(0, 18, 0, 20, {}))
-      eq({'ext'}, get_text(-1, 1, -1, 4, {}))
+      eq({'ext'}, get_text(-2, 1, -2, 4, {}))
+      eq({'hello foo!', 'text', 'm'}, get_text(0, 0, 2, 1, {}))
     end)
 
     it('errors on out-of-range', function()
-      eq('Index out of bounds', pcall_err(get_text, 2, 0, 3, 0, {}))
-      eq('Index out of bounds', pcall_err(get_text, -3, 0, 0, 0, {}))
-      eq('Index out of bounds', pcall_err(get_text, 0, 0, 2, 0, {}))
-      eq('Index out of bounds', pcall_err(get_text, 0, 0, -3, 0, {}))
+      eq('Index out of bounds', pcall_err(get_text, 2, 0, 4, 0, {}))
+      eq('Index out of bounds', pcall_err(get_text, -4, 0, 0, 0, {}))
+      eq('Index out of bounds', pcall_err(get_text, 0, 0, 3, 0, {}))
+      eq('Index out of bounds', pcall_err(get_text, 0, 0, -4, 0, {}))
       -- no ml_get errors should happen #19017
       eq('', meths.get_vvar('errmsg'))
     end)

@@ -108,6 +108,7 @@ return {
     'TextChanged',            -- text was modified
     'TextChangedI',           -- text was modified in Insert mode(no popup)
     'TextChangedP',           -- text was modified in Insert mode(popup)
+    'TextChangedT',           -- text was modified in Terminal mode
     'TextYankPost',           -- after a yank or delete was done (y, d, c)
     'UIEnter',                -- after UI attaches
     'UILeave',                -- after UI detaches
@@ -122,7 +123,8 @@ return {
     'WinEnter',               -- after entering a window
     'WinLeave',               -- before leaving a window
     'WinNew',                 -- when entering a new window
-    'WinScrolled',            -- after scrolling a window
+    'WinResized',             -- after a window was resized
+    'WinScrolled',            -- after a window was scrolled or resized
   },
   aliases = {
     BufCreate = 'BufAdd',

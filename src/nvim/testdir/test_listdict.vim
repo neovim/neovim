@@ -31,6 +31,12 @@ func Test_list_slice()
   call assert_equal([1, 'as''d', [1, 2, function('strlen')]], l[:-2])
   call assert_equal([1, 'as''d', [1, 2, function('strlen')], {'a': 1}], l[0:8])
   call assert_equal([], l[8:-1])
+  call assert_equal([], l[0:-10])
+  " perform an operation on a list slice
+  let l = [1, 2, 3]
+  let l[:1] += [1, 2]
+  let l[2:] -= [1]
+  call assert_equal([2, 4, 2], l)
 endfunc
 
 " List identity
@@ -104,6 +110,8 @@ func Test_list_range_assign()
   let l = [0]
   let l[:] = [1, 2]
   call assert_equal([1, 2], l)
+  let l[-4:-1] = [5, 6]
+  call assert_equal([5, 6], l)
 endfunc
 
 " Test removing items in list
@@ -143,6 +151,20 @@ func Test_list_func_remove()
   call assert_fails("call remove(l, l)", 'E745:')
 endfunc
 
+" List add() function
+func Test_list_add()
+  let l = []
+  call add(l, 1)
+  call add(l, [2, 3])
+  call add(l, [])
+  call add(l, v:_null_list)
+  call add(l, {'k' : 3})
+  call add(l, {})
+  call add(l, v:_null_dict)
+  call assert_equal([1, [2, 3], [], [], {'k' : 3}, {}, {}], l)
+  " call assert_equal(1, add(v:_null_list, 4))
+endfunc
+
 " Tests for Dictionary type
 
 func Test_dict()
@@ -165,6 +187,26 @@ func Test_dict()
   call assert_equal({'c': 'ccc', '1': 99, 'b': [1, 2, function('strlen')], '3': 33, '-1': {'a': 1}}, d)
   call filter(d, 'v:key =~ ''[ac391]''')
   call assert_equal({'c': 'ccc', '1': 99, '3': 33, '-1': {'a': 1}}, d)
+
+  " duplicate key
+  call assert_fails("let d = {'k' : 10, 'k' : 20}", 'E721:')
+  " missing comma
+  call assert_fails("let d = {'k' : 10 'k' : 20}", 'E722:')
+  " missing curly brace
+  call assert_fails("let d = {'k' : 10,", 'E723:')
+  " invalid key
+  call assert_fails('let d = #{++ : 10}', 'E15:')
+  " wrong type for key
+  call assert_fails('let d={[] : 10}', 'E730:')
+  " undefined variable as value
+  call assert_fails("let d={'k' : i}", 'E121:')
+
+  " allow key starting with number at the start, not a curly expression
+  call assert_equal({'1foo': 77}, #{1foo: 77})
+
+  " #{expr} is not a curly expression
+  let x = 'x'
+  call assert_equal(#{g: x}, #{g:x})
 endfunc
 
 " Dictionary identity
@@ -247,6 +289,16 @@ func Test_dict_func()
   call assert_equal('xxx3', Fn('xxx'))
 endfunc
 
+func Test_dict_assign()
+  let d = {}
+  let d.1 = 1
+  let d._ = 2
+  call assert_equal({'1': 1, '_': 2}, d)
+
+  let n = 0
+  call assert_fails('let n.key = 3', 'E1203: Dot can only be used on a dictionary: n.key = 3')
+endfunc
+
 " Function in script-local List or Dict
 func Test_script_local_dict_func()
   let g:dict = {}
@@ -259,7 +311,7 @@ func Test_script_local_dict_func()
   unlet g:dict
 endfunc
 
-" Test removing items in la dictionary
+" Test removing items in a dictionary
 func Test_dict_func_remove()
   let d = {1:'a', 2:'b', 3:'c'}
   call assert_equal('b', remove(d, 2))
@@ -294,11 +346,12 @@ func Test_dict_deepcopy()
   let l = [4, d, 6]
   let d[3] = l
   let dc = deepcopy(d)
-  call assert_fails('call deepcopy(d, 1)', 'E698')
+  call assert_fails('call deepcopy(d, 1)', 'E698:')
   let l2 = [0, l, l, 3]
   let l[1] = l2
   let l3 = deepcopy(l2)
   call assert_true(l3[1] is l3[2])
+  call assert_fails("call deepcopy([1, 2], 2)", 'E1023:')
 endfunc
 
 " Locked variables
@@ -378,6 +431,11 @@ func Test_list_locked_var()
       call assert_equal(expected[depth][u][1], ps)
     endfor
   endfor
+  call assert_fails("let x=islocked('a b')", 'E488:')
+  let mylist = [1, 2, 3]
+  call assert_fails("let x = islocked('mylist[1:2]')", 'E786:')
+  let mydict = {'k' : 'v'}
+  call assert_fails("let x = islocked('mydict.a')", 'E716:')
 endfunc
 
 " Unletting locked variables
@@ -458,6 +516,11 @@ func Test_list_locked_var_unlet()
       call assert_equal(expected[depth][u][1], ps)
     endfor
   endfor
+  " Deleting a list range should fail if the range is locked
+  let l = [1, 2, 3, 4]
+  lockvar l[1:2]
+  call assert_fails('unlet l[1:2]', 'E741:')
+  unlet l
 endfunc
 
 " Locked variables and :unlet or list / dict functions
@@ -567,6 +630,18 @@ func Test_let_lock_list()
   unlet l
 endfunc
 
+" Locking part of the list
+func Test_let_lock_list_items()
+  let l = [1, 2, 3, 4]
+  lockvar l[2:]
+  call assert_equal(0, islocked('l[0]'))
+  call assert_equal(1, islocked('l[2]'))
+  call assert_equal(1, islocked('l[3]'))
+  call assert_fails('let l[2] = 10', 'E741:')
+  call assert_fails('let l[3] = 20', 'E741:')
+  unlet l
+endfunc
+
 " lockvar/islocked() triggering script autoloading
 func Test_lockvar_script_autoload()
   let old_rtp = &rtp
@@ -604,20 +679,26 @@ func Test_reverse_sort_uniq()
   call assert_equal(['-0', 'A11', 2, 'xaaa', 4, 'foo', 'foo6', 'foo', [0, 1, 2], 'x8', [0, 1, 2], 1.5], uniq(copy(l)))
   call assert_equal([1.5, [0, 1, 2], 'x8', [0, 1, 2], 'foo', 'foo6', 'foo', 4, 'xaaa', 2, 2, 'A11', '-0'], reverse(l))
   call assert_equal([1.5, [0, 1, 2], 'x8', [0, 1, 2], 'foo', 'foo6', 'foo', 4, 'xaaa', 2, 2, 'A11', '-0'], reverse(reverse(l)))
-  call assert_equal(['-0', 'A11', 'foo', 'foo', 'foo6', 'x8', 'xaaa', 1.5, 2, 2, 4, [0, 1, 2], [0, 1, 2]], sort(l))
-  call assert_equal([[0, 1, 2], [0, 1, 2], 4, 2, 2, 1.5, 'xaaa', 'x8', 'foo6', 'foo', 'foo', 'A11', '-0'], reverse(sort(l)))
-  call assert_equal(['-0', 'A11', 'foo', 'foo', 'foo6', 'x8', 'xaaa', 1.5, 2, 2, 4, [0, 1, 2], [0, 1, 2]], sort(reverse(sort(l))))
-  call assert_equal(['-0', 'A11', 'foo', 'foo6', 'x8', 'xaaa', 1.5, 2, 4, [0, 1, 2]], uniq(sort(l)))
+  if has('float')
+    call assert_equal(['-0', 'A11', 'foo', 'foo', 'foo6', 'x8', 'xaaa', 1.5, 2, 2, 4, [0, 1, 2], [0, 1, 2]], sort(l))
+    call assert_equal([[0, 1, 2], [0, 1, 2], 4, 2, 2, 1.5, 'xaaa', 'x8', 'foo6', 'foo', 'foo', 'A11', '-0'], reverse(sort(l)))
+    call assert_equal(['-0', 'A11', 'foo', 'foo', 'foo6', 'x8', 'xaaa', 1.5, 2, 2, 4, [0, 1, 2], [0, 1, 2]], sort(reverse(sort(l))))
+    call assert_equal(['-0', 'A11', 'foo', 'foo6', 'x8', 'xaaa', 1.5, 2, 4, [0, 1, 2]], uniq(sort(l)))
 
-  let l=[7, 9, 'one', 18, 12, 22, 'two', 10.0e-16, -1, 'three', 0xff, 0.22, 'four']
-  call assert_equal([-1, 'one', 'two', 'three', 'four', 1.0e-15, 0.22, 7, 9, 12, 18, 22, 255], sort(copy(l), 'n'))
+    let l = [7, 9, 'one', 18, 12, 22, 'two', 10.0e-16, -1, 'three', 0xff, 0.22, 'four']
+    call assert_equal([-1, 'one', 'two', 'three', 'four', 1.0e-15, 0.22, 7, 9, 12, 18, 22, 255], sort(copy(l), 'n'))
 
-  let l=[7, 9, 18, 12, 22, 10.0e-16, -1, 0xff, 0, -0, 0.22, 'bar', 'BAR', 'Bar', 'Foo', 'FOO', 'foo', 'FOOBAR', {}, []]
-  call assert_equal(['bar', 'BAR', 'Bar', 'Foo', 'FOO', 'foo', 'FOOBAR', -1, 0, 0, 0.22, 1.0e-15, 12, 18, 22, 255, 7, 9, [], {}], sort(copy(l), 1))
-  call assert_equal(['bar', 'BAR', 'Bar', 'Foo', 'FOO', 'foo', 'FOOBAR', -1, 0, 0, 0.22, 1.0e-15, 12, 18, 22, 255, 7, 9, [], {}], sort(copy(l), 'i'))
-  call assert_equal(['BAR', 'Bar', 'FOO', 'FOOBAR', 'Foo', 'bar', 'foo', -1, 0, 0, 0.22, 1.0e-15, 12, 18, 22, 255, 7, 9, [], {}], sort(copy(l)))
+    let l = [7, 9, 18, 12, 22, 10.0e-16, -1, 0xff, 0, -0, 0.22, 'bar', 'BAR', 'Bar', 'Foo', 'FOO', 'foo', 'FOOBAR', {}, []]
+    call assert_equal(['bar', 'BAR', 'Bar', 'Foo', 'FOO', 'foo', 'FOOBAR', -1, 0, 0, 0.22, 1.0e-15, 12, 18, 22, 255, 7, 9, [], {}], sort(copy(l), 1))
+    call assert_equal(['bar', 'BAR', 'Bar', 'Foo', 'FOO', 'foo', 'FOOBAR', -1, 0, 0, 0.22, 1.0e-15, 12, 18, 22, 255, 7, 9, [], {}], sort(copy(l), 'i'))
+    call assert_equal(['BAR', 'Bar', 'FOO', 'FOOBAR', 'Foo', 'bar', 'foo', -1, 0, 0, 0.22, 1.0e-15, 12, 18, 22, 255, 7, 9, [], {}], sort(copy(l)))
+  endif
 
   call assert_fails('call reverse("")', 'E899:')
+  call assert_fails('call uniq([1, 2], {x, y -> []})', 'E745:')
+  call assert_fails("call sort([1, 2], function('min'), 1)", "E715:")
+  call assert_fails("call sort([1, 2], function('invalid_func'))", "E700:")
+  call assert_fails("call sort([1, 2], function('min'))", "E118:")
 endfunc
 
 " reduce a list or a blob
@@ -665,7 +746,7 @@ func Test_reduce()
   call assert_equal(42, reduce(v:_null_blob, function('add'), 42))
 endfunc
 
-" splitting a string to a List
+" splitting a string to a List using split()
 func Test_str_split()
   call assert_equal(['aa', 'bb'], split('  aa  bb '))
   call assert_equal(['aa', 'bb'], split('  aa  bb  ', '\W\+', 0))
@@ -676,6 +757,9 @@ func Test_str_split()
   call assert_equal(['aa', '', 'bb', 'cc', ''], split('aa,,bb, cc,', ',\s*', 1))
   call assert_equal(['a', 'b', 'c'], split('abc', '\zs'))
   call assert_equal(['', 'a', '', 'b', '', 'c', ''], split('abc', '\zs', 1))
+  call assert_fails("call split('abc', [])", 'E730:')
+  call assert_fails("call split('abc', 'b', [])", 'E745:')
+  call assert_equal(['abc'], split('abc', '\\%('))
 endfunc
 
 " compare recursively linked list and dict
@@ -687,6 +771,12 @@ func Test_listdict_compare()
   call assert_true(d == d)
   call assert_false(l != deepcopy(l))
   call assert_false(d != deepcopy(d))
+
+  " comparison errors
+  call assert_fails('echo [1, 2] =~ {}', 'E691:')
+  call assert_fails('echo [1, 2] =~ [1, 2]', 'E692:')
+  call assert_fails('echo {} =~ 5', 'E735:')
+  call assert_fails('echo {} =~ {}', 'E736:')
 endfunc
 
   " compare complex recursively linked list and dict
@@ -860,6 +950,67 @@ func Test_scope_dict()
   call s:check_scope_dict('v', v:true)
 endfunc
 
+" Test for deep nesting of lists (> 100)
+func Test_deep_nested_list()
+  let deep_list = []
+  let l = deep_list
+  for i in range(102)
+    let newlist = []
+    call add(l, newlist)
+    let l = newlist
+  endfor
+  call add(l, 102)
+
+  call assert_fails('let m = deepcopy(deep_list)', 'E698:')
+  call assert_fails('lockvar 110 deep_list', 'E743:')
+  call assert_fails('unlockvar 110 deep_list', 'E743:')
+  " Nvim implements :echo very differently
+  " call assert_fails('let x = execute("echo deep_list")', 'E724:')
+  call test_garbagecollect_now()
+  unlet deep_list
+endfunc
+
+" Test for deep nesting of dicts (> 100)
+func Test_deep_nested_dict()
+  let deep_dict = {}
+  let d = deep_dict
+  for i in range(102)
+    let newdict = {}
+    let d.k = newdict
+    let d = newdict
+  endfor
+  let d.k = 'v'
+
+  call assert_fails('let m = deepcopy(deep_dict)', 'E698:')
+  call assert_fails('lockvar 110 deep_dict', 'E743:')
+  call assert_fails('unlockvar 110 deep_dict', 'E743:')
+  " Nvim implements :echo very differently
+  " call assert_fails('let x = execute("echo deep_dict")', 'E724:')
+  call test_garbagecollect_now()
+  unlet deep_dict
+endfunc
+
+" List and dict indexing tests
+func Test_listdict_index()
+  call assert_fails('echo function("min")[0]', 'E695:')
+  call assert_fails('echo v:true[0]', 'E909:')
+  let d = {'k' : 10}
+  call assert_fails('echo d.', 'E15:')
+  call assert_fails('echo d[1:2]', 'E719:')
+  call assert_fails("let v = [4, 6][{-> 1}]", 'E729:')
+  call assert_fails("let v = range(5)[2:[]]", 'E730:')
+  call assert_fails("let v = range(5)[2:{-> 2}(]", ['E15:', 'E116:'])
+  call assert_fails("let v = range(5)[2:3", 'E111:')
+  call assert_fails("let l = insert([1,2,3], 4, 10)", 'E684:')
+  call assert_fails("let l = insert([1,2,3], 4, -10)", 'E684:')
+  call assert_fails("let l = insert([1,2,3], 4, [])", 'E745:')
+  let l = [1, 2, 3]
+  call assert_fails("let l[i] = 3", 'E121:')
+  call assert_fails("let l[1.1] = 4", 'E806:')
+  call assert_fails("let l[:i] = [4, 5]", 'E121:')
+  call assert_fails("let l[:3.2] = [4, 5]", 'E806:')
+endfunc
+
 " Test for a null list
 func Test_null_list()
   let l = v:_null_list
@@ -896,3 +1047,21 @@ func Test_null_list()
   call assert_equal(1, islocked('l'))
   unlockvar l
 endfunc
+
+" Test for a null dict
+func Test_null_dict()
+  call assert_equal(v:_null_dict, v:_null_dict)
+  let d = v:_null_dict
+  call assert_equal({}, d)
+  call assert_equal(0, len(d))
+  call assert_equal(1, empty(d))
+  call assert_equal(0, items(d))
+  call assert_equal(0, keys(d))
+  call assert_equal(0, values(d))
+  call assert_false(has_key(d, 'k'))
+  call assert_equal('{}', string(d))
+  call assert_fails('let x = v:_null_dict[10]')
+  call assert_equal({}, {})
+endfunc
+
+" vim: shiftwidth=2 sts=2 expandtab

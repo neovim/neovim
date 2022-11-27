@@ -6,27 +6,35 @@
 /// Popup menu (PUM)
 
 #include <assert.h>
-#include <inttypes.h>
+#include <limits.h>
 #include <stdbool.h>
+#include <string.h>
 
+#include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/ascii.h"
 #include "nvim/buffer.h"
 #include "nvim/charset.h"
 #include "nvim/drawscreen.h"
-#include "nvim/edit.h"
 #include "nvim/eval/typval.h"
+#include "nvim/eval/typval_defs.h"
 #include "nvim/ex_cmds.h"
+#include "nvim/getchar.h"
+#include "nvim/globals.h"
 #include "nvim/grid.h"
 #include "nvim/highlight.h"
 #include "nvim/insexpand.h"
+#include "nvim/keycodes.h"
+#include "nvim/mbyte.h"
 #include "nvim/memline.h"
 #include "nvim/memory.h"
 #include "nvim/menu.h"
+#include "nvim/message.h"
 #include "nvim/move.h"
 #include "nvim/option.h"
 #include "nvim/popupmenu.h"
-#include "nvim/search.h"
+#include "nvim/pos.h"
+#include "nvim/screen.h"
 #include "nvim/strings.h"
 #include "nvim/ui.h"
 #include "nvim/ui_compositor.h"
@@ -156,7 +164,6 @@ void pum_display(pumitem_T *array, int size, int selected, bool array_changed, i
     if (pum_external) {
       if (array_changed) {
         Arena arena = ARENA_EMPTY;
-        arena_start(&arena, &ui_ext_fixblk);
         Array arr = arena_array(&arena, (size_t)size);
         for (int i = 0; i < size; i++) {
           Array item = arena_array(&arena, 4);
@@ -168,7 +175,7 @@ void pum_display(pumitem_T *array, int size, int selected, bool array_changed, i
         }
         ui_call_popupmenu_show(arr, selected, pum_win_row, cursor_col,
                                pum_anchor_grid);
-        arena_mem_free(arena_finish(&arena), &ui_ext_fixblk);
+        arena_mem_free(arena_finish(&arena));
       } else {
         ui_call_popupmenu_select(selected);
         return;
@@ -265,12 +272,15 @@ void pum_display(pumitem_T *array, int size, int selected, bool array_changed, i
       pum_row = above_row;
       pum_height = pum_win_row - above_row;
     }
+
+    pum_array = array;
+    // Set "pum_size" before returning so that pum_set_event_info() gets the correct size.
+    pum_size = size;
+
     if (pum_external) {
       return;
     }
 
-    pum_array = array;
-    pum_size = size;
     pum_compute_size();
     int max_width = pum_base_width;
 
@@ -525,7 +535,7 @@ void pum_redraw(void)
             }
 
             if (pum_rl) {
-              char *rt = (char *)reverse_text(st);
+              char *rt = reverse_text((char *)st);
               char *rt_start = rt;
               int size = vim_strsize(rt);
 
@@ -543,14 +553,13 @@ void pum_redraw(void)
                   size++;
                 }
               }
-              grid_puts_len(&pum_grid, (char_u *)rt, (int)STRLEN(rt), row,
-                            grid_col - size + 1, attr);
+              grid_puts_len(&pum_grid, rt, (int)strlen(rt), row, grid_col - size + 1, attr);
               xfree(rt_start);
               xfree(st);
               grid_col -= width;
             } else {
               // use grid_puts_len() to truncate the text
-              grid_puts(&pum_grid, st, row, grid_col, attr);
+              grid_puts(&pum_grid, (char *)st, row, grid_col, attr);
               xfree(st);
               grid_col += width;
             }
@@ -561,11 +570,11 @@ void pum_redraw(void)
 
             // Display two spaces for a Tab.
             if (pum_rl) {
-              grid_puts_len(&pum_grid, (char_u *)"  ", 2, row, grid_col - 1,
+              grid_puts_len(&pum_grid, "  ", 2, row, grid_col - 1,
                             attr);
               grid_col -= 2;
             } else {
-              grid_puts_len(&pum_grid, (char_u *)"  ", 2, row, grid_col, attr);
+              grid_puts_len(&pum_grid, "  ", 2, row, grid_col, attr);
               grid_col += 2;
             }
             totwidth += 2;
@@ -704,7 +713,7 @@ static bool pum_set_selected(int n, int repeat)
     if ((pum_array[pum_selected].pum_info != NULL)
         && (Rows > 10)
         && (repeat <= 1)
-        && (vim_strchr((char *)p_cot, 'p') != NULL)) {
+        && (vim_strchr(p_cot, 'p') != NULL)) {
       win_T *curwin_save = curwin;
       tabpage_T *curtab_save = curtab;
       int res = OK;
@@ -744,11 +753,11 @@ static bool pum_set_selected(int n, int repeat)
           if (res == OK) {
             // Edit a new, empty buffer. Set options for a "wipeout"
             // buffer.
-            set_option_value("swf", 0L, NULL, OPT_LOCAL);
-            set_option_value("bl", 0L, NULL, OPT_LOCAL);
-            set_option_value("bt", 0L, "nofile", OPT_LOCAL);
-            set_option_value("bh", 0L, "wipe", OPT_LOCAL);
-            set_option_value("diff", 0L, NULL, OPT_LOCAL);
+            set_option_value_give_err("swf", 0L, NULL, OPT_LOCAL);
+            set_option_value_give_err("bl", 0L, NULL, OPT_LOCAL);
+            set_option_value_give_err("bt", 0L, "nofile", OPT_LOCAL);
+            set_option_value_give_err("bh", 0L, "wipe", OPT_LOCAL);
+            set_option_value_give_err("diff", 0L, NULL, OPT_LOCAL);
           }
         }
 
@@ -761,12 +770,11 @@ static bool pum_set_selected(int n, int repeat)
             if (e == NULL) {
               ml_append(lnum++, (char *)p, 0, false);
               break;
-            } else {
-              *e = NUL;
-              ml_append(lnum++, (char *)p, (int)(e - p + 1), false);
-              *e = '\n';
-              p = e + 1;
             }
+            *e = NUL;
+            ml_append(lnum++, (char *)p, (int)(e - p + 1), false);
+            *e = '\n';
+            p = e + 1;
           }
 
           // Increase the height of the preview window to show the
@@ -802,7 +810,7 @@ static bool pum_set_selected(int n, int repeat)
 
             // Return cursor to where we were
             validate_cursor();
-            redraw_later(curwin, SOME_VALID);
+            redraw_later(curwin, UPD_SOME_VALID);
 
             // When the preview window was resized we need to
             // update the view on the buffer.  Only go back to
@@ -820,7 +828,7 @@ static bool pum_set_selected(int n, int repeat)
             // TODO(bfredl): can simplify, get rid of the flag munging?
             // or at least eliminate extra redraw before win_enter()?
             pum_is_visible = false;
-            update_screen(0);
+            update_screen();
             pum_is_visible = true;
 
             if (!resized && win_valid(curwin_save)) {
@@ -832,7 +840,7 @@ static bool pum_set_selected(int n, int repeat)
             // May need to update the screen again when there are
             // autocommands involved.
             pum_is_visible = false;
-            update_screen(0);
+            update_screen();
             pum_is_visible = true;
           }
         }
@@ -901,6 +909,17 @@ void pum_invalidate(void)
 void pum_recompose(void)
 {
   ui_comp_compose_grid(&pum_grid);
+}
+
+void pum_ext_select_item(int item, bool insert, bool finish)
+{
+  if (!pum_visible() || item < -1 || item >= pum_size) {
+    return;
+  }
+  pum_want.active = true;
+  pum_want.item = item;
+  pum_want.insert = insert;
+  pum_want.finish = finish;
 }
 
 /// Gets the height of the menu.
@@ -1032,10 +1051,16 @@ void pum_show_popupmenu(vimmenu_T *menu)
   pumitem_T *array = (pumitem_T *)xcalloc((size_t)pum_size, sizeof(pumitem_T));
 
   for (vimmenu_T *mp = menu->children; mp != NULL; mp = mp->next) {
+    char *s = NULL;
+    // Make a copy of the text, the menu may be redefined in a callback.
     if (menu_is_separator(mp->dname)) {
-      array[idx++].pum_text = (char_u *)"";
+      s = "";
     } else if (mp->modes & mp->enabled & mode) {
-      array[idx++].pum_text = (char_u *)mp->dname;
+      s = mp->dname;
+    }
+    if (s != NULL) {
+      s = xstrdup(s);
+      array[idx++].pum_text = (char_u *)s;
     }
   }
 
@@ -1047,6 +1072,10 @@ void pum_show_popupmenu(vimmenu_T *menu)
 
   pum_selected = -1;
   pum_first = 0;
+  if (!p_mousemev) {
+    // Pretend 'mousemoveevent' is set.
+    ui_call_option_set(STATIC_CSTR_AS_STRING("mousemoveevent"), BOOLEAN_OBJ(true));
+  }
 
   for (;;) {
     pum_is_visible = true;
@@ -1102,8 +1131,14 @@ void pum_show_popupmenu(vimmenu_T *menu)
     }
   }
 
+  for (idx = 0; idx < pum_size; idx++) {
+    xfree(array[idx].pum_text);
+  }
   xfree(array);
   pum_undisplay(true);
+  if (!p_mousemev) {
+    ui_call_option_set(STATIC_CSTR_AS_STRING("mousemoveevent"), BOOLEAN_OBJ(false));
+  }
 }
 
 void pum_make_popup(const char *path_name, int use_mouse_pos)

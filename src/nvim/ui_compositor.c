@@ -7,24 +7,30 @@
 // Layer-based compositing: https://en.wikipedia.org/wiki/Digital_compositing
 
 #include <assert.h>
+#include <inttypes.h>
 #include <limits.h>
 #include <stdbool.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
-#include "nvim/api/private/helpers.h"
+#include "klib/kvec.h"
+#include "nvim/api/private/defs.h"
 #include "nvim/ascii.h"
+#include "nvim/buffer_defs.h"
+#include "nvim/globals.h"
 #include "nvim/grid.h"
 #include "nvim/highlight.h"
 #include "nvim/highlight_group.h"
-#include "nvim/lib/kvec.h"
 #include "nvim/log.h"
 #include "nvim/lua/executor.h"
-#include "nvim/main.h"
+#include "nvim/macros.h"
+#include "nvim/map.h"
 #include "nvim/memory.h"
 #include "nvim/message.h"
-#include "nvim/os/os.h"
-#include "nvim/popupmenu.h"
-#include "nvim/ugrid.h"
+#include "nvim/option_defs.h"
+#include "nvim/os/time.h"
+#include "nvim/types.h"
 #include "nvim/ui.h"
 #include "nvim/ui_compositor.h"
 #include "nvim/vim.h"
@@ -54,6 +60,8 @@ static bool msg_was_scrolled = false;
 static int msg_sep_row = -1;
 static schar_T msg_sep_char = { ' ', NUL };
 
+static PMap(uint32_t) ui_event_cbs = MAP_INIT;
+
 static int dbghl_normal, dbghl_clear, dbghl_composed, dbghl_recompose;
 
 void ui_comp_init(void)
@@ -69,13 +77,17 @@ void ui_comp_init(void)
   compositor->grid_cursor_goto = ui_comp_grid_cursor_goto;
   compositor->raw_line = ui_comp_raw_line;
   compositor->msg_set_pos = ui_comp_msg_set_pos;
+  compositor->event = ui_comp_event;
 
   // Be unopinionated: will be attached together with a "real" ui anyway
   compositor->width = INT_MAX;
   compositor->height = INT_MAX;
-  for (UIExtension i = 0; (int)i < kUIExtCount; i++) {
+  for (UIExtension i = kUIGlobalCount; (int)i < kUIExtCount; i++) {
     compositor->ui_ext[i] = true;
   }
+
+  // TODO(bfredl): one day. in the future.
+  compositor->ui_ext[kUIMultigrid] = false;
 
   // TODO(bfredl): this will be more complicated if we implement
   // hlstate per UI (i e reduce hl ids for non-hlstate UIs)
@@ -85,6 +97,15 @@ void ui_comp_init(void)
   curgrid = &default_grid;
 
   ui_attach_impl(compositor, 0);
+}
+
+void ui_comp_free_all_mem(void)
+{
+  UIEventCallback *event_cb;
+  map_foreach_value(&ui_event_cbs, event_cb, {
+    free_ui_event_callback(event_cb);
+  })
+  pmap_destroy(uint32_t)(&ui_event_cbs);
 }
 
 void ui_comp_syn_init(void)
@@ -122,7 +143,7 @@ bool ui_comp_should_draw(void)
 ///
 /// TODO(bfredl): later on the compositor should just use win_float_pos events,
 /// though that will require slight event order adjustment: emit the win_pos
-/// events in the beginning of  update_screen(0), rather than in ui_flush()
+/// events in the beginning of update_screen(), rather than in ui_flush()
 bool ui_comp_put_grid(ScreenGrid *grid, int row, int col, int height, int width, bool valid,
                       bool on_top)
 {
@@ -469,6 +490,10 @@ static void compose_debug(Integer startrow, Integer endrow, Integer startcol, In
   endcol = MIN(endcol, default_grid.cols);
   int attr = syn_id2attr(syn_id);
 
+  if (delay) {
+    debug_delay(endrow - startrow);
+  }
+
   for (int row = (int)startrow; row < endrow; row++) {
     ui_composed_call_raw_line(1, row, startcol, startcol, endcol, attr, false,
                               (const schar_T *)linebuf,
@@ -485,7 +510,7 @@ static void debug_delay(Integer lines)
   ui_call_flush();
   uint64_t wd = (uint64_t)labs(p_wd);
   uint64_t factor = (uint64_t)MAX(MIN(lines, 5), 1);
-  os_microdelay(factor * wd * 1000u, true);
+  os_microdelay(factor * wd * 1000U, true);
 }
 
 static void compose_area(Integer startrow, Integer endrow, Integer startcol, Integer endcol)
@@ -570,12 +595,14 @@ static void ui_comp_raw_line(UI *ui, Integer grid, Integer row, Integer startcol
 /// The screen is invalid and will soon be cleared
 ///
 /// Don't redraw floats until screen is cleared
-void ui_comp_set_screen_valid(bool valid)
+bool ui_comp_set_screen_valid(bool valid)
 {
+  bool old_val = valid_screen;
   valid_screen = valid;
   if (!valid) {
     msg_sep_row = -1;
   }
+  return old_val;
 }
 
 static void ui_comp_msg_set_pos(UI *ui, Integer grid, Integer row, Boolean scrolled,
@@ -594,7 +621,7 @@ static void ui_comp_msg_set_pos(UI *ui, Integer grid, Integer row, Boolean scrol
   if (row > msg_current_row && ui_comp_should_draw()) {
     compose_area(MAX(msg_current_row - 1, 0), row, 0, default_grid.cols);
   } else if (row < msg_current_row && ui_comp_should_draw()
-             && msg_current_row < Rows) {
+             && (msg_current_row < Rows || (scrolled && !msg_was_scrolled))) {
     int delta = msg_current_row - (int)row;
     if (msg_grid.blending) {
       int first_row = MAX((int)row - (scrolled?1:0), 0);
@@ -675,4 +702,73 @@ static void ui_comp_grid_resize(UI *ui, Integer grid, Integer width, Integer hei
       bufsize = new_bufsize;
     }
   }
+}
+
+static void ui_comp_event(UI *ui, char *name, Array args)
+{
+  Error err = ERROR_INIT;
+  UIEventCallback *event_cb;
+  bool handled = false;
+
+  map_foreach_value(&ui_event_cbs, event_cb, {
+    Object res = nlua_call_ref(event_cb->cb, name, args, false, &err);
+    if (res.type == kObjectTypeBoolean && res.data.boolean == true) {
+      handled = true;
+    }
+  })
+
+  if (!handled) {
+    ui_composed_call_event(name, args);
+  }
+}
+
+static void ui_comp_update_ext(void)
+{
+  memset(compositor->ui_ext, 0, ARRAY_SIZE(compositor->ui_ext));
+
+  for (size_t i = 0; i < kUIGlobalCount; i++) {
+    UIEventCallback *event_cb;
+
+    map_foreach_value(&ui_event_cbs, event_cb, {
+      if (event_cb->ext_widgets[i]) {
+        compositor->ui_ext[i] = true;
+        break;
+      }
+    })
+  }
+}
+
+void free_ui_event_callback(UIEventCallback *event_cb)
+{
+  api_free_luaref(event_cb->cb);
+  xfree(event_cb);
+}
+
+void ui_comp_add_cb(uint32_t ns_id, LuaRef cb, bool *ext_widgets)
+{
+  UIEventCallback *event_cb = xcalloc(1, sizeof(UIEventCallback));
+  event_cb->cb = cb;
+  memcpy(event_cb->ext_widgets, ext_widgets, ARRAY_SIZE(event_cb->ext_widgets));
+  if (event_cb->ext_widgets[kUIMessages]) {
+    event_cb->ext_widgets[kUICmdline] = true;
+  }
+
+  UIEventCallback **item = (UIEventCallback **)pmap_ref(uint32_t)(&ui_event_cbs, ns_id, true);
+  if (*item) {
+    free_ui_event_callback(*item);
+  }
+  *item = event_cb;
+
+  ui_comp_update_ext();
+  ui_refresh();
+}
+
+void ui_comp_remove_cb(uint32_t ns_id)
+{
+  if (pmap_has(uint32_t)(&ui_event_cbs, ns_id)) {
+    free_ui_event_callback(pmap_get(uint32_t)(&ui_event_cbs, ns_id));
+    pmap_del(uint32_t)(&ui_event_cbs, ns_id);
+  }
+  ui_comp_update_ext();
+  ui_refresh();
 }

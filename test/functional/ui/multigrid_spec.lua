@@ -3,7 +3,9 @@ local Screen = require('test.functional.ui.screen')
 local clear = helpers.clear
 local feed, command, insert = helpers.feed, helpers.command, helpers.insert
 local eq = helpers.eq
+local funcs = helpers.funcs
 local meths = helpers.meths
+local curwin = helpers.curwin
 local poke_eventloop = helpers.poke_eventloop
 
 
@@ -871,6 +873,15 @@ describe('ext_multigrid', function()
     before_each(function()
       screen:try_resize_grid(2, 60, 20)
     end)
+
+    it('winwidth() winheight() getwininfo() return inner width and height #19743', function()
+      eq(60, funcs.winwidth(0))
+      eq(20, funcs.winheight(0))
+      local win_info = funcs.getwininfo(curwin().id)[1]
+      eq(60, win_info.width)
+      eq(20, win_info.height)
+    end)
+
     it('gets written till grid width', function()
       insert(('a'):rep(60).."\n")
 

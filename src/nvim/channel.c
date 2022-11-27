@@ -1,24 +1,42 @@
 // This is an open source non-commercial project. Dear PVS-Studio, please check
 // it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
+#include <assert.h>
+#include <inttypes.h>
+#include <stddef.h>
+#include <stdio.h>
+#include <string.h>
+
+#include "lauxlib.h"
 #include "nvim/api/private/converter.h"
+#include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"
-#include "nvim/api/ui.h"
 #include "nvim/autocmd.h"
+#include "nvim/buffer_defs.h"
 #include "nvim/channel.h"
 #include "nvim/eval.h"
 #include "nvim/eval/encode.h"
+#include "nvim/eval/typval.h"
+#include "nvim/event/loop.h"
+#include "nvim/event/rstream.h"
 #include "nvim/event/socket.h"
+#include "nvim/event/wstream.h"
+#include "nvim/gettext.h"
+#include "nvim/globals.h"
+#include "nvim/log.h"
 #include "nvim/lua/executor.h"
+#include "nvim/main.h"
+#include "nvim/memory.h"
+#include "nvim/message.h"
 #include "nvim/msgpack_rpc/channel.h"
 #include "nvim/msgpack_rpc/server.h"
-#include "nvim/os/fs.h"
+#include "nvim/os/os_defs.h"
 #include "nvim/os/shell.h"
-#ifdef WIN32
+#include "nvim/rbuffer.h"
+#ifdef MSWIN
 # include "nvim/os/os_win_console.h"
 # include "nvim/os/pty_conpty_win.h"
 #endif
-#include "nvim/ascii.h"
 #include "nvim/path.h"
 
 static bool did_stdio = false;
@@ -492,7 +510,7 @@ uint64_t channel_from_stdio(bool rpc, CallbackReader on_output, const char **err
 
   int stdin_dup_fd = STDIN_FILENO;
   int stdout_dup_fd = STDOUT_FILENO;
-#ifdef WIN32
+#ifdef MSWIN
   // Strangely, ConPTY doesn't work if stdin and stdout are pipes. So replace
   // stdin and stdout with CONIN$ and CONOUT$, respectively.
   if (embedded_mode && os_has_conpty_working()) {

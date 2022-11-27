@@ -113,6 +113,9 @@ func Test_syntime()
   let a = execute('syntime report')
   call assert_equal("\nNo Syntax items defined for this buffer", a)
 
+  let a = execute('syntime clear')
+  call assert_equal("\nNo Syntax items defined for this buffer", a)
+
   view samples/memfile_test.c
   setfiletype cpp
   redraw
@@ -171,6 +174,10 @@ func Test_syntax_list()
   let a = execute('syntax list')
   call assert_equal("\nNo Syntax items defined for this buffer", a)
 
+  syntax keyword Type int containedin=g1 skipwhite skipempty skipnl nextgroup=Abc
+  let exp = "Type           xxx containedin=g1  nextgroup=Abc  skipnl skipwhite skipempty int"
+  call assert_equal(exp, split(execute("syntax list"), "\n")[1])
+
   bd
 endfunc
 
@@ -188,22 +195,26 @@ func Test_syntax_completion()
   call assert_equal('"syn sync ccomment clear fromstart linebreaks= linecont lines= match maxlines= minlines= region', @:)
 
   " Check that clearing "Aap" avoids it showing up before Boolean.
-  hi Aap ctermfg=blue
+  hi @Aap ctermfg=blue
   call feedkeys(":syn list \<C-A>\<C-B>\"\<CR>", 'tx')
-  call assert_match('^"syn list Aap Boolean Character ', @:)
-  hi clear Aap
+  call assert_match('^"syn list @Aap @boolean @character ', @:)
+  hi clear @Aap
 
   call feedkeys(":syn list \<C-A>\<C-B>\"\<CR>", 'tx')
-  call assert_match('^"syn list Boolean Character ', @:)
+  call assert_match('^"syn list @boolean @character ', @:)
 
   call feedkeys(":syn match \<C-A>\<C-B>\"\<CR>", 'tx')
-  call assert_match('^"syn match Boolean Character ', @:)
+  call assert_match('^"syn match @boolean @character ', @:)
+
+  syn cluster Aax contains=Aap
+  call feedkeys(":syn list @A\<C-A>\<C-B>\"\<CR>", 'tx')
+  call assert_match('^"syn list @Aax', @:)
 endfunc
 
 func Test_echohl_completion()
   call feedkeys(":echohl no\<C-A>\<C-B>\"\<CR>", 'tx')
   " call assert_equal('"echohl NonText Normal none', @:)
-  call assert_equal('"echohl NonText Normal NormalFloat NormalNC none', @:)
+  call assert_equal('"echohl NonText Normal NormalFloat none', @:)
 endfunc
 
 func Test_syntax_arg_skipped()
@@ -343,6 +354,18 @@ func Test_syntax_arg_skipped()
   syn clear
 endfunc
 
+" Check for an error. Used when multiple errors are thrown and we are checking
+" for an earliest error.
+func AssertFails(cmd, errcode)
+  let save_exception = ''
+  try
+    exe a:cmd
+  catch
+    let save_exception = v:exception
+  endtry
+  call assert_match(a:errcode, save_exception)
+endfunc
+
 func Test_syntax_invalid_arg()
   call assert_fails('syntax case asdf', 'E390:')
   if has('conceal')
@@ -350,11 +373,51 @@ func Test_syntax_invalid_arg()
   endif
   call assert_fails('syntax spell asdf', 'E390:')
   call assert_fails('syntax clear @ABCD', 'E391:')
-  call assert_fails('syntax include @Xxx', 'E397:')
-  call assert_fails('syntax region X start="{"', 'E399:')
+  call assert_fails('syntax include random_file', 'E484:')
+  call assert_fails('syntax include <afile>', 'E495:')
   call assert_fails('syntax sync x', 'E404:')
   call assert_fails('syntax keyword Abc a[', 'E789:')
   call assert_fails('syntax keyword Abc a[bc]d', 'E890:')
+  call assert_fails('syntax cluster Abc add=A add=', 'E406:')
+
+  " Test for too many \z\( and unmatched \z\(
+  " Not able to use assert_fails() here because both E50:/E879: and E475:
+  " messages are emitted.
+  set regexpengine=1
+  call AssertFails("syntax region MyRegion start='\\z\\(' end='\\*/'", 'E52:')
+
+  let cmd = "syntax region MyRegion start='"
+  let cmd ..= repeat("\\z\\(.\\)", 10) .. "' end='\*/'"
+  call AssertFails(cmd, 'E50:')
+
+  set regexpengine=2
+  call AssertFails("syntax region MyRegion start='\\z\\(' end='\\*/'", 'E54:')
+
+  let cmd = "syntax region MyRegion start='"
+  let cmd ..= repeat("\\z\\(.\\)", 10) .. "' end='\*/'"
+  call AssertFails(cmd, 'E879:')
+  set regexpengine&
+
+  call AssertFails('syntax keyword cMyItem grouphere G1', 'E393:')
+  call AssertFails('syntax sync match Abc grouphere MyItem "abc"', 'E394:')
+  call AssertFails('syn keyword Type contains int', 'E395:')
+  call assert_fails('syntax include @Xxx', 'E397:')
+  call AssertFails('syntax region X start', 'E398:')
+  call assert_fails('syntax region X start="{"', 'E399:')
+  call AssertFails('syntax cluster contains=Abc', 'E400:')
+  call AssertFails("syntax match Character /'.'", 'E401:')
+  call AssertFails("syntax match Character /'.'/a", 'E402:')
+  call assert_fails('syntax sync linecont /\%(/', 'E53:')
+  call assert_fails('syntax sync linecont /pat', 'E404:')
+  call assert_fails('syntax sync linecont', 'E404:')
+  call assert_fails('syntax sync linecont /pat1/ linecont /pat2/', 'E403:')
+  call assert_fails('syntax sync minlines=a', 'E404:')
+  call AssertFails('syntax match ABC /x/ contains=', 'E406:')
+  call AssertFails("syntax match Character contains /'.'/", 'E405:')
+  call AssertFails('syntax match ccFoo "Foo" nextgroup=ALLBUT,F', 'E407:')
+  call AssertFails('syntax region Block start="{" contains=F,ALLBUT', 'E408:')
+  call AssertFails("syntax match Characters contains=a.*x /'.'/", 'E409:')
+  call assert_fails('syntax match Search /abc/ contains=ALLBUT,/\%(/', 'E53:')
 endfunc
 
 func Test_syn_sync()
@@ -382,6 +445,7 @@ func Test_syn_clear()
   hi clear Foo
   call assert_equal('Foo', synIDattr(hlID("Foo"), "name"))
   hi clear Bar
+  call assert_fails('syntax clear invalid_syngroup', 'E28:')
 endfunc
 
 func Test_invalid_name()
@@ -389,7 +453,7 @@ func Test_invalid_name()
   syn keyword Nop yes
   call assert_fails("syntax keyword Wr\x17ong bar", 'E669:')
   syntax keyword @Wrong bar
-  call assert_match('W18:', execute('1messages'))
+  call assert_fails("syntax keyword @#Wrong bar", 'E5248:')
   syn clear
   hi clear Nop
   hi clear @Wrong
@@ -475,15 +539,16 @@ func Test_conceal()
   call assert_match('16     ', ScreenLines(2, 7)[0])
   call assert_equal([[0, '', 0], [1, '', 1], [1, '', 1], [1, '', 2], [1, '', 2], [0, '', 0]], map(range(1, 6), 'synconcealed(2, v:val)'))
 
+  call AssertFails("syntax match Entity '&amp;' conceal cchar=\<Tab>", 'E844:')
+
   syn clear
   set conceallevel&
   bw!
 endfunc
 
 func Test_bg_detection()
-  if has('gui_running')
-    return
-  endif
+  CheckNotGui
+
   " auto-detection of &bg, make sure sure it isn't set anywhere before
   " this test
   hi Normal ctermbg=0
@@ -560,15 +625,15 @@ func Test_synstack_synIDtrans()
   call assert_equal(['cComment', 'cTodo'], map(synstack(line("."), col(".")), 'synIDattr(v:val, "name")'))
   call assert_equal(['Comment', 'Todo'],   map(synstack(line("."), col(".")), 'synIDattr(synIDtrans(v:val), "name")'))
 
+  call assert_fails("let n=synIDtrans([])", 'E745:')
+
   syn clear
   bw!
 endfunc
 
 " Check highlighting for a small piece of C code with a screen dump.
 func Test_syntax_c()
-  if !CanRunVimInTerminal()
-    throw 'Skipped: cannot make screendumps'
-  endif
+  CheckRunVimInTerminal
   call writefile([
 	\ '/* comment line at the top */',
 	\ 'int main(int argc, char **argv) { // another comment',
@@ -602,6 +667,24 @@ func Test_syntax_c()
   let $COLORFGBG = ''
   call delete('Xtest.c')
 endfun
+
+" Test \z(...) along with \z1
+func Test_syn_zsub()
+  new
+  syntax on
+  call setline(1,  'xxx start foo xxx not end foo xxx end foo xxx')
+  let l:expected = '    ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ    '
+
+  for l:re in [0, 1, 2]
+    " Example taken from :help :syn-ext-match
+    syntax region Z start="start \z(\I\i*\)" skip="not end \z1" end="end \z1"
+    eval AssertHighlightGroups(1, 1, l:expected, 1, 'regexp=' .. l:re)
+    syntax clear Z
+  endfor
+
+  set re&
+  bw!
+endfunc
 
 " Using \z() in a region with NFA failing should not crash.
 func Test_syn_wrong_z_one()

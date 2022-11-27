@@ -39,7 +39,7 @@ endfunc
 func Test_global_error()
   call assert_fails('g\\a', 'E10:')
   call assert_fails('g', 'E148:')
-  call assert_fails('g/\(/y', 'E476:')
+  call assert_fails('g/\(/y', 'E54:')
 endfunc
 
 " Test for printing lines using :g with different search patterns

@@ -1,7 +1,8 @@
-local if_nil = vim.F.if_nil
+local api, if_nil = vim.api, vim.F.if_nil
 
 local M = {}
 
+---@enum DiagnosticSeverity
 M.severity = {
   ERROR = 1,
   WARN = 2,
@@ -45,18 +46,24 @@ local bufnr_and_namespace_cacher_mt = {
   end,
 }
 
-local diagnostic_cache = setmetatable({}, {
-  __index = function(t, bufnr)
-    assert(bufnr > 0, 'Invalid buffer number')
-    vim.api.nvim_buf_attach(bufnr, false, {
-      on_detach = function()
-        rawset(t, bufnr, nil) -- clear cache
-      end,
-    })
-    t[bufnr] = {}
-    return t[bufnr]
-  end,
-})
+local diagnostic_cache
+do
+  local group = api.nvim_create_augroup('DiagnosticBufWipeout', {})
+  diagnostic_cache = setmetatable({}, {
+    __index = function(t, bufnr)
+      assert(bufnr > 0, 'Invalid buffer number')
+      api.nvim_create_autocmd('BufWipeout', {
+        group = group,
+        buffer = bufnr,
+        callback = function()
+          rawset(t, bufnr, nil)
+        end,
+      })
+      t[bufnr] = {}
+      return t[bufnr]
+    end,
+  })
+end
 
 local diagnostic_cache_extmarks = setmetatable({}, bufnr_and_namespace_cacher_mt)
 local diagnostic_attached_buffers = {}
@@ -239,7 +246,7 @@ end)()
 ---@private
 local function get_bufnr(bufnr)
   if not bufnr or bufnr == 0 then
-    return vim.api.nvim_get_current_buf()
+    return api.nvim_get_current_buf()
   end
   return bufnr
 end
@@ -293,7 +300,7 @@ end
 ---@private
 local function restore_extmarks(bufnr, last)
   for ns, extmarks in pairs(diagnostic_cache_extmarks[bufnr]) do
-    local extmarks_current = vim.api.nvim_buf_get_extmarks(bufnr, ns, 0, -1, { details = true })
+    local extmarks_current = api.nvim_buf_get_extmarks(bufnr, ns, 0, -1, { details = true })
     local found = {}
     for _, extmark in ipairs(extmarks_current) do
       -- nvim_buf_set_lines will move any extmark to the line after the last
@@ -306,7 +313,7 @@ local function restore_extmarks(bufnr, last)
       if not found[extmark[1]] then
         local opts = extmark[4]
         opts.id = extmark[1]
-        pcall(vim.api.nvim_buf_set_extmark, bufnr, ns, extmark[2], extmark[3], opts)
+        pcall(api.nvim_buf_set_extmark, bufnr, ns, extmark[2], extmark[3], opts)
       end
     end
   end
@@ -316,7 +323,7 @@ end
 local function save_extmarks(namespace, bufnr)
   bufnr = get_bufnr(bufnr)
   if not diagnostic_attached_buffers[bufnr] then
-    vim.api.nvim_buf_attach(bufnr, false, {
+    api.nvim_buf_attach(bufnr, false, {
       on_lines = function(_, _, _, _, _, last)
         restore_extmarks(bufnr, last - 1)
       end,
@@ -327,7 +334,7 @@ local function save_extmarks(namespace, bufnr)
     diagnostic_attached_buffers[bufnr] = true
   end
   diagnostic_cache_extmarks[bufnr][namespace] =
-    vim.api.nvim_buf_get_extmarks(bufnr, namespace, 0, -1, { details = true })
+    api.nvim_buf_get_extmarks(bufnr, namespace, 0, -1, { details = true })
 end
 
 local registered_autocmds = {}
@@ -351,19 +358,6 @@ local function execute_scheduled_display(namespace, bufnr)
   M.show(namespace, bufnr, nil, args)
 end
 
---- @deprecated
---- Callback scheduled when leaving Insert mode.
----
---- called from the Vimscript autocommand.
----
---- See @ref schedule_display()
----
----@private
-function M._execute_scheduled_display(namespace, bufnr)
-  vim.deprecate('vim.diagnostic._execute_scheduled_display', nil, '0.9')
-  execute_scheduled_display(namespace, bufnr)
-end
-
 --- Table of autocmd events to fire the update for displaying new diagnostic information
 local insert_leave_auto_cmds = { 'InsertLeave', 'CursorHoldI' }
 
@@ -373,8 +367,8 @@ local function schedule_display(namespace, bufnr, args)
 
   local key = make_augroup_key(namespace, bufnr)
   if not registered_autocmds[key] then
-    local group = vim.api.nvim_create_augroup(key, { clear = true })
-    vim.api.nvim_create_autocmd(insert_leave_auto_cmds, {
+    local group = api.nvim_create_augroup(key, { clear = true })
+    api.nvim_create_autocmd(insert_leave_auto_cmds, {
       group = group,
       buffer = bufnr,
       callback = function()
@@ -391,7 +385,7 @@ local function clear_scheduled_display(namespace, bufnr)
   local key = make_augroup_key(namespace, bufnr)
 
   if registered_autocmds[key] then
-    vim.api.nvim_del_augroup_by_name(key)
+    api.nvim_del_augroup_by_name(key)
     registered_autocmds[key] = nil
   end
 end
@@ -406,7 +400,7 @@ local function get_diagnostics(bufnr, opts, clamp)
   -- Memoized results of buf_line_count per bufnr
   local buf_line_count = setmetatable({}, {
     __index = function(t, k)
-      t[k] = vim.api.nvim_buf_line_count(k)
+      t[k] = api.nvim_buf_line_count(k)
       return rawget(t, k)
     end,
   })
@@ -414,7 +408,7 @@ local function get_diagnostics(bufnr, opts, clamp)
   ---@private
   local function add(b, d)
     if not opts.lnum or d.lnum == opts.lnum then
-      if clamp and vim.api.nvim_buf_is_loaded(b) then
+      if clamp and api.nvim_buf_is_loaded(b) then
         local line_count = buf_line_count[b] - 1
         if
           d.lnum > line_count
@@ -478,7 +472,7 @@ local function set_list(loclist, opts)
   local winnr = opts.winnr or 0
   local bufnr
   if loclist then
-    bufnr = vim.api.nvim_win_get_buf(winnr)
+    bufnr = api.nvim_win_get_buf(winnr)
   end
   -- Don't clamp line numbers since the quickfix list can already handle line
   -- numbers beyond the end of the buffer
@@ -490,7 +484,7 @@ local function set_list(loclist, opts)
     vim.fn.setqflist({}, ' ', { title = title, items = items })
   end
   if open then
-    vim.api.nvim_command(loclist and 'lopen' or 'botright copen')
+    api.nvim_command(loclist and 'lopen' or 'botright copen')
   end
 end
 
@@ -499,7 +493,7 @@ local function next_diagnostic(position, search_forward, bufnr, opts, namespace)
   position[1] = position[1] - 1
   bufnr = get_bufnr(bufnr)
   local wrap = vim.F.if_nil(opts.wrap, true)
-  local line_count = vim.api.nvim_buf_line_count(bufnr)
+  local line_count = api.nvim_buf_line_count(bufnr)
   local diagnostics =
     get_diagnostics(bufnr, vim.tbl_extend('keep', opts, { namespace = namespace }), true)
   local line_diagnostics = diagnostic_lines(diagnostics)
@@ -513,7 +507,7 @@ local function next_diagnostic(position, search_forward, bufnr, opts, namespace)
       lnum = (lnum + line_count) % line_count
     end
     if line_diagnostics[lnum] and not vim.tbl_isempty(line_diagnostics[lnum]) then
-      local line_length = #vim.api.nvim_buf_get_lines(bufnr, lnum, lnum + 1, true)[1]
+      local line_length = #api.nvim_buf_get_lines(bufnr, lnum, lnum + 1, true)[1]
       local sort_diagnostics, is_next
       if search_forward then
         sort_diagnostics = function(a, b)
@@ -549,17 +543,17 @@ local function diagnostic_move_pos(opts, pos)
   opts = opts or {}
 
   local float = vim.F.if_nil(opts.float, true)
-  local win_id = opts.win_id or vim.api.nvim_get_current_win()
+  local win_id = opts.win_id or api.nvim_get_current_win()
 
   if not pos then
-    vim.api.nvim_echo({ { 'No more valid diagnostics to move to', 'WarningMsg' } }, true, {})
+    api.nvim_echo({ { 'No more valid diagnostics to move to', 'WarningMsg' } }, true, {})
     return
   end
 
-  vim.api.nvim_win_call(win_id, function()
+  api.nvim_win_call(win_id, function()
     -- Save position in the window's jumplist
     vim.cmd("normal! m'")
-    vim.api.nvim_win_set_cursor(win_id, { pos[1] + 1, pos[2] })
+    api.nvim_win_set_cursor(win_id, { pos[1] + 1, pos[2] })
     -- Open folds under the cursor
     vim.cmd('normal! zv')
   end)
@@ -568,7 +562,7 @@ local function diagnostic_move_pos(opts, pos)
     local float_opts = type(float) == 'table' and float or {}
     vim.schedule(function()
       M.open_float(vim.tbl_extend('keep', float_opts, {
-        bufnr = vim.api.nvim_win_get_buf(win_id),
+        bufnr = api.nvim_win_get_buf(win_id),
         scope = 'cursor',
         focus = false,
       }))
@@ -620,6 +614,10 @@ end
 ---                       * spacing: (number) Amount of empty spaces inserted at the beginning
 ---                                  of the virtual text.
 ---                       * prefix: (string) Prepend diagnostic message with prefix.
+---                       * suffix: (string or function) Append diagnostic message with suffix.
+---                                 If a function, it must have the signature (diagnostic) ->
+---                                 string, where {diagnostic} is of type |diagnostic-structure|.
+---                                 This can be used to render an LSP diagnostic error code.
 ---                       * format: (function) A function that takes a diagnostic as input and
 ---                                 returns a string. The return value is the text used to display
 ---                                 the diagnostic. Example:
@@ -673,13 +671,13 @@ function M.config(opts, namespace)
 
   if namespace then
     for bufnr, v in pairs(diagnostic_cache) do
-      if vim.api.nvim_buf_is_loaded(bufnr) and v[namespace] then
+      if api.nvim_buf_is_loaded(bufnr) and v[namespace] then
         M.show(namespace, bufnr)
       end
     end
   else
     for bufnr, v in pairs(diagnostic_cache) do
-      if vim.api.nvim_buf_is_loaded(bufnr) then
+      if api.nvim_buf_is_loaded(bufnr) then
         for ns in pairs(v) do
           M.show(ns, bufnr)
         end
@@ -714,13 +712,14 @@ function M.set(namespace, bufnr, diagnostics, opts)
     set_diagnostic_cache(namespace, bufnr, diagnostics)
   end
 
-  if vim.api.nvim_buf_is_loaded(bufnr) then
+  if api.nvim_buf_is_loaded(bufnr) then
     M.show(namespace, bufnr, nil, opts)
   end
 
-  vim.api.nvim_exec_autocmds('DiagnosticChanged', {
+  api.nvim_exec_autocmds('DiagnosticChanged', {
     modeline = false,
     buffer = bufnr,
+    data = { diagnostics = diagnostics },
   })
 end
 
@@ -732,7 +731,7 @@ function M.get_namespace(namespace)
   vim.validate({ namespace = { namespace, 'n' } })
   if not all_namespaces[namespace] then
     local name
-    for k, v in pairs(vim.api.nvim_get_namespaces()) do
+    for k, v in pairs(api.nvim_get_namespaces()) do
       if namespace == v then
         name = k
         break
@@ -757,6 +756,18 @@ function M.get_namespaces()
   return vim.deepcopy(all_namespaces)
 end
 
+---@class Diagnostic
+---@field buffer number
+---@field lnum number 0-indexed
+---@field end_lnum nil|number 0-indexed
+---@field col number 0-indexed
+---@field end_col nil|number 0-indexed
+---@field severity DiagnosticSeverity
+---@field message string
+---@field source nil|string
+---@field code nil|string
+---@field user_data nil|any arbitrary data plugins can add
+
 --- Get current diagnostics.
 ---
 ---@param bufnr number|nil Buffer number to get diagnostics from. Use 0 for
@@ -765,7 +776,7 @@ end
 ---                        - namespace: (number) Limit diagnostics to the given namespace.
 ---                        - lnum: (number) Limit diagnostics to the given line number.
 ---                        - severity: See |diagnostic-severity|.
----@return table A list of diagnostic items |diagnostic-structure|.
+---@return Diagnostic[] table A list of diagnostic items |diagnostic-structure|.
 function M.get(bufnr, opts)
   vim.validate({
     bufnr = { bufnr, 'n', true },
@@ -777,22 +788,23 @@ end
 
 --- Get the previous diagnostic closest to the cursor position.
 ---
----@param opts table See |vim.diagnostic.goto_next()|
----@return table Previous diagnostic
+---@param opts nil|table See |vim.diagnostic.goto_next()|
+---@return Diagnostic|nil Previous diagnostic
 function M.get_prev(opts)
   opts = opts or {}
 
-  local win_id = opts.win_id or vim.api.nvim_get_current_win()
-  local bufnr = vim.api.nvim_win_get_buf(win_id)
-  local cursor_position = opts.cursor_position or vim.api.nvim_win_get_cursor(win_id)
+  local win_id = opts.win_id or api.nvim_get_current_win()
+  local bufnr = api.nvim_win_get_buf(win_id)
+  local cursor_position = opts.cursor_position or api.nvim_win_get_cursor(win_id)
 
   return next_diagnostic(cursor_position, false, bufnr, opts, opts.namespace)
 end
 
 --- Return the position of the previous diagnostic in the current buffer.
 ---
----@param opts table See |vim.diagnostic.goto_next()|
----@return table Previous diagnostic position as a (row, col) tuple.
+---@param opts table|nil See |vim.diagnostic.goto_next()|
+---@return table|false Previous diagnostic position as a (row, col) tuple or false if there is no
+---                    prior diagnostic
 function M.get_prev_pos(opts)
   local prev = M.get_prev(opts)
   if not prev then
@@ -803,29 +815,30 @@ function M.get_prev_pos(opts)
 end
 
 --- Move to the previous diagnostic in the current buffer.
----@param opts table See |vim.diagnostic.goto_next()|
+---@param opts table|nil See |vim.diagnostic.goto_next()|
 function M.goto_prev(opts)
   return diagnostic_move_pos(opts, M.get_prev_pos(opts))
 end
 
 --- Get the next diagnostic closest to the cursor position.
 ---
----@param opts table See |vim.diagnostic.goto_next()|
----@return table Next diagnostic
+---@param opts table|nil See |vim.diagnostic.goto_next()|
+---@return Diagnostic|nil Next diagnostic
 function M.get_next(opts)
   opts = opts or {}
 
-  local win_id = opts.win_id or vim.api.nvim_get_current_win()
-  local bufnr = vim.api.nvim_win_get_buf(win_id)
-  local cursor_position = opts.cursor_position or vim.api.nvim_win_get_cursor(win_id)
+  local win_id = opts.win_id or api.nvim_get_current_win()
+  local bufnr = api.nvim_win_get_buf(win_id)
+  local cursor_position = opts.cursor_position or api.nvim_win_get_cursor(win_id)
 
   return next_diagnostic(cursor_position, true, bufnr, opts, opts.namespace)
 end
 
 --- Return the position of the next diagnostic in the current buffer.
 ---
----@param opts table See |vim.diagnostic.goto_next()|
----@return table Next diagnostic position as a (row, col) tuple.
+---@param opts table|nil See |vim.diagnostic.goto_next()|
+---@return table|false Next diagnostic position as a (row, col) tuple or false if no next
+---                    diagnostic.
 function M.get_next_pos(opts)
   local next = M.get_next(opts)
   if not next then
@@ -937,7 +950,7 @@ M.handlers.underline = {
 
     local ns = M.get_namespace(namespace)
     if not ns.user_data.underline_ns then
-      ns.user_data.underline_ns = vim.api.nvim_create_namespace('')
+      ns.user_data.underline_ns = api.nvim_create_namespace('')
     end
 
     local underline_ns = ns.user_data.underline_ns
@@ -964,7 +977,7 @@ M.handlers.underline = {
     local ns = M.get_namespace(namespace)
     if ns.user_data.underline_ns then
       diagnostic_cache_extmarks[bufnr][ns.user_data.underline_ns] = {}
-      vim.api.nvim_buf_clear_namespace(bufnr, ns.user_data.underline_ns, 0, -1)
+      api.nvim_buf_clear_namespace(bufnr, ns.user_data.underline_ns, 0, -1)
     end
   end,
 }
@@ -1003,7 +1016,7 @@ M.handlers.virtual_text = {
 
     local ns = M.get_namespace(namespace)
     if not ns.user_data.virt_text_ns then
-      ns.user_data.virt_text_ns = vim.api.nvim_create_namespace('')
+      ns.user_data.virt_text_ns = api.nvim_create_namespace('')
     end
 
     local virt_text_ns = ns.user_data.virt_text_ns
@@ -1015,7 +1028,7 @@ M.handlers.virtual_text = {
       local virt_texts = M._get_virt_text_chunks(line_diagnostics, opts.virtual_text)
 
       if virt_texts then
-        vim.api.nvim_buf_set_extmark(bufnr, virt_text_ns, line, 0, {
+        api.nvim_buf_set_extmark(bufnr, virt_text_ns, line, 0, {
           hl_mode = 'combine',
           virt_text = virt_texts,
         })
@@ -1027,7 +1040,7 @@ M.handlers.virtual_text = {
     local ns = M.get_namespace(namespace)
     if ns.user_data.virt_text_ns then
       diagnostic_cache_extmarks[bufnr][ns.user_data.virt_text_ns] = {}
-      vim.api.nvim_buf_clear_namespace(bufnr, ns.user_data.virt_text_ns, 0, -1)
+      api.nvim_buf_clear_namespace(bufnr, ns.user_data.virt_text_ns, 0, -1)
     end
   end,
 }
@@ -1045,6 +1058,7 @@ function M._get_virt_text_chunks(line_diags, opts)
 
   opts = opts or {}
   local prefix = opts.prefix or '■'
+  local suffix = opts.suffix or ''
   local spacing = opts.spacing or 4
 
   -- Create a little more space between virtual text and contents
@@ -1058,8 +1072,11 @@ function M._get_virt_text_chunks(line_diags, opts)
   -- TODO(tjdevries): Allow different servers to be shown first somehow?
   -- TODO(tjdevries): Display server name associated with these?
   if last.message then
+    if type(suffix) == 'function' then
+      suffix = suffix(last) or ''
+    end
     table.insert(virt_texts, {
-      string.format('%s %s', prefix, last.message:gsub('\r', ''):gsub('\n', '  ')),
+      string.format('%s %s%s', prefix, last.message:gsub('\r', ''):gsub('\n', '  '), suffix),
       virtual_text_highlight_map[last.severity],
     })
 
@@ -1159,7 +1176,7 @@ function M.show(namespace, bufnr, diagnostics, opts)
   if opts.update_in_insert then
     clear_scheduled_display(namespace, bufnr)
   else
-    local mode = vim.api.nvim_get_mode()
+    local mode = api.nvim_get_mode()
     if string.sub(mode.mode, 1, 1) == 'i' then
       schedule_display(namespace, bufnr, opts)
       return
@@ -1226,7 +1243,9 @@ end
 ---                      string, it is prepended to each diagnostic in the window with no
 ---                      highlight.
 ---                      Overrides the setting from |vim.diagnostic.config()|.
----@return tuple ({float_bufnr}, {win_id})
+---            - suffix: Same as {prefix}, but appends the text to the diagnostic instead of
+---                      prepending it. Overrides the setting from |vim.diagnostic.config()|.
+---@return number|nil, number|nil: ({float_bufnr}, {win_id})
 function M.open_float(opts, ...)
   -- Support old (bufnr, opts) signature
   local bufnr
@@ -1257,7 +1276,7 @@ function M.open_float(opts, ...)
   local lnum, col
   if scope == 'line' or scope == 'cursor' then
     if not opts.pos then
-      local pos = vim.api.nvim_win_get_cursor(0)
+      local pos = api.nvim_win_get_cursor(0)
       lnum = pos[1] - 1
       col = pos[2]
     elseif type(opts.pos) == 'number' then
@@ -1279,7 +1298,7 @@ function M.open_float(opts, ...)
     end, diagnostics)
   elseif scope == 'cursor' then
     -- LSP servers can send diagnostics with `end_col` past the length of the line
-    local line_length = #vim.api.nvim_buf_get_lines(bufnr, lnum, lnum + 1, true)[1]
+    local line_length = #api.nvim_buf_get_lines(bufnr, lnum, lnum + 1, true)[1]
     diagnostics = vim.tbl_filter(function(d)
       return d.lnum == lnum
         and math.min(d.col, line_length - 1) <= col
@@ -1311,9 +1330,7 @@ function M.open_float(opts, ...)
     vim.validate({
       header = {
         header,
-        function(v)
-          return type(v) == 'string' or type(v) == 'table'
-        end,
+        { 'string', 'table' },
         "'string' or 'table'",
       },
     })
@@ -1321,11 +1338,11 @@ function M.open_float(opts, ...)
       -- Don't insert any lines for an empty string
       if string.len(if_nil(header[1], '')) > 0 then
         table.insert(lines, header[1])
-        table.insert(highlights, { 0, header[2] or 'Bold' })
+        table.insert(highlights, { hlname = header[2] or 'Bold' })
       end
     elseif #header > 0 then
       table.insert(lines, header)
-      table.insert(highlights, { 0, 'Bold' })
+      table.insert(highlights, { hlname = 'Bold' })
     end
   end
 
@@ -1347,9 +1364,7 @@ function M.open_float(opts, ...)
     vim.validate({
       prefix = {
         prefix_opt,
-        function(v)
-          return type(v) == 'string' or type(v) == 'table' or type(v) == 'function'
-        end,
+        { 'string', 'table', 'function' },
         "'string' or 'table' or 'function'",
       },
     })
@@ -1360,18 +1375,52 @@ function M.open_float(opts, ...)
     end
   end
 
+  local suffix_opt = if_nil(opts.suffix, function(diagnostic)
+    return diagnostic.code and string.format(' [%s]', diagnostic.code) or ''
+  end)
+
+  local suffix, suffix_hl_group
+  if suffix_opt then
+    vim.validate({
+      suffix = {
+        suffix_opt,
+        { 'string', 'table', 'function' },
+        "'string' or 'table' or 'function'",
+      },
+    })
+    if type(suffix_opt) == 'string' then
+      suffix, suffix_hl_group = suffix_opt, 'NormalFloat'
+    elseif type(suffix_opt) == 'table' then
+      suffix, suffix_hl_group = suffix_opt[1] or '', suffix_opt[2] or 'NormalFloat'
+    end
+  end
+
   for i, diagnostic in ipairs(diagnostics) do
     if prefix_opt and type(prefix_opt) == 'function' then
       prefix, prefix_hl_group = prefix_opt(diagnostic, i, #diagnostics)
       prefix, prefix_hl_group = prefix or '', prefix_hl_group or 'NormalFloat'
     end
+    if suffix_opt and type(suffix_opt) == 'function' then
+      suffix, suffix_hl_group = suffix_opt(diagnostic, i, #diagnostics)
+      suffix, suffix_hl_group = suffix or '', suffix_hl_group or 'NormalFloat'
+    end
     local hiname = floating_highlight_map[diagnostic.severity]
     local message_lines = vim.split(diagnostic.message, '\n')
-    table.insert(lines, prefix .. message_lines[1])
-    table.insert(highlights, { #prefix, hiname, prefix_hl_group })
-    for j = 2, #message_lines do
-      table.insert(lines, string.rep(' ', #prefix) .. message_lines[j])
-      table.insert(highlights, { 0, hiname })
+    for j = 1, #message_lines do
+      local pre = j == 1 and prefix or string.rep(' ', #prefix)
+      local suf = j == #message_lines and suffix or ''
+      table.insert(lines, pre .. message_lines[j] .. suf)
+      table.insert(highlights, {
+        hlname = hiname,
+        prefix = {
+          length = j == 1 and #prefix or 0,
+          hlname = prefix_hl_group,
+        },
+        suffix = {
+          length = j == #message_lines and #suffix or 0,
+          hlname = suffix_hl_group,
+        },
+      })
     end
   end
 
@@ -1380,12 +1429,17 @@ function M.open_float(opts, ...)
     opts.focus_id = scope
   end
   local float_bufnr, winnr = require('vim.lsp.util').open_floating_preview(lines, 'plaintext', opts)
-  for i, hi in ipairs(highlights) do
-    local prefixlen, hiname, prefix_hiname = unpack(hi)
-    if prefix_hiname then
-      vim.api.nvim_buf_add_highlight(float_bufnr, -1, prefix_hiname, i - 1, 0, prefixlen)
+  for i, hl in ipairs(highlights) do
+    local line = lines[i]
+    local prefix_len = hl.prefix and hl.prefix.length or 0
+    local suffix_len = hl.suffix and hl.suffix.length or 0
+    if prefix_len > 0 then
+      api.nvim_buf_add_highlight(float_bufnr, -1, hl.prefix.hlname, i - 1, 0, prefix_len)
     end
-    vim.api.nvim_buf_add_highlight(float_bufnr, -1, hiname, i - 1, prefixlen, -1)
+    api.nvim_buf_add_highlight(float_bufnr, -1, hl.hlname, i - 1, prefix_len, #line - suffix_len)
+    if suffix_len > 0 then
+      api.nvim_buf_add_highlight(float_bufnr, -1, hl.suffix.hlname, i - 1, #line - suffix_len, -1)
+    end
   end
 
   return float_bufnr, winnr
@@ -1416,9 +1470,10 @@ function M.reset(namespace, bufnr)
       M.hide(iter_namespace, iter_bufnr)
     end
 
-    vim.api.nvim_exec_autocmds('DiagnosticChanged', {
+    api.nvim_exec_autocmds('DiagnosticChanged', {
       modeline = false,
       buffer = iter_bufnr,
+      data = { diagnostics = {} },
     })
   end
 end
@@ -1538,7 +1593,7 @@ end
 ---@param defaults table|nil Table of default values for any fields not listed in {groups}.
 ---                          When omitted, numeric values default to 0 and "severity" defaults to
 ---                          ERROR.
----@return diagnostic |diagnostic-structure| or `nil` if {pat} fails to match {str}.
+---@return Diagnostic|nil: |diagnostic-structure| or `nil` if {pat} fails to match {str}.
 function M.match(str, pat, groups, severity_map, defaults)
   vim.validate({
     str = { str, 's' },
@@ -1585,7 +1640,7 @@ local errlist_type_map = {
 --- passed to |setqflist()| or |setloclist()|.
 ---
 ---@param diagnostics table List of diagnostics |diagnostic-structure|.
----@return array of quickfix list items |setqflist-what|
+---@return table[] of quickfix list items |setqflist-what|
 function M.toqflist(diagnostics)
   vim.validate({
     diagnostics = {
@@ -1622,7 +1677,7 @@ end
 ---
 ---@param list table A list of quickfix items from |getqflist()| or
 ---            |getloclist()|.
----@return array of diagnostics |diagnostic-structure|
+---@return Diagnostic[] array of |diagnostic-structure|
 function M.fromqflist(list)
   vim.validate({
     list = {

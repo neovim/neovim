@@ -13,8 +13,7 @@ export SHELL := sh
 export NVIM_PRG := $(NVIM_PRG)
 export TMPDIR := $(abspath Xtest-tmpdir)
 
-SCRIPTS_DEFAULT = \
-	test42.out             \
+SCRIPTS_DEFAULT =
 
 ifneq ($(OS),Windows_NT)
   SCRIPTS_DEFAULTS := $(SCRIPTS_DEFAULT) \
@@ -179,4 +178,4 @@ newtestssilent: $(NEW_TESTS_RES)
 	@echo "[OLDTEST] Running" $*
 	@rm -rf $*.failed test.ok $(RM_ON_RUN)
 	@mkdir -p $(TMPDIR)
-	@/bin/sh runnvim.sh $(ROOT) $(NVIM_PRG) $* $(RUN_VIMTEST) $(NO_INITS) -u NONE -S runtest.vim $*.vim
+	@/bin/sh runnvim.sh $(ROOT) $(NVIM_PRG) $* $(RUN_VIMTEST) $(NO_INITS) -u NONE --cmd "set shortmess-=F" -S runtest.vim $*.vim

@@ -13,11 +13,13 @@
 /// Vim specific notes:
 /// sha256_self_test() is implicitly called once.
 
-#include <stddef.h>        // for size_t
-#include <stdio.h>         // for snprintf().
+#include <stdbool.h>
+#include <stddef.h>
+#include <stdio.h>
+#include <string.h>
 
-#include "nvim/sha256.h"   // for context_sha256_T
-#include "nvim/vim.h"      // for STRCPY()/STRLEN().
+#include "nvim/sha256.h"
+#include "nvim/vim.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "sha256.c.generated.h"
@@ -339,7 +341,7 @@ bool sha256_self_test(void)
       }
     }
 
-    if (memcmp(output, sha_self_test_vector[i], SHA256_BUFFER_SIZE)) {
+    if (memcmp(output, sha_self_test_vector[i], SHA256_BUFFER_SIZE) != 0) {
       failures = true;
       output[sizeof(output) - 1] = '\0';
 

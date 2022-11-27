@@ -83,7 +83,8 @@ pattern and do not match another pattern: >
 This first finds all lines containing "found", but only executes {cmd} when
 there is no match for "notfound".
 
-To execute a non-Ex command, you can use the `:normal` command: >
+Any Ex command can be used, see |ex-cmd-index|.  To execute a Normal mode
+command, you can use the `:normal` command: >
 	:g/pat/normal {commands}
 Make sure that {commands} ends with a whole command, otherwise Vim will wait
 for you to type the rest of the command for each match.  The screen will not
@@ -288,7 +289,7 @@ For writing a Vim script, see chapter 41 of the user manual |usr_41.txt|.
 			how this can be useful.
 
 			This is normally done automatically during startup,
-			after loading your .vimrc file.  With this command it
+			after loading your |vimrc| file.  With this command it
 			can be done earlier.
 
 			Packages will be loaded only once.  Using
@@ -470,7 +471,7 @@ flag when defining the function, it is not relevant when executing it. >
    :set cpo-=C
 <
 					*line-continuation-comment*
-To add a comment in between the lines start with '"\ '.  Notice the space
+To add a comment in between the lines start with `'"\ '`.  Notice the space
 after the backslash.  Example: >
 	let array = [
 		"\ first entry comment
@@ -490,29 +491,40 @@ Rationale:
 	continuation lines to be part of the comment.  Since it was like this
 	for a long time, when making it possible to add a comment halfway a
 	sequence of continuation lines, it was not possible to use \", since
-	that was a valid continuation line.  Using '"\ ' comes closest, even
+	that was a valid continuation line.  Using `'"\ '` comes closest, even
 	though it may look a bit weird.  Requiring the space after the
 	backslash is to make it very unlikely this is a normal comment line.
 
 ==============================================================================
 Using Vim packages					*packages*
 
-A Vim package is a directory that contains one or more plugins.  The
-advantages over normal plugins:
-- A package can be downloaded as an archive and unpacked in its own directory.
-  Thus the files are not mixed with files of other plugins.  That makes it
-  easy to update and remove.
-- A package can be a git, mercurial, etc. repository.  That makes it really
-  easy to update.
-- A package can contain multiple plugins that depend on each other.
-- A package can contain plugins that are automatically loaded on startup and
-  ones that are only loaded when needed with `:packadd`.
+A Vim "package" is a directory that contains |plugin|s.  Compared to normal
+plugins, a package can...
+- be downloaded as an archive and unpacked in its own directory, so the files
+  are not mixed with files of other plugins.
+- be a git, mercurial, etc. repository, thus easy to update.
+- contain multiple plugins that depend on each other.
+- contain plugins that are automatically loaded on startup ("start" packages,
+  located in "pack/*/start/*") and ones that are only loaded when needed with
+  |:packadd| ("opt" packages, located in "pack/*/opt/*").
 
+							*runtime-search-path*
+Nvim searches for |:runtime| files in:
+	1. all paths in 'runtimepath'
+	2. all "pack/*/start/*" dirs
+
+Note that the "pack/*/start/*" paths are not explicitly included in
+'runtimepath', so they will not be reported by ":set rtp" or "echo &rtp".
+Scripts can use |nvim_list_runtime_paths()| to list all used directories, and
+|nvim_get_runtime_file()| to query for specific files or sub-folders within
+the runtime path. Example: >
+	" List all runtime dirs and packages with Lua paths.
+	:echo nvim_get_runtime_file("lua/", v:true)
 
 Using a package and loading automatically ~
 
-Let's assume your Vim files are in the "~/.local/share/nvim/site" directory
-and you want to add a package from a zip archive "/tmp/foopack.zip":
+Let's assume your Nvim files are in "~/.local/share/nvim/site" and you want to
+add a package from a zip archive "/tmp/foopack.zip":
 	% mkdir -p ~/.local/share/nvim/site/pack/foo
 	% cd ~/.local/share/nvim/site/pack/foo
 	% unzip /tmp/foopack.zip
@@ -525,28 +537,22 @@ You would now have these files under ~/.local/share/nvim/site:
 	pack/foo/start/foobar/syntax/some.vim
 	pack/foo/opt/foodebug/plugin/debugger.vim
 
-							*runtime-search-path*
-When runtime files are searched for, first all paths in 'runtimepath' are
-searched, then all "pack/*/start/*" dirs are searched. However, package entries
-are not visible in `:set rtp` or `echo &rtp`, as the final concatenated path
-would be too long and get truncated. To list all used directories, use
-|nvim_list_runtime_paths()|. In addition |nvim_get_runtime_file()| can be used
-to query for specific files or sub-folders within the runtime path. For
-instance to list all runtime dirs and packages with lua paths, use >
+On startup after processing your |config|, Nvim scans all directories in
+'packpath' for plugins in "pack/*/start/*", then loads the plugins.
 
-    :echo nvim_get_runtime_file("lua/", v:true)
+To allow for calling into package functionality while parsing your |vimrc|,
+|:colorscheme| and |autoload| will both automatically search under 'packpath'
+as well in addition to 'runtimepath'.  See the documentation for each for
+details.
 
-<When Vim starts up, after processing your .vimrc, it scans all directories in
-'packpath' for plugins under the "pack/*/start" directory, and all the plugins
-are loaded.
+In the example Nvim will find "pack/foo/start/foobar/plugin/foo.vim" and load
+it.
 
-In the example Vim will find "pack/foo/start/foobar/plugin/foo.vim" and load it.
-
-If the "foobar" plugin kicks in and sets the 'filetype' to "some", Vim will
+If the "foobar" plugin kicks in and sets the 'filetype' to "some", Nvim will
 find the syntax/some.vim file, because its directory is in the runtime search
 path.
 
-Vim will also load ftdetect files, if there are any.
+Nvim will also load ftdetect files, if there are any.
 
 Note that the files under "pack/foo/opt" are not loaded automatically, only the
 ones under "pack/foo/start".  See |pack-add| below for how the "opt" directory
@@ -588,12 +594,12 @@ This searches for "pack/*/opt/foodebug" in 'packpath' and will find
 it.
 
 This could be done if some conditions are met.  For example, depending on
-whether Vim supports a feature or a dependency is missing.
+whether Nvim supports a feature or a dependency is missing.
 
 You can also load an optional plugin at startup, by putting this command in
-your |.vimrc|: >
+your |config|: >
 	:packadd! foodebug
-The extra "!" is so that the plugin isn't loaded if Vim was started with
+The extra "!" is so that the plugin isn't loaded if Nvim was started with
 |--noplugin|.
 
 It is perfectly normal for a package to only have files in the "opt"
@@ -605,7 +611,7 @@ Where to put what ~
 Since color schemes, loaded with `:colorscheme`, are found below
 "pack/*/start" and "pack/*/opt", you could put them anywhere.  We recommend
 you put them below "pack/*/opt", for example
-".vim/pack/mycolors/opt/dark/colors/very_dark.vim".
+"~/.config/nvim/pack/mycolors/opt/dark/colors/very_dark.vim".
 
 Filetype plugins should go under "pack/*/start", so that they are always
 found.  Unless you have more than one plugin for a file type and want to
@@ -683,8 +689,8 @@ found automatically.  Your package would have these files:
 <	pack/foo/start/lib/autoload/foolib.vim >
 		func foolib#getit()
 
-This works, because start packages will be used to look for autoload files,
-when sourcing the plugins.
+This works, because start packages will be searched for autoload files, when
+sourcing the plugins.
 
 ==============================================================================
 Debugging scripts					*debug-scripts*

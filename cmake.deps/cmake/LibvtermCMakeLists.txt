@@ -41,14 +41,6 @@ file(GLOB VTERM_SOURCES ${CMAKE_SOURCE_DIR}/src/*.c)
 add_library(vterm ${VTERM_SOURCES} ${TBL_FILES_HEADERS})
 install(TARGETS vterm ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
-add_library(vterm-shared SHARED ${VTERM_SOURCES} ${TBL_FILES_HEADERS})
-set_target_properties(vterm-shared PROPERTIES
-  OUTPUT_NAME vterm
-  SOVERSION 0)
-install(TARGETS vterm-shared
-  LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
-
 install(FILES include/vterm.h include/vterm_keycodes.h
   DESTINATION include)
 
@@ -90,3 +82,5 @@ if(Perl_FOUND)
       DEPENDS ${header_path} ${perl_header_path})
   endforeach()
 endif()
+
+# vim: set ft=cmake:

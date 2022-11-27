@@ -31,7 +31,7 @@
 /// @return `s, sizeof(s) - 1`
 #define S_LEN(s) (s), (sizeof(s) - 1)
 
-/// LINEEMPTY() - return TRUE if the line is empty
+/// LINEEMPTY() - return true if the line is empty
 #define LINEEMPTY(p) (*ml_get(p) == NUL)
 
 // toupper() and tolower() that use the current locale.
@@ -54,7 +54,7 @@
 #define ASCII_ISALNUM(c) (ASCII_ISALPHA(c) || ascii_isdigit(c))
 
 // Returns empty string if it is NULL.
-#define EMPTY_IF_NULL(x) (char *)((x) ? (x) : (char_u *)"")
+#define EMPTY_IF_NULL(x) ((x) ? (x) : "")
 
 /// Adjust chars in a language according to 'langmap' option.
 /// NOTE that there is no noticeable overhead if 'langmap' is not set.
@@ -86,7 +86,7 @@
 // mch_open_rw(): invoke os_open() with third argument for user R/W.
 #if defined(UNIX)  // open in rw------- mode
 # define MCH_OPEN_RW(n, f)      os_open((n), (f), (mode_t)0600)
-#elif defined(WIN32)
+#elif defined(MSWIN)
 # define MCH_OPEN_RW(n, f)      os_open((n), (f), S_IREAD | S_IWRITE)
 #else
 # define MCH_OPEN_RW(n, f)      os_open((n), (f), 0)
@@ -104,7 +104,7 @@
 // MB_PTR_BACK(): backup a pointer to the previous character, taking care of
 // multi-byte characters if needed. Only use with "p" > "s" !
 #define MB_PTR_BACK(s, p) \
-  (p -= utf_head_off((char_u *)(s), (char_u *)(p) - 1) + 1)
+  (p -= utf_head_off((char *)(s), (char *)(p) - 1) + 1)
 
 // MB_CHAR2BYTES(): convert character to bytes and advance pointer to bytes
 #define MB_CHAR2BYTES(c, b) ((b) += utf_char2bytes((c), ((char *)b)))
@@ -178,14 +178,14 @@
 
 // Type of uv_buf_t.len is platform-dependent.
 // Related: https://github.com/libuv/libuv/pull/1236
-#if defined(WIN32)
+#if defined(MSWIN)
 # define UV_BUF_LEN(x)  (ULONG)(x)
 #else
 # define UV_BUF_LEN(x)  (x)
 #endif
 
 // Type of read()/write() `count` param is platform-dependent.
-#if defined(WIN32)
+#if defined(MSWIN)
 # define IO_COUNT(x)  (unsigned)(x)
 #else
 # define IO_COUNT(x)  (x)

@@ -1,27 +1,38 @@
 // This is an open source non-commercial project. Dear PVS-Studio, please check
 // it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
-#include <assert.h>
+#include <stdbool.h>
+#include <stddef.h>
+#include <string.h>
 
 #include "nvim/ascii.h"
 #include "nvim/autocmd.h"
+#include "nvim/buffer_defs.h"
 #include "nvim/drawscreen.h"
 #include "nvim/eval.h"
-#include "nvim/ex_docmd.h"
+#include "nvim/eval/typval.h"
+#include "nvim/eval/typval_defs.h"
+#include "nvim/event/defs.h"
+#include "nvim/event/loop.h"
+#include "nvim/event/multiqueue.h"
 #include "nvim/getchar.h"
+#include "nvim/globals.h"
 #include "nvim/insexpand.h"
-#include "nvim/lib/kvec.h"
+#include "nvim/keycodes.h"
 #include "nvim/log.h"
+#include "nvim/macros.h"
 #include "nvim/main.h"
 #include "nvim/option.h"
-#include "nvim/option_defs.h"
 #include "nvim/os/input.h"
+#include "nvim/screen.h"
 #include "nvim/state.h"
+#include "nvim/strings.h"
+#include "nvim/types.h"
 #include "nvim/ui.h"
 #include "nvim/vim.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "state.c.generated.h"
+# include "state.c.generated.h"  // IWYU pragma: export
 #endif
 
 void state_enter(VimState *s)
@@ -57,7 +68,7 @@ getkey:
       // Duplicate display updating logic in vgetorpeek()
       if (((State & MODE_INSERT) != 0 || p_lz) && (State & MODE_CMDLINE) == 0
           && must_redraw != 0 && !need_wait_return) {
-        update_screen(0);
+        update_screen();
         setcursor();  // put cursor back where it belongs
       }
       // Flush screen updates before blocking
@@ -65,7 +76,7 @@ getkey:
       // Call `os_inchar` directly to block for events or user input without
       // consuming anything from `input_buffer`(os/input.c) or calling the
       // mapping engine.
-      (void)os_inchar(NULL, 0, -1, 0, main_loop.events);
+      (void)os_inchar(NULL, 0, -1, typebuf.tb_change_cnt, main_loop.events);
       // If an event was put into the queue, we send K_EVENT directly.
       if (!multiqueue_empty(main_loop.events)) {
         key = K_EVENT;
@@ -229,7 +240,9 @@ void get_mode(char *buf)
 /// Fires a ModeChanged autocmd if appropriate.
 void may_trigger_modechanged(void)
 {
-  if (!has_event(EVENT_MODECHANGED)) {
+  // Skip this when got_int is set, the autocommand will not be executed.
+  // Better trigger it next time.
+  if (!has_event(EVENT_MODECHANGED) || got_int) {
     return;
   }
 
@@ -237,7 +250,7 @@ void may_trigger_modechanged(void)
   char pattern_buf[2 * MODE_MAX_LENGTH];
 
   get_mode(curr_mode);
-  if (STRCMP(curr_mode, last_mode) == 0) {
+  if (strcmp(curr_mode, last_mode) == 0) {
     return;
   }
 

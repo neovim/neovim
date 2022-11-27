@@ -5,11 +5,23 @@
 #include <assert.h>
 #include <errno.h>
 #include <fcntl.h>
-#include <limits.h>
 #include <stdbool.h>
 #include <stddef.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/stat.h>
 
 #include "auto/config.h"
+#include "nvim/gettext.h"
+#include "nvim/globals.h"
+#include "nvim/log.h"
+#include "nvim/macros.h"
+#include "nvim/option_defs.h"
+#include "nvim/os/fs_defs.h"
+#include "nvim/types.h"
+#include "nvim/vim.h"
 
 #ifdef HAVE_SYS_UIO_H
 # include <sys/uio.h>
@@ -18,16 +30,14 @@
 #include <uv.h>
 
 #include "nvim/ascii.h"
-#include "nvim/assert.h"
 #include "nvim/memory.h"
 #include "nvim/message.h"
-#include "nvim/option.h"
 #include "nvim/os/os.h"
-#include "nvim/os/os_defs.h"
 #include "nvim/path.h"
-#include "nvim/strings.h"
 
-#ifdef WIN32
+struct iovec;
+
+#ifdef MSWIN
 # include "nvim/mbyte.h"  // for utf8_to_utf16, utf16_to_utf8
 #endif
 
@@ -121,18 +131,17 @@ bool os_isrealdir(const char *name)
   fs_loop_unlock();
   if (S_ISLNK(request.statbuf.st_mode)) {
     return false;
-  } else {
-    return S_ISDIR(request.statbuf.st_mode);
   }
+  return S_ISDIR(request.statbuf.st_mode);
 }
 
 /// Check if the given path exists and is a directory.
 ///
 /// @return `true` if `name` is a directory.
-bool os_isdir(const char_u *name)
+bool os_isdir(const char *name)
   FUNC_ATTR_NONNULL_ALL
 {
-  int32_t mode = os_getperm((const char *)name);
+  int32_t mode = os_getperm(name);
   if (mode < 0) {
     return false;
   }
@@ -151,7 +160,7 @@ bool os_isdir(const char_u *name)
 int os_nodetype(const char *name)
   FUNC_ATTR_NONNULL_ALL
 {
-#ifndef WIN32  // Unix
+#ifndef MSWIN  // Unix
   uv_stat_t statbuf;
   if (0 != os_stat(name, &statbuf)) {
     return NODE_NORMAL;  // File doesn't exist.
@@ -241,7 +250,7 @@ bool os_can_exe(const char *name, char **abspath, bool use_path)
   FUNC_ATTR_NONNULL_ARG(1)
 {
   if (!use_path || gettail_dir(name) != name) {
-#ifdef WIN32
+#ifdef MSWIN
     if (is_executable_ext(name, abspath)) {
 #else
     // Must have path separator, cannot execute files in the current directory.
@@ -249,9 +258,8 @@ bool os_can_exe(const char *name, char **abspath, bool use_path)
         && is_executable(name, abspath)) {
 #endif
       return true;
-    } else {
-      return false;
     }
+    return false;
   }
 
   return is_executable_in_path(name, abspath);
@@ -270,7 +278,7 @@ static bool is_executable(const char *name, char **abspath)
     return false;
   }
 
-#ifdef WIN32
+#ifdef MSWIN
   // Windows does not have exec bit; just check if the file exists and is not
   // a directory.
   const bool ok = S_ISREG(mode);
@@ -287,7 +295,7 @@ static bool is_executable(const char *name, char **abspath)
   return ok;
 }
 
-#ifdef WIN32
+#ifdef MSWIN
 /// Checks if file `name` is executable under any of these conditions:
 /// - extension is in $PATHEXT and `name` is executable
 /// - result of any $PATHEXT extension appended to `name` is executable
@@ -351,7 +359,7 @@ static bool is_executable_in_path(const char *name, char **abspath)
     return false;
   }
 
-#ifdef WIN32
+#ifdef MSWIN
   // Prepend ".;" to $PATH.
   size_t pathlen = strlen(path_env);
   char *path = memcpy(xmallocz(pathlen + 2), "." ENV_SEPSTR, 2);
@@ -374,7 +382,7 @@ static bool is_executable_in_path(const char *name, char **abspath)
     STRLCPY(buf, p, e - p + 1);
     append_path(buf, name, buf_len);
 
-#ifdef WIN32
+#ifdef MSWIN
     if (is_executable_ext(buf, abspath)) {
 #else
     if (is_executable(buf, abspath)) {
@@ -446,7 +454,7 @@ FILE *os_fopen(const char *path, const char *flags)
     default:
       abort();
     }
-#ifdef WIN32
+#ifdef MSWIN
     if (flags[1] == 'b') {
       iflags |= O_BINARY;
     }
@@ -756,9 +764,8 @@ int32_t os_getperm(const char *name)
   int stat_result = os_stat(name, &statbuf);
   if (stat_result == kLibuvSuccess) {
     return (int32_t)statbuf.st_mode;
-  } else {
-    return stat_result;
   }
+  return stat_result;
 }
 
 /// Set the permission of a file.
@@ -821,10 +828,10 @@ int os_fchown(int fd, uv_uid_t owner, uv_gid_t group)
 /// Check if a path exists.
 ///
 /// @return `true` if `path` exists
-bool os_path_exists(const char_u *path)
+bool os_path_exists(const char *path)
 {
   uv_stat_t statbuf;
-  return os_stat((char *)path, &statbuf) == kLibuvSuccess;
+  return os_stat(path, &statbuf) == kLibuvSuccess;
 }
 
 /// Sets file access and modification times.
@@ -865,7 +872,7 @@ int os_file_is_writable(const char *name)
   int r;
   RUN_UV_FS_FUNC(r, uv_fs_access, name, W_OK, NULL);
   if (r == 0) {
-    return os_isdir((char_u *)name) ? 2 : 1;
+    return os_isdir(name) ? 2 : 1;
   }
   return 0;
 }
@@ -911,11 +918,11 @@ int os_mkdir_recurse(const char *const dir, int32_t mode, char **const failed_di
   // We're done when it's "/" or "c:/".
   const size_t dirlen = strlen(dir);
   char *const curdir = xmemdupz(dir, dirlen);
-  char *const past_head = (char *)get_past_head((char_u *)curdir);
+  char *const past_head = get_past_head(curdir);
   char *e = curdir + dirlen;
   const char *const real_end = e;
   const char past_head_save = *past_head;
-  while (!os_isdir((char_u *)curdir)) {
+  while (!os_isdir(curdir)) {
     e = path_tail_with_sep(curdir);
     if (e <= past_head) {
       *past_head = NUL;
@@ -943,6 +950,37 @@ int os_mkdir_recurse(const char *const dir, int32_t mode, char **const failed_di
     }
   }
   xfree(curdir);
+  return 0;
+}
+
+/// Create the parent directory of a file if it does not exist
+///
+/// @param[in] fname Full path of the file name whose parent directories
+///                  we want to create
+/// @param[in] mode  Permissions for the newly-created directory.
+///
+/// @return `0` for success, libuv error code for failure.
+int os_file_mkdir(char *fname, int32_t mode)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  if (!dir_of_file_exists((char_u *)fname)) {
+    char *tail = path_tail_with_sep(fname);
+    char *last_char = tail + strlen(tail) - 1;
+    if (vim_ispathsep(*last_char)) {
+      emsg(_(e_noname));
+      return -1;
+    }
+    char c = *tail;
+    *tail = NUL;
+    int r;
+    char *failed_dir;
+    if (((r = os_mkdir_recurse(fname, mode, &failed_dir)) < 0)) {
+      semsg(_(e_mkdir), failed_dir, os_strerror(r));
+      xfree(failed_dir);
+    }
+    *tail = c;
+    return r;
+  }
   return 0;
 }
 
@@ -1208,7 +1246,7 @@ char *os_realpath(const char *name, char *buf)
   return result == kLibuvSuccess ? buf : NULL;
 }
 
-#ifdef WIN32
+#ifdef MSWIN
 # include <shlobj.h>
 
 /// When "fname" is the name of a shortcut (*.lnk) resolve the file it points

@@ -6,10 +6,18 @@ local expect = helpers.expect
 local command = helpers.command
 local eq = helpers.eq
 local eval = helpers.eval
+local curbuf_contents = helpers.curbuf_contents
 
 describe('insert-mode', function()
   before_each(function()
     clear()
+  end)
+
+  it('indents only once after "!" keys #12894', function()
+    command('let counter = []')
+    command('set indentexpr=len(add(counter,0))')
+    feed('i<C-F>x')
+    eq(' x', curbuf_contents())
   end)
 
   it('CTRL-@', function()

@@ -4,8 +4,8 @@
 #include <stdint.h>
 #include <uv.h>
 
+#include "klib/klist.h"
 #include "nvim/event/multiqueue.h"
-#include "nvim/lib/klist.h"
 #include "nvim/os/time.h"
 
 typedef void *WatcherPtr;

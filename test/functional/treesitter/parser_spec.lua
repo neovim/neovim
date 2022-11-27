@@ -5,17 +5,15 @@ local eq = helpers.eq
 local insert = helpers.insert
 local exec_lua = helpers.exec_lua
 local feed = helpers.feed
-local pending_c_parser = helpers.pending_c_parser
+local is_os = helpers.is_os
+local skip = helpers.skip
 
 before_each(clear)
 
 describe('treesitter parser API', function()
   clear()
-  if pending_c_parser(pending) then return end
 
   it('parses buffer', function()
-    if helpers.pending_win32(pending) then return end
-
     insert([[
       int main() {
         int x = 3;
@@ -249,7 +247,6 @@ void ui_refresh(void)
   end)
 
   it('supports getting text of multiline node', function()
-    if pending_c_parser(pending) then return end
     insert(test_text)
     local res = exec_lua([[
       local parser = vim.treesitter.get_parser(0, "c")
@@ -687,7 +684,7 @@ int x = INT_MAX;
       end)
 
       it("should not inject bad languages", function()
-        if helpers.pending_win32(pending) then return end
+        skip(is_os('win'))
         exec_lua([=[
         vim.treesitter.add_directive("inject-bad!", function(match, _, _, pred, metadata)
           metadata.language = "{"

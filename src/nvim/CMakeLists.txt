@@ -96,8 +96,8 @@ file(MAKE_DIRECTORY ${LINT_SUPPRESSES_ROOT}/src)
 
 glob_wrapper(NVIM_SOURCES *.c)
 glob_wrapper(NVIM_HEADERS *.h)
-glob_wrapper(EXTERNAL_SOURCES ../xdiff/*.c ../mpack/*.c ../cjson/*.c)
-glob_wrapper(EXTERNAL_HEADERS ../xdiff/*.h ../mpack/*.h ../cjson/*.h)
+glob_wrapper(EXTERNAL_SOURCES ../xdiff/*.c ../mpack/*.c ../cjson/*.c ../klib/*.c)
+glob_wrapper(EXTERNAL_HEADERS ../xdiff/*.h ../mpack/*.h ../cjson/*.h ../klib/*.h)
 
 foreach(subdir
         os
@@ -159,14 +159,14 @@ list(REMOVE_ITEM NVIM_SOURCES ${to_remove})
 if(NOT MSVC)
   # xdiff, mpack, lua-cjson: inlined external project, we don't maintain it. #9306
   set_source_files_properties(
-    ${EXTERNAL_SOURCES} PROPERTIES COMPILE_FLAGS "${COMPILE_FLAGS} -Wno-conversion -Wno-missing-noreturn -Wno-missing-format-attribute -Wno-double-promotion")
+    ${EXTERNAL_SOURCES} PROPERTIES COMPILE_FLAGS "${COMPILE_FLAGS} -Wno-conversion -Wno-missing-noreturn -Wno-missing-format-attribute -Wno-double-promotion -Wno-strict-prototypes")
 endif()
 
 if(NOT "${MIN_LOG_LEVEL}" MATCHES "^$")
   add_definitions(-DMIN_LOG_LEVEL=${MIN_LOG_LEVEL})
 endif()
 
-if(DEBUG OR CLANG_ASAN_UBSAN OR CLANG_MSAN OR CLANG_TSAN)
+if(CLANG_ASAN_UBSAN OR CLANG_MSAN OR CLANG_TSAN)
   add_definitions(-DEXITFREE)
 endif()
 
@@ -206,9 +206,7 @@ add_custom_target(update_version_stamp
     -DNVIM_VERSION_PATCH=${NVIM_VERSION_PATCH}
     -DNVIM_VERSION_PRERELEASE=${NVIM_VERSION_PRERELEASE}
     -DOUTPUT=${NVIM_VERSION_GIT_H}
-    -DCMAKE_MESSAGE_LOG_LEVEL=${CMAKE_MESSAGE_LOG_LEVEL}
     -P ${PROJECT_SOURCE_DIR}/cmake/GenerateVersion.cmake
-  WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
   BYPRODUCTS ${NVIM_VERSION_GIT_H})
 
 # NVIM_GENERATED_FOR_HEADERS: generated headers to be included in headers
@@ -443,14 +441,18 @@ endif()
 
 set(NVIM_EXEC_LINK_LIBRARIES ${NVIM_LINK_LIBRARIES} ${LUA_PREFERRED_LIBRARIES})
 
-# Add IPO flags (for LTO), or error if CMake does not know the flags. #8654
-if(POLICY CMP0069)
-  cmake_policy(SET CMP0069 NEW)
-endif()
-
 add_executable(nvim ${NVIM_GENERATED_FOR_SOURCES} ${NVIM_GENERATED_FOR_HEADERS}
   ${NVIM_GENERATED_SOURCES} ${NVIM_SOURCES} ${NVIM_HEADERS}
   ${EXTERNAL_SOURCES} ${EXTERNAL_HEADERS})
+
+set_target_properties(nvim
+  PROPERTIES
+  EXPORT_COMPILE_COMMANDS ON)
+
+if(${CMAKE_VERSION} VERSION_LESS 3.20)
+  set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+endif()
+
 target_link_libraries(nvim ${NVIM_EXEC_LINK_LIBRARIES})
 install_helper(TARGETS nvim)
 if(MSVC)
@@ -461,7 +463,7 @@ set_property(TARGET nvim APPEND PROPERTY
              INCLUDE_DIRECTORIES ${LUA_PREFERRED_INCLUDE_DIRS})
 set_property(TARGET nvim PROPERTY ENABLE_EXPORTS TRUE)
 
-if(ENABLE_LTO AND (POLICY CMP0069))
+if(ENABLE_LTO)
   include(CheckIPOSupported)
   check_ipo_supported(RESULT IPO_SUPPORTED)
   if(IPO_SUPPORTED AND (NOT CMAKE_BUILD_TYPE MATCHES Debug))
@@ -537,8 +539,8 @@ if(WIN32)
                       translations/qt_uk.qm
                       D3Dcompiler_47.dll
                       libEGL.dll
-                      libgcc_s_dw2-1.dll
-                      libGLESV2.dll
+                      libgcc_s_seh-1.dll
+                      libGLESv2.dll
                       libstdc++-6.dll
                       libwinpthread-1.dll
                       nvim-qt.exe
@@ -569,7 +571,10 @@ file(MAKE_DIRECTORY ${BINARY_LIB_DIR})
 
 # install treesitter parser if bundled
 if(EXISTS ${DEPS_PREFIX}/lib/nvim/parser)
-  file(COPY ${DEPS_PREFIX}/lib/nvim/parser DESTINATION ${BINARY_LIB_DIR})
+  glob_wrapper(TREESITTER_PARSERS ${DEPS_PREFIX}/lib/nvim/parser/*)
+  foreach(parser_lib ${TREESITTER_PARSERS})
+    file(COPY ${parser_lib} DESTINATION ${BINARY_LIB_DIR}/parser)
+  endforeach()
 endif()
 
 install(DIRECTORY ${BINARY_LIB_DIR}
@@ -767,7 +772,7 @@ add_custom_target(uncrustify-version
     -D CONFIG_FILE=${PROJECT_SOURCE_DIR}/src/uncrustify.cfg
     -P ${PROJECT_SOURCE_DIR}/cmake/CheckUncrustifyVersion.cmake)
 
-add_glob_targets(
+add_glob_target(
   TARGET lintuncrustify
   COMMAND ${UNCRUSTIFY_PRG}
   FLAGS -c "${PROJECT_SOURCE_DIR}/src/uncrustify.cfg" -q --check

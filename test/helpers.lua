@@ -1,4 +1,4 @@
-require('vim.compat')
+require('test.compat')
 local shared = require('vim.shared')
 local assert = require('luassert')
 local luv = require('luv')
@@ -114,25 +114,13 @@ function module.assert_nolog(pat, logfile, nrlines)
   return module.assert_log(pat, logfile, nrlines, true)
 end
 
--- Invokes `fn` and returns the error string (with truncated paths), or raises
--- an error if `fn` succeeds.
---
--- Replaces line/column numbers with zero:
---     shared.lua:0: in function 'gsplit'
---     shared.lua:0: in function <shared.lua:0>'
---
--- Usage:
---    -- Match exact string.
---    eq('e', pcall_err(function(a, b) error('e') end, 'arg1', 'arg2'))
---    -- Match Lua pattern.
---    matches('e[or]+$', pcall_err(function(a, b) error('some error') end, 'arg1', 'arg2'))
---
-function module.pcall_err_withfile(fn, ...)
+function module.pcall(fn, ...)
   assert(type(fn) == 'function')
   local status, rv = pcall(fn, ...)
-  if status == true then
-    error('expected failure, but got success')
+  if status then
+    return status, rv
   end
+
   -- From:
   --    C:/long/path/foo.lua:186: Expected string, got number
   -- to:
@@ -150,13 +138,37 @@ function module.pcall_err_withfile(fn, ...)
   --    We remove this so that the tests are not lua dependent.
   errmsg = errmsg:gsub('%s*%(tail call%): %?', '')
 
-  return errmsg
+  return status, errmsg
+end
+
+-- Invokes `fn` and returns the error string (with truncated paths), or raises
+-- an error if `fn` succeeds.
+--
+-- Replaces line/column numbers with zero:
+--     shared.lua:0: in function 'gsplit'
+--     shared.lua:0: in function <shared.lua:0>'
+--
+-- Usage:
+--    -- Match exact string.
+--    eq('e', pcall_err(function(a, b) error('e') end, 'arg1', 'arg2'))
+--    -- Match Lua pattern.
+--    matches('e[or]+$', pcall_err(function(a, b) error('some error') end, 'arg1', 'arg2'))
+--
+function module.pcall_err_withfile(fn, ...)
+  assert(type(fn) == 'function')
+  local status, rv = module.pcall(fn, ...)
+  if status == true then
+    error('expected failure, but got success')
+  end
+  return rv
 end
 
 function module.pcall_err_withtrace(fn, ...)
   local errmsg = module.pcall_err_withfile(fn, ...)
 
-  return errmsg:gsub('.../helpers.lua:0: ', '')
+  return errmsg:gsub('^%.%.%./helpers%.lua:0: ', '')
+               :gsub('^Error executing lua:- ' ,'')
+               :gsub('^%[string "<nvim>"%]:0: ' ,'')
 end
 
 function module.pcall_err(...)
@@ -257,14 +269,10 @@ function module.check_logs()
     table.concat(runtime_errors, ', ')))
 end
 
-function module.iswin()
-  return package.config:sub(1,1) == '\\'
-end
-
--- Gets (lowercase) OS name from CMake, uname, or "win" if iswin().
-module.uname = (function()
+-- Gets (lowercase) OS name from CMake, uname, or manually check if on Windows
+do
   local platform = nil
-  return (function()
+  function module.uname()
     if platform then
       return platform
     end
@@ -278,22 +286,28 @@ module.uname = (function()
     if status then
       platform = string.lower(f:read("*l"))
       f:close()
-    elseif module.iswin() then
+    elseif package.config:sub(1,1) == '\\' then
       platform = 'windows'
     else
       error('unknown platform')
     end
     return platform
-  end)
-end)()
+  end
+end
 
 function module.is_os(s)
-  if not (s == 'win' or s == 'mac' or s == 'unix') then
+  if not (s == 'win'
+    or s == 'mac'
+    or s == 'freebsd'
+    or s == 'openbsd'
+    or s == 'bsd') then
     error('unknown platform: '..tostring(s))
   end
-  return ((s == 'win' and module.iswin())
+  return ((s == 'win' and module.uname() == 'windows')
     or (s == 'mac' and module.uname() == 'darwin')
-    or (s == 'unix'))
+    or (s == 'freebsd' and module.uname() == 'freebsd')
+    or (s == 'openbsd' and module.uname() == 'openbsd')
+    or (s == 'bsd' and string.find(module.uname(), 'bsd')))
 end
 
 local function tmpdir_get()
@@ -319,11 +333,11 @@ module.tmpname = (function()
       return fname
     else
       local fname = os.tmpname()
-      if module.uname() == 'windows' and fname:sub(1, 2) == '\\s' then
+      if module.is_os('win') and fname:sub(1, 2) == '\\s' then
         -- In Windows tmpname() returns a filename starting with
         -- special sequence \s, prepend $TEMP path
         return tmpdir..fname
-      elseif fname:match('^/tmp') and module.uname() == 'darwin' then
+      elseif fname:match('^/tmp') and module.is_os('mac') then
         -- In OS X /tmp links to /private/tmp
         return '/private'..fname
       else
@@ -366,14 +380,14 @@ function module.check_cores(app, force)
     exc_re = { os.getenv('NVIM_TEST_CORE_EXC_RE'), local_tmpdir }
     db_cmd = os.getenv('NVIM_TEST_CORE_DB_CMD') or gdb_db_cmd
     random_skip = os.getenv('NVIM_TEST_CORE_RANDOM_SKIP')
-  elseif 'darwin' == module.uname() then
+  elseif module.is_os('mac') then
     initial_path = '/cores'
     re = nil
     exc_re = { local_tmpdir }
     db_cmd = lldb_db_cmd
   else
     initial_path = '.'
-    if 'freebsd' == module.uname() then
+    if module.is_os('freebsd') then
       re = '/nvim.core$'
     else
       re = '/core[^/]*$'
@@ -788,20 +802,19 @@ function module.write_file(name, text, no_dedent, append)
   file:close()
 end
 
-function module.isCI(name)
+function module.is_ci(name)
   local any = (name == nil)
-  assert(any or name == 'sourcehut' or name == 'github')
-  local sh = ((any or name == 'sourcehut') and nil ~= os.getenv('SOURCEHUT'))
+  assert(any or name == 'github' or name == 'cirrus')
   local gh = ((any or name == 'github') and nil ~= os.getenv('GITHUB_ACTIONS'))
-  return sh or gh
-
+  local cirrus = ((any or name == 'cirrus') and nil ~= os.getenv('CIRRUS_CI'))
+  return gh or cirrus
 end
 
 -- Gets the (tail) contents of `logfile`.
 -- Also moves the file to "${NVIM_LOG_FILE}.displayed" on CI environments.
 function module.read_nvim_log(logfile, ci_rename)
   logfile = logfile or os.getenv('NVIM_LOG_FILE') or '.nvimlog'
-  local is_ci = module.isCI()
+  local is_ci = module.is_ci()
   local keep = is_ci and 100 or 10
   local lines = module.read_file_list(logfile, -keep) or {}
   local log = (('-'):rep(78)..'\n'

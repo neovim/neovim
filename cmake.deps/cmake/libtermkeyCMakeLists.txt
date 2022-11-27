@@ -32,3 +32,5 @@ foreach(f ${TESTSOURCES})
   target_link_libraries("test_${t}" termkey)
   add_test("${t}" "test_${t}")
 endforeach()
+
+# vim: set ft=cmake:

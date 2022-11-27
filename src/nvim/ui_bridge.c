@@ -4,19 +4,19 @@
 // UI wrapper that sends requests to the UI thread.
 // Used by the built-in TUI and libnvim-based UIs.
 
-#include <assert.h>
-#include <limits.h>
 #include <stdbool.h>
-#include <stdio.h>
+#include <stdint.h>
+#include <stdlib.h>
 
+#include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"
-#include "nvim/log.h"
+#include "nvim/event/loop.h"
+#include "nvim/grid_defs.h"
+#include "nvim/highlight_defs.h"
 #include "nvim/main.h"
 #include "nvim/memory.h"
-#include "nvim/ugrid.h"
 #include "nvim/ui.h"
 #include "nvim/ui_bridge.h"
-#include "nvim/vim.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "ui_bridge.c.generated.h"
@@ -194,9 +194,9 @@ static void ui_bridge_suspend_event(void **argv)
 
 static void ui_bridge_option_set(UI *ui, String name, Object value)
 {
-  String copy_name = copy_string(name);
+  String copy_name = copy_string(name, NULL);
   Object *copy_value = xmalloc(sizeof(Object));
-  *copy_value = copy_object(value);
+  *copy_value = copy_object(value, NULL);
   UI_BRIDGE_CALL(ui, option_set, 4, ui, copy_name.data,
                  INT2PTR(copy_name.size), copy_value);
   // TODO(bfredl): when/if TUI/bridge teardown is refactored to use events, the

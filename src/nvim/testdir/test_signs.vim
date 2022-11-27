@@ -483,13 +483,13 @@ func Test_sign_funcs()
   call assert_fails('call sign_place(5, "", "sign1", "@", {"lnum" : 10})',
 	      \ 'E158:')
   call assert_fails('call sign_place(5, "", "sign1", [], {"lnum" : 10})',
-	      \ 'E158:')
+	      \ 'E730:')
   call assert_fails('call sign_place(21, "", "sign1", "Xsign",
 	      \ {"lnum" : -1})', 'E474:')
   call assert_fails('call sign_place(22, "", "sign1", "Xsign",
 	      \ {"lnum" : 0})', 'E474:')
   call assert_fails('call sign_place(22, "", "sign1", "Xsign",
-	      \ {"lnum" : []})', 'E474:')
+	      \ {"lnum" : []})', 'E745:')
   call assert_equal(-1, sign_place(1, "*", "sign1", "Xsign", {"lnum" : 10}))
 
   " Tests for sign_getplaced()
@@ -1731,7 +1731,7 @@ func Test_sign_jump_func()
   call assert_fails("call sign_jump(5, 'g5', 'foo')", 'E157:')
   call assert_fails('call sign_jump([], "", "foo")', 'E745:')
   call assert_fails('call sign_jump(2, [], "foo")', 'E730:')
-  call assert_fails('call sign_jump(2, "", {})', 'E158:')
+  call assert_fails('call sign_jump(2, "", {})', 'E731:')
   call assert_fails('call sign_jump(2, "", "baz")', 'E158:')
 
   sign unplace * group=*
@@ -1741,9 +1741,7 @@ endfunc
 
 " Test for correct cursor position after the sign column appears or disappears.
 func Test_sign_cursor_position()
-  if !CanRunVimInTerminal()
-    throw 'Skipped: cannot make screendumps'
-  endif
+  CheckRunVimInTerminal
 
   let lines =<< trim END
 	call setline(1, [repeat('x', 75), 'mmmm', 'yyyy'])

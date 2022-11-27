@@ -1,12 +1,9 @@
 " Tests for :unlet
 
 func Test_read_only()
-  try
-    " this caused a crash
-    unlet v:count
-  catch
-    call assert_true(v:exception =~ ':E795:')
-  endtry
+  " these caused a crash
+  call assert_fails('unlet v:count', 'E795:')
+  call assert_fails('unlet v:errmsg', 'E795:')
 endfunc
 
 func Test_existing()
@@ -18,15 +15,19 @@ endfunc
 
 func Test_not_existing()
   unlet! does_not_exist
-  try
-    unlet does_not_exist
-  catch
-    call assert_true(v:exception =~ ':E108:')
-  endtry
+  call assert_fails('unlet does_not_exist', 'E108:')
 endfunc
 
 func Test_unlet_fails()
   call assert_fails('unlet v:["count"]', 'E46:')
+  call assert_fails('unlet $', 'E475:')
+  let v = {}
+  call assert_fails('unlet v[:]', 'E719:')
+  let l = []
+  call assert_fails("unlet l['k'", 'E111:')
+  let d = {'k' : 1}
+  call assert_fails("unlet d.k2", 'E716:')
+  call assert_fails("unlet {a};", 'E488:')
 endfunc
 
 func Test_unlet_env()
@@ -62,3 +63,5 @@ func Test_unlet_complete()
   call feedkeys(":unlet $FOO\t\n", 'tx')
   call assert_true(!exists('$FOOBAR') || empty($FOOBAR))
 endfunc
+
+" vim: shiftwidth=2 sts=2 expandtab

@@ -7,7 +7,6 @@
 [Twitter](https://twitter.com/Neovim)
 
 [![GitHub CI](https://github.com/neovim/neovim/workflows/CI/badge.svg)](https://github.com/neovim/neovim/actions?query=workflow%3ACI+branch%3Amaster+event%3Apush)
-[![Codecov coverage](https://img.shields.io/codecov/c/github/neovim/neovim.svg)](https://codecov.io/gh/neovim/neovim)
 [![Coverity Scan analysis](https://scan.coverity.com/projects/2227/badge.svg)](https://scan.coverity.com/projects/2227)
 [![Clang analysis](https://neovim.io/doc/reports/clang/badge.svg)](https://neovim.io/doc/reports/clang)
 [![PVS-Studio analysis](https://neovim.io/doc/reports/pvs/badge.svg)](https://neovim.io/doc/reports/pvs/PVS-studio.html.d)
@@ -40,7 +39,7 @@ Features
 - [XDG base directories](https://github.com/neovim/neovim/pull/3470) support
 - Compatible with most Vim plugins, including Ruby and Python plugins
 
-See [`:help nvim-features`][nvim-features] for the full list!
+See [`:help nvim-features`][nvim-features] for the full list, and [`:help news`][nvim-news] for noteworthy changes in the latest version!
 
 Install from package
 --------------------
@@ -53,7 +52,7 @@ Pre-built packages for Windows, macOS, and Linux are found on the
 Install from source
 -------------------
 
-See the [Building Neovim](https://github.com/neovim/neovim/wiki/Building-Neovim) wiki page for details.
+See the [Building Neovim](https://github.com/neovim/neovim/wiki/Building-Neovim) wiki page and [supported platforms](https://neovim.io/doc/user/support.html#supported-platforms) for details.
 
 The build is CMake-based, but a Makefile is provided as a convenience.
 After installing the dependencies, run the following command.
@@ -117,6 +116,7 @@ Apache 2.0 license, except for contributions copied from Vim (identified by the
 
 [license-commit]: https://github.com/neovim/neovim/commit/b17d9691a24099c9210289f16afb1a498a89d803
 [nvim-features]: https://neovim.io/doc/user/vim_diff.html#nvim-features
+[nvim-news]: https://neovim.io/doc/user/news.html
 [Roadmap]: https://neovim.io/roadmap/
 [advanced UIs]: https://github.com/neovim/neovim/wiki/Related-projects#gui
 [Managed packages]: https://github.com/neovim/neovim/wiki/Installing-Neovim#install-from-package

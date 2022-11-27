@@ -1,24 +1,31 @@
 // This is an open source non-commercial project. Dear PVS-Studio, please check
 // it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
+#include <assert.h>
 #include <inttypes.h>
 #include <stdbool.h>
+#include <string.h>
 
 #include "nvim/ascii.h"
 #include "nvim/assert.h"
+#include "nvim/buffer_defs.h"
 #include "nvim/change.h"
 #include "nvim/charset.h"
 #include "nvim/cursor.h"
 #include "nvim/drawscreen.h"
-#include "nvim/extmark.h"
 #include "nvim/fold.h"
+#include "nvim/globals.h"
+#include "nvim/macros.h"
 #include "nvim/mark.h"
+#include "nvim/mbyte.h"
 #include "nvim/memline.h"
 #include "nvim/memory.h"
 #include "nvim/move.h"
 #include "nvim/option.h"
 #include "nvim/plines.h"
+#include "nvim/pos.h"
 #include "nvim/state.h"
+#include "nvim/types.h"
 #include "nvim/vim.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
@@ -67,7 +74,7 @@ int coladvance_force(colnr_T wcol)
 /// Try to advance the Cursor to the specified screen column.
 /// If virtual editing: fine tune the cursor position.
 /// Note that all virtual positions off the end of a line should share
-/// a curwin->w_cursor.col value (n.b. this is equal to STRLEN(line)),
+/// a curwin->w_cursor.col value (n.b. this is equal to strlen(line)),
 /// beginning at coladd 0.
 ///
 /// @return  OK if desired column is reached, FAIL if not
@@ -101,14 +108,14 @@ static int coladvance2(pos_T *pos, bool addspaces, bool finetune, colnr_T wcol_a
                  || (VIsual_active && *p_sel != 'o')
                  || ((get_ve_flags() & VE_ONEMORE) && wcol < MAXCOL);
 
-  char_u *line = ml_get_buf(curbuf, pos->lnum, false);
+  char *line = ml_get_buf(curbuf, pos->lnum, false);
 
   if (wcol >= MAXCOL) {
-    idx = (int)STRLEN(line) - 1 + one_more;
+    idx = (int)strlen(line) - 1 + one_more;
     col = wcol;
 
     if ((addspaces || finetune) && !VIsual_active) {
-      curwin->w_curswant = linetabsize(line) + one_more;
+      curwin->w_curswant = linetabsize((char_u *)line) + one_more;
       if (curwin->w_curswant > 0) {
         curwin->w_curswant--;
       }
@@ -122,7 +129,7 @@ static int coladvance2(pos_T *pos, bool addspaces, bool finetune, colnr_T wcol_a
         && curwin->w_width_inner != 0
         && wcol >= (colnr_T)width
         && width > 0) {
-      csize = linetabsize(line);
+      csize = linetabsize((char_u *)line);
       if (csize > 0) {
         csize--;
       }
@@ -137,14 +144,18 @@ static int coladvance2(pos_T *pos, bool addspaces, bool finetune, colnr_T wcol_a
       }
     }
 
-    char_u *ptr = line;
-    while (col <= wcol && *ptr != NUL) {
+    chartabsize_T cts;
+    init_chartabsize_arg(&cts, curwin, pos->lnum, 0, line, line);
+    while (cts.cts_vcol <= wcol && *cts.cts_ptr != NUL) {
       // Count a tab for what it's worth (if list mode not on)
-      csize = win_lbr_chartabsize(curwin, line, ptr, col, &head);
-      MB_PTR_ADV(ptr);
-      col += csize;
+      csize = win_lbr_chartabsize(&cts, &head);
+      MB_PTR_ADV(cts.cts_ptr);
+      cts.cts_vcol += csize;
     }
-    idx = (int)(ptr - line);
+    col = cts.cts_vcol;
+    idx = (int)(cts.cts_ptr - line);
+    clear_chartabsize_arg(&cts);
+
     // Handle all the special cases.  The virtual_active() check
     // is needed to ensure that a virtual position off the end of
     // a line has the correct indexing.  The one_more comparison
@@ -177,7 +188,7 @@ static int coladvance2(pos_T *pos, bool addspaces, bool finetune, colnr_T wcol_a
         col = wcol;
       } else {
         // Break a tab
-        int linelen = (int)STRLEN(line);
+        int linelen = (int)strlen(line);
         int correct = wcol - col - csize + 1;             // negative!!
         char_u *newline;
 
@@ -304,8 +315,8 @@ void check_pos(buf_T *buf, pos_T *pos)
   }
 
   if (pos->col > 0) {
-    char_u *line = ml_get_buf(buf, pos->lnum, false);
-    colnr_T len = (colnr_T)STRLEN(line);
+    char *line = ml_get_buf(buf, pos->lnum, false);
+    colnr_T len = (colnr_T)strlen(line);
     if (pos->col > len) {
       pos->col = len;
     }
@@ -342,7 +353,7 @@ void check_cursor_col_win(win_T *win)
   colnr_T oldcoladd = win->w_cursor.col + win->w_cursor.coladd;
   unsigned int cur_ve_flags = get_ve_flags();
 
-  colnr_T len = (colnr_T)STRLEN(ml_get_buf(win->w_buffer, win->w_cursor.lnum, false));
+  colnr_T len = (colnr_T)strlen(ml_get_buf(win->w_buffer, win->w_cursor.lnum, false));
   if (len == 0) {
     win->w_cursor.col = 0;
   } else if (win->w_cursor.col >= len) {
@@ -408,7 +419,7 @@ void check_visual_pos(void)
     VIsual.col = 0;
     VIsual.coladd = 0;
   } else {
-    int len = (int)STRLEN(ml_get(VIsual.lnum));
+    int len = (int)strlen(ml_get(VIsual.lnum));
 
     if (VIsual.col > len) {
       VIsual.col = len;
@@ -445,12 +456,13 @@ bool leftcol_changed(void)
 
   // If the cursor is right or left of the screen, move it to last or first
   // character.
-  if (curwin->w_virtcol > (colnr_T)(lastcol - p_siso)) {
+  long siso = get_sidescrolloff_value(curwin);
+  if (curwin->w_virtcol > (colnr_T)(lastcol - siso)) {
     retval = true;
-    coladvance((colnr_T)(lastcol - p_siso));
-  } else if (curwin->w_virtcol < curwin->w_leftcol + p_siso) {
+    coladvance((colnr_T)(lastcol - siso));
+  } else if (curwin->w_virtcol < curwin->w_leftcol + siso) {
     retval = true;
-    coladvance((colnr_T)(curwin->w_leftcol + p_siso));
+    coladvance((colnr_T)(curwin->w_leftcol + siso));
   }
 
   // If the start of the character under the cursor is not on the screen,
@@ -471,13 +483,13 @@ bool leftcol_changed(void)
   if (retval) {
     curwin->w_set_curswant = true;
   }
-  redraw_later(curwin, NOT_VALID);
+  redraw_later(curwin, UPD_NOT_VALID);
   return retval;
 }
 
 int gchar_cursor(void)
 {
-  return utf_ptr2char((char *)get_cursor_pos_ptr());
+  return utf_ptr2char(get_cursor_pos_ptr());
 }
 
 /// Write a character at the current cursor position.
@@ -485,18 +497,17 @@ int gchar_cursor(void)
 void pchar_cursor(char_u c)
 {
   *(ml_get_buf(curbuf, curwin->w_cursor.lnum, true)
-    + curwin->w_cursor.col) = c;
+    + curwin->w_cursor.col) = (char)c;
 }
 
 /// @return  pointer to cursor line.
-char_u *get_cursor_line_ptr(void)
+char *get_cursor_line_ptr(void)
 {
   return ml_get_buf(curbuf, curwin->w_cursor.lnum, false);
 }
 
 /// @return  pointer to cursor position.
-char_u *get_cursor_pos_ptr(void)
+char *get_cursor_pos_ptr(void)
 {
-  return ml_get_buf(curbuf, curwin->w_cursor.lnum, false) +
-         curwin->w_cursor.col;
+  return ml_get_buf(curbuf, curwin->w_cursor.lnum, false) + curwin->w_cursor.col;
 }

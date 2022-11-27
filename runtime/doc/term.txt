@@ -29,7 +29,7 @@ whole.
 Building your own terminfo is usually as simple as running this as
 a non-superuser:
 >
-  curl -LO http://invisible-island.net/datafiles/current/terminfo.src.gz
+  curl -LO https://invisible-island.net/datafiles/current/terminfo.src.gz
   gunzip terminfo.src.gz
   tic terminfo.src
 <
@@ -379,6 +379,8 @@ Dragging the mouse with a double click (button-down, button-up, button-down
 and then drag) will result in whole words to be selected.  This continues
 until the button is released, at which point the selection is per character
 again.
+
+For scrolling with the mouse see |scroll-mouse-wheel|.
 
 In Insert mode, when a selection is started, Vim goes into Normal mode
 temporarily.  When Visual or Select mode ends, it returns to Insert mode.

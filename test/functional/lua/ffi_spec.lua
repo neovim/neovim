@@ -35,11 +35,12 @@ describe('ffi.cdef', function()
 
         int build_stl_str_hl(
           win_T *wp,
-          char_u *out,
+          char *out,
           size_t outlen,
-          char_u *fmt,
-          int use_sandbox,
-          char_u fillchar,
+          char *fmt,
+          char *opt_name,
+          int opt_scope,
+          int fillchar,
           int maxwidth,
           stl_hlrec_t **hltab,
           StlClickRecord **tabtab
@@ -48,9 +49,10 @@ describe('ffi.cdef', function()
 
       return ffi.C.build_stl_str_hl(
         ffi.C.find_window_by_handle(0, ffi.new('Error')),
-        ffi.new('char_u[1024]'),
+        ffi.new('char[1024]'),
         1024,
-        ffi.cast('char_u*', 'StatusLineOfLength20'),
+        ffi.cast('char*', 'StatusLineOfLength20'),
+        nil,
         0,
         0,
         0,

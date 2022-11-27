@@ -1,9 +1,15 @@
 #ifndef NVIM_EX_GETLN_H
 #define NVIM_EX_GETLN_H
 
+#include <stdbool.h>
+
+#include "klib/kvec.h"
 #include "nvim/eval/typval.h"
+#include "nvim/eval/typval_defs.h"
 #include "nvim/ex_cmds_defs.h"
 #include "nvim/types.h"
+
+struct cmdline_info;
 
 /// Command-line colors: one chunk
 ///
@@ -41,7 +47,7 @@ typedef enum {
 /// structure.
 typedef struct cmdline_info CmdlineInfo;
 struct cmdline_info {
-  char_u *cmdbuff;              ///< pointer to command line buffer
+  char *cmdbuff;                ///< pointer to command line buffer
   int cmdbufflen;               ///< length of cmdbuff
   int cmdlen;                   ///< number of chars in command line
   int cmdpos;                   ///< current cursor position

@@ -2,6 +2,7 @@
 // it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
 #include <stdbool.h>
+#include <string.h>
 
 #include "nvim/ascii.h"
 #include "nvim/fileio.h"
@@ -21,7 +22,7 @@ static const char *xdg_env_vars[] = {
   [kXDGDataDirs] = "XDG_DATA_DIRS",
 };
 
-#ifdef WIN32
+#ifdef MSWIN
 static const char *const xdg_defaults_env_vars[] = {
   [kXDGConfigHome] = "LOCALAPPDATA",
   [kXDGDataHome] = "LOCALAPPDATA",
@@ -37,7 +38,7 @@ static const char *const xdg_defaults_env_vars[] = {
 ///
 /// Used in case environment variables contain nothing. Need to be expanded.
 static const char *const xdg_defaults[] = {
-#ifdef WIN32
+#ifdef MSWIN
   [kXDGConfigHome] = "~\\AppData\\Local",
   [kXDGDataHome] = "~\\AppData\\Local",
   [kXDGCacheHome] = "~\\AppData\\Local\\Temp",
@@ -69,7 +70,7 @@ char *stdpaths_get_xdg_var(const XDGVarType idx)
 
   const char *env_val = os_getenv(env);
 
-#ifdef WIN32
+#ifdef MSWIN
   if (env_val == NULL && xdg_defaults_env_vars[idx] != NULL) {
     env_val = os_getenv(xdg_defaults_env_vars[idx]);
   }
@@ -87,6 +88,9 @@ char *stdpaths_get_xdg_var(const XDGVarType idx)
   } else if (idx == kXDGRuntimeDir) {
     // Special-case: stdpath('run') is defined at startup.
     ret = vim_gettempdir();
+    if (ret == NULL) {
+      ret = "/tmp/";
+    }
     size_t len = strlen(ret);
     ret = xstrndup(ret, len >= 2 ? len - 1 : 0);  // Trim trailing slash.
   }
@@ -107,7 +111,7 @@ char *get_xdg_home(const XDGVarType idx)
 {
   char *dir = stdpaths_get_xdg_var(idx);
   if (dir) {
-#if defined(WIN32)
+#if defined(MSWIN)
     dir = concat_fnames_realloc(dir,
                                 ((idx == kXDGDataHome
                                   || idx == kXDGStateHome) ? "nvim-data" : "nvim"),

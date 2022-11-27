@@ -35,7 +35,7 @@ filename	One or more file names.  The first one will be the current
 		no other options or "+command" argument can follow.
 
 							*--*
--		Alias for stdin (standard input).
+`-`		Alias for stdin (standard input).
 		Example: >
 			echo text | nvim - file
 <		"text" is read into buffer 1, "file" is opened as buffer 2.
@@ -82,12 +82,10 @@ argument.
 --help							*-h* *--help* *-?*
 -?
 -h		Give usage (help) message and exit.
-		See |info-message| about capturing the text.
 
 --version						*-v* *--version*
 -v		Print version information and exit.  Same output as for
 		|:version| command.
-		See |info-message| about capturing the text.
 
 							*--clean*
 --clean		Mimics a fresh install of Nvim:
@@ -145,12 +143,11 @@ argument.
 		these commands, independently from "-c" commands.
 
 							*-S*
--S {file}	The {file} will be sourced after the first file has been read.
-		This is an easy way to do the equivalent of: >
+-S {file}	Vimscript or Lua (".lua") {file} will be |:source|d after the
+		first file has been read. Equivalent to: >
 			-c "source {file}"
-<		It can be mixed with "-c" arguments and repeated like "-c".
-		The limit of 10 "-c" arguments applies here as well.
-		{file} cannot start with a "-".
+<		Can be repeated like "-c", subject to the same limit of 10
+		"-c" arguments. {file} cannot start with a "-".
 
 -S		Works like "-S Session.vim".  Only when used as the last
 		argument or when another "-" option follows.
@@ -205,13 +202,14 @@ argument.
 		send commands. >
 			printf "foo\n" | nvim -Es +"%print"
 
-<		Output of these commands is displayed (to stdout):
-			:print
+<		These commands display on stdout:
 			:list
 			:number
-			:set      (to display option values)
-		When 'verbose' is set messages are printed to stderr. >
-			echo foo | nvim -V1 -es
+			:print
+			:set
+		With |:verbose| or 'verbose', other commands display on stderr: >
+			nvim -es +":verbose echo 'foo'"
+			nvim -V1 -es +foo
 
 <		User |config| is skipped (unless given with |-u|).
 		Swap file is skipped (like |-n|).
@@ -403,18 +401,20 @@ accordingly, proceeding as follows:
 	The |-V| argument can be used to display or log what happens next,
 	useful for debugging the initializations.
 
-3. Wait for UI to connect.
+3. Start a server (unless |--listen| was given) and set |v:servername|.
+
+4. Wait for UI to connect.
 	Nvim started with |--embed| waits for the UI to connect before
 	proceeding to load user configuration.
 
-4. Setup |default-mappings| and |default-autocmds|.  Create |popup-menu|.
+5. Setup |default-mappings| and |default-autocmds|.  Create |popup-menu|.
 
-5. Enable filetype and indent plugins.
+6. Enable filetype and indent plugins.
 	This does the same as the command: >
 		:runtime! ftplugin.vim indent.vim
 <	Skipped if the "-u NONE" command line argument was given.
 
-6. Load user config (execute Ex commands from files, environment, …).
+7. Load user config (execute Ex commands from files, environment, …).
 	$VIMINIT environment variable is read as one Ex command line (separate
 	multiple commands with '|' or <NL>).
 					*config* *init.vim* *init.lua* *vimrc* *exrc*
@@ -445,9 +445,9 @@ accordingly, proceeding as follows:
 						*VIMINIT* *EXINIT* *$MYVIMRC*
      b. Locations searched for initializations, in order of preference:
 	-  $VIMINIT environment variable (Ex command line).
-	-  User |config|: $XDG_CONFIG_HOME/nvim/init.vim.
-	-  Other config: {dir}/nvim/init.vim where {dir} is any directory
-	   in $XDG_CONFIG_DIRS.
+	-  User |config|: $XDG_CONFIG_HOME/nvim/init.vim (or init.lua).
+	-  Other config: {dir}/nvim/init.vim (or init.lua) where {dir} is any
+	   directory in $XDG_CONFIG_DIRS.
 	-  $EXINIT environment variable (Ex command line).
 	|$MYVIMRC| is set to the first valid location unless it was already
 	set or when using $VIMINIT.
@@ -458,19 +458,19 @@ accordingly, proceeding as follows:
 	-  The file ".nvimrc"
 	-  The file ".exrc"
 
-7. Enable filetype detection.
+8. Enable filetype detection.
 	This does the same as the command: >
-		:runtime! filetype.lua filetype.vim
+		:runtime! filetype.lua
 <	Skipped if ":filetype off" was called or if the "-u NONE" command line
 	argument was given.
 
-8. Enable syntax highlighting.
+9. Enable syntax highlighting.
 	This does the same as the command: >
 		:runtime! syntax/syntax.vim
 <	Skipped if ":syntax off" was called or if the "-u NONE" command
 	line argument was given.
 
-9. Load the plugin scripts.					*load-plugins*
+10. Load the plugin scripts.					*load-plugins*
 	This does the same as the command: >
 		:runtime! plugin/**/*.vim
 		:runtime! plugin/**/*.lua
@@ -500,21 +500,21 @@ accordingly, proceeding as follows:
 	if packages have been found, but that should not add a directory
 	ending in "after".
 
-10. Set 'shellpipe' and 'shellredir'
+11. Set 'shellpipe' and 'shellredir'
 	The 'shellpipe' and 'shellredir' options are set according to the
 	value of the 'shell' option, unless they have been set before.
 	This means that Nvim will figure out the values of 'shellpipe' and
 	'shellredir' for you, unless you have set them yourself.
 
-11. Set 'updatecount' to zero, if "-n" command argument used
+12. Set 'updatecount' to zero, if "-n" command argument used
 
-12. Set binary options if the |-b| flag was given.
+13. Set binary options if the |-b| flag was given.
 
-13. Read the |shada-file|.
+14. Read the |shada-file|.
 
-14. Read the quickfix file if the |-q| flag was given, or exit on failure.
+15. Read the quickfix file if the |-q| flag was given, or exit on failure.
 
-15. Open all windows
+16. Open all windows
 	When the |-o| flag was given, windows will be opened (but not
 	displayed yet).
 	When the |-p| flag was given, tab pages will be created (but not
@@ -524,7 +524,7 @@ accordingly, proceeding as follows:
 	Buffers for all windows will be loaded, without triggering |BufAdd|
 	autocommands.
 
-16. Execute startup commands
+17. Execute startup commands
 	If a |-t| flag was given, the tag is jumped to.
 	Commands given with |-c| and |+cmd| are executed.
 	The starting flag is reset, has("vim_starting") will now return zero.
@@ -1184,7 +1184,7 @@ exactly four MessagePack objects:
                        encoding   Binary, effective 'encoding' value.
                        max_kbyte  Integer, effective |shada-s| limit value.
                        pid        Integer, instance process ID.
-                       *          It is allowed to have any number of
+                       `*`          It is allowed to have any number of
                                   additional keys with any data.
    2 (SearchPattern)   Map containing data describing last used search or
                        substitute pattern.  Normally ShaDa file contains two
@@ -1215,7 +1215,7 @@ exactly four MessagePack objects:
                        sp   Binary   N/A      Actual pattern.  Required.
                        sb   Boolean  false    True if search direction is
                                               backward.
-                       *    any      none     Other keys are allowed for
+                       `*`    any      none     Other keys are allowed for
                                               compatibility reasons, see
                                               |shada-compatibility|.
    3 (SubString)       Array containing last |:substitute| replacement string.
@@ -1286,7 +1286,7 @@ exactly four MessagePack objects:
                                                GlobalMark and LocalMark
                                                entries.
                        f    Binary    N/A      File name.  Required.
-                       *    any       none     Other keys are allowed for
+                       `*`    any       none     Other keys are allowed for
                                                compatibility reasons, see
                                                |shada-compatibility|.
    9 (BufferList)      Array containing maps.  Each map in the array
@@ -1296,10 +1296,10 @@ exactly four MessagePack objects:
                                                greater then zero.
                        c    UInteger  0        Position column number.
                        f    Binary    N/A      File name.  Required.
-                       *    any       none     Other keys are allowed for
+                       `*`    any       none     Other keys are allowed for
                                                compatibility reasons, see
                                                |shada-compatibility|.
-   * (Unknown)         Any other entry type is allowed for compatibility
+   `*` (Unknown)         Any other entry type is allowed for compatibility
                        reasons, see |shada-compatibility|.
 
 								*E575* *E576*
@@ -1359,7 +1359,7 @@ LOG FILE					*$NVIM_LOG_FILE* *E5430*
 Besides 'debug' and 'verbose', Nvim keeps a general log file for internal
 debugging, plugins and RPC clients. >
 	:echo $NVIM_LOG_FILE
-By default, the file is located at stdpath('log')/log unless that path
+By default, the file is located at stdpath("log")/log unless that path
 is inaccessible or if $NVIM_LOG_FILE was set before |startup|.
 
 

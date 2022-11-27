@@ -6,8 +6,11 @@
 
 #include "nvim/buffer_defs.h"
 #include "nvim/eval/typval.h"
+#include "nvim/eval/typval_defs.h"
 #include "nvim/normal.h"
 #include "nvim/os/time.h"
+#include "nvim/pos.h"
+#include "nvim/types.h"
 #include "nvim/vim.h"
 
 // Values for the find_pattern_in_path() function args 'type' and 'action':
@@ -70,7 +73,7 @@ typedef struct soffset {
 
 /// Structure containing last search pattern and its attributes.
 typedef struct spat {
-  char_u *pat;          ///< The pattern (in allocated memory) or NULL.
+  char *pat;            ///< The pattern (in allocated memory) or NULL.
   bool magic;           ///< Magicness of the pattern.
   bool no_scs;          ///< No smartcase for this pattern.
   Timestamp timestamp;  ///< Time of the last change.

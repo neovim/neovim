@@ -20,6 +20,14 @@ function transform_schema_to_table()
 end
 --]=]
 
+---@class lsp.ShowMessageRequestParams
+---@field type lsp.MessageType
+---@field message string
+---@field actions nil|lsp.MessageActionItem[]
+
+---@class lsp.MessageActionItem
+---@field title string
+
 local constants = {
   DiagnosticSeverity = {
     -- Reports an error.
@@ -39,6 +47,7 @@ local constants = {
     Deprecated = 2,
   },
 
+  ---@enum lsp.MessageType
   MessageType = {
     -- An error message.
     Error = 1,
@@ -637,7 +646,7 @@ function protocol.make_client_capabilities()
         codeActionLiteralSupport = {
           codeActionKind = {
             valueSet = (function()
-              local res = vim.tbl_values(protocol.CodeActionKind)
+              local res = vim.tbl_values(constants.CodeActionKind)
               table.sort(res)
               return res
             end)(),
@@ -778,7 +787,7 @@ function protocol.make_client_capabilities()
         },
       },
       showDocument = {
-        support = false,
+        support = true,
       },
     },
   }
