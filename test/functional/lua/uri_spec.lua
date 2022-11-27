@@ -84,7 +84,9 @@ describe('URI methods', function()
       it('file path including white space', function()
         exec_lua("uri = 'file:///Foo%20/Bar/Baz.txt'")
 
-        eq('/Foo /Bar/Baz.txt', exec_lua("return vim.uri_to_fname(uri)"))
+        if not is_win then
+          eq('/Foo /Bar/Baz.txt', exec_lua("return vim.uri_to_fname(uri)"))
+        end
       end)
 
       it('file path including Unicode charactors', function()
