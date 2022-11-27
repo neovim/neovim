@@ -4969,17 +4969,19 @@ void ex_trust(exarg_T *eap)
   char *arg1 = xmemdupz(eap->arg, len);
 
   bool success = false;
-  bool action_allow = false, action_deny = false, action_remove = false;
+  bool action_allow = false;
+  bool action_deny = false;
+  bool action_remove = false;
   char *msg = NULL;
 
-  if (len > 2 && strncmp(arg1, "++deny", len) == 0) {
+  if (len > 2 && strcmp(arg1, "++deny") == 0) {
     char *path = skipwhite(p);
     if (path[0] == '\0') {
       path = NULL;
     }
     success = nlua_trust("deny", path, &msg);
     action_deny = 1;
-  } else if (len > 2 && strncmp(arg1, "++remove", len) == 0) {
+  } else if (len > 2 && strcmp(arg1, "++remove") == 0) {
     char *path = skipwhite(p);
     if (path[0] == '\0') {
       path = NULL;
