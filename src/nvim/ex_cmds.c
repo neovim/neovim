@@ -4972,14 +4972,14 @@ void ex_trust(exarg_T *eap)
   bool action_allow = false, action_deny = false, action_remove = false;
   char *msg = NULL;
 
-  if (len > 2 && STRNCMP(arg1, "++deny", len) == 0) {
+  if (len > 2 && strncmp(arg1, "++deny", len) == 0) {
     char *path = skipwhite(p);
     if (path[0] == '\0') {
       path = NULL;
     }
     success = nlua_trust("deny", path, &msg);
     action_deny = 1;
-  } else if (len > 2 && STRNCMP(arg1, "++remove", len) == 0) {
+  } else if (len > 2 && strncmp(arg1, "++remove", len) == 0) {
     char *path = skipwhite(p);
     if (path[0] == '\0') {
       path = NULL;
