@@ -25,36 +25,6 @@ describe('float window', function()
     clear()
     command('hi VertSplit gui=reverse')
   end)
-  local attrs = {
-    [0] = {bold=true, foreground=Screen.colors.Blue},
-    [1] = {background = Screen.colors.LightMagenta},
-    [2] = {background = Screen.colors.LightMagenta, bold = true, foreground = Screen.colors.Blue1},
-    [3] = {bold = true},
-    [4] = {bold = true, reverse = true},
-    [5] = {reverse = true},
-    [6] = {background = Screen.colors.LightMagenta, bold = true, reverse = true},
-    [7] = {foreground = Screen.colors.Grey100, background = Screen.colors.Red},
-    [8] = {bold = true, foreground = Screen.colors.SeaGreen4},
-    [9] = {background = Screen.colors.LightGrey, underline = true},
-    [10] = {background = Screen.colors.LightGrey, underline = true, bold = true, foreground = Screen.colors.Magenta},
-    [11] = {bold = true, foreground = Screen.colors.Magenta},
-    [12] = {background = Screen.colors.Red, bold = true, foreground = Screen.colors.Blue1},
-    [13] = {background = Screen.colors.WebGray},
-    [14] = {foreground = Screen.colors.Brown},
-    [15] = {background = Screen.colors.Grey20},
-    [16] = {background = Screen.colors.Grey20, bold = true, foreground = Screen.colors.Blue1},
-    [17] = {background = Screen.colors.Yellow},
-    [18] = {foreground = Screen.colors.Brown, background = Screen.colors.Grey20},
-    [19] = {foreground = Screen.colors.DarkBlue, background = Screen.colors.WebGray},
-    [20] = {bold = true, foreground = Screen.colors.Brown},
-    [21] = {background = Screen.colors.Gray90},
-    [22] = {background = Screen.colors.LightRed},
-    [23] = {foreground = Screen.colors.Black, background = Screen.colors.White};
-    [24] = {foreground = Screen.colors.Black, background = Screen.colors.Grey80};
-    [25] = {blend = 100, background = Screen.colors.Gray0};
-    [26] = {blend = 80, background = Screen.colors.Gray0};
-    [27] = {background = Screen.colors.LightGray};
-  }
 
   it('behavior', function()
     -- Create three windows and test that ":wincmd <direction>" changes to the
@@ -724,10 +694,40 @@ describe('float window', function()
   end)
 
   local function with_ext_multigrid(multigrid)
-    local screen
+    local screen, attrs
     before_each(function()
       screen = Screen.new(40,7)
       screen:attach {ext_multigrid=multigrid}
+      attrs = {
+        [0] = {bold=true, foreground=Screen.colors.Blue},
+        [1] = {background = Screen.colors.LightMagenta},
+        [2] = {background = Screen.colors.LightMagenta, bold = true, foreground = Screen.colors.Blue1},
+        [3] = {bold = true},
+        [4] = {bold = true, reverse = true},
+        [5] = {reverse = true},
+        [6] = {background = Screen.colors.LightMagenta, bold = true, reverse = true},
+        [7] = {foreground = Screen.colors.Grey100, background = Screen.colors.Red},
+        [8] = {bold = true, foreground = Screen.colors.SeaGreen4},
+        [9] = {background = Screen.colors.LightGrey, underline = true},
+        [10] = {background = Screen.colors.LightGrey, underline = true, bold = true, foreground = Screen.colors.Magenta},
+        [11] = {bold = true, foreground = Screen.colors.Magenta},
+        [12] = {background = Screen.colors.Red, bold = true, foreground = Screen.colors.Blue1},
+        [13] = {background = Screen.colors.WebGray},
+        [14] = {foreground = Screen.colors.Brown},
+        [15] = {background = Screen.colors.Grey20},
+        [16] = {background = Screen.colors.Grey20, bold = true, foreground = Screen.colors.Blue1},
+        [17] = {background = Screen.colors.Yellow},
+        [18] = {foreground = Screen.colors.Brown, background = Screen.colors.Grey20},
+        [19] = {foreground = Screen.colors.DarkBlue, background = Screen.colors.WebGray},
+        [20] = {bold = true, foreground = Screen.colors.Brown},
+        [21] = {background = Screen.colors.Gray90},
+        [22] = {background = Screen.colors.LightRed},
+        [23] = {foreground = Screen.colors.Black, background = Screen.colors.White};
+        [24] = {foreground = Screen.colors.Black, background = Screen.colors.Grey80};
+        [25] = {blend = 100, background = Screen.colors.Gray0};
+        [26] = {blend = 80, background = Screen.colors.Gray0};
+        [27] = {background = Screen.colors.LightGray};
+      }
       screen:set_default_attr_ids(attrs)
     end)
 
