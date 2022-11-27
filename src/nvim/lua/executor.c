@@ -2218,7 +2218,7 @@ char *nlua_read_secure(const char *path)
   return buf;
 }
 
-bool nlua_trust(const char *action, int bufnr, char **msg)
+bool nlua_trust(const char *action, const char *path, char **msg)
 {
     lua_State *const lstate = global_lstate;
     lua_getglobal(lstate, "vim");
@@ -2229,9 +2229,15 @@ bool nlua_trust(const char *action, int bufnr, char **msg)
     lua_pushstring(lstate, "action");
     lua_pushstring(lstate, action);
     lua_settable(lstate, -3);
-    lua_pushstring(lstate, "bufnr");
-    lua_pushnumber(lstate, bufnr);
-    lua_settable(lstate, -3);
+    if (path == NULL) {
+      lua_pushstring(lstate, "bufnr");
+      lua_pushnumber(lstate, 0);
+      lua_settable(lstate, -3);
+    } else {
+      lua_pushstring(lstate, "path");
+      lua_pushstring(lstate, path);
+      lua_settable(lstate, -3);
+    }
 
     if (nlua_pcall(lstate, 1, 2)) {
       nlua_error(lstate, _("Error executing vim.secure.trust: %.*s"));

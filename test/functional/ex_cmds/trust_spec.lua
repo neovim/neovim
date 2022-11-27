@@ -1,4 +1,5 @@
 local helpers = require('test.functional.helpers')(after_each)
+local Screen = require('test.functional.ui.screen')
 
 local eq = helpers.eq
 local clear = helpers.clear
@@ -27,36 +28,149 @@ describe(':trust', function()
     os.remove('test_file')
   end)
 
-  it('allow then deny then forget a file', function()
+  it('deny then allow then forget a file using current buffer', function()
+    local screen = Screen.new(80, 8)
+    screen:attach()
+    screen:set_default_attr_ids({
+      [1] = {bold = true, foreground = Screen.colors.Blue1},
+    })
+
     local cwd = funcs.getcwd()
     local hash = funcs.sha256(helpers.read_file('test_file'))
 
-    command('trust allow test_file')
-    local trust = helpers.read_file(funcs.stdpath('state') .. pathsep .. 'trust')
+    command('edit test_file')
+    command('trust')
+    screen:expect([[
+      ^test                                                                            |
+      {1:~                                                                               }|
+      {1:~                                                                               }|
+      {1:~                                                                               }|
+      {1:~                                                                               }|
+      {1:~                                                                               }|
+      {1:~                                                                               }|
+      "]] .. cwd .. pathsep .. [[test_file" trusted.                                     |
+    ]])
+    trust = helpers.read_file(funcs.stdpath('state') .. pathsep .. 'trust')
     eq(string.format('%s %s', hash, cwd .. pathsep .. 'test_file'), vim.trim(trust))
 
-    command('trust deny test_file')
-    trust = helpers.read_file(funcs.stdpath('state') .. pathsep .. 'trust')
+    command('trust ++deny')
+    screen:expect([[
+      ^test                                                                            |
+      {1:~                                                                               }|
+      {1:~                                                                               }|
+      {1:~                                                                               }|
+      {1:~                                                                               }|
+      {1:~                                                                               }|
+      {1:~                                                                               }|
+      "]] .. cwd .. pathsep .. [[test_file" denied.                                      |
+    ]])
+    local trust = helpers.read_file(funcs.stdpath('state') .. pathsep .. 'trust')
     eq(string.format('! %s', cwd .. pathsep .. 'test_file'), vim.trim(trust))
 
-    command('trust forget test_file')
+    command('trust ++remove')
+    screen:expect([[
+      ^test                                                                            |
+      {1:~                                                                               }|
+      {1:~                                                                               }|
+      {1:~                                                                               }|
+      {1:~                                                                               }|
+      {1:~                                                                               }|
+      {1:~                                                                               }|
+      "]] .. cwd .. pathsep .. [[test_file" removed.                                     |
+    ]])
     trust = helpers.read_file(funcs.stdpath('state') .. pathsep .. 'trust')
     eq(string.format(''), vim.trim(trust))
   end)
 
-  it('deny then allow then forget a file', function()
+  it('deny then allow then forget a file using current buffer', function()
+    local screen = Screen.new(80, 8)
+    screen:attach()
+    screen:set_default_attr_ids({
+      [1] = {bold = true, foreground = Screen.colors.Blue1},
+    })
+
     local cwd = funcs.getcwd()
     local hash = funcs.sha256(helpers.read_file('test_file'))
 
-    command('trust deny test_file')
+    command('edit test_file')
+    command('trust ++deny')
+    screen:expect([[
+      ^test                                                                            |
+      {1:~                                                                               }|
+      {1:~                                                                               }|
+      {1:~                                                                               }|
+      {1:~                                                                               }|
+      {1:~                                                                               }|
+      {1:~                                                                               }|
+      "]] .. cwd .. pathsep .. [[test_file" denied.                                      |
+    ]])
     local trust = helpers.read_file(funcs.stdpath('state') .. pathsep .. 'trust')
     eq(string.format('! %s', cwd .. pathsep .. 'test_file'), vim.trim(trust))
 
-    command('trust allow test_file')
+    command('trust')
+    screen:expect([[
+      ^test                                                                            |
+      {1:~                                                                               }|
+      {1:~                                                                               }|
+      {1:~                                                                               }|
+      {1:~                                                                               }|
+      {1:~                                                                               }|
+      {1:~                                                                               }|
+      "]] .. cwd .. pathsep .. [[test_file" trusted.                                     |
+    ]])
     trust = helpers.read_file(funcs.stdpath('state') .. pathsep .. 'trust')
     eq(string.format('%s %s', hash, cwd .. pathsep .. 'test_file'), vim.trim(trust))
 
-    command('trust forget test_file')
+    command('trust ++remove')
+    screen:expect([[
+      ^test                                                                            |
+      {1:~                                                                               }|
+      {1:~                                                                               }|
+      {1:~                                                                               }|
+      {1:~                                                                               }|
+      {1:~                                                                               }|
+      {1:~                                                                               }|
+      "]] .. cwd .. pathsep .. [[test_file" removed.                                     |
+    ]])
+    trust = helpers.read_file(funcs.stdpath('state') .. pathsep .. 'trust')
+    eq(string.format(''), vim.trim(trust))
+  end)
+
+  it('deny then forget a file using file path', function()
+    local screen = Screen.new(80, 8)
+    screen:attach()
+    screen:set_default_attr_ids({
+      [1] = {bold = true, foreground = Screen.colors.Blue1},
+    })
+
+    local cwd = funcs.getcwd()
+    local hash = funcs.sha256(helpers.read_file('test_file'))
+
+    command('trust ++deny test_file')
+    screen:expect([[
+      ^                                                                                |
+      {1:~                                                                               }|
+      {1:~                                                                               }|
+      {1:~                                                                               }|
+      {1:~                                                                               }|
+      {1:~                                                                               }|
+      {1:~                                                                               }|
+      "]] .. cwd .. pathsep .. [[test_file" denied.                                      |
+    ]])
+    trust = helpers.read_file(funcs.stdpath('state') .. pathsep .. 'trust')
+    eq(string.format('! %s', cwd .. pathsep .. 'test_file'), vim.trim(trust))
+
+    command('trust ++remove test_file')
+    screen:expect([[
+      ^                                                                                |
+      {1:~                                                                               }|
+      {1:~                                                                               }|
+      {1:~                                                                               }|
+      {1:~                                                                               }|
+      {1:~                                                                               }|
+      {1:~                                                                               }|
+      "]] .. cwd .. pathsep .. [[test_file" removed.                                     |
+    ]])
     trust = helpers.read_file(funcs.stdpath('state') .. pathsep .. 'trust')
     eq(string.format(''), vim.trim(trust))
   end)
