@@ -1615,7 +1615,7 @@ There are three different types of searching:
    directory or in the directory of the current file (if the relative path
    starts with './' and 'd' is not included in 'cpoptions').
 
-   If Vim's cu rrent path is /u/user_x/work/release and you do >
+   If Vim's current path is /u/user_x/work/release and you do >
 	:set path=include;/u/user_x
 <  and then search for a file with |gf| the file is searched in: >
 	/u/user_x/work/release/include
