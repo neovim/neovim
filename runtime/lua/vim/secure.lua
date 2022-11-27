@@ -118,12 +118,12 @@ end
 --- $XDG_STATE_HOME/nvim/trust.
 ---
 ---@param opts (table):
----    - action (string): 'allow' to add a file to the trust database and trust it,
----      'deny' to add a file to the trust database and deny it,
----      'remove' to remove file from the trust database
+---    - action (string): "allow" to add a file to the trust database and trust it,
+---      "deny" to add a file to the trust database and deny it,
+---      "remove" to remove file from the trust database
 ---    - path (string|nil): Path to a file to update. If nil, must provide bufnr
 ---    - bufnr (number|nil): Buffer number to update. If nil, must provide path.
----      For 'allow', must provide bufnr.
+---      For "allow", must provide bufnr.
 ---@return (boolean, string|nil) success, errmsg: true and nil if the operation was successful,
 ---   otherwise false and an error message.
 function M.trust(opts)
