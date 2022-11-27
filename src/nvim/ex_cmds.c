@@ -4995,7 +4995,7 @@ void ex_trust(exarg_T *eap)
         msg_puts("\" removed.");
       }
     } else {
-      semsg("Error: %s", msg);
+      semsg(e_trustfile, msg);
     }
   }
 
