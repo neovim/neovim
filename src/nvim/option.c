@@ -1084,8 +1084,8 @@ static int do_set_string(int opt_idx, int opt_flags, char **argp, int nextchar, 
 
   if (*errmsg == NULL) {
     if (!starting) {
-      trigger_optionsset_string(opt_idx, opt_flags, saved_origval, saved_origval_l,
-                                saved_origval_g, saved_newval);
+      trigger_optionset_string(opt_idx, opt_flags, saved_origval, saved_origval_l,
+                               saved_origval_g, saved_newval);
     }
     if (options[opt_idx].flags & P_UI_OPTION) {
       ui_call_option_set(cstr_as_string(options[opt_idx].fullname),

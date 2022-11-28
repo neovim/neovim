@@ -3237,7 +3237,7 @@ func Test_cclose_from_copen()
 endfunc
 
 func Test_cclose_in_autocmd()
-  " Problem is only triggered if "starting" is zero, so that the OptionsSet
+  " Problem is only triggered if "starting" is zero, so that the OptionSet
   " event will be triggered.
   " call test_override('starting', 1)
   augroup QF_Test

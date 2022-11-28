@@ -161,8 +161,8 @@ void didset_string_options(void)
 /// "oldval_l"  the old local value (only non-NULL if global and local value are set)
 /// "oldval_g"  the old global value (only non-NULL if global and local value are set)
 /// "newval"    the new value
-void trigger_optionsset_string(int opt_idx, int opt_flags, char *oldval, char *oldval_l,
-                               char *oldval_g, char *newval)
+void trigger_optionset_string(int opt_idx, int opt_flags, char *oldval, char *oldval_l,
+                              char *oldval_g, char *newval)
 {
   // Don't do this recursively.
   if (oldval != NULL
@@ -448,8 +448,8 @@ char *set_string_option(const int opt_idx, const char *const value, const int op
   // call autocommand after handling side effects
   if (errmsg == NULL) {
     if (!starting) {
-      trigger_optionsset_string(opt_idx, opt_flags, saved_oldval, saved_oldval_l, saved_oldval_g,
-                                saved_newval);
+      trigger_optionset_string(opt_idx, opt_flags, saved_oldval, saved_oldval_l, saved_oldval_g,
+                               saved_newval);
     }
     if (opt->flags & P_UI_OPTION) {
       ui_call_option_set(cstr_as_string(opt->fullname),
