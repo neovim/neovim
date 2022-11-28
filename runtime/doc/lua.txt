@@ -2373,8 +2373,8 @@ read({path})                                               *vim.secure.read()*
         trusted, or nil otherwise.
 
     See also: ~
-        vim.secure.trust()
-        :trust
+        |vim.secure.trust()|
+        |:trust|
 
 trust({opts})                                             *vim.secure.trust()*
     Manage the trust database.

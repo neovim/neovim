@@ -43,8 +43,8 @@ end
 --- trusted. The user's choice is persisted in a trust database at
 --- $XDG_STATE_HOME/nvim/trust.
 ---
----@see vim.secure.trust()
----@see :trust
+---@see |vim.secure.trust()|
+---@see |:trust|
 ---
 ---@param path (string) Path to a file to read.
 ---
