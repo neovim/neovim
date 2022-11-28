@@ -1952,7 +1952,7 @@ compute_diff({___MissingCloseParenHere___})
       • {offset_encoding}  (string) encoding requested by language server
 
     Return: ~
-        (table) TextDocumentContentChangeEvent see https://microsoft.github.io/language-server-protocol/specifications/specification-3-17/#textDocumentContentChangeEvent
+        (table) TextDocumentContentChangeEvent see https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocumentContentChangeEvent
 
 
 ==============================================================================
