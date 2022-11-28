@@ -173,7 +173,7 @@ describe('vim.secure', function()
     local xstate = 'Xstate'
 
     setup(function()
-      helpers.mkdir_p(xstate .. pathsep .. (iswin and 'nvim-data' or 'nvim'))
+      helpers.mkdir_p(xstate .. pathsep .. (is_os('win') and 'nvim-data' or 'nvim'))
     end)
 
     teardown(function()
