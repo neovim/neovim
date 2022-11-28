@@ -1679,7 +1679,7 @@ do --[[ References ]]
   ---@param bufnr number Buffer id
   ---@param references table List of `DocumentHighlight` objects to highlight
   ---@param offset_encoding string One of "utf-8", "utf-16", "utf-32".
-  ---@see https://microsoft.github.io/language-server-protocol/specifications/specification-3-17/#documentHighlight
+  ---@see https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocumentContentChangeEvent
   function M.buf_highlight_references(bufnr, references, offset_encoding)
     validate({
       bufnr = { bufnr, 'n', true },
