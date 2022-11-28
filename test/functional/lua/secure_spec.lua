@@ -189,8 +189,8 @@ describe('vim.secure', function()
     end)
 
     it('returns error when passing both path and bufnr', function()
-      eq({false, 'path and bufnr are mutually exclusive'},
-        exec_lua([[return {vim.secure.trust({action='deny', bufnr=0, path='test_file'})}]]))
+      eq('path and bufnr are mutually exclusive',
+        pcall_err(exec_lua, [[vim.secure.trust({action='deny', bufnr=0, path='test_file'})]]))
     end)
 
     it('trust then deny then remove a file using bufnr', function()
