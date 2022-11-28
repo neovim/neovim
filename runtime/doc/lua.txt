@@ -1159,9 +1159,8 @@ vim.wo[{winid}]                                                                *
 
 
 
-                                                                          *lua-vim-opt*
-                                                                     *lua-vim-optlocal*
-                                                                    *lua-vim-optglobal*
+                                                                        *vim.opt_local*
+                                                                       *vim.opt_global*
                                                                               *vim.opt*
 
 
