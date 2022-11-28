@@ -6389,9 +6389,6 @@ void win_new_height(win_T *wp, int height)
   wp->w_height = height;
   wp->w_pos_changed = true;
   win_set_inner_size(wp, true);
-  if (wp->w_status_height) {
-    wp->w_redr_status = true;
-  }
 }
 
 void scroll_to_fraction(win_T *wp, int prev_height)
@@ -6487,7 +6484,6 @@ void scroll_to_fraction(win_T *wp, int prev_height)
   }
 
   redraw_later(wp, UPD_SOME_VALID);
-  wp->w_redr_status = true;
   invalidate_botline_win(wp);
 }
 
@@ -6554,6 +6550,7 @@ void win_set_inner_size(win_T *wp, bool valid_cursor)
   wp->w_width_outer = (wp->w_width_inner + win_border_width(wp));
   wp->w_winrow_off = wp->w_border_adj[0] + wp->w_winbar_height;
   wp->w_wincol_off = wp->w_border_adj[3];
+  wp->w_redr_status = true;
 }
 
 static int win_border_height(win_T *wp)
@@ -6570,10 +6567,8 @@ static int win_border_width(win_T *wp)
 void win_new_width(win_T *wp, int width)
 {
   wp->w_width = width;
-  win_set_inner_size(wp, true);
-
-  wp->w_redr_status = true;
   wp->w_pos_changed = true;
+  win_set_inner_size(wp, true);
 }
 
 void win_comp_scroll(win_T *wp)
@@ -6974,7 +6969,6 @@ int set_winbar_win(win_T *wp, bool make_room, bool valid_cursor)
     }
     wp->w_winbar_height = winbar_height;
     win_set_inner_size(wp, valid_cursor);
-    wp->w_redr_status = wp->w_redr_status || winbar_height;
 
     if (winbar_height == 0) {
       // When removing winbar, deallocate the w_winbar_click_defs array
