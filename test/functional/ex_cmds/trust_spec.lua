@@ -5,14 +5,14 @@ local eq = helpers.eq
 local clear = helpers.clear
 local command = helpers.command
 local pathsep = helpers.get_pathsep()
-local iswin = helpers.iswin()
+local is_os = helpers.is_os
 local funcs = helpers.funcs
 
 describe(':trust', function()
   local xstate = 'Xstate'
 
   setup(function()
-    helpers.mkdir_p(xstate .. pathsep .. (iswin and 'nvim-data' or 'nvim'))
+    helpers.mkdir_p(xstate .. pathsep .. (is_os('win') and 'nvim-data' or 'nvim'))
   end)
 
   teardown(function()
