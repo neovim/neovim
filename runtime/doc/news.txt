@@ -39,6 +39,9 @@ NEW FEATURES                                                    *news-features*
 
 The following new APIs or features were added.
 
+• |vim.secure.trust()|, |:trust| allows the user to manage files in trust
+  database.
+
 • |vim.diagnostic.open_float()| (and therefore |vim.diagnostic.config()|) now
   accepts a `suffix` option which, by default, renders LSP error codes.
   Similarly, the `virtual_text` configuration in |vim.diagnostic.config()| now
@@ -59,9 +62,6 @@ The following new APIs or features were added.
   available to |vim.diff()|
 
   See https://github.com/neovim/neovim/pull/14537.
-
-• |vim.secure.trust()|, |:trust| allows the user to manage files in trust
-  database.
 
 ==============================================================================
 CHANGED FEATURES                                                 *news-changes*

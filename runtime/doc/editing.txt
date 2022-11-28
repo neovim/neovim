@@ -1666,7 +1666,7 @@ the |:trust| command or the |vim.secure.read()| function.
 
 			Manage files in the trust database. Without any options
 			or arguments
-			`:trust` adds the file associated with the current
+			:trust adds the file associated with the current
 			buffer to the trust database, along with the SHA256
 			hash of its contents.
 			[++deny] marks the file associated with the current

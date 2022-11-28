@@ -171,7 +171,7 @@ function M.trust(opts)
   local trust = read_trust()
 
   if action == 'allow' then
-    assert(bufnr, 'bufnr is required when action is "allow")
+    assert(bufnr, 'bufnr is required when action is "allow"')
 
     local contents = table.concat(vim.api.nvim_buf_get_lines(bufnr, 0, -1, false))
     local hash = vim.fn.sha256(contents)
