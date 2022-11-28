@@ -43,7 +43,6 @@ end
 --- trusted. The user's choice is persisted in a trust database at
 --- $XDG_STATE_HOME/nvim/trust.
 ---
----@see |vim.secure.trust()|
 ---@see |:trust|
 ---
 ---@param path (string) Path to a file to read.
@@ -173,7 +172,7 @@ function M.trust(opts)
   if action == 'allow' then
     assert(bufnr, 'bufnr is required when action is "allow"')
 
-    local contents = table.concat(vim.api.nvim_buf_get_lines(bufnr, 0, -1, false))
+    local contents = table.concat(vim.api.nvim_buf_get_lines(bufnr, 0, -1, false), '\n') .. '\n'
     local hash = vim.fn.sha256(contents)
 
     trust[fullpath] = hash

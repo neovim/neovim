@@ -1663,14 +1663,15 @@ the |:trust| command or the |vim.secure.read()| function.
 :trust [++deny] [++remove] [{file}]
 
 			Manage files in the trust database. Without any options
-			or arguments
-			:trust adds the file associated with the current
-			buffer to the trust database, along with the SHA256
-			hash of its contents.
+			or arguments, :trust adds the file associated with the
+			current buffer to the trust database, along with the
+			SHA256 hash of its contents.
+
 			[++deny] marks the file associated with the current
 			buffer (or {file}, if given) as denied; no prompts will
 			be displayed to the user and the file will never be
 			executed.
+
 			[++remove] removes the file associated with the current
 			buffer (or {file}, if given) from the trust database.
 			Future attempts to read the file in a secure setting

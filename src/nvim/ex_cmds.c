@@ -4975,6 +4975,10 @@ void ex_trust(exarg_T *eap)
   } else if (strcmp(arg1, "++remove") == 0) {
     path = skipwhite(p);
     action = "remove";
+  } else if (*arg1 != '\0') {
+    semsg(e_invarg2, arg1);
+    xfree(arg1);
+    return;
   }
 
   if (path[0] == '\0') {
