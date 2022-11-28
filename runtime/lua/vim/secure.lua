@@ -150,7 +150,7 @@ function M.trust(opts)
   local action = opts.action
 
   if path and bufnr then
-    return false, 'path and bufnr are mutually exclusive'
+    error('path and bufnr are mutually exclusive', 2)
   end
 
   local fullpath
@@ -171,9 +171,7 @@ function M.trust(opts)
   local trust = read_trust()
 
   if action == 'allow' then
-    if not bufnr then
-      return false, 'allow operates on buffers - bufnr is required'
-    end
+    assert(bufnr, 'bufnr is required when action is "allow")
 
     local contents = table.concat(vim.api.nvim_buf_get_lines(bufnr, 0, -1, false))
     local hash = vim.fn.sha256(contents)
