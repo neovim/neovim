@@ -2217,3 +2217,51 @@ char *nlua_read_secure(const char *path)
 
   return buf;
 }
+
+bool nlua_trust(const char *action, const char *path)
+{
+  lua_State *const lstate = global_lstate;
+  lua_getglobal(lstate, "vim");
+  lua_getfield(lstate, -1, "secure");
+  lua_getfield(lstate, -1, "trust");
+
+  lua_newtable(lstate);
+  lua_pushstring(lstate, "action");
+  lua_pushstring(lstate, action);
+  lua_settable(lstate, -3);
+  if (path == NULL) {
+    lua_pushstring(lstate, "bufnr");
+    lua_pushnumber(lstate, 0);
+    lua_settable(lstate, -3);
+  } else {
+    lua_pushstring(lstate, "path");
+    lua_pushstring(lstate, path);
+    lua_settable(lstate, -3);
+  }
+
+  if (nlua_pcall(lstate, 1, 2)) {
+    nlua_error(lstate, _("Error executing vim.secure.trust: %.*s"));
+    return false;
+  }
+
+  bool success = lua_toboolean(lstate, -2);
+  const char *msg = lua_tostring(lstate, -1);
+  if (msg != NULL) {
+    if (success) {
+      if (strcmp(action, "allow") == 0) {
+        smsg("Allowed \"%s\" in trust database.", msg);
+      } else if (strcmp(action, "deny") == 0) {
+        smsg("Denied \"%s\" in trust database.", msg);
+      } else if (strcmp(action, "remove") == 0) {
+        smsg("Removed \"%s\" from trust database.", msg);
+      }
+    } else {
+      semsg(e_trustfile, msg);
+    }
+  }
+
+  // Pop return values, "vim" and "secure"
+  lua_pop(lstate, 4);
+
+  return success;
+}

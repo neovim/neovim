@@ -2934,6 +2934,12 @@ module.cmds = {
     func='ex_tag',
   },
   {
+    command='trust',
+    flags=bit.bor(EXTRA, FILE1, TRLBAR, LOCK_OK),
+    addr_type='ADDR_NONE',
+    func='ex_trust',
+  },
+  {
     command='try',
     flags=bit.bor(TRLBAR, SBOXOK, CMDWIN, LOCK_OK),
     addr_type='ADDR_NONE',
