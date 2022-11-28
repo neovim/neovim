@@ -12,6 +12,7 @@ local feed_command = helpers.feed_command
 local feed = helpers.feed
 local funcs = helpers.funcs
 local pcall_err = helpers.pcall_err
+local matches = helpers.matches
 
 describe('vim.secure', function()
   describe('read()', function()
@@ -189,8 +190,13 @@ describe('vim.secure', function()
     end)
 
     it('returns error when passing both path and bufnr', function()
-      eq('path and bufnr are mutually exclusive',
+      matches('"path" and "bufnr" are mutually exclusive',
         pcall_err(exec_lua, [[vim.secure.trust({action='deny', bufnr=0, path='test_file'})]]))
+    end)
+
+    it('returns error when passing neither path or bufnr', function()
+      matches('one of "path" or "bufnr" is required',
+        pcall_err(exec_lua, [[vim.secure.trust({action='deny'})]]))
     end)
 
     it('trust then deny then remove a file using bufnr', function()

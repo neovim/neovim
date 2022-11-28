@@ -148,19 +148,23 @@ function M.trust(opts)
   local bufnr = opts.bufnr
   local action = opts.action
 
-  if path and bufnr then
-    error('path and bufnr are mutually exclusive', 2)
+  assert(not path or not bufnr, '"path" and "bufnr" are mutually exclusive')
+
+  if action == 'allow' then
+    assert(not path, '"path" is not valid when action is "allow"')
   end
 
   local fullpath
   if path then
     fullpath = vim.loop.fs_realpath(vim.fs.normalize(path))
-  else
+  elseif bufnr then
     local bufname = vim.api.nvim_buf_get_name(bufnr)
     if bufname == '' then
       return false, 'buffer is not associated with a file'
     end
     fullpath = vim.loop.fs_realpath(vim.fs.normalize(bufname))
+  else
+    error('one of "path" or "bufnr" is required')
   end
 
   if not fullpath then
@@ -170,8 +174,6 @@ function M.trust(opts)
   local trust = read_trust()
 
   if action == 'allow' then
-    assert(bufnr, 'bufnr is required when action is "allow"')
-
     local newline = vim.bo[bufnr].fileformat == 'unix' and '\n' or '\r\n'
     local contents = table.concat(vim.api.nvim_buf_get_lines(bufnr, 0, -1, false), newline)
     if vim.bo[bufnr].endofline then
