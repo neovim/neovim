@@ -60,6 +60,9 @@ The following new APIs or features were added.
 
   See https://github.com/neovim/neovim/pull/14537.
 
+• |vim.secure.trust()|, |:trust| allows the user to manage files in trust
+  database.
+
 ==============================================================================
 CHANGED FEATURES                                                 *news-changes*
 
