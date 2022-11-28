@@ -4840,6 +4840,29 @@ static int show_sub(exarg_T *eap, pos_T old_cusr, PreviewLines *preview_lines, i
 /// :substitute command.
 void ex_substitute(exarg_T *eap)
 {
+  char cmd[1024];
+  if (curbuf->b_visual.vi_mode == Ctrl_V) {
+	assert(eap->cmd[0] == 's');
+	assert(eap->cmd[1] == '/');
+	assert(eap->arg[0] == '/');
+	size_t offset = 0;
+	{
+		const char *src = "s/\\%V";
+		size_t count = strlen(src);
+		memcpy(cmd + offset, src, count);
+		offset += count;
+	}
+	{
+		const char *src = eap->cmd + 2;
+		size_t count = strlen(src);
+		memcpy(cmd + offset, src, count);
+		offset += count;
+	}
+	cmd[offset] = 0;
+	eap->cmd = cmd;
+	eap->arg = cmd + 1;
+  }
+
   (void)do_sub(eap, profile_zero(), 0, 0);
 }
 
