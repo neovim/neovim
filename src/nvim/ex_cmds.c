@@ -4967,18 +4967,15 @@ void ex_trust(exarg_T *eap)
   const char *const p = skiptowhite(eap->arg);
   char *arg1 = xmemdupz(eap->arg, (size_t)(p - eap->arg));
   const char *action = "allow";
-  const char *path = eap->arg;
+  const char *path = skipwhite(p);
 
   if (strcmp(arg1, "++deny") == 0) {
-    path = skipwhite(p);
     action = "deny";
   } else if (strcmp(arg1, "++remove") == 0) {
-    path = skipwhite(p);
     action = "remove";
   } else if (*arg1 != '\0') {
     semsg(e_invarg2, arg1);
-    xfree(arg1);
-    return;
+    goto theend;
   }
 
   if (path[0] == '\0') {
@@ -4987,5 +4984,6 @@ void ex_trust(exarg_T *eap)
 
   nlua_trust(action, path);
 
+theend:
   xfree(arg1);
 }
