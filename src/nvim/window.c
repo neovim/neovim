@@ -543,7 +543,7 @@ wingotofile:
     // Make a copy, if the line was changed it will be freed.
     ptr = xstrnsave(ptr, len);
 
-    find_pattern_in_path((char_u *)ptr, 0, len, true, Prenum == 0,
+    find_pattern_in_path(ptr, 0, len, true, Prenum == 0,
                          type, Prenum1, ACTION_SPLIT, 1, MAXLNUM);
     xfree(ptr);
     curwin->w_set_curswant = true;
@@ -6799,9 +6799,9 @@ char_u *file_name_in_line(char_u *line, int col, int options, long count, char_u
     // Also accept " line 999" with and without the same translation as
     // used in last_set_msg().
     char *p = ptr + len;
-    if (STRNCMP(p, line_english, strlen(line_english)) == 0) {
+    if (strncmp(p, line_english, strlen(line_english)) == 0) {
       p += strlen(line_english);
-    } else if (STRNCMP(p, line_transl, strlen(line_transl)) == 0) {
+    } else if (strncmp(p, line_transl, strlen(line_transl)) == 0) {
       p += strlen(line_transl);
     } else {
       p = skipwhite(p);

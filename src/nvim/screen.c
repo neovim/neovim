@@ -934,15 +934,15 @@ char *set_chars_option(win_T *wp, char **varp, bool apply)
         }
       }
     }
-    const char_u *p = value;
+    const char *p = (char *)value;
     while (*p) {
       int i;
       for (i = 0; i < entries; i++) {
         const size_t len = strlen(tab[i].name);
-        if (STRNCMP(p, tab[i].name, len) == 0
+        if (strncmp(p, tab[i].name, len) == 0
             && p[len] == ':'
             && p[len + 1] != NUL) {
-          const char_u *s = p + len + 1;
+          const char_u *s = (char_u *)p + len + 1;
           int c1 = get_encoded_char_adv(&s);
           if (c1 == 0 || char2cells(c1) > 1) {
             return e_invarg;
@@ -973,7 +973,7 @@ char *set_chars_option(win_T *wp, char **varp, bool apply)
                 *(tab[i].cp) = c1;
               }
             }
-            p = s;
+            p = (char *)s;
             break;
           }
         }
@@ -983,13 +983,13 @@ char *set_chars_option(win_T *wp, char **varp, bool apply)
         const size_t len = strlen("multispace");
         const size_t len2 = strlen("leadmultispace");
         if (is_listchars
-            && STRNCMP(p, "multispace", len) == 0
+            && strncmp(p, "multispace", len) == 0
             && p[len] == ':'
             && p[len + 1] != NUL) {
-          const char_u *s = p + len + 1;
+          const char_u *s = (char_u *)p + len + 1;
           if (round == 0) {
             // Get length of lcs-multispace string in the first round
-            last_multispace = p;
+            last_multispace = (char_u *)p;
             multispace_len = 0;
             while (*s != NUL && *s != ',') {
               int c1 = get_encoded_char_adv(&s);
@@ -1002,25 +1002,25 @@ char *set_chars_option(win_T *wp, char **varp, bool apply)
               // lcs-multispace cannot be an empty string
               return e_invarg;
             }
-            p = s;
+            p = (char *)s;
           } else {
             int multispace_pos = 0;
             while (*s != NUL && *s != ',') {
               int c1 = get_encoded_char_adv(&s);
-              if (p == last_multispace) {
+              if (p == (char *)last_multispace) {
                 wp->w_p_lcs_chars.multispace[multispace_pos++] = c1;
               }
             }
-            p = s;
+            p = (char *)s;
           }
         } else if (is_listchars
-                   && STRNCMP(p, "leadmultispace", len2) == 0
+                   && strncmp(p, "leadmultispace", len2) == 0
                    && p[len2] == ':'
                    && p[len2 + 1] != NUL) {
-          const char_u *s = p + len2 + 1;
+          const char_u *s = (char_u *)p + len2 + 1;
           if (round == 0) {
             // get length of lcs-leadmultispace string in first round
-            last_lmultispace = p;
+            last_lmultispace = (char_u *)p;
             lead_multispace_len = 0;
             while (*s != NUL && *s != ',') {
               int c1 = get_encoded_char_adv(&s);
@@ -1033,16 +1033,16 @@ char *set_chars_option(win_T *wp, char **varp, bool apply)
               // lcs-leadmultispace cannot be an empty string
               return e_invarg;
             }
-            p = s;
+            p = (char *)s;
           } else {
             int multispace_pos = 0;
             while (*s != NUL && *s != ',') {
               int c1 = get_encoded_char_adv(&s);
-              if (p == last_lmultispace) {
+              if (p == (char *)last_lmultispace) {
                 wp->w_p_lcs_chars.leadmultispace[multispace_pos++] = c1;
               }
             }
-            p = s;
+            p = (char *)s;
           }
         } else {
           return e_invarg;

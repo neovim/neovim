@@ -3735,8 +3735,8 @@ static int chk_modeline(linenr_T lnum, int flags)
   prev = -1;
   for (s = ml_get(lnum); *s != NUL; s++) {
     if (prev == -1 || ascii_isspace(prev)) {
-      if ((prev != -1 && STRNCMP(s, "ex:", (size_t)3) == 0)
-          || STRNCMP(s, "vi:", (size_t)3) == 0) {
+      if ((prev != -1 && strncmp(s, "ex:", (size_t)3) == 0)
+          || strncmp(s, "vi:", (size_t)3) == 0) {
         break;
       }
       // Accept both "vim" and "Vim".
@@ -3752,7 +3752,7 @@ static int chk_modeline(linenr_T lnum, int flags)
 
         if (*e == ':'
             && (s[0] != 'V'
-                || STRNCMP(skipwhite((char *)e + 1), "set", 3) == 0)
+                || strncmp(skipwhite(e + 1), "set", 3) == 0)
             && (s[3] == ':'
                 || (VIM_VERSION_100 >= vers && isdigit(s[3]))
                 || (VIM_VERSION_100 < vers && s[3] == '<')
@@ -3801,8 +3801,8 @@ static int chk_modeline(linenr_T lnum, int flags)
     // "vi:set opt opt opt: foo" -- foo not interpreted
     // "vi:opt opt opt: foo" -- foo interpreted
     // Accept "se" for compatibility with Elvis.
-    if (STRNCMP(s, "set ", (size_t)4) == 0
-        || STRNCMP(s, "se ", (size_t)3) == 0) {
+    if (strncmp(s, "set ", (size_t)4) == 0
+        || strncmp(s, "se ", (size_t)3) == 0) {
       if (*e != ':') {                // no terminating ':'?
         break;
       }

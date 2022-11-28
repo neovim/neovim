@@ -801,7 +801,7 @@ static int ins_compl_add(char *const str, int len, char *const fname, char *cons
     match = compl_first_match;
     do {
       if (!match_at_original_text(match)
-          && STRNCMP(match->cp_str, str, len) == 0
+          && strncmp(match->cp_str, str, (size_t)len) == 0
           && ((int)strlen(match->cp_str) <= len || match->cp_str[len] == NUL)) {
         FREE_CPTEXT(cptext, cptext_allocated);
         return NOTDONE;
@@ -2935,7 +2935,7 @@ done:
 /// included files.
 static void get_next_include_file_completion(int compl_type)
 {
-  find_pattern_in_path((char_u *)compl_pattern, compl_direction,
+  find_pattern_in_path(compl_pattern, compl_direction,
                        strlen(compl_pattern), false, false,
                        ((compl_type == CTRL_X_PATH_DEFINES
                          && !(compl_cont_status & CONT_SOL))
@@ -3080,8 +3080,8 @@ static char_u *ins_comp_get_next_word_or_line(buf_T *ins_buf, pos_T *cur_match_p
       if (cur_match_pos->lnum < ins_buf->b_ml.ml_line_count) {
         // Try next line, if any. the new word will be "join" as if the
         // normal command "J" was used. IOSIZE is always greater than
-        // compl_length, so the next STRNCPY always works -- Acevedo
-        STRNCPY(IObuff, ptr, len);  // NOLINT(runtime/printf)
+        // compl_length, so the next strncpy always works -- Acevedo
+        strncpy(IObuff, ptr, (size_t)len);  // NOLINT(runtime/printf)
         ptr = ml_get_buf(ins_buf, cur_match_pos->lnum + 1, false);
         tmp_ptr = ptr = skipwhite(ptr);
         // Find start of next word.
@@ -3159,7 +3159,7 @@ static int get_next_default_completion(ins_compl_next_state_T *st, pos_T *start_
     // has added a word that was at the beginning of the line.
     if (ctrl_x_mode_line_or_eval() || (compl_cont_status & CONT_SOL)) {
       found_new_match = search_for_exact_line(st->ins_buf, st->cur_match_pos,
-                                              compl_direction, (char_u *)compl_pattern);
+                                              compl_direction, compl_pattern);
     } else {
       found_new_match = searchit(NULL, st->ins_buf, st->cur_match_pos,
                                  NULL, compl_direction, (char_u *)compl_pattern, 1L,

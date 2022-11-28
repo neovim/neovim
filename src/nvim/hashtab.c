@@ -140,7 +140,7 @@ hashitem_T *hash_lookup(const hashtab_T *const ht, const char *const key, const 
   if (hi->hi_key == HI_KEY_REMOVED) {
     freeitem = hi;
   } else if ((hi->hi_hash == hash)
-             && (STRNCMP(hi->hi_key, key, key_len) == 0)
+             && (strncmp(hi->hi_key, key, key_len) == 0)
              && hi->hi_key[key_len] == NUL) {
     return hi;
   }
@@ -166,7 +166,7 @@ hashitem_T *hash_lookup(const hashtab_T *const ht, const char *const key, const 
 
     if ((hi->hi_hash == hash)
         && (hi->hi_key != HI_KEY_REMOVED)
-        && (STRNCMP(hi->hi_key, key, key_len) == 0)
+        && (strncmp(hi->hi_key, key, key_len) == 0)
         && hi->hi_key[key_len] == NUL) {
       return hi;
     }

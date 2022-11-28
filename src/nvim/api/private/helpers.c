@@ -391,13 +391,13 @@ String cbuf_to_string(const char *buf, size_t size)
 String cstrn_to_string(const char *str, size_t maxsize)
   FUNC_ATTR_NONNULL_ALL
 {
-  return cbuf_to_string(str, STRNLEN(str, maxsize));
+  return cbuf_to_string(str, strnlen(str, maxsize));
 }
 
 String cstrn_as_string(char *str, size_t maxsize)
   FUNC_ATTR_NONNULL_ALL
 {
-  return cbuf_as_string(str, STRNLEN(str, maxsize));
+  return cbuf_as_string(str, strnlen(str, maxsize));
 }
 
 /// Creates a String using the given C string. Unlike

@@ -412,9 +412,9 @@ int spell_check_sps(void)
       f = SPS_FAST;
     } else if (strcmp(buf, "double") == 0) {
       f = SPS_DOUBLE;
-    } else if (STRNCMP(buf, "expr:", 5) != 0
-               && STRNCMP(buf, "file:", 5) != 0
-               && (STRNCMP(buf, "timeout:", 8) != 0
+    } else if (strncmp(buf, "expr:", 5) != 0
+               && strncmp(buf, "file:", 5) != 0
+               && (strncmp(buf, "timeout:", 8) != 0
                    || (!ascii_isdigit(buf[8])
                        && !(buf[8] == '-' && ascii_isdigit(buf[9]))))) {
       f = -1;
@@ -546,7 +546,7 @@ void spell_suggest(int count)
     lines_left = Rows;          // avoid more prompt
     vim_snprintf((char *)IObuff, IOSIZE, _("Change \"%.*s\" to:"),
                  sug.su_badlen, sug.su_badptr);
-    if (cmdmsg_rl && STRNCMP(IObuff, "Change", 6) == 0) {
+    if (cmdmsg_rl && strncmp(IObuff, "Change", 6) == 0) {
       // And now the rabbit from the high hat: Avoid showing the
       // untranslated message rightleft.
       vim_snprintf((char *)IObuff, IOSIZE, ":ot \"%.*s\" egnahC",
@@ -711,7 +711,7 @@ static void spell_find_suggest(char_u *badptr, int badlen, suginfo_T *su, int ma
                                bool banbadword, bool need_cap, bool interactive)
 {
   hlf_T attr = HLF_COUNT;
-  char_u buf[MAXPATHL];
+  char buf[MAXPATHL];
   char *p;
   bool do_combine = false;
   char *sps_copy;
@@ -783,7 +783,7 @@ static void spell_find_suggest(char_u *badptr, int badlen, suginfo_T *su, int ma
   // for that.
   c = utf_ptr2char(su->su_badptr);
   if (!SPELL_ISUPPER(c) && attr == HLF_COUNT) {
-    make_case_word(su->su_badword, buf, WF_ONECAP);
+    make_case_word(su->su_badword, (char_u *)buf, WF_ONECAP);
     add_suggestion(su, &su->su_ga, (char *)buf, su->su_badlen, SCORE_ICASE,
                    0, true, su->su_sallang, false);
   }
@@ -800,18 +800,18 @@ static void spell_find_suggest(char_u *badptr, int badlen, suginfo_T *su, int ma
   for (p = sps_copy; *p != NUL;) {
     copy_option_part(&p, (char *)buf, MAXPATHL, ",");
 
-    if (STRNCMP(buf, "expr:", 5) == 0) {
+    if (strncmp(buf, "expr:", 5) == 0) {
       // Evaluate an expression.  Skip this when called recursively,
       // when using spellsuggest() in the expression.
       if (!expr_busy) {
         expr_busy = true;
-        spell_suggest_expr(su, buf + 5);
+        spell_suggest_expr(su, (char_u *)buf + 5);
         expr_busy = false;
       }
-    } else if (STRNCMP(buf, "file:", 5) == 0) {
+    } else if (strncmp(buf, "file:", 5) == 0) {
       // Use list of suggestions in a file.
-      spell_suggest_file(su, buf + 5);
-    } else if (STRNCMP(buf, "timeout:", 8) == 0) {
+      spell_suggest_file(su, (char_u *)buf + 5);
+    } else if (strncmp(buf, "timeout:", 8) == 0) {
       // Limit the time searching for suggestions.
       spell_suggest_timeout = atol((char *)buf + 8);
     } else if (!did_intern) {
@@ -1428,8 +1428,7 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char_u *fword, bool so
         STRCPY(preword + sp->ts_prewordlen, tword + sp->ts_splitoff);
       } else if (flags & WF_KEEPCAP) {
         // Must find the word in the keep-case tree.
-        find_keepcap_word(slang, tword + sp->ts_splitoff,
-                          (char_u *)preword + sp->ts_prewordlen);
+        find_keepcap_word(slang, (char *)tword + sp->ts_splitoff, preword + sp->ts_prewordlen);
       } else {
         // Include badflags: If the badword is onecap or allcap
         // use that for the goodword too.  But if the badword is
@@ -2376,9 +2375,9 @@ static void go_deeper(trystate_T *stack, int depth, int score_add)
 /// words and put it in "kword".
 /// Theoretically there could be several keep-case words that result in the
 /// same case-folded word, but we only find one...
-static void find_keepcap_word(slang_T *slang, char_u *fword, char_u *kword)
+static void find_keepcap_word(slang_T *slang, char *fword, char *kword)
 {
-  char_u uword[MAXWLEN];                // "fword" in upper-case
+  char uword[MAXWLEN];                // "fword" in upper-case
   int depth;
   idx_T tryidx;
 
@@ -2405,7 +2404,7 @@ static void find_keepcap_word(slang_T *slang, char_u *fword, char_u *kword)
   }
 
   // Make an all-cap version of "fword".
-  allcap_copy(fword, uword);
+  allcap_copy((char_u *)fword, (char_u *)uword);
 
   // Each character needs to be tried both case-folded and upper-case.
   // All this gets very complicated if we keep in mind that changing case
@@ -2434,13 +2433,13 @@ static void find_keepcap_word(slang_T *slang, char_u *fword, char_u *kword)
     } else {
       // round[depth] == 1: Try using the folded-case character.
       // round[depth] == 2: Try using the upper-case character.
-      flen = utf_ptr2len((char *)fword + fwordidx[depth]);
+      flen = utf_ptr2len(fword + fwordidx[depth]);
       ulen = utf_ptr2len((char *)uword + uwordidx[depth]);
       if (round[depth] == 1) {
-        p = fword + fwordidx[depth];
+        p = (char_u *)fword + fwordidx[depth];
         l = flen;
       } else {
-        p = uword + uwordidx[depth];
+        p = (char_u *)uword + uwordidx[depth];
         l = ulen;
       }
 
@@ -2475,12 +2474,14 @@ static void find_keepcap_word(slang_T *slang, char_u *fword, char_u *kword)
         // Found the matching char.  Copy it to "kword" and go a
         // level deeper.
         if (round[depth] == 1) {
-          STRNCPY(kword + kwordlen[depth], fword + fwordidx[depth],  // NOLINT(runtime/printf)
-                  flen);
+          strncpy(kword + kwordlen[depth],  // NOLINT(runtime/printf)
+                  fword + fwordidx[depth],
+                  (size_t)flen);
           kwordlen[depth + 1] = kwordlen[depth] + flen;
         } else {
-          STRNCPY(kword + kwordlen[depth], uword + uwordidx[depth],  // NOLINT(runtime/printf)
-                  ulen);
+          strncpy(kword + kwordlen[depth],  // NOLINT(runtime/printf)
+                  uword + uwordidx[depth],
+                  (size_t)ulen);
           kwordlen[depth + 1] = kwordlen[depth] + ulen;
         }
         fwordidx[depth + 1] = fwordidx[depth] + flen;
@@ -2897,7 +2898,7 @@ badword:
 
       if (flags & WF_KEEPCAP) {
         // Must find the word in the keep-case tree.
-        find_keepcap_word(slang, theword, cword);
+        find_keepcap_word(slang, (char *)theword, (char *)cword);
         p = cword;
       } else {
         flags |= su->su_badflags;
@@ -3134,7 +3135,7 @@ static void add_suggestion(suginfo_T *su, garray_T *gap, const char *goodword, i
     for (i = gap->ga_len; --i >= 0; stp++) {
       if (stp->st_wordlen == goodlen
           && stp->st_orglen == badlen
-          && STRNCMP(stp->st_word, goodword, goodlen) == 0) {
+          && strncmp(stp->st_word, goodword, (size_t)goodlen) == 0) {
         // Found it.  Remember the word with the lowest score.
         if (stp->st_slang == NULL) {
           stp->st_slang = slang;

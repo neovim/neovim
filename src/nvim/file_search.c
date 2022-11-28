@@ -400,7 +400,7 @@ void *vim_findfile_init(char *path, char *filename, char *stopdirs, int level, i
         emsg(_(e_pathtoolong));
         break;
       }
-      if (STRNCMP(wc_part, "**", 2) == 0) {
+      if (strncmp(wc_part, "**", 2) == 0) {
         ff_expand_buffer[len++] = *wc_part++;
         ff_expand_buffer[len++] = *wc_part++;
 
@@ -463,7 +463,7 @@ void *vim_findfile_init(char *path, char *filename, char *stopdirs, int level, i
       if (p > search_ctx->ffsc_fix_path) {
         // do not add '..' to the path and start upwards searching
         len = (int)(p - search_ctx->ffsc_fix_path) - 1;
-        if ((len >= 2 && STRNCMP(search_ctx->ffsc_fix_path, "..", 2) == 0)
+        if ((len >= 2 && strncmp(search_ctx->ffsc_fix_path, "..", 2) == 0)
             && (len == 2 || search_ctx->ffsc_fix_path[2] == PATHSEP)) {
           xfree(buf);
           goto error_return;
@@ -681,7 +681,7 @@ char_u *vim_findfile(void *search_ctx_arg)
         rest_of_wildcards = stackp->ffs_wc_path;
         if (*rest_of_wildcards != NUL) {
           len = strlen(file_path);
-          if (STRNCMP(rest_of_wildcards, "**", 2) == 0) {
+          if (strncmp(rest_of_wildcards, "**", 2) == 0) {
             // pointer to the restrict byte
             // The restrict byte is not a character!
             p = rest_of_wildcards + 2;
@@ -858,7 +858,7 @@ char_u *vim_findfile(void *search_ctx_arg)
 
       // if wildcards contains '**' we have to descent till we reach the
       // leaves of the directory tree.
-      if (STRNCMP(stackp->ffs_wc_path, "**", 2) == 0) {
+      if (strncmp(stackp->ffs_wc_path, "**", 2) == 0) {
         for (int i = stackp->ffs_filearray_cur;
              i < stackp->ffs_filearray_size; i++) {
           if (path_fnamecmp(stackp->ffs_filearray[i],

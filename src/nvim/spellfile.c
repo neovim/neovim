@@ -3731,7 +3731,7 @@ static int spell_read_wordfile(spellinfo_T *spin, char_u *fname)
 
     if (*line == '/') {
       line++;
-      if (STRNCMP(line, "encoding=", 9) == 0) {
+      if (strncmp(line, "encoding=", 9) == 0) {
         if (spin->si_conv.vc_type != CONV_NONE) {
           smsg(_("Duplicate /encoding= line ignored in %s line %ld: %s"),
                fname, lnum, line - 1);
@@ -3755,7 +3755,7 @@ static int spell_read_wordfile(spellinfo_T *spin, char_u *fname)
         continue;
       }
 
-      if (STRNCMP(line, "regions=", 8) == 0) {
+      if (strncmp(line, "regions=", 8) == 0) {
         if (spin->si_region_count > 1) {
           smsg(_("Duplicate /regions= line ignored in %s line %ld: %s"),
                fname, lnum, line);
@@ -4895,7 +4895,7 @@ void ex_mkspell(exarg_T *eap)
   char *arg = eap->arg;
   bool ascii = false;
 
-  if (STRNCMP(arg, "-ascii", 6) == 0) {
+  if (strncmp(arg, "-ascii", 6) == 0) {
     ascii = true;
     arg = skipwhite(arg + 6);
   }

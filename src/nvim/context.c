@@ -264,7 +264,7 @@ static inline void ctx_save_funcs(Context *ctx, bool scriptonly)
 
   HASHTAB_ITER(func_tbl_get(), hi, {
     const char *const name = hi->hi_key;
-    bool islambda = (STRNCMP(name, "<lambda>", 8) == 0);
+    bool islambda = (strncmp(name, "<lambda>", 8) == 0);
     bool isscript = ((uint8_t)name[0] == K_SPECIAL);
 
     if (!islambda && (!scriptonly || isscript)) {

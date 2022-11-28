@@ -346,51 +346,51 @@ static void set_maparg_rhs(const char *const orig_rhs, const size_t orig_rhs_len
 /// @return 0 on success, 1 if invalid arguments are detected.
 static int str_to_mapargs(const char_u *strargs, bool is_unmap, MapArguments *mapargs)
 {
-  const char_u *to_parse = strargs;
-  to_parse = (char_u *)skipwhite((char *)to_parse);
+  const char *to_parse = (char *)strargs;
+  to_parse = skipwhite((char *)to_parse);
   CLEAR_POINTER(mapargs);
 
   // Accept <buffer>, <nowait>, <silent>, <expr>, <script>, and <unique> in
   // any order.
   while (true) {
-    if (STRNCMP(to_parse, "<buffer>", 8) == 0) {
-      to_parse = (char_u *)skipwhite((char *)to_parse + 8);
+    if (strncmp(to_parse, "<buffer>", 8) == 0) {
+      to_parse = skipwhite((char *)to_parse + 8);
       mapargs->buffer = true;
       continue;
     }
 
-    if (STRNCMP(to_parse, "<nowait>", 8) == 0) {
-      to_parse = (char_u *)skipwhite((char *)to_parse + 8);
+    if (strncmp(to_parse, "<nowait>", 8) == 0) {
+      to_parse = skipwhite((char *)to_parse + 8);
       mapargs->nowait = true;
       continue;
     }
 
-    if (STRNCMP(to_parse, "<silent>", 8) == 0) {
-      to_parse = (char_u *)skipwhite((char *)to_parse + 8);
+    if (strncmp(to_parse, "<silent>", 8) == 0) {
+      to_parse = skipwhite((char *)to_parse + 8);
       mapargs->silent = true;
       continue;
     }
 
     // Ignore obsolete "<special>" modifier.
-    if (STRNCMP(to_parse, "<special>", 9) == 0) {
-      to_parse = (char_u *)skipwhite((char *)to_parse + 9);
+    if (strncmp(to_parse, "<special>", 9) == 0) {
+      to_parse = skipwhite((char *)to_parse + 9);
       continue;
     }
 
-    if (STRNCMP(to_parse, "<script>", 8) == 0) {
-      to_parse = (char_u *)skipwhite((char *)to_parse + 8);
+    if (strncmp(to_parse, "<script>", 8) == 0) {
+      to_parse = skipwhite((char *)to_parse + 8);
       mapargs->script = true;
       continue;
     }
 
-    if (STRNCMP(to_parse, "<expr>", 6) == 0) {
-      to_parse = (char_u *)skipwhite((char *)to_parse + 6);
+    if (strncmp(to_parse, "<expr>", 6) == 0) {
+      to_parse = skipwhite((char *)to_parse + 6);
       mapargs->expr = true;
       continue;
     }
 
-    if (STRNCMP(to_parse, "<unique>", 8) == 0) {
-      to_parse = (char_u *)skipwhite((char *)to_parse + 8);
+    if (strncmp(to_parse, "<unique>", 8) == 0) {
+      to_parse = skipwhite((char *)to_parse + 8);
       mapargs->unique = true;
       continue;
     }
@@ -423,7 +423,7 @@ static int str_to_mapargs(const char_u *strargs, bool is_unmap, MapArguments *ma
 
   // Given {lhs} might be larger than MAXMAPLEN before replace_termcodes
   // (e.g. "<Space>" is longer than ' '), so first copy into a buffer.
-  size_t orig_lhs_len = (size_t)((char_u *)lhs_end - to_parse);
+  size_t orig_lhs_len = (size_t)(lhs_end - to_parse);
   if (orig_lhs_len >= 256) {
     return 1;
   }
@@ -1209,7 +1209,7 @@ static char_u *translate_mapping(char_u *str, int cpo_flags)
 /// @param forceit  true if '!' given
 /// @param isabbrev  true if abbreviation
 /// @param isunmap  true if unmap/unabbrev command
-char_u *set_context_in_map_cmd(expand_T *xp, char *cmd, char_u *arg, bool forceit, bool isabbrev,
+char_u *set_context_in_map_cmd(expand_T *xp, char *cmd, char *arg, bool forceit, bool isabbrev,
                                bool isunmap, cmdidx_T cmdidx)
 {
   if (forceit && cmdidx != CMD_map && cmdidx != CMD_unmap) {
@@ -1227,38 +1227,38 @@ char_u *set_context_in_map_cmd(expand_T *xp, char *cmd, char_u *arg, bool forcei
     xp->xp_context = EXPAND_MAPPINGS;
     expand_buffer = false;
     for (;;) {
-      if (STRNCMP(arg, "<buffer>", 8) == 0) {
+      if (strncmp(arg, "<buffer>", 8) == 0) {
         expand_buffer = true;
-        arg = (char_u *)skipwhite((char *)arg + 8);
+        arg = skipwhite(arg + 8);
         continue;
       }
-      if (STRNCMP(arg, "<unique>", 8) == 0) {
-        arg = (char_u *)skipwhite((char *)arg + 8);
+      if (strncmp(arg, "<unique>", 8) == 0) {
+        arg = skipwhite(arg + 8);
         continue;
       }
-      if (STRNCMP(arg, "<nowait>", 8) == 0) {
-        arg = (char_u *)skipwhite((char *)arg + 8);
+      if (strncmp(arg, "<nowait>", 8) == 0) {
+        arg = skipwhite(arg + 8);
         continue;
       }
-      if (STRNCMP(arg, "<silent>", 8) == 0) {
-        arg = (char_u *)skipwhite((char *)arg + 8);
+      if (strncmp(arg, "<silent>", 8) == 0) {
+        arg = skipwhite(arg + 8);
         continue;
       }
-      if (STRNCMP(arg, "<special>", 9) == 0) {
-        arg = (char_u *)skipwhite((char *)arg + 9);
+      if (strncmp(arg, "<special>", 9) == 0) {
+        arg = skipwhite(arg + 9);
         continue;
       }
-      if (STRNCMP(arg, "<script>", 8) == 0) {
-        arg = (char_u *)skipwhite((char *)arg + 8);
+      if (strncmp(arg, "<script>", 8) == 0) {
+        arg = skipwhite(arg + 8);
         continue;
       }
-      if (STRNCMP(arg, "<expr>", 6) == 0) {
-        arg = (char_u *)skipwhite((char *)arg + 6);
+      if (strncmp(arg, "<expr>", 6) == 0) {
+        arg = skipwhite(arg + 6);
         continue;
       }
       break;
     }
-    xp->xp_pattern = (char *)arg;
+    xp->xp_pattern = arg;
   }
 
   return NULL;
@@ -2548,7 +2548,7 @@ void modify_keymap(uint64_t channel_id, Buffer buffer, bool is_unmap, String mod
   }
   int mode_val;  // integer value of the mapping mode, to be passed to do_map()
   char *p = (mode.size) ? mode.data : "m";
-  if (STRNCMP(p, "!", 2) == 0) {
+  if (strncmp(p, "!", 2) == 0) {
     mode_val = get_map_mode(&p, true);  // mapmode-ic
   } else {
     mode_val = get_map_mode(&p, false);

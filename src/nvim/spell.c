@@ -2113,7 +2113,7 @@ char *did_set_spelllang(win_T *wp)
       for (int j = 0; j < ga.ga_len; j++) {
         lp2 = LANGP_ENTRY(ga, j);
         if (!GA_EMPTY(&lp2->lp_slang->sl_sal)
-            && STRNCMP(lp->lp_slang->sl_name,
+            && strncmp(lp->lp_slang->sl_name,
                        lp2->lp_slang->sl_name, 2) == 0) {
           lp->lp_sallang = lp2->lp_slang;
           break;
@@ -2130,7 +2130,7 @@ char *did_set_spelllang(win_T *wp)
       for (int j = 0; j < ga.ga_len; j++) {
         lp2 = LANGP_ENTRY(ga, j);
         if (!GA_EMPTY(&lp2->lp_slang->sl_rep)
-            && STRNCMP(lp->lp_slang->sl_name,
+            && strncmp(lp->lp_slang->sl_name,
                        lp2->lp_slang->sl_name, 2) == 0) {
           lp->lp_replang = lp2->lp_slang;
           break;
@@ -2598,7 +2598,7 @@ void ex_spellrepall(exarg_T *eap)
     // Only replace when the right word isn't there yet.  This happens
     // when changing "etc" to "etc.".
     char *line = get_cursor_line_ptr();
-    if (addlen <= 0 || STRNCMP(line + curwin->w_cursor.col,
+    if (addlen <= 0 || strncmp(line + curwin->w_cursor.col,
                                repl_to, strlen(repl_to)) != 0) {
       char_u *p = xmalloc(strlen(line) + (size_t)addlen + 1);
       memmove(p, line, (size_t)curwin->w_cursor.col);
@@ -3420,7 +3420,7 @@ static void dump_word(slang_T *slang, char *word, char *pat, Direction *dir, int
     ml_append(lnum, p, (colnr_T)0, false);
   } else if (((dumpflags & DUMPFLAG_ICASE)
               ? mb_strnicmp(p, pat, strlen(pat)) == 0
-              : STRNCMP(p, pat, strlen(pat)) == 0)
+              : strncmp(p, pat, strlen(pat)) == 0)
              && ins_compl_add_infercase((char_u *)p, (int)strlen(p),
                                         p_ic, NULL, *dir, false) == OK) {
     // if dir was BACKWARD then honor it just once

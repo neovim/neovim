@@ -457,7 +457,7 @@ static void redraw_wildmenu(expand_T *xp, int num_matches, char **matches, int m
         s += skip_wildmenu_char(xp, s);
         clen += ptr2cells((char *)s);
         if ((l = utfc_ptr2len((char *)s)) > 1) {
-          STRNCPY(buf + len, s, l);  // NOLINT(runtime/printf)
+          strncpy((char *)buf + len, (char *)s, (size_t)l);  // NOLINT(runtime/printf)
           s += l - 1;
           len += l;
         } else {
@@ -1715,7 +1715,7 @@ static const char *set_context_by_cmdname(const char *cmd, cmdidx_T cmdidx, cons
         } else if (context == EXPAND_COMMANDS) {
           return arg;
         } else if (context == EXPAND_MAPPINGS) {
-          return (const char *)set_context_in_map_cmd(xp, "map", (char_u *)arg, forceit,
+          return (const char *)set_context_in_map_cmd(xp, "map", (char *)arg, forceit,
                                                       false, false,
                                                       CMD_map);
         }
@@ -1754,7 +1754,7 @@ static const char *set_context_by_cmdname(const char *cmd, cmdidx_T cmdidx, cons
   case CMD_snoremap:
   case CMD_xmap:
   case CMD_xnoremap:
-    return (const char *)set_context_in_map_cmd(xp, (char *)cmd, (char_u *)arg, forceit, false,
+    return (const char *)set_context_in_map_cmd(xp, (char *)cmd, (char *)arg, forceit, false,
                                                 false, cmdidx);
   case CMD_unmap:
   case CMD_nunmap:
@@ -1765,7 +1765,7 @@ static const char *set_context_by_cmdname(const char *cmd, cmdidx_T cmdidx, cons
   case CMD_lunmap:
   case CMD_sunmap:
   case CMD_xunmap:
-    return (const char *)set_context_in_map_cmd(xp, (char *)cmd, (char_u *)arg, forceit, false,
+    return (const char *)set_context_in_map_cmd(xp, (char *)cmd, (char *)arg, forceit, false,
                                                 true, cmdidx);
   case CMD_mapclear:
   case CMD_nmapclear:
@@ -1786,12 +1786,12 @@ static const char *set_context_by_cmdname(const char *cmd, cmdidx_T cmdidx, cons
   case CMD_cnoreabbrev:
   case CMD_iabbrev:
   case CMD_inoreabbrev:
-    return (const char *)set_context_in_map_cmd(xp, (char *)cmd, (char_u *)arg, forceit, true,
+    return (const char *)set_context_in_map_cmd(xp, (char *)cmd, (char *)arg, forceit, true,
                                                 false, cmdidx);
   case CMD_unabbreviate:
   case CMD_cunabbrev:
   case CMD_iunabbrev:
-    return (const char *)set_context_in_map_cmd(xp, (char *)cmd, (char_u *)arg, forceit, true,
+    return (const char *)set_context_in_map_cmd(xp, (char *)cmd, (char *)arg, forceit, true,
                                                 true, cmdidx);
   case CMD_menu:
   case CMD_noremenu:
@@ -2445,7 +2445,7 @@ static int ExpandFromContext(expand_T *xp, char *pat, int *num_file, char ***fil
   // When expanding a function name starting with s:, match the <SNR>nr_
   // prefix.
   char *tofree = NULL;
-  if (xp->xp_context == EXPAND_USER_FUNC && STRNCMP(pat, "^s:", 3) == 0) {
+  if (xp->xp_context == EXPAND_USER_FUNC && strncmp(pat, "^s:", 3) == 0) {
     const size_t len = strlen(pat) + 20;
 
     tofree = xmalloc(len);
@@ -2628,7 +2628,7 @@ static void expand_shellcmd(char *filepat, int *num_file, char ***file, int flag
       // Find directories in the current directory, path is empty.
       did_curdir = true;
       flags |= EW_DIR;
-    } else if (STRNCMP(s, ".", e - s) == 0) {
+    } else if (strncmp(s, ".", (size_t)(e - s)) == 0) {
       did_curdir = true;
       flags |= EW_DIR;
     } else {

@@ -179,19 +179,19 @@ enum {
 // different machines. b0_magic_* is used to check the byte order and size of
 // variables, because the rest of the swap file is not portable.
 struct block0 {
-  char_u b0_id[2];              ///< ID for block 0: BLOCK0_ID0 and BLOCK0_ID1.
-  char_u b0_version[10];        // Vim version string
-  char_u b0_page_size[4];       // number of bytes per page
-  char_u b0_mtime[4];           // last modification time of file
-  char_u b0_ino[4];             // inode of b0_fname
-  char_u b0_pid[4];             // process id of creator (or 0)
-  char_u b0_uname[B0_UNAME_SIZE];        // name of user (uid if no name)
-  char_u b0_hname[B0_HNAME_SIZE];        // host name (if it has a name)
-  char b0_fname[B0_FNAME_SIZE_ORG];      // name of file being edited
-  long b0_magic_long;           // check for byte order of long
-  int b0_magic_int;             // check for byte order of int
-  int16_t b0_magic_short;       // check for byte order of short
-  char_u b0_magic_char;         // check for last char
+  char_u b0_id[2];                   ///< ID for block 0: BLOCK0_ID0 and BLOCK0_ID1.
+  char b0_version[10];               // Vim version string
+  char_u b0_page_size[4];            // number of bytes per page
+  char_u b0_mtime[4];                // last modification time of file
+  char_u b0_ino[4];                  // inode of b0_fname
+  char_u b0_pid[4];                  // process id of creator (or 0)
+  char_u b0_uname[B0_UNAME_SIZE];    // name of user (uid if no name)
+  char_u b0_hname[B0_HNAME_SIZE];    // host name (if it has a name)
+  char b0_fname[B0_FNAME_SIZE_ORG];  // name of file being edited
+  long b0_magic_long;                // check for byte order of long
+  int b0_magic_int;                  // check for byte order of int
+  int16_t b0_magic_short;            // check for byte order of short
+  char_u b0_magic_char;              // check for last char
 };
 
 // Note: b0_dirty and b0_flags are put at the end of the file name.  For very
@@ -297,7 +297,7 @@ int ml_open(buf_T *buf)
   b0p->b0_magic_int = B0_MAGIC_INT;
   b0p->b0_magic_short = (int16_t)B0_MAGIC_SHORT;
   b0p->b0_magic_char = B0_MAGIC_CHAR;
-  xstrlcpy(xstpcpy((char *)b0p->b0_version, "VIM "), Version, 6);
+  xstrlcpy(xstpcpy(b0p->b0_version, "VIM "), Version, 6);
   long_to_char((long)mfp->mf_page_size, b0p->b0_page_size);
 
   if (!buf->b_spell) {
@@ -828,7 +828,7 @@ void ml_recover(bool checkext)
     goto theend;
   }
   b0p = hp->bh_data;
-  if (STRNCMP(b0p->b0_version, "VIM 3.0", 7) == 0) {
+  if (strncmp(b0p->b0_version, "VIM 3.0", 7) == 0) {
     msg_start();
     msg_outtrans_attr(mfp->mf_fname, MSG_HIST);
     msg_puts_attr(_(" cannot be used with this version of Vim.\n"),
@@ -1410,7 +1410,7 @@ void get_b0_dict(const char *fname, dict_T *d)
         tv_dict_add_str(d, S_LEN("error"), "Magic number mismatch");
       } else {
         // We have swap information.
-        tv_dict_add_str_len(d, S_LEN("version"), (char *)b0.b0_version, 10);
+        tv_dict_add_str_len(d, S_LEN("version"), b0.b0_version, 10);
         tv_dict_add_str_len(d, S_LEN("user"), (char *)b0.b0_uname,
                             B0_UNAME_SIZE);
         tv_dict_add_str_len(d, S_LEN("host"), (char *)b0.b0_hname,
@@ -1469,7 +1469,7 @@ static time_t swapfile_info(char_u *fname)
   fd = os_open((char *)fname, O_RDONLY, 0);
   if (fd >= 0) {
     if (read_eintr(fd, &b0, sizeof(b0)) == sizeof(b0)) {
-      if (STRNCMP(b0.b0_version, "VIM 3.0", 7) == 0) {
+      if (strncmp(b0.b0_version, "VIM 3.0", 7) == 0) {
         msg_puts(_("         [from Vim version 3.0]"));
       } else if (ml_check_b0_id(&b0) == FAIL) {
         msg_puts(_("         [does not look like a Vim swap file]"));

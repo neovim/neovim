@@ -760,7 +760,7 @@ void expand_env_esc(char *restrict srcp, char *restrict dst, int dstlen, bool es
 
         if (prefix != NULL
             && src - prefix_len >= srcp
-            && STRNCMP(src - prefix_len, prefix, prefix_len) == 0) {
+            && strncmp(src - prefix_len, prefix, (size_t)prefix_len) == 0) {
           at_start = true;
         }
       }

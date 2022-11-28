@@ -1215,27 +1215,27 @@ static void sign_define_cmd(char *sign_name, char *cmdline)
       break;
     }
     p = skiptowhite_esc(arg);
-    if (STRNCMP(arg, "icon=", 5) == 0) {
+    if (strncmp(arg, "icon=", 5) == 0) {
       arg += 5;
       XFREE_CLEAR(icon);
       icon = xstrnsave(arg, (size_t)(p - arg));
-    } else if (STRNCMP(arg, "text=", 5) == 0) {
+    } else if (strncmp(arg, "text=", 5) == 0) {
       arg += 5;
       XFREE_CLEAR(text);
       text = xstrnsave(arg, (size_t)(p - arg));
-    } else if (STRNCMP(arg, "linehl=", 7) == 0) {
+    } else if (strncmp(arg, "linehl=", 7) == 0) {
       arg += 7;
       XFREE_CLEAR(linehl);
       linehl = xstrnsave(arg, (size_t)(p - arg));
-    } else if (STRNCMP(arg, "texthl=", 7) == 0) {
+    } else if (strncmp(arg, "texthl=", 7) == 0) {
       arg += 7;
       XFREE_CLEAR(texthl);
       texthl = xstrnsave(arg, (size_t)(p - arg));
-    } else if (STRNCMP(arg, "culhl=", 6) == 0) {
+    } else if (strncmp(arg, "culhl=", 6) == 0) {
       arg += 6;
       XFREE_CLEAR(culhl);
       culhl = xstrnsave(arg, (size_t)(p - arg));
-    } else if (STRNCMP(arg, "numhl=", 6) == 0) {
+    } else if (strncmp(arg, "numhl=", 6) == 0) {
       arg += 6;
       XFREE_CLEAR(numhl);
       numhl = xstrnsave(arg, (size_t)(p - arg));
@@ -1393,19 +1393,19 @@ static int parse_sign_cmd_args(int cmd, char *arg, char **sign_name, int *signid
   }
 
   while (*arg != NUL) {
-    if (STRNCMP(arg, "line=", 5) == 0) {
+    if (strncmp(arg, "line=", 5) == 0) {
       arg += 5;
       *lnum = atoi(arg);
       arg = skiptowhite(arg);
       lnum_arg = true;
-    } else if (STRNCMP(arg, "*", 1) == 0 && cmd == SIGNCMD_UNPLACE) {
+    } else if (strncmp(arg, "*", 1) == 0 && cmd == SIGNCMD_UNPLACE) {
       if (*signid != -1) {
         emsg(_(e_invarg));
         return FAIL;
       }
       *signid = -2;
       arg = skiptowhite(arg + 1);
-    } else if (STRNCMP(arg, "name=", 5) == 0) {
+    } else if (strncmp(arg, "name=", 5) == 0) {
       arg += 5;
       name = arg;
       arg = skiptowhite(arg);
@@ -1416,23 +1416,23 @@ static int parse_sign_cmd_args(int cmd, char *arg, char **sign_name, int *signid
         name++;
       }
       *sign_name = name;
-    } else if (STRNCMP(arg, "group=", 6) == 0) {
+    } else if (strncmp(arg, "group=", 6) == 0) {
       arg += 6;
       *group = arg;
       arg = skiptowhite(arg);
       if (*arg != NUL) {
         *arg++ = NUL;
       }
-    } else if (STRNCMP(arg, "priority=", 9) == 0) {
+    } else if (strncmp(arg, "priority=", 9) == 0) {
       arg += 9;
       *prio = atoi(arg);
       arg = skiptowhite(arg);
-    } else if (STRNCMP(arg, "file=", 5) == 0) {
+    } else if (strncmp(arg, "file=", 5) == 0) {
       arg += 5;
       filename = arg;
       *buf = buflist_findname_exp(arg);
       break;
-    } else if (STRNCMP(arg, "buffer=", 7) == 0) {
+    } else if (strncmp(arg, "buffer=", 7) == 0) {
       arg += 7;
       filename = arg;
       *buf = buflist_findnr(getdigits_int(&arg, true, 0));
@@ -1900,23 +1900,23 @@ void set_context_in_sign_cmd(expand_T *xp, char *arg)
     xp->xp_pattern = p + 1;
     switch (cmd_idx) {
     case SIGNCMD_DEFINE:
-      if (STRNCMP(last, "texthl", 6) == 0
-          || STRNCMP(last, "linehl", 6) == 0
-          || STRNCMP(last, "culhl", 5) == 0
-          || STRNCMP(last, "numhl", 5) == 0) {
+      if (strncmp(last, "texthl", 6) == 0
+          || strncmp(last, "linehl", 6) == 0
+          || strncmp(last, "culhl", 5) == 0
+          || strncmp(last, "numhl", 5) == 0) {
         xp->xp_context = EXPAND_HIGHLIGHT;
-      } else if (STRNCMP(last, "icon", 4) == 0) {
+      } else if (strncmp(last, "icon", 4) == 0) {
         xp->xp_context = EXPAND_FILES;
       } else {
         xp->xp_context = EXPAND_NOTHING;
       }
       break;
     case SIGNCMD_PLACE:
-      if (STRNCMP(last, "name", 4) == 0) {
+      if (strncmp(last, "name", 4) == 0) {
         expand_what = EXP_SIGN_NAMES;
-      } else if (STRNCMP(last, "group", 5) == 0) {
+      } else if (strncmp(last, "group", 5) == 0) {
         expand_what = EXP_SIGN_GROUPS;
-      } else if (STRNCMP(last, "file", 4) == 0) {
+      } else if (strncmp(last, "file", 4) == 0) {
         xp->xp_context = EXPAND_BUFFERS;
       } else {
         xp->xp_context = EXPAND_NOTHING;
@@ -1924,9 +1924,9 @@ void set_context_in_sign_cmd(expand_T *xp, char *arg)
       break;
     case SIGNCMD_UNPLACE:
     case SIGNCMD_JUMP:
-      if (STRNCMP(last, "group", 5) == 0) {
+      if (strncmp(last, "group", 5) == 0) {
         expand_what = EXP_SIGN_GROUPS;
-      } else if (STRNCMP(last, "file", 4) == 0) {
+      } else if (strncmp(last, "file", 4) == 0) {
         xp->xp_context = EXPAND_BUFFERS;
       } else {
         xp->xp_context = EXPAND_NOTHING;

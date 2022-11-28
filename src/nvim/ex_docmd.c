@@ -2973,7 +2973,7 @@ char *find_ex_command(exarg_T *eap, int *full)
 
     for (; (int)eap->cmdidx < CMD_SIZE;
          eap->cmdidx = (cmdidx_T)((int)eap->cmdidx + 1)) {
-      if (STRNCMP(cmdnames[(int)eap->cmdidx].cmd_name, eap->cmd,
+      if (strncmp(cmdnames[(int)eap->cmdidx].cmd_name, eap->cmd,
                   (size_t)len) == 0) {
         if (full != NULL
             && cmdnames[(int)eap->cmdidx].cmd_name[len] == NUL) {
@@ -4051,7 +4051,7 @@ static int getargopt(exarg_T *eap)
   int bad_char_idx;
 
   // ":edit ++[no]bin[ary] file"
-  if (STRNCMP(arg, "bin", 3) == 0 || STRNCMP(arg, "nobin", 5) == 0) {
+  if (strncmp(arg, "bin", 3) == 0 || strncmp(arg, "nobin", 5) == 0) {
     if (*arg == 'n') {
       arg += 2;
       eap->force_bin = FORCE_NOBIN;
@@ -4066,7 +4066,7 @@ static int getargopt(exarg_T *eap)
   }
 
   // ":read ++edit file"
-  if (STRNCMP(arg, "edit", 4) == 0) {
+  if (strncmp(arg, "edit", 4) == 0) {
     eap->read_edit = true;
     eap->arg = skipwhite(arg + 4);
     return OK;
@@ -4079,20 +4079,20 @@ static int getargopt(exarg_T *eap)
     return OK;
   }
 
-  if (STRNCMP(arg, "ff", 2) == 0) {
+  if (strncmp(arg, "ff", 2) == 0) {
     arg += 2;
     pp = &eap->force_ff;
-  } else if (STRNCMP(arg, "fileformat", 10) == 0) {
+  } else if (strncmp(arg, "fileformat", 10) == 0) {
     arg += 10;
     pp = &eap->force_ff;
-  } else if (STRNCMP(arg, "enc", 3) == 0) {
-    if (STRNCMP(arg, "encoding", 8) == 0) {
+  } else if (strncmp(arg, "enc", 3) == 0) {
+    if (strncmp(arg, "encoding", 8) == 0) {
       arg += 8;
     } else {
       arg += 3;
     }
     pp = &eap->force_enc;
-  } else if (STRNCMP(arg, "bad", 3) == 0) {
+  } else if (strncmp(arg, "bad", 3) == 0) {
     arg += 3;
     pp = &bad_char_idx;
   }
@@ -6511,7 +6511,7 @@ static void ex_findpat(exarg_T *eap)
     }
   }
   if (!eap->skip) {
-    find_pattern_in_path((char_u *)eap->arg, 0, strlen(eap->arg), whole, !eap->forceit,
+    find_pattern_in_path(eap->arg, 0, strlen(eap->arg), whole, !eap->forceit,
                          *eap->cmd == 'd' ?  FIND_DEFINE : FIND_ANY,
                          n, action, eap->line1, eap->line2);
   }
@@ -6959,7 +6959,7 @@ char *expand_sfile(char *arg)
   char *result = xstrdup(arg);
 
   for (char *p = result; *p;) {
-    if (STRNCMP(p, "<sfile>", 7) != 0) {
+    if (strncmp(p, "<sfile>", 7) != 0) {
       p++;
     } else {
       // replace "<sfile>" with the sourced file name, and do ":" stuff
@@ -7065,12 +7065,12 @@ static void ex_filetype(exarg_T *eap)
 
   // Accept "plugin" and "indent" in any order.
   for (;;) {
-    if (STRNCMP(arg, "plugin", 6) == 0) {
+    if (strncmp(arg, "plugin", 6) == 0) {
       plugin = true;
       arg = skipwhite(arg + 6);
       continue;
     }
-    if (STRNCMP(arg, "indent", 6) == 0) {
+    if (strncmp(arg, "indent", 6) == 0) {
       indent = true;
       arg = skipwhite(arg + 6);
       continue;
@@ -7147,7 +7147,7 @@ static void ex_setfiletype(exarg_T *eap)
   if (!did_filetype) {
     char *arg = eap->arg;
 
-    if (STRNCMP(arg, "FALLBACK ", 9) == 0) {
+    if (strncmp(arg, "FALLBACK ", 9) == 0) {
       arg += 9;
     }
 

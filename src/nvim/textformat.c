@@ -475,21 +475,21 @@ void internal_format(int textwidth, int second_indent, int flags, bool format_on
 /// ('e' in comment flags), so that this line is skipped, and not joined to the
 /// previous line.  A new paragraph starts after a blank line, or when the
 /// comment leader changes.
-static int fmt_check_par(linenr_T lnum, int *leader_len, char_u **leader_flags, bool do_comments)
+static int fmt_check_par(linenr_T lnum, int *leader_len, char **leader_flags, bool do_comments)
 {
   char_u *flags = NULL;        // init for GCC
   char_u *ptr;
 
   ptr = (char_u *)ml_get(lnum);
   if (do_comments) {
-    *leader_len = get_leader_len((char *)ptr, (char **)leader_flags, false, true);
+    *leader_len = get_leader_len((char *)ptr, leader_flags, false, true);
   } else {
     *leader_len = 0;
   }
 
   if (*leader_len > 0) {
     // Search for 'e' flag in comment leader flags.
-    flags = *leader_flags;
+    flags = (char_u *)(*leader_flags);
     while (*flags && *flags != ':' && *flags != COM_END) {
       flags++;
     }
@@ -589,9 +589,9 @@ static bool paragraph_start(linenr_T lnum)
 {
   char_u *p;
   int leader_len = 0;                // leader len of current line
-  char_u *leader_flags = NULL;       // flags for leader of current line
+  char *leader_flags = NULL;         // flags for leader of current line
   int next_leader_len = 0;           // leader len of next line
-  char_u *next_leader_flags = NULL;  // flags for leader of next line
+  char *next_leader_flags = NULL;    // flags for leader of next line
 
   if (lnum <= 1) {
     return true;                // start of the file
@@ -615,8 +615,8 @@ static bool paragraph_start(linenr_T lnum)
   if (has_format_option(FO_Q_NUMBER) && (get_number_indent(lnum) > 0)) {
     return true;                // numbered item starts in "lnum".
   }
-  if (!same_leader(lnum - 1, leader_len, (char *)leader_flags,
-                   next_leader_len, (char *)next_leader_flags)) {
+  if (!same_leader(lnum - 1, leader_len, leader_flags,
+                   next_leader_len, next_leader_flags)) {
     return true;                // change of comment leader.
   }
   return false;
@@ -924,8 +924,8 @@ void format_lines(linenr_T line_count, bool avoid_fex)
   bool next_is_start_par = false;
   int leader_len = 0;               // leader len of current line
   int next_leader_len;              // leader len of next line
-  char_u *leader_flags = NULL;      // flags for leader of current line
-  char_u *next_leader_flags = NULL;  // flags for leader of next line
+  char *leader_flags = NULL;        // flags for leader of current line
+  char *next_leader_flags = NULL;   // flags for leader of next line
   bool advance = true;
   int second_indent = -1;           // indent for second line (comment aware)
   bool first_par_line = true;
@@ -1028,14 +1028,14 @@ void format_lines(linenr_T line_count, bool avoid_fex)
       // When the comment leader changes, it's the end of the paragraph.
       if (curwin->w_cursor.lnum >= curbuf->b_ml.ml_line_count
           || !same_leader(curwin->w_cursor.lnum,
-                          leader_len, (char *)leader_flags,
+                          leader_len, leader_flags,
                           next_leader_len,
-                          (char *)next_leader_flags)) {
+                          next_leader_flags)) {
         // Special case: If the next line starts with a line comment
         // and this line has a line comment after some text, the
         // paragraph doesn't really end.
         if (next_leader_flags == NULL
-            || STRNCMP(next_leader_flags, "://", 3) != 0
+            || strncmp(next_leader_flags, "://", 3) != 0
             || check_linecomment(get_cursor_line_ptr()) == MAXCOL) {
           is_end_par = true;
         }

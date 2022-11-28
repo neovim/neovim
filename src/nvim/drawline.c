@@ -2098,7 +2098,9 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
             c = (uint8_t)(*p_extra);
             p = xmalloc((size_t)n_extra + 1);
             memset(p, ' ', (size_t)n_extra);
-            STRNCPY(p, p_extra + 1, strlen(p_extra) - 1);  // NOLINT(runtime/printf)
+            strncpy((char *)p,  // NOLINT(runtime/printf)
+                    p_extra + 1,
+                    (size_t)strlen(p_extra) - 1);
             p[n_extra] = NUL;
             xfree(p_extra_free);
             p_extra_free = p_extra = (char *)p;

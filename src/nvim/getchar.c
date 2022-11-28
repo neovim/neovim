@@ -2266,7 +2266,7 @@ static int handle_mapping(int *keylenp, const bool *timedout, int *mapdepth)
 
       if (save_m_noremap != REMAP_YES) {
         noremap = save_m_noremap;
-      } else if (STRNCMP(map_str, save_m_keys != NULL ? save_m_keys : (char *)mp->m_keys,
+      } else if (strncmp(map_str, save_m_keys != NULL ? save_m_keys : (char *)mp->m_keys,
                          (size_t)keylen) != 0) {
         noremap = REMAP_YES;
       } else {
