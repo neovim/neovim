@@ -367,6 +367,12 @@ glob_wrapper(NVIM_HEADERS *.h)
 glob_wrapper(EXTERNAL_SOURCES ../xdiff/*.c ../mpack/*.c ../cjson/*.c ../klib/*.c)
 glob_wrapper(EXTERNAL_HEADERS ../xdiff/*.h ../mpack/*.h ../cjson/*.h ../klib/*.h)
 
+if(PREFER_LUA)
+  # luajit not used, use a vendored copy of the bit module
+  list(APPEND EXTERNAL_SOURCES ${PROJECT_SOURCE_DIR}/src/bit.c)
+  target_compile_definitions(main_lib INTERFACE NVIM_VENDOR_BIT)
+endif()
+
 foreach(subdir
         os
         api
@@ -425,7 +431,7 @@ if(MSVC)
     ${EXTERNAL_SOURCES} PROPERTIES COMPILE_FLAGS "${COMPILE_FLAGS} -wd4090 -wd4244 -wd4267")
 else()
   set_source_files_properties(
-    ${EXTERNAL_SOURCES} PROPERTIES COMPILE_FLAGS "${COMPILE_FLAGS} -Wno-conversion -Wno-missing-noreturn -Wno-missing-format-attribute -Wno-double-promotion -Wno-strict-prototypes")
+    ${EXTERNAL_SOURCES} PROPERTIES COMPILE_FLAGS "${COMPILE_FLAGS} -Wno-conversion -Wno-missing-noreturn -Wno-missing-format-attribute -Wno-double-promotion -Wno-strict-prototypes -Wno-misleading-indentation")
 endif()
 
 # Log level (MIN_LOG_LEVEL in log.h)
@@ -684,8 +690,8 @@ if(UNIX)
   endif()
 endif()
 
-if(NOT LUAJIT_FOUND)
-  message(STATUS "luajit not found, skipping unit tests")
+if(PREFER_LUA)
+  message(STATUS "luajit not used, skipping unit tests")
 else()
   glob_wrapper(UNIT_TEST_FIXTURES ${PROJECT_SOURCE_DIR}/test/unit/fixtures/*.c)
   target_sources(nvim PRIVATE $<$<CONFIG:Debug>:${UNIT_TEST_FIXTURES}>)

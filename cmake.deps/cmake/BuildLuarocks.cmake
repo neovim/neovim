@@ -147,7 +147,7 @@ if(USE_BUNDLED_BUSTED)
     DEPENDS busted)
   add_custom_target(luacheck ALL DEPENDS ${LUACHECK_EXE})
 
-  if (NOT USE_BUNDLED_LUAJIT)
+  if (USE_BUNDLED_LUA OR NOT USE_BUNDLED_LUAJIT)
     # coxpcall
     add_custom_command(OUTPUT ${ROCKS_DIR}/coxpcall
       COMMAND ${LUAROCKS_BINARY} build coxpcall 1.16.0-1 ${LUAROCKS_BUILDARGS}

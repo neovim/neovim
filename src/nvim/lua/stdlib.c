@@ -11,6 +11,10 @@
 #include <string.h>
 #include <sys/types.h>
 
+#ifdef NVIM_VENDOR_BIT
+# include "bit.h"
+#endif
+
 #include "auto/config.h"
 #include "cjson/lua_cjson.h"
 #include "mpack/lmpack.h"
@@ -596,6 +600,13 @@ void nlua_state_add_stdlib(lua_State *const lstate, bool is_thread)
   // vim.json
   lua_cjson_new(lstate);
   lua_setfield(lstate, -2, "json");
+
+#ifdef NVIM_VENDOR_BIT
+  // if building with puc lua, use internal fallback for require'bit'
+  int top = lua_gettop(lstate);
+  luaopen_bit(lstate);
+  lua_settop(lstate, top);
+#endif
 }
 
 /// like luaL_error, but allow cleanup

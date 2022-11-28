@@ -167,6 +167,7 @@ The following new APIs or features were added.
 • |vim.treesitter.language.add()| as a new replacement for
   `vim.treesitter.language.require_language`.
 
+• `require'bit'` is now always available |lua-bit|
 ==============================================================================
 CHANGED FEATURES                                                 *news-changes*
 

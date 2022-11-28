@@ -33,6 +33,22 @@ Lua 5.1, not worry about forward-compatibility with future Lua versions.  If
 Nvim ever ships with Lua 5.4+, a Lua 5.1 compatibility shim will be provided
 so that old plugins continue to work transparently.
 
+                                                                  *lua-luajit*
+Neovim is built with luajit on platforms which support it, which provides
+extra functionality. Lua code in |init.lua| and plugins can assume its presence
+on installations on common platforms. For maximum compatibility with less
+common platforms, availability can be checked using the `jit` global variable: >lua
+  if jit then
+    -- code for luajit
+  else
+    -- code for plain lua 5.1
+  end
+<
+                                                                  *lua-bit*
+In particular, the luajit "bit" extension module is _always_ available.
+A fallback implementation is included when nvim is built with PUC lua 5.1,
+and will be transparently used when `require("bit")` is invoked.
+
 ==============================================================================
 LUA CONCEPTS AND IDIOMS                                         *lua-concepts*
 

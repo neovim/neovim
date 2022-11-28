@@ -338,3 +338,11 @@ describe('os.getenv', function()
     eq(value, funcs.luaeval('os.getenv("XTEST_1")'))
   end)
 end)
+
+-- "bit" module is always available, regardless if nvim is built with
+-- luajit or PUC lua 5.1.
+describe('bit module', function()
+  it('works', function()
+    eq (9, exec_lua [[ return require'bit'.band(11,13) ]])
+  end)
+end)
