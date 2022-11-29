@@ -2403,7 +2403,6 @@ bool mch_print_begin(prt_settings_T *psettings)
   struct prt_ps_resource_S res_encoding;
   char buffer[256];
   char *p_encoding;
-  char_u *p;
   struct prt_ps_resource_S res_cidfont;
   struct prt_ps_resource_S res_cmap;
 
@@ -2416,14 +2415,9 @@ bool mch_print_begin(prt_settings_T *psettings)
   prt_dsc_textline("For", buffer);
   prt_dsc_textline("Creator", longVersion);
   // Note: to ensure Clean8bit I don't think we can use LC_TIME
+
   char ctime_buf[100];  // hopefully enough for every language
-  char *p_time = os_ctime(ctime_buf, sizeof(ctime_buf));
-  // Note: os_ctime() adds a \n so we have to remove it :-(
-  p = (char_u *)vim_strchr(p_time, '\n');
-  if (p != NULL) {
-    *p = NUL;
-  }
-  prt_dsc_textline("CreationDate", p_time);
+  prt_dsc_textline("CreationDate", os_ctime(ctime_buf, sizeof(ctime_buf), false));
   prt_dsc_textline("DocumentData", "Clean8Bit");
   prt_dsc_textline("Orientation", "Portrait");
   prt_dsc_text(("Pages"), "atend");
