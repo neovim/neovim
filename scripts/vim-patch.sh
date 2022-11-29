@@ -242,6 +242,14 @@ preprocess_patch() {
   LC_ALL=C sed -e 's/\( [ab]\/src\/nvim\)\/userfunc\.c/\1\/eval\/userfunc\.c/g' \
     "$file" > "$file".tmp && mv "$file".tmp "$file"
 
+  # Rename evalbuffer.c to eval/buffer.c
+  LC_ALL=C sed -e 's/\( [ab]\/src\/nvim\)\/evalbuffer\.c/\1\/eval\/buffer\.c/g' \
+    "$file" > "$file".tmp && mv "$file".tmp "$file"
+
+  # Rename evalwindow.c to eval/window.c
+  LC_ALL=C sed -e 's/\( [ab]\/src\/nvim\)\/evalwindow\.c/\1\/eval\/window\.c/g' \
+    "$file" > "$file".tmp && mv "$file".tmp "$file"
+
   # Rename map.c to mapping.c
   LC_ALL=C sed -e 's/\( [ab]\/src\/nvim\)\/map\(\.[ch]\)/\1\/mapping\2/g' \
     "$file" > "$file".tmp && mv "$file".tmp "$file"

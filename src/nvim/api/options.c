@@ -11,6 +11,7 @@
 #include "nvim/api/private/helpers.h"
 #include "nvim/autocmd.h"
 #include "nvim/buffer_defs.h"
+#include "nvim/eval/window.h"
 #include "nvim/globals.h"
 #include "nvim/memory.h"
 #include "nvim/option.h"
