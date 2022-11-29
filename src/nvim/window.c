@@ -3092,18 +3092,18 @@ void win_free_all(void)
     win_remove(lastwin, NULL);
     int dummy;
     (void)win_free_mem(wp, &dummy, NULL);
-    for (int i = 0; i < AUCMD_WIN_COUNT; ++i) {
+    for (int i = 0; i < AUCMD_WIN_COUNT; i++) {
       if (aucmd_win[i].auc_win == wp) {
-        aucmd_win[i].auc_win_used = false;
+        aucmd_win[i].auc_win = NULL;
       }
     }
   }
 
-  for (int i = 0; i < AUCMD_WIN_COUNT; ++i) {
-    if (aucmd_win[i].auc_win_used) {
+  for (int i = 0; i < AUCMD_WIN_COUNT; i++) {
+    if (aucmd_win[i].auc_win != NULL) {
       int dummy;
       (void)win_free_mem(aucmd_win[i].auc_win, &dummy, NULL);
-      aucmd_win[i].auc_win_used = false;
+      aucmd_win[i].auc_win = NULL;
     }
   }
 

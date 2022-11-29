@@ -665,12 +665,7 @@ void free_all_autocmds(void)
   })
   map_destroy(int, String)(&map_augroup_id_to_name);
 
-  for (int i = 0; i < AUCMD_WIN_COUNT; ++i) {
-    if (aucmd_win[i].auc_win_used) {
-      aucmd_win[i].auc_win_used = false;
-      win_remove(aucmd_win[i].auc_win, NULL);
-    }
-  }
+  // aucmd_win[] is freed in win_free_all()
 }
 #endif
 
@@ -1418,10 +1413,12 @@ void aucmd_prepbuf(aco_save_T *aco, buf_T *buf)
   if (win == NULL) {
     for (auc_idx = 0; auc_idx < AUCMD_WIN_COUNT; auc_idx++) {
       if (!aucmd_win[auc_idx].auc_win_used) {
-        win_alloc_aucmd_win(auc_idx);
+        if (aucmd_win[auc_idx].auc_win == NULL) {
+          win_alloc_aucmd_win(auc_idx);
+          need_append = false;
+        }
         auc_win = aucmd_win[auc_idx].auc_win;
         aucmd_win[auc_idx].auc_win_used = true;
-        need_append = false;
         break;
       }
     }
@@ -1520,6 +1517,8 @@ win_found:
       grid_free(&curwin->w_grid_alloc);
     }
 
+    // The window is marked as not used, but it is not freed, it can be
+    // used again.
     aucmd_win[aco->use_aucmd_win_idx].auc_win_used = false;
 
     if (!valid_tabpage_win(curtab)) {

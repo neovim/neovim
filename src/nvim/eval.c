@@ -4174,8 +4174,9 @@ bool garbage_collect(bool testing)
       ABORTING(set_ref_in_fmark)(wp->w_jumplist[i].fmark, copyID);
     }
   }
+  // window-local variables in autocmd windows
   for (int i = 0; i < AUCMD_WIN_COUNT; i++) {
-    if (aucmd_win[i].auc_win_used) {
+    if (aucmd_win[i].auc_win != NULL) {
       ABORTING(set_ref_in_item)(&aucmd_win[i].auc_win->w_winvar.di_tv, copyID, NULL, NULL);
     }
   }
