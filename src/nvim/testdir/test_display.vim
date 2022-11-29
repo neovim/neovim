@@ -248,6 +248,37 @@ func Test_visual_block_scroll()
   call delete(filename)
 endfunc
 
+" Test for clearing paren highlight when switching buffers
+func Test_matchparen_clear_highlight()
+  CheckScreendump
+
+  let lines =<< trim END
+    source $VIMRUNTIME/plugin/matchparen.vim
+    set hidden
+    call setline(1, ['()'])
+    normal 0
+
+    func OtherBuffer()
+       enew
+       exe "normal iaa\<Esc>0"
+    endfunc
+  END
+  call writefile(lines, 'XMatchparenClear', 'D')
+  let buf = RunVimInTerminal('-S XMatchparenClear', #{rows: 5})
+  call VerifyScreenDump(buf, 'Test_matchparen_clear_highlight_1', {})
+
+  call term_sendkeys(buf, ":call OtherBuffer()\<CR>:\<Esc>")
+  call VerifyScreenDump(buf, 'Test_matchparen_clear_highlight_2', {})
+
+  call term_sendkeys(buf, "\<C-^>:\<Esc>")
+  call VerifyScreenDump(buf, 'Test_matchparen_clear_highlight_1', {})
+
+  call term_sendkeys(buf, "\<C-^>:\<Esc>")
+  call VerifyScreenDump(buf, 'Test_matchparen_clear_highlight_2', {})
+
+  call StopVimInTerminal(buf)
+endfunc
+
 func Test_display_scroll_at_topline()
   " See test/functional/legacy/display_spec.lua
   CheckScreendump
