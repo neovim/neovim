@@ -2416,7 +2416,7 @@ bool mch_print_begin(prt_settings_T *psettings)
   prt_dsc_textline("For", buffer);
   prt_dsc_textline("Creator", longVersion);
   // Note: to ensure Clean8bit I don't think we can use LC_TIME
-  char ctime_buf[50];
+  char ctime_buf[100];  // hopefully enough for every language
   char *p_time = os_ctime(ctime_buf, sizeof(ctime_buf));
   // Note: os_ctime() adds a \n so we have to remove it :-(
   p = (char_u *)vim_strchr(p_time, '\n');

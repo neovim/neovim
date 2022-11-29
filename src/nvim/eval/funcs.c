@@ -8445,9 +8445,7 @@ static void f_strftime(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
       p = string_convert(&conv, p, NULL);
     }
     char result_buf[256];
-    if (p != NULL) {
-      (void)strftime(result_buf, sizeof(result_buf), p, curtime_ptr);
-    } else {
+    if (p == NULL || strftime(result_buf, sizeof(result_buf), p, curtime_ptr) == 0) {
       result_buf[0] = NUL;
     }
 

@@ -186,10 +186,16 @@ char *os_ctime_r(const time_t *restrict clock, char *restrict result, size_t res
   struct tm *clock_local_ptr = os_localtime_r(clock, &clock_local);
   // MSVC returns NULL for an invalid value of seconds.
   if (clock_local_ptr == NULL) {
-    xstrlcpy(result, _("(Invalid)"), result_len);
+    xstrlcpy(result, _("(Invalid)"), result_len - 1);
   } else {
     // xgettext:no-c-format
-    strftime(result, result_len, _("%a %b %d %H:%M:%S %Y"), clock_local_ptr);
+    if (strftime(result, result_len - 1, _("%a %b %d %H:%M:%S %Y"), clock_local_ptr) == 0) {
+      // Quoting "man strftime":
+      // > If the length of the result string (including the terminating
+      // > null byte) would exceed max bytes, then strftime() returns 0,
+      // > and the contents of the array are undefined.
+      xstrlcpy(result, _("(Invalid)"), result_len - 1);
+    }
   }
   xstrlcat(result, "\n", result_len);
   return result;
