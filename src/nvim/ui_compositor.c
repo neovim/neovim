@@ -708,7 +708,7 @@ static void ui_comp_event(UI *ui, char *name, Array args)
 {
   UIEventCallback *event_cb;
   bool handled = false;
-  Error initerr = ERROR_INIT;
+  const Error initerr = ERROR_INIT;
   map_foreach_value(&ui_event_cbs, event_cb, {
     Error err = initerr;
     Object res = nlua_call_ref(event_cb->cb, name, args, false, &err);
@@ -720,7 +720,6 @@ static void ui_comp_event(UI *ui, char *name, Array args)
     }
     api_clear_error(&err);
   })
-  api_clear_error(&initerr);
 
   if (!handled) {
     ui_composed_call_event(name, args);
