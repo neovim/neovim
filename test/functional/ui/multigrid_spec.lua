@@ -2381,8 +2381,7 @@ describe('ext_multigrid', function()
   end)
 
   it('with winbar', function()
-    command 'split'
-    command 'setlocal winbar=very\\ bar'
+    command('split')
     screen:expect{grid=[[
     ## grid 1
       [4:-----------------------------------------------------]|
@@ -2408,7 +2407,52 @@ describe('ext_multigrid', function()
     ## grid 3
                                                            |
     ## grid 4
-      {7:very bar                                             }|
+      ^                                                     |
+      {1:~                                                    }|
+      {1:~                                                    }|
+      {1:~                                                    }|
+      {1:~                                                    }|
+      {1:~                                                    }|
+    ]], win_viewport={
+      [2] = {win = {id = 1000}, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1};
+      [4] = {win = {id = 1001}, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1};
+    }}
+
+    -- XXX: hack to get notifications. Could use next_msg() also.
+    local orig_handle_win_pos = screen._handle_win_pos
+    local win_pos = {}
+    function screen._handle_win_pos(self, grid, win, startrow, startcol, width, height)
+      table.insert(win_pos, {grid, win, startrow, startcol, width, height})
+      orig_handle_win_pos(self, grid, win, startrow, startcol, width, height)
+    end
+
+    command('setlocal winbar=very%=bar')
+    screen:expect{grid=[[
+    ## grid 1
+      [4:-----------------------------------------------------]|
+      [4:-----------------------------------------------------]|
+      [4:-----------------------------------------------------]|
+      [4:-----------------------------------------------------]|
+      [4:-----------------------------------------------------]|
+      [4:-----------------------------------------------------]|
+      {11:[No Name]                                            }|
+      [2:-----------------------------------------------------]|
+      [2:-----------------------------------------------------]|
+      [2:-----------------------------------------------------]|
+      [2:-----------------------------------------------------]|
+      [2:-----------------------------------------------------]|
+      {12:[No Name]                                            }|
+      [3:-----------------------------------------------------]|
+    ## grid 2
+                                                           |
+      {1:~                                                    }|
+      {1:~                                                    }|
+      {1:~                                                    }|
+      {1:~                                                    }|
+    ## grid 3
+                                                           |
+    ## grid 4
+      {7:very                                              bar}|
       ^                                                     |
       {1:~                                                    }|
       {1:~                                                    }|
@@ -2418,6 +2462,45 @@ describe('ext_multigrid', function()
       [2] = {win = {id = 1000}, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1};
       [4] = {win = {id = 1001}, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1};
     }}
+    eq({}, win_pos)
+
+    command('setlocal winbar=')
+    screen:expect{grid=[[
+    ## grid 1
+      [4:-----------------------------------------------------]|
+      [4:-----------------------------------------------------]|
+      [4:-----------------------------------------------------]|
+      [4:-----------------------------------------------------]|
+      [4:-----------------------------------------------------]|
+      [4:-----------------------------------------------------]|
+      {11:[No Name]                                            }|
+      [2:-----------------------------------------------------]|
+      [2:-----------------------------------------------------]|
+      [2:-----------------------------------------------------]|
+      [2:-----------------------------------------------------]|
+      [2:-----------------------------------------------------]|
+      {12:[No Name]                                            }|
+      [3:-----------------------------------------------------]|
+    ## grid 2
+                                                           |
+      {1:~                                                    }|
+      {1:~                                                    }|
+      {1:~                                                    }|
+      {1:~                                                    }|
+    ## grid 3
+                                                           |
+    ## grid 4
+      ^                                                     |
+      {1:~                                                    }|
+      {1:~                                                    }|
+      {1:~                                                    }|
+      {1:~                                                    }|
+      {1:~                                                    }|
+    ]], win_viewport={
+      [2] = {win = {id = 1000}, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1};
+      [4] = {win = {id = 1001}, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1};
+    }}
+    eq({}, win_pos)
   end)
 
   it('with winbar dragging statusline with mouse works correctly', function()
