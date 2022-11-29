@@ -58,6 +58,51 @@ describe('display', function()
     ]])
   end)
 
+  -- oldtest: Test_matchparen_clear_highlight()
+  it('matchparen highlight is cleared when switching buffer', function()
+    local screen = Screen.new(20, 5)
+    screen:set_default_attr_ids({
+      [0] = {bold = true, foreground = Screen.colors.Blue},
+      [1] = {background = Screen.colors.Cyan},
+    })
+    screen:attach()
+
+    local screen1 = [[
+      {1:^()}                  |
+      {0:~                   }|
+      {0:~                   }|
+      {0:~                   }|
+                          |
+    ]]
+    local screen2 = [[
+      ^aa                  |
+      {0:~                   }|
+      {0:~                   }|
+      {0:~                   }|
+                          |
+    ]]
+
+    exec([[
+      source $VIMRUNTIME/plugin/matchparen.vim
+      set hidden
+      call setline(1, ['()'])
+      normal 0
+    ]])
+    screen:expect(screen1)
+
+    exec([[
+      enew
+      exe "normal iaa\<Esc>0"
+    ]])
+    screen:expect(screen2)
+
+    feed('<C-^>')
+    screen:expect(screen1)
+
+    feed('<C-^>')
+    screen:expect(screen2)
+  end)
+
   local function run_test_display_lastline(euro)
     local screen = Screen.new(75, 10)
     screen:set_default_attr_ids({

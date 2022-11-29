@@ -1029,7 +1029,8 @@ describe('completion', function()
     ]])
   end)
 
-  it('TextChangedP autocommand', function()
+  -- oldtest: Test_ChangedP()
+  it('TextChangedI and TextChangedP autocommands', function()
     curbufmeths.set_lines(0, 1, false, { 'foo', 'bar', 'foobar'})
     source([[
       set complete=. completeopt=menuone

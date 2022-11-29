@@ -51,6 +51,7 @@ describe("'spell'", function()
 
   end)
 
+  -- oldtest: Test_spell_screendump()
   it('has correct highlight at start of line', function()
     insert([[
     "This is some text without any spell errors.  Everything",

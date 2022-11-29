@@ -7,6 +7,7 @@ local write_file = helpers.write_file
 before_each(clear)
 
 describe(':source!', function()
+  -- oldtest: Test_nested_script()
   it('gives E22 when scripts nested too deep', function()
     write_file('Xscript.vim', [[
     :source! Xscript.vim
