@@ -98,12 +98,25 @@ func Test_appendbufline()
   new
   let b = bufnr('%')
   hide
+
+  new
+  call setline(1, ['line1', 'line2', 'line3'])
+  normal! 2gggg
+  call assert_equal(2, line("''"))
+
   call assert_equal(0, appendbufline(b, 0, ['foo', 'bar']))
   call assert_equal(['foo'], getbufline(b, 1))
   call assert_equal(['bar'], getbufline(b, 2))
   call assert_equal(['foo', 'bar'], getbufline(b, 1, 2))
+  call assert_equal(0, appendbufline(b, 0, 'baz'))
+  call assert_equal(['baz', 'foo', 'bar'], getbufline(b, 1, 3))
+
+  " appendbufline() in a hidden buffer shouldn't move marks in current window.
+  call assert_equal(2, line("''"))
+  bwipe!
+
   exe "bd!" b
-  call assert_equal([], getbufline(b, 1, 2))
+  call assert_equal([], getbufline(b, 1, 3))
 
   split Xtest
   call setline(1, ['a', 'b', 'c'])
@@ -145,10 +158,21 @@ func Test_deletebufline()
   let b = bufnr('%')
   call setline(1, ['aaa', 'bbb', 'ccc'])
   hide
+
+  new
+  call setline(1, ['line1', 'line2', 'line3'])
+  normal! 2gggg
+  call assert_equal(2, line("''"))
+
   call assert_equal(0, deletebufline(b, 2))
   call assert_equal(['aaa', 'ccc'], getbufline(b, 1, 2))
   call assert_equal(0, deletebufline(b, 2, 8))
   call assert_equal(['aaa'], getbufline(b, 1, 2))
+
+  " deletebufline() in a hidden buffer shouldn't move marks in current window.
+  call assert_equal(2, line("''"))
+  bwipe!
+
   exe "bd!" b
   call assert_equal(1, b->deletebufline(1))
 
