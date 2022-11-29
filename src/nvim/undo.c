@@ -2600,12 +2600,16 @@ void undo_fmt_time(char_u *buf, size_t buflen, time_t tt)
   if (time(NULL) - tt >= 100) {
     struct tm curtime;
     os_localtime_r(&tt, &curtime);
+    size_t n;
     if (time(NULL) - tt < (60L * 60L * 12L)) {
       // within 12 hours
-      (void)strftime((char *)buf, buflen, "%H:%M:%S", &curtime);
+      n = strftime((char *)buf, buflen, "%H:%M:%S", &curtime);
     } else {
       // longer ago
-      (void)strftime((char *)buf, buflen, "%Y/%m/%d %H:%M:%S", &curtime);
+      n = strftime((char *)buf, buflen, "%Y/%m/%d %H:%M:%S", &curtime);
+    }
+    if (n == 0) {
+      buf[0] = NUL;
     }
   } else {
     int64_t seconds = time(NULL) - tt;

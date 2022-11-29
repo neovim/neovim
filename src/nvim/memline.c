@@ -1461,7 +1461,7 @@ static time_t swapfile_info(char_u *fname)
     msg_puts(_("             dated: "));
 #endif
     x = file_info.stat.st_mtim.tv_sec;
-    char ctime_buf[50];
+    char ctime_buf[100];  // hopefully enough for every language
     msg_puts(os_ctime_r(&x, ctime_buf, sizeof(ctime_buf)));
   }
 
