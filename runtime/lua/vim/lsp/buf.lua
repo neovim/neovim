@@ -1,5 +1,6 @@
 local api = vim.api
 local validate = vim.validate
+local lsp = vim.lsp
 local util = require('vim.lsp.util')
 local npcall = vim.F.npcall
 
@@ -24,7 +25,7 @@ local function request(method, params, handler)
     method = { method, 's' },
     handler = { handler, 'f', true },
   })
-  return vim.lsp.buf_request(0, method, params, handler)
+  return lsp.buf_request(0, method, params, handler)
 end
 
 --- Checks whether the language servers attached to the current buffer are
@@ -32,7 +33,7 @@ end
 ---
 ---@returns `true` if server responds.
 function M.server_ready()
-  return not not vim.lsp.buf_notify(0, 'window/progress', {})
+  return not not lsp.buf_notify(0, 'window/progress', {})
 end
 
 --- Displays hover information about the symbol under the cursor in a floating
@@ -47,8 +48,8 @@ local function request_with_options(name, params, options)
   local req_handler
   if options then
     req_handler = function(err, result, ctx, config)
-      local client = vim.lsp.get_client_by_id(ctx.client_id)
-      local handler = client.handlers[name] or vim.lsp.handlers[name]
+      local client = lsp.get_client_by_id(ctx.client_id)
+      local handler = client.handlers[name] or lsp.handlers[name]
       handler(err, result, ctx, vim.tbl_extend('force', config or {}, options))
     end
   end
@@ -187,7 +188,7 @@ end
 function M.format(options)
   options = options or {}
   local bufnr = options.bufnr or api.nvim_get_current_buf()
-  local clients = vim.lsp.get_active_clients({
+  local clients = lsp.get_active_clients({
     id = options.id,
     bufnr = bufnr,
     name = options.name,
@@ -230,7 +231,7 @@ function M.format(options)
       end
       local params = set_range(client, util.make_formatting_params(options.formatting_options))
       client.request(method, params, function(...)
-        local handler = client.handlers[method] or vim.lsp.handlers[method]
+        local handler = client.handlers[method] or lsp.handlers[method]
         handler(...)
         do_format(next(clients, idx))
       end, bufnr)
@@ -264,7 +265,7 @@ end
 function M.rename(new_name, options)
   options = options or {}
   local bufnr = options.bufnr or api.nvim_get_current_buf()
-  local clients = vim.lsp.get_active_clients({
+  local clients = lsp.get_active_clients({
     bufnr = bufnr,
     name = options.name,
   })
@@ -309,7 +310,7 @@ function M.rename(new_name, options)
       local params = util.make_position_params(win, client.offset_encoding)
       params.newName = name
       local handler = client.handlers['textDocument/rename']
-        or vim.lsp.handlers['textDocument/rename']
+        or lsp.handlers['textDocument/rename']
       client.request('textDocument/rename', params, function(...)
         handler(...)
         try_use_client(next(clients, idx))
@@ -434,7 +435,7 @@ local function call_hierarchy(method)
       return
     end
     local call_hierarchy_item = pick_call_hierarchy_item(result)
-    local client = vim.lsp.get_client_by_id(ctx.client_id)
+    local client = lsp.get_client_by_id(ctx.client_id)
     if client then
       client.request(method, { item = call_hierarchy_item }, nil, ctx.bufnr)
     else
@@ -464,7 +465,7 @@ end
 ---
 function M.list_workspace_folders()
   local workspace_folders = {}
-  for _, client in pairs(vim.lsp.buf_get_clients()) do
+  for _, client in pairs(lsp.buf_get_clients()) do
     for _, folder in pairs(client.workspace_folders or {}) do
       table.insert(workspace_folders, folder.name)
     end
@@ -489,7 +490,7 @@ function M.add_workspace_folder(workspace_folder)
     { { uri = vim.uri_from_fname(workspace_folder), name = workspace_folder } },
     { {} }
   )
-  for _, client in pairs(vim.lsp.buf_get_clients()) do
+  for _, client in pairs(lsp.buf_get_clients()) do
     local found = false
     for _, folder in pairs(client.workspace_folders or {}) do
       if folder.name == workspace_folder then
@@ -499,7 +500,7 @@ function M.add_workspace_folder(workspace_folder)
       end
     end
     if not found then
-      vim.lsp.buf_notify(0, 'workspace/didChangeWorkspaceFolders', params)
+      lsp.buf_notify(0, 'workspace/didChangeWorkspaceFolders', params)
       if not client.workspace_folders then
         client.workspace_folders = {}
       end
@@ -522,10 +523,10 @@ function M.remove_workspace_folder(workspace_folder)
     { {} },
     { { uri = vim.uri_from_fname(workspace_folder), name = workspace_folder } }
   )
-  for _, client in pairs(vim.lsp.buf_get_clients()) do
+  for _, client in pairs(lsp.buf_get_clients()) do
     for idx, folder in pairs(client.workspace_folders) do
       if folder.name == workspace_folder then
-        vim.lsp.buf_notify(0, 'workspace/didChangeWorkspaceFolders', params)
+        lsp.buf_notify(0, 'workspace/didChangeWorkspaceFolders', params)
         client.workspace_folders[idx] = nil
         return
       end
@@ -638,7 +639,7 @@ local function on_code_action_results(results, ctx, options)
     end
     if action.command then
       local command = type(action.command) == 'table' and action.command or action
-      local fn = client.commands[command.command] or vim.lsp.commands[command.command]
+      local fn = client.commands[command.command] or lsp.commands[command.command]
       if fn then
         local enriched_ctx = vim.deepcopy(ctx)
         enriched_ctx.client_id = client.id
@@ -673,7 +674,7 @@ local function on_code_action_results(results, ctx, options)
     --  command: string
     --  arguments?: any[]
     --
-    local client = vim.lsp.get_client_by_id(action_tuple[1])
+    local client = lsp.get_client_by_id(action_tuple[1])
     local action = action_tuple[2]
     if
       not action.edit
@@ -715,7 +716,7 @@ end
 local function code_action_request(params, options)
   local bufnr = api.nvim_get_current_buf()
   local method = 'textDocument/codeAction'
-  vim.lsp.buf_request_all(bufnr, method, params, function(results)
+  lsp.buf_request_all(bufnr, method, params, function(results)
     local ctx = { bufnr = bufnr, method = method, params = params }
     on_code_action_results(results, ctx, options)
   end)
@@ -758,7 +759,7 @@ function M.code_action(options)
   local context = options.context or {}
   if not context.diagnostics then
     local bufnr = api.nvim_get_current_buf()
-    context.diagnostics = vim.lsp.diagnostic.get_line_diagnostics(bufnr)
+    context.diagnostics = lsp.diagnostic.get_line_diagnostics(bufnr)
   end
   local params
   local mode = api.nvim_get_mode().mode

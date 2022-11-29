@@ -2,6 +2,7 @@ local protocol = require('vim.lsp.protocol')
 local snippet = require('vim.lsp._snippet')
 local validate = vim.validate
 local api = vim.api
+local lsp = vim.lsp
 local list_extend = vim.list_extend
 local highlight = require('vim.highlight')
 local uv = vim.loop
@@ -357,7 +358,7 @@ function M.get_progress_messages()
   local new_messages = {}
   local progress_remove = {}
 
-  for _, client in ipairs(vim.lsp.get_active_clients()) do
+  for _, client in ipairs(lsp.get_active_clients()) do
     local messages = client.messages
     local data = messages
     for token, ctx in pairs(data.progress) do
@@ -1933,7 +1934,7 @@ function M._get_offset_encoding(bufnr)
 
   local offset_encoding
 
-  for _, client in pairs(vim.lsp.buf_get_clients(bufnr)) do
+  for _, client in pairs(lsp.buf_get_clients(bufnr)) do
     if client.offset_encoding == nil then
       vim.notify_once(
         string.format(
