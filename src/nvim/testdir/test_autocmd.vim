@@ -2334,9 +2334,8 @@ function Test_dirchanged_auto()
 endfunc
 
 " Test TextChangedI and TextChangedP
-" See test/functional/viml/completion_spec.lua'
 func Test_ChangedP()
-  CheckFunction test_override
+  throw 'Skipped: use test/functional/editor/completion_spec.lua'
   new
   call setline(1, ['foo', 'bar', 'foobar'])
   call test_override("char_avail", 1)
