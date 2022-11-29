@@ -715,7 +715,7 @@ static void ui_comp_event(UI *ui, char *name, Array args)
     if (res.type == kObjectTypeBoolean && res.data.boolean == true) {
       handled = true;
     }
-    if (err.type != kErrorTypeNone) {
+    if (ERROR_SET(&err)) {
       ELOG("Error while executing ui_comp_event callback: %s", err.msg);
     }
     api_clear_error(&err);
