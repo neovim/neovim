@@ -16,7 +16,6 @@
 #include "nvim/ascii.h"
 #include "nvim/buffer.h"
 #include "nvim/buffer_defs.h"
-#include "nvim/change.h"
 #include "nvim/channel.h"
 #include "nvim/charset.h"
 #include "nvim/cmdhist.h"
@@ -73,13 +72,11 @@
 #include "nvim/regexp.h"
 #include "nvim/runtime.h"
 #include "nvim/search.h"
-#include "nvim/sign.h"
 #include "nvim/strings.h"
 #include "nvim/tag.h"
 #include "nvim/types.h"
 #include "nvim/ui.h"
 #include "nvim/ui_compositor.h"
-#include "nvim/undo.h"
 #include "nvim/usercmd.h"
 #include "nvim/version.h"
 #include "nvim/vim.h"
@@ -1027,17 +1024,6 @@ void restore_vimvar(int idx, typval_T *save_tv)
       internal_error("restore_vimvar()");
     } else {
       hash_remove(&vimvarht, hi);
-    }
-  }
-}
-
-/// If there is a window for "curbuf", make it the current window.
-void find_win_for_curbuf(void)
-{
-  for (wininfo_T *wip = curbuf->b_wininfo; wip != NULL; wip = wip->wi_next) {
-    if (wip->wi_win != NULL) {
-      curwin = wip->wi_win;
-      break;
     }
   }
 }
@@ -4792,19 +4778,6 @@ void assert_error(garray_T *gap)
                         (const char *)gap->ga_data, (ptrdiff_t)gap->ga_len);
 }
 
-/// Find a window: When using a Window ID in any tab page, when using a number
-/// in the current tab page.
-win_T *find_win_by_nr_or_id(typval_T *vp)
-{
-  int nr = (int)tv_get_number_chk(vp, NULL);
-
-  if (nr >= LOWEST_WIN_ID) {
-    return win_id2wp((int)tv_get_number(vp));
-  }
-
-  return find_win_by_nr(vp, NULL);
-}
-
 /// Implementation of map() and filter().
 void filter_map(typval_T *argvars, typval_T *rettv, int map)
 {
@@ -5161,46 +5134,6 @@ theend:
   xfree(trans_name);
 }
 
-/// @return  buffer options, variables and other attributes in a dictionary.
-dict_T *get_buffer_info(buf_T *buf)
-{
-  dict_T *const dict = tv_dict_alloc();
-
-  tv_dict_add_nr(dict, S_LEN("bufnr"), buf->b_fnum);
-  tv_dict_add_str(dict, S_LEN("name"),
-                  buf->b_ffname != NULL ? (const char *)buf->b_ffname : "");
-  tv_dict_add_nr(dict, S_LEN("lnum"),
-                 buf == curbuf ? curwin->w_cursor.lnum : buflist_findlnum(buf));
-  tv_dict_add_nr(dict, S_LEN("linecount"), buf->b_ml.ml_line_count);
-  tv_dict_add_nr(dict, S_LEN("loaded"), buf->b_ml.ml_mfp != NULL);
-  tv_dict_add_nr(dict, S_LEN("listed"), buf->b_p_bl);
-  tv_dict_add_nr(dict, S_LEN("changed"), bufIsChanged(buf));
-  tv_dict_add_nr(dict, S_LEN("changedtick"), buf_get_changedtick(buf));
-  tv_dict_add_nr(dict, S_LEN("hidden"),
-                 buf->b_ml.ml_mfp != NULL && buf->b_nwindows == 0);
-
-  // Get a reference to buffer variables
-  tv_dict_add_dict(dict, S_LEN("variables"), buf->b_vars);
-
-  // List of windows displaying this buffer
-  list_T *const windows = tv_list_alloc(kListLenMayKnow);
-  FOR_ALL_TAB_WINDOWS(tp, wp) {
-    if (wp->w_buffer == buf) {
-      tv_list_append_number(windows, (varnumber_T)wp->handle);
-    }
-  }
-  tv_dict_add_list(dict, S_LEN("windows"), windows);
-
-  if (buf->b_signlist != NULL) {
-    // List of signs placed in this buffer
-    tv_dict_add_list(dict, S_LEN("signs"), get_buffer_signs(buf));
-  }
-
-  tv_dict_add_nr(dict, S_LEN("lastused"), buf->b_last_used);
-
-  return dict;
-}
-
 /// Get the line number from VimL object
 ///
 /// @note Unlike tv_get_lnum(), this one supports only "$" special string.
@@ -5222,115 +5155,6 @@ linenr_T tv_get_lnum_buf(const typval_T *const tv, const buf_T *const buf)
     return buf->b_ml.ml_line_count;
   }
   return (linenr_T)tv_get_number_chk(tv, NULL);
-}
-
-/// @return  information (variables, options, etc.) about a tab page
-///          as a dictionary.
-dict_T *get_tabpage_info(tabpage_T *tp, int tp_idx)
-{
-  dict_T *const dict = tv_dict_alloc();
-
-  tv_dict_add_nr(dict, S_LEN("tabnr"), tp_idx);
-
-  list_T *const l = tv_list_alloc(kListLenMayKnow);
-  FOR_ALL_WINDOWS_IN_TAB(wp, tp) {
-    tv_list_append_number(l, (varnumber_T)wp->handle);
-  }
-  tv_dict_add_list(dict, S_LEN("windows"), l);
-
-  // Make a reference to tabpage variables
-  tv_dict_add_dict(dict, S_LEN("variables"), tp->tp_vars);
-
-  return dict;
-}
-
-/// @return  information about a window as a dictionary.
-dict_T *get_win_info(win_T *wp, int16_t tpnr, int16_t winnr)
-{
-  dict_T *const dict = tv_dict_alloc();
-
-  // make sure w_botline is valid
-  validate_botline(wp);
-
-  tv_dict_add_nr(dict, S_LEN("tabnr"), tpnr);
-  tv_dict_add_nr(dict, S_LEN("winnr"), winnr);
-  tv_dict_add_nr(dict, S_LEN("winid"), wp->handle);
-  tv_dict_add_nr(dict, S_LEN("height"), wp->w_height_inner);
-  tv_dict_add_nr(dict, S_LEN("winrow"), wp->w_winrow + 1);
-  tv_dict_add_nr(dict, S_LEN("topline"), wp->w_topline);
-  tv_dict_add_nr(dict, S_LEN("botline"), wp->w_botline - 1);
-  tv_dict_add_nr(dict, S_LEN("winbar"), wp->w_winbar_height);
-  tv_dict_add_nr(dict, S_LEN("width"), wp->w_width_inner);
-  tv_dict_add_nr(dict, S_LEN("bufnr"), wp->w_buffer->b_fnum);
-  tv_dict_add_nr(dict, S_LEN("wincol"), wp->w_wincol + 1);
-  tv_dict_add_nr(dict, S_LEN("textoff"), win_col_off(wp));
-  tv_dict_add_nr(dict, S_LEN("terminal"), bt_terminal(wp->w_buffer));
-  tv_dict_add_nr(dict, S_LEN("quickfix"), bt_quickfix(wp->w_buffer));
-  tv_dict_add_nr(dict, S_LEN("loclist"),
-                 (bt_quickfix(wp->w_buffer) && wp->w_llist_ref != NULL));
-
-  // Add a reference to window variables
-  tv_dict_add_dict(dict, S_LEN("variables"), wp->w_vars);
-
-  return dict;
-}
-
-/// Find window specified by "vp" in tabpage "tp".
-///
-/// @param tp  NULL for current tab page
-win_T *find_win_by_nr(typval_T *vp, tabpage_T *tp)
-{
-  int nr = (int)tv_get_number_chk(vp, NULL);
-
-  if (nr < 0) {
-    return NULL;
-  }
-
-  if (nr == 0) {
-    return curwin;
-  }
-
-  // This method accepts NULL as an alias for curtab.
-  if (tp == NULL) {
-    tp = curtab;
-  }
-
-  FOR_ALL_WINDOWS_IN_TAB(wp, tp) {
-    if (nr >= LOWEST_WIN_ID) {
-      if (wp->handle == nr) {
-        return wp;
-      }
-    } else if (--nr <= 0) {
-      return wp;
-    }
-  }
-  return NULL;
-}
-
-/// Find window specified by "wvp" in tabpage "tvp".
-win_T *find_tabwin(typval_T *wvp, typval_T *tvp)
-{
-  win_T *wp = NULL;
-  tabpage_T *tp = NULL;
-
-  if (wvp->v_type != VAR_UNKNOWN) {
-    if (tvp->v_type != VAR_UNKNOWN) {
-      long n = tv_get_number(tvp);
-      if (n >= 0) {
-        tp = find_tabpage((int)n);
-      }
-    } else {
-      tp = curtab;
-    }
-
-    if (tp != NULL) {
-      wp = find_win_by_nr(wvp, tp);
-    }
-  } else {
-    wp = curwin;
-  }
-
-  return wp;
 }
 
 /// This function is used by f_input() and f_inputdialog() functions. The third
@@ -5552,136 +5376,6 @@ void screenchar_adjust(ScreenGrid **grid, int *row, int *col)
   // Make `row` and `col` relative to the grid
   *row -= (*grid)->comp_row;
   *col -= (*grid)->comp_col;
-}
-
-/// Set line or list of lines in buffer "buf" to "lines".
-/// Any type is allowed and converted to a string.
-void set_buffer_lines(buf_T *buf, linenr_T lnum_arg, bool append, typval_T *lines, typval_T *rettv)
-  FUNC_ATTR_NONNULL_ARG(4, 5)
-{
-  linenr_T lnum = lnum_arg + (append ? 1 : 0);
-  long added = 0;
-  buf_T *curbuf_save = NULL;
-  win_T *curwin_save = NULL;
-  const bool is_curbuf = buf == curbuf;
-  const bool save_VIsual_active = VIsual_active;
-
-  // When using the current buffer ml_mfp will be set if needed.  Useful when
-  // setline() is used on startup.  For other buffers the buffer must be
-  // loaded.
-  if (buf == NULL || (!is_curbuf && buf->b_ml.ml_mfp == NULL) || lnum < 1) {
-    rettv->vval.v_number = 1;  // FAIL
-    return;
-  }
-
-  if (!is_curbuf) {
-    VIsual_active = false;
-    curbuf_save = curbuf;
-    curwin_save = curwin;
-    curbuf = buf;
-    find_win_for_curbuf();
-  }
-
-  linenr_T append_lnum;
-  if (append) {
-    // appendbufline() uses the line number below which we insert
-    append_lnum = lnum - 1;
-  } else {
-    // setbufline() uses the line number above which we insert, we only
-    // append if it's below the last line
-    append_lnum = curbuf->b_ml.ml_line_count;
-  }
-
-  list_T *l = NULL;
-  listitem_T *li = NULL;
-  char *line = NULL;
-  if (lines->v_type == VAR_LIST) {
-    l = lines->vval.v_list;
-    if (l == NULL || tv_list_len(l) == 0) {
-      // set proper return code
-      if (lnum > curbuf->b_ml.ml_line_count) {
-        rettv->vval.v_number = 1;       // FAIL
-      }
-      goto done;
-    }
-    li = tv_list_first(l);
-  } else {
-    line = typval_tostring(lines, false);
-  }
-
-  // Default result is zero == OK.
-  for (;;) {
-    if (lines->v_type == VAR_LIST) {
-      // List argument, get next string.
-      if (li == NULL) {
-        break;
-      }
-      xfree(line);
-      line = typval_tostring(TV_LIST_ITEM_TV(li), false);
-      li = TV_LIST_ITEM_NEXT(l, li);
-    }
-
-    rettv->vval.v_number = 1;  // FAIL
-    if (line == NULL || lnum > curbuf->b_ml.ml_line_count + 1) {
-      break;
-    }
-
-    // When coming here from Insert mode, sync undo, so that this can be
-    // undone separately from what was previously inserted.
-    if (u_sync_once == 2) {
-      u_sync_once = 1;  // notify that u_sync() was called
-      u_sync(true);
-    }
-
-    if (!append && lnum <= curbuf->b_ml.ml_line_count) {
-      // Existing line, replace it.
-      int old_len = (int)strlen(ml_get(lnum));
-      if (u_savesub(lnum) == OK
-          && ml_replace(lnum, line, true) == OK) {
-        inserted_bytes(lnum, 0, old_len, (int)strlen(line));
-        if (is_curbuf && lnum == curwin->w_cursor.lnum) {
-          check_cursor_col();
-        }
-        rettv->vval.v_number = 0;  // OK
-      }
-    } else if (added > 0 || u_save(lnum - 1, lnum) == OK) {
-      // append the line.
-      added++;
-      if (ml_append(lnum - 1, line, 0, false) == OK) {
-        rettv->vval.v_number = 0;  // OK
-      }
-    }
-
-    if (l == NULL) {  // only one string argument
-      break;
-    }
-    lnum++;
-  }
-  xfree(line);
-
-  if (added > 0) {
-    appended_lines_mark(append_lnum, added);
-
-    // Only adjust the cursor for buffers other than the current, unless it
-    // is the current window. For curbuf and other windows it has been done
-    // in mark_adjust_internal().
-    FOR_ALL_TAB_WINDOWS(tp, wp) {
-      if (wp->w_buffer == buf
-          && (wp->w_buffer != curbuf || wp == curwin)
-          && wp->w_cursor.lnum > append_lnum) {
-        wp->w_cursor.lnum += (linenr_T)added;
-      }
-    }
-    check_cursor_col();
-    update_topline(curwin);
-  }
-
-done:
-  if (!is_curbuf) {
-    curbuf = curbuf_save;
-    curwin = curwin_save;
-    VIsual_active = save_VIsual_active;
-  }
 }
 
 /// "stdpath()" helper for list results
