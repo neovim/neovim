@@ -1462,7 +1462,7 @@ static time_t swapfile_info(char_u *fname)
 #endif
     x = file_info.stat.st_mtim.tv_sec;
     char ctime_buf[100];  // hopefully enough for every language
-    msg_puts(os_ctime_r(&x, ctime_buf, sizeof(ctime_buf)));
+    msg_puts(os_ctime_r(&x, ctime_buf, sizeof(ctime_buf), true));
   }
 
   // print the original file name
@@ -3121,7 +3121,7 @@ static void attention_message(buf_T *buf, char_u *fname)
     msg_puts(_("             dated: "));
     time_t x = file_info.stat.st_mtim.tv_sec;
     char ctime_buf[50];
-    msg_puts(os_ctime_r(&x, ctime_buf, sizeof(ctime_buf)));
+    msg_puts(os_ctime_r(&x, ctime_buf, sizeof(ctime_buf), true));
     if (swap_mtime != 0 && x > swap_mtime) {
       msg_puts(_("      NEWER than swap file!\n"));
     }
