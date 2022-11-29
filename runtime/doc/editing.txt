@@ -1651,7 +1651,7 @@ There are three different types of searching:
    with depth limiter (/usr/**2) or upward search (;) notations.
 
 ==============================================================================
-11. Trusted Files						*trust*
+12. Trusted Files						*trust*
 
 Nvim has the ability to execute arbitrary code through the 'exrc' option. In
 order to prevent executing code from untrusted sources, Nvim has the concept of

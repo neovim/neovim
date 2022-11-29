@@ -160,25 +160,25 @@ describe('lua stdlib', function()
 
   it("vim.str_utfindex/str_byteindex", function()
     exec_lua([[_G.test_text = "xy åäö ɧ 汉语 ↥ 🤦x🦄 å بِيَّ\000ъ"]])
-    local indicies32 = {[0]=0,1,2,3,5,7,9,10,12,13,16,19,20,23,24,28,29,33,34,35,37,38,40,42,44,46,48,49,51}
-    local indicies16 = {[0]=0,1,2,3,5,7,9,10,12,13,16,19,20,23,24,28,28,29,33,33,34,35,37,38,40,42,44,46,48,49,51}
-    for i,k in pairs(indicies32) do
+    local indices32 = {[0]=0,1,2,3,5,7,9,10,12,13,16,19,20,23,24,28,29,33,34,35,37,38,40,42,44,46,48,49,51}
+    local indices16 = {[0]=0,1,2,3,5,7,9,10,12,13,16,19,20,23,24,28,28,29,33,33,34,35,37,38,40,42,44,46,48,49,51}
+    for i,k in pairs(indices32) do
       eq(k, exec_lua("return vim.str_byteindex(_G.test_text, ...)", i), i)
     end
-    for i,k in pairs(indicies16) do
+    for i,k in pairs(indices16) do
       eq(k, exec_lua("return vim.str_byteindex(_G.test_text, ..., true)", i), i)
     end
-    eq("index out of range", pcall_err(exec_lua, "return vim.str_byteindex(_G.test_text, ...)", #indicies32 + 1))
-    eq("index out of range", pcall_err(exec_lua, "return vim.str_byteindex(_G.test_text, ..., true)", #indicies16 + 1))
+    eq("index out of range", pcall_err(exec_lua, "return vim.str_byteindex(_G.test_text, ...)", #indices32 + 1))
+    eq("index out of range", pcall_err(exec_lua, "return vim.str_byteindex(_G.test_text, ..., true)", #indices16 + 1))
     local i32, i16 = 0, 0
     local len = 51
     for k = 0,len do
-      if indicies32[i32] < k then
+      if indices32[i32] < k then
         i32 = i32 + 1
       end
-      if indicies16[i16] < k then
+      if indices16[i16] < k then
         i16 = i16 + 1
-        if indicies16[i16+1] == indicies16[i16] then
+        if indices16[i16+1] == indices16[i16] then
           i16 = i16 + 1
         end
       end
