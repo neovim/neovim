@@ -6,9 +6,11 @@ local exec_lua = helpers.exec_lua
 local feed = helpers.feed
 
 describe('splitkeep', function()
-  local screen = Screen.new()
+  local screen
+
   before_each(function()
     clear('--cmd', 'set splitkeep=screen')
+    screen = Screen.new()
     screen:attach()
   end)
 
@@ -191,6 +193,35 @@ describe('splitkeep', function()
        48 after fold                                       |
        49 +--  7 lines: int FuncName() {···················|
       :quit                                                |
+    ]])
+  end)
+
+  -- oldtest: Test_splitkeep_status()
+  it('does not scroll when split in callback', function()
+    exec([[
+      call setline(1, ['a', 'b', 'c'])
+      set nomodified
+      set splitkeep=screen
+      let win = winnr()
+      wincmd s
+      wincmd j
+    ]])
+    feed(':call win_move_statusline(win, 1)<CR>')
+    screen:expect([[
+      a                                                    |
+      b                                                    |
+      c                                                    |
+      ~                                                    |
+      ~                                                    |
+      ~                                                    |
+      ~                                                    |
+      [No Name]                                            |
+      ^a                                                    |
+      b                                                    |
+      c                                                    |
+      ~                                                    |
+      [No Name]                                            |
+                                                           |
     ]])
   end)
 end)
