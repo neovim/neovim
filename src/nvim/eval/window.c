@@ -590,7 +590,7 @@ static void win_move_into_split(win_T *wp, win_T *targetwin, int size, int flags
   int height = wp->w_height;
   win_T *oldwin = curwin;
 
-  if (wp == targetwin || wp == aucmd_win) {
+  if (wp == targetwin || is_aucmd_win(wp)) {
     return;
   }
 
@@ -674,7 +674,7 @@ void f_win_gettype(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
       return;
     }
   }
-  if (wp == aucmd_win) {
+  if (is_aucmd_win(wp)) {
     rettv->vval.v_string = xstrdup("autocmd");
   } else if (wp->w_p_pvw) {
     rettv->vval.v_string = xstrdup("preview");

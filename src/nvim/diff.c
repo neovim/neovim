@@ -2943,8 +2943,13 @@ void ex_diffgetput(exarg_T *eap)
     // Need to make the other buffer the current buffer to be able to make
     // changes in it.
 
-    // set curwin/curbuf to buf and save a few things
+    // Set curwin/curbuf to buf and save a few things.
     aucmd_prepbuf(&aco, curtab->tp_diffbuf[idx_other]);
+    if (curbuf != curtab->tp_diffbuf[idx_other]) {
+      // Could not find a window for this buffer, the rest is likely to
+      // fail.
+      goto theend;
+    }
   }
 
   const int idx_from = eap->cmdidx == CMD_diffget ? idx_other : idx_cur;

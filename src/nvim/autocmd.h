@@ -25,7 +25,7 @@ struct AutoPat_S;
 // not the current buffer.
 typedef struct {
   buf_T *save_curbuf;             ///< saved curbuf
-  bool use_aucmd_win;             ///< using aucmd_win
+  int use_aucmd_win_idx;          ///< index in aucmd_win[] if >= 0
   handle_T save_curwin_handle;    ///< ID of saved curwin
   handle_T new_curwin_handle;     ///< ID of new curwin
   handle_T save_prevwin_handle;   ///< ID of saved prevwin

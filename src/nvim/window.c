@@ -1046,8 +1046,8 @@ int win_split_ins(int size, int flags, win_T *new_wp, int dir)
 {
   win_T *wp = new_wp;
 
-  // aucmd_win should always remain floating
-  if (new_wp != NULL && new_wp == aucmd_win) {
+  // aucmd_win[] should always remain floating
+  if (new_wp != NULL && is_aucmd_win(new_wp)) {
     return FAIL;
   }
 
@@ -1505,7 +1505,7 @@ int win_split_ins(int size, int flags, win_T *new_wp, int dir)
   // equalize the window sizes.
   if (do_equal || dir != 0) {
     win_equal(wp, true, (flags & WSP_VERT) ? (dir == 'v' ? 'b' : 'h') : (dir == 'h' ? 'b' : 'v'));
-  } else if (*p_spk != 'c' && wp != aucmd_win) {
+  } else if (*p_spk != 'c' && !is_aucmd_win(wp)) {
     win_fix_scroll(false);
   }
 
@@ -1940,7 +1940,7 @@ static void win_totop(int size, int flags)
     beep_flush();
     return;
   }
-  if (curwin == aucmd_win) {
+  if (is_aucmd_win(curwin)) {
     return;
   }
   if (check_split_disallowed() == FAIL) {
@@ -2086,7 +2086,7 @@ void win_equal(win_T *next_curwin, bool current, int dir)
   win_equal_rec(next_curwin == NULL ? curwin : next_curwin, current,
                 topframe, dir, 0, tabline_height(),
                 Columns, topframe->fr_height);
-  if (*p_spk != 'c' && next_curwin != aucmd_win) {
+  if (*p_spk != 'c' && !is_aucmd_win(next_curwin)) {
     win_fix_scroll(true);
   }
 }
@@ -2459,7 +2459,7 @@ void close_windows(buf_T *buf, bool keep_curwin)
 
   // Start from lastwin to close floating windows with the same buffer first.
   // When the autocommand window is involved win_close() may need to print an error message.
-  for (win_T *wp = lastwin; wp != NULL && (lastwin == aucmd_win || !one_window(wp));) {
+  for (win_T *wp = lastwin; wp != NULL && (is_aucmd_win(lastwin) || !one_window(wp));) {
     if (wp->w_buffer == buf && (!keep_curwin || wp != curwin)
         && !(wp->w_closing || wp->w_buffer->b_locked > 0)) {
       if (win_close(wp, false, false) == FAIL) {
@@ -2508,14 +2508,14 @@ bool last_window(win_T *win) FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
   return one_window(win) && first_tabpage->tp_next == NULL;
 }
 
-/// Check that current tab page contains no more then one window other than `aucmd_win`.
-/// @param counted_float  counted even if floating, but not if it is `aucmd_win`
+/// Check if current tab page contains no more than one window other than `aucmd_win[]`.
+/// @param counted_float  counted even if floating, but not if it is `aucmd_win[]`
 bool one_window(win_T *counted_float) FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
   bool seen_one = false;
 
   FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
-    if (wp != aucmd_win && (!wp->w_floating || wp == counted_float)) {
+    if (!is_aucmd_win(wp) && (!wp->w_floating || wp == counted_float)) {
       if (seen_one) {
         return false;
       }
@@ -2545,7 +2545,7 @@ bool last_nonfloat(win_T *wp) FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 /// @return true if all floating windows can be closed
 static bool can_close_floating_windows(void)
 {
-  assert(lastwin != aucmd_win);
+  assert(!is_aucmd_win(lastwin));
   for (win_T *wp = lastwin; wp->w_floating; wp = wp->w_prev) {
     buf_T *buf = wp->w_buffer;
     int need_hide = (bufIsChanged(buf) && buf->b_nwindows <= 1);
@@ -2663,12 +2663,12 @@ int win_close(win_T *win, bool free_buf, bool force)
       || (win->w_buffer != NULL && win->w_buffer->b_locked > 0)) {
     return FAIL;     // window is already being closed
   }
-  if (win == aucmd_win) {
+  if (is_aucmd_win(win)) {
     emsg(_(e_autocmd_close));
     return FAIL;
   }
   if (lastwin->w_floating && one_window(win)) {
-    if (lastwin == aucmd_win) {
+    if (is_aucmd_win(lastwin)) {
       emsg(_("E814: Cannot close window, only autocmd window would remain"));
       return FAIL;
     }
@@ -3092,15 +3092,19 @@ void win_free_all(void)
     win_remove(lastwin, NULL);
     int dummy;
     (void)win_free_mem(wp, &dummy, NULL);
-    if (wp == aucmd_win) {
-      aucmd_win = NULL;
+    for (int i = 0; i < AUCMD_WIN_COUNT; ++i) {
+      if (aucmd_win[i].auc_win == wp) {
+        aucmd_win[i].auc_win_used = false;
+      }
     }
   }
 
-  if (aucmd_win != NULL) {
-    int dummy;
-    (void)win_free_mem(aucmd_win, &dummy, NULL);
-    aucmd_win = NULL;
+  for (int i = 0; i < AUCMD_WIN_COUNT; ++i) {
+    if (aucmd_win[i].auc_win_used) {
+      int dummy;
+      (void)win_free_mem(aucmd_win[i].auc_win, &dummy, NULL);
+      aucmd_win[i].auc_win_used = false;
+    }
   }
 
   while (firstwin != NULL) {
@@ -3904,18 +3908,18 @@ void win_alloc_first(void)
   unuse_tabpage(first_tabpage);
 }
 
-// Init `aucmd_win`. This can only be done after the first window
+// Init `aucmd_win[idx]`. This can only be done after the first window
 // is fully initialized, thus it can't be in win_alloc_first().
-void win_alloc_aucmd_win(void)
+void win_alloc_aucmd_win(int idx)
 {
   Error err = ERROR_INIT;
   FloatConfig fconfig = FLOAT_CONFIG_INIT;
   fconfig.width = Columns;
   fconfig.height = 5;
   fconfig.focusable = false;
-  aucmd_win = win_new_float(NULL, true, fconfig, &err);
-  aucmd_win->w_buffer->b_nwindows--;
-  RESET_BINDING(aucmd_win);
+  aucmd_win[idx].auc_win = win_new_float(NULL, true, fconfig, &err);
+  aucmd_win[idx].auc_win->w_buffer->b_nwindows--;
+  RESET_BINDING(aucmd_win[idx].auc_win);
 }
 
 // Allocate the first window or the first window in a new tab page.
@@ -5108,7 +5112,7 @@ static void win_free(win_T *wp, tabpage_T *tp)
 
   win_free_grid(wp, false);
 
-  if (wp != aucmd_win) {
+  if (win_valid_any_tab(wp)) {
     win_remove(wp, tp);
   }
   if (autocmd_busy) {
@@ -7059,7 +7063,7 @@ bool only_one_window(void) FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
   FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
     if (wp->w_buffer != NULL
         && (!((bt_help(wp->w_buffer) && !bt_help(curbuf)) || wp->w_floating
-              || wp->w_p_pvw) || wp == curwin) && wp != aucmd_win) {
+              || wp->w_p_pvw) || wp == curwin) && !is_aucmd_win(wp)) {
       count++;
     }
   }
