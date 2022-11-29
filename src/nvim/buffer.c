@@ -175,6 +175,19 @@ static int read_buffer(int read_stdin, exarg_T *eap, int flags)
   return retval;
 }
 
+/// Ensure buffer "buf" is loaded.  Does not trigger the swap-exists action.
+void buffer_ensure_loaded(buf_T *buf)
+{
+  if (buf->b_ml.ml_mfp == NULL) {
+    aco_save_T aco;
+
+    aucmd_prepbuf(&aco, buf);
+    swap_exists_action = SEA_NONE;
+    open_buffer(false, NULL, 0);
+    aucmd_restbuf(&aco);
+  }
+}
+
 /// Open current buffer, that is: open the memfile and read the file into
 /// memory.
 ///

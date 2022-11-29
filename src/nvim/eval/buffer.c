@@ -302,13 +302,8 @@ void f_bufload(typval_T *argvars, typval_T *unused, EvalFuncData fptr)
 {
   buf_T *buf = get_buf_arg(&argvars[0]);
 
-  if (buf != NULL && buf->b_ml.ml_mfp == NULL) {
-    aco_save_T aco;
-
-    aucmd_prepbuf(&aco, buf);
-    swap_exists_action = SEA_NONE;
-    open_buffer(false, NULL, 0);
-    aucmd_restbuf(&aco);
+  if (buf != NULL) {
+    buffer_ensure_loaded(buf);
   }
 }
 
