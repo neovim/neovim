@@ -175,6 +175,22 @@ static int read_buffer(int read_stdin, exarg_T *eap, int flags)
   return retval;
 }
 
+/// Ensure buffer "buf" is loaded.  Does not trigger the swap-exists action.
+void buffer_ensure_loaded(buf_T *buf)
+{
+  if (buf->b_ml.ml_mfp == NULL) {
+    aco_save_T aco;
+
+    // Make sure the buffer is in a window.  If not then skip it.
+    aucmd_prepbuf(&aco, buf);
+    if (curbuf == buf) {
+      swap_exists_action = SEA_NONE;
+      open_buffer(false, NULL, 0);
+      aucmd_restbuf(&aco);
+    }
+  }
+}
+
 /// Open current buffer, that is: open the memfile and read the file into
 /// memory.
 ///
@@ -352,18 +368,21 @@ int open_buffer(int read_stdin, exarg_T *eap, int flags_arg)
   if (bufref_valid(&old_curbuf) && old_curbuf.br_buf->b_ml.ml_mfp != NULL) {
     aco_save_T aco;
 
-    // Go to the buffer that was opened.
+    // Go to the buffer that was opened, make sure it is in a window.
+    // If not then skip it.
     aucmd_prepbuf(&aco, old_curbuf.br_buf);
-    do_modelines(0);
-    curbuf->b_flags &= ~(BF_CHECK_RO | BF_NEVERLOADED);
+    if (curbuf == old_curbuf.br_buf) {
+      do_modelines(0);
+      curbuf->b_flags &= ~(BF_CHECK_RO | BF_NEVERLOADED);
 
-    if ((flags & READ_NOWINENTER) == 0) {
-      apply_autocmds_retval(EVENT_BUFWINENTER, NULL, NULL, false, curbuf,
-                            &retval);
+      if ((flags & READ_NOWINENTER) == 0) {
+        apply_autocmds_retval(EVENT_BUFWINENTER, NULL, NULL, false, curbuf,
+                              &retval);
+      }
+
+      // restore curwin/curbuf and a few other things
+      aucmd_restbuf(&aco);
     }
-
-    // restore curwin/curbuf and a few other things
-    aucmd_restbuf(&aco);
   }
 
   return retval;
@@ -1316,7 +1335,7 @@ int do_buffer(int action, int start, int dir, int count, int forceit)
     // Repeat this so long as we end up in a window with this buffer.
     while (buf == curbuf
            && !(curwin->w_closing || curwin->w_buffer->b_locked > 0)
-           && (lastwin == aucmd_win || !last_window(curwin))) {
+           && (is_aucmd_win(lastwin) || !last_window(curwin))) {
       if (win_close(curwin, false, false) == FAIL) {
         break;
       }
@@ -4155,9 +4174,14 @@ bool buf_contents_changed(buf_T *buf)
   exarg_T ea;
   prep_exarg(&ea, buf);
 
-  // set curwin/curbuf to buf and save a few things
+  // Set curwin/curbuf to buf and save a few things.
   aco_save_T aco;
   aucmd_prepbuf(&aco, newbuf);
+  if (curbuf != newbuf) {
+    // Failed to find a window for "newbuf".
+    wipe_buffer(newbuf, false);
+    return true;
+  }
 
   if (ml_open(curbuf) == OK
       && readfile(buf->b_ffname, buf->b_fname,

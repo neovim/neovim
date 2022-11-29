@@ -387,7 +387,7 @@ void terminal_check_size(Terminal *term)
   // Check if there is a window that displays the terminal and find the maximum width and height.
   // Skip the autocommand window which isn't actually displayed.
   FOR_ALL_TAB_WINDOWS(tp, wp) {
-    if (wp == aucmd_win) {
+    if (is_aucmd_win(wp)) {
       continue;
     }
     if (wp->w_buffer && wp->w_buffer->terminal == term) {

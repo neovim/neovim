@@ -422,8 +422,19 @@ EXTERN win_T *prevwin INIT(= NULL);  // previous window
 
 EXTERN win_T *curwin;        // currently active window
 
-EXTERN win_T *aucmd_win;     // window used in aucmd_prepbuf()
-EXTERN int aucmd_win_used INIT(= false);  // aucmd_win is being used
+/// When executing autocommands for a buffer that is not in any window, a
+/// special window is created to handle the side effects.  When autocommands
+/// nest we may need more than one.  Allow for up to five, if more are needed
+/// something crazy is happening.
+enum { AUCMD_WIN_COUNT = 5, };
+
+typedef struct {
+  win_T *auc_win;     ///< Window used in aucmd_prepbuf().  When not NULL the
+                      ///< window has been allocated.
+  bool auc_win_used;  ///< This auc_win is being used.
+} aucmdwin_T;
+
+EXTERN aucmdwin_T aucmd_win[AUCMD_WIN_COUNT];
 
 // The window layout is kept in a tree of frames.  topframe points to the top
 // of the tree.
