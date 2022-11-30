@@ -847,6 +847,8 @@ void ex_retab(exarg_T *eap)
       vcol += win_chartabsize(curwin, ptr + col, (colnr_T)vcol);
       if (vcol >= MAXCOL) {
         emsg(_(e_resulting_text_too_long));
+        // set got_int to break out of any loop
+        got_int = true;
         break;
       }
       col += utfc_ptr2len(ptr + col);
