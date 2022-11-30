@@ -1,6 +1,6 @@
 local M = {}
 
-local iswin = package.config:sub(1, 1) == '\\'
+local iswin = vim.loop.os_uname().sysname == 'Windows_NT'
 
 --- Iterate over all the parents of the given file or directory.
 ---

@@ -70,7 +70,7 @@ describe('vim.fs', function()
 
   describe('dirname()', function()
     it('works', function()
-      local test_windows = package.config:sub(1, 1) == '\\'
+      local test_windows = vim.loop.os_uname().sysname == 'Windows_NT'
 
       eq(test_build_dir, exec_lua([[
         local nvim_dir = ...
@@ -102,7 +102,7 @@ describe('vim.fs', function()
 
   describe('basename()', function()
     it('works', function()
-      local test_windows = package.config:sub(1, 1) == '\\'
+      local test_windows = vim.loop.os_uname().sysname == 'Windows_NT'
 
       eq(nvim_prog_basename, exec_lua([[
         local nvim_prog = ...
