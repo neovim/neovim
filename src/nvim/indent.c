@@ -17,6 +17,7 @@
 #include "nvim/edit.h"
 #include "nvim/eval.h"
 #include "nvim/eval/typval_defs.h"
+#include "nvim/ex_docmd.h"
 #include "nvim/extmark.h"
 #include "nvim/gettext.h"
 #include "nvim/globals.h"
@@ -1152,6 +1153,12 @@ int get_expr_indent(void)
   curwin->w_set_curswant = save_set_curswant;
   check_cursor();
   State = save_State;
+
+  // Reset did_throw, unless 'debug' has "throw" and inside a try/catch.
+  if (did_throw && (vim_strchr(p_debug, 't') == NULL || trylevel == 0)) {
+    handle_did_throw();
+    did_throw = false;
+  }
 
   // If there is an error, just keep the current indent.
   if (indent < 0) {
