@@ -70,6 +70,8 @@ describe('vim.fs', function()
 
   describe('dirname()', function()
     it('works', function()
+      local test_windows = package.config:sub(1, 1) == '\\'
+
       eq(test_build_dir, exec_lua([[
         local nvim_dir = ...
         return vim.fs.dirname(nvim_dir)
@@ -92,7 +94,7 @@ describe('vim.fs', function()
       end
 
       test_paths(test_basename_dirname_eq)
-      if iswin() then
+      if test_windows then
         test_paths(tests_windows_paths)
       end
     end)
@@ -100,6 +102,8 @@ describe('vim.fs', function()
 
   describe('basename()', function()
     it('works', function()
+      local test_windows = package.config:sub(1, 1) == '\\'
+
       eq(nvim_prog_basename, exec_lua([[
         local nvim_prog = ...
         return vim.fs.basename(nvim_prog)
@@ -122,7 +126,7 @@ describe('vim.fs', function()
       end
 
       test_paths(test_basename_dirname_eq)
-      if iswin() then
+      if test_windows then
         test_paths(tests_windows_paths)
       end
     end)
