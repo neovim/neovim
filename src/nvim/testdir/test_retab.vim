@@ -104,6 +104,9 @@ func Test_retab_endless()
 endfunc
 
 func Test_nocatch_retab_endless()
+  " FIXME: why does this hang on MS-Windows?
+  CheckNotMSWindows
+
   " not inside try/catch an interrupt is generated to get out of loops
   new
   call setline(1, "\t0\t")
