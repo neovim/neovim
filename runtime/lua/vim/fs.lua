@@ -43,11 +43,11 @@ function M.dirname(file)
     return nil
   end
   vim.validate({ file = { file, 's' } })
-  if file:match('^%w:[\\/]?$') and iswin then
-    return file:gsub('\\', '/')
+  if iswin and file:match('^%w:[\\/]?$') then
+    return (file:gsub('\\', '/'))
   elseif not file:match('[\\/]') then
     return '.'
-  elseif file:match('^/[^/]+$') or file == '/' then
+  elseif file == '/' or file:match('^/[^/]+$') then
     return '/'
   end
   local dir = file:match('[/\\]$') and file:sub(1, #file - 1) or file:match('^([/\\]?.+)[/\\]')
