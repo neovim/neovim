@@ -918,6 +918,16 @@ bool may_do_si(void)
   return curbuf->b_p_si && !curbuf->b_p_cin && *curbuf->b_p_inde == NUL && !p_paste;
 }
 
+/// Give a "resulting text too long" error and maybe set got_int.
+static void emsg_text_too_long(void)
+{
+  emsg(_(e_resulting_text_too_long));
+  // when not inside a try/catch set got_int to break out of any loop
+  if (trylevel == 0) {
+    got_int = true;
+  }
+}
+
 /// ":retab".
 void ex_retab(exarg_T *eap)
 {
@@ -1009,7 +1019,7 @@ void ex_retab(exarg_T *eap)
             old_len = (long)strlen(ptr);
             const long new_len = old_len - col + start_col + len + 1;
             if (new_len <= 0 || new_len >= MAXCOL) {
-              emsg(_(e_resulting_text_too_long));
+              emsg_text_too_long();
               break;
             }
             new_line = xmalloc((size_t)new_len);
@@ -1045,12 +1055,7 @@ void ex_retab(exarg_T *eap)
       }
       vcol += win_chartabsize(curwin, ptr + col, (colnr_T)vcol);
       if (vcol >= MAXCOL) {
-        emsg(_(e_resulting_text_too_long));
-        // when not inside a try/catch set got_int to break out of any
-        // loop
-        if (trylevel == 0) {
-          got_int = true;
-        }
+        emsg_text_too_long();
         break;
       }
       col += utfc_ptr2len(ptr + col);

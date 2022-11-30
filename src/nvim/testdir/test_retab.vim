@@ -92,7 +92,7 @@ func RetabLoop()
 endfunc
 
 func Test_retab_endless()
-  " inside try/catch we catch the error message
+  " inside try/catch we can catch the error message
   call setline(1, "\t0\t")
   let caught = 'no'
   try
@@ -106,13 +106,7 @@ func Test_retab_endless()
 endfunc
 
 func Test_nocatch_retab_endless()
-  " FIXME: why does this hang on MS-Windows?  Is got_int reset somewhere?
-  if has('win32')
-    let g:skipped_reason = "does not work on MS-Windows"
-    return
-  endif
-
-  " not inside try/catch an interrupt is generated to get out of loops
+  " when not inside try/catch an interrupt is generated to get out of loops
   call setline(1, "\t0\t")
   call assert_fails('call RetabLoop()', ['E1240:', 'Interrupted'])
 
