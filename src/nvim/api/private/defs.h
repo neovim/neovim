@@ -12,7 +12,7 @@
 #define ARRAY_DICT_INIT KV_INITIAL_VALUE
 #define STRING_INIT { .data = NULL, .size = 0 }
 #define OBJECT_INIT { .type = kObjectTypeNil }
-#define ERROR_INIT { .type = kErrorTypeNone, .msg = NULL }
+#define ERROR_INIT ((Error) { .type = kErrorTypeNone, .msg = NULL })
 #define REMOTE_TYPE(type) typedef handle_T type
 
 #define ERROR_SET(e) ((e)->type != kErrorTypeNone)
