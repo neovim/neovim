@@ -1,6 +1,6 @@
 " Tests for :hide command/modifier and 'hidden' option
 
-function SetUp()
+func SetUp()
   let s:save_hidden = &hidden
   let s:save_bufhidden = &bufhidden
   let s:save_autowrite = &autowrite

@@ -606,6 +606,7 @@ theend:
   suppress_errthrow = false;
   in_assert_fails = false;
   did_emsg = false;
+  got_int = false;
   msg_col = 0;
   no_wait_return--;
   need_wait_return = false;

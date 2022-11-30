@@ -24,7 +24,7 @@ endfunc
 
 " Do all test in a separate window to avoid E211 when we recursively
 " delete the Xtopdir directory during cleanup
-function SetUp()
+func SetUp()
   set visualbell
   set nocp viminfo+=nviminfo
 

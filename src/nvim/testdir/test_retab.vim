@@ -1,4 +1,7 @@
 " Test :retab
+
+source check.vim
+
 func SetUp()
   new
   call setline(1, "\ta  \t    b        c    ")
@@ -81,19 +84,32 @@ func Test_retab_error()
   call assert_fails('ret 80000000000000000000', 'E475:')
 endfunc
 
+func RetabLoop()
+  while 1
+    set ts=4000
+    retab 4
+  endwhile
+endfunc
+
 func Test_retab_endless()
-  new
+  " inside try/catch we can catch the error message
   call setline(1, "\t0\t")
   let caught = 'no'
   try
-    while 1
-      set ts=4000
-      retab 4
-    endwhile
-  catch /E1240/
-    let caught = 'yes'
+    call RetabLoop()
+  catch /E1240:/
+    let caught = v:exception
   endtry
-  bwipe!
+  call assert_match('E1240:', caught)
+
+  set tabstop&
+endfunc
+
+func Test_nocatch_retab_endless()
+  " when not inside try/catch an interrupt is generated to get out of loops
+  call setline(1, "\t0\t")
+  call assert_fails('call RetabLoop()', ['E1240:', 'Interrupted'])
+
   set tabstop&
 endfunc
 
