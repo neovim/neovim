@@ -9,6 +9,7 @@ local nvim_dir = helpers.nvim_dir
 local test_build_dir = helpers.test_build_dir
 local iswin = helpers.iswin
 local nvim_prog = helpers.nvim_prog
+local is_os = helpers.is_os
 
 local nvim_prog_basename = iswin() and 'nvim.exe' or 'nvim'
 
@@ -70,8 +71,6 @@ describe('vim.fs', function()
 
   describe('dirname()', function()
     it('works', function()
-      local test_windows = vim.loop.os_uname().sysname == 'Windows_NT'
-
       eq(test_build_dir, exec_lua([[
         local nvim_dir = ...
         return vim.fs.dirname(nvim_dir)
@@ -94,7 +93,7 @@ describe('vim.fs', function()
       end
 
       test_paths(test_basename_dirname_eq)
-      if test_windows then
+      if is_os('win') then
         test_paths(tests_windows_paths)
       end
     end)
@@ -102,7 +101,6 @@ describe('vim.fs', function()
 
   describe('basename()', function()
     it('works', function()
-      local test_windows = vim.loop.os_uname().sysname == 'Windows_NT'
 
       eq(nvim_prog_basename, exec_lua([[
         local nvim_prog = ...
@@ -126,7 +124,7 @@ describe('vim.fs', function()
       end
 
       test_paths(test_basename_dirname_eq)
-      if test_windows then
+      if is_os('win') then
         test_paths(tests_windows_paths)
       end
     end)
