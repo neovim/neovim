@@ -1,4 +1,7 @@
 " Test :retab
+
+source check.vim
+
 func SetUp()
   new
   call setline(1, "\ta  \t    b        c    ")
@@ -89,6 +92,9 @@ func RetabLoop()
 endfunc
 
 func Test_retab_endless()
+  " FIXME: why does this hang on MS-Windows?
+  CheckNotMSWindows
+
   " inside try/catch we catch the error message
   new
   call setline(1, "\t0\t")
@@ -104,7 +110,7 @@ func Test_retab_endless()
 endfunc
 
 func Test_nocatch_retab_endless()
-  " FIXME: why does this hang on MS-Windows?
+  " FIXME: does this hang on MS-Windows?
   CheckNotMSWindows
 
   " not inside try/catch an interrupt is generated to get out of loops
