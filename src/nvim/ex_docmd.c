@@ -766,53 +766,7 @@ int do_cmdline(char *cmdline, LineGetter fgetline, void *cookie, int flags)
     // of interrupts or errors to exceptions, and ensure that no more
     // commands are executed.
     if (did_throw) {
-      assert(current_exception != NULL);
-      char *p = NULL;
-      msglist_T *messages = NULL;
-      msglist_T *next;
-
-      // If the uncaught exception is a user exception, report it as an
-      // error.  If it is an error exception, display the saved error
-      // message now.  For an interrupt exception, do nothing; the
-      // interrupt message is given elsewhere.
-      switch (current_exception->type) {
-      case ET_USER:
-        vim_snprintf((char *)IObuff, IOSIZE,
-                     _("E605: Exception not caught: %s"),
-                     current_exception->value);
-        p = xstrdup((char *)IObuff);
-        break;
-      case ET_ERROR:
-        messages = current_exception->messages;
-        current_exception->messages = NULL;
-        break;
-      case ET_INTERRUPT:
-        break;
-      }
-
-      estack_push(ETYPE_EXCEPT, current_exception->throw_name, current_exception->throw_lnum);
-      current_exception->throw_name = NULL;
-
-      discard_current_exception();              // uses IObuff if 'verbose'
-      suppress_errthrow = true;
-      force_abort = true;
-      msg_ext_set_kind("emsg");  // kind=emsg for :throw, exceptions. #9993
-
-      if (messages != NULL) {
-        do {
-          next = messages->next;
-          emsg(messages->msg);
-          xfree(messages->msg);
-          xfree(messages->sfile);
-          xfree(messages);
-          messages = next;
-        } while (messages != NULL);
-      } else if (p != NULL) {
-        emsg(p);
-        xfree(p);
-      }
-      xfree(SOURCING_NAME);
-      estack_pop();
+      handle_did_throw();
     } else if (got_int || (did_emsg && force_abort)) {
       // On an interrupt or an aborting error not converted to an exception,
       // disable the conversion of errors to exceptions.  (Interrupts are not
@@ -900,6 +854,57 @@ int do_cmdline(char *cmdline, LineGetter fgetline, void *cookie, int flags)
   call_depth--;
   end_batch_changes();
   return retval;
+}
+
+/// Handle when "did_throw" is set after executing commands.
+void handle_did_throw(void)
+{
+  assert(current_exception != NULL);
+  char *p = NULL;
+  msglist_T *messages = NULL;
+
+  // If the uncaught exception is a user exception, report it as an
+  // error.  If it is an error exception, display the saved error
+  // message now.  For an interrupt exception, do nothing; the
+  // interrupt message is given elsewhere.
+  switch (current_exception->type) {
+  case ET_USER:
+    vim_snprintf((char *)IObuff, IOSIZE,
+                 _("E605: Exception not caught: %s"),
+                 current_exception->value);
+    p = xstrdup((char *)IObuff);
+    break;
+  case ET_ERROR:
+    messages = current_exception->messages;
+    current_exception->messages = NULL;
+    break;
+  case ET_INTERRUPT:
+    break;
+  }
+
+  estack_push(ETYPE_EXCEPT, current_exception->throw_name, current_exception->throw_lnum);
+  current_exception->throw_name = NULL;
+
+  discard_current_exception();              // uses IObuff if 'verbose'
+  suppress_errthrow = true;
+  force_abort = true;
+  msg_ext_set_kind("emsg");  // kind=emsg for :throw, exceptions. #9993
+
+  if (messages != NULL) {
+    do {
+      msglist_T *next = messages->next;
+      emsg(messages->msg);
+      xfree(messages->msg);
+      xfree(messages->sfile);
+      xfree(messages);
+      messages = next;
+    } while (messages != NULL);
+  } else if (p != NULL) {
+    emsg(p);
+    xfree(p);
+  }
+  xfree(SOURCING_NAME);
+  estack_pop();
 }
 
 /// Obtain a line when inside a ":while" or ":for" loop.
