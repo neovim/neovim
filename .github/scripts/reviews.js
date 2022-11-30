@@ -20,10 +20,15 @@ module.exports = async ({github, context}) => {
   if (labels.includes('ci')) {
     reviewers.add("dundargoc")
     reviewers.add("jamessan")
+    reviewers.add("justinmk")
   }
 
   if (labels.includes('column')) {
     reviewers.add("lewis6991")
+  }
+
+  if (labels.includes('dependencies')) {
+    reviewers.add("jamessan")
   }
 
   if (labels.includes('diagnostic')) {
@@ -32,10 +37,6 @@ module.exports = async ({github, context}) => {
 
   if (labels.includes('diff')) {
     reviewers.add("lewis6991")
-  }
-
-  if (labels.includes('dependencies')) {
-    reviewers.add("jamessan")
   }
 
   if (labels.includes('distribution')) {
@@ -59,6 +60,19 @@ module.exports = async ({github, context}) => {
   if (labels.includes('lsp')) {
     reviewers.add("glepnir")
     reviewers.add("mfussenegger")
+  }
+
+  if (labels.includes('project-management')) {
+    reviewers.add("bfredl")
+    reviewers.add("justinmk")
+  }
+
+  if (labels.includes('refactor')) {
+    reviewers.add("bfredl")
+  }
+
+  if (labels.includes('test')) {
+    reviewers.add("justinmk")
   }
 
   if (labels.includes('treesitter')) {
