@@ -708,9 +708,8 @@ static void ui_comp_event(UI *ui, char *name, Array args)
 {
   UIEventCallback *event_cb;
   bool handled = false;
-  const Error initerr = ERROR_INIT;
   map_foreach_value(&ui_event_cbs, event_cb, {
-    Error err = initerr;
+    Error err = ERROR_INIT;
     Object res = nlua_call_ref(event_cb->cb, name, args, false, &err);
     if (res.type == kObjectTypeBoolean && res.data.boolean == true) {
       handled = true;

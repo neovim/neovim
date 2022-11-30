@@ -186,7 +186,7 @@ void unpacker_init(Unpacker *p)
   mpack_parser_init(&p->parser, 0);
   p->parser.data.p = p;
   mpack_tokbuf_init(&p->reader);
-  p->unpack_error = (Error)ERROR_INIT;
+  p->unpack_error = ERROR_INIT;
 
   p->arena = (Arena)ARENA_EMPTY;
 }
