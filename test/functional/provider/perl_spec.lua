@@ -9,8 +9,8 @@ local curbufmeths = helpers.curbufmeths
 local insert = helpers.insert
 local expect = helpers.expect
 local feed = helpers.feed
-local is_os = helpers.is_os
 local skip = helpers.skip
+local funcs = helpers.funcs
 
 do
   clear()
@@ -21,13 +21,15 @@ do
   end
 end
 
+if skip(funcs.executable('perl') == 0, 'missing "perl" command') then
+  return
+end
+
 before_each(function()
   clear()
 end)
 
 describe('legacy perl provider', function()
-  skip(is_os('win'))
-
   it('feature test', function()
     eq(1, eval('has("perl")'))
   end)
@@ -70,7 +72,6 @@ describe('legacy perl provider', function()
 end)
 
 describe('perl provider', function()
-  skip(is_os('win'))
   teardown(function ()
     os.remove('Xtest-perl-hello.pl')
     os.remove('Xtest-perl-hello-plugin.pl')

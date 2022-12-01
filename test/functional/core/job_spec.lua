@@ -806,7 +806,6 @@ describe('jobs', function()
     end)
 
     it('can be called recursively', function()
-      skip(is_os('win'), "TODO: Need `cat`")
       source([[
       let g:opts = {}
       let g:counter = 0
