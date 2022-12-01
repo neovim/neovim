@@ -71,13 +71,11 @@ function! provider#node#Detect() abort
     let yarn_opts = deepcopy(s:NodeHandler)
     let yarn_opts.entry_point = '/node_modules/neovim/bin/cli.js'
     " `yarn global dir` is slow (> 250ms), try the default path first
-    " XXX: The following code is not portable
     " https://github.com/yarnpkg/yarn/issues/2049#issuecomment-263183768
-    if has('unix')
-      let yarn_default_path = $HOME . '/.config/yarn/global/' . yarn_opts.entry_point
-      if filereadable(yarn_default_path)
-        return [yarn_default_path, '']
-      endif
+    let yarn_config_dir = has('win32') ? '/AppData/Local/Yarn/Data' : '/.config/yarn'
+    let yarn_default_path = $HOME . yarn_config_dir . '/global/' . yarn_opts.entry_point
+    if filereadable(yarn_default_path)
+      return [yarn_default_path, '']
     endif
     let yarn_opts.job_id = jobstart('yarn global dir', yarn_opts)
   endif
