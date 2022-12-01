@@ -71,7 +71,7 @@ function! provider#node#Detect() abort
     let yarn_opts = deepcopy(s:NodeHandler)
     let yarn_opts.entry_point = '/node_modules/neovim/bin/cli.js'
     " `yarn global dir` is slow (> 250ms), try the default path first
-    " Provides support for Yarn node_modules on Win32
+    " https://github.com/yarnpkg/yarn/issues/2049#issuecomment-263183768
     if has('unix')
       let yarn_config_dir = '/.config/yarn/'
     elseif has('win32')
