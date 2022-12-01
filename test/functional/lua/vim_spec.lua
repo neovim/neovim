@@ -2679,6 +2679,46 @@ describe('lua stdlib', function()
         a.nvim_buf_call(a.nvim_create_buf(false, true), function() vim.cmd "redraw" end)
       ]]
     end)
+
+    it('can be nested crazily with hidden buffers', function()
+      eq(true, exec_lua([[
+        local function scratch_buf_call(fn)
+          local buf = vim.api.nvim_create_buf(false, true)
+          vim.api.nvim_buf_set_option(buf, 'cindent', true)
+          return vim.api.nvim_buf_call(buf, function()
+            return vim.api.nvim_get_current_buf() == buf
+              and vim.api.nvim_buf_get_option(buf, 'cindent')
+              and fn()
+          end) and vim.api.nvim_buf_delete(buf, {}) == nil
+        end
+
+        return scratch_buf_call(function()
+          return scratch_buf_call(function()
+            return scratch_buf_call(function()
+              return scratch_buf_call(function()
+                return scratch_buf_call(function()
+                  return scratch_buf_call(function()
+                    return scratch_buf_call(function()
+                      return scratch_buf_call(function()
+                        return scratch_buf_call(function()
+                          return scratch_buf_call(function()
+                            return scratch_buf_call(function()
+                              return scratch_buf_call(function()
+                                return true
+                              end)
+                            end)
+                          end)
+                        end)
+                      end)
+                    end)
+                  end)
+                end)
+              end)
+            end)
+          end)
+        end)
+      ]]))
+    end)
   end)
 
   describe('vim.api.nvim_win_call', function()

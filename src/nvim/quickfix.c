@@ -3902,27 +3902,21 @@ static void qf_update_buffer(qf_info_T *qi, qfline_T *old_last)
 
     aco_save_T aco;
 
-    bool do_fill = true;
     if (old_last == NULL) {
       // set curwin/curbuf to buf and save a few things
       aucmd_prepbuf(&aco, buf);
-      if (curbuf != buf) {
-        do_fill = false;  // failed to find a window for "buf"
-      }
     }
 
-    if (do_fill) {
-      qf_update_win_titlevar(qi);
+    qf_update_win_titlevar(qi);
 
-      qf_fill_buffer(qf_get_curlist(qi), buf, old_last, qf_winid);
-      buf_inc_changedtick(buf);
+    qf_fill_buffer(qf_get_curlist(qi), buf, old_last, qf_winid);
+    buf_inc_changedtick(buf);
 
-      if (old_last == NULL) {
-        (void)qf_win_pos_update(qi, 0);
+    if (old_last == NULL) {
+      (void)qf_win_pos_update(qi, 0);
 
-        // restore curwin/curbuf and a few other things
-        aucmd_restbuf(&aco);
-      }
+      // restore curwin/curbuf and a few other things
+      aucmd_restbuf(&aco);
     }
 
     // Only redraw when added lines are visible.  This avoids flickering when
@@ -5469,11 +5463,9 @@ static int vgr_process_files(win_T *wp, qf_info_T *qi, vgr_args_T *cmd_args, boo
           // options!
           aco_save_T aco;
           aucmd_prepbuf(&aco, buf);
-          if (curbuf == buf) {
-            apply_autocmds(EVENT_FILETYPE, buf->b_p_ft, buf->b_fname, true, buf);
-            do_modelines(OPT_NOWIN);
-            aucmd_restbuf(&aco);
-          }
+          apply_autocmds(EVENT_FILETYPE, buf->b_p_ft, buf->b_fname, true, buf);
+          do_modelines(OPT_NOWIN);
+          aucmd_restbuf(&aco);
         }
       }
     }
@@ -5631,43 +5623,42 @@ static buf_T *load_dummy_buffer(char *fname, char *dirname_start, char *resultin
     // set curwin/curbuf to buf and save a few things
     aco_save_T aco;
     aucmd_prepbuf(&aco, newbuf);
-    if (curbuf == newbuf) {
-      // Need to set the filename for autocommands.
-      (void)setfname(curbuf, fname, NULL, false);
 
-      // Create swap file now to avoid the ATTENTION message.
-      check_need_swap(true);
+    // Need to set the filename for autocommands.
+    (void)setfname(curbuf, fname, NULL, false);
 
-      // Remove the "dummy" flag, otherwise autocommands may not
-      // work.
-      curbuf->b_flags &= ~BF_DUMMY;
+    // Create swap file now to avoid the ATTENTION message.
+    check_need_swap(true);
 
-      bufref_T newbuf_to_wipe;
-      newbuf_to_wipe.br_buf = NULL;
-      int readfile_result = readfile(fname, NULL, (linenr_T)0, (linenr_T)0,
-                                     (linenr_T)MAXLNUM, NULL,
-                                     READ_NEW | READ_DUMMY, false);
-      newbuf->b_locked--;
-      if (readfile_result == OK
-          && !got_int
-          && !(curbuf->b_flags & BF_NEW)) {
-        failed = false;
-        if (curbuf != newbuf) {
-          // Bloody autocommands changed the buffer!  Can happen when
-          // using netrw and editing a remote file.  Use the current
-          // buffer instead, delete the dummy one after restoring the
-          // window stuff.
-          set_bufref(&newbuf_to_wipe, newbuf);
-          newbuf = curbuf;
-        }
+    // Remove the "dummy" flag, otherwise autocommands may not
+    // work.
+    curbuf->b_flags &= ~BF_DUMMY;
+
+    bufref_T newbuf_to_wipe;
+    newbuf_to_wipe.br_buf = NULL;
+    int readfile_result = readfile(fname, NULL, (linenr_T)0, (linenr_T)0,
+                                   (linenr_T)MAXLNUM, NULL,
+                                   READ_NEW | READ_DUMMY, false);
+    newbuf->b_locked--;
+    if (readfile_result == OK
+        && !got_int
+        && !(curbuf->b_flags & BF_NEW)) {
+      failed = false;
+      if (curbuf != newbuf) {
+        // Bloody autocommands changed the buffer!  Can happen when
+        // using netrw and editing a remote file.  Use the current
+        // buffer instead, delete the dummy one after restoring the
+        // window stuff.
+        set_bufref(&newbuf_to_wipe, newbuf);
+        newbuf = curbuf;
       }
+    }
 
-      // Restore curwin/curbuf and a few other things.
-      aucmd_restbuf(&aco);
+    // Restore curwin/curbuf and a few other things.
+    aucmd_restbuf(&aco);
 
-      if (newbuf_to_wipe.br_buf != NULL && bufref_valid(&newbuf_to_wipe)) {
-        wipe_buffer(newbuf_to_wipe.br_buf, false);
-      }
+    if (newbuf_to_wipe.br_buf != NULL && bufref_valid(&newbuf_to_wipe)) {
+      wipe_buffer(newbuf_to_wipe.br_buf, false);
     }
 
     // Add back the "dummy" flag, otherwise buflist_findname_file_id()

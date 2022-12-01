@@ -86,8 +86,6 @@ static void find_win_for_curbuf(void)
 ///
 /// Information is saved in "cob" and MUST be restored by calling
 /// change_other_buffer_restore().
-///
-/// If this fails then "curbuf" will not be equal to "buf".
 static void change_other_buffer_prepare(cob_T *cob, buf_T *buf)
 {
   CLEAR_POINTER(cob);
@@ -105,9 +103,7 @@ static void change_other_buffer_prepare(cob_T *cob, buf_T *buf)
     // curwin->w_buffer differ from "curbuf", use the autocmd window.
     curbuf = curwin->w_buffer;
     aucmd_prepbuf(&cob->cob_aco, buf);
-    if (curbuf == buf) {
-      cob->cob_using_aco = true;
-    }
+    cob->cob_using_aco = true;
   }
 }
 
