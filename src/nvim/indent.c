@@ -199,6 +199,7 @@ void tabstop_fromto(colnr_T start_col, colnr_T end_col, long ts_arg, const long 
   long padding = 0;
   int t;
   long ts = ts_arg == 0 ? curbuf->b_p_ts : ts_arg;
+  assert(ts != 0);  // suppress clang "Division by zero"
 
   if (vts == NULL || vts[0] == 0) {
     int tabs = 0;

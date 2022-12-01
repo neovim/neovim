@@ -1427,6 +1427,7 @@ void aucmd_prepbuf(aco_save_T *aco, buf_T *buf)
     // then we can't reliably execute the autocmd,
     // return with "curbuf" unequal "buf".
     if (auc_win == NULL) {
+      assert(curbuf != buf);
       return;
     }
   }
