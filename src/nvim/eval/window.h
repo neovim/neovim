@@ -37,7 +37,8 @@ typedef struct {
     /* apply 'acd' afterwards, otherwise restore the current directory. */ \
     if (cwd_status_ == OK && p_acd) { \
       do_autochdir(); \
-      apply_acd_ = os_dirname((char_u *)autocwd_, MAXPATHL) == OK && strcmp(cwd_, autocwd_) == 0; \
+      apply_acd_ = \
+        os_dirname((char_u *)autocwd_, MAXPATHL) == OK && strcmp(cwd_, autocwd_) == 0; \
     } \
     switchwin_T switchwin_; \
     if (switch_win_noblock(&switchwin_, wp_, (tp), true) == OK) { \

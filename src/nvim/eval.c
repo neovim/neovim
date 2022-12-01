@@ -2052,7 +2052,7 @@ void set_context_for_expression(expand_T *xp, char *arg, cmdidx_T cmdidx)
        || cmdidx == CMD_echon
        || cmdidx == CMD_echomsg)
       && xp->xp_context == EXPAND_EXPRESSION) {
-    for (;;) {
+    while (true) {
       char *const n = skiptowhite(arg);
 
       if (n == arg || ascii_iswhite_or_nul(*skipwhite(n))) {
@@ -2620,7 +2620,7 @@ static int eval5(char **arg, typval_T *rettv, int evaluate)
   }
 
   // Repeat computing, until no '+', '-' or '.' is following.
-  for (;;) {
+  while (true) {
     op = (char_u)(**arg);
     if (op != '+' && op != '-' && op != '.') {
       break;
@@ -2785,7 +2785,7 @@ static int eval6(char **arg, typval_T *rettv, int evaluate, int want_string)
   }
 
   // Repeat computing, until no '*', '/' or '%' is following.
-  for (;;) {
+  while (true) {
     op = (char_u)(**arg);
     if (op != '*' && op != '/' && op != '%') {
       break;
@@ -3613,7 +3613,7 @@ static int eval_index(char **arg, typval_T *rettv, int evaluate, int verbose)
         *rettv = var1;
       }
       break;
-    case VAR_DICT: {
+    case VAR_DICT:
       if (range) {
         if (verbose) {
           emsg(_(e_dictrange));
@@ -3649,7 +3649,6 @@ static int eval_index(char **arg, typval_T *rettv, int evaluate, int verbose)
       tv_clear(rettv);
       *rettv = var1;
       break;
-    }
     case VAR_BOOL:
     case VAR_SPECIAL:
     case VAR_FUNC:
@@ -4376,7 +4375,7 @@ bool set_ref_in_ht(hashtab_T *ht, int copyID, list_stack_T **list_stack)
   ht_stack_T *ht_stack = NULL;
 
   hashtab_T *cur_ht = ht;
-  for (;;) {
+  while (true) {
     if (!abort) {
       // Mark each item in the hashtab.  If the item contains a hashtab
       // it is added to ht_stack, if it contains a list it is added to
@@ -4414,7 +4413,7 @@ bool set_ref_in_list(list_T *l, int copyID, ht_stack_T **ht_stack)
   list_stack_T *list_stack = NULL;
 
   list_T *cur_l = l;
-  for (;;) {
+  while (true) {
     // Mark each item in the list.  If the item contains a hashtab
     // it is added to ht_stack, if it contains a list it is added to
     // list_stack.
@@ -4453,6 +4452,7 @@ bool set_ref_in_item(typval_T *tv, int copyID, ht_stack_T **ht_stack, list_stack
 {
   bool abort = false;
 
+  // uncrustify:off
   switch (tv->v_type) {
   case VAR_DICT: {
     dict_T *dd = tv->vval.v_dict;
@@ -4528,6 +4528,7 @@ bool set_ref_in_item(typval_T *tv, int copyID, ht_stack_T **ht_stack, list_stack
   case VAR_BLOB:
     break;
   }
+  // uncrustify:on
   return abort;
 }
 

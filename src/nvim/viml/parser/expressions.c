@@ -1431,7 +1431,7 @@ static inline ParserPosition recol_pos(const ParserPosition pos, const size_t ne
 /// (parsed as OpMissing(@a, @a)).
 #define OP_MISSING \
   do { \
-    if (flags & kExprFlagsMulti && MAY_HAVE_NEXT_EXPR) { \
+    if (flags &kExprFlagsMulti && MAY_HAVE_NEXT_EXPR) { \
       /* Multiple expressions allowed, return without calling */ \
       /* viml_parser_advance(). */ \
       goto viml_pexpr_parse_end; \
@@ -2315,7 +2315,7 @@ viml_pexpr_parse_process_token:
                    || eastnode_lvl > kEOpLvlComma) {
           // Do nothing
         } else {
-viml_pexpr_parse_invalid_comma:
+          viml_pexpr_parse_invalid_comma:
           ERROR_FROM_TOKEN_AND_MSG(cur_token,
                                    _("E15: Comma outside of call, lambda or literal: %.*s"));
           break;
@@ -2885,7 +2885,7 @@ viml_pexpr_parse_no_paren_closing_error: {}
         want_node = kENodeValue;
       }
       break;
-    case kExprLexQuestion: {
+    case kExprLexQuestion:
       ADD_VALUE_IF_MISSING(_("E15: Expected value, got question mark: %.*s"));
       NEW_NODE_WITH_CUR_POS(cur_node, kExprNodeTernary);
       ADD_OP_NODE(cur_node);
@@ -2899,7 +2899,6 @@ viml_pexpr_parse_no_paren_closing_error: {}
       *kv_last(ast_stack) = ter_val_node;
       kvi_push(ast_stack, &ter_val_node->children);
       break;
-    }
     case kExprLexDoubleQuotedString:
     case kExprLexSingleQuotedString: {
       const bool is_double = (tok_type == kExprLexDoubleQuotedString);

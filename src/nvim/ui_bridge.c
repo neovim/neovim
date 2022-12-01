@@ -26,7 +26,8 @@
 
 // Schedule a function call on the UI bridge thread.
 #define UI_BRIDGE_CALL(ui, name, argc, ...) \
-  ((UIBridgeData *)ui)->scheduler(event_create(ui_bridge_##name##_event, argc, __VA_ARGS__), UI(ui))
+  ((UIBridgeData *)ui)->scheduler(event_create(ui_bridge_##name##_event, argc, \
+                                               __VA_ARGS__), UI(ui))
 
 #define INT2PTR(i) ((void *)(intptr_t)i)
 #define PTR2INT(p) ((Integer)(intptr_t)p)
@@ -115,7 +116,7 @@ static void ui_bridge_stop(UI *b)
   UIBridgeData *bridge = (UIBridgeData *)b;
   bool stopped = bridge->stopped = false;
   UI_BRIDGE_CALL(b, stop, 1, b);
-  for (;;) {
+  while (true) {
     uv_mutex_lock(&bridge->mutex);
     stopped = bridge->stopped;
     uv_mutex_unlock(&bridge->mutex);

@@ -2296,7 +2296,7 @@ static char *do_one_cmd(char **cmdlinep, int flags, cstack_T *cstack, LineGetter
   }
   need_rethrow = check_cstack = false;
 
-doend:
+  doend:
   // can happen with zero line number
   if (curwin->w_cursor.lnum == 0) {
     curwin->w_cursor.lnum = 1;
@@ -2365,7 +2365,7 @@ int parse_command_modifiers(exarg_T *eap, char **errormsg, cmdmod_T *cmod, bool 
   CLEAR_POINTER(cmod);
 
   // Repeat until no more command modifiers are found.
-  for (;;) {
+  while (true) {
     while (*eap->cmd == ' '
            || *eap->cmd == '\t'
            || *eap->cmd == ':') {
@@ -2694,7 +2694,7 @@ int parse_cmd_address(exarg_T *eap, char **errormsg, bool silent)
   int ret = FAIL;
 
   // Repeat for all ',' or ';' separated addresses.
-  for (;;) {
+  while (true) {
     eap->line1 = eap->line2;
     eap->line2 = get_cmd_default_range(eap);
     eap->cmd = skipwhite(eap->cmd);
@@ -2712,6 +2712,7 @@ int parse_cmd_address(exarg_T *eap, char **errormsg, bool silent)
           eap->line1 = 1;
           eap->line2 = curbuf->b_ml.ml_line_count;
           break;
+          // uncrustify:off
         case ADDR_LOADED_BUFFERS: {
           buf_T *buf = firstbuf;
 
@@ -2726,6 +2727,7 @@ int parse_cmd_address(exarg_T *eap, char **errormsg, bool silent)
           eap->line2 = buf->b_fnum;
           break;
         }
+          // uncrustify:on
         case ADDR_BUFFERS:
           eap->line1 = firstbuf->b_fnum;
           eap->line2 = lastbuf->b_fnum;
@@ -3437,7 +3439,7 @@ static linenr_T get_address(exarg_T *eap, char **ptr, cmd_addr_T addr_type, int 
       }
     }
 
-    for (;;) {
+    while (true) {
       cmd = skipwhite(cmd);
       if (*cmd != '-' && *cmd != '+' && !ascii_isdigit(*cmd)) {
         break;
@@ -4223,7 +4225,7 @@ static int get_tabpage_arg(exarg_T *eap)
     }
   }
 
-theend:
+  theend:
   return tab_number;
 }
 
@@ -7070,7 +7072,7 @@ static void ex_filetype(exarg_T *eap)
   bool indent = false;
 
   // Accept "plugin" and "indent" in any order.
-  for (;;) {
+  while (true) {
     if (strncmp(arg, "plugin", 6) == 0) {
       plugin = true;
       arg = skipwhite(arg + 6);

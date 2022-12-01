@@ -371,7 +371,7 @@ int vim_stricmp(const char *s1, const char *s2)
 {
   int i;
 
-  for (;;) {
+  while (true) {
     i = (int)TOLOWER_LOC(*s1) - (int)TOLOWER_LOC(*s2);
     if (i != 0) {
       return i;                             // this character different

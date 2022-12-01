@@ -2092,7 +2092,7 @@ void op_tilde(oparg_T *oap)
       did_change = swapchars(oap->op_type, &pos,
                              oap->end.col - pos.col + 1);
     } else {
-      for (;;) {
+      while (true) {
         did_change |= swapchars(oap->op_type, &pos,
                                 pos.lnum == oap->end.lnum ? oap->end.col + 1 :
                                 (int)strlen(ml_get_pos(&pos)));
@@ -3057,7 +3057,7 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
       // For the = register we need to split the string at NL
       // characters.
       // Loop twice: count the number of lines and save them.
-      for (;;) {
+      while (true) {
         y_size = 0;
         ptr = insert_string;
         while (ptr != NULL) {
@@ -6664,7 +6664,7 @@ static bool get_clipboard(int name, yankreg_T **target, bool quiet)
   *target = reg;
   return true;
 
-err:
+  err:
   if (reg->y_array) {
     for (size_t i = 0; i < reg->y_size; i++) {
       xfree(reg->y_array[i]);

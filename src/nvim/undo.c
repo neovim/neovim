@@ -905,7 +905,7 @@ static u_header_T *unserialize_uhp(bufinfo_T *bi, const char *file_name)
   uhp->uh_time = undo_read_time(bi);
 
   // Unserialize optional fields.
-  for (;;) {
+  while (true) {
     int len = undo_read_byte(bi);
 
     if (len == EOF) {
@@ -1027,7 +1027,7 @@ static ExtmarkUndoObject *unserialize_extmark(bufinfo_T *bi, bool *error, const 
 
   return extup;
 
-error:
+  error:
   xfree(extup);
   if (buf) {
     xfree(buf);
@@ -1474,7 +1474,7 @@ void u_read_undo(char *name, const char_u *hash, const char_u *orig_name FUNC_AT
 
   // Optional header fields.
   long last_save_nr = 0;
-  for (;;) {
+  while (true) {
     int len = undo_read_byte(&bi);
 
     if (len == 0 || len == EOF) {
@@ -1637,7 +1637,7 @@ void u_read_undo(char *name, const char_u *hash, const char_u *orig_name FUNC_AT
   }
   goto theend;
 
-error:
+  error:
   xfree(line_ptr);
   if (uhp_table != NULL) {
     for (long i = 0; i < num_read_uhps; i++) {
@@ -1648,7 +1648,7 @@ error:
     xfree(uhp_table);
   }
 
-theend:
+  theend:
   if (fp != NULL) {
     fclose(fp);
   }

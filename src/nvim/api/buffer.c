@@ -508,7 +508,7 @@ void nvim_buf_set_lines(uint64_t channel_id, Buffer buffer, Integer start, Integ
   changed_lines((linenr_T)start, 0, (linenr_T)end, (linenr_T)extra, true);
   fix_cursor((linenr_T)start, (linenr_T)end, (linenr_T)extra);
 
-end:
+  end:
   for (size_t i = 0; i < new_len; i++) {
     xfree(lines[i]);
   }

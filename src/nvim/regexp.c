@@ -289,15 +289,15 @@ static void init_class_tab(void)
   done = true;
 }
 
-#define ri_digit(c)    ((c) < 0x100 && (class_tab[c] & RI_DIGIT))
-#define ri_hex(c)      ((c) < 0x100 && (class_tab[c] & RI_HEX))
-#define ri_octal(c)    ((c) < 0x100 && (class_tab[c] & RI_OCTAL))
-#define ri_word(c)     ((c) < 0x100 && (class_tab[c] & RI_WORD))
-#define ri_head(c)     ((c) < 0x100 && (class_tab[c] & RI_HEAD))
-#define ri_alpha(c)    ((c) < 0x100 && (class_tab[c] & RI_ALPHA))
-#define ri_lower(c)    ((c) < 0x100 && (class_tab[c] & RI_LOWER))
-#define ri_upper(c)    ((c) < 0x100 && (class_tab[c] & RI_UPPER))
-#define ri_white(c)    ((c) < 0x100 && (class_tab[c] & RI_WHITE))
+#define ri_digit(c)    ((c) < 0x100 && (class_tab[c] &RI_DIGIT))
+#define ri_hex(c)      ((c) < 0x100 && (class_tab[c] &RI_HEX))
+#define ri_octal(c)    ((c) < 0x100 && (class_tab[c] &RI_OCTAL))
+#define ri_word(c)     ((c) < 0x100 && (class_tab[c] &RI_WORD))
+#define ri_head(c)     ((c) < 0x100 && (class_tab[c] &RI_HEAD))
+#define ri_alpha(c)    ((c) < 0x100 && (class_tab[c] &RI_ALPHA))
+#define ri_lower(c)    ((c) < 0x100 && (class_tab[c] &RI_LOWER))
+#define ri_upper(c)    ((c) < 0x100 && (class_tab[c] &RI_UPPER))
+#define ri_white(c)    ((c) < 0x100 && (class_tab[c] &RI_WHITE))
 
 // flags for regflags
 #define RF_ICASE    1   // ignore case
@@ -1233,7 +1233,7 @@ static int match_with_backref(linenr_T start_lnum, colnr_T start_col, linenr_T e
   if (bytelen != NULL) {
     *bytelen = 0;
   }
-  for (;;) {
+  while (true) {
     // Since getting one line may invalidate the other, need to make copy.
     // Slow!
     if (rex.line != reg_tofree) {
@@ -1989,7 +1989,7 @@ static int vim_regsub_both(char *source, typval_T *expr, char *dest, int destlen
           }
         }
         if (s != NULL) {
-          for (;;) {
+          while (true) {
             if (len == 0) {
               if (REG_MULTI) {
                 if (rex.reg_mmatch->endpos[no].lnum == clnum) {
@@ -2081,7 +2081,7 @@ static int vim_regsub_both(char *source, typval_T *expr, char *dest, int destlen
     *dst = NUL;
   }
 
-exit:
+  exit:
   return (int)((dst - dest) + 1);
 }
 

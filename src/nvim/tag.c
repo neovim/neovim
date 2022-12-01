@@ -542,7 +542,7 @@ void do_tag(char *tag, int type, int count, int forceit, int verbose)
   }
 
   // Repeat searching for tags, when a file has not been found.
-  for (;;) {
+  while (true) {
     int other_name;
     char *name;
 
@@ -2108,7 +2108,7 @@ static void findtags_get_all_tags(findtags_state_T *st, findtags_match_args_T *m
   CLEAR_FIELD(search_info);
 
   // Read and parse the lines in the file one by one
-  for (;;) {
+  while (true) {
     // check for CTRL-C typed, more often when jumping around
     if (st->state == TS_BINARY || st->state == TS_SKIP_BACK) {
       line_breakcheck();
@@ -2573,7 +2573,7 @@ int get_tagfname(tagname_T *tnp, int first, char *buf)
   // There are two states:
   // tnp->tn_did_filefind_init == false: setup for next part in 'tags'.
   // tnp->tn_did_filefind_init == true: find next file in this part.
-  for (;;) {
+  while (true) {
     if (tnp->tn_did_filefind_init) {
       fname = (char *)vim_findfile(tnp->tn_search_ctx);
       if (fname != NULL) {
@@ -3185,7 +3185,7 @@ static int find_extra(char **pp)
   char first_char = **pp;
 
   // Repeat for addresses separated with ';'
-  for (;;) {
+  while (true) {
     if (ascii_isdigit(*str)) {
       str = skipdigits(str + 1);
     } else if (*str == '/' || *str == '?') {

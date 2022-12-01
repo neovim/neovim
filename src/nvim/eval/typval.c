@@ -2807,6 +2807,8 @@ void tv_dict_alloc_ret(typval_T *const ret_tv)
   tv_dict_set_ret(ret_tv, d);
 }
 
+// uncrustify:off
+
 /// Turn a dictionary into a list
 ///
 /// @param[in] tv      Dictionary to convert. Is checked for actually being
@@ -2858,6 +2860,7 @@ static void tv_dict_list(typval_T *const tv, typval_T *const rettv, const DictLi
     tv_list_append_owned_tv(rettv->vval.v_list, tv_item);
   });
 }
+// uncrustify:off
 
 /// "items(dict)" function
 void f_items(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
@@ -3314,6 +3317,8 @@ void tv_copy(const typval_T *const from, typval_T *const to)
   }
 }
 
+// uncrustify:off
+
 //{{{2 Locks
 
 /// Lock or unlock an item
@@ -3397,6 +3402,7 @@ void tv_item_lock(typval_T *const tv, const int deep, const bool lock, const boo
 #undef CHANGE_LOCK
   recurse--;
 }
+// uncrustify:on
 
 /// Check whether VimL value is locked itself or refers to a locked container
 ///

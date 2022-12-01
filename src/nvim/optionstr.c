@@ -480,7 +480,7 @@ static char *check_mousescroll(char *string)
   long vertical = -1;
   long horizontal = -1;
 
-  for (;;) {
+  while (true) {
     char *end = vim_strchr(string, ',');
     size_t length = end ? (size_t)(end - string) : strlen(string);
 

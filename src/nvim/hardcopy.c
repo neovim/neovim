@@ -2365,7 +2365,7 @@ static bool prt_add_resource(struct prt_ps_resource_S *resource)
 
   prt_dsc_textline("BeginDocument", (char *)resource->filename);
 
-  for (;;) {
+  while (true) {
     bytes_read = fread((char *)resource_buffer, sizeof(char_u),
                        sizeof(resource_buffer), fd_resource);
     if (ferror(fd_resource)) {

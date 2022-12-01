@@ -1077,7 +1077,7 @@ void pum_show_popupmenu(vimmenu_T *menu)
     ui_call_option_set(STATIC_CSTR_AS_STRING("mousemoveevent"), BOOLEAN_OBJ(true));
   }
 
-  for (;;) {
+  while (true) {
     pum_is_visible = true;
     pum_is_drawn = true;
     pum_redraw();

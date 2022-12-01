@@ -1225,7 +1225,7 @@ static void read_input(DynamicBuffer *buf)
   linenr_T lnum = curbuf->b_op_start.lnum;
   char_u *lp = (char_u *)ml_get(lnum);
 
-  for (;;) {
+  while (true) {
     l = strlen((char *)lp + written);
     if (l == 0) {
       len = 0;

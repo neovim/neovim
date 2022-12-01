@@ -585,7 +585,7 @@ size_t channel_send(uint64_t id, char *data, size_t len, bool data_owned, const 
                                     len, 1, xfree);
   return wstream_write(in, buf) ? len : 0;
 
-retfree:
+  retfree:
   if (data_owned) {
     xfree(data);
   }

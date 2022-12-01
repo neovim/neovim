@@ -1513,7 +1513,7 @@ static void regtail(char_u *p, char_u *val)
 
   // Find last node.
   char_u *scan = p;
-  for (;;) {
+  while (true) {
     char_u *temp = regnext(scan);
     if (temp == NULL) {
       break;
@@ -2400,7 +2400,7 @@ collection:
     // A multi-byte character is handled as a separate atom if it's
     // before a multi and when it's a composing char.
     if (use_multibytecode(c)) {
-do_multibyte:
+      do_multibyte:
       ret = regnode(MULTIBYTECODE);
       regmbc(c);
       *flagp |= HASWIDTH | SIMPLE;
@@ -2427,7 +2427,7 @@ do_multibyte:
           int l;
 
           // Need to get composing character too.
-          for (;;) {
+          while (true) {
             l = utf_ptr2len((char *)regparse);
             if (!utf_composinglike(regparse, regparse + l)) {
               break;
@@ -2683,7 +2683,7 @@ static char_u *regbranch(int *flagp)
   *flagp = WORST | HASNL;               // Tentatively.
 
   ret = regnode(BRANCH);
-  for (;;) {
+  while (true) {
     latest = regconcat(&flags);
     if (latest == NULL) {
       return NULL;
@@ -3532,7 +3532,7 @@ static bool regmatch(char_u *scan, proftime_T *tm, int *timed_out)
   backpos.ga_len = 0;
 
   // Repeat until "regstack" is empty.
-  for (;;) {
+  while (true) {
     // Some patterns may take a long time to match, e.g., "\([a-z]\+\)\+Q".
     // Allow interrupting them with CTRL-C.
     fast_breakcheck();
@@ -3546,7 +3546,7 @@ static bool regmatch(char_u *scan, proftime_T *tm, int *timed_out)
 
     // Repeat for items that can be matched sequentially, without using the
     // regstack.
-    for (;;) {
+    while (true) {
       if (got_int || scan == NULL) {
         status = RA_FAIL;
         break;
@@ -4750,6 +4750,7 @@ static bool regmatch(char_u *scan, proftime_T *tm, int *timed_out)
         }
         break;
 
+        // uncrustify:off
       case RS_STAR_LONG:
       case RS_STAR_SHORT: {
         regstar_T *rst = ((regstar_T *)rp) - 1;
@@ -4826,7 +4827,8 @@ static bool regmatch(char_u *scan, proftime_T *tm, int *timed_out)
           status = RA_NOMATCH;
         }
       }
-      break;
+        // uncrustify:on
+        break;
       }
 
       // If we want to continue the inner loop or didn't pop a state

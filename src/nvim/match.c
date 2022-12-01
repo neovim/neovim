@@ -231,7 +231,7 @@ static int match_add(win_T *wp, const char *const grp, const char *const pat, in
   redraw_later(wp, rtype);
   return id;
 
-fail:
+  fail:
   xfree(m->mit_pattern);
   xfree(m->mit_pos_array);
   xfree(m);
@@ -445,7 +445,7 @@ static void next_search_hl(win_T *win, match_T *search_hl, match_T *shl, linenr_
 
   // Repeat searching for a match until one is found that includes "mincol"
   // or none is found in this line.
-  for (;;) {
+  while (true) {
     // Stop searching after passing the time limit.
     if (profile_passed_limit(shl->tm)) {
       shl->lnum = 0;                    // no match found in time

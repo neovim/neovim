@@ -2175,7 +2175,7 @@ char *getnextac(int c, void *cookie, int indent, bool do_concat)
   }
 
   // repeat until we find an autocommand to execute
-  for (;;) {
+  while (true) {
     // skip removed commands
     while (acp->nextcmd != NULL
            && aucmd_exec_is_deleted(acp->nextcmd->exec)) {

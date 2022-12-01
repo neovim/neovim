@@ -363,7 +363,7 @@ static bool do_incsearch_highlighting(int firstc, int *search_delim, incsearch_s
 
   curwin->w_cursor = save_cursor;
   retval = true;
-theend:
+  theend:
   emsg_off--;
   return retval;
 }
@@ -1414,7 +1414,7 @@ static int may_do_command_line_next_incsearch(int firstc, long count, incsearch_
 static void command_line_next_histidx(CommandLineState *s, bool next_match)
 {
   int j = (int)strlen(s->lookfor);
-  for (;;) {
+  while (true) {
     // one step backwards
     if (!next_match) {
       if (s->hiscnt == get_hislen()) {
@@ -3066,7 +3066,7 @@ static bool color_cmdline(CmdlineInfo *colored_ccline)
     }));
   }
   prev_prompt_errors = 0;
-color_cmdline_end:
+  color_cmdline_end:
   assert(!ERROR_SET(&err));
   if (can_free_cb) {
     callback_free(&color_cb);
@@ -4453,7 +4453,7 @@ char *script_get(exarg_T *const eap, size_t *const lenp)
   }
 
   const char *const end_pattern = (cmd[2] != NUL ? (const char *)skipwhite(cmd + 2) : ".");
-  for (;;) {
+  while (true) {
     char *const theline = eap->getline(eap->cstack->cs_looplevel > 0 ? -1 : NUL, eap->cookie, 0,
                                        true);
 

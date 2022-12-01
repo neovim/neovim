@@ -2763,7 +2763,7 @@ void ex_append(exarg_T *eap)
     State |= MODE_LANGMAP;
   }
 
-  for (;;) {
+  while (true) {
     msg_scroll = true;
     need_wait_return = false;
     if (curbuf->b_p_ai) {
@@ -3562,7 +3562,7 @@ static int do_sub(exarg_T *eap, proftime_T timeout, long cmdpreview_ns, handle_T
       // 3. substitute the string.
       // 4. if subflags.do_all is set, find next match
       // 5. break if there isn't another match in this line
-      for (;;) {
+      while (true) {
         SubResult current_match = {
           .start = { 0, 0 },
           .end   = { 0, 0 },
@@ -4803,6 +4803,6 @@ void ex_trust(exarg_T *eap)
 
   nlua_trust(action, path);
 
-theend:
+  theend:
   xfree(arg1);
 }

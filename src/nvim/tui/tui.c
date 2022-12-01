@@ -1441,7 +1441,8 @@ static void tui_set_title(UI *ui, String title)
 }
 
 static void tui_set_icon(UI *ui, String icon)
-{}
+{
+}
 
 static void tui_screenshot(UI *ui, String path)
 {
@@ -1618,7 +1619,7 @@ static void unibi_goto(UI *ui, int row, int col)
       size_t orig_pos = data->bufpos; \
       memset(&vars, 0, sizeof(vars)); \
       data->cork = true; \
-retry: \
+      retry: \
       unibi_format(vars, vars + 26, str, data->params, out, ui, pad, ui); \
       if (data->overflow) { \
         data->bufpos = orig_pos; \

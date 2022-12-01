@@ -327,7 +327,7 @@ static void api_wrapper(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     semsg(_("Error converting the call result: %s"), err.msg);
   }
 
-end:
+  end:
   api_free_array(args);
   if (handler.arena_return) {
     arena_mem_free(arena_finish(&res_arena));
@@ -2159,7 +2159,8 @@ static void f_fnamemodify(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 
 /// "foreground()" function
 static void f_foreground(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
-{}
+{
+}
 
 static void f_funcref(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
@@ -2835,7 +2836,8 @@ static void f_gettagstack(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 
 /// Dummy timer callback. Used by f_wait().
 static void dummy_timer_due_cb(TimeWatcher *tw, void *data)
-{}
+{
+}
 
 /// Dummy timer close callback. Used by f_wait().
 static void dummy_timer_close_cb(TimeWatcher *tw, void *data)
@@ -4471,7 +4473,7 @@ static void find_some_match(typval_T *const argvars, typval_T *const rettv,
   if (regmatch.regprog != NULL) {
     regmatch.rm_ic = p_ic;
 
-    for (;;) {
+    while (true) {
       if (l != NULL) {
         if (li == NULL) {
           match = false;
@@ -4811,7 +4813,7 @@ static void msgpackparse_unpack_list(const list_T *const list, list_T *const ret
   }
   msgpack_unpacked unpacked;
   msgpack_unpacked_init(&unpacked);
-  do {
+  while (true) {
     if (!msgpack_unpacker_reserve_buffer(unpacker, IOSIZE)) {
       emsg(_(e_outofmem));
       goto end;
@@ -4841,7 +4843,7 @@ static void msgpackparse_unpack_list(const list_T *const list, list_T *const ret
     if (rlret == OK) {
       break;
     }
-  } while (true);
+  }
 
 end:
   msgpack_unpacker_free(unpacker);
@@ -5836,8 +5838,8 @@ static void f_resolve(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     char *const buf = xmallocz(MAXPATHL);
 
     char *cpy;
-    for (;;) {
-      for (;;) {
+    while (true) {
+      while (true) {
         len = readlink(p, buf, MAXPATHL);
         if (len <= 0) {
           break;
@@ -6216,7 +6218,7 @@ static int search_cmn(typval_T *argvars, pos_T *match_pos, int *flagsp)
   int subpatnum;
 
   // Repeat until {skip} returns false.
-  for (;;) {
+  while (true) {
     subpatnum
       = searchit(curwin, curbuf, &pos, NULL, dir, (char_u *)pat, 1, options, RE_SEARCH, &sia);
     // finding the first match again means there is no match where {skip}
@@ -6791,7 +6793,7 @@ long do_searchpair(const char *spat, const char *mpat, const char *epat, int dir
   pos_T foundpos;
   clearpos(&foundpos);
   char_u *pat = pat3;
-  for (;;) {
+  while (true) {
     searchit_arg_T sia = {
       .sa_stop_lnum = lnum_stop,
       .sa_tm = &tm,

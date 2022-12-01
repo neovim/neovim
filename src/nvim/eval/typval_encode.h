@@ -100,7 +100,8 @@ static inline size_t tv_strlen(const typval_T *const tv)
                                                conv_type) \
   do { \
     const int te_csr_ret = _TYPVAL_ENCODE_CHECK_SELF_REFERENCE(TYPVAL_ENCODE_FIRST_ARG_NAME, \
-                                                               (val), &(val)->copyID_attr, mpstack, \
+                                                               (val), &(val)->copyID_attr, \
+                                                               mpstack, \
                                                                copyID, conv_type, objname); \
     if (te_csr_ret != NOTDONE) { \
       return te_csr_ret; \

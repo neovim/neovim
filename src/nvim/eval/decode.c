@@ -203,6 +203,9 @@ static inline int json_decoder_pop(ValuesStackItem obj, ValuesStack *const stack
 
 #define LENP(p, e) \
   ((int)((e) - (p))), (p)
+
+// uncrustify:off
+
 #define OBJ(obj_tv, is_sp_string, didcomma_, didcolon_) \
   ((ValuesStackItem) { \
     .is_special_string = (is_sp_string), \
@@ -210,6 +213,8 @@ static inline int json_decoder_pop(ValuesStackItem obj, ValuesStack *const stack
     .didcomma = (didcomma_), \
     .didcolon = (didcolon_), \
   })
+
+// uncrustify:on
 
 #define POP(obj_tv, is_sp_string) \
   do { \
@@ -922,6 +927,8 @@ json_decode_string_ret:
 
 #undef DICT_LEN
 
+// uncrustify:off
+
 /// Convert msgpack object to a VimL one
 int msgpack_to_vim(const msgpack_object mobj, typval_T *const rettv)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
@@ -1105,3 +1112,5 @@ msgpack_to_vim_generic_map: {}
   }
   return OK;
 }
+
+// uncrustify:on

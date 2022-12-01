@@ -50,7 +50,7 @@ int file_open(FileDescriptor *const ret_fp, const char *const fname, const int f
   // -V:FLAG:501
 #define FLAG(flags, flag, fcntl_flags, wrval, cond) \
   do { \
-    if (flags & flag) { \
+    if (flags &flag) { \
       os_open_flags |= fcntl_flags; \
       assert(cond); \
       if (wrval != kNone) { \

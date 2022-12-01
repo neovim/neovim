@@ -1428,7 +1428,7 @@ int vgetc(void)
     // if peeking records more
     last_recorded_len -= last_vgetc_recorded_len;
 
-    for (;;) {                 // this is done twice if there are modifiers
+    while (true) {              // this is done twice if there are modifiers
       bool did_inc = false;
       if (mod_mask) {           // no mapping after modifier has been read
         no_mapping++;
@@ -1666,7 +1666,7 @@ static void getchar_common(typval_T *argvars, typval_T *rettv)
 
   no_mapping++;
   allow_keys++;
-  for (;;) {
+  while (true) {
     if (msg_col > 0) {
       // Position the cursor. Needed after a message that ends in a space.
       ui_cursor_goto(msg_row, msg_col);
@@ -2400,7 +2400,7 @@ static int vgetorpeek(bool advance)
       // are sure that it is not a mapped key.
       // If a mapped key sequence is found we go back to the start to
       // try re-mapping.
-      for (;;) {
+      while (true) {
         check_end_reg_executing(advance);
         // os_breakcheck() is slow, don't use it too often when
         // inside a mapping.  But call it each time for typed
@@ -2846,7 +2846,7 @@ int inchar(char_u *buf, int maxlen, long wait_time)
 #define DUM_LEN (MAXMAPLEN * 3 + 3)
       char_u dum[DUM_LEN + 1];
 
-      for (;;) {
+      while (true) {
         len = os_inchar(dum, DUM_LEN, 0L, 0, NULL);
         if (len == 0 || (len == 1 && dum[0] == Ctrl_C)) {
           break;

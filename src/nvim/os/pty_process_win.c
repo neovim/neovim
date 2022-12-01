@@ -172,11 +172,13 @@ void pty_process_close(PtyProcess *ptyproc)
 
 void pty_process_close_master(PtyProcess *ptyproc)
   FUNC_ATTR_NONNULL_ALL
-{}
+{
+}
 
 void pty_process_teardown(Loop *loop)
   FUNC_ATTR_NONNULL_ALL
-{}
+{
+}
 
 static void pty_process_connect_cb(uv_connect_t *req, int status)
   FUNC_ATTR_NONNULL_ALL

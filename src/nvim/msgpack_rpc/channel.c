@@ -707,14 +707,13 @@ static void log_server_msg(uint64_t channel_id, msgpack_sbuffer *packed)
   case MSGPACK_UNPACK_EXTRA_BYTES:
   case MSGPACK_UNPACK_CONTINUE:
   case MSGPACK_UNPACK_PARSE_ERROR:
-  case MSGPACK_UNPACK_NOMEM_ERROR: {
+  case MSGPACK_UNPACK_NOMEM_ERROR:
     log_lock();
     FILE *f = open_log_file();
     fprintf(f, ERR);
     fprintf(f, "%s", msgpack_error_messages[result + MUR_OFF]);
     log_close(f);
     break;
-  }
   }
 }
 

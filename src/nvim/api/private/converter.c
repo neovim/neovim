@@ -72,7 +72,7 @@ typedef struct {
 #define TYPVAL_ENCODE_CONV_FUNC_START(tv, fun) \
   do { \
     ufunc_T *fp = find_func(fun); \
-    if (fp != NULL && (fp->uf_flags & FC_LUAREF)) { \
+    if (fp != NULL && (fp->uf_flags &FC_LUAREF)) { \
       LuaRef ref = api_new_luaref(fp->uf_luaref); \
       kvi_push(edata->stack, LUAREF_OBJ(ref)); \
     } else { \
@@ -303,6 +303,7 @@ bool object_to_vim(Object obj, typval_T *tv, Error *err)
     }
     break;
 
+    // uncrustify:off
   case kObjectTypeArray: {
     list_T *const list = tv_list_alloc((ptrdiff_t)obj.data.array.size);
 
@@ -356,6 +357,7 @@ bool object_to_vim(Object obj, typval_T *tv, Error *err)
     tv->vval.v_dict = dict;
     break;
   }
+    // uncrustify:on
 
   case kObjectTypeLuaRef: {
     char *name = (char *)register_luafunc(api_new_luaref(obj.data.luaref));

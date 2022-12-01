@@ -1512,7 +1512,7 @@ skip:
     arg = skipwhite(arg);
   }
 
-theend:
+  theend:
   if (silent_mode && did_show) {
     // After displaying option values in silent mode.
     silent_mode = false;

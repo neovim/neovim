@@ -3009,7 +3009,7 @@ int shada_write_file(const char *const file, bool nomerge)
     // 2: Make sure that user can always read and write the result.
     // 3: If somebody happened to delete the file after it was opened for
     //    reading use u=rw permissions.
-shada_write_file_open: {}
+    shada_write_file_open: {}
     sd_writer.cookie = file_open_new(&error, tempname, kFileCreateOnly|kFileNoSymlink, perm);
     if (sd_writer.cookie == NULL) {
       if (error == UV_EEXIST || error == UV_ELOOP) {

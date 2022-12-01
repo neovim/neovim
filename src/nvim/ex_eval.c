@@ -81,7 +81,7 @@
    || got_int \
    || did_throw \
    || (cstack->cs_idx > 0 \
-       && !(cstack->cs_flags[cstack->cs_idx - 1] & CSF_ACTIVE)))
+       && !(cstack->cs_flags[cstack->cs_idx - 1] &CSF_ACTIVE)))
 
 static void discard_pending_return(typval_T *p)
 {
@@ -1988,7 +1988,7 @@ int has_loop_cmd(char *p)
   int len;
 
   // skip modifiers, white space and ':'
-  for (;;) {
+  while (true) {
     while (*p == ' ' || *p == '\t' || *p == ':') {
       p++;
     }

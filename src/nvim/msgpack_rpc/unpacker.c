@@ -179,7 +179,8 @@ static void api_parse_enter(mpack_parser_t *parser, mpack_node_t *node)
 }
 
 static void api_parse_exit(mpack_parser_t *parser, mpack_node_t *node)
-{}
+{
+}
 
 void unpacker_init(Unpacker *p)
 {

@@ -102,8 +102,7 @@ typedef enum {
   ((char[]) { \
     kExprVarScopeScript, kExprVarScopeGlobal, kExprVarScopeVim, \
     kExprVarScopeBuffer, kExprVarScopeWindow, kExprVarScopeTabpage, \
-    kExprVarScopeLocal, kExprVarScopeBuffer, kExprVarScopeArguments, \
-  })
+    kExprVarScopeLocal, kExprVarScopeBuffer, kExprVarScopeArguments })
 
 /// Lexer token
 typedef struct {

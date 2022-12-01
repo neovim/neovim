@@ -991,7 +991,7 @@ retry:
             long tlen;
 
             tlen = 0;
-            for (;;) {
+            while (true) {
               p = (char_u *)ml_get(read_buf_lnum) + read_buf_col;
               n = (int)strlen((char *)p);
               if ((int)tlen + n + 1 > size) {
@@ -5261,7 +5261,7 @@ int readdir_core(garray_T *gap, const char *path, void *context, CheckItem check
     return FAIL;
   }
 
-  for (;;) {
+  while (true) {
     const char *p = os_scandir_next(&dir);
     if (p == NULL) {
       break;
@@ -5694,7 +5694,7 @@ long read_eintr(int fd, void *buf, size_t bufsize)
 {
   long ret;
 
-  for (;;) {
+  while (true) {
     ret = read(fd, buf, bufsize);
     if (ret >= 0 || errno != EINTR) {
       break;

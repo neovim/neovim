@@ -239,7 +239,7 @@ fmark_T *get_jumplist(win_T *win, int count)
     return NULL;
   }
 
-  for (;;) {
+  while (true) {
     if (win->w_jumplistidx + count < 0
         || win->w_jumplistidx + count >= win->w_jumplistlen) {
       return NULL;
@@ -581,7 +581,7 @@ MarkMoveRes mark_move_to(fmark_T *fm, MarkMove flags)
   if (res & kMarkSwitchedBuf || res & kMarkChangedCursor) {
     check_cursor();
   }
-end:
+  end:
   return res;
 }
 

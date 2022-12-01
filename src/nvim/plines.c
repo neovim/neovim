@@ -303,7 +303,8 @@ void init_chartabsize_arg(chartabsize_T *cts, win_T *wp, linenr_T lnum FUNC_ATTR
 
 /// Free any allocated item in "cts".
 void clear_chartabsize_arg(chartabsize_T *cts)
-{}
+{
+}
 
 /// like win_chartabsize(), but also check for line breaks on the screen
 ///
@@ -410,7 +411,7 @@ int win_lbr_chartabsize(chartabsize_T *cts, int *headp)
       }
     }
 
-    for (;;) {
+    while (true) {
       ps = s;
       MB_PTR_ADV(s);
       c = *s;

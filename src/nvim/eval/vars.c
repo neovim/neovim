@@ -116,7 +116,7 @@ static list_T *heredoc_get(exarg_T *eap, char *cmd)
   }
 
   list_T *l = tv_list_alloc(0);
-  for (;;) {
+  while (true) {
     int mi = 0;
     int ti = 0;
 
@@ -375,7 +375,7 @@ const char *skip_var_list(const char *arg, int *var_count, int *semicolon)
   if (*arg == '[') {
     // "[var, var]": find the matching ']'.
     p = arg;
-    for (;;) {
+    while (true) {
       p = skipwhite(p + 1);             // skip whites after '[', ';' or ','
       s = skip_var_one((char *)p);
       if (s == p) {
@@ -890,7 +890,7 @@ static int do_unlet_var(lval_T *lp, char *name_end, exarg_T *eap, int deep FUNC_
     // Delete a range of List items.
     listitem_T *const first_li = lp->ll_li;
     listitem_T *last_li = first_li;
-    for (;;) {
+    while (true) {
       listitem_T *const li = TV_LIST_ITEM_NEXT(lp->ll_list, lp->ll_li);
       if (var_check_lock(TV_LIST_ITEM_TV(lp->ll_li)->v_lock,
                          lp->ll_name,

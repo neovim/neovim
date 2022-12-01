@@ -385,7 +385,7 @@ bool nlua_pop_typval(lua_State *lstate, typval_T *ret_tv)
       default:
         abort();
       }
-nlua_pop_typval_table_processing_end:
+      nlua_pop_typval_table_processing_end:
       break;
     }
     case LUA_TFUNCTION: {
@@ -477,7 +477,7 @@ static bool typval_conv_special = false;
 #define TYPVAL_ENCODE_CONV_FUNC_START(tv, fun) \
   do { \
     ufunc_T *fp = find_func(fun); \
-    if (fp != NULL && fp->uf_flags & FC_LUAREF) { \
+    if (fp != NULL && fp->uf_flags &FC_LUAREF) { \
       nlua_pushref(lstate, fp->uf_luaref); \
     } else { \
       TYPVAL_ENCODE_CONV_NIL(tv); \

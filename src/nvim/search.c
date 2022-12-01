@@ -732,7 +732,7 @@ int searchit(win_T *win, buf_T *buf, pos_T *pos, pos_T *end_pos, Direction dir, 
             // When putting the new cursor at the end, compare
             // relative to the end of the match.
             match_ok = false;
-            for (;;) {
+            while (true) {
               // Remember a position that is before the start
               // position, we use it if it's the last match in
               // the line.  Always accept a position after
@@ -1065,7 +1065,7 @@ int do_search(oparg_T *oap, int dirc, int search_delim, char *pat, long count, i
   }
 
   // Repeat the search when pattern followed by ';', e.g. "/foo/;?bar".
-  for (;;) {
+  while (true) {
     bool show_top_bot_msg = false;
 
     searchstr = pat;
@@ -1419,7 +1419,7 @@ int search_for_exact_line(buf_T *buf, pos_T *pos, Direction dir, char *pat)
   if (buf->b_ml.ml_line_count == 0) {
     return FAIL;
   }
-  for (;;) {
+  while (true) {
     pos->lnum += dir;
     if (pos->lnum < 1) {
       if (p_ws) {
@@ -1534,7 +1534,7 @@ int searchc(cmdarg_T *cap, int t_cmd)
   len = (int)strlen(p);
 
   while (count--) {
-    for (;;) {
+    while (true) {
       if (dir > 0) {
         col += utfc_ptr2len(p + col);
         if (col >= len) {
@@ -1800,7 +1800,7 @@ pos_T *findmatchlimit(oparg_T *oap, int initc, int flags, int64_t maxtravel)
         if (linep[pos.col] == NUL && pos.col) {
           pos.col--;
         }
-        for (;;) {
+        while (true) {
           initc = utf_ptr2char(linep + pos.col);
           if (initc == NUL) {
             break;
@@ -3504,7 +3504,7 @@ void find_pattern_in_path(char *ptr, Direction dir, size_t len, bool whole, bool
   }
   line = (char *)get_line_and_copy(lnum, file_line);
 
-  for (;;) {
+  while (true) {
     if (incl_regmatch.regprog != NULL
         && vim_regexec(&incl_regmatch, line, (colnr_T)0)) {
       char_u *p_fname = (curr_fname == (char_u *)curbuf->b_fname)
@@ -3678,7 +3678,7 @@ void find_pattern_in_path(char *ptr, Direction dir, size_t len, bool whole, bool
     } else {
       // Check if the line is a define (type == FIND_DEFINE)
       p = line;
-search_line:
+      search_line:
       define_matched = false;
       if (def_regmatch.regprog != NULL
           && vim_regexec(&def_regmatch, line, (colnr_T)0)) {
@@ -4028,7 +4028,7 @@ static void show_pat_in_path(char *line, int type, bool did_show, int action, FI
   if (got_int) {                // 'q' typed at "--more--" message
     return;
   }
-  for (;;) {
+  while (true) {
     p = line + strlen(line) - 1;
     if (fp != NULL) {
       // We used fgets(), so get rid of newline at end

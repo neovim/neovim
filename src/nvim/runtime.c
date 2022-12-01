@@ -543,7 +543,7 @@ ArrayOf(String) runtime_get_named_common(bool lua, Array pat, bool all,
       }
     }
   }
-done:
+  done:
   return rv;
 }
 
@@ -1608,7 +1608,7 @@ char *runtimepath_default(bool clean_arg)
   assert((size_t)(rtp_cur - rtp) == rtp_size);
 #undef SITE_SIZE
 #undef AFTER_SIZE
-freeall:
+  freeall:
   xfree(data_dirs);
   xfree(config_dirs);
   xfree(data_home);
@@ -2359,7 +2359,7 @@ static char *get_one_sourceline(struct source_cookie *sp)
 
   // Loop until there is a finished line (or end-of-file).
   sp->sourcing_lnum++;
-  for (;;) {
+  while (true) {
     // make room to read at least 120 (more) characters
     ga_grow(&ga, 120);
     buf = ga.ga_data;

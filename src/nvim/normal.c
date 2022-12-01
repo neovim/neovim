@@ -2147,7 +2147,8 @@ static void nv_ignore(cmdarg_T *cap)
 /// Command character that doesn't do anything, but unlike nv_ignore() does
 /// start edit().  Used for "startinsert" executed while starting up.
 static void nv_nop(cmdarg_T *cap)
-{}
+{
+}
 
 /// Command character doesn't exist.
 static void nv_error(cmdarg_T *cap)
@@ -2303,7 +2304,7 @@ bool find_decl(char_u *ptr, size_t len, bool locally, bool thisblock, int flags_
 
   // Search forward for the identifier, ignore comment lines.
   clearpos(&found_pos);
-  for (;;) {
+  while (true) {
     t = searchit(curwin, curbuf, &curwin->w_cursor, NULL, FORWARD,
                  pat, 1L, searchflags, RE_LAST, NULL);
     if (curwin->w_cursor.lnum >= old_pos.lnum) {
@@ -2667,7 +2668,7 @@ static bool nv_z_get_count(cmdarg_T *cap, int *nchar_arg)
   }
   long n = nchar - '0';
 
-  for (;;) {
+  while (true) {
     no_mapping++;
     allow_keys++;         // no mapping for nchar, but allow key codes
     nchar = plain_vgetc();
@@ -4134,7 +4135,7 @@ static void nv_bracket_block(cmdarg_T *cap, const pos_T *old_pos)
       pos = NULL;
     }
     while (n > 0) {
-      for (;;) {
+      while (true) {
         if ((findc == '{' ? dec_cursor() : inc_cursor()) < 0) {
           // if not found anything, that's an error
           if (pos == NULL) {

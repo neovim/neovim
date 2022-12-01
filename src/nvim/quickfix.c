@@ -744,7 +744,7 @@ static int qf_get_next_buf_line(qfstate_T *state)
 /// Get the next string from file state->fd.
 static int qf_get_next_file_line(qfstate_T *state)
 {
-retry:
+  retry:
   errno = 0;
   if (fgets((char *)IObuff, IOSIZE, state->fd) == NULL) {
     if (errno == EINTR) {
@@ -768,7 +768,7 @@ retry:
     memcpy(state->growbuf, IObuff, IOSIZE - 1);
     size_t growbuflen = state->linelen;
 
-    for (;;) {
+    while (true) {
       errno = 0;
       if (fgets(state->growbuf + growbuflen,
                 (int)(state->growbufsiz - growbuflen), state->fd) == NULL) {
@@ -2605,7 +2605,7 @@ static void qf_goto_win_with_qfl_file(int qf_fnum)
 {
   win_T *win = curwin;
   win_T *altwin = NULL;
-  for (;;) {
+  while (true) {
     if (win->w_buffer->b_fnum == qf_fnum) {
       break;
     }
@@ -4345,7 +4345,7 @@ void ex_make(exarg_T *eap)
     qf_jump_first(qi, save_qfid, false);
   }
 
-cleanup:
+  cleanup:
   decr_quickfix_busy();
   os_remove(fname);
   xfree(fname);
@@ -4382,7 +4382,7 @@ static char *get_mef_name(void)
   }
 
   // Keep trying until the name doesn't exist yet.
-  for (;;) {
+  while (true) {
     if (start == -1) {
       start = (int)os_get_pid();
     } else {

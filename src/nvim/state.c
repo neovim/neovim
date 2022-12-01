@@ -37,7 +37,7 @@
 
 void state_enter(VimState *s)
 {
-  for (;;) {
+  while (true) {
     int check_result = s->check ? s->check(s) : 1;
 
     if (!check_result) {

@@ -1110,7 +1110,7 @@ int map_to_exists_mode(const char *const rhs, const int mode, const bool abbr)
   bool exp_buffer = false;
 
   // Do it twice: once for global maps and once for local maps.
-  for (;;) {
+  while (true) {
     for (hash = 0; hash < 256; hash++) {
       if (abbr) {
         if (hash > 0) {  // There is only one abbr list.
@@ -1226,7 +1226,7 @@ char_u *set_context_in_map_cmd(expand_T *xp, char *cmd, char *arg, bool forceit,
     expand_isabbrev = isabbrev;
     xp->xp_context = EXPAND_MAPPINGS;
     expand_buffer = false;
-    for (;;) {
+    while (true) {
       if (strncmp(arg, "<buffer>", 8) == 0) {
         expand_buffer = true;
         arg = skipwhite(arg + 8);
@@ -2611,7 +2611,7 @@ void modify_keymap(uint64_t channel_id, Buffer buffer, bool is_unmap, String mod
     goto fail_and_free;
   }  // switch
 
-fail_and_free:
+  fail_and_free:
   current_sctx = save_current_sctx;
   NLUA_CLEAR_REF(parsed_args.rhs_lua);
   xfree(parsed_args.rhs);
