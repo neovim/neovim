@@ -2760,6 +2760,7 @@ int win_close(win_T *win, bool free_buf, bool force)
 
   if (win->w_floating) {
     ui_comp_remove_grid(&win->w_grid_alloc);
+    assert(first_tabpage != NULL);  // suppress clang "Dereference of NULL pointer"
     if (win->w_float_config.external) {
       for (tabpage_T *tp = first_tabpage; tp != NULL; tp = tp->tp_next) {
         if (tp == curtab) {
