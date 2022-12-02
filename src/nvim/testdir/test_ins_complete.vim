@@ -1300,13 +1300,13 @@ func Test_completefunc_callback()
   endfunc
 
   let lines =<< trim END
-    #" Test for using a function name
+    #" Test for using a global function name
     LET &completefunc = 'g:CompleteFunc2'
     new
-    call setline(1, 'zero')
+    call setline(1, 'global')
     LET g:CompleteFunc2Args = []
     call feedkeys("A\<C-X>\<C-U>\<Esc>", 'x')
-    call assert_equal([[1, ''], [0, 'zero']], g:CompleteFunc2Args)
+    call assert_equal([[1, ''], [0, 'global']], g:CompleteFunc2Args)
     bw!
 
     #" Test for using a function()
@@ -1442,6 +1442,29 @@ func Test_completefunc_callback()
   END
   call CheckLegacyAndVim9Success(lines)
 
+  " Test for using a script-local function name
+  func s:CompleteFunc3(findstart, base)
+    call add(g:CompleteFunc3Args, [a:findstart, a:base])
+    return a:findstart ? 0 : []
+  endfunc
+  set completefunc=s:CompleteFunc3
+  new
+  call setline(1, 'script1')
+  let g:CompleteFunc3Args = []
+  call feedkeys("A\<C-X>\<C-U>\<Esc>", 'x')
+  call assert_equal([[1, ''], [0, 'script1']], g:CompleteFunc3Args)
+  bw!
+
+  let &completefunc = 's:CompleteFunc3'
+  new
+  call setline(1, 'script2')
+  let g:CompleteFunc3Args = []
+  call feedkeys("A\<C-X>\<C-U>\<Esc>", 'x')
+  call assert_equal([[1, ''], [0, 'script2']], g:CompleteFunc3Args)
+  bw!
+  delfunc s:CompleteFunc3
+
+  " invalid return value
   let &completefunc = {a -> 'abc'}
   call feedkeys("A\<C-X>\<C-U>\<Esc>", 'x')
 
@@ -1476,17 +1499,40 @@ func Test_completefunc_callback()
   let lines =<< trim END
     vim9script
 
-    # Test for using a def function with completefunc
-    def Vim9CompleteFunc(val: number, findstart: number, base: string): any
-      add(g:Vim9completeFuncArgs, [val, findstart, base])
+    def Vim9CompleteFunc(callnr: number, findstart: number, base: string): any
+      add(g:Vim9completeFuncArgs, [callnr, findstart, base])
       return findstart ? 0 : []
     enddef
+
+    # Test for using a def function with completefunc
     set completefunc=function('Vim9CompleteFunc',\ [60])
     new | only
     setline(1, 'one')
     g:Vim9completeFuncArgs = []
     feedkeys("A\<C-X>\<C-U>\<Esc>", 'x')
     assert_equal([[60, 1, ''], [60, 0, 'one']], g:Vim9completeFuncArgs)
+    bw!
+
+    # Test for using a global function name
+    &completefunc = g:CompleteFunc2
+    new | only
+    setline(1, 'two')
+    g:CompleteFunc2Args = []
+    feedkeys("A\<C-X>\<C-U>\<Esc>", 'x')
+    assert_equal([[1, ''], [0, 'two']], g:CompleteFunc2Args)
+    bw!
+
+    # Test for using a script-local function name
+    def s:LocalCompleteFunc(findstart: number, base: string): any
+      add(g:LocalCompleteFuncArgs, [findstart, base])
+      return findstart ? 0 : []
+    enddef
+    &completefunc = s:LocalCompleteFunc
+    new | only
+    setline(1, 'three')
+    g:LocalCompleteFuncArgs = []
+    feedkeys("A\<C-X>\<C-U>\<Esc>", 'x')
+    assert_equal([[1, ''], [0, 'three']], g:LocalCompleteFuncArgs)
     bw!
   END
   " call CheckScriptSuccess(lines)
@@ -1653,6 +1699,29 @@ func Test_omnifunc_callback()
   END
   call CheckLegacyAndVim9Success(lines)
 
+  " Test for using a script-local function name
+  func s:OmniFunc3(findstart, base)
+    call add(g:OmniFunc3Args, [a:findstart, a:base])
+    return a:findstart ? 0 : []
+  endfunc
+  set omnifunc=s:OmniFunc3
+  new
+  call setline(1, 'script1')
+  let g:OmniFunc3Args = []
+  call feedkeys("A\<C-X>\<C-O>\<Esc>", 'x')
+  call assert_equal([[1, ''], [0, 'script1']], g:OmniFunc3Args)
+  bw!
+
+  let &omnifunc = 's:OmniFunc3'
+  new
+  call setline(1, 'script2')
+  let g:OmniFunc3Args = []
+  call feedkeys("A\<C-X>\<C-O>\<Esc>", 'x')
+  call assert_equal([[1, ''], [0, 'script2']], g:OmniFunc3Args)
+  bw!
+  delfunc s:OmniFunc3
+
+  " invalid return value
   let &omnifunc = {a -> 'abc'}
   call feedkeys("A\<C-X>\<C-O>\<Esc>", 'x')
 
@@ -1687,17 +1756,40 @@ func Test_omnifunc_callback()
   let lines =<< trim END
     vim9script
 
-    # Test for using a def function with omnifunc
-    def Vim9omniFunc(val: number, findstart: number, base: string): any
-      add(g:Vim9omniFunc_Args, [val, findstart, base])
+    def Vim9omniFunc(callnr: number, findstart: number, base: string): any
+      add(g:Vim9omniFunc_Args, [callnr, findstart, base])
       return findstart ? 0 : []
     enddef
+
+    # Test for using a def function with omnifunc
     set omnifunc=function('Vim9omniFunc',\ [60])
     new | only
     setline(1, 'one')
     g:Vim9omniFunc_Args = []
     feedkeys("A\<C-X>\<C-O>\<Esc>", 'x')
     assert_equal([[60, 1, ''], [60, 0, 'one']], g:Vim9omniFunc_Args)
+    bw!
+
+    # Test for using a global function name
+    &omnifunc = g:OmniFunc2
+    new | only
+    setline(1, 'two')
+    g:OmniFunc2Args = []
+    feedkeys("A\<C-X>\<C-O>\<Esc>", 'x')
+    assert_equal([[1, ''], [0, 'two']], g:OmniFunc2Args)
+    bw!
+
+    # Test for using a script-local function name
+    def s:LocalOmniFunc(findstart: number, base: string): any
+      add(g:LocalOmniFuncArgs, [findstart, base])
+      return findstart ? 0 : []
+    enddef
+    &omnifunc = s:LocalOmniFunc
+    new | only
+    setline(1, 'three')
+    g:LocalOmniFuncArgs = []
+    feedkeys("A\<C-X>\<C-O>\<Esc>", 'x')
+    assert_equal([[1, ''], [0, 'three']], g:LocalOmniFuncArgs)
     bw!
   END
   " call CheckScriptSuccess(lines)
@@ -1887,6 +1979,29 @@ func Test_thesaurusfunc_callback()
   END
   call CheckLegacyAndVim9Success(lines)
 
+  " Test for using a script-local function name
+  func s:TsrFunc3(findstart, base)
+    call add(g:TsrFunc3Args, [a:findstart, a:base])
+    return a:findstart ? 0 : []
+  endfunc
+  set tsrfu=s:TsrFunc3
+  new
+  call setline(1, 'script1')
+  let g:TsrFunc3Args = []
+  call feedkeys("A\<C-X>\<C-T>\<Esc>", 'x')
+  call assert_equal([[1, ''], [0, 'script1']], g:TsrFunc3Args)
+  bw!
+
+  let &tsrfu = 's:TsrFunc3'
+  new
+  call setline(1, 'script2')
+  let g:TsrFunc3Args = []
+  call feedkeys("A\<C-X>\<C-T>\<Esc>", 'x')
+  call assert_equal([[1, ''], [0, 'script2']], g:TsrFunc3Args)
+  bw!
+  delfunc s:TsrFunc3
+
+  " invalid return value
   let &thesaurusfunc = {a -> 'abc'}
   call feedkeys("A\<C-X>\<C-T>\<Esc>", 'x')
 
@@ -1934,17 +2049,40 @@ func Test_thesaurusfunc_callback()
   let lines =<< trim END
     vim9script
 
-    # Test for using a def function with thesaurusfunc
-    def Vim9tsrFunc(val: number, findstart: number, base: string): any
-      add(g:Vim9tsrFunc_Args, [val, findstart, base])
+    def Vim9tsrFunc(callnr: number, findstart: number, base: string): any
+      add(g:Vim9tsrFunc_Args, [callnr, findstart, base])
       return findstart ? 0 : []
     enddef
+
+    # Test for using a def function with thesaurusfunc
     set thesaurusfunc=function('Vim9tsrFunc',\ [60])
     new | only
     setline(1, 'one')
     g:Vim9tsrFunc_Args = []
     feedkeys("A\<C-X>\<C-T>\<Esc>", 'x')
     assert_equal([[60, 1, ''], [60, 0, 'one']], g:Vim9tsrFunc_Args)
+    bw!
+
+    # Test for using a global function name
+    &thesaurusfunc = g:TsrFunc2
+    new | only
+    setline(1, 'two')
+    g:TsrFunc2Args = []
+    feedkeys("A\<C-X>\<C-T>\<Esc>", 'x')
+    assert_equal([[1, ''], [0, 'two']], g:TsrFunc2Args)
+    bw!
+
+    # Test for using a script-local function name
+    def s:LocalTsrFunc(findstart: number, base: string): any
+      add(g:LocalTsrFuncArgs, [findstart, base])
+      return findstart ? 0 : []
+    enddef
+    &thesaurusfunc = s:LocalTsrFunc
+    new | only
+    setline(1, 'three')
+    g:LocalTsrFuncArgs = []
+    feedkeys("A\<C-X>\<C-T>\<Esc>", 'x')
+    assert_equal([[1, ''], [0, 'three']], g:LocalTsrFuncArgs)
     bw!
   END
   " call CheckScriptSuccess(lines)
