@@ -1930,6 +1930,40 @@ theend:
   return (char_u *)name;
 }
 
+/// If the "funcname" starts with "s:" or "<SID>", then expands it to the
+/// current script ID and returns the expanded function name. The caller should
+/// free the returned name. If not called from a script context or the function
+/// name doesn't start with these prefixes, then returns NULL.
+/// This doesn't check whether the script-local function exists or not.
+char *get_scriptlocal_funcname(char *funcname)
+{
+  if (funcname == NULL) {
+    return NULL;
+  }
+
+  if (strncmp(funcname, "s:", 2) != 0
+      && strncmp(funcname, "<SID>", 5) != 0) {
+    // The function name is not a script-local function name
+    return NULL;
+  }
+
+  if (!SCRIPT_ID_VALID(current_sctx.sc_sid)) {
+    emsg(_(e_usingsid));
+    return NULL;
+  }
+
+  char sid_buf[25];
+  // Expand s: and <SID> prefix into <SNR>nr_<name>
+  snprintf(sid_buf, sizeof(sid_buf), "<SNR>%" PRId64 "_",
+           (int64_t)current_sctx.sc_sid);
+  const int off = *funcname == 's' ? 2 : 5;
+  char *newname = xmalloc(strlen(sid_buf) + strlen(funcname + off) + 1);
+  STRCPY(newname, sid_buf);
+  STRCAT(newname, funcname + off);
+
+  return newname;
+}
+
 /// Call trans_function_name(), except that a lambda is returned as-is.
 /// Returns the name in allocated memory.
 char *save_function_name(char **name, bool skip, int flags, funcdict_T *fudi)

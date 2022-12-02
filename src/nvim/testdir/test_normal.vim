@@ -658,6 +658,18 @@ func Test_opfunc_callback()
   END
   " call CheckScriptSuccess(lines)
 
+  " setting 'opfunc' to a script local function outside of a script context
+  " should fail
+  let cleanup =<< trim END
+    call writefile([execute('messages')], 'Xtest.out')
+    qall
+  END
+  call writefile(cleanup, 'Xverify.vim')
+  call RunVim([], [], "-c \"set opfunc=s:abc\" -S Xverify.vim")
+  call assert_match('E81: Using <SID> not in a', readfile('Xtest.out')[0])
+  call delete('Xtest.out')
+  call delete('Xverify.vim')
+
   " cleanup
   set opfunc&
   delfunc OpFunc1
