@@ -3122,6 +3122,8 @@ void win_free_all(void)
     }
   }
 
+  kv_destroy(aucmd_win_vec);
+
   while (firstwin != NULL) {
     int dummy;
     (void)win_free_mem(firstwin, &dummy, NULL);

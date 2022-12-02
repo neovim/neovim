@@ -633,11 +633,6 @@ void do_augroup(char *arg, int del_group)
   }
 }
 
-void autocmd_init(void)
-{
-  CLEAR_FIELD(aucmd_win);
-}
-
 #if defined(EXITFREE)
 void free_all_autocmds(void)
 {
@@ -1328,13 +1323,6 @@ void ex_doautoall(exarg_T *eap)
 
     // Find a window for this buffer and save some values.
     aucmd_prepbuf(&aco, buf);
-    if (curbuf != buf) {
-      // Failed to find a window for this buffer.  Better not execute
-      // autocommands then.
-      retval = FAIL;
-      break;
-    }
-
     set_bufref(&bufref, buf);
 
     // execute the autocommands for this buffer
@@ -1385,7 +1373,6 @@ bool check_nomodeline(char **argp)
 /// If the current buffer is not in any visible window, put it in a temporary
 /// floating window using an entry in `aucmd_win[]`.
 /// Set `curbuf` and `curwin` to match `buf`.
-/// When this fails `curbuf` is not equal `buf`.
 ///
 /// @param aco  structure to save values in
 /// @param buf  new curbuf
@@ -1413,23 +1400,23 @@ void aucmd_prepbuf(aco_save_T *aco, buf_T *buf)
   if (win == NULL) {
     for (auc_idx = 0; auc_idx < AUCMD_WIN_COUNT; auc_idx++) {
       if (!aucmd_win[auc_idx].auc_win_used) {
-        if (aucmd_win[auc_idx].auc_win == NULL) {
-          win_alloc_aucmd_win(auc_idx);
-          need_append = false;
-        }
-        auc_win = aucmd_win[auc_idx].auc_win;
-        aucmd_win[auc_idx].auc_win_used = true;
         break;
       }
     }
 
-    // If this fails (using all AUCMD_WIN_COUNT entries)
-    // then we can't reliably execute the autocmd,
-    // return with "curbuf" unequal "buf".
-    if (auc_win == NULL) {
-      assert(curbuf != buf);
-      return;
+    if (auc_idx == AUCMD_WIN_COUNT) {
+      kv_push(aucmd_win_vec, ((aucmdwin_T){
+        .auc_win = NULL,
+        .auc_win_used = false,
+      }));
     }
+
+    if (aucmd_win[auc_idx].auc_win == NULL) {
+      win_alloc_aucmd_win(auc_idx);
+      need_append = false;
+    }
+    auc_win = aucmd_win[auc_idx].auc_win;
+    aucmd_win[auc_idx].auc_win_used = true;
   }
 
   aco->save_curwin_handle = curwin->handle;

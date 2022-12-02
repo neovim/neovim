@@ -1802,13 +1802,11 @@ void f_setbufvar(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 
       // Set curbuf to be our buf, temporarily.
       aucmd_prepbuf(&aco, buf);
-      if (curbuf == buf) {
-        // Only when it worked to set "curbuf".
-        set_option_from_tv(varname + 1, varp);
 
-        // reset notion of buffer
-        aucmd_restbuf(&aco);
-      }
+      set_option_from_tv(varname + 1, varp);
+
+      // reset notion of buffer
+      aucmd_restbuf(&aco);
     } else {
       const size_t varname_len = strlen(varname);
       char *const bufvarname = xmalloc(varname_len + 3);
