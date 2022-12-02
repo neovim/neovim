@@ -1644,11 +1644,20 @@ bool win_valid_floating(const win_T *win)
 /// @param  win  window to check
 bool win_valid(const win_T *win) FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
+  return tabpage_win_valid(curtab, win);
+}
+
+/// Check if "win" is a pointer to an existing window in tabpage "tp".
+///
+/// @param  win  window to check
+static bool tabpage_win_valid(const tabpage_T *tp, const win_T *win)
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
+{
   if (win == NULL) {
     return false;
   }
 
-  FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+  FOR_ALL_WINDOWS_IN_TAB(wp, tp) {
     if (wp == win) {
       return true;
     }
@@ -3049,6 +3058,7 @@ void win_close_othertab(win_T *win, int free_buf, tabpage_T *tp)
 static win_T *win_free_mem(win_T *win, int *dirp, tabpage_T *tp)
 {
   win_T *wp;
+  tabpage_T *win_tp = tp == NULL ? curtab : tp;
 
   if (!win->w_floating) {
     // Remove the window and its frame from the tree of frames.
@@ -3057,22 +3067,26 @@ static win_T *win_free_mem(win_T *win, int *dirp, tabpage_T *tp)
     xfree(frp);
   } else {
     *dirp = 'h';  // Dummy value.
-    if (win_valid(prevwin) && prevwin != win) {
-      wp = prevwin;
+    if (tp == NULL) {
+      if (win_valid(prevwin) && prevwin != win) {
+        wp = prevwin;
+      } else {
+        wp = firstwin;
+      }
     } else {
-      wp = firstwin;
+      if (tabpage_win_valid(tp, tp->tp_prevwin) && tp->tp_prevwin != win) {
+        wp = tp->tp_prevwin;
+      } else {
+        wp = tp->tp_firstwin;
+      }
     }
   }
   win_free(win, tp);
 
-  // When deleting the current window of another tab page select a new
-  // current window.
-  if (tp != NULL && win == tp->tp_curwin) {
-    if (win_valid(tp->tp_prevwin) && tp->tp_prevwin != win) {
-      tp->tp_curwin = tp->tp_prevwin;
-    } else {
-      tp->tp_curwin = tp->tp_firstwin;
-    }
+  // When deleting the current window in the tab, select a new current
+  // window.
+  if (win == win_tp->tp_curwin) {
+    win_tp->tp_curwin = wp;
   }
 
   return wp;

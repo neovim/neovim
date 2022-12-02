@@ -192,7 +192,23 @@ func Test_tabwin_close()
   call win_execute(l:wid, 'close')
   " Should not crash.
   call assert_true(v:true)
-  %bwipe!
+
+  " This tests closing a window in another tab, while leaving the tab open
+  " i.e. two windows in another tab.
+  tabedit
+  let w:this_win = 42
+  new
+  let othertab_wid = win_getid()
+  tabprevious
+  call win_execute(othertab_wid, 'q')
+  " drawing the tabline helps check that the other tab's windows and buffers
+  " are still valid
+  redrawtabline
+  " but to be certain, ensure we can focus the other tab too
+  tabnext
+  call assert_equal(42, w:this_win)
+
+  bwipe!
 endfunc
 
 " Test when closing a split window (above/below) restores space to the window
