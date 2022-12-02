@@ -5157,6 +5157,10 @@ int option_set_callback_func(char *optval, Callback *optcb)
     return OK;
   }
 
+  if (strncmp(optval, "s:", 2) == 0 && !SCRIPT_ID_VALID(current_sctx.sc_sid)) {
+    return FAIL;
+  }
+
   typval_T *tv;
   if (*optval == '{'
       || (strncmp(optval, "function(", 9) == 0)
