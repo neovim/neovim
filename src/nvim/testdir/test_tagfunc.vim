@@ -1,6 +1,8 @@
 " Test 'tagfunc'
 
 source vim9.vim
+source check.vim
+source screendump.vim
 
 func TagFunc(pat, flag, info)
   let g:tagfunc_args = [a:pat, a:flag, a:info]
@@ -265,38 +267,62 @@ func Test_tagfunc_callback()
   END
   call CheckLegacyAndVim9Success(lines)
 
+  " Test for using a script-local function name
+  func s:TagFunc3(pat, flags, info)
+    let g:TagFunc3Args = [a:pat, a:flags, a:info]
+    return v:null
+  endfunc
+  set tagfunc=s:TagFunc3
+  new
+  let g:TagFunc3Args = []
+  call assert_fails('tag a21', 'E433:')
+  call assert_equal(['a21', '', {}], g:TagFunc3Args)
+  bw!
+  let &tagfunc = 's:TagFunc3'
+  new
+  let g:TagFunc3Args = []
+  call assert_fails('tag a22', 'E433:')
+  call assert_equal(['a22', '', {}], g:TagFunc3Args)
+  bw!
+  delfunc s:TagFunc3
+
+  " invalid return value
   let &tagfunc = "{a -> 'abc'}"
   call assert_fails("echo taglist('a')", "E987:")
 
   " Using Vim9 lambda expression in legacy context should fail
   " set tagfunc=(a,\ b,\ c)\ =>\ g:TagFunc1(21,\ a,\ b,\ c)
-  new | only
+  new
   let g:TagFunc1Args = []
   " call assert_fails("tag a17", "E117:")
   call assert_equal([], g:TagFunc1Args)
+  bw!
 
   " Test for using a script local function
   set tagfunc=<SID>ScriptLocalTagFunc
-  new | only
+  new
   let g:ScriptLocalFuncArgs = []
   call assert_fails('tag a15', 'E433:')
   call assert_equal(['a15', '', {}], g:ScriptLocalFuncArgs)
+  bw!
 
   " Test for using a script local funcref variable
   let Fn = function("s:ScriptLocalTagFunc")
   let &tagfunc= Fn
-  new | only
+  new
   let g:ScriptLocalFuncArgs = []
   call assert_fails('tag a16', 'E433:')
   call assert_equal(['a16', '', {}], g:ScriptLocalFuncArgs)
+  bw!
 
   " Test for using a string(script local funcref variable)
   let Fn = function("s:ScriptLocalTagFunc")
   let &tagfunc= string(Fn)
-  new | only
+  new
   let g:ScriptLocalFuncArgs = []
   call assert_fails('tag a16', 'E433:')
   call assert_equal(['a16', '', {}], g:ScriptLocalFuncArgs)
+  bw!
 
   " set 'tagfunc' to a partial with dict. This used to cause a crash.
   func SetTagFunc()
@@ -322,16 +348,37 @@ func Test_tagfunc_callback()
   let lines =<< trim END
     vim9script
 
-    # Test for using function()
-    def Vim9tagFunc(val: number, pat: string, flags: string, info: dict<any>): any
-      g:Vim9tagFuncArgs = [val, pat, flags, info]
+    def Vim9tagFunc(callnr: number, pat: string, flags: string, info: dict<any>): any
+      g:Vim9tagFuncArgs = [callnr, pat, flags, info]
       return null
     enddef
+
+    # Test for using a def function with completefunc
     set tagfunc=function('Vim9tagFunc',\ [60])
-    new | only
+    new
     g:Vim9tagFuncArgs = []
     assert_fails('tag a10', 'E433:')
     assert_equal([60, 'a10', '', {}], g:Vim9tagFuncArgs)
+
+    # Test for using a global function name
+    &tagfunc = g:TagFunc2
+    new
+    g:TagFunc2Args = []
+    assert_fails('tag a11', 'E433:')
+    assert_equal(['a11', '', {}], g:TagFunc2Args)
+    bw!
+
+    # Test for using a script-local function name
+    def s:LocalTagFunc(pat: string, flags: string, info: dict<any> ): any
+      g:LocalTagFuncArgs = [pat, flags, info]
+      return null
+    enddef
+    &tagfunc = s:LocalTagFunc
+    new
+    g:LocalTagFuncArgs = []
+    assert_fails('tag a12', 'E433:')
+    assert_equal(['a12', '', {}], g:LocalTagFuncArgs)
+    bw!
   END
   " call CheckScriptSuccess(lines)
 
