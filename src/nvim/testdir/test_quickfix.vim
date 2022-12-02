@@ -6180,5 +6180,17 @@ func Test_loclist_replace_autocmd()
   call setloclist(0, [], 'f')
 endfunc
 
+func s:QfTf(_)
+endfunc
+
+func Test_setqflist_cb_arg()
+  " This was changing the callback name in the dictionary.
+  let d = #{quickfixtextfunc: 's:QfTf'}
+  call setqflist([], 'a', d)
+  call assert_equal('s:QfTf', d.quickfixtextfunc)
+
+  call setqflist([], 'f')
+endfunc
+
 
 " vim: shiftwidth=2 sts=2 expandtab

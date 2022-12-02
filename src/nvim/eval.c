@@ -5510,6 +5510,7 @@ void get_system_output_as_rettv(typval_T *argvars, typval_T *rettv, bool retlist
   }
 }
 
+/// Get a callback from "arg".  It can be a Funcref or a function name.
 bool callback_from_typval(Callback *const callback, typval_T *const arg)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
@@ -5531,16 +5532,14 @@ bool callback_from_typval(Callback *const callback, typval_T *const arg)
       callback->type = kCallbackNone;
       callback->data.funcref = NULL;
     } else {
+      callback->data.funcref = NULL;
       if (arg->v_type == VAR_STRING) {
-        char *newname = get_scriptlocal_funcname(arg->vval.v_string);
-        if (newname != NULL) {
-          xfree(arg->vval.v_string);
-          name = arg->vval.v_string = newname;
-        }
+        callback->data.funcref = get_scriptlocal_funcname(name);
       }
-
-      func_ref((char_u *)name);
-      callback->data.funcref = xstrdup(name);
+      if (callback->data.funcref == NULL) {
+        callback->data.funcref = xstrdup(name);
+      }
+      func_ref((char_u *)callback->data.funcref);
       callback->type = kCallbackFuncref;
     }
   } else if (nlua_is_table_from_lua(arg)) {
