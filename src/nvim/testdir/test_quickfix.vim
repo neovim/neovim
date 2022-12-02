@@ -3298,6 +3298,21 @@ func Test_resize_from_copen()
   endtry
 endfunc
 
+func Test_filetype_autocmd()
+  " this changes the location list while it is in use to fill a buffer
+  lexpr ''
+  lopen
+  augroup FT_loclist
+    au FileType * call setloclist(0, [], 'f')
+  augroup END
+  silent! lolder
+  lexpr ''
+
+  augroup FT_loclist
+    au! FileType
+  augroup END
+endfunc
+
 func Test_vimgrep_with_textlock()
   new
 
@@ -6164,5 +6179,18 @@ func Test_loclist_replace_autocmd()
   %bw!
   call setloclist(0, [], 'f')
 endfunc
+
+func s:QfTf(_)
+endfunc
+
+func Test_setqflist_cb_arg()
+  " This was changing the callback name in the dictionary.
+  let d = #{quickfixtextfunc: 's:QfTf'}
+  call setqflist([], 'a', d)
+  call assert_equal('s:QfTf', d.quickfixtextfunc)
+
+  call setqflist([], 'f')
+endfunc
+
 
 " vim: shiftwidth=2 sts=2 expandtab

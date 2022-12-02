@@ -5018,18 +5018,11 @@ void common_function(typval_T *argvars, typval_T *rettv, bool is_funcref)
     int arg_idx = 0;
     list_T *list = NULL;
     if (strncmp(s, "s:", 2) == 0 || strncmp(s, "<SID>", 5) == 0) {
-      char sid_buf[25];
-      int off = *s == 's' ? 2 : 5;
-
       // Expand s: and <SID> into <SNR>nr_, so that the function can
       // also be called from another script. Using trans_function_name()
       // would also work, but some plugins depend on the name being
       // printable text.
-      snprintf(sid_buf, sizeof(sid_buf), "<SNR>%" PRId64 "_",
-               (int64_t)current_sctx.sc_sid);
-      name = xmalloc(strlen(sid_buf) + strlen(s + off) + 1);
-      STRCPY(name, sid_buf);
-      STRCAT(name, s + off);
+      name = get_scriptlocal_funcname(s);
     } else {
       name = xstrdup(s);
     }
@@ -5517,6 +5510,7 @@ void get_system_output_as_rettv(typval_T *argvars, typval_T *rettv, bool retlist
   }
 }
 
+/// Get a callback from "arg".  It can be a Funcref or a function name.
 bool callback_from_typval(Callback *const callback, typval_T *const arg)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
@@ -5538,8 +5532,14 @@ bool callback_from_typval(Callback *const callback, typval_T *const arg)
       callback->type = kCallbackNone;
       callback->data.funcref = NULL;
     } else {
-      func_ref((char_u *)name);
-      callback->data.funcref = xstrdup(name);
+      callback->data.funcref = NULL;
+      if (arg->v_type == VAR_STRING) {
+        callback->data.funcref = get_scriptlocal_funcname(name);
+      }
+      if (callback->data.funcref == NULL) {
+        callback->data.funcref = xstrdup(name);
+      }
+      func_ref((char_u *)callback->data.funcref);
       callback->type = kCallbackFuncref;
     }
   } else if (nlua_is_table_from_lua(arg)) {

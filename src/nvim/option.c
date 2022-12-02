@@ -5170,26 +5170,7 @@ int option_set_callback_func(char *optval, Callback *optcb)
     // treat everything else as a function name string
     tv = xcalloc(1, sizeof(*tv));
     tv->v_type = VAR_STRING;
-
-    // Function name starting with "s:" are supported only in a vimscript
-    // context.
-    if (strncmp(optval, "s:", 2) == 0) {
-      char sid_buf[25];
-
-      if (!SCRIPT_ID_VALID(current_sctx.sc_sid)) {
-        emsg(_(e_usingsid));
-        return FAIL;
-      }
-      // Expand s: prefix into <SNR>nr_<name>
-      snprintf(sid_buf, sizeof(sid_buf), "<SNR>%" PRId64 "_",
-               (int64_t)current_sctx.sc_sid);
-      char *funcname = xmalloc(strlen(sid_buf) + strlen(optval + 2) + 1);
-      STRCPY(funcname, sid_buf);
-      STRCAT(funcname, optval + 2);
-      tv->vval.v_string = funcname;
-    } else {
-      tv->vval.v_string = xstrdup(optval);
-    }
+    tv->vval.v_string = xstrdup(optval);
   }
 
   Callback cb;
