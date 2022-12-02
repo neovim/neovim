@@ -17,7 +17,7 @@
    text: (_) @text.literal)
 (codeblock) @text.literal
 (codeblock
-   ">" @conceal (#set! conceal ""))
+   [">" (language)] @conceal (#set! conceal ""))
 (block
    "<" @conceal (#set! conceal ""))
 (argument) @parameter

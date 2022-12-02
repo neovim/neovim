@@ -119,7 +119,7 @@ reflects whether Python support is working.
 							*provider-reload*
 Sometimes a GUI or other application may want to force a provider to
 "reload".  To reload a provider, undefine its "loaded" flag, then use
-|:runtime| to reload it: >
+|:runtime| to reload it: >vim
 
     :unlet g:loaded_clipboard_provider
     :runtime autoload/provider/clipboard.vim
@@ -185,6 +185,7 @@ Docstring format:
 - Limited markdown is supported.
   - List-items start with `-` (useful to nest or "indent")
 - Use `<pre>` for code samples.
+  Code samples can be annotated as `vim` or `lua`
 
 Example: the help for |nvim_open_win()| is generated from a docstring defined
 in src/nvim/api/win_config.c like this: >
@@ -193,7 +194,7 @@ in src/nvim/api/win_config.c like this: >
     /// ...
     ///
     /// Example (Lua): window-relative float
-    /// <pre>
+    /// <pre>lua
     ///     vim.api.nvim_open_win(0, false,
     ///       {relative='win', row=3, col=3, width=12, height=3})
     /// </pre>
@@ -223,6 +224,7 @@ Docstring format:
 - Limited markdown is supported.
   - List-items start with `-` (useful to nest or "indent")
 - Use `<pre>` for code samples.
+  Code samples can be annotated as `vim` or `lua`
 
 Example: the help for |vim.paste()| is generated from a docstring decorating
 vim.paste in runtime/lua/vim/_editor.lua like this: >
@@ -231,7 +233,7 @@ vim.paste in runtime/lua/vim/_editor.lua like this: >
     --- (such as the |TUI|) pastes text into the editor.
     ---
     --- Example: To remove ANSI color codes when pasting:
-    --- <pre>
+    --- <pre>lua
     --- vim.paste = (function()
     ---   local overridden = vim.paste
     ---   ...

@@ -889,7 +889,7 @@ static void build_cmdline_str(char **cmdlinep, exarg_T *eap, CmdParseInfo *cmdin
 /// {command} is the replacement text or Lua function to execute.
 ///
 /// Example:
-/// <pre>
+/// <pre>vim
 ///    :call nvim_create_user_command('SayHello', 'echo "Hello world!"', {})
 ///    :SayHello
 ///    Hello world!

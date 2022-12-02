@@ -51,7 +51,7 @@ Connecting to the socket is the easiest way a programmer can test the API,
 which can be done through any msgpack-rpc client library or full-featured
 |api-client|. Here's a Ruby script that prints "hello world!" in the current
 Nvim instance:
->
+>ruby
     #!/usr/bin/env ruby
     # Requires msgpack-rpc: gem install msgpack-rpc
     #
@@ -79,7 +79,7 @@ functions can be called interactively:
 <
 You can also embed Nvim via |jobstart()|, and communicate using |rpcrequest()|
 and |rpcnotify()|:
->
+>vim
     let nvim = jobstart(['nvim', '--embed'], {'rpc': v:true})
     echo rpcrequest(nvim, 'nvim_eval', '"Hello " . "world!"')
     call jobstop(nvim)
@@ -201,9 +201,9 @@ any of these approaches:
      Example (requires Python "pyyaml" and "msgpack-python" modules): >
      nvim --api-info | python -c 'import msgpack, sys, yaml; yaml.dump(msgpack.unpackb(sys.stdin.buffer.read()), sys.stdout)'
 <
-  3. Use the |api_info()| Vimscript function. >
+  3. Use the |api_info()| Vimscript function. >vim
      :lua print(vim.inspect(vim.fn.api_info()))
-<     Example using |filter()| to exclude non-deprecated API functions: >
+<     Example using |filter()| to exclude non-deprecated API functions: >vim
      :new|put =map(filter(api_info().functions, '!has_key(v:val,''deprecated_since'')'), 'v:val.name')
 
 ==============================================================================
@@ -361,10 +361,10 @@ callbacks. These callbacks are called frequently in various contexts;
 receive parameters ("lines", {buf}, {changedtick}, {firstline}, {lastline},
 {new_lastline}, {old_byte_size} [, {old_utf32_size}, {old_utf16_size}]).
 Unlike remote channel events the text contents are not passed. The new text can
-be accessed inside the callback as
+be accessed inside the callback as >lua
 
-    `vim.api.nvim_buf_get_lines(buf, firstline, new_lastline, true)`
-
+    vim.api.nvim_buf_get_lines(buf, firstline, new_lastline, true)
+<
 {old_byte_size} is the total size of the replaced region {firstline} to
 {lastline} in bytes, including the final newline after {lastline}. if
 `utf_sizes` is set to true in |nvim_buf_attach()| keyword args, then the
@@ -400,7 +400,7 @@ performance can be improved by calling |nvim_buf_add_highlight()| as an
 asynchronous notification, after first (synchronously) requesting a source id.
 
 Example using the Python API client (|pynvim|):
->
+>python
     src = vim.new_highlight_source()
     buf = vim.current.buffer
     for i in range(5):
@@ -414,7 +414,7 @@ clear highlights from a specific source, in a specific line range or the
 entire buffer by passing in the line range 0, -1 (the latter is the default in
 python as used above).
 
-Example using the API from Vimscript: >
+Example using the API from Vimscript: >vim
 
     call nvim_buf_set_lines(0, 0, 0, v:true, ["test text"])
     let src = nvim_buf_add_highlight(0, 0, "String", 1, 0, 4)
@@ -438,7 +438,7 @@ Two ways to create a floating window:
 To close it use |nvim_win_close()| or a command such as |:close|.
 
 To check whether a window is floating, check whether the `relative` option in
-its config is non-empty: >
+its config is non-empty: >lua
 
     if vim.api.nvim_win_get_config(window_id).relative ~= '' then
       -- window with this window_id is floating
@@ -456,7 +456,7 @@ Currently, floating windows don't support some widgets like scrollbar.
 The output of |:mksession| does not include commands for restoring floating
 windows.
 
-Example: create a float with scratch buffer: >
+Example: create a float with scratch buffer: >vim
 
     let buf = nvim_create_buf(v:false, v:true)
     call nvim_buf_set_lines(buf, 0, -1, v:true, ["test", "text"])
@@ -510,19 +510,20 @@ Let's set an extmark at the first row (row=0) and third column (column=2).
       01 2345678
     0 ex|ample..
         ^ extmark position
-
+<
+>vim
     let g:mark_ns = nvim_create_namespace('myplugin')
     let g:mark_id = nvim_buf_set_extmark(0, g:mark_ns, 0, 2, {})
 <
-We can get the mark by its id: >
+We can get the mark by its id: >vim
 
     echo nvim_buf_get_extmark_by_id(0, g:mark_ns, g:mark_id, {})
-    => [0, 2]
+    " => [0, 2]
 
-We can get all marks in a buffer by |namespace| (or by a range): >
+We can get all marks in a buffer by |namespace| (or by a range): >vim
 
     echo nvim_buf_get_extmarks(0, g:mark_ns, 0, -1, {})
-    => [[1, 0, 2]]
+    " => [[1, 0, 2]]
 
 Deleting all surrounding text does NOT remove an extmark! To remove extmarks
 use |nvim_buf_del_extmark()|. Deleting "x" in our example: >
@@ -530,9 +531,10 @@ use |nvim_buf_del_extmark()|. Deleting "x" in our example: >
       0 12345678
     0 e|ample..
        ^ extmark position
-
+<
+>vim
     echo nvim_buf_get_extmark_by_id(0, g:mark_ns, g:mark_id, {})
-    => [0, 1]
+    " => [0, 1]
 <
     Note: Extmark "gravity" decides how it will shift after a text edit.
           See |nvim_buf_set_extmark()|
@@ -801,7 +803,7 @@ nvim_feedkeys({keys}, {mode}, {escape_ks})                   *nvim_feedkeys()*
     with escape_ks=false) to replace |keycodes|, then pass the result to
     nvim_feedkeys().
 
-    Example: >
+    Example: >vim
         :let key = nvim_replace_termcodes("<C-o>", v:true, v:false, v:true)
         :call nvim_feedkeys(key, 'n', v:false)
 <
@@ -857,7 +859,7 @@ nvim_get_color_by_name({name})                      *nvim_get_color_by_name()*
     Returns the 24-bit RGB value of a |nvim_get_color_map()| color name or
     "#rrggbb" hexadecimal string.
 
-    Example: >
+    Example: >vim
         :echo nvim_get_color_by_name("Pink")
         :echo nvim_get_color_by_name("#cbcbcb")
 <
@@ -1442,11 +1444,11 @@ nvim_set_keymap({mode}, {lhs}, {rhs}, {*opts})             *nvim_set_keymap()*
     Unlike |:map|, leading/trailing whitespace is accepted as part of the
     {lhs} or {rhs}. Empty {rhs} is |<Nop>|. |keycodes| are replaced as usual.
 
-    Example: >
+    Example: >vim
         call nvim_set_keymap('n', ' <NL>', '', {'nowait': v:true})
 <
 
-    is equivalent to: >
+    is equivalent to: >vim
         nmap <nowait> <Space><NL> <Nop>
 <
 
@@ -1744,7 +1746,7 @@ nvim_create_user_command({name}, {command}, {*opts})
 
     {command} is the replacement text or Lua function to execute.
 
-    Example: >
+    Example: >vim
        :call nvim_create_user_command('SayHello', 'echo "Hello world!"', {})
        :SayHello
        Hello world!
@@ -2025,7 +2027,7 @@ whether a buffer is loaded.
 nvim_buf_attach({buffer}, {send_buffer}, {opts})           *nvim_buf_attach()*
     Activates buffer-update events on a channel, or as Lua callbacks.
 
-    Example (Lua): capture buffer updates in a global `events` variable (use "print(vim.inspect(events))" to see its contents): >
+    Example (Lua): capture buffer updates in a global `events` variable (use "print(vim.inspect(events))" to see its contents): >lua
       events = {}
       vim.api.nvim_buf_attach(0, false, {
         on_lines=function(...) table.insert(events, {...}) end})
@@ -2527,29 +2529,27 @@ nvim_buf_get_extmarks({buffer}, {ns_id}, {start}, {end}, {opts})
 
     Region can be given as (row,col) tuples, or valid extmark ids (whose
     positions define the bounds). 0 and -1 are understood as (0,0) and (-1,-1)
-    respectively, thus the following are equivalent:
->
-    nvim_buf_get_extmarks(0, my_ns, 0, -1, {})
-    nvim_buf_get_extmarks(0, my_ns, [0,0], [-1,-1], {})
+    respectively, thus the following are equivalent: >lua
+      nvim_buf_get_extmarks(0, my_ns, 0, -1, {})
+      nvim_buf_get_extmarks(0, my_ns, [0,0], [-1,-1], {})
 <
 
     If `end` is less than `start`, traversal works backwards. (Useful with
     `limit`, to get the first marks prior to a given position.)
 
-    Example:
->
-    local a   = vim.api
-    local pos = a.nvim_win_get_cursor(0)
-    local ns  = a.nvim_create_namespace('my-plugin')
-    -- Create new extmark at line 1, column 1.
-    local m1  = a.nvim_buf_set_extmark(0, ns, 0, 0, {})
-    -- Create new extmark at line 3, column 1.
-    local m2  = a.nvim_buf_set_extmark(0, ns, 0, 2, {})
-    -- Get extmarks only from line 3.
-    local ms  = a.nvim_buf_get_extmarks(0, ns, {2,0}, {2,0}, {})
-    -- Get all marks in this buffer + namespace.
-    local all = a.nvim_buf_get_extmarks(0, ns, 0, -1, {})
-    print(vim.inspect(ms))
+    Example: >lua
+      local a   = vim.api
+      local pos = a.nvim_win_get_cursor(0)
+      local ns  = a.nvim_create_namespace('my-plugin')
+      -- Create new extmark at line 1, column 1.
+      local m1  = a.nvim_buf_set_extmark(0, ns, 0, 0, {})
+      -- Create new extmark at line 3, column 1.
+      local m2  = a.nvim_buf_set_extmark(0, ns, 0, 2, {})
+      -- Get extmarks only from line 3.
+      local ms  = a.nvim_buf_get_extmarks(0, ns, {2,0}, {2,0}, {})
+      -- Get all marks in this buffer + namespace.
+      local all = a.nvim_buf_get_extmarks(0, ns, 0, -1, {})
+      print(vim.inspect(ms))
 <
 
     Parameters: ~
@@ -2967,12 +2967,12 @@ nvim_open_win({buffer}, {enter}, {*config})                  *nvim_open_win()*
     could let floats hover outside of the main window like a tooltip, but this
     should not be used to specify arbitrary WM screen positions.
 
-    Example (Lua): window-relative float >
+    Example (Lua): window-relative float >lua
         vim.api.nvim_open_win(0, false,
           {relative='win', row=3, col=3, width=12, height=3})
 <
 
-    Example (Lua): buffer-relative float (travels as buffer is scrolled) >
+    Example (Lua): buffer-relative float (travels as buffer is scrolled) >lua
         vim.api.nvim_open_win(0, false,
           {relative='win', width=12, height=3, bufpos={100,10}})
 <
@@ -3208,7 +3208,7 @@ nvim_clear_autocmds({*opts})                           *nvim_clear_autocmds()*
 nvim_create_augroup({name}, {*opts})                   *nvim_create_augroup()*
     Create or get an autocommand group |autocmd-groups|.
 
-    To get an existing group id, do: >
+    To get an existing group id, do: >lua
         local id = vim.api.nvim_create_augroup("MyGroup", {
             clear = false
         })
@@ -3233,7 +3233,7 @@ nvim_create_autocmd({event}, {*opts})                  *nvim_create_autocmd()*
     executed when the autocommand triggers: a callback function (Lua or
     Vimscript), or a command (like regular autocommands).
 
-    Example using callback: >
+    Example using callback: >lua
         -- Lua function
         local myluafun = function() print("This buffer enters") end
 
@@ -3248,40 +3248,39 @@ nvim_create_autocmd({event}, {*opts})                  *nvim_create_autocmd()*
 
     Lua functions receive a table with information about the autocmd event as
     an argument. To use a function which itself accepts another (optional)
-    parameter, wrap the function in a lambda:
->
-    -- Lua function with an optional parameter.
-    -- The autocmd callback would pass a table as argument but this
-    -- function expects number|nil
-    local myluafun = function(bufnr) bufnr = bufnr or vim.api.nvim_get_current_buf() end
+    parameter, wrap the function in a lambda: >lua
+        -- Lua function with an optional parameter.
+        -- The autocmd callback would pass a table as argument but this
+        -- function expects number|nil
+        local myluafun = function(bufnr) bufnr = bufnr or vim.api.nvim_get_current_buf() end
 
-    vim.api.nvim_create_autocmd({"BufEnter", "BufWinEnter"}, {
-      pattern = {"*.c", "*.h"},
-      callback = function() myluafun() end,
-    })
+        vim.api.nvim_create_autocmd({"BufEnter", "BufWinEnter"}, {
+          pattern = {"*.c", "*.h"},
+          callback = function() myluafun() end,
+        })
 <
 
-    Example using command: >
+    Example using command: >lua
         vim.api.nvim_create_autocmd({"BufEnter", "BufWinEnter"}, {
           pattern = {"*.c", "*.h"},
           command = "echo 'Entering a C or C++ file'",
         })
 <
 
-    Example values for pattern: >
+    Example values for pattern: >lua
       pattern = "*.py"
       pattern = { "*.py", "*.pyi" }
 <
 
     Note: The `pattern` is passed to callbacks and commands as a literal string; environment
     variables like `$HOME` and `~` are not automatically expanded as they are by |:autocmd|. Instead,
-    |expand()| such variables explicitly: >
+    |expand()| such variables explicitly: >lua
       pattern = vim.fn.expand("~") .. "/some/path/*.py"
 <
 
-    Example values for event: >
-      "BufWritePre"
-      {"CursorHold", "BufWritePre", "BufWritePost"}
+    Example values for event: >lua
+      event = "BufWritePre"
+      event = {"CursorHold", "BufWritePre", "BufWritePost"}
 <
 
     Parameters: ~
@@ -3392,7 +3391,7 @@ nvim_exec_autocmds({event}, {*opts})                    *nvim_exec_autocmds()*
 nvim_get_autocmds({*opts})                               *nvim_get_autocmds()*
     Get all autocommands that match the corresponding {opts}.
 
-    These examples will get autocommands matching ALL the given criteria: >
+    These examples will get autocommands matching ALL the given criteria: >lua
       -- Matches all criteria
       autocommands = vim.api.nvim_get_autocmds({
         group = "MyGroup",

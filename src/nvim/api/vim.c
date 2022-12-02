@@ -229,7 +229,7 @@ void nvim_set_hl_ns_fast(Integer ns_id, Error *err)
 /// nvim_feedkeys().
 ///
 /// Example:
-/// <pre>
+/// <pre>vim
 ///     :let key = nvim_replace_termcodes("<C-o>", v:true, v:false, v:true)
 ///     :call nvim_feedkeys(key, 'n', v:false)
 /// </pre>
@@ -1295,7 +1295,7 @@ void nvim_unsubscribe(uint64_t channel_id, String event)
 /// "#rrggbb" hexadecimal string.
 ///
 /// Example:
-/// <pre>
+/// <pre>vim
 ///     :echo nvim_get_color_by_name("Pink")
 ///     :echo nvim_get_color_by_name("#cbcbcb")
 /// </pre>
@@ -1437,12 +1437,12 @@ ArrayOf(Dictionary) nvim_get_keymap(String mode)
 /// Empty {rhs} is |<Nop>|. |keycodes| are replaced as usual.
 ///
 /// Example:
-/// <pre>
+/// <pre>vim
 ///     call nvim_set_keymap('n', ' <NL>', '', {'nowait': v:true})
 /// </pre>
 ///
 /// is equivalent to:
-/// <pre>
+/// <pre>vim
 ///     nmap <nowait> <Space><NL> <Nop>
 /// </pre>
 ///

@@ -35,6 +35,7 @@ local spell_dict = {
   lua = 'Lua',
   VimL = 'Vimscript',
 }
+local language = nil
 
 local M = {}
 
@@ -489,7 +490,7 @@ local function visit_node(root, level, lang_tree, headings, opt, stats)
     end
     return string.format('<div class="help-para">\n%s\n</div>\n', text)
   elseif node_name == 'line' then
-    if parent ~= 'codeblock' and (is_blank(text) or is_noise(text, stats.noise_lines)) then
+    if (parent ~= 'codeblock' or parent ~= 'code') and (is_blank(text) or is_noise(text, stats.noise_lines)) then
       return ''  -- Discard common "noise" lines.
     end
     -- XXX: Avoid newlines (too much whitespace) after block elements in old (preformatted) layout.
@@ -536,10 +537,22 @@ local function visit_node(root, level, lang_tree, headings, opt, stats)
   elseif node_name == 'argument' then
     return ('%s<code>{%s}</code>'):format(ws(), text)
   elseif node_name == 'codeblock' then
+    return text
+  elseif node_name == 'language' then
+    language = node_text(root)
+    return ''
+  elseif node_name == 'code' then
     if is_blank(text) then
       return ''
     end
-    return ('<pre>%s</pre>'):format(trim(trim_indent(text), 2))
+    local code
+    if language then
+      code = ('<pre><code class="language-%s">%s</code></pre>'):format(language,trim(trim_indent(text), 2))
+      language = nil
+    else
+      code = ('<pre>%s</pre>'):format(trim(trim_indent(text), 2))
+    end
+    return code
   elseif node_name == 'tag' then  -- anchor
     if root:has_error() then
       return text
@@ -685,6 +698,9 @@ local function gen_one(fname, to_fname, old, commit)
     <link href="/css/bootstrap.css" rel="stylesheet">
     <link href="/css/main.css" rel="stylesheet">
     <link href="help.css" rel="stylesheet">
+    <link href="/highlight/styles/neovim.min.css" rel="stylesheet">
+    <script src="/highlight/highlight.min.js"></script>
+    <script>hljs.highlightAll();</script>
     <title>%s - Neovim docs</title>
   </head>
   <body>

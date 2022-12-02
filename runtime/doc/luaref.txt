@@ -136,7 +136,7 @@ For convenience, when the opening long bracket is immediately followed by a
 newline, the newline is not included in the string. As an example, in a system
 using ASCII (in which `a` is coded as 97, newline is coded as 10, and `1` is
 coded as 49), the five literals below denote the same string:
->
+>lua
        a = 'alo\n123"'
        a = "alo\n123\""
        a = '\97lo\10\04923"'
@@ -283,7 +283,7 @@ library; see |luaref-libDebug|.)
 
 An access to a global variable `x` is equivalent to `_env.x`, which in turn is
 equivalent to
->
+>lua
        gettable_event(_env, "x")
 <
 where `_env` is the environment of the running function. (The `_env` variable is
@@ -366,13 +366,13 @@ before the adjustment (except when the call is enclosed in parentheses; see
 
 The assignment statement first evaluates all its expressions and only then are
 the assignments performed. Thus the code
->
+>lua
        i = 3
        i, a[i] = i+1, 20
 <
 sets `a[3]` to 20, without affecting `a[4]` because the `i` in `a[i]` is evaluated (to
 3) before it is assigned 4. Similarly, the line
->
+>lua
        x, y = y, x
 <
 exchanges the values of `x` and `y`.
@@ -385,7 +385,7 @@ defined or callable in Lua. We use it here only for explanatory purposes.)
 
 An assignment to a global variable `x = val` is equivalent to the
 assignment `_env.x = val`, which in turn is equivalent to
->
+>lua
        settable_event(_env, "x", val)
 <
 where `_env` is the environment of the running function. (The `_env` variable is
@@ -448,11 +448,11 @@ through an arithmetic progression. It has the following syntax:
 <
 The `block` is repeated for `name` starting at the value of the first `exp`, until
 it passes the second `exp` by steps of the third `exp`. More precisely,
-a `for` statement like >
+a `for` statement like
 
-       for var =  e1, e2, e3  do  block  end
+       `for var =  e1, e2, e3  do  block  end`
 
-< is equivalent to the code: >
+is equivalent to the code: >lua
 
        do
          local  var, limit, step  = tonumber(e1), tonumber(e2), tonumber(e3)
@@ -489,7 +489,7 @@ A `for` statement like
 
        `for`  `var1, ..., varn`  `in`  `explist`  `do`  `block`  `end`
 
-is equivalent to the code: >
+is equivalent to the code: >lua
 
        do
          local  f, s, var  =  explist
@@ -582,7 +582,7 @@ adjusts the result list to one element, discarding all values except the first
 one.
 
 Here are some examples:
->
+>lua
        f()                -- adjusted to 0 results
        g(f(), x)          -- f() is adjusted to 1 result
        g(x, f())          -- g gets x plus all results from f()
@@ -615,7 +615,7 @@ or strings that can be converted to numbers (see |luaref-langCoercion|), then al
 operations have the usual meaning. Exponentiation works for any exponent. For
 instance, `x^(-0.5)` computes the inverse of the square root of `x`. Modulo is
 defined as
->
+>lua
        a % b == a - math.floor(a/b)*b
 <
 That is, it is the remainder of a division that rounds the quotient towards
@@ -742,11 +742,11 @@ key `exp1` and value `exp2`. A field of the form `name = exp` is equivalent to
 `["name"] = exp`. Finally, fields of the form `exp` are equivalent to
 `[i] = exp`, where `i` are consecutive numerical integers, starting with 1.
 Fields in the other formats do not affect this counting. For example,
->
+>lua
        a = { [f(1)] = g; "x", "y"; x = 1, f(x), [30] = 23; 45 }
 <
 is equivalent to
->
+>lua
        do
          local t = {}
          t[f(1)] = g
@@ -802,7 +802,7 @@ argument list is a single new table. A call of the form `f'` `string` `'`
 As an exception to the free-format syntax of Lua, you cannot put a line break
 before the `(` in a function call. This restriction avoids some ambiguities
 in the language. If you write
->
+>lua
        a = f
        (g).x(a)
 <
@@ -820,7 +820,7 @@ function. Note that a tail call only happens with a particular syntax, where
 the `return` has one single function call as argument; this syntax makes the
 calling function return exactly the returns of the called function. So, none
 of the following examples are tail calls:
->
+>lua
        return (f(x))        -- results adjusted to 1
        return 2 * f(x)
        return x, f(x)       -- additional results
@@ -901,7 +901,7 @@ expression is used as the last element of a list of expressions, then no
 adjustment is made (unless the call is enclosed in parentheses).
 
 As an example, consider the following definitions:
->
+>lua
        function f(a, b) end
        function g(a, b, ...) end
        function r() return 1,2,3 end
@@ -942,7 +942,7 @@ is syntactic sugar for
 Lua is a lexically scoped language. The scope of variables begins at the first
 statement after their declaration and lasts until the end of the innermost
 block that includes the declaration. Consider the following example:
->
+>lua
        x = 10                -- global variable
        do                    -- new block
          local x = x         -- new `x`, with value 10
@@ -967,7 +967,7 @@ function.
 
 Notice that each execution of a local statement defines new local variables.
 Consider the following example:
->
+>lua
        a = {}
        local x = 20
        for i=1,10 do
@@ -1043,7 +1043,7 @@ given object, we use the expression
        metatable(obj)[event]
 <
 This should be read as
->
+>lua
        rawget(metatable(obj) or {}, event)
 <
 That is, the access to a metamethod does not invoke other metamethods, and the
@@ -1057,13 +1057,13 @@ the `+` operation.
 The function `getbinhandler` below defines how Lua chooses a handler for a
 binary operation. First, Lua tries the first operand. If its type does not
 define a handler for the operation, then Lua tries the second operand.
->
+>lua
        function getbinhandler (op1, op2, event)
          return metatable(op1)[event] or metatable(op2)[event]
        end
 <
 By using this function, the behavior of the `op1 + op2` is
->
+>lua
        function add_event (op1, op2)
          local o1, o2 = tonumber(op1), tonumber(op2)
          if o1 and o2 then  -- both operands are numeric?
@@ -1104,7 +1104,7 @@ with the function `pow` (from the C math library) as the primitive operation.
 "unm":                                                                 *__unm()*
 ------
 the unary `-` operation.
->
+>lua
        function unm_event (op)
          local o = tonumber(op)
          if o then  -- operand is numeric?
@@ -1124,7 +1124,7 @@ the unary `-` operation.
 "concat":                                                           *__concat()*
 ---------
 the `..` (concatenation) operation.
->
+>lua
        function concat_event (op1, op2)
          if (type(op1) == "string" or type(op1) == "number") and
             (type(op2) == "string" or type(op2) == "number") then
@@ -1142,7 +1142,7 @@ the `..` (concatenation) operation.
 "len":                                                                 *__len()*
 ------
 the `#` operation.
->
+>lua
        function len_event (op)
          if type(op) == "string" then
            return strlen(op)         -- primitive string length
@@ -1167,7 +1167,7 @@ The function `getcomphandler` defines how Lua chooses a metamethod for
 comparison operators. A metamethod only is selected when both objects being
 compared have the same type and the same metamethod for the selected
 operation.
->
+>lua
        function getcomphandler (op1, op2, event)
          if type(op1) ~= type(op2) then return nil end
          local mm1 = metatable(op1)[event]
@@ -1176,7 +1176,7 @@ operation.
        end
 <
 The "eq" event is defined as follows:
->
+>lua
        function eq_event (op1, op2)
          if type(op1) ~= type(op2) then  -- different types?
            return false   -- different objects
@@ -1198,7 +1198,7 @@ The "eq" event is defined as follows:
 "lt":                                                                   *__lt()*
 -----
 the `<` operation.
->
+>lua
        function lt_event (op1, op2)
          if type(op1) == "number" and type(op2) == "number" then
            return op1 < op2   -- numeric comparison
@@ -1219,7 +1219,7 @@ the `<` operation.
 "le":                                                                   *__le()*
 -----
 the `<=` operation.
->
+>lua
        function le_event (op1, op2)
          if type(op1) == "number" and type(op2) == "number" then
            return op1 <= op2   -- numeric comparison
@@ -1247,7 +1247,7 @@ to `not (b < a)`.
 "index":                                                             *__index()*
 --------
 The indexing access `table[key]`.
->
+>lua
        function gettable_event (table, key)
          local h
          if type(table) == "table" then
@@ -1269,7 +1269,7 @@ The indexing access `table[key]`.
 "newindex":                                                       *__newindex()*
 -----------
 The indexing assignment `table[key] = value`.
->
+>lua
        function settable_event (table, key, value)
          local h
          if type(table) == "table" then
@@ -1291,7 +1291,7 @@ The indexing assignment `table[key] = value`.
 "call":                                                               *__call()*
 -------
 called when Lua calls a value.
->
+>lua
        function function_event (func, ...)
          if type(func) == "function" then
            return func(...)   -- primitive call
@@ -1386,7 +1386,7 @@ Garbage userdata with a field `__gc` in their metatables are not collected
 immediately by the garbage collector. Instead, Lua puts them in a list. After
 the collection, Lua does the equivalent of the following function for each
 userdata in that list:
->
+>lua
        function gc_event (udata)
          local h = metatable(udata).__gc
          if h then
@@ -1469,7 +1469,7 @@ coroutine. Any arguments passed to this function go as extra arguments to
 propagated to the caller.
 
 As an example, consider the next code:
->
+>lua
        function foo1 (a)
          print("foo", a)
          return coroutine.yield(2*a)
@@ -1559,7 +1559,7 @@ Most query functions accept as indices any value inside the available stack
 space, that is, indices up to the maximum stack size you have set through
 `lua_checkstack`. Such indices are called acceptable indices. More formally,
 we define an acceptable index as follows:
->
+>lua
     (index < 0 && abs(index) <= top) || (index > 0 && index <= stackspace)
 <
 Note that 0 is never an acceptable index.
@@ -1580,7 +1580,7 @@ pseudo-index `LUA_ENVIRONINDEX`.
 To access and change the value of global variables, you can use regular table
 operations over an environment table. For instance, to access the value of a
 global variable, do
->
+>c
        lua_getfield(L, LUA_GLOBALSINDEX, varname);
 <
 
@@ -1639,7 +1639,7 @@ Inside a C function you can raise an error by calling `lua_error`  (see
 Here we list all functions and types from the C API in alphabetical order.
 
 lua_Alloc                                                          *lua_Alloc()*
->
+>c
     typedef void * (*lua_Alloc) (void *ud,
                                  void *ptr,
                                  size_t osize,
@@ -1663,7 +1663,7 @@ lua_Alloc                                                          *lua_Alloc()*
         Here is a simple implementation for the allocator function. It is used
         in the auxiliary library by `luaL_newstate` (see
         |luaL_newstate()|).
->
+>c
             static void *l_alloc (void *ud, void *ptr, size_t osize,
                                                        size_t nsize) {
               (void)ud;  (void)osize;  /* not used */
@@ -1680,7 +1680,7 @@ lua_Alloc                                                          *lua_Alloc()*
         behaviors.
 
 lua_atpanic                                                      *lua_atpanic()*
->
+>c
     lua_CFunction lua_atpanic (lua_State *L, lua_CFunction panicf);
 <
         Sets a new panic function and returns the old one.
@@ -1694,7 +1694,7 @@ lua_atpanic                                                      *lua_atpanic()*
         stack.
 
 lua_call                                                            *lua_call()*
->
+>c
     void lua_call (lua_State *L, int nargs, int nresults);
 <
         Calls a function.
@@ -1718,11 +1718,11 @@ lua_call                                                            *lua_call()*
 
         The following example shows how the host program may do the equivalent
         to this Lua code:
->
+>lua
             a = f("how", t.x, 14)
 <
         Here it is in C:
->
+>c
             lua_getfield(L, LUA_GLOBALSINDEX, "f"); // function to be called
             lua_pushstring(L, "how");                        // 1st argument
             lua_getfield(L, LUA_GLOBALSINDEX, "t");   // table to be indexed
@@ -1737,7 +1737,7 @@ lua_call                                                            *lua_call()*
         practice.
 
 lua_CFunction                             *luaref-cfunction* *lua_CFunction()*
->
+>c
     typedef int (*lua_CFunction) (lua_State *L);
 <
         Type for C functions.
@@ -1758,7 +1758,7 @@ lua_CFunction                             *luaref-cfunction* *lua_CFunction()*
                                                        *luaref-cfunctionexample*
         As an example, the following function receives a variable number of
         numerical arguments and returns their average and sum:
->
+>c
             static int foo (lua_State *L) {
               int n = lua_gettop(L);    /* number of arguments */
               lua_Number sum = 0;
@@ -1777,7 +1777,7 @@ lua_CFunction                             *luaref-cfunction* *lua_CFunction()*
 <
 
 lua_checkstack                                                *lua_checkstack()*
->
+>c
     int lua_checkstack (lua_State *L, int extra);
 <
         Ensures that there are at least `extra` free stack slots in the stack.
@@ -1786,7 +1786,7 @@ lua_checkstack                                                *lua_checkstack()*
         the new size, it is left unchanged.
 
 lua_close                                                          *lua_close()*
->
+>c
     void lua_close (lua_State *L);
 <
         Destroys all objects in the given Lua state (calling the corresponding
@@ -1798,7 +1798,7 @@ lua_close                                                          *lua_close()*
         are not needed, to avoid growing too large.
 
 lua_concat                                                        *lua_concat()*
->
+>c
     void lua_concat (lua_State *L, int n);
 <
         Concatenates the `n` values at the top of the stack, pops them, and
@@ -1808,7 +1808,7 @@ lua_concat                                                        *lua_concat()*
         usual semantics of Lua (see |luaref-langConcat|).
 
 lua_cpcall                                                        *lua_cpcall()*
->
+>c
     int lua_cpcall (lua_State *L, lua_CFunction func, void *ud);
 <
         Calls the C function `func` in protected mode. `func` starts with only
@@ -1819,7 +1819,7 @@ lua_cpcall                                                        *lua_cpcall()*
         returned by `func` are discarded.
 
 lua_createtable                                              *lua_createtable()*
->
+>c
     void lua_createtable (lua_State *L, int narr, int nrec);
 <
         Creates a new empty table and pushes it onto the stack. The new table
@@ -1829,7 +1829,7 @@ lua_createtable                                              *lua_createtable()*
         `lua_newtable`  (see |lua_newtable()|).
 
 lua_dump                                                            *lua_dump()*
->
+>c
     int lua_dump (lua_State *L, lua_Writer writer, void *data);
 <
         Dumps a function as a binary chunk. Receives a Lua function on the top
@@ -1844,7 +1844,7 @@ lua_dump                                                            *lua_dump()*
         This function does not pop the Lua function from the stack.
 
 lua_equal                                                          *lua_equal()*
->
+>c
     int lua_equal (lua_State *L, int index1, int index2);
 <
         Returns 1 if the two values in acceptable indices `index1` and
@@ -1853,7 +1853,7 @@ lua_equal                                                          *lua_equal()*
         if any of the indices is non valid.
 
 lua_error                                                          *lua_error()*
->
+>c
     int lua_error (lua_State *L);
 <
         Generates a Lua error. The error message (which can actually be a Lua
@@ -1861,7 +1861,7 @@ lua_error                                                          *lua_error()*
         jump, and therefore never returns (see |luaL_error()|).
 
 lua_gc                                                                *lua_gc()*
->
+>c
     int lua_gc (lua_State *L, int what, int data);
 <
         Controls the garbage collector.
@@ -1893,7 +1893,7 @@ lua_gc                                                                *lua_gc()*
                           previous value of the step multiplier.
 
 lua_getallocf                                                  *lua_getallocf()*
->
+>c
     lua_Alloc lua_getallocf (lua_State *L, void **ud);
 <
         Returns the memory-allocation function of a given state. If `ud` is
@@ -1901,14 +1901,14 @@ lua_getallocf                                                  *lua_getallocf()*
         `lua_newstate` (see |lua_newstate()|).
 
 lua_getfenv                                                      *lua_getfenv()*
->
+>c
     void lua_getfenv (lua_State *L, int index);
 <
         Pushes onto the stack the environment table of the value at the given
         index.
 
 lua_getfield                                                    *lua_getfield()*
->
+>c
     void lua_getfield (lua_State *L, int index, const char *k);
 <
         Pushes onto the stack the value `t[k]`, where `t` is the value at the
@@ -1916,17 +1916,17 @@ lua_getfield                                                    *lua_getfield()*
         metamethod for the "index" event (see |luaref-langMetatables|).
 
 lua_getglobal                                                  *lua_getglobal()*
->
+>c
     void lua_getglobal (lua_State *L, const char *name);
 <
         Pushes onto the stack the value of the global `name`. It is defined as
         a macro:
->
+>c
             #define lua_getglobal(L,s)  lua_getfield(L, LUA_GLOBALSINDEX, s)
 <
 
 lua_getmetatable                                            *lua_getmetatable()*
->
+>c
     int lua_getmetatable (lua_State *L, int index);
 <
         Pushes onto the stack the metatable of the value at the given
@@ -1935,7 +1935,7 @@ lua_getmetatable                                            *lua_getmetatable()*
         stack.
 
 lua_gettable                                                    *lua_gettable()*
->
+>c
     void lua_gettable (lua_State *L, int index);
 <
         Pushes onto the stack the value `t[k]`, where `t` is the value at the
@@ -1947,7 +1947,7 @@ lua_gettable                                                    *lua_gettable()*
         the "index" event (see |luaref-langMetatables|).
 
 lua_gettop                                                        *lua_gettop()*
->
+>c
     int lua_gettop (lua_State *L);
 <
         Returns the index of the top element in the stack. Because indices
@@ -1956,7 +1956,7 @@ lua_gettop                                                        *lua_gettop()*
         0 means an empty stack).
 
 lua_insert                                                        *lua_insert()*
->
+>c
     void lua_insert (lua_State *L, int index);
 <
         Moves the top element into the given valid index, shifting up the
@@ -1964,7 +1964,7 @@ lua_insert                                                        *lua_insert()*
         pseudo-index, because a pseudo-index is not an actual stack position.
 
 lua_Integer                                                      *lua_Integer()*
->
+>c
     typedef ptrdiff_t lua_Integer;
 <
         The type used by the Lua API to represent integral values.
@@ -1973,77 +1973,77 @@ lua_Integer                                                      *lua_Integer()*
         type the machine handles "comfortably".
 
 lua_isboolean                                                  *lua_isboolean()*
->
+>c
     int lua_isboolean (lua_State *L, int index);
 <
         Returns 1 if the value at the given acceptable index has type boolean,
         and 0 otherwise.
 
 lua_iscfunction                                              *lua_iscfunction()*
->
+>c
     int lua_iscfunction (lua_State *L, int index);
 <
         Returns 1 if the value at the given acceptable index is a C function,
         and 0 otherwise.
 
 lua_isfunction                                                *lua_isfunction()*
->
+>c
     int lua_isfunction (lua_State *L, int index);
 <
         Returns 1 if the value at the given acceptable index is a function
         (either C or Lua), and 0 otherwise.
 
 lua_islightuserdata                                      *lua_islightuserdata()*
->
+>c
     int lua_islightuserdata (lua_State *L, int index);
 <
         Returns 1 if the value at the given acceptable index is a light
         userdata, and 0 otherwise.
 
 lua_isnil                                                          *lua_isnil()*
->
+>c
     int lua_isnil (lua_State *L, int index);
 <
         Returns 1 if the value at the given acceptable index is `nil`, and 0
         otherwise.
 
 lua_isnumber                                                    *lua_isnumber()*
->
+>c
     int lua_isnumber (lua_State *L, int index);
 <
         Returns 1 if the value at the given acceptable index is a number or a
         string convertible to a number, and 0 otherwise.
 
 lua_isstring                                                    *lua_isstring()*
->
+>c
     int lua_isstring (lua_State *L, int index);
 <
         Returns 1 if the value at the given acceptable index is a string or a
         number (which is always convertible to a string), and 0 otherwise.
 
 lua_istable                                                      *lua_istable()*
->
+>c
     int lua_istable (lua_State *L, int index);
 <
         Returns 1 if the value at the given acceptable index is a table, and
         0 otherwise.
 
 lua_isthread                                                    *lua_isthread()*
->
+>c
     int lua_isthread (lua_State *L, int index);
 <
         Returns 1 if the value at the given acceptable index is a thread, and
         0 otherwise.
 
 lua_isuserdata                                                *lua_isuserdata()*
->
+>c
     int lua_isuserdata (lua_State *L, int index);
 <
         Returns 1 if the value at the given acceptable index is a userdata
         (either full or light), and 0 otherwise.
 
 lua_lessthan                                                    *lua_lessthan()*
->
+>c
     int lua_lessthan (lua_State *L, int index1, int index2);
 <
         Returns 1 if the value at acceptable index `index1` is smaller than
@@ -2052,7 +2052,7 @@ lua_lessthan                                                    *lua_lessthan()*
         Also returns 0 if any of the indices is non valid.
 
 lua_load                                                            *lua_load()*
->
+>c
     int lua_load (lua_State *L,
                   lua_Reader reader,
                   void *data,
@@ -2079,7 +2079,7 @@ lua_load                                                            *lua_load()*
         error messages and in debug information (see |luaref-apiDebug|).
 
 lua_newstate                                                    *lua_newstate()*
->
+>c
     lua_State *lua_newstate (lua_Alloc f, void *ud);
 <
         Creates a new, independent state. Returns `NULL` if cannot create the
@@ -2089,7 +2089,7 @@ lua_newstate                                                    *lua_newstate()*
         simply passes to the allocator in every call.
 
 lua_newtable                                                    *lua_newtable()*
->
+>c
     void lua_newtable (lua_State *L);
 <
         Creates a new empty table and pushes it onto the stack. It is
@@ -2097,7 +2097,7 @@ lua_newtable                                                    *lua_newtable()*
         |lua_createtable()|).
 
 lua_newthread                                                  *lua_newthread()*
->
+>c
     lua_State *lua_newthread (lua_State *L);
 <
         Creates a new thread, pushes it on the stack, and returns a pointer to
@@ -2110,7 +2110,7 @@ lua_newthread                                                  *lua_newthread()*
         are subject to garbage collection, like any Lua object.
 
 lua_newuserdata                                              *lua_newuserdata()*
->
+>c
     void *lua_newuserdata (lua_State *L, size_t size);
 <
         This function allocates a new block of memory with the given size,
@@ -2128,7 +2128,7 @@ lua_newuserdata                                              *lua_newuserdata()*
         is collected again then Lua frees its corresponding memory.
 
 lua_next                                                            *lua_next()*
->
+>c
     int lua_next (lua_State *L, int index);
 <
         Pops a key from the stack, and pushes a key-value pair from the table
@@ -2138,7 +2138,7 @@ lua_next                                                            *lua_next()*
 
                                                          *luaref-tabletraversal*
         A typical traversal looks like this:
->
+>c
                /* table is in the stack at index 't' */
                lua_pushnil(L);  /* first key */
                while (lua_next(L, t) != 0) {
@@ -2156,7 +2156,7 @@ lua_next                                                            *lua_next()*
         value at the given index; this confuses the next call to `lua_next`.
 
 lua_Number                                                        *lua_Number()*
->
+>c
     typedef double lua_Number;
 <
         The type of numbers in Lua. By default, it is double, but that can be
@@ -2166,7 +2166,7 @@ lua_Number                                                        *lua_Number()*
         another type for numbers (e.g., float or long).
 
 lua_objlen                                                        *lua_objlen()*
->
+>c
     size_t lua_objlen (lua_State *L, int index);
 <
         Returns the "length" of the value at the given acceptable index: for
@@ -2175,7 +2175,7 @@ lua_objlen                                                        *lua_objlen()*
         block of memory allocated for the userdata; for other values, it is 0.
 
 lua_pcall                                                          *lua_pcall()*
->
+>c
     lua_pcall (lua_State *L, int nargs, int nresults, int errfunc);
 <
         Calls a function in protected mode.
@@ -2210,19 +2210,19 @@ lua_pcall                                                          *lua_pcall()*
         - `LUA_ERRERR`  error while running the error handler function.
 
 lua_pop                                                              *lua_pop()*
->
+>c
     void lua_pop (lua_State *L, int n);
 <
         Pops `n` elements from the stack.
 
 lua_pushboolean                                              *lua_pushboolean()*
->
+>c
     void lua_pushboolean (lua_State *L, int b);
 <
         Pushes a boolean value with value `b` onto the stack.
 
 lua_pushcclosure                                            *lua_pushcclosure()*
->
+>c
     void lua_pushcclosure (lua_State *L, lua_CFunction fn, int n);
 <
         Pushes a new C closure onto the stack.
@@ -2238,7 +2238,7 @@ lua_pushcclosure                                            *lua_pushcclosure()*
         pops these values from the stack.
 
 lua_pushcfunction                                          *lua_pushcfunction()*
->
+>c
     void lua_pushcfunction (lua_State *L, lua_CFunction f);
 <
         Pushes a C function onto the stack. This function receives a pointer
@@ -2250,12 +2250,12 @@ lua_pushcfunction                                          *lua_pushcfunction()*
         |lua_CFunction()|).
 
         `lua_pushcfunction` is defined as a macro:
->
+>c
             #define lua_pushcfunction(L,f)  lua_pushcclosure(L,f,0)
 <
 
 lua_pushfstring                                              *lua_pushfstring()*
->
+>c
     const char *lua_pushfstring (lua_State *L, const char *fmt, ...);
 <
         Pushes onto the stack a formatted string and returns a pointer to this
@@ -2274,13 +2274,13 @@ lua_pushfstring                                              *lua_pushfstring()*
            character).
 
 lua_pushinteger                                              *lua_pushinteger()*
->
+>c
     void lua_pushinteger (lua_State *L, lua_Integer n);
 <
         Pushes a number with value `n` onto the stack.
 
 lua_pushlightuserdata                                  *lua_pushlightuserdata()*
->
+>c
     void lua_pushlightuserdata (lua_State *L, void *p);
 <
         Pushes a light userdata onto the stack.
@@ -2292,7 +2292,7 @@ lua_pushlightuserdata                                  *lua_pushlightuserdata()*
         same C address.
 
 lua_pushlstring                                              *lua_pushlstring()*
->
+>c
     void lua_pushlstring (lua_State *L, const char *s, size_t len);
 <
         Pushes the string pointed to by `s` with size `len` onto the stack.
@@ -2301,19 +2301,19 @@ lua_pushlstring                                              *lua_pushlstring()*
         returns. The string can contain embedded zeros.
 
 lua_pushnil                                                      *lua_pushnil()*
->
+>c
     void lua_pushnil (lua_State *L);
 <
         Pushes a nil value onto the stack.
 
 lua_pushnumber                                                *lua_pushnumber()*
->
+>c
     void lua_pushnumber (lua_State *L, lua_Number n);
 <
         Pushes a number with value `n` onto the stack.
 
 lua_pushstring                                                *lua_pushstring()*
->
+>c
     void lua_pushstring (lua_State *L, const char *s);
 <
         Pushes the zero-terminated string pointed to by `s` onto the stack.
@@ -2323,20 +2323,20 @@ lua_pushstring                                                *lua_pushstring()*
         end at the first zero.
 
 lua_pushthread                                                *lua_pushthread()*
->
+>c
     int lua_pushthread (lua_State *L);
 <
         Pushes the thread represented by `L` onto the stack. Returns 1 if this
         thread is the main thread of its state.
 
 lua_pushvalue                                                  *lua_pushvalue()*
->
+>c
     void lua_pushvalue (lua_State *L, int index);
 <
         Pushes a copy of the element at the given valid index onto the stack.
 
 lua_pushvfstring                                            *lua_pushvfstring()*
->
+>c
     const char *lua_pushvfstring (lua_State *L,
                                   const char *fmt,
                                   va_list argp);
@@ -2346,7 +2346,7 @@ lua_pushvfstring                                            *lua_pushvfstring()*
         arguments.
 
 lua_rawequal                                                    *lua_rawequal()*
->
+>c
     int lua_rawequal (lua_State *L, int index1, int index2);
 <
         Returns 1 if the two values in acceptable indices `index1` and
@@ -2355,14 +2355,14 @@ lua_rawequal                                                    *lua_rawequal()*
         valid.
 
 lua_rawget                                                        *lua_rawget()*
->
+>c
     void lua_rawget (lua_State *L, int index);
 <
         Similar to `lua_gettable` (see |lua_gettable()|), but does a raw
         access (i.e., without metamethods).
 
 lua_rawgeti                                                      *lua_rawgeti()*
->
+>c
     void lua_rawgeti (lua_State *L, int index, int n);
 <
         Pushes onto the stack the value `t[n]`, where `t` is the value at the
@@ -2370,14 +2370,14 @@ lua_rawgeti                                                      *lua_rawgeti()*
         invoke metamethods.
 
 lua_rawset                                                        *lua_rawset()*
->
+>c
     void lua_rawset (lua_State *L, int index);
 <
         Similar to `lua_settable` (see |lua_settable()|), but does a raw
         assignment (i.e., without metamethods).
 
 lua_rawseti                                                      *lua_rawseti()*
->
+>c
     void lua_rawseti (lua_State *L, int index, int n);
 <
         Does the equivalent of `t[n] = v`, where `t` is the value at the given
@@ -2387,7 +2387,7 @@ lua_rawseti                                                      *lua_rawseti()*
         that is, it does not invoke metamethods.
 
 lua_Reader                                                        *lua_Reader()*
->
+>c
     typedef const char * (*lua_Reader) (lua_State *L,
                                         void *data,
                                         size_t *size);
@@ -2402,20 +2402,20 @@ lua_Reader                                                        *lua_Reader()*
         zero.
 
 lua_register                                                    *lua_register()*
->
+>c
     void lua_register (lua_State *L,
                        const char *name,
                        lua_CFunction f);
 <
         Sets the C function `f` as the new value of global `name`. It is
         defined as a macro:
->
+>c
             #define lua_register(L,n,f) \
                    (lua_pushcfunction(L, f), lua_setglobal(L, n))
 <
 
 lua_remove                                                        *lua_remove()*
->
+>c
     void lua_remove (lua_State *L, int index);
 <
         Removes the element at the given valid index, shifting down the
@@ -2423,7 +2423,7 @@ lua_remove                                                        *lua_remove()*
         pseudo-index, because a pseudo-index is not an actual stack position.
 
 lua_replace                                                      *lua_replace()*
->
+>c
     void lua_replace (lua_State *L, int index);
 <
         Moves the top element into the given position (and pops it), without
@@ -2431,7 +2431,7 @@ lua_replace                                                      *lua_replace()*
         position).
 
 lua_resume                                                        *lua_resume()*
->
+>c
     int lua_resume (lua_State *L, int narg);
 <
         Starts and resumes a coroutine in a given thread.
@@ -2452,14 +2452,14 @@ lua_resume                                                        *lua_resume()*
         and then call `lua_resume`.
 
 lua_setallocf                                                  *lua_setallocf()*
->
+>c
     void lua_setallocf (lua_State *L, lua_Alloc f, void *ud);
 <
         Changes the allocator function of a given state to `f` with user data
         `ud`.
 
 lua_setfenv                                                      *lua_setfenv()*
->
+>c
     int lua_setfenv (lua_State *L, int index);
 <
         Pops a table from the stack and sets it as the new environment for the
@@ -2468,7 +2468,7 @@ lua_setfenv                                                      *lua_setfenv()*
         Otherwise it returns 1.
 
 lua_setfield                                                    *lua_setfield()*
->
+>c
     void lua_setfield (lua_State *L, int index, const char *k);
 <
         Does the equivalent to `t[k] = v`, where `t` is the value at the given
@@ -2479,24 +2479,24 @@ lua_setfield                                                    *lua_setfield()*
         |luaref-langMetatables|).
 
 lua_setglobal                                                  *lua_setglobal()*
->
+>c
     void lua_setglobal (lua_State *L, const char *name);
 <
         Pops a value from the stack and sets it as the new value of global
         `name`. It is defined as a macro:
->
+>c
             #define lua_setglobal(L,s)   lua_setfield(L, LUA_GLOBALSINDEX, s)
 <
 
 lua_setmetatable                                            *lua_setmetatable()*
->
+>c
     int lua_setmetatable (lua_State *L, int index);
 <
         Pops a table from the stack and sets it as the new metatable for the
         value at the given acceptable index.
 
 lua_settable                                                    *lua_settable()*
->
+>c
     void lua_settable (lua_State *L, int index);
 <
         Does the equivalent to `t[k] = v`, where `t` is the value at the given
@@ -2508,7 +2508,7 @@ lua_settable                                                    *lua_settable()*
         (see |luaref-langMetatables|).
 
 lua_settop                                                        *lua_settop()*
->
+>c
     void lua_settop (lua_State *L, int index);
 <
         Accepts any acceptable index, or 0, and sets the stack top to this
@@ -2517,7 +2517,7 @@ lua_settop                                                        *lua_settop()*
         elements are removed.
 
 lua_State                                                          *lua_State()*
->
+>c
     typedef struct lua_State lua_State;
 <
         Opaque structure that keeps the whole state of a Lua interpreter. The
@@ -2529,7 +2529,7 @@ lua_State                                                          *lua_State()*
         |lua_newstate()|), which creates a Lua state from scratch.
 
 lua_status                                                        *lua_status()*
->
+>c
     int lua_status (lua_State *L);
 <
         Returns the status of the thread `L`.
@@ -2539,7 +2539,7 @@ lua_status                                                        *lua_status()*
         suspended.
 
 lua_toboolean                                                  *lua_toboolean()*
->
+>c
     int lua_toboolean (lua_State *L, int index);
 <
         Converts the Lua value at the given acceptable index to a C boolean
@@ -2550,14 +2550,14 @@ lua_toboolean                                                  *lua_toboolean()*
            |lua_isboolean()| to test the value's type.)
 
 lua_tocfunction                                              *lua_tocfunction()*
->
+>c
     lua_CFunction lua_tocfunction (lua_State *L, int index);
 <
         Converts a value at the given acceptable index to a C function. That
         value must be a C function; otherwise it returns `NULL`.
 
 lua_tointeger                                                  *lua_tointeger()*
->
+>c
     lua_Integer lua_tointeger (lua_State *L, int idx);
 <
         Converts the Lua value at the given acceptable index to the signed
@@ -2569,7 +2569,7 @@ lua_tointeger                                                  *lua_tointeger()*
         way.
 
 lua_tolstring                                                  *lua_tolstring()*
->
+>c
     const char *lua_tolstring (lua_State *L, int index, size_t *len);
 <
         Converts the Lua value at the given acceptable index to a C string. If
@@ -2588,7 +2588,7 @@ lua_tolstring                                                  *lua_tolstring()*
         value is removed from the stack.
 
 lua_tonumber                                                    *lua_tonumber()*
->
+>c
     lua_Number lua_tonumber (lua_State *L, int index);
 <
         Converts the Lua value at the given acceptable index to the C type
@@ -2597,7 +2597,7 @@ lua_tonumber                                                    *lua_tonumber()*
         otherwise, `lua_tonumber` returns 0.
 
 lua_topointer                                                  *lua_topointer()*
->
+>c
     const void *lua_topointer (lua_State *L, int index);
 <
         Converts the value at the given acceptable index to a generic C
@@ -2609,14 +2609,14 @@ lua_topointer                                                  *lua_topointer()*
         Typically this function is used only for debug information.
 
 lua_tostring                                                    *lua_tostring()*
->
+>c
     const char *lua_tostring (lua_State *L, int index);
 <
         Equivalent to `lua_tolstring` (see |lua_tolstring()|) with `len`
         equal to `NULL`.
 
 lua_tothread                                                    *lua_tothread()*
->
+>c
     lua_State *lua_tothread (lua_State *L, int index);
 <
         Converts the value at the given acceptable index to a Lua thread
@@ -2624,7 +2624,7 @@ lua_tothread                                                    *lua_tothread()*
         thread; otherwise, the function returns `NULL`.
 
 lua_touserdata                                                *lua_touserdata()*
->
+>c
     void *lua_touserdata (lua_State *L, int index);
 <
         If the value at the given acceptable index is a full userdata, returns
@@ -2632,7 +2632,7 @@ lua_touserdata                                                *lua_touserdata()*
         pointer. Otherwise, it returns `NULL`.
 
 lua_type                                                            *lua_type()*
->
+>c
     int lua_type (lua_State *L, int index);
 <
         Returns the type of the value in the given acceptable index, or
@@ -2643,14 +2643,14 @@ lua_type                                                            *lua_type()*
         `LUA_TUSERDATA`, `LUA_TTHREAD`, and `LUA_TLIGHTUSERDATA`.
 
 lua_typename                                                    *lua_typename()*
->
+>c
     const char *lua_typename  (lua_State *L, int tp);
 <
         Returns the name of the type encoded by the value `tp`, which must be
         one the values returned by `lua_type`.
 
 lua_Writer                                                        *lua_Writer()*
->
+>c
     typedef int (*lua_Writer) (lua_State *L,
                                const void* p,
                                size_t sz,
@@ -2665,7 +2665,7 @@ lua_Writer                                                        *lua_Writer()*
         means an error and stops `lua_dump` from calling the writer again.
 
 lua_xmove                                                          *lua_xmove()*
->
+>c
     void lua_xmove (lua_State *from, lua_State *to, int n);
 <
         Exchange values between different threads of the `same` global state.
@@ -2674,14 +2674,14 @@ lua_xmove                                                          *lua_xmove()*
         onto the stack `to`.
 
 lua_yield                                                          *lua_yield()*
->
+>c
     int lua_yield (lua_State *L, int nresults);
 <
         Yields a coroutine.
 
         This function should only be called as the return expression of a C
         function, as follows:
->
+>c
                return lua_yield (L, nresults);
 <
         When a C function calls `lua_yield` in that way, the running coroutine
@@ -2715,7 +2715,7 @@ need "inside information" from the interpreter.
 
 lua_Debug                                                          *lua_Debug()*
 
->
+>c
     typedef struct lua_Debug {
         int event;
         const char *name;           /* (n) */
@@ -2768,25 +2768,25 @@ The fields of `lua_Debug`  have the following meaning:
                      upvalues of the function.
 
 lua_gethook                                                      *lua_gethook()*
->
+>c
     lua_Hook lua_gethook (lua_State *L);
 <
         Returns the current hook function.
 
 lua_gethookcount                                            *lua_gethookcount()*
->
+>c
     int lua_gethookcount (lua_State *L);
 <
         Returns the current hook count.
 
 lua_gethookmask                                              *lua_gethookmask()*
->
+>c
     int lua_gethookmask (lua_State *L);
 <
         Returns the current hook mask.
 
 lua_getinfo                                                      *lua_getinfo()*
->
+>c
     int lua_getinfo (lua_State *L, const char *what, lua_Debug *ar);
 <
         Returns information about a specific function or function invocation.
@@ -2801,7 +2801,7 @@ lua_getinfo                                                      *lua_getinfo()*
         `lua_getinfo` pops the function in the top of the stack.) For
         instance, to know in which line a function `f` was defined, you can
         write the following code:
->
+>c
                lua_Debug ar;
                lua_getfield(L, LUA_GLOBALSINDEX, "f");  /* get global 'f' */
                lua_getinfo(L, ">S", &ar);
@@ -2826,7 +2826,7 @@ lua_getinfo                                                      *lua_getinfo()*
         `what`).
 
 lua_getlocal                                                    *lua_getlocal()*
->
+>c
     const char *lua_getlocal (lua_State *L, lua_Debug *ar, int n);
 <
         Gets information about a local variable of a given activation record.
@@ -2846,7 +2846,7 @@ lua_getlocal                                                    *lua_getlocal()*
         number of active local variables.
 
 lua_getstack                                                    *lua_getstack()*
->
+>c
     int lua_getstack (lua_State *L, int level, lua_Debug *ar);
 <
         Gets information about the interpreter runtime stack.
@@ -2859,7 +2859,7 @@ lua_getstack                                                    *lua_getstack()*
         with a level greater than the stack depth, it returns 0.
 
 lua_getupvalue                                                *lua_getupvalue()*
->
+>c
     const char *lua_getupvalue (lua_State *L, int funcindex, int n);
 <
         Gets information about a closure's upvalue. (For Lua functions,
@@ -2875,7 +2875,7 @@ lua_getupvalue                                                *lua_getupvalue()*
         string `""` as a name for all upvalues.
 
 lua_Hook                                                            *lua_Hook()*
->
+>c
     typedef void (*lua_Hook) (lua_State *L, lua_Debug *ar);
 <
         Type for debugging hook functions.
@@ -2897,7 +2897,7 @@ lua_Hook                                                            *lua_Hook()*
 
 
 lua_sethook                                                      *lua_sethook()*
->
+>c
     int lua_sethook (lua_State *L, lua_Hook f, int mask, int count);
 <
         Sets the debugging hook function.
@@ -2926,7 +2926,7 @@ lua_sethook                                                      *lua_sethook()*
         A hook is disabled by setting `mask` to zero.
 
 lua_setlocal                                                    *lua_setlocal()*
->
+>c
     const char *lua_setlocal (lua_State *L, lua_Debug *ar, int n);
 <
         Sets the value of a local variable of a given activation record.
@@ -2939,7 +2939,7 @@ lua_setlocal                                                    *lua_setlocal()*
         number of active local variables.
 
 lua_setupvalue                                                *lua_setupvalue()*
->
+>c
     const char *lua_setupvalue (lua_State *L, int funcindex, int n);
 <
         Sets the value of a closure's upvalue. It assigns the value at the top
@@ -2953,7 +2953,7 @@ lua_setupvalue                                                *lua_setupvalue()*
                                                            *luaref-debugexample*
         As an example, the following function lists the names of all local
         variables and upvalues for a function at a given level of the stack:
->
+>c
                int listvars (lua_State *L, int level) {
                  lua_Debug ar;
                  int i;
@@ -3002,20 +3002,20 @@ Here we list all functions and types from the auxiliary library in
 alphabetical order.
 
 luaL_addchar                                                    *luaL_addchar()*
->
+>c
     void luaL_addchar (luaL_Buffer *B, char c);
 <
         Adds the character `c` to the buffer `B` (see |luaL_Buffer()|).
 
 luaL_addlstring                                              *luaL_addlstring()*
->
+>c
     void luaL_addlstring (luaL_Buffer *B, const char *s, size_t l);
 <
         Adds the string pointed to by `s` with length `l` to the buffer `B`
         (see |luaL_Buffer()|). The string may contain embedded zeros.
 
 luaL_addsize                                                    *luaL_addsize()*
->
+>c
     void luaL_addsize (luaL_Buffer *B, size_t n);
 <
         Adds to the buffer `B` (see |luaL_Buffer()|) a string of length
@@ -3023,14 +3023,14 @@ luaL_addsize                                                    *luaL_addsize()*
         |luaL_prepbuffer()|).
 
 luaL_addstring                                                *luaL_addstring()*
->
+>c
     void luaL_addstring (luaL_Buffer *B, const char *s);
 <
         Adds the zero-terminated string pointed to by `s` to the buffer `B`
         (see |luaL_Buffer()|). The string may not contain embedded zeros.
 
 luaL_addvalue                                                  *luaL_addvalue()*
->
+>c
     void luaL_addvalue (luaL_Buffer *B);
 <
         Adds the value at the top of the stack to the buffer `B` (see
@@ -3041,7 +3041,7 @@ luaL_addvalue                                                  *luaL_addvalue()*
         added to the buffer.
 
 luaL_argcheck                                                  *luaL_argcheck()*
->
+>c
     void luaL_argcheck (lua_State *L,
                         int cond,
                         int narg,
@@ -3054,7 +3054,7 @@ luaL_argcheck                                                  *luaL_argcheck()*
 <
 
 luaL_argerror                                                  *luaL_argerror()*
->
+>c
     int luaL_argerror (lua_State *L, int narg, const char *extramsg);
 <
         Raises an error with the following message, where `func` is retrieved
@@ -3066,7 +3066,7 @@ luaL_argerror                                                  *luaL_argerror()*
         functions as `return luaL_argerror(` `args` `)`.
 
 luaL_Buffer                                                      *luaL_Buffer()*
->
+>c
     typedef struct luaL_Buffer luaL_Buffer;
 <
         Type for a `string buffer`.
@@ -3095,14 +3095,14 @@ luaL_Buffer                                                      *luaL_Buffer()*
         string on its top.
 
 luaL_buffinit                                                  *luaL_buffinit()*
->
+>c
     void luaL_buffinit (lua_State *L, luaL_Buffer *B);
 <
         Initializes a buffer `B`. This function does not allocate any space;
         the buffer must be declared as a variable (see |luaL_Buffer()|).
 
 luaL_callmeta                                                  *luaL_callmeta()*
->
+>c
     int luaL_callmeta (lua_State *L, int obj, const char *e);
 <
         Calls a metamethod.
@@ -3115,49 +3115,49 @@ luaL_callmeta                                                  *luaL_callmeta()*
         0 (without pushing any value on the stack).
 
 luaL_checkany                                                  *luaL_checkany()*
->
+>c
     void luaL_checkany (lua_State *L, int narg);
 <
         Checks whether the function has an argument of any type (including
         `nil`) at position `narg`.
 
 luaL_checkint                                                  *luaL_checkint()*
->
+>c
     int luaL_checkint (lua_State *L, int narg);
 <
         Checks whether the function argument `narg` is a number and returns
         this number cast to an `int`.
 
 luaL_checkinteger                                          *luaL_checkinteger()*
->
+>c
     lua_Integer luaL_checkinteger (lua_State *L, int narg);
 <
         Checks whether the function argument `narg` is a number and returns
         this number cast to a `lua_Integer` (see |lua_Integer()|).
 
 luaL_checklong                                                *luaL_checklong()*
->
+>c
     long luaL_checklong (lua_State *L, int narg);
 <
         Checks whether the function argument `narg` is a number and returns
         this number cast to a `long`.
 
 luaL_checklstring                                          *luaL_checklstring()*
->
+>c
     const char *luaL_checklstring (lua_State *L, int narg, size_t *l);
 <
         Checks whether the function argument `narg` is a string and returns
         this string; if `l` is not `NULL` fills `*l` with the string's length.
 
 luaL_checknumber                                            *luaL_checknumber()*
->
+>c
     lua_Number luaL_checknumber (lua_State *L, int narg);
 <
         Checks whether the function argument `narg` is a number and returns
         this number (see |lua_Number()|).
 
 luaL_checkoption                                            *luaL_checkoption()*
->
+>c
     int luaL_checkoption (lua_State *L,
                           int narg,
                           const char *def,
@@ -3177,7 +3177,7 @@ luaL_checkoption                                            *luaL_checkoption()*
         select options.)
 
 luaL_checkstack                                              *luaL_checkstack()*
->
+>c
     void luaL_checkstack (lua_State *L, int sz, const char *msg);
 <
         Grows the stack size to `top + sz` elements, raising an error if the
@@ -3185,48 +3185,48 @@ luaL_checkstack                                              *luaL_checkstack()*
         the error message.
 
 luaL_checkstring                                            *luaL_checkstring()*
->
+>c
     const char *luaL_checkstring (lua_State *L, int narg);
 <
         Checks whether the function argument `narg` is a string and returns
         this string.
 
 luaL_checktype                                                *luaL_checktype()*
->
+>c
     void luaL_checktype (lua_State *L, int narg, int t);
 <
         Checks whether the function argument `narg` has type `t` (see
         |lua_type()|).
 
 luaL_checkudata                                              *luaL_checkudata()*
->
+>c
     void *luaL_checkudata (lua_State *L, int narg, const char *tname);
 <
         Checks whether the function argument `narg` is a userdata of the type
         `tname` (see |luaL_newmetatable()|).
 
 luaL_dofile                                                      *luaL_dofile()*
->
+>c
     int luaL_dofile (lua_State *L, const char *filename);
 <
         Loads and runs the given file. It is defined as the following macro:
->
+>c
                (luaL_loadfile(L, filename) || lua_pcall(L, 0, LUA_MULTRET, 0))
 <
         It returns 0 if there are no errors or 1 in case of errors.
 
 luaL_dostring                                                  *luaL_dostring()*
->
+>c
     int luaL_dostring (lua_State *L, const char *str);
 <
         Loads and runs the given string. It is defined as the following macro:
->
+>c
                (luaL_loadstring(L, str) || lua_pcall(L, 0, LUA_MULTRET, 0))
 <
         It returns 0 if there are no errors or 1 in case of errors.
 
 luaL_error                                                        *luaL_error()*
->
+>c
     int luaL_error (lua_State *L, const char *fmt, ...);
 <
         Raises an error. The error message format is given by `fmt` plus any
@@ -3239,7 +3239,7 @@ luaL_error                                                        *luaL_error()*
         functions as `return luaL_error(` `args` `)`.
 
 luaL_getmetafield                                          *luaL_getmetafield()*
->
+>c
     int luaL_getmetafield (lua_State *L, int obj, const char *e);
 <
         Pushes onto the stack the field `e` from the metatable of the object
@@ -3247,14 +3247,14 @@ luaL_getmetafield                                          *luaL_getmetafield()*
         metatable does not have this field, returns 0 and pushes nothing.
 
 luaL_getmetatable                                          *luaL_getmetatable()*
->
+>c
     void luaL_getmetatable (lua_State *L, const char *tname);
 <
         Pushes onto the stack the metatable associated with name `tname` in
         the registry (see |luaL_newmetatable()|).
 
 luaL_gsub                                                          *luaL_gsub()*
->
+>c
     const char *luaL_gsub (lua_State *L,
                            const char *s,
                            const char *p,
@@ -3265,7 +3265,7 @@ luaL_gsub                                                          *luaL_gsub()*
         returns it.
 
 luaL_loadbuffer                                              *luaL_loadbuffer()*
->
+>c
     int luaL_loadbuffer (lua_State *L,
                          const char *buff,
                          size_t sz,
@@ -3279,7 +3279,7 @@ luaL_loadbuffer                                              *luaL_loadbuffer()*
         chunk name, used for debug information and error messages.
 
 luaL_loadfile                                                  *luaL_loadfile()*
->
+>c
     int luaL_loadfile (lua_State *L, const char *filename);
 <
         Loads a file as a Lua chunk. This function uses `lua_load` (see
@@ -3293,7 +3293,7 @@ luaL_loadfile                                                  *luaL_loadfile()*
         As `lua_load`, this function only loads the chunk; it does not run it.
 
 luaL_loadstring                                              *luaL_loadstring()*
->
+>c
     int luaL_loadstring (lua_State *L, const char *s);
 <
         Loads a string as a Lua chunk. This function uses `lua_load` (see
@@ -3306,7 +3306,7 @@ luaL_loadstring                                              *luaL_loadstring()*
         run it.
 
 luaL_newmetatable                                          *luaL_newmetatable()*
->
+>c
     int luaL_newmetatable (lua_State *L, const char *tname);
 <
         If the registry already has the key `tname`, returns 0. Otherwise,
@@ -3317,7 +3317,7 @@ luaL_newmetatable                                          *luaL_newmetatable()*
         `tname` in the registry.
 
 luaL_newstate                                                  *luaL_newstate()*
->
+>c
     lua_State *luaL_newstate (void);
 <
         Creates a new Lua state. It calls `lua_newstate` (see
@@ -3330,14 +3330,14 @@ luaL_newstate                                                  *luaL_newstate()*
         error.
 
 luaL_openlibs                                                  *luaL_openlibs()*
->
+>c
     void luaL_openlibs (lua_State *L);
 <
         Opens all standard Lua libraries into the given state. See also
         |luaref-openlibs| for details on how to open individual libraries.
 
 luaL_optint                                                      *luaL_optint()*
->
+>c
     int luaL_optint (lua_State *L, int narg, int d);
 <
         If the function argument `narg` is a number, returns this number cast
@@ -3345,7 +3345,7 @@ luaL_optint                                                      *luaL_optint()*
         Otherwise, raises an error.
 
 luaL_optinteger                                              *luaL_optinteger()*
->
+>c
     lua_Integer luaL_optinteger (lua_State *L,
                                  int narg,
                                  lua_Integer d);
@@ -3355,7 +3355,7 @@ luaL_optinteger                                              *luaL_optinteger()*
         absent or is `nil`, returns `d`. Otherwise, raises an error.
 
 luaL_optlong                                                    *luaL_optlong()*
->
+>c
     long luaL_optlong (lua_State *L, int narg, long d);
 <
         If the function argument `narg` is a number, returns this number cast
@@ -3363,7 +3363,7 @@ luaL_optlong                                                    *luaL_optlong()*
         Otherwise, raises an error.
 
 luaL_optlstring                                              *luaL_optlstring()*
->
+>c
     const char *luaL_optlstring (lua_State *L,
                                  int narg,
                                  const char *d,
@@ -3376,7 +3376,7 @@ luaL_optlstring                                              *luaL_optlstring()*
         If `l` is not `NULL`, fills the position `*l` with the results' length.
 
 luaL_optnumber                                                *luaL_optnumber()*
->
+>c
     lua_Number luaL_optnumber (lua_State *L, int narg, lua_Number d);
 <
         If the function argument `narg` is a number, returns this number. If
@@ -3384,7 +3384,7 @@ luaL_optnumber                                                *luaL_optnumber()*
         error.
 
 luaL_optstring                                                *luaL_optstring()*
->
+>c
     const char *luaL_optstring (lua_State *L,
                                 int narg,
                                 const char *d);
@@ -3394,7 +3394,7 @@ luaL_optstring                                                *luaL_optstring()*
         error.
 
 luaL_prepbuffer                                              *luaL_prepbuffer()*
->
+>c
     char *luaL_prepbuffer (luaL_Buffer *B);
 <
         Returns an address to a space of size `LUAL_BUFFERSIZE` where you can
@@ -3404,14 +3404,14 @@ luaL_prepbuffer                                              *luaL_prepbuffer()*
         add it to the buffer.
 
 luaL_pushresult                                              *luaL_pushresult()*
->
+>c
     void luaL_pushresult (luaL_Buffer *B);
 <
         Finishes the use of buffer `B` leaving the final string on the top of
         the stack.
 
 luaL_ref                                                            *luaL_ref()*
->
+>c
     int luaL_ref (lua_State *L, int t);
 <
         Creates and returns a `reference`, in the table at index `t`, for the
@@ -3429,7 +3429,7 @@ luaL_ref                                                            *luaL_ref()*
         different from any reference returned by `luaL_ref`.
 
 luaL_Reg                                                            *luaL_Reg()*
->
+>c
     typedef struct luaL_Reg {
         const char *name;
         lua_CFunction func;
@@ -3441,7 +3441,7 @@ luaL_Reg                                                            *luaL_Reg()*
         sentinel entry in which both `name` and `func` are `NULL`.
 
 luaL_register                                                  *luaL_register()*
->
+>c
     void luaL_register (lua_State *L,
                         const char *libname,
                         const luaL_Reg *l);
@@ -3462,13 +3462,13 @@ luaL_register                                                  *luaL_register()*
         In any case the function leaves the table on the top of the stack.
 
 luaL_typename                                                  *luaL_typename()*
->
+>c
     const char *luaL_typename (lua_State *L, int idx);
 <
         Returns the name of the type of the value at index `idx`.
 
 luaL_typerror                                                  *luaL_typerror()*
->
+>c
     int luaL_typerror (lua_State *L, int narg, const char *tname);
 <
         Generates an error with a message like the following:
@@ -3481,7 +3481,7 @@ luaL_typerror                                                  *luaL_typerror()*
         `rt` is the type name of the actual argument.
 
 luaL_unref                                                        *luaL_unref()*
->
+>c
     void luaL_unref (lua_State *L, int t, int ref);
 <
         Releases reference `ref` from the table at index `t` (see
@@ -3492,7 +3492,7 @@ luaL_unref                                                        *luaL_unref()*
         If `ref` is `LUA_NOREF` or `LUA_REFNIL`, `luaL_unref` does nothing.
 
 luaL_where                                                        *luaL_where()*
->
+>c
     void luaL_where (lua_State *L, int lvl);
 <
         Pushes onto the stack a string identifying the current position of the
@@ -3641,7 +3641,7 @@ loadstring({string} [, {chunkname}])                       *luaref-loadstring()*
         given {string}.
 
         To load and run a given string, use the idiom
->
+>lua
                assert(loadstring(s))()
 <
 
@@ -3756,7 +3756,7 @@ type({v})                                                        *luaref-type()*
 unpack({list} [, {i} [, {j}]])                                 *luaref-unpack()*
         Returns the elements from the given table. This function is equivalent
         to
->
+>lua
           return list[i], list[i+1], ..., list[j]
 <
         except that the above code can be written only for a fixed number of
@@ -4021,11 +4021,11 @@ string.format({formatstring}, {...})                           *string.format()*
         interpreter: the string is written between double quotes, and all
         double quotes, newlines, embedded zeros, and backslashes in the string
         are correctly escaped when written. For instance, the call
->
+>lua
                string.format('%q', 'a string with "quotes" and \n new line')
 <
         will produce the string:
->
+>lua
                "a string with \"quotes\" and \
                 new line"
 <
@@ -4043,7 +4043,7 @@ string.gmatch({s}, {pattern})                                  *string.gmatch()*
         in each call.
 
         As an example, the following loop
->
+>lua
                s = "hello world from Lua"
                for w in string.gmatch(s, "%a+") do
                  print(w)
@@ -4052,7 +4052,7 @@ string.gmatch({s}, {pattern})                                  *string.gmatch()*
         will iterate over all the words from string {s}, printing one per
         line. The next example collects all pairs `key=value` from the given
         string into a table:
->
+>lua
                t = {}
                s = "from=world, to=Lua"
                for k, v in string.gmatch(s, "(%w+)=(%w+)") do
@@ -4091,7 +4091,7 @@ string.gsub({s}, {pattern}, {repl} [, {n}])                    *string.gsub()*
         occurrence of `pattern` is replaced.
 
         Here are some examples:
->
+>lua
            x = string.gsub("hello world", "(%w+)", "%1 %1")
            --> x="hello hello world world"
 

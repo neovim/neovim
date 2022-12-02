@@ -68,11 +68,11 @@ The "severity" key in a diagnostic is one of the values defined in
 Functions that take a severity as an optional parameter (e.g.
 |vim.diagnostic.get()|) accept one of two forms:
 
-1. A single |vim.diagnostic.severity| value: >
+1. A single |vim.diagnostic.severity| value: >lua
 
     vim.diagnostic.get(0, { severity = vim.diagnostic.severity.WARN })
 
-2. A table with a "min" or "max" key (or both): >
+2. A table with a "min" or "max" key (or both): >lua
 
     vim.diagnostic.get(0, { severity = { min = vim.diagnostic.severity.WARN } })
 
@@ -107,7 +107,7 @@ Nvim provides these handlers by default: "virtual_text", "signs", and
 
                                                 *diagnostic-handlers-example*
 The example below creates a new handler that notifies the user of diagnostics
-with |vim.notify()|: >
+with |vim.notify()|: >lua
 
     -- It's good practice to namespace custom handlers to avoid collisions
     vim.diagnostic.handlers["my/notify"] = {
@@ -135,7 +135,7 @@ In this example, there is nothing to do when diagnostics are hidden, so we
 omit the "hide" function.
 
 Existing handlers can be overridden. For example, use the following to only
-show a sign for the highest severity diagnostic on a given line: >
+show a sign for the highest severity diagnostic on a given line: >lua
 
     -- Create a custom namespace. This will aggregate signs from all other
     -- namespaces and only show the one with the highest severity on a
@@ -185,7 +185,7 @@ own default highlight groups.
 
 For example, the default highlighting for |hl-DiagnosticSignError| is linked
 to |hl-DiagnosticError|. To change the default (and therefore the linked
-highlights), use the |:highlight| command: >
+highlights), use the |:highlight| command: >vim
 
     highlight DiagnosticError guifg="BrightRed"
 <
@@ -279,7 +279,7 @@ SIGNS                                                   *diagnostic-signs*
 
 Signs are defined for each diagnostic severity. The default text for each sign
 is the first letter of the severity name (for example, "E" for ERROR). Signs
-can be customized using the following: >
+can be customized using the following: >vim
 
     sign define DiagnosticSignError text=E texthl=DiagnosticSignError linehl= numhl=
     sign define DiagnosticSignWarn text=W texthl=DiagnosticSignWarn linehl= numhl=
@@ -299,7 +299,7 @@ DiagnosticChanged       After diagnostics have changed. When used from Lua,
                         the new diagnostics are passed to the autocmd
                         callback in the "data" table.
 
-Example: >
+Example: >lua
 
     vim.api.nvim_create_autocmd('DiagnosticChanged', {
       callback = function(args)
@@ -320,12 +320,12 @@ config({opts}, {namespace})                          *vim.diagnostic.config()*
     |vim.diagnostic.show()|). Ephemeral configuration has highest priority,
     followed by namespace configuration, and finally global configuration.
 
-    For example, if a user enables virtual text globally with >
+    For example, if a user enables virtual text globally with >lua
 
        vim.diagnostic.config({ virtual_text = true })
 <
 
-    and a diagnostic producer sets diagnostics with >
+    and a diagnostic producer sets diagnostics with >lua
 
        vim.diagnostic.set(ns, 0, diagnostics, { virtual_text = false })
 <
@@ -372,14 +372,14 @@ config({opts}, {namespace})                          *vim.diagnostic.config()*
                          to render an LSP diagnostic error code.
                        • format: (function) A function that takes a diagnostic
                          as input and returns a string. The return value is
-                         the text used to display the diagnostic. Example: >
+                         the text used to display the diagnostic. Example: >lua
 
-                           function(diagnostic)
-                             if diagnostic.severity == vim.diagnostic.severity.ERROR then
-                               return string.format("E: %s", diagnostic.message)
+                             function(diagnostic)
+                               if diagnostic.severity == vim.diagnostic.severity.ERROR then
+                                 return string.format("E: %s", diagnostic.message)
+                               end
+                               return diagnostic.message
                              end
-                             return diagnostic.message
-                           end
 <
 
                      • signs: (default true) Use signs for diagnostics.
@@ -553,12 +553,12 @@ match({str}, {pat}, {groups}, {severity_map}, {defaults})
      WARNING filename:27:3: Variable 'foo' does not exist
 <
 
-    This can be parsed into a diagnostic |diagnostic-structure| with: >
+    This can be parsed into a diagnostic |diagnostic-structure| with: >lua
 
-     local s = "WARNING filename:27:3: Variable 'foo' does not exist"
-     local pattern = "^(%w+) %w+:(%d+):(%d+): (.+)$"
-     local groups = { "severity", "lnum", "col", "message" }
-     vim.diagnostic.match(s, pattern, groups, { WARNING = vim.diagnostic.WARN })
+       local s = "WARNING filename:27:3: Variable 'foo' does not exist"
+       local pattern = "^(%w+) %w+:(%d+):(%d+): (.+)$"
+       local groups = { "severity", "lnum", "col", "message" }
+       vim.diagnostic.match(s, pattern, groups, { WARNING = vim.diagnostic.WARN })
 <
 
     Parameters: ~

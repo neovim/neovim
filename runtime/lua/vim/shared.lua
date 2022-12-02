@@ -102,11 +102,11 @@ end
 --- Splits a string at each instance of a separator.
 ---
 --- Examples:
---- <pre>
----  split(":aa::b:", ":")     => {'','aa','','b',''}
----  split("axaby", "ab?")     => {'','x','y'}
----  split("x*yz*o", "*", {plain=true})  => {'x','yz','o'}
----  split("|x|y|z|", "|", {trimempty=true}) => {'x', 'y', 'z'}
+--- <pre>lua
+---  split(":aa::b:", ":")                   --> {'','aa','','b',''}
+---  split("axaby", "ab?")                   --> {'','x','y'}
+---  split("x*yz*o", "*", {plain=true})      --> {'x','yz','o'}
+---  split("|x|y|z|", "|", {trimempty=true}) --> {'x', 'y', 'z'}
 --- </pre>
 ---
 ---@see |vim.gsplit()|
@@ -383,7 +383,7 @@ end
 --- Return `nil` if the key does not exist.
 ---
 --- Examples:
---- <pre>
+--- <pre>lua
 ---  vim.tbl_get({ key = { nested_key = true }}, 'key', 'nested_key') == true
 ---  vim.tbl_get({ key = {}}, 'key', 'nested_key') == nil
 --- </pre>
@@ -495,9 +495,9 @@ end
 
 --- Counts the number of non-nil values in table `t`.
 ---
---- <pre>
---- vim.tbl_count({ a=1, b=2 }) => 2
---- vim.tbl_count({ 1, 2 }) => 2
+--- <pre>lua
+--- vim.tbl_count({ a=1, b=2 })  --> 2
+--- vim.tbl_count({ 1, 2 })      --> 2
 --- </pre>
 ---
 ---@see https://github.com/Tieske/Penlight/blob/master/lua/pl/tablex.lua
@@ -571,7 +571,7 @@ end
 --- Validates a parameter specification (types and values).
 ---
 --- Usage example:
---- <pre>
+--- <pre>lua
 ---  function user.new(name, age, hobbies)
 ---    vim.validate{
 ---      name={name, 'string'},
@@ -583,24 +583,24 @@ end
 --- </pre>
 ---
 --- Examples with explicit argument values (can be run directly):
---- <pre>
+--- <pre>lua
 ---  vim.validate{arg1={{'foo'}, 'table'}, arg2={'foo', 'string'}}
----     => NOP (success)
+---     --> NOP (success)
 ---
 ---  vim.validate{arg1={1, 'table'}}
----     => error('arg1: expected table, got number')
+---     --> error('arg1: expected table, got number')
 ---
 ---  vim.validate{arg1={3, function(a) return (a % 2) == 0 end, 'even number'}}
----     => error('arg1: expected even number, got 3')
+---     --> error('arg1: expected even number, got 3')
 --- </pre>
 ---
 --- If multiple types are valid they can be given as a list.
---- <pre>
+--- <pre>lua
 ---  vim.validate{arg1={{'foo'}, {'table', 'string'}}, arg2={'foo', {'table', 'string'}}}
----     => NOP (success)
+---     --> NOP (success)
 ---
 ---  vim.validate{arg1={1, {'string', table'}}}
----     => error('arg1: expected string|table, got number')
+---     --> error('arg1: expected string|table, got number')
 ---
 --- </pre>
 ---
@@ -735,7 +735,7 @@ end
 --- If {create} is `nil`, this will create a defaulttable whose constructor function is
 --- this function, effectively allowing to create nested tables on the fly:
 ---
---- <pre>
+--- <pre>lua
 --- local a = vim.defaulttable()
 --- a.b.c = 1
 --- </pre>

@@ -255,8 +255,7 @@ ArrayOf(Integer) nvim_buf_get_extmark_by_id(Buffer buffer, Integer ns_id,
 /// Region can be given as (row,col) tuples, or valid extmark ids (whose
 /// positions define the bounds). 0 and -1 are understood as (0,0) and (-1,-1)
 /// respectively, thus the following are equivalent:
-///
-/// <pre>
+/// <pre>lua
 ///   nvim_buf_get_extmarks(0, my_ns, 0, -1, {})
 ///   nvim_buf_get_extmarks(0, my_ns, [0,0], [-1,-1], {})
 /// </pre>
@@ -265,8 +264,7 @@ ArrayOf(Integer) nvim_buf_get_extmark_by_id(Buffer buffer, Integer ns_id,
 /// with `limit`, to get the first marks prior to a given position.)
 ///
 /// Example:
-///
-/// <pre>
+/// <pre>lua
 ///   local a   = vim.api
 ///   local pos = a.nvim_win_get_cursor(0)
 ///   local ns  = a.nvim_create_namespace('my-plugin')

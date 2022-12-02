@@ -9,7 +9,7 @@ Nvim                                                       *nvim* *nvim-intro*
 Nvim is based on Vim by Bram Moolenaar.
 
 If you already use Vim see |nvim-from-vim| for a quickstart.
-If you are new to Vim, try the 30-minute tutorial: >
+If you are new to Vim, try the 30-minute tutorial: >vim
 
     :Tutor<Enter>
 
@@ -22,12 +22,12 @@ Nvim is emphatically a fork of Vim, not a clone: compatibility with Vim
 ==============================================================================
 Transitioning from Vim                          *nvim-from-vim*
 
-1. To start the transition, create your |init.vim| (user config) file: >
+1. To start the transition, create your |init.vim| (user config) file: >vim
 
     :call mkdir(stdpath('config'), 'p')
     :exe 'edit '.stdpath('config').'/init.vim'
 
-2. Add these contents to the file: >
+2. Add these contents to the file: >vim
 
     set runtimepath^=~/.vim runtimepath+=~/.vim/after
     let &packpath = &runtimepath
@@ -43,19 +43,19 @@ Your Vim configuration might not be entirely Nvim-compatible (see
 because mouse support is always enabled if possible. If you use the same
 |vimrc| for Vim and Nvim you could guard |'ttymouse'| in your configuration
 like so:
->
+>vim
     if !has('nvim')
         set ttymouse=xterm2
     endif
 
 And for Nvim-specific configuration, you can do this:
->
+>vim
     if has('nvim')
         tnoremap <Esc> <C-\><C-n>
     endif
 
 For a more granular approach use |exists()|:
->
+>vim
     if exists(':tnoremap')
         tnoremap <Esc> <C-\><C-n>
     endif
@@ -67,7 +67,7 @@ for more information.
 Because Nvim follows the XDG |base-directories| standard, configuration on
 Windows is stored in ~/AppData instead of ~/.config. But you can still share
 the same Nvim configuration on all of your machines, by creating
-~/AppData/Local/nvim/init.vim containing just this line: >
+~/AppData/Local/nvim/init.vim containing just this line: >vim
     source ~/.config/nvim/init.vim
 
 ==============================================================================

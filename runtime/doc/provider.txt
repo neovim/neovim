@@ -36,7 +36,7 @@ itself).
 
 For Python 3 plugins:
 1. Make sure Python 3.4+ is available in your $PATH.
-2. Install the module (try "python" if "python3" is missing): >
+2. Install the module (try "python" if "python3" is missing): >bash
    python3 -m pip install --user --upgrade pynvim
 
 The pip `--upgrade` flag ensures that you get the latest version even if
@@ -46,7 +46,7 @@ See also |python-virtualenv|.
 
 Note: The old "neovim" module was renamed to "pynvim".
 https://github.com/neovim/neovim/wiki/Following-HEAD#20181118
-If you run into problems, uninstall _both_ then install "pynvim" again: >
+If you run into problems, uninstall _both_ then install "pynvim" again: >bash
   python -m pip uninstall neovim pynvim
   python -m pip install --user --upgrade pynvim
 
@@ -55,11 +55,11 @@ PYTHON PROVIDER CONFIGURATION ~
 						*g:python3_host_prog*
 Command to start Python 3 (executable, not directory). Setting this makes
 startup faster. Useful for working with virtualenvs. Must be set before any
-check for has("python3").  >
+check for has("python3").  >vim
     let g:python3_host_prog = '/path/to/python3'
 <
 						*g:loaded_python3_provider*
-To disable Python 3 support: >
+To disable Python 3 support: >vim
     let g:loaded_python3_provider = 0
 
 
@@ -70,13 +70,13 @@ virtualenv for Neovim and hard-code the interpreter path via
 |g:python3_host_prog| so that the "pynvim" package is not required
 for each virtualenv.
 
-Example using pyenv: >
+Example using pyenv: >bash
     pyenv install 3.4.4
     pyenv virtualenv 3.4.4 py3nvim
     pyenv activate py3nvim
     python3 -m pip install pynvim
     pyenv which python  # Note the path
-The last command reports the interpreter path, add it to your init.vim: >
+The last command reports the interpreter path, add it to your init.vim: >vim
     let g:python3_host_prog = '/path/to/py3nvim/bin/python'
 
 See also: https://github.com/zchee/deoplete-jedi/wiki/Setting-up-Python-for-Neovim
@@ -90,7 +90,7 @@ Nvim supports Ruby |remote-plugin|s and the Vim legacy |ruby-vim| interface
 
 RUBY QUICKSTART ~
 
-To use Ruby plugins with Nvim, install the latest "neovim" RubyGem: >
+To use Ruby plugins with Nvim, install the latest "neovim" RubyGem: >bash
     gem install neovim
 
 Run |:checkhealth| to see if your system is up-to-date.
@@ -98,7 +98,7 @@ Run |:checkhealth| to see if your system is up-to-date.
 
 RUBY PROVIDER CONFIGURATION ~
 						*g:loaded_ruby_provider*
-To disable Ruby support: >
+To disable Ruby support: >vim
     let g:loaded_ruby_provider = 0
 <
 						*g:ruby_host_prog*
@@ -106,10 +106,10 @@ Command to start the Ruby host. By default this is "neovim-ruby-host". With
 project-local Ruby versions (via tools like RVM or rbenv) setting this can
 avoid the need to install the "neovim" gem in every project.
 
-To use an absolute path (e.g. to an rbenv installation): >
+To use an absolute path (e.g. to an rbenv installation): >vim
     let g:ruby_host_prog = '~/.rbenv/versions/2.4.1/bin/neovim-ruby-host'
 
-To use the RVM "system" Ruby installation: >
+To use the RVM "system" Ruby installation: >vim
     let g:ruby_host_prog = 'rvm system do neovim-ruby-host'
 
 ==============================================================================
@@ -125,7 +125,7 @@ Note: Only perl versions from 5.22 onward are supported.
 
 PERL QUICKSTART~
 
-To use perl remote-plugins with Nvim, install the "Neovim::Ext" cpan package: >
+To use perl remote-plugins with Nvim, install the "Neovim::Ext" cpan package: >bash
     cpanm -n Neovim::Ext
 
 Run |:checkhealth| to see if your system is up-to-date.
@@ -133,12 +133,12 @@ Run |:checkhealth| to see if your system is up-to-date.
 
 PERL PROVIDER CONFIGURATION~
 						*g:loaded_perl_provider*
-To disable Perl support: >
+To disable Perl support: >vim
     :let g:loaded_perl_provider = 0
 <
 						*g:perl_host_prog*
 Command to start the Perl executable. Must be set before any
-check for has("perl").  >
+check for has("perl").  >vim
     let g:perl_host_prog = '/path/to/perl'
 <
 ==============================================================================
@@ -150,7 +150,7 @@ https://github.com/neovim/node-client/
 
 NODEJS QUICKSTART~
 
-To use javascript remote-plugins with Nvim, install the "neovim" npm package: >
+To use javascript remote-plugins with Nvim, install the "neovim" npm package: >bash
     npm install -g neovim
 
 Run |:checkhealth| to see if your system is up-to-date.
@@ -158,14 +158,14 @@ Run |:checkhealth| to see if your system is up-to-date.
 
 NODEJS PROVIDER CONFIGURATION~
 						*g:loaded_node_provider*
-To disable Node.js support: >
+To disable Node.js support: >vim
     :let g:loaded_node_provider = 0
 <
 						*g:node_host_prog*
 Command to start the Node.js host. Setting this makes startup faster.
 
 By default, Nvim searches for "neovim-node-host" using "npm root -g", which
-can be slow. To avoid this, set g:node_host_prog to the host path: >
+can be slow. To avoid this, set g:node_host_prog to the host path: >vim
     let g:node_host_prog = '/usr/local/bin/neovim-node-host'
 <
 ==============================================================================
@@ -176,7 +176,7 @@ a |provider| which transparently uses shell commands to communicate with the
 system clipboard or any other clipboard "backend".
 
 To ALWAYS use the clipboard for ALL operations (instead of interacting with
-the '+' and/or '*' registers explicitly): >
+the '+' and/or '*' registers explicitly): >vim
     set clipboard+=unnamedplus
 
 See 'clipboard' for details and options.
@@ -199,7 +199,7 @@ registers. Nvim looks for these clipboard tools, in order of priority:
 
 								 *g:clipboard*
 To configure a custom clipboard tool, set g:clipboard to a dictionary.
-For example this configuration integrates the tmux clipboard: >
+For example this configuration integrates the tmux clipboard: >vim
 
     let g:clipboard = {
           \   'name': 'myClipboard',
@@ -219,7 +219,8 @@ the selection until the copy command process dies. When pasting, if the copy
 process has not died the cached selection is applied.
 
 g:clipboard can also use functions (see |lambda|) instead of strings.
-For example this configuration uses the g:foo variable as a fake clipboard: >
+For example this configuration uses the g:foo variable as a fake clipboard:
+>vim
 
     let g:clipboard = {
           \   'name': 'myClipboard',
@@ -239,7 +240,7 @@ a list of lines and `regtype` is a register type conforming to |setreg()|.
 
 							      *clipboard-wsl*
 For Windows WSL, try this g:clipboard definition:
->
+>vim
     let g:clipboard = {
                 \   'name': 'WslClipboard',
                 \   'copy': {
@@ -283,7 +284,7 @@ many commands.  Use the |cmdline-window| if you really want to paste multiple
 lines to the cmdline.
 
 You can implement a custom paste handler by redefining |vim.paste()|.
-Example: >
+Example: >lua
 
   vim.paste = (function(lines, phase)
     vim.api.nvim_put(lines, 'c', true, true)

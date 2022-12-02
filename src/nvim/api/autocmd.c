@@ -47,7 +47,7 @@ static int64_t next_autocmd_id = 1;
 /// Get all autocommands that match the corresponding {opts}.
 ///
 /// These examples will get autocommands matching ALL the given criteria:
-/// <pre>
+/// <pre>lua
 ///   -- Matches all criteria
 ///   autocommands = vim.api.nvim_get_autocmds({
 ///     group = "MyGroup",
@@ -367,7 +367,7 @@ cleanup:
 /// triggers: a callback function (Lua or Vimscript), or a command (like regular autocommands).
 ///
 /// Example using callback:
-/// <pre>
+/// <pre>lua
 ///     -- Lua function
 ///     local myluafun = function() print("This buffer enters") end
 ///
@@ -383,8 +383,7 @@ cleanup:
 /// Lua functions receive a table with information about the autocmd event as an argument. To use
 /// a function which itself accepts another (optional) parameter, wrap the function
 /// in a lambda:
-///
-/// <pre>
+/// <pre>lua
 ///     -- Lua function with an optional parameter.
 ///     -- The autocmd callback would pass a table as argument but this
 ///     -- function expects number|nil
@@ -397,7 +396,7 @@ cleanup:
 /// </pre>
 ///
 /// Example using command:
-/// <pre>
+/// <pre>lua
 ///     vim.api.nvim_create_autocmd({"BufEnter", "BufWinEnter"}, {
 ///       pattern = {"*.c", "*.h"},
 ///       command = "echo 'Entering a C or C++ file'",
@@ -405,7 +404,7 @@ cleanup:
 /// </pre>
 ///
 /// Example values for pattern:
-/// <pre>
+/// <pre>lua
 ///   pattern = "*.py"
 ///   pattern = { "*.py", "*.pyi" }
 /// </pre>
@@ -413,14 +412,14 @@ cleanup:
 /// Note: The `pattern` is passed to callbacks and commands as a literal string; environment
 /// variables like `$HOME` and `~` are not automatically expanded as they are by |:autocmd|.
 /// Instead, |expand()| such variables explicitly:
-/// <pre>
+/// <pre>lua
 ///   pattern = vim.fn.expand("~") .. "/some/path/*.py"
 /// </pre>
 ///
 /// Example values for event:
-/// <pre>
-///   "BufWritePre"
-///   {"CursorHold", "BufWritePre", "BufWritePost"}
+/// <pre>lua
+///   event = "BufWritePre"
+///   event = {"CursorHold", "BufWritePre", "BufWritePost"}
 /// </pre>
 ///
 /// @param event (string|array) The event or events to register this autocommand
@@ -703,7 +702,7 @@ cleanup:
 /// Create or get an autocommand group |autocmd-groups|.
 ///
 /// To get an existing group id, do:
-/// <pre>
+/// <pre>lua
 ///     local id = vim.api.nvim_create_augroup("MyGroup", {
 ///         clear = false
 ///     })

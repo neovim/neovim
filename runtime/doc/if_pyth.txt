@@ -16,7 +16,7 @@ Commands						*python-commands*
 					*:python* *:py* *E263* *E264* *E887*
 :[range]py[thon] {stmt}
 			Execute Python statement {stmt}.  A simple check if
-			the `:python` command is working: >
+			the `:python` command is working: >vim
 				:python print "Hello"
 
 :[range]py[thon] << [endmarker]
@@ -31,7 +31,7 @@ The {endmarker} below the {script} must NOT be preceded by any white space.
 If [endmarker] is omitted from after the "<<", a dot '.' must be used after
 {script}, like for the |:append| and |:insert| commands.
 
-Example: >
+Example: >vim
 	function! IcecreamInitialize()
 	python << EOF
 	class StrawberryIcecream:
@@ -40,7 +40,7 @@ Example: >
 	EOF
 	endfunction
 
-To see what version of Python you have: >
+To see what version of Python you have: >vim
 	:python print(sys.version)
 
 There is no need to "import sys", it's done by default.
@@ -64,12 +64,12 @@ Note: Python is very sensitive to indenting.  Make sure the "class" line and
 			is the whole file: "1,$".
 
 Examples:
->
+>vim
 	:pydo return "%s\t%d" % (line[::-1], len(line))
 	:pydo if line: return "%4d: %s" % (linenr, line)
 <
 One can use `:pydo` in possible conjunction with `:py` to filter a range using
-python. For example: >
+python. For example: >vim
 
 	:py3 << EOF
 	needle = vim.eval('@a')
@@ -94,12 +94,13 @@ In the case of :pyfile, the code to execute is the contents of the given file.
 
 Python commands cannot be used in the |sandbox|.
 
-To pass arguments you need to set sys.argv[] explicitly.  Example: >
+To pass arguments you need to set sys.argv[] explicitly.  Example: >vim
 
 	:python sys.argv = ["foo", "bar"]
 	:pyfile myscript.py
 
-Here are some examples					*python-examples*  >
+Here are some examples					*python-examples*
+>vim
 
 	:python from vim import *
 	:python from string import upper
@@ -113,7 +114,7 @@ to the next, just like the Python REPL.
 							*script-here*
 When using a script language in-line, you might want to skip this when the
 language isn't supported.  Note that this mechanism doesn't work:
->
+>vim
    if has('python')
      python << EOF
        this will NOT work!
@@ -121,7 +122,7 @@ language isn't supported.  Note that this mechanism doesn't work:
    endif
 
 Instead, put the Python command in a function and call that function:
->
+>vim
     if has('python')
       function DefPython()
         python << EOF
@@ -139,10 +140,10 @@ The vim module							*python-vim*
 Python code gets all of its access to vim (with one exception - see
 |python-output| below) via the "vim" module.  The vim module implements two
 methods, three constants, and one error object.  You need to import the vim
-module before using it: >
+module before using it: >vim
 	:python import vim
 
-Overview >
+Overview >vim
 	:py print "Hello"		# displays a message
 	:py vim.command(cmd)		# execute an Ex command
 	:py w = vim.windows[n]		# gets window "n"
@@ -166,10 +167,10 @@ Methods of the "vim" module
 
 vim.command(str)					*python-command*
 	Executes the vim (ex-mode) command str.  Returns None.
-	Examples: >
+	Examples: >vim
 	    :py vim.command("set tw=72")
 	    :py vim.command("%s/aaa/bbb/g")
-<	The following definition executes Normal mode commands: >
+<	The following definition executes Normal mode commands: >python
 		def normal(str):
 			vim.command("normal "+str)
 		# Note the use of single quotes to delimit a string containing
@@ -177,7 +178,7 @@ vim.command(str)					*python-command*
 		normal('"a2dd"aP')
 <								*E659*
 	The ":python" command cannot be used recursively with Python 2.2 and
-	older.  This only works with Python 2.3 and later: >
+	older.  This only works with Python 2.3 and later: >vim
 	    :py vim.command("python print 'Hello again Python'")
 
 vim.eval(str)						*python-eval*
@@ -187,7 +188,7 @@ vim.eval(str)						*python-eval*
 	- a list if the Vim expression evaluates to a Vim list
 	- a dictionary if the Vim expression evaluates to a Vim dictionary
 	Dictionaries and lists are recursively expanded.
-	Examples: >
+	Examples: >vim
 	    :py text_width = vim.eval("&tw")
 	    :py str = vim.eval("12+12")		# NB result is a string! Use
 						# string.atoi() to convert to
@@ -215,7 +216,7 @@ Error object of the "vim" module
 vim.error						*python-error*
 	Upon encountering a Vim error, Python raises an exception of type
 	vim.error.
-	Example: >
+	Example: >python
 		try:
 			vim.command("put a")
 		except vim.error:
@@ -229,7 +230,7 @@ Constants of the "vim" module
 
 vim.buffers						*python-buffers*
 	A mapping object providing access to the list of vim buffers.  The
-	object supports the following operations: >
+	object supports the following operations: >vim
 	    :py b = vim.buffers[i]	# Indexing (read-only)
 	    :py b in vim.buffers	# Membership test
 	    :py n = len(vim.buffers)	# Number of elements
@@ -237,7 +238,7 @@ vim.buffers						*python-buffers*
 <
 vim.windows						*python-windows*
 	A sequence object providing access to the list of vim windows.  The
-	object supports the following operations: >
+	object supports the following operations: >vim
 	    :py w = vim.windows[i]	# Indexing (read-only)
 	    :py w in vim.windows	# Membership test
 	    :py n = len(vim.windows)	# Number of elements
@@ -251,7 +252,7 @@ vim.windows						*python-windows*
 
 vim.tabpages						*python-tabpages*
 	A sequence object providing access to the list of vim tab pages. The
-	object supports the following operations: >
+	object supports the following operations: >vim
 	    :py t = vim.tabpages[i]	# Indexing (read-only)
 	    :py t in vim.tabpages	# Membership test
 	    :py n = len(vim.tabpages)	# Number of elements
@@ -277,7 +278,7 @@ vim.current						*python-current*
 	switching to given buffer, window or tab page. It is the only way to
 	switch UI objects in python: you can't assign to
 	|python-tabpage|.window attribute. To switch without triggering
-	autocommands use >
+	autocommands use >vim
 	    py << EOF
 	    saved_eventignore = vim.options['eventignore']
 	    vim.options['eventignore'] = 'all'
@@ -330,7 +331,7 @@ the list of paths found in 'runtimepath': with this directory in sys.path and
 vim.path_hooks in sys.path_hooks python will try to load module from
 {rtp}/python3 and {rtp}/pythonx for each {rtp} found in 'runtimepath'.
 
-Implementation is similar to the following, but written in C: >
+Implementation is similar to the following, but written in C: >python
 
     from imp import find_module, load_module
     import vim
@@ -461,12 +462,12 @@ The buffer object methods are:
 			numbers s and e |inclusive|.
 
 Note that when adding a line it must not contain a line break character '\n'.
-A trailing '\n' is allowed and ignored, so that you can do: >
+A trailing '\n' is allowed and ignored, so that you can do: >vim
 	:py b.append(f.readlines())
 
 Buffer object type is available using "Buffer" attribute of vim module.
 
-Examples (assume b is the current buffer) >
+Examples (assume b is the current buffer) >vim
 	:py print b.name		# write the buffer file name
 	:py b[0] = "hello!!!"		# replace the top line
 	:py b[:] = None			# delete the whole buffer
@@ -605,10 +606,10 @@ variants explicitly if Python 3 is required.
 {script}
 {endmarker}
 	The `:py3` and `:python3` commands work similar to `:python`.  A
-	simple check if the `:py3` command is working: >
+	simple check if the `:py3` command is working: >vim
 		:py3 print("Hello")
 <
-	To see what version of Python you have: >
+	To see what version of Python you have: >vim
 		:py3 import sys
 		:py3 print(sys.version)
 <							*:py3file*
@@ -619,11 +620,12 @@ variants explicitly if Python 3 is required.
 	The `:py3do` command works similar to `:pydo`.
 
 							*E880*
-Raising SystemExit exception in python isn't endorsed way to quit vim, use: >
+Raising SystemExit exception in python isn't endorsed way to quit vim, use:
+>vim
 	:py vim.command("qall!")
 <
 							*has-python*
-You can test if Python is available with: >
+You can test if Python is available with: >vim
 	if has('pythonx')
 	  echo 'there is Python'
 	endif
@@ -642,10 +644,10 @@ works with Python 2.6+ and Python 3. As Nvim only supports Python 3,
 all these commands are now synonymous to their "python3" equivalents.
 
 							*:pyx* *:pythonx*
-`:pyx` and `:pythonx` work the same as `:python3`.  To check if `:pyx` works: >
+`:pyx` and `:pythonx` work the same as `:python3`.  To check if `:pyx` works: >vim
 	:pyx print("Hello")
 
-To see what version of Python is being used: >
+To see what version of Python is being used: >vim
 	:pyx import sys
 	:pyx print(sys.version)
 <
@@ -656,7 +658,7 @@ To see what version of Python is being used: >
 `:pyxdo` works the same as `:py3do`.
 
 							*has-pythonx*
-To check if `pyx*` functions and commands are available: >
+To check if `pyx*` functions and commands are available: >vim
 	if has('pythonx')
 	  echo 'pyx* commands are available. (Python ' .. &pyx .. ')'
 	endif

@@ -21,7 +21,7 @@ local M = {}
 ---
 ---
 --- Example:
---- <pre>
+--- <pre>lua
 --- vim.ui.select({ 'tabs', 'spaces' }, {
 ---     prompt = 'Select tabs or spaces:',
 ---     format_item = function(item)
@@ -78,7 +78,7 @@ end
 ---               `nil` if the user aborted the dialog.
 ---
 --- Example:
---- <pre>
+--- <pre>lua
 --- vim.ui.input({ prompt = 'Enter value for shiftwidth: ' }, function(input)
 ---     vim.o.shiftwidth = tonumber(input)
 --- end)

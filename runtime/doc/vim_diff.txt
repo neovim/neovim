@@ -73,7 +73,7 @@ centralized reference of the differences.
 - 'wildoptions' defaults to "pum,tagfile"
 
 - |man.lua| plugin is enabled, so |:Man| is available by default.
-- |matchit| plugin is enabled. To disable it in your config: >
+- |matchit| plugin is enabled. To disable it in your config: >vim
     :let loaded_matchit = 1
 
 - |g:vimsyn_embed| defaults to "l" to enable Lua highlighting
@@ -88,11 +88,11 @@ typing ":".
 
 If you don't like this you can disable the mouse in your |config| using any of
 the following:
-- Disable mouse completely by unsetting the 'mouse' option: >
+- Disable mouse completely by unsetting the 'mouse' option: >vim
   set mouse=
-- Pressing <RightMouse> extends selection instead of showing popup-menu: >
+- Pressing <RightMouse> extends selection instead of showing popup-menu: >vim
   set mousemodel=extend
-- Pressing <A-LeftMouse> releases mouse until the cursor moves:  >
+- Pressing <A-LeftMouse> releases mouse until the cursor moves:  >vim
   nnoremap <A-LeftMouse> <Cmd>
     \ set mouse=<Bar>
     \ echo 'mouse OFF until next cursor-move'<Bar>
@@ -104,7 +104,7 @@ Default Mappings ~
 							*default-mappings*
 Nvim creates the following default mappings at |startup|. You can disable any
 of these in your config by simply removing the mapping, e.g. ":unmap Y".
->
+>vim
 	nnoremap Y y$
 	nnoremap <C-L> <Cmd>nohlsearch<Bar>diffupdate<Bar>normal! <C-L><CR>
 	inoremap <C-U> <C-G>u<C-U>
@@ -302,7 +302,7 @@ are always available and may be used simultaneously. See |provider-python|.
    structures.
 2. |string()| fails immediately on nested containers, not when recursion limit
    was exceeded.
-2. When |:echo| encounters duplicate containers like >
+2. When |:echo| encounters duplicate containers like >vim
 
        let l = []
        echo [l, l]
@@ -462,7 +462,7 @@ TUI:
 <
 			*'term'* *E529* *E530* *E531*
   'term' reflects the terminal type derived from |$TERM| and other environment
-  checks.  For debugging only; not reliable during startup. >
+  checks.  For debugging only; not reliable during startup. >vim
 	  :echo &term
 <  "builtin_x" means one of the |builtin-terms| was chosen, because the expected
   terminfo file was not found on the system.
@@ -568,7 +568,7 @@ Events:
 Highlight groups:
   *hl-StatusLineTerm* *hl-StatusLineTermNC* are unnecessary because Nvim
     supports 'winhighlight' window-local highlights.
-    For example, to mimic Vim's StatusLineTerm:  >
+    For example, to mimic Vim's StatusLineTerm:  >vim
       hi StatusLineTerm ctermfg=black ctermbg=green
       hi StatusLineTermNC ctermfg=green
       autocmd TermOpen,WinEnter * if &buftype=='terminal'
@@ -604,7 +604,7 @@ Options:
   *'imactivatekey'* *'imak'*
   *'imstatusfunc'* *'imsf'*
   *'insertmode'* *'im'* Use the following script to emulate 'insertmode':
->
+>vim
     autocmd BufWinEnter * startinsert
     inoremap <Esc> <C-X><C-Z><C-]>
     inoremap <C-C> <C-X><C-Z>

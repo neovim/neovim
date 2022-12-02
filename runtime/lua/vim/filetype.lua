@@ -2308,7 +2308,7 @@ end
 --- See $VIMRUNTIME/lua/vim/filetype.lua for more examples.
 ---
 --- Example:
---- <pre>
+--- <pre>lua
 ---  vim.filetype.add({
 ---    extension = {
 ---      foo = 'fooscript',
@@ -2344,7 +2344,7 @@ end
 --- </pre>
 ---
 --- To add a fallback match on contents, use
---- <pre>
+--- <pre>lua
 --- vim.filetype.add {
 ---   pattern = {
 ---     ['.*'] = {
@@ -2456,7 +2456,7 @@ end
 --- Each of the three options is specified using a key to the single argument of this function.
 --- Example:
 ---
---- <pre>
+--- <pre>lua
 ---   -- Using a buffer number
 ---   vim.filetype.match({ buf = 42 })
 ---

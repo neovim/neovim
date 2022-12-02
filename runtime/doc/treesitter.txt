@@ -24,7 +24,7 @@ via a plugin like https://github.com/nvim-treesitter/nvim-treesitter.
 Parsers are searched for as `parser/{lang}.*` in any 'runtimepath' directory.
 If multiple parsers for the same language are found, the first one is used.
 (This typically implies the priority "user config > plugins > bundled".
-A parser can also be loaded manually using a full path: >
+A parser can also be loaded manually using a full path: >lua
 
     vim.treesitter.require_language("python", "/path/to/python.so")
 <
@@ -37,7 +37,7 @@ file), multiple parsers may be needed to parse the full buffer. These are
 combined in a |LanguageTree| object.
 
 To create a LanguageTree (parser object) for a buffer and a given language,
-use >
+use >lua
 
     tsparser = vim.treesitter.get_parser(bufnr, lang)
 <
@@ -46,7 +46,7 @@ Currently, the parser will be retained for the lifetime of a buffer but this
 is subject to change. A plugin should keep a reference to the parser object as
 long as it wants incremental updates.
 
-Whenever you need to access the current syntax tree, parse the buffer: >
+Whenever you need to access the current syntax tree, parse the buffer: >lua
 
     tstree = tsparser:parse()
 <
@@ -366,10 +366,10 @@ queries that make them available.
 
 As an additional rule, capture highlights can always be specialized by
 language, by appending the language name after an additional dot. For
-instance, to highlight comments differently per language: >
+instance, to highlight comments differently per language: >vim
 
     hi @comment.c guifg=Blue
-    hi @comment.lua @guifg=DarkBlue
+    hi @comment.lua guifg=DarkBlue
     hi link @comment.doc.java String
 <
 The following captures are linked by default to standard |group-name|s:
@@ -605,7 +605,7 @@ start({bufnr}, {lang})                                               *start()*
     required for some plugins. In this case, add `vim.bo.syntax = 'on'` after
     the call to `start`.
 
-    Example: >
+    Example: >lua
 
      vim.api.nvim_create_autocmd( 'FileType', { pattern = 'tex',
          callback = function(args)
@@ -770,7 +770,7 @@ Query:iter_captures({self}, {node}, {source}, {start}, {stop})
 
     The iterator returns three values: a numeric id identifying the capture,
     the captured node, and metadata from any directives processing the match.
-    The following example shows how to get captures by name: >
+    The following example shows how to get captures by name: >lua
 
      for id, node, metadata in query:iter_captures(tree:root(), bufnr, first, last) do
        local name = query.captures[id] -- name of the capture in the query
@@ -802,7 +802,7 @@ Query:iter_matches({self}, {node}, {source}, {start}, {stop})
     (1-based) index of the pattern in the query, a table mapping capture
     indices to nodes, and metadata from any directives processing the match.
     If the query has more than one pattern, the capture table might be sparse
-    and e.g. `pairs()` method should be used over `ipairs` . Here is an example iterating over all captures in every match: >
+    and e.g. `pairs()` method should be used over `ipairs` . Here is an example iterating over all captures in every match: >lua
 
      for pattern, match, metadata in cquery:iter_matches(tree:root(), bufnr, first, last) do
        for id, node in pairs(match) do

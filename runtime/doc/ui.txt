@@ -119,7 +119,7 @@ for forward-compatibility. |api-contract|
 UI startup							   *ui-startup*
 
 UI embedders (clients that start Nvim with |--embed| and later call
-|nvim_ui_attach()|) must start Nvim without |--headless|: >
+|nvim_ui_attach()|) must start Nvim without |--headless|: >bash
     nvim --embed
 Nvim will pause before loading startup files and reading buffers, so the UI
 has a chance to invoke requests and do early initialization. Startup will
@@ -138,7 +138,7 @@ procedure:
    to set |g:| variables visible to init.vim
 
 3. If the UI wants to do additional setup after user config is loaded,
-   register a VimEnter autocmd: >
+   register a VimEnter autocmd: >vim
       nvim_command("autocmd VimEnter * call rpcrequest(1, 'vimenter')")
 
 4. Now invoke |nvim_ui_attach()|. The UI must handle user input by now:
@@ -722,7 +722,7 @@ For command-line 'wildmenu' UI events, activate |ui-popupmenu|.
 
 ["cmdline_block_show", lines] ~
 	Show a block of context to the current command line. For example if
-	the user defines a |:function| interactively: >
+	the user defines a |:function| interactively: >vim
 	    :function Foo()
 	    :  echo "foo"
 	    :

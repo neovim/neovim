@@ -28,7 +28,7 @@ TCP Echo Server Example~
 
 Here is a small example showing a TCP echo server:
 
-    >
+    >lua
     local uv = vim.loop
 
     local server = uv.new_tcp()
@@ -250,7 +250,7 @@ uv.loop_configure({option}, {...})                         *uv.loop_configure()*
 
                 An example of a valid call to this function is:
 
-                    >
+                    >lua
                     uv.loop_configure("block_signal", "sigprof")
 <
 
@@ -343,7 +343,7 @@ uv.walk({callback})                                                  *uv.walk()*
 
                 Returns: Nothing.
 
-                    >
+                    >lua
                     -- Example usage of uv.walk to close all handles that
                     -- aren't already closing.
                     uv.walk(function (handle)
@@ -613,7 +613,7 @@ uv.new_timer()                                                  *uv.new_timer()*
 
                 Returns: `uv_timer_t userdata` or `fail`
 
-                    >
+                    >lua
                     -- Creating a simple setTimeout wrapper
                     local function setTimeout(timeout, callback)
                       local timer = uv.new_timer()
@@ -737,7 +737,7 @@ uv.timer_get_due_in({timer})                             *uv.timer_get_due_in()*
 Prepare handles will run the given callback once per loop iteration, right
 before polling for I/O.
 
-    >
+    >lua
     local prepare = uv.new_prepare()
     prepare:start(function()
       print("Before I/O polling")
@@ -782,7 +782,7 @@ uv.prepare_stop({prepare})                                   *uv.prepare_stop()*
 Check handles will run the given callback once per loop iteration, right after
 polling for I/O.
 
-    >
+    >lua
     local check = uv.new_check()
     check:start(function()
       print("After I/O polling")
@@ -834,7 +834,7 @@ blocking for I/O.
 WARNING: Despite the name, idle handles will get their callbacks called on
 every loop iteration, not when the loop is actually "idle".
 
-    >
+    >lua
     local idle = uv.new_idle()
     idle:start(function()
       print("Before I/O polling, no blocking")
@@ -879,7 +879,7 @@ uv.idle_stop({check})                                           *uv.idle_stop()*
 Async handles allow the user to "wakeup" the event loop and get a callback
 called from another thread.
 
-    >
+    >lua
     local async
     async = uv.new_async(function()
       print("async operation ran")
@@ -1062,7 +1062,7 @@ Unix Notes:
     will lead to unpredictable behavior and is strongly discouraged. Future
     versions of libuv may simply reject them.
 
-    >
+    >lua
     -- Create a new signal handler
     local signal = uv.new_signal()
     -- Define a handler function
@@ -1164,7 +1164,7 @@ uv.spawn({path}, {options}, {on_exit})                              *uv.spawn()*
                 permissions to use the setuid or setgid specified, or not
                 having enough memory to allocate for the new process.
 
-                    >
+                    >lua
                     local stdin = uv.new_pipe()
                     local stdout = uv.new_pipe()
                     local stderr = uv.new_pipe()
@@ -1358,7 +1358,7 @@ uv.accept({stream}, {client_stream})                               *uv.accept()*
 
                 Returns: `0` or `fail`
 
-                    >
+                    >lua
                     server:listen(128, function (err)
                       local client = uv.new_tcp()
                       server:accept(client)
@@ -1382,7 +1382,7 @@ uv.read_start({stream}, {callback})                            *uv.read_start()*
 
                 Returns: `0` or `fail`
 
-                    >
+                    >lua
                     stream:read_start(function (err, chunk)
                       if err then
                         -- handle read error
@@ -1690,7 +1690,7 @@ uv.tcp_connect({tcp}, {host}, {port}, {callback})             *uv.tcp_connect()*
 
                 Returns: `uv_connect_t userdata` or `fail`
 
-                    >
+                    >lua
                     local client = uv.new_tcp()
                     client:connect("127.0.0.1", 8080, function (err)
                       -- check error and carry on.
@@ -1755,7 +1755,7 @@ uv.socketpair([{socktype}, [{protocol}, [{flags1}, [{flags2}]]]])
                 Returns: `table` or `fail`
                 - `[1, 2]` : `integer` (file descriptor)
 
-                    >
+                    >lua
                     -- Simple read/write with tcp
                     local fds = uv.socketpair(nil, nil, {nonblock=true}, {nonblock=true})
 
@@ -1780,7 +1780,7 @@ uv.socketpair([{socktype}, [{protocol}, [{flags1}, [{flags2}]]]])
 Pipe handles provide an abstraction over local domain sockets on Unix and
 named pipes on Windows.
 
-    >
+    >lua
     local pipe = uv.new_pipe(false)
 
     pipe:bind('/tmp/sock.test')
@@ -1959,7 +1959,7 @@ uv.pipe({read_flags}, {write_flags})                                 *uv.pipe()*
                 - `read` : `integer` (file descriptor)
                 - `write` : `integer` (file descriptor)
 
-                    >
+                    >lua
                     -- Simple read/write with pipe_open
                     local fds = uv.pipe({nonblock=true}, {nonblock=true})
 
@@ -1983,7 +1983,7 @@ uv.pipe({read_flags}, {write_flags})                                 *uv.pipe()*
 
 TTY handles represent a stream for the console.
 
-    >
+    >lua
     -- Simple echo program
     local stdin = uv.new_tty(0, true)
     local stdout = uv.new_tty(1, false)
@@ -2537,7 +2537,7 @@ FS call.
 Synchronous and asynchronous versions of `readFile` (with naive error
 handling) are implemented below as an example:
 
-    >
+    >lua
     local function readFileSync(path)
       local fd = assert(uv.fs_open(path, "r", 438))
       local stat = assert(uv.fs_fstat(fd))
@@ -2550,7 +2550,7 @@ handling) are implemented below as an example:
     print("synchronous read", data)
 <
 
-    >
+    >lua
     local function readFile(path, callback)
       uv.fs_open(path, "r", 438, function(err, fd)
         assert(not err, err)
@@ -3253,7 +3253,7 @@ Libuv provides a threadpool which can be used to run user code and get
 notified in the loop thread. This threadpool is internally used to run all
 file system operations, as well as `getaddrinfo` and `getnameinfo` requests.
 
-    >
+    >lua
     local function work_callback(a, b)
       return a + b
     end

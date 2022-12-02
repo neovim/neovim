@@ -91,7 +91,7 @@ only bytes can be written to Nvim's own stderr.
 
     There are two ways to deal with this:
     - 1. To wait for the entire output, use |channel-buffered| mode.
-    - 2. To read line-by-line, use the following code: >
+    - 2. To read line-by-line, use the following code: >vim
 	let s:lines = ['']
 	func! s:on_event(job_id, data, event) dict
 	  let eof = (a:data == [''])
@@ -108,7 +108,7 @@ callbacks.
 
 Data can be sent to the channel using the |chansend()| function. Here is a
 simple example, echoing some data through a cat-process:
->
+>vim
     function! s:OnEvent(id, data, event) dict
       let str = join(a:data, "\n")
       echomsg str
@@ -119,7 +119,7 @@ simple example, echoing some data through a cat-process:
 
 Here is a example of setting a buffer to the result of grep, but only after
 all data has been processed:
->
+>vim
     function! s:OnEvent(id, data, event) dict
       call nvim_buf_set_lines(2, 0, -1, v:true, a:data)
     endfunction
@@ -142,7 +142,7 @@ However, change of PTY size can be signaled to the slave using |jobresize()|.
 See also |terminal-emulator|.
 
 Terminal characteristics (termios) for |:terminal| and PTY channels are copied
-from the host TTY, or if Nvim is |--headless| it uses default values: >
+from the host TTY, or if Nvim is |--headless| it uses default values: >vim
     :echo system('nvim --headless +"te stty -a" +"sleep 1" +"1,/^$/print" +q')
 
 ==============================================================================
@@ -163,7 +163,7 @@ used as a channel. See also |--embed|.
 Call |stdioopen()| during |startup| to open the stdio channel as |channel-id| 1.
 Nvim's stderr is always available as |v:stderr|, a write-only bytes channel.
 
-Example: >
+Example: >vim
     func! OnEvent(id, data, event)
       if a:data == [""]
         quit
@@ -172,7 +172,7 @@ Example: >
     endfunc
     call stdioopen({'on_stdin': 'OnEvent'})
 <
-Put this in `uppercase.vim` and run:  >
+Put this in `uppercase.vim` and run:  >bash
     nvim --headless --cmd "source uppercase.vim"
 
 ==============================================================================
@@ -223,7 +223,7 @@ start of the line.
 
 Here is an example for Unix.  It starts a shell in the background and prompts
 for the next shell command.  Output from the shell is displayed above the
-prompt. >
+prompt. >vim
 
 	" Function handling a line of text that has been typed.
 	func TextEntered(text)
