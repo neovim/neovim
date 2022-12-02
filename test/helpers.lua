@@ -269,29 +269,10 @@ function module.check_logs()
     table.concat(runtime_errors, ', ')))
 end
 
--- Gets (lowercase) OS name from CMake, uname, or manually check if on Windows
-do
-  local platform = nil
-  function module.uname()
-    if platform then
-      return platform
-    end
-
-    if os.getenv("SYSTEM_NAME") then  -- From CMAKE_HOST_SYSTEM_NAME.
-      platform = string.lower(os.getenv("SYSTEM_NAME"))
-      return platform
-    end
-
-    local status, f = pcall(module.popen_r, 'uname', '-s')
-    if status then
-      platform = string.lower(f:read("*l"))
-      f:close()
-    elseif package.config:sub(1,1) == '\\' then
-      platform = 'windows'
-    else
-      error('unknown platform')
-    end
-    return platform
+function module.sysname()
+  local platform = luv.os_uname()
+  if platform and platform.sysname then
+    return platform.sysname:lower()
   end
 end
 
@@ -303,11 +284,11 @@ function module.is_os(s)
     or s == 'bsd') then
     error('unknown platform: '..tostring(s))
   end
-  return ((s == 'win' and module.uname() == 'windows')
-    or (s == 'mac' and module.uname() == 'darwin')
-    or (s == 'freebsd' and module.uname() == 'freebsd')
-    or (s == 'openbsd' and module.uname() == 'openbsd')
-    or (s == 'bsd' and string.find(module.uname(), 'bsd')))
+  return ((s == 'win' and module.sysname():find('windows'))
+    or (s == 'mac' and module.sysname() == 'darwin')
+    or (s == 'freebsd' and module.sysname() == 'freebsd')
+    or (s == 'openbsd' and module.sysname() == 'openbsd')
+    or (s == 'bsd' and module.sysname():find('bsd')))
 end
 
 local function tmpdir_get()
