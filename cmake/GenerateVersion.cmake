@@ -2,7 +2,7 @@ set(NVIM_VERSION
     "v${NVIM_VERSION_MAJOR}.${NVIM_VERSION_MINOR}.${NVIM_VERSION_PATCH}${NVIM_VERSION_PRERELEASE}")
 
 execute_process(
-  COMMAND git describe --first-parent --dirty --always
+  COMMAND git --git-dir=${NVIM_SOURCE_DIR}/.git --work-tree=${NVIM_SOURCE_DIR} describe --first-parent --dirty --always
   OUTPUT_VARIABLE GIT_TAG
   OUTPUT_STRIP_TRAILING_WHITESPACE
   RESULT_VARIABLE RES)
