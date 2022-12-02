@@ -490,6 +490,8 @@ describe('API/win', function()
 
     it('closing current (float) window of another tabpage #15313', function()
       command('tabedit')
+      command('botright split')
+      local prevwin = curwin().id
       eq(2, eval('tabpagenr()'))
       local win = meths.open_win(0, true, {
         relative='editor', row=10, col=10, width=50, height=10
@@ -499,7 +501,7 @@ describe('API/win', function()
       eq(1, eval('tabpagenr()'))
       meths.win_close(win, false)
 
-      eq(1001, meths.tabpage_get_win(tab).id)
+      eq(prevwin, meths.tabpage_get_win(tab).id)
       assert_alive()
     end)
   end)
