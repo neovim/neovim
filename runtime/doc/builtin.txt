@@ -8003,7 +8003,7 @@ stridx({haystack}, {needle} [, {start}])		*stridx()*
 
 		Can also be used as a |method|: >
 			GetHaystack()->stridx(needle)
-
+<
 							*string()*
 string({expr})	Return {expr} converted to a String.  If {expr} is a Number,
 		Float, String, Blob or a composition of them, then the result

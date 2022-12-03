@@ -156,6 +156,13 @@ func Test_helptag_cmd()
   call assert_equal(["help-tags\ttags\t1"], readfile('Xdir/tags'))
   call delete('Xdir/tags')
 
+  " Test parsing tags
+  call writefile(['*tag1*', 'Example: >', '  *notag*', 'Example end: *tag2*'],
+    \ 'Xdir/a/doc/sample.txt')
+  helptags Xdir
+  call assert_equal(["tag1\ta/doc/sample.txt\t/*tag1*",
+                  \  "tag2\ta/doc/sample.txt\t/*tag2*"], readfile('Xdir/tags'))
+
   " Duplicate tags in the help file
   call writefile(['*tag1*', '*tag1*', '*tag2*'], 'Xdir/a/doc/sample.txt')
   call assert_fails('helptags Xdir', 'E154:')

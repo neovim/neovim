@@ -941,6 +941,7 @@ static void helptags_one(char *dir, const char *ext, const char *tagfname, bool 
     }
     const char *const fname = files[fi] + dirlen + 1;
 
+    bool in_example = false;
     bool firstline = true;
     while (!vim_fgets(IObuff, IOSIZE, fd) && !got_int) {
       if (firstline) {
@@ -971,6 +972,13 @@ static void helptags_one(char *dir, const char *ext, const char *tagfname, bool 
         }
         firstline = false;
       }
+      if (in_example) {
+        // skip over example; a non-white in the first column ends it
+        if (vim_strchr(" \t\n\r", IObuff[0])) {
+          continue;
+        }
+        in_example = false;
+      }
       p1 = vim_strchr((char *)IObuff, '*');       // find first '*'
       while (p1 != NULL) {
         p2 = strchr((const char *)p1 + 1, '*');  // Find second '*'.
@@ -990,7 +998,7 @@ static void helptags_one(char *dir, const char *ext, const char *tagfname, bool 
                   || s[1] == '\0')) {
             *p2 = '\0';
             p1++;
-            size_t s_len= (size_t)(p2 - p1) + strlen(fname) + 2;
+            size_t s_len = (size_t)(p2 - p1) + strlen(fname) + 2;
             s = xmalloc(s_len);
             GA_APPEND(char *, &ga, s);
             snprintf(s, s_len, "%s\t%s", p1, fname);
@@ -1000,6 +1008,11 @@ static void helptags_one(char *dir, const char *ext, const char *tagfname, bool 
           }
         }
         p1 = p2;
+      }
+      size_t len = strlen(IObuff);
+      if ((len == 2 && strcmp(&IObuff[len - 2], ">\n") == 0)
+          || (len >= 3 && strcmp(&IObuff[len - 3], " >\n") == 0)) {
+        in_example = true;
       }
       line_breakcheck();
     }
