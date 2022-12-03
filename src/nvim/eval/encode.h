@@ -39,7 +39,7 @@ typedef struct {
 
 /// Initialize ListReaderState structure
 static inline ListReaderState encode_init_lrstate(const list_T *const list)
-  FUNC_ATTR_NONNULL_ALL
+FUNC_ATTR_NONNULL_ALL
 {
   return (ListReaderState) {
     .list = list,

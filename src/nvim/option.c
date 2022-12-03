@@ -512,7 +512,7 @@ static void set_options_default(int opt_flags)
 /// @param val The value of the option
 /// @param allocated If true, do not copy default as it was already allocated.
 static void set_string_default(const char *name, char *val, bool allocated)
-  FUNC_ATTR_NONNULL_ALL
+FUNC_ATTR_NONNULL_ALL
 {
   int opt_idx = findoption(name);
   if (opt_idx >= 0) {
@@ -528,7 +528,7 @@ static void set_string_default(const char *name, char *val, bool allocated)
 /// For an option value that contains comma separated items, find "newval" in
 /// "origval".  Return NULL if not found.
 static char *find_dup_item(char *origval, const char *newval, uint32_t flags)
-  FUNC_ATTR_NONNULL_ARG(2)
+FUNC_ATTR_NONNULL_ARG(2)
 {
   int bs = 0;
 
@@ -1512,7 +1512,7 @@ skip:
     arg = skipwhite(arg);
   }
 
-  theend:
+theend:
   if (silent_mode && did_show) {
     // After displaying option values in silent mode.
     silent_mode = false;
@@ -1804,7 +1804,7 @@ void redraw_titles(void)
 /// Return true if "val" is a valid name: only consists of alphanumeric ASCII
 /// characters or characters in "allowed".
 bool valid_name(const char *val, const char *allowed)
-  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
+FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
   for (const char_u *s = (char_u *)val; *s != NUL; s++) {
     if (!ASCII_ISALNUM(*s)
@@ -2726,7 +2726,7 @@ int findoption_len(const char *const arg, const size_t len)
 }
 
 bool is_tty_option(const char *name)
-  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
+FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
   return (name[0] == 't' && name[1] == '_')
          || strequal(name, "term")
@@ -2819,7 +2819,7 @@ void set_tty_background(const char *value)
 ///
 /// @return Option index or -1 if option was not found.
 int findoption(const char *const arg)
-  FUNC_ATTR_NONNULL_ALL
+FUNC_ATTR_NONNULL_ALL
 {
   return findoption_len(arg, strlen(arg));
 }
@@ -3027,7 +3027,7 @@ vimoption_T *get_option(int opt_idx)
 /// @return NULL on success, an untranslated error message on error.
 char *set_option_value(const char *const name, const long number, const char *const string,
                        const int opt_flags)
-  FUNC_ATTR_NONNULL_ARG(1)
+FUNC_ATTR_NONNULL_ARG(1)
 {
   if (is_tty_option(name)) {
     return NULL;  // Fail silently; many old vimrcs set t_xx options.
@@ -5235,7 +5235,7 @@ unsigned int get_ve_flags(void)
 /// @param win  If not NULL, the window to get the local option from; global
 ///             otherwise.
 char_u *get_showbreak_value(win_T *const win)
-  FUNC_ATTR_WARN_UNUSED_RESULT
+FUNC_ATTR_WARN_UNUSED_RESULT
 {
   if (win->w_p_sbr == NULL || *win->w_p_sbr == NUL) {
     return (char_u *)p_sbr;
@@ -5248,7 +5248,7 @@ char_u *get_showbreak_value(win_T *const win)
 
 /// Return the current end-of-line type: EOL_DOS, EOL_UNIX or EOL_MAC.
 int get_fileformat(const buf_T *buf)
-  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
+FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
 {
   int c = (unsigned char)(*buf->b_p_ff);
 
@@ -5266,7 +5266,7 @@ int get_fileformat(const buf_T *buf)
 ///
 /// @param eap  can be NULL!
 int get_fileformat_force(const buf_T *buf, const exarg_T *eap)
-  FUNC_ATTR_NONNULL_ARG(1)
+FUNC_ATTR_NONNULL_ARG(1)
 {
   int c;
 
@@ -5452,7 +5452,7 @@ int win_signcol_configured(win_T *wp, int *is_fixed)
 
 /// Get window or buffer local options
 dict_T *get_winbuf_options(const int bufopt)
-  FUNC_ATTR_WARN_UNUSED_RESULT
+FUNC_ATTR_WARN_UNUSED_RESULT
 {
   dict_T *const d = tv_dict_alloc();
 

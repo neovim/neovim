@@ -87,7 +87,7 @@ static int64_t next_autocmd_id = 1;
 ///             - buflocal (boolean): true if the autocommand is buffer local.
 ///             - buffer (number): the buffer number.
 Array nvim_get_autocmds(Dict(get_autocmds) *opts, Error *err)
-  FUNC_API_SINCE(9)
+FUNC_API_SINCE(9)
 {
   // TODO(tjdevries): Would be cool to add nvim_get_autocmds({ id = ... })
 
@@ -456,7 +456,7 @@ cleanup:
 /// @see |nvim_del_autocmd()|
 Integer nvim_create_autocmd(uint64_t channel_id, Object event, Dict(create_autocmd) *opts,
                             Error *err)
-  FUNC_API_SINCE(9)
+FUNC_API_SINCE(9)
 {
   int64_t autocmd_id = -1;
   char *desc = NULL;
@@ -602,7 +602,7 @@ cleanup:
 /// @param id Integer The id returned by nvim_create_autocmd
 /// @see |nvim_create_autocmd()|
 void nvim_del_autocmd(Integer id, Error *err)
-  FUNC_API_SINCE(9)
+FUNC_API_SINCE(9)
 {
   if (id <= 0) {
     api_set_error(err, kErrorTypeException, "Invalid autocmd id");
@@ -635,7 +635,7 @@ void nvim_del_autocmd(Integer id, Error *err)
 ///             - NOTE: If not passed, will only delete autocmds *not* in any group.
 ///
 void nvim_clear_autocmds(Dict(clear_autocmds) *opts, Error *err)
-  FUNC_API_SINCE(9)
+FUNC_API_SINCE(9)
 {
   // TODO(tjdevries): Future improvements:
   //        - once: (boolean) - Only clear autocmds with once. See |autocmd-once|
@@ -716,7 +716,7 @@ cleanup:
 /// @see |autocmd-groups|
 Integer nvim_create_augroup(uint64_t channel_id, String name, Dict(create_augroup) *opts,
                             Error *err)
-  FUNC_API_SINCE(9)
+FUNC_API_SINCE(9)
 {
   char *augroup_name = name.data;
   bool clear_autocmds = api_object_to_bool(opts->clear, "clear", true, err);
@@ -749,7 +749,7 @@ Integer nvim_create_augroup(uint64_t channel_id, String name, Dict(create_augrou
 /// @see |nvim_del_augroup_by_name()|
 /// @see |nvim_create_augroup()|
 void nvim_del_augroup_by_id(Integer id, Error *err)
-  FUNC_API_SINCE(9)
+FUNC_API_SINCE(9)
 {
   TRY_WRAP({
     try_start();
@@ -766,7 +766,7 @@ void nvim_del_augroup_by_id(Integer id, Error *err)
 /// @param name String The name of the group.
 /// @see |autocmd-groups|
 void nvim_del_augroup_by_name(String name, Error *err)
-  FUNC_API_SINCE(9)
+FUNC_API_SINCE(9)
 {
   TRY_WRAP({
     try_start();
@@ -791,7 +791,7 @@ void nvim_del_augroup_by_name(String name, Error *err)
 ///             |nvim_create_autocmd()| for details.
 /// @see |:doautocmd|
 void nvim_exec_autocmds(Object event, Dict(exec_autocmds) *opts, Error *err)
-  FUNC_API_SINCE(9)
+FUNC_API_SINCE(9)
 {
   int au_group = AUGROUP_ALL;
   bool modeline = true;

@@ -115,8 +115,8 @@ static bool have_dollars(int num, char **file)
 ///
 /// @returns             OK for success or FAIL for error.
 int os_expand_wildcards(int num_pat, char **pat, int *num_file, char ***file, int flags)
-  FUNC_ATTR_NONNULL_ARG(3)
-  FUNC_ATTR_NONNULL_ARG(4)
+FUNC_ATTR_NONNULL_ARG(3)
+FUNC_ATTR_NONNULL_ARG(4)
 {
   int i;
   size_t len;
@@ -568,7 +568,7 @@ notfound:
 /// @param extra_args Extra arguments to the shell, or NULL.
 /// @return Newly allocated argument vector. Must be freed with shell_free_argv.
 char **shell_build_argv(const char *cmd, const char *extra_args)
-  FUNC_ATTR_NONNULL_RET
+FUNC_ATTR_NONNULL_RET
 {
   size_t argc = tokenize((char_u *)p_sh, NULL) + (cmd ? tokenize(p_shcf, NULL) : 0);
   char **rv = xmalloc((argc + 4) * sizeof(*rv));
@@ -615,7 +615,7 @@ void shell_free_argv(char **argv)
 ///
 /// @returns[allocated] `argv` joined to a string.
 char *shell_argv_to_str(char **const argv)
-  FUNC_ATTR_NONNULL_ALL
+FUNC_ATTR_NONNULL_ALL
 {
   size_t n = 0;
   char **p = argv;
@@ -1106,7 +1106,7 @@ static void out_data_ring(char *output, size_t size)
 /// @param remaining    Size of data.
 /// @param new_line     If true, next data output will be on a new line.
 static void out_data_append_to_screen(char *output, size_t *count, bool eof)
-  FUNC_ATTR_NONNULL_ALL
+FUNC_ATTR_NONNULL_ALL
 {
   char *p = output, *end = output + *count;
   while (p < end) {
@@ -1166,7 +1166,7 @@ static void out_data_cb(Stream *stream, RBuffer *buf, size_t count, void *data, 
 ///        words. It can be NULL if the caller only needs to count words.
 /// @return The number of words parsed.
 static size_t tokenize(const char_u *const str, char **const argv)
-  FUNC_ATTR_NONNULL_ARG(1)
+FUNC_ATTR_NONNULL_ARG(1)
 {
   size_t argc = 0;
   const char *p = (const char *)str;
@@ -1324,7 +1324,7 @@ static void shell_write_cb(Stream *stream, void *data, int status)
 /// @param cmd Command string
 /// @return    Escaped/quoted command string (allocated).
 static char *shell_xescape_xquote(const char *cmd)
-  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_MALLOC FUNC_ATTR_WARN_UNUSED_RESULT
+FUNC_ATTR_NONNULL_ALL FUNC_ATTR_MALLOC FUNC_ATTR_WARN_UNUSED_RESULT
 {
   if (*p_sxq == NUL) {
     return xstrdup(cmd);

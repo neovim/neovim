@@ -1445,7 +1445,7 @@ void edit_putchar(int c, bool highlight)
 
 /// @return    the effective prompt for the specified buffer.
 char *buf_prompt_text(const buf_T *const buf)
-    FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_PURE
+FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_PURE
 {
   if (buf->b_prompt_text == NULL) {
     return "% ";
@@ -1455,7 +1455,7 @@ char *buf_prompt_text(const buf_T *const buf)
 
 /// @return  the effective prompt for the current buffer.
 char *prompt_text(void)
-  FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_PURE
+FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_PURE
 {
   return buf_prompt_text(curbuf);
 }
@@ -1503,7 +1503,7 @@ static void init_prompt(int cmdchar_todo)
 
 /// @return  true if the cursor is in the editable position of the prompt line.
 bool prompt_curpos_editable(void)
-  FUNC_ATTR_PURE
+FUNC_ATTR_PURE
 {
   return curwin->w_cursor.lnum == curbuf->b_ml.ml_line_count
          && curwin->w_cursor.col >= (int)strlen(prompt_text());
@@ -2727,7 +2727,7 @@ int stuff_inserted(int c, long count, int no_esc)
 }
 
 char_u *get_last_insert(void)
-  FUNC_ATTR_PURE
+FUNC_ATTR_PURE
 {
   if (last_insert == NULL) {
     return NULL;
@@ -2763,7 +2763,7 @@ char_u *get_last_insert_save(void)
 ///
 /// @return true if the word is a known abbreviation.
 static bool echeck_abbr(int c)
-  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
+FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
   // Don't check for abbreviation in paste mode, when disabled and just
   // after moving around with cursor keys.
@@ -2992,7 +2992,7 @@ static void replace_do_bs(int limit_col)
 
 /// Check that C-indenting is on.
 bool cindent_on(void)
-  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
+FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
   return !p_paste && (curbuf->b_p_cin || *curbuf->b_p_inde != NUL);
 }
@@ -3220,7 +3220,7 @@ bool in_cinkeys(int keytyped, int when, bool line_is_empty)
 
 // Map Hebrew keyboard when in hkmap mode.
 int hkmap(int c)
-  FUNC_ATTR_PURE
+FUNC_ATTR_PURE
 {
   if (p_hkmapp) {   // phonetic mapping, by Ilya Dogolazky
     enum {
@@ -3483,7 +3483,7 @@ static void ins_ctrl_hat(void)
 ///
 /// @return true when leaving insert mode, false when repeating the insert.
 static bool ins_esc(long *count, int cmdchar, bool nomove)
-  FUNC_ATTR_NONNULL_ARG(1)
+FUNC_ATTR_NONNULL_ARG(1)
 {
   static bool disabled_redraw = false;
 
@@ -3612,7 +3612,7 @@ static void ins_ctrl_(void)
 //
 /// @return true when a CTRL-O and other keys stuffed.
 static bool ins_start_select(int c)
-  FUNC_ATTR_WARN_UNUSED_RESULT
+FUNC_ATTR_WARN_UNUSED_RESULT
 {
   if (!km_startsel) {
     return false;
@@ -3780,7 +3780,7 @@ static void ins_bs_one(colnr_T *vcolp)
 ///
 /// @return true when backspace was actually used.
 static bool ins_bs(int c, int mode, int *inserted_space_p)
-  FUNC_ATTR_NONNULL_ARG(3)
+FUNC_ATTR_NONNULL_ARG(3)
 {
   linenr_T lnum;
   int cc;
@@ -4419,7 +4419,7 @@ static void ins_pagedown(void)
 ///
 /// @return true when the TAB needs to be inserted like a normal character.
 static bool ins_tab(void)
-  FUNC_ATTR_WARN_UNUSED_RESULT
+FUNC_ATTR_WARN_UNUSED_RESULT
 {
   int i;
   int temp;

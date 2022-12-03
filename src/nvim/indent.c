@@ -387,7 +387,7 @@ int get_indent_buf(buf_T *buf, linenr_T lnum)
 /// 'tabstop' at "ts".
 /// If @param list is true, count only screen size for tabs.
 int get_indent_str(const char_u *ptr, int ts, bool list)
-  FUNC_ATTR_NONNULL_ALL
+FUNC_ATTR_NONNULL_ALL
 {
   int count = 0;
 
@@ -799,7 +799,7 @@ bool briopt_check(win_T *wp)
 // parameters into account. Window must be specified, since it is not
 // necessarily always the current one.
 int get_breakindent_win(win_T *wp, char_u *line)
-  FUNC_ATTR_NONNULL_ALL
+FUNC_ATTR_NONNULL_ALL
 {
   static int prev_indent = 0;  // Cached indent value.
   static long prev_ts = 0L;  // Cached tabstop value.

@@ -93,7 +93,7 @@ typedef struct {
            DICTIONARY_OBJ(((Dictionary) { .capacity = 0, .size = 0 })))
 
 static inline void typval_encode_list_start(EncodedData *const edata, const size_t len)
-  FUNC_ATTR_ALWAYS_INLINE FUNC_ATTR_NONNULL_ALL
+FUNC_ATTR_ALWAYS_INLINE FUNC_ATTR_NONNULL_ALL
 {
   kvi_push(edata->stack, ARRAY_OBJ(((Array) {
     .capacity = len,
@@ -108,7 +108,7 @@ static inline void typval_encode_list_start(EncodedData *const edata, const size
 #define TYPVAL_ENCODE_CONV_REAL_LIST_AFTER_START(tv, mpsv)
 
 static inline void typval_encode_between_list_items(EncodedData *const edata)
-  FUNC_ATTR_ALWAYS_INLINE FUNC_ATTR_NONNULL_ALL
+FUNC_ATTR_ALWAYS_INLINE FUNC_ATTR_NONNULL_ALL
 {
   Object item = kv_pop(edata->stack);
   Object *const list = &kv_last(edata->stack);
@@ -121,7 +121,7 @@ static inline void typval_encode_between_list_items(EncodedData *const edata)
   typval_encode_between_list_items(edata)
 
 static inline void typval_encode_list_end(EncodedData *const edata)
-  FUNC_ATTR_ALWAYS_INLINE FUNC_ATTR_NONNULL_ALL
+FUNC_ATTR_ALWAYS_INLINE FUNC_ATTR_NONNULL_ALL
 {
   typval_encode_between_list_items(edata);
 #ifndef NDEBUG
@@ -134,7 +134,7 @@ static inline void typval_encode_list_end(EncodedData *const edata)
   typval_encode_list_end(edata)
 
 static inline void typval_encode_dict_start(EncodedData *const edata, const size_t len)
-  FUNC_ATTR_ALWAYS_INLINE FUNC_ATTR_NONNULL_ALL
+FUNC_ATTR_ALWAYS_INLINE FUNC_ATTR_NONNULL_ALL
 {
   kvi_push(edata->stack, DICTIONARY_OBJ(((Dictionary) {
     .capacity = len,
@@ -151,7 +151,7 @@ static inline void typval_encode_dict_start(EncodedData *const edata, const size
 #define TYPVAL_ENCODE_SPECIAL_DICT_KEY_CHECK(label, kv_pair)
 
 static inline void typval_encode_after_key(EncodedData *const edata)
-  FUNC_ATTR_ALWAYS_INLINE FUNC_ATTR_NONNULL_ALL
+FUNC_ATTR_ALWAYS_INLINE FUNC_ATTR_NONNULL_ALL
 {
   Object key = kv_pop(edata->stack);
   Object *const dict = &kv_last(edata->stack);
@@ -171,7 +171,7 @@ static inline void typval_encode_after_key(EncodedData *const edata)
   typval_encode_after_key(edata)
 
 static inline void typval_encode_between_dict_items(EncodedData *const edata)
-  FUNC_ATTR_ALWAYS_INLINE FUNC_ATTR_NONNULL_ALL
+FUNC_ATTR_ALWAYS_INLINE FUNC_ATTR_NONNULL_ALL
 {
   Object val = kv_pop(edata->stack);
   Object *const dict = &kv_last(edata->stack);
@@ -184,7 +184,7 @@ static inline void typval_encode_between_dict_items(EncodedData *const edata)
   typval_encode_between_dict_items(edata)
 
 static inline void typval_encode_dict_end(EncodedData *const edata)
-  FUNC_ATTR_ALWAYS_INLINE FUNC_ATTR_NONNULL_ALL
+FUNC_ATTR_ALWAYS_INLINE FUNC_ATTR_NONNULL_ALL
 {
   typval_encode_between_dict_items(edata);
 #ifndef NDEBUG
@@ -303,7 +303,6 @@ bool object_to_vim(Object obj, typval_T *tv, Error *err)
     }
     break;
 
-    // uncrustify:off
   case kObjectTypeArray: {
     list_T *const list = tv_list_alloc((ptrdiff_t)obj.data.array.size);
 
@@ -357,7 +356,6 @@ bool object_to_vim(Object obj, typval_T *tv, Error *err)
     tv->vval.v_dict = dict;
     break;
   }
-    // uncrustify:on
 
   case kObjectTypeLuaRef: {
     char *name = (char *)register_luafunc(api_new_luaref(obj.data.luaref));

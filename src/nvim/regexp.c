@@ -385,7 +385,7 @@ static regengine_T nfa_regengine;
 
 // Return true if compiled regular expression "prog" can match a line break.
 int re_multiline(const regprog_T *prog)
-  FUNC_ATTR_NONNULL_ALL
+FUNC_ATTR_NONNULL_ALL
 {
   return prog->regflags & RF_HASNL;
 }
@@ -1042,7 +1042,7 @@ static lpos_T reg_endzpos[NSUBEXP];     // idem, end pos
 
 // Create a new extmatch and mark it as referenced once.
 static reg_extmatch_T *make_extmatch(void)
-  FUNC_ATTR_NONNULL_RET
+FUNC_ATTR_NONNULL_RET
 {
   reg_extmatch_T *em = xcalloc(1, sizeof(reg_extmatch_T));
   em->refcnt = 1;
@@ -1433,8 +1433,8 @@ static int cstrncmp(char *s1, char *s2, int *n)
 ///
 /// @return  NULL if no match, otherwise pointer to the position in @a s
 static inline char_u *cstrchr(const char_u *const s, const int c)
-  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
-  FUNC_ATTR_ALWAYS_INLINE
+FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
+FUNC_ATTR_ALWAYS_INLINE
 {
   if (!rex.reg_ic) {
     return (char_u *)vim_strchr((char *)s, c);
@@ -1582,7 +1582,7 @@ static regsubmatch_T rsm;  // can only be used when can_f_submatch is true
 /// Put the submatches in "argv[argskip]" which is a list passed into
 /// call_func() by vim_regsub_both().
 static int fill_submatch_list(int argc FUNC_ATTR_UNUSED, typval_T *argv, int argskip, ufunc_T *fp)
-  FUNC_ATTR_NONNULL_ALL
+FUNC_ATTR_NONNULL_ALL
 {
   typval_T *listarg = argv + argskip;
 
@@ -2081,7 +2081,7 @@ static int vim_regsub_both(char *source, typval_T *expr, char *dest, int destlen
     *dst = NUL;
   }
 
-  exit:
+exit:
   return (int)((dst - dest) + 1);
 }
 
@@ -2516,7 +2516,7 @@ bool vim_regexec_nl(regmatch_T *rmp, char_u *line, colnr_T col)
 ///          match otherwise.
 long vim_regexec_multi(regmmatch_T *rmp, win_T *win, buf_T *buf, linenr_T lnum, colnr_T col,
                        proftime_T *tm, int *timed_out)
-  FUNC_ATTR_NONNULL_ARG(1)
+FUNC_ATTR_NONNULL_ARG(1)
 {
   regexec_T rex_save;
   bool rex_in_use_save = rex_in_use;

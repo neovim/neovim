@@ -95,7 +95,7 @@
 ///               - "topleft": |:topleft|.
 ///               - "botright": |:botright|.
 Dictionary nvim_parse_cmd(String str, Dictionary opts, Error *err)
-  FUNC_API_SINCE(10) FUNC_API_FAST
+FUNC_API_SINCE(10) FUNC_API_FAST
 {
   Dictionary result = ARRAY_DICT_INIT;
 
@@ -318,7 +318,7 @@ end:
 /// @param[out] err  Error details, if any.
 /// @return Command output (non-error, non-shell |:!|) if `output` is true, else empty string.
 String nvim_cmd(uint64_t channel_id, Dict(cmd) *cmd, Dict(cmd_opts) *opts, Error *err)
-  FUNC_API_SINCE(10)
+FUNC_API_SINCE(10)
 {
   exarg_T ea;
   CLEAR_FIELD(ea);
@@ -923,7 +923,7 @@ static void build_cmdline_str(char **cmdlinep, exarg_T *eap, CmdParseInfo *cmdin
 ///                 - preview: (function) Preview callback for 'inccommand' |:command-preview|
 /// @param[out] err Error details, if any.
 void nvim_create_user_command(String name, Object command, Dict(user_command) *opts, Error *err)
-  FUNC_API_SINCE(9)
+FUNC_API_SINCE(9)
 {
   create_user_command(name, command, opts, 0, err);
 }
@@ -933,7 +933,7 @@ void nvim_create_user_command(String name, Object command, Dict(user_command) *o
 /// @param  name    Name of the command to delete.
 /// @param[out] err Error details, if any.
 void nvim_del_user_command(String name, Error *err)
-  FUNC_API_SINCE(9)
+FUNC_API_SINCE(9)
 {
   nvim_buf_del_user_command(-1, name, err);
 }
@@ -945,7 +945,7 @@ void nvim_del_user_command(String name, Error *err)
 /// @see nvim_create_user_command
 void nvim_buf_create_user_command(Buffer buffer, String name, Object command,
                                   Dict(user_command) *opts, Error *err)
-  FUNC_API_SINCE(9)
+FUNC_API_SINCE(9)
 {
   buf_T *target_buf = find_buffer_by_handle(buffer, err);
   if (ERROR_SET(err)) {
@@ -967,7 +967,7 @@ void nvim_buf_create_user_command(Buffer buffer, String name, Object command,
 /// @param  name    Name of the command to delete.
 /// @param[out] err Error details, if any.
 void nvim_buf_del_user_command(Buffer buffer, String name, Error *err)
-  FUNC_API_SINCE(9)
+FUNC_API_SINCE(9)
 {
   garray_T *gap;
   if (buffer == -1) {
@@ -1209,7 +1209,7 @@ err:
 ///
 /// @returns Map of maps describing commands.
 Dictionary nvim_get_commands(Dict(get_commands) *opts, Error *err)
-  FUNC_API_SINCE(4)
+FUNC_API_SINCE(4)
 {
   return nvim_buf_get_commands(-1, opts, err);
 }
@@ -1222,7 +1222,7 @@ Dictionary nvim_get_commands(Dict(get_commands) *opts, Error *err)
 ///
 /// @returns Map of maps describing commands.
 Dictionary nvim_buf_get_commands(Buffer buffer, Dict(get_commands) *opts, Error *err)
-  FUNC_API_SINCE(4)
+FUNC_API_SINCE(4)
 {
   bool global = (buffer == -1);
   bool builtin = api_object_to_bool(opts->builtin, "builtin", false, err);

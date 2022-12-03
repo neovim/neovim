@@ -1482,7 +1482,7 @@ static char_u *re_put_uint32(char_u *p, uint32_t val)
 // Returns NULL when calculating size, when there is no next item and when
 // there is an error.
 static char_u *regnext(char_u *p)
-  FUNC_ATTR_NONNULL_ALL
+FUNC_ATTR_NONNULL_ALL
 {
   int offset;
 
@@ -2400,7 +2400,7 @@ collection:
     // A multi-byte character is handled as a separate atom if it's
     // before a multi and when it's a composing char.
     if (use_multibytecode(c)) {
-      do_multibyte:
+do_multibyte:
       ret = regnode(MULTIBYTECODE);
       regmbc(c);
       *flagp |= HASWIDTH | SIMPLE;
@@ -2994,7 +2994,7 @@ static long bl_maxval;
 
 // Save the input line and position in a regsave_T.
 static void reg_save(regsave_T *save, garray_T *gap)
-  FUNC_ATTR_NONNULL_ALL
+FUNC_ATTR_NONNULL_ALL
 {
   if (REG_MULTI) {
     save->rs_u.pos.col = (colnr_T)(rex.input - rex.line);
@@ -3007,7 +3007,7 @@ static void reg_save(regsave_T *save, garray_T *gap)
 
 // Restore the input line and position from a regsave_T.
 static void reg_restore(regsave_T *save, garray_T *gap)
-  FUNC_ATTR_NONNULL_ALL
+FUNC_ATTR_NONNULL_ALL
 {
   if (REG_MULTI) {
     if (rex.lnum != save->rs_u.pos.lnum) {
@@ -3025,7 +3025,7 @@ static void reg_restore(regsave_T *save, garray_T *gap)
 
 // Return true if current position is equal to saved position.
 static bool reg_save_equal(const regsave_T *save)
-  FUNC_ATTR_NONNULL_ALL
+FUNC_ATTR_NONNULL_ALL
 {
   if (REG_MULTI) {
     return rex.lnum == save->rs_u.pos.lnum
@@ -3463,7 +3463,7 @@ static void regstack_pop(char_u **scan)
 // Save the current subexpr to "bp", so that they can be restored
 // later by restore_subexpr().
 static void save_subexpr(regbehind_T *bp)
-  FUNC_ATTR_NONNULL_ALL
+FUNC_ATTR_NONNULL_ALL
 {
   // When "rex.need_clear_subexpr" is set we don't need to save the values, only
   // remember that this flag needs to be set again when restoring.
@@ -3483,7 +3483,7 @@ static void save_subexpr(regbehind_T *bp)
 
 // Restore the subexpr from "bp".
 static void restore_subexpr(regbehind_T *bp)
-  FUNC_ATTR_NONNULL_ALL
+FUNC_ATTR_NONNULL_ALL
 {
   // Only need to restore saved values when they are not to be cleared.
   rex.need_clear_subexpr = bp->save_need_clear_subexpr;
@@ -4750,7 +4750,6 @@ static bool regmatch(char_u *scan, proftime_T *tm, int *timed_out)
         }
         break;
 
-        // uncrustify:off
       case RS_STAR_LONG:
       case RS_STAR_SHORT: {
         regstar_T *rst = ((regstar_T *)rp) - 1;
@@ -4767,7 +4766,7 @@ static bool regmatch(char_u *scan, proftime_T *tm, int *timed_out)
         }
 
         // Repeat until we found a position where it could match.
-        for (;;) {
+        while (true) {
           if (status != RA_BREAK) {
             // Tried first position already, advance.
             if (rp->rs_state == RS_STAR_LONG) {
@@ -4827,8 +4826,7 @@ static bool regmatch(char_u *scan, proftime_T *tm, int *timed_out)
           status = RA_NOMATCH;
         }
       }
-        // uncrustify:on
-        break;
+      break;
       }
 
       // If we want to continue the inner loop or didn't pop a state

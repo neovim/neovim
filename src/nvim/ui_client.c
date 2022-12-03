@@ -67,7 +67,7 @@ Object handle_ui_client_redraw(uint64_t channel_id, Array args, Arena *arena, Er
 ///
 /// This is just a stub. the full version will handle input, resizing, etc
 void ui_client_execute(uint64_t chan)
-  FUNC_ATTR_NORETURN
+FUNC_ATTR_NORETURN
 {
   while (true) {
     loop_poll_events(&main_loop, -1);
@@ -113,7 +113,7 @@ void ui_client_event_grid_resize(Array args)
 }
 
 void ui_client_event_grid_line(Array args)
-  FUNC_ATTR_NORETURN
+FUNC_ATTR_NORETURN
 {
   abort();  // unreachable
 }

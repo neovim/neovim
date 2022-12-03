@@ -339,7 +339,7 @@ int do_in_path(char *path, char *name, int flags, DoInRuntimepathCB callback, vo
 }
 
 RuntimeSearchPath runtime_search_path_get_cached(int *ref)
-  FUNC_ATTR_NONNULL_ALL
+FUNC_ATTR_NONNULL_ALL
 {
   runtime_search_path_validate();
 
@@ -365,7 +365,7 @@ RuntimeSearchPath copy_runtime_search_path(const RuntimeSearchPath src)
 }
 
 void runtime_search_path_unref(RuntimeSearchPath path, const int *ref)
-  FUNC_ATTR_NONNULL_ALL
+FUNC_ATTR_NONNULL_ALL
 {
   if (*ref) {
     if (runtime_search_path_ref == ref) {
@@ -543,7 +543,7 @@ ArrayOf(String) runtime_get_named_common(bool lua, Array pat, bool all,
       }
     }
   }
-  done:
+done:
   return rv;
 }
 
@@ -1330,7 +1330,7 @@ int ExpandPackAddDir(char *pat, int *num_file, char ***file)
 
 /// Append string with escaped commas
 static char *strcpy_comma_escaped(char *dest, const char *src, const size_t len)
-  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
+FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
   size_t shift = 0;
   for (size_t i = 0; i < len; i++) {
@@ -1358,7 +1358,7 @@ static char *strcpy_comma_escaped(char *dest, const char *src, const size_t len)
 ///         inside the values are escaped.
 static inline size_t compute_double_env_sep_len(const char *const val, const size_t common_suf_len,
                                                 const size_t single_suf_len)
-  FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_PURE
+FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_PURE
 {
   if (val == NULL || *val == NUL) {
     return 0;
@@ -1401,7 +1401,7 @@ static inline size_t compute_double_env_sep_len(const char *const val, const siz
 static inline char *add_env_sep_dirs(char *dest, const char *const val, const char *const suf1,
                                      const size_t len1, const char *const suf2, const size_t len2,
                                      const bool forward)
-  FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_RET FUNC_ATTR_NONNULL_ARG(1)
+FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_RET FUNC_ATTR_NONNULL_ARG(1)
 {
   if (val == NULL || *val == NUL) {
     return dest;
@@ -1461,7 +1461,7 @@ static inline char *add_env_sep_dirs(char *dest, const char *const val, const ch
 static inline char *add_dir(char *dest, const char *const dir, const size_t dir_len,
                             const XDGVarType type, const char *const suf1, const size_t len1,
                             const char *const suf2, const size_t len2)
-  FUNC_ATTR_NONNULL_RET FUNC_ATTR_NONNULL_ARG(1) FUNC_ATTR_WARN_UNUSED_RESULT
+FUNC_ATTR_NONNULL_RET FUNC_ATTR_NONNULL_ARG(1) FUNC_ATTR_WARN_UNUSED_RESULT
 {
   if (dir == NULL || dir_len == 0) {
     return dest;
@@ -1608,7 +1608,7 @@ char *runtimepath_default(bool clean_arg)
   assert((size_t)(rtp_cur - rtp) == rtp_size);
 #undef SITE_SIZE
 #undef AFTER_SIZE
-  freeall:
+freeall:
   xfree(data_dirs);
   xfree(config_dirs);
   xfree(data_home);
@@ -1676,7 +1676,7 @@ int *source_dbg_tick(void *cookie)
 
 /// @return  the nesting level for a source cookie.
 int source_level(void *cookie)
-  FUNC_ATTR_PURE
+FUNC_ATTR_PURE
 {
   return ((struct source_cookie *)cookie)->level;
 }
@@ -1714,7 +1714,7 @@ static FILE *fopen_noinh_readbin(char *filename)
 ///         should also be considered, if it exists); false otherwise
 static bool concat_continued_line(garray_T *const ga, const int init_growsize, const char *const p,
                                   size_t len)
-  FUNC_ATTR_NONNULL_ALL
+FUNC_ATTR_NONNULL_ALL
 {
   const char *const line = skipwhite_len((char *)p, len);
   len -= (size_t)(line - p);
@@ -1829,7 +1829,7 @@ static int source_using_linegetter(void *cookie, LineGetter fgetline, const char
 }
 
 static void cmd_source_buffer(const exarg_T *const eap)
-  FUNC_ATTR_NONNULL_ALL
+FUNC_ATTR_NONNULL_ALL
 {
   if (curbuf == NULL) {
     return;
@@ -2249,7 +2249,7 @@ void free_scriptnames(void)
 #endif
 
 linenr_T get_sourced_lnum(LineGetter fgetline, void *cookie)
-  FUNC_ATTR_PURE
+FUNC_ATTR_PURE
 {
   return fgetline == getsourceline
         ? ((struct source_cookie *)cookie)->sourcing_lnum

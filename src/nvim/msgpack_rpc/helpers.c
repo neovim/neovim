@@ -46,7 +46,7 @@ typedef struct {
 ///
 /// @return true in case of success, false otherwise.
 bool msgpack_rpc_to_object(const msgpack_object *const obj, Object *const arg)
-  FUNC_ATTR_NONNULL_ALL
+FUNC_ATTR_NONNULL_ALL
 {
   bool ret = true;
   kvec_withinit_t(MPToAPIObjectStackItem, 2) stack = KV_INITIAL_VALUE;
@@ -213,7 +213,7 @@ bool msgpack_rpc_to_object(const msgpack_object *const obj, Object *const arg)
 }
 
 static bool msgpack_rpc_to_string(const msgpack_object *const obj, String *const arg)
-  FUNC_ATTR_NONNULL_ALL
+FUNC_ATTR_NONNULL_ALL
 {
   if (obj->type == MSGPACK_OBJECT_BIN || obj->type == MSGPACK_OBJECT_STR) {
     arg->data = obj->via.bin.ptr != NULL
@@ -226,7 +226,7 @@ static bool msgpack_rpc_to_string(const msgpack_object *const obj, String *const
 }
 
 bool msgpack_rpc_to_array(const msgpack_object *const obj, Array *const arg)
-  FUNC_ATTR_NONNULL_ALL
+FUNC_ATTR_NONNULL_ALL
 {
   if (obj->type != MSGPACK_OBJECT_ARRAY) {
     return false;
@@ -245,7 +245,7 @@ bool msgpack_rpc_to_array(const msgpack_object *const obj, Array *const arg)
 }
 
 bool msgpack_rpc_to_dictionary(const msgpack_object *const obj, Dictionary *const arg)
-  FUNC_ATTR_NONNULL_ALL
+FUNC_ATTR_NONNULL_ALL
 {
   if (obj->type != MSGPACK_OBJECT_MAP) {
     return false;
@@ -270,7 +270,7 @@ bool msgpack_rpc_to_dictionary(const msgpack_object *const obj, Dictionary *cons
 }
 
 void msgpack_rpc_from_boolean(Boolean result, msgpack_packer *res)
-  FUNC_ATTR_NONNULL_ARG(2)
+FUNC_ATTR_NONNULL_ARG(2)
 {
   if (result) {
     msgpack_pack_true(res);
@@ -280,19 +280,19 @@ void msgpack_rpc_from_boolean(Boolean result, msgpack_packer *res)
 }
 
 void msgpack_rpc_from_integer(Integer result, msgpack_packer *res)
-  FUNC_ATTR_NONNULL_ARG(2)
+FUNC_ATTR_NONNULL_ARG(2)
 {
   msgpack_pack_int64(res, result);
 }
 
 void msgpack_rpc_from_float(Float result, msgpack_packer *res)
-  FUNC_ATTR_NONNULL_ARG(2)
+FUNC_ATTR_NONNULL_ARG(2)
 {
   msgpack_pack_double(res, result);
 }
 
 void msgpack_rpc_from_string(const String result, msgpack_packer *res)
-  FUNC_ATTR_NONNULL_ARG(2)
+FUNC_ATTR_NONNULL_ARG(2)
 {
   msgpack_pack_str(res, result.size);
   if (result.size > 0) {
@@ -301,7 +301,7 @@ void msgpack_rpc_from_string(const String result, msgpack_packer *res)
 }
 
 static void msgpack_rpc_from_handle(ObjectType type, Integer o, msgpack_packer *res)
-  FUNC_ATTR_NONNULL_ARG(3)
+FUNC_ATTR_NONNULL_ARG(3)
 {
   msgpack_packer pac;
   msgpack_packer_init(&pac, &sbuffer, msgpack_sbuffer_write);
@@ -324,7 +324,7 @@ typedef struct {
 ///
 /// @return true in case of success, false otherwise.
 void msgpack_rpc_from_object(const Object result, msgpack_packer *const res)
-  FUNC_ATTR_NONNULL_ARG(2)
+FUNC_ATTR_NONNULL_ARG(2)
 {
   kvec_withinit_t(APIToMPObjectStackItem, 2) stack = KV_INITIAL_VALUE;
   kvi_init(stack);
@@ -412,7 +412,7 @@ void msgpack_rpc_from_object(const Object result, msgpack_packer *const res)
 }
 
 void msgpack_rpc_from_array(Array result, msgpack_packer *res)
-  FUNC_ATTR_NONNULL_ARG(2)
+FUNC_ATTR_NONNULL_ARG(2)
 {
   msgpack_pack_array(res, result.size);
 
@@ -422,7 +422,7 @@ void msgpack_rpc_from_array(Array result, msgpack_packer *res)
 }
 
 void msgpack_rpc_from_dictionary(Dictionary result, msgpack_packer *res)
-  FUNC_ATTR_NONNULL_ARG(2)
+FUNC_ATTR_NONNULL_ARG(2)
 {
   msgpack_pack_map(res, result.size);
 
@@ -435,7 +435,7 @@ void msgpack_rpc_from_dictionary(Dictionary result, msgpack_packer *res)
 /// Serializes a msgpack-rpc request or notification(id == 0)
 void msgpack_rpc_serialize_request(uint32_t request_id, const String method, Array args,
                                    msgpack_packer *pac)
-  FUNC_ATTR_NONNULL_ARG(4)
+FUNC_ATTR_NONNULL_ARG(4)
 {
   msgpack_pack_array(pac, request_id ? 4 : 3);
   msgpack_pack_int(pac, request_id ? 0 : 2);
@@ -451,7 +451,7 @@ void msgpack_rpc_serialize_request(uint32_t request_id, const String method, Arr
 /// Serializes a msgpack-rpc response
 void msgpack_rpc_serialize_response(uint32_t response_id, Error *err, Object arg,
                                     msgpack_packer *pac)
-  FUNC_ATTR_NONNULL_ARG(2, 4)
+FUNC_ATTR_NONNULL_ARG(2, 4)
 {
   msgpack_pack_array(pac, 4);
   msgpack_pack_int(pac, 1);

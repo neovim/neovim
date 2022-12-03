@@ -27,7 +27,7 @@ extern const uint8_t utf8len_tab[256];
 #endif
 
 static inline int mb_strcmp_ic(bool ic, const char *s1, const char *s2)
-  REAL_FATTR_NONNULL_ALL REAL_FATTR_PURE REAL_FATTR_WARN_UNUSED_RESULT;
+REAL_FATTR_NONNULL_ALL REAL_FATTR_PURE REAL_FATTR_WARN_UNUSED_RESULT;
 
 /// Compare strings
 ///

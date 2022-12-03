@@ -26,7 +26,7 @@
 #endif
 
 int socket_watcher_init(Loop *loop, SocketWatcher *watcher, const char *endpoint)
-  FUNC_ATTR_NONNULL_ALL
+FUNC_ATTR_NONNULL_ALL
 {
   xstrlcpy(watcher->addr, endpoint, sizeof(watcher->addr));
   char *addr = watcher->addr;
@@ -80,7 +80,7 @@ int socket_watcher_init(Loop *loop, SocketWatcher *watcher, const char *endpoint
 }
 
 int socket_watcher_start(SocketWatcher *watcher, int backlog, socket_cb cb)
-  FUNC_ATTR_NONNULL_ALL
+FUNC_ATTR_NONNULL_ALL
 {
   watcher->cb = cb;
   int result = UV_EINVAL;
@@ -137,7 +137,7 @@ int socket_watcher_start(SocketWatcher *watcher, int backlog, socket_cb cb)
 }
 
 int socket_watcher_accept(SocketWatcher *watcher, Stream *stream)
-  FUNC_ATTR_NONNULL_ARG(1) FUNC_ATTR_NONNULL_ARG(2)
+FUNC_ATTR_NONNULL_ARG(1) FUNC_ATTR_NONNULL_ARG(2)
 {
   uv_stream_t *client;
 
@@ -162,7 +162,7 @@ int socket_watcher_accept(SocketWatcher *watcher, Stream *stream)
 }
 
 void socket_watcher_close(SocketWatcher *watcher, socket_close_cb cb)
-  FUNC_ATTR_NONNULL_ARG(1)
+FUNC_ATTR_NONNULL_ARG(1)
 {
   watcher->close_cb = cb;
   uv_close(STRUCT_CAST(uv_handle_t, watcher->stream), close_cb);

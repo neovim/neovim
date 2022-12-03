@@ -104,7 +104,7 @@ typedef enum {
 ///
 /// @return Index in y_regs array or -1 if register name was not recognized.
 static inline int op_reg_index(const int regname)
-  FUNC_ATTR_CONST
+FUNC_ATTR_CONST
 {
   if (ascii_isdigit(regname)) {
     return regname - '0';

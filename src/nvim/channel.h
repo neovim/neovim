@@ -123,7 +123,7 @@ static inline Channel *find_channel(uint64_t id)
 }
 
 static inline Stream *channel_instream(Channel *chan)
-  FUNC_ATTR_NONNULL_ALL
+FUNC_ATTR_NONNULL_ALL
 {
   switch (chan->streamtype) {
   case kChannelStreamProc:
@@ -143,7 +143,7 @@ static inline Stream *channel_instream(Channel *chan)
 }
 
 static inline Stream *channel_outstream(Channel *chan)
-  FUNC_ATTR_NONNULL_ALL
+FUNC_ATTR_NONNULL_ALL
 {
   switch (chan->streamtype) {
   case kChannelStreamProc:

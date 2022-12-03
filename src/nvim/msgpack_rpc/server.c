@@ -223,7 +223,7 @@ bool server_stop(char *endpoint)
 /// Returns an allocated array of server addresses.
 /// @param[out] size The size of the returned array.
 char **server_address_list(size_t *size)
-  FUNC_ATTR_NONNULL_ALL
+FUNC_ATTR_NONNULL_ALL
 {
   if ((*size = (size_t)watchers.ga_len) == 0) {
     return NULL;

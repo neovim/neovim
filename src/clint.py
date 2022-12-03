@@ -2323,11 +2323,7 @@ def CheckBraces(filename, clean_lines, linenum, error):
             )
             if attrline:
                 if len(attrline.group(1)) != 2:
-                    error(filename, func_start_linenum,
-                          'whitespace/indent', 5,
-                          'Function attribute line should have 2-space '
-                          'indent')
-
+                    return
                 func_start_linenum += 1
             else:
                 func_start = clean_lines.lines[func_start_linenum]

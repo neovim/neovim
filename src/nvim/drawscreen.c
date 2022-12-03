@@ -1991,7 +1991,7 @@ win_update_start:
 /// Set must_redraw only if not already set to a higher value.
 /// e.g. if must_redraw is UPD_CLEAR, type UPD_NOT_VALID will do nothing.
 void redraw_later(win_T *wp, int type)
-  FUNC_ATTR_NONNULL_ALL
+FUNC_ATTR_NONNULL_ALL
 {
   if (!exiting && wp->w_redr_type < type) {
     wp->w_redr_type = type;
@@ -2136,7 +2136,7 @@ void redraw_statuslines(void)
 
 /// Redraw all status lines at the bottom of frame "frp".
 void win_redraw_last_status(const frame_T *frp)
-  FUNC_ATTR_NONNULL_ARG(1)
+FUNC_ATTR_NONNULL_ARG(1)
 {
   if (frp->fr_layout == FR_LEAF) {
     frp->fr_win->w_redr_status = true;
@@ -2161,7 +2161,7 @@ void win_redraw_last_status(const frame_T *frp)
 /// Note that when also inserting/deleting lines w_redraw_top and w_redraw_bot
 /// may become invalid and the whole window will have to be redrawn.
 void redrawWinline(win_T *wp, linenr_T lnum)
-  FUNC_ATTR_NONNULL_ALL
+FUNC_ATTR_NONNULL_ALL
 {
   if (lnum >= wp->w_topline
       && lnum < wp->w_botline) {

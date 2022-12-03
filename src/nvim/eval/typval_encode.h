@@ -72,8 +72,8 @@ typedef kvec_withinit_t(MPConvStackVal, 8) MPConvStack;
 #define _mp_last kv_last
 
 static inline size_t tv_strlen(const typval_T *tv)
-  REAL_FATTR_ALWAYS_INLINE REAL_FATTR_PURE REAL_FATTR_WARN_UNUSED_RESULT
-  REAL_FATTR_NONNULL_ALL;
+REAL_FATTR_ALWAYS_INLINE REAL_FATTR_PURE REAL_FATTR_WARN_UNUSED_RESULT
+REAL_FATTR_NONNULL_ALL;
 
 /// Length of the string stored in typval_T
 ///

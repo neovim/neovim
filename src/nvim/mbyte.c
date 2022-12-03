@@ -355,7 +355,7 @@ enc_alias_table[] = {
 /// Find encoding "name" in the list of canonical encoding names.
 /// Returns -1 if not found.
 static int enc_canon_search(const char *name)
-  FUNC_ATTR_PURE
+FUNC_ATTR_PURE
 {
   for (int i = 0; i < IDX_COUNT; i++) {
     if (strcmp(name, enc_canon_table[i].name) == 0) {
@@ -368,7 +368,7 @@ static int enc_canon_search(const char *name)
 // Find canonical encoding "name" in the list and return its properties.
 // Returns 0 if not found.
 int enc_canon_props(const char *name)
-  FUNC_ATTR_PURE
+FUNC_ATTR_PURE
 {
   int i = enc_canon_search((char *)name);
   if (i >= 0) {
@@ -387,7 +387,7 @@ int enc_canon_props(const char *name)
 // 4 - UCS-4 BOM
 // 3 - UTF-8 BOM
 int bomb_size(void)
-  FUNC_ATTR_PURE
+FUNC_ATTR_PURE
 {
   int n = 0;
 
@@ -425,13 +425,13 @@ void remove_bom(char_u *s)
 // 2 for an (ASCII) word character
 // >2 for other word characters
 int mb_get_class(const char_u *p)
-  FUNC_ATTR_PURE
+FUNC_ATTR_PURE
 {
   return mb_get_class_tab(p, curbuf->b_chartab);
 }
 
 int mb_get_class_tab(const char_u *p, const uint64_t *const chartab)
-  FUNC_ATTR_PURE
+FUNC_ATTR_PURE
 {
   if (MB_BYTE2LEN(p[0]) == 1) {
     if (p[0] == NUL || ascii_iswhite(p[0])) {
@@ -447,7 +447,7 @@ int mb_get_class_tab(const char_u *p, const uint64_t *const chartab)
 
 // Return true if "c" is in "table".
 static bool intable(const struct interval *table, size_t n_items, int c)
-  FUNC_ATTR_PURE
+FUNC_ATTR_PURE
 {
   int mid, bot, top;
 
@@ -580,7 +580,7 @@ size_t mb_string2cells(const char *str)
 /// @param size maximum length of string. It will terminate on earlier NUL.
 /// @return The number of cells occupied by string `str`
 size_t mb_string2cells_len(const char *str, size_t size)
-  FUNC_ATTR_NONNULL_ARG(1)
+FUNC_ATTR_NONNULL_ARG(1)
 {
   size_t clen = 0;
 
@@ -603,7 +603,7 @@ size_t mb_string2cells_len(const char *str, size_t size)
 ///
 /// @return Unicode codepoint or byte value.
 int utf_ptr2char(const char *const p_in)
-  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
+FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
   uint8_t *p = (uint8_t *)p_in;
   if (p[0] < 0x80) {  // Be quick for ASCII.
@@ -820,7 +820,7 @@ int utfc_ptr2char_len(const char_u *p, int *pcc, int maxlen)
 /// @return Sequence length, 0 for empty string and 1 for non-UTF-8 byte
 ///         sequence.
 int utf_ptr2len(const char *const p_in)
-  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
+FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
 {
   uint8_t *p = (uint8_t *)p_in;
   if (*p == NUL) {
@@ -876,7 +876,7 @@ int utf_ptr2len_len(const char_u *p, int size)
 /// This includes following composing characters.
 /// Returns zero for NUL.
 int utfc_ptr2len(const char *const p_in)
-  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
+FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
 {
   uint8_t *p = (uint8_t *)p_in;
   uint8_t b0 = *p;
@@ -1057,7 +1057,7 @@ int utf_class(const int c)
 }
 
 int utf_class_tab(const int c, const uint64_t *const chartab)
-  FUNC_ATTR_PURE
+FUNC_ATTR_PURE
 {
   // sorted list of non-overlapping intervals
   static struct clinterval {
@@ -1278,7 +1278,7 @@ bool mb_isupper(int a)
 }
 
 bool mb_isalpha(int a)
-  FUNC_ATTR_WARN_UNUSED_RESULT
+FUNC_ATTR_WARN_UNUSED_RESULT
 {
   return mb_islower(a) || mb_isupper(a);
 }
@@ -1368,7 +1368,7 @@ static int utf_strnicmp(const char_u *s1, const char_u *s2, size_t n1, size_t n2
 /// @param utf16[out,allocated]  NUL-terminated UTF-16 string, or NULL on error
 /// @return 0 on success, or libuv error code
 int utf8_to_utf16(const char *utf8, int utf8len, wchar_t **utf16)
-  FUNC_ATTR_NONNULL_ALL
+FUNC_ATTR_NONNULL_ALL
 {
   // Compute the length needed for the converted UTF-16 string.
   int bufsize = MultiByteToWideChar(CP_UTF8,
@@ -1405,7 +1405,7 @@ int utf8_to_utf16(const char *utf8, int utf8len, wchar_t **utf16)
 /// @param utf8[out,allocated]  NUL-terminated UTF-8 string, or NULL on error
 /// @return 0 on success, or libuv error code
 int utf16_to_utf8(const wchar_t *utf16, int utf16len, char **utf8)
-  FUNC_ATTR_NONNULL_ALL
+FUNC_ATTR_NONNULL_ALL
 {
   // Compute the space needed for the converted UTF-8 string.
   DWORD bufsize = WideCharToMultiByte(CP_UTF8,
@@ -1459,7 +1459,7 @@ int utf16_to_utf8(const wchar_t *utf16, int utf16len, char **utf8)
 /// @param[out] codepoints incremented with UTF-32 code point size
 /// @param[out] codeunits incremented with UTF-16 code unit size
 void mb_utflen(const char_u *s, size_t len, size_t *codepoints, size_t *codeunits)
-  FUNC_ATTR_NONNULL_ALL
+FUNC_ATTR_NONNULL_ALL
 {
   size_t count = 0, extra = 0;
   size_t clen;
@@ -1478,7 +1478,7 @@ void mb_utflen(const char_u *s, size_t len, size_t *codepoints, size_t *codeunit
 }
 
 ssize_t mb_utf_index_to_bytes(const char_u *s, size_t len, size_t index, bool use_utf16_units)
-  FUNC_ATTR_NONNULL_ALL
+FUNC_ATTR_NONNULL_ALL
 {
   size_t count = 0;
   size_t clen, i;
@@ -1635,7 +1635,7 @@ int utf_head_off(const char *base_in, const char *p_in)
 
 // Whether space is NOT allowed before/after 'c'.
 bool utf_eat_space(int cc)
-  FUNC_ATTR_CONST FUNC_ATTR_WARN_UNUSED_RESULT
+FUNC_ATTR_CONST FUNC_ATTR_WARN_UNUSED_RESULT
 {
   return (cc >= 0x2000 && cc <= 0x206F)   // General punctuations
          || (cc >= 0x2e00 && cc <= 0x2e7f)   // Supplemental punctuations
@@ -1648,7 +1648,7 @@ bool utf_eat_space(int cc)
 
 // Whether line break is allowed before "cc".
 bool utf_allow_break_before(int cc)
-  FUNC_ATTR_CONST FUNC_ATTR_WARN_UNUSED_RESULT
+FUNC_ATTR_CONST FUNC_ATTR_WARN_UNUSED_RESULT
 {
   static const int BOL_prohibition_punct[] = {
     '!',
@@ -1716,7 +1716,7 @@ bool utf_allow_break_before(int cc)
 
 // Whether line break is allowed after "cc".
 bool utf_allow_break_after(int cc)
-  FUNC_ATTR_CONST FUNC_ATTR_WARN_UNUSED_RESULT
+FUNC_ATTR_CONST FUNC_ATTR_WARN_UNUSED_RESULT
 {
   static const int EOL_prohibition_punct[] = {
     '(',
@@ -1762,7 +1762,7 @@ bool utf_allow_break_after(int cc)
 
 // Whether line break is allowed between "cc" and "ncc".
 bool utf_allow_break(int cc, int ncc)
-  FUNC_ATTR_CONST FUNC_ATTR_WARN_UNUSED_RESULT
+FUNC_ATTR_CONST FUNC_ATTR_WARN_UNUSED_RESULT
 {
   // don't break between two-letter punctuations
   if (cc == ncc
@@ -2064,7 +2064,7 @@ int mb_charlen_len(const char_u *str, int len)
 ///         multibyte character was found. Returns a static buffer, always one
 ///         and the same.
 const char *mb_unescape(const char **const pp)
-  FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
+FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
 {
   static char buf[6];
   size_t buf_idx = 0;
@@ -2118,7 +2118,7 @@ char *enc_skip(char *p)
 ///
 /// @return  an allocated string.
 char *enc_canonize(char *enc)
-  FUNC_ATTR_NONNULL_RET
+FUNC_ATTR_NONNULL_RET
 {
   char *p, *s;
   if (strcmp(enc, "default") == 0) {

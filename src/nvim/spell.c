@@ -928,7 +928,7 @@ bool match_checkcompoundpattern(char_u *ptr, int wlen, garray_T *gap)
 /// @return  true if "flags" is a valid sequence of compound flags and "word"
 ///          does not have too many syllables.
 bool can_compound(slang_T *slang, const char *word, const uint8_t *flags)
-  FUNC_ATTR_NONNULL_ALL
+FUNC_ATTR_NONNULL_ALL
 {
   char_u uflags[MAXWLEN * 2] = { 0 };
 
@@ -1583,7 +1583,7 @@ static void int_wordlist_spl(char_u *fname)
 /// Allocate a new slang_T for language "lang".  "lang" can be NULL.
 /// Caller must fill "sl_next".
 slang_T *slang_alloc(char *lang)
-  FUNC_ATTR_NONNULL_RET
+FUNC_ATTR_NONNULL_RET
 {
   slang_T *lp = xcalloc(1, sizeof(slang_T));
 
@@ -1799,7 +1799,7 @@ int init_syl_tab(slang_T *slang)
 // When "word" contains spaces the syllables after the last space are counted.
 // Returns zero if syllables are not defines.
 static int count_syllables(slang_T *slang, const char_u *word)
-  FUNC_ATTR_NONNULL_ALL
+FUNC_ATTR_NONNULL_ALL
 {
   int cnt = 0;
   bool skip = false;
@@ -2156,7 +2156,7 @@ static void clear_midword(win_T *wp)
 /// Use the "sl_midword" field of language "lp" for buffer "buf".
 /// They add up to any currently used midword characters.
 static void use_midword(slang_T *lp, win_T *wp)
-  FUNC_ATTR_NONNULL_ALL
+FUNC_ATTR_NONNULL_ALL
 {
   if (lp->sl_midword == NULL) {  // there aren't any
     return;
@@ -2211,7 +2211,7 @@ static int find_region(const char_u *rp, const char_u *region)
 ///
 /// @returns  Case type of word
 int captype(char_u *word, const char_u *end)
-  FUNC_ATTR_NONNULL_ARG(1)
+FUNC_ATTR_NONNULL_ARG(1)
 {
   char_u *p;
 
@@ -2394,7 +2394,7 @@ void init_spell_chartab(void)
 ///
 /// @param wp Buffer used.
 bool spell_iswordp(const char_u *p, const win_T *wp)
-  FUNC_ATTR_NONNULL_ALL
+FUNC_ATTR_NONNULL_ALL
 {
   const int l = utfc_ptr2len((char *)p);
   const char_u *s = p;
@@ -2436,7 +2436,7 @@ bool spell_iswordp_nmw(const char_u *p, win_T *wp)
 // Unicode subscript and superscript are not considered word characters.
 // See also utf_class() in mbyte.c.
 static bool spell_mb_isword_class(int cl, const win_T *wp)
-  FUNC_ATTR_PURE FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
+FUNC_ATTR_PURE FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
   if (wp->w_s->b_cjk) {
     // East Asian characters are not considered word characters.
@@ -2448,7 +2448,7 @@ static bool spell_mb_isword_class(int cl, const win_T *wp)
 // Returns true if "p" points to a word character.
 // Wide version of spell_iswordp().
 static bool spell_iswordp_w(const int *p, const win_T *wp)
-  FUNC_ATTR_NONNULL_ALL
+FUNC_ATTR_NONNULL_ALL
 {
   const int *s;
 
@@ -2472,7 +2472,7 @@ static bool spell_iswordp_w(const int *p, const win_T *wp)
 // When using a multi-byte 'encoding' the length may change!
 // Returns FAIL when something wrong.
 int spell_casefold(const win_T *wp, char_u *str, int len, char_u *buf, int buflen)
-  FUNC_ATTR_NONNULL_ALL
+FUNC_ATTR_NONNULL_ALL
 {
   if (len >= buflen) {
     buf[0] = NUL;
@@ -2712,7 +2712,7 @@ void make_case_word(char_u *fword, char_u *cword, int flags)
 ///                     copy of the input string if soundfolding is not
 ///                     supported by any of the languages in &spellang.
 char *eval_soundfold(const char *const word)
-  FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_MALLOC FUNC_ATTR_NONNULL_ALL
+FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_MALLOC FUNC_ATTR_NONNULL_ALL
 {
   if (curwin->w_p_spell && *curwin->w_s->b_p_spl != NUL) {
     // Use the sound-folding of the first language that supports it.
@@ -3595,14 +3595,14 @@ int expand_spelling(linenr_T lnum, char_u *pat, char ***matchp)
 
 /// @return  true if "val" is a valid 'spelllang' value.
 bool valid_spelllang(const char *val)
-  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
+FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
   return valid_name(val, ".-_,@");
 }
 
 /// @return  true if "val" is a valid 'spellfile' value.
 bool valid_spellfile(const char *val)
-  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
+FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
   for (const char_u *s = (char_u *)val; *s != NUL; s++) {
     if (!vim_isfilec(*s) && *s != ',' && *s != ' ') {
@@ -3639,7 +3639,7 @@ char *did_set_spell_option(bool is_spellfile)
 /// Set curbuf->b_cap_prog to the regexp program for 'spellcapcheck'.
 /// Return error message when failed, NULL when OK.
 char *compile_cap_prog(synblock_T *synblock)
-  FUNC_ATTR_NONNULL_ALL
+FUNC_ATTR_NONNULL_ALL
 {
   regprog_T *rp = synblock->b_cap_prog;
 

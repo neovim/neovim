@@ -57,7 +57,7 @@ static char *e_invalwindow = N_("E957: Invalid window number");
 /// @return ID of added match, -1 on failure.
 static int match_add(win_T *wp, const char *const grp, const char *const pat, int prio, int id,
                      list_T *pos_list, const char *const conceal_char)
-  FUNC_ATTR_NONNULL_ARG(1, 2)
+FUNC_ATTR_NONNULL_ARG(1, 2)
 {
   matchitem_T *cur;
   matchitem_T *prev;
@@ -231,7 +231,7 @@ static int match_add(win_T *wp, const char *const grp, const char *const pat, in
   redraw_later(wp, rtype);
   return id;
 
-  fail:
+fail:
   xfree(m->mit_pattern);
   xfree(m->mit_pos_array);
   xfree(m);
@@ -323,7 +323,7 @@ static matchitem_T *get_match(win_T *wp, int id)
 
 /// Init for calling prepare_search_hl().
 void init_search_hl(win_T *wp, match_T *search_hl)
-  FUNC_ATTR_NONNULL_ALL
+FUNC_ATTR_NONNULL_ALL
 {
   // Setup for match and 'hlsearch' highlighting.  Disable any previous
   // match
@@ -356,7 +356,7 @@ void init_search_hl(win_T *wp, match_T *search_hl)
 ///
 /// @return one on match, otherwise return zero.
 static int next_search_hl_pos(match_T *shl, linenr_T lnum, matchitem_T *match, colnr_T mincol)
-  FUNC_ATTR_NONNULL_ALL
+FUNC_ATTR_NONNULL_ALL
 {
   int i;
   int found = -1;
@@ -417,7 +417,7 @@ static int next_search_hl_pos(match_T *shl, linenr_T lnum, matchitem_T *match, c
 /// @param cur     to retrieve match positions if any
 static void next_search_hl(win_T *win, match_T *search_hl, match_T *shl, linenr_T lnum,
                            colnr_T mincol, matchitem_T *cur)
-  FUNC_ATTR_NONNULL_ARG(2)
+FUNC_ATTR_NONNULL_ARG(2)
 {
   linenr_T l;
   colnr_T matchcol;
@@ -521,7 +521,7 @@ static void next_search_hl(win_T *win, match_T *search_hl, match_T *shl, linenr_
 
 /// Advance to the match in window "wp" line "lnum" or past it.
 void prepare_search_hl(win_T *wp, match_T *search_hl, linenr_T lnum)
-  FUNC_ATTR_NONNULL_ALL
+FUNC_ATTR_NONNULL_ALL
 {
   matchitem_T *cur;       // points to the match list
   match_T *shl;       // points to search_hl or a match

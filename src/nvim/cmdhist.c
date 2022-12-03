@@ -68,7 +68,7 @@ int *get_hisnum(int hist_type)
 
 /// Translate a history character to the associated type number
 HistoryType hist_char2type(const int c)
-  FUNC_ATTR_CONST FUNC_ATTR_WARN_UNUSED_RESULT
+FUNC_ATTR_CONST FUNC_ATTR_WARN_UNUSED_RESULT
 {
   switch (c) {
   case ':':
@@ -187,7 +187,7 @@ void init_history(void)
 }
 
 static inline void hist_free_entry(histentry_T *hisptr)
-  FUNC_ATTR_NONNULL_ALL
+FUNC_ATTR_NONNULL_ALL
 {
   xfree(hisptr->hisstr);
   tv_list_unref(hisptr->additional_elements);
@@ -195,7 +195,7 @@ static inline void hist_free_entry(histentry_T *hisptr)
 }
 
 static inline void clear_hist_entry(histentry_T *hisptr)
-  FUNC_ATTR_NONNULL_ALL
+FUNC_ATTR_NONNULL_ALL
 {
   CLEAR_POINTER(hisptr);
 }
@@ -267,7 +267,7 @@ static int in_history(int type, char *str, int move_to_front, int sep)
 /// @return Any value from HistoryType enum, including HIST_INVALID. May not
 ///         return HIST_DEFAULT unless return_default is true.
 static HistoryType get_histtype(const char *const name, const size_t len, const bool return_default)
-  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
+FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
   // No argument: use current history.
   if (len == 0) {
@@ -707,7 +707,7 @@ void ex_history(exarg_T *eap)
 ///         was finished.
 const void *hist_iter(const void *const iter, const uint8_t history_type, const bool zero,
                       histentry_T *const hist)
-  FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ARG(4)
+FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ARG(4)
 {
   *hist = (histentry_T) {
     .hisstr = NULL
@@ -759,7 +759,7 @@ const void *hist_iter(const void *const iter, const uint8_t history_type, const 
 /// @return Pointer to the array or NULL.
 histentry_T *hist_get_array(const uint8_t history_type, int **const new_hisidx,
                             int **const new_hisnum)
-  FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
+FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
 {
   init_history();
   *new_hisidx = &(hisidx[history_type]);

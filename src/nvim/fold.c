@@ -1695,7 +1695,7 @@ static void foldDelMarker(buf_T *buf, linenr_T lnum, char *marker, size_t marker
 ///
 /// Otherwise the result is in allocated memory.
 char *get_foldtext(win_T *wp, linenr_T lnum, linenr_T lnume, foldinfo_T foldinfo, char *buf)
-  FUNC_ATTR_NONNULL_ARG(1)
+FUNC_ATTR_NONNULL_ARG(1)
 {
   char *text = NULL;
   // an error occurred when evaluating 'fdt' setting

@@ -1516,7 +1516,7 @@ static win_T *mouse_find_grid_win(int *gridp, int *rowp, int *colp)
 /// Convert a virtual (screen) column to a character column.
 /// The first column is one.
 colnr_T vcol2col(win_T *const wp, const linenr_T lnum, const colnr_T vcol)
-  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
+FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
   // try to advance to the specified column
   char_u *line = (char_u *)ml_get_buf(wp->w_buffer, lnum, false);

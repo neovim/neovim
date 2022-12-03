@@ -186,7 +186,7 @@ void channel_init(void)
 /// Channel is allocated with refcount 1, which should be decreased
 /// when the underlying stream closes.
 Channel *channel_alloc(ChannelStreamType type)
-  FUNC_ATTR_NONNULL_RET
+FUNC_ATTR_NONNULL_RET
 {
   Channel *chan = xcalloc(1, sizeof(*chan));
   if (type == kChannelStreamStdio) {
@@ -493,7 +493,7 @@ void channel_from_connection(SocketWatcher *watcher)
 /// Creates an API channel from stdin/stdout. This is used when embedding
 /// Neovim
 uint64_t channel_from_stdio(bool rpc, CallbackReader on_output, const char **error)
-  FUNC_ATTR_NONNULL_ALL
+FUNC_ATTR_NONNULL_ALL
 {
   if (!headless_mode && !embedded_mode) {
     *error = _("can only be opened in headless mode");
@@ -536,7 +536,7 @@ uint64_t channel_from_stdio(bool rpc, CallbackReader on_output, const char **err
 
 /// @param data will be consumed
 size_t channel_send(uint64_t id, char *data, size_t len, bool data_owned, const char **error)
-  FUNC_ATTR_NONNULL_ALL
+FUNC_ATTR_NONNULL_ALL
 {
   Channel *chan = find_channel(id);
   size_t written = 0;
@@ -585,7 +585,7 @@ size_t channel_send(uint64_t id, char *data, size_t len, bool data_owned, const 
                                     len, 1, xfree);
   return wstream_write(in, buf) ? len : 0;
 
-  retfree:
+retfree:
   if (data_owned) {
     xfree(data);
   }
@@ -599,7 +599,7 @@ size_t channel_send(uint64_t id, char *data, size_t len, bool data_owned, const 
 ///
 /// @return [allocated] Converted list.
 static inline list_T *buffer_to_tv_list(const char *const buf, const size_t len)
-  FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_ALWAYS_INLINE
+FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_ALWAYS_INLINE
 {
   list_T *const l = tv_list_alloc(kListLenMayKnow);
   // Empty buffer should be represented by [''], encode_list_write() thinks

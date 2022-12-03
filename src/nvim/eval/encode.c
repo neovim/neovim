@@ -49,7 +49,7 @@ const char *const encode_special_var_names[] = {
 
 /// Msgpack callback for writing to a Blob
 int encode_blob_write(void *const data, const char *const buf, const size_t len)
-  FUNC_ATTR_NONNULL_ARG(1)
+FUNC_ATTR_NONNULL_ARG(1)
 {
   ga_concat_len(&((blob_T *)data)->bv_ga, buf, len);
   return (int)len;
@@ -57,7 +57,7 @@ int encode_blob_write(void *const data, const char *const buf, const size_t len)
 
 /// Msgpack callback for writing to readfile()-style list
 int encode_list_write(void *const data, const char *const buf, const size_t len)
-  FUNC_ATTR_NONNULL_ARG(1)
+FUNC_ATTR_NONNULL_ARG(1)
 {
   if (len == 0) {
     return 0;
@@ -116,7 +116,7 @@ static bool did_echo_string_emsg = false;
 /// @return FAIL.
 static int conv_error(const char *const msg, const MPConvStack *const mpstack,
                       const char *const objname)
-  FUNC_ATTR_NONNULL_ALL
+FUNC_ATTR_NONNULL_ALL
 {
   garray_T msg_ga;
   ga_init(&msg_ga, (int)sizeof(char), 80);
@@ -215,7 +215,7 @@ static int conv_error(const char *const msg, const MPConvStack *const mpstack,
 ///
 /// @return true in case of success, false in case of failure.
 bool encode_vim_list_to_buf(const list_T *const list, size_t *const ret_len, char **const ret_buf)
-  FUNC_ATTR_NONNULL_ARG(2, 3) FUNC_ATTR_WARN_UNUSED_RESULT
+FUNC_ATTR_NONNULL_ARG(2, 3) FUNC_ATTR_WARN_UNUSED_RESULT
 {
   size_t len = 0;
   TV_LIST_ITER_CONST(list, li, {
@@ -260,7 +260,7 @@ bool encode_vim_list_to_buf(const list_T *const list, size_t *const ret_len, cha
 ///         more bytes to read.
 int encode_read_from_list(ListReaderState *const state, char *const buf, const size_t nbuf,
                           size_t *const read_bytes)
-  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
+FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
   char *const buf_end = buf + nbuf;
   char *p = buf;
@@ -598,7 +598,7 @@ static const char xdigits[] = "0123456789ABCDEF";
 /// @return OK in case of success, FAIL otherwise.
 static inline int convert_to_json_string(garray_T *const gap, const char *const buf,
                                          const size_t len)
-  FUNC_ATTR_NONNULL_ARG(1) FUNC_ATTR_ALWAYS_INLINE
+FUNC_ATTR_NONNULL_ARG(1) FUNC_ATTR_ALWAYS_INLINE
 {
   const char *utf_buf = buf;
   if (utf_buf == NULL) {
@@ -757,7 +757,7 @@ static inline int convert_to_json_string(garray_T *const gap, const char *const 
 ///
 /// @param[in]  tv  Key to check.
 bool encode_check_json_key(const typval_T *const tv)
-  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_PURE
+FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_PURE
 {
   if (tv->v_type == VAR_STRING) {
     return true;
@@ -845,7 +845,7 @@ bool encode_check_json_key(const typval_T *const tv)
 ///
 /// @return String representation of the variable or NULL.
 char *encode_tv2string(typval_T *tv, size_t *len)
-  FUNC_ATTR_NONNULL_ARG(1) FUNC_ATTR_MALLOC
+FUNC_ATTR_NONNULL_ARG(1) FUNC_ATTR_MALLOC
 {
   garray_T ga;
   ga_init(&ga, (int)sizeof(char), 80);
@@ -869,7 +869,7 @@ char *encode_tv2string(typval_T *tv, size_t *len)
 ///
 /// @return String representation of the variable or NULL.
 char *encode_tv2echo(typval_T *tv, size_t *len)
-  FUNC_ATTR_NONNULL_ARG(1) FUNC_ATTR_MALLOC
+FUNC_ATTR_NONNULL_ARG(1) FUNC_ATTR_MALLOC
 {
   garray_T ga;
   ga_init(&ga, (int)sizeof(char), 80);
@@ -897,7 +897,7 @@ char *encode_tv2echo(typval_T *tv, size_t *len)
 ///
 /// @return String representation of the variable or NULL.
 char *encode_tv2json(typval_T *tv, size_t *len)
-  FUNC_ATTR_NONNULL_ARG(1) FUNC_ATTR_MALLOC
+FUNC_ATTR_NONNULL_ARG(1) FUNC_ATTR_MALLOC
 {
   garray_T ga;
   ga_init(&ga, (int)sizeof(char), 80);

@@ -1544,7 +1544,7 @@ static int prt_resfile_next_line(void)
 }
 
 static int prt_resfile_strncmp(int offset, const char *string, int len)
-  FUNC_ATTR_NONNULL_ALL
+FUNC_ATTR_NONNULL_ALL
 {
   // Force not equal if string is longer than remainder of line
   if (len > (prt_resfile.line_end - (prt_resfile.line_start + offset))) {
@@ -1586,7 +1586,7 @@ static int prt_resfile_skip_ws(int offset)
 ///
 /// @return  true if a DSC comment is found, else false
 static bool prt_next_dsc(struct prt_dsc_line_S *p_dsc_line)
-  FUNC_ATTR_NONNULL_ALL
+FUNC_ATTR_NONNULL_ALL
 {
   int comment;
   int offset;
@@ -1633,7 +1633,7 @@ static bool prt_next_dsc(struct prt_dsc_line_S *p_dsc_line)
 /// Improved hand crafted parser to get the type, title, and version number of a
 /// PS resource file so the file details can be added to the DSC header comments.
 static bool prt_open_resource(struct prt_ps_resource_S *resource)
-  FUNC_ATTR_NONNULL_ALL
+FUNC_ATTR_NONNULL_ALL
 {
   struct prt_dsc_line_S dsc_line;
 
@@ -1748,7 +1748,7 @@ static bool prt_open_resource(struct prt_ps_resource_S *resource)
 }
 
 static bool prt_check_resource(const struct prt_ps_resource_S *resource, const char *version)
-  FUNC_ATTR_NONNULL_ALL
+FUNC_ATTR_NONNULL_ALL
 {
   // Version number m.n should match, the revision number does not matter
   if (STRNCMP(resource->version, version, strlen(version)) != 0) {
@@ -1806,7 +1806,7 @@ static void prt_dsc_ints(char *comment, int count, int *ints)
 
 /// @param comment  if NULL add to previous
 static void prt_dsc_resources(const char *comment, const char *type, const char *string)
-  FUNC_ATTR_NONNULL_ARG(2, 3)
+FUNC_ATTR_NONNULL_ARG(2, 3)
 {
   if (comment != NULL) {
     vim_snprintf(prt_line_buffer, sizeof(prt_line_buffer),

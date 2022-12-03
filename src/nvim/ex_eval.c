@@ -138,7 +138,7 @@ int should_abort(int retcode)
 /// to find finally clauses to be executed, and that some errors in skipped
 /// commands are still reported.
 int aborted_in_try(void)
-  FUNC_ATTR_PURE
+FUNC_ATTR_PURE
 {
   // This function is only called after an error.  In this case, "force_abort"
   // determines whether searching for finally clauses is necessary.
@@ -155,7 +155,7 @@ int aborted_in_try(void)
 /// most specific one and used as the exception value.  The "severe" flag can be
 /// set to true, if a later but severer message should be used instead.
 bool cause_errthrow(const char *mesg, bool severe, bool *ignore)
-  FUNC_ATTR_NONNULL_ALL
+FUNC_ATTR_NONNULL_ALL
 {
   msglist_T *elem;
   msglist_T **plist;

@@ -382,7 +382,7 @@ static struct mousetable {
 ///
 /// E.g. 'S' for shift, 'C' for ctrl.
 int name_to_mod_mask(int c)
-  FUNC_ATTR_CONST FUNC_ATTR_WARN_UNUSED_RESULT
+FUNC_ATTR_CONST FUNC_ATTR_WARN_UNUSED_RESULT
 {
   c = TOUPPER_ASC(c);
   for (size_t i = 0; mod_mask_table[i].mod_mask != 0; i++) {
@@ -401,7 +401,7 @@ int name_to_mod_mask(int c)
 ///
 /// @return Simplified key code.
 int simplify_key(const int key, int *modifiers)
-  FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
+FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
 {
   if (*modifiers & (MOD_MASK_SHIFT | MOD_MASK_CTRL | MOD_MASK_ALT)) {
     // TAB is a special case.
@@ -426,7 +426,7 @@ int simplify_key(const int key, int *modifiers)
 
 /// Change <xKey> to <Key>
 int handle_x_keys(const int key)
-  FUNC_ATTR_CONST FUNC_ATTR_WARN_UNUSED_RESULT
+FUNC_ATTR_CONST FUNC_ATTR_WARN_UNUSED_RESULT
 {
   switch (key) {
   case K_XUP:
@@ -572,7 +572,7 @@ char_u *get_special_key_name(int c, int modifiers)
 /// @return Number of characters added to dst, zero for no match.
 unsigned int trans_special(const char_u **const srcp, const size_t src_len, char_u *const dst,
                            const int flags, const bool escape_ks, bool *const did_simplify)
-  FUNC_ATTR_NONNULL_ARG(1, 3) FUNC_ATTR_WARN_UNUSED_RESULT
+FUNC_ATTR_NONNULL_ARG(1, 3) FUNC_ATTR_WARN_UNUSED_RESULT
 {
   int modifiers = 0;
   int key = find_special_key(srcp, src_len, &modifiers, flags, did_simplify);
@@ -625,7 +625,7 @@ unsigned int special_to_buf(int key, int modifiers, bool escape_ks, char_u *dst)
 /// @return Key and modifiers or 0 if there is no match.
 int find_special_key(const char_u **const srcp, const size_t src_len, int *const modp,
                      const int flags, bool *const did_simplify)
-  FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ARG(1, 3)
+FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ARG(1, 3)
 {
   const char_u *last_dash;
   const char_u *end_of_name;
@@ -821,7 +821,7 @@ int find_special_key_in_table(int c)
 ///
 /// @return Key code or 0 if not found.
 int get_special_key_code(const char_u *name)
-  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
+FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
   for (int i = 0; key_names_table[i].name != NULL; i++) {
     const char *const table_name = key_names_table[i].name;
@@ -881,7 +881,7 @@ int get_mouse_button(int code, bool *is_click, bool *is_drag)
 /// @return  The same as what `*bufp` is set to.
 char *replace_termcodes(const char *const from, const size_t from_len, char **const bufp,
                         const int flags, bool *const did_simplify, const int cpo_flags)
-  FUNC_ATTR_NONNULL_ARG(1, 3)
+FUNC_ATTR_NONNULL_ARG(1, 3)
 {
   ssize_t i;
   size_t slen;
@@ -1032,7 +1032,7 @@ char *replace_termcodes(const char *const from, const size_t from_len, char **co
 ///
 /// @return Pointer to after the added bytes.
 char_u *add_char2buf(int c, char_u *s)
-  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
+FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
   char_u temp[MB_MAXBYTES + 1];
   const int len = utf_char2bytes(c, (char *)temp);

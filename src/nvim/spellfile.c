@@ -572,7 +572,7 @@ typedef struct spellinfo_S {
 ///         bytes, SP_FORMERROR if it does not match magic string and
 ///         SP_OTHERERROR if reading file failed.
 static inline int spell_check_magic_string(FILE *const fd)
-  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_ALWAYS_INLINE
+FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_ALWAYS_INLINE
 {
   char buf[VIMSPELLMAGICL];
   SPELL_READ_BYTES(buf, VIMSPELLMAGICL, fd,; );
@@ -1683,7 +1683,7 @@ static int *mb_str2wide(char_u *s)
 /// @return  zero when OK, SP_ value for an error.
 static int spell_read_tree(FILE *fd, char_u **bytsp, long *bytsp_len, idx_T **idxsp,
                            bool prefixtree, int prefixcnt)
-  FUNC_ATTR_NONNULL_ARG(1, 2, 4)
+FUNC_ATTR_NONNULL_ARG(1, 2, 4)
 {
   int idx;
   char_u *bp;
@@ -3851,7 +3851,7 @@ static int spell_read_wordfile(spellinfo_T *spin, char_u *fname)
 /// @param align Align for pointer.
 /// @return Pointer into block data.
 static void *getroom(spellinfo_T *spin, size_t len, bool align)
-  FUNC_ATTR_NONNULL_RET
+FUNC_ATTR_NONNULL_RET
 {
   char_u *p;
   sblock_T *bl = spin->si_blocks;
@@ -3903,7 +3903,7 @@ static void free_blocks(sblock_T *bl)
 // Allocate the root of a word tree.
 // Returns NULL when out of memory.
 static wordnode_T *wordtree_alloc(spellinfo_T *spin)
-  FUNC_ATTR_NONNULL_RET
+FUNC_ATTR_NONNULL_RET
 {
   return (wordnode_T *)getroom(spin, sizeof(wordnode_T), true);
 }
@@ -4173,7 +4173,7 @@ static wordnode_T *get_wordnode(spellinfo_T *spin)
 // siblings.
 // Returns the number of nodes actually freed.
 static int deref_wordnode(spellinfo_T *spin, wordnode_T *node)
-  FUNC_ATTR_NONNULL_ALL
+FUNC_ATTR_NONNULL_ALL
 {
   wordnode_T *np;
   int cnt = 0;
@@ -4194,7 +4194,7 @@ static int deref_wordnode(spellinfo_T *spin, wordnode_T *node)
 // Free a wordnode_T for re-use later.
 // Only the "wn_child" field becomes invalid.
 static void free_wordnode(spellinfo_T *spin, wordnode_T *n)
-  FUNC_ATTR_NONNULL_ALL
+FUNC_ATTR_NONNULL_ALL
 {
   n->wn_child = spin->si_first_free;
   spin->si_first_free = n;
@@ -4203,7 +4203,7 @@ static void free_wordnode(spellinfo_T *spin, wordnode_T *n)
 
 // Compress a tree: find tails that are identical and can be shared.
 static void wordtree_compress(spellinfo_T *spin, wordnode_T *root, const char *name)
-  FUNC_ATTR_NONNULL_ALL
+FUNC_ATTR_NONNULL_ALL
 {
   hashtab_T ht;
   long tot = 0;
@@ -4243,7 +4243,7 @@ static void wordtree_compress(spellinfo_T *spin, wordnode_T *root, const char *n
 ///
 /// @param tot  total count of nodes before compressing, incremented while going through the tree
 static long node_compress(spellinfo_T *spin, wordnode_T *node, hashtab_T *ht, long *tot)
-  FUNC_ATTR_NONNULL_ALL
+FUNC_ATTR_NONNULL_ALL
 {
   wordnode_T *np;
   wordnode_T *tp;
@@ -5496,7 +5496,7 @@ theend:
 // Display a message for spell file processing when 'verbose' is set or using
 // ":mkspell".  "str" can be IObuff.
 static void spell_message(const spellinfo_T *spin, char *str)
-  FUNC_ATTR_NONNULL_ALL
+FUNC_ATTR_NONNULL_ALL
 {
   if (spin->si_verbose || p_verbose > 2) {
     if (!spin->si_verbose) {

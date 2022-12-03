@@ -409,7 +409,7 @@ void set_string_option_direct_in_win(win_T *wp, const char *name, int opt_idx, c
 ///
 /// @return NULL on success, an untranslated error message on error.
 char *set_string_option(const int opt_idx, const char *const value, const int opt_flags)
-  FUNC_ATTR_NONNULL_ARG(2) FUNC_ATTR_WARN_UNUSED_RESULT
+FUNC_ATTR_NONNULL_ARG(2) FUNC_ATTR_WARN_UNUSED_RESULT
 {
   vimoption_T *opt = get_option(opt_idx);
 
@@ -468,7 +468,7 @@ char *set_string_option(const int opt_idx, const char *const value, const int op
 /// Return true if "val" is a valid 'filetype' name.
 /// Also used for 'syntax' and 'keymap'.
 static bool valid_filetype(const char *val)
-  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
+FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
   return valid_name(val, ".-_");
 }

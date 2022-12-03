@@ -37,7 +37,7 @@ static bool process_is_tearing_down = false;
 
 /// @returns zero on success, or negative error code
 int process_spawn(Process *proc, bool in, bool out, bool err)
-  FUNC_ATTR_NONNULL_ALL
+FUNC_ATTR_NONNULL_ALL
 {
   if (in) {
     uv_pipe_init(&proc->loop->uv, &proc->in.uv.pipe, 0);
@@ -162,7 +162,7 @@ void process_close_streams(Process *proc) FUNC_ATTR_NONNULL_ALL
 ///         -1 if the timeout expired while the process is still running.
 ///         -2 if the user interrupted the wait.
 int process_wait(Process *proc, int ms, MultiQueue *events)
-  FUNC_ATTR_NONNULL_ARG(1)
+FUNC_ATTR_NONNULL_ARG(1)
 {
   if (!proc->refcount) {
     int status = proc->status;
@@ -308,7 +308,7 @@ static void decref(Process *proc)
 }
 
 static void process_close(Process *proc)
-  FUNC_ATTR_NONNULL_ARG(1)
+FUNC_ATTR_NONNULL_ARG(1)
 {
   if (process_is_tearing_down && (proc->detach || proc->type == kProcessTypePty)
       && proc->closed) {
@@ -342,7 +342,7 @@ static void process_close(Process *proc)
 /// @param proc     Process, for which an output stream should be flushed.
 /// @param stream   Stream to flush.
 static void flush_stream(Process *proc, Stream *stream)
-  FUNC_ATTR_NONNULL_ARG(1)
+FUNC_ATTR_NONNULL_ARG(1)
 {
   if (!stream || stream->closed) {
     return;

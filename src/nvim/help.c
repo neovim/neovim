@@ -257,7 +257,7 @@ char *check_help_lang(char *arg)
 ///
 /// @return  a heuristic indicating how well the given string matches.
 int help_heuristic(char *matched_string, int offset, int wrong_case)
-  FUNC_ATTR_PURE
+FUNC_ATTR_PURE
 {
   int num_letters;
   char *p;
@@ -871,7 +871,7 @@ void ex_viusage(exarg_T *eap)
 /// @param ignore_writeerr  ignore write error
 static void helptags_one(char *dir, const char *ext, const char *tagfname, bool add_help_tags,
                          bool ignore_writeerr)
-  FUNC_ATTR_NONNULL_ALL
+FUNC_ATTR_NONNULL_ALL
 {
   garray_T ga;
   int filecount;
@@ -1067,7 +1067,7 @@ static void helptags_one(char *dir, const char *ext, const char *tagfname, bool 
 
 /// Generate tags in one help directory, taking care of translations.
 static void do_helptags(char *dirname, bool add_help_tags, bool ignore_writeerr)
-  FUNC_ATTR_NONNULL_ALL
+FUNC_ATTR_NONNULL_ALL
 {
   int len;
   garray_T ga;
@@ -1157,7 +1157,7 @@ static void do_helptags(char *dirname, bool add_help_tags, bool ignore_writeerr)
 }
 
 static void helptags_cb(char *fname, void *cookie)
-  FUNC_ATTR_NONNULL_ALL
+FUNC_ATTR_NONNULL_ALL
 {
   do_helptags(fname, *(bool *)cookie, true);
 }

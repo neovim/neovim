@@ -27,8 +27,8 @@
 /// @deprecated
 /// @see nvim_exec
 String nvim_command_output(uint64_t channel_id, String command, Error *err)
-  FUNC_API_SINCE(1)
-  FUNC_API_DEPRECATED_SINCE(7)
+FUNC_API_SINCE(1)
+FUNC_API_DEPRECATED_SINCE(7)
 {
   return nvim_exec(channel_id, command, true, err);
 }
@@ -36,9 +36,9 @@ String nvim_command_output(uint64_t channel_id, String command, Error *err)
 /// @deprecated Use nvim_exec_lua() instead.
 /// @see nvim_exec_lua
 Object nvim_execute_lua(String code, Array args, Error *err)
-  FUNC_API_SINCE(3)
-  FUNC_API_DEPRECATED_SINCE(7)
-  FUNC_API_REMOTE_ONLY
+FUNC_API_SINCE(3)
+FUNC_API_DEPRECATED_SINCE(7)
+FUNC_API_REMOTE_ONLY
 {
   return nlua_exec(code, args, err);
 }
@@ -52,8 +52,8 @@ Object nvim_execute_lua(String code, Array args, Error *err)
 /// @param[out] err   Error details, if any
 /// @return Buffer number
 Integer nvim_buf_get_number(Buffer buffer, Error *err)
-  FUNC_API_SINCE(1)
-  FUNC_API_DEPRECATED_SINCE(2)
+FUNC_API_SINCE(1)
+FUNC_API_DEPRECATED_SINCE(2)
 {
   buf_T *buf = find_buffer_by_handle(buffer, err);
 
@@ -76,8 +76,8 @@ Integer nvim_buf_get_number(Buffer buffer, Error *err)
 /// @param[out] err   Error details, if any
 void nvim_buf_clear_highlight(Buffer buffer, Integer ns_id, Integer line_start, Integer line_end,
                               Error *err)
-  FUNC_API_SINCE(1)
-  FUNC_API_DEPRECATED_SINCE(7)
+FUNC_API_SINCE(1)
+FUNC_API_DEPRECATED_SINCE(7)
 {
   nvim_buf_clear_namespace(buffer, ns_id, line_start, line_end, err);
 }
@@ -114,8 +114,8 @@ void nvim_buf_clear_highlight(Buffer buffer, Integer ns_id, Integer line_start, 
 /// @return The ns_id that was used
 Integer nvim_buf_set_virtual_text(Buffer buffer, Integer src_id, Integer line, Array chunks,
                                   Dictionary opts, Error *err)
-  FUNC_API_SINCE(5)
-  FUNC_API_DEPRECATED_SINCE(8)
+FUNC_API_SINCE(5)
+FUNC_API_DEPRECATED_SINCE(8)
 {
   buf_T *buf = find_buffer_by_handle(buffer, err);
   if (!buf) {
@@ -169,7 +169,7 @@ Integer nvim_buf_set_virtual_text(Buffer buffer, Integer src_id, Integer line, A
 /// @param lines      Array of lines
 /// @param[out] err   Error details, if any
 void buffer_insert(Buffer buffer, Integer lnum, ArrayOf(String) lines, Error *err)
-  FUNC_API_DEPRECATED_SINCE(1)
+FUNC_API_DEPRECATED_SINCE(1)
 {
   // "lnum" will be the index of the line after inserting,
   // no matter if it is negative or not
@@ -189,7 +189,7 @@ void buffer_insert(Buffer buffer, Integer lnum, ArrayOf(String) lines, Error *er
 /// @param[out] err Error details, if any
 /// @return Line string
 String buffer_get_line(Buffer buffer, Integer index, Error *err)
-  FUNC_API_DEPRECATED_SINCE(1)
+FUNC_API_DEPRECATED_SINCE(1)
 {
   String rv = { .size = 0 };
 
@@ -218,7 +218,7 @@ String buffer_get_line(Buffer buffer, Integer index, Error *err)
 /// @param line     Contents of the new line
 /// @param[out] err Error details, if any
 void buffer_set_line(Buffer buffer, Integer index, String line, Error *err)
-  FUNC_API_DEPRECATED_SINCE(1)
+FUNC_API_DEPRECATED_SINCE(1)
 {
   Object l = STRING_OBJ(line);
   Array array = { .items = &l, .size = 1 };
@@ -237,7 +237,7 @@ void buffer_set_line(Buffer buffer, Integer index, String line, Error *err)
 /// @param index    line index
 /// @param[out] err Error details, if any
 void buffer_del_line(Buffer buffer, Integer index, Error *err)
-  FUNC_API_DEPRECATED_SINCE(1)
+FUNC_API_DEPRECATED_SINCE(1)
 {
   Array array = ARRAY_DICT_INIT;
   index = convert_index(index);
@@ -263,7 +263,7 @@ ArrayOf(String) buffer_get_line_slice(Buffer buffer,
                                       Boolean include_start,
                                       Boolean include_end,
                                       Error *err)
-  FUNC_API_DEPRECATED_SINCE(1)
+FUNC_API_DEPRECATED_SINCE(1)
 {
   start = convert_index(start) + !include_start;
   end = convert_index(end) + include_end;
@@ -287,7 +287,7 @@ ArrayOf(String) buffer_get_line_slice(Buffer buffer,
 /// @param[out] err       Error details, if any
 void buffer_set_line_slice(Buffer buffer, Integer start, Integer end, Boolean include_start,
                            Boolean include_end, ArrayOf(String) replacement, Error *err)
-  FUNC_API_DEPRECATED_SINCE(1)
+FUNC_API_DEPRECATED_SINCE(1)
 {
   start = convert_index(start) + !include_start;
   end = convert_index(end) + include_end;
@@ -307,7 +307,7 @@ void buffer_set_line_slice(Buffer buffer, Integer start, Integer end, Boolean in
 ///         @warning It may return nil if there was no previous value
 ///                  or if previous value was `v:null`.
 Object buffer_set_var(Buffer buffer, String name, Object value, Error *err)
-  FUNC_API_DEPRECATED_SINCE(1)
+FUNC_API_DEPRECATED_SINCE(1)
 {
   buf_T *buf = find_buffer_by_handle(buffer, err);
 
@@ -327,7 +327,7 @@ Object buffer_set_var(Buffer buffer, String name, Object value, Error *err)
 /// @param[out] err   Error details, if any
 /// @return Old value
 Object buffer_del_var(Buffer buffer, String name, Error *err)
-  FUNC_API_DEPRECATED_SINCE(1)
+FUNC_API_DEPRECATED_SINCE(1)
 {
   buf_T *buf = find_buffer_by_handle(buffer, err);
 
@@ -351,7 +351,7 @@ Object buffer_del_var(Buffer buffer, String name, Error *err)
 ///         @warning It may return nil if there was no previous value
 ///                  or if previous value was `v:null`.
 Object window_set_var(Window window, String name, Object value, Error *err)
-  FUNC_API_DEPRECATED_SINCE(1)
+FUNC_API_DEPRECATED_SINCE(1)
 {
   win_T *win = find_window_by_handle(window, err);
 
@@ -371,7 +371,7 @@ Object window_set_var(Window window, String name, Object value, Error *err)
 /// @param[out] err Error details, if any
 /// @return Old value
 Object window_del_var(Window window, String name, Error *err)
-  FUNC_API_DEPRECATED_SINCE(1)
+FUNC_API_DEPRECATED_SINCE(1)
 {
   win_T *win = find_window_by_handle(window, err);
 
@@ -395,7 +395,7 @@ Object window_del_var(Window window, String name, Error *err)
 ///         @warning It may return nil if there was no previous value
 ///                  or if previous value was `v:null`.
 Object tabpage_set_var(Tabpage tabpage, String name, Object value, Error *err)
-  FUNC_API_DEPRECATED_SINCE(1)
+FUNC_API_DEPRECATED_SINCE(1)
 {
   tabpage_T *tab = find_tab_by_handle(tabpage, err);
 
@@ -415,7 +415,7 @@ Object tabpage_set_var(Tabpage tabpage, String name, Object value, Error *err)
 /// @param[out] err Error details, if any
 /// @return Old value
 Object tabpage_del_var(Tabpage tabpage, String name, Error *err)
-  FUNC_API_DEPRECATED_SINCE(1)
+FUNC_API_DEPRECATED_SINCE(1)
 {
   tabpage_T *tab = find_tab_by_handle(tabpage, err);
 
@@ -432,7 +432,7 @@ Object tabpage_del_var(Tabpage tabpage, String name, Error *err)
 ///          OR if previous value was `v:null`.
 /// @return Old value or nil if there was no previous value.
 Object vim_set_var(String name, Object value, Error *err)
-  FUNC_API_DEPRECATED_SINCE(1)
+FUNC_API_DEPRECATED_SINCE(1)
 {
   return dict_set_var(&globvardict, name, value, false, true, err);
 }
@@ -440,7 +440,7 @@ Object vim_set_var(String name, Object value, Error *err)
 /// @deprecated
 /// @see nvim_del_var
 Object vim_del_var(String name, Error *err)
-  FUNC_API_DEPRECATED_SINCE(1)
+FUNC_API_DEPRECATED_SINCE(1)
 {
   return dict_set_var(&globvardict, name, NIL, true, true, err);
 }

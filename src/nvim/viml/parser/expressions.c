@@ -148,7 +148,7 @@ typedef enum {
 /// @param[in]  exponent_negative  True if exponent is negative.
 static inline float_T scale_number(const float_T num, const uint8_t base,
                                    const uvarnumber_T exponent, const bool exponent_negative)
-  FUNC_ATTR_ALWAYS_INLINE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_CONST
+FUNC_ATTR_ALWAYS_INLINE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_CONST
 {
   if (num == 0 || exponent == 0) {
     return num;
@@ -178,7 +178,7 @@ static inline float_T scale_number(const float_T num, const uint8_t base,
 ///
 /// @return Next token.
 LexExprToken viml_pexpr_next_token(ParserState *const pstate, const int flags)
-  FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
+FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
 {
   LexExprToken ret = {
     .type = kExprLexInvalid,
@@ -797,7 +797,7 @@ static const char *const eltkn_opt_scope_tab[] = {
 ///         on each call).
 const char *viml_pexpr_repr_token(const ParserState *const pstate, const LexExprToken token,
                                   size_t *const ret_size)
-  FUNC_ATTR_WARN_UNUSED_RESULT
+FUNC_ATTR_WARN_UNUSED_RESULT
 {
   static char ret[1024];
   char *p = ret;
@@ -918,7 +918,7 @@ const char *const east_node_type_tab[] = {
 /// @return Converted string, stored in a static buffer (overridden after each
 ///         call).
 static const char *intchar2str(const int ch)
-  FUNC_ATTR_WARN_UNUSED_RESULT
+FUNC_ATTR_WARN_UNUSED_RESULT
 {
   static char buf[sizeof(int) * 3 + 1];
   if (' ' <= ch && ch < 0x7f) {
@@ -957,7 +957,7 @@ static inline void viml_pexpr_debug_print_ast_node(const ExprASTNode *const *con
 REAL_FATTR_UNUSED
 static inline void viml_pexpr_debug_print_ast_stack(const ExprASTStack *const ast_stack,
                                                     const char *const msg)
-  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_ALWAYS_INLINE
+FUNC_ATTR_NONNULL_ALL FUNC_ATTR_ALWAYS_INLINE
 {
   fprintf(stderr, "\n%sstack: %zu:\n", msg, kv_size(*ast_stack));
   for (size_t i = 0; i < kv_size(*ast_stack); i++) {
@@ -969,7 +969,7 @@ static inline void viml_pexpr_debug_print_ast_stack(const ExprASTStack *const as
 REAL_FATTR_UNUSED
 static inline void viml_pexpr_debug_print_token(const ParserState *const pstate,
                                                 const LexExprToken token)
-  FUNC_ATTR_ALWAYS_INLINE
+FUNC_ATTR_ALWAYS_INLINE
 {
   fprintf(stderr, "\ntkn: %s\n", viml_pexpr_repr_token(pstate, token, NULL));
 }
@@ -1134,7 +1134,7 @@ void viml_pexpr_free_ast(ExprAST ast)
 /// @param[in]  type  Node type to allocate.
 /// @param[in]  level  Node level to allocate
 static inline ExprASTNode *viml_pexpr_new_node(const ExprASTNodeType type)
-  FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_MALLOC
+FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_MALLOC
 {
   ExprASTNode *ret = xmalloc(sizeof(*ret));
   ret->type = type;
@@ -1224,7 +1224,7 @@ static struct {
 ///
 /// @return Node priority level.
 static inline ExprOpLvl node_lvl(const ExprASTNode node)
-  FUNC_ATTR_ALWAYS_INLINE FUNC_ATTR_CONST FUNC_ATTR_WARN_UNUSED_RESULT
+FUNC_ATTR_ALWAYS_INLINE FUNC_ATTR_CONST FUNC_ATTR_WARN_UNUSED_RESULT
 {
   return node_type_to_node_props[node.type].lvl;
 }
@@ -1237,7 +1237,7 @@ static inline ExprOpLvl node_lvl(const ExprASTNode node)
 ///
 /// @return Node associativity.
 static inline ExprOpAssociativity node_ass(const ExprASTNode node)
-  FUNC_ATTR_ALWAYS_INLINE FUNC_ATTR_CONST FUNC_ATTR_WARN_UNUSED_RESULT
+FUNC_ATTR_ALWAYS_INLINE FUNC_ATTR_CONST FUNC_ATTR_WARN_UNUSED_RESULT
 {
   return node_type_to_node_props[node.type].ass;
 }
@@ -1257,7 +1257,7 @@ static inline ExprOpAssociativity node_ass(const ExprASTNode node)
 static bool viml_pexpr_handle_bop(const ParserState *const pstate, ExprASTStack *const ast_stack,
                                   ExprASTNode *const bop_node, ExprASTWantedNode *const want_node_p,
                                   ExprASTError *const ast_err)
-  FUNC_ATTR_NONNULL_ALL
+FUNC_ATTR_NONNULL_ALL
 {
   bool ret = true;
   ExprASTNode **top_node_p = NULL;
@@ -1350,7 +1350,7 @@ static bool viml_pexpr_handle_bop(const ParserState *const pstate, ExprASTStack 
 ///
 /// @return Shifted position.
 static inline ParserPosition shifted_pos(const ParserPosition pos, const size_t shift)
-  FUNC_ATTR_CONST FUNC_ATTR_ALWAYS_INLINE FUNC_ATTR_WARN_UNUSED_RESULT
+FUNC_ATTR_CONST FUNC_ATTR_ALWAYS_INLINE FUNC_ATTR_WARN_UNUSED_RESULT
 {
   return (ParserPosition) { .line = pos.line, .col = pos.col + shift };
 }
@@ -1364,7 +1364,7 @@ static inline ParserPosition shifted_pos(const ParserPosition pos, const size_t 
 ///
 /// @return Shifted position.
 static inline ParserPosition recol_pos(const ParserPosition pos, const size_t new_col)
-  FUNC_ATTR_CONST FUNC_ATTR_ALWAYS_INLINE FUNC_ATTR_WARN_UNUSED_RESULT
+FUNC_ATTR_CONST FUNC_ATTR_ALWAYS_INLINE FUNC_ATTR_WARN_UNUSED_RESULT
 {
   return (ParserPosition) { .line = pos.line, .col = new_col };
 }
@@ -1467,7 +1467,7 @@ static inline ParserPosition recol_pos(const ParserPosition pos, const size_t ne
 /// @param[in]  start  Position at which error occurred.
 static inline void east_set_error(const ParserState *const pstate, ExprASTError *const ret_ast_err,
                                   const char *const msg, const ParserPosition start)
-  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_ALWAYS_INLINE
+FUNC_ATTR_NONNULL_ALL FUNC_ATTR_ALWAYS_INLINE
 {
   if (ret_ast_err->msg != NULL) {
     return;
@@ -1567,7 +1567,7 @@ static inline void east_set_error(const ParserState *const pstate, ExprASTError 
 ///
 /// @return true if parsing an assignment, false otherwise.
 static inline bool pt_is_assignment(const ExprASTParseType pt)
-  FUNC_ATTR_ALWAYS_INLINE FUNC_ATTR_CONST FUNC_ATTR_WARN_UNUSED_RESULT
+FUNC_ATTR_ALWAYS_INLINE FUNC_ATTR_CONST FUNC_ATTR_WARN_UNUSED_RESULT
 {
   return (pt == kEPTAssignment || pt == kEPTSingleAssignment);
 }
@@ -1596,7 +1596,7 @@ typedef struct {
 static void parse_quoted_string(ParserState *const pstate, ExprASTNode *const node,
                                 const LexExprToken token, const ExprASTStack *ast_stack,
                                 const bool is_invalid)
-  FUNC_ATTR_NONNULL_ALL
+FUNC_ATTR_NONNULL_ALL
 {
   const ParserLine pline = pstate->reader.lines.items[token.start.line];
   const char *const s = pline.data + token.start.col;
@@ -1922,7 +1922,7 @@ static const uint8_t base_to_prefix_length[] = {
 ///
 /// @return Parsed AST.
 ExprAST viml_pexpr_parse(ParserState *const pstate, const int flags)
-  FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
+FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
 {
   ExprAST ast = {
     .err = {
@@ -2315,7 +2315,7 @@ viml_pexpr_parse_process_token:
                    || eastnode_lvl > kEOpLvlComma) {
           // Do nothing
         } else {
-          viml_pexpr_parse_invalid_comma:
+viml_pexpr_parse_invalid_comma:
           ERROR_FROM_TOKEN_AND_MSG(cur_token,
                                    _("E15: Comma outside of call, lambda or literal: %.*s"));
           break;

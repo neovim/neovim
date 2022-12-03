@@ -60,7 +60,7 @@ static char e_conflicts_with_value_of_fillchars[] = N_("E835: Conflicts with val
 /// Return true if the cursor line in window "wp" may be concealed, according
 /// to the 'concealcursor' option.
 bool conceal_cursor_line(const win_T *wp)
-  FUNC_ATTR_NONNULL_ALL
+FUNC_ATTR_NONNULL_ALL
 {
   int c;
 
@@ -85,7 +85,7 @@ bool conceal_cursor_line(const win_T *wp)
 ///
 /// If true, both old and new cursorline will need to be redrawn when moving cursor within windows.
 bool win_cursorline_standout(const win_T *wp)
-  FUNC_ATTR_NONNULL_ALL
+FUNC_ATTR_NONNULL_ALL
 {
   return wp->w_p_cul || (wp->w_p_cole > 0 && !conceal_cursor_line(wp));
 }

@@ -942,7 +942,7 @@ void free_prev_shellcmd(void)
 /// Bangs in the argument are replaced with the previously entered command.
 /// Remember the argument.
 void do_bang(int addr_count, exarg_T *eap, bool forceit, bool do_in, bool do_out)
-  FUNC_ATTR_NONNULL_ALL
+FUNC_ATTR_NONNULL_ALL
 {
   char *arg = eap->arg;             // command
   linenr_T line1 = eap->line1;        // start of range
@@ -3063,7 +3063,7 @@ static int global_need_beginline;       // call beginline() after ":g"
 ///
 /// @param[out]  ret_sub    Location where old string will be saved.
 void sub_get_replacement(SubReplacementString *const ret_sub)
-  FUNC_ATTR_NONNULL_ALL
+FUNC_ATTR_NONNULL_ALL
 {
   *ret_sub = old_sub;
 }
@@ -3093,7 +3093,7 @@ void sub_set_replacement(SubReplacementString sub)
 ///
 /// @returns true if :substitute can be replaced with a join command
 static bool sub_joining_lines(exarg_T *eap, char *pat, const char *sub, const char *cmd, bool save)
-  FUNC_ATTR_NONNULL_ARG(1, 3, 4)
+FUNC_ATTR_NONNULL_ARG(1, 3, 4)
 {
   // TODO(vim): find a generic solution to make line-joining operations more
   // efficient, avoid allocating a string that grows in size.
@@ -3153,7 +3153,7 @@ static bool sub_joining_lines(exarg_T *eap, char *pat, const char *sub, const ch
 ///
 /// @returns pointer to the end of the allocated memory
 static char *sub_grow_buf(char **new_start, int needed_len)
-  FUNC_ATTR_NONNULL_ARG(1) FUNC_ATTR_NONNULL_RET
+FUNC_ATTR_NONNULL_ARG(1) FUNC_ATTR_NONNULL_RET
 {
   int new_start_len = 0;
   char *new_end;
@@ -3189,7 +3189,7 @@ static char *sub_grow_buf(char **new_start, int needed_len)
 ///
 /// @returns pointer to the end of the flags, which may be the end of the string
 static char *sub_parse_flags(char *cmd, subflags_T *subflags, int *which_pat)
-  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_NONNULL_RET
+FUNC_ATTR_NONNULL_ALL FUNC_ATTR_NONNULL_RET
 {
   // Find trailing options.  When '&' is used, keep old options.
   if (*cmd == '&') {
@@ -3242,7 +3242,7 @@ static char *sub_parse_flags(char *cmd, subflags_T *subflags, int *which_pat)
 }
 
 static int check_regexp_delim(int c)
-  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
+FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
   if (isalpha(c)) {
     emsg(_("E146: Regular expressions can't be delimited by letters"));
@@ -4539,7 +4539,7 @@ bool prepare_tagpreview(bool undo_sync)
 /// @return 1 if preview window isn't needed, 2 if preview window is needed.
 static int show_sub(exarg_T *eap, pos_T old_cusr, PreviewLines *preview_lines, int hl_id,
                     long cmdpreview_ns, handle_T cmdpreview_bufnr)
-  FUNC_ATTR_NONNULL_ALL
+FUNC_ATTR_NONNULL_ALL
 {
   char *save_shm_p = xstrdup(p_shm);
   PreviewLines lines = *preview_lines;
@@ -4803,6 +4803,6 @@ void ex_trust(exarg_T *eap)
 
   nlua_trust(action, path);
 
-  theend:
+theend:
   xfree(arg1);
 }

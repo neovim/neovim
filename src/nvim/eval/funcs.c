@@ -219,7 +219,7 @@ char *get_expr_name(expand_T *xp, int idx)
 ///
 /// @return  pointer to the function definition or NULL if not found.
 const EvalFuncDef *find_internal_func(const char *const name)
-  FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_PURE FUNC_ATTR_NONNULL_ALL
+FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_PURE FUNC_ATTR_NONNULL_ALL
 {
   size_t len = strlen(name);
   int index = find_internal_func_hash(name, len);
@@ -228,7 +228,7 @@ const EvalFuncDef *find_internal_func(const char *const name)
 
 int call_internal_func(const char_u *const fname, const int argcount, typval_T *const argvars,
                        typval_T *const rettv)
-  FUNC_ATTR_NONNULL_ALL
+FUNC_ATTR_NONNULL_ALL
 {
   const EvalFuncDef *const fdef = find_internal_func((const char *)fname);
   if (fdef == NULL) {
@@ -246,7 +246,7 @@ int call_internal_func(const char_u *const fname, const int argcount, typval_T *
 /// Invoke a method for base->method().
 int call_internal_method(const char_u *const fname, const int argcount, typval_T *const argvars,
                          typval_T *const rettv, typval_T *const basetv)
-  FUNC_ATTR_NONNULL_ALL
+FUNC_ATTR_NONNULL_ALL
 {
   const EvalFuncDef *const fdef = find_internal_func((const char *)fname);
   if (fdef == NULL) {
@@ -327,7 +327,7 @@ static void api_wrapper(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     semsg(_("Error converting the call result: %s"), err.msg);
   }
 
-  end:
+end:
   api_free_array(args);
   if (handler.arena_return) {
     arena_mem_free(arena_finish(&res_arena));
@@ -3695,7 +3695,7 @@ static void f_isnan(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 
 /// "id()" function
 static void f_id(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
-  FUNC_ATTR_NONNULL_ALL
+FUNC_ATTR_NONNULL_ALL
 {
   const int len = vim_vsnprintf_typval(NULL, 0, "%p", dummy_ap, argvars);
   rettv->v_type = VAR_STRING;
@@ -4354,7 +4354,7 @@ static void f_localtime(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 
 /// luaeval() function implementation
 static void f_luaeval(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
-  FUNC_ATTR_NONNULL_ALL
+FUNC_ATTR_NONNULL_ALL
 {
   const char *const str = tv_get_string_chk(&argvars[0]);
   if (str == NULL) {
@@ -4619,7 +4619,7 @@ static void f_matchstrpos(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 ///                     empty lists/dictionaries.
 /// @param[in]  domax  Determines whether maximal or minimal value is desired.
 static void max_min(const typval_T *const tv, typval_T *const rettv, const bool domax)
-  FUNC_ATTR_NONNULL_ALL
+FUNC_ATTR_NONNULL_ALL
 {
   bool error = false;
 
@@ -4734,7 +4734,7 @@ static void f_mode(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 
 /// "msgpackdump()" function
 static void f_msgpackdump(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
-  FUNC_ATTR_NONNULL_ALL
+FUNC_ATTR_NONNULL_ALL
 {
   if (argvars[0].v_type != VAR_LIST) {
     semsg(_(e_listarg), "msgpackdump()");
@@ -4766,7 +4766,7 @@ static void f_msgpackdump(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 
 static int msgpackparse_convert_item(const msgpack_object data, const msgpack_unpack_return result,
                                      list_T *const ret_list, const bool fail_if_incomplete)
-  FUNC_ATTR_NONNULL_ALL
+FUNC_ATTR_NONNULL_ALL
 {
   switch (result) {
   case MSGPACK_UNPACK_PARSE_ERROR:
@@ -4796,7 +4796,7 @@ static int msgpackparse_convert_item(const msgpack_object data, const msgpack_un
 }
 
 static void msgpackparse_unpack_list(const list_T *const list, list_T *const ret_list)
-  FUNC_ATTR_NONNULL_ARG(2)
+FUNC_ATTR_NONNULL_ARG(2)
 {
   if (tv_list_len(list) == 0) {
     return;
@@ -4851,7 +4851,7 @@ end:
 }
 
 static void msgpackparse_unpack_blob(const blob_T *const blob, list_T *const ret_list)
-  FUNC_ATTR_NONNULL_ARG(2)
+FUNC_ATTR_NONNULL_ARG(2)
 {
   const int len = tv_blob_len(blob);
   if (len == 0) {
@@ -4873,7 +4873,7 @@ static void msgpackparse_unpack_blob(const blob_T *const blob, list_T *const ret
 
 /// "msgpackparse" function
 static void f_msgpackparse(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
-  FUNC_ATTR_NONNULL_ALL
+FUNC_ATTR_NONNULL_ALL
 {
   if (argvars[0].v_type != VAR_LIST && argvars[0].v_type != VAR_BLOB) {
     semsg(_(e_listblobarg), "msgpackparse()");
@@ -5062,7 +5062,7 @@ static void f_prompt_setinterrupt(typval_T *argvars, typval_T *rettv, EvalFuncDa
 
 /// "prompt_getprompt({buffer})" function
 static void f_prompt_getprompt(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
-  FUNC_ATTR_NONNULL_ALL
+FUNC_ATTR_NONNULL_ALL
 {
   // return an empty string by default, e.g. it's not a prompt buffer
   rettv->v_type = VAR_STRING;
@@ -5118,7 +5118,7 @@ static void f_py3eval(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 }
 
 static void init_srand(uint32_t *const x)
-  FUNC_ATTR_NONNULL_ALL
+FUNC_ATTR_NONNULL_ALL
 {
 #ifndef MSWIN
   static int dev_urandom_state = NOTDONE;  // FAIL or OK once tried
@@ -5158,7 +5158,7 @@ static void init_srand(uint32_t *const x)
 }
 
 static inline uint32_t splitmix32(uint32_t *const x)
-  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_ALWAYS_INLINE
+FUNC_ATTR_NONNULL_ALL FUNC_ATTR_ALWAYS_INLINE
 {
   uint32_t z = (*x += 0x9e3779b9);
   z = (z ^ (z >> 16)) * 0x85ebca6b;
@@ -5168,7 +5168,7 @@ static inline uint32_t splitmix32(uint32_t *const x)
 
 static inline uint32_t shuffle_xoshiro128starstar(uint32_t *const x, uint32_t *const y,
                                                   uint32_t *const z, uint32_t *const w)
-  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_ALWAYS_INLINE
+FUNC_ATTR_NONNULL_ALL FUNC_ATTR_ALWAYS_INLINE
 {
 #define ROTL(x, k) (((x) << (k)) | ((x) >> (32 - (k))))
   const uint32_t result = ROTL(*y * 5, 7) * 9;
@@ -5322,7 +5322,7 @@ static void f_range(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 
 /// Evaluate "expr" (= "context") for readdir().
 static varnumber_T readdir_checkitem(void *context, const char *name)
-  FUNC_ATTR_NONNULL_ALL
+FUNC_ATTR_NONNULL_ALL
 {
   typval_T *expr = (typval_T *)context;
   typval_T argv[2];
@@ -5717,7 +5717,7 @@ static void f_reltime(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 
 /// "reltimestr()" function
 static void f_reltimestr(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
-  FUNC_ATTR_NONNULL_ALL
+FUNC_ATTR_NONNULL_ALL
 {
   proftime_T tm;
 
@@ -6751,7 +6751,7 @@ static void f_searchpairpos(typval_T *argvars, typval_T *rettv, EvalFuncData fpt
 long do_searchpair(const char *spat, const char *mpat, const char *epat, int dir,
                    const typval_T *skip, int flags, pos_T *match_pos, linenr_T lnum_stop,
                    long time_limit)
-  FUNC_ATTR_NONNULL_ARG(1, 2, 3)
+FUNC_ATTR_NONNULL_ARG(1, 2, 3)
 {
   long retval = 0;
   int nest = 1;
@@ -7130,7 +7130,7 @@ static void f_setpos(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 
 /// Translate a register type string to the yank type and block length
 static int get_yank_type(char **const pp, MotionType *const yank_type, long *const block_len)
-  FUNC_ATTR_NONNULL_ALL
+FUNC_ATTR_NONNULL_ALL
 {
   char *stropt = *pp;
   switch (*stropt) {
@@ -7484,7 +7484,7 @@ static void f_stdioopen(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 
 /// "reltimefloat()" function
 static void f_reltimefloat(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
-  FUNC_ATTR_NONNULL_ALL
+FUNC_ATTR_NONNULL_ALL
 {
   proftime_T tm;
 

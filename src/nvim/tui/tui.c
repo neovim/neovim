@@ -429,7 +429,7 @@ static void tui_terminal_start(UI *ui)
 }
 
 static void tui_terminal_after_startup(UI *ui)
-  FUNC_ATTR_NONNULL_ALL
+FUNC_ATTR_NONNULL_ALL
 {
   TUIData *data = ui->data;
 
@@ -1588,7 +1588,7 @@ static void tui_guess_size(UI *ui)
   height = unibi_get_num(data->ut, unibi_lines);
   width = unibi_get_num(data->ut, unibi_columns);
 
-  end:
+end:
   if (width <= 0 || height <= 0) {
     // use the defaults
     width = DFLT_COLS;
@@ -1619,7 +1619,7 @@ static void unibi_goto(UI *ui, int row, int col)
       size_t orig_pos = data->bufpos; \
       memset(&vars, 0, sizeof(vars)); \
       data->cork = true; \
-      retry: \
+retry: \
       unibi_format(vars, vars + 26, str, data->params, out, ui, pad, ui); \
       if (data->overflow) { \
         data->bufpos = orig_pos; \

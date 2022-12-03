@@ -92,7 +92,7 @@ static int validate_option_value_args(Dict(option) *opts, int *scope, int *opt_t
 /// @param[out] err  Error details, if any
 /// @return          Option value
 Object nvim_get_option_value(String name, Dict(option) *opts, Error *err)
-  FUNC_API_SINCE(9)
+FUNC_API_SINCE(9)
 {
   Object rv = OBJECT_INIT;
 
@@ -154,7 +154,7 @@ Object nvim_get_option_value(String name, Dict(option) *opts, Error *err)
 ///                  - buf: Buffer number. Used for setting buffer local option.
 /// @param[out] err  Error details, if any
 void nvim_set_option_value(String name, Object value, Dict(option) *opts, Error *err)
-  FUNC_API_SINCE(9)
+FUNC_API_SINCE(9)
 {
   int scope = 0;
   int opt_type = SREQ_GLOBAL;
@@ -207,7 +207,7 @@ void nvim_set_option_value(String name, Object value, Dict(option) *opts, Error 
 ///
 /// @return dictionary of all options
 Dictionary nvim_get_all_options_info(Error *err)
-  FUNC_API_SINCE(7)
+FUNC_API_SINCE(7)
 {
   return get_all_vimoptions();
 }
@@ -236,7 +236,7 @@ Dictionary nvim_get_all_options_info(Error *err)
 /// @param[out] err Error details, if any
 /// @return         Option Information
 Dictionary nvim_get_option_info(String name, Error *err)
-  FUNC_API_SINCE(7)
+FUNC_API_SINCE(7)
 {
   return get_vimoption(name, err);
 }
@@ -247,7 +247,7 @@ Dictionary nvim_get_option_info(String name, Error *err)
 /// @param value    New option value
 /// @param[out] err Error details, if any
 void nvim_set_option(uint64_t channel_id, String name, Object value, Error *err)
-  FUNC_API_SINCE(1)
+FUNC_API_SINCE(1)
 {
   set_option_to(channel_id, NULL, SREQ_GLOBAL, name, value, err);
 }
@@ -258,7 +258,7 @@ void nvim_set_option(uint64_t channel_id, String name, Object value, Error *err)
 /// @param[out] err Error details, if any
 /// @return         Option value (global)
 Object nvim_get_option(String name, Arena *arena, Error *err)
-  FUNC_API_SINCE(1)
+FUNC_API_SINCE(1)
 {
   return get_option_from(NULL, SREQ_GLOBAL, name, err);
 }
@@ -270,7 +270,7 @@ Object nvim_get_option(String name, Arena *arena, Error *err)
 /// @param[out] err   Error details, if any
 /// @return Option value
 Object nvim_buf_get_option(Buffer buffer, String name, Arena *arena, Error *err)
-  FUNC_API_SINCE(1)
+FUNC_API_SINCE(1)
 {
   buf_T *buf = find_buffer_by_handle(buffer, err);
 
@@ -290,7 +290,7 @@ Object nvim_buf_get_option(Buffer buffer, String name, Arena *arena, Error *err)
 /// @param value      Option value
 /// @param[out] err   Error details, if any
 void nvim_buf_set_option(uint64_t channel_id, Buffer buffer, String name, Object value, Error *err)
-  FUNC_API_SINCE(1)
+FUNC_API_SINCE(1)
 {
   buf_T *buf = find_buffer_by_handle(buffer, err);
 
@@ -308,7 +308,7 @@ void nvim_buf_set_option(uint64_t channel_id, Buffer buffer, String name, Object
 /// @param[out] err Error details, if any
 /// @return Option value
 Object nvim_win_get_option(Window window, String name, Arena *arena, Error *err)
-  FUNC_API_SINCE(1)
+FUNC_API_SINCE(1)
 {
   win_T *win = find_window_by_handle(window, err);
 
@@ -328,7 +328,7 @@ Object nvim_win_get_option(Window window, String name, Arena *arena, Error *err)
 /// @param value    Option value
 /// @param[out] err Error details, if any
 void nvim_win_set_option(uint64_t channel_id, Window window, String name, Object value, Error *err)
-  FUNC_API_SINCE(1)
+FUNC_API_SINCE(1)
 {
   win_T *win = find_window_by_handle(window, err);
 

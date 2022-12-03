@@ -155,7 +155,7 @@ proftime_T profile_sub(proftime_T tm1, proftime_T tm2) FUNC_ATTR_CONST
 /// @return if `total` <= `children`, then self, otherwise `self` + `total` -
 ///         `children`
 proftime_T profile_self(proftime_T self, proftime_T total, proftime_T children)
-  FUNC_ATTR_CONST
+FUNC_ATTR_CONST
 {
   // check that the result won't be negative, which can happen with
   // recursive calls.
@@ -202,7 +202,7 @@ bool profile_equal(proftime_T tm1, proftime_T tm2) FUNC_ATTR_CONST
 ///
 /// @return signed representation of the given time value
 int64_t profile_signed(proftime_T tm)
-  FUNC_ATTR_CONST
+FUNC_ATTR_CONST
 {
   // (tm > INT64_MAX) is >=150 years, so we can assume it was produced by
   // arithmetic of two proftime_T values.  For human-readable representation
@@ -349,7 +349,7 @@ static char *pexpand_cmds[] = {
 /// Function given to ExpandGeneric() to obtain the profile command
 /// specific expansion.
 char *get_profile_name(expand_T *xp, int idx)
-  FUNC_ATTR_PURE
+FUNC_ATTR_PURE
 {
   switch (pexpand_what) {
   case PEXP_SUBCMD:
@@ -401,7 +401,7 @@ void prof_inchar_exit(void)
 /// @return  true when a function defined in the current script should be
 ///          profiled.
 bool prof_def_func(void)
-  FUNC_ATTR_PURE
+FUNC_ATTR_PURE
 {
   if (current_sctx.sc_sid > 0) {
     return SCRIPT_ITEM(current_sctx.sc_sid).sn_pr_force;

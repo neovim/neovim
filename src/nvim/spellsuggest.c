@@ -302,7 +302,7 @@ static int score_wordcount_adj(slang_T *slang, int score, char_u *word, bool spl
 /// capital.  So that make_case_word() can turn WOrd into Word.
 /// Add ALLCAP for "WOrD".
 static int badword_captype(char_u *word, char_u *end)
-  FUNC_ATTR_NONNULL_ALL
+FUNC_ATTR_NONNULL_ALL
 {
   int flags = captype(word, end);
   int c;
@@ -3310,7 +3310,7 @@ static int sug_compare(const void *s1, const void *s2)
 ///
 /// @return  the maximum score in the list or "maxscore" unmodified.
 static int cleanup_suggestions(garray_T *gap, int maxscore, int keep)
-  FUNC_ATTR_NONNULL_ALL
+FUNC_ATTR_NONNULL_ALL
 {
   if (gap->ga_len > 0) {
     // Sort the list.

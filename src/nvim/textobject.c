@@ -1499,7 +1499,7 @@ static int find_prev_quote(char_u *line, int col_start, int quotechar, char_u *e
 ///
 /// @return           true if found, else false.
 bool current_quote(oparg_T *oap, long count, bool include, int quotechar)
-  FUNC_ATTR_NONNULL_ALL
+FUNC_ATTR_NONNULL_ALL
 {
   char_u *line = (char_u *)get_cursor_line_ptr();
   int col_end;

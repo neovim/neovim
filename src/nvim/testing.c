@@ -69,7 +69,7 @@ static void prepare_assert_error(garray_T *gap)
 /// Append "p[clen]" to "gap", escaping unprintable characters.
 /// Changes NL to \n, CR to \r, etc.
 static void ga_concat_esc(garray_T *gap, const char_u *p, int clen)
-  FUNC_ATTR_NONNULL_ALL
+FUNC_ATTR_NONNULL_ALL
 {
   char_u buf[NUMBUFLEN];
 
@@ -108,7 +108,7 @@ static void ga_concat_esc(garray_T *gap, const char_u *p, int clen)
 /// Append "str" to "gap", escaping unprintable characters.
 /// Changes NL to \n, CR to \r, etc.
 static void ga_concat_shorten_esc(garray_T *gap, const char_u *str)
-  FUNC_ATTR_NONNULL_ARG(1)
+FUNC_ATTR_NONNULL_ARG(1)
 {
   char_u buf[NUMBUFLEN];
 
@@ -252,7 +252,7 @@ static void fill_assert_error(garray_T *gap, typval_T *opt_msg_tv, char_u *exp_s
 }
 
 static int assert_equal_common(typval_T *argvars, assert_type_T atype)
-  FUNC_ATTR_NONNULL_ALL
+FUNC_ATTR_NONNULL_ALL
 {
   garray_T ga;
 
@@ -269,7 +269,7 @@ static int assert_equal_common(typval_T *argvars, assert_type_T atype)
 }
 
 static int assert_match_common(typval_T *argvars, assert_type_T atype)
-  FUNC_ATTR_NONNULL_ALL
+FUNC_ATTR_NONNULL_ALL
 {
   char buf1[NUMBUFLEN];
   char buf2[NUMBUFLEN];
@@ -291,7 +291,7 @@ static int assert_match_common(typval_T *argvars, assert_type_T atype)
 
 /// Common for assert_true() and assert_false().
 static int assert_bool(typval_T *argvars, bool is_true)
-  FUNC_ATTR_NONNULL_ALL
+FUNC_ATTR_NONNULL_ALL
 {
   bool error = false;
   garray_T ga;
@@ -316,7 +316,7 @@ static int assert_bool(typval_T *argvars, bool is_true)
 }
 
 static void assert_append_cmd_or_arg(garray_T *gap, typval_T *argvars, const char *cmd)
-  FUNC_ATTR_NONNULL_ALL
+FUNC_ATTR_NONNULL_ALL
 {
   if (argvars[1].v_type != VAR_UNKNOWN && argvars[2].v_type != VAR_UNKNOWN) {
     char *const tofree = encode_tv2echo(&argvars[2], NULL);
@@ -328,7 +328,7 @@ static void assert_append_cmd_or_arg(garray_T *gap, typval_T *argvars, const cha
 }
 
 static int assert_beeps(typval_T *argvars, bool no_beep)
-  FUNC_ATTR_NONNULL_ALL
+FUNC_ATTR_NONNULL_ALL
 {
   const char *const cmd = tv_get_string_chk(&argvars[0]);
   int ret = 0;
@@ -375,7 +375,7 @@ void f_assert_equal(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 }
 
 static int assert_equalfile(typval_T *argvars)
-  FUNC_ATTR_NONNULL_ALL
+FUNC_ATTR_NONNULL_ALL
 {
   char buf1[NUMBUFLEN];
   char buf2[NUMBUFLEN];
@@ -627,7 +627,7 @@ void f_assert_false(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 }
 
 static int assert_inrange(typval_T *argvars)
-  FUNC_ATTR_NONNULL_ALL
+FUNC_ATTR_NONNULL_ALL
 {
   bool error = false;
 

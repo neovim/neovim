@@ -57,7 +57,7 @@
 
 /// Convert mark name to the offset
 static inline int mark_global_index(const char name)
-  FUNC_ATTR_CONST
+FUNC_ATTR_CONST
 {
   return (ASCII_ISUPPER(name)
           ? (name - 'A')
@@ -68,7 +68,7 @@ static inline int mark_global_index(const char name)
 
 /// Convert local mark name to the offset
 static inline int mark_local_index(const char name)
-  FUNC_ATTR_CONST
+FUNC_ATTR_CONST
 {
   return (ASCII_ISLOWER(name)
           ? (name - 'a')
@@ -82,13 +82,13 @@ static inline int mark_local_index(const char name)
 }
 
 static inline bool lt(pos_T a, pos_T b)
-  REAL_FATTR_CONST REAL_FATTR_ALWAYS_INLINE;
+REAL_FATTR_CONST REAL_FATTR_ALWAYS_INLINE;
 static inline bool equalpos(pos_T a, pos_T b)
-  REAL_FATTR_CONST REAL_FATTR_ALWAYS_INLINE;
+REAL_FATTR_CONST REAL_FATTR_ALWAYS_INLINE;
 static inline bool ltoreq(pos_T a, pos_T b)
-  REAL_FATTR_CONST REAL_FATTR_ALWAYS_INLINE;
+REAL_FATTR_CONST REAL_FATTR_ALWAYS_INLINE;
 static inline void clearpos(pos_T *a)
-  REAL_FATTR_ALWAYS_INLINE;
+REAL_FATTR_ALWAYS_INLINE;
 
 /// Return true if position a is before (less than) position b.
 static inline bool lt(pos_T a, pos_T b)

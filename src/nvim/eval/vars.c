@@ -572,7 +572,7 @@ static const char *list_arg_vars(exarg_T *eap, const char *arg, int *first)
 ///         error.
 static char *ex_let_one(char *arg, typval_T *const tv, const bool copy, const bool is_const,
                         const char *const endchars, const char *const op)
-  FUNC_ATTR_NONNULL_ARG(1, 2) FUNC_ATTR_WARN_UNUSED_RESULT
+FUNC_ATTR_NONNULL_ARG(1, 2) FUNC_ATTR_WARN_UNUSED_RESULT
 {
   char *arg_end = NULL;
   int len;
@@ -794,7 +794,7 @@ void ex_lockvar(exarg_T *eap)
 ///                   everything.
 /// @param[in]  callback  Appropriate handler for the command.
 static void ex_unletlock(exarg_T *eap, char *argstart, int deep, ex_unletlock_callback callback)
-  FUNC_ATTR_NONNULL_ALL
+FUNC_ATTR_NONNULL_ALL
 {
   char *arg = argstart;
   char *name_end;
@@ -857,7 +857,7 @@ static void ex_unletlock(exarg_T *eap, char *argstart, int deep, ex_unletlock_ca
 ///
 /// @return OK on success, or FAIL on failure.
 static int do_unlet_var(lval_T *lp, char *name_end, exarg_T *eap, int deep FUNC_ATTR_UNUSED)
-  FUNC_ATTR_NONNULL_ALL
+FUNC_ATTR_NONNULL_ALL
 {
   int forceit = eap->forceit;
   int ret = OK;
@@ -945,7 +945,7 @@ static int do_unlet_var(lval_T *lp, char *name_end, exarg_T *eap, int deep FUNC_
 ///
 /// @return OK if it existed, FAIL otherwise.
 int do_unlet(const char *const name, const size_t name_len, const bool forceit)
-  FUNC_ATTR_NONNULL_ALL
+FUNC_ATTR_NONNULL_ALL
 {
   const char *varname;
   dict_T *dict;
@@ -1018,7 +1018,7 @@ int do_unlet(const char *const name, const size_t name_len, const bool forceit)
 ///
 /// @return OK on success, or FAIL on failure.
 static int do_lock_var(lval_T *lp, char *name_end FUNC_ATTR_UNUSED, exarg_T *eap, int deep)
-  FUNC_ATTR_NONNULL_ARG(1, 3)
+FUNC_ATTR_NONNULL_ARG(1, 3)
 {
   bool lock = eap->cmdidx == CMD_lockvar;
   int ret = OK;
@@ -1233,7 +1233,7 @@ static void list_one_var_a(const char *prefix, const char *name, const ptrdiff_t
 /// @param  tv  Variable value.
 /// @param[in]  copy  True if value in tv is to be copied.
 void set_var(const char *name, const size_t name_len, typval_T *const tv, const bool copy)
-  FUNC_ATTR_NONNULL_ALL
+FUNC_ATTR_NONNULL_ALL
 {
   set_var_const(name, name_len, tv, copy, false);
 }
@@ -1250,7 +1250,7 @@ void set_var(const char *name, const size_t name_len, typval_T *const tv, const 
 /// @param[in]  is_const  True if value in tv is to be locked.
 void set_var_const(const char *name, const size_t name_len, typval_T *const tv, const bool copy,
                    const bool is_const)
-  FUNC_ATTR_NONNULL_ALL
+FUNC_ATTR_NONNULL_ALL
 {
   dictitem_T *v;
   hashtab_T *ht;
@@ -1394,7 +1394,7 @@ void set_var_const(const char *name, const size_t name_len, typval_T *const tv, 
 /// @return True if variable is read-only: either always or in sandbox when
 ///         sandbox is enabled, false otherwise.
 bool var_check_ro(const int flags, const char *name, size_t name_len)
-  FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
+FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
 {
   const char *error_message = NULL;
   if (flags & DI_FLAGS_RO) {
@@ -1437,7 +1437,7 @@ bool var_check_ro(const int flags, const char *name, size_t name_len)
 ///
 /// @return True if variable is fixed, false otherwise.
 bool var_check_fixed(const int flags, const char *name, size_t name_len)
-  FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
+FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
 {
   if (flags & DI_FLAGS_FIX) {
     if (name_len == TV_TRANSLATE) {
@@ -1460,7 +1460,7 @@ bool var_check_fixed(const int flags, const char *name, size_t name_len)
 /// @return false in case of success, true in case of failure. Also gives an
 ///         error message if appropriate.
 bool var_wrong_func_name(const char *const name, const bool new_var)
-  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
+FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
   // Allow for w: b: s: and t:.
   // Allow autoload variable.
@@ -1487,7 +1487,7 @@ bool var_wrong_func_name(const char *const name, const bool new_var)
 /// @return false when variable name is not valid, true when it is. Also gives
 ///         an error message if appropriate.
 bool valid_varname(const char *varname)
-  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
+FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
   for (const char *p = varname; *p != NUL; p++) {
     if (!eval_isnamec1((int)(uint8_t)(*p))
@@ -1676,7 +1676,7 @@ static void setwinvar(typval_T *argvars, typval_T *rettv, int off)
 }
 
 bool var_exists(const char *var)
-  FUNC_ATTR_NONNULL_ALL
+FUNC_ATTR_NONNULL_ALL
 {
   char *tofree;
   bool n = false;

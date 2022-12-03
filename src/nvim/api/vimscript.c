@@ -50,7 +50,7 @@
 /// @return Output (non-error, non-shell |:!|) if `output` is true,
 ///         else empty string.
 String nvim_exec(uint64_t channel_id, String src, Boolean output, Error *err)
-  FUNC_API_SINCE(7)
+FUNC_API_SINCE(7)
 {
   const int save_msg_silent = msg_silent;
   garray_T *const save_capture_ga = capture_ga;
@@ -116,7 +116,7 @@ theend:
 /// @param command  Ex command string
 /// @param[out] err Error details (Vim error), if any
 void nvim_command(String command, Error *err)
-  FUNC_API_SINCE(1)
+FUNC_API_SINCE(1)
 {
   try_start();
   do_cmdline_cmd(command.data);
@@ -132,7 +132,7 @@ void nvim_command(String command, Error *err)
 /// @param[out] err Error details, if any
 /// @return         Evaluation result or expanded object
 Object nvim_eval(String expr, Error *err)
-  FUNC_API_SINCE(1)
+FUNC_API_SINCE(1)
 {
   static int recursive = 0;  // recursion depth
   Object rv = OBJECT_INIT;
@@ -241,7 +241,7 @@ free_vim_args:
 /// @param[out] err Error details, if any
 /// @return Result of the function call
 Object nvim_call_function(String fn, Array args, Error *err)
-  FUNC_API_SINCE(1)
+FUNC_API_SINCE(1)
 {
   return _call_function(fn, args, NULL, err);
 }
@@ -256,7 +256,7 @@ Object nvim_call_function(String fn, Array args, Error *err)
 /// @param[out] err Error details, if any
 /// @return Result of the function call
 Object nvim_call_dict_function(Object dict, String fn, Array args, Error *err)
-  FUNC_API_SINCE(4)
+FUNC_API_SINCE(4)
 {
   Object rv = OBJECT_INIT;
 
@@ -411,7 +411,7 @@ typedef kvec_withinit_t(ExprASTConvStackItem, 16) ExprASTConvStack;
 ///                    "DoubleQuotedString" nodes.
 /// @param[out] err Error details, if any
 Dictionary nvim_parse_expression(String expr, String flags, Boolean highlight, Error *err)
-  FUNC_API_SINCE(4) FUNC_API_FAST
+FUNC_API_SINCE(4) FUNC_API_FAST
 {
   int pflags = 0;
   for (size_t i = 0; i < flags.size; i++) {
