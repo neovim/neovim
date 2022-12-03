@@ -96,16 +96,42 @@ func Test_help_local_additions()
   call writefile(['*mydoc-ext.txt* my extended awesome doc'], 'Xruntime/doc/mydoc-ext.txt')
   let rtp_save = &rtp
   set rtp+=./Xruntime
-  help
-  1
-  call search('mydoc.txt')
-  call assert_equal('|mydoc.txt| my awesome doc', getline('.'))
-  1
-  call search('mydoc-ext.txt')
-  call assert_equal('|mydoc-ext.txt| my extended awesome doc', getline('.'))
+  help local-additions
+  let lines = getline(line(".") + 1, search("^$") - 1)
+  call assert_equal([
+  \ '|mydoc-ext.txt| my extended awesome doc',
+  \ '|mydoc.txt| my awesome doc'
+  \ ], lines)
+  call delete('Xruntime/doc/mydoc-ext.txt')
+  close
+
+  call mkdir('Xruntime-ja/doc', 'p')
+  call writefile(["local-additions\thelp.jax\t/*local-additions*"], 'Xruntime-ja/doc/tags-ja')
+  call writefile(['*help.txt* This is jax file', '',
+  \ 'LOCAL ADDITIONS: *local-additions*', ''], 'Xruntime-ja/doc/help.jax')
+  call writefile(['*work.txt* This is jax file'], 'Xruntime-ja/doc/work.jax')
+  call writefile(['*work2.txt* This is jax file'], 'Xruntime-ja/doc/work2.jax')
+  set rtp+=./Xruntime-ja
+
+  help local-additions@en
+  let lines = getline(line(".") + 1, search("^$") - 1)
+  call assert_equal([
+  \ '|mydoc.txt| my awesome doc'
+  \ ], lines)
+  close
+
+  help local-additions@ja
+  let lines = getline(line(".") + 1, search("^$") - 1)
+  call assert_equal([
+  \ '|mydoc.txt| my awesome doc',
+  \ '|help.txt| This is jax file',
+  \ '|work.txt| This is jax file',
+  \ '|work2.txt| This is jax file',
+  \ ], lines)
   close
 
   call delete('Xruntime', 'rf')
+  call delete('Xruntime-ja', 'rf')
   let &rtp = rtp_save
 endfunc
 
