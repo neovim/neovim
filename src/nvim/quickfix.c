@@ -4076,7 +4076,7 @@ static void qf_fill_buffer(qf_list_T *qfl, buf_T *buf, qfline_T *old_last, int q
   }
 
   // Check if there is anything to display
-  if (qfl != NULL) {
+  if (qfl != NULL && qfl->qf_start != NULL) {
     char dirname[MAXPATHL];
 
     *dirname = NUL;
