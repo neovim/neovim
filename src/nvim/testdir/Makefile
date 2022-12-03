@@ -13,21 +13,11 @@ export SHELL := sh
 export NVIM_PRG := $(NVIM_PRG)
 export TMPDIR := $(abspath Xtest-tmpdir)
 
-SCRIPTS_DEFAULT =
-
-ifneq ($(OS),Windows_NT)
-  SCRIPTS_DEFAULTS := $(SCRIPTS_DEFAULT) \
-	test49.out             \
-
-endif
-
 ifeq ($(OS),Windows_NT)
   FIXFF = fixff
 else
   FIXFF =
 endif
-
-SCRIPTS ?= $(SCRIPTS_DEFAULT)
 
 # Tests using runtest.vim.
 NEW_TESTS_ALOT := test_alot_utf8 test_alot test_alot_latin
@@ -65,11 +55,7 @@ else
 	endif
 endif
 
-ifdef TESTNUM
-	SCRIPTS := test$(TESTNUM).out
-endif
-
-nongui: nolog $(FIXFF) $(SCRIPTS) newtests report
+nongui: nolog $(FIXFF) newtests report
 
 .gdbinit:
 	@echo "[OLDTEST-PREP] Setting up .gdbinit"
@@ -86,8 +72,6 @@ report:
 		fi"
 
 test1.out: $(NVIM_PRG)
-
-$(SCRIPTS): $(NVIM_PRG) test1.out
 
 NO_PLUGINS = --noplugin --headless
 # In vim, if the -u command line option is specified, compatible is turned on
@@ -145,17 +129,6 @@ test1.out: .gdbinit test1.in
 	@/bin/sh runnvim.sh $(ROOT) $(NVIM_PRG) $* $(RUN_VIM) $*.in
 	@rm -f wrongtermsize
 	@rm -rf X* viminfo
-
-%.out: %.in .gdbinit
-	@echo "[OLDESTTEST] Running" $*
-	@rm -rf $*.failed test.ok $(RM_ON_RUN)
-	@mkdir -p $(TMPDIR)
-	@cp $*.ok test.ok
-	@/bin/sh runnvim.sh --oldesttest $(ROOT) $(NVIM_PRG) $* $(RUN_VIM) $*.in
-	@rm -rf X* test.ok viminfo
-
-# Explicit dependencies.
-test49.out: test49.vim
 
 nolog:
 	@echo "[OLDTEST-PREP] Removing test.log and messages"

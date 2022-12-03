@@ -20,17 +20,11 @@ and for testing plugins.
 Vim can be tested after building it, usually with "make test".
 The tests are located in the directory "src/testdir".
 
-There are several types of tests added over time:
-	test33.in		oldest, don't add any of these
-	test_something.in	old style tests
-	test_something.vim	new style tests
-
 						*new-style-testing*
-New tests should be added as new style tests.  These use functions such as
-|assert_equal()| to keep the test commands and the expected result in one
-place.
-						*old-style-testing*
-In some cases an old style test needs to be used.
+New tests should be added as new style tests.  The test scripts are named
+test_<feature>.vim (replace <feature> with the feature under test). These use
+functions such as |assert_equal()| to keep the test commands and the expected
+result in one place.
 
 Find more information in the file src/testdir/README.txt.
 

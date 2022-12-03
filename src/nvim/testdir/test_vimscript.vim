@@ -1,5 +1,6 @@
 " Test various aspects of the Vim script language.
-" Most of this was formerly in test49.
+" Most of this was formerly in test49.vim (developed by Servatius Brandt
+" <Servatius.Brandt@fujitsu-siemens.com>)
 
 source check.vim
 source shared.vim
@@ -5878,7 +5879,7 @@ func Test_discard_exception_after_error_1()
   call RunInNewVim(test, verify)
 endfunc
 
-" TODO: Not able inject an interrupt after throwing an exception
+" TODO: Need to interrupt the code before the endtry is invoked
 func Disable_Test_discard_exception_after_error_2()
   let test =<< trim [CODE]
     try
@@ -5897,6 +5898,507 @@ func Disable_Test_discard_exception_after_error_2()
   [CODE]
   let verify =<< trim [CODE]
     call assert_equal('ab', g:Xpath)
+  [CODE]
+  call RunInNewVim(test, verify)
+endfunc
+
+"-------------------------------------------------------------------------------
+" Test 82:  Ignoring :catch clauses after an error or interrupt		    {{{1
+"
+"	    When an exception is thrown and an error or interrupt occurs before
+"	    the matching :catch clause is reached, the exception is discarded
+"	    and the :catch clause is ignored (also for the error or interrupt
+"	    exception being thrown then).
+"-------------------------------------------------------------------------------
+
+func Test_ignore_catch_after_error_1()
+  let test =<< trim [CODE]
+    try
+      try
+        Xpath 'a'
+        throw "arrgh"
+        call assert_report('should not get here')
+        if 1
+        call assert_report('should not get here')
+        " error after :throw: missing :endif
+      catch /.*/
+        call assert_report('should not get here')
+      catch /.*/
+        call assert_report('should not get here')
+      endtry
+      call assert_report('should not get here')
+    catch /arrgh/
+      call assert_report('should not get here')
+    endtry
+    call assert_report('should not get here')
+  [CODE]
+  let verify =<< trim [CODE]
+    call assert_equal('a', g:Xpath)
+  [CODE]
+  call RunInNewVim(test, verify)
+endfunc
+
+func Test_ignore_catch_after_error_2()
+  let test =<< trim [CODE]
+    func E()
+      try
+        try
+          Xpath 'a'
+          throw "arrgh"
+          call assert_report('should not get here')
+          if 1
+          call assert_report('should not get here')
+          " error after :throw: missing :endif
+        catch /.*/
+          call assert_report('should not get here')
+        catch /.*/
+          call assert_report('should not get here')
+        endtry
+        call assert_report('should not get here')
+      catch /arrgh/
+        call assert_report('should not get here')
+      endtry
+    endfunc
+
+    call E()
+    call assert_report('should not get here')
+  [CODE]
+  let verify =<< trim [CODE]
+    call assert_equal('a', g:Xpath)
+  [CODE]
+  call RunInNewVim(test, verify)
+endfunc
+
+" TODO: Need to interrupt the code right before the catch is invoked
+func FIXME_Test_ignore_catch_after_intr_1()
+  let test =<< trim [CODE]
+    try
+      try
+        Xpath 'a'
+        throw "arrgh"
+        call assert_report('should not get here')
+      catch /.*/              " TODO: Need to interrupt before this catch is
+        call interrupt()      " invoked
+        call assert_report('should not get here')
+      catch /.*/
+        call assert_report('should not get here')
+      endtry
+      call assert_report('should not get here')
+    catch /arrgh/
+      call assert_report('should not get here')
+    endtry
+    call assert_report('should not get here')
+  [CODE]
+  let verify =<< trim [CODE]
+    call assert_equal('a', g:Xpath)
+  [CODE]
+  call RunInNewVim(test, verify)
+endfunc
+
+" TODO: Need to interrupt the code right before the catch is invoked
+func FIXME_Test_ignore_catch_after_intr_2()
+  let test =<< trim [CODE]
+    func I()
+      try
+        try
+          Xpath 'a'
+          throw "arrgh"
+          call assert_report('should not get here')
+        catch /.*/              " TODO: Need to interrupt before this catch is
+                                " invoked
+          call interrupt()
+          call assert_report('should not get here')
+        catch /.*/
+          call assert_report('should not get here')
+        endtry
+        call assert_report('should not get here')
+      catch /arrgh/
+        call assert_report('should not get here')
+      endtry
+    endfunc
+
+    call I()
+    call assert_report('should not get here')
+  [CODE]
+  let verify =<< trim [CODE]
+    call assert_equal('a', g:Xpath)
+  [CODE]
+  call RunInNewVim(test, verify)
+endfunc
+
+"-------------------------------------------------------------------------------
+" Test 83:  Executing :finally clauses after an error or interrupt	    {{{1
+"
+"	    When an exception is thrown and an error or interrupt occurs before
+"	    the :finally of the innermost :try is reached, the exception is
+"	    discarded and the :finally clause is executed.
+"-------------------------------------------------------------------------------
+
+func Test_finally_after_error()
+  let test =<< trim [CODE]
+    try
+      Xpath 'a'
+      try
+        Xpath 'b'
+        throw "arrgh"
+        call assert_report('should not get here')
+        if 1
+        call assert_report('should not get here')
+        " error after :throw: missing :endif
+      finally
+        Xpath 'c'
+      endtry
+      call assert_report('should not get here')
+    catch /arrgh/
+      call assert_report('should not get here')
+    endtry
+    call assert_report('should not get here')
+  [CODE]
+  let verify =<< trim [CODE]
+    call assert_equal('abc', g:Xpath)
+  [CODE]
+  call RunInNewVim(test, verify)
+endfunc
+
+" TODO: Need to interrupt the code right before the finally is invoked
+func FIXME_Test_finally_after_intr()
+  let test =<< trim [CODE]
+    try
+      Xpath 'a'
+      try
+        Xpath 'b'
+        throw "arrgh"
+        call assert_report('should not get here')
+      finally		" TODO: Need to interrupt before the finally is invoked
+        Xpath 'c'
+      endtry
+      call assert_report('should not get here')
+    catch /arrgh/
+      call assert_report('should not get here')
+    endtry
+    call assert_report('should not get here')
+  [CODE]
+  let verify =<< trim [CODE]
+    call assert_equal('abc', g:Xpath)
+  [CODE]
+  call RunInNewVim(test, verify)
+endfunc
+
+"-------------------------------------------------------------------------------
+" Test 84:  Exceptions in autocommand sequences.			    {{{1
+"
+"	    When an exception occurs in a sequence of autocommands for
+"	    a specific event, the rest of the sequence is not executed.  The
+"	    command that triggered the autocommand execution aborts, and the
+"	    exception is propagated to the caller.
+"
+"	    For the FuncUndefined event under a function call expression or
+"	    :call command, the function is not executed, even when it has
+"	    been defined by the autocommands before the exception occurred.
+"-------------------------------------------------------------------------------
+
+func Test_autocmd_exception()
+  let test =<< trim [CODE]
+    func INT()
+      call interrupt()
+    endfunc
+
+    aug TMP
+      autocmd!
+
+      autocmd User x1 Xpath 'a'
+      autocmd User x1 throw "x1"
+      autocmd User x1 call assert_report('should not get here')
+
+      autocmd User x2 Xpath 'b'
+      autocmd User x2 asdf
+      autocmd User x2 call assert_report('should not get here')
+
+      autocmd User x3 Xpath 'c'
+      autocmd User x3 call INT()
+      autocmd User x3 call assert_report('should not get here')
+
+      autocmd FuncUndefined U1 func U1()
+      autocmd FuncUndefined U1   call assert_report('should not get here')
+      autocmd FuncUndefined U1 endfunc
+      autocmd FuncUndefined U1 Xpath 'd'
+      autocmd FuncUndefined U1 throw "U1"
+      autocmd FuncUndefined U1 call assert_report('should not get here')
+
+      autocmd FuncUndefined U2 func U2()
+      autocmd FuncUndefined U2   call assert_report('should not get here')
+      autocmd FuncUndefined U2 endfunc
+      autocmd FuncUndefined U2 Xpath 'e'
+      autocmd FuncUndefined U2 ASDF
+      autocmd FuncUndefined U2 call assert_report('should not get here')
+
+      autocmd FuncUndefined U3 func U3()
+      autocmd FuncUndefined U3   call assert_report('should not get here')
+      autocmd FuncUndefined U3 endfunc
+      autocmd FuncUndefined U3 Xpath 'f'
+      autocmd FuncUndefined U3 call INT()
+      autocmd FuncUndefined U3 call assert_report('should not get here')
+    aug END
+
+    try
+      try
+        Xpath 'g'
+        doautocmd User x1
+      catch /x1/
+        Xpath 'h'
+      endtry
+
+      while 1
+        try
+          Xpath 'i'
+          doautocmd User x2
+        catch /asdf/
+          Xpath 'j'
+        finally
+          Xpath 'k'
+          break
+        endtry
+      endwhile
+
+      while 1
+        try
+          Xpath 'l'
+          doautocmd User x3
+        catch /Vim:Interrupt/
+          Xpath 'm'
+        finally
+          Xpath 'n'
+          " ... but break loop for caught interrupt exception,
+          " or discard interrupt and break loop if $VIMNOINTTHROW
+          break
+        endtry
+      endwhile
+
+      if exists("*U1") | delfunction U1 | endif
+      if exists("*U2") | delfunction U2 | endif
+      if exists("*U3") | delfunction U3 | endif
+
+      try
+        Xpath 'o'
+        call U1()
+      catch /U1/
+        Xpath 'p'
+      endtry
+
+      while 1
+        try
+          Xpath 'q'
+          call U2()
+        catch /ASDF/
+          Xpath 'r'
+        finally
+          Xpath 's'
+          " ... but break loop for caught error exception,
+          " or discard error and break loop if $VIMNOERRTHROW
+          break
+        endtry
+      endwhile
+
+      while 1
+        try
+          Xpath 't'
+          call U3()
+        catch /Vim:Interrupt/
+          Xpath 'u'
+        finally
+          Xpath 'v'
+          " ... but break loop for caught interrupt exception,
+          " or discard interrupt and break loop if $VIMNOINTTHROW
+          break
+        endtry
+      endwhile
+    catch /.*/
+      call assert_report('should not get here')
+    endtry
+    Xpath 'w'
+  [CODE]
+  let verify =<< trim [CODE]
+    call assert_equal('gahibjklcmnodpqerstfuvw', g:Xpath)
+  [CODE]
+  call RunInNewVim(test, verify)
+endfunc
+
+"-------------------------------------------------------------------------------
+" Test 85:  Error exceptions in autocommands for I/O command events	    {{{1
+"
+"	    When an I/O command is inside :try/:endtry, autocommands to be
+"	    executed after it should be skipped on an error (exception) in the
+"	    command itself or in autocommands to be executed before the command.
+"	    In the latter case, the I/O command should not be executed either.
+"	    Example 1: BufWritePre, :write, BufWritePost
+"	    Example 2: FileReadPre, :read, FileReadPost.
+"-------------------------------------------------------------------------------
+
+func Test_autocmd_error_io_exception()
+  let test =<< trim [CODE]
+    " Remove the autocommands for the events specified as arguments in all used
+    " autogroups.
+    func Delete_autocommands(...)
+      let augfile = tempname()
+      while 1
+        try
+          exec "redir >" . augfile
+          aug
+          redir END
+          exec "edit" augfile
+          g/^$/d
+          norm G$
+          let wrap = "w"
+          while search('\%(  \|^\)\@<=.\{-}\%(  \)\@=', wrap) > 0
+            let wrap = "W"
+            exec "norm y/  \n"
+            let argno = 1
+            while argno <= a:0
+              exec "au!" escape(@", " ") a:{argno}
+              let argno = argno + 1
+            endwhile
+          endwhile
+        catch /.*/
+        finally
+          bwipeout!
+          call delete(augfile)
+          break
+        endtry
+      endwhile
+    endfunc
+
+    call Delete_autocommands("BufWritePre", "BufWritePost")
+
+    while 1
+      try
+        try
+          let post = 0
+          aug TMP
+            au! BufWritePost * let post = 1
+          aug END
+          write /n/o/n/e/x/i/s/t/e/n/t
+        catch /^Vim(write):/
+          Xpath 'a'
+          call assert_match("E212: Can't open file for writing", v:exception)
+        finally
+          Xpath 'b'
+          call assert_equal(0, post)
+          au! TMP
+          aug! TMP
+        endtry
+      catch /.*/
+        call assert_report('should not get here')
+      finally
+        Xpath 'c'
+        break
+      endtry
+    endwhile
+
+    while 1
+      try
+        try
+          let post = 0
+          aug TMP
+            au! BufWritePre  * asdf
+            au! BufWritePost * let post = 1
+          aug END
+          let tmpfile = tempname()
+          exec "write" tmpfile
+        catch /^Vim\((write)\)\=:/
+          Xpath 'd'
+          call assert_match('E492: Not an editor command', v:exception)
+        finally
+          Xpath 'e'
+          if filereadable(tmpfile)
+            call assert_report('should not get here')
+          endif
+          call assert_equal(0, post)
+          au! TMP
+          aug! TMP
+        endtry
+      catch /.*/
+        call assert_report('should not get here')
+      finally
+        Xpath 'f'
+        break
+      endtry
+    endwhile
+
+    call delete(tmpfile)
+
+    call Delete_autocommands("BufWritePre", "BufWritePost",
+          \ "BufReadPre", "BufReadPost", "FileReadPre", "FileReadPost")
+
+    while 1
+      try
+        try
+          let post = 0
+          aug TMP
+            au! FileReadPost * let post = 1
+          aug END
+          let caught = 0
+          read /n/o/n/e/x/i/s/t/e/n/t
+        catch /^Vim(read):/
+          Xpath 'g'
+          call assert_match("E484: Can't open file", v:exception)
+        finally
+          Xpath 'h'
+          call assert_equal(0, post)
+          au! TMP
+          aug! TMP
+        endtry
+      catch /.*/
+        call assert_report('should not get here')
+      finally
+        Xpath 'i'
+        break
+      endtry
+    endwhile
+
+    while 1
+      try
+        let infile = tempname()
+        let tmpfile = tempname()
+        call writefile(["XYZ"], infile)
+        exec "edit" tmpfile
+        try
+          Xpath 'j'
+          try
+            let post = 0
+            aug TMP
+              au! FileReadPre  * asdf
+              au! FileReadPost * let post = 1
+            aug END
+            exec "0read" infile
+          catch /^Vim\((read)\)\=:/
+            Xpath 'k'
+            call assert_match('E492: Not an editor command', v:exception)
+          finally
+            Xpath 'l'
+            if getline("1") == "XYZ"
+              call assert_report('should not get here')
+            endif
+            call assert_equal(0, post)
+            au! TMP
+            aug! TMP
+          endtry
+        finally
+          Xpath 'm'
+          bwipeout!
+        endtry
+      catch /.*/
+        call assert_report('should not get here')
+      finally
+        Xpath 'n'
+        break
+      endtry
+    endwhile
+
+    call delete(infile)
+    call delete(tmpfile)
+  [CODE]
+  let verify =<< trim [CODE]
+    call assert_equal('abcdefghijklmn', g:Xpath)
   [CODE]
   call RunInNewVim(test, verify)
 endfunc
