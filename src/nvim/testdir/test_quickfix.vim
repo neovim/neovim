@@ -5328,6 +5328,29 @@ func Test_lhelpgrep_from_help_window()
   new | only!
 endfunc
 
+" Test for the crash fixed by 7.3.715
+func Test_setloclist_crash()
+  %bw!
+  let g:BufNum = bufnr()
+  augroup QF_Test
+    au!
+    au BufUnload * call setloclist(0, [{'bufnr':g:BufNum, 'lnum':1, 'col':1, 'text': 'tango down'}])
+  augroup END
+
+  try
+    lvimgrep /.*/ *.mak
+  catch /E926:/
+  endtry
+  call assert_equal('tango down', getloclist(0, {'items' : 0}).items[0].text)
+  call assert_equal(1, getloclist(0, {'size' : 0}).size)
+
+  augroup QF_Test
+    au!
+  augroup END
+  unlet g:BufNum
+  %bw!
+endfunc
+
 " Test for adding an invalid entry with the quickfix window open and making
 " sure that the window contents are not changed
 func Test_add_invalid_entry_with_qf_window()
