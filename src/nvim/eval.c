@@ -5511,7 +5511,7 @@ void get_system_output_as_rettv(typval_T *argvars, typval_T *rettv, bool retlist
 }
 
 /// Get a callback from "arg".  It can be a Funcref or a function name.
-bool callback_from_typval(Callback *const callback, typval_T *const arg)
+bool callback_from_typval(Callback *const callback, const typval_T *const arg)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
   int r = OK;
