@@ -2,6 +2,21 @@
 
 source check.vim
 
+func SetUp()
+  let s:vimruntime = $VIMRUNTIME
+  let s:runtimepath = &runtimepath
+  " Set $VIMRUNTIME to $BUILD_DIR/runtime and remove the original $VIMRUNTIME
+  " path from &runtimepath so that ":h local-additions" won't pick up builtin
+  " help files.
+  let $VIMRUNTIME = expand($BUILD_DIR) .. '/runtime'
+  set runtimepath-=../../../runtime
+endfunc
+
+func TearDown()
+  let $VIMRUNTIME = s:vimruntime
+  let &runtimepath = s:runtimepath
+endfunc
+
 func Test_help_restore_snapshot()
   help
   set buftype=

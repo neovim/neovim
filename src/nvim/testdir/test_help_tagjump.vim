@@ -1,17 +1,5 @@
 " Tests for :help! {subject}
 
-func SetUp()
-  " v:progpath is …/build/bin/nvim and we need …/build/runtime
-  " to be added to &rtp
-  let builddir = fnamemodify(exepath(v:progpath), ':h:h')
-  let s:rtp = &rtp
-  let &rtp .= printf(',%s/runtime', builddir)
-endfunc
-
-func TearDown()
-  let &rtp = s:rtp
-endfunc
-
 func Test_help_tagjump()
   help
   call assert_equal("help", &filetype)
