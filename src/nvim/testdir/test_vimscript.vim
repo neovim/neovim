@@ -5879,27 +5879,39 @@ func Test_discard_exception_after_error_1()
   call RunInNewVim(test, verify)
 endfunc
 
-" TODO: Need to interrupt the code before the endtry is invoked
-func Disable_Test_discard_exception_after_error_2()
-  let test =<< trim [CODE]
+" interrupt the code before the endtry is invoked
+func Test_discard_exception_after_error_2()
+  XpathINIT
+  let lines =<< trim [CODE]
     try
       Xpath 'a'
       try
         Xpath 'b'
         throw "arrgh"
-        call interrupt()    " FIXME: throw is not interrupted here
         call assert_report('should not get here')
-      endtry
+      endtry                      " interrupt here
       call assert_report('should not get here')
     catch /arrgh/
       call assert_report('should not get here')
     endtry
     call assert_report('should not get here')
   [CODE]
-  let verify =<< trim [CODE]
-    call assert_equal('ab', g:Xpath)
-  [CODE]
-  call RunInNewVim(test, verify)
+  call writefile(lines, 'Xscript')
+
+  breakadd file 7 Xscript
+  try
+    let caught_intr = 0
+    debuggreedy
+    call feedkeys(":source Xscript\<CR>quit\<CR>", "xt")
+  catch /^Vim:Interrupt$/
+    call assert_match('Xscript, line 7', v:throwpoint)
+    let caught_intr = 1
+  endtry
+  0debuggreedy
+  call assert_equal(1, caught_intr)
+  call assert_equal('ab', g:Xpath)
+  breakdel *
+  call delete('Xscript')
 endfunc
 
 "-------------------------------------------------------------------------------
@@ -5969,16 +5981,16 @@ func Test_ignore_catch_after_error_2()
   call RunInNewVim(test, verify)
 endfunc
 
-" TODO: Need to interrupt the code right before the catch is invoked
-func FIXME_Test_ignore_catch_after_intr_1()
-  let test =<< trim [CODE]
+" interrupt right before a catch is invoked in a script
+func Test_ignore_catch_after_intr_1()
+  XpathINIT
+  let lines =<< trim [CODE]
     try
       try
         Xpath 'a'
         throw "arrgh"
         call assert_report('should not get here')
-      catch /.*/              " TODO: Need to interrupt before this catch is
-        call interrupt()      " invoked
+      catch /.*/              " interrupt here
         call assert_report('should not get here')
       catch /.*/
         call assert_report('should not get here')
@@ -5989,41 +6001,59 @@ func FIXME_Test_ignore_catch_after_intr_1()
     endtry
     call assert_report('should not get here')
   [CODE]
-  let verify =<< trim [CODE]
-    call assert_equal('a', g:Xpath)
-  [CODE]
-  call RunInNewVim(test, verify)
+  call writefile(lines, 'Xscript')
+
+  breakadd file 6 Xscript
+  try
+    let caught_intr = 0
+    debuggreedy
+    call feedkeys(":source Xscript\<CR>quit\<CR>", "xt")
+  catch /^Vim:Interrupt$/
+    call assert_match('Xscript, line 6', v:throwpoint)
+    let caught_intr = 1
+  endtry
+  0debuggreedy
+  call assert_equal(1, caught_intr)
+  call assert_equal('a', g:Xpath)
+  breakdel *
+  call delete('Xscript')
 endfunc
 
-" TODO: Need to interrupt the code right before the catch is invoked
-func FIXME_Test_ignore_catch_after_intr_2()
-  let test =<< trim [CODE]
-    func I()
+" interrupt right before a catch is invoked inside a function.
+func Test_ignore_catch_after_intr_2()
+  XpathINIT
+  func F()
+    try
       try
-        try
-          Xpath 'a'
-          throw "arrgh"
-          call assert_report('should not get here')
-        catch /.*/              " TODO: Need to interrupt before this catch is
-                                " invoked
-          call interrupt()
-          call assert_report('should not get here')
-        catch /.*/
-          call assert_report('should not get here')
-        endtry
+        Xpath 'a'
+        throw "arrgh"
         call assert_report('should not get here')
-      catch /arrgh/
+      catch /.*/              " interrupt here
+        call assert_report('should not get here')
+      catch /.*/
         call assert_report('should not get here')
       endtry
-    endfunc
-
-    call I()
+      call assert_report('should not get here')
+    catch /arrgh/
+      call assert_report('should not get here')
+    endtry
     call assert_report('should not get here')
-  [CODE]
-  let verify =<< trim [CODE]
-    call assert_equal('a', g:Xpath)
-  [CODE]
-  call RunInNewVim(test, verify)
+  endfunc
+
+  breakadd func 6 F
+  try
+    let caught_intr = 0
+    debuggreedy
+    call feedkeys(":call F()\<CR>quit\<CR>", "xt")
+  catch /^Vim:Interrupt$/
+    call assert_match('\.F, line 6', v:throwpoint)
+    let caught_intr = 1
+  endtry
+  0debuggreedy
+  call assert_equal(1, caught_intr)
+  call assert_equal('a', g:Xpath)
+  breakdel *
+  delfunc F
 endfunc
 
 "-------------------------------------------------------------------------------
@@ -6060,16 +6090,17 @@ func Test_finally_after_error()
   call RunInNewVim(test, verify)
 endfunc
 
-" TODO: Need to interrupt the code right before the finally is invoked
-func FIXME_Test_finally_after_intr()
-  let test =<< trim [CODE]
+" interrupt the code right before the finally is invoked
+func Test_finally_after_intr()
+  XpathINIT
+  let lines =<< trim [CODE]
     try
       Xpath 'a'
       try
         Xpath 'b'
         throw "arrgh"
         call assert_report('should not get here')
-      finally		" TODO: Need to interrupt before the finally is invoked
+      finally		" interrupt here
         Xpath 'c'
       endtry
       call assert_report('should not get here')
@@ -6078,10 +6109,22 @@ func FIXME_Test_finally_after_intr()
     endtry
     call assert_report('should not get here')
   [CODE]
-  let verify =<< trim [CODE]
-    call assert_equal('abc', g:Xpath)
-  [CODE]
-  call RunInNewVim(test, verify)
+  call writefile(lines, 'Xscript')
+
+  breakadd file 7 Xscript
+  try
+    let caught_intr = 0
+    debuggreedy
+    call feedkeys(":source Xscript\<CR>quit\<CR>", "xt")
+  catch /^Vim:Interrupt$/
+    call assert_match('Xscript, line 7', v:throwpoint)
+    let caught_intr = 1
+  endtry
+  0debuggreedy
+  call assert_equal(1, caught_intr)
+  call assert_equal('abc', g:Xpath)
+  breakdel *
+  call delete('Xscript')
 endfunc
 
 "-------------------------------------------------------------------------------
