@@ -1,6 +1,7 @@
 " Tests for :help
 
 source check.vim
+source vim9.vim
 
 func SetUp()
   let s:vimruntime = $VIMRUNTIME
@@ -205,6 +206,16 @@ func Test_help_long_argument()
   catch
     call assert_match("E149:", v:exception)
   endtry
+endfunc
+
+func Test_help_using_visual_match()
+  let lines =<< trim END
+      call setline(1, ' ')
+      /^
+      exe "normal \<C-V>\<C-V>"
+      h5\%V]
+  END
+  call CheckScriptFailure(lines, 'E149:')
 endfunc
 
 

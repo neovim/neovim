@@ -2,6 +2,32 @@
 " Use a different file name for each run.
 let s:sequence = 1
 
+func CheckScriptFailure(lines, error, lnum = -3)
+  let cwd = getcwd()
+  let fname = 'XScriptFailure' .. s:sequence
+  let s:sequence += 1
+  call writefile(a:lines, fname)
+  try
+    call assert_fails('so ' .. fname, a:error, a:lines, a:lnum)
+  finally
+    call chdir(cwd)
+    call delete(fname)
+  endtry
+endfunc
+
+func CheckScriptSuccess(lines)
+  let cwd = getcwd()
+  let fname = 'XScriptSuccess' .. s:sequence
+  let s:sequence += 1
+  call writefile(a:lines, fname)
+  try
+    exe 'so ' .. fname
+  finally
+    call chdir(cwd)
+    call delete(fname)
+  endtry
+endfunc
+
 " Check that "lines" inside a legacy function has no error.
 func CheckLegacySuccess(lines)
   let cwd = getcwd()
