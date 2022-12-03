@@ -3,6 +3,7 @@
 
 source check.vim
 source shared.vim
+source vim9.vim
 
 "-------------------------------------------------------------------------------
 " Test environment							    {{{1
@@ -2007,6 +2008,27 @@ func Test_try_catch_errors()
   call assert_fails('try | for i in range(5) | endif | endtry', 'E580:')
   call assert_fails('try | while v:true | endtry', 'E170:')
   call assert_fails('try | if v:true | endtry', 'E171:')
+
+  " this was using a negative index in cstack[]
+  let lines =<< trim END
+      try
+      for
+      if
+      endwhile
+      if
+      finally
+  END
+  call CheckScriptFailure(lines, 'E690:')
+
+  let lines =<< trim END
+      try
+      for
+      if
+      endwhile
+      if
+      endtry
+  END
+  call CheckScriptFailure(lines, 'E690:')
 endfunc
 
 " Test for verbose messages with :try :catch, and :finally                 {{{1

@@ -1,6 +1,22 @@
 " Tests for :help
 
 source check.vim
+source vim9.vim
+
+func SetUp()
+  let s:vimruntime = $VIMRUNTIME
+  let s:runtimepath = &runtimepath
+  " Set $VIMRUNTIME to $BUILD_DIR/runtime and remove the original $VIMRUNTIME
+  " path from &runtimepath so that ":h local-additions" won't pick up builtin
+  " help files.
+  let $VIMRUNTIME = expand($BUILD_DIR) .. '/runtime'
+  set runtimepath-=../../../runtime
+endfunc
+
+func TearDown()
+  let $VIMRUNTIME = s:vimruntime
+  let &runtimepath = s:runtimepath
+endfunc
 
 func Test_help_restore_snapshot()
   help
@@ -81,16 +97,42 @@ func Test_help_local_additions()
   call writefile(['*mydoc-ext.txt* my extended awesome doc'], 'Xruntime/doc/mydoc-ext.txt')
   let rtp_save = &rtp
   set rtp+=./Xruntime
-  help
-  1
-  call search('mydoc.txt')
-  call assert_equal('|mydoc.txt| my awesome doc', getline('.'))
-  1
-  call search('mydoc-ext.txt')
-  call assert_equal('|mydoc-ext.txt| my extended awesome doc', getline('.'))
+  help local-additions
+  let lines = getline(line(".") + 1, search("^$") - 1)
+  call assert_equal([
+  \ '|mydoc-ext.txt| my extended awesome doc',
+  \ '|mydoc.txt| my awesome doc'
+  \ ], lines)
+  call delete('Xruntime/doc/mydoc-ext.txt')
+  close
+
+  call mkdir('Xruntime-ja/doc', 'p')
+  call writefile(["local-additions\thelp.jax\t/*local-additions*"], 'Xruntime-ja/doc/tags-ja')
+  call writefile(['*help.txt* This is jax file', '',
+  \ 'LOCAL ADDITIONS: *local-additions*', ''], 'Xruntime-ja/doc/help.jax')
+  call writefile(['*work.txt* This is jax file'], 'Xruntime-ja/doc/work.jax')
+  call writefile(['*work2.txt* This is jax file'], 'Xruntime-ja/doc/work2.jax')
+  set rtp+=./Xruntime-ja
+
+  help local-additions@en
+  let lines = getline(line(".") + 1, search("^$") - 1)
+  call assert_equal([
+  \ '|mydoc.txt| my awesome doc'
+  \ ], lines)
+  close
+
+  help local-additions@ja
+  let lines = getline(line(".") + 1, search("^$") - 1)
+  call assert_equal([
+  \ '|mydoc.txt| my awesome doc',
+  \ '|help.txt| This is jax file',
+  \ '|work.txt| This is jax file',
+  \ '|work2.txt| This is jax file',
+  \ ], lines)
   close
 
   call delete('Xruntime', 'rf')
+  call delete('Xruntime-ja', 'rf')
   let &rtp = rtp_save
 endfunc
 
@@ -113,6 +155,13 @@ func Test_helptag_cmd()
   helptags ++t Xdir
   call assert_equal(["help-tags\ttags\t1"], readfile('Xdir/tags'))
   call delete('Xdir/tags')
+
+  " Test parsing tags
+  call writefile(['*tag1*', 'Example: >', '  *notag*', 'Example end: *tag2*'],
+    \ 'Xdir/a/doc/sample.txt')
+  helptags Xdir
+  call assert_equal(["tag1\ta/doc/sample.txt\t/*tag1*",
+                  \  "tag2\ta/doc/sample.txt\t/*tag2*"], readfile('Xdir/tags'))
 
   " Duplicate tags in the help file
   call writefile(['*tag1*', '*tag1*', '*tag2*'], 'Xdir/a/doc/sample.txt')
@@ -164,6 +213,16 @@ func Test_help_long_argument()
   catch
     call assert_match("E149:", v:exception)
   endtry
+endfunc
+
+func Test_help_using_visual_match()
+  let lines =<< trim END
+      call setline(1, ' ')
+      /^
+      exe "normal \<C-V>\<C-V>"
+      h5\%V]
+  END
+  call CheckScriptFailure(lines, 'E149:')
 endfunc
 
 

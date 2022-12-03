@@ -695,7 +695,7 @@ func Test_opfunc_callback()
     assert_equal(['char'], g:LocalOpFuncArgs)
     bw!
   END
-  " call CheckScriptSuccess(lines)
+  call CheckScriptSuccess(lines)
 
   " setting 'opfunc' to a script local function outside of a script context
   " should fail

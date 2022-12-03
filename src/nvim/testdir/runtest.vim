@@ -105,7 +105,7 @@ set nomore
 lang mess C
 
 " Nvim: append runtime from build dir, which contains the generated doc/tags.
-let &runtimepath .= ','.expand($BUILD_DIR).'/runtime/'
+let &runtimepath ..= ',' .. expand($BUILD_DIR) .. '/runtime/'
 
 let s:t_bold = &t_md
 let s:t_normal = &t_me
