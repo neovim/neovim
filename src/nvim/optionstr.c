@@ -1483,6 +1483,7 @@ char *did_set_string_option(int opt_idx, char **varp, char *oldval, char *errbuf
     }
   } else if (varp == &p_dex
              || varp == &curwin->w_p_fde
+             || varp == &curwin->w_p_fdt
              || gvarp == &p_fex
              || gvarp == &p_inex
              || gvarp == &p_inde
@@ -1498,6 +1499,9 @@ char *did_set_string_option(int opt_idx, char **varp, char *oldval, char *errbuf
     }
     if (varp == &curwin->w_p_fde) {  // 'foldexpr'
       p_opt = &curwin->w_p_fde;
+    }
+    if (varp == &curwin->w_p_fdt) {  // 'foldtext'
+      p_opt = &curwin->w_p_fdt;
     }
     if (gvarp == &p_fex) {  // 'formatexpr'
       p_opt = &curbuf->b_p_fex;
