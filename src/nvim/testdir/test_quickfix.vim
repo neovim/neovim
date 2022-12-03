@@ -3932,6 +3932,22 @@ func Xgetlist_empty_tests(cchar)
   endif
 endfunc
 
+func Test_empty_list_quickfixtextfunc()
+  " This was crashing.  Can only reproduce by running it in a separate Vim
+  " instance.
+  let lines =<< trim END
+      func s:Func(o)
+              cgetexpr '0'
+      endfunc
+      cope
+      let &quickfixtextfunc = 's:Func'
+      cgetfile [ex
+  END
+  call writefile(lines, 'Xquickfixtextfunc')
+  call RunVim([], [], '-e -s -S Xquickfixtextfunc -c qa')
+  call delete('Xquickfixtextfunc')
+endfunc
+
 func Test_getqflist()
   call Xgetlist_empty_tests('c')
   call Xgetlist_empty_tests('l')
