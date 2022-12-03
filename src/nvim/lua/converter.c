@@ -54,7 +54,7 @@ typedef struct {
   lua_pushlstring(lstate, s, sizeof(s) - 1)
 
 static LuaTableProps nlua_traverse_table(lua_State *const lstate)
-FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
   size_t tsize = 0;  // Total number of keys.
   int val_type = 0;  // If has_val_key: lua type of the value.
@@ -385,7 +385,7 @@ bool nlua_pop_typval(lua_State *lstate, typval_T *ret_tv)
       default:
         abort();
       }
-nlua_pop_typval_table_processing_end:
+      nlua_pop_typval_table_processing_end:
       break;
     }
     case LUA_TFUNCTION: {
@@ -633,7 +633,7 @@ bool nlua_push_typval(lua_State *lstate, typval_T *const tv, bool special)
 /// Used for all “typed” tables: i.e. for all tables which represent VimL
 /// values.
 static inline void nlua_push_type_idx(lua_State *lstate)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   lua_pushboolean(lstate, TYPE_IDX_VALUE);
 }
@@ -642,7 +642,7 @@ FUNC_ATTR_NONNULL_ALL
 ///
 /// Used for tables which represent scalar values, like float value.
 static inline void nlua_push_val_idx(lua_State *lstate)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   lua_pushboolean(lstate, VAL_IDX_VALUE);
 }
@@ -654,7 +654,7 @@ FUNC_ATTR_NONNULL_ALL
 /// @param[out]  lstate  Lua state.
 /// @param[in]   type    Type to push.
 static inline void nlua_push_type(lua_State *lstate, ObjectType type)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   lua_pushnumber(lstate, (lua_Number)type);
 }
@@ -667,7 +667,7 @@ FUNC_ATTR_NONNULL_ALL
 /// @param[in]   type    Type of the table.
 static inline void nlua_create_typed_table(lua_State *lstate, const size_t narr, const size_t nrec,
                                            const ObjectType type)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   lua_createtable(lstate, (int)narr, (int)(1 + nrec));
   nlua_push_type_idx(lstate);
@@ -679,7 +679,7 @@ FUNC_ATTR_NONNULL_ALL
 ///
 /// Leaves converted string on top of the stack.
 void nlua_push_String(lua_State *lstate, const String s, bool special)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   lua_pushlstring(lstate, s.data, s.size);
 }
@@ -688,7 +688,7 @@ FUNC_ATTR_NONNULL_ALL
 ///
 /// Leaves converted number on top of the stack.
 void nlua_push_Integer(lua_State *lstate, const Integer n, bool special)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   lua_pushnumber(lstate, (lua_Number)n);
 }
@@ -697,7 +697,7 @@ FUNC_ATTR_NONNULL_ALL
 ///
 /// Leaves converted table on top of the stack.
 void nlua_push_Float(lua_State *lstate, const Float f, bool special)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   if (special) {
     nlua_create_typed_table(lstate, 0, 1, kObjectTypeFloat);
@@ -713,7 +713,7 @@ FUNC_ATTR_NONNULL_ALL
 ///
 /// Leaves converted value on top of the stack.
 void nlua_push_Boolean(lua_State *lstate, const Boolean b, bool special)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   lua_pushboolean(lstate, b);
 }
@@ -722,7 +722,7 @@ FUNC_ATTR_NONNULL_ALL
 ///
 /// Leaves converted table on top of the stack.
 void nlua_push_Dictionary(lua_State *lstate, const Dictionary dict, bool special)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   if (dict.size == 0 && special) {
     nlua_create_typed_table(lstate, 0, 0, kObjectTypeDictionary);
@@ -744,7 +744,7 @@ FUNC_ATTR_NONNULL_ALL
 ///
 /// Leaves converted table on top of the stack.
 void nlua_push_Array(lua_State *lstate, const Array array, bool special)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   lua_createtable(lstate, (int)array.size, 0);
   for (size_t i = 0; i < array.size; i++) {
@@ -770,7 +770,7 @@ GENERATE_INDEX_FUNCTION(Tabpage)
 ///
 /// Leaves converted value on top of the stack.
 void nlua_push_Object(lua_State *lstate, const Object obj, bool special)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   switch (obj.type) {
   case kObjectTypeNil:
@@ -812,7 +812,7 @@ FUNC_ATTR_NONNULL_ALL
 ///
 /// Always pops one value from the stack.
 String nlua_pop_String(lua_State *lstate, Error *err)
-FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
   if (lua_type(lstate, -1) != LUA_TSTRING) {
     lua_pop(lstate, 1);
@@ -833,7 +833,7 @@ FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 ///
 /// Always pops one value from the stack.
 Integer nlua_pop_Integer(lua_State *lstate, Error *err)
-FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
   if (lua_type(lstate, -1) != LUA_TNUMBER) {
     lua_pop(lstate, 1);
@@ -854,7 +854,7 @@ FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 ///
 /// Always pops one value from the stack.
 Boolean nlua_pop_Boolean(lua_State *lstate, Error *err)
-FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
   const Boolean ret = lua_toboolean(lstate, -1);
   lua_pop(lstate, 1);
@@ -870,7 +870,7 @@ FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 /// @return @see nlua_traverse_table().
 static inline LuaTableProps nlua_check_type(lua_State *const lstate, Error *const err,
                                             const ObjectType type)
-FUNC_ATTR_NONNULL_ARG(1) FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_NONNULL_ARG(1) FUNC_ATTR_WARN_UNUSED_RESULT
 {
   if (lua_type(lstate, -1) != LUA_TTABLE) {
     if (err) {
@@ -898,7 +898,7 @@ FUNC_ATTR_NONNULL_ARG(1) FUNC_ATTR_WARN_UNUSED_RESULT
 ///
 /// Always pops one value from the stack.
 Float nlua_pop_Float(lua_State *lstate, Error *err)
-FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
   if (lua_type(lstate, -1) == LUA_TNUMBER) {
     const Float ret = (Float)lua_tonumber(lstate, -1);
@@ -954,7 +954,7 @@ static Array nlua_pop_Array_unchecked(lua_State *const lstate, const LuaTablePro
 ///
 /// Always pops one value from the stack.
 Array nlua_pop_Array(lua_State *lstate, Error *err)
-FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
   const LuaTableProps table_props = nlua_check_type(lstate, err,
                                                     kObjectTypeArray);
@@ -974,7 +974,7 @@ FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 /// @param[out]  err  Location where error will be saved.
 static Dictionary nlua_pop_Dictionary_unchecked(lua_State *lstate, const LuaTableProps table_props,
                                                 bool ref, Error *err)
-FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
   Dictionary ret = { .size = table_props.string_keys_num, .items = NULL };
 
@@ -1025,7 +1025,7 @@ FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 ///
 /// Always pops one value from the stack.
 Dictionary nlua_pop_Dictionary(lua_State *lstate, bool ref, Error *err)
-FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
   const LuaTableProps table_props = nlua_check_type(lstate, err,
                                                     kObjectTypeDictionary);

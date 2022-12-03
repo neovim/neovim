@@ -251,7 +251,7 @@ static int can_join(int c1, int c2)
 /// Check whether we are dealing with a character that could be regarded as an
 /// Arabic combining character, need to check the character before this.
 bool arabic_maycombine(int two)
-FUNC_ATTR_PURE
+  FUNC_ATTR_PURE
 {
   if (p_arshape && !p_tbidi) {
     return two == a_ALEF_MADDA
@@ -268,7 +268,7 @@ FUNC_ATTR_PURE
 /// @param one First character.
 /// @param two Character just after "one".
 bool arabic_combine(int one, int two)
-FUNC_ATTR_PURE
+  FUNC_ATTR_PURE
 {
   if (one == a_LAM) {
     return arabic_maycombine(two);

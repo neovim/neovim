@@ -185,7 +185,7 @@ static long cmdpreview_ns = 0;
 static int cmd_hkmap = 0;  // Hebrew mapping during command line
 
 static void save_viewstate(win_T *wp, viewstate_T *vs)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   vs->vs_curswant = wp->w_curswant;
   vs->vs_leftcol = wp->w_leftcol;
@@ -196,7 +196,7 @@ FUNC_ATTR_NONNULL_ALL
 }
 
 static void restore_viewstate(win_T *wp, viewstate_T *vs)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   wp->w_curswant = vs->vs_curswant;
   wp->w_leftcol = vs->vs_leftcol;
@@ -223,7 +223,7 @@ static void init_incsearch_state(incsearch_state_T *s)
 // Sets search_first_line and search_last_line to the address range.
 static bool do_incsearch_highlighting(int firstc, int *search_delim, incsearch_state_T *s,
                                       int *skiplen, int *patlen)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   char *cmd;
   char *p;
@@ -363,7 +363,7 @@ FUNC_ATTR_NONNULL_ALL
 
   curwin->w_cursor = save_cursor;
   retval = true;
-theend:
+  theend:
   emsg_off--;
   return retval;
 }
@@ -527,7 +527,7 @@ static void may_do_incsearch_highlighting(int firstc, long count, incsearch_stat
 // May set "*c" to the added character.
 // Return OK when calling command_line_not_changed.
 static int may_add_char_to_search(int firstc, int *c, incsearch_state_T *s)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   int skiplen, patlen;
   int search_delim;
@@ -1303,7 +1303,7 @@ static int command_line_execute(VimState *state, int key)
 // Returns FAIL when calling command_line_not_changed.
 static int may_do_command_line_next_incsearch(int firstc, long count, incsearch_state_T *s,
                                               bool next_match)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   int skiplen, patlen, search_delim;
 
@@ -2510,7 +2510,7 @@ char_u *getcmdline(int firstc, long count, int indent, bool do_concat FUNC_ATTR_
 char *getcmdline_prompt(const int firstc, const char *const prompt, const int attr,
                         const int xp_context, const char *const xp_arg,
                         const Callback highlight_callback)
-FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_MALLOC
+  FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_MALLOC
 {
   const int msg_col_save = msg_col;
 
@@ -2740,14 +2740,14 @@ char *getexline(int c, void *cookie, int indent, bool do_concat)
 }
 
 bool cmdline_overstrike(void)
-FUNC_ATTR_PURE
+  FUNC_ATTR_PURE
 {
   return ccline.overstrike;
 }
 
 /// Return true if the cursor is at the end of the cmdline.
 bool cmdline_at_end(void)
-FUNC_ATTR_PURE
+  FUNC_ATTR_PURE
 {
   return (ccline.cmdpos >= ccline.cmdlen);
 }
@@ -2816,7 +2816,7 @@ enum { MAX_CB_ERRORS = 1, };
 /// Always colors the whole cmdline.
 static void color_expr_cmdline(const CmdlineInfo *const colored_ccline,
                                ColoredCmdline *const ret_ccline_colors)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   ParserLine parser_lines[] = {
     {
@@ -2882,7 +2882,7 @@ FUNC_ATTR_NONNULL_ALL
 /// @return true if draw_cmdline may proceed, false if it does not need anything
 ///         to do.
 static bool color_cmdline(CmdlineInfo *colored_ccline)
-FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
   bool printed_errmsg = false;
 
@@ -3066,7 +3066,7 @@ FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
     }));
   }
   prev_prompt_errors = 0;
-color_cmdline_end:
+  color_cmdline_end:
   assert(!ERROR_SET(&err));
   if (can_free_cb) {
     callback_free(&color_cb);
@@ -3528,7 +3528,7 @@ static void save_cmdline(CmdlineInfo *ccp)
 
 /// Restore ccline after it has been saved with save_cmdline().
 static void restore_cmdline(CmdlineInfo *ccp)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   ccline = *ccp;
 }
@@ -3835,7 +3835,7 @@ static int ccheck_abbr(int c)
 ///
 /// @return [allocated] escaped file name.
 char *vim_strsave_fnameescape(const char *const fname, const int what)
-FUNC_ATTR_NONNULL_RET FUNC_ATTR_MALLOC FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_RET FUNC_ATTR_MALLOC FUNC_ATTR_NONNULL_ALL
 {
 #ifdef BACKSLASH_IN_FILENAME
 # define PATH_ESC_CHARS " \t\n*?[{`%#'\"|!<"
@@ -4418,7 +4418,7 @@ static int open_cmdwin(void)
 
 /// @return true if in the cmdwin, not editing the command line.
 bool is_in_cmdwin(void)
-FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
   return cmdwin_type != 0 && get_cmdline_type() == NUL;
 }
@@ -4438,7 +4438,7 @@ FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 /// @return [allocated] NULL or script. Does not show any error messages.
 ///                     NULL is returned when skipping and on error.
 char *script_get(exarg_T *const eap, size_t *const lenp)
-FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_MALLOC
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_MALLOC
 {
   const char *const cmd = (const char *)eap->arg;
 

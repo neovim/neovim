@@ -311,7 +311,7 @@ void trans_characters(char *buf, int bufsize)
 /// @return number of bytes needed to hold a translation of `s`, NUL byte not
 ///         included.
 size_t transstr_len(const char *const s, bool untab)
-FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_PURE
+  FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_PURE
 {
   const char *p = s;
   size_t len = 0;
@@ -353,7 +353,7 @@ FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_PURE
 ///
 /// @return length of the resulting string, without the NUL byte.
 size_t transstr_buf(const char *const s, char *const buf, const size_t len, bool untab)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   const char *p = s;
   char *buf_p = buf;
@@ -408,7 +408,7 @@ FUNC_ATTR_NONNULL_ALL
 ///
 /// @return [allocated] translated string
 char *transstr(const char *const s, bool untab)
-FUNC_ATTR_NONNULL_RET
+  FUNC_ATTR_NONNULL_RET
 {
   // Compute the length of the result, taking account of unprintable
   // multi-byte characters.
@@ -424,7 +424,7 @@ FUNC_ATTR_NONNULL_RET
 /// When "buf" is NULL, return an allocated string.
 /// Otherwise, put the result in buf, limited by buflen, and return buf.
 char_u *str_foldcase(char_u *str, int orglen, char *buf, int buflen)
-FUNC_ATTR_NONNULL_RET
+  FUNC_ATTR_NONNULL_RET
 {
   garray_T ga;
   int i;
@@ -528,7 +528,7 @@ char_u *transchar(int c)
 }
 
 char_u *transchar_buf(const buf_T *buf, int c)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   int i = 0;
   if (IS_SPECIAL(c)) {
@@ -560,7 +560,7 @@ FUNC_ATTR_NONNULL_ALL
 ///
 /// @return pointer to translated character in transchar_charbuf.
 char_u *transchar_byte(const int c)
-FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_WARN_UNUSED_RESULT
 {
   if (c >= 0x80) {
     transchar_nonprint(curbuf, transchar_charbuf, c);
@@ -579,7 +579,7 @@ FUNC_ATTR_WARN_UNUSED_RESULT
 /// @param[in]  c  Character to convert. NUL is assumed to be NL according to
 ///                `:h NL-used-for-NUL`.
 void transchar_nonprint(const buf_T *buf, char_u *charbuf, int c)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   if (c == NL) {
     // we use newline in place of a NUL
@@ -610,7 +610,7 @@ FUNC_ATTR_NONNULL_ALL
 ///
 /// @return Number of bytes stored in buffer, excluding trailing NUL byte.
 size_t transchar_hex(char *const buf, const int c)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   size_t i = 0;
 
@@ -639,7 +639,7 @@ FUNC_ATTR_NONNULL_ALL
 ///
 /// @return the hex character.
 static inline unsigned nr2hex(unsigned n)
-FUNC_ATTR_CONST FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_CONST FUNC_ATTR_WARN_UNUSED_RESULT
 {
   if ((n & 0xf) <= 9) {
     return (n & 0xf) + '0';
@@ -659,7 +659,7 @@ FUNC_ATTR_CONST FUNC_ATTR_WARN_UNUSED_RESULT
 ///
 /// @return Number of display cells.
 int byte2cells(int b)
-FUNC_ATTR_PURE
+  FUNC_ATTR_PURE
 {
   if (b >= 0x80) {
     return 0;
@@ -746,7 +746,7 @@ int vim_strnsize(char *s, int len)
 ///
 /// @param  c  character to check
 bool vim_isIDc(int c)
-FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
   return c > 0 && c < 0x100 && (g_chartab[c] & CT_ID_CHAR);
 }
@@ -757,7 +757,7 @@ FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 ///
 /// @param  c  character to check
 bool vim_iswordc(const int c)
-FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
   return vim_iswordc_buf(c, curbuf);
 }
@@ -769,7 +769,7 @@ FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 /// @param[in]  c  Character to check.
 /// @param[in]  chartab  Buffer chartab.
 bool vim_iswordc_tab(const int c, const uint64_t *const chartab)
-FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
 {
   return (c >= 0x100
           ? (utf_class_tab(c, chartab) >= 2)
@@ -783,7 +783,7 @@ FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
 /// @param  c    character to check
 /// @param  buf  buffer whose keywords to use
 bool vim_iswordc_buf(const int c, buf_T *const buf)
-FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ARG(2)
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ARG(2)
 {
   return vim_iswordc_tab(c, buf->b_chartab);
 }
@@ -794,7 +794,7 @@ FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ARG(2)
 ///
 /// @return true if "p" points to a keyword character.
 bool vim_iswordp(const char_u *const p)
-FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
 {
   return vim_iswordp_buf((char *)p, curbuf);
 }
@@ -807,7 +807,7 @@ FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
 ///
 /// @return true if "p" points to a keyword character.
 bool vim_iswordp_buf(const char *const p, buf_T *const buf)
-FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
 {
   int c = (uint8_t)(*p);
 
@@ -822,7 +822,7 @@ FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
 ///
 /// @param  c  character to check
 bool vim_isfilec(int c)
-FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
   return c >= 0x100 || (c > 0 && (g_chartab[c] & CT_FNAME_CHAR));
 }
@@ -834,7 +834,7 @@ FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 ///
 /// @param  c  character to check
 bool vim_isfilec_or_wc(int c)
-FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
   char buf[2];
   buf[0] = (char)c;
@@ -847,7 +847,7 @@ FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 ///
 /// @param  c  character to check
 bool vim_isprintc(int c)
-FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
   if (c >= 0x100) {
     return utf_printable(c);
@@ -862,7 +862,7 @@ FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 ///
 /// @return true if "c" is a printable character.
 bool vim_isprintc_strict(int c)
-FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
   if (c >= 0x100) {
     return utf_printable(c);
@@ -875,7 +875,7 @@ FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 /// @param  wp    window
 /// @param  vcol  column number
 bool in_win_border(win_T *wp, colnr_T vcol)
-FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ARG(1)
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ARG(1)
 {
   if (wp->w_width_inner == 0) {
     // there is no border
@@ -1161,8 +1161,8 @@ void getvcols(win_T *wp, pos_T *pos1, pos_T *pos2, colnr_T *left, colnr_T *right
 ///
 /// @return Pointer to character after the skipped whitespace.
 char *skipwhite(const char *const p)
-FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
-FUNC_ATTR_NONNULL_RET
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_RET
 {
   return skipwhite_len(p, strlen(p));
 }
@@ -1176,8 +1176,8 @@ FUNC_ATTR_NONNULL_RET
 /// @return Pointer to character after the skipped whitespace, or the `len`-th
 ///         character in the string.
 char *skipwhite_len(const char *p, size_t len)
-FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
-FUNC_ATTR_NONNULL_RET
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_RET
 {
   for (; len > 0 && ascii_iswhite(*p); len--) {
     p++;
@@ -1193,7 +1193,7 @@ intptr_t getwhitecols_curline(void)
 }
 
 intptr_t getwhitecols(const char *p)
-FUNC_ATTR_PURE
+  FUNC_ATTR_PURE
 {
   return skipwhite(p) - p;
 }
@@ -1204,8 +1204,8 @@ FUNC_ATTR_PURE
 ///
 /// @return Pointer to the character after the skipped digits.
 char *skipdigits(const char *q)
-FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
-FUNC_ATTR_NONNULL_RET
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_RET
 {
   const char *p = q;
   while (ascii_isdigit(*p)) {
@@ -1221,9 +1221,9 @@ FUNC_ATTR_NONNULL_RET
 ///
 /// @return Pointer to the character after the skipped digits.
 const char *skipbin(const char *q)
-FUNC_ATTR_PURE
-FUNC_ATTR_NONNULL_ALL
-FUNC_ATTR_NONNULL_RET
+  FUNC_ATTR_PURE
+  FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_RET
 {
   const char *p = q;
   while (ascii_isbdigit(*p)) {
@@ -1240,7 +1240,7 @@ FUNC_ATTR_NONNULL_RET
 /// @return Pointer to the character after the skipped digits and hex
 ///         characters.
 char *skiphex(char *q)
-FUNC_ATTR_PURE
+  FUNC_ATTR_PURE
 {
   char *p = q;
   while (ascii_isxdigit(*p)) {
@@ -1256,7 +1256,7 @@ FUNC_ATTR_PURE
 ///
 /// @return Pointer to the digit or (NUL after the string).
 char *skiptodigit(char *q)
-FUNC_ATTR_PURE
+  FUNC_ATTR_PURE
 {
   char *p = q;
   while (*p != NUL && !ascii_isdigit(*p)) {
@@ -1272,9 +1272,9 @@ FUNC_ATTR_PURE
 ///
 /// @return Pointer to the binary character or (NUL after the string).
 const char *skiptobin(const char *q)
-FUNC_ATTR_PURE
-FUNC_ATTR_NONNULL_ALL
-FUNC_ATTR_NONNULL_RET
+  FUNC_ATTR_PURE
+  FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_RET
 {
   const char *p = q;
   while (*p != NUL && !ascii_isbdigit(*p)) {
@@ -1290,7 +1290,7 @@ FUNC_ATTR_NONNULL_RET
 ///
 /// @return Pointer to the hex character or (NUL after the string).
 char *skiptohex(char *q)
-FUNC_ATTR_PURE
+  FUNC_ATTR_PURE
 {
   char *p = q;
   while (*p != NUL && !ascii_isxdigit(*p)) {
@@ -1306,7 +1306,7 @@ FUNC_ATTR_PURE
 ///
 /// @return Pointer to the next whitespace or NUL character.
 char *skiptowhite(const char *p)
-FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE
 {
   while (*p != ' ' && *p != '\t' && *p != NUL) {
     p++;
@@ -1320,7 +1320,7 @@ FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE
 ///
 /// @return Pointer to the next whitespace character.
 char *skiptowhite_esc(char *p)
-FUNC_ATTR_PURE
+  FUNC_ATTR_PURE
 {
   while (*p != ' ' && *p != '\t' && *p != NUL) {
     if (((*p == '\\') || (*p == Ctrl_V)) && (*(p + 1) != NUL)) {
@@ -1337,8 +1337,8 @@ FUNC_ATTR_PURE
 ///
 /// @return Pointer to the next '\n' or NUL character.
 char *skip_to_newline(const char *const p)
-FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
-FUNC_ATTR_NONNULL_RET
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_RET
 {
   return xstrchrnul(p, NL);
 }
@@ -1430,7 +1430,7 @@ int32_t getdigits_int32(char **pp, bool strict, long def)
 ///
 /// @param  lbuf  line buffer to check
 bool vim_isblankline(char *lbuf)
-FUNC_ATTR_PURE
+  FUNC_ATTR_PURE
 {
   char *p = skipwhite(lbuf);
   return *p == NUL || *p == '\r' || *p == '\n';
@@ -1473,7 +1473,7 @@ FUNC_ATTR_PURE
 void vim_str2nr(const char *const start, int *const prep, int *const len, const int what,
                 varnumber_T *const nptr, uvarnumber_T *const unptr, const int maxlen,
                 const bool strict)
-FUNC_ATTR_NONNULL_ARG(1)
+  FUNC_ATTR_NONNULL_ARG(1)
 {
   const char *ptr = start;
 #define STRING_ENDED(ptr) \
@@ -1658,7 +1658,7 @@ vim_str2nr_proceed:
 ///
 /// @return The value of the hex character.
 int hex2nr(int c)
-FUNC_ATTR_CONST
+  FUNC_ATTR_CONST
 {
   if ((c >= 'a') && (c <= 'f')) {
     return c - 'a' + 10;
@@ -1674,7 +1674,7 @@ FUNC_ATTR_CONST
 ///
 /// @return  -1 if one of the characters is not hex.
 int hexhex2nr(const char *p)
-FUNC_ATTR_PURE
+  FUNC_ATTR_PURE
 {
   if (!ascii_isxdigit(p[0]) || !ascii_isxdigit(p[1])) {
     return -1;
@@ -1696,7 +1696,7 @@ FUNC_ATTR_PURE
 ///
 /// @param  str  file path string to check
 bool rem_backslash(const char *str)
-FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
 {
 #ifdef BACKSLASH_IN_FILENAME
   return str[0] == '\\'
@@ -1730,7 +1730,7 @@ void backslash_halve(char *p)
 ///
 /// @return String with the number of backslashes halved.
 char *backslash_halve_save(const char *p)
-FUNC_ATTR_NONNULL_ALL FUNC_ATTR_NONNULL_RET
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_NONNULL_RET
 {
   // TODO(philix): simplify and improve backslash_halve_save algorithm
   char *res = xstrdup(p);

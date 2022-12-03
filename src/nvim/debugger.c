@@ -488,7 +488,7 @@ static garray_T prof_ga = { 0, 0, sizeof(struct debuggy), 4, NULL };
 /// Evaluate the "bp->dbg_name" expression and return the result.
 /// Disables error messages.
 static typval_T *eval_expr_no_emsg(struct debuggy *const bp)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   // Disable error messages, a bad expression would make Vim unusable.
   emsg_off++;

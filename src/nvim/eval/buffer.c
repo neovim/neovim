@@ -122,7 +122,7 @@ static void change_other_buffer_restore(cob_T *cob)
 /// Any type is allowed and converted to a string.
 static void set_buffer_lines(buf_T *buf, linenr_T lnum_arg, bool append, typval_T *lines,
                              typval_T *rettv)
-FUNC_ATTR_NONNULL_ARG(4, 5)
+  FUNC_ATTR_NONNULL_ARG(4, 5)
 {
   linenr_T lnum = lnum_arg + (append ? 1 : 0);
   long added = 0;

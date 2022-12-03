@@ -278,7 +278,7 @@ char *expand_user_command_name(int idx)
 
 /// Function given to ExpandGeneric() to obtain the list of user command names.
 char *get_user_commands(expand_T *xp FUNC_ATTR_UNUSED, int idx)
-FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
   // In cmdwin, the alternative buffer should be used.
   const buf_T *const buf = prevwin_curwin()->w_buffer;
@@ -564,7 +564,7 @@ static void uc_list(char *name, size_t name_len)
 
 /// Parse address type argument
 int parse_addr_type_arg(char *value, int vallen, cmd_addr_T *addr_type_arg)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   int i, a, b;
 
@@ -596,7 +596,7 @@ FUNC_ATTR_NONNULL_ALL
 ///
 /// @return  FAIL if something is wrong.
 int parse_compl_arg(const char *value, int vallen, int *complp, uint32_t *argt, char **compl_arg)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   const char *arg = NULL;
   size_t arglen = 0;
@@ -654,7 +654,7 @@ FUNC_ATTR_NONNULL_ALL
 
 static int uc_scan_attr(char *attr, size_t len, uint32_t *argt, long *def, int *flags, int *complp,
                         char_u **compl_arg, cmd_addr_T *addr_type_arg)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   char *p;
 
@@ -818,7 +818,7 @@ char *uc_validate_name(char *name)
 int uc_add_command(char *name, size_t name_len, const char *rep, uint32_t argt, long def, int flags,
                    int compl, char *compl_arg, LuaRef compl_luaref, LuaRef preview_luaref,
                    cmd_addr_T addr_type, LuaRef luaref, bool force)
-FUNC_ATTR_NONNULL_ARG(1, 3)
+  FUNC_ATTR_NONNULL_ARG(1, 3)
 {
   ucmd_T *cmd = NULL;
   int i;
@@ -911,7 +911,7 @@ FUNC_ATTR_NONNULL_ARG(1, 3)
 
   return OK;
 
-fail:
+  fail:
   xfree(rep_buf);
   xfree(compl_arg);
   NLUA_CLEAR_REF(luaref);

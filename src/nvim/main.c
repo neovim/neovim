@@ -601,7 +601,7 @@ int main(int argc, char **argv)
 }
 
 void os_exit(int r)
-FUNC_ATTR_NORETURN
+  FUNC_ATTR_NORETURN
 {
   exiting = true;
 
@@ -627,7 +627,7 @@ FUNC_ATTR_NORETURN
 
 /// Exit properly
 void getout(int exitval)
-FUNC_ATTR_NORETURN
+  FUNC_ATTR_NORETURN
 {
   exiting = true;
 
@@ -752,7 +752,7 @@ FUNC_ATTR_NORETURN
 /// @note This may be called from deadly_signal() in a signal handler, avoid
 ///       unsafe functions, such as allocating memory.
 void preserve_exit(void)
-FUNC_ATTR_NORETURN
+  FUNC_ATTR_NORETURN
 {
   // 'true' when we are sure to exit, e.g., after a deadly signal
   static bool really_exiting = false;
@@ -804,7 +804,7 @@ FUNC_ATTR_NORETURN
 ///
 /// @return argument's numeric value otherwise
 static int get_number_arg(const char *p, int *idx, int def)
-FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
   if (ascii_isdigit(p[*idx])) {  // -V522
     def = atoi(&(p[*idx]));
@@ -1454,7 +1454,7 @@ static void check_and_set_isatty(mparm_T *paramp)
 
 // Sets v:progname and v:progpath. Also modifies $PATH on Windows.
 static void init_path(const char *exename)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   char exepath[MAXPATHL] = { 0 };
   size_t exepathlen = MAXPATHL;
@@ -1898,7 +1898,7 @@ static void do_system_initialization(void)
 /// @return True if it is needed to attempt to source exrc file according to
 ///         'exrc' option definition.
 static bool do_user_initialization(void)
-FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_WARN_UNUSED_RESULT
 {
   bool do_exrc = p_exrc;
   if (execute_env("VIMINIT") == OK) {
@@ -1974,7 +1974,7 @@ FUNC_ATTR_WARN_UNUSED_RESULT
 
 /// Source startup scripts
 static void source_startup_scripts(const mparm_T *const parmp)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   // If -u given, use only the initializations from that file and nothing else.
   if (parmp->use_vimrc != NULL) {
@@ -2017,7 +2017,7 @@ FUNC_ATTR_NONNULL_ALL
 /// @return FAIL if the environment variable was not executed,
 ///         OK otherwise.
 static int execute_env(char *env)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   const char *initstr = os_getenv(env);
   if (initstr != NULL) {
@@ -2042,7 +2042,7 @@ FUNC_ATTR_NONNULL_ALL
 /// @param errstr  string containing an error message
 /// @param str     string to append to the primary error message, or NULL
 static void mainerr(const char *errstr, const char *str)
-FUNC_ATTR_NORETURN
+  FUNC_ATTR_NORETURN
 {
   char *prgname = path_tail(argv0);
 

@@ -16,7 +16,7 @@
 
 /// Creates a new `RBuffer` instance.
 RBuffer *rbuffer_new(size_t capacity)
-FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_RET
+  FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_RET
 {
   if (!capacity) {
     capacity = 0x10000;
@@ -139,7 +139,7 @@ char *rbuffer_read_ptr(RBuffer *buf, size_t *read_count) FUNC_ATTR_NONNULL_ALL
 /// directly, this needs to called after the data was copied from the internal
 /// buffer. The read pointer will be wrapped if required.
 void rbuffer_consumed(RBuffer *buf, size_t count)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   assert(count && count <= buf->size);
 
@@ -160,7 +160,7 @@ FUNC_ATTR_NONNULL_ALL
 /// This is generally useful if we can guarantee to parse all input
 /// except some small incomplete token, like when parsing msgpack.
 void rbuffer_consumed_compact(RBuffer *buf, size_t count)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   assert(buf->read_ptr <= buf->write_ptr);
   rbuffer_consumed(buf, count);
@@ -175,7 +175,7 @@ FUNC_ATTR_NONNULL_ALL
 // Higher level functions for copying from/to RBuffer instances and data
 // pointers
 size_t rbuffer_write(RBuffer *buf, const char *src, size_t src_size)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   size_t size = src_size;
 
@@ -195,7 +195,7 @@ FUNC_ATTR_NONNULL_ALL
 }
 
 size_t rbuffer_read(RBuffer *buf, char *dst, size_t dst_size)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   size_t size = dst_size;
 
@@ -215,7 +215,7 @@ FUNC_ATTR_NONNULL_ALL
 }
 
 char *rbuffer_get(RBuffer *buf, size_t index)
-FUNC_ATTR_NONNULL_ALL FUNC_ATTR_NONNULL_RET
+    FUNC_ATTR_NONNULL_ALL FUNC_ATTR_NONNULL_RET
 {
   assert(index < buf->size);
   char *rptr = buf->read_ptr + index;
@@ -226,7 +226,7 @@ FUNC_ATTR_NONNULL_ALL FUNC_ATTR_NONNULL_RET
 }
 
 int rbuffer_cmp(RBuffer *buf, const char *str, size_t count)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   assert(count <= buf->size);
   size_t rcnt;

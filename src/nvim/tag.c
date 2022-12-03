@@ -3289,7 +3289,7 @@ int expand_tags(int tagnames, char_u *pat, int *num_file, char ***file)
 /// @param start  start of the value
 /// @param end  after the value; can be NULL
 static int add_tag_field(dict_T *dict, const char *field_name, const char *start, const char *end)
-FUNC_ATTR_NONNULL_ARG(1, 2)
+  FUNC_ATTR_NONNULL_ARG(1, 2)
 {
   int len = 0;
   int retval;
@@ -3573,7 +3573,7 @@ static void tagstack_set_curidx(win_T *wp, int curidx)
 //    'r' for replace
 //    't' for truncate
 int set_tagstack(win_T *wp, const dict_T *d, int action)
-FUNC_ATTR_NONNULL_ARG(1)
+  FUNC_ATTR_NONNULL_ARG(1)
 {
   dictitem_T *di;
   list_T *l = NULL;

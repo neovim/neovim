@@ -46,7 +46,7 @@ int stream_set_blocking(int fd, bool blocking)
 }
 
 void stream_init(Loop *loop, Stream *stream, int fd, uv_stream_t *uvstream)
-FUNC_ATTR_NONNULL_ARG(2)
+  FUNC_ATTR_NONNULL_ARG(2)
 {
   stream->uvstream = uvstream;
 
@@ -103,7 +103,7 @@ FUNC_ATTR_NONNULL_ARG(2)
 }
 
 void stream_close(Stream *stream, stream_close_cb on_stream_close, void *data)
-FUNC_ATTR_NONNULL_ARG(1)
+  FUNC_ATTR_NONNULL_ARG(1)
 {
   assert(!stream->closed);
   DLOG("closing Stream: %p", (void *)stream);
@@ -131,7 +131,7 @@ void stream_may_close(Stream *stream)
 }
 
 void stream_close_handle(Stream *stream)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   if (stream->uvstream) {
     if (uv_stream_get_write_queue_size(stream->uvstream) > 0) {

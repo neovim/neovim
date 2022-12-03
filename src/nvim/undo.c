@@ -655,7 +655,7 @@ void u_compute_hash(buf_T *buf, char_u *hash)
 ///
 /// @return [allocated] File name to read from/write to or NULL.
 char *u_get_undo_file_name(const char *const buf_ffname, const bool reading)
-FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_WARN_UNUSED_RESULT
 {
   const char *ffname = buf_ffname;
 
@@ -744,7 +744,7 @@ FUNC_ATTR_WARN_UNUSED_RESULT
 /// @param[in]  mesg  Identifier of the corruption kind.
 /// @param[in]  file_name  File in which error occurred.
 static void corruption_error(const char *const mesg, const char *const file_name)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   semsg(_("E825: Corrupted undo file (%s): %s"), mesg, file_name);
 }
@@ -767,7 +767,7 @@ static void u_free_uhp(u_header_T *uhp)
 //
 /// @returns false in case of an error.
 static bool serialize_header(bufinfo_T *bi, char_u *hash)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   buf_T *buf = bi->bi_buf;
   FILE *fp = bi->bi_fp;
@@ -1027,7 +1027,7 @@ static ExtmarkUndoObject *unserialize_extmark(bufinfo_T *bi, bool *error, const 
 
   return extup;
 
-error:
+  error:
   xfree(extup);
   if (buf) {
     xfree(buf);
@@ -1152,7 +1152,7 @@ static void unserialize_visualinfo(bufinfo_T *bi, visualinfo_T *info)
 /// @param[in]  hash  Hash value of the buffer text. Must have #UNDO_HASH_SIZE
 ///                   size.
 void u_write_undo(const char *const name, const bool forceit, buf_T *const buf, char_u *const hash)
-FUNC_ATTR_NONNULL_ARG(3, 4)
+  FUNC_ATTR_NONNULL_ARG(3, 4)
 {
   char *file_name;
 #ifdef U_DEBUG
@@ -1361,7 +1361,7 @@ theend:
 /// Otherwise use curbuf->b_ffname to generate the undo file name.
 /// "hash[UNDO_HASH_SIZE]" must be the hash value of the buffer text.
 void u_read_undo(char *name, const char_u *hash, const char_u *orig_name FUNC_ATTR_UNUSED)
-FUNC_ATTR_NONNULL_ARG(2)
+  FUNC_ATTR_NONNULL_ARG(2)
 {
   u_header_T **uhp_table = NULL;
   char_u *line_ptr = NULL;
@@ -1637,7 +1637,7 @@ FUNC_ATTR_NONNULL_ARG(2)
   }
   goto theend;
 
-error:
+  error:
   xfree(line_ptr);
   if (uhp_table != NULL) {
     for (long i = 0; i < num_read_uhps; i++) {
@@ -1648,7 +1648,7 @@ error:
     xfree(uhp_table);
   }
 
-theend:
+  theend:
   if (fp != NULL) {
     fclose(fp);
   }
@@ -1665,7 +1665,7 @@ theend:
 ///
 /// @returns false in case of an error.
 static bool undo_write(bufinfo_T *bi, uint8_t *ptr, size_t len)
-FUNC_ATTR_NONNULL_ARG(1)
+  FUNC_ATTR_NONNULL_ARG(1)
 {
   return fwrite(ptr, len, 1, bi->bi_fp) == 1;
 }
@@ -1728,7 +1728,7 @@ static time_t undo_read_time(bufinfo_T *bi)
 ///
 /// @returns false in case of an error.
 static bool undo_read(bufinfo_T *bi, uint8_t *buffer, size_t size)
-FUNC_ATTR_NONNULL_ARG(1)
+  FUNC_ATTR_NONNULL_ARG(1)
 {
   const bool retval = fread(buffer, size, 1, bi->bi_fp) == 1;
   if (!retval) {
@@ -3066,7 +3066,7 @@ static char *u_save_line_buf(buf_T *buf, linenr_T lnum)
 ///
 /// @return true if the buffer has changed
 bool bufIsChanged(buf_T *buf)
-FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
   // In a "prompt" buffer we do respect 'modified', so that we can control
   // closing the window by setting or resetting that option.
@@ -3076,7 +3076,7 @@ FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 
 // Return true if any buffer has changes.  Also buffers that are not written.
 bool anyBufIsChanged(void)
-FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_WARN_UNUSED_RESULT
 {
   FOR_ALL_BUFFERS(buf) {
     if (bufIsChanged(buf)) {
@@ -3089,7 +3089,7 @@ FUNC_ATTR_WARN_UNUSED_RESULT
 /// @see bufIsChanged
 /// @return true if the current buffer has changed
 bool curbufIsChanged(void)
-FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_WARN_UNUSED_RESULT
 {
   return bufIsChanged(curbuf);
 }
@@ -3102,7 +3102,7 @@ FUNC_ATTR_WARN_UNUSED_RESULT
 ///
 /// @return [allocated] List with a representation of undo blocks.
 list_T *u_eval_tree(const u_header_T *const first_uhp)
-FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_RET
+  FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_RET
 {
   list_T *const list = tv_list_alloc(kListLenMayKnow);
 

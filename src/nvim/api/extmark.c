@@ -52,7 +52,7 @@ void api_extmark_free_all_mem(void)
 /// @param name Namespace name or empty string
 /// @return Namespace id
 Integer nvim_create_namespace(String name)
-FUNC_API_SINCE(5)
+  FUNC_API_SINCE(5)
 {
   handle_T id = map_get(String, handle_T)(&namespace_ids, name);
   if (id > 0) {
@@ -70,7 +70,7 @@ FUNC_API_SINCE(5)
 ///
 /// @return dict that maps from names to namespace ids.
 Dictionary nvim_get_namespaces(void)
-FUNC_API_SINCE(5)
+  FUNC_API_SINCE(5)
 {
   Dictionary retval = ARRAY_DICT_INIT;
   String name;
@@ -208,7 +208,7 @@ static Array extmark_to_array(const ExtmarkInfo *extmark, bool id, bool add_dict
 ArrayOf(Integer) nvim_buf_get_extmark_by_id(Buffer buffer, Integer ns_id,
                                             Integer id, Dictionary opts,
                                             Error *err)
-FUNC_API_SINCE(7)
+  FUNC_API_SINCE(7)
 {
   Array rv = ARRAY_DICT_INIT;
 
@@ -292,7 +292,7 @@ FUNC_API_SINCE(7)
 /// @return List of [extmark_id, row, col] tuples in "traversal order".
 Array nvim_buf_get_extmarks(Buffer buffer, Integer ns_id, Object start, Object end, Dictionary opts,
                             Error *err)
-FUNC_API_SINCE(7)
+  FUNC_API_SINCE(7)
 {
   Array rv = ARRAY_DICT_INIT;
 
@@ -491,7 +491,7 @@ FUNC_API_SINCE(7)
 /// @return Id of the created/updated extmark
 Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer line, Integer col,
                              Dict(set_extmark) *opts, Error *err)
-FUNC_API_SINCE(7)
+  FUNC_API_SINCE(7)
 {
   Decoration decor = DECORATION_INIT;
   bool has_decor = false;
@@ -822,7 +822,7 @@ error:
 /// @param[out] err   Error details, if any
 /// @return true if the extmark was found, else false
 Boolean nvim_buf_del_extmark(Buffer buffer, Integer ns_id, Integer id, Error *err)
-FUNC_API_SINCE(7)
+  FUNC_API_SINCE(7)
 {
   buf_T *buf = find_buffer_by_handle(buffer, err);
 
@@ -880,7 +880,7 @@ uint32_t src2ns(Integer *src_id)
 /// @return The ns_id that was used
 Integer nvim_buf_add_highlight(Buffer buffer, Integer ns_id, String hl_group, Integer line,
                                Integer col_start, Integer col_end, Error *err)
-FUNC_API_SINCE(1)
+  FUNC_API_SINCE(1)
 {
   buf_T *buf = find_buffer_by_handle(buffer, err);
   if (!buf) {
@@ -943,7 +943,7 @@ FUNC_API_SINCE(1)
 /// @param[out] err   Error details, if any
 void nvim_buf_clear_namespace(Buffer buffer, Integer ns_id, Integer line_start, Integer line_end,
                               Error *err)
-FUNC_API_SINCE(5)
+  FUNC_API_SINCE(5)
 {
   buf_T *buf = find_buffer_by_handle(buffer, err);
   if (!buf) {
@@ -1004,7 +1004,7 @@ FUNC_API_SINCE(5)
 ///             - on_end: called at the end of a redraw cycle
 ///                 ["end", tick]
 void nvim_set_decoration_provider(Integer ns_id, Dict(set_decoration_provider) *opts, Error *err)
-FUNC_API_SINCE(7) FUNC_API_LUA_ONLY
+  FUNC_API_SINCE(7) FUNC_API_LUA_ONLY
 {
   DecorProvider *p = get_decor_provider((NS)ns_id, true);
   assert(p != NULL);

@@ -424,7 +424,7 @@ static void au_cleanup(void)
 
 // Get the first AutoPat for a particular event.
 AutoPat *au_get_autopat_for_event(event_T event)
-FUNC_ATTR_PURE
+  FUNC_ATTR_PURE
 {
   return first_autopat[(int)event];
 }
@@ -538,7 +538,7 @@ void augroup_del(char *name, bool stupid_legacy_mode)
 ///
 /// @return the ID or AUGROUP_ERROR (< 0) for error.
 int augroup_find(const char *name)
-FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
   int existing_id = map_get(String, int)(&map_augroup_name_to_id, cstr_as_string((char *)name));
   if (existing_id == AUGROUP_DELETED) {
@@ -595,7 +595,7 @@ char *augroup_name(int group)
 ///
 /// @param name augroup name
 bool augroup_exists(const char *name)
-FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
   return augroup_find(name) > 0;
 }
@@ -707,7 +707,7 @@ event_T event_name2nr(const char *start, char **end)
 ///
 /// @return Event name, static string. Returns "Unknown" for unknown events.
 const char *event_nr2name(event_T event)
-FUNC_ATTR_NONNULL_RET FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_CONST
+  FUNC_ATTR_NONNULL_RET FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_CONST
 {
   for (int i = 0; event_names[i].name != NULL; i++) {
     if (event_names[i].event == event) {
@@ -721,7 +721,7 @@ FUNC_ATTR_NONNULL_RET FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_CONST
 ///
 /// @param event event to check
 static bool event_ignored(event_T event)
-FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
   char *p = p_ei;
 
@@ -959,7 +959,7 @@ void do_all_autocmd_events(char *pat, bool once, int nested, char *cmd, bool del
 // If group is not AUGROUP_ALL: only use this group.
 int do_autocmd_event(event_T event, char *pat, bool once, int nested, char *cmd, bool delete,
                      int group)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   // Cannot be used to show all patterns. See au_show_for_event or au_show_for_all_events
   assert(*pat != NUL || delete);
@@ -1209,7 +1209,7 @@ int autocmd_register(int64_t id, event_T event, char *pat, int patlen, int group
 }
 
 size_t aucmd_pattern_length(char *pat)
-FUNC_ATTR_PURE
+  FUNC_ATTR_PURE
 {
   if (*pat == NUL) {
     return 0;
@@ -1242,7 +1242,7 @@ FUNC_ATTR_PURE
 }
 
 char *aucmd_next_pattern(char *pat, size_t patlen)
-FUNC_ATTR_PURE
+  FUNC_ATTR_PURE
 {
   pat = pat + patlen;
   if (*pat == ',') {
@@ -1360,7 +1360,7 @@ void ex_doautoall(exarg_T *eap)
 ///
 /// @param[in,out] argp argument string
 bool check_nomodeline(char **argp)
-FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
   if (strncmp(*argp, "<nomodeline>", 12) == 0) {
     *argp = skipwhite(*argp + 12);
@@ -2035,7 +2035,7 @@ void unblock_autocmds(void)
 }
 
 bool is_autocmd_blocked(void)
-FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
   return autocmd_blocked != 0;
 }
@@ -2264,7 +2264,7 @@ char *getnextac(int c, void *cookie, int indent, bool do_concat)
 /// @param sfname filename the event occurred in.
 /// @param buf buffer the file is open in
 bool has_autocmd(event_T event, char *sfname, buf_T *buf)
-FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_WARN_UNUSED_RESULT
 {
   char *tail = path_tail(sfname);
   bool retval = false;
@@ -2388,7 +2388,7 @@ char *expand_get_event_name(expand_T *xp, int idx)
 ///
 /// @return True if it is, false otherwise.
 bool autocmd_supported(const char *const event)
-FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
   char *p;
   return event_name2nr(event, &p) != NUM_EVENTS;
@@ -2486,7 +2486,7 @@ theend:
 
 // Checks if a pattern is buflocal
 bool aupat_is_buflocal(char *pat, int patlen)
-FUNC_ATTR_PURE
+  FUNC_ATTR_PURE
 {
   return patlen >= 8
          && strncmp(pat, "<buffer", 7) == 0
@@ -2534,7 +2534,7 @@ void aupat_normalize_buflocal_pat(char *dest, char *pat, int patlen, int bufloca
 }
 
 int autocmd_delete_event(int group, event_T event, char *pat)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   return do_autocmd_event(event, pat, false, false, "", true, group);
 }
@@ -2567,7 +2567,7 @@ bool autocmd_delete_id(int64_t id)
 
 /// Generate a string description for the command/callback of an autocmd
 char *aucmd_exec_to_string(AutoCmd *ac, AucmdExecutable acc)
-FUNC_ATTR_PURE
+  FUNC_ATTR_PURE
 {
   switch (acc.type) {
   case CALLABLE_EX:
@@ -2618,7 +2618,7 @@ AucmdExecutable aucmd_exec_copy(AucmdExecutable src)
 }
 
 bool aucmd_exec_is_deleted(AucmdExecutable acc)
-FUNC_ATTR_PURE
+  FUNC_ATTR_PURE
 {
   switch (acc.type) {
   case CALLABLE_EX:
@@ -2633,7 +2633,7 @@ FUNC_ATTR_PURE
 }
 
 bool au_event_is_empty(event_T event)
-FUNC_ATTR_PURE
+  FUNC_ATTR_PURE
 {
   return first_autopat[event] == NULL;
 }

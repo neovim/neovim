@@ -46,7 +46,7 @@ typedef struct _queue {
 
 // ffi.cdef is unable to swallow `bool` in place of `int` here.
 static inline int QUEUE_EMPTY(const QUEUE *const q)
-FUNC_ATTR_ALWAYS_INLINE FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_ALWAYS_INLINE FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
   return q == q->next;
 }
@@ -60,7 +60,7 @@ static inline void QUEUE_INIT(QUEUE *const q) FUNC_ATTR_ALWAYS_INLINE
 }
 
 static inline void QUEUE_ADD(QUEUE *const h, QUEUE *const n)
-FUNC_ATTR_ALWAYS_INLINE
+  FUNC_ATTR_ALWAYS_INLINE
 {
   h->prev->next = n->next;
   n->next->prev = h->prev;
@@ -69,7 +69,7 @@ FUNC_ATTR_ALWAYS_INLINE
 }
 
 static inline void QUEUE_INSERT_HEAD(QUEUE *const h, QUEUE *const q)
-FUNC_ATTR_ALWAYS_INLINE
+  FUNC_ATTR_ALWAYS_INLINE
 {
   q->next = h->next;
   q->prev = h;
@@ -78,7 +78,7 @@ FUNC_ATTR_ALWAYS_INLINE
 }
 
 static inline void QUEUE_INSERT_TAIL(QUEUE *const h, QUEUE *const q)
-FUNC_ATTR_ALWAYS_INLINE
+  FUNC_ATTR_ALWAYS_INLINE
 {
   q->next = h;
   q->prev = h->prev;

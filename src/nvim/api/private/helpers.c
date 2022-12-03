@@ -81,7 +81,7 @@ void try_enter(TryState *const tstate)
 ///
 /// @return false if error occurred, true otherwise.
 bool try_leave(const TryState *const tstate, Error *const err)
-FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
   const bool ret = !try_end(err);
   assert(trylevel == 0);
@@ -366,7 +366,7 @@ String cstr_to_string(const char *str)
 /// @param str the String to copy
 /// @return the resulting C string
 char *string_to_cstr(String str)
-FUNC_ATTR_NONNULL_RET FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_NONNULL_RET FUNC_ATTR_WARN_UNUSED_RESULT
 {
   return xstrndup(str.data, str.size);
 }
@@ -380,7 +380,7 @@ FUNC_ATTR_NONNULL_RET FUNC_ATTR_WARN_UNUSED_RESULT
 /// @return the resulting String, if the input string was NULL, an
 ///         empty String is returned
 String cbuf_to_string(const char *buf, size_t size)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   return (String){
     .data = xmemdupz(buf, size),
@@ -389,13 +389,13 @@ FUNC_ATTR_NONNULL_ALL
 }
 
 String cstrn_to_string(const char *str, size_t maxsize)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   return cbuf_to_string(str, strnlen(str, maxsize));
 }
 
 String cstrn_as_string(char *str, size_t maxsize)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   return cbuf_as_string(str, strnlen(str, maxsize));
 }
@@ -593,7 +593,7 @@ void api_free_dictionary(Dictionary value)
 }
 
 void api_clear_error(Error *value)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   if (!ERROR_SET(value)) {
     return;
@@ -764,7 +764,7 @@ Object copy_object(Object obj, Arena *arena)
 }
 
 void api_set_error(Error *err, ErrorType errType, const char *format, ...)
-FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PRINTF(3, 4)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PRINTF(3, 4)
 {
   assert(kErrorTypeNone != errType);
   va_list args1;

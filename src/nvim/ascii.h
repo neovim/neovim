@@ -85,32 +85,32 @@
 #endif
 
 static inline bool ascii_iswhite(int c)
-REAL_FATTR_CONST
-REAL_FATTR_ALWAYS_INLINE;
+  REAL_FATTR_CONST
+  REAL_FATTR_ALWAYS_INLINE;
 
 static inline bool ascii_iswhite_or_nul(int c)
-REAL_FATTR_CONST
-REAL_FATTR_ALWAYS_INLINE;
+  REAL_FATTR_CONST
+  REAL_FATTR_ALWAYS_INLINE;
 
 static inline bool ascii_isdigit(int c)
-REAL_FATTR_CONST
-REAL_FATTR_ALWAYS_INLINE;
+  REAL_FATTR_CONST
+  REAL_FATTR_ALWAYS_INLINE;
 
 static inline bool ascii_isxdigit(int c)
-REAL_FATTR_CONST
-REAL_FATTR_ALWAYS_INLINE;
+  REAL_FATTR_CONST
+  REAL_FATTR_ALWAYS_INLINE;
 
 static inline bool ascii_isident(int c)
-REAL_FATTR_CONST
-REAL_FATTR_ALWAYS_INLINE;
+  REAL_FATTR_CONST
+  REAL_FATTR_ALWAYS_INLINE;
 
 static inline bool ascii_isbdigit(int c)
-REAL_FATTR_CONST
-REAL_FATTR_ALWAYS_INLINE;
+  REAL_FATTR_CONST
+  REAL_FATTR_ALWAYS_INLINE;
 
 static inline bool ascii_isspace(int c)
-REAL_FATTR_CONST
-REAL_FATTR_ALWAYS_INLINE;
+  REAL_FATTR_CONST
+  REAL_FATTR_ALWAYS_INLINE;
 
 /// Checks if `c` is a space or tab character.
 ///

@@ -181,7 +181,7 @@ void pty_process_save_termios(int tty_fd)
 
 /// @returns zero on success, or negative error code
 int pty_process_spawn(PtyProcess *ptyproc)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   if (!termios_default.c_cflag) {
     // TODO(jkeyes): We could pass NULL to forkpty() instead ...
@@ -251,14 +251,14 @@ const char *pty_process_tty_name(PtyProcess *ptyproc)
 }
 
 void pty_process_resize(PtyProcess *ptyproc, uint16_t width, uint16_t height)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   ptyproc->winsize = (struct winsize){ height, width, 0, 0 };
   ioctl(ptyproc->tty_fd, TIOCSWINSZ, &ptyproc->winsize);
 }
 
 void pty_process_close(PtyProcess *ptyproc)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   pty_process_close_master(ptyproc);
   Process *proc = (Process *)ptyproc;
@@ -281,7 +281,7 @@ void pty_process_teardown(Loop *loop)
 }
 
 static void init_child(PtyProcess *ptyproc)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
 #if defined(HAVE__NSGETENVIRON)
 # define environ (*_NSGetEnviron())
@@ -372,7 +372,7 @@ static void init_termios(struct termios *termios) FUNC_ATTR_NONNULL_ALL
 }
 
 static int set_duplicating_descriptor(int fd, uv_pipe_t *pipe)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   int status = 0;  // zero or negative error code (libuv convention)
   int fd_dup = dup(fd);

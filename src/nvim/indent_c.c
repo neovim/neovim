@@ -326,7 +326,7 @@ static bool cin_has_js_key(const char_u *text)
 /// Checks if string matches "label:"; move to character after ':' if true.
 /// "*s" must point to the start of the label, if there is one.
 static bool cin_islabel_skip(const char_u **s)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   if (!vim_isIDc(**s)) {            // need at least one ID character
     return false;

@@ -139,7 +139,7 @@ void ga_remove_duplicate_strings(garray_T *gap)
 ///
 /// @returns the concatenated strings
 char *ga_concat_strings_sep(const garray_T *gap, const char *sep)
-FUNC_ATTR_NONNULL_RET
+  FUNC_ATTR_NONNULL_RET
 {
   const size_t nelem = (size_t)gap->ga_len;
   const char **strings = gap->ga_data;
@@ -202,7 +202,7 @@ void ga_concat(garray_T *gap, const char *restrict s)
 /// @param[in]  s  String to concatenate.
 /// @param[in]  len  String length.
 void ga_concat_len(garray_T *const gap, const char *restrict s, const size_t len)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   if (len) {
     ga_grow(gap, (int)len);

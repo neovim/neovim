@@ -336,7 +336,7 @@ static void alist_check_arg_idx(void)
 /// @param after: where to add: 0 = before first one
 /// @param will_edit  will edit adding argument
 static void alist_add_list(int count, char **files, int after, bool will_edit)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   int old_argcount = ARGCOUNT;
   ga_grow(&ALIST(curwin)->al_ga, count);
@@ -421,7 +421,7 @@ static void arglist_del_files(garray_T *alist_ga)
 ///
 /// @return  FAIL for failure, OK otherwise.
 static int do_arglist(char *str, int what, int after, bool will_edit)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   garray_T new_ga;
   int exp_count;

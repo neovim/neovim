@@ -182,7 +182,7 @@ void remote_ui_wait_for_attach(void)
 /// @param[out] err Error details, if any
 void nvim_ui_attach(uint64_t channel_id, Integer width, Integer height, Dictionary options,
                     Error *err)
-FUNC_API_SINCE(1) FUNC_API_REMOTE_ONLY
+  FUNC_API_SINCE(1) FUNC_API_REMOTE_ONLY
 {
   if (pmap_has(uint64_t)(&connected_uis, channel_id)) {
     api_set_error(err, kErrorTypeException,
@@ -277,7 +277,7 @@ FUNC_API_SINCE(1) FUNC_API_REMOTE_ONLY
 
 /// @deprecated
 void ui_attach(uint64_t channel_id, Integer width, Integer height, Boolean enable_rgb, Error *err)
-FUNC_API_DEPRECATED_SINCE(1)
+  FUNC_API_DEPRECATED_SINCE(1)
 {
   Dictionary opts = ARRAY_DICT_INIT;
   PUT(opts, "rgb", BOOLEAN_OBJ(enable_rgb));
@@ -292,7 +292,7 @@ FUNC_API_DEPRECATED_SINCE(1)
 /// @param channel_id
 /// @param[out] err Error details, if any
 void nvim_ui_detach(uint64_t channel_id, Error *err)
-FUNC_API_SINCE(1) FUNC_API_REMOTE_ONLY
+  FUNC_API_SINCE(1) FUNC_API_REMOTE_ONLY
 {
   if (!pmap_has(uint64_t)(&connected_uis, channel_id)) {
     api_set_error(err, kErrorTypeException,
@@ -303,7 +303,7 @@ FUNC_API_SINCE(1) FUNC_API_REMOTE_ONLY
 }
 
 void nvim_ui_try_resize(uint64_t channel_id, Integer width, Integer height, Error *err)
-FUNC_API_SINCE(1) FUNC_API_REMOTE_ONLY
+  FUNC_API_SINCE(1) FUNC_API_REMOTE_ONLY
 {
   if (!pmap_has(uint64_t)(&connected_uis, channel_id)) {
     api_set_error(err, kErrorTypeException,
@@ -324,7 +324,7 @@ FUNC_API_SINCE(1) FUNC_API_REMOTE_ONLY
 }
 
 void nvim_ui_set_option(uint64_t channel_id, String name, Object value, Error *error)
-FUNC_API_SINCE(1) FUNC_API_REMOTE_ONLY
+  FUNC_API_SINCE(1) FUNC_API_REMOTE_ONLY
 {
   if (!pmap_has(uint64_t)(&connected_uis, channel_id)) {
     api_set_error(error, kErrorTypeException,
@@ -446,7 +446,7 @@ static void ui_set_option(UI *ui, bool init, String name, Object value, Error *e
 /// @param[out] err Error details, if any
 void nvim_ui_try_resize_grid(uint64_t channel_id, Integer grid, Integer width, Integer height,
                              Error *err)
-FUNC_API_SINCE(6) FUNC_API_REMOTE_ONLY
+  FUNC_API_SINCE(6) FUNC_API_REMOTE_ONLY
 {
   if (!pmap_has(uint64_t)(&connected_uis, channel_id)) {
     api_set_error(err, kErrorTypeException,
@@ -468,7 +468,7 @@ FUNC_API_SINCE(6) FUNC_API_REMOTE_ONLY
 /// @param height  Popupmenu height, must be greater than zero.
 /// @param[out] err Error details, if any
 void nvim_ui_pum_set_height(uint64_t channel_id, Integer height, Error *err)
-FUNC_API_SINCE(6) FUNC_API_REMOTE_ONLY
+  FUNC_API_SINCE(6) FUNC_API_REMOTE_ONLY
 {
   if (!pmap_has(uint64_t)(&connected_uis, channel_id)) {
     api_set_error(err, kErrorTypeException,
@@ -509,7 +509,7 @@ FUNC_API_SINCE(6) FUNC_API_REMOTE_ONLY
 /// @param[out] err Error details, if any.
 void nvim_ui_pum_set_bounds(uint64_t channel_id, Float width, Float height, Float row, Float col,
                             Error *err)
-FUNC_API_SINCE(7) FUNC_API_REMOTE_ONLY
+  FUNC_API_SINCE(7) FUNC_API_REMOTE_ONLY
 {
   if (!pmap_has(uint64_t)(&connected_uis, channel_id)) {
     api_set_error(err, kErrorTypeException,

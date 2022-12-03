@@ -55,7 +55,7 @@ static bool did_add_space = false;  ///< auto_format() added an extra space
 /// Return true if format option 'x' is in effect.
 /// Take care of no formatting when 'paste' is set.
 bool has_format_option(int x)
-FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
   if (p_paste) {
     return false;

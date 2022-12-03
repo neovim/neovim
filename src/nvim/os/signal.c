@@ -164,7 +164,7 @@ static char *signal_name(int signum)
 // (partly from Elvis).
 // NOTE: this is scheduled on the event loop, not called directly from a signal handler.
 static void deadly_signal(int signum)
-FUNC_ATTR_NORETURN
+  FUNC_ATTR_NORETURN
 {
   // Set the v:dying variable.
   set_vim_var_nr(VV_DYING, 1);

@@ -46,8 +46,8 @@ typedef enum {
 #endif
 
 static inline bool vim_isbreak(int c)
-REAL_FATTR_CONST
-REAL_FATTR_ALWAYS_INLINE;
+  REAL_FATTR_CONST
+  REAL_FATTR_ALWAYS_INLINE;
 
 /// Check if `c` is one of the characters in 'breakat'.
 /// Used very often if 'linebreak' is set

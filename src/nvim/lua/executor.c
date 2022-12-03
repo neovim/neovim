@@ -113,7 +113,7 @@ typedef enum luv_err_type {
 /// @param  lstate  Lua interpreter state.
 /// @param[in]  msg  Message base, must contain one `%s`.
 static void nlua_error(lua_State *const lstate, const char *const msg)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   size_t len;
   const char *str = NULL;
@@ -192,7 +192,7 @@ static void nlua_luv_error_event(void **argv)
 }
 
 static int nlua_luv_cfpcall(lua_State *lstate, int nargs, int nresult, int flags)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   int retval;
 
@@ -232,13 +232,13 @@ static int nlua_luv_thread_cb_cfpcall(lua_State *lstate, int nargs, int nresult,
 }
 
 static int nlua_luv_thread_cfpcall(lua_State *lstate, int nargs, int nresult, int flags)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   return nlua_luv_thread_common_cfpcall(lstate, nargs, nresult, flags, false);
 }
 
 static int nlua_luv_thread_cfcpcall(lua_State *lstate, lua_CFunction func, void *ud, int flags)
-FUNC_ATTR_NONNULL_ARG(1, 2)
+  FUNC_ATTR_NONNULL_ARG(1, 2)
 {
   lua_pushcfunction(lstate, func);
   lua_pushlightuserdata(lstate, ud);
@@ -248,7 +248,7 @@ FUNC_ATTR_NONNULL_ARG(1, 2)
 
 static int nlua_luv_thread_common_cfpcall(lua_State *lstate, int nargs, int nresult, int flags,
                                           bool is_callback)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   int retval;
 
@@ -338,7 +338,7 @@ static void nlua_schedule_event(void **argv)
 ///
 /// @param  lstate  Lua interpreter state.
 static int nlua_schedule(lua_State *const lstate)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   if (lua_type(lstate, 1) != LUA_TFUNCTION) {
     lua_pushliteral(lstate, "vim.schedule: expected function");
@@ -377,7 +377,7 @@ static bool nlua_wait_condition(lua_State *lstate, int *status, bool *callback_r
 
 /// "vim.wait(timeout, condition[, interval])" function
 static int nlua_wait(lua_State *lstate)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   intptr_t timeout = luaL_checkinteger(lstate, 1);
   if (timeout < 0) {
@@ -464,7 +464,7 @@ FUNC_ATTR_NONNULL_ALL
 }
 
 static nlua_ref_state_t *nlua_new_ref_state(lua_State *lstate, bool is_thread)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   nlua_ref_state_t *ref_state = lua_newuserdata(lstate, sizeof(*ref_state));
   CLEAR_POINTER(ref_state);
@@ -477,7 +477,7 @@ FUNC_ATTR_NONNULL_ALL
 }
 
 static nlua_ref_state_t *nlua_get_ref_state(lua_State *lstate)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   lua_getfield(lstate, LUA_REGISTRYINDEX, "nlua.ref_state");
   nlua_ref_state_t *ref_state = lua_touserdata(lstate, -1);
@@ -487,14 +487,14 @@ FUNC_ATTR_NONNULL_ALL
 }
 
 LuaRef nlua_get_nil_ref(lua_State *lstate)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   nlua_ref_state_t *ref_state = nlua_get_ref_state(lstate);
   return ref_state->nil_ref;
 }
 
 LuaRef nlua_get_empty_dict_ref(lua_State *lstate)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   nlua_ref_state_t *ref_state = nlua_get_ref_state(lstate);
   return ref_state->empty_dict_ref;
@@ -506,7 +506,7 @@ int nlua_get_global_ref_count(void)
 }
 
 static void nlua_common_vim_init(lua_State *lstate, bool is_thread)
-FUNC_ATTR_NONNULL_ARG(1)
+  FUNC_ATTR_NONNULL_ARG(1)
 {
   nlua_ref_state_t *ref_state = nlua_new_ref_state(lstate, is_thread);
   lua_setfield(lstate, LUA_REGISTRYINDEX, "nlua.ref_state");
@@ -578,7 +578,7 @@ static int nlua_module_preloader(lua_State *lstate)
 }
 
 static bool nlua_init_packages(lua_State *lstate)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   // put builtin packages in preload
   lua_getglobal(lstate, "package");  // [package]
@@ -609,7 +609,7 @@ FUNC_ATTR_NONNULL_ALL
 
 /// "vim.ui_attach(ns_id, {ext_foo=true}, cb)" function
 static int nlua_ui_attach(lua_State *lstate)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   uint32_t ns_id = (uint32_t)luaL_checkinteger(lstate, 1);
 
@@ -660,7 +660,7 @@ ok:
 
 /// "vim.ui_detach(ns_id)" function
 static int nlua_ui_detach(lua_State *lstate)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   uint32_t ns_id = (uint32_t)luaL_checkinteger(lstate, 1);
 
@@ -852,7 +852,7 @@ void nlua_free_all_mem(void)
 }
 
 static void nlua_common_free_all_mem(lua_State *lstate)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   nlua_ref_state_t *ref_state = nlua_get_ref_state(lstate);
   nlua_unref(lstate, ref_state, ref_state->nil_ref);
@@ -912,7 +912,7 @@ static void nlua_print_event(void **argv)
 ///
 /// @param  lstate  Lua interpreter state.
 static int nlua_print(lua_State *const lstate)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
 #define PRINT_ERROR(msg) \
   do { \
@@ -982,7 +982,7 @@ nlua_print_error:
 ///
 /// @param  lstate  Lua interpreter state.
 static int nlua_require(lua_State *const lstate)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   const char *name = luaL_checkstring(lstate, 1);
   lua_settop(lstate, 1);
@@ -1038,7 +1038,7 @@ FUNC_ATTR_NONNULL_ALL
 ///
 /// @param  lstate  Lua interpreter state.
 static int nlua_debug(lua_State *lstate)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   const typval_T input_args[] = {
     {
@@ -1309,7 +1309,7 @@ LuaRef api_new_luaref(LuaRef original_ref)
 ///
 /// @return Result of the execution.
 void nlua_typval_eval(const String str, typval_T *const arg, typval_T *const ret_tv)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
 #define EVALHEADER "local _A=select(1,...) return ("
   const size_t lcmd_len = sizeof(EVALHEADER) - 1 + str.size + 1;
@@ -1332,7 +1332,7 @@ FUNC_ATTR_NONNULL_ALL
 
 void nlua_typval_call(const char *str, size_t len, typval_T *const args, int argcount,
                       typval_T *ret_tv)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
 #define CALLHEADER "return "
 #define CALLSUFFIX "(...)"
@@ -1358,7 +1358,7 @@ FUNC_ATTR_NONNULL_ALL
 }
 
 void nlua_call_user_expand_func(expand_T *xp, typval_T *ret_tv)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   lua_State *const lstate = global_lstate;
 
@@ -1569,7 +1569,7 @@ bool nlua_is_deferred_safe(void)
 ///
 /// @param  eap  VimL command being run.
 void ex_lua(exarg_T *const eap)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   size_t len;
   char *code = script_get(eap, &len);
@@ -1600,7 +1600,7 @@ FUNC_ATTR_NONNULL_ALL
 ///
 /// @param  eap  VimL command being run.
 void ex_luado(exarg_T *const eap)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   if (u_save(eap->line1 - 1, eap->line2 + 1) == FAIL) {
     emsg(_("cannot save undo information"));
@@ -1681,7 +1681,7 @@ FUNC_ATTR_NONNULL_ALL
 ///
 /// @param  eap  VimL command being run.
 void ex_luafile(exarg_T *const eap)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   nlua_exec_file((const char *)eap->arg);
 }
@@ -1695,7 +1695,7 @@ FUNC_ATTR_NONNULL_ALL
 ///
 /// @return  true if everything ok, false if there was an error (echoed)
 bool nlua_exec_file(const char *path)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   lua_State *const lstate = global_lstate;
 

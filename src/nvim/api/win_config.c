@@ -155,8 +155,8 @@
 ///
 /// @return Window handle, or 0 on error
 Window nvim_open_win(Buffer buffer, Boolean enter, Dict(float_config) *config, Error *err)
-FUNC_API_SINCE(6)
-FUNC_API_CHECK_TEXTLOCK
+  FUNC_API_SINCE(6)
+  FUNC_API_CHECK_TEXTLOCK
 {
   FloatConfig fconfig = FLOAT_CONFIG_INIT;
   if (!parse_float_config(config, &fconfig, false, true, err)) {
@@ -198,7 +198,7 @@ FUNC_API_CHECK_TEXTLOCK
 ///                     see |nvim_open_win()|
 /// @param[out] err     Error details, if any
 void nvim_win_set_config(Window window, Dict(float_config) *config, Error *err)
-FUNC_API_SINCE(6)
+  FUNC_API_SINCE(6)
 {
   win_T *win = find_window_by_handle(window, err);
   if (!win) {
@@ -236,7 +236,7 @@ FUNC_API_SINCE(6)
 /// @param[out] err Error details, if any
 /// @return     Map defining the window configuration, see |nvim_open_win()|
 Dictionary nvim_win_get_config(Window window, Error *err)
-FUNC_API_SINCE(6)
+  FUNC_API_SINCE(6)
 {
   Dictionary rv = ARRAY_DICT_INIT;
 

@@ -370,7 +370,7 @@ static void start_stuff(void)
 
 /// Return true if the stuff buffer is empty.
 int stuff_empty(void)
-FUNC_ATTR_PURE
+  FUNC_ATTR_PURE
 {
   return (readbuf1.bh_first.b_next == NULL && readbuf2.bh_first.b_next == NULL);
 }
@@ -378,7 +378,7 @@ FUNC_ATTR_PURE
 /// Return true if readbuf1 is empty.  There may still be redo characters in
 /// redbuf2.
 int readbuf1_empty(void)
-FUNC_ATTR_PURE
+  FUNC_ATTR_PURE
 {
   return (readbuf1.bh_first.b_next == NULL);
 }
@@ -986,7 +986,7 @@ int ins_char_typebuf(int c, int modifiers)
 ///
 /// @param tb_change_cnt  old value of typebuf.tb_change_cnt
 bool typebuf_changed(int tb_change_cnt)
-FUNC_ATTR_PURE
+  FUNC_ATTR_PURE
 {
   return tb_change_cnt != 0 && (typebuf.tb_change_cnt != tb_change_cnt
                                 || typebuf_was_filled);
@@ -995,14 +995,14 @@ FUNC_ATTR_PURE
 /// Return true if there are no characters in the typeahead buffer that have
 /// not been typed (result from a mapping or come from ":normal").
 int typebuf_typed(void)
-FUNC_ATTR_PURE
+  FUNC_ATTR_PURE
 {
   return typebuf.tb_maplen == 0;
 }
 
 // Return the number of characters that are mapped (or not typed).
 int typebuf_maplen(void)
-FUNC_ATTR_PURE
+  FUNC_ATTR_PURE
 {
   return typebuf.tb_maplen;
 }
@@ -1077,7 +1077,7 @@ void del_typebuf(int len, int offset)
 // Write typed characters to script file.
 // If recording is on put the character in the recordbuffer.
 static void gotchars(const char_u *chars, size_t len)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   const char_u *s = chars;
   static char_u buf[4] = { 0 };
@@ -1330,7 +1330,7 @@ void close_all_scripts(void)
 
 /// Return true when reading keys from a script file.
 int using_script(void)
-FUNC_ATTR_PURE
+  FUNC_ATTR_PURE
 {
   return scriptin[curscript] != NULL;
 }
@@ -1659,7 +1659,7 @@ int char_avail(void)
 
 /// "getchar()" and "getcharstr()" functions
 static void getchar_common(typval_T *argvars, typval_T *rettv)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   varnumber_T n;
   bool error = false;
@@ -2884,7 +2884,7 @@ int inchar(char_u *buf, int maxlen, long wait_time)
 // "buf[]" must have room to triple the number of bytes!
 // Returns the new length.
 int fix_input_buffer(char_u *buf, int len)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   if (!using_script()) {
     // Should not escape K_SPECIAL reading input from the user because vim

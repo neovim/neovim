@@ -84,7 +84,7 @@ typedef struct {
 
 static inline void viml_parser_init(ParserState *ret_pstate, ParserLineGetter get_line,
                                     void *cookie, ParserHighlight *colors)
-REAL_FATTR_ALWAYS_INLINE REAL_FATTR_NONNULL_ARG(1, 2);
+  REAL_FATTR_ALWAYS_INLINE REAL_FATTR_NONNULL_ARG(1, 2);
 
 /// Initialize a new parser state instance
 ///
@@ -111,7 +111,7 @@ static inline void viml_parser_init(ParserState *const ret_pstate, const ParserL
 }
 
 static inline void viml_parser_destroy(ParserState *pstate)
-REAL_FATTR_NONNULL_ALL REAL_FATTR_ALWAYS_INLINE;
+  REAL_FATTR_NONNULL_ALL REAL_FATTR_ALWAYS_INLINE;
 
 /// Free all memory allocated by the parser on heap
 ///
@@ -129,7 +129,7 @@ static inline void viml_parser_destroy(ParserState *const pstate)
 }
 
 static inline void viml_preader_get_line(ParserInputReader *preader, ParserLine *ret_pline)
-REAL_FATTR_NONNULL_ALL;
+  REAL_FATTR_NONNULL_ALL;
 
 /// Get one line from ParserInputReader
 static inline void viml_preader_get_line(ParserInputReader *const preader,
@@ -153,7 +153,7 @@ static inline void viml_preader_get_line(ParserInputReader *const preader,
 }
 
 static inline bool viml_parser_get_remaining_line(ParserState *pstate, ParserLine *ret_pline)
-REAL_FATTR_ALWAYS_INLINE REAL_FATTR_WARN_UNUSED_RESULT REAL_FATTR_NONNULL_ALL;
+  REAL_FATTR_ALWAYS_INLINE REAL_FATTR_WARN_UNUSED_RESULT REAL_FATTR_NONNULL_ALL;
 
 /// Get currently parsed line, shifted to pstate->pos.col
 ///
@@ -178,7 +178,7 @@ static inline bool viml_parser_get_remaining_line(ParserState *const pstate,
 }
 
 static inline void viml_parser_advance(ParserState *pstate, size_t len)
-REAL_FATTR_ALWAYS_INLINE REAL_FATTR_NONNULL_ALL;
+  REAL_FATTR_ALWAYS_INLINE REAL_FATTR_NONNULL_ALL;
 
 /// Advance position by a given number of bytes
 ///
@@ -200,7 +200,7 @@ static inline void viml_parser_advance(ParserState *const pstate, const size_t l
 
 static inline void viml_parser_highlight(ParserState *pstate, ParserPosition start, size_t len,
                                          const char *group)
-REAL_FATTR_ALWAYS_INLINE REAL_FATTR_NONNULL_ALL;
+  REAL_FATTR_ALWAYS_INLINE REAL_FATTR_NONNULL_ALL;
 
 /// Record highlighting of some region of text
 ///

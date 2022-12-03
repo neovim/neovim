@@ -1565,7 +1565,7 @@ int get_digraph(bool cmdline)
 /// @return If no match, return "char2". If "meta_char" is true and "char1"
 //          is a space, return "char2" | 0x80.
 static int getexactdigraph(int char1, int char2, bool meta_char)
-FUNC_ATTR_PURE
+  FUNC_ATTR_PURE
 {
   int retval = 0;
 
@@ -1616,7 +1616,7 @@ FUNC_ATTR_PURE
 ///
 /// @return The digraph.
 int digraph_get(int char1, int char2, bool meta_char)
-FUNC_ATTR_PURE
+  FUNC_ATTR_PURE
 {
   int retval;
 
@@ -1699,7 +1699,7 @@ void putdigraph(char *str)
 }
 
 static void digraph_header(const char *msg)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   if (msg_col > 0) {
     msg_putchar('\n');
@@ -1821,7 +1821,7 @@ struct dg_header_entry {
 };
 
 static void printdigraph(const digr_T *dp, result_T *previous)
-FUNC_ATTR_NONNULL_ARG(1)
+  FUNC_ATTR_NONNULL_ARG(1)
 {
   char_u buf[30];
   int list_width = 13;

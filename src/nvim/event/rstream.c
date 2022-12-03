@@ -21,21 +21,21 @@
 #endif
 
 void rstream_init_fd(Loop *loop, Stream *stream, int fd, size_t bufsize)
-FUNC_ATTR_NONNULL_ARG(1, 2)
+  FUNC_ATTR_NONNULL_ARG(1, 2)
 {
   stream_init(loop, stream, fd, NULL);
   rstream_init(stream, bufsize);
 }
 
 void rstream_init_stream(Stream *stream, uv_stream_t *uvstream, size_t bufsize)
-FUNC_ATTR_NONNULL_ARG(1, 2)
+  FUNC_ATTR_NONNULL_ARG(1, 2)
 {
   stream_init(NULL, stream, -1, uvstream);
   rstream_init(stream, bufsize);
 }
 
 void rstream_init(Stream *stream, size_t bufsize)
-FUNC_ATTR_NONNULL_ARG(1)
+  FUNC_ATTR_NONNULL_ARG(1)
 {
   stream->buffer = rbuffer_new(bufsize);
   stream->buffer->data = stream;
@@ -47,7 +47,7 @@ FUNC_ATTR_NONNULL_ARG(1)
 ///
 /// @param stream The `Stream` instance
 void rstream_start(Stream *stream, stream_read_cb cb, void *data)
-FUNC_ATTR_NONNULL_ARG(1)
+  FUNC_ATTR_NONNULL_ARG(1)
 {
   stream->read_cb = cb;
   stream->cb_data = data;
@@ -62,7 +62,7 @@ FUNC_ATTR_NONNULL_ARG(1)
 ///
 /// @param stream The `Stream` instance
 void rstream_stop(Stream *stream)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   if (stream->uvstream) {
     uv_read_stop(stream->uvstream);

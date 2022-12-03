@@ -384,7 +384,7 @@ errret:
 ///
 /// @return name of the function.
 char_u *deref_func_name(const char *name, int *lenp, partial_T **const partialp, bool no_autoload)
-FUNC_ATTR_NONNULL_ARG(1, 2)
+  FUNC_ATTR_NONNULL_ARG(1, 2)
 {
   if (partialp != NULL) {
     *partialp = NULL;
@@ -521,8 +521,8 @@ int get_func_tv(const char_u *name, int len, typval_T *rettv, char **arg, funcex
 ///
 /// @return true if it starts with <SID> or s:, false otherwise.
 static inline bool eval_fname_sid(const char *const name)
-FUNC_ATTR_PURE FUNC_ATTR_ALWAYS_INLINE FUNC_ATTR_WARN_UNUSED_RESULT
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_PURE FUNC_ATTR_ALWAYS_INLINE FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_NONNULL_ALL
 {
   return *name == 's' || TOUPPER_ASC(name[2]) == 'I';
 }
@@ -545,7 +545,7 @@ FUNC_ATTR_NONNULL_ALL
 ///         memory.
 static char *fname_trans_sid(const char *const name, char *const fname_buf, char **const tofree,
                              int *const error)
-FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
   const int llen = eval_fname_script(name);
   if (llen == 0) {
@@ -835,7 +835,7 @@ static void func_clear_free(ufunc_T *fp, bool force)
 /// @param selfdict  Dictionary for "self" for dictionary functions.
 void call_user_func(ufunc_T *fp, int argcount, typval_T *argvars, typval_T *rettv,
                     linenr_T firstline, linenr_T lastline, dict_T *selfdict)
-FUNC_ATTR_NONNULL_ARG(1, 3, 4)
+  FUNC_ATTR_NONNULL_ARG(1, 3, 4)
 {
   bool using_sandbox = false;
   funccall_T *fc;
@@ -1233,7 +1233,7 @@ static bool func_name_refcount(const char_u *name)
 /// Call a user function after checking the arguments.
 static int call_user_func_check(ufunc_T *fp, int argcount, typval_T *argvars, typval_T *rettv,
                                 funcexe_T *funcexe, dict_T *selfdict)
-FUNC_ATTR_NONNULL_ARG(1, 3, 4, 5)
+  FUNC_ATTR_NONNULL_ARG(1, 3, 4, 5)
 {
   if (fp->uf_flags & FC_LUAREF) {
     return typval_exec_lua_callable(fp->uf_luaref, argcount, argvars, rettv);
@@ -1435,7 +1435,7 @@ varnumber_T callback_call_retnr(Callback *callback, int argcount, typval_T *argv
 /// Give an error message for the result of a function.
 /// Nothing if "error" is FCERR_NONE.
 static void user_func_error(int error, const char_u *name)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   switch (error) {
   case FCERR_UNKNOWN:
@@ -1469,7 +1469,7 @@ FUNC_ATTR_NONNULL_ALL
 /// as the first argument. @see call_func
 static void argv_add_base(typval_T *const basetv, typval_T **const argvars, int *const argcount,
                           typval_T *const new_argvars, int *const argv_base)
-FUNC_ATTR_NONNULL_ARG(2, 3, 4, 5)
+  FUNC_ATTR_NONNULL_ARG(2, 3, 4, 5)
 {
   if (basetv != NULL) {
     // Method call: base->Method()
@@ -1495,7 +1495,7 @@ FUNC_ATTR_NONNULL_ARG(2, 3, 4, 5)
 ///         the error, see do_cmdline()).
 int call_func(const char *funcname, int len, typval_T *rettv, int argcount_in, typval_T *argvars_in,
               funcexe_T *funcexe)
-FUNC_ATTR_NONNULL_ARG(1, 3, 5, 6)
+  FUNC_ATTR_NONNULL_ARG(1, 3, 5, 6)
 {
   int ret = FAIL;
   int error = FCERR_NONE;
@@ -1727,7 +1727,7 @@ static void list_func_head(ufunc_T *fp, int indent, bool force)
 ///
 /// @return the function name in allocated memory, or NULL for failure.
 char_u *trans_function_name(char **pp, bool skip, int flags, funcdict_T *fdp, partial_T **partial)
-FUNC_ATTR_NONNULL_ARG(1)
+  FUNC_ATTR_NONNULL_ARG(1)
 {
   char *name = NULL;
   const char_u *start;
@@ -2925,8 +2925,8 @@ void func_ptr_ref(ufunc_T *fp)
 /// a: or a:000 are referenced as all these are statically allocated within
 /// funccall structure.
 static inline bool fc_referenced(const funccall_T *const fc)
-FUNC_ATTR_ALWAYS_INLINE FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_ALWAYS_INLINE FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_NONNULL_ALL
 {
   return ((fc->l_varlist.lv_refcount  // NOLINT(runtime/deprecated)
            != DO_NOT_FREE_CNT)

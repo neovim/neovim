@@ -63,7 +63,7 @@ static const char *const xdg_defaults[] = {
 ///
 /// @return [allocated] variable value.
 char *stdpaths_get_xdg_var(const XDGVarType idx)
-FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_WARN_UNUSED_RESULT
 {
   const char *const env = xdg_env_vars[idx];
   const char *const fallback = xdg_defaults[idx];
@@ -107,7 +107,7 @@ FUNC_ATTR_WARN_UNUSED_RESULT
 ///
 /// @return [allocated] "{xdg_directory}/nvim"
 char *get_xdg_home(const XDGVarType idx)
-FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_WARN_UNUSED_RESULT
 {
   char *dir = stdpaths_get_xdg_var(idx);
   if (dir) {
@@ -133,7 +133,7 @@ FUNC_ATTR_WARN_UNUSED_RESULT
 ///
 /// @return [allocated] `$XDG_CACHE_HOME/nvim/{fname}`
 char *stdpaths_user_cache_subpath(const char *fname)
-FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL FUNC_ATTR_NONNULL_RET
+  FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL FUNC_ATTR_NONNULL_RET
 {
   return concat_fnames_realloc(get_xdg_home(kXDGCacheHome), fname, true);
 }
@@ -144,7 +144,7 @@ FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL FUNC_ATTR_NONNULL_RET
 ///
 /// @return [allocated] `$XDG_CONFIG_HOME/nvim/{fname}`
 char *stdpaths_user_conf_subpath(const char *fname)
-FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL FUNC_ATTR_NONNULL_RET
+  FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL FUNC_ATTR_NONNULL_RET
 {
   return concat_fnames_realloc(get_xdg_home(kXDGConfigHome), fname, true);
 }
@@ -155,7 +155,7 @@ FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL FUNC_ATTR_NONNULL_RET
 ///
 /// @return [allocated] `$XDG_DATA_HOME/nvim/{fname}`
 char *stdpaths_user_data_subpath(const char *fname)
-FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL FUNC_ATTR_NONNULL_RET
+  FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL FUNC_ATTR_NONNULL_RET
 {
   return concat_fnames_realloc(get_xdg_home(kXDGDataHome), fname, true);
 }
@@ -169,7 +169,7 @@ FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL FUNC_ATTR_NONNULL_RET
 /// @return [allocated] `$XDG_STATE_HOME/nvim/{fname}`.
 char *stdpaths_user_state_subpath(const char *fname, const size_t trailing_pathseps,
                                   const bool escape_commas)
-FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL FUNC_ATTR_NONNULL_RET
+  FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL FUNC_ATTR_NONNULL_RET
 {
   char *ret = concat_fnames_realloc(get_xdg_home(kXDGStateHome), fname, true);
   const size_t len = strlen(ret);

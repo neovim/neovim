@@ -912,7 +912,7 @@ theend:
 /// diff will be used anyway.
 ///
 int diff_internal(void)
-FUNC_ATTR_PURE
+  FUNC_ATTR_PURE
 {
   return (diff_flags & DIFF_INTERNAL) != 0 && *p_dex == NUL;
 }
@@ -1793,7 +1793,7 @@ static void diff_copy_entry(diff_T *dprev, diff_T *dp, int idx_orig, int idx_new
 ///
 /// @param tp
 void diff_clear(tabpage_T *tp)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   diff_T *next_p;
   for (diff_T *p = tp->tp_first_diff; p != NULL; p = next_p) {
@@ -2227,7 +2227,7 @@ int diff_check(win_T *wp, linenr_T lnum)
 ///
 /// @return true if two entries are equal.
 static bool diff_equal_entry(diff_T *dp, int idx1, int idx2)
-FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ARG(1)
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ARG(1)
 {
   if (dp->df_count[idx1] != dp->df_count[idx2]) {
     return false;
@@ -2573,28 +2573,28 @@ int diffopt_changed(void)
 
 /// Check that "diffopt" contains "horizontal".
 bool diffopt_horizontal(void)
-FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
   return (diff_flags & DIFF_HORIZONTAL) != 0;
 }
 
 // Return true if 'diffopt' contains "hiddenoff".
 bool diffopt_hiddenoff(void)
-FUNC_ATTR_PURE
+  FUNC_ATTR_PURE
 {
   return (diff_flags & DIFF_HIDDEN_OFF) != 0;
 }
 
 // Return true if 'diffopt' contains "closeoff".
 bool diffopt_closeoff(void)
-FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
   return (diff_flags & DIFF_CLOSE_OFF) != 0;
 }
 
 // Return true if 'diffopt' contains "filler".
 bool diffopt_filler(void)
-FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
   return (diff_flags & DIFF_FILLER) != 0;
 }
@@ -2608,7 +2608,7 @@ FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 ///
 /// @return true if the line was added, no other buffer has it.
 bool diff_find_change(win_T *wp, linenr_T lnum, int *startp, int *endp)
-FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
 {
   // Make a copy of the line, the next ml_get() will invalidate it.
   char *line_org = xstrdup(ml_get_buf(wp->w_buffer, lnum, false));
@@ -2746,7 +2746,7 @@ FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
 ///
 /// @return false if there are no diff blocks at all in this window.
 bool diff_infold(win_T *wp, linenr_T lnum)
-FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ARG(1)
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ARG(1)
 {
   // Return if 'diff' isn't set.
   if (!wp->w_p_diff) {
@@ -2973,7 +2973,7 @@ void ex_diffgetput(exarg_T *eap)
     aucmd_restbuf(&aco);
   }
 
-theend:
+  theend:
   diff_busy = false;
 
   if (diff_need_update) {
@@ -3194,7 +3194,7 @@ static void diff_fold_update(diff_T *dp, int skip_idx)
 ///
 /// @param  buf  buffer to check.
 bool diff_mode_buf(buf_T *buf)
-FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ARG(1)
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ARG(1)
 {
   FOR_ALL_TABS(tp) {
     if (diff_buf_idx_tp(buf, tp) != DB_COUNT) {

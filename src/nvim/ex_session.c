@@ -168,7 +168,7 @@ static frame_T *ses_skipframe(frame_T *fr)
 /// @return  true if frame "fr" has a window somewhere that we want to save in
 ///          the Session.
 static bool ses_do_frame(const frame_T *fr)
-FUNC_ATTR_NONNULL_ARG(1)
+  FUNC_ATTR_NONNULL_ARG(1)
 {
   const frame_T *frc;
 

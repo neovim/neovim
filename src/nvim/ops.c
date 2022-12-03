@@ -859,7 +859,7 @@ static bool is_append_register(int regname)
 /// @returns true when register should be inserted literally
 /// (selection or clipboard)
 static inline bool is_literal_register(int regname)
-FUNC_ATTR_CONST
+  FUNC_ATTR_CONST
 {
   return regname == '*' || regname == '+';
 }
@@ -867,7 +867,7 @@ FUNC_ATTR_CONST
 /// @return  a copy of contents in register `name` for use in do_put. Should be
 ///          freed by caller.
 yankreg_T *copy_register(int name)
-FUNC_ATTR_NONNULL_RET
+  FUNC_ATTR_NONNULL_RET
 {
   yankreg_T *reg = get_yank_register(name, YREG_PASTE);
 
@@ -969,7 +969,7 @@ int do_record(int c)
 }
 
 static void set_yreg_additional_data(yankreg_T *reg, dict_T *additional_data)
-FUNC_ATTR_NONNULL_ARG(1)
+  FUNC_ATTR_NONNULL_ARG(1)
 {
   if (reg->additional_data == additional_data) {
     return;
@@ -2133,7 +2133,7 @@ void op_tilde(oparg_T *oap)
 ///
 /// @return  true if some character was changed.
 static int swapchars(int op_type, pos_T *pos, int length)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   int did_change = 0;
 
@@ -2160,7 +2160,7 @@ FUNC_ATTR_NONNULL_ALL
 ///
 /// @return  true when something actually changed.
 bool swapchar(int op_type, pos_T *pos)
-FUNC_ATTR_NONNULL_ARG(2)
+  FUNC_ATTR_NONNULL_ARG(2)
 {
   const int c = gchar_pos(pos);
 
@@ -2570,7 +2570,7 @@ void clear_registers(void)
 ///
 /// @param reg  must not be NULL (but `reg->y_array` might be)
 void free_register(yankreg_T *reg)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   set_yreg_additional_data(reg, NULL);
   if (reg->y_array != NULL) {
@@ -2590,7 +2590,7 @@ FUNC_ATTR_NONNULL_ALL
 /// @param message show message when more than `&report` lines are yanked.
 /// @returns whether the operation register was writable.
 bool op_yank(oparg_T *oap, bool message)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   // check for read-only register
   if (oap->regname != 0 && !valid_yank_reg(oap->regname, true)) {
@@ -2819,7 +2819,7 @@ static void op_yank_reg(oparg_T *oap, bool message, yankreg_T *reg, bool append)
 /// @param exclude_trailing_space  if true, do not copy trailing whitespaces.
 static void yank_copy_line(yankreg_T *reg, struct block_def *bd, size_t y_idx,
                            bool exclude_trailing_space)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   if (exclude_trailing_space) {
     bd->endspaces = 0;
@@ -2850,7 +2850,7 @@ FUNC_ATTR_NONNULL_ALL
 /// @param oap Operator arguments.
 /// @param reg The yank register used.
 static void do_autocmd_textyankpost(oparg_T *oap, yankreg_T *reg)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   static bool recursive = false;
 
@@ -3902,7 +3902,7 @@ void ex_display(exarg_T *eap)
 ///
 /// @param skip_esc  if true, ignore trailing ESC
 static void dis_msg(const char *p, bool skip_esc)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   int n;
   int l;
@@ -4865,7 +4865,7 @@ MotionType get_reg_type(int regname, colnr_T *reg_width)
 ///                 be at least NUMBUFLEN+2 to always fit the value.
 /// @param buf_len The allocated size of the buffer.
 void format_reg_type(MotionType reg_type, colnr_T reg_width, char *buf, size_t buf_len)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   assert(buf_len > 1);
   switch (reg_type) {
@@ -5153,7 +5153,7 @@ void write_reg_contents_ex(int name, const char *str, ssize_t len, bool must_app
 /// @param str_list True if str is `char_u **`.
 static void str_to_reg(yankreg_T *y_ptr, MotionType yank_type, const char *str, size_t len,
                        colnr_T blocklen, bool str_list)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   if (y_ptr->y_array == NULL) {  // NULL means empty register
     y_ptr->y_size = 0;
@@ -5639,7 +5639,7 @@ bool set_ref_in_opfunc(int copyID)
 
 /// Handle the "g@" operator: call 'operatorfunc'.
 static void op_function(const oparg_T *oap)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   const pos_T orig_start = curbuf->b_op_start;
   const pos_T orig_end = curbuf->b_op_end;
@@ -6664,7 +6664,7 @@ static bool get_clipboard(int name, yankreg_T **target, bool quiet)
   *target = reg;
   return true;
 
-err:
+  err:
   if (reg->y_array) {
     for (size_t i = 0; i < reg->y_size; i++) {
       xfree(reg->y_array[i]);
@@ -6769,7 +6769,7 @@ void restore_batch_count(int save_count)
 
 /// Check whether register is empty
 static inline bool reg_empty(const yankreg_T *const reg)
-FUNC_ATTR_PURE
+  FUNC_ATTR_PURE
 {
   return (reg->y_array == NULL
           || reg->y_size == 0
@@ -6783,7 +6783,7 @@ FUNC_ATTR_PURE
 /// @see op_register_iter
 const void *op_global_reg_iter(const void *const iter, char *const name, yankreg_T *const reg,
                                bool *is_unnamed)
-FUNC_ATTR_NONNULL_ARG(2, 3, 4) FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_NONNULL_ARG(2, 3, 4) FUNC_ATTR_WARN_UNUSED_RESULT
 {
   return op_reg_iter(iter, y_regs, name, reg, is_unnamed);
 }
@@ -6799,7 +6799,7 @@ FUNC_ATTR_NONNULL_ARG(2, 3, 4) FUNC_ATTR_WARN_UNUSED_RESULT
 ///         NULL if iteration is over.
 const void *op_reg_iter(const void *const iter, const yankreg_T *const regs, char *const name,
                         yankreg_T *const reg, bool *is_unnamed)
-FUNC_ATTR_NONNULL_ARG(3, 4, 5) FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_NONNULL_ARG(3, 4, 5) FUNC_ATTR_WARN_UNUSED_RESULT
 {
   *name = NUL;
   const yankreg_T *iter_reg = (iter == NULL
@@ -6825,7 +6825,7 @@ FUNC_ATTR_NONNULL_ARG(3, 4, 5) FUNC_ATTR_WARN_UNUSED_RESULT
 
 /// Get a number of non-empty registers
 size_t op_reg_amount(void)
-FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_WARN_UNUSED_RESULT
 {
   size_t ret = 0;
   for (size_t i = 0; i < NUM_SAVED_REGISTERS; i++) {

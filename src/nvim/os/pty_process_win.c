@@ -17,7 +17,7 @@
 #endif
 
 static void CALLBACK pty_process_finish1(void *context, BOOLEAN unused)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   PtyProcess *ptyproc = (PtyProcess *)context;
   Process *proc = (Process *)ptyproc;
@@ -30,7 +30,7 @@ FUNC_ATTR_NONNULL_ALL
 
 /// @returns zero on success, or negative error code.
 int pty_process_spawn(PtyProcess *ptyproc)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   Process *proc = (Process *)ptyproc;
   int status = 0;
@@ -153,13 +153,13 @@ const char *pty_process_tty_name(PtyProcess *ptyproc)
 }
 
 void pty_process_resize(PtyProcess *ptyproc, uint16_t width, uint16_t height)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   os_conpty_set_size(ptyproc->conpty, width, height);
 }
 
 void pty_process_close(PtyProcess *ptyproc)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   Process *proc = (Process *)ptyproc;
 
@@ -171,24 +171,24 @@ FUNC_ATTR_NONNULL_ALL
 }
 
 void pty_process_close_master(PtyProcess *ptyproc)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
 }
 
 void pty_process_teardown(Loop *loop)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
 }
 
 static void pty_process_connect_cb(uv_connect_t *req, int status)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   assert(status == 0);
   req->handle = NULL;
 }
 
 static void wait_eof_timer_cb(uv_timer_t *wait_eof_timer)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   PtyProcess *ptyproc = wait_eof_timer->data;
   Process *proc = (Process *)ptyproc;
@@ -200,7 +200,7 @@ FUNC_ATTR_NONNULL_ALL
 }
 
 static void pty_process_finish2(PtyProcess *ptyproc)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   Process *proc = (Process *)ptyproc;
 
@@ -225,7 +225,7 @@ FUNC_ATTR_NONNULL_ALL
 /// @returns zero on success, or error code of MultiByteToWideChar function.
 ///
 static int build_cmd_line(char **argv, wchar_t **cmd_line, bool is_cmdexe)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   size_t utf8_cmd_line_len = 0;
   size_t argc = 0;
@@ -276,7 +276,7 @@ FUNC_ATTR_NONNULL_ALL
 /// @param[in]  src Pointer to argument.
 ///
 static void quote_cmd_arg(char *dest, size_t dest_remaining, const char *src)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   size_t src_len = strlen(src);
   bool quote_hit = true;

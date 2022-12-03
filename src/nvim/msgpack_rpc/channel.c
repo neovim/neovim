@@ -294,7 +294,7 @@ static void parse_msgpack(Channel *channel)
 
 /// Handles requests and notifications received on the channel.
 static void handle_request(Channel *channel, Unpacker *p, Array args)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   assert(p->type == kMessageTypeRequest || p->type == kMessageTypeNotification);
 

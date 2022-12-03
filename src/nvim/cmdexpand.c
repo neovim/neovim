@@ -798,7 +798,7 @@ char *ExpandOne(expand_T *xp, char *str, char *orig, int options, int mode)
 
 /// Prepare an expand structure for use.
 void ExpandInit(expand_T *xp)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   CLEAR_POINTER(xp);
   xp->xp_backslash = XP_BS_NONE;
@@ -1067,7 +1067,7 @@ static bool expand_showtail(expand_T *xp)
 ///
 /// @param context EXPAND_FILES etc.
 char *addstar(char *fname, size_t len, int context)
-FUNC_ATTR_NONNULL_RET
+  FUNC_ATTR_NONNULL_RET
 {
   char *retval;
   size_t i, j;
@@ -2570,7 +2570,7 @@ static void ExpandGeneric(expand_T *xp, regmatch_T *regmatch, int *num_file, cha
 ///                      allocated memory.
 /// @param      flagsarg is a combination of EW_* flags.
 static void expand_shellcmd(char *filepat, int *num_file, char ***file, int flagsarg)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   char *pat;
   int i;
@@ -2691,7 +2691,7 @@ FUNC_ATTR_NONNULL_ALL
 /// return the result (either a string, a List or NULL).
 static void *call_user_expand_func(user_expand_func_T user_expand_func, expand_T *xp, int *num_file,
                                    char ***file)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   CmdlineInfo *const ccline = get_cmdline_info();
   char keep = 0;
@@ -3144,7 +3144,7 @@ void f_getcompletion(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     xpc.xp_pattern_len = strlen(xpc.xp_pattern);
   }
 
-theend:
+  theend:
   pat = (char_u *)addstar(xpc.xp_pattern, xpc.xp_pattern_len, xpc.xp_context);
   ExpandOne(&xpc, (char *)pat, NULL, options, WILD_ALL_KEEP);
   tv_list_alloc_ret(rettv, xpc.xp_numfiles);

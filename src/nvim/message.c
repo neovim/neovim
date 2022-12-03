@@ -233,14 +233,14 @@ int verb_msg(char *s)
 }
 
 int msg_attr(const char *s, const int attr)
-FUNC_ATTR_NONNULL_ARG(1)
+  FUNC_ATTR_NONNULL_ARG(1)
 {
   return msg_attr_keep(s, attr, false, false);
 }
 
 /// Similar to msg_outtrans_attr, but support newlines and tabs.
 void msg_multiline_attr(const char *s, int attr, bool check_int, bool *need_clear)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   const char *next_spec = s;
 
@@ -291,7 +291,7 @@ void msg_multiattr(HlMessage hl_msg, const char *kind, bool history)
 
 /// @param keep set keep_msg if it doesn't scroll
 bool msg_attr_keep(const char *s, int attr, bool keep, bool multiline)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   static int entered = 0;
   int retval;
@@ -486,7 +486,7 @@ void trunc_string(char *s, char *buf, int room_in, int buflen)
 // shorter than IOSIZE!!!
 
 int smsg(const char *s, ...)
-FUNC_ATTR_PRINTF(1, 2)
+  FUNC_ATTR_PRINTF(1, 2)
 {
   va_list arglist;
 
@@ -498,7 +498,7 @@ FUNC_ATTR_PRINTF(1, 2)
 }
 
 int smsg_attr(int attr, const char *s, ...)
-FUNC_ATTR_PRINTF(2, 3)
+  FUNC_ATTR_PRINTF(2, 3)
 {
   va_list arglist;
 
@@ -509,7 +509,7 @@ FUNC_ATTR_PRINTF(2, 3)
 }
 
 int smsg_attr_keep(int attr, const char *s, ...)
-FUNC_ATTR_PRINTF(2, 3)
+  FUNC_ATTR_PRINTF(2, 3)
 {
   va_list arglist;
 
@@ -549,7 +549,7 @@ static bool other_sourcing_name(void)
 /// @return [allocated] String with room for one more character. NULL when no
 ///                     message is to be given.
 static char *get_emsg_source(void)
-FUNC_ATTR_MALLOC FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_MALLOC FUNC_ATTR_WARN_UNUSED_RESULT
 {
   if (SOURCING_NAME != NULL && other_sourcing_name()) {
     char *sname = estack_sfile(ESTACK_NONE);
@@ -574,7 +574,7 @@ FUNC_ATTR_MALLOC FUNC_ATTR_WARN_UNUSED_RESULT
 /// @return [allocated] String with room for one more character. NULL when no
 ///                     message is to be given.
 static char *get_emsg_lnum(void)
-FUNC_ATTR_MALLOC FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_MALLOC FUNC_ATTR_WARN_UNUSED_RESULT
 {
   // lnum is 0 when executing a command from the command line
   // argument, we don't want a line number then
@@ -779,7 +779,7 @@ void emsg_invreg(int name)
 
 /// Print an error message with unknown number of arguments
 bool semsg(const char *const fmt, ...)
-FUNC_ATTR_PRINTF(1, 2)
+  FUNC_ATTR_PRINTF(1, 2)
 {
   bool ret;
 
@@ -877,7 +877,7 @@ static void msg_semsg_event(void **argv)
 }
 
 void msg_schedule_semsg(const char *const fmt, ...)
-FUNC_ATTR_PRINTF(1, 2)
+  FUNC_ATTR_PRINTF(1, 2)
 {
   va_list ap;
   va_start(ap, fmt);
@@ -1027,7 +1027,7 @@ int delete_first_msg(void)
 
 /// :messages command implementation
 void ex_messages(void *const eap_p)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   const exarg_T *const eap = (const exarg_T *)eap_p;
   struct msg_hist *p;
@@ -1691,8 +1691,8 @@ int msg_outtrans_special(const char *strstart, bool from, int maxlen)
 ///
 /// @return [allocated] Converted string.
 char *str2special_save(const char *const str, const bool replace_spaces, const bool replace_lt)
-FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_MALLOC
-FUNC_ATTR_NONNULL_RET
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_MALLOC
+  FUNC_ATTR_NONNULL_RET
 {
   garray_T ga;
   ga_init(&ga, 1, 40);
@@ -1717,7 +1717,7 @@ FUNC_ATTR_NONNULL_RET
 ///         for the second time.
 ///         On illegal byte return a string with only that byte.
 const char *str2special(const char **const sp, const bool replace_spaces, const bool replace_lt)
-FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_RET
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_RET
 {
   static char buf[7];
 
@@ -1784,7 +1784,7 @@ FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_RET
 /// @param[out]  buf  Buffer to save results to.
 /// @param[in]  len  Buffer length.
 void str2specialbuf(const char *sp, char *buf, size_t len)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   while (*sp) {
     const char *s = str2special(&sp, false, false);
@@ -2036,7 +2036,7 @@ void msg_puts_attr(const char *const s, const int attr)
 /// @param[in]  len  Length of the string or -1.
 /// @param[in]  attr  Highlight attribute.
 void msg_puts_attr_len(const char *const str, const ptrdiff_t len, int attr)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   assert(len < 0 || memchr(str, 0, (size_t)len) == NULL);
   // If redirection is on, also write to the redirection file.
@@ -2101,7 +2101,7 @@ FUNC_ATTR_NONNULL_ALL
 /// @param[in]  attr  Highlight attributes.
 /// @param[in]  fmt  Format string.
 void msg_printf_attr(const int attr, const char *const fmt, ...)
-FUNC_ATTR_NONNULL_ARG(2) FUNC_ATTR_PRINTF(2, 3)
+  FUNC_ATTR_NONNULL_ARG(2) FUNC_ATTR_PRINTF(2, 3)
 {
   static char msgbuf[IOSIZE];
 
@@ -3408,7 +3408,7 @@ int verbose_open(void)
 /// Give a warning message (for searching).
 /// Use 'w' highlighting and may repeat the message after redrawing
 void give_warning(char *message, bool hl)
-FUNC_ATTR_NONNULL_ARG(1)
+  FUNC_ATTR_NONNULL_ARG(1)
 {
   // Don't do this for ":silent".
   if (msg_silent != 0) {
@@ -3578,7 +3578,7 @@ int do_dialog(int type, char *title, char *message, char *buttons, int dfltbutto
 ///
 /// @param lowercase  make character lower case
 static int copy_char(const char *from, char *to, bool lowercase)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   if (lowercase) {
     int c = mb_tolower(utf_ptr2char(from));
@@ -3659,7 +3659,7 @@ static char *console_dialog_alloc(const char *message, char *buttons, bool has_h
 ///
 /// @return  an allocated string with hotkeys.
 static char *msg_show_console_dialog(char *message, char *buttons, int dfltbutton)
-FUNC_ATTR_NONNULL_RET
+  FUNC_ATTR_NONNULL_RET
 {
   bool has_hotkey[HAS_HOTKEY_LEN] = { false };
   char *hotk = console_dialog_alloc(message, buttons, has_hotkey);

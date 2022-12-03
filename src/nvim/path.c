@@ -105,7 +105,7 @@ FileComparison path_full_compare(char *const s1, char *const s2, const bool chec
 /// @return pointer just past the last path separator (empty string, if fname
 ///         ends in a slash), or empty string if fname is NULL.
 char *path_tail(const char *fname)
-FUNC_ATTR_NONNULL_RET
+  FUNC_ATTR_NONNULL_RET
 {
   if (fname == NULL) {
     return "";
@@ -155,7 +155,7 @@ char *path_tail_with_sep(char *fname)
 ///
 /// @return The position of the last path separator + 1.
 const char_u *invocation_path_tail(const char_u *invocation, size_t *len)
-FUNC_ATTR_NONNULL_RET FUNC_ATTR_NONNULL_ARG(1)
+    FUNC_ATTR_NONNULL_RET FUNC_ATTR_NONNULL_ARG(1)
 {
   const char_u *tail = (char_u *)get_past_head((char *)invocation);
   const char_u *p = tail;
@@ -351,7 +351,7 @@ bool dir_of_file_exists(char_u *fname)
 ///
 /// @return 0 if they are equal, non-zero otherwise.
 int path_fnamecmp(const char *fname1, const char *fname2)
-FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
 #ifdef BACKSLASH_IN_FILENAME
   const size_t len1 = strlen(fname1);
@@ -372,7 +372,7 @@ FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 ///
 /// @return 0 if they are equal, non-zero otherwise.
 int path_fnamencmp(const char *const fname1, const char *const fname2, size_t len)
-FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
 #ifdef BACKSLASH_IN_FILENAME
   int c1 = NUL;
@@ -413,7 +413,7 @@ FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 /// @return fname1
 static inline char *do_concat_fnames(char *fname1, const size_t len1, const char *fname2,
                                      const size_t len2, const bool sep)
-FUNC_ATTR_NONNULL_ALL FUNC_ATTR_NONNULL_RET
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_NONNULL_RET
 {
   if (sep && *fname1 && !after_pathsep(fname1, fname1 + len1)) {
     fname1[len1] = PATHSEP;
@@ -435,7 +435,7 @@ FUNC_ATTR_NONNULL_ALL FUNC_ATTR_NONNULL_RET
 ///               if necessary
 /// @return [allocated] Concatenation of fname1 and fname2.
 char *concat_fnames(const char *fname1, const char *fname2, bool sep)
-FUNC_ATTR_NONNULL_ALL FUNC_ATTR_NONNULL_RET
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_NONNULL_RET
 {
   const size_t len1 = strlen(fname1);
   const size_t len2 = strlen(fname2);
@@ -456,7 +456,7 @@ FUNC_ATTR_NONNULL_ALL FUNC_ATTR_NONNULL_RET
 ///               if necessary
 /// @return [allocated] Concatenation of fname1 and fname2.
 char *concat_fnames_realloc(char *fname1, const char *fname2, bool sep)
-FUNC_ATTR_NONNULL_ALL FUNC_ATTR_NONNULL_RET
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_NONNULL_RET
 {
   const size_t len1 = strlen(fname1);
   const size_t len2 = strlen(fname2);
@@ -469,7 +469,7 @@ FUNC_ATTR_NONNULL_ALL FUNC_ATTR_NONNULL_RET
 /// @return `true` if the path separator was added or already existed.
 ///         `false` if the filename is too long.
 bool add_pathsep(char *p)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   const size_t len = strlen(p);
   if (*p != NUL && !after_pathsep(p, p + len)) {
@@ -490,7 +490,7 @@ FUNC_ATTR_NONNULL_ALL
 /// @return [allocated] Copy of absolute path to `fname` or NULL when
 ///                     `fname` is NULL.
 char *FullName_save(const char *fname, bool force)
-FUNC_ATTR_MALLOC
+  FUNC_ATTR_MALLOC
 {
   if (fname == NULL) {
     return NULL;
@@ -508,7 +508,7 @@ FUNC_ATTR_MALLOC
 /// @param name An absolute or relative path.
 /// @return The absolute path of `name`.
 char *save_abs_path(const char *name)
-FUNC_ATTR_MALLOC FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_MALLOC FUNC_ATTR_NONNULL_ALL
 {
   if (!path_is_absolute((char_u *)name)) {
     return FullName_save(name, true);
@@ -521,7 +521,7 @@ FUNC_ATTR_MALLOC FUNC_ATTR_NONNULL_ALL
 /// @returns Unix: True if it contains one of "?[{`'$".
 /// @returns Windows: True if it contains one of "*?$[".
 bool path_has_wildcard(const char *p)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   for (; *p; MB_PTR_ADV(p)) {
 #if defined(UNIX)
@@ -554,7 +554,7 @@ static int pstrcmp(const void *a, const void *b)
 /// @returns Unix: True if it contains one of *?[{.
 /// @returns Windows: True if it contains one of *?[.
 bool path_has_exp_wildcard(const char_u *p)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   for (; *p != NUL; MB_PTR_ADV(p)) {
 #if defined(UNIX)
@@ -586,7 +586,7 @@ FUNC_ATTR_NONNULL_ALL
 ///   - EW_NOTWILD: Add matches literally.
 /// @returns the number of matches found.
 static size_t path_expand(garray_T *gap, const char_u *path, int flags)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   return do_path_expand(gap, (char *)path, 0, flags, false);
 }
@@ -611,7 +611,7 @@ static const char *scandir_next_with_dots(Directory *dir)
 /// Chars before `path + wildoff` do not get expanded.
 static size_t do_path_expand(garray_T *gap, const char *path, size_t wildoff, int flags,
                              bool didstar)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   int start_len = gap->ga_len;
   size_t len;
@@ -1085,7 +1085,7 @@ static void uniquefy_paths(garray_T *gap, char *pattern)
 ///            "/path/file", "/path/dir/", "/path//dir", "/file"
 ///                  ^             ^             ^        ^
 const char *gettail_dir(const char *const fname)
-FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
 {
   const char *dir_end = fname;
   const char *next_dir_end = fname;
@@ -1732,7 +1732,7 @@ char *find_file_name_in_path(char *ptr, size_t len, int options, long count, cha
 ///
 /// @see https://url.spec.whatwg.org/#start-with-a-windows-drive-letter
 bool path_has_drive_letter(const char *p)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   return strlen(p) >= 2
          && ASCII_ISALPHA(p[0])
@@ -1814,7 +1814,7 @@ bool vim_isAbsName(char_u *name)
 ///
 /// @return           FAIL for failure, OK otherwise
 int vim_FullName(const char *fname, char *buf, size_t len, bool force)
-FUNC_ATTR_NONNULL_ARG(2)
+  FUNC_ATTR_NONNULL_ARG(2)
 {
   *buf = NUL;
   if (fname == NULL) {
@@ -1885,7 +1885,7 @@ char *fix_fname(const char *fname)
 // TODO(SplinterOfChaos): Could also be used when mounting case-insensitive
 // file systems.
 void path_fix_case(char *name)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   FileInfo file_info;
   if (!os_fileinfo_link(name, &file_info)) {
@@ -2413,7 +2413,7 @@ int path_is_absolute(const char_u *fname)
 ///
 /// @see os_exepath
 void path_guess_exepath(const char *argv0, char *buf, size_t bufsize)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   const char *path = os_getenv("PATH");
 

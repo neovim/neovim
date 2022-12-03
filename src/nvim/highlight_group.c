@@ -855,7 +855,7 @@ update:
 ///                      it has its own settings.
 /// @param[in]  init  True when initializing.
 void do_highlight(const char *line, const bool forceit, const bool init)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   const char *name_end;
   const char *linep;
@@ -1573,7 +1573,7 @@ static bool highlight_list_arg(const int id, bool didh, const int type, int iarg
 ///
 /// @return "1" if highlight group has attribute, NULL otherwise.
 const char *highlight_has_attr(const int id, const int flag, const int modec)
-FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_PURE
+  FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_PURE
 {
   int attr;
 
@@ -1600,7 +1600,7 @@ FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_PURE
 /// @return color name, possibly in a static buffer. Buffer will be overwritten
 ///         on next highlight_color() call. May return NULL.
 const char *highlight_color(const int id, const char *const what, const int modec)
-FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
 {
   static char name[20];
   int n;
@@ -1750,7 +1750,7 @@ static void set_hl_attr(int idx)
 }
 
 int syn_name2id(const char *name)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   if (name[0] == '@') {
     // if we look up @aaa.bbb, we have to consider @aaa as well
@@ -1764,7 +1764,7 @@ FUNC_ATTR_NONNULL_ALL
 /// @param highlight name e.g. 'Cursor', 'Normal'
 /// @return the highlight id, else 0 if \p name does not exist
 int syn_name2id_len(const char *name, size_t len)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   char name_u[MAX_SYN_NAME + 1];
 
@@ -1786,7 +1786,7 @@ FUNC_ATTR_NONNULL_ALL
 /// Lookup a highlight group name and return its attributes.
 /// Return zero if not found.
 int syn_name2attr(const char_u *name)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   int id = syn_name2id((char *)name);
 
@@ -1988,7 +1988,7 @@ void highlight_attr_set_all(void)
 
 // Apply difference between User[1-9] and HLF_S to HLF_SNC.
 static void combine_stl_hlt(int id, int id_S, int id_alt, int hlcnt, int i, int hlf, int *table)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   HlGroup *const hlt = hl_table;
 
@@ -2164,7 +2164,7 @@ static void highlight_list_two(int cnt, int attr)
 
 /// Function given to ExpandGeneric() to obtain the list of group names.
 const char *get_highlight_name(expand_T *const xp, int idx)
-FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_WARN_UNUSED_RESULT
 {
   return get_highlight_name_ext(xp, idx, true);
 }
@@ -2173,7 +2173,7 @@ FUNC_ATTR_WARN_UNUSED_RESULT
 ///
 /// @param skip_cleared  if true don't return a cleared entry.
 const char *get_highlight_name_ext(expand_T *xp, int idx, bool skip_cleared)
-FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_WARN_UNUSED_RESULT
 {
   if (idx < 0) {
     return NULL;

@@ -258,7 +258,7 @@ void do_exmode(void)
 ///
 /// @param lnum  if 0, only print the command.
 static void msg_verbose_cmd(linenr_T lnum, char *cmd)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   no_wait_return++;
   verbose_enter_scroll();
@@ -1029,7 +1029,7 @@ static int compute_buffer_local_count(cmd_addr_T addr_type, linenr_T lnum, long 
 /// @return  the window number of "win" or,
 ///          the number of windows if "win" is NULL
 static int current_win_nr(const win_T *win)
-FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
   int nr = 0;
 
@@ -2296,7 +2296,7 @@ static char *do_one_cmd(char **cmdlinep, int flags, cstack_T *cstack, LineGetter
   }
   need_rethrow = check_cstack = false;
 
-doend:
+  doend:
   // can happen with zero line number
   if (curwin->w_cursor.lnum == 0) {
     curwin->w_cursor.lnum = 1;
@@ -2337,7 +2337,7 @@ static char ex_error_buf[MSG_BUF_LEN];
 /// Uses a static buffer, only the last error will be kept.
 /// "msg" will be translated, caller should use N_().
 char *ex_errmsg(const char *const msg, const char *const arg)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   vim_snprintf(ex_error_buf, MSG_BUF_LEN, _(msg), arg);
   return ex_error_buf;
@@ -2634,7 +2634,7 @@ static void apply_cmdmod(cmdmod_T *cmod)
 
 /// Undo and free contents of "cmod".
 void undo_cmdmod(cmdmod_T *cmod)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   if (cmod->cmod_verbose_save > 0) {
     p_verbose = cmod->cmod_verbose_save - 1;
@@ -2686,7 +2686,7 @@ FUNC_ATTR_NONNULL_ALL
 ///
 /// @return  FAIL and set "errormsg" or return OK.
 int parse_cmd_address(exarg_T *eap, char **errormsg, bool silent)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   int address_count = 1;
   linenr_T lnum;
@@ -2712,6 +2712,7 @@ FUNC_ATTR_NONNULL_ALL
           eap->line1 = 1;
           eap->line2 = curbuf->b_ml.ml_line_count;
           break;
+          // uncrustify:off
         case ADDR_LOADED_BUFFERS: {
           buf_T *buf = firstbuf;
 
@@ -2726,6 +2727,7 @@ FUNC_ATTR_NONNULL_ALL
           eap->line2 = buf->b_fnum;
           break;
         }
+          // uncrustify:on
         case ADDR_BUFFERS:
           eap->line1 = firstbuf->b_fnum;
           eap->line2 = lastbuf->b_fnum;
@@ -2895,7 +2897,7 @@ static void append_command(char *cmd)
 ///
 /// @return  NULL for an ambiguous user command.
 char *find_ex_command(exarg_T *eap, int *full)
-FUNC_ATTR_NONNULL_ARG(1)
+  FUNC_ATTR_NONNULL_ARG(1)
 {
   // Isolate the command and search for it in the command table.
   // Exceptions:
@@ -3215,7 +3217,7 @@ static void addr_error(cmd_addr_T addr_type)
 /// @return               MAXLNUM when no Ex address was found.
 static linenr_T get_address(exarg_T *eap, char **ptr, cmd_addr_T addr_type, int skip, bool silent,
                             int to_other_file, int address_count)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   int c;
   int i;
@@ -4033,7 +4035,7 @@ char *skip_cmd_arg(char *p, int rembs)
 }
 
 int get_bad_opt(const char_u *p, exarg_T *eap)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   if (STRICMP(p, "keep") == 0) {
     eap->bad_char = BAD_KEEP;
@@ -4223,7 +4225,7 @@ static int get_tabpage_arg(exarg_T *eap)
     }
   }
 
-theend:
+  theend:
   return tab_number;
 }
 
@@ -4547,7 +4549,7 @@ static void ex_quit(exarg_T *eap)
 
 /// ":cquit".
 static void ex_cquit(exarg_T *eap)
-FUNC_ATTR_NORETURN
+  FUNC_ATTR_NORETURN
 {
   // this does not always pass on the exit code to the Manx compiler. why?
   getout(eap->addr_count > 0 ? (int)eap->line2 : EXIT_FAILURE);
@@ -6184,7 +6186,7 @@ static void close_redir(void)
 ///
 /// @return OK in case of success, FAIL otherwise.
 int vim_mkdir_emsg(const char *const name, const int prot)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   int ret;
   if ((ret = os_mkdir(name, prot)) != 0) {
@@ -6254,7 +6256,7 @@ void update_topline_cursor(void)
 ///
 /// @return  true if the typeahead could be saved.
 bool save_current_state(save_state_T *sst)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   sst->save_msg_scroll = msg_scroll;
   sst->save_restart_edit = restart_edit;
@@ -6276,7 +6278,7 @@ FUNC_ATTR_NONNULL_ALL
 }
 
 void restore_current_state(save_state_T *sst)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   // Restore the previous typeahead.
   restore_typeahead(&sst->tabuf);
@@ -6632,7 +6634,7 @@ enum {
 /// If found return one of the SPEC_ values and set "*usedlen" to the length of
 /// the variable.  Otherwise return -1 and "*usedlen" is unchanged.
 ssize_t find_cmdline_var(const char_u *src, size_t *usedlen)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   static char *(spec_str[]) = {
     [SPEC_PERC] = "%",
@@ -7218,7 +7220,7 @@ static void ex_folddo(exarg_T *eap)
 /// @return  true if the supplied Ex cmdidx is for a location list command
 ///          instead of a quickfix command.
 bool is_loclist_cmd(int cmdidx)
-FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
   if (cmdidx < 0 || cmdidx >= CMD_SIZE) {
     return false;
@@ -7227,7 +7229,7 @@ FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 }
 
 bool get_pressedreturn(void)
-FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
   return ex_pressedreturn;
 }

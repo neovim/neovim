@@ -402,7 +402,7 @@ void set_bufref(bufref_T *bufref, buf_T *buf)
 ///
 /// @param bufref Buffer reference to check for.
 bool bufref_valid(bufref_T *bufref)
-FUNC_ATTR_PURE
+  FUNC_ATTR_PURE
 {
   return bufref->br_buf_free_count == buf_free_count
     ? true
@@ -415,7 +415,7 @@ FUNC_ATTR_PURE
 ///
 /// @param buf The buffer to check for.
 bool buf_valid(buf_T *buf)
-FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
   if (buf == NULL) {
     return false;
@@ -1716,7 +1716,7 @@ void no_write_message(void)
 }
 
 void no_write_message_nobang(const buf_T *const buf)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   if (buf->terminal
       && channel_job_running((uint64_t)buf->b_p_channel)) {
@@ -1734,7 +1734,7 @@ FUNC_ATTR_NONNULL_ALL
 ///
 /// @param[out]  buf  Buffer to initialize for.
 static inline void buf_init_changedtick(buf_T *const buf)
-FUNC_ATTR_ALWAYS_INLINE FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_ALWAYS_INLINE FUNC_ATTR_NONNULL_ALL
 {
   STATIC_ASSERT(sizeof("changedtick") <= sizeof(buf->changedtick_di.di_key),
                 "buf->changedtick_di cannot hold large enough keys");
@@ -2177,7 +2177,7 @@ buf_T *buflist_findname(char *ffname)
 ///
 /// @return  buffer or NULL if not found
 static buf_T *buflist_findname_file_id(char *ffname, FileID *file_id, bool file_id_valid)
-FUNC_ATTR_PURE
+  FUNC_ATTR_PURE
 {
   // Start at the last buffer, expect to find a match sooner.
   FOR_ALL_BUFFERS_BACKWARDS(buf) {
@@ -2199,7 +2199,7 @@ FUNC_ATTR_PURE
 /// @return  fnum of the found buffer or < 0 for error.
 int buflist_findpat(const char *pattern, const char *pattern_end, bool unlisted, bool diffmode,
                     bool curtab_only)
-FUNC_ATTR_NONNULL_ARG(1)
+  FUNC_ATTR_NONNULL_ARG(1)
 {
   int match = -1;
   int find_listed;
@@ -2527,7 +2527,7 @@ char *buflist_nr2name(int n, int fullname, int helptail)
 /// @param[in]      copy_options  If true save the local window option values.
 void buflist_setfpos(buf_T *const buf, win_T *const win, linenr_T lnum, colnr_T col,
                      bool copy_options)
-FUNC_ATTR_NONNULL_ARG(1)
+  FUNC_ATTR_NONNULL_ARG(1)
 {
   wininfo_T *wip;
 
@@ -2588,7 +2588,7 @@ FUNC_ATTR_NONNULL_ARG(1)
 /// Check that "wip" has 'diff' set and the diff is only for another tab page.
 /// That's because a diff is local to a tab page.
 static bool wininfo_other_tab_diff(wininfo_T *wip)
-FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
 {
   if (wip->wi_opt.wo_diff) {
     FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
@@ -2611,7 +2611,7 @@ FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
 ///
 /// @return  NULL when there isn't any info.
 static wininfo_T *find_wininfo(buf_T *buf, bool need_options, bool skip_diff_buffer)
-FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE
 {
   wininfo_T *wip;
 
@@ -2691,7 +2691,7 @@ void get_winopts(buf_T *buf)
 ///
 /// @return  a pointer to no_position if no position is found.
 fmark_T *buflist_findfmark(buf_T *buf)
-FUNC_ATTR_PURE
+  FUNC_ATTR_PURE
 {
   static fmark_T no_position = { { 1, 0, 0 }, 0, 0, { 0 }, NULL };
 
@@ -2701,7 +2701,7 @@ FUNC_ATTR_PURE
 
 /// Find the lnum for the buffer 'buf' for the current window.
 linenr_T buflist_findlnum(buf_T *buf)
-FUNC_ATTR_PURE
+  FUNC_ATTR_PURE
 {
   return buflist_findfmark(buf)->mark.lnum;
 }
@@ -3008,7 +3008,7 @@ void buflist_altfpos(win_T *win)
 ///
 /// @param  ffname  full path name to check
 bool otherfile(char *ffname)
-FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
 {
   return otherfile_buf(curbuf, ffname, NULL, false);
 }
@@ -3021,7 +3021,7 @@ FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
 /// @param  file_id_p      information about the file at "ffname".
 /// @param  file_id_valid  whether a valid "file_id_p" was passed in.
 static bool otherfile_buf(buf_T *buf, char *ffname, FileID *file_id_p, bool file_id_valid)
-FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
   // no name is different
   if (ffname == NULL || *ffname == NUL || buf->b_ffname == NULL) {
@@ -3079,7 +3079,7 @@ void buf_set_file_id(buf_T *buf)
 /// @param  buf      buffer
 /// @param  file_id  file id
 static bool buf_same_file_id(buf_T *buf, FileID *file_id)
-FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
 {
   return buf->file_id_valid && os_fileid_equal(&(buf->file_id), file_id);
 }
@@ -3378,7 +3378,7 @@ void maketitle(void)
 ///
 /// @return  true if resettitle() is to be called.
 static bool value_change(char *str, char **last)
-FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_WARN_UNUSED_RESULT
 {
   if ((str == NULL) != (*last == NULL)
       || (str != NULL && *last != NULL && strcmp(str, *last) != 0)) {
@@ -3451,7 +3451,7 @@ void get_rel_pos(win_T *wp, char *buf, int buflen)
 ///
 /// @return  true if it was appended.
 bool append_arg_number(win_T *wp, char *buf, int buflen, bool add_file)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   // Nothing to do
   if (ARGCOUNT <= 1) {
@@ -3509,7 +3509,7 @@ void fname_expand(buf_T *buf, char **ffname, char **sfname)
 
 /// @return  true if "buf" is a prompt buffer.
 bool bt_prompt(buf_T *buf)
-FUNC_ATTR_PURE
+  FUNC_ATTR_PURE
 {
   return buf != NULL && buf->b_p_bt[0] == 'p';
 }
@@ -3853,28 +3853,28 @@ static int chk_modeline(linenr_T lnum, int flags)
 
 /// @return  true if "buf" is a help buffer.
 bool bt_help(const buf_T *const buf)
-FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
   return buf != NULL && buf->b_help;
 }
 
 /// @return  true if "buf" is a normal buffer, 'buftype' is empty.
 bool bt_normal(const buf_T *const buf)
-FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
   return buf != NULL && buf->b_p_bt[0] == NUL;
 }
 
 /// @return  true if "buf" is the quickfix buffer.
 bool bt_quickfix(const buf_T *const buf)
-FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
   return buf != NULL && buf->b_p_bt[0] == 'q';
 }
 
 /// @return  true if "buf" is a terminal buffer.
 bool bt_terminal(const buf_T *const buf)
-FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
   return buf != NULL && buf->b_p_bt[0] == 't';
 }
@@ -3883,7 +3883,7 @@ FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 ///          buffer.  This means the buffer name may not be a file name,
 ///          at least not for writing the buffer.
 bool bt_nofilename(const buf_T *const buf)
-FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
   return buf != NULL && ((buf->b_p_bt[0] == 'n' && buf->b_p_bt[2] == 'f')
                          || buf->b_p_bt[0] == 'a'
@@ -3894,7 +3894,7 @@ FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 /// @return  true if "buf" is a "nofile", "quickfix", "terminal" or "prompt"
 ///          buffer.  This means the buffer is not to be read from a file.
 static bool bt_nofileread(const buf_T *const buf)
-FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
   return buf != NULL && ((buf->b_p_bt[0] == 'n' && buf->b_p_bt[2] == 'f')
                          || buf->b_p_bt[0] == 't'
@@ -3904,7 +3904,7 @@ FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 
 /// @return  true if "buf" has 'buftype' set to "nofile".
 bool bt_nofile(const buf_T *const buf)
-FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
   return buf != NULL && buf->b_p_bt[0] == 'n' && buf->b_p_bt[2] == 'f';
 }
@@ -3912,7 +3912,7 @@ FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 /// @return  true if "buf" is a "nowrite", "nofile", "terminal" or "prompt"
 ///          buffer.
 bool bt_dontwrite(const buf_T *const buf)
-FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
   return buf != NULL && (buf->b_p_bt[0] == 'n'
                          || buf->terminal
@@ -3920,7 +3920,7 @@ FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 }
 
 bool bt_dontwrite_msg(const buf_T *const buf)
-FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
   if (bt_dontwrite(buf)) {
     emsg(_("E382: Cannot write, 'buftype' option is set"));
@@ -3932,7 +3932,7 @@ FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 /// @return  true if the buffer should be hidden, according to 'hidden', ":hide"
 ///          and 'bufhidden'.
 bool buf_hide(const buf_T *const buf)
-FUNC_ATTR_PURE
+  FUNC_ATTR_PURE
 {
   // 'bufhidden' overrules 'hidden' and ":hide", check it first
   switch (buf->b_p_bh[0]) {
@@ -4127,7 +4127,7 @@ int buf_signcols(buf_T *buf, int maximum)
 
 /// Get "buf->b_fname", use "[No Name]" if it is NULL.
 char *buf_get_fname(const buf_T *buf)
-FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
 {
   if (buf->b_fname == NULL) {
     return _("[No Name]");
@@ -4155,7 +4155,7 @@ void set_buflisted(int on)
 ///
 /// @return  true if the buffer's contents have changed
 bool buf_contents_changed(buf_T *buf)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   bool differ = true;
 

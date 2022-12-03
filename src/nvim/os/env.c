@@ -68,7 +68,7 @@ void os_env_var_unlock(void)
 /// Like getenv(), but returns NULL if the variable is empty.
 /// @see os_env_exists
 const char *os_getenv(const char *name)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   char *e;
   size_t size = 64;
@@ -112,7 +112,7 @@ end:
 /// Returns true if environment variable `name` is defined (even if empty).
 /// Returns false if not found (UV_ENOENT) or other failure.
 bool os_env_exists(const char *name)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   if (name[0] == '\0') {
     return false;
@@ -136,7 +136,7 @@ FUNC_ATTR_NONNULL_ALL
 /// @warning Existing pointers to the result of os_getenv("foo") are
 ///          INVALID after os_setenv("foo", …).
 int os_setenv(const char *name, const char *value, int overwrite)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   if (name[0] == '\0') {
     return -1;
@@ -179,7 +179,7 @@ FUNC_ATTR_NONNULL_ALL
 
 /// Unset environment variable
 int os_unsetenv(const char *name)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   if (name[0] == '\0') {
     return -1;
@@ -582,7 +582,7 @@ void expand_env(char *src, char *dst, int dstlen)
 /// @param prefix     Start again after this (can be NULL)
 void expand_env_esc(char *restrict srcp, char *restrict dst, int dstlen, bool esc, bool one,
                     char *prefix)
-FUNC_ATTR_NONNULL_ARG(1, 2)
+  FUNC_ATTR_NONNULL_ARG(1, 2)
 {
   char *tail;
   char *var;
@@ -839,7 +839,7 @@ static char *remove_tail(char *path, char *pend, char *dirname)
 /// @return Next iter argument value or NULL when iteration should stop.
 const void *vim_env_iter(const char delim, const char *const val, const void *const iter,
                          const char **const dir, size_t *const len)
-FUNC_ATTR_NONNULL_ARG(2, 4, 5) FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_NONNULL_ARG(2, 4, 5) FUNC_ATTR_WARN_UNUSED_RESULT
 {
   const char *varval = (const char *)iter;
   if (varval == NULL) {
@@ -870,7 +870,7 @@ FUNC_ATTR_NONNULL_ARG(2, 4, 5) FUNC_ATTR_WARN_UNUSED_RESULT
 /// @return Next iter argument value or NULL when iteration should stop.
 const void *vim_env_iter_rev(const char delim, const char *const val, const void *const iter,
                              const char **const dir, size_t *const len)
-FUNC_ATTR_NONNULL_ARG(2, 4, 5) FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_NONNULL_ARG(2, 4, 5) FUNC_ATTR_WARN_UNUSED_RESULT
 {
   const char *varend = (const char *)iter;
   if (varend == NULL) {
@@ -1045,7 +1045,7 @@ char *vim_getenv(const char *name)
 /// @return length of the string put into dst, does not include NUL byte.
 size_t home_replace(const buf_T *const buf, const char *src, char *const dst, size_t dstlen,
                     const bool one)
-FUNC_ATTR_NONNULL_ARG(3)
+  FUNC_ATTR_NONNULL_ARG(3)
 {
   size_t dirlen = 0;
   size_t envlen = 0;
@@ -1159,7 +1159,7 @@ FUNC_ATTR_NONNULL_ARG(3)
 /// @param buf When not NULL, check for help files
 /// @param src Input file name
 char *home_replace_save(buf_T *buf, const char *src)
-FUNC_ATTR_NONNULL_RET
+  FUNC_ATTR_NONNULL_RET
 {
   size_t len = 3;             // space for "~/" and trailing NUL
   if (src != NULL) {          // just in case
@@ -1189,7 +1189,7 @@ char *get_env_name(expand_T *xp, int idx)
 ///
 /// @return true if `path` was appended-to
 bool os_setenv_append_path(const char *fname)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
 #ifdef MSWIN
 // 8191 (plus NUL) is considered the practical maximum.
@@ -1229,7 +1229,7 @@ FUNC_ATTR_NONNULL_ALL
 
 /// Returns true if `sh` looks like it resolves to "cmd.exe".
 bool os_shell_is_cmdexe(const char *sh)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   if (*sh == NUL) {
     return false;

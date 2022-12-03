@@ -372,18 +372,18 @@ struct sd_read_def;
 
 /// Function used to close files defined by ShaDaReadDef
 typedef void (*ShaDaReadCloser)(struct sd_read_def *const sd_reader)
-REAL_FATTR_NONNULL_ALL;
+  REAL_FATTR_NONNULL_ALL;
 
 /// Function used to read ShaDa files
 typedef ptrdiff_t (*ShaDaFileReader)(struct sd_read_def *const sd_reader,
                                      void *const dest,
                                      const size_t size)
-REAL_FATTR_NONNULL_ALL REAL_FATTR_WARN_UNUSED_RESULT;
+  REAL_FATTR_NONNULL_ALL REAL_FATTR_WARN_UNUSED_RESULT;
 
 /// Function used to skip in ShaDa files
 typedef int (*ShaDaFileSkipper)(struct sd_read_def *const sd_reader,
                                 const size_t offset)
-REAL_FATTR_NONNULL_ALL REAL_FATTR_WARN_UNUSED_RESULT;
+  REAL_FATTR_NONNULL_ALL REAL_FATTR_WARN_UNUSED_RESULT;
 
 /// Structure containing necessary pointers for reading ShaDa files
 typedef struct sd_read_def {
@@ -401,13 +401,13 @@ struct sd_write_def;
 
 /// Function used to close files defined by ShaDaWriteDef
 typedef void (*ShaDaWriteCloser)(struct sd_write_def *const sd_writer)
-REAL_FATTR_NONNULL_ALL;
+  REAL_FATTR_NONNULL_ALL;
 
 /// Function used to write ShaDa files
 typedef ptrdiff_t (*ShaDaFileWriter)(struct sd_write_def *const sd_writer,
                                      const void *const src,
                                      const size_t size)
-REAL_FATTR_NONNULL_ALL REAL_FATTR_WARN_UNUSED_RESULT;
+  REAL_FATTR_NONNULL_ALL REAL_FATTR_WARN_UNUSED_RESULT;
 
 /// Structure containing necessary pointers for writing ShaDa files
 typedef struct sd_write_def {
@@ -496,7 +496,7 @@ static const ShadaEntry sd_default_values[] = {
 /// @param[out]  hmll       List to initialize.
 /// @param[in]   size       Maximum size of the list.
 static inline void hmll_init(HMLList *const hmll, const size_t size)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   *hmll = (HMLList) {
     .entries = xcalloc(size, sizeof(hmll->entries[0])),
@@ -528,7 +528,7 @@ FUNC_ATTR_NONNULL_ALL
 /// @param  hmll        List to remove from.
 /// @param  hmll_entry  Entry to remove.
 static inline void hmll_remove(HMLList *const hmll, HMLListEntry *const hmll_entry)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   if (hmll_entry == hmll->last_free_entry - 1) {
     hmll->last_free_entry--;
@@ -565,7 +565,7 @@ FUNC_ATTR_NONNULL_ALL
 /// @param[in]   can_free_entry  True if data can be freed.
 static inline void hmll_insert(HMLList *const hmll, HMLListEntry *hmll_entry, const ShadaEntry data,
                                const bool can_free_entry)
-FUNC_ATTR_NONNULL_ARG(1)
+  FUNC_ATTR_NONNULL_ARG(1)
 {
   if (hmll->num_entries == hmll->size) {
     if (hmll_entry == hmll->first) {
@@ -613,7 +613,7 @@ FUNC_ATTR_NONNULL_ARG(1)
 ///
 /// @param[in]  hmll  List to free.
 static inline void hmll_dealloc(HMLList *const hmll)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   kh_dealloc(hmll_entries, &hmll->contained_entries);
   xfree(hmll->entries);
@@ -623,7 +623,7 @@ FUNC_ATTR_NONNULL_ALL
 ///
 /// @return -1 or number of bytes read.
 static ptrdiff_t read_file(ShaDaReadDef *const sd_reader, void *const dest, const size_t size)
-FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
   const ptrdiff_t ret = file_read(sd_reader->cookie, dest, size);
   sd_reader->eof = file_eof(sd_reader->cookie);
@@ -637,7 +637,7 @@ FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 
 /// Read one character
 static int read_char(ShaDaReadDef *const sd_reader)
-FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
   uint8_t ret;
   ptrdiff_t read_bytes = sd_reader->read(sd_reader, &ret, 1);
@@ -652,7 +652,7 @@ FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 /// @return -1 or number of bytes written.
 static ptrdiff_t write_file(ShaDaWriteDef *const sd_writer, const void *const dest,
                             const size_t size)
-FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
   const ptrdiff_t ret = file_write(sd_writer->cookie, dest, size);
   if (ret < 0) {
@@ -664,14 +664,14 @@ FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 
 /// Wrapper for closing file descriptors opened for reading
 static void close_sd_reader(ShaDaReadDef *const sd_reader)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   close_file(sd_reader->cookie);
 }
 
 /// Wrapper for closing file descriptors opened for writing
 static void close_sd_writer(ShaDaWriteDef *const sd_writer)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   close_file(sd_writer->cookie);
 }
@@ -686,7 +686,7 @@ FUNC_ATTR_NONNULL_ALL
 /// @return FAIL in case of failure, OK in case of success. May set
 ///         sd_reader->eof or sd_reader->error.
 static int sd_reader_skip_read(ShaDaReadDef *const sd_reader, const size_t offset)
-FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
   const ptrdiff_t skip_bytes = file_skip(sd_reader->cookie, offset);
   if (skip_bytes < 0) {
@@ -714,7 +714,7 @@ FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 /// @return kSDReadStatusReadError, kSDReadStatusNotShaDa or
 ///         kSDReadStatusSuccess.
 static ShaDaReadResult sd_reader_skip(ShaDaReadDef *const sd_reader, const size_t offset)
-FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
 {
   if (sd_reader->skip(sd_reader, offset) != OK) {
     if (sd_reader->error != NULL) {
@@ -740,7 +740,7 @@ FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
 ///
 /// @return libuv error in case of error, 0 otherwise.
 static int open_shada_file_for_reading(const char *const fname, ShaDaReadDef *sd_reader)
-FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
 {
   int error;
 
@@ -779,7 +779,7 @@ static void close_file(void *cookie)
 ///
 /// @return true or false.
 static inline bool in_bufset(const khash_t(bufset) *const set, const buf_T *buf)
-FUNC_ATTR_PURE
+  FUNC_ATTR_PURE
 {
   return kh_get(bufset, set, (uintptr_t)buf) != kh_end(set);
 }
@@ -791,7 +791,7 @@ FUNC_ATTR_PURE
 ///
 /// @return true or false.
 static inline bool in_strset(const khash_t(strset) *const set, char *str)
-FUNC_ATTR_PURE
+  FUNC_ATTR_PURE
 {
   return kh_get(strset, set, str) != kh_end(set);
 }
@@ -813,7 +813,7 @@ static int msgpack_sd_writer_write(void *data, const char *buf, size_t len)
 ///
 /// @return true if it was disabled, false otherwise.
 static bool shada_disabled(void)
-FUNC_ATTR_PURE
+  FUNC_ATTR_PURE
 {
   return strequal(p_shadafile, "NONE");
 }
@@ -825,7 +825,7 @@ FUNC_ATTR_PURE
 ///
 /// @return FAIL if reading failed for some reason and OK otherwise.
 static int shada_read_file(const char *const file, const int flags)
-FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_WARN_UNUSED_RESULT
 {
   if (shada_disabled()) {
     return FAIL;
@@ -874,7 +874,7 @@ FUNC_ATTR_WARN_UNUSED_RESULT
 /// @return Next iteration state.
 static const void *shada_hist_iter(const void *const iter, const uint8_t history_type,
                                    const bool zero, ShadaEntry *const hist)
-FUNC_ATTR_NONNULL_ARG(4) FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_NONNULL_ARG(4) FUNC_ATTR_WARN_UNUSED_RESULT
 {
   histentry_T hist_he;
   const void *const ret = hist_iter(iter, history_type, zero, &hist_he);
@@ -916,7 +916,7 @@ FUNC_ATTR_NONNULL_ARG(4) FUNC_ATTR_WARN_UNUSED_RESULT
 /// @param[in]      can_free_entry  True if entry can be freed.
 static void hms_insert(HistoryMergerState *const hms_p, const ShadaEntry entry, const bool do_iter,
                        const bool can_free_entry)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   if (do_iter) {
     while (hms_p->last_hist_entry.type != kSDItemMissing
@@ -971,7 +971,7 @@ FUNC_ATTR_NONNULL_ALL
 ///                            in Neovim.
 static inline void hms_init(HistoryMergerState *const hms_p, const uint8_t history_type,
                             const size_t num_elements, const bool do_merge, const bool reading)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   hmll_init(&hms_p->hmll, num_elements);
   hms_p->do_merge = do_merge;
@@ -986,7 +986,7 @@ FUNC_ATTR_NONNULL_ALL
 /// @param[in,out]  hms_p  Merger structure into which history should be
 ///                        inserted.
 static inline void hms_insert_whole_neovim_history(HistoryMergerState *const hms_p)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   while (hms_p->last_hist_entry.type != kSDItemMissing) {
     hms_insert(hms_p, hms_p->last_hist_entry, false, hms_p->reading);
@@ -1007,7 +1007,7 @@ FUNC_ATTR_NONNULL_ALL
 static inline void hms_to_he_array(const HistoryMergerState *const hms_p,
                                    histentry_T *const hist_array, int *const new_hisidx,
                                    int *const new_hisnum)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   histentry_T *hist = hist_array;
   HMLL_FORALL(&hms_p->hmll, cur_entry,  {
@@ -1026,7 +1026,7 @@ FUNC_ATTR_NONNULL_ALL
 ///
 /// @param[in]  hms_p  Structure to be freed.
 static inline void hms_dealloc(HistoryMergerState *const hms_p)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   hmll_dealloc(&hms_p->hmll);
 }
@@ -1048,7 +1048,7 @@ FUNC_ATTR_NONNULL_ALL
 ///
 /// @return Pointer to the buffer or NULL.
 static buf_T *find_buffer(khash_t(fnamebufs) *const fname_bufs, const char *const fname)
-FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
 {
   int kh_ret;
   khint_t k = kh_put(fnamebufs, fname_bufs, fname, &kh_ret);
@@ -1125,7 +1125,7 @@ static inline bool marks_equal(const pos_T a, const pos_T b)
 /// @param[in]  sd_reader  Structure containing file reader definition.
 /// @param[in]  flags      What to read, see ShaDaReadFileFlags enum.
 static void shada_read(ShaDaReadDef *const sd_reader, const int flags)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   list_T *oldfiles_list = get_vim_var_list(VV_OLDFILES);
   const bool force = flags & kShaDaForceit;
@@ -1458,7 +1458,7 @@ static char *default_shada_file = NULL;
 
 /// Get the default ShaDa file
 static const char *shada_get_default_file(void)
-FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_WARN_UNUSED_RESULT
 {
   if (default_shada_file == NULL) {
     char *shada_dir = stdpaths_user_state_subpath("shada", 0, false);
@@ -1477,7 +1477,7 @@ FUNC_ATTR_WARN_UNUSED_RESULT
 ///
 /// @return An allocated string containing shada file name.
 static char *shada_filename(const char *file)
-FUNC_ATTR_MALLOC FUNC_ATTR_NONNULL_RET FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_MALLOC FUNC_ATTR_NONNULL_RET FUNC_ATTR_WARN_UNUSED_RESULT
 {
   if (file == NULL || *file == NUL) {
     if (p_shadafile != NULL && *p_shadafile != NUL) {
@@ -1522,7 +1522,7 @@ FUNC_ATTR_MALLOC FUNC_ATTR_NONNULL_RET FUNC_ATTR_WARN_UNUSED_RESULT
 /// @return kSDWriteSuccessful, kSDWriteFailed or kSDWriteIgnError.
 static ShaDaWriteResult shada_pack_entry(msgpack_packer *const packer, ShadaEntry entry,
                                          const size_t max_kbyte)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   ShaDaWriteResult ret = kSDWriteFailed;
   msgpack_sbuffer sbuf;
@@ -1845,7 +1845,7 @@ shada_pack_entry_error:
 static inline ShaDaWriteResult shada_pack_pfreed_entry(msgpack_packer *const packer,
                                                        PossiblyFreedShadaEntry entry,
                                                        const size_t max_kbyte)
-FUNC_ATTR_NONNULL_ALL FUNC_ATTR_ALWAYS_INLINE
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_ALWAYS_INLINE
 {
   ShaDaWriteResult ret = kSDWriteSuccessful;
   ret = shada_pack_entry(packer, entry.data, max_kbyte);
@@ -1860,7 +1860,7 @@ FUNC_ATTR_NONNULL_ALL FUNC_ATTR_ALWAYS_INLINE
 /// Order is reversed: structure with greatest greatest_timestamp comes first.
 /// Function signature is compatible with qsort.
 static int compare_file_marks(const void *a, const void *b)
-FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_PURE
+  FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_PURE
 {
   const FileMarks *const *const a_fms = a;
   const FileMarks *const *const b_fms = b;
@@ -1886,7 +1886,7 @@ static inline ShaDaReadResult shada_parse_msgpack(ShaDaReadDef *const sd_reader,
                                                   const size_t length,
                                                   msgpack_unpacked *ret_unpacked,
                                                   char **const ret_buf)
-FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ARG(1)
+  FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ARG(1)
 {
   const uintmax_t initial_fpos = sd_reader->fpos;
   char *const buf = xmalloc(length);
@@ -1960,7 +1960,7 @@ shada_parse_msgpack_extra_bytes:
 ///
 /// @return string representing ShaDa entry in a static buffer.
 static const char *shada_format_entry(const ShadaEntry entry)
-FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_UNUSED FUNC_ATTR_NONNULL_RET
+  FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_UNUSED FUNC_ATTR_NONNULL_RET
 {
   static char ret[1024];
   ret[0] = 0;
@@ -2039,7 +2039,7 @@ FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_UNUSED FUNC_ATTR_NONNULL_RET
 ///
 /// @return string representing ShaDa entry in a static buffer.
 static const char *shada_format_pfreed_entry(const PossiblyFreedShadaEntry pfs_entry)
-FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_UNUSED FUNC_ATTR_NONNULL_RET
+  FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_UNUSED FUNC_ATTR_NONNULL_RET
 {
   char *ret = (char *)shada_format_entry(pfs_entry.data);
   ret[1] = (pfs_entry.can_free_entry ? 'T' : 'F');
@@ -2059,7 +2059,7 @@ static inline ShaDaWriteResult shada_read_when_writing(ShaDaReadDef *const sd_re
                                                        const size_t max_kbyte,
                                                        WriteMergerState *const wms,
                                                        msgpack_packer *const packer)
-FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
   ShaDaWriteResult ret = kSDWriteSuccessful;
   ShadaEntry entry;
@@ -2281,7 +2281,7 @@ FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 ///
 /// @return true or false.
 static inline bool ignore_buf(const buf_T *const buf, khash_t(bufset) *const removable_bufs)
-FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_ALWAYS_INLINE
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_ALWAYS_INLINE
 {
   return (buf->b_ffname == NULL || !buf->b_p_bl || bt_quickfix(buf) \
           || bt_terminal(buf) || in_bufset(removable_bufs, buf));
@@ -2293,7 +2293,7 @@ FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_ALWAYS_INLINE
 ///
 /// @return  ShadaEntry  List of buffers to save, kSDItemBufferList entry.
 static inline ShadaEntry shada_get_buflist(khash_t(bufset) *const removable_bufs)
-FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_ALWAYS_INLINE
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_ALWAYS_INLINE
 {
   int max_bufs = get_shada_parameter('%');
   size_t buf_count = 0;
@@ -2350,7 +2350,7 @@ static inline void add_search_pattern(PossiblyFreedShadaEntry *const ret_pse,
                                       const SearchPatternGetter get_pattern,
                                       const bool is_substitute_pattern, const bool search_last_used,
                                       const bool search_highlighted)
-FUNC_ATTR_ALWAYS_INLINE
+  FUNC_ATTR_ALWAYS_INLINE
 {
   const ShadaEntry defaults = sd_default_values[kSDItemSearchPattern];
   SearchPattern pat;
@@ -2394,7 +2394,7 @@ FUNC_ATTR_ALWAYS_INLINE
 /// @param[in]  wms  The WriteMergerState used when writing.
 /// @param[in]  max_reg_lines  The maximum number of register lines.
 static inline void shada_initialize_registers(WriteMergerState *const wms, int max_reg_lines)
-FUNC_ATTR_NONNULL_ALL FUNC_ATTR_ALWAYS_INLINE
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_ALWAYS_INLINE
 {
   const void *reg_iter = NULL;
   const bool limit_reg_lines = max_reg_lines >= 0;
@@ -2440,7 +2440,7 @@ FUNC_ATTR_NONNULL_ALL FUNC_ATTR_ALWAYS_INLINE
 /// @param[in]  entry  New mark.
 static inline void replace_numbered_mark(WriteMergerState *const wms, const size_t idx,
                                          const PossiblyFreedShadaEntry entry)
-FUNC_ATTR_NONNULL_ALL FUNC_ATTR_ALWAYS_INLINE
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_ALWAYS_INLINE
 {
   if (ARRAY_LAST_ENTRY(wms->numbered_marks).can_free_entry) {
     shada_free_shada_entry(&ARRAY_LAST_ENTRY(wms->numbered_marks).data);
@@ -2472,7 +2472,7 @@ static inline void find_removable_bufs(khash_t(bufset) *removable_bufs)
 
 /// Translate a history type number to the associated character
 static int hist_type2char(const int type)
-FUNC_ATTR_CONST
+  FUNC_ATTR_CONST
 {
   switch (type) {
   case HIST_CMD:
@@ -2498,7 +2498,7 @@ FUNC_ATTR_CONST
 ///                        not NULL then contents of this file will be merged
 ///                        with current Neovim runtime.
 static ShaDaWriteResult shada_write(ShaDaWriteDef *const sd_writer, ShaDaReadDef *const sd_reader)
-FUNC_ATTR_NONNULL_ARG(1)
+  FUNC_ATTR_NONNULL_ARG(1)
 {
   ShaDaWriteResult ret = kSDWriteSuccessful;
   int max_kbyte_i = get_shada_parameter('s');
@@ -3009,7 +3009,7 @@ int shada_write_file(const char *const file, bool nomerge)
     // 2: Make sure that user can always read and write the result.
     // 3: If somebody happened to delete the file after it was opened for
     //    reading use u=rw permissions.
-shada_write_file_open: {}
+    shada_write_file_open: {}
     sd_writer.cookie = file_open_new(&error, tempname, kFileCreateOnly|kFileNoSymlink, perm);
     if (sd_writer.cookie == NULL) {
       if (error == UV_EEXIST || error == UV_ELOOP) {
@@ -3258,7 +3258,7 @@ static inline uint64_t be64toh(uint64_t big_endian_64_bits)
 ///         there was some error while reading.
 static ShaDaReadResult fread_len(ShaDaReadDef *const sd_reader, char *const buffer,
                                  const size_t length)
-FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
   const ptrdiff_t read_bytes = sd_reader->read(sd_reader, buffer, length);
 
@@ -3295,7 +3295,7 @@ FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 ///         kSDReadStatusReadError if reading failed for whatever reason.
 static ShaDaReadResult msgpack_read_uint64(ShaDaReadDef *const sd_reader, const int first_char,
                                            uint64_t *const result)
-FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
   const uintmax_t fpos = sd_reader->fpos - 1;
 
@@ -3489,7 +3489,7 @@ FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 /// @return Any value from ShaDaReadResult enum.
 static ShaDaReadResult shada_read_next_item(ShaDaReadDef *const sd_reader, ShadaEntry *const entry,
                                             const unsigned flags, const size_t max_kbyte)
-FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
   ShaDaReadResult ret = kSDReadStatusMalformed;
 shada_read_next_item_start:
@@ -4007,7 +4007,7 @@ shada_read_next_item_error:
 ///
 /// @return True if it is, false otherwise.
 static bool shada_removable(const char *name)
-FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_WARN_UNUSED_RESULT
 {
   char *p;
   char part[MAXPATHL + 1];
@@ -4092,7 +4092,7 @@ static inline size_t shada_init_jumps(PossiblyFreedShadaEntry *jumps,
 ///
 /// @param[in]  sbuf  target msgpack_sbuffer to write to.
 void shada_encode_regs(msgpack_sbuffer *const sbuf)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   WriteMergerState *const wms = xcalloc(1, sizeof(*wms));
   shada_initialize_registers(wms, -1);
@@ -4113,7 +4113,7 @@ FUNC_ATTR_NONNULL_ALL
 ///
 /// @param[in]  sbuf            target msgpack_sbuffer to write to.
 void shada_encode_jumps(msgpack_sbuffer *const sbuf)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   khash_t(bufset) removable_bufs = KHASH_EMPTY_TABLE(bufset);
   find_removable_bufs(&removable_bufs);
@@ -4133,7 +4133,7 @@ FUNC_ATTR_NONNULL_ALL
 ///
 /// @param[in]  sbuf            target msgpack_sbuffer to write to.
 void shada_encode_buflist(msgpack_sbuffer *const sbuf)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   khash_t(bufset) removable_bufs = KHASH_EMPTY_TABLE(bufset);
   find_removable_bufs(&removable_bufs);
@@ -4150,7 +4150,7 @@ FUNC_ATTR_NONNULL_ALL
 ///
 /// @param[in]  sbuf            target msgpack_sbuffer to write to.
 void shada_encode_gvars(msgpack_sbuffer *const sbuf)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   msgpack_packer packer;
   msgpack_packer_init(&packer, sbuf, msgpack_sbuffer_write);
@@ -4191,7 +4191,7 @@ FUNC_ATTR_NONNULL_ALL
 ///
 /// @return number of bytes read.
 static ptrdiff_t read_sbuf(ShaDaReadDef *const sd_reader, void *const dest, const size_t size)
-FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
   msgpack_sbuffer *sbuf = (msgpack_sbuffer *)sd_reader->cookie;
   const uintmax_t bytes_read = MIN(size, sbuf->size - sd_reader->fpos);
@@ -4213,7 +4213,7 @@ FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 /// @return FAIL in case of failure, OK in case of success. May set
 ///         sd_reader->eof.
 static int sd_sbuf_reader_skip_read(ShaDaReadDef *const sd_reader, const size_t offset)
-FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
   msgpack_sbuffer *sbuf = (msgpack_sbuffer *)sd_reader->cookie;
   assert(sbuf->size >= sd_reader->fpos);
@@ -4231,7 +4231,7 @@ FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 /// @param[in]   sbuf       msgpack_sbuffer to read from.
 /// @param[out]  sd_reader  Location where reader structure will be saved.
 static void open_shada_sbuf_for_reading(const msgpack_sbuffer *const sbuf, ShaDaReadDef *sd_reader)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   *sd_reader = (ShaDaReadDef) {
     .read = &read_sbuf,
@@ -4249,7 +4249,7 @@ FUNC_ATTR_NONNULL_ALL
 /// @param[in]  file   msgpack_sbuffer to read from.
 /// @param[in]  flags  Flags, see ShaDaReadFileFlags enum.
 void shada_read_sbuf(msgpack_sbuffer *const sbuf, const int flags)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   assert(sbuf != NULL);
   if (sbuf->data == NULL) {

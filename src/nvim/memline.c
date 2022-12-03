@@ -581,14 +581,14 @@ void ml_timestamp(buf_T *buf)
 
 /// Checks whether the IDs in b0 are valid.
 static bool ml_check_b0_id(ZERO_BL *b0p)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   return b0p->b0_id[0] == BLOCK0_ID0 && b0p->b0_id[1] == BLOCK0_ID1;
 }
 
 /// Checks whether all strings in b0 are valid (i.e. nul-terminated).
 static bool ml_check_b0_strings(ZERO_BL *b0p)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   return (memchr(b0p->b0_version, NUL, 10)
           && memchr(b0p->b0_uname, NUL, B0_UNAME_SIZE)
@@ -1374,7 +1374,7 @@ int recover_names(char_u *fname, int list, int nr, char **fname_out)
 /// Append the full path to name with path separators made into percent
 /// signs, to dir. An unnamed buffer is handled as "" (<currentdir>/"")
 char *make_percent_swname(const char *dir, const char *name)
-FUNC_ATTR_NONNULL_ARG(1)
+  FUNC_ATTR_NONNULL_ARG(1)
 {
   char *d = NULL;
   char *f = fix_fname(name != NULL ? name : "");
@@ -1585,7 +1585,7 @@ static bool swapfile_unchanged(char *fname)
 }
 
 static int recov_file_names(char **names, char *path, int prepend_dot)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   int num_names = 0;
 
@@ -1746,14 +1746,14 @@ char *ml_get(linenr_T lnum)
 
 /// @return  pointer to position "pos".
 char *ml_get_pos(const pos_T *pos)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   return ml_get_buf(curbuf, pos->lnum, false) + pos->col;
 }
 
 /// @return  codepoint at pos. pos must be either valid or have col set to MAXCOL!
 int gchar_pos(pos_T *pos)
-FUNC_ATTR_NONNULL_ARG(1)
+  FUNC_ATTR_NONNULL_ARG(1)
 {
   // When searching columns is sometimes put at the end of a line.
   if (pos->col == MAXCOL) {
@@ -1766,7 +1766,7 @@ FUNC_ATTR_NONNULL_ARG(1)
 ///
 /// @return  a pointer to a line in a specific buffer
 char *ml_get_buf(buf_T *buf, linenr_T lnum, bool will_change)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   static int recursive = 0;
   static char questions[4];
@@ -1877,7 +1877,7 @@ int ml_append(linenr_T lnum, char *line, colnr_T len, bool newfile)
 /// @param len  length of new line, including NUL, or 0
 /// @param newfile  flag, see above
 int ml_append_buf(buf_T *buf, linenr_T lnum, char_u *line, colnr_T len, bool newfile)
-FUNC_ATTR_NONNULL_ARG(1)
+  FUNC_ATTR_NONNULL_ARG(1)
 {
   if (buf->b_ml.ml_mfp == NULL) {
     return FAIL;
@@ -3208,7 +3208,7 @@ static int do_swapexists(buf_T *buf, char_u *fname)
 ///
 /// @return [allocated] Name of the swap file.
 static char *findswapname(buf_T *buf, char **dirp, char *old_fname, bool *found_existing_dir)
-FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ARG(1, 2, 4)
+  FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ARG(1, 2, 4)
 {
   size_t n;
   char *buf_fname = buf->b_fname;

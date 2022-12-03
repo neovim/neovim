@@ -348,7 +348,7 @@ void restore_v_event(dict_T *v_event, save_v_event_T *sve)
 
 /// @return  "n1" divided by "n2", taking care of dividing by zero.
 varnumber_T num_divide(varnumber_T n1, varnumber_T n2)
-FUNC_ATTR_CONST FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_CONST FUNC_ATTR_WARN_UNUSED_RESULT
 {
   varnumber_T result;
 
@@ -373,7 +373,7 @@ FUNC_ATTR_CONST FUNC_ATTR_WARN_UNUSED_RESULT
 
 /// @return  "n1" modulus "n2", taking care of dividing by zero.
 varnumber_T num_modulus(varnumber_T n1, varnumber_T n2)
-FUNC_ATTR_CONST FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_CONST FUNC_ATTR_WARN_UNUSED_RESULT
 {
   // Give an error when n2 is 0?
   return (n2 == 0) ? 0 : (n1 % n2);
@@ -520,7 +520,7 @@ void eval_clear(void)
 /// Set an internal variable to a string value. Creates the variable if it does
 /// not already exist.
 void set_internal_string_var(const char *name, char *value)  // NOLINT(readability-non-const-parameter)
-FUNC_ATTR_NONNULL_ARG(1)
+  FUNC_ATTR_NONNULL_ARG(1)
 {
   typval_T tv = {
     .v_type = VAR_STRING,
@@ -749,7 +749,7 @@ int eval_to_bool(char *arg, bool *error, char **nextcmd, int skip)
 
 /// Call eval1() and give an error message if not done at a lower level.
 static int eval1_emsg(char **arg, typval_T *rettv, bool evaluate)
-FUNC_ATTR_NONNULL_ARG(1, 2)
+  FUNC_ATTR_NONNULL_ARG(1, 2)
 {
   const char *const start = *arg;
   const int did_emsg_before = did_emsg;
@@ -773,14 +773,14 @@ FUNC_ATTR_NONNULL_ARG(1, 2)
 /// @return  whether a typval is a valid expression to pass to eval_expr_typval()
 ///          or eval_expr_to_bool().  An empty string returns false;
 bool eval_expr_valid_arg(const typval_T *const tv)
-FUNC_ATTR_NONNULL_ALL FUNC_ATTR_CONST
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_CONST
 {
   return tv->v_type != VAR_UNKNOWN
          && (tv->v_type != VAR_STRING || (tv->vval.v_string != NULL && *tv->vval.v_string != NUL));
 }
 
 int eval_expr_typval(const typval_T *expr, typval_T *argv, int argc, typval_T *rettv)
-FUNC_ATTR_NONNULL_ARG(1, 2, 4)
+  FUNC_ATTR_NONNULL_ARG(1, 2, 4)
 {
   funcexe_T funcexe = FUNCEXE_INIT;
 
@@ -826,7 +826,7 @@ FUNC_ATTR_NONNULL_ARG(1, 2, 4)
 /// Like eval_to_bool() but using a typval_T instead of a string.
 /// Works for string, funcref and partial.
 bool eval_expr_to_bool(const typval_T *expr, bool *error)
-FUNC_ATTR_NONNULL_ARG(1, 2)
+  FUNC_ATTR_NONNULL_ARG(1, 2)
 {
   typval_T argv, rettv;
 
@@ -849,7 +849,7 @@ FUNC_ATTR_NONNULL_ARG(1, 2)
 /// @return [allocated] string result of evaluation or NULL in case of error or
 ///                     when skipping.
 char *eval_to_string_skip(const char *arg, const char **nextcmd, const bool skip)
-FUNC_ATTR_MALLOC FUNC_ATTR_NONNULL_ARG(1) FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_MALLOC FUNC_ATTR_NONNULL_ARG(1) FUNC_ATTR_WARN_UNUSED_RESULT
 {
   typval_T tv;
   char *retval;
@@ -1096,7 +1096,7 @@ int get_spellword(list_T *const list, const char **ret_word)
 ///
 /// @return  OK or FAIL.
 int call_vim_function(const char *func, int argc, typval_T *argv, typval_T *rettv)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   int ret;
   int len = (int)strlen(func);
@@ -1139,7 +1139,7 @@ fail:
 /// @return [allocated] NULL when calling function fails, allocated string
 ///                     otherwise.
 char *call_func_retstr(const char *const func, int argc, typval_T *argv)
-FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_MALLOC
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_MALLOC
 {
   typval_T rettv;
   // All arguments are passed as strings, no conversion to number.
@@ -1163,7 +1163,7 @@ FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_MALLOC
 /// @return [allocated] NULL when calling function fails or return tv is not a
 ///                     List, allocated List otherwise.
 void *call_func_retlist(const char *func, int argc, typval_T *argv)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   typval_T rettv;
 
@@ -1247,7 +1247,7 @@ int eval_foldexpr(char *arg, int *cp)
 ///         for a parsing error, but it is still needed to free items in lp.
 char *get_lval(char *const name, typval_T *const rettv, lval_T *const lp, const bool unlet,
                const bool skip, const int flags, const int fne_flags)
-FUNC_ATTR_NONNULL_ARG(1, 3)
+  FUNC_ATTR_NONNULL_ARG(1, 3)
 {
   bool empty1 = false;
   int quiet = flags & GLV_QUIET;
@@ -1961,7 +1961,7 @@ void free_for_info(void *fi_void)
 }
 
 void set_context_for_expression(expand_T *xp, char *arg, cmdidx_T cmdidx)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   bool got_eq = false;
   int c;
@@ -2086,7 +2086,7 @@ static size_t varnamebuflen = 0;
 
 /// Function to concatenate a prefix and a variable name.
 char *cat_prefix_varname(int prefix, const char *name)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   size_t len = strlen(name) + 3;
 
@@ -2216,7 +2216,7 @@ int pattern_match(const char *pat, const char *text, bool ic)
 /// @return OK or FAIL.
 static int eval_func(char **const arg, char *const name, const int name_len, typval_T *const rettv,
                      const bool evaluate, typval_T *const basetv)
-FUNC_ATTR_NONNULL_ARG(1, 2, 4)
+  FUNC_ATTR_NONNULL_ARG(1, 2, 4)
 {
   char *s = name;
   int len = name_len;
@@ -2770,7 +2770,7 @@ static int eval5(char **arg, typval_T *rettv, int evaluate)
 ///                          float
 /// @return  OK or FAIL.
 static int eval6(char **arg, typval_T *rettv, int evaluate, int want_string)
-FUNC_ATTR_NO_SANITIZE_UNDEFINED
+  FUNC_ATTR_NO_SANITIZE_UNDEFINED
 {
   typval_T var2;
   int op;
@@ -3150,7 +3150,7 @@ static int eval7(char **arg, typval_T *rettv, int evaluate, int want_string)
 /// @return  OK on success, FAIL on failure.
 static int eval7_leader(typval_T *const rettv, const char *const start_leader,
                         const char **const end_leaderp)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   const char *end_leader = (char *)(*end_leaderp);
   int ret = OK;
@@ -3205,7 +3205,7 @@ FUNC_ATTR_NONNULL_ALL
 static int call_func_rettv(char **const arg, typval_T *const rettv, const bool evaluate,
                            dict_T *const selfdict, typval_T *const basetv,
                            const char *const lua_funcname)
-FUNC_ATTR_NONNULL_ARG(1, 2)
+  FUNC_ATTR_NONNULL_ARG(1, 2)
 {
   partial_T *pt = NULL;
   typval_T functv;
@@ -3258,7 +3258,7 @@ FUNC_ATTR_NONNULL_ARG(1, 2)
 /// @note "*arg" is advanced to after the ')'.
 static int eval_lambda(char **const arg, typval_T *const rettv, const bool evaluate,
                        const bool verbose)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   // Skip over the ->.
   *arg += 2;
@@ -3298,7 +3298,7 @@ FUNC_ATTR_NONNULL_ALL
 /// @return  FAIL or OK. "*arg" is advanced to after the ')'.
 static int eval_method(char **const arg, typval_T *const rettv, const bool evaluate,
                        const bool verbose)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   // Skip over the ->.
   *arg += 2;
@@ -3671,7 +3671,7 @@ static int eval_index(char **arg, typval_T *rettv, int evaluate, int verbose)
 ///
 /// @return  OK or FAIL.
 int get_option_tv(const char **const arg, typval_T *const rettv, const bool evaluate)
-FUNC_ATTR_NONNULL_ARG(1)
+  FUNC_ATTR_NONNULL_ARG(1)
 {
   int scope;
 
@@ -3917,7 +3917,7 @@ static int get_lit_string_tv(char **arg, typval_T *rettv, int evaluate)
 
 /// @return  the function name of the partial.
 char *partial_name(partial_T *pt)
-FUNC_ATTR_PURE
+  FUNC_ATTR_PURE
 {
   if (pt->pt_name != NULL) {
     return pt->pt_name;
@@ -4050,7 +4050,7 @@ bool func_equal(typval_T *tv1, typval_T *tv2, bool ic)
 /// Used for traversing nested structures e.g. when serializing them or garbage
 /// collecting.
 int get_copyID(void)
-FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_WARN_UNUSED_RESULT
 {
   // CopyID for recursively traversing lists and dicts
   //
@@ -4369,7 +4369,7 @@ static int free_unref_items(int copyID)
 ///
 /// @returns             true if setting references failed somehow.
 bool set_ref_in_ht(hashtab_T *ht, int copyID, list_stack_T **list_stack)
-FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_WARN_UNUSED_RESULT
 {
   bool abort = false;
   ht_stack_T *ht_stack = NULL;
@@ -4407,7 +4407,7 @@ FUNC_ATTR_WARN_UNUSED_RESULT
 ///
 /// @returns             true if setting references failed somehow.
 bool set_ref_in_list(list_T *l, int copyID, ht_stack_T **ht_stack)
-FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_WARN_UNUSED_RESULT
 {
   bool abort = false;
   list_stack_T *list_stack = NULL;
@@ -4448,10 +4448,11 @@ FUNC_ATTR_WARN_UNUSED_RESULT
 ///
 /// @returns             true if setting references failed somehow.
 bool set_ref_in_item(typval_T *tv, int copyID, ht_stack_T **ht_stack, list_stack_T **list_stack)
-FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_WARN_UNUSED_RESULT
 {
   bool abort = false;
 
+  // uncrustify:off
   switch (tv->v_type) {
   case VAR_DICT: {
     dict_T *dd = tv->vval.v_dict;
@@ -4527,6 +4528,7 @@ FUNC_ATTR_WARN_UNUSED_RESULT
   case VAR_BLOB:
     break;
   }
+  // uncrustify:on
   return abort;
 }
 
@@ -4534,7 +4536,7 @@ FUNC_ATTR_WARN_UNUSED_RESULT
 ///
 /// @return  true if setting references failed somehow.
 static inline bool set_ref_in_fmark(fmark_T fm, int copyID)
-FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_WARN_UNUSED_RESULT
 {
   if (fm.additional_data != NULL
       && fm.additional_data->dv_copyID != copyID) {
@@ -4548,7 +4550,7 @@ FUNC_ATTR_WARN_UNUSED_RESULT
 ///
 /// @return  true if setting references failed somehow.
 static inline bool set_ref_list(list_T *list, int copyID)
-FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_WARN_UNUSED_RESULT
 {
   if (list != NULL) {
     typval_T tv = (typval_T) {
@@ -4564,7 +4566,7 @@ FUNC_ATTR_WARN_UNUSED_RESULT
 ///
 /// @return  true if setting references failed somehow.
 static inline bool set_ref_dict(dict_T *dict, int copyID)
-FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_WARN_UNUSED_RESULT
 {
   if (dict != NULL) {
     typval_T tv = (typval_T) {
@@ -4580,7 +4582,7 @@ FUNC_ATTR_WARN_UNUSED_RESULT
 ///
 /// @return  FAIL when there is no valid key.
 static int get_literal_key(char **arg, typval_T *tv)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   char *p;
 
@@ -4709,7 +4711,7 @@ failret:
 ///
 /// @return  Length of the text that was consumed.
 size_t string2float(const char *const text, float_T *const ret_value)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   // MS-Windows does not deal with "inf" and "nan" properly
   if (STRNICMP(text, "inf", 3) == 0) {
@@ -4935,7 +4937,7 @@ void filter_map(typval_T *argvars, typval_T *rettv, int map)
 }
 
 static int filter_map_one(typval_T *tv, typval_T *expr, int map, int *remp)
-FUNC_ATTR_NONNULL_ARG(1, 2)
+  FUNC_ATTR_NONNULL_ARG(1, 2)
 {
   typval_T rettv;
   typval_T argv[3];
@@ -5140,7 +5142,7 @@ theend:
 ///
 /// @return  Line number or 0 in case of error.
 linenr_T tv_get_lnum_buf(const typval_T *const tv, const buf_T *const buf)
-FUNC_ATTR_NONNULL_ARG(1) FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_NONNULL_ARG(1) FUNC_ATTR_WARN_UNUSED_RESULT
 {
   if (tv->v_type == VAR_STRING
       && tv->vval.v_string != NULL
@@ -5158,7 +5160,7 @@ FUNC_ATTR_NONNULL_ARG(1) FUNC_ATTR_WARN_UNUSED_RESULT
 /// when the user cancels the prompt.
 void get_user_input(const typval_T *const argvars, typval_T *const rettv, const bool inputdialog,
                     const bool secret)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   rettv->v_type = VAR_STRING;
   rettv->vval.v_string = NULL;
@@ -5375,7 +5377,7 @@ void screenchar_adjust(ScreenGrid **grid, int *row, int *col)
 
 /// "stdpath()" helper for list results
 void get_xdg_var_list(const XDGVarType xdg, typval_T *rettv)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   list_T *const list = tv_list_alloc(kListLenShouldKnow);
   rettv->v_type = VAR_LIST;
@@ -5511,7 +5513,7 @@ void get_system_output_as_rettv(typval_T *argvars, typval_T *rettv, bool retlist
 
 /// Get a callback from "arg".  It can be a Funcref or a function name.
 bool callback_from_typval(Callback *const callback, const typval_T *const arg)
-FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
   int r = OK;
 
@@ -5569,7 +5571,7 @@ FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 /// @return  whether the callback could be called.
 bool callback_call(Callback *const callback, const int argcount_in, typval_T *const argvars_in,
                    typval_T *const rettv)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   partial_T *partial;
   char *name;
@@ -5814,7 +5816,7 @@ void timer_teardown(void)
 ///
 /// @return true in case of success, false otherwise.
 bool write_list(FileDescriptor *const fp, const list_T *const list, const bool binary)
-FUNC_ATTR_NONNULL_ARG(1)
+  FUNC_ATTR_NONNULL_ARG(1)
 {
   int error = 0;
   TV_LIST_ITER_CONST(list, li, {
@@ -5869,7 +5871,7 @@ write_list_error:
 ///
 /// @return true on success, or false on failure.
 bool write_blob(FileDescriptor *const fp, const blob_T *const blob)
-FUNC_ATTR_NONNULL_ARG(1)
+  FUNC_ATTR_NONNULL_ARG(1)
 {
   int error = 0;
   const int len = tv_blob_len(blob);
@@ -5897,7 +5899,7 @@ write_blob_error:
 ///
 /// @return true on success, or false on failure.
 bool read_blob(FILE *const fd, blob_T *const blob)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   FileInfo file_info;
   if (!os_fileinfo_fd(fileno(fd), &file_info)) {
@@ -5923,7 +5925,7 @@ FUNC_ATTR_NONNULL_ALL
 /// @returns an allocated string if `tv` represents a VimL string, list, or
 ///          number; NULL otherwise.
 char *save_tv_as_string(typval_T *tv, ptrdiff_t *const len, bool endnl)
-FUNC_ATTR_MALLOC FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_MALLOC FUNC_ATTR_NONNULL_ALL
 {
   *len = 0;
   if (tv->v_type == VAR_UNKNOWN) {
@@ -6076,7 +6078,7 @@ int buf_charidx_to_byteidx(buf_T *buf, linenr_T lnum, int charidx)
 /// @return Pointer to position or NULL in case of error (e.g. invalid type).
 pos_T *var2fpos(const typval_T *const tv, const bool dollar_lnum, int *const ret_fnum,
                 const bool charcol)
-FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
 {
   static pos_T pos;
 
@@ -6559,7 +6561,7 @@ varnumber_T get_vim_var_nr(int idx) FUNC_ATTR_PURE
 /// If the String variable has never been set, return an empty string.
 /// Never returns NULL.
 char *get_vim_var_str(int idx)
-FUNC_ATTR_PURE FUNC_ATTR_NONNULL_RET
+  FUNC_ATTR_PURE FUNC_ATTR_NONNULL_RET
 {
   return (char *)tv_get_string(&vimvars[idx].vv_tv);
 }
@@ -6839,7 +6841,7 @@ static void check_vars(const char *name, size_t len)
 
 /// check if special v:lua value for calling lua functions
 bool is_luafunc(partial_T *partial)
-FUNC_ATTR_PURE
+  FUNC_ATTR_PURE
 {
   return partial == vvlua_partial;
 }
@@ -6854,7 +6856,7 @@ static bool tv_is_luafunc(typval_T *tv)
 /// @param p  Pointer to the char AFTER the "v:lua." prefix.
 /// @return Pointer to the char one past the end of the function's name.
 const char *skip_luafunc_name(const char *p)
-FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
   while (ASCII_ISALNUM(*p) || *p == '_' || *p == '-' || *p == '.' || *p == '\'') {
     p++;
@@ -6864,7 +6866,7 @@ FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 
 /// check the function name after "v:lua."
 int check_luafunc_name(const char *const str, const bool paren)
-FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
   const char *const p = skip_luafunc_name(str);
   if (*p != (paren ? '(' : NUL)) {
@@ -7024,7 +7026,7 @@ dictitem_T *find_var(const char *const name, const size_t name_len, hashtab_T **
 ///         was not found.
 dictitem_T *find_var_in_ht(hashtab_T *const ht, int htname, const char *const varname,
                            const size_t varname_len, int no_autoload)
-FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
 {
   if (varname_len == 0) {
     // Must be something like "s:", otherwise "ht" would be NULL.
@@ -7255,7 +7257,7 @@ void unref_var_dict(dict_T *dict)
 ///                     original list. Not used when deep is false.
 int var_item_copy(const vimconv_T *const conv, typval_T *const from, typval_T *const to,
                   const bool deep, const int copyID)
-FUNC_ATTR_NONNULL_ARG(2, 3)
+  FUNC_ATTR_NONNULL_ARG(2, 3)
 {
   static int recurse = 0;
   int ret = OK;
@@ -7538,7 +7540,7 @@ const char *find_option_end(const char **const arg, int *const scope)
 ///
 /// @return [allocated] autoload script name.
 char *autoload_name(const char *const name, const size_t name_len)
-FUNC_ATTR_MALLOC FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_MALLOC FUNC_ATTR_WARN_UNUSED_RESULT
 {
   // Get the script file name: replace '#' with '/', append ".vim".
   char *const scriptname = xmalloc(name_len + sizeof("autoload/.vim"));
@@ -7605,7 +7607,7 @@ bool script_autoload(const char *const name, const size_t name_len, const bool r
 }
 
 static var_flavour_T var_flavour(char *varname)
-FUNC_ATTR_PURE
+  FUNC_ATTR_PURE
 {
   char *p = varname;
 
@@ -7633,7 +7635,7 @@ FUNC_ATTR_PURE
 ///         or NULL to indicate that iteration is over.
 const void *var_shada_iter(const void *const iter, const char **const name, typval_T *rettv,
                            var_flavour_T flavour)
-FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ARG(2, 3)
+  FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ARG(2, 3)
 {
   const hashitem_T *hi;
   const hashitem_T *hifirst = globvarht.ht_array;
@@ -8422,7 +8424,7 @@ bool invoke_prompt_interrupt(void)
 /// @param type  operator
 /// @param ic  ignore case
 int typval_compare(typval_T *typ1, typval_T *typ2, exprtype_T type, bool ic)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   varnumber_T n1, n2;
   const bool type_is = type == EXPR_IS || type == EXPR_ISNOT;

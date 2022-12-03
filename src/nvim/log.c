@@ -131,7 +131,7 @@ void log_unlock(void)
 /// @return true if log was emitted normally, false if failed or recursive
 bool logmsg(int log_level, const char *context, const char *func_name, int line_num, bool eol,
             const char *fmt, ...)
-FUNC_ATTR_UNUSED FUNC_ATTR_PRINTF(6, 7)
+  FUNC_ATTR_UNUSED FUNC_ATTR_PRINTF(6, 7)
 {
   static bool recursive = false;
   static bool did_msg = false;  // Showed recursion message?
@@ -266,7 +266,7 @@ void log_callstack(const char *const func_name, const int line_num)
 
 static bool do_log_to_file(FILE *log_file, int log_level, const char *context,
                            const char *func_name, int line_num, bool eol, const char *fmt, ...)
-FUNC_ATTR_PRINTF(7, 8)
+  FUNC_ATTR_PRINTF(7, 8)
 {
   va_list args;
   va_start(args, fmt);
@@ -280,7 +280,7 @@ FUNC_ATTR_PRINTF(7, 8)
 static bool v_do_log_to_file(FILE *log_file, int log_level, const char *context,
                              const char *func_name, int line_num, bool eol, const char *fmt,
                              va_list args)
-FUNC_ATTR_PRINTF(7, 0)
+  FUNC_ATTR_PRINTF(7, 0)
 {
   // Name of the Nvim instance that produced the log.
   static char name[16] = { 0 };

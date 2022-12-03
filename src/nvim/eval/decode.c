@@ -64,7 +64,7 @@ typedef kvec_t(ContainerStackItem) ContainerStack;
 /// @param[in]  val  Value associated with the _VAL key.
 static inline void create_special_dict(typval_T *const rettv, const MessagePackType type,
                                        typval_T val)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   dict_T *const dict = tv_dict_alloc();
   dictitem_T *const type_di = tv_dict_item_alloc_len(S_LEN("_TYPE"));
@@ -110,7 +110,7 @@ static inline int json_decoder_pop(ValuesStackItem obj, ValuesStack *const stack
                                    ContainerStack *const container_stack, const char **const pp,
                                    bool *const next_map_special, bool *const didcomma,
                                    bool *const didcolon)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   if (kv_size(*container_stack) == 0) {
     kv_push(*stack, obj);
@@ -204,6 +204,8 @@ FUNC_ATTR_NONNULL_ALL
 #define LENP(p, e) \
   ((int)((e) - (p))), (p)
 
+// uncrustify:off
+
 #define OBJ(obj_tv, is_sp_string, didcomma_, didcolon_) \
   ((ValuesStackItem) { \
     .is_special_string = (is_sp_string), \
@@ -211,6 +213,8 @@ FUNC_ATTR_NONNULL_ALL
     .didcomma = (didcomma_), \
     .didcolon = (didcolon_), \
   })
+
+// uncrustify:on
 
 #define POP(obj_tv, is_sp_string) \
   do { \
@@ -236,7 +240,7 @@ FUNC_ATTR_NONNULL_ALL
 /// @return [allocated] list which should contain key-value pairs. Return value
 ///                     may be safely ignored.
 list_T *decode_create_map_special_dict(typval_T *const ret_tv, const ptrdiff_t len)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   list_T *const list = tv_list_alloc(len);
   tv_list_ref(list);
@@ -267,7 +271,7 @@ FUNC_ATTR_NONNULL_ALL
 /// @return Decoded string.
 typval_T decode_string(const char *const s, const size_t len, const TriState hasnul,
                        const bool binary, const bool s_allocated)
-FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_WARN_UNUSED_RESULT
 {
   assert(s != NULL || len == 0);
   const bool really_hasnul = (hasnul == kNone
@@ -327,7 +331,7 @@ static inline int parse_json_string(const char *const buf, const size_t buf_len,
                                     ContainerStack *const container_stack,
                                     bool *const next_map_special, bool *const didcomma,
                                     bool *const didcolon)
-FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_ALWAYS_INLINE
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_ALWAYS_INLINE
 {
   const char *const e = buf + buf_len;
   const char *p = *pp;
@@ -532,7 +536,7 @@ static inline int parse_json_number(const char *const buf, const size_t buf_len,
                                     ContainerStack *const container_stack,
                                     bool *const next_map_special, bool *const didcomma,
                                     bool *const didcolon)
-FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_ALWAYS_INLINE
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_ALWAYS_INLINE
 {
   const char *const e = buf + buf_len;
   const char *p = *pp;
@@ -655,7 +659,7 @@ parse_json_number_ret:
 ///
 /// @return OK in case of success, FAIL otherwise.
 int json_decode_string(const char *const buf, const size_t buf_len, typval_T *const rettv)
-FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
   const char *p = buf;
   const char *const e = buf + buf_len;
@@ -923,9 +927,11 @@ json_decode_string_ret:
 
 #undef DICT_LEN
 
+// uncrustify:off
+
 /// Convert msgpack object to a VimL one
 int msgpack_to_vim(const msgpack_object mobj, typval_T *const rettv)
-FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
   switch (mobj.type) {
   case MSGPACK_OBJECT_NIL:
@@ -1106,3 +1112,5 @@ msgpack_to_vim_generic_map: {}
   }
   return OK;
 }
+
+// uncrustify:on

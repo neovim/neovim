@@ -4605,7 +4605,7 @@ static void report_state(char *action, regsub_T *sub, nfa_state_T *state, int li
 /// @return  true if the same state is already in list "l" with the same
 ///          positions as "subs".
 static bool has_state_with_pos(nfa_list_T *l, nfa_state_T *state, regsubs_T *subs, nfa_pim_T *pim)
-FUNC_ATTR_NONNULL_ARG(1, 2, 3)
+  FUNC_ATTR_NONNULL_ARG(1, 2, 3)
 {
   for (int i = 0; i < l->n; i++) {
     nfa_thread_T *thread = &l->t[i];
@@ -4649,7 +4649,7 @@ static bool pim_equal(const nfa_pim_T *one, const nfa_pim_T *two)
 
 // Return true if "state" leads to a NFA_MATCH without advancing the input.
 static bool match_follows(const nfa_state_T *startstate, int depth)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   const nfa_state_T *state = startstate;
 
@@ -4741,7 +4741,7 @@ FUNC_ATTR_NONNULL_ALL
 ///
 /// @return  true if "state" is already in list "l".
 static bool state_in_list(nfa_list_T *l, nfa_state_T *state, regsubs_T *subs)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   if (state->lastlist[nfa_ll_index] == l->id) {
     if (!rex.nfa_has_backref || has_state_with_pos(l, state, subs, NULL)) {
@@ -4766,7 +4766,7 @@ FUNC_ATTR_NONNULL_ALL
 ///          NULL when recursiveness is too deep.
 static regsubs_T *addstate(nfa_list_T *l, nfa_state_T *state, regsubs_T *subs_arg, nfa_pim_T *pim,
                            int off_arg)
-FUNC_ATTR_NONNULL_ARG(1, 2) FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_NONNULL_ARG(1, 2) FUNC_ATTR_WARN_UNUSED_RESULT
 {
   int subidx;
   int off = off_arg;
@@ -5172,7 +5172,7 @@ skip_add:
 /// @param pim    postponed look-behind match
 static regsubs_T *addstate_here(nfa_list_T *l, nfa_state_T *state, regsubs_T *subs, nfa_pim_T *pim,
                                 int *ip)
-FUNC_ATTR_NONNULL_ARG(1, 2, 5) FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_NONNULL_ARG(1, 2, 5) FUNC_ATTR_WARN_UNUSED_RESULT
 {
   int tlen = l->n;
   int count;
@@ -5472,7 +5472,7 @@ static bool nfa_re_num_cmp(uintmax_t val, int op, uintmax_t pos)
 // position).
 static int recursive_regmatch(nfa_state_T *state, nfa_pim_T *pim, nfa_regprog_T *prog,
                               regsubs_T *submatch, regsubs_T *m, int **listids, int *listids_len)
-FUNC_ATTR_NONNULL_ARG(1, 3, 5, 6, 7)
+  FUNC_ATTR_NONNULL_ARG(1, 3, 5, 6, 7)
 {
   const int save_reginput_col = (int)(rex.input - rex.line);
   const int save_reglnum = rex.lnum;
@@ -5856,7 +5856,7 @@ static int nfa_did_time_out(void)
 ///
 /// Note: Caller must ensure that: start != NULL.
 static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start, regsubs_T *submatch, regsubs_T *m)
-FUNC_ATTR_NONNULL_ARG(1, 2, 4)
+  FUNC_ATTR_NONNULL_ARG(1, 2, 4)
 {
   int result = false;
   int flag = 0;

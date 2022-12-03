@@ -81,7 +81,7 @@ void free_xfmark(xfmark_T fm)
 
 /// Free and clear fmark_T item
 void clear_fmark(fmark_T *fm)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   free_fmark(*fm);
   CLEAR_POINTER(fm);
@@ -505,7 +505,7 @@ fmark_T *mark_get_visual(buf_T *buf, int name)
 ///
 /// @return[static] Mark with the given information.
 fmark_T *pos_to_mark(buf_T *buf, fmark_T *fmp, pos_T pos)
-FUNC_ATTR_NONNULL_RET
+  FUNC_ATTR_NONNULL_RET
 {
   static fmark_T fms = INIT_FMARK;
   fmark_T *fm = fmp == NULL ? &fms : fmp;
@@ -581,7 +581,7 @@ MarkMoveRes mark_move_to(fmark_T *fm, MarkMove flags)
   if (res & kMarkSwitchedBuf || res & kMarkChangedCursor) {
     check_cursor();
   }
-end:
+  end:
   return res;
 }
 
@@ -759,7 +759,7 @@ bool mark_check_line_bounds(buf_T *buf, fmark_T *fm)
 ///
 /// @param[out]  buf  Buffer to clear marks in.
 void clrallmarks(buf_T *const buf)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   for (size_t i = 0; i < NMARKS; i++) {
     clear_fmark(&buf->b_namedm[i]);
@@ -1474,7 +1474,7 @@ void copy_jumplist(win_T *from, win_T *to)
 /// @return Pointer that needs to be passed to next `mark_jumplist_iter` call or
 ///         NULL if iteration is over.
 const void *mark_jumplist_iter(const void *const iter, const win_T *const win, xfmark_T *const fm)
-FUNC_ATTR_NONNULL_ARG(2, 3) FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_NONNULL_ARG(2, 3) FUNC_ATTR_WARN_UNUSED_RESULT
 {
   if (iter == NULL && win->w_jumplistlen == 0) {
     *fm = (xfmark_T)INIT_XFMARK;
@@ -1501,7 +1501,7 @@ FUNC_ATTR_NONNULL_ARG(2, 3) FUNC_ATTR_WARN_UNUSED_RESULT
 /// @return Pointer that needs to be passed to next `mark_global_iter` call or
 ///         NULL if iteration is over.
 const void *mark_global_iter(const void *const iter, char *const name, xfmark_T *const fm)
-FUNC_ATTR_NONNULL_ARG(2, 3) FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_NONNULL_ARG(2, 3) FUNC_ATTR_WARN_UNUSED_RESULT
 {
   *name = NUL;
   const xfmark_T *iter_mark = (iter == NULL
@@ -1540,7 +1540,7 @@ FUNC_ATTR_NONNULL_ARG(2, 3) FUNC_ATTR_WARN_UNUSED_RESULT
 ///
 /// @return Pointer to the next mark or NULL.
 static inline const fmark_T *next_buffer_mark(const buf_T *const buf, char *const mark_name)
-FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
   switch (*mark_name) {
   case NUL:
@@ -1577,7 +1577,7 @@ FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 ///         NULL if iteration is over.
 const void *mark_buffer_iter(const void *const iter, const buf_T *const buf, char *const name,
                              fmark_T *const fm)
-FUNC_ATTR_NONNULL_ARG(2, 3, 4) FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_NONNULL_ARG(2, 3, 4) FUNC_ATTR_WARN_UNUSED_RESULT
 {
   *name = NUL;
   char mark_name = (char)(iter == NULL ? NUL :
@@ -1637,7 +1637,7 @@ bool mark_set_global(const char name, const xfmark_T fm, const bool update)
 ///
 /// @return true on success, false on failure.
 bool mark_set_local(const char name, buf_T *const buf, const fmark_T fm, const bool update)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   fmark_T *fm_tgt = NULL;
   if (ASCII_ISLOWER(name)) {
@@ -1700,7 +1700,7 @@ void free_all_marks(void)
 /// @param[in]  buf  Buffer to adjust position in.
 /// @param[out]  lp  Position to adjust.
 void mark_mb_adjustpos(buf_T *buf, pos_T *lp)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   if (lp->col > 0 || lp->coladd > 1) {
     const char *const p = ml_get_buf(buf, lp->lnum, false);
@@ -1722,7 +1722,7 @@ FUNC_ATTR_NONNULL_ALL
 
 // Add information about mark 'mname' to list 'l'
 static int add_mark(list_T *l, const char *mname, const pos_T *pos, int bufnr, const char *fname)
-FUNC_ATTR_NONNULL_ARG(1, 2, 3)
+  FUNC_ATTR_NONNULL_ARG(1, 2, 3)
 {
   if (pos->lnum <= 0) {
     return OK;
@@ -1752,7 +1752,7 @@ FUNC_ATTR_NONNULL_ARG(1, 2, 3)
 /// @param[in] buf  Buffer to get the marks from
 /// @param[out] l   List to store marks
 void get_buf_local_marks(const buf_T *buf, list_T *l)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   char mname[3] = "' ";
 
@@ -1788,7 +1788,7 @@ xfmark_T get_raw_global_mark(char name)
 ///
 /// @param[out] l  List to store global marks
 void get_global_marks(list_T *l)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   char mname[3] = "' ";
   char *name;

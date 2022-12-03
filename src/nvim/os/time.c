@@ -45,7 +45,7 @@ void time_init(void)
 ///
 /// @return Relative time value with nanosecond precision.
 uint64_t os_hrtime(void)
-FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_WARN_UNUSED_RESULT
 {
   return uv_hrtime();
 }
@@ -59,7 +59,7 @@ FUNC_ATTR_WARN_UNUSED_RESULT
 ///
 /// @return Relative time value with millisecond precision.
 uint64_t os_now(void)
-FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_WARN_UNUSED_RESULT
 {
   return uv_now(&main_loop.uv);
 }
@@ -181,7 +181,7 @@ struct tm *os_localtime(struct tm *result) FUNC_ATTR_NONNULL_ALL
 /// @return human-readable string of current local time
 char *os_ctime_r(const time_t *restrict clock, char *restrict result, size_t result_len,
                  bool add_newline)
-FUNC_ATTR_NONNULL_ALL FUNC_ATTR_NONNULL_RET
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_NONNULL_RET
 {
   struct tm clock_local;
   struct tm *clock_local_ptr = os_localtime_r(clock, &clock_local);
@@ -210,7 +210,7 @@ FUNC_ATTR_NONNULL_ALL FUNC_ATTR_NONNULL_RET
 /// @param result_len length of result buffer
 /// @return human-readable string of current local time
 char *os_ctime(char *result, size_t result_len, bool add_newline)
-FUNC_ATTR_NONNULL_ALL FUNC_ATTR_NONNULL_RET
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_NONNULL_RET
 {
   time_t rawtime = time(NULL);
   return os_ctime_r(&rawtime, result, result_len, add_newline);
@@ -223,7 +223,7 @@ FUNC_ATTR_NONNULL_ALL FUNC_ATTR_NONNULL_RET
 /// @param tm[out]  time representation of "str"
 /// @return Pointer to first unprocessed character or NULL
 char *os_strptime(const char *str, const char *format, struct tm *tm)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
 #ifdef HAVE_STRPTIME
   return strptime(str, format, tm);
@@ -236,7 +236,7 @@ FUNC_ATTR_NONNULL_ALL
 ///
 /// @return Seconds since epoch.
 Timestamp os_time(void)
-FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_WARN_UNUSED_RESULT
 {
   return (Timestamp)time(NULL);
 }

@@ -54,13 +54,13 @@ static char e_nomenu[] = N_("E329: No menu \"%s\"");
 
 // Return true if "name" is a window toolbar menu name.
 static bool menu_is_winbar(const char *const name)
-FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
 {
   return (strncmp(name, "WinBar", 6) == 0);
 }
 
 static vimmenu_T **get_root_menu(const char *const name)
-FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
 {
   return &root_menu;
 }
@@ -896,7 +896,7 @@ static int expand_emenu;                // true for ":emenu" command
 
 // Work out what to complete when doing command line completion of menu names.
 char *set_context_in_menu_cmd(expand_T *xp, const char *cmd, char *arg, bool forceit)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   char *after_dot;
   char *p;
@@ -1312,7 +1312,8 @@ static char *popup_mode_name(char *name, int idx)
 ///
 /// @return a pointer to allocated memory.
 static char *menu_text(const char *str, int *mnemonic, char **actext)
-FUNC_ATTR_NONNULL_RET FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ARG(1)
+  FUNC_ATTR_NONNULL_RET FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_NONNULL_ARG(1)
 {
   char *p;
   char *text;
@@ -1348,7 +1349,7 @@ FUNC_ATTR_NONNULL_RET FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ARG(1)
 
 // Return true if "name" can be a menu in the MenuBar.
 bool menu_is_menubar(const char *const name)
-FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
 {
   return !menu_is_popup((char *)name)
          && !menu_is_toolbar(name)
@@ -1358,14 +1359,14 @@ FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
 
 // Return true if "name" is a popup menu name.
 bool menu_is_popup(const char *const name)
-FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
 {
   return strncmp(name, "PopUp", 5) == 0;
 }
 
 // Return true if "name" is a toolbar menu name.
 bool menu_is_toolbar(const char *const name)
-FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
 {
   return strncmp(name, "ToolBar", 7) == 0;
 }
@@ -1457,7 +1458,7 @@ void show_popupmenu(void)
 /// @param eap  NULL for the window toolbar.
 /// @param mode_idx  specify a MENU_INDEX_ value, use -1 to depend on the current state
 void execute_menu(const exarg_T *eap, vimmenu_T *menu, int mode_idx)
-FUNC_ATTR_NONNULL_ARG(2)
+  FUNC_ATTR_NONNULL_ARG(2)
 {
   int idx = mode_idx;
 
@@ -1571,7 +1572,7 @@ FUNC_ATTR_NONNULL_ARG(2)
 /// Lookup a menu by the descriptor name e.g. "File.New"
 /// Returns NULL if the menu is not found
 static vimmenu_T *menu_getbyname(char *name_arg)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   char *saved_name = xstrdup(name_arg);
   vimmenu_T *menu = *get_root_menu(saved_name);
@@ -1835,7 +1836,7 @@ static char *menu_translate_tab_and_shift(char *arg_start)
 
 /// Get the information about a menu item in mode 'which'
 static void menuitem_getinfo(const char *menu_name, const vimmenu_T *menu, int modes, dict_T *dict)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   if (*menu_name == NUL) {
     // Return all the top-level menus

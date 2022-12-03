@@ -105,7 +105,7 @@ static void comp_botline(win_T *wp)
 /// Redraw when w_cline_row changes and 'relativenumber' or 'cursorline' is set.
 /// Also when concealing is on and 'concealcursor' is not active.
 void redraw_for_cursorline(win_T *wp)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   if ((wp->w_valid & VALID_CROW) == 0 && !pum_visible()
       && (wp->w_p_rnu || win_cursorline_standout(wp))) {
@@ -118,7 +118,7 @@ FUNC_ATTR_NONNULL_ALL
 /// contains "screenline" or when the "CurSearch" highlight is in use.
 /// Also when concealing is on and 'concealcursor' is active.
 static void redraw_for_cursorcolumn(win_T *wp)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   if ((wp->w_valid & VALID_VIRTCOL) == 0 && !pum_visible()) {
     if (wp->w_p_cuc || ((HL_ATTR(HLF_LC) || win_hl_attr(wp, HLF_LC)) && using_hlsearch())) {

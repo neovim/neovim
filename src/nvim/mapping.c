@@ -79,7 +79,7 @@ mapblock_T *get_buf_maphash_list(int state, int c)
 /// @param  index  The index in the maphash[]
 /// @param  buf  The buffer to get the maphash from. NULL for global
 mapblock_T *get_maphash(int index, buf_T *buf)
-FUNC_ATTR_PURE
+    FUNC_ATTR_PURE
 {
   if (index >= MAX_MAPHASH) {
     return NULL;
@@ -110,7 +110,7 @@ static void mapblock_free(mapblock_T **mpp)
 ///
 /// @return [allocated] NUL-terminated string with characters.
 static char *map_mode_to_chars(int mode)
-FUNC_ATTR_MALLOC FUNC_ATTR_NONNULL_RET
+  FUNC_ATTR_MALLOC FUNC_ATTR_NONNULL_RET
 {
   garray_T mapmode;
 
@@ -1061,7 +1061,7 @@ void map_clear_mode(buf_T *buf, int mode, bool local, bool abbr)
 ///
 /// @return true if there is at least one mapping with given parameters.
 bool map_to_exists(const char *const str, const char *const modechars, const bool abbr)
-FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_PURE
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_PURE
 {
   int mode = 0;
   int retval;
@@ -2012,7 +2012,7 @@ void f_hasmapto(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 /// @return  A Dictionary.
 static Dictionary mapblock_fill_dict(const mapblock_T *const mp, const char *lhsrawalt,
                                      const long buffer_value, const bool compatible)
-FUNC_ATTR_NONNULL_ARG(1)
+  FUNC_ATTR_NONNULL_ARG(1)
 {
   Dictionary dict = ARRAY_DICT_INIT;
   char *const lhs = str2special_save((const char *)mp->m_keys, compatible, !compatible);
@@ -2611,7 +2611,7 @@ void modify_keymap(uint64_t channel_id, Buffer buffer, bool is_unmap, String mod
     goto fail_and_free;
   }  // switch
 
-fail_and_free:
+  fail_and_free:
   current_sctx = save_current_sctx;
   NLUA_CLEAR_REF(parsed_args.rhs_lua);
   xfree(parsed_args.rhs);

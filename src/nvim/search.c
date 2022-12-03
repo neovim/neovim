@@ -370,7 +370,7 @@ int ignorecase_opt(char_u *pat, int ic_in, int scs)
 
 /// Returns true if pattern `pat` has an uppercase character.
 bool pat_has_uppercase(char_u *pat)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   char_u *p = pat;
 
@@ -402,7 +402,7 @@ FUNC_ATTR_NONNULL_ALL
 }
 
 const char *last_csearch(void)
-FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
   return lastc_bytes;
 }
@@ -1477,7 +1477,7 @@ int search_for_exact_line(buf_T *buf, pos_T *pos, Direction dir, char *pat)
 /// Do this "cap->count1" times.
 /// Return FAIL or OK.
 int searchc(cmdarg_T *cap, int t_cmd)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   int c = cap->nchar;                   // char to search for
   int dir = cap->arg;                   // true for searching forward
@@ -1640,7 +1640,7 @@ static bool find_rawstring_end(char *linep, pos_T *startpos, pos_T *endpos)
 /// the opposite character.  Set "*backwards" to the direction.
 /// When "switchit" is true swap the direction.
 static void find_mps_values(int *initc, int *findc, bool *backwards, bool switchit)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   char *ptr = curbuf->b_p_mps;
 
@@ -2931,7 +2931,7 @@ typedef struct {
 /// are in 'matches'.
 static int fuzzy_match_compute_score(const char_u *const str, const int strSz,
                                      const uint32_t *const matches, const int numMatches)
-FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_PURE
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_PURE
 {
   assert(numMatches > 0);  // suppress clang "result of operation is garbage"
   // Initialize score
@@ -3000,7 +3000,7 @@ static int fuzzy_match_recursive(const char_u *fuzpat, const char_u *str, uint32
                                  const int strLen, const uint32_t *const srcMatches,
                                  uint32_t *const matches, const int maxMatches, int nextMatch,
                                  int *const recursionCount)
-FUNC_ATTR_NONNULL_ARG(1, 2, 4, 5, 8, 11) FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_NONNULL_ARG(1, 2, 4, 5, 8, 11) FUNC_ATTR_WARN_UNUSED_RESULT
 {
   // Recursion params
   bool recursiveMatch = false;
@@ -3098,7 +3098,7 @@ FUNC_ATTR_NONNULL_ARG(1, 2, 4, 5, 8, 11) FUNC_ATTR_WARN_UNUSED_RESULT
 /// 'outScore' and the matching character positions in 'matches'.
 bool fuzzy_match(char_u *const str, const char_u *const pat_arg, const bool matchseq,
                  int *const outScore, uint32_t *const matches, const int maxMatches)
-FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
   const int len = mb_charlen(str);
   bool complete = false;
@@ -3159,7 +3159,7 @@ FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 /// Sort the fuzzy matches in the descending order of the match score.
 /// For items with same score, retain the order using the index (stable sort)
 static int fuzzy_match_item_compare(const void *const s1, const void *const s2)
-FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_PURE
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_PURE
 {
   const int v1 = ((const fuzzyItem_T *)s1)->score;
   const int v2 = ((const fuzzyItem_T *)s2)->score;
@@ -3182,7 +3182,7 @@ static void fuzzy_match_in_list(list_T *const l, char_u *const str, const bool m
                                 const char_u *const key, Callback *const item_cb,
                                 const bool retmatchpos, list_T *const fmatchlist,
                                 const long max_matches)
-FUNC_ATTR_NONNULL_ARG(2, 5, 7)
+  FUNC_ATTR_NONNULL_ARG(2, 5, 7)
 {
   long len = tv_list_len(l);
   if (len == 0) {
@@ -3316,7 +3316,7 @@ FUNC_ATTR_NONNULL_ARG(2, 5, 7)
 /// If 'retmatchpos' is true, also returns the matching character positions.
 static void do_fuzzymatch(const typval_T *const argvars, typval_T *const rettv,
                           const bool retmatchpos)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   // validate and get the arguments
   if (argvars[0].v_type != VAR_LIST || argvars[0].vval.v_list == NULL) {
@@ -3678,7 +3678,7 @@ void find_pattern_in_path(char *ptr, Direction dir, size_t len, bool whole, bool
     } else {
       // Check if the line is a define (type == FIND_DEFINE)
       p = line;
-search_line:
+      search_line:
       define_matched = false;
       if (def_regmatch.regprog != NULL
           && vim_regexec(&def_regmatch, line, (colnr_T)0)) {
@@ -4016,7 +4016,7 @@ fpip_end:
 
 static void show_pat_in_path(char *line, int type, bool did_show, int action, FILE *fp,
                              linenr_T *lnum, long count)
-FUNC_ATTR_NONNULL_ARG(1, 6)
+  FUNC_ATTR_NONNULL_ARG(1, 6)
 {
   char *p;
 

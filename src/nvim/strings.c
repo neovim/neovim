@@ -34,7 +34,7 @@
 /// terminate with a NUL. The allocated memory always has size `len + 1`, even
 /// when `string` is shorter.
 char *xstrnsave(const char *string, size_t len)
-FUNC_ATTR_NONNULL_RET FUNC_ATTR_MALLOC FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_RET FUNC_ATTR_MALLOC FUNC_ATTR_NONNULL_ALL
 {
   return strncpy(xmallocz(len), string, len);  // NOLINT(runtime/printf)
 }
@@ -42,7 +42,7 @@ FUNC_ATTR_NONNULL_RET FUNC_ATTR_MALLOC FUNC_ATTR_NONNULL_ALL
 // Same as vim_strsave(), but any characters found in esc_chars are preceded
 // by a backslash.
 char_u *vim_strsave_escaped(const char_u *string, const char_u *esc_chars)
-FUNC_ATTR_NONNULL_RET FUNC_ATTR_MALLOC FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_RET FUNC_ATTR_MALLOC FUNC_ATTR_NONNULL_ALL
 {
   return vim_strsave_escaped_ext(string, esc_chars, '\\', false);
 }
@@ -51,7 +51,7 @@ FUNC_ATTR_NONNULL_RET FUNC_ATTR_MALLOC FUNC_ATTR_NONNULL_ALL
 // characters where rem_backslash() would remove the backslash.
 // Escape the characters with "cc".
 char_u *vim_strsave_escaped_ext(const char_u *string, const char_u *esc_chars, char_u cc, bool bsl)
-FUNC_ATTR_NONNULL_RET FUNC_ATTR_MALLOC FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_RET FUNC_ATTR_MALLOC FUNC_ATTR_NONNULL_ALL
 {
   // First count the number of backslashes required.
   // Then allocate the memory and insert them.
@@ -101,8 +101,8 @@ FUNC_ATTR_NONNULL_RET FUNC_ATTR_MALLOC FUNC_ATTR_NONNULL_ALL
 ///
 /// @return [allocated] Copy of the string.
 char *vim_strnsave_unquoted(const char *const string, const size_t length)
-FUNC_ATTR_MALLOC FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
-FUNC_ATTR_NONNULL_RET
+  FUNC_ATTR_MALLOC FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_RET
 {
 #define ESCAPE_COND(p, inquote, string_end) \
   (*(p) == '\\' && (inquote) && (p) + 1 < (string_end) && ((p)[1] == '\\' || (p)[1] == '"'))
@@ -147,7 +147,7 @@ FUNC_ATTR_NONNULL_RET
 ///
 /// @return  the result in allocated memory.
 char *vim_strsave_shellescape(const char *string, bool do_special, bool do_newline)
-FUNC_ATTR_NONNULL_RET FUNC_ATTR_MALLOC FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_RET FUNC_ATTR_MALLOC FUNC_ATTR_NONNULL_ALL
 {
   char *d;
   char_u *escaped_string;
@@ -265,7 +265,7 @@ FUNC_ATTR_NONNULL_RET FUNC_ATTR_MALLOC FUNC_ATTR_NONNULL_ALL
 // Like vim_strsave(), but make all characters uppercase.
 // This uses ASCII lower-to-upper case translation, language independent.
 char_u *vim_strsave_up(const char_u *string)
-FUNC_ATTR_NONNULL_RET FUNC_ATTR_MALLOC FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_RET FUNC_ATTR_MALLOC FUNC_ATTR_NONNULL_ALL
 {
   char *p1;
 
@@ -277,7 +277,7 @@ FUNC_ATTR_NONNULL_RET FUNC_ATTR_MALLOC FUNC_ATTR_NONNULL_ALL
 /// Like xstrnsave(), but make all characters uppercase.
 /// This uses ASCII lower-to-upper case translation, language independent.
 char *vim_strnsave_up(const char *string, size_t len)
-FUNC_ATTR_NONNULL_RET FUNC_ATTR_MALLOC FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_RET FUNC_ATTR_MALLOC FUNC_ATTR_NONNULL_ALL
 {
   char *p1 = xstrnsave(string, len);
   vim_strup((char_u *)p1);
@@ -286,7 +286,7 @@ FUNC_ATTR_NONNULL_RET FUNC_ATTR_MALLOC FUNC_ATTR_NONNULL_ALL
 
 // ASCII lower-to-upper case translation, language independent.
 void vim_strup(char_u *p)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   char_u c;
   while ((c = *p) != NUL) {
@@ -303,7 +303,7 @@ FUNC_ATTR_NONNULL_ALL
 ///
 /// @return [allocated] upper-cased string.
 char *strcase_save(const char *const orig, bool upper)
-FUNC_ATTR_NONNULL_RET FUNC_ATTR_MALLOC FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_RET FUNC_ATTR_MALLOC FUNC_ATTR_NONNULL_ALL
 {
   char *res = xstrdup(orig);
 
@@ -340,7 +340,7 @@ FUNC_ATTR_NONNULL_RET FUNC_ATTR_MALLOC FUNC_ATTR_NONNULL_ALL
 
 // delete spaces at the end of a string
 void del_trailing_spaces(char *ptr)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   char *q;
 
@@ -352,7 +352,7 @@ FUNC_ATTR_NONNULL_ALL
 
 #if !defined(HAVE_STRNLEN)
 size_t xstrnlen(const char *s, size_t n)
-FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE
 {
   const char *end = memchr(s, '\0', n);
   if (end == NULL) {
@@ -367,7 +367,7 @@ FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE
 // Doesn't work for multi-byte characters.
 // return 0 for match, < 0 for smaller, > 0 for bigger
 int vim_stricmp(const char *s1, const char *s2)
-FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE
 {
   int i;
 
@@ -391,7 +391,7 @@ FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE
 // Doesn't work for multi-byte characters.
 // return 0 for match, < 0 for smaller, > 0 for bigger
 int vim_strnicmp(const char *s1, const char *s2, size_t len)
-FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE
 {
   int i;
 
@@ -420,7 +420,7 @@ FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE
 ///         if it was not found or character is invalid. NUL character is never
 ///         found, use `strlen()` instead.
 char *vim_strchr(const char *const string, const int c)
-FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
   if (c <= 0) {
     return NULL;
@@ -440,7 +440,7 @@ FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 # include "strings.c.generated.h"
 #endif
 static int sort_compare(const void *s1, const void *s2)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   return strcmp(*(char **)s1, *(char **)s2);
 }
@@ -453,7 +453,7 @@ void sort_strings(char **files, int count)
 // Return true if string "s" contains a non-ASCII character (128 or higher).
 // When "s" is NULL false is returned.
 bool has_non_ascii(const char_u *s)
-FUNC_ATTR_PURE
+  FUNC_ATTR_PURE
 {
   const char_u *p;
 
@@ -470,7 +470,7 @@ FUNC_ATTR_PURE
 /// Return true if string "s" contains a non-ASCII character (128 or higher).
 /// When "s" is NULL false is returned.
 bool has_non_ascii_len(const char *const s, const size_t len)
-FUNC_ATTR_PURE
+  FUNC_ATTR_PURE
 {
   if (s != NULL) {
     for (size_t i = 0; i < len; i++) {
@@ -484,7 +484,7 @@ FUNC_ATTR_PURE
 
 /// Concatenate two strings and return the result in allocated memory.
 char *concat_str(const char *restrict str1, const char *restrict str2)
-FUNC_ATTR_NONNULL_RET FUNC_ATTR_MALLOC FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_RET FUNC_ATTR_MALLOC FUNC_ATTR_NONNULL_ALL
 {
   size_t l = strlen(str1);
   char *dest = xmalloc(l + strlen(str2) + 1);
@@ -508,7 +508,7 @@ static const char *const e_printf =
 ///
 /// @return Number value or 0 in case of error.
 static varnumber_T tv_nr(typval_T *tvs, int *idxp)
-FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
   int idx = *idxp - 1;
   varnumber_T n = 0;
@@ -541,7 +541,7 @@ FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 ///
 /// @return String value or NULL in case of error.
 static const char *tv_str(typval_T *tvs, int *idxp, char **const tofree)
-FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
   int idx = *idxp - 1;
   const char *s = NULL;
@@ -570,7 +570,7 @@ FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 ///
 /// @return Pointer stored in typval_T or NULL.
 static const void *tv_ptr(const typval_T *const tvs, int *const idxp)
-FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
 #define OFF(attr) offsetof(union typval_vval_union, attr)
   STATIC_ASSERT(OFF(v_string) == OFF(v_list)  // -V568
@@ -602,7 +602,7 @@ FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 ///
 /// @return Floating-point value or zero in case of error.
 static float_T tv_float(typval_T *const tvs, int *const idxp)
-FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
   int idx = *idxp - 1;
   float_T f = 0;
@@ -663,7 +663,7 @@ FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 ///
 /// @see vim_vsnprintf_typval().
 int vim_snprintf_add(char *str, size_t str_m, const char *fmt, ...)
-FUNC_ATTR_PRINTF(3, 4)
+  FUNC_ATTR_PRINTF(3, 4)
 {
   const size_t len = strlen(str);
   size_t space;
@@ -689,7 +689,7 @@ FUNC_ATTR_PRINTF(3, 4)
 /// @return Number of bytes excluding NUL byte that would be written to the
 ///         string if str_m was greater or equal to the return value.
 int vim_snprintf(char *str, size_t str_m, const char *fmt, ...)
-FUNC_ATTR_PRINTF(3, 4)
+  FUNC_ATTR_PRINTF(3, 4)
 {
   va_list ap;
   va_start(ap, fmt);
@@ -1408,7 +1408,7 @@ int vim_vsnprintf_typval(char *str, size_t str_m, const char *fmt, va_list ap, t
 }
 
 int kv_do_printf(StringBuilder *str, const char *fmt, ...)
-FUNC_ATTR_PRINTF(2, 3)
+  FUNC_ATTR_PRINTF(2, 3)
 {
   size_t remaining = str->capacity - str->size;
 
@@ -1441,7 +1441,7 @@ FUNC_ATTR_PRINTF(2, 3)
 ///
 /// @return  the allocated string.
 char *reverse_text(char *s)
-FUNC_ATTR_NONNULL_RET
+  FUNC_ATTR_NONNULL_RET
 {
   // Reverse the pattern.
   size_t len = strlen(s);

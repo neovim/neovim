@@ -2513,7 +2513,7 @@ static const int included_patches[] = {
 ///
 /// @return true if Nvim is at or above the version.
 bool has_nvim_version(const char *const version_str)
-FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
 {
   const char *p = version_str;
   int major = 0;
@@ -2555,7 +2555,7 @@ FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
 ///
 /// @return true if patch `n` has been included.
 bool has_vim_patch(int n)
-FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
   // Perform a binary search.
   int l = 0;

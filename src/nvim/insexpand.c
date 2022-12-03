@@ -301,104 +301,104 @@ void ins_ctrl_x(void)
 // Functions to check the current CTRL-X mode.
 
 bool ctrl_x_mode_none(void)
-FUNC_ATTR_PURE
+  FUNC_ATTR_PURE
 {
   return ctrl_x_mode == 0;
 }
 
 bool ctrl_x_mode_normal(void)
-FUNC_ATTR_PURE
+  FUNC_ATTR_PURE
 {
   return ctrl_x_mode == CTRL_X_NORMAL;
 }
 
 bool ctrl_x_mode_scroll(void)
-FUNC_ATTR_PURE
+  FUNC_ATTR_PURE
 {
   return ctrl_x_mode == CTRL_X_SCROLL;
 }
 
 bool ctrl_x_mode_whole_line(void)
-FUNC_ATTR_PURE
+  FUNC_ATTR_PURE
 {
   return ctrl_x_mode == CTRL_X_WHOLE_LINE;
 }
 
 bool ctrl_x_mode_files(void)
-FUNC_ATTR_PURE
+  FUNC_ATTR_PURE
 {
   return ctrl_x_mode == CTRL_X_FILES;
 }
 
 bool ctrl_x_mode_tags(void)
-FUNC_ATTR_PURE
+  FUNC_ATTR_PURE
 {
   return ctrl_x_mode == CTRL_X_TAGS;
 }
 
 bool ctrl_x_mode_path_patterns(void)
-FUNC_ATTR_PURE
+  FUNC_ATTR_PURE
 {
   return ctrl_x_mode == CTRL_X_PATH_PATTERNS;
 }
 
 bool ctrl_x_mode_path_defines(void)
-FUNC_ATTR_PURE
+  FUNC_ATTR_PURE
 {
   return ctrl_x_mode == CTRL_X_PATH_DEFINES;
 }
 
 bool ctrl_x_mode_dictionary(void)
-FUNC_ATTR_PURE
+  FUNC_ATTR_PURE
 {
   return ctrl_x_mode == CTRL_X_DICTIONARY;
 }
 
 bool ctrl_x_mode_thesaurus(void)
-FUNC_ATTR_PURE
+  FUNC_ATTR_PURE
 {
   return ctrl_x_mode == CTRL_X_THESAURUS;
 }
 
 bool ctrl_x_mode_cmdline(void)
-FUNC_ATTR_PURE
+  FUNC_ATTR_PURE
 {
   return ctrl_x_mode == CTRL_X_CMDLINE || ctrl_x_mode == CTRL_X_CMDLINE_CTRL_X;
 }
 
 bool ctrl_x_mode_function(void)
-FUNC_ATTR_PURE
+  FUNC_ATTR_PURE
 {
   return ctrl_x_mode == CTRL_X_FUNCTION;
 }
 
 bool ctrl_x_mode_omni(void)
-FUNC_ATTR_PURE
+  FUNC_ATTR_PURE
 {
   return ctrl_x_mode == CTRL_X_OMNI;
 }
 
 bool ctrl_x_mode_spell(void)
-FUNC_ATTR_PURE
+  FUNC_ATTR_PURE
 {
   return ctrl_x_mode == CTRL_X_SPELL;
 }
 
 static bool ctrl_x_mode_eval(void)
-FUNC_ATTR_PURE
+  FUNC_ATTR_PURE
 {
   return ctrl_x_mode == CTRL_X_EVAL;
 }
 
 bool ctrl_x_mode_line_or_eval(void)
-FUNC_ATTR_PURE
+  FUNC_ATTR_PURE
 {
   return ctrl_x_mode == CTRL_X_WHOLE_LINE || ctrl_x_mode == CTRL_X_EVAL;
 }
 
 /// Whether other than default completion has been selected.
 bool ctrl_x_mode_not_default(void)
-FUNC_ATTR_PURE
+  FUNC_ATTR_PURE
 {
   return ctrl_x_mode != CTRL_X_NORMAL;
 }
@@ -406,7 +406,7 @@ FUNC_ATTR_PURE
 /// Whether CTRL-X was typed without a following character,
 /// not including when in CTRL-X CTRL-V mode.
 bool ctrl_x_mode_not_defined_yet(void)
-FUNC_ATTR_PURE
+  FUNC_ATTR_PURE
 {
   return ctrl_x_mode == CTRL_X_NOT_DEFINED_YET;
 }
@@ -484,7 +484,7 @@ bool check_compl_option(bool dict_opt)
 ///
 /// @param  c  character to check
 bool vim_is_ctrl_x_key(int c)
-FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_WARN_UNUSED_RESULT
 {
   // Always allow ^R - let its results then be checked
   if (c == Ctrl_R) {
@@ -558,7 +558,7 @@ static bool is_first_match(const compl_T *const match)
 ///
 /// @param  c  character to check
 bool ins_compl_accept_char(int c)
-FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
   if (ctrl_x_mode & CTRL_X_WANT_IDENT) {
     // When expanding an identifier only accept identifier chars.
@@ -694,7 +694,7 @@ static char_u *ins_compl_infercase_gettext(const char_u *str, int char_len, int 
 /// @param[in]  cont_s_ipos  next ^X<> will set initial_pos
 int ins_compl_add_infercase(char_u *str_arg, int len, bool icase, char_u *fname, Direction dir,
                             bool cont_s_ipos)
-FUNC_ATTR_NONNULL_ARG(1)
+  FUNC_ATTR_NONNULL_ARG(1)
 {
   char_u *str = str_arg;
   int char_len;  // count multi-byte characters
@@ -769,7 +769,7 @@ FUNC_ATTR_NONNULL_ARG(1)
 static int ins_compl_add(char *const str, int len, char *const fname, char *const *const cptext,
                          const bool cptext_allocated, typval_T *user_data, const Direction cdir,
                          int flags_arg, const bool adup)
-FUNC_ATTR_NONNULL_ARG(1)
+  FUNC_ATTR_NONNULL_ARG(1)
 {
   compl_T *match;
   const Direction dir = (cdir == kDirectionNotSet ? compl_direction : cdir);
@@ -894,7 +894,7 @@ FUNC_ATTR_NONNULL_ARG(1)
 /// @param  str    character string to check
 /// @param  len    length of "str"
 static bool ins_compl_equal(compl_T *match, char_u *str, size_t len)
-FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
 {
   if (match->cp_flags & CP_EQUAL) {
     return true;
@@ -1054,7 +1054,7 @@ static void ins_compl_del_pum(void)
 
 /// Check if the popup menu should be displayed.
 bool pum_wanted(void)
-FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
   // "completeopt" must contain "menu" or "menuone"
   return vim_strchr(p_cot, 'm') != NULL;
@@ -1063,7 +1063,7 @@ FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 /// Check that there are two or more matches to be shown in the popup menu.
 /// One if "completopt" contains "menuone".
 static bool pum_enough_matches(void)
-FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
   // Don't display the popup menu if there are no matches or there is only
   // one (ignoring the original text).
@@ -1441,7 +1441,7 @@ static int thesaurus_add_words_in_line(char *fname, char_u **buf_arg, int dir,
 /// "regmatch".
 static void ins_compl_files(int count, char **files, int thesaurus, int flags, regmatch_T *regmatch,
                             char_u *buf, Direction *dir)
-FUNC_ATTR_NONNULL_ARG(2, 7)
+  FUNC_ATTR_NONNULL_ARG(2, 7)
 {
   char_u *ptr;
   int i;
@@ -1503,7 +1503,7 @@ FUNC_ATTR_NONNULL_ARG(2, 7)
 /// Find the start of the next word.
 /// Returns a pointer to the first char of the word.  Also stops at a NUL.
 char_u *find_word_start(char_u *ptr)
-FUNC_ATTR_PURE
+  FUNC_ATTR_PURE
 {
   while (*ptr != NUL && *ptr != '\n' && mb_get_class(ptr) <= 1) {
     ptr += utfc_ptr2len((char *)ptr);
@@ -1514,7 +1514,7 @@ FUNC_ATTR_PURE
 /// Find the end of the word.  Assumes it starts inside a word.
 /// Returns a pointer to just after the word.
 char_u *find_word_end(char_u *ptr)
-FUNC_ATTR_PURE
+  FUNC_ATTR_PURE
 {
   const int start_class = mb_get_class(ptr);
   if (start_class > 1) {
@@ -1594,7 +1594,7 @@ void ins_compl_clear(void)
 
 /// Check that Insert completion is active.
 bool ins_compl_active(void)
-FUNC_ATTR_PURE
+  FUNC_ATTR_PURE
 {
   return compl_started;
 }
@@ -1684,7 +1684,7 @@ int ins_compl_bs(void)
 /// Check that we need to find matches again, ins_compl_restart() is to
 /// be called.
 static bool ins_compl_need_restart(void)
-FUNC_ATTR_PURE
+  FUNC_ATTR_PURE
 {
   // Return true if we didn't complete finding matches or when the
   // "completefunc" returned "always" in the "refresh" dictionary item.
@@ -1787,7 +1787,7 @@ static void ins_compl_restart(void)
 
 /// Set the first match, the original text.
 static void ins_compl_set_original_text(char *str)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   // Replace the original text entry.
   // The CP_ORIGINAL_TEXT flag is either at the first item or might possibly
@@ -2422,7 +2422,7 @@ static void expand_by_function(int type, char_u *base)
     ins_compl_add_dict(matchdict);
   }
 
-theend:
+  theend:
   // Restore State, it might have been changed.
   State = save_State;
 
@@ -2444,7 +2444,7 @@ theend:
 ///         otherwise it is added to the list and  OK is returned. FAIL will be
 ///         returned in case of error.
 static int ins_compl_add_tv(typval_T *const tv, const Direction dir, bool fast)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   const char *word;
   bool dup = false;
@@ -3757,7 +3757,7 @@ static int ins_compl_key2dir(int c)
 ///
 /// @param  c  character to check
 static bool ins_compl_pum_key(int c)
-FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
   return pum_visible() && (c == K_PAGEUP || c == K_KPAGEUP || c == K_S_UP
                            || c == K_PAGEDOWN || c == K_KPAGEDOWN
@@ -3790,7 +3790,7 @@ static int ins_compl_key2count(int c)
 ///
 /// @param  c  character to check
 static bool ins_compl_use_match(int c)
-FUNC_ATTR_CONST FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_CONST FUNC_ATTR_WARN_UNUSED_RESULT
 {
   switch (c) {
   case K_UP:

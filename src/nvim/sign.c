@@ -311,7 +311,7 @@ static dict_T *sign_get_info(sign_entry_T *sign)
 // changing the priority of an already placed sign.  Assumes the signs in the
 // buffer are sorted by line number and priority.
 static void sign_sort_by_prio_on_line(buf_T *buf, sign_entry_T *sign)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   // If there is only one sign in the buffer or only one sign on the line or
   // the sign is already sorted by priority, then return.
@@ -1607,7 +1607,7 @@ static void sign_getlist(const char *name, list_T *retlist)
 
 /// Returns information about signs placed in a buffer as list of dicts.
 list_T *get_buffer_signs(buf_T *buf)
-FUNC_ATTR_NONNULL_RET FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_NONNULL_RET FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
   sign_entry_T *sign;
   dict_T *d;
@@ -1755,7 +1755,7 @@ static enum {
 
 /// @return  the n'th sign name (used for command line completion)
 static char *get_nth_sign_name(int idx)
-FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
   // Complete with name of signs already defined
   int current_idx = 0;

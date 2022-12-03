@@ -117,7 +117,7 @@ void *verbose_try_malloc(size_t size) FUNC_ATTR_MALLOC FUNC_ATTR_ALLOC_SIZE(1)
 /// @param size
 /// @return pointer to allocated space. Never NULL
 void *xmalloc(size_t size)
-FUNC_ATTR_MALLOC FUNC_ATTR_ALLOC_SIZE(1) FUNC_ATTR_NONNULL_RET
+  FUNC_ATTR_MALLOC FUNC_ATTR_ALLOC_SIZE(1) FUNC_ATTR_NONNULL_RET
 {
   void *ret = try_malloc(size);
   if (!ret) {
@@ -143,7 +143,7 @@ void xfree(void *ptr)
 /// @param size
 /// @return pointer to allocated space. Never NULL
 void *xcalloc(size_t count, size_t size)
-FUNC_ATTR_MALLOC FUNC_ATTR_ALLOC_SIZE_PROD(1, 2) FUNC_ATTR_NONNULL_RET
+  FUNC_ATTR_MALLOC FUNC_ATTR_ALLOC_SIZE_PROD(1, 2) FUNC_ATTR_NONNULL_RET
 {
   size_t allocated_count = count && size ? count : 1;
   size_t allocated_size = count && size ? size : 1;
@@ -166,7 +166,7 @@ FUNC_ATTR_MALLOC FUNC_ATTR_ALLOC_SIZE_PROD(1, 2) FUNC_ATTR_NONNULL_RET
 /// @param size
 /// @return pointer to reallocated space. Never NULL
 void *xrealloc(void *ptr, size_t size)
-FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_ALLOC_SIZE(2) FUNC_ATTR_NONNULL_RET
+  FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_ALLOC_SIZE(2) FUNC_ATTR_NONNULL_RET
 {
   size_t allocated_size = size ? size : 1;
   void *ret = realloc(ptr, allocated_size);
@@ -190,7 +190,7 @@ FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_ALLOC_SIZE(2) FUNC_ATTR_NONNULL_RET
 /// @param size
 /// @return pointer to allocated space. Never NULL
 void *xmallocz(size_t size)
-FUNC_ATTR_MALLOC FUNC_ATTR_NONNULL_RET FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_MALLOC FUNC_ATTR_NONNULL_RET FUNC_ATTR_WARN_UNUSED_RESULT
 {
   size_t total_size = size + 1;
   if (total_size < size) {
@@ -213,8 +213,8 @@ FUNC_ATTR_MALLOC FUNC_ATTR_NONNULL_RET FUNC_ATTR_WARN_UNUSED_RESULT
 /// @param data Pointer to the data that will be copied
 /// @param len number of bytes that will be copied
 void *xmemdupz(const void *data, size_t len)
-FUNC_ATTR_MALLOC FUNC_ATTR_NONNULL_RET FUNC_ATTR_WARN_UNUSED_RESULT
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_MALLOC FUNC_ATTR_NONNULL_RET FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_NONNULL_ALL
 {
   return memcpy(xmallocz(len), data, len);
 }
@@ -227,7 +227,7 @@ FUNC_ATTR_NONNULL_ALL
 /// @returns a pointer to the first instance of `c`, or to the NUL terminator
 ///          if not found.
 char *xstrchrnul(const char *str, char c)
-FUNC_ATTR_NONNULL_RET FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE
+  FUNC_ATTR_NONNULL_RET FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE
 {
   char *p = strchr(str, c);
   return p ? p : (char *)(str + strlen(str));
@@ -242,7 +242,7 @@ FUNC_ATTR_NONNULL_RET FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE
 /// @returns a pointer to the first instance of `c`, or one past the end if not
 ///          found.
 void *xmemscan(const void *addr, char c, size_t size)
-FUNC_ATTR_NONNULL_RET FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE
+  FUNC_ATTR_NONNULL_RET FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE
 {
   char *p = memchr(addr, c, size);
   return p ? p : (char *)addr + size;
@@ -256,7 +256,7 @@ FUNC_ATTR_NONNULL_RET FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE
 /// @param c   The unwanted byte.
 /// @param x   The replacement.
 void strchrsub(char *str, char c, char x)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   assert(c != '\0');
   while ((str = strchr(str, c))) {
@@ -271,7 +271,7 @@ FUNC_ATTR_NONNULL_ALL
 /// @param x    The replacement.
 /// @param len  The length of data.
 void memchrsub(void *data, char c, char x, size_t len)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   char *p = data, *end = (char *)data + len;
   while ((p = memchr(p, c, (size_t)(end - p)))) {
@@ -287,7 +287,7 @@ FUNC_ATTR_NONNULL_ALL
 /// @param c   The byte to search for.
 /// @returns the number of occurrences of `c` in `str`.
 size_t strcnt(const char *str, char c)
-FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE
 {
   assert(c != 0);
   size_t cnt = 0;
@@ -305,7 +305,7 @@ FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE
 /// @param len  The length of `data`.
 /// @returns the number of occurrences of `c` in `data[len]`.
 size_t memcnt(const void *data, char c, size_t len)
-FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE
 {
   size_t cnt = 0;
   const char *ptr = data, *end = ptr + len;
@@ -331,7 +331,7 @@ FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE
 /// @param dst
 /// @param src
 char *xstpcpy(char *restrict dst, const char *restrict src)
-FUNC_ATTR_NONNULL_RET FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_RET FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
 {
   const size_t len = strlen(src);
   return (char *)memcpy(dst, src, len + 1) + len;
@@ -354,7 +354,7 @@ FUNC_ATTR_NONNULL_RET FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
 /// @param src
 /// @param maxlen
 char *xstpncpy(char *restrict dst, const char *restrict src, size_t maxlen)
-FUNC_ATTR_NONNULL_RET FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_RET FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
 {
   const char *p = memchr(src, '\0', maxlen);
   if (p) {
@@ -381,7 +381,7 @@ FUNC_ATTR_NONNULL_RET FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
 /// @return Length of `src`. May be greater than `dsize - 1`, which would mean
 ///         that string was truncated.
 size_t xstrlcpy(char *restrict dst, const char *restrict src, size_t dsize)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   size_t slen = strlen(src);
 
@@ -409,7 +409,7 @@ FUNC_ATTR_NONNULL_ALL
 ///         May be greater than `dsize - 1`, which would mean that string was
 ///         truncated.
 size_t xstrlcat(char *const dst, const char *const src, const size_t dsize)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   assert(dsize > 0);
   const size_t dlen = strlen(dst);
@@ -432,8 +432,8 @@ FUNC_ATTR_NONNULL_ALL
 /// @param str 0-terminated string that will be copied
 /// @return pointer to a copy of the string
 char *xstrdup(const char *str)
-FUNC_ATTR_MALLOC FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_RET
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_MALLOC FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_RET
+  FUNC_ATTR_NONNULL_ALL
 {
   return xmemdupz(str, strlen(str));
 }
@@ -442,7 +442,7 @@ FUNC_ATTR_NONNULL_ALL
 ///
 /// Unlike xstrdup() allocates a new empty string if it receives NULL.
 char *xstrdupnul(const char *const str)
-FUNC_ATTR_MALLOC FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_RET
+  FUNC_ATTR_MALLOC FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_RET
 {
   if (str == NULL) {
     return xmallocz(0);
@@ -459,7 +459,7 @@ FUNC_ATTR_MALLOC FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_RET
 /// @param len The length of the memory object.
 /// @returns a pointer to the found byte in src[len], or NULL.
 void *xmemrchr(const void *src, uint8_t c, size_t len)
-FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE
 {
   while (len--) {
     if (((uint8_t *)src)[len] == c) {
@@ -475,8 +475,8 @@ FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE
 /// @param str 0-terminated string that will be copied
 /// @return pointer to a copy of the string
 char *xstrndup(const char *str, size_t len)
-FUNC_ATTR_MALLOC FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_RET
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_MALLOC FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_RET
+  FUNC_ATTR_NONNULL_ALL
 {
   char *p = memchr(str, '\0', len);
   return xmemdupz(str, p ? (size_t)(p - str) : len);
@@ -489,22 +489,22 @@ FUNC_ATTR_NONNULL_ALL
 /// @param len size of the chunk
 /// @return a pointer
 void *xmemdup(const void *data, size_t len)
-FUNC_ATTR_MALLOC FUNC_ATTR_ALLOC_SIZE(2) FUNC_ATTR_NONNULL_RET
-FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_MALLOC FUNC_ATTR_ALLOC_SIZE(2) FUNC_ATTR_NONNULL_RET
+  FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
 {
   return memcpy(xmalloc(len), data, len);
 }
 
 /// Returns true if strings `a` and `b` are equal. Arguments may be NULL.
 bool strequal(const char *a, const char *b)
-FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
   return (a == NULL && b == NULL) || (a && b && strcmp(a, b) == 0);
 }
 
 /// Case-insensitive `strequal`.
 bool striequal(const char *a, const char *b)
-FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
   return (a == NULL && b == NULL) || (a && b && STRICMP(a, b) == 0);
 }

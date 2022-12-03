@@ -131,7 +131,7 @@ static void log_frame_layout(frame_T *frame)
 /// @return the current window, unless in the cmdline window and "prevwin" is
 /// set, then return "prevwin".
 win_T *prevwin_curwin(void)
-FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_WARN_UNUSED_RESULT
 {
   // In cmdwin, the alternative buffer should be used.
   return is_in_cmdwin() && prevwin != NULL ? prevwin : curwin;
@@ -247,7 +247,8 @@ newwindow:
     do_cmdline_cmd("pclose");
     break;
 
-  // cursor to preview window
+    // cursor to preview window
+    // uncrustify:off
   case 'P': {
     win_T *wp = NULL;
     FOR_ALL_WINDOWS_IN_TAB(wp2, curtab) {
@@ -263,6 +264,7 @@ newwindow:
     }
     break;
   }
+    // uncrustify:on
 
   // close all but current window
   case Ctrl_O:
@@ -500,7 +502,7 @@ newwindow:
   case 'f':
   case 'F':
   case Ctrl_F: {
-wingotofile:
+    wingotofile:
     CHECK_CMDWIN;
 
     linenr_T lnum = -1;
@@ -1625,7 +1627,7 @@ static void win_init_some(win_T *newp, win_T *oldp)
 ///
 /// @param  win  window to check
 bool win_valid_floating(const win_T *win)
-FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
   if (win == NULL) {
     return false;
@@ -1651,7 +1653,7 @@ bool win_valid(const win_T *win) FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 ///
 /// @param  win  window to check
 static bool tabpage_win_valid(const tabpage_T *tp, const win_T *win)
-FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
   if (win == NULL) {
     return false;
@@ -1668,7 +1670,7 @@ FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 // Find window "handle" in the current tab page.
 // Return NULL if not found.
 win_T *win_find_by_handle(handle_T handle)
-FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
   FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
     if (wp->handle == handle) {
@@ -2388,7 +2390,7 @@ static void win_equal_rec(win_T *next_curwin, bool current, frame_T *topfr, int 
 }
 
 static void leaving_window(win_T *const win)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   // Only matters for a prompt window.
   if (!bt_prompt(win->w_buffer)) {
@@ -2415,7 +2417,7 @@ FUNC_ATTR_NONNULL_ALL
 }
 
 void entering_window(win_T *const win)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   // Only matters for a prompt window.
   if (!bt_prompt(win->w_buffer)) {
@@ -2575,7 +2577,7 @@ static bool can_close_floating_windows(void)
 ///
 /// @return true when the window was closed already.
 static bool close_last_window_tabpage(win_T *win, bool free_buf, tabpage_T *prev_curtab)
-FUNC_ATTR_NONNULL_ARG(1)
+  FUNC_ATTR_NONNULL_ARG(1)
 {
   if (!ONE_WINDOW) {
     return false;
@@ -2936,7 +2938,7 @@ int win_close(win_T *win, bool free_buf, bool force)
 }
 
 static void do_autocmd_winclosed(win_T *win)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   static bool recursive = false;
   if (recursive || !has_event(EVENT_WINCLOSED)) {
@@ -3366,7 +3368,7 @@ win_T *frame2win(frame_T *frp)
 /// @param  frp  frame
 /// @param  wp   window
 static bool frame_has_win(const frame_T *frp, const win_T *wp)
-FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ARG(1)
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ARG(1)
 {
   if (frp->fr_layout == FR_LEAF) {
     return frp->fr_win == wp;
@@ -3383,7 +3385,7 @@ FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ARG(1)
 /// Check if current window is at the bottom
 /// Returns true if there are no windows below current window
 static bool is_bottom_win(win_T *wp)
-FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
 {
   for (frame_T *frp = wp->w_frame; frp->fr_parent != NULL; frp = frp->fr_parent) {
     if (frp->fr_parent->fr_layout == FR_COL && frp->fr_next != NULL) {
@@ -3399,7 +3401,7 @@ FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
 /// @param wfh       obey 'winfixheight' when there is a choice;
 ///                  may cause the height not to be set.
 void frame_new_height(frame_T *topfrp, int height, bool topfirst, bool wfh)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   if (topfrp->fr_win != NULL) {
     // Simple case: just one window.
@@ -3490,7 +3492,7 @@ FUNC_ATTR_NONNULL_ALL
 ///
 /// @return true if the frame has a fixed height
 static bool frame_fixed_height(frame_T *frp)
-FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
 {
   // frame with one window: fixed height if 'winfixheight' set.
   if (frp->fr_win != NULL) {
@@ -3524,7 +3526,7 @@ FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
 ///
 /// @return true if the frame has a fixed width
 static bool frame_fixed_width(frame_T *frp)
-FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
 {
   // frame with one window: fixed width if 'winfixwidth' set.
   if (frp->fr_win != NULL) {
@@ -3676,7 +3678,7 @@ static void frame_new_width(frame_T *topfrp, int width, bool leftfirst, bool wfw
 /// Add the vertical separator to windows at the right side of "frp".
 /// Note: Does not check if there is room!
 static void frame_add_vsep(const frame_T *frp)
-FUNC_ATTR_NONNULL_ARG(1)
+  FUNC_ATTR_NONNULL_ARG(1)
 {
   if (frp->fr_layout == FR_LEAF) {
     win_T *wp = frp->fr_win;
@@ -3705,7 +3707,7 @@ FUNC_ATTR_NONNULL_ARG(1)
 /// Add the horizontal separator to windows at the bottom of "frp".
 /// Note: Does not check if there is room or whether the windows have a statusline!
 static void frame_add_hsep(const frame_T *frp)
-FUNC_ATTR_NONNULL_ARG(1)
+  FUNC_ATTR_NONNULL_ARG(1)
 {
   if (frp->fr_layout == FR_LEAF) {
     win_T *wp = frp->fr_win;
@@ -3739,7 +3741,7 @@ static void frame_fix_width(win_T *wp)
 
 // Set frame height from the window it contains.
 static void frame_fix_height(win_T *wp)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   wp->w_frame->fr_height = wp->w_height + wp->w_hsep_height + wp->w_status_height;
 }
@@ -5580,7 +5582,7 @@ void win_size_save(garray_T *gap)
 // and 'lines' didn't change.
 // Does not free the growarray.
 void win_size_restore(garray_T *gap)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   if (win_count() * 2 + 1 == gap->ga_len
       && ((int *)gap->ga_data)[0] == Rows) {
@@ -7305,7 +7307,7 @@ static win_T *restore_snapshot_rec(frame_T *sn, frame_T *fr)
 /// @param  topfrp  top frame pointer
 /// @param  height  expected height
 static bool frame_check_height(const frame_T *topfrp, int height)
-FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
 {
   if (topfrp->fr_height != height) {
     return false;
@@ -7326,7 +7328,7 @@ FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
 /// @param  topfrp  top frame pointer
 /// @param  width   expected width
 static bool frame_check_width(const frame_T *topfrp, int width)
-FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
 {
   if (topfrp->fr_width != width) {
     return false;

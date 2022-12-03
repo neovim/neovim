@@ -1553,7 +1553,7 @@ static bool find_is_eval_item(const char_u *const ptr, int *const colp, int *con
 /// If text is found, a pointer to the text is put in "*text".  This
 /// points into the current buffer line and is not always NUL terminated.
 size_t find_ident_under_cursor(char **text, int find_type)
-FUNC_ATTR_NONNULL_ARG(1)
+  FUNC_ATTR_NONNULL_ARG(1)
 {
   return find_ident_at_pos(curwin, curwin->w_cursor.lnum,
                            curwin->w_cursor.col, text, NULL, find_type);
@@ -1565,7 +1565,7 @@ FUNC_ATTR_NONNULL_ARG(1)
 /// @param textcol  column where "text" starts, can be NULL
 size_t find_ident_at_pos(win_T *wp, linenr_T lnum, colnr_T startcol, char **text, int *textcol,
                          int find_type)
-FUNC_ATTR_NONNULL_ARG(1, 4)
+  FUNC_ATTR_NONNULL_ARG(1, 4)
 {
   int col = 0;         // init to shut up GCC
   int i;

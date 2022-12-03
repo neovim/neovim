@@ -1937,7 +1937,7 @@ failed:
 ///
 /// @param fname file name to check
 bool is_dev_fd_file(char *fname)
-FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
   return strncmp(fname, "/dev/fd/", 8) == 0
          && ascii_isdigit((uint8_t)fname[8])
@@ -1971,7 +1971,7 @@ static linenr_T readfile_linenr(linenr_T linecnt, char_u *p, const char_u *endp)
 /// Fill "*eap" to force the 'fileencoding', 'fileformat' and 'binary' to be
 /// equal to the buffer "buf".  Used for calling readfile().
 void prep_exarg(exarg_T *eap, const buf_T *buf)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   const size_t cmd_len = 15 + strlen(buf->b_p_fenc);
   eap->cmd = xmalloc(cmd_len);
@@ -2024,7 +2024,7 @@ void set_forced_fenc(exarg_T *eap)
 /// When *pp is not set to NULL, the result is in allocated memory and "alloced"
 /// is set to true.
 static char *next_fenc(char **pp, bool *alloced)
-FUNC_ATTR_NONNULL_ALL FUNC_ATTR_NONNULL_RET
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_NONNULL_RET
 {
   char *p;
   char *r;
@@ -3698,7 +3698,7 @@ static int set_rw_fname(char_u *fname, char_u *sfname)
 /// @param[in]  fname  File name to write.
 static void add_quoted_fname(char *const ret_buf, const size_t buf_len, const buf_T *const buf,
                              const char *fname)
-FUNC_ATTR_NONNULL_ARG(1)
+  FUNC_ATTR_NONNULL_ARG(1)
 {
   if (fname == NULL) {
     fname = "-stdin-";
@@ -4052,7 +4052,7 @@ static bool ucs2bytes(unsigned c, char_u **pp, int flags) FUNC_ATTR_NONNULL_ALL
 ///
 /// @return true if conversion is required
 static bool need_conversion(const char *fenc)
-FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
   int same_encoding;
   int enc_flags;
@@ -4265,7 +4265,7 @@ void shorten_fnames(int force)
 ///                     - NULL, if fname is NULL and there was a problem trying
 ///                       to get current directory.
 char *modname(const char *fname, const char *ext, bool prepend_dot)
-FUNC_ATTR_NONNULL_ARG(2)
+  FUNC_ATTR_NONNULL_ARG(2)
 {
   char *retval;
   size_t fnamelen;
@@ -4343,7 +4343,7 @@ FUNC_ATTR_NONNULL_ARG(2)
 ///
 /// @return true for EOF or error
 bool vim_fgets(char *buf, int size, FILE *fp)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   char *retval;
 
@@ -4505,7 +4505,7 @@ int put_time(FILE *fd, time_t time_)
 ///
 /// @return  -1 for failure, 0 for success
 int vim_rename(const char *from, const char *to)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   int fd_in;
   int fd_out;
@@ -4765,7 +4765,7 @@ static int move_lines(buf_T *frombuf, buf_T *tobuf)
 ///          2 if a message has been displayed or,
 ///          0 otherwise.
 int buf_check_timestamp(buf_T *buf)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   int retval = 0;
   char *path;
@@ -5130,7 +5130,7 @@ void buf_reload(buf_T *buf, int orig_mode, bool reload_options)
 }
 
 void buf_store_file_info(buf_T *buf, FileInfo *file_info)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   buf->b_mtime = file_info->stat.st_mtim.tv_sec;
   buf->b_mtime_ns = file_info->stat.st_mtim.tv_nsec;
@@ -5251,7 +5251,7 @@ static void vim_mktempdir(void)
 ///
 /// @return  OK for success, FAIL for failure.
 int readdir_core(garray_T *gap, const char *path, void *context, CheckItem checkitem)
-FUNC_ATTR_NONNULL_ARG(1, 2)
+  FUNC_ATTR_NONNULL_ARG(1, 2)
 {
   ga_init(gap, (int)sizeof(char *), 20);
 
@@ -5299,7 +5299,7 @@ FUNC_ATTR_NONNULL_ARG(1, 2)
 ///
 /// @return  0 for success, -1 if some file was not deleted.
 int delete_recursive(const char *name)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   int result = 0;
 
@@ -5458,7 +5458,7 @@ bool match_file_pat(char *pattern, regprog_T **prog, char *fname, char *sfname, 
 ///
 /// @return true if there was a match
 bool match_file_list(char_u *list, char_u *sfname, char_u *ffname)
-FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ARG(1, 3)
+  FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ARG(1, 3)
 {
   char_u buf[100];
   char_u *tail;
@@ -5499,7 +5499,7 @@ FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ARG(1, 3)
 ///
 /// @return            NULL on failure.
 char *file_pat_to_reg_pat(const char *pat, const char *pat_end, char *allow_dirs, int no_bslash)
-FUNC_ATTR_NONNULL_ARG(1)
+  FUNC_ATTR_NONNULL_ARG(1)
 {
   const char *endp;
   char *reg_pat;

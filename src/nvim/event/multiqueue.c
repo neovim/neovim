@@ -94,7 +94,7 @@ MultiQueue *multiqueue_new_parent(PutCallback put_cb, void *data)
 }
 
 MultiQueue *multiqueue_new_child(MultiQueue *parent)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   assert(!parent->parent);  // parent cannot have a parent, more like a "root"
   parent->size++;

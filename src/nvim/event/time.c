@@ -12,7 +12,7 @@
 #endif
 
 void time_watcher_init(Loop *loop, TimeWatcher *watcher, void *data)
-FUNC_ATTR_NONNULL_ARG(1) FUNC_ATTR_NONNULL_ARG(2)
+  FUNC_ATTR_NONNULL_ARG(1) FUNC_ATTR_NONNULL_ARG(2)
 {
   uv_timer_init(&loop->uv, &watcher->uv);
   watcher->uv.data = watcher;
@@ -22,20 +22,20 @@ FUNC_ATTR_NONNULL_ARG(1) FUNC_ATTR_NONNULL_ARG(2)
 }
 
 void time_watcher_start(TimeWatcher *watcher, time_cb cb, uint64_t timeout, uint64_t repeat)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   watcher->cb = cb;
   uv_timer_start(&watcher->uv, time_watcher_cb, timeout, repeat);
 }
 
 void time_watcher_stop(TimeWatcher *watcher)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   uv_timer_stop(&watcher->uv);
 }
 
 void time_watcher_close(TimeWatcher *watcher, time_cb cb)
-FUNC_ATTR_NONNULL_ARG(1)
+  FUNC_ATTR_NONNULL_ARG(1)
 {
   watcher->close_cb = cb;
   uv_close((uv_handle_t *)&watcher->uv, close_cb);
@@ -48,7 +48,7 @@ static void time_event(void **argv)
 }
 
 static void time_watcher_cb(uv_timer_t *handle)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   TimeWatcher *watcher = handle->data;
   if (watcher->blockable && !multiqueue_empty(watcher->events)) {
@@ -65,7 +65,7 @@ static void close_event(void **argv)
 }
 
 static void close_cb(uv_handle_t *handle)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   TimeWatcher *watcher = handle->data;
   if (watcher->close_cb) {
