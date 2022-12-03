@@ -1261,7 +1261,7 @@ function M.stylize_markdown(bufnr, contents, opts)
   -- when ft is nil, we get the ft from the regex match
   local matchers = {
     block = { nil, '```+([a-zA-Z0-9_]*)', '```+' },
-    pre = { '', '<pre>', '</pre>' },
+    pre = { nil, '<pre>([a-z0-9]*)', '</pre>' },
     code = { '', '<code>', '</code>' },
     text = { 'text', '<text>', '</text>' },
   }
@@ -1286,8 +1286,6 @@ function M.stylize_markdown(bufnr, contents, opts)
   -- Clean up
   contents = M._trim(contents, opts)
 
-  -- Insert blank line separator after code block?
-  local add_sep = opts.separator == nil and true or opts.separator
   local stripped = {}
   local highlights = {}
   -- keep track of lnums that contain markdown
@@ -1315,7 +1313,7 @@ function M.stylize_markdown(bufnr, contents, opts)
           finish = #stripped,
         })
         -- add a separator, but not on the last line
-        if add_sep and i < #contents then
+        if opts.separator and i < #contents then
           table.insert(stripped, '---')
           markdown_lines[#stripped] = true
         end
