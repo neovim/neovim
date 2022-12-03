@@ -255,6 +255,45 @@ func Test_normal_formatexpr_returns_nonzero()
   close!
 endfunc
 
+" Test for using a script-local function for 'formatexpr'
+func Test_formatexpr_scriptlocal_func()
+  func! s:Format()
+    let g:FormatArgs = [v:lnum, v:count]
+  endfunc
+  set formatexpr=s:Format()
+  call assert_equal(expand('<SID>') .. 'Format()', &formatexpr)
+  new | only
+  call setline(1, range(1, 40))
+  let g:FormatArgs = []
+  normal! 2GVjgq
+  call assert_equal([2, 2], g:FormatArgs)
+  bw!
+  set formatexpr=<SID>Format()
+  call assert_equal(expand('<SID>') .. 'Format()', &formatexpr)
+  new | only
+  call setline(1, range(1, 40))
+  let g:FormatArgs = []
+  normal! 4GVjgq
+  call assert_equal([4, 2], g:FormatArgs)
+  bw!
+  let &formatexpr = 's:Format()'
+  new | only
+  call setline(1, range(1, 40))
+  let g:FormatArgs = []
+  normal! 6GVjgq
+  call assert_equal([6, 2], g:FormatArgs)
+  bw!
+  let &formatexpr = '<SID>Format()'
+  new | only
+  call setline(1, range(1, 40))
+  let g:FormatArgs = []
+  normal! 8GVjgq
+  call assert_equal([8, 2], g:FormatArgs)
+  setlocal formatexpr=
+  delfunc s:Format
+  bw!
+endfunc
+
 " basic test for formatprg
 func Test_normal06_formatprg()
   " only test on non windows platform

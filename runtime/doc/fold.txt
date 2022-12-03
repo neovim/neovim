@@ -116,6 +116,11 @@ method can be very slow!
 Try to avoid the "=", "a" and "s" return values, since Vim often has to search
 backwards for a line for which the fold level is defined.  This can be slow.
 
+If the 'foldexpr' expression starts with s: or |<SID>|, then it is replaced
+with the script ID (|local-function|). Example: >
+		set foldexpr=s:MyFoldExpr()
+		set foldexpr=<SID>SomeFoldExpr()
+<
 An example of using "a1" and "s1": For a multi-line C comment, a line
 containing "/*" would return "a1" to start a fold, and a line containing "*/"
 would return "s1" to end the fold after that line: >

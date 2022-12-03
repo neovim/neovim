@@ -1273,6 +1273,32 @@ func Test_fold_jump()
   bw!
 endfunc
 
+" Test for using a script-local function for 'foldexpr'
+func Test_foldexpr_scriptlocal_func()
+  func! s:FoldFunc()
+    let g:FoldLnum = v:lnum
+  endfunc
+  new | only
+  call setline(1, 'abc')
+  let g:FoldLnum = 0
+  set foldmethod=expr foldexpr=s:FoldFunc()
+  redraw!
+  call assert_equal(expand('<SID>') .. 'FoldFunc()', &foldexpr)
+  call assert_equal(1, g:FoldLnum)
+  set foldmethod& foldexpr=
+  bw!
+  new | only
+  call setline(1, 'abc')
+  let g:FoldLnum = 0
+  set foldmethod=expr foldexpr=<SID>FoldFunc()
+  redraw!
+  call assert_equal(expand('<SID>') .. 'FoldFunc()', &foldexpr)
+  call assert_equal(1, g:FoldLnum)
+  set foldmethod& foldexpr=
+  delfunc s:FoldFunc
+  bw!
+endfunc
+
 " Make sure a fold containing a nested fold is split correctly when using
 " foldmethod=indent
 func Test_fold_split()

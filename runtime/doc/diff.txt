@@ -388,6 +388,11 @@ mode, so that a CTRL-Z doesn't end the text on DOS.
 The `redraw!` command may not be needed, depending on whether executing a
 shell command shows something on the display or not.
 
+If the 'diffexpr' expression starts with s: or |<SID>|, then it is replaced
+with the script ID (|local-function|). Example: >
+		set diffexpr=s:MyDiffExpr()
+		set diffexpr=<SID>SomeDiffExpr()
+<
 						*E810* *E97*
 Vim will do a test if the diff output looks alright.  If it doesn't, you will
 get an error message.  Possible causes:
@@ -439,4 +444,9 @@ evaluating 'patchexpr'.  This hopefully avoids that files in the current
 directory are accidentally patched.  Vim will also delete files starting with
 v:fname_in and ending in ".rej" and ".orig".
 
+If the 'patchexpr' expression starts with s: or |<SID>|, then it is replaced
+with the script ID (|local-function|). Example: >
+		set patchexpr=s:MyPatchExpr()
+		set patchexpr=<SID>SomePatchExpr()
+<
  vim:tw=78:ts=8:noet:ft=help:norl:

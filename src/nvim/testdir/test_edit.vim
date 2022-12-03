@@ -330,6 +330,16 @@ func Test_edit_11_indentexpr()
   set cinkeys&vim indentkeys&vim
   set nocindent indentexpr=
   delfu Do_Indent
+
+  " Using a script-local function
+  func s:NewIndentExpr()
+  endfunc
+  set indentexpr=s:NewIndentExpr()
+  call assert_equal(expand('<SID>') .. 'NewIndentExpr()', &indentexpr)
+  set indentexpr=<SID>NewIndentExpr()
+  call assert_equal(expand('<SID>') .. 'NewIndentExpr()', &indentexpr)
+  set indentexpr&
+
   bw!
 endfunc
 

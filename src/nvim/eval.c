@@ -711,7 +711,7 @@ void eval_patch(const char *const origfile, const char *const difffile, const ch
   set_vim_var_string(VV_FNAME_IN, origfile, -1);
   set_vim_var_string(VV_FNAME_DIFF, difffile, -1);
   set_vim_var_string(VV_FNAME_OUT, outfile, -1);
-  (void)eval_to_bool((char *)p_pex, &err, NULL, false);
+  (void)eval_to_bool(p_pex, &err, NULL, false);
   set_vim_var_string(VV_FNAME_IN, NULL, -1);
   set_vim_var_string(VV_FNAME_DIFF, NULL, -1);
   set_vim_var_string(VV_FNAME_OUT, NULL, -1);
