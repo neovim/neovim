@@ -2,6 +2,9 @@
 
 source shared.vim
 source check.vim
+source term_util.vim
+source screendump.vim
+source vim9.vim
 
 " Must be done first, since the alternate buffer must be unset.
 func Test_00_bufexists()
@@ -2518,7 +2521,7 @@ func Test_builtin_check()
     vim9script
     var s:trim = (x) => " " .. x
   END
-  " call CheckScriptFailure(lines, 'E704:')
+  call CheckScriptFailure(lines, 'E704:')
 
   call assert_fails('call extend(g:, #{foo: { -> "foo" }})', 'E704:')
   let g:bar = 123

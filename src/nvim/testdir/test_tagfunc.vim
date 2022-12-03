@@ -380,7 +380,7 @@ func Test_tagfunc_callback()
     assert_equal(['a12', '', {}], g:LocalTagFuncArgs)
     bw!
   END
-  " call CheckScriptSuccess(lines)
+  call CheckScriptSuccess(lines)
 
   " cleanup
   delfunc TagFunc1

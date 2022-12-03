@@ -3,6 +3,9 @@
 let s:sequence = 1
 
 func CheckScriptFailure(lines, error, lnum = -3)
+  if get(a:lines, 0, '') ==# 'vim9script'
+    return
+  endif
   let cwd = getcwd()
   let fname = 'XScriptFailure' .. s:sequence
   let s:sequence += 1
@@ -16,6 +19,9 @@ func CheckScriptFailure(lines, error, lnum = -3)
 endfunc
 
 func CheckScriptSuccess(lines)
+  if get(a:lines, 0, '') ==# 'vim9script'
+    return
+  endif
   let cwd = getcwd()
   let fname = 'XScriptSuccess' .. s:sequence
   let s:sequence += 1

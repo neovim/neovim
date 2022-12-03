@@ -1535,7 +1535,7 @@ func Test_completefunc_callback()
     assert_equal([[1, ''], [0, 'three']], g:LocalCompleteFuncArgs)
     bw!
   END
-  " call CheckScriptSuccess(lines)
+  call CheckScriptSuccess(lines)
 
   " cleanup
   set completefunc&
@@ -1792,7 +1792,7 @@ func Test_omnifunc_callback()
     assert_equal([[1, ''], [0, 'three']], g:LocalOmniFuncArgs)
     bw!
   END
-  " call CheckScriptSuccess(lines)
+  call CheckScriptSuccess(lines)
 
   " cleanup
   set omnifunc&
@@ -2085,7 +2085,7 @@ func Test_thesaurusfunc_callback()
     assert_equal([[1, ''], [0, 'three']], g:LocalTsrFuncArgs)
     bw!
   END
-  " call CheckScriptSuccess(lines)
+  call CheckScriptSuccess(lines)
 
   " cleanup
   set thesaurusfunc&
