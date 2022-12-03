@@ -116,6 +116,11 @@ method can be very slow!
 Try to avoid the "=", "a" and "s" return values, since Vim often has to search
 backwards for a line for which the fold level is defined.  This can be slow.
 
+If the 'foldexpr' expression starts with s: or |<SID>|, then it is replaced
+with the script ID (|local-function|). Examples: >
+		set foldexpr=s:MyFoldExpr()
+		set foldexpr=<SID>SomeFoldExpr()
+<
 An example of using "a1" and "s1": For a multi-line C comment, a line
 containing "/*" would return "a1" to start a fold, and a line containing "*/"
 would return "s1" to end the fold after that line: >
@@ -521,6 +526,11 @@ The resulting line is truncated to fit in the window, it never wraps.
 When there is room after the text, it is filled with the character specified
 by 'fillchars'.
 
+If the 'foldtext' expression starts with s: or |<SID>|, then it is replaced
+with the script ID (|local-function|). Examples: >
+		set foldtext=s:MyFoldText()
+		set foldtext=<SID>SomeFoldText()
+<
 Note that backslashes need to be used for characters that the ":set" command
 handles differently: Space, backslash and double-quote. |option-backslash|
 

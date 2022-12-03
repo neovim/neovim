@@ -711,7 +711,7 @@ void eval_patch(const char *const origfile, const char *const difffile, const ch
   set_vim_var_string(VV_FNAME_IN, origfile, -1);
   set_vim_var_string(VV_FNAME_DIFF, difffile, -1);
   set_vim_var_string(VV_FNAME_OUT, outfile, -1);
-  (void)eval_to_bool((char *)p_pex, &err, NULL, false);
+  (void)eval_to_bool(p_pex, &err, NULL, false);
   set_vim_var_string(VV_FNAME_IN, NULL, -1);
   set_vim_var_string(VV_FNAME_DIFF, NULL, -1);
   set_vim_var_string(VV_FNAME_OUT, NULL, -1);
@@ -5511,7 +5511,7 @@ void get_system_output_as_rettv(typval_T *argvars, typval_T *rettv, bool retlist
 }
 
 /// Get a callback from "arg".  It can be a Funcref or a function name.
-bool callback_from_typval(Callback *const callback, typval_T *const arg)
+bool callback_from_typval(Callback *const callback, const typval_T *const arg)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
   int r = OK;

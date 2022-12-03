@@ -1845,7 +1845,7 @@ static int nlua_is_thread(lua_State *lstate)
   return 1;
 }
 
-bool nlua_is_table_from_lua(typval_T *const arg)
+bool nlua_is_table_from_lua(const typval_T *const arg)
 {
   if (arg->v_type == VAR_DICT) {
     return arg->vval.v_dict->lua_table_ref != LUA_NOREF;
@@ -1856,7 +1856,7 @@ bool nlua_is_table_from_lua(typval_T *const arg)
   }
 }
 
-char_u *nlua_register_table_as_callable(typval_T *const arg)
+char_u *nlua_register_table_as_callable(const typval_T *const arg)
 {
   LuaRef table_ref = LUA_NOREF;
   if (arg->v_type == VAR_DICT) {

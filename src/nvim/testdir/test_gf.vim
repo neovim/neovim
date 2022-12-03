@@ -226,6 +226,32 @@ func Test_gf_includeexpr()
   delfunc IncFunc
 endfunc
 
+" Test for using a script-local function for 'includeexpr'
+func Test_includeexpr_scriptlocal_func()
+  func! s:IncludeFunc()
+    let g:IncludeFname = v:fname
+    return ''
+  endfunc
+  set includeexpr=s:IncludeFunc()
+  call assert_equal(expand('<SID>') .. 'IncludeFunc()', &includeexpr)
+  new | only
+  call setline(1, 'TestFile1')
+  let g:IncludeFname = ''
+  call assert_fails('normal! gf', 'E447:')
+  call assert_equal('TestFile1', g:IncludeFname)
+  bw!
+  set includeexpr=<SID>IncludeFunc()
+  call assert_equal(expand('<SID>') .. 'IncludeFunc()', &includeexpr)
+  new | only
+  call setline(1, 'TestFile2')
+  let g:IncludeFname = ''
+  call assert_fails('normal! gf', 'E447:')
+  call assert_equal('TestFile2', g:IncludeFname)
+  set includeexpr&
+  delfunc s:IncludeFunc
+  bw!
+endfunc
+
 " Check that expanding directories can handle more than 255 entries.
 func Test_gf_subdirs_wildcard()
   let cwd = getcwd()

@@ -155,6 +155,11 @@ an error message.  In that case Vim will delete the file.  In the default
 value for non-MS-Windows a trick is used: Adding "v:shell_error" will result
 in a non-zero number when the system() call fails.
 
+If the expression starts with s: or |<SID>|, then it is replaced with the
+script ID (|local-function|). Example: >
+		set printexpr=s:MyPrintFile()
+		set printexpr=<SID>SomePrintFile()
+<
 This option cannot be set from a |modeline| or in the |sandbox|, for security
 reasons.
 

@@ -1,4 +1,5 @@
 " Tests for diff mode
+
 source shared.vim
 source screendump.vim
 source check.vim
@@ -681,15 +682,25 @@ func Test_diffexpr()
   set diffexpr=NewDiffFunc()
   call assert_fails('windo diffthis', ['E117:', 'E97:'])
   diffoff!
+
+  " Using a script-local function
+  func s:NewDiffExpr()
+  endfunc
+  set diffexpr=s:NewDiffExpr()
+  call assert_equal(expand('<SID>') .. 'NewDiffExpr()', &diffexpr)
+  set diffexpr=<SID>NewDiffExpr()
+  call assert_equal(expand('<SID>') .. 'NewDiffExpr()', &diffexpr)
+
   %bwipe!
   set diffexpr& diffopt&
+  delfunc DiffExpr
+  delfunc s:NewDiffExpr
 endfunc
 
 func Test_diffpatch()
   " The patch program on MS-Windows may fail or hang.
-  if !executable('patch') || !has('unix')
-    return
-  endif
+  CheckExecutable patch
+  CheckUnix
   new
   insert
 ***************
@@ -1250,10 +1261,19 @@ func Test_patchexpr()
   call assert_equal(2, winnr('$'))
   call assert_true(&diff)
 
+  " Using a script-local function
+  func s:NewPatchExpr()
+  endfunc
+  set patchexpr=s:NewPatchExpr()
+  call assert_equal(expand('<SID>') .. 'NewPatchExpr()', &patchexpr)
+  set patchexpr=<SID>NewPatchExpr()
+  call assert_equal(expand('<SID>') .. 'NewPatchExpr()', &patchexpr)
+
   call delete('Xinput')
   call delete('Xdiff')
   set patchexpr&
   delfunc TPatch
+  delfunc s:NewPatchExpr
   %bwipe!
 endfunc
 

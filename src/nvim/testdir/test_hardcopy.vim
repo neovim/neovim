@@ -125,6 +125,14 @@ func Test_printexpr()
   set printexpr=PrintFails(v:fname_in)
   call assert_fails('hardcopy', 'E365:')
 
+  " Using a script-local function
+  func s:NewPrintExpr()
+  endfunc
+  set printexpr=s:NewPrintExpr()
+  call assert_equal(expand('<SID>') .. 'NewPrintExpr()', &printexpr)
+  set printexpr=<SID>NewPrintExpr()
+  call assert_equal(expand('<SID>') .. 'NewPrintExpr()', &printexpr)
+
   set printexpr&
   bwipe
 endfunc
