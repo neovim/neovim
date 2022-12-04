@@ -2048,6 +2048,17 @@ func Test_pattern_is_uppercase_smartcase()
   call assert_equal(['abc', 'ABC', 'Abc', ''],
         \ getline(1, '$'))
 
+  call setline(1, input)
+  call cursor(1,1)
+  " \Vabc should match everything
+  %s/\Vabc//g
+  call assert_equal(['', '', '', ''], getline(1, '$'))
+
+  call setline(1, input + ['_abc'])
+  " _ matches normally
+  %s/\v_.*//g
+  call assert_equal(['abc', 'ABC', 'Abc', 'abC', ''], getline(1, '$'))
+
   set smartcase& ignorecase&
   bw!
 endfunc

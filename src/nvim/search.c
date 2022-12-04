@@ -386,7 +386,7 @@ bool pat_has_uppercase(char_u *pat)
         return true;
       }
       p += l;
-    } else if (*p == '\\' && magic_val == MAGIC_ON) {
+    } else if (*p == '\\' && magic_val <= MAGIC_ON) {
       if (p[1] == '_' && p[2] != NUL) {  // skip "\_X"
         p += 3;
       } else if (p[1] == '%' && p[2] != NUL) {  // skip "\%X"
@@ -399,6 +399,8 @@ bool pat_has_uppercase(char_u *pat)
     } else if ((*p == '%' || *p == '_') && magic_val == MAGIC_ALL) {
       if (p[1] != NUL) {  // skip "_X" and %X
         p += 2;
+      } else {
+        p++;
       }
     } else if (mb_isupper(*p)) {
       return true;
