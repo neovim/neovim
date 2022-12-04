@@ -1760,7 +1760,8 @@ char_u *trans_function_name(char **pp, bool skip, int flags, funcdict_T *fdp, pa
   // Note that TFN_ flags use the same values as GLV_ flags.
   end = (char_u *)get_lval((char *)start, NULL, &lv, false, skip, flags | GLV_READ_ONLY,
                            lead > 2 ? 0 : FNE_CHECK_START);
-  if (end == start) {
+  if (end == start
+      || (end != NULL && end[-1] == AUTOLOAD_CHAR && *end == '(')) {
     if (!skip) {
       emsg(_("E129: Function name required"));
     }
