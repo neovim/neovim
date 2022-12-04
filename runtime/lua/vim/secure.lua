@@ -80,34 +80,27 @@ function M.read(path)
   end
 
   -- File either does not exist in trust database or the hash does not match
-  local choice = vim.fn.confirm(
+  local ok, result = pcall(
+    vim.fn.confirm,
     string.format('%s is not trusted.', fullpath),
     '&ignore\n&view\n&deny\n&allow',
     1
   )
 
-  if choice == 0 or choice == 1 then
+  if not ok and result ~= 'Keyboard interrupt' then
+    error(result)
+  elseif not ok or result == 0 or result == 1 then
     -- Cancelled or ignored
     return nil
-  elseif choice == 2 then
+  elseif result == 2 then
     -- View
-    vim.cmd('new')
-    local buf = vim.api.nvim_get_current_buf()
-    local lines = vim.split(string.gsub(contents, '\n$', ''), '\n')
-    vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
-    vim.bo[buf].bufhidden = 'hide'
-    vim.bo[buf].buftype = 'nofile'
-    vim.bo[buf].swapfile = false
-    vim.bo[buf].modeline = false
-    vim.bo[buf].buflisted = false
-    vim.bo[buf].readonly = true
-    vim.bo[buf].modifiable = false
+    vim.cmd('sview ' .. fullpath)
     return nil
-  elseif choice == 3 then
+  elseif result == 3 then
     -- Deny
     trust[fullpath] = '!'
     contents = nil
-  elseif choice == 4 then
+  elseif result == 4 then
     -- Allow
     trust[fullpath] = hash
   end

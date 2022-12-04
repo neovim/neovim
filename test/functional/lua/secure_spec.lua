@@ -150,10 +150,10 @@ describe('vim.secure', function()
       ]]}
       feed('v')
       screen:expect{grid=[[
-        ^  let g:foobar = 42                                                             |
+          ^let g:foobar = 42                                                             |
         {1:~                                                                               }|
         {1:~                                                                               }|
-        {2:]] .. cwd .. pathsep .. [[Xfile [RO]{MATCH:%s+}|
+        {2:]] .. funcs.fnamemodify(cwd, ':~') .. pathsep .. [[Xfile [RO]{MATCH:%s+}|
                                                                                         |
         {1:~                                                                               }|
         {4:[No Name]                                                                       }|
@@ -166,7 +166,7 @@ describe('vim.secure', function()
 
       -- Cannot write file
       pcall_err(command, 'write')
-      eq(false, curbufmeths.get_option('modifiable'))
+      eq(true, curbufmeths.get_option('readonly'))
     end)
   end)
 
