@@ -1998,6 +1998,60 @@ func Test_incsearch_substitute_dump2()
   call delete('Xis_subst_script2')
 endfunc
 
+func Test_pattern_is_uppercase_smartcase()
+  new
+  let input=['abc', 'ABC', 'Abc', 'abC']
+  call setline(1, input)
+  call cursor(1,1)
+  " default, matches firstline
+  %s/abc//g
+  call assert_equal(['', 'ABC', 'Abc', 'abC'],
+        \ getline(1, '$'))
+
+  set smartcase ignorecase
+  sil %d
+  call setline(1, input)
+  call cursor(1,1)
+  " with smartcase and incsearch set, matches everything
+  %s/abc//g
+  call assert_equal(['', '', '', ''], getline(1, '$'))
+
+  sil %d
+  call setline(1, input)
+  call cursor(1,1)
+  " with smartcase and incsearch set and found an uppercase letter,
+  " match only that.
+  %s/abC//g
+  call assert_equal(['abc', 'ABC', 'Abc', ''],
+        \ getline(1, '$'))
+
+  sil %d
+  call setline(1, input)
+  call cursor(1,1)
+  exe "norm! vG$\<esc>"
+  " \%V should not be detected as uppercase letter
+  %s/\%Vabc//g
+  call assert_equal(['', '', '', ''], getline(1, '$'))
+
+  call setline(1, input)
+  call cursor(1,1)
+  exe "norm! vG$\<esc>"
+  " \v%V should not be detected as uppercase letter
+  %s/\v%Vabc//g
+  call assert_equal(['', '', '', ''], getline(1, '$'))
+
+  call setline(1, input)
+  call cursor(1,1)
+  exe "norm! vG$\<esc>"
+  " \v%VabC should be detected as uppercase letter
+  %s/\v%VabC//g
+  call assert_equal(['abc', 'ABC', 'Abc', ''],
+        \ getline(1, '$'))
+
+  set smartcase& ignorecase&
+  bw!
+endfunc
+
 func Test_no_last_search_pattern()
   CheckOption incsearch
 
