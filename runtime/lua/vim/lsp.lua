@@ -1285,8 +1285,6 @@ function lsp.start_client(config)
       client.initialized = true
       uninitialized_clients[client_id] = nil
       client.workspace_folders = workspace_folders
-      -- TODO(mjlbach): Backwards compatibility, to be removed in 0.7
-      client.workspaceFolders = client.workspace_folders
 
       -- These are the cleaned up capabilities we use for dynamically deciding
       -- when to send certain events to clients.
