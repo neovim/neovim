@@ -1969,6 +1969,35 @@ func Test_incsearch_highlighting_newline()
   bw
 endfunc
 
+func Test_incsearch_substitute_dump2()
+  CheckOption incsearch
+  CheckScreendump
+
+  call writefile([
+	\ 'set incsearch hlsearch scrolloff=0',
+	\ 'for n in range(1, 4)',
+	\ '  call setline(n, "foo " . n)',
+	\ 'endfor',
+	\ 'call setline(5, "abc|def")',
+	\ '3',
+	\ ], 'Xis_subst_script2')
+  let buf = RunVimInTerminal('-S Xis_subst_script2', {'rows': 9, 'cols': 70})
+
+  call term_sendkeys(buf, ':%s/\vabc|')
+  sleep 100m
+  call VerifyScreenDump(buf, 'Test_incsearch_sub_01', {})
+  call term_sendkeys(buf, "\<Esc>")
+
+  " The following should not be highlighted
+  call term_sendkeys(buf, ':1,5s/\v|')
+  sleep 100m
+  call VerifyScreenDump(buf, 'Test_incsearch_sub_02', {})
+
+
+  call StopVimInTerminal(buf)
+  call delete('Xis_subst_script2')
+endfunc
+
 func Test_no_last_search_pattern()
   CheckOption incsearch
 

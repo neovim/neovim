@@ -5151,11 +5151,11 @@ int fill_culopt_flags(char *val, win_T *wp)
 bool magic_isset(void)
 {
   switch (magic_overruled) {
-  case MAGIC_ON:
+  case OPTION_MAGIC_ON:
     return true;
-  case MAGIC_OFF:
+  case OPTION_MAGIC_OFF:
     return false;
-  case MAGIC_NOT_SET:
+  case OPTION_MAGIC_NOT_SET:
     break;
   }
   return p_magic;

@@ -5828,9 +5828,9 @@ void ex_may_print(exarg_T *eap)
 /// ":smagic" and ":snomagic".
 static void ex_submagic(exarg_T *eap)
 {
-  const magic_T saved = magic_overruled;
+  const optmagic_T saved = magic_overruled;
 
-  magic_overruled = eap->cmdidx == CMD_smagic ? MAGIC_ON : MAGIC_OFF;
+  magic_overruled = eap->cmdidx == CMD_smagic ? OPTION_MAGIC_ON : OPTION_MAGIC_OFF;
   ex_substitute(eap);
   magic_overruled = saved;
 }
@@ -5838,9 +5838,9 @@ static void ex_submagic(exarg_T *eap)
 /// ":smagic" and ":snomagic" preview callback.
 static int ex_submagic_preview(exarg_T *eap, long cmdpreview_ns, handle_T cmdpreview_bufnr)
 {
-  const magic_T saved = magic_overruled;
+  const optmagic_T saved = magic_overruled;
 
-  magic_overruled = eap->cmdidx == CMD_smagic ? MAGIC_ON : MAGIC_OFF;
+  magic_overruled = eap->cmdidx == CMD_smagic ? OPTION_MAGIC_ON : OPTION_MAGIC_OFF;
   int retv = ex_substitute_preview(eap, cmdpreview_ns, cmdpreview_bufnr);
   magic_overruled = saved;
 

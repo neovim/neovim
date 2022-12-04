@@ -15,10 +15,22 @@
 #include "nvim/pos.h"
 #include "nvim/types.h"
 
+/// Used for "magic_overruled".
 typedef enum {
-  MAGIC_NOT_SET,  ///< p_magic not overruled
-  MAGIC_ON,       ///< magic on inside regexp
-  MAGIC_OFF,      ///< magic off inside regexp
+  OPTION_MAGIC_NOT_SET,  ///< p_magic not overruled
+  OPTION_MAGIC_ON,       ///< magic on inside regexp
+  OPTION_MAGIC_OFF,      ///< magic off inside regexp
+} optmagic_T;
+
+/// Magicness of a pattern, used by regexp code.
+/// The order and values matter:
+///  magic <= MAGIC_OFF includes MAGIC_NONE
+///  magic >= MAGIC_ON  includes MAGIC_ALL
+typedef enum {
+  MAGIC_NONE = 1,  ///< "\V" very unmagic
+  MAGIC_OFF = 2,   ///< "\M" or 'magic' off
+  MAGIC_ON = 3,    ///< "\m" or 'magic'
+  MAGIC_ALL = 4,   ///< "\v" very magic
 } magic_T;
 
 // The number of sub-matches is limited to 10.

@@ -2955,8 +2955,8 @@ static int jumpto_tag(const char_u *lbuf_arg, int forceit, int keep_help)
     curwin->w_set_curswant = true;
     postponed_split = 0;
 
-    const magic_T save_magic_overruled = magic_overruled;
-    magic_overruled = MAGIC_OFF;  // always execute with 'nomagic'
+    const optmagic_T save_magic_overruled = magic_overruled;
+    magic_overruled = OPTION_MAGIC_OFF;  // always execute with 'nomagic'
     // Save value of no_hlsearch, jumping to a tag is not a real search
     const bool save_no_hlsearch = no_hlsearch;
 
