@@ -3507,9 +3507,9 @@ static void nv_ident(cmdarg_T *cap)
     xfree(p);
   } else {
     if (cmdchar == '*') {
-      aux_ptr = (p_magic ? "/.*~[^$\\" : "/^$\\");
+      aux_ptr = (magic_isset() ? "/.*~[^$\\" : "/^$\\");
     } else if (cmdchar == '#') {
-      aux_ptr = (p_magic ? "/?.*~[^$\\" : "/?^$\\");
+      aux_ptr = (magic_isset() ? "/?.*~[^$\\" : "/?^$\\");
     } else if (tag_cmd) {
       if (curbuf->b_help) {
         // ":help" handles unescaped argument

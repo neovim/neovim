@@ -15,6 +15,12 @@
 #include "nvim/pos.h"
 #include "nvim/types.h"
 
+typedef enum {
+  MAGIC_NOT_SET,  ///< p_magic not overruled
+  MAGIC_ON,       ///< magic on inside regexp
+  MAGIC_OFF,      ///< magic off inside regexp
+} magic_T;
+
 // The number of sub-matches is limited to 10.
 // The first one (index 0) is the whole match, referenced with "\0".
 // The second one (index 1) is the first sub-match, referenced with "\1".

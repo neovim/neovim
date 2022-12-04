@@ -98,7 +98,7 @@ typedef struct {
   pos_T match_end;
   bool did_incsearch;
   bool incsearch_postponed;
-  int magic_save;
+  magic_T magic_overruled_save;
 } incsearch_state_T;
 
 typedef struct command_line_state {
@@ -211,7 +211,7 @@ static void init_incsearch_state(incsearch_state_T *s)
   s->match_start = curwin->w_cursor;
   s->did_incsearch = false;
   s->incsearch_postponed = false;
-  s->magic_save = p_magic;
+  s->magic_overruled_save = magic_overruled;
   clearpos(&s->match_end);
   s->save_cursor = curwin->w_cursor;  // may be restored later
   s->search_start = curwin->w_cursor;
@@ -281,9 +281,9 @@ static bool do_incsearch_highlighting(int firstc, int *search_delim, incsearch_s
       || strncmp(cmd, "snomagic", (size_t)MAX(p - cmd, 3)) == 0
       || strncmp(cmd, "vglobal", (size_t)(p - cmd)) == 0) {
     if (*cmd == 's' && cmd[1] == 'm') {
-      p_magic = true;
+      magic_overruled = MAGIC_ON;
     } else if (*cmd == 's' && cmd[1] == 'n') {
-      p_magic = false;
+      magic_overruled = MAGIC_OFF;
     }
   } else if (strncmp(cmd, "sort", (size_t)MAX(p - cmd, 3)) == 0) {
     // skip over ! and flags
@@ -318,7 +318,7 @@ static bool do_incsearch_highlighting(int firstc, int *search_delim, incsearch_s
   p = skipwhite(p);
   delim = (delim_optional && vim_isIDc(*p)) ? ' ' : *p++;
   *search_delim = delim;
-  end = skip_regexp(p, delim, p_magic);
+  end = skip_regexp(p, delim, magic_isset());
 
   use_last_pat = end == p && *end == delim;
   if (end == p && !use_last_pat) {
@@ -556,7 +556,7 @@ static int may_add_char_to_search(int firstc, int *c, incsearch_state_T *s)
         *c = mb_tolower(*c);
       }
       if (*c == search_delim
-          || vim_strchr((p_magic ? "\\~^$.*[" : "\\^$"), *c) != NULL) {
+          || vim_strchr((magic_isset() ? "\\~^$.*[" : "\\^$"), *c) != NULL) {
         // put a backslash before special characters
         stuffcharReadbuff(*c);
         *c = '\\';
@@ -588,7 +588,7 @@ static void finish_incsearch_highlighting(int gotesc, incsearch_state_T *s, bool
     search_first_line = 0;
     search_last_line = MAXLNUM;
 
-    p_magic = s->magic_save;
+    magic_overruled = s->magic_overruled_save;
 
     validate_cursor();          // needed for TAB
     redraw_all_later(UPD_SOME_VALID);

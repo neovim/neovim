@@ -1252,7 +1252,7 @@ static void shada_read(ShaDaReadDef *const sd_reader, const int flags)
       // string is close to useless: you can only use it with :& or :~ and
       // that’s all because s//~ is not available until the first call to
       // regtilde. Vim was not calling this for some reason.
-      (void)regtilde(cur_entry.data.sub_string.sub, p_magic, false);
+      (void)regtilde(cur_entry.data.sub_string.sub, magic_isset(), false);
       // Do not free shada entry: its allocated memory was saved above.
       break;
     case kSDItemHistoryEntry:
