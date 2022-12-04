@@ -467,66 +467,68 @@ bool do_mouse(oparg_T *oap, int c, int dir, long count, bool fixindent)
 
   start_visual.lnum = 0;
 
-  // Check for clicking in the tab page line.
-  if (mouse_grid <= 1 && mouse_row == 0 && firstwin->w_winrow > 0) {
-    if (is_drag) {
-      if (in_tab_line) {
-        move_tab_to_mouse();
+  if (tab_page_click_defs != NULL) {  // only when initialized
+    // Check for clicking in the tab page line.
+    if (mouse_grid <= 1 && mouse_row == 0 && firstwin->w_winrow > 0) {
+      if (is_drag) {
+        if (in_tab_line) {
+          move_tab_to_mouse();
+        }
+        return false;
       }
+
+      // click in a tab selects that tab page
+      if (is_click && cmdwin_type == 0 && mouse_col < Columns) {
+        in_tab_line = true;
+        c1 = tab_page_click_defs[mouse_col].tabnr;
+        switch (tab_page_click_defs[mouse_col].type) {
+        case kStlClickDisabled:
+          break;
+        case kStlClickTabClose: {
+          tabpage_T *tp;
+
+          // Close the current or specified tab page.
+          if (c1 == 999) {
+            tp = curtab;
+          } else {
+            tp = find_tabpage(c1);
+          }
+          if (tp == curtab) {
+            if (first_tabpage->tp_next != NULL) {
+              tabpage_close(false);
+            }
+          } else if (tp != NULL) {
+            tabpage_close_other(tp, false);
+          }
+          break;
+        }
+        case kStlClickTabSwitch:
+          if ((mod_mask & MOD_MASK_MULTI_CLICK) == MOD_MASK_2CLICK) {
+            // double click opens new page
+            end_visual_mode();
+            tabpage_new();
+            tabpage_move(c1 == 0 ? 9999 : c1 - 1);
+          } else {
+            // Go to specified tab page, or next one if not clicking
+            // on a label.
+            goto_tabpage(c1);
+
+            // It's like clicking on the status line of a window.
+            if (curwin != old_curwin) {
+              end_visual_mode();
+            }
+          }
+          break;
+        case kStlClickFuncRun:
+          call_click_def_func(tab_page_click_defs, mouse_col, which_button);
+          break;
+        }
+      }
+      return true;
+    } else if (is_drag && in_tab_line) {
+      move_tab_to_mouse();
       return false;
     }
-
-    // click in a tab selects that tab page
-    if (is_click && cmdwin_type == 0 && mouse_col < Columns) {
-      in_tab_line = true;
-      c1 = tab_page_click_defs[mouse_col].tabnr;
-      switch (tab_page_click_defs[mouse_col].type) {
-      case kStlClickDisabled:
-        break;
-      case kStlClickTabClose: {
-        tabpage_T *tp;
-
-        // Close the current or specified tab page.
-        if (c1 == 999) {
-          tp = curtab;
-        } else {
-          tp = find_tabpage(c1);
-        }
-        if (tp == curtab) {
-          if (first_tabpage->tp_next != NULL) {
-            tabpage_close(false);
-          }
-        } else if (tp != NULL) {
-          tabpage_close_other(tp, false);
-        }
-        break;
-      }
-      case kStlClickTabSwitch:
-        if ((mod_mask & MOD_MASK_MULTI_CLICK) == MOD_MASK_2CLICK) {
-          // double click opens new page
-          end_visual_mode();
-          tabpage_new();
-          tabpage_move(c1 == 0 ? 9999 : c1 - 1);
-        } else {
-          // Go to specified tab page, or next one if not clicking
-          // on a label.
-          goto_tabpage(c1);
-
-          // It's like clicking on the status line of a window.
-          if (curwin != old_curwin) {
-            end_visual_mode();
-          }
-        }
-        break;
-      case kStlClickFuncRun:
-        call_click_def_func(tab_page_click_defs, mouse_col, which_button);
-        break;
-      }
-    }
-    return true;
-  } else if (is_drag && in_tab_line) {
-    move_tab_to_mouse();
-    return false;
   }
 
   // When 'mousemodel' is "popup" or "popup_setpos", translate mouse events:
