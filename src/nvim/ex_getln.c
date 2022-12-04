@@ -98,7 +98,7 @@ typedef struct {
   pos_T match_end;
   bool did_incsearch;
   bool incsearch_postponed;
-  int magic_save;
+  optmagic_T magic_overruled_save;
 } incsearch_state_T;
 
 typedef struct command_line_state {
@@ -211,7 +211,7 @@ static void init_incsearch_state(incsearch_state_T *s)
   s->match_start = curwin->w_cursor;
   s->did_incsearch = false;
   s->incsearch_postponed = false;
-  s->magic_save = p_magic;
+  s->magic_overruled_save = magic_overruled;
   clearpos(&s->match_end);
   s->save_cursor = curwin->w_cursor;  // may be restored later
   s->search_start = curwin->w_cursor;
@@ -234,6 +234,7 @@ static bool do_incsearch_highlighting(int firstc, int *search_delim, incsearch_s
   pos_T save_cursor;
   bool use_last_pat;
   bool retval = false;
+  magic_T magic = 0;
 
   *skiplen = 0;
   *patlen = ccline.cmdlen;
@@ -281,9 +282,9 @@ static bool do_incsearch_highlighting(int firstc, int *search_delim, incsearch_s
       || strncmp(cmd, "snomagic", (size_t)MAX(p - cmd, 3)) == 0
       || strncmp(cmd, "vglobal", (size_t)(p - cmd)) == 0) {
     if (*cmd == 's' && cmd[1] == 'm') {
-      p_magic = true;
+      magic_overruled = OPTION_MAGIC_ON;
     } else if (*cmd == 's' && cmd[1] == 'n') {
-      p_magic = false;
+      magic_overruled = OPTION_MAGIC_OFF;
     }
   } else if (strncmp(cmd, "sort", (size_t)MAX(p - cmd, 3)) == 0) {
     // skip over ! and flags
@@ -318,7 +319,7 @@ static bool do_incsearch_highlighting(int firstc, int *search_delim, incsearch_s
   p = skipwhite(p);
   delim = (delim_optional && vim_isIDc(*p)) ? ' ' : *p++;
   *search_delim = delim;
-  end = skip_regexp(p, delim, p_magic);
+  end = skip_regexp_ex(p, delim, magic_isset(), NULL, NULL, &magic);
 
   use_last_pat = end == p && *end == delim;
   if (end == p && !use_last_pat) {
@@ -328,10 +329,8 @@ static bool do_incsearch_highlighting(int firstc, int *search_delim, incsearch_s
   // Don't do 'hlsearch' highlighting if the pattern matches everything.
   if (!use_last_pat) {
     char c = *end;
-    int empty;
-
     *end = NUL;
-    empty = empty_pattern(p);
+    bool empty = empty_pattern_magic(p, strlen(p), magic);
     *end = c;
     if (empty) {
       goto theend;
@@ -486,13 +485,13 @@ static void may_do_incsearch_highlighting(int firstc, long count, incsearch_stat
   } else {
     end_pos = curwin->w_cursor;         // shutup gcc 4
   }
-  //
+
   // Disable 'hlsearch' highlighting if the pattern matches
   // everything. Avoids a flash when typing "foo\|".
   if (!use_last_pat) {
     next_char = ccline.cmdbuff[skiplen + patlen];
     ccline.cmdbuff[skiplen + patlen] = NUL;
-    if (empty_pattern(ccline.cmdbuff) && !no_hlsearch) {
+    if (empty_pattern(ccline.cmdbuff + skiplen, search_delim) && !no_hlsearch) {
       redraw_all_later(UPD_SOME_VALID);
       set_no_hlsearch(true);
     }
@@ -556,7 +555,7 @@ static int may_add_char_to_search(int firstc, int *c, incsearch_state_T *s)
         *c = mb_tolower(*c);
       }
       if (*c == search_delim
-          || vim_strchr((p_magic ? "\\~^$.*[" : "\\^$"), *c) != NULL) {
+          || vim_strchr((magic_isset() ? "\\~^$.*[" : "\\^$"), *c) != NULL) {
         // put a backslash before special characters
         stuffcharReadbuff(*c);
         *c = '\\';
@@ -588,7 +587,7 @@ static void finish_incsearch_highlighting(int gotesc, incsearch_state_T *s, bool
     search_first_line = 0;
     search_last_line = MAXLNUM;
 
-    p_magic = s->magic_save;
+    magic_overruled = s->magic_overruled_save;
 
     validate_cursor();          // needed for TAB
     redraw_all_later(UPD_SOME_VALID);
@@ -2031,16 +2030,35 @@ static int command_line_not_changed(CommandLineState *s)
 
 /// Guess that the pattern matches everything.  Only finds specific cases, such
 /// as a trailing \|, which can happen while typing a pattern.
-static int empty_pattern(char *p)
+static bool empty_pattern(char *p, int delim)
 {
   size_t n = strlen(p);
+  magic_T magic_val = MAGIC_ON;
 
-  // remove trailing \v and the like
-  while (n >= 2 && p[n - 2] == '\\'
-         && vim_strchr("mMvVcCZ", p[n - 1]) != NULL) {
-    n -= 2;
+  if (n > 0) {
+    (void)skip_regexp_ex(p, delim, magic_isset(), NULL, NULL, &magic_val);
+  } else {
+    return true;
   }
-  return n == 0 || (n >= 2 && p[n - 2] == '\\' && p[n - 1] == '|');
+
+  return empty_pattern_magic(p, n, magic_val);
+}
+
+static bool empty_pattern_magic(char *p, size_t len, magic_T magic_val)
+{
+  // remove trailing \v and the like
+  while (len >= 2 && p[len - 2] == '\\'
+         && vim_strchr("mMvVcCZ", p[len - 1]) != NULL) {
+    len -= 2;
+  }
+
+  // true, if the pattern is empty, or the pattern ends with \| and magic is
+  // set (or it ends with '|' and very magic is set)
+  return len == 0 || (len > 1
+                      && ((p[len - 2] == '\\'
+                           && p[len - 1] == '|' && magic_val == MAGIC_ON)
+                          || (p[len - 2] != '\\'
+                              && p[len - 1] == '|' && magic_val == MAGIC_ALL)));
 }
 
 handle_T cmdpreview_get_bufnr(void)

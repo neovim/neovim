@@ -1200,7 +1200,8 @@ static void prepare_pats(pat_T *pats, int has_re)
       pats->headlen = 0;
     } else {
       for (pats->headlen = 0; pats->head[pats->headlen] != NUL; pats->headlen++) {
-        if (vim_strchr((p_magic ? ".[~*\\$" : "\\$"), pats->head[pats->headlen]) != NULL) {
+        if (vim_strchr(magic_isset() ? ".[~*\\$" : "\\$",
+                       pats->head[pats->headlen]) != NULL) {
           break;
         }
       }
@@ -1211,7 +1212,7 @@ static void prepare_pats(pat_T *pats, int has_re)
   }
 
   if (has_re) {
-    pats->regmatch.regprog = vim_regcomp(pats->pat, p_magic ? RE_MAGIC : 0);
+    pats->regmatch.regprog = vim_regcomp(pats->pat, magic_isset() ? RE_MAGIC : 0);
   } else {
     pats->regmatch.regprog = NULL;
   }
@@ -2812,7 +2813,6 @@ static char_u *tag_full_fname(tagptrs_T *tagp)
 /// @return  OK for success, NOTAGFILE when file not found, FAIL otherwise.
 static int jumpto_tag(const char_u *lbuf_arg, int forceit, int keep_help)
 {
-  int save_magic;
   bool save_p_ws;
   int save_p_scs, save_p_ic;
   linenr_T save_lnum;
@@ -2955,8 +2955,8 @@ static int jumpto_tag(const char_u *lbuf_arg, int forceit, int keep_help)
     curwin->w_set_curswant = true;
     postponed_split = 0;
 
-    save_magic = p_magic;
-    p_magic = false;            // always execute with 'nomagic'
+    const optmagic_T save_magic_overruled = magic_overruled;
+    magic_overruled = OPTION_MAGIC_OFF;  // always execute with 'nomagic'
     // Save value of no_hlsearch, jumping to a tag is not a real search
     const bool save_no_hlsearch = no_hlsearch;
 
@@ -3063,7 +3063,7 @@ static int jumpto_tag(const char_u *lbuf_arg, int forceit, int keep_help)
       sandbox--;
     }
 
-    p_magic = save_magic;
+    magic_overruled = save_magic_overruled;
     // restore no_hlsearch when keeping the old search pattern
     if (search_options) {
       set_no_hlsearch(save_no_hlsearch);

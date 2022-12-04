@@ -14,7 +14,7 @@ describe('search cmdline', function()
 
   before_each(function()
     clear()
-    command('set nohlsearch')
+    command('set nohlsearch inccommand=')
     screen = Screen.new(20, 3)
     screen:attach()
     screen:set_default_attr_ids({
@@ -472,8 +472,8 @@ describe('search cmdline', function()
        funcs.winsaveview())
   end)
 
+  -- oldtest: Test_search_cmdline4().
   it("CTRL-G with 'incsearch' and ? goes in the right direction", function()
-    -- oldtest: Test_search_cmdline4().
     screen:try_resize(40, 4)
     command('enew!')
     funcs.setline(1, {'  1 the first', '  2 the second', '  3 the third'})
@@ -573,8 +573,8 @@ describe('search cmdline', function()
     ]])
   end)
 
+  -- oldtest: Test_incsearch_sort_dump().
   it('incsearch works with :sort', function()
-    -- oldtest: Test_incsearch_sort_dump().
     screen:try_resize(20, 4)
     command('set incsearch hlsearch scrolloff=0')
     funcs.setline(1, {'another one 2', 'that one 3', 'the one 1'})
@@ -589,8 +589,8 @@ describe('search cmdline', function()
     feed('<esc>')
   end)
 
+  -- oldtest: Test_incsearch_vimgrep_dump().
   it('incsearch works with :vimgrep family', function()
-    -- oldtest: Test_incsearch_vimgrep_dump().
     screen:try_resize(30, 4)
     command('set incsearch hlsearch scrolloff=0')
     funcs.setline(1, {'another one 2', 'that one 3', 'the one 1'})
@@ -639,6 +639,41 @@ describe('search cmdline', function()
       :lvimgrepa "the" **/*.txt^     |
     ]])
     feed('<esc>')
+  end)
+
+  -- oldtest: Test_incsearch_substitute_dump2()
+  it('detects empty pattern properly vim-patch:8.2.2295', function()
+    screen:try_resize(70, 6)
+    exec([[
+      set incsearch hlsearch scrolloff=0
+      for n in range(1, 4)
+        call setline(n, "foo " . n)
+      endfor
+      call setline(5, "abc|def")
+      3
+    ]])
+
+    feed([[:%s/\vabc|]])
+    screen:expect([[
+      foo 1                                                                 |
+      foo 2                                                                 |
+      foo 3                                                                 |
+      foo 4                                                                 |
+      abc|def                                                               |
+      :%s/\vabc|^                                                            |
+    ]])
+    feed('<Esc>')
+
+    -- The following should not be highlighted
+    feed([[:1,5s/\v|]])
+    screen:expect([[
+      foo 1                                                                 |
+      foo 2                                                                 |
+      foo 3                                                                 |
+      foo 4                                                                 |
+      abc|def                                                               |
+      :1,5s/\v|^                                                             |
+    ]])
   end)
 end)
 

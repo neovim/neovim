@@ -1087,6 +1087,10 @@ EXTERN char windowsVersion[20] INIT(= { 0 });
 
 EXTERN int exit_need_delay INIT(= 0);
 
+/// While executing a regexp and set to OPTION_MAGIC_ON or OPTION_MAGIC_OFF this
+/// overrules p_magic.  Otherwise set to OPTION_MAGIC_NOT_SET.
+EXTERN optmagic_T magic_overruled INIT(= OPTION_MAGIC_NOT_SET);
+
 /// Skip win_fix_cursor() call for 'splitkeep' when cmdwin is closed.
 EXTERN bool skip_win_fix_cursor INIT(= false);
 /// Skip win_fix_scroll() call for 'splitkeep' when closing tab page.

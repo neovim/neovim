@@ -1505,7 +1505,7 @@ static const char *set_context_by_cmdname(const char *cmd, cmdidx_T cmdidx, cons
       arg = (const char *)skipwhite(skiptowhite(arg));
       if (*arg != NUL) {
         xp->xp_context = EXPAND_NOTHING;
-        arg = (const char *)skip_regexp((char *)arg + 1, (uint8_t)(*arg), p_magic);
+        arg = (const char *)skip_regexp((char *)arg + 1, (uint8_t)(*arg), magic_isset());
       }
     }
     return (const char *)find_nextcmd(arg);
@@ -1544,7 +1544,7 @@ static const char *set_context_by_cmdname(const char *cmd, cmdidx_T cmdidx, cons
     if (delim) {
       // Skip "from" part.
       arg++;
-      arg = (const char *)skip_regexp((char *)arg, delim, p_magic);
+      arg = (const char *)skip_regexp((char *)arg, delim, magic_isset());
     }
     // Skip "to" part.
     while (arg[0] != NUL && (uint8_t)arg[0] != delim) {
@@ -2458,7 +2458,7 @@ static int ExpandFromContext(expand_T *xp, char *pat, int *num_file, char ***fil
     return nlua_expand_pat(xp, pat, num_file, file);
   }
 
-  regmatch.regprog = vim_regcomp(pat, p_magic ? RE_MAGIC : 0);
+  regmatch.regprog = vim_regcomp(pat, magic_isset() ? RE_MAGIC : 0);
   if (regmatch.regprog == NULL) {
     return FAIL;
   }

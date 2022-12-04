@@ -138,7 +138,7 @@ int search_regcomp(char_u *pat, int pat_save, int pat_use, int options, regmmatc
   int i;
 
   rc_did_emsg = false;
-  magic = p_magic;
+  magic = magic_isset();
 
   // If no pattern given, use a previously defined pattern.
   if (pat == NULL || *pat == NUL) {
@@ -373,6 +373,10 @@ bool pat_has_uppercase(char_u *pat)
   FUNC_ATTR_NONNULL_ALL
 {
   char_u *p = pat;
+  magic_T magic_val = MAGIC_ON;
+
+  // get the magicness of the pattern
+  (void)skip_regexp_ex((char *)pat, NUL, magic_isset(), NULL, NULL, &magic_val);
 
   while (*p != NUL) {
     const int l = utfc_ptr2len((char *)p);
@@ -382,7 +386,7 @@ bool pat_has_uppercase(char_u *pat)
         return true;
       }
       p += l;
-    } else if (*p == '\\') {
+    } else if (*p == '\\' && magic_val <= MAGIC_ON) {
       if (p[1] == '_' && p[2] != NUL) {  // skip "\_X"
         p += 3;
       } else if (p[1] == '%' && p[2] != NUL) {  // skip "\%X"
@@ -391,6 +395,12 @@ bool pat_has_uppercase(char_u *pat)
         p += 2;
       } else {
         p += 1;
+      }
+    } else if ((*p == '%' || *p == '_') && magic_val == MAGIC_ALL) {
+      if (p[1] != NUL) {  // skip "_X" and %X
+        p += 2;
+      } else {
+        p++;
       }
     } else if (mb_isupper(*p)) {
       return true;
@@ -1089,7 +1099,7 @@ int do_search(oparg_T *oap, int dirc, int search_delim, char *pat, long count, i
       // Find end of regular expression.
       // If there is a matching '/' or '?', toss it.
       ps = (char_u *)strcopy;
-      p = skip_regexp_ex(pat, search_delim, p_magic, &strcopy, NULL);
+      p = skip_regexp_ex(pat, search_delim, magic_isset(), &strcopy, NULL, NULL);
       if (strcopy != (char *)ps) {
         // made a copy of "pat" to change "\?" to "?"
         searchcmdlen += (int)(strlen(pat) - strlen(strcopy));
@@ -3468,7 +3478,7 @@ void find_pattern_in_path(char *ptr, Direction dir, size_t len, bool whole, bool
     snprintf((char *)pat, patlen, whole ? "\\<%.*s\\>" : "%.*s", (int)len, ptr);
     // ignore case according to p_ic, p_scs and pat
     regmatch.rm_ic = ignorecase(pat);
-    regmatch.regprog = vim_regcomp((char *)pat, p_magic ? RE_MAGIC : 0);
+    regmatch.regprog = vim_regcomp((char *)pat, magic_isset() ? RE_MAGIC : 0);
     xfree(pat);
     if (regmatch.regprog == NULL) {
       goto fpip_end;
@@ -3476,7 +3486,7 @@ void find_pattern_in_path(char *ptr, Direction dir, size_t len, bool whole, bool
   }
   char *inc_opt = (*curbuf->b_p_inc == NUL) ? p_inc : curbuf->b_p_inc;
   if (*inc_opt != NUL) {
-    incl_regmatch.regprog = vim_regcomp(inc_opt, p_magic ? RE_MAGIC : 0);
+    incl_regmatch.regprog = vim_regcomp(inc_opt, magic_isset() ? RE_MAGIC : 0);
     if (incl_regmatch.regprog == NULL) {
       goto fpip_end;
     }
@@ -3485,7 +3495,7 @@ void find_pattern_in_path(char *ptr, Direction dir, size_t len, bool whole, bool
   if (type == FIND_DEFINE && (*curbuf->b_p_def != NUL || *p_def != NUL)) {
     def_regmatch.regprog = vim_regcomp(*curbuf->b_p_def == NUL
                                        ? p_def : curbuf->b_p_def,
-                                       p_magic ? RE_MAGIC : 0);
+                                       magic_isset() ? RE_MAGIC : 0);
     if (def_regmatch.regprog == NULL) {
       goto fpip_end;
     }

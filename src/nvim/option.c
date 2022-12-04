@@ -5147,6 +5147,20 @@ int fill_culopt_flags(char *val, win_T *wp)
   return OK;
 }
 
+/// Get the value of 'magic' taking "magic_overruled" into account.
+bool magic_isset(void)
+{
+  switch (magic_overruled) {
+  case OPTION_MAGIC_ON:
+    return true;
+  case OPTION_MAGIC_OFF:
+    return false;
+  case OPTION_MAGIC_NOT_SET:
+    break;
+  }
+  return p_magic;
+}
+
 /// Set the callback function value for an option that accepts a function name,
 /// lambda, et al. (e.g. 'operatorfunc', 'tagfunc', etc.)
 /// @return  OK if the option is successfully set to a function, otherwise FAIL

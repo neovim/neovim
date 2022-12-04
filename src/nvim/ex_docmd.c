@@ -3355,7 +3355,7 @@ static linenr_T get_address(exarg_T *eap, char **ptr, cmd_addr_T addr_type, int 
         goto error;
       }
       if (skip) {                       // skip "/pat/"
-        cmd = skip_regexp(cmd, c, p_magic);
+        cmd = skip_regexp(cmd, c, magic_isset());
         if (*cmd == c) {
           cmd++;
         }
@@ -5828,21 +5828,21 @@ void ex_may_print(exarg_T *eap)
 /// ":smagic" and ":snomagic".
 static void ex_submagic(exarg_T *eap)
 {
-  int magic_save = p_magic;
+  const optmagic_T saved = magic_overruled;
 
-  p_magic = (eap->cmdidx == CMD_smagic);
+  magic_overruled = eap->cmdidx == CMD_smagic ? OPTION_MAGIC_ON : OPTION_MAGIC_OFF;
   ex_substitute(eap);
-  p_magic = magic_save;
+  magic_overruled = saved;
 }
 
 /// ":smagic" and ":snomagic" preview callback.
 static int ex_submagic_preview(exarg_T *eap, long cmdpreview_ns, handle_T cmdpreview_bufnr)
 {
-  int magic_save = p_magic;
+  const optmagic_T saved = magic_overruled;
 
-  p_magic = (eap->cmdidx == CMD_smagic);
+  magic_overruled = eap->cmdidx == CMD_smagic ? OPTION_MAGIC_ON : OPTION_MAGIC_OFF;
   int retv = ex_substitute_preview(eap, cmdpreview_ns, cmdpreview_bufnr);
-  p_magic = magic_save;
+  magic_overruled = saved;
 
   return retv;
 }
@@ -6503,7 +6503,7 @@ static void ex_findpat(exarg_T *eap)
   if (*eap->arg == '/') {   // Match regexp, not just whole words
     whole = false;
     eap->arg++;
-    char *p = skip_regexp(eap->arg, '/', p_magic);
+    char *p = skip_regexp(eap->arg, '/', magic_isset());
     if (*p) {
       *p++ = NUL;
       p = skipwhite(p);

@@ -29,7 +29,7 @@
 #include "nvim/memline_defs.h"
 #include "nvim/memory.h"
 #include "nvim/message.h"
-#include "nvim/option_defs.h"
+#include "nvim/option.h"
 #include "nvim/os/input.h"
 #include "nvim/path.h"
 #include "nvim/pos.h"
@@ -380,7 +380,7 @@ static void arglist_del_files(garray_T *alist_ga)
     if (p == NULL) {
       break;
     }
-    regmatch.regprog = vim_regcomp(p, p_magic ? RE_MAGIC : 0);
+    regmatch.regprog = vim_regcomp(p, magic_isset() ? RE_MAGIC : 0);
     if (regmatch.regprog == NULL) {
       xfree(p);
       break;

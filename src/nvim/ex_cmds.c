@@ -3131,7 +3131,7 @@ static bool sub_joining_lines(exarg_T *eap, char *pat, const char *sub, const ch
 
     if (save) {
       if ((cmdmod.cmod_flags & CMOD_KEEPPATTERNS) == 0) {
-        save_re_pat(RE_SUBST, pat, p_magic);
+        save_re_pat(RE_SUBST, pat, magic_isset());
       }
       // put pattern in history
       add_to_history(HIST_SEARCH, pat, true, NUL);
@@ -3356,7 +3356,7 @@ static int do_sub(exarg_T *eap, proftime_T timeout, long cmdpreview_ns, handle_T
       which_pat = RE_LAST;                  // use last used regexp
       delimiter = (char_u)(*cmd++);                   // remember delimiter character
       pat = cmd;                            // remember start of search pat
-      cmd = skip_regexp_ex(cmd, delimiter, p_magic, &eap->arg, NULL);
+      cmd = skip_regexp_ex(cmd, delimiter, magic_isset(), &eap->arg, NULL, NULL);
       if (cmd[0] == delimiter) {            // end delimiter found
         *cmd++ = NUL;                       // replace it with a NUL
         has_second_delim = true;
@@ -3472,7 +3472,7 @@ static int do_sub(exarg_T *eap, proftime_T timeout, long cmdpreview_ns, handle_T
     sub = xstrdup(sub);
     sub_copy = sub;
   } else {
-    char *newsub = regtilde(sub, p_magic, cmdpreview);
+    char *newsub = regtilde(sub, magic_isset(), cmdpreview);
     if (newsub != sub) {
       // newsub was allocated, free it later.
       sub_copy = newsub;
@@ -3895,7 +3895,8 @@ static int do_sub(exarg_T *eap, proftime_T timeout, long cmdpreview_ns, handle_T
           sublen = vim_regsub_multi(&regmatch,
                                     sub_firstlnum - regmatch.startpos[0].lnum,
                                     (char_u *)sub, (char_u *)sub_firstline, 0,
-                                    REGSUB_BACKSLASH | (p_magic ? REGSUB_MAGIC : 0));
+                                    REGSUB_BACKSLASH
+                                    | (magic_isset() ? REGSUB_MAGIC : 0));
           textlock--;
 
           // If getting the substitute string caused an error, don't do
@@ -3937,7 +3938,8 @@ static int do_sub(exarg_T *eap, proftime_T timeout, long cmdpreview_ns, handle_T
           (void)vim_regsub_multi(&regmatch,
                                  sub_firstlnum - regmatch.startpos[0].lnum,
                                  (char_u *)sub, (char_u *)new_end, sublen,
-                                 REGSUB_COPY | REGSUB_BACKSLASH | (p_magic ? REGSUB_MAGIC : 0));
+                                 REGSUB_COPY | REGSUB_BACKSLASH
+                                 | (magic_isset() ? REGSUB_MAGIC : 0));
           textlock--;
           sub_nsubs++;
           did_sub = true;
@@ -4389,7 +4391,7 @@ void ex_global(exarg_T *eap)
     delim = *cmd;               // get the delimiter
     cmd++;                      // skip delimiter if there is one
     pat = cmd;                  // remember start of pattern
-    cmd = skip_regexp_ex(cmd, delim, p_magic, &eap->arg, NULL);
+    cmd = skip_regexp_ex(cmd, delim, magic_isset(), &eap->arg, NULL, NULL);
     if (cmd[0] == delim) {                  // end delimiter found
       *cmd++ = NUL;                         // replace it with a NUL
     }
