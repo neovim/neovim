@@ -9,3 +9,7 @@ endfunc
 func foo#addFoo(head)
   return a:head .. 'foo'
 endfunc
+
+func foo#()
+  return 'empty'
+endfunc

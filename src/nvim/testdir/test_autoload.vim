@@ -10,6 +10,9 @@ func Test_autoload_dict_func()
   call assert_equal(1, g:called_foo_bar_echo)
 
   eval 'bar'->g:foo#addFoo()->assert_equal('barfoo')
+
+  " empty name works in legacy script
+  call assert_equal('empty', foo#())
 endfunc
 
 func Test_source_autoload()
@@ -17,3 +20,6 @@ func Test_source_autoload()
   source sautest/autoload/sourced.vim
   call assert_equal(1, g:loaded_sourced_vim)
 endfunc
+
+
+" vim: shiftwidth=2 sts=2 expandtab
