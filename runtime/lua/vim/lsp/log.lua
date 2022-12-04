@@ -20,6 +20,17 @@ local format_func = function(arg)
 end
 
 do
+  ---@private
+  local function notify(msg, level)
+    if vim.in_fast_event() then
+      vim.schedule(function()
+        vim.notify(msg, level)
+      end)
+    else
+      vim.notify(msg, level)
+    end
+  end
+
   local path_sep = vim.loop.os_uname().version:match('Windows') and '\\' or '/'
   ---@private
   local function path_join(...)
@@ -53,7 +64,7 @@ do
     logfile, openerr = io.open(logfilename, 'a+')
     if not logfile then
       local err_msg = string.format('Failed to open LSP client log file: %s', openerr)
-      vim.notify(err_msg, vim.log.levels.ERROR)
+      notify(err_msg, vim.log.levels.ERROR)
       return false
     end
 
@@ -64,7 +75,7 @@ do
         log_info.size / (1000 * 1000),
         logfilename
       )
-      vim.notify(warn_msg)
+      notify(warn_msg)
     end
 
     -- Start message for logging
