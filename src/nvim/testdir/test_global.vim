@@ -91,6 +91,7 @@ endfunc
 " Test for interrupting :global using Ctrl-C
 func Test_interrupt_global()
   CheckRunVimInTerminal
+
   let lines =<< trim END
     cnoremap ; <Cmd>sleep 10<CR>
     call setline(1, repeat(['foo'], 5))
@@ -100,14 +101,14 @@ func Test_interrupt_global()
 
   call term_sendkeys(buf, ":g/foo/norm :\<C-V>;\<CR>")
   " Wait for :sleep to start
-  call term_wait(buf)
+  call TermWait(buf, 100)
   call term_sendkeys(buf, "\<C-C>")
   call WaitForAssert({-> assert_match('Interrupted', term_getline(buf, 6))}, 1000)
 
   " Also test in Ex mode
   call term_sendkeys(buf, "gQg/foo/norm :\<C-V>;\<CR>")
   " Wait for :sleep to start
-  call term_wait(buf)
+  call TermWait(buf, 100)
   call term_sendkeys(buf, "\<C-C>")
   call WaitForAssert({-> assert_match('Interrupted', term_getline(buf, 5))}, 1000)
 
