@@ -47,6 +47,56 @@ local function clear_notrace()
 end
 
 
+local create_server_definition = [[
+  function _create_server(opts)
+    opts = opts or {}
+    local server = {}
+    server.messages = {}
+
+    function server.cmd(dispatchers)
+      local closing = false
+      local handlers = opts.handlers or {}
+      local srv = {}
+
+      function srv.request(method, params, callback)
+        table.insert(server.messages, {
+          method = method,
+          params = params,
+        })
+        local handler = handlers[method]
+        if handler then
+          local response = handler(method, params)
+          if response then
+            callback(nill, response)
+          end
+        elseif method == 'initialize' then
+          callback(nil, {
+            capabilities = opts.capabilities or {}
+          })
+        elseif method == 'shutdown' then
+          callback(nil, nil)
+        end
+      end
+
+      function srv.notify(method, params)
+      end
+
+      function srv.is_closing()
+        return closing
+      end
+
+      function srv.terminate()
+        closing = true
+      end
+
+      return srv
+    end
+
+    return server
+  end
+]]
+
+
 local function fake_lsp_server_setup(test_name, timeout_ms, options, settings)
   exec_lua([=[
     lsp = require('vim.lsp')
@@ -422,24 +472,12 @@ describe('LSP', function()
 
     it('should detach buffer on bufwipe', function()
       clear()
+      exec_lua(create_server_definition)
       local result = exec_lua([[
-        local server = function(dispatchers)
-          local closing = false
-          return {
-            request = function(method, params, callback)
-              if method == 'initialize' then
-                callback(nil, { capabilities = {} })
-              end
-            end,
-            notify = function(...)
-            end,
-            is_closing = function() return closing end,
-            terminate = function() closing = true end
-          }
-        end
+        local server = _create_server()
         local bufnr = vim.api.nvim_create_buf(false, true)
         vim.api.nvim_set_current_buf(bufnr)
-        local client_id = vim.lsp.start({ name = 'detach-dummy', cmd = server })
+        local client_id = vim.lsp.start({ name = 'detach-dummy', cmd = server.cmd })
         assert(client_id, "lsp.start must return client_id")
         local client = vim.lsp.get_client_by_id(client_id)
         local num_attached_before = vim.tbl_count(client.attached_buffers)
@@ -2651,6 +2689,33 @@ describe('LSP', function()
       eq(10, pos.col)
     end)
 
+    it('jumps to a Location if focus is true via handler', function()
+      exec_lua(create_server_definition)
+      local result = exec_lua([[
+        local server = _create_server()
+        local client_id = vim.lsp.start({ name = 'dummy', cmd = server.cmd })
+        local result = {
+          uri = 'file:///fake/uri',
+          selection = {
+            start = { line = 0, character = 9 },
+            ['end'] = { line = 0, character = 9 }
+          },
+          takeFocus = true,
+        }
+        local ctx = {
+          client_id = client_id,
+          method = 'window/showDocument',
+        }
+        vim.lsp.handlers['window/showDocument'](nil, result, ctx)
+        vim.lsp.stop_client(client_id)
+        return {
+          cursor = vim.api.nvim_win_get_cursor(0)
+        }
+      ]])
+      eq(1, result.cursor[1])
+      eq(9, result.cursor[2])
+    end)
+
     it('jumps to a Location if focus not set', function()
       local pos = show_document(location(0, 9, 0, 9), nil, true)
       eq(1, pos.line)
@@ -3436,44 +3501,21 @@ describe('LSP', function()
       }
     end)
     it('format formats range in visual mode', function()
+      exec_lua(create_server_definition)
       local result = exec_lua([[
-        local messages = {}
-        local server = function(dispatchers)
-          local closing = false
-          return {
-            request = function(method, params, callback)
-              table.insert(messages, {
-                method = method,
-                params = params,
-              })
-              if method == 'initialize' then
-                callback(nil, {
-                  capabilities = {
-                    documentFormattingProvider = true,
-                    documentRangeFormattingProvider = true,
-                  }
-                })
-              end
-            end,
-            notify = function(...)
-            end,
-            is_closing = function()
-              return closing
-            end,
-            terminate = function()
-              closing = true
-            end
-          }
-        end
+        local server = _create_server({ capabilities = {
+          documentFormattingProvider = true,
+          documentRangeFormattingProvider = true,
+        }})
         local bufnr = vim.api.nvim_get_current_buf()
-        local client_id = vim.lsp.start({ name = 'dummy', cmd = server })
+        local client_id = vim.lsp.start({ name = 'dummy', cmd = server.cmd })
         vim.api.nvim_win_set_buf(0, bufnr)
         vim.api.nvim_buf_set_lines(bufnr, 0, -1, true, {'foo', 'bar'})
         vim.api.nvim_win_set_cursor(0, { 1, 0 })
         vim.cmd.normal('v')
         vim.api.nvim_win_set_cursor(0, { 2, 3 })
         vim.lsp.buf.format({ bufnr = bufnr, false })
-        return messages
+        return server.messages
       ]])
       eq("textDocument/rangeFormatting", result[2].method)
       local expected_range = {

@@ -579,7 +579,10 @@ M['window/showDocument'] = function(_, result, ctx, _)
     range = result.selection,
   }
 
-  local success = util.show_document(location, client.offset_encoding, true, result.takeFocus)
+  local success = util.show_document(location, client.offset_encoding, {
+    reuse_win = true,
+    focus = result.takeFocus,
+  })
   return { success = success or false }
 end
 
