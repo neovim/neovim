@@ -2689,6 +2689,33 @@ describe('LSP', function()
       eq(10, pos.col)
     end)
 
+    it('jumps to a Location if focus is true via handler', function()
+      exec_lua(create_server_definition)
+      local result = exec_lua([[
+        local server = _create_server()
+        local client_id = vim.lsp.start({ name = 'dummy', cmd = server.cmd })
+        local result = {
+          uri = 'file:///fake/uri',
+          selection = {
+            start = { line = 0, character = 9 },
+            ['end'] = { line = 0, character = 9 }
+          },
+          takeFocus = true,
+        }
+        local ctx = {
+          client_id = client_id,
+          method = 'window/showDocument',
+        }
+        vim.lsp.handlers['window/showDocument'](nil, result, ctx)
+        vim.lsp.stop_client(client_id)
+        return {
+          cursor = vim.api.nvim_win_get_cursor(0)
+        }
+      ]])
+      eq(1, result.cursor[1])
+      eq(9, result.cursor[2])
+    end)
+
     it('jumps to a Location if focus not set', function()
       local pos = show_document(location(0, 9, 0, 9), nil, true)
       eq(1, pos.line)
