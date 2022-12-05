@@ -155,6 +155,9 @@ func Test_screenpos_number()
   let pos = screenpos(winid, 1, 66)
   call assert_equal(winrow, pos.row)
   call assert_equal(wincol + 66 + 3, pos.col)
+
+  call assert_fails('echo screenpos(0, 2, 1)', 'E966:')
+
   close
   bwipe!
 endfunc
