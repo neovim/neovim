@@ -653,6 +653,7 @@ let s:filename_checks = {
     \ 'zig': ['file.zig'],
     \ 'zimbu': ['file.zu'],
     \ 'zimbutempl': ['file.zut'],
+    \ 'zir': ['file.zir'],
     \ 'zsh': ['.zprofile', '/etc/zprofile', '.zfbfmarks', 'file.zsh', '.zcompdump', '.zlogin', '.zlogout', '.zshenv', '.zshrc', '.zcompdump-file', '.zlog', '.zlog-file', '.zsh', '.zsh-file', 'any/etc/zprofile', 'zlog', 'zlog-file', 'zsh', 'zsh-file'],
     \
     \ 'help': [$VIMRUNTIME . '/doc/help.txt'],
