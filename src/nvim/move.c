@@ -927,9 +927,12 @@ void textpos2screenpos(win_T *wp, pos_T *pos, int *rowp, int *scolp, int *ccolp,
   int rowoff = 0;
   colnr_T coloff = 0;
   bool visible_row = false;
+  bool is_folded = false;
 
   if (pos->lnum >= wp->w_topline && pos->lnum <= wp->w_botline) {
-    row = plines_m_win(wp, wp->w_topline, pos->lnum - 1) + 1;
+    linenr_T lnum = pos->lnum;
+    is_folded = hasFoldingWin(wp, lnum, &lnum, NULL, true, NULL);
+    row = plines_m_win(wp, wp->w_topline, lnum - 1) + 1;
     visible_row = true;
   } else if (!local || pos->lnum < wp->w_topline) {
     row = 0;
@@ -940,7 +943,10 @@ void textpos2screenpos(win_T *wp, pos_T *pos, int *rowp, int *scolp, int *ccolp,
   bool existing_row = (pos->lnum > 0
                        && pos->lnum <= wp->w_buffer->b_ml.ml_line_count);
 
-  if ((local || visible_row) && existing_row) {
+  if (is_folded) {
+    row += local ? 0 : wp->w_winrow + wp->w_winrow_off;
+    coloff = (local ? 0 : wp->w_wincol + wp->w_wincol_off) + 1;
+  } else if ((local || visible_row) && existing_row) {
     colnr_T off;
     colnr_T col;
     int width;
