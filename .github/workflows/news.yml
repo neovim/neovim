@@ -1,0 +1,31 @@
+name: "news.txt check"
+on:
+  pull_request:
+    branches:
+    - 'master'
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: ${{ github.event.pull_request.commits }}
+      - name: news.txt needs to be updated
+        run: |
+          for commit in $(git rev-list HEAD); do
+            message=$(git log -n1 --pretty=format:%s $commit)
+            type="$(echo "$message" | sed -E 's|([[:alpha:]]+)(\(.*\))?!?:.*|\1|')"
+            breaking="$(echo "$message" | sed -E 's|[[:alpha:]]+(\(.*\))?!:.*|breaking-change|')"
+            if [[ "$type" == "feat" ]] || [[ "$breaking" == "breaking-change" ]]; then
+              git diff HEAD~$((${{ github.event.pull_request.commits }}-1)) --name-only | grep runtime/doc/news.txt ||
+              {
+                echo "
+                  Pull request includes a new feature or a breaking change, but
+                  news.txt hasn't been updated yet. news.txt is our primary way of
+                  communicating changes to users so it's important to keep it up to
+                  date."
+                  exit 1
+               }
+            fi
+          done
