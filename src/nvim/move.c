@@ -928,7 +928,7 @@ void textpos2screenpos(win_T *wp, pos_T *pos, int *rowp, int *scolp, int *ccolp,
   colnr_T coloff = 0;
   bool visible_row = false;
 
-  if (pos->lnum >= wp->w_topline && pos->lnum < wp->w_botline) {
+  if (pos->lnum >= wp->w_topline && pos->lnum <= wp->w_botline) {
     row = plines_m_win(wp, wp->w_topline, pos->lnum - 1) + 1;
     visible_row = true;
   } else if (pos->lnum < wp->w_topline) {
@@ -962,15 +962,15 @@ void textpos2screenpos(win_T *wp, pos_T *pos, int *rowp, int *scolp, int *ccolp,
 
     col -= wp->w_leftcol;
 
-    if (col >= 0 && col < wp->w_width) {
+    if (col >= 0 && col < wp->w_width && row + rowoff <= wp->w_height) {
       coloff = col - scol + (local ? 0 : wp->w_wincol + wp->w_wincol_off) + 1;
     } else {
+      // character is left, right or below of the window
       scol = ccol = ecol = 0;
-      // character is left or right of the window
       if (local) {
         coloff = col < 0 ? -1 : wp->w_width_inner + 1;
       } else {
-        row = 0;
+        row = rowoff = 0;
       }
     }
   }
