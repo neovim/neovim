@@ -2197,11 +2197,17 @@ plain:
 char *nlua_read_secure(const char *path)
 {
   lua_State *const lstate = global_lstate;
+  const int top = lua_gettop(lstate);
+
   lua_getglobal(lstate, "vim");
   lua_getfield(lstate, -1, "secure");
   lua_getfield(lstate, -1, "read");
   lua_pushstring(lstate, path);
-  lua_call(lstate, 1, 1);
+  if (nlua_pcall(lstate, 1, 1)) {
+    nlua_error(lstate, _("Error executing vim.secure.read: %.*s"));
+    lua_settop(lstate, top);
+    return NULL;
+  }
 
   size_t len = 0;
   const char *contents = lua_tolstring(lstate, -1, &len);
@@ -2212,15 +2218,15 @@ char *nlua_read_secure(const char *path)
     memcpy(buf, contents, len + 1);
   }
 
-  // Pop return value, "vim", and "secure"
-  lua_pop(lstate, 3);
-
+  lua_settop(lstate, top);
   return buf;
 }
 
 bool nlua_trust(const char *action, const char *path)
 {
   lua_State *const lstate = global_lstate;
+  const int top = lua_gettop(lstate);
+
   lua_getglobal(lstate, "vim");
   lua_getfield(lstate, -1, "secure");
   lua_getfield(lstate, -1, "trust");
@@ -2241,6 +2247,7 @@ bool nlua_trust(const char *action, const char *path)
 
   if (nlua_pcall(lstate, 1, 2)) {
     nlua_error(lstate, _("Error executing vim.secure.trust: %.*s"));
+    lua_settop(lstate, top);
     return false;
   }
 
@@ -2260,8 +2267,6 @@ bool nlua_trust(const char *action, const char *path)
     }
   }
 
-  // Pop return values, "vim" and "secure"
-  lua_pop(lstate, 4);
-
+  lua_settop(lstate, top);
   return success;
 }
