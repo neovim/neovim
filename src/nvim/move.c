@@ -931,7 +931,7 @@ void textpos2screenpos(win_T *wp, pos_T *pos, int *rowp, int *scolp, int *ccolp,
   if (pos->lnum >= wp->w_topline && pos->lnum <= wp->w_botline) {
     row = plines_m_win(wp, wp->w_topline, pos->lnum - 1) + 1;
     visible_row = true;
-  } else if (pos->lnum < wp->w_topline) {
+  } else if (!local || pos->lnum < wp->w_topline) {
     row = 0;
   } else {
     row = wp->w_height_inner;
@@ -964,6 +964,7 @@ void textpos2screenpos(win_T *wp, pos_T *pos, int *rowp, int *scolp, int *ccolp,
 
     if (col >= 0 && col < wp->w_width && row + rowoff <= wp->w_height) {
       coloff = col - scol + (local ? 0 : wp->w_wincol + wp->w_wincol_off) + 1;
+      row += local ? 0 : wp->w_winrow + wp->w_winrow_off;
     } else {
       // character is left, right or below of the window
       scol = ccol = ecol = 0;
@@ -974,7 +975,7 @@ void textpos2screenpos(win_T *wp, pos_T *pos, int *rowp, int *scolp, int *ccolp,
       }
     }
   }
-  *rowp = (local ? 0 : wp->w_winrow + wp->w_winrow_off) + row + rowoff;
+  *rowp = row + rowoff;
   *scolp = scol + coloff;
   *ccolp = ccol + coloff;
   *ecolp = ecol + coloff;
