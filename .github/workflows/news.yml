@@ -18,7 +18,7 @@ jobs:
             type="$(echo "$message" | sed -E 's|([[:alpha:]]+)(\(.*\))?!?:.*|\1|')"
             breaking="$(echo "$message" | sed -E 's|[[:alpha:]]+(\(.*\))?!:.*|breaking-change|')"
             if [[ "$type" == "feat" ]] || [[ "$breaking" == "breaking-change" ]]; then
-              git diff HEAD~$((${{ github.event.pull_request.commits }}-1)) --name-only | grep runtime/doc/news.txt ||
+              git diff HEAD~$((${{ github.event.pull_request.commits }})) --name-only | grep runtime/doc/news.txt ||
               {
                 echo "
                   Pull request includes a new feature or a breaking change, but
