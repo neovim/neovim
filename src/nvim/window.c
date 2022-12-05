@@ -849,7 +849,7 @@ void win_config_float(win_T *wp, FloatConfig fconfig)
       pos_T pos = { wp->w_float_config.bufpos.lnum + 1,
                     wp->w_float_config.bufpos.col, 0 };
       int trow, tcol, tcolc, tcole;
-      textpos2screenpos(wp, &pos, &trow, &tcol, &tcolc, &tcole, true);
+      textpos2screenpos(parent, &pos, &trow, &tcol, &tcolc, &tcole, true);
       row += trow - 1;
       col += tcol - 1;
     }
