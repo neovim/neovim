@@ -13,9 +13,7 @@ source shared.vim
 
 func Check_X11_Connection()
   if has('x11')
-    if empty($DISPLAY)
-      throw 'Skipped: $DISPLAY is not set'
-    endif
+    CheckEnv DISPLAY
     try
       call remote_send('xxx', '')
     catch
@@ -142,19 +140,19 @@ func Test_client_server()
 
     " Edit multiple files using --remote
     call system(cmd .. ' --remote Xfile1 Xfile2 Xfile3')
-    call assert_equal("Xfile1\nXfile2\nXfile3\n", remote_expr(name, 'argv()'))
+    call assert_match(".*Xfile1\n.*Xfile2\n.*Xfile3\n", remote_expr(name, 'argv()'))
     eval name->remote_send(":%bw!\<CR>")
 
     " Edit files in separate tab pages
     call system(cmd .. ' --remote-tab Xfile1 Xfile2 Xfile3')
     call WaitForAssert({-> assert_equal('3', remote_expr(name, 'tabpagenr("$")'))})
-    call assert_equal('Xfile2', remote_expr(name, 'bufname(tabpagebuflist(2)[0])'))
+    call assert_match('.*\<Xfile2', remote_expr(name, 'bufname(tabpagebuflist(2)[0])'))
     eval name->remote_send(":%bw!\<CR>")
 
     " Edit a file using --remote-wait
     eval name->remote_send(":source $VIMRUNTIME/plugin/rrhelper.vim\<CR>")
     call system(cmd .. ' --remote-wait +enew Xfile1')
-    call assert_equal("Xfile1", remote_expr(name, 'bufname("#")'))
+    call assert_match('.*\<Xfile1', remote_expr(name, 'bufname("#")'))
     eval name->remote_send(":%bw!\<CR>")
 
     " Edit files using --remote-tab-wait
@@ -184,8 +182,10 @@ func Test_client_server()
 
   call assert_fails('call remote_startserver([])', 'E730:')
   call assert_fails("let x = remote_peek([])", 'E730:')
-  call assert_fails("let x = remote_read('vim10')", ['E573:.*vim10'])
-  call assert_fails("call server2client('abc', 'xyz')", ['E573:.*abc'])
+  call assert_fails("let x = remote_read('vim10')",
+        \ has('unix') ? ['E573:.*vim10'] : 'E277:')
+  call assert_fails("call server2client('abc', 'xyz')",
+        \ has('unix') ? ['E573:.*abc'] : 'E258:')
 endfunc
 
 " Uncomment this line to get a debugging log

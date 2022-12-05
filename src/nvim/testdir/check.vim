@@ -123,6 +123,14 @@ func CheckCanRunGui()
   endif
 endfunc
 
+" Command to Check for an environment variable
+command -nargs=1 CheckEnv call CheckEnv(<f-args>)
+func CheckEnv(name)
+  if empty(eval('$' .. a:name))
+    throw 'Skipped: Environment variable ' .. a:name .. ' is not set'
+  endif
+endfunc
+
 " Command to check that we are using the GUI
 command CheckGui call CheckGui()
 func CheckGui()
@@ -160,6 +168,22 @@ command CheckNotAsan call CheckNotAsan()
 func CheckNotAsan()
   if execute('version') =~# '-fsanitize=[a-z,]*\<address\>'
     throw 'Skipped: does not work with ASAN'
+  endif
+endfunc
+
+" Command to check for not running under valgrind
+command CheckNotValgrind call CheckNotValgrind()
+func CheckNotValgrind()
+  if RunningWithValgrind()
+    throw 'Skipped: does not work well with valgrind'
+  endif
+endfunc
+
+" Command to check for X11 based GUI
+command CheckX11BasedGui call CheckX11BasedGui()
+func CheckX11BasedGui()
+  if !g:x11_based_gui
+    throw 'Skipped: requires X11 based GUI'
   endif
 endfunc
 
