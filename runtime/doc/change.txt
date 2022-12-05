@@ -204,7 +204,6 @@ gR			Enter Virtual Replace mode: Each character you type
 							*v_S*
 {Visual}["x]S		Delete the highlighted lines [into register x] and
 			start insert (for {Visual} see |Visual-mode|).
-
 							*v_R*
 {Visual}["x]R		Currently just like {Visual}["x]S.  In a next version
 			it might work differently.
