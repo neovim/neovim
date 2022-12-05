@@ -800,6 +800,7 @@ Short explanation of each option:		*option-list*
 'mousefocus'	  'mousef'  keyboard focus follows the mouse
 'mousehide'	  'mh'	    hide mouse pointer while typing
 'mousemodel'	  'mousem'  changes meaning of mouse buttons
+'mousemoveevent'  'mousemev'  report mouse moves with <MouseMove>
 'mousescroll'		    amount to scroll by when scrolling with a mouse
 'mouseshape'	  'mouses'  shape of the mouse pointer in different modes
 'mousetime'	  'mouset'  max time between mouse double-click
@@ -901,6 +902,7 @@ Short explanation of each option:		*option-list*
 'tabstop'	  'ts'	    number of spaces that <Tab> in file uses
 'tagbsearch'	  'tbs'     use binary searching in tags files
 'tagcase'	  'tc'      how to handle case when searching in tags files
+'tagfunc'	  'tfu'	    function to get list of tag matches
 'taglength'	  'tl'	    number of significant characters for a tag
 'tagrelative'	  'tr'	    file names in tag file are relative
 'tags'		  'tag'     list of file names used by the tag command

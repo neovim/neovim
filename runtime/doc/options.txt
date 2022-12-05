@@ -4123,7 +4123,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 	checked for set commands.  If 'modeline' is off or 'modelines' is zero
 	no lines are checked.  See |modeline|.
 
-				*'modifiable'* *'ma'* *'nomodifiable'* *'noma'* *E21*
+				*'modifiable'* *'ma'* *'nomodifiable'* *'noma'*
+				*E21*
 'modifiable' 'ma'	boolean	(default on)
 			local to buffer
 	When off the buffer contents cannot be changed.  The 'fileformat' and

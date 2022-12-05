@@ -255,7 +255,8 @@ well stand for "source").
 The windows that were open are restored, with the same position and size as
 before.  Mappings and option values are like before.
    What exactly is restored depends on the 'sessionoptions' option.  The
-default value is "blank,buffers,curdir,folds,help,options,winsize".
+default value is:
+"blank,buffers,curdir,folds,help,options,tabpages,winsize,terminal".
 
 	blank		keep empty windows
 	buffers		all buffers, not only the ones in a window
@@ -263,7 +264,9 @@ default value is "blank,buffers,curdir,folds,help,options,winsize".
 	folds		folds, also manually created ones
 	help		the help window
 	options		all options and mappings
+	tabpages	all tab pages
 	winsize		window sizes
+	terminal	include terminal windows
 
 Change this to your liking.  To also restore the size of the Vim window, for
 example, use: >
