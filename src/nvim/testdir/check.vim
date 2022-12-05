@@ -126,7 +126,7 @@ endfunc
 " Command to Check for an environment variable
 command -nargs=1 CheckEnv call CheckEnv(<f-args>)
 func CheckEnv(name)
-  if empty('$' .. a:name)
+  if empty(eval('$' .. a:name))
     throw 'Skipped: Environment variable ' .. a:name .. ' is not set'
   endif
 endfunc
