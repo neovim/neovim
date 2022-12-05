@@ -171,6 +171,14 @@ func CheckNotAsan()
   endif
 endfunc
 
+" Command to check for not running under valgrind
+command CheckNotValgrind call CheckNotValgrind()
+func CheckNotValgrind()
+  if RunningWithValgrind()
+    throw 'Skipped: does not work well with valgrind'
+  endif
+endfunc
+
 " Command to check for X11 based GUI
 command CheckX11BasedGui call CheckX11BasedGui()
 func CheckX11BasedGui()

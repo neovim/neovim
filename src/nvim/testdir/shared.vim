@@ -285,6 +285,12 @@ func GetVimCommand(...)
   return cmd
 endfunc
 
+" Return one when it looks like the tests are run with valgrind, which means
+" that everything is much slower.
+func RunningWithValgrind()
+  return GetVimCommand() =~ '\<valgrind\>'
+endfunc
+
 " Get the command to run Vim, with --clean instead of "-u NONE".
 func GetVimCommandClean()
   let cmd = GetVimCommand()
