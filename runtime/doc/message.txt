@@ -820,7 +820,7 @@ Type					effect ~
 					the clipboard ("* and "+ registers)
     {menu-entry}			what the menu is defined to in
 					Cmdline-mode.
-    <LeftMouse> (*)			next page
+    <LeftMouse>				next page (*)
 
 Any other key causes the meaning of the keys to be displayed.
 

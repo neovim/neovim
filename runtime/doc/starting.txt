@@ -149,6 +149,9 @@ argument.
 <		Can be repeated like "-c", subject to the same limit of 10
 		"-c" arguments. {file} cannot start with a "-".
 
+		Do not use this for running a script to do some work and exit
+		Vim, you won't see error messages.  Use |-u| instead.
+
 -S		Works like "-S Session.vim".  Only when used as the last
 		argument or when another "-" option follows.
 
