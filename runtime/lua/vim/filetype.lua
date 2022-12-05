@@ -1122,6 +1122,7 @@ local extension = {
   yang = 'yang',
   ['z8a'] = 'z8a',
   zig = 'zig',
+  zir = 'zir',
   zu = 'zimbu',
   zut = 'zimbutempl',
   zsh = 'zsh',
