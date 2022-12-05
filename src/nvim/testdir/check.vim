@@ -171,6 +171,14 @@ func CheckNotAsan()
   endif
 endfunc
 
+" Command to check for X11 based GUI
+command CheckX11BasedGui call CheckX11BasedGui()
+func CheckX11BasedGui()
+  if !g:x11_based_gui
+    throw 'Skipped: requires X11 based GUI'
+  endif
+endfunc
+
 " Command to check for satisfying any of the conditions.
 " e.g. CheckAnyOf Feature:bsd Feature:sun Linux
 command -nargs=+ CheckAnyOf call CheckAnyOf(<f-args>)
