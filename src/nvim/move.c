@@ -996,6 +996,10 @@ void f_screenpos(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     .col    = (colnr_T)tv_get_number(&argvars[2]) - 1,
     .coladd = 0
   };
+  if (pos.lnum > wp->w_buffer->b_ml.ml_line_count) {
+    semsg(_(e_invalid_line_number_nr), pos.lnum);
+    return;
+  }
   int row = 0;
   int scol = 0, ccol = 0, ecol = 0;
   textpos2screenpos(wp, &pos, &row, &scol, &ccol, &ecol, false);
