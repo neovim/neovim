@@ -940,7 +940,7 @@ void textpos2screenpos(win_T *wp, pos_T *pos, int *rowp, int *scolp, int *ccolp,
   bool existing_row = (pos->lnum > 0
                        && pos->lnum <= wp->w_buffer->b_ml.ml_line_count);
 
-  if ((local && existing_row) || visible_row) {
+  if ((local || visible_row) && existing_row) {
     colnr_T off;
     colnr_T col;
     int width;
