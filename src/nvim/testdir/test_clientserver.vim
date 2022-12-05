@@ -185,9 +185,9 @@ func Test_client_server()
   call assert_fails('call remote_startserver([])', 'E730:')
   call assert_fails("let x = remote_peek([])", 'E730:')
   call assert_fails("let x = remote_read('vim10')",
-        \ [has('unix') ? 'E573:.*vim10' : 'E277:.*vim10'])
+        \ has('unix') ? ['E573:.*vim10'] : 'E277:')
   call assert_fails("call server2client('abc', 'xyz')",
-        \ [has('unix') ? 'E573:.*abc' : 'E258:.*abc'])
+        \ has('unix') ? ['E573:.*abc'] : 'E258:')
 endfunc
 
 " Uncomment this line to get a debugging log
