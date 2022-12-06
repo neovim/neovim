@@ -9,16 +9,15 @@ jobs:
     steps:
       - uses: actions/checkout@v3
         with:
-          ref: ${{ github.event.pull_request.head.sha }}
-          fetch-depth: ${{ github.event.pull_request.commits }}
+          fetch-depth: 0
       - name: news.txt needs to be updated
         run: |
-          for commit in $(git rev-list HEAD); do
+          for commit in $(git rev-list HEAD~${{ github.event.pull_request.commits }}..HEAD); do
             message=$(git log -n1 --pretty=format:%s $commit)
             type="$(echo "$message" | sed -E 's|([[:alpha:]]+)(\(.*\))?!?:.*|\1|')"
             breaking="$(echo "$message" | sed -E 's|[[:alpha:]]+(\(.*\))?!:.*|breaking-change|')"
             if [[ "$type" == "feat" ]] || [[ "$breaking" == "breaking-change" ]]; then
-              git diff HEAD~$((${{ github.event.pull_request.commits }}-1)) --name-only | grep runtime/doc/news.txt ||
+              ! git diff HEAD~${{ github.event.pull_request.commits }}..HEAD --quiet runtime/doc/news.txt ||
               {
                 echo "
                   Pull request includes a new feature or a breaking change, but
