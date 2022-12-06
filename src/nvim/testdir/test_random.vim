@@ -1,5 +1,8 @@
 " Tests for srand() and rand()
 
+source check.vim
+source shared.vim
+
 func Test_Rand()
   let r = srand(123456789)
   call assert_equal([1573771921, 319883699, 2742014374, 1324369493], r)
@@ -46,6 +49,22 @@ func Test_issue_5587()
   call rand()
   call garbagecollect()
   call rand()
+endfunc
+
+func Test_srand()
+  CheckNotGui
+
+  let cmd = GetVimCommand() .. ' -V -es -c "echo rand()" -c qa!'
+  let bad = 0
+  for _ in range(10)
+    echo cmd
+    let result1 = system(cmd)
+    let result2 = system(cmd)
+    if result1 ==# result2
+      let bad += 1
+    endif
+  endfor
+  call assert_inrange(0, 4, bad)
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab
