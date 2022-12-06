@@ -39,6 +39,11 @@ NEW FEATURES                                                    *news-features*
 
 The following new APIs or features were added.
 
+• Added support for the `willSave` and `willSaveWaitUntil` capabilities to the
+  LSP client. `willSaveWaitUntil` allows a server to modify a document before it
+  gets saved. Example use-cases by language servers include removing unused
+  imports, or formatting the file.
+
 • Treesitter syntax highlighting for `help` files now supports highlighted
   code examples. To enable, create a `.config/nvim/ftplugin/help.lua` with
   the contents >lua
