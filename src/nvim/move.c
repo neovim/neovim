@@ -920,11 +920,16 @@ void textpos2screenpos(win_T *wp, pos_T *pos, int *rowp, int *scolp, int *ccolp,
   int rowoff = 0;
   colnr_T coloff = 0;
   bool visible_row = false;
+  bool is_folded = false;
 
-  if (pos->lnum >= wp->w_topline && pos->lnum < wp->w_botline) {
-    row = plines_m_win(wp, wp->w_topline, pos->lnum - 1) + 1;
+  if (pos->lnum >= wp->w_topline && pos->lnum <= wp->w_botline) {
+    linenr_T lnum = pos->lnum;
+    is_folded = hasFoldingWin(wp, lnum, &lnum, NULL, true, NULL);
+    row = plines_m_win(wp, wp->w_topline, lnum - 1) + 1;
+    // Add filler lines above this buffer line.
+    row += win_get_fill(wp, lnum);
     visible_row = true;
-  } else if (pos->lnum < wp->w_topline) {
+  } else if (!local || pos->lnum < wp->w_topline) {
     row = 0;
   } else {
     row = wp->w_height_inner;
@@ -933,7 +938,10 @@ void textpos2screenpos(win_T *wp, pos_T *pos, int *rowp, int *scolp, int *ccolp,
   bool existing_row = (pos->lnum > 0
                        && pos->lnum <= wp->w_buffer->b_ml.ml_line_count);
 
-  if ((local && existing_row) || visible_row) {
+  if (is_folded) {
+    row += local ? 0 : wp->w_winrow + wp->w_winrow_off;
+    coloff = (local ? 0 : wp->w_wincol + wp->w_wincol_off) + 1;
+  } else if ((local || visible_row) && existing_row) {
     colnr_T off;
     colnr_T col;
     int width;
@@ -955,19 +963,20 @@ void textpos2screenpos(win_T *wp, pos_T *pos, int *rowp, int *scolp, int *ccolp,
 
     col -= wp->w_leftcol;
 
-    if (col >= 0 && col < wp->w_width) {
+    if (col >= 0 && col < wp->w_width && row + rowoff <= wp->w_height) {
       coloff = col - scol + (local ? 0 : wp->w_wincol + wp->w_wincol_off) + 1;
+      row += local ? 0 : wp->w_winrow + wp->w_winrow_off;
     } else {
+      // character is left, right or below of the window
       scol = ccol = ecol = 0;
-      // character is left or right of the window
       if (local) {
         coloff = col < 0 ? -1 : wp->w_width_inner + 1;
       } else {
-        row = 0;
+        row = rowoff = 0;
       }
     }
   }
-  *rowp = (local ? 0 : wp->w_winrow + wp->w_winrow_off) + row + rowoff;
+  *rowp = row + rowoff;
   *scolp = scol + coloff;
   *ccolp = ccol + coloff;
   *ecolp = ecol + coloff;
@@ -989,6 +998,10 @@ void f_screenpos(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     .col    = (colnr_T)tv_get_number(&argvars[2]) - 1,
     .coladd = 0
   };
+  if (pos.lnum > wp->w_buffer->b_ml.ml_line_count) {
+    semsg(_(e_invalid_line_number_nr), pos.lnum);
+    return;
+  }
   int row = 0;
   int scol = 0, ccol = 0, ecol = 0;
   textpos2screenpos(wp, &pos, &row, &scol, &ccol, &ecol, false);
