@@ -3571,6 +3571,14 @@ highlighting is to put the following line in your |vimrc|: >
 <
 
 
+WDL							*wdl.vim* *wdl-syntax*
+
+The Workflow Description Language is a way to specify data processing workflows
+with a human-readable and writeable syntax.  This is used a lot in
+bioinformatics.  More info on the spec can be found here:
+https://github.com/openwdl/wdl
+
+
 XF86CONFIG				*xf86conf.vim* *ft-xf86conf-syntax*
 
 The syntax of XF86Config file differs in XFree86 v3.x and v4.x.  Both

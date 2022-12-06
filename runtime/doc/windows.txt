@@ -615,6 +615,8 @@ autocommand event can be used.
 If you want to get notified of text in windows scrolling vertically or
 horizontally, the |WinScrolled| autocommand event can be used.  This will also
 trigger in window size changes.
+Exception: the events will not be triggered when the text scrolls for
+'incsearch'.
 							*WinResized-event*
 The |WinResized| event is triggered after updating the display, several
 windows may have changed size then.  A list of the IDs of windows that changed

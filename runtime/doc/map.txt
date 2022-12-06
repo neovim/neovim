@@ -1471,7 +1471,7 @@ Possible attributes are:
 		    number.
 	-count=N    A count (default N) which is specified either in the line
 		    number position, or as an initial argument (like |:Next|).
-	-count	    acts like -count=0
+	-count	    Acts like -count=0
 
 Note that -range=N and -count=N are mutually exclusive - only one should be
 specified.
@@ -1489,7 +1489,7 @@ Possible values are (second column is the short name used in listing):
     -addr=windows	  win	Range for windows
     -addr=tabs		  tab	Range for tab pages
     -addr=quickfix	  qf	Range for quickfix entries
-    -addr=other		  ?	other kind of range; can use ".", "$" and "%"
+    -addr=other		  ?	Other kind of range; can use ".", "$" and "%"
 				as with "lines" (this is the default for
 				-count)
 
