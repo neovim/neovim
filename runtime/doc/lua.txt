@@ -733,7 +733,7 @@ vim.spell.check({str})                                     *vim.spell.check()*
         vim.spell.check("the quik brown fox")
         -- =>
         -- {
-        --     {'quik', 'bad', 4}
+        --     {'quik', 'bad', 5}
         -- }
 <
     Parameters: ~
