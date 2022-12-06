@@ -144,6 +144,22 @@ func Test_screenpos_fold()
   bwipe!
 endfunc
 
+func Test_screenpos_diff()
+  CheckFeature diff
+
+  enew!
+  call setline(1, ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i'])
+  vnew
+  call setline(1, ['a', 'b', 'c', 'g', 'h', 'i'])
+  windo diffthis
+  wincmd w
+  call assert_equal(#{col: 3, row: 7, endcol: 3, curscol: 3}, screenpos(0, 4, 1))
+
+  windo diffoff
+  bwipe!
+  bwipe!
+endfunc
+
 func Test_screenpos_number()
   rightbelow new
   rightbelow 73vsplit
