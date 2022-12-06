@@ -1436,15 +1436,13 @@ static void foldMarkAdjustRecurse(win_T *wp, garray_T *gap, linenr_T line1, line
           // 5. fold is below line1 and contains line2; need to
           // correct nested folds too
           if (amount == MAXLNUM) {
-            foldMarkAdjustRecurse(wp, &fp->fd_nested, line1 - fp->fd_top,
-                                  line2 - fp->fd_top, amount,
-                                  amount_after + (fp->fd_top - top));
+            foldMarkAdjustRecurse(wp, &fp->fd_nested, 0, line2 - fp->fd_top,
+                                  amount, amount_after + (fp->fd_top - top));
             fp->fd_len -= line2 - fp->fd_top + 1;
             fp->fd_top = line1;
           } else {
-            foldMarkAdjustRecurse(wp, &fp->fd_nested, line1 - fp->fd_top,
-                                  line2 - fp->fd_top, amount,
-                                  amount_after - amount);
+            foldMarkAdjustRecurse(wp, &fp->fd_nested, 0, line2 - fp->fd_top,
+                                  amount, amount_after - amount);
             fp->fd_len += amount_after - amount;
             fp->fd_top += amount;
           }
