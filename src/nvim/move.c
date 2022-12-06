@@ -926,6 +926,8 @@ void textpos2screenpos(win_T *wp, pos_T *pos, int *rowp, int *scolp, int *ccolp,
     linenr_T lnum = pos->lnum;
     is_folded = hasFoldingWin(wp, lnum, &lnum, NULL, true, NULL);
     row = plines_m_win(wp, wp->w_topline, lnum - 1) + 1;
+    // Add filler lines above this buffer line.
+    row += win_get_fill(wp, lnum);
     visible_row = true;
   } else if (!local || pos->lnum < wp->w_topline) {
     row = 0;
