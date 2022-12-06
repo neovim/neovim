@@ -5145,10 +5145,11 @@ static void init_srand(uint32_t *const x)
     }
   }
   if (dev_urandom_state != OK) {
-    // Reading /dev/urandom doesn't work, fall back to time().
+    // Reading /dev/urandom doesn't work, fall back to os_hrtime() XOR with process ID
 #endif
   // uncrustify:off
-    *x = (uint32_t)time(NULL);
+    *x = (uint32_t)os_hrtime();
+    *x ^= (uint32_t)os_get_pid();
 #ifndef MSWIN
   }
 #endif
