@@ -11,35 +11,36 @@ local ok = helpers.ok
 local assert_alive = helpers.assert_alive
 
 describe('API: highlight',function()
-  local expected_rgb = {
-    background = Screen.colors.Yellow,
-    foreground = Screen.colors.Red,
-    special = Screen.colors.Blue,
-    bold = true,
-  }
-  local expected_cterm = {
-    background = 10,
-    underline = true,
-  }
-  local expected_rgb2 = {
-    background = Screen.colors.Yellow,
-    foreground = Screen.colors.Red,
-    special = Screen.colors.Blue,
-    bold = true,
-    italic = true,
-    reverse = true,
-    underline = true,
-    undercurl = true,
-    underdouble = true,
-    underdotted = true,
-    underdashed = true,
-    strikethrough = true,
-    nocombine = true,
-  }
+  local expected_rgb, expected_cterm, expected_rgb2
 
   before_each(function()
     clear()
     command("hi NewHighlight cterm=underline ctermbg=green guifg=red guibg=yellow guisp=blue gui=bold")
+    expected_rgb = {
+      background = Screen.colors.Yellow,
+      foreground = Screen.colors.Red,
+      special = Screen.colors.Blue,
+      bold = true,
+    }
+    expected_cterm = {
+      background = 10,
+      underline = true,
+    }
+    expected_rgb2 = {
+      background = Screen.colors.Yellow,
+      foreground = Screen.colors.Red,
+      special = Screen.colors.Blue,
+      bold = true,
+      italic = true,
+      reverse = true,
+      underline = true,
+      undercurl = true,
+      underdouble = true,
+      underdotted = true,
+      underdashed = true,
+      strikethrough = true,
+      nocombine = true,
+    }
   end)
 
   it("nvim_get_hl_by_id", function()
