@@ -41,8 +41,15 @@ function LanguageTree.new(source, lang, opts)
   end
 
   local injections = opts.injections or {}
+
+  -- pass our source index to any children so we only build it once.
+  -- opts is just a convenient place to inject it
+  opts._source_index = opts._source_index
+    or (type(source) == 'string' and LanguageTree._string_row_index(source) or {})
+
   local self = setmetatable({
     _source = source,
+    _source_index = opts._source_index,
     _lang = lang,
     _children = {},
     _regions = {},
@@ -263,6 +270,53 @@ function LanguageTree:destroy()
   end
 end
 
+---@alias Region4 Range4[]
+---@alias Range4 integer[]
+
+---@private
+---@param str string
+---@return {line: string, byte_offset: number}[]
+function LanguageTree._string_row_index(str)
+  local result = {}
+  local running_total = 0
+  for line in str:gmatch('([^\n]*)\n?') do
+    table.insert(result, { line = line, byte_offset = running_total })
+    -- lua strings are byte sequences. their length is the byte count.
+    -- add 1 for the newline
+    running_total = running_total + #line + 1
+  end
+  return result
+end
+
+--- Transform the tables from 4 element long to 6 element long (with byte offset)
+--- (in-place)
+---@private
+---@param regions Region4[]
+function LanguageTree:_four_to_six(regions)
+  for _, region in ipairs(regions) do
+    for i, range in ipairs(region) do
+      if type(range) == 'table' and #range == 4 then
+        local start_row, start_col, end_row, end_col = unpack(range)
+        local start_byte = 0
+        local end_byte = 0
+        -- these rows and columns come from node:range() or metadata, so they are 0-based.
+        -- the columns are byte offsets
+        if type(self._source) == 'number' then
+          -- Easy case, this is a buffer parser
+          start_byte = a.nvim_buf_get_offset(self._source, start_row) + start_col
+          end_byte = a.nvim_buf_get_offset(self._source, end_row) + end_col
+        elseif type(self._source) == 'string' then
+          -- string parser, single `\n` delimited string
+          start_byte = self._source_index[start_row + 1].byte_offset + start_col
+          end_byte = self._source_index[end_row + 1].byte_offset + end_col
+        end
+
+        region[i] = { start_row, start_col, start_byte, end_row, end_col, end_byte }
+      end
+    end
+  end
+end
+
 --- Sets the included regions that should be parsed by this |LanguageTree|.
 --- A region is a set of nodes and/or ranges that will be parsed in the same context.
 ---
@@ -282,28 +336,7 @@ end
 ---@private
 ---@param regions table List of regions this tree should manage and parse.
 function LanguageTree:set_included_regions(regions)
-  -- Transform the tables from 4 element long to 6 element long (with byte offset)
-  for _, region in ipairs(regions) do
-    for i, range in ipairs(region) do
-      if type(range) == 'table' and #range == 4 then
-        local start_row, start_col, end_row, end_col = unpack(range)
-        local start_byte = 0
-        local end_byte = 0
-        -- TODO(vigoux): proper byte computation here, and account for EOL ?
-        if type(self._source) == 'number' then
-          -- Easy case, this is a buffer parser
-          start_byte = a.nvim_buf_get_offset(self._source, start_row) + start_col
-          end_byte = a.nvim_buf_get_offset(self._source, end_row) + end_col
-        elseif type(self._source) == 'string' then
-          -- string parser, single `\n` delimited string
-          start_byte = vim.fn.byteidx(self._source, start_col)
-          end_byte = vim.fn.byteidx(self._source, end_col)
-        end
-
-        region[i] = { start_row, start_col, start_byte, end_row, end_col, end_byte }
-      end
-    end
-  end
+  self:_four_to_six(regions)
 
   self._regions = regions
   -- Trees are no longer valid now that we have changed regions.

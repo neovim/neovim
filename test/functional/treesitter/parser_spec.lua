@@ -571,6 +571,28 @@ end]]
     eq({ {0, 10, 0, 13} }, ret)
   end)
 
+  it("gets injection byte offsets for string parsers", function()
+    local txt = [[
+    #define MACRO int c = 5; \
+                  float f = 9.0;
+    ]]
+
+    local ret = exec_lua([[
+    local str = ...
+    local parser = vim.treesitter.get_string_parser(str, "c", {
+      injections = {
+        c = "(preproc_def (preproc_arg) @c) (preproc_function_def value: (preproc_arg) @c)"
+      }
+    })
+    parser:parse();
+    local regions = parser:children().c:included_regions()
+    return regions]], txt)
+
+    eq({
+      { { 0, 17, 17, 1, 32, 63 } }
+    }, ret)
+  end)
+
   it("should use node range when omitted", function()
     local txt = [[
       int foo = 42;
