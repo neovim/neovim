@@ -631,9 +631,9 @@ The information provided by |WinScrolled| is a dictionary for each window that
 has changes, using the window ID as the key, and a total count of the changes
 with the key "all".  Example value for |v:event|:
 	{
-	   all: {width: 0, height: 2, leftcol: 0, topline: 1, skipcol: 0},
-	   1003: {width: 0, height: -1, leftcol: 0, topline: 0, skipcol: 0},
-	   1006: {width: 0, height: 1, leftcol: 0, topline: 1, skipcol: 0},
+	   all: {width: 0, height: 2, leftcol: 0, skipcol: 0, topline: 1, topfill: 0},
+	   1003: {width: 0, height: -1, leftcol: 0, skipcol: 0, topline: 0, topfill: 0},
+	   1006: {width: 0, height: 1, leftcol: 0, skipcol: 0, topline: 1, topfill: 0},
 	}
 
 Note that the "all" entry has the absolute values of the individual windows
