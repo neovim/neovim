@@ -2959,6 +2959,7 @@ func Test_cwindow_highlight()
   call writefile(lines, 'XtestCwindow')
   let buf = RunVimInTerminal('-S XtestCwindow', #{rows: 12})
   call VerifyScreenDump(buf, 'Test_quickfix_cwindow_1', {})
+
   call term_sendkeys(buf, ":cnext\<CR>")
   call VerifyScreenDump(buf, 'Test_quickfix_cwindow_2', {})
 
