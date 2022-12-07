@@ -839,6 +839,44 @@ int x = INT_MAX;
         },
       }, exec_lua("return parser:children().c:children().c:included_regions()"))
     end)
+
+    it("should limit child clipping to the relevant region in the parent", function()
+      insert([[
+      /* #define TEN (5 \
+       *              + 5)
+       */
+      #define ONE 1
+      ]])
+      local injections = [[ (preproc_arg) @c ]]
+      local child_regions = exec_lua([[
+      parser = vim.treesitter.get_parser(0, "c", { injections = { c = ... }})
+      parser:set_included_regions({
+         -- chop off the leading comment marks
+         { {0, 3, 1, 0 }, {1, 3, 2, 0 } },
+         -- a second region to obliterate the mask if we do it wrong.
+         -- this will end up as a second tree, so won't interfere
+         -- with the parsing of the top level C language, and should
+         -- cause the creation of two separate child trees as the second
+         -- region contains a define of its own
+         { {0, 0, 4, 0} },
+      })
+      parser:parse()
+      return parser:children().c:included_regions()
+      ]], injections)
+
+      eq(2, exec_lua("return #parser:children().c:trees()"))
+
+      eq({
+        {
+          -- the second line's > masked out
+          {0, 14, 14, 1, 0, 20}, -- (5 \
+          {1, 3, 23, 1, 20, 40}, --  + 5
+        },
+        {
+          {3, 11, 56, 3, 13, 58} -- 1
+        }
+      }, child_regions)
+    end)
   end)
 
   describe("when getting the language for a range", function()
