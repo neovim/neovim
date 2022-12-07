@@ -777,6 +777,70 @@ int x = INT_MAX;
     end)
   end)
 
+  describe("when setting included regions", function()
+    it("should clip ranges on child", function()
+      insert([[
+      > #define TEN (5 \
+      >              + 5)
+      ]])
+      local injections = [[ (preproc_arg) @c ]]
+      local child_regions = exec_lua([[
+      parser = vim.treesitter.get_parser(0, "c", { injections = { c = ... }})
+      parser:set_included_regions({
+         -- chop off the leading >s
+         { {0, 2, 1, 0 }, {1, 2, 2, 0 } }
+      })
+      parser:parse()
+      return parser:children().c:included_regions()
+      ]], injections)
+
+      eq({
+        {
+          -- the second line's > masked out.
+          {0, 13, 13, 1, 0, 19}, -- (5 \
+          {1, 2, 21, 1, 19, 38}, --  + 5
+        },
+      }, child_regions)
+    end)
+
+    it("should clip ranges automatically for injections", function()
+      -- A recursive C parser
+      -- We want the second level to combine as "int x = INT_MAX;", be parsed as a
+      -- string, and then the third level to interpret the content of that string.
+      insert([[
+      #define COMBINE() "int x
+      #define COMBINE() = INT_MAX;"
+      ]])
+      local injections = [[
+      (preproc_function_def (preproc_arg) @c @combined)
+      ((string_literal) @c (#offset! @c 0 1 0 -1))
+      ]]
+      exec_lua([[
+      parser = vim.treesitter.get_parser(0, "c", { injections = { c = ... }})
+      ]], injections)
+
+      eq("table", exec_lua("return type(parser:children().c)"))
+      eq(1, exec_lua("return #parser:children().c:trees()"))
+      eq(1, exec_lua("return #parser:children().c:children().c:trees()"))
+
+      eq({
+        -- @combined, so only one region.
+        {
+          {0, 17, 17, 0, 24, 24}, -- "int x
+          {1, 17, 42, 1, 29, 54}, -- = INT_MAX;"
+        },
+      }, exec_lua("return parser:children().c:included_regions()"))
+
+      eq({
+        -- maintain the splitting of the parent language
+        {
+          {0, 19, 19, 0, 24, 24}, -- int x
+          {1, 17, 42, 1, 28, 53}, -- = INT_MAX;
+        },
+      }, exec_lua("return parser:children().c:children().c:included_regions()"))
+    end)
+  end)
+
   describe("when getting the language for a range", function()
     before_each(function()
       insert([[
