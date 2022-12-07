@@ -605,9 +605,9 @@ end]]
 
     local nodes = {}
     local query = vim.treesitter.parse_query("c", '((identifier) @foo)')
-    local first_child = parser:parse()[1]:root():child(1)
+    local second_child = parser:parse()[1]:root():child(1)
 
-    for _, node in query:iter_captures(first_child, str) do
+    for _, node in query:iter_captures(second_child, str) do
       table.insert(nodes, { node:range() })
     end
 
@@ -648,12 +648,23 @@ int x = INT_MAX;
         eq(5, exec_lua("return #parser:children().c:trees()"))
         eq({
           {0, 0, 7, 0},   -- root tree
-          {3, 14, 3, 17}, -- VALUE 123
-          {4, 15, 4, 18}, -- VALUE1 123
-          {5, 15, 5, 18}, -- VALUE2 123
-          {1, 26, 1, 65}, -- READ_STRING(x, y) (char_u *)read_string((x), (size_t)(y))
-          {2, 29, 2, 68}  -- READ_STRING_OK(x, y) (char_u *)read_string((x), (size_t)(y))
+          {3, 14, 3, 17}, -- 123
+          {4, 15, 4, 18}, -- 123
+          {5, 15, 5, 18}, -- 123
+          {1, 26, 1, 65}, -- (char_u *)read_string((x), (size_t)(y))
+          {2, 29, 2, 68}  -- (char_u *)read_string((x), (size_t)(y))
         }, get_ranges())
+        -- these ranges include the leading space, because that's what
+        -- comes back from the query. Once those ranges are fed to,
+        -- the child parser, the returned trees don't have a leading
+        -- space.
+        eq({
+          { {3, 13, 165, 3, 17, 169}, },
+          { {4, 14, 184, 4, 18, 188}, },
+          { {5, 14, 203, 5, 18, 207}, },
+          { {1, 25, 42,  1, 65, 82}, },
+          { {2, 28, 111, 2, 68, 151}, },
+        }, exec_lua("return parser:children().c:included_regions()"))
       end)
     end)
 
@@ -669,12 +680,23 @@ int x = INT_MAX;
         eq(2, exec_lua("return #parser:children().c:trees()"))
         eq({
           {0, 0, 7, 0},   -- root tree
-          {3, 14, 5, 18}, -- VALUE 123
+          {3, 14, 5, 18}, --       123
                           -- VALUE1 123
                           -- VALUE2 123
-          {1, 26, 2, 68}  -- READ_STRING(x, y) (char_u *)read_string((x), (size_t)(y))
+          {1, 26, 2, 68}  --                   (char_u *)read_string((x), (size_t)(y))
                           -- READ_STRING_OK(x, y) (char_u *)read_string((x), (size_t)(y))
         }, get_ranges())
+        eq({
+          {
+            {3, 13, 165, 3, 17, 169}, -- ` 123`
+            {4, 14, 184, 4, 18, 188}, --  ` 123`
+            {5, 14, 203, 5, 18, 207}, --  ` 123`
+          },
+          {
+            {1, 25, 42,  1, 65, 82},  -- (char_u *) ...
+            {2, 28, 111, 2, 68, 151}, -- (char_u *) ...
+          }
+        }, exec_lua("return parser:children().c:included_regions()"))
       end)
     end)
 
