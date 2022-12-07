@@ -421,6 +421,15 @@ describe('float window', function()
     eq(winids, eval('winids'))
   end)
 
+  it('no crash with bufpos and non-existent window', function()
+    command('new')
+    local closed_win = meths.get_current_win().id
+    command('close')
+    local buf = meths.create_buf(false,false)
+    meths.open_win(buf, true, {relative='win', win=closed_win, width=1, height=1, bufpos={0,0}})
+    assert_alive()
+  end)
+
   it("no segfault when setting minimal style after clearing local 'fillchars' #19510", function()
     local float_opts = {relative = 'editor', row = 1, col = 1, width = 1, height = 1}
     local float_win = meths.open_win(0, true, float_opts)
