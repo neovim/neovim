@@ -1454,6 +1454,14 @@ describe('API/extmarks', function()
     }} }, get_extmarks(ns, 0, -1, {details=true}))
   end)
 
+  it('in prompt buffer', function()
+    feed('dd')
+    local id = set_extmark(ns, marks[1], 0, 0, {})
+    curbufmeths.set_option('buftype', 'prompt')
+    feed('i<esc>')
+    eq({{id, 0, 2}}, get_extmarks(ns, 0, -1))
+  end)
+
   it('can get details', function()
     set_extmark(ns, marks[1], 0, 0, {
       end_col = 0,
