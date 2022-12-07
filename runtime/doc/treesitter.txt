@@ -56,11 +56,11 @@ current state of the buffer. When the plugin wants to access the state after a
 the same tree will be returned again without extra work. If the buffer was
 parsed before, incremental parsing will be done of the changed parts.
 
-Note: To use the parser directly inside a |nvim_buf_attach()| Lua callback, you
-must call |get_parser()| before you register your callback. But preferably
-parsing shouldn't be done directly in the change callback anyway as they will
-be very frequent. Rather a plugin that does any kind of analysis on a tree
-should use a timer to throttle too frequent updates.
+Note: To use the parser directly inside a |nvim_buf_attach()| Lua callback,
+you must call |vim.treesitter.get_parser()| before you register your callback.
+But preferably parsing shouldn't be done directly in the change callback
+anyway as they will be very frequent. Rather a plugin that does any kind of
+analysis on a tree should use a timer to throttle too frequent updates.
 
 See |lua-treesitter-languagetree| for the list of available methods.
 
@@ -253,8 +253,8 @@ The following predicates are built in:
 Each predicate has a `not-` prefixed predicate that is just the negation of
 the predicate.
 
-Further predicates can be added via `vim.treesitter.query.`|add_predicate()|.
-Use `vim.treesitter.query.`|list_predicates()| to list all available
+Further predicates can be added via |vim.treesitter.query.add_predicate()|.
+Use |vim.treesitter.query.list_predicates()| to list all available
 predicates.
 
 
@@ -297,8 +297,8 @@ The following directives are built in:
             ((identifier) @constant (#offset! @constant 0 1 0 -1))
 <
 
-Further directives can be added via `vim.treesitter.query.`|add_directive()|.
-Use `vim.treesitter.query.`|list_directives()| to list all available
+Further directives can be added via |vim.treesitter.query.add_directive()|.
+Use |vim.treesitter.query.list_directives()| to list all available
 directives.
 
 
@@ -481,7 +481,8 @@ library.
 ==============================================================================
 Lua module: vim.treesitter                               *lua-treesitter-core*
 
-get_captures_at_cursor({winnr})                     *get_captures_at_cursor()*
+                                     *vim.treesitter.get_captures_at_cursor()*
+get_captures_at_cursor({winnr})
     Returns a list of highlight capture names under the cursor
 
     Parameters: ~
@@ -490,7 +491,8 @@ get_captures_at_cursor({winnr})                     *get_captures_at_cursor()*
     Return: ~
         string[] List of capture names
 
-get_captures_at_pos({bufnr}, {row}, {col})             *get_captures_at_pos()*
+                                        *vim.treesitter.get_captures_at_pos()*
+get_captures_at_pos({bufnr}, {row}, {col})
     Returns a list of highlight captures at the given position
 
     Each capture is represented by a table containing the capture name as a
@@ -506,7 +508,7 @@ get_captures_at_pos({bufnr}, {row}, {col})             *get_captures_at_pos()*
         table[] List of captures `{ capture = "capture name", metadata = { ...
         } }`
 
-get_node_at_cursor({winnr})                             *get_node_at_cursor()*
+get_node_at_cursor({winnr})              *vim.treesitter.get_node_at_cursor()*
     Returns the smallest named node under the cursor
 
     Parameters: ~
@@ -515,7 +517,8 @@ get_node_at_cursor({winnr})                             *get_node_at_cursor()*
     Return: ~
         (string) Name of node under the cursor
 
-get_node_at_pos({bufnr}, {row}, {col}, {opts})             *get_node_at_pos()*
+                                            *vim.treesitter.get_node_at_pos()*
+get_node_at_pos({bufnr}, {row}, {col}, {opts})
     Returns the smallest named node at the given position
 
     Parameters: ~
@@ -529,7 +532,7 @@ get_node_at_pos({bufnr}, {row}, {col}, {opts})             *get_node_at_pos()*
     Return: ~
         userdata |tsnode| under the cursor
 
-get_node_range({node_or_range})                             *get_node_range()*
+get_node_range({node_or_range})              *vim.treesitter.get_node_range()*
     Returns the node's range or an unpacked range table
 
     Parameters: ~
@@ -538,7 +541,7 @@ get_node_range({node_or_range})                             *get_node_range()*
     Return: ~
         (table) `{ start_row, start_col, end_row, end_col }`
 
-get_parser({bufnr}, {lang}, {opts})                             *get_parser()*
+get_parser({bufnr}, {lang}, {opts})              *vim.treesitter.get_parser()*
     Returns the parser for a specific buffer and filetype and attaches it to
     the buffer
 
@@ -554,7 +557,8 @@ get_parser({bufnr}, {lang}, {opts})                             *get_parser()*
     Return: ~
         LanguageTree |LanguageTree| object to use for parsing
 
-get_string_parser({str}, {lang}, {opts})                 *get_string_parser()*
+                                          *vim.treesitter.get_string_parser()*
+get_string_parser({str}, {lang}, {opts})
     Returns a string parser
 
     Parameters: ~
@@ -565,7 +569,7 @@ get_string_parser({str}, {lang}, {opts})                 *get_string_parser()*
     Return: ~
         LanguageTree |LanguageTree| object to use for parsing
 
-is_ancestor({dest}, {source})                                  *is_ancestor()*
+is_ancestor({dest}, {source})                   *vim.treesitter.is_ancestor()*
     Determines whether a node is the ancestor of another
 
     Parameters: ~
@@ -575,7 +579,8 @@ is_ancestor({dest}, {source})                                  *is_ancestor()*
     Return: ~
         (boolean) True if {dest} is an ancestor of {source}
 
-is_in_node_range({node}, {line}, {col})                   *is_in_node_range()*
+                                           *vim.treesitter.is_in_node_range()*
+is_in_node_range({node}, {line}, {col})
     Determines whether (line, col) position is in node range
 
     Parameters: ~
@@ -586,7 +591,7 @@ is_in_node_range({node}, {line}, {col})                   *is_in_node_range()*
     Return: ~
         (boolean) True if the position is in node range
 
-node_contains({node}, {range})                               *node_contains()*
+node_contains({node}, {range})                *vim.treesitter.node_contains()*
     Determines if a node contains a range
 
     Parameters: ~
@@ -596,7 +601,7 @@ node_contains({node}, {range})                               *node_contains()*
     Return: ~
         (boolean) True if the {node} contains the {range}
 
-start({bufnr}, {lang})                                               *start()*
+start({bufnr}, {lang})                                *vim.treesitter.start()*
     Starts treesitter highlighting for a buffer
 
     Can be used in an ftplugin or FileType autocommand.
@@ -621,7 +626,7 @@ start({bufnr}, {lang})                                               *start()*
       • {lang}   (string|nil) Language of the parser (default: buffer
                  filetype)
 
-stop({bufnr})                                                         *stop()*
+stop({bufnr})                                          *vim.treesitter.stop()*
     Stops treesitter highlighting for a buffer
 
     Parameters: ~
@@ -632,7 +637,7 @@ stop({bufnr})                                                         *stop()*
 ==============================================================================
 Lua module: vim.treesitter.language                  *lua-treesitter-language*
 
-inspect_language({lang})                                  *inspect_language()*
+inspect_language({lang})          *vim.treesitter.language.inspect_language()*
     Inspects the provided language.
 
     Inspecting provides some useful information on the language like node
@@ -644,7 +649,7 @@ inspect_language({lang})                                  *inspect_language()*
     Return: ~
         (table)
 
-                                                          *require_language()*
+                                  *vim.treesitter.language.require_language()*
 require_language({lang}, {path}, {silent}, {symbol_name})
     Asserts that a parser for the language {lang} is installed.
 
@@ -666,7 +671,8 @@ require_language({lang}, {path}, {silent}, {symbol_name})
 ==============================================================================
 Lua module: vim.treesitter.query                        *lua-treesitter-query*
 
-add_directive({name}, {handler}, {force})                    *add_directive()*
+                                        *vim.treesitter.query.add_directive()*
+add_directive({name}, {handler}, {force})
     Adds a new directive to be used in queries
 
     Handlers can set match level data by setting directly on the metadata
@@ -679,7 +685,8 @@ add_directive({name}, {handler}, {force})                    *add_directive()*
       • {handler}  function(match:string, pattern:string, bufnr:number,
                    predicate:function, metadata:table)
 
-add_predicate({name}, {handler}, {force})                    *add_predicate()*
+                                        *vim.treesitter.query.add_predicate()*
+add_predicate({name}, {handler}, {force})
     Adds a new predicate to be used in queries
 
     Parameters: ~
@@ -687,7 +694,8 @@ add_predicate({name}, {handler}, {force})                    *add_predicate()*
       • {handler}  function(match:string, pattern:string, bufnr:number,
                    predicate:function)
 
-get_node_text({node}, {source}, {opts})                      *get_node_text()*
+                                        *vim.treesitter.query.get_node_text()*
+get_node_text({node}, {source}, {opts})
     Gets the text corresponding to a given node
 
     Parameters: ~
@@ -701,7 +709,7 @@ get_node_text({node}, {source}, {opts})                      *get_node_text()*
     Return: ~
         (string[]|string)
 
-get_query({lang}, {query_name})                                  *get_query()*
+get_query({lang}, {query_name})             *vim.treesitter.query.get_query()*
     Returns the runtime query {query_name} for {lang}.
 
     Parameters: ~
@@ -711,7 +719,7 @@ get_query({lang}, {query_name})                                  *get_query()*
     Return: ~
         Query Parsed query
 
-                                                           *get_query_files()*
+                                      *vim.treesitter.query.get_query_files()*
 get_query_files({lang}, {query_name}, {is_included})
     Gets the list of files used to make up a query
 
@@ -725,19 +733,19 @@ get_query_files({lang}, {query_name}, {is_included})
         string[] query_files List of files to load for given query and
         language
 
-list_directives()                                          *list_directives()*
+list_directives()                     *vim.treesitter.query.list_directives()*
     Lists the currently available directives to use in queries.
 
     Return: ~
         string[] List of supported directives.
 
-list_predicates()                                          *list_predicates()*
+list_predicates()                     *vim.treesitter.query.list_predicates()*
     Lists the currently available predicates to use in queries.
 
     Return: ~
         string[] List of supported predicates.
 
-parse_query({lang}, {query})                                   *parse_query()*
+parse_query({lang}, {query})              *vim.treesitter.query.parse_query()*
     Parse {query} as a string. (If the query is in a file, the caller should
     read the contents into a string before calling).
 
@@ -828,7 +836,8 @@ Query:iter_matches({self}, {node}, {source}, {start}, {stop})
         (table) match
         (table) metadata
 
-set_query({lang}, {query_name}, {text})                          *set_query()*
+                                            *vim.treesitter.query.set_query()*
+set_query({lang}, {query_name}, {text})
     Sets the runtime query named {query_name} for {lang}
 
     This allows users to override any runtime files and/or configuration set
@@ -843,7 +852,7 @@ set_query({lang}, {query_name}, {text})                          *set_query()*
 ==============================================================================
 Lua module: vim.treesitter.highlighter            *lua-treesitter-highlighter*
 
-new({tree}, {opts})                                        *highlighter.new()*
+new({tree}, {opts})                         *vim.treesitter.highlighter.new()*
     Creates a new highlighter using
 
     Parameters: ~
@@ -1014,7 +1023,7 @@ LanguageTree:trees({self})                              *LanguageTree:trees()*
     Parameters: ~
       • {self}
 
-new({source}, {lang}, {opts})                             *languagetree.new()*
+new({source}, {lang}, {opts})              *vim.treesitter.languagetree.new()*
     A |LanguageTree| holds the treesitter parser for a given language {lang}
     used to parse a buffer. As the buffer may contain injected languages, the LanguageTree needs to store parsers for these child languages as well (which in turn
     may contain child languages themselves, hence the name).
