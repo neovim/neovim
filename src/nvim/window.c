@@ -843,16 +843,16 @@ void win_config_float(win_T *wp, FloatConfig fconfig)
       grid_adjust(&grid, &row_off, &col_off);
       row += row_off;
       col += col_off;
+      if (wp->w_float_config.bufpos.lnum >= 0) {
+        pos_T pos = { wp->w_float_config.bufpos.lnum + 1,
+                      wp->w_float_config.bufpos.col, 0 };
+        int trow, tcol, tcolc, tcole;
+        textpos2screenpos(parent, &pos, &trow, &tcol, &tcolc, &tcole, true);
+        row += trow - 1;
+        col += tcol - 1;
+      }
     }
     api_clear_error(&dummy);
-    if (wp->w_float_config.bufpos.lnum >= 0) {
-      pos_T pos = { wp->w_float_config.bufpos.lnum + 1,
-                    wp->w_float_config.bufpos.col, 0 };
-      int trow, tcol, tcolc, tcole;
-      textpos2screenpos(parent, &pos, &trow, &tcol, &tcolc, &tcole, true);
-      row += trow - 1;
-      col += tcol - 1;
-    }
     wp->w_winrow = row;
     wp->w_wincol = col;
   } else {
