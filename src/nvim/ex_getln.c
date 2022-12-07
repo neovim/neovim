@@ -734,13 +734,14 @@ static uint8_t *command_line_enter(int firstc, long count, int indent, bool init
   TryState tstate;
   Error err = ERROR_INIT;
   bool tl_ret = true;
-  save_v_event_T save_v_event;
-  dict_T *dict = get_v_event(&save_v_event);
   char firstcbuf[2];
   firstcbuf[0] = (char)(firstc > 0 ? firstc : '-');
   firstcbuf[1] = 0;
 
   if (has_event(EVENT_CMDLINEENTER)) {
+    save_v_event_T save_v_event;
+    dict_T *dict = get_v_event(&save_v_event);
+
     // set v:event to a dictionary with information about the commandline
     tv_dict_add_str(dict, S_LEN("cmdtype"), firstcbuf);
     tv_dict_add_nr(dict, S_LEN("cmdlevel"), ccline.level);
@@ -802,6 +803,9 @@ static uint8_t *command_line_enter(int firstc, long count, int indent, bool init
   state_enter(&s->state);
 
   if (has_event(EVENT_CMDLINELEAVE)) {
+    save_v_event_T save_v_event;
+    dict_T *dict = get_v_event(&save_v_event);
+
     tv_dict_add_str(dict, S_LEN("cmdtype"), firstcbuf);
     tv_dict_add_nr(dict, S_LEN("cmdlevel"), ccline.level);
     tv_dict_set_keys_readonly(dict);
