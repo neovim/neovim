@@ -383,7 +383,7 @@ describe('treesitter highlighting', function()
         table.insert(nodes, node)
       end
 
-      parser:set_included_regions({nodes})
+      parser:set_included_regions({{nodes}})
 
       local hl = vim.treesitter.highlighter.new(parser, {queries = {c = "(identifier) @type"}})
     ]]

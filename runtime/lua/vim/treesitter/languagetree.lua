@@ -1,6 +1,7 @@
 local a = vim.api
 local query = require('vim.treesitter.query')
 local language = require('vim.treesitter.language')
+local clipping = require('vim.treesitter._clipping')
 
 ---@class LanguageTree
 ---@field _callbacks function[] Callback handlers
@@ -10,7 +11,6 @@ local language = require('vim.treesitter.language')
 ---@field _parser userdata Parser for language
 ---@field _regions table List of regions this tree should manage and parse
 ---@field _lang string Language name
----@field _regions table
 ---@field _source (number|string) Buffer or string to parse
 ---@field _trees userdata[] Reference to parsed |tstree| (one for each language)
 ---@field _valid boolean If the parsed tree is valid
@@ -30,7 +30,7 @@ LanguageTree.__index = LanguageTree
 ---                                This is useful for overriding the built-in
 ---                                runtime file searching for the injection language
 ---                                query per language.
----@return LanguageTree |LanguageTree| parser object
+---@return LanguageTree _ |LanguageTree| parser object
 function LanguageTree.new(source, lang, opts)
   language.require_language(lang)
   opts = opts or {}
@@ -119,7 +119,7 @@ end
 --- determine if any child languages should be created.
 ---
 ---@return userdata[] Table of parsed |tstree|
----@return table Change list
+---@return table|nil Change list
 function LanguageTree:parse()
   if self._valid then
     return self._trees
@@ -155,7 +155,7 @@ function LanguageTree:parse()
   local injections_by_lang = self:_get_injections()
   local seen_langs = {}
 
-  for lang, injection_ranges in pairs(injections_by_lang) do
+  for lang, injection_ranges_by_tree_index in pairs(injections_by_lang) do
     local has_lang = language.require_language(lang, nil, true)
 
     -- Child language trees should just be ignored if not found, since
@@ -168,7 +168,7 @@ function LanguageTree:parse()
         child = self:add_child(lang)
       end
 
-      child:set_included_regions(injection_ranges)
+      child:set_included_regions(injection_ranges_by_tree_index, self._regions)
 
       local _, child_changes = child:parse()
 
@@ -291,27 +291,30 @@ end
 --- Transform the tables from 4 element long to 6 element long (with byte offset)
 --- (in-place)
 ---@private
----@param regions Region4[]
-function LanguageTree:_four_to_six(regions)
-  for _, region in ipairs(regions) do
-    for i, range in ipairs(region) do
-      if type(range) == 'table' and #range == 4 then
-        local start_row, start_col, end_row, end_col = unpack(range)
-        local start_byte = 0
-        local end_byte = 0
-        -- these rows and columns come from node:range() or metadata, so they are 0-based.
-        -- the columns are byte offsets
-        if type(self._source) == 'number' then
-          -- Easy case, this is a buffer parser
-          start_byte = a.nvim_buf_get_offset(self._source, start_row) + start_col
-          end_byte = a.nvim_buf_get_offset(self._source, end_row) + end_col
-        elseif type(self._source) == 'string' then
-          -- string parser, single `\n` delimited string
-          start_byte = self._source_index[start_row + 1].byte_offset + start_col
-          end_byte = self._source_index[end_row + 1].byte_offset + end_col
-        end
+---@param regions_by_tree_index { [number]: Region4[] }
+---@return Region6[]
+function LanguageTree:_four_to_six(regions_by_tree_index)
+  for _, regions in pairs(regions_by_tree_index) do
+    for _, region in ipairs(regions) do
+      for i, range in ipairs(region) do
+        if type(range) == 'table' and #range == 4 then
+          local start_row, start_col, end_row, end_col = unpack(range)
+          local start_byte = 0
+          local end_byte = 0
+          -- these rows and columns come from node:range() or metadata, so they are 0-based.
+          -- the columns are byte offsets
+          if type(self._source) == 'number' then
+            -- Easy case, this is a buffer parser
+            start_byte = a.nvim_buf_get_offset(self._source, start_row) + start_col
+            end_byte = a.nvim_buf_get_offset(self._source, end_row) + end_col
+          elseif type(self._source) == 'string' then
+            -- string parser, single `\n` delimited string
+            start_byte = self._source_index[start_row + 1].byte_offset + start_col
+            end_byte = self._source_index[end_row + 1].byte_offset + end_col
+          end
 
-        region[i] = { start_row, start_col, start_byte, end_row, end_col, end_byte }
+          region[i] = { start_row, start_col, start_byte, end_row, end_col, end_byte }
+        end
       end
     end
   end
@@ -334,11 +337,22 @@ end
 --- Note: This call invalidates the tree and requires it to be parsed again.
 ---
 ---@private
----@param regions table List of regions this tree should manage and parse.
-function LanguageTree:set_included_regions(regions)
-  self:_four_to_six(regions)
+---@param regions_by_tree_index { [number]: Region4[] }
+---@param parent_regions Region6[]?
+function LanguageTree:set_included_regions(regions_by_tree_index, parent_regions)
+  parent_regions = parent_regions or {}
+  self:_four_to_six(regions_by_tree_index)
 
-  self._regions = regions
+  -- See _clipping.vim
+  local clipped_regions = {}
+  for tree_index, tree_regions in pairs(regions_by_tree_index) do
+    local parent_region = parent_regions[tree_index] or {}
+    for _, region in ipairs(tree_regions) do
+      table.insert(clipped_regions, clipping.clip_region(region, parent_region))
+    end
+  end
+  self._regions = clipped_regions
+
   -- Trees are no longer valid now that we have changed regions.
   -- TODO(vigoux,steelsojka): Look into doing this smarter so we can use some of the
   --                          old trees for incremental parsing. Currently, this only
@@ -366,7 +380,10 @@ end
 ---
 --- TODO: Allow for an offset predicate to tailor the injection range
 ---       instead of using the entire nodes range.
+--
 ---@private
+---@return { [string]: { [number]: Region4[] } }
+---           ^ lang      ^ tree_index (sparse)
 function LanguageTree:_get_injections()
   if not self._injection_query then
     return {}
@@ -454,21 +471,25 @@ function LanguageTree:_get_injections()
 
   -- Generate a map by lang of node lists.
   -- Each list is a set of ranges that should be parsed together.
-  for _, lang_map in ipairs(injections) do
+  for tree_index, lang_map in ipairs(injections) do
     for lang, patterns in pairs(lang_map) do
       if not result[lang] then
         result[lang] = {}
       end
+      if not result[lang][tree_index] then
+        result[lang][tree_index] = {}
+      end
+      local for_this_tree = result[lang][tree_index]
 
       for _, entry in pairs(patterns) do
         if entry.combined then
           local regions = vim.tbl_map(function(e)
             return vim.tbl_flatten(e)
           end, entry.regions)
-          table.insert(result[lang], regions)
+          table.insert(for_this_tree, regions)
         else
           for _, ranges in ipairs(entry.regions) do
-            table.insert(result[lang], ranges)
+            table.insert(for_this_tree, ranges)
           end
         end
       end

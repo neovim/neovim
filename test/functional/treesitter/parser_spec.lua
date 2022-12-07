@@ -480,7 +480,7 @@ end]]
     -- As stated here, this only includes the function (thus the whole buffer, without the last line)
     local res2 = exec_lua [[
     local root = parser:parse()[1]:root()
-    parser:set_included_regions({{root:child(0)}})
+    parser:set_included_regions({{{root:child(0)}}})
     parser:invalidate()
     return { parser:parse()[1]:root():range() }
     ]]
@@ -500,7 +500,7 @@ end]]
     eq(range, { { 0, 0, 18, 1 } })
 
     local range_tbl = exec_lua [[
-      parser:set_included_regions { { { 0, 0, 17, 1 } } }
+      parser:set_included_regions { { { {0, 0, 17, 1} } } }
       parser:parse()
       return parser:included_regions()
     ]]
@@ -519,7 +519,7 @@ end]]
       table.insert(nodes, node)
     end
 
-    parser:set_included_regions({nodes})
+    parser:set_included_regions({{nodes}})
 
     local root = parser:parse()[1]:root()
 
@@ -786,10 +786,10 @@ int x = INT_MAX;
       local injections = [[ (preproc_arg) @c ]]
       local child_regions = exec_lua([[
       parser = vim.treesitter.get_parser(0, "c", { injections = { c = ... }})
-      parser:set_included_regions({
+      parser:set_included_regions({{
          -- chop off the leading >s
          { {0, 2, 1, 0 }, {1, 2, 2, 0 } }
-      })
+      }})
       parser:parse()
       return parser:children().c:included_regions()
       ]], injections)
@@ -850,7 +850,7 @@ int x = INT_MAX;
       local injections = [[ (preproc_arg) @c ]]
       local child_regions = exec_lua([[
       parser = vim.treesitter.get_parser(0, "c", { injections = { c = ... }})
-      parser:set_included_regions({
+      parser:set_included_regions({{
          -- chop off the leading comment marks
          { {0, 3, 1, 0 }, {1, 3, 2, 0 } },
          -- a second region to obliterate the mask if we do it wrong.
@@ -859,7 +859,7 @@ int x = INT_MAX;
          -- cause the creation of two separate child trees as the second
          -- region contains a define of its own
          { {0, 0, 4, 0} },
-      })
+      }})
       parser:parse()
       return parser:children().c:included_regions()
       ]], injections)
