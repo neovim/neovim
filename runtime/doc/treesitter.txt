@@ -530,7 +530,7 @@ get_node_at_pos({bufnr}, {row}, {col}, {opts})
                    (default true)
 
     Return: ~
-        userdata |tsnode| under the cursor
+        userdata|nil |tsnode| under the cursor
 
 get_node_range({node_or_range})              *vim.treesitter.get_node_range()*
     Returns the node's range or an unpacked range table
@@ -600,6 +600,28 @@ node_contains({node}, {range})                *vim.treesitter.node_contains()*
 
     Return: ~
         (boolean) True if the {node} contains the {range}
+
+show_tree({opts})                                 *vim.treesitter.show_tree()*
+    Open a window that displays a textual representation of the nodes in the
+    language tree.
+
+    While in the window, press "a" to toggle display of anonymous nodes, "I"
+    to toggle the display of the source language of each node, and press
+    <Enter> to jump to the node under the cursor in the source buffer.
+
+    Parameters: ~
+      • {opts}  (table) Options table with the following keys:
+                • bufnr (number): Buffer to draw the tree into. If omitted, a
+                  new buffer is created.
+                • winid (number): Window id to display the tree buffer in. If
+                  omitted, a new window is created with {command}.
+                • command (string): Vimscript command to create the window.
+                  Default value is "topleft 60vnew". Only used when {winid} is
+                  nil.
+                • title (string|fun(bufnr:number):string): Title of the
+                  window. If a function, it accepts the buffer number of the
+                  source buffer as its only argument and should return a
+                  string.
 
 start({bufnr}, {lang})                                *vim.treesitter.start()*
     Starts treesitter highlighting for a buffer
