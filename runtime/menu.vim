@@ -2,7 +2,7 @@
 " You can also use this as a start for your own set of menus.
 "
 " Maintainer:	Bram Moolenaar <Bram@vim.org>
-" Last Change:	2020 Sep 28
+" Last Change:	2021 Dec 22
 
 " Note that ":an" (short for ":anoremenu") is often used to make a menu work
 " in all modes and avoid side effects from mappings defined by the user.
@@ -714,6 +714,11 @@ endfunc
 func s:BMCanAdd(name, num)
   " no directory or unlisted buffer
   if isdirectory(a:name) || !buflisted(a:num)
+    return 0
+  endif
+
+  " no name with control characters
+  if a:name =~ '[\x01-\x1f]'
     return 0
   endif
 

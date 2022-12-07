@@ -324,7 +324,7 @@ the name, e.g. "<lambda>123".  Examples:
 	set opfunc={a\ ->\ MyOpFunc(a)}
 	" set using a funcref variable
 	let Fn = function('MyTagFunc')
-	let &tagfunc = string(Fn)
+	let &tagfunc = Fn
 	" set using a lambda expression
 	let &tagfunc = {t -> MyTagFunc(t)}
 	" set using a variable with lambda expression
