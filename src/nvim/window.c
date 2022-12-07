@@ -5306,6 +5306,7 @@ void snapshot_windows_scroll_size(void)
 {
   FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
     wp->w_last_topline = wp->w_topline;
+    wp->w_last_topfill = wp->w_topfill;
     wp->w_last_leftcol = wp->w_leftcol;
     wp->w_last_skipcol = wp->w_skipcol;
     wp->w_last_width = wp->w_width;
@@ -5327,7 +5328,8 @@ void may_make_initial_scroll_size_snapshot(void)
 /// window.
 /// Returns the dictionary with refcount set to one.
 /// Returns NULL on internal error.
-static dict_T *make_win_info_dict(int width, int height, int topline, int leftcol, int skipcol)
+static dict_T *make_win_info_dict(int width, int height, int topline, int topfill, int leftcol,
+                                  int skipcol)
 {
   dict_T *const d = tv_dict_alloc();
   d->dv_refcount = 1;
@@ -5349,6 +5351,10 @@ static dict_T *make_win_info_dict(int width, int height, int topline, int leftco
     }
     tv.vval.v_number = topline;
     if (tv_dict_add_tv(d, S_LEN("topline"), &tv) == FAIL) {
+      break;
+    }
+    tv.vval.v_number = topfill;
+    if (tv_dict_add_tv(d, S_LEN("topfill"), &tv) == FAIL) {
       break;
     }
     tv.vval.v_number = leftcol;
@@ -5394,6 +5400,7 @@ static int check_window_scroll_resize(int *size_count, win_T **first_scroll_win,
   int tot_width = 0;
   int tot_height = 0;
   int tot_topline = 0;
+  int tot_topfill = 0;
   int tot_leftcol = 0;
   int tot_skipcol = 0;
 
@@ -5426,6 +5433,7 @@ static int check_window_scroll_resize(int *size_count, win_T **first_scroll_win,
     }
 
     const bool scroll_changed = wp->w_last_topline != wp->w_topline
+                                || wp->w_last_topfill != wp->w_topfill
                                 || wp->w_last_leftcol != wp->w_leftcol
                                 || wp->w_last_skipcol != wp->w_skipcol;
     if (scroll_changed) {
@@ -5440,10 +5448,11 @@ static int check_window_scroll_resize(int *size_count, win_T **first_scroll_win,
       int width = wp->w_width - wp->w_last_width;
       int height = wp->w_height - wp->w_last_height;
       int topline = wp->w_topline - wp->w_last_topline;
+      int topfill = wp->w_topfill - wp->w_last_topfill;
       int leftcol = wp->w_leftcol - wp->w_last_leftcol;
       int skipcol = wp->w_skipcol - wp->w_last_skipcol;
-      dict_T *d = make_win_info_dict(width, height,
-                                     topline, leftcol, skipcol);
+      dict_T *d = make_win_info_dict(width, height, topline,
+                                     topfill, leftcol, skipcol);
       if (d == NULL) {
         break;
       }
@@ -5458,14 +5467,15 @@ static int check_window_scroll_resize(int *size_count, win_T **first_scroll_win,
       tot_width += abs(width);
       tot_height += abs(height);
       tot_topline += abs(topline);
+      tot_topfill += abs(topfill);
       tot_leftcol += abs(leftcol);
       tot_skipcol += abs(skipcol);
     }
   }
 
   if (v_event != NULL) {
-    dict_T *alldict = make_win_info_dict(tot_width, tot_height,
-                                         tot_topline, tot_leftcol, tot_skipcol);
+    dict_T *alldict = make_win_info_dict(tot_width, tot_height, tot_topline,
+                                         tot_topfill, tot_leftcol, tot_skipcol);
     if (alldict != NULL) {
       if (tv_dict_add_dict(v_event, S_LEN("all"), alldict) == FAIL) {
         tv_dict_unref(alldict);
