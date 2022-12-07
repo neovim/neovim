@@ -258,17 +258,11 @@ CONFIG = {
             if name.lower() == 'treesitter'
             else f'*lua-treesitter-{name.lower()}*'),
         'fn_helptag_fmt': lambda fstem, name: (
-            f'*{name}()*'
-            if name != 'new'
-            else f'*{fstem}.{name}()*'),
-        # 'fn_helptag_fmt': lambda fstem, name: (
-        #     f'*vim.treesitter.{name}()*'
-        #     if fstem == 'treesitter'
-        #     else (
-        #         '*vim.lsp.client*'
-        #         # HACK. TODO(justinmk): class/structure support in lua2dox
-        #         if 'lsp.client' == f'{fstem}.{name}'
-        #         else f'*vim.lsp.{fstem}.{name}()*')),
+            f'*vim.{fstem}.{name}()*'
+            if fstem == 'treesitter'
+            else f'*{name}()*'
+            if name[0].isupper()
+            else f'*vim.treesitter.{fstem}.{name}()*'),
         'module_override': {},
         'append_only': [],
     }
