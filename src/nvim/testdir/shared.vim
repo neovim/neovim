@@ -323,7 +323,6 @@ func RunVim(before, after, arguments)
 endfunc
 
 func RunVimPiped(before, after, arguments, pipecmd)
-  let $NVIM_LOG_FILE = exists($NVIM_LOG_FILE) ? $NVIM_LOG_FILE : 'Xnvim.log'
   let cmd = GetVimCommand()
   let args = ''
   if len(a:before) > 0
@@ -338,7 +337,9 @@ func RunVimPiped(before, after, arguments, pipecmd)
   " Optionally run Vim under valgrind
   " let cmd = 'valgrind --tool=memcheck --leak-check=yes --num-callers=25 --log-file=valgrind ' . cmd
 
-  exe "silent !" . a:pipecmd . cmd . args . ' ' . a:arguments
+  let $NVIM_LOG_FILE = exists($NVIM_LOG_FILE) ? $NVIM_LOG_FILE : 'Xnvim.log'
+  " Nvim does not support -Z flag, remove it.
+  exe "silent !" . a:pipecmd . cmd . args . ' ' . substitute(a:arguments, '-Z', '', 'g')
 
   if len(a:before) > 0
     call delete('Xbefore.vim')
