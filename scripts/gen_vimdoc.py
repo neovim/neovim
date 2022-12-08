@@ -183,6 +183,7 @@ CONFIG = {
             'diagnostic.lua',
             'codelens.lua',
             'tagfunc.lua',
+            'semantic_tokens.lua',
             'handlers.lua',
             'util.lua',
             'log.lua',

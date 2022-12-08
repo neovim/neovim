@@ -39,6 +39,14 @@ NEW FEATURES                                                    *news-features*
 
 The following new APIs or features were added.
 
+• Added support for semantic token highlighting to the LSP client. This
+  functionality is enabled by default when a client that supports this feature
+  is attached to a buffer. Opt-out can be performed by deleting the
+  `semanticTokensProvider` from the LSP client's {server_capabilities} in the
+  `LspAttach` callback.
+
+  See |lsp-semantic_tokens| for more information.
+
 • |vim.treesitter.show_tree()| opens a split window showing a text
   representation of the nodes in a language tree for the current buffer.
 

@@ -5,6 +5,7 @@ local M = {}
 M.priorities = {
   syntax = 50,
   treesitter = 100,
+  semantic_tokens = 125,
   diagnostics = 150,
   user = 200,
 }
