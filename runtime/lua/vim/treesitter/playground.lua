@@ -3,6 +3,7 @@ local api = vim.api
 local M = {}
 
 ---@class Playground
+---@field ns number API namespace
 ---@field opts table Options table with the following keys:
 ---                  - anon (boolean): If true, display anonymous nodes
 ---                  - lang (boolean): If true, display the language alongside each node
@@ -79,13 +80,14 @@ end
 --- Create a new Playground object.
 ---
 ---@param bufnr number Source buffer number
+---@param lang string|nil Language of source buffer
 ---
 ---@return Playground|nil
 ---@return string|nil Error message, if any
 ---
 ---@private
-function M.new(self, bufnr)
-  local ok, parser = pcall(vim.treesitter.get_parser, bufnr or 0)
+function M.new(self, bufnr, lang)
+  local ok, parser = pcall(vim.treesitter.get_parser, bufnr or 0, lang)
   if not ok then
     return nil, 'No parser available for the given buffer'
   end
@@ -95,13 +97,13 @@ function M.new(self, bufnr)
   -- the root in the child tree to the {injections} table.
   local root = parser:parse()[1]:root()
   local injections = {}
-  parser:for_each_child(function(child, lang)
+  parser:for_each_child(function(child, lang_)
     child:for_each_tree(function(tree)
       local r = tree:root()
       local node = root:named_descendant_for_range(r:range())
       if node then
         injections[node:id()] = {
-          lang = lang,
+          lang = lang_,
           root = r,
         }
       end

@@ -526,6 +526,7 @@ get_node_at_pos({bufnr}, {row}, {col}, {opts})
       • {row}    (number) Position row
       • {col}    (number) Position column
       • {opts}   (table) Optional keyword arguments:
+                 • lang string|nil Parser language
                  • ignore_injections boolean Ignore injected languages
                    (default true)
 
@@ -612,6 +613,8 @@ show_tree({opts})                                 *vim.treesitter.show_tree()*
     Parameters: ~
       • {opts}  (table|nil) Optional options table with the following possible
                 keys:
+                • lang (string|nil): The language of the source buffer. If
+                  omitted, the filetype of the source buffer is used.
                 • bufnr (number|nil): Buffer to draw the tree into. If
                   omitted, a new buffer is created.
                 • winid (number|nil): Window id to display the tree buffer in.
