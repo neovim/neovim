@@ -1931,7 +1931,7 @@ function M._get_offset_encoding(bufnr)
 
   local offset_encoding
 
-  for _, client in pairs(vim.lsp.buf_get_clients(bufnr)) do
+  for _, client in pairs(vim.lsp.get_active_clients({ buffer = bufnr })) do
     if client.offset_encoding == nil then
       vim.notify_once(
         string.format(
