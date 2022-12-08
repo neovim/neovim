@@ -353,16 +353,16 @@ end
 --- display of the source language of each node, and press <Enter> to jump to the node under the
 --- cursor in the source buffer.
 ---
----@param opts table Options table with the following keys:
----                   - bufnr (number): Buffer to draw the tree into. If omitted, a new buffer
----                     is created.
----                   - winid (number): Window id to display the tree buffer in. If omitted, a
----                     new window is created with {command}.
----                   - command (string): Vimscript command to create the window. Default value is
----                     "topleft 60vnew". Only used when {winid} is nil.
----                   - title (string|fun(bufnr:number):string): Title of the window. If a function,
----                     it accepts the buffer number of the source buffer as its only argument and
----                     should return a string.
+---@param opts table|nil Optional options table with the following possible keys:
+---                      - bufnr (number|nil): Buffer to draw the tree into. If omitted, a new
+---                        buffer is created.
+---                      - winid (number|nil): Window id to display the tree buffer in. If omitted,
+---                        a new window is created with {command}.
+---                      - command (string|nil): Vimscript command to create the window. Default
+---                        value is "topleft 60vnew". Only used when {winid} is nil.
+---                      - title (string|fun(bufnr:number):string|nil): Title of the window. If a
+---                        function, it accepts the buffer number of the source buffer as its only
+---                        argument and should return a string.
 function M.show_tree(opts)
   vim.validate({
     opts = { opts, 't', true },
