@@ -622,6 +622,7 @@ describe('LSP', function()
     end)
 
     it('BufWritePre does not send notifications if server lacks willSave capabilities', function()
+      clear()
       exec_lua(create_server_definition)
       local messages = exec_lua([[
         local server = _create_server({
@@ -644,7 +645,9 @@ describe('LSP', function()
       eq(messages[3].method, 'shutdown')
       eq(messages[4].method, 'exit')
     end)
+
     it('BufWritePre sends willSave / willSaveWaitUntil, applies textEdits', function()
+      clear()
       exec_lua(create_server_definition)
       local result = exec_lua([[
         local server = _create_server({
