@@ -2207,6 +2207,8 @@ func Test_wildmenu_pum()
 endfunc
 
 func Test_wildmenu_pum_clear_entries()
+  CheckRunVimInTerminal
+
   " This was using freed memory.  Run in a terminal to get the pum to update.
   let lines =<< trim END
     set wildoptions=pum
