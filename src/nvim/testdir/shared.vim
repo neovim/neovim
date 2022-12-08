@@ -9,7 +9,7 @@ source view_util.vim
 
 " {Nvim}
 " Filepath captured from output may be truncated, like this:
-"   /home/va...estdir/Xtest-tmpdir/nvimxbXN4i/10
+"   /home/va...estdir/X-test-tmpdir/nvimxbXN4i/10
 " Get last 2 segments, then combine with $TMPDIR.
 func! Fix_truncated_tmpfile(fname)
   " sanity check

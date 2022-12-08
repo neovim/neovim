@@ -11,7 +11,7 @@ ROOT := ../../..
 
 export SHELL := sh
 export NVIM_PRG := $(NVIM_PRG)
-export TMPDIR := $(abspath Xtest-tmpdir)
+export TMPDIR := $(abspath X-test-tmpdir)
 
 ifeq ($(OS),Windows_NT)
   FIXFF = fixff
