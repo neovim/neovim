@@ -10,6 +10,7 @@ local feed_command = helpers.feed_command
 local insert = helpers.insert
 local funcs = helpers.funcs
 local exec = helpers.exec
+local exec_lua = helpers.exec_lua
 
 local function lastmessage()
   local messages = funcs.split(funcs.execute('messages'), '\n')
@@ -88,6 +89,45 @@ describe('u CTRL-R g- g+', function()
     it('using <Cmd> mapping', function()
       command('imap . <Cmd>write<CR>')
       feed('Otest.<CR>boo!!!<Esc>')
+      expect([[
+        test
+        boo!!!
+        ]])
+
+      feed('u')
+      expect([[
+        test
+        ]])
+
+      feed('u')
+      expect('')
+    end)
+
+    it('using Lua mapping', function()
+      exec_lua([[
+        vim.api.nvim_set_keymap('i', '.', '', {callback = function()
+          vim.cmd('write')
+        end})
+      ]])
+      feed('Otest.<CR>boo!!!<Esc>')
+      expect([[
+        test
+        boo!!!
+        ]])
+
+      feed('u')
+      expect([[
+        test
+        ]])
+
+      feed('u')
+      expect('')
+    end)
+
+    it('using RPC call', function()
+      feed('Otest')
+      command('write')
+      feed('<CR>boo!!!<Esc>')
       expect([[
         test
         boo!!!
