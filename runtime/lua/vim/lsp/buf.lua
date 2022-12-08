@@ -464,7 +464,7 @@ end
 ---
 function M.list_workspace_folders()
   local workspace_folders = {}
-  for _, client in pairs(vim.lsp.buf_get_clients()) do
+  for _, client in pairs(vim.lsp.get_active_clients({ buffer = 0 })) do
     for _, folder in pairs(client.workspace_folders or {}) do
       table.insert(workspace_folders, folder.name)
     end
@@ -489,7 +489,7 @@ function M.add_workspace_folder(workspace_folder)
     { { uri = vim.uri_from_fname(workspace_folder), name = workspace_folder } },
     { {} }
   )
-  for _, client in pairs(vim.lsp.buf_get_clients()) do
+  for _, client in pairs(vim.lsp.get_active_clients({ buffer = 0 })) do
     local found = false
     for _, folder in pairs(client.workspace_folders or {}) do
       if folder.name == workspace_folder then
@@ -522,7 +522,7 @@ function M.remove_workspace_folder(workspace_folder)
     { {} },
     { { uri = vim.uri_from_fname(workspace_folder), name = workspace_folder } }
   )
-  for _, client in pairs(vim.lsp.buf_get_clients()) do
+  for _, client in pairs(vim.lsp.get_active_clients({ buffer = 0 })) do
     for idx, folder in pairs(client.workspace_folders) do
       if folder.name == workspace_folder then
         vim.lsp.buf_notify(0, 'workspace/didChangeWorkspaceFolders', params)
