@@ -5426,7 +5426,7 @@ void get_system_output_as_rettv(typval_T *argvars, typval_T *rettv, bool retlist
 
   // get input to the shell command (if any), and its length
   ptrdiff_t input_len;
-  char *input = save_tv_as_string(&argvars[1], &input_len, false);
+  char *input = save_tv_as_string(&argvars[1], &input_len, false, false);
   if (input_len < 0) {
     assert(input == NULL);
     return;
@@ -5921,9 +5921,10 @@ bool read_blob(FILE *const fd, blob_T *const blob)
 /// @param[in]  tv   Value to store as a string.
 /// @param[out] len  Length of the resulting string or -1 on error.
 /// @param[in]  endnl If true, the output will end in a newline (if a list).
+/// @param[in]  crlf  If true, list items will be joined with CRLF (if a list).
 /// @returns an allocated string if `tv` represents a VimL string, list, or
 ///          number; NULL otherwise.
-char *save_tv_as_string(typval_T *tv, ptrdiff_t *const len, bool endnl)
+char *save_tv_as_string(typval_T *tv, ptrdiff_t *const len, bool endnl, bool crlf)
   FUNC_ATTR_MALLOC FUNC_ATTR_NONNULL_ALL
 {
   *len = 0;
@@ -5980,20 +5981,23 @@ char *save_tv_as_string(typval_T *tv, ptrdiff_t *const len, bool endnl)
   // Pre-calculate the resulting length.
   list_T *list = tv->vval.v_list;
   TV_LIST_ITER_CONST(list, li, {
-    *len += (ptrdiff_t)strlen(tv_get_string(TV_LIST_ITEM_TV(li))) + 1;
+    *len += (ptrdiff_t)strlen(tv_get_string(TV_LIST_ITEM_TV(li))) + (crlf ? 2 : 1);
   });
 
   if (*len == 0) {
     return NULL;
   }
 
-  char *ret = xmalloc((size_t)(*len) + endnl);
+  char *ret = xmalloc((size_t)(*len) + (endnl ? (crlf ? 2 : 1) : 0));
   char *end = ret;
   TV_LIST_ITER_CONST(list, li, {
     for (const char *s = tv_get_string(TV_LIST_ITEM_TV(li)); *s != NUL; s++) {
       *end++ = (*s == '\n') ? NUL : *s;
     }
     if (endnl || TV_LIST_ITEM_NEXT(list, li) != NULL) {
+      if (crlf) {
+        *end++ = '\r';
+      }
       *end++ = '\n';
     }
   });
