@@ -1,8 +1,9 @@
 local helpers = require('test.functional.helpers')(after_each)
+local lsp_helpers = require('test.functional.plugin.lsp.helpers')
 
 local assert_log = helpers.assert_log
-local clear = helpers.clear
 local buf_lines = helpers.buf_lines
+local clear = helpers.clear
 local command = helpers.command
 local dedent = helpers.dedent
 local exec_lua = helpers.exec_lua
@@ -14,6 +15,7 @@ local pesc = helpers.pesc
 local insert = helpers.insert
 local funcs = helpers.funcs
 local retry = helpers.retry
+local stop = helpers.stop
 local NIL = helpers.NIL
 local read_file = require('test.helpers').read_file
 local write_file = require('test.helpers').write_file
@@ -22,185 +24,18 @@ local meths = helpers.meths
 local is_os = helpers.is_os
 local skip = helpers.skip
 
--- Use these to get access to a coroutine so that I can run async tests and use
--- yield.
-local run, stop = helpers.run, helpers.stop
+local clear_notrace = lsp_helpers.clear_notrace
+local create_server_definition = lsp_helpers.create_server_definition
+local fake_lsp_code = lsp_helpers.fake_lsp_code
+local fake_lsp_logfile = lsp_helpers.fake_lsp_logfile
+local test_rpc_server = lsp_helpers.test_rpc_server
 
 -- TODO(justinmk): hangs on Windows https://github.com/neovim/neovim/pull/11837
 if skip(is_os('win')) then return end
 
--- Fake LSP server.
-local fake_lsp_code = 'test/functional/fixtures/fake-lsp-server.lua'
-local fake_lsp_logfile = 'Xtest-fake-lsp.log'
-
 teardown(function()
   os.remove(fake_lsp_logfile)
 end)
-
-local function clear_notrace()
-  -- problem: here be dragons
-  -- solution: don't look for dragons to closely
-  clear {env={
-    NVIM_LUA_NOTRACK="1";
-    VIMRUNTIME=os.getenv"VIMRUNTIME";
-  }}
-end
-
-
-local create_server_definition = [[
-  function _create_server(opts)
-    opts = opts or {}
-    local server = {}
-    server.messages = {}
-
-    function server.cmd(dispatchers)
-      local closing = false
-      local handlers = opts.handlers or {}
-      local srv = {}
-
-      function srv.request(method, params, callback)
-        table.insert(server.messages, {
-          method = method,
-          params = params,
-        })
-        local handler = handlers[method]
-        if handler then
-          local response, err = handler(params)
-          if response then
-            callback(err, response)
-          end
-        elseif method == 'initialize' then
-          callback(nil, {
-            capabilities = opts.capabilities or {}
-          })
-        elseif method == 'shutdown' then
-          callback(nil, nil)
-        end
-        local request_id = #server.messages
-        return true, request_id
-      end
-
-      function srv.notify(method, params)
-        table.insert(server.messages, {
-          method = method,
-          params = params
-        })
-        if method == 'exit' then
-          dispatchers.on_exit(0, 15)
-        end
-      end
-
-      function srv.is_closing()
-        return closing
-      end
-
-      function srv.terminate()
-        closing = true
-      end
-
-      return srv
-    end
-
-    return server
-  end
-]]
-
-
-local function fake_lsp_server_setup(test_name, timeout_ms, options, settings)
-  exec_lua([=[
-    lsp = require('vim.lsp')
-    local test_name, fixture_filename, logfile, timeout, options, settings = ...
-    TEST_RPC_CLIENT_ID = lsp.start_client {
-      cmd_env = {
-        NVIM_LOG_FILE = logfile;
-        NVIM_LUA_NOTRACK = "1";
-      };
-      cmd = {
-        vim.v.progpath, '-Es', '-u', 'NONE', '--headless',
-        "-c", string.format("lua TEST_NAME = %q", test_name),
-        "-c", string.format("lua TIMEOUT = %d", timeout),
-        "-c", "luafile "..fixture_filename,
-      };
-      handlers = setmetatable({}, {
-        __index = function(t, method)
-          return function(...)
-            return vim.rpcrequest(1, 'handler', ...)
-          end
-        end;
-      });
-      workspace_folders = {{
-          uri = 'file://' .. vim.loop.cwd(),
-          name = 'test_folder',
-      }};
-      on_init = function(client, result)
-        TEST_RPC_CLIENT = client
-        vim.rpcrequest(1, "init", result)
-      end;
-      flags = {
-        allow_incremental_sync = options.allow_incremental_sync or false;
-        debounce_text_changes = options.debounce_text_changes or 0;
-      };
-      settings = settings;
-      on_exit = function(...)
-        vim.rpcnotify(1, "exit", ...)
-      end;
-    }
-  ]=], test_name, fake_lsp_code, fake_lsp_logfile, timeout_ms or 1e3, options or {}, settings or {})
-end
-
-local function test_rpc_server(config)
-  if config.test_name then
-    clear_notrace()
-    fake_lsp_server_setup(config.test_name, config.timeout_ms or 1e3, config.options, config.settings)
-  end
-  local client = setmetatable({}, {
-    __index = function(_, name)
-      -- Workaround for not being able to yield() inside __index for Lua 5.1 :(
-      -- Otherwise I would just return the value here.
-      return function(...)
-        return exec_lua([=[
-        local name = ...
-        if type(TEST_RPC_CLIENT[name]) == 'function' then
-          return TEST_RPC_CLIENT[name](select(2, ...))
-        else
-          return TEST_RPC_CLIENT[name]
-        end
-        ]=], name, ...)
-      end
-    end;
-  })
-  local code, signal
-  local function on_request(method, args)
-    if method == "init" then
-      if config.on_init then
-        config.on_init(client, unpack(args))
-      end
-      return NIL
-    end
-    if method == 'handler' then
-      if config.on_handler then
-        config.on_handler(unpack(args))
-      end
-    end
-    return NIL
-  end
-  local function on_notify(method, args)
-    if method == 'exit' then
-      code, signal = unpack(args)
-      return stop()
-    end
-  end
-  --  TODO specify timeout?
-  --  run(on_request, on_notify, config.on_setup, 1000)
-  run(on_request, on_notify, config.on_setup)
-  if config.on_exit then
-    config.on_exit(code, signal)
-  end
-  stop()
-  if config.test_name then
-    exec_lua("vim.api.nvim_exec_autocmds('VimLeavePre', { modeline = false })")
-  end
-end
 
 describe('LSP', function()
   before_each(function()
