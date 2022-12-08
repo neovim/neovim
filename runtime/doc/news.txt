@@ -78,6 +78,12 @@ The following new APIs or features were added.
 
   See https://github.com/neovim/neovim/pull/14537.
 
+• |vim.lsp.buf.add_workspace_folder| support add workspace for a special client
+  and support workspace path include tilde symbol
+
+• |vim.lsp.buf.remove_workspace_folder| support remove workspace from a special client
+  and support workspace path include tilde symbol
+
 ==============================================================================
 CHANGED FEATURES                                                 *news-changes*
 
