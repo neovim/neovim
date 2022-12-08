@@ -2583,6 +2583,29 @@ describe('builtin popupmenu', function()
     ]]}
   end)
 
+  -- oldtest: Test_wildmenu_pum_clear_entries()
+  it('wildoptions=pum when using Ctrl-E as wildchar vim-patch:9.0.1030', function()
+    screen:try_resize(30, 10)
+    exec([[
+      set wildoptions=pum
+      set wildchar=<C-E>
+    ]])
+    feed(':sign <C-E><C-E>')
+    screen:expect([[
+                                    |
+      {1:~                             }|
+      {1:~                             }|
+      {1:~    }{s: define         }{1:         }|
+      {1:~    }{n: jump           }{1:         }|
+      {1:~    }{n: list           }{1:         }|
+      {1:~    }{n: place          }{1:         }|
+      {1:~    }{n: undefine       }{1:         }|
+      {1:~    }{n: unplace        }{1:         }|
+      :sign define^                  |
+    ]])
+    assert_alive()
+  end)
+
   it("'pumblend' RGB-color", function()
     screen:try_resize(60,14)
     screen:set_default_attr_ids({

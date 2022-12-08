@@ -2281,6 +2281,21 @@ func Test_wildmenu_pum()
   call delete('Xdir', 'rf')
 endfunc
 
+func Test_wildmenu_pum_clear_entries()
+  " This was using freed memory.  Run in a terminal to get the pum to update.
+  let lines =<< trim END
+    set wildoptions=pum
+    set wildchar=<C-E>
+  END
+  call writefile(lines, 'XwildmenuTest', 'D')
+  let buf = RunVimInTerminal('-S XwildmenuTest', #{rows: 10})
+
+  call term_sendkeys(buf, ":\<C-E>\<C-E>")
+  call VerifyScreenDump(buf, 'Test_wildmenu_pum_clear_entries_1', {})
+
+  set wildoptions& wildchar&
+endfunc
+
 " this was going over the end of IObuff
 func Test_report_error_with_composing()
   let caught = 'no'
