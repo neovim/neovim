@@ -472,15 +472,17 @@ function M.list_workspace_folders()
   return workspace_folders
 end
 
---- Add the folder at path to the workspace folders. If {path} is
---- not provided, the user will be prompted for a path using |input()|.
-function M.add_workspace_folder(workspace_folder)
+--- Add the folder at path to the clients or client workspace folders.
+--- If {path} and {client_id} is not provided, the user will be
+--- prompted for a path using |input()|.
+function M.add_workspace_folder(workspace_folder, client_id)
   workspace_folder = workspace_folder
     or npcall(vim.fn.input, 'Workspace Folder: ', vim.fn.expand('%:p:h'), 'dir')
   api.nvim_command('redraw')
   if not (workspace_folder and #workspace_folder > 0) then
     return
   end
+  workspace_folder = vim.fs.normalize(workspace_folder)
   if vim.fn.isdirectory(workspace_folder) == 0 then
     print(workspace_folder, ' is not a valid directory')
     return
@@ -489,7 +491,11 @@ function M.add_workspace_folder(workspace_folder)
     { { uri = vim.uri_from_fname(workspace_folder), name = workspace_folder } },
     { {} }
   )
-  for _, client in pairs(vim.lsp.get_active_clients({ buffer = 0 })) do
+
+  local clients = client_id and { vim.lsp.get_client_by_id(client_id) }
+    or vim.lsp.get_active_clients({ buffer = 0 })
+
+  for _, client in pairs(clients) do
     local found = false
     for _, folder in pairs(client.workspace_folders or {}) do
       if folder.name == workspace_folder then
@@ -508,21 +514,26 @@ function M.add_workspace_folder(workspace_folder)
   end
 end
 
---- Remove the folder at path from the workspace folders. If
---- {path} is not provided, the user will be prompted for
+--- Remove the folder at path from the clients or client workspace folders.
+--- If {path} and {client_id} is not provided, the user will be prompted for
 --- a path using |input()|.
-function M.remove_workspace_folder(workspace_folder)
+function M.remove_workspace_folder(workspace_folder, client_id)
   workspace_folder = workspace_folder
     or npcall(vim.fn.input, 'Workspace Folder: ', vim.fn.expand('%:p:h'))
   api.nvim_command('redraw')
   if not (workspace_folder and #workspace_folder > 0) then
     return
   end
+  workspace_folder = vim.fs.normalize(workspace_folder)
   local params = util.make_workspace_params(
     { {} },
     { { uri = vim.uri_from_fname(workspace_folder), name = workspace_folder } }
   )
-  for _, client in pairs(vim.lsp.get_active_clients({ buffer = 0 })) do
+
+  local clients = client_id and { vim.lsp.get_client_by_id(client_id) }
+    or vim.lsp.get_active_clients({ buffer = 0 })
+
+  for _, client in pairs(clients) do
     for idx, folder in pairs(client.workspace_folders) do
       if folder.name == workspace_folder then
         vim.lsp.buf_notify(0, 'workspace/didChangeWorkspaceFolders', params)

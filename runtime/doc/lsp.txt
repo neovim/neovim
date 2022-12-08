@@ -1003,9 +1003,10 @@ with({handler}, {override_config})                            *vim.lsp.with()*
 Lua module: vim.lsp.buf                                              *lsp-buf*
 
                                           *vim.lsp.buf.add_workspace_folder()*
-add_workspace_folder({workspace_folder})
-    Add the folder at path to the workspace folders. If {path} is not
-    provided, the user will be prompted for a path using |input()|.
+add_workspace_folder({workspace_folder}, {client_id})
+    Add the folder at path to the clients or client workspace folders. If
+    {path} and {client_id} is not provided, the user will be prompted for a
+    path using |input()|.
 
 clear_references()                            *vim.lsp.buf.clear_references()*
     Removes document highlights from current buffer.
@@ -1182,9 +1183,10 @@ references({context}, {options})                    *vim.lsp.buf.references()*
         https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_references
 
                                        *vim.lsp.buf.remove_workspace_folder()*
-remove_workspace_folder({workspace_folder})
-    Remove the folder at path from the workspace folders. If {path} is not
-    provided, the user will be prompted for a path using |input()|.
+remove_workspace_folder({workspace_folder}, {client_id})
+    Remove the folder at path from the clients or client workspace folders. If
+    {path} and {client_id} is not provided, the user will be prompted for a
+    path using |input()|.
 
 rename({new_name}, {options})                           *vim.lsp.buf.rename()*
     Renames all references to the symbol under the cursor.
