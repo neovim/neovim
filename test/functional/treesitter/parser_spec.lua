@@ -480,7 +480,7 @@ end]]
     -- As stated here, this only includes the function (thus the whole buffer, without the last line)
     local res2 = exec_lua [[
     local root = parser:parse()[1]:root()
-    parser:set_included_regions({{root:child(0)}})
+    parser:set_included_regions({{{root:child(0)}}})
     parser:invalidate()
     return { parser:parse()[1]:root():range() }
     ]]
@@ -500,7 +500,7 @@ end]]
     eq(range, { { 0, 0, 18, 1 } })
 
     local range_tbl = exec_lua [[
-      parser:set_included_regions { { { 0, 0, 17, 1 } } }
+      parser:set_included_regions { { { {0, 0, 17, 1} } } }
       parser:parse()
       return parser:included_regions()
     ]]
@@ -519,7 +519,7 @@ end]]
       table.insert(nodes, node)
     end
 
-    parser:set_included_regions({nodes})
+    parser:set_included_regions({{nodes}})
 
     local root = parser:parse()[1]:root()
 
@@ -571,6 +571,28 @@ end]]
     eq({ {0, 10, 0, 13} }, ret)
   end)
 
+  it("gets injection byte offsets for string parsers", function()
+    local txt = [[
+    #define MACRO int c = 5; \
+                  float f = 9.0;
+    ]]
+
+    local ret = exec_lua([[
+    local str = ...
+    local parser = vim.treesitter.get_string_parser(str, "c", {
+      injections = {
+        c = "(preproc_def (preproc_arg) @c) (preproc_function_def value: (preproc_arg) @c)"
+      }
+    })
+    parser:parse();
+    local regions = parser:children().c:included_regions()
+    return regions]], txt)
+
+    eq({
+      { { 0, 17, 17, 1, 32, 63 } }
+    }, ret)
+  end)
+
   it("should use node range when omitted", function()
     local txt = [[
       int foo = 42;
@@ -583,9 +605,9 @@ end]]
 
     local nodes = {}
     local query = vim.treesitter.parse_query("c", '((identifier) @foo)')
-    local first_child = parser:parse()[1]:root():child(1)
+    local second_child = parser:parse()[1]:root():child(1)
 
-    for _, node in query:iter_captures(first_child, str) do
+    for _, node in query:iter_captures(second_child, str) do
       table.insert(nodes, { node:range() })
     end
 
@@ -626,12 +648,23 @@ int x = INT_MAX;
         eq(5, exec_lua("return #parser:children().c:trees()"))
         eq({
           {0, 0, 7, 0},   -- root tree
-          {3, 14, 3, 17}, -- VALUE 123
-          {4, 15, 4, 18}, -- VALUE1 123
-          {5, 15, 5, 18}, -- VALUE2 123
-          {1, 26, 1, 65}, -- READ_STRING(x, y) (char_u *)read_string((x), (size_t)(y))
-          {2, 29, 2, 68}  -- READ_STRING_OK(x, y) (char_u *)read_string((x), (size_t)(y))
+          {3, 14, 3, 17}, -- 123
+          {4, 15, 4, 18}, -- 123
+          {5, 15, 5, 18}, -- 123
+          {1, 26, 1, 65}, -- (char_u *)read_string((x), (size_t)(y))
+          {2, 29, 2, 68}  -- (char_u *)read_string((x), (size_t)(y))
         }, get_ranges())
+        -- these ranges include the leading space, because that's what
+        -- comes back from the query. Once those ranges are fed to,
+        -- the child parser, the returned trees don't have a leading
+        -- space.
+        eq({
+          { {3, 13, 165, 3, 17, 169}, },
+          { {4, 14, 184, 4, 18, 188}, },
+          { {5, 14, 203, 5, 18, 207}, },
+          { {1, 25, 42,  1, 65, 82}, },
+          { {2, 28, 111, 2, 68, 151}, },
+        }, exec_lua("return parser:children().c:included_regions()"))
       end)
     end)
 
@@ -647,12 +680,23 @@ int x = INT_MAX;
         eq(2, exec_lua("return #parser:children().c:trees()"))
         eq({
           {0, 0, 7, 0},   -- root tree
-          {3, 14, 5, 18}, -- VALUE 123
+          {3, 14, 5, 18}, --       123
                           -- VALUE1 123
                           -- VALUE2 123
-          {1, 26, 2, 68}  -- READ_STRING(x, y) (char_u *)read_string((x), (size_t)(y))
+          {1, 26, 2, 68}  --                   (char_u *)read_string((x), (size_t)(y))
                           -- READ_STRING_OK(x, y) (char_u *)read_string((x), (size_t)(y))
         }, get_ranges())
+        eq({
+          {
+            {3, 13, 165, 3, 17, 169}, -- ` 123`
+            {4, 14, 184, 4, 18, 188}, --  ` 123`
+            {5, 14, 203, 5, 18, 207}, --  ` 123`
+          },
+          {
+            {1, 25, 42,  1, 65, 82},  -- (char_u *) ...
+            {2, 28, 111, 2, 68, 151}, -- (char_u *) ...
+          }
+        }, exec_lua("return parser:children().c:included_regions()"))
       end)
     end)
 
@@ -730,6 +774,108 @@ int x = INT_MAX;
 
         eq({ 'offset!', 'set!' }, res_list)
       end)
+    end)
+  end)
+
+  describe("when setting included regions", function()
+    it("should clip ranges on child", function()
+      insert([[
+      > #define TEN (5 \
+      >              + 5)
+      ]])
+      local injections = [[ (preproc_arg) @c ]]
+      local child_regions = exec_lua([[
+      parser = vim.treesitter.get_parser(0, "c", { injections = { c = ... }})
+      parser:set_included_regions({{
+         -- chop off the leading >s
+         { {0, 2, 1, 0 }, {1, 2, 2, 0 } }
+      }})
+      parser:parse()
+      return parser:children().c:included_regions()
+      ]], injections)
+
+      eq({
+        {
+          -- the second line's > masked out.
+          {0, 13, 13, 1, 0, 19}, -- (5 \
+          {1, 2, 21, 1, 19, 38}, --  + 5
+        },
+      }, child_regions)
+    end)
+
+    it("should clip ranges automatically for injections", function()
+      -- A recursive C parser
+      -- We want the second level to combine as "int x = INT_MAX;", be parsed as a
+      -- string, and then the third level to interpret the content of that string.
+      insert([[
+      #define COMBINE() "int x
+      #define COMBINE() = INT_MAX;"
+      ]])
+      local injections = [[
+      (preproc_function_def (preproc_arg) @c @combined)
+      ((string_literal) @c (#offset! @c 0 1 0 -1))
+      ]]
+      exec_lua([[
+      parser = vim.treesitter.get_parser(0, "c", { injections = { c = ... }})
+      ]], injections)
+
+      eq("table", exec_lua("return type(parser:children().c)"))
+      eq(1, exec_lua("return #parser:children().c:trees()"))
+      eq(1, exec_lua("return #parser:children().c:children().c:trees()"))
+
+      eq({
+        -- @combined, so only one region.
+        {
+          {0, 17, 17, 0, 24, 24}, -- "int x
+          {1, 17, 42, 1, 29, 54}, -- = INT_MAX;"
+        },
+      }, exec_lua("return parser:children().c:included_regions()"))
+
+      eq({
+        -- maintain the splitting of the parent language
+        {
+          {0, 19, 19, 0, 24, 24}, -- int x
+          {1, 17, 42, 1, 28, 53}, -- = INT_MAX;
+        },
+      }, exec_lua("return parser:children().c:children().c:included_regions()"))
+    end)
+
+    it("should limit child clipping to the relevant region in the parent", function()
+      insert([[
+      /* #define TEN (5 \
+       *              + 5)
+       */
+      #define ONE 1
+      ]])
+      local injections = [[ (preproc_arg) @c ]]
+      local child_regions = exec_lua([[
+      parser = vim.treesitter.get_parser(0, "c", { injections = { c = ... }})
+      parser:set_included_regions({{
+         -- chop off the leading comment marks
+         { {0, 3, 1, 0 }, {1, 3, 2, 0 } },
+         -- a second region to obliterate the mask if we do it wrong.
+         -- this will end up as a second tree, so won't interfere
+         -- with the parsing of the top level C language, and should
+         -- cause the creation of two separate child trees as the second
+         -- region contains a define of its own
+         { {0, 0, 4, 0} },
+      }})
+      parser:parse()
+      return parser:children().c:included_regions()
+      ]], injections)
+
+      eq(2, exec_lua("return #parser:children().c:trees()"))
+
+      eq({
+        {
+          -- the second line's > masked out
+          {0, 14, 14, 1, 0, 20}, -- (5 \
+          {1, 3, 23, 1, 20, 40}, --  + 5
+        },
+        {
+          {3, 11, 56, 3, 13, 58} -- 1
+        }
+      }, child_regions)
     end)
   end)
 
