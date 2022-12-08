@@ -908,6 +908,12 @@ check_pum:
       }
       pum_want.active = false;
     }
+
+    if (curbuf->b_u_synced) {
+      // The K_EVENT, K_COMMAND, or K_LUA caused undo to be synced.
+      // Need to save the line for undo before inserting the next char.
+      ins_need_undo = true;
+    }
     break;
 
   case K_HOME:        // <Home>

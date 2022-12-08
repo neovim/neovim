@@ -3,6 +3,9 @@
 " undo-able pieces.  Do that by setting 'undolevels'.
 " Also tests :earlier and :later.
 
+source check.vim
+source screendump.vim
+
 func Test_undotree()
   new
 
@@ -772,5 +775,31 @@ func Test_undo_mark()
   call assert_equal([0, 2, 1, 0], getpos("']"))
   bwipe!
 endfunc
+
+func Test_undo_after_write()
+  " use a terminal to make undo work like when text is typed
+  CheckRunVimInTerminal
+
+  let lines =<< trim END
+      edit Xtestfile.txt
+      set undolevels=100 undofile
+      imap . <Cmd>write<CR>
+      write
+  END
+  call writefile(lines, 'Xtest_undo_after_write', 'D')
+  let buf = RunVimInTerminal('-S Xtest_undo_after_write', #{rows: 6})
+
+  call term_sendkeys(buf, "Otest.\<CR>boo!!!\<Esc>")
+  sleep 100m
+  call term_sendkeys(buf, "u")
+  call VerifyScreenDump(buf, 'Test_undo_after_write_1', {})
+
+  call term_sendkeys(buf, "u")
+  call VerifyScreenDump(buf, 'Test_undo_after_write_2', {})
+
+  call StopVimInTerminal(buf)
+  call delete('Xtestfile.txt')
+endfunc
+
 
 " vim: shiftwidth=2 sts=2 expandtab
