@@ -103,6 +103,7 @@ static int sort_func_compare(const void *s1, const void *s2)
   return strcmp(p1, p2);
 }
 
+/// Escape special characters in the cmdline completion matches.
 static void ExpandEscape(expand_T *xp, char_u *str, int numfiles, char **files, int options)
 {
   int i;

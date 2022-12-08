@@ -515,11 +515,17 @@ func Test_getcompletion()
     call assert_equal(cmds, l)
     let l = getcompletion('list ', 'sign')
     call assert_equal(['Testing'], l)
+    let l = getcompletion('de*', 'sign')
+    call assert_equal(['define'], l)
+    let l = getcompletion('p?', 'sign')
+    call assert_equal(['place'], l)
+    let l = getcompletion('j.', 'sign')
+    call assert_equal(['jump'], l)
   endif
 
   " Command line completion tests
   let l = getcompletion('cd ', 'cmdline')
-  call assert_true(index(l, 'sautest/') >= 0)
+  call assert_true(index(l, 'samples/') >= 0)
   let l = getcompletion('cd NoMatch', 'cmdline')
   call assert_equal([], l)
   let l = getcompletion('let v:n', 'cmdline')
@@ -566,6 +572,18 @@ func Test_getcompletion()
 
   call delete('Xtags')
   set tags&
+
+  edit a~b
+  enew
+  call assert_equal(['a~b'], getcompletion('a~', 'buffer'))
+  bw a~b
+
+  if has('unix')
+    edit Xtest\
+    enew
+    call assert_equal(['Xtest\'], getcompletion('Xtest\', 'buffer'))
+    bw Xtest\
+  endif
 
   call assert_fails("call getcompletion('\\\\@!\\\\@=', 'buffer')", 'E871:')
   call assert_fails('call getcompletion("", "burp")', 'E475:')
@@ -1109,6 +1127,25 @@ func Test_cmdline_complete_various()
   call feedkeys(":chist\<Esc>\<Esc>", 'xt')
   call assert_equal('"g/a\xb/clearjumps', @:)
   set wildchar&
+
+  " should be able to complete a file name that starts with a '~'.
+  if has('unix')
+    call writefile([], '~Xtest')
+    call feedkeys(":e \\~X\<Tab>\<C-B>\"\<CR>", 'xt')
+    call assert_equal('"e \~Xtest', @:)
+    call delete('~Xtest')
+  endif
+endfunc
+
+" Test for 'wildignorecase'
+func Test_cmdline_wildignorecase()
+  CheckUnix
+  call writefile([], 'XTEST')
+  set wildignorecase
+  call feedkeys(":e xt\<Tab>\<C-B>\"\<CR>", 'xt')
+  call assert_equal('"e XTEST', @:)
+  set wildignorecase&
+  call delete('XTEST')
 endfunc
 
 func Test_cmdline_write_alternatefile()
@@ -1772,6 +1809,14 @@ func Test_wildmode()
   call feedkeys(":b A\t\t\<F2>\<C-B>\"\<CR>", 'xt')
   call assert_equal('AAA    AAAA   AAAAA', g:Sline)
   call assert_equal('"b A', @:)
+
+  " when using longest completion match, matches shorter than the argument
+  " should be ignored (happens with :help)
+  set wildmode=longest,full
+  set wildmenu
+  call feedkeys(":help a*\t\<C-B>\"\<CR>", 'xt')
+  call assert_equal('"help a', @:)
+  set wildmenu&
 
   %argdelete
   delcommand MyCmd
