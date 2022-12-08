@@ -5,6 +5,19 @@ source screendump.vim
 source view_util.vim
 source shared.vim
 
+func SetUp()
+  func SaveLastScreenLine()
+    let g:Sline = Screenline(&lines - 1)
+    return ''
+  endfunc
+  cnoremap <expr> <F4> SaveLastScreenLine()
+endfunc
+
+func TearDown()
+  delfunc SaveLastScreenLine
+  cunmap <F4>
+endfunc
+
 func Test_complete_tab()
   call writefile(['testfile'], 'Xtestfile')
   call feedkeys(":e Xtest\t\r", "tx")
@@ -25,6 +38,43 @@ func Test_complete_list()
   " used.
   call feedkeys(":chistory \<C-D>\<C-B>\"\<CR>", 'xt')
   call assert_equal("\"chistory \<C-D>", @:)
+
+  " Test for displaying the tail of the completion matches
+  set wildmode=longest,full
+  call mkdir('Xtest')
+  call writefile([], 'Xtest/a.c')
+  call writefile([], 'Xtest/a.h')
+  let g:Sline = ''
+  call feedkeys(":e Xtest/\<C-D>\<F4>\<C-B>\"\<CR>", 'xt')
+  call assert_equal('a.c  a.h', g:Sline)
+  call assert_equal('"e Xtest/', @:)
+  if has('win32')
+    " Test for 'completeslash'
+    set completeslash=backslash
+    call feedkeys(":e Xtest\<Tab>\<C-B>\"\<CR>", 'xt')
+    call assert_equal('"e Xtest\', @:)
+    set completeslash=slash
+    call feedkeys(":e Xtest\<Tab>\<C-B>\"\<CR>", 'xt')
+    call assert_equal('"e Xtest/', @:)
+    set completeslash&
+  endif
+
+  " Test for displaying the tail with wildcards
+  let g:Sline = ''
+  call feedkeys(":e Xtes?/\<C-D>\<F4>\<C-B>\"\<CR>", 'xt')
+  call assert_equal('Xtest/a.c  Xtest/a.h', g:Sline)
+  call assert_equal('"e Xtes?/', @:)
+  let g:Sline = ''
+  call feedkeys(":e Xtes*/\<C-D>\<F4>\<C-B>\"\<CR>", 'xt')
+  call assert_equal('Xtest/a.c  Xtest/a.h', g:Sline)
+  call assert_equal('"e Xtes*/', @:)
+  let g:Sline = ''
+  call feedkeys(":e Xtes[/\<C-D>\<F4>\<C-B>\"\<CR>", 'xt')
+  call assert_equal(':e Xtes[/', g:Sline)
+  call assert_equal('"e Xtes[/', @:)
+
+  call delete('Xtest', 'rf')
+  set wildmode&
 endfunc
 
 func Test_complete_wildmenu()
@@ -386,6 +436,8 @@ func Test_getcompletion()
   args a.c b.c
   let l = getcompletion('', 'arglist')
   call assert_equal(['a.c', 'b.c'], l)
+  let l = getcompletion('a.', 'buffer')
+  call assert_equal(['a.c'], l)
   %argdelete
 
   let l = getcompletion('', 'augroup')
@@ -1075,7 +1127,7 @@ func Test_cmdline_complete_various()
   map <F3> :ls<CR>
   com -nargs=* -complete=mapping MyCmd
   call feedkeys(":MyCmd <F\<C-A>\<C-B>\"\<CR>", 'xt')
-  call assert_equal('"MyCmd <F3>', @:)
+  call assert_equal('"MyCmd <F3> <F4>', @:)
   mapclear
   delcom MyCmd
 
@@ -1135,6 +1187,9 @@ func Test_cmdline_complete_various()
     call assert_equal('"e \~Xtest', @:)
     call delete('~Xtest')
   endif
+
+  call feedkeys(":py3f\<Tab>\<C-B>\"\<CR>", 'xt')
+  call assert_equal('"py3file', @:)
 endfunc
 
 " Test for 'wildignorecase'
@@ -1144,6 +1199,7 @@ func Test_cmdline_wildignorecase()
   set wildignorecase
   call feedkeys(":e xt\<Tab>\<C-B>\"\<CR>", 'xt')
   call assert_equal('"e XTEST', @:)
+  call assert_equal(['XTEST'], getcompletion('xt', 'file'))
   set wildignorecase&
   call delete('XTEST')
 endfunc
@@ -1756,22 +1812,16 @@ func Test_cmdline_ctrl_g()
 endfunc
 
 " Test for 'wildmode'
-func Test_wildmode()
+func Wildmode_tests()
   func T(a, c, p)
     return "oneA\noneB\noneC"
   endfunc
   command -nargs=1 -complete=custom,T MyCmd
 
-  func SaveScreenLine()
-    let g:Sline = Screenline(&lines - 1)
-    return ''
-  endfunc
-  cnoremap <expr> <F2> SaveScreenLine()
-
   set nowildmenu
   set wildmode=full,list
   let g:Sline = ''
-  call feedkeys(":MyCmd \t\t\<F2>\<C-B>\"\<CR>", 'xt')
+  call feedkeys(":MyCmd \t\t\<F4>\<C-B>\"\<CR>", 'xt')
   call assert_equal('oneA  oneB  oneC', g:Sline)
   call assert_equal('"MyCmd oneA', @:)
 
@@ -1787,7 +1837,7 @@ func Test_wildmode()
 
   set wildmode=list:longest
   let g:Sline = ''
-  call feedkeys(":MyCmd \t\<F2>\<C-B>\"\<CR>", 'xt')
+  call feedkeys(":MyCmd \t\<F4>\<C-B>\"\<CR>", 'xt')
   call assert_equal('oneA  oneB  oneC', g:Sline)
   call assert_equal('"MyCmd one', @:)
 
@@ -1806,7 +1856,7 @@ func Test_wildmode()
   " Test for listing files with wildmode=list
   set wildmode=list
   let g:Sline = ''
-  call feedkeys(":b A\t\t\<F2>\<C-B>\"\<CR>", 'xt')
+  call feedkeys(":b A\t\t\<F4>\<C-B>\"\<CR>", 'xt')
   call assert_equal('AAA    AAAA   AAAAA', g:Sline)
   call assert_equal('"b A', @:)
 
@@ -1816,15 +1866,27 @@ func Test_wildmode()
   set wildmenu
   call feedkeys(":help a*\t\<C-B>\"\<CR>", 'xt')
   call assert_equal('"help a', @:)
+  " non existing file
+  call feedkeys(":e a1b2y3z4\t\<C-B>\"\<CR>", 'xt')
+  call assert_equal('"e a1b2y3z4', @:)
   set wildmenu&
 
   %argdelete
   delcommand MyCmd
   delfunc T
-  delfunc SaveScreenLine
-  cunmap <F2>
   set wildmode&
   %bwipe!
+endfunc
+
+func Test_wildmode()
+  " Test with utf-8 encoding
+  call Wildmode_tests()
+
+  " Test with latin1 encoding
+  let save_encoding = &encoding
+  " set encoding=latin1
+  " call Wildmode_tests()
+  let &encoding = save_encoding
 endfunc
 
 " Test for interrupting the command-line completion
@@ -2121,13 +2183,22 @@ func Test_suffixes_opt()
   set suffixes=
   call feedkeys(":e Xfi*\<C-A>\<C-B>\"\<CR>", 'xt')
   call assert_equal('"e Xfile Xfile.c Xfile.o', @:)
+  call feedkeys(":e Xfi*\<Tab>\<Tab>\<C-B>\"\<CR>", 'xt')
+  call assert_equal('"e Xfile.c', @:)
   set suffixes=.c
   call feedkeys(":e Xfi*\<C-A>\<C-B>\"\<CR>", 'xt')
   call assert_equal('"e Xfile Xfile.o Xfile.c', @:)
+  call feedkeys(":e Xfi*\<Tab>\<Tab>\<C-B>\"\<CR>", 'xt')
+  call assert_equal('"e Xfile.o', @:)
   set suffixes=,,
   call feedkeys(":e Xfi*\<C-A>\<C-B>\"\<CR>", 'xt')
   call assert_equal('"e Xfile.c Xfile.o Xfile', @:)
+  call feedkeys(":e Xfi*\<Tab>\<Tab>\<C-B>\"\<CR>", 'xt')
+  call assert_equal('"e Xfile.o', @:)
   set suffixes&
+  " Test for getcompletion() with different patterns
+  call assert_equal(['Xfile', 'Xfile.c', 'Xfile.o'], getcompletion('Xfile', 'file'))
+  call assert_equal(['Xfile'], getcompletion('Xfile$', 'file'))
   call delete('Xfile')
   call delete('Xfile.c')
   call delete('Xfile.o')
