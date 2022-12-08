@@ -277,7 +277,7 @@ end
 ---@param opts table Optional keyword arguments:
 ---             - ignore_injections boolean Ignore injected languages (default true)
 ---
----@return userdata |tsnode| under the cursor
+---@return userdata|nil |tsnode| under the cursor
 function M.get_node_at_pos(bufnr, row, col, opts)
   if bufnr == 0 then
     bufnr = a.nvim_get_current_buf()
@@ -345,6 +345,199 @@ function M.stop(bufnr)
   end
 
   vim.bo[bufnr].syntax = 'on'
+end
+
+--- Open a window that displays a textual representation of the nodes in the language tree.
+---
+--- While in the window, press "a" to toggle display of anonymous nodes, "I" to toggle the
+--- display of the source language of each node, and press <Enter> to jump to the node under the
+--- cursor in the source buffer.
+---
+---@param opts table|nil Optional options table with the following possible keys:
+---                      - bufnr (number|nil): Buffer to draw the tree into. If omitted, a new
+---                        buffer is created.
+---                      - winid (number|nil): Window id to display the tree buffer in. If omitted,
+---                        a new window is created with {command}.
+---                      - command (string|nil): Vimscript command to create the window. Default
+---                        value is "topleft 60vnew". Only used when {winid} is nil.
+---                      - title (string|fun(bufnr:number):string|nil): Title of the window. If a
+---                        function, it accepts the buffer number of the source buffer as its only
+---                        argument and should return a string.
+function M.show_tree(opts)
+  vim.validate({
+    opts = { opts, 't', true },
+  })
+
+  local Playground = require('vim.treesitter.playground')
+  local buf = a.nvim_get_current_buf()
+  local win = a.nvim_get_current_win()
+  local pg = assert(Playground:new(buf))
+
+  opts = opts or {}
+
+  -- Close any existing playground window
+  if vim.b[buf].playground then
+    local w = vim.b[buf].playground
+    if a.nvim_win_is_valid(w) then
+      a.nvim_win_close(w, true)
+    end
+  end
+
+  local w = opts.winid
+  if not w then
+    vim.cmd(opts.command or 'topleft 60vnew')
+    w = a.nvim_get_current_win()
+  end
+
+  local b = opts.bufnr
+  if b then
+    a.nvim_win_set_buf(w, b)
+  else
+    b = a.nvim_win_get_buf(w)
+  end
+
+  vim.b[buf].playground = w
+
+  vim.wo[w].scrolloff = 5
+  vim.wo[w].wrap = false
+  vim.bo[b].buflisted = false
+  vim.bo[b].buftype = 'nofile'
+  vim.bo[b].bufhidden = 'wipe'
+
+  local title = opts.title
+  if not title then
+    local bufname = a.nvim_buf_get_name(buf)
+    title = string.format('Syntax tree for %s', vim.fn.fnamemodify(bufname, ':.'))
+  elseif type(title) == 'function' then
+    title = title(buf)
+  end
+
+  assert(type(title) == 'string', 'Window title must be a string')
+  a.nvim_buf_set_name(b, title)
+
+  pg:draw(b)
+
+  vim.fn.matchadd('Comment', '\\[[0-9:-]\\+\\]')
+  vim.fn.matchadd('String', '".*"')
+
+  a.nvim_buf_clear_namespace(buf, pg.ns, 0, -1)
+  a.nvim_buf_set_keymap(b, 'n', '<CR>', '', {
+    desc = 'Jump to the node under the cursor in the source buffer',
+    callback = function()
+      local row = a.nvim_win_get_cursor(w)[1]
+      local pos = pg:get(row)
+      a.nvim_set_current_win(win)
+      a.nvim_win_set_cursor(win, { pos.lnum + 1, pos.col })
+    end,
+  })
+  a.nvim_buf_set_keymap(b, 'n', 'a', '', {
+    desc = 'Toggle anonymous nodes',
+    callback = function()
+      pg.opts.anon = not pg.opts.anon
+      pg:draw(b)
+    end,
+  })
+  a.nvim_buf_set_keymap(b, 'n', 'I', '', {
+    desc = 'Toggle language display',
+    callback = function()
+      pg.opts.lang = not pg.opts.lang
+      pg:draw(b)
+    end,
+  })
+
+  local group = a.nvim_create_augroup('treesitter/playground', {})
+
+  a.nvim_create_autocmd('CursorMoved', {
+    group = group,
+    buffer = b,
+    callback = function()
+      a.nvim_buf_clear_namespace(buf, pg.ns, 0, -1)
+      local row = a.nvim_win_get_cursor(w)[1]
+      local pos = pg:get(row)
+      a.nvim_buf_set_extmark(buf, pg.ns, pos.lnum, pos.col, {
+        end_row = pos.end_lnum,
+        end_col = math.max(0, pos.end_col),
+        hl_group = 'Visual',
+      })
+    end,
+  })
+
+  a.nvim_create_autocmd('CursorMoved', {
+    group = group,
+    buffer = buf,
+    callback = function()
+      if not a.nvim_buf_is_loaded(b) then
+        return true
+      end
+
+      a.nvim_buf_clear_namespace(b, pg.ns, 0, -1)
+
+      local cursor = a.nvim_win_get_cursor(win)
+      local cursor_node =
+        M.get_node_at_pos(buf, cursor[1] - 1, cursor[2], { ignore_injections = false })
+      if not cursor_node then
+        return
+      end
+
+      local cursor_node_id = cursor_node:id()
+      for i, v in pg:iter() do
+        if v.id == cursor_node_id then
+          local start = v.depth
+          local end_col = start + #v.text
+          a.nvim_buf_set_extmark(b, pg.ns, i - 1, start, {
+            end_col = end_col,
+            hl_group = 'Visual',
+          })
+          a.nvim_win_set_cursor(w, { i, 0 })
+          break
+        end
+      end
+    end,
+  })
+
+  a.nvim_create_autocmd({ 'TextChanged', 'InsertLeave' }, {
+    group = group,
+    buffer = buf,
+    callback = function()
+      if not a.nvim_buf_is_loaded(b) then
+        return true
+      end
+
+      pg = assert(Playground:new(buf))
+      pg:draw(b)
+    end,
+  })
+
+  a.nvim_create_autocmd('BufLeave', {
+    group = group,
+    buffer = b,
+    callback = function()
+      a.nvim_buf_clear_namespace(buf, pg.ns, 0, -1)
+    end,
+  })
+
+  a.nvim_create_autocmd('BufLeave', {
+    group = group,
+    buffer = buf,
+    callback = function()
+      if not a.nvim_buf_is_loaded(b) then
+        return true
+      end
+
+      a.nvim_buf_clear_namespace(b, pg.ns, 0, -1)
+    end,
+  })
+
+  a.nvim_create_autocmd('BufHidden', {
+    group = group,
+    buffer = buf,
+    once = true,
+    callback = function()
+      if a.nvim_win_is_valid(w) then
+        a.nvim_win_close(w, true)
+      end
+    end,
+  })
 end
 
 return M

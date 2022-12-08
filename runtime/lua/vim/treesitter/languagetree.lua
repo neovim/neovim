@@ -608,7 +608,9 @@ end
 ---@return userdata|nil Found |tsnode|
 function LanguageTree:named_node_for_range(range, opts)
   local tree = self:tree_for_range(range, opts)
-  return tree:root():named_descendant_for_range(unpack(range))
+  if tree then
+    return tree:root():named_descendant_for_range(unpack(range))
+  end
 end
 
 --- Gets the appropriate language that contains {range}.
