@@ -158,7 +158,6 @@ void update_topline(win_T *wp)
   if (!default_grid.chars || wp->w_height_inner == 0) {
     wp->w_topline = wp->w_cursor.lnum;
     wp->w_botline = wp->w_topline;
-    wp->w_valid |= VALID_BOTLINE|VALID_BOTLINE_AP;
     wp->w_viewport_invalid = true;
     wp->w_scbind_pos = 1;
     return;
