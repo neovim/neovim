@@ -21,12 +21,7 @@ Nvim includes a "standard library" |lua-stdlib| for Lua.  It complements the
 which can be used from Lua code (|lua-vimscript| |vim.api|). Together these
 "namespaces" form the Nvim programming interface.
 
-The |:source| and |:runtime| commands can run Lua scripts. Lua modules can be
-loaded with `require('name')`, which by convention usually returns a table.
-See |lua-require| for how Nvim finds and loads Lua modules.
-
-See this page for more insight into Nvim Lua:
-    https://github.com/nanotee/nvim-lua-guide
+See the |lua-guide| for an introduction to using Lua in Neovim.
 
                                                                   *lua-compat*
 Lua 5.1 is the permanent interface for Nvim Lua.  Plugins need only consider
@@ -125,7 +120,7 @@ Examples using |string.match()|: >
 For more complex matching you can use Vim regex from Lua via |vim.regex()|.
 
 ==============================================================================
-IMPORTING LUA MODULES                                            *lua-require*
+IMPORTING LUA MODULES                                  *require()* *lua-require*
 
 Modules are searched for under the directories specified in 'runtimepath', in
 the order they appear.  Any "." in the module name is treated as a directory
