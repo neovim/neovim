@@ -6088,7 +6088,7 @@ func Test_lopen_bwipe_all()
     qall!
   END
   call writefile(lines, 'Xscript')
-  if RunVim([], [], '--clean -n -S Xscript')
+  if RunVim([], [], '-u NONE -n -X -Z -e -m -s -S Xscript')
     call assert_equal(['done'], readfile('Xresult'))
   endif
 
