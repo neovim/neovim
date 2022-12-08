@@ -7,7 +7,7 @@ source shared.vim
 
 func Test_complete_tab()
   call writefile(['testfile'], 'Xtestfile')
-  call feedkeys(":e Xtestf\t\r", "tx")
+  call feedkeys(":e Xtest\t\r", "tx")
   call assert_equal('testfile', getline(1))
 
   " Pressing <Tab> after '%' completes the current file, also on MS-Windows
