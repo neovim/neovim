@@ -7,7 +7,7 @@ local command = helpers.command
 local pcall_err = helpers.pcall_err
 local feed = helpers.feed
 local poke_eventloop = helpers.poke_eventloop
-local iswin = helpers.iswin
+local is_os = helpers.is_os
 
 describe('terminal channel is closed and later released if', function()
   local screen
@@ -98,7 +98,7 @@ it('chansend sends lines to terminal channel in proper order', function()
   clear()
   local screen = Screen.new(100, 20)
   screen:attach()
-  local shells = iswin() and {'cmd.exe', 'pwsh.exe -nop','powershell.exe -nop'} or {'sh'}
+  local shells = is_os('win') and {'cmd.exe', 'pwsh.exe -nop', 'powershell.exe -nop'} or {'sh'}
   for _, sh in ipairs(shells) do
     command([[bdelete! | let id = termopen(']] .. sh .. [[')]])
     command([[call chansend(id, ['echo "hello"', 'echo "world"', ''])]])
