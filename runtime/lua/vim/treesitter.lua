@@ -275,6 +275,7 @@ end
 ---@param row number Position row
 ---@param col number Position column
 ---@param opts table Optional keyword arguments:
+---             - lang string|nil Parser language
 ---             - ignore_injections boolean Ignore injected languages (default true)
 ---
 ---@return userdata|nil |tsnode| under the cursor
@@ -284,7 +285,7 @@ function M.get_node_at_pos(bufnr, row, col, opts)
   end
   local ts_range = { row, col, row, col }
 
-  local root_lang_tree = M.get_parser(bufnr)
+  local root_lang_tree = M.get_parser(bufnr, opts.lang)
   if not root_lang_tree then
     return
   end
@@ -354,6 +355,8 @@ end
 --- cursor in the source buffer.
 ---
 ---@param opts table|nil Optional options table with the following possible keys:
+---                      - lang (string|nil): The language of the source buffer. If omitted, the
+---                        filetype of the source buffer is used.
 ---                      - bufnr (number|nil): Buffer to draw the tree into. If omitted, a new
 ---                        buffer is created.
 ---                      - winid (number|nil): Window id to display the tree buffer in. If omitted,
@@ -368,12 +371,12 @@ function M.show_tree(opts)
     opts = { opts, 't', true },
   })
 
+  opts = opts or {}
+
   local Playground = require('vim.treesitter.playground')
   local buf = a.nvim_get_current_buf()
   local win = a.nvim_get_current_win()
-  local pg = assert(Playground:new(buf))
-
-  opts = opts or {}
+  local pg = assert(Playground:new(buf, opts.lang))
 
   -- Close any existing playground window
   if vim.b[buf].playground then
@@ -473,8 +476,10 @@ function M.show_tree(opts)
       a.nvim_buf_clear_namespace(b, pg.ns, 0, -1)
 
       local cursor = a.nvim_win_get_cursor(win)
-      local cursor_node =
-        M.get_node_at_pos(buf, cursor[1] - 1, cursor[2], { ignore_injections = false })
+      local cursor_node = M.get_node_at_pos(buf, cursor[1] - 1, cursor[2], {
+        lang = opts.lang,
+        ignore_injections = false,
+      })
       if not cursor_node then
         return
       end
@@ -503,7 +508,7 @@ function M.show_tree(opts)
         return true
       end
 
-      pg = assert(Playground:new(buf))
+      pg = assert(Playground:new(buf, opts.lang))
       pg:draw(b)
     end,
   })
