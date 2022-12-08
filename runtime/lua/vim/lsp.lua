@@ -1611,9 +1611,37 @@ function lsp.buf_attach_client(bufnr, client_id)
     all_buffer_active_clients[bufnr] = buffer_client_ids
 
     local uri = vim.uri_from_bufnr(bufnr)
-    local augroup = ('lsp_c_%d_b_%d_did_save'):format(client_id, bufnr)
+    local augroup = ('lsp_c_%d_b_%d_save'):format(client_id, bufnr)
+    local group = api.nvim_create_augroup(augroup, { clear = true })
+    api.nvim_create_autocmd('BufWritePre', {
+      group = group,
+      buffer = bufnr,
+      desc = 'vim.lsp: textDocument/willSave',
+      callback = function(ctx)
+        for_each_buffer_client(ctx.buf, function(client)
+          local params = {
+            textDocument = {
+              uri = uri,
+            },
+            reason = protocol.TextDocumentSaveReason.Manual,
+          }
+          if vim.tbl_get(client.server_capabilities, 'textDocumentSync', 'willSave') then
+            client.notify('textDocument/willSave', params)
+          end
+          if vim.tbl_get(client.server_capabilities, 'textDocumentSync', 'willSaveWaitUntil') then
+            local result, err =
+              client.request_sync('textDocument/willSaveWaitUntil', params, 1000, ctx.buf)
+            if result and result.result then
+              util.apply_text_edits(result.result, ctx.buf, client.offset_encoding)
+            elseif err then
+              log.error(vim.inspect(err))
+            end
+          end
+        end)
+      end,
+    })
     api.nvim_create_autocmd('BufWritePost', {
-      group = api.nvim_create_augroup(augroup, { clear = true }),
+      group = group,
       buffer = bufnr,
       desc = 'vim.lsp: textDocument/didSave handler',
       callback = function(ctx)

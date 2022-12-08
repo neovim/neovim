@@ -151,6 +151,7 @@ local constants = {
   },
 
   -- Represents reasons why a text document is saved.
+  ---@enum lsp.TextDocumentSaveReason
   TextDocumentSaveReason = {
     -- Manually triggered, e.g. by the user pressing save, by starting debugging,
     -- or by an API call.
@@ -631,11 +632,8 @@ function protocol.make_client_capabilities()
       synchronization = {
         dynamicRegistration = false,
 
-        -- TODO(ashkan) Send textDocument/willSave before saving (BufWritePre)
-        willSave = false,
-
-        -- TODO(ashkan) Implement textDocument/willSaveWaitUntil
-        willSaveWaitUntil = false,
+        willSave = true,
+        willSaveWaitUntil = true,
 
         -- Send textDocument/didSave after saving (BufWritePost)
         didSave = true,
@@ -870,8 +868,8 @@ function protocol._resolve_capabilities_compat(server_capabilities)
       text_document_sync_properties = {
         text_document_open_close = if_nil(textDocumentSync.openClose, false),
         text_document_did_change = if_nil(textDocumentSync.change, TextDocumentSyncKind.None),
-        text_document_will_save = if_nil(textDocumentSync.willSave, false),
-        text_document_will_save_wait_until = if_nil(textDocumentSync.willSaveWaitUntil, false),
+        text_document_will_save = if_nil(textDocumentSync.willSave, true),
+        text_document_will_save_wait_until = if_nil(textDocumentSync.willSaveWaitUntil, true),
         text_document_save = if_nil(textDocumentSync.save, false),
         text_document_save_include_text = if_nil(
           type(textDocumentSync.save) == 'table' and textDocumentSync.save.includeText,

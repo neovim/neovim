@@ -65,9 +65,9 @@ local create_server_definition = [[
         })
         local handler = handlers[method]
         if handler then
-          local response = handler(method, params)
+          local response, err = handler(params)
           if response then
-            callback(nill, response)
+            callback(err, response)
           end
         elseif method == 'initialize' then
           callback(nil, {
@@ -76,9 +76,18 @@ local create_server_definition = [[
         elseif method == 'shutdown' then
           callback(nil, nil)
         end
+        local request_id = #server.messages
+        return true, request_id
       end
 
       function srv.notify(method, params)
+        table.insert(server.messages, {
+          method = method,
+          params = params
+        })
+        if method == 'exit' then
+          dispatchers.on_exit(0, 15)
+        end
       end
 
       function srv.is_closing()
@@ -610,6 +619,67 @@ describe('LSP', function()
           end
         end;
       }
+    end)
+
+    it('BufWritePre does not send notifications if server lacks willSave capabilities', function()
+      exec_lua(create_server_definition)
+      local messages = exec_lua([[
+        local server = _create_server({
+          capabilities = {
+            textDocumentSync = {
+              willSave = false,
+              willSaveWaitUntil = false,
+            }
+          },
+        })
+        local client_id = vim.lsp.start({ name = 'dummy', cmd = server.cmd })
+        local buf = vim.api.nvim_get_current_buf()
+        vim.api.nvim_exec_autocmds('BufWritePre', { buffer = buf, modeline = false })
+        vim.lsp.stop_client(client_id)
+        return server.messages
+      ]])
+      eq(#messages, 4)
+      eq(messages[1].method, 'initialize')
+      eq(messages[2].method, 'initialized')
+      eq(messages[3].method, 'shutdown')
+      eq(messages[4].method, 'exit')
+    end)
+    it('BufWritePre sends willSave / willSaveWaitUntil, applies textEdits', function()
+      exec_lua(create_server_definition)
+      local result = exec_lua([[
+        local server = _create_server({
+          capabilities = {
+            textDocumentSync = {
+              willSave = true,
+              willSaveWaitUntil = true,
+            }
+          },
+          handlers = {
+            ['textDocument/willSaveWaitUntil'] = function()
+              local text_edit = {
+                range = {
+                  start = { line = 0, character = 0 },
+                  ['end'] = { line = 0, character = 0 },
+                },
+                newText = 'Hello'
+              }
+              return { text_edit, }
+            end
+          },
+        })
+        local buf = vim.api.nvim_get_current_buf()
+        local client_id = vim.lsp.start({ name = 'dummy', cmd = server.cmd })
+        vim.api.nvim_exec_autocmds('BufWritePre', { buffer = buf, modeline = false })
+        vim.lsp.stop_client(client_id)
+        return {
+          messages = server.messages,
+          lines = vim.api.nvim_buf_get_lines(buf, 0, -1, true)
+        }
+      ]])
+      local messages = result.messages
+      eq('textDocument/willSave', messages[3].method)
+      eq('textDocument/willSaveWaitUntil', messages[4].method)
+      eq({'Hello'}, result.lines)
     end)
 
     it('saveas sends didOpen if filename changed', function()
@@ -3517,12 +3587,12 @@ describe('LSP', function()
         vim.lsp.buf.format({ bufnr = bufnr, false })
         return server.messages
       ]])
-      eq("textDocument/rangeFormatting", result[2].method)
+      eq("textDocument/rangeFormatting", result[3].method)
       local expected_range = {
         start = { line = 0, character = 0 },
         ['end'] = { line = 1, character = 4 },
       }
-      eq(expected_range, result[2].params.range)
+      eq(expected_range, result[3].params.range)
     end)
   end)
   describe('cmd', function()
