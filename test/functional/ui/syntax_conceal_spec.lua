@@ -4,7 +4,7 @@ local clear, feed, command = helpers.clear, helpers.feed, helpers.command
 local eq = helpers.eq
 local insert = helpers.insert
 local poke_eventloop = helpers.poke_eventloop
-local expect_exit = helpers.expect_exit
+local exec = helpers.exec
 
 describe('Screen', function()
   local screen
@@ -1001,25 +1001,32 @@ describe('Screen', function()
     eq({}, grid_lines) -- no redraw was done
   end)
 
-  -- Copy of Test_cursor_column_in_concealed_line_after_window_scroll in
-  -- test/functional/ui/syntax_conceal_spec.lua.
-  describe('concealed line after window scroll', function()
-    after_each(function()
-      expect_exit(command, ':qall!')
-      os.remove('Xcolesearch')
-    end)
-
-    it('has the correct cursor column', function()
+  describe('concealed line has the correct cursor column', function()
+    -- oldtest: Test_cursor_column_in_concealed_line_after_window_scroll()
+    it('after window scroll', function()
       insert([[
-      3split
-      let m = matchadd('Conceal', '=')
-      setl conceallevel=2 concealcursor=nc
-      normal gg
-      "==expr==
-      ]])
+        3split
+        let m = matchadd('Conceal', '=')
+        setl conceallevel=2 concealcursor=nc
+        normal gg
+        "==expr==]])
+      feed('gg')
+      command('file Xcolesearch')
+      command('set nomodified')
 
-      command('write Xcolesearch')
-      feed(":so %<CR>")
+      command('so')
+      screen:expect{grid=[[
+        ^3split                                               |
+        let m  matchadd('Conceal', '')                       |
+        setl conceallevel2 concealcursornc                   |
+        {2:Xcolesearch                                          }|
+        3split                                               |
+        let m = matchadd('Conceal', '=')                     |
+        setl conceallevel=2 concealcursor=nc                 |
+        normal gg                                            |
+        {3:Xcolesearch                                          }|
+                                                             |
+      ]]}
 
       -- Jump to something that is beyond the bottom of the window,
       -- so there's a scroll down.
@@ -1033,12 +1040,41 @@ describe('Screen', function()
         normal gg                                            |
         "{5:^expr}                                                |
         {2:Xcolesearch                                          }|
+        3split                                               |
+        let m = matchadd('Conceal', '=')                     |
+        setl conceallevel=2 concealcursor=nc                 |
         normal gg                                            |
-        "=={5:expr}==                                            |
-                                                             |
-        {0:~                                                    }|
         {3:Xcolesearch                                          }|
         /expr                                                |
+      ]]}
+    end)
+
+    -- oldtest: Test_cursor_column_in_concealed_line_after_leftcol_change()
+    it('after leftcol change', function()
+      exec([[
+        0put = 'ab' .. repeat('-', &columns) .. 'c'
+        call matchadd('Conceal', '-')
+        set nowrap ss=0 cole=3 cocu=n
+      ]])
+
+      -- Go to the end of the line (3 columns beyond the end of the screen).
+      -- Horizontal scroll would center the cursor in the screen line, but conceal
+      -- makes it go to screen column 1.
+      feed('$')
+
+      -- Are the concealed parts of the current line really hidden?
+      -- Is the window's cursor column properly updated for conceal?
+      screen:expect{grid=[[
+        ^c                                                    |
+                                                             |
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+                                                             |
       ]]}
     end)
   end)
