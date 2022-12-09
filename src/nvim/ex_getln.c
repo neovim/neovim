@@ -939,10 +939,10 @@ static int command_line_check(VimState *state)
   return 1;
 }
 
-/// Handle the backslash key pressed in the command-line mode.
-/// CTRL-\ CTRL-N or CTRL-\ CTRL-G goes to Normal mode,
-/// CTRL-\ e prompts for an expression.
-static int command_line_handle_backslash_key(CommandLineState *s)
+/// Handle CTRL-\ pressed in Command-line mode:
+/// - CTRL-\ CTRL-N or CTRL-\ CTRL-G goes to Normal mode.
+/// - CTRL-\ e prompts for an expression.
+static int command_line_handle_ctrl_bsl(CommandLineState *s)
 {
   no_mapping++;
   allow_keys++;
@@ -963,6 +963,7 @@ static int command_line_handle_backslash_key(CommandLineState *s)
 
   if (s->c == 'e') {
     // Replace the command line with the result of an expression.
+    // This will call getcmdline() recursively in get_expr_register().
     if (ccline.cmdpos == ccline.cmdlen) {
       new_cmdpos = 99999;           // keep it at the end
     } else {
@@ -971,9 +972,8 @@ static int command_line_handle_backslash_key(CommandLineState *s)
 
     s->c = get_expr_register();
     if (s->c == '=') {
-      // Need to save and restore ccline.  And set "textlock"
-      // to avoid nasty things like going to another buffer when
-      // evaluating an expression.
+      // Evaluate the expression.  Set "textlock" to avoid nasty things
+      // like going to another buffer.
       textlock++;
       char *p = get_expr_line();
       textlock--;
@@ -1244,7 +1244,7 @@ static int command_line_execute(VimState *state, int key)
   // CTRL-\ CTRL-N or CTRL-\ CTRL-G goes to Normal mode,
   // CTRL-\ e prompts for an expression.
   if (s->c == Ctrl_BSL) {
-    switch (command_line_handle_backslash_key(s)) {
+    switch (command_line_handle_ctrl_bsl(s)) {
     case CMDLINE_CHANGED:
       return command_line_changed(s);
     case CMDLINE_NOT_CHANGED:
@@ -1253,7 +1253,7 @@ static int command_line_execute(VimState *state, int key)
       return 0;                   // back to cmd mode
     default:
       s->c = Ctrl_BSL;            // backslash key not processed by
-                                  // cmdline_handle_backslash_key()
+                                  // command_line_handle_ctrl_bsl()
     }
   }
 
