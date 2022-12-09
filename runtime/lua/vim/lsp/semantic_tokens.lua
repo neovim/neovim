@@ -313,18 +313,15 @@ function STHighlighter:process_response(response, client, version)
       return a.start < b.start
     end)
 
-    ---@private
-    local function _splice(list, start, remove_count, data)
-      local ret = vim.list_slice(list, 1, start)
-      vim.list_extend(ret, data)
-      vim.list_extend(ret, list, start + remove_count + 1)
-      return ret
-    end
-
-    tokens = state.current_result.tokens
+    tokens = {}
+    local old_tokens = state.current_result.tokens
+    local idx = 1
     for _, token_edit in ipairs(token_edits) do
-      tokens = _splice(tokens, token_edit.start, token_edit.deleteCount, token_edit.data)
+      vim.list_extend(tokens, old_tokens, idx, token_edit.start)
+      vim.list_extend(tokens, token_edit.data)
+      idx = token_edit.start + token_edit.deleteCount + 1
     end
+    vim.list_extend(tokens, old_tokens, idx)
   else
     tokens = response.data
   end
