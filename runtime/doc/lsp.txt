@@ -564,9 +564,9 @@ buf_notify({bufnr}, {method}, {params})                 *vim.lsp.buf_notify()*
     Send a notification to a server
 
     Parameters: ~
-      • {bufnr}   [number] (optional): The number of the buffer
-      • {method}  [string]: Name of the request method
-      • {params}  [string]: Arguments to send to the server
+      • {bufnr}   (number|nil) The number of the buffer
+      • {method}  (string) Name of the request method
+      • {params}  (string) Arguments to send to the server
 
     Return: ~
         true if any client returns true; false otherwise
@@ -580,7 +580,7 @@ buf_request_all({bufnr}, {method}, {params}, {callback})
     Parameters: ~
       • {bufnr}     (number) Buffer handle, or 0 for current.
       • {method}    (string) LSP method name
-      • {params}    (optional, table) Parameters to send to the server
+      • {params}    (table|nil) Parameters to send to the server
       • {callback}  (function) The callback to call when all requests are
                     finished.
 
@@ -599,9 +599,9 @@ buf_request_sync({bufnr}, {method}, {params}, {timeout_ms})
     Parameters: ~
       • {bufnr}       (number) Buffer handle, or 0 for current.
       • {method}      (string) LSP method name
-      • {params}      (optional, table) Parameters to send to the server
-      • {timeout_ms}  (optional, number, default=1000) Maximum time in
-                      milliseconds to wait for a result.
+      • {params}      (table|nil) Parameters to send to the server
+      • {timeout_ms}  (number|nil) Maximum time in milliseconds to wait for a
+                      result. Defaults to 1000
 
     Return: ~
         Map of client_id:request_result. On timeout, cancel or error, returns
@@ -668,7 +668,7 @@ client_is_stopped({client_id})                   *vim.lsp.client_is_stopped()*
     Checks whether a client is stopped.
 
     Parameters: ~
-      • {client_id}  (Number)
+      • {client_id}  (number)
 
     Return: ~
         true if client is stopped, false otherwise.
@@ -747,8 +747,8 @@ omnifunc({findstart}, {base})                             *vim.lsp.omnifunc()*
     Implements 'omnifunc' compatible LSP completion.
 
     Parameters: ~
-      • {findstart}  0 or 1, decides behavior
-      • {base}       If findstart=0, text to match against
+      • {findstart}  (number) 0 or 1, decides behavior
+      • {base}       (number) findstart=0, text to match against
 
     Return: ~
         (number) Decided by {findstart}:
@@ -770,7 +770,7 @@ set_log_level({level})                               *vim.lsp.set_log_level()*
     Use `lsp.log_levels` for reverse lookup.
 
     Parameters: ~
-      • {level}  [number|string] the case insensitive level name or number
+      • {level}  (number|string) the case insensitive level name or number
 
     See also: ~
         |vim.lsp.log_levels|
@@ -972,7 +972,8 @@ stop_client({client_id}, {force})                      *vim.lsp.stop_client()*
     for this client, then force-shutdown is attempted.
 
     Parameters: ~
-      • {client_id}  client id or |vim.lsp.client| object, or list thereof
+      • {client_id}  number|table id or |vim.lsp.client| object, or list
+                     thereof
       • {force}      (boolean) (optional) shutdown forcefully
 
 tagfunc({...})                                             *vim.lsp.tagfunc()*
@@ -984,8 +985,8 @@ tagfunc({...})                                             *vim.lsp.tagfunc()*
     LSP servers, falls back to using built-in tags.
 
     Parameters: ~
-      • {pattern}  Pattern used to find a workspace symbol
-      • {flags}    See |tag-function|
+      • {pattern}  (string) Pattern used to find a workspace symbol
+      • {flags}    (string) See |tag-function|
 
     Return: ~
         A list of matching tags
@@ -1877,7 +1878,7 @@ set_level({level})                                   *vim.lsp.log.set_level()*
     Sets the current log level.
 
     Parameters: ~
-      • {level}  (string or number) One of `vim.lsp.log.levels`
+      • {level}  (string|number) One of `vim.lsp.log.levels`
 
 should_log({level})                                 *vim.lsp.log.should_log()*
     Checks whether the level is sufficient for logging.
