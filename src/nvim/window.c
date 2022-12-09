@@ -5405,6 +5405,18 @@ static int check_window_scroll_resize(int *size_count, win_T **first_scroll_win,
   int tot_skipcol = 0;
 
   FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+    // Skip floating windows that do not have a snapshot (usually becuase they are newly-created),
+    // as unlike split windows, creating floating windows do not cause other windows to resize.
+    if (wp->w_floating && wp->w_last_topline == 0) {
+      wp->w_last_topline = wp->w_topline;
+      wp->w_last_topfill = wp->w_topfill;
+      wp->w_last_leftcol = wp->w_leftcol;
+      wp->w_last_skipcol = wp->w_skipcol;
+      wp->w_last_width = wp->w_width;
+      wp->w_last_height = wp->w_height;
+      continue;
+    }
+
     const bool size_changed = wp->w_last_width != wp->w_width
                               || wp->w_last_height != wp->w_height;
     if (size_changed) {
