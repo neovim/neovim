@@ -869,6 +869,24 @@ func Test_cmdline_complete_user_cmd()
   call feedkeys(":Foo b\\x\<Tab>\<Home>\"\<cr>", 'tx')
   call assert_equal('"Foo b\x', @:)
   delcommand Foo
+
+  redraw
+  call assert_equal('~', Screenline(&lines - 1))
+  command! FooOne :
+  command! FooTwo :
+
+  set nowildmenu
+  call feedkeys(":Foo\<Tab>\<Home>\"\<cr>", 'tx')
+  call assert_equal('"FooOne', @:)
+  call assert_equal('~', Screenline(&lines - 1))
+
+  call feedkeys(":Foo\<S-Tab>\<Home>\"\<cr>", 'tx')
+  call assert_equal('"FooTwo', @:)
+  call assert_equal('~', Screenline(&lines - 1))
+
+  delcommand FooOne
+  delcommand FooTwo
+  set wildmenu&
 endfunc
 
 func Test_complete_user_cmd()
