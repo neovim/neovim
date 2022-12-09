@@ -327,12 +327,8 @@ end
 ---@param lang (string|nil) Language of the parser (default: buffer filetype)
 function M.start(bufnr, lang)
   bufnr = bufnr or a.nvim_get_current_buf()
-
   local parser = M.get_parser(bufnr, lang)
-
   M.highlighter.new(parser)
-
-  vim.b[bufnr].ts_highlight = true
 end
 
 --- Stops treesitter highlighting for a buffer
@@ -344,8 +340,6 @@ function M.stop(bufnr)
   if M.highlighter.active[bufnr] then
     M.highlighter.active[bufnr]:destroy()
   end
-
-  vim.bo[bufnr].syntax = 'on'
 end
 
 --- Open a window that displays a textual representation of the nodes in the language tree.

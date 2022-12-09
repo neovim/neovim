@@ -88,7 +88,9 @@ function TSHighlighter.new(tree, opts)
     end
   end
 
+  self.orig_syntax = vim.bo[self.bufnr].syntax
   vim.bo[self.bufnr].syntax = ''
+  vim.b[self.bufnr].ts_highlight = true
 
   TSHighlighter.active[self.bufnr] = self
 
@@ -114,6 +116,8 @@ function TSHighlighter:destroy()
   if TSHighlighter.active[self.bufnr] then
     TSHighlighter.active[self.bufnr] = nil
   end
+
+  vim.bo[self.bufnr].syntax = self.orig_syntax
 end
 
 ---@private
