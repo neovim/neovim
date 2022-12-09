@@ -147,6 +147,15 @@ void buf_updates_unregister(buf_T *buf, uint64_t channelid)
   }
 }
 
+void buf_free_callbacks(buf_T *buf)
+{
+  kv_destroy(buf->update_channels);
+  for (size_t i = 0; i < kv_size(buf->update_callbacks); i++) {
+    buffer_update_callbacks_free(kv_A(buf->update_callbacks, i));
+  }
+  kv_destroy(buf->update_callbacks);
+}
+
 void buf_updates_unload(buf_T *buf, bool can_reload)
 {
   size_t size = kv_size(buf->update_channels);

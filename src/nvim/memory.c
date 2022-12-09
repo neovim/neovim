@@ -14,6 +14,7 @@
 #include "nvim/api/extmark.h"
 #include "nvim/arglist.h"
 #include "nvim/ascii.h"
+#include "nvim/buffer_updates.h"
 #include "nvim/context.h"
 #include "nvim/decoration_provider.h"
 #include "nvim/eval.h"
@@ -812,6 +813,11 @@ void free_all_mem(void)
     bufref_T bufref;
     set_bufref(&bufref, buf);
     nextbuf = buf->b_next;
+
+    // Since options (in addition to other stuff) have been freed above we need to ensure no
+    // callbacks are called, so free them before closing the buffer.
+    buf_free_callbacks(buf);
+
     close_buffer(NULL, buf, DOBUF_WIPE, false, false);
     // Didn't work, try next one.
     buf = bufref_valid(&bufref) ? nextbuf : firstbuf;
