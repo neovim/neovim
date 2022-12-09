@@ -484,6 +484,11 @@ char *ExpandOne(expand_T *xp, char *str, char *orig, int options, int mode)
     FreeWild(xp->xp_numfiles, xp->xp_files);
     xp->xp_numfiles = -1;
     XFREE_CLEAR(orig_save);
+
+    // The entries from xp_files may be used in the PUM, remove it.
+    if (compl_match_array != NULL) {
+      cmdline_pum_remove();
+    }
   }
   findex = 0;
 
