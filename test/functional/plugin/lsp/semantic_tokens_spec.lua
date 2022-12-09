@@ -359,9 +359,9 @@ describe('semantic token highlighting', function()
           client_id = vim.lsp.start({
             name = 'dummy',
             cmd = server.cmd,
-            on_attach = function(client, bufnr)
+            on_attach = vim.schedule_wrap(function(client, bufnr)
               client.server_capabilities.semanticTokensProvider = nil
-            end,
+            end),
           })
         ]])
         eq(true, exec_lua("return vim.lsp.buf_is_attached(bufnr, client_id)"))
@@ -533,7 +533,7 @@ int main()
   #else
     comment
   #endif
-}]]      ,
+}]],
         response = [[{"data": [1, 4, 4, 3, 8193, 2, 9, 11, 19, 8192, 1, 12, 1, 1, 1033, 1, 2, 3, 15, 8448, 0, 5, 4, 0, 8448, 0, 8, 1, 1, 1032, 0, 5, 3, 15, 8448, 0, 5, 4, 3, 8448, 1, 0, 7, 20, 0, 1, 0, 11, 20, 0, 1, 0, 8, 20, 0], "resultId": "1"}]],
         legend = [[{
           "tokenTypes": [
@@ -681,7 +681,7 @@ b = "as"]],
   break rust;
   /// what?
 }
-]]       ,
+]],
         response = [[{"data": [0, 0, 3, 1, 0, 0, 4, 2, 1, 0, 0, 3, 4, 14, 524290, 0, 4, 1, 45, 0, 0, 1, 1, 45, 0, 0, 2, 1, 26, 0, 1, 4, 5, 1, 8192, 0, 6, 4, 52, 0, 0, 4, 1, 48, 0, 1, 4, 9, 0, 1, 1, 0, 1, 26, 0], "resultId": "1"}]],
         legend = [[{
         "tokenTypes": [
@@ -693,7 +693,7 @@ b = "as"]],
           "documentation", "declaration", "definition", "static", "abstract", "deprecated", "readonly", "defaultLibrary", "async", "attribute", "callable", "constant", "consuming", "controlFlow", "crateRoot", "injected", "intraDocLink",
           "library", "mutable", "public", "reference", "trait", "unsafe"
         ]
-      }]],
+        }]],
         expected = {
           {
             line = 0,
@@ -818,11 +818,11 @@ b = "as"]],
       end)
     end
   end)
+
   describe('token decoding with deltas', function()
     for _, test in ipairs({
       {
         it = 'semantic_tokens_delta: clangd-15 on C',
-        name = 'semantic_tokens_delta',
         legend = [[{
           "tokenTypes": [
             "variable", "variable", "parameter", "function", "method", "function", "property", "variable", "class", "interface", "enum", "enumMember", "type", "type", "unknown", "namespace", "typeParameter", "concept", "type", "macro", "comment"
@@ -831,7 +831,7 @@ b = "as"]],
             "declaration", "deprecated", "deduced", "readonly", "static", "abstract", "virtual", "dependentName", "defaultLibrary", "usedAsMutableReference", "functionScope", "classScope", "fileScope", "globalScope"
           ]
         }]],
-        text = [[char* foo = "\n";]],
+        text1 = [[char* foo = "\n";]],
         edit = [[ggO<Esc>]],
         response1 = [[{"data": [0, 6, 3, 0, 8193], "resultId": "1"}]],
         response2 = [[{"edits": [{ "start": 0, "deleteCount": 1, "data": [1] }], "resultId": "2"}]],
@@ -861,6 +861,205 @@ b = "as"]],
             extmark_added = true,
           }
         },
+      },
+      {
+        it = 'response with multiple delta edits',
+        legend = [[{
+        "tokenTypes": [
+          "variable", "variable", "parameter", "function", "method", "function", "property", "variable", "class", "interface", "enum", "enumMember", "type", "type", "unknown", "namespace", "typeParameter", "concept", "type", "macro", "comment"
+        ],
+        "tokenModifiers": [
+          "declaration", "deprecated", "deduced", "readonly", "static", "abstract", "virtual", "dependentName", "defaultLibrary", "usedAsMutableReference", "functionScope", "classScope", "fileScope", "globalScope"
+        ]
+        }]],
+        text1 = dedent([[
+        #include <iostream>
+
+        int main()
+        {
+            int x;
+        #ifdef __cplusplus
+            std::cout << x << "\n";
+        #else
+            printf("%d\n", x);
+        #endif
+        }]]),
+        text2 = [[#include <iostream>
+
+int main()
+{
+    int x();
+    double y;
+#ifdef __cplusplus
+    std::cout << x << "\n";
+#else
+    printf("%d\n", x);
+#endif
+}]],
+        response1 = [[{
+        "data": [ 2, 4, 4, 3, 8193, 2, 8, 1, 1, 1025, 1, 7, 11, 19, 8192, 1, 4, 3, 15, 8448, 0, 5, 4, 0, 8448, 0, 8, 1, 1, 1024, 1, 0, 5, 20, 0, 1, 0, 22, 20, 0, 1, 0, 6, 20, 0 ],
+        "resultId": 1
+        }]],
+        response2 = [[{
+        "edits": [ {"data": [ 2, 8, 1, 3, 8193, 1, 11, 1, 1, 1025 ], "deleteCount": 5, "start": 5}, {"data": [ 0, 8, 1, 3, 8192 ], "deleteCount": 5, "start": 25 } ],
+        "resultId":"2"
+        }]],
+        expected1 = {
+          {
+            line = 2,
+            start_col = 4,
+            end_col = 8,
+            modifiers = { 'declaration', 'globalScope' },
+            type = 'function',
+            extmark_added = true,
+          },
+          {
+            line = 4,
+            start_col = 8,
+            end_col = 9,
+            modifiers = { 'declaration', 'functionScope' },
+            type = 'variable',
+            extmark_added = true,
+          },
+          {
+            line = 5,
+            start_col = 7,
+            end_col = 18,
+            modifiers = { 'globalScope' },
+            type = 'macro',
+            extmark_added = true,
+          },
+          {
+            line = 6,
+            start_col = 4,
+            end_col = 7,
+            modifiers = { 'defaultLibrary', 'globalScope' },
+            type = 'namespace',
+            extmark_added = true,
+          },
+          {
+            line = 6,
+            start_col = 9,
+            end_col = 13,
+            modifiers = { 'defaultLibrary', 'globalScope' },
+            type = 'variable',
+            extmark_added = true,
+          },
+          {
+            line = 6,
+            start_col = 17,
+            end_col = 18,
+            extmark_added = true,
+            modifiers = { 'functionScope' },
+            type = 'variable',
+          },
+          {
+            line = 7,
+            start_col = 0,
+            end_col = 5,
+            extmark_added = true,
+            modifiers = {},
+            type = 'comment',
+          },
+          {
+            line = 8,
+            end_col = 22,
+            modifiers = {},
+            start_col = 0,
+            type = 'comment',
+            extmark_added = true,
+          },
+          {
+            line = 9,
+            start_col = 0,
+            end_col = 6,
+            modifiers = {},
+            type = 'comment',
+            extmark_added = true,
+          }
+        },
+        expected2 = {
+          {
+            line = 2,
+            start_col = 4,
+            end_col = 8,
+            modifiers = { 'declaration', 'globalScope' },
+            type = 'function',
+            extmark_added = true,
+          },
+          {
+            line = 4,
+            start_col = 8,
+            end_col = 9,
+            modifiers = { 'declaration', 'globalScope' },
+            type = 'function',
+            extmark_added = true,
+          },
+          {
+            line = 5,
+            end_col = 12,
+            start_col = 11,
+            modifiers = { 'declaration', 'functionScope' },
+            type = 'variable',
+            extmark_added = true,
+          },
+          {
+            line = 6,
+            start_col = 7,
+            end_col = 18,
+            modifiers = { 'globalScope' },
+            type = 'macro',
+            extmark_added = true,
+          },
+          {
+            line = 7,
+            start_col = 4,
+            end_col = 7,
+            modifiers = { 'defaultLibrary', 'globalScope' },
+            type = 'namespace',
+            extmark_added = true,
+          },
+          {
+            line = 7,
+            start_col = 9,
+            end_col = 13,
+            modifiers = { 'defaultLibrary', 'globalScope' },
+            type = 'variable',
+            extmark_added = true,
+          },
+          {
+            line = 7,
+            start_col = 17,
+            end_col = 18,
+            extmark_added = true,
+            modifiers = { 'globalScope' },
+            type = 'function',
+          },
+          {
+            line = 8,
+            start_col = 0,
+            end_col = 5,
+            extmark_added = true,
+            modifiers = {},
+            type = 'comment',
+          },
+          {
+            line = 9,
+            end_col = 22,
+            modifiers = {},
+            start_col = 0,
+            type = 'comment',
+            extmark_added = true,
+          },
+          {
+            line = 10,
+            start_col = 0,
+            end_col = 6,
+            modifiers = {},
+            type = 'comment',
+            extmark_added = true,
+          }
+        },
       }
     }) do
       it(test.it, function()
@@ -886,10 +1085,16 @@ b = "as"]],
           bufnr = vim.api.nvim_get_current_buf()
           vim.api.nvim_win_set_buf(0, bufnr)
           client_id = vim.lsp.start({ name = 'dummy', cmd = server.cmd })
+
+          -- speed up vim.api.nvim_buf_set_lines calls by changing debounce to 10 for these tests
           semantic_tokens = vim.lsp.semantic_tokens
+          vim.schedule(function()
+            semantic_tokens.stop(bufnr, client_id)
+            semantic_tokens.start(bufnr, client_id, { debounce = 10 })
+          end)
         ]], test.legend, test.response1, test.response2)
 
-        insert(test.text)
+        insert(test.text1)
 
         local highlights = exec_lua([[
           return semantic_tokens.__STHighlighter.active[bufnr].client_state[client_id].current_result.highlights
@@ -897,7 +1102,15 @@ b = "as"]],
 
         eq(test.expected1, highlights)
 
-        feed(test.edit)
+        if test.edit then
+          feed(test.edit)
+        else
+          exec_lua([[
+            local text = ...
+            vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, vim.fn.split(text, "\n"))
+            vim.wait(15) -- wait fot debounce
+          ]], test.text2)
+        end
 
         highlights = exec_lua([[
           return semantic_tokens.__STHighlighter.active[bufnr].client_state[client_id].current_result.highlights

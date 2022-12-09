@@ -1531,9 +1531,14 @@ function lsp.start_client(config)
       pcall(config.on_attach, client, bufnr)
     end
 
-    if vim.tbl_get(client.server_capabilities, 'semanticTokensProvider', 'full') then
-      semantic_tokens.start(bufnr, client.id)
-    end
+    -- schedule the initialization of semantic tokens to give the above
+    -- on_attach and LspAttach callbacks the ability to schedule wrap the
+    -- opt-out (deleting the semanticTokensProvider from capabilities)
+    vim.schedule(function()
+      if vim.tbl_get(client.server_capabilities, 'semanticTokensProvider', 'full') then
+        semantic_tokens.start(bufnr, client.id)
+      end
+    end)
 
     client.attached_buffers[bufnr] = true
   end
