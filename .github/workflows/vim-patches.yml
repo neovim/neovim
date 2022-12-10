@@ -2,6 +2,7 @@ name: vim-patches
 on:
   schedule:
     - cron: '3 3 * * *'
+  workflow_dispatch:
 
 jobs:
   update-vim-patches:
@@ -23,6 +24,8 @@ jobs:
           repository: vim/vim
           path: ${{ env.VIM_SOURCE_DIR }}
           fetch-depth: 0
+
+      - run: sudo apt-get install libfuse2
 
       - run: |
           gh release download -R neovim/neovim -p nvim.appimage
