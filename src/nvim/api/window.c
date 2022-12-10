@@ -162,9 +162,11 @@ void nvim_win_set_height(Window window, Integer height, Error *err)
 
   win_T *savewin = curwin;
   curwin = win;
+  curbuf = curwin->w_buffer;
   try_start();
   win_setheight((int)height);
   curwin = savewin;
+  curbuf = curwin->w_buffer;
   try_end(err);
 }
 
@@ -207,9 +209,11 @@ void nvim_win_set_width(Window window, Integer width, Error *err)
 
   win_T *savewin = curwin;
   curwin = win;
+  curbuf = curwin->w_buffer;
   try_start();
   win_setwidth((int)width);
   curwin = savewin;
+  curbuf = curwin->w_buffer;
   try_end(err);
 }
 
