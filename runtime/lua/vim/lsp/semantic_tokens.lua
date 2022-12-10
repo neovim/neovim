@@ -304,6 +304,11 @@ function STHighlighter:process_response(response, client, version)
   -- reset active request
   state.active_request = {}
 
+  -- skip nil responses
+  if response == nil then
+    return
+  end
+
   -- if we have a response to a delta request, update the state of our tokens
   -- appropriately. if it's a full response, just use that
   local tokens
