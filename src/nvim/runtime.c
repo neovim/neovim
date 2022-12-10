@@ -1130,8 +1130,10 @@ void load_plugins(void)
     }
 
     // don't use source_runtime() yet so we can check for :packloadall below
-    source_in_path(rtp_copy, plugin_pattern_vim, DIP_ALL | DIP_NOAFTER);
-    source_in_path(rtp_copy, plugin_pattern_lua, DIP_ALL | DIP_NOAFTER);
+    if (p_lbpl) {
+      source_in_path(rtp_copy, plugin_pattern_vim, DIP_ALL | DIP_NOAFTER);
+      source_in_path(rtp_copy, plugin_pattern_lua, DIP_ALL | DIP_NOAFTER);
+    }
     TIME_MSG("loading rtp plugins");
 
     // Only source "start" packages if not done already with a :packloadall

@@ -1415,6 +1415,13 @@ return {
       defaults={if_true=true}
     },
     {
+      full_name='loadbuiltinplugins', abbreviation='lbpl',
+      short_desc=N_("load built-in plugin scripts when starting up"),
+      type='bool', scope={'global'},
+      varname='p_lbpl',
+      defaults={if_true=true}
+    },
+    {
       full_name='magic',
       short_desc=N_("special characters in search patterns"),
       type='bool', scope={'global'},

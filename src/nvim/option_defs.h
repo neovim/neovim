@@ -591,6 +591,7 @@ EXTERN char *p_lcs;             // 'listchars'
 
 EXTERN int p_lz;                // 'lazyredraw'
 EXTERN int p_lpl;               // 'loadplugins'
+EXTERN int p_lbpl;              // 'loadpbuiltinlugins'
 EXTERN int p_magic;             // 'magic'
 EXTERN char *p_menc;            // 'makeencoding'
 EXTERN char *p_mef;             // 'makeef'
