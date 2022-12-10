@@ -585,6 +585,50 @@ function M.stop(bufnr, client_id)
   end
 end
 
+--- Return the semantic token(s) at the given position.
+--- If called without argument, returns the token under the cursor.
+---
+---@param bufnr number|nil Buffer number (0 for current buffer, default)
+---@param row number|nil Position row (default cursor position)
+---@param col number|nil Position column (default cursor position)
+---
+---@return table[]|nil tokens Table of tokens at position
+function M.get_at_pos(bufnr, row, col)
+  if bufnr == nil or bufnr == 0 then
+    bufnr = api.nvim_get_current_buf()
+  end
+
+  local highlighter = STHighlighter.active[bufnr]
+  if not highlighter then
+    return
+  end
+
+  if row == nil or col == nil then
+    local cursor = api.nvim_win_get_cursor(0)
+    row, col = cursor[1] - 1, cursor[2]
+  end
+
+  local tokens = {}
+  for _, client in pairs(highlighter.client_state) do
+    local highlights = client.current_result.highlights
+    if highlights then
+      local idx = binary_search(highlights, row)
+      for i = idx, #highlights do
+        local token = highlights[i]
+
+        if token.line > row then
+          break
+        end
+
+        if token.start_col <= col and token.end_col > col then
+          tokens[#tokens + 1] = token
+        end
+      end
+    end
+  end
+  return tokens
+end
+
 --- Force a refresh of all semantic tokens
 ---
 --- Only has an effect if the buffer is currently active for semantic token
