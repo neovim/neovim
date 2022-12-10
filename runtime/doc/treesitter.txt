@@ -481,16 +481,6 @@ library.
 ==============================================================================
 Lua module: vim.treesitter                               *lua-treesitter-core*
 
-                                     *vim.treesitter.get_captures_at_cursor()*
-get_captures_at_cursor({winnr})
-    Returns a list of highlight capture names under the cursor
-
-    Parameters: ~
-      • {winnr}  (number|nil) Window handle or 0 for current window (default)
-
-    Return: ~
-        string[] List of capture names
-
                                         *vim.treesitter.get_captures_at_pos()*
 get_captures_at_pos({bufnr}, {row}, {col})
     Returns a list of highlight captures at the given position
@@ -601,6 +591,13 @@ node_contains({node}, {range})                *vim.treesitter.node_contains()*
 
     Return: ~
         (boolean) True if the {node} contains the {range}
+
+                                    *vim.treesitter.show_captures_at_cursor()*
+show_captures_at_cursor({winnr})
+    Shows the list of highlight capture names under the cursor
+
+    Parameters: ~
+      • {winnr}  (number|nil) Window handle or 0 for current window (default)
 
 show_tree({opts})                                 *vim.treesitter.show_tree()*
     Open a window that displays a textual representation of the nodes in the

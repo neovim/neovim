@@ -248,25 +248,24 @@ function M.get_captures_at_pos(bufnr, row, col)
   return matches
 end
 
---- Returns a list of highlight capture names under the cursor
+--- Shows the list of highlight capture names under the cursor
 ---
 ---@param winnr (number|nil) Window handle or 0 for current window (default)
----
----@return string[] List of capture names
-function M.get_captures_at_cursor(winnr)
+function M.show_captures_at_cursor(winnr)
   winnr = winnr or 0
   local bufnr = a.nvim_win_get_buf(winnr)
   local cursor = a.nvim_win_get_cursor(winnr)
 
   local data = M.get_captures_at_pos(bufnr, cursor[1] - 1, cursor[2])
 
-  local captures = {}
-
+  local msg = {}
   for _, capture in ipairs(data) do
-    table.insert(captures, capture.capture)
+    local capture_name = '@' .. capture.capture
+    msg[#msg + 1] = { capture_name, capture_name }
+    msg[#msg + 1] = { ' ' }
   end
 
-  return captures
+  a.nvim_echo(msg, false, {})
 end
 
 --- Returns the smallest named node at the given position
