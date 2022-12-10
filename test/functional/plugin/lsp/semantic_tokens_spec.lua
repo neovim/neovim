@@ -415,6 +415,75 @@ describe('semantic token highlighting', function()
           ]], unchanged = true }
       end)
 
+  it('ignores null responses from the server', function()
+      exec_lua([[
+        local legend, response, edit_response = ...
+        server2 = _create_server({
+          capabilities = {
+            semanticTokensProvider = {
+              full = { delta = false },
+            },
+          },
+          handlers = {
+            ['textDocument/semanticTokens/full'] = function()
+              return nil
+            end,
+            ['textDocument/semanticTokens/full/delta'] = function()
+              return nil
+            end,
+          }
+        })
+        bufnr = vim.api.nvim_get_current_buf()
+        vim.api.nvim_win_set_buf(0, bufnr)
+        client_id = vim.lsp.start({ name = 'dummy', cmd = server2.cmd })
+      ]])
+      eq(true, exec_lua("return vim.lsp.buf_is_attached(bufnr, client_id)"))
+
+      insert(text)
+
+      screen:expect { grid = [[
+        #include <iostream>                     |
+                                                |
+        int main()                              |
+        {                                       |
+            int x;                              |
+        #ifdef __cplusplus                      |
+            std::cout << x << "\n";             |
+        #else                                   |
+            printf("%d\n", x);                  |
+        #endif                                  |
+        }                                       |
+        ^}                                       |
+        {1:~                                       }|
+        {1:~                                       }|
+        {1:~                                       }|
+                                                |
+      ]] }
+
+      exec_lua([[
+        vim.lsp.semantic_tokens.start(bufnr, client_id)
+      ]])
+
+      screen:expect { grid = [[
+        #include <iostream>                     |
+                                                |
+        int main()                              |
+        {                                       |
+            int x;                              |
+        #ifdef __cplusplus                      |
+            std::cout << x << "\n";             |
+        #else                                   |
+            printf("%d\n", x);                  |
+        #endif                                  |
+        }                                       |
+        ^}                                       |
+        {1:~                                       }|
+        {1:~                                       }|
+        {1:~                                       }|
+                                                |
+        ]], unchanged = true }
+    end)
+
     it('does not send delta requests if not supported by server', function()
       exec_lua([[
         local legend, response, edit_response = ...

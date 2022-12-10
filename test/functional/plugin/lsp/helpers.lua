@@ -36,9 +36,7 @@ M.create_server_definition = [[
         local handler = handlers[method]
         if handler then
           local response, err = handler(method, params)
-          if response then
-            callback(err, response)
-          end
+          callback(err, response)
         elseif method == 'initialize' then
           callback(nil, {
             capabilities = opts.capabilities or {}
