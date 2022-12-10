@@ -35,7 +35,7 @@ M.create_server_definition = [[
         })
         local handler = handlers[method]
         if handler then
-          local response, err = handler(method, params)
+          local response, err = handler(method, params, callback)
           if response then
             callback(err, response)
           end
