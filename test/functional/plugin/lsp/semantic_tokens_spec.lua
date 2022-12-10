@@ -425,11 +425,11 @@ describe('semantic token highlighting', function()
             },
           },
           handlers = {
-            ['textDocument/semanticTokens/full'] = function(_, _, callback)
-              callback(nil, nil)
+            ['textDocument/semanticTokens/full'] = function()
+              return nil
             end,
-            ['textDocument/semanticTokens/full/delta'] = function(_, _, callback)
-              callback(nil, nil)
+            ['textDocument/semanticTokens/full/delta'] = function()
+              return nil
             end,
           }
         })
