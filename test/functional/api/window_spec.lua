@@ -7,6 +7,7 @@ local clear, nvim, curbuf, curbuf_contents, window, curwin, eq, neq,
   helpers.tabpage
 local poke_eventloop = helpers.poke_eventloop
 local curwinmeths = helpers.curwinmeths
+local exec = helpers.exec
 local funcs = helpers.funcs
 local request = helpers.request
 local NIL = helpers.NIL
@@ -283,6 +284,22 @@ describe('API/win', function()
       window('set_height', nvim('list_wins')[2], 2)
       eq(2, window('get_height', nvim('list_wins')[2]))
     end)
+
+    it('do not cause ml_get errors with foldmethod=expr #19989', function()
+      insert([[
+        aaaaa
+        bbbbb
+        ccccc]])
+      command('set foldmethod=expr')
+      exec([[
+        new
+        let w = nvim_get_current_win()
+        wincmd w
+        call nvim_win_set_height(w, 5)
+      ]])
+      feed('l')
+      eq('', meths.get_vvar('errmsg'))
+    end)
   end)
 
   describe('{get,set}_width', function()
@@ -296,6 +313,22 @@ describe('API/win', function()
         math.floor(window('get_width', nvim('list_wins')[1]) / 2))
       window('set_width', nvim('list_wins')[2], 2)
       eq(2, window('get_width', nvim('list_wins')[2]))
+    end)
+
+    it('do not cause ml_get errors with foldmethod=expr #19989', function()
+      insert([[
+        aaaaa
+        bbbbb
+        ccccc]])
+      command('set foldmethod=expr')
+      exec([[
+        vnew
+        let w = nvim_get_current_win()
+        wincmd w
+        call nvim_win_set_width(w, 5)
+      ]])
+      feed('l')
+      eq('', meths.get_vvar('errmsg'))
     end)
   end)
 
