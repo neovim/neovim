@@ -637,6 +637,49 @@ api.nvim_set_decoration_provider(namespace, {
   end,
 })
 
+--- Show the token under the cursor
+---
+---@param winnr (number|nil) Window handle or 0 for current window (default)
+M.show_token_at_cursor = function(winnr)
+  local highlighter = STHighlighter.active[api.nvim_get_current_buf()]
+  if not highlighter then
+    return
+  end
+
+  local cursor = api.nvim_win_get_cursor(winnr or 0)
+  local row, col = cursor[1] - 1, cursor[2]
+
+  for _, client in pairs(highlighter.client_state) do
+    local highlights = client.current_result.highlights
+    if not highlights then
+      break
+    end
+
+    local idx = binary_search(highlights, row)
+    for i = idx, #highlights do
+      local token = highlights[i]
+
+      if token.line > row then
+        break
+      end
+
+      if token.start_col <= col and token.end_col > col then
+        local type = '@' .. token.type
+        local msg = { { 'type: ' }, { type, type } }
+        if #token.modifiers > 0 then
+          msg[#msg + 1] = { ' modifiers:' }
+          for _, modifier in pairs(token.modifiers) do
+            local mod = '@' .. modifier
+            msg[#msg + 1] = { ' ' }
+            msg[#msg + 1] = { mod, mod }
+          end
+        end
+        api.nvim_echo(msg, false, {})
+      end
+    end
+  end
+end
+
 --- for testing only! there is no guarantee of API stability with this!
 ---
 ---@private
