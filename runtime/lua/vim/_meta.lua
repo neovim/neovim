@@ -526,7 +526,7 @@ local function create_option_accessor(scope)
 
   return setmetatable({}, {
     __index = function(_, k)
-      return make_option(k, a.nvim_get_option_value(k, { scope = scope }))
+      return make_option(k, a.nvim_get_option_value(k, {}))
     end,
 
     __newindex = function(_, k, v)

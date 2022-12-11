@@ -2187,6 +2187,22 @@ describe('lua stdlib', function()
     end)
   end) -- vim.opt
 
+  describe('opt_local', function()
+    it('should be able to append to an array list type option', function()
+      eq({ "foo,bar,baz,qux" }, exec_lua [[
+        local result = {}
+
+        vim.opt.tags = "foo,bar"
+        vim.opt_local.tags:append("baz")
+        vim.opt_local.tags:append("qux")
+
+        table.insert(result, vim.bo.tags)
+
+        return result
+      ]])
+    end)
+  end)
+
   it('vim.cmd', function()
     exec_lua [[
     vim.cmd "autocmd BufNew * ++once lua BUF = vim.fn.expand('<abuf>')"
