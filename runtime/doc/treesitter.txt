@@ -493,13 +493,12 @@ get_captures_at_pos({bufnr}, {row}, {col})
 
     Parameters: ~
       • {bufnr}  (number|nil) Buffer number (0 for current buffer)
-      • {row}    (number) Position row (default cursor position if `bufnr` is
-                 `nil) @param col (number) Position column (default cursor
-                 position if`bufnr`is`nil)
+      • {row}    (number|nil) Position row (default cursor position)
+      • {col}    (number|nil) Position column (default cursor position)
 
     Return: ~
-        table[] matches List of captures `{ capture = "capture name", metadata
-        = { ... } }`
+        table[] List of captures `{ capture = "capture name", metadata = { ...
+        } }`
 
                                             *vim.treesitter.get_node_at_pos()*
 get_node_at_pos({bufnr}, {row}, {col}, {opts})
@@ -509,9 +508,8 @@ get_node_at_pos({bufnr}, {row}, {col}, {opts})
 
     Parameters: ~
       • {bufnr}  (number|nil) Buffer number (0 for current buffer)
-      • {row}    (number) Position row (default cursor position if `bufnr` is
-                 `nil) @param col (number) Position column (default cursor
-                 position if`bufnr`is`nil)
+      • {row}    (number|nil) Position row (default cursor position)
+      • {col}    (number|nil) Position column (default cursor position)
       • {opts}   (table|nil) Optional keyword arguments:
                  • lang string|nil Parser language
                  • ignore_injections boolean Ignore injected languages

@@ -200,23 +200,24 @@ end
 --- If called without argument, returns the captures at cursor.
 ---
 ---@param bufnr number|nil Buffer number (0 for current buffer)
----@param row number Position row (default cursor position if `bufnr` is `nil)
----@param col number Position column (default cursor position if `bufnr` is `nil)
+---@param row number|nil Position row (default cursor position)
+---@param col number|nil Position column (default cursor position)
 ---
----@return table[] matches List of captures `{ capture = "capture name", metadata = { ... } }`
+---@return table[] List of captures `{ capture = "capture name", metadata = { ... } }`
 function M.get_captures_at_pos(bufnr, row, col)
-  if bufnr == nil then
+  if bufnr == nil or bufnr == 0 then
     bufnr = a.nvim_get_current_buf()
+  end
+
+  local buf_highlighter = M.highlighter.active[bufnr]
+  if not buf_highlighter then
+    return {}
+  end
+
+  if not (row and col) then
     local cursor = a.nvim_win_get_cursor(0)
     row = cursor[1] - 1
     col = cursor[2]
-  elseif bufnr == 0 then
-    bufnr = a.nvim_get_current_buf()
-  end
-  local buf_highlighter = M.highlighter.active[bufnr]
-
-  if not buf_highlighter then
-    return {}
   end
 
   local matches = {}
@@ -280,30 +281,30 @@ end
 --- If called without argument, returns the node at cursor.
 ---
 ---@param bufnr number|nil Buffer number (0 for current buffer)
----@param row number Position row (default cursor position if `bufnr` is `nil)
----@param col number Position column (default cursor position if `bufnr` is `nil)
+---@param row number|nil Position row (default cursor position)
+---@param col number|nil Position column (default cursor position)
 ---@param opts table|nil Optional keyword arguments:
 ---             - lang string|nil Parser language
 ---             - ignore_injections boolean Ignore injected languages (default true)
 ---
 ---@return userdata|nil _ |tsnode| under the cursor
 function M.get_node_at_pos(bufnr, row, col, opts)
-  if bufnr == nil then
-    bufnr = a.nvim_get_current_buf()
-    local cursor = a.nvim_win_get_cursor(0)
-    row = cursor[1] - 1
-    col = cursor[2]
-  elseif bufnr == 0 then
+  if bufnr == nil or bufnr == 0 then
     bufnr = a.nvim_get_current_buf()
   end
-  local ts_range = { row, col, row, col }
 
   local root_lang_tree = M.get_parser(bufnr, opts and opts.lang)
   if not root_lang_tree then
     return
   end
 
-  return root_lang_tree:named_node_for_range(ts_range, opts)
+  if not (row and col) then
+    local cursor = a.nvim_win_get_cursor(0)
+    row = cursor[1] - 1
+    col = cursor[2]
+  end
+
+  return root_lang_tree:named_node_for_range({ row, col, row, col }, opts)
 end
 
 --- Starts treesitter highlighting for a buffer
