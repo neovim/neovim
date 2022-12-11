@@ -489,39 +489,36 @@ get_captures_at_pos({bufnr}, {row}, {col})
     string as well as a table of metadata (`priority`, `conceal`, ...; empty
     if none are defined).
 
-    Parameters: ~
-      • {bufnr}  (number) Buffer number (0 for current buffer)
-      • {row}    (number) Position row
-      • {col}    (number) Position column
-
-    Return: ~
-        table[] List of captures `{ capture = "capture name", metadata = { ...
-        } }`
-
-get_node_at_cursor({winnr})              *vim.treesitter.get_node_at_cursor()*
-    Returns the smallest named node under the cursor
+    If called without argument, returns the captures at cursor.
 
     Parameters: ~
-      • {winnr}  (number|nil) Window handle or 0 for current window (default)
+      • {bufnr}  (number|nil) Buffer number (0 for current buffer)
+      • {row}    (number) Position row (default cursor position if `bufnr` is
+                 `nil) @param col (number) Position column (default cursor
+                 position if`bufnr`is`nil)
 
     Return: ~
-        (string) Name of node under the cursor
+        table[] matches List of captures `{ capture = "capture name", metadata
+        = { ... } }`
 
                                             *vim.treesitter.get_node_at_pos()*
 get_node_at_pos({bufnr}, {row}, {col}, {opts})
     Returns the smallest named node at the given position
 
+    If called without argument, returns the node at cursor.
+
     Parameters: ~
-      • {bufnr}  (number) Buffer number (0 for current buffer)
-      • {row}    (number) Position row
-      • {col}    (number) Position column
-      • {opts}   (table) Optional keyword arguments:
+      • {bufnr}  (number|nil) Buffer number (0 for current buffer)
+      • {row}    (number) Position row (default cursor position if `bufnr` is
+                 `nil) @param col (number) Position column (default cursor
+                 position if`bufnr`is`nil)
+      • {opts}   (table|nil) Optional keyword arguments:
                  • lang string|nil Parser language
                  • ignore_injections boolean Ignore injected languages
                    (default true)
 
     Return: ~
-        userdata|nil |tsnode| under the cursor
+        userdata|nil _ |tsnode| under the cursor
 
 get_node_range({node_or_range})              *vim.treesitter.get_node_range()*
     Returns the node's range or an unpacked range table

@@ -197,13 +197,20 @@ end
 --- Each capture is represented by a table containing the capture name as a string as
 --- well as a table of metadata (`priority`, `conceal`, ...; empty if none are defined).
 ---
----@param bufnr number Buffer number (0 for current buffer)
----@param row number Position row
----@param col number Position column
+--- If called without argument, returns the captures at cursor.
 ---
----@return table[] List of captures `{ capture = "capture name", metadata = { ... } }`
+---@param bufnr number|nil Buffer number (0 for current buffer)
+---@param row number Position row (default cursor position if `bufnr` is `nil)
+---@param col number Position column (default cursor position if `bufnr` is `nil)
+---
+---@return table[] matches List of captures `{ capture = "capture name", metadata = { ... } }`
 function M.get_captures_at_pos(bufnr, row, col)
-  if bufnr == 0 then
+  if bufnr == nil then
+    bufnr = a.nvim_get_current_buf()
+    local cursor = a.nvim_win_get_cursor(0)
+    row = cursor[1] - 1
+    col = cursor[2]
+  elseif bufnr == 0 then
     bufnr = a.nvim_get_current_buf()
   end
   local buf_highlighter = M.highlighter.active[bufnr]
@@ -270,39 +277,33 @@ end
 
 --- Returns the smallest named node at the given position
 ---
----@param bufnr number Buffer number (0 for current buffer)
----@param row number Position row
----@param col number Position column
----@param opts table Optional keyword arguments:
+--- If called without argument, returns the node at cursor.
+---
+---@param bufnr number|nil Buffer number (0 for current buffer)
+---@param row number Position row (default cursor position if `bufnr` is `nil)
+---@param col number Position column (default cursor position if `bufnr` is `nil)
+---@param opts table|nil Optional keyword arguments:
 ---             - lang string|nil Parser language
 ---             - ignore_injections boolean Ignore injected languages (default true)
 ---
----@return userdata|nil |tsnode| under the cursor
+---@return userdata|nil _ |tsnode| under the cursor
 function M.get_node_at_pos(bufnr, row, col, opts)
-  if bufnr == 0 then
+  if bufnr == nil then
+    bufnr = a.nvim_get_current_buf()
+    local cursor = a.nvim_win_get_cursor(0)
+    row = cursor[1] - 1
+    col = cursor[2]
+  elseif bufnr == 0 then
     bufnr = a.nvim_get_current_buf()
   end
   local ts_range = { row, col, row, col }
 
-  local root_lang_tree = M.get_parser(bufnr, opts.lang)
+  local root_lang_tree = M.get_parser(bufnr, opts and opts.lang)
   if not root_lang_tree then
     return
   end
 
   return root_lang_tree:named_node_for_range(ts_range, opts)
-end
-
---- Returns the smallest named node under the cursor
----
----@param winnr (number|nil) Window handle or 0 for current window (default)
----
----@return string Name of node under the cursor
-function M.get_node_at_cursor(winnr)
-  winnr = winnr or 0
-  local bufnr = a.nvim_win_get_buf(winnr)
-  local cursor = a.nvim_win_get_cursor(winnr)
-
-  return M.get_node_at_pos(bufnr, cursor[1] - 1, cursor[2], { ignore_injections = false }):type()
 end
 
 --- Starts treesitter highlighting for a buffer
