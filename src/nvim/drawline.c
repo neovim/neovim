@@ -472,7 +472,7 @@ static void apply_cursorline_highlight(win_T *wp, linenr_T lnum, int *line_attr,
         && qf_current_entry(wp) == lnum) {
       *line_attr = hl_combine_attr(*cul_attr, *line_attr);
     } else {
-      *line_attr = *cul_attr;
+      *line_attr = hl_combine_attr(*line_attr, *cul_attr);
     }
   }
 }
