@@ -280,6 +280,7 @@ typedef struct {
       char_u *end;
     } line[NSUBEXP];
   } list;
+  colnr_T orig_start_col;  // list.multi[0].start_col without \zs
 } regsub_T;
 
 typedef struct {
@@ -4431,6 +4432,7 @@ static void copy_sub(regsub_T *to, regsub_T *from)
     if (REG_MULTI) {
       memmove(&to->list.multi[0], &from->list.multi[0],
               sizeof(struct multipos) * (size_t)from->in_use);
+      to->orig_start_col = from->orig_start_col;
     } else {
       memmove(&to->list.line[0], &from->list.line[0],
               sizeof(struct linepos) * (size_t)from->in_use);
@@ -5781,12 +5783,12 @@ static int skip_to_start(int c, colnr_T *colp)
 // Check for a match with match_text.
 // Called after skip_to_start() has found regstart.
 // Returns zero for no match, 1 for a match.
-static long find_match_text(colnr_T startcol, int regstart, char_u *match_text)
+static long find_match_text(colnr_T *startcol, int regstart, char_u *match_text)
 {
 #define PTR2LEN(x) utf_ptr2len(x)
 
-  colnr_T col = startcol;
-  int regstart_len = PTR2LEN((char *)rex.line + startcol);
+  colnr_T col = *startcol;
+  int regstart_len = PTR2LEN((char *)rex.line + col);
 
   for (;;) {
     bool match = true;
@@ -5819,6 +5821,7 @@ static long find_match_text(colnr_T startcol, int regstart, char_u *match_text)
         rex.reg_startp[0] = rex.line + col;
         rex.reg_endp[0] = s2;
       }
+      *startcol = col;
       return 1L;
     }
 
@@ -5828,6 +5831,8 @@ static long find_match_text(colnr_T startcol, int regstart, char_u *match_text)
       break;
     }
   }
+
+  *startcol = col;
   return 0L;
 
 #undef PTR2LEN
@@ -5931,6 +5936,7 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start, regsubs_T *subm
     if (REG_MULTI) {
       m->norm.list.multi[0].start_lnum = rex.lnum;
       m->norm.list.multi[0].start_col = (colnr_T)(rex.input - rex.line);
+      m->norm.orig_start_col = m->norm.list.multi[0].start_col;
     } else {
       m->norm.list.line[0].start = rex.input;
     }
@@ -7110,6 +7116,8 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start, regsubs_T *subm
           if (REG_MULTI) {
             m->norm.list.multi[0].start_col =
               (colnr_T)(rex.input - rex.line) + clen;
+            m->norm.orig_start_col =
+              m->norm.list.multi[0].start_col;
           } else {
             m->norm.list.line[0].start = rex.input + clen;
           }
@@ -7242,6 +7250,9 @@ static long nfa_regtry(nfa_regprog_T *prog, colnr_T col, proftime_T *tm, int *ti
 
       rex.reg_endpos[i].lnum = subs.norm.list.multi[i].end_lnum;
       rex.reg_endpos[i].col = subs.norm.list.multi[i].end_col;
+    }
+    if (rex.reg_mmatch != NULL) {
+      rex.reg_mmatch->rmm_matchcol = subs.norm.orig_start_col;
     }
 
     if (rex.reg_startpos[0].lnum < 0) {
@@ -7385,7 +7396,7 @@ static long nfa_regexec_both(char_u *line, colnr_T startcol, proftime_T *tm, int
     // If match_text is set it contains the full text that must match.
     // Nothing else to try. Doesn't handle combining chars well.
     if (prog->match_text != NULL && !rex.reg_icombine) {
-      retval = find_match_text(col, prog->regstart, prog->match_text);
+      retval = find_match_text(&col, prog->regstart, prog->match_text);
       if (REG_MULTI) {
         rex.reg_mmatch->rmm_matchcol = col;
       } else {
@@ -7427,10 +7438,6 @@ theend:
           || (end->lnum == start->lnum && end->col < start->col)) {
         rex.reg_mmatch->endpos[0] = rex.reg_mmatch->startpos[0];
       }
-
-      // startpos[0] may be set by "\zs", also return the column where
-      // the whole pattern matched.
-      rex.reg_mmatch->rmm_matchcol = col;
     } else {
       if (rex.reg_match->endp[0] < rex.reg_match->startp[0]) {
         rex.reg_match->endp[0] = rex.reg_match->startp[0];
