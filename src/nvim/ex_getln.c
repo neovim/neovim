@@ -1609,7 +1609,8 @@ static int command_line_insert_reg(CommandLineState *s)
   ccline.special_char = NUL;
   redrawcmd();
 
-  return CMDLINE_CHANGED;
+  // The text has been stuffed, the command line didn't change yet.
+  return CMDLINE_NOT_CHANGED;
 }
 
 /// Handle the Left and Right mouse clicks in the command-line mode.
