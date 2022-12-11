@@ -7,7 +7,6 @@ local neq = helpers.neq
 local nvim_argv = helpers.nvim_argv
 local request = helpers.request
 local retry = helpers.retry
-local NIL = helpers.NIL
 local is_os = helpers.is_os
 
 describe('API', function()
@@ -80,7 +79,7 @@ describe('API', function()
       -- Assume PID 99999 does not exist.
       status, rv = pcall(request, "nvim_get_proc", 99999)
       eq(true, status)
-      eq(NIL, rv)
+      eq(vim.NIL, rv)
     end)
   end)
 end)

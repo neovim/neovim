@@ -10,7 +10,7 @@ local command = helpers.command
 local exc_exec = helpers.exc_exec
 local pcall_err = helpers.pcall_err
 local async_meths = helpers.async_meths
-local NIL = helpers.NIL
+local NIL = vim.NIL
 
 local screen
 

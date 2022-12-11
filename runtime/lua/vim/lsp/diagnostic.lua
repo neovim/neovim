@@ -197,9 +197,8 @@ function M.on_publish_diagnostics(_, result, ctx, config)
       end
     end
 
-    -- Persist configuration to ensure buffer reloads use the same
-    -- configuration. To make lsp.with configuration work (See :help
-    -- lsp-handler-configuration)
+    -- Persist configuration to ensure buffer reloads use the same configuration.
+    -- To make vim.on_fun work (:help lsp-handler-config).
     vim.diagnostic.config(config, namespace)
   end
 

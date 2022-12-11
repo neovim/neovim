@@ -1939,7 +1939,7 @@ api.nvim_create_autocmd('VimLeavePre', {
 ---@param method (string) LSP method name
 ---@param params table|nil Parameters to send to the server
 ---@param handler lsp-handler|nil See |lsp-handler|
----       If nil, follows resolution strategy defined in |lsp-handler-configuration|
+---       If nil, follows resolution strategy defined in |lsp-handler-config|
 ---
 ---@return table<integer, integer>, fun() 2-tuple:
 ---  - Map of client-id:request-id pairs for all successful requests.
@@ -2317,10 +2317,15 @@ function lsp.for_each_buffer_client(bufnr, fn)
   return for_each_buffer_client(bufnr, fn)
 end
 
---- Function to manage overriding defaults for LSP handlers.
+---@private
+---@deprecated Use |vim.on_fun()| instead.
+---
+--- Wraps LSP `handler`, merging `override_config` with the default config.
+---
 ---@param handler (function) See |lsp-handler|
 ---@param override_config (table) Table containing the keys to override behavior of the {handler}
 function lsp.with(handler, override_config)
+  vim.deprecate('vim.lsp.with', 'vim.on_fun', '0.10')
   return function(err, result, ctx, config)
     return handler(err, result, ctx, vim.tbl_deep_extend('force', config or {}, override_config))
   end

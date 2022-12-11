@@ -3,6 +3,7 @@ local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
 
 local nvim_prog = helpers.nvim_prog
+local dedent = helpers.dedent
 local funcs = helpers.funcs
 local meths = helpers.meths
 local command = helpers.command
@@ -2296,6 +2297,149 @@ describe('lua stdlib', function()
     it('blockwise', function()
       insert([[αα]])
       eq({0,5}, exec_lua[[ return vim.region(0,{0,0},{0,4},'3',true)[0] ]])
+    end)
+  end)
+
+  describe('vim.on_fun', function()
+    it('reports info', function()
+      exec_lua [[
+        function test2()
+          vim.on_fun(vim.ui, 'select', function() end)
+          vim.on_fun(vim.ui, 'select', function() end)
+          vim.on_fun(vim.health, 'report_ok', function() end)
+          vim.on_fun(vim.health, 'report_info', function() end)
+          vim.on_fun(vim.health, 'report_warn', function() end)
+          vim.on_fun(vim.health, 'report_warn', function() end)
+        end
+        function test3()
+          vim.on_fun(vim, 'paste', function() end)
+          vim.on_fun(vim, 'paste', function() end)
+          vim.on_fun(vim, 'paste', function() end)
+          vim.on_fun(vim, 'paste', function() end)
+          _G._handle = vim.on_fun(vim, 'paste', function() end)
+        end
+        function test1()
+          test2()
+        end
+        test1()
+        test3()
+      ]]
+
+      eq(5, exec_lua([[return vim.on_fun().maxdepth]]))
+      exec_lua('_G._handle.unhook()')
+      exec_lua('collectgarbage("collect")')
+      eq(4, exec_lua([[return vim.on_fun().maxdepth]]))
+    end)
+
+    it('idempotency', function()
+      -- Skipped.
+      eq(true, exec_lua([[
+        local handle = vim.on_fun(vim, 'inspect', function() end)
+        return vim.on_fun(vim, 'inspect', vim.inspect).skip
+      ]]))
+      -- Skipped.
+      eq(true, exec_lua([[
+        local handle = vim.on_fun(vim, 'inspect', function() end)
+        vim.on_fun(vim, 'foo', vim.inspect)
+        return vim.on_fun(vim, 'inspect', vim.inspect).skip
+      ]]))
+      -- Not skipped.
+      eq(vim.NIL, exec_lua([[
+        return vim.on_fun(vim, 'inspect', function() end).skip
+      ]]))
+      -- Not skipped.
+      eq(vim.NIL, exec_lua([[
+        return vim.on_fun(vim, 'foo', vim.inspect).skip
+      ]]))
+    end)
+
+    it('.unhook()', function()
+      local function dosetup()
+        exec_lua [[
+          local i = 0
+          _G._handle1 = vim.on_fun(vim, 'inspect', function()
+            i = i + 1
+            return false, ('wrapper 1, i=%d'):format(i)
+          end)
+          _G._handle2 = vim.on_fun(vim, 'inspect', function()
+            i = i + 1
+            return false, ('wrapper 2, i=%d'):format(i)
+          end)
+        ]]
+      end
+
+      dosetup()
+      eq('wrapper 2, i=1', exec_lua('return vim.inspect("lol")'))
+      eq('wrapper 2, i=2', exec_lua('return vim.inspect("again")'))
+      exec_lua('_G._handle2.unhook()')
+      eq('wrapper 1, i=3', exec_lua('return vim.inspect(42)'))
+      eq('wrapper 1, i=4', exec_lua('return vim.inspect({})'))
+      exec_lua('_G._handle1.unhook()')
+      eq('"back to normal"', exec_lua('return vim.inspect("back to normal")'))
+      dosetup()
+      exec_lua('_G._handle1.unhook()')
+      exec_lua('_G._handle1.unhook()')
+      exec_lua('_G._handle1.unhook()')
+      eq('"back to normal"', exec_lua('return vim.inspect("back to normal")'))
+      -- dosetup()
+      -- dosetup()
+    end)
+
+    it('can hook into and cancel a function', function()
+      exec_lua [[
+        _G._called = 0
+        vim.on_fun(vim, 'inspect', function(s)
+          _G._called = _G._called + 1
+          return true
+        end)
+        vim.on_fun(vim, 'inspect', function(s)
+          _G._called = _G._called + 1
+          return true
+        end)
+        vim.on_fun(vim, 'inspect', function(s)
+          _G._called = _G._called + 1
+          return true
+        end)
+      ]]
+
+      exec_lua [[ vim.inspect('foo') ]]
+      eq(3, exec_lua('return _G._called'))
+    end)
+
+    it('fn() returning nil,… is an error', function()
+      matches('fn: expected function%(%) returning true,… false,… or nothing, got function:', pcall_err(exec_lua, [[
+        vim.on_fun(vim, 'inspect', function(o)
+          return nil, { foo = 'bar', z = o.z }
+        end)
+        return vim.inspect({ z = 77 })
+      ]]))
+    end)
+
+    it('can modify parameters to original function', function()
+      local rv = exec_lua [[
+        vim.on_fun(vim, 'inspect', function(o)
+          return true, { foo = 'bar', z = o.z }
+        end)
+        return vim.inspect({ z = 77 })
+      ]]
+      eq(dedent([[
+      {
+        foo = "bar",
+        z = 77
+      }]]), rv)
+    end)
+
+    it('invoke after', function()
+      local rv = exec_lua [[
+        vim.on_fun(vim, 'inspect', function(o)
+          local function after(o2)
+            return false, 'AFTER!'
+          end
+          return after
+        end)
+        return vim.inspect({ z = 77 })
+      ]]
+      eq(dedent([[AFTER!]]), rv)
     end)
   end)
 
