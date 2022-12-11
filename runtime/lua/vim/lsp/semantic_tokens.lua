@@ -585,6 +585,76 @@ function M.stop(bufnr, client_id)
   end
 end
 
+--- Return the semantic token(s) at the given position.
+--- If called without argument, returns the token under the cursor.
+---
+---@param bufnr number|nil Buffer number (0 for current buffer, default)
+---@param row number|nil Position row (default cursor position)
+---@param col number|nil Position column (default cursor position)
+---
+---@return table[]|nil tokens Table of tokens at position
+function M.get_at_pos(bufnr, row, col)
+  if bufnr == nil or bufnr == 0 then
+    bufnr = api.nvim_get_current_buf()
+  end
+
+  local highlighter = STHighlighter.active[bufnr]
+  if not highlighter then
+    return
+  end
+
+  if not (row and col) then
+    local cursor = api.nvim_win_get_cursor(0)
+    row = cursor[1] - 1
+    col = cursor[2]
+  end
+
+  local tokens = {}
+  for _, client in pairs(highlighter.client_state) do
+    local highlights = client.current_result.highlights
+    if highlights then
+      local idx = binary_search(highlights, row)
+      for i = idx, #highlights do
+        local token = highlights[i]
+
+        if token.line > row then
+          break
+        end
+
+        if token.start_col <= col and token.end_col > col then
+          tokens[#tokens + 1] = token
+        end
+      end
+    end
+  end
+  return tokens
+end
+
+--- Show the semantic token(s) under the cursor
+function M.show_at_cursor()
+  local tokens = M.get_at_pos()
+  if not tokens then
+    return
+  end
+
+  local msg = {}
+  for _, token in pairs(tokens) do
+    local type = '@' .. token.type
+    msg[#msg + 1] = { 'type: ' }
+    msg[#msg + 1] = { type, type }
+    if #token.modifiers > 0 then
+      msg[#msg + 1] = { '  modifiers:' }
+      for _, modifier in pairs(token.modifiers) do
+        local mod = '@' .. modifier
+        msg[#msg + 1] = { ' ' }
+        msg[#msg + 1] = { mod, mod }
+      end
+    end
+    msg[#msg + 1] = { '    ' }
+  end
+  api.nvim_echo(msg, false, {})
+end
+
 --- Force a refresh of all semantic tokens
 ---
 --- Only has an effect if the buffer is currently active for semantic token
@@ -646,49 +716,6 @@ api.nvim_set_decoration_provider(namespace, {
     end
   end,
 })
-
---- Show the token under the cursor
----
----@param winnr (number|nil) Window handle or 0 for current window (default)
-M.show_token_at_cursor = function(winnr)
-  local highlighter = STHighlighter.active[api.nvim_get_current_buf()]
-  if not highlighter then
-    return
-  end
-
-  local cursor = api.nvim_win_get_cursor(winnr or 0)
-  local row, col = cursor[1] - 1, cursor[2]
-
-  for _, client in pairs(highlighter.client_state) do
-    local highlights = client.current_result.highlights
-    if not highlights then
-      break
-    end
-
-    local idx = binary_search(highlights, row)
-    for i = idx, #highlights do
-      local token = highlights[i]
-
-      if token.line > row then
-        break
-      end
-
-      if token.start_col <= col and token.end_col > col then
-        local type = '@' .. token.type
-        local msg = { { 'type: ' }, { type, type } }
-        if #token.modifiers > 0 then
-          msg[#msg + 1] = { ' modifiers:' }
-          for _, modifier in pairs(token.modifiers) do
-            local mod = '@' .. modifier
-            msg[#msg + 1] = { ' ' }
-            msg[#msg + 1] = { mod, mod }
-          end
-        end
-        api.nvim_echo(msg, false, {})
-      end
-    end
-  end
-end
 
 --- for testing only! there is no guarantee of API stability with this!
 ---
