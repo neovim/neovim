@@ -11,6 +11,9 @@ local ok = helpers.ok
 local assert_alive = helpers.assert_alive
 
 describe('API: highlight',function()
+  clear()
+  Screen.new() -- initialize Screen.colors
+
   local expected_rgb = {
     background = Screen.colors.Yellow,
     foreground = Screen.colors.Red,
