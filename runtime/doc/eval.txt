@@ -1708,13 +1708,13 @@ v:charconvert_to
 
 					*v:cmdarg* *cmdarg-variable*
 v:cmdarg	This variable is used for two purposes:
-		1. The extra arguments given to a file read/write command.
-		   Currently these are "++enc=" and "++ff=".  This variable is
-		   set before an autocommand event for a file read/write
-		   command is triggered.  There is a leading space to make it
-		   possible to append this variable directly after the
-		   read/write command.  Note: The "+cmd" argument isn't
-		   included here, because it will be executed anyway.
+		1. The extra arguments ("++p", "++enc=", "++ff=") given to
+		   a file read/write command.  This is set before an
+		   autocommand event for a file read/write command is
+		   triggered.  There is a leading space to make it possible to
+		   append this variable directly after the read/write command.
+		   Note: "+cmd" isn't included here, because it will be
+		   executed anyway.
 		2. When printing a PostScript file with ":hardcopy" this is
 		   the argument for the ":hardcopy" command.  This can be used
 		   in 'printexpr'.

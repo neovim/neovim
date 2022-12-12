@@ -296,12 +296,11 @@ local function ignore_invalid(s)
   )
 end
 
-local function ignore_parse_error(s, fname)
-  local helpfile = vim.fs.basename(fname)
-  return (helpfile == 'pi_netrw.txt'
+local function ignore_parse_error(s)
+  return (
     -- Ignore parse errors for unclosed tag.
     -- This is common in vimdocs and is treated as plaintext by :help.
-    or s:find("^[`'|*]")
+    s:find("^[`'|*]")
   )
 end
 
@@ -370,7 +369,7 @@ local function visit_validate(root, level, lang_tree, opt, stats)
   end
 
   if node_name == 'ERROR' then
-    if ignore_parse_error(text, opt.fname) then
+    if ignore_parse_error(text) then
       return
     end
     -- Store the raw text to give context to the error report.
@@ -582,7 +581,7 @@ local function visit_node(root, level, lang_tree, headings, opt, stats)
     end
     return s
   elseif node_name == 'ERROR' then
-    if ignore_parse_error(trimmed, opt.fname) then
+    if ignore_parse_error(trimmed) then
       return text
     end
 

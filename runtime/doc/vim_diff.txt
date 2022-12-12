@@ -127,7 +127,7 @@ nvim_cmdwin:
 ==============================================================================
 3. New Features						       *nvim-features*
 
-MAJOR COMPONENTS ~
+MAJOR COMPONENTS
 
 API				|API|
 Job control			|job-control|
@@ -145,7 +145,7 @@ Terminal emulator		|terminal|
 Vimscript parser		|nvim_parse_expression()|
 XDG base directories		|xdg|
 
-USER EXPERIENCE  ~
+USER EXPERIENCE
 
 Working intuitively and consistently is a major goal of Nvim.
 
@@ -176,7 +176,7 @@ Some features are built in that otherwise required external plugins:
 
 - Highlighting the yanked region, see |lua-highlight|.
 
-ARCHITECTURE ~
+ARCHITECTURE
 
 External plugins run in separate processes. |remote-plugin| This improves
 stability and allows those plugins to work without blocking the editor. Even
@@ -187,7 +187,7 @@ Platform and I/O facilities are built upon libuv. Nvim benefits from libuv
 features and bug fixes, and other projects benefit from improvements to libuv
 by Nvim developers.
 
-FEATURES ~
+FEATURES
 
 Command-line highlighting:
   The expression prompt (|@=|, |c_CTRL-R_=|, |i_CTRL-R_=|) is highlighted
@@ -206,6 +206,7 @@ Commands:
   |:match| can be invoked before highlight group is defined
   |:source| works with Lua
   User commands can support |:command-preview| to show results as you type
+  |:write| with "++p" flag creates parent directories.
 
 Events:
   |RecordingEnter|
@@ -226,6 +227,7 @@ Functions:
   |stdpath()|
   |system()|, |systemlist()| can run {cmd} directly (without 'shell')
   |matchadd()| can be called before highlight group is defined
+  |writefile()| with "p" flag creates parent directories.
 
 Highlight groups:
   |highlight-blend| controls blend level for a highlight group
@@ -277,7 +279,20 @@ Variables:
   |v:windowid| is always available (for use by external UIs)
 
 ==============================================================================
-4. Changed features					 *nvim-features-changed*
+4. Upstreamed features					 *nvim-upstreamed*
+
+These Nvim features were later integrated into Vim.
+
+- 'fillchars' flags: "eob"
+- 'wildoptions' flags: "pum" enables popupmenu for wildmode completion
+- |<Cmd>|
+- |WinClosed|
+- |WinScrolled|
+- |:sign-define| "numhl" argument
+- |:source| works with anonymous (no file) scripts
+
+==============================================================================
+5. Changed features					 *nvim-features-changed*
 
 Nvim always builds with all features, in contrast to Vim which may have
 certain features removed/added at compile-time. |feature-compile|
@@ -499,7 +514,7 @@ Working directory (Vim implemented some of these later than Nvim):
   working directory. Use `getcwd(-1, -1)` to get the global working directory.
 
 ==============================================================================
-5. Missing legacy features				 *nvim-features-missing*
+6. Missing legacy features				 *nvim-features-missing*
 
 Some legacy Vim features are not yet implemented:
 
@@ -512,7 +527,7 @@ Some legacy Vim features are not yet implemented:
 *:gvim*
 
 ==============================================================================
-6. Removed features					 *nvim-features-removed*
+7. Removed features					 *nvim-features-removed*
 
 These Vim features were intentionally removed from Nvim.
 

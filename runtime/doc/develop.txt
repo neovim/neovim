@@ -28,11 +28,9 @@ The Neo bits of Nvim should make it a better Vim, without becoming a
 completely different editor.
 - In matters of taste, prefer Vim/Unix tradition. If there is no relevant
   Vim/Unix tradition, consider the "common case".
-- A feature that people do not know about is a useless feature.  Don't add
-  obscure features, or at least add hints in documentation that they exist.
-- There is no limit to the features that can be added.  Selecting new features
-  is based on (1) what users ask for, (2) how much effort it takes to
-  implement and (3) someone actually implementing it.
+- There is no limit to the features that can be added.  Select new features
+  based on (1) what users ask for, (2) how much effort it takes to implement
+  and (3) someone actually implementing it.
 - Backwards compatibility is a feature.  The RPC API in particular should
   never break.
 
@@ -48,7 +46,7 @@ NVIM IS... WELL DOCUMENTED				*design-documented*
 
 NVIM IS... FAST AND SMALL				*design-speed-size*
 
-Keep Nvim small and fast.
+Keep Nvim small and fast. This directly affects versatility and usability.
 - Computers are becoming faster and bigger each year.  Vim can grow too, but
   no faster than computers are growing.  Keep Vim usable on older systems.
 - Many users start Vim from a shell very often.  Startup time must be short.
@@ -57,7 +55,8 @@ Keep Nvim small and fast.
 - Don't forget that some people use Vim over a slow connection.  Minimize the
   communication overhead.
 - Vim is a component among other components.  Don't turn it into a massive
-  application, but have it work well together with other programs.
+  application, but have it work well together with other programs
+  ("composability").
 
 
 NVIM IS... MAINTAINABLE					*design-maintain*
@@ -250,13 +249,25 @@ vim.paste in runtime/lua/vim/_editor.lua like this: >
 LUA							*dev-lua*
 
 - Keep the core Lua modules |lua-stdlib| simple. Avoid elaborate OOP or
-  pseudo-OOP designs. Plugin authors just want functions to call, they don't
-  want to learn a big, fancy inheritance hierarchy. Thus avoid specialized
-  objects; tables or values are usually better.
+  pseudo-OOP designs. Plugin authors just want functions to call, not a big,
+  fancy inheritance hierarchy.
+- Avoid requiring or returning special objects in the Nvim stdlib. Plain
+  tables or values are easier to serialize, easier to construct from literals,
+  easier to inspect and print, and inherently compatible with all Lua plugins.
+  (This guideline doesn't apply to opaque, non-data objects like `vim.cmd`.)
 
 
 API							*dev-api*
 
+- Avoid "mutually exclusive" parameters--via constraints or limitations, if
+  necessary. For example nvim_create_autocmd() has mutually exclusive
+  "callback" and "command" args; but the "command" arg could be eliminated by
+  simply not supporting Vimscript function names, and treating a string
+  "callback" arg as an Ex command (which can call Vimscript functions). The
+  "buffer" arg could also be eliminated by treating a number "pattern" as
+  a buffer number.
+
+                                                              *dev-api-naming*
 Use this format to name new RPC |API| functions:
 
     nvim_{thing}_{action}_{arbitrary-qualifiers}

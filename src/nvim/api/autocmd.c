@@ -361,41 +361,20 @@ cleanup:
   return autocmd_list;
 }
 
-/// Create an |autocommand|
+/// Creates an |autocommand| event handler, defined by `callback` (Lua function or Vimscript
+/// function _name_ string) or `command` (Ex command string).
 ///
-/// The API allows for two (mutually exclusive) types of actions to be executed when the autocommand
-/// triggers: a callback function (Lua or Vimscript), or a command (like regular autocommands).
-///
-/// Example using callback:
+/// Example using Lua callback:
 /// <pre>lua
-///     -- Lua function
-///     local myluafun = function() print("This buffer enters") end
-///
-///     -- Vimscript function name (as a string)
-///     local myvimfun = "g:MyVimFunction"
-///
 ///     vim.api.nvim_create_autocmd({"BufEnter", "BufWinEnter"}, {
 ///       pattern = {"*.c", "*.h"},
-///       callback = myluafun,  -- Or myvimfun
+///       callback = function(ev)
+///         print(string.format('event fired: %s', vim.inspect(ev)))
+///       end
 ///     })
 /// </pre>
 ///
-/// Lua functions receive a table with information about the autocmd event as an argument. To use
-/// a function which itself accepts another (optional) parameter, wrap the function
-/// in a lambda:
-/// <pre>lua
-///     -- Lua function with an optional parameter.
-///     -- The autocmd callback would pass a table as argument but this
-///     -- function expects number|nil
-///     local myluafun = function(bufnr) bufnr = bufnr or vim.api.nvim_get_current_buf() end
-///
-///     vim.api.nvim_create_autocmd({"BufEnter", "BufWinEnter"}, {
-///       pattern = {"*.c", "*.h"},
-///       callback = function() myluafun() end,
-///     })
-/// </pre>
-///
-/// Example using command:
+/// Example using an Ex command as the handler:
 /// <pre>lua
 ///     vim.api.nvim_create_autocmd({"BufEnter", "BufWinEnter"}, {
 ///       pattern = {"*.c", "*.h"},
@@ -403,46 +382,28 @@ cleanup:
 ///     })
 /// </pre>
 ///
-/// Example values for pattern:
-/// <pre>lua
-///   pattern = "*.py"
-///   pattern = { "*.py", "*.pyi" }
-/// </pre>
-///
-/// Note: The `pattern` is passed to callbacks and commands as a literal string; environment
-/// variables like `$HOME` and `~` are not automatically expanded as they are by |:autocmd|.
-/// Instead, |expand()| such variables explicitly:
+/// Note: `pattern` is NOT automatically expanded (unlike with |:autocmd|), thus names like "$HOME"
+/// and "~" must be expanded explicitly:
 /// <pre>lua
 ///   pattern = vim.fn.expand("~") .. "/some/path/*.py"
 /// </pre>
 ///
-/// Example values for event:
-/// <pre>lua
-///   event = "BufWritePre"
-///   event = {"CursorHold", "BufWritePre", "BufWritePost"}
-/// </pre>
-///
-/// @param event (string|array) The event or events to register this autocommand
-/// @param opts Dictionary of autocommand options:
-///             - group (string|integer) optional: the autocommand group name or
-///             id to match against.
-///             - pattern (string|array) optional: pattern or patterns to match literally
-///             against |autocmd-pattern|.
-///             - buffer (integer) optional: buffer number for buffer local autocommands
+/// @param event (string|array) Event(s) that will trigger the handler (`callback` or `command`).
+/// @param opts Options dict:
+///             - group (string|integer) optional: autocommand group name or id to match against.
+///             - pattern (string|array) optional: pattern(s) to match literally |autocmd-pattern|.
+///             - buffer (integer) optional: buffer number for buffer-local autocommands
 ///             |autocmd-buflocal|. Cannot be used with {pattern}.
-///             - desc (string) optional: description of the autocommand.
-///             - callback (function|string) optional: if a string, the name of a Vimscript function
-///             to call when this autocommand is triggered. Otherwise, a Lua function which is
-///             called when this autocommand is triggered. Cannot be used with {command}. Lua
-///             callbacks can return true to delete the autocommand; in addition, they accept a
-///             single table argument with the following keys:
-///                 - id: (number) the autocommand id
-///                 - event: (string) the name of the event that triggered the autocommand
-///                 |autocmd-events|
-///                 - group: (number|nil) the autocommand group id, if it exists
-///                 - match: (string) the expanded value of |<amatch>|
-///                 - buf: (number) the expanded value of |<abuf>|
-///                 - file: (string) the expanded value of |<afile>|
+///             - desc (string) optional: description (for documentation and troubleshooting).
+///             - callback (function|string) optional: Lua function (or Vimscript function name, if
+///             string) called when the event(s) is triggered. Lua callback can return true to
+///             delete the autocommand, and receives a table argument with these keys:
+///                 - id: (number) autocommand id
+///                 - event: (string) name of the triggered event |autocmd-events|
+///                 - group: (number|nil) autocommand group id, if any
+///                 - match: (string) expanded value of |<amatch>|
+///                 - buf: (number) expanded value of |<abuf>|
+///                 - file: (string) expanded value of |<afile>|
 ///                 - data: (any) arbitrary data passed to |nvim_exec_autocmds()|
 ///             - command (string) optional: Vim command to execute on event. Cannot be used with
 ///             {callback}
@@ -451,7 +412,7 @@ cleanup:
 ///             - nested (boolean) optional: defaults to false. Run nested
 ///             autocommands |autocmd-nested|.
 ///
-/// @return Integer id of the created autocommand.
+/// @return Autocommand id (number)
 /// @see |autocommand|
 /// @see |nvim_del_autocmd()|
 Integer nvim_create_autocmd(uint64_t channel_id, Object event, Dict(create_autocmd) *opts,
@@ -472,8 +433,7 @@ Integer nvim_create_autocmd(uint64_t channel_id, Object event, Dict(create_autoc
   }
 
   if (opts->callback.type != kObjectTypeNil && opts->command.type != kObjectTypeNil) {
-    api_set_error(err, kErrorTypeValidation,
-                  "cannot pass both: 'callback' and 'command' for the same autocmd");
+    api_set_error(err, kErrorTypeValidation, "specify either 'callback' or 'command', not both");
     goto cleanup;
   } else if (opts->callback.type != kObjectTypeNil) {
     // TODO(tjdevries): It's possible we could accept callable tables,

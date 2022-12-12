@@ -14,14 +14,14 @@ before_each(clear)
 
 describe('autocmd api', function()
   describe('nvim_create_autocmd', function()
-    it('does not allow "command" and "callback" in the same autocmd', function()
-      local ok, _ = pcall(meths.create_autocmd, "BufReadPost", {
+    it('"command" and "callback" are mutually exclusive', function()
+      local rv = pcall_err(meths.create_autocmd, "BufReadPost", {
         pattern = "*.py,*.pyi",
         command = "echo 'Should Have Errored",
-        callback = "not allowed",
+        callback = "NotAllowed",
       })
 
-      eq(false, ok)
+      eq("specify either 'callback' or 'command', not both", rv)
     end)
 
     it('doesnt leak when you use ++once', function()
@@ -60,13 +60,13 @@ describe('autocmd api', function()
     end)
 
     it('does not allow passing buffer and patterns', function()
-      local ok = pcall(meths.create_autocmd, "Filetype", {
+      local rv = pcall_err(meths.create_autocmd, "Filetype", {
         command = "let g:called = g:called + 1",
         buffer = 0,
         pattern = "*.py",
       })
 
-      eq(false, ok)
+      eq("cannot pass both: 'pattern' and 'buffer' for the same autocmd", rv)
     end)
 
     it('does not allow passing invalid buffers', function()
