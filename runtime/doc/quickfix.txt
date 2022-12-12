@@ -1259,6 +1259,21 @@ not "b:current_compiler".  What the command actually does is the following:
 For writing a compiler plugin, see |write-compiler-plugin|.
 
 
+DOTNET							*compiler-dotnet*
+
+The .NET CLI compiler outputs both errors and warnings by default. The output
+may be limited to include only errors, by setting the g:dotnet_errors_only
+variable to |v:true|.
+
+The associated project name is included in each error and warning. To supress
+the project name, set the g:dotnet_show_project_file variable to |v:false|.
+
+Example: limit output to only display errors, and suppress the project name: >
+	let dotnet_errors_only = v:true
+	let dotnet_show_project_file = v:false
+	compiler dotnet
+<
+
 GCC					*quickfix-gcc*	*compiler-gcc*
 
 There's one variable you can set for the GCC compiler:
