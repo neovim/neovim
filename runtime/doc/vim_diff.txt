@@ -283,9 +283,13 @@ Variables:
 
 These Nvim features were later integrated into Vim.
 
-- |:source| works anonymous (no file) scripts
-- 'wildoptions' "pum" flag enables popupmenu for wildmode completion
-- |:sign-define| accepts a `numhl` argument, to highlight the line number
+- 'fillchars' flags: "eob"
+- 'wildoptions' flags: "pum" enables popupmenu for wildmode completion
+- |<Cmd>|
+- |WinClosed|
+- |WinScrolled|
+- |:sign-define| "numhl" argument
+- |:source| works with anonymous (no file) scripts
 
 ==============================================================================
 5. Changed features					 *nvim-features-changed*
