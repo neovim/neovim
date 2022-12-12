@@ -459,29 +459,6 @@ describe('semantic token highlighting', function()
         {1:~                                       }|
                                                 |
       ]] }
-
-      exec_lua([[
-        vim.lsp.semantic_tokens.start(bufnr, client_id)
-      ]])
-
-      screen:expect { grid = [[
-        #include <iostream>                     |
-                                                |
-        int main()                              |
-        {                                       |
-            int x;                              |
-        #ifdef __cplusplus                      |
-            std::cout << x << "\n";             |
-        #else                                   |
-            printf("%d\n", x);                  |
-        #endif                                  |
-        }                                       |
-        ^}                                       |
-        {1:~                                       }|
-        {1:~                                       }|
-        {1:~                                       }|
-                                                |
-        ]], unchanged = true }
     end)
 
     it('does not send delta requests if not supported by server', function()
