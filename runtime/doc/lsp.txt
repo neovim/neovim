@@ -1340,9 +1340,7 @@ start({bufnr}, {client_id}, {opts})          *vim.lsp.semantic_tokens.start()*
     |vim.lsp.buf_attach_client()|. To opt-out of semantic highlighting with a
     server that supports it, you can delete the semanticTokensProvider table
     from the {server_capabilities} of your client in your |LspAttach| callback
-    or your configuration's `on_attach` callback.
-
-    >lua
+    or your configuration's `on_attach` callback. >lua
 
        client.server_capabilities.semanticTokensProvider = nil
 <
