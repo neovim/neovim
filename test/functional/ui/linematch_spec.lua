@@ -49,12 +49,11 @@ describe('Diff mode screen with 3 diffs open', function()
       [8] = {background = Screen.colors.Red1, bold = true};
       [10] = {foreground = Screen.colors.Brown};
       [9] = {background = Screen.colors.Plum1};
-})
+    })
     feed('<c-w>=')
     feed(':windo set nu!<cr>')
-
-
   end)
+
   describe('setup the diff screen to look like a merge conflict with 3 files in diff mode', function()
     before_each(function()
 
@@ -249,12 +248,11 @@ describe('Diff mode screen with 2 diffs open', function()
       [8] = {background = Screen.colors.Red1, bold = true};
       [10] = {foreground = Screen.colors.Brown};
       [9] = {background = Screen.colors.Plum1};
-})
+    })
     feed('<c-w>=')
     feed(':windo set nu!<cr>')
-
-
   end)
+
   describe('setup a diff with 2 files and set linematch:30', function()
     before_each(function()
       feed(':set diffopt+=linematch:30<cr>')
@@ -977,5 +975,21 @@ something
       :8,10diffget                                                                                        |
       ]])
     end)
+  end)
+end)
+
+describe('regressions', function()
+  local screen
+
+  it("doesn't crash with long lines", function()
+    clear()
+    feed(':set diffopt+=linematch:30<cr>')
+    screen = Screen.new(100, 20)
+    screen:attach()
+    -- line must be greater than MATCH_CHAR_MAX_LEN
+    helpers.curbufmeths.set_lines(0, -1, false, { string.rep('a', 1000)..'hello' })
+    helpers.exec 'vnew'
+    helpers.curbufmeths.set_lines(0, -1, false, { string.rep('a', 1010)..'world' })
+    helpers.exec 'windo diffthis'
   end)
 end)

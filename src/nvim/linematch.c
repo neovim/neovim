@@ -85,7 +85,7 @@ static void update_path_flat(diffcmppath_T *diffcmppath, int score, size_t to, s
   diffcmppath[to].df_path_idx = path_idx + 1;
 }
 
-#define MATCH_CHAR_MAX_LEN 500
+#define MATCH_CHAR_MAX_LEN 800
 
 /// Return matching characters between "s1" and "s2" whilst respecting sequence order.
 /// Consider the case of two strings 'AAACCC' and 'CCCAAA', the
@@ -102,8 +102,8 @@ static void update_path_flat(diffcmppath_T *diffcmppath, int score, size_t to, s
 /// @param s2
 static int matching_chars(const char *s1, const char *s2)
 {
-  size_t s1len = MIN(MATCH_CHAR_MAX_LEN, line_len(s1));
-  size_t s2len = MIN(MATCH_CHAR_MAX_LEN, line_len(s2));
+  size_t s1len = MIN(MATCH_CHAR_MAX_LEN - 1, line_len(s1));
+  size_t s2len = MIN(MATCH_CHAR_MAX_LEN - 1, line_len(s2));
   int matrix[2][MATCH_CHAR_MAX_LEN] = { 0 };
   bool icur = 1;  // save space by storing only two rows for i axis
   for (size_t i = 0; i < s1len; i++) {
