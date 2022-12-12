@@ -263,7 +263,7 @@ API							*dev-api*
 - Avoid "mutually exclusive" parameters--via constraints or limitations, if
   necessary. For example nvim_create_autocmd() has mutually exclusive
   "callback" and "command" args; but the "command" arg could be eliminated by
-  simply not supported Vimscript function names, and treating a string
+  simply not supporting Vimscript function names, and treating a string
   "callback" arg as an Ex command (which can call Vimscript functions). The
   "buffer" arg could also be eliminated by treating a number "pattern" as
   a buffer number.
