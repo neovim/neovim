@@ -227,7 +227,7 @@ Functions:
   |stdpath()|
   |system()|, |systemlist()| can run {cmd} directly (without 'shell')
   |matchadd()| can be called before highlight group is defined
-  |:writefile()| with "p" flag creates parent directories.
+  |writefile()| with "p" flag creates parent directories.
 
 Highlight groups:
   |highlight-blend| controls blend level for a highlight group
