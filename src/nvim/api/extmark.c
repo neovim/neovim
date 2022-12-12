@@ -66,7 +66,7 @@ Integer nvim_create_namespace(String name)
   return (Integer)id;
 }
 
-/// Gets existing, non-anonymous namespaces.
+/// Gets existing, non-anonymous |namespace|s.
 ///
 /// @return dict that maps from names to namespace ids.
 Dictionary nvim_get_namespaces(void)
@@ -195,7 +195,7 @@ static Array extmark_to_array(const ExtmarkInfo *extmark, bool id, bool add_dict
   return rv;
 }
 
-/// Gets the position (0-indexed) of an extmark.
+/// Gets the position (0-indexed) of an |extmark|.
 ///
 /// @param buffer  Buffer handle, or 0 for current buffer
 /// @param ns_id  Namespace id from |nvim_create_namespace()|
@@ -249,7 +249,7 @@ ArrayOf(Integer) nvim_buf_get_extmark_by_id(Buffer buffer, Integer ns_id,
   return extmark_to_array(&extmark, false, details);
 }
 
-/// Gets extmarks in "traversal order" from a |charwise| region defined by
+/// Gets |extmarks| in "traversal order" from a |charwise| region defined by
 /// buffer positions (inclusive, 0-indexed |api-indexing|).
 ///
 /// Region can be given as (row,col) tuples, or valid extmark ids (whose
@@ -368,7 +368,7 @@ Array nvim_buf_get_extmarks(Buffer buffer, Integer ns_id, Object start, Object e
   return rv;
 }
 
-/// Creates or updates an extmark.
+/// Creates or updates an |extmark|.
 ///
 /// By default a new extmark is created when no id is passed in, but it is also
 /// possible to create a new mark by passing in a previously unused id or move
@@ -814,7 +814,7 @@ error:
   return 0;
 }
 
-/// Removes an extmark.
+/// Removes an |extmark|.
 ///
 /// @param buffer Buffer handle, or 0 for current buffer
 /// @param ns_id Namespace id from |nvim_create_namespace()|
@@ -929,7 +929,7 @@ Integer nvim_buf_add_highlight(Buffer buffer, Integer ns_id, String hl_group, In
   return ns_id;
 }
 
-/// Clears namespaced objects (highlights, extmarks, virtual text) from
+/// Clears |namespace|d objects (highlights, |extmarks|, virtual text) from
 /// a region.
 ///
 /// Lines are 0-indexed. |api-indexing|  To clear the namespace in the entire
@@ -962,12 +962,12 @@ void nvim_buf_clear_namespace(Buffer buffer, Integer ns_id, Integer line_start, 
                 (int)line_end - 1, MAXCOL);
 }
 
-/// Set or change decoration provider for a namespace
+/// Set or change decoration provider for a |namespace|
 ///
 /// This is a very general purpose interface for having lua callbacks
 /// being triggered during the redraw code.
 ///
-/// The expected usage is to set extmarks for the currently
+/// The expected usage is to set |extmarks| for the currently
 /// redrawn buffer. |nvim_buf_set_extmark()| can be called to add marks
 /// on a per-window or per-lines basis. Use the `ephemeral` key to only
 /// use the mark for the current screen redraw (the callback will be called
@@ -1051,7 +1051,7 @@ error:
   decor_provider_clear(p);
 }
 
-/// Gets the line and column of an extmark.
+/// Gets the line and column of an |extmark|.
 ///
 /// Extmarks may be queried by position, name or even special names
 /// in the future such as "cursor".
