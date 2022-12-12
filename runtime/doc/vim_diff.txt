@@ -278,16 +278,17 @@ Variables:
   |v:progpath| is always absolute ("full")
   |v:windowid| is always available (for use by external UIs)
 
-FEATURES UPSTREAMED TO VIM
+==============================================================================
+4. Upstreamed features					 *nvim-upstreamed*
 
 These Nvim features were later integrated into Vim.
 
-- |:source| works with Lua and anonymous (no file) scripts
-- 'wildoptions' "pum" flag to use popupmenu for wildmode completion
+- |:source| works anonymous (no file) scripts
+- 'wildoptions' "pum" flag enables popupmenu for wildmode completion
 - |:sign-define| accepts a `numhl` argument, to highlight the line number
 
 ==============================================================================
-4. Changed features					 *nvim-features-changed*
+5. Changed features					 *nvim-features-changed*
 
 Nvim always builds with all features, in contrast to Vim which may have
 certain features removed/added at compile-time. |feature-compile|
@@ -509,7 +510,7 @@ Working directory (Vim implemented some of these later than Nvim):
   working directory. Use `getcwd(-1, -1)` to get the global working directory.
 
 ==============================================================================
-5. Missing legacy features				 *nvim-features-missing*
+6. Missing legacy features				 *nvim-features-missing*
 
 Some legacy Vim features are not yet implemented:
 
@@ -522,7 +523,7 @@ Some legacy Vim features are not yet implemented:
 *:gvim*
 
 ==============================================================================
-6. Removed features					 *nvim-features-removed*
+7. Removed features					 *nvim-features-removed*
 
 These Vim features were intentionally removed from Nvim.
 
