@@ -254,8 +254,7 @@ LUA							*dev-lua*
 - Avoid requiring or returning special objects in the Nvim stdlib. Plain
   tables or values are easier to serialize, easier to construct from literals,
   easier to inspect and print, and inherently compatible with all Lua plugins.
-  (This guideline doesn't apply to opaque, non-data interfaces like
-  |vim.cmd()|.)
+  (This guideline doesn't apply to opaque, non-data objects like `vim.cmd`.)
 
 
 API							*dev-api*
