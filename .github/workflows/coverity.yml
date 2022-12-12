@@ -37,7 +37,7 @@ jobs:
             --form email=$EMAIL \
             --form file=@cov-scan.tgz \
             --form version="$(git rev-parse HEAD)" \
-            --form description="Weekly GHA scan" \
+            --form description="Daily GHA scan" \
             'https://scan.coverity.com/builds?project=neovim%2Fneovim'
         env:
           TOKEN: ${{ secrets.COVERITY_SCAN_TOKEN }}

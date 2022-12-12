@@ -1691,7 +1691,7 @@ static void command_line_next_histidx(CommandLineState *s, bool next_match)
 }
 
 /// Handle the Up, Down, Page Up, Page down, CTRL-N and CTRL-P key in the
-/// command-line mode. The pressed key is in 'c'.
+/// command-line mode.
 static int command_line_browse_history(CommandLineState *s)
 {
   if (s->histype == HIST_INVALID || get_hislen() == 0 || s->firstc == NUL) {
