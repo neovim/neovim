@@ -304,4 +304,17 @@ func Test_getmarklist()
   close!
 endfunc
 
+" This was using freed memory
+func Test_jump_mark_autocmd()
+  next 00
+  edit 0
+  sargument
+  au BufEnter 0 all
+  sil norm 
+
+  au! BufEnter
+  bwipe!
+endfunc
+
+
 " vim: shiftwidth=2 sts=2 expandtab

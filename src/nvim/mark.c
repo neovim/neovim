@@ -551,6 +551,7 @@ MarkMoveRes mark_move_to(fmark_T *fm, MarkMove flags)
     // Need to change buffer
     fm_copy = *fm;  // Copy, autocommand may change it
     fm = &fm_copy;
+    // Jump to the file with the mark
     res |= switch_to_mark_buf(fm, !(flags & kMarkJumpList));
     // Failed switching buffer
     if (res & kMarkMoveFailed) {
@@ -568,6 +569,7 @@ MarkMoveRes mark_move_to(fmark_T *fm, MarkMove flags)
   // Move the cursor while keeping track of what changed for the caller
   pos_T prev_pos = curwin->w_cursor;
   pos_T pos = fm->mark;
+  // Set lnum again, autocommands my have changed it
   curwin->w_cursor = fm->mark;
   if (flags & kMarkBeginLine) {
     beginline(BL_WHITE | BL_FIX);
