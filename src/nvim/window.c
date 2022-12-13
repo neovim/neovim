@@ -494,6 +494,7 @@ newwindow:
     // Execute the command right here, required when
     // "wincmd ]" was used in a function.
     do_nv_ident(Ctrl_RSB, NUL);
+    postponed_split = 0;
     break;
 
   // edit file name under cursor in a new window
@@ -594,6 +595,7 @@ wingotofile:
       // Execute the command right here, required when
       // "wincmd g}" was used in a function.
       do_nv_ident('g', xchar);
+      postponed_split = 0;
       break;
 
     case 'f':                       // CTRL-W gf: "gf" in a new tab page
