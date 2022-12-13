@@ -78,7 +78,6 @@ centralized reference of the differences.
 
 - |g:vimsyn_embed| defaults to "l" to enable Lua highlighting
 
-
 Default Mouse ~
 						*default-mouse* *disable-mouse*
 By default the mouse is enabled, and <RightMouse> opens a |popup-menu| with
@@ -99,7 +98,10 @@ the following:
     \ autocmd CursorMoved * ++once set mouse&<Bar>
     \ echo 'mouse ON'<CR>
 <
-
+To remove the "How-to disable mouse" menu item and the separator above it: >vim
+  aunmenu PopUp.How-to\ disable\ mouse
+  aunmenu PopUp.-1-
+<
 Default Mappings ~
 							*default-mappings*
 Nvim creates the following default mappings at |startup|. You can disable any
