@@ -191,17 +191,17 @@ func s:CompleteDone_CompleteFuncDict( findstart, base )
   endif
 
   return {
-          \ 'words': [
-            \ {
-              \ 'word': 'aword',
-              \ 'abbr': 'wrd',
-              \ 'menu': 'extra text',
-              \ 'info': 'words are cool',
-              \ 'kind': 'W',
-              \ 'user_data': ['one', 'two']
-            \ }
-          \ ]
-        \ }
+	  \ 'words': [
+	    \ {
+	      \ 'word': 'aword',
+	      \ 'abbr': 'wrd',
+	      \ 'menu': 'extra text',
+	      \ 'info': 'words are cool',
+	      \ 'kind': 'W',
+	      \ 'user_data': ['one', 'two']
+	    \ }
+	  \ ]
+	\ }
 endfunc
 
 func s:CompleteDone_CheckCompletedItemNone()
@@ -261,16 +261,16 @@ func s:CompleteDone_CompleteFuncDictNoUserData(findstart, base)
   endif
 
   return {
-          \ 'words': [
-            \ {
-              \ 'word': 'aword',
-              \ 'abbr': 'wrd',
-              \ 'menu': 'extra text',
-              \ 'info': 'words are cool',
-              \ 'kind': 'W'
-            \ }
-          \ ]
-        \ }
+	  \ 'words': [
+	    \ {
+	      \ 'word': 'aword',
+	      \ 'abbr': 'wrd',
+	      \ 'menu': 'extra text',
+	      \ 'info': 'words are cool',
+	      \ 'kind': 'W',
+	    \ }
+	  \ ]
+	\ }
 endfunc
 
 func s:CompleteDone_CheckCompletedItemDictNoUserData()
