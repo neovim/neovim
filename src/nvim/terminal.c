@@ -168,6 +168,7 @@ static VTermScreenCallbacks vterm_screen_callbacks = {
   .bell        = term_bell,
   .sb_pushline = term_sb_push,  // Called before a line goes offscreen.
   .sb_popline  = term_sb_pop,
+  .sb_clear    = term_sb_clear,
 };
 
 static PMap(ptr_t) invalidated_terminals = MAP_INIT;
@@ -1066,6 +1067,25 @@ static int term_sb_pop(int cols, VTermScreenCell *cells, void *data)
 
   xfree(sbrow);
   pmap_put(ptr_t)(&invalidated_terminals, term, NULL);
+
+  return 1;
+}
+
+static int term_sb_clear(void *data)
+{
+  Terminal *term = data;
+
+  if (!term->sb_size || !term->sb_current) {
+    return 1;
+  }
+
+  for (size_t i = 0; i < term->sb_current; i++) {
+    xfree(term->sb_buffer[i]);
+  }
+
+  term->sb_current = 0;
+  term->sb_pending = 0;
+  refresh_terminal(term);
 
   return 1;
 }

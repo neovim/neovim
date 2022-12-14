@@ -56,6 +56,29 @@ describe(':terminal scrollback', function()
                                       |
       ]])
     end)
+
+    it('ED 3 clears scrollback #21403', function()
+      feed_data('\027[3J\n')
+      screen:expect([[
+        line27                        |
+        line28                        |
+        line29                        |
+        line30                        |
+                                      |
+        {1: }                             |
+        {3:-- TERMINAL --}                |
+      ]])
+      feed('<c-\\><c-n>gg')
+      screen:expect([[
+        ^line26                        |
+        line27                        |
+        line28                        |
+        line29                        |
+        line30                        |
+                                      |
+                                      |
+      ]])
+    end)
   end)
 
   describe('with cursor at last row', function()
