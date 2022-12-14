@@ -24,6 +24,7 @@ local function test_terminal_scrollback(hide_curbuf)
   local chan --- @type integer
   local otherbuf --- @type integer
   local restore_terminal_mode --- @type boolean?
+  local save_feed_data = feed_data
 
   local function may_hide_curbuf()
     if hide_curbuf then
@@ -56,6 +57,18 @@ local function test_terminal_scrollback(hide_curbuf)
     end
   end
 
+  setup(function()
+    feed_data = function(data)
+      may_hide_curbuf()
+      api.nvim_chan_send(chan, data)
+      may_restore_curbuf()
+    end
+  end)
+
+  teardown(function()
+    feed_data = save_feed_data
+  end)
+
   --- @param prefix string
   --- @param start integer
   --- @param stop integer
@@ -69,6 +82,12 @@ local function test_terminal_scrollback(hide_curbuf)
     retry(nil, 1000, function()
       eq({ prefix .. tostring(stop), '' }, api.nvim_buf_get_lines(buf, -3, -1, true))
     end)
+    may_restore_curbuf()
+  end
+
+  local function try_resize(width, height)
+    may_hide_curbuf()
+    screen:try_resize(width, height)
     may_restore_curbuf()
   end
 
@@ -95,6 +114,7 @@ local function test_terminal_scrollback(hide_curbuf)
         ^                              |
         {5:-- TERMINAL --}                |
       ]])
+      eq(16, api.nvim_buf_line_count(0))
     end)
 
     it('will delete extra lines at the top', function()
@@ -126,7 +146,7 @@ local function test_terminal_scrollback(hide_curbuf)
         ]])
       end)
 
-      it("when outputting fewer than 'scrollback' lines", function()
+      it("outputting fewer than 'scrollback' lines", function()
         feed_lines('new_line', 1, 6)
         screen:expect([[
           line26                        |
@@ -141,7 +161,7 @@ local function test_terminal_scrollback(hide_curbuf)
         eq({ 0, 7, 6, 0 }, fn.getpos('.'))
       end)
 
-      it("when outputting more than 'scrollback' lines", function()
+      it("outputting more than 'scrollback' lines", function()
         feed_lines('new_line', 1, 11)
         screen:expect([[
           line27                        |
@@ -156,7 +176,7 @@ local function test_terminal_scrollback(hide_curbuf)
         eq({ 0, 2, 6, 0 }, fn.getpos('.'))
       end)
 
-      it('when outputting more lines than whole buffer', function()
+      it('outputting more lines than whole buffer', function()
         feed_lines('new_line', 1, 20)
         screen:expect([[
           ^new_line6                     |
@@ -169,6 +189,53 @@ local function test_terminal_scrollback(hide_curbuf)
         ]])
         eq({ 0, 0, 0, 0 }, fn.getpos("'m"))
         eq({ 0, 1, 1, 0 }, fn.getpos('.'))
+      end)
+
+      it('clearing scrollback with ED 3', function()
+        feed_data('\027[3J')
+        screen:expect_unchanged(hide_curbuf)
+        eq({ 0, 3, 4, 0 }, fn.getpos("'m"))
+        eq({ 0, 3, 6, 0 }, fn.getpos('.'))
+        feed('gg')
+        screen:expect([[
+          line2^6                        |
+          line27                        |
+          {101:line28}                        |
+          line29                        |
+          line30                        |
+                                        |*2
+        ]])
+      end)
+
+      it('clearing scrollback with ED 3 and outputting lines', function()
+        feed_data('\027[3J' .. 'new_line1\nnew_line2\nnew_line3')
+        screen:expect([[
+          line26                        |
+          line27                        |
+          {101:line2^8}                        |
+          line29                        |
+          line30                        |
+          new_line1                     |
+                                        |
+        ]])
+        eq({ 0, 3, 4, 0 }, fn.getpos("'m"))
+        eq({ 0, 3, 6, 0 }, fn.getpos('.'))
+      end)
+
+      it('clearing scrollback with ED 3 between outputting lines', function()
+        skip(is_os('win'), 'FIXME: wrong behavior on Windows, ConPTY bug?')
+        feed_data('line31\nline32\n' .. '\027[3J' .. 'new_line1\nnew_line2')
+        screen:expect([[
+          {101:line2^8}                        |
+          line29                        |
+          line30                        |
+          line31                        |
+          line32                        |
+          new_line1                     |
+                                        |
+        ]])
+        eq({ 0, 1, 4, 0 }, fn.getpos("'m"))
+        eq({ 0, 1, 6, 0 }, fn.getpos('.'))
       end)
     end)
 
@@ -189,14 +256,14 @@ local function test_terminal_scrollback(hide_curbuf)
         ]])
       end)
 
-      it("when outputting fewer than 'scrollback' lines", function()
+      it("outputting fewer than 'scrollback' lines", function()
         feed_lines('new_line', 1, 6)
         screen:expect_unchanged(hide_curbuf)
         eq({ 0, 4, 4, 0 }, fn.getpos("'m"))
         eq({ 0, 4, 6, 0 }, fn.getpos('.'))
       end)
 
-      it("when outputting more than 'scrollback' lines", function()
+      it("outputting more than 'scrollback' lines", function()
         feed_lines('new_line', 1, 11)
         screen:expect([[
           ^line27                        |
@@ -210,6 +277,76 @@ local function test_terminal_scrollback(hide_curbuf)
         eq({ 0, 0, 0, 0 }, fn.getpos("'m"))
         eq({ 0, 1, 1, 0 }, fn.getpos('.'))
       end)
+    end)
+
+    it('changing window height does not duplicate lines', function()
+      -- XXX: Can't test this reliably on Windows unless the cursor is _moved_
+      --      by the resize. http://docs.libuv.org/en/v1.x/signal.html
+      --      See also: https://github.com/rprichard/winpty/issues/110
+      skip(is_os('win'))
+      try_resize(screen._width, screen._height + 4)
+      screen:expect([[
+        line23                        |
+        line24                        |
+        line25                        |
+        line26                        |
+        line27                        |
+        line28                        |
+        line29                        |
+        line30                        |
+        rows: 10, cols: 30            |
+        ^                              |
+        {5:-- TERMINAL --}                |
+      ]])
+      eq(17, api.nvim_buf_line_count(0))
+      try_resize(screen._width, screen._height - 2)
+      screen:expect([[
+        line26                        |
+        line27                        |
+        line28                        |
+        line29                        |
+        line30                        |
+        rows: 10, cols: 30            |
+        rows: 8, cols: 30             |
+        ^                              |
+        {5:-- TERMINAL --}                |
+      ]])
+      eq(18, api.nvim_buf_line_count(0))
+      try_resize(screen._width, screen._height - 3)
+      screen:expect([[
+        line30                        |
+        rows: 10, cols: 30            |
+        rows: 8, cols: 30             |
+        rows: 5, cols: 30             |
+        ^                              |
+        {5:-- TERMINAL --}                |
+      ]])
+      eq(15, api.nvim_buf_line_count(0))
+      try_resize(screen._width, screen._height + 3)
+      screen:expect([[
+        line28                        |
+        line29                        |
+        line30                        |
+        rows: 10, cols: 30            |
+        rows: 8, cols: 30             |
+        rows: 5, cols: 30             |
+        rows: 8, cols: 30             |
+        ^                              |
+        {5:-- TERMINAL --}                |
+      ]])
+      eq(16, api.nvim_buf_line_count(0))
+      feed([[<C-\><C-N>8<C-Y>]])
+      screen:expect([[
+        line20                        |
+        line21                        |
+        line22                        |
+        line23                        |
+        line24                        |
+        line25                        |
+        line26                        |
+        ^line27                        |
+                                      |
+      ]])
     end)
   end)
 
@@ -239,7 +376,7 @@ local function test_terminal_scrollback(hide_curbuf)
       ]])
     end)
 
-    it("when outputting more than 'scrollback' lines in Normal mode", function()
+    it("outputting more than 'scrollback' lines in Normal mode", function()
       feed([[<C-\><C-N>]])
       feed_lines('new_line', 1, 11)
       screen:expect([[
@@ -283,6 +420,79 @@ local function test_terminal_scrollback(hide_curbuf)
         new_line22                    |
                                       |
       ]])
+      eq({ 0, 0, 0, 0 }, fn.getpos("'m"))
+    end)
+
+    it('clearing scrollback with ED 3', function()
+      -- Clearing empty scrollback and then outputting a line
+      feed_data('\027[3J' .. 'line5\n')
+      screen:expect([[
+        line1                         |
+        {101:line2}                         |
+        line3                         |
+        line4                         |
+        line5                         |
+        ^                              |
+        {5:-- TERMINAL --}                |
+      ]])
+      eq(7, api.nvim_buf_line_count(0))
+      eq({ 0, 3, 4, 0 }, fn.getpos("'m"))
+      -- Clearing 1 line of scrollback
+      feed_data('\027[3J')
+      screen:expect_unchanged(hide_curbuf)
+      eq(6, api.nvim_buf_line_count(0))
+      eq({ 0, 2, 4, 0 }, fn.getpos("'m"))
+      -- Outputting a line
+      feed_data('line6\n')
+      screen:expect([[
+        {101:line2}                         |
+        line3                         |
+        line4                         |
+        line5                         |
+        line6                         |
+        ^                              |
+        {5:-- TERMINAL --}                |
+      ]])
+      eq(7, api.nvim_buf_line_count(0))
+      eq({ 0, 2, 4, 0 }, fn.getpos("'m"))
+      -- Clearing 1 line of scrollback and then outputting a line
+      feed_data('\027[3J' .. 'line7\n')
+      screen:expect([[
+        line3                         |
+        line4                         |
+        line5                         |
+        line6                         |
+        line7                         |
+        ^                              |
+        {5:-- TERMINAL --}                |
+      ]])
+      eq(7, api.nvim_buf_line_count(0))
+      eq({ 0, 1, 4, 0 }, fn.getpos("'m"))
+      -- Check first line of buffer in Normal mode
+      feed([[<C-\><C-N>gg]])
+      screen:expect([[
+        {101:^line2}                         |
+        line3                         |
+        line4                         |
+        line5                         |
+        line6                         |
+        line7                         |
+                                      |
+      ]])
+      feed('G')
+      -- Outputting lines and then clearing scrollback
+      skip(is_os('win'), 'FIXME: wrong behavior on Windows, ConPTY bug?')
+      feed_data('line8\nline9\n' .. '\027[3J')
+      screen:expect([[
+        line5                         |
+        line6                         |
+        line7                         |
+        line8                         |
+        line9                         |
+        ^                              |
+                                      |
+      ]])
+      eq(6, api.nvim_buf_line_count(0))
       eq({ 0, 0, 0, 0 }, fn.getpos("'m"))
     end)
 
@@ -361,9 +571,7 @@ local function test_terminal_scrollback(hide_curbuf)
     describe('and height decreased by 1', function()
       local function will_hide_top_line()
         feed([[<C-\><C-N>]])
-        may_hide_curbuf()
-        screen:try_resize(screen._width - 2, screen._height - 1)
-        may_restore_curbuf()
+        try_resize(screen._width - 2, screen._height - 1)
         screen:expect([[
           {101:line2}                       |
           line3                       |
@@ -380,9 +588,7 @@ local function test_terminal_scrollback(hide_curbuf)
       describe('and then decreased by 2', function()
         before_each(function()
           will_hide_top_line()
-          may_hide_curbuf()
-          screen:try_resize(screen._width - 2, screen._height - 2)
-          may_restore_curbuf()
+          try_resize(screen._width - 2, screen._height - 2)
         end)
 
         it('will hide the top 3 lines', function()
@@ -423,9 +629,7 @@ local function test_terminal_scrollback(hide_curbuf)
 
     describe('and the height is decreased by 2', function()
       before_each(function()
-        may_hide_curbuf()
-        screen:try_resize(screen._width, screen._height - 2)
-        may_restore_curbuf()
+        try_resize(screen._width, screen._height - 2)
       end)
 
       local function will_delete_last_two_lines()
@@ -444,9 +648,7 @@ local function test_terminal_scrollback(hide_curbuf)
       describe('and then decreased by 1', function()
         before_each(function()
           will_delete_last_two_lines()
-          may_hide_curbuf()
-          screen:try_resize(screen._width, screen._height - 1)
-          may_restore_curbuf()
+          try_resize(screen._width, screen._height - 1)
         end)
 
         it('will delete the last line and hide the first', function()
@@ -500,9 +702,7 @@ local function test_terminal_scrollback(hide_curbuf)
         ^                              |
         {5:-- TERMINAL --}                |
       ]])
-      may_hide_curbuf()
-      screen:try_resize(screen._width, screen._height - 3)
-      may_restore_curbuf()
+      try_resize(screen._width, screen._height - 3)
       screen:expect([[
         line4                         |
         rows: 3, cols: 30             |
@@ -520,9 +720,7 @@ local function test_terminal_scrollback(hide_curbuf)
         return
       end
       local function pop_then_push()
-        may_hide_curbuf()
-        screen:try_resize(screen._width, screen._height + 1)
-        may_restore_curbuf()
+        try_resize(screen._width, screen._height + 1)
         screen:expect([[
           line4                         |
           rows: 3, cols: 30             |
@@ -539,9 +737,7 @@ local function test_terminal_scrollback(hide_curbuf)
         before_each(function()
           pop_then_push()
           eq(8, api.nvim_buf_line_count(0))
-          may_hide_curbuf()
-          screen:try_resize(screen._width, screen._height + 3)
-          may_restore_curbuf()
+          try_resize(screen._width, screen._height + 3)
         end)
 
         local function pop3_then_push1()
@@ -576,9 +772,7 @@ local function test_terminal_scrollback(hide_curbuf)
           before_each(function()
             pop3_then_push1()
             feed('Gi')
-            may_hide_curbuf()
-            screen:try_resize(screen._width, screen._height + 4)
-            may_restore_curbuf()
+            try_resize(screen._width, screen._height + 4)
           end)
 
           it('will show all lines and leave a blank one at the end', function()
