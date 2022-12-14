@@ -72,6 +72,7 @@ Defaults					            *nvim-defaults*
 - 'wildmenu' is enabled
 - 'wildoptions' defaults to "pum,tagfile"
 
+- |editorconfig| plugin is enabled, .editorconfig settings are applied.
 - |man.lua| plugin is enabled, so |:Man| is available by default.
 - |matchit| plugin is enabled. To disable it in your config: >vim
     :let loaded_matchit = 1

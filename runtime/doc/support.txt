@@ -14,11 +14,15 @@ Supported platforms					 *supported-platforms*
 `System`          `Tier`      `Versions`                  `Tested versions`
 Linux            1      >= 2.6.32, glibc >= 2.12     Ubuntu 22.04
 macOS (Intel)    1      >= 10.15                     macOS 12
-Windows 64-bit   1      >= 8                         Windows Server 2019
+Windows 64-bit   1      >= 8 (see note below)        Windows Server 2019
 FreeBSD          1      >= 10                        FreeBSD 13
 macOS (M1)       2      >= 10.15
 OpenBSD          2      >= 7
 MinGW            2      MinGW-w64
+
+Note: Windows 10 "Version 1809" or later is required for |:terminal|. To check
+your Windows version, run the "winver" command and look for "Version xxxx"
+(NOT "OS Build").
 
 Support types ~
 

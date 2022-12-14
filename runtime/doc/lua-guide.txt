@@ -657,7 +657,7 @@ See also
 • |nvim_exec_autocmds()|: execute all matching autocommands
 
 ==============================================================================
-User commands                                           *lua-guide-usercommands*
+User commands                                           *lua-guide-commands*
 
 |user-commands| are custom Vim commands that call a Vimscript or Lua function.
 Just like built-in commands, they can have arguments, act on ranges, or have
@@ -665,7 +665,7 @@ custom completion of arguments. As these are most useful for plugins, we will
 cover only the basics of this advanced topic.
 
 ------------------------------------------------------------------------------
-Creating user commands                           *lua-guide-usercommands-create*
+Creating user commands                           *lua-guide-commands-create*
 
 User commands can be created through the Neovim API with
 `vim.api.`|nvim_create_user_command()|. This function takes three mandatory
@@ -734,7 +734,7 @@ the remaining arguments are the same as for |nvim_create_user_command()|:
       { nargs = 1 })
 <
 ------------------------------------------------------------------------------
-Deleting user commands                           *lua-guide-usercommands-delete*
+Deleting user commands                           *lua-guide-commands-delete*
 
 User commands can be deleted with `vim.api.`|nvim_del_user_command()|. The only
 argument is the name of the command:

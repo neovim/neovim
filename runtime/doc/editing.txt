@@ -1668,29 +1668,26 @@ There are three different types of searching:
 ==============================================================================
 12. Trusted Files						*trust*
 
-Nvim has the ability to execute arbitrary code through the 'exrc' option. In
-order to prevent executing code from untrusted sources, Nvim has the concept of
-"trusted files". An untrusted file will not be executed without the user's
-consent, and a user can permanently mark a file as trusted or untrusted using
-the |:trust| command or the |vim.secure.read()| function.
+Nvim executes arbitrary code found on the filesystem if 'exrc' is enabled. To
+prevent executing malicious code, only "trusted files" are executed. You can
+mark a file as trusted or untrusted using the |:trust| command or the
+|vim.secure.read()| function.
 
 							*:trust* *E5570*
-:trust [++deny] [++remove] [{file}]
+:trust [++deny] [++remove] [file]
 
-			Manage files in the trust database. Without any options
-			or arguments, :trust adds the file associated with the
-			current buffer to the trust database, along with the
-			SHA256 hash of its contents.
+			Manage trusted files. Without ++ options, :trust marks
+			[file] (or current buffer if no [file]) as trusted,
+			keyed on a hash of its contents. The trust list is
+			stored on disk, Nvim will re-use it after restarting.
 
-			[++deny] marks the file associated with the current
-			buffer (or {file}, if given) as denied; no prompts will
-			be displayed to the user and the file will never be
-			executed.
+			[++deny] marks [file] (or current buffer if no [file]) as
+			untrusted: it will never be executed, 'exrc' will
+			ignore it.
 
-			[++remove] removes the file associated with the current
-			buffer (or {file}, if given) from the trust database.
-			Future attempts to read the file in a secure setting
-			(i.e. with 'exrc' or |vim.secure.read()|) will prompt
-			the user if the file is trusted.
+			[++remove] removes [file] (or current buffer if no
+			[file]) from the trust list. When the file is
+			discovered by 'exrc' or |vim.secure.read()|, the user
+			will be asked whether to trust or deny the file.
 
  vim:tw=78:ts=8:noet:ft=help:norl:

@@ -1442,15 +1442,14 @@ ArrayOf(Dictionary) nvim_get_keymap(String mode)
 ///               or "!" for |:map!|, or empty string for |:map|.
 /// @param  lhs   Left-hand-side |{lhs}| of the mapping.
 /// @param  rhs   Right-hand-side |{rhs}| of the mapping.
-/// @param  opts  Optional parameters map: keys are |:map-arguments|, values are booleans (default
-///               false). Accepts all |:map-arguments| as keys excluding |<buffer>| but including
-///               |:noremap| and "desc". Unknown key is an error.
-///               "desc" can be used to give a description to the mapping.
-///               When called from Lua, also accepts a "callback" key that takes a Lua function to
-///               call when the mapping is executed.
-///               When "expr" is true, "replace_keycodes" (boolean) can be used to replace keycodes
-///               in the resulting string (see |nvim_replace_termcodes()|), and a Lua callback
-///               returning `nil` is equivalent to returning an empty string.
+/// @param  opts  Optional parameters map: Accepts all |:map-arguments| as keys except |<buffer>|,
+///               values are booleans (default false). Also:
+///               - "noremap" non-recursive mapping |:noremap|
+///               - "desc" human-readable description.
+///               - "callback" Lua function called when the mapping is executed.
+///               - "replace_keycodes" (boolean) When "expr" is true, replace keycodes in the
+///                 resulting string (see |nvim_replace_termcodes()|). Returning nil from the Lua
+///                 "callback" is equivalent to returning an empty string.
 /// @param[out]   err   Error details, if any.
 void nvim_set_keymap(uint64_t channel_id, String mode, String lhs, String rhs, Dict(keymap) *opts,
                      Error *err)
