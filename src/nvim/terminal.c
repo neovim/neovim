@@ -1439,8 +1439,8 @@ static bool send_mouse_event(Terminal *term, int c)
     int direction = c == K_MOUSEDOWN ? MSCR_DOWN : MSCR_UP;
     if (mod_mask & (MOD_MASK_SHIFT | MOD_MASK_CTRL)) {
       scroll_redraw(direction, curwin->w_botline - curwin->w_topline);
-    } else {
-      scroll_redraw(direction, 3L);
+    } else if (p_mousescroll_vert > 0) {
+      scroll_redraw(direction, p_mousescroll_vert);
     }
 
     curwin->w_redr_status = true;
