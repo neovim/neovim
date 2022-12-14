@@ -586,13 +586,13 @@ function M.stop(bufnr, client_id)
 end
 
 --- Return the semantic token(s) at the given position.
---- If called without argument, returns the token under the cursor.
+--- If called without arguments, returns the token under the cursor.
 ---
 ---@param bufnr number|nil Buffer number (0 for current buffer, default)
 ---@param row number|nil Position row (default cursor position)
 ---@param col number|nil Position column (default cursor position)
 ---
----@return table[]|nil tokens Table of tokens at position
+---@return table|nil (table|nil) List of tokens at position
 function M.get_at_pos(bufnr, row, col)
   if bufnr == nil or bufnr == 0 then
     bufnr = api.nvim_get_current_buf()
@@ -609,7 +609,7 @@ function M.get_at_pos(bufnr, row, col)
   end
 
   local tokens = {}
-  for _, client in pairs(highlighter.client_state) do
+  for client_id, client in pairs(highlighter.client_state) do
     local highlights = client.current_result.highlights
     if highlights then
       local idx = binary_search(highlights, row)
@@ -621,6 +621,7 @@ function M.get_at_pos(bufnr, row, col)
         end
 
         if token.start_col <= col and token.end_col > col then
+          token.client_id = client_id
           tokens[#tokens + 1] = token
         end
       end

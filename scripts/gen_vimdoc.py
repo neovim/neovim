@@ -125,6 +125,7 @@ CONFIG = {
         'filename': 'lua.txt',
         'section_order': [
             '_editor.lua',
+            '_inspector.lua',
             'shared.lua',
             'uri.lua',
             'ui.lua',
@@ -142,11 +143,13 @@ CONFIG = {
             'runtime/lua/vim/keymap.lua',
             'runtime/lua/vim/fs.lua',
             'runtime/lua/vim/secure.lua',
+            'runtime/lua/vim/_inspector.lua',
         ],
         'file_patterns': '*.lua',
         'fn_name_prefix': '',
         'section_name': {
             'lsp.lua': 'core',
+            '_inspector.lua': 'inspector',
         },
         'section_fmt': lambda name: (
             'Lua module: vim'
@@ -163,6 +166,7 @@ CONFIG = {
         'module_override': {
             # `shared` functions are exposed on the `vim` module.
             'shared': 'vim',
+            '_inspector': 'vim',
             'uri': 'vim',
             'ui': 'vim.ui',
             'filetype': 'vim.filetype',
@@ -344,6 +348,17 @@ def self_or_child(n):
     if len(n.childNodes) == 0:
         return n
     return n.childNodes[0]
+
+
+def align_tags(line):
+    tag_regex = r"\s(\*.+?\*)(?:\s|$)"
+    tags = re.findall(tag_regex, line)
+
+    if len(tags) > 0:
+        line = re.sub(tag_regex, "", line)
+        tags = " " + " ".join(tags)
+        line = line + (" " * (78 - len(line) - len(tags))) + tags
+    return line
 
 
 def clean_lines(text):
@@ -950,7 +965,7 @@ def fmt_doxygen_xml_as_vimhelp(filename, target):
 
             start = end
 
-        func_doc = "\n".join(split_lines)
+        func_doc = "\n".join(map(align_tags, split_lines))
 
         if (name.startswith(CONFIG[target]['fn_name_prefix'])
            and name != "nvim_error_event"):
