@@ -12,6 +12,7 @@ describe(':grep', function()
     end
 
     command([[set grepprg=grep\ -r]])
+    command([[set grepformat=%f:%l:%m]])
     -- Change to test directory so that the test does not run too long.
     command('cd test')
     command('grep a **/*')
@@ -19,15 +20,15 @@ describe(':grep', function()
     ok(eval('len(getqflist())') > 9000)  -- IT'S OVER 9000!!1
   end)
 
-  it('works when both shellpipe and makeef are unset', function()
+  it('works when makeef is set', function()
     if eval("executable('grep')") == 0 then
       pending('missing "grep" command')
       return
     end
 
-    command([[set grepprg=grep\ -r]])
-    command([[set shellpipe=]])
-    command([[set makeef=]])
+    command([[set grepprg=grep\ -r\ >\ grep_spec.tempfile]])
+    command([[set grepformat=%f:%l:%m]])
+    command([[set makeef=grep_spec.tempfile]])
     -- Change to test directory so that the test does not run too long.
     command('cd test')
     command('grep a **/*')

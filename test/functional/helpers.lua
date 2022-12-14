@@ -588,7 +588,6 @@ function module.set_shell_powershell(fake)
     let &shell = ']]..shell..[['
     set shellquote= shellxquote=
     let &shellcmdflag = '-NoLogo -NoProfile -ExecutionPolicy RemoteSigned -Command ]]..cmd..[['
-    let &shellpipe = '2>&1 | Out-File -Encoding UTF8 %s; exit $LastExitCode'
     let &shellredir = '2>&1 | Out-File -Encoding UTF8 %s; exit $LastExitCode'
   ]])
   return found

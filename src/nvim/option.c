@@ -595,37 +595,25 @@ void set_init_3(void)
 {
   parse_shape_opt(SHAPE_CURSOR);   // set cursor shapes from 'guicursor'
 
-  // Set 'shellpipe' and 'shellredir', depending on the 'shell' option.
+  // Set 'shellredir', depending on the 'shell' option.
   // This is done after other initializations, where 'shell' might have been
   // set, but only if they have not been set before.
   int idx_srr = findoption("srr");
   int do_srr = (idx_srr < 0)
     ? false
     : !(options[idx_srr].flags & P_WAS_SET);
-  int idx_sp = findoption("sp");
-  int do_sp = (idx_sp < 0)
-    ? false
-    : !(options[idx_sp].flags & P_WAS_SET);
-
-  size_t len = 0;
-  char *p = (char *)invocation_path_tail(p_sh, &len);
-  p = xstrnsave(p, len);
-
-  {
+  if (do_srr) {
+    size_t len = 0;
+    char *p = (char *)invocation_path_tail(p_sh, &len);
+    p = xstrnsave(p, len);
     //
-    // Default for p_sp is "| tee", for p_srr is ">".
+    // Default for p_srr is ">".
     // For known shells it is changed here to include stderr.
     //
     if (path_fnamecmp(p, "csh") == 0
         || path_fnamecmp(p, "tcsh") == 0) {
-      if (do_sp) {
-        p_sp = "|& tee";
-        options[idx_sp].def_val = p_sp;
-      }
-      if (do_srr) {
-        p_srr = ">&";
-        options[idx_srr].def_val = p_srr;
-      }
+      p_srr = ">&";
+      options[idx_srr].def_val = p_srr;
     } else if (path_fnamecmp(p, "sh") == 0
                || path_fnamecmp(p, "ksh") == 0
                || path_fnamecmp(p, "mksh") == 0
@@ -637,14 +625,8 @@ void set_init_3(void)
                || path_fnamecmp(p, "ash") == 0
                || path_fnamecmp(p, "dash") == 0) {
       // Always use POSIX shell style redirection if we reach this
-      if (do_sp) {
-        p_sp = "2>&1| tee";
-        options[idx_sp].def_val = p_sp;
-      }
-      if (do_srr) {
-        p_srr = ">%s 2>&1";
-        options[idx_srr].def_val = p_srr;
-      }
+      p_srr = ">%s 2>&1";
+      options[idx_srr].def_val = p_srr;
     }
     xfree(p);
   }

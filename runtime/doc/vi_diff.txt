@@ -271,11 +271,8 @@ Edit-compile-edit speedup.				|quickfix|
 
 	The |:cn| command can be used to jump to the next error.
 	|:cl| lists all the error messages.  Other commands are available.
-	The 'makeef' option has the name of the file with error messages.
 	The 'makeprg' option contains the name of the program to be executed
 	with the |:make| command.
-	The 'shellpipe' option contains the string to be used to put the
-	output of the compiler into the errorfile.
 
 Finding matches in files.				|:vimgrep|
 	Vim can search for a pattern in multiple files.  This uses the

@@ -23,8 +23,8 @@ CompilerSet errorformat=
 		\%-G%.%#,
 " Compiler call
 CompilerSet makeprg=df\ /nologo\ /noobj\ /c\ %:S
-" Visual fortran defaults to printing output on stderr
-" Adjust option shellpipe accordingly
+" Visual fortran defaults to printing output on stderr. Postfix 2>&1 to
+" 'makeprg'.
 
 let &cpoptions = s:cposet
 unlet s:cposet

@@ -522,11 +522,10 @@ accordingly, proceeding as follows:
 	if packages have been found, but that should not add a directory
 	ending in "after".
 
-11. Set 'shellpipe' and 'shellredir'
-	The 'shellpipe' and 'shellredir' options are set according to the
-	value of the 'shell' option, unless they have been set before.
-	This means that Nvim will figure out the values of 'shellpipe' and
-	'shellredir' for you, unless you have set them yourself.
+11. Set 'shellredir'
+	The 'shellredir' option is set according to the value of the 'shell' 
+	option, unless it has been set before. This means that Nvim will figure 
+	out the value 'shellredir' for you, unless you have set them yourself.
 
 12. Set 'updatecount' to zero, if "-n" command argument used
 

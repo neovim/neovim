@@ -11964,11 +11964,11 @@ fun! s:NetrwExe(cmd)
 "  call Dfunc("s:NetrwExe(a:cmd<".a:cmd.">)")
   if has("win32") && &shell !~? 'cmd' && !g:netrw_cygwin
 "    call Decho("using win32:",expand("<slnum>"))
-    let savedShell=[&shell,&shellcmdflag,&shellxquote,&shellxescape,&shellquote,&shellpipe,&shellredir,&shellslash]
+    let savedShell=[&shell,&shellcmdflag,&shellxquote,&shellxescape,&shellquote,&shellredir,&shellslash]
     set shell& shellcmdflag& shellxquote& shellxescape&
-    set shellquote& shellpipe& shellredir& shellslash&
+    set shellquote& shellredir& shellslash&
     exe a:cmd
-    let [&shell,&shellcmdflag,&shellxquote,&shellxescape,&shellquote,&shellpipe,&shellredir,&shellslash] = savedShell
+    let [&shell,&shellcmdflag,&shellxquote,&shellxescape,&shellquote,&shellredir,&shellslash] = savedShell
   else
 "   call Decho("exe ".a:cmd,'~'.expand("<slnum>"))
    exe a:cmd

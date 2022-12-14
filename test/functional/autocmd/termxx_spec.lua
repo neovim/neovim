@@ -17,7 +17,7 @@ describe('autocmd TermClose', function()
   before_each(function()
     clear()
     nvim('set_option', 'shell', testprg('shell-test'))
-    command('set shellcmdflag=EXE shellredir= shellpipe= shellquote= shellxquote=')
+    command('set shellcmdflag=EXE shellredir= shellquote= shellxquote=')
   end)
 
 

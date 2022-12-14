@@ -2022,18 +2022,6 @@ return {
       }
     },
     {
-      full_name='shellpipe', abbreviation='sp',
-      short_desc=N_("string to put output of \":make\" in error file"),
-      type='string', scope={'global'},
-      secure=true,
-      varname='p_sp',
-      defaults={
-        condition='MSWIN',
-        if_true=">%s 2>&1",
-        if_false="| tee",
-      }
-    },
-    {
       full_name='shellquote', abbreviation='shq',
       short_desc=N_("quote character(s) for around shell command"),
       type='string', scope={'global'},

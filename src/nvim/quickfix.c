@@ -52,6 +52,7 @@
 #include "nvim/os/fs_defs.h"
 #include "nvim/os/input.h"
 #include "nvim/os/os.h"
+#include "nvim/os/shell.h"
 #include "nvim/path.h"
 #include "nvim/pos.h"
 #include "nvim/quickfix.h"
@@ -1107,6 +1108,9 @@ static int qf_init_ext(qf_info_T *qi, int qf_idx, const char *restrict efile, bu
   const char *efm;
 
   // Use the local value of 'errorformat' if it's set.
+  //
+  // TODO(aktau): Why is there a `tv == NULL` check here? Why don't we want the
+  //              buffer-local 'errorformat' if we're reading from a typval?
   if (errorformat == p_efm && tv == NULL && buf && *buf->b_p_efm != NUL) {
     efm = buf->b_p_efm;
   } else {
@@ -4245,36 +4249,6 @@ static char *make_get_auname(cmdidx_T cmdidx)
   }
 }
 
-// Form the complete command line to invoke 'make'/'grep'. Quote the command
-// using 'shellquote' and append 'shellpipe'. Echo the fully formed command.
-static char *make_get_fullcmd(const char *makecmd, const char *fname)
-  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_NONNULL_RET
-{
-  size_t len = strlen(p_shq) * 2 + strlen(makecmd) + 1;
-  if (*p_sp != NUL) {
-    len += strlen(p_sp) + strlen(fname) + 3;
-  }
-  char *const cmd = xmalloc(len);
-  snprintf(cmd, len, "%s%s%s", p_shq, (char *)makecmd, p_shq);
-
-  // If 'shellpipe' empty: don't redirect to 'errorfile'.
-  if (*p_sp != NUL) {
-    append_redir(cmd, len, p_sp, (char *)fname);
-  }
-
-  // Display the fully formed command.  Output a newline if there's something
-  // else than the :make command that was typed (in which case the cursor is
-  // in column 0).
-  if (msg_col == 0) {
-    msg_didout = false;
-  }
-  msg_start();
-  msg_puts(":!");
-  msg_outtrans(cmd);  // show what we are doing
-
-  return cmd;
-}
-
 // Used for ":make", ":lmake", ":grep", ":lgrep", ":grepadd", and ":lgrepadd"
 void ex_make(exarg_T *eap)
 {
@@ -4303,58 +4277,54 @@ void ex_make(exarg_T *eap)
   autowrite_all();  // Flush all buffers.
   incr_quickfix_busy();
 
+  bool use_file = (*p_mef != NUL);
+  if (use_file) {  // The process will put the contents in 'makeef'.
+    os_remove(p_mef);  // In case it already exists.
+  }
+
+  size_t nread = 0;
+  char *out = NULL;
+  char **argv = shell_build_argv((const char *)eap->arg, NULL);
+  int status = os_system(argv, NULL, 0, &out, &nread);  // Consumes `argv`.
+  set_vim_var_nr(VV_SHELL_ERROR, (varnumber_T)status);
+  if (status == -1) {
+    char buf[IOSIZE];
+    snprintf(buf, sizeof(buf), "failed to run: %s", eap->arg);
+    semsg(_(e_invargNval), "cmd", buf);
+
+    xfree(out);
+    goto cleanup;
+  }
+
+  if (!use_file && out == NULL) {
+    goto cleanup;  // If the command did not output anything, out is NULL: return.
+  }
+
+  // To load the quickfix/loclist with values, `qf_init_ext` accepts either a
+  // file, a buffer or a VimL variable (string or list). The latter is easiest
+  // in case we have a char array. Ideally we'd stream the jobs output
+  // directly to the quickfix list [1], saving a copy. This is more
+  // complicated though.
+  //
+  // [1]: For example, :vimgrep adds items to the quicklist/loclist as it
+  //      finds them (vgr_match_buflines()).
+  typval_T tv = { 0 };
+  tv.v_type = VAR_STRING;
+  tv.vval.v_string = out;
+
   bool newlist = (eap->cmdidx != CMD_grepadd && eap->cmdidx != CMD_lgrepadd);
   const char *errorformat = (eap->cmdidx != CMD_make && eap->cmdidx != CMD_lmake) ? p_gefm : p_efm;
   const char *enc = (*curbuf->b_p_menc != NUL) ? curbuf->b_p_menc : p_menc;
-  int res = 0;
-  if (*p_mef == NUL && *p_sp == NUL) {  // Read from stdout.
-    size_t nread = 0;
-    char *out = NULL;
-    char **argv = shell_build_argv((const char *)eap->arg, NULL);
-    int status = os_system(argv, NULL, 0, &out, &nread);  // Consumes `argv`.
-    set_vim_var_nr(VV_SHELL_ERROR, (varnumber_T)status);
-    if (status == -1) {
-      char buf[IOSIZE];
-      snprintf(buf, sizeof(buf), "failed to run: %s", eap->arg);
-      semsg(_(e_invargNval), "cmd", buf);
 
-      xfree(out);
-      goto cleanup;
-    }
+  // Fill the quickfix/loclist either from fname (if 'makeef' is set) or from
+  // the process' stdout.
+  int res = qf_init_ext(qi, qi->qf_curlist, use_file ? p_mef : NULL, curbuf,
+                        use_file ? NULL : &tv, errorformat,
+                        newlist, (linenr_T)0, (linenr_T)0, qf_cmdtitle(*eap->cmdlinep), enc);
 
-    // To load the quickfix/loclist with values, `qf_init_ext` accepts either a
-    // file, a buffer or a VimL variable (string or list). The latter is easiest
-    // in case we have a char array. Ideally we'd stream the jobs output
-    // directly to the quickfix list [1], saving a copy. This is more
-    // complicated though.
-    //
-    // [1]: For example, :vimgrep adds items to the quicklist/loclist as it
-    //      finds them (vgr_match_buflines()).
-    typval_T tv = { 0 };
-    tv.v_type = VAR_STRING;
-    tv.vval.v_string = out;
-
-    res = qf_init_ext(qi, qi->qf_curlist, NULL, NULL, &tv, errorformat,
-                      newlist, (linenr_T)0, (linenr_T)0, qf_cmdtitle(*eap->cmdlinep), enc);
-
-    xfree(out);
-  } else {  // Read from 'makeef' file.
-    char *fname = get_mef_name();
-    if (fname == NULL) {
-      goto cleanup;
-    }
-    os_remove(fname);  // in case it's not unique
-
-    char *const cmd = make_get_fullcmd(eap->arg, fname);
-
-    do_shell(cmd, 0);
-
-    res = qf_init_ext(qi, qi->qf_curlist, fname, curbuf, NULL, errorformat,
-                      newlist, (linenr_T)0, (linenr_T)0, qf_cmdtitle(*eap->cmdlinep), enc);
-
-    os_remove(fname);
-    xfree(fname);
-    xfree(cmd);
+  xfree(out);
+  if (use_file) {
+    os_remove(p_mef);
   }
 
   if (res >= 0) {
@@ -4374,57 +4344,6 @@ void ex_make(exarg_T *eap)
 
 cleanup:
   decr_quickfix_busy();
-}
-
-// Return the name for the errorfile, in allocated memory.
-// Find a new unique name when 'makeef' contains "##".
-// Returns NULL for error.
-static char *get_mef_name(void)
-{
-  char *name;
-  static int start = -1;
-  static int off = 0;
-
-  if (*p_mef == NUL) {
-    name = vim_tempname();
-    if (name == NULL) {
-      emsg(_(e_notmp));
-    }
-    return name;
-  }
-
-  char *p;
-
-  for (p = p_mef; *p; p++) {
-    if (p[0] == '#' && p[1] == '#') {
-      break;
-    }
-  }
-
-  if (*p == NUL) {
-    return xstrdup(p_mef);
-  }
-
-  // Keep trying until the name doesn't exist yet.
-  for (;;) {
-    if (start == -1) {
-      start = (int)os_get_pid();
-    } else {
-      off += 19;
-    }
-    name = xmalloc(strlen(p_mef) + 30);
-    STRCPY(name, p_mef);
-    snprintf(name + (p - p_mef), strlen(name), "%d%d", start, off);
-    STRCAT(name, p + 2);
-    // Don't accept a symbolic link, it's a security risk.
-    FileInfo file_info;
-    bool file_or_link_found = os_fileinfo_link(name, &file_info);
-    if (!file_or_link_found) {
-      break;
-    }
-    xfree(name);
-  }
-  return name;
 }
 
 /// Returns the number of entries in the current quickfix/location list.
