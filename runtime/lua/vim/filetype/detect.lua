@@ -1097,11 +1097,10 @@ function M.sc(bufnr)
   for _, line in ipairs(getlines(bufnr, 1, 25)) do
     if
       findany(line, {
-        '[A-Za-z0-9]*%s:%s[A-Za-z0-9]',
         'var%s<',
         'classvar%s<',
         '%^this.*',
-        '|%w*|',
+        '|%w+|',
         '%+%s%w*%s{',
         '%*ar%s',
       })

@@ -1555,13 +1555,6 @@ endfunc
 func Test_sc_file()
   filetype on
 
-  " SC file methods are defined 'Class : Method'
-  call writefile(['SCNvimDocRenderer : SCDocHTMLRenderer {'], 'srcfile.sc')
-  split srcfile.sc
-  call assert_equal('supercollider', &filetype)
-  bwipe!
-  call delete('srcfile.sc')
-
   " SC classes are defined with '+ Class {}'
   call writefile(['+ SCNvim {', '*methodArgs {|method|'], 'srcfile.sc')
   split srcfile.sc
