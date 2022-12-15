@@ -660,6 +660,12 @@ String nvim_cmd(uint64_t channel_id, Dict(cmd) *cmd, Dict(cmd_opts) *opts, Error
     OBJ_TO_CMOD_FLAG(CMOD_LOCKMARKS, mods.lockmarks, false, "'mods.lockmarks'");
     OBJ_TO_CMOD_FLAG(CMOD_NOSWAPFILE, mods.noswapfile, false, "'mods.noswapfile'");
 
+    if (cmdinfo.cmdmod.cmod_flags & CMOD_ERRSILENT) {
+      // CMOD_ERRSILENT must imply CMOD_SILENT, otherwise apply_cmdmod() and undo_cmdmod() won't
+      // work properly.
+      cmdinfo.cmdmod.cmod_flags |= CMOD_SILENT;
+    }
+
     if ((cmdinfo.cmdmod.cmod_flags & CMOD_SANDBOX) && !(ea.argt & EX_SBOXOK)) {
       VALIDATION_ERROR("Command cannot be run in sandbox");
     }
