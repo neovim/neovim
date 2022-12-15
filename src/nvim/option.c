@@ -2725,14 +2725,6 @@ int findoption_len(const char *const arg, const size_t len)
   return opt_idx;
 }
 
-bool is_tty_option(const char *name)
-  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
-{
-  return (name[0] == 't' && name[1] == '_')
-         || strequal(name, "term")
-         || strequal(name, "ttytype");
-}
-
 #define TCO_BUFFER_SIZE 8
 /// @param name TUI-related option
 /// @param[out,allocated] value option string value
@@ -2760,14 +2752,6 @@ bool get_tty_option(const char *name, char **value)
   if (strequal(name, "ttytype")) {
     if (value) {
       *value = p_ttytype ? xstrdup(p_ttytype) : xstrdup("nvim");
-    }
-    return true;
-  }
-
-  if (is_tty_option(name)) {
-    if (value) {
-      // XXX: All other t_* options were removed in 3baba1e7.
-      *value = xstrdup("");
     }
     return true;
   }
@@ -3029,10 +3013,6 @@ char *set_option_value(const char *const name, const long number, const char *co
                        const int opt_flags)
   FUNC_ATTR_NONNULL_ARG(1)
 {
-  if (is_tty_option(name)) {
-    return NULL;  // Fail silently; many old vimrcs set t_xx options.
-  }
-
   int opt_idx;
   char_u *varp;
 
