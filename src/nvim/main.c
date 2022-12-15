@@ -1987,15 +1987,27 @@ static bool do_user_initialization(void)
   return do_exrc;
 }
 
-// Read initialization commands from ".nvimrc" or ".exrc" in current
-// directory.  This is only done if the 'exrc' option is set.
+// Read initialization commands from ".nvim.lua", ".nvimrc", or ".exrc" in
+// current directory.  This is only done if the 'exrc' option is set.
 // Only do this if VIMRC_FILE is not the same as vimrc file sourced in
 // do_user_initialization.
 static void do_exrc_initialization(void)
 {
   char *str;
 
-  if (os_path_exists(VIMRC_FILE)) {
+  if (os_path_exists(VIMRC_LUA_FILE)) {
+    str = nlua_read_secure(VIMRC_LUA_FILE);
+    if (str != NULL) {
+      Error err = ERROR_INIT;
+      nlua_exec(cstr_as_string(str), (Array)ARRAY_DICT_INIT, &err);
+      xfree(str);
+      if (ERROR_SET(&err)) {
+        semsg("Error detected while processing %s:", VIMRC_LUA_FILE);
+        semsg_multiline(err.msg);
+        api_clear_error(&err);
+      }
+    }
+  } else if (os_path_exists(VIMRC_FILE)) {
     str = nlua_read_secure(VIMRC_FILE);
     if (str != NULL) {
       do_source_str(str, VIMRC_FILE);
