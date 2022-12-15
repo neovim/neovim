@@ -453,10 +453,11 @@ accordingly, proceeding as follows:
 	set or when using $VIMINIT.
 
      c. If the 'exrc' option is on (which is NOT the default), the current
-	directory is searched for two files.  The first that exists is used,
-	the others are ignored.
-	-  The file ".nvimrc"
-	-  The file ".exrc"
+	directory is searched for the following files, in order of precedence:
+	- ".nvim.lua"
+	- ".nvimrc"
+	- ".exrc"
+	The first that exists is used, the others are ignored.
 
 8. Enable filetype detection.
 	This does the same as the command: >

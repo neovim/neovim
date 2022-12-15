@@ -434,8 +434,8 @@ Options:
   'jumpoptions' "view" tries to restore the |mark-view| when moving through
   the |jumplist|, |changelist|, |alternate-file| or using |mark-motions|.
   'shortmess' the "F" flag does not affect output from autocommands
-  'exrc' searches for ".nvimrc" or ".exrc" files. The user is prompted whether
-  to trust the file.
+  'exrc' searches for ".nvim.lua", ".nvimrc", or ".exrc" files. The user is
+  prompted whether to trust the file.
 
 Shell:
   Shell output (|:!|, |:make|, …) is always routed through the UI, so it

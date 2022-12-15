@@ -98,6 +98,7 @@ CHANGED FEATURES                                                 *news-changes*
 
 The following changes to existing APIs or features add new behavior.
 
+• 'exrc' now supports `.nvim.lua` file.
 • 'exrc' is no longer marked deprecated.
 
 ==============================================================================
