@@ -2755,6 +2755,7 @@ static void get_complete_info(list_T *what_list, dict_T *retdict)
           tv_dict_add_str(di, S_LEN("kind"), EMPTY_IF_NULL(match->cp_text[CPT_KIND]));
           tv_dict_add_str(di, S_LEN("info"), EMPTY_IF_NULL(match->cp_text[CPT_INFO]));
           if (match->cp_user_data.v_type == VAR_UNKNOWN) {
+            // Add an empty string for backwards compatibility
             tv_dict_add_str(di, S_LEN("user_data"), "");
           } else {
             tv_dict_add_tv(di, S_LEN("user_data"), &match->cp_user_data);
