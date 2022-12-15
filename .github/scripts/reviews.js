@@ -7,6 +7,7 @@ module.exports = async ({github, context}) => {
   const labels = pr_data.data.labels.map(e => e.name)
 
   const reviewers = new Set()
+  const team_reviewers = new Array()
   if (labels.includes('api')) {
     reviewers.add("bfredl")
     reviewers.add("muniter")
@@ -18,9 +19,7 @@ module.exports = async ({github, context}) => {
   }
 
   if (labels.includes('ci')) {
-    reviewers.add("dundargoc")
-    reviewers.add("jamessan")
-    reviewers.add("justinmk")
+    team_reviewers.push('ci');
   }
 
   if (labels.includes('column')) {
@@ -58,8 +57,7 @@ module.exports = async ({github, context}) => {
   }
 
   if (labels.includes('lsp')) {
-    reviewers.add("glepnir")
-    reviewers.add("mfussenegger")
+    team_reviewers.push('lsp');
   }
 
   if (labels.includes('project-management')) {
@@ -76,9 +74,7 @@ module.exports = async ({github, context}) => {
   }
 
   if (labels.includes('treesitter')) {
-    reviewers.add("bfredl")
-    reviewers.add("clason")
-    reviewers.add("vigoux")
+    team_reviewers.push('treesitter');
   }
 
   if (labels.includes('typo')) {
@@ -102,6 +98,7 @@ module.exports = async ({github, context}) => {
     owner: context.repo.owner,
     repo: context.repo.repo,
     pull_number: context.issue.number,
-    reviewers: Array.from(reviewers)
+    reviewers: Array.from(reviewers),
+    team_reviewers: team_reviewers
   });
 }
