@@ -512,6 +512,8 @@ describe('lua stdlib', function()
     eq(NIL, exec_lua("return vim.tbl_get({ unindexable = function () end }, 'unindexable', 'missing_key')"))
     eq(NIL, exec_lua("return vim.tbl_get({}, 'missing_key')"))
     eq(NIL, exec_lua("return vim.tbl_get({})"))
+    eq(1, exec_lua("return select('#', vim.tbl_get({}))"))
+    eq(1, exec_lua("return select('#', vim.tbl_get({ nested = {} }, 'nested', 'missing_key'))"))
   end)
 
   it('vim.tbl_extend', function()
