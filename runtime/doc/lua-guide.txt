@@ -285,7 +285,7 @@ work:
 Instead, you need to create an intermediate Lua table and change this:
 >lua
     local temp_table = vim.g.some_global_variable
-    temp_table = keys = 400
+    temp_table.key2 = 400
     vim.g.some_global_variable = temp_table
     vim.pretty_print(vim.g.some_global_variable)
     --> { key1 = "value", key2 = 400 }
@@ -408,7 +408,7 @@ mandatory arguments:
 • {lhs} is a string with the key sequences that should trigger the mapping.
   An empty string is equivalent to |<Nop>|, which disables a key.
 • {rhs} is either a string with a Vim command or a Lua function that should
-  be execucted when the {lhs} is entered.
+  be executed when the {lhs} is entered.
 
 Examples:
 >lua
@@ -608,25 +608,25 @@ may be reloaded is
 This is equivalent to the following Lua code:
 >lua
     local mygroup = vim.api.nvim_create_augroup('vimrc', { clear = true })
-    vim.api.nvim_create_autocmd( {'BufNewFile', 'BufRead' }, {
+    vim.api.nvim_create_autocmd({ 'BufNewFile', 'BufRead' }, {
       pattern = '*.html',
       group = mygroup,
-      cmd = 'set shiftwidth=4',
+      command = 'set shiftwidth=4',
     })
-    vim.api.nvim_create_autocmd( {'BufNewFile', 'BufRead' }, {
+    vim.api.nvim_create_autocmd({ 'BufNewFile', 'BufRead' }, {
       pattern = '*.html',
       group = 'vimrc',  -- equivalent to group=mygroup
-      cmd = 'set expandtab',
+      command = 'set expandtab',
     })
 <
 Autocommand groups are unique for a given name, so you can reuse them, e.g.,
 in a different file:
 >lua
     local mygroup = vim.api.nvim_create_augroup('vimrc', { clear = false })
-    vim.api.nvim_create_autocmd( {'BufNewFile', 'BufRead' }, {
+    vim.api.nvim_create_autocmd({ 'BufNewFile', 'BufRead' }, {
       pattern = '*.html',
       group = mygroup,
-      cmd = 'set shiftwidth=4',
+      command = 'set shiftwidth=4',
     })
 <
 ------------------------------------------------------------------------------

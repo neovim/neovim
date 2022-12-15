@@ -1265,7 +1265,7 @@ The .NET CLI compiler outputs both errors and warnings by default. The output
 may be limited to include only errors, by setting the g:dotnet_errors_only
 variable to |v:true|.
 
-The associated project name is included in each error and warning. To supress
+The associated project name is included in each error and warning. To suppress
 the project name, set the g:dotnet_show_project_file variable to |v:false|.
 
 Example: limit output to only display errors, and suppress the project name: >
