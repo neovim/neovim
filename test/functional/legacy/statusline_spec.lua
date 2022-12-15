@@ -68,4 +68,51 @@ describe('statusline', function()
                                                         |
     ]])
   end)
+
+  -- oldtest: Test_statusline_showcmd()
+  it('showcmdloc=statusline works', function()
+    screen:set_default_attr_ids({
+      [0] = {bold = true, foreground = Screen.colors.Blue},  -- NonText
+      [1] = {background = Screen.colors.LightGrey},  -- Visual
+      [2] = {bold = true},  -- MoreMsg
+      [3] = {bold = true, reverse = true},  -- StatusLine
+    })
+    exec([[
+      set showcmd
+      set laststatus=2
+      set statusline=%S
+      set showcmdloc=statusline
+      call setline(1, ['a', 'b', 'c'])
+    ]])
+    feed('<C-V>Gl')
+    screen:expect([[
+      {1:a}                                                 |
+      {1:b}                                                 |
+      {1:c}^                                                 |
+      {0:~                                                 }|
+      {0:~                                                 }|
+      {3:3x2                                               }|
+      {2:-- VISUAL BLOCK --}                                |
+    ]])
+    feed('<Esc>1234')
+    screen:expect([[
+      a                                                 |
+      b                                                 |
+      ^c                                                 |
+      {0:~                                                 }|
+      {0:~                                                 }|
+      {3:1234                                              }|
+                                                        |
+    ]])
+    feed('<Esc>:set statusline=<CR>:<CR>1234')
+    screen:expect([[
+      a                                                 |
+      b                                                 |
+      ^c                                                 |
+      {0:~                                                 }|
+      {0:~                                                 }|
+      {3:[No Name] [+]                          1234       }|
+      :                                                 |
+    ]])
+  end)
 end)

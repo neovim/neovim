@@ -2184,6 +2184,13 @@ return {
       defaults={if_true=true}
     },
     {
+      full_name='showcmdloc', abbreviation='sloc',
+      short_desc=N_("change location of partial command"),
+      type='string', scope={'global'},
+      varname='p_sloc',
+      defaults={if_true="last"}
+    },
+    {
       full_name='showfulltag', abbreviation='sft',
       short_desc=N_("show full tag pattern when completing tag"),
       type='bool', scope={'global'},

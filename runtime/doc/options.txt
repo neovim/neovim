@@ -5641,7 +5641,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 			global
 	Show (partial) command in the last line of the screen.  Set this
 	option off if your terminal is slow.
-	The option has no effect when 'cmdheight' is zero.
 	In Visual mode the size of the selected area is shown:
 	- When selecting characters within a line, the number of characters.
 	  If the number of bytes is different it is also displayed: "2-6"
@@ -5649,6 +5648,22 @@ A jump table for the options with a short description can be found at |Q_op|.
 	- When selecting more than one line, the number of lines.
 	- When selecting a block, the size in screen characters:
 	  {lines}x{columns}.
+	This information can be displayed in an alternative location using the
+	'showcmdloc' option, useful when 'cmdheight' is 0.
+
+			*'showcmdloc'* *'sloc'*
+'showcmdloc' 'sloc'	string	(default "last")
+	This option can be used to display the (partially) entered command in
+	another location.  Possible values are:
+	  last		Last line of the screen (default).
+	  statusline	Status line of the current window.
+	  tabline	First line of the screen if 'showtabline' is enabled.
+	Setting this option to "statusline" or "tabline" means that these will
+	be redrawn whenever the command changes, which can be on every key
+	pressed.
+	The %S 'statusline' item can be used in 'statusline' or 'tabline' to
+	place the text.  Without a custom 'statusline' or 'tabline' it will be
+	displayed in a convenient location.
 
 			*'showfulltag'* *'sft'* *'noshowfulltag'* *'nosft'*
 'showfulltag' 'sft'	boolean (default off)
@@ -6120,6 +6135,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	P S   Percentage through file of displayed window.  This is like the
 	      percentage described for 'ruler'.  Always 3 in length, unless
 	      translated.
+	S S   'showcmd' content, see 'showcmdloc'.
 	a S   Argument list status as in default title.  ({current} of {max})
 	      Empty if the argument file count is zero or one.
 	{ NF  Evaluate expression between '%{' and '}' and substitute result.
