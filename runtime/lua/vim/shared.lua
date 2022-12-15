@@ -395,15 +395,14 @@ end
 function vim.tbl_get(o, ...)
   local keys = { ... }
   if #keys == 0 then
-    return
+    return nil
   end
   for i, k in ipairs(keys) do
-    if type(o[k]) ~= 'table' and next(keys, i) then
-      return nil
-    end
     o = o[k]
     if o == nil then
-      return
+      return nil
+    elseif type(o) ~= 'table' and next(keys, i) then
+      return nil
     end
   end
   return o
