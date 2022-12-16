@@ -3853,14 +3853,16 @@ describe('API', function()
       eq("", meths.cmd({ cmd = "Foo", bang = false }, { output = true }))
     end)
     it('works with modifiers', function()
-      -- with :silent output is still captured
+      -- with silent = true output is still captured
       eq('1',
          meths.cmd({ cmd = 'echomsg', args = { '1' }, mods = { silent = true } },
                    { output = true }))
       -- but message isn't added to message history
       eq('', meths.cmd({ cmd = 'messages' }, { output = true }))
+
       meths.create_user_command("Foo", 'set verbose', {})
       eq("  verbose=1", meths.cmd({ cmd = "Foo", mods = { verbose = 1 } }, { output = true }))
+
       meths.create_user_command("Mods", "echo '<mods>'", {})
       eq('keepmarks keeppatterns silent 3verbose aboveleft horizontal',
          meths.cmd({ cmd = "Mods", mods = {
@@ -3872,6 +3874,7 @@ describe('API', function()
            verbose = 3,
          } }, { output = true }))
       eq(0, meths.get_option_value("verbose", {}))
+
       command('edit foo.txt | edit bar.txt')
       eq('  1 #h   "foo.txt"                      line 1',
          meths.cmd({ cmd = "buffers", mods = { filter = { pattern = "foo", force = false } } },
@@ -3879,6 +3882,13 @@ describe('API', function()
       eq('  2 %a   "bar.txt"                      line 1',
          meths.cmd({ cmd = "buffers", mods = { filter = { pattern = "foo", force = true } } },
                    { output = true }))
+
+      -- with emsg_silent = true error is suppresed
+      feed([[:lua vim.api.nvim_cmd({ cmd = 'call', mods = { emsg_silent = true } }, {})<CR>]])
+      eq('', meths.cmd({ cmd = 'messages' }, { output = true }))
+      -- error from the next command typed is not suppressed #21420
+      feed(':call<CR><CR>')
+      eq('E471: Argument required', meths.cmd({ cmd = 'messages' }, { output = true }))
     end)
     it('works with magic.file', function()
       exec_lua([[
