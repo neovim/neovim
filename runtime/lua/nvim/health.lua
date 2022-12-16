@@ -1,7 +1,7 @@
 local M = {}
 local health = require('vim.health')
 
-local suggest_faq = 'https://github.com/neovim/neovim/wiki/FAQ'
+local suggest_faq = 'https://github.com/neovim/neovim/wiki/Building-Neovim#optimized-builds'
 
 local function check_runtime()
   health.report_start('Runtime')
