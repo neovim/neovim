@@ -42,6 +42,9 @@ typedef struct {
   char *listen_addr;                    // --listen {address}
   int remote;                           // --remote-[subcmd] {file1} {file2}
   char *server_addr;                    // --server {address}
+  char *scriptin;                       // -s {filename}
+  char *scriptout;                      // -w/-W {filename}
+  bool scriptout_append;                // append (-w) instead of overwrite (-W)
 } mparm_T;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
