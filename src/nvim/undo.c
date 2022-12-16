@@ -1343,9 +1343,9 @@ write_error:
 #ifdef HAVE_ACL
   if (buf->b_ffname != NULL) {
     // For systems that support ACL: get the ACL from the original file.
-    vim_acl_T acl = mch_get_acl((char_u *)buf->b_ffname);
-    mch_set_acl((char_u *)file_name, acl);
-    mch_free_acl(acl);
+    vim_acl_T acl = os_get_acl((char_u *)buf->b_ffname);
+    os_set_acl((char_u *)file_name, acl);
+    os_free_acl(acl);
   }
 #endif
 

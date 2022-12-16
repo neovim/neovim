@@ -2560,7 +2560,7 @@ int buf_write(buf_T *buf, char *fname, char *sfname, linenr_T start, linenr_T en
 #ifdef HAVE_ACL
   // For systems that support ACL: get the ACL from the original file.
   if (!newfile) {
-    acl = mch_get_acl((char_u *)fname);
+    acl = os_get_acl((char_u *)fname);
   }
 #endif
 
@@ -2800,7 +2800,7 @@ int buf_write(buf_T *buf, char *fname, char *sfname, linenr_T start, linenr_T en
                           (double)file_info_old.stat.st_mtim.tv_sec);
 #endif
 #ifdef HAVE_ACL
-          mch_set_acl((char_u *)backup, acl);
+          os_set_acl((char_u *)backup, acl);
 #endif
           SET_ERRMSG(NULL);
           break;
@@ -3336,7 +3336,7 @@ restore_backup:
     // Probably need to set the ACL before changing the user (can't set the
     // ACL on a file the user doesn't own).
     if (!backup_copy) {
-      mch_set_acl((char_u *)wfname, acl);
+      os_set_acl((char_u *)wfname, acl);
     }
 #endif
 
@@ -3552,7 +3552,7 @@ nofail:
   }
 #endif
 #ifdef HAVE_ACL
-  mch_free_acl(acl);
+  os_free_acl(acl);
 #endif
 
   if (errmsg != NULL) {
@@ -4591,12 +4591,12 @@ int vim_rename(const char *from, const char *to)
   perm = os_getperm(from);
 #ifdef HAVE_ACL
   // For systems that support ACL: get the ACL from the original file.
-  acl = mch_get_acl((char_u *)from);
+  acl = os_get_acl((char_u *)from);
 #endif
   fd_in = os_open((char *)from, O_RDONLY, 0);
   if (fd_in < 0) {
 #ifdef HAVE_ACL
-    mch_free_acl(acl);
+    os_free_acl(acl);
 #endif
     return -1;
   }
@@ -4607,7 +4607,7 @@ int vim_rename(const char *from, const char *to)
   if (fd_out < 0) {
     close(fd_in);
 #ifdef HAVE_ACL
-    mch_free_acl(acl);
+    os_free_acl(acl);
 #endif
     return -1;
   }
@@ -4619,7 +4619,7 @@ int vim_rename(const char *from, const char *to)
     close(fd_out);
     close(fd_in);
 #ifdef HAVE_ACL
-    mch_free_acl(acl);
+    os_free_acl(acl);
 #endif
     return -1;
   }
@@ -4644,8 +4644,8 @@ int vim_rename(const char *from, const char *to)
   os_setperm((const char *)to, perm);
 #endif
 #ifdef HAVE_ACL
-  mch_set_acl((char_u *)to, acl);
-  mch_free_acl(acl);
+  os_set_acl((char_u *)to, acl);
+  os_free_acl(acl);
 #endif
   if (errmsg != NULL) {
     semsg(errmsg, to);
