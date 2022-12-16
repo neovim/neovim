@@ -1502,7 +1502,7 @@ void print_line(linenr_T lnum, int use_number, int list)
 
   msg_start();
   silent_mode = false;
-  info_message = true;  // use mch_msg(), not mch_errmsg()
+  info_message = true;  // use os_msg(), not os_errmsg()
   print_line_no_prefix(lnum, use_number, list);
   if (save_silent) {
     msg_putchar('\n');

@@ -214,7 +214,7 @@ void msg_grid_validate(void)
 }
 
 /// Displays the string 's' on the status line
-/// When terminal not initialized (yet) mch_errmsg(..) is used.
+/// When terminal not initialized (yet) os_errmsg(..) is used.
 ///
 /// @return  true if wait_return() not called
 int msg(char *s)
@@ -764,7 +764,7 @@ static bool emsg_multiline(const char *s, bool multiline)
 /// emsg() - display an error message
 ///
 /// Rings the bell, if appropriate, and calls message() to do the real work
-/// When terminal not initialized (yet) mch_errmsg(..) is used.
+/// When terminal not initialized (yet) os_errmsg(..) is used.
 ///
 /// @return true if wait_return() not called
 bool emsg(const char *s)
@@ -2726,9 +2726,9 @@ static void msg_puts_printf(const char *str, const ptrdiff_t maxlen)
       memcpy(p, s, (size_t)len);
       *(p + len) = '\0';
       if (info_message) {
-        mch_msg(buf);
+        os_msg(buf);
       } else {
-        mch_errmsg(buf);
+        os_errmsg(buf);
       }
     }
 
@@ -3003,7 +3003,7 @@ static int do_more_prompt(int typed_char)
 }
 
 #if defined(MSWIN)
-void mch_errmsg(char *str)
+void os_errmsg(char *str)
 {
   assert(str != NULL);
   wchar_t *utf16str;
@@ -3017,7 +3017,7 @@ void mch_errmsg(char *str)
 }
 
 /// Give a message.  To be used when the UI is not initialized yet.
-void mch_msg(char *str)
+void os_msg(char *str)
 {
   assert(str != NULL);
   wchar_t *utf16str;

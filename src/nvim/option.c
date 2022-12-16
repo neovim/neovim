@@ -1505,11 +1505,11 @@ theend:
   if (silent_mode && did_show) {
     // After displaying option values in silent mode.
     silent_mode = false;
-    info_message = true;        // use mch_msg(), not mch_errmsg()
+    info_message = true;        // use os_msg(), not os_errmsg()
     msg_putchar('\n');
     ui_flush();
     silent_mode = true;
-    info_message = false;       // use mch_msg(), not mch_errmsg()
+    info_message = false;       // use os_msg(), not os_errmsg()
   }
 
   return OK;
@@ -3274,7 +3274,7 @@ static void showoneopt(vimoption_T *p, int opt_flags)
   int save_silent = silent_mode;
 
   silent_mode = false;
-  info_message = true;          // use mch_msg(), not mch_errmsg()
+  info_message = true;          // use os_msg(), not os_errmsg()
 
   char_u *varp = (char_u *)get_varp_scope(p, opt_flags);
 

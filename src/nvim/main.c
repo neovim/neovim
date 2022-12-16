@@ -771,15 +771,15 @@ void preserve_exit(void)
   really_exiting = true;
   // Ignore SIGHUP while we are already exiting. #9274
   signal_reject_deadly();
-  mch_errmsg(IObuff);
-  mch_errmsg("\n");
+  os_errmsg(IObuff);
+  os_errmsg("\n");
   ui_flush();
 
   ml_close_notmod();                // close all not-modified buffers
 
   FOR_ALL_BUFFERS(buf) {
     if (buf->b_ml.ml_mfp != NULL && buf->b_ml.ml_mfp->mf_fname != NULL) {
-      mch_errmsg("Vim: preserving files...\r\n");
+      os_errmsg("Vim: preserving files...\r\n");
       ui_flush();
       ml_sync_all(false, false, true);  // preserve all swap files
       break;
@@ -788,7 +788,7 @@ void preserve_exit(void)
 
   ml_close_all(false);              // close all memfiles, without deleting
 
-  mch_errmsg("Vim: Finished.\r\n");
+  os_errmsg("Vim: Finished.\r\n");
 
   getout(1);
 }
@@ -870,15 +870,15 @@ static void remote_request(mparm_T *params, int remote_args, char *server_addr, 
   Object o = nlua_exec(s, a, &err);
   api_free_array(a);
   if (ERROR_SET(&err)) {
-    mch_errmsg(err.msg);
-    mch_errmsg("\n");
+    os_errmsg(err.msg);
+    os_errmsg("\n");
     os_exit(2);
   }
 
   if (o.type == kObjectTypeDictionary) {
     rvobj.data.dictionary = o.data.dictionary;
   } else {
-    mch_errmsg("vim._cs_remote returned unexpected value\n");
+    os_errmsg("vim._cs_remote returned unexpected value\n");
     os_exit(2);
   }
 
@@ -888,28 +888,28 @@ static void remote_request(mparm_T *params, int remote_args, char *server_addr, 
   for (size_t i = 0; i < rvobj.data.dictionary.size; i++) {
     if (strcmp(rvobj.data.dictionary.items[i].key.data, "errmsg") == 0) {
       if (rvobj.data.dictionary.items[i].value.type != kObjectTypeString) {
-        mch_errmsg("vim._cs_remote returned an unexpected type for 'errmsg'\n");
+        os_errmsg("vim._cs_remote returned an unexpected type for 'errmsg'\n");
         os_exit(2);
       }
-      mch_errmsg(rvobj.data.dictionary.items[i].value.data.string.data);
-      mch_errmsg("\n");
+      os_errmsg(rvobj.data.dictionary.items[i].value.data.string.data);
+      os_errmsg("\n");
       os_exit(2);
     } else if (strcmp(rvobj.data.dictionary.items[i].key.data, "tabbed") == 0) {
       if (rvobj.data.dictionary.items[i].value.type != kObjectTypeBoolean) {
-        mch_errmsg("vim._cs_remote returned an unexpected type for 'tabbed'\n");
+        os_errmsg("vim._cs_remote returned an unexpected type for 'tabbed'\n");
         os_exit(2);
       }
       tabbed = rvobj.data.dictionary.items[i].value.data.boolean ? kTrue : kFalse;
     } else if (strcmp(rvobj.data.dictionary.items[i].key.data, "should_exit") == 0) {
       if (rvobj.data.dictionary.items[i].value.type != kObjectTypeBoolean) {
-        mch_errmsg("vim._cs_remote returned an unexpected type for 'should_exit'\n");
+        os_errmsg("vim._cs_remote returned an unexpected type for 'should_exit'\n");
         os_exit(2);
       }
       should_exit = rvobj.data.dictionary.items[i].value.data.boolean ? kTrue : kFalse;
     }
   }
   if (should_exit == kNone || tabbed == kNone) {
-    mch_errmsg("vim._cs_remote didn't return a value for should_exit or tabbed, bailing\n");
+    os_errmsg("vim._cs_remote didn't return a value for should_exit or tabbed, bailing\n");
     os_exit(2);
   }
   api_free_object(o);
@@ -1285,7 +1285,7 @@ scripterror:
             vim_snprintf((char *)IObuff, IOSIZE,
                          _("Attempt to open script file again: \"%s %s\"\n"),
                          argv[-1], argv[0]);
-            mch_errmsg(IObuff);
+            os_errmsg(IObuff);
             os_exit(2);
           }
           parmp->scriptin = argv[0];
@@ -1545,7 +1545,7 @@ static void open_script_files(mparm_T *parmp)
         vim_snprintf((char *)IObuff, IOSIZE,
                      _("Cannot open for reading: \"%s\": %s\n"),
                      parmp->scriptin, os_strerror(error));
-        mch_errmsg(IObuff);
+        os_errmsg(IObuff);
         os_exit(2);
       }
     }
@@ -1555,9 +1555,9 @@ static void open_script_files(mparm_T *parmp)
   if (parmp->scriptout) {
     scriptout = os_fopen(parmp->scriptout, parmp->scriptout_append ? APPENDBIN : WRITEBIN);
     if (scriptout == NULL) {
-      mch_errmsg(_("Cannot open for script output: \""));
-      mch_errmsg(parmp->scriptout);
-      mch_errmsg("\"\n");
+      os_errmsg(_("Cannot open for script output: \""));
+      os_errmsg(parmp->scriptout);
+      os_errmsg("\"\n");
       os_exit(2);
     }
   }
@@ -2063,17 +2063,17 @@ static void mainerr(const char *errstr, const char *str)
 
   signal_stop();              // kill us with CTRL-C here, if you like
 
-  mch_errmsg(prgname);
-  mch_errmsg(": ");
-  mch_errmsg(_(errstr));
+  os_errmsg(prgname);
+  os_errmsg(": ");
+  os_errmsg(_(errstr));
   if (str != NULL) {
-    mch_errmsg(": \"");
-    mch_errmsg((char *)str);
-    mch_errmsg("\"");
+    os_errmsg(": \"");
+    os_errmsg((char *)str);
+    os_errmsg("\"");
   }
-  mch_errmsg(_("\nMore info with \""));
-  mch_errmsg(prgname);
-  mch_errmsg(" -h\"\n");
+  os_errmsg(_("\nMore info with \""));
+  os_errmsg(prgname);
+  os_errmsg(" -h\"\n");
 
   os_exit(1);
 }
@@ -2083,7 +2083,7 @@ static void version(void)
 {
   // TODO(bfred): not like this?
   nlua_init();
-  info_message = true;  // use mch_msg(), not mch_errmsg()
+  info_message = true;  // use os_msg(), not os_errmsg()
   list_version();
   msg_putchar('\n');
   msg_didout = false;
@@ -2094,47 +2094,47 @@ static void usage(void)
 {
   signal_stop();              // kill us with CTRL-C here, if you like
 
-  mch_msg(_("Usage:\n"));
-  mch_msg(_("  nvim [options] [file ...]      Edit file(s)\n"));
-  mch_msg(_("  nvim [options] -t <tag>        Edit file where tag is defined\n"));
-  mch_msg(_("  nvim [options] -q [errorfile]  Edit file with first error\n"));
-  mch_msg(_("\nOptions:\n"));
-  mch_msg(_("  --                    Only file names after this\n"));
-  mch_msg(_("  +                     Start at end of file\n"));
-  mch_msg(_("  --cmd <cmd>           Execute <cmd> before any config\n"));
-  mch_msg(_("  +<cmd>, -c <cmd>      Execute <cmd> after config and first file\n"));
-  mch_msg("\n");
-  mch_msg(_("  -b                    Binary mode\n"));
-  mch_msg(_("  -d                    Diff mode\n"));
-  mch_msg(_("  -e, -E                Ex mode\n"));
-  mch_msg(_("  -es, -Es              Silent (batch) mode\n"));
-  mch_msg(_("  -h, --help            Print this help message\n"));
-  mch_msg(_("  -i <shada>            Use this shada file\n"));
-  mch_msg(_("  -m                    Modifications (writing files) not allowed\n"));
-  mch_msg(_("  -M                    Modifications in text not allowed\n"));
-  mch_msg(_("  -n                    No swap file, use memory only\n"));
-  mch_msg(_("  -o[N]                 Open N windows (default: one per file)\n"));
-  mch_msg(_("  -O[N]                 Open N vertical windows (default: one per file)\n"));
-  mch_msg(_("  -p[N]                 Open N tab pages (default: one per file)\n"));
-  mch_msg(_("  -r, -L                List swap files\n"));
-  mch_msg(_("  -r <file>             Recover edit state for this file\n"));
-  mch_msg(_("  -R                    Read-only mode\n"));
-  mch_msg(_("  -S <session>          Source <session> after loading the first file\n"));
-  mch_msg(_("  -s <scriptin>         Read Normal mode commands from <scriptin>\n"));
-  mch_msg(_("  -u <config>           Use this config file\n"));
-  mch_msg(_("  -v, --version         Print version information\n"));
-  mch_msg(_("  -V[N][file]           Verbose [level][file]\n"));
-  mch_msg("\n");
-  mch_msg(_("  --api-info            Write msgpack-encoded API metadata to stdout\n"));
-  mch_msg(_("  --clean               \"Factory defaults\" (skip user config and plugins, shada)\n"));
-  mch_msg(_("  --embed               Use stdin/stdout as a msgpack-rpc channel\n"));
-  mch_msg(_("  --headless            Don't start a user interface\n"));
-  mch_msg(_("  --listen <address>    Serve RPC API from this address\n"));
-  mch_msg(_("  --noplugin            Don't load plugins\n"));
-  mch_msg(_("  --remote[-subcommand] Execute commands remotely on a server\n"));
-  mch_msg(_("  --server <address>    Specify RPC server to send commands to\n"));
-  mch_msg(_("  --startuptime <file>  Write startup timing messages to <file>\n"));
-  mch_msg(_("\nSee \":help startup-options\" for all options.\n"));
+  os_msg(_("Usage:\n"));
+  os_msg(_("  nvim [options] [file ...]      Edit file(s)\n"));
+  os_msg(_("  nvim [options] -t <tag>        Edit file where tag is defined\n"));
+  os_msg(_("  nvim [options] -q [errorfile]  Edit file with first error\n"));
+  os_msg(_("\nOptions:\n"));
+  os_msg(_("  --                    Only file names after this\n"));
+  os_msg(_("  +                     Start at end of file\n"));
+  os_msg(_("  --cmd <cmd>           Execute <cmd> before any config\n"));
+  os_msg(_("  +<cmd>, -c <cmd>      Execute <cmd> after config and first file\n"));
+  os_msg("\n");
+  os_msg(_("  -b                    Binary mode\n"));
+  os_msg(_("  -d                    Diff mode\n"));
+  os_msg(_("  -e, -E                Ex mode\n"));
+  os_msg(_("  -es, -Es              Silent (batch) mode\n"));
+  os_msg(_("  -h, --help            Print this help message\n"));
+  os_msg(_("  -i <shada>            Use this shada file\n"));
+  os_msg(_("  -m                    Modifications (writing files) not allowed\n"));
+  os_msg(_("  -M                    Modifications in text not allowed\n"));
+  os_msg(_("  -n                    No swap file, use memory only\n"));
+  os_msg(_("  -o[N]                 Open N windows (default: one per file)\n"));
+  os_msg(_("  -O[N]                 Open N vertical windows (default: one per file)\n"));
+  os_msg(_("  -p[N]                 Open N tab pages (default: one per file)\n"));
+  os_msg(_("  -r, -L                List swap files\n"));
+  os_msg(_("  -r <file>             Recover edit state for this file\n"));
+  os_msg(_("  -R                    Read-only mode\n"));
+  os_msg(_("  -S <session>          Source <session> after loading the first file\n"));
+  os_msg(_("  -s <scriptin>         Read Normal mode commands from <scriptin>\n"));
+  os_msg(_("  -u <config>           Use this config file\n"));
+  os_msg(_("  -v, --version         Print version information\n"));
+  os_msg(_("  -V[N][file]           Verbose [level][file]\n"));
+  os_msg("\n");
+  os_msg(_("  --api-info            Write msgpack-encoded API metadata to stdout\n"));
+  os_msg(_("  --clean               \"Factory defaults\" (skip user config and plugins, shada)\n"));
+  os_msg(_("  --embed               Use stdin/stdout as a msgpack-rpc channel\n"));
+  os_msg(_("  --headless            Don't start a user interface\n"));
+  os_msg(_("  --listen <address>    Serve RPC API from this address\n"));
+  os_msg(_("  --noplugin            Don't load plugins\n"));
+  os_msg(_("  --remote[-subcommand] Execute commands remotely on a server\n"));
+  os_msg(_("  --server <address>    Specify RPC server to send commands to\n"));
+  os_msg(_("  --startuptime <file>  Write startup timing messages to <file>\n"));
+  os_msg(_("\nSee \":help startup-options\" for all options.\n"));
 }
 
 // Check the result of the ATTENTION dialog:

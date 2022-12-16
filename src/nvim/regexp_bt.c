@@ -3539,8 +3539,8 @@ static bool regmatch(char_u *scan, proftime_T *tm, int *timed_out)
 
 #ifdef REGEXP_DEBUG
     if (scan != NULL && regnarrate) {
-      mch_errmsg((char *)regprop(scan));
-      mch_errmsg("(\n");
+      os_errmsg((char *)regprop(scan));
+      os_errmsg("(\n");
     }
 #endif
 
@@ -3566,18 +3566,18 @@ static bool regmatch(char_u *scan, proftime_T *tm, int *timed_out)
 
 #ifdef REGEXP_DEBUG
       if (regnarrate) {
-        mch_errmsg((char *)regprop(scan));
-        mch_errmsg("...\n");
+        os_errmsg((char *)regprop(scan));
+        os_errmsg("...\n");
         if (re_extmatch_in != NULL) {
           int i;
 
-          mch_errmsg(_("External submatches:\n"));
+          os_errmsg(_("External submatches:\n"));
           for (i = 0; i < NSUBEXP; i++) {
-            mch_errmsg("    \"");
+            os_errmsg("    \"");
             if (re_extmatch_in->matches[i] != NULL) {
-              mch_errmsg((char *)re_extmatch_in->matches[i]);
+              os_errmsg((char *)re_extmatch_in->matches[i]);
             }
-            mch_errmsg("\"\n");
+            os_errmsg("\"\n");
           }
         }
       }
