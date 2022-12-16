@@ -418,6 +418,22 @@ char *transstr(const char *const s, bool untab)
   return buf;
 }
 
+size_t kv_transstr(StringBuilder *str, const char *const s, bool untab)
+  FUNC_ATTR_NONNULL_ARG(1)
+{
+  if (!s) {
+    return 0;
+  }
+
+  // Compute the length of the result, taking account of unprintable
+  // multi-byte characters.
+  const size_t len = transstr_len(s, untab);
+  kv_ensure_space(*str, len + 1);
+  transstr_buf(s, str->items + str->size, len + 1, untab);
+  str->size += len;  // do not include NUL byte
+  return len;
+}
+
 /// Convert the string "str[orglen]" to do ignore-case comparing.
 /// Use the current locale.
 ///
