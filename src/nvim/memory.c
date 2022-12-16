@@ -122,8 +122,8 @@ void *xmalloc(size_t size)
 {
   void *ret = try_malloc(size);
   if (!ret) {
-    mch_errmsg(e_outofmem);
-    mch_errmsg("\n");
+    os_errmsg(e_outofmem);
+    os_errmsg("\n");
     preserve_exit();
   }
   return ret;
@@ -153,8 +153,8 @@ void *xcalloc(size_t count, size_t size)
     try_to_free_memory();
     ret = calloc(allocated_count, allocated_size);
     if (!ret) {
-      mch_errmsg(e_outofmem);
-      mch_errmsg("\n");
+      os_errmsg(e_outofmem);
+      os_errmsg("\n");
       preserve_exit();
     }
   }
@@ -175,8 +175,8 @@ void *xrealloc(void *ptr, size_t size)
     try_to_free_memory();
     ret = realloc(ptr, allocated_size);
     if (!ret) {
-      mch_errmsg(e_outofmem);
-      mch_errmsg("\n");
+      os_errmsg(e_outofmem);
+      os_errmsg("\n");
       preserve_exit();
     }
   }
@@ -195,7 +195,7 @@ void *xmallocz(size_t size)
 {
   size_t total_size = size + 1;
   if (total_size < size) {
-    mch_errmsg(_("Vim: Data too large to fit into virtual memory space\n"));
+    os_errmsg(_("Vim: Data too large to fit into virtual memory space\n"));
     preserve_exit();
   }
 
