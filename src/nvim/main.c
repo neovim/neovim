@@ -278,6 +278,8 @@ int main(int argc, char **argv)
   // argument list "global_alist".
   command_line_scan(&params);
 
+  open_script_files(&params);
+
   nlua_init();
 
   TIME_MSG("init lua interpreter");
@@ -929,7 +931,7 @@ static bool edit_stdin(bool explicit, mparm_T *parmp)
                   && !embedded_mode
                   && (!exmode_active || parmp->input_neverscript)
                   && !parmp->input_isatty
-                  && scriptin[0] == NULL;  // `-s -` was not given.
+                  && parmp->scriptin == NULL;  // `-s -` was not given.
   return explicit || implicit;
 }
 
@@ -1277,8 +1279,8 @@ static void command_line_scan(mparm_T *parmp)
           set_option_value_give_err("shadafile", 0L, argv[0], 0);
           break;
 
-        case 's': {  // "-s {scriptin}" read from script file
-          if (scriptin[0] != NULL) {
+        case 's':    // "-s {scriptin}" read from script file
+          if (parmp->scriptin != NULL) {
 scripterror:
             vim_snprintf((char *)IObuff, IOSIZE,
                          _("Attempt to open script file again: \"%s %s\"\n"),
@@ -1286,28 +1288,8 @@ scripterror:
             mch_errmsg(IObuff);
             os_exit(2);
           }
-          int error;
-          if (strequal(argv[0], "-")) {
-            const int stdin_dup_fd = os_dup(STDIN_FILENO);
-#ifdef MSWIN
-            // Replace the original stdin with the console input handle.
-            os_replace_stdin_to_conin();
-#endif
-            FileDescriptor *const stdin_dup = file_open_fd_new(&error, stdin_dup_fd,
-                                                               kFileReadOnly|kFileNonBlocking);
-            assert(stdin_dup != NULL);
-            scriptin[0] = stdin_dup;
-          } else if ((scriptin[0] = file_open_new(&error, argv[0],
-                                                  kFileReadOnly|kFileNonBlocking, 0)) == NULL) {
-            vim_snprintf((char *)IObuff, IOSIZE,
-                         _("Cannot open for reading: \"%s\": %s\n"),
-                         argv[0], os_strerror(error));
-            mch_errmsg(IObuff);
-            os_exit(2);
-          }
-          save_typebuf();
+          parmp->scriptin = argv[0];
           break;
-        }
 
         case 't':    // "-t {tag}"
           parmp->tagname = argv[0];
@@ -1329,17 +1311,11 @@ scripterror:
           }
           FALLTHROUGH;
         case 'W':    // "-W {scriptout}" overwrite script file
-          if (scriptout != NULL) {
+          if (parmp->scriptout != NULL) {
             goto scripterror;
           }
-          if ((scriptout = os_fopen(argv[0], c == 'w' ? APPENDBIN : WRITEBIN))
-              == NULL) {
-            mch_errmsg(_("Cannot open for script output: \""));
-            mch_errmsg(argv[0]);
-            mch_errmsg("\"\n");
-            os_exit(2);
-          }
-          break;
+          parmp->scriptout = argv[0];
+          parmp->scriptout_append = (c == 'w');
         }
       }
     } else {  // File name argument.
@@ -1546,6 +1522,45 @@ static void read_stdin(void)
   msg_didany = save_msg_didany;
   TIME_MSG("reading stdin");
   check_swap_exists_action();
+}
+
+static void open_script_files(mparm_T *parmp)
+{
+  if (parmp->scriptin) {
+    int error;
+    if (strequal(parmp->scriptin, "-")) {
+      const int stdin_dup_fd = os_dup(STDIN_FILENO);
+#ifdef MSWIN
+      // Replace the original stdin with the console input handle.
+      os_replace_stdin_to_conin();
+#endif
+      FileDescriptor *const stdin_dup = file_open_fd_new(&error, stdin_dup_fd,
+                                                         kFileReadOnly|kFileNonBlocking);
+      assert(stdin_dup != NULL);
+      scriptin[0] = stdin_dup;
+    } else {
+      scriptin[0] = file_open_new(&error, parmp->scriptin,
+                                  kFileReadOnly|kFileNonBlocking, 0);
+      if (scriptin[0] == NULL) {
+        vim_snprintf((char *)IObuff, IOSIZE,
+                     _("Cannot open for reading: \"%s\": %s\n"),
+                     parmp->scriptin, os_strerror(error));
+        mch_errmsg(IObuff);
+        os_exit(2);
+      }
+    }
+    save_typebuf();
+  }
+
+  if (parmp->scriptout) {
+    scriptout = os_fopen(parmp->scriptout, parmp->scriptout_append ? APPENDBIN : WRITEBIN);
+    if (scriptout == NULL) {
+      mch_errmsg(_("Cannot open for script output: \""));
+      mch_errmsg(parmp->scriptout);
+      mch_errmsg("\"\n");
+      os_exit(2);
+    }
+  }
 }
 
 // Create the requested number of windows and edit buffers in them.
