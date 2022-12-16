@@ -897,7 +897,7 @@ static int do_set_string(int opt_idx, int opt_flags, char **argp, int nextchar, 
     // backslashes.
 
     // get a bit too much
-    unsigned long newlen = strlen(arg) + 1;
+    size_t newlen = strlen(arg) + 1;
     if (op != OP_NONE) {
       newlen += strlen(origval) + 1;
     }
