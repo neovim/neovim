@@ -4263,7 +4263,7 @@ void buf_copy_options(buf_T *buf, int flags)
       // Don't copy the options specific to a help buffer when
       // BCO_NOHELP is given or the options were initialized already
       // (jumping back to a help file with CTRL-T or CTRL-O)
-      int dont_do_help = ((flags & BCO_NOHELP) && buf->b_help) || buf->b_p_initialized;
+      bool dont_do_help = ((flags & BCO_NOHELP) && buf->b_help) || buf->b_p_initialized;
       if (dont_do_help) {               // don't free b_p_isk
         save_p_isk = (char_u *)buf->b_p_isk;
         buf->b_p_isk = NULL;
