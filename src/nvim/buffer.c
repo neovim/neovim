@@ -1090,13 +1090,13 @@ char *do_bufdel(int command, char *arg, int addr_count, int start_bnr, int end_b
       errormsg = (char *)IObuff;
     } else if (deleted >= p_report) {
       if (command == DOBUF_UNLOAD) {
-        smsg(NGETTEXT("%d buffer unloaded", "%d buffers unloaded", (unsigned long)deleted),
+        smsg(NGETTEXT("%d buffer unloaded", "%d buffers unloaded", deleted),
              deleted);
       } else if (command == DOBUF_DEL) {
-        smsg(NGETTEXT("%d buffer deleted", "%d buffers deleted", (unsigned long)deleted),
+        smsg(NGETTEXT("%d buffer deleted", "%d buffers deleted", deleted),
              deleted);
       } else {
-        smsg(NGETTEXT("%d buffer wiped out", "%d buffers wiped out", (unsigned long)deleted),
+        smsg(NGETTEXT("%d buffer wiped out", "%d buffers wiped out", deleted),
              deleted);
       }
     }
@@ -3149,7 +3149,7 @@ void fileinfo(int fullname, int shorthelp, int dont_truncate)
     vim_snprintf_add(buffer, IOSIZE,
                      NGETTEXT("%" PRId64 " line --%d%%--",
                               "%" PRId64 " lines --%d%%--",
-                              (unsigned long)curbuf->b_ml.ml_line_count),
+                              curbuf->b_ml.ml_line_count),
                      (int64_t)curbuf->b_ml.ml_line_count, n);
   } else {
     vim_snprintf_add(buffer, IOSIZE,
