@@ -223,6 +223,7 @@ int hash_add(hashtab_T *ht, char *key)
 void hash_add_item(hashtab_T *ht, hashitem_T *hi, char_u *key, hash_T hash)
 {
   ht->ht_used++;
+  ht->ht_changed++;
   if (hi->hi_key == NULL) {
     ht->ht_filled++;
   }
@@ -242,6 +243,7 @@ void hash_add_item(hashtab_T *ht, hashitem_T *hi, char_u *key, hash_T hash)
 void hash_remove(hashtab_T *ht, hashitem_T *hi)
 {
   ht->ht_used--;
+  ht->ht_changed++;
   hi->hi_key = HI_KEY_REMOVED;
   hash_may_resize(ht, 0);
 }
@@ -384,6 +386,7 @@ static void hash_may_resize(hashtab_T *ht, size_t minitems)
   ht->ht_array = newarray;
   ht->ht_mask = newmask;
   ht->ht_filled = ht->ht_used;
+  ht->ht_changed++;
 }
 
 #define HASH_CYCLE_BODY(hash, p) \
