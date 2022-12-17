@@ -56,6 +56,9 @@ setmetatable(vim, {
     if vim._submodules[key] then
       t[key] = require('vim.' .. key)
       return t[key]
+    elseif key == 'inspect_pos' or key == 'show_pos' then
+      require('vim._inspector')
+      return t[key]
     elseif vim.startswith(key, 'uri_') then
       local val = require('vim.uri')[key]
       if val ~= nil then

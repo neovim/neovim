@@ -1504,6 +1504,56 @@ schedule_wrap({cb})                                      *vim.schedule_wrap()*
         |vim.in_fast_event()|
 
 
+==============================================================================
+Lua module: inspector                                          *lua-inspector*
+
+inspect_pos({bufnr}, {row}, {col}, {filter})               *vim.inspect_pos()*
+    Get all the items at a given buffer position.
+
+    Can also be pretty-printed with `:Inspect!`.                   *:Inspect!*
+
+    Parameters: ~
+      • {bufnr}   (number|nil) defaults to the current buffer
+      • {row}     (number|nil) row to inspect, 0-based. Defaults to the row of
+                  the current cursor
+      • {col}     (number|nil) col to inspect, 0-based. Defaults to the col of
+                  the current cursor
+      • {filter}  (table|nil) a table with key-value pairs to filter the items
+                  • syntax (boolean): include syntax based highlight groups
+                    (defaults to true)
+                  • treesitter (boolean): include treesitter based highlight
+                    groups (defaults to true)
+                  • extmarks (boolean|"all"): include extmarks. When `all`,
+                    then extmarks without a `hl_group` will also be included
+                    (defaults to true)
+                  • semantic_tokens (boolean): include semantic tokens
+                    (defaults to true)
+
+    Return: ~
+        (table) a table with the following key-value pairs. Items are in
+        "traversal order":
+        • treesitter: a list of treesitter captures
+        • syntax: a list of syntax groups
+        • semantic_tokens: a list of semantic tokens
+        • extmarks: a list of extmarks
+        • buffer: the buffer used to get the items
+        • row: the row used to get the items
+        • col: the col used to get the items
+
+show_pos({bufnr}, {row}, {col}, {filter})                     *vim.show_pos()*
+    Show all the items at a given buffer position.
+
+    Can also be shown with `:Inspect`.                              *:Inspect*
+
+    Parameters: ~
+      • {bufnr}   (number|nil) defaults to the current buffer
+      • {row}     (number|nil) row to inspect, 0-based. Defaults to the row of
+                  the current cursor
+      • {col}     (number|nil) col to inspect, 0-based. Defaults to the col of
+                  the current cursor
+      • {filter}  (table|nil) see |vim.inspect_pos()|
+
+
 
 
 deep_equal({a}, {b})                                        *vim.deep_equal()*

@@ -40,7 +40,7 @@ void api_extmark_free_all_mem(void)
   map_destroy(String, handle_T)(&namespace_ids);
 }
 
-/// Creates a new \*namespace\* or gets an existing one.
+/// Creates a new namespace or gets an existing one. \*namespace\*
 ///
 /// Namespaces are used for buffer highlights and virtual text, see
 /// |nvim_buf_add_highlight()| and |nvim_buf_set_extmark()|.

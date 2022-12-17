@@ -39,6 +39,10 @@ NEW FEATURES                                                    *news-features*
 
 The following new APIs or features were added.
 
+• |vim.inspect_pos()|, |vim.show_pos()| and |:Inspect| allow a user to get or show items
+  at a given buffer postion. Currently this includes treesitter captures,
+  semantic tokens, syntax groups and extmarks.
+
 • Added support for semantic token highlighting to the LSP client. This
   functionality is enabled by default when a client that supports this feature
   is attached to a buffer. Opt-out can be performed by deleting the

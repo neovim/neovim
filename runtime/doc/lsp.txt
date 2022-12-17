@@ -1332,6 +1332,19 @@ force_refresh({bufnr})               *vim.lsp.semantic_tokens.force_refresh()*
     Parameters: ~
       • {bufnr}  (nil|number) default: current buffer
 
+                                        *vim.lsp.semantic_tokens.get_at_pos()*
+get_at_pos({bufnr}, {row}, {col})
+    Return the semantic token(s) at the given position. If called without
+    arguments, returns the token under the cursor.
+
+    Parameters: ~
+      • {bufnr}  (number|nil) Buffer number (0 for current buffer, default)
+      • {row}    (number|nil) Position row (default cursor position)
+      • {col}    (number|nil) Position column (default cursor position)
+
+    Return: ~
+        (table|nil) List of tokens at position
+
 start({bufnr}, {client_id}, {opts})          *vim.lsp.semantic_tokens.start()*
     Start the semantic token highlighting engine for the given buffer with the
     given client. The client must already be attached to the buffer.
