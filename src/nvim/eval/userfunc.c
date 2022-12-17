@@ -1297,7 +1297,7 @@ void free_all_functions(void)
   ufunc_T *fp;
   uint64_t skipped = 0;
   uint64_t todo = 1;
-  uint64_t used;
+  int changed;
 
   // Clean up the current_funccal chain and the funccal stack.
   while (current_funccal != NULL) {
@@ -1321,9 +1321,9 @@ void free_all_functions(void)
         if (func_name_refcount((char_u *)fp->uf_name)) {
           skipped++;
         } else {
-          used = func_hashtab.ht_used;
+          changed = func_hashtab.ht_changed;
           func_clear(fp, true);
-          if (used != func_hashtab.ht_used) {
+          if (changed != func_hashtab.ht_changed) {
             skipped = 0;
             break;
           }
@@ -1993,8 +1993,8 @@ char *save_function_name(char **name, bool skip, int flags, funcdict_T *fudi)
 ///                  Otherwise functions matching "regmatch".
 static void list_functions(regmatch_T *regmatch)
 {
-  const size_t used = func_hashtab.ht_used;
-  size_t todo = used;
+  const int changed = func_hashtab.ht_changed;
+  size_t todo = func_hashtab.ht_used;
   const hashitem_T *const ht_array = func_hashtab.ht_array;
 
   for (const hashitem_T *hi = ht_array; todo > 0 && !got_int; hi++) {
@@ -2008,7 +2008,7 @@ static void list_functions(regmatch_T *regmatch)
               : (!isdigit(*fp->uf_name)
                  && vim_regexec(regmatch, (char *)fp->uf_name, 0)))) {
         list_func_head(fp, false, false);
-        if (used != func_hashtab.ht_used || ht_array != func_hashtab.ht_array) {
+        if (changed != func_hashtab.ht_changed) {
           emsg(_("E454: function list was modified"));
           return;
         }
@@ -2730,15 +2730,17 @@ bool function_exists(const char *const name, bool no_deref)
 char *get_user_func_name(expand_T *xp, int idx)
 {
   static size_t done;
+  static int changed;
   static hashitem_T *hi;
   ufunc_T *fp;
 
   if (idx == 0) {
     done = 0;
     hi = func_hashtab.ht_array;
+    changed = func_hashtab.ht_changed;
   }
   assert(hi);
-  if (done < func_hashtab.ht_used) {
+  if (changed == func_hashtab.ht_changed && done < func_hashtab.ht_used) {
     if (done++ > 0) {
       hi++;
     }
