@@ -1781,7 +1781,7 @@ char *get_foldtext(win_T *wp, linenr_T lnum, linenr_T lnume, foldinfo_T foldinfo
     }
   }
   if (text == NULL) {
-    unsigned long count = (unsigned long)(lnume - lnum + 1);  // NOLINT(bugprone-misplaced-widening-cast)
+    long count = lnume - lnum + 1;
 
     vim_snprintf(buf, FOLD_TEXT_LEN,
                  NGETTEXT("+--%3ld line folded",
@@ -3269,7 +3269,7 @@ void f_foldtext(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
         }
       }
     }
-    int count = foldend - foldstart + 1;
+    long count = foldend - foldstart + 1;
     char *txt = NGETTEXT("+-%s%3ld line: ", "+-%s%3ld lines: ", count);
     size_t len = strlen(txt)
                  + strlen(dashes)  // for %s

@@ -4391,14 +4391,14 @@ static int check_more(int message, bool forceit)
 
         vim_snprintf((char *)buff, DIALOG_MSG_SIZE,
                      NGETTEXT("%d more file to edit.  Quit anyway?",
-                              "%d more files to edit.  Quit anyway?", (unsigned long)n), n);
+                              "%d more files to edit.  Quit anyway?", n), n);
         if (vim_dialog_yesno(VIM_QUESTION, NULL, buff, 1) == VIM_YES) {
           return OK;
         }
         return FAIL;
       }
       semsg(NGETTEXT("E173: %" PRId64 " more file to edit",
-                     "E173: %" PRId64 " more files to edit", (unsigned long)n), (int64_t)n);
+                     "E173: %" PRId64 " more files to edit", n), (int64_t)n);
       quitmore = 2;                 // next try to quit is allowed
     }
     return FAIL;
