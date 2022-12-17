@@ -71,7 +71,7 @@ jobs:
 
       - if: success() || failure() && steps.abort_job.outputs.status == 'success'
         name: lintstylua
-        uses: JohnnyMorganz/stylua-action@v1
+        uses: JohnnyMorganz/stylua-action@v2
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           version: latest
