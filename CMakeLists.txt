@@ -490,6 +490,7 @@ if(FEAT_TUI)
   int
   main(void)
   {
+    unibi_str_from_var(unibi_var_from_str(\"\"));
     return unibi_num_from_var(unibi_var_from_num(0));
   }
   " UNIBI_HAS_VAR_FROM)
