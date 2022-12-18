@@ -65,8 +65,21 @@
   do { \
     (var) = unibi_var_from_num((num)); \
   } while (0)
+# define UNIBI_SET_STR_VAR(var, str) \
+  do { \
+    (var) = unibi_var_from_str((str)); \
+  } while (0)
 #else
-# define UNIBI_SET_NUM_VAR(var, num) (var).i = (num);
+# define UNIBI_SET_NUM_VAR(var, num) \
+  do { \
+    (var).p = NULL; \
+    (var).i = (num); \
+  } while (0)
+# define UNIBI_SET_STR_VAR(var, str) \
+  do { \
+    (var).i = INT_MIN; \
+    (var).p = str; \
+  } while (0)
 #endif
 
 typedef struct {
@@ -108,6 +121,7 @@ struct TUIData {
   bool mouse_move_enabled;
   bool busy, is_invisible, want_invisible;
   bool cork, overflow;
+  bool set_cursor_color_as_str;
   bool cursor_color_changed;
   bool is_starting;
   FILE *screenshot;
@@ -236,6 +250,7 @@ static void terminfo_start(UI *ui)
   data->busy = false;
   data->cork = false;
   data->overflow = false;
+  data->set_cursor_color_as_str = false;
   data->cursor_color_changed = false;
   data->showing_mode = SHAPE_IDX_N;
   data->unibi_ext.enable_mouse = -1;
@@ -1180,7 +1195,13 @@ static void tui_set_mode(UI *ui, ModeShape mode)
       // Hopefully the user's default cursor color is inverse.
       unibi_out_ext(ui, data->unibi_ext.reset_cursor_color);
     } else {
-      UNIBI_SET_NUM_VAR(data->params[0], aep.rgb_bg_color);
+      if (data->set_cursor_color_as_str) {
+        char hexbuf[8];
+        snprintf(hexbuf, 7 + 1, "#%06x", aep.rgb_bg_color);
+        UNIBI_SET_STR_VAR(data->params[0], hexbuf);
+      } else {
+        UNIBI_SET_NUM_VAR(data->params[0], aep.rgb_bg_color);
+      }
       unibi_out_ext(ui, data->unibi_ext.set_cursor_color);
       data->cursor_color_changed = true;
     }
@@ -2148,10 +2169,20 @@ static void augment_terminfo(TUIData *data, const char *term, long vte_version, 
                && (vte_version == 0 || vte_version >= 3900)) {
       // Supported in urxvt, newer VTE.
       data->unibi_ext.set_cursor_color = (int)unibi_add_ext_str(ut, "ext.set_cursor_color",
-                                                                "\033]12;#%p1%06x\007");
+                                                                "\033]12;%p1%s\007");
     }
   }
   if (-1 != data->unibi_ext.set_cursor_color) {
+    // Some terminals supporting cursor color changing specify their Cs
+    // capability to take a string parameter. Others take a numeric parameter.
+    // If and only if the format string contains `%s` we assume a string
+    // parameter. #20628
+    const char *set_cursor_color =
+      unibi_get_ext_str(ut, (unsigned)data->unibi_ext.set_cursor_color);
+    if (set_cursor_color) {
+      data->set_cursor_color_as_str = strstr(set_cursor_color, "%s") != NULL;
+    }
+
     data->unibi_ext.reset_cursor_color = unibi_find_ext_str(ut, "Cr");
     if (-1 == data->unibi_ext.reset_cursor_color) {
       data->unibi_ext.reset_cursor_color = (int)unibi_add_ext_str(ut, "ext.reset_cursor_color",
