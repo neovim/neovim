@@ -1673,7 +1673,11 @@ function M.toqflist(diagnostics)
   end
   table.sort(list, function(a, b)
     if a.bufnr == b.bufnr then
-      return a.lnum < b.lnum
+      if a.lnum == b.lnum then
+        return a.col < b.col
+      else
+        return a.lnum < b.lnum
+      end
     else
       return a.bufnr < b.bufnr
     end
