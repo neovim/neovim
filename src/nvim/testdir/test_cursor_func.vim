@@ -138,8 +138,12 @@ func Test_screenpos_fold()
   redraw
   call assert_equal(2, screenpos(1, 2, 1).row)
   call assert_equal(#{col: 1, row: 3, endcol: 1, curscol: 1}, screenpos(1, 3, 1))
-  call assert_equal(3, screenpos(1, 4, 1).row)
-  call assert_equal(3, screenpos(1, 5, 1).row)
+  call assert_equal(#{col: 1, row: 3, endcol: 1, curscol: 1}, screenpos(1, 4, 1))
+  call assert_equal(#{col: 1, row: 3, endcol: 1, curscol: 1}, screenpos(1, 5, 1))
+  setlocal number
+  call assert_equal(#{col: 5, row: 3, endcol: 5, curscol: 5}, screenpos(1, 3, 1))
+  call assert_equal(#{col: 5, row: 3, endcol: 5, curscol: 5}, screenpos(1, 4, 1))
+  call assert_equal(#{col: 5, row: 3, endcol: 5, curscol: 5}, screenpos(1, 5, 1))
   call assert_equal(4, screenpos(1, 6, 1).row)
   bwipe!
 endfunc
