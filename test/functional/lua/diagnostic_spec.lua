@@ -160,6 +160,24 @@ describe('vim.diagnostic', function()
     ]])
   end)
 
+  it('removes diagnostic from stale cache on reset', function()
+    local diagnostics = exec_lua [[
+      vim.diagnostic.set(diagnostic_ns, diagnostic_bufnr, {
+        make_error('Diagnostic #1', 1, 1, 1, 1),
+        make_error('Diagnostic #2', 2, 1, 2, 1),
+      })
+      local other_bufnr = vim.fn.bufadd('test | test')
+      vim.cmd('noautocmd bwipeout! ' .. diagnostic_bufnr)
+      return vim.diagnostic.get(diagnostic_bufnr)
+    ]]
+    eq(2, #diagnostics)
+    diagnostics = exec_lua [[
+      vim.diagnostic.reset()
+      return vim.diagnostic.get()
+    ]]
+    eq(0, #diagnostics)
+  end)
+
   it('resolves buffer number 0 to the current buffer', function()
     eq(2, exec_lua [[
       vim.api.nvim_set_current_buf(diagnostic_bufnr)

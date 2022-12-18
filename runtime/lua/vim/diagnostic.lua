@@ -922,7 +922,7 @@ M.handlers.signs = {
   end,
   hide = function(namespace, bufnr)
     local ns = M.get_namespace(namespace)
-    if ns.user_data.sign_group then
+    if ns.user_data.sign_group and api.nvim_buf_is_valid(bufnr) then
       vim.fn.sign_unplace(ns.user_data.sign_group, { buffer = bufnr })
     end
   end,
@@ -977,7 +977,9 @@ M.handlers.underline = {
     local ns = M.get_namespace(namespace)
     if ns.user_data.underline_ns then
       diagnostic_cache_extmarks[bufnr][ns.user_data.underline_ns] = {}
-      api.nvim_buf_clear_namespace(bufnr, ns.user_data.underline_ns, 0, -1)
+      if api.nvim_buf_is_valid(bufnr) then
+        api.nvim_buf_clear_namespace(bufnr, ns.user_data.underline_ns, 0, -1)
+      end
     end
   end,
 }
@@ -1040,7 +1042,9 @@ M.handlers.virtual_text = {
     local ns = M.get_namespace(namespace)
     if ns.user_data.virt_text_ns then
       diagnostic_cache_extmarks[bufnr][ns.user_data.virt_text_ns] = {}
-      api.nvim_buf_clear_namespace(bufnr, ns.user_data.virt_text_ns, 0, -1)
+      if api.nvim_buf_is_valid(bufnr) then
+        api.nvim_buf_clear_namespace(bufnr, ns.user_data.virt_text_ns, 0, -1)
+      end
     end
   end,
 }
@@ -1470,11 +1474,15 @@ function M.reset(namespace, bufnr)
       M.hide(iter_namespace, iter_bufnr)
     end
 
-    api.nvim_exec_autocmds('DiagnosticChanged', {
-      modeline = false,
-      buffer = iter_bufnr,
-      data = { diagnostics = {} },
-    })
+    if api.nvim_buf_is_valid(iter_bufnr) then
+      api.nvim_exec_autocmds('DiagnosticChanged', {
+        modeline = false,
+        buffer = iter_bufnr,
+        data = { diagnostics = {} },
+      })
+    else
+      diagnostic_cache[iter_bufnr] = nil
+    end
   end
 end
 
