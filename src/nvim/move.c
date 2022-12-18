@@ -937,41 +937,39 @@ void textpos2screenpos(win_T *wp, pos_T *pos, int *rowp, int *scolp, int *ccolp,
   bool existing_row = (pos->lnum > 0
                        && pos->lnum <= wp->w_buffer->b_ml.ml_line_count);
 
-  if (is_folded) {
-    row += local ? 0 : wp->w_winrow + wp->w_winrow_off;
-    coloff = (local ? 0 : wp->w_wincol + wp->w_wincol_off) + 1;
-  } else if ((local || visible_row) && existing_row) {
-    colnr_T off;
-    colnr_T col;
-    int width;
-
-    getvcol(wp, pos, &scol, &ccol, &ecol);
-
-    // similar to what is done in validate_cursor_col()
-    col = scol;
-    off = win_col_off(wp);
-    col += off;
-    width = wp->w_width - off + win_col_off2(wp);
-
-    // long line wrapping, adjust row
-    if (wp->w_p_wrap && col >= (colnr_T)wp->w_width && width > 0) {
-      // use same formula as what is used in curs_columns()
-      rowoff = visible_row ? ((col - wp->w_width) / width + 1) : 0;
-      col -= rowoff * width;
-    }
-
-    col -= wp->w_leftcol;
-
-    if (col >= 0 && col < wp->w_width && row + rowoff <= wp->w_height) {
-      coloff = col - scol + (local ? 0 : wp->w_wincol + wp->w_wincol_off) + 1;
+  if ((local || visible_row) && existing_row) {
+    const colnr_T off = win_col_off(wp);
+    if (is_folded) {
       row += local ? 0 : wp->w_winrow + wp->w_winrow_off;
+      coloff = (local ? 0 : wp->w_wincol + wp->w_wincol_off) + 1 + off;
     } else {
-      // character is left, right or below of the window
-      scol = ccol = ecol = 0;
-      if (local) {
-        coloff = col < 0 ? -1 : wp->w_width_inner + 1;
+      getvcol(wp, pos, &scol, &ccol, &ecol);
+
+      // similar to what is done in validate_cursor_col()
+      colnr_T col = scol;
+      col += off;
+      int width = wp->w_width - off + win_col_off2(wp);
+
+      // long line wrapping, adjust row
+      if (wp->w_p_wrap && col >= (colnr_T)wp->w_width && width > 0) {
+        // use same formula as what is used in curs_columns()
+        rowoff = visible_row ? ((col - wp->w_width) / width + 1) : 0;
+        col -= rowoff * width;
+      }
+
+      col -= wp->w_leftcol;
+
+      if (col >= 0 && col < wp->w_width && row + rowoff <= wp->w_height) {
+        coloff = col - scol + (local ? 0 : wp->w_wincol + wp->w_wincol_off) + 1;
+        row += local ? 0 : wp->w_winrow + wp->w_winrow_off;
       } else {
-        row = rowoff = 0;
+        // character is left, right or below of the window
+        scol = ccol = ecol = 0;
+        if (local) {
+          coloff = col < 0 ? -1 : wp->w_width_inner + 1;
+        } else {
+          row = rowoff = 0;
+        }
       }
     }
   }
