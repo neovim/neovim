@@ -814,22 +814,6 @@ retry:
     state->linebuf = IObuff;
   }
 
-  // Convert a line if it contains a non-ASCII character
-  if (state->vc.vc_type != CONV_NONE && has_non_ascii(state->linebuf)) {
-    char *line = string_convert(&state->vc, state->linebuf, &state->linelen);
-    if (line != NULL) {
-      if (state->linelen < IOSIZE) {
-        xstrlcpy(state->linebuf, line, state->linelen + 1);
-        xfree(line);
-      } else {
-        xfree(state->growbuf);
-        state->linebuf = line;
-        state->growbuf = line;
-        state->growbufsiz = state->linelen < LINE_MAXLEN
-          ? state->linelen : LINE_MAXLEN;
-      }
-    }
-  }
   return QF_OK;
 }
 
@@ -858,6 +842,23 @@ static int qf_get_nextline(qfstate_T *state)
 
   if (status != QF_OK) {
     return status;
+  }
+
+  // Convert a line if conversion was requiested and the line contains a non-ASCII character.
+  if (state->vc.vc_type != CONV_NONE && has_non_ascii(state->linebuf)) {
+    char *line = string_convert(&state->vc, state->linebuf, &state->linelen);
+    if (line != NULL) {
+      if (state->linelen < IOSIZE) {
+        xstrlcpy(state->linebuf, line, state->linelen + 1);
+        xfree(line);
+      } else {
+        xfree(state->growbuf);
+        state->linebuf = line;
+        state->growbuf = line;
+        state->growbufsiz = state->linelen < LINE_MAXLEN
+          ? state->linelen : LINE_MAXLEN;
+      }
+    }
   }
 
   if (state->linelen > 0 && state->linebuf[state->linelen - 1] == '\n') {
