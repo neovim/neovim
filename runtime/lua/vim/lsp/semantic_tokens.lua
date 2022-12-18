@@ -328,13 +328,9 @@ function STHighlighter:process_response(response, client, version)
     end
     vim.list_extend(tokens, old_tokens, idx)
   else
-    tokens = response.data
+    tokens = response.data or {}
   end
 
-  -- skip nil tokens
-  if tokens == nil then
-    return
-  end
   -- Update the state with the new results
   local current_result = state.current_result
   current_result.version = version
