@@ -323,7 +323,9 @@ function STHighlighter:process_response(response, client, version)
     local idx = 1
     for _, token_edit in ipairs(token_edits) do
       vim.list_extend(tokens, old_tokens, idx, token_edit.start)
-      vim.list_extend(tokens, token_edit.data)
+      if token_edit.data then
+        vim.list_extend(tokens, token_edit.data)
+      end
       idx = token_edit.start + token_edit.deleteCount + 1
     end
     vim.list_extend(tokens, old_tokens, idx)
