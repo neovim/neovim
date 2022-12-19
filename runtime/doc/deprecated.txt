@@ -17,6 +17,12 @@ API
 - *nvim_buf_set_virtual_text()*	Use |nvim_buf_set_extmark()| instead.
 - *nvim_command_output()*	Use |nvim_exec()| instead.
 - *nvim_execute_lua()*		Use |nvim_exec_lua()| instead.
+- *nvim_buf_get_option()*	Use |nvim_get_option_value()| instead.
+- *nvim_buf_set_option()*	Use |nvim_set_option_value()| instead.
+- *nvim_get_option()*		Use |nvim_get_option_value()| instead.
+- *nvim_set_option()*		Use |nvim_set_option_value()| instead.
+- *nvim_win_get_option()*	Use |nvim_get_option_value()| instead.
+- *nvim_win_set_option()*	Use |nvim_set_option_value()| instead.
 
 COMMANDS
 - *:rv* *:rviminfo*		Deprecated alias to |:rshada| command.

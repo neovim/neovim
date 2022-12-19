@@ -197,7 +197,7 @@ describe(':terminal buffer', function()
 
   it('handles loss of focus gracefully', function()
     -- Change the statusline to avoid printing the file name, which varies.
-    nvim('set_option', 'statusline', '==========')
+    nvim('set_option_value', 'statusline', '==========', {})
     feed_command('set laststatus=0')
 
     -- Save the buffer number of the terminal for later testing.

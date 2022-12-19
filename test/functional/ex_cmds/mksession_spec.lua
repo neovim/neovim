@@ -247,7 +247,7 @@ describe(':mksession', function()
       style = 'minimal',
     }
     meths.open_win(buf, false, config)
-    local cmdheight = meths.get_option('cmdheight')
+    local cmdheight = meths.get_option_value('cmdheight', {})
     command('mksession ' .. session_file)
 
     -- Create a new test instance of Nvim.
@@ -260,7 +260,7 @@ describe(':mksession', function()
     -- window was not restored.
     eq(1, funcs.winnr('$'))
     -- The command-line height should remain the same as it was.
-    eq(cmdheight, meths.get_option('cmdheight'))
+    eq(cmdheight, meths.get_option_value('cmdheight', {}))
 
     os.remove(tmpfile)
   end)

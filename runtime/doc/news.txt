@@ -178,9 +178,15 @@ The following deprecated functions or APIs were removed.
 ==============================================================================
 DEPRECATIONS                                                *news-deprecations*
 
-The following functions are now deprecated and will be removed in the next
+The following functions are now deprecated and will be removed in a future
 release.
 
+- |nvim_buf_get_option()|	Use |nvim_get_option_value()| instead.
+- |nvim_buf_set_option()|	Use |nvim_set_option_value()| instead.
+- |nvim_get_option()|		Use |nvim_get_option_value()| instead.
+- |nvim_set_option()|		Use |nvim_set_option_value()| instead.
+- |nvim_win_get_option()|	Use |nvim_get_option_value()| instead.
+- |nvim_win_set_option()|	Use |nvim_set_option_value()| instead.
 
 
  vim:tw=78:ts=8:sw=2:et:ft=help:norl:

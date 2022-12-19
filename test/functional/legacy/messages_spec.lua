@@ -361,9 +361,9 @@ describe('messages', function()
       screen:attach()
 
       command('cd '..nvim_dir)
-      meths.set_option('shell', './shell-test')
-      meths.set_option('shellcmdflag', 'REP 20')
-      meths.set_option('shellxquote', '')  -- win: avoid extra quotes
+      meths.set_option_value('shell', './shell-test', {})
+      meths.set_option_value('shellcmdflag', 'REP 20', {})
+      meths.set_option_value('shellxquote', '', {})  -- win: avoid extra quotes
 
       -- display a page and go back, results in exactly the same view
       feed([[:4 verbose echo system('foo')<CR>]])

@@ -988,7 +988,7 @@ describe('completion', function()
           return ''
         endfunction
       ]])
-      meths.set_option('completeopt', 'menuone,noselect')
+      meths.set_option_value('completeopt', 'menuone,noselect', {})
       meths.set_var('_complist', {{
         word=0,
         abbr=1,

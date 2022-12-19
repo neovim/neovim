@@ -89,7 +89,7 @@ function M.get_parser(bufnr, lang, opts)
     bufnr = a.nvim_get_current_buf()
   end
   if lang == nil then
-    lang = a.nvim_buf_get_option(bufnr, 'filetype')
+    lang = vim.bo[bufnr].filetype
   end
 
   if parsers[bufnr] == nil or parsers[bufnr]:lang() ~= lang then

@@ -12,7 +12,7 @@ describe('Vim script', function()
   it('Error when if/for/while/try/function is nested too deep',function()
     local screen = Screen.new(80, 24)
     screen:attach()
-    meths.set_option('laststatus', 2)
+    meths.set_option_value('laststatus', 2, {})
     exec([[
       " Deep nesting of if ... endif
       func Test1()

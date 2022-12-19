@@ -240,8 +240,10 @@ Dictionary nvim_get_option_info(String name, Error *err)
 {
   return get_vimoption(name, err);
 }
+
 /// Sets the global value of an option.
 ///
+/// @deprecated
 /// @param channel_id
 /// @param name     Option name
 /// @param value    New option value
@@ -254,6 +256,7 @@ void nvim_set_option(uint64_t channel_id, String name, Object value, Error *err)
 
 /// Gets the global value of an option.
 ///
+/// @deprecated
 /// @param name     Option name
 /// @param[out] err Error details, if any
 /// @return         Option value (global)
@@ -265,6 +268,7 @@ Object nvim_get_option(String name, Arena *arena, Error *err)
 
 /// Gets a buffer option value
 ///
+/// @deprecated
 /// @param buffer     Buffer handle, or 0 for current buffer
 /// @param name       Option name
 /// @param[out] err   Error details, if any
@@ -284,6 +288,7 @@ Object nvim_buf_get_option(Buffer buffer, String name, Arena *arena, Error *err)
 /// Sets a buffer option value. Passing `nil` as value deletes the option (only
 /// works if there's a global fallback)
 ///
+/// @deprecated
 /// @param channel_id
 /// @param buffer     Buffer handle, or 0 for current buffer
 /// @param name       Option name
@@ -303,6 +308,7 @@ void nvim_buf_set_option(uint64_t channel_id, Buffer buffer, String name, Object
 
 /// Gets a window option value
 ///
+/// @deprecated
 /// @param window   Window handle, or 0 for current window
 /// @param name     Option name
 /// @param[out] err Error details, if any
@@ -322,6 +328,7 @@ Object nvim_win_get_option(Window window, String name, Arena *arena, Error *err)
 /// Sets a window option value. Passing `nil` as value deletes the option (only
 /// works if there's a global fallback)
 ///
+/// @deprecated
 /// @param channel_id
 /// @param window   Window handle, or 0 for current window
 /// @param name     Option name

@@ -210,8 +210,8 @@ describe('system()', function()
     end)
 
     it('prints verbose information', function()
-      nvim('set_option', 'shell', 'fake_shell')
-      nvim('set_option', 'shellcmdflag', 'cmdflag')
+      nvim('set_option_value', 'shell', 'fake_shell', {})
+      nvim('set_option_value', 'shellcmdflag', 'cmdflag', {})
 
       screen:try_resize(72, 14)
       feed(':4verbose echo system("echo hi")<cr>')

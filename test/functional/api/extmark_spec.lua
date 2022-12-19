@@ -1385,7 +1385,7 @@ describe('API/extmarks', function()
 
   it('in read-only buffer', function()
     command("view! runtime/doc/help.txt")
-    eq(true, curbufmeths.get_option('ro'))
+    eq(true, meths.get_option_value('ro', {buf=0}))
     local id = set_extmark(ns, 0, 0, 2)
     eq({{id, 0, 2}}, get_extmarks(ns,0, -1))
   end)

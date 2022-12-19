@@ -2504,7 +2504,7 @@ describe('ext_multigrid', function()
   end)
 
   it('with winbar dragging statusline with mouse works correctly', function()
-    meths.set_option('winbar', 'Set Up The Bars')
+    meths.set_option_value('winbar', 'Set Up The Bars', {})
     command('split')
     screen:expect([[
     ## grid 1
@@ -2644,7 +2644,7 @@ describe('ext_multigrid', function()
       {1:~                                                    }|
       {1:~                                                    }|
     ]])
-    eq(3, meths.get_option('cmdheight'))
+    eq(3, meths.get_option_value('cmdheight', {}))
 
     meths.input_mouse('left', 'drag', '', 1, 12, 10)
     screen:expect([[
@@ -2679,6 +2679,6 @@ describe('ext_multigrid', function()
       {1:~                                                    }|
       {1:~                                                    }|
     ]])
-    eq(1, meths.get_option('cmdheight'))
+    eq(1, meths.get_option_value('cmdheight', {}))
   end)
 end)

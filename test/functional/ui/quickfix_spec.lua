@@ -27,7 +27,7 @@ describe('quickfix selection highlight', function()
       [12] = {foreground = Screen.colors.Brown, background = Screen.colors.Fuchsia},
     })
 
-    meths.set_option('errorformat', '%m %l')
+    meths.set_option_value('errorformat', '%m %l', {})
     command('syntax on')
     command('highlight Search guibg=Green')
 

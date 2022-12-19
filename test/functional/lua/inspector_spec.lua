@@ -14,7 +14,7 @@ describe('vim.inspect_pos', function()
       local buf = vim.api.nvim_create_buf(true, false)
       vim.api.nvim_set_current_buf(buf)
       vim.api.nvim_buf_set_lines(0, 0, -1, false, {"local a = 123"})
-      vim.api.nvim_buf_set_option(buf, "filetype", "lua")
+      vim.bo[buf].filetype = 'lua'
       vim.cmd("syntax on")
       return {buf, vim.inspect_pos(0, 0, 10)}
     ]])
@@ -47,7 +47,7 @@ describe('vim.show_pos', function()
       local buf = vim.api.nvim_create_buf(true, false)
       vim.api.nvim_set_current_buf(buf)
       vim.api.nvim_buf_set_lines(0, 0, -1, false, {"local a = 123"})
-      vim.api.nvim_buf_set_option(buf, "filetype", "lua")
+      vim.bo[buf].filetype = 'lua'
       vim.cmd("syntax on")
       return {buf, vim.show_pos(0, 0, 10)}
     ]])

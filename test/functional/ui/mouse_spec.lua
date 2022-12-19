@@ -11,8 +11,8 @@ describe('ui/mouse/input', function()
 
   before_each(function()
     clear()
-    meths.set_option('mouse', 'a')
-    meths.set_option('list', true)
+    meths.set_option_value('mouse', 'a', {})
+    meths.set_option_value('list', true, {})
     -- NB: this is weird, but mostly irrelevant to the test
     -- So I didn't bother to change it
     command('set listchars=eol:$')
@@ -64,7 +64,7 @@ describe('ui/mouse/input', function()
   end)
 
   it("in external ui works with unset 'mouse'", function()
-    meths.set_option('mouse', '')
+    meths.set_option_value('mouse', '', {})
     feed('<LeftMouse><2,1>')
     screen:expect{grid=[[
       testing                  |
@@ -379,7 +379,7 @@ describe('ui/mouse/input', function()
     end)
 
     it('left click in default tabline (position 24) closes tab', function()
-      meths.set_option('hidden', true)
+      meths.set_option_value('hidden', true, {})
       feed_command('%delete')
       insert('this is foo')
       feed_command('silent file foo | tabnew | file bar')
@@ -402,7 +402,7 @@ describe('ui/mouse/input', function()
     end)
 
     it('double click in default tabline (position 4) opens new tab', function()
-      meths.set_option('hidden', true)
+      meths.set_option_value('hidden', true, {})
       feed_command('%delete')
       insert('this is foo')
       feed_command('silent file foo | tabnew | file bar')
@@ -437,8 +437,8 @@ describe('ui/mouse/input', function()
             return call('Test', a:000 + [2])
           endfunction
         ]])
-        meths.set_option('tabline', '%@Test@test%X-%5@Test2@test2')
-        meths.set_option('showtabline', 2)
+        meths.set_option_value('tabline', '%@Test@test%X-%5@Test2@test2', {})
+        meths.set_option_value('showtabline', 2, {})
         screen:expect([[
           {fill:test-test2               }|
           testing                  |
@@ -786,7 +786,7 @@ describe('ui/mouse/input', function()
   end)
 
   it('ctrl + left click will search for a tag', function()
-    meths.set_option('tags', './non-existent-tags-file')
+    meths.set_option_value('tags', './non-existent-tags-file', {})
     feed('<C-LeftMouse><0,0>')
     screen:expect([[
       {6:E433: No tags file}       |
@@ -1577,9 +1577,9 @@ describe('ui/mouse/input', function()
   end)
 
   it('getmousepos works correctly', function()
-    local winwidth = meths.get_option('winwidth')
+    local winwidth = meths.get_option_value('winwidth', {})
     -- Set winwidth=1 so that window sizes don't change.
-    meths.set_option('winwidth', 1)
+    meths.set_option_value('winwidth', 1, {})
     command('tabedit')
     local tabpage = meths.get_current_tabpage()
     insert('hello')
@@ -1597,8 +1597,8 @@ describe('ui/mouse/input', function()
     }
     local float = meths.open_win(meths.get_current_buf(), false, opts)
     command('redraw')
-    local lines = meths.get_option('lines')
-    local columns = meths.get_option('columns')
+    local lines = meths.get_option_value('lines', {})
+    local columns = meths.get_option_value('columns', {})
 
     -- Test that screenrow and screencol are set properly for all positions.
     for row = 0, lines - 1 do
@@ -1696,7 +1696,7 @@ describe('ui/mouse/input', function()
 
     -- Restore state and release mouse.
     command('tabclose!')
-    meths.set_option('winwidth', winwidth)
+    meths.set_option_value('winwidth', winwidth, {})
     meths.input_mouse('left', 'release', '', 0, 0, 0)
   end)
 

@@ -592,7 +592,7 @@ describe('lua: nvim_buf_attach on_bytes', function()
     it('inccomand=nosplit and substitute', function()
       local check_events = setup_eventcheck(verify,
                                             {"abcde", "12345"})
-      meths.set_option('inccommand', 'nosplit')
+      meths.set_option_value('inccommand', 'nosplit', {})
 
       -- linewise substitute
       feed(':%s/bcd/')
@@ -986,7 +986,7 @@ describe('lua: nvim_buf_attach on_bytes', function()
     it("virtual edit", function ()
       local check_events = setup_eventcheck(verify, { "", "	" })
 
-      meths.set_option("virtualedit", "all")
+      meths.set_option_value('virtualedit', "all", {})
 
       feed [[<Right><Right>iab<ESC>]]
 

@@ -129,18 +129,18 @@ describe(':write', function()
       eq(('Vim(write):E17: "'..funcs.fnamemodify('.', ':p:h')..'" is a directory'),
         pcall_err(command, 'write .'))
     end
-    meths.set_option('writeany', true)
+    meths.set_option_value('writeany', true, {})
     -- Message from buf_write
     eq(('Vim(write):E502: "." is a directory'), pcall_err(command, 'write .'))
     funcs.mkdir(fname_bak)
-    meths.set_option('backupdir', '.')
-    meths.set_option('backup', true)
+    meths.set_option_value('backupdir', '.', {})
+    meths.set_option_value('backup', true, {})
     write_file(fname, 'content0')
     command('edit ' .. fname)
     funcs.setline(1, 'TTY')
     eq('Vim(write):E510: Can\'t make backup file (add ! to override)',
        pcall_err(command, 'write'))
-    meths.set_option('backup', false)
+    meths.set_option_value('backup', false, {})
     funcs.setfperm(fname, 'r--------')
     eq('Vim(write):E505: "Xtest-functional-ex_cmds-write" is read-only (add ! to override)',
        pcall_err(command, 'write'))

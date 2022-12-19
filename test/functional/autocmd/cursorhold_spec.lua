@@ -26,7 +26,7 @@ describe('CursorHold', function()
       -- if testing with small 'updatetime' fails, double its value and test again
       retry(10, nil, function()
         ut = ut * 2
-        meths.set_option('updatetime', ut)
+        meths.set_option_value('updatetime', ut, {})
         feed('0')  -- reset did_cursorhold
         meths.set_var('cursorhold', 0)
         sleep(ut / 4)
@@ -51,12 +51,12 @@ describe('CursorHold', function()
   end)
 
   it("reducing 'updatetime' while waiting for CursorHold #20241", function()
-    meths.set_option('updatetime', 10000)
+    meths.set_option_value('updatetime', 10000, {})
     feed('0')  -- reset did_cursorhold
     meths.set_var('cursorhold', 0)
     sleep(50)
     eq(0, meths.get_var('cursorhold'))
-    meths.set_option('updatetime', 20)
+    meths.set_option_value('updatetime', 20, {})
     sleep(10)
     eq(1, meths.get_var('cursorhold'))
   end)

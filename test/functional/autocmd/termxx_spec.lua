@@ -16,7 +16,7 @@ local is_os = helpers.is_os
 describe('autocmd TermClose', function()
   before_each(function()
     clear()
-    nvim('set_option', 'shell', testprg('shell-test'))
+    nvim('set_option_value', 'shell', testprg('shell-test'), {})
     command('set shellcmdflag=EXE shellredir= shellpipe= shellquote= shellxquote=')
   end)
 
@@ -48,7 +48,7 @@ describe('autocmd TermClose', function()
   end)
 
   it('triggers when long-running terminal job gets stopped', function()
-    nvim('set_option', 'shell', is_os('win') and 'cmd.exe' or 'sh')
+    nvim('set_option_value', 'shell', is_os('win') and 'cmd.exe' or 'sh', {})
     command('autocmd TermClose * let g:test_termclose = 23')
     command('terminal')
     command('call jobstop(b:terminal_job_id)')
@@ -57,8 +57,8 @@ describe('autocmd TermClose', function()
 
   it('kills job trapping SIGTERM', function()
     skip(is_os('win'))
-    nvim('set_option', 'shell', 'sh')
-    nvim('set_option', 'shellcmdflag', '-c')
+    nvim('set_option_value', 'shell', 'sh', {})
+    nvim('set_option_value', 'shellcmdflag', '-c', {})
     command([[ let g:test_job = jobstart('trap "" TERM && echo 1 && sleep 60', { ]]
       .. [[ 'on_stdout': {-> execute('let g:test_job_started = 1')}, ]]
       .. [[ 'on_exit': {-> execute('let g:test_job_exited = 1')}}) ]])
@@ -77,8 +77,8 @@ describe('autocmd TermClose', function()
 
   it('kills PTY job trapping SIGHUP and SIGTERM', function()
     skip(is_os('win'))
-    nvim('set_option', 'shell', 'sh')
-    nvim('set_option', 'shellcmdflag', '-c')
+    nvim('set_option_value', 'shell', 'sh', {})
+    nvim('set_option_value', 'shellcmdflag', '-c', {})
     command([[ let g:test_job = jobstart('trap "" HUP TERM && echo 1 && sleep 60', { ]]
       .. [[ 'pty': 1,]]
       .. [[ 'on_stdout': {-> execute('let g:test_job_started = 1')}, ]]

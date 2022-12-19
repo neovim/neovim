@@ -1,7 +1,7 @@
 -- shada buffer list saving/reading support
 local helpers = require('test.functional.helpers')(after_each)
-local nvim_command, funcs, eq, curbufmeths =
-  helpers.command, helpers.funcs, helpers.eq, helpers.curbufmeths
+local nvim_command, funcs, eq, curbufmeths, meths =
+  helpers.command, helpers.funcs, helpers.eq, helpers.curbufmeths, helpers.meths
 local expect_exit = helpers.expect_exit
 
 local shada_helpers = require('test.functional.shada.helpers')
@@ -48,7 +48,7 @@ describe('shada support code', function()
     reset('set shada+=%')
     nvim_command('edit ' .. testfilename)
     nvim_command('edit ' .. testfilename_2)
-    curbufmeths.set_option('buflisted', false)
+    meths.set_option_value('buflisted', false, {buf=0})
     expect_exit(nvim_command, 'qall')
     reset('set shada+=%')
     eq(2, funcs.bufnr('$'))
@@ -60,7 +60,7 @@ describe('shada support code', function()
     reset('set shada+=%')
     nvim_command('edit ' .. testfilename)
     nvim_command('edit ' .. testfilename_2)
-    curbufmeths.set_option('buftype', 'quickfix')
+    meths.set_option_value('buftype', 'quickfix', {buf=0})
     expect_exit(nvim_command, 'qall')
     reset('set shada+=%')
     eq(2, funcs.bufnr('$'))

@@ -452,8 +452,8 @@ end)
 describe('confirm()', function()
   -- oldtest: Test_confirm()
   it('works', function()
-    meths.set_option('more', false)  -- Avoid hit-enter prompt
-    meths.set_option('laststatus', 2)
+    meths.set_option_value('more', false, {})  -- Avoid hit-enter prompt
+    meths.set_option_value('laststatus', 2, {})
     -- screen:expect() calls are needed to avoid feeding input too early
     screen:expect({any = '%[No Name%]'})
 

@@ -21,8 +21,8 @@ describe(':edit term://*', function()
 
   before_each(function()
     clear()
-    meths.set_option('shell', testprg('shell-test'))
-    meths.set_option('shellcmdflag', 'EXE')
+    meths.set_option_value('shell', testprg('shell-test'), {})
+    meths.set_option_value('shellcmdflag', 'EXE', {})
   end)
 
   it('runs TermOpen event', function()
@@ -40,7 +40,7 @@ describe(':edit term://*', function()
     local columns, lines = 20, 4
     local scr = get_screen(columns, lines)
     local rep = 97
-    meths.set_option('shellcmdflag', 'REP ' .. rep)
+    meths.set_option_value('shellcmdflag', 'REP ' .. rep, {})
     command('set shellxquote=')  -- win: avoid extra quotes
     local sb = 10
     command('autocmd TermOpen * :setlocal scrollback='..tostring(sb)

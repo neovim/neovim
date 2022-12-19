@@ -8,6 +8,7 @@ local clear = helpers.clear
 local funcs = helpers.funcs
 local command = helpers.command
 local curbufmeths = helpers.curbufmeths
+local meths = helpers.meths
 local Screen = require('test.functional.ui.screen')
 
 local cmdtest = function(cmd, prep, ret1)
@@ -42,7 +43,7 @@ local cmdtest = function(cmd, prep, ret1)
       eq(hisline, funcs.histget(':', -2))
       eq(cmd, funcs.histget(':'))
       -- Test that command-line window was launched
-      eq('nofile', curbufmeths.get_option('buftype'))
+      eq('nofile', meths.get_option_value('buftype', {buf=0}))
       eq('n', funcs.mode(1))
       feed('<CR>')
       eq('c', funcs.mode(1))

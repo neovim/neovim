@@ -3,7 +3,6 @@ local helpers = require('test.functional.helpers')(after_each)
 local assert_alive = helpers.assert_alive
 local clear = helpers.clear
 local command = helpers.command
-local curbufmeths = helpers.curbufmeths
 local eq = helpers.eq
 local exc_exec = helpers.exc_exec
 local expect = helpers.expect
@@ -98,7 +97,7 @@ describe(':rubydo command', function()
 
   it('does not modify the buffer if no changes are made', function()
     command('normal :rubydo 42')
-    eq(false, curbufmeths.get_option('modified'))
+    eq(false, meths.get_option_value('modified', {buf=0}))
   end)
 end)
 

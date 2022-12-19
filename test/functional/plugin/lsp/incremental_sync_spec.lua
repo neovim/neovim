@@ -21,7 +21,7 @@ before_each(function ()
     --   ["mac"] = '\r',
     -- }
 
-    -- local line_ending = format_line_ending[vim.api.nvim_buf_get_option(0, 'fileformat')]
+    -- local line_ending = format_line_ending[vim.api.nvim_get_option_value('fileformat', {buf=0})]
 
 
     function test_register(bufnr, id, offset_encoding, line_ending)

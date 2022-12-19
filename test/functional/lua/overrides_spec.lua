@@ -100,7 +100,7 @@ describe('print', function()
       pcall_err(command, 'lua bad_custom_error()'))
   end)
   it('prints strings with NULs and NLs correctly', function()
-    meths.set_option('more', true)
+    meths.set_option_value('more', true, {})
     eq('abc ^@ def\nghi^@^@^@jkl\nTEST\n\n\nT\n',
        exec_capture([[lua print("abc \0 def\nghi\0\0\0jkl\nTEST\n\n\nT\n")]]))
     eq('abc ^@ def\nghi^@^@^@jkl\nTEST\n\n\nT^@',

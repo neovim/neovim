@@ -96,7 +96,7 @@ The example will:
   function check_start_javascript_lsp()
     local bufnr = vim.api.nvim_get_current_buf()
     -- Filter which files we are considering.
-    if not javascript_filetypes[vim.api.nvim_buf_get_option(bufnr, 'filetype')] then
+    if not javascript_filetypes[vim.bo[bufnr].filetype] then
       return
     end
     -- Try to find our root directory. We will define this as a directory which contains

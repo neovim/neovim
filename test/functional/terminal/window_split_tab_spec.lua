@@ -19,7 +19,7 @@ describe(':terminal', function()
     clear()
     -- set the statusline to a constant value because of variables like pid
     -- and current directory and to improve visibility of splits
-    meths.set_option('statusline', '==========')
+    meths.set_option_value('statusline', '==========', {})
     command('highlight StatusLine cterm=NONE')
     command('highlight StatusLineNC cterm=NONE')
     command('highlight VertSplit cterm=NONE')

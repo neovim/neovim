@@ -133,8 +133,8 @@ describe(':terminal (with fake shell)', function()
     screen = Screen.new(50, 4)
     screen:attach({rgb=false})
     -- shell-test.c is a fake shell that prints its arguments and exits.
-    nvim('set_option', 'shell', testprg('shell-test'))
-    nvim('set_option', 'shellcmdflag', 'EXE')
+    nvim('set_option_value', 'shell', testprg('shell-test'), {})
+    nvim('set_option_value', 'shellcmdflag', 'EXE', {})
   end)
 
   -- Invokes `:terminal {cmd}` using a fake shell (shell-test.c) which prints
@@ -157,7 +157,7 @@ describe(':terminal (with fake shell)', function()
   end)
 
   it("with no argument, and 'shell' is set to empty string", function()
-    nvim('set_option', 'shell', '')
+    nvim('set_option_value', 'shell', '', {})
     terminal_with_fake_shell()
     screen:expect([[
       ^                                                  |
@@ -169,7 +169,7 @@ describe(':terminal (with fake shell)', function()
 
   it("with no argument, but 'shell' has arguments, acts like termopen()", function()
     skip(is_os('win'))
-    nvim('set_option', 'shell', testprg('shell-test')..' -t jeff')
+    nvim('set_option_value', 'shell', testprg('shell-test')..' -t jeff', {})
     terminal_with_fake_shell()
     screen:expect([[
       ^jeff $                                            |
@@ -193,7 +193,7 @@ describe(':terminal (with fake shell)', function()
 
   it("executes a given command through the shell, when 'shell' has arguments", function()
     skip(is_os('win'))
-    nvim('set_option', 'shell', testprg('shell-test')..' -t jeff')
+    nvim('set_option_value', 'shell', testprg('shell-test')..' -t jeff', {})
     command('set shellxquote=')   -- win: avoid extra quotes
     terminal_with_fake_shell('echo hi')
     screen:expect([[

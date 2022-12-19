@@ -1064,7 +1064,7 @@ describe('LSP', function()
               "testing";
               "123";
             })
-            vim.api.nvim_buf_set_option(BUFFER, 'eol', false)
+            vim.bo[BUFFER].eol = false
           ]]
         end;
         on_init = function(_client)
@@ -2777,8 +2777,8 @@ describe('LSP', function()
   describe('lsp.util.get_effective_tabstop', function()
     local function test_tabstop(tabsize, shiftwidth)
       exec_lua(string.format([[
-        vim.api.nvim_buf_set_option(0, 'shiftwidth', %d)
-        vim.api.nvim_buf_set_option(0, 'tabstop', 2)
+        vim.bo.shiftwidth = %d
+        vim.bo.tabstop = 2
       ]], shiftwidth))
       eq(tabsize, exec_lua('return vim.lsp.util.get_effective_tabstop()'))
     end

@@ -14,7 +14,7 @@ describe(':ls', function()
   end)
 
   it('R, F for :terminal buffers', function()
-    nvim('set_option', 'shell', string.format('"%s" INTERACT', testprg('shell-test')))
+    nvim('set_option_value', 'shell', string.format('"%s" INTERACT', testprg('shell-test')), {})
 
     command('edit foo')
     command('set hidden')
