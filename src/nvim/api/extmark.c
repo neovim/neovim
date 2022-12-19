@@ -271,7 +271,7 @@ ArrayOf(Integer) nvim_buf_get_extmark_by_id(Buffer buffer, Integer ns_id,
 ///   -- Create new extmark at line 1, column 1.
 ///   local m1  = a.nvim_buf_set_extmark(0, ns, 0, 0, {})
 ///   -- Create new extmark at line 3, column 1.
-///   local m2  = a.nvim_buf_set_extmark(0, ns, 0, 2, {})
+///   local m2  = a.nvim_buf_set_extmark(0, ns, 2, 0, {})
 ///   -- Get extmarks only from line 3.
 ///   local ms  = a.nvim_buf_get_extmarks(0, ns, {2,0}, {2,0}, {})
 ///   -- Get all marks in this buffer + namespace.
