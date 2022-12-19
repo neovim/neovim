@@ -1109,7 +1109,36 @@ int main()
             extmark_added = true,
           }
         },
-      }
+      },
+      {
+        it = 'optional token_edit.data on deletion',
+        legend = [[{
+          "tokenTypes": [
+            "comment", "keyword", "operator", "string", "number", "regexp", "type", "class", "interface", "enum", "enumMember", "typeParameter", "function", "method", "property", "variable", "parameter", "module", "intrinsic", "selfParameter", "clsParameter", "magicFunction", "builtinConstant", "parenthesis", "curlybrace", "bracket", "colon", "semicolon", "arrow"
+          ],
+          "tokenModifiers": [
+            "declaration", "static", "abstract", "async", "documentation", "typeHint", "typeHintComment", "readonly", "decorator", "builtin"
+          ]
+        }]],
+        text1 = [[string = "test"]],
+        text2 = [[]],
+        response1 = [[{"data": [0, 0, 6, 15, 1], "resultId": "1"}]],
+        response2 = [[{"edits": [{ "start": 0, "deleteCount": 5 }], "resultId": "2"}]],
+        expected1 = {
+          {
+            line = 0,
+            modifiers = {
+              'declaration',
+            },
+            start_col = 0,
+            end_col = 6,
+            type = 'variable',
+            extmark_added = true,
+          }
+        },
+        expected2 = {
+        },
+      },
     }) do
       it(test.it, function()
         exec_lua(create_server_definition)
