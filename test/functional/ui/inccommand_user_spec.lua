@@ -391,7 +391,7 @@ describe("'inccommand' for user commands", function()
       vim.api.nvim_create_user_command('Replace', function() end, {
         nargs = '*',
         preview = function()
-          vim.api.nvim_set_option('inccommand', 'split')
+          vim.api.nvim_set_option_value('inccommand', 'split', {})
           return 2
         end,
       })

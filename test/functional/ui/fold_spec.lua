@@ -967,8 +967,8 @@ describe("folded lines", function()
 
     it("works with multibyte text", function()
       -- Currently the only allowed value of 'maxcombine'
-      eq(6, meths.get_option('maxcombine'))
-      eq(true, meths.get_option('arabicshape'))
+      eq(6, meths.get_option_value('maxcombine', {}))
+      eq(true, meths.get_option_value('arabicshape', {}))
       insert([[
         å 语 x̨̣̘̫̲͚͎̎͂̀̂͛͛̾͢͟ العَرَبِيَّة
         möre text]])

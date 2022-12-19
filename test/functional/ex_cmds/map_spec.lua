@@ -18,7 +18,7 @@ describe(':*map', function()
   it('are not affected by &isident', function()
     meths.set_var('counter', 0)
     command('nnoremap <C-x> :let counter+=1<CR>')
-    meths.set_option('isident', ('%u'):format(('>'):byte()))
+    meths.set_option_value('isident', ('%u'):format(('>'):byte()), {})
     command('nnoremap <C-y> :let counter+=1<CR>')
     -- &isident used to disable keycode parsing here as well
     feed('\24\25<C-x><C-y>')

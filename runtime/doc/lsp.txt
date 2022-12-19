@@ -800,8 +800,8 @@ formatexpr({opts})                                      *vim.lsp.formatexpr()*
 
     Currently only supports a single client. This can be set via `setlocal
     formatexpr=v:lua.vim.lsp.formatexpr()` but will typically or in
-    `on_attach` via `vim.api.nvim_buf_set_option(bufnr, 'formatexpr',
-    'v:lua.vim.lsp.formatexpr(#{timeout_ms:250})')`.
+    `on_attach` via `vim.bo[bufnr].formatexpr =
+    'v:lua.vim.lsp.formatexpr(#{timeout_ms:250})'`.
 
     Parameters: ~
       • {opts}  (table) options for customizing the formatting expression

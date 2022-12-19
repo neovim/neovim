@@ -40,9 +40,9 @@ end)
 describe('startup', function()
   it('--clean', function()
     clear()
-    ok(string.find(alter_slashes(meths.get_option('runtimepath')), funcs.stdpath('config'), 1, true) ~= nil)
+    ok(string.find(alter_slashes(meths.get_option_value('runtimepath', {})), funcs.stdpath('config'), 1, true) ~= nil)
     clear('--clean')
-    ok(string.find(alter_slashes(meths.get_option('runtimepath')), funcs.stdpath('config'), 1, true) == nil)
+    ok(string.find(alter_slashes(meths.get_option_value('runtimepath', {})), funcs.stdpath('config'), 1, true) == nil)
   end)
 
   it('--startuptime', function()
@@ -589,7 +589,7 @@ describe('startup', function()
     ]]
     eq({'ordinary', 'FANCY', 'mittel', 'FANCY after', 'ordinary after'}, exec_lua [[ return _G.test_loadorder ]])
 
-    local rtp = meths.get_option'rtp'
+    local rtp = meths.get_option_value('rtp', {})
     ok(startswith(rtp, 'test/functional/fixtures/nvim,test/functional/fixtures/pack/*/start/*,test/functional/fixtures/start/*,test/functional/fixtures,test/functional/fixtures/middle,'),
       'startswith(…)', 'rtp='..rtp)
   end)

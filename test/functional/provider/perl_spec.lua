@@ -5,7 +5,7 @@ local command = helpers.command
 local write_file = helpers.write_file
 local eval = helpers.eval
 local retry = helpers.retry
-local curbufmeths = helpers.curbufmeths
+local meths = helpers.meths
 local insert = helpers.insert
 local expect = helpers.expect
 local feed = helpers.feed
@@ -45,7 +45,7 @@ describe('legacy perl provider', function()
     -- :perldo 1; doesn't change $_,
     -- the buffer should not be changed
     command('normal :perldo 1;')
-    eq(false, curbufmeths.get_option('modified'))
+    eq(false, meths.get_option_value('modified', {buf=0}))
     -- insert some text
     insert('abc\ndef\nghi')
     expect([[

@@ -84,7 +84,7 @@ The following deprecated functions or APIs were removed.
 ==============================================================================
 DEPRECATIONS                                                *news-deprecations*
 
-The following functions are now deprecated and will be removed in the next
+The following functions are now deprecated and will be removed in a future
 release.
 
 • Checkhealth functions:
@@ -93,5 +93,13 @@ release.
   - |health#report_ok|, |vim.health.report_ok()|	Use |vim.health.ok()| instead.
   - |health#report_start|, |vim.health.report_start()|	Use |vim.health.start()| instead.
   - |health#report_warn|, |vim.health.report_warn()|	Use |vim.health.warn()| instead.
+
+• |API| functions:
+  - |nvim_buf_get_option()|	Use |nvim_get_option_value()| instead.
+  - |nvim_buf_set_option()|	Use |nvim_set_option_value()| instead.
+  - |nvim_get_option()|		Use |nvim_get_option_value()| instead.
+  - |nvim_set_option()|		Use |nvim_set_option_value()| instead.
+  - |nvim_win_get_option()|	Use |nvim_get_option_value()| instead.
+  - |nvim_win_set_option()|	Use |nvim_set_option_value()| instead.
 
  vim:tw=78:ts=8:sw=2:et:ft=help:norl:

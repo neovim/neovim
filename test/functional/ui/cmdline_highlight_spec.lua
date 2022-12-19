@@ -178,7 +178,7 @@ end
 describe('Command-line coloring', function()
   it('works', function()
     set_color_cb('RainBowParens')
-    meths.set_option('more', false)
+    meths.set_option_value('more', false, {})
     start_prompt()
     screen:expect([[
                                               |

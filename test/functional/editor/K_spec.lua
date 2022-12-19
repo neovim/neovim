@@ -59,7 +59,7 @@ describe('K', function()
   end)
 
   it('empty string falls back to :help #19298', function()
-    meths.set_option('keywordprg', '')
+    meths.set_option_value('keywordprg', '', {})
     meths.buf_set_lines(0, 0, -1, true, {'doesnotexist'})
     feed('K')
     eq('E149: Sorry, no help for doesnotexist', meths.get_vvar('errmsg'))

@@ -514,7 +514,7 @@ describe('v:lua', function()
       [5] = {bold = true, foreground = Screen.colors.SeaGreen4},
     })
     screen:attach()
-    meths.buf_set_option(0, 'omnifunc', 'v:lua.mymod.omni')
+    meths.set_option_value('omnifunc', 'v:lua.mymod.omni', { buf = 0 })
     feed('isome st<c-x><c-o>')
     screen:expect{grid=[[
       some stuff^                                                  |
@@ -526,7 +526,7 @@ describe('v:lua', function()
       {1:~                                                           }|
       {4:-- Omni completion (^O^N^P) }{5:match 1 of 3}                    |
     ]]}
-    meths.set_option('operatorfunc', 'v:lua.mymod.noisy')
+    meths.set_option_value('operatorfunc', 'v:lua.mymod.noisy', {})
     feed('<Esc>g@g@')
     eq("hey line", meths.get_current_line())
   end)

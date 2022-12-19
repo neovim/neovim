@@ -31,14 +31,12 @@ describe('nlua_expand_pat', function()
     eq(
       {{
         'nvim_buf_set_lines',
-        'nvim_buf_set_option'
        }, 8
       },
       get_completions('vim.api.nvim_buf_', {
         vim = {
           api = {
             nvim_buf_set_lines = true,
-            nvim_buf_set_option = true,
             nvim_win_doesnt_match = true,
           },
           other_key = true,
@@ -68,14 +66,12 @@ describe('nlua_expand_pat', function()
     eq(
       {{
         'nvim_buf_set_lines',
-        'nvim_buf_set_option'
        }, 11
       },
       get_completions('vim["api"].nvim_buf_', {
         vim = {
           api = {
             nvim_buf_set_lines = true,
-            nvim_buf_set_option = true,
             nvim_win_doesnt_match = true,
           },
           other_key = true,
@@ -88,7 +84,6 @@ describe('nlua_expand_pat', function()
     eq(
       {{
         'nvim_buf_set_lines',
-        'nvim_buf_set_option'
        }, 21
       },
       get_completions('vim["nested"]["api"].nvim_buf_', {
@@ -96,7 +91,6 @@ describe('nlua_expand_pat', function()
           nested = {
             api = {
               nvim_buf_set_lines = true,
-              nvim_buf_set_option = true,
               nvim_win_doesnt_match = true,
             },
           },
@@ -121,7 +115,6 @@ describe('nlua_expand_pat', function()
     eq(
       {{
         'nvim_buf_set_lines',
-        'nvim_buf_set_option'
        }, 12
       },
       get_completions('vim[MY_VAR].nvim_buf_', {
@@ -129,7 +122,6 @@ describe('nlua_expand_pat', function()
         vim = {
           api = {
             nvim_buf_set_lines = true,
-            nvim_buf_set_option = true,
             nvim_win_doesnt_match = true,
           },
           other_key = true,

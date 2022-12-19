@@ -630,19 +630,19 @@ describe('api/buf', function()
       eq('Index out of bounds', pcall_err(get_offset, 6))
       eq('Index out of bounds', pcall_err(get_offset, -1))
 
-      curbufmeths.set_option('eol', false)
-      curbufmeths.set_option('fixeol', false)
+      meths.set_option_value('eol', false, {buf=0})
+      meths.set_option_value('fixeol', false, {buf=0})
       eq(28, get_offset(5))
 
       -- fileformat is ignored
-      curbufmeths.set_option('fileformat', 'dos')
+      meths.set_option_value('fileformat', 'dos', {buf=0})
       eq(0, get_offset(0))
       eq(6, get_offset(1))
       eq(15, get_offset(2))
       eq(16, get_offset(3))
       eq(24, get_offset(4))
       eq(28, get_offset(5))
-      curbufmeths.set_option('eol', true)
+      meths.set_option_value('eol', true, {buf=0})
       eq(29, get_offset(5))
 
       command("set hidden")
@@ -697,23 +697,23 @@ describe('api/buf', function()
     end)
   end)
 
-  describe('nvim_buf_get_option, nvim_buf_set_option', function()
+  describe('nvim_get_option_value, nvim_set_option_value', function()
     it('works', function()
-      eq(8, curbuf('get_option', 'shiftwidth'))
-      curbuf('set_option', 'shiftwidth', 4)
-      eq(4, curbuf('get_option', 'shiftwidth'))
+      eq(8, nvim('get_option_value', 'shiftwidth', {buf = 0}))
+      nvim('set_option_value', 'shiftwidth', 4, {buf=0})
+      eq(4, nvim('get_option_value', 'shiftwidth', {buf = 0}))
       -- global-local option
-      curbuf('set_option', 'define', 'test')
-      eq('test', curbuf('get_option', 'define'))
+      nvim('set_option_value', 'define', 'test', {buf = 0})
+      eq('test', nvim('get_option_value', 'define', {buf = 0}))
       -- Doesn't change the global value
-      eq([[^\s*#\s*define]], nvim('get_option', 'define'))
+      eq([[^\s*#\s*define]], nvim('get_option_value', 'define', {scope='global'}))
     end)
 
     it('returns values for unset local options', function()
       -- 'undolevels' is only set to its "unset" value when a new buffer is
       -- created
       command('enew')
-      eq(-123456, curbuf('get_option', 'undolevels'))
+      eq(-123456, nvim('get_option_value', 'undolevels', {buf=0}))
     end)
   end)
 

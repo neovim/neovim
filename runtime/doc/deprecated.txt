@@ -21,6 +21,12 @@ API
 - *nvim_get_hl_by_id()*		Use |nvim_get_hl()| instead.
 - *nvim_exec()*			Use |nvim_exec2()| instead.
 - *nvim_get_option_info()*	Use |nvim_get_option_info2()| instead.
+- *nvim_buf_get_option()*	Use |nvim_get_option_value()| instead.
+- *nvim_buf_set_option()*	Use |nvim_set_option_value()| instead.
+- *nvim_get_option()*		Use |nvim_get_option_value()| instead.
+- *nvim_set_option()*		Use |nvim_set_option_value()| instead.
+- *nvim_win_get_option()*	Use |nvim_get_option_value()| instead.
+- *nvim_win_set_option()*	Use |nvim_set_option_value()| instead.
 
 COMMANDS
 - *:rv* *:rviminfo*		Deprecated alias to |:rshada| command.

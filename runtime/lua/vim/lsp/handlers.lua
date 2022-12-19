@@ -454,7 +454,7 @@ function M.signature_help(_, result, ctx, config)
   local client = vim.lsp.get_client_by_id(ctx.client_id)
   local triggers =
     vim.tbl_get(client.server_capabilities, 'signatureHelpProvider', 'triggerCharacters')
-  local ft = api.nvim_buf_get_option(ctx.bufnr, 'filetype')
+  local ft = vim.bo[ctx.bufnr].filetype
   local lines, hl = util.convert_signature_help_to_markdown_lines(result, ft, triggers)
   lines = util.trim_empty_lines(lines)
   if vim.tbl_isempty(lines) then

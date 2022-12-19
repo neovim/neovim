@@ -18,7 +18,7 @@ local function last_set_tests(cmd)
     script_location = table.concat{current_dir, helpers.get_pathsep(), script_file}
 
     write_file(script_file, [[
-vim.api.nvim_set_option('hlsearch', false)
+vim.api.nvim_set_option_value('hlsearch', false, {})
 vim.bo.expandtab = true
 vim.opt.number = true
 vim.api.nvim_set_keymap('n', '<leader>key1', ':echo "test"<cr>', {noremap = true})
@@ -160,7 +160,7 @@ describe('lua verbose:', function()
     clear()
     script_file = 'test_luafile.lua'
     write_file(script_file, [[
-    vim.api.nvim_set_option('hlsearch', false)
+    vim.api.nvim_set_option_value('hlsearch', false, {})
     ]])
     exec(':source '..script_file)
   end)

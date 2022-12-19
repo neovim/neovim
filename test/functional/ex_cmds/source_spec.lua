@@ -48,7 +48,7 @@ describe(':source', function()
       pending("'shellslash' only works on Windows")
       return
     end
-    meths.set_option('shellslash', false)
+    meths.set_option_value('shellslash', false, {})
     mkdir('Xshellslash')
 
     write_file([[Xshellslash/Xstack.vim]], [[

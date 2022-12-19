@@ -1496,9 +1496,9 @@ describe('lua stdlib', function()
   it('vim.bo', function()
     eq('', funcs.luaeval "vim.bo.filetype")
     exec_lua [[
-    vim.api.nvim_buf_set_option(0, "filetype", "markdown")
+    vim.api.nvim_set_option_value("filetype", "markdown", {buf = 0})
     BUF = vim.api.nvim_create_buf(false, true)
-    vim.api.nvim_buf_set_option(BUF, "modifiable", false)
+    vim.api.nvim_set_option_value("modifiable", false, {buf = BUF})
     ]]
     eq(false, funcs.luaeval "vim.bo.modified")
     eq('markdown', funcs.luaeval "vim.bo.filetype")
@@ -1519,9 +1519,9 @@ describe('lua stdlib', function()
 
   it('vim.wo', function()
     exec_lua [[
-    vim.api.nvim_win_set_option(0, "cole", 2)
+    vim.api.nvim_set_option_value("cole", 2, {win=0})
     vim.cmd "split"
-    vim.api.nvim_win_set_option(0, "cole", 2)
+    vim.api.nvim_set_option_value("cole", 2, {win=0})
     ]]
     eq(2, funcs.luaeval "vim.wo.cole")
     exec_lua [[
@@ -1566,8 +1566,8 @@ describe('lua stdlib', function()
       local result = exec_lua [[
         local result = {}
 
-        table.insert(result, vim.api.nvim_get_option('scrolloff'))
-        table.insert(result, vim.api.nvim_win_get_option(0, 'scrolloff'))
+        table.insert(result, vim.api.nvim_get_option_value('scrolloff', {scope='global'}))
+        table.insert(result, vim.api.nvim_get_option_value('scrolloff', {win=0}))
 
         return result
       ]]
@@ -1631,20 +1631,20 @@ describe('lua stdlib', function()
         local result = {}
 
         vim.opt.makeprg = "global-local"
-        table.insert(result, vim.api.nvim_get_option('makeprg'))
-        table.insert(result, vim.api.nvim_buf_get_option(0, 'makeprg'))
+        table.insert(result, vim.go.makeprg)
+        table.insert(result, vim.api.nvim_get_option_value('makeprg', {buf=0}))
 
         vim.opt_local.mp = "only-local"
-        table.insert(result, vim.api.nvim_get_option('makeprg'))
-        table.insert(result, vim.api.nvim_buf_get_option(0, 'makeprg'))
+        table.insert(result, vim.go.makeprg)
+        table.insert(result, vim.api.nvim_get_option_value('makeprg', {buf=0}))
 
         vim.opt_global.makeprg = "only-global"
-        table.insert(result, vim.api.nvim_get_option('makeprg'))
-        table.insert(result, vim.api.nvim_buf_get_option(0, 'makeprg'))
+        table.insert(result, vim.go.makeprg)
+        table.insert(result, vim.api.nvim_get_option_value('makeprg', {buf=0}))
 
         vim.opt.makeprg = "global-local"
-        table.insert(result, vim.api.nvim_get_option('makeprg'))
-        table.insert(result, vim.api.nvim_buf_get_option(0, 'makeprg'))
+        table.insert(result, vim.go.makeprg)
+        table.insert(result, vim.api.nvim_get_option_value('makeprg', {buf=0}))
         return result
       ]]
 
@@ -2173,7 +2173,7 @@ describe('lua stdlib', function()
     it('can handle isfname ,,,', function()
       local result = exec_lua [[
         vim.opt.isfname = "a,b,,,c"
-        return { vim.opt.isfname:get(), vim.api.nvim_get_option('isfname') }
+        return { vim.opt.isfname:get(), vim.go.isfname }
       ]]
 
       eq({{",", "a", "b", "c"}, "a,b,,,c"}, result)
@@ -2183,7 +2183,7 @@ describe('lua stdlib', function()
     it('can handle isfname ,^,,', function()
       local result = exec_lua [[
         vim.opt.isfname = "a,b,^,,c"
-        return { vim.opt.isfname:get(), vim.api.nvim_get_option('isfname') }
+        return { vim.opt.isfname:get(), vim.go.isfname }
       ]]
 
       eq({{"^,", "a", "b", "c"}, "a,b,^,,c"}, result)
@@ -2734,14 +2734,14 @@ describe('lua stdlib', function()
 
   describe('vim.api.nvim_buf_call', function()
     it('can access buf options', function()
-      local buf1 = meths.get_current_buf()
+      local buf1 = meths.get_current_buf().id
       local buf2 = exec_lua [[
         buf2 = vim.api.nvim_create_buf(false, true)
         return buf2
       ]]
 
-      eq(false, meths.buf_get_option(buf1, 'autoindent'))
-      eq(false, meths.buf_get_option(buf2, 'autoindent'))
+      eq(false, meths.get_option_value('autoindent', {buf=buf1}))
+      eq(false, meths.get_option_value('autoindent', {buf=buf2}))
 
       local val = exec_lua [[
         return vim.api.nvim_buf_call(buf2, function()
@@ -2750,9 +2750,9 @@ describe('lua stdlib', function()
         end)
       ]]
 
-      eq(false, meths.buf_get_option(buf1, 'autoindent'))
-      eq(true, meths.buf_get_option(buf2, 'autoindent'))
-      eq(buf1, meths.get_current_buf())
+      eq(false, meths.get_option_value('autoindent', {buf=buf1}))
+      eq(true, meths.get_option_value('autoindent', {buf=buf2}))
+      eq(buf1, meths.get_current_buf().id)
       eq(buf2, val)
     end)
 
@@ -2771,10 +2771,10 @@ describe('lua stdlib', function()
       eq(true, exec_lua([[
         local function scratch_buf_call(fn)
           local buf = vim.api.nvim_create_buf(false, true)
-          vim.api.nvim_buf_set_option(buf, 'cindent', true)
+          vim.api.nvim_set_option_value('cindent', true, {buf = buf})
           return vim.api.nvim_buf_call(buf, function()
             return vim.api.nvim_get_current_buf() == buf
-              and vim.api.nvim_buf_get_option(buf, 'cindent')
+              and vim.api.nvim_get_option_value('cindent', {buf = buf})
               and fn()
           end) and vim.api.nvim_buf_delete(buf, {}) == nil
         end
@@ -2811,7 +2811,7 @@ describe('lua stdlib', function()
   describe('vim.api.nvim_win_call', function()
     it('can access window options', function()
       command('vsplit')
-      local win1 = meths.get_current_win()
+      local win1 = meths.get_current_win().id
       command('wincmd w')
       local win2 = exec_lua [[
         win2 = vim.api.nvim_get_current_win()
@@ -2819,8 +2819,8 @@ describe('lua stdlib', function()
       ]]
       command('wincmd p')
 
-      eq('', meths.win_get_option(win1, 'winhighlight'))
-      eq('', meths.win_get_option(win2, 'winhighlight'))
+      eq('', meths.get_option_value('winhighlight', {win=win1}))
+      eq('', meths.get_option_value('winhighlight', {win=win2}))
 
       local val = exec_lua [[
         return vim.api.nvim_win_call(win2, function()
@@ -2829,9 +2829,9 @@ describe('lua stdlib', function()
         end)
       ]]
 
-      eq('', meths.win_get_option(win1, 'winhighlight'))
-      eq('Normal:Normal', meths.win_get_option(win2, 'winhighlight'))
-      eq(win1, meths.get_current_win())
+      eq('', meths.get_option_value('winhighlight', {win=win1}))
+      eq('Normal:Normal', meths.get_option_value('winhighlight', {win=win2}))
+      eq(win1, meths.get_current_win().id)
       eq(win2, val)
     end)
 

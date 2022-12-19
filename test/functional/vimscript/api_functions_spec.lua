@@ -32,8 +32,8 @@ describe('eval-API', function()
     local err = exc_exec('call nvim_get_current_buf("foo")')
     eq('Vim(call):E118: Too many arguments for function: nvim_get_current_buf', err)
 
-    err = exc_exec('call nvim_set_option("hlsearch")')
-    eq('Vim(call):E119: Not enough arguments for function: nvim_set_option', err)
+    err = exc_exec('call nvim_set_option_value("hlsearch")')
+    eq('Vim(call):E119: Not enough arguments for function: nvim_set_option_value', err)
 
     err = exc_exec('call nvim_buf_set_lines(1, 0, -1, [], ["list"])')
     eq('Vim(call):E5555: API call: Wrong type for argument 4 when calling nvim_buf_set_lines, expecting Boolean', err)

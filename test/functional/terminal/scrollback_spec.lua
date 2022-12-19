@@ -8,7 +8,7 @@ local command = helpers.command
 local matches = helpers.matches
 local poke_eventloop = helpers.poke_eventloop
 local retry = helpers.retry
-local curbufmeths = helpers.curbufmeths
+local meths = helpers.meths
 local nvim = helpers.nvim
 local feed_data = thelpers.feed_data
 local pcall_err = helpers.pcall_err
@@ -381,8 +381,8 @@ describe("'scrollback' option", function()
 
   local function set_fake_shell()
     -- shell-test.c is a fake shell that prints its arguments and exits.
-    nvim('set_option', 'shell', testprg('shell-test'))
-    nvim('set_option', 'shellcmdflag', 'EXE')
+    nvim('set_option_value', 'shell', testprg('shell-test'), {})
+    nvim('set_option_value', 'shellcmdflag', 'EXE', {})
   end
 
   local function expect_lines(expected, epsilon)
@@ -401,7 +401,7 @@ describe("'scrollback' option", function()
       screen = thelpers.screen_setup(nil, "['sh']", 30)
     end
 
-    curbufmeths.set_option('scrollback', 0)
+    meths.set_option_value('scrollback', 0, {buf = 0})
     feed_data(('%s REP 31 line%s'):format(testprg('shell-test'), is_os('win') and '\r' or '\n'))
     screen:expect{any='30: line                      '}
     retry(nil, nil, function() expect_lines(7) end)
@@ -417,7 +417,7 @@ describe("'scrollback' option", function()
       screen = thelpers.screen_setup(nil, "['sh']", 30)
     end
 
-    curbufmeths.set_option('scrollback', 200)
+    meths.set_option_value('scrollback', 200, {buf=0})
 
     -- Wait for prompt.
     screen:expect{any='%$'}
@@ -426,10 +426,10 @@ describe("'scrollback' option", function()
     screen:expect{any='30: line                      '}
 
     retry(nil, nil, function() expect_lines(33, 2) end)
-    curbufmeths.set_option('scrollback', 10)
+    meths.set_option_value('scrollback', 10, {buf=0})
     poke_eventloop()
     retry(nil, nil, function() expect_lines(16) end)
-    curbufmeths.set_option('scrollback', 10000)
+    meths.set_option_value('scrollback', 10000, {buf=0})
     retry(nil, nil, function() expect_lines(16) end)
     -- Terminal job data is received asynchronously, may happen before the
     -- 'scrollback' option is synchronized with the internal sb_buffer.
@@ -484,18 +484,18 @@ describe("'scrollback' option", function()
       ]])
     local term_height = 6  -- Actual terminal screen height, not the scrollback
     -- Initial
-    local scrollback = curbufmeths.get_option('scrollback')
+    local scrollback = meths.get_option_value('scrollback', {buf=0})
     eq(scrollback + term_height, eval('line("$")'))
     -- Reduction
     scrollback = scrollback - 2
-    curbufmeths.set_option('scrollback', scrollback)
+    meths.set_option_value('scrollback', scrollback, {buf=0})
     eq(scrollback + term_height, eval('line("$")'))
   end)
 
   it('defaults to 10000 in :terminal buffers', function()
     set_fake_shell()
     command('terminal')
-    eq(10000, curbufmeths.get_option('scrollback'))
+    eq(10000, meths.get_option_value('scrollback', {buf=0}))
   end)
 
   it('error if set to invalid value', function()
@@ -507,7 +507,7 @@ describe("'scrollback' option", function()
 
   it('defaults to -1 on normal buffers', function()
     command('new')
-    eq(-1, curbufmeths.get_option('scrollback'))
+    eq(-1, meths.get_option_value('scrollback', {buf=0}))
   end)
 
   it(':setlocal in a :terminal buffer', function()
@@ -516,45 +516,45 @@ describe("'scrollback' option", function()
     -- _Global_ scrollback=-1 defaults :terminal to 10_000.
     command('setglobal scrollback=-1')
     command('terminal')
-    eq(10000, curbufmeths.get_option('scrollback'))
+    eq(10000, meths.get_option_value('scrollback', {buf=0}))
 
     -- _Local_ scrollback=-1 in :terminal forces the _maximum_.
     command('setlocal scrollback=-1')
     retry(nil, nil, function()  -- Fixup happens on refresh, not immediately.
-      eq(100000, curbufmeths.get_option('scrollback'))
+      eq(100000, meths.get_option_value('scrollback', {buf=0}))
     end)
 
     -- _Local_ scrollback=-1 during TermOpen forces the maximum. #9605
     command('setglobal scrollback=-1')
     command('autocmd TermOpen * setlocal scrollback=-1')
     command('terminal')
-    eq(100000, curbufmeths.get_option('scrollback'))
+    eq(100000, meths.get_option_value('scrollback', {buf=0}))
   end)
 
   it(':setlocal in a normal buffer', function()
     command('new')
     -- :setlocal to -1.
     command('setlocal scrollback=-1')
-    eq(-1, curbufmeths.get_option('scrollback'))
+    eq(-1, meths.get_option_value('scrollback', {buf=0}))
     -- :setlocal to anything except -1. Currently, this just has no effect.
     command('setlocal scrollback=42')
-    eq(42, curbufmeths.get_option('scrollback'))
+    eq(42, meths.get_option_value('scrollback', {buf=0}))
   end)
 
   it(':set updates local value and global default', function()
     set_fake_shell()
     command('set scrollback=42')                  -- set global value
-    eq(42, curbufmeths.get_option('scrollback'))
+    eq(42, meths.get_option_value('scrollback', {buf=0}))
     command('terminal')
-    eq(42, curbufmeths.get_option('scrollback'))  -- inherits global default
+    eq(42, meths.get_option_value('scrollback', {buf=0})) -- inherits global default
     command('setlocal scrollback=99')
-    eq(99, curbufmeths.get_option('scrollback'))
+    eq(99, meths.get_option_value('scrollback', {buf=0}))
     command('set scrollback<')                    -- reset to global default
-    eq(42, curbufmeths.get_option('scrollback'))
+    eq(42, meths.get_option_value('scrollback', {buf=0}))
     command('setglobal scrollback=734')           -- new global default
-    eq(42, curbufmeths.get_option('scrollback'))  -- local value did not change
+    eq(42, meths.get_option_value('scrollback', {buf=0})) -- local value did not change
     command('terminal')
-    eq(734, curbufmeths.get_option('scrollback'))
+    eq(734, meths.get_option_value('scrollback', {buf=0}))
   end)
 
 end)
@@ -578,7 +578,7 @@ describe("pending scrollback line handling", function()
       local api = vim.api
       local buf = api.nvim_create_buf(true, true)
       local chan = api.nvim_open_term(buf, {})
-      api.nvim_win_set_option(0, "number", true)
+      vim.wo.number = true
       api.nvim_chan_send(chan, ("a\n"):rep(11) .. "a")
       api.nvim_win_set_buf(0, buf)
     ]]
