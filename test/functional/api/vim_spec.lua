@@ -3993,18 +3993,39 @@ describe('API', function()
       eq({ arg, arg }, funcs.argv())
     end)
     it("'make' command works when argument count isn't 1 #19696", function()
-      command('set makeprg=echo')
+      -- Echo a string that will provoke a single match using errorformat (%f|%l| %m).
+      local qflist
+
+      -- Embed the string in the makeprg itself, to test 0-arg calling.
       command('set shellquote=')
-      matches('^:!echo ',
-              meths.cmd({ cmd = 'make' }, { output = true }))
+      command([[set makeprg=echo\ 'vim_spec.lua\|3969\|\ no\ formal\ args']])
+      meths.cmd({ cmd = 'make' }, {})
       assert_alive()
-      matches('^:!echo foo bar',
-              meths.cmd({ cmd = 'make', args = { 'foo', 'bar' } }, { output = true }))
+      qflist = funcs.getqflist()
+      eq(#qflist, 1)
+      eq(funcs.bufname(qflist.bufnr), 'vim_spec.lua')
+      eq(qflist[1].lnum, 3969)
+      eq(qflist[1].text, 'no formal args')
+
+      -- Pass the string as an argument, to test 2-arg calling.
+      command('set makeprg=echo')
+      meths.cmd({ cmd = 'make', args = { '"vim_spec.lua|3979|"', 'some goofy error message' } }, {})
       assert_alive()
-      local arg_pesc = pesc(funcs.expand('%:p:h:t'))
-      matches(('^:!echo %s %s'):format(arg_pesc, arg_pesc),
-              meths.cmd({ cmd = 'make', args = { '%:p:h:t', '%:p:h:t' } }, { output = true }))
+      qflist = funcs.getqflist()
+      eq(#qflist, 1)
+      eq(funcs.bufname(qflist.bufnr), 'vim_spec.lua')
+      eq(qflist[1].lnum, 3979)
+      eq(qflist[1].text, 'some goofy error message')
+
+      -- Test replacement.
+      command([[set errorformat=%f\ %l\ %m]])
       assert_alive()
+      meths.cmd({ cmd = 'make', args = { '%:p:h:t', '666', 'oh my' } }, {})
+      qflist = funcs.getqflist()
+      eq(#qflist, 1)
+      eq(funcs.bufname(qflist.bufnr), pesc(funcs.expand('%:p:h:t')))
+      eq(qflist[1].lnum, 666)
+      eq(qflist[1].text, 'oh my')
     end)
     it('doesn\'t display messages when output=true', function()
       local screen = Screen.new(40, 6)
