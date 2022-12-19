@@ -378,7 +378,7 @@ int get_indent_lnum(linenr_T lnum)
 int get_indent_buf(buf_T *buf, linenr_T lnum)
 {
   return get_indent_str_vtab(ml_get_buf(buf, lnum, false),
-                             curbuf->b_p_ts,
+                             buf->b_p_ts,
                              buf->b_p_vts_array,
                              false);
 }

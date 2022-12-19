@@ -157,6 +157,27 @@ func Test_indent_fold_max()
   bw!
 endfunc
 
+func Test_indent_fold_tabstop()
+  call setline(1, ['0', '    1', '    1', "\t2", "\t2"])
+  setlocal shiftwidth=4
+  setlocal foldcolumn=1
+  setlocal foldlevel=2
+  setlocal foldmethod=indent
+  redraw
+  call assert_equal('2        2', ScreenLines(5, 10)[0])
+  vsplit
+  windo diffthis
+  botright new
+  " This 'tabstop' value should not be used for folding in other buffers.
+  setlocal tabstop=4
+  diffoff!
+  redraw
+  call assert_equal('2        2', ScreenLines(5, 10)[0])
+
+  bwipe!
+  bwipe!
+endfunc
+
 func Test_manual_fold_with_filter()
   CheckExecutable cat
   for type in ['manual', 'marker']
