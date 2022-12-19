@@ -69,7 +69,6 @@
   { include: [ '"garray.h.generated.h"', private, '"nvim/garray.h"', public ] },
   { include: [ '"getchar.h.generated.h"', private, '"nvim/getchar.h"', public ] },
   { include: [ '"grid.h.generated.h"', private, '"nvim/grid.h"', public ] },
-  { include: [ '"hardcopy.h.generated.h"', private, '"nvim/hardcopy.h"', public ] },
   { include: [ '"hashtab.h.generated.h"', private, '"nvim/hashtab.h"', public ] },
   { include: [ '"help.h.generated.h"', private, '"nvim/help.h"', public ] },
   { include: [ '"highlight.h.generated.h"', private, '"nvim/highlight.h"', public ] },

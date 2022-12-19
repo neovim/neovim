@@ -627,30 +627,6 @@ if has("gui")
   endif
 endif
 
-if has("printer")
-  call <SID>Header(gettext("printing"))
-  call <SID>AddOption("printoptions", gettext("list of items that control the format of :hardcopy output"))
-  call <SID>OptionG("popt", &popt)
-  call <SID>AddOption("printdevice", gettext("name of the printer to be used for :hardcopy"))
-  call <SID>OptionG("pdev", &pdev)
-  if has("postscript")
-    call <SID>AddOption("printexpr", gettext("expression used to print the PostScript file for :hardcopy"))
-    call <SID>OptionG("pexpr", &pexpr)
-  endif
-  call <SID>AddOption("printfont", gettext("name of the font to be used for :hardcopy"))
-  call <SID>OptionG("pfn", &pfn)
-  call <SID>AddOption("printheader", gettext("format of the header used for :hardcopy"))
-  call <SID>OptionG("pheader", &pheader)
-  if has("postscript")
-    call <SID>AddOption("printencoding", gettext("encoding used to print the PostScript file for :hardcopy"))
-    call <SID>OptionG("penc", &penc)
-  endif
-  call <SID>AddOption("printmbcharset", gettext("the CJK character set to be used for CJK output from :hardcopy"))
-  call <SID>OptionG("pmbcs", &pmbcs)
-  call <SID>AddOption("printmbfont", gettext("list of font names to be used for CJK output from :hardcopy"))
-  call <SID>OptionG("pmbfn", &pmbfn)
-endif
-
 call <SID>Header(gettext("messages and info"))
 call <SID>AddOption("terse", gettext("add 's' flag in 'shortmess' (don't show search message)"))
 call <SID>BinOptionG("terse", &terse)

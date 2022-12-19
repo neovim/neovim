@@ -3109,8 +3109,6 @@ static void f_has(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     "packages",
     "path_extra",
     "persistent_undo",
-    "postscript",
-    "printer",
     "profile",
     "pythonx",
     "reltime",

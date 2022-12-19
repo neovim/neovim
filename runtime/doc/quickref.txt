@@ -821,14 +821,6 @@ Short explanation of each option:		*option-list*
 'previewheight'   'pvh'     height of the preview window
 'previewpopup'    'pvp'     use popup window for preview
 'previewwindow'   'pvw'     identifies the preview window
-'printdevice'	  'pdev'    name of the printer to be used for :hardcopy
-'printencoding'   'penc'    encoding to be used for printing
-'printexpr'	  'pexpr'   expression used to print PostScript for :hardcopy
-'printfont'	  'pfn'     name of the font to be used for :hardcopy
-'printheader'	  'pheader' format of the header used for :hardcopy
-'printmbcharset'  'pmbcs'   CJK character set to be used for :hardcopy
-'printmbfont'	  'pmbfn'   font names to be used for CJK output of :hardcopy
-'printoptions'	  'popt'    controls the format of :hardcopy output
 'pumheight'	  'ph'	    maximum number of items to show in the popup menu
 'pumwidth'	  'pw'	    minimum width of the popup menu
 'pyxversion'	  'pyx'	    Python version used for pyx* commands

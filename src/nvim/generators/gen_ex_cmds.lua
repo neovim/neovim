@@ -64,7 +64,6 @@ defsfile:write(string.format([[
 #include "nvim/ex_docmd.h"
 #include "nvim/ex_eval.h"
 #include "nvim/ex_session.h"
-#include "nvim/hardcopy.h"
 #include "nvim/help.h"
 #include "nvim/indent.h"
 #include "nvim/locale.h"

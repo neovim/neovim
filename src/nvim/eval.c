@@ -672,25 +672,6 @@ int eval_charconvert(const char *const enc_from, const char *const enc_to,
   return OK;
 }
 
-int eval_printexpr(const char *const fname, const char *const args)
-{
-  bool err = false;
-
-  set_vim_var_string(VV_FNAME_IN, fname, -1);
-  set_vim_var_string(VV_CMDARG, args, -1);
-  if (eval_to_bool(p_pexpr, &err, NULL, false)) {
-    err = true;
-  }
-  set_vim_var_string(VV_FNAME_IN, NULL, -1);
-  set_vim_var_string(VV_CMDARG, NULL, -1);
-
-  if (err) {
-    os_remove(fname);
-    return FAIL;
-  }
-  return OK;
-}
-
 void eval_diff(const char *const origfile, const char *const newfile, const char *const outfile)
 {
   bool err = false;

@@ -1740,65 +1740,6 @@ return {
       defaults={if_true=false}
     },
     {
-      full_name='printdevice', abbreviation='pdev',
-      short_desc=N_("name of the printer to be used for :hardcopy"),
-      type='string', scope={'global'},
-      secure=true,
-      varname='p_pdev',
-      defaults={if_true=""}
-    },
-    {
-      full_name='printencoding', abbreviation='penc',
-      short_desc=N_("encoding to be used for printing"),
-      type='string', scope={'global'},
-      varname='p_penc',
-      defaults={if_true=""}
-    },
-    {
-      full_name='printexpr', abbreviation='pexpr',
-      short_desc=N_("expression used to print PostScript for :hardcopy"),
-      type='string', scope={'global'},
-      secure=true,
-      varname='p_pexpr',
-      defaults={if_true=""}
-    },
-    {
-      full_name='printfont', abbreviation='pfn',
-      short_desc=N_("name of the font to be used for :hardcopy"),
-      type='string', scope={'global'},
-      varname='p_pfn',
-      defaults={if_true="courier"}
-    },
-    {
-      full_name='printheader', abbreviation='pheader',
-      short_desc=N_("format of the header used for :hardcopy"),
-      type='string', scope={'global'},
-      varname='p_header',
-      defaults={if_true="%<%f%h%m%=Page %N"}
-    },
-    {
-      full_name='printmbcharset', abbreviation='pmbcs',
-      short_desc=N_("CJK character set to be used for :hardcopy"),
-      type='string', scope={'global'},
-      varname='p_pmcs',
-      defaults={if_true=""}
-    },
-    {
-      full_name='printmbfont', abbreviation='pmbfn',
-      short_desc=N_("font names to be used for CJK output of :hardcopy"),
-      type='string', scope={'global'},
-      varname='p_pmfn',
-      defaults={if_true=""}
-    },
-    {
-      full_name='printoptions', abbreviation='popt',
-      short_desc=N_("controls the format of :hardcopy output"),
-      type='string', list='onecomma', scope={'global'},
-      deny_duplicates=true,
-      varname='p_popt',
-      defaults={if_true=""}
-    },
-    {
       full_name='prompt',
       short_desc=N_("enable prompt in Ex mode"),
       type='bool', scope={'global'},
