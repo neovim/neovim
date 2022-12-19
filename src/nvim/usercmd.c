@@ -943,7 +943,7 @@ void ex_command(exarg_T *eap)
     end = skiptowhite(p);
     if (uc_scan_attr(p, (size_t)(end - p), &argt, &def, &flags, &compl, (char_u **)&compl_arg,
                      &addr_type_arg) == FAIL) {
-      return;
+      goto theend;
     }
     p = skipwhite(end);
   }
@@ -953,7 +953,7 @@ void ex_command(exarg_T *eap)
   end = uc_validate_name(name);
   if (!end) {
     emsg(_("E182: Invalid command name"));
-    return;
+    goto theend;
   }
   name_len = (size_t)(end - name);
 
@@ -971,7 +971,12 @@ void ex_command(exarg_T *eap)
   } else {
     uc_add_command(name, name_len, p, argt, def, flags, compl, compl_arg, LUA_NOREF, LUA_NOREF,
                    addr_type_arg, LUA_NOREF, eap->forceit);
+
+    return;  // success
   }
+
+theend:
+  xfree(compl_arg);
 }
 
 /// ":comclear"
