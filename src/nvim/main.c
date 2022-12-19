@@ -1987,6 +1987,41 @@ static bool do_user_initialization(void)
   return do_exrc;
 }
 
+// Read initialization commands from ".nvim.lua", ".nvimrc", or ".exrc" in
+// current directory.  This is only done if the 'exrc' option is set.
+// Only do this if VIMRC_FILE is not the same as vimrc file sourced in
+// do_user_initialization.
+static void do_exrc_initialization(void)
+{
+  char *str;
+
+  if (os_path_exists(VIMRC_LUA_FILE)) {
+    str = nlua_read_secure(VIMRC_LUA_FILE);
+    if (str != NULL) {
+      Error err = ERROR_INIT;
+      nlua_exec(cstr_as_string(str), (Array)ARRAY_DICT_INIT, &err);
+      xfree(str);
+      if (ERROR_SET(&err)) {
+        semsg("Error detected while processing %s:", VIMRC_LUA_FILE);
+        semsg_multiline(err.msg);
+        api_clear_error(&err);
+      }
+    }
+  } else if (os_path_exists(VIMRC_FILE)) {
+    str = nlua_read_secure(VIMRC_FILE);
+    if (str != NULL) {
+      do_source_str(str, VIMRC_FILE);
+      xfree(str);
+    }
+  } else if (os_path_exists(EXRC_FILE)) {
+    str = nlua_read_secure(EXRC_FILE);
+    if (str != NULL) {
+      do_source_str(str, EXRC_FILE);
+      xfree(str);
+    }
+  }
+}
+
 /// Source startup scripts
 static void source_startup_scripts(const mparm_T *const parmp)
   FUNC_ATTR_NONNULL_ALL
@@ -2005,21 +2040,7 @@ static void source_startup_scripts(const mparm_T *const parmp)
     do_system_initialization();
 
     if (do_user_initialization()) {
-      // Read initialization commands from ".nvimrc" or ".exrc" in current
-      // directory.  This is only done if the 'exrc' option is set.
-      // Only do this if VIMRC_FILE is not the same as vimrc file sourced in
-      // do_user_initialization.
-      char *str = nlua_read_secure(VIMRC_FILE);
-      if (str != NULL) {
-        do_source_str(str, VIMRC_FILE);
-        xfree(str);
-      } else {
-        str = nlua_read_secure(EXRC_FILE);
-        if (str != NULL) {
-          do_source_str(str, EXRC_FILE);
-          xfree(str);
-        }
-      }
+      do_exrc_initialization();
     }
   }
   TIME_MSG("sourcing vimrc file(s)");

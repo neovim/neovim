@@ -75,6 +75,10 @@
 # define VIMRC_FILE     ".nvimrc"
 #endif
 
+#ifndef VIMRC_LUA_FILE
+# define VIMRC_LUA_FILE ".nvim.lua"
+#endif
+
 EXTERN struct nvim_stats_s {
   int64_t fsync;
   int64_t redraw;
