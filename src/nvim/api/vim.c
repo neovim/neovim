@@ -726,8 +726,11 @@ void nvim_set_vvar(String name, Object value, Error *err)
 ///                text chunk with specified highlight. `hl_group` element
 ///                can be omitted for no highlight.
 /// @param history  if true, add to |message-history|.
-/// @param opts  Optional parameters. Reserved for future use.
-void nvim_echo(Array chunks, Boolean history, Dictionary opts, Error *err)
+/// @param opts  Optional parameters.
+///          - verbose: Message was printed as a result of 'verbose' option
+///            if Nvim was invoked with -V3log_file, the message will be
+///            redirected to the log_file and surpressed from direct output.
+void nvim_echo(Array chunks, Boolean history, Dict(echo_opts) *opts, Error *err)
   FUNC_API_SINCE(7)
 {
   HlMessage hl_msg = parse_hl_msg(chunks, err);
@@ -735,12 +738,18 @@ void nvim_echo(Array chunks, Boolean history, Dictionary opts, Error *err)
     goto error;
   }
 
-  if (opts.size > 0) {
-    api_set_error(err, kErrorTypeValidation, "opts dict isn't empty");
-    goto error;
+  bool verbose = api_object_to_bool(opts->verbose, "verbose", false, err);
+
+  if (verbose) {
+    verbose_enter();
   }
 
   msg_multiattr(hl_msg, history ? "echomsg" : "echo", history);
+
+  if (verbose) {
+    verbose_leave();
+    verbose_stop();  // flush now
+  }
 
   if (history) {
     // history takes ownership

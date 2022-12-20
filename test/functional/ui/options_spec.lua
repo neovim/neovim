@@ -24,6 +24,7 @@ describe('UI receives option updates', function()
       termguicolors=false,
       ttimeout=true,
       ttimeoutlen=50,
+      verbose=0,
       ext_cmdline=false,
       ext_popupmenu=false,
       ext_tabline=false,

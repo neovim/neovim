@@ -2690,7 +2690,7 @@ return {
       full_name='verbose', abbreviation='vbs',
       short_desc=N_("give informative messages"),
       type='number', scope={'global'},
-      varname='p_verbose',
+      varname='p_verbose', redraw={'ui_option'},
       defaults={if_true=0}
     },
     {

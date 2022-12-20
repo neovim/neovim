@@ -7,10 +7,13 @@
 #include <string.h>
 #include <unibilium.h>
 
+#include "nvim/api/private/helpers.h"
+#include "nvim/charset.h"
 #include "nvim/globals.h"
 #include "nvim/memory.h"
 #include "nvim/message.h"
 #include "nvim/option.h"
+#include "nvim/strings.h"
 #include "nvim/tui/terminfo.h"
 #include "nvim/tui/terminfo_defs.h"
 
@@ -147,82 +150,80 @@ unibi_term *terminfo_from_builtin(const char *term, char **termname)
 /// Serves a similar purpose as Vim `:set termcap` (removed in Nvim).
 ///
 /// @note adapted from unibilium unibi-dump.c
-void terminfo_info_msg(const unibi_term *const ut)
+/// @return allocated string
+String terminfo_info_msg(const unibi_term *ut, const char *termname)
 {
-  if (exiting) {
-    return;
-  }
-  msg_puts_title("\n\n--- Terminal info --- {{{\n");
+  StringBuilder data = KV_INITIAL_VALUE;
 
-  char *term;
-  get_tty_option("term", &term);
-  msg_printf_attr(0, "&term: %s\n", term);
-  msg_printf_attr(0, "Description: %s\n", unibi_get_name(ut));
+  kv_printf(data, "&term: %s\n", termname);
+  kv_printf(data, "Description: %s\n", unibi_get_name(ut));
   const char **a = unibi_get_aliases(ut);
   if (*a) {
-    msg_puts("Aliases: ");
+    kv_printf(data, "Aliases: ");
     do {
-      msg_printf_attr(0, "%s%s\n", *a, a[1] ? " | " : "");
+      kv_printf(data, "%s%s\n", *a, a[1] ? " | " : "");
       a++;
     } while (*a);
   }
 
-  msg_puts("Boolean capabilities:\n");
+  kv_printf(data, "Boolean capabilities:\n");
   for (enum unibi_boolean i = unibi_boolean_begin_ + 1;
        i < unibi_boolean_end_; i++) {
-    msg_printf_attr(0, "  %-25s %-10s = %s\n", unibi_name_bool(i),
-                    unibi_short_name_bool(i),
-                    unibi_get_bool(ut, i) ? "true" : "false");
+    kv_printf(data, "  %-25s %-10s = %s\n", unibi_name_bool(i),
+              unibi_short_name_bool(i),
+              unibi_get_bool(ut, i) ? "true" : "false");
   }
 
-  msg_puts("Numeric capabilities:\n");
+  kv_printf(data, "Numeric capabilities:\n");
   for (enum unibi_numeric i = unibi_numeric_begin_ + 1;
        i < unibi_numeric_end_; i++) {
     int n = unibi_get_num(ut, i);  // -1 means "empty"
-    msg_printf_attr(0, "  %-25s %-10s = %d\n", unibi_name_num(i),
-                    unibi_short_name_num(i), n);
+    kv_printf(data, "  %-25s %-10s = %d\n", unibi_name_num(i),
+              unibi_short_name_num(i), n);
   }
 
-  msg_puts("String capabilities:\n");
+  kv_printf(data, "String capabilities:\n");
   for (enum unibi_string i = unibi_string_begin_ + 1;
        i < unibi_string_end_; i++) {
     const char *s = unibi_get_str(ut, i);
     if (s) {
-      msg_printf_attr(0, "  %-25s %-10s = ", unibi_name_str(i),
-                      unibi_short_name_str(i));
+      kv_printf(data, "  %-25s %-10s = ", unibi_name_str(i),
+                unibi_short_name_str(i));
       // Most of these strings will contain escape sequences.
-      msg_outtrans_special(s, false, 0);
-      msg_putchar('\n');
+      kv_transstr(&data, s, false);
+      kv_push(data, '\n');
     }
   }
 
   if (unibi_count_ext_bool(ut)) {
-    msg_puts("Extended boolean capabilities:\n");
+    kv_printf(data, "Extended boolean capabilities:\n");
     for (size_t i = 0; i < unibi_count_ext_bool(ut); i++) {
-      msg_printf_attr(0, "  %-25s = %s\n",
-                      unibi_get_ext_bool_name(ut, i),
-                      unibi_get_ext_bool(ut, i) ? "true" : "false");
+      kv_printf(data, "  %-25s = %s\n",
+                unibi_get_ext_bool_name(ut, i),
+                unibi_get_ext_bool(ut, i) ? "true" : "false");
     }
   }
 
   if (unibi_count_ext_num(ut)) {
-    msg_puts("Extended numeric capabilities:\n");
+    kv_printf(data, "Extended numeric capabilities:\n");
     for (size_t i = 0; i < unibi_count_ext_num(ut); i++) {
-      msg_printf_attr(0, "  %-25s = %d\n",
-                      unibi_get_ext_num_name(ut, i),
-                      unibi_get_ext_num(ut, i));
+      kv_printf(data, "  %-25s = %d\n",
+                unibi_get_ext_num_name(ut, i),
+                unibi_get_ext_num(ut, i));
     }
   }
 
   if (unibi_count_ext_str(ut)) {
-    msg_puts("Extended string capabilities:\n");
+    kv_printf(data, "Extended string capabilities:\n");
     for (size_t i = 0; i < unibi_count_ext_str(ut); i++) {
-      msg_printf_attr(0, "  %-25s = ", unibi_get_ext_str_name(ut, i));
-      msg_outtrans_special(unibi_get_ext_str(ut, i), false, 0);
-      msg_putchar('\n');
+      kv_printf(data, "  %-25s = ", unibi_get_ext_str_name(ut, i));
+      // NOTE: unibi_get_ext_str(ut, i) might be NULL, as termcap
+      // might include junk data on mac os. kv_transstr will handle this.
+      kv_transstr(&data, unibi_get_ext_str(ut, i), false);
+      kv_push(data, '\n');
     }
   }
+  kv_push(data, NUL);
 
-  msg_puts("}}}\n");
-  xfree(term);
+  return cbuf_as_string(data.items, data.size - 1);
 }

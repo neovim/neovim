@@ -717,7 +717,7 @@ nvim_del_var({name})                                          *nvim_del_var()*
     Parameters: ~
       • {name}  Variable name
 
-nvim_echo({chunks}, {history}, {opts})                           *nvim_echo()*
+nvim_echo({chunks}, {history}, {*opts})                          *nvim_echo()*
     Echo a message.
 
     Parameters: ~
@@ -725,7 +725,11 @@ nvim_echo({chunks}, {history}, {opts})                           *nvim_echo()*
                    chunk with specified highlight. `hl_group` element can be
                    omitted for no highlight.
       • {history}  if true, add to |message-history|.
-      • {opts}     Optional parameters. Reserved for future use.
+      • {opts}     Optional parameters.
+                   • verbose: Message was printed as a result of 'verbose'
+                     option if Nvim was invoked with -V3log_file, the message
+                     will be redirected to the log_file and surpressed from
+                     direct output.
 
 nvim_err_write({str})                                       *nvim_err_write()*
     Writes a message to the Vim error buffer. Does not append "\n", the
