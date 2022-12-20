@@ -15,13 +15,13 @@ func Test_sign()
   " the icon name when listing signs.
   sign define Sign1 text=x
 
-  call Sign_command_ignore_error('sign define Sign2 text=xy texthl=Title linehl=Error culhl=Search icon=../../pixmaps/stock_vim_find_help.png')
+  call Sign_command_ignore_error('sign define Sign2 text=xy texthl=Title linehl=Error culhl=Search numhl=Number icon=../../pixmaps/stock_vim_find_help.png')
 
   " Test listing signs.
   let a=execute('sign list')
   call assert_match('^\nsign Sign1 text=x \nsign Sign2 ' .
 	      \ 'icon=../../pixmaps/stock_vim_find_help.png .*text=xy ' .
-	      \ 'linehl=Error texthl=Title culhl=Search$', a)
+	      \ 'linehl=Error texthl=Title culhl=Search numhl=Number$', a)
 
   let a=execute('sign list Sign1')
   call assert_equal("\nsign Sign1 text=x ", a)
@@ -127,26 +127,34 @@ func Test_sign()
   call assert_fails("sign define Sign4 text=\\ ab  linehl=Comment", 'E239:')
 
   " an empty highlight argument for an existing sign clears it
-  sign define SignY texthl=TextHl culhl=CulHl linehl=LineHl
+  sign define SignY texthl=TextHl culhl=CulHl linehl=LineHl numhl=NumHl
   let sl = sign_getdefined('SignY')[0]
   call assert_equal('TextHl', sl.texthl)
   call assert_equal('CulHl', sl.culhl)
   call assert_equal('LineHl', sl.linehl)
+  call assert_equal('NumHl', sl.numhl)
 
-  sign define SignY texthl= culhl=CulHl linehl=LineHl
+  sign define SignY texthl= culhl=CulHl linehl=LineHl numhl=NumHl
   let sl = sign_getdefined('SignY')[0]
   call assert_false(has_key(sl, 'texthl'))
   call assert_equal('CulHl', sl.culhl)
   call assert_equal('LineHl', sl.linehl)
+  call assert_equal('NumHl', sl.numhl)
 
   sign define SignY linehl=
   let sl = sign_getdefined('SignY')[0]
   call assert_false(has_key(sl, 'linehl'))
   call assert_equal('CulHl', sl.culhl)
+  call assert_equal('NumHl', sl.numhl)
 
   sign define SignY culhl=
   let sl = sign_getdefined('SignY')[0]
   call assert_false(has_key(sl, 'culhl'))
+  call assert_equal('NumHl', sl.numhl)
+
+  sign define SignY numhl=
+  let sl = sign_getdefined('SignY')[0]
+  call assert_false(has_key(sl, 'numhl'))
 
   sign undefine SignY
 
@@ -158,7 +166,7 @@ func Test_sign()
 
   sign define Sign5 text=X\  linehl=Comment
   sign undefine Sign5
-  sign define Sign5 linehl=Comment text=X\
+  sign define Sign5 linehl=Comment text=X\ 
   sign undefine Sign5
 
   " define sign with backslash
@@ -417,8 +425,8 @@ func Test_sign_funcs()
   let attr = {'text' : '=>', 'linehl' : 'Search', 'texthl' : 'Error',
               \ 'culhl': 'Visual', 'numhl': 'Number'}
   call assert_equal(0, "sign1"->sign_define(attr))
-  call assert_equal([{'name' : 'sign1', 'texthl' : 'Error', 'linehl': 'Search',
-	      \ 'culhl': 'Visual', 'numhl': 'Number', 'text' : '=>'}],
+  call assert_equal([{'name' : 'sign1', 'texthl' : 'Error', 'linehl' : 'Search',
+              \ 'culhl' : 'Visual', 'numhl': 'Number', 'text' : '=>'}],
               \ sign_getdefined())
 
   " Define a new sign without attributes and then update it
@@ -535,9 +543,9 @@ func Test_sign_funcs()
   call assert_equal(15, sign_place(15, '', 'sign1', 'Xsign', {'lnum' : 20}))
   call assert_equal(15, sign_place(15, '', 'sign2', 'Xsign'))
   call assert_equal([{'bufnr' : bufnr(''), 'signs' :
-      \ [{'id' : 15, 'group' : '', 'lnum' : 20, 'name' : 'sign2',
-      \ 'priority' : 10}]}],
-      \ sign_getplaced())
+	      \ [{'id' : 15, 'group' : '', 'lnum' : 20, 'name' : 'sign2',
+	      \ 'priority' : 10}]}],
+	      \ sign_getplaced())
 
   " Tests for sign_undefine()
   call assert_equal(0, sign_undefine("sign1"))
@@ -1165,7 +1173,7 @@ func Test_sign_unplace()
   call delete("Xsign2")
 endfunc
 
-" Tests for auto-generating the sign identifier
+" Tests for auto-generating the sign identifier.
 func Test_aaa_sign_id_autogen()
   enew | only
   call sign_unplace('*')
@@ -1650,10 +1658,34 @@ func Test_sign_lnum_adjust()
   " changes made by this function.
   let &undolevels=&undolevels
 
+  " Nvim: make sign adjustment when deleting lines match Vim
+  set signcolumn=yes:1
+
   " Delete the line with the sign
   call deletebufline('', 4)
   let l = sign_getplaced(bufnr(''))
-  call assert_equal(0, len(l[0].signs))
+  call assert_equal(4, l[0].signs[0].lnum)
+
+  " Undo the delete operation
+  undo
+  let l = sign_getplaced(bufnr(''))
+  call assert_equal(5, l[0].signs[0].lnum)
+
+  " Break the undo
+  let &undolevels=&undolevels
+
+  " Delete few lines at the end of the buffer including the line with the sign
+  " Sign line number should not change (as it is placed outside of the buffer)
+  call deletebufline('', 3, 6)
+  let l = sign_getplaced(bufnr(''))
+  call assert_equal(5, l[0].signs[0].lnum)
+
+  " Undo the delete operation. Sign should be restored to the previous line
+  undo
+  let l = sign_getplaced(bufnr(''))
+  call assert_equal(5, l[0].signs[0].lnum)
+
+  set signcolumn&
 
   sign unplace * group=*
   sign undefine sign1
@@ -1788,8 +1820,8 @@ func Test_sign_numcol()
   set number
   set signcolumn=number
   sign define sign1 text==>
-  sign place 10 line=1 name=sign1
   sign define sign2 text=Ｖ
+  sign place 10 line=1 name=sign1
   redraw!
   call assert_equal("=> 01234", s:ScreenLine(1, 1, 8))
 
