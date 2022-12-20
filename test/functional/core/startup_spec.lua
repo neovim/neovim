@@ -581,15 +581,26 @@ describe('user config init', function()
     local exrc_path = '.exrc'
     local xstate = 'Xstate'
 
+    local function setup_exrc_file(filename)
+      exrc_path = filename
+
+      if string.find(exrc_path, "%.lua$") then
+        write_file(exrc_path, string.format([[
+          vim.g.exrc_file = "%s"
+        ]], exrc_path))
+      else
+        write_file(exrc_path, string.format([[
+          let g:exrc_file = "%s"
+        ]], exrc_path))
+      end
+    end
+
     before_each(function()
       write_file(init_lua_path, [[
         vim.o.exrc = true
-        vim.g.from_exrc = 0
+        vim.g.exrc_file = '---'
       ]])
       mkdir_p(xstate .. pathsep .. (is_os('win') and 'nvim-data' or 'nvim'))
-      write_file(exrc_path, [[
-        let g:from_exrc = 1
-      ]])
     end)
 
     after_each(function()
@@ -597,43 +608,47 @@ describe('user config init', function()
       rmdir(xstate)
     end)
 
-    it('loads .exrc #13501', function()
-      clear{ args_rm = {'-u'}, env={ XDG_CONFIG_HOME=xconfig, XDG_STATE_HOME=xstate } }
-      -- The .exrc file is not trusted, and the prompt is skipped because there is no UI.
-      eq(0, eval('g:from_exrc'))
+    for _, filename in ipairs({ '.exrc', '.nvimrc', '.nvim.lua' }) do
+      it('loads ' .. filename, function ()
+        setup_exrc_file(filename)
 
-      local screen = Screen.new(50, 8)
-      screen:attach()
-      funcs.termopen({nvim_prog})
-      screen:expect({ any = pesc('[i]gnore, (v)iew, (d)eny, (a)llow:') })
-      -- `i` to enter Terminal mode, `a` to allow
-      feed('ia')
-      screen:expect([[
-                                                          |
-        ~                                                 |
-        ~                                                 |
-        ~                                                 |
-        ~                                                 |
-        [No Name]                       0,0-1          All|
-                                                          |
-        -- TERMINAL --                                    |
-      ]])
-      feed(':echo g:from_exrc<CR>')
-      screen:expect([[
-                                                          |
-        ~                                                 |
-        ~                                                 |
-        ~                                                 |
-        ~                                                 |
-        [No Name]                       0,0-1          All|
-        1                                                 |
-        -- TERMINAL --                                    |
-      ]])
+        clear{ args_rm = {'-u'}, env={ XDG_CONFIG_HOME=xconfig, XDG_STATE_HOME=xstate } }
+        -- The 'exrc' file is not trusted, and the prompt is skipped because there is no UI.
+        eq('---', eval('g:exrc_file'))
 
-      clear{ args_rm = {'-u'}, env={ XDG_CONFIG_HOME=xconfig, XDG_STATE_HOME=xstate } }
-      -- The .exrc file is now trusted.
-      eq(1, eval('g:from_exrc'))
-    end)
+        local screen = Screen.new(50, 8)
+        screen:attach()
+        funcs.termopen({nvim_prog})
+        screen:expect({ any = pesc('[i]gnore, (v)iew, (d)eny, (a)llow:') })
+        -- `i` to enter Terminal mode, `a` to allow
+        feed('ia')
+        screen:expect([[
+                                                            |
+          ~                                                 |
+          ~                                                 |
+          ~                                                 |
+          ~                                                 |
+          [No Name]                       0,0-1          All|
+                                                            |
+          -- TERMINAL --                                    |
+        ]])
+        feed(':echo g:exrc_file<CR>')
+        screen:expect(string.format([[
+                                                            |
+          ~                                                 |
+          ~                                                 |
+          ~                                                 |
+          ~                                                 |
+          [No Name]                       0,0-1          All|
+          %s%s|
+          -- TERMINAL --                                    |
+        ]], filename, string.rep(' ', 50 - #filename)))
+
+        clear{ args_rm = {'-u'}, env={ XDG_CONFIG_HOME=xconfig, XDG_STATE_HOME=xstate } }
+        -- The 'exrc' file is now trusted.
+        eq(filename, eval('g:exrc_file'))
+      end)
+    end
   end)
 
   describe('with explicitly provided config', function()
