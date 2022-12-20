@@ -511,15 +511,15 @@ endfunc
 
 " Tests for reading and writing files with conversion for Win32.
 func Test_write_file_encoding()
-  throw 'skipped: Nvim does not support :w ++enc=cp1251'
+  throw 'Skipped: Nvim does not support encoding=latin1'
   CheckMSWindows
   let save_encoding = &encoding
   let save_fileencodings = &fileencodings
-  set encoding& fileencodings&
+  set encoding=latin1 fileencodings&
   let text =<< trim END
-    1 utf-8 text: ÐÐ»Ñ Vim version 6.2.  ÐÐ¾ÑÐ»ÐµÐ´Ð½ÐµÐµ Ð¸Ð·Ð¼ÐµÐ½ÐµÐ½Ð¸Ðµ: 1970 Jan 01
-    2 cp1251 text: Äëÿ Vim version 6.2.  Ïîñëåäíåå èçìåíåíèå: 1970 Jan 01
-    3 cp866 text: «ï Vim version 6.2.  ®á«¥¤­¥¥ ¨§¬¥­¥­¨¥: 1970 Jan 01
+    1 utf-8 text: Для Vim version 6.2.  Последнее изменение: 1970 Jan 01
+    2 cp1251 text: ��� Vim version 6.2.  ��������� ���������: 1970 Jan 01
+    3 cp866 text: ��� Vim version 6.2.  ��᫥���� ���������: 1970 Jan 01
   END
   call writefile(text, 'Xfile')
   edit Xfile
@@ -534,9 +534,9 @@ func Test_write_file_encoding()
   .w ++enc=cp866 >> Xtest
   .w! ++enc=utf-8 Xutf8
   let expected =<< trim END
-    1 utf-8 text: ÐÐ»Ñ Vim version 6.2.  ÐÐ¾ÑÐ»ÐµÐ´Ð½ÐµÐµ Ð¸Ð·Ð¼ÐµÐ½ÐµÐ½Ð¸Ðµ: 1970 Jan 01
-    1 utf-8 text: Äëÿ Vim version 6.2.  Ïîñëåäíåå èçìåíåíèå: 1970 Jan 01
-    1 utf-8 text: «ï Vim version 6.2.  ®á«¥¤­¥¥ ¨§¬¥­¥­¨¥: 1970 Jan 01
+    1 utf-8 text: Для Vim version 6.2.  Последнее изменение: 1970 Jan 01
+    1 utf-8 text: ��� Vim version 6.2.  ��������� ���������: 1970 Jan 01
+    1 utf-8 text: ��� Vim version 6.2.  ��᫥���� ���������: 1970 Jan 01
   END
   call assert_equal(expected, readfile('Xtest'))
 
@@ -547,9 +547,9 @@ func Test_write_file_encoding()
   .w ++enc=cp866 >> Xtest
   .w! ++enc=cp1251 Xcp1251
   let expected =<< trim END
-    2 cp1251 text: ÐÐ»Ñ Vim version 6.2.  ÐÐ¾ÑÐ»ÐµÐ´Ð½ÐµÐµ Ð¸Ð·Ð¼ÐµÐ½ÐµÐ½Ð¸Ðµ: 1970 Jan 01
-    2 cp1251 text: Äëÿ Vim version 6.2.  Ïîñëåäíåå èçìåíåíèå: 1970 Jan 01
-    2 cp1251 text: «ï Vim version 6.2.  ®á«¥¤­¥¥ ¨§¬¥­¥­¨¥: 1970 Jan 01
+    2 cp1251 text: Для Vim version 6.2.  Последнее изменение: 1970 Jan 01
+    2 cp1251 text: ��� Vim version 6.2.  ��������� ���������: 1970 Jan 01
+    2 cp1251 text: ��� Vim version 6.2.  ��᫥���� ���������: 1970 Jan 01
   END
   call assert_equal(expected, readfile('Xtest'))
 
@@ -560,9 +560,9 @@ func Test_write_file_encoding()
   .w ++enc=cp866 >> Xtest
   .w! ++enc=cp866 Xcp866
   let expected =<< trim END
-    3 cp866 text: ÐÐ»Ñ Vim version 6.2.  ÐÐ¾ÑÐ»ÐµÐ´Ð½ÐµÐµ Ð¸Ð·Ð¼ÐµÐ½ÐµÐ½Ð¸Ðµ: 1970 Jan 01
-    3 cp866 text: Äëÿ Vim version 6.2.  Ïîñëåäíåå èçìåíåíèå: 1970 Jan 01
-    3 cp866 text: «ï Vim version 6.2.  ®á«¥¤­¥¥ ¨§¬¥­¥­¨¥: 1970 Jan 01
+    3 cp866 text: Для Vim version 6.2.  Последнее изменение: 1970 Jan 01
+    3 cp866 text: ��� Vim version 6.2.  ��������� ���������: 1970 Jan 01
+    3 cp866 text: ��� Vim version 6.2.  ��᫥���� ���������: 1970 Jan 01
   END
   call assert_equal(expected, readfile('Xtest'))
 
@@ -576,9 +576,9 @@ func Test_write_file_encoding()
   e Xcp866
   .w ++enc=utf-8 >> Xtest
   let expected =<< trim END
-    1 utf-8 text: ÐÐ»Ñ Vim version 6.2.  ÐÐ¾ÑÐ»ÐµÐ´Ð½ÐµÐµ Ð¸Ð·Ð¼ÐµÐ½ÐµÐ½Ð¸Ðµ: 1970 Jan 01
-    2 cp1251 text: ÐÐ»Ñ Vim version 6.2.  ÐÐ¾ÑÐ»ÐµÐ´Ð½ÐµÐµ Ð¸Ð·Ð¼ÐµÐ½ÐµÐ½Ð¸Ðµ: 1970 Jan 01
-    3 cp866 text: ÐÐ»Ñ Vim version 6.2.  ÐÐ¾ÑÐ»ÐµÐ´Ð½ÐµÐµ Ð¸Ð·Ð¼ÐµÐ½ÐµÐ½Ð¸Ðµ: 1970 Jan 01
+    1 utf-8 text: Для Vim version 6.2.  Последнее изменение: 1970 Jan 01
+    2 cp1251 text: Для Vim version 6.2.  Последнее изменение: 1970 Jan 01
+    3 cp866 text: Для Vim version 6.2.  Последнее изменение: 1970 Jan 01
   END
   call assert_equal(expected, readfile('Xtest'))
 
@@ -592,9 +592,9 @@ func Test_write_file_encoding()
   e Xcp866
   .w ++enc=cp1251 >> Xtest
   let expected =<< trim END
-    1 utf-8 text: Äëÿ Vim version 6.2.  Ïîñëåäíåå èçìåíåíèå: 1970 Jan 01
-    2 cp1251 text: Äëÿ Vim version 6.2.  Ïîñëåäíåå èçìåíåíèå: 1970 Jan 01
-    3 cp866 text: Äëÿ Vim version 6.2.  Ïîñëåäíåå èçìåíåíèå: 1970 Jan 01
+    1 utf-8 text: ��� Vim version 6.2.  ��������� ���������: 1970 Jan 01
+    2 cp1251 text: ��� Vim version 6.2.  ��������� ���������: 1970 Jan 01
+    3 cp866 text: ��� Vim version 6.2.  ��������� ���������: 1970 Jan 01
   END
   call assert_equal(expected, readfile('Xtest'))
 
@@ -608,9 +608,9 @@ func Test_write_file_encoding()
   e Xcp866
   .w ++enc=cp866 >> Xtest
   let expected =<< trim END
-    1 utf-8 text: «ï Vim version 6.2.  ®á«¥¤­¥¥ ¨§¬¥­¥­¨¥: 1970 Jan 01
-    2 cp1251 text: «ï Vim version 6.2.  ®á«¥¤­¥¥ ¨§¬¥­¥­¨¥: 1970 Jan 01
-    3 cp866 text: «ï Vim version 6.2.  ®á«¥¤­¥¥ ¨§¬¥­¥­¨¥: 1970 Jan 01
+    1 utf-8 text: ��� Vim version 6.2.  ��᫥���� ���������: 1970 Jan 01
+    2 cp1251 text: ��� Vim version 6.2.  ��᫥���� ���������: 1970 Jan 01
+    3 cp866 text: ��� Vim version 6.2.  ��᫥���� ���������: 1970 Jan 01
   END
   call assert_equal(expected, readfile('Xtest'))
 
