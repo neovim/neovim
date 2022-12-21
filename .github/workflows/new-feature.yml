@@ -1,4 +1,4 @@
-name: "news.txt check"
+name: "New feature"
 on:
   pull_request:
     branches:
@@ -10,7 +10,7 @@ jobs:
       - uses: actions/checkout@v3
         with:
           fetch-depth: 0
-      - name: news.txt needs to be updated
+      - name: Pull request is incomplete
         run: |
           for commit in $(git rev-list HEAD~${{ github.event.pull_request.commits }}..HEAD); do
             message=$(git log -n1 --pretty=format:%s $commit)
@@ -24,7 +24,15 @@ jobs:
                   news.txt hasn't been updated yet. news.txt is our primary way of
                   communicating changes to users so it's important to keep it up to
                   date."
-                  exit 1
+                exit 1
+               }
+            fi
+
+            if [[ "$type" == "feat" ]]; then
+              ! git diff HEAD~${{ github.event.pull_request.commits }}..HEAD --quiet test ||
+              {
+                echo "Pull request includes a new feature but no tests were added."
+                exit 1
                }
             fi
           done
