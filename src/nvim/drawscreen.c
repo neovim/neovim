@@ -956,9 +956,6 @@ static void draw_sep_connectors_win(win_T *wp)
 /// bot: from bot_start to last row (when scrolled up)
 static void win_update(win_T *wp, DecorProviders *providers)
 {
-  bool called_decor_providers = false;
-win_update_start:
-  ;
   int top_end = 0;              // Below last row of the top area that needs
                                 // updating.  0 when no top area updating.
   int mid_start = 999;          // first row of the mid area that needs
@@ -1028,13 +1025,6 @@ win_update_start:
 
   DecorProviders line_providers;
   decor_providers_invoke_win(wp, providers, &line_providers, &provider_err);
-  if (must_redraw != 0) {
-    must_redraw = 0;
-    if (!called_decor_providers) {
-      called_decor_providers = true;
-      goto win_update_start;
-    }
-  }
 
   redraw_win_signcol(wp);
 
