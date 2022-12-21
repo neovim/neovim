@@ -3838,7 +3838,7 @@ static int get_string_tv(char **arg, typval_T *rettv, int evaluate)
         if (p[1] != '*') {
           flags |= FSK_SIMPLIFY;
         }
-        extra = trans_special((const char_u **)&p, strlen(p), (char_u *)name, flags, false, NULL);
+        extra = trans_special((const char **)&p, strlen(p), (char_u *)name, flags, false, NULL);
         if (extra != 0) {
           name += extra;
           if (name >= rettv->vval.v_string + len) {

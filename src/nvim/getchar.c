@@ -1968,7 +1968,7 @@ static int handle_mapping(int *keylenp, const bool *timedout, int *mapdepth)
       // Only consider an entry if the first character matches and it is
       // for the current state.
       // Skip ":lmap" mappings if keys were mapped.
-      if (mp->m_keys[0] == tb_c1 && (mp->m_mode & local_State)
+      if ((uint8_t)mp->m_keys[0] == tb_c1 && (mp->m_mode & local_State)
           && ((mp->m_mode & MODE_LANGMAP) == 0 || typebuf.tb_maplen == 0)) {
         int nomap = nolmaplen;
         int modifiers = 0;
@@ -1994,7 +1994,7 @@ static int handle_mapping(int *keylenp, const bool *timedout, int *mapdepth)
             }
             modifiers = 0;
           }
-          if (mp->m_keys[mlen] != c2) {
+          if ((uint8_t)mp->m_keys[mlen] != c2) {
             break;
           }
         }
@@ -2002,7 +2002,7 @@ static int handle_mapping(int *keylenp, const bool *timedout, int *mapdepth)
         // Don't allow mapping the first byte(s) of a multi-byte char.
         // Happens when mapping <M-a> and then changing 'encoding'.
         // Beware that 0x80 is escaped.
-        char_u *p1 = mp->m_keys;
+        char_u *p1 = (char_u *)mp->m_keys;
         char_u *p2 = (char_u *)mb_unescape((const char **)&p1);
 
         if (p2 != NULL && MB_BYTE2LEN(tb_c1) > utfc_ptr2len((char *)p2)) {
@@ -2020,8 +2020,8 @@ static int handle_mapping(int *keylenp, const bool *timedout, int *mapdepth)
           // mapping starts with K_SNR.
           uint8_t *s = typebuf.tb_noremap + typebuf.tb_off;
           if (*s == RM_SCRIPT
-              && (mp->m_keys[0] != K_SPECIAL
-                  || mp->m_keys[1] != KS_EXTRA
+              && ((uint8_t)mp->m_keys[0] != K_SPECIAL
+                  || (uint8_t)mp->m_keys[1] != KS_EXTRA
                   || mp->m_keys[2] != KE_SNR)) {
             continue;
           }
@@ -2212,7 +2212,7 @@ static int handle_mapping(int *keylenp, const bool *timedout, int *mapdepth)
       vgetc_busy = 0;
       may_garbage_collect = false;
 
-      save_m_keys = xstrdup((char *)mp->m_keys);
+      save_m_keys = xstrdup(mp->m_keys);
       if (save_m_luaref == LUA_NOREF) {
         save_m_str = xstrdup(mp->m_str);
       }
@@ -2266,7 +2266,7 @@ static int handle_mapping(int *keylenp, const bool *timedout, int *mapdepth)
 
       if (save_m_noremap != REMAP_YES) {
         noremap = save_m_noremap;
-      } else if (strncmp(map_str, save_m_keys != NULL ? save_m_keys : (char *)mp->m_keys,
+      } else if (strncmp(map_str, save_m_keys != NULL ? save_m_keys : mp->m_keys,
                          (size_t)keylen) != 0) {
         noremap = REMAP_YES;
       } else {

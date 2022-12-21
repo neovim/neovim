@@ -1367,12 +1367,13 @@ char *make_filter_cmd(char *cmd, char *itmp, char *otmp)
 {
   bool is_fish_shell =
 #if defined(UNIX)
-    STRNCMP(invocation_path_tail((char_u *)p_sh, NULL), "fish", 4) == 0;
+    strncmp((char *)invocation_path_tail((char_u *)p_sh, NULL), "fish", 4) == 0;
 #else
     false;
 #endif
-  bool is_pwsh = STRNCMP(invocation_path_tail((char_u *)p_sh, NULL), "pwsh", 4) == 0
-                 || STRNCMP(invocation_path_tail((char_u *)p_sh, NULL), "powershell", 10) == 0;
+  bool is_pwsh = strncmp((char *)invocation_path_tail((char_u *)p_sh, NULL), "pwsh", 4) == 0
+                 || strncmp((char *)invocation_path_tail((char_u *)p_sh, NULL), "powershell",
+                            10) == 0;
 
   size_t len = strlen(cmd) + 1;  // At least enough space for cmd + NULL.
 

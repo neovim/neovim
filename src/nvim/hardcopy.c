@@ -232,7 +232,7 @@ struct prt_ps_resource_S {
   char_u filename[MAXPATHL + 1];
   PrtResourceType type;
   char_u title[256];
-  char_u version[256];
+  char version[256];
 };
 
 struct prt_dsc_comment_S {
@@ -243,7 +243,7 @@ struct prt_dsc_comment_S {
 
 struct prt_dsc_line_S {
   int type;
-  char_u *string;
+  char *string;
   int len;
 };
 
@@ -251,7 +251,7 @@ struct prt_dsc_line_S {
 // couple of KB of comments!
 #define PRT_FILE_BUFFER_LEN (2048)
 struct prt_resfile_buffer_S {
-  char_u buffer[PRT_FILE_BUFFER_LEN];
+  char buffer[PRT_FILE_BUFFER_LEN];
   int len;
   int line_start;
   int line_end;
@@ -1550,8 +1550,8 @@ static int prt_resfile_strncmp(int offset, const char *string, int len)
   if (len > (prt_resfile.line_end - (prt_resfile.line_start + offset))) {
     return 1;
   }
-  return STRNCMP(&prt_resfile.buffer[prt_resfile.line_start + offset],
-                 string, len);
+  return strncmp(&prt_resfile.buffer[prt_resfile.line_start + offset],
+                 string, (size_t)len);
 }
 
 static int prt_resfile_skip_nonws(int offset)
@@ -1751,7 +1751,7 @@ static bool prt_check_resource(const struct prt_ps_resource_S *resource, const c
   FUNC_ATTR_NONNULL_ALL
 {
   // Version number m.n should match, the revision number does not matter
-  if (STRNCMP(resource->version, version, strlen(version)) != 0) {
+  if (strncmp(resource->version, version, strlen(version)) != 0) {
     semsg(_("E621: \"%s\" resource file has wrong version"),
           resource->name);
     return false;

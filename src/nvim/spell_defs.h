@@ -72,8 +72,8 @@ typedef int idx_T;
 // si_repsal, sl_rep, and si_sal.  Not for sl_sal!
 // One replacement: from "ft_from" to "ft_to".
 typedef struct fromto_S {
-  uint8_t *ft_from;
-  uint8_t *ft_to;
+  char *ft_from;
+  char *ft_to;
 } fromto_T;
 
 // Info from "SAL" entries in ".aff" file used in sl_sal.

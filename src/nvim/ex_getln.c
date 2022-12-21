@@ -3929,7 +3929,7 @@ static int ccheck_abbr(int c)
     spos = 0;
   }
 
-  return check_abbr(c, (char_u *)ccline.cmdbuff, ccline.cmdpos, spos);
+  return check_abbr(c, ccline.cmdbuff, ccline.cmdpos, spos);
 }
 
 /// Escape special characters in "fname", depending on "what":

@@ -185,7 +185,7 @@ char *vim_strsave_shellescape(const char *string, bool do_special, bool do_newli
         length++;                       // insert backslash
       }
     }
-    if (do_special && find_cmdline_var(p, &l) >= 0) {
+    if (do_special && find_cmdline_var((char *)p, &l) >= 0) {
       length++;                         // insert backslash
       p += l - 1;
     }
@@ -234,7 +234,7 @@ char *vim_strsave_shellescape(const char *string, bool do_special, bool do_newli
       *d++ = *p++;
       continue;
     }
-    if (do_special && find_cmdline_var((char_u *)p, &l) >= 0) {
+    if (do_special && find_cmdline_var(p, &l) >= 0) {
       *d++ = '\\';                    // insert backslash
       while (--l != SIZE_MAX) {  // copy the var
         *d++ = *p++;

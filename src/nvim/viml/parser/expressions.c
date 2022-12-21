@@ -1825,7 +1825,7 @@ static void parse_quoted_string(ParserState *const pstate, ExprASTNode *const no
           if (p[1] != '*') {
             flags |= FSK_SIMPLIFY;
           }
-          const size_t special_len = trans_special((const char_u **)&p, (size_t)(e - p),
+          const size_t special_len = trans_special(&p, (size_t)(e - p),
                                                    (char_u *)v_p, flags, false, NULL);
           if (special_len != 0) {
             v_p += special_len;

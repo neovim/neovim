@@ -222,7 +222,7 @@ int match_user(char *name)
     if (strcmp(((char **)ga_users.ga_data)[i], name) == 0) {
       return 2;       // full match
     }
-    if (STRNCMP(((char_u **)ga_users.ga_data)[i], name, n) == 0) {
+    if (strncmp(((char **)ga_users.ga_data)[i], name, (size_t)n) == 0) {
       result = 1;       // partial match
     }
   }

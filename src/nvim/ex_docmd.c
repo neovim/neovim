@@ -6631,7 +6631,7 @@ enum {
 /// Check "str" for starting with a special cmdline variable.
 /// If found return one of the SPEC_ values and set "*usedlen" to the length of
 /// the variable.  Otherwise return -1 and "*usedlen" is unchanged.
-ssize_t find_cmdline_var(const char_u *src, size_t *usedlen)
+ssize_t find_cmdline_var(const char *src, size_t *usedlen)
   FUNC_ATTR_NONNULL_ALL
 {
   static char *(spec_str[]) = {
@@ -6655,7 +6655,7 @@ ssize_t find_cmdline_var(const char_u *src, size_t *usedlen)
 
   for (size_t i = 0; i < ARRAY_SIZE(spec_str); i++) {
     size_t len = strlen(spec_str[i]);
-    if (STRNCMP(src, spec_str[i], len) == 0) {
+    if (strncmp(src, spec_str[i], len) == 0) {
       *usedlen = len;
       assert(i <= SSIZE_MAX);
       return (ssize_t)i;
@@ -6711,7 +6711,7 @@ char_u *eval_vars(char_u *src, const char_u *srcstart, size_t *usedlen, linenr_T
   }
 
   // Check if there is something to do.
-  ssize_t spec_idx = find_cmdline_var(src, usedlen);
+  ssize_t spec_idx = find_cmdline_var((char *)src, usedlen);
   if (spec_idx < 0) {   // no match
     *usedlen = 1;
     return NULL;

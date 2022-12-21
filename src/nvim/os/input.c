@@ -266,7 +266,7 @@ size_t input_enqueue(String keys)
     uint8_t buf[19] = { 0 };
     // Do not simplify the keys here. Simplification will be done later.
     unsigned int new_size
-      = trans_special((const uint8_t **)&ptr, (size_t)(end - ptr), buf, FSK_KEYCODE, true, NULL);
+      = trans_special((const char **)&ptr, (size_t)(end - ptr), buf, FSK_KEYCODE, true, NULL);
 
     if (new_size) {
       new_size = handle_mouse_event(&ptr, buf, new_size);

@@ -3108,12 +3108,12 @@ bool is_string_option(const char *name)
 int find_key_option_len(const char_u *arg_arg, size_t len, bool has_lt)
 {
   int key = 0;
-  const char_u *arg = arg_arg;
+  const char *arg = (char *)arg_arg;
 
   // Don't use get_special_key_code() for t_xx, we don't want it to call
   // add_termcap_entry().
   if (len >= 4 && arg[0] == 't' && arg[1] == '_') {
-    key = TERMCAP2KEY(arg[2], arg[3]);
+    key = TERMCAP2KEY((uint8_t)arg[2], (uint8_t)arg[3]);
   } else if (has_lt) {
     arg--;  // put arg at the '<'
     int modifiers = 0;

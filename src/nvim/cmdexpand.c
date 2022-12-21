@@ -2960,7 +2960,7 @@ int wildmenu_process_key(CmdlineInfo *cclp, int key, expand_T *xp)
   if (xp->xp_context == EXPAND_FILES
       || xp->xp_context == EXPAND_DIRECTORIES
       || xp->xp_context == EXPAND_SHELLCMD) {
-    char_u upseg[5];
+    char upseg[5];
 
     upseg[0] = PATHSEP;
     upseg[1] = '.';
@@ -2977,7 +2977,7 @@ int wildmenu_process_key(CmdlineInfo *cclp, int key, expand_T *xp)
       // go down a directory
       c = (int)p_wc;
       KeyTyped = true;  // in case the key was mapped
-    } else if (STRNCMP(xp->xp_pattern, upseg + 1, 3) == 0
+    } else if (strncmp(xp->xp_pattern, upseg + 1, 3) == 0
                && c == K_DOWN) {
       // If in a direct ancestor, strip off one ../ to go down
       int found = false;
@@ -3024,9 +3024,9 @@ int wildmenu_process_key(CmdlineInfo *cclp, int key, expand_T *xp)
 
       if (!found) {
         j = i;
-      } else if (STRNCMP(cclp->cmdbuff + j, upseg, 4) == 0) {
+      } else if (strncmp(cclp->cmdbuff + j, upseg, 4) == 0) {
         j += 4;
-      } else if (STRNCMP(cclp->cmdbuff + j, upseg + 1, 3) == 0
+      } else if (strncmp(cclp->cmdbuff + j, upseg + 1, 3) == 0
                  && j == i) {
         j += 3;
       } else {
@@ -3037,7 +3037,7 @@ int wildmenu_process_key(CmdlineInfo *cclp, int key, expand_T *xp)
         // TODO(tarruda): this is only for DOS/Unix systems - need to put in
         // machine-specific stuff here and in upseg init
         cmdline_del(cclp, j);
-        put_on_cmdline(upseg + 1, 3, false);
+        put_on_cmdline((char_u *)upseg + 1, 3, false);
       } else if (cclp->cmdpos > i) {
         cmdline_del(cclp, i);
       }

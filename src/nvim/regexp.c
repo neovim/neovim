@@ -233,7 +233,7 @@ static int get_char_class(char **pp)
 
   if ((*pp)[1] == ':') {
     for (i = 0; i < (int)ARRAY_SIZE(class_names); i++) {
-      if (STRNCMP(*pp + 2, class_names[i], strlen(class_names[i])) == 0) {
+      if (strncmp(*pp + 2, class_names[i], strlen(class_names[i])) == 0) {
         *pp += strlen(class_names[i]) + 2;
         return i;
       }
@@ -1380,7 +1380,7 @@ static int cstrncmp(char *s1, char *s2, int *n)
   int result;
 
   if (!rex.reg_ic) {
-    result = STRNCMP(s1, s2, *n);
+    result = strncmp(s1, s2, (size_t)(*n));
   } else {
     assert(*n >= 0);
     result = mb_strnicmp(s1, s2, (size_t)(*n));
@@ -2303,12 +2303,12 @@ static char_u regname[][30] = {
 regprog_T *vim_regcomp(char *expr_arg, int re_flags)
 {
   regprog_T *prog = NULL;
-  char_u *expr = (char_u *)expr_arg;
+  char *expr = expr_arg;
 
   regexp_engine = (int)p_re;
 
   // Check for prefix "\%#=", that sets the regexp engine
-  if (STRNCMP(expr, "\\%#=", 4) == 0) {
+  if (strncmp(expr, "\\%#=", 4) == 0) {
     int newengine = expr[4] - '0';
 
     if (newengine == AUTOMATIC_ENGINE
@@ -2338,10 +2338,10 @@ regprog_T *vim_regcomp(char *expr_arg, int re_flags)
   //
   const int called_emsg_before = called_emsg;
   if (regexp_engine != BACKTRACKING_ENGINE) {
-    prog = nfa_regengine.regcomp(expr,
+    prog = nfa_regengine.regcomp((char_u *)expr,
                                  re_flags + (regexp_engine == AUTOMATIC_ENGINE ? RE_AUTO : 0));
   } else {
-    prog = bt_regengine.regcomp(expr, re_flags);
+    prog = bt_regengine.regcomp((char_u *)expr, re_flags);
   }
 
   // Check for error compiling regexp with initial engine.
@@ -2365,8 +2365,8 @@ regprog_T *vim_regcomp(char *expr_arg, int re_flags)
     // But don't try if an error message was given.
     if (regexp_engine == AUTOMATIC_ENGINE && called_emsg == called_emsg_before) {
       regexp_engine = BACKTRACKING_ENGINE;
-      report_re_switch(expr);
-      prog = bt_regengine.regcomp(expr, re_flags);
+      report_re_switch((char_u *)expr);
+      prog = bt_regengine.regcomp((char_u *)expr, re_flags);
     }
   }
 
