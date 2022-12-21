@@ -553,7 +553,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
   int char_attr = 0;                    // attributes for next character
   bool attr_pri = false;                // char_attr has priority
   bool area_highlighting = false;       // Visual or incsearch highlighting in this line
-  int attr = 0;                         // attributes for area highlighting
+  int vi_attr = 0;                      // attributes for Visual and incsearch highlighting
   int area_attr = 0;                    // attributes desired by highlighting
   int search_attr = 0;                  // attributes desired by 'hlsearch'
   int vcol_save_attr = 0;               // saved attr for 'cursorcolumn'
@@ -792,7 +792,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
       // if inverting in this line set area_highlighting
       if (fromcol >= 0) {
         area_highlighting = true;
-        attr = win_hl_attr(wp, HLF_V);
+        vi_attr = win_hl_attr(wp, HLF_V);
       }
       // handle 'incsearch' and ":s///c" highlighting
     } else if (highlight_match
@@ -816,7 +816,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
         tocol = fromcol + 1;
       }
       area_highlighting = true;
-      attr = win_hl_attr(wp, HLF_I);
+      vi_attr = win_hl_attr(wp, HLF_I);
     }
   }
 
@@ -1413,7 +1413,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
           || ((int)vcol_prev == fromcol_prev
               && vcol_prev < vcol               // not at margin
               && vcol < tocol)) {
-        area_attr = attr;                       // start highlighting
+        area_attr = vi_attr;                    // start highlighting
         if (area_highlighting) {
           area_active = true;
         }
