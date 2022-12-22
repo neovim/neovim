@@ -520,7 +520,9 @@ func Test_geometry()
       call writefile([&columns, &lines, getwinposx(), getwinposy(), string(getwinpos())], "Xtest_geometry")
       qall
     [CODE]
-    if RunVim([], after, '-f -g -geometry 31x13+41+43')
+    " Some window managers have a bar at the top that pushes windows down,
+    " need to use at least 130, let's do 150
+    if RunVim([], after, '-f -g -geometry 31x13+41+150')
       let lines = readfile('Xtest_geometry')
       " Depending on the GUI library and the windowing system the final size
       " might be a bit different, allow for some tolerance.  Tuned based on
@@ -528,8 +530,8 @@ func Test_geometry()
       call assert_inrange(31, 35, str2nr(lines[0]))
       call assert_equal('13', lines[1])
       call assert_equal('41', lines[2])
-      call assert_equal('43', lines[3])
-      call assert_equal('[41, 43]', lines[4])
+      call assert_equal('150', lines[3])
+      call assert_equal('[41, 150]', lines[4])
     endif
   endif
 
