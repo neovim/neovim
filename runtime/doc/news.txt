@@ -77,6 +77,9 @@ The following new APIs or features were added.
   Similarly, the `virtual_text` configuration in |vim.diagnostic.config()| now
   has a `suffix` option which does nothing by default.
 
+• |vim.fs.dir()| now has a `opts` argument with a depth field to allow
+  recursively searching a directory tree.
+
 • |vim.secure.read()| reads a file and prompts the user if it should be
   trusted and, if so, returns the file's contents.
 

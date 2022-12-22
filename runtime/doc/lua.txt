@@ -2295,13 +2295,18 @@ basename({file})                                           *vim.fs.basename()*
     Return: ~
         (string) Basename of {file}
 
-dir({path})                                                     *vim.fs.dir()*
+dir({path}, {opts})                                             *vim.fs.dir()*
     Return an iterator over the files and directories located in {path}
 
     Parameters: ~
       • {path}  (string) An absolute or relative path to the directory to
                 iterate over. The path is first normalized
                 |vim.fs.normalize()|.
+      • {opts}  table|nil Optional keyword arguments:
+                • depth: integer|nil How deep the traverse (default 1)
+                • skip: (fun(dir_name: string): boolean)|nil Predicate to
+                  control traversal. Return false to stop searching the
+                  current directory. Only useful when depth > 1
 
     Return: ~
         Iterator over files and directories in {path}. Each iteration yields

@@ -141,6 +141,74 @@ describe('vim.fs', function()
         return false
       ]], nvim_dir, nvim_prog_basename))
     end)
+
+    it('works with opts.depth and opts.skip', function()
+      helpers.funcs.system 'mkdir -p testd/a/b/c'
+      helpers.funcs.system('touch '..table.concat({
+        'testd/a1',
+        'testd/b1',
+        'testd/c1',
+        'testd/a/a2',
+        'testd/a/b2',
+        'testd/a/c2',
+        'testd/a/b/a3',
+        'testd/a/b/b3',
+        'testd/a/b/c3',
+        'testd/a/b/c/a4',
+        'testd/a/b/c/b4',
+        'testd/a/b/c/c4',
+      }, ' '))
+
+      local function run(dir, depth, skip)
+         local r = exec_lua([[
+          local dir, depth, skip = ...
+          local r = {}
+          local skip_f
+          if skip then
+            skip_f = function(n)
+              if vim.tbl_contains(skip or {}, n) then
+                return false
+              end
+            end
+          end
+          for name, type_ in vim.fs.dir(dir, { depth = depth, skip = skip_f }) do
+            r[name] = type_
+          end
+          return r
+        ]], dir, depth, skip)
+        return r
+      end
+
+      local exp = {}
+
+      exp['a1'] = 'file'
+      exp['b1'] = 'file'
+      exp['c1'] = 'file'
+      exp['a'] = 'directory'
+
+      eq(exp, run('testd', 1))
+
+      exp['a/a2'] = 'file'
+      exp['a/b2'] = 'file'
+      exp['a/c2'] = 'file'
+      exp['a/b'] = 'directory'
+
+      eq(exp, run('testd', 2))
+
+      exp['a/b/a3'] = 'file'
+      exp['a/b/b3'] = 'file'
+      exp['a/b/c3'] = 'file'
+      exp['a/b/c'] = 'directory'
+
+      eq(exp, run('testd', 3))
+      eq(exp, run('testd', 999, {'a/b/c'}))
+
+      exp['a/b/c/a4'] = 'file'
+      exp['a/b/c/b4'] = 'file'
+      exp['a/b/c/c4'] = 'file'
+
+      eq(exp, run('testd', 999))
+    end)
   end)
 
   describe('find()', function()
