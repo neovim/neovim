@@ -1,4 +1,5 @@
 local helpers = require('test.functional.helpers')(after_each)
+local lfs = require('lfs')
 
 local clear = helpers.clear
 local exec_lua = helpers.exec_lua
@@ -130,6 +131,17 @@ describe('vim.fs', function()
   end)
 
   describe('dir()', function()
+    before_each(function()
+      lfs.mkdir('testd')
+      lfs.mkdir('testd/a')
+      lfs.mkdir('testd/a/b')
+      lfs.mkdir('testd/a/b/c')
+    end)
+
+    after_each(function()
+      rmdir('testd')
+    end)
+
     it('works', function()
       eq(true, exec_lua([[
         local dir, nvim = ...
@@ -143,24 +155,18 @@ describe('vim.fs', function()
     end)
 
     it('works with opts.depth and opts.skip', function()
-      if is_os('win') then
-        pending()
-      end
-      helpers.funcs.system 'mkdir -p testd/a/b/c'
-      helpers.funcs.system('touch '..table.concat({
-        'testd/a1',
-        'testd/b1',
-        'testd/c1',
-        'testd/a/a2',
-        'testd/a/b2',
-        'testd/a/c2',
-        'testd/a/b/a3',
-        'testd/a/b/b3',
-        'testd/a/b/c3',
-        'testd/a/b/c/a4',
-        'testd/a/b/c/b4',
-        'testd/a/b/c/c4',
-      }, ' '))
+      io.open('testd/a1', 'w'):close()
+      io.open('testd/b1', 'w'):close()
+      io.open('testd/c1', 'w'):close()
+      io.open('testd/a/a2', 'w'):close()
+      io.open('testd/a/b2', 'w'):close()
+      io.open('testd/a/c2', 'w'):close()
+      io.open('testd/a/b/a3', 'w'):close()
+      io.open('testd/a/b/b3', 'w'):close()
+      io.open('testd/a/b/c3', 'w'):close()
+      io.open('testd/a/b/c/a4', 'w'):close()
+      io.open('testd/a/b/c/b4', 'w'):close()
+      io.open('testd/a/b/c/c4', 'w'):close()
 
       local function run(dir, depth, skip)
          local r = exec_lua([[
