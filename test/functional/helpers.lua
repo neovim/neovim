@@ -950,11 +950,9 @@ function module.os_kill(pid)
     or  'kill -9 '..pid..' > /dev/null'))
 end
 
--- Create folder with non existing parents
+-- Create directories with non exsisting intermidiate directories
 function module.mkdir_p(path)
-  return os.execute((is_os('win')
-    and 'mkdir '..path
-    or 'mkdir -p '..path))
+  return module.meths.call_function('mkdir', {path, 'p'})
 end
 
 module = global_helpers.tbl_extend('error', module, global_helpers)
