@@ -143,6 +143,9 @@ describe('vim.fs', function()
     end)
 
     it('works with opts.depth and opts.skip', function()
+      if is_os('win') then
+        pending()
+      end
       helpers.funcs.system 'mkdir -p testd/a/b/c'
       helpers.funcs.system('touch '..table.concat({
         'testd/a1',
