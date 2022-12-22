@@ -28,9 +28,9 @@ describe('buffer functions', function()
 
   setup(function()
     -- create the files
-    io.open(path1, 'w').close()
-    io.open(path2, 'w').close()
-    io.open(path3, 'w').close()
+    io.open(path1, 'w'):close()
+    io.open(path2, 'w'):close()
+    io.open(path3, 'w'):close()
   end)
 
   teardown(function()

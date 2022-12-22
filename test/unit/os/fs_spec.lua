@@ -72,9 +72,9 @@ describe('fs.c', function()
   before_each(function()
     lfs.mkdir('unit-test-directory');
 
-    io.open('unit-test-directory/test.file', 'w').close()
+    io.open('unit-test-directory/test.file', 'w'):close()
 
-    io.open('unit-test-directory/test_2.file', 'w').close()
+    io.open('unit-test-directory/test_2.file', 'w'):close()
     lfs.link('test.file', 'unit-test-directory/test_link.file', true)
 
     lfs.link('non_existing_file.file', 'unit-test-directory/test_broken_link.file', true)
@@ -472,7 +472,7 @@ describe('fs.c', function()
 
     describe('os_remove', function()
       before_each(function()
-        io.open('unit-test-directory/test_remove.file', 'w').close()
+        io.open('unit-test-directory/test_remove.file', 'w'):close()
       end)
 
       after_each(function()
