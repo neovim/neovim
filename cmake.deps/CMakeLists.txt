@@ -153,8 +153,8 @@ set(MSGPACK_URL https://github.com/msgpack/msgpack-c/releases/download/c-4.0.0/m
 set(MSGPACK_SHA256 420fe35e7572f2a168d17e660ef981a589c9cbe77faa25eb34a520e1fcc032c8)
 
 # https://github.com/LuaJIT/LuaJIT/tree/v2.1
-set(LUAJIT_URL https://github.com/LuaJIT/LuaJIT/archive/564147f518af5a5d8985d9e09fc3a768231f4e75.tar.gz)
-set(LUAJIT_SHA256 67019962f0c8102f90f0ba540be2f3462ed3ca8d22672b32a214ffa63addd40b)
+set(LUAJIT_URL https://github.com/LuaJIT/LuaJIT/archive/a04480e311f93d3ceb2f92549cad3fffa38250ef.tar.gz)
+set(LUAJIT_SHA256 297e9c06d934753f9553fa7d1c1e43381e20094ed3289e0e145dd5f3c203a27e)
 
 set(LUA_URL https://www.lua.org/ftp/lua-5.1.5.tar.gz)
 set(LUA_SHA256 2640fc56a795f29d28ef15e13c34a47e223960b0240e8cb0a82d9b0738695333)
