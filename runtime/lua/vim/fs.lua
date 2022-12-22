@@ -147,6 +147,14 @@ function M.find(names, opts)
     end
   end
 
+  local function join(dir, name)
+    if dir:match('/$') then
+      return '/' .. name
+    else
+      return dir .. '/' .. name
+    end
+  end
+
   if opts.upward then
     local test
 
@@ -155,7 +163,7 @@ function M.find(names, opts)
         local t = {}
         for name, type in M.dir(p) do
           if names(name) and (not opts.type or opts.type == type) then
-            table.insert(t, p .. '/' .. name)
+            table.insert(t, join(p, name))
           end
         end
         return t
@@ -164,7 +172,7 @@ function M.find(names, opts)
       test = function(p)
         local t = {}
         for _, name in ipairs(names) do
-          local f = p .. '/' .. name
+          local f = join(p, name)
           local stat = vim.loop.fs_stat(f)
           if stat and (not opts.type or opts.type == stat.type) then
             t[#t + 1] = f
@@ -201,7 +209,7 @@ function M.find(names, opts)
       end
 
       for other, type_ in M.dir(dir) do
-        local f = dir .. '/' .. other
+        local f = join(dir, other)
         if type(names) == 'function' then
           if names(other) and (not opts.type or opts.type == type_) then
             if add(f) then
