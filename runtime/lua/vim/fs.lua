@@ -147,6 +147,7 @@ function M.find(names, opts)
     end
   end
 
+  ---@private
   local function join(dir, name)
     if dir:match('/$') then
       return '/' .. name
