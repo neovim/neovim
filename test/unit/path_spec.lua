@@ -82,8 +82,8 @@ describe('path.c', function()
     local f2 = 'f2.o'
     before_each(function()
       -- create the three files that will be used in this spec
-      io.open(f1, 'w').close()
-      io.open(f2, 'w').close()
+      io.open(f1, 'w'):close()
+      io.open(f2, 'w'):close()
     end)
 
     after_each(function()
@@ -355,7 +355,7 @@ end)
 describe('path.c', function()
   setup(function()
     lfs.mkdir('unit-test-directory');
-    io.open('unit-test-directory/test.file', 'w').close()
+    io.open('unit-test-directory/test.file', 'w'):close()
 
     -- Since the tests are executed, they are called by an executable. We use
     -- that executable for several asserts.
