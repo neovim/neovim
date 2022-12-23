@@ -328,6 +328,16 @@ static void channel_destroy_early(Channel *chan)
 static void close_cb(Stream *stream, void *data)
 {
   channel_decref(data);
+
+  typval_T argv[1];
+
+  argv[0].v_type = VAR_NUMBER;
+  argv[0].v_lock = VAR_UNLOCKED;
+  argv[0].vval.v_number = (varnumber_T)(((Channel *)data)->id);
+
+  typval_T rettv = TV_INITIAL_VALUE;
+  callback_call(&stream->on_close, 1, argv, &rettv);
+  tv_clear(&rettv);
 }
 
 /// Starts a job and returns the associated channel
@@ -455,7 +465,8 @@ Channel *channel_job_start(char **argv, const char *exepath, CallbackReader on_s
   return chan;
 }
 
-uint64_t channel_connect(bool tcp, const char *address, bool rpc, CallbackReader on_output,
+uint64_t channel_connect(bool tcp, const char *address, bool rpc,
+                         CallbackReader on_output, Callback on_close,
                          int timeout, const char **error)
 {
   Channel *channel;
@@ -480,6 +491,7 @@ uint64_t channel_connect(bool tcp, const char *address, bool rpc, CallbackReader
 
   channel->stream.socket.s.internal_close_cb = close_cb;
   channel->stream.socket.s.internal_data = channel;
+  channel->on_close = on_close;
   wstream_init(&channel->stream.socket.s, 0);
   rstream_init(&channel->stream.socket);
 

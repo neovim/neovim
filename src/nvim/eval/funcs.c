@@ -6787,6 +6787,7 @@ static void f_sockconnect(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 
   bool rpc = false;
   CallbackReader on_data = CALLBACK_READER_INIT;
+  Callback on_close = CALLBACK_NONE;
   if (argvars[2].v_type == VAR_DICT) {
     dict_T *opts = argvars[2].vval.v_dict;
     rpc = tv_dict_get_number(opts, "rpc") != 0;
@@ -6798,10 +6799,14 @@ static void f_sockconnect(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     if (on_data.buffered && on_data.cb.type == kCallbackNone) {
       on_data.self = opts;
     }
+
+    if (!tv_dict_get_callback(opts, S_LEN("on_close"), &on_close)) {
+      return;
+    }
   }
 
   const char *error = NULL;
-  uint64_t id = channel_connect(tcp, address, rpc, on_data, 50, &error);
+  uint64_t id = channel_connect(tcp, address, rpc, on_data, on_close, 50, &error);
 
   if (error) {
     semsg(_("connection failed: %s"), error);
