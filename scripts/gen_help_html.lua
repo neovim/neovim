@@ -475,7 +475,7 @@ local function visit_node(root, level, lang_tree, headings, opt, stats)
     end
     return string.format('<div class="help-para">\n%s\n</div>\n', text)
   elseif node_name == 'line' then
-    if parent ~= 'codeblock' and (is_blank(text) or is_noise(text, stats.noise_lines)) then
+    if parent ~= 'code' and (is_blank(text) or is_noise(text, stats.noise_lines)) then
       return ''  -- Discard common "noise" lines.
     end
     -- XXX: Avoid newlines (too much whitespace) after block elements in old (preformatted) layout.
@@ -513,7 +513,12 @@ local function visit_node(root, level, lang_tree, headings, opt, stats)
     return ('%s<code>%s</code>'):format(ws(), trimmed)
   elseif node_name == 'argument' then
     return ('%s<code>{%s}</code>'):format(ws(), text)
+  -- TODO: use language for proper syntax highlighted code blocks
   elseif node_name == 'codeblock' then
+    return text
+  elseif node_name == 'language' then
+    return ''
+  elseif node_name == 'code' then
     if is_blank(text) then
       return ''
     end
