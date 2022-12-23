@@ -3659,10 +3659,10 @@ static int eval_index(char **arg, typval_T *rettv, int evaluate, int verbose)
 int get_option_tv(const char **const arg, typval_T *const rettv, const bool evaluate)
   FUNC_ATTR_NONNULL_ARG(1)
 {
-  int opt_flags;
+  int scope;
 
   // Isolate the option name and find its value.
-  char *option_end = (char *)find_option_end(arg, &opt_flags);
+  char *option_end = (char *)find_option_end(arg, &scope);
   if (option_end == NULL) {
     if (rettv != NULL) {
       semsg(_("E112: Option name missing: %s"), *arg);
@@ -3682,7 +3682,7 @@ int get_option_tv(const char **const arg, typval_T *const rettv, const bool eval
   char c = *option_end;
   *option_end = NUL;
   getoption_T opt_type = get_option_value(*arg, &numval,
-                                          rettv == NULL ? NULL : &stringval, opt_flags);
+                                          rettv == NULL ? NULL : &stringval, scope);
 
   if (opt_type == gov_unknown) {
     if (rettv != NULL) {
