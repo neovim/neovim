@@ -1618,12 +1618,12 @@ static int check_writable(const char *fname)
 }
 #endif
 
-/// write current buffer to file 'eap->arg'
-/// if 'eap->append' is true, append to the file
+/// Write current buffer to file "eap->arg".
+/// If "eap->append" is true, append to the file.
 ///
-/// if *eap->arg == NUL write to current file
+/// If "*eap->arg == NUL" write to current file.
 ///
-/// @return  FAIL for failure, OK otherwise
+/// @return  FAIL for failure, OK otherwise.
 int do_write(exarg_T *eap)
 {
   int other;
@@ -3443,8 +3443,8 @@ static int do_sub(exarg_T *eap, proftime_T timeout, long cmdpreview_ns, handle_T
     return 0;
   }
 
-  if (search_regcomp((char_u *)pat, RE_SUBST, which_pat, (cmdpreview ? 0 : SEARCH_HIS),
-                     &regmatch) == FAIL) {
+  if (search_regcomp((char_u *)pat, NULL, RE_SUBST, which_pat,
+                     (cmdpreview ? 0 : SEARCH_HIS), &regmatch) == FAIL) {
     if (subflags.do_error) {
       emsg(_(e_invcmd));
     }
@@ -4398,7 +4398,9 @@ void ex_global(exarg_T *eap)
     }
   }
 
-  if (search_regcomp((char_u *)pat, RE_BOTH, which_pat, SEARCH_HIS, &regmatch) == FAIL) {
+  char_u *used_pat;
+  if (search_regcomp((char_u *)pat, &used_pat, RE_BOTH, which_pat,
+                     SEARCH_HIS, &regmatch) == FAIL) {
     emsg(_(e_invcmd));
     return;
   }
@@ -4429,9 +4431,9 @@ void ex_global(exarg_T *eap)
       msg(_(e_interr));
     } else if (ndone == 0) {
       if (type == 'v') {
-        smsg(_("Pattern found in every line: %s"), pat);
+        smsg(_("Pattern found in every line: %s"), used_pat);
       } else {
-        smsg(_("Pattern not found: %s"), pat);
+        smsg(_("Pattern not found: %s"), used_pat);
       }
     } else {
       global_exe(cmd);

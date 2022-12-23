@@ -132,7 +132,8 @@ typedef struct SearchedFile {
 /// @param regmatch  return: pattern and ignore-case flag
 ///
 /// @return          FAIL if failed, OK otherwise.
-int search_regcomp(char_u *pat, int pat_save, int pat_use, int options, regmmatch_T *regmatch)
+int search_regcomp(char_u *pat, char_u **used_pat, int pat_save, int pat_use, int options,
+                   regmmatch_T *regmatch)
 {
   int magic;
   int i;
@@ -161,6 +162,10 @@ int search_regcomp(char_u *pat, int pat_save, int pat_use, int options, regmmatc
     no_smartcase = spats[i].no_scs;
   } else if (options & SEARCH_HIS) {      // put new pattern in history
     add_to_history(HIST_SEARCH, (char *)pat, true, NUL);
+  }
+
+  if (used_pat) {
+    *used_pat = pat;
   }
 
   if (mr_pattern_alloced) {
@@ -509,7 +514,7 @@ void last_pat_prog(regmmatch_T *regmatch)
     return;
   }
   emsg_off++;           // So it doesn't beep if bad expr
-  (void)search_regcomp((char_u *)"", 0, last_idx, SEARCH_KEEP, regmatch);
+  (void)search_regcomp((char_u *)"", NULL, 0, last_idx, SEARCH_KEEP, regmatch);
   emsg_off--;
 }
 
@@ -567,7 +572,7 @@ int searchit(win_T *win, buf_T *buf, pos_T *pos, pos_T *end_pos, Direction dir, 
     timed_out = &extra_arg->sa_timed_out;
   }
 
-  if (search_regcomp(pat, RE_SEARCH, pat_use,
+  if (search_regcomp(pat, NULL, RE_SEARCH, pat_use,
                      (options & (SEARCH_HIS + SEARCH_KEEP)), &regmatch) == FAIL) {
     if ((options & SEARCH_MSG) && !rc_did_emsg) {
       semsg(_("E383: Invalid search string: %s"), mr_pattern);
@@ -2523,7 +2528,7 @@ static int is_zero_width(char_u *pattern, int move, pos_T *cur, Direction direct
     pattern = (char_u *)spats[last_idx].pat;
   }
 
-  if (search_regcomp(pattern, RE_SEARCH, RE_SEARCH,
+  if (search_regcomp(pattern, NULL, RE_SEARCH, RE_SEARCH,
                      SEARCH_KEEP, &regmatch) == FAIL) {
     return -1;
   }

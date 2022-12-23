@@ -72,6 +72,18 @@ func Test_global_print()
   close!
 endfunc
 
+func Test_global_empty_pattern()
+  " populate history
+  silent g/hello/
+
+  redir @a
+  g//
+  redir END
+
+  call assert_match('Pattern not found: hello', @a)
+  "                                     ^~~~~ this was previously empty
+endfunc
+
 " Test for global command with newline character
 func Test_global_newline()
   new

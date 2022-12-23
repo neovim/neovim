@@ -37,7 +37,7 @@ end)
 describe('search_regcomp', function()
   local search_regcomp = function(pat, pat_save, pat_use, options )
     local regmatch = ffi.new("regmmatch_T")
-    local fail = search.search_regcomp(to_cstr(pat), pat_save, pat_use, options, regmatch)
+    local fail = search.search_regcomp(to_cstr(pat), nil, pat_save, pat_use, options, regmatch)
     return fail, regmatch
   end
 
