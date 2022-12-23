@@ -27,6 +27,9 @@ describe('channels', function()
     function! OnEvent(id, data, event) dict
       call rpcnotify(1, a:event, a:id, a:data)
     endfunction
+    function! OnClose(id) dict
+      let g:close = a:id
+    endfunction
   ]]
   before_each(function()
     clear()
@@ -42,7 +45,7 @@ describe('channels', function()
     source(init)
 
     api.nvim_set_var('address', address)
-    command("let g:id = sockconnect('pipe', address, {'on_data':'OnEvent'})")
+    command("let g:id = sockconnect('pipe', address, {'on_data':'OnEvent', 'on_close':'OnClose'})")
     local id = eval('g:id')
     ok(id > 0)
 
@@ -60,6 +63,9 @@ describe('channels', function()
     eq({ 'notification', 'data', { id, res } }, next_msg())
     command("call chansend(g:id, msgpackdump([[2,'nvim_command',['quit']]]))")
     eq({ 'notification', 'data', { id, { '' } } }, next_msg())
+
+    command("call chanclose(g:id)")
+    eq(id, eval("g:close"))
   end)
 
   it('dont crash due to garbage in rpc #23781', function()
