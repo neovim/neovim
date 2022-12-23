@@ -204,6 +204,7 @@ let s:filename_checks = {
     \ 'fpcmake': ['file.fpc'],
     \ 'framescript': ['file.fsl'],
     \ 'freebasic': ['file.fb'],
+    \ 'fsh': ['file.fsh'],
     \ 'fsharp': ['file.fs', 'file.fsi', 'file.fsx'],
     \ 'fstab': ['fstab', 'mtab'],
     \ 'fusion': ['file.fusion'],
