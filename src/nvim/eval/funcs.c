@@ -1721,14 +1721,9 @@ static void f_exists(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
       xfree(exp);
     }
   } else if (*p == '&' || *p == '+') {  // Option.
-    bool working = (*p == '+');  // whether option needs to be working
-    int opt_flags;
-
-    if (find_option_end(&p, &opt_flags) != NULL) {
-      int opt_idx = findoption(p);
-      n = (opt_idx >= 0 && (!working || get_varp_scope(get_option(opt_idx), opt_flags) != NULL));
-    } else {
-      n = false;
+    n = (get_option_tv(&p, NULL, true) == OK);
+    if (*skipwhite(p) != NUL) {
+      n = false;  // Trailing garbage.
     }
   } else if (*p == '*') {  // Internal or user defined function.
     n = function_exists(p + 1, false);
