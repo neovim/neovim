@@ -281,7 +281,6 @@ int ml_open(buf_T *buf)
   buf->b_ml.ml_mfp = mfp;
   buf->b_ml.ml_flags = ML_EMPTY;
   buf->b_ml.ml_line_count = 1;
-  curwin->w_nrwidth_line_count = 0;
 
   // fill block0 struct and write page 0
   hp = mf_new(mfp, false, 1);
