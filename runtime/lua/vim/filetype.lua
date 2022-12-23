@@ -419,6 +419,7 @@ local extension = {
   fs = function(path, bufnr)
     return require('vim.filetype.detect').fs(bufnr)
   end,
+  fsh = 'fsh',
   fsi = 'fsharp',
   fsx = 'fsharp',
   fusion = 'fusion',
