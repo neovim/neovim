@@ -6,6 +6,7 @@ local command, exec = helpers.command, helpers.exec
 local eval = helpers.eval
 local feed_command, eq = helpers.feed_command, helpers.eq
 local curbufmeths = helpers.curbufmeths
+local funcs = helpers.funcs
 local meths = helpers.meths
 
 describe('colorscheme compatibility', function()
@@ -13,7 +14,9 @@ describe('colorscheme compatibility', function()
     clear()
   end)
 
-  it('t_Co is set to 256 by default', function()
+  it('&t_Co exists and is set to 256 by default', function()
+    eq(1, funcs.exists('&t_Co'))
+    eq(1, funcs.exists('+t_Co'))
     eq('256', eval('&t_Co'))
   end)
 end)
