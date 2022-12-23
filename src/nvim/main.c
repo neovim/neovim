@@ -928,8 +928,7 @@ static uint64_t server_connect(char *server_addr, const char **errmsg)
   const char *error = NULL;
   bool is_tcp = strrchr(server_addr, ':') ? true : false;
   // connected to channel
-  uint64_t chan = channel_connect(
-          is_tcp, server_addr, true, on_data, on_close, 50, &error);
+  uint64_t chan = channel_connect(is_tcp, server_addr, true, on_data, on_close, 50, &error);
   if (error) {
     *errmsg = error;
     return 0;
