@@ -230,6 +230,10 @@ describe('vim.fs', function()
         local dir, nvim = ...
         return vim.fs.find(nvim, { path = dir, type = 'file' })
       ]], test_build_dir, nvim_prog_basename))
+      eq({test_build_dir}, exec_lua([[
+        local dir, name = ...
+        return vim.fs.find(name, { path = dir .. '/', upward = true, type = 'directory' })
+      ]], nvim_dir))
     end)
 
     it('accepts predicate as names', function()

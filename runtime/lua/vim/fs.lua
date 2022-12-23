@@ -74,7 +74,11 @@ end
 
 ---@private
 local function join_paths(...)
-  return table.concat({ ... }, '/')
+  local path_elements = vim.tbl_map(function(element)
+    return element:gsub('/$', '')
+  end, { ... })
+
+  return table.concat(path_elements, '/')
 end
 
 --- Return an iterator over the files and directories located in {path}
