@@ -96,6 +96,8 @@ The following new APIs or features were added.
 
   See https://github.com/neovim/neovim/pull/14537.
 
+• |sockconnect()| supports "on_close" callback.
+
 ==============================================================================
 CHANGED FEATURES                                                 *news-changes*
 
