@@ -3674,6 +3674,7 @@ static int eval_index(char **arg, typval_T *rettv, int evaluate, int verbose)
 int get_option_tv(const char **const arg, typval_T *const rettv, const bool evaluate)
   FUNC_ATTR_NONNULL_ARG(1)
 {
+  const bool working = (**arg == '+');  // has("+option")
   int scope;
 
   // Isolate the option name and find its value.
@@ -3718,6 +3719,10 @@ int get_option_tv(const char **const arg, typval_T *const rettv, const bool eval
       rettv->v_type = VAR_STRING;
       rettv->vval.v_string = stringval;
     }
+  } else if (working && (opt_type == gov_hidden_bool
+                         || opt_type == gov_hidden_number
+                         || opt_type == gov_hidden_string)) {
+    ret = FAIL;
   }
 
   *option_end = c;                  // put back for error messages
