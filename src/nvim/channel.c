@@ -300,8 +300,6 @@ static void channel_destroy_early(Channel *chan)
 
 static void close_cb(Stream *stream, void *data)
 {
-  channel_decref(data);
-
   typval_T argv[1];
 
   argv[0].v_type = VAR_NUMBER;
@@ -311,6 +309,8 @@ static void close_cb(Stream *stream, void *data)
   typval_T rettv = TV_INITIAL_VALUE;
   callback_call(&stream->on_close, 1, argv, &rettv);
   tv_clear(&rettv);
+
+  channel_decref(data);
 }
 
 /// Starts a job and returns the associated channel
@@ -441,9 +441,8 @@ Channel *channel_job_start(char **argv, CallbackReader on_stdout, CallbackReader
   return chan;
 }
 
-uint64_t channel_connect(bool tcp, const char *address, bool rpc,
-                         CallbackReader on_output, Callback on_close,
-                         int timeout, const char **error)
+uint64_t channel_connect(bool tcp, const char *address, bool rpc, CallbackReader on_output,
+                         Callback on_close, int timeout, const char **error)
 {
   Channel *channel;
 
