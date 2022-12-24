@@ -3400,12 +3400,25 @@ A jump table for the options with a short description can be found at |Q_op|.
 	typing a search command. See also: 'hlsearch'.
 	If you don't want to turn 'hlsearch' on, but want to highlight all
 	matches while searching, you can turn on and off 'hlsearch' with
-	autocmd.  Example: >
+	autocmd.  Example vimscript: >
 		augroup vimrc-incsearch-highlight
 		  autocmd!
 		  autocmd CmdlineEnter /,\? :set hlsearch
 		  autocmd CmdlineLeave /,\? :set nohlsearch
 		augroup END
+<
+        Example lua: >
+                vim.api.nvim_create_augroup('NeovimrcIncSearchHighlight', { clear = true })
+                vim.api.nvim_create_autocmd({ 'CmdlineEnter' }, {
+                  group = NeovimrcIncSearchHighlight,
+                  pattern = '/,\\?',
+                  command = 'set hlsearch',
+                })
+                vim.api.nvim_create_autocmd({ 'CmdlineLeave' }, {
+                  group = NeovimrcIncSearchHighlight,
+                  pattern = '/,\\?',
+                  command = 'set nohlsearch',
+                })
 <
 	CTRL-L can be used to add one character from after the current match
 	to the command line.  If 'ignorecase' and 'smartcase' are set and the
