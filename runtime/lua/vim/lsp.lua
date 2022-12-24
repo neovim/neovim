@@ -1789,6 +1789,11 @@ function lsp.get_active_clients(filter)
 
   local t = filter.bufnr and (all_buffer_active_clients[resolve_bufnr(filter.bufnr)] or {})
     or active_clients
+
+  if #active_clients == 0 then
+    return clients
+  end
+
   for client_id in pairs(t) do
     local client = active_clients[client_id]
     if
