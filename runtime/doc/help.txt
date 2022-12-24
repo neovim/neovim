@@ -97,6 +97,7 @@ General subjects ~
 |nvim.txt|	Transitioning from Vim
 |help.txt|	overview and quick reference (this file)
 |helphelp.txt|	about using the help files
+|lua-guide|	Nvim Lua guide
 |index.txt|	alphabetical index of all commands
 |tips.txt|	various tips on using Vim
 |message.txt|	(error) messages and explanations
