@@ -429,32 +429,30 @@ local function get_diagnostics(bufnr, opts, clamp)
     end
   end
 
+  local add_iterator = function(buf_nr, diag_tbl)
+    for _, diagnostic in pairs(diag_tbl) do
+      add(buf_nr, diagnostic)
+    end
+  end
+
   if namespace == nil and bufnr == nil then
     for b, t in pairs(diagnostic_cache) do
       for _, v in pairs(t) do
-        for _, diagnostic in pairs(v) do
-          add(b, diagnostic)
-        end
+        add_iterator(b, v)
       end
     end
   elseif namespace == nil then
     bufnr = get_bufnr(bufnr)
     for iter_namespace in pairs(diagnostic_cache[bufnr]) do
-      for _, diagnostic in pairs(diagnostic_cache[bufnr][iter_namespace]) do
-        add(bufnr, diagnostic)
-      end
+      add_iterator(bufnr, diagnostic_cache[bufnr][iter_namespace])
     end
   elseif bufnr == nil then
     for b, t in pairs(diagnostic_cache) do
-      for _, diagnostic in pairs(t[namespace] or {}) do
-        add(b, diagnostic)
-      end
+      add_iterator(b, t[namespace] or {})
     end
   else
     bufnr = get_bufnr(bufnr)
-    for _, diagnostic in pairs(diagnostic_cache[bufnr][namespace] or {}) do
-      add(bufnr, diagnostic)
-    end
+    add_iterator(bufnr, diagnostic_cache[bufnr][namespace] or {})
   end
 
   if opts.severity then
