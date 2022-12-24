@@ -103,11 +103,12 @@ static int lastc_bytelen = 1;             // >1 for multi-byte char
 
 // copy of spats[], for keeping the search patterns while executing autocmds
 static struct spat saved_spats[2];
+static char *saved_mr_pattern = NULL;
 static int saved_spats_last_idx = 0;
 static bool saved_spats_no_hlsearch = false;
 
-static char_u *mr_pattern = NULL;    // pattern used by search_regcomp()
-static bool mr_pattern_alloced = false;    // mr_pattern was allocated
+// allocated copy of pattern used by search_regcomp()
+static char *mr_pattern = NULL;
 
 // Type used by find_pattern_in_path() to remember which included files have
 // been searched already.
@@ -168,16 +169,11 @@ int search_regcomp(char_u *pat, char_u **used_pat, int pat_save, int pat_use, in
     *used_pat = pat;
   }
 
-  if (mr_pattern_alloced) {
-    xfree(mr_pattern);
-    mr_pattern_alloced = false;
-  }
-
+  xfree(mr_pattern);
   if (curwin->w_p_rl && *curwin->w_p_rlc == 's') {
-    mr_pattern = (char_u *)reverse_text((char *)pat);
-    mr_pattern_alloced = true;
+    mr_pattern = reverse_text((char *)pat);
   } else {
-    mr_pattern = pat;
+    mr_pattern = xstrdup((char *)pat);
   }
 
   // Save the currently used pattern in the appropriate place,
@@ -202,8 +198,8 @@ int search_regcomp(char_u *pat, char_u **used_pat, int pat_save, int pat_use, in
   return OK;
 }
 
-// Get search pattern used by search_regcomp().
-char_u *get_search_pat(void)
+/// Get search pattern used by search_regcomp().
+char *get_search_pat(void)
 {
   return mr_pattern;
 }
@@ -241,6 +237,11 @@ void save_search_patterns(void)
     if (spats[1].pat != NULL) {
       saved_spats[1].pat = xstrdup(spats[1].pat);
     }
+    if (mr_pattern == NULL) {
+      saved_mr_pattern = NULL;
+    } else {
+      saved_mr_pattern = xstrdup(mr_pattern);
+    }
     saved_spats_last_idx = last_idx;
     saved_spats_no_hlsearch = no_hlsearch;
   }
@@ -254,6 +255,8 @@ void restore_search_patterns(void)
     set_vv_searchforward();
     free_spat(&spats[1]);
     spats[1] = saved_spats[1];
+    xfree(mr_pattern);
+    mr_pattern = saved_mr_pattern;
     last_idx = saved_spats_last_idx;
     set_no_hlsearch(saved_spats_no_hlsearch);
   }
@@ -273,11 +276,7 @@ void free_search_patterns(void)
 
   CLEAR_FIELD(spats);
 
-  if (mr_pattern_alloced) {
-    xfree(mr_pattern);
-    mr_pattern_alloced = false;
-    mr_pattern = NULL;
-  }
+  XFREE_CLEAR(mr_pattern);
 }
 
 #endif
@@ -1413,6 +1412,7 @@ end_do_search:
   if ((options & SEARCH_KEEP) || (cmdmod.cmod_flags & CMOD_KEEPPATTERNS)) {
     spats[0].off = old_off;
   }
+  xfree(strcopy);
   xfree(msgbuf);
 
   return retval;
