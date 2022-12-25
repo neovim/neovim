@@ -233,6 +233,8 @@ endfunc
 
 func Test_getcwd_actual_dir()
   CheckFunction test_autochdir
+  CheckOption autochdir
+
   let startdir = getcwd()
   call mkdir('Xactual')
   call test_autochdir()
