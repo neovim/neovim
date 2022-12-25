@@ -50,6 +50,10 @@ NEW FEATURES                                                    *news-features*
 
 The following new APIs or features were added.
 
+• |nvim_open_win()| now accepts a relative `mouse` option to open a floating win
+  relative to the mouse. Note that the mouse doesn't update frequently without
+  setting `vim.o.mousemoveevent = true`
+
 • EditorConfig support is now builtin. This is enabled by default and happens
   automatically. To disable it, users should add >lua
 
