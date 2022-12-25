@@ -785,7 +785,12 @@ function M.get(bufnr, opts)
 
   if #diagnostic_disabled > 0 then
     if bufnr then
-      if opts and opts.namespace and diagnostic_disabled[bufnr] and diagnostic_disabled[bufnr][opts.namespace] then
+      if
+        opts
+        and opts.namespace
+        and diagnostic_disabled[bufnr]
+        and diagnostic_disabled[bufnr][opts.namespace]
+      then
         return {}
       elseif diagnostic_disabled[bufnr] then
         return {}
