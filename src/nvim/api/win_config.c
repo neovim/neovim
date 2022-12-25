@@ -74,6 +74,7 @@
 ///      - "editor" The global editor grid
 ///      - "win"    Window given by the `win` field, or current window.
 ///      - "cursor" Cursor position in current window.
+///      - "mouse"  Mouse position
 ///   - win: |window-ID| for relative="win".
 ///   - anchor: Decides which corner of the float to place at (row,col):
 ///      - "NW" northwest (default)
@@ -348,6 +349,8 @@ static bool parse_float_relative(String relative, FloatRelative *out)
     *out = kFloatRelativeWindow;
   } else if (striequal(str, "cursor")) {
     *out = kFloatRelativeCursor;
+  } else if (striequal(str, "mouse")) {
+    *out = kFloatRelativeMouse;
   } else {
     return false;
   }

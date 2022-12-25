@@ -1015,6 +1015,7 @@ end
 ---        - border (string or table) override `border`
 ---        - focusable (string or table) override `focusable`
 ---        - zindex (string or table) override `zindex`, defaults to 50
+---        - relative ("mouse"|"cursor") defaults to "cursor"
 ---@returns (table) Options
 function M.make_floating_popup_options(width, height, opts)
   validate({
@@ -1029,7 +1030,8 @@ function M.make_floating_popup_options(width, height, opts)
   local anchor = ''
   local row, col
 
-  local lines_above = vim.fn.winline() - 1
+  local lines_above = opts.relative == 'mouse' and vim.fn.getmousepos().line - 1
+    or vim.fn.winline() - 1
   local lines_below = vim.fn.winheight(0) - lines_above
 
   if lines_above < lines_below then
@@ -1042,7 +1044,9 @@ function M.make_floating_popup_options(width, height, opts)
     row = 0
   end
 
-  if vim.fn.wincol() + width + (opts.offset_x or 0) <= api.nvim_get_option('columns') then
+  local wincol = opts.relative == 'mouse' and vim.fn.getmousepos().column or vim.fn.wincol()
+
+  if wincol + width + (opts.offset_x or 0) <= api.nvim_get_option('columns') then
     anchor = anchor .. 'W'
     col = 0
   else
@@ -1062,7 +1066,7 @@ function M.make_floating_popup_options(width, height, opts)
     col = col + (opts.offset_x or 0),
     height = height,
     focusable = opts.focusable,
-    relative = 'cursor',
+    relative = opts.relative == 'mouse' and 'mouse' or 'cursor',
     row = row + (opts.offset_y or 0),
     style = 'minimal',
     width = width,

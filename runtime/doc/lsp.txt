@@ -1612,6 +1612,7 @@ make_floating_popup_options({width}, {height}, {opts})
                   • border (string or table) override `border`
                   • focusable (string or table) override `focusable`
                   • zindex (string or table) override `zindex`, defaults to 50
+                  • relative ("mouse"|"cursor") defaults to "cursor"
 
     Return: ~
         (table) Options
