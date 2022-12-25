@@ -277,7 +277,7 @@ describe('vim.diagnostic', function()
     ]])
 
     -- Clear diagnostics from namespace 1, and make sure we have the right amount of stuff for namespace 2
-    eq({1, 1, 2, 0, 2}, exec_lua [[
+    eq({0, 0, 0, 0, 2}, exec_lua [[
       vim.diagnostic.disable(diagnostic_bufnr, diagnostic_ns)
       return {
         count_diagnostics(diagnostic_bufnr, vim.diagnostic.severity.ERROR, diagnostic_ns),
@@ -468,7 +468,7 @@ describe('vim.diagnostic', function()
       eq(3, result[1])
       eq(0, result[2])
       eq(0, result[3])
-      eq(4, result[4])
+      eq(3, result[4])
     end)
 
     it('works with only a buffer argument', function()
@@ -853,6 +853,27 @@ end)
           make_warning("Warning on Server 1", 1, 1, 2, 3),
         })
 
+        return #vim.diagnostic.get(diagnostic_bufnr)
+      ]])
+    end)
+
+    it('return a empty table after vim.diagnostic.disable', function()
+      eq(0, exec_lua [[
+        vim.diagnostic.set(diagnostic_ns, diagnostic_bufnr, {
+          make_error('Diagnostic #1', 1, 1, 1, 1),
+        })
+        vim.diagnostic.disable(diagnostic_bufnr)
+        return #vim.diagnostic.get(diagnostic_bufnr)
+      ]])
+    end)
+
+    it('return data after vim.diagnostic.enable', function()
+      eq(1, exec_lua [[
+        vim.diagnostic.set(diagnostic_ns, diagnostic_bufnr, {
+          make_error('Diagnostic #1', 1, 1, 1, 1),
+        })
+        vim.diagnostic.disable(diagnostic_bufnr)
+        vim.diagnostic.enable(diagnostic_bufnr)
         return #vim.diagnostic.get(diagnostic_bufnr)
       ]])
     end)
