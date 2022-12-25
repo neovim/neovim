@@ -393,9 +393,6 @@ end
 ---@private
 local function get_diagnostics(bufnr, opts, clamp)
   opts = opts or {}
-  if diagnostic_disabled[bufnr] then
-    return {}
-  end
 
   local namespace = opts.namespace
   local diagnostics = {}
