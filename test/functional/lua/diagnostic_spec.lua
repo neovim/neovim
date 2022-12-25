@@ -289,7 +289,7 @@ describe('vim.diagnostic', function()
     ]])
 
     -- Show diagnostics from namespace 1 again
-    eq(all_highlights, exec_lua([[
+    eq({0, 0, 0, 0, 2}, exec_lua([[
       vim.diagnostic.enable(diagnostic_bufnr, diagnostic_ns)
       return {
         count_diagnostics(diagnostic_bufnr, vim.diagnostic.severity.ERROR, diagnostic_ns),
@@ -322,7 +322,7 @@ describe('vim.diagnostic', function()
       }
     ]])
 
-    eq({4, 0}, exec_lua [[
+    eq({0, 0}, exec_lua [[
       vim.diagnostic.enable(diagnostic_bufnr, diagnostic_ns)
       vim.diagnostic.disable(diagnostic_bufnr, other_ns)
 
@@ -468,7 +468,7 @@ describe('vim.diagnostic', function()
       eq(3, result[1])
       eq(0, result[2])
       eq(0, result[3])
-      eq(3, result[4])
+      eq(4, result[4])
     end)
 
     it('works with only a buffer argument', function()
@@ -633,8 +633,8 @@ describe('vim.diagnostic', function()
       eq(4, result[1])
       eq(2, result[2])
       eq(1, result[3])
-      eq(3, result[4])
-      eq(3, result[5])
+      eq(1, result[4])
+      eq(1, result[5])
     end)
   end)
 
@@ -1407,7 +1407,7 @@ end)
         return count_extmarks(diagnostic_bufnr, diagnostic_ns)
       ]])
 
-      eq(2, exec_lua [[
+      eq(0, exec_lua [[
         vim.diagnostic.enable(diagnostic_bufnr, diagnostic_ns)
         return count_extmarks(diagnostic_bufnr, diagnostic_ns)
       ]])

@@ -390,12 +390,10 @@ local function clear_scheduled_display(namespace, bufnr)
   end
 end
 
-local disabled_buffers = {}
 ---@private
 local function get_diagnostics(bufnr, opts, clamp)
   opts = opts or {}
-
-  if disabled_buffers[bufnr] then
+  if diagnostic_disabled[bufnr] then
     return {}
   end
 
@@ -787,6 +785,16 @@ function M.get(bufnr, opts)
     bufnr = { bufnr, 'n', true },
     opts = { opts, 't', true },
   })
+
+  if #diagnostic_disabled > 0 then
+    if bufnr then
+      if opts and opts.namespace and diagnostic_disabled[bufnr] and diagnostic_disabled[bufnr][opts.namespace] then
+        return {}
+      elseif diagnostic_disabled[bufnr] then
+        return {}
+      end
+    end
+  end
 
   return get_diagnostics(bufnr, opts, false)
 end
@@ -1548,10 +1556,6 @@ function M.disable(bufnr, namespace)
     end
   end
 
-  if not bufnr then
-    bufnr = get_bufnr(bufnr)
-  end
-  disabled_buffers[bufnr] = true
   M.hide(namespace, bufnr)
 end
 
@@ -1580,13 +1584,6 @@ function M.enable(bufnr, namespace)
       end
       diagnostic_disabled[bufnr][namespace] = nil
     end
-  end
-
-  if not bufnr then
-    bufnr = get_bufnr(bufnr)
-  end
-  if disabled_buffers[bufnr] then
-    disabled_buffers[bufnr] = nil
   end
 
   M.show(namespace, bufnr)
