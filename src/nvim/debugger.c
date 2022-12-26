@@ -594,33 +594,35 @@ void ex_breakadd(exarg_T *eap)
     gap = &prof_ga;
   }
 
-  if (dbg_parsearg(eap->arg, gap) == OK) {
-    struct debuggy *bp = &DEBUGGY(gap, gap->ga_len);
-    bp->dbg_forceit = eap->forceit;
+  if (dbg_parsearg(eap->arg, gap) != OK) {
+    return;
+  }
 
-    if (bp->dbg_type != DBG_EXPR) {
-      char *pat = file_pat_to_reg_pat(bp->dbg_name, NULL, NULL, false);
-      if (pat != NULL) {
-        bp->dbg_prog = vim_regcomp(pat, RE_MAGIC + RE_STRING);
-        xfree(pat);
-      }
-      if (pat == NULL || bp->dbg_prog == NULL) {
-        xfree(bp->dbg_name);
-      } else {
-        if (bp->dbg_lnum == 0) {           // default line number is 1
-          bp->dbg_lnum = 1;
-        }
-        if (eap->cmdidx != CMD_profile) {
-          DEBUGGY(gap, gap->ga_len).dbg_nr = ++last_breakp;
-          debug_tick++;
-        }
-        gap->ga_len++;
-      }
-    } else {
-      // DBG_EXPR
-      DEBUGGY(gap, gap->ga_len++).dbg_nr = ++last_breakp;
-      debug_tick++;
+  struct debuggy *bp = &DEBUGGY(gap, gap->ga_len);
+  bp->dbg_forceit = eap->forceit;
+
+  if (bp->dbg_type != DBG_EXPR) {
+    char *pat = file_pat_to_reg_pat(bp->dbg_name, NULL, NULL, false);
+    if (pat != NULL) {
+      bp->dbg_prog = vim_regcomp(pat, RE_MAGIC + RE_STRING);
+      xfree(pat);
     }
+    if (pat == NULL || bp->dbg_prog == NULL) {
+      xfree(bp->dbg_name);
+    } else {
+      if (bp->dbg_lnum == 0) {           // default line number is 1
+        bp->dbg_lnum = 1;
+      }
+      if (eap->cmdidx != CMD_profile) {
+        DEBUGGY(gap, gap->ga_len).dbg_nr = ++last_breakp;
+        debug_tick++;
+      }
+      gap->ga_len++;
+    }
+  } else {
+    // DBG_EXPR
+    DEBUGGY(gap, gap->ga_len++).dbg_nr = ++last_breakp;
+    debug_tick++;
   }
 }
 
@@ -682,31 +684,32 @@ void ex_breakdel(exarg_T *eap)
 
   if (todel < 0) {
     semsg(_("E161: Breakpoint not found: %s"), eap->arg);
-  } else {
-    while (!GA_EMPTY(gap)) {
-      xfree(DEBUGGY(gap, todel).dbg_name);
-      if (DEBUGGY(gap, todel).dbg_type == DBG_EXPR
-          && DEBUGGY(gap, todel).dbg_val != NULL) {
-        tv_free(DEBUGGY(gap, todel).dbg_val);
-      }
-      vim_regfree(DEBUGGY(gap, todel).dbg_prog);
-      gap->ga_len--;
-      if (todel < gap->ga_len) {
-        memmove(&DEBUGGY(gap, todel), &DEBUGGY(gap, todel + 1),
-                (size_t)(gap->ga_len - todel) * sizeof(struct debuggy));
-      }
-      if (eap->cmdidx == CMD_breakdel) {
-        debug_tick++;
-      }
-      if (!del_all) {
-        break;
-      }
-    }
+    return;
+  }
 
-    // If all breakpoints were removed clear the array.
-    if (GA_EMPTY(gap)) {
-      ga_clear(gap);
+  while (!GA_EMPTY(gap)) {
+    xfree(DEBUGGY(gap, todel).dbg_name);
+    if (DEBUGGY(gap, todel).dbg_type == DBG_EXPR
+        && DEBUGGY(gap, todel).dbg_val != NULL) {
+      tv_free(DEBUGGY(gap, todel).dbg_val);
     }
+    vim_regfree(DEBUGGY(gap, todel).dbg_prog);
+    gap->ga_len--;
+    if (todel < gap->ga_len) {
+      memmove(&DEBUGGY(gap, todel), &DEBUGGY(gap, todel + 1),
+              (size_t)(gap->ga_len - todel) * sizeof(struct debuggy));
+    }
+    if (eap->cmdidx == CMD_breakdel) {
+      debug_tick++;
+    }
+    if (!del_all) {
+      break;
+    }
+  }
+
+  // If all breakpoints were removed clear the array.
+  if (GA_EMPTY(gap)) {
+    ga_clear(gap);
   }
 }
 
@@ -715,21 +718,22 @@ void ex_breaklist(exarg_T *eap)
 {
   if (GA_EMPTY(&dbg_breakp)) {
     msg(_("No breakpoints defined"));
-  } else {
-    for (int i = 0; i < dbg_breakp.ga_len; i++) {
-      struct debuggy *bp = &BREAKP(i);
-      if (bp->dbg_type == DBG_FILE) {
-        home_replace(NULL, bp->dbg_name, (char *)NameBuff, MAXPATHL, true);
-      }
-      if (bp->dbg_type != DBG_EXPR) {
-        smsg(_("%3d  %s %s  line %" PRId64),
-             bp->dbg_nr,
-             bp->dbg_type == DBG_FUNC ? "func" : "file",
-             bp->dbg_type == DBG_FUNC ? bp->dbg_name : NameBuff,
-             (int64_t)bp->dbg_lnum);
-      } else {
-        smsg(_("%3d  expr %s"), bp->dbg_nr, bp->dbg_name);
-      }
+    return;
+  }
+
+  for (int i = 0; i < dbg_breakp.ga_len; i++) {
+    struct debuggy *bp = &BREAKP(i);
+    if (bp->dbg_type == DBG_FILE) {
+      home_replace(NULL, bp->dbg_name, (char *)NameBuff, MAXPATHL, true);
+    }
+    if (bp->dbg_type != DBG_EXPR) {
+      smsg(_("%3d  %s %s  line %" PRId64),
+           bp->dbg_nr,
+           bp->dbg_type == DBG_FUNC ? "func" : "file",
+           bp->dbg_type == DBG_FUNC ? bp->dbg_name : NameBuff,
+           (int64_t)bp->dbg_lnum);
+    } else {
+      smsg(_("%3d  expr %s"), bp->dbg_nr, bp->dbg_name);
     }
   }
 }
