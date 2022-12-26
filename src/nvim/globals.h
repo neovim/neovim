@@ -1039,9 +1039,6 @@ EXTERN char bot_top_msg[] INIT(= N_("search hit BOTTOM, continuing at TOP"));
 
 EXTERN char line_msg[] INIT(= N_(" line "));
 
-// For undo we need to know the lowest time possible.
-EXTERN time_t starttime;
-
 EXTERN FILE *time_fd INIT(= NULL);  // where to write startup timing
 
 // Some compilers warn for not using a return value, but in some situations we

@@ -1406,8 +1406,6 @@ static void init_startuptime(mparm_T *paramp)
       break;
     }
   }
-
-  starttime = time(NULL);
 }
 
 static void check_and_set_isatty(mparm_T *paramp)
