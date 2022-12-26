@@ -288,6 +288,7 @@ let s:filename_checks = {
     \ 'javascriptreact': ['file.jsx'],
     \ 'jess': ['file.clp'],
     \ 'jgraph': ['file.jgr'],
+    \ 'jq': ['file.jq'],
     \ 'jovial': ['file.jov', 'file.j73', 'file.jovial'],
     \ 'jproperties': ['file.properties', 'file.properties_xx', 'file.properties_xx_xx', 'some.properties_xx_xx_file', 'org.eclipse.xyz.prefs'],
     \ 'json': ['file.json', 'file.jsonp', 'file.json-patch', 'file.webmanifest', 'Pipfile.lock', 'file.ipynb', '.prettierrc', '.firebaserc', 'file.slnf'],
