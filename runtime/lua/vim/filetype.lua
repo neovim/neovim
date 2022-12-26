@@ -557,6 +557,7 @@ local extension = {
   jov = 'jovial',
   jovial = 'jovial',
   properties = 'jproperties',
+  jq = 'jq',
   slnf = 'json',
   json = 'json',
   jsonp = 'json',
