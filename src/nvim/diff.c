@@ -1147,6 +1147,7 @@ static int diff_file(diffio_T *dio)
   if (dio->dio_internal) {
     return diff_file_internal(dio);
   }
+
   const size_t len = (strlen(tmp_orig) + strlen(tmp_new) + strlen(tmp_diff)
                       + strlen(p_srr) + 27);
   char *const cmd = xmalloc(len);
@@ -1350,30 +1351,33 @@ void ex_diffsplit(exarg_T *eap)
   // don't use a new tab page, each tab page has its own diffs
   cmdmod.cmod_tab = 0;
 
-  if (win_split(0, (diff_flags & DIFF_VERTICAL) ? WSP_VERT : 0) != FAIL) {
-    // Pretend it was a ":split fname" command
-    eap->cmdidx = CMD_split;
-    curwin->w_p_diff = true;
-    do_exedit(eap, old_curwin);
+  if (win_split(0, (diff_flags & DIFF_VERTICAL) ? WSP_VERT : 0) == FAIL) {
+    return;
+  }
 
-    // split must have worked
-    if (curwin != old_curwin) {
-      // Set 'diff', 'scrollbind' on and 'wrap' off.
-      diff_win_options(curwin, true);
-      if (win_valid(old_curwin)) {
-        diff_win_options(old_curwin, true);
+  // Pretend it was a ":split fname" command
+  eap->cmdidx = CMD_split;
+  curwin->w_p_diff = true;
+  do_exedit(eap, old_curwin);
 
-        if (bufref_valid(&old_curbuf)) {
-          // Move the cursor position to that of the old window.
-          curwin->w_cursor.lnum = diff_get_corresponding_line(old_curbuf.br_buf,
-                                                              old_curwin->w_cursor.lnum);
-        }
-      }
-      // Now that lines are folded scroll to show the cursor at the same
-      // relative position.
-      scroll_to_fraction(curwin, curwin->w_height);
+  if (curwin == old_curwin) {  // split didn't work
+    return;
+  }
+
+  // Set 'diff', 'scrollbind' on and 'wrap' off.
+  diff_win_options(curwin, true);
+  if (win_valid(old_curwin)) {
+    diff_win_options(old_curwin, true);
+
+    if (bufref_valid(&old_curbuf)) {
+      // Move the cursor position to that of the old window.
+      curwin->w_cursor.lnum = diff_get_corresponding_line(old_curbuf.br_buf,
+                                                          old_curwin->w_cursor.lnum);
     }
   }
+  // Now that lines are folded scroll to show the cursor at the same
+  // relative position.
+  scroll_to_fraction(curwin, curwin->w_height);
 }
 
 // Set options to show diffs for the current window.

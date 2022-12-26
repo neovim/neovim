@@ -439,47 +439,48 @@ int clr_history(const int histype)
 /// @param histype  may be one of the HIST_ values.
 static int del_history_entry(int histype, char_u *str)
 {
-  regmatch_T regmatch;
-  histentry_T *hisptr;
-  int idx;
-  int i;
-  int last;
-  bool found = false;
-
-  regmatch.regprog = NULL;
-  regmatch.rm_ic = false;       // always match case
-  if (hislen != 0
-      && histype >= 0
-      && histype < HIST_COUNT
-      && *str != NUL
-      && (idx = hisidx[histype]) >= 0
-      && (regmatch.regprog = vim_regcomp((char *)str, RE_MAGIC + RE_STRING)) != NULL) {
-    i = last = idx;
-    do {
-      hisptr = &history[histype][i];
-      if (hisptr->hisstr == NULL) {
-        break;
-      }
-      if (vim_regexec(&regmatch, hisptr->hisstr, (colnr_T)0)) {
-        found = true;
-        hist_free_entry(hisptr);
-      } else {
-        if (i != last) {
-          history[histype][last] = *hisptr;
-          clear_hist_entry(hisptr);
-        }
-        if (--last < 0) {
-          last += hislen;
-        }
-      }
-      if (--i < 0) {
-        i += hislen;
-      }
-    } while (i != idx);
-    if (history[histype][idx].hisstr == NULL) {
-      hisidx[histype] = -1;
-    }
+  if (hislen == 0 || histype < 0 || histype >= HIST_COUNT || *str == NUL
+      || hisidx[histype] < 0) {
+    return false;
   }
+
+  const int idx = hisidx[histype];
+  regmatch_T regmatch;
+  regmatch.regprog = vim_regcomp((char *)str, RE_MAGIC + RE_STRING);
+  if (regmatch.regprog == NULL) {
+    return false;
+  }
+
+  regmatch.rm_ic = false;       // always match case
+
+  bool found = false;
+  int i = idx, last = idx;
+  do {
+    histentry_T *hisptr = &history[histype][i];
+    if (hisptr->hisstr == NULL) {
+      break;
+    }
+    if (vim_regexec(&regmatch, hisptr->hisstr, (colnr_T)0)) {
+      found = true;
+      hist_free_entry(hisptr);
+    } else {
+      if (i != last) {
+        history[histype][last] = *hisptr;
+        clear_hist_entry(hisptr);
+      }
+      if (--last < 0) {
+        last += hislen;
+      }
+    }
+    if (--i < 0) {
+      i += hislen;
+    }
+  } while (i != idx);
+
+  if (history[histype][idx].hisstr == NULL) {
+    hisidx[histype] = -1;
+  }
+
   vim_regfree(regmatch.regprog);
   return found;
 }

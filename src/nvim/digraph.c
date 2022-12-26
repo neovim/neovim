@@ -1826,54 +1826,56 @@ static void printdigraph(const digr_T *dp, result_T *previous)
   char_u buf[30];
   int list_width = 13;
 
-  if (dp->result != 0) {
-    if (previous != NULL) {
-      for (int i = 0; header_table[i].dg_header != NULL; i++) {
-        if (*previous < header_table[i].dg_start
-            && dp->result >= header_table[i].dg_start
-            && dp->result < header_table[i + 1].dg_start) {
-          digraph_header(_(header_table[i].dg_header));
-          break;
-        }
-      }
-      *previous = dp->result;
-    }
-    if (msg_col > Columns - list_width) {
-      msg_putchar('\n');
-    }
-
-    // Make msg_col a multiple of list_width by using spaces.
-    if (msg_col % list_width != 0) {
-      int spaces = (msg_col / list_width + 1) * list_width - msg_col;
-      while (spaces--) {
-        msg_putchar(' ');
-      }
-    }
-
-    char_u *p = &buf[0];
-    *p++ = dp->char1;
-    *p++ = dp->char2;
-    *p++ = ' ';
-    *p = NUL;
-    msg_outtrans((char *)buf);
-    p = buf;
-
-    // add a space to draw a composing char on
-    if (utf_iscomposing(dp->result)) {
-      *p++ = ' ';
-    }
-    p += utf_char2bytes(dp->result, (char *)p);
-
-    *p = NUL;
-    msg_outtrans_attr((char *)buf, HL_ATTR(HLF_8));
-    p = buf;
-    if (char2cells(dp->result) == 1) {
-      *p++ = ' ';
-    }
-    assert(p >= buf);
-    vim_snprintf((char *)p, sizeof(buf) - (size_t)(p - buf), " %3d", dp->result);
-    msg_outtrans((char *)buf);
+  if (dp->result == 0) {
+    return;
   }
+
+  if (previous != NULL) {
+    for (int i = 0; header_table[i].dg_header != NULL; i++) {
+      if (*previous < header_table[i].dg_start
+          && dp->result >= header_table[i].dg_start
+          && dp->result < header_table[i + 1].dg_start) {
+        digraph_header(_(header_table[i].dg_header));
+        break;
+      }
+    }
+    *previous = dp->result;
+  }
+  if (msg_col > Columns - list_width) {
+    msg_putchar('\n');
+  }
+
+  // Make msg_col a multiple of list_width by using spaces.
+  if (msg_col % list_width != 0) {
+    int spaces = (msg_col / list_width + 1) * list_width - msg_col;
+    while (spaces--) {
+      msg_putchar(' ');
+    }
+  }
+
+  char_u *p = &buf[0];
+  *p++ = dp->char1;
+  *p++ = dp->char2;
+  *p++ = ' ';
+  *p = NUL;
+  msg_outtrans((char *)buf);
+  p = buf;
+
+  // add a space to draw a composing char on
+  if (utf_iscomposing(dp->result)) {
+    *p++ = ' ';
+  }
+  p += utf_char2bytes(dp->result, (char *)p);
+
+  *p = NUL;
+  msg_outtrans_attr((char *)buf, HL_ATTR(HLF_8));
+  p = buf;
+  if (char2cells(dp->result) == 1) {
+    *p++ = ' ';
+  }
+  assert(p >= buf);
+  vim_snprintf((char *)p, sizeof(buf) - (size_t)(p - buf), " %3d", dp->result);
+  msg_outtrans((char *)buf);
 }
 
 /// Get the two digraph characters from a typval.
