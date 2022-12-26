@@ -685,7 +685,7 @@ static int buf_do_map(int maptype, MapArguments *args, int mode, bool is_abbrev,
     for (int round = 0; (round == 0 || maptype == MAPTYPE_UNMAP) && round <= 1
          && !did_it && !got_int; round++) {
       int hash_start, hash_end;
-      if (has_lhs || is_abbrev) {
+      if ((round == 0 && has_lhs) || is_abbrev) {
         // just use one hash
         hash_start = is_abbrev ? 0 : MAP_HASH(mode, lhs[0]);
         hash_end = hash_start + 1;
