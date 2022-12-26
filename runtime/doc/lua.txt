@@ -715,6 +715,22 @@ vim.mpack.decode({str})                                     *vim.mpack.decode*
     Decodes (or "unpacks") the msgpack-encoded {str} to a Lua object.
 
 ------------------------------------------------------------------------------
+VIM.JSON                                                            *lua-json*
+
+The *vim.json* module provides encoding and decoding of Lua objects to and
+from JSON-encoded strings. Supports |vim.NIL| and |vim.empty_dict()|.
+
+vim.json.encode({obj})                                       *vim.json.encode*
+    Encodes (or "packs") Lua object {obj} as JSON in a Lua string.
+
+vim.json.decode({str}[, {opts}])                             *vim.json.decode*
+    Decodes (or "unpacks") the JSON-encoded {str} to a Lua object.
+
+    {opts} is a table with the key `luanil = { object: bool, array: bool }`
+    that controls whether `null` in JSON objects or arrays should be converted
+    to Lua `nil` instead of `vim.NIL`.
+
+------------------------------------------------------------------------------
 VIM.SPELL                                                          *lua-spell*
 
 vim.spell.check({str})                                     *vim.spell.check()*
