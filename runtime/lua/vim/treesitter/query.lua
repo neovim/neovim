@@ -445,9 +445,11 @@ local directive_handlers = {
   ['offset!'] = function(match, _, _, pred, metadata)
     ---@cast pred integer[]
     local capture_id = pred[2]
-    local offset_node = match[capture_id]
-    local range = { offset_node:range() }
-    ---@cast range integer[] bug in sumneko
+    if not metadata[capture_id] then
+      metadata[capture_id] = {}
+    end
+
+    local range = metadata[capture_id].range or { match[capture_id]:range() }
     local start_row_offset = pred[3] or 0
     local start_col_offset = pred[4] or 0
     local end_row_offset = pred[5] or 0
@@ -460,9 +462,6 @@ local directive_handlers = {
 
     -- If this produces an invalid range, we just skip it.
     if range[1] < range[3] or (range[1] == range[3] and range[2] <= range[4]) then
-      if not metadata[capture_id] then
-        metadata[capture_id] = {}
-      end
       metadata[capture_id].range = range
     end
   end,
