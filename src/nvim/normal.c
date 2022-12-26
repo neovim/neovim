@@ -1990,6 +1990,9 @@ static void display_showcmd(void)
     return;
   }
   // 'showcmdloc' is "last" or empty
+  if (p_ch == 0 && !ui_has(kUIMessages)) {
+    return;
+  }
 
   if (ui_has(kUIMessages)) {
     MAXSIZE_TEMP_ARRAY(content, 1);

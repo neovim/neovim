@@ -1351,4 +1351,17 @@ describe('cmdheight=0', function()
       {1:~                             }│{1:~                            }|
     ]])
   end)
+
+  it('no assert failure with showcmd', function()
+    command('set showcmd cmdheight=0')
+    feed('d')
+    screen:expect([[
+      ^                         |
+      {1:~                        }|
+      {1:~                        }|
+      {1:~                        }|
+      {1:~                        }|
+    ]])
+    assert_alive()
+  end)
 end)
