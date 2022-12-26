@@ -86,7 +86,12 @@ The following new APIs or features were added.
 • When using Nvim inside tmux 3.2 or later, the default clipboard provider
   will now copy to the system clipboard. |provider-clipboard|
 
-• 'splitkeep' option to control the scroll behavior of horizontal splits.
+• |'showcmdloc'| option to display the 'showcmd' information in the
+  status line or tab line. A new %S statusline item is available to place
+  the 'showcmd' text in a custom 'statusline'. Useful for when |'cmdheight'|
+  is set to 0.
+
+• |'splitkeep'| option to control the scroll behavior of horizontal splits.
 
 • |nvim_select_popupmenu_item()| now supports |cmdline-completion| popup menu.
 

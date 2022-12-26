@@ -126,6 +126,7 @@ static char *(p_icm_values[]) = { "nosplit", "split", NULL };
 static char *(p_jop_values[]) = { "stack", "view", NULL };
 static char *(p_tpf_values[]) = { "BS", "HT", "FF", "ESC", "DEL", "C0", "C1", NULL };
 static char *(p_rdb_values[]) = { "compositor", "nothrottle", "invalid", "nodelta", NULL };
+static char *(p_sloc_values[]) = { "last", "statusline", "tabline", NULL };
 
 /// All possible flags for 'shm'.
 static char SHM_ALL[] = { SHM_RO, SHM_MOD, SHM_FILE, SHM_LAST, SHM_TEXT, SHM_LINES, SHM_NEW,
@@ -1274,6 +1275,10 @@ char *did_set_string_option(int opt_idx, char **varp, char *oldval, char *errbuf
          || (*curwin->w_p_scl == 'n' && *(curwin->w_p_scl + 1) == 'u'))
         && (curwin->w_p_nu || curwin->w_p_rnu)) {
       curwin->w_nrwidth_line_count = 0;
+    }
+  } else if (varp == &p_sloc) {  // 'showcmdloc'
+    if (check_opt_strings(p_sloc, p_sloc_values, false) != OK) {
+      errmsg = e_invarg;
     }
   } else if (varp == &curwin->w_p_fdc
              || varp == &curwin->w_allbuf_opt.wo_fdc) {
