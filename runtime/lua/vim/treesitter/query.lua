@@ -55,6 +55,38 @@ local function add_included_lang(base_langs, lang, ilang)
   return false
 end
 
+---@private
+---@param buf (number)
+---@param range (table)
+---@param concat (boolean)
+---@returns (string[]|string|nil)
+local function buf_range_get_text(buf, range, concat)
+  local lines
+  local start_row, start_col, end_row, end_col = unpack(range)
+  local eof_row = a.nvim_buf_line_count(buf)
+  if start_row >= eof_row then
+    return nil
+  end
+
+  if end_col == 0 then
+    lines = a.nvim_buf_get_lines(buf, start_row, end_row, true)
+    end_col = -1
+  else
+    lines = a.nvim_buf_get_lines(buf, start_row, end_row + 1, true)
+  end
+
+  if #lines > 0 then
+    if #lines == 1 then
+      lines[1] = string.sub(lines[1], start_col + 1, end_col)
+    else
+      lines[1] = string.sub(lines[1], start_col + 1)
+      lines[#lines] = string.sub(lines[#lines], 1, end_col)
+    end
+  end
+
+  return concat and table.concat(lines, '\n') or lines
+end
+
 --- Gets the list of files used to make up a query
 ---
 ---@param lang string Language to get query for
@@ -240,40 +272,22 @@ end
 ---@param source (number|string) Buffer or string from which the {node} is extracted
 ---@param opts (table|nil) Optional parameters.
 ---          - concat: (boolean) Concatenate result in a string (default true)
+---          - metadata (table) Metadata of a specific capture. This would be
+---            set to `metadata[capture_id]` when using
+---            |vim.treesitter.query.add_directive()|.
 ---@return (string[]|string|nil)
 function M.get_node_text(node, source, opts)
   opts = opts or {}
   local concat = vim.F.if_nil(opts.concat, true)
+  local metadata = opts.metadata or {}
 
-  local start_row, start_col, start_byte = node:start()
-  local end_row, end_col, end_byte = node:end_()
-
-  if type(source) == 'number' then
-    local eof_row = a.nvim_buf_line_count(source)
-    if start_row >= eof_row then
-      return nil
-    end
-
-    local lines ---@type string[]
-    if end_col == 0 then
-      lines = a.nvim_buf_get_lines(source, start_row, end_row, true)
-      end_col = -1
-    else
-      lines = a.nvim_buf_get_lines(source, start_row, end_row + 1, true)
-    end
-
-    if #lines > 0 then
-      if #lines == 1 then
-        lines[1] = string.sub(lines[1], start_col + 1, end_col)
-      else
-        lines[1] = string.sub(lines[1], start_col + 1)
-        lines[#lines] = string.sub(lines[#lines], 1, end_col)
-      end
-    end
-
-    return concat and table.concat(lines, '\n') or lines
+  if metadata.text then
+    return metadata.text
+  elseif type(source) == 'number' then
+    return metadata.range and buf_range_get_text(source, metadata.range, concat)
+      or buf_range_get_text(source, { node:range() }, concat)
   elseif type(source) == 'string' then
-    return source:sub(start_byte + 1, end_byte)
+    return source:sub(select(3, node:start()) + 1, select(3, node:end_()))
   end
 end
 
