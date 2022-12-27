@@ -1505,7 +1505,7 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, char *opt_n
       break;
 
     case STL_SHOWCMD:
-      if (p_sc && strcmp(opt_name, p_sloc) == 0) {
+      if (p_sc && (opt_name == NULL || strcmp(opt_name, p_sloc) == 0)) {
         str = showcmd_buf;
       }
       break;
