@@ -545,3 +545,29 @@ it('statusline is redrawn with :resize from <Cmd> mapping #19629', function()
                                             |
   ]])
 end)
+
+it('showcmdloc=statusline does not show if statusline is too narrow', function()
+  clear()
+  local screen = Screen.new(40, 8)
+  screen:set_default_attr_ids({
+    [0] = {bold = true, foreground = Screen.colors.Blue},  -- NonText
+    [1] = {bold = true, reverse = true},  -- StatusLine
+    [2] = {reverse = true},  -- StatusLineNC
+  })
+  screen:attach()
+  command('set showcmd')
+  command('set showcmdloc=statusline')
+  command('1vsplit')
+  screen:expect([[
+    ^ │                                      |
+    {0:~}│{0:~                                     }|
+    {0:~}│{0:~                                     }|
+    {0:~}│{0:~                                     }|
+    {0:~}│{0:~                                     }|
+    {0:~}│{0:~                                     }|
+    {1:< }{2:[No Name]                             }|
+                                            |
+  ]])
+  feed('1234')
+  screen:expect_unchanged()
+end)
