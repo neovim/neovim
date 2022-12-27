@@ -334,12 +334,13 @@ static void hash_may_resize(hashtab_T *ht, size_t minitems)
     assert(newsize != 0);
   }
 
-  // bail out if the hashtab is already at the desired size
-  if (newsize == ht->ht_mask + 1) {
+  bool newarray_is_small = newsize == HT_INIT_SIZE;
+
+  if (!newarray_is_small && newsize == ht->ht_mask + 1) {
+    // the hashtab is already at the desired size, bail out
     return;
   }
 
-  bool newarray_is_small = newsize == HT_INIT_SIZE;
   bool keep_smallarray = newarray_is_small
                          && ht->ht_array == ht->ht_smallarray;
 
