@@ -3006,7 +3006,7 @@ static int do_more_prompt(int typed_char)
 
 #if defined(MSWIN)
 /// Headless (no UI) error message handler.
-static void do_msg(char *str, bool errmsg)
+static void do_msg(const char *str, bool errmsg)
 {
   static bool did_err = false;
   assert(str != NULL);
@@ -3026,13 +3026,13 @@ static void do_msg(char *str, bool errmsg)
   }
 }
 
-void os_errmsg(char *str)
+void os_errmsg(const char *str)
 {
   do_msg(str, true);
 }
 
 /// Headless (no UI) message handler.
-void os_msg(char *str)
+void os_msg(const char *str)
 {
   do_msg(str, false);
 }

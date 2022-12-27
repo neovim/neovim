@@ -2709,7 +2709,7 @@ void f_setcellwidths(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 
     if (li_tv->v_type != VAR_LIST || li_tv->vval.v_list == NULL) {
       semsg(_(e_list_item_nr_is_not_list), item);
-      xfree(ptrs);
+      xfree((void *)ptrs);
       return;
     }
 
@@ -2727,23 +2727,23 @@ void f_setcellwidths(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
         n1 = lili_tv->vval.v_number;
         if (n1 < 0x100) {
           emsg(_(e_only_values_of_0x100_and_higher_supported));
-          xfree(ptrs);
+          xfree((void *)ptrs);
           return;
         }
       } else if (i == 1 && lili_tv->vval.v_number < n1) {
         semsg(_(e_list_item_nr_range_invalid), item);
-        xfree(ptrs);
+        xfree((void *)ptrs);
         return;
       } else if (i == 2 && (lili_tv->vval.v_number < 1 || lili_tv->vval.v_number > 2)) {
         semsg(_(e_list_item_nr_cell_width_invalid), item);
-        xfree(ptrs);
+        xfree((void *)ptrs);
         return;
       }
     }
 
     if (i != 3) {
       semsg(_(e_list_item_nr_does_not_contain_3_numbers), item);
-      xfree(ptrs);
+      xfree((void *)ptrs);
       return;
     }
 
@@ -2762,7 +2762,7 @@ void f_setcellwidths(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     const varnumber_T n1 = TV_LIST_ITEM_TV(lili)->vval.v_number;
     if (item > 0 && n1 <= table[item - 1].last) {
       semsg(_(e_overlapping_ranges_for_nr), (long)n1);
-      xfree(ptrs);
+      xfree((void *)ptrs);
       xfree(table);
       return;
     }
@@ -2773,7 +2773,7 @@ void f_setcellwidths(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     table[item].width = (char)TV_LIST_ITEM_TV(lili)->vval.v_number;
   }
 
-  xfree(ptrs);
+  xfree((void *)ptrs);
 
   cw_interval_T *const cw_table_save = cw_table;
   const size_t cw_table_size_save = cw_table_size;
