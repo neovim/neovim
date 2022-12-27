@@ -110,9 +110,6 @@ foreach(subdir
         viml
         viml/parser
        )
-  if(${subdir} MATCHES "tui" AND NOT FEAT_TUI)
-    continue()
-  endif()
 
   file(MAKE_DIRECTORY ${GENERATED_DIR}/${subdir})
   file(MAKE_DIRECTORY ${GENERATED_INCLUDES_DIR}/${subdir})

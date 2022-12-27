@@ -128,32 +128,16 @@ static UI *builtin_ui = NULL;
 void ui_free_all_mem(void)
 {
   kv_destroy(call_buf);
-# ifdef FEAT_TUI
   if (builtin_ui) {
     tui_free_all_mem(builtin_ui);
     builtin_ui = NULL;
   }
-# endif
 }
 #endif
 
 void ui_builtin_start(void)
 {
-#ifdef FEAT_TUI
   builtin_ui = tui_start();
-#else
-  fprintf(stderr, "Nvim headless-mode started.\n");
-  size_t len;
-  char **addrs = server_address_list(&len);
-  if (addrs != NULL) {
-    fprintf(stderr, "Listening on:\n");
-    for (size_t i = 0; i < len; i++) {
-      fprintf(stderr, "\t%s\n", addrs[i]);
-    }
-    xfree(addrs);
-  }
-  fprintf(stderr, "Press CTRL+C to exit.\n");
-#endif
 }
 
 UI *ui_get_by_index(int idx)

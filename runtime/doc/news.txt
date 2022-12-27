@@ -118,6 +118,10 @@ The following changes to existing APIs or features add new behavior.
   thread was used). This is not supposed to be a visible change to the user,
   but might be the cause of subtle changes of behavior and bugs.
 
+  Previously, the TUI could be disabled as a build time feature (+tui/-tui),
+  resulting in a nvim binary which only could be run headless or embedded
+  in an external process. As of this version, TUI is always avalibale.
+
 ==============================================================================
 REMOVED FEATURES                                                 *news-removed*
 
