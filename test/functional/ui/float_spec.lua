@@ -8831,6 +8831,34 @@ describe('float window', function()
         ]]}
       end
     end)
+
+    describe('no crash after moving and closing float window #21547', function()
+      local function test_float_move_close(cmd)
+        local float_opts = {relative = 'editor', row = 1, col = 1, width = 10, height = 10}
+        meths.open_win(meths.create_buf(false, false), true, float_opts)
+        if multigrid then
+          screen:expect({float_pos = {[4] = {{id = 1001}, 'NW', 1, 1, 1, true}}})
+        end
+        command(cmd)
+        exec_lua([[
+          vim.api.nvim_win_set_config(0, {relative = 'editor', row = 2, col = 2})
+          vim.api.nvim_win_close(0, {})
+          vim.api.nvim_echo({{''}}, false, {})
+        ]])
+        if multigrid then
+          screen:expect({float_pos = {}})
+        end
+        assert_alive()
+      end
+
+      it('if WinClosed autocommand flushes UI', function()
+        test_float_move_close('autocmd WinClosed * ++once redraw')
+      end)
+
+      it('if closing buffer flushes UI', function()
+        test_float_move_close('autocmd BufWinLeave * ++once redraw')
+      end)
+    end)
   end
 
   describe('with ext_multigrid', function()
