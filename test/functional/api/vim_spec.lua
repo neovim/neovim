@@ -3126,6 +3126,19 @@ describe('API', function()
       eq('E539: Illegal character <}>',
          pcall_err(meths.eval_statusline, '%{%}', {}))
     end)
+    it('supports %S item', function()
+      local screen = Screen.new(80, 24)
+      screen:attach()
+      command('set showcmd')
+      feed('1234')
+      screen:expect({any = '1234'})
+      eq({ str = '1234', width = 4 },
+         meths.eval_statusline('%S', { maxwidth = 5 }))
+      feed('56')
+      screen:expect({any = '123456'})
+      eq({ str = '<3456', width = 5 },
+         meths.eval_statusline('%S', { maxwidth = 5 }))
+    end)
     describe('highlight parsing', function()
       it('works', function()
         eq({
