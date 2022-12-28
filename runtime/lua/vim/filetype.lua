@@ -1532,6 +1532,7 @@ local filename = {
   ['.latexmkrc'] = 'perl',
   ['pf.conf'] = 'pf',
   ['main.cf'] = 'pfmain',
+  ['main.cf.proto'] = 'pfmain',
   pinerc = 'pine',
   ['.pinercex'] = 'pine',
   ['.pinerc'] = 'pine',
