@@ -1502,8 +1502,7 @@ region({bufnr}, {pos1}, {pos2}, {regtype}, {inclusive})         *vim.region()*
                      end-inclusive
 
     Return: ~
-        table<integer, {}> region lua table of the form {linenr =
-        {startcol,endcol}}
+        (table) region Table of the form `{linenr = {startcol,endcol}}`
 
 schedule_wrap({cb})                                      *vim.schedule_wrap()*
     Defers callback `cb` until the Nvim API is safe to call.
@@ -1711,8 +1710,7 @@ split({s}, {sep}, {kwargs})                                      *vim.split()*
     Parameters: ~
       • {s}       (string) String to split
       • {sep}     (string) Separator or pattern
-      • {kwargs}  ({plain: boolean, trimempty: boolean}|nil) Keyword
-                  arguments:
+      • {kwargs}  (table|nil) Keyword arguments:
                   • plain: (boolean) If `true` use `sep` literally (passed to
                     string.find)
                   • trimempty: (boolean) If `true` remove empty items from the

@@ -391,7 +391,7 @@ end
 ---@param pos2 integer[] (line, column) tuple marking end of region
 ---@param regtype string type of selection, see |setreg()|
 ---@param inclusive boolean indicating whether the selection is end-inclusive
----@return table<integer, {}> region lua table of the form {linenr = {startcol,endcol}}
+---@return table region Table of the form `{linenr = {startcol,endcol}}`
 function vim.region(bufnr, pos1, pos2, regtype, inclusive)
   if not vim.api.nvim_buf_is_loaded(bufnr) then
     vim.fn.bufload(bufnr)
