@@ -2,7 +2,7 @@
 -- Busted started doing this to help provide more isolation.  See issue #62
 -- for more information about this.
 local helpers = require('test.functional.helpers')(nil)
-local screen = require('test.functional.ui.screen')
+require('test.functional.ui.screen')
 local busted = require("busted")
 local is_os = helpers.is_os
 
