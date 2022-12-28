@@ -63,7 +63,7 @@ foreach(DF ${DOCFILES})
 endforeach()
 
 add_custom_command(OUTPUT ${GENERATED_HELP_TAGS}
-  COMMAND ${CMAKE_COMMAND} -E remove doc/*
+  COMMAND ${CMAKE_COMMAND} -E remove_directory doc
   COMMAND ${CMAKE_COMMAND} -E copy_directory
     ${PROJECT_SOURCE_DIR}/runtime/doc doc
   COMMAND "${PROJECT_BINARY_DIR}/bin/nvim"
