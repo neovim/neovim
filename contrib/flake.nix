@@ -62,7 +62,6 @@
 
         pythonEnv = pkgs.python3.withPackages (ps: [
           ps.msgpack
-          ps.flake8 # for 'make pylint'
         ]);
       in {
         packages = with pkgs; {
@@ -71,11 +70,6 @@
         };
 
         checks = {
-          pylint = pkgs.runCommand "pylint" {
-            nativeBuildInputs = [ pythonEnv ];
-            preferLocalBuild = true;
-          } "make -C ${./..} pylint > $out";
-
           shlint = pkgs.runCommand "shlint" {
             nativeBuildInputs = [ pkgs.shellcheck ];
             preferLocalBuild = true;
