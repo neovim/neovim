@@ -260,6 +260,19 @@ For managing includes in C files, use [include-what-you-use].
 
 See [#549][549] for more details.
 
+### Lua Scripting
+
+Neovim uses precompiled Lua bytecode, so Lua files in [`./runtime`](./runtime) won't get used if you run a newly-built Neovim.
+
+In order to use the raw Lua modules, you need to add `--luamod-dev` and specify the runtime you want to use with `VIMRUNTIME` (see `:h $VIMRUNTIME`).
+
+For instance, if you cloned and built Neovim in the current directory, you might be able to use:
+```
+VIMRUNTIME=./runtime ./build/bin/nvim --luamod-dev
+```
+
+Then, any change in the `./runtime` directory will be loaded when Neovim starts.
+
 Documenting
 -----------
 
@@ -290,7 +303,7 @@ If a function in your Lua module should not be documented (e.g. internal functio
 ---@private
 ```
 
-Mark functions that are deprecated as 
+Mark functions that are deprecated as
 ```
 ---@deprecated
 ```
