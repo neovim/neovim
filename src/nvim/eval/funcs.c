@@ -3036,7 +3036,7 @@ static void f_has(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 #ifdef UNIX
     "unix",
 #endif
-#if defined(MSWIN)
+#ifdef MSWIN
     "win32",
 #endif
 #ifdef _WIN64
@@ -3127,7 +3127,7 @@ static void f_has(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     "spell",
     "syntax",
 #if !defined(UNIX)
-    "system",  // TODO(SplinterOfChaos): This IS defined for UNIX!
+    "system",
 #endif
     "tablineat",
     "tag_binary",
