@@ -625,7 +625,7 @@ and what the keymaps are to get those characters:
 
 glyph   encoding	   keymap ~
 Char UTF-8 cp1255  hebrew  hebrewp  name ~
-א    0x5d0  0xe0     t	      a     'alef
+א    0x5d0  0xe0     t	      a     ´alef
 ב    0x5d1  0xe1     c	      b     bet
 ג    0x5d2  0xe2     d	      g     gimel
 ד    0x5d3  0xe3     s	      d     dalet
@@ -706,7 +706,7 @@ Char UTF-8 hebrew name
 
 Combining forms:
 ﬠ    0xfb20  X`   Alternative `ayin
-ﬡ    0xfb21  X'   Alternative 'alef
+ﬡ    0xfb21  X'   Alternative ´alef
 ﬢ    0xfb22  X-d  Alternative dalet
 ﬣ    0xfb23  X-h  Alternative he
 ﬤ    0xfb24  X-k  Alternative kaf

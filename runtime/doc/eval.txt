@@ -840,8 +840,8 @@ Example: >
 All expressions within one level are parsed from left to right.
 
 
+------------------------------------------------------------------------------
 expr1							*expr1* *ternary* *E109*
------
 
 expr2 ? expr1 : expr1
 
@@ -867,8 +867,8 @@ You should always put a space before the ':', otherwise it can be mistaken for
 use in a variable such as "a:1".
 
 
+------------------------------------------------------------------------------
 expr2 and expr3						*expr2* *expr3*
----------------
 
 expr3 || expr3 ..	logical OR		*expr-barbar*
 expr4 && expr4 ..	logical AND		*expr-&&*
@@ -906,8 +906,8 @@ This is valid whether "b" has been defined or not.  The second clause will
 only be evaluated if "b" has been defined.
 
 
+------------------------------------------------------------------------------
 expr4							*expr4*
------
 
 expr5 {cmp} expr5
 
@@ -1010,8 +1010,9 @@ can be matched like an ordinary character.  Examples:
 	"foo\nbar" =~ "\\n"	evaluates to 0
 
 
+------------------------------------------------------------------------------
 expr5 and expr6						*expr5* *expr6*
----------------
+
 expr6 + expr6   Number addition, |List| or |Blob| concatenation	*expr-+*
 expr6 - expr6   Number subtraction				*expr--*
 expr6 . expr6   String concatenation				*expr-.*
@@ -1064,8 +1065,9 @@ None of these work for |Funcref|s.
 . and % do not work for Float. *E804*
 
 
+------------------------------------------------------------------------------
 expr7							*expr7*
------
+
 ! expr7			logical NOT		*expr-!*
 - expr7			unary minus		*expr-unary--*
 + expr7			unary plus		*expr-unary-+*
@@ -1082,8 +1084,9 @@ These three can be repeated and mixed.  Examples:
 	--9	    == 9
 
 
+------------------------------------------------------------------------------
 expr8							*expr8*
------
+
 This expression is either |expr9| or a sequence of the alternatives below,
 in any order.  E.g., these are all possible:
 	expr8[expr1].name
@@ -1234,8 +1237,9 @@ When using the lambda form there must be no white space between the } and the
 
 
 							*expr9*
+------------------------------------------------------------------------------
 number
-------
+
 number			number constant			*expr-number*
 
 			*0x* *hex-number* *0o* *octal-number* *binary-number*
@@ -1297,9 +1301,9 @@ function.  Example: >
 <	7.853981633974483e-01
 
 
-
+------------------------------------------------------------------------------
 string					*string* *String* *expr-string* *E114*
-------
+
 "string"		string constant		*expr-quote*
 
 Note that double quotes are used.
@@ -1338,16 +1342,17 @@ encodings.  Use "\u00ff" to store character 255 correctly as UTF-8.
 Note that "\000" and "\x00" force the end of the string.
 
 
+------------------------------------------------------------------------------
 blob-literal				*blob-literal* *E973*
-------------
 
 Hexadecimal starting with 0z or 0Z, with an arbitrary number of bytes.
 The sequence must be an even number of hex characters.  Example: >
 	:let b = 0zFF00ED015DAF
 
 
+------------------------------------------------------------------------------
 literal-string						*literal-string* *E115*
----------------
+
 'string'		string constant			*expr-'*
 
 Note that single quotes are used.
@@ -1361,8 +1366,9 @@ to be doubled.  These two commands are equivalent: >
 	if a =~ '\s*'
 
 
+------------------------------------------------------------------------------
 option						*expr-option* *E112* *E113*
-------
+
 &option			option value, local value if possible
 &g:option		global option value
 &l:option		local option value
@@ -1376,8 +1382,9 @@ and there is no buffer-local or window-local value, the global value is used
 anyway.
 
 
+------------------------------------------------------------------------------
 register						*expr-register* *@r*
---------
+
 @r			contents of register 'r'
 
 The result is the contents of the named register, as a single string.
@@ -1394,8 +1401,9 @@ nesting							*expr-nesting* *E110*
 (expr1)			nested expression
 
 
+------------------------------------------------------------------------------
 environment variable					*expr-env*
---------------------
+
 $VAR			environment variable
 
 The String value of any environment variable.  When it is not defined, the
@@ -1420,20 +1428,23 @@ The first one probably doesn't echo anything, the second echoes the $shell
 variable (if your shell supports it).
 
 
+------------------------------------------------------------------------------
 internal variable					*expr-variable*
------------------
+
 variable		internal variable
 See below |internal-variables|.
 
 
+------------------------------------------------------------------------------
 function call		*expr-function* *E116* *E118* *E119* *E120*
--------------
+
 function(expr1, ...)	function call
 See below |functions|.
 
 
+------------------------------------------------------------------------------
 lambda expression				*expr-lambda* *lambda*
------------------
+
 {args -> expr1}		lambda expression
 
 A lambda expression creates a new unnamed function which returns the result of
@@ -1524,7 +1535,7 @@ specified by what is prepended:
 |tabpage-variable|   t:	  Local to the current tab page.
 |global-variable|    g:	  Global.
 |local-variable|     l:	  Local to a function.
-|script-variable|    s:	  Local to a |:source|'ed Vim script.
+|script-variable|    s:	  Local to a |:source|d Vim script.
 |function-argument|  a:	  Function argument (only inside a function).
 |vim-variable|       v:	  Global, predefined by Vim.
 
@@ -1922,10 +1933,10 @@ v:fname_in	The name of the input file.  Valid while evaluating:
 v:fname_out	The name of the output file.  Only valid while
 		evaluating:
 			option		used for ~
-			'charconvert'	resulting converted file (*)
+			'charconvert'	resulting converted file [1]
 			'diffexpr'	output of diff
 			'patchexpr'	resulting patched file
-		(*) When doing conversion for a write command (e.g., ":w
+		[1] When doing conversion for a write command (e.g., ":w
 		file") it will be equal to v:fname_in.  When doing conversion
 		for a read command (e.g., ":e file") it will be a temporary
 		file and different from v:fname_in.

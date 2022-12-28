@@ -312,7 +312,7 @@ g<Down>			[count] display lines downward.  |exclusive| motion.
 `-`  <minus>		[count] lines upward, on the first non-blank
 			character |linewise|.
 
-+		or					*+*
+`+`		or					*+*
 CTRL-M		or					*CTRL-M* *<CR>*
 <CR>			[count] lines downward, on the first non-blank
 			character |linewise|.
@@ -438,9 +438,9 @@ between Vi and Vim.
 }			[count] |paragraph|s forward.  |exclusive| motion.
 
 							*]]*
-]]			[count] |section|s forward or to the next '{' in the
+]]			[count] |section|s forward or to the next "{" in the
 			first column.  When used after an operator, then also
-			stops below a '}' in the first column.  |exclusive|
+			stops below a "}" in the first column.  |exclusive|
 			Note that |exclusive-linewise| often applies.
 
 							*][*
@@ -449,12 +449,12 @@ between Vi and Vim.
 			Note that |exclusive-linewise| often applies.
 
 							*[[*
-[[			[count] |section|s backward or to the previous '{' in
+[[			[count] |section|s backward or to the previous "{" in
 			the first column.  |exclusive|
 			Note that |exclusive-linewise| often applies.
 
 							*[]*
-[]			[count] |section|s backward or to the previous '}' in
+[]			[count] |section|s backward or to the previous "}" in
 			the first column.  |exclusive|
 			Note that |exclusive-linewise| often applies.
 
@@ -1004,8 +1004,8 @@ These commands are not marks themselves, but jump to a mark:
 			Note that ":keepjumps" must be used for every command.
 			When invoking a function the commands in that function
 			can still change the jumplist.  Also, for
-			":keepjumps exe 'command '" the "command" won't keep
-			jumps.  Instead use: ":exe 'keepjumps command'"
+			`:keepjumps exe 'command '` the "command" won't keep
+			jumps.  Instead use: `:exe 'keepjumps command'`
 
 ==============================================================================
 8. Jumps					*jump-motions*

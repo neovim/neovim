@@ -297,7 +297,7 @@ be able to give comments to the parts of the mapping. >
 (<> notation |<>|.  Note that this is all typed literally.  ^W is "^" "W", not
 CTRL-W.)
 
-Note that the last comment starts with |", because the ":execute" command
+Note that the last comment starts with `|"`, because the ":execute" command
 doesn't accept a comment directly.
 
 You also need to set 'textwidth' to a non-zero value, e.g., >

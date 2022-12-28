@@ -11,8 +11,9 @@ Lottem. <alottem at gmail dot com>  Ron Aaron <ron at ronware dot org> is
 currently helping support these features.
 
 
+------------------------------------------------------------------------------
 Introduction
-------------
+
 Hebrew-specific options are 'hkmap', 'hkmapp' 'keymap'=hebrew and 'aleph'.
 Hebrew-useful options are 'delcombine', 'allowrevins', 'revins', 'rightleft'
 and 'rightleftcmd'.
@@ -22,8 +23,9 @@ from right to left instead of the usual left to right.  This is useful
 primarily when editing Hebrew or other Middle-Eastern languages.
 See |rileft.txt| for further details.
 
+------------------------------------------------------------------------------
 Details
---------------
+
 +  Options:
    +  'rightleft' ('rl') sets window orientation to right-to-left.  This means
       that the logical text 'ABC' will be displayed as 'CBA', and will start
@@ -31,7 +33,7 @@ Details
    +  'hkmap' ('hk') sets keyboard mapping to Hebrew, in insert/replace modes.
    +  'aleph' ('al'), numeric, holds the decimal code of Aleph, for keyboard
       mapping.
-   +  'hkmapp' ('hkp') sets keyboard mapping to 'phonetic hebrew'
+   +  'hkmapp' ('hkp') sets keyboard mapping to "phonetic hebrew"
 
    NOTE: these three ('hkmap', 'hkmapp' and 'aleph') are obsolete.  You should
 	 use ":set keymap=hebrewp" instead.
@@ -51,7 +53,7 @@ Details
       ('deco' does nothing if UTF8 encoding is not active).
 
 +  Vim arguments:
-   +  'vim -H file' starts editing a Hebrew file, i.e. 'rightleft' and 'hkmap'
+   +  `vim -H file` starts editing a Hebrew file, i.e. 'rightleft' and 'hkmap'
       are set.
 
 +  Keyboard:
@@ -116,8 +118,9 @@ when exiting 'revins' via CTRL-_, the cursor moves to the end of the typed
 text (if possible).
 
 
+------------------------------------------------------------------------------
 Pasting when in a rightleft window
-----------------------------------
+
 When cutting text with the mouse and pasting it in a rightleft window
 the text will be reversed, because the characters come from the cut buffer
 from the left to the right, while inserted in the file from the right to
@@ -125,8 +128,9 @@ the left.   In order to avoid it, toggle 'revins' (by typing CTRL-? or CTRL-_)
 before pasting.
 
 
+------------------------------------------------------------------------------
 Hebrew characters and the 'isprint' variable
---------------------------------------------
+
 Sometimes Hebrew character codes are in the non-printable range defined by
 the 'isprint' variable.  For example in the Linux console, the Hebrew font
 encoding starts from 128, while the default 'isprint' variable is @,161-255.

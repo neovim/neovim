@@ -2821,12 +2821,12 @@ your browsing preferences.  (see also: |netrw-settings|)
 				function 'netrw_gitignore#Hide() automatically
 				hiding all gitignored files.
 				For more details see |netrw-gitignore|.
+				 default: ""
 
-				Examples:
-				 let g:netrw_list_hide= '.*\.swp$'
-				 let g:netrw_list_hide= netrw_gitignore#Hide() .. '.*\.swp$'
-				default: ""
-
+				Examples: >
+				  let g:netrw_list_hide= '.*\.swp$'
+				  let g:netrw_list_hide= netrw_gitignore#Hide() .. '.*\.swp$'
+<
   *g:netrw_localcopycmd*	="cp"           Linux/Unix/MacOS/Cygwin
 				=expand("$COMSPEC")             Windows
 				Copies marked files (|netrw-mf|) to target
@@ -3268,7 +3268,7 @@ If there are marked files:  (see |netrw-mf|)
     	mr  [query: reply with *.c]
 	R   [query: reply with s/^\(.*\)\.c$/\1.cpp/]
 <
-    This example will mark all *.c files and then rename them to *.cpp
+    This example will mark all "*.c" files and then rename them to "*.cpp"
     files.  Netrw will protect you from overwriting local files without
     confirmation, but not remote ones.
 
@@ -3280,7 +3280,7 @@ If there are marked files:  (see |netrw-mf|)
 	<c-x><c-x> : a pair of contiguous ctrl-x's tells netrw to ignore any
 		     portion of the string preceding the double ctrl-x's.
 <
-    WARNING:~
+    WARNING: ~
 
     Note that moving files is a dangerous operation; copies are safer.  That's
     because a "move" for remote files is actually a copy + delete -- and if
@@ -3776,9 +3776,9 @@ Example: Clear netrw's marked file list via a mapping on gu >
 <
 								*netrw-P22*
 	P22. I get an error message when I try to copy or move a file:      {{{2
-
+>
 		**error** (netrw) tried using g:netrw_localcopycmd<cp>; it doesn't work!
-
+<
 	     What's wrong?
 
 	     Netrw uses several system level commands to do things (see
@@ -4001,9 +4001,9 @@ netrw:
 		Nov 22, 2016	* (glacambre) reported that files containing
 				  spaces weren't being obtained properly via
 				  scp.  Fix: apparently using single quotes
-				  such as with 'file name' wasn't enough; the
+				  such as with "file name" wasn't enough; the
 				  spaces inside the quotes also had to be
-				  escaped (ie. 'file\ name').
+				  escaped (ie. "file\ name").
 				* Also fixed obtain (|netrw-O|) to be able to
 				  obtain files with spaces in their names
 		Dec 20, 2016	* (xc1427) Reported that using "I" (|netrw-I|)
