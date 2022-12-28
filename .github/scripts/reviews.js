@@ -60,6 +60,10 @@ module.exports = async ({github, context}) => {
     team_reviewers.push('lsp');
   }
 
+  if (labels.includes('platform:nix')) {
+    reviewers.add("teto")
+  }
+
   if (labels.includes('project-management')) {
     reviewers.add("bfredl")
     reviewers.add("justinmk")
