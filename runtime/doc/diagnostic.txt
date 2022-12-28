@@ -209,6 +209,11 @@ DiagnosticHint
     Used as the base highlight group.
     Other Diagnostic highlights link to this by default (except Underline)
 
+                                                        *hl-DiagnosticOk*
+DiagnosticOk
+    Used as the base highlight group.
+    Other Diagnostic highlights link to this by default (except Underline)
+
                                         *hl-DiagnosticVirtualTextError*
 DiagnosticVirtualTextError
     Used for "Error" diagnostic virtual text.
@@ -225,6 +230,10 @@ DiagnosticVirtualTextInfo
 DiagnosticVirtualTextHint
     Used for "Hint" diagnostic virtual text.
 
+                                                *hl-DiagnosticVirtualTextOk*
+DiagnosticVirtualTextOk
+    Used for "Ok" diagnostic virtual text.
+
                                                 *hl-DiagnosticUnderlineError*
 DiagnosticUnderlineError
     Used to underline "Error" diagnostics.
@@ -240,6 +249,10 @@ DiagnosticUnderlineInfo
                                                 *hl-DiagnosticUnderlineHint*
 DiagnosticUnderlineHint
     Used to underline "Hint" diagnostics.
+
+                                                *hl-DiagnosticUnderlineOk*
+DiagnosticUnderlineOk
+    Used to underline "Ok" diagnostics.
 
                                                 *hl-DiagnosticFloatingError*
 DiagnosticFloatingError
@@ -258,6 +271,10 @@ DiagnosticFloatingInfo
 DiagnosticFloatingHint
     Used to color "Hint" diagnostic messages in diagnostics float.
 
+                                                *hl-DiagnosticFloatingOk*
+DiagnosticFloatingOk
+    Used to color "Ok" diagnostic messages in diagnostics float.
+
                                                 *hl-DiagnosticSignError*
 DiagnosticSignError
     Used for "Error" signs in sign column.
@@ -273,6 +290,10 @@ DiagnosticSignInfo
                                                 *hl-DiagnosticSignHint*
 DiagnosticSignHint
     Used for "Hint" signs in sign column.
+
+                                                *hl-DiagnosticSignOk*
+DiagnosticSignOk
+    Used for "Ok" signs in sign column.
 
 ==============================================================================
 SIGNS                                                   *diagnostic-signs*
