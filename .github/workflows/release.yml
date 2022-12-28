@@ -36,7 +36,9 @@ jobs:
         id: build
         run: |
           CC=gcc-10 make CMAKE_BUILD_TYPE=${NVIM_BUILD_TYPE} CMAKE_EXTRA_FLAGS="-DCMAKE_INSTALL_PREFIX:PATH="
-          printf 'version=%s\n' "$(./build/bin/nvim --version | head -n 3 | sed -z 's/\n/%0A/g')" >> $GITHUB_OUTPUT
+          printf 'version<<END\n' >> $GITHUB_OUTPUT
+          ./build/bin/nvim --version | head -n 3 >> $GITHUB_OUTPUT
+          printf 'END\n' >> $GITHUB_OUTPUT
           printf 'release=%s\n' "$(./build/bin/nvim --version | head -n 1)" >> $GITHUB_OUTPUT
           make DESTDIR="$GITHUB_WORKSPACE/build/release/nvim-linux64" install
           cd "$GITHUB_WORKSPACE/build/"
