@@ -421,7 +421,7 @@ let s:filename_checks = {
     \ 'pdf': ['file.pdf'],
     \ 'perl': ['file.plx', 'file.al', 'file.psgi', 'gitolite.rc', '.gitolite.rc', 'example.gitolite.rc', '.latexmkrc', 'latexmkrc'],
     \ 'pf': ['pf.conf'],
-    \ 'pfmain': ['main.cf'],
+    \ 'pfmain': ['main.cf', 'main.cf.proto'],
     \ 'php': ['file.php', 'file.php9', 'file.phtml', 'file.ctp', 'file.phpt', 'file.theme'],
     \ 'pike': ['file.pike', 'file.pmod'],
     \ 'pilrc': ['file.rcp'],
