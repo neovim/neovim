@@ -229,7 +229,9 @@ void get_mode(char *buf)
 /// Fires a ModeChanged autocmd if appropriate.
 void may_trigger_modechanged(void)
 {
-  if (!has_event(EVENT_MODECHANGED)) {
+  // Skip this when got_int is set, the autocommand will not be executed.
+  // Better trigger it next time.
+  if (!has_event(EVENT_MODECHANGED) || got_int) {
     return;
   }
 
