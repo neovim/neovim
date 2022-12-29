@@ -4851,7 +4851,7 @@ Note that the ":syntax" command can be abbreviated to ":sy", although ":syn"
 is mostly used, because it looks better.
 
 ==============================================================================
-12. Highlight command			*:highlight* *:hi* *E28* *E411* *E415*
+13. Highlight command			*:highlight* *:hi* *E28* *E411* *E415*
 
 There are two types of highlight groups:
 - The built-in |highlight-groups|.
@@ -5333,7 +5333,7 @@ Tooltip		Current font, background and foreground of the tooltips.
 		Applicable highlight arguments: font, guibg, guifg.
 
 ==============================================================================
-13. Linking groups		*:hi-link* *:highlight-link* *E412* *E413*
+14. Linking groups		*:hi-link* *:highlight-link* *E412* *E413*
 
 When you want to use the same highlighting for several syntax groups, you
 can do this more easily by linking the groups into one common highlight
@@ -5492,7 +5492,7 @@ is loaded into that window or the file is reloaded.
 When splitting the window, the new window will use the original syntax.
 
 ==============================================================================
-17. Color xterms				*xterm-color* *color-xterm*
+18. Color xterms				*xterm-color* *color-xterm*
 
 							*colortest.vim*
 To test your color setup, a file has been included in the Vim distribution.
@@ -5502,7 +5502,7 @@ To use it, execute this command: >
 Nvim uses 256-color and |true-color| terminal capabilities wherever possible.
 
 ==============================================================================
-18. When syntax is slow						*:syntime*
+19. When syntax is slow						*:syntime*
 
 This is aimed at authors of a syntax file.
 
