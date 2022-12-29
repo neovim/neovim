@@ -13,6 +13,7 @@ local feed_command = helpers.feed_command
 local feed_data = thelpers.feed_data
 local clear = helpers.clear
 local command = helpers.command
+local exec = helpers.exec
 local testprg = helpers.testprg
 local retry = helpers.retry
 local nvim_prog = helpers.nvim_prog
@@ -88,24 +89,6 @@ describe('TUI', function()
     screen:try_resize(57, 17)
     command('call jobresize(b:terminal_job_id, 57, 17)')
     assert_alive()
-  end)
-
-  it('resize at startup', function()
-    -- Issues: #17285 #15044 #11330
-    screen:try_resize(50, 10)
-    feed_command([[call termopen([v:progpath, '--clean', '--cmd', 'let start = reltime() | while v:true | if reltimefloat(reltime(start)) > 2 | break | endif | endwhile']) | sleep 500m | vs new]])
-    screen:expect([[
-      {1: }                        │                        |
-      {4:~                        }│{4:~                       }|
-      {4:~                        }│{4:~                       }|
-      {4:~                        }│{4:~                       }|
-      {4:~                        }│{4:~                       }|
-      {4:~                        }│{5:[No Name]   0,0-1    All}|
-      {4:~                        }│                        |
-      {5:new                       }{MATCH:<.*[/\]nvim }|
-                                                        |
-      {3:-- TERMINAL --}                                    |
-    ]])
   end)
 
   it('accepts resize while pager is active', function()
@@ -1435,6 +1418,35 @@ describe('TUI', function()
   before_each(clear)
   after_each(function()
     os.remove('testF')
+  end)
+
+  it('resize at startup #17285 #15044 #11330', function()
+    local screen = Screen.new(50, 10)
+    screen:set_default_attr_ids({
+      [1] = {reverse = true},
+      [2] = {bold = true, foreground = Screen.colors.Blue},
+      [3] = {bold = true},
+      [4] = {foreground = tonumber('0x4040ff'), fg_indexed = true},
+      [5] = {bold = true, reverse = true},
+    })
+    screen:attach()
+    exec([[
+      call termopen([v:progpath, '--clean', '--cmd', 'let start = reltime() | while v:true | if reltimefloat(reltime(start)) > 2 | break | endif | endwhile'])
+      sleep 500m
+      vs new
+    ]])
+    screen:expect([[
+      ^                         │                        |
+      {2:~                        }│{4:~                       }|
+      {2:~                        }│{4:~                       }|
+      {2:~                        }│{4:~                       }|
+      {2:~                        }│{4:~                       }|
+      {2:~                        }│{4:~                       }|
+      {2:~                        }│{5:[No Name]   0,0-1    All}|
+      {2:~                        }│                        |
+      {5:new                       }{MATCH:<.*[/\]nvim }|
+                                                        |
+    ]])
   end)
 
   it('with non-tty (pipe) stdout/stderr', function()
