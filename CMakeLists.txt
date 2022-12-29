@@ -133,8 +133,8 @@ endif()
 # version string, else they are combined with the result of `git describe`.
 set(NVIM_VERSION_MAJOR 0)
 set(NVIM_VERSION_MINOR 8)
-set(NVIM_VERSION_PATCH 2)
-set(NVIM_VERSION_PRERELEASE "") # for package maintainers
+set(NVIM_VERSION_PATCH 3)
+set(NVIM_VERSION_PRERELEASE "-dev") # for package maintainers
 
 # API level
 set(NVIM_API_LEVEL 10)         # Bump this after any API change.
