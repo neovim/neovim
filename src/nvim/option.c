@@ -2280,6 +2280,8 @@ static char *set_num_option(int opt_idx, char_u *varp, long value, char *errbuf,
     int minval = 0;
     if (value < minval) {
       errmsg = e_positive;
+    } else {
+      p_ch_was_zero = value == 0;
     }
   } else if (pp == &p_tm) {
     if (value < 0) {

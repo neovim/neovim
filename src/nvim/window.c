@@ -5758,8 +5758,8 @@ static void frame_setheight(frame_T *curfrp, int height)
     if (height > ROWS_AVAIL) {
       // If height is greater than the available space, try to create space for
       // the frame by reducing 'cmdheight' if possible, while making sure
-      // `cmdheight` doesn't go below 1.
-      height = (int)MIN((p_ch > 0 ? ROWS_AVAIL + (p_ch - 1) : ROWS_AVAIL), height);
+      // `cmdheight` doesn't go below 1 if it wasn't set to 0 explicitly.
+      height = (int)MIN(ROWS_AVAIL + p_ch - !p_ch_was_zero, height);
     }
     if (height > 0) {
       frame_new_height(curfrp, height, false, false);
@@ -6090,8 +6090,6 @@ void win_setminwidth(void)
 /// Status line of dragwin is dragged "offset" lines down (negative is up).
 void win_drag_status_line(win_T *dragwin, int offset)
 {
-  static bool p_ch_was_zero = false;
-
   // If the user explicitly set 'cmdheight' to zero, then allow for dragging
   // the status line making it zero again.
   if (p_ch == 0) {

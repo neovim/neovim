@@ -35,6 +35,8 @@
 #define MIN_COLUMNS     12      // minimal columns for screen
 #define MIN_LINES       2       // minimal lines for screen
 
+// Set to true if 'cmdheight' was explicitly set to 0.
+EXTERN bool p_ch_was_zero INIT(= false);
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "window.h.generated.h"
 #endif
