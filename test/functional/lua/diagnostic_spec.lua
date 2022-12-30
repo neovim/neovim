@@ -2129,11 +2129,20 @@ end)
         return vim.diagnostic.buf_in_disable(diagnostic_bufnr)
       ]])
 
+      eq(true, exec_lua [[
+        vim.diagnostic.set(diagnostic_ns, diagnostic_bufnr, {
+          make_error('Diagnostic #1', 1, 1, 1, 1),
+        })
+        vim.diagnostic.disable()
+        return vim.diagnostic.buf_in_disable(diagnostic_bufnr)
+      ]])
+
       eq(false, exec_lua [[
         local tmp = vim.api.nvim_create_buf(false, true)
         vim.diagnostic.set(diagnostic_ns, tmp, {
           make_error('Diagnostic #1', 1, 1, 1, 1),
         })
+        vim.diagnostic.enable()
         return vim.diagnostic.buf_in_disable(tmp)
       ]])
     end)

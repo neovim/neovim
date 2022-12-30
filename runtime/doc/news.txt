@@ -96,7 +96,7 @@ The following new APIs or features were added.
 
   See https://github.com/neovim/neovim/pull/14537.
 
-• |vimdiagnostic.buf_in_disable| check diagnostic disabled in given buffer or
+• |vim.diagnostic.buf_in_disable| check diagnostic disabled in given buffer or
   current buffer.
 ==============================================================================
 CHANGED FEATURES                                                 *news-changes*
