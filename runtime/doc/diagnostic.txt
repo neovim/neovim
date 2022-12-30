@@ -311,6 +311,16 @@ Example: >lua
 ==============================================================================
 Lua module: vim.diagnostic                                    *diagnostic-api*
 
+buf_in_disable({bufnr})                      *vim.diagnostic.buf_in_disable()*
+    Check diagnostic enabled in buffer
+
+    Parameters: ~
+      • {bufnr}  (number|nil) Buffer number to get diagnostics from. Use 0 for
+                 current buffer or nil for all buffers.
+
+    Return: ~
+        (boolean)
+
 config({opts}, {namespace})                          *vim.diagnostic.config()*
     Configure diagnostic options globally or for a specific diagnostic
     namespace.
