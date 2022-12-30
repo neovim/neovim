@@ -5658,15 +5658,11 @@ static void ex_sleep(exarg_T *eap)
   do_sleep(len);
 }
 
-/// Sleep for "msec" milliseconds, but keep checking for a CTRL-C every second.
+/// Sleep for "msec" milliseconds, but return early on CTRL-C.
 void do_sleep(long msec)
 {
   ui_flush();  // flush before waiting
-  for (long left = msec; !got_int && left > 0; left -= 1000L) {
-    int next = left > 1000L ? 1000 : (int)left;
-    LOOP_PROCESS_EVENTS_UNTIL(&main_loop, main_loop.events, (int)next, got_int);
-    os_breakcheck();
-  }
+  LOOP_PROCESS_EVENTS_UNTIL(&main_loop, main_loop.events, msec, got_int);
 
   // If CTRL-C was typed to interrupt the sleep, drop the CTRL-C from the
   // input buffer, otherwise a following call to input() fails.
