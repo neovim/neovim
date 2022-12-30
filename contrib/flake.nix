@@ -10,9 +10,12 @@
     {
       overlay = final: prev: {
 
-        neovim = final.neovim-unwrapped.overrideAttrs (oa: {
-          version = "master";
+        neovim = final.neovim-unwrapped.overrideAttrs (oa: rec {
+          version = self.shortRev or "dirty";
           src = ../.;
+          preConfigure = ''
+            sed -i cmake.config/versiondef.h.in -e 's/@NVIM_VERSION_PRERELEASE@/-dev-${version}/'
+          '';
         });
 
         # a development binary to help debug issues
