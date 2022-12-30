@@ -575,32 +575,34 @@ static int may_add_char_to_search(int firstc, int *c, incsearch_state_T *s)
 
 static void finish_incsearch_highlighting(int gotesc, incsearch_state_T *s, bool call_update_screen)
 {
-  if (s->did_incsearch) {
-    s->did_incsearch = false;
-    if (gotesc) {
+  if (!s->did_incsearch) {
+    return;
+  }
+
+  s->did_incsearch = false;
+  if (gotesc) {
+    curwin->w_cursor = s->save_cursor;
+  } else {
+    if (!equalpos(s->save_cursor, s->search_start)) {
+      // put the '" mark at the original position
       curwin->w_cursor = s->save_cursor;
-    } else {
-      if (!equalpos(s->save_cursor, s->search_start)) {
-        // put the '" mark at the original position
-        curwin->w_cursor = s->save_cursor;
-        setpcmark();
-      }
-      curwin->w_cursor = s->search_start;  // -V519
+      setpcmark();
     }
-    restore_viewstate(curwin, &s->old_viewstate);
-    highlight_match = false;
+    curwin->w_cursor = s->search_start;  // -V519
+  }
+  restore_viewstate(curwin, &s->old_viewstate);
+  highlight_match = false;
 
-    // by default search all lines
-    search_first_line = 0;
-    search_last_line = MAXLNUM;
+  // by default search all lines
+  search_first_line = 0;
+  search_last_line = MAXLNUM;
 
-    magic_overruled = s->magic_overruled_save;
+  magic_overruled = s->magic_overruled_save;
 
-    validate_cursor();          // needed for TAB
-    redraw_all_later(UPD_SOME_VALID);
-    if (call_update_screen) {
-      update_screen();
-    }
+  validate_cursor();          // needed for TAB
+  redraw_all_later(UPD_SOME_VALID);
+  if (call_update_screen) {
+    update_screen();
   }
 }
 
