@@ -4277,7 +4277,9 @@ static int leave_tabpage(buf_T *new_curbuf, bool trigger_leave_autocmds)
   tp->tp_firstwin = firstwin;
   tp->tp_lastwin = lastwin;
   tp->tp_old_Rows_avail = ROWS_AVAIL;
-  tp->tp_old_Columns = Columns;
+  if (tp->tp_old_Columns != -1) {
+    tp->tp_old_Columns = Columns;
+  }
   firstwin = NULL;
   lastwin = NULL;
   return OK;
@@ -4340,8 +4342,13 @@ static void enter_tabpage(tabpage_T *tp, buf_T *old_curbuf, bool trigger_enter_a
   if (curtab->tp_old_Rows_avail != ROWS_AVAIL || (old_off != firstwin->w_winrow)) {
     win_new_screen_rows();
   }
-  if (curtab->tp_old_Columns != Columns && starting == 0) {
-    win_new_screen_cols();  // update window widths
+  if (curtab->tp_old_Columns != Columns) {
+    if (starting == 0) {
+      win_new_screen_cols();  // update window widths
+      curtab->tp_old_Columns = Columns;
+    } else {
+      curtab->tp_old_Columns = -1;  // update window widths later
+    }
   }
 
   lastused_tabpage = old_curtab;
