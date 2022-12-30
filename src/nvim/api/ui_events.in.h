@@ -37,7 +37,7 @@ void set_title(String title)
 void set_icon(String icon)
   FUNC_API_SINCE(3);
 void screenshot(String path)
-  FUNC_API_SINCE(7) FUNC_API_REMOTE_IMPL;
+  FUNC_API_SINCE(7);
 void option_set(String name, Object value)
   FUNC_API_SINCE(4);
 // Stop event is not exported as such, represented by EOF in the msgpack stream.
@@ -75,7 +75,7 @@ void default_colors_set(Integer rgb_fg, Integer rgb_bg, Integer rgb_sp, Integer 
 void hl_attr_define(Integer id, HlAttrs rgb_attrs, HlAttrs cterm_attrs, Array info)
   FUNC_API_SINCE(5) FUNC_API_REMOTE_IMPL;
 void hl_group_set(String name, Integer id)
-  FUNC_API_SINCE(6);
+  FUNC_API_SINCE(6) FUNC_API_CLIENT_IGNORE;
 void grid_resize(Integer grid, Integer width, Integer height)
   FUNC_API_SINCE(5) FUNC_API_REMOTE_IMPL FUNC_API_COMPOSITOR_IMPL FUNC_API_CLIENT_IMPL;
 void grid_clear(Integer grid)
@@ -97,9 +97,6 @@ void raw_line(Integer grid, Integer row, Integer startcol, Integer endcol, Integ
               Integer clearattr, LineFlags flags, const schar_T *chunk, const sattr_T *attrs)
   FUNC_API_NOEXPORT FUNC_API_COMPOSITOR_IMPL;
 
-void event(char *name, Array args)
-  FUNC_API_NOEXPORT FUNC_API_COMPOSITOR_IMPL;
-
 void win_pos(Integer grid, Window win, Integer startrow, Integer startcol, Integer width,
              Integer height)
   FUNC_API_SINCE(6) FUNC_API_REMOTE_ONLY;
@@ -114,11 +111,11 @@ void win_close(Integer grid)
   FUNC_API_SINCE(6) FUNC_API_REMOTE_ONLY;
 
 void msg_set_pos(Integer grid, Integer row, Boolean scrolled, String sep_char)
-  FUNC_API_SINCE(6) FUNC_API_COMPOSITOR_IMPL;
+  FUNC_API_SINCE(6) FUNC_API_COMPOSITOR_IMPL FUNC_API_CLIENT_IGNORE;
 
 void win_viewport(Integer grid, Window win, Integer topline, Integer botline, Integer curline,
                   Integer curcol, Integer line_count)
-  FUNC_API_SINCE(7) FUNC_API_BRIDGE_IMPL;
+  FUNC_API_SINCE(7) FUNC_API_CLIENT_IGNORE;
 
 void win_extmark(Integer grid, Window win, Integer ns_id, Integer mark_id, Integer row, Integer col)
   FUNC_API_SINCE(10) FUNC_API_REMOTE_ONLY;
@@ -150,11 +147,11 @@ void cmdline_block_hide(void)
   FUNC_API_SINCE(3) FUNC_API_REMOTE_ONLY;
 
 void wildmenu_show(Array items)
-  FUNC_API_SINCE(3) FUNC_API_REMOTE_IMPL;
+  FUNC_API_SINCE(3) FUNC_API_REMOTE_ONLY;
 void wildmenu_select(Integer selected)
-  FUNC_API_SINCE(3) FUNC_API_REMOTE_IMPL;
+  FUNC_API_SINCE(3) FUNC_API_REMOTE_ONLY;
 void wildmenu_hide(void)
-  FUNC_API_SINCE(3) FUNC_API_REMOTE_IMPL;
+  FUNC_API_SINCE(3) FUNC_API_REMOTE_ONLY;
 
 void msg_show(String kind, Array content, Boolean replace_last)
   FUNC_API_SINCE(6) FUNC_API_REMOTE_ONLY;

@@ -23,7 +23,6 @@
 #include "nvim/highlight.h"
 #include "nvim/highlight_group.h"
 #include "nvim/log.h"
-#include "nvim/lua/executor.h"
 #include "nvim/macros.h"
 #include "nvim/map.h"
 #include "nvim/memory.h"
@@ -39,7 +38,6 @@
 # include "ui_compositor.c.generated.h"
 #endif
 
-static UI *compositor = NULL;
 static int composed_uis = 0;
 kvec_t(ScreenGrid *) layers = KV_INITIAL_VALUE;
 
@@ -60,52 +58,12 @@ static bool msg_was_scrolled = false;
 static int msg_sep_row = -1;
 static schar_T msg_sep_char = { ' ', NUL };
 
-static PMap(uint32_t) ui_event_cbs = MAP_INIT;
-
 static int dbghl_normal, dbghl_clear, dbghl_composed, dbghl_recompose;
 
 void ui_comp_init(void)
 {
-  if (compositor != NULL) {
-    return;
-  }
-  compositor = xcalloc(1, sizeof(UI));
-
-  compositor->rgb = true;
-  compositor->grid_resize = ui_comp_grid_resize;
-  compositor->grid_scroll = ui_comp_grid_scroll;
-  compositor->grid_cursor_goto = ui_comp_grid_cursor_goto;
-  compositor->raw_line = ui_comp_raw_line;
-  compositor->msg_set_pos = ui_comp_msg_set_pos;
-  compositor->event = ui_comp_event;
-
-  // Be unopinionated: will be attached together with a "real" ui anyway
-  compositor->width = INT_MAX;
-  compositor->height = INT_MAX;
-  for (UIExtension i = kUIGlobalCount; (int)i < kUIExtCount; i++) {
-    compositor->ui_ext[i] = true;
-  }
-
-  // TODO(bfredl): one day. in the future.
-  compositor->ui_ext[kUIMultigrid] = false;
-
-  // TODO(bfredl): this will be more complicated if we implement
-  // hlstate per UI (i e reduce hl ids for non-hlstate UIs)
-  compositor->ui_ext[kUIHlState] = false;
-
   kv_push(layers, &default_grid);
   curgrid = &default_grid;
-
-  ui_attach_impl(compositor, 0);
-}
-
-void ui_comp_free_all_mem(void)
-{
-  UIEventCallback *event_cb;
-  map_foreach_value(&ui_event_cbs, event_cb, {
-    free_ui_event_callback(event_cb);
-  })
-  pmap_destroy(uint32_t)(&ui_event_cbs);
 }
 
 void ui_comp_syn_init(void)
@@ -258,7 +216,7 @@ bool ui_comp_set_grid(handle_T handle)
   return false;
 }
 
-static void ui_comp_raise_grid(ScreenGrid *grid, size_t new_index)
+void ui_comp_raise_grid(ScreenGrid *grid, size_t new_index)
 {
   size_t old_index = grid->comp_index;
   for (size_t i = old_index; i < new_index; i++) {
@@ -278,7 +236,7 @@ static void ui_comp_raise_grid(ScreenGrid *grid, size_t new_index)
   }
 }
 
-static void ui_comp_grid_cursor_goto(UI *ui, Integer grid_handle, Integer r, Integer c)
+void ui_comp_grid_cursor_goto(Integer grid_handle, Integer r, Integer c)
 {
   if (!ui_comp_should_draw() || !ui_comp_set_grid((int)grid_handle)) {
     return;
@@ -538,9 +496,9 @@ void ui_comp_compose_grid(ScreenGrid *grid)
   }
 }
 
-static void ui_comp_raw_line(UI *ui, Integer grid, Integer row, Integer startcol, Integer endcol,
-                             Integer clearcol, Integer clearattr, LineFlags flags,
-                             const schar_T *chunk, const sattr_T *attrs)
+void ui_comp_raw_line(Integer grid, Integer row, Integer startcol, Integer endcol, Integer clearcol,
+                      Integer clearattr, LineFlags flags, const schar_T *chunk,
+                      const sattr_T *attrs)
 {
   if (!ui_comp_should_draw() || !ui_comp_set_grid((int)grid)) {
     return;
@@ -605,8 +563,7 @@ bool ui_comp_set_screen_valid(bool valid)
   return old_val;
 }
 
-static void ui_comp_msg_set_pos(UI *ui, Integer grid, Integer row, Boolean scrolled,
-                                String sep_char)
+void ui_comp_msg_set_pos(Integer grid, Integer row, Boolean scrolled, String sep_char)
 {
   msg_grid.comp_row = (int)row;
   if (scrolled && row > 0) {
@@ -650,8 +607,8 @@ static bool curgrid_covered_above(int row)
   return kv_size(layers) - (above_msg?1:0) > curgrid->comp_index + 1;
 }
 
-static void ui_comp_grid_scroll(UI *ui, Integer grid, Integer top, Integer bot, Integer left,
-                                Integer right, Integer rows, Integer cols)
+void ui_comp_grid_scroll(Integer grid, Integer top, Integer bot, Integer left, Integer right,
+                         Integer rows, Integer cols)
 {
   if (!ui_comp_should_draw() || !ui_comp_set_grid((int)grid)) {
     return;
@@ -685,7 +642,7 @@ static void ui_comp_grid_scroll(UI *ui, Integer grid, Integer top, Integer bot, 
   }
 }
 
-static void ui_comp_grid_resize(UI *ui, Integer grid, Integer width, Integer height)
+void ui_comp_grid_resize(Integer grid, Integer width, Integer height)
 {
   if (grid == 1) {
     ui_composed_call_grid_resize(1, width, height);
@@ -702,76 +659,4 @@ static void ui_comp_grid_resize(UI *ui, Integer grid, Integer width, Integer hei
       bufsize = new_bufsize;
     }
   }
-}
-
-static void ui_comp_event(UI *ui, char *name, Array args)
-{
-  UIEventCallback *event_cb;
-  bool handled = false;
-  map_foreach_value(&ui_event_cbs, event_cb, {
-    Error err = ERROR_INIT;
-    Object res = nlua_call_ref(event_cb->cb, name, args, false, &err);
-    if (res.type == kObjectTypeBoolean && res.data.boolean == true) {
-      handled = true;
-    }
-    if (ERROR_SET(&err)) {
-      ELOG("Error while executing ui_comp_event callback: %s", err.msg);
-    }
-    api_clear_error(&err);
-  })
-
-  if (!handled) {
-    ui_composed_call_event(name, args);
-  }
-}
-
-static void ui_comp_update_ext(void)
-{
-  memset(compositor->ui_ext, 0, ARRAY_SIZE(compositor->ui_ext));
-
-  for (size_t i = 0; i < kUIGlobalCount; i++) {
-    UIEventCallback *event_cb;
-
-    map_foreach_value(&ui_event_cbs, event_cb, {
-      if (event_cb->ext_widgets[i]) {
-        compositor->ui_ext[i] = true;
-        break;
-      }
-    })
-  }
-}
-
-void free_ui_event_callback(UIEventCallback *event_cb)
-{
-  api_free_luaref(event_cb->cb);
-  xfree(event_cb);
-}
-
-void ui_comp_add_cb(uint32_t ns_id, LuaRef cb, bool *ext_widgets)
-{
-  UIEventCallback *event_cb = xcalloc(1, sizeof(UIEventCallback));
-  event_cb->cb = cb;
-  memcpy(event_cb->ext_widgets, ext_widgets, ARRAY_SIZE(event_cb->ext_widgets));
-  if (event_cb->ext_widgets[kUIMessages]) {
-    event_cb->ext_widgets[kUICmdline] = true;
-  }
-
-  UIEventCallback **item = (UIEventCallback **)pmap_ref(uint32_t)(&ui_event_cbs, ns_id, true);
-  if (*item) {
-    free_ui_event_callback(*item);
-  }
-  *item = event_cb;
-
-  ui_comp_update_ext();
-  ui_refresh();
-}
-
-void ui_comp_remove_cb(uint32_t ns_id)
-{
-  if (pmap_has(uint32_t)(&ui_event_cbs, ns_id)) {
-    free_ui_event_callback(pmap_get(uint32_t)(&ui_event_cbs, ns_id));
-    pmap_del(uint32_t)(&ui_event_cbs, ns_id);
-  }
-  ui_comp_update_ext();
-  ui_refresh();
 }

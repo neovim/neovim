@@ -653,7 +653,7 @@ ok:
   }
 
   LuaRef ui_event_cb = nlua_ref_global(lstate, 3);
-  ui_comp_add_cb(ns_id, ui_event_cb, ext_widgets);
+  ui_add_cb(ns_id, ui_event_cb, ext_widgets);
   return 0;
 }
 
@@ -667,7 +667,7 @@ static int nlua_ui_detach(lua_State *lstate)
     return luaL_error(lstate, "invalid ns_id");
   }
 
-  ui_comp_remove_cb(ns_id);
+  ui_remove_cb(ns_id);
   return 0;
 }
 

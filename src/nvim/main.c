@@ -627,11 +627,13 @@ void os_exit(int r)
 {
   exiting = true;
 
-  if (!ui_client_channel_id) {
+  if (ui_client_channel_id) {
+    ui_client_stop();
+  } else {
     ui_flush();
+    ui_call_stop();
+    ml_close_all(true);           // remove all memfiles
   }
-  ui_call_stop();
-  ml_close_all(true);           // remove all memfiles
 
   if (!event_teardown() && r == 0) {
     r = 1;  // Exit with error if main_loop did not teardown gracefully.

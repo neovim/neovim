@@ -15,8 +15,11 @@
 #include "nvim/main.h"
 #include "nvim/memory.h"
 #include "nvim/msgpack_rpc/channel.h"
+#include "nvim/tui/tui.h"
 #include "nvim/ui.h"
 #include "nvim/ui_client.h"
+
+static TUIData *tui = NULL;
 
 // uncrustify:off
 #ifdef INCLUDE_GENERATED_DECLARATIONS
@@ -24,6 +27,7 @@
 # include "ui_events_client.generated.h"
 #endif
 // uncrustify:on
+//
 
 uint64_t ui_client_start_server(int argc, char **argv)
 {
@@ -52,20 +56,20 @@ uint64_t ui_client_start_server(int argc, char **argv)
 void ui_client_run(bool remote_ui)
   FUNC_ATTR_NORETURN
 {
-  ui_builtin_start();
-
-  loop_poll_events(&main_loop, 1);
+  int width, height;
+  char *term;
+  tui = tui_start(&width, &height, &term);
 
   MAXSIZE_TEMP_ARRAY(args, 3);
-  ADD_C(args, INTEGER_OBJ(Columns));
-  ADD_C(args, INTEGER_OBJ(Rows));
+  ADD_C(args, INTEGER_OBJ(width));
+  ADD_C(args, INTEGER_OBJ(height));
 
   MAXSIZE_TEMP_DICT(opts, 9);
   PUT_C(opts, "rgb", BOOLEAN_OBJ(true));
   PUT_C(opts, "ext_linegrid", BOOLEAN_OBJ(true));
   PUT_C(opts, "ext_termcolors", BOOLEAN_OBJ(true));
-  if (ui_client_termname) {
-    PUT_C(opts, "term_name", STRING_OBJ(cstr_as_string(ui_client_termname)));
+  if (term) {
+    PUT(opts, "term_name", STRING_OBJ(cstr_to_string(term)));
   }
   if (ui_client_bg_respose != kNone) {
     bool is_dark = (ui_client_bg_respose == kTrue);
@@ -80,12 +84,29 @@ void ui_client_run(bool remote_ui)
     }
   }
   ADD_C(args, DICTIONARY_OBJ(opts));
+
   rpc_send_event(ui_client_channel_id, "nvim_ui_attach", args);
   ui_client_attached = true;
 
   // os_exit() will be invoked when the client channel detaches
   while (true) {
     LOOP_PROCESS_EVENTS(&main_loop, resize_events, -1);
+  }
+}
+
+void ui_client_stop(void)
+{
+  tui_stop(tui);
+}
+
+void ui_client_set_size(int width, int height)
+{
+  // The currently known size will be sent when attaching
+  if (ui_client_attached) {
+    MAXSIZE_TEMP_ARRAY(args, 2);
+    ADD_C(args, INTEGER_OBJ((int)width));
+    ADD_C(args, INTEGER_OBJ((int)height));
+    rpc_send_event(ui_client_channel_id, "nvim_ui_try_resize", args);
   }
 }
 
@@ -133,7 +154,7 @@ void ui_client_event_grid_resize(Array args)
   Integer grid = args.items[0].data.integer;
   Integer width = args.items[1].data.integer;
   Integer height = args.items[2].data.integer;
-  ui_call_grid_resize(grid, width, height);
+  tui_grid_resize(tui, grid, width, height);
 
   if (grid_line_buf_size < (size_t)width) {
     xfree(grid_line_buf_char);
@@ -159,6 +180,6 @@ void ui_client_event_raw_line(GridLineEvent *g)
   // TODO(hlpr98): Accommodate other LineFlags when included in grid_line
   LineFlags lineflags = 0;
 
-  ui_call_raw_line(grid, row, startcol, endcol, clearcol, g->cur_attr, lineflags,
-                   (const schar_T *)grid_line_buf_char, grid_line_buf_attr);
+  tui_raw_line(tui, grid, row, startcol, endcol, clearcol, g->cur_attr, lineflags,
+               (const schar_T *)grid_line_buf_char, grid_line_buf_attr);
 }

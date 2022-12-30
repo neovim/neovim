@@ -34,8 +34,6 @@ EXTERN TriState ui_client_bg_respose INIT(= kNone);
 /// by convention, this uses fd=3 (next free number after stdio)
 EXTERN bool ui_client_forward_stdin INIT(= false);
 
-EXTERN char *ui_client_termname INIT(= NULL);
-
 #define UI_CLIENT_STDIN_FD 3
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "ui_client.h.generated.h"
