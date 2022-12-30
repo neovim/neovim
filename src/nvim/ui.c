@@ -235,7 +235,7 @@ void ui_refresh(void)
   }
 
   if (ext_widgets[kUIMessages]) {
-    p_ch = 0;
+    set_option_value("cmdheight", 0L, NULL, 0);
     command_height();
   }
   ui_mode_info_set();
