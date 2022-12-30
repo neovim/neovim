@@ -277,7 +277,7 @@ describe('vim.diagnostic', function()
     ]])
 
     -- Clear diagnostics from namespace 1, and make sure we have the right amount of stuff for namespace 2
-    eq({0, 0, 0, 0, 2}, exec_lua [[
+    eq({1, 1, 2, 0, 2}, exec_lua [[
       vim.diagnostic.disable(diagnostic_bufnr, diagnostic_ns)
       return {
         count_diagnostics(diagnostic_bufnr, vim.diagnostic.severity.ERROR, diagnostic_ns),
@@ -289,7 +289,7 @@ describe('vim.diagnostic', function()
     ]])
 
     -- Show diagnostics from namespace 1 again
-    eq({0, 0, 0, 0, 2}, exec_lua([[
+    eq(all_highlights, exec_lua([[
       vim.diagnostic.enable(diagnostic_bufnr, diagnostic_ns)
       return {
         count_diagnostics(diagnostic_bufnr, vim.diagnostic.severity.ERROR, diagnostic_ns),
@@ -322,7 +322,7 @@ describe('vim.diagnostic', function()
       }
     ]])
 
-    eq({0, 0}, exec_lua [[
+    eq({4, 0}, exec_lua [[
       vim.diagnostic.enable(diagnostic_bufnr, diagnostic_ns)
       vim.diagnostic.disable(diagnostic_bufnr, other_ns)
 
@@ -633,8 +633,8 @@ describe('vim.diagnostic', function()
       eq(4, result[1])
       eq(2, result[2])
       eq(1, result[3])
-      eq(1, result[4])
-      eq(1, result[5])
+      eq(3, result[4])
+      eq(3, result[5])
     end)
   end)
 
@@ -853,27 +853,6 @@ end)
           make_warning("Warning on Server 1", 1, 1, 2, 3),
         })
 
-        return #vim.diagnostic.get(diagnostic_bufnr)
-      ]])
-    end)
-
-    it('return a empty table after vim.diagnostic.disable', function()
-      eq(0, exec_lua [[
-        vim.diagnostic.set(diagnostic_ns, diagnostic_bufnr, {
-          make_error('Diagnostic #1', 1, 1, 1, 1),
-        })
-        vim.diagnostic.disable(diagnostic_bufnr)
-        return #vim.diagnostic.get(diagnostic_bufnr)
-      ]])
-    end)
-
-    it('return data after vim.diagnostic.enable', function()
-      eq(1, exec_lua [[
-        vim.diagnostic.set(diagnostic_ns, diagnostic_bufnr, {
-          make_error('Diagnostic #1', 1, 1, 1, 1),
-        })
-        vim.diagnostic.disable(diagnostic_bufnr)
-        vim.diagnostic.enable(diagnostic_bufnr)
         return #vim.diagnostic.get(diagnostic_bufnr)
       ]])
     end)
@@ -1407,7 +1386,7 @@ end)
         return count_extmarks(diagnostic_bufnr, diagnostic_ns)
       ]])
 
-      eq(0, exec_lua [[
+      eq(2, exec_lua [[
         vim.diagnostic.enable(diagnostic_bufnr, diagnostic_ns)
         return count_extmarks(diagnostic_bufnr, diagnostic_ns)
       ]])
@@ -2140,5 +2119,23 @@ end)
         return vim.g.diagnostic_autocmd_triggered == diagnostic_bufnr
       ]])
       end)
+
+    it("Check diagnostic disabled in buffer", function()
+      eq(true, exec_lua [[
+        vim.diagnostic.set(diagnostic_ns, diagnostic_bufnr, {
+          make_error('Diagnostic #1', 1, 1, 1, 1),
+        })
+        vim.diagnostic.disable(diagnostic_bufnr)
+        return vim.diagnostic.buf_in_disable(diagnostic_bufnr)
+      ]])
+
+      eq(false, exec_lua [[
+        local tmp = vim.api.nvim_create_buf(false, true)
+        vim.diagnostic.set(diagnostic_ns, tmp, {
+          make_error('Diagnostic #1', 1, 1, 1, 1),
+        })
+        return vim.diagnostic.buf_in_disable(tmp)
+      ]])
+    end)
   end)
 end)

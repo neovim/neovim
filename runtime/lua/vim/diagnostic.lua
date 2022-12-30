@@ -756,6 +756,19 @@ function M.get_namespaces()
   return vim.deepcopy(all_namespaces)
 end
 
+--- Check diagnostic enabled in buffer
+---
+---@param bufnr number|nil Buffer number to get diagnostics from. Use 0 for
+---                        current buffer or nil for all buffers.
+---@return boolean
+function M.buf_in_disable(bufnr)
+  bufnr = bufnr or api.nvim_get_current_buf()
+  if diagnostic_disabled[bufnr] then
+    return true
+  end
+  return false
+end
+
 ---@class Diagnostic
 ---@field buffer number
 ---@field lnum number 0-indexed
@@ -782,21 +795,6 @@ function M.get(bufnr, opts)
     bufnr = { bufnr, 'n', true },
     opts = { opts, 't', true },
   })
-
-  if #diagnostic_disabled > 0 then
-    if bufnr then
-      if
-        opts
-        and opts.namespace
-        and diagnostic_disabled[bufnr]
-        and diagnostic_disabled[bufnr][opts.namespace]
-      then
-        return {}
-      elseif diagnostic_disabled[bufnr] then
-        return {}
-      end
-    end
-  end
 
   return get_diagnostics(bufnr, opts, false)
 end
