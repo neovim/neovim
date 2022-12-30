@@ -2797,12 +2797,15 @@ int findoption(const char *const arg)
 
 /// Gets the value for an option.
 ///
-/// @param stringval  NULL when only checking existence
-/// @param flagsp     set to the option flags (P_xxxx) (if not NULL)
+/// @param name            Name of option
+/// @param[out] numval     Number or boolean value of option
+/// @param[out] stringval  NULL when only checking existence
+/// @param flagsp          set to the option flags (P_xxxx) (if not NULL)
+/// @param scope           Requested scope
 ///
 /// @returns:
 ///           Number option: gov_number, *numval gets value.
-///           Tottle option: gov_bool,   *numval gets value.
+///           Toggle option: gov_bool,   *numval gets value.
 ///           String option: gov_string, *stringval gets allocated string.
 ///           Hidden Number option: gov_hidden_number.
 ///           Hidden Toggle option: gov_hidden_bool.
@@ -2820,17 +2823,22 @@ getoption_T get_option_value(const char *name, long *numval, char **stringval, u
     return gov_unknown;
   }
 
-  char_u *varp = (char_u *)get_varp_scope(&(options[opt_idx]), scope);
+  vimoption_T *p = &options[opt_idx];
 
   if (flagsp != NULL) {
     // Return the P_xxxx option flags.
-    *flagsp = options[opt_idx].flags;
+    *flagsp = p->flags;
   }
 
-  if (options[opt_idx].flags & P_STRING) {
-    if (varp == NULL) {  // hidden option
-      return gov_hidden_string;
-    }
+  // Hidden option
+  if (p->var == NULL) {
+    return (p->flags & P_STRING) ? gov_hidden_string :
+           (p->flags & P_NUM)    ? gov_hidden_number : gov_hidden_bool;
+  }
+
+  char *varp = get_varp_scope(p, scope);
+
+  if (p->flags & P_STRING) {
     if (stringval != NULL) {
       if ((char **)varp == &p_pt) {  // 'pastetoggle'
         *stringval = str2special_save(*(char **)(varp), false, false);
@@ -2841,10 +2849,7 @@ getoption_T get_option_value(const char *name, long *numval, char **stringval, u
     return gov_string;
   }
 
-  if (varp == NULL) {  // hidden option
-    return (options[opt_idx].flags & P_NUM) ? gov_hidden_number : gov_hidden_bool;
-  }
-  if (options[opt_idx].flags & P_NUM) {
+  if (p->flags & P_NUM) {
     *numval = *(long *)varp;
   } else {
     // Special case: 'modified' is b_changed, but we also want to consider
@@ -2855,13 +2860,48 @@ getoption_T get_option_value(const char *name, long *numval, char **stringval, u
       *numval = (long)(*(int *)varp);
     }
   }
-  return (options[opt_idx].flags & P_NUM) ? gov_number : gov_bool;
+  return (p->flags & P_NUM) ? gov_number : gov_bool;
+}
+
+static char *get_varp_from(vimoption_T *p, int opt_type, int *from)
+{
+  if (opt_type == SREQ_GLOBAL) {
+    return (char *)p->var;
+  }
+
+  if (opt_type == SREQ_BUF) {
+    // Special case: 'modified' is b_changed, but we also want to
+    // consider it set when 'ff' or 'fenc' changed.
+    if (p->indir == PV_MOD) {
+      return NULL;
+    }
+
+    buf_T *save_curbuf = curbuf;
+
+    // only getting a pointer, no need to use aucmd_prepbuf()
+    curbuf = (buf_T *)from;
+    curwin->w_buffer = curbuf;
+    char *varp = get_varp_scope(p, OPT_LOCAL);
+    curbuf = save_curbuf;
+    curwin->w_buffer = curbuf;
+    return varp;
+  }
+
+  assert(opt_type == SREQ_WIN);
+
+  win_T *save_curwin = curwin;
+  curwin = (win_T *)from;
+  curbuf = curwin->w_buffer;
+  char *varp = get_varp_scope(p, OPT_LOCAL);
+  curwin = save_curwin;
+  curbuf = curwin->w_buffer;
+  return varp;
 }
 
 // Returns the option attributes and its value. Unlike the above function it
 // will return either global value or local value of the option depending on
 // what was requested, but it will never return global value if it was
-// requested to return local one and vice versa. Neither it will return
+// requested to return local one and vice versa. Neither will it return
 // buffer-local value if it was requested to return window-local one.
 //
 // Pretends that option is absent if it is not present in the requested scope
@@ -2874,16 +2914,15 @@ getoption_T get_option_value(const char *name, long *numval, char **stringval, u
 //  see SOPT_* in option_defs.h for other flags
 //
 // Possible opt_type values: see SREQ_* in option_defs.h
-int get_option_value_strict(char *name, int64_t *numval, char **stringval, int opt_type, void *from)
+int get_option_value_strict(const char *name, int64_t *numval, char **stringval, int opt_type,
+                            void *from)
 {
   if (get_tty_option(name, stringval)) {
     return SOPT_STRING | SOPT_GLOBAL;
   }
 
-  char_u *varp = NULL;
-  int rv = 0;
   int opt_idx = findoption(name);
-  if (opt_idx < 0) {
+  if (opt_idx < 0) {  // option not in the table
     return 0;
   }
 
@@ -2894,13 +2933,9 @@ int get_option_value_strict(char *name, int64_t *numval, char **stringval, int o
     return 0;
   }
 
-  if (p->flags & P_BOOL) {
-    rv |= SOPT_BOOL;
-  } else if (p->flags & P_NUM) {
-    rv |= SOPT_NUM;
-  } else if (p->flags & P_STRING) {
-    rv |= SOPT_STRING;
-  }
+  int rv = (p->flags & P_STRING) ? SOPT_STRING :
+           (p->flags & P_NUM)    ? SOPT_NUM    :
+           (p->flags & P_BOOL)   ? SOPT_BOOL   : 0;
 
   if (p->indir == PV_NONE) {
     if (opt_type == SREQ_GLOBAL) {
@@ -2930,38 +2965,14 @@ int get_option_value_strict(char *name, int64_t *numval, char **stringval, int o
     return rv;
   }
 
+  const char *varp = get_varp_from(p, opt_type, from);
+
   if (opt_type == SREQ_GLOBAL) {
     if (p->var == VAR_WIN) {
       return 0;
     }
-    varp = p->var;
   } else {
-    if (opt_type == SREQ_BUF) {
-      // Special case: 'modified' is b_changed, but we also want to
-      // consider it set when 'ff' or 'fenc' changed.
-      if (p->indir == PV_MOD) {
-        *numval = bufIsChanged((buf_T *)from);
-        varp = NULL;
-      } else {
-        buf_T *save_curbuf = curbuf;
-
-        // only getting a pointer, no need to use aucmd_prepbuf()
-        curbuf = (buf_T *)from;
-        curwin->w_buffer = curbuf;
-        varp = (char_u *)get_varp_scope(p, OPT_LOCAL);
-        curbuf = save_curbuf;
-        curwin->w_buffer = curbuf;
-      }
-    } else if (opt_type == SREQ_WIN) {
-      win_T *save_curwin = curwin;
-      curwin = (win_T *)from;
-      curbuf = curwin->w_buffer;
-      varp = (char_u *)get_varp_scope(p, OPT_LOCAL);
-      curwin = save_curwin;
-      curbuf = curwin->w_buffer;
-    }
-
-    if (varp == p->var) {
+    if (varp == (char *)p->var) {
       return (rv | SOPT_UNSET);
     }
   }
@@ -2970,7 +2981,13 @@ int get_option_value_strict(char *name, int64_t *numval, char **stringval, int o
     if (p->flags & P_STRING) {
       *stringval = *(char **)(varp);
     } else if (p->flags & P_NUM) {
-      *numval = *(long *)varp;
+      // Special case: 'modified' is b_changed, but we also want to
+      // consider it set when 'ff' or 'fenc' changed.
+      if (opt_type == SREQ_BUF && p->indir == PV_MOD) {
+        *numval = bufIsChanged((buf_T *)from);
+      } else {
+        *numval = *(long *)varp;
+      }
     } else {
       *numval = *(int *)varp;
     }
