@@ -1382,8 +1382,7 @@ describe('API', function()
     end)
 
     it('most window-local options have no global value', function()
-      --  TODO(lewis6991): use get_optio_value
-      local status, err = pcall(nvim, 'get_option', 'foldcolumn')
+      local status, err = pcall(nvim, 'get_option_value', 'foldcolumn', {})
       eq(false, status)
       ok(err:match('Invalid option name') ~= nil)
     end)

@@ -94,49 +94,15 @@ static int validate_option_value_args(Dict(option) *opts, int *scope, int *opt_t
 Object nvim_get_option_value(String name, Dict(option) *opts, Error *err)
   FUNC_API_SINCE(9)
 {
-  Object rv = OBJECT_INIT;
-
   int scope = 0;
   int opt_type = SREQ_GLOBAL;
   void *from = NULL;
   if (!validate_option_value_args(opts, &scope, &opt_type, &from, err)) {
+    Object rv = OBJECT_INIT;
     return rv;
   }
 
-  long numval = 0;
-  char *stringval = NULL;
-  getoption_T result = access_option_value_for(name.data, &numval, &stringval, scope, opt_type,
-                                               from, true, err);
-  if (ERROR_SET(err)) {
-    return rv;
-  }
-
-  switch (result) {
-  case gov_string:
-    rv = STRING_OBJ(cstr_as_string(stringval));
-    break;
-  case gov_number:
-    rv = INTEGER_OBJ(numval);
-    break;
-  case gov_bool:
-    switch (numval) {
-    case 0:
-    case 1:
-      rv = BOOLEAN_OBJ(numval);
-      break;
-    default:
-      // Boolean options that return something other than 0 or 1 should return nil. Currently this
-      // only applies to 'autoread' which uses -1 as a local value to indicate "unset"
-      rv = NIL;
-      break;
-    }
-    break;
-  default:
-    api_set_error(err, kErrorTypeValidation, "unknown option '%s'", name.data);
-    return rv;
-  }
-
-  return rv;
+  return get_option_from(from, opt_type, scope, name, err);
 }
 
 /// Sets the value of an option. The behavior of this function matches that of
@@ -170,7 +136,7 @@ void nvim_set_option_value(String name, Object value, Dict(option) *opts, Error 
   //
   // Then force scope to local since we don't want to change the global option
   if (opt_type == SREQ_WIN && scope == 0) {
-    int flags = get_option_value_strict(name.data, NULL, NULL, opt_type, to);
+    int flags = get_option_value_strict(name.data, NULL, NULL, opt_type, scope, to);
     if (flags & SOPT_GLOBAL) {
       scope = OPT_LOCAL;
     }
@@ -197,7 +163,7 @@ void nvim_set_option_value(String name, Object value, Dict(option) *opts, Error 
     return;
   }
 
-  access_option_value_for(name.data, &numval, &stringval, scope, opt_type, to, false, err);
+  set_option_value_for(name.data, &numval, &stringval, scope, opt_type, to, err);
 }
 
 /// Gets the option information for all options.
@@ -263,7 +229,7 @@ void nvim_set_option(uint64_t channel_id, String name, Object value, Error *err)
 Object nvim_get_option(String name, Arena *arena, Error *err)
   FUNC_API_SINCE(1)
 {
-  return get_option_from(NULL, SREQ_GLOBAL, name, err);
+  return get_option_from(NULL, SREQ_GLOBAL, 0, name, err);
 }
 
 /// Gets a buffer option value
@@ -282,7 +248,7 @@ Object nvim_buf_get_option(Buffer buffer, String name, Arena *arena, Error *err)
     return (Object)OBJECT_INIT;
   }
 
-  return get_option_from(buf, SREQ_BUF, name, err);
+  return get_option_from(buf, SREQ_BUF, 0, name, err);
 }
 
 /// Sets a buffer option value. Passing `nil` as value deletes the option (only
@@ -322,7 +288,7 @@ Object nvim_win_get_option(Window window, String name, Arena *arena, Error *err)
     return (Object)OBJECT_INIT;
   }
 
-  return get_option_from(win, SREQ_WIN, name, err);
+  return get_option_from(win, SREQ_WIN, 0, name, err);
 }
 
 /// Sets a window option value. Passing `nil` as value deletes the option (only
@@ -354,7 +320,7 @@ void nvim_win_set_option(uint64_t channel_id, Window window, String name, Object
 /// @param name The option name
 /// @param[out] err Details of an error that may have occurred
 /// @return the option value
-static Object get_option_from(void *from, int type, String name, Error *err)
+static Object get_option_from(void *from, int type, int scope, String name, Error *err)
 {
   Object rv = OBJECT_INIT;
 
@@ -366,7 +332,7 @@ static Object get_option_from(void *from, int type, String name, Error *err)
   // Return values
   int64_t numval;
   char *stringval = NULL;
-  int flags = get_option_value_strict(name.data, &numval, &stringval, type, from);
+  int flags = get_option_value_strict(name.data, &numval, &stringval, type, scope, from);
 
   if (!flags) {
     api_set_error(err, kErrorTypeValidation, "Invalid option name: '%s'",
@@ -407,14 +373,15 @@ static Object get_option_from(void *from, int type, String name, Error *err)
 /// @param type One of `SREQ_GLOBAL`, `SREQ_WIN` or `SREQ_BUF`
 /// @param name The option name
 /// @param[out] err Details of an error that may have occurred
-void set_option_to(uint64_t channel_id, void *to, int type, String name, Object value, Error *err)
+static void set_option_to(uint64_t channel_id, void *to, int type, String name, Object value,
+                          Error *err)
 {
   if (name.size == 0) {
     api_set_error(err, kErrorTypeValidation, "Empty option name");
     return;
   }
 
-  int flags = get_option_value_strict(name.data, NULL, NULL, type, to);
+  int flags = get_option_value_strict(name.data, NULL, NULL, type, 0, to);
 
   if (flags == 0) {
     api_set_error(err, kErrorTypeValidation, "Invalid option name '%s'",
@@ -486,35 +453,17 @@ void set_option_to(uint64_t channel_id, void *to, int type, String name, Object 
                         (type == SREQ_GLOBAL)                        ? OPT_GLOBAL : OPT_LOCAL;
 
   WITH_SCRIPT_CONTEXT(channel_id, {
-    access_option_value_for(name.data, &numval, &stringval, opt_flags, type, to, false, err);
+    set_option_value_for(name.data, &numval, &stringval, opt_flags, type, to, err);
   });
 }
 
-static getoption_T access_option_value(char *key, long *numval, char **stringval, int opt_flags,
-                                       bool get, Error *err)
-{
-  if (get) {
-    return get_option_value(key, numval, stringval, NULL, opt_flags);
-  } else {
-    char *errmsg;
-    if ((errmsg = set_option_value(key, *numval, *stringval, opt_flags))) {
-      if (try_end(err)) {
-        return 0;
-      }
-
-      api_set_error(err, kErrorTypeException, "%s", errmsg);
-    }
-    return 0;
-  }
-}
-
-static getoption_T access_option_value_for(char *key, long *numval, char **stringval, int opt_flags,
-                                           int opt_type, void *from, bool get, Error *err)
+static getoption_T set_option_value_for(char *key, long *numval, char **stringval, int opt_flags,
+                                        int opt_type, void *from, Error *err)
 {
   bool need_switch = false;
   switchwin_T switchwin;
   aco_save_T aco;
-  getoption_T result = 0;
+  char *errmsg;
 
   try_start();
   switch (opt_type) {
@@ -525,13 +474,13 @@ static getoption_T access_option_value_for(char *key, long *numval, char **strin
           == FAIL) {
         restore_win_noblock(&switchwin, true);
         if (try_end(err)) {
-          return result;
+          return 0;
         }
         api_set_error(err, kErrorTypeException, "Problem while switching windows");
-        return result;
+        return 0;
       }
     }
-    result = access_option_value(key, numval, stringval, opt_flags, get, err);
+    errmsg = set_option_value(key, *numval, *stringval, opt_flags);
     if (need_switch) {
       restore_win_noblock(&switchwin, true);
     }
@@ -541,21 +490,21 @@ static getoption_T access_option_value_for(char *key, long *numval, char **strin
     if (need_switch) {
       aucmd_prepbuf(&aco, (buf_T *)from);
     }
-    result = access_option_value(key, numval, stringval, opt_flags, get, err);
+    errmsg = set_option_value(key, *numval, *stringval, opt_flags);
     if (need_switch) {
       aucmd_restbuf(&aco);
     }
     break;
   case SREQ_GLOBAL:
-    result = access_option_value(key, numval, stringval, opt_flags, get, err);
+    errmsg = set_option_value(key, *numval, *stringval, opt_flags);
     break;
   }
 
-  if (ERROR_SET(err)) {
-    return result;
+  if (errmsg) {
+    api_set_error(err, kErrorTypeException, "%s", errmsg);
   }
 
   try_end(err);
 
-  return result;
+  return 0;
 }

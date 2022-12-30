@@ -2863,7 +2863,7 @@ getoption_T get_option_value(const char *name, long *numval, char **stringval, u
   return (p->flags & P_NUM) ? gov_number : gov_bool;
 }
 
-static char *get_varp_from(vimoption_T *p, int opt_type, int *from)
+static char *get_varp_from(vimoption_T *p, int opt_type, int scope, int *from)
 {
   if (opt_type == SREQ_GLOBAL) {
     return (char *)p->var;
@@ -2881,7 +2881,7 @@ static char *get_varp_from(vimoption_T *p, int opt_type, int *from)
     // only getting a pointer, no need to use aucmd_prepbuf()
     curbuf = (buf_T *)from;
     curwin->w_buffer = curbuf;
-    char *varp = get_varp_scope(p, OPT_LOCAL);
+    char *varp = get_varp_scope(p, scope);
     curbuf = save_curbuf;
     curwin->w_buffer = curbuf;
     return varp;
@@ -2892,7 +2892,7 @@ static char *get_varp_from(vimoption_T *p, int opt_type, int *from)
   win_T *save_curwin = curwin;
   curwin = (win_T *)from;
   curbuf = curwin->w_buffer;
-  char *varp = get_varp_scope(p, OPT_LOCAL);
+  char *varp = get_varp_scope(p, scope);
   curwin = save_curwin;
   curbuf = curwin->w_buffer;
   return varp;
@@ -2915,7 +2915,7 @@ static char *get_varp_from(vimoption_T *p, int opt_type, int *from)
 //
 // Possible opt_type values: see SREQ_* in option_defs.h
 int get_option_value_strict(const char *name, int64_t *numval, char **stringval, int opt_type,
-                            void *from)
+                            int scope, void *from)
 {
   if (get_tty_option(name, stringval)) {
     return SOPT_STRING | SOPT_GLOBAL;
@@ -2965,7 +2965,7 @@ int get_option_value_strict(const char *name, int64_t *numval, char **stringval,
     return rv;
   }
 
-  const char *varp = get_varp_from(p, opt_type, from);
+  const char *varp = get_varp_from(p, opt_type, scope, from);
 
   if (opt_type == SREQ_GLOBAL) {
     if (p->var == VAR_WIN) {
