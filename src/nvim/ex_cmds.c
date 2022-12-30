@@ -4743,45 +4743,46 @@ void ex_oldfiles(exarg_T *eap)
 
   if (l == NULL) {
     msg(_("No old files"));
-  } else {
-    msg_start();
-    msg_scroll = true;
-    TV_LIST_ITER(l, li, {
-      if (got_int) {
-        break;
-      }
-      nr++;
-      const char *fname = tv_get_string(TV_LIST_ITEM_TV(li));
-      if (!message_filtered((char *)fname)) {
-        msg_outnum(nr);
-        msg_puts(": ");
-        msg_outtrans((char *)tv_get_string(TV_LIST_ITEM_TV(li)));
-        msg_clr_eos();
-        msg_putchar('\n');
-        os_breakcheck();
-      }
-    });
+    return;
+  }
 
-    // Assume "got_int" was set to truncate the listing.
-    got_int = false;
+  msg_start();
+  msg_scroll = true;
+  TV_LIST_ITER(l, li, {
+    if (got_int) {
+      break;
+    }
+    nr++;
+    const char *fname = tv_get_string(TV_LIST_ITEM_TV(li));
+    if (!message_filtered((char *)fname)) {
+      msg_outnum(nr);
+      msg_puts(": ");
+      msg_outtrans((char *)tv_get_string(TV_LIST_ITEM_TV(li)));
+      msg_clr_eos();
+      msg_putchar('\n');
+      os_breakcheck();
+    }
+  });
 
-    // File selection prompt on ":browse oldfiles"
-    if (cmdmod.cmod_flags & CMOD_BROWSE) {
-      quit_more = false;
-      nr = prompt_for_number(false);
-      msg_starthere();
-      if (nr > 0 && nr <= tv_list_len(l)) {
-        const char *const p = tv_list_find_str(l, (int)nr - 1);
-        if (p == NULL) {
-          return;
-        }
-        char *const s = expand_env_save((char *)p);
-        eap->arg = s;
-        eap->cmdidx = CMD_edit;
-        cmdmod.cmod_flags &= ~CMOD_BROWSE;
-        do_exedit(eap, NULL);
-        xfree(s);
+  // Assume "got_int" was set to truncate the listing.
+  got_int = false;
+
+  // File selection prompt on ":browse oldfiles"
+  if (cmdmod.cmod_flags & CMOD_BROWSE) {
+    quit_more = false;
+    nr = prompt_for_number(false);
+    msg_starthere();
+    if (nr > 0 && nr <= tv_list_len(l)) {
+      const char *const p = tv_list_find_str(l, (int)nr - 1);
+      if (p == NULL) {
+        return;
       }
+      char *const s = expand_env_save((char *)p);
+      eap->arg = s;
+      eap->cmdidx = CMD_edit;
+      cmdmod.cmod_flags &= ~CMOD_BROWSE;
+      do_exedit(eap, NULL);
+      xfree(s);
     }
   }
 }
