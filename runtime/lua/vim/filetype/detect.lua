@@ -1256,17 +1256,15 @@ end
 -- 2. Check the first 1000 non-comment lines for LaTeX or ConTeXt keywords.
 -- 3. Default to "plain" or to g:tex_flavor, can be set in user's vimrc.
 function M.tex(path, bufnr)
-  local format = getlines(bufnr, 1):find('^%%&%s*(%a+)')
-  if format then
+  local matched, _, format = getlines(bufnr, 1):find('^%%&%s*(%a+)')
+  if matched then
     format = format:lower():gsub('pdf', '', 1)
-    if format == 'tex' then
-      return 'tex'
-    elseif format == 'plaintex' then
-      return 'plaintex'
-    end
   elseif path:lower():find('tex/context/.*/.*%.tex') then
     return 'context'
   else
+    -- Default value, may be changed later:
+    format = vim.g.tex_flavor or 'plaintex'
+
     local lpat = [[documentclass\>\|usepackage\>\|begin{\|newcommand\>\|renewcommand\>]]
     local cpat =
       [[start\a\+\|setup\a\+\|usemodule\|enablemode\|enableregime\|setvariables\|useencoding\|usesymbols\|stelle\a\+\|verwende\a\+\|stel\a\+\|gebruik\a\+\|usa\a\+\|imposta\a\+\|regle\a\+\|utilisemodule\>]]
@@ -1275,26 +1273,25 @@ function M.tex(path, bufnr)
       -- Find first non-comment line
       if not l:find('^%s*%%%S') then
         -- Check the next thousand lines for a LaTeX or ConTeXt keyword.
-        for _, line in ipairs(getlines(bufnr, i + 1, i + 1000)) do
-          local lpat_match, cpat_match =
-            matchregex(line, [[\c^\s*\\\%(]] .. lpat .. [[\)\|^\s*\\\(]] .. cpat .. [[\)]])
-          if lpat_match then
+        for _, line in ipairs(getlines(bufnr, i, i + 1000)) do
+          if matchregex(line, [[\c^\s*\\\%(]] .. lpat .. [[\)]]) then
             return 'tex'
-          elseif cpat_match then
+          elseif matchregex(line, [[\c^\s*\\\%(]] .. cpat .. [[\)]]) then
             return 'context'
           end
         end
       end
     end
-    -- TODO: add AMSTeX, RevTex, others?
-    if not vim.g.tex_flavor or vim.g.tex_flavor == 'plain' then
-      return 'plaintex'
-    elseif vim.g.tex_flavor == 'context' then
-      return 'context'
-    else
-      -- Probably LaTeX
-      return 'tex'
-    end
+  end -- if matched
+
+  -- Translation from formats to file types.  TODO:  add AMSTeX, RevTex, others?
+  if format == 'plain' then
+    return 'plaintex'
+  elseif format == 'plaintex' or format == 'context' then
+    return format
+  else
+    -- Probably LaTeX
+    return 'tex'
   end
 end
 
