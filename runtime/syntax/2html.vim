@@ -1,6 +1,6 @@
 " Vim syntax support file
 " Maintainer: Ben Fritz <fritzophrenic@gmail.com>
-" Last Change: 2020 Jan 05
+" Last Change: 2022 Dec 26
 "
 " Additional contributors:
 "
@@ -1881,7 +1881,7 @@ if s:settings.use_css && !s:settings.no_doc
   endif
 endif
 
-if !s:settings.use_css && !s:settings_no_doc
+if !s:settings.use_css && !s:settings.no_doc
   " For Netscape 4, set <body> attributes too, though, strictly speaking, it's
   " incorrect.
   execute '%s:<body\([^>]*\):<body bgcolor="' . s:bgc . '" text="' . s:fgc . '"\1>\r<font face="'. s:htmlfont .'"'

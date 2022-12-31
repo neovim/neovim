@@ -5573,30 +5573,30 @@ A jump table for the options with a short description can be found at |Q_op|.
 		and "[a]" instead of "appended" for ':w >> file' command
 	  x	use "[dos]" instead of "[dos format]", "[unix]"		*shm-x*
 		instead of "[unix format]" and "[mac]" instead of "[mac
-		format]".
+		format]"
 	  a	all of the above abbreviations				*shm-a*
 
 	  o	overwrite message for writing a file with subsequent	*shm-o*
 		message for reading a file (useful for ":wn" or when
 		'autowrite' on)
-	  O	message for reading a file overwrites any previous	*smh-O*
-		message.  Also for quickfix message (e.g., ":cn").
+	  O	message for reading a file overwrites any previous	*shm-O*
+		message;  also for quickfix message (e.g., ":cn")
 	  s	don't give "search hit BOTTOM, continuing at TOP" or	*shm-s*
 		"search hit TOP, continuing at BOTTOM" messages; when using
 		the search count do not show "W" after the count message (see
 		S below)
 	  t	truncate file message at the start if it is too long	*shm-t*
 		to fit on the command-line, "<" will appear in the left most
-		column.  Ignored in Ex mode.
+		column; ignored in Ex mode
 	  T	truncate other messages in the middle if they are too	*shm-T*
-		long to fit on the command line.  "..." will appear in the
-		middle.  Ignored in Ex mode.
+		long to fit on the command line; "..." will appear in the
+		middle; ignored in Ex mode
 	  W	don't give "written" or "[w]" when writing a file	*shm-W*
 	  A	don't give the "ATTENTION" message when an existing	*shm-A*
-		swap file is found.
+		swap file is found
 	  I	don't give the intro message when starting Vim,		*shm-I*
-	  	see |:intro|.
-	  c	don't give |ins-completion-menu| messages.  For		*shm-c*
+	  	see |:intro|
+	  c	don't give |ins-completion-menu| messages; for		*shm-c*
 		example, "-- XXX completion (YYY)", "match 1 of 2", "The only
 		match", "Pattern not found", "Back at original", etc.
 	  C	don't give messages while scanning for ins-completion	*shm-C*
@@ -5653,6 +5653,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 
 			*'showcmdloc'* *'sloc'*
 'showcmdloc' 'sloc'	string	(default "last")
+			global
 	This option can be used to display the (partially) entered command in
 	another location.  Possible values are:
 	  last		Last line of the screen (default).
