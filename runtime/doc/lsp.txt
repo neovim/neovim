@@ -1278,6 +1278,13 @@ on_publish_diagnostics({_}, {result}, {ctx}, {config})
 ==============================================================================
 Lua module: vim.lsp.codelens                                    *lsp-codelens*
 
+clear({client_id}, {bufnr})                         *vim.lsp.codelens.clear()*
+    Clear the lenses
+
+    Parameters: ~
+      • {client_id}  (number|nil) filter by client_id. All clients if nil
+      • {bufnr}      (number|nil) filter by buffer. All buffers if nil
+
 display({lenses}, {bufnr}, {client_id})           *vim.lsp.codelens.display()*
     Display the lenses using virtual text
 
