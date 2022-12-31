@@ -33,9 +33,17 @@ describe('autoread TUI FocusGained/FocusLost', function()
 
     helpers.write_file(path, '')
     lfs.touch(path, os.time() - 10)
-    feed_command('edit '..path)
-    feed_data('\027[O')
 
+    screen:expect{grid=[[
+      {1: }                                                 |
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {5:[No Name]                                         }|
+                                                        |
+      {3:-- TERMINAL --}                                    |
+    ]]}
+    feed_command('edit '..path)
     screen:expect{grid=[[
       {1: }                                                 |
       {4:~                                                 }|
@@ -45,6 +53,17 @@ describe('autoread TUI FocusGained/FocusLost', function()
       :edit xtest-foo                                   |
       {3:-- TERMINAL --}                                    |
     ]]}
+    feed_data('\027[O')
+    feed_data('\027[O')
+    screen:expect{grid=[[
+      {1: }                                                 |
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {5:xtest-foo                                         }|
+      :edit xtest-foo                                   |
+      {3:-- TERMINAL --}                                    |
+    ]], unchanged=true}
 
     helpers.write_file(path, expected_addition)
 

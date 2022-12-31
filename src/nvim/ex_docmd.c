@@ -1931,9 +1931,11 @@ static char *do_one_cmd(char **cmdlinep, int flags, cstack_T *cstack, LineGetter
 
   profile_cmd(&ea, cstack, fgetline, cookie);
 
-  // May go to debug mode.  If this happens and the ">quit" debug command is
-  // used, throw an interrupt exception and skip the next command.
-  dbg_check_breakpoint(&ea);
+  if (!exiting) {
+    // May go to debug mode.  If this happens and the ">quit" debug command is
+    // used, throw an interrupt exception and skip the next command.
+    dbg_check_breakpoint(&ea);
+  }
   if (!ea.skip && got_int) {
     ea.skip = true;
     (void)do_intthrow(cstack);

@@ -56,8 +56,6 @@
 #endif
 #cmakedefine HAVE_FORKPTY
 
-#cmakedefine FEAT_TUI
-
 #ifndef UNIT_TESTING
 #cmakedefine LOG_LIST_ACTIONS
 #endif

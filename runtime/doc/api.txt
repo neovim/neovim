@@ -3471,6 +3471,12 @@ nvim_ui_pum_set_height({height})                    *nvim_ui_pum_set_height()*
     Parameters: ~
       • {height}  Popupmenu height, must be greater than zero.
 
+nvim_ui_set_focus({gained})                              *nvim_ui_set_focus()*
+    Tells the nvim server if focus was gained or lost by the GUI.
+
+    Attributes: ~
+        |RPC| only
+
 nvim_ui_set_option({name}, {value})                     *nvim_ui_set_option()*
     TODO: Documentation
 

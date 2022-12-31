@@ -24,6 +24,11 @@ local funcs = helpers.funcs
 local meths = helpers.meths
 local is_ci = helpers.is_ci
 local is_os = helpers.is_os
+local new_pipename = helpers.new_pipename
+local spawn_argv = helpers.spawn_argv
+local set_session = helpers.set_session
+local feed = helpers.feed
+local eval = helpers.eval
 
 if helpers.skip(helpers.is_os('win')) then return end
 
@@ -34,7 +39,7 @@ describe('TUI', function()
 
   before_each(function()
     clear()
-    local child_server = helpers.new_pipename()
+    local child_server = new_pipename()
     screen = thelpers.screen_setup(0,
       string.format([=[["%s", "--listen", "%s", "-u", "NONE", "-i", "NONE", "--cmd", "%s laststatus=2 background=dark"]]=],
         nvim_prog, child_server, nvim_set))
@@ -1191,6 +1196,15 @@ describe('TUI', function()
 
   it('paste: split "start paste" code', function()
     feed_data('i')
+    screen:expect{grid=[[
+      {1: }                                                 |
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {5:[No Name]                                         }|
+      {3:-- INSERT --}                                      |
+      {3:-- TERMINAL --}                                    |
+    ]]}
     -- Send split "start paste" sequence.
     feed_data('\027[2')
     feed_data('00~pasted from terminal\027[201~')
@@ -1207,6 +1221,15 @@ describe('TUI', function()
 
   it('paste: split "stop paste" code', function()
     feed_data('i')
+    screen:expect{grid=[[
+      {1: }                                                 |
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {5:[No Name]                                         }|
+      {3:-- INSERT --}                                      |
+      {3:-- TERMINAL --}                                    |
+    ]]}
     -- Send split "stop paste" sequence.
     feed_data('\027[200~pasted from terminal\027[20')
     feed_data('1~')
@@ -1232,6 +1255,15 @@ describe('TUI', function()
       end)(vim.paste)
     ]], {})
     feed_data('i')
+    screen:expect{grid=[[
+      {1: }                                                 |
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {5:[No Name]                                         }|
+      {3:-- INSERT --}                                      |
+      {3:-- TERMINAL --}                                    |
+    ]]}
     feed_data('\027[200~pasted')  -- phase 1
     screen:expect([[
       pasted{1: }                                           |
@@ -1365,7 +1397,7 @@ describe('TUI', function()
                                                         |
       {4:~                                                 }|
       {5:                                                  }|
-      [[['chan', 0], ['height', 6], ['override', v:false|
+      [[['chan', 1], ['height', 6], ['override', v:false|
       ], ['rgb', v:false], ['width', 50]]]              |
       {10:Press ENTER or type command to continue}{1: }          |
       {3:-- TERMINAL --}                                    |
@@ -1467,6 +1499,15 @@ describe('TUI', function()
   it('<C-h> #10134', function()
     local screen = thelpers.screen_setup(0, '["'..nvim_prog
       ..[[", "-u", "NONE", "-i", "NONE", "--cmd", "set noruler", "--cmd", ':nnoremap <C-h> :echomsg "\<C-h\>"<CR>']]..']')
+    screen:expect{grid=[[
+      {1: }                                                 |
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {5:[No Name]                                         }|
+                                                        |
+      {3:-- TERMINAL --}                                    |
+    ]]}
 
     command([[call chansend(b:terminal_job_id, "\<C-h>")]])
     screen:expect([[
@@ -1493,6 +1534,15 @@ describe('TUI UIEnter/UILeave', function()
       ..[[, "--cmd", "autocmd VimEnter * :call add(g:evs, 'VimEnter')"]]
       ..']'
     )
+    screen:expect{grid=[[
+      {1: }                                                 |
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {5:[No Name]                                         }|
+                                                        |
+      {3:-- TERMINAL --}                                    |
+    ]]}
     feed_data(":echo g:evs\n")
     screen:expect{grid=[[
       {1: }                                                 |
@@ -1513,61 +1563,88 @@ describe('TUI FocusGained/FocusLost', function()
     clear()
     screen = thelpers.screen_setup(0, '["'..nvim_prog
       ..'", "-u", "NONE", "-i", "NONE", "--cmd", "set noswapfile noshowcmd noruler"]')
+    screen:expect{grid=[[
+      {1: }                                                 |
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {5:[No Name]                                         }|
+                                                        |
+      {3:-- TERMINAL --}                                    |
+    ]]}
     feed_data(":autocmd FocusGained * echo 'gained'\n")
     feed_data(":autocmd FocusLost * echo 'lost'\n")
     feed_data("\034\016")  -- CTRL-\ CTRL-N
   end)
 
   it('in normal-mode', function()
+    screen:expect{grid=[[
+      {1: }                                                 |
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {5:[No Name]                                         }|
+      :autocmd FocusLost * echo 'lost'                  |
+      {3:-- TERMINAL --}                                    |
+    ]]}
     retry(2, 3 * screen.timeout, function()
-    feed_data('\027[I')
-    screen:expect([[
-      {1: }                                                 |
-      {4:~                                                 }|
-      {4:~                                                 }|
-      {4:~                                                 }|
-      {5:[No Name]                                         }|
-      gained                                            |
-      {3:-- TERMINAL --}                                    |
-    ]])
+      feed_data('\027[I')
+      screen:expect([[
+        {1: }                                                 |
+        {4:~                                                 }|
+        {4:~                                                 }|
+        {4:~                                                 }|
+        {5:[No Name]                                         }|
+        gained                                            |
+        {3:-- TERMINAL --}                                    |
+      ]])
 
-    feed_data('\027[O')
-    screen:expect([[
-      {1: }                                                 |
-      {4:~                                                 }|
-      {4:~                                                 }|
-      {4:~                                                 }|
-      {5:[No Name]                                         }|
-      lost                                              |
-      {3:-- TERMINAL --}                                    |
-    ]])
+      feed_data('\027[O')
+      screen:expect([[
+        {1: }                                                 |
+        {4:~                                                 }|
+        {4:~                                                 }|
+        {4:~                                                 }|
+        {5:[No Name]                                         }|
+        lost                                              |
+        {3:-- TERMINAL --}                                    |
+      ]])
     end)
   end)
 
   it('in insert-mode', function()
     feed_command('set noshowmode')
     feed_data('i')
+    screen:expect{grid=[[
+      {1: }                                                 |
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {5:[No Name]                                         }|
+      :set noshowmode                                   |
+      {3:-- TERMINAL --}                                    |
+    ]]}
     retry(2, 3 * screen.timeout, function()
-    feed_data('\027[I')
-    screen:expect([[
-      {1: }                                                 |
-      {4:~                                                 }|
-      {4:~                                                 }|
-      {4:~                                                 }|
-      {5:[No Name]                                         }|
-      gained                                            |
-      {3:-- TERMINAL --}                                    |
-    ]])
-    feed_data('\027[O')
-    screen:expect([[
-      {1: }                                                 |
-      {4:~                                                 }|
-      {4:~                                                 }|
-      {4:~                                                 }|
-      {5:[No Name]                                         }|
-      lost                                              |
-      {3:-- TERMINAL --}                                    |
-    ]])
+      feed_data('\027[I')
+      screen:expect([[
+        {1: }                                                 |
+        {4:~                                                 }|
+        {4:~                                                 }|
+        {4:~                                                 }|
+        {5:[No Name]                                         }|
+        gained                                            |
+        {3:-- TERMINAL --}                                    |
+      ]])
+      feed_data('\027[O')
+      screen:expect([[
+        {1: }                                                 |
+        {4:~                                                 }|
+        {4:~                                                 }|
+        {4:~                                                 }|
+        {5:[No Name]                                         }|
+        lost                                              |
+        {3:-- TERMINAL --}                                    |
+      ]])
     end)
   end)
 
@@ -1604,6 +1681,15 @@ describe('TUI FocusGained/FocusLost', function()
     feed_data(":autocmd!\n")
     feed_data(":autocmd FocusLost * call append(line('$'), 'lost')\n")
     feed_data(":autocmd FocusGained * call append(line('$'), 'gained')\n")
+    screen:expect{grid=[[
+      {1: }                                                 |
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {5:[No Name]                                         }|
+                                                        |
+      {3:-- TERMINAL --}                                    |
+    ]]}
     retry(2, 3 * screen.timeout, function()
       -- Enter cmdline-mode.
       feed_data(':')
@@ -1662,9 +1748,7 @@ describe('TUI FocusGained/FocusLost', function()
     feed_data(":echom 'msg1'|echom 'msg2'|echom 'msg3'|echom 'msg4'|echom 'msg5'\n")
     -- Execute :messages to provoke the press-enter prompt.
     feed_data(":messages\n")
-    feed_data('\027[I')
-    feed_data('\027[I')
-    screen:expect([[
+    screen:expect{grid=[[
       msg1                                              |
       msg2                                              |
       msg3                                              |
@@ -1672,7 +1756,18 @@ describe('TUI FocusGained/FocusLost', function()
       msg5                                              |
       {10:Press ENTER or type command to continue}{1: }          |
       {3:-- TERMINAL --}                                    |
-    ]])
+    ]]}
+    feed_data('\027[I')
+    feed_data('\027[I')
+    screen:expect{grid=[[
+      msg1                                              |
+      msg2                                              |
+      msg3                                              |
+      msg4                                              |
+      msg5                                              |
+      {10:Press ENTER or type command to continue}{1: }          |
+      {3:-- TERMINAL --}                                    |
+    ]], unchanged=true}
   end)
 end)
 
@@ -2040,7 +2135,7 @@ describe("TUI", function()
 
     retry(nil, 3000, function()  -- Wait for log file to be flushed.
       local log = read_file('Xtest_tui_verbose_log') or ''
-      eq('--- Terminal info --- {{{\n', string.match(log, '%-%-%- Terminal.-\n'))
+      eq('--- Terminal info --- {{{\n', string.match(log, '%-%-%- Terminal.-\n')) -- }}}
       ok(#log > 50)
     end)
   end)
@@ -2162,5 +2257,167 @@ describe('TUI bg color', function()
 
     feed_data(':echo "new_bg=".&background\n')
     screen:expect{any='new_bg=dark'}
+  end)
+end)
+
+-- These tests require `thelpers` because --headless/--embed
+-- does not initialize the TUI.
+describe("TUI as a client", function()
+
+  it("connects to remote instance (with its own TUI)", function()
+    local server_super = spawn_argv(false) -- equivalent to clear()
+    local client_super = spawn_argv(true)
+
+    set_session(server_super)
+    local server_pipe = new_pipename()
+    local screen_server = thelpers.screen_setup(0,
+      string.format([=[["%s", "--listen", "%s", "-u", "NONE", "-i", "NONE", "--cmd", "%s laststatus=2 background=dark"]]=],
+        nvim_prog, server_pipe, nvim_set))
+
+    feed_data("iHello, World")
+    screen_server:expect{grid=[[
+      Hello, World{1: }                                     |
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {5:[No Name] [+]                                     }|
+      {3:-- INSERT --}                                      |
+      {3:-- TERMINAL --}                                    |
+    ]]}
+    feed_data("\027")
+    screen_server:expect{grid=[[
+      Hello, Worl{1:d}                                      |
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {5:[No Name] [+]                                     }|
+                                                        |
+      {3:-- TERMINAL --}                                    |
+    ]]}
+
+    set_session(client_super)
+    local screen_client = thelpers.screen_setup(0,
+      string.format([=[["%s", "-u", "NONE", "-i", "NONE", "--server", "%s", "--remote-ui"]]=],
+                    nvim_prog, server_pipe))
+
+      screen_client:expect{grid=[[
+        Hello, Worl{1:d}                                      |
+        {4:~                                                 }|
+        {4:~                                                 }|
+        {4:~                                                 }|
+        {5:[No Name] [+]                                     }|
+                                                          |
+        {3:-- TERMINAL --}                                    |
+      ]]}
+
+    feed_data(":q!\n")
+
+    server_super:close()
+    client_super:close()
+  end)
+
+  it("connects to remote instance (--headless)", function()
+    local server = helpers.spawn_argv(false) -- equivalent to clear()
+    local client_super = spawn_argv(true)
+
+    set_session(server)
+    local server_pipe = eval'v:servername'
+    feed'iHalloj!<esc>'
+
+    set_session(client_super)
+    local screen = thelpers.screen_setup(0,
+      string.format([=[["%s", "-u", "NONE", "-i", "NONE", "--server", "%s", "--remote-ui"]]=],
+                    nvim_prog, server_pipe))
+
+    screen:expect{grid=[[
+      Halloj{1:!}                                           |
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {4:~                                                 }|
+                                                        |
+      {3:-- TERMINAL --}                                    |
+    ]]}
+
+    client_super:close()
+    server:close()
+  end)
+
+
+  it("throws error when no server exists", function()
+    clear()
+    local screen = thelpers.screen_setup(0,
+      string.format([=[["%s", "-u", "NONE", "-i", "NONE", "--server", "127.0.0.1:2436546", "--remote-ui"]]=],
+                    nvim_prog))
+
+    screen:try_resize(60, 7)
+
+    screen:expect([[
+      Remote ui failed to start: {MATCH:.*}|
+                                                                  |
+      [Process exited 1]{1: }                                         |
+                                                                  |
+                                                                  |
+                                                                  |
+      {3:-- TERMINAL --}                                              |
+    ]])
+  end)
+
+  it("exits when server quits", function()
+    local server_super = spawn_argv(false) -- equivalent to clear()
+    local client_super = spawn_argv(true)
+
+    set_session(server_super)
+    local server_pipe = new_pipename()
+    local screen_server = thelpers.screen_setup(0,
+      string.format([=[["%s", "--listen", "%s", "-u", "NONE", "-i", "NONE", "--cmd", "%s laststatus=2 background=dark"]]=],
+        nvim_prog, server_pipe, nvim_set))
+
+    feed_data("iHello, World")
+    screen_server:expect{grid=[[
+      Hello, World{1: }                                     |
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {5:[No Name] [+]                                     }|
+      {3:-- INSERT --}                                      |
+      {3:-- TERMINAL --}                                    |
+    ]]}
+    feed_data("\027")
+    screen_server:expect{grid=[[
+      Hello, Worl{1:d}                                      |
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {5:[No Name] [+]                                     }|
+                                                        |
+      {3:-- TERMINAL --}                                    |
+    ]]}
+
+    set_session(client_super)
+    local screen_client = thelpers.screen_setup(0,
+      string.format([=[["%s", "-u", "NONE", "-i", "NONE", "--server", "%s", "--remote-ui"]]=],
+                    nvim_prog, server_pipe))
+
+    screen_client:expect{grid=[[
+      Hello, Worl{1:d}                                      |
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {5:[No Name] [+]                                     }|
+                                                        |
+      {3:-- TERMINAL --}                                    |
+    ]]}
+
+    -- quitting the server
+    set_session(server_super)
+    feed_data(":q!\n")
+    screen_server:expect({any="Process exited 0"})
+
+    -- assert that client has exited
+    screen_client:expect({any="Process exited 0"})
+
+    server_super:close()
+    client_super:close()
   end)
 end)

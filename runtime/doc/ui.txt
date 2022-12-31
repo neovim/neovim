@@ -56,6 +56,8 @@ with these (optional) keys:
 - `stdin_fd`		Read buffer from `fd` as if it was a stdin pipe
 			This option can only used by |--embed| ui,
 			see |ui-startup-stdin|.
+	`stdin_tty`		Tells if `stdin` is a `tty` or not.
+	`stdout_tty`		Tells if `stdout` is a `tty` or not.
 
 Specifying an unknown option is an error; UIs can check the |api-metadata|
 `ui_options` key for supported options.

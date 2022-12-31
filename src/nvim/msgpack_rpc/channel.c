@@ -250,8 +250,8 @@ static void parse_msgpack(Channel *channel)
         ui_client_event_raw_line(p->grid_line_event);
       } else if (p->ui_handler.fn != NULL && p->result.type == kObjectTypeArray) {
         p->ui_handler.fn(p->result.data.array);
-        arena_mem_free(arena_finish(&p->arena));
       }
+      arena_mem_free(arena_finish(&p->arena));
     } else if (p->type == kMessageTypeResponse) {
       ChannelCallFrame *frame = kv_last(channel->rpc.call_stack);
       if (p->request_id != frame->request_id) {
@@ -299,7 +299,7 @@ static void handle_request(Channel *channel, Unpacker *p, Array args)
   assert(p->type == kMessageTypeRequest || p->type == kMessageTypeNotification);
 
   if (!p->handler.fn) {
-    send_error(channel, p->type, p->request_id, p->unpack_error.msg);
+    send_error(channel, p->handler, p->type, p->request_id, p->unpack_error.msg);
     api_clear_error(&p->unpack_error);
     arena_mem_free(arena_finish(&p->arena));
     return;
@@ -358,6 +358,7 @@ static void request_event(void **argv)
     msgpack_packer response;
     msgpack_packer_init(&response, &out_buffer, msgpack_sbuffer_write);
     channel_write(channel, serialize_response(channel->id,
+                                              e->handler,
                                               e->type,
                                               e->request_id,
                                               &error,
@@ -440,11 +441,13 @@ static void internal_read_event(void **argv)
   wstream_release_wbuffer(buffer);
 }
 
-static void send_error(Channel *chan, MessageType type, uint32_t id, char *err)
+static void send_error(Channel *chan, MsgpackRpcRequestHandler handler, MessageType type,
+                       uint32_t id, char *err)
 {
   Error e = ERROR_INIT;
   api_set_error(&e, kErrorTypeException, "%s", err);
   channel_write(chan, serialize_response(chan->id,
+                                         handler,
                                          type,
                                          id,
                                          &e,
@@ -543,26 +546,8 @@ void rpc_close(Channel *channel)
   channel_decref(channel);
 
   if (channel->streamtype == kChannelStreamStdio
-      || channel->id == ui_client_channel_id) {
-    multiqueue_put(main_loop.fast_events, exit_event, 0);
-  }
-}
-
-static void exit_delay_cb(uv_timer_t *handle)
-{
-  uv_timer_stop(&main_loop.exit_delay_timer);
-  multiqueue_put(main_loop.fast_events, exit_event, 0);
-}
-
-static void exit_event(void **argv)
-{
-  if (exit_need_delay) {
-    uv_timer_start(&main_loop.exit_delay_timer, exit_delay_cb, 0, 0);
-    return;
-  }
-
-  if (!exiting) {
-    os_exit(0);
+      || (channel->id == ui_client_channel_id && channel->streamtype != kChannelStreamProc)) {
+    exit_from_channel(0);
   }
 }
 
@@ -612,18 +597,27 @@ static WBuffer *serialize_request(uint64_t channel_id, uint32_t request_id, cons
   return rv;
 }
 
-static WBuffer *serialize_response(uint64_t channel_id, MessageType type, uint32_t response_id,
-                                   Error *err, Object arg, msgpack_sbuffer *sbuffer)
+static WBuffer *serialize_response(uint64_t channel_id, MsgpackRpcRequestHandler handler,
+                                   MessageType type, uint32_t response_id, Error *err, Object arg,
+                                   msgpack_sbuffer *sbuffer)
 {
   msgpack_packer pac;
   msgpack_packer_init(&pac, sbuffer, msgpack_sbuffer_write);
   if (ERROR_SET(err) && type == kMessageTypeNotification) {
-    Array args = ARRAY_DICT_INIT;
-    ADD(args, INTEGER_OBJ(err->type));
-    ADD(args, STRING_OBJ(cstr_to_string(err->msg)));
-    msgpack_rpc_serialize_request(0, cstr_as_string("nvim_error_event"),
-                                  args, &pac);
-    api_free_array(args);
+    if (handler.fn == handle_nvim_paste) {
+      // TODO(bfredl): this is pretty much ad-hoc. maybe TUI and UI:s should be
+      // allowed to ask nvim to just scream directly in the users face
+      // instead of sending nvim_error_event, in general.
+      semsg("paste: %s", err->msg);
+      api_clear_error(err);
+    } else {
+      Array args = ARRAY_DICT_INIT;
+      ADD(args, INTEGER_OBJ(err->type));
+      ADD(args, STRING_OBJ(cstr_to_string(err->msg)));
+      msgpack_rpc_serialize_request(0, cstr_as_string("nvim_error_event"),
+                                    args, &pac);
+      api_free_array(args);
+    }
   } else {
     msgpack_rpc_serialize_response(response_id, err, arg, &pac);
   }

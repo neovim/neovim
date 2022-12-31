@@ -933,22 +933,26 @@ HlAttrs dict2hlattrs(Dict(highlight) *dict, bool use_rgb, int *link_id, Error *e
   CHECK_FLAG(dict, mask, italic, , HL_ITALIC);
   CHECK_FLAG(dict, mask, reverse, , HL_INVERSE);
   CHECK_FLAG(dict, mask, strikethrough, , HL_STRIKETHROUGH);
+  if (use_rgb) {
+    CHECK_FLAG(dict, mask, fg_indexed, , HL_FG_INDEXED);
+    CHECK_FLAG(dict, mask, bg_indexed, , HL_BG_INDEXED);
+  }
   CHECK_FLAG(dict, mask, nocombine, , HL_NOCOMBINE);
   CHECK_FLAG(dict, mask, default, _, HL_DEFAULT);
 
   if (HAS_KEY(dict->fg)) {
-    fg = object_to_color(dict->fg, "fg", true, err);
+    fg = object_to_color(dict->fg, "fg", use_rgb, err);
   } else if (HAS_KEY(dict->foreground)) {
-    fg = object_to_color(dict->foreground, "foreground", true, err);
+    fg = object_to_color(dict->foreground, "foreground", use_rgb, err);
   }
   if (ERROR_SET(err)) {
     return hlattrs;
   }
 
   if (HAS_KEY(dict->bg)) {
-    bg = object_to_color(dict->bg, "bg", true, err);
+    bg = object_to_color(dict->bg, "bg", use_rgb, err);
   } else if (HAS_KEY(dict->background)) {
-    bg = object_to_color(dict->background, "background", true, err);
+    bg = object_to_color(dict->background, "background", use_rgb, err);
   }
   if (ERROR_SET(err)) {
     return hlattrs;
@@ -1035,11 +1039,11 @@ HlAttrs dict2hlattrs(Dict(highlight) *dict, bool use_rgb, int *link_id, Error *e
     }
   }
 
-  // apply gui mask as default for cterm mask
-  if (!cterm_mask_provided) {
-    cterm_mask = mask;
-  }
   if (use_rgb) {
+    // apply gui mask as default for cterm mask
+    if (!cterm_mask_provided) {
+      cterm_mask = mask;
+    }
     hlattrs.rgb_ae_attr = mask;
     hlattrs.rgb_bg_color = bg;
     hlattrs.rgb_fg_color = fg;
@@ -1049,9 +1053,9 @@ HlAttrs dict2hlattrs(Dict(highlight) *dict, bool use_rgb, int *link_id, Error *e
     hlattrs.cterm_fg_color = ctermfg == -1 ? 0 : ctermfg + 1;
     hlattrs.cterm_ae_attr = cterm_mask;
   } else {
-    hlattrs.cterm_bg_color = ctermbg == -1 ? 0 : ctermbg + 1;
-    hlattrs.cterm_fg_color = ctermfg == -1 ? 0 : ctermfg + 1;
-    hlattrs.cterm_ae_attr = cterm_mask;
+    hlattrs.cterm_bg_color = bg == -1 ? 0 : bg + 1;
+    hlattrs.cterm_fg_color = fg == -1 ? 0 : fg + 1;
+    hlattrs.cterm_ae_attr = mask;
   }
 
   return hlattrs;

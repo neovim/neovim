@@ -126,6 +126,8 @@ return {
     "global_link";
     "fallback";
     "blend";
+    "fg_indexed";
+    "bg_indexed";
   };
   highlight_cterm = {
     "bold";

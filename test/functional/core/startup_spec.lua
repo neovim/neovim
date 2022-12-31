@@ -544,7 +544,7 @@ describe('sysinit', function()
       nvim_exec()                                                 |
       cmd: aunmenu *                                              |
       >                                                           |
-      <" -u NONE -i NONE --cmd "set noruler" -D 1,1            All|
+      <" -u NONE -i NONE --cmd "set noruler" -D 1,0-1          All|
                                                                   |
     ]])
     command([[call chansend(g:id, "cont\n")]])

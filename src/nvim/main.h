@@ -45,6 +45,7 @@ typedef struct {
   char *scriptin;                       // -s {filename}
   char *scriptout;                      // -w/-W {filename}
   bool scriptout_append;                // append (-w) instead of overwrite (-W)
+  bool had_stdin_file;                  // explicit - as a file to edit
 } mparm_T;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS

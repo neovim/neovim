@@ -1550,7 +1550,8 @@ function Screen:_get_attr_id(attr_state, attrs, hl_id)
       attr_state.modified = true
       return id
     end
-    return "UNEXPECTED "..self:_pprint_attrs(self._attr_table[hl_id][1])
+    local kind = self._options.rgb and 1 or 2
+    return "UNEXPECTED "..self:_pprint_attrs(self._attr_table[hl_id][kind])
   else
     if self:_equal_attrs(attrs, {}) then
       -- ignore this attrs

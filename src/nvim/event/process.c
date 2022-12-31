@@ -14,6 +14,7 @@
 #include "nvim/globals.h"
 #include "nvim/log.h"
 #include "nvim/macros.h"
+#include "nvim/main.h"
 #include "nvim/os/process.h"
 #include "nvim/os/pty_process.h"
 #include "nvim/os/shell.h"
@@ -34,6 +35,9 @@ void __gcov_flush(void);
 #endif
 
 static bool process_is_tearing_down = false;
+
+// Delay exit until handles are closed, to avoid deadlocks
+static int exit_need_delay = 0;
 
 /// @returns zero on success, or negative error code
 int process_spawn(Process *proc, bool in, bool out, bool err)
@@ -398,11 +402,40 @@ static void process_close_handles(void **argv)
   exit_need_delay--;
 }
 
+static void exit_delay_cb(uv_timer_t *handle)
+{
+  uv_timer_stop(&main_loop.exit_delay_timer);
+  multiqueue_put(main_loop.fast_events, exit_event, 1, main_loop.exit_delay_timer.data);
+}
+
+static void exit_event(void **argv)
+{
+  int status = (int)(intptr_t)argv[0];
+  if (exit_need_delay) {
+    main_loop.exit_delay_timer.data = argv[0];
+    uv_timer_start(&main_loop.exit_delay_timer, exit_delay_cb, 0, 0);
+    return;
+  }
+
+  if (!exiting) {
+    os_exit(status);
+  }
+}
+
+void exit_from_channel(int status)
+{
+  multiqueue_put(main_loop.fast_events, exit_event, 1, status);
+}
+
 static void on_process_exit(Process *proc)
 {
   Loop *loop = proc->loop;
   ILOG("exited: pid=%d status=%d stoptime=%" PRIu64, proc->pid, proc->status,
        proc->stopped_time);
+
+  if (ui_client_channel_id) {
+    exit_from_channel(proc->status);
+  }
 
   // Process has terminated, but there could still be data to be read from the
   // OS. We are still in the libuv loop, so we cannot call code that polls for
