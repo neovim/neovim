@@ -302,7 +302,7 @@ session file as a starting point.
 use, and save this in a session.  Then you can go back to this layout whenever
 you want.
    For example, this is a nice layout to use:
-
+>
 	+----------------------------------------+
 	|		   VIM - main help file  |
 	|					 |
@@ -318,7 +318,7 @@ you want.
 	|~/=========|[No File]===================|
 	|					 |
 	+----------------------------------------+
-
+<
 This has a help window at the top, so that you can read this text.  The narrow
 vertical window on the left contains a file explorer.  This is a Vim plugin
 that lists the contents of a directory.  You can select files to edit there.
@@ -454,7 +454,7 @@ Use this format for the modeline:
 
 The "any-text" indicates that you can put any text before and after the part
 that Vim will use.  This allows making it look like a comment, like what was
-done above with /* and */.
+done above with "/*" and "*/".
    The " vim:" part is what makes Vim recognize this line.  There must be
 white space before "vim", or "vim" must be at the start of the line.  Thus
 using something like "gvim:" will not work.

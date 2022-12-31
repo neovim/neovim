@@ -53,7 +53,7 @@ function.
    The "write_line" function calls "write_char".  You need to figure out what
 it does.  So you position the cursor over the call to "write_char" and press
 CTRL-].  Now you are at the definition of "write_char".
-
+>
 	+-------------------------------------+
 	|void write_block(char **s; int cnt)  |
 	|{				      |
@@ -79,7 +79,7 @@ CTRL-].  Now you are at the definition of "write_char".
 				       |    putchar((int)(unsigned char)c); |
 				       |}				    |
 				       +------------------------------------+
-
+<
 The ":tags" command shows the list of tags that you traversed through:
 
 	:tags
@@ -425,7 +425,7 @@ MOVING IN COMMENTS
 
 To move back to the start of a comment use "[/".  Move forward to the end of a
 comment with "]/".  This only works for /* - */ comments.
-
+>
 	  +->	  +-> /*
 	  |    [/ |    * A comment about      --+
        [/ |	  +--  * wonderful life.	| ]/
@@ -434,7 +434,7 @@ comment with "]/".  This only works for /* - */ comments.
 	  +--	       foo = bar * 3;	      --+
 						| ]/
 		       /* a short comment */  <-+
-
+<
 ==============================================================================
 *29.4*	Finding global identifiers
 
@@ -575,7 +575,7 @@ and jump to the first place where the word under the cursor is used: >
 Hint: Goto Definition.  This command is very useful to find a variable or
 function that was declared locally ("static", in C terms).  Example (cursor on
 "counter"):
-
+>
 	   +->   static int counter = 0;
 	   |
 	   |     int get_counter(void)
@@ -583,7 +583,7 @@ function that was declared locally ("static", in C terms).  Example (cursor on
 	   |	     ++counter;
 	   +--	     return counter;
 		 }
-
+<
 To restrict the search even further, and look only in the current function,
 use this command: >
 
@@ -593,7 +593,7 @@ This will go back to the start of the current function and find the first
 occurrence of the word under the cursor.  Actually, it searches backwards to
 an empty line above a "{" in the first column.  From there it searches forward
 for the identifier.  Example (cursor on "idx"):
-
+>
 		int find_entry(char *name)
 		{
 	   +->	    int idx;
@@ -602,7 +602,7 @@ for the identifier.  Example (cursor on "idx"):
 	   |		if (strcmp(table[idx].name, name) == 0)
 	   +--		    return idx;
 		}
-
+<
 ==============================================================================
 
 Next chapter: |usr_30.txt|  Editing programs

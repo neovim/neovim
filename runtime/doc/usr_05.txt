@@ -107,7 +107,7 @@ Display an incomplete command in the lower right corner of the Vim window,
 left of the ruler.  For example, when you type "2f", Vim is waiting for you to
 type the character to find and "2f" is displayed.  When you press "w" next,
 the "2fw" command is executed and the displayed "2f" is removed.
-
+>
 	+-------------------------------------------------+
 	|text in the Vim window				  |
 	|~						  |
@@ -119,7 +119,7 @@ the "2fw" command is executed and the displayed "2f" is removed.
 
 >
 	set incsearch
-
+<
 Display matches for a search pattern while you type.
 
 >

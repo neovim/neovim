@@ -33,7 +33,7 @@ On Unix you can type this at any command prompt.  If you are running Microsoft
 Windows, open a Command Prompt and enter the command.  In either case, Vim
 starts editing a file called file.txt.  Because this is a new file, you get a
 blank window. This is what your screen will look like:
-
+>
 	+---------------------------------------+
 	|#					|
 	|~					|
@@ -43,7 +43,7 @@ blank window. This is what your screen will look like:
 	|"file.txt" [New file]			|
 	+---------------------------------------+
 		('#' is the cursor position.)
-
+<
 The tilde (~) lines indicate lines not in the file.  In other words, when Vim
 runs out of file to display, it displays tilde lines.  At the bottom of the
 screen, a message line indicates the file is named file.txt and shows that you
@@ -83,7 +83,7 @@ limerick, this is what you type: >
 After typing "turtle" you press the <Enter> key to start a new line.  Finally
 you press the <Esc> key to stop Insert mode and go back to Normal mode.  You
 now have two lines of text in your Vim window:
-
+>
 	+---------------------------------------+
 	|A very intelligent turtle		|
 	|Found programming Unix a hurdle	|
@@ -91,7 +91,7 @@ now have two lines of text in your Vim window:
 	|~					|
 	|					|
 	+---------------------------------------+
-
+<
 
 WHAT IS THE MODE?
 
@@ -105,7 +105,7 @@ with a colon).  Finish this command by pressing the <Enter> key (all commands
 that start with a colon are finished this way).
    Now, if you type the "i" command Vim will display --INSERT-- at the bottom
 of the window.  This indicates you are in Insert mode.
-
+>
 	+---------------------------------------+
 	|A very intelligent turtle		|
 	|Found programming Unix a hurdle	|
@@ -113,7 +113,7 @@ of the window.  This indicates you are in Insert mode.
 	|~					|
 	|-- INSERT --				|
 	+---------------------------------------+
-
+<
 If you press <Esc> to go back to Normal mode the last line will be made blank.
 
 
@@ -182,7 +182,7 @@ throwback to the old days of the typewriter, when you deleted things by typing
 xxxx over them.)  Move the cursor to the beginning of the first line, for
 example, and type xxxxxxx (seven x's) to delete "A very ".  The result should
 look like this:
-
+>
 	+---------------------------------------+
 	|intelligent turtle			|
 	|Found programming Unix a hurdle	|
@@ -190,14 +190,14 @@ look like this:
 	|~					|
 	|					|
 	+---------------------------------------+
-
+<
 Now you can insert new text, for example by typing: >
 
 	iA young <Esc>
 
 This begins an insert (the i), inserts the words "A young", and then exits
 insert mode (the final <Esc>).	The result:
-
+>
 	+---------------------------------------+
 	|A young intelligent turtle		|
 	|Found programming Unix a hurdle	|
@@ -205,13 +205,13 @@ insert mode (the final <Esc>).	The result:
 	|~					|
 	|					|
 	+---------------------------------------+
-
+<
 
 DELETING A LINE
 
 To delete a whole line use the "dd" command.  The following line will
 then move up to fill the gap:
-
+>
 	+---------------------------------------+
 	|Found programming Unix a hurdle	|
 	|~					|
@@ -219,7 +219,7 @@ then move up to fill the gap:
 	|~					|
 	|					|
 	+---------------------------------------+
-
+<
 
 DELETING A LINE BREAK
 
