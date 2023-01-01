@@ -2475,7 +2475,7 @@ from the rest of the name (like 'PkgName::' in '$PkgName::VarName'): >
 (In Vim 6.x it was the other way around: "perl_want_scope_in_variables"
 enabled it.)
 
-If you do not want complex things like '@{${"foo"}}' to be parsed: >
+If you do not want complex things like `@{${"foo"}}` to be parsed: >
 
 	:let perl_no_extended_vars = 1
 
@@ -5042,7 +5042,7 @@ ctermbg={color-nr}				*ctermbg*
 	a number instead of a color name.
 
 	Note that for 16 color ansi style terminals (including xterms), the
-	numbers in the NR-8 column is used.  Here '*' means 'add 8' so that 
+	numbers in the NR-8 column is used.  Here "*" means "add 8" so that 
 	Blue is 12, DarkGray is 8 etc.
 
 	Note that for some color terminals these names may result in the wrong

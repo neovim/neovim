@@ -34,8 +34,8 @@ also check if the name, version and release matches.  The plugin is smart
 enough to ask you if it should update the package release, if you have not
 done so.
 
+------------------------------------------------------------------------------
 Setting a map					*spec-setting-a-map*
--------------
 
 As you should know, you can easily set a map to access any Vim command (or
 anything, for that matter).  If you don't like the default map of
@@ -54,8 +54,8 @@ This command will add a map only in the spec file buffers.
 ==============================================================================
 2. Customizing					*spec-customizing*
 
+------------------------------------------------------------------------------
 The format string				*spec_chglog_format*
------------------
 
 You can easily customize how your spec file entry will look like.  To do
 this just set the variable "spec_chglog_format" in your vimrc file like
@@ -72,8 +72,8 @@ address once.
 To discover which format options you can use, take a look at the strftime()
 function man page.
 
+------------------------------------------------------------------------------
 Where to insert new items			*spec_chglog_prepend*
--------------------------
 
 The plugin will usually insert new %changelog entry items (note that it's
 not the entry itself) after the existing ones.  If you set the
@@ -83,8 +83,8 @@ spec_chglog_prepend variable >
 
 it will insert new items before the existing ones.
 
+------------------------------------------------------------------------------
 Inserting release info				*spec_chglog_release_info*
-----------------------
 
 If you want, the plugin may automatically insert release information
 on each changelog entry.  One advantage of turning this feature on is

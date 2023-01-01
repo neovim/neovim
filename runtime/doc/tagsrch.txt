@@ -59,9 +59,9 @@ CTRL-]			Jump to the definition of the keyword under the
 CTRL-] is the default telnet escape key.  When you type CTRL-] to jump to a
 tag, you will get the telnet prompt instead.  Most versions of telnet allow
 changing or disabling the default escape key.  See the telnet man page.  You
-can 'telnet -E {Hostname}' to disable the escape character, or 'telnet -e
-{EscapeCharacter} {Hostname}' to specify another escape character.  If
-possible, try to use "ssh" instead of "telnet" to avoid this problem.
+can `telnet -E {Hostname}` to disable the escape character, or
+`telnet -e {EscapeCharacter} {Hostname}` to specify another escape character.
+If possible, try to use "ssh" instead of "telnet" to avoid this problem.
 
 							*tag-priority*
 When there are multiple matches for a tag, this priority is used:
@@ -404,7 +404,7 @@ is added to the command and on the 'autowrite' option:
 
   tag in       file	   autowrite			~
 current file  changed	!   option	  action	~
------------------------------------------------------------------------------
+ ---------------------------------------------------------------------------
     yes		 x	x     x	  goto tag
     no		 no	x     x	  read other file, goto tag
     no		yes    yes    x   abandon current file, read other file, goto
@@ -412,7 +412,7 @@ current file  changed	!   option	  action	~
     no		yes	no    on  write current file, read other file, goto
 				  tag
     no		yes	no   off  fail
------------------------------------------------------------------------------
+ ---------------------------------------------------------------------------
 
 - If the tag is in the current file, the command will always work.
 - If the tag is in another file and the current file was not changed, the
@@ -561,8 +561,8 @@ ctags).
 		with Vi, it ignores the following fields. Example:
 			APP	file	/^static int APP;$/;"	v
 		When {tagaddress} is not a line number or search pattern, then
-		{term} must be |;".  Here the bar ends the command (excluding
-		the bar) and ;" is used to have Vi ignore the rest of the
+		{term} must be `|;"`.  Here the bar ends the command (excluding
+		the bar) and `;"` is used to have Vi ignore the rest of the
 		line.  Example:
 			APP	file.c	call cursor(3, 4)|;"	v
 
@@ -848,9 +848,9 @@ Common arguments for the commands above:
 	a comment (even though syntax highlighting does recognize it).
 	Note: Since a macro definition mostly doesn't look like a comment, the
 	[!] makes no difference for ":dlist", ":dsearch" and ":djump".
-[/]	A pattern can be surrounded by '/'.  Without '/' only whole words are
-	matched, using the pattern "\<pattern\>".  Only after the second '/' a
-	next command can be appended with '|'.  Example: >
+[/]	A pattern can be surrounded by "/".  Without "/" only whole words are
+	matched, using the pattern "\<pattern\>".  Only after the second "/" a
+	next command can be appended with "|".  Example: >
 	:isearch /string/ | echo "the last one"
 <	For a ":djump", ":dsplit", ":dlist" and ":dsearch" command the pattern
 	is used as a literal string, not as a search pattern.

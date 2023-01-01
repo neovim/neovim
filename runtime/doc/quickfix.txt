@@ -1585,8 +1585,9 @@ A call of |:clist| writes them accordingly with their correct filenames:
 
 Unlike the other prefixes that all match against whole lines, %P, %Q and %O
 can be used to match several patterns in the same line.  Thus it is possible
-to parse even nested files like in the following line:
+to parse even nested files like in the following line: >
   {"file1" {"file2" error1} error2 {"file3" error3 {"file4" error4 error5}}}
+<
 The %O then parses over strings that do not contain any push/pop file name
 information.  See |errorformat-LaTeX| for an extended example.
 
@@ -1946,9 +1947,9 @@ by Vim.
 
 The default format for the lines displayed in the quickfix window and location
 list window is:
-
+>
     <filename>|<lnum> col <col>|<text>
-
+<
 The values displayed in each line correspond to the "bufnr", "lnum", "col" and
 "text" fields returned by the |getqflist()| function.
 

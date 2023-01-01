@@ -483,13 +483,13 @@ accordingly, proceeding as follows:
 	However, directories in 'runtimepath' ending in "after" are skipped
 	here and only loaded after packages, see below.
 	Loading plugins won't be done when:
-	- The 'loadplugins' option was reset in a vimrc file.
+	- The |'loadplugins'| option was reset in a vimrc file.
 	- The |--noplugin| command line argument is used.
 	- The |--clean| command line argument is used.
 	- The "-u NONE" command line argument is used |-u|.
-	Note that using "-c 'set noloadplugins'" doesn't work, because the
+	Note that using `-c 'set noloadplugins'` doesn't work, because the
 	commands from the command line have not been executed yet.  You can
-	use "--cmd 'set noloadplugins'" or "--cmd 'set loadplugins'" |--cmd|.
+	use `--cmd 'set noloadplugins'` or `--cmd 'set loadplugins'` |--cmd|.
 
 	Packages are loaded.  These are plugins, as above, but found in the
 	"start" directory of each entry in 'packpath'.  Every plugin directory

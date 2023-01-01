@@ -169,10 +169,10 @@ To travel forward in time again use the |:later| command: >
 The arguments are "s", "m" and "h", just like with |:earlier|.
 
 If you want even more details, or want to manipulate the information, you can
-use the |undotree()| function.  To see what it returns: >
-
+use the |undotree()| function.  To see what it returns:
+>
 	:echo undotree()
-
+<
 ==============================================================================
 
 Next chapter: |usr_40.txt|  Make new commands

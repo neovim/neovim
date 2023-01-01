@@ -345,9 +345,9 @@ escaped with a backslash.
 Wildcards in {file} are expanded, but as with file completion, 'wildignore'
 and 'suffixes' apply.  Which wildcards are supported depends on the system.
 These are the common ones:
-	?	matches one character
-	*	matches anything, including nothing
-	**	matches anything, including nothing, recurses into directories
+	`?`	matches one character
+	`*`	matches anything, including nothing
+	`**`	matches anything, including nothing, recurses into directories
 	[abc]	match 'a', 'b' or 'c'
 
 To avoid the special meaning of the wildcards prepend a backslash.  However,
@@ -406,7 +406,7 @@ external command, by putting an equal sign right after the first backtick,
 e.g.: >
 	:e `=tempname()`
 The expression can contain just about anything, thus this can also be used to
-avoid the special meaning of '"', '|', '%' and '#'.  However, 'wildignore'
+avoid the special meaning of '"', "|", '%' and '#'.  However, 'wildignore'
 does apply like to other wildcards.
 
 Environment variables in the expression are expanded when evaluating the
@@ -894,7 +894,7 @@ changed.  This is done for all *.c files.
 Example: >
 	:args *.[ch]
 	:argdo %s/\<my_foo\>/My_Foo/ge | update
-This changes the word "my_foo" to "My_Foo" in all *.c and *.h files.  The "e"
+This changes the word "my_foo" to "My_Foo" in all "*.c" and "*.h" files.  The "e"
 flag is used for the ":substitute" command to avoid an error for files where
 "my_foo" isn't used.  ":update" writes the file only if changes were made.
 
@@ -1276,8 +1276,8 @@ unmodified.
 For MS-Windows you can modify the filters that are used in the browse
 dialog.  By setting the g:browsefilter or b:browsefilter variables, you can
 change the filters globally or locally to the buffer.  The variable is set to
-a string in the format "{filter label}\t{pattern};{pattern}\n" where {filter
-label} is the text that appears in the "Files of Type" comboBox, and {pattern}
+a string in the format "{filter label}\t{pattern};{pattern}\n" where "{filter
+label}" is the text that appears in the "Files of Type" comboBox, and {pattern}
 is the pattern which filters the filenames.  Several patterns can be given,
 separated by ';'.
 
@@ -1576,8 +1576,8 @@ which is slightly different.
 There are three different types of searching:
 
 1) Downward search:					*starstar*
-   Downward search uses the wildcards '*', '**' and possibly others
-   supported by your operating system.  '*' and '**' are handled inside Vim,
+   Downward search uses the wildcards "*", "**" and possibly others
+   supported by your operating system.  "*" and "**" are handled inside Vim,
    so they work on all operating systems.  Note that "**" only acts as a
    special wildcard when it is at the start of a name.
 
@@ -1585,12 +1585,12 @@ There are three different types of searching:
    search pattern this would be ".*".  Note that the "." is not used for file
    searching.
 
-   '**' is more sophisticated:
+   "**" is more sophisticated:
       - It ONLY matches directories.
       - It matches up to 30 directories deep by default, so you can use it to
 	search an entire directory tree
       - The maximum number of levels matched can be given by appending a number
-	to '**'.
+	to "**".
 	Thus '/usr/**2' can match: >
 		/usr
 		/usr/include
@@ -1601,14 +1601,14 @@ There are three different types of searching:
 		....
 <	It does NOT match '/usr/include/g++/std' as this would be three
 	levels.
-	The allowed number range is 0 ('**0' is removed) to 100
+	The allowed number range is 0 ("**0" is removed) to 100
 	If the given number is smaller than 0 it defaults to 30, if it's
 	bigger than 100 then 100 is used.  The system also has a limit on the
 	path length, usually 256 or 1024 bytes.
-      - '**' can only be at the end of the path or be followed by a path
+      - "**" can only be at the end of the path or be followed by a path
 	separator or by a number and a path separator.
 
-   You can combine '*' and '**' in any order: >
+   You can combine "*" and "**" in any order: >
 	/usr/**/sys/*
 	/usr/*tory/sys/**
 	/usr/**2/sys/*

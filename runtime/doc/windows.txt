@@ -284,8 +284,8 @@ Opens a vertically split, full-height window on the "tags" file at the far
 left of the Vim window.
 
 
+------------------------------------------------------------------------------
 Closing a window
-----------------
 
 :q[uit]
 :{count}q[uit]						*:count_quit*
@@ -693,8 +693,8 @@ Note: ":next" is an exception, because it must accept a list of file names
 for compatibility with Vi.
 
 
+------------------------------------------------------------------------------
 The argument list and multiple windows
---------------------------------------
 
 The current position in the argument list can be different for each window.
 Remember that when doing ":e file", the position in the argument list stays
