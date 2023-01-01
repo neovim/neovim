@@ -4902,7 +4902,7 @@ in their own color.
 
 						*highlight-clear* *:hi-clear*
 :hi[ghlight] clear	Reset all highlighting to the defaults.  Removes all
-			highlighting for groups added by the user!
+			highlighting for groups added by the user.
 			Uses the current value of 'background' to decide which
 			default colors to use.
 			If there was a default link, restore it. |:hi-link|

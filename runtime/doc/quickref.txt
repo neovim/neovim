@@ -868,7 +868,8 @@ Short explanation of each option:		*option-list*
 'shiftwidth'	  'sw'	    number of spaces to use for (auto)indent step
 'shortmess'	  'shm'     list of flags, reduce length of messages
 'showbreak'	  'sbr'     string to use at the start of wrapped lines
-'showcmd'	  'sc'	    show (partial) command in status line
+'showcmd'	  'sc'	    show (partial) command somewhere
+'showcmdloc'	  'sloc'    where to show (partial) command
 'showfulltag'	  'sft'     show full tag pattern when completing tag
 'showmatch'	  'sm'	    briefly jump to matching bracket if insert one
 'showmode'	  'smd'     message on status line to show current mode
