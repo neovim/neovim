@@ -1676,16 +1676,44 @@ endfunc
 func Test_tex_file()
   filetype on
 
-  " only tests one case, should do more
-  let lines =<< trim END
-      % This is a sentence.
+  call writefile(['%& pdflatex'], 'Xfile.tex')
+  split Xfile.tex
+  call assert_equal('tex', &filetype)
+  bwipe
 
-      This is a sentence.
-  END
-  call writefile(lines, "Xfile.tex")
+  call writefile(['\newcommand{\test}{some text}'], 'Xfile.tex')
+  split Xfile.tex
+  call assert_equal('tex', &filetype)
+  bwipe
+
+  " tex_flavor is unset
+  call writefile(['%& plain'], 'Xfile.tex')
   split Xfile.tex
   call assert_equal('plaintex', &filetype)
   bwipe
+
+  let g:tex_flavor = 'plain'
+  call writefile(['just some text'], 'Xfile.tex')
+  split Xfile.tex
+  call assert_equal('plaintex', &filetype)
+  bwipe
+
+  let lines =<< trim END
+      % This is a comment.
+
+      \usemodule[translate]
+  END
+  call writefile(lines, 'Xfile.tex')
+  split Xfile.tex
+  call assert_equal('context', &filetype)
+  bwipe
+
+  let g:tex_flavor = 'context'
+  call writefile(['just some text'], 'Xfile.tex')
+  split Xfile.tex
+  call assert_equal('context', &filetype)
+  bwipe
+  unlet g:tex_flavor
 
   call delete('Xfile.tex')
   filetype off
