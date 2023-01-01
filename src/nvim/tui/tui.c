@@ -310,11 +310,12 @@ static void terminfo_start(UI *ui)
 #endif
 
   // Set up unibilium/terminfo.
-  ui_client_termname = NULL;
   if (term) {
     data->ut = unibi_from_term(term);
     if (data->ut) {
-      ui_client_termname = xstrdup(term);
+      if (!ui_client_termname) {
+        ui_client_termname = xstrdup(term);
+      }
       if (!data->term) {
         data->term = xstrdup(term);
       }
