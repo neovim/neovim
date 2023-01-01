@@ -275,13 +275,13 @@ int main(int argc, char **argv)
   // Check if we have an interactive window.
   check_and_set_isatty(&params);
 
-  // TODO: should we try to keep param scan before this?
-  nlua_init();
-  TIME_MSG("init lua interpreter");
-
   // Process the command line arguments.  File names are put in the global
   // argument list "global_alist".
   command_line_scan(&params);
+
+  nlua_init();
+  nlua_set_argv(argv, argc, params.lua_arg0);
+  TIME_MSG("init lua interpreter");
 
   if (embedded_mode) {
     const char *err;
@@ -1318,14 +1318,9 @@ static void command_line_scan(mparm_T *parmp)
           }
           parmp->luaf = argv[0];
           argc--;
-          argv++;
-          // Lua args after "-l <file>" (upto "--").
-          int l_argc = nlua_set_argv(argv, argc);
-          assert(l_argc >= 0);
-          argc = argc - l_argc;
-          if (argc > 0) {  // Found "--".
-            argv = argv + l_argc;
-            had_minmin = true;
+          if (argc > 0) {  // Lua args after "-l <file>".
+            parmp->lua_arg0 = parmp->argc - argc;
+            argc = 0;
           }
           break;
 
@@ -1438,6 +1433,7 @@ static void init_params(mparm_T *paramp, int argc, char **argv)
   paramp->server_addr = NULL;
   paramp->remote = 0;
   paramp->luaf = NULL;
+  paramp->lua_arg0 = -1;
 }
 
 /// Initialize global startuptime file if "--startuptime" passed as an argument.

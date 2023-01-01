@@ -32,7 +32,7 @@ filename	One or more file names.  The first one will be the current
 		an option, precede the arglist with "--", e.g.: >
 			nvim -- -filename
 <		All arguments after "--" are interpreted as file names, no
-		other options or "+command" argument can follow.
+		other options or "+command" arguments can follow.
 
 							*--*
 `-`		Alias for stdin (standard input).
@@ -143,9 +143,9 @@ argument.
 		these commands, independently from "-c" commands.
 
 							*-S*
--S [file]	Vimscript or Lua (".lua") [file] will be |:source|d after the
-		first file has been read or "Session.vim" if [file] is not
-		given. Equivalent to: >
+-S [file]	Executes Vimscript or Lua (".lua") [file] after the first file
+		has been read. See also |:source|. If [file] is not given,
+		defaults to "Session.vim". Equivalent to: >
 			-c "source {file}"
 <		Can be repeated like "-c", subject to the same limit of 10
 		"-c" arguments. {file} cannot start with a "-".
@@ -190,8 +190,9 @@ argument.
 		  -E reads stdin as text (into buffer 1).
 
 -es						*-es* *-Es* *-s-ex* *silent-mode*
--Es		Silent mode (no UI), for scripting.  Unrelated to |-s|.
-		Disables most prompts, messages, warnings and errors.
+-Es		Script mode, aka "silent mode", aka "batch mode". No UI,
+		disables most prompts and messages. Unrelated to |-s|.
+		See also |-S| to run script files.
 
 		-es reads/executes stdin as Ex commands. >
 			printf "put ='foo'\n%%print\n" | nvim -es
@@ -215,16 +216,22 @@ argument.
 
 							*-l*
 -l {script} [args]
-		Executes Lua {script} file and exits. All [args] (up to "--"
-		|---|) are treated as {script} args, not Nvim args: by Lua
-		convention they are set in the `_G.arg` global table.  *lua-args*
-		On {script} error, Nvim exits with code 1.
+		Executes Lua {script} non-interactively (no UI) with optional
+		[args] after processing any preceding Nvim |cli-arguments|,
+		then exits. See |-S| to run multiple Lua scripts without args,
+		or in an interactive session.
+								    *lua-args*
+		All [args] are treated as {script} arguments and passed
+		literally to Lua (in the conventional `_G.arg` global table),
+		thus "-l" ends processing of Nvim arguments.
+		
+		Exits with code 1 on Lua error.
 
 		Sets 'verbose' to 1 (like "-V1"), so Lua `print()` writes to
 		output.
 
-		Any |cli-arguments| before "-l" are processed before executing
-		{script}. For example this quits before executing "foo.lua": >
+		Arguments before "-l" are processed before executing {script}.
+		This example quits before executing "foo.lua": >
 			nvim +q -l foo.lua
 <		This loads Lua module "bar" before executing "foo.lua": >
 			nvim +"lua require('bar')" -l foo.lua
@@ -256,7 +263,7 @@ argument.
 
 -V[N]{file}
 		Like -V and sets 'verbosefile' to {file} (must not start with
-		a digit).  Messages are not displayed; instead they are
+		a digit).  Messages are not displayed, instead they are
 		written to {file}.
 		Example: >
 			nvim -V20vimlog

@@ -23,7 +23,8 @@ end
 
 local function main()
   printbufs()
-  print('args:', vim.inspect(_G.arg))
+  print('nvim args:', #vim.v.argv)
+  print('lua args:', vim.inspect(_G.arg))
 
   local exitcode = parseargs(_G.arg)
   if type(exitcode) == 'number' then

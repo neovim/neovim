@@ -107,7 +107,8 @@ describe('startup', function()
       -- nvim -l foo.lua -arg1 -- a b c
       assert_l_out([[
           bufs:
-          args: { "-arg1", "--exitcode", "73", "--arg2" }]],
+          nvim args: 8
+          lua args: { "-arg1", "--exitcode", "73", "--arg2" }]],
         {},
         { '-arg1', "--exitcode", "73", '--arg2' }
       )
@@ -118,7 +119,8 @@ describe('startup', function()
       -- nvim -l foo.lua -arg1 -- a b c
       assert_l_out([[
           bufs:
-          args: { "-arg1", "--arg2", "arg3" }]],
+          nvim args: 7
+          lua args: { "-arg1", "--arg2", "arg3" }]],
         {},
         { '-arg1', '--arg2', 'arg3' }
       )
@@ -127,7 +129,8 @@ describe('startup', function()
       -- nvim -l foo.lua --
       assert_l_out([[
           bufs:
-          args: {}]],
+          nvim args: 5
+          lua args: { "--" }]],
         {},
         { '--' }
       )
@@ -135,8 +138,9 @@ describe('startup', function()
 
       -- nvim file1 file2 -l foo.lua -arg1 -- file3 file4
       assert_l_out([[
-          bufs: file1 file2 file3 file4
-          args: { "-arg1", "arg 2" }]],
+          bufs: file1 file2
+          nvim args: 11
+          lua args: { "-arg1", "arg 2", "--", "file3", "file4" }]],
         { 'file1', 'file2', },
         { '-arg1', 'arg 2', '--', 'file3', 'file4' }
       )
@@ -145,7 +149,8 @@ describe('startup', function()
       -- nvim file1 file2 -l foo.lua -arg1 --
       assert_l_out([[
           bufs: file1 file2
-          args: { "-arg1" }]],
+          nvim args: 8
+          lua args: { "-arg1", "--" }]],
         { 'file1', 'file2', },
         { '-arg1', '--' }
       )
@@ -154,7 +159,8 @@ describe('startup', function()
       -- nvim -l foo.lua <vim args>
       assert_l_out([[
           bufs:
-          args: { "-c", "set wrap?" }]],
+          nvim args: 6
+          lua args: { "-c", "set wrap?" }]],
         {},
         { '-c', 'set wrap?' }
       )
@@ -167,7 +173,8 @@ describe('startup', function()
             wrap
           
           bufs:
-          args: { "-c", "set wrap?" }]],
+          nvim args: 8
+          lua args: { "-c", "set wrap?" }]],
         { '-c', 'set wrap?' },
         { '-c', 'set wrap?' }
       )
