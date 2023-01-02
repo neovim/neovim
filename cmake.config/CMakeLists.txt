@@ -46,6 +46,26 @@ check_function_exists(strcasecmp HAVE_STRCASECMP)
 check_function_exists(strncasecmp HAVE_STRNCASECMP)
 check_function_exists(strptime HAVE_STRPTIME)
 
+check_c_source_compiles("
+#include <sys/types.h>
+#include <dirent.h>
+int main(void)
+{
+  DIR *dir = opendir(\"dirname\");
+  dirfd(dir);
+  return 0;
+}
+" HAVE_DIRFD)
+
+check_c_source_compiles("
+#include <sys/file.h>
+int main(void)
+{
+  flock(10, LOCK_SH);
+  return 0;
+}
+" HAVE_FLOCK)
+
 if(CMAKE_SYSTEM_NAME STREQUAL "SunOS")
   check_c_source_compiles("
 #include <termios.h>
