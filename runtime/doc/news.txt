@@ -106,7 +106,7 @@ The following new APIs or features were added.
 • |--remote-ui| option was added to connect to a remote instance and display
   in it in a |TUI| in the local terminal. This can be used run a headless nvim
   instance in the background and display its UI on demand, which previously
-  only was possible usiing a external UI implementation.
+  only was possible using a external UI implementation.
 
 ==============================================================================
 CHANGED FEATURES                                                 *news-changes*
