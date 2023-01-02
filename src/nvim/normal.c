@@ -5773,6 +5773,10 @@ static void nv_operator(cmdarg_T *cap)
 
   op_type = get_op_type(cap->cmdchar, cap->nchar);
 
+  if (op_type == OP_YANK && !p_cmoy) {
+      cap->oap->cursor_start = curwin->w_cursor;
+  }
+
   if (bt_prompt(curbuf) && op_is_change(op_type)
       && !prompt_curpos_editable()) {
     clearopbeep(cap->oap);

@@ -1861,6 +1861,13 @@ A jump table for the options with a short description can be found at |Q_op|.
 	"line" and "screenline" cannot be used together.
 
 
+			*'cursormvonyank'* *'cmoy'* *'nocursormvonyank'* *'nocmoy'*
+'cursormvonyank' 'cmoy'	boolean	(default on)
+			global
+	Move cursor to the start of the copied text on yank.
+	Set to off to keep in the cursor in the same position.
+
+
 						*'debug'*
 'debug'			string	(default "")
 			global

@@ -37,6 +37,7 @@ typedef struct oparg_S {
   pos_T start;                  // start of the operator
   pos_T end;                    // end of the operator
   pos_T cursor_start;           // cursor position before motion for "gw"
+                                // and yank operations when "nocursormvonyank"
 
   long line_count;              // number of lines from op_start to op_end
                                 // (inclusive)

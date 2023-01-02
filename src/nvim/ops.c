@@ -6188,6 +6188,9 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
         restore_lbr(lbr_saved);
         oap->excl_tr_ws = cap->cmdchar == 'z';
         (void)op_yank(oap, !gui_yank);
+        if (!p_cmoy) {
+          curwin->w_cursor = oap->cursor_start;  // resetting cursor to original position
+        }
       }
       check_cursor_col();
       break;
