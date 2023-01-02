@@ -285,7 +285,7 @@ work:
 Instead, you need to create an intermediate Lua table and change this:
 >lua
     local temp_table = vim.g.some_global_variable
-    temp_table = keys = 400
+    temp_table.key2 = 400
     vim.g.some_global_variable = temp_table
     vim.pretty_print(vim.g.some_global_variable)
     --> { key1 = "value", key2 = 400 }
