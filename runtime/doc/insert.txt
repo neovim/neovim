@@ -257,8 +257,8 @@ CTRL-]		Trigger abbreviation, without inserting a character.
 
 						*i_<Insert>*
 <Insert>	Toggle between Insert and Replace mode.
------------------------------------------------------------------------
 
+-----------------------------------------------------------------------
 						*i_backspacing*
 The effect of the <BS>, CTRL-W, and CTRL-U depend on the 'backspace' option
 (unless 'revins' is set).  This is a comma-separated list of items:
@@ -378,6 +378,7 @@ CTRL-G u	close undo sequence, start new change	     *i_CTRL-G_u*
 CTRL-G U	don't start a new undo block with the next   *i_CTRL-G_U*
 		left/right cursor movement, if the cursor
 		stays within the same line
+
 -----------------------------------------------------------------------
 
 The CTRL-O command sometimes has a side effect: If the cursor was beyond the
@@ -1450,13 +1451,13 @@ At the moment (beginning of 2006) there are two main browsers - MS Internet
 Explorer and Mozilla Firefox. These two applications are covering over 90% of
 market. Theoretically standards are created by W3C organisation
 (https://www.w3.org/) but they are not always followed/implemented.
-
+>
 		IE	FF	W3C  Omni completion ~
 		+/-	+/-	+    +		     ~
 		+	+	-    +		     ~
 		+	-	-    -		     ~
 		-	+	-    -		     ~
-
+<
 Regardless from state of implementation in browsers but if element is defined
 in standards, completion plugin will place element in suggestion list. When
 both major engines implemented element, even if this is not in standards it

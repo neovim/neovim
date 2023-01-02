@@ -1845,7 +1845,8 @@ function lsp.get_active_clients(filter)
   for client_id in pairs(t) do
     local client = active_clients[client_id]
     if
-      (filter.id == nil or client.id == filter.id)
+      client
+      and (filter.id == nil or client.id == filter.id)
       and (filter.name == nil or client.name == filter.name)
     then
       clients[#clients + 1] = client

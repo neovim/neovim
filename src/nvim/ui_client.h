@@ -17,6 +17,26 @@ EXTERN size_t grid_line_buf_size INIT(= 0);
 EXTERN schar_T *grid_line_buf_char INIT(= NULL);
 EXTERN sattr_T *grid_line_buf_attr INIT(= NULL);
 
+// ID of the ui client channel. If zero, the client is not running.
+EXTERN uint64_t ui_client_channel_id INIT(= 0);
+
+// TODO(bfredl): the current structure for how tui and ui_client.c communicate is a bit awkward.
+// This will be restructured as part of The UI Devirtualization Project.
+
+/// Whether ui client has sent nvim_ui_attach yet
+EXTERN bool ui_client_attached INIT(= false);
+
+/// Whether ui client has gotten a response about the bg color of the terminal,
+/// kTrue=dark, kFalse=light, kNone=no response yet
+EXTERN TriState ui_client_bg_respose INIT(= kNone);
+
+/// The ui client should forward its stdin to the nvim process
+/// by convention, this uses fd=3 (next free number after stdio)
+EXTERN bool ui_client_forward_stdin INIT(= false);
+
+EXTERN char *ui_client_termname INIT(= NULL);
+
+#define UI_CLIENT_STDIN_FD 3
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "ui_client.h.generated.h"
 

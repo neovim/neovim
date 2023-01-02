@@ -199,8 +199,8 @@ this allows you to pass multiple commands to a single call of |vim.cmd()|:
       highlight link Warning Error
     ]])
 <
-This is the converse of |lua-heredoc| and allows you to include Lua code in
-your `init.vim`.
+This is the converse of |lua-heredoc| and allows you to include Vimscript code in
+your `init.lua`.
 
 If you want to build your Vim command programmatically, the following form can
 be useful (all these are equivalent to the corresponding line above):

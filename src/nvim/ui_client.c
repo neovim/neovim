@@ -6,6 +6,7 @@
 #include <stdlib.h>
 
 #include "nvim/api/private/helpers.h"
+#include "nvim/eval.h"
 #include "nvim/event/loop.h"
 #include "nvim/event/multiqueue.h"
 #include "nvim/globals.h"
@@ -24,23 +25,71 @@
 #endif
 // uncrustify:on
 
-void ui_client_init(uint64_t chan)
+uint64_t ui_client_start_server(int argc, char **argv)
 {
+  varnumber_T exit_status;
+  char **args = xmalloc(((size_t)(2 + argc)) * sizeof(char *));
+  int args_idx = 0;
+  args[args_idx++] = xstrdup((const char *)get_vim_var_str(VV_PROGPATH));
+  args[args_idx++] = xstrdup("--embed");
+  for (int i = 1; i < argc; i++) {
+    args[args_idx++] = xstrdup(argv[i]);
+  }
+  args[args_idx++] = NULL;
+
+  Channel *channel = channel_job_start(args, CALLBACK_READER_INIT,
+                                       CALLBACK_READER_INIT, CALLBACK_NONE,
+                                       false, true, true, false, kChannelStdinPipe,
+                                       NULL, 0, 0, NULL, &exit_status);
+  if (ui_client_forward_stdin) {
+    close(0);
+    dup(2);
+  }
+
+  return channel->id;
+}
+
+void ui_client_run(bool remote_ui)
+  FUNC_ATTR_NORETURN
+{
+  ui_builtin_start();
+
+  loop_poll_events(&main_loop, 1);
+
   Array args = ARRAY_DICT_INIT;
-  int width = Columns;
-  int height = Rows;
   Dictionary opts = ARRAY_DICT_INIT;
 
   PUT(opts, "rgb", BOOLEAN_OBJ(true));
   PUT(opts, "ext_linegrid", BOOLEAN_OBJ(true));
   PUT(opts, "ext_termcolors", BOOLEAN_OBJ(true));
 
-  ADD(args, INTEGER_OBJ((int)width));
-  ADD(args, INTEGER_OBJ((int)height));
+  if (ui_client_termname) {
+    PUT(opts, "term_name", STRING_OBJ(cstr_as_string(ui_client_termname)));
+  }
+  if (ui_client_bg_respose != kNone) {
+    bool is_dark = (ui_client_bg_respose == kTrue);
+    PUT(opts, "term_background", STRING_OBJ(cstr_as_string(is_dark ? "dark" : "light")));
+  }
+  PUT(opts, "term_colors", INTEGER_OBJ(t_colors));
+  if (!remote_ui) {
+    PUT(opts, "stdin_tty", BOOLEAN_OBJ(stdin_isatty));
+    PUT(opts, "stdout_tty", BOOLEAN_OBJ(stdout_isatty));
+    if (ui_client_forward_stdin) {
+      PUT(opts, "stdin_fd", INTEGER_OBJ(UI_CLIENT_STDIN_FD));
+    }
+  }
+
+  ADD(args, INTEGER_OBJ(Columns));
+  ADD(args, INTEGER_OBJ(Rows));
   ADD(args, DICTIONARY_OBJ(opts));
 
-  rpc_send_event(chan, "nvim_ui_attach", args);
-  ui_client_channel_id = chan;
+  rpc_send_event(ui_client_channel_id, "nvim_ui_attach", args);
+  ui_client_attached = true;
+
+  // os_exit() will be invoked when the client channel detaches
+  while (true) {
+    LOOP_PROCESS_EVENTS(&main_loop, resize_events, -1);
+  }
 }
 
 UIClientHandler ui_client_get_redraw_handler(const char *name, size_t name_len, Error *error)
@@ -63,20 +112,6 @@ Object handle_ui_client_redraw(uint64_t channel_id, Array args, Arena *arena, Er
   return NIL;
 }
 
-/// run the main thread in ui client mode
-///
-/// This is just a stub. the full version will handle input, resizing, etc
-void ui_client_execute(uint64_t chan)
-  FUNC_ATTR_NORETURN
-{
-  while (true) {
-    loop_poll_events(&main_loop, -1);
-    multiqueue_process_events(resize_events);
-  }
-
-  getout(0);
-}
-
 static HlAttrs ui_client_dict2hlattrs(Dictionary d, bool rgb)
 {
   Error err = ERROR_INIT;
@@ -85,7 +120,7 @@ static HlAttrs ui_client_dict2hlattrs(Dictionary d, bool rgb)
     // TODO(bfredl): log "err"
     return HLATTRS_INIT;
   }
-  return dict2hlattrs(&dict, true, NULL, &err);
+  return dict2hlattrs(&dict, rgb, NULL, &err);
 }
 
 void ui_client_event_grid_resize(Array args)

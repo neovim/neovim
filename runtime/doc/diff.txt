@@ -137,6 +137,10 @@ Otherwise they are set to their default value:
 	'foldmethod'	"manual"
 	'foldcolumn'	0
 
+'foldenable' will most-likely be reset to off.  That is when 'foldmethod' is
+restored to "manual".  The folds themselves are not cleared but they should
+not show up, resetting 'foldenable' is the best way to do that.
+
 ==============================================================================
 2. Viewing diffs						*view-diffs*
 

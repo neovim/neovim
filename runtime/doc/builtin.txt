@@ -68,8 +68,8 @@ bufnr([{expr} [, {create}]])	Number	Number of the buffer {expr}
 bufwinid({expr})		Number	|window-ID| of buffer {expr}
 bufwinnr({expr})		Number	window number of buffer {expr}
 byte2line({byte})		Number	line number at byte count {byte}
-byteidx({expr}, {nr})		Number	byte index of {nr}'th char in {expr}
-byteidxcomp({expr}, {nr})	Number	byte index of {nr}'th char in {expr}
+byteidx({expr}, {nr})		Number	byte index of {nr}th char in {expr}
+byteidxcomp({expr}, {nr})	Number	byte index of {nr}th char in {expr}
 call({func}, {arglist} [, {dict}])
 				any	call {func} with arguments {arglist}
 ceil({expr})			Float	round {expr} up
@@ -318,9 +318,9 @@ matchfuzzypos({list}, {str} [, {dict}])
 matchlist({expr}, {pat} [, {start} [, {count}]])
 				List	match and submatches of {pat} in {expr}
 matchstr({expr}, {pat} [, {start} [, {count}]])
-				String	{count}'th match of {pat} in {expr}
+				String	{count}th match of {pat} in {expr}
 matchstrpos({expr}, {pat} [, {start} [, {count}]])
-				List	{count}'th match of {pat} in {expr}
+				List	{count}th match of {pat} in {expr}
 max({expr})			Number	maximum value of items in {expr}
 menu_get({path} [, {modes}])	List	description of |menus| matched by {path}
 menu_info({name} [, {mode}])	Dict	get menu item information
@@ -956,7 +956,7 @@ byte2line({byte})					*byte2line()*
 			GetOffset()->byte2line()
 
 byteidx({expr}, {nr})					*byteidx()*
-		Return byte index of the {nr}'th character in the String
+		Return byte index of the {nr}th character in the String
 		{expr}.  Use zero for the first character, it then returns
 		zero.
 		If there are no multibyte characters the returned value is
@@ -1508,7 +1508,7 @@ debugbreak({pid})					*debugbreak()*
 		Specifically used to interrupt a program being debugged.  It
 		will cause process {pid} to get a SIGTRAP.  Behavior for other
 		processes is undefined. See |terminal-debug|.
-		{Sends a SIGINT to a process {pid} other than MS-Windows}
+		(Sends a SIGINT to a process {pid} other than MS-Windows)
 
 		Returns |TRUE| if successfully interrupted the program.
 		Otherwise returns |FALSE|.
@@ -1597,9 +1597,9 @@ dictwatcheradd({dict}, {pattern}, {callback})		      *dictwatcheradd()*
 			call dictwatcheradd(g:, '*', 'OnDictChanged')
 <
 		For now {pattern} only accepts very simple patterns that can
-		contain a '*' at the end of the string, in which case it will
-		match every key that begins with the substring before the '*'.
-		That means if '*' is not the last character of {pattern}, only
+		contain a "*" at the end of the string, in which case it will
+		match every key that begins with the substring before the "*".
+		That means if "*" is not the last character of {pattern}, only
 		keys that are exactly equal as {pattern} will be matched.
 
 		The {callback} receives three arguments:
@@ -4956,7 +4956,7 @@ match({expr}, {pat} [, {start} [, {count}]])			*match()*
 		If {start} is out of range ({start} > strlen({expr}) for a
 		String or {start} > len({expr}) for a |List|) -1 is returned.
 
-		When {count} is given use the {count}'th match.  When a match
+		When {count} is given use the {count}th match.  When a match
 		is found in a String the search for the next one starts one
 		character further.  Thus this example results in 1: >
 			echo match("testing", "..", 0, 2)
@@ -5186,7 +5186,7 @@ matchfuzzy({list}, {str} [, {dict}])			*matchfuzzy()*
 		   :let l = readfile("buffer.c")->matchfuzzy("str")
 <		results in a list of lines in "buffer.c" fuzzy matching "str". >
 		   :echo ['one two', 'two one']->matchfuzzy('two one')
-<		results in ['two one', 'one two']. >
+<		results in `['two one', 'one two']` . >
 		   :echo ['one two', 'two one']->matchfuzzy('two one',
 						\ {'matchseq': 1})
 <		results in ['two one'].
@@ -6683,7 +6683,7 @@ searchcount([{options}])					*searchcount()*
 		  pos		|List|		`[lnum, col, off]` value
 						when recomputing the result.
 						this changes "current" result
-						value. see |cursor()|, |getpos()
+						value. see |cursor()|, |getpos()|
 						(default: cursor's position)
 
 		Can also be used as a |method|: >
@@ -8147,7 +8147,7 @@ strwidth({string})					*strwidth()*
 submatch({nr} [, {list}])			*submatch()* *E935*
 		Only for an expression in a |:substitute| command or
 		substitute() function.
-		Returns the {nr}'th submatch of the matched text.  When {nr}
+		Returns the {nr}th submatch of the matched text.  When {nr}
 		is 0 the whole matched text is returned.
 		Note that a NL in the string can stand for a line break of a
 		multi-line match or a NUL character in the text.

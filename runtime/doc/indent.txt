@@ -35,7 +35,7 @@ The rest of this section describes the 'cindent' option.
 
 Note that 'cindent' indenting does not work for every code scenario.  Vim
 is not a C compiler: it does not recognize all syntax.  One requirement is
-that toplevel functions have a '{' in the first column.  Otherwise they are
+that toplevel functions have a "{" in the first column.  Otherwise they are
 easily confused with declarations.
 
 These five options control C program indenting:
@@ -60,12 +60,12 @@ used instead.  The format of 'cinkeys' and 'indentkeys' is equal.
 The default is "0{,0},0),0],:,0#,!^F,o,O,e" which specifies that indenting
 occurs as follows:
 
-	"0{"	if you type '{' as the first character in a line
-	"0}"	if you type '}' as the first character in a line
-	"0)"	if you type ')' as the first character in a line
-	"0]"	if you type ']' as the first character in a line
-	":"	if you type ':' after a label or case statement
-	"0#"	if you type '#' as the first character in a line
+	"0{"	if you type "{" as the first character in a line
+	"0}"	if you type "}" as the first character in a line
+	"0)"	if you type ")" as the first character in a line
+	"0]"	if you type "]" as the first character in a line
+	":"	if you type ":" after a label or case statement
+	"0#"	if you type "#" as the first character in a line
 	"!^F"	if you type CTRL-F (which is not inserted)
 	"o"	if you type a <CR> anywhere or use the "o" command (not in
 		insert mode!)
@@ -74,21 +74,21 @@ occurs as follows:
 		line
 
 Characters that can precede each key:				*i_CTRL-F*
-!	When a '!' precedes the key, Vim will not insert the key but will
+!	When a "!" precedes the key, Vim will not insert the key but will
 	instead reindent the current line.  This allows you to define a
 	command key for reindenting the current line.  CTRL-F is the default
 	key for this.  Be careful if you define CTRL-I for this because CTRL-I
 	is the ASCII code for <Tab>.
-*	When a '*' precedes the key, Vim will reindent the line before
+*	When a "*" precedes the key, Vim will reindent the line before
 	inserting the key.  If 'cinkeys' contains "*<Return>", Vim reindents
 	the current line before opening a new line.
-0	When a zero precedes the key (but appears after '!' or '*') Vim will
+0	When a zero precedes the key (but appears after "!" or "*") Vim will
 	reindent the line only if the key is the first character you type in
 	the line.  When used before "=" Vim will only reindent the line if
 	there is only white space before the word.
 
-When neither '!' nor '*' precedes the key, Vim reindents the line after you
-type the key.  So ';' sets the indentation of a line which includes the ';'.
+When neither "!" nor "*" precedes the key, Vim reindents the line after you
+type the key.  So ";" sets the indentation of a line which includes the ";".
 
 Special key names:
 <>	Angle brackets mean spelled-out names of keys.  For example: "<Up>",
@@ -154,8 +154,8 @@ The examples below assume a 'shiftwidth' of 4.
 	eN    Add N to the prevailing indent inside a set of braces if the
 	      opening brace at the End of the line (more precise: is not the
 	      first character in a line).  This is useful if you want a
-	      different indent when the '{' is at the start of the line from
-	      when '{' is at the end of the line.  (default 0).
+	      different indent when the "{" is at the start of the line from
+	      when "{" is at the end of the line.  (default 0).
 
 		cino=		    cino=e2		cino=e-2 >
 		  if (cond) {	      if (cond) {	  if (cond) {
@@ -169,8 +169,8 @@ The examples below assume a 'shiftwidth' of 4.
 							*cino-n*
 	nN    Add N to the prevailing indent for a statement after an "if",
 	      "while", etc., if it is NOT inside a set of braces.  This is
-	      useful if you want a different indent when there is no '{'
-	      before the statement from when there is a '{' before it.
+	      useful if you want a different indent when there is no "{"
+	      before the statement from when there is a "{" before it.
 	      (default 0).
 
 		cino=		    cino=n2		cino=n-2 >
@@ -193,7 +193,7 @@ The examples below assume a 'shiftwidth' of 4.
 		      int foo;		    int foo;		  int foo;
 <
 							*cino-{*
-	{N    Place opening braces N characters from the prevailing indent.
+	`{N`    Place opening braces N characters from the prevailing indent.
 	      This applies only for opening braces that are inside other
 	      braces.  (default 0).
 
@@ -203,7 +203,7 @@ The examples below assume a 'shiftwidth' of 4.
 		      foo;		  foo;		      foo;
 <
 							*cino-}*
-	}N    Place closing braces N characters from the matching opening
+	`}N`    Place closing braces N characters from the matching opening
 	      brace.  (default 0).
 
 		cino=		    cino={2,}-0.5s	cino=}2 >
@@ -846,7 +846,7 @@ own 'formatoptions'): >
 
 Else, 't' will be removed from the 'formatoptions' string and "qrowcb" will be
 added, see |fo-table| for more information.
--------------
+
 
 							*PHP_outdentSLComments*
 To add extra indentation to single-line comments: >
@@ -858,7 +858,7 @@ Only single-line comments will be affected such as: >
     # Comment
     // Comment
     /* Comment */
--------------
+<
 
 							*PHP_default_indenting*
 To add extra indentation to every PHP lines with N being the number of
@@ -878,18 +878,17 @@ For example, with N = 1, this will give:
 	$command_hist = TRUE;
     ?>
 (Notice the extra indentation between the PHP container markers and the code)
--------------
 
 							*PHP_outdentphpescape*
 To indent PHP escape tags as the surrounding non-PHP code (only affects the
 PHP escape tags): >
     :let g:PHP_outdentphpescape = 0
--------------
+<
 
 							*PHP_removeCRwhenUnix*
 To automatically remove '\r' characters when the 'fileformat' is set to Unix: >
     :let g:PHP_removeCRwhenUnix = 1
--------------
+<
 
 							*PHP_BracesAtCodeLevel*
 To indent braces at the same level than the code they contain: >
@@ -908,7 +907,6 @@ Instead of: >
 
 NOTE:	Indenting will be a bit slower if this option is used because some
 	optimizations won't be available.
--------------
 
 					*PHP_vintage_case_default_indent*
 To indent 'case:' and 'default:' statements in switch() blocks: >
@@ -918,7 +916,6 @@ In PHP braces are not required inside 'case/default' blocks therefore 'case:'
 and 'default:' are indented at the same level than the 'switch()' to avoid
 meaningless indentation. You can use the above option to return to the
 traditional way.
--------------
 
 							*PHP_noArrowMatching*
 By default the indent script will indent multi-line chained calls by matching
@@ -927,17 +924,16 @@ the position of the '->': >
     $user_name_very_long->name()
                         ->age()
                         ->info();
-
+<
 You can revert to the classic way of indenting by setting this option to 1: >
     :let g:PHP_noArrowMatching = 1
-
+<
 You will obtain the following result: >
 
     $user_name_very_long->name()
         ->age()
         ->info();
-
--------------
+<
 
 					*PHP_IndentFunctionCallParameters*
 Extra indentation levels to add to parameters in multi-line function calls. >
@@ -954,14 +950,13 @@ Function call arguments will indent 1 extra level. For two-space indentation: >
           $and_that
       );
     }
-
--------------
+<
 
 				*PHP_IndentFunctionDeclarationParameters*
 Extra indentation levels to add to arguments in multi-line function
 definitions. >
     let g:PHP_IndentFunctionDeclarationParameters = 1
-
+<
 Function arguments in declarations will indent 1 extra level. For two-space
 indentation: >
 
@@ -974,7 +969,7 @@ indentation: >
         $and_that
       );
     }
-
+<
 
 PYTHON							*ft-python-indent*
 
@@ -1145,7 +1140,6 @@ to the vimrc file, which causes the previous alignment example to change: >
   );
   END ENTITY sync;
 
-----------------------------------------
 
 Alignment of right-hand side assignment "<=" statements are performed by
 default. This causes the following alignment example: >
@@ -1164,7 +1158,6 @@ to the vimrc file, which causes the previous alignment example to change: >
     (sig_b OR sig_c)) OR
     (bus_a(0) AND sig_d);
 
-----------------------------------------
 
 Full-line comments (lines that begin with "--") are indented to be aligned with
 the very previous line's comment, PROVIDED that a whitespace follows after

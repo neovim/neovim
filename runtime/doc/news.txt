@@ -39,6 +39,8 @@ NEW FEATURES                                                    *news-features*
 
 The following new APIs or features were added.
 
+• Added a |vim.lsp.codelens.clear()| function to clear codelenses.
+
 • |vim.inspect_pos()|, |vim.show_pos()| and |:Inspect| allow a user to get or show items
   at a given buffer postion. Currently this includes treesitter captures,
   semantic tokens, syntax groups and extmarks.
@@ -86,7 +88,12 @@ The following new APIs or features were added.
 • When using Nvim inside tmux 3.2 or later, the default clipboard provider
   will now copy to the system clipboard. |provider-clipboard|
 
-• 'splitkeep' option to control the scroll behavior of horizontal splits.
+• |'showcmdloc'| option to display the 'showcmd' information in the
+  status line or tab line. A new %S statusline item is available to place
+  the 'showcmd' text in a custom 'statusline'. Useful for when |'cmdheight'|
+  is set to 0.
+
+• |'splitkeep'| option to control the scroll behavior of horizontal splits.
 
 • |nvim_select_popupmenu_item()| now supports |cmdline-completion| popup menu.
 
@@ -98,6 +105,13 @@ The following new APIs or features were added.
 
 • |vim.diagnostic.buf_in_disable()| check diagnostic disabled in given buffer or
   current buffer.
+
+• |--remote-ui| option was added to connect to a remote instance and display
+  in it in a |TUI| in the local terminal. This can be used run a headless nvim
+  instance in the background and display its UI on demand, which previously
+  only was possible usiing a external UI implementation.
+
+
 ==============================================================================
 CHANGED FEATURES                                                 *news-changes*
 
@@ -105,6 +119,14 @@ The following changes to existing APIs or features add new behavior.
 
 • 'exrc' now supports `.nvim.lua` file.
 • 'exrc' is no longer marked deprecated.
+
+• The |TUI| is changed to run in a separate process (previously, a separate
+  thread was used). This is not supposed to be a visible change to the user,
+  but might be the cause of subtle changes of behavior and bugs.
+
+  Previously, the TUI could be disabled as a build time feature (+tui/-tui),
+  resulting in a nvim binary which only could be run headless or embedded
+  in an external process. As of this version, TUI is always avalibale.
 
 ==============================================================================
 REMOVED FEATURES                                                 *news-removed*

@@ -66,7 +66,6 @@ void win_redr_status(win_T *wp)
   int len;
   int fillchar;
   int attr;
-  int width;
   int this_ru_col;
   bool is_stl_global = global_stl_height() > 0;
   static bool busy = false;
@@ -93,7 +92,7 @@ void win_redr_status(win_T *wp)
     redraw_custom_statusline(wp);
   } else {
     fillchar = fillchar_status(&attr, wp);
-    width = is_stl_global ? Columns : wp->w_width;
+    const int stl_width = is_stl_global ? Columns : wp->w_width;
 
     get_trans_bufname(wp->w_buffer);
     p = NameBuff;
@@ -123,9 +122,9 @@ void win_redr_status(win_T *wp)
       // len += (int)strlen(p + len);  // dead assignment
     }
 
-    this_ru_col = ru_col - (Columns - width);
-    if (this_ru_col < (width + 1) / 2) {
-      this_ru_col = (width + 1) / 2;
+    this_ru_col = ru_col - (Columns - stl_width);
+    if (this_ru_col < (stl_width + 1) / 2) {
+      this_ru_col = (stl_width + 1) / 2;
     }
     if (this_ru_col <= 1) {
       p = "<";                // No room for file name!
@@ -163,6 +162,16 @@ void win_redr_status(win_T *wp)
     }
 
     win_redr_ruler(wp, true);
+
+    // Draw the 'showcmd' information if 'showcmdloc' == "statusline".
+    if (p_sc && *p_sloc == 's') {
+      const int sc_width = MIN(10, this_ru_col - len - 2);
+
+      if (sc_width > 0) {
+        grid_puts_len(&default_grid, showcmd_buf, sc_width, row,
+                      wp->w_wincol + this_ru_col - sc_width - 1, attr);
+      }
+    }
   }
 
   // May need to draw the character below the vertical separator.
@@ -832,8 +841,18 @@ void draw_tabline(void)
     }
     grid_fill(&default_grid, 0, 1, col, Columns, c, c, attr_fill);
 
+    // Draw the 'showcmd' information if 'showcmdloc' == "tabline".
+    if (p_sc && *p_sloc == 't') {
+      const int sc_width = MIN(10, (int)Columns - col - (tabcount > 1) * 3);
+
+      if (sc_width > 0) {
+        grid_puts_len(&default_grid, showcmd_buf, sc_width, 0,
+                      Columns - sc_width - (tabcount > 1) * 2, attr_nosel);
+      }
+    }
+
     // Put an "X" for closing the current tab if there are several.
-    if (first_tabpage->tp_next != NULL) {
+    if (tabcount > 1) {
       grid_putchar(&default_grid, 'X', 0, Columns - 1, attr_nosel);
       tab_page_click_defs[Columns - 1] = (StlClickDefinition) {
         .type = kStlClickTabClose,
@@ -1483,6 +1502,12 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, char *opt_n
       //       `get_rel_pos` can return a named position. Ex: "Top"
       get_rel_pos(wp, buf_tmp, TMPLEN);
       str = buf_tmp;
+      break;
+
+    case STL_SHOWCMD:
+      if (p_sc && (opt_name == NULL || strcmp(opt_name, p_sloc) == 0)) {
+        str = showcmd_buf;
+      }
       break;
 
     case STL_ARGLISTSTAT:

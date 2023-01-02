@@ -33,7 +33,7 @@ itp('handle_background_color', function()
     term_input.waiting_for_bg_response = 1
     eq(kComplete, handle_background_color(term_input))
     eq(0, term_input.waiting_for_bg_response)
-    eq(1, multiqueue.multiqueue_size(events))
+    eq(0, multiqueue.multiqueue_size(events))
 
     local event = multiqueue.multiqueue_get(events)
     local bg_event = ffi.cast("Event*", event.argv[1])

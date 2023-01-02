@@ -903,7 +903,8 @@ struct tabpage_S {
   win_T *tp_firstwin;      ///< first window in this Tab page
   win_T *tp_lastwin;       ///< last window in this Tab page
   long tp_old_Rows_avail;  ///< ROWS_AVAIL when Tab page was left
-  long tp_old_Columns;     ///< Columns when Tab page was left
+  long tp_old_Columns;     ///< Columns when Tab page was left, -1 when
+                           ///< calling win_new_screen_cols() postponed
   long tp_ch_used;         ///< value of 'cmdheight' when frame size was set
 
   diff_T *tp_first_diff;

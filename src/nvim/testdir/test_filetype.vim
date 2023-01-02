@@ -288,6 +288,7 @@ let s:filename_checks = {
     \ 'javascriptreact': ['file.jsx'],
     \ 'jess': ['file.clp'],
     \ 'jgraph': ['file.jgr'],
+    \ 'jq': ['file.jq'],
     \ 'jovial': ['file.jov', 'file.j73', 'file.jovial'],
     \ 'jproperties': ['file.properties', 'file.properties_xx', 'file.properties_xx_xx', 'some.properties_xx_xx_file', 'org.eclipse.xyz.prefs'],
     \ 'json': ['file.json', 'file.jsonp', 'file.json-patch', 'file.webmanifest', 'Pipfile.lock', 'file.ipynb', '.prettierrc', '.firebaserc', 'file.slnf'],
@@ -420,7 +421,7 @@ let s:filename_checks = {
     \ 'pdf': ['file.pdf'],
     \ 'perl': ['file.plx', 'file.al', 'file.psgi', 'gitolite.rc', '.gitolite.rc', 'example.gitolite.rc', '.latexmkrc', 'latexmkrc'],
     \ 'pf': ['pf.conf'],
-    \ 'pfmain': ['main.cf'],
+    \ 'pfmain': ['main.cf', 'main.cf.proto'],
     \ 'php': ['file.php', 'file.php9', 'file.phtml', 'file.ctp', 'file.phpt', 'file.theme'],
     \ 'pike': ['file.pike', 'file.pmod'],
     \ 'pilrc': ['file.rcp'],
@@ -1675,16 +1676,44 @@ endfunc
 func Test_tex_file()
   filetype on
 
-  " only tests one case, should do more
-  let lines =<< trim END
-      % This is a sentence.
+  call writefile(['%& pdflatex'], 'Xfile.tex')
+  split Xfile.tex
+  call assert_equal('tex', &filetype)
+  bwipe
 
-      This is a sentence.
-  END
-  call writefile(lines, "Xfile.tex")
+  call writefile(['\newcommand{\test}{some text}'], 'Xfile.tex')
+  split Xfile.tex
+  call assert_equal('tex', &filetype)
+  bwipe
+
+  " tex_flavor is unset
+  call writefile(['%& plain'], 'Xfile.tex')
   split Xfile.tex
   call assert_equal('plaintex', &filetype)
   bwipe
+
+  let g:tex_flavor = 'plain'
+  call writefile(['just some text'], 'Xfile.tex')
+  split Xfile.tex
+  call assert_equal('plaintex', &filetype)
+  bwipe
+
+  let lines =<< trim END
+      % This is a comment.
+
+      \usemodule[translate]
+  END
+  call writefile(lines, 'Xfile.tex')
+  split Xfile.tex
+  call assert_equal('context', &filetype)
+  bwipe
+
+  let g:tex_flavor = 'context'
+  call writefile(['just some text'], 'Xfile.tex')
+  split Xfile.tex
+  call assert_equal('context', &filetype)
+  bwipe
+  unlet g:tex_flavor
 
   call delete('Xfile.tex')
   filetype off

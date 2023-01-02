@@ -520,12 +520,12 @@ CTRL-O in Insert mode you get a beep but you are still in Insert mode, type
 		TO mode						    ~
 		Normal	Visual	Select	Insert	  Replace   Cmd-line  Ex ~
 FROM mode								 ~
-Normal			v V ^V	  *4	 *1	   R gR     : / ? !   Q
-Visual		 *2		  ^G	 c C	    --	      :       --
-Select		 *5	^O ^G		 *6	    --	      --      --
+Normal			v V ^V	  `*4`	 *1	   R gR     : / ? !   Q
+Visual		 `*2`		  ^G	 c C	    --	      :       --
+Select		 `*5`	^O ^G		 `*6`	    --	      --      --
 Insert		 <Esc>	  --	  --		  <Insert>    --      --
 Replace		 <Esc>	  --	  --	<Insert>	      --      --
-Command-line	 *3	  --	  --	 :start	    --		      --
+Command-line	 `*3`	  --	  --	 :start	    --		      --
 Ex		 :vi	  --	  --	 --	    --	      --
 
 -- not possible
@@ -589,26 +589,26 @@ Lines longer than the window width will wrap, unless the 'wrap' option is off
 
 If the window has room after the last line of the buffer, Vim will show '~' in
 the first column of the last lines in the window, like this:
-
+>
 	+-----------------------+
 	|some line		|
 	|last line		|
 	|~			|
 	|~			|
 	+-----------------------+
-
+<
 Thus the '~' lines indicate that the end of the buffer was reached.
 
 If the last line in a window doesn't fit, Vim will indicate this with a '@' in
 the first column of the last lines in the window, like this:
-
+>
 	+-----------------------+
 	|first line		|
 	|second line		|
 	|@			|
 	|@			|
 	+-----------------------+
-
+<
 Thus the '@' lines indicate that there is a line that doesn't fit in the
 window.
 
@@ -616,14 +616,14 @@ When the "lastline" flag is present in the 'display' option, you will not see
 '@' characters at the left side of window.  If the last line doesn't fit
 completely, only the part that fits is shown, and the last three characters of
 the last line are replaced with "@@@", like this:
-
+>
 	+-----------------------+
 	|first line		|
 	|second line		|
 	|a very long line that d|
 	|oesn't fit in the wi@@@|
 	+-----------------------+
-
+<
 If there is a single line that is too long to fit in the window, this is a
 special situation.  Vim will show only part of the line, around where the
 cursor is.  There are no special characters shown, so that you can edit all
@@ -704,9 +704,9 @@ Definitions						*definitions* *jargon*
 
 A screen contains one or more windows, separated by status lines and with the
 command line at the bottom.
-
+>
 	+-------------------------------+
-screen	| window 1	| window 2	|
+ screen	| window 1	| window 2	|
 	|		|		|
 	|		|		|
 	|= status line =|= status line =|
@@ -716,7 +716,7 @@ screen	| window 1	| window 2	|
 	|==== status line ==============|
 	|command line			|
 	+-------------------------------+
-
+<
 The command line is also used for messages.  It scrolls up the screen when
 there is not enough room in the command line.
 

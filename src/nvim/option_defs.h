@@ -336,6 +336,7 @@ enum {
   STL_ALTPERCENT      = 'P',  ///< Percentage as TOP BOT ALL or NN%.
   STL_ARGLISTSTAT     = 'a',  ///< Argument list status as (x of y).
   STL_PAGENUM         = 'N',  ///< Page number (when printing).
+  STL_SHOWCMD         = 'S',  ///< 'showcmd' buffer
   STL_VIM_EXPR        = '{',  ///< Start of expression to substitute.
   STL_SEPARATE        = '=',  ///< Separation between alignment sections.
   STL_TRUNCMARK       = '<',  ///< Truncation mark if line is too long.
@@ -353,8 +354,8 @@ enum {
     STL_HELPFLAG, STL_HELPFLAG_ALT, STL_FILETYPE, STL_FILETYPE_ALT, \
     STL_PREVIEWFLAG, STL_PREVIEWFLAG_ALT, STL_MODIFIED, STL_MODIFIED_ALT, \
     STL_QUICKFIX, STL_PERCENTAGE, STL_ALTPERCENT, STL_ARGLISTSTAT, STL_PAGENUM, \
-    STL_VIM_EXPR, STL_SEPARATE, STL_TRUNCMARK, STL_USER_HL, STL_HIGHLIGHT, \
-    STL_TABPAGENR, STL_TABCLOSENR, STL_CLICK_FUNC, \
+    STL_SHOWCMD, STL_VIM_EXPR, STL_SEPARATE, STL_TRUNCMARK, STL_USER_HL, \
+    STL_HIGHLIGHT, STL_TABPAGENR, STL_TABCLOSENR, STL_CLICK_FUNC, \
     0, \
   })
 
@@ -696,6 +697,7 @@ EXTERN long p_sw;               ///< 'shiftwidth'
 EXTERN char *p_shm;             // 'shortmess'
 EXTERN char *p_sbr;             // 'showbreak'
 EXTERN int p_sc;                // 'showcmd'
+EXTERN char *p_sloc;            // 'showcmdloc'
 EXTERN int p_sft;               // 'showfulltag'
 EXTERN int p_sm;                // 'showmatch'
 EXTERN int p_smd;               // 'showmode'

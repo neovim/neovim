@@ -343,7 +343,6 @@ is used as a method: >
 
 
 ==============================================================================
-
 3. Automatically loading functions ~
 							*autoload-functions*
 When using many or large functions, it's possible to automatically define them

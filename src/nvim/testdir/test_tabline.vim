@@ -1,6 +1,9 @@
 " Test for tabline
 
 source shared.vim
+source view_util.vim
+source check.vim
+source screendump.vim
 
 func TablineWithCaughtError()
   let s:func_in_tabline_called = 1
@@ -160,5 +163,23 @@ func Test_mouse_click_in_tab()
   call delete('Xclickscript')
 endfunc
 
+func Test_tabline_showcmd()
+  CheckScreendump
+
+  let lines =<< trim END
+    set showtabline=2
+    set showcmdloc=tabline
+    call setline(1, ['a', 'b', 'c'])
+  END
+  call writefile(lines, 'XTest_tabline', 'D')
+
+  let buf = RunVimInTerminal('-S XTest_tabline', {'rows': 6})
+
+  call feedkeys("\<C-V>Gl", "xt")
+  call VerifyScreenDump(buf, 'Test_tabline_showcmd_1', {})
+
+  call feedkeys("\<Esc>1234", "xt")
+  call VerifyScreenDump(buf, 'Test_tabline_showcmd_2', {})
+endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab

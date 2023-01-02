@@ -145,7 +145,7 @@ This sets the 'titlestring' option to "hi" and 'iconstring' to "there": >
 
 Similarly, the double quote character starts a comment.  To include the '"' in
 the option value, use '\"' instead.  This example sets the 'titlestring'
-option to 'hi "there"': >
+option to "hi "there"": >
    :set titlestring=hi\ \"there\"
 
 For Win32 backslashes in file names are mostly not removed.  More precise: For
@@ -1325,7 +1325,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	These names are recognized:
 
 						*clipboard-unnamed*
-	unnamed		When included, Vim will use the clipboard register '*'
+	unnamed		When included, Vim will use the clipboard register "*"
 			for all yank, delete, change and put operations which
 			would normally go to the unnamed register.  When a
 			register is explicitly specified, it will always be
@@ -1336,8 +1336,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 
 						*clipboard-unnamedplus*
 	unnamedplus	A variant of the "unnamed" flag which uses the
-			clipboard register '+' (|quoteplus|) instead of
-			register '*' for all yank, delete, change and put
+			clipboard register "+" (|quoteplus|) instead of
+			register "*" for all yank, delete, change and put
 			operations which would normally go to the unnamed
 			register.  When "unnamed" is also included to the
 			option, yank and delete operations (but not put)
@@ -4357,7 +4357,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	w x	updown		up-down sizing arrows
 	w x	leftright	left-right sizing arrows
 	w x	busy		The system's usual busy pointer
-	w x	no		The system's usual 'no input' pointer
+	w x	no		The system's usual "no input" pointer
 	  x	udsizing	indicates up-down resizing
 	  x	lrsizing	indicates left-right resizing
 	  x	crosshair	like a big thin +
@@ -4434,12 +4434,12 @@ A jump table for the options with a short description can be found at |Q_op|.
 
 		'nonu'          'nu'            'nonu'          'nu'
 		'nornu'         'nornu'         'rnu'           'rnu'
-
+>
 	    |apple          |  1 apple      |  2 apple      |  2 apple
 	    |pear           |  2 pear       |  1 pear       |  1 pear
 	    |nobody         |  3 nobody     |  0 nobody     |3   nobody
 	    |there          |  4 there      |  1 there      |  1 there
-
+<
 						*'numberwidth'* *'nuw'*
 'numberwidth' 'nuw'	number	(default: 4)
 			local to window
@@ -5573,30 +5573,30 @@ A jump table for the options with a short description can be found at |Q_op|.
 		and "[a]" instead of "appended" for ':w >> file' command
 	  x	use "[dos]" instead of "[dos format]", "[unix]"		*shm-x*
 		instead of "[unix format]" and "[mac]" instead of "[mac
-		format]".
+		format]"
 	  a	all of the above abbreviations				*shm-a*
 
 	  o	overwrite message for writing a file with subsequent	*shm-o*
 		message for reading a file (useful for ":wn" or when
 		'autowrite' on)
-	  O	message for reading a file overwrites any previous	*smh-O*
-		message.  Also for quickfix message (e.g., ":cn").
+	  O	message for reading a file overwrites any previous	*shm-O*
+		message;  also for quickfix message (e.g., ":cn")
 	  s	don't give "search hit BOTTOM, continuing at TOP" or	*shm-s*
 		"search hit TOP, continuing at BOTTOM" messages; when using
 		the search count do not show "W" after the count message (see
 		S below)
 	  t	truncate file message at the start if it is too long	*shm-t*
 		to fit on the command-line, "<" will appear in the left most
-		column.  Ignored in Ex mode.
+		column; ignored in Ex mode
 	  T	truncate other messages in the middle if they are too	*shm-T*
-		long to fit on the command line.  "..." will appear in the
-		middle.  Ignored in Ex mode.
+		long to fit on the command line; "..." will appear in the
+		middle; ignored in Ex mode
 	  W	don't give "written" or "[w]" when writing a file	*shm-W*
 	  A	don't give the "ATTENTION" message when an existing	*shm-A*
-		swap file is found.
+		swap file is found
 	  I	don't give the intro message when starting Vim,		*shm-I*
-	  	see |:intro|.
-	  c	don't give |ins-completion-menu| messages.  For		*shm-c*
+	  	see |:intro|
+	  c	don't give |ins-completion-menu| messages; for		*shm-c*
 		example, "-- XXX completion (YYY)", "match 1 of 2", "The only
 		match", "Pattern not found", "Back at original", etc.
 	  C	don't give messages while scanning for ins-completion	*shm-C*
@@ -5641,7 +5641,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 			global
 	Show (partial) command in the last line of the screen.  Set this
 	option off if your terminal is slow.
-	The option has no effect when 'cmdheight' is zero.
 	In Visual mode the size of the selected area is shown:
 	- When selecting characters within a line, the number of characters.
 	  If the number of bytes is different it is also displayed: "2-6"
@@ -5649,6 +5648,23 @@ A jump table for the options with a short description can be found at |Q_op|.
 	- When selecting more than one line, the number of lines.
 	- When selecting a block, the size in screen characters:
 	  {lines}x{columns}.
+	This information can be displayed in an alternative location using the
+	'showcmdloc' option, useful when 'cmdheight' is 0.
+
+			*'showcmdloc'* *'sloc'*
+'showcmdloc' 'sloc'	string	(default "last")
+			global
+	This option can be used to display the (partially) entered command in
+	another location.  Possible values are:
+	  last		Last line of the screen (default).
+	  statusline	Status line of the current window.
+	  tabline	First line of the screen if 'showtabline' is enabled.
+	Setting this option to "statusline" or "tabline" means that these will
+	be redrawn whenever the command changes, which can be on every key
+	pressed.
+	The %S 'statusline' item can be used in 'statusline' or 'tabline' to
+	place the text.  Without a custom 'statusline' or 'tabline' it will be
+	displayed in a convenient location.
 
 			*'showfulltag'* *'sft'* *'noshowfulltag'* *'nosft'*
 'showfulltag' 'sft'	boolean (default off)
@@ -5782,11 +5798,11 @@ A jump table for the options with a short description can be found at |Q_op|.
 	alternative.
 	Normally 'autoindent' should also be on when using 'smartindent'.
 	An indent is automatically inserted:
-	- After a line ending in '{'.
+	- After a line ending in "{".
 	- After a line starting with a keyword from 'cinwords'.
-	- Before a line starting with '}' (only with the "O" command).
+	- Before a line starting with "}" (only with the "O" command).
 	When typing '}' as the first character in a new line, that line is
-	given the same indent as the matching '{'.
+	given the same indent as the matching "{".
 	When typing '#' as the first character in a new line, the indent for
 	that line is removed, the '#' is put in the first column.  The indent
 	is restored for the next line.  If you don't want this, use this
@@ -6069,12 +6085,12 @@ A jump table for the options with a short description can be found at |Q_op|.
 	field	    meaning ~
 	-	    Left justify the item.  The default is right justified
 		    when minwid is larger than the length of the item.
-	0	    Leading zeroes in numeric items.  Overridden by '-'.
-	minwid	    Minimum width of the item, padding as set by '-' & '0'.
+	0	    Leading zeroes in numeric items.  Overridden by "-".
+	minwid	    Minimum width of the item, padding as set by "-" & "0".
 		    Value must be 50 or less.
-	maxwid	    Maximum width of the item.  Truncation occurs with a '<'
+	maxwid	    Maximum width of the item.  Truncation occurs with a "<"
 		    on the left for text items.  Numeric items will be
-		    shifted down to maxwid-2 digits followed by '>'number
+		    shifted down to maxwid-2 digits followed by ">"number
 		    where number is the amount of missing digits, much like
 		    an exponential notation.
 	item	    A one letter code as described below.
@@ -6120,24 +6136,25 @@ A jump table for the options with a short description can be found at |Q_op|.
 	P S   Percentage through file of displayed window.  This is like the
 	      percentage described for 'ruler'.  Always 3 in length, unless
 	      translated.
+	S S   'showcmd' content, see 'showcmdloc'.
 	a S   Argument list status as in default title.  ({current} of {max})
 	      Empty if the argument file count is zero or one.
-	{ NF  Evaluate expression between '%{' and '}' and substitute result.
-	      Note that there is no '%' before the closing '}'.  The
-	      expression cannot contain a '}' character, call a function to
+	{ NF  Evaluate expression between "%{" and "}" and substitute result.
+	      Note that there is no "%" before the closing "}".  The
+	      expression cannot contain a "}" character, call a function to
 	      work around that.  See |stl-%{| below.
-	{% -  This is almost same as { except the result of the expression is
+	`{%` -  This is almost same as "{" except the result of the expression is
 	      re-evaluated as a statusline format string.  Thus if the
-	      return value of expr contains % items they will get expanded.
-	      The expression can contain the } character, the end of
-	      expression is denoted by %}.
+	      return value of expr contains "%" items they will get expanded.
+	      The expression can contain the "}" character, the end of
+	      expression is denoted by "%}".
 	      For example: >
 		func! Stl_filename() abort
 		    return "%t"
 		endfunc
 <	        `stl=%{Stl_filename()}`   results in `"%t"`
 	        `stl=%{%Stl_filename()%}` results in `"Name of current file"`
-	%} -  End of `{%` expression
+	%} -  End of "{%" expression
 	( -   Start of item group.  Can be used for setting the width and
 	      alignment of a section.  Must be followed by %) somewhere.
 	) -   End of item group.  No width fields allowed.

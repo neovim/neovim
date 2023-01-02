@@ -113,7 +113,7 @@ end
 ---
 ---@param s string String to split
 ---@param sep string Separator or pattern
----@param kwargs ({plain: boolean, trimempty: boolean}|nil) Keyword arguments:
+---@param kwargs (table|nil) Keyword arguments:
 ---       - plain: (boolean) If `true` use `sep` literally (passed to string.find)
 ---       - trimempty: (boolean) If `true` remove empty items from the front
 ---         and back of the list

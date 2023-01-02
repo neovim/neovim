@@ -606,9 +606,9 @@ sign_placelist({list})
 				then a new unique identifier is allocated.
 				Otherwise the specified number is used. See
 				|sign-identifier| for more information.
-		    lnum	line number in the buffer {buf} where the
-				sign is to be placed. For the accepted values,
-				see |line()|.
+		    lnum	line number in the buffer where the sign is to
+				be placed. For the accepted values, see
+				|line()|.
 		    name	name of the sign to place. See |sign_define()|
 		    		for more information.
 		    priority	priority of the sign. When multiple signs are

@@ -1931,9 +1931,11 @@ static char *do_one_cmd(char **cmdlinep, int flags, cstack_T *cstack, LineGetter
 
   profile_cmd(&ea, cstack, fgetline, cookie);
 
-  // May go to debug mode.  If this happens and the ">quit" debug command is
-  // used, throw an interrupt exception and skip the next command.
-  dbg_check_breakpoint(&ea);
+  if (!exiting) {
+    // May go to debug mode.  If this happens and the ">quit" debug command is
+    // used, throw an interrupt exception and skip the next command.
+    dbg_check_breakpoint(&ea);
+  }
   if (!ea.skip && got_int) {
     ea.skip = true;
     (void)do_intthrow(cstack);
@@ -4663,23 +4665,29 @@ static void ex_tabclose(exarg_T *eap)
 {
   if (cmdwin_type != 0) {
     cmdwin_result = K_IGNORE;
-  } else if (first_tabpage->tp_next == NULL) {
+    return;
+  }
+
+  if (first_tabpage->tp_next == NULL) {
     emsg(_("E784: Cannot close last tab page"));
-  } else {
-    int tab_number = get_tabpage_arg(eap);
-    if (eap->errmsg == NULL) {
-      tabpage_T *tp = find_tabpage(tab_number);
-      if (tp == NULL) {
-        beep_flush();
-        return;
-      }
-      if (tp != curtab) {
-        tabpage_close_other(tp, eap->forceit);
-        return;
-      } else if (!text_locked() && !curbuf_locked()) {
-        tabpage_close(eap->forceit);
-      }
-    }
+    return;
+  }
+
+  int tab_number = get_tabpage_arg(eap);
+  if (eap->errmsg != NULL) {
+    return;
+  }
+
+  tabpage_T *tp = find_tabpage(tab_number);
+  if (tp == NULL) {
+    beep_flush();
+    return;
+  }
+  if (tp != curtab) {
+    tabpage_close_other(tp, eap->forceit);
+    return;
+  } else if (!text_locked() && !curbuf_locked()) {
+    tabpage_close(eap->forceit);
   }
 }
 
@@ -4688,31 +4696,37 @@ static void ex_tabonly(exarg_T *eap)
 {
   if (cmdwin_type != 0) {
     cmdwin_result = K_IGNORE;
-  } else if (first_tabpage->tp_next == NULL) {
+    return;
+  }
+
+  if (first_tabpage->tp_next == NULL) {
     msg(_("Already only one tab page"));
-  } else {
-    int tab_number = get_tabpage_arg(eap);
-    if (eap->errmsg == NULL) {
-      goto_tabpage(tab_number);
-      // Repeat this up to a 1000 times, because autocommands may
-      // mess up the lists.
-      for (int done = 0; done < 1000; done++) {
-        FOR_ALL_TABS(tp) {
-          if (tp->tp_topframe != topframe) {
-            tabpage_close_other(tp, eap->forceit);
-            // if we failed to close it quit
-            if (valid_tabpage(tp)) {
-              done = 1000;
-            }
-            // start over, "tp" is now invalid
-            break;
-          }
+    return;
+  }
+
+  int tab_number = get_tabpage_arg(eap);
+  if (eap->errmsg != NULL) {
+    return;
+  }
+
+  goto_tabpage(tab_number);
+  // Repeat this up to a 1000 times, because autocommands may
+  // mess up the lists.
+  for (int done = 0; done < 1000; done++) {
+    FOR_ALL_TABS(tp) {
+      if (tp->tp_topframe != topframe) {
+        tabpage_close_other(tp, eap->forceit);
+        // if we failed to close it quit
+        if (valid_tabpage(tp)) {
+          done = 1000;
         }
-        assert(first_tabpage);
-        if (first_tabpage->tp_next == NULL) {
-          break;
-        }
+        // start over, "tp" is now invalid
+        break;
       }
+    }
+    assert(first_tabpage);
+    if (first_tabpage->tp_next == NULL) {
+      break;
     }
   }
 }
@@ -4782,25 +4796,27 @@ static void ex_only(exarg_T *eap)
 static void ex_hide(exarg_T *eap)
 {
   // ":hide" or ":hide | cmd": hide current window
-  if (!eap->skip) {
-    if (eap->addr_count == 0) {
-      win_close(curwin, false, eap->forceit);  // don't free buffer
-    } else {
-      int winnr = 0;
-      win_T *win = NULL;
+  if (eap->skip) {
+    return;
+  }
 
-      FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
-        winnr++;
-        if (winnr == eap->line2) {
-          win = wp;
-          break;
-        }
+  if (eap->addr_count == 0) {
+    win_close(curwin, false, eap->forceit);  // don't free buffer
+  } else {
+    int winnr = 0;
+    win_T *win = NULL;
+
+    FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+      winnr++;
+      if (winnr == eap->line2) {
+        win = wp;
+        break;
       }
-      if (win == NULL) {
-        win = lastwin;
-      }
-      win_close(win, false, eap->forceit);
     }
+    if (win == NULL) {
+      win = lastwin;
+    }
+    win_close(win, false, eap->forceit);
   }
 }
 
@@ -5384,50 +5400,51 @@ static void ex_read(exarg_T *eap)
 
   if (eap->usefilter) {  // :r!cmd
     do_bang(1, eap, false, false, true);
-  } else {
-    if (u_save(eap->line2, (linenr_T)(eap->line2 + 1)) == FAIL) {
+    return;
+  }
+
+  if (u_save(eap->line2, (linenr_T)(eap->line2 + 1)) == FAIL) {
+    return;
+  }
+
+  int i;
+  if (*eap->arg == NUL) {
+    if (check_fname() == FAIL) {       // check for no file name
       return;
     }
-    int i;
-
-    if (*eap->arg == NUL) {
-      if (check_fname() == FAIL) {       // check for no file name
-        return;
-      }
-      i = readfile(curbuf->b_ffname, curbuf->b_fname,
-                   eap->line2, (linenr_T)0, (linenr_T)MAXLNUM, eap, 0, false);
-    } else {
-      if (vim_strchr(p_cpo, CPO_ALTREAD) != NULL) {
-        (void)setaltfname(eap->arg, eap->arg, (linenr_T)1);
-      }
-      i = readfile(eap->arg, NULL,
-                   eap->line2, (linenr_T)0, (linenr_T)MAXLNUM, eap, 0, false);
+    i = readfile(curbuf->b_ffname, curbuf->b_fname,
+                 eap->line2, (linenr_T)0, (linenr_T)MAXLNUM, eap, 0, false);
+  } else {
+    if (vim_strchr(p_cpo, CPO_ALTREAD) != NULL) {
+      (void)setaltfname(eap->arg, eap->arg, (linenr_T)1);
     }
-    if (i != OK) {
-      if (!aborting()) {
-        semsg(_(e_notopen), eap->arg);
-      }
-    } else {
-      if (empty && exmode_active) {
-        // Delete the empty line that remains.  Historically ex does
-        // this but vi doesn't.
-        linenr_T lnum;
-        if (eap->line2 == 0) {
-          lnum = curbuf->b_ml.ml_line_count;
-        } else {
-          lnum = 1;
-        }
-        if (*ml_get(lnum) == NUL && u_savedel(lnum, 1L) == OK) {
-          ml_delete(lnum, false);
-          if (curwin->w_cursor.lnum > 1
-              && curwin->w_cursor.lnum >= lnum) {
-            curwin->w_cursor.lnum--;
-          }
-          deleted_lines_mark(lnum, 1L);
-        }
-      }
-      redraw_curbuf_later(UPD_VALID);
+    i = readfile(eap->arg, NULL,
+                 eap->line2, (linenr_T)0, (linenr_T)MAXLNUM, eap, 0, false);
+  }
+  if (i != OK) {
+    if (!aborting()) {
+      semsg(_(e_notopen), eap->arg);
     }
+  } else {
+    if (empty && exmode_active) {
+      // Delete the empty line that remains.  Historically ex does
+      // this but vi doesn't.
+      linenr_T lnum;
+      if (eap->line2 == 0) {
+        lnum = curbuf->b_ml.ml_line_count;
+      } else {
+        lnum = 1;
+      }
+      if (*ml_get(lnum) == NUL && u_savedel(lnum, 1L) == OK) {
+        ml_delete(lnum, false);
+        if (curwin->w_cursor.lnum > 1
+            && curwin->w_cursor.lnum >= lnum) {
+          curwin->w_cursor.lnum--;
+        }
+        deleted_lines_mark(lnum, 1L);
+      }
+    }
+    redraw_curbuf_later(UPD_VALID);
   }
 }
 
@@ -5584,6 +5601,7 @@ void ex_cd(exarg_T *eap)
     return;
   }
 #endif
+
   CdScope scope = kCdScopeGlobal;
   switch (eap->cmdidx) {
   case CMD_tcd:
@@ -5658,15 +5676,11 @@ static void ex_sleep(exarg_T *eap)
   do_sleep(len);
 }
 
-/// Sleep for "msec" milliseconds, but keep checking for a CTRL-C every second.
+/// Sleep for "msec" milliseconds, but return early on CTRL-C.
 void do_sleep(long msec)
 {
   ui_flush();  // flush before waiting
-  for (long left = msec; !got_int && left > 0; left -= 1000L) {
-    int next = left > 1000L ? 1000 : (int)left;
-    LOOP_PROCESS_EVENTS_UNTIL(&main_loop, main_loop.events, (int)next, got_int);
-    os_breakcheck();
-  }
+  LOOP_PROCESS_EVENTS_UNTIL(&main_loop, main_loop.events, msec, got_int);
 
   // If CTRL-C was typed to interrupt the sleep, drop the CTRL-C from the
   // input buffer, otherwise a following call to input() fails.
@@ -5883,20 +5897,21 @@ static void ex_at(exarg_T *eap)
   // Put the register in the typeahead buffer with the "silent" flag.
   if (do_execreg(c, true, vim_strchr(p_cpo, CPO_EXECBUF) != NULL, true) == FAIL) {
     beep_flush();
-  } else {
-    bool save_efr = exec_from_reg;
-
-    exec_from_reg = true;
-
-    // Execute from the typeahead buffer.
-    // Continue until the stuff buffer is empty and all added characters
-    // have been consumed.
-    while (!stuff_empty() || typebuf.tb_len > prev_len) {
-      (void)do_cmdline(NULL, getexline, NULL, DOCMD_NOWAIT|DOCMD_VERBOSE);
-    }
-
-    exec_from_reg = save_efr;
+    return;
   }
+
+  const bool save_efr = exec_from_reg;
+
+  exec_from_reg = true;
+
+  // Execute from the typeahead buffer.
+  // Continue until the stuff buffer is empty and all added characters
+  // have been consumed.
+  while (!stuff_empty() || typebuf.tb_len > prev_len) {
+    (void)do_cmdline(NULL, getexline, NULL, DOCMD_NOWAIT|DOCMD_VERBOSE);
+  }
+
+  exec_from_reg = save_efr;
 }
 
 /// ":!".
@@ -6226,17 +6241,21 @@ static void ex_mark(exarg_T *eap)
 {
   if (*eap->arg == NUL) {               // No argument?
     emsg(_(e_argreq));
-  } else if (eap->arg[1] != NUL) {         // more than one character?
-    semsg(_(e_trailing_arg), eap->arg);
-  } else {
-    pos_T pos = curwin->w_cursor;             // save curwin->w_cursor
-    curwin->w_cursor.lnum = eap->line2;
-    beginline(BL_WHITE | BL_FIX);
-    if (setmark(*eap->arg) == FAIL) {   // set mark
-      emsg(_("E191: Argument must be a letter or forward/backward quote"));
-    }
-    curwin->w_cursor = pos;             // restore curwin->w_cursor
+    return;
   }
+
+  if (eap->arg[1] != NUL) {         // more than one character?
+    semsg(_(e_trailing_arg), eap->arg);
+    return;
+  }
+
+  pos_T pos = curwin->w_cursor;             // save curwin->w_cursor
+  curwin->w_cursor.lnum = eap->line2;
+  beginline(BL_WHITE | BL_FIX);
+  if (setmark(*eap->arg) == FAIL) {   // set mark
+    emsg(_("E191: Argument must be a letter or forward/backward quote"));
+  }
+  curwin->w_cursor = pos;             // restore curwin->w_cursor
 }
 
 /// Update w_topline, w_leftcol and the cursor position.
@@ -7150,17 +7169,18 @@ void filetype_maybe_enable(void)
 /// ":setfiletype [FALLBACK] {name}"
 static void ex_setfiletype(exarg_T *eap)
 {
-  if (!did_filetype) {
-    char *arg = eap->arg;
+  if (did_filetype) {
+    return;
+  }
 
-    if (strncmp(arg, "FALLBACK ", 9) == 0) {
-      arg += 9;
-    }
+  char *arg = eap->arg;
+  if (strncmp(arg, "FALLBACK ", 9) == 0) {
+    arg += 9;
+  }
 
-    set_option_value_give_err("filetype", 0L, arg, OPT_LOCAL);
-    if (arg != eap->arg) {
-      did_filetype = false;
-    }
+  set_option_value_give_err("filetype", 0L, arg, OPT_LOCAL);
+  if (arg != eap->arg) {
+    did_filetype = false;
   }
 }
 

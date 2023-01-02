@@ -307,6 +307,24 @@ describe('semantic token highlighting', function()
       ]])
 
       insert(text)
+      screen:expect { grid = [[
+        #include <iostream>                     |
+                                                |
+        int {8:main}()                              |
+        {                                       |
+            int {7:x};                              |
+        #ifdef {5:__cplusplus}                      |
+            {4:std}::{2:cout} << {2:x} << "\n";             |
+        {6:#else}                                   |
+        {6:    printf("%d\n", x);}                  |
+        {6:#endif}                                  |
+        }                                       |
+        ^}                                       |
+        {1:~                                       }|
+        {1:~                                       }|
+        {1:~                                       }|
+                                                |
+      ]] }
       feed_command('%s/int x/int x()/')
       feed_command('noh')
       screen:expect { grid = [[

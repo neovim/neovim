@@ -465,6 +465,19 @@ describe('startup', function()
     clear{args={'--cmd', 'set packpath^=test/functional/fixtures',  '--cmd', [[ lua _G.test_loadorder = {} vim.cmd "runtime! filen.lua" ]]}, env={XDG_CONFIG_HOME='test/functional/fixtures/'}}
     eq({'ordinary', 'FANCY', 'FANCY after', 'ordinary after'}, exec_lua [[ return _G.test_loadorder ]])
   end)
+
+  it('window widths are correct when modelines set &columns with tabpages', function()
+    write_file('tab1.noft', 'vim: columns=81')
+    write_file('tab2.noft', 'vim: columns=81')
+    finally(function()
+      os.remove('tab1.noft')
+      os.remove('tab2.noft')
+    end)
+    clear({args = {'-p', 'tab1.noft', 'tab2.noft'}})
+    eq(81, meths.win_get_width(0))
+    command('tabnext')
+    eq(81, meths.win_get_width(0))
+  end)
 end)
 
 describe('sysinit', function()
@@ -531,7 +544,7 @@ describe('sysinit', function()
       nvim_exec()                                                 |
       cmd: aunmenu *                                              |
       >                                                           |
-      <" -u NONE -i NONE --cmd "set noruler" -D 1,1            All|
+      <" -u NONE -i NONE --cmd "set noruler" -D 1,0-1          All|
                                                                   |
     ]])
     command([[call chansend(g:id, "cont\n")]])

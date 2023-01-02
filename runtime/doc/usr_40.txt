@@ -226,7 +226,7 @@ When using a space inside a mapping, use <Space> (seven characters): >
 This makes the spacebar move a blank-separated word forward.
 
 It is not possible to put a comment directly after a mapping, because the "
-character is considered to be part of the mapping.  You can use |", this
+character is considered to be part of the mapping.  You can use `|"`, this
 starts a new, empty command with a comment.  Example: >
 
 	:map <Space> W|     " Use spacebar to move forward a word
@@ -657,10 +657,10 @@ To ignore all events, use the following command: >
 
 	:set eventignore=all
 
-To set it back to the normal behavior, make 'eventignore' empty: >
-
+To set it back to the normal behavior, make 'eventignore' empty:
+>
 	:set eventignore=
-
+<
 ==============================================================================
 
 Next chapter: |usr_41.txt|  Write a Vim script

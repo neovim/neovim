@@ -97,6 +97,7 @@
 #include "nvim/msgpack_rpc/helpers.h"
 #include "nvim/msgpack_rpc/server.h"
 #include "nvim/os/signal.h"
+#include "nvim/tui/tui.h"
 
 // values for "window_layout"
 enum {
@@ -278,8 +279,6 @@ int main(int argc, char **argv)
   // argument list "global_alist".
   command_line_scan(&params);
 
-  open_script_files(&params);
-
   nlua_init();
 
   TIME_MSG("init lua interpreter");
@@ -291,9 +290,29 @@ int main(int argc, char **argv)
     }
   }
 
-  server_init(params.listen_addr);
+  bool use_builtin_ui = (!headless_mode && !embedded_mode && !silent_mode);
+
+  // don't bind the server yet, if we are using builtin ui.
+  // This will be done when nvim server has been forked from the ui process
+  if (!use_builtin_ui) {
+    server_init(params.listen_addr);
+  }
+
   if (params.remote) {
-    remote_request(&params, params.remote, params.server_addr, argc, argv);
+    remote_request(&params, params.remote, params.server_addr, argc, argv,
+                   use_builtin_ui);
+  }
+
+  bool remote_ui = (ui_client_channel_id != 0);
+
+  if (use_builtin_ui && !remote_ui) {
+    ui_client_forward_stdin = !params.input_isatty;
+    uint64_t rv = ui_client_start_server(params.argc, params.argv);
+    if (!rv) {
+      os_errmsg("Failed to start Nvim server!\n");
+      getout(1);
+    }
+    ui_client_channel_id = rv;
   }
 
   if (GARGCOUNT > 0) {
@@ -349,17 +368,16 @@ int main(int argc, char **argv)
     input_start(STDIN_FILENO);
   }
 
+  if (ui_client_channel_id) {
+    ui_client_run(remote_ui);  // NORETURN
+  }
+
   // Wait for UIs to set up Nvim or show early messages
   // and prompts (--cmd, swapfile dialog, …).
   bool use_remote_ui = (embedded_mode && !headless_mode);
-  bool use_builtin_ui = (!headless_mode && !embedded_mode && !silent_mode);
-  if (use_remote_ui || use_builtin_ui) {
+  if (use_remote_ui) {
     TIME_MSG("waiting for UI");
-    if (use_remote_ui) {
-      remote_ui_wait_for_attach();
-    } else {
-      ui_builtin_start();
-    }
+    remote_ui_wait_for_attach();
     TIME_MSG("done waiting for UI");
     firstwin->w_prev_height = firstwin->w_height;  // may have changed
   }
@@ -370,11 +388,12 @@ int main(int argc, char **argv)
   win_new_screensize();
   TIME_MSG("clear screen");
 
-  if (ui_client_channel_id) {
-    ui_client_init(ui_client_channel_id);
-    ui_client_execute(ui_client_channel_id);
-    abort();  // unreachable
+  // Handle "foo | nvim". EDIT_FILE may be overwritten now. #6299
+  if (edit_stdin(&params)) {
+    params.edit_type = EDIT_STDIN;
   }
+
+  open_script_files(&params);
 
   // Default mappings (incl. menus)
   Error err = ERROR_INIT;
@@ -384,6 +403,7 @@ int main(int argc, char **argv)
   api_clear_error(&err);
   assert(o.type == kObjectTypeNil);
   api_free_object(o);
+
   TIME_MSG("init default mappings");
 
   init_default_autocmds();
@@ -483,7 +503,7 @@ int main(int argc, char **argv)
   // writing end of the pipe doesn't like, e.g., in case stdin and stderr
   // are the same terminal: "cat | vim -".
   // Using autocommands here may cause trouble...
-  if ((params.edit_type == EDIT_STDIN || stdin_fd >= 0) && !recoverymode) {
+  if (params.edit_type == EDIT_STDIN && !recoverymode) {
     read_stdin();
   }
 
@@ -837,15 +857,24 @@ static uint64_t server_connect(char *server_addr, const char **errmsg)
 
 /// Handle remote subcommands
 static void remote_request(mparm_T *params, int remote_args, char *server_addr, int argc,
-                           char **argv)
+                           char **argv, bool ui_only)
 {
+  bool is_ui = strequal(argv[remote_args], "--remote-ui");
+  if (ui_only && !is_ui) {
+    // TODO(bfredl): this implies always starting the TUI.
+    // if we be smart we could delay this past should_exit
+    return;
+  }
+
   const char *connect_error = NULL;
   uint64_t chan = server_connect(server_addr, &connect_error);
   Object rvobj = OBJECT_INIT;
 
-  if (strequal(argv[remote_args], "--remote-ui-test")) {
+  if (is_ui) {
     if (!chan) {
-      emsg(connect_error);
+      os_errmsg("Remote ui failed to start: ");
+      os_errmsg(connect_error);
+      os_errmsg("\n");
       exit(1);
     }
 
@@ -925,14 +954,14 @@ static void remote_request(mparm_T *params, int remote_args, char *server_addr, 
 
 /// Decides whether text (as opposed to commands) will be read from stdin.
 /// @see EDIT_STDIN
-static bool edit_stdin(bool explicit, mparm_T *parmp)
+static bool edit_stdin(mparm_T *parmp)
 {
   bool implicit = !headless_mode
-                  && !embedded_mode
+                  && !(embedded_mode && stdin_fd <= 0)
                   && (!exmode_active || parmp->input_neverscript)
                   && !parmp->input_isatty
                   && parmp->scriptin == NULL;  // `-s -` was not given.
-  return explicit || implicit;
+  return parmp->had_stdin_file || implicit;
 }
 
 /// Scan the command line arguments.
@@ -941,7 +970,6 @@ static void command_line_scan(mparm_T *parmp)
   int argc = parmp->argc;
   char **argv = parmp->argv;
   int argv_idx;                         // index in argv[n][]
-  bool had_stdin_file = false;          // found explicit "-" argument
   bool had_minmin = false;              // found "--" argument
   int want_argument;                    // option argument with argument
   long n;
@@ -978,7 +1006,7 @@ static void command_line_scan(mparm_T *parmp)
               && parmp->edit_type != EDIT_STDIN) {
             mainerr(err_too_many_args, argv[0]);
           }
-          had_stdin_file = true;
+          parmp->had_stdin_file = true;
           parmp->edit_type = EDIT_STDIN;
         }
         argv_idx = -1;  // skip to next argument
@@ -1345,7 +1373,7 @@ scripterror:
       path_fix_case(p);
 #endif
 
-      int alist_fnum_flag = edit_stdin(had_stdin_file, parmp)
+      int alist_fnum_flag = edit_stdin(parmp)
                             ? 1   // add buffer nr after exp.
                             : 2;  // add buffer number now and use curbuf
       alist_add(&global_alist, p, alist_fnum_flag);
@@ -1371,11 +1399,6 @@ scripterror:
     snprintf(swcmd, swcmd_len, ":%s\r", parmp->commands[0]);
     set_vim_var_string(VV_SWAPCOMMAND, swcmd, -1);
     xfree(swcmd);
-  }
-
-  // Handle "foo | nvim". EDIT_FILE may be overwritten now. #6299
-  if (edit_stdin(had_stdin_file, parmp)) {
-    parmp->edit_type = EDIT_STDIN;
   }
 
   TIME_MSG("parsing arguments");
@@ -1406,8 +1429,6 @@ static void init_startuptime(mparm_T *paramp)
       break;
     }
   }
-
-  starttime = time(NULL);
 }
 
 static void check_and_set_isatty(mparm_T *paramp)
@@ -1529,11 +1550,16 @@ static void open_script_files(mparm_T *parmp)
   if (parmp->scriptin) {
     int error;
     if (strequal(parmp->scriptin, "-")) {
-      const int stdin_dup_fd = os_dup(STDIN_FILENO);
+      int stdin_dup_fd;
+      if (stdin_fd > 0) {
+        stdin_dup_fd = stdin_fd;
+      } else {
+        stdin_dup_fd = os_dup(STDIN_FILENO);
 #ifdef MSWIN
-      // Replace the original stdin with the console input handle.
-      os_replace_stdin_to_conin();
+        // Replace the original stdin with the console input handle.
+        os_replace_stdin_to_conin();
 #endif
+      }
       FileDescriptor *const stdin_dup = file_open_fd_new(&error, stdin_dup_fd,
                                                          kFileReadOnly|kFileNonBlocking);
       assert(stdin_dup != NULL);

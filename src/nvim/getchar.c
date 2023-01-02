@@ -2191,12 +2191,12 @@ static int handle_mapping(int *keylenp, const bool *timedout, int *mapdepth)
     // Copy the values from *mp that are used, because evaluating the
     // expression may invoke a function that redefines the mapping, thereby
     // making *mp invalid.
-    char save_m_expr = mp->m_expr;
-    int save_m_noremap = mp->m_noremap;
-    char save_m_silent = mp->m_silent;
+    const bool save_m_expr = mp->m_expr;
+    const int save_m_noremap = mp->m_noremap;
+    const bool save_m_silent = mp->m_silent;
     char *save_m_keys = NULL;  // only saved when needed
     char *save_m_str = NULL;  // only saved when needed
-    LuaRef save_m_luaref = mp->m_luaref;
+    const LuaRef save_m_luaref = mp->m_luaref;
 
     // Handle ":map <expr>": evaluate the {rhs} as an
     // expression.  Also save and restore the command line

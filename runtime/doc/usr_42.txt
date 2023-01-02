@@ -81,7 +81,7 @@ the far right.
    The second number (340) determines the location of the item within the
 pull-down menu.  Lower numbers go on top, higher number on the bottom.  These
 are the priorities in the File menu:
-
+>
 			+-----------------+
 	    10.310	|Open...	  |
 	    10.320	|Split-Open...	  |
@@ -99,7 +99,7 @@ are the priorities in the File menu:
 	    10.610	|Save-Exit	  |
 	    10.620	|Exit		  |
 			+-----------------+
-
+<
 Notice that there is room in between the numbers.  This is where you can
 insert your own items, if you really want to (it's often better to leave the
 standard menus alone and add a new menu for your own items).
@@ -168,11 +168,11 @@ inserts a CTRL-C or CTRL-O for you.  For example, if you use this command:
 
 Then the resulting menu commands will be:
 
-	Normal mode:		*
-	Visual mode:		CTRL-C *
-	Operator-pending mode:	CTRL-C *
-	Insert mode:		CTRL-O *
-	Command-line mode:	CTRL-C *
+	Normal mode:		`*`
+	Visual mode:		CTRL-C `*`
+	Operator-pending mode:	CTRL-C `*`
+	Insert mode:		CTRL-O `*`
+	Command-line mode:	CTRL-C `*`
 
 When in Command-line mode the CTRL-C will abandon the command typed so far.
 In Visual and Operator-pending mode CTRL-C will stop the mode.  The CTRL-O in

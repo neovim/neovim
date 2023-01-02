@@ -235,8 +235,6 @@ enum { FOLD_TEXT_LEN = 51, };  //!< buffer size for get_foldtext()
 // destination and mess up the screen.
 #define PERROR(msg) (void)semsg("%s: %s", (msg), strerror(errno))
 
-#define SHOWCMD_COLS 10                 // columns needed by shown command
-
 #include "nvim/path.h"
 
 // Enums need a typecast to be used as array index.

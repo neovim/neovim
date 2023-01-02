@@ -68,6 +68,7 @@
 #include "nvim/spellfile.h"
 #include "nvim/spellsuggest.h"
 #include "nvim/state.h"
+#include "nvim/statusline.h"
 #include "nvim/strings.h"
 #include "nvim/syntax.h"
 #include "nvim/tag.h"
@@ -1782,8 +1783,6 @@ void may_clear_cmdline(void)
 }
 
 // Routines for displaying a partly typed command
-#define SHOWCMD_BUFLEN (SHOWCMD_COLS + 1 + 30)
-static char showcmd_buf[SHOWCMD_BUFLEN];
 static char_u old_showcmd_buf[SHOWCMD_BUFLEN];    // For push_showcmd()
 static bool showcmd_is_clear = true;
 static bool showcmd_visual = false;
@@ -1977,14 +1976,23 @@ void pop_showcmd(void)
 
 static void display_showcmd(void)
 {
-  if (p_ch == 0 && !ui_has(kUIMessages)) {
-    // TODO(bfredl): would be nice to show in global statusline, perhaps
+  int len = (int)strlen(showcmd_buf);
+  showcmd_is_clear = (len == 0);
+
+  if (*p_sloc == 's') {
+    win_redr_status(curwin);
+    setcursor();  // put cursor back where it belongs
     return;
   }
-
-  int len;
-  len = (int)strlen(showcmd_buf);
-  showcmd_is_clear = (len == 0);
+  if (*p_sloc == 't') {
+    draw_tabline();
+    setcursor();  // put cursor back where it belongs
+    return;
+  }
+  // 'showcmdloc' is "last" or empty
+  if (p_ch == 0 && !ui_has(kUIMessages)) {
+    return;
+  }
 
   if (ui_has(kUIMessages)) {
     MAXSIZE_TEMP_ARRAY(content, 1);

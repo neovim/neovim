@@ -74,4 +74,10 @@ tags
 # vim patches
 /vim-*.patch
 
+# nix build results
+/result
+/result-*
+/contrib/result
+/contrib/result-*
+
 CMakeUserPresets.json

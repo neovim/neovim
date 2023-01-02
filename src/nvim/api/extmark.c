@@ -256,8 +256,8 @@ ArrayOf(Integer) nvim_buf_get_extmark_by_id(Buffer buffer, Integer ns_id,
 /// positions define the bounds). 0 and -1 are understood as (0,0) and (-1,-1)
 /// respectively, thus the following are equivalent:
 /// <pre>lua
-///   nvim_buf_get_extmarks(0, my_ns, 0, -1, {})
-///   nvim_buf_get_extmarks(0, my_ns, [0,0], [-1,-1], {})
+///   vim.api.nvim_buf_get_extmarks(0, my_ns, 0, -1, {})
+///   vim.api.nvim_buf_get_extmarks(0, my_ns, {0,0}, {-1,-1}, {})
 /// </pre>
 ///
 /// If `end` is less than `start`, traversal works backwards. (Useful

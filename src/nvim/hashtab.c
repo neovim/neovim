@@ -292,6 +292,7 @@ static void hash_may_resize(hashtab_T *ht, size_t minitems)
 #endif  // ifdef HT_DEBUG
 
   size_t minsize;
+  const size_t oldsize = ht->ht_mask + 1;
   if (minitems == 0) {
     // Return quickly for small tables with at least two NULL items.
     // items are required for the lookup to decide a key isn't there.
@@ -304,7 +305,6 @@ static void hash_may_resize(hashtab_T *ht, size_t minitems)
     // removed items, so that they get cleaned up).
     // Shrink the array when it's less than 1/5 full. When growing it is
     // at least 1/4 full (avoids repeated grow-shrink operations)
-    size_t oldsize = ht->ht_mask + 1;
     if ((ht->ht_filled * 3 < oldsize * 2) && (ht->ht_used > oldsize / 5)) {
       return;
     }
@@ -335,6 +335,13 @@ static void hash_may_resize(hashtab_T *ht, size_t minitems)
   }
 
   bool newarray_is_small = newsize == HT_INIT_SIZE;
+
+  if (!newarray_is_small && newsize == oldsize && ht->ht_filled * 3 < oldsize * 2) {
+    // The hashtab is already at the desired size, and there are not too
+    // many removed items, bail out.
+    return;
+  }
+
   bool keep_smallarray = newarray_is_small
                          && ht->ht_array == ht->ht_smallarray;
 

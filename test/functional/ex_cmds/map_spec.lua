@@ -3,6 +3,7 @@ local Screen = require('test.functional.ui.screen')
 
 local eq = helpers.eq
 local exec = helpers.exec
+local exec_capture = helpers.exec_capture
 local feed = helpers.feed
 local meths = helpers.meths
 local clear = helpers.clear
@@ -30,12 +31,12 @@ describe(':*map', function()
     expect('-foo-')
   end)
 
-  it('shows <nop> as mapping rhs', function()
+  it('shows <Nop> as mapping rhs', function()
     command('nmap asdf <Nop>')
     eq([[
 
 n  asdf          <Nop>]],
-       helpers.exec_capture('nmap asdf'))
+       exec_capture('nmap asdf'))
   end)
 
   it('mappings with description can be filtered', function()
@@ -48,7 +49,7 @@ n  asdf3         qwert
                  do the other thing
 n  asdf1         qwert
                  do the one thing]],
-       helpers.exec_capture('filter the nmap'))
+       exec_capture('filter the nmap'))
   end)
 
   it('<Plug> mappings ignore nore', function()
@@ -83,6 +84,12 @@ n  asdf1         qwert
     feed('increase_x_noremap')
     eq(2, meths.eval('x'))
     eq('Some te', eval("getline('.')"))
+  end)
+
+  it(':unmap with rhs works when lhs is in another bucket #21530', function()
+    command('map F <Plug>Foo')
+    command('unmap <Plug>Foo')
+    eq('\nNo mapping found', exec_capture('map F'))
   end)
 end)
 

@@ -328,9 +328,6 @@ EXTERN sctx_T current_sctx INIT(= { 0, 0, 0 });
 // ID of the current channel making a client API call
 EXTERN uint64_t current_channel_id INIT(= 0);
 
-// ID of the client channel. Used by ui client
-EXTERN uint64_t ui_client_channel_id INIT(= 0);
-
 EXTERN bool did_source_packages INIT(= false);
 
 // Scope information for the code that indirectly triggered the current
@@ -494,9 +491,9 @@ EXTERN bool exiting INIT(= false);
 // internal value of v:dying
 EXTERN int v_dying INIT(= 0);
 // is stdin a terminal?
-EXTERN int stdin_isatty INIT(= true);
+EXTERN bool stdin_isatty INIT(= true);
 // is stdout a terminal?
-EXTERN int stdout_isatty INIT(= true);
+EXTERN bool stdout_isatty INIT(= true);
 /// filedesc set by embedder for reading first buffer like `cmd | nvim -`
 EXTERN int stdin_fd INIT(= -1);
 
@@ -1039,9 +1036,6 @@ EXTERN char bot_top_msg[] INIT(= N_("search hit BOTTOM, continuing at TOP"));
 
 EXTERN char line_msg[] INIT(= N_(" line "));
 
-// For undo we need to know the lowest time possible.
-EXTERN time_t starttime;
-
 EXTERN FILE *time_fd INIT(= NULL);  // where to write startup timing
 
 // Some compilers warn for not using a return value, but in some situations we
@@ -1090,8 +1084,6 @@ typedef enum {
 
 // Only filled for Win32.
 EXTERN char windowsVersion[20] INIT(= { 0 });
-
-EXTERN int exit_need_delay INIT(= 0);
 
 /// While executing a regexp and set to OPTION_MAGIC_ON or OPTION_MAGIC_OFF this
 /// overrules p_magic.  Otherwise set to OPTION_MAGIC_NOT_SET.

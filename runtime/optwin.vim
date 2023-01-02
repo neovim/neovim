@@ -1,7 +1,7 @@
 " These commands create the option window.
 "
 " Maintainer:	Bram Moolenaar <Bram@vim.org>
-" Last Change:	2022 Nov 23
+" Last Change:	2022 Dec 16
 
 " If there already is an option window, jump to that one.
 let buf = bufnr('option-window')
@@ -656,10 +656,12 @@ call <SID>AddOption("terse", gettext("add 's' flag in 'shortmess' (don't show se
 call <SID>BinOptionG("terse", &terse)
 call <SID>AddOption("shortmess", gettext("list of flags to make messages shorter"))
 call <SID>OptionG("shm", &shm)
-call <SID>AddOption("showcmd", gettext("show (partial) command keys in the status line"))
+call <SID>AddOption("showcmd", gettext("show (partial) command keys in location given by 'showcmdloc'"))
 let &sc = s:old_sc
 call <SID>BinOptionG("sc", &sc)
 set nosc
+call <SID>AddOption("showcmdloc", gettext("location where to show the (partial) command keys for 'showcmd'"))
+  call <SID>OptionG("sloc", &sloc)
 call <SID>AddOption("showmode", gettext("display the current mode in the status line"))
 call <SID>BinOptionG("smd", &smd)
 call <SID>AddOption("ruler", gettext("show cursor position below each window"))

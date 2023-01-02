@@ -2764,28 +2764,6 @@ int win_close(win_T *win, bool free_buf, bool force)
     }
   }
 
-  bool was_floating = win->w_floating;
-  if (ui_has(kUIMultigrid)) {
-    ui_call_win_close(win->w_grid_alloc.handle);
-  }
-
-  if (win->w_floating) {
-    ui_comp_remove_grid(&win->w_grid_alloc);
-    assert(first_tabpage != NULL);  // suppress clang "Dereference of NULL pointer"
-    if (win->w_float_config.external) {
-      for (tabpage_T *tp = first_tabpage; tp != NULL; tp = tp->tp_next) {
-        if (tp == curtab) {
-          continue;
-        }
-        if (tp->tp_curwin == win) {
-          // NB: an autocmd can still abort the closing of this window,
-          // bur carring out this change anyway shouldn't be a catastrophe.
-          tp->tp_curwin = tp->tp_firstwin;
-        }
-      }
-    }
-  }
-
   // Fire WinClosed just before starting to free window-related resources.
   do_autocmd_winclosed(win);
   // autocmd may have freed the window already.
@@ -2830,6 +2808,28 @@ int win_close(win_T *win, bool free_buf, bool force)
 
   // let terminal buffers know that this window dimensions may be ignored
   win->w_closing = true;
+
+  bool was_floating = win->w_floating;
+  if (ui_has(kUIMultigrid)) {
+    ui_call_win_close(win->w_grid_alloc.handle);
+  }
+
+  if (win->w_floating) {
+    ui_comp_remove_grid(&win->w_grid_alloc);
+    assert(first_tabpage != NULL);  // suppress clang "Dereference of NULL pointer"
+    if (win->w_float_config.external) {
+      for (tabpage_T *tp = first_tabpage; tp != NULL; tp = tp->tp_next) {
+        if (tp == curtab) {
+          continue;
+        }
+        if (tp->tp_curwin == win) {
+          // NB: an autocmd can still abort the closing of this window,
+          // bur carring out this change anyway shouldn't be a catastrophe.
+          tp->tp_curwin = tp->tp_firstwin;
+        }
+      }
+    }
+  }
 
   // Free the memory used for the window and get the window that received
   // the screen space.
@@ -4277,7 +4277,9 @@ static int leave_tabpage(buf_T *new_curbuf, bool trigger_leave_autocmds)
   tp->tp_firstwin = firstwin;
   tp->tp_lastwin = lastwin;
   tp->tp_old_Rows_avail = ROWS_AVAIL;
-  tp->tp_old_Columns = Columns;
+  if (tp->tp_old_Columns != -1) {
+    tp->tp_old_Columns = Columns;
+  }
   firstwin = NULL;
   lastwin = NULL;
   return OK;
@@ -4340,8 +4342,13 @@ static void enter_tabpage(tabpage_T *tp, buf_T *old_curbuf, bool trigger_enter_a
   if (curtab->tp_old_Rows_avail != ROWS_AVAIL || (old_off != firstwin->w_winrow)) {
     win_new_screen_rows();
   }
-  if (curtab->tp_old_Columns != Columns && starting == 0) {
-    win_new_screen_cols();  // update window widths
+  if (curtab->tp_old_Columns != Columns) {
+    if (starting == 0) {
+      win_new_screen_cols();  // update window widths
+      curtab->tp_old_Columns = Columns;
+    } else {
+      curtab->tp_old_Columns = -1;  // update window widths later
+    }
   }
 
   lastused_tabpage = old_curtab;

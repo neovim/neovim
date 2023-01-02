@@ -693,7 +693,7 @@ static int buf_do_map(int maptype, MapArguments *args, int mode, bool is_abbrev,
     for (int round = 0; (round == 0 || maptype == MAPTYPE_UNMAP) && round <= 1
          && !did_it && !got_int; round++) {
       int hash_start, hash_end;
-      if (has_lhs || is_abbrev) {
+      if ((round == 0 && has_lhs) || is_abbrev) {
         // just use one hash
         hash_start = is_abbrev ? 0 : MAP_HASH(mode, (uint8_t)lhs[0]);
         hash_end = hash_start + 1;
@@ -1517,17 +1517,23 @@ bool check_abbr(int c, char *ptr, int col, int mincol)
         // insert the last typed char
         (void)ins_typebuf((char *)tb, 1, 0, true, mp->m_silent);
       }
-      if (mp->m_expr) {
+
+      // copy values here, calling eval_map_expr() may make "mp" invalid!
+      const int noremap = mp->m_noremap;
+      const bool silent = mp->m_silent;
+      const bool expr = mp->m_expr;
+
+      if (expr) {
         s = eval_map_expr(mp, c);
       } else {
         s = mp->m_str;
       }
       if (s != NULL) {
         // insert the to string
-        (void)ins_typebuf(s, mp->m_noremap, 0, true, mp->m_silent);
+        (void)ins_typebuf(s, noremap, 0, true, silent);
         // no abbrev. for these chars
         typebuf.tb_no_abbr_cnt += (int)strlen(s) + j + 1;
-        if (mp->m_expr) {
+        if (expr) {
           xfree(s);
         }
       }
@@ -1536,7 +1542,7 @@ bool check_abbr(int c, char *ptr, int col, int mincol)
       tb[1] = NUL;
       len = clen;  // Delete characters instead of bytes
       while (len-- > 0) {  // delete the from string
-        (void)ins_typebuf((char *)tb, 1, 0, true, mp->m_silent);
+        (void)ins_typebuf((char *)tb, 1, 0, true, silent);
       }
       return true;
     }
@@ -1546,6 +1552,7 @@ bool check_abbr(int c, char *ptr, int col, int mincol)
 
 /// Evaluate the RHS of a mapping or abbreviations and take care of escaping
 /// special characters.
+/// Careful: after this "mp" will be invalid if the mapping was deleted.
 ///
 /// @param c  NUL or typed character for abbreviation
 char *eval_map_expr(mapblock_T *mp, int c)
@@ -1559,6 +1566,8 @@ char *eval_map_expr(mapblock_T *mp, int c)
     expr = xstrdup(mp->m_str);
     vim_unescape_ks((char_u *)expr);
   }
+
+  const bool replace_keycodes = mp->m_replace_keycodes;
 
   // Forbid changing text or using ":normal" to avoid most of the bad side
   // effects.  Also restore the cursor position.
@@ -1596,7 +1605,7 @@ char *eval_map_expr(mapblock_T *mp, int c)
 
   char *res = NULL;
 
-  if (mp->m_replace_keycodes) {
+  if (replace_keycodes) {
     replace_termcodes(p, strlen(p), &res, REPTERM_DO_LT, NULL, CPO_TO_CPO_FLAGS);
   } else {
     // Escape K_SPECIAL in the result to be able to use the string as typeahead.

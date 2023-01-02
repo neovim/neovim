@@ -767,6 +767,11 @@ func Test_mapcomplete()
   mapclear
 endfunc
 
+func GetAbbrText()
+  unabbr hola
+  return 'hello'
+endfunc
+
 " Test for <expr> in abbreviation
 func Test_expr_abbr()
   new
@@ -782,7 +787,14 @@ func Test_expr_abbr()
   call assert_equal('', getline(1))
   unabbr <expr> hte
 
-  close!
+  " evaluating the expression deletes the abbreviation
+  abbr <expr> hola GetAbbrText()
+  call assert_equal('GetAbbrText()', maparg('hola', 'i', '1'))
+  call feedkeys("ahola \<Esc>", 'xt')
+  call assert_equal('hello ', getline('.'))
+  call assert_equal('', maparg('hola', 'i', '1'))
+
+  bwipe!
 endfunc
 
 " Test for storing mappings in different modes in a vimrc file

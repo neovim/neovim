@@ -30,7 +30,7 @@ done
 
 for filename in $emoji_files ; do
   curl -L -o "$UNIDIR/$filename" "$DOWNLOAD_URL_BASE/UNIDATA/emoji/$filename"
-  git -C "$UNIDIR" add $filename
+  git -C "$UNIDIR" add "$filename"
 done
 
 git -C "$UNIDIR" commit -m "feat: update unicode tables" .

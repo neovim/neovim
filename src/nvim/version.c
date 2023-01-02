@@ -69,11 +69,7 @@ static char *features[] = {
   "-iconv",
 #endif
 
-#ifdef FEAT_TUI
   "+tui",
-#else
-  "-tui",
-#endif
   NULL
 };
 

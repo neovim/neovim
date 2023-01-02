@@ -2475,7 +2475,7 @@ from the rest of the name (like 'PkgName::' in '$PkgName::VarName'): >
 (In Vim 6.x it was the other way around: "perl_want_scope_in_variables"
 enabled it.)
 
-If you do not want complex things like '@{${"foo"}}' to be parsed: >
+If you do not want complex things like `@{${"foo"}}` to be parsed: >
 
 	:let perl_no_extended_vars = 1
 
@@ -4851,7 +4851,7 @@ Note that the ":syntax" command can be abbreviated to ":sy", although ":syn"
 is mostly used, because it looks better.
 
 ==============================================================================
-12. Highlight command			*:highlight* *:hi* *E28* *E411* *E415*
+13. Highlight command			*:highlight* *:hi* *E28* *E411* *E415*
 
 There are two types of highlight groups:
 - The built-in |highlight-groups|.
@@ -4902,7 +4902,7 @@ in their own color.
 
 						*highlight-clear* *:hi-clear*
 :hi[ghlight] clear	Reset all highlighting to the defaults.  Removes all
-			highlighting for groups added by the user!
+			highlighting for groups added by the user.
 			Uses the current value of 'background' to decide which
 			default colors to use.
 			If there was a default link, restore it. |:hi-link|
@@ -5042,7 +5042,7 @@ ctermbg={color-nr}				*ctermbg*
 	a number instead of a color name.
 
 	Note that for 16 color ansi style terminals (including xterms), the
-	numbers in the NR-8 column is used.  Here '*' means 'add 8' so that 
+	numbers in the NR-8 column is used.  Here "*" means "add 8" so that 
 	Blue is 12, DarkGray is 8 etc.
 
 	Note that for some color terminals these names may result in the wrong
@@ -5333,7 +5333,7 @@ Tooltip		Current font, background and foreground of the tooltips.
 		Applicable highlight arguments: font, guibg, guifg.
 
 ==============================================================================
-13. Linking groups		*:hi-link* *:highlight-link* *E412* *E413*
+14. Linking groups		*:hi-link* *:highlight-link* *E412* *E413*
 
 When you want to use the same highlighting for several syntax groups, you
 can do this more easily by linking the groups into one common highlight
@@ -5492,7 +5492,7 @@ is loaded into that window or the file is reloaded.
 When splitting the window, the new window will use the original syntax.
 
 ==============================================================================
-17. Color xterms				*xterm-color* *color-xterm*
+18. Color xterms				*xterm-color* *color-xterm*
 
 							*colortest.vim*
 To test your color setup, a file has been included in the Vim distribution.
@@ -5502,7 +5502,7 @@ To use it, execute this command: >
 Nvim uses 256-color and |true-color| terminal capabilities wherever possible.
 
 ==============================================================================
-18. When syntax is slow						*:syntime*
+19. When syntax is slow						*:syntime*
 
 This is aimed at authors of a syntax file.
 

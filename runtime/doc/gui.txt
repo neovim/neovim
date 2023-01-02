@@ -44,8 +44,8 @@ Scrollbars						*gui-scrollbars*
 There are vertical scrollbars and a horizontal scrollbar.  You may
 configure which ones appear with the 'guioptions' option.
 
-The interface looks like this (with ":set guioptions=mlrb"):
-
+The interface looks like this (with `:set guioptions=mlrb`):
+>
 		       +------------------------------+ `
 		       | File  Edit		 Help | <- Menu bar (m) `
 		       +-+--------------------------+-+ `
@@ -66,7 +66,7 @@ The interface looks like this (with ":set guioptions=mlrb"):
 		       +-+--------------------------+-+ `
 		       | |< ####		   >| | <- Bottom `
 		       +-+--------------------------+-+    scrollbar (b) `
-
+<
 Any of the scrollbar or menu components may be turned off by not putting the
 appropriate letter in the 'guioptions' string.  The bottom scrollbar is
 only useful when 'nowrap' is set.
@@ -123,7 +123,7 @@ message).  Keep Shift pressed to change to the directory instead.
 If Vim happens to be editing a command line, the names of the dropped files
 and directories will be inserted at the cursor.  This allows you to use these
 names with any Ex command.  Special characters (space, tab, double quote and
-'|'; backslash on non-MS-Windows systems) will be escaped.
+"|"; backslash on non-MS-Windows systems) will be escaped.
 
 ==============================================================================
 Menus							*menus*
@@ -569,14 +569,14 @@ Tooltips & Menu tips
 See section |42.4| in the user manual.
 
 							*:tmenu*
-:tm[enu] {menupath} {rhs}	Define a tip for a menu or tool.  {only in
-				X11 and Win32 GUI}
+:tm[enu] {menupath} {rhs}	Define a tip for a menu or tool.  (only in
+				X11 and Win32 GUI)
 
-:tm[enu] [menupath]		List menu tips. {only in X11 and Win32 GUI}
+:tm[enu] [menupath]		List menu tips. (only in X11 and Win32 GUI)
 
 							*:tunmenu*
 :tu[nmenu] {menupath}		Remove a tip for a menu or tool.
-				{only in X11 and Win32 GUI}
+				(only in X11 and Win32 GUI)
 
 Note: To create menus for terminal mode, use |:tlmenu| instead.
 
