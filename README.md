@@ -1,22 +1,19 @@
 <h1 align="center">
   <img src="https://raw.githubusercontent.com/neovim/neovim.github.io/master/logos/neovim-logo-300x87.png" alt="Neovim">
+
+  <a href="https://neovim.io/doc/">Documentation</a> |
+  <a href="https://app.element.io/#/room/#neovim:matrix.org">Chat</a>
 </h1>
 
-[Documentation](https://neovim.io/doc/) |
-[Chat](https://app.element.io/#/room/#neovim:matrix.org) |
-[Twitter](https://twitter.com/Neovim)
-
-[![GitHub CI](https://github.com/neovim/neovim/workflows/CI/badge.svg)](https://github.com/neovim/neovim/actions?query=workflow%3ACI+branch%3Amaster+event%3Apush)
+[![GitHub CI](https://github.com/neovim/neovim/actions/workflows/ci.yml/badge.svg?event=push&branch=master)](https://github.com/neovim/neovim/actions?query=workflow%3ACI+branch%3Amaster+event%3Apush)
 [![Coverity Scan analysis](https://scan.coverity.com/projects/2227/badge.svg)](https://scan.coverity.com/projects/2227)
 [![Clang analysis](https://neovim.io/doc/reports/clang/badge.svg)](https://neovim.io/doc/reports/clang)
 [![PVS-Studio analysis](https://neovim.io/doc/reports/pvs/badge.svg)](https://neovim.io/doc/reports/pvs/PVS-studio.html.d)
-
 [![Packages](https://repology.org/badge/tiny-repos/neovim.svg)](https://repology.org/metapackage/neovim)
 [![Debian CI](https://badges.debian.net/badges/debian/testing/neovim/version.svg)](https://buildd.debian.org/neovim)
 [![Downloads](https://img.shields.io/github/downloads/neovim/neovim/total.svg?maxAge=2592001)](https://github.com/neovim/neovim/releases/)
-[![nvim](https://snapcraft.io//nvim/badge.svg)](https://snapcraft.io/nvim)
 
-Neovim is a project that seeks to aggressively refactor Vim in order to:
+Neovim is a project that seeks to aggressively refactor [Vim](https://www.vim.org/) in order to:
 
 - Simplify maintenance and encourage [contributions](CONTRIBUTING.md)
 - Split the work between multiple developers
