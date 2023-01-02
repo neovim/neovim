@@ -622,7 +622,7 @@ This is equivalent to the following Lua code:
 Autocommand groups are unique for a given name, so you can reuse them, e.g.,
 in a different file:
 >lua
-    local mygroup = vim.api.nvim_create_augroup('vimrc', { clear = true })
+    local mygroup = vim.api.nvim_create_augroup('vimrc', { clear = false })
     vim.api.nvim_create_autocmd( {'BufNewFile', 'BufRead' }, {
       pattern = '*.html',
       group = mygroup,
