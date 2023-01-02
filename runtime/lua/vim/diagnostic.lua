@@ -758,8 +758,8 @@ end
 
 --- Check diagnostic enabled in buffer
 ---
----@param bufnr number|nil Buffer number to get diagnostics from. Use 0 for
----                        current buffer or nil for all buffers.
+---@param bufnr number|nil Check buffer disabled diagnostic. nil for
+---                        current buffer
 ---@return boolean
 function M.buf_in_disable(bufnr)
   bufnr = bufnr or api.nvim_get_current_buf()
