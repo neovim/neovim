@@ -608,8 +608,9 @@ int main(int argc, char **argv)
   }
 
   if (params.luaf != NULL) {
-    nlua_exec_file(params.luaf);
-    // return 0;
+    bool lua_ok = nlua_exec_file(params.luaf);
+    TIME_MSG("executing Lua -l script");
+    getout(lua_ok ? 0 : 1);
   }
 
   TIME_MSG("before starting main loop");
@@ -659,9 +660,8 @@ void getout(int exitval)
 {
   exiting = true;
 
-  // When running in Ex mode an error causes us to exit with a non-zero exit
-  // code.  POSIX requires this, although it's not 100% clear from the
-  // standard.
+  // On error during Ex mode, exit with a non-zero code.
+  // POSIX requires this, although it's not 100% clear from the standard.
   if (exmode_active) {
     exitval += ex_exitval;
   }
@@ -752,6 +752,7 @@ void getout(int exitval)
   if (did_emsg) {
     // give the user a chance to read the (error) message
     no_wait_return = false;
+    // TODO(justinmk): this may call getout(0), clobbering exitval...
     wait_return(false);
   }
 
@@ -775,10 +776,9 @@ void getout(int exitval)
   os_exit(exitval);
 }
 
-/// Preserve files and exit.
-/// @note IObuff must contain a message.
-/// @note This may be called from deadly_signal() in a signal handler, avoid
-///       unsafe functions, such as allocating memory.
+/// Preserve files, print contents of `IObuff`, and exit 1.
+///
+/// May be called from deadly_signal().
 void preserve_exit(void)
   FUNC_ATTR_NORETURN
 {
@@ -1309,6 +1309,7 @@ static void command_line_scan(mparm_T *parmp)
           break;
 
         case 'l':    // "-l" Lua script: args after "-l".
+          headless_mode = true;
           silent_mode = true;
           p_verbose = 1;
           parmp->no_swap_file = true;
@@ -1403,8 +1404,8 @@ scripterror:
     }
   }
 
-  if (embedded_mode && silent_mode) {
-    mainerr(_("--embed conflicts with -es/-Es"), NULL);
+  if (embedded_mode && (silent_mode || parmp->luaf)) {
+    mainerr(_("--embed conflicts with -es/-Es/-l"), NULL);
   }
 
   // If there is a "+123" or "-c" command, set v:swapcommand to the first one.

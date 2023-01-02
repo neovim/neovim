@@ -325,10 +325,11 @@ static int nlua_thr_api_nvim__get_runtime(lua_State *lstate)
 
 /// Copies args starting at `lua_arg0` into the Lua `arg` global.
 ///
-/// Example:
+/// Example (`lua_arg0` points to "--arg1"):
 ///     nvim -l foo.lua --arg1 --arg2
 ///
-/// @note `lua` CLI sets _negative_ `arg` indices to the arguments upto "-e".
+/// @note Lua CLI sets arguments upto "-e" as _negative_ `_G.arg` indices, but we currently don't
+/// follow that convention.
 ///
 /// @see https://www.lua.org/pil/1.4.html
 /// @see https://github.com/premake/premake-core/blob/1c1304637f4f5e50ba8c57aae8d1d80ec3b7aaf2/src/host/premake.c#L563-L594
@@ -1710,10 +1711,10 @@ void ex_luafile(exarg_T *const eap)
   nlua_exec_file((const char *)eap->arg);
 }
 
-/// execute lua code from a file.
+/// Executes Lua code from a file.
 ///
-/// Note: we call the lua global loadfile as opposed to calling luaL_loadfile
-/// in case loadfile has been overridden in the users environment.
+/// Note: we call the Lua global loadfile as opposed to calling luaL_loadfile
+/// in case loadfile was overridden in the user's environment.
 ///
 /// @param  path  path of the file
 ///

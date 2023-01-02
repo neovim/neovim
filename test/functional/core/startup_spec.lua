@@ -88,11 +88,11 @@ describe('startup', function()
   end)
 
   describe('-l Lua', function()
-    local function assert_l_out(expected, args_before, args_after)
+    local function assert_l_out(expected, nvim_args, lua_args)
       local args = { nvim_prog, '--clean' }
-      vim.list_extend(args, args_before or {})
+      vim.list_extend(args, nvim_args or {})
       vim.list_extend(args, { '-l', 'test/functional/fixtures/startup.lua' })
-      vim.list_extend(args, args_after or {})
+      vim.list_extend(args, lua_args or {})
       local out = funcs.system(args):gsub('\r\n', '\n')
       return eq(dedent(expected), out)
     end
@@ -113,6 +113,13 @@ describe('startup', function()
         { '-arg1', "--exitcode", "73", '--arg2' }
       )
       eq(73, eval('v:shell_error'))
+    end)
+
+    it('Lua error sets Nvim exitcode', function()
+      eq(0, eval('v:shell_error'))
+      matches('E5113: .* my pearls!!',
+        funcs.system({ nvim_prog, '-l', 'test/functional/fixtures/startup-fail.lua' }))
+      eq(1, eval('v:shell_error'))
     end)
 
     it('sets _G.arg', function()
@@ -396,11 +403,13 @@ describe('startup', function()
                     { 'put =mode(1)', 'print', '' }))
   end)
 
-  it('fails on --embed with -es/-Es', function()
-    matches('nvim[.exe]*: %-%-embed conflicts with %-es/%-Es',
+  it('fails on --embed with -es/-Es/-l', function()
+    matches('nvim[.exe]*: %-%-embed conflicts with %-es/%-Es/%-l',
       funcs.system({nvim_prog, '--embed', '-es' }))
-    matches('nvim[.exe]*: %-%-embed conflicts with %-es/%-Es',
+    matches('nvim[.exe]*: %-%-embed conflicts with %-es/%-Es/%-l',
       funcs.system({nvim_prog, '--embed', '-Es' }))
+    matches('nvim[.exe]*: %-%-embed conflicts with %-es/%-Es/%-l',
+      funcs.system({nvim_prog, '--embed', '-l', 'foo.lua' }))
   end)
 
   it('does not crash if --embed is given twice', function()
