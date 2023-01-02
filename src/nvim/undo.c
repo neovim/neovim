@@ -116,7 +116,6 @@
 #include "nvim/os/os.h"
 #include "nvim/os/os_defs.h"
 #include "nvim/os/time.h"
-#include "nvim/os_unix.h"
 #include "nvim/path.h"
 #include "nvim/pos.h"
 #include "nvim/screen.h"
