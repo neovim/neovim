@@ -1437,6 +1437,19 @@ func Test_inputlist()
   call assert_fails('call inputlist("")', 'E686:')
 endfunc
 
+func Test_range_inputlist()
+  " flush out any garbage left in the buffer
+  while getchar(0)
+  endwhile
+
+  call feedkeys(":let result = inputlist(range(10))\<CR>1\<CR>", 'x')
+  call assert_equal(1, result)
+  call feedkeys(":let result = inputlist(range(3, 10))\<CR>1\<CR>", 'x')
+  call assert_equal(1, result)
+
+  unlet result
+endfunc
+
 func Test_balloon_show()
   CheckFeature balloon_eval
 
@@ -2164,12 +2177,6 @@ func Test_range()
   " index()
   call assert_equal(1, index(range(1, 5), 2))
   call assert_fails("echo index([1, 2], 1, [])", 'E745:')
-
-  " inputlist()
-  call feedkeys(":let result = inputlist(range(10))\<CR>1\<CR>", 'x')
-  call assert_equal(1, result)
-  call feedkeys(":let result = inputlist(range(3, 10))\<CR>1\<CR>", 'x')
-  call assert_equal(1, result)
 
   " insert()
   call assert_equal([42, 1, 2, 3, 4, 5], insert(range(1, 5), 42))
