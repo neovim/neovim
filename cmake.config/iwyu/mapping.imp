@@ -121,7 +121,6 @@
   { include: [ '"os/shell.h.generated.h"', private, '"nvim/os/shell.h"', public ] },
   { include: [ '"os/signal.h.generated.h"', private, '"nvim/os/signal.h"', public ] },
   { include: [ '"os/time.h.generated.h"', private, '"nvim/os/time.h"', public ] },
-  { include: [ '"os_unix.h.generated.h"', private, '"nvim/os_unix.h"', public ] },
   { include: [ '"path.h.generated.h"', private, '"nvim/path.h"', public ] },
   { include: [ '"plines.h.generated.h"', private, '"nvim/plines.h"', public ] },
   { include: [ '"popupmenu.h.generated.h"', private, '"nvim/popupmenu.h"', public ] },
