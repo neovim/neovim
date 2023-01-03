@@ -2014,11 +2014,13 @@ void set_file_options(int set_options, exarg_T *eap)
 /// Set forced 'fileencoding'.
 void set_forced_fenc(exarg_T *eap)
 {
-  if (eap->force_enc != 0) {
-    char *fenc = enc_canonize(eap->cmd + eap->force_enc);
-    set_string_option_direct("fenc", -1, fenc, OPT_FREE|OPT_LOCAL, 0);
-    xfree(fenc);
+  if (eap->force_enc == 0) {
+    return;
   }
+
+  char *fenc = enc_canonize(eap->cmd + eap->force_enc);
+  set_string_option_direct("fenc", -1, fenc, OPT_FREE|OPT_LOCAL, 0);
+  xfree(fenc);
 }
 
 /// Find next fileencoding to use from 'fileencodings'.
@@ -5348,35 +5350,40 @@ static void vim_opentempdir(void)
   }
 
   DIR *dp = opendir(vim_tempdir);
-
-  if (dp != NULL) {
-    vim_tempdir_dp = dp;
-    flock(dirfd(vim_tempdir_dp), LOCK_SH);
+  if (dp == NULL) {
+    return;
   }
+
+  vim_tempdir_dp = dp;
+  flock(dirfd(vim_tempdir_dp), LOCK_SH);
 }
 
 /// Close temporary directory - it automatically release file lock.
 static void vim_closetempdir(void)
 {
-  if (vim_tempdir_dp != NULL) {
-    closedir(vim_tempdir_dp);
-    vim_tempdir_dp = NULL;
+  if (vim_tempdir_dp == NULL) {
+    return;
   }
+
+  closedir(vim_tempdir_dp);
+  vim_tempdir_dp = NULL;
 }
 #endif
 
 /// Delete the temp directory and all files it contains.
 void vim_deltempdir(void)
 {
-  if (vim_tempdir != NULL) {
-#if defined(HAVE_FLOCK) && defined(HAVE_DIRFD)
-    vim_closetempdir();
-#endif
-    // remove the trailing path separator
-    path_tail(vim_tempdir)[-1] = NUL;
-    delete_recursive(vim_tempdir);
-    XFREE_CLEAR(vim_tempdir);
+  if (vim_tempdir == NULL) {
+    return;
   }
+
+#if defined(HAVE_FLOCK) && defined(HAVE_DIRFD)
+  vim_closetempdir();
+#endif
+  // remove the trailing path separator
+  path_tail(vim_tempdir)[-1] = NUL;
+  delete_recursive(vim_tempdir);
+  XFREE_CLEAR(vim_tempdir);
 }
 
 /// Gets path to Nvim's own temp dir (ending with slash).
@@ -5401,9 +5408,10 @@ char *vim_gettempdir(void)
 static bool vim_settempdir(char *tempdir)
 {
   char *buf = verbose_try_malloc(MAXPATHL + 2);
-  if (!buf) {
+  if (buf == NULL) {
     return false;
   }
+
   vim_FullName(tempdir, buf, MAXPATHL, false);
   add_pathsep(buf);
   vim_tempdir = xstrdup(buf);

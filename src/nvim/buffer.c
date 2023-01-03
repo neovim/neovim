@@ -178,15 +178,17 @@ static int read_buffer(int read_stdin, exarg_T *eap, int flags)
 /// Ensure buffer "buf" is loaded.  Does not trigger the swap-exists action.
 void buffer_ensure_loaded(buf_T *buf)
 {
-  if (buf->b_ml.ml_mfp == NULL) {
-    aco_save_T aco;
-
-    // Make sure the buffer is in a window.
-    aucmd_prepbuf(&aco, buf);
-    swap_exists_action = SEA_NONE;
-    open_buffer(false, NULL, 0);
-    aucmd_restbuf(&aco);
+  if (buf->b_ml.ml_mfp != NULL) {
+    return;
   }
+
+  aco_save_T aco;
+
+  // Make sure the buffer is in a window.
+  aucmd_prepbuf(&aco, buf);
+  swap_exists_action = SEA_NONE;
+  open_buffer(false, NULL, 0);
+  aucmd_restbuf(&aco);
 }
 
 /// Open current buffer, that is: open the memfile and read the file into
@@ -2903,18 +2905,20 @@ int setfname(buf_T *buf, char *ffname_arg, char *sfname_arg, bool message)
 void buf_set_name(int fnum, char *name)
 {
   buf_T *buf = buflist_findnr(fnum);
-  if (buf != NULL) {
-    if (buf->b_sfname != buf->b_ffname) {
-      xfree(buf->b_sfname);
-    }
-    xfree(buf->b_ffname);
-    buf->b_ffname = xstrdup(name);
-    buf->b_sfname = NULL;
-    // Allocate ffname and expand into full path.  Also resolves .lnk
-    // files on Win32.
-    fname_expand(buf, &buf->b_ffname, &buf->b_sfname);
-    buf->b_fname = buf->b_sfname;
+  if (buf == NULL) {
+    return;
   }
+
+  if (buf->b_sfname != buf->b_ffname) {
+    xfree(buf->b_sfname);
+  }
+  xfree(buf->b_ffname);
+  buf->b_ffname = xstrdup(name);
+  buf->b_sfname = NULL;
+  // Allocate ffname and expand into full path.  Also resolves .lnk
+  // files on Win32.
+  fname_expand(buf, &buf->b_ffname, &buf->b_sfname);
+  buf->b_fname = buf->b_sfname;
 }
 
 /// Take care of what needs to be done when the name of buffer "buf" has changed.
@@ -4138,13 +4142,15 @@ char *buf_get_fname(const buf_T *buf)
 /// Set 'buflisted' for curbuf to "on" and trigger autocommands if it changed.
 void set_buflisted(int on)
 {
-  if (on != curbuf->b_p_bl) {
-    curbuf->b_p_bl = on;
-    if (on) {
-      apply_autocmds(EVENT_BUFADD, NULL, NULL, false, curbuf);
-    } else {
-      apply_autocmds(EVENT_BUFDELETE, NULL, NULL, false, curbuf);
-    }
+  if (on == curbuf->b_p_bl) {
+    return;
+  }
+
+  curbuf->b_p_bl = on;
+  if (on) {
+    apply_autocmds(EVENT_BUFADD, NULL, NULL, false, curbuf);
+  } else {
+    apply_autocmds(EVENT_BUFDELETE, NULL, NULL, false, curbuf);
   }
 }
 
