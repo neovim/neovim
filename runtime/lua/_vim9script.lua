@@ -13,13 +13,13 @@ local NVIM9 = (function()
 
   M.ternary = function(cond, if_true, if_false)
     if cond then
-      if type(if_true) == "function" then
+      if type(if_true) == 'function' then
         return if_true()
       else
         return if_true
       end
     else
-      if type(if_false) == "function" then
+      if type(if_false) == 'function' then
         return if_false()
       else
         return if_false
@@ -43,7 +43,7 @@ local NVIM9 = (function()
   end
 
   M.replace = function(orig, new)
-    if type(orig) == "table" and type(new) == "table" then
+    if type(orig) == 'table' and type(new) == 'table' then
       for k in pairs(orig) do
         orig[k] = nil
       end
@@ -65,22 +65,22 @@ local NVIM9 = (function()
       else
         return obj[idx + 1]
       end
-    elseif type(obj) == "table" then
+    elseif type(obj) == 'table' then
       return obj[idx]
-    elseif type(obj) == "string" then
+    elseif type(obj) == 'string' then
       return string.sub(obj, idx + 1, idx + 1)
     end
 
-    error("invalid type for indexing: " .. vim.inspect(obj))
+    error('invalid type for indexing: ' .. vim.inspect(obj))
   end
 
   M.index_expr = function(idx)
-    if type(idx) == "string" then
+    if type(idx) == 'string' then
       return idx
-    elseif type(idx) == "number" then
+    elseif type(idx) == 'number' then
       return idx + 1
     else
-      error(string.format("not yet handled: %s", vim.inspect(idx)))
+      error(string.format('not yet handled: %s', vim.inspect(idx)))
     end
   end
 
@@ -92,7 +92,7 @@ local NVIM9 = (function()
     if start < 0 then
       start = #obj + start
     end
-    assert(type(start) == "number")
+    assert(type(start) == 'number')
 
     if finish == nil then
       finish = #obj
@@ -101,15 +101,15 @@ local NVIM9 = (function()
     if finish < 0 then
       finish = #obj + finish
     end
-    assert(type(finish) == "number")
+    assert(type(finish) == 'number')
 
     local slicer
     if vim.tbl_islist(obj) then
       slicer = vim.list_slice
-    elseif type(obj) == "string" then
+    elseif type(obj) == 'string' then
       slicer = string.sub
     else
-      error("invalid type for slicing: " .. vim.inspect(obj))
+      error('invalid type for slicing: ' .. vim.inspect(obj))
     end
 
     return slicer(obj, start + 1, finish + 1)
@@ -122,16 +122,16 @@ local NVIM9 = (function()
   -- work well for calling ":source X" from within a vimscript/vim9script
   -- function
   M.make_source_cmd = function()
-    local group = vim.api.nvim_create_augroup("vim9script-source", {})
-    vim.api.nvim_create_autocmd("SourceCmd", {
-      pattern = "*.vim",
+    local group = vim.api.nvim_create_augroup('vim9script-source', {})
+    vim.api.nvim_create_autocmd('SourceCmd', {
+      pattern = '*.vim',
       group = group,
       callback = function(a)
         local file = vim.fn.readfile(a.file)
         for _, line in ipairs(file) do
           -- TODO: Or starts with def <something>
           --  You can use def in legacy vim files
-          if vim.startswith(line, "vim9script") then
+          if vim.startswith(line, 'vim9script') then
             -- TODO: Use the rust lib to actually
             -- generate the corresponding lua code and then
             -- execute that (instead of sourcing it directly)
@@ -139,7 +139,7 @@ local NVIM9 = (function()
           end
         end
 
-        vim.api.nvim_exec(table.concat(file, "\n"), false)
+        vim.api.nvim_exec(table.concat(file, '\n'), false)
       end,
     })
   end
@@ -176,70 +176,70 @@ function! _Vim9ScriptFn(name, args) abort
 endfunction
 ]])
 
-NVIM9["autoload"] = (function()
+NVIM9['autoload'] = (function()
   return function(path)
     return loadfile(path)()
   end
 end)()
-NVIM9["bool"] = (function()
+NVIM9['bool'] = (function()
   return function(...)
     return NVIM9.convert.to_vim_bool(...)
   end
 end)()
-NVIM9["convert"] = (function()
+NVIM9['convert'] = (function()
   local M = {}
 
   M.decl_bool = function(val)
-    if type(val) == "boolean" then
+    if type(val) == 'boolean' then
       return val
-    elseif type(val) == "number" then
+    elseif type(val) == 'number' then
       if val == 0 then
         return false
       elseif val == 1 then
         return true
       else
-        error(string.format("bad number passed to bool declaration: %s", val))
+        error(string.format('bad number passed to bool declaration: %s', val))
       end
     end
 
-    error(string.format("invalid bool declaration: %s", vim.inspect(val)))
+    error(string.format('invalid bool declaration: %s', vim.inspect(val)))
   end
 
   M.decl_dict = function(val)
-    if type(val) == "nil" then
+    if type(val) == 'nil' then
       return vim.empty_dict()
-    elseif type(val) == "table" then
+    elseif type(val) == 'table' then
       if vim.tbl_isempty(val) then
         return vim.empty_dict()
       elseif vim.tbl_islist(val) then
-        error(string.format("Cannot pass list to dictionary? %s", vim.inspect(val)))
+        error(string.format('Cannot pass list to dictionary? %s', vim.inspect(val)))
       else
         return val
       end
     end
 
-    error(string.format("invalid dict declaration: %s", vim.inspect(val)))
+    error(string.format('invalid dict declaration: %s', vim.inspect(val)))
   end
 
   M.to_vim_bool = function(val)
-    if type(val) == "boolean" then
+    if type(val) == 'boolean' then
       return val
-    elseif type(val) == "number" then
+    elseif type(val) == 'number' then
       return val ~= 0
-    elseif type(val) == "string" then
+    elseif type(val) == 'string' then
       return string.len(val) ~= 0
-    elseif type(val) == "table" then
+    elseif type(val) == 'table' then
       return not vim.tbl_isempty(val)
     elseif val == nil then
       return false
     end
 
-    error("unhandled type: " .. vim.inspect(val))
+    error('unhandled type: ' .. vim.inspect(val))
   end
 
   return M
 end)()
-NVIM9["fn"] = (function()
+NVIM9['fn'] = (function()
   local M = {}
 
   M.insert = function(list, item, idx)
@@ -281,13 +281,13 @@ NVIM9["fn"] = (function()
 
   M.prop_type_add = function(...)
     local args = { ... }
-    print("[prop_type_add]", vim.inspect(args))
+    print('[prop_type_add]', vim.inspect(args))
   end
 
   do
     local patch_overrides = {
       -- We do have vim9script :) that's this plugin
-      ["vim9script"] = true,
+      ['vim9script'] = true,
 
       -- Include some vim patches that I don't care about
       [ [[patch-8.2.2261]] ] = true,
@@ -362,14 +362,14 @@ readdirex({directory} [, {expr} [, {dict}]])			*readdirex()*
 
   M.typename = function(val)
     local ty = type(val)
-    if ty == "string" then
-      return "string"
-    elseif ty == "boolean" then
-      return "bool"
-    elseif ty == "number" then
-      return "number"
+    if ty == 'string' then
+      return 'string'
+    elseif ty == 'boolean' then
+      return 'bool'
+    elseif ty == 'number' then
+      return 'number'
     else
-      error(string.format("typename: %s", val))
+      error(string.format('typename: %s', val))
     end
   end
 
@@ -377,10 +377,10 @@ readdirex({directory} [, {expr} [, {dict}]])			*readdirex()*
 
   do
     local pos_map = {
-      topleft = "NW",
-      topright = "NE",
-      botleft = "SW",
-      botright = "SE",
+      topleft = 'NW',
+      topright = 'NE',
+      botleft = 'SW',
+      botright = 'SE',
     }
 
     M.popup_menu = function(what, options)
@@ -388,8 +388,8 @@ readdirex({directory} [, {expr} [, {dict}]])			*readdirex()*
 
       local buf = vim.api.nvim_create_buf(false, true)
       local win = vim.api.nvim_open_win(buf, true, {
-        relative = "editor",
-        style = "minimal",
+        relative = 'editor',
+        style = 'minimal',
         anchor = pos_map[options.pos],
         height = options.maxheight or options.minheight,
         width = options.maxwidth or options.minwidth,
@@ -406,11 +406,11 @@ readdirex({directory} [, {expr} [, {dict}]])			*readdirex()*
             return
           end -- interrupted
 
-          if ch == "<C-C>" then
+          if ch == '<C-C>' then
             return
           end
 
-          if not require("vim9script").bool(options.filter(nil, ch)) then
+          if not require('vim9script').bool(options.filter(nil, ch)) then
             vim.cmd.normal(ch)
           end
 
@@ -425,7 +425,7 @@ readdirex({directory} [, {expr} [, {dict}]])			*readdirex()*
   end
 
   M.popup_settext = function(id, text)
-    if type(text) == "string" then
+    if type(text) == 'string' then
       -- text = vim.split(text, "\n")
       error("Haven't handled string yet")
     end
@@ -439,20 +439,20 @@ readdirex({directory} [, {expr} [, {dict}]])			*readdirex()*
   end
 
   M.popup_filter_menu = function()
-    print("ok, just pretend we filtered the menu")
+    print('ok, just pretend we filtered the menu')
   end
 
   M.popup_setoptions = function(id, options)
-    print("setting options...", id)
+    print('setting options...', id)
   end
 
   M.job_start = function(...)
-    return vim.fn["vim9#job#start"](...)
+    return vim.fn['vim9#job#start'](...)
   end
 
   M.job_status = function()
     -- LOL
-    return "run"
+    return 'run'
   end
 
   M = setmetatable(M, {
@@ -461,13 +461,13 @@ readdirex({directory} [, {expr} [, {dict}]])			*readdirex()*
 
   return M
 end)()
-NVIM9["heredoc"] = (function()
+NVIM9['heredoc'] = (function()
   local M = {}
 
   M.trim = function(lines)
     local min_whitespace = 9999
     for _, line in ipairs(lines) do
-      local _, finish = string.find(line, "^%s*")
+      local _, finish = string.find(line, '^%s*')
       min_whitespace = math.min(min_whitespace, finish)
     end
 
@@ -481,17 +481,17 @@ NVIM9["heredoc"] = (function()
 
   return M
 end)()
-NVIM9["import"] = (function()
+NVIM9['import'] = (function()
   local imported = {}
   imported.autoload = setmetatable({}, {
     __index = function(_, name)
-      local luaname = "autoload/" .. string.gsub(name, "%.vim$", ".lua")
+      local luaname = 'autoload/' .. string.gsub(name, '%.vim$', '.lua')
       local runtime_file = vim.api.nvim_get_runtime_file(luaname, false)[1]
       if not runtime_file then
-        error("unable to find autoload file:" .. name)
+        error('unable to find autoload file:' .. name)
       end
 
-      return imported.absolute[vim.fn.fnamemodify(runtime_file, ":p")]
+      return imported.absolute[vim.fn.fnamemodify(runtime_file, ':p')]
     end,
   })
 
@@ -504,7 +504,7 @@ NVIM9["import"] = (function()
         return result
       end
 
-      error(string.format("unabled to find absolute file: %s", name))
+      error(string.format('unabled to find absolute file: %s', name))
     end,
   })
 
@@ -515,19 +515,19 @@ NVIM9["import"] = (function()
       return imported.autoload[info.name]
     end
 
-    local debug_info = debug.getinfo(2, "S")
-    local sourcing_path = vim.fn.fnamemodify(string.sub(debug_info.source, 2), ":p")
+    local debug_info = debug.getinfo(2, 'S')
+    local sourcing_path = vim.fn.fnamemodify(string.sub(debug_info.source, 2), ':p')
 
     -- Relative paths
-    if vim.startswith(name, "../") or vim.startswith(name, "./") then
-      local luaname = string.gsub(name, "%.vim$", ".lua")
-      local directory = vim.fn.fnamemodify(sourcing_path, ":h")
-      local search = directory .. "/" .. luaname
+    if vim.startswith(name, '../') or vim.startswith(name, './') then
+      local luaname = string.gsub(name, '%.vim$', '.lua')
+      local directory = vim.fn.fnamemodify(sourcing_path, ':h')
+      local search = directory .. '/' .. luaname
       return imported.absolute[search]
     end
 
-    if vim.startswith(name, "/") then
-      error("absolute path")
+    if vim.startswith(name, '/') then
+      error('absolute path')
       -- local luaname = string.gsub(name, "%.vim", ".lua")
       -- local runtime_file = vim.api.nvim_get_runtime_file(luaname, false)[1]
       -- if runtime_file then
@@ -536,95 +536,95 @@ NVIM9["import"] = (function()
       -- end
     end
 
-    error("Unhandled case" .. vim.inspect(info) .. vim.inspect(debug_info))
+    error('Unhandled case' .. vim.inspect(info) .. vim.inspect(debug_info))
   end
 end)()
-NVIM9["ops"] = (function()
+NVIM9['ops'] = (function()
   local lib = NVIM9
 
   local M = {}
 
-  M["And"] = function(left, right)
+  M['And'] = function(left, right)
     return lib.bool(left) and lib.bool(right)
   end
 
-  M["Or"] = function(left, right)
+  M['Or'] = function(left, right)
     return lib.bool(left) or lib.bool(right)
   end
 
-  M["Plus"] = function(left, right)
+  M['Plus'] = function(left, right)
     return left + right
   end
 
-  M["Multiply"] = function(left, right)
+  M['Multiply'] = function(left, right)
     return left * right
   end
 
-  M["Divide"] = function(left, right)
+  M['Divide'] = function(left, right)
     return left / right
   end
 
-  M["StringConcat"] = function(left, right)
+  M['StringConcat'] = function(left, right)
     return left .. right
   end
 
-  M["EqualTo"] = function(left, right)
+  M['EqualTo'] = function(left, right)
     return left == right
   end
 
-  M["NotEqualTo"] = function(left, right)
-    return not M["EqualTo"](left, right)
+  M['NotEqualTo'] = function(left, right)
+    return not M['EqualTo'](left, right)
   end
 
-  M["LessThan"] = function(left, right)
+  M['LessThan'] = function(left, right)
     return left < right
   end
 
-  M["LessThanOrEqual"] = function(left, right)
+  M['LessThanOrEqual'] = function(left, right)
     return left <= right
   end
 
-  M["GreaterThan"] = function(left, right)
+  M['GreaterThan'] = function(left, right)
     return left > right
   end
 
-  M["GreaterThanOrEqual"] = function(left, right)
+  M['GreaterThanOrEqual'] = function(left, right)
     return left >= right
   end
 
-  M["RegexpMatches"] = function(left, right)
+  M['RegexpMatches'] = function(left, right)
     return not not vim.regex(right):match_str(left)
   end
 
-  M["RegexpMatchesIns"] = function(left, right)
-    return not not vim.regex("\\c" .. right):match_str(left)
+  M['RegexpMatchesIns'] = function(left, right)
+    return not not vim.regex('\\c' .. right):match_str(left)
   end
 
-  M["NotRegexpMatches"] = function(left, right)
-    return not M["RegexpMatches"](left, right)
+  M['NotRegexpMatches'] = function(left, right)
+    return not M['RegexpMatches'](left, right)
   end
 
-  M["Modulo"] = function(left, right)
+  M['Modulo'] = function(left, right)
     return left % right
   end
 
-  M["Minus"] = function(left, right)
+  M['Minus'] = function(left, right)
     -- TODO: This is not right :)
     return left - right
   end
 
   return M
 end)()
-NVIM9["prefix"] = (function()
+NVIM9['prefix'] = (function()
   local lib = NVIM9
 
   local M = {}
 
-  M["Minus"] = function(right)
+  M['Minus'] = function(right)
     return -right
   end
 
-  M["Bang"] = function(right)
+  M['Bang'] = function(right)
     return not lib.bool(right)
   end
 
