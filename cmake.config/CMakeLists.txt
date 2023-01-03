@@ -5,6 +5,26 @@ include(CheckIncludeFiles)
 include(CheckCSourceRuns)
 include(CheckCSourceCompiles)
 
+check_c_source_compiles("
+#include <execinfo.h>
+int main(void)
+{
+  void *trace[1];
+  backtrace(trace, 1);
+  return 0;
+}
+" HAVE_EXECINFO_BACKTRACE)
+
+check_c_source_compiles("
+int main(void)
+{
+  int a = 42;
+  __builtin_add_overflow(a, a, &a);
+  __builtin_sub_overflow(a, a, &a);
+  return 0;
+}
+" HAVE_BUILTIN_ADD_OVERFLOW)
+
 check_type_size("int" SIZEOF_INT LANGUAGE C)
 check_type_size("long" SIZEOF_LONG LANGUAGE C)
 check_type_size("intmax_t" SIZEOF_INTMAX_T LANGUAGE C)
