@@ -1822,7 +1822,7 @@ end
 ---@class vim.lsp.get_active_clients.filter
 ---@field id number|nil Match clients by id
 ---@field bufnr number|nil match clients attached to the given buffer
----@field name number|nil match clients by name
+---@field name string|nil match clients by name
 
 --- Get active clients.
 ---
