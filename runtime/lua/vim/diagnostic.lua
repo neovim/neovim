@@ -430,9 +430,9 @@ local function get_diagnostics(bufnr, opts, clamp)
   end
 
   ---@private
-  local function add_all_diags(bufnr, diags)
+  local function add_all_diags(buf, diags)
     for _, diagnostic in pairs(diags) do
-      add(bufnr, diagnostic)
+      add(buf, diagnostic)
     end
   end
 
