@@ -1190,6 +1190,7 @@ static int nlua_rpc(lua_State *lstate, bool request)
       api_set_error(&err, kErrorTypeValidation,
                     "Invalid channel: %" PRIu64, chan_id);
     }
+    api_free_array(args);  // TODO(bfredl): no
   }
 
 check_err:

@@ -1401,6 +1401,7 @@ static void show_verbose_terminfo(TUIData *data)
   PUT(opts, "verbose", BOOLEAN_OBJ(true));
   ADD(args, DICTIONARY_OBJ(opts));
   rpc_send_event(ui_client_channel_id, "nvim_echo", args);
+  api_free_array(args);
 }
 
 #ifdef UNIX
@@ -1493,9 +1494,9 @@ static void tui_option_set(UI *ui, String name, Object value)
     invalidate(ui, 0, data->grid.height, 0, data->grid.width);
 
     if (ui_client_channel_id) {
-      Array args = ARRAY_DICT_INIT;
-      ADD(args, STRING_OBJ(cstr_as_string(xstrdup("rgb"))));
-      ADD(args, BOOLEAN_OBJ(value.data.boolean));
+      MAXSIZE_TEMP_ARRAY(args, 2);
+      ADD_C(args, STRING_OBJ(cstr_as_string("rgb")));
+      ADD_C(args, BOOLEAN_OBJ(value.data.boolean));
       rpc_send_event(ui_client_channel_id, "nvim_ui_set_option", args);
     }
   } else if (strequal(name.data, "ttimeout")) {

@@ -136,6 +136,7 @@ Object rpc_send_call(uint64_t id, const char *method_name, Array args, ArenaMem 
   uint32_t request_id = rpc->next_request_id++;
   // Send the msgpack-rpc request
   send_request(channel, request_id, method_name, args);
+  api_free_array(args);
 
   // Push the frame
   ChannelCallFrame frame = { request_id, false, false, NIL, NULL };
@@ -491,7 +492,6 @@ static void broadcast_event(const char *name, Array args)
   });
 
   if (!kv_size(subscribed)) {
-    api_free_array(args);
     goto end;
   }
 
@@ -593,7 +593,6 @@ static WBuffer *serialize_request(uint64_t channel_id, uint32_t request_id, cons
                                    refcount,
                                    xfree);
   msgpack_sbuffer_clear(sbuffer);
-  api_free_array(args);
   return rv;
 }
 

@@ -88,6 +88,7 @@ bool buf_updates_register(buf_T *buf, uint64_t channel_id, BufUpdateCallbacks cb
     args.items[5] = BOOLEAN_OBJ(false);
 
     rpc_send_event(channel_id, "nvim_buf_lines_event", args);
+    api_free_array(args);  // TODO(bfredl): no
   } else {
     buf_updates_changedtick_single(buf, channel_id);
   }
@@ -103,10 +104,8 @@ bool buf_updates_active(buf_T *buf)
 
 void buf_updates_send_end(buf_T *buf, uint64_t channelid)
 {
-  Array args = ARRAY_DICT_INIT;
-  args.size = 1;
-  args.items = xcalloc(args.size, sizeof(Object));
-  args.items[0] = BUFFER_OBJ(buf->handle);
+  MAXSIZE_TEMP_ARRAY(args, 1);
+  ADD_C(args, BUFFER_OBJ(buf->handle));
   rpc_send_event(channelid, "nvim_buf_detach_event", args);
 }
 
@@ -262,6 +261,7 @@ void buf_updates_send_changes(buf_T *buf, linenr_T firstline, int64_t num_added,
       // the end.
       badchannelid = channelid;
     }
+    api_free_array(args);  // TODO(bfredl): no
   }
 
   // We can only ever remove one dead channel at a time. This is OK because the
@@ -408,15 +408,13 @@ void buf_updates_changedtick(buf_T *buf)
 
 void buf_updates_changedtick_single(buf_T *buf, uint64_t channel_id)
 {
-  Array args = ARRAY_DICT_INIT;
-  args.size = 2;
-  args.items = xcalloc(args.size, sizeof(Object));
+  MAXSIZE_TEMP_ARRAY(args, 2);
 
   // the first argument is always the buffer handle
-  args.items[0] = BUFFER_OBJ(buf->handle);
+  ADD_C(args, BUFFER_OBJ(buf->handle));
 
   // next argument is b:changedtick
-  args.items[1] = INTEGER_OBJ(buf_get_changedtick(buf));
+  ADD_C(args, INTEGER_OBJ(buf_get_changedtick(buf)));
 
   // don't try and clean up dead channels here
   rpc_send_event(channel_id, "nvim_buf_changedtick_event", args);

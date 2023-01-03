@@ -56,33 +56,30 @@ void ui_client_run(bool remote_ui)
 
   loop_poll_events(&main_loop, 1);
 
-  Array args = ARRAY_DICT_INIT;
-  Dictionary opts = ARRAY_DICT_INIT;
+  MAXSIZE_TEMP_ARRAY(args, 3);
+  ADD_C(args, INTEGER_OBJ(Columns));
+  ADD_C(args, INTEGER_OBJ(Rows));
 
-  PUT(opts, "rgb", BOOLEAN_OBJ(true));
-  PUT(opts, "ext_linegrid", BOOLEAN_OBJ(true));
-  PUT(opts, "ext_termcolors", BOOLEAN_OBJ(true));
-
+  MAXSIZE_TEMP_DICT(opts, 9);
+  PUT_C(opts, "rgb", BOOLEAN_OBJ(true));
+  PUT_C(opts, "ext_linegrid", BOOLEAN_OBJ(true));
+  PUT_C(opts, "ext_termcolors", BOOLEAN_OBJ(true));
   if (ui_client_termname) {
-    PUT(opts, "term_name", STRING_OBJ(cstr_as_string(ui_client_termname)));
+    PUT_C(opts, "term_name", STRING_OBJ(cstr_as_string(ui_client_termname)));
   }
   if (ui_client_bg_respose != kNone) {
     bool is_dark = (ui_client_bg_respose == kTrue);
-    PUT(opts, "term_background", STRING_OBJ(cstr_as_string(is_dark ? "dark" : "light")));
+    PUT_C(opts, "term_background", STRING_OBJ(cstr_as_string(is_dark ? "dark" : "light")));
   }
-  PUT(opts, "term_colors", INTEGER_OBJ(t_colors));
+  PUT_C(opts, "term_colors", INTEGER_OBJ(t_colors));
   if (!remote_ui) {
-    PUT(opts, "stdin_tty", BOOLEAN_OBJ(stdin_isatty));
-    PUT(opts, "stdout_tty", BOOLEAN_OBJ(stdout_isatty));
+    PUT_C(opts, "stdin_tty", BOOLEAN_OBJ(stdin_isatty));
+    PUT_C(opts, "stdout_tty", BOOLEAN_OBJ(stdout_isatty));
     if (ui_client_forward_stdin) {
-      PUT(opts, "stdin_fd", INTEGER_OBJ(UI_CLIENT_STDIN_FD));
+      PUT_C(opts, "stdin_fd", INTEGER_OBJ(UI_CLIENT_STDIN_FD));
     }
   }
-
-  ADD(args, INTEGER_OBJ(Columns));
-  ADD(args, INTEGER_OBJ(Rows));
-  ADD(args, DICTIONARY_OBJ(opts));
-
+  ADD_C(args, DICTIONARY_OBJ(opts));
   rpc_send_event(ui_client_channel_id, "nvim_ui_attach", args);
   ui_client_attached = true;
 
