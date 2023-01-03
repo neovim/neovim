@@ -166,8 +166,8 @@ describe('memory usage', function()
     local last = monitor_memory_usage(pid)
     -- The usage may be a bit less than the last value, use 80%.
     -- Allow for 20% tolerance at the upper limit. That's very permissive, but
-    -- otherwise the test fails sometimes.  On Sourcehut CI with FreeBSD we need to
-    -- be even much more permissive.
+    -- otherwise the test fails sometimes.  On FreeBSD we need to be even much
+    -- more permissive.
     local upper_multiplier = is_os('freebsd') and 19 or 12
     local lower = before.last * 8 / 10
     local upper = load_adjust((after.max + (after.last - before.last)) * upper_multiplier / 10)

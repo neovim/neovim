@@ -61,7 +61,7 @@ for i = 6, #arg do
       functions[#functions + 1] = tmp[j]
       function_names[fn.name] = true
       if #fn.parameters >= 2 and fn.parameters[2][1] == 'Array' and fn.parameters[2][2] == 'uidata' then
-        -- function recieves the "args" as a parameter
+        -- function receives the "args" as a parameter
         fn.receives_array_args = true
         -- remove the args parameter
         table.remove(fn.parameters, 2)
@@ -360,7 +360,7 @@ for i = 1, #functions do
       if #args > 0 or fn.can_fail then
         output:write('channel_id, ')
         if fn.receives_array_args then
-          -- if the function recieves the array args, pass it the second argument
+          -- if the function receives the array args, pass it the second argument
           output:write('args, ')
         end
         output:write(call_args)

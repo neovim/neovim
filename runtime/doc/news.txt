@@ -60,7 +60,7 @@ The following new APIs or features were added.
 • Added a |vim.lsp.codelens.clear()| function to clear codelenses.
 
 • |vim.inspect_pos()|, |vim.show_pos()| and |:Inspect| allow a user to get or show items
-  at a given buffer postion. Currently this includes treesitter captures,
+  at a given buffer position. Currently this includes treesitter captures,
   semantic tokens, syntax groups and extmarks.
 
 • Added support for semantic token highlighting to the LSP client. This
@@ -124,7 +124,7 @@ The following new APIs or features were added.
 • |--remote-ui| option was added to connect to a remote instance and display
   in it in a |TUI| in the local terminal. This can be used run a headless nvim
   instance in the background and display its UI on demand, which previously
-  only was possible usiing a external UI implementation.
+  only was possible using an external UI implementation.
 
 ==============================================================================
 CHANGED FEATURES                                                 *news-changes*
@@ -140,7 +140,7 @@ The following changes to existing APIs or features add new behavior.
 
   Previously, the TUI could be disabled as a build time feature (+tui/-tui),
   resulting in a nvim binary which only could be run headless or embedded
-  in an external process. As of this version, TUI is always avalibale.
+  in an external process. As of this version, TUI is always available.
 
 ==============================================================================
 REMOVED FEATURES                                                 *news-removed*
