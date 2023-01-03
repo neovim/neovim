@@ -8,7 +8,7 @@
 -- luacheck: ignore 311
 
 local NVIM9 = require('_vim9script')
-local __VIM9_MODULE = {}
+local M = {}
 local prepended = nil
 local grepCache = nil
 local Complete = nil
@@ -342,7 +342,7 @@ Complete = function(findstart, abase)
     return Tagline2item(v, brackets)
   end)
 end
-__VIM9_MODULE['Complete'] = Complete
+M['Complete'] = Complete
 
 GetAddition = function(line, match, memarg, bracket)
   bracket = NVIM9.bool(bracket)
@@ -862,4 +862,4 @@ end
 -- #}}}1
 
 -- # vim: noet sw=2 sts=2
-return __VIM9_MODULE
+return M
