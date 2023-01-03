@@ -477,10 +477,6 @@ local function set_list(loclist, opts)
   -- numbers beyond the end of the buffer
   local diagnostics = get_diagnostics(bufnr, opts, false)
   local items = M.toqflist(diagnostics)
-  if next(items) == nil then
-    vim.notify('No diagnostics available')
-    return
-  end
   if loclist then
     vim.fn.setloclist(winnr, {}, ' ', { title = title, items = items })
   else
