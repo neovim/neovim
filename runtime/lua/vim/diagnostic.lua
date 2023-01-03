@@ -429,32 +429,31 @@ local function get_diagnostics(bufnr, opts, clamp)
     end
   end
 
+  ---@private
+  local function add_all_diags(buf, diags)
+    for _, diagnostic in pairs(diags) do
+      add(buf, diagnostic)
+    end
+  end
+
   if namespace == nil and bufnr == nil then
     for b, t in pairs(diagnostic_cache) do
       for _, v in pairs(t) do
-        for _, diagnostic in pairs(v) do
-          add(b, diagnostic)
-        end
+        add_all_diags(b, v)
       end
     end
   elseif namespace == nil then
     bufnr = get_bufnr(bufnr)
     for iter_namespace in pairs(diagnostic_cache[bufnr]) do
-      for _, diagnostic in pairs(diagnostic_cache[bufnr][iter_namespace]) do
-        add(bufnr, diagnostic)
-      end
+      add_all_diags(bufnr, diagnostic_cache[bufnr][iter_namespace])
     end
   elseif bufnr == nil then
     for b, t in pairs(diagnostic_cache) do
-      for _, diagnostic in pairs(t[namespace] or {}) do
-        add(b, diagnostic)
-      end
+      add_all_diags(b, t[namespace] or {})
     end
   else
     bufnr = get_bufnr(bufnr)
-    for _, diagnostic in pairs(diagnostic_cache[bufnr][namespace] or {}) do
-      add(bufnr, diagnostic)
-    end
+    add_all_diags(bufnr, diagnostic_cache[bufnr][namespace] or {})
   end
 
   if opts.severity then
