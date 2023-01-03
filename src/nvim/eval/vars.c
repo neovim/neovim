@@ -1654,7 +1654,7 @@ static void setwinvar(typval_T *argvars, typval_T *rettv, int off)
   const char *varname = tv_get_string_chk(&argvars[off + 1]);
   typval_T *varp = &argvars[off + 2];
 
-  if (win == NULL || varname == NULL || varp == NULL) {
+  if (win == NULL || varname == NULL) {
     return;
   }
 
