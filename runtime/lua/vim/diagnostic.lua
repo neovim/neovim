@@ -429,7 +429,7 @@ local function get_diagnostics(bufnr, opts, clamp)
     end
   end
 
-  local add_iterator = function(buf_nr, diag_tbl)
+  local function add_all_diags(buf_nr, diags)
     for _, diagnostic in pairs(diag_tbl) do
       add(buf_nr, diagnostic)
     end
