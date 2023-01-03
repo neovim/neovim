@@ -230,42 +230,31 @@ Complete = function(findstart, abase)
       tags = NVIM9.fn.taglist('^' .. NVIM9.index(items, 0) .. '$')
     end
 
-    NVIM9.fn_mut(
-      'filter',
-      {
-        NVIM9.fn_mut(
-          'filter',
-          {
-            tags,
-            function(_, v)
-              return NVIM9.ternary(NVIM9.fn.has_key(v, 'kind'), function()
-                return v.kind ~= 'm'
-              end, true)
-            end,
-          },
-          { replace = 0 }
-        ),
+    NVIM9.fn_mut('filter', {
+      NVIM9.fn_mut('filter', {
+        tags,
         function(_, v)
-          return NVIM9.ops.Or(
-            NVIM9.ops.Or(
-              NVIM9.prefix['Bang'](NVIM9.fn.has_key(v, 'static')),
-              NVIM9.prefix['Bang'](NVIM9.index(v, 'static'))
-            ),
-            NVIM9.fn.bufnr('%') == NVIM9.fn.bufnr(NVIM9.index(v, 'filename'))
-          )
+          return NVIM9.ternary(NVIM9.fn.has_key(v, 'kind'), function()
+            return v.kind ~= 'm'
+          end, true)
         end,
-      },
-      { replace = 0 }
-    )
+      }, { replace = 0 }),
+      function(_, v)
+        return NVIM9.ops.Or(
+          NVIM9.ops.Or(
+            NVIM9.prefix['Bang'](NVIM9.fn.has_key(v, 'static')),
+            NVIM9.prefix['Bang'](NVIM9.index(v, 'static'))
+          ),
+          NVIM9.fn.bufnr('%') == NVIM9.fn.bufnr(NVIM9.index(v, 'filename'))
+        )
+      end,
+    }, { replace = 0 })
 
     res = NVIM9.fn.extend(
       res,
-      NVIM9.fn.map(
-        tags,
-        function(_, v)
-          return Tag2item(v)
-        end
-      )
+      NVIM9.fn.map(tags, function(_, v)
+        return Tag2item(v)
+      end)
     )
   end
 
@@ -345,12 +334,9 @@ Complete = function(findstart, abase)
     last = last - 1
   end
 
-  return NVIM9.fn.map(
-    res,
-    function(_, v)
-      return Tagline2item(v, brackets)
-    end
-  )
+  return NVIM9.fn.map(res, function(_, v)
+    return Tagline2item(v, brackets)
+  end)
 end
 __VIM9_MODULE['Complete'] = Complete
 
@@ -697,12 +683,9 @@ StructMembers = function(atypename, items, all)
   -- # When "all" is true find all, otherwise just return 1 if there is any member.
 
   -- # Todo: What about local structures?
-  local fnames = NVIM9.fn.join(NVIM9.fn.map(
-    NVIM9.fn.tagfiles(),
-    function(_, v)
-      return NVIM9.fn.escape(v, ' \\#%')
-    end
-  ))
+  local fnames = NVIM9.fn.join(NVIM9.fn.map(NVIM9.fn.tagfiles(), function(_, v)
+    return NVIM9.fn.escape(v, ' \\#%')
+  end))
   if fnames == '' then
     return {}
   end
