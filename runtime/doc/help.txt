@@ -169,11 +169,6 @@ DEVELOPING NVIM
 |dev-style|		Development style guidelines
 |debug.txt|		Debugging Vim itself
 
-------------------------------------------------------------------------------
-OTHER
-
-|print.txt|		For your briefcase and fax machine
-
 						*standard-plugin-list*
 Standard plugins ~
 |matchit.txt|		Extended |%| matching

@@ -549,6 +549,7 @@ Aliases:
 
 Commands:
   :fixdel
+  :hardcopy
   :helpfind
   :mode (no longer accepts an argument)
   :open
@@ -655,6 +656,12 @@ Options:
     Use |g8| or |ga|.  See |mbyte-combining|.
   *'maxmem'* Nvim delegates memory-management to the OS.
   *'maxmemtot'* Nvim delegates memory-management to the OS.
+  *'printdevice'*
+  *'printencoding'*
+  *'printexpr'*
+  *'printfont'*
+  *'printheader'*
+  *'printmbcharset'*
   *'prompt'* *'noprompt'*
   *'remap'* *'noremap'*
   *'restorescreen'* *'rs'* *'norestorescreen'* *'nors'*
@@ -731,6 +738,11 @@ TUI:
 Cscope:
                                                                       *cscope*
   Cscope support has been removed in favour of LSP based solutions.
+
+Hardcopy:
+                                                                     *hardcopy*
+  `:hardcopy` was removed. Instead, use `:TOhtml` and print the resulting HTML
+  using a web browser or some other HTML viewer.
 
 ==============================================================================
  vim:tw=78:ts=8:sw=2:et:ft=help:norl:

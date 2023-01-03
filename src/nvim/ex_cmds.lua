@@ -1105,12 +1105,6 @@ module.cmds = {
     func='ex_helptags',
   },
   {
-    command='hardcopy',
-    flags=bit.bor(RANGE, COUNT, EXTRA, TRLBAR, DFLALL, BANG),
-    addr_type='ADDR_LINES',
-    func='ex_hardcopy',
-  },
-  {
     command='highlight',
     flags=bit.bor(BANG, EXTRA, TRLBAR, SBOXOK, CMDWIN, LOCK_OK),
     addr_type='ADDR_NONE',

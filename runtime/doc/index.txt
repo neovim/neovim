@@ -1310,7 +1310,6 @@ tag		command		action ~
 |:grepadd|	:grepa[dd]	like :grep, but append to current list
 |:gui|		:gu[i]		start the GUI
 |:gvim|		:gv[im]		start the GUI
-|:hardcopy|	:ha[rdcopy]	send text to the printer
 |:help|		:h[elp]		open a help window
 |:helpclose|	:helpc[lose]	close one help window
 |:helpgrep|	:helpg[rep]	like ":grep" but searches help files

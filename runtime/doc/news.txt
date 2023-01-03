@@ -34,6 +34,17 @@ The following changes may require adaptations in user config or plugins.
 
   See https://github.com/neovim/neovim/pull/20545 for more information.
 
+• `:hardcopy` is now removed (see |hardcopy| and |nvim-features-removed|):
+  - Commands removed:
+    - `:hardcopy`
+  - Options removed:
+    - `printdevice`
+    - `printencoding`
+    - `printexpr`
+    - `printfont`
+    - `printheader`
+    - `printmbcharset`
+
 ==============================================================================
 NEW FEATURES                                                    *news-features*
 

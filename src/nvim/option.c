@@ -52,7 +52,6 @@
 #include "nvim/gettext.h"
 #include "nvim/globals.h"
 #include "nvim/grid_defs.h"
-#include "nvim/hardcopy.h"
 #include "nvim/highlight.h"
 #include "nvim/highlight_group.h"
 #include "nvim/indent.h"
@@ -286,28 +285,6 @@ void set_init_1(bool clean_arg)
       xfree(cdpath);
     }
   }
-
-#if defined(MSWIN) || defined(MAC)
-  // Set print encoding on platforms that don't default to latin1
-  set_string_default("printencoding", "hp-roman8", false);
-#endif
-
-  // 'printexpr' must be allocated to be able to evaluate it.
-  set_string_default("printexpr",
-#ifdef UNIX
-                     "system(['lpr'] "
-                     "+ (empty(&printdevice)?[]:['-P', &printdevice]) "
-                     "+ [v:fname_in])"
-                     ". delete(v:fname_in)"
-                     "+ v:shell_error",
-#elif defined(MSWIN)
-                     "system(['copy', v:fname_in, "
-                     "empty(&printdevice)?'LPT1':&printdevice])"
-                     ". delete(v:fname_in)",
-#else
-                     "",
-#endif
-                     false);
 
   char *backupdir = stdpaths_user_state_subpath("backup", 2, true);
   const size_t backupdir_len = strlen(backupdir);
@@ -611,7 +588,6 @@ void set_init_2(bool headless)
     p_window = Rows - 1;
   }
   set_number_default("window", Rows - 1);
-  (void)parse_printoptions();      // parse 'printoptions' default value
 }
 
 /// Initialize the options, part three: After reading the .vimrc

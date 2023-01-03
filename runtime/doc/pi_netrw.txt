@@ -2419,15 +2419,6 @@ from the current window (where one does the mf) to the target.
 
 Associated setting variable: |g:netrw_localmovecmd| |g:netrw_ssh_cmd|
 
-MARKED FILES: PRINTING						*netrw-mp* {{{2
-	    (See |netrw-mf| and |netrw-mr| for how to mark files)
-		      (uses the local marked file list)
-
-When "mp" is used, netrw will apply the |:hardcopy| command to marked files.
-What netrw does is open each file in a one-line window, execute hardcopy, then
-close the one-line window.
-
-
 MARKED FILES: SOURCING						*netrw-ms* {{{2
 	    (See |netrw-mf| and |netrw-mr| for how to mark files)
 		      (uses the local marked file list)

@@ -1533,7 +1533,7 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, char *opt_n
       }
       break;
     case STL_PAGENUM:
-      num = printer_page_num;
+      num = 0;
       break;
 
     case STL_BUFNO:

@@ -139,12 +139,7 @@ if has("diff")
   an 10.420 &File.Split\ Patched\ &By\.\.\.	:browse vert diffpatch<CR>
 endif
 
-if has("printer")
-  an 10.500 &File.-SEP3-			<Nop>
-  an 10.510 &File.&Print			:hardcopy<CR>
-  vunmenu   &File.&Print
-  vnoremenu &File.&Print			:hardcopy<CR>
-elseif has("unix")
+if has("unix")
   an 10.500 &File.-SEP3-			<Nop>
   an 10.510 &File.&Print			:w !lpr<CR>
   vunmenu   &File.&Print
@@ -1069,11 +1064,7 @@ if has("toolbar")
   an <silent> 1.20 ToolBar.Save		:if expand("%") == ""<Bar>browse confirm w<Bar>else<Bar>confirm w<Bar>endif<CR>
   an 1.30 ToolBar.SaveAll		:browse confirm wa<CR>
 
-  if has("printer")
-    an 1.40   ToolBar.Print		:hardcopy<CR>
-    vunmenu   ToolBar.Print
-    vnoremenu ToolBar.Print		:hardcopy<CR>
-  elseif has("unix")
+  if has("unix")
     an 1.40   ToolBar.Print		:w !lpr<CR>
     vunmenu   ToolBar.Print
     vnoremenu ToolBar.Print		:w !lpr<CR>

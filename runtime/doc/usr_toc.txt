@@ -111,8 +111,7 @@ Read this from start to end to learn the essential commands.
 		|06.2|	No or wrong colors?
 		|06.3|	Different colors
 		|06.4|	With colors or without colors
-		|06.5|	Printing with colors
-		|06.6|	Further reading
+		|06.5|	Further reading
 
 |usr_07.txt|  Editing more than one file
 		|07.1|	Edit another file

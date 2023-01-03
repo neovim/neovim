@@ -23,7 +23,6 @@
 #include "nvim/fold.h"
 #include "nvim/gettext.h"
 #include "nvim/globals.h"
-#include "nvim/hardcopy.h"
 #include "nvim/highlight_group.h"
 #include "nvim/indent.h"
 #include "nvim/indent_c.h"
@@ -860,11 +859,6 @@ char *did_set_string_option(int opt_idx, char **varp, char *oldval, char *errbuf
         }
       }
     }
-  } else if (varp == &p_penc) {
-    // Canonize printencoding if VIM standard one
-    p = enc_canonize(p_penc);
-    xfree(p_penc);
-    p_penc = p;
   } else if (varp == &curbuf->b_p_keymap) {
     if (!valid_filetype(*varp)) {
       errmsg = e_invarg;
@@ -1071,10 +1065,6 @@ char *did_set_string_option(int opt_idx, char **varp, char *oldval, char *errbuf
     }
   } else if (varp == &p_guicursor) {  // 'guicursor'
     errmsg = parse_shape_opt(SHAPE_CURSOR);
-  } else if (varp == &p_popt) {
-    errmsg = parse_printoptions();
-  } else if (varp == &p_pmfn) {
-    errmsg = parse_printmbfont();
   } else if (varp == &p_langmap) {  // 'langmap'
     langmap_set();
   } else if (varp == &p_breakat) {  // 'breakat'
@@ -1492,8 +1482,7 @@ char *did_set_string_option(int opt_idx, char **varp, char *oldval, char *errbuf
              || gvarp == &p_fex
              || gvarp == &p_inex
              || gvarp == &p_inde
-             || varp == &p_pex
-             || varp == &p_pexpr) {  // '*expr' options
+             || varp == &p_pex) {  // '*expr' options
     char **p_opt = NULL;
 
     // If the option value starts with <SID> or s:, then replace that with
@@ -1519,9 +1508,6 @@ char *did_set_string_option(int opt_idx, char **varp, char *oldval, char *errbuf
     }
     if (varp == &p_pex) {  // 'patchexpr'
       p_opt = &p_pex;
-    }
-    if (varp == &p_pexpr) {  // 'printexpr'
-      p_opt = &p_pexpr;
     }
 
     if (p_opt != NULL) {

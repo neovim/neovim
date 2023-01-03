@@ -1718,17 +1718,13 @@ v:charconvert_to
 		Only valid while evaluating the 'charconvert' option.
 
 					*v:cmdarg* *cmdarg-variable*
-v:cmdarg	This variable is used for two purposes:
-		1. The extra arguments ("++p", "++enc=", "++ff=") given to
-		   a file read/write command.  This is set before an
-		   autocommand event for a file read/write command is
-		   triggered.  There is a leading space to make it possible to
-		   append this variable directly after the read/write command.
-		   Note: "+cmd" isn't included here, because it will be
-		   executed anyway.
-		2. When printing a PostScript file with ":hardcopy" this is
-		   the argument for the ":hardcopy" command.  This can be used
-		   in 'printexpr'.
+v:cmdarg
+		The extra arguments ("++p", "++enc=", "++ff=") given to a file
+		read/write command.  This is set before an autocommand event
+		for a file read/write command is triggered.  There is a
+		leading space to make it possible to append this variable
+		directly after the read/write command. Note: "+cmd" isn't
+		included here, because it will be executed anyway.
 
 						*v:collate* *collate-variable*
 v:collate	The current locale setting for collation order of the runtime
@@ -1926,7 +1922,6 @@ v:fname_in	The name of the input file.  Valid while evaluating:
 			'charconvert'	file to be converted
 			'diffexpr'	original file
 			'patchexpr'	original file
-			'printexpr'	file to be printed
 		And set to the swap file name for |SwapExists|.
 
 					*v:fname_out* *fname_out-variable*

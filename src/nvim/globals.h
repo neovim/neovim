@@ -841,9 +841,6 @@ EXTERN int stl_syntax INIT(= 0);
 // don't use 'hlsearch' temporarily
 EXTERN bool no_hlsearch INIT(= false);
 
-// Page number used for %N in 'pageheader' and 'guitablabel'.
-EXTERN linenr_T printer_page_num;
-
 EXTERN bool typebuf_was_filled INIT(= false);     // received text from client
                                                   // or from feedkeys()
 

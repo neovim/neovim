@@ -88,7 +88,6 @@ local exclude_invalid_urls = {
   ["http://papp.plan9.de"] = "syntax.txt",
   ["http://wiki.services.openoffice.org/wiki/Dictionaries"] = "spell.txt",
   ["http://www.adapower.com"] = "ft_ada.txt",
-  ["http://www.ghostscript.com/"] = "print.txt",
   ["http://www.jclark.com/"] = "quickfix.txt",
 }
 

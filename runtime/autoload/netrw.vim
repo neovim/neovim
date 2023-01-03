@@ -6446,7 +6446,6 @@ fun! s:NetrwMaps(islocal)
 "  if !hasmapto('<Plug>NetrwMarkFileGrep')      |nmap <buffer> <silent> <nowait> mg	<Plug>NetrwMarkFileGrep|endif
 "  if !hasmapto('<Plug>NetrwMarkHideSfx')       |nmap <buffer> <silent> <nowait> mh	<Plug>NetrwMarkHideSfx|endif
 "  if !hasmapto('<Plug>NetrwMarkFileMove')      |nmap <buffer> <silent> <nowait> mm	<Plug>NetrwMarkFileMove|endif
-"  if !hasmapto('<Plug>NetrwMarkFilePrint')     |nmap <buffer> <silent> <nowait> mp	<Plug>NetrwMarkFilePrint|endif
 "  if !hasmapto('<Plug>NetrwMarkFileRegexp')    |nmap <buffer> <silent> <nowait> mr	<Plug>NetrwMarkFileRegexp|endif
 "  if !hasmapto('<Plug>NetrwMarkFileSource')    |nmap <buffer> <silent> <nowait> ms	<Plug>NetrwMarkFileSource|endif
 "  if !hasmapto('<Plug>NetrwMarkFileTag')       |nmap <buffer> <silent> <nowait> mT	<Plug>NetrwMarkFileTag|endif
@@ -6509,7 +6508,6 @@ fun! s:NetrwMaps(islocal)
    nnoremap <buffer> <silent> <nowait> mg	:<c-u>call <SID>NetrwMarkFileGrep(1)<cr>
    nnoremap <buffer> <silent> <nowait> mh	:<c-u>call <SID>NetrwMarkHideSfx(1)<cr>
    nnoremap <buffer> <silent> <nowait> mm	:<c-u>call <SID>NetrwMarkFileMove(1)<cr>
-   nnoremap <buffer> <silent> <nowait> mp	:<c-u>call <SID>NetrwMarkFilePrint(1)<cr>
    nnoremap <buffer> <silent> <nowait> mr	:<c-u>call <SID>NetrwMarkFileRegexp(1)<cr>
    nnoremap <buffer> <silent> <nowait> ms	:<c-u>call <SID>NetrwMarkFileSource(1)<cr>
    nnoremap <buffer> <silent> <nowait> mT	:<c-u>call <SID>NetrwMarkFileTag(1)<cr>
@@ -6622,7 +6620,6 @@ fun! s:NetrwMaps(islocal)
    nnoremap <buffer> <silent> <nowait> mg	:<c-u>call <SID>NetrwMarkFileGrep(0)<cr>
    nnoremap <buffer> <silent> <nowait> mh	:<c-u>call <SID>NetrwMarkHideSfx(0)<cr>
    nnoremap <buffer> <silent> <nowait> mm	:<c-u>call <SID>NetrwMarkFileMove(0)<cr>
-   nnoremap <buffer> <silent> <nowait> mp	:<c-u>call <SID>NetrwMarkFilePrint(0)<cr>
    nnoremap <buffer> <silent> <nowait> mr	:<c-u>call <SID>NetrwMarkFileRegexp(0)<cr>
    nnoremap <buffer> <silent> <nowait> ms	:<c-u>call <SID>NetrwMarkFileSource(0)<cr>
    nnoremap <buffer> <silent> <nowait> mT	:<c-u>call <SID>NetrwMarkFileTag(0)<cr>
@@ -7837,46 +7834,6 @@ fun! s:NetrwMarkFileMove(islocal)
   endif
 
 "  call Dret("s:NetrwMarkFileMove")
-endfun
-
-" ---------------------------------------------------------------------
-" s:NetrwMarkFilePrint: (invoked by mp) This function prints marked files {{{2
-"                       using the hardcopy command.  Local marked-file list only.
-fun! s:NetrwMarkFilePrint(islocal)
-"  call Dfunc("s:NetrwMarkFilePrint(islocal=".a:islocal.")")
-  let curbufnr= bufnr("%")
-
-  " sanity check
-  if !exists("s:netrwmarkfilelist_{curbufnr}") || empty(s:netrwmarkfilelist_{curbufnr})
-   NetrwKeepj call netrw#ErrorMsg(2,"there are no marked files in this window (:help netrw-mf)",66)
-"   call Dret("s:NetrwMarkFilePrint")
-   return
-  endif
-"  call Decho("sanity chk passed: s:netrwmarkfilelist_".curbufnr."<".string(s:netrwmarkfilelist_{curbufnr}),'~'.expand("<slnum>"))
-  let curdir= s:NetrwGetCurdir(a:islocal)
-
-  if exists("s:netrwmarkfilelist_{curbufnr}")
-   let netrwmarkfilelist = s:netrwmarkfilelist_{curbufnr}
-   call s:NetrwUnmarkList(curbufnr,curdir)
-   for fname in netrwmarkfilelist
-    if a:islocal
-     if g:netrw_keepdir
-      let fname= s:ComposePath(curdir,fname)
-     endif
-    else
-     let fname= curdir.fname
-    endif
-    1split
-    " the autocmds will handle both local and remote files
-"    call Decho("exe sil e ".escape(fname,' '),'~'.expand("<slnum>"))
-    exe "sil NetrwKeepj e ".fnameescape(fname)
-"    call Decho("hardcopy",'~'.expand("<slnum>"))
-    hardcopy
-    q
-   endfor
-   2match none
-  endif
-"  call Dret("s:NetrwMarkFilePrint")
 endfun
 
 " ---------------------------------------------------------------------
