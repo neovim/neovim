@@ -74,7 +74,7 @@ end
 
 ---@private
 local function join_paths(...)
-  return table.concat({ ... }, '/')
+  return (table.concat({ ... }, '/'):gsub('//+', '/'))
 end
 
 --- Return an iterator over the files and directories located in {path}
