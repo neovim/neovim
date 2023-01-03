@@ -6433,7 +6433,7 @@ static yankreg_T *adjust_clipboard_name(int *name, bool quiet, bool writing)
   }
 
   if (!eval_has_provider("clipboard")) {
-    if (batch_change_count == 1 && !quiet
+    if (batch_change_count <= 1 && !quiet
         && (!clipboard_didwarn || (explicit_cb_reg && !redirecting()))) {
       clipboard_didwarn = true;
       // Do NOT error (emsg()) here--if it interrupts :redir we get into

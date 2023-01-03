@@ -106,8 +106,53 @@ describe('clipboard', function()
     basic_register_test()
   end)
 
-  it('`:redir @+>` with invalid g:clipboard shows exactly one error #7184',
-  function()
+  it('using "+ in Normal mode with invalid g:clipboard always shows error', function()
+    insert('a')
+    command("let g:clipboard = 'bogus'")
+    feed('"+yl')
+    screen:expect([[
+      ^a                                                                       |
+      {0:~                                                                       }|
+      {0:~                                                                       }|
+      clipboard: No provider. Try ":checkhealth" or ":h clipboard".           |
+    ]])
+    feed('"+p')
+    screen:expect([[
+      a^a                                                                      |
+      {0:~                                                                       }|
+      {0:~                                                                       }|
+      clipboard: No provider. Try ":checkhealth" or ":h clipboard".           |
+    ]])
+  end)
+
+  it('using clipboard=unnamedplus with invalid g:clipboard shows error once', function()
+    insert('a')
+    command("let g:clipboard = 'bogus'")
+    command('set clipboard=unnamedplus')
+    feed('yl')
+    screen:expect([[
+      ^a                                                                       |
+      {0:~                                                                       }|
+      {0:~                                                                       }|
+      clipboard: No provider. Try ":checkhealth" or ":h clipboard".           |
+    ]])
+    feed(':<CR>')
+    screen:expect([[
+      ^a                                                                       |
+      {0:~                                                                       }|
+      {0:~                                                                       }|
+      :                                                                       |
+    ]])
+    feed('p')
+    screen:expect([[
+      a^a                                                                      |
+      {0:~                                                                       }|
+      {0:~                                                                       }|
+      :                                                                       |
+    ]])
+  end)
+
+  it('`:redir @+>` with invalid g:clipboard shows exactly one error #7184', function()
     command("let g:clipboard = 'bogus'")
     feed_command('redir @+> | :silent echo system("cat CONTRIBUTING.md") | redir END')
     screen:expect([[
@@ -118,8 +163,7 @@ describe('clipboard', function()
     ]])
   end)
 
-  it('`:redir @+>|bogus_cmd|redir END` + invalid g:clipboard must not recurse #7184',
-  function()
+  it('`:redir @+>|bogus_cmd|redir END` + invalid g:clipboard must not recurse #7184', function()
     command("let g:clipboard = 'bogus'")
     feed_command('redir @+> | bogus_cmd | redir END')
     screen:expect{grid=[[
