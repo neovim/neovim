@@ -220,11 +220,12 @@ static void tinput_wait_enqueue(void **argv)
     const size_t len = rbuffer_size(input->key_buffer);
     String keys = { .data = xmallocz(len), .size = len };
     rbuffer_read(input->key_buffer, keys.data, len);
-    Array args = ARRAY_DICT_INIT;
-    ADD(args, STRING_OBJ(keys));  // 'data'
-    ADD(args, BOOLEAN_OBJ(true));  // 'crlf'
-    ADD(args, INTEGER_OBJ(input->paste));  // 'phase'
+    MAXSIZE_TEMP_ARRAY(args, 3);
+    ADD_C(args, STRING_OBJ(keys));  // 'data'
+    ADD_C(args, BOOLEAN_OBJ(true));  // 'crlf'
+    ADD_C(args, INTEGER_OBJ(input->paste));  // 'phase'
     rpc_send_event(ui_client_channel_id, "nvim_paste", args);
+    api_free_string(keys);
     if (input->paste == 1) {
       // Paste phase: "continue"
       input->paste = 2;
@@ -233,8 +234,8 @@ static void tinput_wait_enqueue(void **argv)
   } else {  // enqueue input for the main thread or Nvim server
     RBUFFER_UNTIL_EMPTY(input->key_buffer, buf, len) {
       const String keys = { .data = buf, .size = len };
-      Array args = ARRAY_DICT_INIT;
-      ADD(args, STRING_OBJ(copy_string(keys, NULL)));
+      MAXSIZE_TEMP_ARRAY(args, 1);
+      ADD_C(args, STRING_OBJ(keys));
       // NOTE: This is non-blocking and won't check partially processed input,
       // but should be fine as all big sends are handled with nvim_paste, not nvim_input
       rpc_send_event(ui_client_channel_id, "nvim_input", args);
@@ -529,8 +530,8 @@ static bool handle_focus_event(TermInput *input)
     // Advance past the sequence
     rbuffer_consumed(input->read_stream.buffer, 3);
 
-    Array args = ARRAY_DICT_INIT;
-    ADD(args, BOOLEAN_OBJ(focus_gained));
+    MAXSIZE_TEMP_ARRAY(args, 1);
+    ADD_C(args, BOOLEAN_OBJ(focus_gained));
     rpc_send_event(ui_client_channel_id, "nvim_ui_set_focus", args);
     return true;
   }
@@ -581,10 +582,9 @@ static HandleState handle_bracketed_paste(TermInput *input)
 static void set_bg(char *bgvalue)
 {
   if (ui_client_attached) {
-    Array args = ARRAY_DICT_INIT;
-    ADD(args, STRING_OBJ(cstr_to_string("term_background")));
-    ADD(args, STRING_OBJ(cstr_as_string(xstrdup(bgvalue))));
-
+    MAXSIZE_TEMP_ARRAY(args, 2);
+    ADD_C(args, STRING_OBJ(cstr_as_string("term_background")));
+    ADD_C(args, STRING_OBJ(cstr_as_string(bgvalue)));
     rpc_send_event(ui_client_channel_id, "nvim_ui_set_option", args);
   }
 }

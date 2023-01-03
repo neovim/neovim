@@ -227,9 +227,9 @@ void ui_refresh(void)
     if (ui_client_attached) {
       // TODO(bfredl): ui_refresh() should only be used on the server
       // we are in the client process. forward the resize
-      Array args = ARRAY_DICT_INIT;
-      ADD(args, INTEGER_OBJ((int)width));
-      ADD(args, INTEGER_OBJ((int)height));
+      MAXSIZE_TEMP_ARRAY(args, 2);
+      ADD_C(args, INTEGER_OBJ((int)width));
+      ADD_C(args, INTEGER_OBJ((int)height));
       rpc_send_event(ui_client_channel_id, "nvim_ui_try_resize", args);
     } else {
       /// TODO(bfredl): Messy! The screen does not yet exist, but we need to
