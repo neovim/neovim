@@ -383,7 +383,7 @@ readdirex({directory} [, {expr} [, {dict}]])			*readdirex()*
       botright = 'SE',
     }
 
-    M.popup_menu = function(what, options)
+    M.popup_menu = function(_, options)
       -- print "OPTIONS:"
 
       local buf = vim.api.nvim_create_buf(false, true)
@@ -442,7 +442,7 @@ readdirex({directory} [, {expr} [, {dict}]])			*readdirex()*
     print('ok, just pretend we filtered the menu')
   end
 
-  M.popup_setoptions = function(id, options)
+  M.popup_setoptions = function(id, _)
     print('setting options...', id)
   end
 
