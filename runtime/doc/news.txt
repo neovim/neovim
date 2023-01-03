@@ -50,6 +50,13 @@ NEW FEATURES                                                    *news-features*
 
 The following new APIs or features were added.
 
+• EditorConfig support is now builtin. This is enabled by default and happens
+  automatically. To disable it, users should add >vim
+
+    vim.g.editorconfig_enable = false
+<
+  (or the Vimscript equivalent) to their |config| file.
+
 • Added a |vim.lsp.codelens.clear()| function to clear codelenses.
 
 • |vim.inspect_pos()|, |vim.show_pos()| and |:Inspect| allow a user to get or show items
