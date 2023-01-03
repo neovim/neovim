@@ -25,8 +25,8 @@ local SearchMembers = nil
 -- #		Rewritten in Vim9 script by github user lacygoill
 -- # Last Change:  2022 Jan 31
 
-local prepended = ''
-local grepCache = vim.empty_dict()
+prepended = ''
+grepCache = vim.empty_dict()
 
 -- # This function is used for the 'omnifunc' option.
 
