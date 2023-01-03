@@ -3843,7 +3843,7 @@ void compute_cmdrow(void)
     cmdline_row = wp->w_winrow + wp->w_height
                   + wp->w_hsep_height + wp->w_status_height + global_stl_height();
   }
-  if (cmdline_row == Rows) {
+  if (cmdline_row == Rows && p_ch > 0) {
     cmdline_row--;
   }
   lines_left = cmdline_row;

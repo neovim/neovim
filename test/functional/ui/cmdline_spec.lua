@@ -1364,4 +1364,40 @@ describe('cmdheight=0', function()
     ]])
     assert_alive()
   end)
+
+  it('can only be resized to 0 if set explicitly', function()
+    command('set laststatus=2')
+    command('resize +1')
+    screen:expect([[
+      ^                         |
+      {1:~                        }|
+      {1:~                        }|
+      {2:[No Name]                }|
+                               |
+    ]])
+    command('set cmdheight=0')
+    command('resize -1')
+    command('resize +1')
+    screen:expect([[
+      ^                         |
+      {1:~                        }|
+      {1:~                        }|
+      {1:~                        }|
+      {2:[No Name]                }|
+    ]])
+  end)
+
+  it("clears cmdline area when resized with external messages", function()
+    clear()
+    screen = new_screen({rgb=true, ext_messages=true})
+    command('set laststatus=2 cmdheight=0')
+    command('resize -1')
+    screen:expect([[
+      ^                         |
+      {1:~                        }|
+      {1:~                        }|
+      {3:[No Name]                }|
+                               |
+    ]])
+  end)
 end)
