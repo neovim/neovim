@@ -1654,24 +1654,26 @@ static void setwinvar(typval_T *argvars, typval_T *rettv, int off)
   const char *varname = tv_get_string_chk(&argvars[off + 1]);
   typval_T *varp = &argvars[off + 2];
 
-  if (win != NULL && varname != NULL && varp != NULL) {
-    bool need_switch_win = !(tp == curtab && win == curwin);
-    switchwin_T switchwin;
-    if (!need_switch_win || switch_win(&switchwin, win, tp, true) == OK) {
-      if (*varname == '&') {
-        set_option_from_tv(varname + 1, varp);
-      } else {
-        const size_t varname_len = strlen(varname);
-        char *const winvarname = xmalloc(varname_len + 3);
-        memcpy(winvarname, "w:", 2);
-        memcpy(winvarname + 2, varname, varname_len + 1);
-        set_var(winvarname, varname_len + 2, varp, true);
-        xfree(winvarname);
-      }
+  if (win == NULL || varname == NULL || varp == NULL) {
+    return;
+  }
+
+  bool need_switch_win = !(tp == curtab && win == curwin);
+  switchwin_T switchwin;
+  if (!need_switch_win || switch_win(&switchwin, win, tp, true) == OK) {
+    if (*varname == '&') {
+      set_option_from_tv(varname + 1, varp);
+    } else {
+      const size_t varname_len = strlen(varname);
+      char *const winvarname = xmalloc(varname_len + 3);
+      memcpy(winvarname, "w:", 2);
+      memcpy(winvarname + 2, varname, varname_len + 1);
+      set_var(winvarname, varname_len + 2, varp, true);
+      xfree(winvarname);
     }
-    if (need_switch_win) {
-      restore_win(&switchwin, true);
-    }
+  }
+  if (need_switch_win) {
+    restore_win(&switchwin, true);
   }
 }
 
@@ -1755,21 +1757,23 @@ void f_settabvar(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   const char *const varname = tv_get_string_chk(&argvars[1]);
   typval_T *const varp = &argvars[2];
 
-  if (varname != NULL && tp != NULL) {
-    tabpage_T *const save_curtab = curtab;
-    goto_tabpage_tp(tp, false, false);
+  if (varname == NULL || tp == NULL) {
+    return;
+  }
 
-    const size_t varname_len = strlen(varname);
-    char *const tabvarname = xmalloc(varname_len + 3);
-    memcpy(tabvarname, "t:", 2);
-    memcpy(tabvarname + 2, varname, varname_len + 1);
-    set_var(tabvarname, varname_len + 2, varp, true);
-    xfree(tabvarname);
+  tabpage_T *const save_curtab = curtab;
+  goto_tabpage_tp(tp, false, false);
 
-    // Restore current tabpage.
-    if (valid_tabpage(save_curtab)) {
-      goto_tabpage_tp(save_curtab, false, false);
-    }
+  const size_t varname_len = strlen(varname);
+  char *const tabvarname = xmalloc(varname_len + 3);
+  memcpy(tabvarname, "t:", 2);
+  memcpy(tabvarname + 2, varname, varname_len + 1);
+  set_var(tabvarname, varname_len + 2, varp, true);
+  xfree(tabvarname);
+
+  // Restore current tabpage.
+  if (valid_tabpage(save_curtab)) {
+    goto_tabpage_tp(save_curtab, false, false);
   }
 }
 
@@ -1796,27 +1800,29 @@ void f_setbufvar(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   buf_T *const buf = tv_get_buf(&argvars[0], false);
   typval_T *varp = &argvars[2];
 
-  if (buf != NULL && varname != NULL) {
-    if (*varname == '&') {
-      aco_save_T aco;
+  if (buf == NULL || varname == NULL) {
+    return;
+  }
 
-      // Set curbuf to be our buf, temporarily.
-      aucmd_prepbuf(&aco, buf);
+  if (*varname == '&') {
+    aco_save_T aco;
 
-      set_option_from_tv(varname + 1, varp);
+    // Set curbuf to be our buf, temporarily.
+    aucmd_prepbuf(&aco, buf);
 
-      // reset notion of buffer
-      aucmd_restbuf(&aco);
-    } else {
-      const size_t varname_len = strlen(varname);
-      char *const bufvarname = xmalloc(varname_len + 3);
-      buf_T *const save_curbuf = curbuf;
-      curbuf = buf;
-      memcpy(bufvarname, "b:", 2);
-      memcpy(bufvarname + 2, varname, varname_len + 1);
-      set_var(bufvarname, varname_len + 2, varp, true);
-      xfree(bufvarname);
-      curbuf = save_curbuf;
-    }
+    set_option_from_tv(varname + 1, varp);
+
+    // reset notion of buffer
+    aucmd_restbuf(&aco);
+  } else {
+    const size_t varname_len = strlen(varname);
+    char *const bufvarname = xmalloc(varname_len + 3);
+    buf_T *const save_curbuf = curbuf;
+    curbuf = buf;
+    memcpy(bufvarname, "b:", 2);
+    memcpy(bufvarname + 2, varname, varname_len + 1);
+    set_var(bufvarname, varname_len + 2, varp, true);
+    xfree(bufvarname);
+    curbuf = save_curbuf;
   }
 }

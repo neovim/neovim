@@ -486,9 +486,11 @@ void f_win_execute(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   int id = (int)tv_get_number(argvars);
   tabpage_T *tp;
   win_T *wp = win_id2wp_tp(id, &tp);
-  if (wp != NULL && tp != NULL) {
-    WIN_EXECUTE(wp, tp, execute_common(argvars, rettv, 1));
+  if (wp == NULL || tp == NULL) {
+    return;
   }
+
+  WIN_EXECUTE(wp, tp, execute_common(argvars, rettv, 1));
 }
 
 /// "win_findbuf()" function

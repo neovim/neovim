@@ -1216,19 +1216,21 @@ static void f_debugbreak(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   int pid = (int)tv_get_number(&argvars[0]);
   if (pid == 0) {
     emsg(_(e_invarg));
-  } else {
-#ifdef MSWIN
-    HANDLE hProcess = OpenProcess(PROCESS_ALL_ACCESS, 0, pid);
-
-    if (hProcess != NULL) {
-      DebugBreakProcess(hProcess);
-      CloseHandle(hProcess);
-      rettv->vval.v_number = OK;
-    }
-#else
-    uv_kill(pid, SIGINT);
-#endif
+    return;
   }
+
+#ifdef MSWIN
+  HANDLE hProcess = OpenProcess(PROCESS_ALL_ACCESS, 0, pid);
+  if (hProcess == NULL) {
+    return;
+  }
+
+  DebugBreakProcess(hProcess);
+  CloseHandle(hProcess);
+  rettv->vval.v_number = OK;
+#else
+  uv_kill(pid, SIGINT);
+#endif
 }
 
 /// "deepcopy()" function
@@ -2099,14 +2101,16 @@ static void f_float2nr(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
   float_T f;
 
-  if (tv_get_float_chk(argvars, &f)) {
-    if (f <= (float_T) - VARNUMBER_MAX + DBL_EPSILON) {
-      rettv->vval.v_number = -VARNUMBER_MAX;
-    } else if (f >= (float_T)VARNUMBER_MAX - DBL_EPSILON) {
-      rettv->vval.v_number = VARNUMBER_MAX;
-    } else {
-      rettv->vval.v_number = (varnumber_T)f;
-    }
+  if (!tv_get_float_chk(argvars, &f)) {
+    return;
+  }
+
+  if (f <= (float_T) - VARNUMBER_MAX + DBL_EPSILON) {
+    rettv->vval.v_number = -VARNUMBER_MAX;
+  } else if (f >= (float_T)VARNUMBER_MAX - DBL_EPSILON) {
+    rettv->vval.v_number = VARNUMBER_MAX;
+  } else {
+    rettv->vval.v_number = (varnumber_T)f;
   }
 }
 
@@ -3435,33 +3439,36 @@ static void f_index(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     emsg(_(e_listblobreq));
     return;
   }
-  list_T *const l = argvars[0].vval.v_list;
-  if (l != NULL) {
-    listitem_T *item = tv_list_first(l);
-    if (argvars[2].v_type != VAR_UNKNOWN) {
-      bool error = false;
 
-      // Start at specified item.
-      idx = tv_list_uidx(l, (int)tv_get_number_chk(&argvars[2], &error));
-      if (error || idx == -1) {
+  list_T *const l = argvars[0].vval.v_list;
+  if (l == NULL) {
+    return;
+  }
+
+  listitem_T *item = tv_list_first(l);
+  if (argvars[2].v_type != VAR_UNKNOWN) {
+    bool error = false;
+
+    // Start at specified item.
+    idx = tv_list_uidx(l, (int)tv_get_number_chk(&argvars[2], &error));
+    if (error || idx == -1) {
+      item = NULL;
+    } else {
+      item = tv_list_find(l, (int)idx);
+      assert(item != NULL);
+    }
+    if (argvars[3].v_type != VAR_UNKNOWN) {
+      ic = !!tv_get_number_chk(&argvars[3], &error);
+      if (error) {
         item = NULL;
-      } else {
-        item = tv_list_find(l, (int)idx);
-        assert(item != NULL);
-      }
-      if (argvars[3].v_type != VAR_UNKNOWN) {
-        ic = !!tv_get_number_chk(&argvars[3], &error);
-        if (error) {
-          item = NULL;
-        }
       }
     }
+  }
 
-    for (; item != NULL; item = TV_LIST_ITEM_NEXT(l, item), idx++) {
-      if (tv_equal(TV_LIST_ITEM_TV(item), &argvars[1], ic, false)) {
-        rettv->vval.v_number = idx;
-        break;
-      }
+  for (; item != NULL; item = TV_LIST_ITEM_NEXT(l, item), idx++) {
+    if (tv_equal(TV_LIST_ITEM_TV(item), &argvars[1], ic, false)) {
+      rettv->vval.v_number = idx;
+      break;
     }
   }
 }
@@ -5311,13 +5318,16 @@ static void f_range(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   }
   if (stride == 0) {
     emsg(_("E726: Stride is zero"));
-  } else if (stride > 0 ? end + 1 < start : end - 1 > start) {
+    return;
+  }
+  if (stride > 0 ? end + 1 < start : end - 1 > start) {
     emsg(_("E727: Start past end"));
-  } else {
-    tv_list_alloc_ret(rettv, (end - start) / stride);
-    for (varnumber_T i = start; stride > 0 ? i <= end : i >= end; i += stride) {
-      tv_list_append_number(rettv->vval.v_list, i);
-    }
+    return;
+  }
+
+  tv_list_alloc_ret(rettv, (end - start) / stride);
+  for (varnumber_T i = start; stride > 0 ? i <= end : i >= end; i += stride) {
+    tv_list_append_number(rettv->vval.v_list, i);
   }
 }
 
@@ -7009,31 +7019,35 @@ static void set_position(typval_T *argvars, typval_T *rettv, bool charpos)
 
   rettv->vval.v_number = -1;
   const char *const name = tv_get_string_chk(argvars);
-  if (name != NULL) {
-    pos_T pos;
-    int fnum;
-    if (list2fpos(&argvars[1], &pos, &fnum, &curswant, charpos) == OK) {
-      if (pos.col != MAXCOL && --pos.col < 0) {
-        pos.col = 0;
-      }
-      if (name[0] == '.' && name[1] == NUL) {
-        // set cursor; "fnum" is ignored
-        curwin->w_cursor = pos;
-        if (curswant >= 0) {
-          curwin->w_curswant = curswant - 1;
-          curwin->w_set_curswant = false;
-        }
-        check_cursor();
-        rettv->vval.v_number = 0;
-      } else if (name[0] == '\'' && name[1] != NUL && name[2] == NUL) {
-        // set mark
-        if (setmark_pos((uint8_t)name[1], &pos, fnum, NULL) == OK) {
-          rettv->vval.v_number = 0;
-        }
-      } else {
-        emsg(_(e_invarg));
-      }
+  if (name == NULL) {
+    return;
+  }
+
+  pos_T pos;
+  int fnum;
+  if (list2fpos(&argvars[1], &pos, &fnum, &curswant, charpos) != OK) {
+    return;
+  }
+
+  if (pos.col != MAXCOL && --pos.col < 0) {
+    pos.col = 0;
+  }
+  if (name[0] == '.' && name[1] == NUL) {
+    // set cursor; "fnum" is ignored
+    curwin->w_cursor = pos;
+    if (curswant >= 0) {
+      curwin->w_curswant = curswant - 1;
+      curwin->w_set_curswant = false;
     }
+    check_cursor();
+    rettv->vval.v_number = 0;
+  } else if (name[0] == '\'' && name[1] != NUL && name[2] == NUL) {
+    // set mark
+    if (setmark_pos((uint8_t)name[1], &pos, fnum, NULL) == OK) {
+      rettv->vval.v_number = 0;
+    }
+  } else {
+    emsg(_(e_invarg));
   }
 }
 
@@ -7051,23 +7065,25 @@ static void f_setcharsearch(typval_T *argvars, typval_T *rettv, EvalFuncData fpt
   }
 
   dict_T *d = argvars[0].vval.v_dict;
-  if (d != NULL) {
-    char_u *const csearch = (char_u *)tv_dict_get_string(d, "char", false);
-    if (csearch != NULL) {
-      int pcc[MAX_MCO];
-      const int c = utfc_ptr2char((char *)csearch, pcc);
-      set_last_csearch(c, csearch, utfc_ptr2len((char *)csearch));
-    }
+  if (d == NULL) {
+    return;
+  }
 
-    dictitem_T *di = tv_dict_find(d, S_LEN("forward"));
-    if (di != NULL) {
-      set_csearch_direction(tv_get_number(&di->di_tv) ? FORWARD : BACKWARD);
-    }
+  char_u *const csearch = (char_u *)tv_dict_get_string(d, "char", false);
+  if (csearch != NULL) {
+    int pcc[MAX_MCO];
+    const int c = utfc_ptr2char((char *)csearch, pcc);
+    set_last_csearch(c, csearch, utfc_ptr2len((char *)csearch));
+  }
 
-    di = tv_dict_find(d, S_LEN("until"));
-    if (di != NULL) {
-      set_csearch_until(!!tv_get_number(&di->di_tv));
-    }
+  dictitem_T *di = tv_dict_find(d, S_LEN("forward"));
+  if (di != NULL) {
+    set_csearch_direction(tv_get_number(&di->di_tv) ? FORWARD : BACKWARD);
+  }
+
+  di = tv_dict_find(d, S_LEN("until"));
+  if (di != NULL) {
+    set_csearch_until(!!tv_get_number(&di->di_tv));
   }
 }
 
