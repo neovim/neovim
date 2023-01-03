@@ -236,9 +236,10 @@ argument.
 <		This loads Lua module "bar" before executing "foo.lua": >
 			nvim +"lua require('bar')" -l foo.lua
 <
-		User |config| is skipped unless |-u| was given.
-		User |shada| is skipped unless |-i| was given.
-		Swap file is skipped (like |-n|).
+		Skips user |config| unless |-u| was given.
+		Disables plugins unless 'loadplugins' was set.
+		Disables |shada| unless |-i| was given.
+		Disables swapfile (like |-n|).
 
 							*-b*
 -b		Binary mode.  File I/O will only recognize <NL> to separate

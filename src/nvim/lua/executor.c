@@ -335,7 +335,7 @@ static int nlua_thr_api_nvim__get_runtime(lua_State *lstate)
 /// @see https://github.com/premake/premake-core/blob/1c1304637f4f5e50ba8c57aae8d1d80ec3b7aaf2/src/host/premake.c#L563-L594
 ///
 /// @returns number of args
-int nlua_set_argv(char **argv, int argc, int lua_arg0)
+int nlua_init_argv(char **argv, int argc, int lua_arg0)
 {
   lua_State *const L = global_lstate;
   lua_newtable(L);  // _G.arg
@@ -1711,21 +1711,62 @@ void ex_luafile(exarg_T *const eap)
   nlua_exec_file((const char *)eap->arg);
 }
 
-/// Executes Lua code from a file.
+/// Executes Lua code from a file or "-" (stdin).
 ///
-/// Note: we call the Lua global loadfile as opposed to calling luaL_loadfile
-/// in case loadfile was overridden in the user's environment.
+/// Calls the Lua `loadfile` global as opposed to `luaL_loadfile` in case `loadfile` was overridden
+/// in the user environment.
 ///
-/// @param  path  path of the file
+/// @param path Path to the file, may be "-" (stdin) during startup.
 ///
-/// @return  true if everything ok, false if there was an error (echoed)
+/// @return true on success, false on error (echoed) or user canceled (CTRL-c) while reading "-"
+/// (stdin).
 bool nlua_exec_file(const char *path)
   FUNC_ATTR_NONNULL_ALL
 {
   lua_State *const lstate = global_lstate;
+  if (!strequal(path, "-")) {
+    lua_getglobal(lstate, "loadfile");
+    lua_pushstring(lstate, path);
+  } else {
+    int error;
+    int stdin_dup_fd;
+    if (stdin_fd > 0) {
+      stdin_dup_fd = stdin_fd;
+    } else {
+      stdin_dup_fd = os_dup(STDIN_FILENO);
+#ifdef MSWIN
+      // Replace the original stdin with the console input handle.
+      os_replace_stdin_to_conin();
+#endif
+    }
+    FileDescriptor *const stdin_dup = file_open_fd_new(&error, stdin_dup_fd,
+                                                       kFileReadOnly|kFileNonBlocking);
+    assert(stdin_dup != NULL);
 
-  lua_getglobal(lstate, "loadfile");
-  lua_pushstring(lstate, path);
+    StringBuilder sb = KV_INITIAL_VALUE;
+    kv_resize(sb, 64);
+    ptrdiff_t read_size = -1;
+    // Read all input from stdin, unless interrupted (ctrl-c).
+    while (true) {
+      if (got_int) {  // User canceled.
+        return false;
+      }
+      read_size = file_read(stdin_dup, IObuff, 64);
+      if (read_size < 0) {  // Error.
+        return false;
+      }
+      kv_concat_len(sb, IObuff, (size_t)read_size);
+      if (read_size < 64) {  // EOF.
+        break;
+      }
+    }
+    kv_push(sb, NUL);
+    file_free(stdin_dup, false);
+
+    lua_getglobal(lstate, "loadstring");
+    lua_pushstring(lstate, sb.items);
+    kv_destroy(sb);
+  }
 
   if (nlua_pcall(lstate, 1, 2)) {
     nlua_error(lstate, _("E5111: Error calling lua: %.*s"));

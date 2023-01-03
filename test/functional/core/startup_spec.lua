@@ -88,18 +88,18 @@ describe('startup', function()
   end)
 
   describe('-l Lua', function()
-    local function assert_l_out(expected, nvim_args, lua_args)
-      local args = { nvim_prog, '--clean' }
+    local function assert_l_out(expected, nvim_args, lua_args, script, input)
+      local args = { nvim_prog }
       vim.list_extend(args, nvim_args or {})
-      vim.list_extend(args, { '-l', 'test/functional/fixtures/startup.lua' })
+      vim.list_extend(args, { '-l', (script or 'test/functional/fixtures/startup.lua') })
       vim.list_extend(args, lua_args or {})
-      local out = funcs.system(args):gsub('\r\n', '\n')
+      local out = funcs.system(args, input):gsub('\r\n', '\n')
       return eq(dedent(expected), out)
     end
 
     it('failure modes', function()
-      -- nvim -l <missing file>
-      matches('nvim: Argument missing after: "%-l"', funcs.system({ nvim_prog, '-l' }))
+      -- nvim -l <empty>
+      matches('nvim%.?e?x?e?: Argument missing after: "%-l"', funcs.system({ nvim_prog, '-l' }))
       eq(1, eval('v:shell_error'))
     end)
 
@@ -107,7 +107,7 @@ describe('startup', function()
       -- nvim -l foo.lua -arg1 -- a b c
       assert_l_out([[
           bufs:
-          nvim args: 8
+          nvim args: 7
           lua args: { "-arg1", "--exitcode", "73", "--arg2" }]],
         {},
         { '-arg1', "--exitcode", "73", '--arg2' }
@@ -115,18 +115,35 @@ describe('startup', function()
       eq(73, eval('v:shell_error'))
     end)
 
-    it('Lua error sets Nvim exitcode', function()
+    it('Lua-error sets Nvim exitcode', function()
       eq(0, eval('v:shell_error'))
       matches('E5113: .* my pearls!!',
         funcs.system({ nvim_prog, '-l', 'test/functional/fixtures/startup-fail.lua' }))
       eq(1, eval('v:shell_error'))
+      matches('E5113: .* %[string "error%("whoa"%)"%]:1: whoa',
+        funcs.system({ nvim_prog, '-l', '-' }, 'error("whoa")'))
+      eq(1, eval('v:shell_error'))
+    end)
+
+    it('executes stdin "-"', function()
+      assert_l_out('args=2 whoa',
+        nil,
+        { 'arg1', 'arg 2' },
+        '-',
+        "print(('args=%d %s'):format(#_G.arg, 'whoa'))")
+      assert_l_out('biiig input: 1000042',
+        nil,
+        nil,
+        '-',
+        ('print("biiig input: "..("%s"):len())'):format(string.rep('x', (1000 * 1000) + 42)))
+      eq(0, eval('v:shell_error'))
     end)
 
     it('sets _G.arg', function()
       -- nvim -l foo.lua -arg1 -- a b c
       assert_l_out([[
           bufs:
-          nvim args: 7
+          nvim args: 6
           lua args: { "-arg1", "--arg2", "arg3" }]],
         {},
         { '-arg1', '--arg2', 'arg3' }
@@ -136,7 +153,7 @@ describe('startup', function()
       -- nvim -l foo.lua --
       assert_l_out([[
           bufs:
-          nvim args: 5
+          nvim args: 4
           lua args: { "--" }]],
         {},
         { '--' }
@@ -146,7 +163,7 @@ describe('startup', function()
       -- nvim file1 file2 -l foo.lua -arg1 -- file3 file4
       assert_l_out([[
           bufs: file1 file2
-          nvim args: 11
+          nvim args: 10
           lua args: { "-arg1", "arg 2", "--", "file3", "file4" }]],
         { 'file1', 'file2', },
         { '-arg1', 'arg 2', '--', 'file3', 'file4' }
@@ -156,7 +173,7 @@ describe('startup', function()
       -- nvim file1 file2 -l foo.lua -arg1 --
       assert_l_out([[
           bufs: file1 file2
-          nvim args: 8
+          nvim args: 7
           lua args: { "-arg1", "--" }]],
         { 'file1', 'file2', },
         { '-arg1', '--' }
@@ -166,7 +183,7 @@ describe('startup', function()
       -- nvim -l foo.lua <vim args>
       assert_l_out([[
           bufs:
-          nvim args: 6
+          nvim args: 5
           lua args: { "-c", "set wrap?" }]],
         {},
         { '-c', 'set wrap?' }
@@ -180,12 +197,21 @@ describe('startup', function()
             wrap
           
           bufs:
-          nvim args: 8
+          nvim args: 7
           lua args: { "-c", "set wrap?" }]],
         { '-c', 'set wrap?' },
         { '-c', 'set wrap?' }
       )
       eq(0, eval('v:shell_error'))
+    end)
+
+    it('disables swapfile/shada/config/plugins', function()
+      assert_l_out('updatecount=0 shadafile=NONE loadplugins=false scriptnames=1',
+        nil,
+        nil,
+        '-',
+        [[print(('updatecount=%d shadafile=%s loadplugins=%s scriptnames=%d'):format(
+          vim.o.updatecount, vim.o.shadafile, tostring(vim.o.loadplugins), math.max(1, #vim.fn.split(vim.fn.execute('scriptnames'),'\n'))))]])
     end)
   end)
 
@@ -375,11 +401,11 @@ describe('startup', function()
   it('-es/-Es disables swapfile, user config #8540', function()
     for _,arg in ipairs({'-es', '-Es'}) do
       local out = funcs.system({nvim_prog, arg,
-                                '+set swapfile? updatecount? shada?',
+                                '+set swapfile? updatecount? shadafile?',
                                 "+put =execute('scriptnames')", '+%print'})
       local line1 = string.match(out, '^.-\n')
       -- updatecount=0 means swapfile was disabled.
-      eq("  swapfile  updatecount=0  shada=!,'100,<50,s10,h\n", line1)
+      eq("  swapfile  updatecount=0  shadafile=\n", line1)
       -- Standard plugins were loaded, but not user config.
       eq('health.vim', string.match(out, 'health.vim'))
       eq(nil, string.match(out, 'init.vim'))

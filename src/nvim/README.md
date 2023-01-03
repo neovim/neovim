@@ -18,6 +18,12 @@ The source files use extensions to hint about their purpose.
 - `*.h.generated.h` - exported functions’ declarations.
 - `*.c.generated.h` - static functions’ declarations.
 
+Common structures
+-----------------
+
+- StringBuilder
+- kvec or garray.c for dynamic lists / vectors (use StringBuilder for strings)
+
 Logs
 ----
 

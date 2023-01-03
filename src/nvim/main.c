@@ -280,7 +280,7 @@ int main(int argc, char **argv)
   command_line_scan(&params);
 
   nlua_init();
-  nlua_set_argv(argv, argc, params.lua_arg0);
+  nlua_init_argv(argv, argc, params.lua_arg0);
   TIME_MSG("init lua interpreter");
 
   if (embedded_mode) {
