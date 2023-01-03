@@ -506,6 +506,7 @@ handle_T ui_cursor_grid(void)
 
 void ui_flush(void)
 {
+  assert(!ui_client_channel_id);
   if (!ui_active()) {
     return;
   }
