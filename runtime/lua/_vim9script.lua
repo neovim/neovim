@@ -8,7 +8,7 @@
 -- to change at any time.
 -------------------------------------------------------------------------------
 
-local NVIM9 = (function()
+local vim9 = (function()
   local M = {}
 
   M.ternary = function(cond, if_true, if_false)
@@ -176,17 +176,17 @@ function! _Vim9ScriptFn(name, args) abort
 endfunction
 ]])
 
-NVIM9['autoload'] = (function()
+vim9['autoload'] = (function()
   return function(path)
     return loadfile(path)()
   end
 end)()
-NVIM9['bool'] = (function()
+vim9['bool'] = (function()
   return function(...)
-    return NVIM9.convert.to_vim_bool(...)
+    return vim9.convert.to_vim_bool(...)
   end
 end)()
-NVIM9['convert'] = (function()
+vim9['convert'] = (function()
   local M = {}
 
   M.decl_bool = function(val)
@@ -239,7 +239,7 @@ NVIM9['convert'] = (function()
 
   return M
 end)()
-NVIM9['fn'] = (function()
+vim9['fn'] = (function()
   local M = {}
 
   M.insert = function(list, item, idx)
@@ -454,7 +454,7 @@ readdirex({directory} [, {expr} [, {dict}]])			*readdirex()*
 
   return M
 end)()
-NVIM9['heredoc'] = (function()
+vim9['heredoc'] = (function()
   local M = {}
 
   M.trim = function(lines)
@@ -474,7 +474,7 @@ NVIM9['heredoc'] = (function()
 
   return M
 end)()
-NVIM9['import'] = (function()
+vim9['import'] = (function()
   local imported = {}
   imported.autoload = setmetatable({}, {
     __index = function(_, name)
@@ -532,8 +532,8 @@ NVIM9['import'] = (function()
     error('Unhandled case' .. vim.inspect(info) .. vim.inspect(debug_info))
   end
 end)()
-NVIM9['ops'] = (function()
-  local lib = NVIM9
+vim9['ops'] = (function()
+  local lib = vim9
 
   local M = {}
 
@@ -608,8 +608,8 @@ NVIM9['ops'] = (function()
 
   return M
 end)()
-NVIM9['prefix'] = (function()
-  local lib = NVIM9
+vim9['prefix'] = (function()
+  local lib = vim9
 
   local M = {}
 
@@ -624,4 +624,4 @@ NVIM9['prefix'] = (function()
   return M
 end)()
 
-return NVIM9
+return vim9
