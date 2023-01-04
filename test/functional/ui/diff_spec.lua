@@ -8,6 +8,8 @@ local insert = helpers.insert
 local write_file = helpers.write_file
 local dedent = helpers.dedent
 local exec = helpers.exec
+local eq = helpers.eq
+local meths = helpers.meths
 
 describe('Diff mode screen', function()
   local fname = 'Xtest-functional-diff-screen-1'
@@ -1489,6 +1491,26 @@ it('Align the filler lines when changing text in diff mode', function()
     {3:[No Name] [+]       }{8:[No Name] [+]       }|
                                             |
   ]]}
+end)
+
+it("diff mode doesn't restore invalid 'foldcolumn' value #21647", function()
+  clear()
+  local screen = Screen.new(60, 6)
+  screen:set_default_attr_ids({
+    [0] = {foreground = Screen.colors.Blue, bold = true};
+  })
+  screen:attach()
+  eq('0', meths.get_option_value('foldcolumn', {}))
+  command('diffsplit | bd')
+  screen:expect([[
+    ^                                                            |
+    {0:~                                                           }|
+    {0:~                                                           }|
+    {0:~                                                           }|
+    {0:~                                                           }|
+                                                                |
+  ]])
+  eq('0', meths.get_option_value('foldcolumn', {}))
 end)
 
 -- oldtest: Test_diff_binary()
