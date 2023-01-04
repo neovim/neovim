@@ -195,7 +195,7 @@ But not this one
   end)
 
   it('can be disabled globally', function()
-    meths.set_var('editorconfig_enable', false)
+    meths.set_var('editorconfig', false)
     meths.set_option_value('shiftwidth', 42, {})
     test_case('3_space.txt', { shiftwidth = 42 })
   end)
@@ -203,7 +203,7 @@ But not this one
   it('can be disabled per-buffer', function()
     meths.set_option_value('shiftwidth', 42, {})
     local bufnr = funcs.bufadd(testdir .. pathsep .. '3_space.txt')
-    meths.buf_set_var(bufnr, 'editorconfig_enable', false)
+    meths.buf_set_var(bufnr, 'editorconfig', false)
     test_case('3_space.txt', { shiftwidth = 42 })
     test_case('4_space.py', { shiftwidth = 4 })
   end)

@@ -13,16 +13,18 @@ the opened file are applied.
 
 For more information on EditorConfig, see https://editorconfig.org/.
 
-                                                       *g:editorconfig_enable*
-EditorConfig integration can be disabled by adding >lua
+                                               *g:editorconfig* *b:editorconfig*
+EditorConfig integration can be disabled globally by adding >lua
 
-    vim.g.editorconfig_enable = false
+    vim.g.editorconfig = false
 <
-to the user's |init.lua| file (or the Vimscript equivalent to |init.vim|).
+to the user's |init.lua| file (or the Vimscript equivalent to |init.vim|). It
+can also be disabled per-buffer by setting the |b:editorconfig| buffer-local
+variable to `false`.
 
-                                                              *b:editorconfig*
 When Nvim finds a valid .editorconfig file it will store the applied
-properties in the buffer variable |b:editorconfig|.
+properties in the buffer variable |b:editorconfig| if it was not already set to
+`false` by the user.
 
                                                      *editorconfig-properties*
 The following properties are supported by default:
