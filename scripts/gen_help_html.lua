@@ -961,7 +961,7 @@ local function gen_css(fname)
     pre {
       /* Tabs are used in codeblocks only for indentation, not alignment, so we can aggressively shrink them. */
       tab-size: 2;
-      white-space: pre;
+      white-space: pre-wrap;
       line-height: 1.3;  /* Important for ascii art. */
       overflow: visible;
       /* font-family: ui-monospace,SFMono-Regular,SF Mono,Menlo,Consolas,Liberation Mono,monospace; */
