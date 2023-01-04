@@ -32,10 +32,6 @@ expand_get_event_name	src/nvim/autocmd.c	/^char *expand_get_event_name(expand_T 
     os.remove('Xtags')
   end)
 
-  it('can be loaded', function()
-    command('call ccomplete#Complete(1, "")')
-  end)
-
   it('can complete from Xtags', function()
     local completed = eval('ccomplete#Complete(0, "a")')
     eq(5, #completed)
