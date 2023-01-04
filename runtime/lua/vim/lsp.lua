@@ -1805,7 +1805,7 @@ end
 --- already for this client, then force-shutdown is attempted.
 ---
 ---@param client_id number|table id or |vim.lsp.client| object, or list thereof
----@param force boolean (optional) shutdown forcefully
+---@param force boolean|nil shutdown forcefully
 function lsp.stop_client(client_id, force)
   local ids = type(client_id) == 'table' and client_id or { client_id }
   for _, id in ipairs(ids) do

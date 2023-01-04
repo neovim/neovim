@@ -974,7 +974,7 @@ stop_client({client_id}, {force})                      *vim.lsp.stop_client()*
     Parameters: ~
       • {client_id}  number|table id or |vim.lsp.client| object, or list
                      thereof
-      • {force}      (boolean) (optional) shutdown forcefully
+      • {force}      (boolean|nil) shutdown forcefully
 
 tagfunc({...})                                             *vim.lsp.tagfunc()*
     Provides an interface between the built-in client and 'tagfunc'.
@@ -1174,7 +1174,7 @@ references({context}, {options})                    *vim.lsp.buf.references()*
     window.
 
     Parameters: ~
-      • {context}  (table) Context for the request
+      • {context}  (table|nil) Context for the request
       • {options}  (table|nil) additional options
                    • on_list: (function) handler for list results. See
                      |lsp-on-list-handler|
@@ -1566,7 +1566,7 @@ jump_to_location({location}, {offset_encoding}, {reuse_win})
     Parameters: ~
       • {location}         (table) (`Location`|`LocationLink`)
       • {offset_encoding}  "utf-8" | "utf-16" | "utf-32"
-      • {reuse_win}        (boolean) Jump to existing window if buffer is
+      • {reuse_win}        (boolean|nil) Jump to existing window if buffer is
                            already open.
 
     Return: ~
@@ -1657,7 +1657,7 @@ make_position_params({window}, {offset_encoding})
     Parameters: ~
       • {window}           (number|nil) window handle or 0 for current,
                            defaults to current
-      • {offset_encoding}  (string) utf-8|utf-16|utf-32|nil defaults to
+      • {offset_encoding}  (string|nil) utf-8|utf-16|utf-32|nil defaults to
                            `offset_encoding` of first client of buffer of
                            `window`
 
@@ -1788,7 +1788,7 @@ show_document({location}, {offset_encoding}, {opts})
     Parameters: ~
       • {location}         (table) (`Location`|`LocationLink`)
       • {offset_encoding}  "utf-8" | "utf-16" | "utf-32"
-      • {opts}             (table) options
+      • {opts}             (table|nil) options
                            • reuse_win (boolean) Jump to existing window if
                              buffer is already open.
                            • focus (boolean) Whether to focus/jump to location
