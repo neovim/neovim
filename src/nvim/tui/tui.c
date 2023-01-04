@@ -1635,11 +1635,13 @@ static void unibi_goto(UI *ui, int row, int col)
     } \
     if (str) { \
       unibi_var_t vars[26 + 26]; \
+      unibi_var_t params[9]; \
       size_t orig_pos = data->bufpos; \
       memset(&vars, 0, sizeof(vars)); \
       data->cork = true; \
 retry: \
-      unibi_format(vars, vars + 26, str, data->params, out, ui, pad, ui); \
+      memcpy(params, data->params, sizeof(params)); \
+      unibi_format(vars, vars + 26, str, params, out, ui, pad, ui); \
       if (data->overflow) { \
         data->bufpos = orig_pos; \
         flush_buf(ui); \

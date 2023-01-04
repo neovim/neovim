@@ -13,6 +13,7 @@ local feed_command = helpers.feed_command
 local feed_data = thelpers.feed_data
 local clear = helpers.clear
 local command = helpers.command
+local dedent = helpers.dedent
 local exec = helpers.exec
 local testprg = helpers.testprg
 local retry = helpers.retry
@@ -1442,6 +1443,31 @@ describe('TUI', function()
     screen:expect(doublewidth_screen, attrs)
     child_session:request('nvim_call_function', 'setcellwidths', {{{0x2103, 0x2103, 1}}})
     screen:expect(singlewidth_screen, attrs)
+  end)
+
+  it('draws correctly when cursor_address overflows #21643', function()
+    helpers.skip(helpers.is_ci('github'), 'FIXME: flaky on GitHub CI')
+    screen:try_resize(75, 60)
+    -- The composing character takes 3 bytes.
+    local composing = ('a︠'):sub(2)
+    -- The composed character takes 1 + 5 * 3 = 16 bytes.
+    local c = 'a' .. composing:rep(5)
+    -- Going to top-left corner needs 3 bytes.
+    -- With screen width 75, 4088 characters need 54 full screen lines.
+    -- Drawing each full screen line needs 75 * 16 + 2 = 1202 bytes (2 bytes for CR LF).
+    -- The incomplete screen line needs 38 * 16 + 8 + 3 = 619 bytes.
+    -- The whole line needs 3 + 54 * 1202 + 619 = 65530 bytes.
+    -- The cursor_address that comes after will overflow the 65535-byte buffer.
+    local line = c:rep(4088) .. ('b'):rep(8) .. '℃'
+    child_session:request('nvim_buf_set_lines', 0, 0, -1, true, {line, 'c'})
+    screen:expect(
+      '{1:' .. c .. '}' .. c:rep(74) .. '|\n' .. (c:rep(75) .. '|\n'):rep(53)
+      .. c:rep(38) .. ('b'):rep(8) .. '℃' .. (' '):rep(28) .. '|\n' .. dedent([[
+      c                                                                          |
+      {4:~                                                                          }|
+      {5:[No Name] [+]                                                              }|
+                                                                                 |
+      {3:-- TERMINAL --}                                                             |]]))
   end)
 end)
 
