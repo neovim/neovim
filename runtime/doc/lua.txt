@@ -1678,8 +1678,8 @@ list_slice({list}, {start}, {finish})                       *vim.list_slice()*
 
     Parameters: ~
       • {list}    (list) Table
-      • {start}   (number) Start range of slice
-      • {finish}  (number) End range of slice
+      • {start}   (number|nil) Start range of slice
+      • {finish}  (number|nil) End range of slice
 
     Return: ~
         (list) Copy of table sliced from start to finish (inclusive)

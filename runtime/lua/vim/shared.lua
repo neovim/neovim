@@ -516,8 +516,8 @@ end
 ---
 ---@generic T
 ---@param list T[] (list) Table
----@param start number Start range of slice
----@param finish number End range of slice
+---@param start number|nil Start range of slice
+---@param finish number|nil End range of slice
 ---@return T[] (list) Copy of table sliced from start to finish (inclusive)
 function vim.list_slice(list, start, finish)
   local new_list = {}
