@@ -4,6 +4,8 @@ local command = helpers.command
 local eq = helpers.eq
 local pathsep = helpers.get_pathsep()
 local curbufmeths = helpers.curbufmeths
+local funcs = helpers.funcs
+local meths = helpers.meths
 
 local testdir = 'Xtest-editorconfig'
 
@@ -190,5 +192,19 @@ But not this one
 
   it('sets textwidth', function()
     test_case('max_line_length.txt', { textwidth = 42 })
+  end)
+
+  it('can be disabled globally', function()
+    meths.set_var('editorconfig_enable', false)
+    meths.set_option_value('shiftwidth', 42, {})
+    test_case('3_space.txt', { shiftwidth = 42 })
+  end)
+
+  it('can be disabled per-buffer', function()
+    meths.set_option_value('shiftwidth', 42, {})
+    local bufnr = funcs.bufadd(testdir .. pathsep .. '3_space.txt')
+    meths.buf_set_var(bufnr, 'editorconfig_enable', false)
+    test_case('3_space.txt', { shiftwidth = 42 })
+    test_case('4_space.py', { shiftwidth = 4 })
   end)
 end)
