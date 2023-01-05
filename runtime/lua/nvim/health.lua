@@ -1,18 +1,18 @@
 local M = {}
 local health = require('vim.health')
 
-local lua_has_bool = function(key)
+local fn_bool = function(key)
   return function(...)
     return vim.fn[key](...) == 1
   end
 end
 
-local has = lua_has_bool('has')
-local exists = lua_has_bool('exists')
-local executable = lua_has_bool('executable')
-local empty = lua_has_bool('empty')
-local filereadable = lua_has_bool('filereadable')
-local filewritable = lua_has_bool('filewritable')
+local has = fn_bool('has')
+local exists = fn_bool('exists')
+local executable = fn_bool('executable')
+local empty = fn_bool('empty')
+local filereadable = fn_bool('filereadable')
+local filewritable = fn_bool('filewritable')
 
 local shell_error = function()
   return vim.v.shell_error ~= 0
@@ -382,8 +382,8 @@ local function check_terminal()
   end
 
   for env_var in ipairs({ 'XTERM_VERSION', 'VTE_VERSION', 'TERM_PROGRAM', 'COLORTERM', 'SSH_TTY' }) do
-    if exists('$' .. env_var) then
-      health.report_info(vim.fn.printf('$%s="%s"', env_var, vim.fn.eval('$' .. env_var)))
+    if vim.env[env_var] then
+      health.report_info(vim.fn.printf('$%s="%s"', env_var, vim.env[env_var]))
     end
   end
 end
