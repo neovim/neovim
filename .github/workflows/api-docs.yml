@@ -28,6 +28,10 @@ jobs:
     env:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
+      - uses: rhysd/action-setup-vim@v1
+        with:
+          neovim: true
+          version: nightly
       - uses: actions/checkout@v3
         with:
           # Fetch depth 0 is required if called through workflow_call. In order
@@ -38,7 +42,7 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo env DEBIAN_FRONTEND=noninteractive apt-get install -y doxygen python3 python3-msgpack luajit
+          sudo env DEBIAN_FRONTEND=noninteractive apt-get install -y doxygen python3 python3-msgpack
 
       - name: Setup git config
         run: |

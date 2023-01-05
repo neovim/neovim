@@ -245,12 +245,10 @@ enum { FOLD_TEXT_LEN = 51, };  //!< buffer size for get_foldtext()
 /// plus six following composing characters of three bytes each.
 #define MB_MAXBYTES    21
 
-// This has to go after the include of proto.h, as proto/gui.pro declares
-// functions of these names. The declarations would break if the defines had
-// been seen at that stage.  But it must be before globals.h, where error_ga
-// is declared.
 #ifndef MSWIN
+/// Headless (no UI) error message handler.
 # define os_errmsg(str)        fprintf(stderr, "%s", (str))
+/// Headless (no UI) message handler.
 # define os_msg(str)           printf("%s", (str))
 #endif
 

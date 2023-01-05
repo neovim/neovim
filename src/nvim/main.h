@@ -23,15 +23,18 @@ typedef struct {
   char cmds_tofree[MAX_ARG_CMDS];       // commands that need free()
   int n_pre_commands;                   // no. of commands from --cmd
   char *pre_commands[MAX_ARG_CMDS];     // commands from --cmd argument
+  char *luaf;                           // Lua script filename from "-l"
+  int lua_arg0;                         // Lua script args start index.
 
   int edit_type;                        // type of editing to do
   char *tagname;                        // tag from -t argument
   char *use_ef;                         // 'errorfile' from -q argument
 
   bool input_isatty;                    // stdin is a terminal
+  bool input_istext;                    // stdin is text, not executable (-E/-Es)
   bool output_isatty;                   // stdout is a terminal
   bool err_isatty;                      // stderr is a terminal
-  bool input_neverscript;               // never treat stdin as script (-E/-Es)
+
   int no_swap_file;                     // "-n" argument used
   int use_debug_break_level;
   int window_count;                     // number of windows to use

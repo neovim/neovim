@@ -515,7 +515,7 @@ EXTERN int allbuf_lock INIT(= 0);
 /// not allowed then.
 EXTERN int sandbox INIT(= 0);
 
-/// Batch-mode: "-es" or "-Es" commandline argument was given.
+/// Batch-mode: "-es", "-Es", "-l" commandline argument was given.
 EXTERN int silent_mode INIT(= false);
 
 /// Start position of active Visual selection.
@@ -1042,7 +1042,7 @@ EXTERN int vim_ignored;
 
 // stdio is an RPC channel (--embed).
 EXTERN bool embedded_mode INIT(= false);
-// Do not start a UI nor read/write to stdio (unless embedding).
+// Do not start UI (--headless, -l) nor read/write to stdio (unless embedding).
 EXTERN bool headless_mode INIT(= false);
 
 // uncrustify:on

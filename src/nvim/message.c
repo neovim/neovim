@@ -3003,31 +3003,36 @@ static int do_more_prompt(int typed_char)
 }
 
 #if defined(MSWIN)
-void os_errmsg(char *str)
+/// Headless (no UI) error message handler.
+static void do_msg(char *str, bool errmsg)
 {
+  static bool did_err = false;
   assert(str != NULL);
   wchar_t *utf16str;
   int r = utf8_to_utf16(str, -1, &utf16str);
-  if (r != 0) {
+  if (r != 0 && !did_err) {
+    did_err = true;
     fprintf(stderr, "utf8_to_utf16 failed: %d", r);
-  } else {
-    fwprintf(stderr, L"%ls", utf16str);
+    ELOG("utf8_to_utf16 failed: %d", r);
+  } else if (r == 0) {
+    if (errmsg) {
+      fwprintf(stderr, L"%ls", utf16str);
+    } else {
+      wprintf(L"%ls", utf16str);
+    }
     xfree(utf16str);
   }
 }
 
-/// Give a message.  To be used when the UI is not initialized yet.
+void os_errmsg(char *str)
+{
+  do_msg(str, true);
+}
+
+/// Headless (no UI) message handler.
 void os_msg(char *str)
 {
-  assert(str != NULL);
-  wchar_t *utf16str;
-  int r = utf8_to_utf16(str, -1, &utf16str);
-  if (r != 0) {
-    fprintf(stderr, "utf8_to_utf16 failed: %d", r);
-  } else {
-    wprintf(L"%ls", utf16str);
-    xfree(utf16str);
-  }
+  do_msg(str, false);
 }
 #endif  // MSWIN
 

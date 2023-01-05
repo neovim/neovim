@@ -27,14 +27,13 @@ http://search.cpan.org/~alec/Doxygen-Lua-0.02/lib/Doxygen/Lua.pm
 Running
 -------
 
-This file "lua2dox.lua" gets called by "lua2dox_filter" (bash).
+This script "lua2dox.lua" gets called by "gen_vimdoc.py".
 
 Doxygen must be on your system. You can experiment like so:
 
 - Run "doxygen -g" to create a default Doxyfile.
-- Then alter it to let it recognise lua. Add the two following lines:
+- Then alter it to let it recognise lua. Add the following line:
     FILE_PATTERNS   = *.lua
-    FILTER_PATTERNS = *.lua=lua2dox_filter
 - Then run "doxygen".
 
 The core function reads the input file (filename or stdin) and outputs some pseudo C-ish language.
@@ -117,26 +116,6 @@ local function string_split(Str, Pattern)
   return splitStr
 end
 
---! \class TCore_Commandline
---! \brief reads/parses commandline
-local TCore_Commandline = class()
-
---! \brief constructor
-function TCore_Commandline.init(this)
-  this.argv = arg
-  this.parsed = {}
-  this.params = {}
-end
-
---! \brief get value
-function TCore_Commandline.getRaw(this, Key, Default)
-  local val = this.argv[Key]
-  if not val then
-    val = Default
-  end
-  return val
-end
-
 -------------------------------
 --! \brief file buffer
 --!
@@ -147,7 +126,7 @@ local TStream_Read = class()
 --!
 --! \param Filename name of file to read (or nil == stdin)
 function TStream_Read.getContents(this, Filename)
-  assert(Filename)
+  assert(Filename, ('invalid file: %s'):format(Filename))
   -- get lines from file
   -- syphon lines to our table
   local filecontents = {}
@@ -548,15 +527,14 @@ end
 local This_app = TApp()
 
 --main
-local cl = TCore_Commandline()
 
-local argv1 = cl:getRaw(2)
+local argv1 = arg[1]
 if argv1 == '--help' then
   TCore_IO_writeln(This_app:getVersion())
   TCore_IO_writeln(This_app:getCopyright())
   TCore_IO_writeln([[
   run as:
-  lua2dox_filter <param>
+  nvim -l scripts/lua2dox.lua <param>
   --------------
   Param:
   <filename> : interprets filename

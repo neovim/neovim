@@ -962,6 +962,7 @@ endfunc
 
 " Test for enabling the lisp mode on startup
 func Test_l_arg()
+  throw 'Skipped: Nvim -l arg differs from Vim'
   let after =<< trim [CODE]
     let s = 'lisp=' .. &lisp .. ', showmatch=' .. &showmatch
     call writefile([s], 'Xtestout')

@@ -323,6 +323,30 @@ static int nlua_thr_api_nvim__get_runtime(lua_State *lstate)
   return 1;
 }
 
+/// Copies args starting at `lua_arg0` into the Lua `arg` global.
+///
+/// Example (`lua_arg0` points to "--arg1"):
+///     nvim -l foo.lua --arg1 --arg2
+///
+/// @note Lua CLI sets arguments upto "-e" as _negative_ `_G.arg` indices, but we currently don't
+/// follow that convention.
+///
+/// @see https://www.lua.org/pil/1.4.html
+/// @see https://github.com/premake/premake-core/blob/1c1304637f4f5e50ba8c57aae8d1d80ec3b7aaf2/src/host/premake.c#L563-L594
+///
+/// @returns number of args
+static int nlua_init_argv(lua_State *const L, char **argv, int argc, int lua_arg0)
+{
+  lua_newtable(L);  // _G.arg
+  int i = 0;
+  for (; lua_arg0 >= 0 && i + lua_arg0 < argc; i++) {
+    lua_pushstring(L, argv[i + lua_arg0]);
+    lua_rawseti(L, -2, i + 1);  // _G.arg[i+1] = "arg1"
+  }
+  lua_setglobal(L, "arg");
+  return i;
+}
+
 static void nlua_schedule_event(void **argv)
 {
   LuaRef cb = (LuaRef)(ptrdiff_t)argv[0];
@@ -765,10 +789,8 @@ static bool nlua_state_init(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
   return true;
 }
 
-/// Initialize global lua interpreter
-///
-/// Crashes Nvim if initialization fails.
-void nlua_init(void)
+/// Initializes global Lua interpreter, or exits Nvim on failure.
+void nlua_init(char **argv, int argc, int lua_arg0)
 {
 #ifdef NLUA_TRACK_REFS
   const char *env = os_getenv("NVIM_LUA_NOTRACK");
@@ -789,10 +811,9 @@ void nlua_init(void)
   }
 
   luv_set_thread_cb(nlua_thread_acquire_vm, nlua_common_free_all_mem);
-
   global_lstate = lstate;
-
   main_thread = uv_thread_self();
+  nlua_init_argv(lstate, argv, argc, lua_arg0);
 }
 
 static lua_State *nlua_thread_acquire_vm(void)
@@ -1686,21 +1707,49 @@ void ex_luafile(exarg_T *const eap)
   nlua_exec_file((const char *)eap->arg);
 }
 
-/// execute lua code from a file.
+/// Executes Lua code from a file or "-" (stdin).
 ///
-/// Note: we call the lua global loadfile as opposed to calling luaL_loadfile
-/// in case loadfile has been overridden in the users environment.
+/// Calls the Lua `loadfile` global as opposed to `luaL_loadfile` in case `loadfile` was overridden
+/// in the user environment.
 ///
-/// @param  path  path of the file
+/// @param path Path to the file, may be "-" (stdin) during startup.
 ///
-/// @return  true if everything ok, false if there was an error (echoed)
+/// @return true on success, false on error (echoed) or user canceled (CTRL-c) while reading "-"
+/// (stdin).
 bool nlua_exec_file(const char *path)
   FUNC_ATTR_NONNULL_ALL
 {
   lua_State *const lstate = global_lstate;
+  if (!strequal(path, "-")) {
+    lua_getglobal(lstate, "loadfile");
+    lua_pushstring(lstate, path);
+  } else {
+    FileDescriptor *stdin_dup = file_open_stdin();
 
-  lua_getglobal(lstate, "loadfile");
-  lua_pushstring(lstate, path);
+    StringBuilder sb = KV_INITIAL_VALUE;
+    kv_resize(sb, 64);
+    ptrdiff_t read_size = -1;
+    // Read all input from stdin, unless interrupted (ctrl-c).
+    while (true) {
+      if (got_int) {  // User canceled.
+        return false;
+      }
+      read_size = file_read(stdin_dup, IObuff, 64);
+      if (read_size < 0) {  // Error.
+        return false;
+      }
+      kv_concat_len(sb, IObuff, (size_t)read_size);
+      if (read_size < 64) {  // EOF.
+        break;
+      }
+    }
+    kv_push(sb, NUL);
+    file_free(stdin_dup, false);
+
+    lua_getglobal(lstate, "loadstring");
+    lua_pushstring(lstate, sb.items);
+    kv_destroy(sb);
+  }
 
   if (nlua_pcall(lstate, 1, 2)) {
     nlua_error(lstate, _("E5111: Error calling lua: %.*s"));
