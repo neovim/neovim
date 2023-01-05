@@ -64,7 +64,7 @@ Third-party dependencies
 ------------------------
 
 These "bundled" dependencies can be updated by bumping their versions in `cmake.deps/CMakeLists.txt`.
-Some can be auto-bumped by `scripts/bump-deps.sh`.
+Some can be auto-bumped by `scripts/bump_deps.lua`.
 
 * [LuaJIT](https://github.com/LuaJIT/LuaJIT)
 * [Lua](https://www.lua.org/download.html)

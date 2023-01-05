@@ -1,18 +1,7 @@
+#!/usr/bin/env -S nvim -l
+
 -- Usage:
---    # bump to version
---    nvim -es +"lua require('scripts.bump_deps').version(dependency, version_tag)"
---
---    # bump to commit
---    nvim -es +"lua require('scripts.bump_deps').commit(dependency, commit_hash)"
---
---    # bump to HEAD
---    nvim -es +"lua require('scripts.bump_deps').head(dependency)"
---
---    # submit PR
---    nvim -es +"lua require('scripts.bump_deps').submit_pr()"
---
---    # create branch
---    nvim -es +"lua require('scripts.bump_deps').create_branch()"
+--    ./scripts/bump_deps.lua -h
 
 local M = {}
 
@@ -128,7 +117,10 @@ local function get_archive_info(repo, ref)
     'Failed to download archive from GitHub'
   )
 
-  local archive_sha = run({ 'sha256sum', archive_path }):gmatch('%w+')()
+  local shacmd = (vim.fn.executable('sha256sum') == 1
+    and{ 'sha256sum', archive_path }
+    or { 'shasum', '-a', '256', archive_path })
+  local archive_sha = run(shacmd):gmatch('%w+')()
   return { url = archive_url, sha = archive_sha }
 end
 
@@ -171,7 +163,7 @@ end
 local function verify_branch(new_branch_suffix)
   require_executable('git')
 
-  local checked_out_branch = run({ 'git', 'rev-parse', '--abbrev-ref', 'HEAD' })
+  local checked_out_branch = assert(run({ 'git', 'rev-parse', '--abbrev-ref', 'HEAD' }))
   if not checked_out_branch:match('^' .. required_branch_prefix) then
     p(
       "Current branch '"
@@ -244,7 +236,7 @@ end
 local function find_git_remote(fork)
   require_executable('git')
 
-  local remotes = run({ 'git', 'remote', '-v' })
+  local remotes = assert(run({ 'git', 'remote', '-v' }))
   local git_remote = ''
   for remote in remotes:gmatch('[^\r\n]+') do
     local words = {}
@@ -295,7 +287,7 @@ local function create_pr(pr_title, pr_body)
 end
 
 function M.commit(dependency_name, commit)
-  local dependency = get_dependency(dependency_name)
+  local dependency = assert(get_dependency(dependency_name))
   verify_cmakelists_committed()
   local commit_sha = get_gh_commit_sha(dependency.repo, commit)
   if commit_sha ~= commit then
@@ -310,7 +302,11 @@ function M.commit(dependency_name, commit)
 end
 
 function M.version(dependency_name, version)
-  local dependency = get_dependency(dependency_name)
+  vim.validate{
+    dependency_name={dependency_name,'s'},
+    version={version,'s'},
+  }
+  local dependency = assert(get_dependency(dependency_name))
   verify_cmakelists_committed()
   local commit_sha = get_gh_commit_sha(dependency.repo, version)
   if commit_sha == version then
@@ -325,7 +321,7 @@ function M.version(dependency_name, version)
 end
 
 function M.head(dependency_name)
-  local dependency = get_dependency(dependency_name)
+  local dependency = assert(get_dependency(dependency_name))
   verify_cmakelists_committed()
   local commit_sha = get_gh_commit_sha(dependency.repo, 'HEAD')
   local archive = get_archive_info(dependency.repo, commit_sha)
@@ -345,7 +341,7 @@ function M.submit_pr()
   verify_branch('deps')
 
   local nvim_remote = find_git_remote(nil)
-  local relevant_commit = run_die({
+  local relevant_commit = assert(run_die({
     'git',
     'log',
     '--grep=' .. commit_prefix,
@@ -353,7 +349,7 @@ function M.submit_pr()
     "--format='%s'",
     nvim_remote .. '/master..HEAD',
     '-1',
-  }, 'Failed to fetch commits')
+  }, 'Failed to fetch commits'))
 
   local pr_title
   local pr_body
@@ -371,4 +367,80 @@ function M.submit_pr()
   create_pr(pr_title, pr_body)
 end
 
-return M
+local function usage()
+  local this_script = _G.arg[0]:match("[^/]*.lua$")
+  print(([=[
+    Bump Nvim dependencies
+
+    Usage:  nvim -l %s [options]
+        Bump to HEAD, tagged version, commit, or branch:
+            nvim -l %s --dep Luv --head
+            nvim -l %s --dep Luv --version 1.43.0-0
+            nvim -l %s --dep Luv --commit abc123
+            nvim -l %s --dep Luv --branch
+        Create a PR:
+            nvim -l %s --pr
+
+    Options:
+        -h                    show this message and exit.
+        --pr                  submit pr for bumping deps.
+        --branch <dep>        create a branch bump-<dep> from current branch.
+        --dep <dependency>    bump to a specific release or tag.
+
+    Dependency Options:
+        --version <tag>       bump to a specific release or tag.
+        --commit <hash>       bump to a specific commit.
+        --HEAD                bump to a current head.
+
+        <dependency> is one of:
+        "LuaJIT", "libuv", "Luv", "tree-sitter"
+  ]=]):format(this_script, this_script, this_script, this_script, this_script, this_script))
+end
+
+local function parseargs()
+  local args = {}
+  for i = 1, #_G.arg do
+    if _G.arg[i] == '-h' then
+      args.h = true
+    elseif _G.arg[i] == '--pr' then
+      args.pr = true
+    elseif _G.arg[i] == '--branch' then
+      args.branch = _G.arg[i+1]
+    elseif _G.arg[i] == '--dep' then
+      args.dep = _G.arg[i+1]
+    elseif _G.arg[i] == '--version' then
+      args.version = _G.arg[i+1]
+    elseif _G.arg[i] == '--commit' then
+      args.commit = _G.arg[i+1]
+    elseif _G.arg[i] == '--head' then
+      args.head = true
+    end
+  end
+  return args
+end
+
+local is_main = _G.arg[0]:match('bump_deps.lua')
+
+if is_main then
+  local args = parseargs()
+  if args.h then
+    usage()
+  elseif args.pr then
+    M.submit_pr()
+  elseif args.head then
+    M.head(args.dep)
+  elseif args.branch then
+    M.create_branch(args.dep)
+  elseif args.version then
+    M.version(args.dep, args.version)
+  elseif args.commit then
+    M.commit(args.dep, args.commit)
+  elseif args.pr then
+    M.submit_pr()
+  else
+    print('missing required arg\n')
+    os.exit(1)
+  end
+else
+  return M
+end
