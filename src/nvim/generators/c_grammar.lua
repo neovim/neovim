@@ -49,9 +49,9 @@ local c_proto = Ct(
   (fill * Cg((P('FUNC_API_LUA_ONLY') * Cc(true)), 'lua_only') ^ -1) *
   (fill * Cg((P('FUNC_API_CHECK_TEXTLOCK') * Cc(true)), 'check_textlock') ^ -1) *
   (fill * Cg((P('FUNC_API_REMOTE_IMPL') * Cc(true)), 'remote_impl') ^ -1) *
-  (fill * Cg((P('FUNC_API_BRIDGE_IMPL') * Cc(true)), 'bridge_impl') ^ -1) *
   (fill * Cg((P('FUNC_API_COMPOSITOR_IMPL') * Cc(true)), 'compositor_impl') ^ -1) *
   (fill * Cg((P('FUNC_API_CLIENT_IMPL') * Cc(true)), 'client_impl') ^ -1) *
+  (fill * Cg((P('FUNC_API_CLIENT_IGNORE') * Cc(true)), 'client_ignore') ^ -1) *
   fill * P(';')
   )
 

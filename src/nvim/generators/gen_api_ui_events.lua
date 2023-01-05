@@ -3,13 +3,12 @@ local mpack = require('mpack')
 local nvimdir = arg[1]
 package.path = nvimdir .. '/?.lua;' .. package.path
 
-assert(#arg == 7)
+assert(#arg == 6)
 local input = io.open(arg[2], 'rb')
-local proto_output = io.open(arg[3], 'wb')
-local call_output = io.open(arg[4], 'wb')
-local remote_output = io.open(arg[5], 'wb')
-local metadata_output = io.open(arg[6], 'wb')
-local client_output = io.open(arg[7], 'wb')
+local call_output = io.open(arg[3], 'wb')
+local remote_output = io.open(arg[4], 'wb')
+local metadata_output = io.open(arg[5], 'wb')
+local client_output = io.open(arg[6], 'wb')
 
 local c_grammar = require('generators.c_grammar')
 local events = c_grammar.grammar:match(input:read('*all'))
@@ -81,12 +80,9 @@ local function call_ui_event_method(output, ev)
     end
   end
 
-  output:write('  ui_call_'..ev.name..'(')
+  output:write('  tui_'..ev.name..'(tui')
   for j = 1, #ev.parameters do
-    output:write('arg_'..j)
-    if j ~= #ev.parameters then
-      output:write(', ')
-    end
+    output:write(', arg_'..j)
   end
   output:write(');\n')
 
@@ -104,12 +100,9 @@ for i = 1, #events do
   ev.since = tonumber(ev.since)
 
   if not ev.remote_only then
-    proto_output:write('  void (*'..ev.name..')')
-    write_signature(proto_output, ev, 'UI *ui')
-    proto_output:write(';\n')
 
     if not ev.remote_impl and not ev.noexport then
-      remote_output:write('static void remote_ui_'..ev.name)
+      remote_output:write('void remote_ui_'..ev.name)
       write_signature(remote_output, ev, 'UI *ui')
       remote_output:write('\n{\n')
       remote_output:write('  UIData *data = ui->data;\n')
@@ -130,6 +123,9 @@ for i = 1, #events do
       call_output:write('  UI_LOG('..ev.name..');\n')
       call_output:write('  ui_call_event("'..ev.name..'", args);\n')
     elseif ev.compositor_impl then
+      call_output:write('  ui_comp_'..ev.name)
+      write_signature(call_output, ev, '', true)
+      call_output:write(";\n")
       call_output:write('  UI_CALL')
       write_signature(call_output, ev, '!ui->composed, '..ev.name..', ui', true)
       call_output:write(";\n")
@@ -151,14 +147,14 @@ for i = 1, #events do
     call_output:write("}\n\n")
   end
 
-  if (not ev.remote_only) and (not ev.noexport) and (not ev.client_impl) then
+  if (not ev.remote_only) and (not ev.noexport) and (not ev.client_impl) and (not ev.client_ignore) then
     call_ui_event_method(client_output, ev)
   end
 end
 
 local client_events = {}
 for _,ev in ipairs(events) do
-  if (not ev.noexport) and ((not ev.remote_only) or ev.client_impl) then
+  if (not ev.noexport) and ((not ev.remote_only) or ev.client_impl) and (not ev.client_ignore) then
     client_events[ev.name] = ev
   end
 end
@@ -176,7 +172,6 @@ end
 client_output:write('\n};\n\n')
 client_output:write(hashfun)
 
-proto_output:close()
 call_output:close()
 remote_output:close()
 client_output:close()

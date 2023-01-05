@@ -36,7 +36,6 @@ set(HEADER_GENERATOR ${GENERATOR_DIR}/gen_declarations.lua)
 set(GENERATED_INCLUDES_DIR ${PROJECT_BINARY_DIR}/include)
 set(GENERATED_API_DISPATCH ${GENERATED_DIR}/api/private/dispatch_wrappers.generated.h)
 set(GENERATED_FUNCS_METADATA ${GENERATED_DIR}/api/private/funcs_metadata.generated.h)
-set(GENERATED_UI_EVENTS ${GENERATED_DIR}/ui_events.generated.h)
 set(GENERATED_UI_EVENTS_CALL ${GENERATED_DIR}/ui_events_call.generated.h)
 set(GENERATED_UI_EVENTS_REMOTE ${GENERATED_DIR}/ui_events_remote.generated.h)
 set(GENERATED_UI_EVENTS_CLIENT ${GENERATED_DIR}/ui_events_client.generated.h)
@@ -310,14 +309,12 @@ list(APPEND NVIM_GENERATED_SOURCES
 )
 
 add_custom_command(
-  OUTPUT ${GENERATED_UI_EVENTS}
-         ${GENERATED_UI_EVENTS_CALL}
+  OUTPUT ${GENERATED_UI_EVENTS_CALL}
          ${GENERATED_UI_EVENTS_REMOTE}
          ${GENERATED_UI_EVENTS_METADATA}
          ${GENERATED_UI_EVENTS_CLIENT}
   COMMAND ${LUA_PRG} ${API_UI_EVENTS_GENERATOR} ${CMAKE_CURRENT_LIST_DIR}
                      ${CMAKE_CURRENT_LIST_DIR}/api/ui_events.in.h
-                     ${GENERATED_UI_EVENTS}
                      ${GENERATED_UI_EVENTS_CALL}
                      ${GENERATED_UI_EVENTS_REMOTE}
                      ${GENERATED_UI_EVENTS_METADATA}

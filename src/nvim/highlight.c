@@ -12,6 +12,7 @@
 #include "lauxlib.h"
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"
+#include "nvim/api/ui.h"
 #include "nvim/decoration_provider.h"
 #include "nvim/drawscreen.h"
 #include "nvim/gettext.h"
@@ -128,19 +129,15 @@ static int get_attr_entry(HlEntry entry)
 /// When a UI connects, we need to send it the table of highlights used so far.
 void ui_send_all_hls(UI *ui)
 {
-  if (ui->hl_attr_define) {
-    for (size_t i = 1; i < kv_size(attr_entries); i++) {
-      Array inspect = hl_inspect((int)i);
-      ui->hl_attr_define(ui, (Integer)i, kv_A(attr_entries, i).attr,
-                         kv_A(attr_entries, i).attr, inspect);
-      api_free_array(inspect);
-    }
+  for (size_t i = 1; i < kv_size(attr_entries); i++) {
+    Array inspect = hl_inspect((int)i);
+    remote_ui_hl_attr_define(ui, (Integer)i, kv_A(attr_entries, i).attr,
+                             kv_A(attr_entries, i).attr, inspect);
+    api_free_array(inspect);
   }
-  if (ui->hl_group_set) {
-    for (size_t hlf = 0; hlf < HLF_COUNT; hlf++) {
-      ui->hl_group_set(ui, cstr_as_string((char *)hlf_names[hlf]),
-                       highlight_attr[hlf]);
-    }
+  for (size_t hlf = 0; hlf < HLF_COUNT; hlf++) {
+    remote_ui_hl_group_set(ui, cstr_as_string((char *)hlf_names[hlf]),
+                           highlight_attr[hlf]);
   }
 }
 
