@@ -23,7 +23,20 @@ end
 local path2name = function(path)
   if path:match('%.lua$') then
     -- Lua: transform "../lua/vim/lsp/health.lua" into "vim.lsp"
-    return path:gsub('.-lua[%\\%/]', '', 1):gsub('[%\\%/]', '.'):gsub('%.health.-$', '')
+
+    -- Get full path, make sure all slashes are '/'
+    path = vim.fs.normalize(path)
+
+    -- Remove everything up to the last /lua/ folder
+    path = path:gsub('^.*/lua/', '')
+
+    -- Remove the filename (health.lua)
+    path = vim.fn.fnamemodify(path, ':h')
+
+    -- Change slashes to dots
+    path = path:gsub('/', '.')
+
+    return path
   else
     -- Vim: transform "../autoload/health/provider.vim" into "provider"
     return vim.fn.fnamemodify(path, ':t:r')
