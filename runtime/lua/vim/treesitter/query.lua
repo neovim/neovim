@@ -414,6 +414,30 @@ local directive_handlers = {
       metadata[capture_id].range = range
     end
   end,
+  ['exclude_children!'] = function(match, _, _, pred, metadata)
+    local capture_id = pred[2]
+    local node = match[capture_id]
+    local start_row, start_col, end_row, end_col = node:range()
+    local ranges = {}
+    for i = 0, node:named_child_count() - 1 do
+      local child = node:named_child(i)
+      local child_start_row, child_start_col, child_end_row, child_end_col = child:range()
+      if child_start_row > start_row or child_start_col > start_col then
+        table.insert(ranges, {
+          start_row,
+          start_col,
+          child_start_row,
+          child_start_col,
+        })
+      end
+      start_row = child_end_row
+      start_col = child_end_col
+    end
+    if end_row > start_row or end_col > start_col then
+      table.insert(ranges, { start_row, start_col, end_row, end_col })
+    end
+    metadata.content = ranges
+  end,
 }
 
 --- Adds a new predicate to be used in queries
