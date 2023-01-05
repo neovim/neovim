@@ -566,7 +566,7 @@ hide({namespace}, {bufnr})                             *vim.diagnostic.hide()*
                      omitted, hide diagnostics in all buffers.
 
 is_disabled({bufnr}, {namespace})               *vim.diagnostic.is_disabled()*
-    Check diagnostic enabled in buffer
+    Check diagnostic disabled in buffer
 
     Parameters: ~
       • {bufnr}      (number|nil) Buffer number, or 0 for current buffer.

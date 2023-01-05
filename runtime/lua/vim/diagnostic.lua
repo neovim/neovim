@@ -251,7 +251,7 @@ local function get_bufnr(bufnr)
   return bufnr
 end
 
---- Check diagnostic enabled in buffer
+--- Check diagnostic disabled in buffer
 ---
 ---@param bufnr number|nil Buffer number, or 0 for current buffer.
 ---@param namespace number|nil Diagnostic namespace. When omitted, hide
