@@ -167,6 +167,30 @@ FileDescriptor *file_open_fd_new(int *const error, const int fd, const int flags
   return fp;
 }
 
+/// Opens standard input as a FileDescriptor.
+FileDescriptor *file_open_stdin(void)
+  FUNC_ATTR_MALLOC FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  int error;
+  int stdin_dup_fd;
+  if (stdin_fd > 0) {
+    stdin_dup_fd = stdin_fd;
+  } else {
+    stdin_dup_fd = os_dup(STDIN_FILENO);
+#ifdef MSWIN
+    // Replace the original stdin with the console input handle.
+    os_replace_stdin_to_conin();
+#endif
+  }
+  FileDescriptor *const stdin_dup = file_open_fd_new(&error, stdin_dup_fd,
+                                                     kFileReadOnly|kFileNonBlocking);
+  assert(stdin_dup != NULL);
+  if (error != 0) {
+    ELOG("failed to open stdin: %s", os_strerror(error));
+  }
+  return stdin_dup;
+}
+
 /// Close file and free its buffer
 ///
 /// @param[in,out]  fp  File to close.

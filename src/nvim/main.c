@@ -1567,19 +1567,7 @@ static void open_script_files(mparm_T *parmp)
   if (parmp->scriptin) {
     int error;
     if (strequal(parmp->scriptin, "-")) {
-      int stdin_dup_fd;
-      if (stdin_fd > 0) {
-        stdin_dup_fd = stdin_fd;
-      } else {
-        stdin_dup_fd = os_dup(STDIN_FILENO);
-#ifdef MSWIN
-        // Replace the original stdin with the console input handle.
-        os_replace_stdin_to_conin();
-#endif
-      }
-      FileDescriptor *const stdin_dup = file_open_fd_new(&error, stdin_dup_fd,
-                                                         kFileReadOnly|kFileNonBlocking);
-      assert(stdin_dup != NULL);
+      FileDescriptor *stdin_dup = file_open_stdin();
       scriptin[0] = stdin_dup;
     } else {
       scriptin[0] = file_open_new(&error, parmp->scriptin,

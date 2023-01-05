@@ -1724,20 +1724,7 @@ bool nlua_exec_file(const char *path)
     lua_getglobal(lstate, "loadfile");
     lua_pushstring(lstate, path);
   } else {
-    int error;
-    int stdin_dup_fd;
-    if (stdin_fd > 0) {
-      stdin_dup_fd = stdin_fd;
-    } else {
-      stdin_dup_fd = os_dup(STDIN_FILENO);
-#ifdef MSWIN
-      // Replace the original stdin with the console input handle.
-      os_replace_stdin_to_conin();
-#endif
-    }
-    FileDescriptor *const stdin_dup = file_open_fd_new(&error, stdin_dup_fd,
-                                                       kFileReadOnly|kFileNonBlocking);
-    assert(stdin_dup != NULL);
+    FileDescriptor *stdin_dup = file_open_stdin();
 
     StringBuilder sb = KV_INITIAL_VALUE;
     kv_resize(sb, 64);
