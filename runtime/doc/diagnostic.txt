@@ -332,16 +332,6 @@ Example: >lua
 ==============================================================================
 Lua module: vim.diagnostic                                    *diagnostic-api*
 
-buf_in_disable({bufnr})                      *vim.diagnostic.buf_in_disable()*
-    Check diagnostic enabled in buffer
-
-    Parameters: ~
-      • {bufnr}  (number|nil) Check buffer disabled diagnostic. nil for
-                 current buffer
-
-    Return: ~
-        (boolean)
-
 config({opts}, {namespace})                          *vim.diagnostic.config()*
     Configure diagnostic options globally or for a specific diagnostic
     namespace.
@@ -574,6 +564,17 @@ hide({namespace}, {bufnr})                             *vim.diagnostic.hide()*
                      namespaces.
       • {bufnr}      (number|nil) Buffer number, or 0 for current buffer. When
                      omitted, hide diagnostics in all buffers.
+
+is_disabled({bufnr}, {namespace})               *vim.diagnostic.is_disabled()*
+    Check diagnostic enabled in buffer
+
+    Parameters: ~
+      • {bufnr}      (number|nil) Buffer number, or 0 for current buffer.
+      • {namespace}  (number|nil) Diagnostic namespace. When omitted, hide diagnostics from all
+                     namespaces.
+
+    Return: ~
+        (boolean)
 
                                                       *vim.diagnostic.match()*
 match({str}, {pat}, {groups}, {severity_map}, {defaults})
