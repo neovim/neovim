@@ -335,9 +335,8 @@ static int nlua_thr_api_nvim__get_runtime(lua_State *lstate)
 /// @see https://github.com/premake/premake-core/blob/1c1304637f4f5e50ba8c57aae8d1d80ec3b7aaf2/src/host/premake.c#L563-L594
 ///
 /// @returns number of args
-int nlua_init_argv(char **argv, int argc, int lua_arg0)
+static int nlua_init_argv(lua_State *const L, char **argv, int argc, int lua_arg0)
 {
-  lua_State *const L = global_lstate;
   lua_newtable(L);  // _G.arg
   int i = 0;
   for (; lua_arg0 >= 0 && i + lua_arg0 < argc; i++) {
@@ -790,10 +789,8 @@ static bool nlua_state_init(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
   return true;
 }
 
-/// Initialize global lua interpreter
-///
-/// Crashes Nvim if initialization fails.
-void nlua_init(void)
+/// Initializes global Lua interpreter, or exits Nvim on failure.
+void nlua_init(char **argv, int argc, int lua_arg0)
 {
 #ifdef NLUA_TRACK_REFS
   const char *env = os_getenv("NVIM_LUA_NOTRACK");
@@ -814,10 +811,9 @@ void nlua_init(void)
   }
 
   luv_set_thread_cb(nlua_thread_acquire_vm, nlua_common_free_all_mem);
-
   global_lstate = lstate;
-
   main_thread = uv_thread_self();
+  nlua_init_argv(lstate, argv, argc, lua_arg0);
 }
 
 static lua_State *nlua_thread_acquire_vm(void)

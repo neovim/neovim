@@ -279,8 +279,7 @@ int main(int argc, char **argv)
   // argument list "global_alist".
   command_line_scan(&params);
 
-  nlua_init();
-  nlua_init_argv(argv, argc, params.lua_arg0);
+  nlua_init(argv, argc, params.lua_arg0);
   TIME_MSG("init lua interpreter");
 
   if (embedded_mode) {
@@ -2147,7 +2146,7 @@ static void mainerr(const char *errstr, const char *str)
 static void version(void)
 {
   // TODO(bfred): not like this?
-  nlua_init();
+  nlua_init(NULL, 0, -1);
   info_message = true;  // use os_msg(), not os_errmsg()
   list_version();
   msg_putchar('\n');
