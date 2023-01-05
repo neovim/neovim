@@ -103,7 +103,7 @@ The following new APIs or features were added.
 
   See https://github.com/neovim/neovim/pull/14537.
 
-• |vim.diagnostic.buf_in_disable()| check diagnostic disabled in given buffer or
+• |vim.diagnostic.is_disabled()| check diagnostic disabled in given buffer or
   current buffer.
 
 • |--remote-ui| option was added to connect to a remote instance and display

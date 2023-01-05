@@ -2126,29 +2126,28 @@ end)
       end)
 
     it("Check diagnostic disabled in buffer", function()
-      eq(true, exec_lua [[
+      eq({true, true, true , true}, exec_lua [[
         vim.diagnostic.set(diagnostic_ns, diagnostic_bufnr, {
           make_error('Diagnostic #1', 1, 1, 1, 1),
         })
-        vim.diagnostic.disable(diagnostic_bufnr)
-        return vim.diagnostic.buf_in_disable(diagnostic_bufnr)
-      ]])
-
-      eq(true, exec_lua [[
-        vim.diagnostic.set(diagnostic_ns, diagnostic_bufnr, {
-          make_error('Diagnostic #1', 1, 1, 1, 1),
-        })
+        vim.api.nvim_set_current_buf(diagnostic_bufnr)
         vim.diagnostic.disable()
-        return vim.diagnostic.buf_in_disable(diagnostic_bufnr)
+        return {
+          vim.diagnostic.is_disabled(),
+          vim.diagnostic.is_disabled(diagnostic_bufnr),
+          vim.diagnostic.is_disabled(diagnostic_bufnr,diagnostic_ns),
+          vim.diagnostic.is_disabled(_,diagnostic_ns),
+        }
       ]])
 
-      eq(false, exec_lua [[
-        local tmp = vim.api.nvim_create_buf(false, true)
-        vim.diagnostic.set(diagnostic_ns, tmp, {
-          make_error('Diagnostic #1', 1, 1, 1, 1),
-        })
+      eq({false, false, false , false}, exec_lua [[
         vim.diagnostic.enable()
-        return vim.diagnostic.buf_in_disable(tmp)
+        return {
+          vim.diagnostic.is_disabled(),
+          vim.diagnostic.is_disabled(diagnostic_bufnr),
+          vim.diagnostic.is_disabled(diagnostic_bufnr,diagnostic_ns),
+          vim.diagnostic.is_disabled(_,diagnostic_ns),
+        }
       ]])
     end)
   end)

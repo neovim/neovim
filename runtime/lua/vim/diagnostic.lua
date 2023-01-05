@@ -251,17 +251,26 @@ local function get_bufnr(bufnr)
   return bufnr
 end
 
----@private
-local function is_disabled(namespace, bufnr)
-  local ns = M.get_namespace(namespace)
-  if ns.disabled then
+--- Check diagnostic enabled in buffer
+---
+---@param bufnr number|nil Buffer number, or 0 for current buffer.
+---@param namespace number|nil Diagnostic namespace. When omitted, hide
+---                            diagnostics from all namespaces.
+---@return boolean
+function M.is_disabled(bufnr, namespace)
+  bufnr = bufnr or api.nvim_get_current_buf()
+  if namespace and M.get_namespace(namespace).disabled then
     return true
   end
 
   if type(diagnostic_disabled[bufnr]) == 'table' then
     return diagnostic_disabled[bufnr][namespace]
   end
-  return diagnostic_disabled[bufnr]
+
+  if diagnostic_disabled[bufnr] then
+    return diagnostic_disabled[bufnr]
+  end
+  return false
 end
 
 ---@private
@@ -760,19 +769,6 @@ function M.get_namespaces()
   return vim.deepcopy(all_namespaces)
 end
 
---- Check diagnostic enabled in buffer
----
----@param bufnr number|nil Check buffer disabled diagnostic. nil for
----                        current buffer
----@return boolean
-function M.buf_in_disable(bufnr)
-  bufnr = bufnr or api.nvim_get_current_buf()
-  if diagnostic_disabled[bufnr] then
-    return true
-  end
-  return false
-end
-
 ---@class Diagnostic
 ---@field buffer number
 ---@field lnum number 0-indexed
@@ -1180,7 +1176,7 @@ function M.show(namespace, bufnr, diagnostics, opts)
     return
   end
 
-  if is_disabled(namespace, bufnr) then
+  if M.is_disabled(bufnr, namespace) then
     return
   end
 
