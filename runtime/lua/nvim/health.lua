@@ -8,7 +8,6 @@ local fn_bool = function(key)
 end
 
 local has = fn_bool('has')
-local exists = fn_bool('exists')
 local executable = fn_bool('executable')
 local empty = fn_bool('empty')
 local filereadable = fn_bool('filereadable')
@@ -73,7 +72,7 @@ local function check_config()
     health.report_error('$VIM is invalid: ' .. vim.env.VIM)
   end
 
-  if 1 == vim.fn.exists('$NVIM_TUI_ENABLE_CURSOR_SHAPE') then
+  if vim.env.NVIM_TUI_ENABLE_CURSOR_SHAPE then
     ok = false
     health.report_warn('$NVIM_TUI_ENABLE_CURSOR_SHAPE is ignored in Nvim 0.2+', {
       "Use the 'guicursor' option to configure cursor shape. :help 'guicursor'",
