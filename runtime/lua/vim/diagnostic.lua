@@ -258,7 +258,7 @@ end
 ---                            diagnostics from all namespaces.
 ---@return boolean
 function M.is_disabled(bufnr, namespace)
-  bufnr = bufnr or api.nvim_get_current_buf()
+  bufnr = get_bufnr(bufnr)
   if namespace and M.get_namespace(namespace).disabled then
     return true
   end
