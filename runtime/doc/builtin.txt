@@ -7210,6 +7210,7 @@ setqflist({list} [, {action} [, {what}]])		*setqflist()*
 		    text	description of the error
 		    type	single-character error type, 'E', 'W', etc.
 		    valid	recognized error message
+		    user_data	custom user data associated with this item.
 
 		The "col", "vcol", "nr", "type" and "text" entries are
 		optional.  Either "lnum" or "pattern" entry can be used to

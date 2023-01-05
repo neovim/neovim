@@ -87,6 +87,7 @@ struct qfline_S {
   //   screen column
   char qf_cleared;      ///< set to true if line has been deleted
   char qf_type;         ///< type of the error (mostly 'E'); 1 for :helpgrep
+  typval_T qf_user_data; ///< custom user data
   char qf_valid;        ///< valid error message detected
 };
 
@@ -226,6 +227,7 @@ typedef struct {
   char *pattern;
   int enr;
   char type;
+  typval_T *user_data;
   bool valid;
 } qffields_T;
 
@@ -319,6 +321,7 @@ static int qf_init_process_nextline(qf_list_T *qfl, efm_T *fmt_first, qfstate_T 
                       fields->pattern,
                       fields->enr,
                       fields->type,
+                      fields->user_data,
                       fields->valid);
 }
 
@@ -1800,12 +1803,14 @@ void check_quickfix_busy(void)
 /// @param  pattern  search pattern
 /// @param  nr       error number
 /// @param  type     type character
+/// @param  user_data custom user data
 /// @param  valid    valid entry
 ///
 /// @return  QF_OK on success or QF_FAIL on failure.
 static int qf_add_entry(qf_list_T *qfl, char *dir, char *fname, char *module, int bufnum,
                         char *mesg, linenr_T lnum, linenr_T end_lnum, int col, int end_col,
-                        char vis_col, char *pattern, int nr, char type, char valid)
+                        char vis_col, char *pattern, int nr, char type, typval_T* user_data, 
+                        char valid)
 {
   qfline_T *qfp = xmalloc(sizeof(qfline_T));
 
@@ -1826,6 +1831,11 @@ static int qf_add_entry(qf_list_T *qfl, char *dir, char *fname, char *module, in
   qfp->qf_col = col;
   qfp->qf_end_col = end_col;
   qfp->qf_viscol = vis_col;
+  if (user_data == NULL) {
+    qfp->qf_user_data = TV_INITIAL_VALUE;
+  } else {
+    tv_copy(user_data, &qfp->qf_user_data);
+  }
   if (pattern == NULL || *pattern == NUL) {
     qfp->qf_pattern = NULL;
   } else {
@@ -1961,6 +1971,7 @@ static int copy_loclist_entries(const qf_list_T *from_qfl, qf_list_T *to_qfl)
                      from_qfp->qf_pattern,
                      from_qfp->qf_nr,
                      0,
+                     NULL,
                      from_qfp->qf_valid) == QF_FAIL) {
       return FAIL;
     }
@@ -5206,6 +5217,7 @@ static bool vgr_match_buflines(qf_list_T *qfl, char *fname, buf_T *buf, char *sp
                          NULL,   // search pattern
                          0,      // nr
                          0,      // type
+                         NULL,   // user_data
                          true)   // valid
             == QF_FAIL) {
           got_int = true;
@@ -5249,6 +5261,7 @@ static bool vgr_match_buflines(qf_list_T *qfl, char *fname, buf_T *buf, char *sp
                          NULL,   // search pattern
                          0,      // nr
                          0,      // type
+                         NULL,   // user_data
                          true)   // valid
             == QF_FAIL) {
           got_int = true;
@@ -5772,6 +5785,8 @@ static int get_qfline_items(qfline_T *qfp, list_T *list)
       || (tv_dict_add_nr(dict, S_LEN("vcol"), (varnumber_T)qfp->qf_viscol)
           == FAIL)
       || (tv_dict_add_nr(dict, S_LEN("nr"), (varnumber_T)qfp->qf_nr) == FAIL)
+      || (qfp->qf_user_data.v_type != VAR_UNKNOWN 
+          && tv_dict_add_tv(dict, S_LEN("user_data"), &qfp->qf_user_data) == FAIL)
       || (tv_dict_add_str(dict, S_LEN("module"),
                           (qfp->qf_module == NULL ? "" : (const char *)qfp->qf_module))
           == FAIL)
@@ -6284,6 +6299,10 @@ static int qf_add_entry_from_dict(qf_list_T *qfl, const dict_T *d, bool first_en
   const char *const type = tv_dict_get_string(d, "type", false);
   char *const pattern = tv_dict_get_string(d, "pattern", true);
   char *text = tv_dict_get_string(d, "text", true);
+
+  typval_T user_data;
+  tv_dict_get_tv(d, "user_data", &user_data);
+
   if (text == NULL) {
     text = xcalloc(1, 1);
   }
@@ -6323,12 +6342,14 @@ static int qf_add_entry_from_dict(qf_list_T *qfl, const dict_T *d, bool first_en
                                   pattern,   // search pattern
                                   nr,
                                   type == NULL ? NUL : *type,
+                                  &user_data,
                                   valid);
 
   xfree(filename);
   xfree(module);
   xfree(pattern);
   xfree(text);
+  tv_clear(&user_data);
 
   if (valid) {
     *valid_entry = true;
@@ -7027,6 +7048,7 @@ static void hgr_search_file(qf_list_T *qfl, char *fname, regmatch_T *p_regmatch)
                        NULL,   // search pattern
                        0,      // nr
                        1,      // type
+                       NULL,   // data
                        true)    // valid
           == QF_FAIL) {
         got_int = true;

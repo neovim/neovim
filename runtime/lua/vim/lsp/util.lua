@@ -1728,6 +1728,9 @@ end)
 --- The result can be passed to the {list} argument of |setqflist()| or
 --- |setloclist()|.
 ---
+--- The user_data field of each quickfix item is set to the original
+--- LSP `Location` or `LocationLink` item.
+---
 ---@param locations table list of `Location`s or `LocationLink`s
 ---@param offset_encoding string offset_encoding for locations utf-8|utf-16|utf-32
 ---@returns (table) list of items

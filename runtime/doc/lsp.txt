@@ -1580,6 +1580,9 @@ locations_to_items({locations}, {offset_encoding})
     The result can be passed to the {list} argument of |setqflist()| or
     |setloclist()|.
 
+    The user_data field of each quickfix item is set to the original LSP
+    `Location` or `LocationLink` item.
+
     Parameters: ~
       • {locations}        (table) list of `Location`s or `LocationLink`s
       • {offset_encoding}  (string) offset_encoding for locations

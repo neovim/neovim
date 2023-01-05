@@ -2040,7 +2040,7 @@ dictitem_T *tv_dict_find(const dict_T *const d, const char *const key, const ptr
 /// @param[in]  key  Dictionary key.
 /// @param[in]  rettv  Return value.
 /// @return OK in case of success or FAIL if nothing was found.
-int tv_dict_get_tv(dict_T *d, const char *const key, typval_T *rettv)
+int tv_dict_get_tv(const dict_T *const d, const char *const key, typval_T *rettv)
 {
   dictitem_T *const di = tv_dict_find(d, key, -1);
   if (di == NULL) {

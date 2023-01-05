@@ -108,6 +108,12 @@ The following new APIs or features were added.
   instance in the background and display its UI on demand, which previously
   only was possible usiing a external UI implementation.
 
+• Add a `user_data` field to quickfix items for arbitrary user-defined data
+  associated which each item.
+  For example, |vim.lsp.util.locations_to_items()| now uses it to store the
+  original LSP `Location` or `LocationLink` item.
+
+
 ==============================================================================
 CHANGED FEATURES                                                 *news-changes*
 
