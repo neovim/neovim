@@ -115,10 +115,6 @@ static char uilog_last_event[1024] = { 0 };
 # include "ui_events_call.generated.h"
 #endif
 
-#ifndef EXITFREE
-# undef entered_free_all_mem
-#endif
-
 void ui_init(void)
 {
   default_grid.handle = 1;
