@@ -1,7 +1,7 @@
 runtime! syntax/dosini.vim
 unlet! b:current_syntax
 
-syntax match editorconfigInvalidProperty "^\s*\zs\w\+\ze\s*="
+syntax match editorconfigUnknownProperty "^\s*\zs\w\+\ze\s*="
 syntax keyword editorconfigProperty root
 
 lua<<
@@ -12,7 +12,6 @@ end
 vim.cmd(string.format('syntax keyword editorconfigProperty %s', table.concat(props, ' ')))
 .
 
-hi def link editorconfigInvalidProperty Error
 hi def link editorconfigProperty dosiniLabel
 
 let b:current_syntax = 'editorconfig'
