@@ -1469,6 +1469,33 @@ describe('TUI', function()
                                                                                  |
       {3:-- TERMINAL --}                                                             |]]))
   end)
+
+  it('visual bell (padding) does not crash #21610', function()
+    feed_data ':set visualbell\n'
+    screen:expect{grid=[[
+      {1: }                                                 |
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {5:[No Name]                                         }|
+      :set visualbell                                   |
+      {3:-- TERMINAL --}                                    |
+    ]]}
+
+    -- move left is enough to invoke the bell
+    feed_data 'h'
+    -- visual change to show we process events after this
+    feed_data 'i'
+    screen:expect{grid=[[
+      {1: }                                                 |
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {5:[No Name]                                         }|
+      {3:-- INSERT --}                                      |
+      {3:-- TERMINAL --}                                    |
+    ]]}
+  end)
 end)
 
 describe('TUI', function()
