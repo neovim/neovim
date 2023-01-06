@@ -2125,7 +2125,7 @@ end)
       ]])
       end)
 
-    it("Check diagnostic disabled in buffer", function()
+    it("checks if diagnostics are disabled in a buffer", function()
       eq({true, true, true , true}, exec_lua [[
         vim.diagnostic.set(diagnostic_ns, diagnostic_bufnr, {
           make_error('Diagnostic #1', 1, 1, 1, 1),
