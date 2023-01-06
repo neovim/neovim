@@ -1626,7 +1626,7 @@ static void pad(void *ctx, size_t delay, int scale FUNC_ATTR_UNUSED, int force)
   }
 
   flush_buf(tui);
-  loop_uv_run(tui->loop, (int64_t)(delay / 10), false);
+  uv_sleep((unsigned int)(delay/10));
 }
 
 static void unibi_set_if_empty(unibi_term *ut, enum unibi_string str, const char *val)
