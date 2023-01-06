@@ -111,7 +111,6 @@ The following new APIs or features were added.
   instance in the background and display its UI on demand, which previously
   only was possible usiing a external UI implementation.
 
-
 ==============================================================================
 CHANGED FEATURES                                                 *news-changes*
 
