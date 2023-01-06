@@ -254,8 +254,10 @@ end
 --- Check whether diagnostics are disabled in a given buffer.
 ---
 ---@param bufnr number|nil Buffer number, or 0 for current buffer.
----@param namespace number|nil Diagnostic namespace. When omitted, hide
----                            diagnostics from all namespaces.
+---@param namespace number|nil Diagnostic namespace. When omitted, checks if
+---                            all diagnostics are disabled in {bufnr}.
+---                            Otherwise, only checks if diagnostics from
+---                            {namespace} are disabled.
 ---@return boolean
 function M.is_disabled(bufnr, namespace)
   bufnr = get_bufnr(bufnr)
