@@ -75,6 +75,32 @@ describe('cfilter.lua', function()
       test('filters with matches', 'z', { 'baz', 'zed' }, toname)
       test('filters with matches', '^z', { 'zed' }, toname)
       test('filters with not matches', '^z', { 'bar', 'baz' }, toname, true)
+
+      it('also supports using the / register', function()
+        list.set({
+          { filename = 'foo', lnum = 1, text = 'bar' },
+          { filename = 'foo', lnum = 2, text = 'baz' },
+          { filename = 'foo', lnum = 3, text = 'zed' },
+        })
+
+        funcs.setreg('/', 'ba')
+        filter('/')
+
+        eq({ 'bar', 'baz' }, toname(list.get()))
+      end)
+
+      it('also supports using the / register with bang', function()
+        list.set({
+          { filename = 'foo', lnum = 1, text = 'bar' },
+          { filename = 'foo', lnum = 2, text = 'baz' },
+          { filename = 'foo', lnum = 3, text = 'zed' },
+        })
+
+        funcs.setreg('/', 'ba')
+        filter('/', true)
+
+        eq({ 'zed' }, toname(list.get()))
+      end)
     end)
   end
 end)
