@@ -2135,8 +2135,8 @@ end)
         return {
           vim.diagnostic.is_disabled(),
           vim.diagnostic.is_disabled(diagnostic_bufnr),
-          vim.diagnostic.is_disabled(diagnostic_bufnr,diagnostic_ns),
-          vim.diagnostic.is_disabled(_,diagnostic_ns),
+          vim.diagnostic.is_disabled(diagnostic_bufnr, diagnostic_ns),
+          vim.diagnostic.is_disabled(_, diagnostic_ns),
         }
       ]])
 
