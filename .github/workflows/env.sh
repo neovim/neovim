@@ -18,7 +18,6 @@ VALGRIND_LOG=$GITHUB_WORKSPACE/build/log/valgrind-%p.log
 CACHE_NVIM_DEPS_DIR=$HOME/.cache/nvim-deps
 CACHE_MARKER=$HOME/.cache/nvim-deps/.ci_cache_marker
 CACHE_UNCRUSTIFY=$HOME/.cache/uncrustify
-UNCRUSTIFY_VERSION=uncrustify-0.75.0
 EOF
 
 DEPS_CMAKE_FLAGS=
