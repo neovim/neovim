@@ -267,10 +267,7 @@ function M.is_disabled(bufnr, namespace)
     return diagnostic_disabled[bufnr][namespace]
   end
 
-  if diagnostic_disabled[bufnr] then
-    return diagnostic_disabled[bufnr]
-  end
-  return false
+  return diagnostic_disabled[bufnr] ~= nil
 end
 
 ---@private
