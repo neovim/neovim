@@ -801,6 +801,9 @@ function protocol.make_client_capabilities()
           end)(),
         },
       },
+      callHierarchy = {
+        dynamicRegistration = false,
+      },
     },
     workspace = {
       symbol = {
@@ -827,9 +830,6 @@ function protocol.make_client_capabilities()
       semanticTokens = {
         refreshSupport = true,
       },
-    },
-    callHierarchy = {
-      dynamicRegistration = false,
     },
     experimental = nil,
     window = {
