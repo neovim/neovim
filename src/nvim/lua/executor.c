@@ -1738,7 +1738,9 @@ bool nlua_exec_file(const char *path)
       if (read_size < 0) {  // Error.
         return false;
       }
-      kv_concat_len(sb, IObuff, (size_t)read_size);
+      if (read_size > 0) {
+        kv_concat_len(sb, IObuff, (size_t)read_size);
+      }
       if (read_size < 64) {  // EOF.
         break;
       }
