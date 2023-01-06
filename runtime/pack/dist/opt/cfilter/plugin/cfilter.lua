@@ -51,35 +51,11 @@ Qf_filter = function(qf, searchpat, bang)
     cmd = ':Cfilter' .. bang
   else
     Xgetlist = function(...)
-      local copied = vim.deepcopy({ 0 })
-      for _, val in ipairs({ ... }) do
-        table.insert(copied, val)
-      end
-
-      local funcref = 'getloclist'
-      if type(funcref) == 'function' then
-        return funcref(unpack(copied))
-      elseif type(funcref) == 'string' then
-        return vim.fn[funcref](unpack(copied))
-      else
-        error(string.format('unable to call funcref: %s', funcref))
-      end
+      return vim9.fn_ref(M, 'getloclist', vim.deepcopy({ 0 }), ...)
     end
 
     Xsetlist = function(...)
-      local copied = vim.deepcopy({ 0 })
-      for _, val in ipairs({ ... }) do
-        table.insert(copied, val)
-      end
-
-      local funcref = 'setloclist'
-      if type(funcref) == 'function' then
-        return funcref(unpack(copied))
-      elseif type(funcref) == 'string' then
-        return vim.fn[funcref](unpack(copied))
-      else
-        error(string.format('unable to call funcref: %s', funcref))
-      end
+      return vim9.fn_ref(M, 'setloclist', vim.deepcopy({ 0 }), ...)
     end
 
     cmd = ':Lfilter' .. bang
