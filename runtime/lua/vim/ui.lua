@@ -104,4 +104,29 @@ function M.input(opts, on_confirm)
   end
 end
 
+function M.confirm(msg, opts, on_choice)
+  vim.validate({
+    msg = { msg, 'string' },
+    opts = { opts, 'table', true},
+    on_choice = { on_choice, 'function'},
+  })
+
+  opts = opts or {}
+  opts.choices = opts.choices or {}
+
+  local ok, res = pcall(vim.fn.confirm, msg, table.concat(opts.choices, '\n'), opts.default)
+
+  if (ok and res == 0) or (not ok and res == 'Keyboard interrupt') then
+    on_choice(nil, nil)
+  elseif ok then
+    local selected_choice = nil
+    if vim.tbl_isempty(opts.choices) == false then
+      selected_choice = (opts.choices[res]:gsub('&', ''))
+    end
+    on_choice(res, selected_choice)
+  else
+    error(res)
+  end
+end
+
 return M
