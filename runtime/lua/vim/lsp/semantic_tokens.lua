@@ -408,7 +408,6 @@ function STHighlighter:on_win(topline, botline)
             hl_group = '@' .. token.type,
             end_col = token.end_col,
             priority = vim.highlight.priorities.semantic_tokens,
-            right_gravity = false,
             end_right_gravity = true,
             strict = false,
           })
@@ -420,7 +419,6 @@ function STHighlighter:on_win(topline, botline)
                 hl_group = '@' .. modifier,
                 end_col = token.end_col,
                 priority = vim.highlight.priorities.semantic_tokens + 1,
-                right_gravity = false,
                 end_right_gravity = true,
                 strict = false,
               })
