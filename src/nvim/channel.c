@@ -377,6 +377,7 @@ Channel *channel_job_start(char **argv, CallbackReader on_stdout, CallbackReader
   } else {
     has_out = rpc || callback_reader_set(chan->on_data);
     has_err = callback_reader_set(chan->on_stderr);
+    proc->fwd_err = chan->on_stderr.fwd_err;
   }
 
   switch (stdin_mode) {
@@ -518,6 +519,13 @@ uint64_t channel_from_stdio(bool rpc, CallbackReader on_output, const char **err
     os_replace_stdin_to_conin();
     stdout_dup_fd = os_dup(STDOUT_FILENO);
     os_replace_stdout_and_stderr_to_conout();
+  }
+#else
+  if (embedded_mode) {
+    stdin_dup_fd = dup(STDIN_FILENO);
+    stdout_dup_fd = dup(STDOUT_FILENO);
+    dup2(STDERR_FILENO, STDOUT_FILENO);
+    dup2(STDERR_FILENO, STDIN_FILENO);
   }
 #endif
   rstream_init_fd(&main_loop, &channel->stream.stdio.in, stdin_dup_fd, 0);

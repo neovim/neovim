@@ -41,8 +41,11 @@ uint64_t ui_client_start_server(int argc, char **argv)
   }
   args[args_idx++] = NULL;
 
+  CallbackReader on_err = CALLBACK_READER_INIT;
+  on_err.fwd_err = true;
+
   Channel *channel = channel_job_start(args, CALLBACK_READER_INIT,
-                                       CALLBACK_READER_INIT, CALLBACK_NONE,
+                                       on_err, CALLBACK_NONE,
                                        false, true, true, false, kChannelStdinPipe,
                                        NULL, 0, 0, NULL, &exit_status);
   if (ui_client_forward_stdin) {

@@ -66,6 +66,7 @@ typedef struct {
   garray_T buffer;
   bool eof;
   bool buffered;
+  bool fwd_err;
   const char *type;
 } CallbackReader;
 
@@ -73,6 +74,7 @@ typedef struct {
                                                 .self = NULL, \
                                                 .buffer = GA_EMPTY_INIT_VALUE, \
                                                 .buffered = false, \
+                                                .fwd_err = false, \
                                                 .type = NULL })
 static inline bool callback_reader_set(CallbackReader reader)
 {
