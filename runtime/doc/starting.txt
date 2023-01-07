@@ -218,15 +218,13 @@ argument.
 -l {script} [args]
 		Executes Lua {script} non-interactively (no UI) with optional
 		[args] after processing any preceding Nvim |cli-arguments|,
-		then exits. See |-S| to run multiple Lua scripts without args,
-		or in an interactive session.
+		then exits. Exits 1 on Lua error. See |-S| to run multiple Lua
+		scripts without args, with a UI.
 								    *lua-args*
-		All [args] are treated as {script} arguments and passed
-		literally to Lua (in the conventional `_G.arg` global table),
-		thus "-l" ends processing of Nvim arguments.
+		All [args] are treated as {script} arguments and stored in the
+		Lua `_G.arg` global table, thus "-l" ends processing of Nvim
+		arguments. The {script} name is stored at `_G.arg[0]`.
 		
-		Exits with code 1 on Lua error.
-
 		Sets 'verbose' to 1 (like "-V1"), so Lua `print()` writes to
 		output.
 

@@ -323,13 +323,12 @@ static int nlua_thr_api_nvim__get_runtime(lua_State *lstate)
   return 1;
 }
 
-/// Copies args starting at `lua_arg0` into the Lua `arg` global.
+/// Copies args starting at `lua_arg0` to Lua `_G.arg`, and sets `_G.arg[0]` to the scriptname.
 ///
-/// Example (`lua_arg0` points to "--arg1"):
+/// Example (arg[0] => "foo.lua", arg[1] => "--arg1", …):
 ///     nvim -l foo.lua --arg1 --arg2
 ///
-/// @note Lua CLI sets arguments upto "-e" as _negative_ `_G.arg` indices, but we currently don't
-/// follow that convention.
+/// @note Lua CLI sets args before "-e" as _negative_ `_G.arg` indices, but we currently don't.
 ///
 /// @see https://www.lua.org/pil/1.4.html
 /// @see https://github.com/premake/premake-core/blob/1c1304637f4f5e50ba8c57aae8d1d80ec3b7aaf2/src/host/premake.c#L563-L594
@@ -337,12 +336,19 @@ static int nlua_thr_api_nvim__get_runtime(lua_State *lstate)
 /// @returns number of args
 static int nlua_init_argv(lua_State *const L, char **argv, int argc, int lua_arg0)
 {
-  lua_newtable(L);  // _G.arg
   int i = 0;
-  for (; lua_arg0 >= 0 && i + lua_arg0 < argc; i++) {
-    lua_pushstring(L, argv[i + lua_arg0]);
-    lua_rawseti(L, -2, i + 1);  // _G.arg[i+1] = "arg1"
+  lua_newtable(L);  // _G.arg
+
+  if (lua_arg0 > 0) {
+    lua_pushstring(L, argv[lua_arg0 - 1]);
+    lua_rawseti(L, -2, 0);  // _G.arg[0] = "foo.lua"
+
+    for (; lua_arg0 >= 0 && i + lua_arg0 < argc; i++) {
+      lua_pushstring(L, argv[i + lua_arg0]);
+      lua_rawseti(L, -2, i + 1);  // _G.arg[i+1] = "--foo"
+    }
   }
+
   lua_setglobal(L, "arg");
   return i;
 }
