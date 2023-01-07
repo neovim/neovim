@@ -25,6 +25,8 @@ The following new APIs or features were added.
 
 • ...
 
+• |vim.ui.confirm()| Prompts the user to pick an option from a list of choices.
+
 ==============================================================================
 CHANGED FEATURES                                                 *news-changed*
 
