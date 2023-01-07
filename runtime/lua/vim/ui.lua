@@ -104,11 +104,38 @@ function M.input(opts, on_confirm)
   end
 end
 
+--- Prompts the user to pick an option from a list of choices
+---
+---@param msg string prompt displayed to the user
+---@param opts table
+---     - choices (string[]|nil)
+---               List of choices. The shortcut key for each choice
+---               is designated with a "&" character. If "&" is not present
+---               in the choice, the first letter of the choice is used.
+---     - default (number|nil)
+---               Default choice selected when user presses <Enter>
+---@param on_choice fun(idx:number|nil,choice:string|nil)
+---               Called once the user chooses or cancel the input.
+---               `idx` is the 1-based index of the 'choice' in `opts.choices` table,
+---               (it might be `0` if none of the choices is picked, or
+---               `nil` if the user aborted the dialog.)
+---		  `choice` is what the user chose (`nil` on abortion or
+---		  if user did not choose any option)
+---
+--- Example:
+--- <pre>lua
+--- vim.ui.confirm("Favorite fruit?", {
+---     choices = {'Apple', 'Banana', 'Cranberry', 'El&derberry' },
+---     default = 2,
+--- }, function(idx, choice)
+---     print(idx, choice)
+--- end)
+--- </pre>
 function M.confirm(msg, opts, on_choice)
   vim.validate({
     msg = { msg, 'string' },
-    opts = { opts, 'table', true},
-    on_choice = { on_choice, 'function'},
+    opts = { opts, 'table', true },
+    on_choice = { on_choice, 'function' },
   })
 
   opts = opts or {}
