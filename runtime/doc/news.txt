@@ -53,7 +53,7 @@ The following new APIs or features were added.
 • EditorConfig support is now builtin. This is enabled by default and happens
   automatically. To disable it, users should add >lua
 
-    vim.g.editorconfig_enable = false
+    vim.g.editorconfig = false
 <
   (or the Vimscript equivalent) to their |config| file.
 
