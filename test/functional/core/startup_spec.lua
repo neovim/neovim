@@ -108,7 +108,9 @@ describe('startup', function()
       assert_l_out([[
           bufs:
           nvim args: 7
-          lua args: { "-arg1", "--exitcode", "73", "--arg2" }]],
+          lua args: { "-arg1", "--exitcode", "73", "--arg2",
+            [0] = "test/functional/fixtures/startup.lua"
+          }]],
         {},
         { '-arg1', "--exitcode", "73", '--arg2' }
       )
@@ -126,11 +128,11 @@ describe('startup', function()
     end)
 
     it('executes stdin "-"', function()
-      assert_l_out('args=2 whoa',
+      assert_l_out('arg0=- args=2 whoa',
         nil,
         { 'arg1', 'arg 2' },
         '-',
-        "print(('args=%d %s'):format(#_G.arg, 'whoa'))")
+        "print(('arg0=%s args=%d %s'):format(_G.arg[0], #_G.arg, 'whoa'))")
       assert_l_out('biiig input: 1000042',
         nil,
         nil,
@@ -140,23 +142,15 @@ describe('startup', function()
     end)
 
     it('sets _G.arg', function()
-      -- nvim -l foo.lua -arg1 -- a b c
+      -- nvim -l foo.lua [args]
       assert_l_out([[
           bufs:
-          nvim args: 6
-          lua args: { "-arg1", "--arg2", "arg3" }]],
+          nvim args: 7
+          lua args: { "-arg1", "--arg2", "--", "arg3",
+            [0] = "test/functional/fixtures/startup.lua"
+          }]],
         {},
-        { '-arg1', '--arg2', 'arg3' }
-      )
-      eq(0, eval('v:shell_error'))
-
-      -- nvim -l foo.lua --
-      assert_l_out([[
-          bufs:
-          nvim args: 4
-          lua args: { "--" }]],
-        {},
-        { '--' }
+        { '-arg1', '--arg2', '--', 'arg3' }
       )
       eq(0, eval('v:shell_error'))
 
@@ -164,19 +158,11 @@ describe('startup', function()
       assert_l_out([[
           bufs: file1 file2
           nvim args: 10
-          lua args: { "-arg1", "arg 2", "--", "file3", "file4" }]],
+          lua args: { "-arg1", "arg 2", "--", "file3", "file4",
+            [0] = "test/functional/fixtures/startup.lua"
+          }]],
         { 'file1', 'file2', },
         { '-arg1', 'arg 2', '--', 'file3', 'file4' }
-      )
-      eq(0, eval('v:shell_error'))
-
-      -- nvim file1 file2 -l foo.lua -arg1 --
-      assert_l_out([[
-          bufs: file1 file2
-          nvim args: 7
-          lua args: { "-arg1", "--" }]],
-        { 'file1', 'file2', },
-        { '-arg1', '--' }
       )
       eq(0, eval('v:shell_error'))
 
@@ -184,7 +170,9 @@ describe('startup', function()
       assert_l_out([[
           bufs:
           nvim args: 5
-          lua args: { "-c", "set wrap?" }]],
+          lua args: { "-c", "set wrap?",
+            [0] = "test/functional/fixtures/startup.lua"
+          }]],
         {},
         { '-c', 'set wrap?' }
       )
@@ -198,7 +186,9 @@ describe('startup', function()
           
           bufs:
           nvim args: 7
-          lua args: { "-c", "set wrap?" }]],
+          lua args: { "-c", "set wrap?",
+            [0] = "test/functional/fixtures/startup.lua"
+          }]],
         { '-c', 'set wrap?' },
         { '-c', 'set wrap?' }
       )
