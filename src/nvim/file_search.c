@@ -1150,10 +1150,12 @@ static void ff_push(ff_search_ctx_T *search_ctx, ff_stack_T *stack_ptr)
 {
   // check for NULL pointer, not to return an error to the user, but
   // to prevent a crash
-  if (stack_ptr != NULL) {
-    stack_ptr->ffs_prev = search_ctx->ffsc_stack_ptr;
-    search_ctx->ffsc_stack_ptr = stack_ptr;
+  if (stack_ptr == NULL) {
+    return;
   }
+
+  stack_ptr->ffs_prev = search_ctx->ffsc_stack_ptr;
+  search_ctx->ffsc_stack_ptr = stack_ptr;
 }
 
 /// Pop a dir from the directory stack.
