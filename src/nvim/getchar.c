@@ -272,10 +272,12 @@ static void delete_buff_tail(buffheader_T *buf, int slen)
     return;  // nothing to delete
   }
   len = (int)strlen(buf->bh_curr->b_str);
-  if (len >= slen) {
-    buf->bh_curr->b_str[len - slen] = NUL;
-    buf->bh_space += (size_t)slen;
+  if (len < slen) {
+    return;
   }
+
+  buf->bh_curr->b_str[len - slen] = NUL;
+  buf->bh_space += (size_t)slen;
 }
 
 /// Add number "n" to buffer "buf".
@@ -439,24 +441,28 @@ void beep_flush(void)
 // This is used for the CTRL-O <.> command in insert mode.
 void ResetRedobuff(void)
 {
-  if (!block_redo) {
-    free_buff(&old_redobuff);
-    old_redobuff = redobuff;
-    redobuff.bh_first.b_next = NULL;
+  if (block_redo) {
+    return;
   }
+
+  free_buff(&old_redobuff);
+  old_redobuff = redobuff;
+  redobuff.bh_first.b_next = NULL;
 }
 
 // Discard the contents of the redo buffer and restore the previous redo
 // buffer.
 void CancelRedo(void)
 {
-  if (!block_redo) {
-    free_buff(&redobuff);
-    redobuff = old_redobuff;
-    old_redobuff.bh_first.b_next = NULL;
-    start_stuff();
-    while (read_readbuffers(true) != NUL) {}
+  if (block_redo) {
+    return;
   }
+
+  free_buff(&redobuff);
+  redobuff = old_redobuff;
+  old_redobuff.bh_first.b_next = NULL;
+  start_stuff();
+  while (read_readbuffers(true) != NUL) {}
 }
 
 /// Save redobuff and old_redobuff to save_redobuff and save_old_redobuff.
@@ -470,10 +476,12 @@ void saveRedobuff(save_redo_T *save_redo)
 
   // Make a copy, so that ":normal ." in a function works.
   char *const s = (char *)get_buffcont(&save_redo->sr_redobuff, false);
-  if (s != NULL) {
-    add_buff(&redobuff, s, -1L);
-    xfree(s);
+  if (s == NULL) {
+    return;
   }
+
+  add_buff(&redobuff, s, -1L);
+  xfree(s);
 }
 
 /// Restore redobuff and old_redobuff from save_redobuff and save_old_redobuff.
@@ -811,14 +819,16 @@ void stop_redo_ins(void)
 // be impossible to type anything.
 static void init_typebuf(void)
 {
-  if (typebuf.tb_buf == NULL) {
-    typebuf.tb_buf = typebuf_init;
-    typebuf.tb_noremap = noremapbuf_init;
-    typebuf.tb_buflen = TYPELEN_INIT;
-    typebuf.tb_len = 0;
-    typebuf.tb_off = MAXMAPLEN + 4;
-    typebuf.tb_change_cnt = 1;
+  if (typebuf.tb_buf != NULL) {
+    return;
   }
+
+  typebuf.tb_buf = typebuf_init;
+  typebuf.tb_noremap = noremapbuf_init;
+  typebuf.tb_buflen = TYPELEN_INIT;
+  typebuf.tb_len = 0;
+  typebuf.tb_off = MAXMAPLEN + 4;
+  typebuf.tb_change_cnt = 1;
 }
 
 /// @return true when keys cannot be remapped.
@@ -1126,10 +1136,12 @@ static void gotchars(const char_u *chars, size_t len)
 /// Only affects recorded characters.
 void ungetchars(int len)
 {
-  if (reg_recording != 0) {
-    delete_buff_tail(&recordbuff, len);
-    last_recorded_len -= (size_t)len;
+  if (reg_recording == 0) {
+    return;
   }
+
+  delete_buff_tail(&recordbuff, len);
+  last_recorded_len -= (size_t)len;
 }
 
 // Sync undo.  Called when typed characters are obtained from the typeahead
@@ -1775,19 +1787,21 @@ void f_getcharstr(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
   getchar_common(argvars, rettv);
 
-  if (rettv->v_type == VAR_NUMBER) {
-    char temp[7];   // mbyte-char: 6, NUL: 1
-    const varnumber_T n = rettv->vval.v_number;
-    int i = 0;
-
-    if (n != 0) {
-      i += utf_char2bytes((int)n, (char *)temp);
-    }
-    assert(i < 7);
-    temp[i++] = NUL;
-    rettv->v_type = VAR_STRING;
-    rettv->vval.v_string = xstrdup(temp);
+  if (rettv->v_type != VAR_NUMBER) {
+    return;
   }
+
+  char temp[7];   // mbyte-char: 6, NUL: 1
+  const varnumber_T n = rettv->vval.v_number;
+  int i = 0;
+
+  if (n != 0) {
+    i += utf_char2bytes((int)n, (char *)temp);
+  }
+  assert(i < 7);
+  temp[i++] = NUL;
+  rettv->v_type = VAR_STRING;
+  rettv->vval.v_string = xstrdup(temp);
 }
 
 /// "getcharmod()" function
