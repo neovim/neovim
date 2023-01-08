@@ -624,21 +624,11 @@ endif()
 
 if(CLANG_ASAN_UBSAN)
   message(STATUS "Enabling Clang address sanitizer and undefined behavior sanitizer for nvim.")
-  check_c_compiler_flag(-fno-sanitize-recover=all SANITIZE_RECOVER_ALL)
-  if(SANITIZE_RECOVER_ALL)
-    if(CI_BUILD)
-      # Try to recover from all sanitize issues so we get reports about all failures
-      set(SANITIZE_RECOVER -fsanitize-recover=all)     # Clang 3.6+
-    else()
-      set(SANITIZE_RECOVER -fno-sanitize-recover=all)  # Clang 3.6+
-    endif()
+  if(CI_BUILD)
+    # Try to recover from all sanitize issues so we get reports about all failures
+    set(SANITIZE_RECOVER -fsanitize-recover=all)
   else()
-    if(CI_BUILD)
-      # Try to recover from all sanitize issues so we get reports about all failures
-      set(SANITIZE_RECOVER -fsanitize-recover)         # Clang 3.5-
-    else()
-      set(SANITIZE_RECOVER -fno-sanitize-recover)      # Clang 3.5-
-    endif()
+    set(SANITIZE_RECOVER -fno-sanitize-recover=all)
   endif()
   set_property(TARGET nvim APPEND PROPERTY COMPILE_OPTIONS ${SANITIZE_RECOVER} -fno-omit-frame-pointer -fno-optimize-sibling-calls -fsanitize=address -fsanitize=undefined -fsanitize-blacklist=${PROJECT_SOURCE_DIR}/src/.asan-blacklist)
   set_property(TARGET nvim APPEND_STRING PROPERTY LINK_FLAGS "-fsanitize=address -fsanitize=undefined ")
