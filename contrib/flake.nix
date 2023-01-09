@@ -13,6 +13,14 @@
         neovim = final.neovim-unwrapped.overrideAttrs (oa: rec {
           version = self.shortRev or "dirty";
           src = ../.;
+          # Remove the reproducible patch that was introduced in NixOS/nixpkgs#208103 and doesn't apply against master
+          patches = builtins.filter (p:
+            let
+              patch = if builtins.typeOf p == "set"
+                      then baseNameOf p.name
+                      else baseNameOf p;
+            in
+            patch != "neovim-build-make-generated-source-files-reproducible.patch") oa.patches;
           preConfigure = ''
             sed -i cmake.config/versiondef.h.in -e 's/@NVIM_VERSION_PRERELEASE@/-dev-${version}/'
           '';
