@@ -427,22 +427,22 @@ void remove_bom(char_u *s)
 int mb_get_class(const char_u *p)
   FUNC_ATTR_PURE
 {
-  return mb_get_class_tab(p, curbuf->b_chartab);
+  return mb_get_class_tab((char *)p, curbuf->b_chartab);
 }
 
-int mb_get_class_tab(const char_u *p, const uint64_t *const chartab)
+int mb_get_class_tab(const char *p, const uint64_t *const chartab)
   FUNC_ATTR_PURE
 {
-  if (MB_BYTE2LEN(p[0]) == 1) {
+  if (MB_BYTE2LEN((uint8_t)p[0]) == 1) {
     if (p[0] == NUL || ascii_iswhite(p[0])) {
       return 0;
     }
-    if (vim_iswordc_tab(p[0], chartab)) {
+    if (vim_iswordc_tab((uint8_t)p[0], chartab)) {
       return 2;
     }
     return 1;
   }
-  return utf_class_tab(utf_ptr2char((char *)p), chartab);
+  return utf_class_tab(utf_ptr2char(p), chartab);
 }
 
 // Return true if "c" is in "table".
@@ -534,13 +534,13 @@ int utf_ptr2cells(const char *p)
 
 /// Like utf_ptr2cells(), but limit string length to "size".
 /// For an empty string or truncated character returns 1.
-int utf_ptr2cells_len(const char_u *p, int size)
+int utf_ptr2cells_len(const char *p, int size)
 {
   int c;
 
   // Need to convert to a wide character.
-  if (size > 0 && *p >= 0x80) {
-    if (utf_ptr2len_len(p, size) < utf8len_tab[*p]) {
+  if (size > 0 && (uint8_t)(*p) >= 0x80) {
+    if (utf_ptr2len_len((char_u *)p, size) < utf8len_tab[(uint8_t)(*p)]) {
       return 1;        // truncated
     }
     c = utf_ptr2char((char *)p);
@@ -599,7 +599,7 @@ size_t mb_string2cells_len(const char *str, size_t size)
 /// For an overlong sequence this may return zero.
 /// Does not include composing characters for obvious reasons.
 ///
-/// @param[in]  p  String to convert.
+/// @param[in]  p_in  String to convert.
 ///
 /// @return Unicode codepoint or byte value.
 int utf_ptr2char(const char *const p_in)
@@ -744,26 +744,25 @@ bool utf_composinglike(const char *p1, const char *p2)
 ///                   space at least for #MAX_MCO + 1 elements.
 ///
 /// @return leading character.
-int utfc_ptr2char(const char *p_in, int *pcc)
+int utfc_ptr2char(const char *p, int *pcc)
 {
-  uint8_t *p = (uint8_t *)p_in;
   int i = 0;
 
-  int c = utf_ptr2char((char *)p);
-  int len = utf_ptr2len((char *)p);
+  int c = utf_ptr2char(p);
+  int len = utf_ptr2len(p);
 
   // Only accept a composing char when the first char isn't illegal.
-  if ((len > 1 || *p < 0x80)
-      && p[len] >= 0x80
-      && utf_composinglike((char *)p, (char *)p + len)) {
-    int cc = utf_ptr2char((char *)p + len);
+  if ((len > 1 || (uint8_t)(*p) < 0x80)
+      && (uint8_t)p[len] >= 0x80
+      && utf_composinglike(p, p + len)) {
+    int cc = utf_ptr2char(p + len);
     for (;;) {
       pcc[i++] = cc;
       if (i == MAX_MCO) {
         break;
       }
-      len += utf_ptr2len((char *)p + len);
-      if (p[len] < 0x80 || !utf_iscomposing(cc = utf_ptr2char((char *)p + len))) {
+      len += utf_ptr2len(p + len);
+      if ((uint8_t)p[len] < 0x80 || !utf_iscomposing(cc = utf_ptr2char(p + len))) {
         break;
       }
     }
@@ -780,24 +779,24 @@ int utfc_ptr2char(const char *p_in, int *pcc)
 // composing characters.  Use no more than p[maxlen].
 //
 // @param [out] pcc: composing chars, last one is 0
-int utfc_ptr2char_len(const char_u *p, int *pcc, int maxlen)
+int utfc_ptr2char_len(const char *p, int *pcc, int maxlen)
 {
   assert(maxlen > 0);
 
   int i = 0;
 
-  int len = utf_ptr2len_len(p, maxlen);
+  int len = utf_ptr2len_len((char_u *)p, maxlen);
   // Is it safe to use utf_ptr2char()?
   bool safe = len > 1 && len <= maxlen;
-  int c = safe ? utf_ptr2char((char *)p) : *p;
+  int c = safe ? utf_ptr2char(p) : (uint8_t)(*p);
 
   // Only accept a composing char when the first char isn't illegal.
-  if ((safe || c < 0x80) && len < maxlen && p[len] >= 0x80) {
+  if ((safe || c < 0x80) && len < maxlen && (uint8_t)p[len] >= 0x80) {
     for (; i < MAX_MCO; i++) {
-      int len_cc = utf_ptr2len_len(p + len, maxlen - len);
+      int len_cc = utf_ptr2len_len((char_u *)p + len, maxlen - len);
       safe = len_cc > 1 && len_cc <= maxlen - len;
-      if (!safe || (pcc[i] = utf_ptr2char((char *)p + len)) < 0x80
-          || !(i == 0 ? utf_composinglike((char *)p, (char *)p + len) : utf_iscomposing(pcc[i]))) {
+      if (!safe || (pcc[i] = utf_ptr2char(p + len)) < 0x80
+          || !(i == 0 ? utf_composinglike(p, p + len) : utf_iscomposing(pcc[i]))) {
         break;
       }
       len += len_cc;
@@ -875,21 +874,20 @@ int utf_ptr2len_len(const char_u *p, int size)
 /// Return the number of bytes occupied by a UTF-8 character in a string.
 /// This includes following composing characters.
 /// Returns zero for NUL.
-int utfc_ptr2len(const char *const p_in)
+int utfc_ptr2len(const char *const p)
   FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
 {
-  uint8_t *p = (uint8_t *)p_in;
-  uint8_t b0 = *p;
+  uint8_t b0 = (uint8_t)(*p);
 
   if (b0 == NUL) {
     return 0;
   }
-  if (b0 < 0x80 && p[1] < 0x80) {  // be quick for ASCII
+  if (b0 < 0x80 && (uint8_t)p[1] < 0x80) {  // be quick for ASCII
     return 1;
   }
 
   // Skip over first UTF-8 char, stopping at a NUL byte.
-  int len = utf_ptr2len((char *)p);
+  int len = utf_ptr2len(p);
 
   // Check for illegal byte.
   if (len == 1 && b0 >= 0x80) {
@@ -900,13 +898,13 @@ int utfc_ptr2len(const char *const p_in)
   // skip all of them (otherwise the cursor would get stuck).
   int prevlen = 0;
   for (;;) {
-    if (p[len] < 0x80 || !utf_composinglike((char *)p + prevlen, (char *)p + len)) {
+    if ((uint8_t)p[len] < 0x80 || !utf_composinglike(p + prevlen, p + len)) {
       return len;
     }
 
     // Skip over composing char.
     prevlen = len;
-    len += utf_ptr2len((char *)p + len);
+    len += utf_ptr2len(p + len);
   }
 }
 
@@ -1786,11 +1784,12 @@ void mb_copy_char(const char **const fp, char **const tp)
   *fp += l;
 }
 
-/// Return the offset from "p" to the first byte of a character.  When "p" is
+/// Return the offset from "p_in" to the first byte of a character.  When "p_in" is
 /// at the start of a character 0 is returned, otherwise the offset to the next
 /// character.  Can start anywhere in a stream of bytes.
-int mb_off_next(const char_u *base, const char_u *p)
+int mb_off_next(const char_u *base, const char *p_in)
 {
+  const uint8_t *p = (uint8_t *)p_in;
   int i;
   int j;
 
@@ -1882,7 +1881,7 @@ int utf_cp_head_off(const char_u *base, const char_u *p)
 void utf_find_illegal(void)
 {
   pos_T pos = curwin->w_cursor;
-  char_u *p;
+  char *p;
   int len;
   vimconv_T vimconv;
   char_u *tofree = NULL;
@@ -1897,30 +1896,29 @@ void utf_find_illegal(void)
 
   curwin->w_cursor.coladd = 0;
   for (;;) {
-    p = (char_u *)get_cursor_pos_ptr();
+    p = get_cursor_pos_ptr();
     if (vimconv.vc_type != CONV_NONE) {
       xfree(tofree);
-      tofree = (char_u *)string_convert(&vimconv, (char *)p, NULL);
+      tofree = (char_u *)string_convert(&vimconv, p, NULL);
       if (tofree == NULL) {
         break;
       }
-      p = tofree;
+      p = (char *)tofree;
     }
 
     while (*p != NUL) {
       // Illegal means that there are not enough trail bytes (checked by
       // utf_ptr2len()) or too many of them (overlong sequence).
-      len = utf_ptr2len((char *)p);
-      if (*p >= 0x80 && (len == 1
-                         || utf_char2len(utf_ptr2char((char *)p)) != len)) {
+      len = utf_ptr2len(p);
+      if ((uint8_t)(*p) >= 0x80 && (len == 1 || utf_char2len(utf_ptr2char(p)) != len)) {
         if (vimconv.vc_type == CONV_NONE) {
-          curwin->w_cursor.col += (colnr_T)(p - (char_u *)get_cursor_pos_ptr());
+          curwin->w_cursor.col += (colnr_T)(p - get_cursor_pos_ptr());
         } else {
           int l;
 
-          len = (int)(p - tofree);
-          for (p = (char_u *)get_cursor_pos_ptr(); *p != NUL && len-- > 0; p += l) {
-            l = utf_ptr2len((char *)p);
+          len = (int)(p - (char *)tofree);
+          for (p = get_cursor_pos_ptr(); *p != NUL && len-- > 0; p += l) {
+            l = utf_ptr2len(p);
             curwin->w_cursor.col += l;
           }
         }

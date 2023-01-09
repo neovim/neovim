@@ -5635,7 +5635,7 @@ char *file_pat_to_reg_pat(const char *pat, const char *pat_end, char *allow_dirs
         // "\*" to "\\.*" e.g., "dir\*.c"
         // "\?" to "\\."  e.g., "dir\??.c"
         // "\+" to "\+"   e.g., "fileX\+.c"
-        if ((vim_isfilec(p[1]) || p[1] == '*' || p[1] == '?')
+        if ((vim_isfilec((uint8_t)p[1]) || p[1] == '*' || p[1] == '?')
             && p[1] != '+') {
           reg_pat[i++] = '[';
           reg_pat[i++] = '\\';

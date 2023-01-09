@@ -4692,7 +4692,7 @@ char *skip_vimgrep_pat(char *p, char **s, int *flags)
 {
   int c;
 
-  if (vim_isIDc(*p)) {
+  if (vim_isIDc((uint8_t)(*p))) {
     // ":vimgrep pattern fname"
     if (s != NULL) {
       *s = p;

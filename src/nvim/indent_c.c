@@ -219,7 +219,7 @@ bool cin_is_cinword(const char *line)
   for (char *cinw = curbuf->b_p_cinw; *cinw;) {
     size_t len = copy_option_part(&cinw, cinw_buf, cinw_len, ",");
     if (strncmp(line, cinw_buf, len) == 0
-        && (!vim_iswordc(line[len]) || !vim_iswordc(line[len - 1]))) {
+        && (!vim_iswordc((uint8_t)line[len]) || !vim_iswordc((uint8_t)line[len - 1]))) {
       retval = true;
       break;
     }
@@ -298,26 +298,26 @@ static pos_T *find_line_comment(void)  // XXX
 /// Checks if `text` starts with "key:".
 static bool cin_has_js_key(const char_u *text)
 {
-  const char_u *s = (char_u *)skipwhite((char *)text);
+  const char *s = skipwhite((char *)text);
 
-  char_u quote = 0;
+  char quote = 0;
   if (*s == '\'' || *s == '"') {
     // can be 'key': or "key":
     quote = *s;
     s++;
   }
-  if (!vim_isIDc(*s)) {     // need at least one ID character
+  if (!vim_isIDc((uint8_t)(*s))) {     // need at least one ID character
     return false;
   }
 
-  while (vim_isIDc(*s)) {
+  while (vim_isIDc((uint8_t)(*s))) {
     s++;
   }
   if (*s && *s == quote) {
     s++;
   }
 
-  s = cin_skipcomment(s);
+  s = (char *)cin_skipcomment((char_u *)s);
 
   // "::" is not a label, it's C++
   return (*s == ':' && s[1] != ':');
@@ -325,18 +325,18 @@ static bool cin_has_js_key(const char_u *text)
 
 /// Checks if string matches "label:"; move to character after ':' if true.
 /// "*s" must point to the start of the label, if there is one.
-static bool cin_islabel_skip(const char_u **s)
+static bool cin_islabel_skip(const char **s)
   FUNC_ATTR_NONNULL_ALL
 {
-  if (!vim_isIDc(**s)) {            // need at least one ID character
+  if (!vim_isIDc((uint8_t)(**s))) {            // need at least one ID character
     return false;
   }
 
-  while (vim_isIDc(**s)) {
+  while (vim_isIDc((uint8_t)(**s))) {
     (*s)++;
   }
 
-  *s = cin_skipcomment(*s);
+  *s = (char *)cin_skipcomment((char_u *)(*s));
 
   // "::" is not a label, it's C++
   return **s == ':' && *++*s != ':';
@@ -346,14 +346,14 @@ static bool cin_islabel_skip(const char_u **s)
 // Note: curwin->w_cursor must be where we are looking for the label.
 bool cin_islabel(void)  // XXX
 {
-  const char_u *s = cin_skipcomment((char_u *)get_cursor_line_ptr());
+  const char *s = (char *)cin_skipcomment((char_u *)get_cursor_line_ptr());
 
   // Exclude "default" from labels, since it should be indented
   // like a switch label.  Same for C++ scope declarations.
   if (cin_isdefault((char *)s)) {
     return false;
   }
-  if (cin_isscopedecl(s)) {
+  if (cin_isscopedecl((char_u *)s)) {
     return false;
   }
   if (!cin_islabel_skip(&s)) {
@@ -364,7 +364,7 @@ bool cin_islabel(void)  // XXX
   // label.
   pos_T cursor_save;
   pos_T *trypos;
-  const char_u *line;
+  const char *line;
 
   cursor_save = curwin->w_cursor;
   while (curwin->w_cursor.lnum > 1) {
@@ -377,19 +377,19 @@ bool cin_islabel(void)  // XXX
       curwin->w_cursor = *trypos;
     }
 
-    line = (char_u *)get_cursor_line_ptr();
-    if (cin_ispreproc(line)) {        // ignore #defines, #if, etc.
+    line = get_cursor_line_ptr();
+    if (cin_ispreproc((char_u *)line)) {        // ignore #defines, #if, etc.
       continue;
     }
-    if (*(line = cin_skipcomment(line)) == NUL) {
+    if (*(line = (char *)cin_skipcomment((char_u *)line)) == NUL) {
       continue;
     }
 
     curwin->w_cursor = cursor_save;
-    if (cin_isterminated(line, true, false)
-        || cin_isscopedecl(line)
-        || cin_iscase(line, true)
-        || (cin_islabel_skip(&line) && cin_nocode(line))) {
+    if (cin_isterminated((char_u *)line, true, false)
+        || cin_isscopedecl((char_u *)line)
+        || cin_iscase((char_u *)line, true)
+        || (cin_islabel_skip(&line) && cin_nocode((char_u *)line))) {
       return true;
     }
     return false;
@@ -519,7 +519,7 @@ bool cin_isscopedecl(const char_u *p)
 // Recognize a "namespace" scope declaration.
 static bool cin_is_cpp_namespace(const char *s)
 {
-  const char_u *p;
+  const char *p;
   bool has_name = false;
   bool has_name_start = false;
 
@@ -530,20 +530,20 @@ static bool cin_is_cpp_namespace(const char *s)
   }
 
   if (strncmp(s, "namespace", 9) == 0 && (s[9] == NUL || !vim_iswordc((uint8_t)s[9]))) {
-    p = cin_skipcomment((char_u *)skipwhite((char *)s + 9));
+    p = (char *)cin_skipcomment((char_u *)skipwhite((char *)s + 9));
     while (*p != NUL) {
       if (ascii_iswhite(*p)) {
         has_name = true;         // found end of a name
-        p = cin_skipcomment((char_u *)skipwhite((char *)p));
+        p = (char *)cin_skipcomment((char_u *)skipwhite((char *)p));
       } else if (*p == '{') {
         break;
-      } else if (vim_iswordc(*p)) {
+      } else if (vim_iswordc((uint8_t)(*p))) {
         has_name_start = true;
         if (has_name) {
           return false;           // word character after skipping past name
         }
         p++;
-      } else if (p[0] == ':' && p[1] == ':' && vim_iswordc(p[2])) {
+      } else if (p[0] == ':' && p[1] == ':' && vim_iswordc((uint8_t)p[2])) {
         if (!has_name_start || has_name) {
           return false;
         }
@@ -669,7 +669,7 @@ static int cin_first_id_amount(void)
       p = s;
     }
   }
-  for (len = 0; vim_isIDc(p[len]); len++) {}
+  for (len = 0; vim_isIDc((uint8_t)p[len]); len++) {}
   if (len == 0 || !ascii_iswhite(p[len]) || cin_nocode((char_u *)p)) {
     return 0;
   }

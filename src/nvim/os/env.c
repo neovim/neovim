@@ -634,7 +634,7 @@ void expand_env_esc(char *restrict srcp, char *restrict dst, int dstlen, bool es
         } else  // NOLINT
 #endif
         {
-          while (c-- > 0 && *tail != NUL && vim_isIDc(*tail)) {
+          while (c-- > 0 && *tail != NUL && vim_isIDc((uint8_t)(*tail))) {
             *var++ = *tail++;
           }
         }
@@ -667,7 +667,7 @@ void expand_env_esc(char *restrict srcp, char *restrict dst, int dstlen, bool es
         int c = dstlen - 1;
         while (c-- > 0
                && *tail
-               && vim_isfilec(*tail)
+               && vim_isfilec((uint8_t)(*tail))
                && !vim_ispathsep(*tail)) {
           *var++ = *tail++;
         }

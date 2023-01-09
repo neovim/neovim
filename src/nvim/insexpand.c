@@ -1400,15 +1400,15 @@ static int thesaurus_add_words_in_line(char *fname, char_u **buf_arg, int dir,
   int status = OK;
 
   // Add the other matches on the line
-  char_u *ptr = *buf_arg;
+  char *ptr = (char *)(*buf_arg);
   while (!got_int) {
     // Find start of the next word.  Skip white
     // space and punctuation.
-    ptr = find_word_start(ptr);
+    ptr = (char *)find_word_start((char_u *)ptr);
     if (*ptr == NUL || *ptr == NL) {
       break;
     }
-    char_u *wstart = ptr;
+    char_u *wstart = (char_u *)ptr;
 
     // Find end of the word.
     // Japanese words may have characters in
@@ -1417,7 +1417,7 @@ static int thesaurus_add_words_in_line(char *fname, char_u **buf_arg, int dir,
     while (*ptr != NUL) {
       const int l = utfc_ptr2len((const char *)ptr);
 
-      if (l < 2 && !vim_iswordc(*ptr)) {
+      if (l < 2 && !vim_iswordc((uint8_t)(*ptr))) {
         break;
       }
       ptr += l;
@@ -1425,7 +1425,7 @@ static int thesaurus_add_words_in_line(char *fname, char_u **buf_arg, int dir,
 
     // Add the word. Skip the regexp match.
     if (wstart != skip_word) {
-      status = ins_compl_add_infercase(wstart, (int)(ptr - wstart), p_ic,
+      status = ins_compl_add_infercase(wstart, (int)(ptr - (char *)wstart), p_ic,
                                        (char_u *)fname, dir, false);
       if (status == FAIL) {
         break;
@@ -1433,7 +1433,7 @@ static int thesaurus_add_words_in_line(char *fname, char_u **buf_arg, int dir,
     }
   }
 
-  *buf_arg = ptr;
+  *buf_arg = (char_u *)ptr;
   return status;
 }
 
@@ -3819,7 +3819,7 @@ static int get_normal_compl_info(char *line, int startcol, colnr_T curs_col)
 {
   if ((compl_cont_status & CONT_SOL) || ctrl_x_mode_path_defines()) {
     if (!compl_status_adding()) {
-      while (--startcol >= 0 && vim_isIDc(line[startcol])) {}
+      while (--startcol >= 0 && vim_isIDc((uint8_t)line[startcol])) {}
       compl_col += ++startcol;
       compl_length = curs_col - startcol;
     }

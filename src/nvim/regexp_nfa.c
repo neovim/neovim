@@ -6341,7 +6341,7 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start, regsubs_T *subm
           int this_class;
 
           // Get class of current and previous char (if it exists).
-          this_class = mb_get_class_tab(rex.input, rex.reg_buf->b_chartab);
+          this_class = mb_get_class_tab((char *)rex.input, rex.reg_buf->b_chartab);
           if (this_class <= 1) {
             result = false;
           } else if (reg_prev_class() == this_class) {
@@ -6362,7 +6362,7 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start, regsubs_T *subm
           int this_class, prev_class;
 
           // Get class of current and previous char (if it exists).
-          this_class = mb_get_class_tab(rex.input, rex.reg_buf->b_chartab);
+          this_class = mb_get_class_tab((char *)rex.input, rex.reg_buf->b_chartab);
           prev_class = reg_prev_class();
           if (this_class == prev_class
               || prev_class == 0 || prev_class == 1) {

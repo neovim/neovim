@@ -3604,8 +3604,8 @@ bool valid_spelllang(const char *val)
 bool valid_spellfile(const char *val)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  for (const char_u *s = (char_u *)val; *s != NUL; s++) {
-    if (!vim_isfilec(*s) && *s != ',' && *s != ' ') {
+  for (const char *s = val; *s != NUL; s++) {
+    if (!vim_isfilec((uint8_t)(*s)) && *s != ',' && *s != ' ') {
       return false;
     }
   }
