@@ -40,17 +40,17 @@
 # include "lua/stdlib.c.generated.h"
 #endif
 
-static int regex_match(lua_State *lstate, regprog_T **prog, char_u *str)
+static int regex_match(lua_State *lstate, regprog_T **prog, char *str)
 {
   regmatch_T rm;
   rm.regprog = *prog;
   rm.rm_ic = false;
-  bool match = vim_regexec(&rm, (char *)str, 0);
+  bool match = vim_regexec(&rm, str, 0);
   *prog = rm.regprog;
 
   if (match) {
-    lua_pushinteger(lstate, (lua_Integer)(rm.startp[0] - (char *)str));
-    lua_pushinteger(lstate, (lua_Integer)(rm.endp[0] - (char *)str));
+    lua_pushinteger(lstate, (lua_Integer)(rm.startp[0] - str));
+    lua_pushinteger(lstate, (lua_Integer)(rm.endp[0] - str));
     return 2;
   }
   return 0;
@@ -60,7 +60,7 @@ static int regex_match_str(lua_State *lstate)
 {
   regprog_T **prog = regex_check(lstate);
   const char *str = luaL_checkstring(lstate, 2);
-  int nret = regex_match(lstate, prog, (char_u *)str);
+  int nret = regex_match(lstate, prog, (char *)str);
 
   if (!*prog) {
     return luaL_error(lstate, "regex: internal error");
@@ -116,7 +116,7 @@ static int regex_match_line(lua_State *lstate)
     line[end] = NUL;
   }
 
-  int nret = regex_match(lstate, prog, (char_u *)line + start);
+  int nret = regex_match(lstate, prog, line + start);
 
   if (end >= 0) {
     line[end] = save;
@@ -198,7 +198,7 @@ static int nlua_str_utf_pos(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
   size_t idx = 1;
   size_t clen;
   for (size_t i = 0; i < s1_len && s1[i] != NUL; i += clen) {
-    clen = (size_t)utf_ptr2len_len((const char_u *)(s1) + i, (int)(s1_len - i));
+    clen = (size_t)utf_ptr2len_len(s1 + i, (int)(s1_len - i));
     lua_pushinteger(lstate, (long)i + 1);
     lua_rawseti(lstate, -2, (int)idx);
     idx++;
@@ -266,8 +266,7 @@ int nlua_str_byteindex(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
     use_utf16 = lua_toboolean(lstate, 3);
   }
 
-  ssize_t byteidx = mb_utf_index_to_bytes((const char_u *)s1, s1_len,
-                                          (size_t)idx, use_utf16);
+  ssize_t byteidx = mb_utf_index_to_bytes(s1, s1_len, (size_t)idx, use_utf16);
   if (byteidx == -1) {
     return luaL_error(lstate, "index out of range");
   }
@@ -503,14 +502,14 @@ static int nlua_iconv(lua_State *lstate)
   size_t str_len = 0;
   const char *str = lua_tolstring(lstate, 1, &str_len);
 
-  char_u *from = (char_u *)enc_canonize(enc_skip((char *)lua_tolstring(lstate, 2, NULL)));
-  char_u *to   = (char_u *)enc_canonize(enc_skip((char *)lua_tolstring(lstate, 3, NULL)));
+  char *from = enc_canonize(enc_skip((char *)lua_tolstring(lstate, 2, NULL)));
+  char *to   = enc_canonize(enc_skip((char *)lua_tolstring(lstate, 3, NULL)));
 
   vimconv_T vimconv;
   vimconv.vc_type = CONV_NONE;
-  convert_setup_ext(&vimconv, (char *)from, false, (char *)to, false);
+  convert_setup_ext(&vimconv, from, false, to, false);
 
-  char_u *ret = (char_u *)string_convert(&vimconv, (char *)str, &str_len);
+  char *ret = string_convert(&vimconv, (char *)str, &str_len);
 
   convert_setup(&vimconv, NULL, NULL);
 
@@ -520,7 +519,7 @@ static int nlua_iconv(lua_State *lstate)
   if (ret == NULL) {
     lua_pushnil(lstate);
   } else {
-    lua_pushlstring(lstate, (char *)ret, str_len);
+    lua_pushlstring(lstate, ret, str_len);
     xfree(ret);
   }
 

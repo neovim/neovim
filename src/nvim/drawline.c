@@ -1432,7 +1432,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
           }
           char_attr = win_hl_attr(wp, HLF_DED);
         }
-        char *const sbr = (char *)get_showbreak_value(wp);
+        char *const sbr = get_showbreak_value(wp);
         if (*sbr != NUL && need_showbreak) {
           // Draw 'showbreak' at the start of each broken line.
           p_extra = sbr;
@@ -1979,7 +1979,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
           // We have just drawn the showbreak value, no need to add
           // space for it again.
           if (vcol == vcol_sbr) {
-            n_extra -= mb_charlen((char *)get_showbreak_value(wp));
+            n_extra -= mb_charlen(get_showbreak_value(wp));
             if (n_extra < 0) {
               n_extra = 0;
             }
@@ -2075,7 +2075,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
         if (c == TAB && (!wp->w_p_list || wp->w_p_lcs_chars.tab1)) {
           int tab_len = 0;
           long vcol_adjusted = vcol;  // removed showbreak length
-          char *const sbr = (char *)get_showbreak_value(wp);
+          char *const sbr = get_showbreak_value(wp);
 
           // Only adjust the tab_len, when at the first column after the
           // showbreak value was drawn.

@@ -294,7 +294,7 @@ static char **find_locales(void)
   if (locale_a == NULL) {
     return NULL;
   }
-  ga_init(&locales_ga, sizeof(char_u *), 20);
+  ga_init(&locales_ga, sizeof(char *), 20);
 
   // Transform locale_a string where each locale is separated by "\n"
   // into an array of locale strings.
@@ -308,7 +308,7 @@ static char **find_locales(void)
   xfree(locale_a);
   // Guarantee that .ga_data is NULL terminated
   ga_grow(&locales_ga, 1);
-  ((char_u **)locales_ga.ga_data)[locales_ga.ga_len] = NULL;
+  ((char **)locales_ga.ga_data)[locales_ga.ga_len] = NULL;
   return locales_ga.ga_data;
 }
 # endif

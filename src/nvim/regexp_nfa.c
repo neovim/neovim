@@ -2218,7 +2218,7 @@ collection:
     // - ranges, two characters followed by NFA_RANGE.
 
     p = (char_u *)regparse;
-    endp = skip_anyof((char *)p);
+    endp = (char_u *)skip_anyof((char *)p);
     if (*endp == ']') {
       // Try to reverse engineer character classes. For example,
       // recognize that [0-9] stands for \d and [A-Za-z_] for \h,
@@ -5522,10 +5522,10 @@ static int recursive_regmatch(nfa_state_T *state, nfa_pim_T *pim, nfa_regprog_T 
     // bytes if possible.
     if (state->val <= 0) {
       if (REG_MULTI) {
-        rex.line = reg_getline(--rex.lnum);
+        rex.line = (char_u *)reg_getline(--rex.lnum);
         if (rex.line == NULL) {
           // can't go before the first line
-          rex.line = reg_getline(++rex.lnum);
+          rex.line = (char_u *)reg_getline(++rex.lnum);
         }
       }
       rex.input = rex.line;
@@ -5533,10 +5533,10 @@ static int recursive_regmatch(nfa_state_T *state, nfa_pim_T *pim, nfa_regprog_T 
       if (REG_MULTI && (int)(rex.input - rex.line) < state->val) {
         // Not enough bytes in this line, go to end of
         // previous line.
-        rex.line = reg_getline(--rex.lnum);
+        rex.line = (char_u *)reg_getline(--rex.lnum);
         if (rex.line == NULL) {
           // can't go before the first line
-          rex.line = reg_getline(++rex.lnum);
+          rex.line = (char_u *)reg_getline(++rex.lnum);
           rex.input = rex.line;
         } else {
           rex.input = rex.line + strlen((char *)rex.line);
@@ -5595,7 +5595,7 @@ static int recursive_regmatch(nfa_state_T *state, nfa_pim_T *pim, nfa_regprog_T 
   // restore position in input text
   rex.lnum = save_reglnum;
   if (REG_MULTI) {
-    rex.line = reg_getline(rex.lnum);
+    rex.line = (char_u *)reg_getline(rex.lnum);
   }
   rex.input = rex.line + save_reginput_col;
   if (result != NFA_TOO_EXPENSIVE) {
@@ -5772,7 +5772,7 @@ static int failure_chance(nfa_state_T *state, int depth)
 // Skip until the char "c" we know a match must start with.
 static int skip_to_start(int c, colnr_T *colp)
 {
-  const char_u *const s = cstrchr(rex.line + *colp, c);
+  const char_u *const s = (char_u *)cstrchr((char *)rex.line + *colp, c);
   if (s == NULL) {
     return FAIL;
   }
@@ -6860,7 +6860,7 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start, regsubs_T *subm
 
         // Line may have been freed, get it again.
         if (REG_MULTI) {
-          rex.line = reg_getline(rex.lnum);
+          rex.line = (char_u *)reg_getline(rex.lnum);
           rex.input = rex.line + col;
         }
 
@@ -7333,7 +7333,7 @@ static long nfa_regexec_both(char_u *line, colnr_T startcol, proftime_T *tm, int
 
   if (REG_MULTI) {
     prog = (nfa_regprog_T *)rex.reg_mmatch->regprog;
-    line = reg_getline((linenr_T)0);  // relative to the cursor
+    line = (char_u *)reg_getline((linenr_T)0);  // relative to the cursor
     rex.reg_startpos = rex.reg_mmatch->startpos;
     rex.reg_endpos = rex.reg_mmatch->endpos;
   } else {

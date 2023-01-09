@@ -687,7 +687,8 @@ static void find_word(matchinf_T *mip, int mode)
         }
 
         // Quickly check if compounding is possible with this flag.
-        if (!byte_in_str(mip->mi_complen == 0 ? slang->sl_compstartflags : slang->sl_compallflags,
+        if (!byte_in_str(mip->mi_complen ==
+                         0 ? slang->sl_compstartflags : slang->sl_compallflags,
                          (int)((unsigned)flags >> 24))) {
           continue;
         }
@@ -942,7 +943,7 @@ bool can_compound(slang_T *slang, const char *word, const uint8_t *flags)
   }
   *p = NUL;
   p = uflags;
-  if (!vim_regexec_prog(&slang->sl_compprog, false, (char_u *)p, 0)) {
+  if (!vim_regexec_prog(&slang->sl_compprog, false, p, 0)) {
     return false;
   }
 
@@ -1035,7 +1036,7 @@ int valid_word_prefix(int totprefcnt, int arridx, int flags, char *word, slang_T
     // stored in the two bytes above the prefix ID byte.
     regprog_T **rp = &slang->sl_prefprog[((unsigned)pidx >> 8) & 0xffff];
     if (*rp != NULL) {
-      if (!vim_regexec_prog(rp, false, (char_u *)word, 0)) {
+      if (!vim_regexec_prog(rp, false, word, 0)) {
         continue;
       }
     } else if (cond_req) {
@@ -1736,14 +1737,14 @@ void count_common_word(slang_T *lp, char *word, int len, uint8_t count)
   }
 
   wordcount_T *wc;
-  hash_T hash = hash_hash((char_u *)p);
+  hash_T hash = hash_hash(p);
   const size_t p_len = strlen(p);
   hashitem_T *hi = hash_lookup(&lp->sl_wordcount, (const char *)p, p_len, hash);
   if (HASHITEM_EMPTY(hi)) {
     wc = xmalloc(sizeof(wordcount_T) + p_len);
     memcpy(wc->wc_word, p, p_len + 1);
     wc->wc_count = count;
-    hash_add_item(&lp->sl_wordcount, hi, wc->wc_word, hash);
+    hash_add_item(&lp->sl_wordcount, hi, (char *)wc->wc_word, hash);
   } else {
     wc = HI2WC(hi);
     wc->wc_count = (uint16_t)(wc->wc_count + count);

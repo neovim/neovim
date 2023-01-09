@@ -330,11 +330,11 @@ static bool is_executable_ext(const char *name, char **abspath)
 
     const char *ext_end = ext;
     size_t ext_len =
-      copy_option_part(&ext_end, (char_u *)buf_end,
+      copy_option_part((char **)&ext_end, buf_end,
                        sizeof(os_buf) - (size_t)(buf_end - os_buf), ENV_SEPSTR);
     if (ext_len != 0) {
       bool in_pathext = nameext_len == ext_len
-                        && 0 == mb_strnicmp((char_u *)nameext, (char_u *)ext, ext_len);
+                        && 0 == mb_strnicmp(nameext, ext, ext_len);
 
       if (((in_pathext || is_unix_shell) && is_executable(name, abspath))
           || is_executable(os_buf, abspath)) {
@@ -791,14 +791,14 @@ int os_setperm(const char *const name, int perm)
 
 // Return a pointer to the ACL of file "fname" in allocated memory.
 // Return NULL if the ACL is not available for whatever reason.
-vim_acl_T os_get_acl(const char_u *fname)
+vim_acl_T os_get_acl(const char *fname)
 {
   vim_acl_T ret = NULL;
   return ret;
 }
 
 // Set the ACL of file "fname" to "acl" (unless it's NULL).
-void os_set_acl(const char_u *fname, vim_acl_T aclent)
+void os_set_acl(const char *fname, vim_acl_T aclent)
 {
   if (aclent == NULL) {
     return;

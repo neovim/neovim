@@ -127,13 +127,13 @@ void internal_format(int textwidth, int second_indent, int flags, bool format_on
 
     // Don't break until after the comment leader
     if (do_comments) {
-      char_u *line = (char_u *)get_cursor_line_ptr();
-      leader_len = get_leader_len((char *)line, NULL, false, true);
+      char *line = get_cursor_line_ptr();
+      leader_len = get_leader_len(line, NULL, false, true);
       if (leader_len == 0 && curbuf->b_p_cin) {
         // Check for a line comment after code.
-        int comment_start = check_linecomment((char *)line);
+        int comment_start = check_linecomment(line);
         if (comment_start != MAXCOL) {
-          leader_len = get_leader_len((char *)line + comment_start, NULL, false, true);
+          leader_len = get_leader_len(line + comment_start, NULL, false, true);
           if (leader_len != 0) {
             leader_len += comment_start;
           }
@@ -477,25 +477,25 @@ void internal_format(int textwidth, int second_indent, int flags, bool format_on
 /// comment leader changes.
 static int fmt_check_par(linenr_T lnum, int *leader_len, char **leader_flags, bool do_comments)
 {
-  char_u *flags = NULL;        // init for GCC
-  char_u *ptr;
+  char *flags = NULL;        // init for GCC
+  char *ptr;
 
-  ptr = (char_u *)ml_get(lnum);
+  ptr = ml_get(lnum);
   if (do_comments) {
-    *leader_len = get_leader_len((char *)ptr, leader_flags, false, true);
+    *leader_len = get_leader_len(ptr, leader_flags, false, true);
   } else {
     *leader_len = 0;
   }
 
   if (*leader_len > 0) {
     // Search for 'e' flag in comment leader flags.
-    flags = (char_u *)(*leader_flags);
+    flags = *leader_flags;
     while (*flags && *flags != ':' && *flags != COM_END) {
       flags++;
     }
   }
 
-  return *skipwhite((char *)ptr + *leader_len) == NUL
+  return *skipwhite(ptr + *leader_len) == NUL
          || (*leader_len > 0 && *flags == COM_END)
          || startPS(lnum, NUL, false);
 }
@@ -587,7 +587,7 @@ static bool same_leader(linenr_T lnum, int leader1_len, char *leader1_flags, int
 ///          false when the previous line is in the same paragraph.
 static bool paragraph_start(linenr_T lnum)
 {
-  char_u *p;
+  char *p;
   int leader_len = 0;                // leader len of current line
   char *leader_flags = NULL;         // flags for leader of current line
   int next_leader_len = 0;           // leader len of next line
@@ -596,7 +596,7 @@ static bool paragraph_start(linenr_T lnum)
   if (lnum <= 1) {
     return true;                // start of the file
   }
-  p = (char_u *)ml_get(lnum - 1);
+  p = ml_get(lnum - 1);
   if (*p == NUL) {
     return true;                // after empty line
   }

@@ -1482,7 +1482,7 @@ static char *shada_filename(const char *file)
     if (p_shadafile != NULL && *p_shadafile != NUL) {
       file = p_shadafile;
     } else {
-      if ((file = (char *)find_shada_parameter('n')) == NULL || *file == NUL) {
+      if ((file = find_shada_parameter('n')) == NULL || *file == NUL) {
         file = shada_get_default_file();
       }
       // XXX It used to be one level lower, so that whatever is in

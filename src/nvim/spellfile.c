@@ -3218,7 +3218,7 @@ static int spell_read_dic(spellinfo_T *spin, char *fname, afffile_T *affile)
       break;
     }
 
-    hash = hash_hash((char_u *)dw);
+    hash = hash_hash(dw);
     hi = hash_lookup(&ht, (const char *)dw, strlen(dw), hash);
     if (!HASHITEM_EMPTY(hi)) {
       if (p_verbose > 0) {
@@ -3230,7 +3230,7 @@ static int spell_read_dic(spellinfo_T *spin, char *fname, afffile_T *affile)
       }
       duplicate++;
     } else {
-      hash_add_item(&ht, hi, (char_u *)dw, hash);
+      hash_add_item(&ht, hi, dw, hash);
     }
 
     flags = 0;
@@ -3465,7 +3465,7 @@ static int store_aff_word(spellinfo_T *spin, char *word, char *afflist, afffile_
               && (ae->ae_chop == NULL
                   || strlen(ae->ae_chop) < wordlen)
               && (ae->ae_prog == NULL
-                  || vim_regexec_prog(&ae->ae_prog, false, (char_u *)word, (colnr_T)0))
+                  || vim_regexec_prog(&ae->ae_prog, false, word, (colnr_T)0))
               && (((condit & CONDIT_CFIX) == 0)
                   == ((condit & CONDIT_AFF) == 0
                       || ae->ae_flags == NULL
@@ -4255,7 +4255,7 @@ static long node_compress(spellinfo_T *spin, wordnode_T *node, hashtab_T *ht, lo
       compressed += node_compress(spin, child, ht, tot);
 
       // Try to find an identical child.
-      hash = hash_hash(child->wn_u1.hashkey);
+      hash = hash_hash((char *)child->wn_u1.hashkey);
       hi = hash_lookup(ht, (const char *)child->wn_u1.hashkey,
                        strlen((char *)child->wn_u1.hashkey), hash);
       if (!HASHITEM_EMPTY(hi)) {
@@ -4284,7 +4284,7 @@ static long node_compress(spellinfo_T *spin, wordnode_T *node, hashtab_T *ht, lo
       } else {
         // No other child has this hash value, add it to the
         // hashtable.
-        hash_add_item(ht, hi, child->wn_u1.hashkey, hash);
+        hash_add_item(ht, hi, (char *)child->wn_u1.hashkey, hash);
       }
     }
   }
@@ -5877,10 +5877,10 @@ static void set_map_str(slang_T *lp, char *map)
         b[cl] = NUL;
         utf_char2bytes(headc, b + cl + 1);
         b[cl + 1 + headcl] = NUL;
-        hash = hash_hash((char_u *)b);
+        hash = hash_hash(b);
         hi = hash_lookup(&lp->sl_map_hash, (const char *)b, strlen(b), hash);
         if (HASHITEM_EMPTY(hi)) {
-          hash_add_item(&lp->sl_map_hash, hi, (char_u *)b, hash);
+          hash_add_item(&lp->sl_map_hash, hi, b, hash);
         } else {
           // This should have been checked when generating the .spl
           // file.

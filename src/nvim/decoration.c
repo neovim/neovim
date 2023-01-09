@@ -407,7 +407,7 @@ void decor_redraw_signs(buf_T *buf, int row, int *num_signs, SignTextAttrs sattr
       }
       if (j < SIGN_SHOW_MAX) {
         sattrs[j] = (SignTextAttrs) {
-          .text = (char *)decor->sign_text,
+          .text = decor->sign_text,
           .hl_attr_id = decor->sign_hl_id == 0 ? 0 : syn_id2attr(decor->sign_hl_id),
           .priority = decor->priority
         };

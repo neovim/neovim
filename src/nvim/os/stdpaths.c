@@ -121,7 +121,7 @@ char *get_xdg_home(const XDGVarType idx)
 #endif
 
 #ifdef BACKSLASH_IN_FILENAME
-    slash_adjust((char_u *)dir);
+    slash_adjust(dir);
 #endif
   }
   return dir;

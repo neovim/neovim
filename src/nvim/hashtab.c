@@ -88,7 +88,7 @@ void hash_clear_all(hashtab_T *ht, unsigned int off)
 ///                  is changed in any way.
 hashitem_T *hash_find(const hashtab_T *const ht, const char *const key)
 {
-  return hash_lookup(ht, key, strlen(key), hash_hash((char_u *)key));
+  return hash_lookup(ht, key, strlen(key), hash_hash(key));
 }
 
 /// Like hash_find, but key is not NUL-terminated
@@ -204,13 +204,13 @@ void hash_debug_results(void)
 ///         FAIL if key already present
 int hash_add(hashtab_T *ht, char *key)
 {
-  hash_T hash = hash_hash((char_u *)key);
+  hash_T hash = hash_hash(key);
   hashitem_T *hi = hash_lookup(ht, key, strlen(key), hash);
   if (!HASHITEM_EMPTY(hi)) {
     internal_error("hash_add()");
     return FAIL;
   }
-  hash_add_item(ht, hi, (char_u *)key, hash);
+  hash_add_item(ht, hi, key, hash);
   return OK;
 }
 
@@ -221,14 +221,14 @@ int hash_add(hashtab_T *ht, char *key)
 /// @param key  Pointer to the key for the new item. The key has to be contained
 ///             in the new item (@see hashitem_T). Must not be NULL.
 /// @param hash The precomputed hash value for the key.
-void hash_add_item(hashtab_T *ht, hashitem_T *hi, char_u *key, hash_T hash)
+void hash_add_item(hashtab_T *ht, hashitem_T *hi, char *key, hash_T hash)
 {
   ht->ht_used++;
   ht->ht_changed++;
   if (hi->hi_key == NULL) {
     ht->ht_filled++;
   }
-  hi->hi_key = (char *)key;
+  hi->hi_key = key;
   hi->hi_hash = hash;
 
   // When the space gets low may resize the array.
@@ -406,9 +406,9 @@ static void hash_may_resize(hashtab_T *ht, size_t minitems)
 /// run a script that uses hashtables a lot. Vim will then print statistics
 /// when exiting. Try that with the current hash algorithm and yours. The
 /// lower the percentage the better.
-hash_T hash_hash(const char_u *key)
+hash_T hash_hash(const char *key)
 {
-  hash_T hash = *key;
+  hash_T hash = (uint8_t)(*key);
 
   if (hash == 0) {
     return (hash_T)0;
@@ -416,7 +416,7 @@ hash_T hash_hash(const char_u *key)
 
   // A simplistic algorithm that appears to do very well.
   // Suggested by George Reilly.
-  const uint8_t *p = key + 1;
+  const uint8_t *p = (uint8_t *)key + 1;
   while (*p != NUL) {
     HASH_CYCLE_BODY(hash, p);
   }

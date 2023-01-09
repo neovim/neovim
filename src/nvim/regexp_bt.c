@@ -430,7 +430,7 @@ static int regnarrate = 0;
 // Setup to parse the regexp.  Used once to get the length and once to do it.
 static void regcomp_start(char_u *expr, int re_flags)                        // see vim_regcomp()
 {
-  initchr(expr);
+  initchr((char *)expr);
   if (re_flags & RE_MAGIC) {
     reg_magic = MAGIC_ON;
   } else {
@@ -2128,7 +2128,7 @@ collection:
 
       // If there is no matching ']', we assume the '[' is a normal
       // character.  This makes 'incsearch' and ":help [" work.
-      lp = skip_anyof(regparse);
+      lp = (char_u *)skip_anyof(regparse);
       if (*lp == ']') {         // there is a matching ']'
         int startc = -1;                // > 0 when next '-' is a range
         int endc;
@@ -3014,7 +3014,7 @@ static void reg_restore(regsave_T *save, garray_T *gap)
       // only call reg_getline() when the line number changed to save
       // a bit of time
       rex.lnum = save->rs_u.pos.lnum;
-      rex.line = reg_getline(rex.lnum);
+      rex.line = (char_u *)reg_getline(rex.lnum);
     }
     rex.input = rex.line + save->rs_u.pos.col;
   } else {
@@ -3385,12 +3385,12 @@ do_class:
       } else if (rex.reg_line_lbr && *scan == '\n' && WITH_NL(OP(p))) {
         scan++;
       } else if ((len = utfc_ptr2len((char *)scan)) > 1) {
-        if ((cstrchr(opnd, utf_ptr2char((char *)scan)) == NULL) == testval) {
+        if ((cstrchr((char *)opnd, utf_ptr2char((char *)scan)) == NULL) == testval) {
           break;
         }
         scan += len;
       } else {
-        if ((cstrchr(opnd, *scan) == NULL) == testval) {
+        if ((cstrchr((char *)opnd, *scan) == NULL) == testval) {
           break;
         }
         scan++;
@@ -3647,7 +3647,7 @@ static bool regmatch(char_u *scan, proftime_T *tm, int *timed_out)
 
           // Line may have been freed, get it again.
           if (REG_MULTI) {
-            rex.line = reg_getline(rex.lnum);
+            rex.line = (char_u *)reg_getline(rex.lnum);
             rex.input = rex.line + col;
           }
 
@@ -4003,7 +4003,7 @@ static bool regmatch(char_u *scan, proftime_T *tm, int *timed_out)
         case ANYBUT:
           if (c == NUL) {
             status = RA_NOMATCH;
-          } else if ((cstrchr(OPERAND(scan), c) == NULL) == (op == ANYOF)) {
+          } else if ((cstrchr((char *)OPERAND(scan), c) == NULL) == (op == ANYOF)) {
             status = RA_NOMATCH;
           } else {
             ADVANCE_REGINPUT();
@@ -4700,7 +4700,7 @@ static bool regmatch(char_u *scan, proftime_T *tm, int *timed_out)
               }
             } else {
               const char_u *const line =
-                reg_getline(rp->rs_un.regsave.rs_u.pos.lnum);
+                (char_u *)reg_getline(rp->rs_un.regsave.rs_u.pos.lnum);
 
               rp->rs_un.regsave.rs_u.pos.col -=
                 utf_head_off((char *)line,
@@ -4782,7 +4782,7 @@ static bool regmatch(char_u *scan, proftime_T *tm, int *timed_out)
                   break;
                 }
                 rex.lnum--;
-                rex.line = reg_getline(rex.lnum);
+                rex.line = (char_u *)reg_getline(rex.lnum);
                 // Just in case regrepeat() didn't count right.
                 if (rex.line == NULL) {
                   break;
@@ -4962,7 +4962,7 @@ static long bt_regexec_both(char_u *line, colnr_T startcol, proftime_T *tm, int 
 
   if (REG_MULTI) {
     prog = (bt_regprog_T *)rex.reg_mmatch->regprog;
-    line = reg_getline((linenr_T)0);
+    line = (char_u *)reg_getline((linenr_T)0);
     rex.reg_startpos = rex.reg_mmatch->startpos;
     rex.reg_endpos = rex.reg_mmatch->endpos;
   } else {
@@ -5014,7 +5014,7 @@ static long bt_regexec_both(char_u *line, colnr_T startcol, proftime_T *tm, int 
         MB_PTR_ADV(s);
       }
     } else {
-      while ((s = cstrchr(s, c)) != NULL) {
+      while ((s = (char_u *)cstrchr((char *)s, c)) != NULL) {
         if (cstrncmp((char *)s, (char *)prog->regmust, &prog->regmlen) == 0) {
           break;  // Found it.
         }
@@ -5049,7 +5049,7 @@ static long bt_regexec_both(char_u *line, colnr_T startcol, proftime_T *tm, int 
     while (!got_int) {
       if (prog->regstart != NUL) {
         // Skip until the char we know it must start with.
-        s = cstrchr(rex.line + col, prog->regstart);
+        s = (char_u *)cstrchr((char *)rex.line + col, prog->regstart);
         if (s == NULL) {
           retval = 0;
           break;
@@ -5071,7 +5071,7 @@ static long bt_regexec_both(char_u *line, colnr_T startcol, proftime_T *tm, int 
       // if not currently on the first line, get it again
       if (rex.lnum != 0) {
         rex.lnum = 0;
-        rex.line = reg_getline((linenr_T)0);
+        rex.line = (char_u *)reg_getline((linenr_T)0);
       }
       if (rex.line[col] == NUL) {
         break;

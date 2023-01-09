@@ -1363,9 +1363,8 @@ bool get_spec_reg(int regname, char **argp, bool *allocated, bool errmsg)
     if (!errmsg) {
       return false;
     }
-    *argp
-      = (char *)file_name_at_cursor(FNAME_MESS | FNAME_HYP | (regname == Ctrl_P ? FNAME_EXP : 0),
-                                    1L, NULL);
+    *argp = file_name_at_cursor(FNAME_MESS | FNAME_HYP | (regname == Ctrl_P ? FNAME_EXP : 0),
+                                1L, NULL);
     *allocated = true;
     return true;
 
@@ -3148,7 +3147,7 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
 
   if (y_size == 0 || y_array == NULL) {
     semsg(_("E353: Nothing in register %s"),
-          regname == 0 ? (char_u *)"\"" : transchar(regname));
+          regname == 0 ? "\"" : transchar(regname));
     goto end;
   }
 
@@ -5178,7 +5177,7 @@ static void str_to_reg(yankreg_T *y_ptr, MotionType yank_type, const char *str, 
 
   // Count the number of lines within the string
   if (str_list) {
-    for (char_u **ss = (char_u **)str; *ss != NULL; ss++) {
+    for (char **ss = (char **)str; *ss != NULL; ss++) {
       newlines++;
     }
   } else {

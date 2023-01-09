@@ -1474,7 +1474,7 @@ static int command_line_erase_chars(CommandLineState *s)
   }
 
   if (s->c == K_DEL) {
-    ccline.cmdpos += mb_off_next((char_u *)ccline.cmdbuff,
+    ccline.cmdpos += mb_off_next(ccline.cmdbuff,
                                  ccline.cmdbuff + ccline.cmdpos);
   }
 
@@ -3969,8 +3969,8 @@ char *vim_strsave_fnameescape(const char *const fname, const int what)
 {
 #ifdef BACKSLASH_IN_FILENAME
 # define PATH_ESC_CHARS " \t\n*?[{`%#'\"|!<"
-# define BUFFER_ESC_CHARS ((char_u *)" \t\n*?[`%#'\"|!<")
-  char_u buf[sizeof(PATH_ESC_CHARS)];
+# define BUFFER_ESC_CHARS (" \t\n*?[`%#'\"|!<")
+  char buf[sizeof(PATH_ESC_CHARS)];
   int j = 0;
 
   // Don't escape '[', '{' and '!' if they are in 'isfname' and for the
@@ -3982,8 +3982,7 @@ char *vim_strsave_fnameescape(const char *const fname, const int what)
     }
   }
   buf[j] = NUL;
-  char *p = (char *)vim_strsave_escaped((const char_u *)fname,
-                                        (const char_u *)buf);
+  char *p = vim_strsave_escaped(fname, buf);
 #else
 # define PATH_ESC_CHARS " \t\n*?[{`$\\%#'\"|!<"
 # define SHELL_ESC_CHARS " \t\n*?[{`$\\%#'\"|!<>();&"
@@ -4290,7 +4289,7 @@ char *check_cedit(void)
   if (*p_cedit == NUL) {
     cedit_key = -1;
   } else {
-    n = string_to_key((char_u *)p_cedit);
+    n = string_to_key(p_cedit);
     if (vim_isprintc(n)) {
       return e_invarg;
     }

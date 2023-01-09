@@ -774,7 +774,7 @@ EXTERN bool g_tag_at_cursor INIT(= false);  // whether the tag command comes
 
 EXTERN int replace_offset INIT(= 0);        // offset for replace_push()
 
-EXTERN char_u *escape_chars INIT(= (char_u *)" \t\\\"|");  // need backslash in cmd line
+EXTERN char *escape_chars INIT(= " \t\\\"|");  // need backslash in cmd line
 
 EXTERN int keep_help_flag INIT(= false);  // doing :ta from help file
 
@@ -825,7 +825,7 @@ EXTERN int cmdwin_type INIT(= 0);    ///< type of cmdline window or 0
 EXTERN int cmdwin_result INIT(= 0);  ///< result of cmdline window or 0
 EXTERN int cmdwin_level INIT(= 0);   ///< cmdline recursion level
 
-EXTERN char_u no_lines_msg[] INIT(= N_("--No lines in buffer--"));
+EXTERN char no_lines_msg[] INIT(= N_("--No lines in buffer--"));
 
 // When ":global" is used to number of substitutions and changed lines is
 // accumulated until it's finished.

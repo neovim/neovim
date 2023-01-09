@@ -3828,7 +3828,7 @@ static int get_string_tv(char **arg, typval_T *rettv, int evaluate)
         if (p[1] != '*') {
           flags |= FSK_SIMPLIFY;
         }
-        extra = trans_special((const char **)&p, strlen(p), (char_u *)name, flags, false, NULL);
+        extra = trans_special((const char **)&p, strlen(p), name, flags, false, NULL);
         if (extra != 0) {
           name += extra;
           if (name >= rettv->vval.v_string + len) {
@@ -3924,7 +3924,7 @@ static void partial_free(partial_T *pt)
   xfree(pt->pt_argv);
   tv_dict_unref(pt->pt_dict);
   if (pt->pt_name != NULL) {
-    func_unref((char_u *)pt->pt_name);
+    func_unref(pt->pt_name);
     xfree(pt->pt_name);
   } else {
     func_ptr_unref(pt->pt_func);
@@ -4490,7 +4490,7 @@ bool set_ref_in_item(typval_T *tv, int copyID, ht_stack_T **ht_stack, list_stack
 
     // A partial does not have a copyID, because it cannot contain itself.
     if (pt != NULL) {
-      abort = set_ref_in_func((char_u *)pt->pt_name, pt->pt_func, copyID);
+      abort = set_ref_in_func(pt->pt_name, pt->pt_func, copyID);
       if (pt->pt_dict != NULL) {
         typval_T dtv;
 
@@ -4507,7 +4507,7 @@ bool set_ref_in_item(typval_T *tv, int copyID, ht_stack_T **ht_stack, list_stack
     break;
   }
   case VAR_FUNC:
-    abort = set_ref_in_func((char_u *)tv->vval.v_string, NULL, copyID);
+    abort = set_ref_in_func(tv->vval.v_string, NULL, copyID);
     break;
   case VAR_UNKNOWN:
   case VAR_BOOL:
@@ -5104,7 +5104,7 @@ void common_function(typval_T *argvars, typval_T *rettv, bool is_funcref)
         xfree(name);
       } else {
         pt->pt_name = name;
-        func_ref((char_u *)name);
+        func_ref(name);
       }
 
       rettv->v_type = VAR_PARTIAL;
@@ -5113,7 +5113,7 @@ void common_function(typval_T *argvars, typval_T *rettv, bool is_funcref)
       // result is a VAR_FUNC
       rettv->v_type = VAR_FUNC;
       rettv->vval.v_string = name;
-      func_ref((char_u *)name);
+      func_ref(name);
     }
   }
 theend:
@@ -5529,7 +5529,7 @@ bool callback_from_typval(Callback *const callback, const typval_T *const arg)
       if (callback->data.funcref == NULL) {
         callback->data.funcref = xstrdup(name);
       }
-      func_ref((char_u *)callback->data.funcref);
+      func_ref(callback->data.funcref);
       callback->type = kCallbackFuncref;
     }
   } else if (nlua_is_table_from_lua(arg)) {
@@ -8100,7 +8100,7 @@ char *do_string_sub(char *str, char *pat, char *sub, typval_T *expr, const char 
       // - The text up to where the match is.
       // - The substituted text.
       // - The text after the match.
-      sublen = vim_regsub(&regmatch, (char_u *)sub, expr, (char_u *)tail, 0, REGSUB_MAGIC);
+      sublen = vim_regsub(&regmatch, sub, expr, tail, 0, REGSUB_MAGIC);
       ga_grow(&ga, (int)((end - tail) + sublen -
                          (regmatch.endp[0] - regmatch.startp[0])));
 
@@ -8108,8 +8108,8 @@ char *do_string_sub(char *str, char *pat, char *sub, typval_T *expr, const char 
       int i = (int)(regmatch.startp[0] - tail);
       memmove((char_u *)ga.ga_data + ga.ga_len, tail, (size_t)i);
       // add the substituted text
-      (void)vim_regsub(&regmatch, (char_u *)sub, expr,
-                       (char_u *)ga.ga_data + ga.ga_len + i, sublen,
+      (void)vim_regsub(&regmatch, sub, expr,
+                       (char *)ga.ga_data + ga.ga_len + i, sublen,
                        REGSUB_COPY | REGSUB_MAGIC);
       ga.ga_len += i + sublen - 1;
       tail = regmatch.endp[0];

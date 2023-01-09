@@ -1260,7 +1260,7 @@ int gen_expand_wildcards(int num_pat, char **pat, int *num_file, char ***file, i
     } else {
       // First expand environment variables, "~/" and "~user/".
       if ((has_env_var(p) && !(flags & EW_NOTENV)) || *p == '~') {
-        p = (char *)expand_env_save_opt(p, true);
+        p = expand_env_save_opt(p, true);
         if (p == NULL) {
           p = pat[i];
         } else {
@@ -1414,9 +1414,9 @@ static int expand_backtick(garray_T *gap, char *pat, int flags)
 /// backslash twice.
 /// When 'shellslash' set do it the other way around.
 /// When the path looks like a URL leave it unmodified.
-void slash_adjust(char_u *p)
+void slash_adjust(char *p)
 {
-  if (path_with_url((const char *)p)) {
+  if (path_with_url(p)) {
     return;
   }
 
@@ -1429,8 +1429,8 @@ void slash_adjust(char_u *p)
   }
 
   while (*p) {
-    if (*p == (char_u)psepcN) {
-      *p = (char_u)psepc;
+    if (*p == psepcN) {
+      *p = psepc;
     }
     MB_PTR_ADV(p);
   }
@@ -1690,8 +1690,8 @@ char *find_file_name_in_path(char *ptr, size_t len, int options, long count, cha
   }
 
   if (options & FNAME_EXP) {
-    file_name = (char *)find_file_in_path(ptr, len, options & ~FNAME_MESS, true,
-                                          rel_fname);
+    file_name = find_file_in_path(ptr, len, options & ~FNAME_MESS, true,
+                                  rel_fname);
 
     // If the file could not be found in a normal way, try applying
     // 'includeexpr' (unless done already).
@@ -1701,8 +1701,8 @@ char *find_file_name_in_path(char *ptr, size_t len, int options, long count, cha
       if (tofree != NULL) {
         ptr = tofree;
         len = strlen(ptr);
-        file_name = (char *)find_file_in_path(ptr, len, options & ~FNAME_MESS,
-                                              true, rel_fname);
+        file_name = find_file_in_path(ptr, len, options & ~FNAME_MESS,
+                                      true, rel_fname);
       }
     }
     if (file_name == NULL && (options & FNAME_MESS)) {
@@ -1717,7 +1717,7 @@ char *find_file_name_in_path(char *ptr, size_t len, int options, long count, cha
     while (file_name != NULL && --count > 0) {
       xfree(file_name);
       file_name =
-        (char *)find_file_in_path(ptr, len, options, false, rel_fname);
+        find_file_in_path(ptr, len, options, false, rel_fname);
     }
   } else {
     file_name = xstrnsave(ptr, len);

@@ -206,7 +206,7 @@ static char *illegal_char(char *errbuf, size_t errbuflen, int c)
     return "";
   }
   vim_snprintf(errbuf, errbuflen, _("E539: Illegal character <%s>"),
-               (char *)transchar(c));
+               transchar(c));
   return errbuf;
 }
 

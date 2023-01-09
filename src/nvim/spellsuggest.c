@@ -2819,7 +2819,7 @@ static void add_sound_suggest(suginfo_T *su, char *goodword, int score, langp_T 
   // times with different scores.  Since the following is quite slow only do
   // the words that have a better score than before.  Use a hashtable to
   // remember the words that have been done.
-  hash = hash_hash((char_u *)goodword);
+  hash = hash_hash(goodword);
   const size_t goodword_len = strlen(goodword);
   hi = hash_lookup(&slang->sl_sounddone, (const char *)goodword, goodword_len,
                    hash);
@@ -2827,7 +2827,7 @@ static void add_sound_suggest(suginfo_T *su, char *goodword, int score, langp_T 
     sft = xmalloc(sizeof(sftword_T) + goodword_len);
     sft->sft_score = (int16_t)score;
     memcpy(sft->sft_word, goodword, goodword_len + 1);
-    hash_add_item(&slang->sl_sounddone, hi, sft->sft_word, hash);
+    hash_add_item(&slang->sl_sounddone, hi, (char *)sft->sft_word, hash);
   } else {
     sft = HI2SFT(hi);
     if (score >= sft->sft_score) {
@@ -3244,12 +3244,12 @@ static void add_banned(suginfo_T *su, char *word)
   hash_T hash;
   hashitem_T *hi;
 
-  hash = hash_hash((char_u *)word);
+  hash = hash_hash(word);
   const size_t word_len = strlen(word);
   hi = hash_lookup(&su->su_banned, word, word_len, hash);
   if (HASHITEM_EMPTY(hi)) {
     s = xmemdupz(word, word_len);
-    hash_add_item(&su->su_banned, hi, s, hash);
+    hash_add_item(&su->su_banned, hi, (char *)s, hash);
   }
 }
 

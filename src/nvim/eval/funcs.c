@@ -244,11 +244,11 @@ int call_internal_func(const char *const fname, const int argcount, typval_T *co
 }
 
 /// Invoke a method for base->method().
-int call_internal_method(const char_u *const fname, const int argcount, typval_T *const argvars,
+int call_internal_method(const char *const fname, const int argcount, typval_T *const argvars,
                          typval_T *const rettv, typval_T *const basetv)
   FUNC_ATTR_NONNULL_ALL
 {
-  const EvalFuncDef *const fdef = find_internal_func((const char *)fname);
+  const EvalFuncDef *const fdef = find_internal_func(fname);
   if (fdef == NULL) {
     return FCERR_UNKNOWN;
   } else if (fdef->base_arg == BASE_NONE) {
@@ -572,16 +572,16 @@ static void f_call(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     if (argvars[2].v_type != VAR_DICT) {
       emsg(_(e_dictreq));
       if (owned) {
-        func_unref((char_u *)func);
+        func_unref(func);
       }
       return;
     }
     selfdict = argvars[2].vval.v_dict;
   }
 
-  func_call((char_u *)func, &argvars[1], partial, selfdict, rettv);
+  func_call(func, &argvars[1], partial, selfdict, rettv);
   if (owned) {
-    func_unref((char_u *)func);
+    func_unref(func);
   }
 }
 
@@ -2248,7 +2248,7 @@ static void f_get(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
         rettv->v_type = (*what == 'f' ? VAR_FUNC : VAR_STRING);
         assert(name != NULL);
         if (rettv->v_type == VAR_FUNC) {
-          func_ref((char_u *)name);
+          func_ref((char *)name);
         }
         if (*what == 'n' && pt->pt_name == NULL && pt->pt_func != NULL) {
           // use <SNR> instead of the byte code
@@ -2982,7 +2982,7 @@ static void f_globpath(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   const char *const file = tv_get_string_buf_chk(&argvars[1], buf1);
   if (file != NULL && !error) {
     garray_T ga;
-    ga_init(&ga, (int)sizeof(char_u *), 10);
+    ga_init(&ga, (int)sizeof(char *), 10);
     globpath((char *)tv_get_string(&argvars[0]), (char *)file, &ga, flags);
 
     if (rettv->v_type == VAR_STRING) {
@@ -6468,7 +6468,7 @@ static void f_rpcstart(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 
   // Allocate extra memory for the argument vector and the NULL pointer
   int argvl = argsl + 2;
-  char **argv = xmalloc(sizeof(char_u *) * (size_t)argvl);
+  char **argv = xmalloc(sizeof(char *) * (size_t)argvl);
 
   // Copy program name
   argv[0] = xstrdup(argvars[0].vval.v_string);
@@ -6644,7 +6644,7 @@ static void f_searchdecl(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     }
   }
   if (!error && name != NULL) {
-    rettv->vval.v_number = find_decl((char_u *)name, strlen(name), locally,
+    rettv->vval.v_number = find_decl((char *)name, strlen(name), locally,
                                      thisblock, SEARCH_KEEP) == FAIL;
   }
 }
@@ -7069,11 +7069,11 @@ static void f_setcharsearch(typval_T *argvars, typval_T *rettv, EvalFuncData fpt
     return;
   }
 
-  char_u *const csearch = (char_u *)tv_dict_get_string(d, "char", false);
+  char *const csearch = tv_dict_get_string(d, "char", false);
   if (csearch != NULL) {
     int pcc[MAX_MCO];
-    const int c = utfc_ptr2char((char *)csearch, pcc);
-    set_last_csearch(c, (char *)csearch, utfc_ptr2len((char *)csearch));
+    const int c = utfc_ptr2char(csearch, pcc);
+    set_last_csearch(c, csearch, utfc_ptr2len(csearch));
   }
 
   dictitem_T *di = tv_dict_find(d, S_LEN("forward"));
