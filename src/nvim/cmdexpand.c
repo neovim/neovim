@@ -107,7 +107,7 @@ static int sort_func_compare(const void *s1, const void *s2)
 static void ExpandEscape(expand_T *xp, char_u *str, int numfiles, char **files, int options)
 {
   int i;
-  char_u *p;
+  char *p;
   const int vse_what = xp->xp_context == EXPAND_BUFFERS ? VSE_BUFFER : VSE_NONE;
 
   // May change home directory back to "~"
@@ -126,9 +126,9 @@ static void ExpandEscape(expand_T *xp, char_u *str, int numfiles, char **files, 
       for (i = 0; i < numfiles; i++) {
         // for ":set path=" we need to escape spaces twice
         if (xp->xp_backslash == XP_BS_THREE) {
-          p = vim_strsave_escaped((char_u *)files[i], (char_u *)" ");
+          p = (char *)vim_strsave_escaped((char_u *)files[i], (char_u *)" ");
           xfree(files[i]);
-          files[i] = (char *)p;
+          files[i] = p;
 #if defined(BACKSLASH_IN_FILENAME)
           p = vim_strsave_escaped(files[i], (char_u *)" ");
           xfree(files[i]);
@@ -136,13 +136,13 @@ static void ExpandEscape(expand_T *xp, char_u *str, int numfiles, char **files, 
 #endif
         }
 #ifdef BACKSLASH_IN_FILENAME
-        p = (char_u *)vim_strsave_fnameescape((const char *)files[i], vse_what);
+        p = vim_strsave_fnameescape((const char *)files[i], vse_what);
 #else
-        p = (char_u *)vim_strsave_fnameescape((const char *)files[i],
-                                              xp->xp_shell ? VSE_SHELL : vse_what);
+        p = vim_strsave_fnameescape((const char *)files[i],
+                                    xp->xp_shell ? VSE_SHELL : vse_what);
 #endif
         xfree(files[i]);
-        files[i] = (char *)p;
+        files[i] = p;
 
         // If 'str' starts with "\~", replace "~" at start of
         // files[i] with "\~".
@@ -161,9 +161,9 @@ static void ExpandEscape(expand_T *xp, char_u *str, int numfiles, char **files, 
       // Insert a backslash before characters in a tag name that
       // would terminate the ":tag" command.
       for (i = 0; i < numfiles; i++) {
-        p = vim_strsave_escaped((char_u *)files[i], (char_u *)"\\|\"");
+        p = (char *)vim_strsave_escaped((char_u *)files[i], (char_u *)"\\|\"");
         xfree(files[i]);
-        files[i] = (char *)p;
+        files[i] = p;
       }
     }
   }
@@ -180,7 +180,7 @@ int nextwild(expand_T *xp, int type, int options, bool escape)
 {
   CmdlineInfo *const ccline = get_cmdline_info();
   int i, j;
-  char_u *p1;
+  char *p1;
   char *p2;
   int difflen;
 
@@ -214,14 +214,14 @@ int nextwild(expand_T *xp, int type, int options, bool escape)
     p2 = ExpandOne(xp, NULL, NULL, 0, type);
   } else {
     // Translate string into pattern and expand it.
-    p1 = (char_u *)addstar(xp->xp_pattern, xp->xp_pattern_len, xp->xp_context);
+    p1 = addstar(xp->xp_pattern, xp->xp_pattern_len, xp->xp_context);
     const int use_options = (options
                              | WILD_HOME_REPLACE
                              | WILD_ADD_SLASH
                              | WILD_SILENT
                              | (escape ? WILD_ESCAPE : 0)
                              | (p_wic ? WILD_ICASE : 0));
-    p2 = ExpandOne(xp, (char *)p1, xstrnsave(&ccline->cmdbuff[i], xp->xp_pattern_len),
+    p2 = ExpandOne(xp, p1, xstrnsave(&ccline->cmdbuff[i], xp->xp_pattern_len),
                    use_options, type);
     xfree(p1);
 
@@ -358,16 +358,16 @@ static void redraw_wildmenu(expand_T *xp, int num_matches, char **matches, int m
 {
 #define L_MATCH(m) (showtail ? showmatches_gettail(matches[m], false) : matches[m])
   int row;
-  char_u *buf;
+  char *buf;
   int len;
   int clen;                     // length in screen cells
   int fillchar;
   int attr;
   int i;
   bool highlight = true;
-  char_u *selstart = NULL;
+  char *selstart = NULL;
   int selstart_col = 0;
-  char_u *selend = NULL;
+  char *selend = NULL;
   static int first_match = 0;
   bool add_left = false;
   char *s;
@@ -450,7 +450,7 @@ static void redraw_wildmenu(expand_T *xp, int num_matches, char **matches, int m
              || xp->xp_context == EXPAND_MENUNAMES);
     if (emenu && menu_is_separator(s)) {
       STRCPY(buf + len, transchar('|'));
-      l = (int)strlen((char *)buf + len);
+      l = (int)strlen(buf + len);
       len += l;
       clen += l;
     } else {
@@ -520,10 +520,10 @@ static void redraw_wildmenu(expand_T *xp, int num_matches, char **matches, int m
     ScreenGrid *grid = (wild_menu_showing == WM_SCROLLED)
                         ? &msg_grid_adj : &default_grid;
 
-    grid_puts(grid, (char *)buf, row, 0, attr);
+    grid_puts(grid, buf, row, 0, attr);
     if (selstart != NULL && highlight) {
       *selend = NUL;
-      grid_puts(grid, (char *)selstart, row, selstart_col, HL_ATTR(HLF_WM));
+      grid_puts(grid, selstart, row, selstart_col, HL_ATTR(HLF_WM));
     }
 
     grid_fill(grid, row, row + 1, clen, Columns,
@@ -835,14 +835,14 @@ int showmatches(expand_T *xp, int wildmenu)
   int maxlen;
   int lines;
   int columns;
-  char_u *p;
+  char *p;
   int lastlen;
   int attr;
   int showtail;
 
   if (xp->xp_numfiles == -1) {
     set_expand_context(xp);
-    i = expand_cmdline(xp, (char_u *)ccline->cmdbuff, ccline->cmdpos,
+    i = expand_cmdline(xp, ccline->cmdbuff, ccline->cmdpos,
                        &num_files, &files_found);
     showtail = expand_showtail(xp);
     if (i != EXPAND_OK) {
@@ -903,8 +903,8 @@ int showmatches(expand_T *xp, int wildmenu)
       if (!showtail && (xp->xp_context == EXPAND_FILES
                         || xp->xp_context == EXPAND_SHELLCMD
                         || xp->xp_context == EXPAND_BUFFERS)) {
-        home_replace(NULL, files_found[i], (char *)NameBuff, MAXPATHL, true);
-        j = vim_strsize((char *)NameBuff);
+        home_replace(NULL, files_found[i], NameBuff, MAXPATHL, true);
+        j = vim_strsize(NameBuff);
       } else {
         j = vim_strsize(L_SHOWFILE(i));
       }
@@ -940,11 +940,11 @@ int showmatches(expand_T *xp, int wildmenu)
       for (k = i; k < num_files; k += lines) {
         if (xp->xp_context == EXPAND_TAGS_LISTFILES) {
           msg_outtrans_attr(files_found[k], HL_ATTR(HLF_D));
-          p = (char_u *)files_found[k] + strlen(files_found[k]) + 1;
+          p = files_found[k] + strlen(files_found[k]) + 1;
           msg_advance(maxlen + 1);
           msg_puts((const char *)p);
           msg_advance(maxlen + 3);
-          msg_outtrans_long_attr((char *)p + 2, HL_ATTR(HLF_D));
+          msg_outtrans_long_attr(p + 2, HL_ATTR(HLF_D));
           break;
         }
         for (j = maxlen - lastlen; --j >= 0;) {
@@ -958,10 +958,10 @@ int showmatches(expand_T *xp, int wildmenu)
             // Expansion was done before and special characters
             // were escaped, need to halve backslashes.  Also
             // $HOME has been replaced with ~/.
-            char_u *exp_path = expand_env_save_opt((char_u *)files_found[k], true);
-            char_u *path = exp_path != NULL ? exp_path : (char_u *)files_found[k];
-            char_u *halved_slash = (char_u *)backslash_halve_save((char *)path);
-            j = os_isdir((char *)halved_slash);
+            char *exp_path = (char *)expand_env_save_opt((char_u *)files_found[k], true);
+            char *path = exp_path != NULL ? exp_path : files_found[k];
+            char *halved_slash = backslash_halve_save(path);
+            j = os_isdir(halved_slash);
             xfree(exp_path);
             if (halved_slash != path) {
               xfree(halved_slash);
@@ -971,16 +971,16 @@ int showmatches(expand_T *xp, int wildmenu)
             j = os_isdir(files_found[k]);
           }
           if (showtail) {
-            p = (char_u *)L_SHOWFILE(k);
+            p = L_SHOWFILE(k);
           } else {
-            home_replace(NULL, files_found[k], (char *)NameBuff, MAXPATHL, true);
-            p = (char_u *)NameBuff;
+            home_replace(NULL, files_found[k], NameBuff, MAXPATHL, true);
+            p = NameBuff;
           }
         } else {
           j = false;
-          p = (char_u *)L_SHOWFILE(k);
+          p = L_SHOWFILE(k);
         }
-        lastlen = msg_outtrans_attr((char *)p, j ? attr : 0);
+        lastlen = msg_outtrans_attr(p, j ? attr : 0);
       }
       if (msg_col > 0) {        // when not wrapped around
         msg_clr_eos();
@@ -1008,11 +1008,11 @@ int showmatches(expand_T *xp, int wildmenu)
 /// Return the tail of file name path "s", ignoring a trailing "/".
 static char *showmatches_gettail(char *s, bool eager)
 {
-  char_u *p;
-  char_u *t = (char_u *)s;
+  char *p;
+  char *t = s;
   bool had_sep = false;
 
-  for (p = (char_u *)s; *p != NUL;) {
+  for (p = s; *p != NUL;) {
     if (vim_ispathsep(*p)
 #ifdef BACKSLASH_IN_FILENAME
         && !rem_backslash(p)
@@ -1029,7 +1029,7 @@ static char *showmatches_gettail(char *s, bool eager)
     }
     MB_PTR_ADV(p);
   }
-  return (char *)t;
+  return t;
 }
 
 /// Return true if we only need to show the tail of completion matches.
@@ -1037,8 +1037,8 @@ static char *showmatches_gettail(char *s, bool eager)
 /// returned.
 static bool expand_showtail(expand_T *xp)
 {
-  char_u *s;
-  char_u *end;
+  char *s;
+  char *end;
 
   // When not completing file names a "/" may mean something different.
   if (xp->xp_context != EXPAND_FILES
@@ -1047,15 +1047,15 @@ static bool expand_showtail(expand_T *xp)
     return false;
   }
 
-  end = (char_u *)path_tail(xp->xp_pattern);
-  if (end == (char_u *)xp->xp_pattern) {          // there is no path separator
+  end = path_tail(xp->xp_pattern);
+  if (end == xp->xp_pattern) {          // there is no path separator
     return false;
   }
 
-  for (s = (char_u *)xp->xp_pattern; s < end; s++) {
+  for (s = xp->xp_pattern; s < end; s++) {
     // Skip escaped wildcards.  Only when the backslash is not a path
     // separator, on DOS the '*' "path\*\file" must not be skipped.
-    if (rem_backslash((char *)s)) {
+    if (rem_backslash(s)) {
       s++;
     } else if (vim_strchr("*?[", *s) != NULL) {
       return false;
@@ -2149,9 +2149,9 @@ void set_cmd_context(expand_T *xp, char_u *str, int len, int col, int use_ccline
 /// @param col  position of cursor
 /// @param matchcount  return: nr of matches
 /// @param matches  return: array of pointers to matches
-int expand_cmdline(expand_T *xp, const char_u *str, int col, int *matchcount, char ***matches)
+int expand_cmdline(expand_T *xp, const char *str, int col, int *matchcount, char ***matches)
 {
-  char_u *file_str = NULL;
+  char *file_str = NULL;
   int options = WILD_ADD_SLASH|WILD_SILENT;
 
   if (xp->xp_context == EXPAND_UNSUCCESSFUL) {
@@ -2164,16 +2164,16 @@ int expand_cmdline(expand_T *xp, const char_u *str, int col, int *matchcount, ch
   }
 
   // add star to file name, or convert to regexp if not exp. files.
-  assert((str + col) - (char_u *)xp->xp_pattern >= 0);
-  xp->xp_pattern_len = (size_t)((str + col) - (char_u *)xp->xp_pattern);
-  file_str = (char_u *)addstar(xp->xp_pattern, xp->xp_pattern_len, xp->xp_context);
+  assert((str + col) - xp->xp_pattern >= 0);
+  xp->xp_pattern_len = (size_t)((str + col) - xp->xp_pattern);
+  file_str = addstar(xp->xp_pattern, xp->xp_pattern_len, xp->xp_context);
 
   if (p_wic) {
     options += WILD_ICASE;
   }
 
   // find all files that match the description
-  if (ExpandFromContext(xp, (char *)file_str, matchcount, matches, options) == FAIL) {
+  if (ExpandFromContext(xp, file_str, matchcount, matches, options) == FAIL) {
     *matchcount = 0;
     *matches = NULL;
   }
@@ -2424,7 +2424,7 @@ static int ExpandFromContext(expand_T *xp, char *pat, int *num_file, char ***fil
   }
   if (xp->xp_context == EXPAND_TAGS
       || xp->xp_context == EXPAND_TAGS_LISTFILES) {
-    return expand_tags(xp->xp_context == EXPAND_TAGS, (char_u *)pat, num_file, file);
+    return expand_tags(xp->xp_context == EXPAND_TAGS, pat, num_file, file);
   }
   if (xp->xp_context == EXPAND_COLORS) {
     char *directories[] = { "colors", NULL };
@@ -3097,7 +3097,7 @@ void wildmenu_cleanup(CmdlineInfo *cclp)
 /// "getcompletion()" function
 void f_getcompletion(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
-  char_u *pat;
+  char *pat;
   expand_T xpc;
   bool filtered = false;
   int options = WILD_SILENT | WILD_USE_NL | WILD_ADD_SLASH
@@ -3155,8 +3155,8 @@ void f_getcompletion(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   }
 
 theend:
-  pat = (char_u *)addstar(xpc.xp_pattern, xpc.xp_pattern_len, xpc.xp_context);
-  ExpandOne(&xpc, (char *)pat, NULL, options, WILD_ALL_KEEP);
+  pat = addstar(xpc.xp_pattern, xpc.xp_pattern_len, xpc.xp_context);
+  ExpandOne(&xpc, pat, NULL, options, WILD_ALL_KEEP);
   tv_list_alloc_ret(rettv, xpc.xp_numfiles);
 
   for (int i = 0; i < xpc.xp_numfiles; i++) {

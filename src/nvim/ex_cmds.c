@@ -160,12 +160,12 @@ void do_ascii(const exarg_T *const eap)
 
     dig = (char *)get_digraph_for_char(cval);
     if (dig != NULL) {
-      iobuff_len += (size_t)vim_snprintf((char *)IObuff + iobuff_len,
+      iobuff_len += (size_t)vim_snprintf(IObuff + iobuff_len,
                                          sizeof(IObuff) - iobuff_len,
                                          _("<%s>%s%s  %d,  Hex %02x,  Oct %03o, Digr %s"),
                                          transchar(c), buf1, buf2, cval, cval, cval, dig);
     } else {
-      iobuff_len += (size_t)vim_snprintf((char *)IObuff + iobuff_len,
+      iobuff_len += (size_t)vim_snprintf(IObuff + iobuff_len,
                                          sizeof(IObuff) - iobuff_len,
                                          _("<%s>%s%s  %d,  Hex %02x,  Octal %03o"),
                                          transchar(c), buf1, buf2, cval, cval, cval);
@@ -204,18 +204,18 @@ void do_ascii(const exarg_T *const eap)
     if (utf_iscomposing(c)) {
       IObuff[iobuff_len++] = ' ';  // Draw composing char on top of a space.
     }
-    iobuff_len += (size_t)utf_char2bytes(c, (char *)IObuff + iobuff_len);
+    iobuff_len += (size_t)utf_char2bytes(c, IObuff + iobuff_len);
 
     dig = (char *)get_digraph_for_char(c);
     if (dig != NULL) {
-      iobuff_len += (size_t)vim_snprintf((char *)IObuff + iobuff_len,
+      iobuff_len += (size_t)vim_snprintf(IObuff + iobuff_len,
                                          sizeof(IObuff) - iobuff_len,
                                          (c < 0x10000
                                           ? _("> %d, Hex %04x, Oct %o, Digr %s")
                                           : _("> %d, Hex %08x, Oct %o, Digr %s")),
                                          c, c, c, dig);
     } else {
-      iobuff_len += (size_t)vim_snprintf((char *)IObuff + iobuff_len,
+      iobuff_len += (size_t)vim_snprintf(IObuff + iobuff_len,
                                          sizeof(IObuff) - iobuff_len,
                                          (c < 0x10000
                                           ? _("> %d, Hex %04x, Octal %o")
@@ -228,10 +228,10 @@ void do_ascii(const exarg_T *const eap)
     c = cc[ci++];
   }
   if (ci != MAX_MCO && c != 0) {
-    xstrlcpy((char *)IObuff + iobuff_len, " ...", sizeof(IObuff) - iobuff_len);
+    xstrlcpy(IObuff + iobuff_len, " ...", sizeof(IObuff) - iobuff_len);
   }
 
-  msg((char *)IObuff);
+  msg(IObuff);
 }
 
 /// ":left", ":center" and ":right": align text.

@@ -1408,7 +1408,7 @@ char *find_file_in_path_option(char *ptr, size_t len, int options, int first, ch
             && rel_fname != NULL
             && strlen(rel_fname) + l < MAXPATHL) {
           STRCPY(NameBuff, rel_fname);
-          STRCPY(path_tail((char *)NameBuff), ff_file_to_find);
+          STRCPY(path_tail(NameBuff), ff_file_to_find);
           l = strlen(NameBuff);
         } else {
           STRCPY(NameBuff, ff_file_to_find);
@@ -1429,7 +1429,7 @@ char *find_file_in_path_option(char *ptr, size_t len, int options, int first, ch
             break;
           }
           assert(MAXPATHL >= l);
-          copy_option_part(&buf, (char *)NameBuff + l, MAXPATHL - l, ",");
+          copy_option_part(&buf, NameBuff + l, MAXPATHL - l, ",");
         }
       }
     }
@@ -1587,7 +1587,7 @@ int vim_chdirfile(char *fname, CdCause cause)
     NameBuff[0] = NUL;
   }
 
-  if (pathcmp(dir, (char *)NameBuff, -1) == 0) {
+  if (pathcmp(dir, NameBuff, -1) == 0) {
     // nothing to do
     return OK;
   }

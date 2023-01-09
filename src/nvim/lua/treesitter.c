@@ -182,19 +182,19 @@ int tslua_add_language(lua_State *L)
 
   uv_lib_t lib;
   if (uv_dlopen(path, &lib)) {
-    snprintf((char *)IObuff, IOSIZE, "Failed to load parser: uv_dlopen: %s",
+    snprintf(IObuff, IOSIZE, "Failed to load parser: uv_dlopen: %s",
              uv_dlerror(&lib));
     uv_dlclose(&lib);
-    lua_pushstring(L, (char *)IObuff);
+    lua_pushstring(L, IObuff);
     return lua_error(L);
   }
 
   TSLanguage *(*lang_parser)(void);
   if (uv_dlsym(&lib, symbol_buf, (void **)&lang_parser)) {
-    snprintf((char *)IObuff, IOSIZE, "Failed to load parser: uv_dlsym: %s",
+    snprintf(IObuff, IOSIZE, "Failed to load parser: uv_dlsym: %s",
              uv_dlerror(&lib));
     uv_dlclose(&lib);
-    lua_pushstring(L, (char *)IObuff);
+    lua_pushstring(L, IObuff);
     return lua_error(L);
   }
 

@@ -439,7 +439,7 @@ size_t kv_transstr(StringBuilder *str, const char *const s, bool untab)
 ///
 /// When "buf" is NULL, return an allocated string.
 /// Otherwise, put the result in buf, limited by buflen, and return buf.
-char_u *str_foldcase(char_u *str, int orglen, char *buf, int buflen)
+char *str_foldcase(char *str, int orglen, char *buf, int buflen)
   FUNC_ATTR_NONNULL_RET
 {
   garray_T ga;
@@ -518,9 +518,9 @@ char_u *str_foldcase(char_u *str, int orglen, char *buf, int buflen)
   }
 
   if (buf == NULL) {
-    return (char_u *)ga.ga_data;
+    return ga.ga_data;
   }
-  return (char_u *)buf;
+  return buf;
 }
 
 // Catch 22: g_chartab[] can't be initialized before the options are
@@ -809,10 +809,10 @@ bool vim_iswordc_buf(const int c, buf_T *const buf)
 /// @param  p  pointer to the multi-byte character
 ///
 /// @return true if "p" points to a keyword character.
-bool vim_iswordp(const char_u *const p)
+bool vim_iswordp(const char *const p)
   FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
 {
-  return vim_iswordp_buf((char *)p, curbuf);
+  return vim_iswordp_buf(p, curbuf);
 }
 
 /// Just like vim_iswordc_buf() but uses a pointer to the (multi-byte)

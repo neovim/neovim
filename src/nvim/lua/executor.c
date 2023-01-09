@@ -1052,8 +1052,8 @@ static int nlua_require(lua_State *const lstate)
   time_push(&rel_time, &start_time);
   int status = lua_pcall(lstate, 1, 1, 0);
   if (status == 0) {
-    vim_snprintf((char *)IObuff, IOSIZE, "require('%s')", name);
-    time_msg((char *)IObuff, &start_time);
+    vim_snprintf(IObuff, IOSIZE, "require('%s')", name);
+    time_msg(IObuff, &start_time);
   }
   time_pop(rel_time);
 
@@ -1342,7 +1342,7 @@ void nlua_typval_eval(const String str, typval_T *const arg, typval_T *const ret
   const size_t lcmd_len = sizeof(EVALHEADER) - 1 + str.size + 1;
   char *lcmd;
   if (lcmd_len < IOSIZE) {
-    lcmd = (char *)IObuff;
+    lcmd = IObuff;
   } else {
     lcmd = xmalloc(lcmd_len);
   }
@@ -1352,7 +1352,7 @@ void nlua_typval_eval(const String str, typval_T *const arg, typval_T *const ret
 #undef EVALHEADER
   nlua_typval_exec(lcmd, lcmd_len, "luaeval()", arg, 1, true, ret_tv);
 
-  if (lcmd != (char *)IObuff) {
+  if (lcmd != IObuff) {
     xfree(lcmd);
   }
 }
@@ -1366,7 +1366,7 @@ void nlua_typval_call(const char *str, size_t len, typval_T *const args, int arg
   const size_t lcmd_len = sizeof(CALLHEADER) - 1 + len + sizeof(CALLSUFFIX) - 1;
   char *lcmd;
   if (lcmd_len < IOSIZE) {
-    lcmd = (char *)IObuff;
+    lcmd = IObuff;
   } else {
     lcmd = xmalloc(lcmd_len);
   }
@@ -1379,7 +1379,7 @@ void nlua_typval_call(const char *str, size_t len, typval_T *const args, int arg
 
   nlua_typval_exec(lcmd, lcmd_len, "v:lua", args, argcount, false, ret_tv);
 
-  if (lcmd != (char *)IObuff) {
+  if (lcmd != IObuff) {
     xfree(lcmd);
   }
 }
@@ -1645,7 +1645,7 @@ void ex_luado(exarg_T *const eap)
                            + (sizeof(DOEND) - 1));
   char *lcmd;
   if (lcmd_len < IOSIZE) {
-    lcmd = (char *)IObuff;
+    lcmd = IObuff;
   } else {
     lcmd = xmalloc(lcmd_len + 1);
   }

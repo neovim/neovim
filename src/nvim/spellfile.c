@@ -2064,8 +2064,8 @@ static afffile_T *spell_read_aff(spellinfo_T *spin, char_u *fname)
     return NULL;
   }
 
-  vim_snprintf((char *)IObuff, IOSIZE, _("Reading affix file %s..."), fname);
-  spell_message(spin, (char *)IObuff);
+  vim_snprintf(IObuff, IOSIZE, _("Reading affix file %s..."), fname);
+  spell_message(spin, IObuff);
 
   // Only do REP lines when not done in another .aff file already.
   do_rep = GA_EMPTY(&spin->si_rep);
@@ -3137,9 +3137,9 @@ static int spell_read_dic(spellinfo_T *spin, char_u *fname, afffile_T *affile)
   // The hashtable is only used to detect duplicated words.
   hash_init(&ht);
 
-  vim_snprintf((char *)IObuff, IOSIZE,
+  vim_snprintf(IObuff, IOSIZE,
                _("Reading dictionary file %s..."), fname);
-  spell_message(spin, (char *)IObuff);
+  spell_message(spin, IObuff);
 
   // start with a message for the first line
   spin->si_msg_count = 999999;
@@ -3691,8 +3691,8 @@ static int spell_read_wordfile(spellinfo_T *spin, char_u *fname)
     return FAIL;
   }
 
-  vim_snprintf((char *)IObuff, IOSIZE, _("Reading word file %s..."), fname);
-  spell_message(spin, (char *)IObuff);
+  vim_snprintf(IObuff, IOSIZE, _("Reading word file %s..."), fname);
+  spell_message(spin, IObuff);
 
   // Read all the lines in the file one by one.
   while (!vim_fgets((char *)rline, MAXLINELEN, fd) && !got_int) {
@@ -3834,9 +3834,9 @@ static int spell_read_wordfile(spellinfo_T *spin, char_u *fname)
   fclose(fd);
 
   if (spin->si_ascii && non_ascii > 0) {
-    vim_snprintf((char *)IObuff, IOSIZE,
+    vim_snprintf(IObuff, IOSIZE,
                  _("Ignored %d words with non-ASCII characters"), non_ascii);
-    spell_message(spin, (char *)IObuff);
+    spell_message(spin, IObuff);
   }
 
   return retval;
@@ -4226,10 +4226,10 @@ static void wordtree_compress(spellinfo_T *spin, wordnode_T *root, const char *n
       } else {
         perc = (tot - n) * 100 / tot;
       }
-      vim_snprintf((char *)IObuff, IOSIZE,
+      vim_snprintf(IObuff, IOSIZE,
                    _("Compressed %s of %ld nodes; %ld (%ld%%) remaining"),
                    name, tot, tot - n, perc);
-      spell_message(spin, (char *)IObuff);
+      spell_message(spin, IObuff);
     }
 #ifdef SPELL_PRINTTREE
     spell_print_tree(root->wn_sibling);
@@ -5208,9 +5208,9 @@ static void sug_write(spellinfo_T *spin, char_u *fname)
     return;
   }
 
-  vim_snprintf((char *)IObuff, IOSIZE,
+  vim_snprintf(IObuff, IOSIZE,
                _("Writing suggestion file %s..."), fname);
-  spell_message(spin, (char *)IObuff);
+  spell_message(spin, IObuff);
 
   // <SUGHEADER>: <fileID> <versionnr> <timestamp>
   if (fwrite(VIMSUGMAGIC, VIMSUGMAGICL, (size_t)1, fd) != 1) {  // <fileID>
@@ -5264,9 +5264,9 @@ static void sug_write(spellinfo_T *spin, char_u *fname)
     emsg(_(e_write));
   }
 
-  vim_snprintf((char *)IObuff, IOSIZE,
+  vim_snprintf(IObuff, IOSIZE,
                _("Estimated runtime memory use: %d bytes"), spin->si_memtot);
-  spell_message(spin, (char *)IObuff);
+  spell_message(spin, IObuff);
 
 theend:
   // close the file
@@ -5445,16 +5445,16 @@ static void mkspell(int fcount, char **fnames, bool ascii, bool over_write, bool
 
     if (!error && !got_int) {
       // Write the info in the spell file.
-      vim_snprintf((char *)IObuff, IOSIZE,
+      vim_snprintf(IObuff, IOSIZE,
                    _("Writing spell file %s..."), wfname);
-      spell_message(&spin, (char *)IObuff);
+      spell_message(&spin, IObuff);
 
       error = write_vim_spell(&spin, wfname) == FAIL;
 
       spell_message(&spin, _("Done!"));
-      vim_snprintf((char *)IObuff, IOSIZE,
+      vim_snprintf(IObuff, IOSIZE,
                    _("Estimated runtime memory use: %d bytes"), spin.si_memtot);
-      spell_message(&spin, (char *)IObuff);
+      spell_message(&spin, IObuff);
 
       // If the file is loaded need to reload it.
       if (!error) {
@@ -5616,7 +5616,7 @@ void spell_add_word(char *word, int len, SpellAddType what, int idx, bool undo)
           if (fseek(fd, fpos, SEEK_SET) == 0) {
             fputc('#', fd);
             if (undo) {
-              home_replace(NULL, fname, (char *)NameBuff, MAXPATHL, true);
+              home_replace(NULL, fname, NameBuff, MAXPATHL, true);
               smsg(_("Word '%.*s' removed from %s"), len, word, NameBuff);
             }
           }
@@ -5666,7 +5666,7 @@ void spell_add_word(char *word, int len, SpellAddType what, int idx, bool undo)
       }
       fclose(fd);
 
-      home_replace(NULL, fname, (char *)NameBuff, MAXPATHL, true);
+      home_replace(NULL, fname, NameBuff, MAXPATHL, true);
       smsg(_("Word '%.*s' added to %s"), len, word, NameBuff);
     }
   }

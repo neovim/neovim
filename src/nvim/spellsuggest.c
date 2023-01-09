@@ -544,12 +544,12 @@ void spell_suggest(int count)
     msg_start();
     msg_row = Rows - 1;         // for when 'cmdheight' > 1
     lines_left = Rows;          // avoid more prompt
-    vim_snprintf((char *)IObuff, IOSIZE, _("Change \"%.*s\" to:"),
+    vim_snprintf(IObuff, IOSIZE, _("Change \"%.*s\" to:"),
                  sug.su_badlen, sug.su_badptr);
     if (cmdmsg_rl && strncmp(IObuff, "Change", 6) == 0) {
       // And now the rabbit from the high hat: Avoid showing the
       // untranslated message rightleft.
-      vim_snprintf((char *)IObuff, IOSIZE, ":ot \"%.*s\" egnahC",
+      vim_snprintf(IObuff, IOSIZE, ":ot \"%.*s\" egnahC",
                    sug.su_badlen, sug.su_badptr);
     }
     msg_puts((const char *)IObuff);
@@ -567,18 +567,18 @@ void spell_suggest(int count)
       if (el > 0 && stp->st_wordlen + el <= MAXWLEN) {
         xstrlcpy(wcopy + stp->st_wordlen, sug.su_badptr + stp->st_orglen, (size_t)el + 1);
       }
-      vim_snprintf((char *)IObuff, IOSIZE, "%2d", i + 1);
+      vim_snprintf(IObuff, IOSIZE, "%2d", i + 1);
       if (cmdmsg_rl) {
         rl_mirror(IObuff);
       }
       msg_puts((const char *)IObuff);
 
-      vim_snprintf((char *)IObuff, IOSIZE, " \"%s\"", wcopy);
+      vim_snprintf(IObuff, IOSIZE, " \"%s\"", wcopy);
       msg_puts((const char *)IObuff);
 
       // The word may replace more than "su_badlen".
       if (sug.su_badlen < stp->st_orglen) {
-        vim_snprintf((char *)IObuff, IOSIZE, _(" < \"%.*s\""),
+        vim_snprintf(IObuff, IOSIZE, _(" < \"%.*s\""),
                      stp->st_orglen, sug.su_badptr);
         msg_puts((const char *)IObuff);
       }
@@ -586,11 +586,11 @@ void spell_suggest(int count)
       if (p_verbose > 0) {
         // Add the score.
         if (sps_flags & (SPS_DOUBLE | SPS_BEST)) {
-          vim_snprintf((char *)IObuff, IOSIZE, " (%s%d - %d)",
+          vim_snprintf(IObuff, IOSIZE, " (%s%d - %d)",
                        stp->st_salscore ? "s " : "",
                        stp->st_score, stp->st_altscore);
         } else {
-          vim_snprintf((char *)IObuff, IOSIZE, " (%d)",
+          vim_snprintf(IObuff, IOSIZE, " (%d)",
                        stp->st_score);
         }
         if (cmdmsg_rl) {
@@ -630,10 +630,10 @@ void spell_suggest(int count)
       // Replacing less than "su_badlen", append the remainder to
       // repl_to.
       repl_from = xstrnsave(sug.su_badptr, (size_t)sug.su_badlen);
-      vim_snprintf((char *)IObuff, IOSIZE, "%s%.*s", stp->st_word,
+      vim_snprintf(IObuff, IOSIZE, "%s%.*s", stp->st_word,
                    sug.su_badlen - stp->st_orglen,
                    sug.su_badptr + stp->st_orglen);
-      repl_to = xstrdup((char *)IObuff);
+      repl_to = xstrdup(IObuff);
     } else {
       // Replacing su_badlen or more, use the whole word.
       repl_from = xstrnsave(sug.su_badptr, (size_t)stp->st_orglen);

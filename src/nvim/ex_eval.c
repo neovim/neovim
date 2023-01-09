@@ -538,7 +538,7 @@ static void discard_exception(except_T *excp, bool was_finished)
   if (p_verbose >= 13 || debug_break_level > 0) {
     int save_msg_silent = msg_silent;
 
-    saved_IObuff = xstrdup((char *)IObuff);
+    saved_IObuff = xstrdup(IObuff);
     if (debug_break_level > 0) {
       msg_silent = false;               // display messages
     } else {
@@ -592,12 +592,12 @@ static void catch_exception(except_T *excp)
   set_vim_var_string(VV_EXCEPTION, excp->value, -1);
   if (*excp->throw_name != NUL) {
     if (excp->throw_lnum != 0) {
-      vim_snprintf((char *)IObuff, IOSIZE, _("%s, line %" PRId64),
+      vim_snprintf(IObuff, IOSIZE, _("%s, line %" PRId64),
                    excp->throw_name, (int64_t)excp->throw_lnum);
     } else {
-      vim_snprintf((char *)IObuff, IOSIZE, "%s", excp->throw_name);
+      vim_snprintf(IObuff, IOSIZE, "%s", excp->throw_name);
     }
-    set_vim_var_string(VV_THROWPOINT, (char *)IObuff, -1);
+    set_vim_var_string(VV_THROWPOINT, IObuff, -1);
   } else {
     // throw_name not set on an exception from a command that was typed.
     set_vim_var_string(VV_THROWPOINT, NULL, -1);
@@ -641,14 +641,14 @@ static void finish_exception(except_T *excp)
     set_vim_var_string(VV_EXCEPTION, caught_stack->value, -1);
     if (*caught_stack->throw_name != NUL) {
       if (caught_stack->throw_lnum != 0) {
-        vim_snprintf((char *)IObuff, IOSIZE,
+        vim_snprintf(IObuff, IOSIZE,
                      _("%s, line %" PRId64), caught_stack->throw_name,
                      (int64_t)caught_stack->throw_lnum);
       } else {
-        vim_snprintf((char *)IObuff, IOSIZE, "%s",
+        vim_snprintf(IObuff, IOSIZE, "%s",
                      caught_stack->throw_name);
       }
-      set_vim_var_string(VV_THROWPOINT, (char *)IObuff, -1);
+      set_vim_var_string(VV_THROWPOINT, IObuff, -1);
     } else {
       // throw_name not set on an exception from a command that was
       // typed.
@@ -714,9 +714,9 @@ static void report_pending(int action, int pending, void *value)
 
   default:
     if (pending & CSTP_THROW) {
-      vim_snprintf((char *)IObuff, IOSIZE,
+      vim_snprintf(IObuff, IOSIZE,
                    mesg, _("Exception"));
-      mesg = concat_str((char *)IObuff, ": %s");
+      mesg = concat_str(IObuff, ": %s");
       s = ((except_T *)value)->value;
     } else if ((pending & CSTP_ERROR) && (pending & CSTP_INTERRUPT)) {
       s = _("Error and interrupt");

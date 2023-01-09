@@ -2085,8 +2085,8 @@ int do_source(char *fname, int check_other, int is_vimrc)
   }
 
   if (l_time_fd != NULL) {
-    vim_snprintf((char *)IObuff, IOSIZE, "sourcing %s", fname);
-    time_msg((char *)IObuff, &start_time);
+    vim_snprintf(IObuff, IOSIZE, "sourcing %s", fname);
+    time_msg(IObuff, &start_time);
     time_pop(rel_time);
   }
 
@@ -2174,11 +2174,11 @@ void ex_scriptnames(exarg_T *eap)
 
   for (int i = 1; i <= script_items.ga_len && !got_int; i++) {
     if (SCRIPT_ITEM(i).sn_name != NULL) {
-      home_replace(NULL, SCRIPT_ITEM(i).sn_name, (char *)NameBuff, MAXPATHL, true);
-      vim_snprintf((char *)IObuff, IOSIZE, "%3d: %s", i, NameBuff);
-      if (!message_filtered((char *)IObuff)) {
+      home_replace(NULL, SCRIPT_ITEM(i).sn_name, NameBuff, MAXPATHL, true);
+      vim_snprintf(IObuff, IOSIZE, "%3d: %s", i, NameBuff);
+      if (!message_filtered(IObuff)) {
         msg_putchar('\n');
-        msg_outtrans((char *)IObuff);
+        msg_outtrans(IObuff);
         line_breakcheck();
       }
     }
@@ -2220,16 +2220,16 @@ char *get_scriptname(LastSet last_set, bool *should_free)
   case SID_LUA:
     return _("Lua");
   case SID_API_CLIENT:
-    snprintf((char *)IObuff, IOSIZE, _("API client (channel id %" PRIu64 ")"), last_set.channel_id);
-    return (char *)IObuff;
+    snprintf(IObuff, IOSIZE, _("API client (channel id %" PRIu64 ")"), last_set.channel_id);
+    return IObuff;
   case SID_STR:
     return _("anonymous :source");
   default: {
     char *const sname = SCRIPT_ITEM(last_set.script_ctx.sc_sid).sn_name;
     if (sname == NULL) {
-      snprintf((char *)IObuff, IOSIZE, _("anonymous :source (script id %d)"),
+      snprintf(IObuff, IOSIZE, _("anonymous :source (script id %d)"),
                last_set.script_ctx.sc_sid);
-      return (char *)IObuff;
+      return IObuff;
     }
 
     *should_free = true;

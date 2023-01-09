@@ -3167,7 +3167,7 @@ bool in_cinkeys(int keytyped, int when, bool line_is_empty)
           line = get_cursor_line_ptr();
           for (s = line + curwin->w_cursor.col; s > line; s = n) {
             n = (char *)mb_prevptr((char_u *)line, (char_u *)s);
-            if (!vim_iswordp((char_u *)n)) {
+            if (!vim_iswordp(n)) {
               break;
             }
           }

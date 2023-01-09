@@ -372,7 +372,7 @@ int find_help_tags(const char *arg, int *num_matches, char ***matches, bool keep
     "!=?", "!~?", "<=?", "<?", "==?", "=~?",
     ">=?", ">?", "is?", "isnot?"
   };
-  char *d = (char *)IObuff;       // assume IObuff is long enough!
+  char *d = IObuff;       // assume IObuff is long enough!
   d[0] = NUL;
 
   if (STRNICMP(arg, "expr-", 5) == 0) {
@@ -550,7 +550,7 @@ int find_help_tags(const char *arg, int *num_matches, char ***matches, bool keep
   if (keep_lang) {
     flags |= TAG_KEEP_LANG;
   }
-  if (find_tags((char *)IObuff, num_matches, matches, flags, MAXCOL, NULL) == OK
+  if (find_tags(IObuff, num_matches, matches, flags, MAXCOL, NULL) == OK
       && *num_matches > 0) {
     // Sort the matches found on the heuristic number that is after the
     // tag name.
@@ -716,10 +716,10 @@ void fix_help_buffer(void)
       // $VIMRUNTIME.
       char *p = p_rtp;
       while (*p != NUL) {
-        copy_option_part(&p, (char *)NameBuff, MAXPATHL, ",");
+        copy_option_part(&p, NameBuff, MAXPATHL, ",");
         char *const rt = vim_getenv("VIMRUNTIME");
         if (rt != NULL
-            && path_full_compare(rt, (char *)NameBuff, false, true) != kEqualFiles) {
+            && path_full_compare(rt, NameBuff, false, true) != kEqualFiles) {
           int fcount;
           char **fnames;
           char *s;
@@ -727,7 +727,7 @@ void fix_help_buffer(void)
           char *cp;
 
           // Find all "doc/ *.txt" files in this directory.
-          if (!add_pathsep((char *)NameBuff)
+          if (!add_pathsep(NameBuff)
               || xstrlcat(NameBuff, "doc/*.??[tx]",  // NOLINT
                           sizeof(NameBuff)) >= MAXPATHL) {
             emsg(_(e_fnametoolong));
@@ -736,7 +736,7 @@ void fix_help_buffer(void)
 
           // Note: We cannot just do `&NameBuff` because it is a statically sized array
           //       so `NameBuff == &NameBuff` according to C semantics.
-          char *buff_list[1] = { (char *)NameBuff };
+          char *buff_list[1] = { NameBuff };
           if (gen_expand_wildcards(1, buff_list, &fcount,
                                    &fnames, EW_FILE|EW_SILENT) == OK
               && fcount > 0) {
@@ -785,7 +785,7 @@ void fix_help_buffer(void)
               }
               vim_fgets(IObuff, IOSIZE, fd);
               if (IObuff[0] == '*'
-                  && (s = vim_strchr((char *)IObuff + 1, '*'))
+                  && (s = vim_strchr(IObuff + 1, '*'))
                   != NULL) {
                 TriState this_utf = kNone;
                 // Change tag definition to a
@@ -818,13 +818,13 @@ void fix_help_buffer(void)
                               p_enc);
                 if (vc.vc_type == CONV_NONE) {
                   // No conversion needed.
-                  cp = (char *)IObuff;
+                  cp = IObuff;
                 } else {
                   // Do the conversion.  If it fails
                   // use the unconverted text.
-                  cp = string_convert(&vc, (char *)IObuff, NULL);
+                  cp = string_convert(&vc, IObuff, NULL);
                   if (cp == NULL) {
-                    cp = (char *)IObuff;
+                    cp = IObuff;
                   }
                 }
                 convert_setup(&vc, NULL, NULL);
@@ -890,7 +890,7 @@ static void helptags_one(char *dir, const char *ext, const char *tagfname, bool 
 
   // Note: We cannot just do `&NameBuff` because it is a statically sized array
   //       so `NameBuff == &NameBuff` according to C semantics.
-  char *buff_list[1] = { (char *)NameBuff };
+  char *buff_list[1] = { NameBuff };
   const int res = gen_expand_wildcards(1, buff_list, &filecount, &files,
                                        EW_FILE|EW_SILENT);
   if (res == FAIL || filecount == 0) {
@@ -906,13 +906,13 @@ static void helptags_one(char *dir, const char *ext, const char *tagfname, bool 
   // Open the tags file for writing.
   // Do this before scanning through all the files.
   memcpy(NameBuff, dir, dirlen + 1);
-  if (!add_pathsep((char *)NameBuff)
+  if (!add_pathsep(NameBuff)
       || xstrlcat(NameBuff, tagfname, sizeof(NameBuff)) >= MAXPATHL) {
     emsg(_(e_fnametoolong));
     return;
   }
 
-  FILE *const fd_tags = os_fopen((char *)NameBuff, "w");
+  FILE *const fd_tags = os_fopen(NameBuff, "w");
   if (fd_tags == NULL) {
     if (!ignore_writeerr) {
       semsg(_("E152: Cannot open %s for writing"), NameBuff);
@@ -947,7 +947,7 @@ static void helptags_one(char *dir, const char *ext, const char *tagfname, bool 
       if (firstline) {
         // Detect utf-8 file by a non-ASCII char in the first line.
         TriState this_utf8 = kNone;
-        for (s = (char *)IObuff; *s != NUL; s++) {
+        for (s = IObuff; *s != NUL; s++) {
           if ((char_u)(*s) >= 0x80) {
             this_utf8 = kTrue;
             const int l = utf_ptr2len(s);
@@ -1033,10 +1033,10 @@ static void helptags_one(char *dir, const char *ext, const char *tagfname, bool 
       while (*p1 == *p2) {
         if (*p2 == '\t') {
           *p2 = NUL;
-          vim_snprintf((char *)NameBuff, MAXPATHL,
+          vim_snprintf(NameBuff, MAXPATHL,
                        _("E154: Duplicate tag \"%s\" in file %s/%s"),
                        ((char_u **)ga.ga_data)[i], dir, p2 + 1);
-          emsg((char *)NameBuff);
+          emsg(NameBuff);
           *p2 = '\t';
           break;
         }
@@ -1098,7 +1098,7 @@ static void do_helptags(char *dirname, bool add_help_tags, bool ignore_writeerr)
 
   // Note: We cannot just do `&NameBuff` because it is a statically sized array
   //       so `NameBuff == &NameBuff` according to C semantics.
-  char *buff_list[1] = { (char *)NameBuff };
+  char *buff_list[1] = { NameBuff };
   if (gen_expand_wildcards(1, buff_list, &filecount, &files,
                            EW_FILE|EW_SILENT) == FAIL
       || filecount == 0) {

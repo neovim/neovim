@@ -3678,10 +3678,10 @@ void find_pattern_in_path(char *ptr, Direction dir, size_t len, bool whole, bool
           files[depth].matched = false;
           if (action == ACTION_EXPAND) {
             msg_hist_off = true;                // reset in msg_trunc_attr()
-            vim_snprintf((char *)IObuff, IOSIZE,
+            vim_snprintf(IObuff, IOSIZE,
                          _("Scanning included file: %s"),
                          (char *)new_fname);
-            msg_trunc_attr((char *)IObuff, true, HL_ATTR(HLF_R));
+            msg_trunc_attr(IObuff, true, HL_ATTR(HLF_R));
           } else if (p_verbose >= 5) {
             verbose_enter();
             smsg(_("Searching included file %s"),
@@ -3775,7 +3775,7 @@ search_line:
         char *aux = p = startp;
         if (compl_status_adding()) {
           p += ins_compl_len();
-          if (vim_iswordp((char_u *)p)) {
+          if (vim_iswordp(p)) {
             goto exit_matched;
           }
           p = (char *)find_word_start((char_u *)p);
@@ -4056,9 +4056,9 @@ static void show_pat_in_path(char *line, int type, bool did_show, int action, FI
       *(p + 1) = NUL;
     }
     if (action == ACTION_SHOW_ALL) {
-      snprintf((char *)IObuff, IOSIZE, "%3ld: ", count);  // Show match nr.
+      snprintf(IObuff, IOSIZE, "%3ld: ", count);  // Show match nr.
       msg_puts((const char *)IObuff);
-      snprintf((char *)IObuff, IOSIZE, "%4" PRIdLINENR, *lnum);  // Show line nr.
+      snprintf(IObuff, IOSIZE, "%4" PRIdLINENR, *lnum);  // Show line nr.
       // Highlight line numbers.
       msg_puts_attr((const char *)IObuff, HL_ATTR(HLF_N));
       msg_puts(" ");

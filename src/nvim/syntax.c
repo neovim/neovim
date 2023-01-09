@@ -2754,7 +2754,7 @@ static int check_keyword_id(char *const line, const int startcol, int *const end
 
   // ignoring case
   if (kp == NULL && syn_block->b_keywtab_ic.ht_used != 0) {
-    str_foldcase((char_u *)kwp, kwlen, keyword, MAXKEYWLEN + 1);
+    str_foldcase(kwp, kwlen, keyword, MAXKEYWLEN + 1);
     kp = match_keyword(keyword, &syn_block->b_keywtab_ic, cur_si);
   }
 
@@ -3727,8 +3727,8 @@ static void add_keyword(char *const name, const int id, const int flags,
 {
   char name_folded[MAXKEYWLEN + 1];
   const char *const name_ic = (curwin->w_s->b_syn_ic)
-      ? (char *)str_foldcase((char_u *)name, (int)strlen(name), name_folded,
-                             sizeof(name_folded))
+      ? str_foldcase(name, (int)strlen(name), name_folded,
+                     sizeof(name_folded))
       : name;
 
   keyentry_T *const kp = xmalloc(sizeof(keyentry_T) + strlen(name_ic));

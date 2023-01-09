@@ -547,8 +547,8 @@ int showmode(void)
           if (curwin->w_p_arab) {
             msg_puts_attr(_(" Arabic"), attr);
           } else if (get_keymap_str(curwin, " (%s)",
-                                    (char *)NameBuff, MAXPATHL)) {
-            msg_puts_attr((char *)NameBuff, attr);
+                                    NameBuff, MAXPATHL)) {
+            msg_puts_attr(NameBuff, attr);
           }
         }
         if ((State & MODE_INSERT) && p_paste) {
@@ -683,9 +683,9 @@ void get_trans_bufname(buf_T *buf)
   if (buf_spname(buf) != NULL) {
     xstrlcpy(NameBuff, buf_spname(buf), MAXPATHL);
   } else {
-    home_replace(buf, buf->b_fname, (char *)NameBuff, MAXPATHL, true);
+    home_replace(buf, buf->b_fname, NameBuff, MAXPATHL, true);
   }
-  trans_characters((char *)NameBuff, MAXPATHL);
+  trans_characters(NameBuff, MAXPATHL);
 }
 
 /// Get the character to use in a separator between vertically split windows.

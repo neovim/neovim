@@ -648,7 +648,7 @@ void ex_history(exarg_T *eap)
     STRCPY(IObuff, "\n      #  ");
     assert(history_names[histype1] != NULL);
     STRCAT(STRCAT(IObuff, history_names[histype1]), " history");
-    msg_puts_title((char *)IObuff);
+    msg_puts_title(IObuff);
     idx = hisidx[histype1];
     hist = history[histype1];
     j = hisidx1;
@@ -667,15 +667,15 @@ void ex_history(exarg_T *eap)
         if (hist[i].hisstr != NULL
             && hist[i].hisnum >= j && hist[i].hisnum <= k) {
           msg_putchar('\n');
-          snprintf((char *)IObuff, IOSIZE, "%c%6d  ", i == idx ? '>' : ' ',
+          snprintf(IObuff, IOSIZE, "%c%6d  ", i == idx ? '>' : ' ',
                    hist[i].hisnum);
           if (vim_strsize(hist[i].hisstr) > Columns - 10) {
-            trunc_string(hist[i].hisstr, (char *)IObuff + strlen(IObuff),
+            trunc_string(hist[i].hisstr, IObuff + strlen(IObuff),
                          Columns - 10, IOSIZE - (int)strlen(IObuff));
           } else {
             STRCAT(IObuff, hist[i].hisstr);
           }
-          msg_outtrans((char *)IObuff);
+          msg_outtrans(IObuff);
         }
         if (i == idx) {
           break;

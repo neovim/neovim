@@ -2569,7 +2569,7 @@ static void u_undo_end(bool did_undo, bool absolute, bool quiet)
   if (uhp == NULL) {
     *msgbuf = NUL;
   } else {
-    undo_fmt_time(msgbuf, sizeof(msgbuf), uhp->uh_time);
+    undo_fmt_time((char *)msgbuf, sizeof(msgbuf), uhp->uh_time);
   }
 
   {
@@ -2594,7 +2594,7 @@ static void u_undo_end(bool did_undo, bool absolute, bool quiet)
 }
 
 /// Put the timestamp of an undo header in "buf[buflen]" in a nice format.
-void undo_fmt_time(char_u *buf, size_t buflen, time_t tt)
+void undo_fmt_time(char *buf, size_t buflen, time_t tt)
 {
   if (time(NULL) - tt >= 100) {
     struct tm curtime;
@@ -2602,17 +2602,17 @@ void undo_fmt_time(char_u *buf, size_t buflen, time_t tt)
     size_t n;
     if (time(NULL) - tt < (60L * 60L * 12L)) {
       // within 12 hours
-      n = strftime((char *)buf, buflen, "%H:%M:%S", &curtime);
+      n = strftime(buf, buflen, "%H:%M:%S", &curtime);
     } else {
       // longer ago
-      n = strftime((char *)buf, buflen, "%Y/%m/%d %H:%M:%S", &curtime);
+      n = strftime(buf, buflen, "%Y/%m/%d %H:%M:%S", &curtime);
     }
     if (n == 0) {
       buf[0] = NUL;
     }
   } else {
     int64_t seconds = time(NULL) - tt;
-    vim_snprintf((char *)buf, buflen,
+    vim_snprintf(buf, buflen,
                  NGETTEXT("%" PRId64 " second ago",
                           "%" PRId64 " seconds ago", (uint32_t)seconds),
                  seconds);
@@ -2654,15 +2654,15 @@ void ex_undolist(exarg_T *eap)
   while (uhp != NULL) {
     if (uhp->uh_prev.ptr == NULL && uhp->uh_walk != nomark
         && uhp->uh_walk != mark) {
-      vim_snprintf((char *)IObuff, IOSIZE, "%6ld %7d  ", uhp->uh_seq, changes);
-      undo_fmt_time((char_u *)IObuff + strlen(IObuff), IOSIZE - strlen(IObuff), uhp->uh_time);
+      vim_snprintf(IObuff, IOSIZE, "%6ld %7d  ", uhp->uh_seq, changes);
+      undo_fmt_time(IObuff + strlen(IObuff), IOSIZE - strlen(IObuff), uhp->uh_time);
       if (uhp->uh_save_nr > 0) {
         while (strlen(IObuff) < 33) {
           STRCAT(IObuff, " ");
         }
-        vim_snprintf_add((char *)IObuff, IOSIZE, "  %3ld", uhp->uh_save_nr);
+        vim_snprintf_add(IObuff, IOSIZE, "  %3ld", uhp->uh_save_nr);
       }
-      GA_APPEND(char *, &ga, xstrdup((char *)IObuff));
+      GA_APPEND(char *, &ga, xstrdup(IObuff));
     }
 
     uhp->uh_walk = mark;

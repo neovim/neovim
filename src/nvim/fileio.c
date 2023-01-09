@@ -138,7 +138,7 @@ void filemess(buf_T *buf, char *name, char *s, int attr)
   if (msg_silent != 0) {
     return;
   }
-  add_quoted_fname((char *)IObuff, IOSIZE - 100, buf, (const char *)name);
+  add_quoted_fname(IObuff, IOSIZE - 100, buf, (const char *)name);
   // Avoid an over-long translation to cause trouble.
   xstrlcat(IObuff, s, IOSIZE);
   // For the first message may have to start a new line.
@@ -155,7 +155,7 @@ void filemess(buf_T *buf, char *name, char *s, int attr)
   msg_scroll = msg_scroll_save;
   msg_scrolled_ign = true;
   // may truncate the message to avoid a hit-return prompt
-  msg_outtrans_attr(msg_may_trunc(false, (char *)IObuff), attr);
+  msg_outtrans_attr(msg_may_trunc(false, IObuff), attr);
   msg_clr_eos();
   ui_flush();
   msg_scrolled_ign = false;
@@ -1758,7 +1758,7 @@ failed:
     }
 
     if (!filtering && !(flags & READ_DUMMY) && !silent) {
-      add_quoted_fname((char *)IObuff, IOSIZE, curbuf, (const char *)sfname);
+      add_quoted_fname(IObuff, IOSIZE, curbuf, (const char *)sfname);
       c = false;
 
 #ifdef UNIX
@@ -1823,7 +1823,7 @@ failed:
       msg_scrolled_ign = true;
 
       if (!read_stdin && !read_buffer) {
-        p = (char_u *)msg_trunc_attr((char *)IObuff, false, 0);
+        p = (char_u *)msg_trunc_attr(IObuff, false, 0);
       }
 
       if (read_stdin || read_buffer || restart_edit != 0
@@ -2615,21 +2615,21 @@ int buf_write(buf_T *buf, char *fname, char *sfname, linenr_T start, linenr_T en
         // arbitrary numbers).
         STRCPY(IObuff, fname);
         for (i = 4913;; i += 123) {
-          char *tail = path_tail((char *)IObuff);
+          char *tail = path_tail(IObuff);
           size_t size = (size_t)(tail - IObuff);
           snprintf(tail, IOSIZE - size, "%d", i);
-          if (!os_fileinfo_link((char *)IObuff, &file_info)) {
+          if (!os_fileinfo_link(IObuff, &file_info)) {
             break;
           }
         }
-        fd = os_open((char *)IObuff,
+        fd = os_open(IObuff,
                      O_CREAT|O_WRONLY|O_EXCL|O_NOFOLLOW, (int)perm);
         if (fd < 0) {           // can't write in directory
           backup_copy = true;
         } else {
 #ifdef UNIX
           os_fchown(fd, (uv_uid_t)file_info_old.stat.st_uid, (uv_gid_t)file_info_old.stat.st_gid);
-          if (!os_fileinfo((char *)IObuff, &file_info)
+          if (!os_fileinfo(IObuff, &file_info)
               || file_info.stat.st_uid != file_info_old.stat.st_uid
               || file_info.stat.st_gid != file_info_old.stat.st_gid
               || (long)file_info.stat.st_mode != perm) {
@@ -2639,7 +2639,7 @@ int buf_write(buf_T *buf, char *fname, char *sfname, linenr_T start, linenr_T en
           // Close the file before removing it, on MS-Windows we
           // can't delete an open file.
           close(fd);
-          os_remove((char *)IObuff);
+          os_remove(IObuff);
         }
       }
     }
@@ -2693,16 +2693,16 @@ int buf_write(buf_T *buf, char *fname, char *sfname, linenr_T start, linenr_T en
       dirp = p_bdir;
       while (*dirp) {
         // Isolate one directory name, using an entry in 'bdir'.
-        size_t dir_len = copy_option_part(&dirp, (char *)IObuff, IOSIZE, ",");
-        p = (char *)IObuff + dir_len;
-        bool trailing_pathseps = after_pathsep((char *)IObuff, p) && p[-1] == p[-2];
+        size_t dir_len = copy_option_part(&dirp, IObuff, IOSIZE, ",");
+        p = IObuff + dir_len;
+        bool trailing_pathseps = after_pathsep(IObuff, p) && p[-1] == p[-2];
         if (trailing_pathseps) {
           IObuff[dir_len - 2] = NUL;
         }
-        if (*dirp == NUL && !os_isdir((char *)IObuff)) {
+        if (*dirp == NUL && !os_isdir(IObuff)) {
           int ret;
           char *failed_dir;
-          if ((ret = os_mkdir_recurse((char *)IObuff, 0755, &failed_dir)) != 0) {
+          if ((ret = os_mkdir_recurse(IObuff, 0755, &failed_dir)) != 0) {
             semsg(_("E303: Unable to create directory \"%s\" for backup file: %s"),
                   failed_dir, os_strerror(ret));
             xfree(failed_dir);
@@ -2710,14 +2710,14 @@ int buf_write(buf_T *buf, char *fname, char *sfname, linenr_T start, linenr_T en
         }
         if (trailing_pathseps) {
           // Ends with '//', Use Full path
-          if ((p = make_percent_swname((char *)IObuff, fname))
+          if ((p = make_percent_swname(IObuff, fname))
               != NULL) {
             backup = modname(p, backup_ext, no_prepend_dot);
             xfree(p);
           }
         }
 
-        rootname = get_file_in_dir(fname, (char *)IObuff);
+        rootname = get_file_in_dir(fname, IObuff);
         if (rootname == NULL) {
           some_error = true;                // out of memory
           goto nobackup;
@@ -2844,16 +2844,16 @@ nobackup:
       dirp = p_bdir;
       while (*dirp) {
         // Isolate one directory name and make the backup file name.
-        size_t dir_len = copy_option_part(&dirp, (char *)IObuff, IOSIZE, ",");
-        p = (char *)IObuff + dir_len;
-        bool trailing_pathseps = after_pathsep((char *)IObuff, p) && p[-1] == p[-2];
+        size_t dir_len = copy_option_part(&dirp, IObuff, IOSIZE, ",");
+        p = IObuff + dir_len;
+        bool trailing_pathseps = after_pathsep(IObuff, p) && p[-1] == p[-2];
         if (trailing_pathseps) {
           IObuff[dir_len - 2] = NUL;
         }
-        if (*dirp == NUL && !os_isdir((char *)IObuff)) {
+        if (*dirp == NUL && !os_isdir(IObuff)) {
           int ret;
           char *failed_dir;
-          if ((ret = os_mkdir_recurse((char *)IObuff, 0755, &failed_dir)) != 0) {
+          if ((ret = os_mkdir_recurse(IObuff, 0755, &failed_dir)) != 0) {
             semsg(_("E303: Unable to create directory \"%s\" for backup file: %s"),
                   failed_dir, os_strerror(ret));
             xfree(failed_dir);
@@ -2861,7 +2861,7 @@ nobackup:
         }
         if (trailing_pathseps) {
           // path ends with '//', use full path
-          if ((p = make_percent_swname((char *)IObuff, fname))
+          if ((p = make_percent_swname(IObuff, fname))
               != NULL) {
             backup = modname(p, backup_ext, no_prepend_dot);
             xfree(p);
@@ -2869,7 +2869,7 @@ nobackup:
         }
 
         if (backup == NULL) {
-          rootname = get_file_in_dir(fname, (char *)IObuff);
+          rootname = get_file_in_dir(fname, IObuff);
           if (rootname == NULL) {
             backup = NULL;
           } else {
@@ -3419,13 +3419,13 @@ restore_backup:
   fname = sfname;           // use shortname now, for the messages
 #endif
   if (!filtering) {
-    add_quoted_fname((char *)IObuff, IOSIZE, buf, (const char *)fname);
+    add_quoted_fname(IObuff, IOSIZE, buf, (const char *)fname);
     c = false;
     if (write_info.bw_conv_error) {
       STRCAT(IObuff, _(" CONVERSION ERROR"));
       c = true;
       if (write_info.bw_conv_error_lnum != 0) {
-        vim_snprintf_add((char *)IObuff, IOSIZE, _(" in line %" PRId64 ";"),
+        vim_snprintf_add(IObuff, IOSIZE, _(" in line %" PRId64 ";"),
                          (int64_t)write_info.bw_conv_error_lnum);
       }
     } else if (notconverted) {
@@ -3459,7 +3459,7 @@ restore_backup:
       }
     }
 
-    set_keep_msg(msg_trunc_attr((char *)IObuff, false, 0), 0);
+    set_keep_msg(msg_trunc_attr(IObuff, false, 0), 0);
   }
 
   // When written everything correctly: reset 'modified'.  Unless not
@@ -3564,9 +3564,9 @@ nofail:
   if (errmsg != NULL) {
     // - 100 to save some space for further error message
 #ifndef UNIX
-    add_quoted_fname((char *)IObuff, IOSIZE - 100, buf, (const char *)sfname);
+    add_quoted_fname(IObuff, IOSIZE - 100, buf, (const char *)sfname);
 #else
-    add_quoted_fname((char *)IObuff, IOSIZE - 100, buf, (const char *)fname);
+    add_quoted_fname(IObuff, IOSIZE - 100, buf, (const char *)fname);
 #endif
     if (errnum != NULL) {
       if (errmsgarg != 0) {
@@ -5317,7 +5317,7 @@ int delete_recursive(const char *name)
     garray_T ga;
     if (readdir_core(&ga, exp, NULL, NULL) == OK) {
       for (int i = 0; i < ga.ga_len; i++) {
-        vim_snprintf((char *)NameBuff, MAXPATHL, "%s/%s", exp, ((char_u **)ga.ga_data)[i]);
+        vim_snprintf(NameBuff, MAXPATHL, "%s/%s", exp, ((char_u **)ga.ga_data)[i]);
         if (delete_recursive((const char *)NameBuff) != 0) {
           // Remember the failure but continue deleting any further
           // entries.
