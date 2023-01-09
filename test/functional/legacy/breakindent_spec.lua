@@ -26,18 +26,18 @@ describe('breakindent', function()
     screen:expect([[
       {1:  }^xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx |
       {1:  }second line                                                              |
-      {0:~                                                                          }|
-      {0:~                                                                          }|
-      {0:~                                                                          }|
+      {0:·                                                                          }|
+      {0:·                                                                          }|
+      {0:·                                                                          }|
                                                                                  |
     ]])
     feed('AX')
     screen:expect([[
       {1:  }xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxX|
       {1:  }^second line                                                              |
-      {0:~                                                                          }|
-      {0:~                                                                          }|
-      {0:~                                                                          }|
+      {0:·                                                                          }|
+      {0:·                                                                          }|
+      {0:·                                                                          }|
       {2:-- INSERT --}                                                               |
     ]])
   end)

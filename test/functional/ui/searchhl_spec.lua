@@ -16,12 +16,12 @@ describe('search highlighting', function()
     clear()
     screen = Screen.new(40, 7)
     screen:attach()
-    screen:set_default_attr_ids( {
-      [1] = {bold=true, foreground=Screen.colors.Blue},
-      [2] = {background = colors.Yellow}, -- Search
-      [3] = {reverse = true},
-      [4] = {foreground = colors.Red}, -- Message
-      [6] = {foreground = Screen.colors.Blue4, background = Screen.colors.LightGrey}, -- Folded
+    screen:set_default_attr_ids({
+      [1] = { bold = true, foreground = Screen.colors.Blue },
+      [2] = { background = colors.Yellow }, -- Search
+      [3] = { reverse = true },
+      [4] = { foreground = colors.Red }, -- Message
+      [6] = { foreground = Screen.colors.Blue4, background = Screen.colors.LightGrey }, -- Folded
     })
   end)
 
@@ -32,10 +32,10 @@ describe('search highlighting', function()
     screen:expect([[
       some ^text                               |
       more text                               |
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
+      {1:·                                       }|
+      {1:·                                       }|
+      {1:·                                       }|
+      {1:·                                       }|
       /text                                   |
     ]])
   end)
@@ -44,17 +44,17 @@ describe('search highlighting', function()
     insert("some text\nmore text")
     feed_command('1,2fold')
     feed("gg/text")
-    screen:expect{grid=[[
+    screen:expect { grid = [[
       {6:+--  2 lines: some text·················}|
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
+      {1:·                                       }|
+      {1:·                                       }|
+      {1:·                                       }|
+      {1:·                                       }|
+      {1:·                                       }|
       /text^                                   |
-    ]], win_viewport={
-      [2] = {win = {id = 1000}, topline = 0, botline = 3, curline = 0, curcol = 9, linecount = 2};
-    }}
+    ]], win_viewport = {
+      [2] = { win = { id = 1000 }, topline = 0, botline = 3, curline = 0, curcol = 9, linecount = 2 };
+    } }
   end)
 
   it('works', function()
@@ -73,7 +73,7 @@ describe('search highlighting', function()
         stupid{2:texttext}stuff                   |
         a {2:text} word                           |
                                               |
-      {1:~                                       }|
+      {1:·                                       }|
       /text                                   |
     ]])
 
@@ -85,7 +85,7 @@ describe('search highlighting', function()
         stupid{2:text}^extstuff                    |
         a {2:text} word                           |
                                               |
-      {1:~                                       }|
+      {1:·                                       }|
       /text                                   |
     ]])
 
@@ -96,7 +96,7 @@ describe('search highlighting', function()
         stupidtextextstuff                    |
         a {2:^text} word                           |
                                               |
-      {1:~                                       }|
+      {1:·                                       }|
       /\<text\>                               |
     ]])
 
@@ -107,7 +107,7 @@ describe('search highlighting', function()
         stupidtextextstuff                    |
         a ^text word                           |
                                               |
-      {1:~                                       }|
+      {1:·                                       }|
       :nohlsearch                             |
     ]])
   end)
@@ -115,9 +115,9 @@ describe('search highlighting', function()
   describe('CurSearch highlight', function()
     before_each(function()
       screen:set_default_attr_ids({
-        [1] = {background = Screen.colors.Yellow},  -- Search
-        [2] = {foreground = Screen.colors.White, background = Screen.colors.Black},  -- CurSearch
-        [3] = {foreground = Screen.colors.Red},  -- WarningMsg
+        [1] = { background = Screen.colors.Yellow }, -- Search
+        [2] = { foreground = Screen.colors.White, background = Screen.colors.Black }, -- CurSearch
+        [3] = { foreground = Screen.colors.Red }, -- WarningMsg
       })
       command('highlight CurSearch guibg=Black guifg=White')
     end)
@@ -132,7 +132,7 @@ describe('search highlighting', function()
         humans think is impossible.]])
 
       feed('/bee<CR>')
-      screen:expect{grid=[[
+      screen:expect { grid = [[
         There is no way that a {2:^bee} should be    |
         able to fly. Its wings are too small    |
         to get its fat little body off the      |
@@ -140,10 +140,10 @@ describe('search highlighting', function()
         anyway because {1:bee}s don't care what     |
         humans think is impossible.             |
         {3:search hit BOTTOM, continuing at TOP}    |
-      ]]}
+      ]] }
 
       feed('nn')
-      screen:expect{grid=[[
+      screen:expect { grid = [[
         There is no way that a {1:bee} should be    |
         able to fly. Its wings are too small    |
         to get its fat little body off the      |
@@ -151,10 +151,10 @@ describe('search highlighting', function()
         anyway because {2:^bee}s don't care what     |
         humans think is impossible.             |
         /bee                                    |
-      ]]}
+      ]] }
 
       feed('N')
-      screen:expect{grid=[[
+      screen:expect { grid = [[
         There is no way that a {1:bee} should be    |
         able to fly. Its wings are too small    |
         to get its fat little body off the      |
@@ -162,7 +162,7 @@ describe('search highlighting', function()
         anyway because {1:bee}s don't care what     |
         humans think is impossible.             |
         ?bee                                    |
-      ]]}
+      ]] }
     end)
 
     it('works for multiline match', function()
@@ -309,7 +309,7 @@ describe('search highlighting', function()
     feed((':terminal "%s" REP 5000 foo<cr>'):format(testprg('shell-test')))
 
     feed(':file term<CR>')
-    feed('G')  -- Follow :terminal output.
+    feed('G') -- Follow :terminal output.
     feed(':vnew<CR>')
     insert([[
       foo bar baz
@@ -333,10 +333,10 @@ describe('search highlighting', function()
     screen:expect([[
       the first {3:li}ne      │the first {2:li}ne     |
       in a {2:li}ttle file    │in a {2:li}ttle file   |
-      {1:~                   }│{1:~                  }|
-      {1:~                   }│{1:~                  }|
-      {1:~                   }│{1:~                  }|
-      {1:~                   }│{1:~                  }|
+      {1:·                   }│{1:·                  }|
+      {1:·                   }│{1:·                  }|
+      {1:·                   }│{1:·                  }|
+      {1:·                   }│{1:·                  }|
       /li^                                     |
     ]])
 
@@ -345,10 +345,10 @@ describe('search highlighting', function()
     screen:expect([[
       the first {2:li}ne      │the first {2:li}ne     |
       in a {3:li}ttle file    │in a {2:li}ttle file   |
-      {1:~                   }│{1:~                  }|
-      {1:~                   }│{1:~                  }|
-      {1:~                   }│{1:~                  }|
-      {1:~                   }│{1:~                  }|
+      {1:·                   }│{1:·                  }|
+      {1:·                   }│{1:·                  }|
+      {1:·                   }│{1:·                  }|
+      {1:·                   }│{1:·                  }|
       /li^                                     |
     ]])
 
@@ -356,10 +356,10 @@ describe('search highlighting', function()
     screen:expect([[
       the first {3:li}ne      │the first {2:li}ne     |
       in a {2:li}ttle file    │in a {2:li}ttle file   |
-      {1:~                   }│{1:~                  }|
-      {1:~                   }│{1:~                  }|
-      {1:~                   }│{1:~                  }|
-      {1:~                   }│{1:~                  }|
+      {1:·                   }│{1:·                  }|
+      {1:·                   }│{1:·                  }|
+      {1:·                   }│{1:·                  }|
+      {1:·                   }│{1:·                  }|
       /li^                                     |
     ]])
 
@@ -367,10 +367,10 @@ describe('search highlighting', function()
     screen:expect([[
       the first line      │the first line     |
       in a {3:lit}tle file    │in a {2:lit}tle file   |
-      {1:~                   }│{1:~                  }|
-      {1:~                   }│{1:~                  }|
-      {1:~                   }│{1:~                  }|
-      {1:~                   }│{1:~                  }|
+      {1:·                   }│{1:·                  }|
+      {1:·                   }│{1:·                  }|
+      {1:·                   }│{1:·                  }|
+      {1:·                   }│{1:·                  }|
       /lit^                                    |
     ]])
 
@@ -378,10 +378,10 @@ describe('search highlighting', function()
     screen:expect([[
       the first line      │the first line     |
       in a {2:^lit}tle file    │in a {2:lit}tle file   |
-      {1:~                   }│{1:~                  }|
-      {1:~                   }│{1:~                  }|
-      {1:~                   }│{1:~                  }|
-      {1:~                   }│{1:~                  }|
+      {1:·                   }│{1:·                  }|
+      {1:·                   }│{1:·                  }|
+      {1:·                   }│{1:·                  }|
+      {1:·                   }│{1:·                  }|
       /lit                                    |
     ]])
 
@@ -389,10 +389,10 @@ describe('search highlighting', function()
     screen:expect([[
       the {3:fir}st line      │the {2:fir}st line     |
       in a little file    │in a little file   |
-      {1:~                   }│{1:~                  }|
-      {1:~                   }│{1:~                  }|
-      {1:~                   }│{1:~                  }|
-      {1:~                   }│{1:~                  }|
+      {1:·                   }│{1:·                  }|
+      {1:·                   }│{1:·                  }|
+      {1:·                   }│{1:·                  }|
+      {1:·                   }│{1:·                  }|
       /fir^                                    |
     ]])
 
@@ -401,10 +401,10 @@ describe('search highlighting', function()
     screen:expect([[
       the first line      │the first line     |
       in a li{3:ttle} file    │in a li{2:ttle} file   |
-      {1:~                   }│{1:~                  }|
-      {1:~                   }│{1:~                  }|
-      {1:~                   }│{1:~                  }|
-      {1:~                   }│{1:~                  }|
+      {1:·                   }│{1:·                  }|
+      {1:·                   }│{1:·                  }|
+      {1:·                   }│{1:·                  }|
+      {1:·                   }│{1:·                  }|
       /ttle^                                   |
     ]])
 
@@ -413,10 +413,10 @@ describe('search highlighting', function()
     screen:expect([[
       the first line      │the first line     |
       in a {2:^lit}tle file    │in a {2:lit}tle file   |
-      {1:~                   }│{1:~                  }|
-      {1:~                   }│{1:~                  }|
-      {1:~                   }│{1:~                  }|
-      {1:~                   }│{1:~                  }|
+      {1:·                   }│{1:·                  }|
+      {1:·                   }│{1:·                  }|
+      {1:·                   }│{1:·                  }|
+      {1:·                   }│{1:·                  }|
                                               |
     ]])
     eq('lit', eval('@/'))
@@ -426,10 +426,10 @@ describe('search highlighting', function()
     screen:expect([[
       the first line      │the first line     |
       in a ^little file    │in a little file   |
-      {1:~                   }│{1:~                  }|
-      {1:~                   }│{1:~                  }|
-      {1:~                   }│{1:~                  }|
-      {1:~                   }│{1:~                  }|
+      {1:·                   }│{1:·                  }|
+      {1:·                   }│{1:·                  }|
+      {1:·                   }│{1:·                  }|
+      {1:·                   }│{1:·                  }|
       :noh                                    |
     ]])
 
@@ -437,20 +437,20 @@ describe('search highlighting', function()
     screen:expect([[
       the {3:first} line      │the {2:first} line     |
       in a little file    │in a little file   |
-      {1:~                   }│{1:~                  }|
-      {1:~                   }│{1:~                  }|
-      {1:~                   }│{1:~                  }|
-      {1:~                   }│{1:~                  }|
+      {1:·                   }│{1:·                  }|
+      {1:·                   }│{1:·                  }|
+      {1:·                   }│{1:·                  }|
+      {1:·                   }│{1:·                  }|
       /first^                                  |
     ]])
     feed('<esc>')
     screen:expect([[
       the first line      │the first line     |
       in a ^little file    │in a little file   |
-      {1:~                   }│{1:~                  }|
-      {1:~                   }│{1:~                  }|
-      {1:~                   }│{1:~                  }|
-      {1:~                   }│{1:~                  }|
+      {1:·                   }│{1:·                  }|
+      {1:·                   }│{1:·                  }|
+      {1:·                   }│{1:·                  }|
+      {1:·                   }│{1:·                  }|
                                               |
     ]])
 
@@ -459,43 +459,43 @@ describe('search highlighting', function()
     command([[let @/ = 'i']])
     -- moves to next match of previous search pattern, just like /<cr>
     feed('/<c-g><cr>')
-    eq({0, 1, 6, 0}, funcs.getpos('.'))
+    eq({ 0, 1, 6, 0 }, funcs.getpos('.'))
     -- moves to next match of previous search pattern, just like /<cr>
     feed('/<cr>')
-    eq({0, 1, 12, 0}, funcs.getpos('.'))
+    eq({ 0, 1, 12, 0 }, funcs.getpos('.'))
     -- moves to next match of previous search pattern, just like /<cr>
     feed('/<c-t><cr>')
-    eq({0, 2, 1, 0}, funcs.getpos('.'))
+    eq({ 0, 2, 1, 0 }, funcs.getpos('.'))
 
     -- 8.0.1304, test that C-g and C-t works with incsearch and empty pattern
     feed('<esc>/fi<CR>')
     screen:expect([[
       the {2:fi}rst line      │the {2:fi}rst line     |
       in a little {2:^fi}le    │in a little {2:fi}le   |
-      {1:~                   }│{1:~                  }|
-      {1:~                   }│{1:~                  }|
-      {1:~                   }│{1:~                  }|
-      {1:~                   }│{1:~                  }|
+      {1:·                   }│{1:·                  }|
+      {1:·                   }│{1:·                  }|
+      {1:·                   }│{1:·                  }|
+      {1:·                   }│{1:·                  }|
       /fi                                     |
     ]])
     feed('//')
     screen:expect([[
       the {3:fi}rst line      │the {2:fi}rst line     |
       in a little {2:fi}le    │in a little {2:fi}le   |
-      {1:~                   }│{1:~                  }|
-      {1:~                   }│{1:~                  }|
-      {1:~                   }│{1:~                  }|
-      {1:~                   }│{1:~                  }|
+      {1:·                   }│{1:·                  }|
+      {1:·                   }│{1:·                  }|
+      {1:·                   }│{1:·                  }|
+      {1:·                   }│{1:·                  }|
       //^                                      |
     ]])
     feed('<C-g>')
     screen:expect([[
       the {2:fi}rst line      │the {2:fi}rst line     |
       in a little {3:fi}le    │in a little {2:fi}le   |
-      {1:~                   }│{1:~                  }|
-      {1:~                   }│{1:~                  }|
-      {1:~                   }│{1:~                  }|
-      {1:~                   }│{1:~                  }|
+      {1:·                   }│{1:·                  }|
+      {1:·                   }│{1:·                  }|
+      {1:·                   }│{1:·                  }|
+      {1:·                   }│{1:·                  }|
       //^                                      |
     ]])
   end)
@@ -511,10 +511,10 @@ describe('search highlighting', function()
     screen:expect([[
       not the {3:mat}ch you're looking for        |
       the {2:mat}ch is here                       |
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
+      {1:·                                       }|
+      {1:·                                       }|
+      {1:·                                       }|
+      {1:·                                       }|
       /mat/e^                                  |
     ]])
 
@@ -523,10 +523,10 @@ describe('search highlighting', function()
     screen:expect([[
       not the {2:mat}ch you're looking for        |
       the {3:mat}ch is here                       |
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
+      {1:·                                       }|
+      {1:·                                       }|
+      {1:·                                       }|
+      {1:·                                       }|
       /mat/e^                                  |
     ]])
 
@@ -534,10 +534,10 @@ describe('search highlighting', function()
     screen:expect([[
       not the {2:mat}ch you're looking for        |
       the {2:ma^t}ch is here                       |
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
+      {1:·                                       }|
+      {1:·                                       }|
+      {1:·                                       }|
+      {1:·                                       }|
       /mat/e                                  |
     ]])
   end)
@@ -552,7 +552,7 @@ describe('search highlighting', function()
       {2:a}  repeated {2:line }                       |
       {2:a}  repeated {2:line }                       |
       {2:a}  repeated line                        |
-      {1:~                                       }|
+      {1:·                                       }|
       {4:search hit BOTTOM, continuing at TOP}    |
     ]])
 
@@ -564,21 +564,21 @@ describe('search highlighting', function()
       {2:a}  repeated line                        |
       ^b  repeated {2:line }                       |
       {2:a}  repeated line                        |
-      {1:~                                       }|
+      {1:·                                       }|
       {4:search hit BOTTOM, continuing at TOP}    |
     ]])
   end)
 
   it('works with matchadd and syntax', function()
     screen:set_default_attr_ids {
-      [1] = {bold=true, foreground=Screen.colors.Blue};
-      [2] = {background = colors.Yellow};
-      [3] = {reverse = true};
-      [4] = {foreground = colors.Red};
-      [5] = {bold = true, background = colors.Green};
-      [6] = {italic = true, background = colors.Magenta};
-      [7] = {bold = true, background = colors.Yellow};
-      [8] = {foreground = Screen.colors.Blue4, background = Screen.colors.LightGray};
+      [1] = { bold = true, foreground = Screen.colors.Blue };
+      [2] = { background = colors.Yellow };
+      [3] = { reverse = true };
+      [4] = { foreground = colors.Red };
+      [5] = { bold = true, background = colors.Green };
+      [6] = { italic = true, background = colors.Magenta };
+      [7] = { bold = true, background = colors.Yellow };
+      [8] = { foreground = Screen.colors.Blue4, background = Screen.colors.LightGray };
     }
     feed_command('set hlsearch')
     insert [[
@@ -593,37 +593,37 @@ describe('search highlighting', function()
     -- searchhl and matchadd matches are exclusive, only the highest priority
     -- is used (and matches with lower priorities are not combined)
     feed_command("/ial te")
-    screen:expect{grid=[[
+    screen:expect { grid = [[
         very {5:spec^ial}{2: te}{6:xt}                     |
                                               |
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
+      {1:·                                       }|
+      {1:·                                       }|
+      {1:·                                       }|
+      {1:·                                       }|
       {4:search hit BOTTOM, continuing at TOP}    |
-    ]], win_viewport={
-      [2] = {win = {id = 1000}, topline = 0, botline = 3, curline = 0, curcol = 11, linecount = 2};
-    }}
+    ]], win_viewport = {
+      [2] = { win = { id = 1000 }, topline = 0, botline = 3, curline = 0, curcol = 11, linecount = 2 };
+    } }
 
     -- check highlights work also in folds
     feed("zf4j")
-    screen:expect{grid=[[
+    screen:expect { grid = [[
       {8:^+--  2 lines: very special text·········}|
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
+      {1:·                                       }|
+      {1:·                                       }|
+      {1:·                                       }|
+      {1:·                                       }|
+      {1:·                                       }|
       {4:search hit BOTTOM, continuing at TOP}    |
-    ]]}
+    ]] }
     command("%foldopen")
     screen:expect([[
         very {5:spec^ial}{2: te}{6:xt}                     |
                                               |
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
+      {1:·                                       }|
+      {1:·                                       }|
+      {1:·                                       }|
+      {1:·                                       }|
       {4:search hit BOTTOM, continuing at TOP}    |
     ]])
 
@@ -631,10 +631,10 @@ describe('search highlighting', function()
     screen:expect([[
         very spec{2:^ial te}xt                     |
                                               |
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
+      {1:·                                       }|
+      {1:·                                       }|
+      {1:·                                       }|
+      {1:·                                       }|
       :call clearmatches()                    |
     ]])
 
@@ -644,10 +644,10 @@ describe('search highlighting', function()
     screen:expect([[
         very {5:spec}{7:^ial}{2: te}xt                     |
                                               |
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
+      {1:·                                       }|
+      {1:·                                       }|
+      {1:·                                       }|
+      {1:·                                       }|
       :syntax keyword MyGroup special         |
     ]])
   end)
@@ -658,13 +658,12 @@ describe('search highlighting', function()
     feed(':%g@a/b')
     screen:expect([[
       {3:a/b}/c                                   |
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
+      {1:·                                       }|
+      {1:·                                       }|
+      {1:·                                       }|
+      {1:·                                       }|
+      {1:·                                       }|
       :%g@a/b^                                 |
     ]])
   end)
 end)
-

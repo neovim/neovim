@@ -20,14 +20,14 @@ describe(':debug', function()
     feed(':echoerr bork<cr>')
     screen:expect([[
                                     |
-      {1:~                             }|
-      {1:~                             }|
-      {1:~                             }|
-      {1:~                             }|
-      {1:~                             }|
-      {1:~                             }|
-      {1:~                             }|
-      {1:~                             }|
+      {1:·                             }|
+      {1:·                             }|
+      {1:·                             }|
+      {1:·                             }|
+      {1:·                             }|
+      {1:·                             }|
+      {1:·                             }|
+      {1:·                             }|
       {2:                              }|
       {3:E121: Undefined variable: bork}|
                                     |
@@ -38,11 +38,11 @@ describe(':debug', function()
     feed(':debug echo "aa"| echo "bb"<cr>')
     screen:expect([[
                                     |
-      {1:~                             }|
-      {1:~                             }|
-      {1:~                             }|
-      {1:~                             }|
-      {1:~                             }|
+      {1:·                             }|
+      {1:·                             }|
+      {1:·                             }|
+      {1:·                             }|
+      {1:·                             }|
       {2:                              }|
       {3:E121: Undefined variable: bork}|
                                     |
@@ -56,8 +56,8 @@ describe(':debug', function()
     feed('step<cr>')
     screen:expect([[
                                     |
-      {1:~                             }|
-      {1:~                             }|
+      {1:·                             }|
+      {1:·                             }|
       {2:                              }|
       {3:E121: Undefined variable: bork}|
                                     |
@@ -92,18 +92,18 @@ describe(':debug', function()
     feed('<cr>')
     screen:expect([[
       ^                              |
-      {1:~                             }|
-      {1:~                             }|
-      {1:~                             }|
-      {1:~                             }|
-      {1:~                             }|
-      {1:~                             }|
-      {1:~                             }|
-      {1:~                             }|
-      {1:~                             }|
-      {1:~                             }|
-      {1:~                             }|
-      {1:~                             }|
+      {1:·                             }|
+      {1:·                             }|
+      {1:·                             }|
+      {1:·                             }|
+      {1:·                             }|
+      {1:·                             }|
+      {1:·                             }|
+      {1:·                             }|
+      {1:·                             }|
+      {1:·                             }|
+      {1:·                             }|
+      {1:·                             }|
                                     |
     ]])
   end)

@@ -40,13 +40,13 @@ describe('cmdline', function()
     screen:expect{grid=[[
       {1: + [No Name] }{2: [No Name] }{3:     }{1:X}|
       ^                              |
-      {4:~                             }|
-      {4:~                             }|
-      {4:~                             }|
-      {4:~                             }|
-      {4:~                             }|
-      {4:~                             }|
-      {4:~                             }|
+      {4:·                             }|
+      {4:·                             }|
+      {4:·                             }|
+      {4:·                             }|
+      {4:·                             }|
+      {4:·                             }|
+      {4:·                             }|
       :tabnew                       |
     ]]}
 
@@ -54,11 +54,11 @@ describe('cmdline', function()
     screen:expect{grid=[[
       {1: + [No Name] }{2: [No Name] }{3:     }{1:X}|
       ^                              |
-      {4:~                             }|
-      {4:~                             }|
-      {4:~                             }|
-      {4:~                             }|
-      {4:~                             }|
+      {4:·                             }|
+      {4:·                             }|
+      {4:·                             }|
+      {4:·                             }|
+      {4:·                             }|
                                     |
                                     |
                                     |
@@ -82,11 +82,11 @@ describe('cmdline', function()
     screen:expect([[
       {1: + [No Name] }{2: [No Name] }{3:     }{1:X}|
       ^                              |
-      {4:~                             }|
-      {4:~                             }|
-      {4:~                             }|
-      {4:~                             }|
-      {4:~                             }|
+      {4:·                             }|
+      {4:·                             }|
+      {4:·                             }|
+      {4:·                             }|
+      {4:·                             }|
                                     |
                                     |
                                     |
@@ -105,8 +105,8 @@ describe('cmdline', function()
     feed_command('DoSomething')
     screen:expect([[
                                                                   |
-      ~                                                           |
-      ~                                                           |
+      ·                                                           |
+      ·                                                           |
                                                                   |
       Executing: DoSomething                                      |
       Executing: echo 'hello' |set ts=4 |let v = '123' |echo v    |
@@ -135,9 +135,9 @@ describe('cmdline', function()
     screen:expect([[
       {1:foo                           }|
                                     |
-      {0:~                             }|
-      {0:~                             }|
-      {0:~                             }|
+      {0:·                             }|
+      {0:·                             }|
+      {0:·                             }|
       :^                             |
     ]])
   end)
@@ -156,9 +156,9 @@ describe('cmdline', function()
     feed(':for i in range(3)<CR>')
     screen:expect([[
                                     |
-      {0:~                             }|
-      {0:~                             }|
-      {0:~                             }|
+      {0:·                             }|
+      {0:·                             }|
+      {0:·                             }|
       :for i in range(3)            |
       :  ^                           |
     ]])
@@ -166,9 +166,9 @@ describe('cmdline', function()
     -- Note: this may still be considered broken, ref #18140
     screen:expect([[
                                     |
-      {0:~                             }|
-      {0:~                             }|
-      {0:~                             }|
+      {0:·                             }|
+      {0:·                             }|
+      {0:·                             }|
       :  :let i =^                   |
                                     |
     ]])
@@ -194,22 +194,22 @@ describe('cmdline', function()
     feed(':call EchoTwo()')
     screen:expect([[
                                                                   |
-      {0:~                                                           }|
-      {0:~                                                           }|
-      {0:~                                                           }|
-      {0:~                                                           }|
-      {0:~                                                           }|
+      {0:·                                                           }|
+      {0:·                                                           }|
+      {0:·                                                           }|
+      {0:·                                                           }|
+      {0:·                                                           }|
       {1:[No Name]                                                   }|
       :call EchoTwo()^                                             |
     ]])
     feed('<CR>')
     screen:expect([[
       ^                                                            |
-      {0:~                                                           }|
-      {0:~                                                           }|
-      {0:~                                                           }|
-      {0:~                                                           }|
-      {0:~                                                           }|
+      {0:·                                                           }|
+      {0:·                                                           }|
+      {0:·                                                           }|
+      {0:·                                                           }|
+      {0:·                                                           }|
       {1:[No Name]                                                   }|
                                                                   |
     ]])
@@ -231,10 +231,10 @@ describe('cmdline', function()
     screen:expect([[
       {2: [No Name] }{3:                                                 }|
       ^                                                            |
-      {0:~                                                           }|
-      {0:~                                                           }|
-      {0:~                                                           }|
-      {0:~                                                           }|
+      {0:·                                                           }|
+      {0:·                                                           }|
+      {0:·                                                           }|
+      {0:·                                                           }|
       {1:[No Name]                                                   }|
                                                                   |
     ]])
@@ -262,58 +262,58 @@ describe('cmdwin', function()
     feed('q')
     screen:expect([[
                                     |
-      {0:~                             }|
-      {0:~                             }|
-      {0:~                             }|
-      {0:~                             }|
-      {0:~                             }|
+      {0:·                             }|
+      {0:·                             }|
+      {0:·                             }|
+      {0:·                             }|
+      {0:·                             }|
       {2:[No Name]                     }|
       {0::}^                             |
-      {0:~                             }|
-      {0:~                             }|
-      {0:~                             }|
-      {0:~                             }|
-      {0:~                             }|
-      {0:~                             }|
+      {0:·                             }|
+      {0:·                             }|
+      {0:·                             }|
+      {0:·                             }|
+      {0:·                             }|
+      {0:·                             }|
       {1:[Command Line]                }|
                                     |
     ]])
     feed([[aecho 'done']])
     screen:expect([[
                                     |
-      {0:~                             }|
-      {0:~                             }|
-      {0:~                             }|
-      {0:~                             }|
-      {0:~                             }|
+      {0:·                             }|
+      {0:·                             }|
+      {0:·                             }|
+      {0:·                             }|
+      {0:·                             }|
       {2:[No Name]                     }|
       {0::}echo 'done'^                  |
-      {0:~                             }|
-      {0:~                             }|
-      {0:~                             }|
-      {0:~                             }|
-      {0:~                             }|
-      {0:~                             }|
+      {0:·                             }|
+      {0:·                             }|
+      {0:·                             }|
+      {0:·                             }|
+      {0:·                             }|
+      {0:·                             }|
       {1:[Command Line]                }|
       {4:-- INSERT --}                  |
     ]])
     feed('<CR>')
     screen:expect([[
       ^                              |
-      {0:~                             }|
-      {0:~                             }|
-      {0:~                             }|
-      {0:~                             }|
-      {0:~                             }|
-      {0:~                             }|
-      {0:~                             }|
-      {0:~                             }|
-      {0:~                             }|
-      {0:~                             }|
-      {0:~                             }|
-      {0:~                             }|
-      {0:~                             }|
-      {0:~                             }|
+      {0:·                             }|
+      {0:·                             }|
+      {0:·                             }|
+      {0:·                             }|
+      {0:·                             }|
+      {0:·                             }|
+      {0:·                             }|
+      {0:·                             }|
+      {0:·                             }|
+      {0:·                             }|
+      {0:·                             }|
+      {0:·                             }|
+      {0:·                             }|
+      {0:·                             }|
       done                          |
     ]])
   end)

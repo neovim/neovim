@@ -2629,7 +2629,7 @@ describe('syntax/shada.vim', function()
       {1:Header} with timestamp 1970{1:-}01{1:-}01{1:T}00{1::}00{1::}00:                  |
       {2:  % Key  Description________  Value}                         |
        {1: +} {3:se }  {4:place cursor at end}  {1:TRUE}                          |
-      {8:~                                                           }|
+      {8:·                                                           }|
       {7:[No Name] [+]                                               }|
                                                                   |
     ]=]}

@@ -1116,10 +1116,10 @@ describe("pty process teardown", function()
     screen:attach()
     screen:expect([[
       ^                              |
-      ~                             |
-      ~                             |
-      ~                             |
-      ~                             |
+      ·                             |
+      ·                             |
+      ·                             |
+      ·                             |
                                     |
     ]])
   end)

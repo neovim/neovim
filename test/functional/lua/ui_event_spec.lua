@@ -46,18 +46,18 @@ describe('vim.ui_attach', function()
     feed('ifo')
     screen:expect{grid=[[
       fo^                                      |
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
+      {1:·                                       }|
+      {1:·                                       }|
+      {1:·                                       }|
       {2:-- INSERT --}                            |
     ]]}
 
     funcs.complete(1, {'food', 'foobar', 'foo'})
     screen:expect{grid=[[
       food^                                    |
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
+      {1:·                                       }|
+      {1:·                                       }|
+      {1:·                                       }|
       {2:-- INSERT --}                            |
     ]]}
     expect_events {
@@ -67,9 +67,9 @@ describe('vim.ui_attach', function()
     feed '<c-n>'
     screen:expect{grid=[[
       foobar^                                  |
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
+      {1:·                                       }|
+      {1:·                                       }|
+      {1:·                                       }|
       {2:-- INSERT --}                            |
     ]]}
     expect_events {
@@ -79,9 +79,9 @@ describe('vim.ui_attach', function()
     feed '<c-y>'
     screen:expect{grid=[[
       foobar^                                  |
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
+      {1:·                                       }|
+      {1:·                                       }|
+      {1:·                                       }|
       {2:-- INSERT --}                            |
     ]], intermediate=true}
     expect_events {

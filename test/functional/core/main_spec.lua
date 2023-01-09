@@ -65,10 +65,10 @@ describe('Command-line option', function()
       funcs.termopen(string.format([[echo "" | %s]], table.concat(args, " ")))
       screen:expect([[
         ^                                        |
-        {1:~                                       }|
-        {1:~                                       }|
-        {1:~                                       }|
-        {1:~                                       }|
+        {1:·                                       }|
+        {1:·                                       }|
+        {1:·                                       }|
+        {1:·                                       }|
         {2:[No Name]             0,0-1          All}|
                                                 |
                                                 |

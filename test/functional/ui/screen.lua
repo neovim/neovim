@@ -14,14 +14,14 @@
 --     -- Assert the expected screen state.
 --     screen:expect([[
 --       hello screen             |
---       ~                        |
---       ~                        |
---       ~                        |
---       ~                        |
---       ~                        |
---       ~                        |
---       ~                        |
---       ~                        |
+--       ·                        |
+--       ·                        |
+--       ·                        |
+--       ·                        |
+--       ·                        |
+--       ·                        |
+--       ·                        |
+--       ·                        |
 --       -- INSERT --             |
 --     ]]) -- <- Last line is stripped
 --

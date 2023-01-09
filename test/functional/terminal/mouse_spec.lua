@@ -247,10 +247,10 @@ describe(':terminal mouse', function()
         feed(':enew | set number<cr>')
         screen:expect([[
           {7:  1 }^                     │line29                  |
-          {4:~                        }│line30                  |
-          {4:~                        }│rows: 5, cols: 25       |
-          {4:~                        }│rows: 5, cols: 24       |
-          {4:~                        }│{2: }                       |
+          {4:·                        }│line30                  |
+          {4:·                        }│rows: 5, cols: 25       |
+          {4:·                        }│rows: 5, cols: 24       |
+          {4:·                        }│{2: }                       |
           ==========                ==========              |
           :enew | set number                                |
         ]])

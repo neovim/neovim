@@ -398,14 +398,14 @@ describe('API/extmarks', function()
     -- This shouldn't seg fault
     screen:expect([[
       12345^ 1        |
-      ~              |
-      ~              |
-      ~              |
-      ~              |
-      ~              |
-      ~              |
-      ~              |
-      ~              |
+      ·              |
+      ·              |
+      ·              |
+      ·              |
+      ·              |
+      ·              |
+      ·              |
+      ·              |
                      |
     ]])
   end)
@@ -458,14 +458,14 @@ describe('API/extmarks', function()
     insert('abc')
     screen:expect([[
       ab^c12345       |
-      ~              |
-      ~              |
-      ~              |
-      ~              |
-      ~              |
-      ~              |
-      ~              |
-      ~              |
+      ·              |
+      ·              |
+      ·              |
+      ·              |
+      ·              |
+      ·              |
+      ·              |
+      ·              |
                      |
     ]])
     local rv = get_extmark_by_id(ns, marks[1])
@@ -1638,7 +1638,7 @@ describe('API/win_extmark', function()
       grid = [[
       non ui-watched line |
       ui-watched lin^e     |
-      ~                   |
+      ·                   |
                           |
     ]],
       extmarks = {
@@ -1663,7 +1663,7 @@ describe('API/win_extmark', function()
       grid = [[
       non ui-watched line |
       ui-watched lin^e     |
-      ~                   |
+      ·                   |
                           |
     ]],
       extmarks = {
@@ -1716,7 +1716,7 @@ describe('API/win_extmark', function()
       grid = [[
       ui-watched linupdat^e|
       e                   |
-      ~                   |
+      ·                   |
                           |
     ]],
       extmarks = {
@@ -1758,7 +1758,7 @@ describe('API/win_extmark', function()
         ## grid 4
           non ui-watched line |
           ui-watched lin^e     |
-          ~                   |
+          ·                   |
     ]],
       extmarks = {
         [2] = {

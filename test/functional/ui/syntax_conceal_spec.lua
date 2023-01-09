@@ -52,8 +52,8 @@ describe('Screen', function()
             {1:∧}                                                    |
             {1:∧}                                                    |
             ^                                                     |
-            {0:~                                                    }|
-            {0:~                                                    }|
+            {0:·                                                    }|
+            {0:·                                                    }|
                                                                  |
           ]])
       end)
@@ -68,8 +68,8 @@ describe('Screen', function()
           {1:∧}                                                    |
           ^&&                                                   |
                                                                |
-          {0:~                                                    }|
-          {0:~                                                    }|
+          {0:·                                                    }|
+          {0:·                                                    }|
                                                                |
         ]])
       end)
@@ -84,8 +84,8 @@ describe('Screen', function()
           {1:∧}                                                    |
           {1:∧}                                                    |
                                                                |
-          {0:~                                                    }|
-          {0:~                                                    }|
+          {0:·                                                    }|
+          {0:·                                                    }|
                                                                |
         ]])
       end)
@@ -100,8 +100,8 @@ describe('Screen', function()
           {1:∧}                                                    |
           {1:∧}                                                    |
                                                                |
-          {0:~                                                    }|
-          {0:~                                                    }|
+          {0:·                                                    }|
+          {0:·                                                    }|
                                                                |
         ]])
       end)
@@ -116,8 +116,8 @@ describe('Screen', function()
           {1:∧}                                                    |
           {1:∧}                                                    |
           ^                                                     |
-          {0:~                                                    }|
-          {0:~                                                    }|
+          {0:·                                                    }|
+          {0:·                                                    }|
                                                                |
         ]])
       end)
@@ -131,12 +131,12 @@ describe('Screen', function()
         {1:λ}                                                    |
         {1:λ}                                                    |
         ^                                                     |
-        {0:~                                                    }|
-        {0:~                                                    }|
-        {0:~                                                    }|
-        {0:~                                                    }|
-        {0:~                                                    }|
-        {0:~                                                    }|
+        {0:·                                                    }|
+        {0:·                                                    }|
+        {0:·                                                    }|
+        {0:·                                                    }|
+        {0:·                                                    }|
+        {0:·                                                    }|
                                                              |
       ]])
     end) -- Keyword
@@ -155,12 +155,12 @@ describe('Screen', function()
           {1:R}                                                    |
           {1:R}                                                    |
           ^                                                     |
-          {0:~                                                    }|
-          {0:~                                                    }|
-          {0:~                                                    }|
-          {0:~                                                    }|
-          {0:~                                                    }|
-          {0:~                                                    }|
+          {0:·                                                    }|
+          {0:·                                                    }|
+          {0:·                                                    }|
+          {0:·                                                    }|
+          {0:·                                                    }|
+          {0:·                                                    }|
                                                                |
         ]])
       end)
@@ -173,12 +173,12 @@ describe('Screen', function()
           {1: } a region of text {1:-}                                 |
           {1: } a region of text {1:-}                                 |
           ^                                                     |
-          {0:~                                                    }|
-          {0:~                                                    }|
-          {0:~                                                    }|
-          {0:~                                                    }|
-          {0:~                                                    }|
-          {0:~                                                    }|
+          {0:·                                                    }|
+          {0:·                                                    }|
+          {0:·                                                    }|
+          {0:·                                                    }|
+          {0:·                                                    }|
+          {0:·                                                    }|
                                                                |
         ]])
       end)
@@ -192,10 +192,10 @@ describe('Screen', function()
           {1: } A region with {1: } a nested {1: } nested region.{1:-}         |
            {1:-} {1:-}                                                 |
           ^                                                     |
-          {0:~                                                    }|
-          {0:~                                                    }|
-          {0:~                                                    }|
-          {0:~                                                    }|
+          {0:·                                                    }|
+          {0:·                                                    }|
+          {0:·                                                    }|
+          {0:·                                                    }|
                                                                |
         ]])
       end)
@@ -214,12 +214,12 @@ describe('Screen', function()
           {1:-}                                                    |
           {1:-}                                                    |
           ^                                                     |
-          {0:~                                                    }|
-          {0:~                                                    }|
-          {0:~                                                    }|
-          {0:~                                                    }|
-          {0:~                                                    }|
-          {0:~                                                    }|
+          {0:·                                                    }|
+          {0:·                                                    }|
+          {0:·                                                    }|
+          {0:·                                                    }|
+          {0:·                                                    }|
+          {0:·                                                    }|
                                                                |
         ]])
       end)
@@ -235,10 +235,10 @@ describe('Screen', function()
           <i> italian text </i>                                |
           <i> italian text </i>                                |
           ^                                                     |
-          {0:~                                                    }|
-          {0:~                                                    }|
-          {0:~                                                    }|
-          {0:~                                                    }|
+          {0:·                                                    }|
+          {0:·                                                    }|
+          {0:·                                                    }|
+          {0:·                                                    }|
                                                                |
         ]])
         command("syntax conceal on")
@@ -249,10 +249,10 @@ describe('Screen', function()
           {1:*}                                                    |
           {1:*}                                                    |
           ^                                                     |
-          {0:~                                                    }|
-          {0:~                                                    }|
-          {0:~                                                    }|
-          {0:~                                                    }|
+          {0:·                                                    }|
+          {0:·                                                    }|
+          {0:·                                                    }|
+          {0:·                                                    }|
                                                                |
         ]])
       end)
@@ -266,28 +266,28 @@ describe('Screen', function()
       command("syn match Foo /foobar/ conceal cchar=&")
       screen:expect([[
         {1:&&&}^                                                  |
-        {0:~                                                    }|
-        {0:~                                                    }|
-        {0:~                                                    }|
-        {0:~                                                    }|
-        {0:~                                                    }|
-        {0:~                                                    }|
-        {0:~                                                    }|
-        {0:~                                                    }|
+        {0:·                                                    }|
+        {0:·                                                    }|
+        {0:·                                                    }|
+        {0:·                                                    }|
+        {0:·                                                    }|
+        {0:·                                                    }|
+        {0:·                                                    }|
+        {0:·                                                    }|
                                                              |
       ]])
       feed("i")
       -- cursor should stay in place, not jump to column 16
       screen:expect([[
         {1:&&&}^                                                  |
-        {0:~                                                    }|
-        {0:~                                                    }|
-        {0:~                                                    }|
-        {0:~                                                    }|
-        {0:~                                                    }|
-        {0:~                                                    }|
-        {0:~                                                    }|
-        {0:~                                                    }|
+        {0:·                                                    }|
+        {0:·                                                    }|
+        {0:·                                                    }|
+        {0:·                                                    }|
+        {0:·                                                    }|
+        {0:·                                                    }|
+        {0:·                                                    }|
+        {0:·                                                    }|
         {4:-- INSERT --}                                         |
       ]])
     end)
@@ -311,10 +311,10 @@ describe('Screen', function()
         + With cchar                                         |
                                                              |
         ^                                                     |
-        {0:~                                                    }|
-        {0:~                                                    }|
-        {0:~                                                    }|
-        {0:~                                                    }|
+        {0:·                                                    }|
+        {0:·                                                    }|
+        {0:·                                                    }|
+        {0:·                                                    }|
                                                              |
       ]])
     end)
@@ -327,10 +327,10 @@ describe('Screen', function()
         {1:C}                                                    |
                                                              |
         ^                                                     |
-        {0:~                                                    }|
-        {0:~                                                    }|
-        {0:~                                                    }|
-        {0:~                                                    }|
+        {0:·                                                    }|
+        {0:·                                                    }|
+        {0:·                                                    }|
+        {0:·                                                    }|
                                                              |
       ]])
     end)
@@ -343,10 +343,10 @@ describe('Screen', function()
         {1:C}                                                    |
                                                              |
         ^                                                     |
-        {0:~                                                    }|
-        {0:~                                                    }|
-        {0:~                                                    }|
-        {0:~                                                    }|
+        {0:·                                                    }|
+        {0:·                                                    }|
+        {0:·                                                    }|
+        {0:·                                                    }|
                                                              |
       ]])
     end)
@@ -359,10 +359,10 @@ describe('Screen', function()
                                                              |
                                                              |
         ^                                                     |
-        {0:~                                                    }|
-        {0:~                                                    }|
-        {0:~                                                    }|
-        {0:~                                                    }|
+        {0:·                                                    }|
+        {0:·                                                    }|
+        {0:·                                                    }|
+        {0:·                                                    }|
                                                              |
       ]])
     end)
@@ -381,9 +381,9 @@ describe('Screen', function()
         foo {1:b} bar {1:b} eggs                                     |
         foo barf bar barf egg^s                               |
                                                              |
-        {0:~                                                    }|
-        {0:~                                                    }|
-        {0:~                                                    }|
+        {0:·                                                    }|
+        {0:·                                                    }|
+        {0:·                                                    }|
                                                              |
       ]])
 
@@ -429,9 +429,9 @@ describe('Screen', function()
         foo {1:b} bar {1:b} eggs                                     |
         foo barf bar barf egg^s                               |
                                                              |
-        {0:~                                                    }|
-        {0:~                                                    }|
-        {0:~                                                    }|
+        {0:·                                                    }|
+        {0:·                                                    }|
+        {0:·                                                    }|
         {4:-- INSERT --}                                         |
       ]])
 
@@ -443,9 +443,9 @@ describe('Screen', function()
         foo barf bar barf egg^s                               |
         foo {1:b} bar {1:b} eggs                                     |
                                                              |
-        {0:~                                                    }|
-        {0:~                                                    }|
-        {0:~                                                    }|
+        {0:·                                                    }|
+        {0:·                                                    }|
+        {0:·                                                    }|
         {4:-- INSERT --}                                         |
       ]])
     end)
@@ -460,9 +460,9 @@ describe('Screen', function()
         foo {1:b} bar {1:b} eggs                                     |
         foo {1:b} bar {1:b} eggs                                     |
                                                              |
-        {0:~                                                    }|
-        {0:~                                                    }|
-        {0:~                                                    }|
+        {0:·                                                    }|
+        {0:·                                                    }|
+        {0:·                                                    }|
                                                              |
       ]])
 
@@ -474,9 +474,9 @@ describe('Screen', function()
         foo {1:b} bar {1:b} eggs                                     |
         foo {1:b} bar {1:b} eggs                                     |
                                                              |
-        {0:~                                                    }|
-        {0:~                                                    }|
-        {0:~                                                    }|
+        {0:·                                                    }|
+        {0:·                                                    }|
+        {0:·                                                    }|
         {4:-- INSERT --}                                         |
       ]])
 
@@ -488,9 +488,9 @@ describe('Screen', function()
         foo {1:b} bar {1:b} eggs                                     |
         foo {1:b} bar {1:b} eggs                                     |
                                                              |
-        {0:~                                                    }|
-        {0:~                                                    }|
-        {0:~                                                    }|
+        {0:·                                                    }|
+        {0:·                                                    }|
+        {0:·                                                    }|
                                                              |
       ]])
 
@@ -502,9 +502,9 @@ describe('Screen', function()
         foo {1:b} bar {1:b} eggs                                     |
         foo {1:b} bar {1:b} eggs                                     |
                                                              |
-        {0:~                                                    }|
-        {0:~                                                    }|
-        {0:~                                                    }|
+        {0:·                                                    }|
+        {0:·                                                    }|
+        {0:·                                                    }|
         {4:-- VISUAL --}                                         |
       ]])
 
@@ -516,9 +516,9 @@ describe('Screen', function()
         foo {1:b} bar {1:b} eggs                                     |
         foo {1:b} bar {1:b} eggs                                     |
                                                              |
-        {0:~                                                    }|
-        {0:~                                                    }|
-        {0:~                                                    }|
+        {0:·                                                    }|
+        {0:·                                                    }|
+        {0:·                                                    }|
                                                              |
       ]])
 
@@ -534,9 +534,9 @@ describe('Screen', function()
         foo {1:b} bar {1:b} eggs                                     |
         foo {1:b} bar {1:b} eggs                                     |
                                                              |
-        {0:~                                                    }|
-        {0:~                                                    }|
-        {0:~                                                    }|
+        {0:·                                                    }|
+        {0:·                                                    }|
+        {0:·                                                    }|
                                                              |
       ]])
 
@@ -548,9 +548,9 @@ describe('Screen', function()
         foo {1:b} bar {1:b} eggs                                     |
         foo {1:b} bar {1:b} eggs                                     |
                                                              |
-        {0:~                                                    }|
-        {0:~                                                    }|
-        {0:~                                                    }|
+        {0:·                                                    }|
+        {0:·                                                    }|
+        {0:·                                                    }|
         {4:-- INSERT --}                                         |
       ]])
 
@@ -562,9 +562,9 @@ describe('Screen', function()
         foo {1:b} bar {1:b} eggs                                     |
         foo {1:b} bar {1:b} eggs                                     |
                                                              |
-        {0:~                                                    }|
-        {0:~                                                    }|
-        {0:~                                                    }|
+        {0:·                                                    }|
+        {0:·                                                    }|
+        {0:·                                                    }|
                                                              |
       ]])
 
@@ -577,9 +577,9 @@ describe('Screen', function()
         foo {1:b} bar {1:b} eggs                                     |
         foo {1:b} bar {1:b} eggs                                     |
                                                              |
-        {0:~                                                    }|
-        {0:~                                                    }|
-        {0:~                                                    }|
+        {0:·                                                    }|
+        {0:·                                                    }|
+        {0:·                                                    }|
         {4:-- VISUAL --}                                         |
       ]])
 
@@ -591,9 +591,9 @@ describe('Screen', function()
         foo {1:b} bar {1:b} eggs                                     |
         foo {1:b} bar {1:b} eggs                                     |
                                                              |
-        {0:~                                                    }|
-        {0:~                                                    }|
-        {0:~                                                    }|
+        {0:·                                                    }|
+        {0:·                                                    }|
+        {0:·                                                    }|
                                                              |
       ]])
     end)
@@ -608,8 +608,8 @@ describe('Screen', function()
         foo {1:b} bar {1:b} eggs                                     |
         ^                                                     |
                                                              |
-        {0:~                                                    }|
-        {0:~                                                    }|
+        {0:·                                                    }|
+        {0:·                                                    }|
         {4:-- INSERT --}                                         |
       ]])
     end)
@@ -625,8 +625,8 @@ describe('Screen', function()
         foo {1:b} bar {1:b} eggs                                     |
         ^                                                     |
                                                              |
-        {0:~                                                    }|
-        {0:~                                                    }|
+        {0:·                                                    }|
+        {0:·                                                    }|
         {4:-- INSERT --}                                         |
       ]])
     end)
@@ -642,9 +642,9 @@ describe('Screen', function()
           foo {1:b} bar {1:b} eggs                                     |
           foo {1:b} bar {1:b} eggs                                     |
                                                                |
-          {0:~                                                    }|
-          {0:~                                                    }|
-          {0:~                                                    }|
+          {0:·                                                    }|
+          {0:·                                                    }|
+          {0:·                                                    }|
                                                                |
         ]])
       end)
@@ -658,9 +658,9 @@ describe('Screen', function()
           foo {1:b} bar {1:b} eggs                                     |
           foo {1:b} bar {1:b} eggs                                     |
                                                                |
-          {0:~                                                    }|
-          {0:~                                                    }|
-          {0:~                                                    }|
+          {0:·                                                    }|
+          {0:·                                                    }|
+          {0:·                                                    }|
           /^                                                    |
         ]])
 
@@ -672,9 +672,9 @@ describe('Screen', function()
           foo {1:b} bar {1:b} eggs                                     |
           foo {1:b} bar {1:b} eggs                                     |
                                                                |
-          {0:~                                                    }|
-          {0:~                                                    }|
-          {0:~                                                    }|
+          {0:·                                                    }|
+          {0:·                                                    }|
+          {0:·                                                    }|
           /x^                                                   |
         ]])
 
@@ -686,9 +686,9 @@ describe('Screen', function()
           foo {1:b} bar {1:b} eggs                                     |
           foo {1:b} bar {1:b} eggs                                     |
                                                                |
-          {0:~                                                    }|
-          {0:~                                                    }|
-          {0:~                                                    }|
+          {0:·                                                    }|
+          {0:·                                                    }|
+          {0:·                                                    }|
           /xy^                                                  |
         ]])
 
@@ -700,9 +700,9 @@ describe('Screen', function()
           foo {1:b} bar {1:b} eggs                                     |
           foo {1:b} bar {1:b} eggs                                     |
                                                                |
-          {0:~                                                    }|
-          {0:~                                                    }|
-          {0:~                                                    }|
+          {0:·                                                    }|
+          {0:·                                                    }|
+          {0:·                                                    }|
           /^                                                    |
         ]])
       end)
@@ -720,9 +720,9 @@ describe('Screen', function()
           foo {1:b} bar {1:b} eggs                                     |
           foo {1:b} bar {1:b} eggs                                     |
                                                                |
-          {0:~                                                    }|
-          {0:~                                                    }|
-          {0:~                                                    }|
+          {0:·                                                    }|
+          {0:·                                                    }|
+          {0:·                                                    }|
           /^                                                    |
         ]])
 
@@ -734,9 +734,9 @@ describe('Screen', function()
           foo {1:b} bar {1:b} eggs                                     |
           foo {1:b} bar {1:b} eggs                                     |
                                                                |
-          {0:~                                                    }|
-          {0:~                                                    }|
-          {0:~                                                    }|
+          {0:·                                                    }|
+          {0:·                                                    }|
+          {0:·                                                    }|
           /x^                                                   |
         ]])
 
@@ -748,9 +748,9 @@ describe('Screen', function()
           foo {1:b} bar {1:b} eggs                                     |
           foo {1:b} bar {1:b} eggs                                     |
                                                                |
-          {0:~                                                    }|
-          {0:~                                                    }|
-          {0:~                                                    }|
+          {0:·                                                    }|
+          {0:·                                                    }|
+          {0:·                                                    }|
           /xy^                                                  |
         ]])
 
@@ -762,9 +762,9 @@ describe('Screen', function()
           foo {1:b} bar {1:b} eggs                                     |
           foo {1:b} bar {1:b} eggs                                     |
                                                                |
-          {0:~                                                    }|
-          {0:~                                                    }|
-          {0:~                                                    }|
+          {0:·                                                    }|
+          {0:·                                                    }|
+          {0:·                                                    }|
           /^                                                    |
         ]])
 
@@ -776,9 +776,9 @@ describe('Screen', function()
           foo {1:b} bar {1:b} eggs                                     |
           foo {1:b} bar {1:b} eggs                                     |
                                                                |
-          {0:~                                                    }|
-          {0:~                                                    }|
-          {0:~                                                    }|
+          {0:·                                                    }|
+          {0:·                                                    }|
+          {0:·                                                    }|
                                                                |
         ]])
       end)
@@ -792,9 +792,9 @@ describe('Screen', function()
           foo {1:b} bar {1:b} eggs                                     |
           foo {1:b} bar {1:b} eggs                                     |
                                                                |
-          {0:~                                                    }|
-          {0:~                                                    }|
-          {0:~                                                    }|
+          {0:·                                                    }|
+          {0:·                                                    }|
+          {0:·                                                    }|
                                                                |
         ]])
 
@@ -808,9 +808,9 @@ describe('Screen', function()
           foo {1:b} bar {1:b} eggs                                     |
           foo {1:b} bar {1:b} eggs                                     |
                                                                |
-          {0:~                                                    }|
-          {0:~                                                    }|
-          {0:~                                                    }|
+          {0:·                                                    }|
+          {0:·                                                    }|
+          {0:·                                                    }|
           /^                                                    |
         ]])
 
@@ -822,9 +822,9 @@ describe('Screen', function()
           foo {1:b} bar {1:b} eggs                                     |
           foo {1:b} bar {1:b} eggs                                     |
                                                                |
-          {0:~                                                    }|
-          {0:~                                                    }|
-          {0:~                                                    }|
+          {0:·                                                    }|
+          {0:·                                                    }|
+          {0:·                                                    }|
           /x^                                                   |
         ]])
 
@@ -836,9 +836,9 @@ describe('Screen', function()
           foo {1:b} bar {1:b} eggs                                     |
           foo {1:b} bar {1:b} eggs                                     |
                                                                |
-          {0:~                                                    }|
-          {0:~                                                    }|
-          {0:~                                                    }|
+          {0:·                                                    }|
+          {0:·                                                    }|
+          {0:·                                                    }|
           /^                                                    |
         ]])
 
@@ -850,9 +850,9 @@ describe('Screen', function()
           foo {1:b} bar {1:b} eggs                                     |
           foo {1:b} bar {1:b} eggs                                     |
                                                                |
-          {0:~                                                    }|
-          {0:~                                                    }|
-          {0:~                                                    }|
+          {0:·                                                    }|
+          {0:·                                                    }|
+          {0:·                                                    }|
                                                                |
         ]])
       end)
@@ -918,11 +918,11 @@ describe('Screen', function()
       bbb                                                  |
       ccc                                                  |
       ^                                                     |
-      {0:~                                                    }|
-      {0:~                                                    }|
-      {0:~                                                    }|
-      {0:~                                                    }|
-      {0:~                                                    }|
+      {0:·                                                    }|
+      {0:·                                                    }|
+      {0:·                                                    }|
+      {0:·                                                    }|
+      {0:·                                                    }|
                                                            |
     ]]}
 
@@ -940,11 +940,11 @@ describe('Screen', function()
       bbb                                                  |
       ^ccc                                                  |
                                                            |
-      {0:~                                                    }|
-      {0:~                                                    }|
-      {0:~                                                    }|
-      {0:~                                                    }|
-      {0:~                                                    }|
+      {0:·                                                    }|
+      {0:·                                                    }|
+      {0:·                                                    }|
+      {0:·                                                    }|
+      {0:·                                                    }|
                                                            |
     ]]}
     eq({{2, 0, {{'c', 0, 3}, {' ', 0, 50}}}, {3, 0, {{' ', 0, 53}}}}, grid_lines)
@@ -965,11 +965,11 @@ describe('Screen', function()
       bbb                                                  |
       ccc                                                  |
       ^                                                     |
-      {0:~                                                    }|
-      {0:~                                                    }|
-      {0:~                                                    }|
-      {0:~                                                    }|
-      {0:~                                                    }|
+      {0:·                                                    }|
+      {0:·                                                    }|
+      {0:·                                                    }|
+      {0:·                                                    }|
+      {0:·                                                    }|
                                                            |
     ]]}
 
@@ -987,11 +987,11 @@ describe('Screen', function()
       bbb                                                  |
       ^ccc                                                  |
                                                            |
-      {0:~                                                    }|
-      {0:~                                                    }|
-      {0:~                                                    }|
-      {0:~                                                    }|
-      {0:~                                                    }|
+      {0:·                                                    }|
+      {0:·                                                    }|
+      {0:·                                                    }|
+      {0:·                                                    }|
+      {0:·                                                    }|
                                                            |
     ]]}
     eq({{2, 0, {{'c', 0, 3}, {' ', 0, 50}}}}, grid_lines)
@@ -1067,13 +1067,13 @@ describe('Screen', function()
       screen:expect{grid=[[
         ^c                                                    |
                                                              |
-        {0:~                                                    }|
-        {0:~                                                    }|
-        {0:~                                                    }|
-        {0:~                                                    }|
-        {0:~                                                    }|
-        {0:~                                                    }|
-        {0:~                                                    }|
+        {0:·                                                    }|
+        {0:·                                                    }|
+        {0:·                                                    }|
+        {0:·                                                    }|
+        {0:·                                                    }|
+        {0:·                                                    }|
+        {0:·                                                    }|
                                                              |
       ]]}
     end)

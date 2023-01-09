@@ -54,9 +54,9 @@ describe('vim.secure', function()
       feed_command([[lua vim.secure.read('Xfile')]])
       screen:expect{grid=[[
                                                                                         |
-        {1:~                                                                               }|
-        {1:~                                                                               }|
-        {1:~                                                                               }|
+        {1:·                                                                               }|
+        {1:·                                                                               }|
+        {1:·                                                                               }|
         {2:                                                                                }|
         :lua vim.secure.read('Xfile')                                                   |
         {3:]] .. cwd .. pathsep .. [[Xfile is untrusted}{MATCH:%s+}|
@@ -65,12 +65,12 @@ describe('vim.secure', function()
       feed('d')
       screen:expect{grid=[[
         ^                                                                                |
-        {1:~                                                                               }|
-        {1:~                                                                               }|
-        {1:~                                                                               }|
-        {1:~                                                                               }|
-        {1:~                                                                               }|
-        {1:~                                                                               }|
+        {1:·                                                                               }|
+        {1:·                                                                               }|
+        {1:·                                                                               }|
+        {1:·                                                                               }|
+        {1:·                                                                               }|
+        {1:·                                                                               }|
                                                                                         |
       ]]}
 
@@ -83,9 +83,9 @@ describe('vim.secure', function()
       feed_command([[lua vim.secure.read('Xfile')]])
       screen:expect{grid=[[
                                                                                         |
-        {1:~                                                                               }|
-        {1:~                                                                               }|
-        {1:~                                                                               }|
+        {1:·                                                                               }|
+        {1:·                                                                               }|
+        {1:·                                                                               }|
         {2:                                                                                }|
         :lua vim.secure.read('Xfile')                                                   |
         {3:]] .. cwd .. pathsep .. [[Xfile is untrusted}{MATCH:%s+}|
@@ -94,12 +94,12 @@ describe('vim.secure', function()
       feed('a')
       screen:expect{grid=[[
         ^                                                                                |
-        {1:~                                                                               }|
-        {1:~                                                                               }|
-        {1:~                                                                               }|
-        {1:~                                                                               }|
-        {1:~                                                                               }|
-        {1:~                                                                               }|
+        {1:·                                                                               }|
+        {1:·                                                                               }|
+        {1:·                                                                               }|
+        {1:·                                                                               }|
+        {1:·                                                                               }|
+        {1:·                                                                               }|
                                                                                         |
       ]]}
 
@@ -113,9 +113,9 @@ describe('vim.secure', function()
       feed_command([[lua vim.secure.read('Xfile')]])
       screen:expect{grid=[[
                                                                                         |
-        {1:~                                                                               }|
-        {1:~                                                                               }|
-        {1:~                                                                               }|
+        {1:·                                                                               }|
+        {1:·                                                                               }|
+        {1:·                                                                               }|
         {2:                                                                                }|
         :lua vim.secure.read('Xfile')                                                   |
         {3:]] .. cwd .. pathsep .. [[Xfile is untrusted}{MATCH:%s+}|
@@ -124,12 +124,12 @@ describe('vim.secure', function()
       feed('i')
       screen:expect{grid=[[
         ^                                                                                |
-        {1:~                                                                               }|
-        {1:~                                                                               }|
-        {1:~                                                                               }|
-        {1:~                                                                               }|
-        {1:~                                                                               }|
-        {1:~                                                                               }|
+        {1:·                                                                               }|
+        {1:·                                                                               }|
+        {1:·                                                                               }|
+        {1:·                                                                               }|
+        {1:·                                                                               }|
+        {1:·                                                                               }|
                                                                                         |
       ]]}
 
@@ -140,9 +140,9 @@ describe('vim.secure', function()
       feed_command([[lua vim.secure.read('Xfile')]])
       screen:expect{grid=[[
                                                                                         |
-        {1:~                                                                               }|
-        {1:~                                                                               }|
-        {1:~                                                                               }|
+        {1:·                                                                               }|
+        {1:·                                                                               }|
+        {1:·                                                                               }|
         {2:                                                                                }|
         :lua vim.secure.read('Xfile')                                                   |
         {3:]] .. cwd .. pathsep .. [[Xfile is untrusted}{MATCH:%s+}|
@@ -151,11 +151,11 @@ describe('vim.secure', function()
       feed('v')
       screen:expect{grid=[[
           ^let g:foobar = 42                                                             |
-        {1:~                                                                               }|
-        {1:~                                                                               }|
+        {1:·                                                                               }|
+        {1:·                                                                               }|
         {2:]] .. funcs.fnamemodify(cwd, ':~') .. pathsep .. [[Xfile [RO]{MATCH:%s+}|
                                                                                         |
-        {1:~                                                                               }|
+        {1:·                                                                               }|
         {4:[No Name]                                                                       }|
                                                                                         |
       ]]}

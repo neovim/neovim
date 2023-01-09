@@ -27,18 +27,18 @@ describe("'fillchars'", function()
       eq('', eval('&fillchars'))
       screen:expect([[
         ^                         |
-        ~                        |
-        ~                        |
-        ~                        |
+        ·                        |
+        ·                        |
+        ·                        |
                                  |
       ]])
     end)
     it('supports whitespace', function()
       screen:expect([[
         ^                         |
-        ~                        |
-        ~                        |
-        ~                        |
+        ·                        |
+        ·                        |
+        ·                        |
                                  |
       ]])
       command('set fillchars=eob:\\ ')
@@ -77,9 +77,9 @@ describe("'fillchars'", function()
     command('set fillchars=fold:x')
     screen:expect([[
       ^+--  2 lines: fooxxxxxxxx│+--  2 lines: fooxxxxxxx|
-      ~                        │~                       |
-      ~                        │~                       |
-      ~                        │~                       |
+      ·                        │·                       |
+      ·                        │·                       |
+      ·                        │·                       |
                                                         |
     ]])
   end)
@@ -92,9 +92,9 @@ describe("'fillchars'", function()
     command('setl fillchars=fold:x')
     screen:expect([[
       ^+--  2 lines: fooxxxxxxxx│+--  2 lines: foo·······|
-      ~                        │~                       |
-      ~                        │~                       |
-      ~                        │~                       |
+      ·                        │·                       |
+      ·                        │·                       |
+      ·                        │·                       |
                                                         |
     ]])
   end)
@@ -108,9 +108,9 @@ describe("'fillchars'", function()
     command('set fillchars&')
     screen:expect([[
       ^+--  2 lines: foo········│+--  2 lines: fooxxxxxxx|
-      ~                        │~                       |
-      ~                        │~                       |
-      ~                        │~                       |
+      ·                        │·                       |
+      ·                        │·                       |
+      ·                        │·                       |
                                                         |
     ]])
   end)
@@ -132,9 +132,9 @@ describe("'listchars'", function()
     command('set listchars=tab:<->')
     screen:expect([[
       <------><------>^<------> │<------><------><------>|
-      ~                        │~                       |
-      ~                        │~                       |
-      ~                        │~                       |
+      ·                        │·                       |
+      ·                        │·                       |
+      ·                        │·                       |
                                                         |
     ]])
   end)
@@ -146,9 +146,9 @@ describe("'listchars'", function()
     command('setl listchars<')
     screen:expect([[
       >       >       ^>        │<------><------><------>|
-      ~                        │~                       |
-      ~                        │~                       |
-      ~                        │~                       |
+      ·                        │·                       |
+      ·                        │·                       |
+      ·                        │·                       |
                                                         |
     ]])
   end)
@@ -160,9 +160,9 @@ describe("'listchars'", function()
     command('set listchars=tab:>-,eol:$')
     screen:expect([[
       >------->-------^>-------$│<------><------><------>|
-      ~                        │~                       |
-      ~                        │~                       |
-      ~                        │~                       |
+      ·                        │·                       |
+      ·                        │·                       |
+      ·                        │·                       |
                                                         |
     ]])
   end)

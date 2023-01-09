@@ -46,9 +46,9 @@ describe('TUI', function()
         nvim_prog, child_server, nvim_set))
     screen:expect([[
       {1: }                                                 |
-      {4:~                                                 }|
-      {4:~                                                 }|
-      {4:~                                                 }|
+      {4:·                                                 }|
+      {4:·                                                 }|
+      {4:·                                                 }|
       {5:[No Name]                                         }|
                                                         |
       {3:-- TERMINAL --}                                    |
@@ -163,12 +163,12 @@ describe('TUI', function()
     feed_data('\003')
     screen:expect{grid=[[
       {1: }                                                 |
-      {4:~                                                 }|
-      {4:~                                                 }|
-      {4:~                                                 }|
-      {4:~                                                 }|
-      {4:~                                                 }|
-      {4:~                                                 }|
+      {4:·                                                 }|
+      {4:·                                                 }|
+      {4:·                                                 }|
+      {4:·                                                 }|
+      {4:·                                                 }|
+      {4:·                                                 }|
       {5:[No Name]                                         }|
                                                         |
       {3:-- TERMINAL --}                                    |
@@ -181,7 +181,7 @@ describe('TUI', function()
       abc                                               |
       test1                                             |
       test2{1: }                                            |
-      {4:~                                                 }|
+      {4:·                                                 }|
       {5:[No Name] [+]                                     }|
       {3:-- INSERT --}                                      |
       {3:-- TERMINAL --}                                    |
@@ -191,7 +191,7 @@ describe('TUI', function()
       abc                                               |
       test1                                             |
       test{1:2}                                             |
-      {4:~                                                 }|
+      {4:·                                                 }|
       {5:[No Name] [+]                                     }|
                                                         |
       {3:-- TERMINAL --}                                    |
@@ -231,9 +231,9 @@ describe('TUI', function()
     feed_data('i\022\027j')
     screen:expect([[
       <M-j>{1: }                                            |
-      {4:~                                                 }|
-      {4:~                                                 }|
-      {4:~                                                 }|
+      {4:·                                                 }|
+      {4:·                                                 }|
+      {4:·                                                 }|
       {5:[No Name] [+]                                     }|
       {3:-- INSERT --}                                      |
       {3:-- TERMINAL --}                                    |
@@ -247,9 +247,9 @@ describe('TUI', function()
     feed_data('\027[27u;')
     screen:expect([[
       ESCsemicolo{1:n}                                      |
-      {4:~                                                 }|
-      {4:~                                                 }|
-      {4:~                                                 }|
+      {4:·                                                 }|
+      {4:·                                                 }|
+      {4:·                                                 }|
       {5:[No Name] [+]                                     }|
                                                         |
       {3:-- TERMINAL --}                                    |
@@ -263,9 +263,9 @@ describe('TUI', function()
     feed_data('i\022\027\000')
     screen:expect([[
       <M-C-Space>{1: }                                      |
-      {4:~                                                 }|
-      {4:~                                                 }|
-      {4:~                                                 }|
+      {4:·                                                 }|
+      {4:·                                                 }|
+      {4:·                                                 }|
       {5:[No Name] [+]                                     }|
       {3:-- INSERT --}                                      |
       {3:-- TERMINAL --}                                    |
@@ -281,9 +281,9 @@ describe('TUI', function()
     attrs[11] = {foreground = 81}
     screen:expect([[
     {11:^G^V^M}{1: }                                           |
-    {4:~                                                 }|
-    {4:~                                                 }|
-    {4:~                                                 }|
+    {4:·                                                 }|
+    {4:·                                                 }|
+    {4:·                                                 }|
     {5:[No Name] [+]                                     }|
     {3:-- INSERT --}                                      |
     {3:-- TERMINAL --}                                    |
@@ -505,8 +505,8 @@ describe('TUI', function()
     screen:expect([[
       0123456789./*-+                                   |
       ={1: }                                                |
-      {4:~                                                 }|
-      {4:~                                                 }|
+      {4:·                                                 }|
+      {4:·                                                 }|
       {5:[No Name] [+]                                     }|
       {3:-- INSERT --}                                      |
       {3:-- TERMINAL --}                                    |
@@ -515,8 +515,8 @@ describe('TUI', function()
     screen:expect([[
       0123456789./*-+                                   |
       {1:=}                                                 |
-      {4:~                                                 }|
-      {4:~                                                 }|
+      {4:·                                                 }|
+      {4:·                                                 }|
       {5:[No Name] [+]                                     }|
       {3:-- INSERT --}                                      |
       {3:-- TERMINAL --}                                    |
@@ -525,8 +525,8 @@ describe('TUI', function()
     screen:expect([[
       0123456789./*-+                                   |
       ={1: }                                                |
-      {4:~                                                 }|
-      {4:~                                                 }|
+      {4:·                                                 }|
+      {4:·                                                 }|
       {5:[No Name] [+]                                     }|
       {3:-- INSERT --}                                      |
       {3:-- TERMINAL --}                                    |
@@ -535,8 +535,8 @@ describe('TUI', function()
     screen:expect([[
       0{1:1}23456789./*-+                                   |
       =                                                 |
-      {4:~                                                 }|
-      {4:~                                                 }|
+      {4:·                                                 }|
+      {4:·                                                 }|
       {5:[No Name] [+]                                     }|
       {3:-- INSERT --}                                      |
       {3:-- TERMINAL --}                                    |
@@ -545,8 +545,8 @@ describe('TUI', function()
     screen:expect([[
       0123456789./*-+                                   |
       ={1: }                                                |
-      {4:~                                                 }|
-      {4:~                                                 }|
+      {4:·                                                 }|
+      {4:·                                                 }|
       {5:[No Name] [+]                                     }|
       {3:-- INSERT --}                                      |
       {3:-- TERMINAL --}                                    |
@@ -555,8 +555,8 @@ describe('TUI', function()
     screen:expect([[
       0123456789./*-+                                   |
       ={1: }                                                |
-      {4:~                                                 }|
-      {4:~                                                 }|
+      {4:·                                                 }|
+      {4:·                                                 }|
       {5:[No Name] [+]                                     }|
       {3:-- REPLACE --}                                     |
       {3:-- TERMINAL --}                                    |
@@ -565,8 +565,8 @@ describe('TUI', function()
     screen:expect([[
       0123456789./*-+                                   |
       {1:=}                                                 |
-      {4:~                                                 }|
-      {4:~                                                 }|
+      {4:·                                                 }|
+      {4:·                                                 }|
       {5:[No Name] [+]                                     }|
                                                         |
       {3:-- TERMINAL --}                                    |
@@ -575,8 +575,8 @@ describe('TUI', function()
     screen:expect([[
       {1:0}123456789./*-+                                   |
       =                                                 |
-      {4:~                                                 }|
-      {4:~                                                 }|
+      {4:·                                                 }|
+      {4:·                                                 }|
       {5:[No Name] [+]                                     }|
                                                         |
       {3:-- TERMINAL --}                                    |
@@ -585,8 +585,8 @@ describe('TUI', function()
     screen:expect([[
       0123456789{1:.}/*-+                                   |
       =                                                 |
-      {4:~                                                 }|
-      {4:~                                                 }|
+      {4:·                                                 }|
+      {4:·                                                 }|
       {5:[No Name] [+]                                     }|
                                                         |
       {3:-- TERMINAL --}                                    |
@@ -595,8 +595,8 @@ describe('TUI', function()
     screen:expect([[
       0123456789{1:/}*-+                                    |
       =                                                 |
-      {4:~                                                 }|
-      {4:~                                                 }|
+      {4:·                                                 }|
+      {4:·                                                 }|
       {5:[No Name] [+]                                     }|
                                                         |
       {3:-- TERMINAL --}                                    |
@@ -605,8 +605,8 @@ describe('TUI', function()
     screen:expect([[
       {1:0}123456789/*-+                                    |
       =                                                 |
-      {4:~                                                 }|
-      {4:~                                                 }|
+      {4:·                                                 }|
+      {4:·                                                 }|
       {5:[No Name] [+]                                     }|
                                                         |
       {3:-- TERMINAL --}                                    |
@@ -615,8 +615,8 @@ describe('TUI', function()
     screen:expect([[
       0123456789/*-{1:+}                                    |
       =                                                 |
-      {4:~                                                 }|
-      {4:~                                                 }|
+      {4:·                                                 }|
+      {4:·                                                 }|
       {5:[No Name] [+]                                     }|
                                                         |
       {3:-- TERMINAL --}                                    |
@@ -629,8 +629,8 @@ describe('TUI', function()
     screen:expect([[
       {12: + [No Name]  + [No Name] }{3: [No Name] }{1:            }{12:X}|
       {1: }                                                 |
-      {4:~                                                 }|
-      {4:~                                                 }|
+      {4:·                                                 }|
+      {4:·                                                 }|
       {5:[No Name]                                         }|
                                                         |
       {3:-- TERMINAL --}                                    |
@@ -640,7 +640,7 @@ describe('TUI', function()
       {12: + [No Name] }{3: + [No Name] }{12: [No Name] }{1:            }{12:X}|
       0123456789/*-{1:+}                                    |
       =                                                 |
-      {4:~                                                 }|
+      {4:·                                                 }|
       {5:[No Name] [+]                                     }|
                                                         |
       {3:-- TERMINAL --}                                    |
@@ -649,8 +649,8 @@ describe('TUI', function()
     screen:expect([[
       {12: + [No Name]  + [No Name] }{3: [No Name] }{1:            }{12:X}|
       {1: }                                                 |
-      {4:~                                                 }|
-      {4:~                                                 }|
+      {4:·                                                 }|
+      {4:·                                                 }|
       {5:[No Name]                                         }|
                                                         |
       {3:-- TERMINAL --}                                    |
@@ -672,9 +672,9 @@ describe('TUI', function()
     meths.input_mouse('right', 'press', '', 0, 0, 4)
     screen:expect([[
       {1:p}opup menu test                                   |
-      {4:~  }{13: foo }{4:                                          }|
-      {4:~  }{13: bar }{4:                                          }|
-      {4:~  }{13: baz }{4:                                          }|
+      {4:·  }{13: foo }{4:                                          }|
+      {4:·  }{13: bar }{4:                                          }|
+      {4:·  }{13: baz }{4:                                          }|
       {5:[No Name] [+]                                     }|
                                                         |
       {3:-- TERMINAL --}                                    |
@@ -684,9 +684,9 @@ describe('TUI', function()
     meths.input_mouse('move', '', '', 0, 3, 6)
     screen:expect([[
       {1:p}opup menu test                                   |
-      {4:~  }{13: foo }{4:                                          }|
-      {4:~  }{13: bar }{4:                                          }|
-      {4:~  }{14: baz }{4:                                          }|
+      {4:·  }{13: foo }{4:                                          }|
+      {4:·  }{13: bar }{4:                                          }|
+      {4:·  }{14: baz }{4:                                          }|
       {5:[No Name] [+]                                     }|
                                                         |
       {3:-- TERMINAL --}                                    |
@@ -694,9 +694,9 @@ describe('TUI', function()
     meths.input_mouse('left', 'press', '', 0, 2, 6)
     screen:expect([[
       {1:p}opup menu test                                   |
-      {4:~                                                 }|
-      {4:~                                                 }|
-      {4:~                                                 }|
+      {4:·                                                 }|
+      {4:·                                                 }|
+      {4:·                                                 }|
       {5:[No Name] [+]                                     }|
       :let g:menustr = 'bar'                            |
       {3:-- TERMINAL --}                                    |
@@ -710,9 +710,9 @@ describe('TUI', function()
     feed_data('i""\027i\027[200~')
     screen:expect([[
       "{1:"}                                                |
-      {4:~                                                 }|
-      {4:~                                                 }|
-      {4:~                                                 }|
+      {4:·                                                 }|
+      {4:·                                                 }|
+      {4:·                                                 }|
       {5:[No Name] [+]                                     }|
       {3:-- INSERT --}                                      |
       {3:-- TERMINAL --}                                    |
@@ -721,9 +721,9 @@ describe('TUI', function()
     expect_child_buf_lines({'"pasted from terminal"'})
     screen:expect([[
       "pasted from terminal{1:"}                            |
-      {4:~                                                 }|
-      {4:~                                                 }|
-      {4:~                                                 }|
+      {4:·                                                 }|
+      {4:·                                                 }|
+      {4:·                                                 }|
       {5:[No Name] [+]                                     }|
       {3:-- INSERT --}                                      |
       {3:-- TERMINAL --}                                    |
@@ -733,9 +733,9 @@ describe('TUI', function()
     wait_for_mode('n')
     screen:expect([[
       "pasted from termina{1:l}"                            |
-      {4:~                                                 }|
-      {4:~                                                 }|
-      {4:~                                                 }|
+      {4:·                                                 }|
+      {4:·                                                 }|
+      {4:·                                                 }|
       {5:[No Name] [+]                                     }|
                                                         |
       {3:-- TERMINAL --}                                    |
@@ -747,8 +747,8 @@ describe('TUI', function()
     screen:expect([[
       "pasted from terminapasted from terminalpasted fro|
       m termina{1:l}l"                                      |
-      {4:~                                                 }|
-      {4:~                                                 }|
+      {4:·                                                 }|
+      {4:·                                                 }|
       {5:[No Name] [+]                                     }|
                                                         |
       {3:-- TERMINAL --}                                    |
@@ -783,8 +783,8 @@ describe('TUI', function()
     screen:expect{grid=[[
       thisjust paste it{1:™}3 is here                       |
                                                         |
-      {4:~                                                 }|
-      {4:~                                                 }|
+      {4:·                                                 }|
+      {4:·                                                 }|
       {5:[No Name] [+]                                     }|
                                                         |
       {3:-- TERMINAL --}                                    |
@@ -846,7 +846,7 @@ describe('TUI', function()
       line 1                                            |
       ESC:{11:^[} / CR:                                      |
       {1:x}                                                 |
-      {4:~                                                 }|
+      {4:·                                                 }|
       {5:[No Name] [+]                   3,1            All}|
                                                         |
       {3:-- TERMINAL --}                                    |
@@ -903,8 +903,8 @@ describe('TUI', function()
     screen:expect{grid=[[
       foo                                               |
                                                         |
-      {4:~                                                 }|
-      {4:~                                                 }|
+      {4:·                                                 }|
+      {4:·                                                 }|
       {5:[No Name] [+]                                     }|
       :"line 1{1:"}                                         |
       {3:-- TERMINAL --}                                    |
@@ -917,7 +917,7 @@ describe('TUI', function()
       foo                                               |
       foo                                               |
       {1: }                                                 |
-      {4:~                                                 }|
+      {4:·                                                 }|
       {5:[No Name] [+]                                     }|
                                                         |
       {3:-- TERMINAL --}                                    |
@@ -961,8 +961,8 @@ describe('TUI', function()
     screen:expect{grid=[[
       foo                                               |
       {1: }                                                 |
-      {4:~                                                 }|
-      {4:~                                                 }|
+      {4:·                                                 }|
+      {4:·                                                 }|
       {5:[No Name] [+]                                     }|
                                                         |
       {3:-- TERMINAL --}                                    |
@@ -992,7 +992,7 @@ describe('TUI', function()
       foo                                               |
       foo                                               |
       {1: }                                                 |
-      {4:~                                                 }|
+      {4:·                                                 }|
       {5:[No Name] [+]                                     }|
                                                         |
       {3:-- TERMINAL --}                                    |
@@ -1003,7 +1003,7 @@ describe('TUI', function()
       foo                                               |
       foo                                               |
       typed input..{1:.}                                    |
-      {4:~                                                 }|
+      {4:·                                                 }|
       {5:[No Name] [+]                                     }|
                                                         |
       {3:-- TERMINAL --}                                    |
@@ -1045,7 +1045,7 @@ describe('TUI', function()
     feed_data('\027[200~fail 1\nfail 2\n\027[201~')
     screen:expect{grid=[[
                                                         |
-      {4:~                                                 }|
+      {4:·                                                 }|
       {5:                                                  }|
       {8:paste: Error executing lua: Vim:E21: Cannot make c}|
       {8:hanges, 'modifiable' is off}                       |
@@ -1059,7 +1059,7 @@ describe('TUI', function()
       success 1                                         |
       success 2                                         |
       {1: }                                                 |
-      {4:~                                                 }|
+      {4:·                                                 }|
       {5:[No Name] [+]                                     }|
                                                         |
       {3:-- TERMINAL --}                                    |
@@ -1078,8 +1078,8 @@ describe('TUI', function()
     screen:expect([[
       zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz|
       zzzzzzzzzzzzzz end{1: }                               |
-      {4:~                                                 }|
-      {4:~                                                 }|
+      {4:·                                                 }|
+      {4:·                                                 }|
       {5:[No Name] [+]                                     }|
       {3:-- INSERT --}                                      |
       {3:-- TERMINAL --}                                    |
@@ -1095,9 +1095,9 @@ describe('TUI', function()
     feed_data('\027[200~'..expected..'\027[201~')
     screen:expect{grid=[[
                                                         |
-      {4:~                                                 }|
-      {4:~                                                 }|
-      {4:~                                                 }|
+      {4:·                                                 }|
+      {4:·                                                 }|
+      {4:·                                                 }|
       {5:[No Name]                                         }|
       :<{1: }                                               |
       {3:-- TERMINAL --}                                    |
@@ -1180,9 +1180,9 @@ describe('TUI', function()
     feed_data('\027[201~')
     screen:expect([[
       {1: }                                                 |
-      {4:~                                                 }|
-      {4:~                                                 }|
-      {4:~                                                 }|
+      {4:·                                                 }|
+      {4:·                                                 }|
+      {4:·                                                 }|
       {5:[No Name]                                         }|
       {3:-- INSERT --}                                      |
       {3:-- TERMINAL --}                                    |
@@ -1193,9 +1193,9 @@ describe('TUI', function()
     feed_data('i')
     screen:expect{grid=[[
       {1: }                                                 |
-      {4:~                                                 }|
-      {4:~                                                 }|
-      {4:~                                                 }|
+      {4:·                                                 }|
+      {4:·                                                 }|
+      {4:·                                                 }|
       {5:[No Name]                                         }|
       {3:-- INSERT --}                                      |
       {3:-- TERMINAL --}                                    |
@@ -1205,9 +1205,9 @@ describe('TUI', function()
     feed_data('00~pasted from terminal\027[201~')
     screen:expect([[
       pasted from terminal{1: }                             |
-      {4:~                                                 }|
-      {4:~                                                 }|
-      {4:~                                                 }|
+      {4:·                                                 }|
+      {4:·                                                 }|
+      {4:·                                                 }|
       {5:[No Name] [+]                                     }|
       {3:-- INSERT --}                                      |
       {3:-- TERMINAL --}                                    |
@@ -1218,9 +1218,9 @@ describe('TUI', function()
     feed_data('i')
     screen:expect{grid=[[
       {1: }                                                 |
-      {4:~                                                 }|
-      {4:~                                                 }|
-      {4:~                                                 }|
+      {4:·                                                 }|
+      {4:·                                                 }|
+      {4:·                                                 }|
       {5:[No Name]                                         }|
       {3:-- INSERT --}                                      |
       {3:-- TERMINAL --}                                    |
@@ -1230,9 +1230,9 @@ describe('TUI', function()
     feed_data('1~')
     screen:expect([[
       pasted from terminal{1: }                             |
-      {4:~                                                 }|
-      {4:~                                                 }|
-      {4:~                                                 }|
+      {4:·                                                 }|
+      {4:·                                                 }|
+      {4:·                                                 }|
       {5:[No Name] [+]                                     }|
       {3:-- INSERT --}                                      |
       {3:-- TERMINAL --}                                    |
@@ -1252,9 +1252,9 @@ describe('TUI', function()
     feed_data('i')
     screen:expect{grid=[[
       {1: }                                                 |
-      {4:~                                                 }|
-      {4:~                                                 }|
-      {4:~                                                 }|
+      {4:·                                                 }|
+      {4:·                                                 }|
+      {4:·                                                 }|
       {5:[No Name]                                         }|
       {3:-- INSERT --}                                      |
       {3:-- TERMINAL --}                                    |
@@ -1262,9 +1262,9 @@ describe('TUI', function()
     feed_data('\027[200~pasted')  -- phase 1
     screen:expect([[
       pasted{1: }                                           |
-      {4:~                                                 }|
-      {4:~                                                 }|
-      {4:~                                                 }|
+      {4:·                                                 }|
+      {4:·                                                 }|
+      {4:·                                                 }|
       {5:[No Name] [+]                                     }|
       {3:-- INSERT --}                                      |
       {3:-- TERMINAL --}                                    |
@@ -1272,9 +1272,9 @@ describe('TUI', function()
     feed_data(' from terminal')  -- phase 2
     screen:expect([[
       pasted from terminal{1: }                             |
-      {4:~                                                 }|
-      {4:~                                                 }|
-      {4:~                                                 }|
+      {4:·                                                 }|
+      {4:·                                                 }|
+      {4:·                                                 }|
       {5:[No Name] [+]                                     }|
       {3:-- INSERT --}                                      |
       {3:-- TERMINAL --}                                    |
@@ -1307,9 +1307,9 @@ describe('TUI', function()
     feed_data(':set termguicolors?\n')
     screen:expect([[
       {5:^}{6:G}                                                |
-      {2:~                                                 }|
-      {2:~                                                 }|
-      {2:~                                                 }|
+      {2:·                                                 }|
+      {2:·                                                 }|
+      {2:·                                                 }|
       {3:[No Name] [+]                                     }|
       notermguicolors                                   |
       {4:-- TERMINAL --}                                    |
@@ -1318,9 +1318,9 @@ describe('TUI', function()
     feed_data(':set termguicolors\n')
     screen:expect([[
       {7:^}{8:G}                                                |
-      {9:~                                                 }|
-      {9:~                                                 }|
-      {9:~                                                 }|
+      {9:·                                                 }|
+      {9:·                                                 }|
+      {9:·                                                 }|
       {3:[No Name] [+]                                     }|
       :set termguicolors                                |
       {4:-- TERMINAL --}                                    |
@@ -1329,9 +1329,9 @@ describe('TUI', function()
     feed_data(':set notermguicolors\n')
     screen:expect([[
       {5:^}{6:G}                                                |
-      {2:~                                                 }|
-      {2:~                                                 }|
-      {2:~                                                 }|
+      {2:·                                                 }|
+      {2:·                                                 }|
+      {2:·                                                 }|
       {3:[No Name] [+]                                     }|
       :set notermguicolors                              |
       {4:-- TERMINAL --}                                    |
@@ -1390,7 +1390,7 @@ describe('TUI', function()
     feed_data(':echo map(nvim_list_uis(), {k,v -> sort(items(filter(v, {k,v -> k[:3] !=# "ext_" })))})\r')
     screen:expect([=[
                                                         |
-      {4:~                                                 }|
+      {4:·                                                 }|
       {5:                                                  }|
       [[['chan', 1], ['height', 6], ['override', v:false|
       ], ['rgb', v:false], ['width', 50]]]              |
@@ -1473,9 +1473,9 @@ describe('TUI', function()
     feed_data ':set visualbell\n'
     screen:expect{grid=[[
       {1: }                                                 |
-      {4:~                                                 }|
-      {4:~                                                 }|
-      {4:~                                                 }|
+      {4:·                                                 }|
+      {4:·                                                 }|
+      {4:·                                                 }|
       {5:[No Name]                                         }|
       :set visualbell                                   |
       {3:-- TERMINAL --}                                    |
@@ -1487,9 +1487,9 @@ describe('TUI', function()
     feed_data 'i'
     screen:expect{grid=[[
       {1: }                                                 |
-      {4:~                                                 }|
-      {4:~                                                 }|
-      {4:~                                                 }|
+      {4:·                                                 }|
+      {4:·                                                 }|
+      {4:·                                                 }|
       {5:[No Name]                                         }|
       {3:-- INSERT --}                                      |
       {3:-- TERMINAL --}                                    |
@@ -1520,13 +1520,13 @@ describe('TUI', function()
     ]])
     screen:expect([[
       ^                         │                        |
-      {2:~                        }│{4:~                       }|
-      {2:~                        }│{4:~                       }|
-      {2:~                        }│{4:~                       }|
-      {2:~                        }│{4:~                       }|
-      {2:~                        }│{4:~                       }|
-      {2:~                        }│{5:[No Name]   0,0-1    All}|
-      {2:~                        }│                        |
+      {2:·                        }│{4:·                       }|
+      {2:·                        }│{4:·                       }|
+      {2:·                        }│{4:·                       }|
+      {2:·                        }│{4:·                       }|
+      {2:·                        }│{4:·                       }|
+      {2:·                        }│{5:[No Name]   0,0-1    All}|
+      {2:·                        }│                        |
       {5:new                       }{MATCH:<.*[/\]nvim }|
                                                         |
     ]])
@@ -1552,9 +1552,9 @@ describe('TUI', function()
       ..[[", "-u", "NONE", "-i", "NONE", "--cmd", "set noruler", "--cmd", ':nnoremap <C-h> :echomsg "\<C-h\>"<CR>']]..']')
     screen:expect{grid=[[
       {1: }                                                 |
-      {4:~                                                 }|
-      {4:~                                                 }|
-      {4:~                                                 }|
+      {4:·                                                 }|
+      {4:·                                                 }|
+      {4:·                                                 }|
       {5:[No Name]                                         }|
                                                         |
       {3:-- TERMINAL --}                                    |
@@ -1563,9 +1563,9 @@ describe('TUI', function()
     command([[call chansend(b:terminal_job_id, "\<C-h>")]])
     screen:expect([[
       {1: }                                                 |
-      {4:~                                                 }|
-      {4:~                                                 }|
-      {4:~                                                 }|
+      {4:·                                                 }|
+      {4:·                                                 }|
+      {4:·                                                 }|
       {5:[No Name]                                         }|
       <C-h>                                             |
       {3:-- TERMINAL --}                                    |
@@ -1587,9 +1587,9 @@ describe('TUI UIEnter/UILeave', function()
     )
     screen:expect{grid=[[
       {1: }                                                 |
-      {4:~                                                 }|
-      {4:~                                                 }|
-      {4:~                                                 }|
+      {4:·                                                 }|
+      {4:·                                                 }|
+      {4:·                                                 }|
       {5:[No Name]                                         }|
                                                         |
       {3:-- TERMINAL --}                                    |
@@ -1597,9 +1597,9 @@ describe('TUI UIEnter/UILeave', function()
     feed_data(":echo g:evs\n")
     screen:expect{grid=[[
       {1: }                                                 |
-      {4:~                                                 }|
-      {4:~                                                 }|
-      {4:~                                                 }|
+      {4:·                                                 }|
+      {4:·                                                 }|
+      {4:·                                                 }|
       {5:[No Name]                                         }|
       ['VimEnter', 'UIEnter']                           |
       {3:-- TERMINAL --}                                    |
@@ -1616,9 +1616,9 @@ describe('TUI FocusGained/FocusLost', function()
       ..'", "-u", "NONE", "-i", "NONE", "--cmd", "set noswapfile noshowcmd noruler"]')
     screen:expect{grid=[[
       {1: }                                                 |
-      {4:~                                                 }|
-      {4:~                                                 }|
-      {4:~                                                 }|
+      {4:·                                                 }|
+      {4:·                                                 }|
+      {4:·                                                 }|
       {5:[No Name]                                         }|
                                                         |
       {3:-- TERMINAL --}                                    |
@@ -1631,9 +1631,9 @@ describe('TUI FocusGained/FocusLost', function()
   it('in normal-mode', function()
     screen:expect{grid=[[
       {1: }                                                 |
-      {4:~                                                 }|
-      {4:~                                                 }|
-      {4:~                                                 }|
+      {4:·                                                 }|
+      {4:·                                                 }|
+      {4:·                                                 }|
       {5:[No Name]                                         }|
       :autocmd FocusLost * echo 'lost'                  |
       {3:-- TERMINAL --}                                    |
@@ -1642,9 +1642,9 @@ describe('TUI FocusGained/FocusLost', function()
       feed_data('\027[I')
       screen:expect([[
         {1: }                                                 |
-        {4:~                                                 }|
-        {4:~                                                 }|
-        {4:~                                                 }|
+        {4:·                                                 }|
+        {4:·                                                 }|
+        {4:·                                                 }|
         {5:[No Name]                                         }|
         gained                                            |
         {3:-- TERMINAL --}                                    |
@@ -1653,9 +1653,9 @@ describe('TUI FocusGained/FocusLost', function()
       feed_data('\027[O')
       screen:expect([[
         {1: }                                                 |
-        {4:~                                                 }|
-        {4:~                                                 }|
-        {4:~                                                 }|
+        {4:·                                                 }|
+        {4:·                                                 }|
+        {4:·                                                 }|
         {5:[No Name]                                         }|
         lost                                              |
         {3:-- TERMINAL --}                                    |
@@ -1668,9 +1668,9 @@ describe('TUI FocusGained/FocusLost', function()
     feed_data('i')
     screen:expect{grid=[[
       {1: }                                                 |
-      {4:~                                                 }|
-      {4:~                                                 }|
-      {4:~                                                 }|
+      {4:·                                                 }|
+      {4:·                                                 }|
+      {4:·                                                 }|
       {5:[No Name]                                         }|
       :set noshowmode                                   |
       {3:-- TERMINAL --}                                    |
@@ -1679,9 +1679,9 @@ describe('TUI FocusGained/FocusLost', function()
       feed_data('\027[I')
       screen:expect([[
         {1: }                                                 |
-        {4:~                                                 }|
-        {4:~                                                 }|
-        {4:~                                                 }|
+        {4:·                                                 }|
+        {4:·                                                 }|
+        {4:·                                                 }|
         {5:[No Name]                                         }|
         gained                                            |
         {3:-- TERMINAL --}                                    |
@@ -1689,9 +1689,9 @@ describe('TUI FocusGained/FocusLost', function()
       feed_data('\027[O')
       screen:expect([[
         {1: }                                                 |
-        {4:~                                                 }|
-        {4:~                                                 }|
-        {4:~                                                 }|
+        {4:·                                                 }|
+        {4:·                                                 }|
+        {4:·                                                 }|
         {5:[No Name]                                         }|
         lost                                              |
         {3:-- TERMINAL --}                                    |
@@ -1706,9 +1706,9 @@ describe('TUI FocusGained/FocusLost', function()
     feed_data('\027[I')
     screen:expect([[
                                                         |
-      {4:~                                                 }|
-      {4:~                                                 }|
-      {4:~                                                 }|
+      {4:·                                                 }|
+      {4:·                                                 }|
+      {4:·                                                 }|
       {5:[No Name]                                         }|
       :{1: }                                                |
       {3:-- TERMINAL --}                                    |
@@ -1716,9 +1716,9 @@ describe('TUI FocusGained/FocusLost', function()
     feed_data('\027[O')
     screen:expect{grid=[[
                                                         |
-      {4:~                                                 }|
-      {4:~                                                 }|
-      {4:~                                                 }|
+      {4:·                                                 }|
+      {4:·                                                 }|
+      {4:·                                                 }|
       {5:[No Name]                                         }|
       :{1: }                                                |
       {3:-- TERMINAL --}                                    |
@@ -1734,9 +1734,9 @@ describe('TUI FocusGained/FocusLost', function()
     feed_data(":autocmd FocusGained * call append(line('$'), 'gained')\n")
     screen:expect{grid=[[
       {1: }                                                 |
-      {4:~                                                 }|
-      {4:~                                                 }|
-      {4:~                                                 }|
+      {4:·                                                 }|
+      {4:·                                                 }|
+      {4:·                                                 }|
       {5:[No Name]                                         }|
                                                         |
       {3:-- TERMINAL --}                                    |
@@ -1840,9 +1840,9 @@ describe("TUI 't_Co' (terminal colors)", function()
 
     local tline
     if maxcolors == 8 or maxcolors == 16 then
-      tline = "~                                                 "
+      tline = "·                                                 "
     else
-      tline = "{4:~                                                 }"
+      tline = "{4:·                                                 }"
     end
 
     screen:expect(string.format([[
@@ -2176,10 +2176,10 @@ describe("TUI", function()
     feed_data('Gitext')
     screen:expect([[
       text{1: }                                             |
-      {4:~                                                 }|
-      {4:~                                                 }|
-      {4:~                                                 }|
-      {4:~                                                 }|
+      {4:·                                                 }|
+      {4:·                                                 }|
+      {4:·                                                 }|
+      {4:·                                                 }|
       {3:-- INSERT --}                                      |
       {3:-- TERMINAL --}                                    |
     ]])
@@ -2210,9 +2210,9 @@ describe('TUI bg color', function()
   it('triggers OptionSet event on unsplit terminal-response', function()
     screen:expect([[
     {1: }                                                 |
-    {4:~                                                 }|
-    {4:~                                                 }|
-    {4:~                                                 }|
+    {4:·                                                 }|
+    {4:·                                                 }|
+    {4:·                                                 }|
     {5:[No Name]                       0,0-1          All}|
                                                       |
     {3:-- TERMINAL --}                                    |
@@ -2226,9 +2226,9 @@ describe('TUI bg color', function()
     setup()
     screen:expect([[
     {1: }                                                 |
-    {4:~                                                 }|
-    {4:~                                                 }|
-    {4:~                                                 }|
+    {4:·                                                 }|
+    {4:·                                                 }|
+    {4:·                                                 }|
     {5:[No Name]                       0,0-1          All}|
                                                       |
     {3:-- TERMINAL --}                                    |
@@ -2243,9 +2243,9 @@ describe('TUI bg color', function()
   it('triggers OptionSet event with split terminal-response', function()
     screen:expect([[
     {1: }                                                 |
-    {4:~                                                 }|
-    {4:~                                                 }|
-    {4:~                                                 }|
+    {4:·                                                 }|
+    {4:·                                                 }|
+    {4:·                                                 }|
     {5:[No Name]                       0,0-1          All}|
                                                       |
     {3:-- TERMINAL --}                                    |
@@ -2261,9 +2261,9 @@ describe('TUI bg color', function()
     setup()
     screen:expect([[
     {1: }                                                 |
-    {4:~                                                 }|
-    {4:~                                                 }|
-    {4:~                                                 }|
+    {4:·                                                 }|
+    {4:·                                                 }|
+    {4:·                                                 }|
     {5:[No Name]                       0,0-1          All}|
                                                       |
     {3:-- TERMINAL --}                                    |
@@ -2280,9 +2280,9 @@ describe('TUI bg color', function()
   it('not triggers OptionSet event with invalid terminal-response', function()
     screen:expect([[
     {1: }                                                 |
-    {4:~                                                 }|
-    {4:~                                                 }|
-    {4:~                                                 }|
+    {4:·                                                 }|
+    {4:·                                                 }|
+    {4:·                                                 }|
     {5:[No Name]                       0,0-1          All}|
                                                       |
     {3:-- TERMINAL --}                                    |
@@ -2296,9 +2296,9 @@ describe('TUI bg color', function()
     setup()
     screen:expect([[
     {1: }                                                 |
-    {4:~                                                 }|
-    {4:~                                                 }|
-    {4:~                                                 }|
+    {4:·                                                 }|
+    {4:·                                                 }|
+    {4:·                                                 }|
     {5:[No Name]                       0,0-1          All}|
                                                       |
     {3:-- TERMINAL --}                                    |
@@ -2328,9 +2328,9 @@ describe("TUI as a client", function()
     feed_data("iHello, World")
     screen_server:expect{grid=[[
       Hello, World{1: }                                     |
-      {4:~                                                 }|
-      {4:~                                                 }|
-      {4:~                                                 }|
+      {4:·                                                 }|
+      {4:·                                                 }|
+      {4:·                                                 }|
       {5:[No Name] [+]                                     }|
       {3:-- INSERT --}                                      |
       {3:-- TERMINAL --}                                    |
@@ -2338,9 +2338,9 @@ describe("TUI as a client", function()
     feed_data("\027")
     screen_server:expect{grid=[[
       Hello, Worl{1:d}                                      |
-      {4:~                                                 }|
-      {4:~                                                 }|
-      {4:~                                                 }|
+      {4:·                                                 }|
+      {4:·                                                 }|
+      {4:·                                                 }|
       {5:[No Name] [+]                                     }|
                                                         |
       {3:-- TERMINAL --}                                    |
@@ -2353,9 +2353,9 @@ describe("TUI as a client", function()
 
       screen_client:expect{grid=[[
         Hello, Worl{1:d}                                      |
-        {4:~                                                 }|
-        {4:~                                                 }|
-        {4:~                                                 }|
+        {4:·                                                 }|
+        {4:·                                                 }|
+        {4:·                                                 }|
         {5:[No Name] [+]                                     }|
                                                           |
         {3:-- TERMINAL --}                                    |
@@ -2382,10 +2382,10 @@ describe("TUI as a client", function()
 
     screen:expect{grid=[[
       Halloj{1:!}                                           |
-      {4:~                                                 }|
-      {4:~                                                 }|
-      {4:~                                                 }|
-      {4:~                                                 }|
+      {4:·                                                 }|
+      {4:·                                                 }|
+      {4:·                                                 }|
+      {4:·                                                 }|
                                                         |
       {3:-- TERMINAL --}                                    |
     ]]}
@@ -2427,9 +2427,9 @@ describe("TUI as a client", function()
     feed_data("iHello, World")
     screen_server:expect{grid=[[
       Hello, World{1: }                                     |
-      {4:~                                                 }|
-      {4:~                                                 }|
-      {4:~                                                 }|
+      {4:·                                                 }|
+      {4:·                                                 }|
+      {4:·                                                 }|
       {5:[No Name] [+]                                     }|
       {3:-- INSERT --}                                      |
       {3:-- TERMINAL --}                                    |
@@ -2437,9 +2437,9 @@ describe("TUI as a client", function()
     feed_data("\027")
     screen_server:expect{grid=[[
       Hello, Worl{1:d}                                      |
-      {4:~                                                 }|
-      {4:~                                                 }|
-      {4:~                                                 }|
+      {4:·                                                 }|
+      {4:·                                                 }|
+      {4:·                                                 }|
       {5:[No Name] [+]                                     }|
                                                         |
       {3:-- TERMINAL --}                                    |
@@ -2452,9 +2452,9 @@ describe("TUI as a client", function()
 
     screen_client:expect{grid=[[
       Hello, Worl{1:d}                                      |
-      {4:~                                                 }|
-      {4:~                                                 }|
-      {4:~                                                 }|
+      {4:·                                                 }|
+      {4:·                                                 }|
+      {4:·                                                 }|
       {5:[No Name] [+]                                     }|
                                                         |
       {3:-- TERMINAL --}                                    |

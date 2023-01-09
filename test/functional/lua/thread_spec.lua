@@ -35,11 +35,11 @@ describe('thread', function()
 
     screen:expect([[
                                                         |
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
+      {1:·                                                 }|
+      {1:·                                                 }|
+      {1:·                                                 }|
+      {1:·                                                 }|
+      {1:·                                                 }|
       {2:                                                  }|
       {3:Error in luv thread:}                              |
       {3:[string "<nvim>"]:2: Error in thread entry func}   |
@@ -66,11 +66,11 @@ describe('thread', function()
 
     screen:expect([[
                                                         |
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
+      {1:·                                                 }|
+      {1:·                                                 }|
+      {1:·                                                 }|
+      {1:·                                                 }|
+      {1:·                                                 }|
       {2:                                                  }|
       {3:Error in luv callback, thread:}                    |
       {3:[string "<nvim>"]:6: Error in thread callback}     |
@@ -91,14 +91,14 @@ describe('thread', function()
 
       screen:expect([[
         ^                                                  |
-        {1:~                                                 }|
-        {1:~                                                 }|
-        {1:~                                                 }|
-        {1:~                                                 }|
-        {1:~                                                 }|
-        {1:~                                                 }|
-        {1:~                                                 }|
-        {1:~                                                 }|
+        {1:·                                                 }|
+        {1:·                                                 }|
+        {1:·                                                 }|
+        {1:·                                                 }|
+        {1:·                                                 }|
+        {1:·                                                 }|
+        {1:·                                                 }|
+        {1:·                                                 }|
         print in thread                                   |
       ]])
     end)
@@ -113,14 +113,14 @@ describe('thread', function()
 
       screen:expect([[
         ^                                                  |
-        {1:~                                                 }|
-        {1:~                                                 }|
-        {1:~                                                 }|
-        {1:~                                                 }|
-        {1:~                                                 }|
-        {1:~                                                 }|
-        {1:~                                                 }|
-        {1:~                                                 }|
+        {1:·                                                 }|
+        {1:·                                                 }|
+        {1:·                                                 }|
+        {1:·                                                 }|
+        {1:·                                                 }|
+        {1:·                                                 }|
+        {1:·                                                 }|
+        {1:·                                                 }|
         { 1, 2 }                                          |
       ]])
     end)
@@ -294,11 +294,11 @@ describe('threadpool', function()
 
     screen:expect([[
                                                         |
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
+      {1:·                                                 }|
+      {1:·                                                 }|
+      {1:·                                                 }|
+      {1:·                                                 }|
+      {1:·                                                 }|
       {2:                                                  }|
       {3:Error in luv thread:}                              |
       {3:Error: thread arg not support type 'table' at 1}   |

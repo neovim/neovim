@@ -42,12 +42,12 @@ describe(':trust', function()
     command('trust')
     screen:expect([[
       ^test                                                                            |
-      {1:~                                                                               }|
-      {1:~                                                                               }|
-      {1:~                                                                               }|
-      {1:~                                                                               }|
-      {1:~                                                                               }|
-      {1:~                                                                               }|
+      {1:·                                                                               }|
+      {1:·                                                                               }|
+      {1:·                                                                               }|
+      {1:·                                                                               }|
+      {1:·                                                                               }|
+      {1:·                                                                               }|
       "]] .. cwd .. pathsep .. [[test_file" trusted.{MATCH:%s+}|
     ]])
     local trust = helpers.read_file(funcs.stdpath('state') .. pathsep .. 'trust')
@@ -56,12 +56,12 @@ describe(':trust', function()
     command('trust ++deny')
     screen:expect([[
       ^test                                                                            |
-      {1:~                                                                               }|
-      {1:~                                                                               }|
-      {1:~                                                                               }|
-      {1:~                                                                               }|
-      {1:~                                                                               }|
-      {1:~                                                                               }|
+      {1:·                                                                               }|
+      {1:·                                                                               }|
+      {1:·                                                                               }|
+      {1:·                                                                               }|
+      {1:·                                                                               }|
+      {1:·                                                                               }|
       "]] .. cwd .. pathsep .. [[test_file" denied.{MATCH:%s+}|
     ]])
     trust = helpers.read_file(funcs.stdpath('state') .. pathsep .. 'trust')
@@ -70,12 +70,12 @@ describe(':trust', function()
     command('trust ++remove')
     screen:expect([[
       ^test                                                                            |
-      {1:~                                                                               }|
-      {1:~                                                                               }|
-      {1:~                                                                               }|
-      {1:~                                                                               }|
-      {1:~                                                                               }|
-      {1:~                                                                               }|
+      {1:·                                                                               }|
+      {1:·                                                                               }|
+      {1:·                                                                               }|
+      {1:·                                                                               }|
+      {1:·                                                                               }|
+      {1:·                                                                               }|
       "]] .. cwd .. pathsep .. [[test_file" removed.{MATCH:%s+}|
     ]])
     trust = helpers.read_file(funcs.stdpath('state') .. pathsep .. 'trust')
@@ -96,12 +96,12 @@ describe(':trust', function()
     command('trust ++deny')
     screen:expect([[
       ^test                                                                            |
-      {1:~                                                                               }|
-      {1:~                                                                               }|
-      {1:~                                                                               }|
-      {1:~                                                                               }|
-      {1:~                                                                               }|
-      {1:~                                                                               }|
+      {1:·                                                                               }|
+      {1:·                                                                               }|
+      {1:·                                                                               }|
+      {1:·                                                                               }|
+      {1:·                                                                               }|
+      {1:·                                                                               }|
       "]] .. cwd .. pathsep .. [[test_file" denied.{MATCH:%s+}|
     ]])
     local trust = helpers.read_file(funcs.stdpath('state') .. pathsep .. 'trust')
@@ -110,12 +110,12 @@ describe(':trust', function()
     command('trust')
     screen:expect([[
       ^test                                                                            |
-      {1:~                                                                               }|
-      {1:~                                                                               }|
-      {1:~                                                                               }|
-      {1:~                                                                               }|
-      {1:~                                                                               }|
-      {1:~                                                                               }|
+      {1:·                                                                               }|
+      {1:·                                                                               }|
+      {1:·                                                                               }|
+      {1:·                                                                               }|
+      {1:·                                                                               }|
+      {1:·                                                                               }|
       "]] .. cwd .. pathsep .. [[test_file" trusted.{MATCH:%s+}|
     ]])
     trust = helpers.read_file(funcs.stdpath('state') .. pathsep .. 'trust')
@@ -124,12 +124,12 @@ describe(':trust', function()
     command('trust ++remove')
     screen:expect([[
       ^test                                                                            |
-      {1:~                                                                               }|
-      {1:~                                                                               }|
-      {1:~                                                                               }|
-      {1:~                                                                               }|
-      {1:~                                                                               }|
-      {1:~                                                                               }|
+      {1:·                                                                               }|
+      {1:·                                                                               }|
+      {1:·                                                                               }|
+      {1:·                                                                               }|
+      {1:·                                                                               }|
+      {1:·                                                                               }|
       "]] .. cwd .. pathsep .. [[test_file" removed.{MATCH:%s+}|
     ]])
     trust = helpers.read_file(funcs.stdpath('state') .. pathsep .. 'trust')
@@ -148,12 +148,12 @@ describe(':trust', function()
     command('trust ++deny test_file')
     screen:expect([[
       ^                                                                                |
-      {1:~                                                                               }|
-      {1:~                                                                               }|
-      {1:~                                                                               }|
-      {1:~                                                                               }|
-      {1:~                                                                               }|
-      {1:~                                                                               }|
+      {1:·                                                                               }|
+      {1:·                                                                               }|
+      {1:·                                                                               }|
+      {1:·                                                                               }|
+      {1:·                                                                               }|
+      {1:·                                                                               }|
       "]] .. cwd .. pathsep .. [[test_file" denied.{MATCH:%s+}|
     ]])
     local trust = helpers.read_file(funcs.stdpath('state') .. pathsep .. 'trust')
@@ -162,12 +162,12 @@ describe(':trust', function()
     command('trust ++remove test_file')
     screen:expect([[
       ^                                                                                |
-      {1:~                                                                               }|
-      {1:~                                                                               }|
-      {1:~                                                                               }|
-      {1:~                                                                               }|
-      {1:~                                                                               }|
-      {1:~                                                                               }|
+      {1:·                                                                               }|
+      {1:·                                                                               }|
+      {1:·                                                                               }|
+      {1:·                                                                               }|
+      {1:·                                                                               }|
+      {1:·                                                                               }|
       "]] .. cwd .. pathsep .. [[test_file" removed.{MATCH:%s+}|
     ]])
     trust = helpers.read_file(funcs.stdpath('state') .. pathsep .. 'trust')

@@ -26,9 +26,9 @@ describe('063: Test for ":match", "matchadd()" and related functions', function(
     command("call matchaddpos('MyGroup1', [[1, 5], [1, 8, 3]], 10, 3)")
     screen:expect([[
       abcd{1:e}fg{1:hij}klmnop^q                       |
-      {0:~                                       }|
-      {0:~                                       }|
-      {0:~                                       }|
+      {0:·                                       }|
+      {0:·                                       }|
+      {0:·                                       }|
                                               |
     ]])
 
@@ -37,9 +37,9 @@ describe('063: Test for ":match", "matchadd()" and related functions', function(
     command("call matchaddpos('MyGroup1', [[1, 4, 2], [1, 9, 2]])")
     screen:expect([[
       abc{1:dΣ}ab{1:cd}e^f                             |
-      {0:~                                       }|
-      {0:~                                       }|
-      {0:~                                       }|
+      {0:·                                       }|
+      {0:·                                       }|
+      {0:·                                       }|
                                               |
     ]])
   end)

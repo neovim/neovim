@@ -27,9 +27,9 @@ describe('ui/ext_tabline', function()
     }
     screen:expect{grid=[[
       ^                         |
-      ~                        |
-      ~                        |
-      ~                        |
+      ·                        |
+      ·                        |
+      ·                        |
                                |
     ]], condition=function()
       eq({ id = 2 }, event_curtab)
@@ -39,9 +39,9 @@ describe('ui/ext_tabline', function()
     command("tabNext")
     screen:expect{grid=[[
       ^                         |
-      ~                        |
-      ~                        |
-      ~                        |
+      ·                        |
+      ·                        |
+      ·                        |
                                |
     ]], condition=function()
       eq({ id = 1 }, event_curtab)
@@ -56,9 +56,9 @@ describe('ui/ext_tabline', function()
 
     screen:expect{grid=[[
       ^                         |
-      ~                        |
-      ~                        |
-      ~                        |
+      ·                        |
+      ·                        |
+      ·                        |
                                |
     ]], condition=function()
       eq({ id = 1}, event_curbuf)
@@ -74,9 +74,9 @@ describe('ui/ext_tabline', function()
     }
     screen:expect{grid=[[
       ^                         |
-      ~                        |
-      ~                        |
-      ~                        |
+      ·                        |
+      ·                        |
+      ·                        |
                                |
     ]], condition=function()
       eq({ id = 2 }, event_curbuf)
@@ -100,8 +100,8 @@ describe("tabline", function()
     screen:expect{grid=[[
       {1:asdf                                      }|
       ^                                          |
-      {2:~                                         }|
-      {2:~                                         }|
+      {2:·                                         }|
+      {2:·                                         }|
                                                 |
     ]], attr_ids={
       [1] = {reverse = true};
@@ -111,8 +111,8 @@ describe("tabline", function()
     screen:expect{grid=[[
       {1:jkl                                       }|
       ^                                          |
-      {2:~                                         }|
-      {2:~                                         }|
+      {2:·                                         }|
+      {2:·                                         }|
                                                 |
     ]], attr_ids={
       [1] = {reverse = true};

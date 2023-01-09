@@ -31,8 +31,8 @@ describe('example', function()
     screen:expect([[
       line1               |
       line^2               |
-      {0:~                   }|
-      {0:~                   }|
+      {0:·                   }|
+      {0:·                   }|
                           |
     ]])
   end)

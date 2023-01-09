@@ -55,13 +55,13 @@ describe('match highlighting', function()
     screen:expect([[
       ^xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx{1:]}                        |
       xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx     |
-      {0:~                                                                          }|
-      {0:~                                                                          }|
-      {0:~                                                                          }|
-      {0:~                                                                          }|
-      {0:~                                                                          }|
-      {0:~                                                                          }|
-      {0:~                                                                          }|
+      {0:·                                                                          }|
+      {0:·                                                                          }|
+      {0:·                                                                          }|
+      {0:·                                                                          }|
+      {0:·                                                                          }|
+      {0:·                                                                          }|
+      {0:·                                                                          }|
                                                                                  |
     ]])
   end)
@@ -112,14 +112,14 @@ describe('match highlighting', function()
     ]])
     screen:expect([[
       {1:       ^ }ix                                                                 |
-      {0:~                                                                          }|
-      {0:~                                                                          }|
-      {0:~                                                                          }|
-      {0:~                                                                          }|
-      {0:~                                                                          }|
-      {0:~                                                                          }|
-      {0:~                                                                          }|
-      {0:~                                                                          }|
+      {0:·                                                                          }|
+      {0:·                                                                          }|
+      {0:·                                                                          }|
+      {0:·                                                                          }|
+      {0:·                                                                          }|
+      {0:·                                                                          }|
+      {0:·                                                                          }|
+      {0:·                                                                          }|
                                                                                  |
     ]])
   end)

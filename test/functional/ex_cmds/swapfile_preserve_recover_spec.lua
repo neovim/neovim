@@ -121,7 +121,7 @@ describe('swapfile detection', function()
 
     local expected_no_dialog = '^'..(' '):rep(256)..'|\n'
     for _=1,37 do
-      expected_no_dialog = expected_no_dialog..'~'..(' '):rep(255)..'|\n'
+      expected_no_dialog = expected_no_dialog..'·'..(' '):rep(255)..'|\n'
     end
     expected_no_dialog = expected_no_dialog..testfile..(' '):rep(216)..'0,0-1          All|\n'
     expected_no_dialog = expected_no_dialog..(' '):rep(256)..'|\n'
@@ -209,22 +209,22 @@ describe('swapfile detection', function()
     feed(':<CR>')
     screen:expect([[
       ^                                                                           |
-      {0:~                                                                          }|
-      {0:~                                                                          }|
-      {0:~                                                                          }|
-      {0:~                                                                          }|
-      {0:~                                                                          }|
-      {0:~                                                                          }|
-      {0:~                                                                          }|
-      {0:~                                                                          }|
-      {0:~                                                                          }|
-      {0:~                                                                          }|
-      {0:~                                                                          }|
-      {0:~                                                                          }|
-      {0:~                                                                          }|
-      {0:~                                                                          }|
-      {0:~                                                                          }|
-      {0:~                                                                          }|
+      {0:·                                                                          }|
+      {0:·                                                                          }|
+      {0:·                                                                          }|
+      {0:·                                                                          }|
+      {0:·                                                                          }|
+      {0:·                                                                          }|
+      {0:·                                                                          }|
+      {0:·                                                                          }|
+      {0:·                                                                          }|
+      {0:·                                                                          }|
+      {0:·                                                                          }|
+      {0:·                                                                          }|
+      {0:·                                                                          }|
+      {0:·                                                                          }|
+      {0:·                                                                          }|
+      {0:·                                                                          }|
       :                                                                          |
     ]])
     nvim1:close()
@@ -245,22 +245,22 @@ describe('swapfile detection', function()
     command([[echo 'hello']])
     screen:expect([[
       ^                                                                           |
-      {0:~                                                                          }|
-      {0:~                                                                          }|
-      {0:~                                                                          }|
-      {0:~                                                                          }|
-      {0:~                                                                          }|
-      {0:~                                                                          }|
-      {0:~                                                                          }|
-      {0:~                                                                          }|
-      {0:~                                                                          }|
-      {0:~                                                                          }|
-      {0:~                                                                          }|
-      {0:~                                                                          }|
-      {0:~                                                                          }|
-      {0:~                                                                          }|
-      {0:~                                                                          }|
-      {0:~                                                                          }|
+      {0:·                                                                          }|
+      {0:·                                                                          }|
+      {0:·                                                                          }|
+      {0:·                                                                          }|
+      {0:·                                                                          }|
+      {0:·                                                                          }|
+      {0:·                                                                          }|
+      {0:·                                                                          }|
+      {0:·                                                                          }|
+      {0:·                                                                          }|
+      {0:·                                                                          }|
+      {0:·                                                                          }|
+      {0:·                                                                          }|
+      {0:·                                                                          }|
+      {0:·                                                                          }|
+      {0:·                                                                          }|
       hello                                                                      |
     ]])
     nvim2:close()

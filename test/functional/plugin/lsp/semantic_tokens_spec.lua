@@ -120,9 +120,9 @@ describe('semantic token highlighting', function()
         {6:#endif}                                  |
         }                                       |
         ^}                                       |
-        {1:~                                       }|
-        {1:~                                       }|
-        {1:~                                       }|
+        {1:·                                       }|
+        {1:·                                       }|
+        {1:·                                       }|
                                                 |
       ]] }
     end)
@@ -154,9 +154,9 @@ describe('semantic token highlighting', function()
         #endif                                  |
         }                                       |
         ^}                                       |
-        {1:~                                       }|
-        {1:~                                       }|
-        {1:~                                       }|
+        {1:·                                       }|
+        {1:·                                       }|
+        {1:·                                       }|
                                                 |
       ]] }
     end)
@@ -189,9 +189,9 @@ describe('semantic token highlighting', function()
         #endif                                  |
         }                                       |
         ^}                                       |
-        {1:~                                       }|
-        {1:~                                       }|
-        {1:~                                       }|
+        {1:·                                       }|
+        {1:·                                       }|
+        {1:·                                       }|
                                                 |
       ]] }
 
@@ -212,9 +212,9 @@ describe('semantic token highlighting', function()
         {6:#endif}                                  |
         }                                       |
         ^}                                       |
-        {1:~                                       }|
-        {1:~                                       }|
-        {1:~                                       }|
+        {1:·                                       }|
+        {1:·                                       }|
+        {1:·                                       }|
                                                 |
       ]] }
     end)
@@ -241,9 +241,9 @@ describe('semantic token highlighting', function()
         {6:#endif}                                  |
         }                                       |
         ^}                                       |
-        {1:~                                       }|
-        {1:~                                       }|
-        {1:~                                       }|
+        {1:·                                       }|
+        {1:·                                       }|
+        {1:·                                       }|
                                                 |
       ]] }
 
@@ -264,9 +264,9 @@ describe('semantic token highlighting', function()
         {6:#endif}                                  |
         }                                       |
         ^}                                       |
-        {1:~                                       }|
-        {1:~                                       }|
-        {1:~                                       }|
+        {1:·                                       }|
+        {1:·                                       }|
+        {1:·                                       }|
                                                 |
       ]], unchanged = true }
 
@@ -320,9 +320,9 @@ describe('semantic token highlighting', function()
         {6:#endif}                                  |
         }                                       |
         ^}                                       |
-        {1:~                                       }|
-        {1:~                                       }|
-        {1:~                                       }|
+        {1:·                                       }|
+        {1:·                                       }|
+        {1:·                                       }|
                                                 |
       ]] }
       feed_command('%s/int x/int x()/')
@@ -340,9 +340,9 @@ describe('semantic token highlighting', function()
         {6:#endif}                                  |
         }                                       |
         }                                       |
-        {1:~                                       }|
-        {1:~                                       }|
-        {1:~                                       }|
+        {1:·                                       }|
+        {1:·                                       }|
+        {1:·                                       }|
         :noh                                    |
       ]] }
     end)
@@ -402,9 +402,9 @@ describe('semantic token highlighting', function()
           #endif                                  |
           }                                       |
           ^}                                       |
-          {1:~                                       }|
-          {1:~                                       }|
-          {1:~                                       }|
+          {1:·                                       }|
+          {1:·                                       }|
+          {1:·                                       }|
                                                   |
         ]] }
 
@@ -429,9 +429,9 @@ describe('semantic token highlighting', function()
           #endif                                  |
           }                                       |
           ^}                                       |
-          {1:~                                       }|
-          {1:~                                       }|
-          {1:~                                       }|
+          {1:·                                       }|
+          {1:·                                       }|
+          {1:·                                       }|
                                                   |
           ]], unchanged = true }
       end)
@@ -475,9 +475,9 @@ describe('semantic token highlighting', function()
         #endif                                  |
         }                                       |
         ^}                                       |
-        {1:~                                       }|
-        {1:~                                       }|
-        {1:~                                       }|
+        {1:·                                       }|
+        {1:·                                       }|
+        {1:·                                       }|
                                                 |
       ]] }
     end)
@@ -520,9 +520,9 @@ describe('semantic token highlighting', function()
         {6:#endif}                                  |
         }                                       |
         ^}                                       |
-        {1:~                                       }|
-        {1:~                                       }|
-        {1:~                                       }|
+        {1:·                                       }|
+        {1:·                                       }|
+        {1:·                                       }|
                                                 |
       ]] }
       feed_command('%s/int x/int x()/')
@@ -544,9 +544,9 @@ describe('semantic token highlighting', function()
         {6:#endif}                                  |
         }                                       |
         }                                       |
-        {1:~                                       }|
-        {1:~                                       }|
-        {1:~                                       }|
+        {1:·                                       }|
+        {1:·                                       }|
+        {1:·                                       }|
         :noh                                    |
       ]] }
       local messages = exec_lua('return server2.messages')

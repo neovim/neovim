@@ -34,9 +34,9 @@ describe("multibyte rendering", function()
     screen:expect([[
       ^ ̊                                                           |
       x                                                           |
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
+      {1:·                                                           }|
+      {1:·                                                           }|
+      {1:·                                                           }|
       < ̊> 778, Hex 030a, Octal 1412                               |
     ]])
 
@@ -46,9 +46,9 @@ describe("multibyte rendering", function()
     screen:expect([[
       ^å                                                           |
       x                                                           |
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
+      {1:·                                                           }|
+      {1:·                                                           }|
+      {1:·                                                           }|
       <a>  97,  Hex 61,  Octal 141 < ̊> 778, Hex 030a, Octal 1412  |
     ]])
   end)
@@ -57,10 +57,10 @@ describe("multibyte rendering", function()
     feed('58a <esc>a馬<esc>')
     screen:expect([[
                                                                 ^馬|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
+      {1:·                                                           }|
+      {1:·                                                           }|
+      {1:·                                                           }|
+      {1:·                                                           }|
                                                                   |
     ]])
 
@@ -68,9 +68,9 @@ describe("multibyte rendering", function()
     screen:expect([[
                                                                 ^ {1:>}|
       馬                                                          |
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
+      {1:·                                                           }|
+      {1:·                                                           }|
+      {1:·                                                           }|
                                                                   |
     ]])
 
@@ -78,9 +78,9 @@ describe("multibyte rendering", function()
     screen:expect([[
                                                                  {1:>}|
       ^馬                                                          |
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
+      {1:·                                                           }|
+      {1:·                                                           }|
+      {1:·                                                           }|
                                                                   |
     ]])
   end)
@@ -90,9 +90,9 @@ describe("multibyte rendering", function()
     screen:expect([[
       ab ^                                                         |
       -馬                                                         |
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
+      {1:·                                                           }|
+      {1:·                                                           }|
+      {1:·                                                           }|
       {4:-- INSERT --}                                                |
     ]])
 
@@ -101,9 +101,9 @@ describe("multibyte rendering", function()
     screen:expect([[
       ab xx^                                                       |
       - {2: xx             }                                          |
-      {1:~ }{3: yy             }{1:                                          }|
-      {1:~                                                           }|
-      {1:~                                                           }|
+      {1:· }{3: yy             }{1:                                          }|
+      {1:·                                                           }|
+      {1:·                                                           }|
       {4:-- INSERT --}                                                |
     ]])
 
@@ -112,9 +112,9 @@ describe("multibyte rendering", function()
     screen:expect([[
       ab xxz^                                                      |
       -馬                                                         |
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
+      {1:·                                                           }|
+      {1:·                                                           }|
+      {1:·                                                           }|
       {4:-- INSERT --}                                                |
     ]])
   end)
@@ -143,7 +143,7 @@ describe("multibyte rendering", function()
       ē̟̊̇̕̚s̖̘̘̒̄̑s̛̘̀̊̆̇e̛̝̘̒̏̚ ̉̅̑̂̐̎c̛̟̙̎̋̓i̜̇̒̏̆̆l̟̄́̆̊̌l̍̊̋̃̆̌ủ̗̙̒̔̚m̛̘̘̖̅̍ ̖̙̈̎̂̕d̞̟̏̋̈̔ơ̟̝̌̃̄l̗̙̝̂̉̒õ̒̃̄̄̚ŕ̗̏̏̊̍ê̞̝̞̋̈ ̜̔̒̎̃̚e̞̟̞̒̃̄ư̖̏̄̑̃ ̛̗̜̄̓̎f̛̖̞̅̓̃ü̞̏̆̋̕g̜̝̞̑̑̆i̛̘̐̐̅̚à̜̖̌̆̎t̙̙̎̉̂̍ ̋̔̈̎̎̉n̞̓́̔̊̕ư̘̅̋̔̚l̗̍̒̄̀̚l̞̗̘̙̓̍â̘̔̒̎̚ ̖̓̋̉̃̆p̛̛̘̋̌̀ä̙̔́̒̕r̟̟̖̋̐̋ì̗̙̎̓̓ȃ̔̋̑̚̕t̄́̎̓̂̋ư̏̈̂̑̃r̖̓̋̊̚̚.̒̆̑̆̊̎ ̘̜̍̐̂̚E̞̅̐̇́̂x̄́̈̌̉̕ć̘̃̉̃̕è̘̂̑̏̑p̝̘̑̂̌̆t̔̐̅̍̌̂ȇ̞̈̐̚̕ű̝̞̜́̚ŕ̗̝̉̆́           |
       š̟́̔̏̀ȉ̝̟̝̏̅n̑̆̇̒̆̚t̝̒́̅̋̏ ̗̑̌̋̇̚ơ̙̗̟̆̅c̙̞̙̎̊̎c̘̟̍̔̊̊a̛̒̓̉́̐e̜̘̙̒̅̇ć̝̝̂̇̕ả̓̍̎̂̚t̗̗̗̟̒̃ ̘̒̓̐̇́c̟̞̉̐̓̄ȕ̙̗̅́̏p̛̍̋̈́̅i̖̓̒̍̈̄d̞̃̈̌̆̐a̛̗̝̎̋̉t̞̙̀̊̆̇a̛̙̒̆̉̚t̜̟̘̉̓̚ ̝̘̗̐̇̕n̛̘̑̏̂́ō̑̋̉̏́ň̞̊̆̄̃ ̙̙̙̜̄̏p̒̆̋̋̓̏r̖̖̅̉́̚ơ̜̆̑̈̚i̟̒̀̃̂̌d̛̏̃̍̋̚ë̖̞̙̗̓n̛̘̓̒̅̎t̟̗̙̊̆̚,̘̙̔̊̚̕ ̟̗̘̜̑̔s̜̝̍̀̓̌û̞̙̅̇́n̘̗̝̒̃̎t̗̅̀̅̊̈ ̗̖̅̅̀̄i̛̖̍̅̋̂n̙̝̓̓̎̚ ̞̋̅̋̃̚c̗̒̀̆̌̎ū̞̂̑̌̓ĺ̛̐̍̑́p̝̆̌̎̈̚a̖̙̒̅̈̌ ̝̝̜̂̈̀q̝̖̔̍̒̚ư̔̐̂̎̊ǐ̛̟̖̘̕          |
       o̖̜̔̋̅̚f̛̊̀̉́̕f̏̉̀̔̃̃i̘̍̎̐̔̎c̙̅̑̂̐̅ȋ̛̜̀̒̚a̋̍̇̏̀̋ ̖̘̒̅̃̒d̗̘̓̈̇̋é̝́̎̒̄š̙̒̊̉̋e̖̓̐̀̍̕r̗̞̂̅̇̄ù̘̇̐̉̀n̐̑̀̄̍̐t̟̀̂̊̄̚ ̟̝̂̍̏́m̜̗̈̂̏̚ő̞̊̑̇̒l̘̑̏́̔̄l̛̛̇̃̋̊i̓̋̒̃̉̌t̛̗̜̏̀̋ ̙̟̒̂̌̐a̙̝̔̆̏̅n̝̙̙̗̆̅i̍̔́̊̃̕m̖̝̟̒̍̚ ̛̃̃̑̌́ǐ̘̉̔̅̚d̝̗̀̌̏̒ ̖̝̓̑̊̚ȇ̞̟̖̌̕š̙̙̈̔̀t̂̉̒̍̄̄ ̝̗̊̋̌̄l̛̞̜̙̘̔å̝̍̂̍̅b̜̆̇̈̉̌ǒ̜̙̎̃̆r̝̀̄̍́̕ư̋̊́̊̕m̜̗̒̐̕̚.̟̘̀̒̌̚                     |
-      {1:~                                                                }|
+      {1:·                                                                }|
                                                                        |
     ]]}
   end)
@@ -167,7 +167,7 @@ describe('multibyte rendering: statusline', function()
     command('set statusline=你好')
     screen:expect([[
     ^                                        |
-    {1:~                                       }|
+    {1:·                                       }|
     {2:你好                                    }|
                                             |
     ]])
@@ -176,7 +176,7 @@ describe('multibyte rendering: statusline', function()
     command('set statusline=abc')
     screen:expect([[
     ^                                        |
-    {1:~                                       }|
+    {1:·                                       }|
     {2:abc                                     }|
                                             |
     ]])
@@ -185,7 +185,7 @@ describe('multibyte rendering: statusline', function()
     command('set statusline=')
     screen:expect([[
     ^                                        |
-    {1:~                                       }|
+    {1:·                                       }|
     {2:<9f>                                    }|
                                             |
     ]])
@@ -195,7 +195,7 @@ describe('multibyte rendering: statusline', function()
     -- o + U+1DF0 + U+20EF + U+0338 + U+20D0 + U+20E7 + U+20DD
     screen:expect([[
     ^                                        |
-    {1:~                                       }|
+    {1:·                                       }|
     {2:o̸⃯ᷰ⃐⃧⃝                                       }|
                                             |
     ]])
@@ -205,7 +205,7 @@ describe('multibyte rendering: statusline', function()
     -- U+9F + U+1DF0 + U+20EF + U+0338 + U+20D0 + U+20E7 + U+20DD
     screen:expect([[
     ^                                        |
-    {1:~                                       }|
+    {1:·                                       }|
     {2:<9f><1df0><20ef><0338><20d0><20e7><20dd>}|
                                             |
     ]])
@@ -215,7 +215,7 @@ describe('multibyte rendering: statusline', function()
     command("let &statusline = '%#StatColorHi2#%(✓%#StatColorHi2#%) Q≡'")
     screen:expect{grid=[[
       ^                                        |
-      {1:~                                       }|
+      {1:·                                       }|
       {2: Q≡                                     }|
                                               |
     ]]}

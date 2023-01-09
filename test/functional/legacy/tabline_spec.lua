@@ -35,8 +35,8 @@ describe('tabline', function()
       {1:a}                                                 |
       {1:b}                                                 |
       {1:c}^                                                 |
-      {0:~                                                 }|
-      {0:~                                                 }|
+      {0:·                                                 }|
+      {0:·                                                 }|
       {2:-- VISUAL BLOCK --}                                |
     ]])
     feed('<Esc>1234')
@@ -45,8 +45,8 @@ describe('tabline', function()
       a                                                 |
       b                                                 |
       ^c                                                 |
-      {0:~                                                 }|
-      {0:~                                                 }|
+      {0:·                                                 }|
+      {0:·                                                 }|
                                                         |
     ]])
   end)

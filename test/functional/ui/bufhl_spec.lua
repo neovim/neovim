@@ -51,11 +51,11 @@ describe('Buffer highlighting', function()
     screen:expect([[
       these are some lines                    |
       with colorful tex^t                      |
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
+      {1:·                                       }|
+      {1:·                                       }|
+      {1:·                                       }|
+      {1:·                                       }|
+      {1:·                                       }|
                                               |
     ]])
 
@@ -65,11 +65,11 @@ describe('Buffer highlighting', function()
     screen:expect([[
       these are {2:some} lines                    |
       with {3:colorful tex^t}                      |
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
+      {1:·                                       }|
+      {1:·                                       }|
+      {1:·                                       }|
+      {1:·                                       }|
+      {1:·                                       }|
                                               |
     ]])
 
@@ -78,10 +78,10 @@ describe('Buffer highlighting', function()
       these are {2:some} lines                    |
       ^                                        |
       with {3:colorful text}                      |
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
+      {1:·                                       }|
+      {1:·                                       }|
+      {1:·                                       }|
+      {1:·                                       }|
                                               |
     ]])
 
@@ -90,10 +90,10 @@ describe('Buffer highlighting', function()
       these are some lines                    |
       ^                                        |
       with colorful text                      |
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
+      {1:·                                       }|
+      {1:·                                       }|
+      {1:·                                       }|
+      {1:·                                       }|
                                               |
     ]])
   end)
@@ -129,9 +129,9 @@ describe('Buffer highlighting', function()
         in {6:order} to {7:de}{5:monstr}{7:ate}                 |
         {7:combin}{8:ing}{9: hi}ghlights                    |
         {9:from }{8:diff}{7:erent} source^s                  |
-        {1:~                                       }|
-        {1:~                                       }|
-        {1:~                                       }|
+        {1:·                                       }|
+        {1:·                                       }|
+        {1:·                                       }|
                                                 |
       ]])
     end)
@@ -143,9 +143,9 @@ describe('Buffer highlighting', function()
         in {6:order} to de{4:monstr}ate                 |
         combin{9:ing hi}ghlights                    |
         {9:from diff}erent source^s                  |
-        {1:~                                       }|
-        {1:~                                       }|
-        {1:~                                       }|
+        {1:·                                       }|
+        {1:·                                       }|
+        {1:·                                       }|
                                                 |
       ]])
     end)
@@ -157,9 +157,9 @@ describe('Buffer highlighting', function()
         in {6:order} to de{4:monstr}ate                 |
         combin{9:ing hi}ghlights                    |
         {9:from diff}erent source^s                  |
-        {1:~                                       }|
-        {1:~                                       }|
-        {1:~                                       }|
+        {1:·                                       }|
+        {1:·                                       }|
+        {1:·                                       }|
                                                 |
       ]])
     end)
@@ -171,9 +171,9 @@ describe('Buffer highlighting', function()
         in order to {7:demonstrate}                 |
         {7:combining} highlights                    |
         from {7:different} source^s                  |
-        {1:~                                       }|
-        {1:~                                       }|
-        {1:~                                       }|
+        {1:·                                       }|
+        {1:·                                       }|
+        {1:·                                       }|
                                                 |
       ]])
     end)
@@ -187,9 +187,9 @@ describe('Buffer highlighting', function()
         in {6:order} to de{4:monstr}ate                 |
         {7:combining} highlights                    |
         from {7:different} source^s                  |
-        {1:~                                       }|
-        {1:~                                       }|
-        {1:~                                       }|
+        {1:·                                       }|
+        {1:·                                       }|
+        {1:·                                       }|
                                                 |
       ]])
     end)
@@ -201,9 +201,9 @@ describe('Buffer highlighting', function()
         ^                                        |
         in {6:order} to {7:de}{5:monstr}{7:ate}                 |
         {9:from }{8:diff}{7:erent} sources                  |
-        {1:~                                       }|
-        {1:~                                       }|
-        {1:~                                       }|
+        {1:·                                       }|
+        {1:·                                       }|
+        {1:·                                       }|
                                                 |
       ]])
 
@@ -216,9 +216,9 @@ describe('Buffer highlighting', function()
                                                 |
         {8:from different sources}                  |
         {8:^in }{20:order}{8: to demonstrate}                 |
-        {1:~                                       }|
-        {1:~                                       }|
-        {1:~                                       }|
+        {1:·                                       }|
+        {1:·                                       }|
+        {1:·                                       }|
                                                 |
       ]]}
       --screen:expect([[
@@ -226,9 +226,9 @@ describe('Buffer highlighting', function()
       --                                          |
       --  {9:from }{8:diff}{7:erent} sources                  |
       --  ^in {6:order} to {7:de}{5:monstr}{7:ate}                 |
-      --  {1:~                                       }|
-      --  {1:~                                       }|
-      --  {1:~                                       }|
+      --  {1:·                                       }|
+      --  {1:·                                       }|
+      --  {1:·                                       }|
       --                                          |
       --]])
 
@@ -238,9 +238,9 @@ describe('Buffer highlighting', function()
         ^                                        |
         in {6:order} to {7:de}{5:monstr}{7:ate}                 |
         {9:from }{8:diff}{7:erent} sources                  |
-        {1:~                                       }|
-        {1:~                                       }|
-        {1:~                                       }|
+        {1:·                                       }|
+        {1:·                                       }|
+        {1:·                                       }|
         1 change; before #4  {MATCH:.*}|
       ]]}
 
@@ -249,10 +249,10 @@ describe('Buffer highlighting', function()
         ^a {5:longer} example                        |
         in {6:order} to {7:de}{5:monstr}{7:ate}                 |
         {9:from }{8:diff}{7:erent} sources                  |
-        {1:~                                       }|
-        {1:~                                       }|
-        {1:~                                       }|
-        {1:~                                       }|
+        {1:·                                       }|
+        {1:·                                       }|
+        {1:·                                       }|
+        {1:·                                       }|
         1 line less; before #3  {MATCH:.*}|
       ]]}
 
@@ -262,9 +262,9 @@ describe('Buffer highlighting', function()
         in {6:order} to {7:de}{5:monstr}{7:ate}                 |
         {7:^combin}{8:ing}{9: hi}ghlights                    |
         {9:from }{8:diff}{7:erent} sources                  |
-        {1:~                                       }|
-        {1:~                                       }|
-        {1:~                                       }|
+        {1:·                                       }|
+        {1:·                                       }|
+        {1:·                                       }|
         1 more line; before #2  {MATCH:.*}|
       ]]}
     end)
@@ -276,9 +276,9 @@ describe('Buffer highlighting', function()
         {7:combin}{8:ing}{9: hi}ghlights                    |
         ^in {6:order} to {7:de}{5:monstr}{7:ate}                 |
         {9:from }{8:diff}{7:erent} sources                  |
-        {1:~                                       }|
-        {1:~                                       }|
-        {1:~                                       }|
+        {1:·                                       }|
+        {1:·                                       }|
+        {1:·                                       }|
                                                 |
       ]]}
 
@@ -288,9 +288,9 @@ describe('Buffer highlighting', function()
         {9:from }{8:diff}{7:erent} sources                  |
         a {5:longer} example                        |
         {7:^combin}{8:ing}{9: hi}ghlights                    |
-        {1:~                                       }|
-        {1:~                                       }|
-        {1:~                                       }|
+        {1:·                                       }|
+        {1:·                                       }|
+        {1:·                                       }|
                                                 |
       ]]}
 
@@ -300,9 +300,9 @@ describe('Buffer highlighting', function()
         {7:combin}{8:ing}{9: hi}ghlights                    |
         ^in {6:order} to {7:de}{5:monstr}{7:ate}                 |
         {9:from }{8:diff}{7:erent} sources                  |
-        {1:~                                       }|
-        {1:~                                       }|
-        {1:~                                       }|
+        {1:·                                       }|
+        {1:·                                       }|
+        {1:·                                       }|
         2 change3; before #3  {MATCH:.*}|
       ]]}
 
@@ -312,9 +312,9 @@ describe('Buffer highlighting', function()
         ^in {6:order} to {7:de}{5:monstr}{7:ate}                 |
         {7:combin}{8:ing}{9: hi}ghlights                    |
         {9:from }{8:diff}{7:erent} sources                  |
-        {1:~                                       }|
-        {1:~                                       }|
-        {1:~                                       }|
+        {1:·                                       }|
+        {1:·                                       }|
+        {1:·                                       }|
         1 change; before #2  {MATCH:.*}|
       ]]}
     end)
@@ -327,9 +327,9 @@ describe('Buffer highlighting', function()
         in {6:order} to {7:de}{5:monstr}{7:ate}                 |
         {7:combin}{8:ing}{9: hi}ghlights                    |
         {9:from }{8:diff}{7:erent} sources                  |
-        {1:~                                       }|
-        {1:~                                       }|
-        {1:~                                       }|
+        {1:·                                       }|
+        {1:·                                       }|
+        {1:·                                       }|
                                                 |
       ]]}
 
@@ -339,9 +339,9 @@ describe('Buffer highlighting', function()
         in {6:order} to {7:de}{5:monstr}{7:ate}                 |
         {7:combin}{8:ing}{9: hi}ghlights                    |
         {9:from }{8:diff}{7:erent} sources                  |
-        {1:~                                       }|
-        {1:~                                       }|
-        {1:~                                       }|
+        {1:·                                       }|
+        {1:·                                       }|
+        {1:·                                       }|
         1 change; before #2  {MATCH:.*}|
       ]]}
 
@@ -352,9 +352,9 @@ describe('Buffer highlighting', function()
         in {6:ordAAAA^r} to {7:de}{5:monstr}{7:ate}              |
         {7:combin}{8:ing}{9: hi}ghlights                    |
         {9:from }{8:diff}{7:erent} sources                  |
-        {1:~                                       }|
-        {1:~                                       }|
-        {1:~                                       }|
+        {1:·                                       }|
+        {1:·                                       }|
+        {1:·                                       }|
         {7:-- INSERT --}                            |
       ]]}
 
@@ -364,9 +364,9 @@ describe('Buffer highlighting', function()
         in {6:ordAAAAr} t^o                          |
         {7:combin}{8:ing}{9: hi}ghlights                    |
         {9:from }{8:diff}{7:erent} sources                  |
-        {1:~                                       }|
-        {1:~                                       }|
-        {1:~                                       }|
+        {1:·                                       }|
+        {1:·                                       }|
+        {1:·                                       }|
                                                 |
       ]]}
 
@@ -376,9 +376,9 @@ describe('Buffer highlighting', function()
         in {6:ordAAAAr} to^ {7:de}{5:monstr}{7:ate}              |
         {7:combin}{8:ing}{9: hi}ghlights                    |
         {9:from }{8:diff}{7:erent} sources                  |
-        {1:~                                       }|
-        {1:~                                       }|
-        {1:~                                       }|
+        {1:·                                       }|
+        {1:·                                       }|
+        {1:·                                       }|
         1 change; before #4  {MATCH:.*}|
       ]]}
 
@@ -388,9 +388,9 @@ describe('Buffer highlighting', function()
         in {6:ord^er} to {7:de}{5:monstr}{7:ate}                 |
         {7:combin}{8:ing}{9: hi}ghlights                    |
         {9:from }{8:diff}{7:erent} sources                  |
-        {1:~                                       }|
-        {1:~                                       }|
-        {1:~                                       }|
+        {1:·                                       }|
+        {1:·                                       }|
+        {1:·                                       }|
         1 change; before #3  {MATCH:.*}|
       ]]}
     end)
@@ -401,10 +401,10 @@ describe('Buffer highlighting', function()
         a {5:longer} example in {6:order} to {7:de}{5:monstr}{7:ate}|
          {7:combin}{8:ing}{9: hi}ghlights^ {9:from }{8:diff}{7:erent} sou|
         rces                                    |
-        {1:~                                       }|
-        {1:~                                       }|
-        {1:~                                       }|
-        {1:~                                       }|
+        {1:·                                       }|
+        {1:·                                       }|
+        {1:·                                       }|
+        {1:·                                       }|
                                                 |
       ]]}
 
@@ -414,9 +414,9 @@ describe('Buffer highlighting', function()
         in {6:order} to {7:de}{5:monstr}{7:ate}                 |
         {7:combin}{8:ing}{9: hi}ghlights                    |
         {9:from }{8:diff}{7:erent} sources                  |
-        {1:~                                       }|
-        {1:~                                       }|
-        {1:~                                       }|
+        {1:·                                       }|
+        {1:·                                       }|
+        {1:·                                       }|
         1 more line; before #2  {MATCH:.*}|
       ]]}
     end)
@@ -429,8 +429,8 @@ describe('Buffer highlighting', function()
         ^ to {7:de}{5:monstr}{7:ate}                         |
         {7:combin}{8:ing}{9: hi}ghlights                    |
         {9:from }{8:diff}{7:erent} sources                  |
-        {1:~                                       }|
-        {1:~                                       }|
+        {1:·                                       }|
+        {1:·                                       }|
         {7:-- INSERT --}                            |
       ]]}
 
@@ -442,7 +442,7 @@ describe('Buffer highlighting', function()
         {5:^nstr}{7:ate}                                 |
         {7:combin}{8:ing}{9: hi}ghlights                    |
         {9:from }{8:diff}{7:erent} sources                  |
-        {1:~                                       }|
+        {1:·                                       }|
         {7:-- INSERT --}                            |
       ]]}
 
@@ -453,8 +453,8 @@ describe('Buffer highlighting', function()
          to {7:de}{5:mo^nstr}{7:ate}                         |
         {7:combin}{8:ing}{9: hi}ghlights                    |
         {9:from }{8:diff}{7:erent} sources                  |
-        {1:~                                       }|
-        {1:~                                       }|
+        {1:·                                       }|
+        {1:·                                       }|
         1 line less; before #3  {MATCH:.*}|
       ]]}
 
@@ -464,9 +464,9 @@ describe('Buffer highlighting', function()
         in {6:order}^ to {7:de}{5:monstr}{7:ate}                 |
         {7:combin}{8:ing}{9: hi}ghlights                    |
         {9:from }{8:diff}{7:erent} sources                  |
-        {1:~                                       }|
-        {1:~                                       }|
-        {1:~                                       }|
+        {1:·                                       }|
+        {1:·                                       }|
+        {1:·                                       }|
         1 line less; before #2  {MATCH:.*}|
       ]]}
     end)
@@ -481,24 +481,24 @@ describe('Buffer highlighting', function()
 
     screen:expect([[
       {4:three ove}{6:rlapp}{2:ing color}^s                |
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
+      {1:·                                       }|
+      {1:·                                       }|
+      {1:·                                       }|
+      {1:·                                       }|
+      {1:·                                       }|
+      {1:·                                       }|
                                               |
     ]])
 
     clear_namespace(id, 0, 1)
     screen:expect([[
       three {6:overlapp}{2:ing color}^s                |
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
+      {1:·                                       }|
+      {1:·                                       }|
+      {1:·                                       }|
+      {1:·                                       }|
+      {1:·                                       }|
+      {1:·                                       }|
                                               |
     ]])
   end)
@@ -512,24 +512,24 @@ describe('Buffer highlighting', function()
 
     screen:expect{grid=[[
       {4:three }{6:overlapp}{2:ing color}^s                |
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
+      {1:·                                       }|
+      {1:·                                       }|
+      {1:·                                       }|
+      {1:·                                       }|
+      {1:·                                       }|
+      {1:·                                       }|
                                               |
     ]]}
 
     clear_namespace(id, 0, 1)
     screen:expect{grid=[[
       three {6:overlapp}{2:ing color}^s                |
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
+      {1:·                                       }|
+      {1:·                                       }|
+      {1:·                                       }|
+      {1:·                                       }|
+      {1:·                                       }|
+      {1:·                                       }|
                                               |
     ]]}
   end)
@@ -554,24 +554,24 @@ describe('Buffer highlighting', function()
 
     screen:expect [[
       {3:fooba}{2:^r}                                  |
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
+      {1:·                                       }|
+      {1:·                                       }|
+      {1:·                                       }|
+      {1:·                                       }|
+      {1:·                                       }|
+      {1:·                                       }|
                                               |
     ]]
 
     clear_namespace(id, 0, -1)
     screen:expect{grid=[[
       fooba^r                                  |
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
+      {1:·                                       }|
+      {1:·                                       }|
+      {1:·                                       }|
+      {1:·                                       }|
+      {1:·                                       }|
+      {1:·                                       }|
                                               |
     ]]}
 
@@ -590,12 +590,12 @@ describe('Buffer highlighting', function()
 
     screen:expect [[
       {3:fooba}{2:^r}                                  |
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
+      {1:·                                       }|
+      {1:·                                       }|
+      {1:·                                       }|
+      {1:·                                       }|
+      {1:·                                       }|
+      {1:·                                       }|
                                               |
     ]]
   end)
@@ -608,12 +608,12 @@ describe('Buffer highlighting', function()
 
     screen:expect([[
       Ta {6:båten} över {2:sjön}^!                     |
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
+      {1:·                                       }|
+      {1:·                                       }|
+      {1:·                                       }|
+      {1:·                                       }|
+      {1:·                                       }|
+      {1:·                                       }|
                                               |
     ]])
   end)
@@ -624,24 +624,24 @@ describe('Buffer highlighting', function()
     add_highlight(-1, "FancyLangItem", 0, 0, 5)
     screen:expect([[
       fancy code in a new fancy languag^e      |
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
+      {1:·                                       }|
+      {1:·                                       }|
+      {1:·                                       }|
+      {1:·                                       }|
+      {1:·                                       }|
+      {1:·                                       }|
                                               |
     ]])
 
     command('hi FancyLangItem guifg=red')
     screen:expect([[
       {10:fancy} code in a new fancy languag^e      |
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
+      {1:·                                       }|
+      {1:·                                       }|
+      {1:·                                       }|
+      {1:·                                       }|
+      {1:·                                       }|
+      {1:·                                       }|
                                               |
     ]])
   end)
@@ -661,8 +661,8 @@ describe('Buffer highlighting', function()
         5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5|
         , 5, 5, 5, 5, 5, 5,                     |
         x = 4                                   |
-        {1:~                                       }|
-        {1:~                                       }|
+        {1:·                                       }|
+        {1:·                                       }|
                                                 |
       ]])
 
@@ -680,8 +680,8 @@ describe('Buffer highlighting', function()
         5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5|
         , 5, 5, 5, 5, 5, 5,  Lorem ipsum dolor s|
         x = 4                                   |
-        {1:~                                       }|
-        {1:~                                       }|
+        {1:·                                       }|
+        {1:·                                       }|
                                                 |
       ]])
 
@@ -692,8 +692,8 @@ describe('Buffer highlighting', function()
         5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5|
         , 5, 5, 5, 5, 5, 5,  Lorem ipsum dolor s|
         x = 4                                   |
-        {1:~                                       }|
-        {1:~                                       }|
+        {1:·                                       }|
+        {1:·                                       }|
                                                 |
       ]])
 
@@ -706,8 +706,8 @@ describe('Buffer highlighting', function()
         5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5|
         , 5, 5, 5, 5, 5, 5,  Lorem ipsum dolor s|
         x = 4                                   |
-        {1:~                                       }|
-        {1:~                                       }|
+        {1:·                                       }|
+        {1:·                                       }|
                                                 |
       ]])
 
@@ -718,8 +718,8 @@ describe('Buffer highlighting', function()
         5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5|
         , 5, 5, 5, 5, 5, 5,  Lorem ipsum dolor s|
         x = 4                                   |
-        {1:~                                       }|
-        {1:~                                       }|
+        {1:·                                       }|
+        {1:·                                       }|
                                                 |
       ]])
 
@@ -732,9 +732,9 @@ describe('Buffer highlighting', function()
         ^5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5|
         , 5, 5, 5, 5, 5, 5,  {12:暗x事zz速野谷質結育}|
         x = 4                                   |
-        {1:~                                       }|
-        {1:~                                       }|
-        {1:~                                       }|
+        {1:·                                       }|
+        {1:·                                       }|
+        {1:·                                       }|
                                                 |
       ]]}
       --screen:expect([[
@@ -742,9 +742,9 @@ describe('Buffer highlighting', function()
       --  ^5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5|
       --  , 5, 5, 5, 5, 5, 5,  Lorem ipsum dolor s|
       --  x = 4                                   |
-      --  {1:~                                       }|
-      --  {1:~                                       }|
-      --  {1:~                                       }|
+      --  {1:·                                       }|
+      --  {1:·                                       }|
+      --  {1:·                                       }|
       --                                          |
       --]])
     end)
@@ -797,8 +797,8 @@ describe('Buffer highlighting', function()
         {13:5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5}|
         {13:, 5, 5, 5, 5, 5, 5, } Lorem ipsum dolor s|
         ^x{13: = 4}                                   |
-        {1:~                                       }|
-        {1:~                                       }|
+        {1:·                                       }|
+        {1:·                                       }|
         {7:-- VISUAL LINE --}                       |
       ]])
 
@@ -809,8 +809,8 @@ describe('Buffer highlighting', function()
         5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5|
         , 5, 5, 5, 5, 5, 5,  Lorem ipsum dolor s|
         ^x = 4                                   |
-        {1:~                                       }|
-        {1:~                                       }|
+        {1:·                                       }|
+        {1:·                                       }|
                                                 |
       ]])
 
@@ -822,8 +822,8 @@ describe('Buffer highlighting', function()
         5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5|
         , 5, 5, 5, 5, 5, 5,  Lorem ipsum dolor s|
         x = 4                                   |
-        {1:~                                       }|
-        {1:~                                       }|
+        {1:·                                       }|
+        {1:·                                       }|
                                                 |
       ]])
 
@@ -834,8 +834,8 @@ describe('Buffer highlighting', function()
         5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5|
         , 5, 5, 5, 5, 5, 5,  Lorem ipsum dolor s|
         x = 4                                   |
-        {1:~                                       }|
-        {1:~                                       }|
+        {1:·                                       }|
+        {1:·                                       }|
         {7:-- VISUAL --}                            |
       ]])
 
@@ -846,8 +846,8 @@ describe('Buffer highlighting', function()
         5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5|
         , 5, 5, 5, 5, 5, 5,  Lorem ipsum dolor s|
         x = 4                                   |
-        {1:~                                       }|
-        {1:~                                       }|
+        {1:·                                       }|
+        {1:·                                       }|
         {7:-- VISUAL --}                            |
       ]])
     end)
@@ -861,8 +861,8 @@ describe('Buffer highlighting', function()
         5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5|
         , 5, 5, 5, 5, 5, 5,{1:-$}Lorem ipsum dolor s|
         x = 4{1:$}                                  |
-        {1:~                                       }|
-        {1:~                                       }|
+        {1:·                                       }|
+        {1:·                                       }|
                                                 |
       ]])
 
@@ -873,8 +873,8 @@ describe('Buffer highlighting', function()
         5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5|
         , 5, 5, 5, 5, 5, 5,{1:-$}                   |
         x = 4{1:$}                                  |
-        {1:~                                       }|
-        {1:~                                       }|
+        {1:·                                       }|
+        {1:·                                       }|
                                                 |
       ]])
     end)
@@ -888,8 +888,8 @@ describe('Buffer highlighting', function()
         5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5|
         , 5, 5, 5, 5, 5, 5,  Lorem ipsum dolor s|
         x = 4                                   |
-        {1:~                                       }|
-        {1:~                                       }|
+        {1:·                                       }|
+        {1:·                                       }|
                                                 |
       ]]}
 
@@ -900,8 +900,8 @@ describe('Buffer highlighting', function()
         5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5|
         , 5, 5, 5, 5, 5, 5,  Lorem ipsum dolor s|
         x = 4                                   |
-        {1:~                                       }|
-        {1:~                                       }|
+        {1:·                                       }|
+        {1:·                                       }|
                                                 |
       ]]}
 
@@ -913,8 +913,8 @@ describe('Buffer highlighting', function()
         {14:^5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5}|
         {14:, 5, 5, 5, 5, 5, 5,  }Lorem ipsum dolor s|
         x = 4                                   |
-        {1:~                                       }|
-        {1:~                                       }|
+        {1:·                                       }|
+        {1:·                                       }|
                                                 |
       ]]}
     end)
@@ -927,8 +927,8 @@ describe('Buffer highlighting', function()
         5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5|
         , 5, 5, 5, 5, 5, 5,  Lorem ipsum dolor s|
         x = 4 {12:暗x事}                             |
-        {1:~                                       }|
-        {1:~                                       }|
+        {1:·                                       }|
+        {1:·                                       }|
                                                 |
       ]]}
 
@@ -939,8 +939,8 @@ describe('Buffer highlighting', function()
         5, 5, 5,{18: }5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5|
         , 5, 5, 5, 5, 5, 5,  Lorem ipsum dolor s|
         x = 4 {12:暗x事}                             |
-        {1:~                                       }|
-        {1:~                                       }|
+        {1:·                                       }|
+        {1:·                                       }|
                                                 |
       ]]}
     end)

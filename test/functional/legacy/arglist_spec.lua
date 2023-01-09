@@ -24,7 +24,7 @@ describe('argument list commands', function()
     feed(':confirm quit\n')
     screen:expect([[
                                                                   |
-      ~                                                           |
+      ·                                                           |
                                                                   |
       :confirm quit                                               |
       2 more files to edit.  Quit anyway?                         |
@@ -33,16 +33,16 @@ describe('argument list commands', function()
     feed('N')
     screen:expect([[
       ^                                                            |
-      ~                                                           |
-      ~                                                           |
-      ~                                                           |
-      ~                                                           |
+      ·                                                           |
+      ·                                                           |
+      ·                                                           |
+      ·                                                           |
                                                                   |
     ]])
     feed(':confirm quit\n')
     screen:expect([[
                                                                   |
-      ~                                                           |
+      ·                                                           |
                                                                   |
       :confirm quit                                               |
       2 more files to edit.  Quit anyway?                         |

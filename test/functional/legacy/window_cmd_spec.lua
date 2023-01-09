@@ -211,15 +211,15 @@ describe('splitkeep', function()
       a                                                    |
       b                                                    |
       c                                                    |
-      ~                                                    |
-      ~                                                    |
-      ~                                                    |
-      ~                                                    |
+      ·                                                    |
+      ·                                                    |
+      ·                                                    |
+      ·                                                    |
       [No Name]                                            |
       ^a                                                    |
       b                                                    |
       c                                                    |
-      ~                                                    |
+      ·                                                    |
       [No Name]                                            |
                                                            |
     ]])

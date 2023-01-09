@@ -39,7 +39,7 @@ describe('ui/mouse/input', function()
       testing                  |
       mouse                    |
       support and selectio^n    |
-      {0:~                        }|
+      {0:·                        }|
                                |
     ]])
   end)
@@ -50,7 +50,7 @@ describe('ui/mouse/input', function()
       testing                  |
       mo^use                    |
       support and selection    |
-      {0:~                        }|
+      {0:·                        }|
                                |
     ]], mouse_enabled=true}
     feed('<LeftMouse><0,0>')
@@ -58,7 +58,7 @@ describe('ui/mouse/input', function()
       ^testing                  |
       mouse                    |
       support and selection    |
-      {0:~                        }|
+      {0:·                        }|
                                |
     ]])
   end)
@@ -70,7 +70,7 @@ describe('ui/mouse/input', function()
       testing                  |
       mo^use                    |
       support and selection    |
-      {0:~                        }|
+      {0:·                        }|
                                |
     ]], mouse_enabled=false}
     feed('<LeftMouse><0,0>')
@@ -78,7 +78,7 @@ describe('ui/mouse/input', function()
       ^testing                  |
       mouse                    |
       support and selection    |
-      {0:~                        }|
+      {0:·                        }|
                                |
     ]])
   end)
@@ -92,7 +92,7 @@ describe('ui/mouse/input', function()
       {1:testin}^g                  |
       mouse                    |
       support and selection    |
-      {0:~                        }|
+      {0:·                        }|
       {2:-- VISUAL --}             |
     ]])
   end)
@@ -108,7 +108,7 @@ describe('ui/mouse/input', function()
       ^t{1:esting}                  |
       mouse                    |
       support and selection    |
-      {0:~                        }|
+      {0:·                        }|
       {2:-- VISUAL LINE --}        |
     ]])
   end)
@@ -126,7 +126,7 @@ describe('ui/mouse/input', function()
       ^testing                  |
       mouse                    |
       support and selection    |
-      {0:~                        }|
+      {0:·                        }|
       {2:-- VISUAL BLOCK --}       |
     ]])
   end)
@@ -149,24 +149,24 @@ describe('ui/mouse/input', function()
       screen:expect([[
         {tab: + foo }{sel: + bar }{fill:          }{tab:X}|
         this is ba^r{0:$}             |
-        {0:~                        }|
-        {0:~                        }|
+        {0:·                        }|
+        {0:·                        }|
                                  |
       ]])
       feed('<LeftMouse><4,0>')
       screen:expect([[
         {sel: + foo }{tab: + bar }{fill:          }{tab:X}|
         this is fo^o              |
-        {0:~                        }|
-        {0:~                        }|
+        {0:·                        }|
+        {0:·                        }|
                                  |
       ]])
       feed('<LeftDrag><14,0>')
       screen:expect([[
         {tab: + bar }{sel: + foo }{fill:          }{tab:X}|
         this is fo^o              |
-        {0:~                        }|
-        {0:~                        }|
+        {0:·                        }|
+        {0:·                        }|
                                  |
       ]])
     end)
@@ -179,24 +179,24 @@ describe('ui/mouse/input', function()
       screen:expect([[
         {tab: + foo }{sel: + bar }{fill:          }{tab:X}|
         this is ba^r{0:$}             |
-        {0:~                        }|
-        {0:~                        }|
+        {0:·                        }|
+        {0:·                        }|
                                  |
       ]])
       feed('<LeftMouse><11,0>')
       screen:expect{grid=[[
         {tab: + foo }{sel: + bar }{fill:          }{tab:X}|
         this is ba^r{0:$}             |
-        {0:~                        }|
-        {0:~                        }|
+        {0:·                        }|
+        {0:·                        }|
                                  |
       ]], unchanged=true}
       feed('<LeftDrag><6,0>')
       screen:expect([[
         {sel: + bar }{tab: + foo }{fill:          }{tab:X}|
         this is ba^r{0:$}             |
-        {0:~                        }|
-        {0:~                        }|
+        {0:·                        }|
+        {0:·                        }|
                                  |
       ]])
     end)
@@ -209,24 +209,24 @@ describe('ui/mouse/input', function()
       screen:expect([[
         {tab: + foo }{sel: + bar }{fill:          }{tab:X}|
         this is ba^r{0:$}             |
-        {0:~                        }|
-        {0:~                        }|
+        {0:·                        }|
+        {0:·                        }|
                                  |
       ]])
       feed('<LeftMouse><4,0>')
       screen:expect([[
         {sel: + foo }{tab: + bar }{fill:          }{tab:X}|
         this is fo^o              |
-        {0:~                        }|
-        {0:~                        }|
+        {0:·                        }|
+        {0:·                        }|
                                  |
       ]])
       feed('<LeftDrag><7,0>')
       screen:expect([[
         {tab: + bar }{sel: + foo }{fill:          }{tab:X}|
         this is fo^o              |
-        {0:~                        }|
-        {0:~                        }|
+        {0:·                        }|
+        {0:·                        }|
                                  |
       ]])
     end)
@@ -239,32 +239,32 @@ describe('ui/mouse/input', function()
       screen:expect([[
         {tab: + foo }{sel: + bar }{fill:          }{tab:X}|
         this is ba^r{0:$}             |
-        {0:~                        }|
-        {0:~                        }|
+        {0:·                        }|
+        {0:·                        }|
                                  |
       ]])
       feed('<LeftMouse><4,0>')
       screen:expect([[
         {sel: + foo }{tab: + bar }{fill:          }{tab:X}|
         this is fo^o              |
-        {0:~                        }|
-        {0:~                        }|
+        {0:·                        }|
+        {0:·                        }|
                                  |
       ]])
       feed('<LeftDrag><4,1>')
       screen:expect{grid=[[
         {sel: + foo }{tab: + bar }{fill:          }{tab:X}|
         this is fo^o              |
-        {0:~                        }|
-        {0:~                        }|
+        {0:·                        }|
+        {0:·                        }|
                                  |
       ]], unchanged=true}
       feed('<LeftDrag><14,1>')
       screen:expect([[
         {tab: + bar }{sel: + foo }{fill:          }{tab:X}|
         this is fo^o              |
-        {0:~                        }|
-        {0:~                        }|
+        {0:·                        }|
+        {0:·                        }|
                                  |
       ]])
     end)
@@ -277,32 +277,32 @@ describe('ui/mouse/input', function()
       screen:expect([[
         {tab: + foo }{sel: + bar }{fill:          }{tab:X}|
         this is ba^r{0:$}             |
-        {0:~                        }|
-        {0:~                        }|
+        {0:·                        }|
+        {0:·                        }|
                                  |
       ]])
       feed('<LeftMouse><11,0>')
       screen:expect{grid=[[
         {tab: + foo }{sel: + bar }{fill:          }{tab:X}|
         this is ba^r{0:$}             |
-        {0:~                        }|
-        {0:~                        }|
+        {0:·                        }|
+        {0:·                        }|
                                  |
       ]], unchanged=true}
       feed('<LeftDrag><11,1>')
       screen:expect{grid=[[
         {tab: + foo }{sel: + bar }{fill:          }{tab:X}|
         this is ba^r{0:$}             |
-        {0:~                        }|
-        {0:~                        }|
+        {0:·                        }|
+        {0:·                        }|
                                  |
       ]], unchanged=true}
       feed('<LeftDrag><6,1>')
       screen:expect([[
         {sel: + bar }{tab: + foo }{fill:          }{tab:X}|
         this is ba^r{0:$}             |
-        {0:~                        }|
-        {0:~                        }|
+        {0:·                        }|
+        {0:·                        }|
                                  |
       ]])
     end)
@@ -315,32 +315,32 @@ describe('ui/mouse/input', function()
       screen:expect([[
         {tab: + foo }{sel: + bar }{fill:          }{tab:X}|
         this is ba^r{0:$}             |
-        {0:~                        }|
-        {0:~                        }|
+        {0:·                        }|
+        {0:·                        }|
                                  |
       ]])
       feed('<LeftMouse><4,0>')
       screen:expect([[
         {sel: + foo }{tab: + bar }{fill:          }{tab:X}|
         this is fo^o              |
-        {0:~                        }|
-        {0:~                        }|
+        {0:·                        }|
+        {0:·                        }|
                                  |
       ]])
       feed('<LeftDrag><4,1>')
       screen:expect{grid=[[
         {sel: + foo }{tab: + bar }{fill:          }{tab:X}|
         this is fo^o              |
-        {0:~                        }|
-        {0:~                        }|
+        {0:·                        }|
+        {0:·                        }|
                                  |
       ]], unchanged=true}
       feed('<LeftDrag><7,1>')
       screen:expect([[
         {tab: + bar }{sel: + foo }{fill:          }{tab:X}|
         this is fo^o              |
-        {0:~                        }|
-        {0:~                        }|
+        {0:·                        }|
+        {0:·                        }|
                                  |
       ]])
     end)
@@ -364,16 +364,16 @@ describe('ui/mouse/input', function()
       screen:expect([[
         {tab: + foo }{sel: + bar }{fill:          }{tab:X}|
         this is ba^r{0:$}             |
-        {0:~                        }|
-        {0:~                        }|
+        {0:·                        }|
+        {0:·                        }|
                                  |
       ]])
       feed('<LeftMouse><4,0>')
       screen:expect([[
         {sel: + foo }{tab: + bar }{fill:          }{tab:X}|
         this is fo^o              |
-        {0:~                        }|
-        {0:~                        }|
+        {0:·                        }|
+        {0:·                        }|
                                  |
       ]])
     end)
@@ -387,16 +387,16 @@ describe('ui/mouse/input', function()
       screen:expect([[
         {tab: + foo }{sel: + bar }{fill:          }{tab:X}|
         this is ba^r{0:$}             |
-        {0:~                        }|
-        {0:~                        }|
+        {0:·                        }|
+        {0:·                        }|
                                  |
       ]])
       feed('<LeftMouse><24,0>')
       screen:expect([[
         this is fo^o              |
-        {0:~                        }|
-        {0:~                        }|
-        {0:~                        }|
+        {0:·                        }|
+        {0:·                        }|
+        {0:·                        }|
                                  |
       ]])
     end)
@@ -410,16 +410,16 @@ describe('ui/mouse/input', function()
       screen:expect([[
         {tab: + foo }{sel: + bar }{fill:          }{tab:X}|
         this is ba^r{0:$}             |
-        {0:~                        }|
-        {0:~                        }|
+        {0:·                        }|
+        {0:·                        }|
                                  |
       ]])
       feed('<2-LeftMouse><4,0>')
       screen:expect([[
         {sel:  Name] }{tab: + foo  + bar }{fill:  }{tab:X}|
         {0:^$}                        |
-        {0:~                        }|
-        {0:~                        }|
+        {0:·                        }|
+        {0:·                        }|
                                  |
       ]])
     end)
@@ -519,7 +519,7 @@ describe('ui/mouse/input', function()
       testing                  |
       mo^use                    |
       support and selection    |
-      {0:~                        }|
+      {0:·                        }|
                                |
     ]])
     feed('<LeftDrag><4,1>')
@@ -527,7 +527,7 @@ describe('ui/mouse/input', function()
       testing                  |
       mo{1:us}^e                    |
       support and selection    |
-      {0:~                        }|
+      {0:·                        }|
       {2:-- VISUAL --}             |
     ]])
     feed('<LeftDrag><2,2>')
@@ -535,7 +535,7 @@ describe('ui/mouse/input', function()
       testing                  |
       mo{1:use}                    |
       {1:su}^pport and selection    |
-      {0:~                        }|
+      {0:·                        }|
       {2:-- VISUAL --}             |
     ]])
     feed('<LeftDrag><0,0>')
@@ -543,7 +543,7 @@ describe('ui/mouse/input', function()
       ^t{1:esting}                  |
       {1:mou}se                    |
       support and selection    |
-      {0:~                        }|
+      {0:·                        }|
       {2:-- VISUAL --}             |
     ]])
   end)
@@ -572,16 +572,16 @@ describe('ui/mouse/input', function()
     screen:expect([[
       {tab: + foo }{sel: + bar }{fill:          }{tab:X}|
       ^this is bar{0:$}             |
-      {0:~                        }|
-      {0:~                        }|
+      {0:·                        }|
+      {0:·                        }|
       :tabprevious             |
     ]])
     feed('<LeftDrag><4,1>')
     screen:expect([[
       {tab: + foo }{sel: + bar }{fill:          }{tab:X}|
       {vis:this}^ is bar{0:$}             |
-      {0:~                        }|
-      {0:~                        }|
+      {0:·                        }|
+      {0:·                        }|
       {sel:-- VISUAL --}             |
     ]])
   end)
@@ -599,15 +599,15 @@ describe('ui/mouse/input', function()
       testing                   │testing                   |
       mouse                     │mouse                     |
       support and selection     │support and selection     |
-      {0:~                         }│{0:~                         }|
-      {0:~                         }│{0:~                         }|
-      {0:~                         }│{4:[No Name] [+]             }|
-      {0:~                         }│foo{0:$}                      |
-      {0:~                         }│ba^r{0:$}                      |
-      {0:~                         }│{0:~                         }|
-      {0:~                         }│{0:~                         }|
-      {0:~                         }│{0:~                         }|
-      {0:~                         }│{0:~                         }|
+      {0:·                         }│{0:·                         }|
+      {0:·                         }│{0:·                         }|
+      {0:·                         }│{4:[No Name] [+]             }|
+      {0:·                         }│foo{0:$}                      |
+      {0:·                         }│ba^r{0:$}                      |
+      {0:·                         }│{0:·                         }|
+      {0:·                         }│{0:·                         }|
+      {0:·                         }│{0:·                         }|
+      {0:·                         }│{0:·                         }|
       {4:[No Name] [+]              }{5:[No Name] [+]             }|
                                                            |
     ]]}
@@ -617,15 +617,15 @@ describe('ui/mouse/input', function()
       testing                   │testing                   |
       mouse                     │mouse                     |
       support and selection     │support and selection     |
-      {0:~                         }│{0:~                         }|
-      {0:~                         }│{0:~                         }|
-      {0:~                         }│{4:[No Name] [+]             }|
-      {0:~                         }│^foo{0:$}                      |
-      {0:~                         }│bar{0:$}                      |
-      {0:~                         }│{0:~                         }|
-      {0:~                         }│{0:~                         }|
-      {0:~                         }│{0:~                         }|
-      {0:~                         }│{0:~                         }|
+      {0:·                         }│{0:·                         }|
+      {0:·                         }│{0:·                         }|
+      {0:·                         }│{4:[No Name] [+]             }|
+      {0:·                         }│^foo{0:$}                      |
+      {0:·                         }│bar{0:$}                      |
+      {0:·                         }│{0:·                         }|
+      {0:·                         }│{0:·                         }|
+      {0:·                         }│{0:·                         }|
+      {0:·                         }│{0:·                         }|
       {4:[No Name] [+]              }{5:[No Name] [+]             }|
                                                            |
     ]]}
@@ -635,15 +635,15 @@ describe('ui/mouse/input', function()
       testing                   │testing                   |
       mouse                     │mouse                     |
       support and selection     │support and selection     |
-      {0:~                         }│{0:~                         }|
-      {0:~                         }│{0:~                         }|
-      {0:~                         }│{4:[No Name] [+]             }|
-      {0:~                         }│{1:foo}{3:$}                      |
-      {0:~                         }│{1:bar}{0:^$}                      |
-      {0:~                         }│{0:~                         }|
-      {0:~                         }│{0:~                         }|
-      {0:~                         }│{0:~                         }|
-      {0:~                         }│{0:~                         }|
+      {0:·                         }│{0:·                         }|
+      {0:·                         }│{0:·                         }|
+      {0:·                         }│{4:[No Name] [+]             }|
+      {0:·                         }│{1:foo}{3:$}                      |
+      {0:·                         }│{1:bar}{0:^$}                      |
+      {0:·                         }│{0:·                         }|
+      {0:·                         }│{0:·                         }|
+      {0:·                         }│{0:·                         }|
+      {0:·                         }│{0:·                         }|
       {4:[No Name] [+]              }{5:[No Name] [+]             }|
       {2:-- VISUAL --}                                         |
     ]]}
@@ -657,7 +657,7 @@ describe('ui/mouse/input', function()
       testing                  |
       mouse                    |
       {1:suppor}^t and selection    |
-      {0:~                        }|
+      {0:·                        }|
       {2:-- VISUAL --}             |
     ]])
     feed('<LeftDrag><0,1>')
@@ -665,7 +665,7 @@ describe('ui/mouse/input', function()
       testing                  |
       ^m{1:ouse}                    |
       {1:support} and selection    |
-      {0:~                        }|
+      {0:·                        }|
       {2:-- VISUAL --}             |
     ]])
     feed('<LeftDrag><4,0>')
@@ -673,7 +673,7 @@ describe('ui/mouse/input', function()
       ^t{1:esting}                  |
       {1:mouse}                    |
       {1:support} and selection    |
-      {0:~                        }|
+      {0:·                        }|
       {2:-- VISUAL --}             |
     ]])
     feed('<LeftDrag><14,2>')
@@ -681,7 +681,7 @@ describe('ui/mouse/input', function()
       testing                  |
       mouse                    |
       {1:support and selectio}^n    |
-      {0:~                        }|
+      {0:·                        }|
       {2:-- VISUAL --}             |
     ]])
   end)
@@ -696,7 +696,7 @@ describe('ui/mouse/input', function()
       testing                  |
       mouse                    |
       {1:su}^p{1:port and selection}    |
-      {0:~                        }|
+      {0:·                        }|
       {2:-- VISUAL LINE --}        |
     ]])
     feed('<LeftDrag><0,1>')
@@ -704,7 +704,7 @@ describe('ui/mouse/input', function()
       testing                  |
       ^m{1:ouse}                    |
       {1:support and selection}    |
-      {0:~                        }|
+      {0:·                        }|
       {2:-- VISUAL LINE --}        |
     ]])
     feed('<LeftDrag><4,0>')
@@ -712,7 +712,7 @@ describe('ui/mouse/input', function()
       {1:test}^i{1:ng}                  |
       {1:mouse}                    |
       {1:support and selection}    |
-      {0:~                        }|
+      {0:·                        }|
       {2:-- VISUAL LINE --}        |
     ]])
     feed('<LeftDrag><14,2>')
@@ -720,7 +720,7 @@ describe('ui/mouse/input', function()
       testing                  |
       mouse                    |
       {1:support and se}^l{1:ection}    |
-      {0:~                        }|
+      {0:·                        }|
       {2:-- VISUAL LINE --}        |
     ]])
   end)
@@ -737,7 +737,7 @@ describe('ui/mouse/input', function()
       testing                  |
       mouse                    |
       su^pport and selection    |
-      {0:~                        }|
+      {0:·                        }|
       {2:-- VISUAL BLOCK --}       |
     ]])
     feed('<LeftDrag><0,1>')
@@ -745,7 +745,7 @@ describe('ui/mouse/input', function()
       testing                  |
       ^m{1:ou}se                    |
       {1:sup}port and selection    |
-      {0:~                        }|
+      {0:·                        }|
       {2:-- VISUAL BLOCK --}       |
     ]])
     feed('<LeftDrag><4,0>')
@@ -753,7 +753,7 @@ describe('ui/mouse/input', function()
       te{1:st}^ing                  |
       mo{1:use}                    |
       su{1:ppo}rt and selection    |
-      {0:~                        }|
+      {0:·                        }|
       {2:-- VISUAL BLOCK --}       |
     ]])
     feed('<LeftDrag><14,2>')
@@ -761,7 +761,7 @@ describe('ui/mouse/input', function()
       testing                  |
       mouse                    |
       su{1:pport and se}^lection    |
-      {0:~                        }|
+      {0:·                        }|
       {2:-- VISUAL BLOCK --}       |
     ]])
   end)
@@ -772,7 +772,7 @@ describe('ui/mouse/input', function()
       ^testing                  |
       mouse                    |
       support and selection    |
-      {0:~                        }|
+      {0:·                        }|
                                |
     ]])
     feed('<RightMouse><2,2>')
@@ -780,7 +780,7 @@ describe('ui/mouse/input', function()
       {1:testing}                  |
       {1:mouse}                    |
       {1:su}^pport and selection    |
-      {0:~                        }|
+      {0:·                        }|
       {2:-- VISUAL --}             |
     ]])
   end)
@@ -819,13 +819,13 @@ describe('ui/mouse/input', function()
       test                      │test                      |
       ^mouse scrolling           │mouse scrolling           |
                                 │                          |
-      {0:~                         }│{0:~                         }|
+      {0:·                         }│{0:·                         }|
       {5:[No Name] [+]              }{4:[No Name] [+]             }|
       to                                                   |
       test                                                 |
       mouse scrolling                                      |
                                                            |
-      {0:~                                                    }|
+      {0:·                                                    }|
       {4:[No Name] [+]                                        }|
       :vsp                                                 |
     ]])
@@ -837,16 +837,16 @@ describe('ui/mouse/input', function()
     screen:expect([[
       ^mouse scrolling           │lines                     |
                                 │to                        |
-      {0:~                         }│test                      |
-      {0:~                         }│mouse scrolling           |
-      {0:~                         }│                          |
-      {0:~                         }│{0:~                         }|
+      {0:·                         }│test                      |
+      {0:·                         }│mouse scrolling           |
+      {0:·                         }│                          |
+      {0:·                         }│{0:·                         }|
       {5:[No Name] [+]              }{4:[No Name] [+]             }|
       to                                                   |
       test                                                 |
       mouse scrolling                                      |
                                                            |
-      {0:~                                                    }|
+      {0:·                                                    }|
       {4:[No Name] [+]                                        }|
       :vsp                                                 |
     ]])
@@ -858,16 +858,16 @@ describe('ui/mouse/input', function()
     screen:expect([[
       ^mouse scrolling           │text                      |
                                 │with                      |
-      {0:~                         }│many                      |
-      {0:~                         }│lines                     |
-      {0:~                         }│to                        |
-      {0:~                         }│test                      |
+      {0:·                         }│many                      |
+      {0:·                         }│lines                     |
+      {0:·                         }│to                        |
+      {0:·                         }│test                      |
       {5:[No Name] [+]              }{4:[No Name] [+]             }|
       to                                                   |
       test                                                 |
       mouse scrolling                                      |
                                                            |
-      {0:~                                                    }|
+      {0:·                                                    }|
       {4:[No Name] [+]                                        }|
       :vsp                                                 |
     ]])
@@ -880,10 +880,10 @@ describe('ui/mouse/input', function()
     screen:expect([[
       ^mouse scrolling           │text                      |
                                 │with                      |
-      {0:~                         }│many                      |
-      {0:~                         }│lines                     |
-      {0:~                         }│to                        |
-      {0:~                         }│test                      |
+      {0:·                         }│many                      |
+      {0:·                         }│lines                     |
+      {0:·                         }│to                        |
+      {0:·                         }│test                      |
       {5:[No Name] [+]              }{4:[No Name] [+]             }|
       Inserting                                            |
       text                                                 |
@@ -912,7 +912,7 @@ describe('ui/mouse/input', function()
                                |
                                |
       bbbbbbbbbbbbbbb^b         |
-      {0:~                        }|
+      {0:·                        }|
                                |
     ]])
 
@@ -921,7 +921,7 @@ describe('ui/mouse/input', function()
                                |
                                |
       n bbbbbbbbbbbbbbbbbbb^b   |
-      {0:~                        }|
+      {0:·                        }|
                                |
     ]])
 
@@ -930,7 +930,7 @@ describe('ui/mouse/input', function()
       g                        |
                                |
       ^t and selection bbbbbbbbb|
-      {0:~                        }|
+      {0:·                        }|
                                |
     ]])
   end)
@@ -944,7 +944,7 @@ describe('ui/mouse/input', function()
                                |
                                |
       bbbbbbbbbbbbbbb^b         |
-      {0:~                        }|
+      {0:·                        }|
                                |
     ]])
 
@@ -953,7 +953,7 @@ describe('ui/mouse/input', function()
                                |
                                |
       n bbbbbbbbbbbbbbbbbbb^b   |
-      {0:~                        }|
+      {0:·                        }|
                                |
     ]])
 
@@ -963,7 +963,7 @@ describe('ui/mouse/input', function()
       g                        |
                                |
       ^t and selection bbbbbbbbb|
-      {0:~                        }|
+      {0:·                        }|
                                |
     ]])
   end)
@@ -977,7 +977,7 @@ describe('ui/mouse/input', function()
       testing                  |
       mouse                    |
       ^bbbbbbbbbbbbbbbbbbbb supp|
-      {0:~                        }|
+      {0:·                        }|
                                |
     ]])
 
@@ -986,7 +986,7 @@ describe('ui/mouse/input', function()
       g                        |
                                |
       bbbb^bbbbbbbbbb support an|
-      {0:~                        }|
+      {0:·                        }|
                                |
     ]])
 
@@ -997,7 +997,7 @@ describe('ui/mouse/input', function()
       testing                  |
       mouse                    |
       ^bbbbbbbbbbbbbbbbbbbb supp|
-      {0:~                        }|
+      {0:·                        }|
                                |
     ]])
 
@@ -1006,7 +1006,7 @@ describe('ui/mouse/input', function()
       g                        |
                                |
       bb^bbbbbbbbbbbb support an|
-      {0:~                        }|
+      {0:·                        }|
                                |
     ]])
   end)
@@ -1051,8 +1051,8 @@ describe('ui/mouse/input', function()
         {0:>--->--->---}  {c: }t2{c: } {c: }t3{c: } {c: }|
         {c:>} 私は猫が大好き{0:>---}{c: X } {0:>}|
                                  |
-        {0:~                        }|
-        {0:~                        }|
+        {0:·                        }|
+        {0:·                        }|
                                  |
       ]])
 
@@ -1062,8 +1062,8 @@ describe('ui/mouse/input', function()
         {0:>--->--->---}  {c: }t2{c: } {c: }t3{c: } {c: }|
         {c:>} 私は猫が大好き{0:>---}{c: X } {0:>}|
                                  |
-        {0:~                        }|
-        {0:~                        }|
+        {0:·                        }|
+        {0:·                        }|
                                  |
       ]])
 
@@ -1073,8 +1073,8 @@ describe('ui/mouse/input', function()
         {0:>--->--->---}  {c: }t2{c: } {c: }t3{c: } {c: }|
         {c:>} 私は猫が大好き{0:>---}{c: X } {0:>}|
                                  |
-        {0:~                        }|
-        {0:~                        }|
+        {0:·                        }|
+        {0:·                        }|
                                  |
       ]])
 
@@ -1084,8 +1084,8 @@ describe('ui/mouse/input', function()
         {0:>--->--->---}  {c: }t2{c: } {c: }t^3{c: } {c: }|
         {c:>} 私は猫が大好き{0:>---}{c: X } {0:>}|
                                  |
-        {0:~                        }|
-        {0:~                        }|
+        {0:·                        }|
+        {0:·                        }|
                                  |
       ]])
 
@@ -1095,8 +1095,8 @@ describe('ui/mouse/input', function()
         {0:>--->--->---}  {c: }t2{c: } {c: }t3{c: } {c: }|
         {c:^>} 私は猫が大好き{0:>---}{c: X } {0:>}|
                                  |
-        {0:~                        }|
-        {0:~                        }|
+        {0:·                        }|
+        {0:·                        }|
                                  |
       ]])
 
@@ -1106,8 +1106,8 @@ describe('ui/mouse/input', function()
         {0:>--->--->---}  {c: }t2{c: } {c: }t3{c: } {c: }|
         {c:>} 私は^猫が大好き{0:>---}{c: X } {0:>}|
                                  |
-        {0:~                        }|
-        {0:~                        }|
+        {0:·                        }|
+        {0:·                        }|
                                  |
       ]])
 
@@ -1117,8 +1117,8 @@ describe('ui/mouse/input', function()
         {0:>--->--->---}  {c: }t2{c: } {c: }t3{c: } {c: }|
         {c:>} 私は猫が大好き{0:>---}{c: ^X } {0:>}|
                                  |
-        {0:~                        }|
-        {0:~                        }|
+        {0:·                        }|
+        {0:·                        }|
                                  |
       ]])
 
@@ -1193,8 +1193,8 @@ describe('ui/mouse/input', function()
         {0:>--->--->---}  t2 t3 t4   |
         {c:>} 私は猫が大好き{0:>---}{c:X} ✨{0:>}|
                                  |
-        {0:~                        }|
-        {0:~                        }|
+        {0:·                        }|
+        {0:·                        }|
                                  |
       ]])
 
@@ -1204,8 +1204,8 @@ describe('ui/mouse/input', function()
         {0:>--->--->---}  ^t2 t3 t4   |
         {c:>} 私は猫が大好き{0:>---}{c:X} ✨{0:>}|
                                  |
-        {0:~                        }|
-        {0:~                        }|
+        {0:·                        }|
+        {0:·                        }|
                                  |
       ]])
 
@@ -1215,8 +1215,8 @@ describe('ui/mouse/input', function()
         {0:>--->--->---}  t2 t^3 t4   |
         {c:>} 私は猫が大好き{0:>---}{c:X} ✨{0:>}|
                                  |
-        {0:~                        }|
-        {0:~                        }|
+        {0:·                        }|
+        {0:·                        }|
                                  |
       ]])
 
@@ -1226,8 +1226,8 @@ describe('ui/mouse/input', function()
         {0:>--->--->---}  t2 t3 t4   |
         {c:^>} 私は猫が大好き{0:>---}{c:X} ✨{0:>}|
                                  |
-        {0:~                        }|
-        {0:~                        }|
+        {0:·                        }|
+        {0:·                        }|
                                  |
       ]])
 
@@ -1237,8 +1237,8 @@ describe('ui/mouse/input', function()
         {0:>--->--->---}  t2 t3 t4   |
         {c:>} 私は猫^が大好き{0:>---}{c:X} ✨{0:>}|
                                  |
-        {0:~                        }|
-        {0:~                        }|
+        {0:·                        }|
+        {0:·                        }|
                                  |
       ]])
 
@@ -1248,8 +1248,8 @@ describe('ui/mouse/input', function()
         {0:>--->--->---}  t2 t3 t4   |
         {c:>} 私は猫が大好き{0:>---}{c:^X} ✨{0:>}|
                                  |
-        {0:~                        }|
-        {0:~                        }|
+        {0:·                        }|
+        {0:·                        }|
                                  |
       ]])
     end) -- level 2 - non wrapped
@@ -1263,8 +1263,8 @@ describe('ui/mouse/input', function()
         {0:>--->--->---}  t2 t3 t4   |
         {c:>} 私は猫が大好き{0:>---}{c:X} ✨{0:>}|
                                  |
-        {0:~                        }|
-        {0:~                        }|
+        {0:·                        }|
+        {0:·                        }|
         {sm:-- INSERT --}             |
       ]])
 
@@ -1274,8 +1274,8 @@ describe('ui/mouse/input', function()
         {0:>--->--->---}  ^t2 t3 t4   |
         {c:>} 私は猫が大好き{0:>---}{c:X} ✨{0:>}|
                                  |
-        {0:~                        }|
-        {0:~                        }|
+        {0:·                        }|
+        {0:·                        }|
         {sm:-- INSERT --}             |
       ]])
 
@@ -1285,8 +1285,8 @@ describe('ui/mouse/input', function()
         {0:>--->--->---}  t2 t^3 t4   |
         {c:>} 私は猫が大好き{0:>---}{c:X} ✨{0:>}|
                                  |
-        {0:~                        }|
-        {0:~                        }|
+        {0:·                        }|
+        {0:·                        }|
         {sm:-- INSERT --}             |
       ]])
 
@@ -1296,8 +1296,8 @@ describe('ui/mouse/input', function()
         {0:>--->--->---}  t2 t3 t4   |
         {c:^>} 私は猫が大好き{0:>---}{c:X} ✨{0:>}|
                                  |
-        {0:~                        }|
-        {0:~                        }|
+        {0:·                        }|
+        {0:·                        }|
         {sm:-- INSERT --}             |
       ]])
 
@@ -1307,8 +1307,8 @@ describe('ui/mouse/input', function()
         {0:>--->--->---}  t2 t3 t4   |
         {c:>} 私は猫^が大好き{0:>---}{c:X} ✨{0:>}|
                                  |
-        {0:~                        }|
-        {0:~                        }|
+        {0:·                        }|
+        {0:·                        }|
         {sm:-- INSERT --}             |
       ]])
 
@@ -1318,8 +1318,8 @@ describe('ui/mouse/input', function()
         {0:>--->--->---}  t2 t3 t4   |
         {c:>} 私は猫が大好き{0:>---}{c:^X} ✨{0:>}|
                                  |
-        {0:~                        }|
-        {0:~                        }|
+        {0:·                        }|
+        {0:·                        }|
         {sm:-- INSERT --}             |
       ]])
     end) -- level 2 - non wrapped (insert mode)
@@ -1443,8 +1443,8 @@ describe('ui/mouse/input', function()
         {0:>--->--->---}  t2 t3 t4   |
         ^ 私は猫が大好き{0:>----} ✨🐈|
                                  |
-        {0:~                        }|
-        {0:~                        }|
+        {0:·                        }|
+        {0:·                        }|
                                  |
       ]])
 
@@ -1454,8 +1454,8 @@ describe('ui/mouse/input', function()
         {0:>--->--->---}  t2 t3 t4   |
          ^私は猫が大好き{0:>----} ✨🐈|
                                  |
-        {0:~                        }|
-        {0:~                        }|
+        {0:·                        }|
+        {0:·                        }|
                                  |
       ]])
 
@@ -1465,8 +1465,8 @@ describe('ui/mouse/input', function()
         {0:>--->--->---}  t2 t3 t4   |
          私は猫が大好^き{0:>----} ✨🐈|
                                  |
-        {0:~                        }|
-        {0:~                        }|
+        {0:·                        }|
+        {0:·                        }|
                                  |
       ]])
 
@@ -1476,8 +1476,8 @@ describe('ui/mouse/input', function()
         {0:>--->--->---}  t2 t3 t4   |
          私は猫が大好き{0:>----}^ ✨🐈|
                                  |
-        {0:~                        }|
-        {0:~                        }|
+        {0:·                        }|
+        {0:·                        }|
                                  |
       ]])
     end) -- level 3 - non wrapped

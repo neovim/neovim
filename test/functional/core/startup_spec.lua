@@ -68,9 +68,9 @@ describe('startup', function()
     command([[call chansend(g:id, "cont\n")]])
     screen:expect([[
       ^                                                            |
-      ~                                                           |
-      ~                                                           |
-      ~                                                           |
+      ·                                                           |
+      ·                                                           |
+      ·                                                           |
       [No Name]                                                   |
                                                                   |
                                                                   |
@@ -221,7 +221,7 @@ describe('startup', function()
     command([[echo has('ttyin') has('ttyout')]])
     screen:expect([[
       ^                         |
-      ~                        |
+      ·                        |
       0 0                      |
     ]])
   end)
@@ -239,7 +239,7 @@ describe('startup', function()
             ..[[, shellescape(v:progpath))]])
     screen:expect([[
       ^                         |
-      ~                        |
+      ·                        |
       1 1                      |
                                |
     ]])
@@ -294,7 +294,7 @@ describe('startup', function()
             ..[[, shellescape(v:progpath))]])
     screen:expect([[
       ^foo                      |
-      ~                        |
+      ·                        |
       0 1                      |
                                |
     ]])
@@ -456,8 +456,8 @@ describe('startup', function()
     command([[call chansend(g:id, "\n")]])
     screen:expect([[
       ^                                                            |
-      ~                                                           |
-      ~                                                           |
+      ·                                                           |
+      ·                                                           |
       [No Name]                                                   |
                                                                   |
                                                                   |
@@ -471,7 +471,7 @@ describe('startup', function()
     screen:expect({grid=[[
         {1: a }{2: b  c }{3:               }{2:X}|
         ^                         |
-        {4:~                        }|
+        {4:·                        }|
                                  |
           ]],
       attr_ids={
@@ -766,10 +766,10 @@ describe('user config init', function()
         feed('ia')
         screen:expect([[
                                                             |
-          ~                                                 |
-          ~                                                 |
-          ~                                                 |
-          ~                                                 |
+          ·                                                 |
+          ·                                                 |
+          ·                                                 |
+          ·                                                 |
           [No Name]                       0,0-1          All|
                                                             |
           -- TERMINAL --                                    |
@@ -777,10 +777,10 @@ describe('user config init', function()
         feed(':echo g:exrc_file<CR>')
         screen:expect(string.format([[
                                                             |
-          ~                                                 |
-          ~                                                 |
-          ~                                                 |
-          ~                                                 |
+          ·                                                 |
+          ·                                                 |
+          ·                                                 |
+          ·                                                 |
           [No Name]                       0,0-1          All|
           %s%s|
           -- TERMINAL --                                    |

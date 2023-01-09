@@ -23,10 +23,10 @@ describe("shell command :!", function()
       '", "-u", "NONE", "-i", "NONE", "--cmd", "'..helpers.nvim_set..'"]')
     screen:expect([[
       {1: }                                                 |
-      {4:~                                                 }|
-      {4:~                                                 }|
-      {4:~                                                 }|
-      {4:~                                                 }|
+      {4:·                                                 }|
+      {4:·                                                 }|
+      {4:·                                                 }|
+      {4:·                                                 }|
                                                         |
       {3:-- TERMINAL --}                                    |
     ]])
@@ -43,8 +43,8 @@ describe("shell command :!", function()
     child_session.feed_data(":!printf foo; sleep 200\n")
     screen:expect([[
                                                         |
-      {4:~                                                 }|
-      {4:~                                                 }|
+      {4:·                                                 }|
+      {4:·                                                 }|
       {5:                                                  }|
       :!printf foo; sleep 200                           |
       foo                                               |
@@ -179,8 +179,8 @@ describe("shell command :!", function()
       feed([[\l]])
       screen:expect([[
                                                              |
-        {1:~                                                    }|
-        {1:~                                                    }|
+        {1:·                                                    }|
+        {1:·                                                    }|
         {4:                                                     }|
         ]]..result..[[                            |
         f1                                                   |
@@ -196,7 +196,7 @@ describe("shell command :!", function()
       screen.bell = false
       screen:expect{grid=[[
                                                              |
-        {1:~                                                    }|
+        {1:·                                                    }|
         {4:                                                     }|
         :!cat test/functional/fixtures/shell_data.txt        |
         {2:^@^A^B^C^D^E^F^H}                                     |

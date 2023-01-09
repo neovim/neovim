@@ -271,42 +271,42 @@ describe('autocmd', function()
     ]])
     screen:expect([[
       ^bb                                                |
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
+      {1:·                                                 }|
+      {1:·                                                 }|
+      {1:·                                                 }|
+      {1:·                                                 }|
+      {1:·                                                 }|
+      {1:·                                                 }|
+      {1:·                                                 }|
+      {1:·                                                 }|
                                                         |
     ]])
 
     feed(":enew | doautoall User<cr>")
     screen:expect([[
       {2:bb                                                }|
-      {3:~                                                 }|
-      {3:~                                                 }|
-      {3:~                                                 }|
-      {3:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
+      {3:·                                                 }|
+      {3:·                                                 }|
+      {3:·                                                 }|
+      {3:·                                                 }|
+      {1:·                                                 }|
+      {1:·                                                 }|
+      {1:·                                                 }|
+      {1:·                                                 }|
       ^:enew | doautoall User                            |
     ]])
 
     feed('<cr>')
     screen:expect([[
       ^                                                  |
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
+      {1:·                                                 }|
+      {1:·                                                 }|
+      {1:·                                                 }|
+      {1:·                                                 }|
+      {1:·                                                 }|
+      {1:·                                                 }|
+      {1:·                                                 }|
+      {1:·                                                 }|
       13                                                |
     ]])
     eq(7, eval('g:test'))
@@ -322,28 +322,28 @@ describe('autocmd', function()
     feed(":doautoall User<cr>")
     screen:expect([[
       {2:bb                                                }|
-      {3:~                                                 }|
-      {3:~                                                 }|
-      {3:~                                                 }|
-      {3:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
+      {3:·                                                 }|
+      {3:·                                                 }|
+      {3:·                                                 }|
+      {3:·                                                 }|
+      {1:·                                                 }|
+      {1:·                                                 }|
+      {1:·                                                 }|
+      {1:·                                                 }|
       ^:doautoall User                                   |
     ]])
 
     feed('<cr>')
     screen:expect([[
       ^                                                  |
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
+      {1:·                                                 }|
+      {1:·                                                 }|
+      {1:·                                                 }|
+      {1:·                                                 }|
+      {1:·                                                 }|
+      {1:·                                                 }|
+      {1:·                                                 }|
+      {1:·                                                 }|
       13                                                |
     ]])
     -- win vars in aucmd_win should have been reset
@@ -372,11 +372,11 @@ describe('autocmd', function()
     ]]
     screen:expect [[
       ^                                                  |
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
+      {1:·                                                 }|
+      {1:·                                                 }|
+      {1:·                                                 }|
+      {1:·                                                 }|
+      {1:·                                                 }|
       {3:[No Name]                                         }|
                                                         |
       {2:[No Name]                                         }|
@@ -394,13 +394,13 @@ describe('autocmd', function()
     exec_lua [[vim.api.nvim_buf_call(_G.buf, function() vim.cmd "split" end)]]
     screen:expect [[
       ^                                                  |
-      {1:~                                                 }|
+      {1:·                                                 }|
       {3:[No Name]                                         }|
                                                         |
-      {1:~                                                 }|
+      {1:·                                                 }|
       {2:[Scratch]                                         }|
                                                         |
-      {1:~                                                 }|
+      {1:·                                                 }|
       {2:[No Name]                                         }|
                                                         |
     ]]
@@ -445,14 +445,14 @@ describe('autocmd', function()
     feed(':doautocmd User Foo<cr>')
     screen:expect{grid=[[
       ^                                |
-      {1:~                               }|
+      {1:·                               }|
       :doautocmd User Foo             |
     ]]}
     feed(':autocmd! SessionLoadPost<cr>')
     feed(':doautocmd SessionLoadPost<cr>')
     screen:expect{grid=[[
       ^                                |
-      {1:~                               }|
+      {1:·                               }|
       :doautocmd SessionLoadPost      |
     ]]}
   end)
