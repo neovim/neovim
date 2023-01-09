@@ -180,7 +180,16 @@ See |:verbose-cmd| for more information.
 			the number 0 is returned.
 			Note that there is no check for unreachable lines,
 			thus there is no warning if commands follow ":return".
-
+			Also, there is no check if the following
+			line contains a valid command.  Forgetting the line
+			continuation backslash may go unnoticed: >
+				return 'some text'
+				       .. ' some more text'
+<			Will happily return "some text" without an error.  It
+			should have been: >
+				return 'some text'
+				       \ .. ' some more text'
+<
 			If the ":return" is used after a |:try| but before the
 			matching |:finally| (if present), the commands
 			following the ":finally" up to the matching |:endtry|
