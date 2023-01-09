@@ -6325,12 +6325,12 @@ static void f_rpcnotify(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   bool ok = rpc_send_event((uint64_t)argvars[0].vval.v_number,
                            tv_get_string(&argvars[1]), args);
 
+  api_free_array(args);
+
   if (!ok) {
     semsg(_(e_invarg2), "Channel doesn't exist");
     return;
   }
-
-  api_free_array(args);
   rettv->vval.v_number = 1;
 }
 
