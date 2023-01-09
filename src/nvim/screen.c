@@ -870,7 +870,7 @@ char *set_chars_option(win_T *wp, char **varp, bool apply)
     { &wp->w_p_fcs_chars.foldsep,    "foldsep",   char2cells(0x2502) == 1 ? 0x2502 : '|' },  // │
     { &wp->w_p_fcs_chars.diff,       "diff",      '-' },
     { &wp->w_p_fcs_chars.msgsep,     "msgsep",    ' ' },
-    { &wp->w_p_fcs_chars.eob,        "eob",       '~' },
+    { &wp->w_p_fcs_chars.eob,        "eob",       L'·' },
     { &wp->w_p_fcs_chars.lastline,   "lastline",  '@' },
   };
 
