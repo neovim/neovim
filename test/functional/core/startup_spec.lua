@@ -83,6 +83,7 @@ describe('startup', function()
   end)
   after_each(function()
     os.remove('Xtest_startup_ttyout')
+    os.remove('Xtest_shada')
   end)
 
   describe('-l Lua', function()
@@ -92,7 +93,11 @@ describe('startup', function()
       vim.list_extend(args, { '-l', (script or 'test/functional/fixtures/startup.lua') })
       vim.list_extend(args, lua_args or {})
       local out = funcs.system(args, input):gsub('\r\n', '\n')
-      return eq(dedent(expected), out)
+      if type(expected) == 'function' then
+        return expected(out)
+      else
+        return eq(dedent(expected), out)
+      end
     end
 
     it('failure modes', function()
@@ -193,9 +198,17 @@ describe('startup', function()
       eq(0, eval('v:shell_error'))
     end)
 
-    it('disables swapfile/shada/config/plugins', function()
+    it('disables swapfile/shada/config/plugins unless overridden', function()
       assert_l_out('updatecount=0 shadafile=NONE loadplugins=false scriptnames=1',
         nil,
+        nil,
+        '-',
+        [[print(('updatecount=%d shadafile=%s loadplugins=%s scriptnames=%d'):format(
+          vim.o.updatecount, vim.o.shadafile, tostring(vim.o.loadplugins), math.max(1, #vim.fn.split(vim.fn.execute('scriptnames'),'\n'))))]])
+
+      -- User can override.
+      assert_l_out(function(out) return matches('updatecount=99 shadafile=Xtest_shada loadplugins=true scriptnames=2%d', out) end,
+        { '+set updatecount=99', '-i', 'Xtest_shada', '+set loadplugins', '-u', 'NORC' },
         nil,
         '-',
         [[print(('updatecount=%d shadafile=%s loadplugins=%s scriptnames=%d'):format(

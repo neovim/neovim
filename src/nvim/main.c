@@ -2058,8 +2058,7 @@ static void source_startup_scripts(const mparm_T *const parmp)
 {
   // If -u given, use only the initializations from that file and nothing else.
   if (parmp->use_vimrc != NULL) {
-    if (strequal(parmp->use_vimrc, "NONE")
-        || strequal(parmp->use_vimrc, "NORC")) {
+    if (strequal(parmp->use_vimrc, "NONE") || strequal(parmp->use_vimrc, "NORC")) {
       // Do nothing.
     } else {
       if (do_source(parmp->use_vimrc, false, DOSO_NONE) != OK) {
