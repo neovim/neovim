@@ -160,39 +160,13 @@ static pid_t forkpty(int *amaster, char *name, struct termios *termp, struct win
 
 #endif
 
-/// termios saved at startup (for TUI) or initialized by pty_process_spawn().
-static struct termios termios_default;
-
-/// Saves the termios properties associated with `tty_fd`.
-///
-/// @param tty_fd   TTY file descriptor, or -1 if not in a terminal.
-void pty_process_save_termios(int tty_fd)
-{
-  if (embedded_mode) {
-    // TODO(bfredl): currently we cannot use the state of the host terminal in
-    // the server. when the TUI process launches the server, the state has already
-    // changed. we would need to serialize termios_default in the TUI process and
-    // transmit it. Altough, just always using the clean slate of init_termios() might
-    // be preferrable anyway.
-    return;
-  }
-  if (tty_fd == -1) {
-    return;
-  }
-  int rv = tcgetattr(tty_fd, &termios_default);
-  if (rv != 0) {
-    ELOG("tcgetattr failed (tty_fd=%d): %s", tty_fd, strerror(errno));
-  } else {
-    DLOG("tty_fd=%d", tty_fd);
-  }
-}
-
 /// @returns zero on success, or negative error code
 int pty_process_spawn(PtyProcess *ptyproc)
   FUNC_ATTR_NONNULL_ALL
 {
+  // termios initialized at first use
+  static struct termios termios_default;
   if (!termios_default.c_cflag) {
-    // TODO(jkeyes): We could pass NULL to forkpty() instead ...
     init_termios(&termios_default);
   }
 
