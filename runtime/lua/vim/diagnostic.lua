@@ -251,27 +251,6 @@ local function get_bufnr(bufnr)
   return bufnr
 end
 
---- Check whether diagnostics are disabled in a given buffer.
----
----@param bufnr number|nil Buffer number, or 0 for current buffer.
----@param namespace number|nil Diagnostic namespace. When omitted, checks if
----                            all diagnostics are disabled in {bufnr}.
----                            Otherwise, only checks if diagnostics from
----                            {namespace} are disabled.
----@return boolean
-function M.is_disabled(bufnr, namespace)
-  bufnr = get_bufnr(bufnr)
-  if namespace and M.get_namespace(namespace).disabled then
-    return true
-  end
-
-  if type(diagnostic_disabled[bufnr]) == 'table' then
-    return diagnostic_disabled[bufnr][namespace]
-  end
-
-  return diagnostic_disabled[bufnr] ~= nil
-end
-
 ---@private
 local function diagnostic_lines(diagnostics)
   if not diagnostics then
@@ -1130,6 +1109,27 @@ function M.hide(namespace, bufnr)
       end
     end
   end
+end
+
+--- Check whether diagnostics are disabled in a given buffer.
+---
+---@param bufnr number|nil Buffer number, or 0 for current buffer.
+---@param namespace number|nil Diagnostic namespace. When omitted, checks if
+---                            all diagnostics are disabled in {bufnr}.
+---                            Otherwise, only checks if diagnostics from
+---                            {namespace} are disabled.
+---@return boolean
+function M.is_disabled(bufnr, namespace)
+  bufnr = get_bufnr(bufnr)
+  if namespace and M.get_namespace(namespace).disabled then
+    return true
+  end
+
+  if type(diagnostic_disabled[bufnr]) == 'table' then
+    return diagnostic_disabled[bufnr][namespace]
+  end
+
+  return diagnostic_disabled[bufnr] ~= nil
 end
 
 --- Display diagnostics for the given namespace and buffer.
