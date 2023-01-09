@@ -3106,7 +3106,7 @@ static char_u *ins_comp_get_next_word_or_line(buf_T *ins_buf, pos_T *cur_match_p
           if (tmp_ptr - ptr >= IOSIZE - len) {
             tmp_ptr = ptr + IOSIZE - len - 1;
           }
-          STRLCPY(IObuff + len, ptr, IOSIZE - len);
+          xstrlcpy(IObuff + len, ptr, (size_t)(IOSIZE - len));
           len += (int)(tmp_ptr - ptr);
           *cont_s_ipos = true;
         }

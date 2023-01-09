@@ -1162,7 +1162,7 @@ char *addstar(char *fname, size_t len, int context)
     }
   } else {
     retval = xmalloc(len + 4);
-    STRLCPY(retval, fname, len + 1);
+    xstrlcpy(retval, fname, len + 1);
 
     // Don't add a star to *, ~, ~user, $var or `cmd`.
     // * would become **, which walks the whole tree.
@@ -2650,10 +2650,10 @@ static void expand_shellcmd(char *filepat, int *num_file, char ***file, int flag
     if (l > MAXPATHL - 5) {
       break;
     }
-    STRLCPY(buf, s, l + 1);
+    xstrlcpy(buf, s, l + 1);
     add_pathsep(buf);
     l = strlen(buf);
-    STRLCPY(buf + l, pat, MAXPATHL - l);
+    xstrlcpy(buf + l, pat, MAXPATHL - l);
 
     // Expand matches in one directory of $PATH.
     ret = expand_wildcards(1, &buf, num_file, file, flags);

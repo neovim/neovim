@@ -1433,7 +1433,7 @@ int open_line(int dir, int flags, int second_line_indent, bool *did_do_comment)
       leader = xmalloc((size_t)bytes);
       allocated = leader;  // remember to free it later
 
-      STRLCPY(leader, saved_line, lead_len + 1);
+      xstrlcpy(leader, saved_line, (size_t)lead_len + 1);
 
       // TODO(vim): handle multi-byte and double width chars
       for (int li = 0; li < comment_start; li++) {

@@ -71,7 +71,7 @@ FileComparison path_full_compare(char *const s1, char *const s2, const bool chec
   if (expandenv) {
     expand_env(s1, exp1, MAXPATHL);
   } else {
-    STRLCPY(exp1, s1, MAXPATHL);
+    xstrlcpy(exp1, s1, MAXPATHL);
   }
   bool id_ok_1 = os_fileid(exp1, &file_id_1);
   bool id_ok_2 = os_fileid(s2, &file_id_2);
@@ -964,7 +964,7 @@ static void uniquefy_paths(garray_T *gap, char *pattern)
   }
 
   char *curdir = xmalloc(MAXPATHL);
-  os_dirname((char_u *)curdir, MAXPATHL);
+  os_dirname(curdir, MAXPATHL);
   expand_path_option(curdir, &path_ga);
 
   in_curdir = xcalloc((size_t)gap->ga_len, sizeof(char_u *));
@@ -1118,7 +1118,7 @@ static int expand_in_path(garray_T *const gap, char_u *const pattern, const int 
   garray_T path_ga;
 
   char_u *const curdir = xmalloc(MAXPATHL);
-  os_dirname(curdir, MAXPATHL);
+  os_dirname((char *)curdir, MAXPATHL);
 
   ga_init(&path_ga, (int)sizeof(char_u *), 1);
   expand_path_option((char *)curdir, &path_ga);
@@ -1916,12 +1916,12 @@ void path_fix_case(char *name)
     // Only accept names that differ in case and are the same byte
     // length. TODO: accept different length name.
     if (STRICMP(tail, entry) == 0 && strlen(tail) == strlen(entry)) {
-      char_u newname[MAXPATHL + 1];
+      char newname[MAXPATHL + 1];
 
       // Verify the inode is equal.
-      STRLCPY(newname, name, MAXPATHL + 1);
-      STRLCPY(newname + (tail - name), entry,
-              MAXPATHL - (tail - name) + 1);
+      xstrlcpy(newname, name, MAXPATHL + 1);
+      xstrlcpy(newname + (tail - name), entry,
+               (size_t)(MAXPATHL - (tail - name) + 1));
       FileInfo file_info_new;
       if (os_fileinfo_link((char *)newname, &file_info_new)
           && os_fileinfo_id_equal(&file_info, &file_info_new)) {
@@ -2049,7 +2049,7 @@ char_u *path_try_shorten_fname(char_u *full_path)
   char_u *dirname = xmalloc(MAXPATHL);
   char_u *p = full_path;
 
-  if (os_dirname(dirname, MAXPATHL) == OK) {
+  if (os_dirname((char *)dirname, MAXPATHL) == OK) {
     p = (char_u *)path_shorten_fname((char *)full_path, (char *)dirname);
     if (p == NULL || *p == NUL) {
       p = full_path;
@@ -2272,13 +2272,13 @@ int path_full_dir_name(char *directory, char *buffer, size_t len)
   int retval = OK;
 
   if (strlen(directory) == 0) {
-    return os_dirname((char_u *)buffer, len);
+    return os_dirname(buffer, len);
   }
 
   char old_dir[MAXPATHL];
 
   // Get current directory name.
-  if (os_dirname((char_u *)old_dir, MAXPATHL) == FAIL) {
+  if (os_dirname(old_dir, MAXPATHL) == FAIL) {
     return FAIL;
   }
 
@@ -2298,7 +2298,7 @@ int path_full_dir_name(char *directory, char *buffer, size_t len)
       xstrlcpy(buffer, old_dir, len);
       append_path(buffer, directory, len);
     }
-  } else if (os_dirname((char_u *)buffer, len) == FAIL) {
+  } else if (os_dirname(buffer, len) == FAIL) {
     // Do not return immediately since we are in the wrong directory.
     retval = FAIL;
   }
@@ -2421,7 +2421,7 @@ void path_guess_exepath(const char *argv0, char *buf, size_t bufsize)
     xstrlcpy(buf, argv0, bufsize);
   } else if (argv0[0] == '.' || strchr(argv0, PATHSEP)) {
     // Relative to CWD.
-    if (os_dirname((char_u *)buf, MAXPATHL) != OK) {
+    if (os_dirname(buf, MAXPATHL) != OK) {
       buf[0] = NUL;
     }
     xstrlcat(buf, PATHSEPSTR, bufsize);
@@ -2439,7 +2439,7 @@ void path_guess_exepath(const char *argv0, char *buf, size_t bufsize)
       if (dir_len + 1 > sizeof(NameBuff)) {
         continue;
       }
-      STRLCPY(NameBuff, dir, dir_len + 1);
+      xstrlcpy(NameBuff, dir, dir_len + 1);
       xstrlcat(NameBuff, PATHSEPSTR, sizeof(NameBuff));
       xstrlcat(NameBuff, argv0, sizeof(NameBuff));
       if (os_can_exe((char *)NameBuff, NULL, false)) {

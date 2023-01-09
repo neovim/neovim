@@ -4234,7 +4234,7 @@ void shorten_fnames(int force)
 {
   char_u dirname[MAXPATHL];
 
-  os_dirname(dirname, MAXPATHL);
+  os_dirname((char *)dirname, MAXPATHL);
   FOR_ALL_BUFFERS(buf) {
     shorten_buf_fname(buf, dirname, force);
 
@@ -4281,7 +4281,7 @@ char *modname(const char *fname, const char *ext, bool prepend_dot)
   // (we need the full path in case :cd is used).
   if (fname == NULL || *fname == NUL) {
     retval = xmalloc(MAXPATHL + extlen + 3);  // +3 for PATHSEP, "_" (Win), NUL
-    if (os_dirname((char_u *)retval, MAXPATHL) == FAIL
+    if (os_dirname(retval, MAXPATHL) == FAIL
         || strlen(retval) == 0) {
       xfree(retval);
       return NULL;

@@ -708,7 +708,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
       nextline[SPWORDLEN] = NUL;
       if (lnum < wp->w_buffer->b_ml.ml_line_count) {
         line = ml_get_buf(wp->w_buffer, lnum + 1, false);
-        spell_cat_line((char_u *)nextline + SPWORDLEN, (char_u *)line, SPWORDLEN);
+        spell_cat_line(nextline + SPWORDLEN, (char_u *)line, SPWORDLEN);
       }
 
       // When a word wrapped from the previous line the start of the current

@@ -2760,7 +2760,7 @@ void buflist_list(exarg_T *eap)
       continue;
     }
     if (buf_spname(buf) != NULL) {
-      STRLCPY(NameBuff, buf_spname(buf), MAXPATHL);
+      xstrlcpy(NameBuff, buf_spname(buf), MAXPATHL);
     } else {
       home_replace(buf, buf->b_fname, (char *)NameBuff, MAXPATHL, true);
     }
@@ -3110,7 +3110,7 @@ void fileinfo(int fullname, int shorthelp, int dont_truncate)
 
   *p++ = '"';
   if (buf_spname(curbuf) != NULL) {
-    STRLCPY(p, buf_spname(curbuf), IOSIZE - (p - buffer));
+    xstrlcpy(p, buf_spname(curbuf), (size_t)(IOSIZE - (p - buffer)));
   } else {
     if (!fullname && curbuf->b_fname != NULL) {
       name = curbuf->b_fname;
@@ -3436,9 +3436,9 @@ void get_rel_pos(win_T *wp, char *buf, int buflen)
   }
   below = wp->w_buffer->b_ml.ml_line_count - wp->w_botline + 1;
   if (below <= 0) {
-    STRLCPY(buf, (above == 0 ? _("All") : _("Bot")), buflen);
+    xstrlcpy(buf, (above == 0 ? _("All") : _("Bot")), (size_t)buflen);
   } else if (above <= 0) {
-    STRLCPY(buf, _("Top"), buflen);
+    xstrlcpy(buf, _("Top"), (size_t)buflen);
   } else {
     vim_snprintf(buf, (size_t)buflen, "%2d%%", above > 1000000L
                  ? (int)(above / ((above + below) / 100L))

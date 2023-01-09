@@ -2141,7 +2141,7 @@ char *reg_submatch(int no)
         // Within one line: take form start to end col.
         len = rsm.sm_mmatch->endpos[no].col - rsm.sm_mmatch->startpos[no].col;
         if (round == 2) {
-          STRLCPY(retval, s, len + 1);
+          xstrlcpy(retval, s, (size_t)len + 1);
         }
         len++;
       } else {

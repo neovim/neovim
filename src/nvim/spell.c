@@ -739,14 +739,14 @@ static void find_word(matchinf_T *mip, int mode)
         mip->mi_compflags[mip->mi_complen] = (char_u)((unsigned)flags >> 24);
         mip->mi_compflags[mip->mi_complen + 1] = NUL;
         if (word_ends) {
-          char_u fword[MAXWLEN] = { 0 };
+          char fword[MAXWLEN] = { 0 };
 
           if (slang->sl_compsylmax < MAXWLEN) {
             // "fword" is only needed for checking syllables.
             if (ptr == mip->mi_word) {
-              (void)spell_casefold(mip->mi_win, (char_u *)ptr, wlen, fword, MAXWLEN);
+              (void)spell_casefold(mip->mi_win, (char_u *)ptr, wlen, (char_u *)fword, MAXWLEN);
             } else {
-              STRLCPY(fword, ptr, endlen[endidxcnt] + 1);
+              xstrlcpy(fword, ptr, (size_t)endlen[endidxcnt] + 1);
             }
           }
           if (!can_compound(slang, (char *)fword, mip->mi_compflags)) {
@@ -1318,7 +1318,7 @@ size_t spell_move_to(win_T *wp, int dir, bool allwords, bool curline, hlf_T *att
     bool empty_line = *skipwhite((const char *)line) == NUL;
     STRCPY(buf, line);
     if (lnum < wp->w_buffer->b_ml.ml_line_count) {
-      spell_cat_line((char_u *)buf + strlen(buf),
+      spell_cat_line(buf + strlen(buf),
                      (char_u *)ml_get_buf(wp->w_buffer, lnum + 1, false),
                      MAXWLEN);
     }
@@ -1480,7 +1480,7 @@ theend:
 // "buf", blanking-out special characters.  Copy less than "maxlen" bytes.
 // Keep the blanks at the start of the next line, this is used in win_line()
 // to skip those bytes if the word was OK.
-void spell_cat_line(char_u *buf, char_u *line, int maxlen)
+void spell_cat_line(char *buf, char_u *line, int maxlen)
 {
   char_u *p = (char_u *)skipwhite((char *)line);
   while (vim_strchr("*#/\"\t", *p) != NULL) {
@@ -1493,7 +1493,7 @@ void spell_cat_line(char_u *buf, char_u *line, int maxlen)
     int n = (int)(p - line) + 1;
     if (n < maxlen - 1) {
       memset(buf, ' ', (size_t)n);
-      STRLCPY(buf + n, p, maxlen - n);
+      xstrlcpy(buf + n, (char *)p, (size_t)(maxlen - n));
     }
   }
 }
@@ -1731,7 +1731,7 @@ void count_common_word(slang_T *lp, char *word, int len, uint8_t count)
   } else if (len >= MAXWLEN) {
     return;
   } else {
-    STRLCPY(buf, word, len + 1);
+    xstrlcpy(buf, word, (size_t)len + 1);
     p = buf;
   }
 
@@ -1789,7 +1789,7 @@ int init_syl_tab(slang_T *slang)
     }
 
     syl_item_T *syl = GA_APPEND_VIA_PTR(syl_item_T, &slang->sl_syl_items);
-    STRLCPY(syl->sy_chars, s, l + 1);
+    xstrlcpy(syl->sy_chars, s, (size_t)l + 1);
     syl->sy_len = l;
   }
   return OK;
@@ -1916,7 +1916,7 @@ char *did_set_spelllang(win_T *wp)
       p = vim_strchr(path_tail((char *)lang), '_');
       if (p != NULL && ASCII_ISALPHA(p[1]) && ASCII_ISALPHA(p[2])
           && !ASCII_ISALPHA(p[3])) {
-        STRLCPY(region_cp, p + 1, 3);
+        xstrlcpy(region_cp, p + 1, 3);
         memmove(p, p + 3, (size_t)(len - (p - lang) - 2));
         region = region_cp;
       } else {
@@ -2055,7 +2055,7 @@ char *did_set_spelllang(win_T *wp)
       if (round == 0) {
         STRCPY(lang, "internal wordlist");
       } else {
-        STRLCPY(lang, path_tail((char *)spf_name), MAXWLEN + 1);
+        xstrlcpy(lang, path_tail((char *)spf_name), MAXWLEN + 1);
         p = vim_strchr((char *)lang, '.');
         if (p != NULL) {
           *p = NUL;             // truncate at ".encoding.add"
@@ -2176,7 +2176,7 @@ static void use_midword(slang_T *lp, win_T *wp)
       char *bp = xstrnsave(wp->w_s->b_spell_ismw_mb, (size_t)n + (size_t)l);
       xfree(wp->w_s->b_spell_ismw_mb);
       wp->w_s->b_spell_ismw_mb = bp;
-      STRLCPY(bp + n, p, l + 1);
+      xstrlcpy(bp + n, p, (size_t)l + 1);
     }
     p += l;
   }
@@ -2634,7 +2634,7 @@ void ex_spellrepall(exarg_T *eap)
 /// @param[in]  word  source string to copy
 /// @param[in,out]  wcopy  copied string, with case of first letter changed
 /// @param[in]  upper  True to upper case, otherwise lower case
-void onecap_copy(char_u *word, char_u *wcopy, bool upper)
+void onecap_copy(char_u *word, char *wcopy, bool upper)
 {
   char_u *p = word;
   int c = mb_cptr2char_adv((const char_u **)&p);
@@ -2643,8 +2643,8 @@ void onecap_copy(char_u *word, char_u *wcopy, bool upper)
   } else {
     c = SPELL_TOFOLD(c);
   }
-  int l = utf_char2bytes(c, (char *)wcopy);
-  STRLCPY(wcopy + l, p, MAXWLEN - l);
+  int l = utf_char2bytes(c, wcopy);
+  xstrlcpy(wcopy + l, (char *)p, (size_t)(MAXWLEN - l));
 }
 
 // Make a copy of "word" with all the letters upper cased into
@@ -2697,7 +2697,7 @@ void make_case_word(char_u *fword, char_u *cword, int flags)
     allcap_copy(fword, cword);
   } else if (flags & WF_ONECAP) {
     // Make the first letter upper-case
-    onecap_copy(fword, cword, true);
+    onecap_copy(fword, (char *)cword, true);
   } else {
     // Use goodword as-is.
     STRCPY(cword, fword);
@@ -3319,7 +3319,7 @@ void spell_dump_compl(char *pat, int ic, Direction *dir, int dumpflags_arg)
 
               // Apply the prefix, if there is one.
               if (c != 0) {
-                lnum = dump_prefixes(slang, (char_u *)word, (char_u *)pat, dir,
+                lnum = dump_prefixes(slang, word, (char_u *)pat, dir,
                                      dumpflags, flags, lnum);
               }
             }
@@ -3436,21 +3436,21 @@ static void dump_word(slang_T *slang, char *word, char *pat, Direction *dir, int
 /// @param flags  flags with prefix ID
 ///
 /// @return  the updated line number.
-static linenr_T dump_prefixes(slang_T *slang, char_u *word, char_u *pat, Direction *dir,
+static linenr_T dump_prefixes(slang_T *slang, char *word, char_u *pat, Direction *dir,
                               int dumpflags, int flags, linenr_T startlnum)
 {
   idx_T arridx[MAXWLEN];
   int curi[MAXWLEN];
-  char_u prefix[MAXWLEN];
-  char_u word_up[MAXWLEN];
+  char prefix[MAXWLEN];
+  char word_up[MAXWLEN];
   bool has_word_up = false;
   linenr_T lnum = startlnum;
 
   // If the word starts with a lower-case letter make the word with an
   // upper-case letter in word_up[].
-  int c = utf_ptr2char((char *)word);
+  int c = utf_ptr2char(word);
   if (SPELL_TOUPPER(c) != c) {
-    onecap_copy(word, word_up, true);
+    onecap_copy((char_u *)word, (char *)word_up, true);
     has_word_up = true;
   }
 
@@ -3484,9 +3484,9 @@ static linenr_T dump_prefixes(slang_T *slang, char_u *word, char_u *pat, Directi
           }
           curi[depth] += i - 1;
 
-          c = valid_word_prefix(i, n, flags, word, slang, false);
+          c = valid_word_prefix(i, n, flags, (char_u *)word, slang, false);
           if (c != 0) {
-            STRLCPY(prefix + depth, word, MAXWLEN - depth);
+            xstrlcpy(prefix + depth, word, (size_t)(MAXWLEN - depth));
             dump_word(slang, (char *)prefix, (char *)pat, dir, dumpflags,
                       (c & WF_RAREPFX) ? (flags | WF_RARE) : flags, lnum);
             if (lnum != 0) {
@@ -3498,10 +3498,10 @@ static linenr_T dump_prefixes(slang_T *slang, char_u *word, char_u *pat, Directi
           // first letter is upper-case, but only if the prefix has
           // a condition.
           if (has_word_up) {
-            c = valid_word_prefix(i, n, flags, word_up, slang,
+            c = valid_word_prefix(i, n, flags, (char_u *)word_up, slang,
                                   true);
             if (c != 0) {
-              STRLCPY(prefix + depth, word_up, MAXWLEN - depth);
+              xstrlcpy(prefix + depth, word_up, (size_t)(MAXWLEN - depth));
               dump_word(slang, (char *)prefix, (char *)pat, dir, dumpflags,
                         (c & WF_RAREPFX) ? (flags | WF_RARE) : flags, lnum);
               if (lnum != 0) {
@@ -3511,7 +3511,7 @@ static linenr_T dump_prefixes(slang_T *slang, char_u *word, char_u *pat, Directi
           }
         } else {
           // Normal char, go one level deeper.
-          prefix[depth++] = (char_u)c;
+          prefix[depth++] = (char)c;
           arridx[depth] = idxs[n];
           curi[depth] = 1;
         }

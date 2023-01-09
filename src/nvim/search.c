@@ -3414,10 +3414,10 @@ void f_matchfuzzypos(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 /// Get line "lnum" and copy it into "buf[LSIZE]".
 /// The copy is made because the regexp may make the line invalid when using a
 /// mark.
-static char_u *get_line_and_copy(linenr_T lnum, char_u *buf)
+static char *get_line_and_copy(linenr_T lnum, char *buf)
 {
-  char_u *line = (char_u *)ml_get(lnum);
-  STRLCPY(buf, line, LSIZE);
+  char *line = ml_get(lnum);
+  xstrlcpy(buf, line, LSIZE);
   return buf;
 }
 
@@ -3517,7 +3517,7 @@ void find_pattern_in_path(char *ptr, Direction dir, size_t len, bool whole, bool
   if (lnum > end_lnum) {                // do at least one line
     lnum = end_lnum;
   }
-  line = (char *)get_line_and_copy(lnum, file_line);
+  line = get_line_and_copy(lnum, (char *)file_line);
 
   for (;;) {
     if (incl_regmatch.regprog != NULL
@@ -3794,7 +3794,7 @@ search_line:
             if (lnum >= end_lnum) {
               goto exit_matched;
             }
-            line = (char *)get_line_and_copy(++lnum, file_line);
+            line = get_line_and_copy(++lnum, (char *)file_line);
           } else if (vim_fgets(line = (char *)file_line,
                                LSIZE, files[depth].fp)) {
             goto exit_matched;
@@ -3984,7 +3984,7 @@ exit_matched:
       if (++lnum > end_lnum) {
         break;
       }
-      line = (char *)get_line_and_copy(lnum, file_line);
+      line = get_line_and_copy(lnum, (char *)file_line);
     }
     already = NULL;
   }

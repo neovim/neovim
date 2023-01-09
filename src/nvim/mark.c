@@ -664,13 +664,13 @@ static void fname2fnum(xfmark_T *fm)
 
       expand_env("~/", NameBuff, MAXPATHL);
       int len = (int)strlen(NameBuff);
-      STRLCPY(NameBuff + len, fm->fname + 2, MAXPATHL - len);
+      xstrlcpy(NameBuff + len, fm->fname + 2, (size_t)(MAXPATHL - len));
     } else {
-      STRLCPY(NameBuff, fm->fname, MAXPATHL);
+      xstrlcpy(NameBuff, fm->fname, MAXPATHL);
     }
 
     // Try to shorten the file name.
-    os_dirname((char_u *)IObuff, IOSIZE);
+    os_dirname(IObuff, IOSIZE);
     char *p = path_shorten_fname(NameBuff, IObuff);
 
     // buflist_new() will call fmarks_check_names()

@@ -1230,7 +1230,7 @@ void ex_diffpatch(exarg_T *eap)
   // have our own temp dir use that instead, it will be cleaned up when we
   // exit (any .rej files created).  Don't change directory if we can't
   // return to the current.
-  if ((os_dirname((char_u *)dirbuf, MAXPATHL) != OK)
+  if ((os_dirname(dirbuf, MAXPATHL) != OK)
       || (os_chdir(dirbuf) != 0)) {
     dirbuf[0] = NUL;
   } else {

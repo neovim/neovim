@@ -146,7 +146,7 @@ int os_get_uname(uv_uid_t uid, char *s, size_t len)
 
   if ((pw = getpwuid(uid)) != NULL  // NOLINT(runtime/threadsafe_fn)
       && pw->pw_name != NULL && *(pw->pw_name) != NUL) {
-    STRLCPY(s, pw->pw_name, len);
+    xstrlcpy(s, pw->pw_name, len);
     return OK;
   }
 #endif

@@ -984,11 +984,11 @@ static void print_tag_list(int new_tag, int use_tagstack, int num_matches, char 
 static int add_llist_tags(char_u *tag, int num_matches, char **matches)
 {
   list_T *list;
-  char_u tag_name[128 + 1];
-  char_u *fname;
+  char tag_name[128 + 1];
+  char *fname;
   char_u *cmd;
   int i;
-  char_u *p;
+  char *p;
   tagptrs_T tagp;
 
   fname = xmalloc(MAXPATHL + 1);
@@ -1007,15 +1007,15 @@ static int add_llist_tags(char_u *tag, int num_matches, char **matches)
     if (len > 128) {
       len = 128;
     }
-    STRLCPY(tag_name, tagp.tagname, len + 1);
+    xstrlcpy(tag_name, tagp.tagname, (size_t)len + 1);
     tag_name[len] = NUL;
 
     // Save the tag file name
-    p = tag_full_fname(&tagp);
+    p = (char *)tag_full_fname(&tagp);
     if (p == NULL) {
       continue;
     }
-    STRLCPY(fname, p, MAXPATHL);
+    xstrlcpy(fname, p, MAXPATHL);
     XFREE_CLEAR(p);
 
     // Get the line number or the search pattern used to locate
@@ -1033,9 +1033,9 @@ static int add_llist_tags(char_u *tag, int num_matches, char **matches)
       cmd_start = (char_u *)tagp.command;
       cmd_end = tagp.command_end;
       if (cmd_end == NULL) {
-        for (p = (char_u *)tagp.command;
+        for (p = tagp.command;
              *p && *p != '\r' && *p != '\n'; p++) {}
-        cmd_end = p;
+        cmd_end = (char_u *)p;
       }
 
       // Now, cmd_end points to the character after the
@@ -1091,7 +1091,7 @@ static int add_llist_tags(char_u *tag, int num_matches, char **matches)
     dict = tv_dict_alloc();
     tv_list_append_dict(list, dict);
 
-    tv_dict_add_str(dict, S_LEN("text"), (const char *)tag_name);
+    tv_dict_add_str(dict, S_LEN("text"), tag_name);
     tv_dict_add_str(dict, S_LEN("filename"), (const char *)fname);
     tv_dict_add_nr(dict, S_LEN("lnum"), lnum);
     if (lnum == 0) {
@@ -1484,7 +1484,7 @@ static bool findtags_in_help_init(findtags_state_T *st)
     // language name in help_lang[].
     i = (int)strlen(st->tag_fname);
     if (i > 3 && st->tag_fname[i - 3] == '-') {
-      STRLCPY(st->help_lang, st->tag_fname + i - 2, 3);
+      xstrlcpy(st->help_lang, st->tag_fname + i - 2, 3);
     } else {
       STRCPY(st->help_lang, "en");
     }
@@ -2034,7 +2034,7 @@ static void findtags_add_match(findtags_state_T *st, tagptrs_T *tagpp, findtags_
       if (tagpp->command + 2 < (char *)temp_end) {
         len = (size_t)(temp_end - (char_u *)tagpp->command - 2);
         mfp = xmalloc(len + 2);
-        STRLCPY(mfp, tagpp->command + 2, len + 1);
+        xstrlcpy(mfp, tagpp->command + 2, len + 1);
       } else {
         mfp = NULL;
       }
@@ -2042,7 +2042,7 @@ static void findtags_add_match(findtags_state_T *st, tagptrs_T *tagpp, findtags_
     } else {
       len = (size_t)((char *)tagpp->tagname_end - tagpp->tagname);
       mfp = xmalloc(sizeof(char) + len + 1);
-      STRLCPY(mfp, tagpp->tagname, len + 1);
+      xstrlcpy(mfp, tagpp->tagname, len + 1);
 
       // if wanted, re-read line to get long form too
       if (State & MODE_INSERT) {
@@ -2558,7 +2558,7 @@ int get_tagfname(tagname_T *tnp, int first, char *buf)
         }
       }
     } else {
-      STRLCPY(buf, ((char **)(tag_fnames.ga_data))[tnp->tn_hf_idx++], MAXPATHL);
+      xstrlcpy(buf, ((char **)(tag_fnames.ga_data))[tnp->tn_hf_idx++], MAXPATHL);
     }
     return OK;
   }
@@ -3140,8 +3140,7 @@ static char *expand_tag_fname(char *fname, char *const tag_fname, const bool exp
       && (p = path_tail(tag_fname)) != tag_fname) {
     retval = xmalloc(MAXPATHL);
     STRCPY(retval, tag_fname);
-    STRLCPY(retval + (p - tag_fname), fname,
-            MAXPATHL - (p - tag_fname));
+    xstrlcpy(retval + (p - tag_fname), fname, (size_t)(MAXPATHL - (p - tag_fname)));
     // Translate names like "src/a/../b/file.c" into "src/b/file.c".
     simplify_filename((char_u *)retval);
   } else {
@@ -3303,7 +3302,7 @@ static int add_tag_field(dict_T *dict, const char *field_name, const char *start
     }
     return FAIL;
   }
-  char_u *buf = xmalloc(MAXPATHL);
+  char *buf = xmalloc(MAXPATHL);
   if (start != NULL) {
     if (end == NULL) {
       end = start + strlen(start);
@@ -3315,11 +3314,10 @@ static int add_tag_field(dict_T *dict, const char *field_name, const char *start
     if (len > MAXPATHL - 1) {
       len = MAXPATHL - 1;
     }
-    STRLCPY(buf, start, len + 1);
+    xstrlcpy(buf, start, (size_t)len + 1);
   }
   buf[len] = NUL;
-  retval = tv_dict_add_str(dict, field_name, strlen(field_name),
-                           (const char *)buf);
+  retval = tv_dict_add_str(dict, field_name, strlen(field_name), buf);
   xfree(buf);
   return retval;
 }

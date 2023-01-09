@@ -445,7 +445,7 @@ void spell_suggest(int count)
 {
   char *line;
   pos_T prev_cursor = curwin->w_cursor;
-  char_u wcopy[MAXWLEN + 2];
+  char wcopy[MAXWLEN + 2];
   char_u *p;
   int c;
   suginfo_T sug;
@@ -562,10 +562,10 @@ void spell_suggest(int count)
 
       // The suggested word may replace only part of the bad word, add
       // the not replaced part.  But only when it's not getting too long.
-      STRLCPY(wcopy, stp->st_word, MAXWLEN + 1);
+      xstrlcpy(wcopy, stp->st_word, MAXWLEN + 1);
       int el = sug.su_badlen - stp->st_orglen;
       if (el > 0 && stp->st_wordlen + el <= MAXWLEN) {
-        STRLCPY(wcopy + stp->st_wordlen, sug.su_badptr + stp->st_orglen, el + 1);
+        xstrlcpy(wcopy + stp->st_wordlen, sug.su_badptr + stp->st_orglen, (size_t)el + 1);
       }
       vim_snprintf((char *)IObuff, IOSIZE, "%2d", i + 1);
       if (cmdmsg_rl) {
@@ -743,7 +743,7 @@ static void spell_find_suggest(char_u *badptr, int badlen, suginfo_T *su, int ma
   if (su->su_badlen >= MAXWLEN) {
     su->su_badlen = MAXWLEN - 1;        // just in case
   }
-  STRLCPY(su->su_badword, su->su_badptr, su->su_badlen + 1);
+  xstrlcpy((char *)su->su_badword, su->su_badptr, (size_t)su->su_badlen + 1);
   (void)spell_casefold(curwin, (char_u *)su->su_badptr, su->su_badlen, (char_u *)su->su_fbadword,
                        MAXWLEN);
 
@@ -783,7 +783,7 @@ static void spell_find_suggest(char_u *badptr, int badlen, suginfo_T *su, int ma
   // for that.
   c = utf_ptr2char(su->su_badptr);
   if (!SPELL_ISUPPER(c) && attr == HLF_COUNT) {
-    make_case_word(su->su_badword, (char_u *)buf, WF_ONECAP);
+    make_case_word((char_u *)su->su_badword, (char_u *)buf, WF_ONECAP);
     add_suggestion(su, &su->su_ga, (char *)buf, su->su_badlen, SCORE_ICASE,
                    0, true, su->su_sallang, false);
   }
@@ -1393,9 +1393,9 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char *fword, bool soun
 
           compflags[sp->ts_complen] = (char_u)((unsigned)flags >> 24);
           compflags[sp->ts_complen + 1] = NUL;
-          STRLCPY(preword + sp->ts_prewordlen,
-                  tword + sp->ts_splitoff,
-                  sp->ts_twordlen - sp->ts_splitoff + 1);
+          xstrlcpy(preword + sp->ts_prewordlen,
+                   tword + sp->ts_splitoff,
+                   (size_t)(sp->ts_twordlen - sp->ts_splitoff) + 1);
 
           // Verify CHECKCOMPOUNDPATTERN  rules.
           if (match_checkcompoundpattern(preword,  sp->ts_prewordlen,
@@ -2584,7 +2584,7 @@ static void score_combine(suginfo_T *su)
   // Add the alternate score to su_sga.
   for (int i = 0; i < su->su_sga.ga_len; i++) {
     stp = &SUG(su->su_sga, i);
-    stp->st_altscore = spell_edit_score(slang, su->su_badword, (char_u *)stp->st_word);
+    stp->st_altscore = spell_edit_score(slang, (char_u *)su->su_badword, (char_u *)stp->st_word);
     if (stp->st_score == SCORE_MAXMAX) {
       stp->st_score = (SCORE_BIG * 7 + stp->st_altscore) / 8;
     } else {
@@ -2653,7 +2653,7 @@ static int stp_sal_score(suggest_T *stp, suginfo_T *su, slang_T *slang, char_u *
   char_u badsound2[MAXWLEN];
   char_u fword[MAXWLEN];
   char_u goodsound[MAXWLEN];
-  char_u goodword[MAXWLEN];
+  char goodword[MAXWLEN];
   int lendiff;
 
   lendiff = su->su_badlen - stp->st_orglen;
@@ -2682,9 +2682,9 @@ static int stp_sal_score(suggest_T *stp, suginfo_T *su, slang_T *slang, char_u *
     // Add part of the bad word to the good word, so that we soundfold
     // what replaces the bad word.
     STRCPY(goodword, stp->st_word);
-    STRLCPY(goodword + stp->st_wordlen,
-            su->su_badptr + su->su_badlen - lendiff, lendiff + 1);
-    pgood = goodword;
+    xstrlcpy(goodword + stp->st_wordlen,
+             su->su_badptr + su->su_badlen - lendiff, (size_t)lendiff + 1);
+    pgood = (char_u *)goodword;
   } else {
     pgood = (char_u *)stp->st_word;
   }
@@ -2949,9 +2949,9 @@ badword:
         // inefficient, using an array is quicker.
         limit = MAXSCORE(su->su_sfmaxscore - goodscore, score);
         if (limit > SCORE_LIMITMAX) {
-          goodscore += spell_edit_score(slang, su->su_badword, p);
+          goodscore += spell_edit_score(slang, (char_u *)su->su_badword, p);
         } else {
-          goodscore += spell_edit_score_limit(slang, su->su_badword,
+          goodscore += spell_edit_score_limit(slang, (char_u *)su->su_badword,
                                               p, limit);
         }
 
@@ -3205,7 +3205,7 @@ static void add_suggestion(suginfo_T *su, garray_T *gap, const char *goodword, i
 static void check_suggestions(suginfo_T *su, garray_T *gap)
 {
   suggest_T *stp;
-  char_u longword[MAXWLEN + 1];
+  char longword[MAXWLEN + 1];
   int len;
   hlf_T attr;
 
@@ -3215,12 +3215,12 @@ static void check_suggestions(suginfo_T *su, garray_T *gap)
   stp = &SUG(*gap, 0);
   for (int i = gap->ga_len - 1; i >= 0; i--) {
     // Need to append what follows to check for "the the".
-    STRLCPY(longword, stp[i].st_word, MAXWLEN + 1);
+    xstrlcpy(longword, stp[i].st_word, MAXWLEN + 1);
     len = stp[i].st_wordlen;
-    STRLCPY(longword + len, su->su_badptr + stp[i].st_orglen,
-            MAXWLEN - len + 1);
+    xstrlcpy(longword + len, su->su_badptr + stp[i].st_orglen,
+             (size_t)(MAXWLEN - len + 1));
     attr = HLF_COUNT;
-    (void)spell_check(curwin, longword, &attr, NULL, false);
+    (void)spell_check(curwin, (char_u *)longword, &attr, NULL, false);
     if (attr != HLF_COUNT) {
       // Remove this entry.
       xfree(stp[i].st_word);

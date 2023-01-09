@@ -374,7 +374,7 @@ static void win_redr_custom(win_T *wp, bool draw_winbar, bool draw_ruler)
 
   // Make all characters printable.
   p = transstr(buf, true);
-  len = (int)STRLCPY(buf, p, sizeof(buf));
+  len = (int)xstrlcpy(buf, p, sizeof(buf));
   len = (size_t)len < sizeof(buf) ? len : (int)sizeof(buf) - 1;
   xfree(p);
 
@@ -1349,7 +1349,7 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, char *opt_n
       // get replaced with the fillchar
       fillable = false;
       if (buf_spname(wp->w_buffer) != NULL) {
-        STRLCPY(NameBuff, buf_spname(wp->w_buffer), MAXPATHL);
+        xstrlcpy(NameBuff, buf_spname(wp->w_buffer), MAXPATHL);
       } else {
         char *t = (opt == STL_FULLPATH) ? wp->w_buffer->b_ffname
                                           : wp->w_buffer->b_fname;

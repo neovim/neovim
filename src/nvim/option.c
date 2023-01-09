@@ -1455,7 +1455,7 @@ skip:
     }
 
     if (errmsg != NULL) {
-      STRLCPY(IObuff, _(errmsg), IOSIZE);
+      xstrlcpy(IObuff, _(errmsg), IOSIZE);
       int i = (int)strlen(IObuff) + 2;
       if (i + (arg - startarg) < IOSIZE) {
         // append the argument with the error
@@ -4798,15 +4798,15 @@ void ExpandOldSetting(int *num_file, char ***file)
 /// @param opt_flags  OPT_GLOBAL and/or OPT_LOCAL
 static void option_value2string(vimoption_T *opp, int scope)
 {
-  char_u *varp = (char_u *)get_varp_scope(opp, scope);
+  char *varp = get_varp_scope(opp, scope);
 
   if (opp->flags & P_NUM) {
     long wc = 0;
 
-    if (wc_use_keyname(varp, &wc)) {
-      STRLCPY(NameBuff, get_special_key_name((int)wc, 0), sizeof(NameBuff));
+    if (wc_use_keyname((char_u *)varp, &wc)) {
+      xstrlcpy(NameBuff, (char *)get_special_key_name((int)wc, 0), sizeof(NameBuff));
     } else if (wc != 0) {
-      STRLCPY(NameBuff, transchar((int)wc), sizeof(NameBuff));
+      xstrlcpy(NameBuff, (char *)transchar((int)wc), sizeof(NameBuff));
     } else {
       snprintf((char *)NameBuff,
                sizeof(NameBuff),
@@ -4814,16 +4814,16 @@ static void option_value2string(vimoption_T *opp, int scope)
                (int64_t)(*(long *)varp));
     }
   } else {  // P_STRING
-    varp = *(char_u **)(varp);
+    varp = *(char **)(varp);
     if (varp == NULL) {  // Just in case.
       NameBuff[0] = NUL;
     } else if (opp->flags & P_EXPAND) {
-      home_replace(NULL, (char *)varp, (char *)NameBuff, MAXPATHL, false);
+      home_replace(NULL, varp, (char *)NameBuff, MAXPATHL, false);
       // Translate 'pastetoggle' into special key names.
     } else if ((char **)opp->var == &p_pt) {
       str2specialbuf((const char *)p_pt, (char *)NameBuff, MAXPATHL);
     } else {
-      STRLCPY(NameBuff, varp, MAXPATHL);
+      xstrlcpy(NameBuff, varp, MAXPATHL);
     }
   }
 }
