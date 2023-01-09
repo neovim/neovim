@@ -1739,6 +1739,28 @@ describe('float window', function()
          }))
     end)
 
+    it('validate title_pos in nvim_win_get_config', function()
+      local title_pos = exec_lua([[
+        local bufnr = vim.api.nvim_create_buf(false, false)
+        local opts = {
+          relative = 'editor',
+          col = 2,
+          row = 5,
+          height = 2,
+          width = 9,
+          border = 'double',
+          title = 'Test',
+          title_pos = 'center'
+        }
+
+        local win_id = vim.api.nvim_open_win(bufnr, true, opts)
+        return vim.api.nvim_win_get_config(win_id).title_pos
+      ]])
+
+      eq('center', title_pos)
+    end)
+
+
     it('border with title', function()
       local buf = meths.create_buf(false, false)
       meths.buf_set_lines(buf, 0, -1, true, {' halloj! ',
