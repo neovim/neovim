@@ -116,7 +116,7 @@ end
 ---               Default choice selected when user presses <Enter>
 ---@param on_choice fun(idx:number|nil,choice:string|nil)
 ---               Called once the user chooses or cancel the input.
----               `idx` is the 1-based index of the 'choice' in `opts.choices` table,
+---               `idx` is the 1-based index of the `choice` in `opts.choices` table,
 ---               (it might be `0` if none of the choices is picked, or
 ---               `nil` if the user aborted the dialog.)
 ---		  `choice` is what the user chose (`nil` on abortion or
