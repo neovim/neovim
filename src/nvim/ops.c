@@ -1109,12 +1109,12 @@ int do_execreg(int regname, int colon, int addcr, int silent)
     // don't keep the cmdline containing @:
     XFREE_CLEAR(new_last_cmdline);
     // Escape all control characters with a CTRL-V
-    p = (char *)vim_strsave_escaped_ext((char_u *)last_cmdline,
-                                        (char_u *)"\001\002\003\004\005\006\007"
-                                        "\010\011\012\013\014\015\016\017"
-                                        "\020\021\022\023\024\025\026\027"
-                                        "\030\031\032\033\034\035\036\037",
-                                        Ctrl_V, false);
+    p = vim_strsave_escaped_ext(last_cmdline,
+                                "\001\002\003\004\005\006\007"
+                                "\010\011\012\013\014\015\016\017"
+                                "\020\021\022\023\024\025\026\027"
+                                "\030\031\032\033\034\035\036\037",
+                                Ctrl_V, false);
     // When in Visual mode "'<,'>" will be prepended to the command.
     // Remove it when it's already there.
     if (VIsual_active && strncmp(p, "'<,'>", 5) == 0) {

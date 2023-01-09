@@ -1577,7 +1577,7 @@ size_t find_ident_at_pos(win_T *wp, linenr_T lnum, colnr_T startcol, char **text
 
   // if i == 0: try to find an identifier
   // if i == 1: try to find any non-white text
-  char_u *ptr = (char_u *)ml_get_buf(wp->w_buffer, lnum, false);
+  char *ptr = ml_get_buf(wp->w_buffer, lnum, false);
   for (i = (find_type & FIND_IDENT) ? 0 : 1; i < 2; i++) {
     // 1. skip to start of identifier/text
     col = startcol;
@@ -1586,11 +1586,11 @@ size_t find_ident_at_pos(win_T *wp, linenr_T lnum, colnr_T startcol, char **text
       if ((find_type & FIND_EVAL) && ptr[col] == ']') {
         break;
       }
-      this_class = mb_get_class(ptr + col);
+      this_class = mb_get_class((char_u *)ptr + col);
       if (this_class != 0 && (i == 1 || this_class != 1)) {
         break;
       }
-      col += utfc_ptr2len((char *)ptr + col);
+      col += utfc_ptr2len(ptr + col);
     }
 
     // When starting on a ']' count it, so that we include the '['.
@@ -1603,18 +1603,18 @@ size_t find_ident_at_pos(win_T *wp, linenr_T lnum, colnr_T startcol, char **text
     if ((find_type & FIND_EVAL) && ptr[col] == ']') {
       this_class = mb_get_class((char_u *)"a");
     } else {
-      this_class = mb_get_class(ptr + col);
+      this_class = mb_get_class((char_u *)ptr + col);
     }
     while (col > 0 && this_class != 0) {
-      prevcol = col - 1 - utf_head_off((char *)ptr, (char *)ptr + col - 1);
-      prev_class = mb_get_class(ptr + prevcol);
+      prevcol = col - 1 - utf_head_off(ptr, ptr + col - 1);
+      prev_class = mb_get_class((char_u *)ptr + prevcol);
       if (this_class != prev_class
           && (i == 0
               || prev_class == 0
               || (find_type & FIND_IDENT))
           && (!(find_type & FIND_EVAL)
               || prevcol == 0
-              || !find_is_eval_item(ptr + prevcol, &prevcol, &bn, BACKWARD))) {
+              || !find_is_eval_item((char_u *)ptr + prevcol, &prevcol, &bn, BACKWARD))) {
         break;
       }
       col = prevcol;
@@ -1640,7 +1640,7 @@ size_t find_ident_at_pos(win_T *wp, linenr_T lnum, colnr_T startcol, char **text
     return 0;
   }
   ptr += col;
-  *text = (char *)ptr;
+  *text = ptr;
   if (textcol != NULL) {
     *textcol = col;
   }
@@ -1650,15 +1650,15 @@ size_t find_ident_at_pos(win_T *wp, linenr_T lnum, colnr_T startcol, char **text
   startcol -= col;
   col = 0;
   // Search for point of changing multibyte character class.
-  this_class = mb_get_class(ptr);
+  this_class = mb_get_class((char_u *)ptr);
   while (ptr[col] != NUL  // -V781
          && ((i == 0
-              ? mb_get_class(ptr + col) == this_class
-              : mb_get_class(ptr + col) != 0)
+              ? mb_get_class((char_u *)ptr + col) == this_class
+              : mb_get_class((char_u *)ptr + col) != 0)
              || ((find_type & FIND_EVAL)
                  && col <= (int)startcol
-                 && find_is_eval_item(ptr + col, &col, &bn, FORWARD)))) {
-    col += utfc_ptr2len((char *)ptr + col);
+                 && find_is_eval_item((char_u *)ptr + col, &col, &bn, FORWARD)))) {
+    col += utfc_ptr2len(ptr + col);
   }
 
   assert(col >= 0);
@@ -1783,7 +1783,7 @@ void may_clear_cmdline(void)
 }
 
 // Routines for displaying a partly typed command
-static char_u old_showcmd_buf[SHOWCMD_BUFLEN];    // For push_showcmd()
+static char old_showcmd_buf[SHOWCMD_BUFLEN];    // For push_showcmd()
 static bool showcmd_is_clear = true;
 static bool showcmd_visual = false;
 
@@ -1827,20 +1827,20 @@ void clear_showcmd(void)
     } else if (VIsual_mode == 'V' || VIsual.lnum != curwin->w_cursor.lnum) {
       snprintf(showcmd_buf, SHOWCMD_BUFLEN, "%" PRId64, (int64_t)lines);
     } else {
-      char_u *s, *e;
+      char *s, *e;
       int l;
       int bytes = 0;
       int chars = 0;
 
       if (cursor_bot) {
-        s = (char_u *)ml_get_pos(&VIsual);
-        e = (char_u *)get_cursor_pos_ptr();
+        s = ml_get_pos(&VIsual);
+        e = get_cursor_pos_ptr();
       } else {
-        s = (char_u *)get_cursor_pos_ptr();
-        e = (char_u *)ml_get_pos(&VIsual);
+        s = get_cursor_pos_ptr();
+        e = ml_get_pos(&VIsual);
       }
       while ((*p_sel != 'e') ? s <= e : s < e) {
-        l = utfc_ptr2len((char *)s);
+        l = utfc_ptr2len(s);
         if (l == 0) {
           bytes++;
           chars++;
@@ -2269,7 +2269,7 @@ static bool is_ident(const char_u *line, int offset)
 /// @return           fail when not found.
 bool find_decl(char_u *ptr, size_t len, bool locally, bool thisblock, int flags_arg)
 {
-  char_u *pat;
+  char *pat;
   pos_T old_pos;
   pos_T par_pos;
   pos_T found_pos;
@@ -2285,7 +2285,7 @@ bool find_decl(char_u *ptr, size_t len, bool locally, bool thisblock, int flags_
   // Put "\V" before the pattern to avoid that the special meaning of "."
   // and "~" causes trouble.
   assert(len <= INT_MAX);
-  sprintf((char *)pat, vim_iswordp((char *)ptr) ? "\\V\\<%.*s\\>" : "\\V%.*s",  // NOLINT(runtime/printf)
+  sprintf(pat, vim_iswordp((char *)ptr) ? "\\V\\<%.*s\\>" : "\\V%.*s",  // NOLINT(runtime/printf)
           (int)len, ptr);
   old_pos = curwin->w_cursor;
   save_p_ws = p_ws;
@@ -2313,7 +2313,7 @@ bool find_decl(char_u *ptr, size_t len, bool locally, bool thisblock, int flags_
   clearpos(&found_pos);
   for (;;) {
     t = searchit(curwin, curbuf, &curwin->w_cursor, NULL, FORWARD,
-                 pat, 1L, searchflags, RE_LAST, NULL);
+                 (char_u *)pat, 1L, searchflags, RE_LAST, NULL);
     if (curwin->w_cursor.lnum >= old_pos.lnum) {
       t = false;         // match after start is failure too
     }
@@ -3815,10 +3815,10 @@ static void nv_left(cmdarg_T *cap)
         // Don't adjust op_end now, otherwise it won't work.
         if ((cap->oap->op_type == OP_DELETE || cap->oap->op_type == OP_CHANGE)
             && !LINEEMPTY(curwin->w_cursor.lnum)) {
-          char_u *cp = (char_u *)get_cursor_pos_ptr();
+          char *cp = get_cursor_pos_ptr();
 
           if (*cp != NUL) {
-            curwin->w_cursor.col += utfc_ptr2len((char *)cp);
+            curwin->w_cursor.col += utfc_ptr2len(cp);
           }
           cap->retval |= CA_NO_ADJ_OP_END;
         }
@@ -3890,7 +3890,7 @@ static void nv_down(cmdarg_T *cap)
 /// Grab the file name under the cursor and edit it.
 static void nv_gotofile(cmdarg_T *cap)
 {
-  char_u *ptr;
+  char *ptr;
   linenr_T lnum = -1;
 
   if (check_text_locked(cap->oap)) {
@@ -3901,7 +3901,7 @@ static void nv_gotofile(cmdarg_T *cap)
     return;
   }
 
-  ptr = grab_file_name(cap->count1, &lnum);
+  ptr = (char *)grab_file_name(cap->count1, &lnum);
 
   if (ptr != NULL) {
     // do autowrite if necessary
@@ -3909,7 +3909,7 @@ static void nv_gotofile(cmdarg_T *cap)
       (void)autowrite(curbuf, false);
     }
     setpcmark();
-    if (do_ecmd(0, (char *)ptr, NULL, NULL, ECMD_LAST,
+    if (do_ecmd(0, ptr, NULL, NULL, ECMD_LAST,
                 buf_hide(curbuf) ? ECMD_HIDE : 0, curwin) == OK
         && cap->nchar == 'F' && lnum >= 0) {
       curwin->w_cursor.lnum = lnum;
@@ -5239,7 +5239,7 @@ static void nv_g_underscore_cmd(cmdarg_T *cap)
     return;
   }
 
-  char_u *ptr = (char_u *)get_cursor_line_ptr();
+  char *ptr = get_cursor_line_ptr();
 
   // In Visual mode we may end up after the line.
   if (curwin->w_cursor.col > 0 && ptr[curwin->w_cursor.col] == NUL) {
@@ -6227,7 +6227,7 @@ static void nv_object(cmdarg_T *cap)
 {
   bool flag;
   bool include;
-  char_u *mps_save;
+  char *mps_save;
 
   if (cap->cmdchar == 'i') {
     include = false;        // "ix" = inner object: exclude white space
@@ -6235,7 +6235,7 @@ static void nv_object(cmdarg_T *cap)
     include = true;         // "ax" = an object: include white space
   }
   // Make sure (), [], {} and <> are in 'matchpairs'
-  mps_save = (char_u *)curbuf->b_p_mps;
+  mps_save = curbuf->b_p_mps;
   curbuf->b_p_mps = "(:),{:},[:],<:>";
 
   switch (cap->nchar) {
@@ -6290,7 +6290,7 @@ static void nv_object(cmdarg_T *cap)
     break;
   }
 
-  curbuf->b_p_mps = (char *)mps_save;
+  curbuf->b_p_mps = mps_save;
   if (!flag) {
     clearopbeep(cap->oap);
   }

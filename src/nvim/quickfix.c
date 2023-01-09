@@ -814,7 +814,7 @@ retry:
   }
 
   // Convert a line if it contains a non-ASCII character
-  if (state->vc.vc_type != CONV_NONE && has_non_ascii((char_u *)state->linebuf)) {
+  if (state->vc.vc_type != CONV_NONE && has_non_ascii(state->linebuf)) {
     char *line = string_convert(&state->vc, state->linebuf, &state->linelen);
     if (line != NULL) {
       if (state->linelen < IOSIZE) {

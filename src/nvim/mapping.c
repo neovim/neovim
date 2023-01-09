@@ -297,10 +297,10 @@ static void set_maparg_rhs(const char *const orig_rhs, const size_t orig_rhs_len
 
   if (rhs_lua == LUA_NOREF) {
     mapargs->orig_rhs_len = orig_rhs_len;
-    mapargs->orig_rhs = xcalloc(mapargs->orig_rhs_len + 1, sizeof(char_u));
+    mapargs->orig_rhs = xcalloc(mapargs->orig_rhs_len + 1, sizeof(char));
     xstrlcpy(mapargs->orig_rhs, orig_rhs, mapargs->orig_rhs_len + 1);
     if (STRICMP(orig_rhs, "<nop>") == 0) {  // "<Nop>" means nothing
-      mapargs->rhs = xcalloc(1, sizeof(char_u));  // single NUL-char
+      mapargs->rhs = xcalloc(1, sizeof(char));  // single NUL-char
       mapargs->rhs_len = 0;
       mapargs->rhs_is_noop = true;
     } else {
@@ -316,7 +316,7 @@ static void set_maparg_rhs(const char *const orig_rhs, const size_t orig_rhs_len
   } else {
     char tmp_buf[64];
     // orig_rhs is not used for Lua mappings, but still needs to be a string.
-    mapargs->orig_rhs = xcalloc(1, sizeof(char_u));
+    mapargs->orig_rhs = xcalloc(1, sizeof(char));
     mapargs->orig_rhs_len = 0;
     // stores <lua>ref_no<cr> in map_str
     mapargs->rhs_len = (size_t)vim_snprintf(S_LEN(tmp_buf), "%c%c%c%d\r", K_SPECIAL,
@@ -344,53 +344,53 @@ static void set_maparg_rhs(const char *const orig_rhs, const size_t orig_rhs_len
 /// @param[out] mapargs   MapArguments struct holding all extracted argument
 ///                       values.
 /// @return 0 on success, 1 if invalid arguments are detected.
-static int str_to_mapargs(const char_u *strargs, bool is_unmap, MapArguments *mapargs)
+static int str_to_mapargs(const char *strargs, bool is_unmap, MapArguments *mapargs)
 {
-  const char *to_parse = (char *)strargs;
-  to_parse = skipwhite((char *)to_parse);
+  const char *to_parse = strargs;
+  to_parse = skipwhite(to_parse);
   CLEAR_POINTER(mapargs);
 
   // Accept <buffer>, <nowait>, <silent>, <expr>, <script>, and <unique> in
   // any order.
   while (true) {
     if (strncmp(to_parse, "<buffer>", 8) == 0) {
-      to_parse = skipwhite((char *)to_parse + 8);
+      to_parse = skipwhite(to_parse + 8);
       mapargs->buffer = true;
       continue;
     }
 
     if (strncmp(to_parse, "<nowait>", 8) == 0) {
-      to_parse = skipwhite((char *)to_parse + 8);
+      to_parse = skipwhite(to_parse + 8);
       mapargs->nowait = true;
       continue;
     }
 
     if (strncmp(to_parse, "<silent>", 8) == 0) {
-      to_parse = skipwhite((char *)to_parse + 8);
+      to_parse = skipwhite(to_parse + 8);
       mapargs->silent = true;
       continue;
     }
 
     // Ignore obsolete "<special>" modifier.
     if (strncmp(to_parse, "<special>", 9) == 0) {
-      to_parse = skipwhite((char *)to_parse + 9);
+      to_parse = skipwhite(to_parse + 9);
       continue;
     }
 
     if (strncmp(to_parse, "<script>", 8) == 0) {
-      to_parse = skipwhite((char *)to_parse + 8);
+      to_parse = skipwhite(to_parse + 8);
       mapargs->script = true;
       continue;
     }
 
     if (strncmp(to_parse, "<expr>", 6) == 0) {
-      to_parse = skipwhite((char *)to_parse + 6);
+      to_parse = skipwhite(to_parse + 6);
       mapargs->expr = true;
       continue;
     }
 
     if (strncmp(to_parse, "<unique>", 8) == 0) {
-      to_parse = skipwhite((char *)to_parse + 8);
+      to_parse = skipwhite(to_parse + 8);
       mapargs->unique = true;
       continue;
     }
@@ -407,7 +407,7 @@ static int str_to_mapargs(const char_u *strargs, bool is_unmap, MapArguments *ma
   //
   // With :unmap, literal white space is included in the {lhs}; there is no
   // separate {rhs}.
-  const char *lhs_end = (char *)to_parse;
+  const char *lhs_end = to_parse;
   bool do_backslash = (vim_strchr(p_cpo, CPO_BSLASH) == NULL);
   while (*lhs_end && (is_unmap || !ascii_iswhite(*lhs_end))) {
     if ((lhs_end[0] == Ctrl_V || (do_backslash && lhs_end[0] == '\\'))
@@ -915,7 +915,7 @@ theend:
 int do_map(int maptype, char_u *arg, int mode, bool is_abbrev)
 {
   MapArguments parsed_args;
-  int result = str_to_mapargs(arg, maptype == MAPTYPE_UNMAP, &parsed_args);
+  int result = str_to_mapargs((char *)arg, maptype == MAPTYPE_UNMAP, &parsed_args);
   switch (result) {
   case 0:
     break;
@@ -1067,9 +1067,9 @@ bool map_to_exists(const char *const str, const char *const modechars, const boo
   int retval;
 
   char *buf = NULL;
-  const char_u *const rhs = (char_u *)replace_termcodes(str, strlen(str),
-                                                        &buf, REPTERM_DO_LT,
-                                                        NULL, CPO_TO_CPO_FLAGS);
+  const char *const rhs = replace_termcodes(str, strlen(str),
+                                            &buf, REPTERM_DO_LT,
+                                            NULL, CPO_TO_CPO_FLAGS);
 
 #define MAPMODE(mode, modechars, chr, modeflags) \
   do { \
@@ -1087,7 +1087,7 @@ bool map_to_exists(const char *const str, const char *const modechars, const boo
   MAPMODE(mode, modechars, 'c', MODE_CMDLINE);
 #undef MAPMODE
 
-  retval = map_to_exists_mode((char *)rhs, mode, abbr);
+  retval = map_to_exists_mode(rhs, mode, abbr);
   xfree(buf);
 
   return retval;
@@ -1344,7 +1344,7 @@ int ExpandMappings(regmatch_T *regmatch, int *num_file, char ***file)
     }
 
     if (round == 1) {
-      *file = xmalloc((size_t)count * sizeof(char_u *));
+      *file = xmalloc((size_t)count * sizeof(char *));
     }
   }   // for (round)
 
@@ -1418,25 +1418,25 @@ bool check_abbr(int c, char *ptr, int col, int mincol)
 
   {
     bool vim_abbr;
-    char_u *p = mb_prevptr((char_u *)ptr, (char_u *)ptr + col);
-    if (!vim_iswordp((char *)p)) {
+    char *p = (char *)mb_prevptr((char_u *)ptr, (char_u *)ptr + col);
+    if (!vim_iswordp(p)) {
       vim_abbr = true;    // Vim added abbr.
     } else {
       vim_abbr = false;   // vi compatible abbr.
-      if (p > (char_u *)ptr) {
-        is_id = vim_iswordp((char *)mb_prevptr((char_u *)ptr, p));
+      if (p > ptr) {
+        is_id = vim_iswordp((char *)mb_prevptr((char_u *)ptr, (char_u *)p));
       }
     }
     clen = 1;
-    while (p > (char_u *)ptr + mincol) {
-      p = mb_prevptr((char_u *)ptr, p);
-      if (ascii_isspace(*p) || (!vim_abbr && is_id != vim_iswordp((char *)p))) {
-        p += utfc_ptr2len((char *)p);
+    while (p > ptr + mincol) {
+      p = (char *)mb_prevptr((char_u *)ptr, (char_u *)p);
+      if (ascii_isspace(*p) || (!vim_abbr && is_id != vim_iswordp(p))) {
+        p += utfc_ptr2len(p);
         break;
       }
       clen++;
     }
-    scol = (int)(p - (char_u *)ptr);
+    scol = (int)(p - ptr);
   }
 
   if (scol < mincol) {
@@ -1623,8 +1623,8 @@ char *eval_map_expr(mapblock_T *mp, int c)
 int makemap(FILE *fd, buf_T *buf)
 {
   mapblock_T *mp;
-  char_u c1, c2, c3;
-  char_u *p;
+  char c1, c2, c3;
+  char *p;
   char *cmd;
   int abbr;
   int hash;
@@ -1662,8 +1662,8 @@ int makemap(FILE *fd, buf_T *buf)
         if (mp->m_luaref != LUA_NOREF) {
           continue;
         }
-        for (p = (char_u *)mp->m_str; *p != NUL; p++) {
-          if (p[0] == K_SPECIAL && p[1] == KS_EXTRA
+        for (p = mp->m_str; *p != NUL; p++) {
+          if ((uint8_t)p[0] == K_SPECIAL && (uint8_t)p[1] == KS_EXTRA
               && p[2] == KE_SNR) {
             break;
           }
@@ -2107,13 +2107,12 @@ static void get_maparg(typval_T *argvars, typval_T *rettv, int exact)
   const int flags = REPTERM_FROM_PART | REPTERM_DO_LT;
   const int mode = get_map_mode((char **)&which, 0);
 
-  char_u *keys_simplified
-    = (char_u *)replace_termcodes(keys, strlen(keys), &keys_buf, flags, &did_simplify,
-                                  CPO_TO_CPO_FLAGS);
+  char *keys_simplified = replace_termcodes(keys, strlen(keys), &keys_buf, flags, &did_simplify,
+                                            CPO_TO_CPO_FLAGS);
   mapblock_T *mp = NULL;
   int buffer_local;
   LuaRef rhs_lua;
-  char *rhs = check_map((char *)keys_simplified, mode, exact, false, abbr, &mp, &buffer_local,
+  char *rhs = check_map(keys_simplified, mode, exact, false, abbr, &mp, &buffer_local,
                         &rhs_lua);
   if (did_simplify) {
     // When the lhs is being simplified the not-simplified keys are
@@ -2140,7 +2139,7 @@ static void get_maparg(typval_T *argvars, typval_T *rettv, int exact)
     // Return a dictionary.
     if (mp != NULL && (rhs != NULL || rhs_lua != LUA_NOREF)) {
       Dictionary dict = mapblock_fill_dict(mp,
-                                           did_simplify ? (char *)keys_simplified : NULL,
+                                           did_simplify ? keys_simplified : NULL,
                                            buffer_local, true);
       (void)object_to_vim(DICTIONARY_OBJ(dict), rettv, NULL);
       api_free_dictionary(dict);
@@ -2350,14 +2349,14 @@ void langmap_init(void)
 /// changed at any time!
 void langmap_set(void)
 {
-  char_u *p;
-  char_u *p2;
+  char *p;
+  char *p2;
   int from, to;
 
   ga_clear(&langmap_mapga);                 // clear the previous map first
   langmap_init();                           // back to one-to-one map
 
-  for (p = (char_u *)p_langmap; p[0] != NUL;) {
+  for (p = p_langmap; p[0] != NUL;) {
     for (p2 = p; p2[0] != NUL && p2[0] != ',' && p2[0] != ';';
          MB_PTR_ADV(p2)) {
       if (p2[0] == '\\' && p2[1] != NUL) {
@@ -2377,7 +2376,7 @@ void langmap_set(void)
       if (p[0] == '\\' && p[1] != NUL) {
         p++;
       }
-      from = utf_ptr2char((char *)p);
+      from = utf_ptr2char(p);
       to = NUL;
       if (p2 == NULL) {
         MB_PTR_ADV(p);
@@ -2385,14 +2384,14 @@ void langmap_set(void)
           if (p[0] == '\\') {
             p++;
           }
-          to = utf_ptr2char((char *)p);
+          to = utf_ptr2char(p);
         }
       } else {
         if (p2[0] != ',') {
           if (p2[0] == '\\') {
             p2++;
           }
-          to = utf_ptr2char((char *)p2);
+          to = utf_ptr2char(p2);
         }
       }
       if (to == NUL) {
@@ -2416,8 +2415,7 @@ void langmap_set(void)
           p = p2;
           if (p[0] != NUL) {
             if (p[0] != ',') {
-              semsg(_("E358: 'langmap': Extra characters after semicolon: %s"),
-                    p);
+              semsg(_("E358: 'langmap': Extra characters after semicolon: %s"), p);
               return;
             }
             p++;

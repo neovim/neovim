@@ -1332,7 +1332,7 @@ static char *shell_xescape_xquote(const char *cmd)
 
   const char *ecmd = cmd;
   if (*p_sxe != NUL && strcmp(p_sxq, "(") == 0) {
-    ecmd = (char *)vim_strsave_escaped_ext((char_u *)cmd, p_sxe, '^', false);
+    ecmd = vim_strsave_escaped_ext(cmd, (char *)p_sxe, '^', false);
   }
   size_t ncmd_size = strlen(ecmd) + strlen(p_sxq) * 2 + 1;
   char *ncmd = xmalloc(ncmd_size);

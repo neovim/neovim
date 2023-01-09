@@ -960,10 +960,10 @@ char *replace_termcodes(const char *const from, const size_t from_len, char **co
       // If "mapleader" or "maplocalleader" isn't set use a backslash.
       if (end - src >= 7 && STRNICMP(src, "<Leader>", 8) == 0) {
         len = 8;
-        p = (char *)get_var_value("g:mapleader");
+        p = get_var_value("g:mapleader");
       } else if (end - src >= 12 && STRNICMP(src, "<LocalLeader>", 13) == 0) {
         len = 13;
-        p = (char *)get_var_value("g:maplocalleader");
+        p = get_var_value("g:maplocalleader");
       } else {
         len = 0;
         p = NULL;

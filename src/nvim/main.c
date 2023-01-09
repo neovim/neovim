@@ -242,10 +242,10 @@ int main(int argc, char **argv)
 
   argv0 = argv[0];
 
-  char_u *fname = NULL;   // file name from command line
+  char *fname = NULL;     // file name from command line
   mparm_T params;         // various parameters passed between
                           // main() and other functions.
-  char_u *cwd = NULL;     // current working dir on startup
+  char *cwd = NULL;       // current working dir on startup
   time_init();
 
   // Many variables are in `params` so that we can pass them around easily.
@@ -551,7 +551,7 @@ int main(int argc, char **argv)
 
   // Need to jump to the tag before executing the '-c command'.
   // Makes "vim -c '/return' -t main" work.
-  handle_tag((char_u *)params.tagname);
+  handle_tag(params.tagname);
 
   // Execute any "+", "-c" and "-S" arguments.
   if (params.n_commands > 0) {
@@ -1206,7 +1206,7 @@ static void command_line_scan(mparm_T *parmp)
         break;
       case 'w':    // "-w{number}" set window height
         // "-w {scriptout}" write to script
-        if (ascii_isdigit(((char_u *)argv[0])[argv_idx])) {
+        if (ascii_isdigit((argv[0])[argv_idx])) {
           n = get_number_arg(argv[0], &argv_idx, 10);
           set_option_value_give_err("window", n, NULL, 0);
           break;
@@ -1347,7 +1347,7 @@ scripterror:
 
         case 'w':    // "-w {nr}" 'window' value
           // "-w {scriptout}" append to script file
-          if (ascii_isdigit(*((char_u *)argv[0]))) {
+          if (ascii_isdigit(*(argv[0]))) {
             argv_idx = 0;
             n = get_number_arg(argv[0], &argv_idx, 10);
             set_option_value_give_err("window", n, NULL, 0);
@@ -1480,9 +1480,9 @@ static void init_path(const char *exename)
 }
 
 /// Get filename from command line, if any.
-static char_u *get_fname(mparm_T *parmp, char_u *cwd)
+static char *get_fname(mparm_T *parmp, char *cwd)
 {
-  return (char_u *)alist_name(&GARGLIST[0]);
+  return alist_name(&GARGLIST[0]);
 }
 
 // Decide about window layout for diff mode after reading vimrc.
@@ -1516,7 +1516,7 @@ static void handle_quickfix(mparm_T *paramp)
 
 // Need to jump to the tag before executing the '-c command'.
 // Makes "vim -c '/return' -t main" work.
-static void handle_tag(char_u *tagname)
+static void handle_tag(char *tagname)
 {
   if (tagname != NULL) {
     swap_exists_did_quit = false;
@@ -1704,7 +1704,7 @@ static void create_windows(mparm_T *parmp)
 
 /// If opened more than one window, start editing files in the other
 /// windows. make_windows() has already opened the windows.
-static void edit_buffers(mparm_T *parmp, char_u *cwd)
+static void edit_buffers(mparm_T *parmp, char *cwd)
 {
   int arg_idx;                          // index in argument list
   int i;
@@ -1725,7 +1725,7 @@ static void edit_buffers(mparm_T *parmp, char_u *cwd)
   arg_idx = 1;
   for (i = 1; i < parmp->window_count; i++) {
     if (cwd != NULL) {
-      os_chdir((char *)cwd);
+      os_chdir(cwd);
     }
     // When w_arg_idx is -1 remove the window (see create_windows()).
     if (curwin->w_arg_idx == -1) {
@@ -1944,13 +1944,13 @@ static bool do_user_initialization(void)
     return do_exrc;
   }
 
-  char_u *init_lua_path = (char_u *)stdpaths_user_conf_subpath("init.lua");
-  char_u *user_vimrc = (char_u *)stdpaths_user_conf_subpath("init.vim");
+  char *init_lua_path = stdpaths_user_conf_subpath("init.lua");
+  char *user_vimrc = stdpaths_user_conf_subpath("init.vim");
 
   // init.lua
-  if (os_path_exists((char *)init_lua_path)
-      && do_source((char *)init_lua_path, true, DOSO_VIMRC)) {
-    if (os_path_exists((char *)user_vimrc)) {
+  if (os_path_exists(init_lua_path)
+      && do_source(init_lua_path, true, DOSO_VIMRC)) {
+    if (os_path_exists(user_vimrc)) {
       semsg(_("E5422: Conflicting configs: \"%s\" \"%s\""), init_lua_path,
             user_vimrc);
     }
@@ -1963,10 +1963,10 @@ static bool do_user_initialization(void)
   xfree(init_lua_path);
 
   // init.vim
-  if (do_source((char *)user_vimrc, true, DOSO_VIMRC) != FAIL) {
+  if (do_source(user_vimrc, true, DOSO_VIMRC) != FAIL) {
     do_exrc = p_exrc;
     if (do_exrc) {
-      do_exrc = (path_full_compare(VIMRC_FILE, (char *)user_vimrc, false, true) != kEqualFiles);
+      do_exrc = (path_full_compare(VIMRC_FILE, user_vimrc, false, true) != kEqualFiles);
     }
     xfree(user_vimrc);
     return do_exrc;

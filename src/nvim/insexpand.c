@@ -1327,7 +1327,7 @@ static void ins_compl_dictionaries(char_u *dict_start, char_u *pat, int flags, i
   // to only match at the start of a line.  Otherwise just match the
   // pattern. Also need to double backslashes.
   if (ctrl_x_mode_line_or_eval()) {
-    char *pat_esc = (char *)vim_strsave_escaped(pat, (char_u *)"\\");
+    char *pat_esc = vim_strsave_escaped((char *)pat, "\\");
 
     size_t len = strlen(pat_esc) + 10;
     ptr = xmalloc(len);

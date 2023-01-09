@@ -833,7 +833,7 @@ void ex_marks(exarg_T *eap)
   }
   for (i = 0; i < NGLOBALMARKS; i++) {
     if (namedfm[i].fmark.fnum != 0) {
-      name = (char *)fm_getname(&namedfm[i].fmark, 15);
+      name = fm_getname(&namedfm[i].fmark, 15);
     } else {
       name = namedfm[i].fname;
     }
@@ -1004,7 +1004,7 @@ void ex_jumps(exarg_T *eap)
   msg_puts_title(_("\n jump line  col file/text"));
   for (i = 0; i < curwin->w_jumplistlen && !got_int; i++) {
     if (curwin->w_jumplist[i].fmark.mark.lnum != 0) {
-      name = (char *)fm_getname(&curwin->w_jumplist[i].fmark, 16);
+      name = fm_getname(&curwin->w_jumplist[i].fmark, 16);
 
       // Make sure to output the current indicator, even when on an wiped
       // out buffer.  ":filter" may still skip it.

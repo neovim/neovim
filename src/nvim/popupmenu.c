@@ -408,8 +408,8 @@ void pum_redraw(void)
   int attr;
   int i;
   int idx;
-  char_u *s;
-  char_u *p = NULL;
+  char *s;
+  char *p = NULL;
   int totwidth, width, w;
   int thumb_pos = 0;
   int thumb_height = 1;
@@ -501,15 +501,15 @@ void pum_redraw(void)
 
       switch (round) {
       case 1:
-        p = pum_array[idx].pum_text;
+        p = (char *)pum_array[idx].pum_text;
         break;
 
       case 2:
-        p = pum_array[idx].pum_kind;
+        p = (char *)pum_array[idx].pum_kind;
         break;
 
       case 3:
-        p = pum_array[idx].pum_extra;
+        p = (char *)pum_array[idx].pum_extra;
         break;
       }
 
@@ -518,24 +518,24 @@ void pum_redraw(void)
           if (s == NULL) {
             s = p;
           }
-          w = ptr2cells((char *)p);
+          w = ptr2cells(p);
 
           if ((*p == NUL) || (*p == TAB) || (totwidth + w > pum_width)) {
             // Display the text that fits or comes before a Tab.
             // First convert it to printable characters.
-            char_u *st;
-            char_u saved = *p;
+            char *st;
+            char saved = *p;
 
             if (saved != NUL) {
               *p = NUL;
             }
-            st = (char_u *)transstr((const char *)s, true);
+            st = transstr(s, true);
             if (saved != NUL) {
               *p = saved;
             }
 
             if (pum_rl) {
-              char *rt = reverse_text((char *)st);
+              char *rt = reverse_text(st);
               char *rt_start = rt;
               int size = vim_strsize(rt);
 
@@ -559,7 +559,7 @@ void pum_redraw(void)
               grid_col -= width;
             } else {
               // use grid_puts_len() to truncate the text
-              grid_puts(&pum_grid, (char *)st, row, grid_col, attr);
+              grid_puts(&pum_grid, st, row, grid_col, attr);
               xfree(st);
               grid_col += width;
             }
@@ -762,17 +762,17 @@ static bool pum_set_selected(int n, int repeat)
         }
 
         if (res == OK) {
-          char_u *p, *e;
+          char *p, *e;
           linenr_T lnum = 0;
 
-          for (p = pum_array[pum_selected].pum_info; *p != NUL;) {
-            e = (char_u *)vim_strchr((char *)p, '\n');
+          for (p = (char *)pum_array[pum_selected].pum_info; *p != NUL;) {
+            e = vim_strchr(p, '\n');
             if (e == NULL) {
-              ml_append(lnum++, (char *)p, 0, false);
+              ml_append(lnum++, p, 0, false);
               break;
             }
             *e = NUL;
-            ml_append(lnum++, (char *)p, (int)(e - p + 1), false);
+            ml_append(lnum++, p, (int)(e - p + 1), false);
             *e = '\n';
             p = e + 1;
           }

@@ -766,7 +766,7 @@ void f_winnr(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 /// "winrestcmd()" function
 void f_winrestcmd(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
-  char_u buf[50];
+  char buf[50];
 
   garray_T ga;
   ga_init(&ga, (int)sizeof(char), 70);
@@ -775,12 +775,12 @@ void f_winrestcmd(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   for (int i = 0; i < 2; i++) {
     int winnr = 1;
     FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
-      snprintf((char *)buf, sizeof(buf), "%dresize %d|", winnr,
+      snprintf(buf, sizeof(buf), "%dresize %d|", winnr,
                wp->w_height);
-      ga_concat(&ga, (char *)buf);
-      snprintf((char *)buf, sizeof(buf), "vert %dresize %d|", winnr,
+      ga_concat(&ga, buf);
+      snprintf(buf, sizeof(buf), "vert %dresize %d|", winnr,
                wp->w_width);
-      ga_concat(&ga, (char *)buf);
+      ga_concat(&ga, buf);
       winnr++;
     }
   }

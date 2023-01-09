@@ -41,7 +41,7 @@ char *xstrnsave(const char *string, size_t len)
 
 // Same as vim_strsave(), but any characters found in esc_chars are preceded
 // by a backslash.
-char_u *vim_strsave_escaped(const char_u *string, const char_u *esc_chars)
+char *vim_strsave_escaped(const char *string, const char *esc_chars)
   FUNC_ATTR_NONNULL_RET FUNC_ATTR_MALLOC FUNC_ATTR_NONNULL_ALL
 {
   return vim_strsave_escaped_ext(string, esc_chars, '\\', false);
@@ -50,36 +50,36 @@ char_u *vim_strsave_escaped(const char_u *string, const char_u *esc_chars)
 // Same as vim_strsave_escaped(), but when "bsl" is true also escape
 // characters where rem_backslash() would remove the backslash.
 // Escape the characters with "cc".
-char_u *vim_strsave_escaped_ext(const char_u *string, const char_u *esc_chars, char_u cc, bool bsl)
+char *vim_strsave_escaped_ext(const char *string, const char *esc_chars, char cc, bool bsl)
   FUNC_ATTR_NONNULL_RET FUNC_ATTR_MALLOC FUNC_ATTR_NONNULL_ALL
 {
   // First count the number of backslashes required.
   // Then allocate the memory and insert them.
   size_t length = 1;                    // count the trailing NUL
-  for (const char_u *p = string; *p; p++) {
-    const size_t l = (size_t)(utfc_ptr2len((char *)p));
+  for (const char *p = string; *p; p++) {
+    const size_t l = (size_t)(utfc_ptr2len(p));
     if (l > 1) {
       length += l;                      // count a multibyte char
       p += l - 1;
       continue;
     }
-    if (vim_strchr((char *)esc_chars, *p) != NULL || (bsl && rem_backslash((char *)p))) {
+    if (vim_strchr(esc_chars, (uint8_t)(*p)) != NULL || (bsl && rem_backslash(p))) {
       length++;                         // count a backslash
     }
     length++;                           // count an ordinary char
   }
 
-  char_u *escaped_string = xmalloc(length);
-  char_u *p2 = escaped_string;
-  for (const char_u *p = string; *p; p++) {
-    const size_t l = (size_t)(utfc_ptr2len((char *)p));
+  char *escaped_string = xmalloc(length);
+  char *p2 = escaped_string;
+  for (const char *p = string; *p; p++) {
+    const size_t l = (size_t)(utfc_ptr2len(p));
     if (l > 1) {
       memcpy(p2, p, l);
       p2 += l;
       p += l - 1;                     // skip multibyte char
       continue;
     }
-    if (vim_strchr((char *)esc_chars, *p) != NULL || (bsl && rem_backslash((char *)p))) {
+    if (vim_strchr(esc_chars, (uint8_t)(*p)) != NULL || (bsl && rem_backslash(p))) {
       *p2++ = cc;
     }
     *p2++ = *p;
@@ -150,7 +150,7 @@ char *vim_strsave_shellescape(const char *string, bool do_special, bool do_newli
   FUNC_ATTR_NONNULL_RET FUNC_ATTR_MALLOC FUNC_ATTR_NONNULL_ALL
 {
   char *d;
-  char_u *escaped_string;
+  char *escaped_string;
   size_t l;
   int csh_like;
   bool fish_like;
@@ -196,7 +196,7 @@ char *vim_strsave_shellescape(const char *string, bool do_special, bool do_newli
 
   // Allocate memory for the result and fill it.
   escaped_string = xmalloc(length);
-  d = (char *)escaped_string;
+  d = escaped_string;
 
   // add opening quote
 #ifdef MSWIN
@@ -206,7 +206,7 @@ char *vim_strsave_shellescape(const char *string, bool do_special, bool do_newli
 #endif
   *d++ = '\'';
 
-  for (const char *p = (char *)string; *p != NUL;) {
+  for (const char *p = string; *p != NUL;) {
 #ifdef MSWIN
     if (!p_ssl) {
       if (*p == '"') {
@@ -259,19 +259,19 @@ char *vim_strsave_shellescape(const char *string, bool do_special, bool do_newli
   *d++ = '\'';
   *d = NUL;
 
-  return (char *)escaped_string;
+  return escaped_string;
 }
 
 // Like vim_strsave(), but make all characters uppercase.
 // This uses ASCII lower-to-upper case translation, language independent.
-char_u *vim_strsave_up(const char_u *string)
+char *vim_strsave_up(const char *string)
   FUNC_ATTR_NONNULL_RET FUNC_ATTR_MALLOC FUNC_ATTR_NONNULL_ALL
 {
   char *p1;
 
-  p1 = xstrdup((char *)string);
+  p1 = xstrdup(string);
   vim_strup((char_u *)p1);
-  return (char_u *)p1;
+  return p1;
 }
 
 /// Like xstrnsave(), but make all characters uppercase.
@@ -452,14 +452,14 @@ void sort_strings(char **files, int count)
 
 // Return true if string "s" contains a non-ASCII character (128 or higher).
 // When "s" is NULL false is returned.
-bool has_non_ascii(const char_u *s)
+bool has_non_ascii(const char *s)
   FUNC_ATTR_PURE
 {
-  const char_u *p;
+  const char *p;
 
   if (s != NULL) {
     for (p = s; *p != NUL; p++) {
-      if (*p >= 128) {
+      if ((uint8_t)(*p) >= 128) {
         return true;
       }
     }
@@ -946,18 +946,18 @@ int vim_vsnprintf_typval(char *str, size_t str_m, const char *fmt, va_list ap, t
                                  - str_arg);
           }
           if (fmt_spec == 'S') {
-            char_u *p1;
+            char *p1;
             size_t i;
 
-            for (i = 0, p1 = (char_u *)str_arg; *p1; p1 += utfc_ptr2len((char *)p1)) {
-              size_t cell = (size_t)utf_ptr2cells((char *)p1);
+            for (i = 0, p1 = (char *)str_arg; *p1; p1 += utfc_ptr2len(p1)) {
+              size_t cell = (size_t)utf_ptr2cells(p1);
               if (precision_specified && i + cell > precision) {
                 break;
               }
               i += cell;
             }
 
-            str_arg_l = (size_t)(p1 - (char_u *)str_arg);
+            str_arg_l = (size_t)(p1 - str_arg);
             if (min_field_width != 0) {
               min_field_width += str_arg_l - i;
             }

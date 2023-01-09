@@ -601,7 +601,7 @@ void init_highlight(bool both, bool reset)
 
   // Try finding the color scheme file.  Used when a color file was loaded
   // and 'background' or 't_Co' is changed.
-  char *p = (char *)get_var_value("g:colors_name");
+  char *p = get_var_value("g:colors_name");
   if (p != NULL) {
     // Value of g:colors_name could be freed in load_colors() and make
     // p invalid, so copy it.

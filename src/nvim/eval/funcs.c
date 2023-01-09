@@ -1522,9 +1522,8 @@ static void f_escape(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
   char buf[NUMBUFLEN];
 
-  rettv->vval.v_string = (char *)vim_strsave_escaped((const char_u *)tv_get_string(&argvars[0]),
-                                                     (const char_u *)tv_get_string_buf(&argvars[1],
-                                                                                       buf));
+  rettv->vval.v_string = vim_strsave_escaped(tv_get_string(&argvars[0]),
+                                             tv_get_string_buf(&argvars[1], buf));
   rettv->v_type = VAR_STRING;
 }
 
@@ -2245,7 +2244,7 @@ static void f_get(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
       const char *const what = tv_get_string(&argvars[1]);
 
       if (strcmp(what, "func") == 0 || strcmp(what, "name") == 0) {
-        const char *name = (const char *)partial_name(pt);
+        const char *name = partial_name(pt);
         rettv->v_type = (*what == 'f' ? VAR_FUNC : VAR_STRING);
         assert(name != NULL);
         if (rettv->v_type == VAR_FUNC) {
@@ -2253,7 +2252,7 @@ static void f_get(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
         }
         if (*what == 'n' && pt->pt_name == NULL && pt->pt_func != NULL) {
           // use <SNR> instead of the byte code
-          name = (const char *)printable_func_name(pt->pt_func);
+          name = printable_func_name(pt->pt_func);
         }
         rettv->vval.v_string = xstrdup(name);
       } else if (strcmp(what, "dict") == 0) {
