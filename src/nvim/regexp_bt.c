@@ -2165,7 +2165,7 @@ collection:
                 endc = get_coll_element(&regparse);
               }
               if (endc == 0) {
-                endc = mb_ptr2char_adv((const char_u **)&regparse);
+                endc = mb_ptr2char_adv((const char **)&regparse);
               }
 
               // Handle \o40, \x20 and \u20AC style sequences
@@ -2197,10 +2197,10 @@ collection:
           // accepts "\t", "\e", etc., but only when the 'l' flag in
           // 'cpoptions' is not included.
           else if (*regparse == '\\'
-                   && (vim_strchr(REGEXP_INRANGE, regparse[1]) != NULL
+                   && (vim_strchr(REGEXP_INRANGE, (uint8_t)regparse[1]) != NULL
                        || (!reg_cpo_lit
                            && vim_strchr(REGEXP_ABBR,
-                                         regparse[1]) != NULL))) {
+                                         (uint8_t)regparse[1]) != NULL))) {
             regparse++;
             if (*regparse == 'n') {
               // '\n' in range: also match NL

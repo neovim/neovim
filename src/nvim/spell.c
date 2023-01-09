@@ -214,7 +214,7 @@ char *repl_to = NULL;
 ///
 /// @return  the length of the word in bytes, also when it's OK, so that the
 /// caller can skip over the word.
-size_t spell_check(win_T *wp, char_u *ptr, hlf_T *attrp, int *capcol, bool docount)
+size_t spell_check(win_T *wp, char *ptr, hlf_T *attrp, int *capcol, bool docount)
 {
   matchinf_T mi;              // Most things are put in "mi" so that it can
                               // be passed to functions quickly.
@@ -226,7 +226,7 @@ size_t spell_check(win_T *wp, char_u *ptr, hlf_T *attrp, int *capcol, bool docou
 
   // A word never starts at a space or a control character. Return quickly
   // then, skipping over the character.
-  if (*ptr <= ' ') {
+  if ((uint8_t)(*ptr) <= ' ') {
     return 1;
   }
 
@@ -242,18 +242,18 @@ size_t spell_check(win_T *wp, char_u *ptr, hlf_T *attrp, int *capcol, bool docou
   // julifeest".
   if (*ptr >= '0' && *ptr <= '9') {
     if (*ptr == '0' && (ptr[1] == 'b' || ptr[1] == 'B')) {
-      mi.mi_end = (char_u *)skipbin((char *)ptr + 2);
+      mi.mi_end = (char_u *)skipbin(ptr + 2);
     } else if (*ptr == '0' && (ptr[1] == 'x' || ptr[1] == 'X')) {
-      mi.mi_end = (char_u *)skiphex((char *)ptr + 2);
+      mi.mi_end = (char_u *)skiphex(ptr + 2);
     } else {
-      mi.mi_end = (char_u *)skipdigits((char *)ptr);
+      mi.mi_end = (char_u *)skipdigits(ptr);
     }
-    nrlen = (size_t)(mi.mi_end - ptr);
+    nrlen = (size_t)(mi.mi_end - (char_u *)ptr);
   }
 
   // Find the normal end of the word (until the next non-word character).
-  mi.mi_word = (char *)ptr;
-  mi.mi_fend = ptr;
+  mi.mi_word = ptr;
+  mi.mi_fend = (char_u *)ptr;
   if (spell_iswordp(mi.mi_fend, wp)) {
     bool this_upper = false;  // init for gcc
 
@@ -275,9 +275,9 @@ size_t spell_check(win_T *wp, char_u *ptr, hlf_T *attrp, int *capcol, bool docou
 
     if (capcol != NULL && *capcol == 0 && wp->w_s->b_cap_prog != NULL) {
       // Check word starting with capital letter.
-      int c = utf_ptr2char((char *)ptr);
+      int c = utf_ptr2char(ptr);
       if (!SPELL_ISUPPER(c)) {
-        wrongcaplen = (size_t)(mi.mi_fend - ptr);
+        wrongcaplen = (size_t)(mi.mi_fend - (char_u *)ptr);
       }
     }
   }
@@ -300,7 +300,7 @@ size_t spell_check(win_T *wp, char_u *ptr, hlf_T *attrp, int *capcol, bool docou
     MB_PTR_ADV(mi.mi_fend);
   }
 
-  (void)spell_casefold(wp, ptr, (int)(mi.mi_fend - ptr), (char_u *)mi.mi_fword,
+  (void)spell_casefold(wp, (char_u *)ptr, (int)(mi.mi_fend - (char_u *)ptr), (char_u *)mi.mi_fword,
                        MAXWLEN + 1);
   mi.mi_fwordlen = (int)strlen(mi.mi_fword);
 
@@ -344,8 +344,8 @@ size_t spell_check(win_T *wp, char_u *ptr, hlf_T *attrp, int *capcol, bool docou
 
     // Count the word in the first language where it's found to be OK.
     if (count_word && mi.mi_result == SP_OK) {
-      count_common_word(mi.mi_lp->lp_slang, (char *)ptr,
-                        (int)(mi.mi_end - ptr), 1);
+      count_common_word(mi.mi_lp->lp_slang, ptr,
+                        (int)(mi.mi_end - (char_u *)ptr), 1);
       count_word = false;
     }
   }
@@ -357,7 +357,7 @@ size_t spell_check(win_T *wp, char_u *ptr, hlf_T *attrp, int *capcol, bool docou
       if (mi.mi_result == SP_BAD || mi.mi_result == SP_BANNED) {
         return nrlen;
       }
-    } else if (!spell_iswordp_nmw(ptr, wp)) {
+    } else if (!spell_iswordp_nmw((char_u *)ptr, wp)) {
       // When we are at a non-word character there is no error, just
       // skip over the character (try looking for a word after it).
       if (capcol != NULL && wp->w_s->b_cap_prog != NULL) {
@@ -366,15 +366,15 @@ size_t spell_check(win_T *wp, char_u *ptr, hlf_T *attrp, int *capcol, bool docou
         // Check for end of sentence.
         regmatch.regprog = wp->w_s->b_cap_prog;
         regmatch.rm_ic = false;
-        int r = vim_regexec(&regmatch, (char *)ptr, 0);
+        int r = vim_regexec(&regmatch, ptr, 0);
         wp->w_s->b_cap_prog = regmatch.regprog;
         if (r) {
-          *capcol = (int)(regmatch.endp[0] - (char *)ptr);
+          *capcol = (int)(regmatch.endp[0] - ptr);
         }
       }
 
-      return (size_t)(utfc_ptr2len((char *)ptr));
-    } else if (mi.mi_end == ptr) {
+      return (size_t)(utfc_ptr2len(ptr));
+    } else if (mi.mi_end == (char_u *)ptr) {
       // Always include at least one character.  Required for when there
       // is a mixup in "midword".
       MB_PTR_ADV(mi.mi_end);
@@ -421,7 +421,7 @@ size_t spell_check(win_T *wp, char_u *ptr, hlf_T *attrp, int *capcol, bool docou
     return wrongcaplen;
   }
 
-  return (size_t)(mi.mi_end - ptr);
+  return (size_t)(mi.mi_end - (char_u *)ptr);
 }
 
 // Check if the word at "mip->mi_word" is in the tree.
@@ -1319,7 +1319,7 @@ size_t spell_move_to(win_T *wp, int dir, bool allwords, bool curline, hlf_T *att
     STRCPY(buf, line);
     if (lnum < wp->w_buffer->b_ml.ml_line_count) {
       spell_cat_line(buf + strlen(buf),
-                     (char_u *)ml_get_buf(wp->w_buffer, lnum + 1, false),
+                     ml_get_buf(wp->w_buffer, lnum + 1, false),
                      MAXWLEN);
     }
     char *p = buf + skip;
@@ -1336,7 +1336,7 @@ size_t spell_move_to(win_T *wp, int dir, bool allwords, bool curline, hlf_T *att
 
       // start of word
       attr = HLF_COUNT;
-      len = spell_check(wp, (char_u *)p, &attr, &capcol, false);
+      len = spell_check(wp, p, &attr, &capcol, false);
 
       if (attr != HLF_COUNT) {
         // We found a bad word.  Check the attribute.
@@ -1480,17 +1480,17 @@ theend:
 // "buf", blanking-out special characters.  Copy less than "maxlen" bytes.
 // Keep the blanks at the start of the next line, this is used in win_line()
 // to skip those bytes if the word was OK.
-void spell_cat_line(char *buf, char_u *line, int maxlen)
+void spell_cat_line(char *buf, char *line, int maxlen)
 {
-  char_u *p = (char_u *)skipwhite((char *)line);
-  while (vim_strchr("*#/\"\t", *p) != NULL) {
+  char_u *p = (char_u *)skipwhite(line);
+  while (vim_strchr("*#/\"\t", (uint8_t)(*p)) != NULL) {
     p = (char_u *)skipwhite((char *)p + 1);
   }
 
   if (*p != NUL) {
     // Only worth concatenating if there is something else than spaces to
     // concatenate.
-    int n = (int)(p - line) + 1;
+    int n = (int)(p - (char_u *)line) + 1;
     if (n < maxlen - 1) {
       memset(buf, ' ', (size_t)n);
       xstrlcpy(buf + n, (char *)p, (size_t)(maxlen - n));
@@ -2213,24 +2213,24 @@ static int find_region(const char_u *rp, const char_u *region)
 int captype(char_u *word, const char_u *end)
   FUNC_ATTR_NONNULL_ARG(1)
 {
-  char_u *p;
+  char *p;
 
   // find first letter
-  for (p = word; !spell_iswordp_nmw(p, curwin); MB_PTR_ADV(p)) {
-    if (end == NULL ? *p == NUL : p >= end) {
+  for (p = (char *)word; !spell_iswordp_nmw((char_u *)p, curwin); MB_PTR_ADV(p)) {
+    if (end == NULL ? *p == NUL : (char_u *)p >= end) {
       return 0;             // only non-word characters, illegal word
     }
   }
-  int c = mb_ptr2char_adv((const char_u **)&p);
+  int c = mb_ptr2char_adv((const char **)&p);
   bool allcap;
   bool firstcap = allcap = SPELL_ISUPPER(c);
   bool past_second = false;              // past second word char
 
   // Need to check all letters to find a word with mixed upper/lower.
   // But a word with an upper char only at start is a ONECAP.
-  for (; end == NULL ? *p != NUL : p < end; MB_PTR_ADV(p)) {
-    if (spell_iswordp_nmw(p, curwin)) {
-      c = utf_ptr2char((char *)p);
+  for (; end == NULL ? *p != NUL : (char_u *)p < end; MB_PTR_ADV(p)) {
+    if (spell_iswordp_nmw((char_u *)p, curwin)) {
+      c = utf_ptr2char(p);
       if (!SPELL_ISUPPER(c)) {
         // UUl -> KEEPCAP
         if (past_second && allcap) {
@@ -2482,18 +2482,18 @@ int spell_casefold(const win_T *wp, char_u *str, int len, char_u *buf, int bufle
   int outi = 0;
 
   // Fold one character at a time.
-  for (char_u *p = str; p < str + len;) {
+  for (char *p = (char *)str; (char_u *)p < str + len;) {
     if (outi + MB_MAXBYTES > buflen) {
       buf[outi] = NUL;
       return FAIL;
     }
-    int c = mb_cptr2char_adv((const char_u **)&p);
+    int c = mb_cptr2char_adv((const char **)&p);
 
     // Exception: greek capital sigma 0x03A3 folds to 0x03C3, except
     // when it is the last character in a word, then it folds to
     // 0x03C2.
     if (c == 0x03a3 || c == 0x03c2) {
-      if (p == str + len || !spell_iswordp(p, wp)) {
+      if (p == (char *)str + len || !spell_iswordp((char_u *)p, wp)) {
         c = 0x03c2;
       } else {
         c = 0x03c3;
@@ -2636,15 +2636,15 @@ void ex_spellrepall(exarg_T *eap)
 /// @param[in]  upper  True to upper case, otherwise lower case
 void onecap_copy(char_u *word, char *wcopy, bool upper)
 {
-  char_u *p = word;
-  int c = mb_cptr2char_adv((const char_u **)&p);
+  char *p = (char *)word;
+  int c = mb_cptr2char_adv((const char **)&p);
   if (upper) {
     c = SPELL_TOUPPER(c);
   } else {
     c = SPELL_TOFOLD(c);
   }
   int l = utf_char2bytes(c, wcopy);
-  xstrlcpy(wcopy + l, (char *)p, (size_t)(MAXWLEN - l));
+  xstrlcpy(wcopy + l, p, (size_t)(MAXWLEN - l));
 }
 
 // Make a copy of "word" with all the letters upper cased into
@@ -2652,8 +2652,8 @@ void onecap_copy(char_u *word, char *wcopy, bool upper)
 void allcap_copy(char_u *word, char_u *wcopy)
 {
   char_u *d = wcopy;
-  for (char_u *s = word; *s != NUL;) {
-    int c = mb_cptr2char_adv((const char_u **)&s);
+  for (char *s = (char *)word; *s != NUL;) {
+    int c = mb_cptr2char_adv((const char **)&s);
 
     if (c == 0xdf) {
       c = 'S';
@@ -2776,8 +2776,8 @@ static void spell_soundfold_sofo(slang_T *slang, char_u *inword, char_u *res)
 
   // The sl_sal_first[] table contains the translation for chars up to
   // 255, sl_sal the rest.
-  for (char_u *s = inword; *s != NUL;) {
-    int c = mb_cptr2char_adv((const char_u **)&s);
+  for (char *s = (char *)inword; *s != NUL;) {
+    int c = mb_cptr2char_adv((const char **)&s);
     if (utf_class(c) == 0) {
       c = ' ';
     } else if (c < 256) {
@@ -2837,8 +2837,8 @@ static void spell_soundfold_wsal(slang_T *slang, const char_u *inword, char_u *r
   // Remove accents, if wanted.  We actually remove all non-word characters.
   // But keep white space.
   int wordlen = 0;
-  for (const char_u *s = inword; *s != NUL;) {
-    const char_u *t = s;
+  for (const char *s = (char *)inword; *s != NUL;) {
+    const char_u *t = (char_u *)s;
     int c = mb_cptr2char_adv(&s);
     if (slang->sl_rem_accents) {
       if (utf_class(c) == 0) {
@@ -3524,11 +3524,11 @@ static linenr_T dump_prefixes(slang_T *slang, char *word, char_u *pat, Direction
 
 // Move "p" to the end of word "start".
 // Uses the spell-checking word characters.
-char_u *spell_to_word_end(char_u *start, win_T *win)
+char *spell_to_word_end(char *start, win_T *win)
 {
-  char_u *p = start;
+  char *p = start;
 
-  while (*p != NUL && spell_iswordp(p, win)) {
+  while (*p != NUL && spell_iswordp((char_u *)p, win)) {
     MB_PTR_ADV(p);
   }
   return p;

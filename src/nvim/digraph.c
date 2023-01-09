@@ -1885,7 +1885,7 @@ static int get_digraph_chars(const typval_T *arg, int *char1, int *char2)
 {
   char buf_chars[NUMBUFLEN];
   const char *chars = tv_get_string_buf_chk(arg, buf_chars);
-  const char_u *p = (const char_u *)chars;
+  const char *p = chars;
 
   if (p != NULL) {
     if (*p != NUL) {
@@ -1917,7 +1917,7 @@ static bool digraph_set_common(const typval_T *argchars, const typval_T *argdigr
   if (digraph == NULL) {
     return false;
   }
-  const char_u *p = (const char_u *)digraph;
+  const char *p = digraph;
   int n = mb_cptr2char_adv(&p);
   if (*p != NUL) {
     semsg(_(e_digraph_argument_must_be_one_character_str), digraph);

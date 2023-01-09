@@ -133,7 +133,7 @@ typedef struct SearchedFile {
 /// @param regmatch  return: pattern and ignore-case flag
 ///
 /// @return          FAIL if failed, OK otherwise.
-int search_regcomp(char_u *pat, char_u **used_pat, int pat_save, int pat_use, int options,
+int search_regcomp(char *pat, char **used_pat, int pat_save, int pat_use, int options,
                    regmmatch_T *regmatch)
 {
   int magic;
@@ -158,11 +158,11 @@ int search_regcomp(char_u *pat, char_u **used_pat, int pat_save, int pat_use, in
       rc_did_emsg = true;
       return FAIL;
     }
-    pat = (char_u *)spats[i].pat;
+    pat = spats[i].pat;
     magic = spats[i].magic;
     no_smartcase = spats[i].no_scs;
   } else if (options & SEARCH_HIS) {      // put new pattern in history
-    add_to_history(HIST_SEARCH, (char *)pat, true, NUL);
+    add_to_history(HIST_SEARCH, pat, true, NUL);
   }
 
   if (used_pat) {
@@ -171,9 +171,9 @@ int search_regcomp(char_u *pat, char_u **used_pat, int pat_save, int pat_use, in
 
   xfree(mr_pattern);
   if (curwin->w_p_rl && *curwin->w_p_rlc == 's') {
-    mr_pattern = reverse_text((char *)pat);
+    mr_pattern = reverse_text(pat);
   } else {
-    mr_pattern = xstrdup((char *)pat);
+    mr_pattern = xstrdup(pat);
   }
 
   // Save the currently used pattern in the appropriate place,
@@ -181,17 +181,17 @@ int search_regcomp(char_u *pat, char_u **used_pat, int pat_save, int pat_use, in
   if (!(options & SEARCH_KEEP) && (cmdmod.cmod_flags & CMOD_KEEPPATTERNS) == 0) {
     // search or global command
     if (pat_save == RE_SEARCH || pat_save == RE_BOTH) {
-      save_re_pat(RE_SEARCH, (char *)pat, magic);
+      save_re_pat(RE_SEARCH, pat, magic);
     }
     // substitute or global command
     if (pat_save == RE_SUBST || pat_save == RE_BOTH) {
-      save_re_pat(RE_SUBST, (char *)pat, magic);
+      save_re_pat(RE_SUBST, pat, magic);
     }
   }
 
-  regmatch->rmm_ic = ignorecase((char *)pat);
+  regmatch->rmm_ic = ignorecase(pat);
   regmatch->rmm_maxcol = 0;
-  regmatch->regprog = vim_regcomp((char *)pat, magic ? RE_MAGIC : 0);
+  regmatch->regprog = vim_regcomp(pat, magic ? RE_MAGIC : 0);
   if (regmatch->regprog == NULL) {
     return FAIL;
   }
@@ -346,9 +346,9 @@ static void restore_incsearch_state(void)
   search_match_lines  = saved_search_match_lines;
 }
 
-char_u *last_search_pattern(void)
+char *last_search_pattern(void)
 {
-  return (char_u *)spats[RE_SEARCH].pat;
+  return spats[RE_SEARCH].pat;
 }
 
 /// Return true when case should be ignored for search pattern "pat".
@@ -365,7 +365,7 @@ int ignorecase_opt(char *pat, int ic_in, int scs)
   if (ic && !no_smartcase && scs
       && !(ctrl_x_mode_not_default()
            && curbuf->b_p_inf)) {
-    ic = !pat_has_uppercase((char_u *)pat);
+    ic = !pat_has_uppercase(pat);
   }
   no_smartcase = false;
 
@@ -373,14 +373,14 @@ int ignorecase_opt(char *pat, int ic_in, int scs)
 }
 
 /// Returns true if pattern `pat` has an uppercase character.
-bool pat_has_uppercase(char_u *pat)
+bool pat_has_uppercase(char *pat)
   FUNC_ATTR_NONNULL_ALL
 {
-  char *p = (char *)pat;
+  char *p = pat;
   magic_T magic_val = MAGIC_ON;
 
   // get the magicness of the pattern
-  (void)skip_regexp_ex((char *)pat, NUL, magic_isset(), NULL, NULL, &magic_val);
+  (void)skip_regexp_ex(pat, NUL, magic_isset(), NULL, NULL, &magic_val);
 
   while (*p != NUL) {
     const int l = utfc_ptr2len(p);
@@ -431,7 +431,7 @@ int last_csearch_until(void)
   return last_t_cmd == true;
 }
 
-void set_last_csearch(int c, char_u *s, int len)
+void set_last_csearch(int c, char *s, int len)
 {
   *lastc = (char_u)c;
   lastc_bytelen = len;
@@ -452,9 +452,9 @@ void set_csearch_until(int t_cmd)
   last_t_cmd = t_cmd;
 }
 
-char_u *last_search_pat(void)
+char *last_search_pat(void)
 {
-  return (char_u *)spats[last_idx].pat;
+  return spats[last_idx].pat;
 }
 
 // Reset search direction to forward.  For "gd" and "gD" commands.
@@ -466,14 +466,14 @@ void reset_search_dir(void)
 
 // Set the last search pattern.  For ":let @/ =" and ShaDa file.
 // Also set the saved search pattern, so that this works in an autocommand.
-void set_last_search_pat(const char_u *s, int idx, int magic, int setlast)
+void set_last_search_pat(const char *s, int idx, int magic, int setlast)
 {
   free_spat(&spats[idx]);
   // An empty string means that nothing should be matched.
   if (*s == NUL) {
     spats[idx].pat = NULL;
   } else {
-    spats[idx].pat = xstrdup((char *)s);
+    spats[idx].pat = xstrdup(s);
   }
   spats[idx].timestamp = os_time();
   spats[idx].additional_data = NULL;
@@ -513,7 +513,7 @@ void last_pat_prog(regmmatch_T *regmatch)
     return;
   }
   emsg_off++;           // So it doesn't beep if bad expr
-  (void)search_regcomp((char_u *)"", NULL, 0, last_idx, SEARCH_KEEP, regmatch);
+  (void)search_regcomp("", NULL, 0, last_idx, SEARCH_KEEP, regmatch);
   emsg_off--;
 }
 
@@ -540,7 +540,7 @@ void last_pat_prog(regmmatch_T *regmatch)
 /// @returns          FAIL (zero) for failure, non-zero for success.
 ///                   the index of the first matching
 ///                   subpattern plus one; one if there was none.
-int searchit(win_T *win, buf_T *buf, pos_T *pos, pos_T *end_pos, Direction dir, char_u *pat,
+int searchit(win_T *win, buf_T *buf, pos_T *pos, pos_T *end_pos, Direction dir, char *pat,
              long count, int options, int pat_use, searchit_arg_T *extra_arg)
 {
   int found;
@@ -1296,7 +1296,7 @@ int do_search(oparg_T *oap, int dirc, int search_delim, char *pat, long count, i
     }
 
     c = searchit(curwin, curbuf, &pos, NULL, dirc == '/' ? FORWARD : BACKWARD,
-                 (char_u *)searchstr, count,
+                 searchstr, count,
                  (spats[0].off.end * SEARCH_END
                   + (options
                      & (SEARCH_KEEP + SEARCH_PEEK + SEARCH_HIS + SEARCH_MSG
@@ -2440,7 +2440,7 @@ int current_search(long count, bool forward)
 
     result = searchit(curwin, curbuf, &pos, &end_pos,
                       (dir ? FORWARD : BACKWARD),
-                      (char_u *)spats[last_idx].pat, i ? count : 1,
+                      spats[last_idx].pat, i ? count : 1,
                       SEARCH_KEEP | flags, RE_SEARCH, NULL);
 
     p_ws = old_p_ws;
@@ -2527,7 +2527,7 @@ static int is_zero_width(char *pattern, int move, pos_T *cur, Direction directio
     pattern = spats[last_idx].pat;
   }
 
-  if (search_regcomp((char_u *)pattern, NULL, RE_SEARCH, RE_SEARCH,
+  if (search_regcomp(pattern, NULL, RE_SEARCH, RE_SEARCH,
                      SEARCH_KEEP, &regmatch) == FAIL) {
     return -1;
   }
@@ -2542,7 +2542,7 @@ static int is_zero_width(char *pattern, int move, pos_T *cur, Direction directio
     // accept a match at the cursor position
     flag = SEARCH_START;
   }
-  if (searchit(curwin, curbuf, &pos, NULL, direction, (char_u *)pattern, 1,
+  if (searchit(curwin, curbuf, &pos, NULL, direction, pattern, 1,
                SEARCH_KEEP + flag, RE_SEARCH, NULL) != FAIL) {
     // Zero-width pattern should match somewhere, then we can check if
     // start and end are in the same position.
@@ -3637,8 +3637,8 @@ void find_pattern_in_path(char *ptr, Direction dir, size_t len, bool whole, bool
                                            1L, p_fname);
       } else {
         // Use text after match with 'include'.
-        new_fname = (char *)file_name_in_line((char_u *)incl_regmatch.endp[0], 0,
-                                              FNAME_EXP|FNAME_INCL|FNAME_REL, 1L, (char_u *)p_fname,
+        new_fname = (char *)file_name_in_line(incl_regmatch.endp[0], 0,
+                                              FNAME_EXP|FNAME_INCL|FNAME_REL, 1L, p_fname,
                                               NULL);
       }
       already_searched = false;

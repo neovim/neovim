@@ -914,12 +914,11 @@ int os_file_is_writable(const char *name)
 /// Rename a file or directory.
 ///
 /// @return `OK` for success, `FAIL` for failure.
-int os_rename(const char_u *path, const char_u *new_path)
+int os_rename(const char *path, const char *new_path)
   FUNC_ATTR_NONNULL_ALL
 {
   int r;
-  RUN_UV_FS_FUNC(r, uv_fs_rename, (const char *)path, (const char *)new_path,
-                 NULL);
+  RUN_UV_FS_FUNC(r, uv_fs_rename, path, new_path, NULL);
   return (r == kLibuvSuccess ? OK : FAIL);
 }
 

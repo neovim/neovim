@@ -1423,7 +1423,7 @@ static size_t uc_check_code(char *code, size_t len, char *buf, ucmd_T *cmd, exar
     ct_NONE,
   } type = ct_NONE;
 
-  if ((vim_strchr("qQfF", *p) != NULL) && p[1] == '-') {
+  if ((vim_strchr("qQfF", (uint8_t)(*p)) != NULL) && p[1] == '-') {
     quote = (*p == 'q' || *p == 'Q') ? 1 : 2;
     p += 2;
     l -= 2;

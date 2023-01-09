@@ -614,7 +614,7 @@ char *check_stl_option(char *s)
       groupdepth++;
       continue;
     }
-    if (vim_strchr(STL_ALL, *s) == NULL) {
+    if (vim_strchr(STL_ALL, (uint8_t)(*s)) == NULL) {
       return illegal_char(errbuf, sizeof(errbuf), *s);
     }
     if (*s == '{') {
@@ -946,7 +946,7 @@ char *did_set_string_option(int opt_idx, char **varp, char *oldval, char *errbuf
   } else if (gvarp == &p_com) {  // 'comments'
     for (s = *varp; *s;) {
       while (*s && *s != ':') {
-        if (vim_strchr(COM_ALL, *s) == NULL
+        if (vim_strchr(COM_ALL, (uint8_t)(*s)) == NULL
             && !ascii_isdigit(*s) && *s != '-') {
           errmsg = illegal_char(errbuf, errbuflen, *s);
           break;
@@ -1016,7 +1016,7 @@ char *did_set_string_option(int opt_idx, char **varp, char *oldval, char *errbuf
     free_oldval = (opt->flags & P_ALLOCED);
     for (s = p_shada; *s;) {
       // Check it's a valid character
-      if (vim_strchr("!\"%'/:<@cfhnrs", *s) == NULL) {
+      if (vim_strchr("!\"%'/:<@cfhnrs", (uint8_t)(*s)) == NULL) {
         errmsg = illegal_char(errbuf, errbuflen, *s);
         break;
       }
@@ -1221,7 +1221,7 @@ char *did_set_string_option(int opt_idx, char **varp, char *oldval, char *errbuf
       if (!*s) {
         break;
       }
-      if (vim_strchr(".wbuksid]tU", *s) == NULL) {
+      if (vim_strchr(".wbuksid]tU", (uint8_t)(*s)) == NULL) {
         errmsg = illegal_char(errbuf, errbuflen, *s);
         break;
       }
@@ -1569,7 +1569,7 @@ char *did_set_string_option(int opt_idx, char **varp, char *oldval, char *errbuf
     }
     if (p != NULL) {
       for (s = *varp; *s; s++) {
-        if (vim_strchr(p, *s) == NULL) {
+        if (vim_strchr(p, (uint8_t)(*s)) == NULL) {
           errmsg = illegal_char(errbuf, errbuflen, *s);
           break;
         }

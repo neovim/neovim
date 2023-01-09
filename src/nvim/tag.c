@@ -1199,7 +1199,7 @@ static void prepare_pats(pat_T *pats, int has_re)
     } else {
       for (pats->headlen = 0; pats->head[pats->headlen] != NUL; pats->headlen++) {
         if (vim_strchr(magic_isset() ? ".[~*\\$" : "\\$",
-                       pats->head[pats->headlen]) != NULL) {
+                       (uint8_t)pats->head[pats->headlen]) != NULL) {
           break;
         }
       }

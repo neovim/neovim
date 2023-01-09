@@ -274,7 +274,7 @@ static bool do_incsearch_highlighting(int firstc, int *search_delim, incsearch_s
   parse_command_modifiers(&ea, &dummy, &dummy_cmdmod, true);
 
   cmd = skip_range(ea.cmd, NULL);
-  if (vim_strchr("sgvl", *cmd) == NULL) {
+  if (vim_strchr("sgvl", (uint8_t)(*cmd)) == NULL) {
     goto theend;
   }
 
@@ -558,7 +558,7 @@ static int may_add_char_to_search(int firstc, int *c, incsearch_state_T *s)
       // command line has no uppercase characters, convert
       // the character to lowercase
       if (p_ic && p_scs
-          && !pat_has_uppercase((char_u *)ccline.cmdbuff + skiplen)) {
+          && !pat_has_uppercase(ccline.cmdbuff + skiplen)) {
         *c = mb_tolower(*c);
       }
       if (*c == search_delim
@@ -1379,7 +1379,7 @@ static int may_do_command_line_next_incsearch(int firstc, long count, incsearch_
   char save;
 
   if (search_delim == ccline.cmdbuff[skiplen]) {
-    pat = (char *)last_search_pattern();
+    pat = last_search_pattern();
     if (pat == NULL) {
       restore_last_search_pattern();
       return FAIL;
@@ -1409,7 +1409,7 @@ static int may_do_command_line_next_incsearch(int firstc, long count, incsearch_
   pat[patlen] = NUL;
   int found = searchit(curwin, curbuf, &t, NULL,
                        next_match ? FORWARD : BACKWARD,
-                       (char_u *)pat, count, search_flags,
+                       pat, count, search_flags,
                        RE_SEARCH, NULL);
   emsg_off--;
   pat[patlen] = save;
@@ -2165,7 +2165,7 @@ static bool empty_pattern_magic(char *p, size_t len, magic_T magic_val)
 {
   // remove trailing \v and the like
   while (len >= 2 && p[len - 2] == '\\'
-         && vim_strchr("mMvVcCZ", p[len - 1]) != NULL) {
+         && vim_strchr("mMvVcCZ", (uint8_t)p[len - 1]) != NULL) {
     len -= 2;
   }
 
@@ -3733,7 +3733,7 @@ static bool cmdline_paste(int regname, bool literally, bool remcr)
       }
     }
 
-    cmdline_paste_str(p, literally);
+    cmdline_paste_str((char *)p, literally);
     if (allocated) {
       xfree(arg);
     }
@@ -3747,19 +3747,19 @@ static bool cmdline_paste(int regname, bool literally, bool remcr)
 // When "literally" is true, insert literally.
 // When "literally" is false, insert as typed, but don't leave the command
 // line.
-void cmdline_paste_str(char_u *s, int literally)
+void cmdline_paste_str(char *s, int literally)
 {
   int c, cv;
 
   if (literally) {
-    put_on_cmdline((char *)s, -1, true);
+    put_on_cmdline(s, -1, true);
   } else {
     while (*s != NUL) {
-      cv = *s;
+      cv = (uint8_t)(*s);
       if (cv == Ctrl_V && s[1]) {
         s++;
       }
-      c = mb_cptr2char_adv((const char_u **)&s);
+      c = mb_cptr2char_adv((const char **)&s);
       if (cv == Ctrl_V || c == ESC || c == Ctrl_C
           || c == CAR || c == NL || c == Ctrl_L
           || (c == Ctrl_BSL && *s == Ctrl_N)) {

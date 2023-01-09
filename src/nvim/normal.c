@@ -2337,7 +2337,7 @@ bool find_decl(char_u *ptr, size_t len, bool locally, bool thisblock, int flags_
   clearpos(&found_pos);
   for (;;) {
     t = searchit(curwin, curbuf, &curwin->w_cursor, NULL, FORWARD,
-                 (char_u *)pat, 1L, searchflags, RE_LAST, NULL);
+                 pat, 1L, searchflags, RE_LAST, NULL);
     if (curwin->w_cursor.lnum >= old_pos.lnum) {
       t = false;         // match after start is failure too
     }
@@ -3561,7 +3561,7 @@ static void nv_ident(cmdarg_T *cap)
     p = buf + strlen(buf);
     while (n-- > 0) {
       // put a backslash before \ and some others
-      if (vim_strchr(aux_ptr, *ptr) != NULL) {
+      if (vim_strchr(aux_ptr, (uint8_t)(*ptr)) != NULL) {
         *p++ = '\\';
       }
       // When current byte is a part of multibyte character, copy all

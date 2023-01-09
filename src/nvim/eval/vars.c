@@ -208,7 +208,7 @@ static void ex_let_const(exarg_T *eap, const bool is_const)
     argend--;
   }
   expr = skipwhite(argend);
-  if (*expr != '=' && !((vim_strchr("+-*/%.", *expr) != NULL
+  if (*expr != '=' && !((vim_strchr("+-*/%.", (uint8_t)(*expr)) != NULL
                          && expr[1] == '=') || strncmp(expr, "..=", 3) == 0)) {
     // ":let" without "=": list variables
     if (*arg == '[') {
@@ -244,7 +244,7 @@ static void ex_let_const(exarg_T *eap, const bool is_const)
     op[0] = '=';
     op[1] = NUL;
     if (*expr != '=') {
-      if (vim_strchr("+-*/%.", *expr) != NULL) {
+      if (vim_strchr("+-*/%.", (uint8_t)(*expr)) != NULL) {
         op[0] = *expr;  // +=, -=, *=, /=, %= or .=
         if (expr[0] == '.' && expr[1] == '.') {  // ..=
           expr++;
@@ -590,10 +590,10 @@ static char *ex_let_one(char *arg, typval_T *const tv, const bool copy, const bo
     if (len == 0) {
       semsg(_(e_invarg2), name - 1);
     } else {
-      if (op != NULL && vim_strchr("+-*/%", *op) != NULL) {
+      if (op != NULL && vim_strchr("+-*/%", (uint8_t)(*op)) != NULL) {
         semsg(_(e_letwrong), op);
       } else if (endchars != NULL
-                 && vim_strchr(endchars, *skipwhite(arg)) == NULL) {
+                 && vim_strchr(endchars, (uint8_t)(*skipwhite(arg))) == NULL) {
         emsg(_(e_letunexp));
       } else if (!check_secure()) {
         char *tofree = NULL;
@@ -629,7 +629,7 @@ static char *ex_let_one(char *arg, typval_T *const tv, const bool copy, const bo
     char *const p = (char *)find_option_end((const char **)&arg, &scope);
     if (p == NULL
         || (endchars != NULL
-            && vim_strchr(endchars, *skipwhite(p)) == NULL)) {
+            && vim_strchr(endchars, (uint8_t)(*skipwhite(p))) == NULL)) {
       emsg(_(e_letunexp));
     } else {
       varnumber_T n = 0;
@@ -716,10 +716,10 @@ static char *ex_let_one(char *arg, typval_T *const tv, const bool copy, const bo
       return NULL;
     }
     arg++;
-    if (op != NULL && vim_strchr("+-*/%", *op) != NULL) {
+    if (op != NULL && vim_strchr("+-*/%", (uint8_t)(*op)) != NULL) {
       semsg(_(e_letwrong), op);
     } else if (endchars != NULL
-               && vim_strchr(endchars, *skipwhite(arg + 1)) == NULL) {
+               && vim_strchr(endchars, (uint8_t)(*skipwhite(arg + 1))) == NULL) {
       emsg(_(e_letunexp));
     } else {
       char *s;
@@ -747,7 +747,7 @@ static char *ex_let_one(char *arg, typval_T *const tv, const bool copy, const bo
 
     char *const p = get_lval(arg, tv, &lv, false, false, 0, FNE_CHECK_START);
     if (p != NULL && lv.ll_name != NULL) {
-      if (endchars != NULL && vim_strchr(endchars, *skipwhite(p)) == NULL) {
+      if (endchars != NULL && vim_strchr(endchars, (uint8_t)(*skipwhite(p))) == NULL) {
         emsg(_(e_letunexp));
       } else {
         set_var_lval(&lv, p, tv, copy, is_const, op);
@@ -1464,7 +1464,7 @@ bool var_wrong_func_name(const char *const name, const bool new_var)
 {
   // Allow for w: b: s: and t:.
   // Allow autoload variable.
-  if (!(vim_strchr("wbst", name[0]) != NULL && name[1] == ':')
+  if (!(vim_strchr("wbst", (uint8_t)name[0]) != NULL && name[1] == ':')
       && !ASCII_ISUPPER((name[0] != NUL && name[1] == ':') ? name[2] : name[0])
       && vim_strchr(name, '#') == NULL) {
     semsg(_("E704: Funcref variable name must start with a capital: %s"), name);

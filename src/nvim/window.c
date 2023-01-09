@@ -6790,8 +6790,8 @@ char_u *grab_file_name(long count, linenr_T *file_lnum)
 // FNAME_INCL       apply "includeexpr"
 char_u *file_name_at_cursor(int options, long count, linenr_T *file_lnum)
 {
-  return file_name_in_line((char_u *)get_cursor_line_ptr(),
-                           curwin->w_cursor.col, options, count, (char_u *)curbuf->b_ffname,
+  return file_name_in_line(get_cursor_line_ptr(),
+                           curwin->w_cursor.col, options, count, curbuf->b_ffname,
                            file_lnum);
 }
 
@@ -6799,11 +6799,11 @@ char_u *file_name_at_cursor(int options, long count, linenr_T *file_lnum)
 /// @param file_lnum  line number after the file name
 ///
 /// @return  the name of the file under or after ptr[col]. Otherwise like file_name_at_cursor().
-char_u *file_name_in_line(char_u *line, int col, int options, long count, char_u *rel_fname,
+char_u *file_name_in_line(char *line, int col, int options, long count, char *rel_fname,
                           linenr_T *file_lnum)
 {
   // search forward for what could be the start of a file name
-  char *ptr = (char *)line + col;
+  char *ptr = line + col;
   while (*ptr != NUL && !vim_isfilec((uint8_t)(*ptr))) {
     MB_PTR_ADV(ptr);
   }
@@ -6820,8 +6820,8 @@ char_u *file_name_in_line(char_u *line, int col, int options, long count, char_u
 
   // Search backward for first char of the file name.
   // Go one char back to ":" before "//" even when ':' is not in 'isfname'.
-  while ((char_u *)ptr > line) {
-    if ((len = (size_t)(utf_head_off((char *)line, ptr - 1))) > 0) {
+  while (ptr > line) {
+    if ((len = (size_t)(utf_head_off(line, ptr - 1))) > 0) {
       ptr -= len + 1;
     } else if (vim_isfilec((uint8_t)ptr[-1])
                || ((options & FNAME_HYP) && path_is_url(ptr - 1))) {
@@ -6836,7 +6836,7 @@ char_u *file_name_in_line(char_u *line, int col, int options, long count, char_u
   len = 0;
   while (vim_isfilec((uint8_t)ptr[len]) || (ptr[len] == '\\' && ptr[len + 1] == ' ')
          || ((options & FNAME_HYP) && path_is_url(ptr + len))
-         || (is_url && vim_strchr(":?&=", ptr[len]) != NULL)) {
+         || (is_url && vim_strchr(":?&=", (uint8_t)ptr[len]) != NULL)) {
     // After type:// we also include :, ?, & and = as valid characters, so that
     // http://google.com:8080?q=this&that=ok works.
     if ((ptr[len] >= 'A' && ptr[len] <= 'Z')
@@ -6857,7 +6857,7 @@ char_u *file_name_in_line(char_u *line, int col, int options, long count, char_u
 
   // If there is trailing punctuation, remove it.
   // But don't remove "..", could be a directory name.
-  if (len > 2 && vim_strchr(".,:;!", ptr[len - 1]) != NULL
+  if (len > 2 && vim_strchr(".,:;!", (uint8_t)ptr[len - 1]) != NULL
       && ptr[len - 2] != '.') {
     len--;
   }
@@ -6888,7 +6888,7 @@ char_u *file_name_in_line(char_u *line, int col, int options, long count, char_u
     }
   }
 
-  return (char_u *)find_file_name_in_path(ptr, len, options, count, (char *)rel_fname);
+  return (char_u *)find_file_name_in_path(ptr, len, options, count, rel_fname);
 }
 
 /// Add or remove a status line from window(s), according to the

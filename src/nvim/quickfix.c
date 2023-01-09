@@ -384,9 +384,9 @@ static char *efmpat_to_regpat(const char *efmpat, char *regpat, efm_T *efminfo, 
     return NULL;
   }
   if ((idx && idx < FMT_PATTERN_R
-       && vim_strchr("DXOPQ", efminfo->prefix) != NULL)
+       && vim_strchr("DXOPQ", (uint8_t)efminfo->prefix) != NULL)
       || (idx == FMT_PATTERN_R
-          && vim_strchr("OPQ", efminfo->prefix) == NULL)) {
+          && vim_strchr("OPQ", (uint8_t)efminfo->prefix) == NULL)) {
     semsg(_("E373: Unexpected %%%c in format string"), *efmpat);
     return NULL;
   }
@@ -468,10 +468,10 @@ static char *scanf_fmt_to_regpat(const char **pefmp, const char *efm, int len, c
 static const char *efm_analyze_prefix(const char *efmp, efm_T *efminfo)
   FUNC_ATTR_NONNULL_ALL
 {
-  if (vim_strchr("+-", *efmp) != NULL) {
+  if (vim_strchr("+-", (uint8_t)(*efmp)) != NULL) {
     efminfo->flags = *efmp++;
   }
-  if (vim_strchr("DXAEWINCZGOPQ", *efmp) != NULL) {
+  if (vim_strchr("DXAEWINCZGOPQ", (uint8_t)(*efmp)) != NULL) {
     efminfo->prefix = *efmp;
   } else {
     semsg(_("E376: Invalid %%%c in format string prefix"), *efmp);
@@ -510,7 +510,7 @@ static int efm_to_regpat(const char *efm, int len, efm_T *fmt_ptr, char *regpat)
         if (ptr == NULL) {
           return FAIL;
         }
-      } else if (vim_strchr("%\\.^$~[", *efmp) != NULL) {
+      } else if (vim_strchr("%\\.^$~[", (uint8_t)(*efmp)) != NULL) {
         *ptr++ = *efmp;  // regexp magic characters
       } else if (*efmp == '#') {
         *ptr++ = '*';
@@ -530,7 +530,7 @@ static int efm_to_regpat(const char *efm, int len, efm_T *fmt_ptr, char *regpat)
     } else {                    // copy normal character
       if (*efmp == '\\' && efmp + 1 < efm + len) {
         efmp++;
-      } else if (vim_strchr(".*^$~[", *efmp) != NULL) {
+      } else if (vim_strchr(".*^$~[", (uint8_t)(*efmp)) != NULL) {
         *ptr++ = '\\';  // escape regexp atoms
       }
       if (*efmp) {
@@ -1483,7 +1483,7 @@ static int qf_parse_match(char *linebuf, size_t linelen, efm_T *fmt_ptr, regmatc
   if ((idx == 'C' || idx == 'Z') && !qf_multiline) {
     return QF_FAIL;
   }
-  if (vim_strchr("EWIN", idx) != NULL) {
+  if (vim_strchr("EWIN", (uint8_t)idx) != NULL) {
     fields->type = idx;
   } else {
     fields->type = 0;
@@ -1524,7 +1524,7 @@ static int qf_parse_match(char *linebuf, size_t linelen, efm_T *fmt_ptr, regmatc
 static int qf_parse_get_fields(char *linebuf, size_t linelen, efm_T *fmt_ptr, qffields_T *fields,
                                int qf_multiline, int qf_multiscan, char **tail)
 {
-  if (qf_multiscan && vim_strchr("OPQ", fmt_ptr->prefix) == NULL) {
+  if (qf_multiscan && vim_strchr("OPQ", (uint8_t)fmt_ptr->prefix) == NULL) {
     return QF_FAIL;
   }
 
@@ -3959,11 +3959,11 @@ static int qf_buf_add_line(qf_list_T *qfl, buf_T *buf, linenr_T lnum, const qfli
         // buffer.
         if (first_bufline
             && (errbuf->b_sfname == NULL
-                || path_is_absolute((char_u *)errbuf->b_sfname))) {
+                || path_is_absolute(errbuf->b_sfname))) {
           if (*dirname == NUL) {
             os_dirname(dirname, MAXPATHL);
           }
-          shorten_buf_fname(errbuf, (char_u *)dirname, false);
+          shorten_buf_fname(errbuf, dirname, false);
         }
         xstrlcpy(IObuff, errbuf->b_fname, IOSIZE);
       }
@@ -5105,7 +5105,7 @@ static void vgr_init_regmatch(regmmatch_T *regmatch, char *s)
       emsg(_(e_noprevre));
       return;
     }
-    regmatch->regprog = vim_regcomp((char *)last_search_pat(), RE_MAGIC);
+    regmatch->regprog = vim_regcomp(last_search_pat(), RE_MAGIC);
   } else {
     regmatch->regprog = vim_regcomp(s, RE_MAGIC);
   }

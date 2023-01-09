@@ -3127,7 +3127,7 @@ bool in_cinkeys(int keytyped, int when, bool line_is_empty)
         // make up some named keys <o>, <O>, <e>, <0>, <>>, <<>, <*>,
         // <:> and <!> so that people can re-indent on o, O, e, 0, <,
         // >, *, : and ! keys if they really really want to.
-        if (vim_strchr("<>!*oOe0:", look[1]) != NULL
+        if (vim_strchr("<>!*oOe0:", (uint8_t)look[1]) != NULL
             && keytyped == look[1]) {
           return true;
         }

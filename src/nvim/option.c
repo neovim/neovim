@@ -999,14 +999,14 @@ static int do_set_string(int opt_idx, int opt_flags, char **argp, int nextchar, 
         // 'whichwrap'
         if (flags & P_ONECOMMA) {
           if (*s != ',' && *(s + 1) == ','
-              && vim_strchr(s + 2, *s) != NULL) {
+              && vim_strchr(s + 2, (uint8_t)(*s)) != NULL) {
             // Remove the duplicated value and the next comma.
             STRMOVE(s, s + 2);
             continue;
           }
         } else {
           if ((!(flags & P_COMMA) || *s != ',')
-              && vim_strchr(s + 1, *s) != NULL) {
+              && vim_strchr(s + 1, (uint8_t)(*s)) != NULL) {
             STRMOVE(s, s + 1);
             continue;
           }
@@ -1210,7 +1210,7 @@ int do_set(char *arg, int opt_flags)
         if (options[opt_idx].var == NULL) {         // hidden option: skip
           // Only give an error message when requesting the value of
           // a hidden option, ignore setting it.
-          if (vim_strchr("=:!&<", nextchar) == NULL
+          if (vim_strchr("=:!&<", (uint8_t)nextchar) == NULL
               && (!(options[opt_idx].flags & P_BOOL)
                   || nextchar == '?')) {
             errmsg = e_unsupportedoption;
@@ -1264,7 +1264,7 @@ int do_set(char *arg, int opt_flags)
         goto skip;
       }
 
-      if (vim_strchr("?=:!&<", nextchar) != NULL) {
+      if (vim_strchr("?=:!&<", (uint8_t)nextchar) != NULL) {
         arg += len;
         if (nextchar == '&' && arg[1] == 'v' && arg[2] == 'i') {
           if (arg[3] == 'm') {  // "opt&vim": set to Vim default
@@ -1273,7 +1273,7 @@ int do_set(char *arg, int opt_flags)
             arg += 2;
           }
         }
-        if (vim_strchr("?!&<", nextchar) != NULL
+        if (vim_strchr("?!&<", (uint8_t)nextchar) != NULL
             && arg[1] != NUL && !ascii_iswhite(arg[1])) {
           errmsg = e_trailing;
           goto skip;
@@ -1286,7 +1286,7 @@ int do_set(char *arg, int opt_flags)
       //
       if (nextchar == '?'
           || (prefix == 1
-              && vim_strchr("=:&<", nextchar) == NULL
+              && vim_strchr("=:&<", (uint8_t)nextchar) == NULL
               && !(flags & P_BOOL))) {
         // print value
         if (did_show) {
@@ -1359,7 +1359,7 @@ int do_set(char *arg, int opt_flags)
 
           errmsg = set_bool_option(opt_idx, (char_u *)varp, (int)value, opt_flags);
         } else {  // Numeric or string.
-          if (vim_strchr("=:&<", nextchar) == NULL
+          if (vim_strchr("=:&<", (uint8_t)nextchar) == NULL
               || prefix != 1) {
             errmsg = e_invarg;
             goto skip;
@@ -1775,7 +1775,7 @@ bool valid_name(const char *val, const char *allowed)
 {
   for (const char_u *s = (char_u *)val; *s != NUL; s++) {
     if (!ASCII_ISALNUM(*s)
-        && vim_strchr(allowed, *s) == NULL) {
+        && vim_strchr(allowed, (uint8_t)(*s)) == NULL) {
       return false;
     }
   }
@@ -1974,7 +1974,7 @@ static char *set_bool_option(const int opt_idx, char_u *const varp, const int va
              || (opt_flags & OPT_GLOBAL) || opt_flags == 0)
             && !bufIsChanged(bp) && bp->b_ml.ml_mfp != NULL) {
           u_compute_hash(bp, hash);
-          u_read_undo(NULL, hash, (char_u *)bp->b_fname);
+          u_read_undo(NULL, hash, bp->b_fname);
         }
       }
     }
@@ -5388,9 +5388,9 @@ size_t copy_option_part(char **option, char *buf, size_t maxlen, char *sep_chars
   if (*p == '.') {
     buf[len++] = *p++;
   }
-  while (*p != NUL && vim_strchr(sep_chars, *p) == NULL) {
+  while (*p != NUL && vim_strchr(sep_chars, (uint8_t)(*p)) == NULL) {
     // Skip backslash before a separator character and space.
-    if (p[0] == '\\' && vim_strchr(sep_chars, p[1]) != NULL) {
+    if (p[0] == '\\' && vim_strchr(sep_chars, (uint8_t)p[1]) != NULL) {
       p++;
     }
     if (len < maxlen - 1) {

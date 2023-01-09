@@ -280,7 +280,7 @@ static HistoryType get_histtype(const char *const name, const size_t len, const 
     }
   }
 
-  if (vim_strchr(":=@>?/", name[0]) != NULL && len == 1) {
+  if (vim_strchr(":=@>?/", (uint8_t)name[0]) != NULL && len == 1) {
     return hist_char2type(name[0]);
   }
 
@@ -437,7 +437,7 @@ int clr_history(const int histype)
 /// Remove all entries matching {str} from a history.
 ///
 /// @param histype  may be one of the HIST_ values.
-static int del_history_entry(int histype, char_u *str)
+static int del_history_entry(int histype, char *str)
 {
   if (hislen == 0 || histype < 0 || histype >= HIST_COUNT || *str == NUL
       || hisidx[histype] < 0) {
@@ -446,7 +446,7 @@ static int del_history_entry(int histype, char_u *str)
 
   const int idx = hisidx[histype];
   regmatch_T regmatch;
-  regmatch.regprog = vim_regcomp((char *)str, RE_MAGIC + RE_STRING);
+  regmatch.regprog = vim_regcomp(str, RE_MAGIC + RE_STRING);
   if (regmatch.regprog == NULL) {
     return false;
   }
@@ -560,7 +560,7 @@ void f_histdel(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     // string given: remove all matching entries
     char buf[NUMBUFLEN];
     n = del_history_entry(get_histtype(str, strlen(str), false),
-                          (char_u *)tv_get_string_buf(&argvars[1], buf));
+                          (char *)tv_get_string_buf(&argvars[1], buf));
   }
   rettv->vval.v_number = n;
 }
@@ -611,7 +611,7 @@ void ex_history(exarg_T *eap)
   int idx;
   int i, j, k;
   char *end;
-  char_u *arg = (char_u *)eap->arg;
+  char *arg = eap->arg;
 
   if (hislen == 0) {
     msg(_("'history' option is zero"));
@@ -619,12 +619,12 @@ void ex_history(exarg_T *eap)
   }
 
   if (!(ascii_isdigit(*arg) || *arg == '-' || *arg == ',')) {
-    end = (char *)arg;
+    end = arg;
     while (ASCII_ISALPHA(*end)
-           || vim_strchr(":=@>/?", *end) != NULL) {
+           || vim_strchr(":=@>/?", (uint8_t)(*end)) != NULL) {
       end++;
     }
-    histype1 = get_histtype((const char *)arg, (size_t)(end - (char *)arg), false);
+    histype1 = get_histtype(arg, (size_t)(end - arg), false);
     if (histype1 == HIST_INVALID) {
       if (STRNICMP(arg, "all", end - (char *)arg) == 0) {
         histype1 = 0;
@@ -637,7 +637,7 @@ void ex_history(exarg_T *eap)
       histype2 = histype1;
     }
   } else {
-    end = (char *)arg;
+    end = arg;
   }
   if (!get_list_range(&end, &hisidx1, &hisidx2) || *end != NUL) {
     semsg(_(e_trailing_arg), end);

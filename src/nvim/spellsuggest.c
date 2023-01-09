@@ -738,7 +738,7 @@ static void spell_find_suggest(char_u *badptr, int badlen, suginfo_T *su, int ma
   if (badlen != 0) {
     su->su_badlen = badlen;
   } else {
-    size_t tmplen = spell_check(curwin, (char_u *)su->su_badptr, &attr, NULL, false);
+    size_t tmplen = spell_check(curwin, su->su_badptr, &attr, NULL, false);
     assert(tmplen <= INT_MAX);
     su->su_badlen = (int)tmplen;
   }
@@ -3225,7 +3225,7 @@ static void check_suggestions(suginfo_T *su, garray_T *gap)
     xstrlcpy(longword + len, su->su_badptr + stp[i].st_orglen,
              (size_t)(MAXWLEN - len + 1));
     attr = HLF_COUNT;
-    (void)spell_check(curwin, (char_u *)longword, &attr, NULL, false);
+    (void)spell_check(curwin, longword, &attr, NULL, false);
     if (attr != HLF_COUNT) {
       // Remove this entry.
       xfree(stp[i].st_word);
@@ -3585,12 +3585,12 @@ static int spell_edit_score(slang_T *slang, const char_u *badword, const char_u 
     // Get the characters from the multi-byte strings and put them in an
     // int array for easy access.
     badlen = 0;
-    for (const char_u *p = badword; *p != NUL;) {
+    for (const char *p = (char *)badword; *p != NUL;) {
       wbadword[badlen++] = mb_cptr2char_adv(&p);
     }
     wbadword[badlen++] = 0;
     goodlen = 0;
-    for (const char_u *p = goodword; *p != NUL;) {
+    for (const char *p = (char *)goodword; *p != NUL;) {
       wgoodword[goodlen++] = mb_cptr2char_adv(&p);
     }
     wgoodword[goodlen++] = 0;
@@ -3691,12 +3691,12 @@ static int spell_edit_score_limit_w(slang_T *slang, const char_u *badword, const
   // Get the characters from the multi-byte strings and put them in an
   // int array for easy access.
   bi = 0;
-  for (const char_u *p = badword; *p != NUL;) {
+  for (const char *p = (char *)badword; *p != NUL;) {
     wbadword[bi++] = mb_cptr2char_adv(&p);
   }
   wbadword[bi++] = 0;
   gi = 0;
-  for (const char_u *p = goodword; *p != NUL;) {
+  for (const char *p = (char *)goodword; *p != NUL;) {
     wgoodword[gi++] = mb_cptr2char_adv(&p);
   }
   wgoodword[gi++] = 0;

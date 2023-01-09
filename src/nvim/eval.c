@@ -2185,7 +2185,7 @@ int pattern_match(const char *pat, const char *text, bool ic)
   regmatch.regprog = vim_regcomp((char *)pat, RE_MAGIC + RE_STRING);
   if (regmatch.regprog != NULL) {
     regmatch.rm_ic = ic;
-    matches = vim_regexec_nl(&regmatch, (char_u *)text, (colnr_T)0);
+    matches = vim_regexec_nl(&regmatch, (char *)text, (colnr_T)0);
     vim_regfree(regmatch.regprog);
   }
   p_cpo = save_cpo;
@@ -6302,7 +6302,7 @@ int get_id_len(const char **const arg)
       // slice "[n:]". Also "xx:" is not a namespace.
       len = (int)(p - *arg);
       if (len > 1
-          || (len == 1 && vim_strchr(namespace_char, **arg) == NULL)) {
+          || (len == 1 && vim_strchr(namespace_char, (uint8_t)(**arg)) == NULL)) {
         break;
       }
     }
@@ -6430,7 +6430,7 @@ const char *find_name_end(const char *arg, const char **expr_start, const char *
       // slice "[n:]".  Also "xx:" is not a namespace. But {ns}: is.
       len = (int)(p - arg);
       if ((len > 1 && p[-1] != '}')
-          || (len == 1 && vim_strchr(namespace_char, *arg) == NULL)) {
+          || (len == 1 && vim_strchr(namespace_char, (uint8_t)(*arg)) == NULL)) {
         break;
       }
     }
@@ -8081,7 +8081,7 @@ char *do_string_sub(char *str, char *pat, char *sub, typval_T *expr, const char 
   if (regmatch.regprog != NULL) {
     char *tail = str;
     char *end = str + strlen(str);
-    while (vim_regexec_nl(&regmatch, (char_u *)str, (colnr_T)(tail - str))) {
+    while (vim_regexec_nl(&regmatch, str, (colnr_T)(tail - str))) {
       // Skip empty match except for first match.
       if (regmatch.startp[0] == regmatch.endp[0]) {
         if (zero_width == regmatch.startp[0]) {

@@ -278,7 +278,7 @@ int readfile(char *fname, char *sfname, linenr_T from, linenr_T lines_to_skip,
       && fname != NULL
       && vim_strchr(p_cpo, CPO_FNAMER) != NULL
       && !(flags & READ_DUMMY)) {
-    if (set_rw_fname((char_u *)fname, (char_u *)sfname) == FAIL) {
+    if (set_rw_fname(fname, sfname) == FAIL) {
       return FAIL;
     }
   }
@@ -860,7 +860,7 @@ retry:
       // Skip conversion when it's already done (retry for wrong
       // "fileformat").
       if (tmpname == NULL) {
-        tmpname = (char *)readfile_charconvert((char_u *)fname, (char_u *)fenc, &fd);
+        tmpname = readfile_charconvert(fname, fenc, &fd);
         if (tmpname == NULL) {
           // Conversion failed.  Try another one.
           advance_fenc = true;
@@ -1175,7 +1175,7 @@ retry:
             goto rewind_retry;
           }
           if (conv_error == 0) {
-            conv_error = readfile_linenr(linecnt, (char_u *)ptr, (char_u *)top);
+            conv_error = readfile_linenr(linecnt, ptr, top);
           }
 
           // Deal with a bad byte and continue with the next.
@@ -1287,7 +1287,7 @@ retry:
                   goto rewind_retry;
                 }
                 if (conv_error == 0) {
-                  conv_error = readfile_linenr(linecnt, (char_u *)ptr, p);
+                  conv_error = readfile_linenr(linecnt, ptr, (char *)p);
                 }
                 if (bad_char_behavior == BAD_DROP) {
                   continue;
@@ -1315,7 +1315,7 @@ retry:
                   goto rewind_retry;
                 }
                 if (conv_error == 0) {
-                  conv_error = readfile_linenr(linecnt, (char_u *)ptr, p);
+                  conv_error = readfile_linenr(linecnt, ptr, (char *)p);
                 }
                 if (bad_char_behavior == BAD_DROP) {
                   continue;
@@ -1356,7 +1356,7 @@ retry:
                   goto rewind_retry;
                 }
                 if (conv_error == 0) {
-                  conv_error = readfile_linenr(linecnt, (char_u *)ptr, p);
+                  conv_error = readfile_linenr(linecnt, ptr, (char *)p);
                 }
                 if (bad_char_behavior == BAD_DROP) {
                   continue;
@@ -1423,12 +1423,12 @@ retry:
 #ifdef HAVE_ICONV
               // When we did a conversion report an error.
               if (iconv_fd != (iconv_t)-1 && conv_error == 0) {
-                conv_error = readfile_linenr(linecnt, (char_u *)ptr, p);
+                conv_error = readfile_linenr(linecnt, ptr, (char *)p);
               }
 #endif
               // Remember the first linenr with an illegal byte
               if (conv_error == 0 && illegal_byte == 0) {
-                illegal_byte = readfile_linenr(linecnt, (char_u *)ptr, p);
+                illegal_byte = readfile_linenr(linecnt, ptr, (char *)p);
               }
 
               // Drop, keep or replace the bad byte.
@@ -1887,7 +1887,7 @@ failed:
     char_u hash[UNDO_HASH_SIZE];
 
     sha256_finish(&sha_ctx, hash);
-    u_read_undo(NULL, hash, (char_u *)fname);
+    u_read_undo(NULL, hash, fname);
   }
 
   if (!read_stdin && !read_fifo && (!read_buffer || sfname != NULL)) {
@@ -1958,9 +1958,9 @@ bool is_dev_fd_file(char *fname)
 /// @param linecnt  line count before reading more bytes
 /// @param p        start of more bytes read
 /// @param endp     end of more bytes read
-static linenr_T readfile_linenr(linenr_T linecnt, char_u *p, const char_u *endp)
+static linenr_T readfile_linenr(linenr_T linecnt, char *p, const char *endp)
 {
-  char_u *s;
+  char *s;
   linenr_T lnum;
 
   lnum = curbuf->b_ml.ml_line_count - linecnt + 1;
@@ -2040,7 +2040,7 @@ static char *next_fenc(char **pp, bool *alloced)
     *pp = NULL;
     return "";
   }
-  p = vim_strchr((*pp), ',');
+  p = vim_strchr(*pp, ',');
   if (p == NULL) {
     r = enc_canonize(*pp);
     *pp += strlen(*pp);
@@ -2065,22 +2065,22 @@ static char *next_fenc(char **pp, bool *alloced)
 ///
 /// @return       name of the resulting converted file (the caller should delete it after reading it).
 ///               Returns NULL if the conversion failed ("*fdp" is not set) .
-static char_u *readfile_charconvert(char_u *fname, char_u *fenc, int *fdp)
+static char *readfile_charconvert(char *fname, char *fenc, int *fdp)
 {
-  char_u *tmpname;
+  char *tmpname;
   char *errmsg = NULL;
 
-  tmpname = (char_u *)vim_tempname();
+  tmpname = vim_tempname();
   if (tmpname == NULL) {
     errmsg = _("Can't find temp file for conversion");
   } else {
     close(*fdp);                // close the input file, ignore errors
     *fdp = -1;
-    if (eval_charconvert((char *)fenc, "utf-8",
-                         (char *)fname, (char *)tmpname) == FAIL) {
+    if (eval_charconvert(fenc, "utf-8",
+                         fname, tmpname) == FAIL) {
       errmsg = _("Conversion with 'charconvert' failed");
     }
-    if (errmsg == NULL && (*fdp = os_open((char *)tmpname, O_RDONLY, 0)) < 0) {
+    if (errmsg == NULL && (*fdp = os_open(tmpname, O_RDONLY, 0)) < 0) {
       errmsg = _("can't read output of 'charconvert'");
     }
   }
@@ -2090,14 +2090,14 @@ static char_u *readfile_charconvert(char_u *fname, char_u *fenc, int *fdp)
     // another type of conversion might still work.
     msg(errmsg);
     if (tmpname != NULL) {
-      os_remove((char *)tmpname);  // delete converted file
+      os_remove(tmpname);  // delete converted file
       XFREE_CLEAR(tmpname);
     }
   }
 
   // If the input file is closed, open it (caller should check for error).
   if (*fdp < 0) {
-    *fdp = os_open((char *)fname, O_RDONLY, 0);
+    *fdp = os_open(fname, O_RDONLY, 0);
   }
 
   return tmpname;
@@ -2254,7 +2254,7 @@ int buf_write(buf_T *buf, char *fname, char *sfname, linenr_T start, linenr_T en
       && !filtering
       && (!append || vim_strchr(p_cpo, CPO_FNAMEAPP) != NULL)
       && vim_strchr(p_cpo, CPO_FNAMEW) != NULL) {
-    if (set_rw_fname((char_u *)fname, (char_u *)sfname) == FAIL) {
+    if (set_rw_fname(fname, sfname) == FAIL) {
       return FAIL;
     }
     buf = curbuf;           // just in case autocmds made "buf" invalid
@@ -2572,7 +2572,7 @@ int buf_write(buf_T *buf, char *fname, char *sfname, linenr_T start, linenr_T en
 
   // If 'backupskip' is not empty, don't make a backup for some files.
   dobackup = (p_wb || p_bk || *p_pm != NUL);
-  if (dobackup && *p_bsk != NUL && match_file_list(p_bsk, (char_u *)sfname, (char_u *)ffname)) {
+  if (dobackup && *p_bsk != NUL && match_file_list((char *)p_bsk, sfname, ffname)) {
     dobackup = false;
   }
 
@@ -3652,7 +3652,7 @@ nofail:
 
 /// Set the name of the current buffer.  Use when the buffer doesn't have a
 /// name and a ":r" or ":w" command with a file name is used.
-static int set_rw_fname(char_u *fname, char_u *sfname)
+static int set_rw_fname(char *fname, char *sfname)
 {
   buf_T *buf = curbuf;
 
@@ -3670,7 +3670,7 @@ static int set_rw_fname(char_u *fname, char_u *sfname)
     return FAIL;
   }
 
-  if (setfname(curbuf, (char *)fname, (char *)sfname, false) == OK) {
+  if (setfname(curbuf, fname, sfname, false) == OK) {
     curbuf->b_flags |= BF_NOTEDITED;
   }
 
@@ -4205,7 +4205,7 @@ static int make_bom(char_u *buf, char_u *name)
 ///
 /// For buffers that have buftype "nofile" or "scratch": never change the file
 /// name.
-void shorten_buf_fname(buf_T *buf, char_u *dirname, int force)
+void shorten_buf_fname(buf_T *buf, char *dirname, int force)
 {
   char *p;
 
@@ -4214,11 +4214,11 @@ void shorten_buf_fname(buf_T *buf, char_u *dirname, int force)
       && !path_with_url(buf->b_fname)
       && (force
           || buf->b_sfname == NULL
-          || path_is_absolute((char_u *)buf->b_sfname))) {
+          || path_is_absolute(buf->b_sfname))) {
     if (buf->b_sfname != buf->b_ffname) {
       XFREE_CLEAR(buf->b_sfname);
     }
-    p = path_shorten_fname(buf->b_ffname, (char *)dirname);
+    p = path_shorten_fname(buf->b_ffname, dirname);
     if (p != NULL) {
       buf->b_sfname = xstrdup(p);
       buf->b_fname = buf->b_sfname;
@@ -4236,7 +4236,7 @@ void shorten_fnames(int force)
 
   os_dirname((char *)dirname, MAXPATHL);
   FOR_ALL_BUFFERS(buf) {
-    shorten_buf_fname(buf, dirname, force);
+    shorten_buf_fname(buf, (char *)dirname, force);
 
     // Always make the swap file name a full path, a "nofile" buffer may
     // also have a swap file.
@@ -4552,7 +4552,7 @@ int vim_rename(const char *from, const char *to)
   }
 
   if (use_tmp_file) {
-    char_u tempname[MAXPATHL + 1];
+    char tempname[MAXPATHL + 1];
 
     // Find a name that doesn't exist and is in the same directory.
     // Rename "from" to "tempname" and then rename "tempname" to "to".
@@ -4561,17 +4561,17 @@ int vim_rename(const char *from, const char *to)
     }
     STRCPY(tempname, from);
     for (n = 123; n < 99999; n++) {
-      char *tail = path_tail((char *)tempname);
-      snprintf(tail, (size_t)((MAXPATHL + 1) - (tail - (char *)tempname - 1)), "%d", n);
+      char *tail = path_tail(tempname);
+      snprintf(tail, (size_t)((MAXPATHL + 1) - (tail - tempname - 1)), "%d", n);
 
-      if (!os_path_exists((char *)tempname)) {
-        if (os_rename((char_u *)from, tempname) == OK) {
-          if (os_rename(tempname, (char_u *)to) == OK) {
+      if (!os_path_exists(tempname)) {
+        if (os_rename(from, tempname) == OK) {
+          if (os_rename(tempname, to) == OK) {
             return 0;
           }
           // Strange, the second step failed.  Try moving the
           // file back and return failure.
-          (void)os_rename(tempname, (char_u *)from);
+          (void)os_rename(tempname, from);
           return -1;
         }
         // If it fails for one temp name it will most likely fail
@@ -4589,7 +4589,7 @@ int vim_rename(const char *from, const char *to)
   os_remove((char *)to);
 
   // First try a normal rename, return if it works.
-  if (os_rename((char_u *)from, (char_u *)to) == OK) {
+  if (os_rename(from, to) == OK) {
     return 0;
   }
 
@@ -5317,7 +5317,7 @@ int delete_recursive(const char *name)
     garray_T ga;
     if (readdir_core(&ga, exp, NULL, NULL) == OK) {
       for (int i = 0; i < ga.ga_len; i++) {
-        vim_snprintf(NameBuff, MAXPATHL, "%s/%s", exp, ((char_u **)ga.ga_data)[i]);
+        vim_snprintf(NameBuff, MAXPATHL, "%s/%s", exp, ((char **)ga.ga_data)[i]);
         if (delete_recursive((const char *)NameBuff) != 0) {
           // Remember the failure but continue deleting any further
           // entries.
@@ -5505,28 +5505,27 @@ bool match_file_pat(char *pattern, regprog_T **prog, char *fname, char *sfname, 
 /// @param ffname full file name
 ///
 /// @return true if there was a match
-bool match_file_list(char_u *list, char_u *sfname, char_u *ffname)
+bool match_file_list(char *list, char *sfname, char *ffname)
   FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ARG(1, 3)
 {
-  char_u buf[100];
-  char_u *tail;
-  char_u *regpat;
+  char buf[100];
+  char *tail;
+  char *regpat;
   char allow_dirs;
   bool match;
   char *p;
 
-  tail = (char_u *)path_tail((char *)sfname);
+  tail = path_tail(sfname);
 
   // try all patterns in 'wildignore'
-  p = (char *)list;
+  p = list;
   while (*p) {
-    copy_option_part(&p, (char *)buf, ARRAY_SIZE(buf), ",");
-    regpat = (char_u *)file_pat_to_reg_pat((char *)buf, NULL, &allow_dirs, false);
+    copy_option_part(&p, buf, ARRAY_SIZE(buf), ",");
+    regpat = file_pat_to_reg_pat(buf, NULL, &allow_dirs, false);
     if (regpat == NULL) {
       break;
     }
-    match = match_file_pat((char *)regpat, NULL, (char *)ffname, (char *)sfname, (char *)tail,
-                           (int)allow_dirs);
+    match = match_file_pat(regpat, NULL, ffname, sfname, tail, (int)allow_dirs);
     xfree(regpat);
     if (match) {
       return true;
