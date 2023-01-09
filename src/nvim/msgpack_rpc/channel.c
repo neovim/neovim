@@ -100,7 +100,6 @@ bool rpc_send_event(uint64_t id, const char *name, Array args)
   Channel *channel = NULL;
 
   if (id && (!(channel = find_rpc_channel(id)))) {
-    api_free_array(args);
     return false;
   }
 
