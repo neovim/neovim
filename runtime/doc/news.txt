@@ -118,6 +118,11 @@ The following new APIs or features were added.
 
 • |'splitkeep'| option to control the scroll behavior of horizontal splits.
 
+• |'statuscolumn'| option to customize the area to the side of a window,
+  normally containing the fold, sign and number columns. This new option follows
+  the 'statusline' syntax and can be used to transform the line numbers, create
+  mouse click callbacks for |signs|, introduce a custom margin or separator etc.
+
 • |nvim_select_popupmenu_item()| now supports |cmdline-completion| popup menu.
 
 • |'diffopt'| now includes a `linematch` option to enable a second-stage diff

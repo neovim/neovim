@@ -522,7 +522,7 @@ int update_screen(void)
   // TODO(bfredl): special casing curwin here is SÅ JÄVLA BULL.
   // Either this should be done for all windows or not at all.
   if (curwin->w_redr_type < UPD_NOT_VALID
-      && curwin->w_nrwidth != ((curwin->w_p_nu || curwin->w_p_rnu)
+      && curwin->w_nrwidth != ((curwin->w_p_nu || curwin->w_p_rnu || *curwin->w_p_stc)
                                ? number_width(curwin) : 0)) {
     curwin->w_redr_type = UPD_NOT_VALID;
   }
@@ -1032,7 +1032,7 @@ static void win_update(win_T *wp, DecorProviders *providers)
 
   // Force redraw when width of 'number' or 'relativenumber' column
   // changes.
-  int nrwidth = (wp->w_p_nu || wp->w_p_rnu) ? number_width(wp) : 0;
+  int nrwidth = (wp->w_p_nu || wp->w_p_rnu || *wp->w_p_stc) ? number_width(wp) : 0;
   if (wp->w_nrwidth != nrwidth) {
     type = UPD_NOT_VALID;
     wp->w_nrwidth = nrwidth;
@@ -1821,6 +1821,18 @@ static void win_update(win_T *wp, DecorProviders *providers)
       }
       lnum = wp->w_lines[idx - 1].wl_lastlnum + 1;
       did_update = DID_NONE;
+    }
+
+    // 'statuscolumn' width has changed or errored, start from the top.
+    if (wp->w_redr_statuscol) {
+      wp->w_redr_statuscol = false;
+      idx = 0;
+      row = 0;
+      lnum = wp->w_topline;
+      wp->w_lines_valid = 0;
+      wp->w_valid &= ~VALID_WCOL;
+      decor_providers_invoke_win(wp, providers, &line_providers, &provider_err);
+      continue;
     }
 
     if (lnum > buf->b_ml.ml_line_count) {

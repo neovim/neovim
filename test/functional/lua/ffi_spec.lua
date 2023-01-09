@@ -29,6 +29,7 @@ describe('ffi.cdef', function()
         typedef struct window_S win_T;
         typedef struct {} stl_hlrec_t;
         typedef struct {} StlClickRecord;
+        typedef struct {} statuscol_T;
         typedef struct {} Error;
 
         win_T *find_window_by_handle(int Window, Error *err);
@@ -43,7 +44,8 @@ describe('ffi.cdef', function()
           int fillchar,
           int maxwidth,
           stl_hlrec_t **hltab,
-          StlClickRecord **tabtab
+          StlClickRecord **tabtab,
+          statuscol_T *scp
         );
       ]]
 
@@ -56,6 +58,7 @@ describe('ffi.cdef', function()
         0,
         0,
         0,
+        nil,
         nil,
         nil
       )

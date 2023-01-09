@@ -21,6 +21,7 @@
 #include "nvim/decoration_provider.h"
 #include "nvim/diff.h"
 #include "nvim/drawline.h"
+#include "nvim/eval.h"
 #include "nvim/extmark_defs.h"
 #include "nvim/fold.h"
 #include "nvim/garray.h"
@@ -43,6 +44,7 @@
 #include "nvim/sign.h"
 #include "nvim/spell.h"
 #include "nvim/state.h"
+#include "nvim/statusline.h"
 #include "nvim/strings.h"
 #include "nvim/syntax.h"
 #include "nvim/terminal.h"
@@ -60,6 +62,7 @@ typedef enum {
   WL_FOLD,       // 'foldcolumn'
   WL_SIGN,       // column for signs
   WL_NR,         // line number
+  WL_STC,        // 'statuscolumn'
   WL_BRI,        // 'breakindent'
   WL_SBR,        // 'showbreak' or 'diff'
   WL_LINE,       // text in the line
@@ -393,6 +396,90 @@ static int get_sign_attrs(buf_T *buf, linenr_T lnum, SignTextAttrs *sattrs, int 
   *cul_attr = cul_attrs.attr_id;
 
   return num_signs;
+}
+
+static void get_statuscol_str(win_T *wp, linenr_T lnum, int row, int startrow, int filler_lines,
+                              int cul_attr, int sign_num_attr, SignTextAttrs *sattrs,
+                              foldinfo_T foldinfo, char_u *extra, statuscol_T *stcp)
+{
+  long relnum;
+  bool wrapped = row != startrow + filler_lines;
+  bool use_cul = use_cursor_line_sign(wp, lnum);
+
+  // Set num, fold and sign text and attrs, empty when wrapped
+  if (row == startrow) {
+    relnum = labs(get_cursor_rel_lnum(wp, lnum));
+    stcp->num_attr = sign_num_attr ? sign_num_attr
+                     : get_line_number_attr(wp, lnum, row, startrow, filler_lines);
+
+    if (compute_foldcolumn(wp, 0)) {
+      size_t n = fill_foldcolumn((char_u *)stcp->fold_text, wp, foldinfo, lnum);
+      stcp->fold_text[n] = NUL;
+      stcp->fold_attr = win_hl_attr(wp, use_cul ? HLF_CLF : HLF_FC);
+    }
+  }
+
+  int i = 0;
+  for (; i < wp->w_scwidth; i++) {
+    SignTextAttrs *sattr = wrapped ? NULL : sign_get_attr(i, sattrs, wp->w_scwidth);
+    stcp->sign_text[i] = sattr && sattr->text ? sattr->text : "  ";
+    stcp->sign_attr[i] = use_cul && cul_attr ? cul_attr : sattr ? sattr->hl_attr_id : 0;
+  }
+  stcp->sign_text[i] = NULL;
+
+  int width = build_statuscol_str(wp, row == startrow, wrapped, lnum, relnum,
+                                  stcp->width, ' ', stcp->text, &stcp->hlrec, stcp);
+  // Force a redraw in case of error or when truncated
+  if (*wp->w_p_stc == NUL || (stcp->truncate > 0 && wp->w_nrwidth < MAX_NUMBERWIDTH)) {
+    if (stcp->truncate) {  // Avoid truncating 'statuscolumn'
+      wp->w_nrwidth = MIN(MAX_NUMBERWIDTH, wp->w_nrwidth + stcp->truncate);
+      wp->w_nrwidth_width = wp->w_nrwidth;
+    } else {  // 'statuscolumn' reset due to error
+      wp->w_nrwidth_line_count = 0;
+      wp->w_nrwidth = (wp->w_p_nu || wp->w_p_rnu) * number_width(wp);
+    }
+    wp->w_redr_statuscol = true;
+    return;
+  }
+
+  // Reset text/highlight pointer and current attr for new line
+  stcp->textp = stcp->text;
+  stcp->hlrecp = stcp->hlrec;
+  stcp->cur_attr = stcp->num_attr;
+  stcp->text_len = strlen(stcp->text);
+
+  int fill = stcp->width - width;
+  if (fill > 0) {
+    // Fill up with ' '
+    memset(&stcp->text[stcp->text_len], ' ', (size_t)fill);
+    stcp->text_len += (size_t)fill;
+    stcp->text[stcp->text_len] = NUL;
+  }
+}
+
+static void get_statuscol_display_info(LineDrawState *draw_state, int *char_attr, int *n_extrap,
+                                       int *c_extrap, int *c_finalp, char_u *extra, char **pp_extra,
+                                       statuscol_T *stcp)
+{
+  *c_extrap = NUL;
+  *c_finalp = NUL;
+  do {
+    *draw_state = WL_STC;
+    *char_attr = stcp->cur_attr;
+    *pp_extra = stcp->textp;
+    *n_extrap = stcp->hlrecp->start ? (int)(stcp->hlrecp->start - stcp->textp)
+                                    : (int)strlen(*pp_extra);
+    // Prepare for next highlight section if not yet at the end
+    if (stcp->textp + *n_extrap < stcp->text + stcp->text_len) {
+      int hl = stcp->hlrecp->userhl;
+      stcp->textp = stcp->hlrecp->start;
+      stcp->cur_attr = hl < 0 ? syn_id2attr(-stcp->hlrecp->userhl)
+                              : hl > 0 ? hl : stcp->num_attr;
+      stcp->hlrecp++;
+      *draw_state = WL_STC - 1;
+    }
+    // Skip over empty highlight sections
+  } while (*n_extrap == 0 && stcp->textp < stcp->text + stcp->text_len);
 }
 
 /// Return true if CursorLineNr highlight is to be used for the number column.
@@ -1098,6 +1185,13 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
     extra_check = true;
   }
 
+  statuscol_T statuscol = { 0 };
+  if (*wp->w_p_stc != NUL) {
+    // Draw the 'statuscolumn' if option is set.
+    statuscol.draw = true;
+    statuscol.width = win_col_off(wp);
+  }
+
   int sign_idx = 0;
   // Repeat for the whole displayed line.
   for (;;) {
@@ -1125,9 +1219,13 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
         }
       }
 
+      // Skip fold, sign and number states if 'statuscolumn' is set.
+      if (draw_state == WL_FOLD - 1 && n_extra == 0 && statuscol.draw) {
+        draw_state = WL_STC - 1;
+      }
+
       if (draw_state == WL_FOLD - 1 && n_extra == 0) {
         int fdc = compute_foldcolumn(wp, 0);
-
         draw_state = WL_FOLD;
         if (fdc > 0) {
           // Draw the 'foldcolumn'.  Allocate a buffer, "extra" may
@@ -1217,7 +1315,23 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
         }
       }
 
-      if (draw_state == WL_NR && n_extra == 0) {
+      if (draw_state == WL_STC - 1 && n_extra == 0) {
+        draw_state = WL_STC;
+        // Draw the 'statuscolumn' if option is set.
+        if (statuscol.draw) {
+          if (statuscol.text_len == 0) {
+            get_statuscol_str(wp, lnum, row, startrow, filler_lines, cul_attr,
+                              sign_num_attr, sattrs, foldinfo, extra, &statuscol);
+            if (wp->w_redr_statuscol) {
+              return 0;
+            }
+          }
+          get_statuscol_display_info(&draw_state, &char_attr, &n_extra, &c_extra,
+                                     &c_final, extra, &p_extra, &statuscol);
+        }
+      }
+
+      if (draw_state == WL_STC && n_extra == 0) {
         win_col_offset = off;
       }
 
@@ -1349,7 +1463,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
           && wp == curwin
           && lnum == wp->w_cursor.lnum
           && vcol >= (long)wp->w_virtcol)
-         || (number_only && draw_state > WL_NR))
+         || (number_only && draw_state > WL_STC))
         && filler_todo <= 0) {
       draw_virt_text(wp, buf, win_col_offset, &col, grid->cols, row);
       grid_put_linebuf(grid, row, 0, col, -grid->cols, wp->w_p_rl, wp, bg_attr, false);
@@ -2214,7 +2328,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
         && wp->w_p_list
         && (wp->w_p_wrap ? (wp->w_skipcol > 0 && row == 0) : wp->w_leftcol > 0)
         && filler_todo <= 0
-        && draw_state > WL_NR
+        && draw_state > WL_STC
         && c != NUL) {
       c = wp->w_p_lcs_chars.prec;
       lcs_prec_todo = NUL;
@@ -2508,7 +2622,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
         col++;
         // UTF-8: Put a 0 in the second screen char.
         linebuf_char[off][0] = 0;
-        if (draw_state > WL_NR && filler_todo <= 0) {
+        if (draw_state > WL_STC && filler_todo <= 0) {
           vcol++;
         }
         // When "tocol" is halfway through a character, set it to the end of
@@ -2591,7 +2705,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
 
     // Only advance the "vcol" when after the 'number' or 'relativenumber'
     // column.
-    if (draw_state > WL_NR
+    if (draw_state > WL_STC
         && filler_todo <= 0) {
       vcol++;
     }
@@ -2601,7 +2715,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
     }
 
     // restore attributes after "predeces" in 'listchars'
-    if (draw_state > WL_NR && n_attr3 > 0 && --n_attr3 == 0) {
+    if (draw_state > WL_STC && n_attr3 > 0 && --n_attr3 == 0) {
       char_attr = saved_attr3;
     }
 
@@ -2696,6 +2810,16 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
       lcs_prec_todo = wp->w_p_lcs_chars.prec;
       if (filler_todo <= 0) {
         need_showbreak = true;
+      }
+      if (statuscol.draw) {
+        if (row == startrow + 1 || row == startrow + filler_lines) {
+          // Re-evaluate 'statuscolumn' for the first wrapped row and non filler line
+          statuscol.text_len = 0;
+        } else {  // Otherwise just reset the text/hlrec pointers
+          statuscol.textp = statuscol.text;
+          statuscol.hlrecp = statuscol.hlrec;
+        }  // Fall back to default columns if the 'n' flag isn't in 'cpo'
+        statuscol.draw = vim_strchr(p_cpo, CPO_NUMCOL) == NULL;
       }
       filler_todo--;
       // When the filler lines are actually below the last line of the

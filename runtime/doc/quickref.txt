@@ -883,6 +883,7 @@ Short explanation of each option:		*option-list*
 'splitkeep'	  'spk'     determines scroll behavior for split windows
 'splitright'	  'spr'     new window is put right of the current one
 'startofline'	  'sol'     commands move cursor to first non-blank in line
+'statuscolumn'	  'stc'	    custom format for the status column
 'statusline'	  'stl'     custom format for the status line
 'suffixes'	  'su'	    suffixes that are ignored with multiple match
 'suffixesadd'	  'sua'     suffixes added when searching for a file

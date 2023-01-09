@@ -204,6 +204,8 @@ typedef struct {
 #define w_p_cc w_onebuf_opt.wo_cc      // 'colorcolumn'
   char *wo_sbr;
 #define w_p_sbr w_onebuf_opt.wo_sbr    // 'showbreak'
+  char *wo_stc;
+#define w_p_stc w_onebuf_opt.wo_stc     // 'statuscolumn'
   char *wo_stl;
 #define w_p_stl w_onebuf_opt.wo_stl     // 'statusline'
   char *wo_wbr;
@@ -1300,6 +1302,7 @@ struct window_S {
   linenr_T w_redraw_bot;            // when != 0: last line needing redraw
   bool w_redr_status;               // if true statusline/winbar must be redrawn
   bool w_redr_border;               // if true border must be redrawn
+  bool w_redr_statuscol;            // if true 'statuscolumn' must be redrawn
 
   // remember what is shown in the ruler for this window (if 'ruler' set)
   pos_T w_ru_cursor;                // cursor position shown in ruler
@@ -1404,6 +1407,31 @@ struct window_S {
   StlClickDefinition *w_winbar_click_defs;
   // Size of the w_winbar_click_defs array
   size_t w_winbar_click_defs_size;
+
+  // Status column click definitions
+  StlClickDefinition *w_statuscol_click_defs;
+  // Size of the w_statuscol_click_defs array
+  size_t w_statuscol_click_defs_size;
+};
+
+/// Struct to hold info for 'statuscolumn'
+typedef struct statuscol statuscol_T;
+
+struct statuscol {
+  int width;                       // width of the status column
+  int cur_attr;                    // current attributes in text
+  int num_attr;                    // attributes used for line number
+  int fold_attr;                   // attributes used for fold column
+  int sign_attr[SIGN_SHOW_MAX];    // attributes used for signs
+  int truncate;                    // truncated width
+  bool draw;                       // draw statuscolumn or not
+  char fold_text[10];              // text in fold column (%C)
+  char *sign_text[SIGN_SHOW_MAX];  // text in sign column (%s)
+  char text[MAXPATHL];             // text in status column
+  char *textp;                     // current position in text
+  size_t text_len;                 // length of text
+  stl_hlrec_t *hlrec;              // highlight groups
+  stl_hlrec_t *hlrecp;             // current highlight group
 };
 
 /// Macros defined in Vim, but not in Neovim
