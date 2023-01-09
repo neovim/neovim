@@ -107,10 +107,9 @@ static colnr_T Insstart_textlen;        // length of line when insert started
 static colnr_T Insstart_blank_vcol;     // vcol for first inserted blank
 static bool update_Insstart_orig = true;  // set Insstart_orig to Insstart
 
-static char_u *last_insert = NULL;    // the text of the previous insert,
-                                      // K_SPECIAL is escaped
-static int last_insert_skip;      // nr of chars in front of previous insert
-static int new_insert_skip;       // nr of chars in front of current insert
+static char *last_insert = NULL;        // the text of the previous insert, K_SPECIAL is escaped
+static int last_insert_skip;            // nr of chars in front of previous insert
+static int new_insert_skip;             // nr of chars in front of current insert
 static int did_restart_edit;            // "restart_edit" when calling edit()
 
 static bool can_cindent;                // may do cindenting on this line
@@ -558,12 +557,12 @@ static int insert_execute(VimState *state, int key)
       // completion: Add to "compl_leader".
       if (ins_compl_accept_char(s->c)) {
         // Trigger InsertCharPre.
-        char_u *str = do_insert_char_pre(s->c);
-        char_u *p;
+        char *str = do_insert_char_pre(s->c);
+        char *p;
 
         if (str != NULL) {
           for (p = str; *p != NUL; MB_PTR_ADV(p)) {
-            ins_compl_addleader(utf_ptr2char((char *)p));
+            ins_compl_addleader(utf_ptr2char(p));
           }
           xfree(str);
         } else {
@@ -1122,7 +1121,7 @@ normalchar:
 
     if (!p_paste) {
       // Trigger InsertCharPre.
-      char *str = (char *)do_insert_char_pre(s->c);
+      char *str = do_insert_char_pre(s->c);
       char *p;
 
       if (str != NULL) {
@@ -1544,8 +1543,8 @@ void display_dollar(colnr_T col)
   curwin->w_cursor.col = col;
 
   // If on the last byte of a multi-byte move to the first byte.
-  char_u *p = (char_u *)get_cursor_line_ptr();
-  curwin->w_cursor.col -= utf_head_off((char *)p, (char *)p + col);
+  char *p = get_cursor_line_ptr();
+  curwin->w_cursor.col -= utf_head_off(p, p + col);
   curs_columns(curwin, false);              // Recompute w_wrow and w_wcol
   if (curwin->w_wcol < curwin->w_grid.cols) {
     edit_putchar('$', false);
@@ -1579,7 +1578,7 @@ void change_indent(int type, int amount, int round, int replaced, int call_chang
   int last_vcol;
   int insstart_less;                    // reduction for Insstart.col
   int new_cursor_col;
-  char_u *ptr;
+  char *ptr;
   int save_p_list;
   int start_col;
   colnr_T vc;
@@ -1658,9 +1657,9 @@ void change_indent(int type, int amount, int round, int replaced, int call_chang
 
     // Advance the cursor until we reach the right screen column.
     last_vcol = 0;
-    ptr = (char_u *)get_cursor_line_ptr();
+    ptr = get_cursor_line_ptr();
     chartabsize_T cts;
-    init_chartabsize_arg(&cts, curwin, 0, 0, (char *)ptr, (char *)ptr);
+    init_chartabsize_arg(&cts, curwin, 0, 0, ptr, ptr);
     while (cts.cts_vcol <= (int)curwin->w_virtcol) {
       last_vcol = cts.cts_vcol;
       if (cts.cts_vcol > 0) {
@@ -1683,7 +1682,7 @@ void change_indent(int type, int amount, int round, int replaced, int call_chang
       ptr = xmallocz(i);
       memset(ptr, ' ', i);
       new_cursor_col += (int)i;
-      ins_str((char *)ptr);
+      ins_str(ptr);
       xfree(ptr);
     }
 
@@ -2062,8 +2061,8 @@ void insertchar(int c, int flags, int second_indent)
 
     // Need to remove existing (middle) comment leader and insert end
     // comment leader.  First, check what comment leader we can find.
-    char_u *line = (char_u *)get_cursor_line_ptr();
-    int i = get_leader_len((char *)line, &p, false, true);
+    char *line = get_cursor_line_ptr();
+    int i = get_leader_len(line, &p, false, true);
     if (i > 0 && vim_strchr(p, COM_MIDDLE) != NULL) {  // Just checking
       // Skip middle-comment string
       while (*p && p[-1] != ':') {  // find end of middle flags
@@ -2308,7 +2307,7 @@ static void stop_insert(pos_T *end_insert_pos, int esc, int nomove)
   if (did_restart_edit == 0 || (ptr != NULL
                                 && (int)strlen(ptr) > new_insert_skip)) {
     xfree(last_insert);
-    last_insert = (char_u *)ptr;
+    last_insert = ptr;
     last_insert_skip = new_insert_skip;
   } else {
     xfree(ptr);
@@ -2414,7 +2413,7 @@ static void stop_insert(pos_T *end_insert_pos, int esc, int nomove)
 // Used for the replace command.
 void set_last_insert(int c)
 {
-  char_u *s;
+  char *s;
 
   xfree(last_insert);
   last_insert = xmalloc(MB_MAXBYTES * 3 + 5);
@@ -2423,7 +2422,7 @@ void set_last_insert(int c)
   if (c < ' ' || c == DEL) {
     *s++ = Ctrl_V;
   }
-  s = add_char2buf(c, s);
+  s = (char *)add_char2buf(c, (char_u *)s);
   *s++ = ESC;
   *s++ = NUL;
   last_insert_skip = 0;
@@ -2738,12 +2737,12 @@ char_u *get_last_insert(void)
   if (last_insert == NULL) {
     return NULL;
   }
-  return last_insert + last_insert_skip;
+  return (char_u *)last_insert + last_insert_skip;
 }
 
 // Get last inserted string, and remove trailing <Esc>.
 // Returns pointer to allocated memory (must be freed) or NULL.
-char_u *get_last_insert_save(void)
+char *get_last_insert_save(void)
 {
   char *s;
   int len;
@@ -2751,13 +2750,13 @@ char_u *get_last_insert_save(void)
   if (last_insert == NULL) {
     return NULL;
   }
-  s = xstrdup((char *)last_insert + last_insert_skip);
+  s = xstrdup(last_insert + last_insert_skip);
   len = (int)strlen(s);
   if (len > 0 && s[len - 1] == ESC) {         // remove trailing ESC
     s[len - 1] = NUL;
   }
 
-  return (char_u *)s;
+  return s;
 }
 
 /// Check the word in front of the cursor for an abbreviation.
@@ -4502,7 +4501,7 @@ static bool ins_tab(void)
   if (!curbuf->b_p_et && (tabstop_count(curbuf->b_p_vsts_array) > 0
                           || get_sts_value() > 0
                           || (p_sta && ind))) {
-    char_u *ptr;
+    char *ptr;
     char *saved_line = NULL;         // init for GCC
     pos_T pos;
     pos_T fpos;
@@ -4517,9 +4516,9 @@ static bool ins_tab(void)
       pos = curwin->w_cursor;
       cursor = &pos;
       saved_line = xstrdup(get_cursor_line_ptr());
-      ptr = (char_u *)saved_line + pos.col;
+      ptr = saved_line + pos.col;
     } else {
-      ptr = (char_u *)get_cursor_pos_ptr();
+      ptr = get_cursor_pos_ptr();
       cursor = &curwin->w_cursor;
     }
 
@@ -4547,9 +4546,9 @@ static bool ins_tab(void)
     getvcol(curwin, &fpos, &vcol, NULL, NULL);
     getvcol(curwin, cursor, &want_vcol, NULL, NULL);
 
-    char_u *tab = (char_u *)"\t";
+    char *tab = "\t";
     chartabsize_T cts;
-    init_chartabsize_arg(&cts, curwin, 0, vcol, (char *)tab, (char *)tab);
+    init_chartabsize_arg(&cts, curwin, 0, vcol, tab, tab);
 
     // Use as many TABs as possible.  Beware of 'breakindent', 'showbreak'
     // and 'linebreak' adding extra virtual columns.
@@ -4578,13 +4577,13 @@ static bool ins_tab(void)
     if (change_col >= 0) {
       int repl_off = 0;
       // Skip over the spaces we need.
-      init_chartabsize_arg(&cts, curwin, 0, vcol, (char *)ptr, (char *)ptr);
+      init_chartabsize_arg(&cts, curwin, 0, vcol, ptr, ptr);
       while (cts.cts_vcol < want_vcol && *cts.cts_ptr == ' ') {
         cts.cts_vcol += lbr_chartabsize(&cts);
         cts.cts_ptr++;
         repl_off++;
       }
-      ptr = (char_u *)cts.cts_ptr;
+      ptr = cts.cts_ptr;
       vcol = cts.cts_vcol;
       clear_chartabsize_arg(&cts);
 
@@ -4761,8 +4760,8 @@ static int ins_digraph(void)
 int ins_copychar(linenr_T lnum)
 {
   int c;
-  char_u *ptr, *prev_ptr;
-  char_u *line;
+  char *ptr, *prev_ptr;
+  char *line;
 
   if (lnum < 1 || lnum > curbuf->b_ml.ml_line_count) {
     vim_beep(BO_COPY);
@@ -4770,25 +4769,25 @@ int ins_copychar(linenr_T lnum)
   }
 
   // try to advance to the cursor column
-  line = (char_u *)ml_get(lnum);
+  line = ml_get(lnum);
   prev_ptr = line;
   validate_virtcol();
 
   chartabsize_T cts;
-  init_chartabsize_arg(&cts, curwin, lnum, 0, (char *)line, (char *)line);
+  init_chartabsize_arg(&cts, curwin, lnum, 0, line, line);
   while (cts.cts_vcol < curwin->w_virtcol && *cts.cts_ptr != NUL) {
-    prev_ptr = (char_u *)cts.cts_ptr;
+    prev_ptr = cts.cts_ptr;
     cts.cts_vcol += lbr_chartabsize_adv(&cts);
   }
 
   if (cts.cts_vcol > curwin->w_virtcol) {
     ptr = prev_ptr;
   } else {
-    ptr = (char_u *)cts.cts_ptr;
+    ptr = cts.cts_ptr;
   }
   clear_chartabsize_arg(&cts);
 
-  c = utf_ptr2char((char *)ptr);
+  c = utf_ptr2char(ptr);
   if (c == NUL) {
     vim_beep(BO_COPY);
   }
@@ -4837,7 +4836,7 @@ static int ins_ctrl_ey(int tc)
 static void ins_try_si(int c)
 {
   pos_T *pos, old_pos;
-  char_u *ptr;
+  char *ptr;
   int i;
   bool temp;
 
@@ -4851,7 +4850,7 @@ static void ins_try_si(int c)
       // containing the matching '(' if there is one.  This handles the
       // case where an "if (..\n..) {" statement continues over multiple
       // lines -- webb
-      ptr = (char_u *)ml_get(pos->lnum);
+      ptr = ml_get(pos->lnum);
       i = pos->col;
       if (i > 0) {              // skip blanks before '{'
         while (--i > 0 && ascii_iswhite(ptr[i])) {}
@@ -4876,7 +4875,7 @@ static void ins_try_si(int c)
         old_pos = curwin->w_cursor;
         i = get_indent();
         while (curwin->w_cursor.lnum > 1) {
-          ptr = (char_u *)skipwhite(ml_get(--(curwin->w_cursor.lnum)));
+          ptr = skipwhite(ml_get(--(curwin->w_cursor.lnum)));
 
           // ignore empty lines and lines starting with '#'.
           if (*ptr != '#' && *ptr != NUL) {
@@ -4927,7 +4926,7 @@ colnr_T get_nolist_virtcol(void)
 // "c" is the character that was typed.
 // Return a pointer to allocated memory with the replacement string.
 // Return NULL to continue inserting "c".
-static char_u *do_insert_char_pre(int c)
+static char *do_insert_char_pre(int c)
 {
   char buf[MB_MAXBYTES + 1];
   const int save_State = State;
@@ -4958,7 +4957,7 @@ static char_u *do_insert_char_pre(int c)
   // Restore the State, it may have been changed.
   State = save_State;
 
-  return (char_u *)res;
+  return res;
 }
 
 bool get_can_cindent(void)

@@ -3168,15 +3168,15 @@ void qf_list(exarg_T *eap)
 
   // Get the attributes for the different quickfix highlight items.  Note
   // that this depends on syntax items defined in the qf.vim syntax file
-  qfFileAttr = syn_name2attr((char_u *)"qfFileName");
+  qfFileAttr = syn_name2attr("qfFileName");
   if (qfFileAttr == 0) {
     qfFileAttr = HL_ATTR(HLF_D);
   }
-  qfSepAttr = syn_name2attr((char_u *)"qfSeparator");
+  qfSepAttr = syn_name2attr("qfSeparator");
   if (qfSepAttr == 0) {
     qfSepAttr = HL_ATTR(HLF_D);
   }
-  qfLineAttr = syn_name2attr((char_u *)"qfLineNr");
+  qfLineAttr = syn_name2attr("qfLineNr");
   if (qfLineAttr == 0) {
     qfLineAttr = HL_ATTR(HLF_N);
   }
@@ -3997,7 +3997,7 @@ static int qf_buf_add_line(qf_list_T *qfl, buf_T *buf, linenr_T lnum, const qfli
                 IObuff + len, IOSIZE - len);
   }
 
-  if (ml_append_buf(buf, lnum, (char_u *)IObuff,
+  if (ml_append_buf(buf, lnum, IObuff,
                     (colnr_T)strlen(IObuff) + 1, false) == FAIL) {
     return FAIL;
   }

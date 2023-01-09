@@ -723,7 +723,7 @@ int get_expr_register(void)
 {
   char *new_line;
 
-  new_line = (char *)getcmdline('=', 0L, 0, true);
+  new_line = getcmdline('=', 0L, 0, true);
   if (new_line == NULL) {
     return NUL;
   }
@@ -1131,7 +1131,7 @@ int do_execreg(int regname, int colon, int addcr, int silent)
     retval = put_in_typebuf(p, true, colon, silent);
     xfree(p);
   } else if (regname == '.') {        // use last inserted text
-    p = (char *)get_last_insert_save();
+    p = get_last_insert_save();
     if (p == NULL) {
       emsg(_(e_noinstext));
       return FAIL;
@@ -1351,7 +1351,7 @@ bool get_spec_reg(int regname, char **argp, bool *allocated, bool errmsg)
     return true;
 
   case '.':                     // last inserted text
-    *argp = (char *)get_last_insert_save();
+    *argp = get_last_insert_save();
     *allocated = true;
     if (*argp == NULL && errmsg) {
       emsg(_(e_noinstext));

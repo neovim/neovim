@@ -304,7 +304,7 @@ static int score_wordcount_adj(slang_T *slang, int score, char_u *word, bool spl
 static int badword_captype(char_u *word, char_u *end)
   FUNC_ATTR_NONNULL_ALL
 {
-  int flags = captype(word, end);
+  int flags = captype((char *)word, (char *)end);
   int c;
   int l, u;
   bool first;
@@ -497,15 +497,15 @@ void spell_suggest(int count)
     line = get_cursor_line_ptr();
     p = (char_u *)line + curwin->w_cursor.col;
     // Backup to before start of word.
-    while (p > (char_u *)line && spell_iswordp_nmw(p, curwin)) {
+    while (p > (char_u *)line && spell_iswordp_nmw((char *)p, curwin)) {
       MB_PTR_BACK(line, p);
     }
     // Forward to start of word.
-    while (*p != NUL && !spell_iswordp_nmw(p, curwin)) {
+    while (*p != NUL && !spell_iswordp_nmw((char *)p, curwin)) {
       MB_PTR_ADV(p);
     }
 
-    if (!spell_iswordp_nmw(p, curwin)) {                // No word found.
+    if (!spell_iswordp_nmw((char *)p, curwin)) {                // No word found.
       beep_flush();
       return;
     }
@@ -678,13 +678,13 @@ void spell_suggest(int count)
 ///
 /// @param maxcount  maximum nr of suggestions
 /// @param need_cap  'spellcapcheck' matched
-void spell_suggest_list(garray_T *gap, char_u *word, int maxcount, bool need_cap, bool interactive)
+void spell_suggest_list(garray_T *gap, char *word, int maxcount, bool need_cap, bool interactive)
 {
   suginfo_T sug;
   suggest_T *stp;
   char_u *wcopy;
 
-  spell_find_suggest(word, 0, &sug, maxcount, false, need_cap, interactive);
+  spell_find_suggest((char_u *)word, 0, &sug, maxcount, false, need_cap, interactive);
 
   // Make room in "gap".
   ga_init(gap, sizeof(char_u *), sug.su_ga.ga_len + 1);
@@ -749,7 +749,7 @@ static void spell_find_suggest(char_u *badptr, int badlen, suginfo_T *su, int ma
     su->su_badlen = MAXWLEN - 1;        // just in case
   }
   xstrlcpy((char *)su->su_badword, su->su_badptr, (size_t)su->su_badlen + 1);
-  (void)spell_casefold(curwin, (char_u *)su->su_badptr, su->su_badlen, (char_u *)su->su_fbadword,
+  (void)spell_casefold(curwin, su->su_badptr, su->su_badlen, su->su_fbadword,
                        MAXWLEN);
 
   // TODO(vim): make this work if the case-folded text is longer than the
@@ -788,7 +788,7 @@ static void spell_find_suggest(char_u *badptr, int badlen, suginfo_T *su, int ma
   // for that.
   c = utf_ptr2char(su->su_badptr);
   if (!SPELL_ISUPPER(c) && attr == HLF_COUNT) {
-    make_case_word((char_u *)su->su_badword, (char_u *)buf, WF_ONECAP);
+    make_case_word((char *)su->su_badword, buf, WF_ONECAP);
     add_suggestion(su, &su->su_ga, (char *)buf, su->su_badlen, SCORE_ICASE,
                    0, true, su->su_sallang, false);
   }
@@ -900,8 +900,8 @@ static void spell_suggest_file(suginfo_T *su, char_u *fname)
 
       // If the suggestion doesn't have specific case duplicate the case
       // of the bad word.
-      if (captype(p, NULL) == 0) {
-        make_case_word(p, cword, su->su_badflags);
+      if (captype((char *)p, NULL) == 0) {
+        make_case_word((char *)p, (char *)cword, su->su_badflags);
         p = cword;
       }
 
@@ -1021,7 +1021,7 @@ static void suggest_try_special(suginfo_T *su)
     // use that for the goodword too: "The the" -> "The".
     c = su->su_fbadword[len];
     su->su_fbadword[len] = NUL;
-    make_case_word((char_u *)su->su_fbadword, word, su->su_badflags);
+    make_case_word(su->su_fbadword, (char *)word, su->su_badflags);
     su->su_fbadword[len] = c;
 
     // Give a soundalike score of 0, compute the score as if deleting one
@@ -1090,7 +1090,7 @@ static void suggest_try_change(suginfo_T *su)
   STRCPY(fword, su->su_fbadword);
   n = (int)strlen(fword);
   p = su->su_badptr + su->su_badlen;
-  (void)spell_casefold(curwin, (char_u *)p, (int)strlen(p), (char_u *)fword + n, MAXWLEN - n);
+  (void)spell_casefold(curwin, p, (int)strlen(p), fword + n, MAXWLEN - n);
 
   // Make sure the resulting text is not longer than the original text.
   n = (int)strlen(su->su_badptr);
@@ -1198,7 +1198,7 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char *fword, bool soun
 
   if (soundfold) {
     // Going through the soundfold tree.
-    byts = fbyts = slang->sl_sbyts;
+    byts = fbyts = (char_u *)slang->sl_sbyts;
     idxs = fidxs = slang->sl_sidxs;
     pbyts = NULL;
     pidxs = NULL;
@@ -1207,9 +1207,9 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char *fword, bool soun
   } else {
     // When there are postponed prefixes we need to use these first.  At
     // the end of the prefix we continue in the case-fold tree.
-    fbyts = slang->sl_fbyts;
+    fbyts = (char_u *)slang->sl_fbyts;
     fidxs = slang->sl_fidxs;
-    pbyts = slang->sl_pbyts;
+    pbyts = (char_u *)slang->sl_pbyts;
     pidxs = slang->sl_pidxs;
     if (pbyts != NULL) {
       byts = pbyts;
@@ -1263,7 +1263,7 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char *fword, bool soun
         if (depth < MAXWLEN - 1 && (byts[arridx] == 0 || n == STATE_NOPREFIX)) {
           // Set su->su_badflags to the caps type at this position.
           // Use the caps type until here for the prefix itself.
-          n = nofold_len((char_u *)fword, sp->ts_fidx, (char_u *)su->su_badptr);
+          n = nofold_len(fword, sp->ts_fidx, su->su_badptr);
           flags = badword_captype((char_u *)su->su_badptr, (char_u *)su->su_badptr + n);
           su->su_badflags = badword_captype((char_u *)su->su_badptr + n,
                                             (char_u *)su->su_badptr + su->su_badlen);
@@ -1281,8 +1281,8 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char *fword, bool soun
           // Move the prefix to preword[] with the right case
           // and make find_keepcap_word() works.
           tword[sp->ts_twordlen] = NUL;
-          make_case_word((char_u *)tword + sp->ts_splitoff,
-                         (char_u *)preword + sp->ts_prewordlen, flags);
+          make_case_word(tword + sp->ts_splitoff,
+                         preword + sp->ts_prewordlen, flags);
           sp->ts_prewordlen = (char_u)strlen(preword);
           sp->ts_splitoff = sp->ts_twordlen;
         }
@@ -1310,7 +1310,7 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char *fword, bool soun
       fword_ends = (fword[sp->ts_fidx] == NUL
                     || (soundfold
                         ? ascii_iswhite(fword[sp->ts_fidx])
-                        : !spell_iswordp((char_u *)fword + sp->ts_fidx, curwin)));
+                        : !spell_iswordp(fword + sp->ts_fidx, curwin)));
       tword[sp->ts_twordlen] = NUL;
 
       if (sp->ts_prefixdepth <= PFD_NOTSPECIAL
@@ -1325,7 +1325,7 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char *fword, bool soun
         for (c = 0; c < len && pbyts[n + c] == 0; c++) {}
         if (c > 0) {
           c = valid_word_prefix(c, n, flags,
-                                (char_u *)tword + sp->ts_splitoff, slang, false);
+                                tword + sp->ts_splitoff, slang, false);
           if (c == 0) {
             break;
           }
@@ -1446,11 +1446,11 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char *fword, bool soun
 
         // When appending a compound word after a word character don't
         // use Onecap.
-        if (p != NULL && spell_iswordp_nmw((char_u *)p, curwin)) {
+        if (p != NULL && spell_iswordp_nmw(p, curwin)) {
           c &= ~WF_ONECAP;
         }
-        make_case_word((char_u *)tword + sp->ts_splitoff,
-                       (char_u *)preword + sp->ts_prewordlen, c);
+        make_case_word(tword + sp->ts_splitoff,
+                       preword + sp->ts_prewordlen, c);
       }
 
       if (!soundfold) {
@@ -1482,7 +1482,7 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char *fword, bool soun
         }
 
         if (!spell_valid_case(su->su_badflags,
-                              captype((char_u *)preword + sp->ts_prewordlen, NULL))) {
+                              captype(preword + sp->ts_prewordlen, NULL))) {
           newscore += SCORE_ICASE;
         }
       }
@@ -1513,10 +1513,10 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char *fword, bool soun
           // char, e.g., "thes," -> "these".
           p = fword + sp->ts_fidx;
           MB_PTR_BACK(fword, p);
-          if (!spell_iswordp((char_u *)p, curwin) && *preword != NUL) {
+          if (!spell_iswordp(p, curwin) && *preword != NUL) {
             p = preword + strlen(preword);
             MB_PTR_BACK(preword, p);
-            if (spell_iswordp((char_u *)p, curwin)) {
+            if (spell_iswordp(p, curwin)) {
               newscore += SCORE_NONWORD;
             }
           }
@@ -1536,10 +1536,10 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char *fword, bool soun
             if (su->su_badflags & WF_MIXCAP) {
               // We really don't know if the word should be
               // upper or lower case, add both.
-              c = captype((char_u *)preword, NULL);
+              c = captype(preword, NULL);
               if (c == 0 || c == WF_ALLCAP) {
-                make_case_word((char_u *)tword + sp->ts_splitoff,
-                               (char_u *)preword + sp->ts_prewordlen,
+                make_case_word(tword + sp->ts_splitoff,
+                               preword + sp->ts_prewordlen,
                                c == 0 ? WF_ALLCAP : 0);
 
                 add_suggestion(su, &su->su_ga, (char *)preword,
@@ -1678,7 +1678,7 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char *fword, bool soun
             // non-word character with a space.  Always skip a
             // character when the word ends.  But only when the
             // good word can end.
-            if (((!try_compound && !spell_iswordp_nmw((char_u *)fword
+            if (((!try_compound && !spell_iswordp_nmw(fword
                                                       + sp->ts_fidx,
                                                       curwin))
                  || fword_ends)
@@ -1710,7 +1710,7 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char *fword, bool soun
 
             // set su->su_badflags to the caps type at this
             // position
-            n = nofold_len((char_u *)fword, sp->ts_fidx, (char_u *)su->su_badptr);
+            n = nofold_len(fword, sp->ts_fidx, su->su_badptr);
             su->su_badflags = badword_captype((char_u *)su->su_badptr + n,
                                               (char_u *)su->su_badptr + su->su_badlen);
 
@@ -2034,7 +2034,7 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char *fword, bool soun
 
       // Don't swap if the first character is not a word character.
       // SWAP3 etc. also don't make sense then.
-      if (!soundfold && !spell_iswordp((char_u *)p, curwin)) {
+      if (!soundfold && !spell_iswordp(p, curwin)) {
         PROF_STORE(sp->ts_state)
         sp->ts_state = STATE_REP_INI;
         break;
@@ -2044,7 +2044,7 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char *fword, bool soun
       c = utf_ptr2char(p);
       if (p[n] == NUL) {
         c2 = NUL;
-      } else if (!soundfold && !spell_iswordp((char_u *)p + n, curwin)) {
+      } else if (!soundfold && !spell_iswordp(p + n, curwin)) {
         c2 = c;  // don't swap non-word char
       } else {
         c2 = utf_ptr2char(p + n);
@@ -2104,7 +2104,7 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char *fword, bool soun
       c = utf_ptr2char(p);
       fl = utf_ptr2len(p + n);
       c2 = utf_ptr2char(p + n);
-      if (!soundfold && !spell_iswordp((char_u *)p + n + fl, curwin)) {
+      if (!soundfold && !spell_iswordp(p + n + fl, curwin)) {
         c3 = c;  // don't swap non-word char
       } else {
         c3 = utf_ptr2char(p + n + fl);
@@ -2155,7 +2155,7 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char *fword, bool soun
       utf_char2bytes(c2, p + tl);
       p = p + tl;
 
-      if (!soundfold && !spell_iswordp((char_u *)p, curwin)) {
+      if (!soundfold && !spell_iswordp(p, curwin)) {
         // Middle char is not a word char, skip the rotate.  First and
         // third char were already checked at swap and swap3.
         PROF_STORE(sp->ts_state)
@@ -2399,7 +2399,7 @@ static void find_keepcap_word(slang_T *slang, char *fword, char *kword)
   int c;
   idx_T lo, hi, m;
   char_u *p;
-  char_u *byts = slang->sl_kbyts;      // array with bytes of the words
+  char_u *byts = (char_u *)slang->sl_kbyts;      // array with bytes of the words
   idx_T *idxs = slang->sl_kidxs;      // array with indexes
 
   if (byts == NULL) {
@@ -2409,7 +2409,7 @@ static void find_keepcap_word(slang_T *slang, char *fword, char *kword)
   }
 
   // Make an all-cap version of "fword".
-  allcap_copy((char_u *)fword, (char_u *)uword);
+  allcap_copy(fword, uword);
 
   // Each character needs to be tried both case-folded and upper-case.
   // All this gets very complicated if we keep in mind that changing case
@@ -2666,7 +2666,7 @@ static int stp_sal_score(suggest_T *stp, suginfo_T *su, slang_T *slang, char_u *
     pbad = badsound;
   } else {
     // soundfold the bad word with more characters following
-    (void)spell_casefold(curwin, (char_u *)su->su_badptr, stp->st_orglen, fword, MAXWLEN);
+    (void)spell_casefold(curwin, su->su_badptr, stp->st_orglen, (char *)fword, MAXWLEN);
 
     // When joining two words the sound often changes a lot.  E.g., "t he"
     // sounds like "t h" while "the" sounds like "@".  Avoid that by
@@ -2851,7 +2851,7 @@ static void add_sound_suggest(suginfo_T *su, char *goodword, int score, langp_T 
     // previous wordnr.
     orgnr += bytes2offset(&nrline);
 
-    byts = slang->sl_fbyts;
+    byts = (char_u *)slang->sl_fbyts;
     idxs = slang->sl_fidxs;
 
     // Lookup the word "orgnr" one of the two tries.
@@ -2909,7 +2909,7 @@ badword:
         flags |= su->su_badflags;
         if ((flags & WF_CAPMASK) != 0) {
           // Need to fix case according to "flags".
-          make_case_word(theword, cword, flags);
+          make_case_word((char *)theword, (char *)cword, flags);
           p = cword;
         } else {
           p = theword;
@@ -2989,7 +2989,7 @@ static int soundfold_find(slang_T *slang, char_u *word)
   idx_T *idxs;
   int wordnr = 0;
 
-  byts = slang->sl_sbyts;
+  byts = (char_u *)slang->sl_sbyts;
   idxs = slang->sl_sidxs;
 
   for (;;) {

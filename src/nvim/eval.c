@@ -7408,7 +7408,7 @@ void ex_echo(exarg_T *eap)
 /// ":echohl {name}".
 void ex_echohl(exarg_T *eap)
 {
-  echo_attr = syn_name2attr((char_u *)eap->arg);
+  echo_attr = syn_name2attr(eap->arg);
 }
 
 /// ":execute expr1 ..." execute the result of an expression.

@@ -337,7 +337,7 @@ struct ufunc {
                            ///< used for s: variables
   int uf_refcount;      ///< reference count, see func_name_refcount()
   funccall_T *uf_scoped;       ///< l: local variables for closure
-  char_u *uf_name_exp;  ///< if "uf_name[]" starts with SNR the name with
+  char *uf_name_exp;    ///< if "uf_name[]" starts with SNR the name with
                         ///< "<SNR>" as a string, otherwise NULL
   char uf_name[];    ///< Name of function (actual size equals name);
                      ///< can start with <SNR>123_

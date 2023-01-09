@@ -2271,7 +2271,7 @@ Dictionary nvim_eval_statusline(String str, Dict(eval_statusline) *opts, Error *
       if (sp->userhl == 0) {
         grpname = get_default_stl_hl(wp, use_winbar);
       } else if (sp->userhl < 0) {
-        grpname = (char *)syn_id2name(-sp->userhl);
+        grpname = syn_id2name(-sp->userhl);
       } else {
         snprintf(user_group, sizeof(user_group), "User%d", sp->userhl);
         grpname = user_group;

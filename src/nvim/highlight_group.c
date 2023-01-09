@@ -77,22 +77,20 @@ static int hl_attr_table[] =
 /// The ID of a highlight group is also called group ID.  It is the index in
 /// the highlight_ga array PLUS ONE.
 typedef struct {
-  char_u *sg_name;         ///< highlight group name
-  char *sg_name_u;       ///< uppercase of sg_name
+  char *sg_name;                ///< highlight group name
+  char *sg_name_u;              ///< uppercase of sg_name
   bool sg_cleared;              ///< "hi clear" was used
   int sg_attr;                  ///< Screen attr @see ATTR_ENTRY
   int sg_link;                  ///< link to this highlight group ID
   int sg_deflink;               ///< default link; restored in highlight_clear()
   int sg_set;                   ///< combination of flags in \ref SG_SET
   sctx_T sg_deflink_sctx;       ///< script where the default link was set
-  sctx_T sg_script_ctx;         ///< script in which the group was last set
-  // for terminal UIs
+  sctx_T sg_script_ctx;         ///< script in which the group was last set for terminal UIs
   int sg_cterm;                 ///< "cterm=" highlighting attr
                                 ///< (combination of \ref HlAttrFlags)
   int sg_cterm_fg;              ///< terminal fg color number + 1
   int sg_cterm_bg;              ///< terminal bg color number + 1
-  bool sg_cterm_bold;           ///< bold attr was set for light color
-  // for RGB UIs
+  bool sg_cterm_bold;           ///< bold attr was set for light color for RGB UIs
   int sg_gui;                   ///< "gui=" highlighting attributes
                                 ///< (combination of \ref HlAttrFlags)
   RgbValue sg_rgb_fg;           ///< RGB foreground color
@@ -571,7 +569,7 @@ int highlight_num_groups(void)
 }
 
 /// Returns the name of a highlight group.
-char_u *highlight_group_name(int id)
+char *highlight_group_name(int id)
 {
   return hl_table[id].sg_name;
 }
@@ -658,7 +656,7 @@ void init_highlight(bool both, bool reset)
 /// @return  OK for success, FAIL for failure.
 int load_colors(char *name)
 {
-  char_u *buf;
+  char *buf;
   int retval = FAIL;
   static bool recursive = false;
 
@@ -673,11 +671,11 @@ int load_colors(char *name)
   size_t buflen = strlen(name) + 12;
   buf = xmalloc(buflen);
   apply_autocmds(EVENT_COLORSCHEMEPRE, name, curbuf->b_fname, false, curbuf);
-  snprintf((char *)buf, buflen, "colors/%s.vim", name);
-  retval = source_runtime((char *)buf, DIP_START + DIP_OPT);
+  snprintf(buf, buflen, "colors/%s.vim", name);
+  retval = source_runtime(buf, DIP_START + DIP_OPT);
   if (retval == FAIL) {
-    snprintf((char *)buf, buflen, "colors/%s.lua", name);
-    retval = source_runtime((char *)buf, DIP_START + DIP_OPT);
+    snprintf(buf, buflen, "colors/%s.lua", name);
+    retval = source_runtime(buf, DIP_START + DIP_OPT);
   }
   xfree(buf);
   if (retval == OK) {
@@ -1471,7 +1469,7 @@ static void highlight_list_one(const int id)
   const HlGroup *sgp = &hl_table[id - 1];  // index is ID minus one
   bool didh = false;
 
-  if (message_filtered((char *)sgp->sg_name)) {
+  if (message_filtered(sgp->sg_name)) {
     return;
   }
 
@@ -1505,7 +1503,7 @@ static void highlight_list_one(const int id)
     didh = true;
     msg_puts_attr("links to", HL_ATTR(HLF_D));
     msg_putchar(' ');
-    msg_outtrans((char *)hl_table[hl_table[id - 1].sg_link - 1].sg_name);
+    msg_outtrans(hl_table[hl_table[id - 1].sg_link - 1].sg_name);
   }
 
   if (!didh) {
@@ -1527,7 +1525,7 @@ Dictionary get_global_hl_defs(Arena *arena)
       hlattrs2dict(&attrs, syn_attr2entry(h->sg_attr), true);
     } else if (h->sg_link > 0) {
       attrs = arena_dict(arena, 1);
-      char *link = (char *)hl_table[h->sg_link - 1].sg_name;
+      char *link = hl_table[h->sg_link - 1].sg_name;
       PUT_C(attrs, "link", STRING_OBJ(cstr_as_string(link)));
     }
     PUT_C(rv, (char *)h->sg_name, DICTIONARY_OBJ(attrs));
@@ -1702,7 +1700,7 @@ bool syn_list_header(const bool did_header, const int outlen, const int id, bool
     if (got_int) {
       return true;
     }
-    msg_outtrans((char *)hl_table[id - 1].sg_name);
+    msg_outtrans(hl_table[id - 1].sg_name);
     name_col = msg_col;
     endcol = 15;
   } else if ((ui_has(kUIMessages) || msg_silent) && !force_newline) {
@@ -1804,10 +1802,10 @@ int syn_name2id_len(const char *name, size_t len)
 
 /// Lookup a highlight group name and return its attributes.
 /// Return zero if not found.
-int syn_name2attr(const char_u *name)
+int syn_name2attr(const char *name)
   FUNC_ATTR_NONNULL_ALL
 {
-  int id = syn_name2id((char *)name);
+  int id = syn_name2id(name);
 
   if (id != 0) {
     return syn_id2attr(id);
@@ -1823,10 +1821,10 @@ int highlight_exists(const char *name)
 
 /// Return the name of highlight group "id".
 /// When not a valid ID return an empty string.
-char_u *syn_id2name(int id)
+char *syn_id2name(int id)
 {
   if (id <= 0 || id > highlight_ga.ga_len) {
-    return (char_u *)"";
+    return "";
   }
   return hl_table[id - 1].sg_name;
 }
@@ -1896,7 +1894,7 @@ static int syn_add_group(const char *name, size_t len)
   // Append another syntax_highlight entry.
   HlGroup *hlgp = GA_APPEND_VIA_PTR(HlGroup, &highlight_ga);
   CLEAR_POINTER(hlgp);
-  hlgp->sg_name = (char_u *)arena_memdupz(&highlight_arena, name, len);
+  hlgp->sg_name = arena_memdupz(&highlight_arena, name, len);
   hlgp->sg_rgb_bg = -1;
   hlgp->sg_rgb_fg = -1;
   hlgp->sg_rgb_sp = -1;

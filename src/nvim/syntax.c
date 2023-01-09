@@ -3416,8 +3416,8 @@ static void syn_list_one(const int id, const bool syncing, const bool link_only)
       }
       msg_putchar(' ');
       if (spp->sp_sync_idx >= 0) {
-        msg_outtrans((char *)highlight_group_name(SYN_ITEMS(curwin->w_s)
-                                                  [spp->sp_sync_idx].sp_syn.id - 1));
+        msg_outtrans(highlight_group_name(SYN_ITEMS(curwin->w_s)
+                                          [spp->sp_sync_idx].sp_syn.id - 1));
       } else {
         msg_puts("NONE");
       }
@@ -3430,7 +3430,7 @@ static void syn_list_one(const int id, const bool syncing, const bool link_only)
     (void)syn_list_header(did_header, 0, id, true);
     msg_puts_attr("links to", attr);
     msg_putchar(' ');
-    msg_outtrans((char *)highlight_group_name(highlight_link_id(id - 1) - 1));
+    msg_outtrans(highlight_group_name(highlight_link_id(id - 1) - 1));
   }
 }
 
@@ -3492,7 +3492,7 @@ static void put_id_list(const char *const name, const int16_t *const list, const
       msg_putchar('@');
       msg_outtrans((char *)SYN_CLSTR(curwin->w_s)[scl_id].scl_name);
     } else {
-      msg_outtrans((char *)highlight_group_name(*p - 1));
+      msg_outtrans(highlight_group_name(*p - 1));
     }
     if (p[1]) {
       msg_putchar(',');
@@ -3514,7 +3514,7 @@ static void put_pattern(const char *const s, const int c, const synpat_T *const 
     if (last_matchgroup == 0) {
       msg_outtrans("NONE");
     } else {
-      msg_outtrans((char *)highlight_group_name(last_matchgroup - 1));
+      msg_outtrans(highlight_group_name(last_matchgroup - 1));
     }
     msg_putchar(' ');
   }
@@ -5042,7 +5042,7 @@ static int get_id_list(char **const arg, const int keylen, int16_t **const list,
           regmatch.rm_ic = true;
           id = 0;
           for (int i = highlight_num_groups(); --i >= 0;) {
-            if (vim_regexec(&regmatch, (char *)highlight_group_name(i), (colnr_T)0)) {
+            if (vim_regexec(&regmatch, highlight_group_name(i), (colnr_T)0)) {
               if (round == 2) {
                 // Got more items than expected; can happen
                 // when adding items that match:
@@ -5677,7 +5677,7 @@ static void syntime_report(void)
     msg_puts(profile_msg(p->average));
     msg_puts(" ");
     msg_advance(50);
-    msg_outtrans((char *)highlight_group_name(p->id - 1));
+    msg_outtrans(highlight_group_name(p->id - 1));
     msg_puts(" ");
 
     msg_advance(69);

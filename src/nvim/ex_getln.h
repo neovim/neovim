@@ -54,14 +54,14 @@ struct cmdline_info {
   int cmdspos;                  ///< cursor column on screen
   int cmdfirstc;                ///< ':', '/', '?', '=', '>' or NUL
   int cmdindent;                ///< number of spaces before cmdline
-  char_u *cmdprompt;            ///< message in front of cmdline
+  char *cmdprompt;              ///< message in front of cmdline
   int cmdattr;                  ///< attributes for prompt
   int overstrike;               ///< Typing mode on the command line.  Shared by
                                 ///< getcmdline() and put_on_cmdline().
   expand_T *xpc;                ///< struct being used for expansion, xp_pattern
                                 ///< may point into cmdbuff
   int xp_context;               ///< type of expansion
-  char_u *xp_arg;               ///< user-defined expansion arg
+  char *xp_arg;                 ///< user-defined expansion arg
   int input_fn;                 ///< when true Invoked for input() function
   unsigned prompt_id;           ///< Prompt number, used to disable coloring on errors.
   Callback highlight_callback;  ///< Callback used for coloring user input.
