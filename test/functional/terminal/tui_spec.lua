@@ -1437,36 +1437,36 @@ describe('TUI', function()
   end)
 
   it('draws correctly when cursor_address overflows #21643', function()
-    helpers.skip(helpers.is_ci('github'), 'FIXME: flaky on GitHub CI')
-    screen:try_resize(75, 60)
+    helpers.skip(helpers.is_os('mac'), 'FIXME: crashes/errors on macOS')
+    screen:try_resize(77, 834)
     retry(nil, nil, function()
-      eq({true, 57}, {child_session:request('nvim_win_get_height', 0)})
+      eq({true, 831}, {child_session:request('nvim_win_get_height', 0)})
     end)
-    -- The composing character takes 3 bytes.
-    local composing = ('a︠'):sub(2)
-    -- The composed character takes 1 + 5 * 3 = 16 bytes.
-    local c = 'a' .. composing:rep(5)
+    -- Use full screen message so that redrawing afterwards is more deterministic.
+    child_session:notify('nvim_command', 'intro')
+    screen:expect({any = 'Nvim'})
     -- Going to top-left corner needs 3 bytes.
     -- Setting underline attribute needs 9 bytes.
-    -- With screen width 75, 4088 characters need 54 full screen lines.
-    -- Drawing each full screen line needs 75 * 16 + 2 = 1202 bytes (2 bytes for CR LF).
-    -- The incomplete screen line needs 38 * 16 + 1 + 3 = 612 bytes.
-    -- The whole line needs 3 + 9 + 54 * 1202 + 612 = 65532 bytes.
+    -- With screen width 77, 63857 characters need 829 full screen lines.
+    -- Drawing each full screen line needs 77 + 2 = 79 bytes (2 bytes for CR LF).
+    -- The incomplete screen line needs 24 + 3 = 27 bytes.
+    -- The whole line needs 3 + 9 + 79 * 829 + 27 = 65530 bytes.
     -- The cursor_address that comes after will overflow the 65535-byte buffer.
-    local line = c:rep(4088) .. 'b℃'
-    child_session:request('nvim_exec_lua', [[
+    local line = ('a'):rep(63857) .. '℃'
+    child_session:notify('nvim_exec_lua', [[
       vim.api.nvim_buf_set_lines(0, 0, -1, true, {...})
       vim.o.cursorline = true
-    ]], {line, 'c'})
+    ]], {line, 'b'})
+    -- Close the :intro message and redraw the lines.
+    feed_data('\n')
     screen:expect(
-      '{13:' .. c .. '}{12:' .. c:rep(74) .. '}|\n'
-      .. ('{12:' .. c:rep(75) .. '}|\n'):rep(53)
-      .. '{12:' .. c:rep(38) .. 'b℃' .. (' '):rep(35) .. '}|\n' .. dedent([[
-      c                                                                          |
-      {4:~                                                                          }|
-      {5:[No Name] [+]                                                              }|
-                                                                                 |
-      {3:-- TERMINAL --}                                                             |]]))
+      '{13:a}{12:' .. ('a'):rep(76) .. '}|\n'
+      .. ('{12:' .. ('a'):rep(77) .. '}|\n'):rep(828)
+      .. '{12:' .. ('a'):rep(24) .. '℃' .. (' '):rep(52) .. '}|\n' .. dedent([[
+      b                                                                            |
+      {5:[No Name] [+]                                                                }|
+                                                                                   |
+      {3:-- TERMINAL --}                                                               |]]))
   end)
 
   it('visual bell (padding) does not crash #21610', function()
