@@ -909,7 +909,7 @@ stack traceback:
     ]]}
   end)
 
-  it('does not truncate', function()
+  it('does not truncate messages', function()
     command('write Xtest')
     screen:expect({messages={
       {content = { { '"Xtest" [New] 0L, 0B written' } }, kind = "" }
