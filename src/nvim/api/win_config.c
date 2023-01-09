@@ -300,9 +300,9 @@ Dictionary nvim_win_get_config(Window window, Error *err)
         }
         PUT(rv, "title", ARRAY_OBJ(titles));
         char *title_pos;
-        if (config->title_pos == 0) {
+        if (config->title_pos == kAlignLeft) {
           title_pos = "left";
-        } else if (config->title_pos == 1) {
+        } else if (config->title_pos == kAlignCenter) {
           title_pos = "center";
         } else {
           title_pos = "right";
