@@ -356,6 +356,7 @@ bool cin_islabel(void)  // XXX
   if (cin_isscopedecl((char_u *)s)) {
     return false;
   }
+
   if (!cin_islabel_skip(&s)) {
     return false;
   }

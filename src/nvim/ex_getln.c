@@ -4083,12 +4083,14 @@ static char *get_cmdline_completion(void)
   }
   CmdlineInfo *p = get_ccline_ptr();
 
-  if (p != NULL && p->xpc != NULL) {
-    set_expand_context(p->xpc);
-    char *cmd_compl = get_user_cmd_complete(p->xpc, p->xpc->xp_context);
-    if (cmd_compl != NULL) {
-      return xstrdup(cmd_compl);
-    }
+  if (p == NULL || p->xpc == NULL) {
+    return NULL;
+  }
+
+  set_expand_context(p->xpc);
+  char *cmd_compl = get_user_cmd_complete(p->xpc, p->xpc->xp_context);
+  if (cmd_compl != NULL) {
+    return xstrdup(cmd_compl);
   }
 
   return NULL;

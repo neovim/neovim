@@ -4510,32 +4510,30 @@ void free_old_sub(void)
 /// @return           true when it was created.
 bool prepare_tagpreview(bool undo_sync)
 {
+  if (curwin->w_p_pvw) {
+    return false;
+  }
+
   // If there is already a preview window open, use that one.
-  if (!curwin->w_p_pvw) {
-    bool found_win = false;
-    FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
-      if (wp->w_p_pvw) {
-        win_enter(wp, undo_sync);
-        found_win = true;
-        break;
-      }
-    }
-    if (!found_win) {
-      // There is no preview window open yet.  Create one.
-      if (win_split(g_do_tagpreview > 0 ? g_do_tagpreview : 0, 0)
-          == FAIL) {
-        return false;
-      }
-      curwin->w_p_pvw = true;
-      curwin->w_p_wfh = true;
-      RESET_BINDING(curwin);                // don't take over 'scrollbind' and 'cursorbind'
-      curwin->w_p_diff = false;             // no 'diff'
-      set_string_option_direct("fdc", -1,     // no 'foldcolumn'
-                               "0", OPT_FREE, SID_NONE);
-      return true;
+  FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+    if (wp->w_p_pvw) {
+      win_enter(wp, undo_sync);
+      return false;
     }
   }
-  return false;
+
+  // There is no preview window open yet.  Create one.
+  if (win_split(g_do_tagpreview > 0 ? g_do_tagpreview : 0, 0)
+      == FAIL) {
+    return false;
+  }
+  curwin->w_p_pvw = true;
+  curwin->w_p_wfh = true;
+  RESET_BINDING(curwin);                // don't take over 'scrollbind' and 'cursorbind'
+  curwin->w_p_diff = false;             // no 'diff'
+  set_string_option_direct("fdc", -1,     // no 'foldcolumn'
+                           "0", OPT_FREE, SID_NONE);
+  return true;
 }
 
 /// Shows the effects of the :substitute command being typed ('inccommand').

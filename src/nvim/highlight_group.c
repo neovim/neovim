@@ -1549,34 +1549,37 @@ static bool highlight_list_arg(const int id, bool didh, const int type, int iarg
   if (got_int) {
     return false;
   }
-  if (type == LIST_STRING ? (sarg != NULL) : (iarg != 0)) {
-    const char *ts = buf;
-    if (type == LIST_INT) {
-      snprintf((char *)buf, sizeof(buf), "%d", iarg - 1);
-    } else if (type == LIST_STRING) {
-      ts = sarg;
-    } else {    // type == LIST_ATTR
-      buf[0] = NUL;
-      for (int i = 0; hl_attr_table[i] != 0; i++) {
-        if (iarg & hl_attr_table[i]) {
-          if (buf[0] != NUL) {
-            xstrlcat(buf, ",", 100);
-          }
-          xstrlcat(buf, hl_name_table[i], 100);
-          iarg &= ~hl_attr_table[i];                // don't want "inverse"
-        }
-      }
-    }
 
-    (void)syn_list_header(didh, vim_strsize((char *)ts) + (int)strlen(name) + 1, id, false);
-    didh = true;
-    if (!got_int) {
-      if (*name != NUL) {
-        msg_puts_attr(name, HL_ATTR(HLF_D));
-        msg_puts_attr("=", HL_ATTR(HLF_D));
+  if (type == LIST_STRING ? (sarg == NULL) : (iarg == 0)) {
+    return didh;
+  }
+
+  const char *ts = buf;
+  if (type == LIST_INT) {
+    snprintf((char *)buf, sizeof(buf), "%d", iarg - 1);
+  } else if (type == LIST_STRING) {
+    ts = sarg;
+  } else {    // type == LIST_ATTR
+    buf[0] = NUL;
+    for (int i = 0; hl_attr_table[i] != 0; i++) {
+      if (iarg & hl_attr_table[i]) {
+        if (buf[0] != NUL) {
+          xstrlcat(buf, ",", 100);
+        }
+        xstrlcat(buf, hl_name_table[i], 100);
+        iarg &= ~hl_attr_table[i];                // don't want "inverse"
       }
-      msg_outtrans((char *)ts);
     }
+  }
+
+  (void)syn_list_header(didh, vim_strsize((char *)ts) + (int)strlen(name) + 1, id, false);
+  didh = true;
+  if (!got_int) {
+    if (*name != NUL) {
+      msg_puts_attr(name, HL_ATTR(HLF_D));
+      msg_puts_attr("=", HL_ATTR(HLF_D));
+    }
+    msg_outtrans((char *)ts);
   }
   return didh;
 }
@@ -2125,35 +2128,43 @@ void set_context_in_highlight_cmd(expand_T *xp, const char *arg)
   include_link = 2;
   include_default = 1;
 
+  if (*arg == NUL) {
+    return;
+  }
+
   // (part of) subcommand already typed
-  if (*arg != NUL) {
-    const char *p = (const char *)skiptowhite(arg);
-    if (*p != NUL) {  // Past "default" or group name.
-      include_default = 0;
-      if (strncmp("default", arg, (unsigned)(p - arg)) == 0) {
-        arg = (const char *)skipwhite(p);
-        xp->xp_pattern = (char *)arg;
-        p = (const char *)skiptowhite(arg);
-      }
-      if (*p != NUL) {                          // past group name
-        include_link = 0;
-        if (arg[1] == 'i' && arg[0] == 'N') {
-          highlight_list();
-        }
-        if (strncmp("link", arg, (unsigned)(p - arg)) == 0
-            || strncmp("clear", arg, (unsigned)(p - arg)) == 0) {
-          xp->xp_pattern = skipwhite(p);
-          p = (const char *)skiptowhite(xp->xp_pattern);
-          if (*p != NUL) {  // Past first group name.
-            xp->xp_pattern = skipwhite(p);
-            p = (const char *)skiptowhite(xp->xp_pattern);
-          }
-        }
-        if (*p != NUL) {  // Past group name(s).
-          xp->xp_context = EXPAND_NOTHING;
-        }
-      }
+  const char *p = (const char *)skiptowhite(arg);
+  if (*p == NUL) {
+    return;
+  }
+
+  // past "default" or group name
+  include_default = 0;
+  if (strncmp("default", arg, (unsigned)(p - arg)) == 0) {
+    arg = (const char *)skipwhite(p);
+    xp->xp_pattern = (char *)arg;
+    p = (const char *)skiptowhite(arg);
+  }
+  if (*p == NUL) {
+    return;
+  }
+
+  // past group name
+  include_link = 0;
+  if (arg[1] == 'i' && arg[0] == 'N') {
+    highlight_list();
+  }
+  if (strncmp("link", arg, (unsigned)(p - arg)) == 0
+      || strncmp("clear", arg, (unsigned)(p - arg)) == 0) {
+    xp->xp_pattern = skipwhite(p);
+    p = (const char *)skiptowhite(xp->xp_pattern);
+    if (*p != NUL) {  // past first group name
+      xp->xp_pattern = skipwhite(p);
+      p = (const char *)skiptowhite(xp->xp_pattern);
     }
+  }
+  if (*p != NUL) {  // past group name(s)
+    xp->xp_context = EXPAND_NOTHING;
   }
 }
 

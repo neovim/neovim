@@ -317,13 +317,15 @@ static int get_maxbacktrace_level(char *sname)
 {
   int maxbacktrace = 0;
 
-  if (sname != NULL) {
-    char *p = sname;
-    char *q;
-    while ((q = strstr(p, "..")) != NULL) {
-      p = q + 2;
-      maxbacktrace++;
-    }
+  if (sname == NULL) {
+    return 0;
+  }
+
+  char *p = sname;
+  char *q;
+  while ((q = strstr(p, "..")) != NULL) {
+    p = q + 2;
+    maxbacktrace++;
   }
   return maxbacktrace;
 }
@@ -458,20 +460,21 @@ void dbg_check_breakpoint(exarg_T *eap)
 /// @return true when the debug mode is entered this time.
 bool dbg_check_skipped(exarg_T *eap)
 {
-  if (debug_skipped) {
-    // Save the value of got_int and reset it.  We don't want a previous
-    // interruption cause flushing the input buffer.
-    int prev_got_int = got_int;
-    got_int = false;
-    debug_breakpoint_name = debug_skipped_name;
-    // eap->skip is true
-    eap->skip = false;
-    dbg_check_breakpoint(eap);
-    eap->skip = true;
-    got_int |= prev_got_int;
-    return true;
+  if (!debug_skipped) {
+    return false;
   }
-  return false;
+
+  // Save the value of got_int and reset it.  We don't want a previous
+  // interruption cause flushing the input buffer.
+  int prev_got_int = got_int;
+  got_int = false;
+  debug_breakpoint_name = debug_skipped_name;
+  // eap->skip is true
+  eap->skip = false;
+  dbg_check_breakpoint(eap);
+  eap->skip = true;
+  got_int |= prev_got_int;
+  return true;
 }
 
 static garray_T dbg_breakp = { 0, 0, sizeof(struct debuggy), 4, NULL };

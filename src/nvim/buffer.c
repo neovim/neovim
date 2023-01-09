@@ -359,8 +359,9 @@ int open_buffer(int read_stdin, exarg_T *eap, int flags_arg)
   }
   apply_autocmds_retval(EVENT_BUFENTER, NULL, NULL, false, curbuf, &retval);
 
+  // if (retval != OK) {
   if (retval == FAIL) {
-    return FAIL;
+    return retval;
   }
 
   // The autocommands may have changed the current buffer.  Apply the
@@ -2473,19 +2474,22 @@ static char *fname_match(regmatch_T *rmp, char *name, bool ignore_case)
   char *match = NULL;
   char *p;
 
-  if (name != NULL) {
-    // Ignore case when 'fileignorecase' or the argument is set.
-    rmp->rm_ic = p_fic || ignore_case;
-    if (vim_regexec(rmp, name, (colnr_T)0)) {
+  // extra check for valid arguments
+  if (name == NULL || rmp->regprog == NULL) {
+    return NULL;
+  }
+
+  // Ignore case when 'fileignorecase' or the argument is set.
+  rmp->rm_ic = p_fic || ignore_case;
+  if (vim_regexec(rmp, name, (colnr_T)0)) {
+    match = name;
+  } else if (rmp->regprog != NULL) {
+    // Replace $(HOME) with '~' and try matching again.
+    p = home_replace_save(NULL, name);
+    if (vim_regexec(rmp, p, (colnr_T)0)) {
       match = name;
-    } else if (rmp->regprog != NULL) {
-      // Replace $(HOME) with '~' and try matching again.
-      p = home_replace_save(NULL, name);
-      if (vim_regexec(rmp, p, (colnr_T)0)) {
-        match = name;
-      }
-      xfree(p);
     }
+    xfree(p);
   }
 
   return match;
@@ -2592,17 +2596,18 @@ void buflist_setfpos(buf_T *const buf, win_T *const win, linenr_T lnum, colnr_T 
 static bool wininfo_other_tab_diff(wininfo_T *wip)
   FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
 {
-  if (wip->wi_opt.wo_diff) {
-    FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
-      // return false when it's a window in the current tab page, thus
-      // the buffer was in diff mode here
-      if (wip->wi_win == wp) {
-        return false;
-      }
-    }
-    return true;
+  if (!wip->wi_opt.wo_diff) {
+    return false;
   }
-  return false;
+
+  FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+    // return false when it's a window in the current tab page, thus
+    // the buffer was in diff mode here
+    if (wip->wi_win == wp) {
+      return false;
+    }
+  }
+  return true;
 }
 
 /// Find info for the current window in buffer "buf".
@@ -2625,25 +2630,27 @@ static wininfo_T *find_wininfo(buf_T *buf, bool need_options, bool skip_diff_buf
     }
   }
 
+  if (wip != NULL) {
+    return wip;
+  }
+
   // If no wininfo for curwin, use the first in the list (that doesn't have
   // 'diff' set and is in another tab page).
   // If "need_options" is true skip entries that don't have options set,
   // unless the window is editing "buf", so we can copy from the window
   // itself.
-  if (wip == NULL) {
-    if (skip_diff_buffer) {
-      for (wip = buf->b_wininfo; wip != NULL; wip = wip->wi_next) {
-        if (!wininfo_other_tab_diff(wip)
-            && (!need_options
-                || wip->wi_optset
-                || (wip->wi_win != NULL
-                    && wip->wi_win->w_buffer == buf))) {
-          break;
-        }
+  if (skip_diff_buffer) {
+    for (wip = buf->b_wininfo; wip != NULL; wip = wip->wi_next) {
+      if (!wininfo_other_tab_diff(wip)
+          && (!need_options
+              || wip->wi_optset
+              || (wip->wi_win != NULL
+                  && wip->wi_win->w_buffer == buf))) {
+        break;
       }
-    } else {
-      wip = buf->b_wininfo;
     }
+  } else {
+    wip = buf->b_wininfo;
   }
   return wip;
 }

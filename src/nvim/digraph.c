@@ -1528,30 +1528,31 @@ int get_digraph(bool cmdline)
   no_mapping--;
   allow_keys--;
 
-  if (c != ESC) {
+  if (c == ESC) {  // ESC cancels CTRL-K
+    return NUL;
+  }
+
+  if (IS_SPECIAL(c)) {
+    // insert special key code
+    return c;
+  }
+
+  if (cmdline) {
+    if ((char2cells(c) == 1) && c < 128 && (cmdline_star == 0)) {
+      putcmdline((char)c, true);
+    }
+  } else {
+    add_to_showcmd(c);
+  }
+  no_mapping++;
+  allow_keys++;
+  int cc = plain_vgetc();
+  no_mapping--;
+  allow_keys--;
+
+  if (cc != ESC) {
     // ESC cancels CTRL-K
-    if (IS_SPECIAL(c)) {
-      // insert special key code
-      return c;
-    }
-
-    if (cmdline) {
-      if ((char2cells(c) == 1) && c < 128 && (cmdline_star == 0)) {
-        putcmdline((char)c, true);
-      }
-    } else {
-      add_to_showcmd(c);
-    }
-    no_mapping++;
-    allow_keys++;
-    int cc = plain_vgetc();
-    no_mapping--;
-    allow_keys--;
-
-    if (cc != ESC) {
-      // ESC cancels CTRL-K
-      return digraph_get(c, cc, true);
-    }
+    return digraph_get(c, cc, true);
   }
   return NUL;
 }
