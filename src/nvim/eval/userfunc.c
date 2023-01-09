@@ -880,7 +880,7 @@ void call_user_func(ufunc_T *fp, int argcount, typval_T *argvars, typval_T *rett
   fc->rettv = rettv;
   fc->level = ex_nesting_level;
   // Check if this function has a breakpoint.
-  fc->breakpoint = dbg_find_breakpoint(false, (char *)fp->uf_name, (linenr_T)0);
+  fc->breakpoint = dbg_find_breakpoint(false, fp->uf_name, (linenr_T)0);
   fc->dbg_tick = debug_tick;
 
   // Set up fields for closure.
@@ -1075,7 +1075,7 @@ void call_user_func(ufunc_T *fp, int argcount, typval_T *argvars, typval_T *rett
 
   bool func_not_yet_profiling_but_should =
     do_profiling_yes
-    && !fp->uf_profiling && has_profiling(false, (char *)fp->uf_name, NULL);
+    && !fp->uf_profiling && has_profiling(false, fp->uf_name, NULL);
 
   if (func_not_yet_profiling_but_should) {
     started_profiling = true;
@@ -1669,7 +1669,7 @@ static void list_func_head(ufunc_T *fp, int indent, bool force)
   if (fp->uf_name_exp != NULL) {
     msg_puts((const char *)fp->uf_name_exp);
   } else {
-    msg_puts((const char *)fp->uf_name);
+    msg_puts(fp->uf_name);
   }
   msg_putchar('(');
   int j;
@@ -1999,10 +1999,10 @@ static void list_functions(regmatch_T *regmatch)
       todo--;
       if ((fp->uf_flags & FC_DEAD) == 0
           && (regmatch == NULL
-              ? (!message_filtered((char *)fp->uf_name)
+              ? (!message_filtered(fp->uf_name)
                  && !func_name_refcount(fp->uf_name))
               : (!isdigit((uint8_t)(*fp->uf_name))
-                 && vim_regexec(regmatch, (char *)fp->uf_name, 0)))) {
+                 && vim_regexec(regmatch, fp->uf_name, 0)))) {
         list_func_head(fp, false, false);
         if (changed != func_hashtab.ht_changed) {
           emsg(_("E454: function list was modified"));
@@ -2194,7 +2194,7 @@ void ex_function(exarg_T *eap)
         j++;
       }
       if (arg[j] != NUL) {
-        emsg_funcname((char *)e_invarg2, arg);
+        emsg_funcname(e_invarg2, arg);
       }
     }
     // Disallow using the g: dict.
@@ -2748,7 +2748,7 @@ char *get_user_func_name(expand_T *xp, int idx)
     }
 
     if (strlen(fp->uf_name) + 4 >= IOSIZE) {
-      return (char *)fp->uf_name;  // Prevent overflow.
+      return fp->uf_name;  // Prevent overflow.
     }
 
     cat_func_name(IObuff, fp);
@@ -3228,7 +3228,7 @@ char *get_func_line(int c, void *cookie, int indent, bool do_concat)
 
   // If breakpoints have been added/deleted need to check for it.
   if (fcp->dbg_tick != debug_tick) {
-    fcp->breakpoint = dbg_find_breakpoint(false, (char *)fp->uf_name, SOURCING_LNUM);
+    fcp->breakpoint = dbg_find_breakpoint(false, fp->uf_name, SOURCING_LNUM);
     fcp->dbg_tick = debug_tick;
   }
   if (do_profiling == PROF_YES) {
@@ -3258,9 +3258,9 @@ char *get_func_line(int c, void *cookie, int indent, bool do_concat)
 
   // Did we encounter a breakpoint?
   if (fcp->breakpoint != 0 && fcp->breakpoint <= SOURCING_LNUM) {
-    dbg_breakpoint((char *)fp->uf_name, SOURCING_LNUM);
+    dbg_breakpoint(fp->uf_name, SOURCING_LNUM);
     // Find next breakpoint.
-    fcp->breakpoint = dbg_find_breakpoint(false, (char *)fp->uf_name, SOURCING_LNUM);
+    fcp->breakpoint = dbg_find_breakpoint(false, fp->uf_name, SOURCING_LNUM);
     fcp->dbg_tick = debug_tick;
   }
 

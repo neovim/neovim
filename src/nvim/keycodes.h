@@ -59,7 +59,7 @@
 // Used for switching Select mode back on after a mapping or menu.
 
 #define KS_SELECT               245
-#define K_SELECT_STRING         (char_u *)"\200\365X"
+#define K_SELECT_STRING         "\200\365X"
 
 /// Used a termcap entry that produces a normal character.
 #define KS_KEY                  242

@@ -201,14 +201,14 @@ void sha256_update(context_sha256_T *ctx, const uint8_t *input, size_t length)
     memcpy(ctx->buffer + left, input, fill);
     sha256_process(ctx, ctx->buffer);
     length -= fill;
-    input  += fill;
+    input += fill;
     left = 0;
   }
 
   while (length >= SHA256_BUFFER_SIZE) {
     sha256_process(ctx, input);
     length -= SHA256_BUFFER_SIZE;
-    input  += SHA256_BUFFER_SIZE;
+    input += SHA256_BUFFER_SIZE;
   }
 
   if (length) {

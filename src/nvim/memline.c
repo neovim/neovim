@@ -185,8 +185,8 @@ struct block0 {
   char_u b0_mtime[4];                // last modification time of file
   char_u b0_ino[4];                  // inode of b0_fname
   char_u b0_pid[4];                  // process id of creator (or 0)
-  char_u b0_uname[B0_UNAME_SIZE];    // name of user (uid if no name)
-  char_u b0_hname[B0_HNAME_SIZE];    // host name (if it has a name)
+  char b0_uname[B0_UNAME_SIZE];      // name of user (uid if no name)
+  char b0_hname[B0_HNAME_SIZE];      // host name (if it has a name)
   char b0_fname[B0_FNAME_SIZE_ORG];  // name of file being edited
   long b0_magic_long;                // check for byte order of long
   int b0_magic_int;                  // check for byte order of int
@@ -303,9 +303,9 @@ int ml_open(buf_T *buf)
     b0p->b0_dirty = buf->b_changed ? B0_DIRTY : 0;
     b0p->b0_flags = (char)(get_fileformat(buf) + 1);
     set_b0_fname(b0p, buf);
-    (void)os_get_username((char *)b0p->b0_uname, B0_UNAME_SIZE);
+    (void)os_get_username(b0p->b0_uname, B0_UNAME_SIZE);
     b0p->b0_uname[B0_UNAME_SIZE - 1] = NUL;
-    os_get_hostname((char *)b0p->b0_hname, B0_HNAME_SIZE);
+    os_get_hostname(b0p->b0_hname, B0_HNAME_SIZE);
     b0p->b0_hname[B0_HNAME_SIZE - 1] = NUL;
     long_to_char((long)os_get_pid(), b0p->b0_pid);
   }
@@ -632,7 +632,7 @@ static void set_b0_fname(ZERO_BL *b0p, buf_T *buf)
     // editing the same file on different machines over a network.
     // First replace home dir path with "~/" with home_replace().
     // Then insert the user name to get "~user/".
-    home_replace(NULL, buf->b_ffname, (char *)b0p->b0_fname,
+    home_replace(NULL, buf->b_ffname, b0p->b0_fname,
                  B0_FNAME_SIZE_CRYPT, true);
     if (b0p->b0_fname[0] == '~') {
       // If there is no user name or it is too long, don't use "~/"
@@ -691,7 +691,7 @@ static void add_b0_fenc(ZERO_BL *b0p, buf_T *buf)
   if ((int)strlen(b0p->b0_fname) + n + 1 > size) {
     b0p->b0_flags = (char)(b0p->b0_flags & ~B0_HAS_FENC);
   } else {
-    memmove((char *)b0p->b0_fname + size - n,
+    memmove(b0p->b0_fname + size - n,
             buf->b_p_fenc, (size_t)n);
     *(b0p->b0_fname + size - n - 1) = NUL;
     b0p->b0_flags |= B0_HAS_FENC;
@@ -848,7 +848,7 @@ void ml_recover(bool checkext)
     msg_puts_attr(_("The file was created on "), attr | MSG_HIST);
     // avoid going past the end of a corrupted hostname
     b0p->b0_fname[0] = NUL;
-    msg_puts_attr((char *)b0p->b0_hname, attr | MSG_HIST);
+    msg_puts_attr(b0p->b0_hname, attr | MSG_HIST);
     msg_puts_attr(_(",\nor the file has been damaged."), attr | MSG_HIST);
     msg_end();
     goto theend;
@@ -886,7 +886,7 @@ void ml_recover(bool checkext)
 
   // If .swp file name given directly, use name from swap file for buffer.
   if (directly) {
-    expand_env((char *)b0p->b0_fname, NameBuff, MAXPATHL);
+    expand_env(b0p->b0_fname, NameBuff, MAXPATHL);
     if (setfname(curbuf, NameBuff, NULL, true) == FAIL) {
       goto theend;
     }
@@ -922,7 +922,7 @@ void ml_recover(bool checkext)
   if (b0p->b0_flags & B0_HAS_FENC) {
     int fnsize = B0_FNAME_SIZE_NOCRYPT;
 
-    for (p = (char *)b0p->b0_fname + fnsize; p > b0p->b0_fname && p[-1] != NUL; p--) {}
+    for (p = b0p->b0_fname + fnsize; p > b0p->b0_fname && p[-1] != NUL; p--) {}
     b0_fenc = xstrnsave(p, (size_t)(b0p->b0_fname + fnsize - p));
   }
 
@@ -1411,11 +1411,11 @@ void get_b0_dict(const char *fname, dict_T *d)
       } else {
         // We have swap information.
         tv_dict_add_str_len(d, S_LEN("version"), b0.b0_version, 10);
-        tv_dict_add_str_len(d, S_LEN("user"), (char *)b0.b0_uname,
+        tv_dict_add_str_len(d, S_LEN("user"), b0.b0_uname,
                             B0_UNAME_SIZE);
-        tv_dict_add_str_len(d, S_LEN("host"), (char *)b0.b0_hname,
+        tv_dict_add_str_len(d, S_LEN("host"), b0.b0_hname,
                             B0_HNAME_SIZE);
-        tv_dict_add_str_len(d, S_LEN("fname"), (char *)b0.b0_fname,
+        tv_dict_add_str_len(d, S_LEN("fname"), b0.b0_fname,
                             B0_FNAME_SIZE_ORG);
 
         tv_dict_add_nr(d, S_LEN("pid"), char_to_long(b0.b0_pid));
@@ -1480,7 +1480,7 @@ static time_t swapfile_info(char *fname)
         if (b0.b0_fname[0] == NUL) {
           msg_puts(_("[No Name]"));
         } else {
-          msg_outtrans((char *)b0.b0_fname);
+          msg_outtrans(b0.b0_fname);
         }
 
         msg_puts(_("\n          modified: "));
@@ -1488,7 +1488,7 @@ static time_t swapfile_info(char *fname)
 
         if (*(b0.b0_uname) != NUL) {
           msg_puts(_("\n         user name: "));
-          msg_outtrans((char *)b0.b0_uname);
+          msg_outtrans(b0.b0_uname);
         }
 
         if (*(b0.b0_hname) != NUL) {
@@ -1497,7 +1497,7 @@ static time_t swapfile_info(char *fname)
           } else {
             msg_puts(_("\n         host name: "));
           }
-          msg_outtrans((char *)b0.b0_hname);
+          msg_outtrans(b0.b0_hname);
         }
 
         if (char_to_long(b0.b0_pid) != 0L) {
@@ -3029,7 +3029,7 @@ char *makeswapname(char *fname, char *ffname, buf_T *buf, char *dir_name)
 
   // Expand symlink in the file name, so that we put the swap file with the
   // actual file instead of with the symlink.
-  if (resolve_symlink(fname, (char *)fname_buf) == OK) {
+  if (resolve_symlink(fname, fname_buf) == OK) {
     fname_res = fname_buf;
   }
 #endif
@@ -3267,12 +3267,12 @@ static char *findswapname(buf_T *buf, char **dirp, char *old_fname, bool *found_
             // have a different mountpoint.
             if (b0.b0_flags & B0_SAME_DIR) {
               if (path_fnamecmp(path_tail(buf->b_ffname),
-                                path_tail((char *)b0.b0_fname)) != 0
+                                path_tail(b0.b0_fname)) != 0
                   || !same_directory(fname, buf->b_ffname)) {
                 // Symlinks may point to the same file even
                 // when the name differs, need to check the
                 // inode too.
-                expand_env((char *)b0.b0_fname, NameBuff, MAXPATHL);
+                expand_env(b0.b0_fname, NameBuff, MAXPATHL);
                 if (fnamecmp_ino(buf->b_ffname, NameBuff,
                                  char_to_long(b0.b0_ino))) {
                   differ = true;
@@ -3281,7 +3281,7 @@ static char *findswapname(buf_T *buf, char **dirp, char *old_fname, bool *found_
             } else {
               // The name in the swap file may be
               // "~user/path/file".  Expand it first.
-              expand_env((char *)b0.b0_fname, NameBuff, MAXPATHL);
+              expand_env(b0.b0_fname, NameBuff, MAXPATHL);
               if (fnamecmp_ino(buf->b_ffname, NameBuff,
                                char_to_long(b0.b0_ino))) {
                 differ = true;
@@ -3516,8 +3516,8 @@ static bool fnamecmp_ino(char *fname_c, char *fname_s, long ino_block0)
 
   // One of the inode numbers is unknown, try a forced vim_FullName() and
   // compare the file names.
-  retval_c = vim_FullName(fname_c, (char *)buf_c, MAXPATHL, true);
-  retval_s = vim_FullName(fname_s, (char *)buf_s, MAXPATHL, true);
+  retval_c = vim_FullName(fname_c, buf_c, MAXPATHL, true);
+  retval_s = vim_FullName(fname_s, buf_s, MAXPATHL, true);
   if (retval_c == OK && retval_s == OK) {
     return strcmp(buf_c, buf_s) != 0;
   }

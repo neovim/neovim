@@ -205,7 +205,7 @@ int ns_get_hl(NS *ns_hl, int hl_id, bool link, bool nodefault)
   if (!valid_item && p->hl_def != LUA_NOREF && !recursive) {
     MAXSIZE_TEMP_ARRAY(args, 3);
     ADD_C(args, INTEGER_OBJ((Integer)ns_id));
-    ADD_C(args, STRING_OBJ(cstr_to_string((char *)syn_id2name(hl_id))));
+    ADD_C(args, STRING_OBJ(cstr_to_string(syn_id2name(hl_id))));
     ADD_C(args, BOOLEAN_OBJ(link));
     // TODO(bfredl): preload the "global" attr dict?
 
@@ -1115,7 +1115,7 @@ static void hl_inspect_impl(Array *arr, int attr)
   case kHlSyntax:
     PUT(item, "kind", STRING_OBJ(cstr_to_string("syntax")));
     PUT(item, "hi_name",
-        STRING_OBJ(cstr_to_string((char *)syn_id2name(e.id1))));
+        STRING_OBJ(cstr_to_string(syn_id2name(e.id1))));
     break;
 
   case kHlUI:
@@ -1123,7 +1123,7 @@ static void hl_inspect_impl(Array *arr, int attr)
     const char *ui_name = (e.id1 == -1) ? "Normal" : hlf_names[e.id1];
     PUT(item, "ui_name", STRING_OBJ(cstr_to_string(ui_name)));
     PUT(item, "hi_name",
-        STRING_OBJ(cstr_to_string((char *)syn_id2name(e.id2))));
+        STRING_OBJ(cstr_to_string(syn_id2name(e.id2))));
     break;
 
   case kHlTerminal:

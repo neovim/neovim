@@ -1085,7 +1085,7 @@ void ex_messages(void *const eap_p)
         } else if (p->msg && p->msg[0]) {
           Array content_entry = ARRAY_DICT_INIT;
           ADD(content_entry, INTEGER_OBJ(p->attr));
-          ADD(content_entry, STRING_OBJ(cstr_to_string((char *)(p->msg))));
+          ADD(content_entry, STRING_OBJ(cstr_to_string(p->msg)));
           ADD(content, ARRAY_OBJ(content_entry));
         }
         ADD(entry, ARRAY_OBJ(content));
@@ -1470,9 +1470,9 @@ void msg_putchar_attr(int c, int attr)
     buf[2] = (char)K_THIRD(c);
     buf[3] = NUL;
   } else {
-    buf[utf_char2bytes(c, (char *)buf)] = NUL;
+    buf[utf_char2bytes(c, buf)] = NUL;
   }
-  msg_puts_attr((const char *)buf, attr);
+  msg_puts_attr(buf, attr);
 }
 
 void msg_outnum(long n)
@@ -2139,7 +2139,7 @@ static void msg_puts_display(const char *str, int maxlen, int attr, int recurse)
   int t_col = 0;  // Screen cells todo, 0 when "t_s" not used.
   int l;
   int cw;
-  const char *sb_str = (char *)str;
+  const char *sb_str = str;
   int sb_col = msg_col;
   int wrap;
   int did_last_char;
@@ -2153,7 +2153,7 @@ static void msg_puts_display(const char *str, int maxlen, int attr, int recurse)
     }
     // Concat pieces with the same highlight
     size_t len = strnlen(str, (size_t)maxlen);  // -V781
-    ga_concat_len(&msg_ext_last_chunk, (char *)str, len);
+    ga_concat_len(&msg_ext_last_chunk, str, len);
     msg_ext_cur_len += len;
     return;
   }

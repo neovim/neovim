@@ -82,7 +82,7 @@ typedef struct fromto_S {
 typedef struct salitem_S {
   char *sm_lead;        // leading letters
   int sm_leadlen;       // length of "sm_lead"
-  char_u *sm_oneof;     // letters from () or NULL
+  char *sm_oneof;       // letters from () or NULL
   char *sm_rules;       // rules like ^, $, priority
   char *sm_to;          // replacement.
   int *sm_lead_w;       // wide character copy of "sm_lead"
@@ -119,20 +119,20 @@ struct slang_S {
   char *sl_fname;           // name of .spl file
   bool sl_add;              // true if it's a .add file.
 
-  char *sl_fbyts;        // case-folded word bytes
-  long sl_fbyts_len;     // length of sl_fbyts
-  idx_T *sl_fidxs;        // case-folded word indexes
-  char *sl_kbyts;         // keep-case word bytes
-  idx_T *sl_kidxs;        // keep-case word indexes
-  char *sl_pbyts;        // prefix tree word bytes
-  idx_T *sl_pidxs;        // prefix tree word indexes
+  char *sl_fbyts;           // case-folded word bytes
+  long sl_fbyts_len;        // length of sl_fbyts
+  idx_T *sl_fidxs;          // case-folded word indexes
+  char *sl_kbyts;           // keep-case word bytes
+  idx_T *sl_kidxs;          // keep-case word indexes
+  char *sl_pbyts;           // prefix tree word bytes
+  idx_T *sl_pidxs;          // prefix tree word indexes
 
-  char_u *sl_info;         // infotext string or NULL
+  char *sl_info;            // infotext string or NULL
 
   char sl_regions[MAXREGIONS * 2 + 1];
   // table with up to 8 region names plus NUL
 
-  char_u *sl_midword;      // MIDWORD string or NULL
+  char *sl_midword;             // MIDWORD string or NULL
 
   hashtab_T sl_wordcount;       // hashtable with word count, wordcount_T
 
@@ -141,13 +141,13 @@ struct slang_S {
   int sl_compsylmax;            // COMPOUNDSYLMAX (default: MAXWLEN)
   int sl_compoptions;           // COMP_* flags
   garray_T sl_comppat;          // CHECKCOMPOUNDPATTERN items
-  regprog_T *sl_compprog;     // COMPOUNDRULE turned into a regexp progrm
-                              // (NULL when no compounding)
+  regprog_T *sl_compprog;       // COMPOUNDRULE turned into a regexp progrm
+                                // (NULL when no compounding)
   uint8_t *sl_comprules;        // all COMPOUNDRULE concatenated (or NULL)
   uint8_t *sl_compstartflags;   // flags for first compound word
   uint8_t *sl_compallflags;     // all flags for compound words
   bool sl_nobreak;              // When true: no spaces between words
-  char_u *sl_syllable;     // SYLLABLE repeatable chars or NULL
+  char *sl_syllable;            // SYLLABLE repeatable chars or NULL
   garray_T sl_syl_items;        // syllable items
 
   int sl_prefixcnt;             // number of items in "sl_prefprog"

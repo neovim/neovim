@@ -3915,7 +3915,7 @@ char *partial_name(partial_T *pt)
   if (pt->pt_name != NULL) {
     return pt->pt_name;
   }
-  return (char *)pt->pt_func->uf_name;
+  return pt->pt_func->uf_name;
 }
 
 static void partial_free(partial_T *pt)
@@ -5052,7 +5052,7 @@ void common_function(typval_T *argvars, typval_T *rettv, bool is_funcref)
         if (tv_list_len(list) == 0) {
           arg_idx = 0;
         } else if (tv_list_len(list) > MAX_FUNC_ARGS) {
-          emsg_funcname((char *)e_toomanyarg, s);
+          emsg_funcname(e_toomanyarg, s);
           xfree(name);
           goto theend;
         }

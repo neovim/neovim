@@ -3380,14 +3380,14 @@ static void ui_ext_cmdline_show(CmdlineInfo *line)
       ADD_C(item, INTEGER_OBJ(chunk.attr));
 
       assert(chunk.end >= chunk.start);
-      ADD_C(item, STRING_OBJ(cbuf_as_string((char *)line->cmdbuff + chunk.start,
+      ADD_C(item, STRING_OBJ(cbuf_as_string(line->cmdbuff + chunk.start,
                                             (size_t)(chunk.end - chunk.start))));
       ADD_C(content, ARRAY_OBJ(item));
     }
   } else {
     Array item = arena_array(&arena, 2);
     ADD_C(item, INTEGER_OBJ(0));
-    ADD_C(item, STRING_OBJ(cstr_as_string((char *)(line->cmdbuff))));
+    ADD_C(item, STRING_OBJ(cstr_as_string(line->cmdbuff)));
     content = arena_array(&arena, 1);
     ADD_C(content, ARRAY_OBJ(item));
   }

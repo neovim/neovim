@@ -2579,7 +2579,7 @@ static ShaDaWriteResult shada_write(ShaDaWriteDef *const sd_writer, ShaDaReadDef
           { STATIC_CSTR_AS_STRING("pid"),
             INTEGER_OBJ((Integer)os_get_pid()) },
           { STATIC_CSTR_AS_STRING("encoding"),
-            STRING_OBJ(cstr_as_string((char *)p_enc)) },
+            STRING_OBJ(cstr_as_string(p_enc)) },
         }),
       }
     }

@@ -582,7 +582,7 @@ void win_redr_ruler(win_T *wp, bool always)
       MAXSIZE_TEMP_ARRAY(content, 1);
       MAXSIZE_TEMP_ARRAY(chunk, 2);
       ADD_C(chunk, INTEGER_OBJ(attr));
-      ADD_C(chunk, STRING_OBJ(cstr_as_string((char *)buffer)));
+      ADD_C(chunk, STRING_OBJ(cstr_as_string(buffer)));
       ADD_C(content, ARRAY_OBJ(chunk));
       ui_call_msg_ruler(content);
       did_show_ext_ruler = true;

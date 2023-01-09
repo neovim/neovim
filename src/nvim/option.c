@@ -754,7 +754,7 @@ static void do_set_bool(int opt_idx, int opt_flags, int prefix, int nextchar, co
     }
   }
 
-  *errmsg = set_bool_option(opt_idx, (char_u *)varp, (int)value, opt_flags);
+  *errmsg = set_bool_option(opt_idx, (char *)varp, (int)value, opt_flags);
 }
 
 static void do_set_num(int opt_idx, int opt_flags, char **argp, int nextchar, const set_op_T op,
@@ -1109,7 +1109,7 @@ static void do_set_string(int opt_idx, int opt_flags, char **argp, int nextchar,
   }
 
   // Set the new value.
-  *(char_u **)(varp) = (char_u *)newval;
+  *(char **)(varp) = newval;
 
   // origval may be freed by did_set_string_option(), make a copy.
   char *saved_origval = (origval != NULL) ? xstrdup(origval) : NULL;
@@ -1974,7 +1974,7 @@ static void apply_optionset_autocmd(int opt_idx, long opt_flags, long oldval, lo
 /// @param[in]  opt_flags  OPT_LOCAL and/or OPT_GLOBAL.
 ///
 /// @return NULL on success, error message on error.
-static char *set_bool_option(const int opt_idx, char_u *const varp, const int value,
+static char *set_bool_option(const int opt_idx, char *const varp, const int value,
                              const int opt_flags)
 {
   int old_value = *(int *)varp;
@@ -2010,7 +2010,7 @@ static char *set_bool_option(const int opt_idx, char_u *const varp, const int va
     // Ensure that options set to p_force_off cannot be enabled.
   } else if ((int *)varp == &p_force_off && p_force_off == true) {
     p_force_off = false;
-    return (char *)e_unsupportedoption;
+    return e_unsupportedoption;
   } else if ((int *)varp == &p_lrm) {
     // 'langremap' -> !'langnoremap'
     p_lnr = !p_lrm;
@@ -2023,7 +2023,7 @@ static char *set_bool_option(const int opt_idx, char_u *const varp, const int va
     // delete the undo file, the option may be set again without making
     // any changes in between.
     if (curbuf->b_p_udf || p_udf) {
-      char_u hash[UNDO_HASH_SIZE];
+      uint8_t hash[UNDO_HASH_SIZE];
 
       FOR_ALL_BUFFERS(bp) {
         // When 'undofile' is set globally: for every buffer, otherwise
@@ -2103,7 +2103,7 @@ static char *set_bool_option(const int opt_idx, char_u *const varp, const int va
         }
       }
     }
-  } else if (varp == (char_u *)&(curbuf->b_p_lisp)) {
+  } else if (varp == (char *)&(curbuf->b_p_lisp)) {
     // When 'lisp' option changes include/exclude '-' in
     // keyword characters.
     (void)buf_init_chartab(curbuf, false);          // ignore errors
@@ -3127,7 +3127,7 @@ char *set_option_value(const char *const name, const long number, const char *co
   if (flags & P_NUM) {
     return set_num_option(opt_idx, varp, numval, NULL, 0, opt_flags);
   }
-  return set_bool_option(opt_idx, varp, (int)numval, opt_flags);
+  return set_bool_option(opt_idx, (char *)varp, (int)numval, opt_flags);
 }
 
 /// Call set_option_value() and when an error is returned report it.
@@ -3218,13 +3218,13 @@ static void showoptions(bool all, int opt_flags)
         continue;
       }
 
-      char_u *varp = NULL;
+      char *varp = NULL;
       if ((opt_flags & (OPT_LOCAL | OPT_GLOBAL)) != 0) {
         if (p->indir != PV_NONE) {
-          varp = (char_u *)get_varp_scope(p, opt_flags);
+          varp = get_varp_scope(p, opt_flags);
         }
       } else {
-        varp = get_varp(p);
+        varp = (char *)get_varp(p);
       }
       if (varp != NULL
           && (all == 1 || (all == 0 && !optval_default(p, varp)))) {
@@ -3278,7 +3278,7 @@ static void showoptions(bool all, int opt_flags)
 }
 
 /// Return true if option "p" has its default value.
-static int optval_default(vimoption_T *p, const char_u *varp)
+static int optval_default(vimoption_T *p, const char *varp)
 {
   if (varp == NULL) {
     return true;            // hidden option is always at default
@@ -3403,7 +3403,7 @@ int makeset(FILE *fd, int opt_flags, int local_only)
           continue;
         }
         // Global values are only written when not at the default value.
-        if ((opt_flags & OPT_GLOBAL) && optval_default(p, (char_u *)varp)) {
+        if ((opt_flags & OPT_GLOBAL) && optval_default(p, varp)) {
           continue;
         }
 
@@ -3424,7 +3424,7 @@ int makeset(FILE *fd, int opt_flags, int local_only)
             // default, need to write it too.
             if (!(opt_flags & OPT_GLOBAL) && !local_only) {
               char_u *varp_fresh = (char_u *)get_varp_scope(p, OPT_GLOBAL);  // local value
-              if (!optval_default(p, varp_fresh)) {
+              if (!optval_default(p, (char *)varp_fresh)) {
                 round = 1;
                 varp_local = (char_u *)varp;
                 varp = (char *)varp_fresh;
@@ -4966,7 +4966,7 @@ static void option_value2string(vimoption_T *opp, int scope)
     if (varp == NULL) {  // Just in case.
       NameBuff[0] = NUL;
     } else if (opp->flags & P_EXPAND) {
-      home_replace(NULL, varp, (char *)NameBuff, MAXPATHL, false);
+      home_replace(NULL, varp, NameBuff, MAXPATHL, false);
       // Translate 'pastetoggle' into special key names.
     } else if ((char **)opp->var == &p_pt) {
       str2specialbuf((const char *)p_pt, NameBuff, MAXPATHL);
@@ -5187,8 +5187,8 @@ void fill_breakat_flags(void)
   }
 
   if (p_breakat != NULL) {
-    for (char_u *p = (char_u *)p_breakat; *p; p++) {
-      breakat_flags[*p] = true;
+    for (char *p = p_breakat; *p; p++) {
+      breakat_flags[(uint8_t)(*p)] = true;
     }
   }
 }

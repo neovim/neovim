@@ -1842,7 +1842,7 @@ int utf_cp_tail_off(const char *base, const char *p_in)
 /// @param[in] p     Pointer to byte for which to return the offset to the previous codepoint
 //
 /// @return 0 if invalid sequence, else offset to previous codepoint
-int utf_cp_head_off(const char_u *base, const char_u *p)
+int utf_cp_head_off(const char *base, const char *p)
 {
   int i;
   int j;
@@ -1853,16 +1853,16 @@ int utf_cp_head_off(const char_u *base, const char_u *p)
 
   // Find the first character that is not 10xx.xxxx
   for (i = 0; p - i > base; i--) {
-    if ((p[i] & 0xc0) != 0x80) {
+    if (((uint8_t)p[i] & 0xc0) != 0x80) {
       break;
     }
   }
 
   // Find the last character that is 10xx.xxxx
-  for (j = 0; (p[j + 1] & 0xc0) == 0x80; j++) {}
+  for (j = 0; ((uint8_t)p[j + 1] & 0xc0) == 0x80; j++) {}
 
   // Check for illegal sequence.
-  if (utf8len_tab[p[i]] == 1) {
+  if (utf8len_tab[(uint8_t)p[i]] == 1) {
     return 0;
   }
   return i;

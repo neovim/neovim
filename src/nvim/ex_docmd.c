@@ -3200,7 +3200,7 @@ char *skip_range(const char *cmd, int *ctx)
   }
 
   // Skip ":" and white space.
-  cmd = skip_colon_white((char *)cmd, false);
+  cmd = skip_colon_white(cmd, false);
 
   return (char *)cmd;
 }
@@ -4011,7 +4011,7 @@ static char *getargcmd(char **argp)
   if (*arg == '+') {        // +[command]
     arg++;
     if (ascii_isspace(*arg) || *arg == '\0') {
-      command = (char *)dollar_command;
+      command = dollar_command;
     } else {
       command = arg;
       arg = skip_cmd_arg(command, true);
@@ -4401,7 +4401,7 @@ static int check_more(int message, bool forceit)
       if ((p_confirm || (cmdmod.cmod_flags & CMOD_CONFIRM)) && curbuf->b_fname != NULL) {
         char buff[DIALOG_MSG_SIZE];
 
-        vim_snprintf((char *)buff, DIALOG_MSG_SIZE,
+        vim_snprintf(buff, DIALOG_MSG_SIZE,
                      NGETTEXT("%d more file to edit.  Quit anyway?",
                               "%d more files to edit.  Quit anyway?", n), n);
         if (vim_dialog_yesno(VIM_QUESTION, NULL, buff, 1) == VIM_YES) {
@@ -4769,7 +4769,7 @@ void tabpage_close_other(tabpage_T *tp, int forceit)
   // Limit to 1000 windows, autocommands may add a window while we close
   // one.  OK, so I'm paranoid...
   while (++done < 1000) {
-    snprintf((char *)prev_idx, sizeof(prev_idx), "%i", tabpage_index(tp));
+    snprintf(prev_idx, sizeof(prev_idx), "%i", tabpage_index(tp));
     win_T *wp = tp->tp_lastwin;
     ex_win_close(forceit, wp, tp);
 
@@ -6748,7 +6748,7 @@ char *eval_vars(char *src, const char *srcstart, size_t *usedlen, linenr_T *lnum
   // Note: In "\\%" the % is also not recognized!
   if (src > srcstart && src[-1] == '\\') {
     *usedlen = 0;
-    STRMOVE(src - 1, (char *)src);      // remove backslash
+    STRMOVE(src - 1, src);      // remove backslash
     return NULL;
   }
 
@@ -6925,7 +6925,7 @@ char *eval_vars(char *src, const char *srcstart, size_t *usedlen, linenr_T *lnum
         *errormsg = _("E961: no line number to use for \"<sflnum>\"");
         return NULL;
       }
-      snprintf((char *)strbuf, sizeof(strbuf), "%" PRIdLINENR,
+      snprintf(strbuf, sizeof(strbuf), "%" PRIdLINENR,
                current_sctx.sc_lnum + SOURCING_LNUM);
       result = strbuf;
       break;

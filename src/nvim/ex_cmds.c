@@ -1818,7 +1818,7 @@ int check_overwrite(exarg_T *eap, buf_T *buf, char *fname, char *ffname, int oth
       if (p_confirm || (cmdmod.cmod_flags & CMOD_CONFIRM)) {
         char buff[DIALOG_MSG_SIZE];
 
-        dialog_msg((char *)buff, _("Overwrite existing file \"%s\"?"), fname);
+        dialog_msg(buff, _("Overwrite existing file \"%s\"?"), fname);
         if (vim_dialog_yesno(VIM_QUESTION, NULL, buff, 2) != VIM_YES) {
           return FAIL;
         }
@@ -1854,7 +1854,7 @@ int check_overwrite(exarg_T *eap, buf_T *buf, char *fname, char *ffname, int oth
         if (p_confirm || (cmdmod.cmod_flags & CMOD_CONFIRM)) {
           char buff[DIALOG_MSG_SIZE];
 
-          dialog_msg((char *)buff,
+          dialog_msg(buff,
                      _("Swap file \"%s\" exists, overwrite anyway?"),
                      swapname);
           if (vim_dialog_yesno(VIM_QUESTION, NULL, buff, 2)
@@ -1974,11 +1974,11 @@ static int check_readonly(int *forceit, buf_T *buf)
       char buff[DIALOG_MSG_SIZE];
 
       if (buf->b_p_ro) {
-        dialog_msg((char *)buff,
+        dialog_msg(buff,
                    _("'readonly' option is set for \"%s\".\nDo you wish to write anyway?"),
                    buf->b_fname);
       } else {
-        dialog_msg((char *)buff,
+        dialog_msg(buff,
                    _("File permissions of \"%s\" are read-only.\nIt may still be possible to "
                      "write it.\nDo you wish to try?"),
                    buf->b_fname);

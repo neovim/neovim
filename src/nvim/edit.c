@@ -1401,7 +1401,7 @@ static int pc_status;
 #define PC_STATUS_RIGHT 1       // right half of double-wide char
 #define PC_STATUS_LEFT  2       // left half of double-wide char
 #define PC_STATUS_SET   3       // pc_bytes was filled
-static char_u pc_bytes[MB_MAXBYTES + 1];  // saved bytes
+static char pc_bytes[MB_MAXBYTES + 1];  // saved bytes
 static int pc_attr;
 static int pc_row;
 static int pc_col;
@@ -1438,7 +1438,7 @@ void edit_putchar(int c, bool highlight)
 
     // save the character to be able to put it back
     if (pc_status == PC_STATUS_UNSET) {
-      grid_getbytes(&curwin->w_grid, pc_row, pc_col, (char *)pc_bytes, &pc_attr);
+      grid_getbytes(&curwin->w_grid, pc_row, pc_col, pc_bytes, &pc_attr);
       pc_status = PC_STATUS_SET;
     }
     grid_putchar(&curwin->w_grid, c, pc_row, pc_col, attr);
@@ -1521,7 +1521,7 @@ void edit_unputchar(void)
     if (pc_status == PC_STATUS_RIGHT || pc_status == PC_STATUS_LEFT) {
       redrawWinline(curwin, curwin->w_cursor.lnum);
     } else {
-      grid_puts(&curwin->w_grid, (char *)pc_bytes, pc_row - msg_scrolled, pc_col, pc_attr);
+      grid_puts(&curwin->w_grid, pc_bytes, pc_row - msg_scrolled, pc_col, pc_attr);
     }
   }
 }
@@ -2051,7 +2051,7 @@ void insertchar(int c, int flags, int second_indent)
 
   // Check whether this character should end a comment.
   if (did_ai && c == end_comment_pending) {
-    char_u lead_end[COM_MAX_LEN];  // end-comment string
+    char lead_end[COM_MAX_LEN];  // end-comment string
 
     // Need to remove existing (middle) comment leader and insert end
     // comment leader.  First, check what comment leader we can find.
@@ -2062,7 +2062,7 @@ void insertchar(int c, int flags, int second_indent)
       while (*p && p[-1] != ':') {  // find end of middle flags
         p++;
       }
-      int middle_len = (int)copy_option_part(&p, (char *)lead_end, COM_MAX_LEN, ",");
+      int middle_len = (int)copy_option_part(&p, lead_end, COM_MAX_LEN, ",");
       // Don't count trailing white space for middle_len
       while (middle_len > 0 && ascii_iswhite(lead_end[middle_len - 1])) {
         middle_len--;
@@ -2072,7 +2072,7 @@ void insertchar(int c, int flags, int second_indent)
       while (*p && p[-1] != ':') {  // find end of end flags
         p++;
       }
-      int end_len = (int)copy_option_part(&p, (char *)lead_end, COM_MAX_LEN, ",");
+      int end_len = (int)copy_option_part(&p, lead_end, COM_MAX_LEN, ",");
 
       // Skip white space before the cursor
       i = curwin->w_cursor.col;
@@ -2083,13 +2083,13 @@ void insertchar(int c, int flags, int second_indent)
       i -= middle_len;
 
       // Check some expected things before we go on
-      if (i >= 0 && lead_end[end_len - 1] == end_comment_pending) {
+      if (i >= 0 && (uint8_t)lead_end[end_len - 1] == end_comment_pending) {
         // Backspace over all the stuff we want to replace
         backspace_until_column(i);
 
         // Insert the end-comment string, except for the last
         // character, which will get inserted as normal later.
-        ins_bytes_len((char *)lead_end, (size_t)(end_len - 1));
+        ins_bytes_len(lead_end, (size_t)(end_len - 1));
       }
     }
   }
@@ -2416,7 +2416,7 @@ void set_last_insert(int c)
   if (c < ' ' || c == DEL) {
     *s++ = Ctrl_V;
   }
-  s = (char *)add_char2buf(c, (char_u *)s);
+  s = add_char2buf(c, s);
   *s++ = ESC;
   *s++ = NUL;
   last_insert_skip = 0;
@@ -2443,9 +2443,9 @@ void beginline(int flags)
     curwin->w_cursor.coladd = 0;
 
     if (flags & (BL_WHITE | BL_SOL)) {
-      char_u *ptr;
+      char *ptr;
 
-      for (ptr = (char_u *)get_cursor_line_ptr(); ascii_iswhite(*ptr)
+      for (ptr = get_cursor_line_ptr(); ascii_iswhite(*ptr)
            && !((flags & BL_FIX) && ptr[1] == NUL); ptr++) {
         curwin->w_cursor.col++;
       }
@@ -2676,7 +2676,7 @@ int stuff_inserted(int c, long count, int no_esc)
   char *last_ptr;
   char last = NUL;
 
-  ptr = (char *)get_last_insert();
+  ptr = get_last_insert();
   if (ptr == NULL) {
     emsg(_(e_noinstext));
     return FAIL;
@@ -2725,13 +2725,13 @@ int stuff_inserted(int c, long count, int no_esc)
   return OK;
 }
 
-char_u *get_last_insert(void)
+char *get_last_insert(void)
   FUNC_ATTR_PURE
 {
   if (last_insert == NULL) {
     return NULL;
   }
-  return (char_u *)last_insert + last_insert_skip;
+  return last_insert + last_insert_skip;
 }
 
 // Get last inserted string, and remove trailing <Esc>.
@@ -4581,7 +4581,7 @@ static bool ins_tab(void)
       // Delete following spaces.
       i = cursor->col - fpos.col;
       if (i > 0) {
-        STRMOVE(ptr, (char *)ptr + i);
+        STRMOVE(ptr, ptr + i);
         // correct replace stack.
         if ((State & REPLACE_FLAG)
             && !(State & VREPLACE_FLAG)) {

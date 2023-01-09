@@ -8769,7 +8769,7 @@ static void f_tr(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
           tolen = utfc_ptr2len(p);
           if (idx-- == 0) {
             cplen = tolen;
-            cpstr = (char *)p;
+            cpstr = p;
             break;
           }
         }

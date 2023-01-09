@@ -179,7 +179,7 @@ static char *get_buffcont(buffheader_T *buffer, int dozero)
 /// Return the contents of the record buffer as a single string
 /// and clear the record buffer.
 /// K_SPECIAL in the returned string is escaped.
-char_u *get_recorded(void)
+char *get_recorded(void)
 {
   char *p;
   size_t len;
@@ -201,7 +201,7 @@ char_u *get_recorded(void)
     p[len - 1] = NUL;
   }
 
-  return (char_u *)p;
+  return p;
 }
 
 /// Return the contents of the redo buffer as a single string.
@@ -978,7 +978,7 @@ int ins_typebuf(char *str, int noremap, int offset, bool nottyped, bool silent)
 int ins_char_typebuf(int c, int modifiers)
 {
   char_u buf[MB_MAXBYTES * 3 + 4];
-  unsigned int len = special_to_buf(c, modifiers, true, buf);
+  unsigned int len = special_to_buf(c, modifiers, true, (char *)buf);
   assert(len < sizeof(buf));
   buf[len] = NUL;
   (void)ins_typebuf((char *)buf, KeyNoremap, 0, !KeyTyped, cmd_silent);
@@ -2197,7 +2197,7 @@ static int handle_mapping(int *keylenp, const bool *timedout, int *mapdepth)
     // mode temporarily.  Append K_SELECT to switch back to Select mode.
     if (VIsual_active && VIsual_select && (mp->m_mode & MODE_VISUAL)) {
       VIsual_select = false;
-      (void)ins_typebuf((char *)K_SELECT_STRING, REMAP_NONE, 0, true, false);
+      (void)ins_typebuf(K_SELECT_STRING, REMAP_NONE, 0, true, false);
     }
 
     // Copy the values from *mp that are used, because evaluating the
@@ -2887,13 +2887,13 @@ int inchar(char_u *buf, int maxlen, long wait_time)
     typebuf.tb_change_cnt = 1;
   }
 
-  return fix_input_buffer(buf, len);
+  return fix_input_buffer((char *)buf, len);
 }
 
 // Fix typed characters for use by vgetc() and check_termcode().
 // "buf[]" must have room to triple the number of bytes!
 // Returns the new length.
-int fix_input_buffer(char_u *buf, int len)
+int fix_input_buffer(char *buf, int len)
   FUNC_ATTR_NONNULL_ALL
 {
   if (!using_script()) {
@@ -2905,7 +2905,7 @@ int fix_input_buffer(char_u *buf, int len)
 
   // Reading from script, need to process special bytes
   int i;
-  char_u *p = buf;
+  char_u *p = (char_u *)buf;
 
   // Two characters are special: NUL and K_SPECIAL.
   // Replace       NUL by K_SPECIAL KS_ZERO    KE_FILLER

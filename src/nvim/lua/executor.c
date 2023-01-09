@@ -1993,7 +1993,7 @@ char *nlua_register_table_as_callable(const typval_T *const arg)
 void nlua_execute_on_key(int c)
 {
   char buf[NUMBUFLEN];
-  size_t buf_len = special_to_buf(c, mod_mask, false, (char_u *)buf);
+  size_t buf_len = special_to_buf(c, mod_mask, false, buf);
 
   lua_State *const lstate = global_lstate;
 

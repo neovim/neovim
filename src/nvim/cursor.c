@@ -494,10 +494,10 @@ int gchar_cursor(void)
 
 /// Write a character at the current cursor position.
 /// It is directly written into the block.
-void pchar_cursor(char_u c)
+void pchar_cursor(char c)
 {
   *(ml_get_buf(curbuf, curwin->w_cursor.lnum, true)
-    + curwin->w_cursor.col) = (char)c;
+    + curwin->w_cursor.col) = c;
 }
 
 /// @return  pointer to cursor line.
