@@ -279,6 +279,15 @@ int main(int argc, char **argv)
   // argument list "global_alist".
   command_line_scan(&params);
 
+#ifndef MSWIN
+  int tty_fd = params.input_isatty
+    ? STDIN_FILENO
+    : (params.output_isatty
+       ? STDOUT_FILENO
+       : (params.err_isatty ? STDERR_FILENO : -1));
+  pty_process_save_termios(tty_fd);
+#endif
+
   nlua_init(argv, argc, params.lua_arg0);
   TIME_MSG("init lua interpreter");
 
@@ -1455,14 +1464,6 @@ static void check_and_set_isatty(mparm_T *paramp)
   stdout_isatty
     = paramp->output_isatty = os_isatty(STDOUT_FILENO);
   paramp->err_isatty = os_isatty(STDERR_FILENO);
-#ifndef MSWIN
-  int tty_fd = paramp->input_isatty
-    ? STDIN_FILENO
-    : (paramp->output_isatty
-       ? STDOUT_FILENO
-       : (paramp->err_isatty ? STDERR_FILENO : -1));
-  pty_process_save_termios(tty_fd);
-#endif
   TIME_MSG("window checked");
 }
 

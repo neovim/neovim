@@ -85,6 +85,9 @@ int libuv_process_spawn(LibuvProcess *uvproc)
     uvproc->uvstdio[2].flags = UV_CREATE_PIPE | UV_WRITABLE_PIPE;
     uvproc->uvstdio[2].data.stream = STRUCT_CAST(uv_stream_t,
                                                  &proc->err.uv.pipe);
+  } else if (proc->fwd_err) {
+    uvproc->uvstdio[2].flags = UV_INHERIT_FD;
+    uvproc->uvstdio[2].data.fd = STDERR_FILENO;
   }
 
   int status;

@@ -168,6 +168,14 @@ static struct termios termios_default;
 /// @param tty_fd   TTY file descriptor, or -1 if not in a terminal.
 void pty_process_save_termios(int tty_fd)
 {
+  if (embedded_mode) {
+    // TODO(bfredl): currently we cannot use the state of the host terminal in
+    // the server. when the TUI process launches the server, the state has already
+    // changed. we would need to serialize termios_default in the TUI process and
+    // transmit it. Altough, just always using the clean slate of init_termios() might
+    // be preferrable anyway.
+    return;
+  }
   if (tty_fd == -1) {
     return;
   }

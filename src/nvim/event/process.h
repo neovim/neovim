@@ -38,7 +38,7 @@ struct process {
   /// Exit handler. If set, user must call process_free().
   process_exit_cb cb;
   internal_process_cb internal_exit_cb, internal_close_cb;
-  bool closed, detach, overlapped;
+  bool closed, detach, overlapped, fwd_err;
   MultiQueue *events;
 };
 
@@ -62,7 +62,8 @@ static inline Process process_init(Loop *loop, ProcessType type, void *data)
     .closed = false,
     .internal_close_cb = NULL,
     .internal_exit_cb = NULL,
-    .detach = false
+    .detach = false,
+    .fwd_err = false,
   };
 }
 
