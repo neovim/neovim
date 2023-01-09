@@ -167,7 +167,7 @@ char *vim_strsave_shellescape(const char *string, bool do_special, bool do_newli
 
   // First count the number of extra bytes required.
   size_t length = strlen(string) + 3;       // two quotes and a trailing NUL
-  for (const char_u *p = (char_u *)string; *p != NUL; MB_PTR_ADV(p)) {
+  for (const char *p = string; *p != NUL; MB_PTR_ADV(p)) {
 #ifdef MSWIN
     if (!p_ssl) {
       if (*p == '"') {
@@ -185,7 +185,7 @@ char *vim_strsave_shellescape(const char *string, bool do_special, bool do_newli
         length++;                       // insert backslash
       }
     }
-    if (do_special && find_cmdline_var((char *)p, &l) >= 0) {
+    if (do_special && find_cmdline_var(p, &l) >= 0) {
       length++;                         // insert backslash
       p += l - 1;
     }
@@ -270,7 +270,7 @@ char *vim_strsave_up(const char *string)
   char *p1;
 
   p1 = xstrdup(string);
-  vim_strup((char_u *)p1);
+  vim_strup(p1);
   return p1;
 }
 
@@ -280,17 +280,17 @@ char *vim_strnsave_up(const char *string, size_t len)
   FUNC_ATTR_NONNULL_RET FUNC_ATTR_MALLOC FUNC_ATTR_NONNULL_ALL
 {
   char *p1 = xstrnsave(string, len);
-  vim_strup((char_u *)p1);
+  vim_strup(p1);
   return p1;
 }
 
 // ASCII lower-to-upper case translation, language independent.
-void vim_strup(char_u *p)
+void vim_strup(char *p)
   FUNC_ATTR_NONNULL_ALL
 {
-  char_u c;
-  while ((c = *p) != NUL) {
-    *p++ = (char_u)(c < 'a' || c > 'z' ? c : c - 0x20);
+  uint8_t c;
+  while ((c = (uint8_t)(*p)) != NUL) {
+    *p++ = (char)(uint8_t)(c < 'a' || c > 'z' ? c : c - 0x20);
   }
 }
 
@@ -313,7 +313,7 @@ char *strcase_save(const char *const orig, bool upper)
     int l = utf_ptr2len(p);
     if (c == 0) {
       // overlong sequence, use only the first byte
-      c = (char_u)(*p);
+      c = (uint8_t)(*p);
       l = 1;
     }
     int uc = upper ? mb_toupper(c) : mb_tolower(c);

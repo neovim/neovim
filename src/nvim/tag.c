@@ -2563,7 +2563,7 @@ int get_tagfname(tagname_T *tnp, int first, char *buf)
   if (first) {
     // Init.  We make a copy of 'tags', because autocommands may change
     // the value without notifying us.
-    tnp->tn_tags = xstrdup((*curbuf->b_p_tags != NUL) ? curbuf->b_p_tags : (char *)p_tags);
+    tnp->tn_tags = xstrdup((*curbuf->b_p_tags != NUL) ? curbuf->b_p_tags : p_tags);
     tnp->tn_np = tnp->tn_tags;
   }
 
@@ -2593,7 +2593,7 @@ int get_tagfname(tagname_T *tnp, int first, char *buf)
       buf[0] = NUL;
       (void)copy_option_part(&tnp->tn_np, buf, MAXPATHL - 1, " ,");
 
-      r_ptr = (char *)vim_findfile_stopdir(buf);
+      r_ptr = vim_findfile_stopdir(buf);
       // move the filename one char forward and truncate the
       // filepath with a NUL
       filename = path_tail(buf);

@@ -4,5 +4,5 @@
 char *default_vim_dir = "${CMAKE_INSTALL_FULL_DATAROOTDIR}/nvim";
 char *default_vimruntime_dir = "";
 char *default_lib_dir = "${CMAKE_INSTALL_FULL_LIBDIR}/nvim";
-char_u *compiled_user = (char_u *)"${USERNAME}";
-char_u *compiled_sys = (char_u *)"${HOSTNAME}";
+char *compiled_user = "${USERNAME}";
+char *compiled_sys = "${HOSTNAME}";

@@ -474,7 +474,7 @@ char_u *get_special_key_name(int c, int modifiers)
 
   int i, idx;
   int table_idx;
-  char_u *s;
+  char *s;
 
   string[0] = '<';
   idx = 1;
@@ -541,9 +541,9 @@ char_u *get_special_key_name(int c, int modifiers)
       } else if (vim_isprintc(c)) {
         string[idx++] = (char_u)c;
       } else {
-        s = (char_u *)transchar(c);
+        s = transchar(c);
         while (*s) {
-          string[idx++] = *s++;
+          string[idx++] = (uint8_t)(*s++);
         }
       }
     }
@@ -629,11 +629,11 @@ int find_special_key(const char **const srcp, const size_t src_len, int *const m
                      const int flags, bool *const did_simplify)
   FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ARG(1, 3)
 {
-  const char_u *last_dash;
-  const char_u *end_of_name;
-  const char_u *src;
-  const char_u *bp;
-  const char_u *const end = (char_u *)(*srcp) + src_len - 1;
+  const char *last_dash;
+  const char *end_of_name;
+  const char *src;
+  const char *bp;
+  const char *const end = *srcp + src_len - 1;
   const bool in_string = flags & FSK_IN_STRING;
   int modifiers;
   int bit;
@@ -645,7 +645,7 @@ int find_special_key(const char **const srcp, const size_t src_len, int *const m
     return 0;
   }
 
-  src = (char_u *)(*srcp);
+  src = *srcp;
   if (src[0] != '<') {
     return 0;
   }
@@ -659,7 +659,7 @@ int find_special_key(const char **const srcp, const size_t src_len, int *const m
     if (*bp == '-') {
       last_dash = bp;
       if (bp + 1 <= end) {
-        l = utfc_ptr2len_len((char *)bp + 1, (int)(end - bp) + 1);
+        l = utfc_ptr2len_len(bp + 1, (int)(end - bp) + 1);
         // Anything accepted, like <C-?>.
         // <C-"> or <M-"> are not special in strings as " is
         // the string delimiter. With a backslash it works: <M-\">
@@ -674,7 +674,7 @@ int find_special_key(const char **const srcp, const size_t src_len, int *const m
     if (end - bp > 3 && bp[0] == 't' && bp[1] == '_') {
       bp += 3;  // skip t_xx, xx may be '-' or '>'
     } else if (end - bp > 4 && STRNICMP(bp, "char-", 5) == 0) {
-      vim_str2nr((char *)bp + 5, NULL, &l, STR2NR_ALL, NULL, NULL, 0, true);
+      vim_str2nr(bp + 5, NULL, &l, STR2NR_ALL, NULL, NULL, 0, true);
       if (l == 0) {
         emsg(_(e_invarg));
         return 0;
@@ -691,7 +691,7 @@ int find_special_key(const char **const srcp, const size_t src_len, int *const m
     modifiers = 0x0;
     for (bp = src + 1; bp < last_dash; bp++) {
       if (*bp != '-') {
-        bit = name_to_mod_mask(*bp);
+        bit = name_to_mod_mask((uint8_t)(*bp));
         if (bit == 0x0) {
           break;                // Illegal modifier name
         }
@@ -704,7 +704,7 @@ int find_special_key(const char **const srcp, const size_t src_len, int *const m
       if (STRNICMP(last_dash + 1, "char-", 5) == 0
           && ascii_isdigit(last_dash[6])) {
         // <Char-123> or <Char-033> or <Char-0x33>
-        vim_str2nr((char *)last_dash + 6, NULL, &l, STR2NR_ALL, NULL, &n, 0, true);
+        vim_str2nr(last_dash + 6, NULL, &l, STR2NR_ALL, NULL, &n, 0, true);
         if (l == 0) {
           emsg(_(e_invarg));
           return 0;
@@ -718,12 +718,12 @@ int find_special_key(const char **const srcp, const size_t src_len, int *const m
           // Special case for a double-quoted string
           off = l = 2;
         } else {
-          l = utfc_ptr2len((char *)last_dash + 1);
+          l = utfc_ptr2len(last_dash + 1);
         }
         if (modifiers != 0 && last_dash[l + 1] == '>') {
-          key = utf_ptr2char((char *)last_dash + off);
+          key = utf_ptr2char(last_dash + off);
         } else {
-          key = get_special_key_code(last_dash + off);
+          key = get_special_key_code((char_u *)last_dash + off);
           if (!(flags & FSK_KEEP_X_KEY)) {
             key = handle_x_keys(key);
           }
@@ -753,7 +753,7 @@ int find_special_key(const char **const srcp, const size_t src_len, int *const m
         }
 
         *modp = modifiers;
-        *srcp = (char *)end_of_name;
+        *srcp = end_of_name;
         return key;
       }  // else { ELOG("unknown key: '%s'", src); }
     }

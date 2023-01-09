@@ -3007,7 +3007,7 @@ void tv_blob_copy(typval_T *const from, typval_T *const to)
     (tv)->v_lock = VAR_UNLOCKED; \
   } while (0)
 
-static inline int _nothing_conv_func_start(typval_T *const tv, char_u *const fun)
+static inline int _nothing_conv_func_start(typval_T *const tv, char *const fun)
   FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_ALWAYS_INLINE FUNC_ATTR_NONNULL_ARG(1)
 {
   tv->v_lock = VAR_UNLOCKED;
@@ -3019,7 +3019,7 @@ static inline int _nothing_conv_func_start(typval_T *const tv, char_u *const fun
       return OK;
     }
   } else {
-    func_unref((char *)fun);
+    func_unref(fun);
     if ((const char *)fun != tv_empty_string) {
       xfree(fun);
     }

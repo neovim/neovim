@@ -1490,8 +1490,8 @@ int get_syntax_attr(const colnr_T col, bool *const can_spell, const bool keep_st
 static int syn_current_attr(const bool syncing, const bool displaying, bool *const can_spell,
                             const bool keep_state)
 {
-  lpos_T endpos;                // was: char_u *endp;
-  lpos_T hl_startpos;           // was: int hl_startcol;
+  lpos_T endpos;
+  lpos_T hl_startpos;
   lpos_T hl_endpos;
   lpos_T eos_pos;               // end-of-start match (start region)
   lpos_T eoe_pos;               // end-of-end pattern

@@ -582,9 +582,9 @@ static char *fname_trans_sid(const char *const name, char *const fname_buf, char
 /// Find a function by name, return pointer to it in ufuncs.
 ///
 /// @return  NULL for unknown function.
-ufunc_T *find_func(const char_u *name)
+ufunc_T *find_func(const char *name)
 {
-  hashitem_T *hi = hash_find(&func_hashtab, (char *)name);
+  hashitem_T *hi = hash_find(&func_hashtab, name);
   if (!HASHITEM_EMPTY(hi)) {
     return HI2UF(hi);
   }
@@ -1580,7 +1580,7 @@ int call_func(const char *funcname, int len, typval_T *rettv, int argcount_in, t
     } else if (fp != NULL || !builtin_function((const char *)rfname, -1)) {
       // User defined function.
       if (fp == NULL) {
-        fp = find_func((char_u *)rfname);
+        fp = find_func(rfname);
       }
 
       // Trigger FuncUndefined event, may load the function.
@@ -1588,13 +1588,13 @@ int call_func(const char *funcname, int len, typval_T *rettv, int argcount_in, t
           && apply_autocmds(EVENT_FUNCUNDEFINED, rfname, rfname, true, NULL)
           && !aborting()) {
         // executed an autocommand, search for the function again
-        fp = find_func((char_u *)rfname);
+        fp = find_func(rfname);
       }
       // Try loading a package.
       if (fp == NULL && script_autoload((const char *)rfname, strlen(rfname),
                                         true) && !aborting()) {
         // Loaded a package, search for the function again.
-        fp = find_func((char_u *)rfname);
+        fp = find_func(rfname);
       }
 
       if (fp != NULL && (fp->uf_flags & FC_DELETED)) {
@@ -2133,7 +2133,7 @@ void ex_function(exarg_T *eap)
       *p = NUL;
     }
     if (!eap->skip && !got_int) {
-      fp = find_func((char_u *)name);
+      fp = find_func(name);
       if (fp != NULL) {
         list_func_head(fp, !eap->forceit, eap->forceit);
         for (int j = 0; j < fp->uf_lines.ga_len && !got_int; j++) {
@@ -2256,7 +2256,7 @@ void ex_function(exarg_T *eap)
     if (!eap->skip && !eap->forceit) {
       if (fudi.fd_dict != NULL && fudi.fd_newkey == NULL) {
         emsg(_(e_funcdict));
-      } else if (name != NULL && find_func((char_u *)name) != NULL) {
+      } else if (name != NULL && find_func(name) != NULL) {
         emsg_funcname(e_funcexts, name);
       }
     }
@@ -2510,7 +2510,7 @@ void ex_function(exarg_T *eap)
       goto erret;
     }
 
-    fp = find_func((char_u *)name);
+    fp = find_func(name);
     if (fp != NULL) {
       // Function can be replaced with "function!" and when sourcing the
       // same script again, but only once.
@@ -2690,7 +2690,7 @@ bool translated_function_exists(const char *name)
   if (builtin_function(name, -1)) {
     return find_internal_func((char *)name) != NULL;
   }
-  return find_func((const char_u *)name) != NULL;
+  return find_func(name) != NULL;
 }
 
 /// Check whether function with the given name exists
@@ -2800,7 +2800,7 @@ void ex_delfunction(exarg_T *eap)
     return;
   }
   if (!eap->skip) {
-    fp = find_func((char_u *)name);
+    fp = find_func(name);
   }
   xfree(name);
 
@@ -2857,7 +2857,7 @@ void func_unref(char *name)
     return;
   }
 
-  fp = find_func((char_u *)name);
+  fp = find_func(name);
   if (fp == NULL && isdigit((uint8_t)(*name))) {
 #ifdef EXITFREE
     if (!entered_free_all_mem) {
@@ -2898,7 +2898,7 @@ void func_ref(char *name)
   if (name == NULL || !func_name_refcount(name)) {
     return;
   }
-  fp = find_func((char_u *)name);
+  fp = find_func(name);
   if (fp != NULL) {
     (fp->uf_refcount)++;
   } else if (isdigit((uint8_t)(*name))) {
@@ -3305,7 +3305,7 @@ void make_partial(dict_T *const selfdict, typval_T *const rettv)
                                       : rettv->vval.v_partial->pt_name;
     // Translate "s:func" to the stored function name.
     fname = fname_trans_sid(fname, fname_buf, &tofree, &error);
-    fp = find_func((char_u *)fname);
+    fp = find_func(fname);
     xfree(tofree);
   }
 
@@ -3651,7 +3651,7 @@ bool set_ref_in_func(char *name, ufunc_T *fp_in, int copyID)
 
   if (fp_in == NULL) {
     fname = fname_trans_sid(name, fname_buf, &tofree, &error);
-    fp = find_func((char_u *)fname);
+    fp = find_func(fname);
   }
   if (fp != NULL) {
     for (fc = fp->uf_scoped; fc != NULL; fc = fc->func->uf_scoped) {

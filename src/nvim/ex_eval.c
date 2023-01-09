@@ -1150,7 +1150,7 @@ void ex_throw(exarg_T *eap)
   // On error or when an exception is thrown during argument evaluation, do
   // not throw.
   if (!eap->skip && value != NULL) {
-    if (throw_exception((char_u *)value, ET_USER, NULL) == FAIL) {
+    if (throw_exception(value, ET_USER, NULL) == FAIL) {
       xfree(value);
     } else {
       do_throw(eap->cstack);

@@ -5222,12 +5222,11 @@ static void str_to_reg(yankreg_T *y_ptr, MotionType yank_type, const char *str, 
     }
   } else {
     size_t line_len;
-    for (const char_u *start = (char_u *)str, *end = (char_u *)str + len;
+    for (const char *start = str, *end = str + len;
          start < end + extraline;
          start += line_len + 1, lnum++) {
       assert(end - start >= 0);
-      line_len = (size_t)((char_u *)xmemscan(start, '\n',
-                                             (size_t)(end - start)) - start);
+      line_len = (size_t)((char *)xmemscan(start, '\n', (size_t)(end - start)) - start);
       if (line_len > maxlen) {
         maxlen = line_len;
       }

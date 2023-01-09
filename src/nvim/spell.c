@@ -664,7 +664,7 @@ static void find_word(matchinf_T *mip, int mode)
         // For multi-byte chars check character length against
         // COMPOUNDMIN.
         if (slang->sl_compminlen > 0
-            && mb_charlen_len((char_u *)mip->mi_word + mip->mi_compoff,
+            && mb_charlen_len(mip->mi_word + mip->mi_compoff,
                               wlen - mip->mi_compoff) < slang->sl_compminlen) {
           continue;
         }

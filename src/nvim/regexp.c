@@ -87,7 +87,7 @@ static int toggle_Magic(int x)
 #define REGMAGIC        0234
 
 // Utility definitions.
-#define UCHARAT(p)      ((int)(*(char_u *)(p)))
+#define UCHARAT(p)      ((int)(*(uint8_t *)(p)))
 
 // Used for an error (down from) vim_regcomp(): give the error message, set
 // rc_did_emsg and return NULL
@@ -327,7 +327,7 @@ static int reg_strict;          // "[abc" is illegal
 // uncrustify:off
 
 // META[] is used often enough to justify turning it into a table.
-static char_u META_flags[] = {
+static uint8_t META_flags[] = {
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 //                 %  &     (  )  *  +        .
@@ -677,7 +677,7 @@ static int peekchr(void)
     // '$' is only magic as the very last char and if it's in front of
     // either "\|", "\)", "\&", or "\n"
     if (reg_magic >= MAGIC_OFF) {
-      char_u *p = (char_u *)regparse + 1;
+      uint8_t *p = (uint8_t *)regparse + 1;
       bool is_magic_all = (reg_magic == MAGIC_ALL);
 
       // ignore \c \C \m \M \v \V and \Z after '$'
@@ -938,7 +938,7 @@ static int read_limits(long *minval, long *maxval)
 // Sometimes need to save a copy of a line.  Since alloc()/free() is very
 // slow, we keep one allocated piece of memory and only re-allocate it when
 // it's too small.  It's freed in bt_regexec_both() when finished.
-static char_u *reg_tofree = NULL;
+static uint8_t *reg_tofree = NULL;
 static unsigned reg_tofreelen;
 
 // Structure used to store the execution state of the regex engine.
@@ -960,8 +960,8 @@ typedef struct {
   regmatch_T *reg_match;
   regmmatch_T *reg_mmatch;
 
-  char_u **reg_startp;
-  char_u **reg_endp;
+  uint8_t **reg_startp;
+  uint8_t **reg_endp;
   lpos_T *reg_startpos;
   lpos_T *reg_endpos;
 
@@ -973,8 +973,8 @@ typedef struct {
 
   // The current match-position is remembered with these variables:
   linenr_T lnum;  ///< line number, relative to first line
-  char_u *line;   ///< start of current line
-  char_u *input;  ///< current input, points into "line"
+  uint8_t *line;   ///< start of current line
+  uint8_t *input;  ///< current input, points into "line"
 
   int need_clear_subexpr;   ///< subexpressions still need to be cleared
   int need_clear_zsubexpr;  ///< extmatch subexpressions still need to be
@@ -1033,8 +1033,8 @@ static char *reg_getline(linenr_T lnum)
   return ml_get_buf(rex.reg_buf, rex.reg_firstlnum + lnum, false);
 }
 
-static char_u *reg_startzp[NSUBEXP];  // Workspace to mark beginning
-static char_u *reg_endzp[NSUBEXP];    //   and end of \z(...\) matches
+static uint8_t *reg_startzp[NSUBEXP];  // Workspace to mark beginning
+static uint8_t *reg_endzp[NSUBEXP];    //   and end of \z(...\) matches
 static lpos_T reg_startzpos[NSUBEXP];   // idem, beginning pos
 static lpos_T reg_endzpos[NSUBEXP];     // idem, end pos
 
@@ -1147,7 +1147,7 @@ static bool reg_match_visual(void)
     }
 
     // getvvcol() flushes rex.line, need to get it again
-    rex.line = (char_u *)reg_getline(rex.lnum);
+    rex.line = (uint8_t *)reg_getline(rex.lnum);
     rex.input = rex.line + col;
 
     unsigned int cols_u = win_linetabsize(wp, rex.reg_firstlnum + rex.lnum, (char *)rex.line, col);
@@ -1219,7 +1219,7 @@ static void cleanup_zsubexpr(void)
 // Advance rex.lnum, rex.line and rex.input to the next line.
 static void reg_nextline(void)
 {
-  rex.line = (char_u *)reg_getline(++rex.lnum);
+  rex.line = (uint8_t *)reg_getline(++rex.lnum);
   rex.input = rex.line;
   fast_breakcheck();
 }
@@ -2293,7 +2293,7 @@ static regengine_T nfa_regengine = {
 static int regexp_engine = 0;
 
 #ifdef REGEXP_DEBUG
-static char_u regname[][30] = {
+static uint8_t regname[][30] = {
   "AUTOMATIC Regexp Engine",
   "BACKTRACKING Regexp Engine",
   "NFA Regexp Engine"
@@ -2342,10 +2342,10 @@ regprog_T *vim_regcomp(char *expr_arg, int re_flags)
   //
   const int called_emsg_before = called_emsg;
   if (regexp_engine != BACKTRACKING_ENGINE) {
-    prog = nfa_regengine.regcomp((char_u *)expr,
+    prog = nfa_regengine.regcomp((uint8_t *)expr,
                                  re_flags + (regexp_engine == AUTOMATIC_ENGINE ? RE_AUTO : 0));
   } else {
-    prog = bt_regengine.regcomp((char_u *)expr, re_flags);
+    prog = bt_regengine.regcomp((uint8_t *)expr, re_flags);
   }
 
   // Check for error compiling regexp with initial engine.
@@ -2370,7 +2370,7 @@ regprog_T *vim_regcomp(char *expr_arg, int re_flags)
     if (regexp_engine == AUTOMATIC_ENGINE && called_emsg == called_emsg_before) {
       regexp_engine = BACKTRACKING_ENGINE;
       report_re_switch(expr);
-      prog = bt_regengine.regcomp((char_u *)expr, re_flags);
+      prog = bt_regengine.regcomp((uint8_t *)expr, re_flags);
     }
   }
 
@@ -2448,7 +2448,7 @@ static bool vim_regexec_string(regmatch_T *rmp, char *line, colnr_T col, bool nl
   rex.reg_startpos = NULL;
   rex.reg_endpos = NULL;
 
-  int result = rmp->regprog->engine->regexec_nl(rmp, (char_u *)line, col, nl);
+  int result = rmp->regprog->engine->regexec_nl(rmp, (uint8_t *)line, col, nl);
   rmp->regprog->re_in_use = false;
 
   // NFA engine aborted because it's very slow, use backtracking engine instead.
@@ -2464,7 +2464,7 @@ static bool vim_regexec_string(regmatch_T *rmp, char *line, colnr_T col, bool nl
     rmp->regprog = vim_regcomp(pat, re_flags);
     if (rmp->regprog != NULL) {
       rmp->regprog->re_in_use = true;
-      result = rmp->regprog->engine->regexec_nl(rmp, (char_u *)line, col, nl);
+      result = rmp->regprog->engine->regexec_nl(rmp, (uint8_t *)line, col, nl);
       rmp->regprog->re_in_use = false;
     }
 

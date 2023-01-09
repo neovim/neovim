@@ -689,7 +689,7 @@ void expand_env_esc(char *restrict srcp, char *restrict dst, int dstlen, bool es
 #else
         // cannot expand user's home directory, so don't try
         var = NULL;
-        tail = (char_u *)"";  // for gcc
+        tail = "";  // for gcc
 #endif  // UNIX
       }
 
@@ -697,7 +697,7 @@ void expand_env_esc(char *restrict srcp, char *restrict dst, int dstlen, bool es
       // If 'shellslash' is set change backslashes to forward slashes.
       // Can't use slash_adjust(), p_ssl may be set temporarily.
       if (p_ssl && var != NULL && vim_strchr(var, '\\') != NULL) {
-        char_u *p = xstrdup(var);
+        char *p = xstrdup(var);
 
         if (mustfree) {
           xfree(var);

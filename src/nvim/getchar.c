@@ -151,11 +151,11 @@ void free_buff(buffheader_T *buf)
 /// K_SPECIAL in the returned string is escaped.
 ///
 /// @param dozero  count == zero is not an error
-static char_u *get_buffcont(buffheader_T *buffer, int dozero)
+static char *get_buffcont(buffheader_T *buffer, int dozero)
 {
   size_t count = 0;
-  char_u *p = NULL;
-  char_u *p2;
+  char *p = NULL;
+  char *p2;
 
   // compute the total length of the string
   for (const buffblock_T *bp = buffer->bh_first.b_next;
@@ -168,7 +168,7 @@ static char_u *get_buffcont(buffheader_T *buffer, int dozero)
     p2 = p;
     for (const buffblock_T *bp = buffer->bh_first.b_next;
          bp != NULL; bp = bp->b_next) {
-      for (const char_u *str = (char_u *)bp->b_str; *str;) {
+      for (const char *str = bp->b_str; *str;) {
         *p2++ = *str++;
       }
     }
@@ -185,7 +185,7 @@ char_u *get_recorded(void)
   char *p;
   size_t len;
 
-  p = (char *)get_buffcont(&recordbuff, true);
+  p = get_buffcont(&recordbuff, true);
   free_buff(&recordbuff);
 
   // Remove the characters that were added the last time, these must be the
@@ -207,7 +207,7 @@ char_u *get_recorded(void)
 
 /// Return the contents of the redo buffer as a single string.
 /// K_SPECIAL in the returned string is escaped.
-char_u *get_inserted(void)
+char *get_inserted(void)
 {
   return get_buffcont(&redobuff, false);
 }
@@ -475,7 +475,7 @@ void saveRedobuff(save_redo_T *save_redo)
   old_redobuff.bh_first.b_next = NULL;
 
   // Make a copy, so that ":normal ." in a function works.
-  char *const s = (char *)get_buffcont(&save_redo->sr_redobuff, false);
+  char *const s = get_buffcont(&save_redo->sr_redobuff, false);
   if (s == NULL) {
     return;
   }

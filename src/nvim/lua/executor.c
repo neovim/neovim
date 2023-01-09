@@ -1440,11 +1440,11 @@ int nlua_source_using_linegetter(LineGetter fgetline, void *cookie, char *name)
   estack_push(ETYPE_SCRIPT, name, 0);
 
   garray_T ga;
-  char_u *line = NULL;
+  char *line = NULL;
 
-  ga_init(&ga, (int)sizeof(char_u *), 10);
-  while ((line = (char_u *)fgetline(0, cookie, 0, false)) != NULL) {
-    GA_APPEND(char_u *, &ga, line);
+  ga_init(&ga, (int)sizeof(char *), 10);
+  while ((line = fgetline(0, cookie, 0, false)) != NULL) {
+    GA_APPEND(char *, &ga, line);
   }
   char *code = ga_concat_strings_sep(&ga, "\n");
   size_t len = strlen(code);
@@ -1877,7 +1877,7 @@ int nlua_expand_pat(expand_T *xp, char *pat, int *num_results, char ***results)
       goto cleanup_array;
     }
 
-    GA_APPEND(char_u *, &result_array, (char_u *)string_to_cstr(v.data.string));
+    GA_APPEND(char *, &result_array, string_to_cstr(v.data.string));
   }
 
   xp->xp_pattern += prefix_len;
@@ -1914,7 +1914,7 @@ bool nlua_is_table_from_lua(const typval_T *const arg)
   }
 }
 
-char_u *nlua_register_table_as_callable(const typval_T *const arg)
+char *nlua_register_table_as_callable(const typval_T *const arg)
 {
   LuaRef table_ref = LUA_NOREF;
   if (arg->v_type == VAR_DICT) {
@@ -1950,7 +1950,7 @@ char_u *nlua_register_table_as_callable(const typval_T *const arg)
 
   LuaRef func = nlua_ref_global(lstate, -1);
 
-  char_u *name = (char_u *)register_luafunc(func);
+  char *name = register_luafunc(func);
 
   lua_pop(lstate, 1);  // []
   assert(top == lua_gettop(lstate));
@@ -1960,8 +1960,8 @@ char_u *nlua_register_table_as_callable(const typval_T *const arg)
 
 void nlua_execute_on_key(int c)
 {
-  char_u buf[NUMBUFLEN];
-  size_t buf_len = special_to_buf(c, mod_mask, false, buf);
+  char buf[NUMBUFLEN];
+  size_t buf_len = special_to_buf(c, mod_mask, false, (char_u *)buf);
 
   lua_State *const lstate = global_lstate;
 
@@ -1977,7 +1977,7 @@ void nlua_execute_on_key(int c)
   luaL_checktype(lstate, -1, LUA_TFUNCTION);
 
   // [ vim, vim._on_key, buf ]
-  lua_pushlstring(lstate, (const char *)buf, buf_len);
+  lua_pushlstring(lstate, buf, buf_len);
 
   int save_got_int = got_int;
   got_int = false;  // avoid interrupts when the key typed is Ctrl-C

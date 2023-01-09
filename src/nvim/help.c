@@ -555,7 +555,7 @@ int find_help_tags(const char *arg, int *num_matches, char ***matches, bool keep
     // Sort the matches found on the heuristic number that is after the
     // tag name.
     qsort((void *)(*matches), (size_t)(*num_matches),
-          sizeof(char_u *), help_compare);
+          sizeof(char *), help_compare);
     // Delete more than TAG_MANY to reduce the size of the listing.
     while (*num_matches > TAG_MANY) {
       xfree((*matches)[--*num_matches]);
@@ -799,7 +799,7 @@ void fix_help_buffer(void)
                   // The text is utf-8 when a byte
                   // above 127 is found and no
                   // illegal byte sequence is found.
-                  if ((char_u)(*s) >= 0x80 && this_utf != kFalse) {
+                  if ((uint8_t)(*s) >= 0x80 && this_utf != kFalse) {
                     this_utf = kTrue;
                     const int l = utf_ptr2len(s);
                     if (l == 1) {
@@ -923,7 +923,7 @@ static void helptags_one(char *dir, const char *ext, const char *tagfname, bool 
 
   // If using the "++t" argument or generating tags for "$VIMRUNTIME/doc"
   // add the "help-tags" tag.
-  ga_init(&ga, (int)sizeof(char_u *), 100);
+  ga_init(&ga, (int)sizeof(char *), 100);
   if (add_help_tags
       || path_full_compare("$VIMRUNTIME/doc", dir, false, true) == kEqualFiles) {
     size_t s_len = 18 + strlen(tagfname);
@@ -948,7 +948,7 @@ static void helptags_one(char *dir, const char *ext, const char *tagfname, bool 
         // Detect utf-8 file by a non-ASCII char in the first line.
         TriState this_utf8 = kNone;
         for (s = IObuff; *s != NUL; s++) {
-          if ((char_u)(*s) >= 0x80) {
+          if ((uint8_t)(*s) >= 0x80) {
             this_utf8 = kTrue;
             const int l = utf_ptr2len(s);
             if (l == 1) {

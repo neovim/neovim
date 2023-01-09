@@ -1348,7 +1348,7 @@ static char *find_pipe(const char *cmd)
     }
     if (*p == '"') {
       inquote = !inquote;
-    } else if (rem_backslash((const char_u *)p)) {
+    } else if (rem_backslash(p)) {
       p++;
     }
   }
@@ -1420,7 +1420,7 @@ char *make_filter_cmd(char *cmd, char *itmp, char *otmp)
 #else
     // For shells that don't understand braces around commands, at least allow
     // the use of commands in a pipe.
-    xstrlcpy(buf, (char *)cmd, len);
+    xstrlcpy(buf, cmd, len);
     if (itmp != NULL) {
       // If there is a pipe, we have to put the '<' in front of it.
       // Don't do this when 'shellquote' is not empty, otherwise the
@@ -3351,11 +3351,11 @@ static int do_sub(exarg_T *eap, proftime_T timeout, long cmdpreview_ns, handle_T
         which_pat = RE_SEARCH;              // use last '/' pattern
       }
       pat = "";                   // empty search pattern
-      delimiter = (char_u)(*cmd++);                   // remember delimiter character
+      delimiter = (uint8_t)(*cmd++);                   // remember delimiter character
       has_second_delim = true;
     } else {          // find the end of the regexp
       which_pat = RE_LAST;                  // use last used regexp
-      delimiter = (char_u)(*cmd++);                   // remember delimiter character
+      delimiter = (uint8_t)(*cmd++);                   // remember delimiter character
       pat = cmd;                            // remember start of search pat
       cmd = skip_regexp_ex(cmd, delimiter, magic_isset(), &eap->arg, NULL, NULL);
       if (cmd[0] == delimiter) {            // end delimiter found
@@ -3697,7 +3697,7 @@ static int do_sub(exarg_T *eap, proftime_T timeout, long cmdpreview_ns, handle_T
               msg_putchar('\n');
               xfree(prompt);
               if (resp != NULL) {
-                typed = (char_u)(*resp);
+                typed = (uint8_t)(*resp);
                 xfree(resp);
               } else {
                 // getcmdline_prompt() returns NULL if there is no command line to return.
@@ -4704,7 +4704,7 @@ char *skip_vimgrep_pat(char *p, char **s, int *flags)
     if (s != NULL) {
       *s = p + 1;
     }
-    c = (char_u)(*p);
+    c = (uint8_t)(*p);
     p = skip_regexp(p + 1, c, true);
     if (*p != c) {
       return NULL;

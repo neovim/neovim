@@ -557,7 +557,7 @@ static void f_call(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     func = partial_name(partial);
   } else if (nlua_is_table_from_lua(&argvars[0])) {
     // TODO(tjdevries): UnifiedCallback
-    func = (char *)nlua_register_table_as_callable(&argvars[0]);
+    func = nlua_register_table_as_callable(&argvars[0]);
     owned = true;
   } else {
     func = (char *)tv_get_string(&argvars[0]);
@@ -1419,7 +1419,7 @@ static void f_diff_hlID(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
       hlID = HLF_CHD;  // Changed line.
     }
   }
-  rettv->vval.v_number = hlID == (hlf_T)0 ? 0 : (int)(hlID + 1);
+  rettv->vval.v_number = hlID == (hlf_T)0 ? 0 : (hlID + 1);
 }
 
 /// "empty({expr})" function
@@ -1695,7 +1695,7 @@ static void f_exepath(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 
 #ifdef BACKSLASH_IN_FILENAME
   if (path != NULL) {
-    slash_adjust((char_u *)path);
+    slash_adjust(path);
   }
 #endif
 
@@ -1749,7 +1749,7 @@ static void f_expand(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   int options = WILD_SILENT|WILD_USE_NL|WILD_LIST_NOTFOUND;
   bool error = false;
 #ifdef BACKSLASH_IN_FILENAME
-  char_u *p_csl_save = p_csl;
+  char *p_csl_save = p_csl;
 
   // avoid using 'completeslash' here
   p_csl = empty_option;
@@ -1770,7 +1770,7 @@ static void f_expand(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     }
     size_t len;
     char *errormsg = NULL;
-    char *result = (char *)eval_vars((char *)s, (char_u *)s, &len, NULL, &errormsg, NULL, false);
+    char *result = eval_vars((char *)s, s, &len, NULL, &errormsg, NULL, false);
     if (p_verbose == 0) {
       emsg_off--;
     } else if (errormsg != NULL) {
@@ -2022,7 +2022,7 @@ static void f_filewritable(typval_T *argvars, typval_T *rettv, EvalFuncData fptr
 static void findfilendir(typval_T *argvars, typval_T *rettv, int find_what)
 {
   char *fresult = NULL;
-  char *path = *curbuf->b_p_path == NUL ? (char *)p_path : curbuf->b_p_path;
+  char *path = *curbuf->b_p_path == NUL ? p_path : curbuf->b_p_path;
   int count = 1;
   bool first = true;
   bool error = false;
@@ -7827,7 +7827,7 @@ static void f_strftime(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     vimconv_T conv;
 
     conv.vc_type = CONV_NONE;
-    char *enc = (char *)enc_locale();
+    char *enc = enc_locale();
     convert_setup(&conv, p_enc, enc);
     if (conv.vc_type != CONV_NONE) {
       p = string_convert(&conv, p, NULL);
@@ -8097,7 +8097,7 @@ static void f_strptime(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   vimconv_T conv = {
     .vc_type = CONV_NONE,
   };
-  char *enc = (char *)enc_locale();
+  char *enc = enc_locale();
   convert_setup(&conv, p_enc, enc);
   if (conv.vc_type != CONV_NONE) {
     fmt = string_convert(&conv, fmt, NULL);

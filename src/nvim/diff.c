@@ -1218,7 +1218,7 @@ void ex_diffpatch(exarg_T *eap)
   fullname = FullName_save(eap->arg, false);
   esc_name = vim_strsave_shellescape(fullname != NULL ? fullname : eap->arg, true, true);
 #else
-  esc_name = (char *)vim_strsave_shellescape(eap->arg, true, true);
+  esc_name = vim_strsave_shellescape(eap->arg, true, true);
 #endif
   size_t buflen = strlen(tmp_orig) + strlen(esc_name) + strlen(tmp_new) + 16;
   buf = xmalloc(buflen);

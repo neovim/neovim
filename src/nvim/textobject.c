@@ -273,7 +273,7 @@ bool startPS(linenr_T lnum, int para, bool both)
     return true;
   }
   if (*s == '.' && (inmacro(p_sections, s + 1)
-                    || (!para && inmacro((char *)p_para, s + 1)))) {
+                    || (!para && inmacro(p_para, s + 1)))) {
     return true;
   }
   return false;
@@ -1078,7 +1078,7 @@ static bool in_html_tag(bool end_tag)
     if (inc(&pos) < 0) {
       return false;
     }
-    c = *ml_get_pos(&pos);
+    c = (uint8_t)(*ml_get_pos(&pos));
     if (c == '>') {
       break;
     }
