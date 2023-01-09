@@ -189,7 +189,7 @@ int compute_foldcolumn(win_T *wp, int col)
 ///
 /// Assume monocell characters
 /// @return number of chars added to \param p
-size_t fill_foldcolumn(char_u *p, win_T *wp, foldinfo_T foldinfo, linenr_T lnum)
+size_t fill_foldcolumn(char *p, win_T *wp, foldinfo_T foldinfo, linenr_T lnum)
 {
   int i = 0;
   int level;
@@ -223,7 +223,7 @@ size_t fill_foldcolumn(char_u *p, win_T *wp, foldinfo_T foldinfo, linenr_T lnum)
       symbol = '>';
     }
 
-    len = utf_char2bytes(symbol, (char *)&p[char_counter]);
+    len = utf_char2bytes(symbol, &p[char_counter]);
     char_counter += (size_t)len;
     if (first_level + i >= level) {
       i++;
@@ -237,7 +237,7 @@ size_t fill_foldcolumn(char_u *p, win_T *wp, foldinfo_T foldinfo, linenr_T lnum)
       char_counter -= (size_t)len;
       memset(&p[char_counter], ' ', (size_t)len);
     }
-    len = utf_char2bytes(wp->w_p_fcs_chars.foldclosed, (char *)&p[char_counter]);
+    len = utf_char2bytes(wp->w_p_fcs_chars.foldclosed, &p[char_counter]);
     char_counter += (size_t)len;
   }
 
@@ -817,7 +817,7 @@ int number_width(win_T *wp)
 /// Returns 0 for invalid hex or invalid UTF-8 byte.
 static int get_encoded_char_adv(const char_u **p)
 {
-  const char_u *s = *p;
+  const char *s = (const char *)(*p);
 
   if (s[0] == '\\' && (s[1] == 'x' || s[1] == 'u' || s[1] == 'U')) {
     int64_t num = 0;
@@ -834,7 +834,7 @@ static int get_encoded_char_adv(const char_u **p)
   }
 
   // TODO(bfredl): use schar_T representation and utfc_ptr2len
-  int clen = utf_ptr2len((const char *)s);
+  int clen = utf_ptr2len(s);
   int c = mb_cptr2char_adv(p);
   if (clen == 1 && c > 127) {  // Invalid UTF-8 byte
     return 0;
@@ -850,8 +850,8 @@ static int get_encoded_char_adv(const char_u **p)
 /// @return error message, NULL if it's OK.
 char *set_chars_option(win_T *wp, char **varp, bool apply)
 {
-  const char_u *last_multispace = NULL;   // Last occurrence of "multispace:"
-  const char_u *last_lmultispace = NULL;  // Last occurrence of "leadmultispace:"
+  const char *last_multispace = NULL;   // Last occurrence of "multispace:"
+  const char *last_lmultispace = NULL;  // Last occurrence of "leadmultispace:"
   int multispace_len = 0;           // Length of lcs-multispace string
   int lead_multispace_len = 0;      // Length of lcs-leadmultispace string
   const bool is_listchars = (varp == &p_lcs || varp == &wp->w_p_lcs);
@@ -898,18 +898,18 @@ char *set_chars_option(win_T *wp, char **varp, bool apply)
 
   struct chars_tab *tab;
   int entries;
-  const char_u *value = (char_u *)(*varp);
+  const char *value = *varp;
   if (is_listchars) {
     tab = lcs_tab;
     entries = ARRAY_SIZE(lcs_tab);
     if (varp == &wp->w_p_lcs && wp->w_p_lcs[0] == NUL) {
-      value = (char_u *)p_lcs;  // local value is empty, use the global value
+      value = p_lcs;  // local value is empty, use the global value
     }
   } else {
     tab = fcs_tab;
     entries = ARRAY_SIZE(fcs_tab);
     if (varp == &wp->w_p_fcs && wp->w_p_fcs[0] == NUL) {
-      value = (char_u *)p_fcs;  // local value is empty, use the global value
+      value = p_fcs;  // local value is empty, use the global value
     }
   }
 
@@ -944,7 +944,7 @@ char *set_chars_option(win_T *wp, char **varp, bool apply)
         }
       }
     }
-    const char *p = (char *)value;
+    const char *p = value;
     while (*p) {
       int i;
       for (i = 0; i < entries; i++) {
@@ -999,7 +999,7 @@ char *set_chars_option(win_T *wp, char **varp, bool apply)
           const char_u *s = (char_u *)p + len + 1;
           if (round == 0) {
             // Get length of lcs-multispace string in the first round
-            last_multispace = (char_u *)p;
+            last_multispace = p;
             multispace_len = 0;
             while (*s != NUL && *s != ',') {
               int c1 = get_encoded_char_adv(&s);
@@ -1017,7 +1017,7 @@ char *set_chars_option(win_T *wp, char **varp, bool apply)
             int multispace_pos = 0;
             while (*s != NUL && *s != ',') {
               int c1 = get_encoded_char_adv(&s);
-              if (p == (char *)last_multispace) {
+              if (p == last_multispace) {
                 wp->w_p_lcs_chars.multispace[multispace_pos++] = c1;
               }
             }
@@ -1030,7 +1030,7 @@ char *set_chars_option(win_T *wp, char **varp, bool apply)
           const char_u *s = (char_u *)p + len2 + 1;
           if (round == 0) {
             // get length of lcs-leadmultispace string in first round
-            last_lmultispace = (char_u *)p;
+            last_lmultispace = p;
             lead_multispace_len = 0;
             while (*s != NUL && *s != ',') {
               int c1 = get_encoded_char_adv(&s);
@@ -1048,7 +1048,7 @@ char *set_chars_option(win_T *wp, char **varp, bool apply)
             int multispace_pos = 0;
             while (*s != NUL && *s != ',') {
               int c1 = get_encoded_char_adv(&s);
-              if (p == (char *)last_lmultispace) {
+              if (p == last_lmultispace) {
                 wp->w_p_lcs_chars.leadmultispace[multispace_pos++] = c1;
               }
             }

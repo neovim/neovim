@@ -573,7 +573,7 @@ int u_savecommon(buf_T *buf, linenr_T top, linenr_T bot, linenr_T newbot, int re
   }
 
   if (size > 0) {
-    uep->ue_array = xmalloc(sizeof(char_u *) * (size_t)size);
+    uep->ue_array = xmalloc(sizeof(char *) * (size_t)size);
     linenr_T lnum;
     long i;
     for (i = 0, lnum = top + 1; i < size; i++) {
@@ -2322,7 +2322,7 @@ static void u_undoredo(int undo, bool do_buf_event)
       linenr_T lnum;
       for (lnum = bot - 1, i = oldsize; --i >= 0; lnum--) {
         // what can we do when we run out of memory?
-        newarray[i] = u_save_line(lnum);
+        newarray[i] = (char_u *)u_save_line(lnum);
         // remember we deleted the last line in the buffer, and a
         // dummy empty line will be inserted
         if (curbuf->b_ml.ml_line_count == 1) {
@@ -2978,7 +2978,7 @@ void u_saveline(linenr_T lnum)
   } else {
     curbuf->b_u_line_colnr = 0;
   }
-  curbuf->b_u_line_ptr = (char *)u_save_line(lnum);
+  curbuf->b_u_line_ptr = u_save_line(lnum);
 }
 
 /// clear the line saved for the "U" command
@@ -3009,7 +3009,7 @@ void u_undoline(void)
     return;
   }
 
-  char *oldp = (char *)u_save_line(curbuf->b_u_line_lnum);
+  char *oldp = u_save_line(curbuf->b_u_line_lnum);
   ml_replace(curbuf->b_u_line_lnum, curbuf->b_u_line_ptr, true);
   changed_bytes(curbuf->b_u_line_lnum, 0);
   extmark_splice_cols(curbuf, (int)curbuf->b_u_line_lnum - 1, 0, (colnr_T)strlen(oldp),
@@ -3043,9 +3043,9 @@ void u_blockfree(buf_T *buf)
 /// Allocate memory and copy curbuf line into it.
 ///
 /// @param lnum the line to copy
-static char_u *u_save_line(linenr_T lnum)
+static char *u_save_line(linenr_T lnum)
 {
-  return (char_u *)u_save_line_buf(curbuf, lnum);
+  return u_save_line_buf(curbuf, lnum);
 }
 
 /// Allocate memory and copy line into it

@@ -176,7 +176,7 @@ int nlua_str_utfindex(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
   }
 
   size_t codepoints = 0, codeunits = 0;
-  mb_utflen((const char_u *)s1, (size_t)idx, &codepoints, &codeunits);
+  mb_utflen(s1, (size_t)idx, &codepoints, &codeunits);
 
   lua_pushinteger(lstate, (long)codepoints);
   lua_pushinteger(lstate, (long)codeunits);

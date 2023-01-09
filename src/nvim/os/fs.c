@@ -995,7 +995,7 @@ int os_mkdir_recurse(const char *const dir, int32_t mode, char **const failed_di
 int os_file_mkdir(char *fname, int32_t mode)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  if (!dir_of_file_exists((char_u *)fname)) {
+  if (!dir_of_file_exists(fname)) {
     char *tail = path_tail_with_sep(fname);
     char *last_char = tail + strlen(tail) - 1;
     if (vim_ispathsep(*last_char)) {

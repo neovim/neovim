@@ -424,10 +424,10 @@ void remove_bom(char_u *s)
 // 1 for punctuation
 // 2 for an (ASCII) word character
 // >2 for other word characters
-int mb_get_class(const char_u *p)
+int mb_get_class(const char *p)
   FUNC_ATTR_PURE
 {
-  return mb_get_class_tab((char *)p, curbuf->b_chartab);
+  return mb_get_class_tab(p, curbuf->b_chartab);
 }
 
 int mb_get_class_tab(const char *p, const uint64_t *const chartab)
@@ -1456,16 +1456,16 @@ int utf16_to_utf8(const wchar_t *utf16, int utf16len, char **utf8)
 /// @param len maximum length (an earlier NUL terminates)
 /// @param[out] codepoints incremented with UTF-32 code point size
 /// @param[out] codeunits incremented with UTF-16 code unit size
-void mb_utflen(const char_u *s, size_t len, size_t *codepoints, size_t *codeunits)
+void mb_utflen(const char *s, size_t len, size_t *codepoints, size_t *codeunits)
   FUNC_ATTR_NONNULL_ALL
 {
   size_t count = 0, extra = 0;
   size_t clen;
   for (size_t i = 0; i < len; i += clen) {
-    clen = (size_t)utf_ptr2len_len(s + i, (int)(len - i));
+    clen = (size_t)utf_ptr2len_len((char_u *)s + i, (int)(len - i));
     // NB: gets the byte value of invalid sequence bytes.
     // we only care whether the char fits in the BMP or not
-    int c = (clen > 1) ? utf_ptr2char((char *)s + i) : s[i];
+    int c = (clen > 1) ? utf_ptr2char(s + i) : (uint8_t)s[i];
     count++;
     if (c > 0xFFFF) {
       extra++;
@@ -2012,7 +2012,7 @@ void mb_check_adjust_col(void *win_)
 /// @param line  start of the string
 ///
 /// @return      a pointer to the character before "*p", if there is one.
-char_u *mb_prevptr(char_u *line, char_u *p)
+char *mb_prevptr(char *line, char *p)
 {
   if (p > line) {
     MB_PTR_BACK(line, p);
@@ -2022,9 +2022,9 @@ char_u *mb_prevptr(char_u *line, char_u *p)
 
 /// Return the character length of "str".  Each multi-byte character (with
 /// following composing characters) counts as one.
-int mb_charlen(const char_u *str)
+int mb_charlen(const char *str)
 {
-  const char_u *p = str;
+  const char_u *p = (char_u *)str;
   int count;
 
   if (p == NULL) {
@@ -2801,5 +2801,5 @@ void f_charclass(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
       || argvars[0].vval.v_string == NULL) {
     return;
   }
-  rettv->vval.v_number = mb_get_class((const char_u *)argvars[0].vval.v_string);
+  rettv->vval.v_number = mb_get_class(argvars[0].vval.v_string);
 }

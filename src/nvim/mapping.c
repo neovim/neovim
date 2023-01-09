@@ -912,10 +912,10 @@ theend:
 ///         - 4 for out of mem (deprecated, WON'T HAPPEN)
 ///         - 5 for entry not unique
 ///
-int do_map(int maptype, char_u *arg, int mode, bool is_abbrev)
+int do_map(int maptype, char *arg, int mode, bool is_abbrev)
 {
   MapArguments parsed_args;
-  int result = str_to_mapargs((char *)arg, maptype == MAPTYPE_UNMAP, &parsed_args);
+  int result = str_to_mapargs(arg, maptype == MAPTYPE_UNMAP, &parsed_args);
   switch (result) {
   case 0:
     break;
@@ -1418,18 +1418,18 @@ bool check_abbr(int c, char *ptr, int col, int mincol)
 
   {
     bool vim_abbr;
-    char *p = (char *)mb_prevptr((char_u *)ptr, (char_u *)ptr + col);
+    char *p = mb_prevptr(ptr, ptr + col);
     if (!vim_iswordp(p)) {
       vim_abbr = true;    // Vim added abbr.
     } else {
       vim_abbr = false;   // vi compatible abbr.
       if (p > ptr) {
-        is_id = vim_iswordp((char *)mb_prevptr((char_u *)ptr, (char_u *)p));
+        is_id = vim_iswordp(mb_prevptr(ptr, p));
       }
     }
     clen = 1;
     while (p > ptr + mincol) {
-      p = (char *)mb_prevptr((char_u *)ptr, (char_u *)p);
+      p = mb_prevptr(ptr, p);
       if (ascii_isspace(*p) || (!vim_abbr && is_id != vim_iswordp(p))) {
         p += utfc_ptr2len(p);
         break;
@@ -2435,7 +2435,7 @@ static void do_exmap(exarg_T *eap, int isabbrev)
 
   switch (do_map((*cmdp == 'n') ? MAPTYPE_NOREMAP
                  : (*cmdp == 'u') ? MAPTYPE_UNMAP : MAPTYPE_MAP,
-                 (char_u *)eap->arg, mode, isabbrev)) {
+                 eap->arg, mode, isabbrev)) {
   case 1:
     emsg(_(e_invarg));
     break;

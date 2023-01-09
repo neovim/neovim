@@ -608,7 +608,7 @@ void set_init_3(void)
     : !(options[idx_sp].flags & P_WAS_SET);
 
   size_t len = 0;
-  char *p = (char *)invocation_path_tail((char_u *)p_sh, &len);
+  char *p = (char *)invocation_path_tail(p_sh, &len);
   p = xstrnsave(p, len);
 
   {
@@ -741,7 +741,7 @@ static int do_set_string(int opt_idx, int opt_flags, char **argp, int nextchar, 
   char *varp = varp_arg;
   char *save_arg = NULL;
   char *s = NULL;
-  char_u *oldval = NULL;  // previous value if *varp
+  char *oldval = NULL;  // previous value if *varp
   char *origval = NULL;
   char_u *origval_l = NULL;
   char_u *origval_g = NULL;
@@ -760,7 +760,7 @@ static int do_set_string(int opt_idx, int opt_flags, char **argp, int nextchar, 
   }
 
   // The old value is kept until we are sure that the new value is valid.
-  oldval = *(char_u **)varp;
+  oldval = *(char **)varp;
 
   if ((opt_flags & (OPT_LOCAL | OPT_GLOBAL)) == 0) {
     origval_l = *(char_u **)get_varp_scope(&(options[opt_idx]), OPT_LOCAL);
@@ -778,7 +778,7 @@ static int do_set_string(int opt_idx, int opt_flags, char **argp, int nextchar, 
   if (((int)options[opt_idx].indir & PV_BOTH) && (opt_flags & OPT_LOCAL)) {
     origval = *(char **)get_varp(&options[opt_idx]);
   } else {
-    origval = (char *)oldval;
+    origval = oldval;
   }
 
   char *newval;
@@ -827,16 +827,16 @@ static int do_set_string(int opt_idx, int opt_flags, char **argp, int nextchar, 
         break;
       }
       xfree(oldval);
-      if ((char_u *)origval == oldval) {
+      if (origval == oldval) {
         origval = *(char **)varp;
       }
-      if (origval_l == oldval) {
+      if (origval_l == (char_u *)oldval) {
         origval_l = *(char_u **)varp;
       }
-      if (origval_g == oldval) {
+      if (origval_g == (char_u *)oldval) {
         origval_g = *(char_u **)varp;
       }
-      oldval = *(char_u **)varp;
+      oldval = *(char **)varp;
     } else if (varp == (char *)&p_ww && ascii_isdigit(*arg)) {
       // Convert 'whichwrap' number to string, for backwards compatibility
       // with Vim 3.0.
@@ -1045,7 +1045,7 @@ static int do_set_string(int opt_idx, int opt_flags, char **argp, int nextchar, 
     // Handle side effects, and set the global value for ":set" on local
     // options. Note: when setting 'syntax' or 'filetype' autocommands may
     // be triggered that can cause havoc.
-    *errmsg = did_set_string_option(opt_idx, (char **)varp, (char *)oldval,
+    *errmsg = did_set_string_option(opt_idx, (char **)varp, oldval,
                                     errbuf, errbuflen,
                                     opt_flags, value_checked);
 

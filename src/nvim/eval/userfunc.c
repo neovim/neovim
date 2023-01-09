@@ -845,7 +845,7 @@ void call_user_func(ufunc_T *fp, int argcount, typval_T *argvars, typval_T *rett
   int fixvar_idx = 0;           // index in fixvar[]
   int ai;
   bool islambda = false;
-  char_u numbuf[NUMBUFLEN];
+  char numbuf[NUMBUFLEN];
   char *name;
   typval_T *tv_to_free[MAX_FUNC_ARGS];
   int tv_to_free_len = 0;
@@ -984,8 +984,8 @@ void call_user_func(ufunc_T *fp, int argcount, typval_T *argvars, typval_T *rett
         break;
       }
       // "..." argument a:1, a:2, etc.
-      snprintf((char *)numbuf, sizeof(numbuf), "%d", ai + 1);
-      name = (char *)numbuf;
+      snprintf(numbuf, sizeof(numbuf), "%d", ai + 1);
+      name = numbuf;
     }
     if (fixvar_idx < FIXVAR_CNT && strlen(name) <= VAR_SHORT_LEN) {
       v = (dictitem_T *)&fc->fixvar[fixvar_idx++];
@@ -1524,7 +1524,7 @@ int call_func(const char *funcname, int len, typval_T *rettv, int argcount_in, t
     // Make a copy of the name, if it comes from a funcref variable it could
     // be changed or deleted in the called function.
     name = xstrnsave(funcname, (size_t)len);
-    fname = fname_trans_sid(name, (char *)fname_buf, &tofree, &error);
+    fname = fname_trans_sid(name, fname_buf, &tofree, &error);
   }
 
   if (funcexe->fe_doesrange != NULL) {
@@ -3303,7 +3303,7 @@ void make_partial(dict_T *const selfdict, typval_T *const rettv)
                                       ? rettv->vval.v_string
                                       : rettv->vval.v_partial->pt_name;
     // Translate "s:func" to the stored function name.
-    fname = fname_trans_sid(fname, (char *)fname_buf, &tofree, &error);
+    fname = fname_trans_sid(fname, fname_buf, &tofree, &error);
     fp = find_func((char_u *)fname);
     xfree(tofree);
   }
@@ -3649,7 +3649,7 @@ bool set_ref_in_func(char_u *name, ufunc_T *fp_in, int copyID)
   }
 
   if (fp_in == NULL) {
-    fname = fname_trans_sid((char *)name, (char *)fname_buf, &tofree, &error);
+    fname = fname_trans_sid((char *)name, fname_buf, &tofree, &error);
     fp = find_func((char_u *)fname);
   }
   if (fp != NULL) {

@@ -675,7 +675,7 @@ static void set_b0_fname(ZERO_BL *b0p, buf_T *buf)
 /// not set.
 static void set_b0_dir_flag(ZERO_BL *b0p, buf_T *buf)
 {
-  if (same_directory((char_u *)buf->b_ml.ml_mfp->mf_fname, (char_u *)buf->b_ffname)) {
+  if (same_directory(buf->b_ml.ml_mfp->mf_fname, buf->b_ffname)) {
     b0p->b0_flags |= B0_SAME_DIR;
   } else {
     b0p->b0_flags = (char)(b0p->b0_flags & ~B0_SAME_DIR);
@@ -1349,7 +1349,7 @@ int recover_names(char_u *fname, int list, int nr, char **fname_out)
           msg_puts(".    ");
           msg_puts((const char *)path_tail(files[i]));
           msg_putchar('\n');
-          (void)swapfile_info((char_u *)files[i]);
+          (void)swapfile_info(files[i]);
         }
       } else {
         msg_puts(_("      -- none --\n"));
@@ -1434,7 +1434,7 @@ void get_b0_dict(const char *fname, dict_T *d)
 /// Give information about an existing swap file.
 ///
 /// @return  timestamp (0 when unknown).
-static time_t swapfile_info(char_u *fname)
+static time_t swapfile_info(char *fname)
 {
   assert(fname != NULL);
   int fd;
@@ -1446,7 +1446,7 @@ static time_t swapfile_info(char_u *fname)
 
   // print the swap file date
   FileInfo file_info;
-  if (os_fileinfo((char *)fname, &file_info)) {
+  if (os_fileinfo(fname, &file_info)) {
 #ifdef UNIX
     // print name of owner of the file
     if (os_get_uname((uv_uid_t)file_info.stat.st_uid, uname, B0_UNAME_SIZE) == OK) {
@@ -1465,7 +1465,7 @@ static time_t swapfile_info(char_u *fname)
   }
 
   // print the original file name
-  fd = os_open((char *)fname, O_RDONLY, 0);
+  fd = os_open(fname, O_RDONLY, 0);
   if (fd >= 0) {
     if (read_eintr(fd, &b0, sizeof(b0)) == sizeof(b0)) {
       if (strncmp(b0.b0_version, "VIM 3.0", 7) == 0) {
@@ -2317,7 +2317,7 @@ void ml_add_deleted_len_buf(buf_T *buf, char *ptr, ssize_t len)
   curbuf->deleted_bytes += (size_t)len + 1;
   curbuf->deleted_bytes2 += (size_t)len + 1;
   if (curbuf->update_need_codepoints) {
-    mb_utflen((char_u *)ptr, (size_t)len, &curbuf->deleted_codepoints,
+    mb_utflen(ptr, (size_t)len, &curbuf->deleted_codepoints,
               &curbuf->deleted_codeunits);
     curbuf->deleted_codepoints++;  // NL char
     curbuf->deleted_codeunits++;
@@ -3109,7 +3109,7 @@ static void attention_message(buf_T *buf, char *fname)
   msg_puts(_("\nFound a swap file by the name \""));
   msg_home_replace(fname);
   msg_puts("\"\n");
-  const time_t swap_mtime = swapfile_info((char_u *)fname);
+  const time_t swap_mtime = swapfile_info(fname);
   msg_puts(_("While opening file \""));
   msg_outtrans(buf->b_fname);
   msg_puts("\"\n");
@@ -3152,9 +3152,9 @@ static void attention_message(buf_T *buf, char *fname)
 ///          4: delete it
 ///          5: quit
 ///          6: abort
-static int do_swapexists(buf_T *buf, char_u *fname)
+static int do_swapexists(buf_T *buf, char *fname)
 {
-  set_vim_var_string(VV_SWAPNAME, (char *)fname, -1);
+  set_vim_var_string(VV_SWAPNAME, fname, -1);
   set_vim_var_string(VV_SWAPCHOICE, NULL, -1);
 
   // Trigger SwapExists autocommands with <afile> set to the file being
@@ -3266,7 +3266,7 @@ static char *findswapname(buf_T *buf, char **dirp, char *old_fname, bool *found_
             if (b0.b0_flags & B0_SAME_DIR) {
               if (path_fnamecmp(path_tail(buf->b_ffname),
                                 path_tail((char *)b0.b0_fname)) != 0
-                  || !same_directory((char_u *)fname, (char_u *)buf->b_ffname)) {
+                  || !same_directory(fname, buf->b_ffname)) {
                 // Symlinks may point to the same file even
                 // when the name differs, need to check the
                 // inode too.
@@ -3311,7 +3311,7 @@ static char *findswapname(buf_T *buf, char **dirp, char *old_fname, bool *found_
           if (choice == 0
               && swap_exists_action != SEA_NONE
               && has_autocmd(EVENT_SWAPEXISTS, buf_fname, buf)) {
-            choice = do_swapexists(buf, (char_u *)fname);
+            choice = do_swapexists(buf, fname);
           }
 
           if (choice == 0) {

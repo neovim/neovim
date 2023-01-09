@@ -288,7 +288,7 @@ void *vim_findfile_init(char *path, char *filename, char *stopdirs, int level, i
       && rel_fname != NULL) {
     size_t len = (size_t)(path_tail(rel_fname) - rel_fname);
 
-    if (!vim_isAbsName((char_u *)rel_fname) && len + 1 < MAXPATHL) {
+    if (!vim_isAbsName(rel_fname) && len + 1 < MAXPATHL) {
       // Make the start dir an absolute path name.
       xstrlcpy(ff_expand_buffer, rel_fname, len + 1);
       search_ctx->ffsc_start_dir = FullName_save(ff_expand_buffer, false);
@@ -298,7 +298,7 @@ void *vim_findfile_init(char *path, char *filename, char *stopdirs, int level, i
     if (*++path != NUL) {
       path++;
     }
-  } else if (*path == NUL || !vim_isAbsName((char_u *)path)) {
+  } else if (*path == NUL || !vim_isAbsName(path)) {
 #ifdef BACKSLASH_IN_FILENAME
     // "c:dir" needs "c:" to be expanded, otherwise use current dir
     if (*path != NUL && path[1] == ':') {
@@ -504,9 +504,9 @@ error_return:
 }
 
 /// @return  the stopdir string.  Check that ';' is not escaped.
-char_u *vim_findfile_stopdir(char_u *buf)
+char_u *vim_findfile_stopdir(char *buf)
 {
-  char_u *r_ptr = buf;
+  char_u *r_ptr = (char_u *)buf;
 
   while (*r_ptr != NUL && *r_ptr != ';') {
     if (r_ptr[0] == '\\' && r_ptr[1] == ';') {
@@ -654,7 +654,7 @@ char_u *vim_findfile(void *search_ctx_arg)
         dirptrs[1] = NULL;
 
         // if we have a start dir copy it in
-        if (!vim_isAbsName((char_u *)stackp->ffs_fix_path)
+        if (!vim_isAbsName(stackp->ffs_fix_path)
             && search_ctx->ffsc_start_dir) {
           if (strlen(search_ctx->ffsc_start_dir) + 1 >= MAXPATHL) {
             ff_free_stack_element(stackp);
@@ -813,7 +813,7 @@ char_u *vim_findfile(void *search_ctx_arg)
                 ff_push(search_ctx, stackp);
 
                 if (!path_with_url(file_path)) {
-                  simplify_filename((char_u *)file_path);
+                  simplify_filename(file_path);
                 }
                 if (os_dirname(ff_expand_buffer, MAXPATHL) == OK) {
                   p = path_shorten_fname(file_path, ff_expand_buffer);
@@ -1287,13 +1287,13 @@ static int ff_path_in_stoplist(char *path, int path_len, char **stopdirs_v)
 /// @param rel_fname  file name searching relative to
 ///
 /// @return  an allocated string for the file name.  NULL for error.
-char_u *find_file_in_path(char_u *ptr, size_t len, int options, int first, char_u *rel_fname)
+char_u *find_file_in_path(char *ptr, size_t len, int options, int first, char *rel_fname)
 {
-  return (char_u *)find_file_in_path_option((char *)ptr, len, options, first,
+  return (char_u *)find_file_in_path_option(ptr, len, options, first,
                                             (*curbuf->b_p_path == NUL
                                              ? (char *)p_path
                                              : curbuf->b_p_path),
-                                            FINDFILE_BOTH, (char *)rel_fname, curbuf->b_p_sua);
+                                            FINDFILE_BOTH, rel_fname, curbuf->b_p_sua);
 }
 
 static char *ff_file_to_find = NULL;
@@ -1379,7 +1379,7 @@ char *find_file_in_path_option(char *ptr, size_t len, int options, int first, ch
                        || (ff_file_to_find[1] == '.'
                            && (ff_file_to_find[2] == NUL
                                || vim_ispathsep(ff_file_to_find[2])))));
-  if (vim_isAbsName((char_u *)ff_file_to_find)
+  if (vim_isAbsName(ff_file_to_find)
       // "..", "../path", "." and "./path": don't use the path_option
       || rel_to_curdir
 #if defined(MSWIN)
@@ -1469,7 +1469,7 @@ char *find_file_in_path_option(char *ptr, size_t len, int options, int first, ch
         copy_option_part(&dir, buf, MAXPATHL, " ,");
 
         // get the stopdir string
-        r_ptr = (char *)vim_findfile_stopdir((char_u *)buf);
+        r_ptr = (char *)vim_findfile_stopdir(buf);
         fdip_search_ctx = vim_findfile_init(buf, ff_file_to_find,
                                             r_ptr, 100, false, find_what,
                                             fdip_search_ctx, false, rel_fname);

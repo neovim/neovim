@@ -73,7 +73,7 @@
 typedef char *(*CompleteListItemGetter)(expand_T *, int);
 
 /// Type used by call_user_expand_func
-typedef void *(*user_expand_func_T)(const char_u *, int, typval_T *);
+typedef void *(*user_expand_func_T)(const char *, int, typval_T *);
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "cmdexpand.c.generated.h"
@@ -104,7 +104,7 @@ static int sort_func_compare(const void *s1, const void *s2)
 }
 
 /// Escape special characters in the cmdline completion matches.
-static void ExpandEscape(expand_T *xp, char_u *str, int numfiles, char **files, int options)
+static void ExpandEscape(expand_T *xp, char *str, int numfiles, char **files, int options)
 {
   int i;
   char *p;
@@ -306,9 +306,9 @@ void cmdline_pum_cleanup(CmdlineInfo *cclp)
 
 /// Return the number of characters that should be skipped in the wildmenu
 /// These are backslashes used for escaping.  Do show backslashes in help tags.
-static int skip_wildmenu_char(expand_T *xp, char_u *s)
+static int skip_wildmenu_char(expand_T *xp, char *s)
 {
-  if ((rem_backslash((char *)s) && xp->xp_context != EXPAND_HELP)
+  if ((rem_backslash(s) && xp->xp_context != EXPAND_HELP)
       || ((xp->xp_context == EXPAND_MENUS || xp->xp_context == EXPAND_MENUNAMES)
           && (s[0] == '\t' || (s[0] == '\\' && s[1] != NUL)))) {
 #ifndef BACKSLASH_IN_FILENAME
@@ -326,7 +326,7 @@ static int skip_wildmenu_char(expand_T *xp, char_u *s)
 }
 
 /// Get the length of an item as it will be shown in the status line.
-static int wildmenu_match_len(expand_T *xp, char_u *s)
+static int wildmenu_match_len(expand_T *xp, char *s)
 {
   int len = 0;
 
@@ -334,13 +334,13 @@ static int wildmenu_match_len(expand_T *xp, char_u *s)
                || xp->xp_context == EXPAND_MENUNAMES);
 
   // Check for menu separators - replace with '|'.
-  if (emenu && menu_is_separator((char *)s)) {
+  if (emenu && menu_is_separator(s)) {
     return 1;
   }
 
   while (*s != NUL) {
     s += skip_wildmenu_char(xp, s);
-    len += ptr2cells((char *)s);
+    len += ptr2cells(s);
     MB_PTR_ADV(s);
   }
 
@@ -385,7 +385,7 @@ static void redraw_wildmenu(expand_T *xp, int num_matches, char **matches, int m
     highlight = false;
   }
   // count 1 for the ending ">"
-  clen = wildmenu_match_len(xp, (char_u *)L_MATCH(match)) + 3;
+  clen = wildmenu_match_len(xp, L_MATCH(match)) + 3;
   if (match == 0) {
     first_match = 0;
   } else if (match < first_match) {
@@ -395,7 +395,7 @@ static void redraw_wildmenu(expand_T *xp, int num_matches, char **matches, int m
   } else {
     // check if match fits on the screen
     for (i = first_match; i < match; i++) {
-      clen += wildmenu_match_len(xp, (char_u *)L_MATCH(i)) + 2;
+      clen += wildmenu_match_len(xp, L_MATCH(i)) + 2;
     }
     if (first_match > 0) {
       clen += 2;
@@ -406,7 +406,7 @@ static void redraw_wildmenu(expand_T *xp, int num_matches, char **matches, int m
       // if showing the last match, we can add some on the left
       clen = 2;
       for (i = match; i < num_matches; i++) {
-        clen += wildmenu_match_len(xp, (char_u *)L_MATCH(i)) + 2;
+        clen += wildmenu_match_len(xp, L_MATCH(i)) + 2;
         if ((long)clen >= Columns) {
           break;
         }
@@ -418,7 +418,7 @@ static void redraw_wildmenu(expand_T *xp, int num_matches, char **matches, int m
   }
   if (add_left) {
     while (first_match > 0) {
-      clen += wildmenu_match_len(xp, (char_u *)L_MATCH(first_match - 1)) + 2;
+      clen += wildmenu_match_len(xp, L_MATCH(first_match - 1)) + 2;
       if ((long)clen >= Columns) {
         break;
       }
@@ -438,7 +438,7 @@ static void redraw_wildmenu(expand_T *xp, int num_matches, char **matches, int m
   clen = len;
 
   i = first_match;
-  while (clen + wildmenu_match_len(xp, (char_u *)L_MATCH(i)) + 2 < Columns) {
+  while (clen + wildmenu_match_len(xp, L_MATCH(i)) + 2 < Columns) {
     if (i == match) {
       selstart = buf + len;
       selstart_col = clen;
@@ -455,7 +455,7 @@ static void redraw_wildmenu(expand_T *xp, int num_matches, char **matches, int m
       clen += l;
     } else {
       for (; *s != NUL; s++) {
-        s += skip_wildmenu_char(xp, (char_u *)s);
+        s += skip_wildmenu_char(xp, s);
         clen += ptr2cells(s);
         if ((l = utfc_ptr2len(s)) > 1) {
           strncpy(buf + len, s, (size_t)l);  // NOLINT(runtime/printf)
@@ -604,7 +604,7 @@ static char *ExpandOne_start(int mode, expand_T *xp, char *str, int options)
     }
   } else {
     // Escape the matches for use on the command line.
-    ExpandEscape(xp, (char_u *)str, xp->xp_numfiles, xp->xp_files, options);
+    ExpandEscape(xp, str, xp->xp_numfiles, xp->xp_files, options);
 
     // Check for matching suffixes in file names.
     if (mode != WILD_ALL && mode != WILD_ALL_KEEP
@@ -865,7 +865,7 @@ int showmatches(expand_T *xp, int wildmenu)
     compl_match_array = xmalloc(sizeof(pumitem_T) * (size_t)compl_match_arraysize);
     for (i = 0; i < num_files; i++) {
       compl_match_array[i] = (pumitem_T){
-        .pum_text = (char_u *)L_SHOWFILE(i),
+        .pum_text = L_SHOWFILE(i),
         .pum_info = NULL,
         .pum_extra = NULL,
         .pum_kind = NULL,
@@ -958,7 +958,7 @@ int showmatches(expand_T *xp, int wildmenu)
             // Expansion was done before and special characters
             // were escaped, need to halve backslashes.  Also
             // $HOME has been replaced with ~/.
-            char *exp_path = (char *)expand_env_save_opt((char_u *)files_found[k], true);
+            char *exp_path = (char *)expand_env_save_opt(files_found[k], true);
             char *path = exp_path != NULL ? exp_path : files_found[k];
             char *halved_slash = backslash_halve_save(path);
             j = os_isdir(halved_slash);
@@ -1245,7 +1245,7 @@ void set_expand_context(expand_T *xp)
     xp->xp_context = EXPAND_NOTHING;
     return;
   }
-  set_cmd_context(xp, (char_u *)ccline->cmdbuff, ccline->cmdlen, ccline->cmdpos, true);
+  set_cmd_context(xp, ccline->cmdbuff, ccline->cmdlen, ccline->cmdpos, true);
 }
 
 /// Sets the index of a built-in or user defined command "cmd" in eap->cmdidx.
@@ -2104,10 +2104,10 @@ static const char *set_one_cmd_context(expand_T *xp, const char *buff)
 /// @param len  length of command line (excl. NUL)
 /// @param col  position of cursor
 /// @param use_ccline  use ccline for info
-void set_cmd_context(expand_T *xp, char_u *str, int len, int col, int use_ccline)
+void set_cmd_context(expand_T *xp, char *str, int len, int col, int use_ccline)
 {
   CmdlineInfo *const ccline = get_cmdline_info();
-  char_u old_char = NUL;
+  char old_char = NUL;
 
   // Avoid a UMR warning from Purify, only save the character if it has been
   // written before.
@@ -2119,7 +2119,7 @@ void set_cmd_context(expand_T *xp, char_u *str, int len, int col, int use_ccline
 
   if (use_ccline && ccline->cmdfirstc == '=') {
     // pass CMD_SIZE because there is no real command
-    set_context_for_expression(xp, (char *)str, CMD_SIZE);
+    set_context_for_expression(xp, str, CMD_SIZE);
   } else if (use_ccline && ccline->input_fn) {
     xp->xp_context = ccline->xp_context;
     xp->xp_pattern = ccline->cmdbuff;
@@ -2132,7 +2132,7 @@ void set_cmd_context(expand_T *xp, char_u *str, int len, int col, int use_ccline
 
   // Store the string here so that call_user_expand_func() can get to them
   // easily.
-  xp->xp_line = (char *)str;
+  xp->xp_line = str;
   xp->xp_col = col;
 
   str[col] = old_char;
@@ -2477,7 +2477,7 @@ static int ExpandFromContext(expand_T *xp, char *pat, int *num_file, char ***fil
   }
 
   // set ignore-case according to p_ic, p_scs and pat
-  regmatch.rm_ic = ignorecase((char_u *)pat);
+  regmatch.rm_ic = ignorecase(pat);
 
   if (xp->xp_context == EXPAND_SETTINGS
       || xp->xp_context == EXPAND_BOOL_SETTINGS) {
@@ -2528,7 +2528,7 @@ static void ExpandGeneric(expand_T *xp, regmatch_T *regmatch, int *num_file, cha
   }
   assert(count < INT_MAX);
   *num_file = (int)count;
-  *file = xmalloc(count * sizeof(char_u *));
+  *file = xmalloc(count * sizeof(char *));
 
   // copy the matching names into allocated memory
   count = 0;
@@ -2734,7 +2734,7 @@ static void *call_user_expand_func(user_expand_func_T user_expand_func, expand_T
 
   current_sctx = xp->xp_script_ctx;
 
-  void *const ret = user_expand_func((char_u *)xp->xp_arg, 3, args);
+  void *const ret = user_expand_func(xp->xp_arg, 3, args);
 
   current_sctx = save_current_sctx;
   if (ccline->cmdbuff != NULL) {
@@ -2862,7 +2862,7 @@ void globpath(char *path, char *file, garray_T *ga, int expand_options)
       (void)ExpandFromContext(&xpc, buf, &num_p, &p,
                               WILD_SILENT | expand_options);
       if (num_p > 0) {
-        ExpandEscape(&xpc, (char_u *)buf, num_p, p, WILD_SILENT | expand_options);
+        ExpandEscape(&xpc, buf, num_p, p, WILD_SILENT | expand_options);
 
         // Concatenate new results to previous ones.
         ga_grow(ga, num_p);
@@ -3040,7 +3040,7 @@ int wildmenu_process_key(CmdlineInfo *cclp, int key, expand_T *xp)
         // TODO(tarruda): this is only for DOS/Unix systems - need to put in
         // machine-specific stuff here and in upseg init
         cmdline_del(cclp, j);
-        put_on_cmdline((char_u *)upseg + 1, 3, false);
+        put_on_cmdline(upseg + 1, 3, false);
       } else if (cclp->cmdpos > i) {
         cmdline_del(cclp, i);
       }

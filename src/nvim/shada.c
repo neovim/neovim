@@ -1341,7 +1341,7 @@ static void shada_read(ShaDaReadDef *const sd_reader, const int flags)
     case kSDItemBufferList:
       for (size_t i = 0; i < cur_entry.data.buffer_list.size; i++) {
         char *const sfname =
-          (char *)path_try_shorten_fname((char_u *)cur_entry.data.buffer_list.buffers[i].fname);
+          path_try_shorten_fname(cur_entry.data.buffer_list.buffers[i].fname);
         buf_T *const buf =
           buflist_new(cur_entry.data.buffer_list.buffers[i].fname, sfname, 0, BLN_LISTED);
         if (buf != NULL) {

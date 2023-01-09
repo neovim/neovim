@@ -58,13 +58,13 @@ static int orig_topfill = 0;
 /// 1: punctuation groups
 /// 2: normal word character
 /// >2: multi-byte word character.
-static int get_mouse_class(char_u *p)
+static int get_mouse_class(char *p)
 {
-  if (MB_BYTE2LEN(p[0]) > 1) {
+  if (MB_BYTE2LEN((uint8_t)p[0]) > 1) {
     return mb_get_class(p);
   }
 
-  const int c = *p;
+  const int c = (uint8_t)(*p);
   if (c == ' ' || c == '\t') {
     return 0;
   }
@@ -90,12 +90,12 @@ static void find_start_of_word(pos_T *pos)
   int col;
 
   line = (char_u *)ml_get(pos->lnum);
-  cclass = get_mouse_class(line + pos->col);
+  cclass = get_mouse_class((char *)line + pos->col);
 
   while (pos->col > 0) {
     col = pos->col - 1;
     col -= utf_head_off((char *)line, (char *)line + col);
-    if (get_mouse_class(line + col) != cclass) {
+    if (get_mouse_class((char *)line + col) != cclass) {
       break;
     }
     pos->col = col;
@@ -115,10 +115,10 @@ static void find_end_of_word(pos_T *pos)
     pos->col--;
     pos->col -= utf_head_off((char *)line, (char *)line + pos->col);
   }
-  cclass = get_mouse_class(line + pos->col);
+  cclass = get_mouse_class((char *)line + pos->col);
   while (line[pos->col] != NUL) {
     col = pos->col + utfc_ptr2len((char *)line + pos->col);
-    if (get_mouse_class(line + col) != cclass) {
+    if (get_mouse_class((char *)line + col) != cclass) {
       if (*p_sel == 'e') {
         pos->col = col;
       }

@@ -1386,7 +1386,7 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char *fword, bool soun
           // For multi-byte chars check character length against
           // COMPOUNDMIN.
           if (slang->sl_compminlen > 0
-              && mb_charlen((char_u *)tword + sp->ts_splitoff)
+              && mb_charlen(tword + sp->ts_splitoff)
               < slang->sl_compminlen) {
             break;
           }
@@ -1582,7 +1582,7 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char *fword, bool soun
             && sp->ts_twordlen - sp->ts_splitoff
             >= slang->sl_compminlen
             && (slang->sl_compminlen == 0
-                || mb_charlen((char_u *)tword + sp->ts_splitoff)
+                || mb_charlen(tword + sp->ts_splitoff)
                 >= slang->sl_compminlen)
             && (slang->sl_compsylmax < MAXWLEN
                 || sp->ts_complen + 1 - sp->ts_compsplit

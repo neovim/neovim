@@ -78,19 +78,19 @@ static void pum_compute_size(void)
   for (int i = 0; i < pum_size; i++) {
     int w;
     if (pum_array[i].pum_text != NULL) {
-      w = vim_strsize((char *)pum_array[i].pum_text);
+      w = vim_strsize(pum_array[i].pum_text);
       if (pum_base_width < w) {
         pum_base_width = w;
       }
     }
     if (pum_array[i].pum_kind != NULL) {
-      w = vim_strsize((char *)pum_array[i].pum_kind) + 1;
+      w = vim_strsize(pum_array[i].pum_kind) + 1;
       if (pum_kind_width < w) {
         pum_kind_width = w;
       }
     }
     if (pum_array[i].pum_extra != NULL) {
-      w = vim_strsize((char *)pum_array[i].pum_extra) + 1;
+      w = vim_strsize(pum_array[i].pum_extra) + 1;
       if (pum_extra_width < w) {
         pum_extra_width = w;
       }
@@ -167,10 +167,10 @@ void pum_display(pumitem_T *array, int size, int selected, bool array_changed, i
         Array arr = arena_array(&arena, (size_t)size);
         for (int i = 0; i < size; i++) {
           Array item = arena_array(&arena, 4);
-          ADD_C(item, STRING_OBJ(cstr_as_string((char *)array[i].pum_text)));
-          ADD_C(item, STRING_OBJ(cstr_as_string((char *)array[i].pum_kind)));
-          ADD_C(item, STRING_OBJ(cstr_as_string((char *)array[i].pum_extra)));
-          ADD_C(item, STRING_OBJ(cstr_as_string((char *)array[i].pum_info)));
+          ADD_C(item, STRING_OBJ(cstr_as_string(array[i].pum_text)));
+          ADD_C(item, STRING_OBJ(cstr_as_string(array[i].pum_kind)));
+          ADD_C(item, STRING_OBJ(cstr_as_string(array[i].pum_extra)));
+          ADD_C(item, STRING_OBJ(cstr_as_string(array[i].pum_info)));
           ADD_C(arr, ARRAY_OBJ(item));
         }
         ui_call_popupmenu_show(arr, selected, pum_win_row, cursor_col,
@@ -501,15 +501,15 @@ void pum_redraw(void)
 
       switch (round) {
       case 1:
-        p = (char *)pum_array[idx].pum_text;
+        p = pum_array[idx].pum_text;
         break;
 
       case 2:
-        p = (char *)pum_array[idx].pum_kind;
+        p = pum_array[idx].pum_kind;
         break;
 
       case 3:
-        p = (char *)pum_array[idx].pum_extra;
+        p = pum_array[idx].pum_extra;
         break;
       }
 
@@ -765,7 +765,7 @@ static bool pum_set_selected(int n, int repeat)
           char *p, *e;
           linenr_T lnum = 0;
 
-          for (p = (char *)pum_array[pum_selected].pum_info; *p != NUL;) {
+          for (p = pum_array[pum_selected].pum_info; *p != NUL;) {
             e = vim_strchr(p, '\n');
             if (e == NULL) {
               ml_append(lnum++, p, 0, false);
@@ -1060,7 +1060,7 @@ void pum_show_popupmenu(vimmenu_T *menu)
     }
     if (s != NULL) {
       s = xstrdup(s);
-      array[idx++].pum_text = (char_u *)s;
+      array[idx++].pum_text = s;
     }
   }
 

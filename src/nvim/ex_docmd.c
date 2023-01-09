@@ -4965,8 +4965,8 @@ void ex_splitview(exarg_T *eap)
   }
 
   if (eap->cmdidx == CMD_sfind || eap->cmdidx == CMD_tabfind) {
-    fname = (char *)find_file_in_path((char_u *)eap->arg, strlen(eap->arg),
-                                      FNAME_MESS, true, (char_u *)curbuf->b_ffname);
+    fname = (char *)find_file_in_path(eap->arg, strlen(eap->arg),
+                                      FNAME_MESS, true, curbuf->b_ffname);
     if (fname == NULL) {
       goto theend;
     }
@@ -5158,15 +5158,15 @@ static void ex_resize(exarg_T *eap)
 /// ":find [+command] <file>" command.
 static void ex_find(exarg_T *eap)
 {
-  char *fname = (char *)find_file_in_path((char_u *)eap->arg, strlen(eap->arg),
-                                          FNAME_MESS, true, (char_u *)curbuf->b_ffname);
+  char *fname = (char *)find_file_in_path(eap->arg, strlen(eap->arg),
+                                          FNAME_MESS, true, curbuf->b_ffname);
   if (eap->addr_count > 0) {
     // Repeat finding the file "count" times.  This matters when it
     // appears several times in the path.
     linenr_T count = eap->line2;
     while (fname != NULL && --count > 0) {
       xfree(fname);
-      fname = (char *)find_file_in_path(NULL, 0, FNAME_MESS, false, (char_u *)curbuf->b_ffname);
+      fname = (char *)find_file_in_path(NULL, 0, FNAME_MESS, false, curbuf->b_ffname);
     }
   }
 
@@ -6042,7 +6042,7 @@ static void ex_redir(exarg_T *eap)
         return;
       }
 
-      redir_fd = open_exfile((char_u *)fname, eap->forceit, mode);
+      redir_fd = open_exfile(fname, eap->forceit, mode);
       xfree(fname);
     } else if (*arg == '@') {
       // redirect to a register a-z (resp. A-Z for appending)
@@ -6215,22 +6215,22 @@ int vim_mkdir_emsg(const char *const name, const int prot)
 /// @param mode  "w" for create new file or "a" for append
 ///
 /// @return  file descriptor, or NULL on failure.
-FILE *open_exfile(char_u *fname, int forceit, char *mode)
+FILE *open_exfile(char *fname, int forceit, char *mode)
 {
 #ifdef UNIX
   // with Unix it is possible to open a directory
-  if (os_isdir((char *)fname)) {
+  if (os_isdir(fname)) {
     semsg(_(e_isadir2), fname);
     return NULL;
   }
 #endif
-  if (!forceit && *mode != 'a' && os_path_exists((char *)fname)) {
+  if (!forceit && *mode != 'a' && os_path_exists(fname)) {
     semsg(_("E189: \"%s\" exists (add ! to override)"), fname);
     return NULL;
   }
 
   FILE *fd;
-  if ((fd = os_fopen((char *)fname, mode)) == NULL) {
+  if ((fd = os_fopen(fname, mode)) == NULL) {
     semsg(_("E190: Cannot open \"%s\" for writing"), fname);
   }
 
@@ -6387,7 +6387,7 @@ static void ex_normal(exarg_T *eap)
         check_cursor_moved(curwin);
       }
 
-      exec_normal_cmd((char_u *)(arg != NULL ? arg : eap->arg),
+      exec_normal_cmd((arg != NULL ? arg : eap->arg),
                       eap->forceit ? REMAP_NONE : REMAP_YES, false);
     } while (eap->addr_count > 0 && eap->line1 <= eap->line2 && !got_int);
   }
@@ -6451,10 +6451,10 @@ static void ex_stopinsert(exarg_T *eap)
 
 /// Execute normal mode command "cmd".
 /// "remap" can be REMAP_NONE or REMAP_YES.
-void exec_normal_cmd(char_u *cmd, int remap, bool silent)
+void exec_normal_cmd(char *cmd, int remap, bool silent)
 {
   // Stuff the argument into the typeahead buffer.
-  ins_typebuf((char *)cmd, remap, 0, true, silent);
+  ins_typebuf(cmd, remap, 0, true, silent);
   exec_normal(false);
 }
 
@@ -6859,7 +6859,7 @@ char_u *eval_vars(char_u *src, const char_u *srcstart, size_t *usedlen, linenr_T
         *errormsg = _("E495: no autocommand file name to substitute for \"<afile>\"");
         return NULL;
       }
-      result = (char *)path_try_shorten_fname((char_u *)result);
+      result = path_try_shorten_fname(result);
       break;
 
     case SPEC_ABUF:             // buffer number for autocommand

@@ -5492,7 +5492,7 @@ void cursor_pos_info(dict_T *dict)
         validate_virtcol();
         col_print((char *)buf1, sizeof(buf1), (int)curwin->w_cursor.col + 1,
                   (int)curwin->w_virtcol + 1);
-        col_print((char *)buf2, sizeof(buf2), (int)strlen(p), linetabsize((char_u *)p));
+        col_print((char *)buf2, sizeof(buf2), (int)strlen(p), linetabsize(p));
 
         if (char_count_cursor == byte_count_cursor
             && char_count == byte_count) {

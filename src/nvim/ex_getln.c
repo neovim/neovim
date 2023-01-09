@@ -1466,27 +1466,27 @@ static int command_line_erase_chars(CommandLineState *s)
   }
 
   if (ccline.cmdpos > 0) {
-    char_u *p;
+    char *p;
 
     int j = ccline.cmdpos;
-    p = mb_prevptr((char_u *)ccline.cmdbuff, (char_u *)ccline.cmdbuff + j);
+    p = mb_prevptr(ccline.cmdbuff, ccline.cmdbuff + j);
 
     if (s->c == Ctrl_W) {
-      while (p > (char_u *)ccline.cmdbuff && ascii_isspace(*p)) {
-        p = mb_prevptr((char_u *)ccline.cmdbuff, p);
+      while (p > ccline.cmdbuff && ascii_isspace(*p)) {
+        p = mb_prevptr(ccline.cmdbuff, p);
       }
 
       int i = mb_get_class(p);
-      while (p > (char_u *)ccline.cmdbuff && mb_get_class(p) == i) {
-        p = mb_prevptr((char_u *)ccline.cmdbuff, p);
+      while (p > ccline.cmdbuff && mb_get_class(p) == i) {
+        p = mb_prevptr(ccline.cmdbuff, p);
       }
 
       if (mb_get_class(p) != i) {
-        p += utfc_ptr2len((char *)p);
+        p += utfc_ptr2len(p);
       }
     }
 
-    ccline.cmdpos = (int)(p - (char_u *)ccline.cmdbuff);
+    ccline.cmdpos = (int)(p - ccline.cmdbuff);
     ccline.cmdlen -= j - ccline.cmdpos;
     int i = ccline.cmdpos;
 
@@ -2097,11 +2097,11 @@ static int command_line_handle_key(CommandLineState *s)
 
   // put the character in the command line
   if (IS_SPECIAL(s->c) || mod_mask != 0) {
-    put_on_cmdline(get_special_key_name(s->c, mod_mask), -1, true);
+    put_on_cmdline((char *)get_special_key_name(s->c, mod_mask), -1, true);
   } else {
     int j = utf_char2bytes(s->c, IObuff);
     IObuff[j] = NUL;                // exclude composing chars
-    put_on_cmdline((char_u *)IObuff, j, true);
+    put_on_cmdline(IObuff, j, true);
   }
   return command_line_changed(s);
 }
@@ -3509,14 +3509,14 @@ void unputcmdline(void)
 // part will be redrawn, otherwise it will not.  If this function is called
 // twice in a row, then 'redraw' should be false and redrawcmd() should be
 // called afterwards.
-void put_on_cmdline(char_u *str, int len, int redraw)
+void put_on_cmdline(char *str, int len, int redraw)
 {
   int i;
   int m;
   int c;
 
   if (len < 0) {
-    len = (int)strlen((char *)str);
+    len = (int)strlen(str);
   }
 
   realloc_cmdbuff(ccline.cmdlen + len + 1);
@@ -3529,7 +3529,7 @@ void put_on_cmdline(char_u *str, int len, int redraw)
   } else {
     // Count nr of characters in the new string.
     m = 0;
-    for (i = 0; i < len; i += utfc_ptr2len((char *)str + i)) {
+    for (i = 0; i < len; i += utfc_ptr2len(str + i)) {
       m++;
     }
     // Count nr of bytes in cmdline that are overwritten by these
@@ -3725,7 +3725,7 @@ void cmdline_paste_str(char_u *s, int literally)
   int c, cv;
 
   if (literally) {
-    put_on_cmdline(s, -1, true);
+    put_on_cmdline((char *)s, -1, true);
   } else {
     while (*s != NUL) {
       cv = *s;
@@ -4000,7 +4000,7 @@ void escape_fname(char **pp)
 
 /// For each file name in files[num_files]:
 /// If 'orig_pat' starts with "~/", replace the home directory with "~".
-void tilde_replace(char_u *orig_pat, int num_files, char **files)
+void tilde_replace(char *orig_pat, int num_files, char **files)
 {
   char *p;
 

@@ -347,7 +347,7 @@ static int linelen(int *has_tab)
   char save = *last;
   *last = NUL;
   // Get line length.
-  len = linetabsize((char_u *)line);
+  len = linetabsize(line);
   // Check for embedded TAB.
   if (has_tab != NULL) {
     *has_tab = vim_strchr(first, TAB) != NULL;
@@ -1179,7 +1179,7 @@ static void do_filter(linenr_T line1, linenr_T line2, exarg_T *eap, char *cmd, b
   read_linecount = curbuf->b_ml.ml_line_count;
 
   // Pass on the kShellOptDoOut flag when the output is being redirected.
-  call_shell((char_u *)cmd_buf, (ShellOpts)(kShellOptFilter | shell_flags), NULL);
+  call_shell(cmd_buf, (ShellOpts)(kShellOptFilter | shell_flags), NULL);
   xfree(cmd_buf);
 
   did_check_timestamps = false;
@@ -1324,7 +1324,7 @@ void do_shell(char *cmd, int flags)
   // This ui_cursor_goto is required for when the '\n' resulted in a "delete line
   // 1" command to the terminal.
   ui_cursor_goto(msg_row, msg_col);
-  (void)call_shell((char_u *)cmd, (ShellOpts)flags, NULL);
+  (void)call_shell(cmd, (ShellOpts)flags, NULL);
   msg_didout = true;
   did_check_timestamps = false;
   need_check_timestamps = true;
@@ -1367,12 +1367,12 @@ char *make_filter_cmd(char *cmd, char *itmp, char *otmp)
 {
   bool is_fish_shell =
 #if defined(UNIX)
-    strncmp((char *)invocation_path_tail((char_u *)p_sh, NULL), "fish", 4) == 0;
+    strncmp((char *)invocation_path_tail(p_sh, NULL), "fish", 4) == 0;
 #else
     false;
 #endif
-  bool is_pwsh = strncmp((char *)invocation_path_tail((char_u *)p_sh, NULL), "pwsh", 4) == 0
-                 || strncmp((char *)invocation_path_tail((char_u *)p_sh, NULL), "powershell",
+  bool is_pwsh = strncmp((char *)invocation_path_tail(p_sh, NULL), "pwsh", 4) == 0
+                 || strncmp((char *)invocation_path_tail(p_sh, NULL), "powershell",
                             10) == 0;
 
   size_t len = strlen(cmd) + 1;  // At least enough space for cmd + NULL.

@@ -6098,7 +6098,7 @@ pos_T *var2fpos(const typval_T *const tv, const bool dollar_lnum, int *const ret
     }
     int len;
     if (charcol) {
-      len = mb_charlen((char_u *)ml_get(pos.lnum));
+      len = mb_charlen(ml_get(pos.lnum));
     } else {
       len = (int)strlen(ml_get(pos.lnum));
     }
@@ -6184,7 +6184,7 @@ pos_T *var2fpos(const typval_T *const tv, const bool dollar_lnum, int *const ret
     } else {
       pos.lnum = curwin->w_cursor.lnum;
       if (charcol) {
-        pos.col = (colnr_T)mb_charlen((char_u *)get_cursor_line_ptr());
+        pos.col = (colnr_T)mb_charlen(get_cursor_line_ptr());
       } else {
         pos.col = (colnr_T)strlen(get_cursor_line_ptr());
       }
@@ -7816,8 +7816,8 @@ repeat:
     }
 
     // FullName_save() is slow, don't use it when not needed.
-    if (*p != NUL || !vim_isAbsName((char_u *)(*fnamep))) {
-      *fnamep = FullName_save((*fnamep), *p != NUL);
+    if (*p != NUL || !vim_isAbsName(*fnamep)) {
+      *fnamep = FullName_save(*fnamep, *p != NUL);
       xfree(*bufp);          // free any allocated file name
       *bufp = *fnamep;
       if (*fnamep == NULL) {

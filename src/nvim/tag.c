@@ -1162,12 +1162,12 @@ void do_tags(exarg_T *eap)
 // Compare two strings, for length "len", ignoring case the ASCII way.
 // return 0 for match, < 0 for smaller, > 0 for bigger
 // Make sure case is folded to uppercase in comparison (like for 'sort -f')
-static int tag_strnicmp(char_u *s1, char_u *s2, size_t len)
+static int tag_strnicmp(char *s1, char *s2, size_t len)
 {
   int i;
 
   while (len > 0) {
-    i = TOUPPER_ASC(*s1) - TOUPPER_ASC(*s2);
+    i = TOUPPER_ASC((uint8_t)(*s1)) - TOUPPER_ASC((uint8_t)(*s2));
     if (i != 0) {
       return i;                         // this character different
     }
@@ -1775,7 +1775,7 @@ static tagmatch_status_T findtags_parse_line(findtags_state_T *st, tagptrs_T *ta
 
       // Compare the current tag with the searched tag.
       if (margs->sortic) {
-        tagcmp = tag_strnicmp((char_u *)tagpp->tagname, (char_u *)st->orgpat->head,
+        tagcmp = tag_strnicmp(tagpp->tagname, st->orgpat->head,
                               (size_t)cmplen);
       } else {
         tagcmp = strncmp(tagpp->tagname, st->orgpat->head, (size_t)cmplen);
@@ -2358,10 +2358,10 @@ int find_tags(char *pat, int *num_matches, char ***matchesp, int flags, int minc
     p_ic = false;
     break;
   case TC_FOLLOWSCS:
-    p_ic = ignorecase((char_u *)pat);
+    p_ic = ignorecase(pat);
     break;
   case TC_SMART:
-    p_ic = ignorecase_opt((char_u *)pat, true, true);
+    p_ic = ignorecase_opt(pat, true, true);
     break;
   default:
     abort();
@@ -2491,7 +2491,7 @@ static void found_tagfile_cb(char *fname, void *cookie)
 #ifdef BACKSLASH_IN_FILENAME
   slash_adjust(tag_fname);
 #endif
-  simplify_filename((char_u *)tag_fname);
+  simplify_filename(tag_fname);
   GA_APPEND(char *, &tag_fnames, tag_fname);
 }
 
@@ -2547,7 +2547,7 @@ int get_tagfname(tagname_T *tnp, int first, char *buf)
 #ifdef BACKSLASH_IN_FILENAME
       slash_adjust(buf);
 #endif
-      simplify_filename((char_u *)buf);
+      simplify_filename(buf);
 
       for (int i = 0; i < tag_fnames.ga_len; i++) {
         if (strcmp(buf, ((char **)(tag_fnames.ga_data))[i]) == 0) {
@@ -2593,7 +2593,7 @@ int get_tagfname(tagname_T *tnp, int first, char *buf)
       buf[0] = NUL;
       (void)copy_option_part(&tnp->tn_np, buf, MAXPATHL - 1, " ,");
 
-      r_ptr = (char *)vim_findfile_stopdir((char_u *)buf);
+      r_ptr = (char *)vim_findfile_stopdir(buf);
       // move the filename one char forward and truncate the
       // filepath with a NUL
       filename = path_tail(buf);
@@ -3132,13 +3132,13 @@ static char *expand_tag_fname(char *fname, char *const tag_fname, const bool exp
 
   char *retval;
   if ((p_tr || curbuf->b_help)
-      && !vim_isAbsName((char_u *)fname)
+      && !vim_isAbsName(fname)
       && (p = path_tail(tag_fname)) != tag_fname) {
     retval = xmalloc(MAXPATHL);
     STRCPY(retval, tag_fname);
     xstrlcpy(retval + (p - tag_fname), fname, (size_t)(MAXPATHL - (p - tag_fname)));
     // Translate names like "src/a/../b/file.c" into "src/b/file.c".
-    simplify_filename((char_u *)retval);
+    simplify_filename(retval);
   } else {
     retval = xstrdup(fname);
   }

@@ -189,7 +189,7 @@ int search_regcomp(char_u *pat, char_u **used_pat, int pat_save, int pat_use, in
     }
   }
 
-  regmatch->rmm_ic = ignorecase(pat);
+  regmatch->rmm_ic = ignorecase((char *)pat);
   regmatch->rmm_maxcol = 0;
   regmatch->regprog = vim_regcomp((char *)pat, magic ? RE_MAGIC : 0);
   if (regmatch->regprog == NULL) {
@@ -353,19 +353,19 @@ char_u *last_search_pattern(void)
 
 /// Return true when case should be ignored for search pattern "pat".
 /// Uses the 'ignorecase' and 'smartcase' options.
-int ignorecase(char_u *pat)
+int ignorecase(char *pat)
 {
   return ignorecase_opt(pat, p_ic, p_scs);
 }
 
 /// As ignorecase() put pass the "ic" and "scs" flags.
-int ignorecase_opt(char_u *pat, int ic_in, int scs)
+int ignorecase_opt(char *pat, int ic_in, int scs)
 {
   int ic = ic_in;
   if (ic && !no_smartcase && scs
       && !(ctrl_x_mode_not_default()
            && curbuf->b_p_inf)) {
-    ic = !pat_has_uppercase(pat);
+    ic = !pat_has_uppercase((char_u *)pat);
   }
   no_smartcase = false;
 
@@ -3113,7 +3113,7 @@ bool fuzzy_match(char_u *const str, const char_u *const pat_arg, const bool matc
                  int *const outScore, uint32_t *const matches, const int maxMatches)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  const int len = mb_charlen(str);
+  const int len = mb_charlen((char *)str);
   bool complete = false;
   int numMatches = 0;
 
@@ -3482,7 +3482,7 @@ void find_pattern_in_path(char *ptr, Direction dir, size_t len, bool whole, bool
     assert(len <= INT_MAX);
     snprintf(pat, patlen, whole ? "\\<%.*s\\>" : "%.*s", (int)len, ptr);
     // ignore case according to p_ic, p_scs and pat
-    regmatch.rm_ic = ignorecase((char_u *)pat);
+    regmatch.rm_ic = ignorecase(pat);
     regmatch.regprog = vim_regcomp(pat, magic_isset() ? RE_MAGIC : 0);
     xfree(pat);
     if (regmatch.regprog == NULL) {
@@ -3778,9 +3778,9 @@ search_line:
           if (vim_iswordp(p)) {
             goto exit_matched;
           }
-          p = (char *)find_word_start((char_u *)p);
+          p = find_word_start(p);
         }
-        p = (char *)find_word_end((char_u *)p);
+        p = find_word_end(p);
         i = (int)(p - aux);
 
         if (compl_status_adding() && i == ins_compl_len()) {
@@ -3804,8 +3804,8 @@ search_line:
           // if depth >= 0 we'll increase files[depth].lnum far
           // below  -- Acevedo
           already = aux = p = skipwhite(line);
-          p = (char *)find_word_start((char_u *)p);
-          p = (char *)find_word_end((char_u *)p);
+          p = find_word_start(p);
+          p = find_word_end(p);
           if (p > aux) {
             if (*aux != ')' && IObuff[i - 1] != TAB) {
               if (IObuff[i - 1] != ' ') {
@@ -3835,9 +3835,9 @@ search_line:
           }
         }
 
-        const int add_r = ins_compl_add_infercase((char_u *)aux, i, p_ic,
+        const int add_r = ins_compl_add_infercase(aux, i, p_ic,
                                                   curr_fname == curbuf->b_fname
-                                                  ? NULL : (char_u *)curr_fname,
+                                                  ? NULL : curr_fname,
                                                   dir, cont_s_ipos);
         if (add_r == OK) {
           // if dir was BACKWARD then honor it just once
