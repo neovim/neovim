@@ -299,7 +299,15 @@ Dictionary nvim_win_get_config(Window window, Error *err)
           ADD(titles, ARRAY_OBJ(tuple));
         }
         PUT(rv, "title", ARRAY_OBJ(titles));
-        PUT(rv, "title_pos", INTEGER_OBJ(config->title_pos));
+        char *title_pos;
+        if (config->title_pos == 0) {
+          title_pos = "left";
+        } else if (config->title_pos == 1){
+          title_pos = "center";
+        }else {
+          title_pos = "right";
+        }
+        PUT(rv, "title_pos", CSTR_TO_OBJ(title_pos));
       }
     }
   }
