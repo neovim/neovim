@@ -2763,7 +2763,7 @@ static int getreg_get_regname(typval_T *argvars)
     strregname = get_vim_var_str(VV_REG);
   }
 
-  return *strregname == 0 ? '"' : *strregname;
+  return *strregname == 0 ? '"' : (uint8_t)(*strregname);
 }
 
 /// "getreg()" function
