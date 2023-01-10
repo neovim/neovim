@@ -698,8 +698,8 @@ To avoid mapping of the characters you type in insert or Command-line mode,
 type a CTRL-V first.  The mapping in Insert mode is disabled if the 'paste'
 option is on.
 							*map-error*
-Note that when an error is encountered (that causes an error message or beep)
-the rest of the mapping is not executed.  This is Vi-compatible.
+Note that when an error is encountered (that causes an error message or might
+cause a beep) the rest of the mapping is not executed.  This is Vi-compatible.
 
 Note that the second character (argument) of the commands @zZtTfF[]rm'`"v
 and CTRL-X is not mapped.  This was done to be able to use all the named
