@@ -5011,10 +5011,12 @@ static void nv_visual(cmdarg_T *cap)
       VIsual_mode = resel_VIsual_mode;
       if (VIsual_mode == 'v') {
         if (resel_VIsual_line_count <= 1) {
-          validate_virtcol();
+          update_curswant_force();
           assert(cap->count0 >= INT_MIN && cap->count0 <= INT_MAX);
-          curwin->w_curswant = (curwin->w_virtcol
-                                + resel_VIsual_vcol * (int)cap->count0 - 1);
+          curwin->w_curswant += resel_VIsual_vcol * (int)cap->count0;
+          if (*p_sel != 'e') {
+            curwin->w_curswant--;
+          }
         } else {
           curwin->w_curswant = resel_VIsual_vcol;
         }
@@ -5024,10 +5026,9 @@ static void nv_visual(cmdarg_T *cap)
         curwin->w_curswant = MAXCOL;
         coladvance(MAXCOL);
       } else if (VIsual_mode == Ctrl_V) {
-        validate_virtcol();
+        update_curswant_force();
         assert(cap->count0 >= INT_MIN && cap->count0 <= INT_MAX);
-        curwin->w_curswant = (curwin->w_virtcol
-                              + resel_VIsual_vcol * (int)cap->count0 - 1);
+        curwin->w_curswant += resel_VIsual_vcol * (int)cap->count0 - 1;
         coladvance(curwin->w_curswant);
       } else {
         curwin->w_set_curswant = true;
@@ -5276,9 +5277,7 @@ static void nv_g_dollar_cmd(cmdarg_T *cap)
       coladvance((colnr_T)i);
 
       // Make sure we stick in this column.
-      validate_virtcol();
-      curwin->w_curswant = curwin->w_virtcol;
-      curwin->w_set_curswant = false;
+      update_curswant_force();
       if (curwin->w_cursor.col > 0 && curwin->w_p_wrap) {
         // Check for landing on a character that got split at
         // the end of the line.  We do not want to advance to
@@ -5309,9 +5308,7 @@ static void nv_g_dollar_cmd(cmdarg_T *cap)
     }
 
     // Make sure we stick in this column.
-    validate_virtcol();
-    curwin->w_curswant = curwin->w_virtcol;
-    curwin->w_set_curswant = false;
+    update_curswant_force();
   }
 }
 

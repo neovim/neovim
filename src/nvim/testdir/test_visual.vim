@@ -1338,6 +1338,18 @@ func Test_visual_reselect_with_count()
   call delete('XvisualReselect')
 endfunc
 
+func Test_visual_reselect_exclusive()
+  new
+  call setline(1, ['abcde', 'abcde'])
+  set selection=exclusive
+  normal 1G0viwd
+  normal 2G01vd
+  call assert_equal(['', ''], getline(1, 2))
+
+  set selection&
+  bwipe!
+endfunc
+
 func Test_visual_block_insert_round_off()
   new
   " The number of characters are tuned to fill a 4096 byte allocated block,
