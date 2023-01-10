@@ -168,6 +168,29 @@ describe('float window', function()
     eq(7, pos[2])
   end)
 
+  it('opened with correct position relative to the mouse', function()
+    meths.input_mouse('left', 'press', '', 0, 10, 10)
+    local pos = exec_lua([[
+      local bufnr = vim.api.nvim_create_buf(false, true)
+
+      local opts = {
+        width = 10,
+        height = 10,
+        col = 1,
+        row = 2,
+        relative = 'mouse',
+        style = 'minimal'
+      }
+
+      local win_id = vim.api.nvim_open_win(bufnr, false, opts)
+
+      return vim.api.nvim_win_get_position(win_id)
+    ]])
+
+    eq(12, pos[1])
+    eq(11, pos[2])
+  end)
+
   it('opened with correct position relative to the cursor', function()
     local pos = exec_lua([[
       local bufnr = vim.api.nvim_create_buf(false, true)

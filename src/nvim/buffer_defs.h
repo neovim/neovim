@@ -1028,10 +1028,11 @@ typedef enum {
   kFloatRelativeEditor = 0,
   kFloatRelativeWindow = 1,
   kFloatRelativeCursor = 2,
+  kFloatRelativeMouse = 3,
 } FloatRelative;
 
 EXTERN const char *const float_relative_str[] INIT(= { "editor", "win",
-                                                       "cursor" });
+                                                       "cursor", "mouse" });
 
 typedef enum {
   kWinStyleUnused = 0,

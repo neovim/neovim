@@ -804,6 +804,15 @@ void win_config_float(win_T *wp, FloatConfig fconfig)
     fconfig.row += curwin->w_wrow;
     fconfig.col += curwin->w_wcol;
     fconfig.window = curwin->handle;
+  } else if (fconfig.relative == kFloatRelativeMouse) {
+    int row = mouse_row, col = mouse_col, grid = mouse_grid;
+    win_T *mouse_win = mouse_find_win(&grid, &row, &col);
+    if (mouse_win != NULL) {
+      fconfig.relative = kFloatRelativeWindow;
+      fconfig.row += row;
+      fconfig.col += col;
+      fconfig.window = mouse_win->handle;
+    }
   }
 
   bool change_external = fconfig.external != wp->w_float_config.external;

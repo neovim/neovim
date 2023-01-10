@@ -335,7 +335,9 @@ function M.hover(_, result, ctx, config)
     return
   end
   if not (result and result.contents) then
-    vim.notify('No information available')
+    if config.silent ~= true then
+      vim.notify('No information available')
+    end
     return
   end
   local markdown_lines = util.convert_input_to_markdown_lines(result.contents)
