@@ -1514,7 +1514,7 @@ static int corr_ind_maxparen(pos_T *startpos)
 
 // Set w_cursor.col to the column number of the last unmatched ')' or '{' in
 // line "l".  "l" must point to the start of the line.
-static int find_last_paren(const char *l, int start, int end)
+static int find_last_paren(const char *l, char start, char end)
 {
   int i;
   int retval = false;
