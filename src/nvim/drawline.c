@@ -406,7 +406,7 @@ static void get_statuscol_str(win_T *wp, linenr_T lnum, int row, int startrow, i
                               int cul_attr, int sign_num_attr, SignTextAttrs *sattrs,
                               foldinfo_T foldinfo, char_u *extra, statuscol_T *stcp)
 {
-  long relnum;
+  long relnum = 0;
   bool wrapped = row != startrow + filler_lines;
   bool use_cul = use_cursor_line_sign(wp, lnum);
 
