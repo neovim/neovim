@@ -48,9 +48,16 @@ uint64_t ui_client_start_server(int argc, char **argv)
                                        on_err, CALLBACK_NONE,
                                        false, true, true, false, kChannelStdinPipe,
                                        NULL, 0, 0, NULL, &exit_status);
+
+  // If stdin is not a pty, it is forwarded to the client.
+  // Replace stdin in the TUI process with the tty fd.
   if (ui_client_forward_stdin) {
     close(0);
-    dup(2);
+#ifdef MSWIN
+    os_open_conin_fd();
+#else
+    dup(stderr_isatty ? STDERR_FILENO : STDOUT_FILENO);
+#endif
   }
 
   return channel->id;

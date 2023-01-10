@@ -289,7 +289,13 @@ int main(int argc, char **argv)
     }
   }
 
-  bool use_builtin_ui = (!headless_mode && !embedded_mode && !silent_mode);
+#ifdef MSWIN
+  // on windows we use CONIN special file, thus we don't know this yet.
+  bool has_term = true;
+#else
+  bool has_term = (stdin_isatty || stdout_isatty || stderr_isatty);
+#endif
+  bool use_builtin_ui = (has_term && !headless_mode && !embedded_mode && !silent_mode);
 
   // don't bind the server yet, if we are using builtin ui.
   // This will be done when nvim server has been forked from the ui process
@@ -305,7 +311,7 @@ int main(int argc, char **argv)
   bool remote_ui = (ui_client_channel_id != 0);
 
   if (use_builtin_ui && !remote_ui) {
-    ui_client_forward_stdin = !params.input_isatty;
+    ui_client_forward_stdin = !stdin_isatty;
     uint64_t rv = ui_client_start_server(params.argc, params.argv);
     if (!rv) {
       os_errmsg("Failed to start Nvim server!\n");
@@ -362,8 +368,8 @@ int main(int argc, char **argv)
   debug_break_level = params.use_debug_break_level;
 
   // Read ex-commands if invoked with "-es".
-  if (!params.input_isatty && !params.input_istext && silent_mode && exmode_active) {
-    input_start(STDIN_FILENO);
+  if (!stdin_isatty && !params.input_istext && silent_mode && exmode_active) {
+    input_start();
   }
 
   if (ui_client_channel_id) {
@@ -640,8 +646,8 @@ void os_exit(int r)
   if (!event_teardown() && r == 0) {
     r = 1;  // Exit with error if main_loop did not teardown gracefully.
   }
-  if (input_global_fd() >= 0) {
-    stream_set_blocking(input_global_fd(), true);  // normalize stream (#2598)
+  if (used_stdin) {
+    stream_set_blocking(STDIN_FILENO, true);  // normalize stream (#2598)
   }
 
   ILOG("Nvim exit: %d", r);
@@ -786,9 +792,9 @@ void preserve_exit(void)
 
   // Prevent repeated calls into this method.
   if (really_exiting) {
-    if (input_global_fd() >= 0) {
+    if (used_stdin) {
       // normalize stream (#2598)
-      stream_set_blocking(input_global_fd(), true);
+      stream_set_blocking(STDIN_FILENO, true);
     }
     exit(2);
   }
@@ -964,7 +970,7 @@ static bool edit_stdin(mparm_T *parmp)
   bool implicit = !headless_mode
                   && !(embedded_mode && stdin_fd <= 0)
                   && (!exmode_active || parmp->input_istext)
-                  && !parmp->input_isatty
+                  && !stdin_isatty
                   && parmp->scriptin == NULL;  // `-s -` was not given.
   return parmp->had_stdin_file || implicit;
 }
@@ -1450,11 +1456,9 @@ static void init_startuptime(mparm_T *paramp)
 
 static void check_and_set_isatty(mparm_T *paramp)
 {
-  stdin_isatty
-    = paramp->input_isatty = os_isatty(STDIN_FILENO);
-  stdout_isatty
-    = paramp->output_isatty = os_isatty(STDOUT_FILENO);
-  paramp->err_isatty = os_isatty(STDERR_FILENO);
+  stdin_isatty = os_isatty(STDIN_FILENO);
+  stdout_isatty = os_isatty(STDOUT_FILENO);
+  stderr_isatty = os_isatty(STDERR_FILENO);
   TIME_MSG("window checked");
 }
 

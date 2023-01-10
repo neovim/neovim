@@ -153,19 +153,7 @@ void tinput_init(TermInput *input, Loop *loop)
                               kitty_key_map_entry[i].name);
   }
 
-  // If stdin is not a pty, switch to stderr. For cases like:
-  //    echo q | nvim -es
-  //    ls *.md | xargs nvim
-#ifdef MSWIN
-  if (!os_isatty(input->in_fd)) {
-    input->in_fd = os_get_conin_fd();
-  }
-#else
-  if (!os_isatty(input->in_fd) && os_isatty(STDERR_FILENO)) {
-    input->in_fd = STDERR_FILENO;
-  }
-#endif
-  input_global_fd_init(input->in_fd);
+  input->in_fd = STDIN_FILENO;
 
   const char *term = os_getenv("TERM");
   if (!term) {
@@ -174,7 +162,7 @@ void tinput_init(TermInput *input, Loop *loop)
 
   input->tk = termkey_new_abstract(term,
                                    TERMKEY_FLAG_UTF8 | TERMKEY_FLAG_NOSTART);
-  termkey_hook_terminfo_getstr(input->tk, input->tk_ti_hook_fn, NULL);
+  termkey_hook_terminfo_getstr(input->tk, input->tk_ti_hook_fn, input);
   termkey_start(input->tk);
 
   int curflags = termkey_get_canonflags(input->tk);
