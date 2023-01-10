@@ -786,6 +786,12 @@ void win_set_minimal_style(win_T *wp)
     free_string_option(wp->w_p_cc);
     wp->w_p_cc = xstrdup("");
   }
+
+  // statuscolumn: cleared
+  if (wp->w_p_stc != NULL && *wp->w_p_stc != NUL) {
+    free_string_option(wp->w_p_stc);
+    wp->w_p_stc = xstrdup("");
+  }
 }
 
 void win_config_float(win_T *wp, FloatConfig fconfig)
