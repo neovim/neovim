@@ -193,18 +193,18 @@ describe('system()', function()
       feed(':call system("echo")<cr>')
       screen:expect([[
         ^                                                     |
-        ~                                                    |
-        ~                                                    |
-        ~                                                    |
-        ~                                                    |
-        ~                                                    |
-        ~                                                    |
-        ~                                                    |
-        ~                                                    |
-        ~                                                    |
-        ~                                                    |
-        ~                                                    |
-        ~                                                    |
+        ·                                                    |
+        ·                                                    |
+        ·                                                    |
+        ·                                                    |
+        ·                                                    |
+        ·                                                    |
+        ·                                                    |
+        ·                                                    |
+        ·                                                    |
+        ·                                                    |
+        ·                                                    |
+        ·                                                    |
         :call system("echo")                                 |
       ]])
     end)
@@ -250,18 +250,18 @@ describe('system()', function()
         or  'yes') .. '")<cr>')
       screen:expect([[
                                                              |
-        ~                                                    |
-        ~                                                    |
-        ~                                                    |
-        ~                                                    |
-        ~                                                    |
-        ~                                                    |
-        ~                                                    |
-        ~                                                    |
-        ~                                                    |
-        ~                                                    |
-        ~                                                    |
-        ~                                                    |
+        ·                                                    |
+        ·                                                    |
+        ·                                                    |
+        ·                                                    |
+        ·                                                    |
+        ·                                                    |
+        ·                                                    |
+        ·                                                    |
+        ·                                                    |
+        ·                                                    |
+        ·                                                    |
+        ·                                                    |
 ]] .. (is_os('win')
         and [[
         :call system("for /L %I in (1,0,2) do @echo y")      |]]
@@ -270,18 +270,18 @@ describe('system()', function()
       feed('foo<c-c>')
       screen:expect([[
         ^                                                     |
-        ~                                                    |
-        ~                                                    |
-        ~                                                    |
-        ~                                                    |
-        ~                                                    |
-        ~                                                    |
-        ~                                                    |
-        ~                                                    |
-        ~                                                    |
-        ~                                                    |
-        ~                                                    |
-        ~                                                    |
+        ·                                                    |
+        ·                                                    |
+        ·                                                    |
+        ·                                                    |
+        ·                                                    |
+        ·                                                    |
+        ·                                                    |
+        ·                                                    |
+        ·                                                    |
+        ·                                                    |
+        ·                                                    |
+        ·                                                    |
         Type  :qa  and press <Enter> to exit Nvim            |
       ]])
     end)
@@ -293,18 +293,18 @@ describe('system()', function()
         or  'yes') .. '")<cr>')
       screen:expect([[
                                                              |
-        ~                                                    |
-        ~                                                    |
-        ~                                                    |
-        ~                                                    |
-        ~                                                    |
-        ~                                                    |
-        ~                                                    |
-        ~                                                    |
-        ~                                                    |
-        ~                                                    |
-        ~                                                    |
-        ~                                                    |
+        ·                                                    |
+        ·                                                    |
+        ·                                                    |
+        ·                                                    |
+        ·                                                    |
+        ·                                                    |
+        ·                                                    |
+        ·                                                    |
+        ·                                                    |
+        ·                                                    |
+        ·                                                    |
+        ·                                                    |
 ]] .. (is_os('win')
         and [[
         :call system("for /L %I in (1,0,2) do @echo y")      |]]
@@ -313,18 +313,18 @@ describe('system()', function()
       feed('foo<c-c>')
       screen:expect([[
         ^                                                     |
-        ~                                                    |
-        ~                                                    |
-        ~                                                    |
-        ~                                                    |
-        ~                                                    |
-        ~                                                    |
-        ~                                                    |
-        ~                                                    |
-        ~                                                    |
-        ~                                                    |
-        ~                                                    |
-        ~                                                    |
+        ·                                                    |
+        ·                                                    |
+        ·                                                    |
+        ·                                                    |
+        ·                                                    |
+        ·                                                    |
+        ·                                                    |
+        ·                                                    |
+        ·                                                    |
+        ·                                                    |
+        ·                                                    |
+        ·                                                    |
         -- INSERT --                                         |
       ]])
     end)
@@ -477,18 +477,18 @@ describe('systemlist()', function()
       feed(':call systemlist("echo")<cr>')
       screen:expect([[
         ^                                                     |
-        ~                                                    |
-        ~                                                    |
-        ~                                                    |
-        ~                                                    |
-        ~                                                    |
-        ~                                                    |
-        ~                                                    |
-        ~                                                    |
-        ~                                                    |
-        ~                                                    |
-        ~                                                    |
-        ~                                                    |
+        ·                                                    |
+        ·                                                    |
+        ·                                                    |
+        ·                                                    |
+        ·                                                    |
+        ·                                                    |
+        ·                                                    |
+        ·                                                    |
+        ·                                                    |
+        ·                                                    |
+        ·                                                    |
+        ·                                                    |
         :call systemlist("echo")                             |
       ]])
     end)
@@ -497,35 +497,35 @@ describe('systemlist()', function()
       feed(':call systemlist("yes | xargs")<cr>')
       screen:expect([[
                                                              |
-        ~                                                    |
-        ~                                                    |
-        ~                                                    |
-        ~                                                    |
-        ~                                                    |
-        ~                                                    |
-        ~                                                    |
-        ~                                                    |
-        ~                                                    |
-        ~                                                    |
-        ~                                                    |
-        ~                                                    |
+        ·                                                    |
+        ·                                                    |
+        ·                                                    |
+        ·                                                    |
+        ·                                                    |
+        ·                                                    |
+        ·                                                    |
+        ·                                                    |
+        ·                                                    |
+        ·                                                    |
+        ·                                                    |
+        ·                                                    |
         :call systemlist("yes | xargs")                      |
       ]])
       feed('<c-c>')
       screen:expect([[
         ^                                                     |
-        ~                                                    |
-        ~                                                    |
-        ~                                                    |
-        ~                                                    |
-        ~                                                    |
-        ~                                                    |
-        ~                                                    |
-        ~                                                    |
-        ~                                                    |
-        ~                                                    |
-        ~                                                    |
-        ~                                                    |
+        ·                                                    |
+        ·                                                    |
+        ·                                                    |
+        ·                                                    |
+        ·                                                    |
+        ·                                                    |
+        ·                                                    |
+        ·                                                    |
+        ·                                                    |
+        ·                                                    |
+        ·                                                    |
+        ·                                                    |
         Type  :qa  and press <Enter> to exit Nvim            |
       ]])
     end)

@@ -179,10 +179,10 @@ describe(':substitute', function()
       {1:o}ne                                                         |
       two                                                         |
       three                                                       |
-      {0:~                                                           }|
-      {0:~                                                           }|
-      {0:~                                                           }|
-      {0:~                                                           }|
+      {0:·                                                           }|
+      {0:·                                                           }|
+      {0:·                                                           }|
+      {0:·                                                           }|
       {2:replace with     (y/n/a/q/l/^E/^Y)?}^                         |
     ]])
   end)

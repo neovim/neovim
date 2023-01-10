@@ -168,9 +168,9 @@ describe('linebreak', function()
 
       Test 3: set linebreak nolist
           *mask = nil;    
-      ~                   
-      ~                   
-      ~                   
+      ·                   
+      ·                   
+      ·                   
       #define ABCDE		1
       #define ABCDEF		1
       #define ABCDEFG		1

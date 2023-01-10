@@ -110,14 +110,14 @@ describe(':lua command', function()
     feed('<cr>')
     screen:expect{grid=[[
       ^                                        |
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
+      {1:·                                       }|
+      {1:·                                       }|
+      {1:·                                       }|
+      {1:·                                       }|
+      {1:·                                       }|
+      {1:·                                       }|
+      {1:·                                       }|
+      {1:·                                       }|
                                               |
     ]]}
     eq('E5108: Error executing lua [string ":lua"]:1: fail\nmuch error\nsuch details', remove_trace(eval('v:errmsg')))

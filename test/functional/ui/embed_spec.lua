@@ -40,12 +40,12 @@ local function test_embed(ext_linegrid)
     feed('<cr>')
     screen:expect([[
       ^                                                            |
-      {3:~                                                           }|
-      {3:~                                                           }|
-      {3:~                                                           }|
-      {3:~                                                           }|
-      {3:~                                                           }|
-      {3:~                                                           }|
+      {3:·                                                           }|
+      {3:·                                                           }|
+      {3:·                                                           }|
+      {3:·                                                           }|
+      {3:·                                                           }|
+      {3:·                                                           }|
                                                                   |
     ]])
   end)
@@ -110,11 +110,11 @@ describe('--embed UI', function()
     screen:expect{grid=[[
       ^hello nvim                              |
       from external input                     |
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
+      {1:·                                       }|
+      {1:·                                       }|
+      {1:·                                       }|
+      {1:·                                       }|
+      {1:·                                       }|
                                               |
     ]]}
 
@@ -124,10 +124,10 @@ describe('--embed UI', function()
       hello nvim                              |
       ^                                        |
       from external input                     |
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
+      {1:·                                       }|
+      {1:·                                       }|
+      {1:·                                       }|
+      {1:·                                       }|
       {2:-- INSERT --}                            |
     ]]}
   end)

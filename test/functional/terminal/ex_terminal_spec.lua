@@ -161,8 +161,8 @@ describe(':terminal (with fake shell)', function()
     terminal_with_fake_shell()
     screen:expect([[
       ^                                                  |
-      ~                                                 |
-      ~                                                 |
+      ·                                                 |
+      ·                                                 |
       E91: 'shell' option is empty                      |
     ]])
   end)

@@ -68,9 +68,9 @@ describe('cmdline autocommands', function()
     feed(':')
     screen:expect([[
                                                                               |
-      {1:~                                                                       }|
-      {1:~                                                                       }|
-      {1:~                                                                       }|
+      {1:·                                                                       }|
+      {1:·                                                                       }|
+      {1:·                                                                       }|
       {4:                                                                        }|
       :                                                                       |
       {2:E5500: autocmd has thrown an exception: Vim(echoerr):FAIL}               |
@@ -94,11 +94,11 @@ describe('cmdline autocommands', function()
     screen:expect([[
                                                                               |
       ^lorem ipsum                                                             |
-      {1:~                                                                       }|
-      {1:~                                                                       }|
-      {1:~                                                                       }|
-      {1:~                                                                       }|
-      {1:~                                                                       }|
+      {1:·                                                                       }|
+      {1:·                                                                       }|
+      {1:·                                                                       }|
+      {1:·                                                                       }|
+      {1:·                                                                       }|
                                                                               |
     ]])
 
@@ -160,10 +160,10 @@ describe('cmdline autocommands', function()
                                                                               |
       lorem ipsum                                                             |
       ^lorem ipsum.                                                            |
-      {1:~                                                                       }|
-      {1:~                                                                       }|
-      {1:~                                                                       }|
-      {1:~                                                                       }|
+      {1:·                                                                       }|
+      {1:·                                                                       }|
+      {1:·                                                                       }|
+      {1:·                                                                       }|
                                                                               |
     ]])
   end)

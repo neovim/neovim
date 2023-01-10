@@ -69,16 +69,16 @@ describe('display', function()
 
     local screen1 = [[
       {1:^()}                  |
-      {0:~                   }|
-      {0:~                   }|
-      {0:~                   }|
+      {0:·                   }|
+      {0:·                   }|
+      {0:·                   }|
                           |
     ]]
     local screen2 = [[
       ^aa                  |
-      {0:~                   }|
-      {0:~                   }|
-      {0:~                   }|
+      {0:·                   }|
+      {0:·                   }|
+      {0:·                   }|
                           |
     ]]
 
@@ -128,10 +128,10 @@ describe('display', function()
       a│bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb|
       a│bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb|
       b│bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb                   |
-      b│{1:~                                                                        }|
-      b│{1:~                                                                        }|
-      b│{1:~                                                                        }|
-      {1:@}│{1:~                                                                        }|
+      b│{1:·                                                                        }|
+      b│{1:·                                                                        }|
+      b│{1:·                                                                        }|
+      {1:@}│{1:·                                                                        }|
       {2:< }{3:[No Name] [+]                                                            }|
                                                                                  |
     ]]):gsub('@', fillchar)))
@@ -145,10 +145,10 @@ describe('display', function()
       bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb│a|
       bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb│a|
       bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb                   │b|
-      {1:~                                                                        }│b|
-      {1:~                                                                        }│b|
-      {1:~                                                                        }│b|
-      {1:~                                                                        }│{1:@}|
+      {1:·                                                                        }│b|
+      {1:·                                                                        }│b|
+      {1:·                                                                        }│b|
+      {1:·                                                                        }│{1:@}|
       {2:[No Name] [+]                                                             }{3:<}|
                                                                                  |
     ]]):gsub('@', fillchar)))
@@ -178,10 +178,10 @@ describe('display', function()
       a │bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb|
       bb│bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb|
       bb│bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb                |
-      bb│{1:~                                                                       }|
-      bb│{1:~                                                                       }|
-      bb│{1:~                                                                       }|
-      {1:@@}│{1:~                                                                       }|
+      bb│{1:·                                                                       }|
+      bb│{1:·                                                                       }|
+      bb│{1:·                                                                       }|
+      {1:@@}│{1:·                                                                       }|
       {2:<  }{3:[No Name] [+]                                                           }|
                                                                                  |
     ]]):gsub('@', fillchar)))

@@ -59,9 +59,9 @@ describe('visual block mode', function()
       {2:aaaaaa}^                        |
       {2:bbbb   }                       |
       {2:cc     }                       |
-      {3:~                             }|
-      {3:~                             }|
-      {3:~                             }|
+      {3:·                             }|
+      {3:·                             }|
+      {3:·                             }|
       {1:-- VISUAL BLOCK --}            |
     ]])
 
@@ -70,9 +70,9 @@ describe('visual block mode', function()
       {2:aaaaaa }                       |
       {2:bbbb   }                       |
       {2:cc}^ {2:    }                       |
-      {3:~                             }|
-      {3:~                             }|
-      {3:~                             }|
+      {3:·                             }|
+      {3:·                             }|
+      {3:·                             }|
       {1:-- VISUAL BLOCK --}            |
     ]])
   end)

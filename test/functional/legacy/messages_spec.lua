@@ -33,18 +33,18 @@ describe('messages', function()
     feed('u')
     screen:expect({grid = [[
                                                                                  |
-      {0:~                                                                          }|
-      {0:~                                                                          }|
-      {0:~                                                                          }|
-      {0:~                                                                          }|
+      {0:·                                                                          }|
+      {0:·                                                                          }|
+      {0:·                                                                          }|
+      {0:·                                                                          }|
       {3:W10: Warning: Changing a readonly file}^                                     |
     ]], timeout = 500})
     screen:expect([[
       ^                                                                           |
-      {0:~                                                                          }|
-      {0:~                                                                          }|
-      {0:~                                                                          }|
-      {0:~                                                                          }|
+      {0:·                                                                          }|
+      {0:·                                                                          }|
+      {0:·                                                                          }|
+      {0:·                                                                          }|
       Already at oldest change                                                   |
     ]])
   end)
@@ -412,13 +412,13 @@ describe('messages', function()
       command('mode')  -- FIXME: bottom is invalid after scrolling
       screen:expect([[
         ^                                                            |
-        {0:~                                                           }|
-        {0:~                                                           }|
-        {0:~                                                           }|
-        {0:~                                                           }|
-        {0:~                                                           }|
-        {0:~                                                           }|
-        {0:~                                                           }|
+        {0:·                                                           }|
+        {0:·                                                           }|
+        {0:·                                                           }|
+        {0:·                                                           }|
+        {0:·                                                           }|
+        {0:·                                                           }|
+        {0:·                                                           }|
                                                                     |
                                                                     |
       ]])
@@ -489,14 +489,14 @@ describe('messages', function()
       feed('q')
       screen:expect([[
         ^                                        |
-        {0:~                                       }|
-        {0:~                                       }|
-        {0:~                                       }|
-        {0:~                                       }|
-        {0:~                                       }|
-        {0:~                                       }|
-        {0:~                                       }|
-        {0:~                                       }|
+        {0:·                                       }|
+        {0:·                                       }|
+        {0:·                                       }|
+        {0:·                                       }|
+        {0:·                                       }|
+        {0:·                                       }|
+        {0:·                                       }|
+        {0:·                                       }|
                                                 |
       ]])
     end)
@@ -525,18 +525,18 @@ describe('messages', function()
       feed('i')
       screen:expect([[
         ^                                        |
-        {1:~                                       }|
-        {1:~                                       }|
-        {1:~                                       }|
+        {1:·                                       }|
+        {1:·                                       }|
+        {1:·                                       }|
         {3:                                        }|
         {2:-- INSERT --}                            |
       ]])
       feed('<C-C>')
       screen:expect([[
         ^                                        |
-        {1:~                                       }|
-        {1:~                                       }|
-        {1:~                                       }|
+        {1:·                                       }|
+        {1:·                                       }|
+        {1:·                                       }|
         {3:                                        }|
                                                 |
       ]])
@@ -551,18 +551,18 @@ describe('messages', function()
       feed('i')
       screen:expect([[
         ^                                        |
-        {1:~                                       }|
-        {1:~                                       }|
-        {1:~                                       }|
+        {1:·                                       }|
+        {1:·                                       }|
+        {1:·                                       }|
         {3:[No Name]                               }|
         {2:-- INSERT --}                            |
       ]])
       feed('<Esc>')
       screen:expect([[
         ^                                        |
-        {1:~                                       }|
-        {1:~                                       }|
-        {1:~                                       }|
+        {1:·                                       }|
+        {1:·                                       }|
+        {1:·                                       }|
         {3:[No Name]                               }|
                                                 |
       ]])
@@ -573,19 +573,19 @@ describe('messages', function()
       feed('i<C-O>')
       screen:expect([[
         ^                                        |
-        {1:~                                       }|
-        {1:~                                       }|
-        {1:~                                       }|
-        {1:~                                       }|
+        {1:·                                       }|
+        {1:·                                       }|
+        {1:·                                       }|
+        {1:·                                       }|
         {2:-- (insert) --}                          |
       ]])
       feed('<C-C>')
       screen:expect([[
         ^                                        |
-        {1:~                                       }|
-        {1:~                                       }|
-        {1:~                                       }|
-        {1:~                                       }|
+        {1:·                                       }|
+        {1:·                                       }|
+        {1:·                                       }|
+        {1:·                                       }|
                                                 |
       ]])
     end)
@@ -607,18 +607,18 @@ describe('messages', function()
     screen:expect([[
       1                                                                          |
       2                                                                          |
-      {0:~                                                                          }|
-      {0:~                                                                          }|
-      {0:~                                                                          }|
+      {0:·                                                                          }|
+      {0:·                                                                          }|
+      {0:·                                                                          }|
       {1:Backwards range given, OK to swap (y/n)?}^                                   |
     ]])
     feed('n')
     screen:expect([[
       ^1                                                                          |
       2                                                                          |
-      {0:~                                                                          }|
-      {0:~                                                                          }|
-      {0:~                                                                          }|
+      {0:·                                                                          }|
+      {0:·                                                                          }|
+      {0:·                                                                          }|
       {1:Backwards range given, OK to swap (y/n)?}n                                  |
     ]])
 
@@ -626,18 +626,18 @@ describe('messages', function()
     screen:expect([[
       1                                                                          |
       2                                                                          |
-      {0:~                                                                          }|
-      {0:~                                                                          }|
-      {0:~                                                                          }|
+      {0:·                                                                          }|
+      {0:·                                                                          }|
+      {0:·                                                                          }|
       {1:Backwards range given, OK to swap (y/n)?}^                                   |
     ]])
     feed('<Esc>')
     screen:expect([[
       ^1                                                                          |
       2                                                                          |
-      {0:~                                                                          }|
-      {0:~                                                                          }|
-      {0:~                                                                          }|
+      {0:·                                                                          }|
+      {0:·                                                                          }|
+      {0:·                                                                          }|
       {1:Backwards range given, OK to swap (y/n)?}n                                  |
     ]])
 
@@ -645,18 +645,18 @@ describe('messages', function()
     screen:expect([[
       1                                                                          |
       2                                                                          |
-      {0:~                                                                          }|
-      {0:~                                                                          }|
-      {0:~                                                                          }|
+      {0:·                                                                          }|
+      {0:·                                                                          }|
+      {0:·                                                                          }|
       {1:Backwards range given, OK to swap (y/n)?}^                                   |
     ]])
     feed('y')
     screen:expect([[
       y1                                                                         |
       ^y2                                                                         |
-      {0:~                                                                          }|
-      {0:~                                                                          }|
-      {0:~                                                                          }|
+      {0:·                                                                          }|
+      {0:·                                                                          }|
+      {0:·                                                                          }|
       {1:Backwards range given, OK to swap (y/n)?}y                                  |
     ]])
   end)
@@ -685,10 +685,10 @@ describe('messages', function()
     feed('0$')
     screen:expect([[
       ^hi                                      |
-      {0:~                                       }|
-      {0:~                                       }|
-      {0:~                                       }|
-      {0:~                                       }|
+      {0:·                                       }|
+      {0:·                                       }|
+      {0:·                                       }|
+      {0:·                                       }|
       'b' written                             |
     ]])
     os.remove('b.txt')

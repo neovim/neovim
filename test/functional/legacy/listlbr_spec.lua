@@ -158,15 +158,15 @@ describe('listlbr', function()
       Test 4: set linebreak with tab and 1 line as long as screen: should break!
       1                   
       +aaaaaaaaaaaaaaaaaa 
-      ~                   
-      ~                   
+      ·                   
+      ·                   
       _S_	 bla
 
       Test 5: set linebreak with conceal and set list and tab displayed by different char (line may not be truncated)
       Sabbbbbb bla        
-      ~                   
-      ~                   
-      ~                   
+      ·                   
+      ·                   
+      ·                   
       Test 6: set linebreak with visual block mode
       this not
       aaaaaaaaaaaaa
@@ -194,7 +194,7 @@ describe('listlbr', function()
       a_                  
       aaaaaaaaaaaaaaaaaaaa
       aa>-----a-$         
-      ~                   ]])
+      ·                   ]])
   end)
 
   -- oldtest: Test_linebreak_reset_restore()
@@ -217,18 +217,18 @@ describe('listlbr', function()
     screen:expect([[
       aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa          |
       bbbbbbbbbb {1:c}^                                                |
-      {0:~                                                           }|
-      {0:~                                                           }|
-      {0:~                                                           }|
+      {0:·                                                           }|
+      {0:·                                                           }|
+      {0:·                                                           }|
                                                        2          |
     ]])
     feed('zo')
     screen:expect([[
       aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa          |
       bbbbbbbbbb ^c                                                |
-      {0:~                                                           }|
-      {0:~                                                           }|
-      {0:~                                                           }|
+      {0:·                                                           }|
+      {0:·                                                           }|
+      {0:·                                                           }|
       {2:E490: No fold found}                                         |
     ]])
 
@@ -236,18 +236,18 @@ describe('listlbr', function()
     screen:expect([[
       aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa          |
       bbbbbbbbbb {1:c}^                                                |
-      {0:~                                                           }|
-      {0:~                                                           }|
-      {0:~                                                           }|
+      {0:·                                                           }|
+      {0:·                                                           }|
+      {0:·                                                           }|
       {2:E490: No fold found}                              2          |
     ]])
     feed('gq')
     screen:expect([[
       aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa          |
       bbbbbbbbbb ^c                                                |
-      {0:~                                                           }|
-      {0:~                                                           }|
-      {0:~                                                           }|
+      {0:·                                                           }|
+      {0:·                                                           }|
+      {0:·                                                           }|
       {2:E490: No fold found}                                         |
     ]])
 
@@ -255,18 +255,18 @@ describe('listlbr', function()
     screen:expect([[
       aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa          |
       bbbbbbbbbb {1:c}^                                                |
-      {0:~                                                           }|
-      {0:~                                                           }|
-      {0:~                                                           }|
+      {0:·                                                           }|
+      {0:·                                                           }|
+      {0:·                                                           }|
       {2:E490: No fold found}                              1x2        |
     ]])
     feed('I')
     screen:expect([[
       aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa          |
       bbbbbbbbbb ^c                                                |
-      {0:~                                                           }|
-      {0:~                                                           }|
-      {0:~                                                           }|
+      {0:·                                                           }|
+      {0:·                                                           }|
+      {0:·                                                           }|
       {2:E490: No fold found}                                         |
     ]])
 
@@ -274,18 +274,18 @@ describe('listlbr', function()
     screen:expect([[
       aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa          |
       bbbbbbbbbb {1:c}^                                                |
-      {0:~                                                           }|
-      {0:~                                                           }|
-      {0:~                                                           }|
+      {0:·                                                           }|
+      {0:·                                                           }|
+      {0:·                                                           }|
       {2:E490: No fold found}                              2          |
     ]])
     feed('s')
     screen:expect([[
       aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa          |
       bbbbbbbbbb ^                                                 |
-      {0:~                                                           }|
-      {0:~                                                           }|
-      {0:~                                                           }|
+      {0:·                                                           }|
+      {0:·                                                           }|
+      {0:·                                                           }|
       {2:E490: No fold found}                                         |
     ]])
   end)

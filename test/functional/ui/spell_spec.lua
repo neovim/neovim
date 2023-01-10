@@ -45,7 +45,7 @@ describe("'spell'", function()
     {1:e} {1:irure} dolor in {1:reprehenderit} in {1:voluptate} {1:velit} {1:esse} {1:cillum} {1:dolore} {1:eu} {1:fugiat} {1:n}|
     {1:ulla} {1:pariatur}. {1:Excepteur} {1:sint} {1:occaecat} {1:cupidatat} non {1:proident}, {1:sunt} in culpa {1:qui}|
      {1:officia} {1:deserunt} {1:mollit} {1:anim} id est {1:laborum}.                                   |
-    {0:~                                                                               }|
+    {0:·                                                                               }|
                                                                                     |
     ]])
 
@@ -84,22 +84,22 @@ describe("'spell'", function()
     screen:expect([[
       {3:#include }{4:<stdbool.h>}                                                            |
       {5:bool} func({5:void})^;                                                                |
-      {0:~                                                                               }|
-      {0:~                                                                               }|
-      {0:~                                                                               }|
-      {0:~                                                                               }|
-      {0:~                                                                               }|
+      {0:·                                                                               }|
+      {0:·                                                                               }|
+      {0:·                                                                               }|
+      {0:·                                                                               }|
+      {0:·                                                                               }|
                                                                                       |
     ]])
     feed('[s')
     screen:expect([[
       {3:#include }{4:<stdbool.h>}                                                            |
       {5:bool} func({5:void})^;                                                                |
-      {0:~                                                                               }|
-      {0:~                                                                               }|
-      {0:~                                                                               }|
-      {0:~                                                                               }|
-      {0:~                                                                               }|
+      {0:·                                                                               }|
+      {0:·                                                                               }|
+      {0:·                                                                               }|
+      {0:·                                                                               }|
+      {0:·                                                                               }|
       {6:search hit TOP, continuing at BOTTOM}                                            |
     ]])
     -- "noplainbuffer" shouldn't change spellchecking behavior with syntax enabled
@@ -109,11 +109,11 @@ describe("'spell'", function()
     screen:expect([[
       {3:#include }{4:<stdbool.h>}                                                            |
       {5:bool} func({5:void})^;                                                                |
-      {0:~                                                                               }|
-      {0:~                                                                               }|
-      {0:~                                                                               }|
-      {0:~                                                                               }|
-      {0:~                                                                               }|
+      {0:·                                                                               }|
+      {0:·                                                                               }|
+      {0:·                                                                               }|
+      {0:·                                                                               }|
+      {0:·                                                                               }|
       {6:search hit BOTTOM, continuing at TOP}                                            |
     ]])
     -- no spellchecking with "noplainbuffer" and syntax disabled
@@ -121,22 +121,22 @@ describe("'spell'", function()
     screen:expect([[
       #include <stdbool.h>                                                            |
       bool func(void)^;                                                                |
-      {0:~                                                                               }|
-      {0:~                                                                               }|
-      {0:~                                                                               }|
-      {0:~                                                                               }|
-      {0:~                                                                               }|
+      {0:·                                                                               }|
+      {0:·                                                                               }|
+      {0:·                                                                               }|
+      {0:·                                                                               }|
+      {0:·                                                                               }|
       {6:search hit BOTTOM, continuing at TOP}                                            |
     ]])
     feed('[s')
     screen:expect([[
       #include <stdbool.h>                                                            |
       bool func(void)^;                                                                |
-      {0:~                                                                               }|
-      {0:~                                                                               }|
-      {0:~                                                                               }|
-      {0:~                                                                               }|
-      {0:~                                                                               }|
+      {0:·                                                                               }|
+      {0:·                                                                               }|
+      {0:·                                                                               }|
+      {0:·                                                                               }|
+      {0:·                                                                               }|
       {6:search hit TOP, continuing at BOTTOM}                                            |
     ]])
     -- everything is spellchecked without "noplainbuffer" with syntax disabled
@@ -144,22 +144,22 @@ describe("'spell'", function()
     screen:expect([[
       #include <{1:stdbool}.h>                                                            |
       {1:bool} {1:func}(void)^;                                                                |
-      {0:~                                                                               }|
-      {0:~                                                                               }|
-      {0:~                                                                               }|
-      {0:~                                                                               }|
-      {0:~                                                                               }|
+      {0:·                                                                               }|
+      {0:·                                                                               }|
+      {0:·                                                                               }|
+      {0:·                                                                               }|
+      {0:·                                                                               }|
       {6:search hit TOP, continuing at BOTTOM}                                            |
     ]])
     feed(']s')
     screen:expect([[
       #include <{1:^stdbool}.h>                                                            |
       {1:bool} {1:func}(void);                                                                |
-      {0:~                                                                               }|
-      {0:~                                                                               }|
-      {0:~                                                                               }|
-      {0:~                                                                               }|
-      {0:~                                                                               }|
+      {0:·                                                                               }|
+      {0:·                                                                               }|
+      {0:·                                                                               }|
+      {0:·                                                                               }|
+      {0:·                                                                               }|
       {6:search hit BOTTOM, continuing at TOP}                                            |
     ]])
   end)

@@ -133,9 +133,9 @@ describe('timers', function()
     screen:expect([[
       ^ITEM 1                                  |
       ITEM 2                                  |
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
+      {1:·                                       }|
+      {1:·                                       }|
+      {1:·                                       }|
                                               |
     ]])
     nvim_async("command", "let g:cont = 1")
@@ -144,8 +144,8 @@ describe('timers', function()
       ^ITEM 1                                  |
       ITEM 2                                  |
       ITEM 3                                  |
-      {1:~                                       }|
-      {1:~                                       }|
+      {1:·                                       }|
+      {1:·                                       }|
                                               |
     ]])
 
@@ -155,8 +155,8 @@ describe('timers', function()
       ^ITEM 1                                  |
       ITEM 2                                  |
       ITEM 3                                  |
-      {1:~                                       }|
-      {1:~                                       }|
+      {1:·                                       }|
+      {1:·                                       }|
                                               |
     ]], unchanged=true}
   end)
@@ -244,20 +244,20 @@ describe('timers', function()
     feed(":good")
     screen:expect([[
                                               |
-      {0:~                                       }|
-      {0:~                                       }|
-      {0:~                                       }|
-      {0:~                                       }|
+      {0:·                                       }|
+      {0:·                                       }|
+      {0:·                                       }|
+      {0:·                                       }|
       :good^                                   |
     ]])
     command('let g:val = 1')
 
     screen:expect{grid=[[
                                               |
-      {0:~                                       }|
-      {0:~                                       }|
-      {0:~                                       }|
-      {0:~                                       }|
+      {0:·                                       }|
+      {0:·                                       }|
+      {0:·                                       }|
+      {0:·                                       }|
       :good^                                   |
     ]], intermediate=true, timeout=load_adjust(200)}
 

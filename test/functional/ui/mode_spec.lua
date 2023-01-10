@@ -24,24 +24,24 @@ describe('ui mode_change event', function()
   it('works in normal mode', function()
     screen:expect{grid=[[
       ^                         |
-      {0:~                        }|
-      {0:~                        }|
+      {0:·                        }|
+      {0:·                        }|
                                |
     ]], mode="normal"}
 
     feed('d')
     screen:expect{grid=[[
       ^                         |
-      {0:~                        }|
-      {0:~                        }|
+      {0:·                        }|
+      {0:·                        }|
                                |
     ]], mode="operator"}
 
     feed('<esc>')
     screen:expect{grid=[[
       ^                         |
-      {0:~                        }|
-      {0:~                        }|
+      {0:·                        }|
+      {0:·                        }|
                                |
     ]], mode="normal"}
 
@@ -51,16 +51,16 @@ describe('ui mode_change event', function()
     feed('c')
     screen:expect{grid=[[
       ^                                                  |
-      {0:~                                                 }|
-      {0:~                                                 }|
+      {0:·                                                 }|
+      {0:·                                                 }|
                                                         |
     ]], mode="operator"}
 
     feed('c')
     screen:expect{grid=[[
       ^                                                  |
-      {0:~                                                 }|
-      {0:~                                                 }|
+      {0:·                                                 }|
+      {0:·                                                 }|
       {4:E21: Cannot make changes, 'modifiable' is off}     |
     ]], mode="normal"}
   end)
@@ -69,16 +69,16 @@ describe('ui mode_change event', function()
     feed('i')
     screen:expect{grid=[[
       ^                         |
-      {0:~                        }|
-      {0:~                        }|
+      {0:·                        }|
+      {0:·                        }|
       {2:-- INSERT --}             |
     ]], mode="insert"}
 
     feed('word<esc>')
     screen:expect{grid=[[
       wor^d                     |
-      {0:~                        }|
-      {0:~                        }|
+      {0:·                        }|
+      {0:·                        }|
                                |
     ]], mode="normal"}
 
@@ -92,23 +92,23 @@ describe('ui mode_change event', function()
       feed('a(stuff')
       screen:expect{grid=[[
         word(stuff^               |
-        {0:~                        }|
-        {0:~                        }|
+        {0:·                        }|
+        {0:·                        }|
         {2:-- INSERT --}             |
       ]], mode="insert", timeout=screen_timeout}
 
       feed(')')
       screen:expect{grid=[[
         word^(stuff)              |
-        {0:~                        }|
-        {0:~                        }|
+        {0:·                        }|
+        {0:·                        }|
         {2:-- INSERT --}             |
       ]], mode="showmatch", timeout=screen_timeout}
 
       screen:expect{grid=[[
         word(stuff)^              |
-        {0:~                        }|
-        {0:~                        }|
+        {0:·                        }|
+        {0:·                        }|
         {2:-- INSERT --}             |
       ]], mode="insert", timeout=screen_timeout}
     end)
@@ -118,16 +118,16 @@ describe('ui mode_change event', function()
     feed('R')
     screen:expect{grid=[[
       ^                         |
-      {0:~                        }|
-      {0:~                        }|
+      {0:·                        }|
+      {0:·                        }|
       {2:-- REPLACE --}            |
     ]], mode="replace"}
 
     feed('word<esc>')
     screen:expect{grid=[[
       wor^d                     |
-      {0:~                        }|
-      {0:~                        }|
+      {0:·                        }|
+      {0:·                        }|
                                |
     ]], mode="normal"}
   end)
@@ -136,24 +136,24 @@ describe('ui mode_change event', function()
     feed(':')
     screen:expect{grid=[[
                                |
-      {0:~                        }|
-      {0:~                        }|
+      {0:·                        }|
+      {0:·                        }|
       :^                        |
     ]], mode="cmdline_normal"}
 
     feed('x<left>')
     screen:expect{grid=[[
                                |
-      {0:~                        }|
-      {0:~                        }|
+      {0:·                        }|
+      {0:·                        }|
       :^x                       |
     ]], mode="cmdline_insert"}
 
     feed('<insert>')
     screen:expect{grid=[[
                                |
-      {0:~                        }|
-      {0:~                        }|
+      {0:·                        }|
+      {0:·                        }|
       :^x                       |
     ]], mode="cmdline_replace"}
 
@@ -161,16 +161,16 @@ describe('ui mode_change event', function()
     feed('<right>')
     screen:expect{grid=[[
                                |
-      {0:~                        }|
-      {0:~                        }|
+      {0:·                        }|
+      {0:·                        }|
       :x^                       |
     ]], mode="cmdline_normal"}
 
     feed('<esc>')
     screen:expect{grid=[[
       ^                         |
-      {0:~                        }|
-      {0:~                        }|
+      {0:·                        }|
+      {0:·                        }|
                                |
     ]], mode="normal"}
   end)
@@ -180,16 +180,16 @@ describe('ui mode_change event', function()
     feed('v')
     screen:expect{grid=[[
       tex^t                     |
-      {0:~                        }|
-      {0:~                        }|
+      {0:·                        }|
+      {0:·                        }|
       {2:-- VISUAL --}             |
     ]], mode="visual"}
 
     feed('<esc>')
     screen:expect{grid=[[
       tex^t                     |
-      {0:~                        }|
-      {0:~                        }|
+      {0:·                        }|
+      {0:·                        }|
                                |
     ]], mode="normal"}
 
@@ -197,16 +197,16 @@ describe('ui mode_change event', function()
     feed('v')
     screen:expect{grid=[[
       tex^t                     |
-      {0:~                        }|
-      {0:~                        }|
+      {0:·                        }|
+      {0:·                        }|
       {2:-- VISUAL --}             |
     ]], mode="visual_select"}
 
     feed('<esc>')
     screen:expect{grid=[[
       tex^t                     |
-      {0:~                        }|
-      {0:~                        }|
+      {0:·                        }|
+      {0:·                        }|
                                |
     ]], mode="normal"}
   end)

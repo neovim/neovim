@@ -28,8 +28,8 @@ describe('startup defaults', function()
       command('filetype')
       screen:expect([[
         ^                                                  |
-        ~                                                 |
-        ~                                                 |
+        ·                                                 |
+        ·                                                 |
         ]]..expected
       )
     end
@@ -148,7 +148,7 @@ describe('startup defaults', function()
         1                        │1                       |
         ^+--  2 lines: 2··········│+--  2 lines: 2·········|
         4                        │4                       |
-        ~                        │~                       |
+        ·                        │·                       |
                                                           |
       ]])
 
@@ -158,7 +158,7 @@ describe('startup defaults', function()
         1                        |1                       |
         ^+--  2 lines: 2----------|+--  2 lines: 2---------|
         4                        |4                       |
-        ~                        |~                       |
+        ·                        |·                       |
                                                           |
       ]])
 
@@ -168,7 +168,7 @@ describe('startup defaults', function()
         1                        │1                       |
         ^+--  2 lines: 2----------│+--  2 lines: 2---------|
         4                        │4                       |
-        ~                        │~                       |
+        ·                        │·                       |
                                                           |
       ]])
 
@@ -178,7 +178,7 @@ describe('startup defaults', function()
         1                        |1                       |
         ^+--  2 lines: 2----------|+--  2 lines: 2---------|
         4                        |4                       |
-        ~                        |~                       |
+        ·                        |·                       |
                                                           |
       ]])
 
@@ -188,7 +188,7 @@ describe('startup defaults', function()
         1                        |1                       |
         ^+--  2 lines: 2··········|+--  2 lines: 2·········|
         4                        |4                       |
-        ~                        |~                       |
+        ·                        |·                       |
                                                           |
       ]])
     end)

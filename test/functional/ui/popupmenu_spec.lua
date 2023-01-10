@@ -47,11 +47,11 @@ describe('ui/ext_popupmenu', function()
     screen:expect{grid=[[
                                                                   |
       foo^                                                         |
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
+      {1:·                                                           }|
+      {1:·                                                           }|
+      {1:·                                                           }|
+      {1:·                                                           }|
+      {1:·                                                           }|
       {2:-- INSERT --}                                                |
     ]], popupmenu={
       items=expected,
@@ -63,11 +63,11 @@ describe('ui/ext_popupmenu', function()
     screen:expect{grid=[[
                                                                   |
       ^                                                            |
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
+      {1:·                                                           }|
+      {1:·                                                           }|
+      {1:·                                                           }|
+      {1:·                                                           }|
+      {1:·                                                           }|
       {2:-- INSERT --}                                                |
     ]], popupmenu={
       items=expected,
@@ -80,11 +80,11 @@ describe('ui/ext_popupmenu', function()
     screen:expect{grid=[[
                                                                   |
       ^                                                            |
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
+      {1:·                                                           }|
+      {1:·                                                           }|
+      {1:·                                                           }|
+      {1:·                                                           }|
+      {1:·                                                           }|
       {2:-- INSERT --}                                                |
     ]], popupmenu={
       items=expected,
@@ -96,11 +96,11 @@ describe('ui/ext_popupmenu', function()
     screen:expect{grid=[[
                                                                   |
       bar^                                                         |
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
+      {1:·                                                           }|
+      {1:·                                                           }|
+      {1:·                                                           }|
+      {1:·                                                           }|
+      {1:·                                                           }|
       {2:-- INSERT --}                                                |
     ]]}
   end)
@@ -110,11 +110,11 @@ describe('ui/ext_popupmenu', function()
     screen:expect{grid=[[
                                                                   |
       foo^                                                         |
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
+      {1:·                                                           }|
+      {1:·                                                           }|
+      {1:·                                                           }|
+      {1:·                                                           }|
+      {1:·                                                           }|
       {2:-- INSERT --}                                                |
     ]], popupmenu={
       items=expected,
@@ -126,11 +126,11 @@ describe('ui/ext_popupmenu', function()
     screen:expect{grid=[[
                                                                   |
       foo^                                                         |
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
+      {1:·                                                           }|
+      {1:·                                                           }|
+      {1:·                                                           }|
+      {1:·                                                           }|
+      {1:·                                                           }|
       {2:-- INSERT --}                                                |
     ]], popupmenu={
       items=expected,
@@ -142,11 +142,11 @@ describe('ui/ext_popupmenu', function()
     screen:expect{grid=[[
                                                                   |
       spam^                                                        |
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
+      {1:·                                                           }|
+      {1:·                                                           }|
+      {1:·                                                           }|
+      {1:·                                                           }|
+      {1:·                                                           }|
       {2:-- INSERT --}                                                |
     ]], popupmenu={
       items=expected,
@@ -158,11 +158,11 @@ describe('ui/ext_popupmenu', function()
     screen:expect([[
                                                                   |
       foo^                                                         |
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
+      {1:·                                                           }|
+      {1:·                                                           }|
+      {1:·                                                           }|
+      {1:·                                                           }|
+      {1:·                                                           }|
       {2:-- INSERT --}                                                |
     ]])
 
@@ -171,11 +171,11 @@ describe('ui/ext_popupmenu', function()
     screen:expect{grid=[[
                                                                   |
       foo^                                                         |
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
+      {1:·                                                           }|
+      {1:·                                                           }|
+      {1:·                                                           }|
+      {1:·                                                           }|
+      {1:·                                                           }|
       {2:-- INSERT --}                                                |
     ]], popupmenu={
       items=expected,
@@ -187,11 +187,11 @@ describe('ui/ext_popupmenu', function()
     screen:expect{grid=[[
                                                                   |
       foo^                                                         |
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
+      {1:·                                                           }|
+      {1:·                                                           }|
+      {1:·                                                           }|
+      {1:·                                                           }|
+      {1:·                                                           }|
       {2:-- INSERT --}                                                |
     ]], popupmenu={
       items=expected,
@@ -203,11 +203,11 @@ describe('ui/ext_popupmenu', function()
     screen:expect{grid=[[
                                                                   |
       bar^                                                         |
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
+      {1:·                                                           }|
+      {1:·                                                           }|
+      {1:·                                                           }|
+      {1:·                                                           }|
+      {1:·                                                           }|
       {2:-- INSERT --}                                                |
     ]], popupmenu={
       items=expected,
@@ -219,11 +219,11 @@ describe('ui/ext_popupmenu', function()
     screen:expect{grid=[[
                                                                   |
       ^                                                            |
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
+      {1:·                                                           }|
+      {1:·                                                           }|
+      {1:·                                                           }|
+      {1:·                                                           }|
+      {1:·                                                           }|
       {2:-- INSERT --}                                                |
     ]], popupmenu={
       items=expected,
@@ -235,11 +235,11 @@ describe('ui/ext_popupmenu', function()
     screen:expect{grid=[[
                                                                   |
       foo^                                                         |
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
+      {1:·                                                           }|
+      {1:·                                                           }|
+      {1:·                                                           }|
+      {1:·                                                           }|
+      {1:·                                                           }|
       {2:-- INSERT --}                                                |
     ]], popupmenu={
       items=expected,
@@ -251,11 +251,11 @@ describe('ui/ext_popupmenu', function()
     screen:expect([[
                                                                   |
       ^                                                            |
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
+      {1:·                                                           }|
+      {1:·                                                           }|
+      {1:·                                                           }|
+      {1:·                                                           }|
+      {1:·                                                           }|
       {2:-- INSERT --}                                                |
     ]])
 
@@ -273,11 +273,11 @@ describe('ui/ext_popupmenu', function()
     screen:expect({grid = [[
                                                                   |
                                                                   |
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
+      {1:·                                                           }|
+      {1:·                                                           }|
+      {1:·                                                           }|
+      {1:·                                                           }|
+      {1:·                                                           }|
       :sign define^                                                |
     ]], popupmenu = {
       items = expected_wildpum,
@@ -289,11 +289,11 @@ describe('ui/ext_popupmenu', function()
     screen:expect({grid = [[
                                                                   |
                                                                   |
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
+      {1:·                                                           }|
+      {1:·                                                           }|
+      {1:·                                                           }|
+      {1:·                                                           }|
+      {1:·                                                           }|
       :sign ^                                                      |
     ]], popupmenu = {
       items = expected_wildpum,
@@ -305,11 +305,11 @@ describe('ui/ext_popupmenu', function()
     screen:expect({grid = [[
                                                                   |
                                                                   |
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
+      {1:·                                                           }|
+      {1:·                                                           }|
+      {1:·                                                           }|
+      {1:·                                                           }|
+      {1:·                                                           }|
       :sign unplace^                                               |
     ]], popupmenu = {
       items = expected_wildpum,
@@ -321,11 +321,11 @@ describe('ui/ext_popupmenu', function()
     screen:expect({grid = [[
                                                                   |
                                                                   |
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
+      {1:·                                                           }|
+      {1:·                                                           }|
+      {1:·                                                           }|
+      {1:·                                                           }|
+      {1:·                                                           }|
       :sign ^                                                      |
     ]]})
 
@@ -333,11 +333,11 @@ describe('ui/ext_popupmenu', function()
     screen:expect({grid = [[
                                                                   |
                                                                   |
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
+      {1:·                                                           }|
+      {1:·                                                           }|
+      {1:·                                                           }|
+      {1:·                                                           }|
+      {1:·                                                           }|
       :sign define^                                                |
     ]], popupmenu = {
       items = expected_wildpum,
@@ -349,11 +349,11 @@ describe('ui/ext_popupmenu', function()
     screen:expect({grid = [[
                                                                   |
                                                                   |
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
+      {1:·                                                           }|
+      {1:·                                                           }|
+      {1:·                                                           }|
+      {1:·                                                           }|
+      {1:·                                                           }|
       :sign unplace^                                               |
     ]]})
 
@@ -363,11 +363,11 @@ describe('ui/ext_popupmenu', function()
       screen:expect{grid=[[
                                                                     |
         foo^                                                         |
-        {1:~                                                           }|
-        {1:~                                                           }|
-        {1:~                                                           }|
-        {1:~                                                           }|
-        {1:~                                                           }|
+        {1:·                                                           }|
+        {1:·                                                           }|
+        {1:·                                                           }|
+        {1:·                                                           }|
+        {1:·                                                           }|
         {2:-- INSERT --}                                                |
       ]], popupmenu={
         items=expected,
@@ -379,11 +379,11 @@ describe('ui/ext_popupmenu', function()
       screen:expect{grid=[[
                                                                     |
         spam^                                                        |
-        {1:~                                                           }|
-        {1:~                                                           }|
-        {1:~                                                           }|
-        {1:~                                                           }|
-        {1:~                                                           }|
+        {1:·                                                           }|
+        {1:·                                                           }|
+        {1:·                                                           }|
+        {1:·                                                           }|
+        {1:·                                                           }|
         {2:-- INSERT --}                                                |
       ]], popupmenu={
         items=expected,
@@ -395,11 +395,11 @@ describe('ui/ext_popupmenu', function()
       screen:expect{grid=[[
                                                                     |
         spam^                                                        |
-        {1:~                                                           }|
-        {1:~                                                           }|
-        {1:~                                                           }|
-        {1:~                                                           }|
-        {1:~                                                           }|
+        {1:·                                                           }|
+        {1:·                                                           }|
+        {1:·                                                           }|
+        {1:·                                                           }|
+        {1:·                                                           }|
         {2:-- INSERT --}                                                |
       ]], popupmenu={
         items=expected,
@@ -411,11 +411,11 @@ describe('ui/ext_popupmenu', function()
       screen:expect([[
                                                                     |
         bar^                                                         |
-        {1:~                                                           }|
-        {1:~                                                           }|
-        {1:~                                                           }|
-        {1:~                                                           }|
-        {1:~                                                           }|
+        {1:·                                                           }|
+        {1:·                                                           }|
+        {1:·                                                           }|
+        {1:·                                                           }|
+        {1:·                                                           }|
         {2:-- INSERT --}                                                |
       ]])
 
@@ -423,11 +423,11 @@ describe('ui/ext_popupmenu', function()
       screen:expect({grid = [[
                                                                     |
         bar                                                         |
-        {1:~                                                           }|
-        {1:~                                                           }|
-        {1:~                                                           }|
-        {1:~                                                           }|
-        {1:~                                                           }|
+        {1:·                                                           }|
+        {1:·                                                           }|
+        {1:·                                                           }|
+        {1:·                                                           }|
+        {1:·                                                           }|
         :sign define^                                                |
       ]], popupmenu = {
         items = expected_wildpum,
@@ -439,11 +439,11 @@ describe('ui/ext_popupmenu', function()
       screen:expect({grid = [[
                                                                     |
         bar                                                         |
-        {1:~                                                           }|
-        {1:~                                                           }|
-        {1:~                                                           }|
-        {1:~                                                           }|
-        {1:~                                                           }|
+        {1:·                                                           }|
+        {1:·                                                           }|
+        {1:·                                                           }|
+        {1:·                                                           }|
+        {1:·                                                           }|
         :sign list^                                                  |
       ]], popupmenu = {
         items = expected_wildpum,
@@ -455,11 +455,11 @@ describe('ui/ext_popupmenu', function()
       screen:expect({grid = [[
                                                                     |
         bar                                                         |
-        {1:~                                                           }|
-        {1:~                                                           }|
-        {1:~                                                           }|
-        {1:~                                                           }|
-        {1:~                                                           }|
+        {1:·                                                           }|
+        {1:·                                                           }|
+        {1:·                                                           }|
+        {1:·                                                           }|
+        {1:·                                                           }|
         :sign ^                                                      |
       ]], popupmenu = {
         items = expected_wildpum,
@@ -471,11 +471,11 @@ describe('ui/ext_popupmenu', function()
       screen:expect({grid = [[
                                                                     |
         bar                                                         |
-        {1:~                                                           }|
-        {1:~                                                           }|
-        {1:~                                                           }|
-        {1:~                                                           }|
-        {1:~                                                           }|
+        {1:·                                                           }|
+        {1:·                                                           }|
+        {1:·                                                           }|
+        {1:·                                                           }|
+        {1:·                                                           }|
         :sign jump^                                                  |
       ]]})
 
@@ -488,8 +488,8 @@ describe('ui/ext_popupmenu', function()
         {6:fo   x the foo }{1:                                             }|
         {7:bar            }{1:                                             }|
         {7:spam           }{1:                                             }|
-        {1:~                                                           }|
-        {1:~                                                           }|
+        {1:·                                                           }|
+        {1:·                                                           }|
         {2:-- INSERT --}                                                |
       ]])
 
@@ -500,8 +500,8 @@ describe('ui/ext_popupmenu', function()
         {7:fo   x the foo }{1:                                             }|
         {7:bar            }{1:                                             }|
         {6:spam           }{1:                                             }|
-        {1:~                                                           }|
-        {1:~                                                           }|
+        {1:·                                                           }|
+        {1:·                                                           }|
         {2:-- INSERT --}                                                |
       ]])
 
@@ -512,8 +512,8 @@ describe('ui/ext_popupmenu', function()
         {7:fo   x the foo }{1:                                             }|
         {7:bar            }{1:                                             }|
         {7:spam           }{1:                                             }|
-        {1:~                                                           }|
-        {1:~                                                           }|
+        {1:·                                                           }|
+        {1:·                                                           }|
         {2:-- INSERT --}                                                |
       ]])
 
@@ -521,11 +521,11 @@ describe('ui/ext_popupmenu', function()
       screen:expect([[
                                                                     |
         bar^                                                         |
-        {1:~                                                           }|
-        {1:~                                                           }|
-        {1:~                                                           }|
-        {1:~                                                           }|
-        {1:~                                                           }|
+        {1:·                                                           }|
+        {1:·                                                           }|
+        {1:·                                                           }|
+        {1:·                                                           }|
+        {1:·                                                           }|
         {2:-- INSERT --}                                                |
       ]])
 
@@ -533,11 +533,11 @@ describe('ui/ext_popupmenu', function()
       screen:expect([[
                                                                     |
         bar  {6: define         }                                       |
-        {1:~    }{7: jump           }{1:                                       }|
-        {1:~    }{7: list           }{1:                                       }|
-        {1:~    }{7: place          }{1:                                       }|
-        {1:~    }{7: undefine       }{1:                                       }|
-        {1:~    }{7: unplace        }{1:                                       }|
+        {1:·    }{7: jump           }{1:                                       }|
+        {1:·    }{7: list           }{1:                                       }|
+        {1:·    }{7: place          }{1:                                       }|
+        {1:·    }{7: undefine       }{1:                                       }|
+        {1:·    }{7: unplace        }{1:                                       }|
         :sign define^                                                |
       ]])
 
@@ -545,11 +545,11 @@ describe('ui/ext_popupmenu', function()
       screen:expect([[
                                                                     |
         bar  {7: define         }                                       |
-        {1:~    }{7: jump           }{1:                                       }|
-        {1:~    }{6: list           }{1:                                       }|
-        {1:~    }{7: place          }{1:                                       }|
-        {1:~    }{7: undefine       }{1:                                       }|
-        {1:~    }{7: unplace        }{1:                                       }|
+        {1:·    }{7: jump           }{1:                                       }|
+        {1:·    }{6: list           }{1:                                       }|
+        {1:·    }{7: place          }{1:                                       }|
+        {1:·    }{7: undefine       }{1:                                       }|
+        {1:·    }{7: unplace        }{1:                                       }|
         :sign list^                                                  |
       ]])
 
@@ -557,11 +557,11 @@ describe('ui/ext_popupmenu', function()
       screen:expect([[
                                                                     |
         bar  {7: define         }                                       |
-        {1:~    }{7: jump           }{1:                                       }|
-        {1:~    }{7: list           }{1:                                       }|
-        {1:~    }{7: place          }{1:                                       }|
-        {1:~    }{7: undefine       }{1:                                       }|
-        {1:~    }{7: unplace        }{1:                                       }|
+        {1:·    }{7: jump           }{1:                                       }|
+        {1:·    }{7: list           }{1:                                       }|
+        {1:·    }{7: place          }{1:                                       }|
+        {1:·    }{7: undefine       }{1:                                       }|
+        {1:·    }{7: unplace        }{1:                                       }|
         :sign ^                                                      |
       ]])
 
@@ -569,11 +569,11 @@ describe('ui/ext_popupmenu', function()
       screen:expect([[
                                                                     |
         bar                                                         |
-        {1:~                                                           }|
-        {1:~                                                           }|
-        {1:~                                                           }|
-        {1:~                                                           }|
-        {1:~                                                           }|
+        {1:·                                                           }|
+        {1:·                                                           }|
+        {1:·                                                           }|
+        {1:·                                                           }|
+        {1:·                                                           }|
         :sign jump^                                                  |
       ]])
     end
@@ -601,8 +601,8 @@ describe('ui/ext_popupmenu', function()
       {6:aa             }{1:                                             }|
       {7:bb             }{1:                                             }|
       {7:cc             }{1:                                             }|
-      {1:~                                                           }|
-      {1:~                                                           }|
+      {1:·                                                           }|
+      {1:·                                                           }|
       {2:-- Keyword Local completion (^N^P) }{5:match 1 of 3}             |
     ]])
 
@@ -613,8 +613,8 @@ describe('ui/ext_popupmenu', function()
       {7:aa             }{1:                                             }|
       {7:bb             }{1:                                             }|
       {6:cc             }{1:                                             }|
-      {1:~                                                           }|
-      {1:~                                                           }|
+      {1:·                                                           }|
+      {1:·                                                           }|
       {2:-- Keyword Local completion (^N^P) }{5:match 3 of 3}             |
     ]])
 
@@ -625,8 +625,8 @@ describe('ui/ext_popupmenu', function()
       {7:aa             }{1:                                             }|
       {7:bb             }{1:                                             }|
       {7:cc             }{1:                                             }|
-      {1:~                                                           }|
-      {1:~                                                           }|
+      {1:·                                                           }|
+      {1:·                                                           }|
       {2:-- Keyword Local completion (^N^P) }{8:Back at original}         |
     ]])
 
@@ -634,11 +634,11 @@ describe('ui/ext_popupmenu', function()
     screen:expect([[
       aa bb cc                                                    |
       bb^                                                          |
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
+      {1:·                                                           }|
+      {1:·                                                           }|
+      {1:·                                                           }|
+      {1:·                                                           }|
+      {1:·                                                           }|
       {2:-- INSERT --}                                                |
     ]])
   end)
@@ -680,11 +680,11 @@ describe('ui/ext_popupmenu', function()
       screen:expect{grid=[[
                                                                   |
       January^                                                     |
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
+      {1:·                                                           }|
+      {1:·                                                           }|
+      {1:·                                                           }|
+      {1:·                                                           }|
+      {1:·                                                           }|
       {2:-- INSERT --}                                                |
       ]], popupmenu={
         items=month_expected,
@@ -735,11 +735,11 @@ describe('ui/ext_popupmenu', function()
       screen:expect{grid=[[
                                                                   |
       January^                                                     |
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
+      {1:·                                                           }|
+      {1:·                                                           }|
+      {1:·                                                           }|
+      {1:·                                                           }|
+      {1:·                                                           }|
       {2:-- INSERT --}                                                |
       ]], popupmenu={
         items=month_expected,
@@ -791,11 +791,11 @@ describe('ui/ext_popupmenu', function()
     screen:expect{grid=[[
                                                                 |
     January^                                                     |
-    {1:~                                                           }|
-    {1:~                                                           }|
-    {1:~                                                           }|
-    {1:~                                                           }|
-    {1:~                                                           }|
+    {1:·                                                           }|
+    {1:·                                                           }|
+    {1:·                                                           }|
+    {1:·                                                           }|
+    {1:·                                                           }|
     {2:-- INSERT --}                                                |
     ]], popupmenu={
       items=month_expected,
@@ -806,11 +806,11 @@ describe('ui/ext_popupmenu', function()
     screen:expect{grid=[[
                                                                 |
     January^                                                     |
-    {1:~                                                           }|
-    {1:~                                                           }|
-    {1:~                                                           }|
-    {1:~                                                           }|
-    {1:~                                                           }|
+    {1:·                                                           }|
+    {1:·                                                           }|
+    {1:·                                                           }|
+    {1:·                                                           }|
+    {1:·                                                           }|
     {2:-- INSERT --}                                                |
     ]], popupmenu={
       items=month_expected,
@@ -836,14 +836,14 @@ describe('ui/ext_popupmenu', function()
     feed(':sign ')
     screen:expect([[
                                       |
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
       :sign ^                          |
     ]])
     eq(0, funcs.wildmenumode())
@@ -851,14 +851,14 @@ describe('ui/ext_popupmenu', function()
     feed('<tab>')
     screen:expect{grid=[[
                                       |
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
       :sign define^                    |
     ]], popupmenu={items=wild_expected, pos=0, anchor={1, 9, 6}}}
     eq(1, funcs.wildmenumode())
@@ -866,42 +866,42 @@ describe('ui/ext_popupmenu', function()
     feed('<left>')
     screen:expect{grid=[[
                                       |
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
       :sign ^                          |
     ]], popupmenu={items=wild_expected, pos=-1, anchor={1, 9, 6}}}
 
     feed('<left>')
     screen:expect{grid=[[
                                       |
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
       :sign unplace^                   |
     ]], popupmenu={items=wild_expected, pos=5, anchor={1, 9, 6}}}
 
     feed('x')
     screen:expect([[
                                       |
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
       :sign unplacex^                  |
     ]])
     feed('<esc>')
@@ -910,14 +910,14 @@ describe('ui/ext_popupmenu', function()
     feed(':sign <S-tab>')
     screen:expect{grid=[[
                                       |
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
       :sign unplace^                   |
     ]], popupmenu={items=wild_expected, pos=5, anchor={1, 9, 6}}}
     feed('<esc>')
@@ -929,13 +929,13 @@ describe('ui/ext_popupmenu', function()
     feed(':b lå<tab>')
     screen:expect{grid=[[
                                       |
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
       {4:långfile2                       }|
                                       |
-      {1:~                               }|
-      {1:~                               }|
+      {1:·                               }|
+      {1:·                               }|
       {3:långfile1                       }|
       :b långfile1^                    |
     ]], popupmenu={
@@ -978,12 +978,12 @@ describe('builtin popupmenu', function()
     screen:expect([[
       aa bb cc dd ee ff gg hh ii jj   |
       aa                              |
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
       {3:[No Name] [Preview][+]          }|
       aa bb cc dd ee ff gg hh ii jj   |
       aa^                              |
@@ -1016,12 +1016,12 @@ describe('builtin popupmenu', function()
       {n:hh             }{s: }{4:                }|
       aa bb cc dd ee ff gg hh ii jj   |
       aa                              |
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
       {3:[No Name] [Preview][+]          }|
       {2:-- }{5:match 1 of 10}                |
       ]])
@@ -1121,22 +1121,22 @@ describe('builtin popupmenu', function()
     screen:expect([[
       aaa aab aac         │aaa aab aac|
       ^                    │           |
-      {1:~                   }│{1:~          }|
-      {1:~                   }│{1:~          }|
-      {1:~                   }│{1:~          }|
-      {1:~                   }│{1:~          }|
-      {1:~                   }│{1:~          }|
-      {1:~                   }│{1:~          }|
-      {1:~                   }│{1:~          }|
-      {1:~                   }│{1:~          }|
-      {1:~                   }│{1:~          }|
-      {1:~                   }│{1:~          }|
-      {1:~                   }│{1:~          }|
-      {1:~                   }│{1:~          }|
-      {1:~                   }│{1:~          }|
-      {1:~                   }│{1:~          }|
-      {1:~                   }│{1:~          }|
-      {1:~                   }│{1:~          }|
+      {1:·                   }│{1:·          }|
+      {1:·                   }│{1:·          }|
+      {1:·                   }│{1:·          }|
+      {1:·                   }│{1:·          }|
+      {1:·                   }│{1:·          }|
+      {1:·                   }│{1:·          }|
+      {1:·                   }│{1:·          }|
+      {1:·                   }│{1:·          }|
+      {1:·                   }│{1:·          }|
+      {1:·                   }│{1:·          }|
+      {1:·                   }│{1:·          }|
+      {1:·                   }│{1:·          }|
+      {1:·                   }│{1:·          }|
+      {1:·                   }│{1:·          }|
+      {1:·                   }│{1:·          }|
+      {1:·                   }│{1:·          }|
       {4:[No Name] [+]        }{3:<Name] [+] }|
       :vsplit                         |
     ]])
@@ -1145,22 +1145,22 @@ describe('builtin popupmenu', function()
     screen:expect([[
       aaa aab aac         │aaa aab aac|
       bbb aaa^             │bbb aaa    |
-      {1:~  }{s: aaa            }{1: }│{1:~          }|
-      {1:~  }{n: aab            }{1: }│{1:~          }|
-      {1:~  }{n: aac            }{1: }│{1:~          }|
-      {1:~                   }│{1:~          }|
-      {1:~                   }│{1:~          }|
-      {1:~                   }│{1:~          }|
-      {1:~                   }│{1:~          }|
-      {1:~                   }│{1:~          }|
-      {1:~                   }│{1:~          }|
-      {1:~                   }│{1:~          }|
-      {1:~                   }│{1:~          }|
-      {1:~                   }│{1:~          }|
-      {1:~                   }│{1:~          }|
-      {1:~                   }│{1:~          }|
-      {1:~                   }│{1:~          }|
-      {1:~                   }│{1:~          }|
+      {1:·  }{s: aaa            }{1: }│{1:·          }|
+      {1:·  }{n: aab            }{1: }│{1:·          }|
+      {1:·  }{n: aac            }{1: }│{1:·          }|
+      {1:·                   }│{1:·          }|
+      {1:·                   }│{1:·          }|
+      {1:·                   }│{1:·          }|
+      {1:·                   }│{1:·          }|
+      {1:·                   }│{1:·          }|
+      {1:·                   }│{1:·          }|
+      {1:·                   }│{1:·          }|
+      {1:·                   }│{1:·          }|
+      {1:·                   }│{1:·          }|
+      {1:·                   }│{1:·          }|
+      {1:·                   }│{1:·          }|
+      {1:·                   }│{1:·          }|
+      {1:·                   }│{1:·          }|
       {4:[No Name] [+]        }{3:<Name] [+] }|
       {2:-- }{5:match 1 of 3}                 |
     ]])
@@ -1170,21 +1170,21 @@ describe('builtin popupmenu', function()
       aaa aab aac│aaa aab aac         |
       bbb aaa    │bbb aaa             |
       c aaa      │c aaa^               |
-      {1:~          }│{1:~}{s: aaa            }{1:   }|
-      {1:~          }│{1:~}{n: aab            }{1:   }|
-      {1:~          }│{1:~}{n: aac            }{1:   }|
-      {1:~          }│{1:~                   }|
-      {1:~          }│{1:~                   }|
-      {1:~          }│{1:~                   }|
-      {1:~          }│{1:~                   }|
-      {1:~          }│{1:~                   }|
-      {1:~          }│{1:~                   }|
-      {1:~          }│{1:~                   }|
-      {1:~          }│{1:~                   }|
-      {1:~          }│{1:~                   }|
-      {1:~          }│{1:~                   }|
-      {1:~          }│{1:~                   }|
-      {1:~          }│{1:~                   }|
+      {1:·          }│{1:·}{s: aaa            }{1:   }|
+      {1:·          }│{1:·}{n: aab            }{1:   }|
+      {1:·          }│{1:·}{n: aac            }{1:   }|
+      {1:·          }│{1:·                   }|
+      {1:·          }│{1:·                   }|
+      {1:·          }│{1:·                   }|
+      {1:·          }│{1:·                   }|
+      {1:·          }│{1:·                   }|
+      {1:·          }│{1:·                   }|
+      {1:·          }│{1:·                   }|
+      {1:·          }│{1:·                   }|
+      {1:·          }│{1:·                   }|
+      {1:·          }│{1:·                   }|
+      {1:·          }│{1:·                   }|
+      {1:·          }│{1:·                   }|
       {3:<Name] [+]  }{4:[No Name] [+]       }|
       {2:-- }{5:match 1 of 3}                 |
     ]])
@@ -1487,24 +1487,24 @@ describe('builtin popupmenu', function()
     funcs.complete(29, {'word', 'choice', 'text', 'thing'})
     screen:expect([[
       some long prefix before the ^    |
-      {1:~                        }{n: word  }|
-      {1:~                        }{n: choice}|
-      {1:~                        }{n: text  }|
-      {1:~                        }{n: thing }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
+      {1:·                        }{n: word  }|
+      {1:·                        }{n: choice}|
+      {1:·                        }{n: text  }|
+      {1:·                        }{n: thing }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
       {2:-- INSERT --}                    |
     ]])
 
@@ -1516,43 +1516,43 @@ describe('builtin popupmenu', function()
       {n:choice         }{1:                 }|
       {n:text           }{1:                 }|
       {s:thing          }{1:                 }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
       {2:-- INSERT --}                    |
     ]])
 
     feed('<c-p>')
     screen:expect([[
       some long prefix before the text|
-      {1:^~                        }{n: word  }|
-      {1:~                        }{n: choice}|
-      {1:~                        }{s: text  }|
-      {1:~                        }{n: thing }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
+      {1:^·                        }{n: word  }|
+      {1:·                        }{n: choice}|
+      {1:·                        }{s: text  }|
+      {1:·                        }{n: thing }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
       {2:-- INSERT --}                    |
     ]])
 
@@ -1564,19 +1564,19 @@ describe('builtin popupmenu', function()
       {n:choice         }{1:               }|
       {s:text           }{1:               }|
       {n:thing          }{1:               }|
-      {1:~                             }|
+      {1:·                             }|
       {2:-- INSERT --}                  |
     ]])
 
     screen:try_resize(50,8)
     screen:expect([[
       some long prefix before the text^                  |
-      {1:~                          }{n: word           }{1:       }|
-      {1:~                          }{n: choice         }{1:       }|
-      {1:~                          }{s: text           }{1:       }|
-      {1:~                          }{n: thing          }{1:       }|
-      {1:~                                                 }|
-      {1:~                                                 }|
+      {1:·                          }{n: word           }{1:       }|
+      {1:·                          }{n: choice         }{1:       }|
+      {1:·                          }{s: text           }{1:       }|
+      {1:·                          }{n: thing          }{1:       }|
+      {1:·                                                 }|
+      {1:·                                                 }|
       {2:-- INSERT --}                                      |
     ]])
 
@@ -1584,13 +1584,13 @@ describe('builtin popupmenu', function()
     screen:expect([[
       some long prefix before  |
       the text^                 |
-      {1:~  }{n: word           }{1:      }|
-      {1:~  }{n: choice         }{1:      }|
-      {1:~  }{s: text           }{1:      }|
-      {1:~  }{n: thing          }{1:      }|
-      {1:~                        }|
-      {1:~                        }|
-      {1:~                        }|
+      {1:·  }{n: word           }{1:      }|
+      {1:·  }{n: choice         }{1:      }|
+      {1:·  }{s: text           }{1:      }|
+      {1:·  }{n: thing          }{1:      }|
+      {1:·                        }|
+      {1:·                        }|
+      {1:·                        }|
       {2:-- INSERT --}             |
     ]])
 
@@ -1615,11 +1615,11 @@ describe('builtin popupmenu', function()
     screen:expect([[
       some long prefix    |
       before the text^     |
-      {1:~         }{n: word    }{1: }|
-      {1:~         }{n: choice  }{1: }|
-      {1:~         }{s: text    }{1: }|
-      {1:~         }{n: thing   }{1: }|
-      {1:~                   }|
+      {1:·         }{n: word    }{1: }|
+      {1:·         }{n: choice  }{1: }|
+      {1:·         }{s: text    }{1: }|
+      {1:·         }{n: thing   }{1: }|
+      {1:·                   }|
       {2:-- INSERT --}        |
     ]])
   end)
@@ -1632,24 +1632,24 @@ describe('builtin popupmenu', function()
     funcs.complete(29, {'word', 'choice', 'text', 'thing'})
     screen:expect([[
       some long prefix before the ^    |
-      {1:~                        }{n: word  }|
-      {1:~                        }{n: choice}|
-      {1:~                        }{n: text  }|
-      {1:~                        }{n: thing }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
+      {1:·                        }{n: word  }|
+      {1:·                        }{n: choice}|
+      {1:·                        }{n: text  }|
+      {1:·                        }{n: thing }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
       {2:-- INSERT --}                    |
     ]])
 
@@ -1658,12 +1658,12 @@ describe('builtin popupmenu', function()
       some long       |
       prefix before   |
       the ^            |
-      {1:~  }{n: word        }|
-      {1:~  }{n: choice      }|
-      {1:~  }{n: text        }|
-      {1:~  }{n: thing       }|
-      {1:~               }|
-      {1:~               }|
+      {1:·  }{n: word        }|
+      {1:·  }{n: choice      }|
+      {1:·  }{n: text        }|
+      {1:·  }{n: thing       }|
+      {1:·               }|
+      {1:·               }|
       {2:-- INSERT --}    |
     ]])
   end)
@@ -1673,24 +1673,24 @@ describe('builtin popupmenu', function()
     feed('isome rightleft ')
     screen:expect([[
                       ^  tfelthgir emos|
-      {1:                               ~}|
-      {1:                               ~}|
-      {1:                               ~}|
-      {1:                               ~}|
-      {1:                               ~}|
-      {1:                               ~}|
-      {1:                               ~}|
-      {1:                               ~}|
-      {1:                               ~}|
-      {1:                               ~}|
-      {1:                               ~}|
-      {1:                               ~}|
-      {1:                               ~}|
-      {1:                               ~}|
-      {1:                               ~}|
-      {1:                               ~}|
-      {1:                               ~}|
-      {1:                               ~}|
+      {1:                               ·}|
+      {1:                               ·}|
+      {1:                               ·}|
+      {1:                               ·}|
+      {1:                               ·}|
+      {1:                               ·}|
+      {1:                               ·}|
+      {1:                               ·}|
+      {1:                               ·}|
+      {1:                               ·}|
+      {1:                               ·}|
+      {1:                               ·}|
+      {1:                               ·}|
+      {1:                               ·}|
+      {1:                               ·}|
+      {1:                               ·}|
+      {1:                               ·}|
+      {1:                               ·}|
       {2:-- INSERT --}                    |
     ]])
 
@@ -1698,72 +1698,72 @@ describe('builtin popupmenu', function()
     funcs.complete(16, {'word', 'choice', 'text', 'thing'})
     screen:expect([[
                       ^  tfelthgir emos|
-      {1:  }{n:           drow}{1:              ~}|
-      {1:  }{n:         eciohc}{1:              ~}|
-      {1:  }{n:           txet}{1:              ~}|
-      {1:  }{n:          gniht}{1:              ~}|
-      {1:                               ~}|
-      {1:                               ~}|
-      {1:                               ~}|
-      {1:                               ~}|
-      {1:                               ~}|
-      {1:                               ~}|
-      {1:                               ~}|
-      {1:                               ~}|
-      {1:                               ~}|
-      {1:                               ~}|
-      {1:                               ~}|
-      {1:                               ~}|
-      {1:                               ~}|
-      {1:                               ~}|
+      {1:  }{n:           drow}{1:              ·}|
+      {1:  }{n:         eciohc}{1:              ·}|
+      {1:  }{n:           txet}{1:              ·}|
+      {1:  }{n:          gniht}{1:              ·}|
+      {1:                               ·}|
+      {1:                               ·}|
+      {1:                               ·}|
+      {1:                               ·}|
+      {1:                               ·}|
+      {1:                               ·}|
+      {1:                               ·}|
+      {1:                               ·}|
+      {1:                               ·}|
+      {1:                               ·}|
+      {1:                               ·}|
+      {1:                               ·}|
+      {1:                               ·}|
+      {1:                               ·}|
       {2:-- INSERT --}                    |
     ]])
 
     feed('<c-n>')
     screen:expect([[
                   ^ drow tfelthgir emos|
-      {1:  }{s:           drow}{1:              ~}|
-      {1:  }{n:         eciohc}{1:              ~}|
-      {1:  }{n:           txet}{1:              ~}|
-      {1:  }{n:          gniht}{1:              ~}|
-      {1:                               ~}|
-      {1:                               ~}|
-      {1:                               ~}|
-      {1:                               ~}|
-      {1:                               ~}|
-      {1:                               ~}|
-      {1:                               ~}|
-      {1:                               ~}|
-      {1:                               ~}|
-      {1:                               ~}|
-      {1:                               ~}|
-      {1:                               ~}|
-      {1:                               ~}|
-      {1:                               ~}|
+      {1:  }{s:           drow}{1:              ·}|
+      {1:  }{n:         eciohc}{1:              ·}|
+      {1:  }{n:           txet}{1:              ·}|
+      {1:  }{n:          gniht}{1:              ·}|
+      {1:                               ·}|
+      {1:                               ·}|
+      {1:                               ·}|
+      {1:                               ·}|
+      {1:                               ·}|
+      {1:                               ·}|
+      {1:                               ·}|
+      {1:                               ·}|
+      {1:                               ·}|
+      {1:                               ·}|
+      {1:                               ·}|
+      {1:                               ·}|
+      {1:                               ·}|
+      {1:                               ·}|
       {2:-- INSERT --}                    |
     ]])
 
     feed('<c-y>')
     screen:expect([[
                   ^ drow tfelthgir emos|
-      {1:                               ~}|
-      {1:                               ~}|
-      {1:                               ~}|
-      {1:                               ~}|
-      {1:                               ~}|
-      {1:                               ~}|
-      {1:                               ~}|
-      {1:                               ~}|
-      {1:                               ~}|
-      {1:                               ~}|
-      {1:                               ~}|
-      {1:                               ~}|
-      {1:                               ~}|
-      {1:                               ~}|
-      {1:                               ~}|
-      {1:                               ~}|
-      {1:                               ~}|
-      {1:                               ~}|
+      {1:                               ·}|
+      {1:                               ·}|
+      {1:                               ·}|
+      {1:                               ·}|
+      {1:                               ·}|
+      {1:                               ·}|
+      {1:                               ·}|
+      {1:                               ·}|
+      {1:                               ·}|
+      {1:                               ·}|
+      {1:                               ·}|
+      {1:                               ·}|
+      {1:                               ·}|
+      {1:                               ·}|
+      {1:                               ·}|
+      {1:                               ·}|
+      {1:                               ·}|
+      {1:                               ·}|
       {2:-- INSERT --}                    |
     ]])
 
@@ -1771,48 +1771,48 @@ describe('builtin popupmenu', function()
     feed('<esc>:sign ')
     screen:expect{grid=[[
                    drow tfelthgir emos|
-      {1:                               ~}|
-      {1:                               ~}|
-      {1:                               ~}|
-      {1:                               ~}|
-      {1:                               ~}|
-      {1:                               ~}|
-      {1:                               ~}|
-      {1:                               ~}|
-      {1:                               ~}|
-      {1:                               ~}|
-      {1:                               ~}|
-      {1:                               ~}|
-      {1:                               ~}|
-      {1:                               ~}|
-      {1:                               ~}|
-      {1:                               ~}|
-      {1:                               ~}|
-      {1:                               ~}|
+      {1:                               ·}|
+      {1:                               ·}|
+      {1:                               ·}|
+      {1:                               ·}|
+      {1:                               ·}|
+      {1:                               ·}|
+      {1:                               ·}|
+      {1:                               ·}|
+      {1:                               ·}|
+      {1:                               ·}|
+      {1:                               ·}|
+      {1:                               ·}|
+      {1:                               ·}|
+      {1:                               ·}|
+      {1:                               ·}|
+      {1:                               ·}|
+      {1:                               ·}|
+      {1:                               ·}|
       :sign ^                          |
     ]]}
 
     feed('<tab>')
     screen:expect{grid=[[
                    drow tfelthgir emos|
-      {1:                               ~}|
-      {1:                               ~}|
-      {1:                               ~}|
-      {1:                               ~}|
-      {1:                               ~}|
-      {1:                               ~}|
-      {1:                               ~}|
-      {1:                               ~}|
-      {1:                               ~}|
-      {1:                               ~}|
-      {1:                               ~}|
-      {1:                               ~}|
-      {1:     }{s: define         }{1:          ~}|
-      {1:     }{n: jump           }{1:          ~}|
-      {1:     }{n: list           }{1:          ~}|
-      {1:     }{n: place          }{1:          ~}|
-      {1:     }{n: undefine       }{1:          ~}|
-      {1:     }{n: unplace        }{1:          ~}|
+      {1:                               ·}|
+      {1:                               ·}|
+      {1:                               ·}|
+      {1:                               ·}|
+      {1:                               ·}|
+      {1:                               ·}|
+      {1:                               ·}|
+      {1:                               ·}|
+      {1:                               ·}|
+      {1:                               ·}|
+      {1:                               ·}|
+      {1:                               ·}|
+      {1:     }{s: define         }{1:          ·}|
+      {1:     }{n: jump           }{1:          ·}|
+      {1:     }{n: list           }{1:          ·}|
+      {1:     }{n: place          }{1:          ·}|
+      {1:     }{n: undefine       }{1:          ·}|
+      {1:     }{n: unplace        }{1:          ·}|
       :sign define^                    |
     ]]}
   end)
@@ -1829,7 +1829,7 @@ describe('builtin popupmenu', function()
       {n:choice         }{1:                         }|
       {n:text           }{1:                         }|
       {n:thing          }{1:                         }|
-      {1:~                                       }|
+      {1:·                                       }|
       {2:-- INSERT --}                            |
     ]])
 
@@ -1853,7 +1853,7 @@ describe('builtin popupmenu', function()
       {n:choice         }{1:                         }|
       {n:text           }{1:                         }|
       {n:thing          }{1:                         }|
-      {1:~                                       }|
+      {1:·                                       }|
       {2:-- INSERT --}                            |
     ]])
 
@@ -1865,7 +1865,7 @@ describe('builtin popupmenu', function()
       {s:choice         }{1:                         }|
       {n:text           }{1:                         }|
       {n:thing          }{1:                         }|
-      {1:~                                       }|
+      {1:·                                       }|
       {2:-- INSERT --}                            |
     ]])
 
@@ -1900,48 +1900,48 @@ describe('builtin popupmenu', function()
     funcs.complete(4, {{word='wordey', kind= 'x', menu='extrainfo'}, 'thing', {word='secret', abbr='sneaky', menu='bar'}})
     screen:expect([[
       xx wordey^                               |
-      {1:~ }{s: wordey x extrainfo }{1:                  }|
-      {1:~ }{n: thing              }{1:                  }|
-      {1:~ }{n: sneaky   bar       }{1:                  }|
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
+      {1:· }{s: wordey x extrainfo }{1:                  }|
+      {1:· }{n: thing              }{1:                  }|
+      {1:· }{n: sneaky   bar       }{1:                  }|
+      {1:·                                       }|
+      {1:·                                       }|
+      {1:·                                       }|
       {2:-- INSERT --}                            |
     ]])
 
     feed('<c-p>')
     screen:expect([[
       xx ^                                     |
-      {1:~ }{n: wordey x extrainfo }{1:                  }|
-      {1:~ }{n: thing              }{1:                  }|
-      {1:~ }{n: sneaky   bar       }{1:                  }|
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
+      {1:· }{n: wordey x extrainfo }{1:                  }|
+      {1:· }{n: thing              }{1:                  }|
+      {1:· }{n: sneaky   bar       }{1:                  }|
+      {1:·                                       }|
+      {1:·                                       }|
+      {1:·                                       }|
       {2:-- INSERT --}                            |
     ]])
 
     feed('<c-p>')
     screen:expect([[
       xx secret^                               |
-      {1:~ }{n: wordey x extrainfo }{1:                  }|
-      {1:~ }{n: thing              }{1:                  }|
-      {1:~ }{s: sneaky   bar       }{1:                  }|
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
+      {1:· }{n: wordey x extrainfo }{1:                  }|
+      {1:· }{n: thing              }{1:                  }|
+      {1:· }{s: sneaky   bar       }{1:                  }|
+      {1:·                                       }|
+      {1:·                                       }|
+      {1:·                                       }|
       {2:-- INSERT --}                            |
     ]])
 
     feed('<esc>')
     screen:expect([[
       xx secre^t                               |
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
+      {1:·                                       }|
+      {1:·                                       }|
+      {1:·                                       }|
+      {1:·                                       }|
+      {1:·                                       }|
+      {1:·                                       }|
                                               |
     ]])
   end)
@@ -1956,84 +1956,84 @@ describe('builtin popupmenu', function()
     feed(':sign ')
     screen:expect([[
                                       |
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
       :sign ^                          |
     ]])
 
     feed('<Tab>')
     screen:expect([[
                                       |
-      {1:~                               }|
-      {1:~                               }|
-      {1:~    }{s: define         }{1:           }|
-      {1:~    }{n: jump           }{1:           }|
-      {1:~    }{n: list           }{1:           }|
-      {1:~    }{n: place          }{1:           }|
-      {1:~    }{n: undefine       }{1:           }|
-      {1:~    }{n: unplace        }{1:           }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·    }{s: define         }{1:           }|
+      {1:·    }{n: jump           }{1:           }|
+      {1:·    }{n: list           }{1:           }|
+      {1:·    }{n: place          }{1:           }|
+      {1:·    }{n: undefine       }{1:           }|
+      {1:·    }{n: unplace        }{1:           }|
       :sign define^                    |
     ]])
 
     feed('<Right><Right>')
     screen:expect([[
                                       |
-      {1:~                               }|
-      {1:~                               }|
-      {1:~    }{n: define         }{1:           }|
-      {1:~    }{n: jump           }{1:           }|
-      {1:~    }{s: list           }{1:           }|
-      {1:~    }{n: place          }{1:           }|
-      {1:~    }{n: undefine       }{1:           }|
-      {1:~    }{n: unplace        }{1:           }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·    }{n: define         }{1:           }|
+      {1:·    }{n: jump           }{1:           }|
+      {1:·    }{s: list           }{1:           }|
+      {1:·    }{n: place          }{1:           }|
+      {1:·    }{n: undefine       }{1:           }|
+      {1:·    }{n: unplace        }{1:           }|
       :sign list^                      |
     ]])
 
     feed('<C-N>')
     screen:expect([[
                                       |
-      {1:~                               }|
-      {1:~                               }|
-      {1:~    }{n: define         }{1:           }|
-      {1:~    }{n: jump           }{1:           }|
-      {1:~    }{n: list           }{1:           }|
-      {1:~    }{s: place          }{1:           }|
-      {1:~    }{n: undefine       }{1:           }|
-      {1:~    }{n: unplace        }{1:           }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·    }{n: define         }{1:           }|
+      {1:·    }{n: jump           }{1:           }|
+      {1:·    }{n: list           }{1:           }|
+      {1:·    }{s: place          }{1:           }|
+      {1:·    }{n: undefine       }{1:           }|
+      {1:·    }{n: unplace        }{1:           }|
       :sign place^                     |
     ]])
 
     feed('<C-P>')
     screen:expect([[
                                       |
-      {1:~                               }|
-      {1:~                               }|
-      {1:~    }{n: define         }{1:           }|
-      {1:~    }{n: jump           }{1:           }|
-      {1:~    }{s: list           }{1:           }|
-      {1:~    }{n: place          }{1:           }|
-      {1:~    }{n: undefine       }{1:           }|
-      {1:~    }{n: unplace        }{1:           }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·    }{n: define         }{1:           }|
+      {1:·    }{n: jump           }{1:           }|
+      {1:·    }{s: list           }{1:           }|
+      {1:·    }{n: place          }{1:           }|
+      {1:·    }{n: undefine       }{1:           }|
+      {1:·    }{n: unplace        }{1:           }|
       :sign list^                      |
     ]])
 
     feed('<Left>')
     screen:expect([[
                                       |
-      {1:~                               }|
-      {1:~                               }|
-      {1:~    }{n: define         }{1:           }|
-      {1:~    }{s: jump           }{1:           }|
-      {1:~    }{n: list           }{1:           }|
-      {1:~    }{n: place          }{1:           }|
-      {1:~    }{n: undefine       }{1:           }|
-      {1:~    }{n: unplace        }{1:           }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·    }{n: define         }{1:           }|
+      {1:·    }{s: jump           }{1:           }|
+      {1:·    }{n: list           }{1:           }|
+      {1:·    }{n: place          }{1:           }|
+      {1:·    }{n: undefine       }{1:           }|
+      {1:·    }{n: unplace        }{1:           }|
       :sign jump^                      |
     ]])
 
@@ -2041,14 +2041,14 @@ describe('builtin popupmenu', function()
     feed('<C-E>')
     screen:expect([[
                                       |
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
       :sign ^                          |
     ]])
 
@@ -2056,14 +2056,14 @@ describe('builtin popupmenu', function()
     feed('<Tab><C-P><C-P><C-Y>')
     screen:expect([[
                                       |
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
       :sign unplace^                   |
     ]])
 
@@ -2071,42 +2071,42 @@ describe('builtin popupmenu', function()
     feed('<C-U>sign define <Tab>')
     screen:expect([[
                                       |
-      {1:~                               }|
-      {1:~                               }|
-      {1:~           }{s: culhl=         }{1:    }|
-      {1:~           }{n: icon=          }{1:    }|
-      {1:~           }{n: linehl=        }{1:    }|
-      {1:~           }{n: numhl=         }{1:    }|
-      {1:~           }{n: text=          }{1:    }|
-      {1:~           }{n: texthl=        }{1:    }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·           }{s: culhl=         }{1:    }|
+      {1:·           }{n: icon=          }{1:    }|
+      {1:·           }{n: linehl=        }{1:    }|
+      {1:·           }{n: numhl=         }{1:    }|
+      {1:·           }{n: text=          }{1:    }|
+      {1:·           }{n: texthl=        }{1:    }|
       :sign define culhl=^             |
     ]])
 
     feed('<Space><Tab>')
     screen:expect([[
                                       |
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                  }{s: culhl=     }{1: }|
-      {1:~                  }{n: icon=      }{1: }|
-      {1:~                  }{n: linehl=    }{1: }|
-      {1:~                  }{n: numhl=     }{1: }|
-      {1:~                  }{n: text=      }{1: }|
-      {1:~                  }{n: texthl=    }{1: }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                  }{s: culhl=     }{1: }|
+      {1:·                  }{n: icon=      }{1: }|
+      {1:·                  }{n: linehl=    }{1: }|
+      {1:·                  }{n: numhl=     }{1: }|
+      {1:·                  }{n: text=      }{1: }|
+      {1:·                  }{n: texthl=    }{1: }|
       :sign define culhl= culhl=^      |
     ]])
 
     feed('<C-U>e Xdi<Tab><Tab>')
     screen:expect([[
                                       |
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~      }{s: XdirA/         }{1:         }|
-      {1:~      }{n: XfileA         }{1:         }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·      }{s: XdirA/         }{1:         }|
+      {1:·      }{n: XfileA         }{1:         }|
       :e Xdir/XdirA/^                  |
     ]])
 
@@ -2114,14 +2114,14 @@ describe('builtin popupmenu', function()
     feed('<Down>')
     screen:expect([[
                                       |
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~            }{s: XdirB/         }{1:   }|
-      {1:~            }{n: XfileB         }{1:   }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·            }{s: XdirB/         }{1:   }|
+      {1:·            }{n: XfileB         }{1:   }|
       :e Xdir/XdirA/XdirB/^            |
     ]])
 
@@ -2129,14 +2129,14 @@ describe('builtin popupmenu', function()
     feed('<Up>')
     screen:expect([[
                                       |
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~      }{s: XdirA/         }{1:         }|
-      {1:~      }{n: XfileA         }{1:         }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·      }{s: XdirA/         }{1:         }|
+      {1:·      }{n: XfileA         }{1:         }|
       :e Xdir/XdirA/^                  |
     ]])
 
@@ -2145,12 +2145,12 @@ describe('builtin popupmenu', function()
     feed(':<C-U>sign <Tab><C-A>')
     screen:expect([[
                                       |
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
       {4:                                }|
       :sign define jump list place und|
       efine unplace^                   |
@@ -2160,12 +2160,12 @@ describe('builtin popupmenu', function()
     feed('<Left>')
     screen:expect([[
                                       |
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
       {4:                                }|
       :sign define jump list place und|
       efine unplac^e                   |
@@ -2177,11 +2177,11 @@ describe('builtin popupmenu', function()
     feed('<C-U>sign <Tab><C-D>')
     screen:expect([[
                                       |
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
       {4:                                }|
       :sign define                    |
       define                          |
@@ -2192,14 +2192,14 @@ describe('builtin popupmenu', function()
     feed('<C-U><CR>:sign <S-Tab><C-P>')
     screen:expect([[
                                       |
-      {1:~                               }|
-      {1:~                               }|
-      {1:~    }{n: define         }{1:           }|
-      {1:~    }{n: jump           }{1:           }|
-      {1:~    }{n: list           }{1:           }|
-      {1:~    }{n: place          }{1:           }|
-      {1:~    }{s: undefine       }{1:           }|
-      {1:~    }{n: unplace        }{1:           }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·    }{n: define         }{1:           }|
+      {1:·    }{n: jump           }{1:           }|
+      {1:·    }{n: list           }{1:           }|
+      {1:·    }{n: place          }{1:           }|
+      {1:·    }{s: undefine       }{1:           }|
+      {1:·    }{n: unplace        }{1:           }|
       :sign undefine^                  |
     ]])
 
@@ -2207,14 +2207,14 @@ describe('builtin popupmenu', function()
     feed('<C-U><CR>:sign <Tab><Esc>')
     screen:expect([[
       ^                                |
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
                                       |
     ]])
 
@@ -2222,14 +2222,14 @@ describe('builtin popupmenu', function()
     feed(':sign <Tab>x')
     screen:expect([[
                                       |
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
       :sign definex^                   |
     ]])
 
@@ -2240,10 +2240,10 @@ describe('builtin popupmenu', function()
       {3:[No Name]                       }|
       {1::}sign define                    |
       {1::}sign define^                    |
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
       {4:[Command Line]                  }|
       :sign define                    |
     ]])
@@ -2253,14 +2253,14 @@ describe('builtin popupmenu', function()
     feed(':sign u<Tab><C-N><C-N>')
     screen:expect([[
                                       |
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~    }{n: undefine       }{1:           }|
-      {1:~    }{n: unplace        }{1:           }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·    }{n: undefine       }{1:           }|
+      {1:·    }{n: unplace        }{1:           }|
       :sign u^                         |
     ]])
 
@@ -2268,10 +2268,10 @@ describe('builtin popupmenu', function()
     feed('<C-U>bu<Tab>')
     screen:expect([[
                                       |
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
       {s: bufdo          }{1:                }|
       {n: buffer         }{1:                }|
       {n: buffers        }{1:                }|
@@ -2283,14 +2283,14 @@ describe('builtin popupmenu', function()
     feed('<C-E><C-U>sign <Tab><BS>')
     screen:expect([[
                                       |
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
       :sign defin^                     |
     ]])
 
@@ -2298,14 +2298,14 @@ describe('builtin popupmenu', function()
     feed('<C-E><C-U>sign <Tab><C-W>')
     screen:expect([[
                                       |
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
       :sign ^                          |
     ]])
 
@@ -2313,14 +2313,14 @@ describe('builtin popupmenu', function()
     feed('<C-E><C-U>sign <Tab><C-U>')
     screen:expect([[
                                       |
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
       :^                               |
     ]])
 
@@ -2329,14 +2329,14 @@ describe('builtin popupmenu', function()
     feed('sign xyz<Esc>:sign <Tab><C-E><Up>')
     screen:expect([[
                                       |
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
       :sign xyz^                       |
     ]])
 
@@ -2347,9 +2347,9 @@ describe('builtin popupmenu', function()
     feed(':cn<Tab>')
     screen:expect([[
                                       |
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
       {4:                                }|
       :cn                             |
       cnewer       cnoreabbrev        |
@@ -2360,9 +2360,9 @@ describe('builtin popupmenu', function()
     feed('s')
     screen:expect([[
                                       |
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
       {4:                                }|
       :cn                             |
       cnewer       cnoreabbrev        |
@@ -2378,14 +2378,14 @@ describe('builtin popupmenu', function()
     feed(':e あいう/<Tab>')
     screen:expect([[
                                       |
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~        }{s: 123            }{1:       }|
-      {1:~        }{n: abc            }{1:       }|
-      {1:~        }{n: xyz            }{1:       }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·        }{s: 123            }{1:       }|
+      {1:·        }{n: abc            }{1:       }|
+      {1:·        }{n: xyz            }{1:       }|
       :e あいう/123^                   |
     ]])
 
@@ -2397,13 +2397,13 @@ describe('builtin popupmenu', function()
     feed(':b lå<tab>')
     screen:expect([[
                                       |
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
       {4:långfile2                       }|
                                       |
-      {1:~                               }|
-      {1:~ }{s: långfile1      }{1:              }|
+      {1:·                               }|
+      {1:· }{s: långfile1      }{1:              }|
       {3:lå}{n: långfile2      }{3:              }|
       :b långfile1^                    |
     ]])
@@ -2412,7 +2412,7 @@ describe('builtin popupmenu', function()
     screen:try_resize(20,6)
     screen:expect([[
                           |
-      {1:~                   }|
+      {1:·                   }|
       {4:långfile2           }|
         {s: långfile1      }  |
       {3:lå}{n: långfile2      }{3:  }|
@@ -2422,18 +2422,18 @@ describe('builtin popupmenu', function()
     screen:try_resize(50,15)
     screen:expect([[
                                                         |
-      {1:~                                                 }|
+      {1:·                                                 }|
       {4:långfile2                                         }|
                                                         |
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~ }{s: långfile1      }{1:                                }|
+      {1:·                                                 }|
+      {1:·                                                 }|
+      {1:·                                                 }|
+      {1:·                                                 }|
+      {1:·                                                 }|
+      {1:·                                                 }|
+      {1:·                                                 }|
+      {1:·                                                 }|
+      {1:· }{s: långfile1      }{1:                                }|
       {3:lå}{n: långfile2      }{3:                                }|
       :b långfile1^                                      |
     ]])
@@ -2444,18 +2444,18 @@ describe('builtin popupmenu', function()
     feed(':b lå<tab>')
     screen:expect([[
                                                         |
-      {1:~                                                 }|
+      {1:·                                                 }|
       {4:långfile2                                         }|
                                                         |
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~ }{n: långfile1      }{1:                                }|
+      {1:·                                                 }|
+      {1:·                                                 }|
+      {1:·                                                 }|
+      {1:·                                                 }|
+      {1:·                                                 }|
+      {1:·                                                 }|
+      {1:·                                                 }|
+      {1:·                                                 }|
+      {1:· }{n: långfile1      }{1:                                }|
       {3:lå}{n: långfile2      }{3:                                }|
       :b långfile^                                       |
     ]])
@@ -2469,19 +2469,19 @@ describe('builtin popupmenu', function()
     feed(':e compdir/<tab>')
     screen:expect([[
                                                         |
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~         }{s: file1          }{1:                        }|
-      {1:~         }{n: file2          }{1:                        }|
+      {1:·                                                 }|
+      {1:·                                                 }|
+      {1:·                                                 }|
+      {1:·                                                 }|
+      {1:·                                                 }|
+      {1:·                                                 }|
+      {1:·                                                 }|
+      {1:·                                                 }|
+      {1:·                                                 }|
+      {1:·                                                 }|
+      {1:·                                                 }|
+      {1:·         }{s: file1          }{1:                        }|
+      {1:·         }{n: file2          }{1:                        }|
       :e compdir/file1^                                  |
     ]])
   end)
@@ -2494,11 +2494,11 @@ describe('builtin popupmenu', function()
     feed(':echoerr "fail"|echoerr "error"<cr>')
     screen:expect{grid=[[
                                               |
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
+      {1:·                                       }|
+      {1:·                                       }|
+      {1:·                                       }|
+      {1:·                                       }|
+      {1:·                                       }|
       {4:                                        }|
       {6:fail}                                    |
       {6:error}                                   |
@@ -2508,11 +2508,11 @@ describe('builtin popupmenu', function()
     feed(':sign <tab>')
     screen:expect{grid=[[
                                               |
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~    }{s: define         }{1:                   }|
-      {1:~    }{n: jump           }{1:                   }|
-      {1:~    }{n: list           }{1:                   }|
+      {1:·                                       }|
+      {1:·                                       }|
+      {1:·    }{s: define         }{1:                   }|
+      {1:·    }{n: jump           }{1:                   }|
+      {1:·    }{n: list           }{1:                   }|
       {4:     }{n: place          }{4:                   }|
       {6:fail} {n: undefine       }                   |
       {6:error}{n: unplace        }                   |
@@ -2522,11 +2522,11 @@ describe('builtin popupmenu', function()
     feed('d')
     screen:expect{grid=[[
                                               |
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
+      {1:·                                       }|
+      {1:·                                       }|
+      {1:·                                       }|
+      {1:·                                       }|
+      {1:·                                       }|
       {4:                                        }|
       {6:fail}                                    |
       {6:error}                                   |
@@ -2545,12 +2545,12 @@ describe('builtin popupmenu', function()
     feed(':sign u<Tab>')
     screen:expect{grid=[[
                                     |
-      {1:~                             }|
-      {1:~                             }|
-      {1:~                             }|
-      {1:~                             }|
-      {1:~                             }|
-      {1:~                             }|
+      {1:·                             }|
+      {1:·                             }|
+      {1:·                             }|
+      {1:·                             }|
+      {1:·                             }|
+      {1:·                             }|
       :sign un^                      |
     ]]}
     eq(0, funcs.wildmenumode())
@@ -2559,12 +2559,12 @@ describe('builtin popupmenu', function()
     feed('<Tab>')
     screen:expect{grid=[[
                                     |
-      {1:~                             }|
-      {1:~                             }|
-      {1:~                             }|
-      {1:~                             }|
-      {1:~    }{s: undefine       }{1:         }|
-      {1:~    }{n: unplace        }{1:         }|
+      {1:·                             }|
+      {1:·                             }|
+      {1:·                             }|
+      {1:·                             }|
+      {1:·    }{s: undefine       }{1:         }|
+      {1:·    }{n: unplace        }{1:         }|
       :sign undefine^                |
     ]]}
     eq(1, funcs.wildmenumode())
@@ -2573,12 +2573,12 @@ describe('builtin popupmenu', function()
     feed('<Tab>')
     screen:expect{grid=[[
                                     |
-      {1:~                             }|
-      {1:~                             }|
-      {1:~                             }|
-      {1:~                             }|
-      {1:~    }{n: undefine       }{1:         }|
-      {1:~    }{s: unplace        }{1:         }|
+      {1:·                             }|
+      {1:·                             }|
+      {1:·                             }|
+      {1:·                             }|
+      {1:·    }{n: undefine       }{1:         }|
+      {1:·    }{s: unplace        }{1:         }|
       :sign unplace^                 |
     ]]}
   end)
@@ -2593,14 +2593,14 @@ describe('builtin popupmenu', function()
     feed(':sign <C-E><C-E>')
     screen:expect([[
                                     |
-      {1:~                             }|
-      {1:~                             }|
-      {1:~    }{s: define         }{1:         }|
-      {1:~    }{n: jump           }{1:         }|
-      {1:~    }{n: list           }{1:         }|
-      {1:~    }{n: place          }{1:         }|
-      {1:~    }{n: undefine       }{1:         }|
-      {1:~    }{n: unplace        }{1:         }|
+      {1:·                             }|
+      {1:·                             }|
+      {1:·    }{s: define         }{1:         }|
+      {1:·    }{n: jump           }{1:         }|
+      {1:·    }{n: list           }{1:         }|
+      {1:·    }{n: place          }{1:         }|
+      {1:·    }{n: undefine       }{1:         }|
+      {1:·    }{n: unplace        }{1:         }|
       :sign define^                  |
     ]])
     assert_alive()
@@ -2835,7 +2835,7 @@ describe('builtin popupmenu', function()
       {4:dolore}{5:dunt ut l}abore et dolore magna aliqua.                |
       Ut enim ad minim veniam, quis nostrud                       |
       laborum.                                                    |
-      {8:~                                                           }|
+      {8:·                                                           }|
       {9:-- Keyword Local completion (^N^P) }{10:match 1 of 3}             |
     ]])
   end)
@@ -2849,12 +2849,12 @@ describe('builtin popupmenu', function()
     funcs.complete(29, {'word', 'choice', 'text', 'thing'})
     screen:expect([[
       some long prefix before the ^    |
-      {1:~                       }{n: word  }{c: }|
-      {1:~                       }{n: choice}{s: }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
+      {1:·                       }{n: word  }{c: }|
+      {1:·                       }{n: choice}{s: }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
       {2:-- INSERT --}                    |
     ]])
   end)
@@ -2868,12 +2868,12 @@ describe('builtin popupmenu', function()
     funcs.complete(29, {'word', 'choice', 'text', 'thing'})
     screen:expect([[
       some long prefix before the ^    |
-      {1:~                        }{n: word  }|
-      {1:~                        }{n: choice}|
-      {1:~                        }{n: text  }|
-      {1:~                        }{n: thing }|
-      {1:~                               }|
-      {1:~                               }|
+      {1:·                        }{n: word  }|
+      {1:·                        }{n: choice}|
+      {1:·                        }{n: text  }|
+      {1:·                        }{n: thing }|
+      {1:·                               }|
+      {1:·                               }|
       {2:-- INSERT --}                    |
     ]])
   end)
@@ -2901,12 +2901,12 @@ describe('builtin popupmenu', function()
     funcs.complete(14, {'哦哦哦哦哦哦哦哦哦哦'})
     screen:expect([[
                    ^                   |
-      {1:~           }{n: 哦哦哦哦哦哦哦哦哦>}|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
+      {1:·           }{n: 哦哦哦哦哦哦哦哦哦>}|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
       {2:-- INSERT --}                    |
     ]])
   end)
@@ -2923,12 +2923,12 @@ describe('builtin popupmenu', function()
     funcs.complete(13, items)
     screen:expect([[
                   ^                    |
-      {1:~          }{n: 哦哦哦哦哦哦哦哦哦>}{c: }|
-      {1:~          }{n: 哦哦哦哦哦哦哦哦哦>}{c: }|
-      {1:~          }{n: 哦哦哦哦哦哦哦哦哦>}{s: }|
-      {1:~          }{n: 哦哦哦哦哦哦哦哦哦>}{s: }|
-      {1:~                               }|
-      {1:~                               }|
+      {1:·          }{n: 哦哦哦哦哦哦哦哦哦>}{c: }|
+      {1:·          }{n: 哦哦哦哦哦哦哦哦哦>}{c: }|
+      {1:·          }{n: 哦哦哦哦哦哦哦哦哦>}{s: }|
+      {1:·          }{n: 哦哦哦哦哦哦哦哦哦>}{s: }|
+      {1:·                               }|
+      {1:·                               }|
       {2:-- INSERT --}                    |
     ]])
   end)
@@ -2947,84 +2947,84 @@ describe('builtin popupmenu', function()
     feed('<RightMouse><4,0>')
     screen:expect([[
       ^popup menu test                 |
-      {1:~  }{n: foo }{1:                        }|
-      {1:~  }{n: bar }{1:                        }|
-      {1:~  }{n: baz }{1:                        }|
-      {1:~                               }|
+      {1:·  }{n: foo }{1:                        }|
+      {1:·  }{n: bar }{1:                        }|
+      {1:·  }{n: baz }{1:                        }|
+      {1:·                               }|
                                       |
     ]])
     feed('<Down>')
     screen:expect([[
       ^popup menu test                 |
-      {1:~  }{s: foo }{1:                        }|
-      {1:~  }{n: bar }{1:                        }|
-      {1:~  }{n: baz }{1:                        }|
-      {1:~                               }|
+      {1:·  }{s: foo }{1:                        }|
+      {1:·  }{n: bar }{1:                        }|
+      {1:·  }{n: baz }{1:                        }|
+      {1:·                               }|
                                       |
     ]])
     feed('<Down>')
     screen:expect([[
       ^popup menu test                 |
-      {1:~  }{n: foo }{1:                        }|
-      {1:~  }{s: bar }{1:                        }|
-      {1:~  }{n: baz }{1:                        }|
-      {1:~                               }|
+      {1:·  }{n: foo }{1:                        }|
+      {1:·  }{s: bar }{1:                        }|
+      {1:·  }{n: baz }{1:                        }|
+      {1:·                               }|
                                       |
     ]])
     feed('<CR>')
     screen:expect([[
       ^popup menu test                 |
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
       :let g:menustr = 'bar'          |
     ]])
     eq('bar', meths.get_var('menustr'))
     feed('<RightMouse><20,1>')
     screen:expect([[
       ^popup menu test                 |
-      {1:~                               }|
-      {1:~                  }{n: foo }{1:        }|
-      {1:~                  }{n: bar }{1:        }|
-      {1:~                  }{n: baz }{1:        }|
+      {1:·                               }|
+      {1:·                  }{n: foo }{1:        }|
+      {1:·                  }{n: bar }{1:        }|
+      {1:·                  }{n: baz }{1:        }|
       :let g:menustr = 'bar'          |
     ]])
     feed('<LeftMouse><22,4>')
     screen:expect([[
       ^popup menu test                 |
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
       :let g:menustr = 'baz'          |
     ]])
     eq('baz', meths.get_var('menustr'))
     feed('<RightMouse><4,0>')
     screen:expect([[
       ^popup menu test                 |
-      {1:~  }{n: foo }{1:                        }|
-      {1:~  }{n: bar }{1:                        }|
-      {1:~  }{n: baz }{1:                        }|
-      {1:~                               }|
+      {1:·  }{n: foo }{1:                        }|
+      {1:·  }{n: bar }{1:                        }|
+      {1:·  }{n: baz }{1:                        }|
+      {1:·                               }|
       :let g:menustr = 'baz'          |
     ]])
     feed('<RightDrag><6,3>')
     screen:expect([[
       ^popup menu test                 |
-      {1:~  }{n: foo }{1:                        }|
-      {1:~  }{n: bar }{1:                        }|
-      {1:~  }{s: baz }{1:                        }|
-      {1:~                               }|
+      {1:·  }{n: foo }{1:                        }|
+      {1:·  }{n: bar }{1:                        }|
+      {1:·  }{s: baz }{1:                        }|
+      {1:·                               }|
       :let g:menustr = 'baz'          |
     ]])
     feed('<RightRelease><6,1>')
     screen:expect([[
       ^popup menu test                 |
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
       :let g:menustr = 'foo'          |
     ]])
     eq('foo', meths.get_var('menustr'))
@@ -3032,30 +3032,30 @@ describe('builtin popupmenu', function()
     feed('<RightMouse><4,0>')
     screen:expect([[
       ^popup menu test                 |
-      {1:~  }{n: foo }{1:                        }|
-      {1:~  }{n: bar }{1:                        }|
-      {1:~  }{n: baz }{1:                        }|
-      {1:~                               }|
+      {1:·  }{n: foo }{1:                        }|
+      {1:·  }{n: bar }{1:                        }|
+      {1:·  }{n: baz }{1:                        }|
+      {1:·                               }|
       :let g:menustr = 'foo'          |
     ]])
     eq(true, screen.options.mousemoveevent)
     feed('<MouseMove><6,3>')
     screen:expect([[
       ^popup menu test                 |
-      {1:~  }{n: foo }{1:                        }|
-      {1:~  }{n: bar }{1:                        }|
-      {1:~  }{s: baz }{1:                        }|
-      {1:~                               }|
+      {1:·  }{n: foo }{1:                        }|
+      {1:·  }{n: bar }{1:                        }|
+      {1:·  }{s: baz }{1:                        }|
+      {1:·                               }|
       :let g:menustr = 'foo'          |
     ]])
     eq(true, screen.options.mousemoveevent)
     feed('<LeftMouse><6,2>')
     screen:expect([[
       ^popup menu test                 |
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
       :let g:menustr = 'bar'          |
     ]])
     eq(false, screen.options.mousemoveevent)
@@ -3087,22 +3087,22 @@ describe('builtin popupmenu', function()
       one two three four five         |
       and one two {7:^X}three four five    |
       one more tw{n: Undo             }   |
-      {1:~          }{n:                  }{1:   }|
-      {1:~          }{n: Paste            }{1:   }|
-      {1:~          }{n:                  }{1:   }|
-      {1:~          }{n: Select Word      }{1:   }|
-      {1:~          }{n: Select Sentence  }{1:   }|
-      {1:~          }{n: Select Paragraph }{1:   }|
-      {1:~          }{n: Select Line      }{1:   }|
-      {1:~          }{n: Select Block     }{1:   }|
-      {1:~          }{n: Select All       }{1:   }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
+      {1:·          }{n:                  }{1:   }|
+      {1:·          }{n: Paste            }{1:   }|
+      {1:·          }{n:                  }{1:   }|
+      {1:·          }{n: Select Word      }{1:   }|
+      {1:·          }{n: Select Sentence  }{1:   }|
+      {1:·          }{n: Select Paragraph }{1:   }|
+      {1:·          }{n: Select Line      }{1:   }|
+      {1:·          }{n: Select Block     }{1:   }|
+      {1:·          }{n: Select All       }{1:   }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
       :popup PopUp                    |
     ]])
 
@@ -3112,22 +3112,22 @@ describe('builtin popupmenu', function()
       one two three four five         |
       and one two {7:^X}three four five    |
       one more tw{n: Undo             }   |
-      {1:~          }{n:                  }{1:   }|
-      {1:~          }{s: Paste            }{1:   }|
-      {1:~          }{n:                  }{1:   }|
-      {1:~          }{n: Select Word      }{1:   }|
-      {1:~          }{n: Select Sentence  }{1:   }|
-      {1:~          }{n: Select Paragraph }{1:   }|
-      {1:~          }{n: Select Line      }{1:   }|
-      {1:~          }{n: Select Block     }{1:   }|
-      {1:~          }{n: Select All       }{1:   }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
+      {1:·          }{n:                  }{1:   }|
+      {1:·          }{s: Paste            }{1:   }|
+      {1:·          }{n:                  }{1:   }|
+      {1:·          }{n: Select Word      }{1:   }|
+      {1:·          }{n: Select Sentence  }{1:   }|
+      {1:·          }{n: Select Paragraph }{1:   }|
+      {1:·          }{n: Select Line      }{1:   }|
+      {1:·          }{n: Select Block     }{1:   }|
+      {1:·          }{n: Select All       }{1:   }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
       :popup PopUp                    |
     ]])
 
@@ -3137,22 +3137,22 @@ describe('builtin popupmenu', function()
       one two three four five         |
       and one two {7:^X}three four five    |
       one more tw{n: Undo             }   |
-      {1:~          }{n:                  }{1:   }|
-      {1:~          }{n: Paste            }{1:   }|
-      {1:~          }{n:                  }{1:   }|
-      {1:~          }{s: Select Word      }{1:   }|
-      {1:~          }{n: Select Sentence  }{1:   }|
-      {1:~          }{n: Select Paragraph }{1:   }|
-      {1:~          }{n: Select Line      }{1:   }|
-      {1:~          }{n: Select Block     }{1:   }|
-      {1:~          }{n: Select All       }{1:   }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
+      {1:·          }{n:                  }{1:   }|
+      {1:·          }{n: Paste            }{1:   }|
+      {1:·          }{n:                  }{1:   }|
+      {1:·          }{s: Select Word      }{1:   }|
+      {1:·          }{n: Select Sentence  }{1:   }|
+      {1:·          }{n: Select Paragraph }{1:   }|
+      {1:·          }{n: Select Line      }{1:   }|
+      {1:·          }{n: Select Block     }{1:   }|
+      {1:·          }{n: Select All       }{1:   }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
       :popup PopUp                    |
     ]])
 
@@ -3167,22 +3167,22 @@ describe('builtin popupmenu', function()
       one two three four five         |
       and one two {7:^X}three four five    |
       one more tw{n: Undo             }   |
-      {1:~          }{n:                  }{1:   }|
-      {1:~          }{n: Paste            }{1:   }|
-      {1:~          }{n:                  }{1:   }|
-      {1:~          }{n: Select Word      }{1:   }|
-      {1:~          }{n: Select Sentence  }{1:   }|
-      {1:~          }{n: Select Paragraph }{1:   }|
-      {1:~          }{n: Select Line      }{1:   }|
-      {1:~          }{n: Select Block     }{1:   }|
-      {1:~          }{n: Select All       }{1:   }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
+      {1:·          }{n:                  }{1:   }|
+      {1:·          }{n: Paste            }{1:   }|
+      {1:·          }{n:                  }{1:   }|
+      {1:·          }{n: Select Word      }{1:   }|
+      {1:·          }{n: Select Sentence  }{1:   }|
+      {1:·          }{n: Select Paragraph }{1:   }|
+      {1:·          }{n: Select Line      }{1:   }|
+      {1:·          }{n: Select Block     }{1:   }|
+      {1:·          }{n: Select All       }{1:   }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
       changed                         |
     ]])
 
@@ -3192,22 +3192,22 @@ describe('builtin popupmenu', function()
       one two three four five         |
       and one two {7:^X}three four five    |
       one more two three four five    |
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
       pasted                          |
     ]])
   end)
@@ -3252,12 +3252,12 @@ describe('builtin popupmenu with ui/ext_multigrid', function()
         [3:--------------------------------]|
       ## grid 2
                      ^                   |
-        {1:~                               }|
-        {1:~                               }|
-        {1:~                               }|
-        {1:~                               }|
-        {1:~                               }|
-        {1:~                               }|
+        {1:·                               }|
+        {1:·                               }|
+        {1:·                               }|
+        {1:·                               }|
+        {1:·                               }|
+        {1:·                               }|
       ## grid 3
         {2:-- INSERT --}                    |
       ## grid 4
@@ -3287,12 +3287,12 @@ describe('builtin popupmenu with ui/ext_multigrid', function()
         [3:--------------------------------]|
       ## grid 2
                     ^                    |
-        {1:~                               }|
-        {1:~                               }|
-        {1:~                               }|
-        {1:~                               }|
-        {1:~                               }|
-        {1:~                               }|
+        {1:·                               }|
+        {1:·                               }|
+        {1:·                               }|
+        {1:·                               }|
+        {1:·                               }|
+        {1:·                               }|
       ## grid 3
         {2:-- INSERT --}                    |
       ## grid 4
@@ -3325,10 +3325,10 @@ describe('builtin popupmenu with ui/ext_multigrid', function()
       [3:--------------------------------]|
     ## grid 2
       ^popup menu test                 |
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
     ## grid 3
                                       |
     ## grid 4
@@ -3347,10 +3347,10 @@ describe('builtin popupmenu with ui/ext_multigrid', function()
       [3:--------------------------------]|
     ## grid 2
       ^popup menu test                 |
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
     ## grid 3
       :let g:menustr = 'baz'          |
     ]]})
@@ -3366,10 +3366,10 @@ describe('builtin popupmenu with ui/ext_multigrid', function()
       [3:--------------------------------]|
     ## grid 2
       ^popup menu test                 |
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
     ## grid 3
       :let g:menustr = 'baz'          |
     ## grid 4
@@ -3388,10 +3388,10 @@ describe('builtin popupmenu with ui/ext_multigrid', function()
       [3:--------------------------------]|
     ## grid 2
       ^popup menu test                 |
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
     ## grid 3
       :let g:menustr = 'baz'          |
     ## grid 4
@@ -3410,10 +3410,10 @@ describe('builtin popupmenu with ui/ext_multigrid', function()
       [3:--------------------------------]|
     ## grid 2
       ^popup menu test                 |
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
     ## grid 3
       :let g:menustr = 'foo'          |
     ]]})
@@ -3430,10 +3430,10 @@ describe('builtin popupmenu with ui/ext_multigrid', function()
       [3:--------------------------------]|
     ## grid 2
       ^popup menu test                 |
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
     ## grid 3
       :let g:menustr = 'foo'          |
     ## grid 4
@@ -3453,10 +3453,10 @@ describe('builtin popupmenu with ui/ext_multigrid', function()
       [3:--------------------------------]|
     ## grid 2
       ^popup menu test                 |
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
     ## grid 3
       :let g:menustr = 'foo'          |
     ## grid 4
@@ -3476,10 +3476,10 @@ describe('builtin popupmenu with ui/ext_multigrid', function()
       [3:--------------------------------]|
     ## grid 2
       ^popup menu test                 |
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
+      {1:·                               }|
     ## grid 3
       :let g:menustr = 'bar'          |
     ]]})

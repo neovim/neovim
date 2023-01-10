@@ -51,14 +51,14 @@ describe('prompt buffer', function()
   it('works', function()
     screen:expect([[
       ^                         |
-      ~                        |
-      ~                        |
-      ~                        |
+      ·                        |
+      ·                        |
+      ·                        |
       [Prompt]                 |
       other buffer             |
-      ~                        |
-      ~                        |
-      ~                        |
+      ·                        |
+      ·                        |
+      ·                        |
                                |
     ]])
     feed("i")
@@ -70,22 +70,22 @@ describe('prompt buffer', function()
       cmd: ^                    |
       [Prompt] [+]             |
       other buffer             |
-      ~                        |
-      ~                        |
-      ~                        |
+      ·                        |
+      ·                        |
+      ·                        |
                                |
     ]])
     feed("exit\n")
     screen:expect([[
       ^other buffer             |
-      ~                        |
-      ~                        |
-      ~                        |
-      ~                        |
-      ~                        |
-      ~                        |
-      ~                        |
-      ~                        |
+      ·                        |
+      ·                        |
+      ·                        |
+      ·                        |
+      ·                        |
+      ·                        |
+      ·                        |
+      ·                        |
                                |
     ]])
   end)
@@ -93,80 +93,80 @@ describe('prompt buffer', function()
   it('editing', function()
     screen:expect([[
       ^                         |
-      ~                        |
-      ~                        |
-      ~                        |
+      ·                        |
+      ·                        |
+      ·                        |
       [Prompt]                 |
       other buffer             |
-      ~                        |
-      ~                        |
-      ~                        |
+      ·                        |
+      ·                        |
+      ·                        |
                                |
     ]])
     feed("i")
     feed("hello<BS><BS>")
     screen:expect([[
       cmd: hel^                 |
-      ~                        |
-      ~                        |
-      ~                        |
+      ·                        |
+      ·                        |
+      ·                        |
       [Prompt] [+]             |
       other buffer             |
-      ~                        |
-      ~                        |
-      ~                        |
+      ·                        |
+      ·                        |
+      ·                        |
                                |
     ]])
     feed("<Left><Left><Left><BS>-")
     screen:expect([[
       cmd: -^hel                |
-      ~                        |
-      ~                        |
-      ~                        |
+      ·                        |
+      ·                        |
+      ·                        |
       [Prompt] [+]             |
       other buffer             |
-      ~                        |
-      ~                        |
-      ~                        |
+      ·                        |
+      ·                        |
+      ·                        |
                                |
     ]])
     feed("<C-O>lz")
     screen:expect([[
       cmd: -hz^el               |
-      ~                        |
-      ~                        |
-      ~                        |
+      ·                        |
+      ·                        |
+      ·                        |
       [Prompt] [+]             |
       other buffer             |
-      ~                        |
-      ~                        |
-      ~                        |
+      ·                        |
+      ·                        |
+      ·                        |
                                |
     ]])
     feed("<End>x")
     screen:expect([[
       cmd: -hzelx^              |
-      ~                        |
-      ~                        |
-      ~                        |
+      ·                        |
+      ·                        |
+      ·                        |
       [Prompt] [+]             |
       other buffer             |
-      ~                        |
-      ~                        |
-      ~                        |
+      ·                        |
+      ·                        |
+      ·                        |
                                |
     ]])
     feed("<C-U>exit\n")
     screen:expect([[
       ^other buffer             |
-      ~                        |
-      ~                        |
-      ~                        |
-      ~                        |
-      ~                        |
-      ~                        |
-      ~                        |
-      ~                        |
+      ·                        |
+      ·                        |
+      ·                        |
+      ·                        |
+      ·                        |
+      ·                        |
+      ·                        |
+      ·                        |
                                |
     ]])
   end)
@@ -176,53 +176,53 @@ describe('prompt buffer', function()
     feed("i")
     screen:expect([[
       cmd: ^                    |
-      ~                        |
-      ~                        |
-      ~                        |
+      ·                        |
+      ·                        |
+      ·                        |
       [Prompt] [+]             |
       other buffer             |
-      ~                        |
-      ~                        |
-      ~                        |
+      ·                        |
+      ·                        |
+      ·                        |
       -- INSERT --             |
     ]])
     feed("<C-O>:call SwitchWindows()<CR>")
     screen:expect{grid=[[
       cmd:                     |
-      ~                        |
-      ~                        |
-      ~                        |
+      ·                        |
+      ·                        |
+      ·                        |
       [Prompt] [+]             |
       ^other buffer             |
-      ~                        |
-      ~                        |
-      ~                        |
+      ·                        |
+      ·                        |
+      ·                        |
                                |
     ]]}
     feed("<C-O>:call SwitchWindows()<CR>")
     screen:expect([[
       cmd: ^                    |
-      ~                        |
-      ~                        |
-      ~                        |
+      ·                        |
+      ·                        |
+      ·                        |
       [Prompt] [+]             |
       other buffer             |
-      ~                        |
-      ~                        |
-      ~                        |
+      ·                        |
+      ·                        |
+      ·                        |
       -- INSERT --             |
     ]])
     feed("<Esc>")
     screen:expect([[
       cmd:^                     |
-      ~                        |
-      ~                        |
-      ~                        |
+      ·                        |
+      ·                        |
+      ·                        |
       [Prompt] [+]             |
       other buffer             |
-      ~                        |
-      ~                        |
-      ~                        |
+      ·                        |
+      ·                        |
+      ·                        |
                                |
     ]])
   end)

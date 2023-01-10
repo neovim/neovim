@@ -105,25 +105,25 @@ describe('Screen', function()
     command('map <expr> x input("> ")')
     screen:expect([[
       ^                    |
-      ~                   |
-      ~                   |
-      ~                   |
+      ·                   |
+      ·                   |
+      ·                   |
                           |
     ]])
     feed('x')
     screen:expect([[
                           |
-      ~                   |
-      ~                   |
-      ~                   |
+      ·                   |
+      ·                   |
+      ·                   |
       > ^                  |
     ]])
     feed('\n')
     screen:expect([[
       ^                    |
-      ~                   |
-      ~                   |
-      ~                   |
+      ·                   |
+      ·                   |
+      ·                   |
       >                   |
     ]])
   end)
@@ -133,25 +133,25 @@ describe('Screen', function()
     feed('i')
     screen:expect([[
       ^                    |
-      ~                   |
-      ~                   |
-      ~                   |
+      ·                   |
+      ·                   |
+      ·                   |
       -- INSERT --        |
     ]])
     feed('x')
     screen:expect([[
                           |
-      ~                   |
-      ~                   |
-      ~                   |
+      ·                   |
+      ·                   |
+      ·                   |
       > ^                  |
     ]])
     feed('\n')
     screen:expect([[
       ^                    |
-      ~                   |
-      ~                   |
-      ~                   |
+      ·                   |
+      ·                   |
+      ·                   |
       >                   |
     ]])
   end)
@@ -161,9 +161,9 @@ describe('Screen', function()
     feed(':<F2>')
     screen:expect([[
                           |
-      ~                   |
-      ~                   |
-      ~                   |
+      ·                   |
+      ·                   |
+      ·                   |
       :^                   |
     ]])
   end)
@@ -210,9 +210,9 @@ describe('Screen', function()
     feed('<CR>')
     screen:expect([[
       ^                                        |
-      ~                                       |
-      ~                                       |
-      ~                                       |
+      ·                                       |
+      ·                                       |
+      ·                                       |
                                               |
     ]])
   end)
@@ -223,9 +223,9 @@ describe('Screen', function()
     feed(':echo "foo')
     screen:expect([[
                                               |
-      ~                                       |
-      ~                                       |
-      ~                                       |
+      ·                                       |
+      ·                                       |
+      ·                                       |
       :echo "foo^                              |
     ]])
     feed('<F2>')
@@ -261,9 +261,9 @@ describe('Screen', function()
     feed(':                      nmap a<CR>')
     screen:expect([[
       ^                                        |
-      ~                                       |
-      ~                                       |
-      ~                                       |
+      ·                                       |
+      ·                                       |
+      ·                                       |
       n  a             b                      |
     ]])
   end)

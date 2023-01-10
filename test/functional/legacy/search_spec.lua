@@ -700,8 +700,8 @@ describe('Search highlight', function()
       {2:xxx }                                              |
       {2:xxx }                                              |
       {2:^xxx }{3:                                              }|
-      {1:~                                                 }|
-      {1:~                                                 }|
+      {1:·                                                 }|
+      {1:·                                                 }|
       /\_.*                                             |
     ]])
   end)
@@ -729,8 +729,8 @@ describe('Search highlight', function()
       xxx {4:y}{5:yy}{3: zzz}                             |
       {3:xxx }{5:yyy}{3: zzz}                             |
       {3:xxx }{5:y}{4:^yy} zzz                             |
-      {1:~                                       }|
-      {1:~                                       }|
+      {1:·                                       }|
+      {1:·                                       }|
       {2:-- VISUAL --}                            |
     ]])
   end)

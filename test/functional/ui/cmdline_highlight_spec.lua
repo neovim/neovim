@@ -181,100 +181,100 @@ describe('Command-line coloring', function()
     start_prompt()
     screen:expect([[
                                               |
-      {EOB:~                                       }|
-      {EOB:~                                       }|
-      {EOB:~                                       }|
-      {EOB:~                                       }|
-      {EOB:~                                       }|
-      {EOB:~                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
       :^                                       |
     ]])
     feed('e')
     screen:expect([[
                                               |
-      {EOB:~                                       }|
-      {EOB:~                                       }|
-      {EOB:~                                       }|
-      {EOB:~                                       }|
-      {EOB:~                                       }|
-      {EOB:~                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
       :e^                                      |
     ]])
     feed('cho ')
     screen:expect([[
                                               |
-      {EOB:~                                       }|
-      {EOB:~                                       }|
-      {EOB:~                                       }|
-      {EOB:~                                       }|
-      {EOB:~                                       }|
-      {EOB:~                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
       :echo ^                                  |
     ]])
     feed('(')
     screen:expect([[
                                               |
-      {EOB:~                                       }|
-      {EOB:~                                       }|
-      {EOB:~                                       }|
-      {EOB:~                                       }|
-      {EOB:~                                       }|
-      {EOB:~                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
       :echo {RBP1:(}^                                 |
     ]])
     feed('(')
     screen:expect([[
                                               |
-      {EOB:~                                       }|
-      {EOB:~                                       }|
-      {EOB:~                                       }|
-      {EOB:~                                       }|
-      {EOB:~                                       }|
-      {EOB:~                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
       :echo {RBP1:(}{RBP2:(}^                                |
     ]])
     feed('42')
     screen:expect([[
                                               |
-      {EOB:~                                       }|
-      {EOB:~                                       }|
-      {EOB:~                                       }|
-      {EOB:~                                       }|
-      {EOB:~                                       }|
-      {EOB:~                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
       :echo {RBP1:(}{RBP2:(}42^                              |
     ]])
     feed('))')
     screen:expect([[
                                               |
-      {EOB:~                                       }|
-      {EOB:~                                       }|
-      {EOB:~                                       }|
-      {EOB:~                                       }|
-      {EOB:~                                       }|
-      {EOB:~                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
       :echo {RBP1:(}{RBP2:(}42{RBP2:)}{RBP1:)}^                            |
     ]])
     feed('<BS>')
     screen:expect([[
                                               |
-      {EOB:~                                       }|
-      {EOB:~                                       }|
-      {EOB:~                                       }|
-      {EOB:~                                       }|
-      {EOB:~                                       }|
-      {EOB:~                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
       :echo {RBP1:(}{RBP2:(}42{RBP2:)}^                             |
     ]])
     redraw_input()
     screen:expect{grid=[[
                                               |
-      {EOB:~                                       }|
-      {EOB:~                                       }|
-      {EOB:~                                       }|
-      {EOB:~                                       }|
-      {EOB:~                                       }|
-      {EOB:~                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
       :echo {RBP1:(}{RBP2:(}42{RBP2:)}^                             |
     ]], reset=true}
   end)
@@ -284,12 +284,12 @@ describe('Command-line coloring', function()
       start_prompt('echo')
       screen:expect([[
                                                 |
-        {EOB:~                                       }|
-        {EOB:~                                       }|
-        {EOB:~                                       }|
-        {EOB:~                                       }|
-        {EOB:~                                       }|
-        {EOB:~                                       }|
+        {EOB:·                                       }|
+        {EOB:·                                       }|
+        {EOB:·                                       }|
+        {EOB:·                                       }|
+        {EOB:·                                       }|
+        {EOB:·                                       }|
         :echo^                                   |
       ]])
     end)
@@ -300,8 +300,8 @@ describe('Command-line coloring', function()
     start_prompt('echo "«')
     screen:expect{grid=[[
                                               |
-      {EOB:~                                       }|
-      {EOB:~                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
       {MSEP:                                        }|
       :echo "                                 |
       {ERR:E5405: Chunk 0 start 7 splits multibyte }|
@@ -311,8 +311,8 @@ describe('Command-line coloring', function()
     feed('»')
     screen:expect([[
                                               |
-      {EOB:~                                       }|
-      {EOB:~                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
       {MSEP:                                        }|
       :echo "                                 |
       {ERR:E5405: Chunk 0 start 7 splits multibyte }|
@@ -326,8 +326,8 @@ describe('Command-line coloring', function()
     start_prompt('echo "«')
     screen:expect([[
                                               |
-      {EOB:~                                       }|
-      {EOB:~                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
       {MSEP:                                        }|
       :echo "                                 |
       {ERR:E5406: Chunk 0 end 7 splits multibyte ch}|
@@ -340,8 +340,8 @@ describe('Command-line coloring', function()
     start_prompt('e')
     screen:expect([[
                                               |
-      {EOB:~                                       }|
-      {EOB:~                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
       {MSEP:                                        }|
       :                                       |
       {ERR:E5407: Callback has thrown an exception:}|
@@ -354,12 +354,12 @@ describe('Command-line coloring', function()
     start_prompt('e')
     screen:expect([[
                                               |
-      {EOB:~                                       }|
-      {EOB:~                                       }|
-      {EOB:~                                       }|
-      {EOB:~                                       }|
-      {EOB:~                                       }|
-      {EOB:~                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
       :e^                                      |
     ]])
     eq('', meths.exec('messages', true))
@@ -369,12 +369,12 @@ describe('Command-line coloring', function()
     start_prompt('e')
     screen:expect([[
                                               |
-      {EOB:~                                       }|
-      {EOB:~                                       }|
-      {EOB:~                                       }|
-      {EOB:~                                       }|
-      {EOB:~                                       }|
-      {EOB:~                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
       :e^                                      |
     ]])
     eq('', meths.exec('messages', true))
@@ -384,12 +384,12 @@ describe('Command-line coloring', function()
     start_prompt('e')
     screen:expect([[
                                               |
-      {EOB:~                                       }|
-      {EOB:~                                       }|
-      {EOB:~                                       }|
-      {EOB:~                                       }|
-      {EOB:~                                       }|
-      {EOB:~                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
       :e^                                      |
     ]])
     eq('', meths.exec('messages', true))
@@ -399,8 +399,8 @@ describe('Command-line coloring', function()
     start_prompt('e')
     screen:expect([[
                                               |
-      {EOB:~                                       }|
-      {EOB:~                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
       {MSEP:                                        }|
       :                                       |
       {ERR:E5407: Callback has thrown an exception:}|
@@ -413,8 +413,8 @@ describe('Command-line coloring', function()
     start_prompt('let x = "«»«»«»«»«»"')
     screen:expect([[
                                               |
-      {EOB:~                                       }|
-      {EOB:~                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
       {MSEP:                                        }|
       :let x = "                              |
       {ERR:E5405: Chunk 0 start 10 splits multibyte}|
@@ -424,12 +424,12 @@ describe('Command-line coloring', function()
     feed('\n')
     screen:expect([[
       ^                                        |
-      {EOB:~                                       }|
-      {EOB:~                                       }|
-      {EOB:~                                       }|
-      {EOB:~                                       }|
-      {EOB:~                                       }|
-      {EOB:~                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
                                               |
     ]])
     feed('\n')
@@ -442,20 +442,20 @@ describe('Command-line coloring', function()
     start_prompt('echo 42')
     screen:expect([[
       ^                                        |
-      {EOB:~                                       }|
-      {EOB:~                                       }|
-      {EOB:~                                       }|
-      {EOB:~                                       }|
-      {EOB:~                                       }|
-      {EOB:~                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
                                               |
     ]])
     screen:sleep(500)
     feed('<C-c>')
     screen:expect([[
                                               |
-      {EOB:~                                       }|
-      {EOB:~                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
       {MSEP:                                        }|
       :                                       |
       {ERR:E5407: Callback has thrown an exception:}|
@@ -465,23 +465,23 @@ describe('Command-line coloring', function()
     redraw_input()
     screen:expect([[
                                               |
-      {EOB:~                                       }|
-      {EOB:~                                       }|
-      {EOB:~                                       }|
-      {EOB:~                                       }|
-      {EOB:~                                       }|
-      {EOB:~                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
       :echo 42^                                |
     ]])
     feed('\n')
     screen:expect([[
       ^                                        |
-      {EOB:~                                       }|
-      {EOB:~                                       }|
-      {EOB:~                                       }|
-      {EOB:~                                       }|
-      {EOB:~                                       }|
-      {EOB:~                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
       :echo 42                                |
     ]])
     feed('\n')
@@ -489,12 +489,12 @@ describe('Command-line coloring', function()
     feed('<C-c>')
     screen:expect([[
       ^                                        |
-      {EOB:~                                       }|
-      {EOB:~                                       }|
-      {EOB:~                                       }|
-      {EOB:~                                       }|
-      {EOB:~                                       }|
-      {EOB:~                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
       Type  :qa  and pre...nter> to exit Nvim |
     ]])
   end)
@@ -503,12 +503,12 @@ describe('Command-line coloring', function()
     start_prompt('echo ("<C-v><CR><C-v><Nul><C-v><NL>")')
     screen:expect([[
                                               |
-      {EOB:~                                       }|
-      {EOB:~                                       }|
-      {EOB:~                                       }|
-      {EOB:~                                       }|
-      {EOB:~                                       }|
-      {EOB:~                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
       :echo {RBP1:(}"{SK:^M^@^@}"{RBP1:)}^                        |
     ]])
   end)
@@ -518,9 +518,9 @@ describe('Command-line coloring', function()
     start_prompt('#')
     screen:expect([[
                                               |
-      {EOB:~                                       }|
-      {EOB:~                                       }|
-      {EOB:~                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
       {MSEP:                                        }|
       :                                       |
       {ERR:E5400: Callback should return list}      |
@@ -532,9 +532,9 @@ describe('Command-line coloring', function()
     start_prompt('#')
     screen:expect([[
                                               |
-      {EOB:~                                       }|
-      {EOB:~                                       }|
-      {EOB:~                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
       {MSEP:                                        }|
       :                                       |
       {ERR:E5401: List item 1 is not a List}        |
@@ -546,8 +546,8 @@ describe('Command-line coloring', function()
     start_prompt('+')
     screen:expect([[
                                               |
-      {EOB:~                                       }|
-      {EOB:~                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
       {MSEP:                                        }|
       :+                                      |
       {ERR:E5402: List item 1 has incorrect length:}|
@@ -560,8 +560,8 @@ describe('Command-line coloring', function()
     start_prompt('+')
     screen:expect([[
                                               |
-      {EOB:~                                       }|
-      {EOB:~                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
       {MSEP:                                        }|
       :+                                      |
       {ERR:E5403: Chunk 1 start 2 not in range [1, }|
@@ -574,8 +574,8 @@ describe('Command-line coloring', function()
     start_prompt('+')
     screen:expect([[
                                               |
-      {EOB:~                                       }|
-      {EOB:~                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
       {MSEP:                                        }|
       :+                                      |
       {ERR:E5404: Chunk 1 end 3 not in range (1, 2]}|
@@ -615,12 +615,12 @@ describe('Command-line coloring', function()
     start_prompt('1')
     screen:expect([[
                                               |
-      {EOB:~                                       }|
-      {EOB:~                                       }|
-      {EOB:~                                       }|
-      {EOB:~                                       }|
-      {EOB:~                                       }|
-      {EOB:~                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
       :{RBP1:1}^                                      |
     ]])
 
@@ -628,12 +628,12 @@ describe('Command-line coloring', function()
     start_prompt('2')
     screen:expect([[
                                               |
-      {EOB:~                                       }|
-      {EOB:~                                       }|
-      {EOB:~                                       }|
-      {EOB:~                                       }|
-      {EOB:~                                       }|
-      {EOB:~                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
       :{RBP2:2}^                                      |
     ]])
 
@@ -641,12 +641,12 @@ describe('Command-line coloring', function()
     start_prompt('3')
     screen:expect([[
                                               |
-      {EOB:~                                       }|
-      {EOB:~                                       }|
-      {EOB:~                                       }|
-      {EOB:~                                       }|
-      {EOB:~                                       }|
-      {EOB:~                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
       :{RBP3:3}^                                      |
     ]])
 
@@ -654,57 +654,57 @@ describe('Command-line coloring', function()
     start_prompt('4')
     screen:expect([[
                                               |
-      {EOB:~                                       }|
-      {EOB:~                                       }|
-      {EOB:~                                       }|
-      {EOB:~                                       }|
-      {EOB:~                                       }|
-      {EOB:~                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
       :{RBP4:4}^                                      |
     ]])
 
     feed('<CR>')
     screen:expect([[
                                               |
-      {EOB:~                                       }|
-      {EOB:~                                       }|
-      {EOB:~                                       }|
-      {EOB:~                                       }|
-      {EOB:~                                       }|
-      {EOB:~                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
       :{RBP3:3}4^                                     |
     ]])
     feed('<CR>')
     screen:expect([[
                                               |
-      {EOB:~                                       }|
-      {EOB:~                                       }|
-      {EOB:~                                       }|
-      {EOB:~                                       }|
-      {EOB:~                                       }|
-      {EOB:~                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
       :{RBP2:2}34^                                    |
     ]])
     feed('<CR>')
     screen:expect([[
                                               |
-      {EOB:~                                       }|
-      {EOB:~                                       }|
-      {EOB:~                                       }|
-      {EOB:~                                       }|
-      {EOB:~                                       }|
-      {EOB:~                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
       :{RBP1:1}234^                                   |
     ]])
     feed('<CR><CR><C-l>')
     screen:expect([[
       ^                                        |
-      {EOB:~                                       }|
-      {EOB:~                                       }|
-      {EOB:~                                       }|
-      {EOB:~                                       }|
-      {EOB:~                                       }|
-      {EOB:~                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
                                               |
     ]])
     eq('1234', meths.get_var('out'))
@@ -762,12 +762,12 @@ describe('Ex commands coloring', function()
     feed(':echo (((1)))')
     screen:expect([[
                                               |
-      {EOB:~                                       }|
-      {EOB:~                                       }|
-      {EOB:~                                       }|
-      {EOB:~                                       }|
-      {EOB:~                                       }|
-      {EOB:~                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
       :echo {RBP1:(}{RBP2:(}{RBP3:(}1{RBP3:)}{RBP2:)}{RBP1:)}^                           |
     ]])
   end)
@@ -801,8 +801,8 @@ describe('Ex commands coloring', function()
     feed(':debug execute "echo 1"\n')
     screen:expect([[
                                               |
-      {EOB:~                                       }|
-      {EOB:~                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
       {MSEP:                                        }|
       Entering Debug mode.  Type "cont" to con|
       tinue.                                  |
@@ -823,12 +823,12 @@ describe('Ex commands coloring', function()
     feed('\n')
     screen:expect([[
       ^                                        |
-      {EOB:~                                       }|
-      {EOB:~                                       }|
-      {EOB:~                                       }|
-      {EOB:~                                       }|
-      {EOB:~                                       }|
-      {EOB:~                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
                                               |
     ]])
   end)
@@ -837,8 +837,8 @@ describe('Ex commands coloring', function()
     feed(':#x')
     screen:expect([[
                                               |
-      {EOB:~                                       }|
-      {EOB:~                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
       {MSEP:                                        }|
       :#                                      |
       {ERR:Error detected while processing :}       |
@@ -848,7 +848,7 @@ describe('Ex commands coloring', function()
     feed('<CR>')
     screen:expect([[
                                               |
-      {EOB:~                                       }|
+      {EOB:·                                       }|
       {MSEP:                                        }|
       :#                                      |
       {ERR:Error detected while processing :}       |
@@ -865,7 +865,7 @@ describe('Ex commands coloring', function()
     feed(':#')
     screen:expect([[
                                               |
-      {EOB:~                                       }|
+      {EOB:·                                       }|
       {MSEP:                                        }|
       :                                       |
       {ERR:E5408: Unable to get g:Nvim_color_cmdlin}|
@@ -884,12 +884,12 @@ describe('Expressions coloring support', function()
     feed(':echo <C-r>=(((1)))')
     screen:expect([[
                                               |
-      {EOB:~                                       }|
-      {EOB:~                                       }|
-      {EOB:~                                       }|
-      {EOB:~                                       }|
-      {EOB:~                                       }|
-      {EOB:~                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
       ={NPAR:(((}{NUM:1}{NPAR:)))}^                                |
     ]])
   end)
@@ -901,12 +901,12 @@ describe('Expressions coloring support', function()
     feed(':<C-r>=1')
     screen:expect([[
                                               |
-      {EOB:~                                       }|
-      {EOB:~                                       }|
-      {EOB:~                                       }|
-      {EOB:~                                       }|
-      {EOB:~                                       }|
-      {EOB:~                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
       ={NUM:1}^                                      |
     ]])
   end)
@@ -920,34 +920,34 @@ describe('Expressions coloring support', function()
     feed('i<C-r>="«»"«»')
     screen:expect([[
                                               |
-      {EOB:~                                       }|
-      {EOB:~                                       }|
-      {EOB:~                                       }|
-      {EOB:~                                       }|
-      {EOB:~                                       }|
-      {EOB:~                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
       ={SQ:"}{SB:«»}{SQ:"}{E:«»}^                                 |
     ]])
     feed('<C-c>')
     screen:expect([[
       ^                                        |
-      {EOB:~                                       }|
-      {EOB:~                                       }|
-      {EOB:~                                       }|
-      {EOB:~                                       }|
-      {EOB:~                                       }|
-      {EOB:~                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
       {M:-- INSERT --}                            |
     ]])
     feed('<Esc>')
     screen:expect([[
       ^                                        |
-      {EOB:~                                       }|
-      {EOB:~                                       }|
-      {EOB:~                                       }|
-      {EOB:~                                       }|
-      {EOB:~                                       }|
-      {EOB:~                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
                                               |
     ]])
     feed(':<C-\\>e"<C-v><C-x>"<C-v><C-x>')
@@ -955,35 +955,35 @@ describe('Expressions coloring support', function()
     --              highlighting.
     screen:expect([[
                                               |
-      {EOB:~                                       }|
-      {EOB:~                                       }|
-      {EOB:~                                       }|
-      {EOB:~                                       }|
-      {EOB:~                                       }|
-      {EOB:~                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
       ={SQ:"}{SB:^X}{SQ:"}{ERR:^X}^                                 |
     ]])
     feed('<C-c>')
     screen:expect([[
                                               |
-      {EOB:~                                       }|
-      {EOB:~                                       }|
-      {EOB:~                                       }|
-      {EOB:~                                       }|
-      {EOB:~                                       }|
-      {EOB:~                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
       :^                                       |
     ]])
     funcs.setreg('a', {'\192'})
     feed('<C-r>="<C-r><C-r>a"<C-r><C-r>a"foo"')
     screen:expect([[
                                               |
-      {EOB:~                                       }|
-      {EOB:~                                       }|
-      {EOB:~                                       }|
-      {EOB:~                                       }|
-      {EOB:~                                       }|
-      {EOB:~                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
+      {EOB:·                                       }|
       ={SQ:"}{SB:<c0>}{SQ:"}{E:<c0>"}{SB:foo}{E:"}^                        |
     ]])
   end)

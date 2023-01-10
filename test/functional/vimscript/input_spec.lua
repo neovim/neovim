@@ -71,7 +71,7 @@ describe('input()', function()
     feed([[:call input("Test\nFoo")<CR>]])
     screen:expect([[
                                |
-      {EOB:~                        }|
+      {EOB:·                        }|
       {SEP:                         }|
       Test                     |
       Foo^                      |
@@ -81,7 +81,7 @@ describe('input()', function()
     feed([[:echohl Test | call input("Test\nFoo")<CR>]])
     screen:expect([[
                                |
-      {EOB:~                        }|
+      {EOB:·                        }|
       {SEP:                         }|
       {T:Test}                     |
       {T:Foo}^                      |
@@ -89,9 +89,9 @@ describe('input()', function()
     command('redraw!')
     screen:expect([[
                                |
-      {EOB:~                        }|
-      {EOB:~                        }|
-      {EOB:~                        }|
+      {EOB:·                        }|
+      {EOB:·                        }|
+      {EOB:·                        }|
       {T:Foo}^                      |
     ]])
   end)
@@ -100,17 +100,17 @@ describe('input()', function()
     feed([[:call input(1, 2)<CR>]])
     screen:expect([[
                                |
-      {EOB:~                        }|
-      {EOB:~                        }|
-      {EOB:~                        }|
+      {EOB:·                        }|
+      {EOB:·                        }|
+      {EOB:·                        }|
       {T:1}2^                       |
     ]])
     feed('<BS>')
     screen:expect([[
                                |
-      {EOB:~                        }|
-      {EOB:~                        }|
-      {EOB:~                        }|
+      {EOB:·                        }|
+      {EOB:·                        }|
+      {EOB:·                        }|
       {T:1}^                        |
     ]])
   end)
@@ -120,25 +120,25 @@ describe('input()', function()
     feed([[:echo input(opts)<CR>]])
     screen:expect([[
                                |
-      {EOB:~                        }|
-      {EOB:~                        }|
-      {EOB:~                        }|
+      {EOB:·                        }|
+      {EOB:·                        }|
+      {EOB:·                        }|
       {T:1}2^                       |
     ]])
     feed('<BS>')
     screen:expect([[
                                |
-      {EOB:~                        }|
-      {EOB:~                        }|
-      {EOB:~                        }|
+      {EOB:·                        }|
+      {EOB:·                        }|
+      {EOB:·                        }|
       {T:1}^                        |
     ]])
     feed('<Esc>')
     screen:expect([[
       ^                         |
-      {EOB:~                        }|
-      {EOB:~                        }|
-      {EOB:~                        }|
+      {EOB:·                        }|
+      {EOB:·                        }|
+      {EOB:·                        }|
       {T:3}                        |
     ]])
   end)
@@ -148,33 +148,33 @@ describe('input()', function()
     feed([[:echo inputdialog(opts)<CR>]])
     screen:expect([[
                                |
-      {EOB:~                        }|
-      {EOB:~                        }|
-      {EOB:~                        }|
+      {EOB:·                        }|
+      {EOB:·                        }|
+      {EOB:·                        }|
       {T:Foo>}Bar^                  |
     ]])
     command('mode')
     screen:expect{grid=[[
                                |
-      {EOB:~                        }|
-      {EOB:~                        }|
-      {EOB:~                        }|
+      {EOB:·                        }|
+      {EOB:·                        }|
+      {EOB:·                        }|
       {T:Foo>}Bar^                  |
     ]], reset=true}
     feed('<BS>')
     screen:expect([[
                                |
-      {EOB:~                        }|
-      {EOB:~                        }|
-      {EOB:~                        }|
+      {EOB:·                        }|
+      {EOB:·                        }|
+      {EOB:·                        }|
       {T:Foo>}Ba^                   |
     ]])
     command('mode')
     screen:expect{grid=[[
                                |
-      {EOB:~                        }|
-      {EOB:~                        }|
-      {EOB:~                        }|
+      {EOB:·                        }|
+      {EOB:·                        }|
+      {EOB:·                        }|
       {T:Foo>}Ba^                   |
     ]], reset=true}
   end)
@@ -183,9 +183,9 @@ describe('input()', function()
     feed([[:call input({})<CR>]])
     screen:expect([[
                                |
-      {EOB:~                        }|
-      {EOB:~                        }|
-      {EOB:~                        }|
+      {EOB:·                        }|
+      {EOB:·                        }|
+      {EOB:·                        }|
       ^                         |
     ]])
   end)
@@ -245,9 +245,9 @@ describe('input()', function()
     feed('(())')
     screen:expect([[
                                |
-      {EOB:~                        }|
-      {EOB:~                        }|
-      {EOB:~                        }|
+      {EOB:·                        }|
+      {EOB:·                        }|
+      {EOB:·                        }|
       {RBP1:(}{RBP2:()}{RBP1:)}^                     |
     ]])
   end)
@@ -255,7 +255,7 @@ describe('input()', function()
     feed([[:silent call input('Foo: ')<CR>]])
     screen:expect([[
                                |
-      {EOB:~                        }|
+      {EOB:·                        }|
       {SEP:                         }|
       Foo: ^                    |
                                |
@@ -263,7 +263,7 @@ describe('input()', function()
     feed('Bar')
     screen:expect([[
                                |
-      {EOB:~                        }|
+      {EOB:·                        }|
       {SEP:                         }|
       Foo: Bar^                 |
                                |
@@ -276,7 +276,7 @@ describe('inputdialog()', function()
     feed([[:call inputdialog("Test\nFoo")<CR>]])
     screen:expect([[
                                |
-      {EOB:~                        }|
+      {EOB:·                        }|
       {SEP:                         }|
       Test                     |
       Foo^                      |
@@ -286,7 +286,7 @@ describe('inputdialog()', function()
     feed([[:echohl Test | call inputdialog("Test\nFoo")<CR>]])
     screen:expect([[
                                |
-      {EOB:~                        }|
+      {EOB:·                        }|
       {SEP:                         }|
       {T:Test}                     |
       {T:Foo}^                      |
@@ -294,9 +294,9 @@ describe('inputdialog()', function()
     command('redraw!')
     screen:expect([[
                                |
-      {EOB:~                        }|
-      {EOB:~                        }|
-      {EOB:~                        }|
+      {EOB:·                        }|
+      {EOB:·                        }|
+      {EOB:·                        }|
       {T:Foo}^                      |
     ]])
   end)
@@ -305,17 +305,17 @@ describe('inputdialog()', function()
     feed([[:call inputdialog(1, 2)<CR>]])
     screen:expect([[
                                |
-      {EOB:~                        }|
-      {EOB:~                        }|
-      {EOB:~                        }|
+      {EOB:·                        }|
+      {EOB:·                        }|
+      {EOB:·                        }|
       {T:1}2^                       |
     ]])
     feed('<BS>')
     screen:expect([[
                                |
-      {EOB:~                        }|
-      {EOB:~                        }|
-      {EOB:~                        }|
+      {EOB:·                        }|
+      {EOB:·                        }|
+      {EOB:·                        }|
       {T:1}^                        |
     ]])
   end)
@@ -325,25 +325,25 @@ describe('inputdialog()', function()
     feed([[:echo input(opts)<CR>]])
     screen:expect([[
                                |
-      {EOB:~                        }|
-      {EOB:~                        }|
-      {EOB:~                        }|
+      {EOB:·                        }|
+      {EOB:·                        }|
+      {EOB:·                        }|
       {T:1}2^                       |
     ]])
     feed('<BS>')
     screen:expect([[
                                |
-      {EOB:~                        }|
-      {EOB:~                        }|
-      {EOB:~                        }|
+      {EOB:·                        }|
+      {EOB:·                        }|
+      {EOB:·                        }|
       {T:1}^                        |
     ]])
     feed('<Esc>')
     screen:expect([[
       ^                         |
-      {EOB:~                        }|
-      {EOB:~                        }|
-      {EOB:~                        }|
+      {EOB:·                        }|
+      {EOB:·                        }|
+      {EOB:·                        }|
       {T:3}                        |
     ]])
   end)
@@ -353,33 +353,33 @@ describe('inputdialog()', function()
     feed([[:echo input(opts)<CR>]])
     screen:expect([[
                                |
-      {EOB:~                        }|
-      {EOB:~                        }|
-      {EOB:~                        }|
+      {EOB:·                        }|
+      {EOB:·                        }|
+      {EOB:·                        }|
       {T:Foo>}Bar^                  |
     ]])
     command('mode')
     screen:expect{grid=[[
                                |
-      {EOB:~                        }|
-      {EOB:~                        }|
-      {EOB:~                        }|
+      {EOB:·                        }|
+      {EOB:·                        }|
+      {EOB:·                        }|
       {T:Foo>}Bar^                  |
     ]], reset=true}
     feed('<BS>')
     screen:expect([[
                                |
-      {EOB:~                        }|
-      {EOB:~                        }|
-      {EOB:~                        }|
+      {EOB:·                        }|
+      {EOB:·                        }|
+      {EOB:·                        }|
       {T:Foo>}Ba^                   |
     ]])
     command('mode')
     screen:expect{grid=[[
                                |
-      {EOB:~                        }|
-      {EOB:~                        }|
-      {EOB:~                        }|
+      {EOB:·                        }|
+      {EOB:·                        }|
+      {EOB:·                        }|
       {T:Foo>}Ba^                   |
     ]], reset=true}
   end)
@@ -388,9 +388,9 @@ describe('inputdialog()', function()
     feed(':echo inputdialog({})<CR>')
     screen:expect([[
                                |
-      {EOB:~                        }|
-      {EOB:~                        }|
-      {EOB:~                        }|
+      {EOB:·                        }|
+      {EOB:·                        }|
+      {EOB:·                        }|
       ^                         |
     ]])
   end)
@@ -441,9 +441,9 @@ describe('inputdialog()', function()
     feed('(())')
     screen:expect([[
                                |
-      {EOB:~                        }|
-      {EOB:~                        }|
-      {EOB:~                        }|
+      {EOB:·                        }|
+      {EOB:·                        }|
+      {EOB:·                        }|
       {RBP1:(}{RBP2:()}{RBP1:)}^                     |
     ]])
   end)

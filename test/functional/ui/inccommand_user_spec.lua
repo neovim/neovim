@@ -269,13 +269,13 @@ describe("'inccommand' for user commands", function()
         why won't it stop                     |
         make the {1:cats} stop                    |
                                               |
-      {2:~                                       }|
-      {2:~                                       }|
-      {2:~                                       }|
-      {2:~                                       }|
-      {2:~                                       }|
-      {2:~                                       }|
-      {2:~                                       }|
+      {2:·                                       }|
+      {2:·                                       }|
+      {2:·                                       }|
+      {2:·                                       }|
+      {2:·                                       }|
+      {2:·                                       }|
+      {2:·                                       }|
       :Replace text cats^                      |
     ]])
   end)
@@ -317,13 +317,13 @@ describe("'inccommand' for user commands", function()
         why won't it stop                     |
         make the text stop                    |
       ^                                        |
-      {2:~                                       }|
-      {2:~                                       }|
-      {2:~                                       }|
-      {2:~                                       }|
-      {2:~                                       }|
-      {2:~                                       }|
-      {2:~                                       }|
+      {2:·                                       }|
+      {2:·                                       }|
+      {2:·                                       }|
+      {2:·                                       }|
+      {2:·                                       }|
+      {2:·                                       }|
+      {2:·                                       }|
                                               |
     ]])
   end)
@@ -341,13 +341,13 @@ describe("'inccommand' for user commands", function()
         why won't it stop                     |
         make the cats stop                    |
       ^                                        |
-      {2:~                                       }|
-      {2:~                                       }|
-      {2:~                                       }|
-      {2:~                                       }|
-      {2:~                                       }|
-      {2:~                                       }|
-      {2:~                                       }|
+      {2:·                                       }|
+      {2:·                                       }|
+      {2:·                                       }|
+      {2:·                                       }|
+      {2:·                                       }|
+      {2:·                                       }|
+      {2:·                                       }|
       :Replace text cats                      |
     ]])
   end)
@@ -365,13 +365,13 @@ describe("'inccommand' for user commands", function()
         why won't it stop                     |
         make the text stop                    |
                                               |
-      {2:~                                       }|
-      {2:~                                       }|
-      {2:~                                       }|
-      {2:~                                       }|
-      {2:~                                       }|
-      {2:~                                       }|
-      {2:~                                       }|
+      {2:·                                       }|
+      {2:·                                       }|
+      {2:·                                       }|
+      {2:·                                       }|
+      {2:·                                       }|
+      {2:·                                       }|
+      {2:·                                       }|
       :.Replace text cats^                     |
     ]])
   end)
@@ -439,17 +439,17 @@ describe("'inccommand' with multiple buffers", function()
         baz {1:bar} bar       │  bar baz {1:bar}      |
         {1:bar} bar baz       │  baz {1:bar} bar      |
                           │                   |
-      {2:~                   }│{2:~                  }|
-      {2:~                   }│{2:~                  }|
-      {2:~                   }│{2:~                  }|
-      {2:~                   }│{2:~                  }|
-      {2:~                   }│{2:~                  }|
-      {2:~                   }│{2:~                  }|
-      {2:~                   }│{2:~                  }|
-      {2:~                   }│{2:~                  }|
-      {2:~                   }│{2:~                  }|
-      {2:~                   }│{2:~                  }|
-      {2:~                   }│{2:~                  }|
+      {2:·                   }│{2:·                  }|
+      {2:·                   }│{2:·                  }|
+      {2:·                   }│{2:·                  }|
+      {2:·                   }│{2:·                  }|
+      {2:·                   }│{2:·                  }|
+      {2:·                   }│{2:·                  }|
+      {2:·                   }│{2:·                  }|
+      {2:·                   }│{2:·                  }|
+      {2:·                   }│{2:·                  }|
+      {2:·                   }│{2:·                  }|
+      {2:·                   }│{2:·                  }|
       {4:[No Name] [+]        }{3:[No Name] [+]      }|
       :Replace foo bar^                        |
     ]])
@@ -459,17 +459,17 @@ describe("'inccommand' with multiple buffers", function()
         baz bar bar       │  bar baz bar      |
         bar bar baz       │  baz bar bar      |
       ^                    │                   |
-      {2:~                   }│{2:~                  }|
-      {2:~                   }│{2:~                  }|
-      {2:~                   }│{2:~                  }|
-      {2:~                   }│{2:~                  }|
-      {2:~                   }│{2:~                  }|
-      {2:~                   }│{2:~                  }|
-      {2:~                   }│{2:~                  }|
-      {2:~                   }│{2:~                  }|
-      {2:~                   }│{2:~                  }|
-      {2:~                   }│{2:~                  }|
-      {2:~                   }│{2:~                  }|
+      {2:·                   }│{2:·                  }|
+      {2:·                   }│{2:·                  }|
+      {2:·                   }│{2:·                  }|
+      {2:·                   }│{2:·                  }|
+      {2:·                   }│{2:·                  }|
+      {2:·                   }│{2:·                  }|
+      {2:·                   }│{2:·                  }|
+      {2:·                   }│{2:·                  }|
+      {2:·                   }│{2:·                  }|
+      {2:·                   }│{2:·                  }|
+      {2:·                   }│{2:·                  }|
       {4:[No Name] [+]        }{3:[No Name] [+]      }|
       :Replace foo bar                        |
     ]])
@@ -493,7 +493,7 @@ describe("'inccommand' with multiple buffers", function()
       |2|   baz {1:bar} bar                       |
       |3|   {1:bar} bar baz                       |
                                               |
-      {2:~                                       }|
+      {2:·                                       }|
       {3:[Preview]                               }|
       :Replace foo bar^                        |
     ]])
@@ -503,17 +503,17 @@ describe("'inccommand' with multiple buffers", function()
         baz bar bar       │  bar baz bar      |
         bar bar baz       │  baz bar bar      |
       ^                    │                   |
-      {2:~                   }│{2:~                  }|
-      {2:~                   }│{2:~                  }|
-      {2:~                   }│{2:~                  }|
-      {2:~                   }│{2:~                  }|
-      {2:~                   }│{2:~                  }|
-      {2:~                   }│{2:~                  }|
-      {2:~                   }│{2:~                  }|
-      {2:~                   }│{2:~                  }|
-      {2:~                   }│{2:~                  }|
-      {2:~                   }│{2:~                  }|
-      {2:~                   }│{2:~                  }|
+      {2:·                   }│{2:·                  }|
+      {2:·                   }│{2:·                  }|
+      {2:·                   }│{2:·                  }|
+      {2:·                   }│{2:·                  }|
+      {2:·                   }│{2:·                  }|
+      {2:·                   }│{2:·                  }|
+      {2:·                   }│{2:·                  }|
+      {2:·                   }│{2:·                  }|
+      {2:·                   }│{2:·                  }|
+      {2:·                   }│{2:·                  }|
+      {2:·                   }│{2:·                  }|
       {4:[No Name] [+]        }{3:[No Name] [+]      }|
       :Replace foo bar                        |
     ]])

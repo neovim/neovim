@@ -125,8 +125,8 @@ describe('API/win', function()
       eq({1, 0}, window('get_cursor', win))
       screen:expect{grid=[[
         ^                              |
-        {1:~                             }|
-        {1:~                             }|
+        {1:·                             }|
+        {1:·                             }|
         {2:[No Name]                     }|
         prologue                      |
                                       |
@@ -139,8 +139,8 @@ describe('API/win', function()
       window('set_cursor', win, {101, 0})
       screen:expect{grid=[[
         ^                              |
-        {1:~                             }|
-        {1:~                             }|
+        {1:·                             }|
+        {1:·                             }|
         {2:[No Name]                     }|
                                       |
                                       |
@@ -153,8 +153,8 @@ describe('API/win', function()
       window('set_cursor', win, {1, 0})
       screen:expect{grid=[[
         ^                              |
-        {1:~                             }|
-        {1:~                             }|
+        {1:·                             }|
+        {1:·                             }|
         {2:[No Name]                     }|
         prologue                      |
                                       |
@@ -213,8 +213,8 @@ describe('API/win', function()
         bbb                           │bbb                          |
         ccc                           │ccc                          |
         {2:dd^d                           }│{2:ddd                          }|
-        {1:~                             }│{1:~                            }|
-        {1:~                             }│{1:~                            }|
+        {1:·                             }│{1:·                            }|
+        {1:·                             }│{1:·                            }|
         {3:[No Name] [+]  4,3         All }{4:[No Name] [+]  4,3        All}|
                                                                     |
       ]])
@@ -224,8 +224,8 @@ describe('API/win', function()
         bbb                           │bbb                          |
         ccc                           │ccc                          |
         {2:dd^d                           }│ddd                          |
-        {1:~                             }│{1:~                            }|
-        {1:~                             }│{1:~                            }|
+        {1:·                             }│{1:·                            }|
+        {1:·                             }│{1:·                            }|
         {3:[No Name] [+]  4,3         All }{4:[No Name] [+]  1,1        All}|
                                                                     |
       ]])
@@ -253,8 +253,8 @@ describe('API/win', function()
         bb{2:b}                           │bb{2:b}                          |
         cc{2:c}                           │cc{2:c}                          |
         dd^d                           │ddd                          |
-        {1:~                             }│{1:~                            }|
-        {1:~                             }│{1:~                            }|
+        {1:·                             }│{1:·                            }|
+        {1:·                             }│{1:·                            }|
         {3:[No Name] [+]                  }{4:[No Name] [+]                }|
                                                                     |
       ]])
@@ -264,8 +264,8 @@ describe('API/win', function()
         bb{2:b}                           │bbb                          |
         cc{2:c}                           │{2:c}cc                          |
         dd^d                           │{2:d}dd                          |
-        {1:~                             }│{1:~                            }|
-        {1:~                             }│{1:~                            }|
+        {1:·                             }│{1:·                            }|
+        {1:·                             }│{1:·                            }|
         {3:[No Name] [+]                  }{4:[No Name] [+]                }|
                                                                     |
       ]])

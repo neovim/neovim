@@ -41,22 +41,22 @@ describe('completion', function()
       screen:expect([[
         foo                                                         |
         foo^                                                         |
-        {0:~                                                           }|
-        {0:~                                                           }|
-        {0:~                                                           }|
-        {0:~                                                           }|
-        {0:~                                                           }|
+        {0:·                                                           }|
+        {0:·                                                           }|
+        {0:·                                                           }|
+        {0:·                                                           }|
+        {0:·                                                           }|
         {3:-- Keyword Local completion (^N^P) The only match}           |
       ]])
       feed('<C-e>')
       screen:expect([[
         foo                                                         |
         ^                                                            |
-        {0:~                                                           }|
-        {0:~                                                           }|
-        {0:~                                                           }|
-        {0:~                                                           }|
-        {0:~                                                           }|
+        {0:·                                                           }|
+        {0:·                                                           }|
+        {0:·                                                           }|
+        {0:·                                                           }|
+        {0:·                                                           }|
         {3:-- INSERT --}                                                |
       ]])
       feed('<ESC>')
@@ -112,10 +112,10 @@ describe('completion', function()
         foo^                                                         |
         {2:bar  foobaz baz  }{0:                                           }|
         {1:abbr kind   menu }{0:                                           }|
-        {0:~                                                           }|
-        {0:~                                                           }|
-        {0:~                                                           }|
-        {0:~                                                           }|
+        {0:·                                                           }|
+        {0:·                                                           }|
+        {0:·                                                           }|
+        {0:·                                                           }|
         {3:-- Omni completion (^O^N^P) }{4:match 1 of 2}                    |
       ]])
       eq({word = 'foo', abbr = 'bar', menu = 'baz',
@@ -140,11 +140,11 @@ describe('completion', function()
       screen:expect([[
         foo                                                         |
         ^                                                            |
-        {0:~                                                           }|
-        {0:~                                                           }|
-        {0:~                                                           }|
-        {0:~                                                           }|
-        {0:~                                                           }|
+        {0:·                                                           }|
+        {0:·                                                           }|
+        {0:·                                                           }|
+        {0:·                                                           }|
+        {0:·                                                           }|
         {3:-- INSERT --}                                                |
       ]])
       feed('<C-x>')
@@ -152,11 +152,11 @@ describe('completion', function()
       screen:expect([[
         foo                                                         |
         ^                                                            |
-        {0:~                                                           }|
-        {0:~                                                           }|
-        {0:~                                                           }|
-        {0:~                                                           }|
-        {0:~                                                           }|
+        {0:·                                                           }|
+        {0:·                                                           }|
+        {0:·                                                           }|
+        {0:·                                                           }|
+        {0:·                                                           }|
         {3:-- ^X mode (^]^D^E^F^I^K^L^N^O^Ps^U^V^Y)}                    |
       ]])
       feed('<C-n>')
@@ -164,10 +164,10 @@ describe('completion', function()
         foo                                                         |
         foo^                                                         |
         {2:foo            }{0:                                             }|
-        {0:~                                                           }|
-        {0:~                                                           }|
-        {0:~                                                           }|
-        {0:~                                                           }|
+        {0:·                                                           }|
+        {0:·                                                           }|
+        {0:·                                                           }|
+        {0:·                                                           }|
         {3:-- Keyword Local completion (^N^P) The only match}           |
       ]])
       feed('bar<ESC>')
@@ -178,9 +178,9 @@ describe('completion', function()
         foobar                                                      |
         foo^                                                         |
         {2:foo            }{0:                                             }|
-        {0:~                                                           }|
-        {0:~                                                           }|
-        {0:~                                                           }|
+        {0:·                                                           }|
+        {0:·                                                           }|
+        {0:·                                                           }|
         {3:-- INSERT --}                                                |
       ]])
       eq('foo', eval('getline(3)'))
@@ -192,21 +192,21 @@ describe('completion', function()
         foo                                                         |
         ^                                                            |
         {2:foo            }{0:                                             }|
-        {0:~                                                           }|
-        {0:~                                                           }|
-        {0:~                                                           }|
-        {0:~                                                           }|
+        {0:·                                                           }|
+        {0:·                                                           }|
+        {0:·                                                           }|
+        {0:·                                                           }|
         {3:-- Keyword Local completion (^N^P) The only match}           |
       ]])
       feed('<C-y>')
       screen:expect([[
         foo                                                         |
         foo^                                                         |
-        {0:~                                                           }|
-        {0:~                                                           }|
-        {0:~                                                           }|
-        {0:~                                                           }|
-        {0:~                                                           }|
+        {0:·                                                           }|
+        {0:·                                                           }|
+        {0:·                                                           }|
+        {0:·                                                           }|
+        {0:·                                                           }|
         {3:-- INSERT --}                                                |
       ]])
       feed('<ESC>')
@@ -217,9 +217,9 @@ describe('completion', function()
         foo                                                         |
         ^                                                            |
         {2:foo            }{0:                                             }|
-        {0:~                                                           }|
-        {0:~                                                           }|
-        {0:~                                                           }|
+        {0:·                                                           }|
+        {0:·                                                           }|
+        {0:·                                                           }|
         {3:-- INSERT --}                                                |
       ]])
       feed('<C-y><ESC>')
@@ -232,21 +232,21 @@ describe('completion', function()
         foo                                                         |
         ^                                                            |
         {1:foo            }{0:                                             }|
-        {0:~                                                           }|
-        {0:~                                                           }|
-        {0:~                                                           }|
-        {0:~                                                           }|
+        {0:·                                                           }|
+        {0:·                                                           }|
+        {0:·                                                           }|
+        {0:·                                                           }|
         {3:-- Keyword Local completion (^N^P) }{5:Back at original}         |
       ]])
       feed('b')
       screen:expect([[
         foo                                                         |
         b^                                                           |
-        {0:~                                                           }|
-        {0:~                                                           }|
-        {0:~                                                           }|
-        {0:~                                                           }|
-        {0:~                                                           }|
+        {0:·                                                           }|
+        {0:·                                                           }|
+        {0:·                                                           }|
+        {0:·                                                           }|
+        {0:·                                                           }|
         {3:-- Keyword Local completion (^N^P) }{5:Back at original}         |
       ]])
       feed('ar<ESC>')
@@ -257,9 +257,9 @@ describe('completion', function()
         bar                                                         |
         ^                                                            |
         {1:foo            }{0:                                             }|
-        {0:~                                                           }|
-        {0:~                                                           }|
-        {0:~                                                           }|
+        {0:·                                                           }|
+        {0:·                                                           }|
+        {0:·                                                           }|
         {3:-- INSERT --}                                                |
       ]])
       feed('bar<ESC>')
@@ -272,21 +272,21 @@ describe('completion', function()
         foo                                                         |
         ^                                                            |
         {1:foo            }{0:                                             }|
-        {0:~                                                           }|
-        {0:~                                                           }|
-        {0:~                                                           }|
-        {0:~                                                           }|
+        {0:·                                                           }|
+        {0:·                                                           }|
+        {0:·                                                           }|
+        {0:·                                                           }|
         {3:-- Keyword Local completion (^N^P) }{5:Back at original}         |
       ]])
       feed('<ESC>')
       screen:expect([[
         foo                                                         |
         ^                                                            |
-        {0:~                                                           }|
-        {0:~                                                           }|
-        {0:~                                                           }|
-        {0:~                                                           }|
-        {0:~                                                           }|
+        {0:·                                                           }|
+        {0:·                                                           }|
+        {0:·                                                           }|
+        {0:·                                                           }|
+        {0:·                                                           }|
                                                                     |
       ]])
       eq('', eval('getline(2)'))
@@ -296,9 +296,9 @@ describe('completion', function()
                                                                     |
         ^                                                            |
         {1:foo            }{0:                                             }|
-        {0:~                                                           }|
-        {0:~                                                           }|
-        {0:~                                                           }|
+        {0:·                                                           }|
+        {0:·                                                           }|
+        {0:·                                                           }|
         {3:-- INSERT --}                                                |
       ]])
       feed('<ESC>')
@@ -306,10 +306,10 @@ describe('completion', function()
         foo                                                         |
                                                                     |
         ^                                                            |
-        {0:~                                                           }|
-        {0:~                                                           }|
-        {0:~                                                           }|
-        {0:~                                                           }|
+        {0:·                                                           }|
+        {0:·                                                           }|
+        {0:·                                                           }|
+        {0:·                                                           }|
                                                                     |
       ]])
       eq('', eval('getline(3)'))
@@ -431,40 +431,40 @@ describe('completion', function()
         {1:June           }{0:                                             }|
         {1:July           }{0:                                             }|
         {1:August         }{0:                                             }|
-        {0:~                                                           }|
+        {0:·                                                           }|
         {3:-- User defined completion (^U^N^P) }{5:Back at original}        |
       ]])
       feed('g')
       screen:expect([[
         ug^                                                          |
         {1:August         }{0:                                             }|
-        {0:~                                                           }|
-        {0:~                                                           }|
-        {0:~                                                           }|
-        {0:~                                                           }|
-        {0:~                                                           }|
+        {0:·                                                           }|
+        {0:·                                                           }|
+        {0:·                                                           }|
+        {0:·                                                           }|
+        {0:·                                                           }|
         {3:-- User defined completion (^U^N^P) }{5:Back at original}        |
       ]])
       feed('<Down>')
       screen:expect([[
         ug^                                                          |
         {2:August         }{0:                                             }|
-        {0:~                                                           }|
-        {0:~                                                           }|
-        {0:~                                                           }|
-        {0:~                                                           }|
-        {0:~                                                           }|
+        {0:·                                                           }|
+        {0:·                                                           }|
+        {0:·                                                           }|
+        {0:·                                                           }|
+        {0:·                                                           }|
         {3:-- User defined completion (^U^N^P) The only match}          |
       ]])
       feed('<C-y>')
       screen:expect([[
         August^                                                      |
-        {0:~                                                           }|
-        {0:~                                                           }|
-        {0:~                                                           }|
-        {0:~                                                           }|
-        {0:~                                                           }|
-        {0:~                                                           }|
+        {0:·                                                           }|
+        {0:·                                                           }|
+        {0:·                                                           }|
+        {0:·                                                           }|
+        {0:·                                                           }|
+        {0:·                                                           }|
         {3:-- INSERT --}                                                |
       ]])
       expect('August')
@@ -476,10 +476,10 @@ describe('completion', function()
                                                                     |
         Ja^                                                          |
         {1:January        }{0:                                             }|
-        {0:~                                                           }|
-        {0:~                                                           }|
-        {0:~                                                           }|
-        {0:~                                                           }|
+        {0:·                                                           }|
+        {0:·                                                           }|
+        {0:·                                                           }|
+        {0:·                                                           }|
         {3:-- User defined completion (^U^N^P) }{5:Back at original}        |
       ]])
       feed('<BS>')
@@ -489,8 +489,8 @@ describe('completion', function()
         {1:January        }{0:                                             }|
         {1:June           }{0:                                             }|
         {1:July           }{0:                                             }|
-        {0:~                                                           }|
-        {0:~                                                           }|
+        {0:·                                                           }|
+        {0:·                                                           }|
         {3:-- User defined completion (^U^N^P) }{5:Back at original}        |
       ]])
       feed('<C-n>')
@@ -500,8 +500,8 @@ describe('completion', function()
         {2:January        }{0:                                             }|
         {1:June           }{0:                                             }|
         {1:July           }{0:                                             }|
-        {0:~                                                           }|
-        {0:~                                                           }|
+        {0:·                                                           }|
+        {0:·                                                           }|
         {3:-- User defined completion (^U^N^P) }{4:match 1 of 3}            |
       ]])
       feed('<C-n>')
@@ -511,19 +511,19 @@ describe('completion', function()
         {1:January        }{0:                                             }|
         {2:June           }{0:                                             }|
         {1:July           }{0:                                             }|
-        {0:~                                                           }|
-        {0:~                                                           }|
+        {0:·                                                           }|
+        {0:·                                                           }|
         {3:-- User defined completion (^U^N^P) }{4:match 2 of 3}            |
       ]])
       feed('<Esc>')
       screen:expect([[
                                                                     |
         Jun^e                                                        |
-        {0:~                                                           }|
-        {0:~                                                           }|
-        {0:~                                                           }|
-        {0:~                                                           }|
-        {0:~                                                           }|
+        {0:·                                                           }|
+        {0:·                                                           }|
+        {0:·                                                           }|
+        {0:·                                                           }|
+        {0:·                                                           }|
                                                                     |
       ]])
       feed('.')
@@ -531,10 +531,10 @@ describe('completion', function()
                                                                     |
         June                                                        |
         Jun^e                                                        |
-        {0:~                                                           }|
-        {0:~                                                           }|
-        {0:~                                                           }|
-        {0:~                                                           }|
+        {0:·                                                           }|
+        {0:·                                                           }|
+        {0:·                                                           }|
+        {0:·                                                           }|
                                                                     |
       ]])
       expect([[
@@ -705,12 +705,12 @@ describe('completion', function()
       feed('<cr>')
       screen:expect([[
         96^                                                          |
-        {0:~                                                           }|
-        {0:~                                                           }|
-        {0:~                                                           }|
-        {0:~                                                           }|
-        {0:~                                                           }|
-        {0:~                                                           }|
+        {0:·                                                           }|
+        {0:·                                                           }|
+        {0:·                                                           }|
+        {0:·                                                           }|
+        {0:·                                                           }|
+        {0:·                                                           }|
         {3:-- INSERT --}                                                |
       ]])
     end)
@@ -748,10 +748,10 @@ describe('completion', function()
       inc uninc indent unindent                                   |
       ind^                                                         |
       {2:indent         }{0:                                             }|
-      {0:~                                                           }|
-      {0:~                                                           }|
-      {0:~                                                           }|
-      {0:~                                                           }|
+      {0:·                                                           }|
+      {0:·                                                           }|
+      {0:·                                                           }|
+      {0:·                                                           }|
       {3:-- Keyword Local completion (^N^P) }{4:match 1 of 2}             |
     ]])
 
@@ -760,11 +760,11 @@ describe('completion', function()
     screen:expect([[
       inc uninc indent unindent                                   |
               indent^                                              |
-      {0:~                                                           }|
-      {0:~                                                           }|
-      {0:~                                                           }|
-      {0:~                                                           }|
-      {0:~                                                           }|
+      {0:·                                                           }|
+      {0:·                                                           }|
+      {0:·                                                           }|
+      {0:·                                                           }|
+      {0:·                                                           }|
       {3:-- INSERT --}                                                |
     ]])
     -- Indents when completion is exited using ESC.
@@ -773,10 +773,10 @@ describe('completion', function()
       inc uninc indent unindent                                   |
               indent                                              |
                       in^d                                         |
-      {0:~                                                           }|
-      {0:~                                                           }|
-      {0:~                                                           }|
-      {0:~                                                           }|
+      {0:·                                                           }|
+      {0:·                                                           }|
+      {0:·                                                           }|
+      {0:·                                                           }|
                                                                   |
     ]])
     -- Works for unindenting too.
@@ -788,9 +788,9 @@ describe('completion', function()
               indent                                              |
                       ind                                         |
                       unind^                                       |
-      {0:~              }{2: unindent       }{0:                             }|
-      {0:~                                                           }|
-      {0:~                                                           }|
+      {0:·              }{2: unindent       }{0:                             }|
+      {0:·                                                           }|
+      {0:·                                                           }|
       {3:-- Keyword Local completion (^N^P) }{4:match 1 of 2}             |
     ]])
     -- Works when going back and forth.
@@ -800,9 +800,9 @@ describe('completion', function()
               indent                                              |
                       ind                                         |
                       uninc^                                       |
-      {0:~              }{2: uninc          }{0:                             }|
-      {0:~                                                           }|
-      {0:~                                                           }|
+      {0:·              }{2: uninc          }{0:                             }|
+      {0:·                                                           }|
+      {0:·                                                           }|
       {3:-- Keyword Local completion (^N^P) }{4:match 1 of 2}             |
     ]])
     feed("<BS>d")
@@ -811,9 +811,9 @@ describe('completion', function()
               indent                                              |
                       ind                                         |
                       unind^                                       |
-      {0:~              }{2: unindent       }{0:                             }|
-      {0:~                                                           }|
-      {0:~                                                           }|
+      {0:·              }{2: unindent       }{0:                             }|
+      {0:·                                                           }|
+      {0:·                                                           }|
       {3:-- Keyword Local completion (^N^P) }{4:match 1 of 2}             |
     ]])
     feed("<C-N><C-N><C-Y><Esc>")
@@ -822,9 +822,9 @@ describe('completion', function()
               indent                                              |
                       ind                                         |
               uninden^t                                            |
-      {0:~                                                           }|
-      {0:~                                                           }|
-      {0:~                                                           }|
+      {0:·                                                           }|
+      {0:·                                                           }|
+      {0:·                                                           }|
                                                                   |
     ]])
   end)
@@ -835,22 +835,22 @@ describe('completion', function()
     screen:expect([[
               ^foo                                                 |
               bar                                                 |
-      {0:~                                                           }|
-      {0:~                                                           }|
-      {0:~                                                           }|
-      {0:~                                                           }|
-      {0:~                                                           }|
+      {0:·                                                           }|
+      {0:·                                                           }|
+      {0:·                                                           }|
+      {0:·                                                           }|
+      {0:·                                                           }|
                                                                   |
     ]])
     feed('A<C-x><C-l>')
     screen:expect([[
               foo^                                                 |
               bar                                                 |
-      {0:~                                                           }|
-      {0:~                                                           }|
-      {0:~                                                           }|
-      {0:~                                                           }|
-      {0:~                                                           }|
+      {0:·                                                           }|
+      {0:·                                                           }|
+      {0:·                                                           }|
+      {0:·                                                           }|
+      {0:·                                                           }|
       {3:-- Whole line completion (^L^N^P) }{7:Pattern not found}         |
     ]])
     eq(-1, eval('foldclosed(1)'))
@@ -865,9 +865,9 @@ describe('completion', function()
       fooegg^                                                      |
       {1:foobar         }{0:                                             }|
       {2:fooegg         }{0:                                             }|
-      {0:~                                                           }|
-      {0:~                                                           }|
-      {0:~                                                           }|
+      {0:·                                                           }|
+      {0:·                                                           }|
+      {0:·                                                           }|
       {3:-- Keyword completion (^N^P) }{4:match 1 of 2}                   |
     ]])
 
@@ -878,9 +878,9 @@ describe('completion', function()
       fooegg^                                                      |
       {1:foobar         }{0:                                             }|
       {2:fooegg         }{0:                                             }|
-      {0:~                                                           }|
-      {0:~                                                           }|
-      {0:~                                                           }|
+      {0:·                                                           }|
+      {0:·                                                           }|
+      {0:·                                                           }|
       {3:-- Keyword completion (^N^P) }{4:match 1 of 2}                   |
     ]], unchanged=true}
 
@@ -891,9 +891,9 @@ describe('completion', function()
       foobar^                                                      |
       {2:foobar         }{0:                                             }|
       {1:fooegg         }{0:                                             }|
-      {0:~                                                           }|
-      {0:~                                                           }|
-      {0:~                                                           }|
+      {0:·                                                           }|
+      {0:·                                                           }|
+      {0:·                                                           }|
       {3:-- Keyword completion (^N^P) }{4:match 2 of 2}                   |
     ]])
   end)
@@ -904,12 +904,12 @@ describe('completion', function()
       feed(':lua CURRENT_TESTING_<TAB>')
       screen:expect{grid=[[
                                                                     |
-        {0:~                                                           }|
-        {0:~                                                           }|
-        {0:~                                                           }|
-        {0:~                                                           }|
-        {0:~                                                           }|
-        {0:~                                                           }|
+        {0:·                                                           }|
+        {0:·                                                           }|
+        {0:·                                                           }|
+        {0:·                                                           }|
+        {0:·                                                           }|
+        {0:·                                                           }|
         :lua CURRENT_TESTING_VAR^                                    |
       ]]}
     end)
@@ -920,11 +920,11 @@ describe('completion', function()
       feed(':lua CURRENT_TESTING_<TAB>')
       screen:expect{ grid = [[
                                                                     |
-        {0:~                                                           }|
-        {0:~                                                           }|
-        {0:~                                                           }|
-        {0:~                                                           }|
-        {0:~                                                           }|
+        {0:·                                                           }|
+        {0:·                                                           }|
+        {0:·                                                           }|
+        {0:·                                                           }|
+        {0:·                                                           }|
         {10:CURRENT_TESTING_BAR}{9:  CURRENT_TESTING_FOO                    }|
         :lua CURRENT_TESTING_BAR^                                    |
       ]], unchanged = true }
@@ -946,9 +946,9 @@ describe('completion', function()
                                                                     |
         {8:[No Name]                                                   }|
         {0::}foo faa fee f^                                              |
-        {0:~                                                           }|
-        {0:~                                                           }|
-        {0:~                                                           }|
+        {0:·                                                           }|
+        {0:·                                                           }|
+        {0:·                                                           }|
         {9:[Command Line]                                              }|
         {3:-- INSERT --}                                                |
       ]] )
@@ -957,9 +957,9 @@ describe('completion', function()
                                                                     |
         {8:[No Name]                                                   }|
         {0::}foo faa fee foo^                                            |
-        {0:~           }{2: foo            }{0:                                }|
-        {0:~           }{1: faa            }{0:                                }|
-        {0:~           }{1: fee            }{0:                                }|
+        {0:·           }{2: foo            }{0:                                }|
+        {0:·           }{1: faa            }{0:                                }|
+        {0:·           }{1: fee            }{0:                                }|
         {9:[Command Line]                                              }|
         {3:-- Keyword Local completion (^N^P) }{4:match 1 of 3}             |
       ]])
@@ -968,9 +968,9 @@ describe('completion', function()
                                                                     |
         {8:[No Name]                                                   }|
         {0::}foo faa fee foo                                            |
-        {0:~                                                           }|
-        {0:~                                                           }|
-        {0:~                                                           }|
+        {0:·                                                           }|
+        {0:·                                                           }|
+        {0:·                                                           }|
         {9:[Command Line]                                              }|
         :foo faa fee foo^                                            |
       ]])
@@ -1003,11 +1003,11 @@ describe('completion', function()
       screen:expect([[
         ^                                                            |
         {1:1 3 2          }{0:                                             }|
-        {0:~                                                           }|
-        {0:~                                                           }|
-        {0:~                                                           }|
-        {0:~                                                           }|
-        {0:~                                                           }|
+        {0:·                                                           }|
+        {0:·                                                           }|
+        {0:·                                                           }|
+        {0:·                                                           }|
+        {0:·                                                           }|
         {3:-- INSERT --}                                                |
       ]])
     end)
@@ -1137,9 +1137,9 @@ describe('completion', function()
       bar                                                         |
       foobar                                                      |
       f^                                                           |
-      {0:~                                                           }|
-      {0:~                                                           }|
-      {0:~                                                           }|
+      {0:·                                                           }|
+      {0:·                                                           }|
+      {0:·                                                           }|
       {3:-- Keyword completion (^N^P) }{5:Back at original}               |
     ]], popupmenu = {
       anchor = { 1, 3, 0 },
@@ -1156,9 +1156,9 @@ describe('completion', function()
       bar                                                         |
       foobar                                                      |
       foob^                                                        |
-      {0:~                                                           }|
-      {0:~                                                           }|
-      {0:~                                                           }|
+      {0:·                                                           }|
+      {0:·                                                           }|
+      {0:·                                                           }|
       {3:-- Keyword completion (^N^P) }{5:Back at original}               |
     ]], popupmenu = {
       anchor = { 1, 3, 0 },
@@ -1180,7 +1180,7 @@ describe('completion', function()
       f^                                                           |
       {1:foo            }{0:                                             }|
       {1:foobar         }{0:                                             }|
-      {0:~                                                           }|
+      {0:·                                                           }|
       {3:-- Keyword completion (^N^P) }{5:Back at original}               |
     ]])
     eq({completed_item = {}, width = 15,
@@ -1195,7 +1195,7 @@ describe('completion', function()
       foo^                                                         |
       {2:foo            }{0:                                             }|
       {1:foobar         }{0:                                             }|
-      {0:~                                                           }|
+      {0:·                                                           }|
       {3:-- Keyword completion (^N^P) }{4:match 1 of 2}                   |
     ]])
     eq('foo', eval('g:word'))
@@ -1207,7 +1207,7 @@ describe('completion', function()
       foobar^                                                      |
       {1:foo            }{0:                                             }|
       {2:foobar         }{0:                                             }|
-      {0:~                                                           }|
+      {0:·                                                           }|
       {3:-- Keyword completion (^N^P) }{4:match 2 of 2}                   |
     ]])
     eq('foobar', eval('g:word'))
@@ -1219,7 +1219,7 @@ describe('completion', function()
       foobar^                                                      |
       {2:foo            }{0:                                             }|
       {1:foobar         }{0:                                             }|
-      {0:~                                                           }|
+      {0:·                                                           }|
       {3:-- Keyword completion (^N^P) }{4:match 1 of 2}                   |
     ]])
     eq('foo', eval('g:word'))
@@ -1231,7 +1231,7 @@ describe('completion', function()
       foobar^                                                      |
       {1:foo            }{0:                                             }|
       {2:foobar         }{0:                                             }|
-      {0:~                                                           }|
+      {0:·                                                           }|
       {3:-- Keyword completion (^N^P) }{4:match 2 of 2}                   |
     ]])
     eq('foobar', eval('g:word'))
@@ -1250,12 +1250,12 @@ describe('completion', function()
       {2:hello          }{0:                 }|
       {1:hullo          }{0:                 }|
       {1:heeee          }{0:                 }|
-      {0:~                               }|
-      {0:~                               }|
-      {0:~                               }|
-      {0:~                               }|
-      {0:~                               }|
-      {0:~                               }|
+      {0:·                               }|
+      {0:·                               }|
+      {0:·                               }|
+      {0:·                               }|
+      {0:·                               }|
+      {0:·                               }|
       {3:-- }{4:match 1 of 3}                 |
     ]])
     command([[call timer_start(100, { -> execute('stopinsert') })]])
@@ -1266,15 +1266,15 @@ describe('completion', function()
       hullo                           |
       heee^e                           |
       hello                           |
-      {0:~                               }|
-      {0:~                               }|
-      {0:~                               }|
-      {0:~                               }|
-      {0:~                               }|
-      {0:~                               }|
-      {0:~                               }|
-      {0:~                               }|
-      {0:~                               }|
+      {0:·                               }|
+      {0:·                               }|
+      {0:·                               }|
+      {0:·                               }|
+      {0:·                               }|
+      {0:·                               }|
+      {0:·                               }|
+      {0:·                               }|
+      {0:·                               }|
                                       |
     ]])
   end)

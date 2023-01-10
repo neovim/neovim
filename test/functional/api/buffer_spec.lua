@@ -361,7 +361,7 @@ describe('api/buf', function()
         Who would win?      |
         A real window       |
         with proper tex^t    |
-        {1:~                   }|
+        {1:·                   }|
                             |
       ]])
 
@@ -371,7 +371,7 @@ describe('api/buf', function()
         Who would win?      |
         A real window       |
         with proper tex^t    |
-        {1:~                   }|
+        {1:·                   }|
         {2:-- INSERT --}        |
       ]])
     end)
@@ -543,7 +543,7 @@ describe('api/buf', function()
   XXX                 |
   YYY                 |
   ^                    |
-  ~                   |
+  ·                   |
                       |
 
       ]])

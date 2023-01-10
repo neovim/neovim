@@ -79,10 +79,10 @@ describe(":autocmd", function()
     feed('q')
     screen:expect([[
       ^                                                  |
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
+      {1:·                                                 }|
+      {1:·                                                 }|
+      {1:·                                                 }|
+      {1:·                                                 }|
                                                         |
     ]])
   end)

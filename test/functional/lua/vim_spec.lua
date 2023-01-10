@@ -253,9 +253,9 @@ describe('lua stdlib', function()
     screen:attach()
     screen:expect{grid=[[
       ^                                                            |
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
+      {1:·                                                           }|
+      {1:·                                                           }|
+      {1:·                                                           }|
                                                                   |
     ]]}
 
@@ -2620,25 +2620,25 @@ describe('lua stdlib', function()
     screen:attach()
     screen:expect{grid=[[
       ^                                                            |
-      {0:~                                                           }|
-      {0:~                                                           }|
-      {0:~                                                           }|
+      {0:·                                                           }|
+      {0:·                                                           }|
+      {0:·                                                           }|
                                                                   |
     ]]}
     exec_lua [[vim.notify_once("I'll only tell you this once...", vim.log.levels.WARN)]]
     screen:expect{grid=[[
       ^                                                            |
-      {0:~                                                           }|
-      {0:~                                                           }|
-      {0:~                                                           }|
+      {0:·                                                           }|
+      {0:·                                                           }|
+      {0:·                                                           }|
       {1:I'll only tell you this once...}                             |
     ]]}
     feed('<C-l>')
     screen:expect{grid=[[
       ^                                                            |
-      {0:~                                                           }|
-      {0:~                                                           }|
-      {0:~                                                           }|
+      {0:·                                                           }|
+      {0:·                                                           }|
+      {0:·                                                           }|
                                                                   |
     ]]}
     exec_lua [[vim.notify_once("I'll only tell you this once...")]]

@@ -406,9 +406,9 @@ describe('named marks view', function()
       feed("<C-w>p'a")
       screen:expect([[
                   |
-      ~           |
-      ~           |
-      ~           |
+      ·           |
+      ·           |
+      ·           |
       [No Name]   |
       6 line      |
       ^7 line      |

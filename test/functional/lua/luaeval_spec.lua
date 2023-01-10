@@ -518,12 +518,12 @@ describe('v:lua', function()
     feed('isome st<c-x><c-o>')
     screen:expect{grid=[[
       some stuff^                                                  |
-      {1:~   }{2: stuff          }{1:                                        }|
-      {1:~   }{3: steam          }{1:                                        }|
-      {1:~   }{3: strange things }{1:                                        }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
+      {1:·   }{2: stuff          }{1:                                        }|
+      {1:·   }{3: steam          }{1:                                        }|
+      {1:·   }{3: strange things }{1:                                        }|
+      {1:·                                                           }|
+      {1:·                                                           }|
+      {1:·                                                           }|
       {4:-- Omni completion (^O^N^P) }{5:match 1 of 3}                    |
     ]]}
     meths.set_option('operatorfunc', 'v:lua.mymod.noisy')

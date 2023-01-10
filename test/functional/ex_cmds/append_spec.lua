@@ -77,11 +77,11 @@ describe('the first line is redrawn correctly after inserting text in an empty b
     screen:expect([[
       aaaaa               |
       ^bbbbb               |
-      {1:~                   }|
-      {1:~                   }|
-      {1:~                   }|
-      {1:~                   }|
-      {1:~                   }|
+      {1:·                   }|
+      {1:·                   }|
+      {1:·                   }|
+      {1:·                   }|
+      {1:·                   }|
                           |
     ]])
   end)
@@ -95,11 +95,11 @@ describe('the first line is redrawn correctly after inserting text in an empty b
     screen:expect([[
       aaaaa               |
       ^bbbbb               |
-      {1:~                   }|
-      {1:~                   }|
-      {1:~                   }|
-      {1:~                   }|
-      {1:~                   }|
+      {1:·                   }|
+      {1:·                   }|
+      {1:·                   }|
+      {1:·                   }|
+      {1:·                   }|
                           |
     ]])
   end)
