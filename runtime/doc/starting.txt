@@ -206,12 +206,13 @@ argument.
 			:print
 			:set
 		With |:verbose| or 'verbose', other commands display on stderr: >
-			nvim -es +":verbose echo 'foo'"
-			nvim -V1 -es +foo
+			nvim -es "+verbose echo 'foo'"
+			nvim -V1 -es "+echo 'foo'"
 
-<		Skips user |config| unless |-u| was given.
+<		Disables user |config| unless |-u| was given.
+		Disables plugins unless 'loadplugins' was set.
+		Disables |shada| unless |-i| was given.
 		Disables swapfile (like |-n|).
-		User |shada| is loaded (unless "-i NONE" is given).
 
 							*-l*
 -l {script} [args]
@@ -219,6 +220,11 @@ argument.
 		[args] after processing any preceding Nvim |cli-arguments|,
 		then exits. Exits 1 on Lua error. See |-S| to run multiple Lua
 		scripts without args, with a UI.
+
+		Disables user |config| unless |-u| was given.
+		Disables plugins unless 'loadplugins' was set.
+		Disables |shada| unless |-i| was given.
+		Disables swapfile (like |-n|).
 								    *lua-args*
 		All [args] are treated as {script} arguments and stored in the
 		Lua `_G.arg` global table, thus "-l" ends processing of Nvim
@@ -233,12 +239,12 @@ argument.
 			nvim +q -l foo.lua
 <		This loads Lua module "bar" before executing "foo.lua": >
 			nvim +"lua require('bar')" -l foo.lua
+<								    *lua-shebang*
+		You can set the "shebang" of the script so that Nvim executes
+		the script when called with "./" from a shell (remember to
+		"chmod u+x"): >
+			#!/usr/bin/env -S nvim -l
 <
-		Skips user |config| unless |-u| was given.
-		Disables plugins unless 'loadplugins' was set.
-		Disables |shada| unless |-i| was given.
-		Disables swapfile (like |-n|).
-
 							*-b*
 -b		Binary mode.  File I/O will only recognize <NL> to separate
 		lines.  The 'expandtab' option will be reset.  The 'textwidth'

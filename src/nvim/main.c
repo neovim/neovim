@@ -1184,6 +1184,10 @@ static void command_line_scan(mparm_T *parmp)
         if (exmode_active) {    // "-es" silent (batch) Ex-mode
           silent_mode = true;
           parmp->no_swap_file = true;
+          parmp->use_vimrc = parmp->use_vimrc ? parmp->use_vimrc : "NONE";
+          if (p_shadafile == NULL || *p_shadafile == NUL) {
+            set_option_value_give_err("shadafile", 0L, "NONE", 0);
+          }
         } else {                // "-s {scriptin}" read from script file
           want_argument = true;
         }

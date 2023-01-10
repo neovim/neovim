@@ -199,20 +199,15 @@ describe('startup', function()
     end)
 
     it('disables swapfile/shada/config/plugins unless overridden', function()
+      local script = [[print(('updatecount=%d shadafile=%s loadplugins=%s scriptnames=%d'):format(
+                       vim.o.updatecount, vim.o.shadafile, tostring(vim.o.loadplugins), math.max(1, #vim.fn.split(vim.fn.execute('scriptnames'),'\n'))))]]
       assert_l_out('updatecount=0 shadafile=NONE loadplugins=false scriptnames=1',
-        nil,
-        nil,
-        '-',
-        [[print(('updatecount=%d shadafile=%s loadplugins=%s scriptnames=%d'):format(
-          vim.o.updatecount, vim.o.shadafile, tostring(vim.o.loadplugins), math.max(1, #vim.fn.split(vim.fn.execute('scriptnames'),'\n'))))]])
+        nil, nil, '-', script)
 
       -- User can override.
       assert_l_out(function(out) return matches('updatecount=99 shadafile=Xtest_shada loadplugins=true scriptnames=2%d', out) end,
         { '+set updatecount=99', '-i', 'Xtest_shada', '+set loadplugins', '-u', 'NORC' },
-        nil,
-        '-',
-        [[print(('updatecount=%d shadafile=%s loadplugins=%s scriptnames=%d'):format(
-          vim.o.updatecount, vim.o.shadafile, tostring(vim.o.loadplugins), math.max(1, #vim.fn.split(vim.fn.execute('scriptnames'),'\n'))))]])
+        nil, '-', script)
     end)
   end)
 
@@ -399,16 +394,16 @@ describe('startup', function()
                     { 'set encoding', '' }))
   end)
 
-  it('-es/-Es disables swapfile, user config #8540', function()
+  it('-es/-Es disables swapfile/shada/config/plugins unless overridden #8540', function()
     for _,arg in ipairs({'-es', '-Es'}) do
       local out = funcs.system({nvim_prog, arg,
-                                '+set swapfile? updatecount? shadafile?',
+                                '+set updatecount? shadafile? loadplugins?',
                                 "+put =execute('scriptnames')", '+%print'})
       local line1 = string.match(out, '^.-\n')
       -- updatecount=0 means swapfile was disabled.
-      eq("  swapfile  updatecount=0  shadafile=\n", line1)
-      -- Standard plugins were loaded, but not user config.
-      eq('health.vim', string.match(out, 'health.vim'))
+      eq("  updatecount=0  shadafile=NONEnoloadplugins\n", line1)
+      -- No plugins were loaded.
+      eq(nil, string.match(out, 'health.vim'))
       eq(nil, string.match(out, 'init.vim'))
     end
   end)
