@@ -1418,20 +1418,20 @@ struct window_S {
 typedef struct statuscol statuscol_T;
 
 struct statuscol {
-  int width;                       // width of the status column
-  int cur_attr;                    // current attributes in text
-  int num_attr;                    // attributes used for line number
-  int fold_attr;                   // attributes used for fold column
-  int sign_attr[SIGN_SHOW_MAX];    // attributes used for signs
-  int truncate;                    // truncated width
-  bool draw;                       // draw statuscolumn or not
-  char fold_text[10];              // text in fold column (%C)
-  char *sign_text[SIGN_SHOW_MAX];  // text in sign column (%s)
-  char text[MAXPATHL];             // text in status column
-  char *textp;                     // current position in text
-  size_t text_len;                 // length of text
-  stl_hlrec_t *hlrec;              // highlight groups
-  stl_hlrec_t *hlrecp;             // current highlight group
+  int width;                           ///< width of the status column
+  int cur_attr;                        ///< current attributes in text
+  int num_attr;                        ///< attributes used for line number
+  int fold_attr;                       ///< attributes used for fold column
+  int sign_attr[SIGN_SHOW_MAX + 1];    ///< attributes used for signs
+  int truncate;                        ///< truncated width
+  bool draw;                           ///< draw statuscolumn or not
+  char fold_text[10];                  ///< text in fold column (%C)
+  char *sign_text[SIGN_SHOW_MAX + 1];  ///< text in sign column (%s)
+  char text[MAXPATHL];                 ///< text in status column
+  char *textp;                         ///< current position in text
+  char *text_end;                      ///< end of text (the NUL byte)
+  stl_hlrec_t *hlrec;                  ///< highlight groups
+  stl_hlrec_t *hlrecp;                 ///< current highlight group
 };
 
 /// Macros defined in Vim, but not in Neovim

@@ -293,6 +293,31 @@ describe('statuscolumn', function()
       {2: }{1:  │     }aaaaaa                                      |
                                                            |
     ]])
+    -- Up to 9 signs in a line
+    command('set signcolumn=auto:9 foldcolumn=auto')
+    command('sign place 5 line=6 name=piet1 buffer=1')
+    command('sign place 6 line=6 name=piet2 buffer=1')
+    command('sign place 7 line=6 name=piet1 buffer=1')
+    command('sign place 8 line=6 name=piet2 buffer=1')
+    command('sign place 9 line=6 name=piet1 buffer=1')
+    command('sign place 10 line=6 name=piet2 buffer=1')
+    command('sign place 11 line=6 name=piet1 buffer=1')
+    screen:expect([[
+      {2: }{1: 4│>>                 }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+      {2: }{1:  │                   }aaaaaaaaaaaaaaaaaaaa          |
+      {2: }{1: 3│}{0:>!}{1:                 }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+      {2: }{1:  │                   }aaaaaaaaaaaaaaaaaaaa          |
+      {2: }{1: 2│>>}{0:>!}{1:>>}{0:>!}{1:>>}{0:>!}{1:>>}{0:>!}{1:>> }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+      {2: }{1:  │                   }aaaaaaaaaaaaaaaaaaaa          |
+      {2: }{1: 1│                   }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+      {2: }{1:  │                   }aaaaaaaaaaaaaaaaaaaa          |
+      {2:+}{1: 0│                   }{3:^+--  1 line: aaaaaaaaaaaaaaaaa}|
+      {2: }{1: 1│                   }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+      {2: }{1:  │                   }aaaaaaaaaaaaaaaaaaaa          |
+      {2: }{1: 2│                   }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+      {2: }{1:  │                   }aaaaaaaaaaaaaaaaaaaa          |
+                                                           |
+    ]])
   end)
 
   it('works with \'statuscolumn\' clicks', function()
