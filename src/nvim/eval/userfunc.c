@@ -1618,7 +1618,7 @@ int call_func(const char *funcname, int len, typval_T *rettv, int argcount_in, t
                                    funcexe->fe_basetv);
     } else {
       // Find the function name in the table, call its implementation.
-      error = call_internal_func((char_u *)fname, argcount, argvars, rettv);
+      error = call_internal_func(fname, argcount, argvars, rettv);
     }
     // The function call (or "FuncUndefined" autocommand sequence) might
     // have been aborted by an error, an interrupt, or an explicitly thrown

@@ -1113,7 +1113,7 @@ const char *gettail_dir(const char *const fname)
 /// Returns the total number of matches.
 ///
 /// @param flags  EW_* flags
-static int expand_in_path(garray_T *const gap, char_u *const pattern, const int flags)
+static int expand_in_path(garray_T *const gap, char *const pattern, const int flags)
 {
   garray_T path_ga;
 
@@ -1127,7 +1127,7 @@ static int expand_in_path(garray_T *const gap, char_u *const pattern, const int 
     return 0;
   }
 
-  char_u *const paths = ga_concat_strings(&path_ga);
+  char *const paths = (char *)ga_concat_strings(&path_ga);
   ga_clear_strings(&path_ga);
 
   int glob_flags = 0;
@@ -1137,7 +1137,7 @@ static int expand_in_path(garray_T *const gap, char_u *const pattern, const int 
   if (flags & EW_ADDSLASH) {
     glob_flags |= WILD_ADD_SLASH;
   }
-  globpath((char *)paths, (char *)pattern, gap, glob_flags);
+  globpath(paths, pattern, gap, glob_flags);
   xfree(paths);
 
   return gap->ga_len;
@@ -1208,7 +1208,7 @@ static bool has_special_wildchar(char_u *p)
 int gen_expand_wildcards(int num_pat, char **pat, int *num_file, char ***file, int flags)
 {
   garray_T ga;
-  char_u *p;
+  char *p;
   static bool recursive = false;
   int add_pat;
   bool did_expand_in_path = false;
@@ -1245,10 +1245,10 @@ int gen_expand_wildcards(int num_pat, char **pat, int *num_file, char ***file, i
 
   for (int i = 0; i < num_pat && !got_int; i++) {
     add_pat = -1;
-    p = (char_u *)pat[i];
+    p = pat[i];
 
-    if (vim_backtick((char *)p)) {
-      add_pat = expand_backtick(&ga, (char *)p, flags);
+    if (vim_backtick(p)) {
+      add_pat = expand_backtick(&ga, p, flags);
       if (add_pat == -1) {
         recursive = false;
         ga_clear_strings(&ga);
@@ -1258,16 +1258,16 @@ int gen_expand_wildcards(int num_pat, char **pat, int *num_file, char ***file, i
       }
     } else {
       // First expand environment variables, "~/" and "~user/".
-      if ((has_env_var(p) && !(flags & EW_NOTENV)) || *p == '~') {
-        p = expand_env_save_opt(p, true);
+      if ((has_env_var((char_u *)p) && !(flags & EW_NOTENV)) || *p == '~') {
+        p = (char *)expand_env_save_opt((char_u *)p, true);
         if (p == NULL) {
-          p = (char_u *)pat[i];
+          p = pat[i];
         } else {
 #ifdef UNIX
           // On Unix, if expand_env() can't expand an environment
           // variable, use the shell to do that.  Discard previously
           // found file names and start all over again.
-          if (has_env_var(p) || *p == '~') {
+          if (has_env_var((char_u *)p) || *p == '~') {
             xfree(p);
             ga_clear_strings(&ga);
             i = os_expand_wildcards(num_pat, pat, num_file, file,
@@ -1284,9 +1284,9 @@ int gen_expand_wildcards(int num_pat, char **pat, int *num_file, char ***file, i
       // there is no match, and EW_NOTFOUND is given, add the pattern.
       // Otherwise: Add the file name if it exists or when EW_NOTFOUND is
       // given.
-      if (path_has_exp_wildcard(p) || (flags & EW_ICASE)) {
+      if (path_has_exp_wildcard((char_u *)p) || (flags & EW_ICASE)) {
         if ((flags & EW_PATH)
-            && !path_is_absolute(p)
+            && !path_is_absolute((char_u *)p)
             && !(p[0] == '.'
                  && (vim_ispathsep(p[1])
                      || (p[1] == '.'
@@ -1298,7 +1298,7 @@ int gen_expand_wildcards(int num_pat, char **pat, int *num_file, char ***file, i
           recursive = true;
           did_expand_in_path = true;
         } else {
-          size_t tmp_add_pat = path_expand(&ga, p, flags);
+          size_t tmp_add_pat = path_expand(&ga, (char_u *)p, flags);
           assert(tmp_add_pat <= INT_MAX);
           add_pat = (int)tmp_add_pat;
         }
@@ -1306,14 +1306,14 @@ int gen_expand_wildcards(int num_pat, char **pat, int *num_file, char ***file, i
     }
 
     if (add_pat == -1 || (add_pat == 0 && (flags & EW_NOTFOUND))) {
-      char_u *t = (char_u *)backslash_halve_save((char *)p);
+      char *t = backslash_halve_save(p);
 
       // When EW_NOTFOUND is used, always add files and dirs.  Makes
       // "vim c:/" work.
       if (flags & EW_NOTFOUND) {
-        addfile(&ga, (char *)t, flags | EW_DIR | EW_FILE);
+        addfile(&ga, t, flags | EW_DIR | EW_FILE);
       } else {
-        addfile(&ga, (char *)t, flags);
+        addfile(&ga, t, flags);
       }
 
       if (t != p) {
@@ -1322,9 +1322,9 @@ int gen_expand_wildcards(int num_pat, char **pat, int *num_file, char ***file, i
     }
 
     if (did_expand_in_path && !GA_EMPTY(&ga) && (flags & EW_PATH)) {
-      uniquefy_paths(&ga, (char *)p);
+      uniquefy_paths(&ga, p);
     }
-    if (p != (char_u *)pat[i]) {
+    if (p != pat[i]) {
       xfree(p);
     }
   }
