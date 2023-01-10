@@ -2,6 +2,7 @@
  
 source check.vim
 source view_util.vim
+source screendump.vim
 
 " Visual block Insert adjusts for multi-byte char
 func Test_visual_block_insert()
@@ -196,6 +197,22 @@ func Test_setcellwidths()
   set listchars&
   set fillchars&
   call setcellwidths([])
+endfunc
+
+func Test_setcellwidths_dump()
+  CheckRunVimInTerminal
+
+  let lines =<< trim END
+      call setline(1, "\ue5ffDesktop")
+  END
+  call writefile(lines, 'XCellwidths', 'D')
+  let buf = RunVimInTerminal('-S XCellwidths', {'rows': 6})
+  call VerifyScreenDump(buf, 'Test_setcellwidths_dump_1', {})
+
+  call term_sendkeys(buf, ":call setcellwidths([[0xe5ff, 0xe5ff, 2]])\<CR>")
+  call VerifyScreenDump(buf, 'Test_setcellwidths_dump_2', {})
+
+  call StopVimInTerminal(buf)
 endfunc
 
 func Test_print_overlong()
