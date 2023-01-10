@@ -868,6 +868,12 @@ void draw_tabline(void)
   redraw_tabline = false;
 }
 
+/// Build the 'statuscolumn' string for line "lnum".  If "setnum" is true,
+/// update the "lnum" and "relnum" vim-variables for a new line.
+///
+/// @param hlrec  HL attributes (can be NULL)
+/// @param stcp  Status column attributes (can be NULL)
+/// @return  The width of the built status column string for line "lnum"
 int build_statuscol_str(win_T *wp, bool setnum, bool wrap, linenr_T lnum, long relnum, int maxwidth,
                         int fillchar, char *buf, stl_hlrec_t **hlrec, statuscol_T *stcp)
 {

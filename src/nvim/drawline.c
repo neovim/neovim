@@ -398,6 +398,10 @@ static int get_sign_attrs(buf_T *buf, linenr_T lnum, SignTextAttrs *sattrs, int 
   return num_signs;
 }
 
+/// Prepare and build the 'statuscolumn' string for line "lnum" in window "wp".
+/// Fill "stcp" with the built status column string and attributes.
+///
+/// @param[out] stcp  Status column attributes
 static void get_statuscol_str(win_T *wp, linenr_T lnum, int row, int startrow, int filler_lines,
                               int cul_attr, int sign_num_attr, SignTextAttrs *sattrs,
                               foldinfo_T foldinfo, char_u *extra, statuscol_T *stcp)
@@ -457,6 +461,11 @@ static void get_statuscol_str(win_T *wp, linenr_T lnum, int row, int startrow, i
   }
 }
 
+/// Get information needed to display the next segment in the 'statuscolumn'.
+/// If not yet at the end, prepare for next segment and decrement "draw_state".
+///
+/// @param stcp  Status column attributes
+/// @param[out] draw_state  Current draw state in win_line()
 static void get_statuscol_display_info(LineDrawState *draw_state, int *char_attr, int *n_extrap,
                                        int *c_extrap, int *c_finalp, char_u *extra, char **pp_extra,
                                        statuscol_T *stcp)
