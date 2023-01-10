@@ -46,31 +46,33 @@ static int win_getid(typval_T *argvars)
   }
   int winnr = (int)tv_get_number(&argvars[0]);
   win_T *wp;
-  if (winnr > 0) {
-    if (argvars[1].v_type == VAR_UNKNOWN) {
-      wp = firstwin;
-    } else {
-      tabpage_T *tp = NULL;
-      int tabnr = (int)tv_get_number(&argvars[1]);
-      FOR_ALL_TABS(tp2) {
-        if (--tabnr == 0) {
-          tp = tp2;
-          break;
-        }
-      }
-      if (tp == NULL) {
-        return -1;
-      }
-      if (tp == curtab) {
-        wp = firstwin;
-      } else {
-        wp = tp->tp_firstwin;
+  if (winnr <= 0) {
+    return 0;
+  }
+
+  if (argvars[1].v_type == VAR_UNKNOWN) {
+    wp = firstwin;
+  } else {
+    tabpage_T *tp = NULL;
+    int tabnr = (int)tv_get_number(&argvars[1]);
+    FOR_ALL_TABS(tp2) {
+      if (--tabnr == 0) {
+        tp = tp2;
+        break;
       }
     }
-    for (; wp != NULL; wp = wp->w_next) {
-      if (--winnr == 0) {
-        return wp->handle;
-      }
+    if (tp == NULL) {
+      return -1;
+    }
+    if (tp == curtab) {
+      wp = firstwin;
+    } else {
+      wp = tp->tp_firstwin;
+    }
+  }
+  for (; wp != NULL; wp = wp->w_next) {
+    if (--winnr == 0) {
+      return wp->handle;
     }
   }
   return 0;
@@ -288,16 +290,18 @@ static int get_winnr(tabpage_T *tp, typval_T *argvar)
     }
   }
 
-  if (nr > 0) {
-    for (win_T *wp = (tp == curtab) ? firstwin : tp->tp_firstwin;
-         wp != twin; wp = wp->w_next) {
-      if (wp == NULL) {
-        // didn't find it in this tabpage
-        nr = 0;
-        break;
-      }
-      nr++;
+  if (nr <= 0) {
+    return 0;
+  }
+
+  for (win_T *wp = (tp == curtab) ? firstwin : tp->tp_firstwin;
+       wp != twin; wp = wp->w_next) {
+    if (wp == NULL) {
+      // didn't find it in this tabpage
+      nr = 0;
+      break;
     }
+    nr++;
   }
   return nr;
 }

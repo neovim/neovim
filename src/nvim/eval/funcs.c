@@ -859,14 +859,14 @@ static void f_cindent(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 
 win_T *get_optional_window(typval_T *argvars, int idx)
 {
-  win_T *win = curwin;
+  if (argvars[idx].v_type == VAR_UNKNOWN) {
+    return curwin;
+  }
 
-  if (argvars[idx].v_type != VAR_UNKNOWN) {
-    win = find_win_by_nr_or_id(&argvars[idx]);
-    if (win == NULL) {
-      emsg(_(e_invalwindow));
-      return NULL;
-    }
+  win_T *win = find_win_by_nr_or_id(&argvars[idx]);
+  if (win == NULL) {
+    emsg(_(e_invalwindow));
+    return NULL;
   }
   return win;
 }
@@ -6109,55 +6109,57 @@ static int get_search_arg(typval_T *varp, int *flagsp)
 {
   int dir = FORWARD;
 
-  if (varp->v_type != VAR_UNKNOWN) {
-    char nbuf[NUMBUFLEN];
-    const char *flags = tv_get_string_buf_chk(varp, nbuf);
-    if (flags == NULL) {
-      return 0;  // Type error; errmsg already given.
-    }
-    int mask;
-    while (*flags != NUL) {
-      switch (*flags) {
-      case 'b':
-        dir = BACKWARD; break;
-      case 'w':
-        p_ws = true; break;
-      case 'W':
-        p_ws = false; break;
-      default:
-        mask = 0;
-        if (flagsp != NULL) {
-          switch (*flags) {
-          case 'c':
-            mask = SP_START; break;
-          case 'e':
-            mask = SP_END; break;
-          case 'm':
-            mask = SP_RETCOUNT; break;
-          case 'n':
-            mask = SP_NOMOVE; break;
-          case 'p':
-            mask = SP_SUBPAT; break;
-          case 'r':
-            mask = SP_REPEAT; break;
-          case 's':
-            mask = SP_SETPCMARK; break;
-          case 'z':
-            mask = SP_COLUMN; break;
-          }
-        }
-        if (mask == 0) {
-          semsg(_(e_invarg2), flags);
-          dir = 0;
-        } else {
-          *flagsp |= mask;
+  if (varp->v_type == VAR_UNKNOWN) {
+    return FORWARD;
+  }
+
+  char nbuf[NUMBUFLEN];
+  const char *flags = tv_get_string_buf_chk(varp, nbuf);
+  if (flags == NULL) {
+    return 0;  // Type error; errmsg already given.
+  }
+  int mask;
+  while (*flags != NUL) {
+    switch (*flags) {
+    case 'b':
+      dir = BACKWARD; break;
+    case 'w':
+      p_ws = true; break;
+    case 'W':
+      p_ws = false; break;
+    default:
+      mask = 0;
+      if (flagsp != NULL) {
+        switch (*flags) {
+        case 'c':
+          mask = SP_START; break;
+        case 'e':
+          mask = SP_END; break;
+        case 'm':
+          mask = SP_RETCOUNT; break;
+        case 'n':
+          mask = SP_NOMOVE; break;
+        case 'p':
+          mask = SP_SUBPAT; break;
+        case 'r':
+          mask = SP_REPEAT; break;
+        case 's':
+          mask = SP_SETPCMARK; break;
+        case 'z':
+          mask = SP_COLUMN; break;
         }
       }
-      if (dir == 0) {
-        break;
+      if (mask == 0) {
+        semsg(_(e_invarg2), flags);
+        dir = 0;
+      } else {
+        *flagsp |= mask;
       }
-      flags++;
     }
+    if (dir == 0) {
+      break;
+    }
+    flags++;
   }
   return dir;
 }

@@ -1585,21 +1585,24 @@ static const char *set_context_by_cmdname(const char *cmd, cmdidx_T cmdidx, cons
   case CMD_dsplit:
     // Skip count.
     arg = (const char *)skipwhite(skipdigits(arg));
-    if (*arg == '/') {  // Match regexp, not just whole words.
-      for (++arg; *arg && *arg != '/'; arg++) {
-        if (*arg == '\\' && arg[1] != NUL) {
-          arg++;
-        }
-      }
-      if (*arg) {
-        arg = (const char *)skipwhite(arg + 1);
+    if (*arg != '/') {
+      return NULL;
+    }
 
-        // Check for trailing illegal characters.
-        if (*arg == NUL || strchr("|\"\n", *arg) == NULL) {
-          xp->xp_context = EXPAND_NOTHING;
-        } else {
-          return arg;
-        }
+    // Match regexp, not just whole words.
+    for (++arg; *arg && *arg != '/'; arg++) {
+      if (*arg == '\\' && arg[1] != NUL) {
+        arg++;
+      }
+    }
+    if (*arg) {
+      arg = (const char *)skipwhite(arg + 1);
+
+      // Check for trailing illegal characters.
+      if (*arg == NUL || strchr("|\"\n", *arg) == NULL) {
+        xp->xp_context = EXPAND_NOTHING;
+      } else {
+        return arg;
       }
     }
     break;
