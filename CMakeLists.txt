@@ -20,7 +20,10 @@ endif()
 # Point CMake at any custom modules we may ship
 list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
 
-# We don't support building in-tree.
+include(CheckCCompilerFlag)
+include(CheckCSourceCompiles)
+include(InstallHelpers)
+include(LuaHelpers) # Find Lua interpreter
 include(PreventInTreeBuilds)
 include(Util)
 
@@ -78,9 +81,6 @@ endif()
 list(INSERT CMAKE_PREFIX_PATH 0 ${DEPS_PREFIX})
 set(ENV{PKG_CONFIG_PATH} "$ENV{PKG_CONFIG_PATH}:${DEPS_PREFIX}/lib/pkgconfig")
 
-# used for check_c_compiler_flag
-include(CheckCCompilerFlag)
-
 if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
   # CMake tries to treat /sw and /opt/local as extension of the system path, but
   # that doesn't really work out very well.  Once you have a dependency that
@@ -98,7 +98,7 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
                     OUTPUT_STRIP_TRAILING_WHITESPACE)
     set(CMAKE_OSX_DEPLOYMENT_TARGET "${MACOS_VERSION}")
   endif()
-  message("Using deployment target ${CMAKE_OSX_DEPLOYMENT_TARGET}")
+  message(STATUS "Using deployment target ${CMAKE_OSX_DEPLOYMENT_TARGET}")
 
   # Work around some old, broken detection by CMake for knowing when to use the
   # isystem flag.  Apple's compilers have supported this for quite some time
@@ -115,8 +115,6 @@ if(WIN32 OR CMAKE_SYSTEM_NAME STREQUAL "Darwin")
   set(USE_FNAME_CASE TRUE)
 endif()
 
-option(ENABLE_LIBINTL "enable libintl" ON)
-option(ENABLE_LIBICONV "enable libiconv" ON)
 if (MINGW)
   # Disable LTO by default as it may not compile
   # See https://github.com/Alexpux/MINGW-packages/issues/3516
@@ -192,24 +190,9 @@ if(CMAKE_C_FLAGS_RELWITHDEBINFO MATCHES DNDEBUG)
   string(REPLACE "-DNDEBUG" "" CMAKE_C_FLAGS_RELWITHDEBINFO "${CMAKE_C_FLAGS_RELWITHDEBINFO}")
 endif()
 
-option(ENABLE_IWYU "Run include-what-you-use with the compiler." OFF)
-if(ENABLE_IWYU)
-  find_program(IWYU_PRG NAMES include-what-you-use iwyu)
-  if(NOT IWYU_PRG)
-    message(FATAL_ERROR "ENABLE_IWYU is ON but include-what-you-use is not found!")
-  endif()
-  set(CMAKE_C_INCLUDE_WHAT_YOU_USE ${IWYU_PRG}
-    -Xiwyu --mapping_file=${PROJECT_SOURCE_DIR}/cmake.config/iwyu/mapping.imp
-    -Xiwyu --mapping_file=${PROJECT_SOURCE_DIR}/cmake.config/iwyu/gcc.libc.imp
-    -Xiwyu --mapping_file=${PROJECT_SOURCE_DIR}/cmake.config/iwyu/gcc.symbols.imp
-    -Xiwyu --no_default_mappings)
-  add_definitions(-DEXITFREE)
-endif()
-
 # gcc 4.0+ sets _FORTIFY_SOURCE=2 automatically.  This currently
 # does not work with Neovim due to some uses of dynamically-sized structures.
 # https://github.com/neovim/neovim/issues/223
-include(CheckCSourceCompiles)
 
 # Include the build type's default flags in the check for _FORTIFY_SOURCE,
 # otherwise we may incorrectly identify the level as acceptable and find out
@@ -221,299 +204,7 @@ if(${INIT_FLAGS_NAME})
   set(CMAKE_REQUIRED_FLAGS "${${INIT_FLAGS_NAME}}")
 endif()
 
-# Include <string.h> because some toolchains define _FORTIFY_SOURCE=2 in
-# internal header files, which should in turn be #included by <string.h>.
-check_c_source_compiles("
-#include <string.h>
-
-#if defined(_FORTIFY_SOURCE) && _FORTIFY_SOURCE > 1
-#error \"_FORTIFY_SOURCE > 1\"
-#endif
-int
-main(void)
-{
-  return 0;
-}
-" HAS_ACCEPTABLE_FORTIFY)
-
-if(NOT HAS_ACCEPTABLE_FORTIFY)
-  message(STATUS "Unsupported _FORTIFY_SOURCE found, forcing _FORTIFY_SOURCE=1")
-  # Extract possible prefix to _FORTIFY_SOURCE (e.g. -Wp,-D_FORTIFY_SOURCE).
-  STRING(REGEX MATCH "[^\ ]+-D_FORTIFY_SOURCE" _FORTIFY_SOURCE_PREFIX "${CMAKE_C_FLAGS}")
-  STRING(REPLACE "-D_FORTIFY_SOURCE" "" _FORTIFY_SOURCE_PREFIX "${_FORTIFY_SOURCE_PREFIX}" )
-  if(NOT _FORTIFY_SOURCE_PREFIX STREQUAL "")
-    message(STATUS "Detected _FORTIFY_SOURCE Prefix=${_FORTIFY_SOURCE_PREFIX}")
-  endif()
-  # -U in add_definitions doesn't end up in the correct spot, so we add it to
-  # the flags variable instead.
-  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${_FORTIFY_SOURCE_PREFIX}-U_FORTIFY_SOURCE ${_FORTIFY_SOURCE_PREFIX}-D_FORTIFY_SOURCE=1")
-endif()
-
-# Remove --sort-common from linker flags, as this seems to cause bugs (see #2641, #3374).
-# TODO: Figure out the root cause.
-if(CMAKE_EXE_LINKER_FLAGS MATCHES "--sort-common" OR
-   CMAKE_SHARED_LINKER_FLAGS MATCHES "--sort-common" OR
-   CMAKE_MODULE_LINKER_FLAGS MATCHES "--sort-common")
-  message(STATUS "Removing --sort-common from linker flags")
-  string(REGEX REPLACE ",--sort-common(=[^,]+)?" "" CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS}")
-  string(REGEX REPLACE ",--sort-common(=[^,]+)?" "" CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS}")
-  string(REGEX REPLACE ",--sort-common(=[^,]+)?" "" CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS}")
-
-  # If no linker flags remain for a -Wl argument, remove it.
-  # '-Wl$' will match LDFLAGS="-Wl,--sort-common",
-  # '-Wl ' will match LDFLAGS="-Wl,--sort-common -Wl,..."
-  string(REGEX REPLACE "-Wl($| )" "" CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS}")
-  string(REGEX REPLACE "-Wl($| )" "" CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS}")
-  string(REGEX REPLACE "-Wl($| )" "" CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS}")
-endif()
-
-check_c_source_compiles("
-#include <execinfo.h>
-int main(void)
-{
-  void *trace[1];
-  backtrace(trace, 1);
-  return 0;
-}
-" HAVE_EXECINFO_BACKTRACE)
-
-check_c_source_compiles("
-int main(void)
-{
-  int a = 42;
-  __builtin_add_overflow(a, a, &a);
-  __builtin_sub_overflow(a, a, &a);
-  return 0;
-}
-" HAVE_BUILTIN_ADD_OVERFLOW)
-
-option(ENABLE_COMPILER_SUGGESTIONS "Enable -Wsuggest compiler warnings" OFF)
-if(MSVC)
-  # XXX: /W4 gives too many warnings. #3241
-  add_compile_options(-W1 -wd4311)
-  add_definitions(-D_CRT_SECURE_NO_WARNINGS -D_CRT_NONSTDC_NO_DEPRECATE)
-  add_definitions(-DMSWIN)
-else()
-  add_compile_options(-Wall -Wextra -pedantic -Wno-unused-parameter
-    -Wstrict-prototypes -std=gnu99 -Wshadow -Wconversion
-    -Wdouble-promotion
-    -Wmissing-noreturn
-    -Wmissing-format-attribute
-    -Wmissing-prototypes)
-
-  check_c_compiler_flag(-Wimplicit-fallthrough HAVE_WIMPLICIT_FALLTHROUGH_FLAG)
-  if(HAVE_WIMPLICIT_FALLTHROUGH_FLAG)
-    add_compile_options(-Wimplicit-fallthrough)
-  endif()
-
-  if(ENABLE_COMPILER_SUGGESTIONS)
-    # Clang doesn't have -Wsuggest-attribute so check for each one.
-    check_c_compiler_flag(-Wsuggest-attribute=pure HAVE_WSUGGEST_ATTRIBUTE_PURE)
-    if(HAVE_WSUGGEST_ATTRIBUTE_PURE)
-      add_compile_options(-Wsuggest-attribute=pure)
-    endif()
-
-    check_c_compiler_flag(-Wsuggest-attribute=const HAVE_WSUGGEST_ATTRIBUTE_CONST)
-    if(HAVE_WSUGGEST_ATTRIBUTE_CONST)
-      add_compile_options(-Wsuggest-attribute=const)
-    endif()
-
-    check_c_compiler_flag(-Wsuggest-attribute=malloc HAVE_WSUGGEST_ATTRIBUTE_MALLOC)
-    if(HAVE_WSUGGEST_ATTRIBUTE_MALLOC)
-      add_compile_options(-Wsuggest-attribute=malloc)
-    endif()
-
-    check_c_compiler_flag(-Wsuggest-attribute=cold HAVE_WSUGGEST_ATTRIBUTE_COLD)
-    if(HAVE_WSUGGEST_ATTRIBUTE_COLD)
-      add_compile_options(-Wsuggest-attribute=cold)
-    endif()
-  endif()
-
-  # On FreeBSD 64 math.h uses unguarded C11 extension, which taints clang
-  # 3.4.1 used there.
-  if(CMAKE_SYSTEM_NAME STREQUAL "FreeBSD" AND CMAKE_C_COMPILER_ID MATCHES "Clang")
-    add_compile_options(-Wno-c11-extensions)
-  endif()
-endif()
-
-if(MINGW)
-  # Use POSIX compatible stdio in Mingw
-  add_definitions(-D__USE_MINGW_ANSI_STDIO)
-  add_definitions(-DMSWIN)
-endif()
-if(WIN32)
-  # Windows Vista is the minimum supported version
-  add_definitions(-D_WIN32_WINNT=0x0600)
-endif()
-
-# OpenBSD's GCC (4.2.1) doesn't have -Wvla
-check_c_compiler_flag(-Wvla HAS_WVLA_FLAG)
-if(HAS_WVLA_FLAG)
-  add_compile_options(-Wvla)
-endif()
-
-if(UNIX)
-  # -fstack-protector breaks non Unix builds even in Mingw-w64
-  check_c_compiler_flag(-fstack-protector-strong HAS_FSTACK_PROTECTOR_STRONG_FLAG)
-  check_c_compiler_flag(-fstack-protector HAS_FSTACK_PROTECTOR_FLAG)
-
-  if(HAS_FSTACK_PROTECTOR_STRONG_FLAG)
-    add_compile_options(-fstack-protector-strong)
-    link_libraries(-fstack-protector-strong)
-  elseif(HAS_FSTACK_PROTECTOR_FLAG)
-    add_compile_options(-fstack-protector --param ssp-buffer-size=4)
-    link_libraries(-fstack-protector --param ssp-buffer-size=4)
-  endif()
-endif()
-
-check_c_compiler_flag(-fno-common HAVE_FNO_COMMON)
-if (HAVE_FNO_COMMON)
-  add_compile_options(-fno-common)
-endif()
-
-check_c_compiler_flag(-fdiagnostics-color=auto HAS_DIAG_COLOR_FLAG)
-if(HAS_DIAG_COLOR_FLAG)
-  if(CMAKE_GENERATOR MATCHES "Ninja")
-    add_compile_options(-fdiagnostics-color=always)
-  else()
-    add_compile_options(-fdiagnostics-color=auto)
-  endif()
-endif()
-
-option(CI_BUILD "CI, extra flags will be set" OFF)
-
-if(CI_BUILD)
-  message(STATUS "CI build enabled")
-  if(MSVC)
-    add_compile_options(-WX)
-  else()
-    add_compile_options(-Werror)
-    if(DEFINED ENV{BUILD_UCHAR})
-      # Get some test coverage for unsigned char
-      add_compile_options(-funsigned-char)
-    endif()
-  endif()
-endif()
-
 option(LOG_LIST_ACTIONS "Add list actions logging" OFF)
-
-add_definitions(-DINCLUDE_GENERATED_DECLARATIONS)
-
-if(CMAKE_C_COMPILER_ID STREQUAL "GNU" OR CMAKE_C_COMPILER_ID STREQUAL "Clang")
-  if(CMAKE_SYSTEM_NAME STREQUAL "SunOS")
-    set(NO_UNDEFINED "-Wl,--no-undefined -lsocket")
-  elseif(NOT CMAKE_SYSTEM_NAME STREQUAL "Darwin")
-    set(NO_UNDEFINED "-Wl,--no-undefined")
-  endif()
-  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${NO_UNDEFINED}")
-  set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} ${NO_UNDEFINED}")
-
-  # For O_CLOEXEC, O_DIRECTORY, and O_NOFOLLOW flags on older systems
-  # (pre POSIX.1-2008: glibc 2.11 and earlier). #4042
-  # For ptsname(). #6743
-  add_definitions(-D_GNU_SOURCE)
-endif()
-
-include_directories("${PROJECT_BINARY_DIR}/cmake.config")
-include_directories("${PROJECT_SOURCE_DIR}/src")
-
-find_package(LibUV 1.28.0 REQUIRED)
-include_directories(SYSTEM ${LIBUV_INCLUDE_DIRS})
-
-find_package(Msgpack 1.0.0 REQUIRED)
-include_directories(SYSTEM ${MSGPACK_INCLUDE_DIRS})
-
-find_package(LibLUV 1.43.0 REQUIRED)
-include_directories(SYSTEM ${LIBLUV_INCLUDE_DIRS})
-
-find_package(TreeSitter REQUIRED)
-include_directories(SYSTEM ${TreeSitter_INCLUDE_DIRS})
-
-list(APPEND CMAKE_REQUIRED_INCLUDES "${TreeSitter_INCLUDE_DIRS}")
-list(APPEND CMAKE_REQUIRED_LIBRARIES "${TreeSitter_LIBRARIES}")
-check_c_source_compiles("
-#include <tree_sitter/api.h>
-int
-main(void)
-{
-  TSQueryCursor *cursor = ts_query_cursor_new();
-  ts_query_cursor_set_match_limit(cursor, 32);
-  return 0;
-}
-" TS_HAS_SET_MATCH_LIMIT)
-if(TS_HAS_SET_MATCH_LIMIT)
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DNVIM_TS_HAS_SET_MATCH_LIMIT")
-endif()
-check_c_source_compiles("
-#include <stdlib.h>
-#include <tree_sitter/api.h>
-int
-main(void)
-{
-  ts_set_allocator(malloc, calloc, realloc, free);
-  return 0;
-}
-" TS_HAS_SET_ALLOCATOR)
-if(TS_HAS_SET_ALLOCATOR)
-  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DNVIM_TS_HAS_SET_ALLOCATOR")
-endif()
-
-# The unit test lib requires LuaJIT; it will be skipped if LuaJIT is missing.
-option(PREFER_LUA "Prefer Lua over LuaJIT in the nvim executable." OFF)
-
-if(PREFER_LUA)
-  find_package(Lua 5.1 EXACT REQUIRED)
-  set(LUA_PREFERRED_INCLUDE_DIRS ${LUA_INCLUDE_DIR})
-  set(LUA_PREFERRED_LIBRARIES ${LUA_LIBRARIES})
-  # Passive (not REQUIRED): if LUAJIT_FOUND is not set, nvim-test is skipped.
-  find_package(LuaJit)
-else()
-  find_package(LuaJit REQUIRED)
-  set(LUA_PREFERRED_INCLUDE_DIRS ${LUAJIT_INCLUDE_DIRS})
-  set(LUA_PREFERRED_LIBRARIES ${LUAJIT_LIBRARIES})
-endif()
-
-list(APPEND CMAKE_REQUIRED_INCLUDES "${MSGPACK_INCLUDE_DIRS}")
-check_c_source_compiles("
-#include <msgpack.h>
-
-int
-main(void)
-{
-  return MSGPACK_OBJECT_FLOAT32;
-}
-" MSGPACK_HAS_FLOAT32)
-list(REMOVE_ITEM CMAKE_REQUIRED_INCLUDES "${MSGPACK_INCLUDE_DIRS}")
-if(MSGPACK_HAS_FLOAT32)
-  add_definitions(-DNVIM_MSGPACK_HAS_FLOAT32)
-endif()
-
-find_package(UNIBILIUM 2.0 REQUIRED)
-include_directories(SYSTEM ${UNIBILIUM_INCLUDE_DIRS})
-
-list(APPEND CMAKE_REQUIRED_INCLUDES "${UNIBILIUM_INCLUDE_DIRS}")
-list(APPEND CMAKE_REQUIRED_LIBRARIES "${UNIBILIUM_LIBRARIES}")
-check_c_source_compiles("
-#include <unibilium.h>
-
-int
-main(void)
-{
-  unibi_str_from_var(unibi_var_from_str(\"\"));
-  return unibi_num_from_var(unibi_var_from_num(0));
-}
-" UNIBI_HAS_VAR_FROM)
-list(REMOVE_ITEM CMAKE_REQUIRED_INCLUDES "${UNIBILIUM_INCLUDE_DIRS}")
-list(REMOVE_ITEM CMAKE_REQUIRED_LIBRARIES "${UNIBILIUM_LIBRARIES}")
-if(UNIBI_HAS_VAR_FROM)
-  add_definitions(-DNVIM_UNIBI_HAS_VAR_FROM)
-endif()
-
-find_package(LibTermkey 0.22 REQUIRED)
-include_directories(SYSTEM ${LIBTERMKEY_INCLUDE_DIRS})
-
-find_package(LIBVTERM 0.3 REQUIRED)
-include_directories(SYSTEM ${LIBVTERM_INCLUDE_DIRS})
 
 option(CLANG_ASAN_UBSAN "Enable Clang address & undefined behavior sanitizer for nvim binary." OFF)
 option(CLANG_MSAN "Enable Clang memory sanitizer for nvim binary." OFF)
@@ -529,22 +220,6 @@ if((CLANG_ASAN_UBSAN OR CLANG_MSAN OR CLANG_TSAN) AND NOT CMAKE_C_COMPILER_ID MA
   message(FATAL_ERROR "Sanitizers are only supported for Clang")
 endif()
 
-if(ENABLE_LIBICONV)
-  find_package(Iconv REQUIRED)
-  include_directories(SYSTEM ${Iconv_INCLUDE_DIRS})
-endif()
-
-if(ENABLE_LIBINTL)
-  # LibIntl (not Intl) selects our FindLibIntl.cmake script. #8464
-  find_package(LibIntl REQUIRED)
-  include_directories(SYSTEM ${LibIntl_INCLUDE_DIRS})
-endif()
-
-# Determine platform's threading library. Set CMAKE_THREAD_PREFER_PTHREAD
-# explicitly to indicate a strong preference for pthread.
-set(CMAKE_THREAD_PREFER_PTHREAD ON)
-find_package(Threads REQUIRED)
-
 # Place targets in bin/ or lib/ for all build configurations
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
@@ -556,8 +231,6 @@ foreach(CFGNAME ${CMAKE_CONFIGURATION_TYPES})
   set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY_${CFGNAME} ${CMAKE_BINARY_DIR}/lib)
 endforeach()
 
-# Find Lua interpreter
-include(LuaHelpers)
 set(LUA_DEPENDENCIES lpeg mpack bit)
 if(NOT LUA_PRG)
   foreach(CURRENT_LUA_PRG luajit lua5.1 lua5.2 lua)
@@ -607,13 +280,6 @@ if(LUAC_PRG)
   message(STATUS "Using Lua compiler: ${LUAC_PRG}")
 endif()
 
-# Setup busted.
-find_program(BUSTED_PRG NAMES busted busted.bat)
-find_program(BUSTED_LUA_PRG busted-lua)
-if(NOT BUSTED_OUTPUT_TYPE)
-  set(BUSTED_OUTPUT_TYPE "nvim")
-endif()
-
 #
 # Lint
 #
@@ -643,8 +309,6 @@ add_glob_target(
 
 add_custom_target(lintlua)
 add_dependencies(lintlua lintlua-luacheck lintlua-stylua)
-
-include(InstallHelpers)
 
 add_glob_target(
   TARGET lintsh
@@ -685,6 +349,11 @@ install_helper(
   FILES ${CMAKE_SOURCE_DIR}/src/man/nvim.1
   DESTINATION ${CMAKE_INSTALL_MANDIR}/man1)
 
+option(ENABLE_LIBICONV "enable libiconv" ON)
+if(ENABLE_LIBICONV)
+  find_package(Iconv REQUIRED)
+endif()
+
 #
 # Go down the tree.
 #
@@ -702,17 +371,17 @@ if(WIN32)
     DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/nvim-qt/runtime/plugin)
 endif()
 
+# Setup busted.
+find_program(BUSTED_PRG NAMES busted busted.bat)
+find_program(BUSTED_LUA_PRG busted-lua)
+if(NOT BUSTED_OUTPUT_TYPE)
+  set(BUSTED_OUTPUT_TYPE "nvim")
+endif()
+
 # Setup some test-related bits.  We do this after going down the tree because we
 # need some of the targets.
 if(BUSTED_PRG)
-  get_property(TEST_INCLUDE_DIRS DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-    PROPERTY INCLUDE_DIRECTORIES)
-
-  # When running tests from 'ninja' we need to use the
-  # console pool: to do so we need to use the USES_TERMINAL
-  # option, but this is only available in CMake 3.2
-  set(TEST_TARGET_ARGS)
-  list(APPEND TEST_TARGET_ARGS "USES_TERMINAL")
+  get_target_property(TEST_INCLUDE_DIRS main_lib INTERFACE_INCLUDE_DIRECTORIES)
 
   set(UNITTEST_PREREQS nvim-test unittest-headers)
   set(FUNCTIONALTEST_PREREQS nvim printenv-test printargs-test shell-test pwsh-test streams-test tty-test ${GENERATED_HELP_TAGS})
@@ -732,7 +401,7 @@ if(BUSTED_PRG)
         -DCIRRUS_CI=$ENV{CIRRUS_CI}
         -P ${PROJECT_SOURCE_DIR}/cmake/RunTests.cmake
       DEPENDS ${UNITTEST_PREREQS}
-      ${TEST_TARGET_ARGS})
+      USES_TERMINAL)
     set_target_properties(unittest PROPERTIES FOLDER test)
   else()
     message(WARNING "disabling unit tests: no Luajit FFI in ${LUA_PRG}")
@@ -763,7 +432,7 @@ if(BUSTED_PRG)
       -DCIRRUS_CI=$ENV{CIRRUS_CI}
       -P ${PROJECT_SOURCE_DIR}/cmake/RunTests.cmake
     DEPENDS ${FUNCTIONALTEST_PREREQS}
-    ${TEST_TARGET_ARGS})
+    USES_TERMINAL)
   set_target_properties(functionaltest PROPERTIES FOLDER test)
 
   add_custom_target(benchmark
@@ -779,7 +448,7 @@ if(BUSTED_PRG)
       -DCIRRUS_CI=$ENV{CIRRUS_CI}
       -P ${PROJECT_SOURCE_DIR}/cmake/RunTests.cmake
     DEPENDS ${BENCHMARK_PREREQS}
-    ${TEST_TARGET_ARGS})
+    USES_TERMINAL)
   set_target_properties(benchmark PROPERTIES FOLDER test)
 endif()
 
@@ -797,7 +466,7 @@ if(BUSTED_LUA_PRG)
       -DCIRRUS_CI=$ENV{CIRRUS_CI}
       -P ${PROJECT_SOURCE_DIR}/cmake/RunTests.cmake
     DEPENDS ${FUNCTIONALTEST_PREREQS}
-    ${TEST_TARGET_ARGS})
+    USES_TERMINAL)
     set_target_properties(functionaltest-lua PROPERTIES FOLDER test)
 endif()
 

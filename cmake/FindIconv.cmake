@@ -1,3 +1,6 @@
+# TODO(dundargoc): FindIconv is shipped by default on cmake version 3.11+. This
+# file can be removed once we decide to upgrade minimum cmake version.
+
 # - Try to find iconv
 # Once done, this will define
 #
