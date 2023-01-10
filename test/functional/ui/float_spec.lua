@@ -1338,7 +1338,7 @@ describe('float window', function()
       command('set statuscolumn=%l%s%C')
       command('hi NormalFloat guibg=#333333')
       feed('ix<cr>y<cr><esc>gg')
-      local win = meths.open_win(0, false, {relative='editor', width=20, height=4, row=4, col=10, style='minimal'})
+      meths.open_win(0, false, {relative='editor', width=20, height=4, row=4, col=10, style='minimal'})
       if multigrid then
         screen:expect{grid=[[
         ## grid 1
