@@ -114,8 +114,9 @@
 ///                    float where the text should not be edited. Disables
 ///                    'number', 'relativenumber', 'cursorline', 'cursorcolumn',
 ///                    'foldcolumn', 'spell' and 'list' options. 'signcolumn'
-///                    is changed to `auto` and 'colorcolumn' is cleared. The
-///                    end-of-buffer region is hidden by setting `eob` flag of
+///                    is changed to `auto` and 'colorcolumn' is cleared.
+///                    'statuscolumn' is changed to empty. The end-of-buffer
+///                     region is hidden by setting `eob` flag of
 ///                    'fillchars' to a space char, and clearing the
 ///                    |hl-EndOfBuffer| region in 'winhighlight'.
 ///   - border: Style of (optional) window border. This can either be a string
