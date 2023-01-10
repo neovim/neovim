@@ -205,9 +205,8 @@ static Array extmark_to_array(const ExtmarkInfo *extmark, bool id, bool add_dict
 /// @param[out] err   Error details, if any
 /// @return 0-indexed (row, col) tuple or empty list () if extmark id was
 /// absent
-ArrayOf(Integer) nvim_buf_get_extmark_by_id(Buffer buffer, Integer ns_id,
-                                            Integer id, Dictionary opts,
-                                            Error *err)
+Array nvim_buf_get_extmark_by_id(Buffer buffer, Integer ns_id, Integer id, Dictionary opts,
+                                 Error *err)
   FUNC_API_SINCE(7)
 {
   Array rv = ARRAY_DICT_INIT;
