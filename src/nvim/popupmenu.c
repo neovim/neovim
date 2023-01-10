@@ -878,6 +878,7 @@ void pum_check_clear(void)
       grid_free(&pum_grid);
     }
     pum_is_drawn = false;
+    pum_external = false;
   }
 }
 
