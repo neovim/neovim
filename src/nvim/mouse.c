@@ -1110,7 +1110,7 @@ retnomove:
     ? wp->w_winbar_height != 0
     : false;
 
-  on_statuscol = grid == (col < win_col_off(wp))
+  on_statuscol = (grid == (col < win_col_off(wp)))
     ? *wp->w_p_stc != NUL
     : false;
 

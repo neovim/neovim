@@ -3126,7 +3126,12 @@ describe('API', function()
       eq('E539: Illegal character <}>',
          pcall_err(meths.eval_statusline, '%{%}', {}))
     end)
-    it('supports %S item', function()
+    it('supports various items', function()
+      eq({ str = '0', width = 1 },
+         meths.eval_statusline('%l', { maxwidth = 5 }))
+      command('set readonly')
+      eq({ str = '[RO]', width = 4 },
+         meths.eval_statusline('%r', { maxwidth = 5 }))
       local screen = Screen.new(80, 24)
       screen:attach()
       command('set showcmd')
