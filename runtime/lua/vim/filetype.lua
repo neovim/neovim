@@ -949,6 +949,7 @@ local extension = {
   ice = 'slice',
   score = 'slrnsc',
   sol = 'solidity',
+  smali = 'smali',
   tpl = 'smarty',
   ihlp = 'smcl',
   smcl = 'smcl',

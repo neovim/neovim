@@ -525,6 +525,7 @@ let s:filename_checks = {
     \ 'slrnrc': ['.slrnrc'],
     \ 'slrnsc': ['file.score'],
     \ 'sm': ['sendmail.cf'],
+    \ 'smali': ['file.smali'],
     \ 'smarty': ['file.tpl'],
     \ 'smcl': ['file.hlp', 'file.ihlp', 'file.smcl'],
     \ 'smith': ['file.smt', 'file.smith'],
