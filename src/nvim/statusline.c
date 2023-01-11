@@ -1502,8 +1502,14 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, char *opt_n
 
     case STL_LINE:
       // Overload %l with v:lnum for 'statuscolumn'
-      num = opt_name != NULL && strcmp(opt_name, "statuscolumn") == 0 ? get_vim_var_nr(VV_LNUM)
-            : (wp->w_buffer->b_ml.ml_flags & ML_EMPTY) ? 0L : (long)(wp->w_cursor.lnum);
+      if (opt_name != NULL && strcmp(opt_name, "statuscolumn") == 0) {
+        if (wp->w_p_nu) {
+          num = get_vim_var_nr(VV_LNUM);
+        }
+      } else {
+        num = (wp->w_buffer->b_ml.ml_flags & ML_EMPTY) ? 0L : (long)(wp->w_cursor.lnum);
+      }
+
       break;
 
     case STL_NUMLINES:
@@ -1603,7 +1609,9 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, char *opt_n
     case STL_ROFLAG_ALT:
       // Overload %r with v:relnum for 'statuscolumn'
       if (opt_name != NULL && strcmp(opt_name, "statuscolumn") == 0) {
-        num = get_vim_var_nr(VV_RELNUM);
+        if (wp->w_p_rnu) {
+          num = get_vim_var_nr(VV_RELNUM);
+        }
       } else {
         itemisflag = true;
         if (wp->w_buffer->b_p_ro) {
