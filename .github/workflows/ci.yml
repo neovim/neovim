@@ -261,11 +261,11 @@ jobs:
         name: Unittests
         run: ./ci/run_tests.sh unittests
 
-      - if: matrix.flavor != 'tsan' && (success() || failure() && steps.abort_job.outputs.status == 'success')
+      - if: success() || failure() && steps.abort_job.outputs.status == 'success'
         name: Functionaltests
         run: ./ci/run_tests.sh functionaltests
 
-      - if: success() || failure() && steps.abort_job.outputs.status == 'success'
+      - if: matrix.flavor != 'tsan' && (success() || failure() && steps.abort_job.outputs.status == 'success')
         name: Oldtests
         run: ./ci/run_tests.sh oldtests
 
