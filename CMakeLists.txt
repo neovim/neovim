@@ -82,14 +82,6 @@ list(INSERT CMAKE_PREFIX_PATH 0 ${DEPS_PREFIX})
 set(ENV{PKG_CONFIG_PATH} "$ENV{PKG_CONFIG_PATH}:${DEPS_PREFIX}/lib/pkgconfig")
 
 if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
-  # CMake tries to treat /sw and /opt/local as extension of the system path, but
-  # that doesn't really work out very well.  Once you have a dependency that
-  # resides there and have to add it as an include directory, then any other
-  # dependency that could be satisfied from there must be--otherwise you can end
-  # up with conflicting versions.  So, let's make them more of a priority having
-  # them be included as one of the first places to look for dependencies.
-  list(APPEND CMAKE_PREFIX_PATH /sw /opt/local)
-
   # If the macOS deployment target is not set manually (via $MACOSX_DEPLOYMENT_TARGET),
   # fall back to local system version. Needs to be done both here and in cmake.deps.
   if(NOT CMAKE_OSX_DEPLOYMENT_TARGET)
@@ -99,13 +91,6 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
     set(CMAKE_OSX_DEPLOYMENT_TARGET "${MACOS_VERSION}")
   endif()
   message(STATUS "Using deployment target ${CMAKE_OSX_DEPLOYMENT_TARGET}")
-
-  # Work around some old, broken detection by CMake for knowing when to use the
-  # isystem flag.  Apple's compilers have supported this for quite some time
-  # now.
-  if(CMAKE_C_COMPILER_ID MATCHES "GNU")
-    set(CMAKE_INCLUDE_SYSTEM_FLAG_C "-isystem ")
-  endif()
 endif()
 
 if(WIN32 OR CMAKE_SYSTEM_NAME STREQUAL "Darwin")
