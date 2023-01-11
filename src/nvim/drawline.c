@@ -403,8 +403,8 @@ static int get_sign_attrs(buf_T *buf, linenr_T lnum, SignTextAttrs *sattrs, int 
 ///
 /// @param[out] stcp  Status column attributes
 static void get_statuscol_str(win_T *wp, linenr_T lnum, int row, int startrow, int filler_lines,
-                              int cul_attr, int sign_num_attr, SignTextAttrs *sattrs,
-                              foldinfo_T foldinfo, char_u *extra, statuscol_T *stcp)
+                              int cul_attr, int sign_num_attr, int sign_cul_attr, char_u *extra,
+                              foldinfo_T foldinfo, SignTextAttrs *sattrs, statuscol_T *stcp)
 {
   long relnum = 0;
   bool wrapped = row != startrow + filler_lines;
@@ -427,7 +427,8 @@ static void get_statuscol_str(win_T *wp, linenr_T lnum, int row, int startrow, i
   for (; i < wp->w_scwidth; i++) {
     SignTextAttrs *sattr = wrapped ? NULL : sign_get_attr(i, sattrs, wp->w_scwidth);
     stcp->sign_text[i] = sattr && sattr->text ? sattr->text : "  ";
-    stcp->sign_attr[i] = use_cul && cul_attr ? cul_attr : sattr ? sattr->hl_attr_id : 0;
+    stcp->sign_attr[i] = sattr ? (use_cul && sign_cul_attr ? sign_cul_attr : sattr->hl_attr_id)
+                               : win_hl_attr(wp, use_cul ? HLF_CLS : HLF_SC);
   }
   stcp->sign_text[i] = NULL;
 
@@ -1327,8 +1328,8 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
         // Draw the 'statuscolumn' if option is set.
         if (statuscol.draw) {
           if (statuscol.textp == NULL) {
-            get_statuscol_str(wp, lnum, row, startrow, filler_lines, cul_attr,
-                              sign_num_attr, sattrs, foldinfo, extra, &statuscol);
+            get_statuscol_str(wp, lnum, row, startrow, filler_lines, cul_attr, sign_num_attr,
+                              sign_cul_attr, extra, foldinfo, sattrs, &statuscol);
             if (wp->w_redr_statuscol) {
               return 0;
             }
