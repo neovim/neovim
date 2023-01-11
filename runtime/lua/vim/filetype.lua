@@ -1425,6 +1425,7 @@ local filename = {
   gnashpluginrc = 'gnash',
   gnashrc = 'gnash',
   ['.gnuplot'] = 'gnuplot',
+  ['go.sum'] = 'gosum',
   ['go.work'] = 'gowork',
   ['.gprc'] = 'gp',
   ['/.gnupg/gpg.conf'] = 'gpg',
