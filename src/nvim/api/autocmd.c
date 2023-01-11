@@ -940,7 +940,7 @@ static bool get_patterns_from_pattern_or_buf(Array *patterns, Object pattern, Ob
         patlen = aucmd_pattern_length(pat);
       }
     } else if (v->type == kObjectTypeArray) {
-      if (!check_autocmd_string_array(*patterns, "pattern", err)) {
+      if (!check_autocmd_string_array(v->data.array, "pattern", err)) {
         return false;
       }
 
