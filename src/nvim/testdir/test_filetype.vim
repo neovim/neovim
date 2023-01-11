@@ -529,6 +529,7 @@ let s:filename_checks = {
     \ 'smarty': ['file.tpl'],
     \ 'smcl': ['file.hlp', 'file.ihlp', 'file.smcl'],
     \ 'smith': ['file.smt', 'file.smith'],
+    \ 'smithy': ['file.smithy'],
     \ 'sml': ['file.sml'],
     \ 'snobol4': ['file.sno', 'file.spt'],
     \ 'solidity': ['file.sol'],
