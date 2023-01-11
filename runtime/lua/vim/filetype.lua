@@ -327,11 +327,7 @@ local extension = {
   end,
   eex = 'eelixir',
   leex = 'eelixir',
-  am = function(path, bufnr)
-    if not path:lower():find('makefile%.am$') then
-      return 'elf'
-    end
-  end,
+  am = 'elf',
   exs = 'elixir',
   elm = 'elm',
   elv = 'elvish',
@@ -956,6 +952,7 @@ local extension = {
   hlp = 'smcl',
   smith = 'smith',
   smt = 'smith',
+  smithy = 'smithy',
   sml = 'sml',
   spt = 'snobol4',
   sno = 'snobol4',
