@@ -2048,7 +2048,7 @@ end
 --- Send a notification to a server
 ---@param bufnr (number|nil) The number of the buffer
 ---@param method (string) Name of the request method
----@param params (string) Arguments to send to the server
+---@param params (any) Arguments to send to the server
 ---
 ---@returns true if any client returns true; false otherwise
 function lsp.buf_notify(bufnr, method, params)
