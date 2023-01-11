@@ -17,16 +17,15 @@ rm -f "$END_MARKER"
 if (($# == 0)); then
   tests=('build_nvim')
 
+  # Additional threads aren't created in the unit/old tests
   if test "$CLANG_SANITIZER" != "TSAN"; then
-    # Additional threads are only created when the builtin UI starts, which
-    # doesn't happen in the unit/functional tests
     if test "${FUNCTIONALTEST}" != "functionaltest-lua"; then
       tests+=('unittests')
     fi
-    tests+=('functionaltests')
+    tests+=('oldtests')
   fi
 
-  tests+=('oldtests' 'install_nvim')
+  tests+=('functionaltests' 'install_nvim')
 else
   tests=("$@")
 fi
