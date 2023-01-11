@@ -293,7 +293,7 @@ end
 ---@private
 --- Sends a notification to the LSP server.
 ---@param method (string) The invoked LSP method
----@param params (table|nil): Parameters for the invoked LSP method
+---@param params (any): Parameters for the invoked LSP method
 ---@returns (bool) `true` if notification could be sent, `false` if not
 function Client:notify(method, params)
   return self:encode_and_send({

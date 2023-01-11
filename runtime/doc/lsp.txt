@@ -566,7 +566,7 @@ buf_notify({bufnr}, {method}, {params})                 *vim.lsp.buf_notify()*
     Parameters: ~
       • {bufnr}   (number|nil) The number of the buffer
       • {method}  (string) Name of the request method
-      • {params}  (string) Arguments to send to the server
+      • {params}  (any) Arguments to send to the server
 
     Return: ~
         true if any client returns true; false otherwise
