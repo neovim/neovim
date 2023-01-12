@@ -613,6 +613,20 @@ describe('autocmd api', function()
         eq(false, success)
         matches("'group' must be a string or an integer", code)
       end)
+
+      it('raises error for invalid pattern array', function()
+        local success, code = unpack(meths.exec_lua([[
+          return {pcall(function()
+            vim.api.nvim_create_autocmd("FileType", {
+              pattern = {{}},
+              command = "echo 'hello'",
+            })
+          end)}
+        ]], {}))
+
+        eq(false, success)
+        matches("All entries in 'pattern' must be strings", code)
+      end)
     end)
 
     describe('patterns', function()
