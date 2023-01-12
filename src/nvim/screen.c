@@ -784,7 +784,7 @@ int number_width(win_T *wp)
   if (*wp->w_p_stc != NUL) {
     char buf[MAXPATHL];
     wp->w_nrwidth_width = 0;
-    n = build_statuscol_str(wp, true, false, lnum, 0, 0, NUL, buf, NULL, NULL);
+    n = build_statuscol_str(wp, lnum, 0, 0, NUL, buf, NULL, NULL);
     n = MAX(n, (wp->w_p_nu || wp->w_p_rnu) * (int)wp->w_p_nuw);
     wp->w_nrwidth_width = MIN(n, MAX_NUMBERWIDTH);
     return wp->w_nrwidth_width;

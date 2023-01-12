@@ -6017,12 +6017,15 @@ A jump table for the options with a short description can be found at |Q_op|.
 	%s	sign column for currently drawn line
 	%C	fold column for currently drawn line
 
-	To draw the sign and fold columns, they must be included in
-	'statuscolumn'.
+	NOTE: To draw the sign and fold columns, their items must be included in
+	'statuscolumn'. Even when they are not included, the status column width
+	will adapt to the 'signcolumn' and 'foldcolumn' width.
 
-	The |v:lnum|   variable holds the line number to be drawn.
-	The |v:relnum| variable holds the relative line number to be drawn.
-	The |v:wrap|   variable holds true for the wrapped part of a line.
+	The |v:lnum|    variable holds the line number to be drawn.
+	The |v:relnum|  variable holds the relative line number to be drawn.
+	The |v:virtnum| variable is negative when drawing virtual lines, zero
+		      when drawing the actual buffer line, and positive when
+		      drawing the wrapped part of a buffer line.
 
 	Examples: >vim
 		" Relative number with bar separator and click handlers:
@@ -6032,7 +6035,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 		:let &stc='%=%{v:relnum?v:relnum:v:lnum} '
 
 		" Line numbers in hexadecimal for non wrapped part of lines:
-		:let &stc='%=%{v:wrap?"":printf("%x",v:lnum)} '
+		:let &stc='%=%{v:virtnum>0?"":printf("%x",v:lnum)} '
 
 		" Human readable line numbers with thousands separator:
 		:let &stc='%{substitute(v:lnum,"\\d\\zs\\ze\\'

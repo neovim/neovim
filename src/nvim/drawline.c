@@ -399,40 +399,45 @@ static int get_sign_attrs(buf_T *buf, linenr_T lnum, SignTextAttrs *sattrs, int 
 
 /// Prepare and build the 'statuscolumn' string for line "lnum" in window "wp".
 /// Fill "stcp" with the built status column string and attributes.
+/// This can be called three times per win_line(), once for virt_lines, once for
+/// the start of the buffer line "lnum" and once for the wrapped lines.
 ///
 /// @param[out] stcp  Status column attributes
 static void get_statuscol_str(win_T *wp, linenr_T lnum, int row, int startrow, int filler_lines,
-                              int cul_attr, int sign_num_attr, int sign_cul_attr, char_u *extra,
-                              foldinfo_T foldinfo, SignTextAttrs *sattrs, statuscol_T *stcp)
+                              int cul_attr, int sign_num_attr, int sign_cul_attr, statuscol_T *stcp,
+                              foldinfo_T foldinfo, SignTextAttrs *sattrs)
 {
-  long relnum = 0;
-  bool wrapped = row != startrow + filler_lines;
+  long relnum = -1;
   bool use_cul = use_cursor_line_sign(wp, lnum);
+  int virtnum = row - startrow - filler_lines;
 
-  // Set num, fold and sign text and attrs, empty when wrapped
+  set_vim_var_nr(VV_VIRTNUM, virtnum);
+  // When called the first time for line "lnum" set num_attr
   if (row == startrow) {
-    relnum = labs(get_cursor_rel_lnum(wp, lnum));
     stcp->num_attr = sign_num_attr ? sign_num_attr
                      : get_line_number_attr(wp, lnum, row, startrow, filler_lines);
-
+  }
+  // When called for the first non-filler row of line "lnum" set num v:vars and fold column
+  if (virtnum == 0) {
+    relnum = labs(get_cursor_rel_lnum(wp, lnum));
     if (compute_foldcolumn(wp, 0)) {
       size_t n = fill_foldcolumn(stcp->fold_text, wp, foldinfo, lnum);
       stcp->fold_text[n] = NUL;
       stcp->fold_attr = win_hl_attr(wp, use_cul ? HLF_CLF : HLF_FC);
     }
   }
-
+  // Make sure to clear->set->clear sign column for filler->first->wrapped lines
   int i = 0;
   for (; i < wp->w_scwidth; i++) {
-    SignTextAttrs *sattr = wrapped ? NULL : sign_get_attr(i, sattrs, wp->w_scwidth);
+    SignTextAttrs *sattr = virtnum ? NULL : sign_get_attr(i, sattrs, wp->w_scwidth);
     stcp->sign_text[i] = sattr && sattr->text ? sattr->text : "  ";
     stcp->sign_attr[i] = sattr ? (use_cul && sign_cul_attr ? sign_cul_attr : sattr->hl_attr_id)
                                : win_hl_attr(wp, use_cul ? HLF_CLS : HLF_SC);
   }
   stcp->sign_text[i] = NULL;
 
-  int width = build_statuscol_str(wp, row == startrow, wrapped, lnum, relnum,
-                                  stcp->width, ' ', stcp->text, &stcp->hlrec, stcp);
+  int width = build_statuscol_str(wp, lnum, relnum, stcp->width,
+                                  ' ', stcp->text, &stcp->hlrec, stcp);
   // Force a redraw in case of error or when truncated
   if (*wp->w_p_stc == NUL || (stcp->truncate > 0 && wp->w_nrwidth < MAX_NUMBERWIDTH)) {
     if (stcp->truncate) {  // Avoid truncating 'statuscolumn'
@@ -465,9 +470,8 @@ static void get_statuscol_str(win_T *wp, linenr_T lnum, int row, int startrow, i
 ///
 /// @param stcp  Status column attributes
 /// @param[out] draw_state  Current draw state in win_line()
-static void get_statuscol_display_info(LineDrawState *draw_state, int *char_attr, int *n_extrap,
-                                       int *c_extrap, int *c_finalp, char_u *extra, char **pp_extra,
-                                       statuscol_T *stcp)
+static void get_statuscol_display_info(statuscol_T *stcp, LineDrawState *draw_state, int *char_attr,
+                                       int *n_extrap, int *c_extrap, int *c_finalp, char **pp_extra)
 {
   *c_extrap = NUL;
   *c_finalp = NUL;
@@ -1326,14 +1330,14 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
         // Draw the 'statuscolumn' if option is set.
         if (statuscol.draw) {
           if (statuscol.textp == NULL) {
-            get_statuscol_str(wp, lnum, row, startrow, filler_lines, cul_attr, sign_num_attr,
-                              sign_cul_attr, extra, foldinfo, sattrs, &statuscol);
+            get_statuscol_str(wp, lnum, row, startrow, filler_lines, cul_attr,
+                              sign_num_attr, sign_cul_attr, &statuscol, foldinfo, sattrs);
             if (wp->w_redr_statuscol) {
-              return 0;
+              break;
             }
           }
-          get_statuscol_display_info(&draw_state, &char_attr, &n_extra, &c_extra,
-                                     &c_final, extra, &p_extra, &statuscol);
+          get_statuscol_display_info(&statuscol, &draw_state, &char_attr,
+                                     &n_extra, &c_extra, &c_final, &p_extra);
         }
       }
 
@@ -2818,7 +2822,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
         need_showbreak = true;
       }
       if (statuscol.draw) {
-        if (row == startrow + 1 || row == startrow + filler_lines) {
+        if (row == startrow + filler_lines + 1 || row == startrow + filler_lines) {
           // Re-evaluate 'statuscolumn' for the first wrapped row and non filler line
           statuscol.textp = NULL;
         } else {  // Otherwise just reset the text/hlrec pointers
