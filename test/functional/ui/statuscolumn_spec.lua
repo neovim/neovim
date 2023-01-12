@@ -210,6 +210,8 @@ describe('statuscolumn', function()
       {1:10│ }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa{0:@@@}|
                                                            |
     ]])
+    command("set stc=%C%s%=%l│\\ ")
+    screen:expect_unchanged()
     command('set signcolumn=auto:2 foldcolumn=auto')
     command('sign define piet1 text=>> texthl=LineNr')
     command('sign define piet2 text=>! texthl=NonText')
