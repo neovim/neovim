@@ -1382,7 +1382,7 @@ char *make_filter_cmd(char *cmd, char *itmp, char *otmp)
                                   : 0;
 
   if (itmp != NULL) {
-    len += is_pwsh  ? strlen(itmp) + sizeof("& { Get-Content " " | & " " }") - 1
+    len += is_pwsh  ? strlen(itmp) + sizeof("& { Get-Content " " | & " " }") - 1 + 6  // +6: #20530
                     : strlen(itmp) + sizeof(" { " " < " " } ") - 1;
   }
   if (otmp != NULL) {

@@ -662,4 +662,33 @@ describe('shell :!', function()
         1]])
     end
   end)
+
+  it(':{range}! without redirecting to buffer', function()
+    local screen = Screen.new(500, 10)
+    screen:attach()
+    insert([[
+      3
+      1
+      4
+      2]])
+    feed(':4verbose %w !sort<cr>')
+    if is_os('win') then
+      screen:expect{
+        any=[[Executing command: .?sort %< .*]]
+      }
+    else
+      screen:expect{
+        any=[[Executing command: .?%(sort%) %< .*]]
+
+      }
+    end
+    feed('<CR>')
+    helpers.set_shell_powershell(true)
+    feed(':4verbose %w !sort<cr>')
+    screen:expect{
+      any=[[Executing command: .?& { Get%-Content .* | & sort }]]
+    }
+    feed('<CR>')
+    helpers.expect_exit(command, 'qall!')
+  end)
 end)
