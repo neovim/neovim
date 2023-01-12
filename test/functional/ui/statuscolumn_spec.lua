@@ -367,4 +367,26 @@ describe('statuscolumn', function()
     meths.input_mouse('right', 'press', '', 0, 3, 0)
     eq('0 4 r 7', eval("g:testvar"))
   end)
+
+  it('fits maximum multibyte foldcolumn #21759', function()
+    command('set stc=%C fdc=9 fillchars=foldsep:𒀀')
+    for _ = 0,8 do command('norm zfjzo') end
+    screen:expect([[
+                aaaaa                                      |
+                aaaaa                                      |
+                aaaaa                                      |
+                aaaaa                                      |
+      --------- ^aaaaa                                      |
+      𒀀𒀀𒀀𒀀𒀀𒀀𒀀𒀀𒀀 aaaaa                                      |
+                aaaaa                                      |
+                aaaaa                                      |
+                aaaaa                                      |
+                aaaaa                                      |
+                aaaaa                                      |
+                aaaaa                                      |
+                aaaaa                                      |
+                                                           |
+    ]])
+  end)
+
 end)

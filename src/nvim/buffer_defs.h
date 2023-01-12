@@ -1426,7 +1426,7 @@ struct statuscol {
   int sign_attr[SIGN_SHOW_MAX + 1];    ///< attributes used for signs
   int truncate;                        ///< truncated width
   bool draw;                           ///< draw statuscolumn or not
-  char fold_text[10];                  ///< text in fold column (%C)
+  char fold_text[9 * 4 + 1];           ///< text in fold column (%C)
   char *sign_text[SIGN_SHOW_MAX + 1];  ///< text in sign column (%s)
   char text[MAXPATHL];                 ///< text in status column
   char *textp;                         ///< current position in text
