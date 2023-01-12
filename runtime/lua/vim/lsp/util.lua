@@ -856,7 +856,7 @@ end
 --- `textDocument/signatureHelp`, and potentially others.
 ---
 ---@param input (`MarkedString` | `MarkedString[]` | `MarkupContent`)
----@param contents (table, optional, default `{}`) List of strings to extend with converted lines
+---@param contents (table|nil) List of strings to extend with converted lines. Defaults to {}.
 ---@returns {contents}, extended with lines of converted markdown.
 ---@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_hover
 function M.convert_input_to_markdown_lines(input, contents)
