@@ -759,7 +759,7 @@ void mf_free_fnames(memfile_T *mfp)
 void mf_set_fnames(memfile_T *mfp, char *fname)
 {
   mfp->mf_fname = fname;
-  mfp->mf_ffname = (char_u *)FullName_save(mfp->mf_fname, false);
+  mfp->mf_ffname = FullName_save(mfp->mf_fname, false);
 }
 
 /// Make name of memfile's swapfile a full path.
@@ -769,7 +769,7 @@ void mf_fullname(memfile_T *mfp)
 {
   if (mfp != NULL && mfp->mf_fname != NULL && mfp->mf_ffname != NULL) {
     xfree(mfp->mf_fname);
-    mfp->mf_fname = (char *)mfp->mf_ffname;
+    mfp->mf_fname = mfp->mf_ffname;
     mfp->mf_ffname = NULL;
   }
 }

@@ -1837,7 +1837,7 @@ static int vim_regsub_both(char *source, typval_T *expr, char *dest, int destlen
         }
         if (had_backslash && (flags & REGSUB_BACKSLASH)) {
           // Backslashes will be consumed, need to double them.
-          s = (char *)vim_strsave_escaped((char_u *)eval_result[nested], (char_u *)"\\");
+          s = vim_strsave_escaped(eval_result[nested], "\\");
           xfree(eval_result[nested]);
           eval_result[nested] = s;
         }

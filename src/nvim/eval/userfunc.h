@@ -36,7 +36,7 @@ struct funccal_entry;
 /// Structure used by trans_function_name()
 typedef struct {
   dict_T *fd_dict;  ///< Dictionary used.
-  char_u *fd_newkey;  ///< New key in "dict" in allocated memory.
+  char *fd_newkey;  ///< New key in "dict" in allocated memory.
   dictitem_T *fd_di;  ///< Dictionary item used.
 } funcdict_T;
 

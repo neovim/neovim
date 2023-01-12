@@ -4783,7 +4783,7 @@ void ExpandOldSetting(int *num_file, char ***file)
 
   // A backslash is required before some characters.  This is the reverse of
   // what happens in do_set().
-  char_u *buf = vim_strsave_escaped((char_u *)var, escape_chars);
+  char_u *buf = (char_u *)vim_strsave_escaped(var, (char *)escape_chars);
 
 #ifdef BACKSLASH_IN_FILENAME
   // For MS-Windows et al. we don't double backslashes at the start and

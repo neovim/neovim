@@ -3802,7 +3802,7 @@ int expand_filename(exarg_T *eap, char **cmdlinep, char **errormsgp)
 
       for (l = repl; *l; l++) {
         if (vim_strchr((char *)ESCAPE_CHARS, *l) != NULL) {
-          l = (char *)vim_strsave_escaped((char_u *)repl, ESCAPE_CHARS);
+          l = vim_strsave_escaped(repl, (char *)ESCAPE_CHARS);
           xfree(repl);
           repl = l;
           break;
@@ -3817,7 +3817,7 @@ int expand_filename(exarg_T *eap, char **cmdlinep, char **errormsgp)
         && strpbrk(repl, "!") != NULL) {
       char *l;
 
-      l = (char *)vim_strsave_escaped((char_u *)repl, (char_u *)"!");
+      l = vim_strsave_escaped(repl, "!");
       xfree(repl);
       repl = l;
     }
@@ -7263,7 +7263,7 @@ static void ex_terminal(exarg_T *eap)
   char ex_cmd[1024];
 
   if (*eap->arg != NUL) {  // Run {cmd} in 'shell'.
-    char *name = (char *)vim_strsave_escaped((char_u *)eap->arg, (char_u *)"\"\\");
+    char *name = vim_strsave_escaped(eap->arg, "\"\\");
     snprintf(ex_cmd, sizeof(ex_cmd),
              ":enew%s | call termopen(\"%s\")",
              eap->forceit ? "!" : "", name);

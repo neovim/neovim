@@ -2641,7 +2641,7 @@ static void ml_flush_line(buf_T *buf)
       DATA_BL *dp = hp->bh_data;
       int idx = lnum - buf->b_ml.ml_locked_low;
       int start = ((dp->db_index[idx]) & DB_INDEX_MASK);
-      char_u *old_line = (char_u *)dp + start;
+      char *old_line = (char *)dp + start;
       int old_len;
       if (idx == 0) {           // line is last in block
         old_len = (int)dp->db_txt_end - start;
@@ -3047,13 +3047,13 @@ char *makeswapname(char *fname, char *ffname, buf_T *buf, char *dir_name)
   }
 
   // Prepend a '.' to the swap file name for the current directory.
-  char_u *r = (char_u *)modname(fname_res, ".swp",
-                                dir_name[0] == '.' && dir_name[1] == NUL);
+  char *r = modname(fname_res, ".swp",
+                    dir_name[0] == '.' && dir_name[1] == NUL);
   if (r == NULL) {          // out of memory
     return NULL;
   }
 
-  s = get_file_in_dir((char *)r, dir_name);
+  s = get_file_in_dir(r, dir_name);
   xfree(r);
   return s;
 }
@@ -3100,16 +3100,16 @@ char *get_file_in_dir(char *fname, char *dname)
 ///
 /// @param buf  buffer being edited
 /// @param fname  swap file name
-static void attention_message(buf_T *buf, char_u *fname)
+static void attention_message(buf_T *buf, char *fname)
 {
   assert(buf->b_fname != NULL);
 
   no_wait_return++;
   (void)emsg(_("E325: ATTENTION"));
   msg_puts(_("\nFound a swap file by the name \""));
-  msg_home_replace((char *)fname);
+  msg_home_replace(fname);
   msg_puts("\"\n");
-  const time_t swap_mtime = swapfile_info(fname);
+  const time_t swap_mtime = swapfile_info((char_u *)fname);
   msg_puts(_("While opening file \""));
   msg_outtrans(buf->b_fname);
   msg_puts("\"\n");
@@ -3136,7 +3136,7 @@ static void attention_message(buf_T *buf, char_u *fname)
   msg_outtrans(buf->b_fname);
   msg_puts(_("\"\n    to recover the changes (see \":help recovery\").\n"));
   msg_puts(_("    If you did this already, delete the swap file \""));
-  msg_outtrans((char *)fname);
+  msg_outtrans(fname);
   msg_puts(_("\"\n    to avoid this message.\n"));
   cmdline_row = msg_row;
   no_wait_return--;
@@ -3316,7 +3316,7 @@ static char *findswapname(buf_T *buf, char **dirp, char *old_fname, bool *found_
 
           if (choice == 0) {
             // Show info about the existing swap file.
-            attention_message(buf, (char_u *)fname);
+            attention_message(buf, fname);
 
             // We don't want a 'q' typed at the more-prompt
             // interrupt loading a file.

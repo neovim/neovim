@@ -4573,7 +4573,7 @@ static void syn_combine_list(int16_t **const clstr1, int16_t **const clstr2, con
 static int syn_scl_name2id(char *name)
 {
   // Avoid using stricmp() too much, it's slow on some systems
-  char *name_u = (char *)vim_strsave_up((char_u *)name);
+  char *name_u = vim_strsave_up(name);
   int i;
   for (i = curwin->w_s->b_syn_clusters.ga_len; --i >= 0;) {
     if (SYN_CLSTR(curwin->w_s)[i].scl_name_u != NULL
@@ -4635,7 +4635,7 @@ static int syn_add_cluster(char *name)
                                          &curwin->w_s->b_syn_clusters);
   CLEAR_POINTER(scp);
   scp->scl_name = (char_u *)name;
-  scp->scl_name_u = (char *)vim_strsave_up((char_u *)name);
+  scp->scl_name_u = vim_strsave_up(name);
   scp->scl_list = NULL;
 
   if (STRICMP(name, "Spell") == 0) {
@@ -5304,7 +5304,7 @@ void ex_ownsyntax(exarg_T *eap)
   }
 
   // Save value of b:current_syntax.
-  old_value = (char *)get_var_value("b:current_syntax");
+  old_value = get_var_value("b:current_syntax");
   if (old_value != NULL) {
     old_value = xstrdup(old_value);
   }
@@ -5313,7 +5313,7 @@ void ex_ownsyntax(exarg_T *eap)
   apply_autocmds(EVENT_SYNTAX, eap->arg, curbuf->b_fname, true, curbuf);
 
   // Move value of b:current_syntax to w:current_syntax.
-  new_value = (char *)get_var_value("b:current_syntax");
+  new_value = get_var_value("b:current_syntax");
   if (new_value != NULL) {
     set_internal_string_var("w:current_syntax", new_value);
   }

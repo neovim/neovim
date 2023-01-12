@@ -616,16 +616,15 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
   int c_extra = NUL;                  // extra chars, all the same
   int c_final = NUL;                  // final char, mandatory if set
   int extra_attr = 0;                 // attributes when n_extra != 0
-  static char_u *at_end_str = (char_u *)"";  // used for p_extra when displaying
-                                             // curwin->w_p_lcs_chars.eol at
-                                             // end-of-line
+  static char *at_end_str = "";       // used for p_extra when displaying curwin->w_p_lcs_chars.eol
+                                      // at end-of-line
   int lcs_eol_one = wp->w_p_lcs_chars.eol;     // 'eol'  until it's been used
   int lcs_prec_todo = wp->w_p_lcs_chars.prec;  // 'prec' until it's been used
   bool has_fold = foldinfo.fi_level != 0 && foldinfo.fi_lines > 0;
 
   // saved "extra" items for when draw_state becomes WL_LINE (again)
   int saved_n_extra = 0;
-  char_u *saved_p_extra = NULL;
+  char *saved_p_extra = NULL;
   int saved_c_extra = 0;
   int saved_c_final = 0;
   int saved_char_attr = 0;
@@ -699,7 +698,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
   bool has_decor = false;               // this buffer has decoration
   int win_col_offset = 0;               // offset for window columns
 
-  char_u buf_fold[FOLD_TEXT_LEN];       // Hold value returned by get_foldtext
+  char buf_fold[FOLD_TEXT_LEN];         // Hold value returned by get_foldtext
 
   bool area_active = false;
 
@@ -1299,10 +1298,10 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
               }
               if (wp->w_p_rl) {                       // reverse line numbers
                 // like rl_mirror(), but keep the space at the end
-                char_u *p2 = (char_u *)skipwhite((char *)extra);
-                p2 = (char_u *)skiptowhite((char *)p2) - 1;
-                for (char_u *p1 = (char_u *)skipwhite((char *)extra); p1 < p2; p1++, p2--) {
-                  const char_u t = *p1;
+                char *p2 = skipwhite((char *)extra);
+                p2 = skiptowhite(p2) - 1;
+                for (char *p1 = skipwhite((char *)extra); p1 < p2; p1++, p2--) {
+                  const char t = *p1;
                   *p1 = *p2;
                   *p2 = t;
                 }
@@ -1452,7 +1451,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
           n_extra = saved_n_extra;
           c_extra = saved_c_extra;
           c_final = saved_c_final;
-          p_extra = (char *)saved_p_extra;
+          p_extra = saved_p_extra;
           char_attr = saved_char_attr;
         } else {
           char_attr = 0;
@@ -1494,10 +1493,10 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
 
       linenr_T lnume = lnum + foldinfo.fi_lines - 1;
       memset(buf_fold, ' ', FOLD_TEXT_LEN);
-      p_extra = get_foldtext(wp, lnum, lnume, foldinfo, (char *)buf_fold);
+      p_extra = get_foldtext(wp, lnum, lnume, foldinfo, buf_fold);
       n_extra = (int)strlen(p_extra);
 
-      if (p_extra != (char *)buf_fold) {
+      if (p_extra != buf_fold) {
         xfree(p_extra_free);
         p_extra_free = p_extra;
       }
@@ -2072,7 +2071,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
           if (!wp->w_p_lbr || !wp->w_p_list) {
             n_extra = tab_len;
           } else {
-            char_u *p;
+            char *p;
             int i;
             int saved_nextra = n_extra;
 
@@ -2101,7 +2100,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
             memset(p, ' ', (size_t)len);
             p[len] = NUL;
             xfree(p_extra_free);
-            p_extra_free = (char *)p;
+            p_extra_free = p;
             for (i = 0; i < tab_len; i++) {
               if (*p == NUL) {
                 tab_len = i;
@@ -2113,7 +2112,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
               if (wp->w_p_lcs_chars.tab3 && i == tab_len - 1) {
                 lcs = wp->w_p_lcs_chars.tab3;
               }
-              p += utf_char2bytes(lcs, (char *)p);
+              p += utf_char2bytes(lcs, p);
               n_extra += utf_char2len(lcs) - (saved_nextra > 0 ? 1 : 0);
             }
             p_extra = p_extra_free;
@@ -2187,7 +2186,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
                 && tocol != MAXCOL && vcol < tocol) {
               n_extra = 0;
             } else {
-              p_extra = (char *)at_end_str;
+              p_extra = at_end_str;
               n_extra = 1;
               c_extra = NUL;
               c_final = NUL;
@@ -2215,17 +2214,17 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
           c_extra = NUL;
           c_final = NUL;
           if (wp->w_p_lbr) {
-            char_u *p;
+            char *p;
 
             c = (uint8_t)(*p_extra);
             p = xmalloc((size_t)n_extra + 1);
             memset(p, ' ', (size_t)n_extra);
-            strncpy((char *)p,  // NOLINT(runtime/printf)
+            strncpy(p,  // NOLINT(runtime/printf)
                     p_extra + 1,
                     (size_t)strlen(p_extra) - 1);
             p[n_extra] = NUL;
             xfree(p_extra_free);
-            p_extra_free = p_extra = (char *)p;
+            p_extra_free = p_extra = p;
           } else {
             n_extra = byte2cells(c) - 1;
             c = (uint8_t)(*p_extra++);
@@ -2740,7 +2739,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
             || *ptr != NUL
             || filler_todo > 0
             || (wp->w_p_list && wp->w_p_lcs_chars.eol != NUL
-                && p_extra != (char *)at_end_str)
+                && p_extra != at_end_str)
             || (n_extra != 0
                 && (c_extra != NUL || *p_extra != NUL)))) {
       bool wrap = wp->w_p_wrap       // Wrapping enabled.
@@ -2810,7 +2809,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
       // reset the drawing state for the start of a wrapped line
       draw_state = WL_START;
       saved_n_extra = n_extra;
-      saved_p_extra = (char_u *)p_extra;
+      saved_p_extra = p_extra;
       saved_c_extra = c_extra;
       saved_c_final = c_final;
       saved_char_attr = char_attr;

@@ -1025,7 +1025,7 @@ void do_bang(int addr_count, exarg_T *eap, bool forceit, bool do_in, bool do_out
     // If % or # appears in the command, it must have been escaped.
     // Reescape them, so that redoing them does not substitute them by the
     // buffername.
-    char *cmd = (char *)vim_strsave_escaped((char_u *)prevcmd, (char_u *)"%#");
+    char *cmd = vim_strsave_escaped(prevcmd, "%#");
 
     AppendToRedobuffLit(cmd, -1);
     xfree(cmd);

@@ -2213,7 +2213,7 @@ static int eval_func(char **const arg, char *const name, const int name_len, typ
   // If "s" is the name of a variable of type VAR_FUNC
   // use its contents.
   partial_T *partial;
-  s = (char *)deref_func_name((const char *)s, &len, &partial, !evaluate);
+  s = deref_func_name((const char *)s, &len, &partial, !evaluate);
 
   // Need to make a copy, in case evaluating the arguments makes
   // the name invalid.
@@ -2226,7 +2226,7 @@ static int eval_func(char **const arg, char *const name, const int name_len, typ
   funcexe.fe_evaluate = evaluate;
   funcexe.fe_partial = partial;
   funcexe.fe_basetv = basetv;
-  int ret = get_func_tv((char_u *)s, len, rettv, arg, &funcexe);
+  int ret = get_func_tv(s, len, rettv, arg, &funcexe);
 
   xfree(s);
 
@@ -3221,7 +3221,7 @@ static int call_func_rettv(char **const arg, typval_T *const rettv, const bool e
   funcexe.fe_partial = pt;
   funcexe.fe_selfdict = selfdict;
   funcexe.fe_basetv = basetv;
-  const int ret = get_func_tv((char_u *)funcname, is_lua ? (int)(*arg - funcname) : -1, rettv,
+  const int ret = get_func_tv(funcname, is_lua ? (int)(*arg - funcname) : -1, rettv,
                               arg, &funcexe);
 
   // Clear the funcref afterwards, so that deleting it while
@@ -5050,7 +5050,7 @@ void common_function(typval_T *argvars, typval_T *rettv, bool is_funcref)
         if (tv_list_len(list) == 0) {
           arg_idx = 0;
         } else if (tv_list_len(list) > MAX_FUNC_ARGS) {
-          emsg_funcname((char *)e_toomanyarg, (char_u *)s);
+          emsg_funcname((char *)e_toomanyarg, s);
           xfree(name);
           goto theend;
         }
@@ -7675,8 +7675,7 @@ int store_session_globals(FILE *fd)
         && var_flavour((char *)this_var->di_key) == VAR_FLAVOUR_SESSION) {
       // Escape special characters with a backslash.  Turn a LF and
       // CR into \n and \r.
-      char *const p = (char *)vim_strsave_escaped((const char_u *)tv_get_string(&this_var->di_tv),
-                                                  (const char_u *)"\\\"\n\r");
+      char *const p = (char *)vim_strsave_escaped(tv_get_string(&this_var->di_tv), "\\\"\n\r");
       for (char *t = p; *t != NUL; t++) {
         if (*t == '\n') {
           *t = 'n';

@@ -747,7 +747,7 @@ void do_tag(char *tag, int type, int count, int forceit, int verbose)
       set_vim_var_string(VV_SWAPCOMMAND, IObuff, -1);
 
       // Jump to the desired match.
-      i = jumpto_tag((char_u *)matches[cur_match], forceit, true);
+      i = jumpto_tag(matches[cur_match], forceit, true);
 
       set_vim_var_string(VV_SWAPCOMMAND, NULL, -1);
 
@@ -984,7 +984,7 @@ static int add_llist_tags(char *tag, int num_matches, char **matches)
   list_T *list;
   char tag_name[128 + 1];
   char *fname;
-  char_u *cmd;
+  char *cmd;
   int i;
   char *p;
   tagptrs_T tagp;
@@ -1071,7 +1071,7 @@ static int add_llist_tags(char *tag, int num_matches, char **matches)
       if (cmd_len > (CMDBUFFSIZE - 5)) {
         cmd_len = CMDBUFFSIZE - 5;
       }
-      snprintf((char *)cmd + len, (size_t)(CMDBUFFSIZE + 1 - len),
+      snprintf(cmd + len, (size_t)(CMDBUFFSIZE + 1 - len),
                "%.*s", cmd_len, cmd_start);
       len += cmd_len;
 
@@ -1093,7 +1093,7 @@ static int add_llist_tags(char *tag, int num_matches, char **matches)
     tv_dict_add_str(dict, S_LEN("filename"), (const char *)fname);
     tv_dict_add_nr(dict, S_LEN("lnum"), lnum);
     if (lnum == 0) {
-      tv_dict_add_str(dict, S_LEN("pattern"), (const char *)cmd);
+      tv_dict_add_str(dict, S_LEN("pattern"), cmd);
     }
   }
 
@@ -2018,7 +2018,7 @@ static void findtags_add_match(findtags_state_T *st, tagptrs_T *tagpp, findtags_
     *tagpp->tagname_end = TAB;
   } else if (name_only) {
     if (st->get_searchpat) {
-      char_u *temp_end = (char_u *)tagpp->command;
+      char *temp_end = tagpp->command;
 
       if (*temp_end == '/') {
         while (*temp_end && *temp_end != '\r'
@@ -2028,8 +2028,8 @@ static void findtags_add_match(findtags_state_T *st, tagptrs_T *tagpp, findtags_
         }
       }
 
-      if (tagpp->command + 2 < (char *)temp_end) {
-        len = (size_t)(temp_end - (char_u *)tagpp->command - 2);
+      if (tagpp->command + 2 < temp_end) {
+        len = (size_t)(temp_end - tagpp->command - 2);
         mfp = xmalloc(len + 2);
         xstrlcpy(mfp, tagpp->command + 2, len + 1);
       } else {
@@ -2807,7 +2807,7 @@ static char *tag_full_fname(tagptrs_T *tagp)
 /// @param keep_help  keep help flag
 ///
 /// @return  OK for success, NOTAGFILE when file not found, FAIL otherwise.
-static int jumpto_tag(const char_u *lbuf_arg, int forceit, int keep_help)
+static int jumpto_tag(const char *lbuf_arg, int forceit, int keep_help)
 {
   bool save_p_ws;
   int save_p_scs, save_p_ic;
@@ -2815,24 +2815,24 @@ static int jumpto_tag(const char_u *lbuf_arg, int forceit, int keep_help)
   char *str;
   char *pbuf;                    // search pattern buffer
   char *pbuf_end;
-  char_u *tofree_fname = NULL;
+  char *tofree_fname = NULL;
   char *fname;
   tagptrs_T tagp;
   int retval = FAIL;
   int getfile_result = GETFILE_UNUSED;
   int search_options;
   win_T *curwin_save = NULL;
-  char_u *full_fname = NULL;
+  char *full_fname = NULL;
   const bool old_KeyTyped = KeyTyped;       // getting the file may reset it
   const int l_g_do_tagpreview = g_do_tagpreview;
-  const size_t len = matching_line_len((char *)lbuf_arg) + 1;
-  char_u *lbuf = xmalloc(len);
+  const size_t len = matching_line_len(lbuf_arg) + 1;
+  char *lbuf = xmalloc(len);
   memmove(lbuf, lbuf_arg, len);
 
   pbuf = xmalloc(LSIZE);
 
   // parse the match line into the tagp structure
-  if (parse_match((char *)lbuf, &tagp) == FAIL) {
+  if (parse_match(lbuf, &tagp) == FAIL) {
     tagp.fname_end = NULL;
     goto erret;
   }
@@ -2863,7 +2863,7 @@ static int jumpto_tag(const char_u *lbuf_arg, int forceit, int keep_help)
   // Expand file name, when needed (for environment variables).
   // If 'tagrelative' option set, may change file name.
   fname = expand_tag_fname(fname, tagp.tag_fname, true);
-  tofree_fname = (char_u *)fname;         // free() it later
+  tofree_fname = fname;         // free() it later
 
   // Check if the file with the tag exists before abandoning the current
   // file.  Also accept a file name for which there is a matching BufReadCmd
@@ -2886,8 +2886,8 @@ static int jumpto_tag(const char_u *lbuf_arg, int forceit, int keep_help)
     // entering it (autocommands) so turn the tag filename
     // into a fullpath
     if (!curwin->w_p_pvw) {
-      full_fname = (char_u *)FullName_save(fname, false);
-      fname = (char *)full_fname;
+      full_fname = FullName_save(fname, false);
+      fname = full_fname;
 
       // Make the preview window the current window.
       // Open a preview window when needed.

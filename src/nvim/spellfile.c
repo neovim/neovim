@@ -2478,8 +2478,8 @@ static afffile_T *spell_read_aff(spellinfo_T *spin, char_u *fname)
 
         // Don't use an affix entry with non-ASCII characters when
         // "spin->si_ascii" is true.
-        if (!spin->si_ascii || !(has_non_ascii((char_u *)aff_entry->ae_chop)
-                                 || has_non_ascii((char_u *)aff_entry->ae_add))) {
+        if (!spin->si_ascii || !(has_non_ascii(aff_entry->ae_chop)
+                                 || has_non_ascii(aff_entry->ae_add))) {
           aff_entry->ae_next = cur_aff->ah_first;
           cur_aff->ah_first = aff_entry;
 
@@ -3197,7 +3197,7 @@ static int spell_read_dic(spellinfo_T *spin, char_u *fname, afffile_T *affile)
     }
 
     // Skip non-ASCII words when "spin->si_ascii" is true.
-    if (spin->si_ascii && has_non_ascii(w)) {
+    if (spin->si_ascii && has_non_ascii((char *)w)) {
       non_ascii++;
       xfree(pc);
       continue;
@@ -3817,7 +3817,7 @@ static int spell_read_wordfile(spellinfo_T *spin, char_u *fname)
     }
 
     // Skip non-ASCII words when "spin->si_ascii" is true.
-    if (spin->si_ascii && has_non_ascii((char_u *)line)) {
+    if (spin->si_ascii && has_non_ascii(line)) {
       non_ascii++;
       continue;
     }

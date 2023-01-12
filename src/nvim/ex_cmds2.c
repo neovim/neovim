@@ -721,7 +721,7 @@ void ex_compiler(exarg_T *eap)
     // plugin will then skip the settings.  Afterwards set
     // "b:current_compiler" and restore "current_compiler".
     // Explicitly prepend "g:" to make it work in a function.
-    old_cur_comp = (char *)get_var_value("g:current_compiler");
+    old_cur_comp = get_var_value("g:current_compiler");
     if (old_cur_comp != NULL) {
       old_cur_comp = xstrdup(old_cur_comp);
     }
@@ -743,7 +743,7 @@ void ex_compiler(exarg_T *eap)
   do_cmdline_cmd(":delcommand CompilerSet");
 
   // Set "b:current_compiler" from "current_compiler".
-  p = (char *)get_var_value("g:current_compiler");
+  p = get_var_value("g:current_compiler");
   if (p != NULL) {
     set_internal_string_var("b:current_compiler", p);
   }

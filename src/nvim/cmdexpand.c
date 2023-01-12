@@ -126,7 +126,7 @@ static void ExpandEscape(expand_T *xp, char_u *str, int numfiles, char **files, 
       for (i = 0; i < numfiles; i++) {
         // for ":set path=" we need to escape spaces twice
         if (xp->xp_backslash == XP_BS_THREE) {
-          p = (char *)vim_strsave_escaped((char_u *)files[i], (char_u *)" ");
+          p = vim_strsave_escaped(files[i], " ");
           xfree(files[i]);
           files[i] = p;
 #if defined(BACKSLASH_IN_FILENAME)
@@ -161,7 +161,7 @@ static void ExpandEscape(expand_T *xp, char_u *str, int numfiles, char **files, 
       // Insert a backslash before characters in a tag name that
       // would terminate the ":tag" command.
       for (i = 0; i < numfiles; i++) {
-        p = (char *)vim_strsave_escaped((char_u *)files[i], (char_u *)"\\|\"");
+        p = vim_strsave_escaped(files[i], "\\|\"");
         xfree(files[i]);
         files[i] = p;
       }
@@ -2542,7 +2542,7 @@ static void ExpandGeneric(expand_T *xp, regmatch_T *regmatch, int *num_file, cha
     }
     if (vim_regexec(regmatch, str, (colnr_T)0)) {
       if (escaped) {
-        str = (char *)vim_strsave_escaped((char_u *)str, (char_u *)" \t\\.");
+        str = vim_strsave_escaped(str, " \t\\.");
       } else {
         str = xstrdup(str);
       }
