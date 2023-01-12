@@ -2124,5 +2124,31 @@ end)
         return vim.g.diagnostic_autocmd_triggered == diagnostic_bufnr
       ]])
       end)
+
+    it("checks if diagnostics are disabled in a buffer", function()
+      eq({true, true, true , true}, exec_lua [[
+        vim.diagnostic.set(diagnostic_ns, diagnostic_bufnr, {
+          make_error('Diagnostic #1', 1, 1, 1, 1),
+        })
+        vim.api.nvim_set_current_buf(diagnostic_bufnr)
+        vim.diagnostic.disable()
+        return {
+          vim.diagnostic.is_disabled(),
+          vim.diagnostic.is_disabled(diagnostic_bufnr),
+          vim.diagnostic.is_disabled(diagnostic_bufnr, diagnostic_ns),
+          vim.diagnostic.is_disabled(_, diagnostic_ns),
+        }
+      ]])
+
+      eq({false, false, false , false}, exec_lua [[
+        vim.diagnostic.enable()
+        return {
+          vim.diagnostic.is_disabled(),
+          vim.diagnostic.is_disabled(diagnostic_bufnr),
+          vim.diagnostic.is_disabled(diagnostic_bufnr, diagnostic_ns),
+          vim.diagnostic.is_disabled(_, diagnostic_ns),
+        }
+      ]])
+    end)
   end)
 end)

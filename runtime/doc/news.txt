@@ -135,6 +135,9 @@ The following new APIs or features were added.
 
   See https://github.com/neovim/neovim/pull/14537.
 
+• |vim.diagnostic.is_disabled()| checks if diagnostics are disabled in a given
+  buffer or namespace.
+
 • |--remote-ui| option was added to connect to a remote instance and display
   in it in a |TUI| in the local terminal. This can be used run a headless nvim
   instance in the background and display its UI on demand, which previously
