@@ -8,9 +8,9 @@ if test -t 1; then
       echo "Missing filename" 1>&2
       exit
     fi
-    nvim --cmd 'let no_plugin_maps = 1' -c 'runtime! macros/less.vim' -
+    nvim -u NORC --cmd 'let no_plugin_maps = 1' -c 'runtime! macros/less.vim' -
   else
-    nvim --cmd 'let no_plugin_maps = 1' -c 'runtime! macros/less.vim' "$@"
+    nvim -u NORC --cmd 'let no_plugin_maps = 1' -c 'runtime! macros/less.vim' "$@"
   fi
 else
   # Output is not a terminal, cat arguments or stdin
