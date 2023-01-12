@@ -1508,8 +1508,8 @@ convert_input_to_markdown_lines({input}, {contents})
 
     Parameters: ~
       • {input}     (`MarkedString` | `MarkedString[]` | `MarkupContent`)
-      • {contents}  (table, optional, default `{}`) List of strings to extend
-                    with converted lines
+      • {contents}  (table|nil) List of strings to extend with converted
+                    lines. Defaults to {}.
 
     Return: ~
         {contents}, extended with lines of converted markdown.
