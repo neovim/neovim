@@ -280,8 +280,7 @@ add_glob_target(
   FLAGS -q
   GLOB_DIRS runtime/ scripts/ src/ test/
   GLOB_PAT *.lua
-  TOUCH_STRATEGY SINGLE
-  )
+  TOUCH_STRATEGY SINGLE)
 
 add_glob_target(
   TARGET lintlua-stylua
@@ -289,8 +288,7 @@ add_glob_target(
   FLAGS --color=always --check
   GLOB_DIRS runtime/
   GLOB_PAT *.lua
-  TOUCH_STRATEGY SINGLE
-  )
+  TOUCH_STRATEGY SINGLE)
 
 add_custom_target(lintlua)
 add_dependencies(lintlua lintlua-luacheck lintlua-stylua)
@@ -305,8 +303,7 @@ add_glob_target(
     scripts/pvscheck.sh
     ci/common
     ci/snap
-  TOUCH_STRATEGY SINGLE
-  )
+  TOUCH_STRATEGY SINGLE)
 
 add_custom_target(lintcommit
   COMMAND ${PROJECT_BINARY_DIR}/bin/nvim -u NONE -es -c [[lua require('scripts.lintcommit').main({trace=false})]]
@@ -315,7 +312,7 @@ add_custom_target(lintcommit
 add_dependencies(lintcommit nvim)
 
 add_custom_target(lint)
-add_dependencies(lint check-single-includes lintc lintlua lintsh lintcommit lintuncrustify)
+add_dependencies(lint check-single-includes lintc lintlua lintsh lintcommit)
 
 #
 # Format

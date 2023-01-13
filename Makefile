@@ -130,7 +130,7 @@ src/nvim/testdir/%.vim: phony_force
 functionaltest functionaltest-lua unittest benchmark: | nvim
 	$(BUILD_TOOL) -C build $@
 
-lintlua lintsh lintuncrustify lintc lintcfull check-single-includes generated-sources lintcommit lint formatc formatlua format: | build/.ran-cmake
+lintlua lintsh lintc check-single-includes generated-sources lintcommit lint formatc formatlua format: | build/.ran-cmake
 	$(CMAKE_PRG) --build build --target $@
 
 test: functionaltest unittest

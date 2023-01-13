@@ -218,8 +218,7 @@ typedef struct {
 // the "w" library function for characters above 255.
 #define SPELL_TOFOLD(c) ((c) >= 128 ? utf_fold(c) : (int)spelltab.st_fold[c])
 
-#define SPELL_TOUPPER(c) ((c) >= 128 ? mb_toupper(c) \
-                                     : (int)spelltab.st_upper[c])
+#define SPELL_TOUPPER(c) ((c) >= 128 ? mb_toupper(c) : (int)spelltab.st_upper[c])
 
 #define SPELL_ISUPPER(c) ((c) >= 128 ? mb_isupper(c) : spelltab.st_isu[c])
 

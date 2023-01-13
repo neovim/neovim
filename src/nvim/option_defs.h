@@ -263,8 +263,7 @@ enum {
 /// Represented by 'a' flag.
 #define SHM_ALL_ABBREVIATIONS ((char[]) { \
     SHM_RO, SHM_MOD, SHM_FILE, SHM_LAST, SHM_TEXT, SHM_LINES, SHM_NEW, SHM_WRI, \
-    0, \
-  })
+    0 })
 
 // characters for p_go:
 #define GO_ASEL         'a'             // autoselect
@@ -359,8 +358,7 @@ enum {
     STL_SHOWCMD, STL_FOLDCOL, STL_SIGNCOL, STL_VIM_EXPR, STL_SEPARATE, \
     STL_TRUNCMARK, STL_USER_HL, STL_HIGHLIGHT, STL_TABPAGENR, STL_TABCLOSENR, \
     STL_CLICK_FUNC, STL_TABPAGENR, STL_TABCLOSENR, STL_CLICK_FUNC, \
-    0, \
-  })
+    0, })
 
 // flags used for parsed 'wildmode'
 #define WIM_FULL        0x01
