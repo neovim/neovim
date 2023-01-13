@@ -1475,4 +1475,12 @@ func Test_sort_closed_fold()
   bwipe!
 endfunc
 
+func Test_indent_with_L_command()
+  " The "L" command moved the cursor to line zero, causing the text saved for
+  " undo to use line number -1, which caused trouble for undo later.
+  new
+  sil! norm 8RV{zf8=Lu
+  bwipe!
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab
