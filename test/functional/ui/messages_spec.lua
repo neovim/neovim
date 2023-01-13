@@ -908,6 +908,13 @@ stack traceback:
       {1:~                        }|
     ]]}
   end)
+
+  it('does not truncate messages', function()
+    command('write Xtest')
+    screen:expect({messages={
+      {content = { { '"Xtest" [New] 0L, 0B written' } }, kind = "" }
+    }})
+  end)
 end)
 
 describe('ui/builtin messages', function()

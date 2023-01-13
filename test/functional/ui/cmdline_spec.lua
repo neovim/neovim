@@ -8,6 +8,7 @@ local exec = helpers.exec
 local eval = helpers.eval
 local eq = helpers.eq
 local is_os = helpers.is_os
+local meths = helpers.meths
 
 local function new_screen(opt)
   local screen = Screen.new(25, 5)
@@ -1387,17 +1388,20 @@ describe('cmdheight=0', function()
     ]])
   end)
 
-  it("clears cmdline area when resized with external messages", function()
+  it("cannot be resized at all with external messages", function()
     clear()
     screen = new_screen({rgb=true, ext_messages=true})
-    command('set laststatus=2 cmdheight=0')
+    command('set laststatus=2 mouse=a')
     command('resize -1')
     screen:expect([[
       ^                         |
       {1:~                        }|
       {1:~                        }|
+      {1:~                        }|
       {3:[No Name]                }|
-                               |
     ]])
+    meths.input_mouse('left', 'press', '', 0, 6, 10)
+    meths.input_mouse('left', 'drag', '', 0, 5, 10)
+    screen:expect_unchanged()
   end)
 end)

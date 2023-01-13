@@ -919,9 +919,11 @@ char *msg_trunc_attr(char *s, bool force, int attr)
 /// @note: May change the message by replacing a character with '<'.
 char *msg_may_trunc(bool force, char *s)
 {
-  int room;
+  if (ui_has(kUIMessages)) {
+    return s;
+  }
 
-  room = (Rows - cmdline_row - 1) * Columns + sc_col - 1;
+  int room = (Rows - cmdline_row - 1) * Columns + sc_col - 1;
   if ((force || (shortmess(SHM_TRUNC) && !exmode_active))
       && (int)strlen(s) - room > 0) {
     int size = vim_strsize(s);
