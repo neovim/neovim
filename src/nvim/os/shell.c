@@ -559,6 +559,17 @@ notfound:
   return FAIL;
 }
 
+/// Returns true if the invocation (usually `p_sh`) executes powershell.
+///
+/// @param invocation The shell command to be evaluated.
+/// @return Whether the invocation represnet a powershell invocation.
+bool shell_is_pwsh(const char *invocation)
+  FUNC_ATTR_NONNULL_ALL
+{
+  return strncmp((char *)invocation_path_tail(p_sh, NULL), "pwsh", 4) == 0
+         || strncmp((char *)invocation_path_tail(p_sh, NULL), "powershell", 10) == 0;
+}
+
 /// Builds the argument vector for running the user-configured 'shell' (p_sh)
 /// with an optional command prefixed by 'shellcmdflag' (p_shcf). E.g.:
 ///
@@ -582,6 +593,18 @@ char **shell_build_argv(const char *cmd, const char *extra_args)
 
   if (cmd) {
     i += tokenize((char *)p_shcf, rv + i);        // Split 'shellcmdflag'
+    char buf[4096];
+    if (shell_is_pwsh(p_sh)) {
+      // For powershell, append `; exit $LastExitCode` to make it return the exit code of the last
+      // executed program. If powershell ever receives a flag for this (see
+      // https://github.com/PowerShell/PowerShell/issues/13501), we should instead use the
+      // &shellcommandflag option for this.
+
+      // TODO(aktau): handle overflow?
+      xstrlcpy(buf, cmd, sizeof(buf));
+      xstrlcat(buf, "; exit $LastExitCode", sizeof(buf));
+      cmd = buf;
+    }
     rv[i++] = shell_xescape_xquote(cmd);  // Copy (and escape) `cmd`.
   }
 
