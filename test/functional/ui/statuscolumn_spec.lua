@@ -77,6 +77,9 @@ describe('statuscolumn', function()
       16│aaaaa                                             |
                                                            |
     ]])
+    command([[set stc=%l%=%{&rnu?'\ ':''}%r│]])
+    screen:expect_unchanged()
+    command([[set stc=%{&nu?v:lnum:''}%=%{&rnu?'\ '.v:relnum:''}│]])
     command('set relativenumber')
     screen:expect([[
       4  4│aaaaa                                           |
@@ -94,6 +97,9 @@ describe('statuscolumn', function()
       16 8│aaaaa                                           |
                                                            |
     ]])
+    command([[set stc=%l%=%{&rnu?'\ ':''}%r│]])
+    screen:expect_unchanged()
+    command([[set stc=%{&nu?v:lnum:''}%=%{&rnu?'\ '.v:relnum:''}│]])
     command('norm 12GH')
     screen:expect([[
       4   0│^aaaaa                                          |
@@ -111,6 +117,9 @@ describe('statuscolumn', function()
       16 12│aaaaa                                          |
                                                            |
     ]])
+    command([[set stc=%l%=%{&rnu?'\ ':''}%r│]])
+    screen:expect_unchanged()
+    command([[set stc=%{&nu?v:lnum:''}%=%{&rnu?'\ '.v:relnum:''}│]])
   end)
 
   it('works with highlighted \'statuscolumn\'', function()
