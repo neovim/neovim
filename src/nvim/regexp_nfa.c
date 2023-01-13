@@ -1735,7 +1735,7 @@ static void nfa_emit_equi_class(int c)
     case 0x1ef5:
     case 0x1ef7:
     case 0x1ef9:
-      EMIT2('y') EMIT2(y_acute) EMIT2(y_diaeresis)
+      EMIT2('y') EMIT2(y_acute) EMIT2(y_diaeresis)  // NOLINT(whitespace/cast)
       EMIT2(0x177) EMIT2(0x1b4) EMIT2(0x233) EMIT2(0x24f)
       EMIT2(0x1e8f) EMIT2(0x1e99) EMIT2(0x1ef3)
       EMIT2(0x1ef5) EMIT2(0x1ef7) EMIT2(0x1ef9)
@@ -5236,7 +5236,7 @@ static regsubs_T *addstate_here(nfa_list_T *l, nfa_state_T *state, regsubs_T *su
               sizeof(nfa_thread_T) * (size_t)count);
     }
   }
-  --l->n;
+  l->n--;
   *ip = listidx - 1;
 
   return r;

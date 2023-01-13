@@ -39,4 +39,4 @@ typedef enum file_comparison {
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "path.h.generated.h"
 #endif
-#endif
+#endif  // NVIM_PATH_H

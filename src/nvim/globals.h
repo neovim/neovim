@@ -419,7 +419,7 @@ EXTERN win_T *prevwin INIT(= NULL);  // previous window
 // -V:FOR_ALL_WINDOWS_IN_TAB:501
 #define FOR_ALL_WINDOWS_IN_TAB(wp, tp) \
   for (win_T *wp = ((tp) == curtab) \
-              ? firstwin : (tp)->tp_firstwin; wp != NULL; wp = wp->w_next)
+       ? firstwin : (tp)->tp_firstwin; wp != NULL; wp = wp->w_next)
 
 EXTERN win_T *curwin;        // currently active window
 

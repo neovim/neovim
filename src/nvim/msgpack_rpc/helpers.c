@@ -39,6 +39,8 @@ typedef struct {
   size_t idx;
 } MPToAPIObjectStackItem;
 
+// uncrustify:off
+
 /// Convert type used by msgpack parser to Nvim API type.
 ///
 /// @param[in]  obj  Msgpack value to convert.
@@ -118,7 +120,7 @@ bool msgpack_rpc_to_object(const msgpack_object *const obj, Object *const arg)
               .mobj = &cur.mobj->via.array.ptr[idx],
               .aobj = &cur.aobj->data.array.items[idx],
               .container = false,
-            }));
+          }));
         }
       } else {
         *cur.aobj = ARRAY_OBJ(((Array) {
@@ -127,7 +129,7 @@ bool msgpack_rpc_to_object(const msgpack_object *const obj, Object *const arg)
             .items = (size > 0
                       ? xcalloc(size, sizeof(*cur.aobj->data.array.items))
                       : NULL),
-          }));
+        }));
         cur.container = true;
         kv_last(stack) = cur;
       }
@@ -171,7 +173,7 @@ bool msgpack_rpc_to_object(const msgpack_object *const obj, Object *const arg)
                 .mobj = &cur.mobj->via.map.ptr[idx].val,
                 .aobj = &cur.aobj->data.dictionary.items[idx].value,
                 .container = false,
-              }));
+            }));
           }
         }
       } else {
@@ -181,7 +183,7 @@ bool msgpack_rpc_to_object(const msgpack_object *const obj, Object *const arg)
             .items = (size > 0
                       ? xcalloc(size, sizeof(*cur.aobj->data.dictionary.items))
                       : NULL),
-          }));
+        }));
         cur.container = true;
         kv_last(stack) = cur;
       }
@@ -371,7 +373,7 @@ void msgpack_rpc_from_object(const Object result, msgpack_packer *const res)
           kvi_push(stack, ((APIToMPObjectStackItem) {
               .aobj = &cur.aobj->data.array.items[idx],
               .container = false,
-            }));
+          }));
         }
       } else {
         msgpack_pack_array(res, size);
@@ -389,12 +391,11 @@ void msgpack_rpc_from_object(const Object result, msgpack_packer *const res)
           const size_t idx = cur.idx;
           cur.idx++;
           kv_last(stack) = cur;
-          msgpack_rpc_from_string(cur.aobj->data.dictionary.items[idx].key,
-                                  res);
+          msgpack_rpc_from_string(cur.aobj->data.dictionary.items[idx].key, res);
           kvi_push(stack, ((APIToMPObjectStackItem) {
               .aobj = &cur.aobj->data.dictionary.items[idx].value,
               .container = false,
-            }));
+          }));
         }
       } else {
         msgpack_pack_map(res, size);
@@ -410,6 +411,8 @@ void msgpack_rpc_from_object(const Object result, msgpack_packer *const res)
   }
   kvi_destroy(stack);
 }
+
+// uncrustify:on
 
 void msgpack_rpc_from_array(Array result, msgpack_packer *res)
   FUNC_ATTR_NONNULL_ARG(2)
