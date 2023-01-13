@@ -4,6 +4,7 @@ local clear, feed = helpers.clear, helpers.feed
 local source = helpers.source
 local command = helpers.command
 local assert_alive = helpers.assert_alive
+local poke_eventloop = helpers.poke_eventloop
 local exec = helpers.exec
 local eval = helpers.eval
 local eq = helpers.eq
@@ -1401,6 +1402,7 @@ describe('cmdheight=0', function()
       {3:[No Name]                }|
     ]])
     meths.input_mouse('left', 'press', '', 0, 6, 10)
+    poke_eventloop()
     meths.input_mouse('left', 'drag', '', 0, 5, 10)
     screen:expect_unchanged()
   end)
