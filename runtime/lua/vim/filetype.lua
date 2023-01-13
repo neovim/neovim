@@ -1321,6 +1321,7 @@ local filename = {
   ['GNUmakefile.am'] = 'automake',
   ['named.root'] = 'bindzone',
   WORKSPACE = 'bzl',
+  ['WORKSPACE.bzlmod'] = 'bzl',
   BUILD = 'bzl',
   ['cabal.project'] = 'cabalproject',
   ['cabal.config'] = 'cabalconfig',
