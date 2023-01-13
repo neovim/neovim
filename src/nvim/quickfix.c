@@ -4297,8 +4297,8 @@ void ex_make(exarg_T *eap)
     goto cleanup;
   }
 
-  if (!use_file && out == NULL) {
-    goto cleanup;  // If the command did not output anything, out is NULL: return.
+  if (out == NULL && !use_file) {
+    out = xstrdup("");  // Output is empty, process empty string to clear quickfix.
   }
 
   // To load the quickfix/loclist with values, `qf_init_ext` accepts either a
