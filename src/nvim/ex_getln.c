@@ -1234,10 +1234,20 @@ static int command_line_execute(VimState *state, int key)
     }
   }
 
+  // The wildmenu is cleared if the pressed key is not used for
+  // navigating the wild menu (i.e. the key is not 'wildchar' or
+  // 'wildcharm' or Ctrl-N or Ctrl-P or Ctrl-A or Ctrl-L).
+  // If the popup menu is displayed, then PageDown and PageUp keys are
+  // also used to navigate the menu.
+  bool end_wildmenu = (!(s->c == p_wc && KeyTyped) && s->c != p_wcm && s->c != Ctrl_Z
+                       && s->c != Ctrl_N && s->c != Ctrl_P && s->c != Ctrl_A
+                       && s->c != Ctrl_L);
+  end_wildmenu = end_wildmenu && (!cmdline_pum_active()
+                                  || (s->c != K_PAGEDOWN && s->c != K_PAGEUP
+                                      && s->c != K_KPAGEDOWN && s->c != K_KPAGEUP));
+
   // free expanded names when finished walking through matches
-  if (!(s->c == p_wc && KeyTyped) && s->c != p_wcm && s->c != Ctrl_Z
-      && s->c != Ctrl_N && s->c != Ctrl_P && s->c != Ctrl_A
-      && s->c != Ctrl_L) {
+  if (end_wildmenu) {
     command_line_end_wildmenu(s);
   }
 
@@ -2000,8 +2010,8 @@ static int command_line_handle_key(CommandLineState *s)
   case Ctrl_N:            // next match
   case Ctrl_P:            // previous match
     if (s->xpc.xp_numfiles > 0) {
-      if (nextwild(&s->xpc, (s->c == Ctrl_P) ? WILD_PREV : WILD_NEXT,
-                   0, s->firstc != '@') == FAIL) {
+      const int wild_type = (s->c == Ctrl_P) ? WILD_PREV : WILD_NEXT;
+      if (nextwild(&s->xpc, wild_type, 0, s->firstc != '@') == FAIL) {
         break;
       }
       return command_line_not_changed(s);
@@ -2016,13 +2026,26 @@ static int command_line_handle_key(CommandLineState *s)
   case K_KPAGEUP:
   case K_PAGEDOWN:
   case K_KPAGEDOWN:
-    switch (command_line_browse_history(s)) {
-    case CMDLINE_CHANGED:
-      return command_line_changed(s);
-    case GOTO_NORMAL_MODE:
-      return 0;
-    default:
+    if (cmdline_pum_active()
+        && (s->c == K_PAGEUP || s->c == K_PAGEDOWN
+            || s->c == K_KPAGEUP || s->c == K_KPAGEDOWN)) {
+      // If the popup menu is displayed, then PageUp and PageDown
+      // are used to scroll the menu.
+      const int wild_type =
+        (s->c == K_PAGEDOWN || s->c == K_KPAGEDOWN) ? WILD_PAGEDOWN : WILD_PAGEUP;
+      if (nextwild(&s->xpc, wild_type, 0, s->firstc != '@') == FAIL) {
+        break;
+      }
       return command_line_not_changed(s);
+    } else {
+      switch (command_line_browse_history(s)) {
+      case CMDLINE_CHANGED:
+        return command_line_changed(s);
+      case GOTO_NORMAL_MODE:
+        return 0;
+      default:
+        return command_line_not_changed(s);
+      }
     }
 
   case Ctrl_G:  // next match

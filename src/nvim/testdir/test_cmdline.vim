@@ -151,6 +151,14 @@ func Test_complete_wildmenu()
   call assert_equal('"e Xdir1/Xdir2/1', @:)
   cunmap <F2>
 
+  " Test for canceling the wild menu by pressing <PageDown> or <PageUp>.
+  " After this pressing <Left> or <Right> should not change the selection.
+  call feedkeys(":sign \<Tab>\<PageDown>\<Left>\<Right>\<C-A>\<C-B>\"\<CR>", 'tx')
+  call assert_equal('"sign define', @:)
+  call histadd('cmd', 'TestWildMenu')
+  call feedkeys(":sign \<Tab>\<PageUp>\<Left>\<Right>\<C-A>\<C-B>\"\<CR>", 'tx')
+  call assert_equal('"TestWildMenu', @:)
+
   " cleanup
   %bwipe
   call delete('Xdir1', 'rf')
@@ -2198,7 +2206,8 @@ func Test_wildmenu_dirstack()
 endfunc
 
 " Test for recalling newer or older cmdline from history with <Up>, <Down>,
-" <S-Up>, <S-Down>, <PageUp>, <PageDown>, <C-p>, or <C-n>.
+" <S-Up>, <S-Down>, <PageUp>, <PageDown>, <kPageUp>, <kPageDown>, <C-p>, or
+" <C-n>.
 func Test_recalling_cmdline()
   CheckFeature cmdline_hist
 
@@ -2206,17 +2215,18 @@ func Test_recalling_cmdline()
   cnoremap <Plug>(save-cmdline) <Cmd>let g:cmdlines += [getcmdline()]<CR>
 
   let histories = [
-  \  {'name': 'cmd',    'enter': ':',                    'exit': "\<Esc>"},
-  \  {'name': 'search', 'enter': '/',                    'exit': "\<Esc>"},
-  \  {'name': 'expr',   'enter': ":\<C-r>=",             'exit': "\<Esc>\<Esc>"},
-  \  {'name': 'input',  'enter': ":call input('')\<CR>", 'exit': "\<CR>"},
+  \  #{name: 'cmd',    enter: ':',                    exit: "\<Esc>"},
+  \  #{name: 'search', enter: '/',                    exit: "\<Esc>"},
+  \  #{name: 'expr',   enter: ":\<C-r>=",             exit: "\<Esc>\<Esc>"},
+  \  #{name: 'input',  enter: ":call input('')\<CR>", exit: "\<CR>"},
   "\ TODO: {'name': 'debug', ...}
   \]
   let keypairs = [
-  \  {'older': "\<Up>",     'newer': "\<Down>",     'prefixmatch': v:true},
-  \  {'older': "\<S-Up>",   'newer': "\<S-Down>",   'prefixmatch': v:false},
-  \  {'older': "\<PageUp>", 'newer': "\<PageDown>", 'prefixmatch': v:false},
-  \  {'older': "\<C-p>",    'newer': "\<C-n>",      'prefixmatch': v:false},
+  \  #{older: "\<Up>",     newer: "\<Down>",     prefixmatch: v:true},
+  \  #{older: "\<S-Up>",   newer: "\<S-Down>",   prefixmatch: v:false},
+  \  #{older: "\<PageUp>", newer: "\<PageDown>", prefixmatch: v:false},
+  \  #{older: "\<kPageUp>", newer: "\<kPageDown>", prefixmatch: v:false},
+  \  #{older: "\<C-p>",    newer: "\<C-n>",      prefixmatch: v:false},
   \]
   let prefix = 'vi'
   for h in histories
@@ -2330,6 +2340,11 @@ func Test_wildmenu_pum()
       set statusline=
       set tabline=%!MyTabLine()
       set showtabline=2
+    endfunc
+
+    func DoFeedKeys()
+      let &wildcharm = char2nr("\t")
+      call feedkeys(":edit $VIMRUNTIME/\<Tab>\<Left>\<C-U>ab\<Tab>")
     endfunc
   [CODE]
   call writefile(commands, 'Xtest')
@@ -2527,6 +2542,34 @@ func Test_wildmenu_pum()
   call term_sendkeys(buf, ":si\<Tab>")
   call term_sendkeys(buf, "\<Esc>")
   call VerifyScreenDump(buf, 'Test_wildmenu_pum_40', {})
+
+  " popup is cleared also when 'lazyredraw' is set
+  call term_sendkeys(buf, ":set showtabline=1 laststatus=1 lazyredraw\<CR>")
+  call term_sendkeys(buf, ":call DoFeedKeys()\<CR>")
+  call VerifyScreenDump(buf, 'Test_wildmenu_pum_41', {})
+  call term_sendkeys(buf, "\<Esc>")
+
+  " Pressing <PageDown> should scroll the menu downward
+  call term_sendkeys(buf, ":sign \<Tab>\<PageDown>")
+  call VerifyScreenDump(buf, 'Test_wildmenu_pum_42', {})
+  call term_sendkeys(buf, "\<PageDown>")
+  call VerifyScreenDump(buf, 'Test_wildmenu_pum_43', {})
+  call term_sendkeys(buf, "\<PageDown>")
+  call VerifyScreenDump(buf, 'Test_wildmenu_pum_44', {})
+  call term_sendkeys(buf, "\<PageDown>")
+  call VerifyScreenDump(buf, 'Test_wildmenu_pum_45', {})
+  call term_sendkeys(buf, "\<C-U>sign \<Tab>\<Down>\<Down>\<PageDown>")
+  call VerifyScreenDump(buf, 'Test_wildmenu_pum_46', {})
+
+  " Pressing <PageUp> should scroll the menu upward
+  call term_sendkeys(buf, "\<C-U>sign \<Tab>\<PageUp>")
+  call VerifyScreenDump(buf, 'Test_wildmenu_pum_47', {})
+  call term_sendkeys(buf, "\<PageUp>")
+  call VerifyScreenDump(buf, 'Test_wildmenu_pum_48', {})
+  call term_sendkeys(buf, "\<PageUp>")
+  call VerifyScreenDump(buf, 'Test_wildmenu_pum_49', {})
+  call term_sendkeys(buf, "\<PageUp>")
+  call VerifyScreenDump(buf, 'Test_wildmenu_pum_50', {})
 
   call term_sendkeys(buf, "\<C-U>\<CR>")
   call StopVimInTerminal(buf)
