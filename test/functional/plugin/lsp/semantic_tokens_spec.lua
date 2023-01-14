@@ -98,11 +98,12 @@ describe('semantic token highlighting', function()
       ]], legend, response, edit_response)
     end)
 
-    it('buffer is highlighted when attached', function()
+    it('buffer is highlighted when semantic token highlighting is started', function()
       exec_lua([[
         bufnr = vim.api.nvim_get_current_buf()
         vim.api.nvim_win_set_buf(0, bufnr)
         client_id = vim.lsp.start({ name = 'dummy', cmd = server.cmd })
+        vim.lsp.semantic_tokens.start(bufnr, client_id)
       ]])
 
       insert(text)
@@ -132,6 +133,7 @@ describe('semantic token highlighting', function()
         bufnr = vim.api.nvim_get_current_buf()
         vim.api.nvim_win_set_buf(0, bufnr)
         client_id = vim.lsp.start({ name = 'dummy', cmd = server.cmd })
+        vim.lsp.semantic_tokens.start(bufnr, client_id)
       ]])
 
       insert(text)
@@ -167,6 +169,7 @@ describe('semantic token highlighting', function()
         bufnr = vim.api.nvim_get_current_buf()
         vim.api.nvim_win_set_buf(0, bufnr)
         client_id = vim.lsp.start({ name = 'dummy', cmd = server.cmd })
+        vim.lsp.semantic_tokens.start(bufnr, client_id)
       ]])
 
       insert(text)
@@ -224,6 +227,7 @@ describe('semantic token highlighting', function()
         bufnr = vim.api.nvim_get_current_buf()
         vim.api.nvim_win_set_buf(0, bufnr)
         client_id = vim.lsp.start({ name = 'dummy', cmd = server.cmd })
+        vim.lsp.semantic_tokens.start(bufnr, client_id)
       ]])
 
       insert(text)
@@ -286,6 +290,7 @@ describe('semantic token highlighting', function()
         bufnr = vim.api.nvim_get_current_buf()
         vim.api.nvim_win_set_buf(0, bufnr)
         client_id = vim.lsp.start({ name = 'dummy', cmd = server.cmd })
+        vim.lsp.semantic_tokens.start(bufnr, client_id)
       ]])
 
       insert(text)
@@ -304,6 +309,7 @@ describe('semantic token highlighting', function()
         bufnr = vim.api.nvim_get_current_buf()
         vim.api.nvim_win_set_buf(0, bufnr)
         client_id = vim.lsp.start({ name = 'dummy', cmd = server.cmd })
+        vim.lsp.semantic_tokens.start(bufnr, client_id)
       ]])
 
       insert(text)
@@ -371,70 +377,6 @@ describe('semantic token highlighting', function()
       ]])
       matches('%[LSP%] No client with id %d', notifications[1][1])
     end)
-
-    it('opt-out: does not activate semantic token highlighting if disabled in client attach',
-      function()
-        exec_lua([[
-          bufnr = vim.api.nvim_get_current_buf()
-          vim.api.nvim_win_set_buf(0, bufnr)
-          client_id = vim.lsp.start({
-            name = 'dummy',
-            cmd = server.cmd,
-            on_attach = vim.schedule_wrap(function(client, bufnr)
-              client.server_capabilities.semanticTokensProvider = nil
-            end),
-          })
-        ]])
-        eq(true, exec_lua("return vim.lsp.buf_is_attached(bufnr, client_id)"))
-
-        insert(text)
-
-        screen:expect { grid = [[
-          #include <iostream>                     |
-                                                  |
-          int main()                              |
-          {                                       |
-              int x;                              |
-          #ifdef __cplusplus                      |
-              std::cout << x << "\n";             |
-          #else                                   |
-              printf("%d\n", x);                  |
-          #endif                                  |
-          }                                       |
-          ^}                                       |
-          {1:~                                       }|
-          {1:~                                       }|
-          {1:~                                       }|
-                                                  |
-        ]] }
-
-        local notifications = exec_lua([[
-          local notifications = {}
-          vim.notify = function(...) table.insert(notifications, 1, {...}) end
-          vim.lsp.semantic_tokens.start(bufnr, client_id)
-          return notifications
-        ]])
-        eq('[LSP] Server does not support semantic tokens', notifications[1][1])
-
-        screen:expect { grid = [[
-          #include <iostream>                     |
-                                                  |
-          int main()                              |
-          {                                       |
-              int x;                              |
-          #ifdef __cplusplus                      |
-              std::cout << x << "\n";             |
-          #else                                   |
-              printf("%d\n", x);                  |
-          #endif                                  |
-          }                                       |
-          ^}                                       |
-          {1:~                                       }|
-          {1:~                                       }|
-          {1:~                                       }|
-                                                  |
-          ]], unchanged = true }
-      end)
 
   it('ignores null responses from the server', function()
       exec_lua([[
@@ -504,6 +446,7 @@ describe('semantic token highlighting', function()
         bufnr = vim.api.nvim_get_current_buf()
         vim.api.nvim_win_set_buf(0, bufnr)
         client_id = vim.lsp.start({ name = 'dummy', cmd = server2.cmd })
+        vim.lsp.semantic_tokens.start(bufnr, client_id)
       ]], legend, response, edit_response)
 
       insert(text)
@@ -873,6 +816,7 @@ b = "as"]],
           bufnr = vim.api.nvim_get_current_buf()
           vim.api.nvim_win_set_buf(0, bufnr)
           client_id = vim.lsp.start({ name = 'dummy', cmd = server.cmd })
+          vim.lsp.semantic_tokens.start(bufnr, client_id)
         ]], test.legend, test.response)
 
         insert(test.text)
@@ -1182,8 +1126,10 @@ int main()
           vim.api.nvim_win_set_buf(0, bufnr)
           client_id = vim.lsp.start({ name = 'dummy', cmd = server.cmd })
 
-          -- speed up vim.api.nvim_buf_set_lines calls by changing debounce to 10 for these tests
           semantic_tokens = vim.lsp.semantic_tokens
+          semantic_tokens.start(bufnr, client_id)
+
+          -- speed up vim.api.nvim_buf_set_lines calls by changing debounce to 10 for these tests
           vim.schedule(function()
             semantic_tokens.stop(bufnr, client_id)
             semantic_tokens.start(bufnr, client_id, { debounce = 10 })
