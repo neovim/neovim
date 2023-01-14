@@ -606,50 +606,59 @@ void validate_virtcol(void)
 void validate_virtcol_win(win_T *wp)
 {
   check_cursor_moved(wp);
-  if (!(wp->w_valid & VALID_VIRTCOL)) {
-    getvvcol(wp, &wp->w_cursor, NULL, &(wp->w_virtcol), NULL);
-    redraw_for_cursorcolumn(wp);
-    wp->w_valid |= VALID_VIRTCOL;
+
+  if (wp->w_valid & VALID_VIRTCOL) {
+    return;
   }
+
+  getvvcol(wp, &wp->w_cursor, NULL, &(wp->w_virtcol), NULL);
+  redraw_for_cursorcolumn(wp);
+  wp->w_valid |= VALID_VIRTCOL;
 }
 
 // Validate curwin->w_cline_height only.
 void validate_cheight(void)
 {
   check_cursor_moved(curwin);
-  if (!(curwin->w_valid & VALID_CHEIGHT)) {
-    curwin->w_cline_height = plines_win_full(curwin, curwin->w_cursor.lnum,
-                                             NULL, &curwin->w_cline_folded,
-                                             true);
-    curwin->w_valid |= VALID_CHEIGHT;
+
+  if (curwin->w_valid & VALID_CHEIGHT) {
+    return;
   }
+
+  curwin->w_cline_height = plines_win_full(curwin, curwin->w_cursor.lnum,
+                                           NULL, &curwin->w_cline_folded,
+                                           true);
+  curwin->w_valid |= VALID_CHEIGHT;
 }
 
 // Validate w_wcol and w_virtcol only.
 void validate_cursor_col(void)
 {
   validate_virtcol();
-  if (!(curwin->w_valid & VALID_WCOL)) {
-    colnr_T col = curwin->w_virtcol;
-    colnr_T off = curwin_col_off();
-    col += off;
-    int width = curwin->w_width_inner - off + curwin_col_off2();
 
-    // long line wrapping, adjust curwin->w_wrow
-    if (curwin->w_p_wrap && col >= (colnr_T)curwin->w_width_inner
-        && width > 0) {
-      // use same formula as what is used in curs_columns()
-      col -= ((col - curwin->w_width_inner) / width + 1) * width;
-    }
-    if (col > (int)curwin->w_leftcol) {
-      col -= curwin->w_leftcol;
-    } else {
-      col = 0;
-    }
-    curwin->w_wcol = col;
-
-    curwin->w_valid |= VALID_WCOL;
+  if (curwin->w_valid & VALID_WCOL) {
+    return;
   }
+
+  colnr_T col = curwin->w_virtcol;
+  colnr_T off = curwin_col_off();
+  col += off;
+  int width = curwin->w_width_inner - off + curwin_col_off2();
+
+  // long line wrapping, adjust curwin->w_wrow
+  if (curwin->w_p_wrap && col >= (colnr_T)curwin->w_width_inner
+      && width > 0) {
+    // use same formula as what is used in curs_columns()
+    col -= ((col - curwin->w_width_inner) / width + 1) * width;
+  }
+  if (col > (int)curwin->w_leftcol) {
+    col -= curwin->w_leftcol;
+  } else {
+    col = 0;
+  }
+  curwin->w_wcol = col;
+
+  curwin->w_valid |= VALID_WCOL;
 }
 
 // Compute offset of a window, occupied by absolute or relative line number,

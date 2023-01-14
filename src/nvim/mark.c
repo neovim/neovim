@@ -653,29 +653,31 @@ fmark_T *getnextmark(pos_T *startpos, int dir, int begin_line)
 // until the mark is used to avoid a long startup delay.
 static void fname2fnum(xfmark_T *fm)
 {
-  if (fm->fname != NULL) {
-    // First expand "~/" in the file name to the home directory.
-    // Don't expand the whole name, it may contain other '~' chars.
+  if (fm->fname == NULL) {
+    return;
+  }
+
+  // First expand "~/" in the file name to the home directory.
+  // Don't expand the whole name, it may contain other '~' chars.
 #ifdef BACKSLASH_IN_FILENAME
-    if (fm->fname[0] == '~' && (fm->fname[1] == '/' || fm->fname[1] == '\\')) {
+  if (fm->fname[0] == '~' && (fm->fname[1] == '/' || fm->fname[1] == '\\')) {
 #else
-    if (fm->fname[0] == '~' && (fm->fname[1] == '/')) {
+  if (fm->fname[0] == '~' && (fm->fname[1] == '/')) {
 #endif
 
-      expand_env("~/", NameBuff, MAXPATHL);
-      int len = (int)strlen(NameBuff);
-      xstrlcpy(NameBuff + len, fm->fname + 2, (size_t)(MAXPATHL - len));
-    } else {
-      xstrlcpy(NameBuff, fm->fname, MAXPATHL);
-    }
-
-    // Try to shorten the file name.
-    os_dirname(IObuff, IOSIZE);
-    char *p = path_shorten_fname(NameBuff, IObuff);
-
-    // buflist_new() will call fmarks_check_names()
-    (void)buflist_new(NameBuff, p, (linenr_T)1, 0);
+    expand_env("~/", NameBuff, MAXPATHL);
+    int len = (int)strlen(NameBuff);
+    xstrlcpy(NameBuff + len, fm->fname + 2, (size_t)(MAXPATHL - len));
+  } else {
+    xstrlcpy(NameBuff, fm->fname, MAXPATHL);
   }
+
+  // Try to shorten the file name.
+  os_dirname(IObuff, IOSIZE);
+  char *p = path_shorten_fname(NameBuff, IObuff);
+
+  // buflist_new() will call fmarks_check_names()
+  (void)buflist_new(NameBuff, p, (linenr_T)1, 0);
 }
 
 // Check all file marks for a name that matches the file name in buf.

@@ -292,34 +292,36 @@ void vim_beep(unsigned val)
 {
   called_vim_beep = true;
 
-  if (emsg_silent == 0 && !in_assert_fails) {
-    if (!((bo_flags & val) || (bo_flags & BO_ALL))) {
-      static int beeps = 0;
-      static uint64_t start_time = 0;
+  if (emsg_silent != 0 || in_assert_fails) {
+    return;
+  }
 
-      // Only beep up to three times per half a second,
-      // otherwise a sequence of beeps would freeze Vim.
-      if (start_time == 0 || os_hrtime() - start_time > 500000000U) {
-        beeps = 0;
-        start_time = os_hrtime();
-      }
-      beeps++;
-      if (beeps <= 3) {
-        if (p_vb) {
-          ui_call_visual_bell();
-        } else {
-          ui_call_bell();
-        }
+  if (!((bo_flags & val) || (bo_flags & BO_ALL))) {
+    static int beeps = 0;
+    static uint64_t start_time = 0;
+
+    // Only beep up to three times per half a second,
+    // otherwise a sequence of beeps would freeze Vim.
+    if (start_time == 0 || os_hrtime() - start_time > 500000000U) {
+      beeps = 0;
+      start_time = os_hrtime();
+    }
+    beeps++;
+    if (beeps <= 3) {
+      if (p_vb) {
+        ui_call_visual_bell();
+      } else {
+        ui_call_bell();
       }
     }
+  }
 
-    // When 'debug' contains "beep" produce a message.  If we are sourcing
-    // a script or executing a function give the user a hint where the beep
-    // comes from.
-    if (vim_strchr(p_debug, 'e') != NULL) {
-      msg_source(HL_ATTR(HLF_W));
-      msg_attr(_("Beep!"), HL_ATTR(HLF_W));
-    }
+  // When 'debug' contains "beep" produce a message.  If we are sourcing
+  // a script or executing a function give the user a hint where the beep
+  // comes from.
+  if (vim_strchr(p_debug, 'e') != NULL) {
+    msg_source(HL_ATTR(HLF_W));
+    msg_attr(_("Beep!"), HL_ATTR(HLF_W));
   }
 }
 

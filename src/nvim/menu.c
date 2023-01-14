@@ -1449,9 +1449,11 @@ void show_popupmenu(void)
   }
 
   // Only show a popup when it is defined and has entries
-  if (menu != NULL && menu->children != NULL) {
-    pum_show_popupmenu(menu);
+  if (menu == NULL || menu->children == NULL) {
+    return;
   }
+
+  pum_show_popupmenu(menu);
 }
 
 /// Execute "menu".  Use by ":emenu" and the window toolbar.

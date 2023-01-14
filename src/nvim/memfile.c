@@ -767,11 +767,13 @@ void mf_set_fnames(memfile_T *mfp, char *fname)
 /// Used before doing a :cd
 void mf_fullname(memfile_T *mfp)
 {
-  if (mfp != NULL && mfp->mf_fname != NULL && mfp->mf_ffname != NULL) {
-    xfree(mfp->mf_fname);
-    mfp->mf_fname = mfp->mf_ffname;
-    mfp->mf_ffname = NULL;
+  if (mfp == NULL || mfp->mf_fname == NULL || mfp->mf_ffname == NULL) {
+    return;
   }
+
+  xfree(mfp->mf_fname);
+  mfp->mf_fname = mfp->mf_ffname;
+  mfp->mf_ffname = NULL;
 }
 
 /// Return true if there are any translations pending for memfile.

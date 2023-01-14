@@ -317,23 +317,26 @@ static char **find_locales(void)
 static void init_locales(void)
 {
 # ifndef MSWIN
-  if (!did_init_locales) {
-    did_init_locales = true;
-    locales = find_locales();
+  if (did_init_locales) {
+    return;
   }
+
+  did_init_locales = true;
+  locales = find_locales();
 # endif
 }
 
 # if defined(EXITFREE)
 void free_locales(void)
 {
-  int i;
-  if (locales != NULL) {
-    for (i = 0; locales[i] != NULL; i++) {
-      xfree(locales[i]);
-    }
-    XFREE_CLEAR(locales);
+  if (locales == NULL) {
+    return;
   }
+
+  for (int i = 0; locales[i] != NULL; i++) {
+    xfree(locales[i]);
+  }
+  XFREE_CLEAR(locales);
 }
 # endif
 

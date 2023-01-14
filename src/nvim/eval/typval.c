@@ -326,10 +326,12 @@ void tv_list_free_list(list_T *const l)
 void tv_list_free(list_T *const l)
   FUNC_ATTR_NONNULL_ALL
 {
-  if (!tv_in_free_unref_items) {
-    tv_list_free_contents(l);
-    tv_list_free_list(l);
+  if (tv_in_free_unref_items) {
+    return;
   }
+
+  tv_list_free_contents(l);
+  tv_list_free_list(l);
 }
 
 /// Unreference a list
