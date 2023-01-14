@@ -268,7 +268,6 @@ static void win_redr_custom(win_T *wp, bool draw_winbar, bool draw_ruler)
   StlClickRecord *tabtab;
   win_T *ewp;
   int p_crb_save;
-  bool save_KeyTyped = KeyTyped;
   bool is_stl_global = global_stl_height() > 0;
 
   ScreenGrid *grid = &default_grid;
@@ -423,9 +422,6 @@ static void win_redr_custom(win_T *wp, bool draw_winbar, bool draw_ruler)
 
 theend:
   entered = false;
-
-  // A user function may reset KeyTyped, restore it.
-  KeyTyped = save_KeyTyped;
 }
 
 void win_redr_winbar(win_T *wp)
@@ -948,6 +944,7 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, char *opt_n
   char *usefmt = fmt;
   const int save_must_redraw = must_redraw;
   const int save_redr_type = curwin->w_redr_type;
+  const bool save_KeyTyped = KeyTyped;
   // TODO(Bram): find out why using called_emsg_before makes tests fail, does it
   // matter?
   // const int called_emsg_before = called_emsg;
@@ -2152,6 +2149,9 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, char *opt_n
   if (opt_name && did_emsg > did_emsg_before) {
     set_string_option_direct(opt_name, -1, "", OPT_FREE | opt_scope, SID_ERROR);
   }
+
+  // A user function may reset KeyTyped, restore it.
+  KeyTyped = save_KeyTyped;
 
   return width;
 }
