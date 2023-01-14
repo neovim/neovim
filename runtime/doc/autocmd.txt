@@ -681,16 +681,12 @@ FuncUndefined			When a user function is used but it isn't
 UIEnter				After a UI connects via |nvim_ui_attach()|, or
 				after builtin TUI is started, after |VimEnter|.
 				Sets these |v:event| keys:
-				    chan: 0 for builtin TUI
-				          1 for |--embed|
-				          |channel-id| of the UI otherwise
+				    chan: |channel-id| of the UI
 							*UILeave*
 UILeave				After a UI disconnects from Nvim, or after
 				builtin TUI is stopped, after |VimLeave|.
 				Sets these |v:event| keys:
-				    chan: 0 for builtin TUI
-				          1 for |--embed|
-				          |channel-id| of the UI otherwise
+				    chan: |channel-id| of the UI
 							*InsertChange*
 InsertChange			When typing <Insert> while in Insert or
 				Replace mode.  The |v:insertmode| variable
