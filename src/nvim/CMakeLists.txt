@@ -77,12 +77,15 @@ if(ENABLE_IWYU)
   if(NOT IWYU_PRG)
     message(FATAL_ERROR "ENABLE_IWYU is ON but include-what-you-use is not found!")
   endif()
-  set(CMAKE_C_INCLUDE_WHAT_YOU_USE ${IWYU_PRG}
-    -Xiwyu --mapping_file=${PROJECT_SOURCE_DIR}/cmake.config/iwyu/mapping.imp
-    -Xiwyu --mapping_file=${PROJECT_SOURCE_DIR}/cmake.config/iwyu/gcc.libc.imp
-    -Xiwyu --mapping_file=${PROJECT_SOURCE_DIR}/cmake.config/iwyu/gcc.symbols.imp
-    -Xiwyu --no_default_mappings)
-  target_compile_definitions(main_lib INTERFACE EXITFREE)
+
+  set(iwyu_flags "${IWYU_PRG};")
+  string(APPEND iwyu_flags "-Xiwyu;--no_default_mappings;")
+  string(APPEND iwyu_flags "-Xiwyu;--mapping_file=${PROJECT_SOURCE_DIR}/cmake.config/iwyu/mapping.imp;")
+  string(APPEND iwyu_flags "-Xiwyu;--mapping_file=${PROJECT_SOURCE_DIR}/cmake.config/iwyu/gcc.libc.imp;")
+  string(APPEND iwyu_flags "-Xiwyu;--mapping_file=${PROJECT_SOURCE_DIR}/cmake.config/iwyu/gcc.symbols.imp")
+
+  set_target_properties(nvim PROPERTIES C_INCLUDE_WHAT_YOU_USE "${iwyu_flags}")
+  target_compile_definitions(nvim PRIVATE EXITFREE)
 endif()
 
 if(MSVC)
