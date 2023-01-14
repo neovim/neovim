@@ -2312,6 +2312,15 @@ func Test_wildmenu_pum()
       set statusline=%!MyStatusLine()
       set laststatus=2
     endfunc
+
+    func MyTabLine()
+      return 'my tab line'
+    endfunc
+    func SetupTabline()
+      set statusline=
+      set tabline=%!MyTabLine()
+      set showtabline=2
+    endfunc
   [CODE]
   call writefile(commands, 'Xtest')
 
@@ -2502,6 +2511,12 @@ func Test_wildmenu_pum()
   call term_sendkeys(buf, ":si\<Tab>")
   call term_sendkeys(buf, "\<Esc>")
   call VerifyScreenDump(buf, 'Test_wildmenu_pum_39', {})
+
+  " Esc still works to abort the command when 'tabline' is set
+  call term_sendkeys(buf, ":call SetupTabline()\<CR>")
+  call term_sendkeys(buf, ":si\<Tab>")
+  call term_sendkeys(buf, "\<Esc>")
+  call VerifyScreenDump(buf, 'Test_wildmenu_pum_40', {})
 
   call term_sendkeys(buf, "\<C-U>\<CR>")
   call StopVimInTerminal(buf)

@@ -268,6 +268,7 @@ static void win_redr_custom(win_T *wp, bool draw_winbar, bool draw_ruler)
   StlClickRecord *tabtab;
   win_T *ewp;
   int p_crb_save;
+  bool save_KeyTyped = KeyTyped;
   bool is_stl_global = global_stl_height() > 0;
 
   ScreenGrid *grid = &default_grid;
@@ -422,6 +423,9 @@ static void win_redr_custom(win_T *wp, bool draw_winbar, bool draw_ruler)
 
 theend:
   entered = false;
+
+  // A user function may reset KeyTyped, restore it.
+  KeyTyped = save_KeyTyped;
 }
 
 void win_redr_winbar(win_T *wp)
@@ -639,7 +643,6 @@ int fillchar_status(int *attr, win_T *wp)
 void redraw_custom_statusline(win_T *wp)
 {
   static bool entered = false;
-  bool saved_KeyTyped = KeyTyped;
 
   // When called recursively return.  This can happen when the statusline
   // contains an expression that triggers a redraw.
@@ -650,9 +653,6 @@ void redraw_custom_statusline(win_T *wp)
 
   win_redr_custom(wp, false, false);
   entered = false;
-
-  // A user function may reset KeyTyped, restore it.
-  KeyTyped = saved_KeyTyped;
 }
 
 static void ui_ext_tabline_update(void)
