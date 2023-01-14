@@ -5,6 +5,7 @@ local command = helpers.command
 local eq = helpers.eq
 local eval = helpers.eval
 local meths = helpers.meths
+local exec = helpers.exec_lua
 local pcall_err = helpers.pcall_err
 
 describe('statuscolumn', function()
@@ -120,6 +121,47 @@ describe('statuscolumn', function()
     command([[set stc=%l%=%{&rnu?'\ ':''}%r│]])
     screen:expect_unchanged()
     command([[set stc=%{&nu?v:lnum:''}%=%{&rnu?'\ '.v:relnum:''}│]])
+  end)
+
+  it('works with virtual lines and wrapping', function()
+    command([[set stc=%{v:lnum}%=%{v:wrap?'w':'u'}│]])
+    exec([[space = vim.api.nvim_create_namespace('space')]])
+    exec([[vim.api.nvim_buf_set_extmark(0, space, 7, 0, {virt_lines_above=true, virt_lines={{{"Hello, world!"}}}})]])
+    exec([[vim.api.nvim_buf_set_extmark(0, space, 7, 0, {virt_lines_above=false, virt_lines={{{"Hello, world!"}}}})]])
+
+    screen:expect([[
+      4 u│aaaaa                                            |
+      5 u│aaaaa                                            |
+      6 u│aaaaa                                            |
+      7 u│aaaaa                                            |
+      8 w│^Hello, world!                                    |
+      8 u│aaaaa                                            |
+      9 w│Hello, world!                                    |
+      9 u│aaaaa                                            |
+      10u│aaaaa                                            |
+      11u│aaaaa                                            |
+      12u│aaaaa                                            |
+      13u│aaaaa                                            |
+      14u│aaaaa                                            |
+                                                           |
+    ]])
+    command([[call setline(1,repeat([repeat('aaaaa',10)],16))")
+    screen:expect([[
+      4 u│aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+      4 w│a                                                |
+      5 u│aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+      5 w│a                                                |
+      6 u│aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+      6 w│a                                                |
+      7 u│aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+      7 w│a                                                |
+      8 w│Hello, world!                                    |
+      8 u│^aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+      8 w│a                                                |
+      9 w│Hello, world!                                    |
+      9 u│aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa@@@|
+                                                          |
+    ]])
   end)
 
   it('works with highlighted \'statuscolumn\'', function()

@@ -2819,7 +2819,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
         need_showbreak = true;
       }
       if (statuscol.draw) {
-        if (row == startrow + 1 || row == startrow + filler_lines) {
+        if (row == startrow + filler_lines + 1 || row == startrow + filler_lines) {
           // Re-evaluate 'statuscolumn' for the first wrapped row and non filler line
           statuscol.textp = NULL;
         } else {  // Otherwise just reset the text/hlrec pointers
