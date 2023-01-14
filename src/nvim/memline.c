@@ -1377,17 +1377,19 @@ char *make_percent_swname(const char *dir, const char *name)
 {
   char *d = NULL;
   char *f = fix_fname(name != NULL ? name : "");
-  if (f != NULL) {
-    char *s = xstrdup(f);
-    for (d = s; *d != NUL; MB_PTR_ADV(d)) {
-      if (vim_ispathsep(*d)) {
-        *d = '%';
-      }
-    }
-    d = concat_fnames(dir, s, true);
-    xfree(s);
-    xfree(f);
+  if (f == NULL) {
+    return NULL;
   }
+
+  char *s = xstrdup(f);
+  for (d = s; *d != NUL; MB_PTR_ADV(d)) {
+    if (vim_ispathsep(*d)) {
+      *d = '%';
+    }
+  }
+  d = concat_fnames(dir, s, true);
+  xfree(s);
+  xfree(f);
   return d;
 }
 

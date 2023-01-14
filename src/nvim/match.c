@@ -880,12 +880,14 @@ static int matchadd_dict_arg(typval_T *tv, const char **conceal_char, win_T **wi
     *conceal_char = tv_get_string(&di->di_tv);
   }
 
-  if ((di = tv_dict_find(tv->vval.v_dict, S_LEN("window"))) != NULL) {
-    *win = find_win_by_nr_or_id(&di->di_tv);
-    if (*win == NULL) {
-      emsg(_(e_invalwindow));
-      return FAIL;
-    }
+  if ((di = tv_dict_find(tv->vval.v_dict, S_LEN("window"))) == NULL) {
+    return OK;
+  }
+
+  *win = find_win_by_nr_or_id(&di->di_tv);
+  if (*win == NULL) {
+    emsg(_(e_invalwindow));
+    return FAIL;
   }
 
   return OK;

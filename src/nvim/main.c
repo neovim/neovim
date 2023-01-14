@@ -1828,17 +1828,19 @@ static void exe_pre_commands(mparm_T *parmp)
   int cnt = parmp->n_pre_commands;
   int i;
 
-  if (cnt > 0) {
-    curwin->w_cursor.lnum = 0;     // just in case..
-    estack_push(ETYPE_ARGS, _("pre-vimrc command line"), 0);
-    current_sctx.sc_sid = SID_CMDARG;
-    for (i = 0; i < cnt; i++) {
-      do_cmdline_cmd(cmds[i]);
-    }
-    estack_pop();
-    current_sctx.sc_sid = 0;
-    TIME_MSG("--cmd commands");
+  if (cnt <= 0) {
+    return;
   }
+
+  curwin->w_cursor.lnum = 0;     // just in case..
+  estack_push(ETYPE_ARGS, _("pre-vimrc command line"), 0);
+  current_sctx.sc_sid = SID_CMDARG;
+  for (i = 0; i < cnt; i++) {
+    do_cmdline_cmd(cmds[i]);
+  }
+  estack_pop();
+  current_sctx.sc_sid = 0;
+  TIME_MSG("--cmd commands");
 }
 
 // Execute "+", "-c" and "-S" arguments.
@@ -2079,19 +2081,20 @@ static int execute_env(char *env)
   FUNC_ATTR_NONNULL_ALL
 {
   const char *initstr = os_getenv(env);
-  if (initstr != NULL) {
-    estack_push(ETYPE_ENV, env, 0);
-    const sctx_T save_current_sctx = current_sctx;
-    current_sctx.sc_sid = SID_ENV;
-    current_sctx.sc_seq = 0;
-    current_sctx.sc_lnum = 0;
-    do_cmdline_cmd((char *)initstr);
-
-    estack_pop();
-    current_sctx = save_current_sctx;
-    return OK;
+  if (initstr == NULL) {
+    return FAIL;
   }
-  return FAIL;
+
+  estack_push(ETYPE_ENV, env, 0);
+  const sctx_T save_current_sctx = current_sctx;
+  current_sctx.sc_sid = SID_ENV;
+  current_sctx.sc_seq = 0;
+  current_sctx.sc_lnum = 0;
+  do_cmdline_cmd((char *)initstr);
+
+  estack_pop();
+  current_sctx = save_current_sctx;
+  return OK;
 }
 
 /// Prints the following then exits:
