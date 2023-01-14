@@ -165,7 +165,8 @@ void rbuffer_consumed_compact(RBuffer *buf, size_t count)
   assert(buf->read_ptr <= buf->write_ptr);
   rbuffer_consumed(buf, count);
   if (buf->read_ptr > buf->start_ptr) {
-    assert((size_t)(buf->read_ptr - buf->write_ptr) == buf->size);
+    assert((size_t)(buf->write_ptr - buf->read_ptr) == buf->size
+           || buf->write_ptr == buf->start_ptr);
     memmove(buf->start_ptr, buf->read_ptr, buf->size);
     buf->read_ptr = buf->start_ptr;
     buf->write_ptr = buf->read_ptr + buf->size;
