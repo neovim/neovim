@@ -53,9 +53,13 @@ func Test_complete_list()
     set completeslash=backslash
     call feedkeys(":e Xtest\<Tab>\<C-B>\"\<CR>", 'xt')
     call assert_equal('"e Xtest\', @:)
+    call feedkeys(":e Xtest/\<Tab>\<C-B>\"\<CR>", 'xt')
+    call assert_equal('"e Xtest\a.', @:)
     set completeslash=slash
     call feedkeys(":e Xtest\<Tab>\<C-B>\"\<CR>", 'xt')
     call assert_equal('"e Xtest/', @:)
+    call feedkeys(":e Xtest\\\<Tab>\<C-B>\"\<CR>", 'xt')
+    call assert_equal('"e Xtest/a.', @:)
     set completeslash&
   endif
 
@@ -139,6 +143,7 @@ func Test_complete_wildmenu()
   call assert_equal('"e Xtestfile3 Xtestfile4', @:)
   cd -
 
+  " test for wildmenumode()
   cnoremap <expr> <F2> wildmenumode()
   call feedkeys(":cd Xdir\<Tab>\<F2>\<C-B>\"\<CR>", 'tx')
   call assert_equal('"cd Xdir1/0', @:)
@@ -148,12 +153,7 @@ func Test_complete_wildmenu()
 
   " cleanup
   %bwipe
-  call delete('Xdir1/Xdir2/Xtestfile4')
-  call delete('Xdir1/Xdir2/Xtestfile3')
-  call delete('Xdir1/Xtestfile2')
-  call delete('Xdir1/Xtestfile1')
-  call delete('Xdir1/Xdir2', 'd')
-  call delete('Xdir1', 'd')
+  call delete('Xdir1', 'rf')
   set nowildmenu
 endfunc
 
@@ -1214,6 +1214,10 @@ func Test_cmdline_complete_various()
     call feedkeys(":e Xx\*\<Tab>\<C-B>\"\<CR>", 'xt')
     call assert_equal('"e Xx\*Yy', @:)
     call delete('Xx*Yy')
+
+    " use a literal star
+    call feedkeys(":e \\*\<Tab>\<C-B>\"\<CR>", 'xt')
+    call assert_equal('"e \*', @:)
   endif
 
   call feedkeys(":py3f\<Tab>\<C-B>\"\<CR>", 'xt')
@@ -2161,28 +2165,34 @@ endfunc
 func Test_wildmenu_dirstack()
   CheckUnix
   %bw!
-  call mkdir('Xdir1/dir2/dir3', 'p')
+  call mkdir('Xdir1/dir2/dir3/dir4', 'p')
   call writefile([], 'Xdir1/file1_1.txt')
   call writefile([], 'Xdir1/file1_2.txt')
   call writefile([], 'Xdir1/dir2/file2_1.txt')
   call writefile([], 'Xdir1/dir2/file2_2.txt')
   call writefile([], 'Xdir1/dir2/dir3/file3_1.txt')
   call writefile([], 'Xdir1/dir2/dir3/file3_2.txt')
-  cd Xdir1/dir2/dir3
+  call writefile([], 'Xdir1/dir2/dir3/dir4/file4_1.txt')
+  call writefile([], 'Xdir1/dir2/dir3/dir4/file4_2.txt')
   set wildmenu
 
+  cd Xdir1/dir2/dir3/dir4
   call feedkeys(":e \<Tab>\<C-B>\"\<CR>", 'xt')
-  call assert_equal('"e file3_1.txt', @:)
+  call assert_equal('"e file4_1.txt', @:)
   call feedkeys(":e \<Tab>\<Up>\<C-B>\"\<CR>", 'xt')
-  call assert_equal('"e ../dir3/', @:)
+  call assert_equal('"e ../dir4/', @:)
   call feedkeys(":e \<Tab>\<Up>\<Up>\<C-B>\"\<CR>", 'xt')
-  call assert_equal('"e ../../dir2/', @:)
+  call assert_equal('"e ../../dir3/', @:)
+  call feedkeys(":e \<Tab>\<Up>\<Up>\<Up>\<C-B>\"\<CR>", 'xt')
+  call assert_equal('"e ../../../dir2/', @:)
   call feedkeys(":e \<Tab>\<Up>\<Up>\<Down>\<C-B>\"\<CR>", 'xt')
-  call assert_equal('"e ../../dir2/dir3/', @:)
+  call assert_equal('"e ../../dir3/dir4/', @:)
   call feedkeys(":e \<Tab>\<Up>\<Up>\<Down>\<Down>\<C-B>\"\<CR>", 'xt')
-  call assert_equal('"e ../../dir2/dir3/file3_1.txt', @:)
-
+  call assert_equal('"e ../../dir3/dir4/file4_1.txt', @:)
   cd -
+  call feedkeys(":e Xdir1/\<Tab>\<Down>\<Down>\<Down>\<C-B>\"\<CR>", 'xt')
+  call assert_equal('"e Xdir1/dir2/dir3/dir4/file4_1.txt', @:)
+
   call delete('Xdir1', 'rf')
   set wildmenu&
 endfunc

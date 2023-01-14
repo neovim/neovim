@@ -859,6 +859,73 @@ void ExpandCleanup(expand_T *xp)
   }
 }
 
+/// Display one line of completion matches. Multiple matches are displayed in
+/// each line (used by wildmode=list and CTRL-D)
+///
+/// @param files_found  list of completion match names
+/// @param num_files    number of completion matches in "files_found"
+/// @param lines        number of output lines
+/// @param linenr       line number of matches to display
+/// @param maxlen       maximum number of characters in each line
+/// @param showtail     display only the tail of the full path of a file name
+/// @param dir_attr     highlight attribute to use for directory names
+static void showmatches_oneline(expand_T *xp, char **files_found, int num_files, int lines,
+                                int linenr, int maxlen, int showtail, int dir_attr)
+{
+  char *p;
+  int lastlen = 999;
+  for (int j = linenr; j < num_files; j += lines) {
+    if (xp->xp_context == EXPAND_TAGS_LISTFILES) {
+      msg_outtrans_attr(files_found[j], HL_ATTR(HLF_D));
+      p = files_found[j] + strlen(files_found[j]) + 1;
+      msg_advance(maxlen + 1);
+      msg_puts((const char *)p);
+      msg_advance(maxlen + 3);
+      msg_outtrans_long_attr(p + 2, HL_ATTR(HLF_D));
+      break;
+    }
+    for (int i = maxlen - lastlen; --i >= 0;) {
+      msg_putchar(' ');
+    }
+    bool isdir;
+    if (xp->xp_context == EXPAND_FILES
+        || xp->xp_context == EXPAND_SHELLCMD
+        || xp->xp_context == EXPAND_BUFFERS) {
+      // highlight directories
+      if (xp->xp_numfiles != -1) {
+        // Expansion was done before and special characters
+        // were escaped, need to halve backslashes.  Also
+        // $HOME has been replaced with ~/.
+        char *exp_path = (char *)expand_env_save_opt(files_found[j], true);
+        char *path = exp_path != NULL ? exp_path : files_found[j];
+        char *halved_slash = backslash_halve_save(path);
+        isdir = os_isdir(halved_slash);
+        xfree(exp_path);
+        if (halved_slash != path) {
+          xfree(halved_slash);
+        }
+      } else {
+        // Expansion was done here, file names are literal.
+        isdir = os_isdir(files_found[j]);
+      }
+      if (showtail) {
+        p = SHOW_FILE_TEXT(j);
+      } else {
+        home_replace(NULL, files_found[j], NameBuff, MAXPATHL, true);
+        p = NameBuff;
+      }
+    } else {
+      isdir = false;
+      p = SHOW_FILE_TEXT(j);
+    }
+    lastlen = msg_outtrans_attr(p, isdir ? dir_attr : 0);
+  }
+  if (msg_col > 0) {  // when not wrapped around
+    msg_clr_eos();
+    msg_putchar('\n');
+  }
+}
+
 /// Show all matches for completion on the command line.
 /// Returns EXPAND_NOTHING when the character that triggered expansion should
 /// be inserted like a normal character.
@@ -867,12 +934,10 @@ int showmatches(expand_T *xp, int wildmenu)
   CmdlineInfo *const ccline = get_cmdline_info();
   int num_files;
   char **files_found;
-  int i, j, k;
+  int i, j;
   int maxlen;
   int lines;
   int columns;
-  char *p;
-  int lastlen;
   int attr;
   int showtail;
 
@@ -954,56 +1019,7 @@ int showmatches(expand_T *xp, int wildmenu)
 
     // list the files line by line
     for (i = 0; i < lines; i++) {
-      lastlen = 999;
-      for (k = i; k < num_files; k += lines) {
-        if (xp->xp_context == EXPAND_TAGS_LISTFILES) {
-          msg_outtrans_attr(files_found[k], HL_ATTR(HLF_D));
-          p = files_found[k] + strlen(files_found[k]) + 1;
-          msg_advance(maxlen + 1);
-          msg_puts((const char *)p);
-          msg_advance(maxlen + 3);
-          msg_outtrans_long_attr(p + 2, HL_ATTR(HLF_D));
-          break;
-        }
-        for (j = maxlen - lastlen; --j >= 0;) {
-          msg_putchar(' ');
-        }
-        if (xp->xp_context == EXPAND_FILES
-            || xp->xp_context == EXPAND_SHELLCMD
-            || xp->xp_context == EXPAND_BUFFERS) {
-          // highlight directories
-          if (xp->xp_numfiles != -1) {
-            // Expansion was done before and special characters
-            // were escaped, need to halve backslashes.  Also
-            // $HOME has been replaced with ~/.
-            char *exp_path = (char *)expand_env_save_opt(files_found[k], true);
-            char *path = exp_path != NULL ? exp_path : files_found[k];
-            char *halved_slash = backslash_halve_save(path);
-            j = os_isdir(halved_slash);
-            xfree(exp_path);
-            if (halved_slash != path) {
-              xfree(halved_slash);
-            }
-          } else {
-            // Expansion was done here, file names are literal.
-            j = os_isdir(files_found[k]);
-          }
-          if (showtail) {
-            p = SHOW_FILE_TEXT(k);
-          } else {
-            home_replace(NULL, files_found[k], NameBuff, MAXPATHL, true);
-            p = NameBuff;
-          }
-        } else {
-          j = false;
-          p = SHOW_FILE_TEXT(k);
-        }
-        lastlen = msg_outtrans_attr(p, j ? attr : 0);
-      }
-      if (msg_col > 0) {        // when not wrapped around
-        msg_clr_eos();
-        msg_putchar('\n');
-      }
+      showmatches_oneline(xp, files_found, num_files, lines, i, maxlen, showtail, attr);
       if (got_int) {
         got_int = false;
         break;
@@ -1441,6 +1457,71 @@ static void set_context_for_wildcard_arg(exarg_T *eap, const char *arg, bool use
   }
 }
 
+/// Returns a pointer to the next command after a :substitute or a :& command.
+/// Returns NULL if there is no next command.
+static const char *find_cmd_after_substitute_cmd(const char *arg)
+{
+  const int delim = (uint8_t)(*arg);
+  if (delim) {
+    // Skip "from" part.
+    arg++;
+    arg = (const char *)skip_regexp((char *)arg, delim, magic_isset());
+
+    if (arg[0] != NUL && arg[0] == delim) {
+      // Skip "to" part.
+      arg++;
+      while (arg[0] != NUL && (uint8_t)arg[0] != delim) {
+        if (arg[0] == '\\' && arg[1] != NUL) {
+          arg++;
+        }
+        arg++;
+      }
+      if (arg[0] != NUL) {  // Skip delimiter.
+        arg++;
+      }
+    }
+  }
+  while (arg[0] && strchr("|\"#", arg[0]) == NULL) {
+    arg++;
+  }
+  if (arg[0] != NUL) {
+    return arg;
+  }
+
+  return NULL;
+}
+
+/// Returns a pointer to the next command after a :isearch/:dsearch/:ilist
+/// :dlist/:ijump/:psearch/:djump/:isplit/:dsplit command.
+/// Returns NULL if there is no next command.
+static const char *find_cmd_after_isearch_cmd(const char *arg, expand_T *xp)
+{
+  // Skip count.
+  arg = (const char *)skipwhite(skipdigits(arg));
+  if (*arg != '/') {
+    return NULL;
+  }
+
+  // Match regexp, not just whole words.
+  for (++arg; *arg && *arg != '/'; arg++) {
+    if (*arg == '\\' && arg[1] != NUL) {
+      arg++;
+    }
+  }
+  if (*arg) {
+    arg = (const char *)skipwhite(arg + 1);
+
+    // Check for trailing illegal characters.
+    if (*arg == NUL || strchr("|\"\n", *arg) == NULL) {
+      xp->xp_context = EXPAND_NOTHING;
+    } else {
+      return arg;
+    }
+  }
+
+  return NULL;
+}
+
 /// Set the completion context in "xp" for command "cmd" with index "cmdidx".
 /// The argument to the command is "arg" and the argument flags is "argt".
 /// For user-defined commands and for environment variables, "context" has the
@@ -1563,35 +1644,8 @@ static const char *set_context_by_cmdname(const char *cmd, cmdidx_T cmdidx, cons
     break;
   }
   case CMD_and:
-  case CMD_substitute: {
-    const int delim = (uint8_t)(*arg);
-    if (delim) {
-      // Skip "from" part.
-      arg++;
-      arg = (const char *)skip_regexp((char *)arg, delim, magic_isset());
-
-      if (arg[0] != NUL && arg[0] == delim) {
-        // Skip "to" part.
-        arg++;
-        while (arg[0] != NUL && (uint8_t)arg[0] != delim) {
-          if (arg[0] == '\\' && arg[1] != NUL) {
-            arg++;
-          }
-          arg++;
-        }
-        if (arg[0] != NUL) {  // Skip delimiter.
-          arg++;
-        }
-      }
-    }
-    while (arg[0] && strchr("|\"#", arg[0]) == NULL) {
-      arg++;
-    }
-    if (arg[0] != NUL) {
-      return arg;
-    }
-    break;
-  }
+  case CMD_substitute:
+    return find_cmd_after_substitute_cmd(arg);
   case CMD_isearch:
   case CMD_dsearch:
   case CMD_ilist:
@@ -1601,29 +1655,7 @@ static const char *set_context_by_cmdname(const char *cmd, cmdidx_T cmdidx, cons
   case CMD_djump:
   case CMD_isplit:
   case CMD_dsplit:
-    // Skip count.
-    arg = (const char *)skipwhite(skipdigits(arg));
-    if (*arg != '/') {
-      return NULL;
-    }
-
-    // Match regexp, not just whole words.
-    for (++arg; *arg && *arg != '/'; arg++) {
-      if (*arg == '\\' && arg[1] != NUL) {
-        arg++;
-      }
-    }
-    if (*arg) {
-      arg = (const char *)skipwhite(arg + 1);
-
-      // Check for trailing illegal characters.
-      if (*arg == NUL || strchr("|\"\n", *arg) == NULL) {
-        xp->xp_context = EXPAND_NOTHING;
-      } else {
-        return arg;
-      }
-    }
-    break;
+    return find_cmd_after_isearch_cmd(arg, xp);
   case CMD_autocmd:
     return (const char *)set_context_in_autocmd(xp, (char *)arg, false);
 
@@ -1738,34 +1770,7 @@ static const char *set_context_by_cmdname(const char *cmd, cmdidx_T cmdidx, cons
 
   case CMD_USER:
   case CMD_USER_BUF:
-    if (context != EXPAND_NOTHING) {
-      // EX_XFILE: file names are handled above.
-      if (!(argt & EX_XFILE)) {
-        if (context == EXPAND_MENUS) {
-          return (const char *)set_context_in_menu_cmd(xp, cmd, (char *)arg, forceit);
-        } else if (context == EXPAND_COMMANDS) {
-          return arg;
-        } else if (context == EXPAND_MAPPINGS) {
-          return (const char *)set_context_in_map_cmd(xp, "map", (char *)arg, forceit,
-                                                      false, false,
-                                                      CMD_map);
-        }
-        // Find start of last argument.
-        p = arg;
-        while (*p) {
-          if (*p == ' ') {
-            // argument starts after a space
-            arg = p + 1;
-          } else if (*p == '\\' && *(p + 1) != NUL) {
-            p++;  // skip over escaped character
-          }
-          MB_PTR_ADV(p);
-        }
-        xp->xp_pattern = (char *)arg;
-      }
-      xp->xp_context = context;
-    }
-    break;
+    return set_context_in_user_cmdarg(cmd, arg, argt, context, xp, forceit);
 
   case CMD_map:
   case CMD_noremap:
@@ -2380,16 +2385,10 @@ static int ExpandOther(expand_T *xp, regmatch_T *rmp, int *num_file, char ***fil
   return ret;
 }
 
-/// Do the expansion based on xp->xp_context and "pat".
-///
-/// @param options  WILD_ flags
-static int ExpandFromContext(expand_T *xp, char *pat, int *num_file, char ***file, int options)
+/// Map wild expand options to flags for expand_wildcards()
+static int map_wildopts_to_ewflags(int options)
 {
-  regmatch_T regmatch;
-  int ret;
-  int flags;
-
-  flags = EW_DIR;       // include directories
+  int flags = EW_DIR;       // include directories
   if (options & WILD_LIST_NOTFOUND) {
     flags |= EW_NOTFOUND;
   }
@@ -2408,6 +2407,18 @@ static int ExpandFromContext(expand_T *xp, char *pat, int *num_file, char ***fil
   if (options & WILD_ALLLINKS) {
     flags |= EW_ALLLINKS;
   }
+
+  return flags;
+}
+
+/// Do the expansion based on xp->xp_context and "pat".
+///
+/// @param options  WILD_ flags
+static int ExpandFromContext(expand_T *xp, char *pat, int *num_file, char ***file, int options)
+{
+  regmatch_T regmatch;
+  int ret;
+  int flags = map_wildopts_to_ewflags(options);
 
   if (xp->xp_context == EXPAND_FILES
       || xp->xp_context == EXPAND_DIRECTORIES
@@ -2592,6 +2603,43 @@ static void ExpandGeneric(expand_T *xp, regmatch_T *regmatch, int *num_file, cha
   reset_expand_highlight();
 }
 
+/// Expand shell command matches in one directory of $PATH.
+static void expand_shellcmd_onedir(char *buf, char *s, size_t l, char *pat, char ***files,
+                                   int *num_files, int flags, hashtab_T *ht, garray_T *gap)
+{
+  xstrlcpy(buf, s, l + 1);
+  add_pathsep(buf);
+  l = strlen(buf);
+  xstrlcpy(buf + l, pat, MAXPATHL - l);
+
+  // Expand matches in one directory of $PATH.
+  int ret = expand_wildcards(1, &buf, num_files, files, flags);
+  if (ret == OK) {
+    ga_grow(gap, *num_files);
+    {
+      for (int i = 0; i < *num_files; i++) {
+        char *name = (*files)[i];
+
+        if (strlen(name) > l) {
+          // Check if this name was already found.
+          hash_T hash = hash_hash((char_u *)name + l);
+          hashitem_T *hi =
+            hash_lookup(ht, (const char *)(name + l), strlen(name + l), hash);
+          if (HASHITEM_EMPTY(hi)) {
+            // Remove the path that was prepended.
+            STRMOVE(name, name + l);
+            ((char **)gap->ga_data)[gap->ga_len++] = name;
+            hash_add_item(ht, hi, (char_u *)name, hash);
+            name = NULL;
+          }
+        }
+        xfree(name);
+      }
+      xfree(*files);
+    }
+  }
+}
+
 /// Complete a shell command.
 ///
 /// @param      filepat  is a pattern to match with command names.
@@ -2611,7 +2659,6 @@ static void expand_shellcmd(char *filepat, int *num_file, char ***file, int flag
   size_t l;
   char *s, *e;
   int flags = flagsarg;
-  int ret;
   bool did_curdir = false;
 
   // for ":set path=" and ":set tags=" halve backslashes for escaped space
@@ -2671,38 +2718,7 @@ static void expand_shellcmd(char *filepat, int *num_file, char ***file, int flag
     if (l > MAXPATHL - 5) {
       break;
     }
-    xstrlcpy(buf, s, l + 1);
-    add_pathsep(buf);
-    l = strlen(buf);
-    xstrlcpy(buf + l, pat, MAXPATHL - l);
-
-    // Expand matches in one directory of $PATH.
-    ret = expand_wildcards(1, &buf, num_file, file, flags);
-    if (ret == OK) {
-      ga_grow(&ga, *num_file);
-      {
-        for (i = 0; i < *num_file; i++) {
-          char *name = (*file)[i];
-
-          if (strlen(name) > l) {
-            // Check if this name was already found.
-            hash_T hash = hash_hash((char_u *)name + l);
-            hashitem_T *hi =
-              hash_lookup(&found_ht, (const char *)(name + l),
-                          strlen(name + l), hash);
-            if (HASHITEM_EMPTY(hi)) {
-              // Remove the path that was prepended.
-              STRMOVE(name, name + l);
-              ((char **)ga.ga_data)[ga.ga_len++] = name;
-              hash_add_item(&found_ht, hi, (char_u *)name, hash);
-              name = NULL;
-            }
-          }
-          xfree(name);
-        }
-        xfree(*file);
-      }
-    }
+    expand_shellcmd_onedir(buf, s, l, pat, file, num_file, flags, &found_ht, &ga);
     if (*e != NUL) {
       e++;
     }
@@ -2932,145 +2948,159 @@ static void cmdline_del(CmdlineInfo *cclp, int from)
   cclp->cmdpos = from;
 }
 
+/// Handle a key pressed when the wild menu for the menu names
+/// (EXPAND_MENUNAMES) is displayed.
+static int wildmenu_process_key_menunames(CmdlineInfo *cclp, int key, expand_T *xp)
+{
+  // Hitting <Down> after "emenu Name.": complete submenu
+  if (key == K_DOWN && cclp->cmdpos > 0
+      && cclp->cmdbuff[cclp->cmdpos - 1] == '.') {
+    key = (int)p_wc;
+    KeyTyped = true;  // in case the key was mapped
+  } else if (key == K_UP) {
+    // Hitting <Up>: Remove one submenu name in front of the
+    // cursor
+    int found = false;
+
+    int j = (int)(xp->xp_pattern - cclp->cmdbuff);
+    int i = 0;
+    while (--j > 0) {
+      // check for start of menu name
+      if (cclp->cmdbuff[j] == ' '
+          && cclp->cmdbuff[j - 1] != '\\') {
+        i = j + 1;
+        break;
+      }
+      // check for start of submenu name
+      if (cclp->cmdbuff[j] == '.'
+          && cclp->cmdbuff[j - 1] != '\\') {
+        if (found) {
+          i = j + 1;
+          break;
+        } else {
+          found = true;
+        }
+      }
+    }
+    if (i > 0) {
+      cmdline_del(cclp, i);
+    }
+    key = (int)p_wc;
+    KeyTyped = true;  // in case the key was mapped
+    xp->xp_context = EXPAND_NOTHING;
+  }
+
+  return key;
+}
+
+/// Handle a key pressed when the wild menu for file names (EXPAND_FILES) or
+/// directory names (EXPAND_DIRECTORIES) or shell command names
+/// (EXPAND_SHELLCMD) is displayed.
+static int wildmenu_process_key_filenames(CmdlineInfo *cclp, int key, expand_T *xp)
+{
+  char upseg[5];
+  upseg[0] = PATHSEP;
+  upseg[1] = '.';
+  upseg[2] = '.';
+  upseg[3] = PATHSEP;
+  upseg[4] = NUL;
+
+  if (key == K_DOWN
+      && cclp->cmdpos > 0
+      && cclp->cmdbuff[cclp->cmdpos - 1] == PATHSEP
+      && (cclp->cmdpos < 3
+          || cclp->cmdbuff[cclp->cmdpos - 2] != '.'
+          || cclp->cmdbuff[cclp->cmdpos - 3] != '.')) {
+    // go down a directory
+    key = (int)p_wc;
+    KeyTyped = true;  // in case the key was mapped
+  } else if (strncmp(xp->xp_pattern, upseg + 1, 3) == 0 && key == K_DOWN) {
+    // If in a direct ancestor, strip off one ../ to go down
+    int found = false;
+
+    int j = cclp->cmdpos;
+    int i = (int)(xp->xp_pattern - cclp->cmdbuff);
+    while (--j > i) {
+      j -= utf_head_off(cclp->cmdbuff, cclp->cmdbuff + j);
+      if (vim_ispathsep(cclp->cmdbuff[j])) {
+        found = true;
+        break;
+      }
+    }
+    if (found
+        && cclp->cmdbuff[j - 1] == '.'
+        && cclp->cmdbuff[j - 2] == '.'
+        && (vim_ispathsep(cclp->cmdbuff[j - 3]) || j == i + 2)) {
+      cmdline_del(cclp, j - 2);
+      key = (int)p_wc;
+      KeyTyped = true;  // in case the key was mapped
+    }
+  } else if (key == K_UP) {
+    // go up a directory
+    int found = false;
+
+    int j = cclp->cmdpos - 1;
+    int i = (int)(xp->xp_pattern - cclp->cmdbuff);
+    while (--j > i) {
+      j -= utf_head_off(cclp->cmdbuff, cclp->cmdbuff + j);
+      if (vim_ispathsep(cclp->cmdbuff[j])
+#ifdef BACKSLASH_IN_FILENAME
+          && vim_strchr((const char_u *)" *?[{`$%#", cclp->cmdbuff[j + 1])
+          == NULL
+#endif
+          ) {
+        if (found) {
+          i = j + 1;
+          break;
+        } else {
+          found = true;
+        }
+      }
+    }
+
+    if (!found) {
+      j = i;
+    } else if (strncmp(cclp->cmdbuff + j, upseg, 4) == 0) {
+      j += 4;
+    } else if (strncmp(cclp->cmdbuff + j, upseg + 1, 3) == 0
+               && j == i) {
+      j += 3;
+    } else {
+      j = 0;
+    }
+
+    if (j > 0) {
+      // TODO(tarruda): this is only for DOS/Unix systems - need to put in
+      // machine-specific stuff here and in upseg init
+      cmdline_del(cclp, j);
+      put_on_cmdline(upseg + 1, 3, false);
+    } else if (cclp->cmdpos > i) {
+      cmdline_del(cclp, i);
+    }
+
+    // Now complete in the new directory. Set KeyTyped in case the
+    // Up key came from a mapping.
+    key = (int)p_wc;
+    KeyTyped = true;
+  }
+
+  return key;
+}
+
 /// Handle a key pressed when wild menu is displayed
 int wildmenu_process_key(CmdlineInfo *cclp, int key, expand_T *xp)
 {
-  int c = key;
-
   // Special translations for 'wildmenu'
   if (xp->xp_context == EXPAND_MENUNAMES) {
-    // Hitting <Down> after "emenu Name.": complete submenu
-    if (c == K_DOWN && cclp->cmdpos > 0
-        && cclp->cmdbuff[cclp->cmdpos - 1] == '.') {
-      c = (int)p_wc;
-      KeyTyped = true;  // in case the key was mapped
-    } else if (c == K_UP) {
-      // Hitting <Up>: Remove one submenu name in front of the
-      // cursor
-      int found = false;
-
-      int j = (int)(xp->xp_pattern - cclp->cmdbuff);
-      int i = 0;
-      while (--j > 0) {
-        // check for start of menu name
-        if (cclp->cmdbuff[j] == ' '
-            && cclp->cmdbuff[j - 1] != '\\') {
-          i = j + 1;
-          break;
-        }
-
-        // check for start of submenu name
-        if (cclp->cmdbuff[j] == '.'
-            && cclp->cmdbuff[j - 1] != '\\') {
-          if (found) {
-            i = j + 1;
-            break;
-          } else {
-            found = true;
-          }
-        }
-      }
-      if (i > 0) {
-        cmdline_del(cclp, i);
-      }
-      c = (int)p_wc;
-      KeyTyped = true;  // in case the key was mapped
-      xp->xp_context = EXPAND_NOTHING;
-    }
+    return wildmenu_process_key_menunames(cclp, key, xp);
   }
   if (xp->xp_context == EXPAND_FILES
       || xp->xp_context == EXPAND_DIRECTORIES
       || xp->xp_context == EXPAND_SHELLCMD) {
-    char upseg[5];
-
-    upseg[0] = PATHSEP;
-    upseg[1] = '.';
-    upseg[2] = '.';
-    upseg[3] = PATHSEP;
-    upseg[4] = NUL;
-
-    if (c == K_DOWN
-        && cclp->cmdpos > 0
-        && cclp->cmdbuff[cclp->cmdpos - 1] == PATHSEP
-        && (cclp->cmdpos < 3
-            || cclp->cmdbuff[cclp->cmdpos - 2] != '.'
-            || cclp->cmdbuff[cclp->cmdpos - 3] != '.')) {
-      // go down a directory
-      c = (int)p_wc;
-      KeyTyped = true;  // in case the key was mapped
-    } else if (strncmp(xp->xp_pattern, upseg + 1, 3) == 0
-               && c == K_DOWN) {
-      // If in a direct ancestor, strip off one ../ to go down
-      int found = false;
-
-      int j = cclp->cmdpos;
-      int i = (int)(xp->xp_pattern - cclp->cmdbuff);
-      while (--j > i) {
-        j -= utf_head_off(cclp->cmdbuff, cclp->cmdbuff + j);
-        if (vim_ispathsep(cclp->cmdbuff[j])) {
-          found = true;
-          break;
-        }
-      }
-      if (found
-          && cclp->cmdbuff[j - 1] == '.'
-          && cclp->cmdbuff[j - 2] == '.'
-          && (vim_ispathsep(cclp->cmdbuff[j - 3]) || j == i + 2)) {
-        cmdline_del(cclp, j - 2);
-        c = (int)p_wc;
-        KeyTyped = true;  // in case the key was mapped
-      }
-    } else if (c == K_UP) {
-      // go up a directory
-      int found = false;
-
-      int j = cclp->cmdpos - 1;
-      int i = (int)(xp->xp_pattern - cclp->cmdbuff);
-      while (--j > i) {
-        j -= utf_head_off(cclp->cmdbuff, cclp->cmdbuff + j);
-        if (vim_ispathsep(cclp->cmdbuff[j])
-#ifdef BACKSLASH_IN_FILENAME
-            && vim_strchr((const char_u *)" *?[{`$%#", cclp->cmdbuff[j + 1])
-            == NULL
-#endif
-            ) {
-          if (found) {
-            i = j + 1;
-            break;
-          } else {
-            found = true;
-          }
-        }
-      }
-
-      if (!found) {
-        j = i;
-      } else if (strncmp(cclp->cmdbuff + j, upseg, 4) == 0) {
-        j += 4;
-      } else if (strncmp(cclp->cmdbuff + j, upseg + 1, 3) == 0
-                 && j == i) {
-        j += 3;
-      } else {
-        j = 0;
-      }
-
-      if (j > 0) {
-        // TODO(tarruda): this is only for DOS/Unix systems - need to put in
-        // machine-specific stuff here and in upseg init
-        cmdline_del(cclp, j);
-        put_on_cmdline(upseg + 1, 3, false);
-      } else if (cclp->cmdpos > i) {
-        cmdline_del(cclp, i);
-      }
-
-      // Now complete in the new directory. Set KeyTyped in case the
-      // Up key came from a mapping.
-      c = (int)p_wc;
-      KeyTyped = true;
-    }
+    return wildmenu_process_key_filenames(cclp, key, xp);
   }
 
-  return c;
+  return key;
 }
 
 /// Free expanded names when finished walking through the matches
