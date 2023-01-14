@@ -89,6 +89,10 @@ static int compl_match_arraysize;
 static int compl_startcol;
 static int compl_selected;
 
+#define SHOW_FILE_TEXT(m) (showtail \
+                           ? showmatches_gettail(files_found[m], false) \
+                           : files_found[m])
+
 static int sort_func_compare(const void *s1, const void *s2)
 {
   char *p1 = *(char **)s1;
@@ -279,19 +283,54 @@ int nextwild(expand_T *xp, int type, int options, bool escape)
   return OK;
 }
 
+/// Create and display a cmdline completion popup menu with items from
+/// "files_found".
+static int cmdline_pum_create(CmdlineInfo *ccline, expand_T *xp, char **files_found, int num_files,
+                              int showtail)
+{
+  assert(num_files >= 0);
+  // Add all the completion matches
+  compl_match_arraysize = num_files;
+  compl_match_array = xmalloc(sizeof(pumitem_T) * (size_t)compl_match_arraysize);
+  for (int i = 0; i < num_files; i++) {
+    compl_match_array[i] = (pumitem_T){
+      .pum_text = SHOW_FILE_TEXT(i),
+      .pum_info = NULL,
+      .pum_extra = NULL,
+      .pum_kind = NULL,
+    };
+  }
+
+  // Compute the popup menu starting column
+  char *endpos = showtail ? showmatches_gettail(xp->xp_pattern, true) : xp->xp_pattern;
+  if (ui_has(kUICmdline)) {
+    compl_startcol = (int)(endpos - ccline->cmdbuff);
+  } else {
+    compl_startcol = cmd_screencol((int)(endpos - ccline->cmdbuff));
+  }
+
+  // no default selection
+  compl_selected = -1;
+
+  cmdline_pum_display(true);
+
+  return EXPAND_OK;
+}
+
 void cmdline_pum_display(bool changed_array)
 {
   pum_display(compl_match_array, compl_match_arraysize, compl_selected,
               changed_array, compl_startcol);
 }
 
+/// Returns true if the cmdline completion popup menu is being displayed.
 bool cmdline_pum_active(void)
 {
   // compl_match_array != NULL should already imply pum_visible() in Nvim.
   return compl_match_array != NULL;
 }
 
-/// Remove the cmdline completion popup menu
+/// Remove the cmdline completion popup menu (if present), free the list of items.
 void cmdline_pum_remove(void)
 {
   pum_undisplay(true);
@@ -826,9 +865,6 @@ void ExpandCleanup(expand_T *xp)
 int showmatches(expand_T *xp, int wildmenu)
 {
   CmdlineInfo *const ccline = get_cmdline_info();
-#define L_SHOWFILE(m) (showtail \
-                       ? showmatches_gettail(files_found[m], false) \
-                       : files_found[m])
   int num_files;
   char **files_found;
   int i, j, k;
@@ -860,26 +896,8 @@ int showmatches(expand_T *xp, int wildmenu)
                        || ui_has(kUIWildmenu);
 
   if (compl_use_pum) {
-    assert(num_files >= 0);
-    compl_match_arraysize = num_files;
-    compl_match_array = xmalloc(sizeof(pumitem_T) * (size_t)compl_match_arraysize);
-    for (i = 0; i < num_files; i++) {
-      compl_match_array[i] = (pumitem_T){
-        .pum_text = L_SHOWFILE(i),
-        .pum_info = NULL,
-        .pum_extra = NULL,
-        .pum_kind = NULL,
-      };
-    }
-    char *endpos = showtail ? showmatches_gettail(xp->xp_pattern, true) : xp->xp_pattern;
-    if (ui_has(kUICmdline)) {
-      compl_startcol = (int)(endpos - ccline->cmdbuff);
-    } else {
-      compl_startcol = cmd_screencol((int)(endpos - ccline->cmdbuff));
-    }
-    compl_selected = -1;
-    cmdline_pum_display(true);
-    return EXPAND_OK;
+    // cmdline completion popup menu (with wildoptions=pum)
+    return cmdline_pum_create(ccline, xp, files_found, num_files, showtail);
   }
 
   if (!wildmenu) {
@@ -906,7 +924,7 @@ int showmatches(expand_T *xp, int wildmenu)
         home_replace(NULL, files_found[i], NameBuff, MAXPATHL, true);
         j = vim_strsize(NameBuff);
       } else {
-        j = vim_strsize(L_SHOWFILE(i));
+        j = vim_strsize(SHOW_FILE_TEXT(i));
       }
       if (j > maxlen) {
         maxlen = j;
@@ -971,14 +989,14 @@ int showmatches(expand_T *xp, int wildmenu)
             j = os_isdir(files_found[k]);
           }
           if (showtail) {
-            p = L_SHOWFILE(k);
+            p = SHOW_FILE_TEXT(k);
           } else {
             home_replace(NULL, files_found[k], NameBuff, MAXPATHL, true);
             p = NameBuff;
           }
         } else {
           j = false;
-          p = L_SHOWFILE(k);
+          p = SHOW_FILE_TEXT(k);
         }
         lastlen = msg_outtrans_attr(p, j ? attr : 0);
       }
