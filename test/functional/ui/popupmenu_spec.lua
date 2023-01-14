@@ -2486,7 +2486,7 @@ describe('builtin popupmenu', function()
     ]])
   end)
 
-  it('wildoptions=pum with scrolled messages ', function()
+  it('wildoptions=pum with scrolled messages', function()
     screen:try_resize(40,10)
     command('set wildmenu')
     command('set wildoptions=pum')

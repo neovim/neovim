@@ -2481,6 +2481,13 @@ func Test_wildmenu_pum()
   call term_sendkeys(buf, ":sign \<Tab>\<C-A>\<S-Tab>")
   call VerifyScreenDump(buf, 'Test_wildmenu_pum_37', {})
 
+  " After removing the pum the command line is redrawn
+  call term_sendkeys(buf, ":edit foo\<CR>")
+  call term_sendkeys(buf, ":edit bar\<CR>")
+  call term_sendkeys(buf, ":ls\<CR>")
+  call term_sendkeys(buf, ":com\<Tab> ")
+  call VerifyScreenDump(buf, 'Test_wildmenu_pum_38', {})
+
   call term_sendkeys(buf, "\<C-U>\<CR>")
   call StopVimInTerminal(buf)
   call delete('Xtest')
