@@ -483,6 +483,11 @@ void spell_suggest(int count)
     }
     badlen++;
     end_visual_mode();
+    // make sure we don't include the NUL at the end of the line
+    line = get_cursor_line_ptr();
+    if (badlen > (int)strlen(line) - (int)curwin->w_cursor.col) {
+      badlen = (int)strlen(line) - (int)curwin->w_cursor.col;
+    }
     // Find the start of the badly spelled word.
   } else if (spell_move_to(curwin, FORWARD, true, true, NULL) == 0
              || curwin->w_cursor.col > prev_cursor.col) {
