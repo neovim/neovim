@@ -89,9 +89,7 @@ static int compl_match_arraysize;
 static int compl_startcol;
 static int compl_selected;
 
-#define SHOW_FILE_TEXT(m) (showtail \
-                           ? showmatches_gettail(matches[m], false) \
-                           : matches[m])
+#define SHOW_MATCH(m) (showtail ? showmatches_gettail(matches[m], false) : matches[m])
 
 /// Sort function for the completion matches.
 /// <SNR> functions should be sorted to the end.
@@ -296,7 +294,7 @@ static int cmdline_pum_create(CmdlineInfo *ccline, expand_T *xp, char **matches,
   compl_match_array = xmalloc(sizeof(pumitem_T) * (size_t)compl_match_arraysize);
   for (int i = 0; i < numMatches; i++) {
     compl_match_array[i] = (pumitem_T){
-      .pum_text = SHOW_FILE_TEXT(i),
+      .pum_text = SHOW_MATCH(i),
       .pum_info = NULL,
       .pum_extra = NULL,
       .pum_kind = NULL,
@@ -397,7 +395,6 @@ static int wildmenu_match_len(expand_T *xp, char *s)
 /// @param matches  list of matches
 static void redraw_wildmenu(expand_T *xp, int num_matches, char **matches, int match, int showtail)
 {
-#define L_MATCH(m) (showtail ? showmatches_gettail(matches[m], false) : matches[m])
   int row;
   char *buf;
   int len;
@@ -426,7 +423,7 @@ static void redraw_wildmenu(expand_T *xp, int num_matches, char **matches, int m
     highlight = false;
   }
   // count 1 for the ending ">"
-  clen = wildmenu_match_len(xp, L_MATCH(match)) + 3;
+  clen = wildmenu_match_len(xp, SHOW_MATCH(match)) + 3;
   if (match == 0) {
     first_match = 0;
   } else if (match < first_match) {
@@ -436,7 +433,7 @@ static void redraw_wildmenu(expand_T *xp, int num_matches, char **matches, int m
   } else {
     // check if match fits on the screen
     for (i = first_match; i < match; i++) {
-      clen += wildmenu_match_len(xp, L_MATCH(i)) + 2;
+      clen += wildmenu_match_len(xp, SHOW_MATCH(i)) + 2;
     }
     if (first_match > 0) {
       clen += 2;
@@ -447,7 +444,7 @@ static void redraw_wildmenu(expand_T *xp, int num_matches, char **matches, int m
       // if showing the last match, we can add some on the left
       clen = 2;
       for (i = match; i < num_matches; i++) {
-        clen += wildmenu_match_len(xp, L_MATCH(i)) + 2;
+        clen += wildmenu_match_len(xp, SHOW_MATCH(i)) + 2;
         if ((long)clen >= Columns) {
           break;
         }
@@ -459,7 +456,7 @@ static void redraw_wildmenu(expand_T *xp, int num_matches, char **matches, int m
   }
   if (add_left) {
     while (first_match > 0) {
-      clen += wildmenu_match_len(xp, L_MATCH(first_match - 1)) + 2;
+      clen += wildmenu_match_len(xp, SHOW_MATCH(first_match - 1)) + 2;
       if ((long)clen >= Columns) {
         break;
       }
@@ -479,13 +476,13 @@ static void redraw_wildmenu(expand_T *xp, int num_matches, char **matches, int m
   clen = len;
 
   i = first_match;
-  while (clen + wildmenu_match_len(xp, L_MATCH(i)) + 2 < Columns) {
+  while (clen + wildmenu_match_len(xp, SHOW_MATCH(i)) + 2 < Columns) {
     if (i == match) {
       selstart = buf + len;
       selstart_col = clen;
     }
 
-    s = L_MATCH(i);
+    s = SHOW_MATCH(i);
     // Check for menu separators - replace with '|'
     emenu = (xp->xp_context == EXPAND_MENUS
              || xp->xp_context == EXPAND_MENUNAMES);
@@ -910,14 +907,14 @@ static void showmatches_oneline(expand_T *xp, char **matches, int numMatches, in
         isdir = os_isdir(matches[j]);
       }
       if (showtail) {
-        p = SHOW_FILE_TEXT(j);
+        p = SHOW_MATCH(j);
       } else {
         home_replace(NULL, matches[j], NameBuff, MAXPATHL, true);
         p = NameBuff;
       }
     } else {
       isdir = false;
-      p = SHOW_FILE_TEXT(j);
+      p = SHOW_MATCH(j);
     }
     lastlen = msg_outtrans_attr(p, isdir ? dir_attr : 0);
   }
@@ -990,7 +987,7 @@ int showmatches(expand_T *xp, int wildmenu)
         home_replace(NULL, matches[i], NameBuff, MAXPATHL, true);
         j = vim_strsize(NameBuff);
       } else {
-        j = vim_strsize(SHOW_FILE_TEXT(i));
+        j = vim_strsize(SHOW_MATCH(i));
       }
       if (j > maxlen) {
         maxlen = j;
