@@ -23,6 +23,7 @@ local util = require('vim.lsp.util')
 ---
 --- @class STClientState
 --- @field namespace number
+--- @field hl_cb function
 --- @field active_request STActiveRequest
 --- @field current_result STCurrentResult
 
@@ -193,11 +194,12 @@ function STHighlighter:destroy()
 end
 
 ---@private
-function STHighlighter:attach(client_id)
+function STHighlighter:attach(client_id, hl_cb)
   local state = self.client_state[client_id]
   if not state then
     state = {
       namespace = api.nvim_create_namespace('vim_lsp_semantic_tokens:' .. client_id),
+      hl_cb = hl_cb,
       active_request = {},
       current_result = {},
     }
@@ -404,22 +406,26 @@ function STHighlighter:on_win(topline, botline)
           -- preamble while the new one is still being built. Once the preamble
           -- finishes, clangd sends a refresh request which lets the client
           -- re-synchronize the tokens.
-          api.nvim_buf_set_extmark(self.bufnr, state.namespace, token.line, token.start_col, {
-            hl_group = '@' .. token.type,
-            end_col = token.end_col,
-            priority = vim.highlight.priorities.semantic_tokens,
-            strict = false,
-          })
+          if state.hl_cb then
+            state.hl_cb(self.bufnr, state.namespace, token)
+          else
+            api.nvim_buf_set_extmark(self.bufnr, state.namespace, token.line, token.start_col, {
+              hl_group = '@' .. token.type,
+              end_col = token.end_col,
+              priority = vim.highlight.priorities.semantic_tokens,
+              strict = false,
+            })
 
-          -- TODO(bfredl) use single extmark when hl_group supports table
-          if #token.modifiers > 0 then
-            for _, modifier in pairs(token.modifiers) do
-              api.nvim_buf_set_extmark(self.bufnr, state.namespace, token.line, token.start_col, {
-                hl_group = '@' .. modifier,
-                end_col = token.end_col,
-                priority = vim.highlight.priorities.semantic_tokens + 1,
-                strict = false,
-              })
+            -- TODO(bfredl) use single extmark when hl_group supports table
+            if #token.modifiers > 0 then
+              for _, modifier in pairs(token.modifiers) do
+                api.nvim_buf_set_extmark(self.bufnr, state.namespace, token.line, token.start_col, {
+                  hl_group = '@' .. modifier,
+                  end_col = token.end_col,
+                  priority = vim.highlight.priorities.semantic_tokens + 1,
+                  strict = false,
+                })
+              end
             end
           end
 
@@ -500,22 +506,23 @@ end
 local M = {}
 
 --- Start the semantic token highlighting engine for the given buffer with the
---- given client. The client must already be attached to the buffer.
----
---- NOTE: This is currently called automatically by |vim.lsp.buf_attach_client()|. To
---- opt-out of semantic highlighting with a server that supports it, you can
---- delete the semanticTokensProvider table from the {server_capabilities} of
---- your client in your |LspAttach| callback or your configuration's
---- `on_attach` callback:
---- <pre>lua
----   client.server_capabilities.semanticTokensProvider = nil
---- </pre>
+--- given client. The client must already be attached to the buffer. This function
+--- can be called in your |LspAttach| autocmd or `on_attach` callback.
 ---
 ---@param bufnr number
 ---@param client_id number
 ---@param opts (nil|table) Optional keyword arguments
 ---  - debounce (number, default: 200): Debounce token requests
 ---        to the server by the given number in milliseconds
+---  - hl_cb (function({bufnr}, {ns_id}, {*token})): If given, this function is called
+---        for each token when it needs to be highlighted. The callback should
+---        apply an extmark or highlight. See |nvim_buf_add_highlight()| and
+---        |nvim_buf_set_extmark()|. {token} is a table with the following:
+---           - line : line number 0-based
+---           - start_col : start column 0-based
+---           - end_col : end column 0-based
+---           - type : token type as string
+---           - modifiers : token modifiers as strings
 function M.start(bufnr, client_id, opts)
   vim.validate({
     bufnr = { bufnr, 'n', false },
@@ -556,16 +563,13 @@ function M.start(bufnr, client_id, opts)
     highlighter.debounce = math.max(highlighter.debounce, opts.debounce or 200)
   end
 
-  highlighter:attach(client_id)
+  highlighter:attach(client_id, opts.hl_cb)
   highlighter:send_request()
 end
 
 --- Stop the semantic token highlighting engine for the given buffer with the
---- given client.
----
---- NOTE: This is automatically called by a |LspDetach| autocmd that is set up as part
---- of `start()`, so you should only need this function to manually disengage the semantic
---- token engine without fully detaching the LSP client from the buffer.
+--- given client. Automatically called if your LSP client is detached from a buffer
+--- where semantic token highlighting is enabled.
 ---
 ---@param bufnr number
 ---@param client_id number

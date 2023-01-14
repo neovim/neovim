@@ -73,10 +73,7 @@ The following new APIs or features were added.
   semantic tokens, syntax groups and extmarks.
 
 • Added support for semantic token highlighting to the LSP client. This
-  functionality is enabled by default when a client that supports this feature
-  is attached to a buffer. Opt-out can be performed by deleting the
-  `semanticTokensProvider` from the LSP client's {server_capabilities} in the
-  `LspAttach` callback.
+  functionality is disabled by default.
 
   See |lsp-semantic_tokens| for more information.
 

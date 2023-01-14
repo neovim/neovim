@@ -1354,16 +1354,9 @@ get_at_pos({bufnr}, {row}, {col})
 
 start({bufnr}, {client_id}, {opts})          *vim.lsp.semantic_tokens.start()*
     Start the semantic token highlighting engine for the given buffer with the
-    given client. The client must already be attached to the buffer.
-
-    NOTE: This is currently called automatically by
-    |vim.lsp.buf_attach_client()|. To opt-out of semantic highlighting with a
-    server that supports it, you can delete the semanticTokensProvider table
-    from the {server_capabilities} of your client in your |LspAttach| callback
-    or your configuration's `on_attach` callback: >lua
-
-       client.server_capabilities.semanticTokensProvider = nil
-<
+    given client. The client must already be attached to the buffer. This
+    function can be called in your |LspAttach| autocmd or `on_attach`
+    callback.
 
     Parameters: ~
       • {bufnr}      (number)
@@ -1372,15 +1365,22 @@ start({bufnr}, {client_id}, {opts})          *vim.lsp.semantic_tokens.start()*
                      • debounce (number, default: 200): Debounce token
                        requests to the server by the given number in
                        milliseconds
+                     • hl_cb (function({bufnr}, {ns_id}, {*token})): If given,
+                       this function is called for each token when it needs to
+                       be highlighted. The callback should apply an extmark or
+                       highlight. See |nvim_buf_add_highlight()| and
+                       |nvim_buf_set_extmark()|. {token} is a table with the
+                       following:
+                       • line : line number 0-based
+                       • start_col : start column 0-based
+                       • end_col : end column 0-based
+                       • type : token type as string
+                       • modifiers : token modifiers as strings
 
 stop({bufnr}, {client_id})                    *vim.lsp.semantic_tokens.stop()*
     Stop the semantic token highlighting engine for the given buffer with the
-    given client.
-
-    NOTE: This is automatically called by a |LspDetach| autocmd that is set up
-    as part of `start()`, so you should only need this function to manually
-    disengage the semantic token engine without fully detaching the LSP client
-    from the buffer.
+    given client. Automatically called if your LSP client is detached from a
+    buffer where semantic token highlighting is enabled.
 
     Parameters: ~
       • {bufnr}      (number)
