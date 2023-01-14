@@ -403,6 +403,47 @@ func Test_profile_completion()
 
   call feedkeys(":profile start test_prof\<C-A>\<C-B>\"\<CR>", 'tx')
   call assert_match('^"profile start.* test_profile\.vim', @:)
+
+  call feedkeys(":profile file test_prof\<Tab>\<C-B>\"\<CR>", 'tx')
+  call assert_match('"profile file test_profile\.vim', @:)
+  call feedkeys(":profile file  test_prof\<Tab>\<C-B>\"\<CR>", 'tx')
+  call assert_match('"profile file  test_profile\.vim', @:)
+  call feedkeys(":profile file test_prof \<Tab>\<C-B>\"\<CR>", 'tx')
+  call assert_match('"profile file test_prof ', @:)
+  call feedkeys(":profile file X1B2C3\<Tab>\<C-B>\"\<CR>", 'tx')
+  call assert_match('"profile file X1B2C3', @:)
+
+  func Xprof_test()
+  endfunc
+  call feedkeys(":profile func Xprof\<Tab>\<C-B>\"\<CR>", 'tx')
+  call assert_equal('"profile func Xprof_test', @:)
+  call feedkeys(":profile   func   Xprof\<Tab>\<C-B>\"\<CR>", 'tx')
+  call assert_equal('"profile   func   Xprof_test', @:)
+  call feedkeys(":profile func Xprof \<Tab>\<C-B>\"\<CR>", 'tx')
+  call assert_equal('"profile func Xprof ', @:)
+  call feedkeys(":profile func X1B2C3\<Tab>\<C-B>\"\<CR>", 'tx')
+  call assert_equal('"profile func X1B2C3', @:)
+
+  call feedkeys(":profdel \<C-A>\<C-B>\"\<CR>", 'tx')
+  call assert_equal('"profdel file func', @:)
+  call feedkeys(":profdel  fu\<Tab>\<C-B>\"\<CR>", 'tx')
+  call assert_equal('"profdel  func', @:)
+  call feedkeys(":profdel he\<Tab>\<C-B>\"\<CR>", 'tx')
+  call assert_equal('"profdel he', @:)
+  call feedkeys(":profdel here \<Tab>\<C-B>\"\<CR>", 'tx')
+  call assert_equal('"profdel here ', @:)
+  call feedkeys(":profdel file test_prof\<Tab>\<C-B>\"\<CR>", 'tx')
+  call assert_equal('"profdel file test_profile.vim', @:)
+  call feedkeys(":profdel file  X1B2C3\<Tab>\<C-B>\"\<CR>", 'tx')
+  call assert_equal('"profdel file  X1B2C3', @:)
+  call feedkeys(":profdel func Xprof\<Tab>\<C-B>\"\<CR>", 'tx')
+  call assert_equal('"profdel func Xprof_test', @:)
+  call feedkeys(":profdel func Xprof_test  \<Tab>\<C-B>\"\<CR>", 'tx')
+  call assert_equal('"profdel func Xprof_test  ', @:)
+  call feedkeys(":profdel func  X1B2C3\<Tab>\<C-B>\"\<CR>", 'tx')
+  call assert_equal('"profdel func  X1B2C3', @:)
+
+  delfunc Xprof_test
 endfunc
 
 func Test_profile_errors()

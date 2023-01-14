@@ -1659,8 +1659,9 @@ static const char *set_context_in_lang_cmd(expand_T *xp, const char *arg)
 }
 
 static enum {
-  EXP_BREAKPT_ADD,    // expand ":breakadd" sub-commands
-  EXP_BREAKPT_DEL,  // expand ":breakdel" sub-commands
+  EXP_BREAKPT_ADD,  ///< expand ":breakadd" sub-commands
+  EXP_BREAKPT_DEL,  ///< expand ":breakdel" sub-commands
+  EXP_PROFDEL,      ///< expand ":profdel" sub-commands
 } breakpt_expand_what;
 
 /// Set the completion context for the :breakadd command. Always returns NULL.
@@ -1671,8 +1672,10 @@ static const char *set_context_in_breakadd_cmd(expand_T *xp, const char *arg, cm
 
   if (cmdidx == CMD_breakadd) {
     breakpt_expand_what = EXP_BREAKPT_ADD;
-  } else {
+  } else if (cmdidx == CMD_breakdel) {
     breakpt_expand_what = EXP_BREAKPT_DEL;
+  } else {
+    breakpt_expand_what = EXP_PROFDEL;
   }
 
   const char *p = skipwhite(arg);
@@ -1681,8 +1684,7 @@ static const char *set_context_in_breakadd_cmd(expand_T *xp, const char *arg, cm
   }
   const char *subcmd_start = p;
 
-  if (strncmp("file ", p, 5) == 0
-      || strncmp("func ", p, 5) == 0) {
+  if (strncmp("file ", p, 5) == 0 || strncmp("func ", p, 5) == 0) {
     // :breakadd file [lnum] <filename>
     // :breakadd func [lnum] <funcname>
     p += 4;
@@ -2067,6 +2069,7 @@ static const char *set_context_by_cmdname(const char *cmd, cmdidx_T cmdidx, expa
     break;
 
   case CMD_breakadd:
+  case CMD_profdel:
   case CMD_breakdel:
     return set_context_in_breakadd_cmd(xp, arg, cmdidx);
 
@@ -2424,10 +2427,17 @@ static char *get_breakadd_arg(expand_T *xp FUNC_ATTR_UNUSED, int idx)
   char *opts[] = { "expr", "file", "func", "here" };
 
   if (idx >= 0 && idx <= 3) {
+    // breakadd {expr, file, func, here}
     if (breakpt_expand_what == EXP_BREAKPT_ADD) {
       return opts[idx];
-    } else {
+    } else if (breakpt_expand_what == EXP_BREAKPT_DEL) {
+      // breakdel {func, file, here}
       if (idx <= 2) {
+        return opts[idx + 1];
+      }
+    } else {
+      // profdel {func, file}
+      if (idx <= 1) {
         return opts[idx + 1];
       }
     }

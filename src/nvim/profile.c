@@ -354,7 +354,6 @@ char *get_profile_name(expand_T *xp, int idx)
   switch (pexpand_what) {
   case PEXP_SUBCMD:
     return pexpand_cmds[idx];
-  // case PEXP_FUNC: TODO
   default:
     return NULL;
   }
@@ -373,13 +372,17 @@ void set_context_in_profile_cmd(expand_T *xp, const char *arg)
     return;
   }
 
-  if (end_subcmd - arg == 5 && strncmp(arg, "start", 5) == 0) {
+  if ((end_subcmd - arg == 5 && strncmp(arg, "start", 5) == 0)
+      || (end_subcmd - arg == 4 && strncmp(arg, "file", 4) == 0)) {
     xp->xp_context = EXPAND_FILES;
+    xp->xp_pattern = skipwhite(end_subcmd);
+    return;
+  } else if (end_subcmd - arg == 4 && strncmp(arg, "func", 4) == 0) {
+    xp->xp_context = EXPAND_USER_FUNC;
     xp->xp_pattern = skipwhite(end_subcmd);
     return;
   }
 
-  // TODO(tarruda): expand function names after "func"
   xp->xp_context = EXPAND_NOTHING;
 }
 

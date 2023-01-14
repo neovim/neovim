@@ -2805,7 +2805,6 @@ func Test_cmdline_complete_breakdel()
   call assert_equal("\"breakdel   here   Xtest", @:)
   call feedkeys(":breakdel here \<Tab>\<C-B>\"\<CR>", 'tx')
   call assert_equal("\"breakdel here ", @:)
-
 endfunc
 
 " this was going over the end of IObuff
