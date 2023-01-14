@@ -19,8 +19,8 @@ enum {
   WILD_ALL_KEEP    = 8,
   WILD_CANCEL      = 9,
   WILD_APPLY       = 10,
-  // WILD_PAGEUP   = 11, not ported yet
-  // WILD_PAGEDOWN = 12, not ported yet
+  WILD_PAGEUP      = 11,
+  WILD_PAGEDOWN    = 12,
   WILD_PUM_WANT    = 13,
 };
 

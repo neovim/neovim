@@ -217,7 +217,9 @@ int nextwild(expand_T *xp, int type, int options, bool escape)
   assert(ccline->cmdpos >= i);
   xp->xp_pattern_len = (size_t)ccline->cmdpos - (size_t)i;
 
-  if (type == WILD_NEXT || type == WILD_PREV || type == WILD_PUM_WANT) {
+  if (type == WILD_NEXT || type == WILD_PREV
+      || type == WILD_PAGEUP || type == WILD_PAGEDOWN
+      || type == WILD_PUM_WANT) {
     // Get next/previous match for a previous expanded pattern.
     p2 = ExpandOne(xp, NULL, NULL, 0, type);
   } else {
@@ -593,6 +595,44 @@ static char *get_next_or_prev_match(int mode, expand_T *xp, int *p_findex, char 
     findex--;
   } else if (mode == WILD_NEXT) {
     findex++;
+  } else if (mode == WILD_PAGEUP) {
+    if (findex == 0) {
+      // at the first entry, don't select any entries
+      findex = -1;
+    } else if (findex == -1) {
+      // no entry is selected. select the last entry
+      findex = xp->xp_numfiles - 1;
+    } else {
+      // go up by the pum height
+      int ht = pum_get_height();
+      if (ht > 3) {
+        ht -= 2;
+      }
+      findex -= ht;
+      if (findex < 0) {
+        // few entries left, select the first entry
+        findex = 0;
+      }
+    }
+  } else if (mode == WILD_PAGEDOWN) {
+    if (findex == xp->xp_numfiles - 1) {
+      // at the last entry, don't select any entries
+      findex = -1;
+    } else if (findex == -1) {
+      // no entry is selected. select the first entry
+      findex = 0;
+    } else {
+      // go down by the pum height
+      int ht = pum_get_height();
+      if (ht > 3) {
+        ht -= 2;
+      }
+      findex += ht;
+      if (findex >= xp->xp_numfiles) {
+        // few entries left, select the last entry
+        findex = xp->xp_numfiles - 1;
+      }
+    }
   } else {  // mode == WILD_PUM_WANT
     assert(pum_want.active);
     findex = pum_want.item;
@@ -770,7 +810,9 @@ char *ExpandOne(expand_T *xp, char *str, char *orig, int options, int mode)
   int i;
 
   // first handle the case of using an old match
-  if (mode == WILD_NEXT || mode == WILD_PREV || mode == WILD_PUM_WANT) {
+  if (mode == WILD_NEXT || mode == WILD_PREV
+      || mode == WILD_PAGEUP || mode == WILD_PAGEDOWN
+      || mode == WILD_PUM_WANT) {
     return get_next_or_prev_match(mode, xp, &findex, orig_save);
   }
 
