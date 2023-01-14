@@ -1658,6 +1658,60 @@ static const char *set_context_in_lang_cmd(expand_T *xp, const char *arg)
   return NULL;
 }
 
+static enum {
+  EXP_BREAKPT_ADD,    // expand ":breakadd" sub-commands
+  EXP_BREAKPT_DEL,  // expand ":breakdel" sub-commands
+} breakpt_expand_what;
+
+/// Set the completion context for the :breakadd command. Always returns NULL.
+static const char *set_context_in_breakadd_cmd(expand_T *xp, const char *arg, cmdidx_T cmdidx)
+{
+  xp->xp_context = EXPAND_BREAKPOINT;
+  xp->xp_pattern = (char *)arg;
+
+  if (cmdidx == CMD_breakadd) {
+    breakpt_expand_what = EXP_BREAKPT_ADD;
+  } else {
+    breakpt_expand_what = EXP_BREAKPT_DEL;
+  }
+
+  const char *p = skipwhite(arg);
+  if (*p == NUL) {
+    return NULL;
+  }
+  const char *subcmd_start = p;
+
+  if (strncmp("file ", p, 5) == 0
+      || strncmp("func ", p, 5) == 0) {
+    // :breakadd file [lnum] <filename>
+    // :breakadd func [lnum] <funcname>
+    p += 4;
+    p = skipwhite(p);
+
+    // skip line number (if specified)
+    if (ascii_isdigit(*p)) {
+      p = skipdigits(p);
+      if (*p != ' ') {
+        xp->xp_context = EXPAND_NOTHING;
+        return NULL;
+      }
+      p = skipwhite(p);
+    }
+    if (strncmp("file", subcmd_start, 4) == 0) {
+      xp->xp_context = EXPAND_FILES;
+    } else {
+      xp->xp_context = EXPAND_USER_FUNC;
+    }
+    xp->xp_pattern = (char *)p;
+  } else if (strncmp("expr ", p, 5) == 0) {
+    // :breakadd expr <expression>
+    xp->xp_context = EXPAND_EXPRESSION;
+    xp->xp_pattern = skipwhite(p + 5);
+  }
+
+  return NULL;
+}
+
 /// Set the completion context in "xp" for command "cmd" with index "cmdidx".
 /// The argument to the command is "arg" and the argument flags is "argt".
 /// For user-defined commands and for environment variables, "context" has the
@@ -2012,6 +2066,10 @@ static const char *set_context_by_cmdname(const char *cmd, cmdidx_T cmdidx, expa
     xp->xp_pattern = (char *)arg;
     break;
 
+  case CMD_breakadd:
+  case CMD_breakdel:
+    return set_context_in_breakadd_cmd(xp, arg, cmdidx);
+
   case CMD_lua:
     xp->xp_context = EXPAND_LUA;
     break;
@@ -2359,6 +2417,25 @@ static char *get_behave_arg(expand_T *xp FUNC_ATTR_UNUSED, int idx)
 }
 
 /// Function given to ExpandGeneric() to obtain the possible arguments of the
+/// ":breakadd {expr, file, func, here}" command.
+/// ":breakdel {func, file, here}" command.
+static char *get_breakadd_arg(expand_T *xp FUNC_ATTR_UNUSED, int idx)
+{
+  char *opts[] = { "expr", "file", "func", "here" };
+
+  if (idx >= 0 && idx <= 3) {
+    if (breakpt_expand_what == EXP_BREAKPT_ADD) {
+      return opts[idx];
+    } else {
+      if (idx <= 2) {
+        return opts[idx + 1];
+      }
+    }
+  }
+  return NULL;
+}
+
+/// Function given to ExpandGeneric() to obtain the possible arguments of the
 /// ":messages {clear}" command.
 static char *get_messages_arg(expand_T *xp FUNC_ATTR_UNUSED, int idx)
 {
@@ -2442,6 +2519,7 @@ static int ExpandOther(expand_T *xp, regmatch_T *rmp, char ***matches, int *numM
     { EXPAND_ENV_VARS, get_env_name, true, true },
     { EXPAND_USER, get_users, true, false },
     { EXPAND_ARGLIST, get_arglist_name, true, false },
+    { EXPAND_BREAKPOINT, get_breakadd_arg, true, true },
     { EXPAND_CHECKHEALTH, get_healthcheck_names, true, false },
   };
   int ret = FAIL;
