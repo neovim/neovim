@@ -2304,6 +2304,14 @@ func Test_wildmenu_pum()
       return repeat(['aaaa'], 120)
     endfunc
     command -nargs=* -complete=customlist,CmdCompl Tcmd
+
+    func MyStatusLine() abort
+      return 'status'
+    endfunc
+    func SetupStatusline()
+      set statusline=%!MyStatusLine()
+      set laststatus=2
+    endfunc
   [CODE]
   call writefile(commands, 'Xtest')
 
@@ -2487,6 +2495,13 @@ func Test_wildmenu_pum()
   call term_sendkeys(buf, ":ls\<CR>")
   call term_sendkeys(buf, ":com\<Tab> ")
   call VerifyScreenDump(buf, 'Test_wildmenu_pum_38', {})
+  call term_sendkeys(buf, "\<C-U>\<CR>")
+
+  " Esc still works to abort the command when 'statusline' is set
+  call term_sendkeys(buf, ":call SetupStatusline()\<CR>")
+  call term_sendkeys(buf, ":si\<Tab>")
+  call term_sendkeys(buf, "\<Esc>")
+  call VerifyScreenDump(buf, 'Test_wildmenu_pum_39', {})
 
   call term_sendkeys(buf, "\<C-U>\<CR>")
   call StopVimInTerminal(buf)

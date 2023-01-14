@@ -639,6 +639,7 @@ int fillchar_status(int *attr, win_T *wp)
 void redraw_custom_statusline(win_T *wp)
 {
   static bool entered = false;
+  bool saved_KeyTyped = KeyTyped;
 
   // When called recursively return.  This can happen when the statusline
   // contains an expression that triggers a redraw.
@@ -649,6 +650,9 @@ void redraw_custom_statusline(win_T *wp)
 
   win_redr_custom(wp, false, false);
   entered = false;
+
+  // A user function may reset KeyTyped, restore it.
+  KeyTyped = saved_KeyTyped;
 }
 
 static void ui_ext_tabline_update(void)
