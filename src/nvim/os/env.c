@@ -543,7 +543,7 @@ void free_homedir(void)
 /// @see {expand_env}
 char *expand_env_save(char *src)
 {
-  return (char *)expand_env_save_opt((char_u *)src, false);
+  return (char *)expand_env_save_opt(src, false);
 }
 
 /// Similar to expand_env_save() but when "one" is `true` handle the string as
@@ -551,10 +551,10 @@ char *expand_env_save(char *src)
 /// @param src String containing environment variables to expand
 /// @param one Should treat as only one file name
 /// @see {expand_env}
-char_u *expand_env_save_opt(char_u *src, bool one)
+char_u *expand_env_save_opt(char *src, bool one)
 {
   char_u *p = xmalloc(MAXPATHL);
-  expand_env_esc((char *)src, (char *)p, MAXPATHL, false, one, NULL);
+  expand_env_esc(src, (char *)p, MAXPATHL, false, one, NULL);
   return p;
 }
 

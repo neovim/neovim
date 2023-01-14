@@ -1608,10 +1608,10 @@ int do_ucmd(exarg_T *eap, bool preview)
         end = vim_strchr(start + 1, '>');
       }
       if (buf != NULL) {
-        for (ksp = p; *ksp != NUL && (char_u)(*ksp) != K_SPECIAL; ksp++) {}
-        if ((char_u)(*ksp) == K_SPECIAL
+        for (ksp = p; *ksp != NUL && (uint8_t)(*ksp) != K_SPECIAL; ksp++) {}
+        if ((uint8_t)(*ksp) == K_SPECIAL
             && (start == NULL || ksp < start || end == NULL)
-            && ((char_u)ksp[1] == KS_SPECIAL && ksp[2] == KE_FILLER)) {
+            && ((uint8_t)ksp[1] == KS_SPECIAL && ksp[2] == KE_FILLER)) {
           // K_SPECIAL has been put in the buffer as K_SPECIAL
           // KS_SPECIAL KE_FILLER, like for mappings, but
           // do_cmdline() doesn't handle that, so convert it back.

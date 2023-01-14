@@ -1275,7 +1275,7 @@ static int read_sal_section(FILE *fd, slang_T *slang)
 
     // convert the multi-byte strings to wide char strings
     smp->sm_lead_w = mb_str2wide(smp->sm_lead);
-    smp->sm_leadlen = mb_charlen(smp->sm_lead);
+    smp->sm_leadlen = mb_charlen((char *)smp->sm_lead);
     if (smp->sm_oneof == NULL) {
       smp->sm_oneof_w = NULL;
     } else {
@@ -1664,7 +1664,7 @@ static int *mb_str2wide(char_u *s)
 {
   int i = 0;
 
-  int *res = xmalloc(((size_t)mb_charlen(s) + 1) * sizeof(int));
+  int *res = xmalloc(((size_t)mb_charlen((char *)s) + 1) * sizeof(int));
   for (char_u *p = s; *p != NUL;) {
     res[i++] = mb_ptr2char_adv((const char_u **)&p);
   }
@@ -3493,7 +3493,7 @@ static int store_aff_word(spellinfo_T *spin, char *word, char_u *afflist, afffil
               p = (char_u *)word;
               if (ae->ae_chop != NULL) {
                 // Skip chop string.
-                i = mb_charlen((char_u *)ae->ae_chop);
+                i = mb_charlen(ae->ae_chop);
                 for (; i > 0; i--) {
                   MB_PTR_ADV(p);
                 }
@@ -3505,7 +3505,7 @@ static int store_aff_word(spellinfo_T *spin, char *word, char_u *afflist, afffil
               if (ae->ae_chop != NULL) {
                 // Remove chop string.
                 p = (char_u *)newword + strlen(newword);
-                i = mb_charlen((char_u *)ae->ae_chop);
+                i = mb_charlen(ae->ae_chop);
                 for (; i > 0; i--) {
                   MB_PTR_BACK(newword, p);
                 }
@@ -5641,7 +5641,7 @@ void spell_add_word(char *word, int len, SpellAddType what, int idx, bool undo)
       // file.  We may need to create the "spell" directory first.  We
       // already checked the runtime directory is writable in
       // init_spellfile().
-      if (!dir_of_file_exists((char_u *)fname)
+      if (!dir_of_file_exists(fname)
           && (p = (char_u *)path_tail_with_sep(fname)) != (char_u *)fname) {
         int c = *p;
 

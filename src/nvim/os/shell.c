@@ -65,7 +65,7 @@ typedef struct {
 
 static void save_patterns(int num_pat, char **pat, int *num_file, char ***file)
 {
-  *file = xmalloc((size_t)num_pat * sizeof(char_u *));
+  *file = xmalloc((size_t)num_pat * sizeof(char *));
   for (int i = 0; i < num_pat; i++) {
     char *s = xstrdup(pat[i]);
     // Be compatible with expand_filename(): halve the number of
@@ -122,7 +122,7 @@ int os_expand_wildcards(int num_pat, char **pat, int *num_file, char ***file, in
   size_t len;
   char *p;
   bool dir;
-  char_u *extra_shell_arg = NULL;
+  char *extra_shell_arg = NULL;
   ShellOpts shellopts = kShellOptExpand | kShellOptSilent;
   int j;
   char *tempname;
@@ -144,7 +144,7 @@ int os_expand_wildcards(int num_pat, char **pat, int *num_file, char ***file, in
 
   bool is_fish_shell =
 #if defined(UNIX)
-    strncmp((char *)invocation_path_tail((char_u *)p_sh, NULL), "fish", 4) == 0;
+    strncmp((char *)invocation_path_tail(p_sh, NULL), "fish", 4) == 0;
 #else
     false;
 #endif
@@ -337,17 +337,17 @@ int os_expand_wildcards(int num_pat, char **pat, int *num_file, char ***file, in
   // the argument list, otherwise zsh gives an error message and doesn't
   // expand any other pattern.
   if (shell_style == STYLE_PRINT) {
-    extra_shell_arg = (char_u *)"-G";       // Use zsh NULL_GLOB option
+    extra_shell_arg = "-G";       // Use zsh NULL_GLOB option
 
     // If we use -f then shell variables set in .cshrc won't get expanded.
     // vi can do it, so we will too, but it is only necessary if there is a "$"
     // in one of the patterns, otherwise we can still use the fast option.
   } else if (shell_style == STYLE_GLOB && !have_dollars(num_pat, pat)) {
-    extra_shell_arg = (char_u *)"-f";           // Use csh fast option
+    extra_shell_arg = "-f";           // Use csh fast option
   }
 
   // execute the shell command
-  i = call_shell((char_u *)command, shellopts, extra_shell_arg);
+  i = call_shell(command, shellopts, extra_shell_arg);
 
   // When running in the background, give it some time to create the temp
   // file, but don't wait for it to finish.
@@ -488,7 +488,7 @@ int os_expand_wildcards(int num_pat, char **pat, int *num_file, char ***file, in
     goto notfound;
   }
   *num_file = i;
-  *file = xmalloc(sizeof(char_u *) * (size_t)i);
+  *file = xmalloc(sizeof(char *) * (size_t)i);
 
   // Isolate the individual file names.
   p = buffer;
@@ -570,18 +570,18 @@ notfound:
 char **shell_build_argv(const char *cmd, const char *extra_args)
   FUNC_ATTR_NONNULL_RET
 {
-  size_t argc = tokenize((char_u *)p_sh, NULL) + (cmd ? tokenize(p_shcf, NULL) : 0);
+  size_t argc = tokenize(p_sh, NULL) + (cmd ? tokenize((char *)p_shcf, NULL) : 0);
   char **rv = xmalloc((argc + 4) * sizeof(*rv));
 
   // Split 'shell'
-  size_t i = tokenize((char_u *)p_sh, rv);
+  size_t i = tokenize(p_sh, rv);
 
   if (extra_args) {
     rv[i++] = xstrdup(extra_args);        // Push a copy of `extra_args`
   }
 
   if (cmd) {
-    i += tokenize(p_shcf, rv + i);        // Split 'shellcmdflag'
+    i += tokenize((char *)p_shcf, rv + i);        // Split 'shellcmdflag'
     rv[i++] = shell_xescape_xquote(cmd);  // Copy (and escape) `cmd`.
   }
 
@@ -653,7 +653,7 @@ char *shell_argv_to_str(char **const argv)
 /// @param extra_args Extra arguments to the shell, or NULL.
 ///
 /// @return shell command exit code
-int os_call_shell(char_u *cmd, ShellOpts opts, char_u *extra_args)
+int os_call_shell(char *cmd, ShellOpts opts, char *extra_args)
 {
   DynamicBuffer input = DYNAMIC_BUFFER_INIT;
   char *output = NULL, **output_ptr = NULL;
@@ -682,7 +682,7 @@ int os_call_shell(char_u *cmd, ShellOpts opts, char_u *extra_args)
   }
 
   size_t nread;
-  int exitcode = do_os_system(shell_build_argv((char *)cmd, (char *)extra_args),
+  int exitcode = do_os_system(shell_build_argv(cmd, extra_args),
                               input.data, input.len, output_ptr, &nread,
                               emsg_silent, forward_output);
   xfree(input.data);
@@ -708,14 +708,14 @@ int os_call_shell(char_u *cmd, ShellOpts opts, char_u *extra_args)
 /// Invalidates cached tags.
 ///
 /// @return shell command exit code
-int call_shell(char_u *cmd, ShellOpts opts, char_u *extra_shell_arg)
+int call_shell(char *cmd, ShellOpts opts, char *extra_shell_arg)
 {
   int retval;
   proftime_T wait_time;
 
   if (p_verbose > 3) {
     verbose_enter();
-    smsg(_("Executing command: \"%s\""), cmd == NULL ? p_sh : (char *)cmd);
+    smsg(_("Executing command: \"%s\""), cmd == NULL ? p_sh : cmd);
     msg_putchar('\n');
     verbose_leave();
   }
@@ -752,23 +752,23 @@ int call_shell(char_u *cmd, ShellOpts opts, char_u *extra_shell_arg)
 /// @param  ret_len  length of the stdout
 ///
 /// @return an allocated string, or NULL for error.
-char_u *get_cmd_output(char_u *cmd, char_u *infile, ShellOpts flags, size_t *ret_len)
+char *get_cmd_output(char *cmd, char *infile, ShellOpts flags, size_t *ret_len)
 {
-  char_u *buffer = NULL;
+  char *buffer = NULL;
 
   if (check_secure()) {
     return NULL;
   }
 
   // get a name for the temp file
-  char_u *tempname = (char_u *)vim_tempname();
+  char *tempname = vim_tempname();
   if (tempname == NULL) {
     emsg(_(e_notmp));
     return NULL;
   }
 
   // Add the redirection stuff
-  char_u *command = (char_u *)make_filter_cmd((char *)cmd, (char *)infile, (char *)tempname);
+  char *command = make_filter_cmd(cmd, infile, tempname);
 
   // Call the shell to execute the command (errors are ignored).
   // Don't check timestamps here.
@@ -779,7 +779,7 @@ char_u *get_cmd_output(char_u *cmd, char_u *infile, ShellOpts flags, size_t *ret
   xfree(command);
 
   // read the names from the file into memory
-  FILE *fd = os_fopen((char *)tempname, READBIN);
+  FILE *fd = os_fopen(tempname, READBIN);
 
   if (fd == NULL) {
     semsg(_(e_notopen), tempname);
@@ -791,9 +791,9 @@ char_u *get_cmd_output(char_u *cmd, char_u *infile, ShellOpts flags, size_t *ret
   fseek(fd, 0L, SEEK_SET);
 
   buffer = xmalloc(len + 1);
-  size_t i = fread((char *)buffer, 1, len, fd);
+  size_t i = fread(buffer, 1, len, fd);
   fclose(fd);
-  os_remove((char *)tempname);
+  os_remove(tempname);
   if (i != len) {
     semsg(_(e_notread), tempname);
     XFREE_CLEAR(buffer);
@@ -1165,14 +1165,14 @@ static void out_data_cb(Stream *stream, RBuffer *buf, size_t count, void *data, 
 /// @param argv The vector that will be filled with copies of the parsed
 ///        words. It can be NULL if the caller only needs to count words.
 /// @return The number of words parsed.
-static size_t tokenize(const char_u *const str, char **const argv)
+static size_t tokenize(const char *const str, char **const argv)
   FUNC_ATTR_NONNULL_ARG(1)
 {
   size_t argc = 0;
-  const char *p = (const char *)str;
+  const char *p = str;
 
   while (*p != NUL) {
-    const size_t len = word_length((const char_u *)p);
+    const size_t len = word_length(p);
 
     if (argv != NULL) {
       // Fill the slot
@@ -1190,9 +1190,9 @@ static size_t tokenize(const char_u *const str, char **const argv)
 ///
 /// @param str A pointer to the first character of the word
 /// @return The offset from `str` at which the word ends.
-static size_t word_length(const char_u *str)
+static size_t word_length(const char *str)
 {
-  const char_u *p = str;
+  const char *p = str;
   bool inquote = false;
   size_t length = 0;
 
@@ -1223,10 +1223,10 @@ static void read_input(DynamicBuffer *buf)
 {
   size_t written = 0, l = 0, len = 0;
   linenr_T lnum = curbuf->b_op_start.lnum;
-  char_u *lp = (char_u *)ml_get(lnum);
+  char *lp = ml_get(lnum);
 
   for (;;) {
-    l = strlen((char *)lp + written);
+    l = strlen(lp + written);
     if (l == 0) {
       len = 0;
     } else if (lp[written] == NL) {
@@ -1235,7 +1235,7 @@ static void read_input(DynamicBuffer *buf)
       dynamic_buffer_ensure(buf, buf->len + len);
       buf->data[buf->len++] = NUL;
     } else {
-      char_u *s = (char_u *)vim_strchr((char *)lp + written, NL);
+      char *s = vim_strchr(lp + written, NL);
       len = s == NULL ? l : (size_t)(s - (lp + written));
       dynamic_buffer_ensure(buf, buf->len + len);
       memcpy(buf->data + buf->len, lp + written, len);
@@ -1255,7 +1255,7 @@ static void read_input(DynamicBuffer *buf)
       if (lnum > curbuf->b_op_end.lnum) {
         break;
       }
-      lp = (char_u *)ml_get(lnum);
+      lp = ml_get(lnum);
       written = 0;
     } else if (len > 0) {
       written += len;

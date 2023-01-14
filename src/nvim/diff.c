@@ -1171,7 +1171,7 @@ static int diff_file(diffio_T *dio)
                tmp_orig, tmp_new);
   append_redir(cmd, len, p_srr, tmp_diff);
   block_autocmds();  // Avoid ShellCmdPost stuff
-  (void)call_shell((char_u *)cmd,
+  (void)call_shell(cmd,
                    kShellOptFilter | kShellOptSilent | kShellOptDoOut,
                    NULL);
   unblock_autocmds();
@@ -1255,7 +1255,7 @@ void ex_diffpatch(exarg_T *eap)
     vim_snprintf(buf, buflen, "patch -o %s %s < %s",
                  tmp_new, tmp_orig, esc_name);
     block_autocmds();  // Avoid ShellCmdPost stuff
-    (void)call_shell((char_u *)buf, kShellOptFilter, NULL);
+    (void)call_shell(buf, kShellOptFilter, NULL);
     unblock_autocmds();
   }
 

@@ -1586,7 +1586,7 @@ size_t find_ident_at_pos(win_T *wp, linenr_T lnum, colnr_T startcol, char **text
       if ((find_type & FIND_EVAL) && ptr[col] == ']') {
         break;
       }
-      this_class = mb_get_class((char_u *)ptr + col);
+      this_class = mb_get_class(ptr + col);
       if (this_class != 0 && (i == 1 || this_class != 1)) {
         break;
       }
@@ -1601,13 +1601,13 @@ size_t find_ident_at_pos(win_T *wp, linenr_T lnum, colnr_T startcol, char **text
     //
     // Remember class of character under cursor.
     if ((find_type & FIND_EVAL) && ptr[col] == ']') {
-      this_class = mb_get_class((char_u *)"a");
+      this_class = mb_get_class("a");
     } else {
-      this_class = mb_get_class((char_u *)ptr + col);
+      this_class = mb_get_class(ptr + col);
     }
     while (col > 0 && this_class != 0) {
       prevcol = col - 1 - utf_head_off(ptr, ptr + col - 1);
-      prev_class = mb_get_class((char_u *)ptr + prevcol);
+      prev_class = mb_get_class(ptr + prevcol);
       if (this_class != prev_class
           && (i == 0
               || prev_class == 0
@@ -1650,11 +1650,11 @@ size_t find_ident_at_pos(win_T *wp, linenr_T lnum, colnr_T startcol, char **text
   startcol -= col;
   col = 0;
   // Search for point of changing multibyte character class.
-  this_class = mb_get_class((char_u *)ptr);
+  this_class = mb_get_class(ptr);
   while (ptr[col] != NUL  // -V781
          && ((i == 0
-              ? mb_get_class((char_u *)ptr + col) == this_class
-              : mb_get_class((char_u *)ptr + col) != 0)
+              ? mb_get_class(ptr + col) == this_class
+              : mb_get_class(ptr + col) != 0)
              || ((find_type & FIND_EVAL)
                  && col <= (int)startcol
                  && find_is_eval_item((char_u *)ptr + col, &col, &bn, FORWARD)))) {
@@ -2401,7 +2401,7 @@ bool find_decl(char_u *ptr, size_t len, bool locally, bool thisblock, int flags_
 /// @return  true if able to move cursor, false otherwise.
 static bool nv_screengo(oparg_T *oap, int dir, long dist)
 {
-  int linelen = linetabsize((char_u *)get_cursor_line_ptr());
+  int linelen = linetabsize(get_cursor_line_ptr());
   bool retval = true;
   bool atend = false;
   int n;
@@ -2472,7 +2472,7 @@ static bool nv_screengo(oparg_T *oap, int dir, long dist)
           }
           curwin->w_cursor.lnum--;
 
-          linelen = linetabsize((char_u *)get_cursor_line_ptr());
+          linelen = linetabsize(get_cursor_line_ptr());
           if (linelen > width1) {
             int w = (((linelen - width1 - 1) / width2) + 1) * width2;
             assert(curwin->w_curswant <= INT_MAX - w);
@@ -2508,7 +2508,7 @@ static bool nv_screengo(oparg_T *oap, int dir, long dist)
           if (curwin->w_curswant >= width1) {
             curwin->w_curswant -= width2;
           }
-          linelen = linetabsize((char_u *)get_cursor_line_ptr());
+          linelen = linetabsize(get_cursor_line_ptr());
         }
       }
     }
@@ -3549,7 +3549,7 @@ static void nv_ident(cmdarg_T *cap)
   // Execute the command.
   if (cmdchar == '*' || cmdchar == '#') {
     if (!g_cmd
-        && vim_iswordp((char *)mb_prevptr((char_u *)get_cursor_line_ptr(), (char_u *)ptr))) {
+        && vim_iswordp(mb_prevptr(get_cursor_line_ptr(), ptr))) {
       STRCAT(buf, "\\>");
     }
 
@@ -4530,7 +4530,7 @@ static void nv_replace(cmdarg_T *cap)
   // Abort if not enough characters to replace.
   ptr = get_cursor_pos_ptr();
   if (strlen(ptr) < (unsigned)cap->count1
-      || (mb_charlen((char_u *)ptr) < cap->count1)) {
+      || (mb_charlen(ptr) < cap->count1)) {
     clearopbeep(cap->oap);
     return;
   }
@@ -5448,7 +5448,7 @@ static void nv_g_cmd(cmdarg_T *cap)
   case 'M':
     oap->motion_type = kMTCharWise;
     oap->inclusive = false;
-    i = linetabsize((char_u *)get_cursor_line_ptr());
+    i = linetabsize(get_cursor_line_ptr());
     if (cap->count0 > 0 && cap->count0 <= 100) {
       coladvance((colnr_T)(i * cap->count0 / 100));
     } else {

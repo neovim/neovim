@@ -864,7 +864,7 @@ static int do_unlet_var(lval_T *lp, char *name_end, exarg_T *eap, int deep FUNC_
   int cc;
 
   if (lp->ll_tv == NULL) {
-    cc = (char_u)(*name_end);
+    cc = (uint8_t)(*name_end);
     *name_end = NUL;
 
     // Environment variable, normal name or expanded name.

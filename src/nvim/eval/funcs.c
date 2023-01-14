@@ -4962,7 +4962,7 @@ static void f_pathshorten(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     rettv->vval.v_string = NULL;
   } else {
     rettv->vval.v_string = xstrdup(p);
-    shorten_dir_len((char_u *)rettv->vval.v_string, trim_len);
+    shorten_dir_len(rettv->vval.v_string, trim_len);
   }
 }
 
@@ -5965,7 +5965,7 @@ static void f_resolve(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 # endif
 #endif
 
-  simplify_filename((char_u *)rettv->vval.v_string);
+  simplify_filename(rettv->vval.v_string);
 }
 
 /// "reverse({list})" function
@@ -7409,7 +7409,7 @@ static void f_simplify(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
   const char *const p = tv_get_string(&argvars[0]);
   rettv->vval.v_string = xstrdup(p);
-  simplify_filename((char_u *)rettv->vval.v_string);  // Simplify in place.
+  simplify_filename(rettv->vval.v_string);  // Simplify in place.
   rettv->v_type = VAR_STRING;
 }
 

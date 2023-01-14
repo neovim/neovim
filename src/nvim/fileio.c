@@ -488,7 +488,7 @@ int readfile(char *fname, char *sfname, linenr_T from, linenr_T lines_to_skip,
         }
       }
       if (!silent) {
-        if (dir_of_file_exists((char_u *)fname)) {
+        if (dir_of_file_exists(fname)) {
           filemess(curbuf, sfname, new_file_message(), 0);
         } else {
           filemess(curbuf, sfname, _("[New DIRECTORY]"), 0);

@@ -108,7 +108,7 @@ int plines_win_nofold(win_T *wp, linenr_T lnum)
   if (*s == NUL) {  // empty line
     return 1;
   }
-  col = win_linetabsize(wp, lnum, (char_u *)s, MAXCOL);
+  col = win_linetabsize(wp, lnum, s, MAXCOL);
 
   // If list mode is on, then the '$' at the end of the line may take up one
   // extra column.
@@ -146,12 +146,12 @@ int plines_win_col(win_T *wp, linenr_T lnum, long column)
     return lines + 1;
   }
 
-  char_u *line = (char_u *)ml_get_buf(wp->w_buffer, lnum, false);
+  char *line = ml_get_buf(wp->w_buffer, lnum, false);
 
   colnr_T col = 0;
   chartabsize_T cts;
 
-  init_chartabsize_arg(&cts, wp, lnum, 0, (char *)line, (char *)line);
+  init_chartabsize_arg(&cts, wp, lnum, 0, line, line);
   while (*cts.cts_ptr != NUL && --column >= 0) {
     cts.cts_vcol += win_lbr_chartabsize(&cts, NULL);
     MB_PTR_ADV(cts.cts_ptr);
@@ -244,9 +244,9 @@ int win_chartabsize(win_T *wp, char *p, colnr_T col)
 /// @param s
 ///
 /// @return Number of characters the string will take on the screen.
-int linetabsize(char_u *s)
+int linetabsize(char *s)
 {
-  return linetabsize_col(0, (char *)s);
+  return linetabsize_col(0, s);
 }
 
 /// Like linetabsize(), but "s" starts at column "startcol".
@@ -273,11 +273,11 @@ int linetabsize_col(int startcol, char *s)
 /// @param len
 ///
 /// @return Number of characters the string will take on the screen.
-unsigned int win_linetabsize(win_T *wp, linenr_T lnum, char_u *line, colnr_T len)
+unsigned int win_linetabsize(win_T *wp, linenr_T lnum, char *line, colnr_T len)
 {
   chartabsize_T cts;
-  init_chartabsize_arg(&cts, wp, lnum, 0, (char *)line, (char *)line);
-  for (; *cts.cts_ptr != NUL && (len == MAXCOL || cts.cts_ptr < (char *)line + len);
+  init_chartabsize_arg(&cts, wp, lnum, 0, line, line);
+  for (; *cts.cts_ptr != NUL && (len == MAXCOL || cts.cts_ptr < line + len);
        MB_PTR_ADV(cts.cts_ptr)) {
     cts.cts_vcol += win_lbr_chartabsize(&cts, NULL);
   }
@@ -354,7 +354,7 @@ int win_lbr_chartabsize(chartabsize_T *cts, int *headp)
 {
   win_T *wp = cts->cts_win;
   char *line = cts->cts_line;  // start of the line
-  char_u *s = (char_u *)cts->cts_ptr;
+  char *s = cts->cts_ptr;
   colnr_T vcol = cts->cts_vcol;
 
   colnr_T col2;
@@ -363,7 +363,7 @@ int win_lbr_chartabsize(chartabsize_T *cts, int *headp)
   int added;
   int mb_added = 0;
   int numberextra;
-  char_u *ps;
+  char *ps;
   int n;
 
   cts->cts_cur_text_width = 0;
@@ -374,16 +374,16 @@ int win_lbr_chartabsize(chartabsize_T *cts, int *headp)
     if (wp->w_p_wrap) {
       return win_nolbr_chartabsize(cts, headp);
     }
-    return win_chartabsize(wp, (char *)s, vcol);
+    return win_chartabsize(wp, s, vcol);
   }
 
   // First get normal size, without 'linebreak' or virtual text
-  int size = win_chartabsize(wp, (char *)s, vcol);
+  int size = win_chartabsize(wp, s, vcol);
   if (cts->cts_has_virt_text) {
     // TODO(bfredl): inline virtual text
   }
 
-  int c = *s;
+  int c = (uint8_t)(*s);
   if (*s == TAB) {
     col_adj = size - 1;
   }
@@ -392,7 +392,7 @@ int win_lbr_chartabsize(chartabsize_T *cts, int *headp)
   // needs a break here
   if (wp->w_p_lbr
       && vim_isbreak(c)
-      && !vim_isbreak((int)s[1])
+      && !vim_isbreak((uint8_t)s[1])
       && wp->w_p_wrap
       && (wp->w_width_inner != 0)) {
     // Count all characters from first non-blank after a blank up to next
@@ -413,14 +413,14 @@ int win_lbr_chartabsize(chartabsize_T *cts, int *headp)
     for (;;) {
       ps = s;
       MB_PTR_ADV(s);
-      c = *s;
+      c = (uint8_t)(*s);
 
       if (!(c != NUL
-            && (vim_isbreak(c) || col2 == vcol || !vim_isbreak((int)(*ps))))) {
+            && (vim_isbreak(c) || col2 == vcol || !vim_isbreak((uint8_t)(*ps))))) {
         break;
       }
 
-      col2 += win_chartabsize(wp, (char *)s, col2);
+      col2 += win_chartabsize(wp, s, col2);
 
       if (col2 >= colmax) {  // doesn't fit
         size = colmax - vcol + col_adj;
@@ -428,7 +428,7 @@ int win_lbr_chartabsize(chartabsize_T *cts, int *headp)
       }
     }
   } else if ((size == 2)
-             && (MB_BYTE2LEN(*s) > 1)
+             && (MB_BYTE2LEN((uint8_t)(*s)) > 1)
              && wp->w_p_wrap
              && in_win_border(wp, vcol)) {
     // Count the ">" in the last column.
@@ -456,7 +456,7 @@ int win_lbr_chartabsize(chartabsize_T *cts, int *headp)
         vcol %= numberextra;
       }
       if (*sbr != NUL) {
-        sbrlen = (colnr_T)mb_charlen((char_u *)sbr);
+        sbrlen = (colnr_T)mb_charlen(sbr);
         if (vcol >= sbrlen) {
           vcol -= sbrlen;
         }
@@ -492,7 +492,7 @@ int win_lbr_chartabsize(chartabsize_T *cts, int *headp)
       }
 
       if (wp->w_p_bri) {
-        added += get_breakindent_win(wp, (char_u *)line);
+        added += get_breakindent_win(wp, line);
       }
 
       size += added;

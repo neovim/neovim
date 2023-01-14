@@ -915,7 +915,7 @@ static void show_one_mark(int c, char *arg, pos_T *p, char *name_arg, int curren
 // ":delmarks[!] [marks]"
 void ex_delmarks(exarg_T *eap)
 {
-  char_u *p;
+  char *p;
   int from, to;
   int i;
   int lower;
@@ -931,14 +931,14 @@ void ex_delmarks(exarg_T *eap)
     emsg(_(e_argreq));
   } else {
     // clear specified marks only
-    for (p = (char_u *)eap->arg; *p != NUL; p++) {
+    for (p = eap->arg; *p != NUL; p++) {
       lower = ASCII_ISLOWER(*p);
       digit = ascii_isdigit(*p);
       if (lower || digit || ASCII_ISUPPER(*p)) {
         if (p[1] == '-') {
           // clear range of marks
-          from = *p;
-          to = p[2];
+          from = (uint8_t)(*p);
+          to = (uint8_t)p[2];
           if (!(lower ? ASCII_ISLOWER(p[2])
                 : (digit ? ascii_isdigit(p[2])
                    : ASCII_ISUPPER(p[2])))
@@ -949,7 +949,7 @@ void ex_delmarks(exarg_T *eap)
           p += 2;
         } else {
           // clear one lower case mark
-          from = to = *p;
+          from = to = (uint8_t)(*p);
         }
 
         for (i = from; i <= to; i++) {

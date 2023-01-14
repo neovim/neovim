@@ -2075,7 +2075,7 @@ static int qf_get_fnum(qf_list_T *qfl, char *directory, char *fname)
   }
   slash_adjust(fname);
 #endif
-  if (directory != NULL && !vim_isAbsName((char_u *)fname)) {
+  if (directory != NULL && !vim_isAbsName(fname)) {
     ptr = concat_fnames(directory, fname, true);
     // Here we check if the file really exists.
     // This should normally be true, but if make works without
@@ -2128,7 +2128,7 @@ static char *qf_push_dir(char *dirbuf, struct dir_stack_T **stackptr, bool is_fi
   *stackptr = ds_new;
 
   // store directory on the stack
-  if (vim_isAbsName((char_u *)dirbuf)
+  if (vim_isAbsName(dirbuf)
       || (*stackptr)->next == NULL
       || is_file_stack) {
     (*stackptr)->dirname = xstrdup(dirbuf);
@@ -5374,7 +5374,7 @@ static int vgr_process_files(win_T *wp, qf_info_T *qi, vgr_args_T *cmd_args, boo
 
   time_t seconds = (time_t)0;
   for (int fi = 0; fi < cmd_args->fcount && !got_int && cmd_args->tomatch > 0; fi++) {
-    char *fname = (char *)path_try_shorten_fname((char_u *)cmd_args->fnames[fi]);
+    char *fname = path_try_shorten_fname(cmd_args->fnames[fi]);
     if (time(NULL) > seconds) {
       // Display the file name every second or so, show the user we are
       // working on it.

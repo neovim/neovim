@@ -115,7 +115,7 @@ static int coladvance2(pos_T *pos, bool addspaces, bool finetune, colnr_T wcol_a
     col = wcol;
 
     if ((addspaces || finetune) && !VIsual_active) {
-      curwin->w_curswant = linetabsize((char_u *)line) + one_more;
+      curwin->w_curswant = linetabsize(line) + one_more;
       if (curwin->w_curswant > 0) {
         curwin->w_curswant--;
       }
@@ -129,7 +129,7 @@ static int coladvance2(pos_T *pos, bool addspaces, bool finetune, colnr_T wcol_a
         && curwin->w_width_inner != 0
         && wcol >= (colnr_T)width
         && width > 0) {
-      csize = linetabsize((char_u *)line);
+      csize = linetabsize(line);
       if (csize > 0) {
         csize--;
       }
@@ -178,11 +178,11 @@ static int coladvance2(pos_T *pos, bool addspaces, bool finetune, colnr_T wcol_a
         int correct = wcol - col;
         size_t newline_size;
         STRICT_ADD(idx, correct, &newline_size, size_t);
-        char_u *newline = xmallocz(newline_size);
+        char *newline = xmallocz(newline_size);
         memcpy(newline, line, (size_t)idx);
         memset(newline + idx, ' ', (size_t)correct);
 
-        ml_replace(pos->lnum, (char *)newline, false);
+        ml_replace(pos->lnum, newline, false);
         inserted_bytes(pos->lnum, (colnr_T)idx, 0, correct);
         idx += correct;
         col = wcol;
@@ -190,7 +190,7 @@ static int coladvance2(pos_T *pos, bool addspaces, bool finetune, colnr_T wcol_a
         // Break a tab
         int linelen = (int)strlen(line);
         int correct = wcol - col - csize + 1;             // negative!!
-        char_u *newline;
+        char *newline;
 
         if (-correct > csize) {
           return FAIL;
@@ -208,7 +208,7 @@ static int coladvance2(pos_T *pos, bool addspaces, bool finetune, colnr_T wcol_a
         STRICT_SUB(n, 1, &n, size_t);
         memcpy(newline + idx + csize, line + idx + 1, n);
 
-        ml_replace(pos->lnum, (char *)newline, false);
+        ml_replace(pos->lnum, newline, false);
         inserted_bytes(pos->lnum, idx, 1, csize);
         idx += (csize - 1 + correct);
         col += correct;

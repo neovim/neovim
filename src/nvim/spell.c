@@ -2415,7 +2415,7 @@ bool spell_iswordp(const char_u *p, const win_T *wp)
 
   int c = utf_ptr2char((char *)s);
   if (c > 255) {
-    return spell_mb_isword_class(mb_get_class(s), wp);
+    return spell_mb_isword_class(mb_get_class((char *)s), wp);
   }
   return spelltab.st_isw[c];
 }
@@ -2426,7 +2426,7 @@ bool spell_iswordp_nmw(const char_u *p, win_T *wp)
 {
   int c = utf_ptr2char((char *)p);
   if (c > 255) {
-    return spell_mb_isword_class(mb_get_class(p), wp);
+    return spell_mb_isword_class(mb_get_class((char *)p), wp);
   }
   return spelltab.st_isw[c];
 }
@@ -3421,7 +3421,7 @@ static void dump_word(slang_T *slang, char *word, char *pat, Direction *dir, int
   } else if (((dumpflags & DUMPFLAG_ICASE)
               ? mb_strnicmp(p, pat, strlen(pat)) == 0
               : strncmp(p, pat, strlen(pat)) == 0)
-             && ins_compl_add_infercase((char_u *)p, (int)strlen(p),
+             && ins_compl_add_infercase(p, (int)strlen(p),
                                         p_ic, NULL, *dir, false) == OK) {
     // if dir was BACKWARD then honor it just once
     *dir = FORWARD;
@@ -3584,11 +3584,11 @@ void spell_expand_check_cap(colnr_T col)
 // Used for Insert mode completion CTRL-X ?.
 // Returns the number of matches.  The matches are in "matchp[]", array of
 // allocated strings.
-int expand_spelling(linenr_T lnum, char_u *pat, char ***matchp)
+int expand_spelling(linenr_T lnum, char *pat, char ***matchp)
 {
   garray_T ga;
 
-  spell_suggest_list(&ga, pat, 100, spell_expand_need_cap, true);
+  spell_suggest_list(&ga, (char_u *)pat, 100, spell_expand_need_cap, true);
   *matchp = ga.ga_data;
   return ga.ga_len;
 }

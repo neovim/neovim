@@ -195,7 +195,7 @@ static void insert_enter(InsertState *s)
     }
   }
 
-  Insstart_textlen = (colnr_T)linetabsize((char_u *)get_cursor_line_ptr());
+  Insstart_textlen = (colnr_T)linetabsize(get_cursor_line_ptr());
   Insstart_blank_vcol = MAXCOL;
 
   if (!did_ai) {
@@ -1442,7 +1442,7 @@ void edit_putchar(int c, bool highlight)
 
     // save the character to be able to put it back
     if (pc_status == PC_STATUS_UNSET) {
-      grid_getbytes(&curwin->w_grid, pc_row, pc_col, pc_bytes, &pc_attr);
+      grid_getbytes(&curwin->w_grid, pc_row, pc_col, (char *)pc_bytes, &pc_attr);
       pc_status = PC_STATUS_SET;
     }
     grid_putchar(&curwin->w_grid, c, pc_row, pc_col, attr);
@@ -2261,7 +2261,7 @@ int stop_arrow(void)
       // right, except when nothing was inserted yet.
       update_Insstart_orig = false;
     }
-    Insstart_textlen = (colnr_T)linetabsize((char_u *)get_cursor_line_ptr());
+    Insstart_textlen = (colnr_T)linetabsize(get_cursor_line_ptr());
 
     if (u_save_cursor() == OK) {
       arrow_used = false;
@@ -3166,7 +3166,7 @@ bool in_cinkeys(int keytyped, int when, bool line_is_empty)
           // search back for the start of a word.
           line = get_cursor_line_ptr();
           for (s = line + curwin->w_cursor.col; s > line; s = n) {
-            n = (char *)mb_prevptr((char_u *)line, (char_u *)s);
+            n = mb_prevptr(line, s);
             if (!vim_iswordp(n)) {
               break;
             }
@@ -4003,7 +4003,7 @@ static bool ins_bs(int c, int mode, int *inserted_space_p)
       // Delete up to starting point, start of line or previous word.
       int prev_cclass = 0;
 
-      int cclass = mb_get_class((char_u *)get_cursor_pos_ptr());
+      int cclass = mb_get_class(get_cursor_pos_ptr());
       do {
         if (!revins_on) {   // put cursor on char to be deleted
           dec_cursor();
@@ -4011,7 +4011,7 @@ static bool ins_bs(int c, int mode, int *inserted_space_p)
         cc = gchar_cursor();
         // look multi-byte character class
         prev_cclass = cclass;
-        cclass = mb_get_class((char_u *)get_cursor_pos_ptr());
+        cclass = mb_get_class(get_cursor_pos_ptr());
         if (mode == BACKSPACE_WORD && !ascii_isspace(cc)) {   // start of word?
           mode = BACKSPACE_WORD_NOT_SPACE;
           temp = vim_iswordc(cc);

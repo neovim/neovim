@@ -417,7 +417,7 @@ static void get_statuscol_str(win_T *wp, linenr_T lnum, int row, int startrow, i
                      : get_line_number_attr(wp, lnum, row, startrow, filler_lines);
 
     if (compute_foldcolumn(wp, 0)) {
-      size_t n = fill_foldcolumn((char_u *)stcp->fold_text, wp, foldinfo, lnum);
+      size_t n = fill_foldcolumn(stcp->fold_text, wp, foldinfo, lnum);
       stcp->fold_text[n] = NUL;
       stcp->fold_attr = win_hl_attr(wp, use_cul ? HLF_CLF : HLF_FC);
     }
@@ -1239,7 +1239,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
           // already be in use.
           xfree(p_extra_free);
           p_extra_free = xmalloc(MAX_MCO * (size_t)fdc + 1);
-          n_extra = (int)fill_foldcolumn((char_u *)p_extra_free, wp, foldinfo, lnum);
+          n_extra = (int)fill_foldcolumn(p_extra_free, wp, foldinfo, lnum);
           p_extra_free[n_extra] = NUL;
           p_extra = p_extra_free;
           c_extra = NUL;
@@ -1366,7 +1366,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
           c_extra = ' ';
           c_final = NUL;
           n_extra =
-            get_breakindent_win(wp, (char_u *)ml_get_buf(wp->w_buffer, lnum, false));
+            get_breakindent_win(wp, ml_get_buf(wp->w_buffer, lnum, false));
           if (row == startrow) {
             n_extra -= win_col_off2(wp);
             if (n_extra < 0) {
@@ -1424,7 +1424,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
           if (wp->w_skipcol == 0 || !wp->w_p_wrap) {
             need_showbreak = false;
           }
-          vcol_sbr = vcol + mb_charlen((char_u *)sbr);
+          vcol_sbr = vcol + mb_charlen(sbr);
           // Correct end of highlighted area for 'showbreak',
           // required when 'linebreak' is also set.
           if (tocol == vcol) {
@@ -1960,7 +1960,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
           // We have just drawn the showbreak value, no need to add
           // space for it again.
           if (vcol == vcol_sbr) {
-            n_extra -= mb_charlen(get_showbreak_value(wp));
+            n_extra -= mb_charlen((char *)get_showbreak_value(wp));
             if (n_extra < 0) {
               n_extra = 0;
             }
@@ -2061,7 +2061,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
           // Only adjust the tab_len, when at the first column after the
           // showbreak value was drawn.
           if (*sbr != NUL && vcol == vcol_sbr && wp->w_p_wrap) {
-            vcol_adjusted = vcol - mb_charlen(sbr);
+            vcol_adjusted = vcol - mb_charlen((char *)sbr);
           }
           // tab amount depends on current column
           tab_len = tabstop_padding((colnr_T)vcol_adjusted,
