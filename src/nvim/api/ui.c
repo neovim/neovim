@@ -13,7 +13,11 @@
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/api/ui.h"
+#include "nvim/autocmd.h"
 #include "nvim/channel.h"
+#include "nvim/event/loop.h"
+#include "nvim/event/wstream.h"
+#include "nvim/globals.h"
 #include "nvim/grid.h"
 #include "nvim/highlight.h"
 #include "nvim/main.h"
@@ -27,13 +31,12 @@
 #include "nvim/types.h"
 #include "nvim/ui.h"
 #include "nvim/vim.h"
-#include "nvim/window.h"
 
 #define BUF_POS(data) ((size_t)((data)->buf_wptr - (data)->buf))
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "api/ui.c.generated.h"
-# include "ui_events_remote.generated.h"
+# include "ui_events_remote.generated.h"  // IWYU pragma: export
 #endif
 
 static PMap(uint64_t) connected_uis = MAP_INIT;

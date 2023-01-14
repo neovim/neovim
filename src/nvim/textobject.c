@@ -4,6 +4,7 @@
 // textobject.c: functions for text objects
 
 #include <stdbool.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -28,7 +29,6 @@
 #include "nvim/search.h"
 #include "nvim/strings.h"
 #include "nvim/textobject.h"
-#include "nvim/types.h"
 #include "nvim/vim.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS

@@ -24,7 +24,6 @@
 #include "nvim/highlight_group.h"
 #include "nvim/log.h"
 #include "nvim/macros.h"
-#include "nvim/map.h"
 #include "nvim/memory.h"
 #include "nvim/message.h"
 #include "nvim/option_defs.h"

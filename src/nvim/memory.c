@@ -31,7 +31,6 @@
 #include "nvim/message.h"
 #include "nvim/sign.h"
 #include "nvim/ui.h"
-#include "nvim/ui_compositor.h"
 #include "nvim/usercmd.h"
 #include "nvim/vim.h"
 

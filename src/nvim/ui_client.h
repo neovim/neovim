@@ -1,11 +1,14 @@
 #ifndef NVIM_UI_CLIENT_H
 #define NVIM_UI_CLIENT_H
 
+#include <stdbool.h>
 #include <stddef.h>
+#include <stdint.h>
 
 #include "nvim/api/private/defs.h"
 #include "nvim/grid_defs.h"
 #include "nvim/macros.h"
+#include "nvim/types.h"
 
 typedef struct {
   const char *name;
@@ -35,10 +38,11 @@ EXTERN TriState ui_client_bg_respose INIT(= kNone);
 EXTERN bool ui_client_forward_stdin INIT(= false);
 
 #define UI_CLIENT_STDIN_FD 3
+// uncrustify:off
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "ui_client.h.generated.h"
-
 # include "ui_events_client.h.generated.h"
 #endif
+// uncrustify:on
 
 #endif  // NVIM_UI_CLIENT_H

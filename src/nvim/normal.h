@@ -4,6 +4,7 @@
 #include <stdbool.h>
 
 #include "nvim/buffer_defs.h"
+#include "nvim/macros.h"
 #include "nvim/pos.h"
 
 // Values for find_ident_under_cursor()

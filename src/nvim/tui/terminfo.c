@@ -7,12 +7,12 @@
 #include <string.h>
 #include <unibilium.h>
 
+#include "klib/kvec.h"
+#include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"
+#include "nvim/ascii.h"
 #include "nvim/charset.h"
-#include "nvim/globals.h"
 #include "nvim/memory.h"
-#include "nvim/message.h"
-#include "nvim/option.h"
 #include "nvim/strings.h"
 #include "nvim/tui/terminfo.h"
 #include "nvim/tui/terminfo_defs.h"

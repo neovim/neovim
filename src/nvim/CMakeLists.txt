@@ -85,7 +85,7 @@ if(ENABLE_IWYU)
   string(APPEND iwyu_flags "-Xiwyu;--mapping_file=${PROJECT_SOURCE_DIR}/cmake.config/iwyu/gcc.symbols.imp")
 
   set_target_properties(nvim PROPERTIES C_INCLUDE_WHAT_YOU_USE "${iwyu_flags}")
-  target_compile_definitions(nvim PRIVATE EXITFREE)
+  target_compile_definitions(main_lib INTERFACE EXITFREE)
 endif()
 
 if(MSVC)

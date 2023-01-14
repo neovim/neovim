@@ -21,7 +21,6 @@
 #include "nvim/decoration_provider.h"
 #include "nvim/diff.h"
 #include "nvim/drawline.h"
-#include "nvim/eval.h"
 #include "nvim/extmark_defs.h"
 #include "nvim/fold.h"
 #include "nvim/garray.h"
