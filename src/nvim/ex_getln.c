@@ -1225,6 +1225,8 @@ static int command_line_execute(VimState *state, int key)
   }
 
   if (cmdline_pum_active() || s->did_wild_list) {
+    // Ctrl-Y: Accept the current selection and close the popup menu.
+    // Ctrl-E: cancel the cmdline popup menu and return the original text.
     if (s->c == Ctrl_E || s->c == Ctrl_Y) {
       const int wild_type = (s->c == Ctrl_E) ? WILD_CANCEL : WILD_APPLY;
       (void)nextwild(&s->xpc, wild_type, WILD_NO_BEEP, s->firstc != '@');
