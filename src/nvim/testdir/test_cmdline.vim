@@ -2331,6 +2331,11 @@ func Test_wildmenu_pum()
       set tabline=%!MyTabLine()
       set showtabline=2
     endfunc
+
+    func DoFeedKeys()
+      let &wildcharm = char2nr("\t")
+      call feedkeys(":edit $VIMRUNTIME/\<Tab>\<Left>\<C-U>ab\<Tab>")
+    endfunc
   [CODE]
   call writefile(commands, 'Xtest')
 
@@ -2527,6 +2532,12 @@ func Test_wildmenu_pum()
   call term_sendkeys(buf, ":si\<Tab>")
   call term_sendkeys(buf, "\<Esc>")
   call VerifyScreenDump(buf, 'Test_wildmenu_pum_40', {})
+
+  " popup is cleared also when 'lazyredraw' is set
+  call term_sendkeys(buf, ":set showtabline=1 laststatus=1 lazyredraw\<CR>")
+  call term_sendkeys(buf, ":call DoFeedKeys()\<CR>")
+  call VerifyScreenDump(buf, 'Test_wildmenu_pum_41', {})
+  call term_sendkeys(buf, "\<Esc>")
 
   call term_sendkeys(buf, "\<C-U>\<CR>")
   call StopVimInTerminal(buf)
