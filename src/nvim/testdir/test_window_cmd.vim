@@ -1761,6 +1761,8 @@ function Test_splitkeep_callback()
 
   call term_sendkeys(buf, ":quit\<CR>Gt")
   call VerifyScreenDump(buf, 'Test_splitkeep_callback_4', {})
+
+  call StopVimInTerminal(buf)
 endfunc
 
 function Test_splitkeep_fold()
@@ -1791,6 +1793,8 @@ function Test_splitkeep_fold()
 
   call term_sendkeys(buf, ":wincmd k\<CR>:quit\<CR>")
   call VerifyScreenDump(buf, 'Test_splitkeep_fold_4', {})
+
+  call StopVimInTerminal(buf)
 endfunction
 
 function Test_splitkeep_status()
@@ -1809,6 +1813,8 @@ function Test_splitkeep_status()
 
   call term_sendkeys(buf, ":call win_move_statusline(win, 1)\<CR>")
   call VerifyScreenDump(buf, 'Test_splitkeep_status_1', {})
+
+  call StopVimInTerminal(buf)
 endfunction
 
 function Test_new_help_window_on_error()

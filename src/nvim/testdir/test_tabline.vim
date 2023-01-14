@@ -167,19 +167,41 @@ func Test_tabline_showcmd()
   CheckScreendump
 
   let lines =<< trim END
+    func MyTabLine()
+      return '%S'
+    endfunc
+
     set showtabline=2
+    set tabline=%!MyTabLine()
     set showcmdloc=tabline
     call setline(1, ['a', 'b', 'c'])
+    set foldopen+=jump
+    1,2fold
+    3
   END
   call writefile(lines, 'XTest_tabline', 'D')
 
   let buf = RunVimInTerminal('-S XTest_tabline', {'rows': 6})
 
-  call feedkeys("\<C-V>Gl", "xt")
+  call term_sendkeys(buf, "g")
   call VerifyScreenDump(buf, 'Test_tabline_showcmd_1', {})
 
-  call feedkeys("\<Esc>1234", "xt")
+  " typing "gg" should open the fold
+  call term_sendkeys(buf, "g")
   call VerifyScreenDump(buf, 'Test_tabline_showcmd_2', {})
+
+  call term_sendkeys(buf, "\<C-V>Gl")
+  call VerifyScreenDump(buf, 'Test_tabline_showcmd_3', {})
+
+  call term_sendkeys(buf, "\<Esc>1234")
+  call VerifyScreenDump(buf, 'Test_tabline_showcmd_4', {})
+
+  call term_sendkeys(buf, "\<Esc>:set tabline=\<CR>")
+  call term_sendkeys(buf, ":\<CR>")
+  call term_sendkeys(buf, "1234")
+  call VerifyScreenDump(buf, 'Test_tabline_showcmd_5', {})
+
+  call StopVimInTerminal(buf)
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab
