@@ -2206,7 +2206,8 @@ func Test_wildmenu_dirstack()
 endfunc
 
 " Test for recalling newer or older cmdline from history with <Up>, <Down>,
-" <S-Up>, <S-Down>, <PageUp>, <PageDown>, <C-p>, or <C-n>.
+" <S-Up>, <S-Down>, <PageUp>, <PageDown>, <kPageUp>, <kPageDown>, <C-p>, or
+" <C-n>.
 func Test_recalling_cmdline()
   CheckFeature cmdline_hist
 
@@ -2214,17 +2215,18 @@ func Test_recalling_cmdline()
   cnoremap <Plug>(save-cmdline) <Cmd>let g:cmdlines += [getcmdline()]<CR>
 
   let histories = [
-  \  {'name': 'cmd',    'enter': ':',                    'exit': "\<Esc>"},
-  \  {'name': 'search', 'enter': '/',                    'exit': "\<Esc>"},
-  \  {'name': 'expr',   'enter': ":\<C-r>=",             'exit': "\<Esc>\<Esc>"},
-  \  {'name': 'input',  'enter': ":call input('')\<CR>", 'exit': "\<CR>"},
+  \  #{name: 'cmd',    enter: ':',                    exit: "\<Esc>"},
+  \  #{name: 'search', enter: '/',                    exit: "\<Esc>"},
+  \  #{name: 'expr',   enter: ":\<C-r>=",             exit: "\<Esc>\<Esc>"},
+  \  #{name: 'input',  enter: ":call input('')\<CR>", exit: "\<CR>"},
   "\ TODO: {'name': 'debug', ...}
   \]
   let keypairs = [
-  \  {'older': "\<Up>",     'newer': "\<Down>",     'prefixmatch': v:true},
-  \  {'older': "\<S-Up>",   'newer': "\<S-Down>",   'prefixmatch': v:false},
-  \  {'older': "\<PageUp>", 'newer': "\<PageDown>", 'prefixmatch': v:false},
-  \  {'older': "\<C-p>",    'newer': "\<C-n>",      'prefixmatch': v:false},
+  \  #{older: "\<Up>",     newer: "\<Down>",     prefixmatch: v:true},
+  \  #{older: "\<S-Up>",   newer: "\<S-Down>",   prefixmatch: v:false},
+  \  #{older: "\<PageUp>", newer: "\<PageDown>", prefixmatch: v:false},
+  \  #{older: "\<kPageUp>", newer: "\<kPageDown>", prefixmatch: v:false},
+  \  #{older: "\<C-p>",    newer: "\<C-n>",      prefixmatch: v:false},
   \]
   let prefix = 'vi'
   for h in histories
