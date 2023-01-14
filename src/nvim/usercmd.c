@@ -25,8 +25,10 @@
 #include "nvim/keycodes.h"
 #include "nvim/lua/executor.h"
 #include "nvim/macros.h"
+#include "nvim/mapping.h"
 #include "nvim/mbyte.h"
 #include "nvim/memory.h"
+#include "nvim/menu.h"
 #include "nvim/message.h"
 #include "nvim/option_defs.h"
 #include "nvim/os/input.h"
@@ -220,6 +222,7 @@ char *find_ucmd(exarg_T *eap, char *p, int *full, expand_T *xp, int *complp)
   return p;
 }
 
+/// Set completion context for :command
 const char *set_context_in_user_cmd(expand_T *xp, const char *arg_in)
 {
   const char *arg = arg_in;
@@ -269,6 +272,47 @@ const char *set_context_in_user_cmd(expand_T *xp, const char *arg_in)
 
   // And finally comes a normal command.
   return (const char *)skipwhite(p);
+}
+
+/// Set the completion context for the argument of a user defined command.
+const char *set_context_in_user_cmdarg(const char *cmd FUNC_ATTR_UNUSED, const char *arg,
+                                       uint32_t argt, int context, expand_T *xp, bool forceit)
+{
+  if (context == EXPAND_NOTHING) {
+    return NULL;
+  }
+
+  if (argt & EX_XFILE) {
+    // EX_XFILE: file names are handled above.
+    xp->xp_context = context;
+    return NULL;
+  }
+
+  if (context == EXPAND_MENUS) {
+    return (const char *)set_context_in_menu_cmd(xp, cmd, (char *)arg, forceit);
+  }
+  if (context == EXPAND_COMMANDS) {
+    return arg;
+  }
+  if (context == EXPAND_MAPPINGS) {
+    return (const char *)set_context_in_map_cmd(xp, "map", (char *)arg, forceit, false, false,
+                                                CMD_map);
+  }
+  // Find start of last argument.
+  const char *p = arg;
+  while (*p) {
+    if (*p == ' ') {
+      // argument starts after a space
+      arg = p + 1;
+    } else if (*p == '\\' && *(p + 1) != NUL) {
+      p++;  // skip over escaped character
+    }
+    MB_PTR_ADV(p);
+  }
+  xp->xp_pattern = (char *)arg;
+  xp->xp_context = context;
+
+  return NULL;
 }
 
 char *expand_user_command_name(int idx)
