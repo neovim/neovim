@@ -354,6 +354,14 @@ func Test_CmdCompletion()
   call feedkeys(":com -complete=co\<C-A>\<C-B>\"\<CR>", 'tx')
   call assert_equal('"com -complete=color command compiler', @:)
 
+  " try completion for unsupported argument values
+  call feedkeys(":com -newarg=\<Tab>\<C-B>\"\<CR>", 'tx')
+  call assert_equal("\"com -newarg=\t", @:)
+
+  " command completion after the name in a user defined command
+  call feedkeys(":com MyCmd chist\<Tab>\<C-B>\"\<CR>", 'tx')
+  call assert_equal("\"com MyCmd chistory", @:)
+
   command! DoCmd1 :
   command! DoCmd2 :
   call feedkeys(":com \<C-A>\<C-B>\"\<CR>", 'tx')
@@ -364,6 +372,10 @@ func Test_CmdCompletion()
 
   call feedkeys(":delcom DoC\<C-A>\<C-B>\"\<CR>", 'tx')
   call assert_equal('"delcom DoCmd1 DoCmd2', @:)
+
+  " try argument completion for a command without completion
+  call feedkeys(":DoCmd1 \<Tab>\<C-B>\"\<CR>", 'tx')
+  call assert_equal("\"DoCmd1 \t", @:)
 
   delcom DoCmd1
   call feedkeys(":delcom DoC\<C-A>\<C-B>\"\<CR>", 'tx')
@@ -382,6 +394,21 @@ func Test_CmdCompletion()
   com! -nargs=1 -complete=behave DoCmd :
   call feedkeys(":DoCmd \<C-A>\<C-B>\"\<CR>", 'tx')
   call assert_equal('"DoCmd mswin xterm', @:)
+
+  " Test for file name completion
+  com! -nargs=1 -complete=file DoCmd :
+  call feedkeys(":DoCmd READM\<Tab>\<C-B>\"\<CR>", 'tx')
+  call assert_equal('"DoCmd README.txt', @:)
+
+  " Test for buffer name completion
+  com! -nargs=1 -complete=buffer DoCmd :
+  let bnum = bufadd('BufForUserCmd')
+  call setbufvar(bnum, '&buflisted', 1)
+  call feedkeys(":DoCmd BufFor\<Tab>\<C-B>\"\<CR>", 'tx')
+  call assert_equal('"DoCmd BufForUserCmd', @:)
+  bwipe BufForUserCmd
+  call feedkeys(":DoCmd BufFor\<Tab>\<C-B>\"\<CR>", 'tx')
+  call assert_equal('"DoCmd BufFor', @:)
 
   com! -nargs=* -complete=custom,CustomComplete DoCmd :
   call feedkeys(":DoCmd \<C-A>\<C-B>\"\<CR>", 'tx')
@@ -694,5 +721,30 @@ func Test_recursive_define()
   endwhile
 endfunc
 
+" Test for using buffer-local ambiguous user-defined commands
+func Test_buflocal_ambiguous_usercmd()
+  new
+  command -buffer -nargs=1 -complete=sign TestCmd1 echo "Hello"
+  command -buffer -nargs=1 -complete=sign TestCmd2 echo "World"
+
+  call assert_fails("call feedkeys(':TestCmd\<CR>', 'xt')", 'E464:')
+  call feedkeys(":TestCmd \<Tab>\<C-B>\"\<CR>", 'xt')
+  call assert_equal('"TestCmd ', @:)
+
+  delcommand TestCmd1
+  delcommand TestCmd2
+  bw!
+endfunc
+
+" Test for using a multibyte character in a user command
+func Test_multibyte_in_usercmd()
+  command SubJapanesePeriodToDot exe "%s/\u3002/./g"
+  new
+  call setline(1, "Hello\u3002")
+  SubJapanesePeriodToDot
+  call assert_equal('Hello.', getline(1))
+  bw!
+  delcommand SubJapanesePeriodToDot
+endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab
