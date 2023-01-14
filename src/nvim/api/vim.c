@@ -1834,7 +1834,7 @@ Dictionary nvim__stats(void)
 ///   - "width"   Requested width of the UI
 ///   - "rgb"     true if the UI uses RGB colors (false implies |cterm-colors|)
 ///   - "ext_..." Requested UI extensions, see |ui-option|
-///   - "chan"    Channel id of remote UI or 0 for TUI
+///   - "chan"    |channel-id| of remote UI
 Array nvim_list_uis(void)
   FUNC_API_SINCE(4)
 {
