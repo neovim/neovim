@@ -59,6 +59,9 @@ setmetatable(vim, {
     elseif key == 'inspect_pos' or key == 'show_pos' then
       require('vim._inspector')
       return t[key]
+    elseif key == 'autocmd' or key == 'augroup' then
+      require('vim._auto')
+      return t[key]
     elseif vim.startswith(key, 'uri_') then
       local val = require('vim.uri')[key]
       if val ~= nil then
