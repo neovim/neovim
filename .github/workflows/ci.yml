@@ -83,8 +83,10 @@ jobs:
           args: --check runtime/
 
       - if: success() || failure() && steps.abort_job.outputs.status == 'success'
-        name: lintlua
-        run: make lintlua
+        name: luacheck
+        run: |
+          cmake -B $BUILD_DIR -G Ninja
+          cmake --build $BUILD_DIR --target lintlua-luacheck
 
       - if: success() || failure() && steps.abort_job.outputs.status == 'success'
         name: lintsh
@@ -162,8 +164,8 @@ jobs:
         run: echo "status=${{ job.status }}" >> $GITHUB_OUTPUT
 
       - if: success() || failure() && steps.abort_job.outputs.status == 'success'
-        name: lintc
-        run: make lintc
+        name: clint.py
+        run: cmake --build build --target lintc-clint
 
       - if: success() || failure() && steps.abort_job.outputs.status == 'success'
         name: check-single-includes
