@@ -773,7 +773,8 @@ static uint8_t *command_line_enter(int firstc, long count, int indent, bool clea
     tl_ret = try_leave(&tstate, &err);
     if (!tl_ret && ERROR_SET(&err)) {
       msg_putchar('\n');
-      msg_printf_attr(HL_ATTR(HLF_E)|MSG_HIST, (char *)e_autocmd_err, err.msg);
+      msg_scroll = true;
+      msg_puts_attr(err.msg, HL_ATTR(HLF_E)|MSG_HIST);
       api_clear_error(&err);
       redrawcmd();
     }
@@ -881,7 +882,7 @@ static uint8_t *command_line_enter(int firstc, long count, int indent, bool clea
 
   if (!tl_ret && ERROR_SET(&err)) {
     msg_putchar('\n');
-    semsg(e_autocmd_err, err.msg);
+    emsg(err.msg);
     did_emsg = false;
     api_clear_error(&err);
   }
@@ -2544,7 +2545,8 @@ static void do_autocmd_cmdlinechanged(int firstc)
     bool tl_ret = try_leave(&tstate, &err);
     if (!tl_ret && ERROR_SET(&err)) {
       msg_putchar('\n');
-      msg_printf_attr(HL_ATTR(HLF_E)|MSG_HIST, (char *)e_autocmd_err, err.msg);
+      msg_scroll = true;
+      msg_puts_attr(err.msg, HL_ATTR(HLF_E)|MSG_HIST);
       api_clear_error(&err);
       redrawcmd();
     }

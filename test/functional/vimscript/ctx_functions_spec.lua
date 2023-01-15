@@ -173,9 +173,9 @@ describe('context functions', function()
       call('SaveSFuncs')
       call('DeleteSFuncs')
 
-      eq('Vim(call):E117: Unknown function: s:greet',
+      eq('function Greet, line 1: Vim(call):E117: Unknown function: s:greet',
          pcall_err(command, [[call Greet('World')]]))
-      eq('Vim(call):E117: Unknown function: s:greet_all',
+      eq('function GreetAll, line 1: Vim(call):E117: Unknown function: s:greet_all',
          pcall_err(command, [[call GreetAll('World', 'One', 'Two', 'Three')]]))
 
       call('RestoreFuncs')

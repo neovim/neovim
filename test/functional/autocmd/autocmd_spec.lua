@@ -424,13 +424,13 @@ describe('autocmd', function()
     end)
 
     it('gives E814 when there are no other floating windows', function()
-      eq('Vim(close):E814: Cannot close window, only autocmd window would remain',
+      eq('BufAdd Autocommands for "Xa.txt": Vim(close):E814: Cannot close window, only autocmd window would remain',
          pcall_err(command, 'doautoall BufAdd'))
     end)
 
     it('gives E814 when there are other floating windows', function()
       meths.open_win(0, true, {width = 10, height = 10, relative = 'editor', row = 10, col = 10})
-      eq('Vim(close):E814: Cannot close window, only autocmd window would remain',
+      eq('BufAdd Autocommands for "Xa.txt": Vim(close):E814: Cannot close window, only autocmd window would remain',
          pcall_err(command, 'doautoall BufAdd'))
     end)
   end)
@@ -476,14 +476,14 @@ describe('autocmd', function()
 
     it('during RecordingLeave event', function()
       command([[autocmd RecordingLeave * let v:event.regname = '']])
-      eq('Vim(let):E46: Cannot change read-only variable "v:event.regname"',
+      eq('RecordingLeave Autocommands for "*": Vim(let):E46: Cannot change read-only variable "v:event.regname"',
          pcall_err(command, 'normal! qqq'))
     end)
 
     it('during TermClose event', function()
       command('autocmd TermClose * let v:event.status = 0')
       command('terminal')
-      eq('Vim(let):E46: Cannot change read-only variable "v:event.status"',
+      eq('TermClose Autocommands for "*": Vim(let):E46: Cannot change read-only variable "v:event.status"',
          pcall_err(command, 'bdelete!'))
     end)
   end)
