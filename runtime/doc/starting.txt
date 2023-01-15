@@ -189,9 +189,10 @@ argument.
 		  -E reads stdin as text (into buffer 1).
 
 -es						*-es* *-Es* *-s-ex* *silent-mode*
--Es		Script mode, aka "silent mode", aka "batch mode". No UI,
-		disables most prompts and messages. Unrelated to |-s|.
-		See also |-S| to run script files.
+-Es		Script mode, aka "silent mode" or "batch mode". No UI,
+		disables most prompts and messages. Exits 1 on Vimscript
+		error (including user config or |-u| scripts).
+		Unrelated to |-s|. See also |-S| to run script files.
 
 		-es reads/executes stdin as Ex commands. >
 			printf "put ='foo'\n%%print\n" | nvim -es
@@ -218,8 +219,9 @@ argument.
 -l {script} [args]
 		Executes Lua {script} non-interactively (no UI) with optional
 		[args] after processing any preceding Nvim |cli-arguments|,
-		then exits. Exits 1 on Lua error. See |-S| to run multiple Lua
-		scripts without args, with a UI.
+		then exits. Exits 2 on Lua error, 1 on Vimscript error
+		(including user config or |-u| scripts).
+		See |-S| to run multiple Lua scripts without args, with a UI.
 
 		Disables user |config| unless |-u| was given.
 		Disables plugins unless 'loadplugins' was set.

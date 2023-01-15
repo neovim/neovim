@@ -106,7 +106,7 @@ describe('startup', function()
       eq(1, eval('v:shell_error'))
     end)
 
-    it('os.exit() sets Nvim exitcode', function()
+    it('os.exit() exitcode', function()
       -- nvim -l foo.lua -arg1 -- a b c
       assert_l_out([[
           bufs:
@@ -120,13 +120,23 @@ describe('startup', function()
       eq(73, eval('v:shell_error'))
     end)
 
-    it('Lua-error sets Nvim exitcode', function()
+    it('exitcode on Lua error', function()
       eq(0, eval('v:shell_error'))
       matches('E5113: .* my pearls!!',
         funcs.system({ nvim_prog, '-l', 'test/functional/fixtures/startup-fail.lua' }))
-      eq(1, eval('v:shell_error'))
+      eq(2, eval('v:shell_error'))
       matches('E5113: .* %[string "error%("whoa"%)"%]:1: whoa',
         funcs.system({ nvim_prog, '-l', '-' }, 'error("whoa")'))
+      eq(2, eval('v:shell_error'))
+    end)
+
+    it('exitcode on Vimscript error', function()
+      eq(0, eval('v:shell_error'))
+      matches('E5113: .* my pearls!!',
+        funcs.system({ nvim_prog, '-l', 'test/functional/fixtures/startup-fail.lua' }))
+      assert_l_out(function(out) return matches('Error detected while processing command line:\nnooo\nok', out) end,
+        { '+echoerr "nooo"', '-l', '-' , 'print("ok")' },
+        nil, '-', 'print("ok")')
       eq(1, eval('v:shell_error'))
     end)
 
@@ -408,7 +418,25 @@ describe('startup', function()
     end
   end)
 
-  it('-e sets ex mode', function()
+  it('-es/-Es exitcode on script error', function()
+    for _,arg in ipairs({'-es', '-Es'}) do
+      local out = funcs.system({nvim_prog, arg, '-V1', '+echoerr "nooo"', })
+      matches('nooo', out)
+      eq(1, eval('v:shell_error'))
+      out = funcs.system({nvim_prog, arg, '-V1', '+throw "excepooo"', })
+      eq(1, eval('v:shell_error'))
+      matches('excepooo', out)
+      out = funcs.system({nvim_prog, arg, '-V1', '+echo "fine"',
+        '-u', 'test/functional/fixtures/startup-fail.vim', })
+      eq(1, eval('v:shell_error'))
+      matches('E605: Exception not caught: failed in TestFail', out)
+      -- Reset v:shell_error.
+      funcs.system({nvim_prog, arg, '-V1', '+echo "okay"'})
+      eq(0, eval('v:shell_error'))
+    end
+  end)
+
+  it('-e sets Ex mode', function()
     local screen = Screen.new(25, 3)
     clear('-e')
     screen:attach()

@@ -1,4 +1,4 @@
--- Test "nvim -l foo.lua …" with a Lua error.
+-- Test "nvim -es -u foo.vim" with a Vimscript error.
 
 local function main()
   error('my pearls!!')

@@ -614,8 +614,9 @@ int main(int argc, char **argv)
 
   if (params.luaf != NULL) {
     bool lua_ok = nlua_exec_file(params.luaf);
+    ex_exitval = lua_ok ? ex_exitval : 2;
     TIME_MSG("executing Lua -l script");
-    getout(lua_ok ? 0 : 1);
+    getout(0);
   }
 
   TIME_MSG("before starting main loop");
@@ -660,13 +661,14 @@ void os_exit(int r)
 }
 
 /// Exit properly
+///
+/// @param exitval Exitcode, will be added to `ex_exitval`.
 void getout(int exitval)
   FUNC_ATTR_NORETURN
 {
   exiting = true;
 
-  // On error during Ex mode, exit with a non-zero code.
-  // POSIX requires this, although it's not 100% clear from the standard.
+  // On error during Ex/script mode (-es/-l), exit nonzero. POSIX requires this.
   if (exmode_active) {
     exitval += ex_exitval;
   }
@@ -1235,7 +1237,7 @@ static void command_line_scan(mparm_T *parmp)
           break;
         }
         FALLTHROUGH;
-      case 'S':    // "-S {file}" execute Vim script
+      case 'S':    // "-S {file}" execute Vim/Lua script
       case 'i':    // "-i {shada}" use for ShaDa file
       case 'l':    // "-l {file}" Lua mode
       case 'u':    // "-u {vimrc}" vim inits file
@@ -1322,6 +1324,11 @@ static void command_line_scan(mparm_T *parmp)
           headless_mode = true;
           silent_mode = true;
           p_verbose = 1;
+          // exmode_active:
+          //  - Sets exitcode (ex_exitval) on Vimscript error.
+          //  - Avoids message truncation (msg_strtrunc).
+          exmode_active = true;
+          parmp->input_istext = true;
           parmp->no_swap_file = true;
           parmp->use_vimrc = parmp->use_vimrc ? parmp->use_vimrc : "NONE";
           if (p_shadafile == NULL || *p_shadafile == NUL) {
