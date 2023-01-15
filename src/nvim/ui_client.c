@@ -48,10 +48,6 @@ uint64_t ui_client_start_server(int argc, char **argv)
                                        on_err, CALLBACK_NONE,
                                        false, true, true, false, kChannelStdinPipe,
                                        NULL, 0, 0, NULL, &exit_status);
-  if (ui_client_forward_stdin) {
-    close(0);
-    dup(2);
-  }
 
   return channel->id;
 }
