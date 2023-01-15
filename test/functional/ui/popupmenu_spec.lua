@@ -945,6 +945,82 @@ describe('ui/ext_popupmenu', function()
     }}
 
   end)
+
+  it('does not interfere with mousemodel=popup', function()
+    exec([[
+      set mouse=a mousemodel=popup
+
+      aunmenu PopUp
+      menu PopUp.foo :let g:menustr = 'foo'<CR>
+      menu PopUp.bar :let g:menustr = 'bar'<CR>
+      menu PopUp.baz :let g:menustr = 'baz'<CR>
+    ]])
+    feed('o<C-r>=TestComplete()<CR>')
+    screen:expect{grid=[[
+                                                                  |
+      foo^                                                         |
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {2:-- INSERT --}                                                |
+    ]], popupmenu={
+      items=expected,
+      pos=0,
+      anchor={1,1,0},
+    }}
+
+    feed('<c-p>')
+    screen:expect{grid=[[
+                                                                  |
+      ^                                                            |
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {2:-- INSERT --}                                                |
+    ]], popupmenu={
+      items=expected,
+      pos=-1,
+      anchor={1,1,0},
+    }}
+
+    feed('<esc>')
+    screen:expect{grid=[[
+                                                                  |
+      ^                                                            |
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+                                                                  |
+    ]]}
+    feed('<RightMouse><0,0>')
+    screen:expect([[
+                                                                  |
+      {7:^foo }                                                        |
+      {7:bar }{1:                                                        }|
+      {7:baz }{1:                                                        }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+                                                                  |
+    ]])
+    feed('<esc>')
+    screen:expect([[
+                                                                  |
+      ^                                                            |
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+                                                                  |
+    ]])
+  end)
 end)
 
 
