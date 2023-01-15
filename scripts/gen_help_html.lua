@@ -338,6 +338,7 @@ local function validate_link(node, bufnr, fname)
   return helppage, tagname, ignored
 end
 
+-- TODO: port the logic from scripts/check_urls.vim
 local function validate_url(text, fname)
   local ignored = false
   if vim.fs.basename(fname) == 'pi_netrw.txt' then
