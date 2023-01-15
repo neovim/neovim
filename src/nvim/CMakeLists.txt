@@ -977,7 +977,9 @@ add_glob_target(
   TARGET lintc-clint
   COMMAND ${PROJECT_SOURCE_DIR}/src/clint.py
   FLAGS --output=${LINT_OUTPUT_FORMAT}
-  FILES ${LINT_NVIM_SOURCES})
+  FILES ${LINT_NVIM_SOURCES}
+  EXCLUDE
+    tui/terminfo_defs.h)
 
 add_custom_target(uncrustify-version
   COMMAND ${CMAKE_COMMAND}
