@@ -164,6 +164,10 @@ REMOVED FEATURES                                                 *news-removed*
 
 The following deprecated functions or APIs were removed.
 
+• It is no longer possible to scroll the whole screen when showing messages
+  longer than 'cmdheight'. |msgsep| is now always enabled even if 'display'
+  doesn't contain the "msgsep" flag.
+
 • `filetype.vim` is removed in favor of |lua-filetype|
   (Note that filetype logic and tests still align with Vim, so additions or
   changes need to be contributed there first.)
