@@ -3999,33 +3999,45 @@ describe('API', function()
       -- Embed the string in the makeprg itself, to test 0-arg calling.
       command('set shellquote=')
       command([[set makeprg=echo\ 'vim_spec.lua\|3969\|\ no\ formal\ args']])
-      meths.cmd({ cmd = 'make' }, {})
+      local cmdo = function(cmd, ...)
+        return meths.cmd({ cmd = cmd, args = { ... } }, { output = true })
+      end
+      local lua = function(eval, ...)
+        return meths.exec_lua('return ' .. eval, {...})
+      end
+      local before = string.format("\nBEFORE: getqflist: %s\n", lua('vim.inspect(vim.fn.getqflist())'))
+      local out = meths.cmd({ cmd = 'make' }, {output = true})
+      local after = string.format("AFTER: output: %s\nclist: %s\ngetqflist: %s\nefm: %s",
+              out,
+              cmdo('clist'),
+              lua('vim.inspect(vim.fn.getqflist())'),
+              cmdo('set', 'errorformat?'))
       assert_alive()
       qflist = funcs.getqflist()
-      eq(#qflist, 1)
-      eq(funcs.bufname(qflist.bufnr), 'vim_spec.lua')
-      eq(qflist[1].lnum, 3969)
-      eq(qflist[1].text, 'no formal args')
+      eq(1, #qflist, before .. "\n\n" .. after)
+      eq('vim_spec.lua', funcs.bufname(qflist.bufnr))
+      eq(3969, qflist[1].lnum)
+      eq('no formal args', qflist[1].text)
 
       -- Pass the string as an argument, to test 2-arg calling.
       command('set makeprg=echo')
       meths.cmd({ cmd = 'make', args = { '"vim_spec.lua|3979|"', 'some goofy error message' } }, {})
       assert_alive()
       qflist = funcs.getqflist()
-      eq(#qflist, 1)
-      eq(funcs.bufname(qflist.bufnr), 'vim_spec.lua')
-      eq(qflist[1].lnum, 3979)
-      eq(qflist[1].text, 'some goofy error message')
+      eq(1, #qflist)
+      eq('vim_spec.lua', funcs.bufname(qflist.bufnr))
+      eq(3979, qflist[1].lnum)
+      eq('some goofy error message', qflist[1].text)
 
       -- Test replacement.
       command([[set errorformat=%f\ %l\ %m]])
       assert_alive()
       meths.cmd({ cmd = 'make', args = { '%:p:h:t', '666', 'oh my' } }, {})
       qflist = funcs.getqflist()
-      eq(#qflist, 1)
-      eq(funcs.bufname(qflist.bufnr), pesc(funcs.expand('%:p:h:t')))
-      eq(qflist[1].lnum, 666)
-      eq(qflist[1].text, 'oh my')
+      eq(1, #qflist)
+      eq(pesc(funcs.expand('%:p:h:t')), funcs.bufname(qflist.bufnr))
+      eq(666, qflist[1].lnum)
+      eq('oh my', qflist[1].text)
     end)
     it('doesn\'t display messages when output=true', function()
       local screen = Screen.new(40, 6)
