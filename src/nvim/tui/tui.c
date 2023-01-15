@@ -16,7 +16,6 @@
 #include "klib/kvec.h"
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"
-#include "nvim/api/vim.h"
 #include "nvim/ascii.h"
 #include "nvim/cursor_shape.h"
 #include "nvim/event/defs.h"
@@ -32,12 +31,10 @@
 #include "nvim/main.h"
 #include "nvim/mbyte.h"
 #include "nvim/memory.h"
-#include "nvim/message.h"
 #include "nvim/msgpack_rpc/channel.h"
-#include "nvim/option.h"
 #include "nvim/os/input.h"
 #include "nvim/os/os.h"
-#include "nvim/os/signal.h"
+#include "nvim/ui_client.h"
 #ifdef MSWIN
 # include "nvim/os/os_win_console.h"
 #endif
@@ -46,7 +43,6 @@
 #include "nvim/tui/tui.h"
 #include "nvim/ugrid.h"
 #include "nvim/ui.h"
-#include "nvim/vim.h"
 
 // Space reserved in two output buffers to make the cursor normal or invisible
 // when flushing. No existing terminal will require 32 bytes to do that.

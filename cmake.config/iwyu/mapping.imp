@@ -178,6 +178,8 @@
   { include: [ '"regexp_bt.h.generated.h"', private, '"nvim/regexp.h"', public ] },
   { include: [ '"ui_events_call.h.generated.h"', private, '"nvim/ui.h"', public ] },
   { include: [ '"ui_events_client.h.generated.h"', private, '"nvim/ui_client.h"', public ] },
+  { include: [ '"ui_events_remote.generated.h"', private, '"nvim/api/ui.h"', public ] },
+  { include: [ '"ui_events_remote.h.generated.h"', private, '"nvim/api/ui.h"', public ] },
 
   # Def to normal headers: nvim/header_defs.h -> nvim/header.h
   #

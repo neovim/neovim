@@ -23,7 +23,6 @@
 #include "nvim/option.h"
 #include "nvim/plines.h"
 #include "nvim/pos.h"
-#include "nvim/types.h"
 #include "nvim/vim.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS

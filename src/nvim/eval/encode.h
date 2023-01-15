@@ -4,6 +4,7 @@
 #include <msgpack.h>
 #include <msgpack/pack.h>
 #include <stddef.h>
+#include <string.h>
 
 #include "nvim/eval.h"
 #include "nvim/eval/typval.h"

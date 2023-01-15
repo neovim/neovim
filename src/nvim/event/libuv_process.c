@@ -1,6 +1,7 @@
 // This is an open source non-commercial project. Dear PVS-Studio, please check
 // it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
+#include <assert.h>
 #include <stdint.h>
 #include <uv.h>
 
@@ -12,6 +13,7 @@
 #include "nvim/log.h"
 #include "nvim/macros.h"
 #include "nvim/os/os.h"
+#include "nvim/ui_client.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "event/libuv_process.c.generated.h"

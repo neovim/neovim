@@ -13,6 +13,7 @@
 #include <string.h>
 
 #include "auto/config.h"
+#include "klib/kvec.h"
 #include "nvim/ascii.h"
 #include "nvim/buffer_defs.h"
 #include "nvim/charset.h"
@@ -35,6 +36,7 @@
 #include "nvim/plines.h"
 #include "nvim/pos.h"
 #include "nvim/state.h"
+#include "nvim/strings.h"
 #include "nvim/vim.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS

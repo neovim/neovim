@@ -62,7 +62,6 @@
 #include "nvim/os/os.h"
 #include "nvim/path.h"
 #include "nvim/pos.h"
-#include "nvim/types.h"
 #include "nvim/vim.h"
 
 #define MEMFILE_PAGE_SIZE 4096       /// default page size

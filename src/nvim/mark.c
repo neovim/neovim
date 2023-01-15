@@ -5,6 +5,7 @@
 
 #include <assert.h>
 #include <limits.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -39,7 +40,6 @@
 #include "nvim/sign.h"
 #include "nvim/strings.h"
 #include "nvim/textobject.h"
-#include "nvim/types.h"
 #include "nvim/undo_defs.h"
 #include "nvim/vim.h"
 

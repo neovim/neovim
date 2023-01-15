@@ -38,7 +38,6 @@
 #include "nvim/path.h"
 #include "nvim/pos.h"
 #include "nvim/runtime.h"
-#include "nvim/types.h"
 #include "nvim/vim.h"
 #include "nvim/window.h"
 

@@ -2,9 +2,19 @@
 #define NVIM_EVAL_WINDOW_H
 
 #include <stdbool.h>
+#include <string.h>
 
+#include "nvim/buffer.h"
 #include "nvim/buffer_defs.h"
+#include "nvim/cursor.h"
 #include "nvim/eval/typval_defs.h"
+#include "nvim/globals.h"
+#include "nvim/mark.h"
+#include "nvim/option_defs.h"
+#include "nvim/os/os.h"
+#include "nvim/pos.h"
+#include "nvim/vim.h"
+#include "nvim/window.h"
 
 /// Structure used by switch_win() to pass values to restore_win()
 typedef struct {

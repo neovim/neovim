@@ -6,6 +6,7 @@
 
 #include "nvim/buffer.h"
 #include "nvim/buffer_defs.h"
+#include "nvim/macros.h"
 #include "nvim/mark.h"
 #include "nvim/os/os.h"
 #include "nvim/os/os_defs.h"

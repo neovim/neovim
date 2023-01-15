@@ -20,6 +20,7 @@
 #include "nvim/os/shell.h"
 #include "nvim/os/time.h"
 #include "nvim/rbuffer.h"
+#include "nvim/ui_client.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "event/process.c.generated.h"
