@@ -406,9 +406,9 @@ mandatory arguments:
   prefix for which the mapping will take effect. The prefixes are the ones
   listed in |:map-modes|, or "!" for |:map!|, or empty string for |:map|.
 • {lhs} is a string with the key sequences that should trigger the mapping.
-  An empty string is equivalent to |<Nop>|, which disables a key.
 • {rhs} is either a string with a Vim command or a Lua function that should
   be executed when the {lhs} is entered.
+  An empty string is equivalent to |<Nop>|, which disables a key.
 
 Examples:
 >lua
