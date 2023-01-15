@@ -1298,6 +1298,7 @@ describe('TUI', function()
       [7] = {reverse = true, foreground = Screen.colors.SeaGreen4},
       [8] = {foreground = Screen.colors.SeaGreen4},
       [9] = {bold = true, foreground = Screen.colors.Blue1},
+      [10] = {foreground = Screen.colors.Blue},
     })
 
     feed_data(':hi SpecialKey ctermfg=3 guifg=SeaGreen\n')
@@ -1318,9 +1319,9 @@ describe('TUI', function()
     feed_data(':set termguicolors\n')
     screen:expect([[
       {7:^}{8:G}                                                |
-      {9:~                                                 }|
-      {9:~                                                 }|
-      {9:~                                                 }|
+      {9:~}{10:                                                 }|
+      {9:~}{10:                                                 }|
+      {9:~}{10:                                                 }|
       {3:[No Name] [+]                                     }|
       :set termguicolors                                |
       {4:-- TERMINAL --}                                    |
