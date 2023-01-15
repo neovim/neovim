@@ -1557,15 +1557,21 @@ end
 --- Notify all attached clients that a buffer has changed.
 local text_document_did_change_handler
 do
-  text_document_did_change_handler =
-    function(_, bufnr, changedtick, firstline, lastline, new_lastline)
-      -- Detach (nvim_buf_attach) via returning True to on_lines if no clients are attached
-      if tbl_isempty(all_buffer_active_clients[bufnr] or {}) then
-        return true
-      end
-      util.buf_versions[bufnr] = changedtick
-      changetracking.send_changes(bufnr, firstline, lastline, new_lastline)
+  text_document_did_change_handler = function(
+    _,
+    bufnr,
+    changedtick,
+    firstline,
+    lastline,
+    new_lastline
+  )
+    -- Detach (nvim_buf_attach) via returning True to on_lines if no clients are attached
+    if tbl_isempty(all_buffer_active_clients[bufnr] or {}) then
+      return true
     end
+    util.buf_versions[bufnr] = changedtick
+    changetracking.send_changes(bufnr, firstline, lastline, new_lastline)
+  end
 end
 
 ---@private
