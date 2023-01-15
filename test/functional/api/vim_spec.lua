@@ -3998,7 +3998,11 @@ describe('API', function()
 
       -- Embed the string in the makeprg itself, to test 0-arg calling.
       command('set shellquote=')
-      command([[set makeprg=echo\ 'vim_spec.lua\|3969\|\ no\ formal\ args']])
+      if is_os('win') then
+        command([[set makeprg=echo\ 'vim_spec.lua^\|3969^\|\ no\ formal\ args']])
+      else
+        command([[set makeprg=echo\ 'vim_spec.lua\|3969\|\ no\ formal\ args']])
+      end
       local cmdo = function(cmd, ...)
         return meths.cmd({ cmd = cmd, args = { ... } }, { output = true })
       end
@@ -4021,7 +4025,11 @@ describe('API', function()
 
       -- Pass the string as an argument, to test 2-arg calling.
       command('set makeprg=echo')
-      meths.cmd({ cmd = 'make', args = { '"vim_spec.lua|3979|"', 'some goofy error message' } }, {})
+      if is_os('win') then
+        meths.cmd({ cmd = 'make', args = { '"vim_spec.lua^|3979^|"', 'some goofy error message' } }, {})
+      else
+        meths.cmd({ cmd = 'make', args = { '"vim_spec.lua|3979|"', 'some goofy error message' } }, {})
+      end
       assert_alive()
       qflist = funcs.getqflist()
       eq(1, #qflist)
