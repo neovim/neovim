@@ -896,6 +896,9 @@ endfunc
 " link to the original file. The backup file should not be modified.
 func Test_write_backup_symlink()
   CheckUnix
+  call mkdir('Xbackup')
+  let save_backupdir = &backupdir
+  set backupdir=.,./Xbackup
   call writefile(['1111'], 'Xfile')
   silent !ln -s Xfile Xfile.bak
 
@@ -904,11 +907,18 @@ func Test_write_backup_symlink()
   write
   call assert_equal('link', getftype('Xfile.bak'))
   call assert_equal('Xfile', resolve('Xfile.bak'))
+  " backup file should be created in the 'backup' directory
+  if !has('bsd')
+    " This check fails on FreeBSD
+    call assert_true(filereadable('./Xbackup/Xfile.bak'))
+  endif
   set backup& backupcopy& backupext&
-  close
+  %bw
 
   call delete('Xfile')
   call delete('Xfile.bak')
+  call delete('Xbackup', 'rf')
+  let &backupdir = save_backupdir
 endfunc
 
 " Test for ':write ++bin' and ':write ++nobin'
