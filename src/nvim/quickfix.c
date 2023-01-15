@@ -1109,10 +1109,7 @@ static int qf_init_ext(qf_info_T *qi, int qf_idx, const char *restrict efile, bu
   const char *efm;
 
   // Use the local value of 'errorformat' if it's set.
-  //
-  // TODO(aktau): Why is there a `tv == NULL` check here? Why don't we want the
-  //              buffer-local 'errorformat' if we're reading from a typval?
-  if (errorformat == p_efm && tv == NULL && buf && *buf->b_p_efm != NUL) {
+  if (errorformat == p_efm && buf && *buf->b_p_efm != NUL) {
     efm = buf->b_p_efm;
   } else {
     efm = errorformat;
