@@ -60,6 +60,7 @@ end)()
 --- Splits a string at each instance of a separator.
 ---
 ---@see |vim.split()|
+---@see |luaref-patterns|
 ---@see https://www.lua.org/pil/20.2.html
 ---@see http://lua-users.org/wiki/StringLibraryTutorial
 ---
@@ -529,6 +530,7 @@ end
 
 --- Trim whitespace (Lua pattern "%s") from both sides of a string.
 ---
+---@see |luaref-patterns|
 ---@see https://www.lua.org/pil/20.2.html
 ---@param s string String to trim
 ---@return string String with whitespace removed from its beginning and end
