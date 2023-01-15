@@ -511,18 +511,40 @@ local M = {}
 ---
 ---@param bufnr number
 ---@param client_id number
----@param opts (nil|table) Optional keyword arguments
----  - debounce (number, default: 200): Debounce token requests
----        to the server by the given number in milliseconds
----  - hl_cb (function({bufnr}, {ns_id}, {*token})): If given, this function is called
----        for each token when it needs to be highlighted. The callback should
----        apply an extmark or highlight. See |nvim_buf_add_highlight()| and
----        |nvim_buf_set_extmark()|. {token} is a table with the following:
+---@param opts (table|nil) Optional keyword arguments:
+---  - debounce (number|nil, default: 200):
+---      Debounce token requests to the server by the given number in milliseconds
+---
+---  - hl_cb (function|nil):
+---      If given, this function is called for each token when it needs to be
+---      highlighted. It is called with the buffer number, namespace id (ns_id), and a
+---      table defining the semantic token to be highlighted: hl_cb(bufnr, ns_id, token).
+---      The callback should apply an extmark or highlight using the given namespace.
+---      See |nvim_buf_add_highlight()| and |nvim_buf_set_extmark()|.
+---      The {token} parameter is a table with the following:
 ---           - line : line number 0-based
 ---           - start_col : start column 0-based
 ---           - end_col : end column 0-based
 ---           - type : token type as string
 ---           - modifiers : token modifiers as strings
+---
+---      Example:
+---                 <pre>lua
+---                   vim.lsp.semantic_tokens.start(bufnr, client_id, {
+---                     hl_cb = function(bufnr, ns_id, token)
+---                       local hl_group = '@' .. token.type
+---                       if token.type == 'variable' and vim.tbl_contains(token.modifiers, 'declaration') then
+---                         hl_group = hl_group .. '.declaration'
+---                       end
+---                       api.nvim_buf_set_extmark(bufnr, ns_id, token.line, token.start_col, {
+---                         hl_group = hl_group,
+---                         end_col = token.end_col,
+---                         priority = vim.highlight.priorities.semantic_tokens,
+---                         strict = false,
+---                       })
+---                     end
+---                   })
+---                 </pre>
 function M.start(bufnr, client_id, opts)
   vim.validate({
     bufnr = { bufnr, 'n', false },
