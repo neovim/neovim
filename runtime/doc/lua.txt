@@ -132,8 +132,7 @@ back to Lua's default search mechanism. The first script found is run and
 
 The return value is cached after the first call to `require()` for each module,
 with subsequent calls returning the cached value without searching for, or
-executing any script. For further details on `require()`, see the Lua
-documentation at https://www.lua.org/manual/5.1/manual.html#pdf-require.
+executing any script. For further details on `require()`, see |luaref-require()|.
 
 For example, if 'runtimepath' is `foo,bar` and |package.cpath| was
 `./?.so;./?.dll` at startup, `require('mod')` searches these paths in order
@@ -1641,6 +1640,7 @@ gsplit({s}, {sep}, {plain})                                     *vim.gsplit()*
 
     See also: ~
         |vim.split()|
+        |luaref-patterns|
         https://www.lua.org/pil/20.2.html
         http://lua-users.org/wiki/StringLibraryTutorial
 
@@ -1913,6 +1913,7 @@ trim({s})                                                         *vim.trim()*
         (string) String with whitespace removed from its beginning and end
 
     See also: ~
+        |luaref-patterns|
         https://www.lua.org/pil/20.2.html
 
 validate({opt})                                               *vim.validate()*
