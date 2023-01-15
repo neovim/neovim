@@ -32,6 +32,8 @@ local is_ci = helpers.is_ci
 
 describe('fileio', function()
   before_each(function()
+    -- XXX: clear() is not called here, so after_each() may
+    -- fail if a test is skipped before calling clear().
   end)
   after_each(function()
     expect_exit(command, ':qall!')
@@ -90,9 +92,9 @@ describe('fileio', function()
   end)
 
   it('backup #9709', function()
-    skip(is_ci('cirrus'))
     clear({ args={ '-i', 'Xtest_startup_shada',
                    '--cmd', 'set directory=Xtest_startup_swapdir' } })
+    skip(is_ci('cirrus'))
 
     command('write Xtest_startup_file1')
     feed('ifoo<esc>')
@@ -110,8 +112,8 @@ describe('fileio', function()
   end)
 
   it('backup with full path #11214', function()
-    skip(is_ci('cirrus'))
     clear()
+    skip(is_ci('cirrus'))
     mkdir('Xtest_backupdir')
     command('set backup')
     command('set backupdir=Xtest_backupdir//')
@@ -132,8 +134,8 @@ describe('fileio', function()
   end)
 
   it('backup symlinked files #11349', function()
-    skip(is_ci('cirrus'))
     clear()
+    skip(is_ci('cirrus'))
 
     local initial_content = 'foo'
     local link_file_name = 'Xtest_startup_file2'
@@ -154,8 +156,8 @@ describe('fileio', function()
 
 
   it('backup symlinked files in first available backupdir #11349', function()
-    skip(is_ci('cirrus'))
     clear()
+    skip(is_ci('cirrus'))
 
     local initial_content = 'foo'
     local backup_dir = 'Xtest_backupdir'
