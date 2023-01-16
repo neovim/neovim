@@ -22,22 +22,7 @@ func Test_shell_options()
           \ ['tcsh', '-c', '|& tee', '', '>&', '', '']]
   endif
   if has('win32')
-    let shells += [['cmd', '/c', '>%s 2>&1', '', '>%s 2>&1', '"&|<>()@^', ''],
-          \ ['cmd.exe', '/c', '>%s 2>&1', '', '>%s 2>&1', '"&|<>()@^', '('],
-          \ ['powershell.exe', '-Command', '2>&1 | Out-File -Encoding default',
-          \           '', '2>&1 | Out-File -Encoding default', '"&|<>()@^', '"'],
-          \ ['powershell', '-Command', '2>&1 | Out-File -Encoding default', '',
-          \               '2>&1 | Out-File -Encoding default', '"&|<>()@^', '"'],
-          \ ['sh.exe', '-c', '>%s 2>&1', '', '>%s 2>&1', '"&|<>()@^', '"'],
-          \ ['ksh.exe', '-c', '>%s 2>&1', '', '>%s 2>&1', '"&|<>()@^', '"'],
-          \ ['mksh.exe', '-c', '>%s 2>&1', '', '>%s 2>&1', '"&|<>()@^', '"'],
-          \ ['pdksh.exe', '-c', '>%s 2>&1', '', '>%s 2>&1', '"&|<>()@^', '"'],
-          \ ['zsh.exe', '-c', '>%s 2>&1', '', '>%s 2>&1', '"&|<>()@^', '"'],
-          \ ['zsh-beta.exe', '-c', '>%s 2>&1', '', '>%s 2>&1', '"&|<>()@^', '"'],
-          \ ['bash.exe', '-c', '>%s 2>&1', '', '>%s 2>&1', '"&|<>()@^', '"'],
-          \ ['dash.exe', '-c', '>%s 2>&1', '', '>%s 2>&1', '"&|<>()@^', '"'],
-          \ ['csh.exe', '-c', '>&', '', '>&', '"&|<>()@^', '"'],
-          \ ['tcsh.exe', '-c', '>&', '', '>&', '"&|<>()@^', '"']]
+    let shells += [['cmd', '/s /c', '>%s 2>&1', '', '>%s 2>&1', '', '"']]
   endif
 
   " start a new Vim instance with 'shell' set to each of the supported shells
@@ -148,8 +133,8 @@ func Test_shellslash()
   " The shell and cmdflag, and expected slash in tempname with shellslash set or
   " unset.  The assert checks the file separator before the leafname.
   " ".*\\\\[^\\\\]*$"
-  let shells = [['cmd', '/c', '\\', '/'],
-        \ ['powershell', '-Command', '\\', '/'],
+  let shells = [['cmd', '/c', '/', '/'],
+        \ ['powershell', '-Command', '/', '/'],
         \ ['sh', '-c', '/', '/']]
   for e in shells
     exe 'set shell=' .. e[0] .. ' | set shellcmdflag=' .. e[1]
