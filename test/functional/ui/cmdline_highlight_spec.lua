@@ -335,17 +335,17 @@ describe('Command-line coloring', function()
       :echo "«^                                |
     ]])
   end)
-  it('does the right thing when errorring', function()
+  it('does the right thing when erroring', function()
     set_color_cb('Echoerring')
     start_prompt('e')
     screen:expect([[
                                               |
       {EOB:~                                       }|
-      {EOB:~                                       }|
       {MSEP:                                        }|
       :                                       |
       {ERR:E5407: Callback has thrown an exception:}|
-      {ERR: Vim(echoerr):HERE}                      |
+      {ERR: function DoPrompt[3]..Echoerring, line }|
+      {ERR:1: Vim(echoerr):HERE}                    |
       :e^                                      |
     ]])
   end)
@@ -400,10 +400,10 @@ describe('Command-line coloring', function()
     screen:expect([[
                                               |
       {EOB:~                                       }|
-      {EOB:~                                       }|
       {MSEP:                                        }|
       :                                       |
       {ERR:E5407: Callback has thrown an exception:}|
+      {ERR: function DoPrompt[3]..Throwing, line 1:}|
       {ERR: ABC}                                    |
       :e^                                      |
     ]])

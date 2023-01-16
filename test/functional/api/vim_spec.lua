@@ -166,7 +166,7 @@ describe('API', function()
           echo nvim_exec('echo Avast_ye_hades(''ahoy!'')', 1)
         ]], true))
 
-      eq('Vim(call):E5555: API call: Vim(echo):E121: Undefined variable: s:pirate',
+      matches('Vim%(echo%):E121: Undefined variable: s:pirate$',
         pcall_err(request, 'nvim_exec', [[
           let s:pirate = 'script-scoped varrrrr'
           call nvim_exec('echo s:pirate', 1)
@@ -208,12 +208,12 @@ describe('API', function()
     end)
 
     it('execution error', function()
-      eq('Vim:E492: Not an editor command: bogus_command',
+      eq('nvim_exec(): Vim:E492: Not an editor command: bogus_command',
         pcall_err(request, 'nvim_exec', 'bogus_command', false))
       eq('', nvim('eval', 'v:errmsg'))  -- v:errmsg was not updated.
       eq('', eval('v:exception'))
 
-      eq('Vim(buffer):E86: Buffer 23487 does not exist',
+      eq('nvim_exec(): Vim(buffer):E86: Buffer 23487 does not exist',
         pcall_err(request, 'nvim_exec', 'buffer 23487', false))
       eq('', eval('v:errmsg'))  -- v:errmsg was not updated.
       eq('', eval('v:exception'))
@@ -485,7 +485,7 @@ describe('API', function()
           throw 'wtf'
         endfunction
       ]])
-      eq('wtf', pcall_err(request, 'nvim_call_function', 'Foo', {}))
+      eq('function Foo, line 1: wtf', pcall_err(request, 'nvim_call_function', 'Foo', {}))
       eq('', eval('v:exception'))
       eq('', eval('v:errmsg'))  -- v:errmsg was not updated.
     end)

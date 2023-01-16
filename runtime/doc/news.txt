@@ -159,6 +159,8 @@ The following changes to existing APIs or features add new behavior.
   resulting in a nvim binary which only could be run headless or embedded
   in an external process. As of this version, TUI is always available.
 
+• API calls now show more information about where an exception happened.
+
 ==============================================================================
 REMOVED FEATURES                                                 *news-removed*
 

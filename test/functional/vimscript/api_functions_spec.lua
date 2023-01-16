@@ -5,6 +5,7 @@ local neq, eq, command = helpers.neq, helpers.eq, helpers.command
 local clear, curbufmeths = helpers.clear, helpers.curbufmeths
 local exc_exec, expect, eval = helpers.exc_exec, helpers.expect, helpers.eval
 local insert, pcall_err = helpers.insert, helpers.pcall_err
+local matches = helpers.matches
 local meths = helpers.meths
 
 describe('eval-API', function()
@@ -49,7 +50,7 @@ describe('eval-API', function()
 
   it('cannot change texts if textlocked', function()
     command("autocmd TextYankPost <buffer> ++once call nvim_buf_set_lines(0, 0, -1, v:false, [])")
-    eq('Vim(call):E5555: API call: E565: Not allowed to change text or change window',
+    matches('Vim%(call%):E5555: API call: E565: Not allowed to change text or change window$',
        pcall_err(command, "normal! yy"))
   end)
 
