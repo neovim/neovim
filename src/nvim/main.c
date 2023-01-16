@@ -539,7 +539,9 @@ int main(int argc, char **argv)
   if (params.diff_mode) {
     // set options in each window for "nvim -d".
     FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
-      diff_win_options(wp, true);
+      if (!wp->w_arg_idx_invalid) {
+        diff_win_options(wp, true);
+      }
     }
   }
 
