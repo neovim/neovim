@@ -674,23 +674,25 @@ void set_helplang_default(const char *lang)
     return;
   }
   int idx = findoption("hlg");
-  if (idx >= 0 && !(options[idx].flags & P_WAS_SET)) {
-    if (options[idx].flags & P_ALLOCED) {
-      free_string_option(p_hlg);
-    }
-    p_hlg = xmemdupz(lang, lang_len);
-    // zh_CN becomes "cn", zh_TW becomes "tw".
-    if (STRNICMP(p_hlg, "zh_", 3) == 0 && strlen(p_hlg) >= 5) {
-      p_hlg[0] = (char)TOLOWER_ASC(p_hlg[3]);
-      p_hlg[1] = (char)TOLOWER_ASC(p_hlg[4]);
-    } else if (strlen(p_hlg) >= 1 && *p_hlg == 'C') {
-      // any C like setting, such as C.UTF-8, becomes "en"
-      p_hlg[0] = 'e';
-      p_hlg[1] = 'n';
-    }
-    p_hlg[2] = NUL;
-    options[idx].flags |= P_ALLOCED;
+  if (idx < 0 || (options[idx].flags & P_WAS_SET)) {
+    return;
   }
+
+  if (options[idx].flags & P_ALLOCED) {
+    free_string_option(p_hlg);
+  }
+  p_hlg = xmemdupz(lang, lang_len);
+  // zh_CN becomes "cn", zh_TW becomes "tw".
+  if (STRNICMP(p_hlg, "zh_", 3) == 0 && strlen(p_hlg) >= 5) {
+    p_hlg[0] = (char)TOLOWER_ASC(p_hlg[3]);
+    p_hlg[1] = (char)TOLOWER_ASC(p_hlg[4]);
+  } else if (strlen(p_hlg) >= 1 && *p_hlg == 'C') {
+    // any C like setting, such as C.UTF-8, becomes "en"
+    p_hlg[0] = 'e';
+    p_hlg[1] = 'n';
+  }
+  p_hlg[2] = NUL;
+  options[idx].flags |= P_ALLOCED;
 }
 
 /// 'title' and 'icon' only default to true if they have not been set or reset
@@ -5035,10 +5037,11 @@ bool option_was_set(const char *name)
 void reset_option_was_set(const char *name)
 {
   const int idx = findoption(name);
-
-  if (idx >= 0) {
-    options[idx].flags &= ~P_WAS_SET;
+  if (idx < 0) {
+    return;
   }
+
+  options[idx].flags &= ~P_WAS_SET;
 }
 
 /// fill_breakat_flags() -- called when 'breakat' changes value.
