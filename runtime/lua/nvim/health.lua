@@ -1,6 +1,22 @@
 local M = {}
 local health = require('vim.health')
 
+local fn_bool = function(key)
+  return function(...)
+    return vim.fn[key](...) == 1
+  end
+end
+
+local has = fn_bool('has')
+local executable = fn_bool('executable')
+local empty = fn_bool('empty')
+local filereadable = fn_bool('filereadable')
+local filewritable = fn_bool('filewritable')
+
+local shell_error = function()
+  return vim.v.shell_error ~= 0
+end
+
 local suggest_faq = 'https://github.com/neovim/neovim/wiki/Building-Neovim#optimized-builds'
 
 local function check_runtime()
@@ -37,15 +53,6 @@ end
 local function check_config()
   health.report_start('Configuration')
   local ok = true
-  local empty = function(o)
-    return 0 ~= vim.fn.empty(o)
-  end
-  local filereadable = function(o)
-    return 0 ~= vim.fn.filereadable(o)
-  end
-  local filewritable = function(o)
-    return 0 ~= vim.fn.filewritable(o)
-  end
 
   local vimrc = (
     empty(vim.env.MYVIMRC) and vim.fn.stdpath('config') .. '/init.vim' or vim.env.MYVIMRC
@@ -65,7 +72,7 @@ local function check_config()
     health.report_error('$VIM is invalid: ' .. vim.env.VIM)
   end
 
-  if 1 == vim.fn.exists('$NVIM_TUI_ENABLE_CURSOR_SHAPE') then
+  if vim.env.NVIM_TUI_ENABLE_CURSOR_SHAPE then
     ok = false
     health.report_warn('$NVIM_TUI_ENABLE_CURSOR_SHAPE is ignored in Nvim 0.2+', {
       "Use the 'guicursor' option to configure cursor shape. :help 'guicursor'",
@@ -139,240 +146,245 @@ local function check_config()
 end
 
 local function check_performance()
-  vim.api.nvim_exec([=[
-  func! s:check_performance() abort
-    let s:suggest_faq = ']=] .. suggest_faq .. [=['
+  health.report_start('Performance')
 
-    call health#report_start('Performance')
+  -- Check buildtype
+  local buildtype = vim.fn.matchstr(vim.fn.execute('version'), [[\v\cbuild type:?\s*[^\n\r\t ]+]])
+  if empty(buildtype) then
+    health.report_error('failed to get build type from :version')
+  elseif vim.regex([[\v(MinSizeRel|Release|RelWithDebInfo)]]):match_str(buildtype) then
+    health.report_ok(buildtype)
+  else
+    health.report_info(buildtype)
+    health.report_warn(
+      'Non-optimized ' .. (has('debug') and '(DEBUG) ' or '') .. 'build. Nvim will be slower.',
+      {
+        'Install a different Nvim package, or rebuild with `CMAKE_BUILD_TYPE=RelWithDebInfo`.',
+        suggest_faq,
+      }
+    )
+  end
 
-    " check buildtype
-    let s:buildtype = matchstr(execute('version'), '\v\cbuild type:?\s*[^\n\r\t ]+')
-    if empty(s:buildtype)
-      call health#report_error('failed to get build type from :version')
-    elseif s:buildtype =~# '\v(MinSizeRel|Release|RelWithDebInfo)'
-      call health#report_ok(s:buildtype)
-    else
-      call health#report_info(s:buildtype)
-      call health#report_warn(
-            \ 'Non-optimized '.(has('debug')?'(DEBUG) ':'').'build. Nvim will be slower.',
-            \ ['Install a different Nvim package, or rebuild with `CMAKE_BUILD_TYPE=RelWithDebInfo`.',
-            \  s:suggest_faq])
-    endif
-
-    " check for slow shell invocation
-    let s:slow_cmd_time = 1.5
-    let s:start_time = reltime()
-    call system('echo')
-    let s:elapsed_time = reltimefloat(reltime(s:start_time))
-    if s:elapsed_time > s:slow_cmd_time
-      call health#report_warn(
-            \ 'Slow shell invocation (took '.printf('%.2f', s:elapsed_time).' seconds).')
-    endif
-  endf
-
-  call s:check_performance()
-  ]=], false)
+  -- check for slow shell invocation
+  local slow_cmd_time = 1.5
+  local start_time = vim.fn.reltime()
+  vim.fn.system('echo')
+  local elapsed_time = vim.fn.reltimefloat(vim.fn.reltime(start_time))
+  if elapsed_time > slow_cmd_time then
+    health.report_warn(
+      'Slow shell invocation (took ' .. vim.fn.printf('%.2f', elapsed_time) .. ' seconds).'
+    )
+  end
 end
 
 -- Load the remote plugin manifest file and check for unregistered plugins
 local function check_rplugin_manifest()
-  vim.api.nvim_exec(
-    [=[
-  func! s:check_rplugin_manifest() abort
-    call health#report_start('Remote Plugins')
-    let existing_rplugins = {}
+  health.report_start('Remote Plugins')
 
-    for item in remote#host#PluginsForHost('python')
-      let existing_rplugins[item.path] = 'python'
-    endfor
+  local existing_rplugins = {}
+  for _, item in ipairs(vim.fn['remote#host#PluginsForHost']('python')) do
+    existing_rplugins[item.path] = 'python'
+  end
 
-    for item in remote#host#PluginsForHost('python3')
-      let existing_rplugins[item.path] = 'python3'
-    endfor
+  for item in ipairs(vim.fn['remote#host#PluginsForHost']('python3')) do
+    existing_rplugins[item.path] = 'python3'
+  end
 
-    let require_update = 0
+  local require_update = false
+  local handle_path = function(path)
+    local python_glob = vim.fn.glob(path .. '/rplugin/python*', true, true)
+    if empty(python_glob) then
+      return
+    end
 
-    for path in map(split(&runtimepath, ','), 'resolve(v:val)')
-      let python_glob = glob(path.'/rplugin/python*', 1, 1)
-      if empty(python_glob)
-        continue
-      endif
+    local python_dir = python_glob[1]
+    local python_version = vim.fn.fnamemodify(python_dir, ':t')
 
-      let python_dir = python_glob[0]
-      let python_version = fnamemodify(python_dir, ':t')
+    local scripts = vim.fn.glob(python_dir .. '/*.py', true, true)
+    vim.list_extend(scripts, vim.fn.glob(python_dir .. '/*/__init__.py', true, true))
 
-      for script in glob(python_dir.'/*.py', 1, 1)
-            \ + glob(python_dir.'/*/__init__.py', 1, 1)
-        let contents = join(readfile(script))
-        if contents =~# '\<\%(from\|import\)\s\+neovim\>'
-          if script =~# '[\/]__init__\.py$'
-            let script = tr(fnamemodify(script, ':h'), '\', '/')
-          endif
+    for script in ipairs(scripts) do
+      local contents = vim.fn.join(vim.fn.readfile(script))
+      if vim.regex([[\<\%(from\|import\)\s\+neovim\>]]):match_str(contents) then
+        if vim.regex([[[\/]__init__\.py$]]):match_str(script) then
+          script = vim.fn.tr(vim.fn.fnamemodify(script, ':h'), '\\', '/')
+        end
+        if not existing_rplugins[script] then
+          local msg = vim.fn.printf('"%s" is not registered.', vim.fn.fnamemodify(path, ':t'))
+          if python_version == 'pythonx' then
+            if not has('python3') then
+              msg = msg .. ' (python3 not available)'
+            end
+          elseif not has(python_version) then
+            msg = msg .. vim.fn.printf(' (%s not available)', python_version)
+          else
+            require_update = true
+          end
 
-          if !has_key(existing_rplugins, script)
-            let msg = printf('"%s" is not registered.', fnamemodify(path, ':t'))
-            if python_version ==# 'pythonx'
-              if !has('python3')
-                let msg .= ' (python3 not available)'
-              endif
-            elseif !has(python_version)
-              let msg .= printf(' (%s not available)', python_version)
-            else
-              let require_update = 1
-            endif
+          health.report_warn(msg)
+        end
 
-            call health#report_warn(msg)
-          endif
+        break
+      end
+    end
+  end
 
-          break
-        endif
-      endfor
-    endfor
+  for _, path in ipairs(vim.fn.map(vim.fn.split(vim.o.runtimepath, ','), 'resolve(v:val)')) do
+    handle_path(path)
+  end
 
-    if require_update
-      call health#report_warn('Out of date', ['Run `:UpdateRemotePlugins`'])
-    else
-      call health#report_ok('Up to date')
-    endif
-  endf
-
-  call s:check_rplugin_manifest()
-  ]=],
-    false
-  )
+  if require_update then
+    health.report_warn('Out of date', { 'Run `:UpdateRemotePlugins`' })
+  else
+    health.report_ok('Up to date')
+  end
 end
 
 local function check_tmux()
-  vim.api.nvim_exec([=[
-  let s:suggest_faq = ']=] .. suggest_faq .. [=['
+  if empty(vim.env.TMUX) or not executable('tmux') then
+    return
+  end
 
-  func! s:get_tmux_option(option) abort
-    let cmd = 'tmux show-option -qvg '.a:option  " try global scope
-    let out = system(split(cmd))
-    let val = substitute(out, '\v(\s|\r|\n)', '', 'g')
-    if v:shell_error
-      call health#report_error('command failed: '.cmd."\n".out)
+  local get_tmux_option = function(option)
+    local cmd = 'tmux show-option -qvg ' .. option -- try global scope
+    local out = vim.fn.system(vim.fn.split(cmd))
+    local val = vim.fn.substitute(out, [[\v(\s|\r|\n)]], '', 'g')
+    if shell_error() then
+      health.report_error('command failed: ' .. cmd .. '\n' .. out)
       return 'error'
-    elseif empty(val)
-      let cmd = 'tmux show-option -qvgs '.a:option  " try session scope
-      let out = system(split(cmd))
-      let val = substitute(out, '\v(\s|\r|\n)', '', 'g')
-      if v:shell_error
-        call health#report_error('command failed: '.cmd."\n".out)
+    elseif empty(val) then
+      cmd = 'tmux show-option -qvgs ' .. option -- try session scope
+      out = vim.fn.system(vim.fn.split(cmd))
+      val = vim.fn.substitute(out, [[\v(\s|\r|\n)]], '', 'g')
+      if shell_error() then
+        health.report_error('command failed: ' .. cmd .. '\n' .. out)
         return 'error'
-      endif
-    endif
+      end
+    end
     return val
-  endf
+  end
 
-  func! s:check_tmux() abort
-    if empty($TMUX) || !executable('tmux')
-      return
-    endif
-    call health#report_start('tmux')
+  health.report_start('tmux')
 
-    " check escape-time
-    let suggestions = ["set escape-time in ~/.tmux.conf:\nset-option -sg escape-time 10",
-          \ s:suggest_faq]
-    let tmux_esc_time = s:get_tmux_option('escape-time')
-    if tmux_esc_time !=# 'error'
-      if empty(tmux_esc_time)
-        call health#report_error('`escape-time` is not set', suggestions)
-      elseif tmux_esc_time > 300
-        call health#report_error(
-            \ '`escape-time` ('.tmux_esc_time.') is higher than 300ms', suggestions)
-      else
-        call health#report_ok('escape-time: '.tmux_esc_time)
-      endif
-    endif
+  -- check escape-time
+  local suggestions =
+    { 'set escape-time in ~/.tmux.conf:\nset-option -sg escape-time 10', suggest_faq }
+  local tmux_esc_time = get_tmux_option('escape-time')
+  if tmux_esc_time ~= 'error' then
+    if empty(tmux_esc_time) then
+      health.report_error('`escape-time` is not set', suggestions)
+    elseif tmux_esc_time > 300 then
+      health.report_error(
+        '`escape-time` (' .. tmux_esc_time .. ') is higher than 300ms',
+        suggestions
+      )
+    else
+      health.report_ok('escape-time: ' .. tmux_esc_time)
+    end
+  end
 
-    " check focus-events
-    let suggestions = ["(tmux 1.9+ only) Set `focus-events` in ~/.tmux.conf:\nset-option -g focus-events on"]
-    let tmux_focus_events = s:get_tmux_option('focus-events')
-    if tmux_focus_events !=# 'error'
-      if empty(tmux_focus_events) || tmux_focus_events !=# 'on'
-        call health#report_warn(
-            \ "`focus-events` is not enabled. |'autoread'| may not work.", suggestions)
-      else
-        call health#report_ok('focus-events: '.tmux_focus_events)
-      endif
-    endif
+  -- check focus-events
+  local tmux_focus_events = get_tmux_option('focus-events')
+  if tmux_focus_events ~= 'error' then
+    if empty(tmux_focus_events) or tmux_focus_events ~= 'on' then
+      health.report_warn(
+        "`focus-events` is not enabled. |'autoread'| may not work.",
+        { '(tmux 1.9+ only) Set `focus-events` in ~/.tmux.conf:\nset-option -g focus-events on' }
+      )
+    else
+      health.report_ok('focus-events: ' .. tmux_focus_events)
+    end
+  end
 
-    " check default-terminal and $TERM
-    call health#report_info('$TERM: '.$TERM)
-    let cmd = 'tmux show-option -qvg default-terminal'
-    let out = system(split(cmd))
-    let tmux_default_term = substitute(out, '\v(\s|\r|\n)', '', 'g')
-    if empty(tmux_default_term)
-      let cmd = 'tmux show-option -qvgs default-terminal'
-      let out = system(split(cmd))
-      let tmux_default_term = substitute(out, '\v(\s|\r|\n)', '', 'g')
-    endif
+  -- check default-terminal and $TERM
+  health.report_info('$TERM: ' .. vim.env.TERM)
+  local cmd = 'tmux show-option -qvg default-terminal'
+  local out = vim.fn.system(vim.fn.split(cmd))
+  local tmux_default_term = vim.fn.substitute(out, [[\v(\s|\r|\n)]], '', 'g')
+  if empty(tmux_default_term) then
+    cmd = 'tmux show-option -qvgs default-terminal'
+    out = vim.fn.system(vim.fn.split(cmd))
+    tmux_default_term = vim.fn.substitute(out, [[\v(\s|\r|\n)]], '', 'g')
+  end
 
-    if v:shell_error
-      call health#report_error('command failed: '.cmd."\n".out)
-    elseif tmux_default_term !=# $TERM
-      call health#report_info('default-terminal: '.tmux_default_term)
-      call health#report_error(
-            \ '$TERM differs from the tmux `default-terminal` setting. Colors might look wrong.',
-            \ ['$TERM may have been set by some rc (.bashrc, .zshrc, ...).'])
-    elseif $TERM !~# '\v(tmux-256color|screen-256color)'
-      call health#report_error(
-            \ '$TERM should be "screen-256color" or "tmux-256color" in tmux. Colors might look wrong.',
-            \ ["Set default-terminal in ~/.tmux.conf:\nset-option -g default-terminal \"screen-256color\"",
-            \  s:suggest_faq])
-    endif
+  if shell_error() then
+    health.report_error('command failed: ' .. cmd .. '\n' .. out)
+  elseif tmux_default_term ~= vim.env.TERM then
+    health.report_info('default-terminal: ' .. tmux_default_term)
+    health.report_error(
+      '$TERM differs from the tmux `default-terminal` setting. Colors might look wrong.',
+      { '$TERM may have been set by some rc (.bashrc, .zshrc, ...).' }
+    )
+  elseif not vim.regex([[\v(tmux-256color|screen-256color)]]):match_str(vim.env.TERM) then
+    health.report_error(
+      '$TERM should be "screen-256color" or "tmux-256color" in tmux. Colors might look wrong.',
+      {
+        'Set default-terminal in ~/.tmux.conf:\nset-option -g default-terminal "screen-256color"',
+        suggest_faq,
+      }
+    )
+  end
 
-    " check for RGB capabilities
-    let info = system(['tmux', 'show-messages', '-JT'])
-    let has_tc = stridx(info, " Tc: (flag) true") != -1
-    let has_rgb = stridx(info, " RGB: (flag) true") != -1
-    if !has_tc && !has_rgb
-      call health#report_warn(
-            \ "Neither Tc nor RGB capability set. True colors are disabled. |'termguicolors'| won't work properly.",
-            \ ["Put this in your ~/.tmux.conf and replace XXX by your $TERM outside of tmux:\nset-option -sa terminal-overrides ',XXX:RGB'",
-            \  "For older tmux versions use this instead:\nset-option -ga terminal-overrides ',XXX:Tc'"])
-    endif
-  endf
-
-  call s:check_tmux()
-  ]=], false)
+  -- check for RGB capabilities
+  local info = vim.fn.system({ 'tmux', 'show-messages', '-JT' })
+  local has_tc = vim.fn.stridx(info, ' Tc: (flag) true') ~= -1
+  local has_rgb = vim.fn.stridx(info, ' RGB: (flag) true') ~= -1
+  if not has_tc and not has_rgb then
+    health.report_warn(
+      "Neither Tc nor RGB capability set. True colors are disabled. |'termguicolors'| won't work properly.",
+      {
+        "Put this in your ~/.tmux.conf and replace XXX by your $TERM outside of tmux:\nset-option -sa terminal-overrides ',XXX:RGB'",
+        "For older tmux versions use this instead:\nset-option -ga terminal-overrides ',XXX:Tc'",
+      }
+    )
+  end
 end
 
 local function check_terminal()
-  vim.api.nvim_exec(
-    [=[
-  func! s:check_terminal() abort
-    if !executable('infocmp')
-      return
-    endif
-    call health#report_start('terminal')
-    let cmd = 'infocmp -L'
-    let out = system(split(cmd))
-    let kbs_entry   = matchstr(out, 'key_backspace=[^,[:space:]]*')
-    let kdch1_entry = matchstr(out, 'key_dc=[^,[:space:]]*')
+  if not executable('infocmp') then
+    return
+  end
 
-    if v:shell_error
-          \ && (!has('win32')
-          \ || empty(matchstr(out,
-          \                   'infocmp: couldn''t open terminfo file .\+'
-          \                   ..'\%(conemu\|vtpcon\|win32con\)')))
-      call health#report_error('command failed: '.cmd."\n".out)
-    else
-      call health#report_info(printf('key_backspace (kbs) terminfo entry: `%s`', (empty(kbs_entry) ? '? (not found)' : kbs_entry)))
-      call health#report_info(printf('key_dc (kdch1) terminfo entry: `%s`', (empty(kbs_entry) ? '? (not found)' : kdch1_entry)))
-    endif
-    for env_var in ['XTERM_VERSION', 'VTE_VERSION', 'TERM_PROGRAM', 'COLORTERM', 'SSH_TTY']
-      if exists('$'.env_var)
-        call health#report_info(printf('$%s="%s"', env_var, eval('$'.env_var)))
-      endif
-    endfor
-  endf
+  health.report_start('terminal')
+  local cmd = 'infocmp -L'
+  local out = vim.fn.system(vim.fn.split(cmd))
+  local kbs_entry = vim.fn.matchstr(out, 'key_backspace=[^,[:space:]]*')
+  local kdch1_entry = vim.fn.matchstr(out, 'key_dc=[^,[:space:]]*')
 
-  call s:check_terminal()
-  ]=],
-    false
-  )
+  if
+    shell_error()
+    and (
+      not has('win32')
+      or empty(
+        vim.fn.matchstr(
+          out,
+          [[infocmp: couldn't open terminfo file .\+\%(conemu\|vtpcon\|win32con\)]]
+        )
+      )
+    )
+  then
+    health.report_error('command failed: ' .. cmd .. '\n' .. out)
+  else
+    health.report_info(
+      vim.fn.printf(
+        'key_backspace (kbs) terminfo entry: `%s`',
+        (empty(kbs_entry) and '? (not found)' or kbs_entry)
+      )
+    )
+
+    health.report_info(
+      vim.fn.printf(
+        'key_dc (kdch1) terminfo entry: `%s`',
+        (empty(kbs_entry) and '? (not found)' or kdch1_entry)
+      )
+    )
+  end
+
+  for env_var in ipairs({ 'XTERM_VERSION', 'VTE_VERSION', 'TERM_PROGRAM', 'COLORTERM', 'SSH_TTY' }) do
+    if vim.env[env_var] then
+      health.report_info(vim.fn.printf('$%s="%s"', env_var, vim.env[env_var]))
+    end
+  end
 end
 
 function M.check()
