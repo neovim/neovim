@@ -273,7 +273,7 @@ local function check_tmux()
   if tmux_esc_time ~= 'error' then
     if empty(tmux_esc_time) then
       health.report_error('`escape-time` is not set', suggestions)
-    elseif tmux_esc_time > 300 then
+    elseif tonumber(tmux_esc_time) > 300 then
       health.report_error(
         '`escape-time` (' .. tmux_esc_time .. ') is higher than 300ms',
         suggestions
@@ -326,17 +326,24 @@ local function check_tmux()
   end
 
   -- check for RGB capabilities
-  local info = vim.fn.system({ 'tmux', 'show-messages', '-JT' })
-  local has_tc = vim.fn.stridx(info, ' Tc: (flag) true') ~= -1
-  local has_rgb = vim.fn.stridx(info, ' RGB: (flag) true') ~= -1
-  if not has_tc and not has_rgb then
-    health.report_warn(
-      "Neither Tc nor RGB capability set. True colors are disabled. |'termguicolors'| won't work properly.",
-      {
-        "Put this in your ~/.tmux.conf and replace XXX by your $TERM outside of tmux:\nset-option -sa terminal-overrides ',XXX:RGB'",
-        "For older tmux versions use this instead:\nset-option -ga terminal-overrides ',XXX:Tc'",
-      }
-    )
+  local info = vim.fn.system({ 'tmux', 'display-message', '-p', '#{client_termfeatures}' })
+  info = vim.split(vim.trim(info), ',', { trimempty = true })
+  if not vim.tbl_contains(info, 'RGB') then
+    local has_rgb = false
+    if #info == 0 then
+      -- client_termfeatures may not be supported; fallback to checking show-messages
+      info = vim.fn.system({ 'tmux', 'show-messages', '-JT' })
+      has_rgb = info:find(' Tc: (flag) true', 1, true) or info:find(' RGB: (flag) true', 1, true)
+    end
+    if not has_rgb then
+      health.report_warn(
+        "Neither Tc nor RGB capability set. True colors are disabled. |'termguicolors'| won't work properly.",
+        {
+          "Put this in your ~/.tmux.conf and replace XXX by your $TERM outside of tmux:\nset-option -sa terminal-features ',XXX:RGB'",
+          "For older tmux versions use this instead:\nset-option -ga terminal-overrides ',XXX:Tc'",
+        }
+      )
+    end
   end
 end
 
