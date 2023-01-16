@@ -940,7 +940,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
     area_highlighting = true;
   }
   VirtLines virt_lines = KV_INITIAL_VALUE;
-  int n_virt_lines = decor_virt_lines(wp, lnum, &virt_lines);
+  int n_virt_lines = decor_virt_lines(wp, lnum, &virt_lines, has_fold);
   filler_lines += n_virt_lines;
   if (lnum == wp->w_topline) {
     filler_lines = wp->w_topfill;
@@ -1507,7 +1507,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
         && has_fold
         && col == win_col_offset
         && n_extra == 0
-        && row == startrow) {
+        && row == startrow + filler_lines) {
       char_attr = win_hl_attr(wp, HLF_FL);
 
       linenr_T lnume = lnum + foldinfo.fi_lines - 1;
@@ -2753,7 +2753,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
     // At end of screen line and there is more to come: Display the line
     // so far.  If there is no more to display it is caught above.
     if ((wp->w_p_rl ? (col < 0) : (col >= grid->cols))
-        && foldinfo.fi_lines == 0
+        && (!has_fold || n_virt_lines > 0)
         && (draw_state != WL_LINE
             || *ptr != NUL
             || filler_todo > 0

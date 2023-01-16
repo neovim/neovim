@@ -20,8 +20,6 @@ typedef struct foldinfo {
   linenr_T fi_lines;
 } foldinfo_T;
 
-#define FOLDINFO_INIT { 0, 0, 0, 0 }
-
 EXTERN int disable_fold_update INIT(= 0);
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
