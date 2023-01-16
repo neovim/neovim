@@ -419,7 +419,8 @@ local directive_handlers = {
 --- Adds a new predicate to be used in queries
 ---
 ---@param name string Name of the predicate, without leading #
----@param handler function(match:string, pattern:string, bufnr:number, predicate:function)
+---@param handler function(match:table, pattern:string, bufnr:number, predicate:string[])
+---   - see |vim.treesitter.query.add_directive()| for argument meanings
 function M.add_predicate(name, handler, force)
   if predicate_handlers[name] and not force then
     error(string.format('Overriding %s', name))
@@ -436,7 +437,12 @@ end
 --- metadata table `metadata[capture_id].key = value`
 ---
 ---@param name string Name of the directive, without leading #
----@param handler function(match:string, pattern:string, bufnr:number, predicate:function, metadata:table)
+---@param handler function(match:table, pattern:string, bufnr:number, predicate:string[], metadata:table)
+---   - match: see |treesitter-query|
+---      - node-level data are accessible via `match[capture_id]`
+---   - pattern: see |treesitter-query|
+---   - predicate: list of strings containing the full directive being called, e.g.
+---     `(node (#set! conceal "-"))` would get the predicate `{ "#set!", "conceal", "-" }`
 function M.add_directive(name, handler, force)
   if directive_handlers[name] and not force then
     error(string.format('Overriding %s', name))
