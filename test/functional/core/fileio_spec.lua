@@ -295,9 +295,7 @@ describe('tmpdir', function()
     clear({ env={ NVIM_LOG_FILE=testlog, TMPDIR=faketmp, } })
     matches(tmproot_pat, funcs.stdpath('run'))  -- Tickle vim_mktempdir().
     -- Assert that broken tmpdir root was handled.
-    retry(nil, 1000, function()
-      assert_log('tempdir root not a directory', testlog, 100)
-    end)
+    assert_log('tempdir root not a directory', testlog, 100)
 
     -- "…/nvim.<user>/" has wrong permissions:
     skip(is_os('win'), 'TODO(justinmk): need setfperm/getfperm on Windows. #8244')
@@ -308,9 +306,7 @@ describe('tmpdir', function()
     clear({ env={ NVIM_LOG_FILE=testlog, TMPDIR=faketmp, } })
     matches(tmproot_pat, funcs.stdpath('run'))  -- Tickle vim_mktempdir().
     -- Assert that broken tmpdir root was handled.
-    retry(nil, 1000, function()
-      assert_log('tempdir root has invalid permissions', testlog, 100)
-    end)
+    assert_log('tempdir root has invalid permissions', testlog, 100)
   end)
 
   it('too long', function()

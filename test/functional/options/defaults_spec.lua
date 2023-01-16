@@ -4,7 +4,6 @@ local Screen = require('test.functional.ui.screen')
 
 local assert_alive = helpers.assert_alive
 local assert_log = helpers.assert_log
-local retry = helpers.retry
 local meths = helpers.meths
 local command = helpers.command
 local clear = helpers.clear
@@ -360,9 +359,7 @@ describe('XDG defaults', function()
     end)
 
     it('are correctly set', function()
-      retry(nil, 1000, function()
-        assert_log('Failed to start server: no such file or directory: /X/X/X', testlog, 10)
-      end)
+      assert_log('Failed to start server: no such file or directory: /X/X/X', testlog, 10)
 
       local vimruntime, libdir = vimruntime_and_libdir()
 
@@ -436,9 +433,8 @@ describe('XDG defaults', function()
     end)
 
     it('are not expanded', function()
-      retry(nil, 1000, function()
-        assert_log('Failed to start server: no such file or directory: %$XDG_RUNTIME_DIR%/', testlog, 10)
-      end)
+      assert_log('Failed to start server: no such file or directory: %$XDG_RUNTIME_DIR%/', testlog, 10)
+
       local vimruntime, libdir = vimruntime_and_libdir()
       eq((('$XDG_DATA_HOME/nvim'
           .. ',$XDG_DATA_DIRS/nvim'

@@ -6,7 +6,6 @@ local eq = helpers.eq
 local exec_lua = helpers.exec_lua
 local expect_exit = helpers.expect_exit
 local request = helpers.request
-local retry = helpers.retry
 
 describe('log', function()
   local testlog = 'Xtest_logging'
@@ -40,9 +39,7 @@ describe('log', function()
       }})
 
     local tid = _G._nvim_test_id
-    retry(nil, 1000, function()
-      assert_log(tid..'%.%d+%.%d +server_init:%d+: test log message', testlog, 100)
-    end)
+    assert_log(tid..'%.%d+%.%d +server_init:%d+: test log message', testlog, 100)
 
     exec_lua([[
       local j1 = vim.fn.jobstart({ vim.v.progpath, '-es', '-V1', '+foochild', '+qa!' }, vim.empty_dict())
@@ -50,8 +47,6 @@ describe('log', function()
     ]])
 
     -- Child Nvim spawned by jobstart() appends "/c" to parent name.
-    retry(nil, 1000, function()
-      assert_log('%.%d+%.%d/c +server_init:%d+: test log message', testlog, 100)
-    end)
+    assert_log('%.%d+%.%d/c +server_init:%d+: test log message', testlog, 100)
   end)
 end)
