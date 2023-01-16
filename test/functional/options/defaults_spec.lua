@@ -3,6 +3,8 @@ local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
 
 local assert_alive = helpers.assert_alive
+local assert_log = helpers.assert_log
+local retry = helpers.retry
 local meths = helpers.meths
 local command = helpers.command
 local clear = helpers.clear
@@ -19,6 +21,8 @@ local alter_slashes = helpers.alter_slashes
 local tbl_contains = helpers.tbl_contains
 local expect_exit = helpers.expect_exit
 local is_os = helpers.is_os
+
+local testlog = 'Xtest-defaults-log'
 
 describe('startup defaults', function()
   describe(':filetype', function()
@@ -275,6 +279,10 @@ describe('XDG defaults', function()
   -- Need separate describe() blocks to not run clear() twice.
   -- Do not put before_each() here for the same reasons.
 
+  after_each(function()
+    os.remove(testlog)
+  end)
+
   it("&runtimepath data-dir matches stdpath('data') #9910", function()
     clear()
     local rtp = eval('split(&runtimepath, ",")')
@@ -337,6 +345,7 @@ describe('XDG defaults', function()
       clear({
         args_rm={'runtimepath'},
         env={
+          NVIM_LOG_FILE=testlog,
           XDG_CONFIG_HOME=(root_path .. ('/x'):rep(4096)),
           XDG_CONFIG_DIRS=(root_path .. ('/a'):rep(2048)
                            .. env_sep.. root_path .. ('/b'):rep(2048)
@@ -351,6 +360,10 @@ describe('XDG defaults', function()
     end)
 
     it('are correctly set', function()
+      retry(nil, 1000, function()
+        assert_log('Failed to start server: no such file or directory: /X/X/X', testlog, 10)
+      end)
+
       local vimruntime, libdir = vimruntime_and_libdir()
 
       eq(((root_path .. ('/x'):rep(4096) .. '/nvim'
@@ -412,6 +425,7 @@ describe('XDG defaults', function()
       clear({
         args_rm={'runtimepath'},
         env={
+          NVIM_LOG_FILE=testlog,
           XDG_CONFIG_HOME='$XDG_DATA_HOME',
           XDG_CONFIG_DIRS='$XDG_DATA_DIRS',
           XDG_DATA_HOME='$XDG_CONFIG_HOME',
@@ -422,6 +436,9 @@ describe('XDG defaults', function()
     end)
 
     it('are not expanded', function()
+      retry(nil, 1000, function()
+        assert_log('Failed to start server: no such file or directory: %$XDG_RUNTIME_DIR%/', testlog, 10)
+      end)
       local vimruntime, libdir = vimruntime_and_libdir()
       eq((('$XDG_DATA_HOME/nvim'
           .. ',$XDG_DATA_DIRS/nvim'

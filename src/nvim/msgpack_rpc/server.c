@@ -101,7 +101,7 @@ char *server_address_new(const char *name)
   xfree(dir);
 #endif
   if ((size_t)r >= sizeof(fmt)) {
-    ELOG("truncated server address");
+    ELOG("truncated server address: %.40s...", fmt);
   }
   return xstrdup(fmt);
 }

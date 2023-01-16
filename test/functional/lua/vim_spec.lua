@@ -2,6 +2,7 @@
 local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
 
+local nvim_prog = helpers.nvim_prog
 local funcs = helpers.funcs
 local meths = helpers.meths
 local command = helpers.command
@@ -22,7 +23,6 @@ local remove_trace = helpers.remove_trace
 local mkdir_p = helpers.mkdir_p
 local rmdir = helpers.rmdir
 local write_file = helpers.write_file
-local expect_exit = helpers.expect_exit
 local poke_eventloop = helpers.poke_eventloop
 local assert_alive = helpers.assert_alive
 
@@ -2910,9 +2910,14 @@ describe('lua: builtin modules', function()
   end)
 
 
-  it('does not work when disabled without runtime', function()
-    clear{args={'--luamod-dev'}, env={VIMRUNTIME='fixtures/a'}}
-    expect_exit(exec_lua, [[return vim.tbl_count {x=1,y=2}]])
+  it('fails when disabled without runtime', function()
+    clear()
+    command("let $VIMRUNTIME='fixtures/a'")
+    -- Use system([nvim,…]) instead of clear() to avoid stderr noise. #21844
+    local out = funcs.system({nvim_prog, '--clean', '--luamod-dev',
+      [[+call nvim_exec_lua('return vim.tbl_count {x=1,y=2}')]], '+qa!'}):gsub('\r\n', '\n')
+    eq(1, eval('v:shell_error'))
+    matches("'vim%.shared' not found", out)
   end)
 end)
 
