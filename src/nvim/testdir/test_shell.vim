@@ -5,9 +5,8 @@ source check.vim
 source shared.vim
 
 func Test_shell_options()
-  " For each shell, the following options are checked:
-  " 'shellcmdflag', 'shellpipe', 'shellquote', 'shellredir', 'shellxescape',
-  " 'shellxquote'
+  " The expected value of 'shellcmdflag', 'shellpipe', 'shellquote',
+  " 'shellredir', 'shellxescape', 'shellxquote' for the supported shells.
   let shells = []
   if has('unix')
     let shells += [['sh', '-c', '2>&1| tee', '', '>%s 2>&1', '', ''],
@@ -39,6 +38,8 @@ func Test_shell_options()
           \ ['tcsh.exe', '-c', '>&', '', '>&', '"&|<>()@^', '"']]
   endif
 
+  " start a new Vim instance with 'shell' set to each of the supported shells
+  " and check the default shell option settings
   let after =<< trim END
     let l = [&shell, &shellcmdflag, &shellpipe, &shellquote]
     let l += [&shellredir, &shellxescape, &shellxquote]
@@ -51,6 +52,7 @@ func Test_shell_options()
     endif
   endfor
 
+  " Test shellescape() for each of the shells.
   for e in shells
     exe 'set shell=' .. e[0]
     if e[0] =~# '.*csh$' || e[0] =~# '.*csh.exe$'
@@ -62,8 +64,20 @@ func Test_shell_options()
     endif
     call assert_equal(str1, shellescape("cmd \"arg1\" 'arg2' !%#"), e[0])
     call assert_equal(str2, shellescape("cmd \"arg1\" 'arg2' !%#", 1), e[0])
+
+    " Try running an external command with the shell.
+    if executable(e[0])
+      " set the shell options for the current 'shell'
+      let [&shellcmdflag, &shellpipe, &shellquote, &shellredir,
+            \ &shellxescape, &shellxquote] = e[1:6]
+      new
+      r !echo hello
+      call assert_equal('hello', substitute(getline(2), '\W', '', 'g'), e[0])
+      bwipe!
+    endif
   endfor
-  set shell&
+  set shell& shellcmdflag& shellpipe& shellquote&
+  set shellredir& shellxescape& shellxquote&
   call delete('Xtestout')
 endfunc
 
@@ -96,6 +110,7 @@ func Test_shellquote()
   call assert_match(': "#echo Hello#"', v)
 endfunc
 
+" Test for the 'shellescape' option
 func Test_shellescape()
   let save_shell = &shell
   set shell=bash
@@ -155,6 +170,28 @@ func Test_shellxquote()
   let &shellxescape = save_sxe
   call delete('Xtestshell')
   call delete('Xlog')
+endfunc
+
+" Test for using the shell set in the $SHELL environment variable
+func Test_set_shell()
+  let after =<< trim [CODE]
+    call writefile([&shell], "Xtestout")
+    quit!
+  [CODE]
+
+  if has('win32')
+    let $SHELL = 'C:\with space\cmd.exe'
+    let expected = '"C:\with space\cmd.exe"'
+  else
+    let $SHELL = '/bin/with space/sh'
+    let expected = '"/bin/with space/sh"'
+  endif
+
+  if RunVimPiped([], after, '', '')
+    let lines = readfile('Xtestout')
+    call assert_equal(expected, lines[0])
+  endif
+  call delete('Xtestout')
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab
