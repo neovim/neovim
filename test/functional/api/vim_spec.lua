@@ -3211,6 +3211,17 @@ describe('API', function()
             'TextWithNoHighlight%#WarningMsg#TextWithWarningHighlight',
             { use_winbar = true, highlights = true }))
       end)
+      it('no memory leak with click functions', function()
+        meths.eval_statusline('%@ClickFunc@StatusLineStringWithClickFunc%T', {})
+        eq({
+            str = 'StatusLineStringWithClickFunc',
+            width = 29
+          },
+          meths.eval_statusline(
+            '%@ClickFunc@StatusLineStringWithClickFunc%T',
+            {})
+          )
+      end)
     end)
   end)
   describe('nvim_parse_cmd', function()
