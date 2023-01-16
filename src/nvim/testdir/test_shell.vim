@@ -24,8 +24,10 @@ func Test_shell_options()
   if has('win32')
     let shells += [['cmd', '/c', '>%s 2>&1', '', '>%s 2>&1', '"&|<>()@^', ''],
           \ ['cmd.exe', '/c', '>%s 2>&1', '', '>%s 2>&1', '"&|<>()@^', '('],
-          \ ['powershell.exe', '-c', '>', '', '>', '"&|<>()@^', '"'],
-          \ ['powershell', '-c', '>', '', '>', '"&|<>()@^', '"'],
+          \ ['powershell.exe', '-Command', '2>&1 | Out-File -Encoding default',
+          \           '', '2>&1 | Out-File -Encoding default', '"&|<>()@^', '"'],
+          \ ['powershell', '-Command', '2>&1 | Out-File -Encoding default', '',
+          \               '2>&1 | Out-File -Encoding default', '"&|<>()@^', '"'],
           \ ['sh.exe', '-c', '>%s 2>&1', '', '>%s 2>&1', '"&|<>()@^', '"'],
           \ ['ksh.exe', '-c', '>%s 2>&1', '', '>%s 2>&1', '"&|<>()@^', '"'],
           \ ['mksh.exe', '-c', '>%s 2>&1', '', '>%s 2>&1', '"&|<>()@^', '"'],
@@ -58,6 +60,9 @@ func Test_shell_options()
     if e[0] =~# '.*csh$' || e[0] =~# '.*csh.exe$'
       let str1 = "'cmd \"arg1\" '\\''arg2'\\'' \\!%#'"
       let str2 = "'cmd \"arg1\" '\\''arg2'\\'' \\\\!\\%\\#'"
+    elseif e[0] =~# '.*powershell$' || e[0] =~# '.*powershell.exe$'
+      let str1 = "'cmd \"arg1\" ''arg2'' !%#'"
+      let str2 = "'cmd \"arg1\" ''arg2'' \\!\\%\\#'"
     else
       let str1 = "'cmd \"arg1\" '\\''arg2'\\'' !%#'"
       let str2 = "'cmd \"arg1\" '\\''arg2'\\'' \\!\\%\\#'"
@@ -134,6 +139,28 @@ func Test_shellescape()
   call assert_equal("'te\\\\\nxt'", shellescape("te\nxt", 1))
 
   let &shell = save_shell
+endfunc
+
+" Test for 'shellslash'
+func Test_shellslash()
+  CheckOption shellslash
+  let save_shellslash = &shellslash
+  " The shell and cmdflag, and expected slash in tempname with shellslash set or
+  " unset.  The assert checks the file separator before the leafname.
+  " ".*\\\\[^\\\\]*$"
+  let shells = [['cmd', '/c', '\\', '/'],
+        \ ['powershell', '-Command', '\\', '/'],
+        \ ['sh', '-c', '/', '/']]
+  for e in shells
+    exe 'set shell=' .. e[0] .. ' | set shellcmdflag=' .. e[1]
+    set noshellslash
+    let file = tempname()
+    call assert_match('^.\+' .. e[2] .. '[^' .. e[2] .. ']\+$', file, e[0] .. ' ' .. e[1] .. ' nossl')
+    set shellslash
+    let file = tempname()
+    call assert_match('^.\+' .. e[3] .. '[^' .. e[3] .. ']\+$', file, e[0] .. ' ' .. e[1] .. ' ssl')
+  endfor
+  let &shellslash = save_shellslash
 endfunc
 
 " Test for 'shellxquote'
