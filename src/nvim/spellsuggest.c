@@ -1364,7 +1364,7 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char *fword, bool soun
               == sp->ts_twordlen - sp->ts_splitoff
               && strncmp(fword + sp->ts_splitfidx,
                          tword + sp->ts_splitoff,
-                         sp->ts_fidx - sp->ts_splitfidx) == 0) {
+                         (size_t)(sp->ts_fidx - sp->ts_splitfidx)) == 0) {
             preword[sp->ts_prewordlen] = NUL;
             newscore = score_wordcount_adj(slang, sp->ts_score,
                                            (char_u *)preword + sp->ts_prewordlen,
