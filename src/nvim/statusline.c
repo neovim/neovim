@@ -1323,7 +1323,7 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, char *opt_n
       }
       stl_items[curitem].type = ClickFunc;
       stl_items[curitem].start = out_p;
-      stl_items[curitem].cmd = xmemdupz(t, (size_t)(fmt_p - t));
+      stl_items[curitem].cmd = tabtab ? xmemdupz(t, (size_t)(fmt_p - t)) : NULL;
       stl_items[curitem].minwid = minwid;
       fmt_p++;
       curitem++;
