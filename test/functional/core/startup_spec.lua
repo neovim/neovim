@@ -43,10 +43,8 @@ describe('startup', function()
 
   it('--startuptime', function()
     clear({ args = {'--startuptime', testfile}})
-    retry(nil, 1000, function()
-      assert_log('sourcing', testfile, 100)
-      assert_log("require%('vim%._editor'%)", testfile, 100)
-    end)
+    assert_log('sourcing', testfile, 100)
+    assert_log("require%('vim%._editor'%)", testfile, 100)
   end)
 
   it('-D does not hang #12647', function()

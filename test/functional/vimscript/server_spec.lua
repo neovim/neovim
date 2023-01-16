@@ -1,4 +1,5 @@
 local helpers = require('test.functional.helpers')(after_each)
+local assert_log = helpers.assert_log
 local eq, neq, eval = helpers.eq, helpers.neq, helpers.eval
 local clear, funcs, meths = helpers.clear, helpers.funcs, helpers.meths
 local ok = helpers.ok
@@ -7,6 +8,8 @@ local pcall_err = helpers.pcall_err
 local mkdir = helpers.mkdir
 local is_os = helpers.is_os
 
+local testlog = 'Xtest-server-log'
+
 local function clear_serverlist()
   for _, server in pairs(funcs.serverlist()) do
     funcs.serverstop(server)
@@ -14,6 +17,10 @@ local function clear_serverlist()
 end
 
 describe('server', function()
+  after_each(function()
+    os.remove(testlog)
+  end)
+
   it('serverstart() stores sockets in $XDG_RUNTIME_DIR', function()
     local dir = 'Xtest_xdg_run'
     mkdir(dir)
@@ -74,13 +81,20 @@ describe('server', function()
   end)
 
   it('serverstop() returns false for invalid input', function()
-    clear()
+    clear{env={
+      NVIM_LOG_FILE=testlog,
+      NVIM_LISTEN_ADDRESS='.',
+    }}
     eq(0, eval("serverstop('')"))
     eq(0, eval("serverstop('bogus-socket-name')"))
+    assert_log('Not listening on bogus%-socket%-name', testlog, 10)
   end)
 
   it('parses endpoints', function()
-    clear()
+    clear{env={
+      NVIM_LOG_FILE=testlog,
+      NVIM_LISTEN_ADDRESS='.',
+    }}
     clear_serverlist()
     eq({}, funcs.serverlist())
 
@@ -104,6 +118,7 @@ describe('server', function()
     if status then
       table.insert(expected, v4)
       pcall(funcs.serverstart, v4)  -- exists already; ignore
+      assert_log('Failed to start server: address already in use: 127%.0%.0%.1', testlog, 10)
     end
 
     local v6 = '::1:12345'
@@ -111,6 +126,7 @@ describe('server', function()
     if status then
       table.insert(expected, v6)
       pcall(funcs.serverstart, v6)  -- exists already; ignore
+      assert_log('Failed to start server: address already in use: ::1', testlog, 10)
     end
     eq(expected, funcs.serverlist())
     clear_serverlist()

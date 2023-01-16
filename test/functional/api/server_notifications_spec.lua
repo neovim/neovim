@@ -1,4 +1,5 @@
 local helpers = require('test.functional.helpers')(after_each)
+local assert_log = helpers.assert_log
 local eq, clear, eval, command, nvim, next_msg =
   helpers.eq, helpers.clear, helpers.eval, helpers.command, helpers.nvim,
   helpers.next_msg
@@ -9,12 +10,18 @@ local is_ci = helpers.is_ci
 local assert_alive = helpers.assert_alive
 local skip = helpers.skip
 
+local testlog = 'Xtest-server-notify-log'
+
 describe('notify', function()
   local channel
 
   before_each(function()
     clear()
     channel = nvim('get_api_info')[1]
+  end)
+
+  after_each(function()
+    os.remove(testlog)
   end)
 
   describe('passing a valid channel id', function()
@@ -72,8 +79,12 @@ describe('notify', function()
   end)
 
   it('unsubscribe non-existing event #8745', function()
+    clear{env={
+      NVIM_LOG_FILE=testlog,
+    }}
     nvim('subscribe', 'event1')
     nvim('unsubscribe', 'doesnotexist')
+    assert_log("tried to unsubscribe unknown event 'doesnotexist'", testlog, 10)
     nvim('unsubscribe', 'event1')
     assert_alive()
   end)

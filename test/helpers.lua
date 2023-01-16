@@ -1,6 +1,7 @@
 require('test.compat')
 local shared = require('vim.shared')
 local assert = require('luassert')
+local busted = require('busted')
 local luv = require('luv')
 local lfs = require('lfs')
 local relpath = require('pl.path').relpath
@@ -45,6 +46,28 @@ function module.sleep(ms)
   luv.sleep(ms)
 end
 
+-- Calls fn() until it succeeds, up to `max` times or until `max_ms`
+-- milliseconds have passed.
+function module.retry(max, max_ms, fn)
+  assert(max == nil or max > 0)
+  assert(max_ms == nil or max_ms > 0)
+  local tries = 1
+  local timeout = (max_ms and max_ms or 10000)
+  local start_time = luv.now()
+  while true do
+    local status, result = pcall(fn)
+    if status then
+      return result
+    end
+    luv.update_time()  -- Update cached value of luv.now() (libuv: uv_now()).
+    if (max and tries >= max) or (luv.now() - start_time > timeout) then
+      busted.fail(string.format("retry() attempts: %d\n%s", tries, tostring(result)), 2)
+    end
+    tries = tries + 1
+    luv.sleep(20)  -- Avoid hot loop...
+  end
+end
+
 local check_logs_useless_lines = {
   ['Warning: noted but unhandled ioctl']=1,
   ['could cause spurious value errors to appear']=2,
@@ -87,6 +110,8 @@ end
 
 --- Asserts that `pat` matches (or *not* if inverse=true) any line in the tail of `logfile`.
 ---
+--- Retries for 1 second in case of filesystem delay.
+---
 ---@param pat (string) Lua pattern to match lines in the log file
 ---@param logfile (string) Full path to log file (default=$NVIM_LOG_FILE)
 ---@param nrlines (number) Search up to this many log lines
@@ -96,18 +121,21 @@ function module.assert_log(pat, logfile, nrlines, inverse)
   assert(logfile ~= nil, 'no logfile')
   nrlines = nrlines or 10
   inverse = inverse or false
-  local lines = module.read_file_list(logfile, -nrlines) or {}
-  local msg = string.format('Pattern %q %sfound in log (last %d lines): %s:\n%s',
-    pat, (inverse and '' or 'not '), nrlines, logfile, '    '..table.concat(lines, '\n    '))
-  for _,line in ipairs(lines) do
-    if line:match(pat) then
-      if inverse then error(msg) else return end
+
+  module.retry(nil, 1000, function()
+    local lines = module.read_file_list(logfile, -nrlines) or {}
+    local msg = string.format('Pattern %q %sfound in log (last %d lines): %s:\n%s',
+      pat, (inverse and '' or 'not '), nrlines, logfile, '    '..table.concat(lines, '\n    '))
+    for _,line in ipairs(lines) do
+      if line:match(pat) then
+        if inverse then error(msg) else return end
+      end
     end
-  end
-  if not inverse then error(msg) end
+    if not inverse then error(msg) end
+  end)
 end
 
---- Asserts that `pat` does NOT matche any line in the tail of `logfile`.
+--- Asserts that `pat` does NOT match any line in the tail of `logfile`.
 ---
 --- @see assert_log
 function module.assert_nolog(pat, logfile, nrlines)

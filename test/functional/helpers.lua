@@ -1,5 +1,4 @@
 require('coxpcall')
-local busted = require('busted')
 local luv = require('luv')
 local lfs = require('lfs')
 local mpack = require('mpack')
@@ -432,28 +431,6 @@ function module.connect(file_or_address)
   local stream = (addr and port) and TcpStream.open(addr, port) or
     SocketStream.open(file_or_address)
   return Session.new(stream)
-end
-
--- Calls fn() until it succeeds, up to `max` times or until `max_ms`
--- milliseconds have passed.
-function module.retry(max, max_ms, fn)
-  assert(max == nil or max > 0)
-  assert(max_ms == nil or max_ms > 0)
-  local tries = 1
-  local timeout = (max_ms and max_ms or 10000)
-  local start_time = luv.now()
-  while true do
-    local status, result = pcall(fn)
-    if status then
-      return result
-    end
-    luv.update_time()  -- Update cached value of luv.now() (libuv: uv_now()).
-    if (max and tries >= max) or (luv.now() - start_time > timeout) then
-      busted.fail(string.format("retry() attempts: %d\n%s", tries, tostring(result)), 2)
-    end
-    tries = tries + 1
-    luv.sleep(20)  -- Avoid hot loop...
-  end
 end
 
 -- Starts a new global Nvim session.
