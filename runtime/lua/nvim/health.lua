@@ -273,7 +273,7 @@ local function check_tmux()
   if tmux_esc_time ~= 'error' then
     if empty(tmux_esc_time) then
       health.report_error('`escape-time` is not set', suggestions)
-    elseif tmux_esc_time > 300 then
+    elseif tonumber(tmux_esc_time) > 300 then
       health.report_error(
         '`escape-time` (' .. tmux_esc_time .. ') is higher than 300ms',
         suggestions
