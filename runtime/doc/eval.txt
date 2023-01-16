@@ -2295,13 +2295,15 @@ v:version	Vim version number: major version times 100 plus minor
 			:if has("nvim-0.2.1")
 <
 
-				*v:vim_did_enter* *vim_did_enter-variable*
-v:vim_did_enter	0 during startup, 1 just before |VimEnter|.
+						*v:virtnum* *virtnum-variable*
+v:virtnum	Virtual line number for the 'statuscolumn' expression.
+	        Negative when drawing the status column for virtual lines, zero
+		when drawing an actual buffer line, and positive when drawing
+		the wrapped part of a buffer line.
 		Read-only.
 
-						*v:wrap* *wrap-variable*
-v:wrap		Boolean indicating whether 'statuscolumn' is being evaluated
-		for the wrapped part of a line.
+				*v:vim_did_enter* *vim_did_enter-variable*
+v:vim_did_enter	0 during startup, 1 just before |VimEnter|.
 		Read-only.
 
 					*v:warningmsg* *warningmsg-variable*

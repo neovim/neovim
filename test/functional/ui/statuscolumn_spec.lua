@@ -4,6 +4,7 @@ local clear = helpers.clear
 local command = helpers.command
 local eq = helpers.eq
 local eval = helpers.eval
+local exec_lua = helpers.exec_lua
 local meths = helpers.meths
 local pcall_err = helpers.pcall_err
 
@@ -15,8 +16,8 @@ describe('statuscolumn', function()
     screen:attach()
   end)
 
-  it('fails with invalid \'statuscolumn\'', function()
-    command('set stc=%{v:relnum?v:relnum:(v:lnum==5?invalid:v:lnum)}\\ ')
+  it("fails with invalid 'statuscolumn'", function()
+    command([[set stc=%{v:relnum?v:relnum:(v:lnum==5?invalid:v:lnum)}\ ]])
     screen:expect([[
       4  aaaaa                                             |
       3  aaaaa                                             |
@@ -38,8 +39,8 @@ describe('statuscolumn', function()
     eq('', eval('&statuscolumn'))
   end)
 
-  it('widens with irregular \'statuscolumn\' width', function()
-    command('set stc=%{v:relnum?v:relnum:(v:lnum==5?\'bbbbb\':v:lnum)}')
+  it("widens with irregular 'statuscolumn' width", function()
+    command([[set stc=%{v:relnum?v:relnum:(v:lnum==5?'bbbbb':v:lnum)}]])
     command('norm 5G | redraw!')
     screen:expect([[
       1    aaaaa                                           |
@@ -59,7 +60,7 @@ describe('statuscolumn', function()
     ]])
   end)
 
-  it('works with \'statuscolumn\'', function()
+  it("works with 'statuscolumn'", function()
     command([[set stc=%{&nu?v:lnum:''}%=%{&rnu?'\ '.v:relnum:''}│]])
     screen:expect([[
       4 │aaaaa                                             |
@@ -122,7 +123,7 @@ describe('statuscolumn', function()
     command([[set stc=%{&nu?v:lnum:''}%=%{&rnu?'\ '.v:relnum:''}│]])
   end)
 
-  it('works with highlighted \'statuscolumn\'', function()
+  it("works with highlighted 'statuscolumn'", function()
     command([[set stc=%#NonText#%{&nu?v:lnum:''}]] ..
             [[%=%{&rnu&&(v:lnum%2)?'\ '.v:relnum:''}]] ..
             [[%#LineNr#%{&rnu&&!(v:lnum%2)?'\ '.v:relnum:''}│]])
@@ -183,7 +184,7 @@ describe('statuscolumn', function()
   end)
 
   it('works with wrapped lines, signs and folds', function()
-    command("set stc=%C%s%=%{v:wrap?'':v:lnum}│\\ ")
+    command([[set stc=%C%s%=%{v:virtnum?'':v:lnum}│\ ]])
     command("call setline(1,repeat([repeat('aaaaa',10)],16))")
     screen:set_default_attr_ids({
       [0] = {bold = true, foreground = Screen.colors.Blue},
@@ -234,7 +235,7 @@ describe('statuscolumn', function()
     ]])
     command('norm zf$')
     -- Check that alignment works properly with signs after %=
-    command("set stc=%C%=%{v:wrap?'':v:lnum}│%s\\ ")
+    command([[set stc=%C%=%{v:virtnum?'':v:lnum}│%s\ ]])
     screen:expect([[
       {2: }{1: 4│>>}{2:  }{1: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
       {2: }{1:  │}{2:    }{1: }aaaaaa                                      |
@@ -269,7 +270,7 @@ describe('statuscolumn', function()
                                                            |
     ]])
     -- v:lnum is the same value on wrapped lines
-    command("set stc=%C%=%{v:lnum}│%s\\ ")
+    command([[set stc=%C%=%{v:lnum}│%s\ ]])
     screen:expect([[
       {2: }{1: 4│>>}{2:  }{1: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
       {2: }{1: 4│}{2:    }{1: }aaaaaa                                      |
@@ -287,7 +288,7 @@ describe('statuscolumn', function()
                                                            |
     ]])
     -- v:relnum is the same value on wrapped lines
-    command("set stc=%C%=\\ %{v:relnum}│%s\\ ")
+    command([[set stc=%C%=\ %{v:relnum}│%s\ ]])
     screen:expect([[
       {2: }{1: 4│>>}{2:  }{1: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
       {2: }{1: 4│}{2:    }{1: }aaaaaa                                      |
@@ -304,7 +305,7 @@ describe('statuscolumn', function()
       {2: }{1: 2│}{2:    }{1: }aaaaaa                                      |
                                                            |
     ]])
-    command("set stc=%C%=\\ %{v:wrap?'':v:relnum}│%s\\ ")
+    command([[set stc=%C%=\ %{v:virtnum?'':v:relnum}│%s\ ]])
     screen:expect([[
       {2: }{1: 4│>>}{2:  }{1: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
       {2: }{1:  │}{2:    }{1: }aaaaaa                                      |
@@ -346,9 +347,34 @@ describe('statuscolumn', function()
       {2: }{1:  │}{2:                  }{1: }aaaaaaaaaaaaaaaaaaaa          |
                                                            |
     ]])
+    -- Status column is re-evaluated for virt_lines, buffer line, and wrapped line
+    exec_lua([[
+      local ns = vim.api.nvim_create_namespace("ns")
+      vim.api.nvim_buf_set_extmark(0, ns, 5, 0, {
+        virt_lines_above = true, virt_lines = {{{"virt_line above", ""}}} })
+      vim.api.nvim_buf_set_extmark(0, ns, 4, 0, { virt_lines = {{{"virt_line", ""}}} })
+    ]])
+    command('set foldcolumn=0 signcolumn=no')
+    command([[set stc=%{v:virtnum<0?'virtual':(!v:virtnum?'buffer':'wrapped')}%=%{'\ '.v:virtnum.'\ '.v:lnum}]])
+    screen:expect([[
+      {1:buffer  0 4}aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+      {1:wrapped 1 4}aaaaaaaa                                  |
+      {1:buffer  0 5}aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+      {1:wrapped 1 5}aaaaaaaa                                  |
+      {1:virtual-2 5}virt_line                                 |
+      {1:virtual-2 5}virt_line above                           |
+      {1:buffer  0 6}aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+      {1:wrapped 1 6}aaaaaaaa                                  |
+      {1:buffer  0 7}aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+      {1:wrapped 1 7}aaaaaaaa                                  |
+      {4:buffer  0 8}{5:^+--  1 line: aaaaaaaaaaaaaaaaaaaaaaaaaaaaa}|
+      {1:buffer  0 9}aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+      {1:wrapped 1 9}aaaaaaaa                                  |
+                                                           |
+    ]])
   end)
 
-  it('works with \'statuscolumn\' clicks', function()
+  it("works with 'statuscolumn' clicks", function()
     command('set mousemodel=extend')
     command([[
       function! MyClickFunc(minwid, clicks, button, mods)
@@ -385,25 +411,36 @@ describe('statuscolumn', function()
     eq('', eval("g:testvar"))
   end)
 
-  it('fits maximum multibyte foldcolumn #21759', function()
-    command('set stc=%C fdc=9 fillchars=foldsep:𒀀')
+  it('works with foldcolumn', function()
+    -- Fits maximum multibyte foldcolumn #21759
+    command([[set stc=%C%=%l\  fdc=9 fillchars=foldsep:𒀀]])
     for _ = 0,8 do command('norm zfjzo') end
+    -- 'statuscolumn' is not drawn for `virt_lines_leftcol` lines
+    exec_lua([[
+      local ns = vim.api.nvim_create_namespace("ns")
+      vim.api.nvim_buf_set_extmark(0, ns, 6, 0, {
+        virt_lines_leftcol = true, virt_lines = {{{"virt", ""}}} })
+      vim.api.nvim_buf_set_extmark(0, ns, 7, 0, {
+        virt_lines_leftcol = true, virt_lines = {{{"virt", ""}}} })
+    ]])
+    helpers.feed('lh')  -- force update wcol/row
     screen:expect([[
-                aaaaa                                      |
-                aaaaa                                      |
-                aaaaa                                      |
-                aaaaa                                      |
-      --------- ^aaaaa                                      |
-      𒀀𒀀𒀀𒀀𒀀𒀀𒀀𒀀𒀀 aaaaa                                      |
-                aaaaa                                      |
-                aaaaa                                      |
-                aaaaa                                      |
-                aaaaa                                      |
-                aaaaa                                      |
-                aaaaa                                      |
-                aaaaa                                      |
+                4 aaaaa                                    |
+                5 aaaaa                                    |
+                6 aaaaa                                    |
+                7 aaaaa                                    |
+      virt                                                 |
+      --------- 8 ^aaaaa                                    |
+      virt                                                 |
+      𒀀𒀀𒀀𒀀𒀀𒀀𒀀𒀀𒀀 9 aaaaa                                    |
+               10 aaaaa                                    |
+               11 aaaaa                                    |
+               12 aaaaa                                    |
+               13 aaaaa                                    |
+               14 aaaaa                                    |
                                                            |
     ]])
+    command('set stc=')  -- also for the default sign column
+    screen:expect_unchanged()
   end)
-
 end)
