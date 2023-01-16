@@ -274,7 +274,6 @@ find_program(UNCRUSTIFY_PRG uncrustify)
 find_program(SHELLCHECK_PRG shellcheck)
 
 add_glob_target(
-  REQUIRED
   TARGET lintlua-luacheck
   COMMAND ${LUACHECK_PRG}
   FLAGS -q
