@@ -21,6 +21,7 @@
 #include "nvim/decoration_provider.h"
 #include "nvim/diff.h"
 #include "nvim/drawline.h"
+#include "nvim/eval.h"
 #include "nvim/extmark_defs.h"
 #include "nvim/fold.h"
 #include "nvim/garray.h"
@@ -413,7 +414,7 @@ static void get_statuscol_str(win_T *wp, linenr_T lnum, int row, int startrow, i
 
   set_vim_var_nr(VV_VIRTNUM, virtnum);
   // When called the first time for line "lnum" set num_attr
-  if (row == startrow) {
+  if (stcp->num_attr == 0) {
     stcp->num_attr = sign_num_attr ? sign_num_attr
                      : get_line_number_attr(wp, lnum, row, startrow, filler_lines);
   }
@@ -1203,6 +1204,8 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
   }
 
   int sign_idx = 0;
+  int virt_line_index;
+  int virt_line_offset = -1;
   // Repeat for the whole displayed line.
   for (;;) {
     int has_match_conc = 0;  ///< match wants to conceal
@@ -1229,9 +1232,22 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
         }
       }
 
-      // Skip fold, sign and number states if 'statuscolumn' is set.
-      if (draw_state == WL_FOLD - 1 && n_extra == 0 && statuscol.draw) {
-        draw_state = WL_STC - 1;
+      if (draw_state == WL_FOLD - 1 && n_extra == 0) {
+        if (filler_todo > 0) {
+          int index = filler_todo - (filler_lines - n_virt_lines);
+          if (index > 0) {
+            virt_line_index = (int)kv_size(virt_lines) - index;
+            assert(virt_line_index >= 0);
+            virt_line_offset = kv_A(virt_lines, virt_line_index).left_col ? 0 : win_col_off(wp);
+          }
+        }
+        if (!virt_line_offset) {
+          // Skip the column states if there is a "virt_left_col" line.
+          draw_state = WL_BRI - 1;
+        } else if (statuscol.draw) {
+          // Skip fold, sign and number states if 'statuscolumn' is set.
+          draw_state = WL_STC - 1;
+        }
       }
 
       if (draw_state == WL_FOLD - 1 && n_extra == 0) {
@@ -2754,15 +2770,9 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
                   && !wp->w_p_rl;              // Not right-to-left.
 
       int draw_col = col - boguscols;
-      if (filler_todo > 0) {
-        int index = filler_todo - (filler_lines - n_virt_lines);
-        if (index > 0) {
-          int i = (int)kv_size(virt_lines) - index;
-          assert(i >= 0);
-          int offset = kv_A(virt_lines, i).left_col ? 0 : win_col_offset;
-          draw_virt_text_item(buf, offset, kv_A(virt_lines, i).line,
-                              kHlModeReplace, grid->cols, 0);
-        }
+      if (virt_line_offset >= 0) {
+        draw_virt_text_item(buf, virt_line_offset, kv_A(virt_lines, virt_line_index).line,
+                            kHlModeReplace, grid->cols, 0);
       } else {
         draw_virt_text(wp, buf, win_col_offset, &draw_col, grid->cols, row);
       }
@@ -2825,13 +2835,15 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
         if (row == startrow + filler_lines + 1 || row == startrow + filler_lines) {
           // Re-evaluate 'statuscolumn' for the first wrapped row and non filler line
           statuscol.textp = NULL;
-        } else {  // Otherwise just reset the text/hlrec pointers
+        } else if (statuscol.textp) {
+          // Draw the already built 'statuscolumn' on the next wrapped or filler line
           statuscol.textp = statuscol.text;
           statuscol.hlrecp = statuscol.hlrec;
         }  // Fall back to default columns if the 'n' flag isn't in 'cpo'
         statuscol.draw = vim_strchr(p_cpo, CPO_NUMCOL) == NULL;
       }
       filler_todo--;
+      virt_line_offset = -1;
       // When the filler lines are actually below the last line of the
       // file, don't draw the line itself, break here.
       if (filler_todo == 0 && (wp->w_botfill || end_fill)) {
