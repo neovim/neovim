@@ -14,7 +14,7 @@ static HWND hWnd = NULL;
 static HICON hOrigIconSmall = NULL;
 static HICON hOrigIcon = NULL;
 
-int os_get_conin_fd(void)
+int os_open_conin_fd(void)
 {
   const HANDLE conin_handle = CreateFile("CONIN$",
                                          GENERIC_READ | GENERIC_WRITE,
@@ -30,7 +30,7 @@ int os_get_conin_fd(void)
 void os_replace_stdin_to_conin(void)
 {
   close(STDIN_FILENO);
-  const int conin_fd = os_get_conin_fd();
+  const int conin_fd = os_open_conin_fd();
   assert(conin_fd == STDIN_FILENO);
 }
 

@@ -494,6 +494,9 @@ EXTERN int v_dying INIT(= 0);
 EXTERN bool stdin_isatty INIT(= true);
 // is stdout a terminal?
 EXTERN bool stdout_isatty INIT(= true);
+// is stderr a terminal?
+EXTERN bool stderr_isatty INIT(= true);
+
 /// filedesc set by embedder for reading first buffer like `cmd | nvim -`
 EXTERN int stdin_fd INIT(= -1);
 

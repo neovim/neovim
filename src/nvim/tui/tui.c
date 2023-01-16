@@ -1338,7 +1338,7 @@ static void suspend_event(void **argv)
   TUIData *tui = argv[0];
   bool enable_mouse = tui->mouse_enabled;
   tui_terminal_stop(tui);
-  stream_set_blocking(input_global_fd(), true);   // normalize stream (#2598)
+  stream_set_blocking(tui->input.in_fd, true);   // normalize stream (#2598)
 
   kill(0, SIGTSTP);
 
@@ -1347,7 +1347,7 @@ static void suspend_event(void **argv)
   if (enable_mouse) {
     tui_mouse_on(tui);
   }
-  stream_set_blocking(input_global_fd(), false);  // libuv expects this
+  stream_set_blocking(tui->input.in_fd, false);  // libuv expects this
 }
 #endif
 
@@ -2234,12 +2234,12 @@ static void flush_buf(TUIData *tui)
 ///
 /// @see tmux/tty-keys.c fe4e9470bb504357d073320f5d305b22663ee3fd
 /// @see https://bugzilla.redhat.com/show_bug.cgi?id=142659
-static const char *tui_get_stty_erase(void)
+static const char *tui_get_stty_erase(int fd)
 {
   static char stty_erase[2] = { 0 };
 #if defined(HAVE_TERMIOS_H)
   struct termios t;
-  if (tcgetattr(input_global_fd(), &t) != -1) {
+  if (tcgetattr(fd, &t) != -1) {
     stty_erase[0] = (char)t.c_cc[VERASE];
     stty_erase[1] = '\0';
     DLOG("stty/termios:erase=%s", stty_erase);
@@ -2252,9 +2252,10 @@ static const char *tui_get_stty_erase(void)
 /// @see TermInput.tk_ti_hook_fn
 static const char *tui_tk_ti_getstr(const char *name, const char *value, void *data)
 {
+  TermInput *input = data;
   static const char *stty_erase = NULL;
   if (stty_erase == NULL) {
-    stty_erase = tui_get_stty_erase();
+    stty_erase = tui_get_stty_erase(input->in_fd);
   }
 
   if (strequal(name, "key_backspace")) {

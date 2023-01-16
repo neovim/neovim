@@ -30,10 +30,7 @@ typedef struct {
   char *tagname;                        // tag from -t argument
   char *use_ef;                         // 'errorfile' from -q argument
 
-  bool input_isatty;                    // stdin is a terminal
   bool input_istext;                    // stdin is text, not executable (-E/-Es)
-  bool output_isatty;                   // stdout is a terminal
-  bool err_isatty;                      // stderr is a terminal
 
   int no_swap_file;                     // "-n" argument used
   int use_debug_break_level;

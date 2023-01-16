@@ -44,7 +44,6 @@ typedef enum {
 static Stream read_stream = { .closed = true };  // Input before UI starts.
 static RBuffer *input_buffer = NULL;
 static bool input_eof = false;
-static int global_fd = -1;
 static bool blocking = false;
 static int cursorhold_time = 0;  ///< time waiting for CursorHold event
 static int cursorhold_tb_change_cnt = 0;  ///< tb_change_cnt when waiting started
@@ -58,25 +57,14 @@ void input_init(void)
   input_buffer = rbuffer_new(INPUT_BUFFER_SIZE + MAX_KEY_CODE_LEN);
 }
 
-void input_global_fd_init(int fd)
-{
-  global_fd = fd;
-}
-
-/// Global TTY (or pipe for "-es") input stream, before UI starts.
-int input_global_fd(void)
-{
-  return global_fd;
-}
-
-void input_start(int fd)
+void input_start(void)
 {
   if (!read_stream.closed) {
     return;
   }
 
-  input_global_fd_init(fd);
-  rstream_init_fd(&main_loop, &read_stream, fd, READ_BUFFER_SIZE);
+  used_stdin = true;
+  rstream_init_fd(&main_loop, &read_stream, STDIN_FILENO, READ_BUFFER_SIZE);
   rstream_start(&read_stream, input_read_cb, NULL);
 }
 
