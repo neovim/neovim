@@ -342,11 +342,6 @@ install_helper(
   FILES ${CMAKE_SOURCE_DIR}/src/man/nvim.1
   DESTINATION ${CMAKE_INSTALL_MANDIR}/man1)
 
-option(ENABLE_LIBICONV "enable libiconv" ON)
-if(ENABLE_LIBICONV)
-  find_package(Iconv REQUIRED)
-endif()
-
 #
 # Go down the tree.
 #

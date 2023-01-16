@@ -2263,8 +2263,6 @@ enc_locale_copy_enc:
   return enc_canonize(buf);
 }
 
-#if defined(HAVE_ICONV)
-
 // Call iconv_open() with a check if iconv() works properly (there are broken
 // versions).
 // Returns (void *)-1 if failed.
@@ -2272,7 +2270,7 @@ enc_locale_copy_enc:
 void *my_iconv_open(char *to, char *from)
 {
   iconv_t fd;
-# define ICONV_TESTLEN 400
+#define ICONV_TESTLEN 400
   char tobuf[ICONV_TESTLEN];
   char *p;
   size_t tolen;
@@ -2386,8 +2384,6 @@ static char *iconv_string(const vimconv_T *const vcp, const char *str, size_t sl
   return result;
 }
 
-#endif  // HAVE_ICONV
-
 /// Setup "vcp" for conversion from "from" to "to".
 /// The names must have been made canonical with enc_canonize().
 /// vcp->vc_type must have been initialized to CONV_NONE.
@@ -2412,11 +2408,9 @@ int convert_setup_ext(vimconv_T *vcp, char *from, bool from_unicode_is_utf8, cha
   int to_is_utf8;
 
   // Reset to no conversion.
-#ifdef HAVE_ICONV
   if (vcp->vc_type == CONV_ICONV && vcp->vc_fd != (iconv_t)-1) {
     iconv_close(vcp->vc_fd);
   }
-#endif
   *vcp = (vimconv_T)MBYTE_NONE_CONV;
 
   // No conversion when one of the names is empty or they are equal.
@@ -2452,9 +2446,7 @@ int convert_setup_ext(vimconv_T *vcp, char *from, bool from_unicode_is_utf8, cha
   } else if (from_is_utf8 && (to_prop & ENC_LATIN9)) {
     // Internal utf-8 -> latin9 conversion.
     vcp->vc_type = CONV_TO_LATIN9;
-  }
-#ifdef HAVE_ICONV
-  else {  // NOLINT(readability/braces)
+  } else {
     // Use iconv() for conversion.
     vcp->vc_fd = (iconv_t)my_iconv_open(to_is_utf8 ? "utf-8" : to,
                                         from_is_utf8 ? "utf-8" : from);
@@ -2463,7 +2455,6 @@ int convert_setup_ext(vimconv_T *vcp, char *from, bool from_unicode_is_utf8, cha
       vcp->vc_factor = 4;       // could be longer too...
     }
   }
-#endif
   if (vcp->vc_type == CONV_NONE) {
     return FAIL;
   }
@@ -2626,11 +2617,9 @@ char *string_convert_ext(const vimconv_T *const vcp, char *ptr, size_t *lenp, si
     }
     break;
 
-#ifdef HAVE_ICONV
   case CONV_ICONV:  // conversion with vcp->vc_fd
     retval = (char_u *)iconv_string(vcp, ptr, len, unconvlenp, lenp);
     break;
-#endif
   }
 
   return (char *)retval;

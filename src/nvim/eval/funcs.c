@@ -3082,9 +3082,7 @@ static void f_has(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     "fork",
 #endif
     "gettext",
-#if defined(HAVE_ICONV)
     "iconv",
-#endif
     "insert_expand",
     "jumplist",
     "keymap",

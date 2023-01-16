@@ -482,8 +482,6 @@ static int nlua_stricmp(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
   return 1;
 }
 
-#if defined(HAVE_ICONV)
-
 /// Convert string from one encoding to another
 static int nlua_iconv(lua_State *lstate)
 {
@@ -525,8 +523,6 @@ static int nlua_iconv(lua_State *lstate)
 
   return 1;
 }
-
-#endif
 
 void nlua_state_add_stdlib(lua_State *const lstate, bool is_thread)
 {
@@ -574,12 +570,10 @@ void nlua_state_add_stdlib(lua_State *const lstate, bool is_thread)
     luaopen_spell(lstate);
     lua_setfield(lstate, -2, "spell");
 
-#if defined(HAVE_ICONV)
     // vim.iconv
     // depends on p_ambw, p_emoji
     lua_pushcfunction(lstate, &nlua_iconv);
     lua_setfield(lstate, -2, "iconv");
-#endif
   }
 
   // vim.mpack

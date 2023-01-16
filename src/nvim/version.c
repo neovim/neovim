@@ -63,12 +63,6 @@ static char *features[] = {
   "-acl",
 #endif
 
-#if defined(HAVE_ICONV)
-  "+iconv",
-#else
-  "-iconv",
-#endif
-
   "+tui",
   NULL
 };
