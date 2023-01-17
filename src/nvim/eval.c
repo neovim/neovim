@@ -2543,7 +2543,7 @@ static int eval4(char **arg, typval_T *rettv, int evaluate)
       if (p[2] == 'n' && p[3] == 'o' && p[4] == 't') {
         len = 5;
       }
-      if (!isalnum(p[len]) && p[len] != '_') {
+      if (!isalnum((uint8_t)p[len]) && p[len] != '_') {
         type = len == 2 ? EXPR_IS : EXPR_ISNOT;
       }
     }

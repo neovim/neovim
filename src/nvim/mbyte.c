@@ -2232,7 +2232,7 @@ char_u *enc_locale(void)
   const char *p = vim_strchr(s, '.');
   if (p != NULL) {
     if (p > s + 2 && !STRNICMP(p + 1, "EUC", 3)
-        && !isalnum((int)p[4]) && p[4] != '-' && p[-3] == '_') {
+        && !isalnum((uint8_t)p[4]) && p[4] != '-' && p[-3] == '_') {
       // Copy "XY.EUC" to "euc-XY" to buf[10].
       memmove(buf, "euc-", 4);
       buf[4] = (char)(ASCII_ISALNUM(p[-2]) ? TOLOWER_ASC(p[-2]) : 0);
