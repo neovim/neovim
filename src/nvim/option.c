@@ -4740,7 +4740,7 @@ static bool match_str(char *const str, regmatch_T *const regmatch, char **const 
 }
 
 int ExpandSettings(expand_T *xp, regmatch_T *regmatch, char *fuzzystr, int *numMatches,
-                   char ***matches)
+                   char ***matches, const bool can_fuzzy)
 {
   int num_normal = 0;  // Nr of matching non-term-code settings
   int count = 0;
@@ -4748,7 +4748,7 @@ int ExpandSettings(expand_T *xp, regmatch_T *regmatch, char *fuzzystr, int *numM
   int ic = regmatch->rm_ic;  // remember the ignore-case flag
 
   fuzmatch_str_T *fuzmatch = NULL;
-  const bool fuzzy = cmdline_fuzzy_complete(fuzzystr);
+  const bool fuzzy = can_fuzzy && cmdline_fuzzy_complete(fuzzystr);
 
   // do this loop twice:
   // loop == 0: count the number of matching options
