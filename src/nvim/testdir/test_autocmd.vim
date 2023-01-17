@@ -629,6 +629,7 @@ func Test_WinScrolled_diff()
         \ }, event)
 
   call StopVimInTerminal(buf)
+  call delete('XscrollEvent')
 endfunc
 
 func Test_WinClosed()

@@ -2852,7 +2852,7 @@ bool checkforcmd(char **pp, const char *cmd, int len)
       break;
     }
   }
-  if (i >= len && !isalpha((uint8_t)(*pp)[i])) {
+  if (i >= len && !ASCII_ISALPHA((*pp)[i])) {
     *pp = skipwhite(*pp + i);
     return true;
   }
