@@ -27,7 +27,8 @@ typedef struct growarray {
 #define GA_APPEND(item_type, gap, item) \
   do { \
     ga_grow(gap, 1); \
-    ((item_type *)(gap)->ga_data)[(gap)->ga_len++] = (item); \
+    ((item_type *)(gap)->ga_data)[(gap)->ga_len] = (item); \
+    (gap)->ga_len++; \
   } while (0)
 
 #define GA_APPEND_VIA_PTR(item_type, gap) \
