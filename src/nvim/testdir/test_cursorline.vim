@@ -319,7 +319,7 @@ func Test_cursorline_cursorbind_horizontal_scroll()
 
   let lines =<< trim END
       call setline(1, 'aa bb cc dd ee ff gg hh ii jj kk ll mm' ..
-      \ ' nn oo pp qq rr ss tt uu vv ww xx yy zz')
+                    \ ' nn oo pp qq rr ss tt uu vv ww xx yy zz')
       set nowrap
       " The following makes the cursor apparent on the screen dump
       set sidescroll=1 cursorcolumn

@@ -3661,8 +3661,7 @@ static bool ins_start_select(int c)
 static void ins_insert(int replaceState)
 {
   set_vim_var_string(VV_INSERTMODE, ((State & REPLACE_FLAG) ? "i" :
-                                     replaceState == MODE_VREPLACE ? "v" :
-                                     "r"), 1);
+                                     replaceState == MODE_VREPLACE ? "v" : "r"), 1);
   ins_apply_autocmds(EVENT_INSERTCHANGE);
   if (State & REPLACE_FLAG) {
     State = MODE_INSERT | (State & MODE_LANGMAP);

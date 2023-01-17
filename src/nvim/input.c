@@ -29,7 +29,8 @@
 # include "input.c.generated.h"  // IWYU pragma: export
 #endif
 
-/// Ask for a reply from the user, 'y' or 'n'
+/// Ask for a reply from the user, a 'y' or a 'n', with prompt "str" (which
+/// should have been translated already).
 ///
 /// No other characters are accepted, the message is repeated until a valid
 /// reply is entered or <C-c> is hit.
