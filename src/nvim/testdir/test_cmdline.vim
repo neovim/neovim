@@ -3384,6 +3384,16 @@ func Test_cmdline_complete_substitute_short()
   endfor
 endfunc
 
+" Test for :! shell command argument completion
+func Test_cmdline_complete_bang_cmd_argument()
+  set wildoptions=fuzzy
+  call feedkeys(":!vim test_cmdline.\<Tab>\<C-B>\"\<CR>", 'xt')
+  call assert_equal('"!vim test_cmdline.vim', @:)
+  set wildoptions&
+  call feedkeys(":!vim test_cmdline.\<Tab>\<C-B>\"\<CR>", 'xt')
+  call assert_equal('"!vim test_cmdline.vim', @:)
+endfunc
+
 func Check_completion()
   call assert_equal('let a', getcmdline())
   call assert_equal(6, getcmdpos())
