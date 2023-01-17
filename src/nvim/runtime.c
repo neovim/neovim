@@ -2160,12 +2160,17 @@ scriptitem_T *get_current_script_id(char **fnamep, sctx_T *ret_sctx)
 /// ":scriptnames"
 void ex_scriptnames(exarg_T *eap)
 {
-  if (eap->addr_count > 0) {
+  if (eap->addr_count > 0 || *eap->arg != NUL) {
     // :script {scriptId}: edit the script
-    if (eap->line2 < 1 || eap->line2 > script_items.ga_len) {
+    if (eap->addr_count > 0 && !SCRIPT_ID_VALID(eap->line2)) {
       emsg(_(e_invarg));
     } else {
-      eap->arg = SCRIPT_ITEM(eap->line2).sn_name;
+      if (eap->addr_count > 0) {
+        eap->arg = SCRIPT_ITEM(eap->line2).sn_name;
+      } else {
+        expand_env(eap->arg, NameBuff, MAXPATHL);
+        eap->arg = NameBuff;
+      }
       do_exedit(eap, NULL);
     }
     return;
