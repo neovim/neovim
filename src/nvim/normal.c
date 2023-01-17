@@ -2010,10 +2010,6 @@ void display_showcmd(void)
     setcursor();  // put cursor back where it belongs
     return;
   }
-  // 'showcmdloc' is "last" or empty
-  if (p_ch == 0 && !ui_has(kUIMessages)) {
-    return;
-  }
 
   if (ui_has(kUIMessages)) {
     MAXSIZE_TEMP_ARRAY(content, 1);
@@ -2035,7 +2031,7 @@ void display_showcmd(void)
   grid_puts_line_start(grid, showcmd_row);
 
   if (!showcmd_is_clear) {
-    grid_puts(&msg_grid_adj, showcmd_buf, showcmd_row, sc_col,
+    grid_puts(grid, showcmd_buf, showcmd_row, sc_col,
               HL_ATTR(HLF_MSG));
   }
 
