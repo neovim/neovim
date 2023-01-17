@@ -146,19 +146,19 @@ int buf_init_chartab(buf_T *buf, int global)
   // options Each option is a list of characters, character numbers or
   // ranges, separated by commas, e.g.: "200-210,x,#-178,-"
   for (i = global ? 0 : 3; i <= 3; i++) {
-    const char_u *p;
+    const char *p;
     if (i == 0) {
       // first round: 'isident'
-      p = (char_u *)p_isi;
+      p = p_isi;
     } else if (i == 1) {
       // second round: 'isprint'
-      p = (char_u *)p_isp;
+      p = p_isp;
     } else if (i == 2) {
       // third round: 'isfname'
-      p = (char_u *)p_isf;
+      p = p_isf;
     } else {  // i == 3
       // fourth round: 'iskeyword'
-      p = (char_u *)buf->b_p_isk;
+      p = buf->b_p_isk;
     }
 
     while (*p) {
@@ -254,8 +254,8 @@ int buf_init_chartab(buf_T *buf, int global)
         c++;
       }
 
-      c = *p;
-      p = (char_u *)skip_to_option_part((char *)p);
+      c = (uint8_t)(*p);
+      p = skip_to_option_part(p);
 
       if ((c == ',') && (*p == NUL)) {
         // Trailing comma is not allowed.

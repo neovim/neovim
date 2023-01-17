@@ -749,7 +749,7 @@ void ml_recover(bool checkext)
   int len = (int)strlen(fname);
   if (checkext && len >= 4
       && STRNICMP(fname + len - 4, ".s", 2) == 0
-      && vim_strchr("abcdefghijklmnopqrstuvw", TOLOWER_ASC(fname[len - 2])) != NULL
+      && vim_strchr("abcdefghijklmnopqrstuvw", TOLOWER_ASC((uint8_t)fname[len - 2])) != NULL
       && ASCII_ISALPHA(fname[len - 1])) {
     directly = true;
     fname_used = xstrdup(fname);     // make a copy for mf_open()
@@ -3000,7 +3000,7 @@ int resolve_symlink(const char *fname, char *buf)
     // If it's relative, build a new path based on the directory
     // portion of the filename (if any) and the path the symlink
     // points to.
-    if (path_is_absolute((char_u *)buf)) {
+    if (path_is_absolute(buf)) {
       STRCPY(tmp, buf);
     } else {
       char *tail = path_tail(tmp);

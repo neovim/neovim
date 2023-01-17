@@ -456,9 +456,9 @@ static char_u *skip_anyof(char *p)
         MB_PTR_ADV(p);
       }
     } else if (*p == '\\'
-               && (vim_strchr(REGEXP_INRANGE, p[1]) != NULL
+               && (vim_strchr(REGEXP_INRANGE, (uint8_t)p[1]) != NULL
                    || (!reg_cpo_lit
-                       && vim_strchr(REGEXP_ABBR, p[1]) != NULL))) {
+                       && vim_strchr(REGEXP_ABBR, (uint8_t)p[1]) != NULL))) {
       p += 2;
     } else if (*p == '[') {
       if (get_char_class(&p) == CLASS_NONE
@@ -1399,8 +1399,8 @@ static int cstrncmp(char *s1, char *s2, int *n)
     str2 = s2;
     c1 = c2 = 0;
     while ((int)(str1 - s1) < *n) {
-      c1 = mb_ptr2char_adv((const char_u **)&str1);
-      c2 = mb_ptr2char_adv((const char_u **)&str2);
+      c1 = mb_ptr2char_adv((const char **)&str1);
+      c2 = mb_ptr2char_adv((const char **)&str2);
 
       // decompose the character if necessary, into 'base' characters
       // because I don't care about Arabic, I will hard-code the Hebrew
@@ -1860,7 +1860,7 @@ static int vim_regsub_both(char *source, typval_T *expr, char *dest, int destlen
           no = 0;
         } else if ('0' <= *src && *src <= '9') {
           no = *src++ - '0';
-        } else if (vim_strchr("uUlLeE", *src)) {
+        } else if (vim_strchr("uUlLeE", (uint8_t)(*src))) {
           switch (*src++) {
           case 'u':
             func_one = (fptr_T)do_upper;
@@ -2497,9 +2497,9 @@ bool vim_regexec(regmatch_T *rmp, char *line, colnr_T col)
 // Like vim_regexec(), but consider a "\n" in "line" to be a line break.
 // Note: "rmp->regprog" may be freed and changed.
 // Return true if there is a match, false if not.
-bool vim_regexec_nl(regmatch_T *rmp, char_u *line, colnr_T col)
+bool vim_regexec_nl(regmatch_T *rmp, char *line, colnr_T col)
 {
-  return vim_regexec_string(rmp, line, col, true);
+  return vim_regexec_string(rmp, (char_u *)line, col, true);
 }
 
 /// Match a regexp against multiple lines.

@@ -2921,9 +2921,9 @@ color_name_table_T color_name_table[] = {
 /// return the hex value or -1 if could not find a correct value
 RgbValue name_to_color(const char *name, int *idx)
 {
-  if (name[0] == '#' && isxdigit(name[1]) && isxdigit(name[2])
-      && isxdigit(name[3]) && isxdigit(name[4]) && isxdigit(name[5])
-      && isxdigit(name[6]) && name[7] == NUL) {
+  if (name[0] == '#' && isxdigit((uint8_t)name[1]) && isxdigit((uint8_t)name[2])
+      && isxdigit((uint8_t)name[3]) && isxdigit((uint8_t)name[4]) && isxdigit((uint8_t)name[5])
+      && isxdigit((uint8_t)name[6]) && name[7] == NUL) {
     // rgb hex string
     *idx = kColorIdxHex;
     return (RgbValue)strtol((char *)(name + 1), NULL, 16);

@@ -119,10 +119,10 @@ static void ga_concat_shorten_esc(garray_T *gap, const char_u *str)
 
   for (const char_u *p = str; *p != NUL; p++) {
     int same_len = 1;
-    const char_u *s = p;
+    const char *s = (char *)p;
     const int c = mb_ptr2char_adv(&s);
-    const int clen = (int)(s - p);
-    while (*s != NUL && c == utf_ptr2char((char *)s)) {
+    const int clen = (int)((char_u *)s - p);
+    while (*s != NUL && c == utf_ptr2char(s)) {
       same_len++;
       s += clen;
     }
@@ -133,7 +133,7 @@ static void ga_concat_shorten_esc(garray_T *gap, const char_u *str)
       vim_snprintf((char *)buf, NUMBUFLEN, "%d", same_len);
       ga_concat(gap, (char *)buf);
       ga_concat(gap, " times]");
-      p = s - 1;
+      p = (char_u *)s - 1;
     } else {
       ga_concat_esc(gap, p, clen);
     }

@@ -815,15 +815,15 @@ int number_width(win_T *wp)
 /// Calls mb_cptr2char_adv(p) and returns the character.
 /// If "p" starts with "\x", "\u" or "\U" the hex or unicode value is used.
 /// Returns 0 for invalid hex or invalid UTF-8 byte.
-static int get_encoded_char_adv(const char_u **p)
+static int get_encoded_char_adv(const char **p)
 {
-  const char *s = (const char *)(*p);
+  const char *s = *p;
 
   if (s[0] == '\\' && (s[1] == 'x' || s[1] == 'u' || s[1] == 'U')) {
     int64_t num = 0;
     for (int bytes = s[1] == 'x' ? 1 : s[1] == 'u' ? 2 : 4; bytes > 0; bytes--) {
       *p += 2;
-      int n = hexhex2nr((char *)(*p));
+      int n = hexhex2nr(*p);
       if (n < 0) {
         return 0;
       }
@@ -952,7 +952,7 @@ char *set_chars_option(win_T *wp, char **varp, bool apply)
         if (strncmp(p, tab[i].name, len) == 0
             && p[len] == ':'
             && p[len + 1] != NUL) {
-          const char_u *s = (char_u *)p + len + 1;
+          const char *s = p + len + 1;
           int c1 = get_encoded_char_adv(&s);
           if (c1 == 0 || char2cells(c1) > 1) {
             return e_invarg;
@@ -983,7 +983,7 @@ char *set_chars_option(win_T *wp, char **varp, bool apply)
                 *(tab[i].cp) = c1;
               }
             }
-            p = (char *)s;
+            p = s;
             break;
           }
         }
@@ -996,7 +996,7 @@ char *set_chars_option(win_T *wp, char **varp, bool apply)
             && strncmp(p, "multispace", len) == 0
             && p[len] == ':'
             && p[len + 1] != NUL) {
-          const char_u *s = (char_u *)p + len + 1;
+          const char *s = p + len + 1;
           if (round == 0) {
             // Get length of lcs-multispace string in the first round
             last_multispace = p;
@@ -1012,7 +1012,7 @@ char *set_chars_option(win_T *wp, char **varp, bool apply)
               // lcs-multispace cannot be an empty string
               return e_invarg;
             }
-            p = (char *)s;
+            p = s;
           } else {
             int multispace_pos = 0;
             while (*s != NUL && *s != ',') {
@@ -1021,13 +1021,13 @@ char *set_chars_option(win_T *wp, char **varp, bool apply)
                 wp->w_p_lcs_chars.multispace[multispace_pos++] = c1;
               }
             }
-            p = (char *)s;
+            p = s;
           }
         } else if (is_listchars
                    && strncmp(p, "leadmultispace", len2) == 0
                    && p[len2] == ':'
                    && p[len2 + 1] != NUL) {
-          const char_u *s = (char_u *)p + len2 + 1;
+          const char *s = p + len2 + 1;
           if (round == 0) {
             // get length of lcs-leadmultispace string in first round
             last_lmultispace = p;
@@ -1043,7 +1043,7 @@ char *set_chars_option(win_T *wp, char **varp, bool apply)
               // lcs-leadmultispace cannot be an empty string
               return e_invarg;
             }
-            p = (char *)s;
+            p = s;
           } else {
             int multispace_pos = 0;
             while (*s != NUL && *s != ',') {
@@ -1052,7 +1052,7 @@ char *set_chars_option(win_T *wp, char **varp, bool apply)
                 wp->w_p_lcs_chars.leadmultispace[multispace_pos++] = c1;
               }
             }
-            p = (char *)s;
+            p = s;
           }
         } else {
           return e_invarg;

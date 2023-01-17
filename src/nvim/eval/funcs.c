@@ -1770,7 +1770,7 @@ static void f_expand(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     }
     size_t len;
     char *errormsg = NULL;
-    char *result = (char *)eval_vars((char_u *)s, (char_u *)s, &len, NULL, &errormsg, NULL, false);
+    char *result = (char *)eval_vars((char *)s, (char_u *)s, &len, NULL, &errormsg, NULL, false);
     if (p_verbose == 0) {
       emsg_off--;
     } else if (errormsg != NULL) {
@@ -4488,7 +4488,7 @@ static void find_some_match(typval_T *const argvars, typval_T *const rettv,
         }
       }
 
-      match = vim_regexec_nl(&regmatch, (char_u *)str, startcol);
+      match = vim_regexec_nl(&regmatch, str, startcol);
 
       if (match && --nth <= 0) {
         break;
@@ -5885,7 +5885,7 @@ static void f_resolve(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
           q[-1] = NUL;
           q = path_tail(p);
         }
-        if (q > p && !path_is_absolute((const char_u *)buf)) {
+        if (q > p && !path_is_absolute(buf)) {
           // Symlink is relative to directory of argument. Replace the
           // symlink with the resolved name in the same directory.
           const size_t p_len = strlen(p);
@@ -6228,7 +6228,7 @@ static int search_cmn(typval_T *argvars, pos_T *match_pos, int *flagsp)
   // Repeat until {skip} returns false.
   for (;;) {
     subpatnum
-      = searchit(curwin, curbuf, &pos, NULL, dir, (char_u *)pat, 1, options, RE_SEARCH, &sia);
+      = searchit(curwin, curbuf, &pos, NULL, dir, (char *)pat, 1, options, RE_SEARCH, &sia);
     // finding the first match again means there is no match where {skip}
     // evaluates to zero.
     if (firstpos.lnum != 0 && equalpos(pos, firstpos)) {
@@ -6810,7 +6810,7 @@ long do_searchpair(const char *spat, const char *mpat, const char *epat, int dir
       .sa_tm = &tm,
     };
 
-    int n = searchit(curwin, curbuf, &pos, NULL, dir, (char_u *)pat, 1L,
+    int n = searchit(curwin, curbuf, &pos, NULL, dir, pat, 1L,
                      options, RE_SEARCH, &sia);
     if (n == FAIL || (firstpos.lnum != 0 && equalpos(pos, firstpos))) {
       // didn't find it or found the first match again: FAIL
@@ -7073,7 +7073,7 @@ static void f_setcharsearch(typval_T *argvars, typval_T *rettv, EvalFuncData fpt
   if (csearch != NULL) {
     int pcc[MAX_MCO];
     const int c = utfc_ptr2char((char *)csearch, pcc);
-    set_last_csearch(c, csearch, utfc_ptr2len((char *)csearch));
+    set_last_csearch(c, (char *)csearch, utfc_ptr2len((char *)csearch));
   }
 
   dictitem_T *di = tv_dict_find(d, S_LEN("forward"));
@@ -7553,7 +7553,7 @@ static void f_spellbadword(typval_T *argvars, typval_T *rettv, EvalFuncData fptr
     if (str != NULL) {
       // Check the argument for spelling.
       while (*str != NUL) {
-        len = spell_check(curwin, (char_u *)str, &attr, &capcol, false);
+        len = spell_check(curwin, (char *)str, &attr, &capcol, false);
         if (attr != HLF_COUNT) {
           word = str;
           break;
@@ -7668,7 +7668,7 @@ static void f_split(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
       if (*str == NUL) {
         match = false;  // Empty item at the end.
       } else {
-        match = vim_regexec_nl(&regmatch, (char_u *)str, col);
+        match = vim_regexec_nl(&regmatch, (char *)str, col);
       }
       const char *end;
       if (match) {
@@ -7930,11 +7930,11 @@ static void strchar_common(typval_T *argvars, typval_T *rettv, bool skipcc)
 {
   const char *s = tv_get_string(&argvars[0]);
   varnumber_T len = 0;
-  int (*func_mb_ptr2char_adv)(const char_u **pp);
+  int (*func_mb_ptr2char_adv)(const char **pp);
 
   func_mb_ptr2char_adv = skipcc ? mb_ptr2char_adv : mb_cptr2char_adv;
   while (*s != NUL) {
-    func_mb_ptr2char_adv((const char_u **)&s);
+    func_mb_ptr2char_adv(&s);
     len++;
   }
   rettv->vval.v_number = len;

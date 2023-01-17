@@ -2363,9 +2363,9 @@ collection:
         // 'cpoptions' is not included.
         if (*regparse == '\\'
             && (char_u *)regparse + 1 <= endp
-            && (vim_strchr(REGEXP_INRANGE, regparse[1]) != NULL
+            && (vim_strchr(REGEXP_INRANGE, (uint8_t)regparse[1]) != NULL
                 || (!reg_cpo_lit
-                    && vim_strchr(REGEXP_ABBR, regparse[1])
+                    && vim_strchr(REGEXP_ABBR, (uint8_t)regparse[1])
                     != NULL))) {
           MB_PTR_ADV(regparse);
 

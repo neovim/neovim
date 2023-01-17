@@ -221,7 +221,7 @@ int os_expand_wildcards(int num_pat, char **pat, int *num_file, char ***file, in
     // "command" below.
     len++;                              // add space
     for (j = 0; pat[i][j] != NUL; j++) {
-      if (vim_strchr(SHELL_SPECIAL, pat[i][j]) != NULL) {
+      if (vim_strchr(SHELL_SPECIAL, (uint8_t)pat[i][j]) != NULL) {
         len++;                  // may add a backslash
       }
       len++;
@@ -304,14 +304,14 @@ int os_expand_wildcards(int num_pat, char **pat, int *num_file, char ***file, in
           // backslash inside backticks, before a special character
           // and before a backtick.
           if (intick
-              || vim_strchr(SHELL_SPECIAL, pat[i][j + 1]) != NULL
+              || vim_strchr(SHELL_SPECIAL, (uint8_t)pat[i][j + 1]) != NULL
               || pat[i][j + 1] == '`') {
             *p++ = '\\';
           }
           j++;
         } else if (!intick
                    && ((flags & EW_KEEPDOLLAR) == 0 || pat[i][j] != '$')
-                   && vim_strchr(SHELL_SPECIAL, pat[i][j]) != NULL) {
+                   && vim_strchr(SHELL_SPECIAL, (uint8_t)pat[i][j]) != NULL) {
           // Put a backslash before a special character, but not
           // when inside ``. And not for $var when EW_KEEPDOLLAR is
           // set.

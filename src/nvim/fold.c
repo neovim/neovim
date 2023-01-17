@@ -2873,7 +2873,7 @@ static void foldlevelIndent(fline_T *flp)
 
   // empty line or lines starting with a character in 'foldignore': level
   // depends on surrounding lines
-  if (*s == NUL || vim_strchr(flp->wp->w_p_fdi, *s) != NULL) {
+  if (*s == NUL || vim_strchr(flp->wp->w_p_fdi, (uint8_t)(*s)) != NULL) {
     // first and last line can't be undefined, use level 0
     if (lnum == 1 || lnum == buf->b_ml.ml_line_count) {
       flp->lvl = 0;

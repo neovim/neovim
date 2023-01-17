@@ -1174,7 +1174,7 @@ static bool expand_showtail(expand_T *xp)
     // separator, on DOS the '*' "path\*\file" must not be skipped.
     if (rem_backslash(s)) {
       s++;
-    } else if (vim_strchr("*?[", *s) != NULL) {
+    } else if (vim_strchr("*?[", (uint8_t)(*s)) != NULL) {
       return false;
     }
   }
@@ -1405,7 +1405,7 @@ static const char *set_cmd_index(const char *cmd, exarg_T *eap, expand_T *xp, in
       }
     }
     // check for non-alpha command
-    if (p == cmd && vim_strchr("@*!=><&~#", *p) != NULL) {
+    if (p == cmd && vim_strchr("@*!=><&~#", (uint8_t)(*p)) != NULL) {
       p++;
     }
     len = (size_t)(p - cmd);
@@ -1435,7 +1435,7 @@ static const char *set_cmd_index(const char *cmd, exarg_T *eap, expand_T *xp, in
   }
 
   if (eap->cmdidx == CMD_SIZE) {
-    if (*cmd == 's' && vim_strchr("cgriI", cmd[1]) != NULL) {
+    if (*cmd == 's' && vim_strchr("cgriI", (uint8_t)cmd[1]) != NULL) {
       eap->cmdidx = CMD_substitute;
       p = cmd + 1;
     } else if (cmd[0] >= 'A' && cmd[0] <= 'Z') {
@@ -2171,7 +2171,7 @@ static const char *set_one_cmd_context(expand_T *xp, const char *buff)
 
   // 1. skip comment lines and leading space, colons or bars
   const char *cmd;
-  for (cmd = buff; vim_strchr(" \t:|", *cmd) != NULL; cmd++) {}
+  for (cmd = buff; vim_strchr(" \t:|", (uint8_t)(*cmd)) != NULL; cmd++) {}
   xp->xp_pattern = (char *)cmd;
 
   if (*cmd == NUL) {
@@ -2967,7 +2967,7 @@ static void expand_shellcmd(char *filepat, char ***matches, int *numMatches, int
     path = ".";
   } else {
     // For an absolute name we don't use $PATH.
-    if (!path_is_absolute((char_u *)pat)) {
+    if (!path_is_absolute(pat)) {
       path = vim_getenv("PATH");
     }
     if (path == NULL) {

@@ -699,23 +699,23 @@ static int utf_safe_read_char_adv(const char_u **s, size_t *n)
 
 // Get character at **pp and advance *pp to the next character.
 // Note: composing characters are skipped!
-int mb_ptr2char_adv(const char_u **const pp)
+int mb_ptr2char_adv(const char **const pp)
 {
   int c;
 
-  c = utf_ptr2char((char *)(*pp));
-  *pp += utfc_ptr2len((char *)(*pp));
+  c = utf_ptr2char(*pp);
+  *pp += utfc_ptr2len(*pp);
   return c;
 }
 
 // Get character at **pp and advance *pp to the next character.
 // Note: composing characters are returned as separate characters.
-int mb_cptr2char_adv(const char_u **pp)
+int mb_cptr2char_adv(const char **pp)
 {
   int c;
 
-  c = utf_ptr2char((char *)(*pp));
-  *pp += utf_ptr2len((char *)(*pp));
+  c = utf_ptr2char(*pp);
+  *pp += utf_ptr2len(*pp);
   return c;
 }
 
@@ -2232,7 +2232,7 @@ char_u *enc_locale(void)
   const char *p = vim_strchr(s, '.');
   if (p != NULL) {
     if (p > s + 2 && !STRNICMP(p + 1, "EUC", 3)
-        && !isalnum((int)p[4]) && p[4] != '-' && p[-3] == '_') {
+        && !isalnum((uint8_t)p[4]) && p[4] != '-' && p[-3] == '_') {
       // Copy "XY.EUC" to "euc-XY" to buf[10].
       memmove(buf, "euc-", 4);
       buf[4] = (char)(ASCII_ISALNUM(p[-2]) ? TOLOWER_ASC(p[-2]) : 0);

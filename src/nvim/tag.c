@@ -1019,7 +1019,7 @@ static int add_llist_tags(char *tag, int num_matches, char **matches)
     // Get the line number or the search pattern used to locate
     // the tag.
     lnum = 0;
-    if (isdigit(*tagp.command)) {
+    if (isdigit((uint8_t)(*tagp.command))) {
       // Line number is used to locate the tag
       lnum = atol(tagp.command);
     } else {
@@ -1199,7 +1199,7 @@ static void prepare_pats(pat_T *pats, int has_re)
     } else {
       for (pats->headlen = 0; pats->head[pats->headlen] != NUL; pats->headlen++) {
         if (vim_strchr(magic_isset() ? ".[~*\\$" : "\\$",
-                       pats->head[pats->headlen]) != NULL) {
+                       (uint8_t)pats->head[pats->headlen]) != NULL) {
           break;
         }
       }

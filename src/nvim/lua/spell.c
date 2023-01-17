@@ -61,7 +61,7 @@ int nlua_spell_check(lua_State *lstate)
 
   while (*str != NUL) {
     attr = HLF_COUNT;
-    len = spell_check(curwin, (char_u *)str, &attr, &capcol, false);
+    len = spell_check(curwin, (char *)str, &attr, &capcol, false);
     assert(len <= INT_MAX);
 
     if (attr != HLF_COUNT) {

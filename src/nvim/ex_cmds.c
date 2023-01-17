@@ -528,7 +528,7 @@ void ex_sort(exarg_T *eap)
           emsg(_(e_noprevre));
           goto sortend;
         }
-        regmatch.regprog = vim_regcomp((char *)last_search_pat(), RE_MAGIC);
+        regmatch.regprog = vim_regcomp(last_search_pat(), RE_MAGIC);
       } else {
         regmatch.regprog = vim_regcomp(p + 1, RE_MAGIC);
       }
@@ -3332,7 +3332,7 @@ static int do_sub(exarg_T *eap, proftime_T timeout, long cmdpreview_ns, handle_T
   }
   // new pattern and substitution
   if (eap->cmd[0] == 's' && *cmd != NUL && !ascii_iswhite(*cmd)
-      && vim_strchr("0123456789cegriIp|\"", *cmd) == NULL) {
+      && vim_strchr("0123456789cegriIp|\"", (uint8_t)(*cmd)) == NULL) {
     // don't accept alphanumeric for separator
     if (check_regexp_delim(*cmd) == FAIL) {
       return 0;
@@ -3343,7 +3343,7 @@ static int do_sub(exarg_T *eap, proftime_T timeout, long cmdpreview_ns, handle_T
     //  //sub/r).  "\&sub&" use last substitute pattern (like //sub/).
     if (*cmd == '\\') {
       cmd++;
-      if (vim_strchr("/?&", *cmd) == NULL) {
+      if (vim_strchr("/?&", (uint8_t)(*cmd)) == NULL) {
         emsg(_(e_backslash));
         return 0;
       }
@@ -3443,7 +3443,7 @@ static int do_sub(exarg_T *eap, proftime_T timeout, long cmdpreview_ns, handle_T
     return 0;
   }
 
-  if (search_regcomp((char_u *)pat, NULL, RE_SUBST, which_pat,
+  if (search_regcomp(pat, NULL, RE_SUBST, which_pat,
                      (cmdpreview ? 0 : SEARCH_HIS), &regmatch) == FAIL) {
     if (subflags.do_error) {
       emsg(_(e_invcmd));
@@ -4372,7 +4372,7 @@ void ex_global(exarg_T *eap)
   //             "\&": use previous substitute pattern.
   if (*cmd == '\\') {
     cmd++;
-    if (vim_strchr("/?&", *cmd) == NULL) {
+    if (vim_strchr("/?&", (uint8_t)(*cmd)) == NULL) {
       emsg(_(e_backslash));
       return;
     }
@@ -4398,8 +4398,8 @@ void ex_global(exarg_T *eap)
     }
   }
 
-  char_u *used_pat;
-  if (search_regcomp((char_u *)pat, &used_pat, RE_BOTH, which_pat,
+  char *used_pat;
+  if (search_regcomp(pat, &used_pat, RE_BOTH, which_pat,
                      SEARCH_HIS, &regmatch) == FAIL) {
     emsg(_(e_invcmd));
     return;

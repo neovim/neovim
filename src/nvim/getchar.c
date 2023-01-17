@@ -538,7 +538,7 @@ void AppendToRedobuffLit(const char *str, int len)
 
     // Handle a special or multibyte character.
     // Composing chars separately are handled separately.
-    const int c = mb_cptr2char_adv((const char_u **)&s);
+    const int c = mb_cptr2char_adv(&s);
     if (c < ' ' || c == DEL || (*s == NUL && (c == '0' || c == '^'))) {
       add_char_buff(&redobuff, Ctrl_V);
     }
@@ -599,7 +599,7 @@ void stuffReadbuffSpec(const char *s)
       stuffReadbuffLen(s, 3);
       s += 3;
     } else {
-      int c = mb_cptr2char_adv((const char_u **)&s);
+      int c = mb_cptr2char_adv(&s);
       if (c == CAR || c == NL || c == ESC) {
         c = ' ';
       }
@@ -640,7 +640,7 @@ void stuffescaped(const char *arg, bool literally)
 
     // stuff a single special character
     if (*arg != NUL) {
-      const int c = mb_cptr2char_adv((const char_u **)&arg);
+      const int c = mb_cptr2char_adv(&arg);
       if (literally && ((c < ' ' && c != TAB) || c == DEL)) {
         stuffcharReadbuff(Ctrl_V);
       }

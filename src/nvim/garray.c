@@ -173,9 +173,9 @@ char *ga_concat_strings_sep(const garray_T *gap, const char *sep)
 /// @param gap
 ///
 /// @returns the concatenated strings
-char_u *ga_concat_strings(const garray_T *gap) FUNC_ATTR_NONNULL_RET
+char *ga_concat_strings(const garray_T *gap) FUNC_ATTR_NONNULL_RET
 {
-  return (char_u *)ga_concat_strings_sep(gap, ",");
+  return ga_concat_strings_sep(gap, ",");
 }
 
 /// Concatenate a string to a growarray which contains characters.

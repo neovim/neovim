@@ -3524,7 +3524,7 @@ static void put_pattern(const char *const s, const int c, const synpat_T *const 
   msg_putchar(c);
 
   // output the pattern, in between a char that is not in the pattern
-  for (i = 0; vim_strchr(spp->sp_pattern, sepchars[i]) != NULL;) {
+  for (i = 0; vim_strchr(spp->sp_pattern, (uint8_t)sepchars[i]) != NULL;) {
     if (sepchars[++i] == NUL) {
       i = 0;            // no good char found, just use the first one
       break;
@@ -4000,7 +4000,7 @@ static void syn_cmd_include(exarg_T *eap, int syncing)
   // filename to include.
   eap->argt |= (EX_XFILE | EX_NOSPC);
   separate_nextcmd(eap);
-  if (*eap->arg == '<' || *eap->arg == '$' || path_is_absolute((char_u *)eap->arg)) {
+  if (*eap->arg == '<' || *eap->arg == '$' || path_is_absolute(eap->arg)) {
     // For an absolute path, "$VIM/..." or "<sfile>.." we ":source" the
     // file.  Need to expand the file name first.  In other cases
     // ":runtime!" is used.

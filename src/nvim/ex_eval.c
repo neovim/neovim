@@ -449,8 +449,8 @@ static int throw_exception(void *value, except_type_T type, char *cmdname)
   // when no active try block is found, see do_cmdline().
   if (type == ET_USER) {
     if (strncmp(value, "Vim", 3) == 0
-        && (((char_u *)value)[3] == NUL || ((char_u *)value)[3] == ':'
-            || ((char_u *)value)[3] == '(')) {
+        && (((char *)value)[3] == NUL || ((char *)value)[3] == ':'
+            || ((char *)value)[3] == '(')) {
       emsg(_("E608: Cannot :throw exceptions with 'Vim' prefix"));
       goto fail;
     }
@@ -1372,8 +1372,7 @@ void ex_catch(exarg_T *eap)
           //
           prev_got_int = got_int;
           got_int = false;
-          caught = vim_regexec_nl(&regmatch, (char_u *)current_exception->value,
-                                  (colnr_T)0);
+          caught = vim_regexec_nl(&regmatch, current_exception->value, (colnr_T)0);
           got_int |= prev_got_int;
           vim_regfree(regmatch.regprog);
         }
