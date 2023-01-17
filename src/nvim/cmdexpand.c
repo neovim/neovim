@@ -105,13 +105,15 @@ static bool cmdline_fuzzy_completion_supported(const expand_T *const xp)
          && xp->xp_context != EXPAND_FILES_IN_PATH
          && xp->xp_context != EXPAND_FILETYPE
          && xp->xp_context != EXPAND_HELP
+         && xp->xp_context != EXPAND_LUA
          && xp->xp_context != EXPAND_OLD_SETTING
          && xp->xp_context != EXPAND_OWNSYNTAX
          && xp->xp_context != EXPAND_PACKADD
          && xp->xp_context != EXPAND_SHELLCMD
          && xp->xp_context != EXPAND_TAGS
          && xp->xp_context != EXPAND_TAGS_LISTFILES
-         && xp->xp_context != EXPAND_USER_LIST;
+         && xp->xp_context != EXPAND_USER_LIST
+         && xp->xp_context != EXPAND_USER_LUA;
 }
 
 /// Returns true if fuzzy completion for cmdline completion is enabled and
