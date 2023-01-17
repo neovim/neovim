@@ -372,7 +372,7 @@ int vim_stricmp(const char *s1, const char *s2)
   int i;
 
   for (;;) {
-    i = (int)TOLOWER_LOC(*s1) - (int)TOLOWER_LOC(*s2);
+    i = (int)TOLOWER_LOC((uint8_t)(*s1)) - (int)TOLOWER_LOC((uint8_t)(*s2));
     if (i != 0) {
       return i;                             // this character different
     }
@@ -396,7 +396,7 @@ int vim_strnicmp(const char *s1, const char *s2, size_t len)
   int i;
 
   while (len > 0) {
-    i = (int)TOLOWER_LOC(*s1) - (int)TOLOWER_LOC(*s2);
+    i = (int)TOLOWER_LOC((uint8_t)(*s1)) - (int)TOLOWER_LOC((uint8_t)(*s2));
     if (i != 0) {
       return i;                             // this character different
     }
