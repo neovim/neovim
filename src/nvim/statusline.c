@@ -733,6 +733,10 @@ void draw_tabline(void)
     return;
   }
 
+  // Clear tab_page_click_defs: Clicking outside of tabs has no effect.
+  assert(tab_page_click_defs_size >= (size_t)Columns);
+  stl_clear_click_defs(tab_page_click_defs, tab_page_click_defs_size);
+
   // Use the 'tabline' option if it's set.
   if (*p_tal != NUL) {
     win_redr_custom(NULL, false, false);
