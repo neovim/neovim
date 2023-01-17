@@ -2869,6 +2869,10 @@ func Test_wildoptions_fuzzy()
   call assert_equal('"mapclear <buffer>', @:)
 
   " map name fuzzy completion - NOT supported
+  " test regex completion works
+  set wildoptions=fuzzy
+  call feedkeys(":cnoremap <ex\<Tab> <esc> \<Tab>\<C-B>\"\<CR>", 'tx')
+  call assert_equal("\"cnoremap <expr> <esc> \<Tab>", @:)
 
   " menu name fuzzy completion
   if has('gui_running')

@@ -2636,6 +2636,8 @@ static int ExpandFromContext(expand_T *xp, char *pat, char ***matches, int *numM
   regmatch_T regmatch = { .rm_ic = false };
   int ret;
   int flags = map_wildopts_to_ewflags(options);
+  const bool fuzzy = cmdline_fuzzy_complete(pat)
+                     && cmdline_fuzzy_completion_supported(xp);
 
   if (xp->xp_context == EXPAND_FILES
       || xp->xp_context == EXPAND_DIRECTORIES
@@ -2716,13 +2718,15 @@ static int ExpandFromContext(expand_T *xp, char *pat, char ***matches, int *numM
     return nlua_expand_pat(xp, pat, numMatches, matches);
   }
 
-  regmatch.regprog = vim_regcomp(pat, magic_isset() ? RE_MAGIC : 0);
-  if (regmatch.regprog == NULL) {
-    return FAIL;
-  }
+  if (!fuzzy) {
+    regmatch.regprog = vim_regcomp(pat, magic_isset() ? RE_MAGIC : 0);
+    if (regmatch.regprog == NULL) {
+      return FAIL;
+    }
 
-  // set ignore-case according to p_ic, p_scs and pat
-  regmatch.rm_ic = ignorecase(pat);
+    // set ignore-case according to p_ic, p_scs and pat
+    regmatch.rm_ic = ignorecase(pat);
+  }
 
   if (xp->xp_context == EXPAND_SETTINGS
       || xp->xp_context == EXPAND_BOOL_SETTINGS) {
@@ -2735,7 +2739,9 @@ static int ExpandFromContext(expand_T *xp, char *pat, char ***matches, int *numM
     ret = ExpandOther(pat, xp, &regmatch, matches, numMatches);
   }
 
-  vim_regfree(regmatch.regprog);
+  if (!fuzzy) {
+    vim_regfree(regmatch.regprog);
+  }
   xfree(tofree);
 
   return ret;
