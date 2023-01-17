@@ -148,6 +148,7 @@ return {
     getbufline={args={2, 3}, base=1},
     getbufoneline={args=2, base=1},
     getbufvar={args={2, 3}, base=1},
+    getcellwidths={},
     getchangelist={args={0, 1}, base=1},
     getchar={args={0, 1}},
     getcharmod={},

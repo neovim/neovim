@@ -173,6 +173,7 @@ getbufline({buf}, {lnum} [, {end}])
 getbufoneline({buf}, {lnum})	String	line {lnum} of buffer {buf}
 getbufvar({buf}, {varname} [, {def}])
 				any	variable {varname} in buffer {buf}
+getcellwidths()			List	get character cell width overrides
 getchangelist([{buf}])		List	list of change list items
 getchar([expr])			Number or String
 					get one character from the user
@@ -2745,6 +2746,13 @@ getbufvar({buf}, {varname} [, {def}])				*getbufvar()*
 <		Can also be used as a |method|: >
 			GetBufnr()->getbufvar(varname)
 <
+getcellwidths()						*getcellwidths()*
+		Returns a |List| of cell widths of character ranges overridden
+		by |setcellwidths()|.  The format is equal to the argument of
+		|setcellwidths()|.  If no character ranges have their cell
+		widths overridden, an empty List is returned.
+
+
 getchangelist([{buf}])					*getchangelist()*
 		Returns the |changelist| for the buffer {buf}. For the use
 		of {buf}, see |bufname()| above. If buffer {buf} doesn't

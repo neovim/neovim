@@ -199,6 +199,26 @@ func Test_setcellwidths()
   call setcellwidths([])
 endfunc
 
+func Test_getcellwidths()
+  call setcellwidths([])
+  call assert_equal([], getcellwidths())
+
+  let widthlist = [
+        \ [0x1330, 0x1330, 2],
+        \ [9999, 10000, 1],
+        \ [0x1337, 0x1339, 2],
+        \]
+  let widthlistsorted = [
+        \ [0x1330, 0x1330, 2],
+        \ [0x1337, 0x1339, 2],
+        \ [9999, 10000, 1],
+        \]
+  call setcellwidths(widthlist)
+  call assert_equal(widthlistsorted, getcellwidths())
+
+  call setcellwidths([])
+endfunc
+
 func Test_setcellwidths_dump()
   CheckRunVimInTerminal
 
