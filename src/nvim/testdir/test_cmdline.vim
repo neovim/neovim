@@ -2989,6 +2989,18 @@ func Test_wildoptions_fuzzy()
   delcommand T123FendingOff
   %bw
 
+  " Test for fuzzy completion of a command with lower case letters and a
+  " number
+  command Foo2Bar :
+  set wildoptions=fuzzy
+  call feedkeys(":foo2\<Tab>\<C-B>\"\<CR>", 'tx')
+  call assert_equal('"Foo2Bar', @:)
+  call feedkeys(":foo\<Tab>\<C-B>\"\<CR>", 'tx')
+  call assert_equal('"Foo2Bar', @:)
+  call feedkeys(":bar\<Tab>\<C-B>\"\<CR>", 'tx')
+  call assert_equal('"Foo2Bar', @:)
+  delcommand Foo2Bar
+
   set wildoptions&
   %bw!
 endfunc
