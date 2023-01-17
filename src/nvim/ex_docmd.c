@@ -5991,7 +5991,7 @@ static void ex_later(exarg_T *eap)
 
   if (*p == NUL) {
     count = 1;
-  } else if (isdigit(*p)) {
+  } else if (isdigit((uint8_t)(*p))) {
     count = getdigits_long(&p, false, 0);
     switch (*p) {
     case 's':

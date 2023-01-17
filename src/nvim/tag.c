@@ -1019,7 +1019,7 @@ static int add_llist_tags(char *tag, int num_matches, char **matches)
     // Get the line number or the search pattern used to locate
     // the tag.
     lnum = 0;
-    if (isdigit(*tagp.command)) {
+    if (isdigit((uint8_t)(*tagp.command))) {
       // Line number is used to locate the tag
       lnum = atol(tagp.command);
     } else {

@@ -2608,7 +2608,7 @@ static afffile_T *spell_read_aff(spellinfo_T *spin, char_u *fname)
       } else if (is_aff_rule(items, itemcnt, "REP", 2)
                  || is_aff_rule(items, itemcnt, "REPSAL", 2)) {
         // Ignore REP/REPSAL count
-        if (!isdigit(*items[1])) {
+        if (!isdigit((uint8_t)(*items[1]))) {
           smsg(_("Expected REP(SAL) count in %s line %d"),
                fname, lnum);
         }
@@ -2643,7 +2643,7 @@ static afffile_T *spell_read_aff(spellinfo_T *spin, char_u *fname)
         if (!found_map) {
           // First line contains the count.
           found_map = true;
-          if (!isdigit(*items[1])) {
+          if (!isdigit((uint8_t)(*items[1]))) {
             smsg(_("Expected MAP count in %s line %d"),
                  fname, lnum);
           }

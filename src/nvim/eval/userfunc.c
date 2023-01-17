@@ -118,7 +118,7 @@ static int get_function_args(char **argp, char_u endchar, garray_T *newargs, int
       while (ASCII_ISALNUM(*p) || *p == '_') {
         p++;
       }
-      if (arg == p || isdigit(*arg)
+      if (arg == p || isdigit((uint8_t)(*arg))
           || (p - arg == 9 && strncmp(arg, "firstline", 9) == 0)
           || (p - arg == 8 && strncmp(arg, "lastline", 8) == 0)) {
         if (!skip) {
@@ -1228,7 +1228,7 @@ void call_user_func(ufunc_T *fp, int argcount, typval_T *argvars, typval_T *rett
 /// looked up by name.
 static bool func_name_refcount(const char_u *name)
 {
-  return isdigit(*name) || *name == '<';
+  return isdigit((uint8_t)(*name)) || *name == '<';
 }
 
 /// Call a user function after checking the arguments.
@@ -2002,7 +2002,7 @@ static void list_functions(regmatch_T *regmatch)
           && (regmatch == NULL
               ? (!message_filtered((char *)fp->uf_name)
                  && !func_name_refcount((char_u *)fp->uf_name))
-              : (!isdigit(*fp->uf_name)
+              : (!isdigit((uint8_t)(*fp->uf_name))
                  && vim_regexec(regmatch, (char *)fp->uf_name, 0)))) {
         list_func_head(fp, false, false);
         if (changed != func_hashtab.ht_changed) {
@@ -2792,7 +2792,7 @@ void ex_delfunction(exarg_T *eap)
     *p = NUL;
   }
 
-  if (isdigit(*name) && fudi.fd_dict == NULL) {
+  if (isdigit((uint8_t)(*name)) && fudi.fd_dict == NULL) {
     if (!eap->skip) {
       semsg(_(e_invarg2), eap->arg);
     }
@@ -2858,7 +2858,7 @@ void func_unref(char_u *name)
   }
 
   fp = find_func(name);
-  if (fp == NULL && isdigit(*name)) {
+  if (fp == NULL && isdigit((uint8_t)(*name))) {
 #ifdef EXITFREE
     if (!entered_free_all_mem) {
       internal_error("func_unref()");
@@ -2901,7 +2901,7 @@ void func_ref(char_u *name)
   fp = find_func(name);
   if (fp != NULL) {
     (fp->uf_refcount)++;
-  } else if (isdigit(*name)) {
+  } else if (isdigit((uint8_t)(*name))) {
     // Only give an error for a numbered function.
     // Fail silently, when named or lambda function isn't found.
     internal_error("func_ref()");

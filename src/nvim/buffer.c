@@ -3822,7 +3822,7 @@ static int chk_modeline(linenr_T lnum, int flags)
             && (s[0] != 'V'
                 || strncmp(skipwhite(e + 1), "set", 3) == 0)
             && (s[3] == ':'
-                || (VIM_VERSION_100 >= vers && isdigit(s[3]))
+                || (VIM_VERSION_100 >= vers && isdigit((uint8_t)s[3]))
                 || (VIM_VERSION_100 < vers && s[3] == '<')
                 || (VIM_VERSION_100 > vers && s[3] == '>')
                 || (VIM_VERSION_100 == vers && s[3] == '='))) {
