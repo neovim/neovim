@@ -1238,6 +1238,30 @@ func Test_opt_cdhome()
   set cdhome&
 endfunc
 
+func Test_set_completion_2()
+  CheckOption termguicolors
+
+  " Test default option completion
+  set wildoptions=
+  call feedkeys(":set termg\<C-A>\<C-B>\"\<CR>", 'tx')
+  call assert_equal('"set termguicolors', @:)
+
+  call feedkeys(":set notermg\<C-A>\<C-B>\"\<CR>", 'tx')
+  call assert_equal('"set notermguicolors', @:)
+
+  " Test fuzzy option completion
+  set wildoptions=fuzzy
+  call feedkeys(":set termg\<C-A>\<C-B>\"\<CR>", 'tx')
+  " Nvim doesn't have 'termencoding'
+  " call assert_equal('"set termguicolors termencoding', @:)
+  call assert_equal('"set termguicolors', @:)
+
+  call feedkeys(":set notermg\<C-A>\<C-B>\"\<CR>", 'tx')
+  call assert_equal('"set notermguicolors', @:)
+
+  set wildoptions=
+endfunc
+
 func Test_switchbuf_reset()
   set switchbuf=useopen
   sblast
