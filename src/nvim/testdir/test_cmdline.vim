@@ -3378,6 +3378,33 @@ func Test_cmdline_complete_breakdel()
   call assert_equal("\"breakdel here ", @:)
 endfunc
 
+" Test for :scriptnames argument completion
+func Test_cmdline_complete_scriptnames()
+  set wildmenu
+  call writefile(['let a = 1'], 'Xa1b2c3.vim')
+  source Xa1b2c3.vim
+  call feedkeys(":script \<Tab>\<Left>\<Left>\<C-B>\"\<CR>", 'tx')
+  call assert_match("\"script .*Xa1b2c3.vim$", @:)
+  call feedkeys(":script    \<Tab>\<Left>\<Left>\<C-B>\"\<CR>", 'tx')
+  call assert_match("\"script .*Xa1b2c3.vim$", @:)
+  call feedkeys(":script b2c3\<Tab>\<C-B>\"\<CR>", 'tx')
+  call assert_equal("\"script b2c3", @:)
+  call feedkeys(":script 2\<Tab>\<C-B>\"\<CR>", 'tx')
+  call assert_match("\"script 2\<Tab>$", @:)
+  call feedkeys(":script \<Tab>\<Left>\<Left> \<Tab>\<C-B>\"\<CR>", 'tx')
+  call assert_match("\"script .*Xa1b2c3.vim $", @:)
+  call feedkeys(":script \<Tab>\<Left>\<C-B>\"\<CR>", 'tx')
+  call assert_equal("\"script ", @:)
+  call assert_match('Xa1b2c3.vim$', getcompletion('.*Xa1b2.*', 'scriptnames')[0])
+  call assert_equal([], getcompletion('Xa1b2', 'scriptnames'))
+  new
+  call feedkeys(":script \<Tab>\<Left>\<Left>\<CR>", 'tx')
+  call assert_equal('Xa1b2c3.vim', fnamemodify(@%, ':t'))
+  bw!
+  call delete('Xa1b2c3.vim')
+  set wildmenu&
+endfunc
+
 " this was going over the end of IObuff
 func Test_report_error_with_composing()
   let caught = 'no'

@@ -2983,6 +2983,7 @@ getcompletion({pat}, {type} [, {filtered}])		*getcompletion()*
 		messages	|:messages| suboptions
 		option		options
 		packadd		optional package |pack-add| names
+		scriptnames	sourced script names |:scriptnames|
 		shellcmd	Shell command
 		sign		|:sign| suboptions
 		syntax		syntax file names |'syntax'|
@@ -3002,7 +3003,10 @@ getcompletion({pat}, {type} [, {filtered}])		*getcompletion()*
 
 		If the 'wildoptions' option contains "fuzzy", then fuzzy
 		matching is used to get the completion matches. Otherwise
-		regular expression matching is used.
+		regular expression matching is used.  Thus this function
+		follows the user preference, what happens on the command line.
+		If you do not want this you can make 'wildoptions' empty
+		before calling getcompletion() and restore it afterwards.
 
 		If {type} is "cmdline", then the |cmdline-completion| result is
 		returned.  For example, to complete the possible values after

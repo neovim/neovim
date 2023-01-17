@@ -2890,6 +2890,33 @@ static void append_command(char *cmd)
   *d = NUL;
 }
 
+/// Return true and set "*idx" if "p" points to a one letter command.
+/// - The 'k' command can directly be followed by any character.
+/// - The 's' command can be followed directly by 'c', 'g', 'i', 'I' or 'r'
+///          but :sre[wind] is another command, as are :scr[iptnames],
+///          :scs[cope], :sim[alt], :sig[ns] and :sil[ent].
+static int one_letter_cmd(const char *p, cmdidx_T *idx)
+{
+  if (*p == 'k') {
+    *idx = CMD_k;
+    return true;
+  }
+  if (p[0] == 's'
+      && ((p[1] == 'c'
+           && (p[2] == NUL
+               || (p[2] != 's' && p[2] != 'r'
+                   && (p[3] == NUL
+                       || (p[3] != 'i' && p[4] != 'p')))))
+          || p[1] == 'g'
+          || (p[1] == 'i' && p[2] != 'm' && p[2] != 'l' && p[2] != 'g')
+          || p[1] == 'I'
+          || (p[1] == 'r' && p[2] != 'e'))) {
+    *idx = CMD_substitute;
+    return true;
+  }
+  return false;
+}
+
 /// Find an Ex command by its name, either built-in or user.
 /// Start of the name can be found at eap->cmd.
 /// Sets eap->cmdidx and returns a pointer to char after the command name.
@@ -2900,27 +2927,8 @@ char *find_ex_command(exarg_T *eap, int *full)
   FUNC_ATTR_NONNULL_ARG(1)
 {
   // Isolate the command and search for it in the command table.
-  // Exceptions:
-  // - the 'k' command can directly be followed by any character.
-  // - the 's' command can be followed directly by 'c', 'g', 'i', 'I' or 'r'
-  //        but :sre[wind] is another command, as are :scr[iptnames],
-  //        :scs[cope], :sim[alt], :sig[ns] and :sil[ent].
-  // - the "d" command can directly be followed by 'l' or 'p' flag.
   char *p = eap->cmd;
-  if (*p == 'k') {
-    eap->cmdidx = CMD_k;
-    p++;
-  } else if (p[0] == 's'
-             && ((p[1] == 'c'
-                  && (p[2] == NUL
-                      || (p[2] != 's' && p[2] != 'r'
-                          && (p[3] == NUL
-                              || (p[3] != 'i' && p[4] != 'p')))))
-                 || p[1] == 'g'
-                 || (p[1] == 'i' && p[2] != 'm' && p[2] != 'l' && p[2] != 'g')
-                 || p[1] == 'I'
-                 || (p[1] == 'r' && p[2] != 'e'))) {
-    eap->cmdidx = CMD_substitute;
+  if (one_letter_cmd(p, &eap->cmdidx)) {
     p++;
   } else {
     while (ASCII_ISALPHA(*p)) {
@@ -2938,6 +2946,7 @@ char *find_ex_command(exarg_T *eap, int *full)
       p++;
     }
     int len = (int)(p - eap->cmd);
+    // The "d" command can directly be followed by 'l' or 'p' flag.
     if (*eap->cmd == 'd' && (p[-1] == 'l' || p[-1] == 'p')) {
       // Check for ":dl", ":dell", etc. to ":deletel": that's
       // :delete with the 'l' flag.  Same for 'p'.
@@ -3135,9 +3144,11 @@ cmdidx_T excmd_get_cmdidx(const char *cmd, size_t len)
 {
   cmdidx_T idx;
 
-  for (idx = (cmdidx_T)0; (int)idx < CMD_SIZE; idx = (cmdidx_T)((int)idx + 1)) {
-    if (strncmp(cmdnames[(int)idx].cmd_name, cmd, len) == 0) {
-      break;
+  if (!one_letter_cmd(cmd, &idx)) {
+    for (idx = (cmdidx_T)0; (int)idx < CMD_SIZE; idx = (cmdidx_T)((int)idx + 1)) {
+      if (strncmp(cmdnames[(int)idx].cmd_name, cmd, len) == 0) {
+        break;
+      }
     }
   }
 
@@ -5238,9 +5249,9 @@ void do_exedit(exarg_T *eap, win_T *old_curwin)
                   old_curwin == NULL ? curwin : NULL);
   } else if ((eap->cmdidx != CMD_split && eap->cmdidx != CMD_vsplit)
              || *eap->arg != NUL) {
-    // Can't edit another file when "curbuf->b_ro_locked" is set.  Only ":edit"
-    // can bring us here, others are stopped earlier.
-    if (*eap->arg != NUL && curbuf_locked()) {
+    // Can't edit another file when "textlock" or "curbuf->b_ro_locked" is set.
+    // Only ":edit" or ":script" can bring us here, others are stopped earlier.
+    if (*eap->arg != NUL && text_or_buf_locked()) {
       return;
     }
     n = readonlymode;

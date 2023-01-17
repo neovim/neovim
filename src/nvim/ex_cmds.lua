@@ -2387,7 +2387,7 @@ module.cmds = {
   },
   {
     command='scriptnames',
-    flags=bit.bor(BANG, RANGE, COUNT, TRLBAR, CMDWIN, LOCK_OK),
+    flags=bit.bor(BANG, FILES, RANGE, COUNT, TRLBAR, CMDWIN, LOCK_OK),
     addr_type='ADDR_OTHER',
     func='ex_scriptnames',
   },

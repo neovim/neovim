@@ -1760,6 +1760,22 @@ static const char *set_context_in_breakadd_cmd(expand_T *xp, const char *arg, cm
   return NULL;
 }
 
+static const char *set_context_in_scriptnames_cmd(expand_T *xp, const char *arg)
+{
+  xp->xp_context = EXPAND_NOTHING;
+  xp->xp_pattern = NULL;
+
+  char *p = skipwhite(arg);
+  if (ascii_isdigit(*p)) {
+    return NULL;
+  }
+
+  xp->xp_context = EXPAND_SCRIPTNAMES;
+  xp->xp_pattern = p;
+
+  return NULL;
+}
+
 /// Set the completion context in "xp" for command "cmd" with index "cmdidx".
 /// The argument to the command is "arg" and the argument flags is "argt".
 /// For user-defined commands and for environment variables, "context" has the
@@ -2118,6 +2134,9 @@ static const char *set_context_by_cmdname(const char *cmd, cmdidx_T cmdidx, expa
   case CMD_profdel:
   case CMD_breakdel:
     return set_context_in_breakadd_cmd(xp, arg, cmdidx);
+
+  case CMD_scriptnames:
+    return set_context_in_scriptnames_cmd(xp, arg);
 
   case CMD_lua:
     xp->xp_context = EXPAND_LUA;
@@ -2496,6 +2515,19 @@ static char *get_breakadd_arg(expand_T *xp FUNC_ATTR_UNUSED, int idx)
   return NULL;
 }
 
+/// Function given to ExpandGeneric() to obtain the possible arguments for the
+/// ":scriptnames" command.
+static char *get_scriptnames_arg(expand_T *xp FUNC_ATTR_UNUSED, int idx)
+{
+  if (!SCRIPT_ID_VALID(idx + 1)) {
+    return NULL;
+  }
+
+  scriptitem_T *si = &SCRIPT_ITEM(idx + 1);
+  home_replace(NULL, si->sn_name, NameBuff, MAXPATHL, true);
+  return NameBuff;
+}
+
 /// Function given to ExpandGeneric() to obtain the possible arguments of the
 /// ":messages {clear}" command.
 static char *get_messages_arg(expand_T *xp FUNC_ATTR_UNUSED, int idx)
@@ -2581,6 +2613,7 @@ static int ExpandOther(char *pat, expand_T *xp, regmatch_T *rmp, char ***matches
     { EXPAND_USER, get_users, true, false },
     { EXPAND_ARGLIST, get_arglist_name, true, false },
     { EXPAND_BREAKPOINT, get_breakadd_arg, true, true },
+    { EXPAND_SCRIPTNAMES, get_scriptnames_arg, true, false },
     { EXPAND_CHECKHEALTH, get_healthcheck_names, true, false },
   };
   int ret = FAIL;
@@ -2823,11 +2856,22 @@ static void ExpandGeneric(const char *const pat, expand_T *xp, regmatch_T *regma
     return;
   }
 
-  // Sort the results.  Keep menu's in the specified order.
-  if (!fuzzy && xp->xp_context != EXPAND_MENUNAMES && xp->xp_context != EXPAND_MENUS) {
-    if (xp->xp_context == EXPAND_EXPRESSION
-        || xp->xp_context == EXPAND_FUNCTIONS
-        || xp->xp_context == EXPAND_USER_FUNC) {
+  // Sort the matches when using regular expression matching and sorting
+  // applies to the completion context. Menus and scriptnames should be kept
+  // in the specified order.
+  const bool sort_matches = !fuzzy
+                            && xp->xp_context != EXPAND_MENUNAMES
+                            && xp->xp_context != EXPAND_MENUS
+                            && xp->xp_context != EXPAND_SCRIPTNAMES;
+
+  // <SNR> functions should be sorted to the end.
+  const bool funcsort = xp->xp_context == EXPAND_EXPRESSION
+                        || xp->xp_context == EXPAND_FUNCTIONS
+                        || xp->xp_context == EXPAND_USER_FUNC;
+
+  // Sort the matches.
+  if (sort_matches) {
+    if (funcsort) {
       // <SNR> functions should be sorted to the end.
       qsort(ga.ga_data, (size_t)ga.ga_len, sizeof(char *), sort_func_compare);
     } else {
@@ -2839,15 +2883,6 @@ static void ExpandGeneric(const char *const pat, expand_T *xp, regmatch_T *regma
     *matches = ga.ga_data;
     *numMatches = ga.ga_len;
   } else {
-    bool funcsort = false;
-
-    if (xp->xp_context == EXPAND_EXPRESSION
-        || xp->xp_context == EXPAND_FUNCTIONS
-        || xp->xp_context == EXPAND_USER_FUNC) {
-      // <SNR> functions should be sorted to the end.
-      funcsort = true;
-    }
-
     fuzzymatches_to_strmatches(ga.ga_data, matches, ga.ga_len, funcsort);
     *numMatches = ga.ga_len;
   }
