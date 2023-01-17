@@ -119,4 +119,10 @@ describe("tabline", function()
       [2] = {bold = true, foreground = Screen.colors.Blue};
     }}
   end)
+
+  it('click definitions do not leak memory #21765', function()
+    command('set tabline=%@MyClickFunc@MyClickText%T')
+    command('set showtabline=2')
+    command('redrawtabline')
+  end)
 end)
