@@ -2415,31 +2415,34 @@ int ExpandBufnames(char *pat, int *num_file, char ***file, int options)
           }
         }
 
-        if (p != NULL) {
-          if (round == 1) {
+        if (p == NULL) {
+          continue;
+        }
+
+        if (round == 1) {
+          count++;
+          continue;
+        }
+
+        if (options & WILD_HOME_REPLACE) {
+          p = home_replace_save(buf, p);
+        } else {
+          p = xstrdup(p);
+        }
+
+        if (!fuzzy) {
+          if (matches != NULL) {
+            matches[count].buf = buf;
+            matches[count].match = p;
             count++;
           } else {
-            if (options & WILD_HOME_REPLACE) {
-              p = home_replace_save(buf, p);
-            } else {
-              p = xstrdup(p);
-            }
-
-            if (!fuzzy) {
-              if (matches != NULL) {
-                matches[count].buf = buf;
-                matches[count].match = p;
-                count++;
-              } else {
-                (*file)[count++] = p;
-              }
-            } else {
-              fuzmatch[count].idx = count;
-              fuzmatch[count].str = p;
-              fuzmatch[count].score = score;
-              count++;
-            }
+            (*file)[count++] = p;
           }
+        } else {
+          fuzmatch[count].idx = count;
+          fuzmatch[count].str = p;
+          fuzmatch[count].score = score;
+          count++;
         }
       }
       if (count == 0) {         // no match found, break here

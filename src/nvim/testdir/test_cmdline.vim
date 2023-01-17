@@ -2876,6 +2876,24 @@ func Test_fuzzy_completion_userdefined_func()
   set wildoptions&
 endfunc
 
+" <SNR> functions should be sorted to the end
+func Test_fuzzy_completion_userdefined_snr_func()
+  func s:Sendmail()
+  endfunc
+  func SendSomemail()
+  endfunc
+  func S1e2n3dmail()
+  endfunc
+  set wildoptions=fuzzy
+  call feedkeys(":call sendmail\<C-A>\<C-B>\"\<CR>", 'tx')
+  call assert_equal('"call SendSomemail() S1e2n3dmail() '
+        \ .. expand("<SID>") .. 'Sendmail()', @:)
+  set wildoptions&
+  delfunc s:Sendmail
+  delfunc SendSomemail
+  delfunc S1e2n3dmail
+endfunc
+
 " user defined command name completion
 func Test_fuzzy_completion_userdefined_cmd()
   set wildoptions&

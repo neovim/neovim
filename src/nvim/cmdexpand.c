@@ -2757,48 +2757,19 @@ static void ExpandGeneric(const char *const pat, expand_T *xp, regmatch_T *regma
                           char ***matches, int *numMatches, CompleteListItemGetter func,
                           int escaped)
 {
-  int i;
-  size_t count = 0;
-  char *str;
-
   const bool fuzzy = cmdline_fuzzy_complete(pat);
+  *matches = NULL;
+  *numMatches = 0;
 
-  // count the number of matching names
-  for (i = 0;; i++) {
-    str = (*func)(xp, i);
-    if (str == NULL) {  // end of list
-      break;
-    }
-    if (*str == NUL) {  // skip empty strings
-      continue;
-    }
-
-    bool match;
-    if (!fuzzy) {
-      match = vim_regexec(regmatch, str, (colnr_T)0);
-    } else {
-      match = fuzzy_match_str(str, pat) != 0;
-    }
-    if (match) {
-      count++;
-    }
-  }
-  if (count == 0) {
-    return;
-  }
-  assert(count < INT_MAX);
-  *numMatches = (int)count;
-  fuzmatch_str_T *fuzmatch = NULL;
-  if (fuzzy) {
-    fuzmatch = xmalloc(count * sizeof(fuzmatch_str_T));
+  garray_T ga;
+  if (!fuzzy) {
+    ga_init(&ga, sizeof(char *), 30);
   } else {
-    *matches = xmalloc(count * sizeof(char *));
+    ga_init(&ga, sizeof(fuzmatch_str_T), 30);
   }
 
-  // copy the matching names into allocated memory
-  count = 0;
-  for (i = 0;; i++) {
-    str = (*func)(xp, i);
+  for (int i = 0;; i++) {
+    char *str = (*func)(xp, i);
     if (str == NULL) {  // End of list.
       break;
     }
@@ -2808,11 +2779,15 @@ static void ExpandGeneric(const char *const pat, expand_T *xp, regmatch_T *regma
 
     bool match;
     int score = 0;
-    if (!fuzzy) {
-      match = vim_regexec(regmatch, str, (colnr_T)0);
+    if (xp->xp_pattern[0] != NUL) {
+      if (!fuzzy) {
+        match = vim_regexec(regmatch, str, (colnr_T)0);
+      } else {
+        score = fuzzy_match_str(str, pat);
+        match = (score != 0);
+      }
     } else {
-      score = fuzzy_match_str(str, pat);
-      match = (score != 0);
+      match = true;
     }
 
     if (!match) {
@@ -2824,14 +2799,17 @@ static void ExpandGeneric(const char *const pat, expand_T *xp, regmatch_T *regma
     } else {
       str = xstrdup(str);
     }
+
     if (fuzzy) {
-      fuzmatch[count].idx = (int)count;
-      fuzmatch[count].str = str;
-      fuzmatch[count].score = score;
+      GA_APPEND(fuzmatch_str_T, &ga, ((fuzmatch_str_T){
+        .idx = ga.ga_len,
+        .str = str,
+        .score = score,
+      }));
     } else {
-      (*matches)[count] = str;
+      GA_APPEND(char *, &ga, str);
     }
-    count++;
+
     if (func == get_menu_names) {
       // Test for separator added by get_menu_names().
       str += strlen(str) - 1;
@@ -2841,31 +2819,42 @@ static void ExpandGeneric(const char *const pat, expand_T *xp, regmatch_T *regma
     }
   }
 
+  if (ga.ga_len == 0) {
+    return;
+  }
+
   // Sort the results.  Keep menu's in the specified order.
-  bool funcsort = false;
-  if (xp->xp_context != EXPAND_MENUNAMES && xp->xp_context != EXPAND_MENUS) {
+  if (!fuzzy && xp->xp_context != EXPAND_MENUNAMES && xp->xp_context != EXPAND_MENUS) {
+    if (xp->xp_context == EXPAND_EXPRESSION
+        || xp->xp_context == EXPAND_FUNCTIONS
+        || xp->xp_context == EXPAND_USER_FUNC) {
+      // <SNR> functions should be sorted to the end.
+      qsort(ga.ga_data, (size_t)ga.ga_len, sizeof(char *), sort_func_compare);
+    } else {
+      sort_strings(ga.ga_data, ga.ga_len);
+    }
+  }
+
+  if (!fuzzy) {
+    *matches = ga.ga_data;
+    *numMatches = ga.ga_len;
+  } else {
+    bool funcsort = false;
+
     if (xp->xp_context == EXPAND_EXPRESSION
         || xp->xp_context == EXPAND_FUNCTIONS
         || xp->xp_context == EXPAND_USER_FUNC) {
       // <SNR> functions should be sorted to the end.
       funcsort = true;
-      if (!fuzzy) {
-        qsort(*matches, (size_t)(*numMatches), sizeof(char *), sort_func_compare);
-      }
-    } else {
-      if (!fuzzy) {
-        sort_strings(*matches, *numMatches);
-      }
     }
+
+    fuzzymatches_to_strmatches(ga.ga_data, matches, ga.ga_len, funcsort);
+    *numMatches = ga.ga_len;
   }
 
   // Reset the variables used for special highlight names expansion, so that
   // they don't show up when getting normal highlight names by ID.
   reset_expand_highlight();
-
-  if (fuzzy) {
-    fuzzymatches_to_strmatches(fuzmatch, matches, (int)count, funcsort);
-  }
 }
 
 /// Expand shell command matches in one directory of $PATH.
@@ -3047,27 +3036,23 @@ static void *call_user_expand_func(user_expand_func_T user_expand_func, expand_T
 static int ExpandUserDefined(const char *const pat, expand_T *xp, regmatch_T *regmatch,
                              char ***matches, int *numMatches)
 {
-  char *e;
-  garray_T ga;
-
   const bool fuzzy = cmdline_fuzzy_complete(pat);
-
   *matches = NULL;
   *numMatches = 0;
-  char *const retstr = call_user_expand_func((user_expand_func_T)call_func_retstr, xp);
 
+  char *const retstr = call_user_expand_func((user_expand_func_T)call_func_retstr, xp);
   if (retstr == NULL) {
     return FAIL;
   }
 
+  garray_T ga;
   if (!fuzzy) {
     ga_init(&ga, (int)sizeof(char *), 3);
   } else {
     ga_init(&ga, (int)sizeof(fuzmatch_str_T), 3);
   }
 
-  int count = 0;
-  for (char *s = retstr; *s != NUL; s = e) {
+  for (char *s = retstr, *e; *s != NUL; s = e) {
     e = vim_strchr(s, '\n');
     if (e == NULL) {
       e = s + strlen(s);
@@ -3077,7 +3062,7 @@ static int ExpandUserDefined(const char *const pat, expand_T *xp, regmatch_T *re
 
     bool match;
     int score = 0;
-    if (xp->xp_pattern[0] || fuzzy) {
+    if (xp->xp_pattern[0] != NUL) {
       if (!fuzzy) {
         match = vim_regexec(regmatch, s, (colnr_T)0);
       } else {
@@ -3095,12 +3080,11 @@ static int ExpandUserDefined(const char *const pat, expand_T *xp, regmatch_T *re
         GA_APPEND(char *, &ga, xstrnsave(s, (size_t)(e - s)));
       } else {
         GA_APPEND(fuzmatch_str_T, &ga, ((fuzmatch_str_T){
-          .idx = count,
+          .idx = ga.ga_len,
           .str = xstrnsave(s, (size_t)(e - s)),
           .score = score,
         }));
       }
-      count++;
     }
 
     if (*e != NUL) {
@@ -3109,12 +3093,16 @@ static int ExpandUserDefined(const char *const pat, expand_T *xp, regmatch_T *re
   }
   xfree(retstr);
 
+  if (ga.ga_len == 0) {
+    return OK;
+  }
+
   if (!fuzzy) {
     *matches = ga.ga_data;
     *numMatches = ga.ga_len;
   } else {
-    fuzzymatches_to_strmatches(ga.ga_data, matches, count, false);
-    *numMatches = count;
+    fuzzymatches_to_strmatches(ga.ga_data, matches, ga.ga_len, false);
+    *numMatches = ga.ga_len;
   }
   return OK;
 }
