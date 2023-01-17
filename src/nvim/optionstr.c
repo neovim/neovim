@@ -167,36 +167,37 @@ void trigger_optionset_string(int opt_idx, int opt_flags, char *oldval, char *ol
                               char *oldval_g, char *newval)
 {
   // Don't do this recursively.
-  if (oldval != NULL
-      && newval != NULL
-      && *get_vim_var_str(VV_OPTION_TYPE) == NUL) {
-    char buf_type[7];
-
-    vim_snprintf(buf_type, ARRAY_SIZE(buf_type), "%s",
-                 (opt_flags & OPT_LOCAL) ? "local" : "global");
-    set_vim_var_string(VV_OPTION_OLD, oldval, -1);
-    set_vim_var_string(VV_OPTION_NEW, newval, -1);
-    set_vim_var_string(VV_OPTION_TYPE, buf_type, -1);
-    if (opt_flags & OPT_LOCAL) {
-      set_vim_var_string(VV_OPTION_COMMAND, "setlocal", -1);
-      set_vim_var_string(VV_OPTION_OLDLOCAL, oldval, -1);
-    }
-    if (opt_flags & OPT_GLOBAL) {
-      set_vim_var_string(VV_OPTION_COMMAND, "setglobal", -1);
-      set_vim_var_string(VV_OPTION_OLDGLOBAL, oldval, -1);
-    }
-    if ((opt_flags & (OPT_LOCAL | OPT_GLOBAL)) == 0) {
-      set_vim_var_string(VV_OPTION_COMMAND, "set", -1);
-      set_vim_var_string(VV_OPTION_OLDLOCAL, oldval_l, -1);
-      set_vim_var_string(VV_OPTION_OLDGLOBAL, oldval_g, -1);
-    }
-    if (opt_flags & OPT_MODELINE) {
-      set_vim_var_string(VV_OPTION_COMMAND, "modeline", -1);
-      set_vim_var_string(VV_OPTION_OLDLOCAL, oldval, -1);
-    }
-    apply_autocmds(EVENT_OPTIONSET, get_option(opt_idx)->fullname, NULL, false, NULL);
-    reset_v_option_vars();
+  if (oldval == NULL || newval == NULL
+      || *get_vim_var_str(VV_OPTION_TYPE) != NUL) {
+    return;
   }
+
+  char buf_type[7];
+
+  vim_snprintf(buf_type, ARRAY_SIZE(buf_type), "%s",
+               (opt_flags & OPT_LOCAL) ? "local" : "global");
+  set_vim_var_string(VV_OPTION_OLD, oldval, -1);
+  set_vim_var_string(VV_OPTION_NEW, newval, -1);
+  set_vim_var_string(VV_OPTION_TYPE, buf_type, -1);
+  if (opt_flags & OPT_LOCAL) {
+    set_vim_var_string(VV_OPTION_COMMAND, "setlocal", -1);
+    set_vim_var_string(VV_OPTION_OLDLOCAL, oldval, -1);
+  }
+  if (opt_flags & OPT_GLOBAL) {
+    set_vim_var_string(VV_OPTION_COMMAND, "setglobal", -1);
+    set_vim_var_string(VV_OPTION_OLDGLOBAL, oldval, -1);
+  }
+  if ((opt_flags & (OPT_LOCAL | OPT_GLOBAL)) == 0) {
+    set_vim_var_string(VV_OPTION_COMMAND, "set", -1);
+    set_vim_var_string(VV_OPTION_OLDLOCAL, oldval_l, -1);
+    set_vim_var_string(VV_OPTION_OLDGLOBAL, oldval_g, -1);
+  }
+  if (opt_flags & OPT_MODELINE) {
+    set_vim_var_string(VV_OPTION_COMMAND, "modeline", -1);
+    set_vim_var_string(VV_OPTION_OLDLOCAL, oldval, -1);
+  }
+  apply_autocmds(EVENT_OPTIONSET, get_option(opt_idx)->fullname, NULL, false, NULL);
+  reset_v_option_vars();
 }
 
 static char *illegal_char(char *errbuf, size_t errbuflen, int c)

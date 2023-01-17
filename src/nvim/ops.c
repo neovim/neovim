@@ -1785,10 +1785,12 @@ setmarks:
 /// Used for deletion.
 static void mb_adjust_opend(oparg_T *oap)
 {
-  if (oap->inclusive) {
-    char *p = ml_get(oap->end.lnum);
-    oap->end.col += utf_cp_tail_off(p, p + oap->end.col);
+  if (!oap->inclusive) {
+    return;
   }
+
+  char *p = ml_get(oap->end.lnum);
+  oap->end.col += utf_cp_tail_off(p, p + oap->end.col);
 }
 
 /// Put character 'c' at position 'lp'
@@ -3711,20 +3713,23 @@ void adjust_cursor_eol(void)
 {
   unsigned int cur_ve_flags = get_ve_flags();
 
-  if (curwin->w_cursor.col > 0
-      && gchar_cursor() == NUL
-      && (cur_ve_flags & VE_ONEMORE) == 0
-      && !(restart_edit || (State & MODE_INSERT))) {
-    // Put the cursor on the last character in the line.
-    dec_cursor();
+  const bool adj_cursor = (curwin->w_cursor.col > 0
+                           && gchar_cursor() == NUL
+                           && (cur_ve_flags & VE_ONEMORE) == 0
+                           && !(restart_edit || (State & MODE_INSERT)));
+  if (!adj_cursor) {
+    return;
+  }
 
-    if (cur_ve_flags == VE_ALL) {
-      colnr_T scol, ecol;
+  // Put the cursor on the last character in the line.
+  dec_cursor();
 
-      // Coladd is set to the width of the last character.
-      getvcol(curwin, &curwin->w_cursor, &scol, NULL, &ecol);
-      curwin->w_cursor.coladd = ecol - scol + 1;
-    }
+  if (cur_ve_flags == VE_ALL) {
+    colnr_T scol, ecol;
+
+    // Coladd is set to the width of the last character.
+    getvcol(curwin, &curwin->w_cursor, &scol, NULL, &ecol);
+    curwin->w_cursor.coladd = ecol - scol + 1;
   }
 }
 
@@ -4205,11 +4210,13 @@ static bool reset_lbr(void)
 /// Restore 'linebreak' and take care of side effects.
 static void restore_lbr(bool lbr_saved)
 {
-  if (!curwin->w_p_lbr && lbr_saved) {
-    // changing 'linebreak' may require w_virtcol to be updated
-    curwin->w_p_lbr = true;
-    curwin->w_valid &= ~(VALID_WROW|VALID_WCOL|VALID_VIRTCOL);
+  if (curwin->w_p_lbr || !lbr_saved) {
+    return;
   }
+
+  // changing 'linebreak' may require w_virtcol to be updated
+  curwin->w_p_lbr = true;
+  curwin->w_valid &= ~(VALID_WROW|VALID_WCOL|VALID_VIRTCOL);
 }
 
 /// prepare a few things for block mode yank/delete/tilde
