@@ -1432,7 +1432,7 @@ static size_t uc_check_code(char *code, size_t len, char *buf, ucmd_T *cmd, exar
 
   l++;
   if (l <= 1) {
-    type = ct_NONE;
+    // type = ct_NONE;
   } else if (STRNICMP(p, "args>", l) == 0) {
     type = ct_ARGS;
   } else if (STRNICMP(p, "bang>", l) == 0) {
