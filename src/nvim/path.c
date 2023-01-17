@@ -1768,7 +1768,7 @@ int path_with_url(const char *fname)
   // non-URL text.
 
   // first character must be alpha
-  if (!isalpha((uint8_t)(*fname))) {
+  if (!ASCII_ISALPHA(*fname)) {
     return 0;
   }
 
@@ -1777,7 +1777,7 @@ int path_with_url(const char *fname)
   }
 
   // check body: alpha or dash
-  for (p = fname + 1; (isalpha((uint8_t)(*p)) || (*p == '-')); p++) {}
+  for (p = fname + 1; (ASCII_ISALPHA(*p) || (*p == '-')); p++) {}
 
   // check last char is not a dash
   if (p[-1] == '-') {
