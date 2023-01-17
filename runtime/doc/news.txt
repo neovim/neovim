@@ -143,6 +143,8 @@ The following new APIs or features were added.
   instance in the background and display its UI on demand, which previously
   only was possible using an external UI implementation.
 
+• Enable 'ruler' and 'showcmd' when 'cmdheight' is 0.
+
 ==============================================================================
 CHANGED FEATURES                                                 *news-changes*
 
