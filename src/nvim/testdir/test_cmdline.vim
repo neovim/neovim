@@ -650,6 +650,22 @@ func Test_getcompletion()
   call assert_fails('call getcompletion("abc", [])', 'E475:')
 endfunc
 
+" Test for getcompletion() with "fuzzy" in 'wildoptions'
+func Test_getcompletion_wildoptions()
+  let save_wildoptions = &wildoptions
+  set wildoptions&
+  let l = getcompletion('space', 'option')
+  call assert_equal([], l)
+  let l = getcompletion('ier', 'command')
+  call assert_equal([], l)
+  set wildoptions=fuzzy
+  let l = getcompletion('space', 'option')
+  call assert_true(index(l, 'backspace') >= 0)
+  let l = getcompletion('ier', 'command')
+  call assert_true(index(l, 'compiler') >= 0)
+  let &wildoptions = save_wildoptions
+endfunc
+
 func Test_fullcommand()
   let tests = {
         \ '':           '',

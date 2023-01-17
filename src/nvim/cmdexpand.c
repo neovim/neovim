@@ -3472,7 +3472,13 @@ void f_getcompletion(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   }
 
 theend:
-  pat = addstar(xpc.xp_pattern, xpc.xp_pattern_len, xpc.xp_context);
+  if (cmdline_fuzzy_completion_supported(&xpc)) {
+    // when fuzzy matching, don't modify the search string
+    pat = xstrdup(xpc.xp_pattern);
+  } else {
+    pat = addstar(xpc.xp_pattern, xpc.xp_pattern_len, xpc.xp_context);
+  }
+
   ExpandOne(&xpc, pat, NULL, options, WILD_ALL_KEEP);
   tv_list_alloc_ret(rettv, xpc.xp_numfiles);
 
