@@ -1381,7 +1381,7 @@ bool os_is_reparse_point_include(const char *path)
   }
 
   p = utf16_path;
-  if (isalpha(p[0]) && p[1] == L':' && IS_PATH_SEP(p[2])) {
+  if (isalpha((uint8_t)p[0]) && p[1] == L':' && IS_PATH_SEP(p[2])) {
     p += 3;
   } else if (IS_PATH_SEP(p[0]) && IS_PATH_SEP(p[1])) {
     p += 2;

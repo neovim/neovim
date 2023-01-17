@@ -1106,7 +1106,7 @@ int do_set(char *arg, int opt_flags)
     char *errmsg = NULL;
     char *startarg = arg;             // remember for error message
 
-    if (strncmp(arg, "all", 3) == 0 && !isalpha(arg[3])
+    if (strncmp(arg, "all", 3) == 0 && !isalpha((uint8_t)arg[3])
         && !(opt_flags & OPT_MODELINE)) {
       // ":set all"  show all options.
       // ":set all&" set all options to their default value.
