@@ -423,6 +423,12 @@ func Test_buf_pattern_invalid()
   vsplit 00000000000000000000000000
   silent! buf [0--]\&\zs*\zs*e
   bwipe!
+
+  " similar case with different code path
+  split 0
+  edit ÿ
+  silent! buf [0--]\&\zs*\zs*0
+  bwipe!
 endfunc
 
 " Test for the 'maxmem' and 'maxmemtot' options
