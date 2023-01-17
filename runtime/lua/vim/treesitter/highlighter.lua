@@ -88,7 +88,6 @@ function TSHighlighter.new(tree, opts)
     end
   end
 
-  self.orig_syntax = vim.bo[self.bufnr].syntax
   vim.bo[self.bufnr].syntax = ''
   vim.b[self.bufnr].ts_highlight = true
 
@@ -117,7 +116,13 @@ function TSHighlighter:destroy()
     TSHighlighter.active[self.bufnr] = nil
   end
 
-  vim.bo[self.bufnr].syntax = self.orig_syntax
+  if vim.api.nvim_buf_is_loaded(self.bufnr) then
+    vim.bo[self.bufnr].spelloptions = self.orig_spelloptions
+    vim.b[self.bufnr].ts_highlight = nil
+    if vim.g.syntax_on == 1 then
+      a.nvim_exec_autocmds('FileType', { group = 'syntaxset', buffer = self.bufnr })
+    end
+  end
 end
 
 ---@private
