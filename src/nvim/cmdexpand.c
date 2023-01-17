@@ -1416,8 +1416,10 @@ static const char *set_cmd_index(const char *cmd, exarg_T *eap, expand_T *xp, in
     eap->cmdidx = excmd_get_cmdidx(cmd, len);
 
     // User defined commands support alphanumeric characters.
-    // Also when doing fuzzy expansion, support alphanumeric characters.
-    if ((cmd[0] >= 'A' && cmd[0] <= 'Z') || (fuzzy && *p != NUL)) {
+    // Also when doing fuzzy expansion for non-shell commands, support
+    // alphanumeric characters.
+    if ((cmd[0] >= 'A' && cmd[0] <= 'Z')
+        || (fuzzy && eap->cmdidx != CMD_bang && *p != NUL)) {
       while (ASCII_ISALNUM(*p) || *p == '*') {  // Allow * wild card
         p++;
       }
