@@ -2795,6 +2795,21 @@ void f_setcellwidths(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   redraw_all_later(UPD_NOT_VALID);
 }
 
+/// "getcellwidths()" function
+void f_getcellwidths(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
+{
+  tv_list_alloc_ret(rettv, (ptrdiff_t)cw_table_size);
+
+  for (size_t i = 0; i < cw_table_size; i++) {
+    list_T *entry = tv_list_alloc(3);
+    tv_list_append_number(entry, (varnumber_T)cw_table[i].first);
+    tv_list_append_number(entry, (varnumber_T)cw_table[i].last);
+    tv_list_append_number(entry, (varnumber_T)cw_table[i].width);
+
+    tv_list_append_list(rettv->vval.v_list, entry);
+  }
+}
+
 void f_charclass(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
   if (tv_check_for_string_arg(argvars, 0) == FAIL
