@@ -2670,9 +2670,8 @@ func Test_cmdline_complete_dlist()
   call assert_equal("\"dlist 10 /pat/ | chistory", @:)
 endfunc
 
-" Test for 'fuzzy' in 'wildoptions' (fuzzy completion)
-func Test_wildoptions_fuzzy()
-  " argument list (only for :argdel)
+" argument list (only for :argdel) fuzzy completion
+func Test_fuzzy_completion_arglist()
   argadd change.py count.py charge.py
   set wildoptions&
   call feedkeys(":argdel cge\<C-A>\<C-B>\"\<CR>", 'tx')
@@ -2681,8 +2680,11 @@ func Test_wildoptions_fuzzy()
   call feedkeys(":argdel cge\<C-A>\<C-B>\"\<CR>", 'tx')
   call assert_equal('"argdel change.py charge.py', @:)
   %argdelete
+  set wildoptions&
+endfunc
 
-  " autocmd group name fuzzy completion
+" autocmd group name fuzzy completion
+func Test_fuzzy_completion_autocmd()
   set wildoptions&
   augroup MyFuzzyGroup
   augroup END
@@ -2696,8 +2698,11 @@ func Test_wildoptions_fuzzy()
   call feedkeys(":augroup My*p\<Tab>\<C-B>\"\<CR>", 'tx')
   call assert_equal('"augroup My*p', @:)
   augroup! MyFuzzyGroup
+  set wildoptions&
+endfunc
 
-  " buffer name fuzzy completion
+" buffer name fuzzy completion
+func Test_fuzzy_completion_bufname()
   set wildoptions&
   edit SomeFile.txt
   enew
@@ -2711,24 +2716,29 @@ func Test_wildoptions_fuzzy()
   call feedkeys(":b S*File.txt\<Tab>\<C-B>\"\<CR>", 'tx')
   call assert_equal('"b S*File.txt', @:)
   %bw!
+  set wildoptions&
+endfunc
 
-  " buffer name (full path) fuzzy completion
-  if has('unix')
-    set wildoptions&
-    call mkdir('Xcmd/Xstate/Xfile.js', 'p')
-    edit Xcmd/Xstate/Xfile.js
-    cd Xcmd/Xstate
-    enew
-    call feedkeys(":b CmdStateFile\<Tab>\<C-B>\"\<CR>", 'tx')
-    call assert_equal('"b CmdStateFile', @:)
-    set wildoptions=fuzzy
-    call feedkeys(":b CmdStateFile\<Tab>\<C-B>\"\<CR>", 'tx')
-    call assert_match('Xcmd/Xstate/Xfile.js$', @:)
-    cd -
-    call delete('Xcmd', 'rf')
-  endif
+" buffer name (full path) fuzzy completion
+func Test_fuzzy_completion_bufname_fullpath()
+  CheckUnix
+  set wildoptions&
+  call mkdir('Xcmd/Xstate/Xfile.js', 'p')
+  edit Xcmd/Xstate/Xfile.js
+  cd Xcmd/Xstate
+  enew
+  call feedkeys(":b CmdStateFile\<Tab>\<C-B>\"\<CR>", 'tx')
+  call assert_equal('"b CmdStateFile', @:)
+  set wildoptions=fuzzy
+  call feedkeys(":b CmdStateFile\<Tab>\<C-B>\"\<CR>", 'tx')
+  call assert_match('Xcmd/Xstate/Xfile.js$', @:)
+  cd -
+  call delete('Xcmd', 'rf')
+  set wildoptions&
+endfunc
 
-  " :behave suboptions fuzzy completion
+" :behave suboptions fuzzy completion
+func Test_fuzzy_completion_behave()
   set wildoptions&
   call feedkeys(":behave xm\<Tab>\<C-B>\"\<CR>", 'tx')
   call assert_equal('"behave xm', @:)
@@ -2743,10 +2753,15 @@ func Test_wildoptions_fuzzy()
   call feedkeys(":behave win\<C-D>\<F4>\<C-B>\"\<CR>", 'tx')
   call assert_equal('mswin', g:Sline)
   call assert_equal('"behave win', @:)
+  set wildoptions&
+endfunc
 
-  " colorscheme name fuzzy completion - NOT supported
+" " colorscheme name fuzzy completion - NOT supported
+" func Test_fuzzy_completion_colorscheme()
+" endfunc
 
-  " built-in command name fuzzy completion
+" built-in command name fuzzy completion
+func Test_fuzzy_completion_cmdname()
   set wildoptions&
   call feedkeys(":sbwin\<Tab>\<C-B>\"\<CR>", 'tx')
   call assert_equal('"sbwin', @:)
@@ -2757,24 +2772,31 @@ func Test_wildoptions_fuzzy()
   call assert_equal('"sbrewind', @:)
   call feedkeys(":sbr*d\<Tab>\<C-B>\"\<CR>", 'tx')
   call assert_equal('"sbr*d', @:)
+  set wildoptions&
+endfunc
 
-  " compiler name fuzzy completion - NOT supported
+" " compiler name fuzzy completion - NOT supported
+" func Test_fuzzy_completion_compiler()
+" endfunc
 
-  " :cscope suboptions fuzzy completion
-  if has('cscope')
-    set wildoptions&
-    call feedkeys(":cscope ret\<Tab>\<C-B>\"\<CR>", 'tx')
-    call assert_equal('"cscope ret', @:)
-    call feedkeys(":cscope re*t\<Tab>\<C-B>\"\<CR>", 'tx')
-    call assert_equal('"cscope reset', @:)
-    set wildoptions=fuzzy
-    call feedkeys(":cscope ret\<Tab>\<C-B>\"\<CR>", 'tx')
-    call assert_equal('"cscope reset', @:)
-    call feedkeys(":cscope re*t\<Tab>\<C-B>\"\<CR>", 'tx')
-    call assert_equal('"cscope re*t', @:)
-  endif
+" :cscope suboptions fuzzy completion
+func Test_fuzzy_completion_cscope()
+  CheckFeature cscope
+  set wildoptions&
+  call feedkeys(":cscope ret\<Tab>\<C-B>\"\<CR>", 'tx')
+  call assert_equal('"cscope ret', @:)
+  call feedkeys(":cscope re*t\<Tab>\<C-B>\"\<CR>", 'tx')
+  call assert_equal('"cscope reset', @:)
+  set wildoptions=fuzzy
+  call feedkeys(":cscope ret\<Tab>\<C-B>\"\<CR>", 'tx')
+  call assert_equal('"cscope reset', @:)
+  call feedkeys(":cscope re*t\<Tab>\<C-B>\"\<CR>", 'tx')
+  call assert_equal('"cscope re*t', @:)
+  set wildoptions&
+endfunc
 
-  " :diffget/:diffput buffer name fuzzy completion
+" :diffget/:diffput buffer name fuzzy completion
+func Test_fuzzy_completion_diff()
   new SomeBuffer
   diffthis
   new OtherBuffer
@@ -2790,26 +2812,37 @@ func Test_wildoptions_fuzzy()
   call feedkeys(":diffput sbuf\<Tab>\<C-B>\"\<CR>", 'tx')
   call assert_equal('"diffput SomeBuffer', @:)
   %bw!
+  set wildoptions&
+endfunc
 
-  " directory name fuzzy completion - NOT supported
+" " directory name fuzzy completion - NOT supported
+" func Test_fuzzy_completion_dirname()
+" endfunc
 
-  " environment variable name fuzzy completion
+" environment variable name fuzzy completion
+func Test_fuzzy_completion_env()
   set wildoptions&
   call feedkeys(":echo $VUT\<Tab>\<C-B>\"\<CR>", 'tx')
   call assert_equal('"echo $VUT', @:)
   set wildoptions=fuzzy
   call feedkeys(":echo $VUT\<Tab>\<C-B>\"\<CR>", 'tx')
   call assert_equal('"echo $VIMRUNTIME', @:)
+  set wildoptions&
+endfunc
 
-  " autocmd event fuzzy completion
+" autocmd event fuzzy completion
+func Test_fuzzy_completion_autocmd_event()
   set wildoptions&
   call feedkeys(":autocmd BWout\<Tab>\<C-B>\"\<CR>", 'tx')
   call assert_equal('"autocmd BWout', @:)
   set wildoptions=fuzzy
   call feedkeys(":autocmd BWout\<Tab>\<C-B>\"\<CR>", 'tx')
   call assert_equal('"autocmd BufWipeout', @:)
+  set wildoptions&
+endfunc
 
-  " vim expression fuzzy completion
+" vim expression fuzzy completion
+func Test_fuzzy_completion_expr()
   let g:PerPlaceCount = 10
   set wildoptions&
   call feedkeys(":let c = ppc\<Tab>\<C-B>\"\<CR>", 'tx')
@@ -2817,32 +2850,49 @@ func Test_wildoptions_fuzzy()
   set wildoptions=fuzzy
   call feedkeys(":let c = ppc\<Tab>\<C-B>\"\<CR>", 'tx')
   call assert_equal('"let c = PerPlaceCount', @:)
-
-  " file name fuzzy completion - NOT supported
-
-  " files in path fuzzy completion - NOT supported
-
-  " filetype name fuzzy completion - NOT supported
-
-  " user defined function name completion
   set wildoptions&
-  call feedkeys(":call Test_w_fuz\<Tab>\<C-B>\"\<CR>", 'tx')
-  call assert_equal('"call Test_w_fuz', @:)
-  set wildoptions=fuzzy
-  call feedkeys(":call Test_w_fuz\<Tab>\<C-B>\"\<CR>", 'tx')
-  call assert_equal('"call Test_wildoptions_fuzzy()', @:)
+endfunc
 
-  " user defined command name completion
+" " file name fuzzy completion - NOT supported
+" func Test_fuzzy_completion_filename()
+" endfunc
+
+" " files in path fuzzy completion - NOT supported
+" func Test_fuzzy_completion_filesinpath()
+" endfunc
+
+" " filetype name fuzzy completion - NOT supported
+" func Test_fuzzy_completion_filetype()
+" endfunc
+
+" user defined function name completion
+func Test_fuzzy_completion_userdefined_func()
+  set wildoptions&
+  call feedkeys(":call Test_f_u_f\<Tab>\<C-B>\"\<CR>", 'tx')
+  call assert_equal('"call Test_f_u_f', @:)
+  set wildoptions=fuzzy
+  call feedkeys(":call Test_f_u_f\<Tab>\<C-B>\"\<CR>", 'tx')
+  call assert_equal('"call Test_fuzzy_completion_userdefined_func()', @:)
+  set wildoptions&
+endfunc
+
+" user defined command name completion
+func Test_fuzzy_completion_userdefined_cmd()
   set wildoptions&
   call feedkeys(":MsFeat\<Tab>\<C-B>\"\<CR>", 'tx')
   call assert_equal('"MsFeat', @:)
   set wildoptions=fuzzy
   call feedkeys(":MsFeat\<Tab>\<C-B>\"\<CR>", 'tx')
   call assert_equal('"MissingFeature', @:)
+  set wildoptions&
+endfunc
 
-  " :help tag fuzzy completion - NOT supported
+" " :help tag fuzzy completion - NOT supported
+" func Test_fuzzy_completion_helptag()
+" endfunc
 
-  " highlight group name fuzzy completion
+" highlight group name fuzzy completion
+func Test_fuzzy_completion_hlgroup()
   set wildoptions&
   call feedkeys(":highlight SKey\<Tab>\<C-B>\"\<CR>", 'tx')
   call assert_equal('"highlight SKey', @:)
@@ -2853,8 +2903,11 @@ func Test_wildoptions_fuzzy()
   call assert_equal('"highlight SpecialKey', @:)
   call feedkeys(":highlight Sp*Key\<Tab>\<C-B>\"\<CR>", 'tx')
   call assert_equal('"highlight Sp*Key', @:)
+  set wildoptions&
+endfunc
 
-  " :history suboptions fuzzy completion
+" :history suboptions fuzzy completion
+func Test_fuzzy_completion_history()
   set wildoptions&
   call feedkeys(":history dg\<Tab>\<C-B>\"\<CR>", 'tx')
   call assert_equal('"history dg', @:)
@@ -2865,26 +2918,34 @@ func Test_wildoptions_fuzzy()
   call assert_equal('"history debug', @:)
   call feedkeys(":history se*h\<Tab>\<C-B>\"\<CR>", 'tx')
   call assert_equal('"history se*h', @:)
+  set wildoptions&
+endfunc
 
-  " :language locale name fuzzy completion
-  if has('unix')
-    set wildoptions&
-    call feedkeys(":lang psx\<Tab>\<C-B>\"\<CR>", 'tx')
-    call assert_equal('"lang psx', @:)
-    set wildoptions=fuzzy
-    call feedkeys(":lang psx\<Tab>\<C-B>\"\<CR>", 'tx')
-    call assert_equal('"lang POSIX', @:)
-  endif
+" :language locale name fuzzy completion
+func Test_fuzzy_completion_lang()
+  CheckUnix
+  set wildoptions&
+  call feedkeys(":lang psx\<Tab>\<C-B>\"\<CR>", 'tx')
+  call assert_equal('"lang psx', @:)
+  set wildoptions=fuzzy
+  call feedkeys(":lang psx\<Tab>\<C-B>\"\<CR>", 'tx')
+  call assert_equal('"lang POSIX', @:)
+  set wildoptions&
+endfunc
 
-  " :mapclear buffer argument fuzzy completion
+" :mapclear buffer argument fuzzy completion
+func Test_fuzzy_completion_mapclear()
   set wildoptions&
   call feedkeys(":mapclear buf\<Tab>\<C-B>\"\<CR>", 'tx')
   call assert_equal('"mapclear buf', @:)
   set wildoptions=fuzzy
   call feedkeys(":mapclear buf\<Tab>\<C-B>\"\<CR>", 'tx')
   call assert_equal('"mapclear <buffer>', @:)
+  set wildoptions&
+endfunc
 
-  " map name fuzzy completion
+" map name fuzzy completion
+func Test_fuzzy_completion_mapname()
   " test regex completion works
   set wildoptions=fuzzy
   call feedkeys(":cnoremap <ex\<Tab> <esc> \<Tab>\<C-B>\"\<CR>", 'tx')
@@ -2919,8 +2980,11 @@ func Test_wildoptions_fuzzy()
   nunmap <Plug>fendoff
   nunmap <Plug>state
   nunmap <Plug>FendingOff
+  set wildoptions&
+endfunc
 
-  " abbreviation fuzzy completion
+" abbreviation fuzzy completion
+func Test_fuzzy_completion_abbr()
   set wildoptions=fuzzy
   call feedkeys(":iabbr wait\<Tab>\<C-B>\"\<CR>", 'tx')
   call assert_equal("\"iabbr <nowait>", @:)
@@ -2930,26 +2994,34 @@ func Test_wildoptions_fuzzy()
   call feedkeys(":iabbr a1z\<Tab>\<C-B>\"\<CR>", 'tx')
   call assert_equal("\"iabbr a1z\t", @:)
   iunabbrev WaitForCompletion
+  set wildoptions&
+endfunc
 
-  " menu name fuzzy completion
-  if has('gui_running')
-    set wildoptions&
-    call feedkeys(":menu pup\<Tab>\<C-B>\"\<CR>", 'tx')
-    call assert_equal('"menu pup', @:)
-    set wildoptions=fuzzy
-    call feedkeys(":menu pup\<Tab>\<C-B>\"\<CR>", 'tx')
-    call assert_equal('"menu PopUp.', @:)
-  endif
+" menu name fuzzy completion
+func Test_fuzzy_completion_menu()
+  CheckGui
+  set wildoptions&
+  call feedkeys(":menu pup\<Tab>\<C-B>\"\<CR>", 'tx')
+  call assert_equal('"menu pup', @:)
+  set wildoptions=fuzzy
+  call feedkeys(":menu pup\<Tab>\<C-B>\"\<CR>", 'tx')
+  call assert_equal('"menu PopUp.', @:)
+  set wildoptions&
+endfunc
 
-  " :messages suboptions fuzzy completion
+" :messages suboptions fuzzy completion
+func Test_fuzzy_completion_messages()
   set wildoptions&
   call feedkeys(":messages clr\<Tab>\<C-B>\"\<CR>", 'tx')
   call assert_equal('"messages clr', @:)
   set wildoptions=fuzzy
   call feedkeys(":messages clr\<Tab>\<C-B>\"\<CR>", 'tx')
   call assert_equal('"messages clear', @:)
+  set wildoptions&
+endfunc
 
-  " :set option name fuzzy completion
+" :set option name fuzzy completion
+func Test_fuzzy_completion_option()
   set wildoptions&
   call feedkeys(":set brkopt\<Tab>\<C-B>\"\<CR>", 'tx')
   call assert_equal('"set brkopt', @:)
@@ -2962,67 +3034,94 @@ func Test_wildoptions_fuzzy()
   set wildoptions=fuzzy
   call feedkeys(":set fixeol\<Tab>\<C-B>\"\<CR>", 'tx')
   call assert_equal('"set fixendofline', @:)
+  set wildoptions&
+endfunc
 
-  " :set <term_option>
-  " Nvim does not support term options
-  " set wildoptions&
-  " call feedkeys(":set t_E\<Tab>\<C-B>\"\<CR>", 'tx')
-  " call assert_equal('"set t_EC', @:)
-  " call feedkeys(":set <t_E\<Tab>\<C-B>\"\<CR>", 'tx')
-  " call assert_equal('"set <t_EC>', @:)
-  " set wildoptions=fuzzy
-  " call feedkeys(":set t_E\<Tab>\<C-B>\"\<CR>", 'tx')
-  " call assert_equal('"set t_EC', @:)
-  " call feedkeys(":set <t_E\<Tab>\<C-B>\"\<CR>", 'tx')
-  " call assert_equal('"set <t_EC>', @:)
+" :set <term_option>
+func Test_fuzzy_completion_term_option()
+  throw 'Skipped: Nvim does not support term options'
+  set wildoptions&
+  call feedkeys(":set t_E\<Tab>\<C-B>\"\<CR>", 'tx')
+  call assert_equal('"set t_EC', @:)
+  call feedkeys(":set <t_E\<Tab>\<C-B>\"\<CR>", 'tx')
+  call assert_equal('"set <t_EC>', @:)
+  set wildoptions=fuzzy
+  call feedkeys(":set t_E\<Tab>\<C-B>\"\<CR>", 'tx')
+  call assert_equal('"set t_EC', @:)
+  call feedkeys(":set <t_E\<Tab>\<C-B>\"\<CR>", 'tx')
+  call assert_equal('"set <t_EC>', @:)
+  set wildoptions&
+endfunc
 
-  " :packadd directory name fuzzy completion - NOT supported
+" " :packadd directory name fuzzy completion - NOT supported
+" func Test_fuzzy_completion_packadd()
+" endfunc
 
-  " shell command name fuzzy completion - NOT supported
+" " shell command name fuzzy completion - NOT supported
+" func Test_fuzzy_completion_shellcmd()
+" endfunc
 
-  " :sign suboptions fuzzy completion
+" :sign suboptions fuzzy completion
+func Test_fuzzy_completion_sign()
   set wildoptions&
   call feedkeys(":sign ufe\<Tab>\<C-B>\"\<CR>", 'tx')
   call assert_equal('"sign ufe', @:)
   set wildoptions=fuzzy
   call feedkeys(":sign ufe\<Tab>\<C-B>\"\<CR>", 'tx')
   call assert_equal('"sign undefine', @:)
+  set wildoptions&
+endfunc
 
-  " :syntax suboptions fuzzy completion
+" :syntax suboptions fuzzy completion
+func Test_fuzzy_completion_syntax_cmd()
   set wildoptions&
   call feedkeys(":syntax kwd\<Tab>\<C-B>\"\<CR>", 'tx')
   call assert_equal('"syntax kwd', @:)
   set wildoptions=fuzzy
   call feedkeys(":syntax kwd\<Tab>\<C-B>\"\<CR>", 'tx')
   call assert_equal('"syntax keyword', @:)
+  set wildoptions&
+endfunc
 
-  " syntax group name fuzzy completion
+" syntax group name fuzzy completion
+func Test_fuzzy_completion_syntax_group()
   set wildoptions&
   call feedkeys(":syntax list mpar\<Tab>\<C-B>\"\<CR>", 'tx')
   call assert_equal('"syntax list mpar', @:)
   set wildoptions=fuzzy
   call feedkeys(":syntax list mpar\<Tab>\<C-B>\"\<CR>", 'tx')
-  " Fuzzy match favours NvimParenthesis over MatchParen
+  " Fuzzy match prefers NvimParenthesis over MatchParen
   " call assert_equal('"syntax list MatchParen', @:)
   call assert_equal('"syntax list NvimParenthesis', @:)
+  set wildoptions&
+endfunc
 
-  " :syntime suboptions fuzzy completion
-  if has('profile')
-    set wildoptions&
-    call feedkeys(":syntime clr\<Tab>\<C-B>\"\<CR>", 'tx')
-    call assert_equal('"syntime clr', @:)
-    set wildoptions=fuzzy
-    call feedkeys(":syntime clr\<Tab>\<C-B>\"\<CR>", 'tx')
-    call assert_equal('"syntime clear', @:)
-  endif
+" :syntime suboptions fuzzy completion
+func Test_fuzzy_completion_syntime()
+  CheckFeature profile
+  set wildoptions&
+  call feedkeys(":syntime clr\<Tab>\<C-B>\"\<CR>", 'tx')
+  call assert_equal('"syntime clr', @:)
+  set wildoptions=fuzzy
+  call feedkeys(":syntime clr\<Tab>\<C-B>\"\<CR>", 'tx')
+  call assert_equal('"syntime clear', @:)
+  set wildoptions&
+endfunc
 
-  " tag name fuzzy completion - NOT supported
+" " tag name fuzzy completion - NOT supported
+" func Test_fuzzy_completion_tagname()
+" endfunc
 
-  " tag name and file fuzzy completion - NOT supported
+" " tag name and file fuzzy completion - NOT supported
+" func Test_fuzzy_completion_tagfile()
+" endfunc
 
-  " user names fuzzy completion - how to test this functionality?
+" " user names fuzzy completion - how to test this functionality?
+" func Test_fuzzy_completion_username()
+" endfunc
 
-  " user defined variable name fuzzy completion
+" user defined variable name fuzzy completion
+func Test_fuzzy_completion_userdefined_var()
   let g:SomeVariable=10
   set wildoptions&
   call feedkeys(":let SVar\<Tab>\<C-B>\"\<CR>", 'tx')
@@ -3030,8 +3129,11 @@ func Test_wildoptions_fuzzy()
   set wildoptions=fuzzy
   call feedkeys(":let SVar\<Tab>\<C-B>\"\<CR>", 'tx')
   call assert_equal('"let SomeVariable', @:)
+  set wildoptions&
+endfunc
 
-  " Test for sorting the results by the best match
+" Test for sorting the results by the best match
+func Test_fuzzy_completion_cmd_sort_results()
   %bw!
   command T123format :
   command T123goformat :
@@ -3049,9 +3151,11 @@ func Test_wildoptions_fuzzy()
   delcommand T123state
   delcommand T123FendingOff
   %bw
+  set wildoptions&
+endfunc
 
-  " Test for fuzzy completion of a command with lower case letters and a
-  " number
+" Test for fuzzy completion of a command with lower case letters and a number
+func Test_fuzzy_completion_cmd_alnum()
   command Foo2Bar :
   set wildoptions=fuzzy
   call feedkeys(":foo2\<Tab>\<C-B>\"\<CR>", 'tx')
@@ -3061,8 +3165,11 @@ func Test_wildoptions_fuzzy()
   call feedkeys(":bar\<Tab>\<C-B>\"\<CR>", 'tx')
   call assert_equal('"Foo2Bar', @:)
   delcommand Foo2Bar
+  set wildoptions&
+endfunc
 
-  " Test for command completion for a command starting with 'k'
+" Test for command completion for a command starting with 'k'
+func Test_fuzzy_completion_cmd_k()
   command KillKillKill :
   set wildoptions&
   call feedkeys(":killkill\<Tab>\<C-B>\"\<CR>", 'tx')
@@ -3071,9 +3178,33 @@ func Test_wildoptions_fuzzy()
   call feedkeys(":killkill\<Tab>\<C-B>\"\<CR>", 'tx')
   call assert_equal('"KillKillKill', @:)
   delcom KillKillKill
-
   set wildoptions&
-  %bw!
+endfunc
+
+" Test for fuzzy completion for user defined custom completion function
+func Test_fuzzy_completion_custom_func()
+  func Tcompl(a, c, p)
+    return "format\ngoformat\nTestFOrmat\nfendoff\nstate"
+  endfunc
+  command -nargs=* -complete=custom,Tcompl Fuzzy :
+  set wildoptions&
+  call feedkeys(":Fuzzy fo\<C-A>\<C-B>\"\<CR>", 'tx')
+  call assert_equal("\"Fuzzy format", @:)
+  call feedkeys(":Fuzzy xy\<Tab>\<C-B>\"\<CR>", 'tx')
+  call assert_equal("\"Fuzzy xy", @:)
+  call feedkeys(":Fuzzy ttt\<C-A>\<C-B>\"\<CR>", 'tx')
+  call assert_equal("\"Fuzzy ttt", @:)
+  set wildoptions=fuzzy
+  call feedkeys(":Fuzzy \<C-A>\<C-B>\"\<CR>", 'tx')
+  call assert_equal("\"Fuzzy format goformat TestFOrmat fendoff state", @:)
+  call feedkeys(":Fuzzy fo\<C-A>\<C-B>\"\<CR>", 'tx')
+  call assert_equal("\"Fuzzy format TestFOrmat goformat fendoff", @:)
+  call feedkeys(":Fuzzy xy\<Tab>\<C-B>\"\<CR>", 'tx')
+  call assert_equal("\"Fuzzy xy", @:)
+  call feedkeys(":Fuzzy ttt\<C-A>\<C-B>\"\<CR>", 'tx')
+  call assert_equal("\"Fuzzy TestFOrmat", @:)
+  delcom Fuzzy
+  set wildoptions&
 endfunc
 
 " Test for :breakadd argument completion

@@ -7126,7 +7126,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 			global
 	A list of words that change how |cmdline-completion| is done.
 	The following values are supported:
-	  fuzzy		Use fuzzy matching to find completion matches. When
+	  fuzzy		Use |fuzzy-matching| to find completion matches. When
 			this value is specified, wildcard expansion will not
 			be used for completion.  The matches will be sorted by
 			the "best match" rather than alphabetically sorted.
