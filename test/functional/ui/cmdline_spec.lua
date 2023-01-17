@@ -1362,7 +1362,7 @@ describe('cmdheight=0', function()
       {1:~                        }|
       {1:~                        }|
       {1:~                        }|
-      {1:~                        }|
+      {1:~             }d         {1: }|
     ]])
     assert_alive()
   end)
