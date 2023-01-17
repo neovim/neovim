@@ -2497,7 +2497,6 @@ viml_pexpr_parse_bracket_closing_error:
           NEW_NODE_WITH_CUR_POS(cur_node, kExprNodeListLiteral);
           *top_node_p = cur_node;
           kvi_push(ast_stack, &cur_node->children);
-          want_node = kENodeValue;
           if (cur_pt == kEPTAssignment) {
             // Additional assignment parse type allows to easily forbid nested
             // lists.
