@@ -3472,7 +3472,7 @@ int fuzzy_match_str(char *const str, const char *const pat)
 
   int score = 0;
   uint32_t matchpos[MAX_FUZZY_MATCHES];
-  fuzzy_match(str, pat, false, &score, matchpos, sizeof(matchpos) / sizeof(matchpos[0]));
+  fuzzy_match(str, pat, true, &score, matchpos, sizeof(matchpos) / sizeof(matchpos[0]));
 
   return score;
 }

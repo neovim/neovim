@@ -2868,11 +2868,52 @@ func Test_wildoptions_fuzzy()
   call feedkeys(":mapclear buf\<Tab>\<C-B>\"\<CR>", 'tx')
   call assert_equal('"mapclear <buffer>', @:)
 
-  " map name fuzzy completion - NOT supported
+  " map name fuzzy completion
   " test regex completion works
   set wildoptions=fuzzy
   call feedkeys(":cnoremap <ex\<Tab> <esc> \<Tab>\<C-B>\"\<CR>", 'tx')
   call assert_equal("\"cnoremap <expr> <esc> \<Tab>", @:)
+  nmap <plug>MyLongMap :p<CR>
+  call feedkeys(":nmap MLM\<Tab>\<C-B>\"\<CR>", 'tx')
+  call assert_equal("\"nmap <Plug>MyLongMap", @:)
+  call feedkeys(":nmap MLM \<Tab>\<C-B>\"\<CR>", 'tx')
+  call assert_equal("\"nmap MLM \t", @:)
+  call feedkeys(":nmap <F2> one two \<Tab>\<C-B>\"\<CR>", 'tx')
+  call assert_equal("\"nmap <F2> one two \t", @:)
+  " duplicate entries should be removed
+  vmap <plug>MyLongMap :<C-U>#<CR>
+  call feedkeys(":nmap MLM\<Tab>\<C-B>\"\<CR>", 'tx')
+  call assert_equal("\"nmap <Plug>MyLongMap", @:)
+  nunmap <plug>MyLongMap
+  vunmap <plug>MyLongMap
+  call feedkeys(":nmap ABC\<Tab>\<C-B>\"\<CR>", 'tx')
+  call assert_equal("\"nmap ABC\t", @:)
+  " results should be sorted by best match
+  nmap <Plug>format :
+  nmap <Plug>goformat :
+  nmap <Plug>TestFOrmat :
+  nmap <Plug>fendoff :
+  nmap <Plug>state :
+  nmap <Plug>FendingOff :
+  call feedkeys(":nmap <Plug>fo\<C-A>\<C-B>\"\<CR>", 'tx')
+  call assert_equal("\"nmap <Plug>format <Plug>TestFOrmat <Plug>FendingOff <Plug>goformat <Plug>fendoff", @:)
+  nunmap <Plug>format
+  nunmap <Plug>goformat
+  nunmap <Plug>TestFOrmat
+  nunmap <Plug>fendoff
+  nunmap <Plug>state
+  nunmap <Plug>FendingOff
+
+  " abbreviation fuzzy completion
+  set wildoptions=fuzzy
+  call feedkeys(":iabbr wait\<Tab>\<C-B>\"\<CR>", 'tx')
+  call assert_equal("\"iabbr <nowait>", @:)
+  iabbr WaitForCompletion WFC
+  call feedkeys(":iabbr fcl\<Tab>\<C-B>\"\<CR>", 'tx')
+  call assert_equal("\"iabbr WaitForCompletion", @:)
+  call feedkeys(":iabbr a1z\<Tab>\<C-B>\"\<CR>", 'tx')
+  call assert_equal("\"iabbr a1z\t", @:)
+  iunabbrev WaitForCompletion
 
   " menu name fuzzy completion
   if has('gui_running')
@@ -3004,6 +3045,16 @@ func Test_wildoptions_fuzzy()
   call feedkeys(":bar\<Tab>\<C-B>\"\<CR>", 'tx')
   call assert_equal('"Foo2Bar', @:)
   delcommand Foo2Bar
+
+  " Test for command completion for a command starting with 'k'
+  command KillKillKill :
+  set wildoptions&
+  call feedkeys(":killkill\<Tab>\<C-B>\"\<CR>", 'tx')
+  call assert_equal("\"killkill\<Tab>", @:)
+  set wildoptions=fuzzy
+  call feedkeys(":killkill\<Tab>\<C-B>\"\<CR>", 'tx')
+  call assert_equal('"KillKillKill', @:)
+  delcom KillKillKill
 
   set wildoptions&
   %bw!

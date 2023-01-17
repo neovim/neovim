@@ -105,7 +105,6 @@ static bool cmdline_fuzzy_completion_supported(const expand_T *const xp)
          && xp->xp_context != EXPAND_FILES_IN_PATH
          && xp->xp_context != EXPAND_FILETYPE
          && xp->xp_context != EXPAND_HELP
-         && xp->xp_context != EXPAND_MAPPINGS
          && xp->xp_context != EXPAND_OLD_SETTING
          && xp->xp_context != EXPAND_OWNSYNTAX
          && xp->xp_context != EXPAND_PACKADD
@@ -1377,10 +1376,12 @@ static const char *set_cmd_index(const char *cmd, exarg_T *eap, expand_T *xp, in
 
   // Isolate the command and search for it in the command table.
   // Exceptions:
-  // - the 'k' command can directly be followed by any character, but
-  //   do accept "keepmarks", "keepalt" and "keepjumps".
+  // - the 'k' command can directly be followed by any character, but do
+  // accept "keepmarks", "keepalt" and "keepjumps". As fuzzy matching can
+  // find matches anywhere in the command name, do this only for command
+  // expansion based on regular expression and not for fuzzy matching.
   // - the 's' command can be followed directly by 'c', 'g', 'i', 'I' or 'r'
-  if (*cmd == 'k' && cmd[1] != 'e') {
+  if (!fuzzy && (*cmd == 'k' && cmd[1] != 'e')) {
     eap->cmdidx = CMD_k;
     p = cmd + 1;
   } else {
@@ -2732,7 +2733,7 @@ static int ExpandFromContext(expand_T *xp, char *pat, char ***matches, int *numM
       || xp->xp_context == EXPAND_BOOL_SETTINGS) {
     ret = ExpandSettings(xp, &regmatch, pat, numMatches, matches);
   } else if (xp->xp_context == EXPAND_MAPPINGS) {
-    ret = ExpandMappings(&regmatch, numMatches, matches);
+    ret = ExpandMappings(pat, &regmatch, numMatches, matches);
   } else if (xp->xp_context == EXPAND_USER_DEFINED) {
     ret = ExpandUserDefined(xp, &regmatch, matches, numMatches);
   } else {
