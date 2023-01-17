@@ -3000,6 +3000,10 @@ getcompletion({pat}, {type} [, {filtered}])		*getcompletion()*
 		is applied to filter the results.  Otherwise all the matches
 		are returned. The 'wildignorecase' option always applies.
 
+		If the 'wildoptions' option contains "fuzzy", then fuzzy
+		matching is used to get the completion matches. Otherwise
+		regular expression matching is used.
+
 		If {type} is "cmdline", then the |cmdline-completion| result is
 		returned.  For example, to complete the possible values after
 		a ":call" command: >

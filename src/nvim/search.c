@@ -2942,7 +2942,7 @@ typedef struct {
 #define FUZZY_MATCH_RECURSION_LIMIT 10
 
 /// Compute a score for a fuzzy matched string. The matching character locations
-/// are in 'matches'.
+/// are in "matches".
 static int fuzzy_match_compute_score(const char *const str, const int strSz,
                                      const uint32_t *const matches, const int numMatches)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_PURE
@@ -3007,7 +3007,7 @@ static int fuzzy_match_compute_score(const char *const str, const int strSz,
   return score;
 }
 
-/// Perform a recursive search for fuzzy matching 'fuzpat' in 'str'.
+/// Perform a recursive search for fuzzy matching "fuzpat" in "str".
 /// @return the number of matching characters.
 static int fuzzy_match_recursive(const char *fuzpat, const char *str, uint32_t strIdx,
                                  int *const outScore, const char *const strBegin, const int strLen,
@@ -3107,23 +3107,23 @@ static int fuzzy_match_recursive(const char *fuzpat, const char *str, uint32_t s
 /// Uses char_u for match indices. Therefore patterns are limited to
 /// MAX_FUZZY_MATCHES characters.
 ///
-/// @return true if 'pat_arg' matches 'str'. Also returns the match score in
-/// 'outScore' and the matching character positions in 'matches'.
-bool fuzzy_match(char_u *const str, const char_u *const pat_arg, const bool matchseq,
+/// @return true if "pat_arg" matches "str". Also returns the match score in
+/// "outScore" and the matching character positions in "matches".
+bool fuzzy_match(char *const str, const char *const pat_arg, const bool matchseq,
                  int *const outScore, uint32_t *const matches, const int maxMatches)
-  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_NONNULL_ALL
 {
-  const int len = mb_charlen((char *)str);
+  const int len = mb_charlen(str);
   bool complete = false;
   int numMatches = 0;
 
   *outScore = 0;
 
-  char *const save_pat = xstrdup((char *)pat_arg);
+  char *const save_pat = xstrdup(pat_arg);
   char *pat = save_pat;
   char *p = pat;
 
-  // Try matching each word in 'pat_arg' in 'str'
+  // Try matching each word in "pat_arg" in "str"
   while (true) {
     if (matchseq) {
       complete = true;
@@ -3146,7 +3146,7 @@ bool fuzzy_match(char_u *const str, const char_u *const pat_arg, const bool matc
     int score = 0;
     int recursionCount = 0;
     const int matchCount
-      = fuzzy_match_recursive(pat, (char *)str, 0, &score, (char *)str, len, NULL,
+      = fuzzy_match_recursive(pat, str, 0, &score, str, len, NULL,
                               matches + numMatches,
                               maxMatches - numMatches, 0, &recursionCount);
     if (matchCount == 0) {
@@ -3183,14 +3183,14 @@ static int fuzzy_match_item_compare(const void *const s1, const void *const s2)
   return v1 == v2 ? (idx1 - idx2) : v1 > v2 ? -1 : 1;
 }
 
-/// Fuzzy search the string 'str' in a list of 'items' and return the matching
-/// strings in 'fmatchlist'.
-/// If 'matchseq' is true, then for multi-word search strings, match all the
+/// Fuzzy search the string "str" in a list of "items" and return the matching
+/// strings in "fmatchlist".
+/// If "matchseq" is true, then for multi-word search strings, match all the
 /// words in sequence.
-/// If 'items' is a list of strings, then search for 'str' in the list.
-/// If 'items' is a list of dicts, then either use 'key' to lookup the string
-/// for each item or use 'item_cb' Funcref function to get the string.
-/// If 'retmatchpos' is true, then return a list of positions where 'str'
+/// If "items" is a list of strings, then search for "str" in the list.
+/// If "items" is a list of dicts, then either use "key" to lookup the string
+/// for each item or use "item_cb" Funcref function to get the string.
+/// If "retmatchpos" is true, then return a list of positions where "str"
 /// matches for each item.
 static void fuzzy_match_in_list(list_T *const l, char *const str, const bool matchseq,
                                 const char *const key, Callback *const item_cb,
@@ -3245,14 +3245,14 @@ static void fuzzy_match_in_list(list_T *const l, char *const str, const bool mat
     }
 
     int score;
-    if (itemstr != NULL && fuzzy_match((char_u *)itemstr, (char_u *)str, matchseq, &score, matches,
+    if (itemstr != NULL && fuzzy_match(itemstr, str, matchseq, &score, matches,
                                        MAX_FUZZY_MATCHES)) {
       items[match_count].idx = (int)match_count;
       items[match_count].item = li;
       items[match_count].score = score;
 
       // Copy the list of matching positions in itemstr to a list, if
-      // 'retmatchpos' is set.
+      // "retmatchpos" is set.
       if (retmatchpos) {
         items[match_count].lmatchpos = tv_list_alloc(kListLenMayKnow);
         int j = 0;
@@ -3326,8 +3326,8 @@ static void fuzzy_match_in_list(list_T *const l, char *const str, const bool mat
   xfree(items);
 }
 
-/// Do fuzzy matching. Returns the list of matched strings in 'rettv'.
-/// If 'retmatchpos' is true, also returns the matching character positions.
+/// Do fuzzy matching. Returns the list of matched strings in "rettv".
+/// If "retmatchpos" is true, also returns the matching character positions.
 static void do_fuzzymatch(const typval_T *const argvars, typval_T *const rettv,
                           const bool retmatchpos)
   FUNC_ATTR_NONNULL_ALL
@@ -3409,6 +3409,109 @@ void f_matchfuzzy(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 void f_matchfuzzypos(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
   do_fuzzymatch(argvars, rettv, true);
+}
+
+/// Same as fuzzy_match_item_compare() except for use with a string match
+static int fuzzy_match_str_compare(const void *const s1, const void *const s2)
+  FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE
+{
+  const int v1 = ((fuzmatch_str_T *)s1)->score;
+  const int v2 = ((fuzmatch_str_T *)s2)->score;
+  const int idx1 = ((fuzmatch_str_T *)s1)->idx;
+  const int idx2 = ((fuzmatch_str_T *)s2)->idx;
+
+  return v1 == v2 ? (idx1 - idx2) : v1 > v2 ? -1 : 1;
+}
+
+/// Sort fuzzy matches by score
+static void fuzzy_match_str_sort(fuzmatch_str_T *const fm, const int sz)
+  FUNC_ATTR_NONNULL_ALL
+{
+  // Sort the list by the descending order of the match score
+  qsort(fm, (size_t)sz, sizeof(fuzmatch_str_T), fuzzy_match_str_compare);
+}
+
+/// Same as fuzzy_match_item_compare() except for use with a function name
+/// string match. <SNR> functions should be sorted to the end.
+static int fuzzy_match_func_compare(const void *const s1, const void *const s2)
+  FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE
+{
+  const int v1 = ((fuzmatch_str_T *)s1)->score;
+  const int v2 = ((fuzmatch_str_T *)s2)->score;
+  const int idx1 = ((fuzmatch_str_T *)s1)->idx;
+  const int idx2 = ((fuzmatch_str_T *)s2)->idx;
+  const char *const str1 = ((fuzmatch_str_T *)s1)->str;
+  const char *const str2 = ((fuzmatch_str_T *)s2)->str;
+
+  if (*str1 != '<' && *str2 == '<') {
+    return -1;
+  }
+  if (*str1 == '<' && *str2 != '<') {
+    return 1;
+  }
+  return v1 == v2 ? (idx1 - idx2) : v1 > v2 ? -1 : 1;
+}
+
+/// Sort fuzzy matches of function names by score.
+/// <SNR> functions should be sorted to the end.
+static void fuzzy_match_func_sort(fuzmatch_str_T *const fm, const int sz)
+  FUNC_ATTR_NONNULL_ALL
+{
+  // Sort the list by the descending order of the match score
+  qsort(fm, (size_t)sz, sizeof(fuzmatch_str_T), fuzzy_match_func_compare);
+}
+
+/// Fuzzy match "pat" in "str".
+/// @returns 0 if there is no match. Otherwise, returns the match score.
+int fuzzy_match_str(char *const str, const char *const pat)
+  FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  if (str == NULL || pat == NULL) {
+    return 0;
+  }
+
+  int score = 0;
+  uint32_t matchpos[MAX_FUZZY_MATCHES];
+  fuzzy_match(str, pat, true, &score, matchpos, sizeof(matchpos) / sizeof(matchpos[0]));
+
+  return score;
+}
+
+/// Copy a list of fuzzy matches into a string list after sorting the matches by
+/// the fuzzy score. Frees the memory allocated for "fuzmatch".
+void fuzzymatches_to_strmatches(fuzmatch_str_T *const fuzmatch, char ***const matches,
+                                const int count, const bool funcsort)
+  FUNC_ATTR_NONNULL_ARG(2)
+{
+  if (count <= 0) {
+    return;
+  }
+
+  *matches = xmalloc((size_t)count * sizeof(char *));
+
+  // Sort the list by the descending order of the match score
+  if (funcsort) {
+    fuzzy_match_func_sort(fuzmatch, count);
+  } else {
+    fuzzy_match_str_sort(fuzmatch, count);
+  }
+
+  for (int i = 0; i < count; i++) {
+    (*matches)[i] = fuzmatch[i].str;
+  }
+  xfree(fuzmatch);
+}
+
+/// Free a list of fuzzy string matches.
+void fuzmatch_str_free(fuzmatch_str_T *const fuzmatch, int count)
+{
+  if (count <= 0 || fuzmatch == NULL) {
+    return;
+  }
+  while (count--) {
+    xfree(fuzmatch[count].str);
+  }
+  xfree(fuzmatch);
 }
 
 /// Get line "lnum" and copy it into "buf[LSIZE]".
