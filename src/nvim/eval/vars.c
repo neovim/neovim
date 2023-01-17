@@ -106,7 +106,7 @@ static list_T *heredoc_get(exarg_T *eap, char *cmd)
       return NULL;
     }
     *p = NUL;
-    if (islower(*marker)) {
+    if (islower((uint8_t)(*marker))) {
       emsg(_("E221: Marker cannot start with lower case letter"));
       return NULL;
     }
