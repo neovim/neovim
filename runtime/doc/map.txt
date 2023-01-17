@@ -1432,9 +1432,11 @@ The function arguments are:
 The function may use these for determining context.  For the "custom"
 argument, it is not necessary to filter candidates against the (implicit
 pattern in) ArgLead.  Vim will filter the candidates with its regexp engine
-after function return, and this is probably more efficient in most cases. For
-the "customlist" argument, Vim will not filter the returned completion
-candidates and the user supplied function should filter the candidates.
+after function return, and this is probably more efficient in most cases. If
+'wildoptions' contains "fuzzy", then the candidates will be filtered using
+|fuzzy-matching|.  For the "customlist" argument, Vim will not
+filter the returned completion candidates and the user supplied function
+should filter the candidates.
 
 The following example lists user names to a Finger command >
     :com -complete=custom,ListUsers -nargs=1 Finger !finger <args>
