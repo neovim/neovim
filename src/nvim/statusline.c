@@ -1682,7 +1682,7 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, char *opt_n
         vim_snprintf(buf_tmp, sizeof(buf_tmp), ",%s", wp->w_buffer->b_p_ft);
         // Uppercase the file extension
         for (char *t = buf_tmp; *t != 0; t++) {
-          *t = (char)TOUPPER_LOC(*t);
+          *t = (char)TOUPPER_LOC((uint8_t)(*t));
         }
         str = buf_tmp;
       }

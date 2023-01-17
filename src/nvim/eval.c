@@ -3777,7 +3777,7 @@ static int get_string_tv(char **arg, typval_T *rettv, int evaluate)
       case 'U':
         if (ascii_isxdigit(p[1])) {
           int n, nr;
-          int c = toupper(*p);
+          int c = toupper((uint8_t)(*p));
 
           if (c == 'X') {
             n = 2;
