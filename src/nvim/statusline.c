@@ -231,8 +231,12 @@ void stl_fill_click_defs(StlClickDefinition *click_defs, StlClickRecord *click_r
   };
   for (int i = 0; click_recs[i].start != NULL; i++) {
     len += vim_strnsize(buf, (int)(click_recs[i].start - buf));
-    while (col < len) {
-      click_defs[col++] = cur_click_def;
+    if (col < len) {
+      while (col < len) {
+        click_defs[col++] = cur_click_def;
+      }
+    } else {
+      xfree(cur_click_def.func);
     }
     buf = (char *)click_recs[i].start;
     cur_click_def = click_recs[i].def;
@@ -242,8 +246,12 @@ void stl_fill_click_defs(StlClickDefinition *click_defs, StlClickRecord *click_r
       cur_click_def.type = kStlClickDisabled;
     }
   }
-  while (col < width) {
-    click_defs[col++] = cur_click_def;
+  if (col < width) {
+    while (col < width) {
+      click_defs[col++] = cur_click_def;
+    }
+  } else {
+    xfree(cur_click_def.func);
   }
 }
 
