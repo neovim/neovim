@@ -656,7 +656,6 @@ char *did_set_string_option(int opt_idx, char **varp, char *oldval, char *errbuf
                             int opt_flags, int *value_checked)
 {
   char *errmsg = NULL;
-  char *s, *p;
   int did_chartab = false;
   vimoption_T *opt = get_option(opt_idx);
   bool free_oldval = (opt->flags & P_ALLOCED);
@@ -746,7 +745,7 @@ char *did_set_string_option(int opt_idx, char **varp, char *oldval, char *errbuf
     errmsg = check_colorcolumn(curwin);
   } else if (varp == &p_hlg) {  // 'helplang'
     // Check for "", "ab", "ab,cd", etc.
-    for (s = p_hlg; *s != NUL; s += 3) {
+    for (char *s = p_hlg; *s != NUL; s += 3) {
       if (s[1] == NUL || ((s[2] != ',' || s[3] == NUL) && s[2] != NUL)) {
         errmsg = e_invarg;
         break;
@@ -849,7 +848,7 @@ char *did_set_string_option(int opt_idx, char **varp, char *oldval, char *errbuf
 
     if (errmsg == NULL) {
       // canonize the value, so that strcmp() can be used on it
-      p = enc_canonize(*varp);
+      char *p = enc_canonize(*varp);
       xfree(*varp);
       *varp = p;
       if (varp == &p_enc) {
@@ -923,7 +922,7 @@ char *did_set_string_option(int opt_idx, char **varp, char *oldval, char *errbuf
       errmsg = e_invarg;
     }
   } else if (gvarp == &p_mps) {  // 'matchpairs'
-    for (p = *varp; *p != NUL; p++) {
+    for (char *p = *varp; *p != NUL; p++) {
       int x2 = -1;
       int x3 = -1;
 
@@ -944,7 +943,7 @@ char *did_set_string_option(int opt_idx, char **varp, char *oldval, char *errbuf
       }
     }
   } else if (gvarp == &p_com) {  // 'comments'
-    for (s = *varp; *s;) {
+    for (char *s = *varp; *s;) {
       while (*s && *s != ':') {
         if (vim_strchr(COM_ALL, (uint8_t)(*s)) == NULL
             && !ascii_isdigit(*s) && *s != '-') {
@@ -1014,7 +1013,7 @@ char *did_set_string_option(int opt_idx, char **varp, char *oldval, char *errbuf
     // there would be a disconnect between the check for P_ALLOCED at the start
     // of the function and the set of P_ALLOCED at the end of the function.
     free_oldval = (opt->flags & P_ALLOCED);
-    for (s = p_shada; *s;) {
+    for (char *s = p_shada; *s;) {
       // Check it's a valid character
       if (vim_strchr("!\"%'/:<@cfhnrs", (uint8_t)(*s)) == NULL) {
         errmsg = illegal_char(errbuf, errbuflen, *s);
@@ -1059,7 +1058,7 @@ char *did_set_string_option(int opt_idx, char **varp, char *oldval, char *errbuf
       errmsg = N_("E528: Must specify a ' value");
     }
   } else if (gvarp == &p_sbr) {  // 'showbreak'
-    for (s = *varp; *s;) {
+    for (char *s = *varp; *s;) {
       if (ptr2cells(s) != 1) {
         errmsg = e_showbreak_contains_unprintable_or_wide_character;
       }
@@ -1188,7 +1187,7 @@ char *did_set_string_option(int opt_idx, char **varp, char *oldval, char *errbuf
     } else if (varp == &curwin->w_p_stc) {
       curwin->w_nrwidth_line_count = 0;
     }
-    s = *varp;
+    char *s = *varp;
     if (varp == &p_ruf && *s == '%') {
       // set ru_wid if 'ruf' starts with "%99("
       if (*++s == '-') {        // ignore a '-'
@@ -1214,7 +1213,7 @@ char *did_set_string_option(int opt_idx, char **varp, char *oldval, char *errbuf
     }
   } else if (gvarp == &p_cpt) {
     // check if it is a valid value for 'complete' -- Acevedo
-    for (s = *varp; *s;) {
+    for (char *s = *varp; *s;) {
       while (*s == ',' || *s == ' ') {
         s++;
       }
@@ -1284,7 +1283,7 @@ char *did_set_string_option(int opt_idx, char **varp, char *oldval, char *errbuf
   } else if (varp == &p_pt) {
     // 'pastetoggle': translate key codes like in a mapping
     if (*p_pt) {
-      p = NULL;
+      char *p = NULL;
       (void)replace_termcodes(p_pt,
                               strlen(p_pt),
                               &p, REPTERM_FROM_PART | REPTERM_DO_LT, NULL,
@@ -1308,6 +1307,7 @@ char *did_set_string_option(int opt_idx, char **varp, char *oldval, char *errbuf
     }
   } else if (gvarp == &p_tc) {  // 'tagcase'
     unsigned int *flags;
+    char *p;
 
     if (opt_flags & OPT_LOCAL) {
       p = curbuf->b_p_tc;
@@ -1343,7 +1343,7 @@ char *did_set_string_option(int opt_idx, char **varp, char *oldval, char *errbuf
       }
     }
   } else if (gvarp == &curwin->w_allbuf_opt.wo_fmr) {  // 'foldmarker'
-    p = vim_strchr(*varp, ',');
+    char *p = vim_strchr(*varp, ',');
     if (p == NULL) {
       errmsg = N_("E536: comma required");
     } else if (p == *varp || p[1] == NUL) {
@@ -1552,7 +1552,7 @@ char *did_set_string_option(int opt_idx, char **varp, char *oldval, char *errbuf
     }
   } else {
     // Options that are a list of flags.
-    p = NULL;
+    char *p = NULL;
     if (varp == &p_ww) {  // 'whichwrap'
       p = WW_ALL;
     }
@@ -1568,7 +1568,7 @@ char *did_set_string_option(int opt_idx, char **varp, char *oldval, char *errbuf
       p = MOUSE_ALL;
     }
     if (p != NULL) {
-      for (s = *varp; *s; s++) {
+      for (char *s = *varp; *s; s++) {
         if (vim_strchr(p, (uint8_t)(*s)) == NULL) {
           errmsg = illegal_char(errbuf, errbuflen, *s);
           break;
@@ -1600,7 +1600,7 @@ char *did_set_string_option(int opt_idx, char **varp, char *oldval, char *errbuf
         && (opt->indir & PV_BOTH)) {
       // global option with local value set to use global value; free
       // the local value and make it empty
-      p = get_varp_scope(opt, OPT_LOCAL);
+      char *p = get_varp_scope(opt, OPT_LOCAL);
       free_string_option(*(char **)p);
       *(char **)p = empty_option;
     } else if (!(opt_flags & OPT_LOCAL) && opt_flags != OPT_GLOBAL) {
@@ -1659,6 +1659,7 @@ char *did_set_string_option(int opt_idx, char **varp, char *oldval, char *errbuf
       // They could set 'spellcapcheck' depending on the language.
       // Use the first name in 'spelllang' up to '_region' or
       // '.encoding'.
+      char *p;
       for (p = q; *p != NUL; p++) {
         if (!ASCII_ISALNUM(*p) && *p != '-') {
           break;
