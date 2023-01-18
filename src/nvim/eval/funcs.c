@@ -362,15 +362,15 @@ static void f_add(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   rettv->vval.v_number = 1;  // Default: failed.
   if (argvars[0].v_type == VAR_LIST) {
     list_T *const l = argvars[0].vval.v_list;
-    if (!var_check_lock(tv_list_locked(l), N_("add() argument"),
-                        TV_TRANSLATE)) {
+    if (!value_check_lock(tv_list_locked(l), N_("add() argument"),
+                          TV_TRANSLATE)) {
       tv_list_append_tv(l, &argvars[1]);
       tv_copy(&argvars[0], rettv);
     }
   } else if (argvars[0].v_type == VAR_BLOB) {
     blob_T *const b = argvars[0].vval.v_blob;
     if (b != NULL
-        && !var_check_lock(b->bv_lock, N_("add() argument"), TV_TRANSLATE)) {
+        && !value_check_lock(b->bv_lock, N_("add() argument"), TV_TRANSLATE)) {
       bool error = false;
       const varnumber_T n = tv_get_number_chk(&argvars[1], &error);
 
@@ -1896,9 +1896,9 @@ static void f_flatten(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 
   list_T *list = argvars[0].vval.v_list;
   if (list != NULL
-      && !var_check_lock(tv_list_locked(list),
-                         N_("flatten() argument"),
-                         TV_TRANSLATE)
+      && !value_check_lock(tv_list_locked(list),
+                           N_("flatten() argument"),
+                           TV_TRANSLATE)
       && tv_list_flatten(list, maxdepth) == OK) {
     tv_copy(&argvars[0], rettv);
   }
@@ -1915,7 +1915,7 @@ static void f_extend(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 
     list_T *const l1 = argvars[0].vval.v_list;
     list_T *const l2 = argvars[1].vval.v_list;
-    if (!var_check_lock(tv_list_locked(l1), arg_errmsg, TV_TRANSLATE)) {
+    if (!value_check_lock(tv_list_locked(l1), arg_errmsg, TV_TRANSLATE)) {
       listitem_T *item;
       if (argvars[2].v_type != VAR_UNKNOWN) {
         long before = (long)tv_get_number_chk(&argvars[2], &error);
@@ -1944,13 +1944,13 @@ static void f_extend(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     dict_T *const d1 = argvars[0].vval.v_dict;
     dict_T *const d2 = argvars[1].vval.v_dict;
     if (d1 == NULL) {
-      const bool locked = var_check_lock(VAR_FIXED, arg_errmsg, TV_TRANSLATE);
+      const bool locked = value_check_lock(VAR_FIXED, arg_errmsg, TV_TRANSLATE);
       (void)locked;
       assert(locked == true);
     } else if (d2 == NULL) {
       // Do nothing
       tv_copy(&argvars[0], rettv);
-    } else if (!var_check_lock(d1->dv_lock, arg_errmsg, TV_TRANSLATE)) {
+    } else if (!value_check_lock(d1->dv_lock, arg_errmsg, TV_TRANSLATE)) {
       const char *action = "force";
       // Check the third argument.
       if (argvars[2].v_type != VAR_UNKNOWN) {
@@ -3556,8 +3556,8 @@ static void f_insert(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     blob_T *const b = argvars[0].vval.v_blob;
 
     if (b == NULL
-        || var_check_lock(b->bv_lock, N_("insert() argument"),
-                          TV_TRANSLATE)) {
+        || value_check_lock(b->bv_lock, N_("insert() argument"),
+                            TV_TRANSLATE)) {
       return;
     }
 
@@ -3592,8 +3592,8 @@ static void f_insert(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     tv_copy(&argvars[0], rettv);
   } else if (argvars[0].v_type != VAR_LIST) {
     semsg(_(e_listblobarg), "insert()");
-  } else if (!var_check_lock(tv_list_locked((l = argvars[0].vval.v_list)),
-                             N_("insert() argument"), TV_TRANSLATE)) {
+  } else if (!value_check_lock(tv_list_locked((l = argvars[0].vval.v_list)),
+                               N_("insert() argument"), TV_TRANSLATE)) {
     long before = 0;
     if (argvars[2].v_type != VAR_UNKNOWN) {
       before = tv_get_number_chk(&argvars[2], &error);
@@ -5985,8 +5985,8 @@ static void f_reverse(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     semsg(_(e_listblobarg), "reverse()");
   } else {
     list_T *const l = argvars[0].vval.v_list;
-    if (!var_check_lock(tv_list_locked(l), N_("reverse() argument"),
-                        TV_TRANSLATE)) {
+    if (!value_check_lock(tv_list_locked(l), N_("reverse() argument"),
+                          TV_TRANSLATE)) {
       tv_list_reverse(l);
       tv_list_set_ret(rettv, l);
     }
