@@ -335,24 +335,24 @@ void set_init_1(bool clean_arg)
   // Don't set the P_ALLOCED flag, because we don't want to free the
   // default.
   for (int opt_idx = 0; options[opt_idx].fullname; opt_idx++) {
-    if (options[opt_idx].flags & P_NO_DEF_EXP) {
+    vimoption_T *opt = &options[opt_idx];
+    if (opt->flags & P_NO_DEF_EXP) {
       continue;
     }
     char *p;
-    if ((options[opt_idx].flags & P_GETTEXT)
-        && options[opt_idx].var != NULL) {
-      p = _(*(char **)options[opt_idx].var);
+    if ((opt->flags & P_GETTEXT) && opt->var != NULL) {
+      p = _(*(char **)opt->var);
     } else {
       p = option_expand(opt_idx, NULL);
     }
     if (p != NULL) {
       p = xstrdup(p);
-      *(char **)options[opt_idx].var = p;
-      if (options[opt_idx].flags & P_DEF_ALLOCED) {
-        xfree(options[opt_idx].def_val);
+      *(char **)opt->var = p;
+      if (opt->flags & P_DEF_ALLOCED) {
+        xfree(opt->def_val);
       }
-      options[opt_idx].def_val = p;
-      options[opt_idx].flags |= P_DEF_ALLOCED;
+      opt->def_val = p;
+      opt->flags |= P_DEF_ALLOCED;
     }
   }
 
@@ -395,32 +395,32 @@ void set_init_1(bool clean_arg)
 /// This does not take care of side effects!
 ///
 /// @param opt_flags OPT_FREE, OPT_LOCAL and/or OPT_GLOBAL
-static void set_option_default(int opt_idx, int opt_flags)
+static void set_option_default(const int opt_idx, int opt_flags)
 {
   int both = (opt_flags & (OPT_LOCAL | OPT_GLOBAL)) == 0;
 
   // pointer to variable for current option
-  char_u *varp = (char_u *)get_varp_scope(&(options[opt_idx]), both ? OPT_LOCAL : opt_flags);
-  uint32_t flags = options[opt_idx].flags;
+  vimoption_T *opt = &options[opt_idx];
+  char_u *varp = (char_u *)get_varp_scope(opt, both ? OPT_LOCAL : opt_flags);
+  uint32_t flags = opt->flags;
   if (varp != NULL) {       // skip hidden option, nothing to do for it
     if (flags & P_STRING) {
       // Use set_string_option_direct() for local options to handle
       // freeing and allocating the value.
-      if (options[opt_idx].indir != PV_NONE) {
-        set_string_option_direct(NULL, opt_idx,
-                                 options[opt_idx].def_val, opt_flags, 0);
+      if (opt->indir != PV_NONE) {
+        set_string_option_direct(NULL, opt_idx, opt->def_val, opt_flags, 0);
       } else {
         if ((opt_flags & OPT_FREE) && (flags & P_ALLOCED)) {
           free_string_option(*(char **)(varp));
         }
-        *(char **)varp = options[opt_idx].def_val;
-        options[opt_idx].flags &= ~P_ALLOCED;
+        *(char **)varp = opt->def_val;
+        opt->flags &= ~P_ALLOCED;
       }
     } else if (flags & P_NUM) {
-      if (options[opt_idx].indir == PV_SCROLL) {
+      if (opt->indir == PV_SCROLL) {
         win_comp_scroll(curwin);
       } else {
-        long def_val = (long)options[opt_idx].def_val;
+        long def_val = (long)opt->def_val;
         if ((long *)varp == &curwin->w_p_so
             || (long *)varp == &curwin->w_p_siso) {
           // 'scrolloff' and 'sidescrolloff' local values have a
@@ -431,21 +431,21 @@ static void set_option_default(int opt_idx, int opt_flags)
         }
         // May also set global value for local option.
         if (both) {
-          *(long *)get_varp_scope(&(options[opt_idx]), OPT_GLOBAL) =
+          *(long *)get_varp_scope(opt, OPT_GLOBAL) =
             def_val;
         }
       }
     } else {  // P_BOOL
-      *(int *)varp = (int)(intptr_t)options[opt_idx].def_val;
+      *(int *)varp = (int)(intptr_t)opt->def_val;
 #ifdef UNIX
       // 'modeline' defaults to off for root
-      if (options[opt_idx].indir == PV_ML && getuid() == ROOT_UID) {
+      if (opt->indir == PV_ML && getuid() == ROOT_UID) {
         *(int *)varp = false;
       }
 #endif
       // May also set global value for local option.
       if (both) {
-        *(int *)get_varp_scope(&(options[opt_idx]), OPT_GLOBAL) =
+        *(int *)get_varp_scope(opt, OPT_GLOBAL) =
           *(int *)varp;
       }
     }
@@ -488,12 +488,13 @@ static void set_string_default(const char *name, char *val, bool allocated)
 {
   int opt_idx = findoption(name);
   if (opt_idx >= 0) {
-    if (options[opt_idx].flags & P_DEF_ALLOCED) {
-      xfree(options[opt_idx].def_val);
+    vimoption_T *opt = &options[opt_idx];
+    if (opt->flags & P_DEF_ALLOCED) {
+      xfree(opt->def_val);
     }
 
-    options[opt_idx].def_val = allocated ? val : xstrdup(val);
-    options[opt_idx].flags |= P_DEF_ALLOCED;
+    opt->def_val = allocated ? val : xstrdup(val);
+    opt->flags |= P_DEF_ALLOCED;
   }
 }
 
