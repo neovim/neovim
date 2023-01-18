@@ -913,9 +913,12 @@ local function gen_css(fname)
       padding-bottom: 10px;
       /* Tabs are used for alignment in old docs, so we must match Vim's 8-char expectation. */
       tab-size: 8;
-      white-space: pre;
+      white-space: pre-wrap;
       font-size: 16px;
       font-family: ui-monospace,SFMono-Regular,SF Mono,Menlo,Consolas,Liberation Mono,monospace;
+    }
+    a {
+      word-break: break-all;
     }
     a.help-tag, a.help-tag:focus, a.help-tag:hover {
       color: inherit;
