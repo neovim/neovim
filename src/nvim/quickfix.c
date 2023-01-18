@@ -52,6 +52,7 @@
 #include "nvim/os/fs_defs.h"
 #include "nvim/os/input.h"
 #include "nvim/os/os.h"
+#include "nvim/os/shell.h"
 #include "nvim/path.h"
 #include "nvim/pos.h"
 #include "nvim/quickfix.h"
@@ -333,8 +334,8 @@ static int qf_init_process_nextline(qf_list_T *qfl, efm_T *fmt_first, qfstate_T 
 /// @params  enc  If non-NULL, encoding used to parse errors
 ///
 /// @returns -1 for error, number of errors for success.
-int qf_init(win_T *wp, const char *restrict efile, char *restrict errorformat, int newlist,
-            const char *restrict qf_title, char *restrict enc)
+int qf_init(win_T *wp, const char *restrict efile, const char *restrict errorformat, int newlist,
+            const char *restrict qf_title, const char *restrict enc)
 {
   qf_info_T *qi = &ql_info;
 
@@ -562,7 +563,7 @@ static void free_efm_list(efm_T **efm_first)
 
 /// Compute the size of the buffer used to convert a 'errorformat' pattern into
 /// a regular expression pattern.
-static size_t efm_regpat_bufsz(char *efm)
+static size_t efm_regpat_bufsz(const char *efm)
 {
   size_t sz = (FMT_PATTERNS * 3) + (strlen(efm) << 2);
   for (int i = FMT_PATTERNS - 1; i >= 0;) {
@@ -594,7 +595,7 @@ static int efm_option_part_len(const char *efm)
 /// Parse the 'errorformat' option. Multiple parts in the 'errorformat' option
 /// are parsed and converted to regular expressions. Returns information about
 /// the parsed 'errorformat' option.
-static efm_T *parse_efm_option(char *efm)
+static efm_T *parse_efm_option(const char *efm)
 {
   efm_T *fmt_first = NULL;
   efm_T *fmt_last = NULL;
@@ -813,22 +814,6 @@ retry:
     state->linebuf = IObuff;
   }
 
-  // Convert a line if it contains a non-ASCII character
-  if (state->vc.vc_type != CONV_NONE && has_non_ascii(state->linebuf)) {
-    char *line = string_convert(&state->vc, state->linebuf, &state->linelen);
-    if (line != NULL) {
-      if (state->linelen < IOSIZE) {
-        xstrlcpy(state->linebuf, line, state->linelen + 1);
-        xfree(line);
-      } else {
-        xfree(state->growbuf);
-        state->linebuf = line;
-        state->growbuf = line;
-        state->growbufsiz = state->linelen < LINE_MAXLEN
-          ? state->linelen : LINE_MAXLEN;
-      }
-    }
-  }
   return QF_OK;
 }
 
@@ -857,6 +842,23 @@ static int qf_get_nextline(qfstate_T *state)
 
   if (status != QF_OK) {
     return status;
+  }
+
+  // Convert a line if conversion was requiested and the line contains a non-ASCII character.
+  if (state->vc.vc_type != CONV_NONE && has_non_ascii(state->linebuf)) {
+    char *line = string_convert(&state->vc, state->linebuf, &state->linelen);
+    if (line != NULL) {
+      if (state->linelen < IOSIZE) {
+        xstrlcpy(state->linebuf, line, state->linelen + 1);
+        xfree(line);
+      } else {
+        xfree(state->growbuf);
+        state->linebuf = line;
+        state->growbuf = line;
+        state->growbufsiz = state->linelen < LINE_MAXLEN
+          ? state->linelen : LINE_MAXLEN;
+      }
+    }
   }
 
   if (state->linelen > 0 && state->linebuf[state->linelen - 1] == '\n') {
@@ -1010,7 +1012,7 @@ static void qf_free_fields(qffields_T *pfields)
 
 // Setup the state information used for parsing lines and populating a
 // quickfix list.
-static int qf_setup_state(qfstate_T *pstate, char *restrict enc, const char *restrict efile,
+static int qf_setup_state(qfstate_T *pstate, const char *restrict enc, const char *restrict efile,
                           typval_T *tv, buf_T *buf, linenr_T lnumfirst, linenr_T lnumlast)
   FUNC_ATTR_NONNULL_ARG(1)
 {
@@ -1068,8 +1070,9 @@ static void qf_cleanup_state(qfstate_T *pstate)
 ///
 /// @return  -1 for error, number of errors for success.
 static int qf_init_ext(qf_info_T *qi, int qf_idx, const char *restrict efile, buf_T *buf,
-                       typval_T *tv, char *restrict errorformat, bool newlist, linenr_T lnumfirst,
-                       linenr_T lnumlast, const char *restrict qf_title, char *restrict enc)
+                       typval_T *tv, const char *restrict errorformat, bool newlist,
+                       linenr_T lnumfirst, linenr_T lnumlast, const char *restrict qf_title,
+                       const char *restrict enc)
   FUNC_ATTR_NONNULL_ARG(1)
 {
   qfstate_T state = { 0 };
@@ -1103,10 +1106,10 @@ static int qf_init_ext(qf_info_T *qi, int qf_idx, const char *restrict efile, bu
     }
   }
 
-  char *efm;
+  const char *efm;
 
   // Use the local value of 'errorformat' if it's set.
-  if (errorformat == p_efm && tv == NULL && buf && *buf->b_p_efm != NUL) {
+  if (errorformat == p_efm && buf && *buf->b_p_efm != NUL) {
     efm = buf->b_p_efm;
   } else {
     efm = errorformat;
@@ -4244,41 +4247,9 @@ static char *make_get_auname(cmdidx_T cmdidx)
   }
 }
 
-// Form the complete command line to invoke 'make'/'grep'. Quote the command
-// using 'shellquote' and append 'shellpipe'. Echo the fully formed command.
-static char *make_get_fullcmd(const char *makecmd, const char *fname)
-  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_NONNULL_RET
-{
-  size_t len = strlen(p_shq) * 2 + strlen(makecmd) + 1;
-  if (*p_sp != NUL) {
-    len += strlen(p_sp) + strlen(fname) + 3;
-  }
-  char *const cmd = xmalloc(len);
-  snprintf(cmd, len, "%s%s%s", p_shq, (char *)makecmd, p_shq);
-
-  // If 'shellpipe' empty: don't redirect to 'errorfile'.
-  if (*p_sp != NUL) {
-    append_redir(cmd, len, p_sp, (char *)fname);
-  }
-
-  // Display the fully formed command.  Output a newline if there's something
-  // else than the :make command that was typed (in which case the cursor is
-  // in column 0).
-  if (msg_col == 0) {
-    msg_didout = false;
-  }
-  msg_start();
-  msg_puts(":!");
-  msg_outtrans(cmd);  // show what we are doing
-
-  return cmd;
-}
-
 // Used for ":make", ":lmake", ":grep", ":lgrep", ":grepadd", and ":lgrepadd"
 void ex_make(exarg_T *eap)
 {
-  char *enc = (*curbuf->b_p_menc != NUL) ? curbuf->b_p_menc : p_menc;
-
   // Redirect ":grep" to ":vimgrep" if 'grepprg' is "internal".
   if (grep_internal(eap->cmdidx)) {
     ex_vimgrep(eap);
@@ -4293,43 +4264,67 @@ void ex_make(exarg_T *eap)
     }
   }
 
+  // Quickfix list or location list?
   win_T *wp = NULL;
+  qf_info_T *qi = &ql_info;
   if (is_loclist_cmd(eap->cmdidx)) {
     wp = curwin;
+    qi = ll_get_or_alloc_list(wp);
   }
 
-  autowrite_all();
-  char *fname = get_mef_name();
-  if (fname == NULL) {
-    return;
-  }
-  os_remove(fname);  // in case it's not unique
-
-  char *const cmd = make_get_fullcmd(eap->arg, fname);
-
-  do_shell(cmd, 0);
-
+  autowrite_all();  // Flush all buffers.
   incr_quickfix_busy();
 
-  char *errorformat = p_efm;
-  bool newlist = true;
-
-  if (eap->cmdidx != CMD_make && eap->cmdidx != CMD_lmake) {
-    errorformat = p_gefm;
-  }
-  if (eap->cmdidx == CMD_grepadd || eap->cmdidx == CMD_lgrepadd) {
-    newlist = false;
+  bool use_file = (*p_mef != NUL);
+  if (use_file) {  // The process will put the contents in 'makeef'.
+    os_remove(p_mef);  // In case it already exists.
   }
 
-  int res = qf_init(wp, fname, errorformat, newlist, qf_cmdtitle(*eap->cmdlinep), enc);
+  size_t nread = 0;
+  char *out = NULL;
+  char **argv = shell_build_argv((const char *)eap->arg, NULL);
+  int status = os_system(argv, NULL, 0, &out, &nread);  // Consumes `argv`.
+  set_vim_var_nr(VV_SHELL_ERROR, (varnumber_T)status);
+  if (status == -1) {
+    char buf[IOSIZE];
+    snprintf(buf, sizeof(buf), "failed to run: %s", eap->arg);
+    semsg(_(e_invargNval), "cmd", buf);
 
-  qf_info_T *qi = &ql_info;
-  if (wp != NULL) {
-    qi = GET_LOC_LIST(wp);
-    if (qi == NULL) {
-      goto cleanup;
-    }
+    xfree(out);
+    goto cleanup;
   }
+
+  if (out == NULL && !use_file) {
+    out = xstrdup("");  // Output is empty, process empty string to clear quickfix.
+  }
+
+  // To load the quickfix/loclist with values, `qf_init_ext` accepts either a
+  // file, a buffer or a VimL variable (string or list). The latter is easiest
+  // in case we have a char array. Ideally we'd stream the jobs output
+  // directly to the quickfix list [1], saving a copy. This is more
+  // complicated though.
+  //
+  // [1]: For example, :vimgrep adds items to the quicklist/loclist as it
+  //      finds them (vgr_match_buflines()).
+  typval_T tv = { 0 };
+  tv.v_type = VAR_STRING;
+  tv.vval.v_string = out;
+
+  bool newlist = (eap->cmdidx != CMD_grepadd && eap->cmdidx != CMD_lgrepadd);
+  const char *errorformat = (eap->cmdidx != CMD_make && eap->cmdidx != CMD_lmake) ? p_gefm : p_efm;
+  const char *enc = (*curbuf->b_p_menc != NUL) ? curbuf->b_p_menc : p_menc;
+
+  // Fill the quickfix/loclist either from fname (if 'makeef' is set) or from
+  // the process' stdout.
+  int res = qf_init_ext(qi, qi->qf_curlist, use_file ? p_mef : NULL, curbuf,
+                        use_file ? NULL : &tv, errorformat,
+                        newlist, (linenr_T)0, (linenr_T)0, qf_cmdtitle(*eap->cmdlinep), enc);
+
+  xfree(out);
+  if (use_file) {
+    os_remove(p_mef);
+  }
+
   if (res >= 0) {
     qf_list_changed(qf_get_curlist(qi));
   }
@@ -4347,60 +4342,6 @@ void ex_make(exarg_T *eap)
 
 cleanup:
   decr_quickfix_busy();
-  os_remove(fname);
-  xfree(fname);
-  xfree(cmd);
-}
-
-// Return the name for the errorfile, in allocated memory.
-// Find a new unique name when 'makeef' contains "##".
-// Returns NULL for error.
-static char *get_mef_name(void)
-{
-  char *name;
-  static int start = -1;
-  static int off = 0;
-
-  if (*p_mef == NUL) {
-    name = vim_tempname();
-    if (name == NULL) {
-      emsg(_(e_notmp));
-    }
-    return name;
-  }
-
-  char *p;
-
-  for (p = p_mef; *p; p++) {
-    if (p[0] == '#' && p[1] == '#') {
-      break;
-    }
-  }
-
-  if (*p == NUL) {
-    return xstrdup(p_mef);
-  }
-
-  // Keep trying until the name doesn't exist yet.
-  for (;;) {
-    if (start == -1) {
-      start = (int)os_get_pid();
-    } else {
-      off += 19;
-    }
-    name = xmalloc(strlen(p_mef) + 30);
-    STRCPY(name, p_mef);
-    snprintf(name + (p - p_mef), strlen(name), "%d%d", start, off);
-    STRCAT(name, p + 2);
-    // Don't accept a symbolic link, it's a security risk.
-    FileInfo file_info;
-    bool file_or_link_found = os_fileinfo_link(name, &file_info);
-    if (!file_or_link_found) {
-      break;
-    }
-    xfree(name);
-  }
-  return name;
 }
 
 /// Returns the number of entries in the current quickfix/location list.

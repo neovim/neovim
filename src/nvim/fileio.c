@@ -842,7 +842,7 @@ retry:
     // Try using iconv() if we can't convert internally.
     if (fio_flags == 0
         && !did_iconv) {
-      iconv_fd = (iconv_t)my_iconv_open((char_u *)"utf-8", (char_u *)fenc);
+      iconv_fd = (iconv_t)my_iconv_open("utf-8", fenc);
     }
 #endif
 
@@ -2999,7 +2999,7 @@ nobackup:
 #ifdef HAVE_ICONV
     // Use iconv() conversion when conversion is needed and it's not done
     // internally.
-    write_info.bw_iconv_fd = (iconv_t)my_iconv_open((char_u *)fenc, (char_u *)"utf-8");
+    write_info.bw_iconv_fd = (iconv_t)my_iconv_open(fenc, "utf-8");
     if (write_info.bw_iconv_fd != (iconv_t)-1) {
       // We're going to use iconv(), allocate a buffer to convert in.
       write_info.bw_conv_buflen = (size_t)bufsize * ICONV_MULT;

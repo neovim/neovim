@@ -2168,6 +2168,7 @@ func s:test_xgrep(cchar)
   " The following lines are used for the grep test. Don't remove.
   " Grep_Test_Text: Match 1
   " Grep_Test_Text: Match 2
+  " Grep_Test_Text: Match 3
   " GrepAdd_Test_Text: Match 1
   " GrepAdd_Test_Text: Match 2
   enew! | only
@@ -2178,7 +2179,6 @@ func s:test_xgrep(cchar)
   call assert_true(w:quickfix_title =~ '^:grep')
   Xclose
   enew
-  set makeef=Temp_File_##
   silent Xgrepadd GrepAdd_Test_Text: test_quickfix.vim
   call assert_true(len(g:Xgetlist()) == 9)
 
@@ -2189,12 +2189,11 @@ func s:test_xgrep(cchar)
   call assert_true(len(g:Xgetlist()) == 9)
   set grepprg&vim
 
-  call writefile(['Vim'], 'XtestTempFile')
-  set makeef=XtestTempFile
-  silent Xgrep Grep_Test_Text: test_quickfix.vim
-  call assert_equal(5, len(g:Xgetlist()))
-  call assert_false(filereadable('XtestTempFile'))
-  set makeef&vim
+  " Assert that no output results in clearing the quickfix list.
+  set grepprg=true
+  silent Xgrep
+  call assert_equal(0, len(g:Xgetlist()))
+  set grepprg&vim
 endfunc
 
 func Test_grep()

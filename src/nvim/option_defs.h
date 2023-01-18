@@ -674,7 +674,6 @@ EXTERN unsigned ssop_flags;
 
 EXTERN char *p_sh;              // 'shell'
 EXTERN char_u *p_shcf;          // 'shellcmdflag'
-EXTERN char *p_sp;              // 'shellpipe'
 EXTERN char *p_shq;             // 'shellquote'
 EXTERN char *p_sxq;             // 'shellxquote'
 EXTERN char_u *p_sxe;           // 'shellxescape'

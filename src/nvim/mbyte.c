@@ -2265,7 +2265,7 @@ enc_locale_copy_enc:
 // versions).
 // Returns (void *)-1 if failed.
 // (should return iconv_t, but that causes problems with prototypes).
-void *my_iconv_open(char_u *to, char_u *from)
+void *my_iconv_open(const char *to, const char *from)
 {
   iconv_t fd;
 # define ICONV_TESTLEN 400
@@ -2392,14 +2392,14 @@ static char_u *iconv_string(const vimconv_T *const vcp, const char_u *str, size_
 /// Afterwards invoke with "from" and "to" equal to NULL to cleanup.
 ///
 /// @return  FAIL when conversion is not supported, OK otherwise.
-int convert_setup(vimconv_T *vcp, char *from, char *to)
+int convert_setup(vimconv_T *vcp, const char *from, const char *to)
 {
   return convert_setup_ext(vcp, from, true, to, true);
 }
 
 /// As convert_setup(), but only when from_unicode_is_utf8 is true will all
 /// "from" unicode charsets be considered utf-8.  Same for "to".
-int convert_setup_ext(vimconv_T *vcp, char *from, bool from_unicode_is_utf8, char *to,
+int convert_setup_ext(vimconv_T *vcp, const char *from, bool from_unicode_is_utf8, const char *to,
                       bool to_unicode_is_utf8)
 {
   int from_prop;
@@ -2452,8 +2452,8 @@ int convert_setup_ext(vimconv_T *vcp, char *from, bool from_unicode_is_utf8, cha
 #ifdef HAVE_ICONV
   else {  // NOLINT(readability/braces)
     // Use iconv() for conversion.
-    vcp->vc_fd = (iconv_t)my_iconv_open(to_is_utf8 ? (char_u *)"utf-8" : (char_u *)to,
-                                        from_is_utf8 ? (char_u *)"utf-8" : (char_u *)from);
+    vcp->vc_fd = (iconv_t)my_iconv_open(to_is_utf8 ? "utf-8" : to,
+                                        from_is_utf8 ? "utf-8" : from);
     if (vcp->vc_fd != (iconv_t)-1) {
       vcp->vc_type = CONV_ICONV;
       vcp->vc_factor = 4;       // could be longer too...

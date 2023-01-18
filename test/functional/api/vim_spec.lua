@@ -4004,18 +4004,59 @@ describe('API', function()
       eq({ arg, arg }, funcs.argv())
     end)
     it("'make' command works when argument count isn't 1 #19696", function()
-      command('set makeprg=echo')
+      -- Echo a string that will provoke a single match using errorformat (%f|%l| %m).
+      local qflist
+
+      -- Embed the string in the makeprg itself, to test 0-arg calling.
       command('set shellquote=')
-      matches('^:!echo ',
-              meths.cmd({ cmd = 'make' }, { output = true }))
+      if is_os('win') then
+        command([[set makeprg=echo\ 'vim_spec.lua^\|3969^\|\ no\ formal\ args']])
+      else
+        command([[set makeprg=echo\ 'vim_spec.lua\|3969\|\ no\ formal\ args']])
+      end
+      local cmdo = function(cmd, ...)
+        return meths.cmd({ cmd = cmd, args = { ... } }, { output = true })
+      end
+      local lua = function(eval, ...)
+        return meths.exec_lua('return ' .. eval, {...})
+      end
+      local before = string.format("\nBEFORE: getqflist: %s\n", lua('vim.inspect(vim.fn.getqflist())'))
+      local out = meths.cmd({ cmd = 'make' }, {output = true})
+      local after = string.format("AFTER: output: %s\nclist: %s\ngetqflist: %s\nefm: %s",
+              out,
+              cmdo('clist'),
+              lua('vim.inspect(vim.fn.getqflist())'),
+              cmdo('set', 'errorformat?'))
       assert_alive()
-      matches('^:!echo foo bar',
-              meths.cmd({ cmd = 'make', args = { 'foo', 'bar' } }, { output = true }))
+      qflist = funcs.getqflist()
+      eq(1, #qflist, before .. "\n\n" .. after)
+      eq('vim_spec.lua', funcs.bufname(qflist.bufnr))
+      eq(3969, qflist[1].lnum)
+      eq('no formal args', qflist[1].text)
+
+      -- Pass the string as an argument, to test 2-arg calling.
+      command('set makeprg=echo')
+      if is_os('win') then
+        meths.cmd({ cmd = 'make', args = { '"vim_spec.lua^|3979^|"', 'some goofy error message' } }, {})
+      else
+        meths.cmd({ cmd = 'make', args = { '"vim_spec.lua|3979|"', 'some goofy error message' } }, {})
+      end
       assert_alive()
-      local arg_pesc = pesc(funcs.expand('%:p:h:t'))
-      matches(('^:!echo %s %s'):format(arg_pesc, arg_pesc),
-              meths.cmd({ cmd = 'make', args = { '%:p:h:t', '%:p:h:t' } }, { output = true }))
+      qflist = funcs.getqflist()
+      eq(1, #qflist)
+      eq('vim_spec.lua', funcs.bufname(qflist.bufnr))
+      eq(3979, qflist[1].lnum)
+      eq('some goofy error message', qflist[1].text)
+
+      -- Test replacement.
+      command([[set errorformat=%f\ %l\ %m]])
       assert_alive()
+      meths.cmd({ cmd = 'make', args = { '%:p:h:t', '666', 'oh my' } }, {})
+      qflist = funcs.getqflist()
+      eq(1, #qflist)
+      eq(pesc(funcs.expand('%:p:h:t')), funcs.bufname(qflist.bufnr))
+      eq(666, qflist[1].lnum)
+      eq('oh my', qflist[1].text)
     end)
     it('doesn\'t display messages when output=true', function()
       local screen = Screen.new(40, 6)

@@ -3,6 +3,7 @@ local clear = helpers.clear
 local eval = helpers.eval
 local has_powershell = helpers.has_powershell
 local matches = helpers.matches
+local eq = helpers.eq
 local nvim = helpers.nvim
 local testprg = helpers.testprg
 
@@ -25,7 +26,7 @@ describe(':make', function()
       nvim('set_option', 'makeprg', testprg('shell-test')..' foo')
       local out = eval('execute("make")')
       -- Make program exit code correctly captured
-      matches('\nshell returned 3', out)
+      eq(3, eval('v:shell_error'), 'shell_error')
       -- Error message is captured in the file and printed in the footer
       matches('\n.*%: Unknown first argument%: foo', out)
     end)
@@ -33,9 +34,10 @@ describe(':make', function()
     it('captures stderr & zero exit code #14349', function ()
       nvim('set_option', 'makeprg', testprg('shell-test'))
       local out = eval('execute("make")')
+      -- We expect this to execute successfully.
+      eq(0, eval('v:shell_error'))
       -- Ensure there are no "shell returned X" messages between
 	  -- command and last line (indicating zero exit)
-      matches('LastExitCode%s+[(]', out)
       matches('\n.*%: ready [$]', out)
     end)
 

@@ -185,11 +185,8 @@ options.
 
 OUTPUT REDIRECTION
 
-The ":make" command redirects the output of the executed program to an error
-file.  How this works depends on various things, such as the 'shell'.  If your
-":make" command doesn't capture the output, check the 'makeef' and
-'shellpipe' options.  The 'shellquote' and 'shellxquote' options might also
-matter.
+The ":make" command reads the output of the executed program (stdout). If the
+program writes directly to a file instead, use the 'makeef' option.
 
 In case you can't get ":make" to redirect the file for you, an alternative is
 to compile the program in another window and redirect the output into a file.

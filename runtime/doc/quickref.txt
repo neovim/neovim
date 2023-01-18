@@ -849,7 +849,6 @@ Short explanation of each option:		*option-list*
 'shada'		  'sd'	    use .shada file upon startup and exiting
 'shell'		  'sh'	    name of shell to use for external commands
 'shellcmdflag'	  'shcf'    flag to shell to execute one command
-'shellpipe'	  'sp'	    string to put output of ":make" in error file
 'shellquote'	  'shq'     quote character(s) for around shell command
 'shellredir'	  'srr'     string to put output of filter in a temp file
 'shellslash'	  'ssl'     use forward slash for shell file names

@@ -906,19 +906,17 @@ To get the number of the current list in the stack: >
 			   executed.
 			2. If the 'autowrite' option is on, write any changed
 			   buffers
-			3. An errorfile name is made from 'makeef'.  If
-			   'makeef' doesn't contain "##", and a file with this
-			   name already exists, it is deleted.
+			3. If 'makeef' is set, the errorfile is deleted if it
+			   exists.
 			4. The program given with the 'makeprg' option is
 			   started (default "make") with the optional
-			   [arguments] and the output is saved in the
-			   errorfile (for Unix it is also echoed on the
-			   screen).
-			5. The errorfile is read using 'errorformat'.
+			   [arguments].
+			5. The errorfile (if 'makeef' is set) or stdout is read 
+			   using 'errorformat'.
 			6. All relevant |QuickFixCmdPost| autocommands are
 			   executed.  See example below.
 			7. If [!] is not given the first error is jumped to.
-			8. The errorfile is deleted.
+			8. If 'makeef' is set, the errorfile is deleted.
 			9. You can now move through the errors with commands
 			   like |:cnext| and |:cprevious|, see above.
 			This command does not accept a comment, any "
@@ -936,7 +934,7 @@ The ":make" command executes the command given with the 'makeprg' option.
 This is done by passing the command to the shell given with the 'shell'
 option.  This works almost like typing
 
-	":!{makeprg} [arguments] {shellpipe} {errorfile}".
+	":!{makeprg} [arguments]".
 
 {makeprg} is the string given with the 'makeprg' option.  Any command can be
 used, not just "make".  Characters '%' and '#' are expanded as usual on a
@@ -946,8 +944,6 @@ example: >
    :set makeprg=make\ #<.o
 
 [arguments] is anything that is typed after ":make".
-{shellpipe} is the 'shellpipe' option.
-{errorfile} is the 'makeef' option, with ## replaced to make it unique.
 
 The placeholder "$*" can be used for the argument list in {makeprg} if the
 command needs some additional characters after its arguments.  The $* is
@@ -958,14 +954,8 @@ or simpler >
 "$*" can be given multiple times, for example: >
    :set makeprg=gcc\ -o\ $*\ $*
 
-The 'shellpipe' option defaults to ">%s 2>&1" for Win32.
-This means that the output of the compiler is saved in a file and not shown on
-the screen directly.  For Unix "| tee" is used.  The compiler output is shown
-on the screen and saved in a file the same time.  Depending on the shell used
-"|& tee" or "2>&1| tee" is the default, so stderr output will be included.
-
-If 'shellpipe' is empty, the {errorfile} part will be omitted.  This is useful
-for compilers that write to an errorfile themselves.
+If 'makeef' is empty (the default), output is read from the process' stdout. If
+set, output is read from the file.
 
 
 Using QuickFixCmdPost to fix the encoding ~
@@ -1017,6 +1007,12 @@ the |:grep| command doesn't jump to the first match automatically.  These
 commands can be combined to create a NewGrep command: >
 
         command! -nargs=+ NewGrep execute 'silent grep! <args>' | copen 42
+
+Alternatively, define an autocommand to open the quickfix window when the
+command is done. |:grep| then behaves similarly to the command above: >
+
+	autocmd QuickFixCmdPost [^l]* cwindow
+	:grep! /myfunc/ **/*.c
 
 
 5.1 using Vim's internal grep

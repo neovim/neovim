@@ -5304,8 +5304,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 'shell' 'sh'		string	(default $SHELL or "sh", Win32: "cmd.exe")
 			global
 	Name of the shell to use for ! and :! commands.  When changing the
-	value also check these options: 'shellpipe', 'shellslash'
-	'shellredir', 'shellquote', 'shellxquote' and 'shellcmdflag'.
+	value also check these options: 'shellslash' 'shellredir', 'shellquote',
+	'shellxquote' and 'shellcmdflag'.
 	It is allowed to give an argument to the command, e.g.  "csh -f".
 	See |option-backslash| about including spaces and backslashes.
 	Environment variables are expanded |:set_env|.
@@ -5343,7 +5343,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 		let &shell = executable('pwsh') ? 'pwsh' : 'powershell'
 		let &shellcmdflag = '-NoLogo -NoProfile -ExecutionPolicy RemoteSigned -Command [Console]::InputEncoding=[Console]::OutputEncoding=[System.Text.Encoding]::UTF8;'
 		let &shellredir = '2>&1 | Out-File -Encoding UTF8 %s; exit $LastExitCode'
-		let &shellpipe = '2>&1 | Out-File -Encoding UTF8 %s; exit $LastExitCode'
 		set shellquote= shellxquote=
 
 <	This option cannot be set from a |modeline| or in the |sandbox|, for
@@ -5361,39 +5360,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 	See |option-backslash| about including spaces and backslashes.
 	See |shell-unquoting| which talks about separating this option into 
 	multiple arguments.
-	This option cannot be set from a |modeline| or in the |sandbox|, for
-	security reasons.
-
-						*'shellpipe'* *'sp'*
-'shellpipe' 'sp'	string	(default ">", ">%s 2>&1", "| tee", "|& tee" or
-				 "2>&1| tee")
-			global
-	String to be used to put the output of the ":make" command in the
-	error file.  See also |:make_makeprg|.  See |option-backslash| about
-	including spaces and backslashes.
-	The name of the temporary file can be represented by "%s" if necessary
-	(the file name is appended automatically if no %s appears in the value
-	of this option).
-	For MS-Windows the default is ">%s 2>&1".  The output is directly
-	saved in a file and not echoed to the screen.
-	For Unix the default is "| tee".  The stdout of the compiler is saved
-	in a file and echoed to the screen.  If the 'shell' option is "csh" or
-	"tcsh" after initializations, the default becomes "|& tee".  If the
-	'shell' option is "sh", "ksh", "mksh", "pdksh", "zsh", "zsh-beta",
-	"bash", "fish", "ash" or "dash" the default becomes "2>&1| tee".  This
-	means that stderr is also included.  Before using the 'shell' option a
-	path is removed, thus "/bin/sh" uses "sh".
-	The initialization of this option is done after reading the vimrc
-	and the other initializations, so that when the 'shell' option is set
-	there, the 'shellpipe' option changes automatically, unless it was
-	explicitly set before.
-	When 'shellpipe' is set to an empty string, no redirection of the
-	":make" output will be done.  This is useful if you use a 'makeprg'
-	that writes to 'makeef' by itself.  If you want no piping, but do
-	want to include the 'makeef', set 'shellpipe' to a single space.
-	Don't forget to precede the space with a backslash: ":set sp=\ ".
-	In the future pipes may be used for filtering and this option will
-	become obsolete (at least for Unix).
 	This option cannot be set from a |modeline| or in the |sandbox|, for
 	security reasons.
 

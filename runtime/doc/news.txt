@@ -27,6 +27,7 @@ The following changes may require adaptations in user config or plugins.
     - `cscopetag`
     - `cscopetagorder`
     - `cscopeverbose`
+    - `shellpipe`
   - Eval functions removed:
     - `cscope_connection()`
 
@@ -150,6 +151,9 @@ The following changes to existing APIs or features add new behavior.
 
 • 'exrc' now supports `.nvim.lua` file.
 • 'exrc' is no longer marked deprecated.
+• :grep/:make (and variants) output is now read from stdout, `shellpipe` is no
+  longer an option (setting it will fail). If your 'makeprg' or 'grepprg' write
+  to a predefined file, use 'makeef'.
 
 • The |TUI| is changed to run in a separate process (previously, a separate
   thread was used). This is not supposed to be a visible change to the user,

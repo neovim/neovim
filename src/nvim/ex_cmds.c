@@ -1371,9 +1371,7 @@ char *make_filter_cmd(char *cmd, char *itmp, char *otmp)
 #else
     false;
 #endif
-  bool is_pwsh = strncmp((char *)invocation_path_tail(p_sh, NULL), "pwsh", 4) == 0
-                 || strncmp((char *)invocation_path_tail(p_sh, NULL), "powershell",
-                            10) == 0;
+  bool is_pwsh = shell_is_pwsh(p_sh);
 
   size_t len = strlen(cmd) + 1;  // At least enough space for cmd + NULL.
 
