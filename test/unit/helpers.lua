@@ -471,8 +471,9 @@ else
     close = ffi.C.close,
     wait = function(pid)
       ffi.errno(0)
+      local stat_loc = ffi.new('int[1]', {0})
       while true do
-        local r = ffi.C.waitpid(pid, nil, ffi.C.kPOSIXWaitWUNTRACED)
+        local r = ffi.C.waitpid(pid, stat_loc, ffi.C.kPOSIXWaitWUNTRACED)
         if r == -1 then
           local err = ffi.errno(0)
           if err == ffi.C.kPOSIXErrnoECHILD then
@@ -485,6 +486,7 @@ else
           assert(r == pid)
         end
       end
+      return stat_loc[0]
     end,
     exit = ffi.C._exit,
   }
@@ -730,18 +732,22 @@ local function check_child_err(rd)
   end
 end
 
-local function itp_parent(rd, pid, allow_failure)
-  local err, emsg = pcall(check_child_err, rd)
-  sc.wait(pid)
+local function itp_parent(rd, pid, allow_failure, location)
+  local ok, emsg = pcall(check_child_err, rd)
+  local status = sc.wait(pid)
   sc.close(rd)
-  if not err then
+  if not ok then
     if allow_failure then
-      io.stderr:write('Errorred out:\n' .. tostring(emsg) .. '\n')
+      io.stderr:write('Errorred out ('..status..'):\n' .. tostring(emsg) .. '\n')
       os.execute([[
         sh -c "source ci/common/test.sh
         check_core_dumps --delete \"]] .. Paths.test_luajit_prg .. [[\""]])
     else
-      error(emsg)
+      error(tostring(emsg)..'\nexit code: '..status)
+    end
+  elseif status ~= 0 then
+    if not allow_failure then
+      error("child process errored out with status "..status.."!\n\n"..location)
     end
   end
 end
@@ -758,6 +764,11 @@ local function gen_itp(it)
       -- FIXME Fix tests with this true
       return
     end
+
+    -- Pre-emptively calculating error location, wasteful, ugh!
+    -- But the way this code messes around with busted implies the real location is strictly
+    -- not available in the parent when an actual error occurs. so we have to do this here.
+    local location = debug.traceback()
     it(name, function()
       local rd, wr = sc.pipe()
       child_pid = sc.fork()
@@ -768,7 +779,7 @@ local function gen_itp(it)
         sc.close(wr)
         local saved_child_pid = child_pid
         child_pid = nil
-        itp_parent(rd, saved_child_pid, allow_failure)
+        itp_parent(rd, saved_child_pid, allow_failure, location)
       end
     end)
   end
