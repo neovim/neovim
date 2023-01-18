@@ -894,13 +894,10 @@ int build_statuscol_str(win_T *wp, linenr_T lnum, long relnum, int maxwidth, int
                                fillchar, maxwidth, hlrec, &clickrec, stcp);
   xfree(stc);
 
-  // Allocate and fill click def array if width has changed
-  if (wp->w_status_click_defs_size != (size_t)width) {
-    stl_clear_click_defs(wp->w_statuscol_click_defs, wp->w_statuscol_click_defs_size);
-    wp->w_statuscol_click_defs = stl_alloc_click_defs(wp->w_statuscol_click_defs, width,
-                                                      &wp->w_statuscol_click_defs_size);
-    stl_fill_click_defs(wp->w_statuscol_click_defs, clickrec, buf, width, false);
-  }
+  stl_clear_click_defs(wp->w_statuscol_click_defs, wp->w_statuscol_click_defs_size);
+  wp->w_statuscol_click_defs = stl_alloc_click_defs(wp->w_statuscol_click_defs, width,
+                                                    &wp->w_statuscol_click_defs_size);
+  stl_fill_click_defs(wp->w_statuscol_click_defs, clickrec, buf, width, false);
 
   return width;
 }
