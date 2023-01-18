@@ -143,9 +143,9 @@ struct slang_S {
   garray_T sl_comppat;          // CHECKCOMPOUNDPATTERN items
   regprog_T *sl_compprog;     // COMPOUNDRULE turned into a regexp progrm
                               // (NULL when no compounding)
-  char *sl_comprules;           // all COMPOUNDRULE concatenated (or NULL)
-  char *sl_compstartflags;      // flags for first compound word
-  char *sl_compallflags;        // all flags for compound words
+  uint8_t *sl_comprules;        // all COMPOUNDRULE concatenated (or NULL)
+  uint8_t *sl_compstartflags;   // flags for first compound word
+  uint8_t *sl_compallflags;     // all flags for compound words
   bool sl_nobreak;              // When true: no spaces between words
   char_u *sl_syllable;     // SYLLABLE repeatable chars or NULL
   garray_T sl_syl_items;        // syllable items

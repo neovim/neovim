@@ -1455,19 +1455,19 @@ static int read_compound(FILE *fd, slang_T *slang, int len)
 
   // We also need a list of all flags that can appear at the start and one
   // for all flags.
-  char_u *cp = xmalloc((size_t)todo + 1);
-  slang->sl_compstartflags = (char *)cp;
+  uint8_t *cp = xmalloc((size_t)todo + 1);
+  slang->sl_compstartflags = cp;
   *cp = NUL;
 
-  char_u *ap = xmalloc((size_t)todo + 1);
-  slang->sl_compallflags = (char *)ap;
+  uint8_t *ap = xmalloc((size_t)todo + 1);
+  slang->sl_compallflags = ap;
   *ap = NUL;
 
   // And a list of all patterns in their original form, for checking whether
   // compounding may work in match_compoundrule().  This is freed when we
   // encounter a wildcard, the check doesn't work then.
-  char_u *crp = xmalloc((size_t)todo + 1);
-  slang->sl_comprules = (char *)crp;
+  uint8_t *crp = xmalloc((size_t)todo + 1);
+  slang->sl_comprules = crp;
 
   char_u *pp = (char_u *)pat;
   *pp++ = '^';

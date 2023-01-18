@@ -687,8 +687,7 @@ static void find_word(matchinf_T *mip, int mode)
         }
 
         // Quickly check if compounding is possible with this flag.
-        if (!byte_in_str(mip->mi_complen ==
-                         0 ? slang->sl_compstartflags : slang->sl_compallflags,
+        if (!byte_in_str(mip->mi_complen == 0 ? slang->sl_compstartflags : slang->sl_compallflags,
                          (int)((unsigned)flags >> 24))) {
           continue;
         }
@@ -1756,9 +1755,9 @@ void count_common_word(slang_T *lp, char *word, int len, uint8_t count)
 
 // Returns true if byte "n" appears in "str".
 // Like strchr() but independent of locale.
-bool byte_in_str(char *str, int n)
+bool byte_in_str(uint8_t *str, int n)
 {
-  for (char_u *p = (char_u *)str; *p != NUL; p++) {
+  for (uint8_t *p = str; *p != NUL; p++) {
     if (*p == n) {
       return true;
     }
