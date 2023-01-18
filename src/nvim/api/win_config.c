@@ -278,7 +278,7 @@ Dictionary nvim_win_get_config(Window window, Error *err)
         String s = cstrn_to_string((const char *)config->border_chars[i], sizeof(schar_T));
 
         int hi_id = config->border_hl_ids[i];
-        char *hi_name = (char *)syn_id2name(hi_id);
+        char *hi_name = syn_id2name(hi_id);
         if (hi_name[0]) {
           ADD(tuple, STRING_OBJ(s));
           ADD(tuple, STRING_OBJ(cstr_to_string((const char *)hi_name)));

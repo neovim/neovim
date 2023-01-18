@@ -7612,7 +7612,7 @@ static void f_spellsuggest(typval_T *argvars, typval_T *rettv, EvalFuncData fptr
     maxcount = 25;
   }
 
-  spell_suggest_list(&ga, (char_u *)str, maxcount, need_capital, false);
+  spell_suggest_list(&ga, (char *)str, maxcount, need_capital, false);
 
 f_spellsuggest_return:
   tv_list_alloc_ret(rettv, (ptrdiff_t)ga.ga_len);

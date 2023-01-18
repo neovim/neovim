@@ -80,11 +80,11 @@ typedef struct fromto_S {
 // The info is split for quick processing by spell_soundfold().
 // Note that "sm_oneof" and "sm_rules" point into sm_lead.
 typedef struct salitem_S {
-  char_u *sm_lead;         // leading letters
-  int sm_leadlen;               // length of "sm_lead"
-  char_u *sm_oneof;        // letters from () or NULL
-  char_u *sm_rules;        // rules like ^, $, priority
-  char_u *sm_to;           // replacement.
+  char *sm_lead;        // leading letters
+  int sm_leadlen;       // length of "sm_lead"
+  char_u *sm_oneof;     // letters from () or NULL
+  char *sm_rules;       // rules like ^, $, priority
+  char *sm_to;          // replacement.
   int *sm_lead_w;       // wide character copy of "sm_lead"
   int *sm_oneof_w;      // wide character copy of "sm_oneof"
   int *sm_to_w;         // wide character copy of "sm_to"
@@ -119,17 +119,17 @@ struct slang_S {
   char *sl_fname;           // name of .spl file
   bool sl_add;              // true if it's a .add file.
 
-  char_u *sl_fbyts;        // case-folded word bytes
+  char *sl_fbyts;        // case-folded word bytes
   long sl_fbyts_len;     // length of sl_fbyts
   idx_T *sl_fidxs;        // case-folded word indexes
-  char_u *sl_kbyts;        // keep-case word bytes
+  char *sl_kbyts;         // keep-case word bytes
   idx_T *sl_kidxs;        // keep-case word indexes
-  char_u *sl_pbyts;        // prefix tree word bytes
+  char *sl_pbyts;        // prefix tree word bytes
   idx_T *sl_pidxs;        // prefix tree word indexes
 
   char_u *sl_info;         // infotext string or NULL
 
-  char_u sl_regions[MAXREGIONS * 2 + 1];
+  char sl_regions[MAXREGIONS * 2 + 1];
   // table with up to 8 region names plus NUL
 
   char_u *sl_midword;      // MIDWORD string or NULL
@@ -143,9 +143,9 @@ struct slang_S {
   garray_T sl_comppat;          // CHECKCOMPOUNDPATTERN items
   regprog_T *sl_compprog;     // COMPOUNDRULE turned into a regexp progrm
                               // (NULL when no compounding)
-  char_u *sl_comprules;    // all COMPOUNDRULE concatenated (or NULL)
-  char_u *sl_compstartflags;   // flags for first compound word
-  char_u *sl_compallflags;   // all flags for compound words
+  uint8_t *sl_comprules;        // all COMPOUNDRULE concatenated (or NULL)
+  uint8_t *sl_compstartflags;   // flags for first compound word
+  uint8_t *sl_compallflags;     // all flags for compound words
   bool sl_nobreak;              // When true: no spaces between words
   char_u *sl_syllable;     // SYLLABLE repeatable chars or NULL
   garray_T sl_syl_items;        // syllable items
@@ -172,7 +172,7 @@ struct slang_S {
 
   // Info from the .sug file.  Loaded on demand.
   time_t sl_sugtime;            // timestamp for .sug file
-  char_u *sl_sbyts;        // soundfolded word bytes
+  char *sl_sbyts;         // soundfolded word bytes
   idx_T *sl_sidxs;        // soundfolded word indexes
   buf_T *sl_sugbuf;       // buffer with word number table
   bool sl_sugloaded;            // true when .sug file was loaded or failed to
@@ -227,7 +227,7 @@ typedef struct {
 extern slang_T *first_lang;
 
 // file used for "zG" and "zW"
-extern char_u *int_wordlist;
+extern char *int_wordlist;
 
 extern spelltab_T spelltab;
 extern int did_set_spelltab;

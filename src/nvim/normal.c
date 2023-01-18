@@ -3998,7 +3998,7 @@ static void nv_search(cmdarg_T *cap)
 
   // When using 'incsearch' the cursor may be moved to set a different search
   // start position.
-  cap->searchbuf = (char *)getcmdline(cap->cmdchar, cap->count1, 0, true);
+  cap->searchbuf = getcmdline(cap->cmdchar, cap->count1, 0, true);
 
   if (cap->searchbuf == NULL) {
     clearop(oap);

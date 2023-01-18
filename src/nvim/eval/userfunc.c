@@ -1652,7 +1652,7 @@ theend:
 
 char *printable_func_name(ufunc_T *fp)
 {
-  return fp->uf_name_exp != NULL ? (char *)fp->uf_name_exp : fp->uf_name;
+  return fp->uf_name_exp != NULL ? fp->uf_name_exp : fp->uf_name;
 }
 
 /// List the head of the function: "name(arg1, arg2)".
@@ -2296,7 +2296,7 @@ void ex_function(exarg_T *eap)
     } else {
       xfree(line_to_free);
       if (eap->getline == NULL) {
-        theline = (char *)getcmdline(':', 0L, indent, do_concat);
+        theline = getcmdline(':', 0L, indent, do_concat);
       } else {
         theline = eap->getline(':', eap->cookie, indent, do_concat);
       }
@@ -2532,7 +2532,7 @@ void ex_function(exarg_T *eap)
         fp = NULL;
         overwrite = true;
       } else {
-        char_u *exp_name = fp->uf_name_exp;
+        char *exp_name = fp->uf_name_exp;
         // redefine existing function, keep the expanded name
         XFREE_CLEAR(name);
         fp->uf_name_exp = NULL;

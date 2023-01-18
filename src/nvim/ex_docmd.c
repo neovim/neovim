@@ -919,7 +919,7 @@ static char *get_loop_line(int c, void *cookie, int indent, bool do_concat)
     char *line;
     // First time inside the ":while"/":for": get line normally.
     if (cp->getline == NULL) {
-      line = (char *)getcmdline(c, 0L, indent, do_concat);
+      line = getcmdline(c, 0L, indent, do_concat);
     } else {
       line = cp->getline(c, cp->cookie, indent, do_concat);
     }
