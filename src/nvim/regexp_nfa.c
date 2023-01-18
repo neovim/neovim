@@ -2238,7 +2238,6 @@ collection:
       }
       // Failed to recognize a character class. Use the simple
       // version that turns [abc] into 'a' OR 'b' OR 'c'
-      startc = -1;
       negated = false;
       if (*regparse == '^') {                           // negated range
         negated = true;
