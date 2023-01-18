@@ -1987,6 +1987,11 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, char *opt_n
       // the truncation point
       for (int i = 0; i < itemcnt; i++) {
         if (stl_items[i].start > trunc_p) {
+          for (int j = i; j < itemcnt; j++) {
+            if (stl_items[j].type == ClickFunc) {
+              XFREE_CLEAR(stl_items[j].cmd);
+            }
+          }
           itemcnt = i;
           break;
         }
