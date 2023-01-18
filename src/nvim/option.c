@@ -2992,58 +2992,62 @@ char *set_option_value(const char *const name, const long number, const char *co
   int opt_idx = findoption(name);
   if (opt_idx < 0) {
     semsg(_("E355: Unknown option: %s"), name);
-  } else {
-    uint32_t flags = options[opt_idx].flags;
-    // Disallow changing some options in the sandbox
-    if (sandbox > 0 && (flags & P_SECURE)) {
-      emsg(_(e_sandbox));
-      return NULL;
-    }
-    if (flags & P_STRING) {
-      const char *s = string;
-      if (s == NULL || opt_flags & OPT_CLEAR) {
-        s = "";
-      }
-      return set_string_option(opt_idx, s, opt_flags);
-    }
+    return NULL;
+  }
 
-    char_u *varp = (char_u *)get_varp_scope(&(options[opt_idx]), opt_flags);
-    if (varp != NULL) {       // hidden option is not changed
-      if (number == 0 && string != NULL) {
-        int idx;
+  uint32_t flags = options[opt_idx].flags;
+  // Disallow changing some options in the sandbox
+  if (sandbox > 0 && (flags & P_SECURE)) {
+    emsg(_(e_sandbox));
+    return NULL;
+  }
 
-        // Either we are given a string or we are setting option
-        // to zero.
-        for (idx = 0; string[idx] == '0'; idx++) {}
-        if (string[idx] != NUL || idx == 0) {
-          // There's another character after zeros or the string
-          // is empty.  In both cases, we are trying to set a
-          // num option using a string.
-          semsg(_("E521: Number required: &%s = '%s'"),
-                name, string);
-          return NULL;  // do nothing as we hit an error
-        }
-      }
-      long numval = number;
-      if (opt_flags & OPT_CLEAR) {
-        if ((int *)varp == &curbuf->b_p_ar) {
-          numval = -1;
-        } else if ((long *)varp == &curbuf->b_p_ul) {
-          numval = NO_LOCAL_UNDOLEVEL;
-        } else if ((long *)varp == &curwin->w_p_so || (long *)varp == &curwin->w_p_siso) {
-          numval = -1;
-        } else {
-          char *s = NULL;
-          (void)get_option_value(name, &numval, &s, NULL, OPT_GLOBAL);
-        }
-      }
-      if (flags & P_NUM) {
-        return set_num_option(opt_idx, varp, numval, NULL, 0, opt_flags);
-      }
-      return set_bool_option(opt_idx, varp, (int)numval, opt_flags);
+  if (flags & P_STRING) {
+    const char *s = string;
+    if (s == NULL || opt_flags & OPT_CLEAR) {
+      s = "";
+    }
+    return set_string_option(opt_idx, s, opt_flags);
+  }
+
+  char_u *varp = (char_u *)get_varp_scope(&(options[opt_idx]), opt_flags);
+  if (varp == NULL) {
+    // hidden option is not changed
+    return NULL;
+  }
+
+  if (number == 0 && string != NULL) {
+    int idx;
+
+    // Either we are given a string or we are setting option
+    // to zero.
+    for (idx = 0; string[idx] == '0'; idx++) {}
+    if (string[idx] != NUL || idx == 0) {
+      // There's another character after zeros or the string
+      // is empty.  In both cases, we are trying to set a
+      // num option using a string.
+      semsg(_("E521: Number required: &%s = '%s'"),
+            name, string);
+      return NULL;  // do nothing as we hit an error
     }
   }
-  return NULL;
+  long numval = number;
+  if (opt_flags & OPT_CLEAR) {
+    if ((int *)varp == &curbuf->b_p_ar) {
+      numval = -1;
+    } else if ((long *)varp == &curbuf->b_p_ul) {
+      numval = NO_LOCAL_UNDOLEVEL;
+    } else if ((long *)varp == &curwin->w_p_so || (long *)varp == &curwin->w_p_siso) {
+      numval = -1;
+    } else {
+      char *s = NULL;
+      (void)get_option_value(name, &numval, &s, NULL, OPT_GLOBAL);
+    }
+  }
+  if (flags & P_NUM) {
+    return set_num_option(opt_idx, varp, numval, NULL, 0, opt_flags);
+  }
+  return set_bool_option(opt_idx, varp, (int)numval, opt_flags);
 }
 
 /// Call set_option_value() and when an error is returned report it.
