@@ -655,7 +655,7 @@ static HandleState handle_background_color(TermInput *input)
     bool is_dark = luminance < 0.5;
     char *bgvalue = is_dark ? "dark" : "light";
     DLOG("bg response: %s", bgvalue);
-    ui_client_bg_respose = is_dark ? kTrue : kFalse;
+    ui_client_bg_response = is_dark ? kTrue : kFalse;
     set_bg(bgvalue);
     input->waiting_for_bg_response = 0;
   } else if (!done && !bad) {
