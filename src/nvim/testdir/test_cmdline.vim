@@ -2704,17 +2704,18 @@ endfunc
 " buffer name fuzzy completion
 func Test_fuzzy_completion_bufname()
   set wildoptions&
-  edit SomeFile.txt
+  " Use a long name to reduce the risk of matching a random directory name
+  edit SomeRandomFileWithLetters.txt
   enew
-  call feedkeys(":b SF\<Tab>\<C-B>\"\<CR>", 'tx')
-  call assert_equal('"b SF', @:)
-  call feedkeys(":b S*File.txt\<Tab>\<C-B>\"\<CR>", 'tx')
-  call assert_equal('"b SomeFile.txt', @:)
+  call feedkeys(":b SRFWL\<Tab>\<C-B>\"\<CR>", 'tx')
+  call assert_equal('"b SRFWL', @:)
+  call feedkeys(":b S*FileWithLetters.txt\<Tab>\<C-B>\"\<CR>", 'tx')
+  call assert_equal('"b SomeRandomFileWithLetters.txt', @:)
   set wildoptions=fuzzy
-  call feedkeys(":b SF\<Tab>\<C-B>\"\<CR>", 'tx')
-  call assert_equal('"b SomeFile.txt', @:)
-  call feedkeys(":b S*File.txt\<Tab>\<C-B>\"\<CR>", 'tx')
-  call assert_equal('"b S*File.txt', @:)
+  call feedkeys(":b SRFWL\<Tab>\<C-B>\"\<CR>", 'tx')
+  call assert_equal('"b SomeRandomFileWithLetters.txt', @:)
+  call feedkeys(":b S*FileWithLetters.txt\<Tab>\<C-B>\"\<CR>", 'tx')
+  call assert_equal('"b S*FileWithLetters.txt', @:)
   %bw!
   set wildoptions&
 endfunc
