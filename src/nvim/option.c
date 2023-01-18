@@ -175,8 +175,6 @@ void set_init_tablocal(void)
 /// editor state initialized here. Do logging in set_init_2 or later.
 void set_init_1(bool clean_arg)
 {
-  int opt_idx;
-
   langmap_init();
 
   // Find default value for 'shell' option.
@@ -204,7 +202,7 @@ void set_init_1(bool clean_arg)
     static char *(names[3]) = { "TMPDIR", "TEMP", "TMP" };
 #endif
     garray_T ga;
-    opt_idx = findoption("backupskip");
+    int opt_idx = findoption("backupskip");
 
     ga_init(&ga, 1, 100);
     for (size_t n = 0; n < ARRAY_SIZE(names); n++) {
@@ -253,19 +251,14 @@ void set_init_1(bool clean_arg)
   }
 
   {
-    char *cdpath;
-    char *buf;
-    int i;
-    int j;
-
     // Initialize the 'cdpath' option's default value.
-    cdpath = vim_getenv("CDPATH");
+    char *cdpath = vim_getenv("CDPATH");
     if (cdpath != NULL) {
-      buf = xmalloc(2 * strlen(cdpath) + 2);
+      char *buf = xmalloc(2 * strlen(cdpath) + 2);
       {
         buf[0] = ',';               // start with ",", current dir first
-        j = 1;
-        for (i = 0; cdpath[i] != NUL; i++) {
+        int j = 1;
+        for (int i = 0; cdpath[i] != NUL; i++) {
           if (vim_ispathlistsep(cdpath[i])) {
             buf[j++] = ',';
           } else {
@@ -276,7 +269,7 @@ void set_init_1(bool clean_arg)
           }
         }
         buf[j] = NUL;
-        opt_idx = findoption("cdpath");
+        int opt_idx = findoption("cdpath");
         if (opt_idx >= 0) {
           options[opt_idx].def_val = buf;
           options[opt_idx].flags |= P_DEF_ALLOCED;
@@ -341,7 +334,7 @@ void set_init_1(bool clean_arg)
   // them.
   // Don't set the P_ALLOCED flag, because we don't want to free the
   // default.
-  for (opt_idx = 0; options[opt_idx].fullname; opt_idx++) {
+  for (int opt_idx = 0; options[opt_idx].fullname; opt_idx++) {
     if (options[opt_idx].flags & P_NO_DEF_EXP) {
       continue;
     }
@@ -404,10 +397,10 @@ void set_init_1(bool clean_arg)
 /// @param opt_flags OPT_FREE, OPT_LOCAL and/or OPT_GLOBAL
 static void set_option_default(int opt_idx, int opt_flags)
 {
-  char_u *varp;            // pointer to variable for current option
   int both = (opt_flags & (OPT_LOCAL | OPT_GLOBAL)) == 0;
 
-  varp = (char_u *)get_varp_scope(&(options[opt_idx]), both ? OPT_LOCAL : opt_flags);
+  // pointer to variable for current option
+  char_u *varp = (char_u *)get_varp_scope(&(options[opt_idx]), both ? OPT_LOCAL : opt_flags);
   uint32_t flags = options[opt_idx].flags;
   if (varp != NULL) {       // skip hidden option, nothing to do for it
     if (flags & P_STRING) {
@@ -509,11 +502,11 @@ static void set_string_default(const char *name, char *val, bool allocated)
 static char *find_dup_item(char *origval, const char *newval, uint32_t flags)
   FUNC_ATTR_NONNULL_ARG(2)
 {
-  int bs = 0;
-
   if (origval == NULL) {
     return NULL;
   }
+
+  int bs = 0;
 
   const size_t newlen = strlen(newval);
   for (char *s = origval; *s != NUL; s++) {
@@ -574,11 +567,9 @@ void set_init_2(bool headless)
   // set in set_init_1 but logging is not allowed there
   ILOG("startup runtimepath/packpath value: %s", p_rtp);
 
-  int idx;
-
   // 'scroll' defaults to half the window height. The stored default is zero,
   // which results in the actual value computed from the window height.
-  idx = findoption("scroll");
+  int idx = findoption("scroll");
   if (idx >= 0 && !(options[idx].flags & P_WAS_SET)) {
     set_option_default(idx, OPT_LOCAL);
   }
@@ -745,14 +736,8 @@ static int do_set_string(int opt_idx, int opt_flags, char **argp, int nextchar, 
   char *varp = varp_arg;
   char *save_arg = NULL;
   char *s = NULL;
-  char *oldval = NULL;  // previous value if *varp
-  char *origval = NULL;
   char_u *origval_l = NULL;
   char_u *origval_g = NULL;
-  char *saved_origval = NULL;
-  char *saved_origval_l = NULL;
-  char *saved_origval_g = NULL;
-  char *saved_newval = NULL;
   char whichwrap[80];
 
   // When using ":set opt=val" for a global option
@@ -764,7 +749,7 @@ static int do_set_string(int opt_idx, int opt_flags, char **argp, int nextchar, 
   }
 
   // The old value is kept until we are sure that the new value is valid.
-  oldval = *(char **)varp;
+  char *oldval = *(char **)varp;
 
   if ((opt_flags & (OPT_LOCAL | OPT_GLOBAL)) == 0) {
     origval_l = *(char_u **)get_varp_scope(&(options[opt_idx]), OPT_LOCAL);
@@ -777,6 +762,7 @@ static int do_set_string(int opt_idx, int opt_flags, char **argp, int nextchar, 
     }
   }
 
+  char *origval;
   // When setting the local value of a global option, the old value may be
   // the global value.
   if (((int)options[opt_idx].indir & PV_BOTH) && (opt_flags & OPT_LOCAL)) {
@@ -1024,13 +1010,13 @@ static int do_set_string(int opt_idx, int opt_flags, char **argp, int nextchar, 
   *(char_u **)(varp) = (char_u *)newval;
 
   // origval may be freed by did_set_string_option(), make a copy.
-  saved_origval = (origval != NULL) ? xstrdup(origval) : NULL;
-  saved_origval_l = (origval_l != NULL) ? xstrdup((char *)origval_l) : NULL;
-  saved_origval_g = (origval_g != NULL) ? xstrdup((char *)origval_g) : NULL;
+  char *saved_origval = (origval != NULL) ? xstrdup(origval) : NULL;
+  char *saved_origval_l = (origval_l != NULL) ? xstrdup((char *)origval_l) : NULL;
+  char *saved_origval_g = (origval_g != NULL) ? xstrdup((char *)origval_g) : NULL;
 
   // newval (and varp) may become invalid if the buffer is closed by
   // autocommands.
-  saved_newval = (newval != NULL) ? xstrdup(newval) : NULL;
+  char *saved_newval = (newval != NULL) ? xstrdup(newval) : NULL;
 
   {
     uint32_t *p = insecure_flag(curwin, opt_idx, opt_flags);
@@ -1707,9 +1693,7 @@ static void didset_options2(void)
 /// Check for string options that are NULL (normally only termcap options).
 void check_options(void)
 {
-  int opt_idx;
-
-  for (opt_idx = 0; options[opt_idx].fullname != NULL; opt_idx++) {
+  for (int opt_idx = 0; options[opt_idx].fullname != NULL; opt_idx++) {
     if ((options[opt_idx].flags & P_STRING) && options[opt_idx].var != NULL) {
       check_string_option((char **)get_varp(&(options[opt_idx])));
     }
@@ -2880,7 +2864,6 @@ int get_option_value_strict(char *name, int64_t *numval, char **stringval, int o
     return SOPT_STRING | SOPT_GLOBAL;
   }
 
-  char_u *varp = NULL;
   int rv = 0;
   int opt_idx = findoption(name);
   if (opt_idx < 0) {
@@ -2929,6 +2912,8 @@ int get_option_value_strict(char *name, int64_t *numval, char **stringval, int o
   if (stringval == NULL) {
     return rv;
   }
+
+  char_u *varp = NULL;
 
   if (opt_type == SREQ_GLOBAL) {
     if (p->var == VAR_WIN) {
@@ -3431,12 +3416,13 @@ int makefoldset(FILE *fd)
 
 static int put_setstring(FILE *fd, char *cmd, char *name, char **valuep, uint64_t flags)
 {
-  char *buf = NULL;
-  char_u *part = NULL;
-
   if (fprintf(fd, "%s %s=", cmd, name) < 0) {
     return FAIL;
   }
+
+  char *buf = NULL;
+  char_u *part = NULL;
+
   if (*valuep != NULL) {
     // Output 'pastetoggle' as key names.  For other
     // options some characters have to be escaped with
@@ -3503,11 +3489,10 @@ fail:
 
 static int put_setnum(FILE *fd, char *cmd, char *name, long *valuep)
 {
-  long wc;
-
   if (fprintf(fd, "%s %s=", cmd, name) < 0) {
     return FAIL;
   }
+  long wc;
   if (wc_use_keyname((char_u *)valuep, &wc)) {
     // print 'wildchar' and 'wildcharm' as a key name
     if (fputs((char *)get_special_key_name((int)wc, 0), fd) < 0) {
@@ -4526,11 +4511,6 @@ static int expand_option_flags = 0;
 /// @param opt_flags  OPT_GLOBAL and/or OPT_LOCAL
 void set_context_in_set_cmd(expand_T *xp, char *arg, int opt_flags)
 {
-  uint32_t flags = 0;           // init for GCC
-  int opt_idx = 0;              // init for GCC
-  char *p;
-  int is_term_option = false;
-
   expand_option_flags = opt_flags;
 
   xp->xp_context = EXPAND_SETTINGS;
@@ -4538,7 +4518,7 @@ void set_context_in_set_cmd(expand_T *xp, char *arg, int opt_flags)
     xp->xp_pattern = arg;
     return;
   }
-  p = arg + strlen(arg) - 1;
+  char *p = arg + strlen(arg) - 1;
   if (*p == ' ' && *(p - 1) != '\\') {
     xp->xp_pattern = p + 1;
     return;
@@ -4570,6 +4550,9 @@ void set_context_in_set_cmd(expand_T *xp, char *arg, int opt_flags)
   arg = p;
 
   char nextchar;
+  uint32_t flags = 0;
+  int opt_idx = 0;
+  int is_term_option = false;
 
   if (*arg == '<') {
     while (*p != '>') {
