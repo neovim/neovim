@@ -2687,12 +2687,6 @@ char *getcmdline_prompt(const int firstc, const char *const prompt, const int at
   return ret;
 }
 
-// Return current cmdline prompt
-char *get_cmdprompt(void)
-{
-  return ccline.cmdprompt;
-}
-
 /// Read the 'wildmode' option, fill wim_flags[].
 int check_opt_wim(void)
 {
