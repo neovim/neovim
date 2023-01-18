@@ -5,6 +5,7 @@ local command = helpers.command
 local eq = helpers.eq
 local eval = helpers.eval
 local exec_lua = helpers.exec_lua
+local feed = helpers.feed
 local meths = helpers.meths
 local pcall_err = helpers.pcall_err
 
@@ -413,6 +414,19 @@ describe('statuscolumn', function()
     eq('', eval("g:testvar"))
   end)
 
+  it('click labels do not leak memory', function()
+    command([[
+      set laststatus=2
+      setlocal statuscolumn=%0@MyClickFunc@abcd%T
+      4vsplit
+      setlocal statusline=abcd
+      redrawstatus
+      setlocal statusline=
+      only
+      redraw
+    ]])
+  end)
+
   it('works with foldcolumn', function()
     -- Fits maximum multibyte foldcolumn #21759
     command([[set stc=%C%=%l\  fdc=9 fillchars=foldsep:𒀀]])
@@ -425,7 +439,7 @@ describe('statuscolumn', function()
       vim.api.nvim_buf_set_extmark(0, ns, 7, 0, {
         virt_lines_leftcol = true, virt_lines = {{{"virt", ""}}} })
     ]])
-    helpers.feed('lh')  -- force update wcol/row
+    feed('lh')  -- force update wcol/row
     screen:expect([[
                 4 aaaaa                                    |
                 5 aaaaa                                    |
