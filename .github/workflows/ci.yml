@@ -304,7 +304,7 @@ jobs:
 
       - name: Build nvim
         run: |
-          cmake -B build -G Ninja -DCMAKE_BUILD_TYPE='RelWithDebInfo' -DDEPS_PREFIX="$env:DEPS_PREFIX"
+          cmake -B build -G Ninja -DCMAKE_BUILD_TYPE='RelWithDebInfo' -DDEPS_PREFIX="$env:DEPS_PREFIX" -DCI_BUILD=ON
           cmake --build build
 
       - name: Install test deps

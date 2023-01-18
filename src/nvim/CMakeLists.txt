@@ -455,8 +455,11 @@ endforeach()
 
 list(REMOVE_ITEM NVIM_SOURCES ${to_remove})
 
-if(NOT MSVC)
-  # xdiff, mpack, lua-cjson: inlined external project, we don't maintain it. #9306
+# xdiff, mpack, lua-cjson: inlined external project, we don't maintain it. #9306
+if(MSVC)
+  set_source_files_properties(
+    ${EXTERNAL_SOURCES} PROPERTIES COMPILE_FLAGS "${COMPILE_FLAGS} /wd4090")
+else()
   set_source_files_properties(
     ${EXTERNAL_SOURCES} PROPERTIES COMPILE_FLAGS "${COMPILE_FLAGS} -Wno-conversion -Wno-missing-noreturn -Wno-missing-format-attribute -Wno-double-promotion -Wno-strict-prototypes")
 endif()
