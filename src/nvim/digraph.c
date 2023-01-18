@@ -1471,15 +1471,17 @@ int do_digraph(int c)
   static int backspaced;  // character before K_BS
   static int lastchar;   // last typed character
 
-  if (c == -1) {         // init values
+  if (c == -1) // init values        
     backspaced = -1;
-  } else if (p_dg) {
-    if (backspaced >= 0) {
+  else if (p_dg) 
+  {
+    if (backspaced >= 0) 
+    {
       c = digraph_get(backspaced, c, false);
     }
     backspaced = -1;
-
-    if (((c == K_BS) || (c == Ctrl_H)) && (lastchar >= 0)) {
+    if (((c == K_BS) || (c == Ctrl_H)) && (lastchar >= 0))
+    {
       backspaced = lastchar;
     }
   }
@@ -1495,12 +1497,12 @@ char_u *get_digraph_for_char(int val_arg)
   const digr_T *dp;
   static char_u r[3];
 
-  for (int use_defaults = 0; use_defaults <= 1; use_defaults++) {
-    if (use_defaults == 0) {
+  for (int use_defaults = 0; use_defaults <= 1; use_defaults++)
+  {
+    if (use_defaults == 0) 
       dp = (const digr_T *)user_digraphs.ga_data;
-    } else {
+    else 
       dp = digraphdefault;
-    }
     for (int i = 0; use_defaults ? dp->char1 != NUL : i < user_digraphs.ga_len; i++) {
       if (dp->result == val) {
         r[0] = dp->char1;
@@ -1541,9 +1543,9 @@ int get_digraph(bool cmdline)
     if ((char2cells(c) == 1) && c < 128 && (cmdline_star == 0)) {
       putcmdline((char)c, true);
     }
-  } else {
+  } 
+  else 
     add_to_showcmd(c);
-  }
   no_mapping++;
   allow_keys++;
   int cc = plain_vgetc();
@@ -1585,7 +1587,8 @@ static int getexactdigraph(int char1, int char2, bool meta_char)
   }
 
   // Search default digraphs.
-  if (retval == 0) {
+  if (retval == 0) 
+  {
     dp = digraphdefault;
 
     while (dp->char1 != 0) {
@@ -1596,8 +1599,8 @@ static int getexactdigraph(int char1, int char2, bool meta_char)
       dp++;
     }
   }
-
-  if (retval == 0) {
+  if (retval == 0) 
+  {
     // digraph deleted or not found
     if ((char1 == ' ') && meta_char) {
       // <space> <char> --> meta-char
@@ -1655,13 +1658,15 @@ static void registerdigraph(int char1, int char2, int n)
 /// returns false.
 bool check_digraph_chars_valid(int char1, int char2)
 {
-  if (char2 == 0) {
+  if (char2 == 0) 
+  {
     char msg[MB_MAXBYTES + 1];
     msg[utf_char2bytes(char1, msg)] = NUL;
     semsg(_(e_digraph_must_be_just_two_characters_str), msg);
     return false;
   }
-  if (char1 == ESC || char2 == ESC) {
+  if (char1 == ESC || char2 == ESC) 
+  {
     emsg(_("E104: Escape not allowed in digraph"));
     return false;
   }
@@ -1674,22 +1679,26 @@ bool check_digraph_chars_valid(int char1, int char2)
 /// @param str
 void putdigraph(char *str)
 {
-  while (*str != NUL) {
+  while (*str != NUL) 
+  {
     str = skipwhite(str);
 
-    if (*str == NUL) {
+    if (*str == NUL) 
+    {
       return;
     }
     uint8_t char1 = (uint8_t)(*str++);
     uint8_t char2 = (uint8_t)(*str++);
 
-    if (!check_digraph_chars_valid(char1, char2)) {
+    if (!check_digraph_chars_valid(char1, char2)) 
+    {
       return;
     }
 
     str = skipwhite(str);
 
-    if (!ascii_isdigit(*str)) {
+    if (!ascii_isdigit(*str)) 
+    {
       emsg(_(e_number_exp));
       return;
     }
@@ -1702,7 +1711,8 @@ void putdigraph(char *str)
 static void digraph_header(const char *msg)
   FUNC_ATTR_NONNULL_ALL
 {
-  if (msg_col > 0) {
+  if (msg_col > 0) 
+  {
     msg_putchar('\n');
   }
   msg_outtrans_attr(msg, HL_ATTR(HLF_CM));
@@ -1717,7 +1727,8 @@ void listdigraphs(bool use_headers)
 
   const digr_T *dp = digraphdefault;
 
-  while (dp->char1 != NUL && !got_int) {
+  while (dp->char1 != NUL && !got_int) 
+  {
     digr_T tmp;
 
     // May need to convert the result to 'encoding'.
@@ -1725,7 +1736,8 @@ void listdigraphs(bool use_headers)
     tmp.char2 = dp->char2;
     tmp.result = getexactdigraph(tmp.char1, tmp.char2, false);
 
-    if (tmp.result != 0 && tmp.result != tmp.char2) {
+    if (tmp.result != 0 && tmp.result != tmp.char2) 
+    {
       printdigraph(&tmp, use_headers ? &previous : NULL);
     }
     dp++;
@@ -1733,8 +1745,10 @@ void listdigraphs(bool use_headers)
   }
 
   dp = (const digr_T *)user_digraphs.ga_data;
-  for (int i = 0; i < user_digraphs.ga_len && !got_int; i++) {
-    if (previous >= 0 && use_headers) {
+  for (int i = 0; i < user_digraphs.ga_len && !got_int; i++) 
+  {
+    if (previous >= 0 && use_headers) 
+    {
       digraph_header(_("Custom"));
     }
     previous = -1;
@@ -1767,7 +1781,8 @@ void digraph_getlist_common(bool list_all, typval_T *rettv)
 
   const digr_T *dp;
 
-  if (list_all) {
+  if (list_all) 
+  {
     dp = digraphdefault;
     while (dp->char1 != NUL && !got_int) {
       digr_T tmp;
@@ -1782,7 +1797,8 @@ void digraph_getlist_common(bool list_all, typval_T *rettv)
   }
 
   dp = (const digr_T *)user_digraphs.ga_data;
-  for (int i = 0; i < user_digraphs.ga_len && !got_int; i++) {
+  for (int i = 0; i < user_digraphs.ga_len && !got_int; i++) 
+  {
     digraph_getlist_appendpair(dp, rettv->vval.v_list);
     dp++;
   }
@@ -1863,7 +1879,8 @@ static void printdigraph(const digr_T *dp, result_T *previous)
   p = buf;
 
   // add a space to draw a composing char on
-  if (utf_iscomposing(dp->result)) {
+  if (utf_iscomposing(dp->result)) 
+  {
     *p++ = ' ';
   }
   p += utf_char2bytes(dp->result, (char *)p);
@@ -1871,7 +1888,8 @@ static void printdigraph(const digr_T *dp, result_T *previous)
   *p = NUL;
   msg_outtrans_attr((char *)buf, HL_ATTR(HLF_8));
   p = buf;
-  if (char2cells(dp->result) == 1) {
+  if (char2cells(dp->result) == 1) 
+  {
     *p++ = ' ';
   }
   assert(p >= buf);
@@ -1887,13 +1905,18 @@ static int get_digraph_chars(const typval_T *arg, int *char1, int *char2)
   const char *chars = tv_get_string_buf_chk(arg, buf_chars);
   const char *p = chars;
 
-  if (p != NULL) {
-    if (*p != NUL) {
+  if (p != NULL) 
+  {
+    if (*p != NUL) 
+    {
       *char1 = mb_cptr2char_adv(&p);
-      if (*p != NUL) {
+      if (*p != NUL) 
+      {
         *char2 = mb_cptr2char_adv(&p);
-        if (*p == NUL) {
-          if (check_digraph_chars_valid(*char1, *char2)) {
+        if (*p == NUL) 
+        {
+          if (check_digraph_chars_valid(*char1, *char2)) 
+          {
             return OK;
           }
           return FAIL;
@@ -1908,18 +1931,21 @@ static int get_digraph_chars(const typval_T *arg, int *char1, int *char2)
 static bool digraph_set_common(const typval_T *argchars, const typval_T *argdigraph)
 {
   int char1, char2;
-  if (get_digraph_chars(argchars, &char1, &char2) == FAIL) {
+  if (get_digraph_chars(argchars, &char1, &char2) == FAIL)
+  {
     return false;
   }
 
   char buf_digraph[NUMBUFLEN];
   const char *digraph = tv_get_string_buf_chk(argdigraph, buf_digraph);
-  if (digraph == NULL) {
+  if (digraph == NULL) 
+  {
     return false;
   }
   const char *p = digraph;
   int n = mb_cptr2char_adv(&p);
-  if (*p != NUL) {
+  if (*p != NUL) 
+  {
     semsg(_(e_digraph_argument_must_be_one_character_str), digraph);
     return false;
   }
@@ -1935,10 +1961,12 @@ void f_digraph_get(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   rettv->vval.v_string = NULL;  // Return empty string for failure
   const char *digraphs = tv_get_string_chk(&argvars[0]);
 
-  if (digraphs == NULL) {
+  if (digraphs == NULL) 
+  {
     return;
   }
-  if (strlen(digraphs) != 2) {
+  if (strlen(digraphs) != 2) 
+  {
     semsg(_(e_digraph_must_be_just_two_characters_str), digraphs);
     return;
   }
@@ -1954,12 +1982,16 @@ void f_digraph_getlist(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
   bool flag_list_all;
 
-  if (argvars[0].v_type == VAR_UNKNOWN) {
+  if (argvars[0].v_type == VAR_UNKNOWN) 
+  {
     flag_list_all = false;
-  } else {
+  } 
+  else 
+  {
     bool error = false;
     varnumber_T flag = tv_get_number_chk(&argvars[0], &error);
-    if (error) {
+    if (error) 
+    {
       return;
     }
     flag_list_all = flag != 0;
@@ -1974,7 +2006,8 @@ void f_digraph_set(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   rettv->v_type = VAR_BOOL;
   rettv->vval.v_bool = kBoolVarFalse;
 
-  if (!digraph_set_common(&argvars[0], &argvars[1])) {
+  if (!digraph_set_common(&argvars[0], &argvars[1])) 
+  {
     return;
   }
 
@@ -1987,32 +2020,38 @@ void f_digraph_setlist(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   rettv->v_type = VAR_BOOL;
   rettv->vval.v_bool = kBoolVarFalse;
 
-  if (argvars[0].v_type != VAR_LIST) {
+  if (argvars[0].v_type != VAR_LIST)
+  {
     emsg(_(e_digraph_setlist_argument_must_be_list_of_lists_with_two_items));
     return;
   }
 
   list_T *pl = argvars[0].vval.v_list;
-  if (pl == NULL) {
+  if (pl == NULL) 
+  {
     // Empty list always results in success.
     rettv->vval.v_bool = kBoolVarTrue;
     return;
   }
 
-  TV_LIST_ITER_CONST(pl, pli, {
-    if (TV_LIST_ITEM_TV(pli)->v_type != VAR_LIST) {
+  TV_LIST_ITER_CONST(pl, pli, 
+  {
+    if (TV_LIST_ITEM_TV(pli)->v_type != VAR_LIST) 
+    {
       emsg(_(e_digraph_setlist_argument_must_be_list_of_lists_with_two_items));
       return;
     }
 
     list_T *l = TV_LIST_ITEM_TV(pli)->vval.v_list;
-    if (l == NULL || tv_list_len(l) != 2) {
+    if (l == NULL || tv_list_len(l) != 2) 
+    {
       emsg(_(e_digraph_setlist_argument_must_be_list_of_lists_with_two_items));
       return;
     }
 
     if (!digraph_set_common(TV_LIST_ITEM_TV(tv_list_first(l)),
-                            TV_LIST_ITEM_TV(TV_LIST_ITEM_NEXT(l, tv_list_first(l))))) {
+                            TV_LIST_ITEM_TV(TV_LIST_ITEM_NEXT(l, tv_list_first(l))))) 
+    {
       return;
     }
   });
@@ -2037,12 +2076,15 @@ char *keymap_init(void)
 {
   curbuf->b_kmap_state &= ~KEYMAP_INIT;
 
-  if (*curbuf->b_p_keymap == NUL) {
+  if (*curbuf->b_p_keymap == NUL) 
+  {
     // Stop any active keymap and clear the table.  Also remove
     // b:keymap_name, as no keymap is active now.
     keymap_unload();
     do_cmdline_cmd("unlet! b:keymap_name");
-  } else {
+  } 
+  else 
+  {
     char *buf;
     size_t buflen;
 
@@ -2055,12 +2097,14 @@ char *keymap_init(void)
     vim_snprintf(buf, buflen, "keymap/%s_%s.vim",
                  curbuf->b_p_keymap, p_enc);
 
-    if (source_runtime(buf, 0) == FAIL) {
+    if (source_runtime(buf, 0) == FAIL) 
+    {
       // try finding "keymap/'keymap'.vim" in 'runtimepath'
       vim_snprintf(buf, buflen, "keymap/%s.vim",
                    curbuf->b_p_keymap);
 
-      if (source_runtime(buf, 0) == FAIL) {
+      if (source_runtime(buf, 0) == FAIL) 
+      {
         xfree(buf);
         return N_("E544: Keymap file not found");
       }
@@ -2082,7 +2126,8 @@ void ex_loadkeymap(exarg_T *eap)
   char buf[KMAP_LLEN + 11];
   char *save_cpo = p_cpo;
 
-  if (!getline_equal(eap->getline, eap->cookie, getsourceline)) {
+  if (!getline_equal(eap->getline, eap->cookie, getsourceline)) 
+  {
     emsg(_("E105: Using :loadkeymap not in a sourced file"));
     return;
   }
@@ -2097,16 +2142,19 @@ void ex_loadkeymap(exarg_T *eap)
   p_cpo = "C";
 
   // Get each line of the sourced file, break at the end.
-  for (;;) {
+  for (;;) 
+  {
     char *line = eap->getline(0, eap->cookie, 0, true);
 
-    if (line == NULL) {
+    if (line == NULL) 
+    {
       break;
     }
 
     char *p = skipwhite(line);
 
-    if ((*p != '"') && (*p != NUL)) {
+    if ((*p != '"') && (*p != NUL)) 
+    {
       kmap_T *kp = GA_APPEND_VIA_PTR(kmap_T, &curbuf->b_kmap_ga);
       s = skiptowhite(p);
       kp->from = xstrnsave(p, (size_t)(s - p));
@@ -2116,8 +2164,10 @@ void ex_loadkeymap(exarg_T *eap)
 
       if ((strlen(kp->from) + strlen(kp->to) >= KMAP_LLEN)
           || (*kp->from == NUL)
-          || (*kp->to == NUL)) {
-        if (*kp->to == NUL) {
+          || (*kp->to == NUL)) //OR operator for multiple Coditions
+      {
+        if (*kp->to == NUL) 
+        {
           emsg(_("E791: Empty keymap entry"));
         }
         xfree(kp->from);
@@ -2129,7 +2179,8 @@ void ex_loadkeymap(exarg_T *eap)
   }
 
   // setup ":lmap" to map the keys
-  for (int i = 0; i < curbuf->b_kmap_ga.ga_len; i++) {
+  for (int i = 0; i < curbuf->b_kmap_ga.ga_len; i++) 
+  {
     vim_snprintf(buf, sizeof(buf), "<buffer> %s %s",
                  ((kmap_T *)curbuf->b_kmap_ga.ga_data)[i].from,
                  ((kmap_T *)curbuf->b_kmap_ga.ga_data)[i].to);
@@ -2146,7 +2197,8 @@ void ex_loadkeymap(exarg_T *eap)
 void keymap_ga_clear(garray_T *kmap_ga)
 {
   kmap_T *kp = (kmap_T *)kmap_ga->ga_data;
-  for (int i = 0; i < kmap_ga->ga_len; i++) {
+  for (int i = 0; i < kmap_ga->ga_len; i++) 
+  {
     xfree(kp[i].from);
     xfree(kp[i].to);
   }
@@ -2158,7 +2210,8 @@ static void keymap_unload(void)
   char buf[KMAP_MAXLEN + 10];
   char *save_cpo = p_cpo;
 
-  if (!(curbuf->b_kmap_state & KEYMAP_LOADED)) {
+  if (!(curbuf->b_kmap_state & KEYMAP_LOADED)) 
+  {
     return;
   }
 
@@ -2168,7 +2221,8 @@ static void keymap_unload(void)
   // clear the ":lmap"s
   kmap_T *kp = (kmap_T *)curbuf->b_kmap_ga.ga_data;
 
-  for (int i = 0; i < curbuf->b_kmap_ga.ga_len; i++) {
+  for (int i = 0; i < curbuf->b_kmap_ga.ga_len; i++) 
+  {
     vim_snprintf(buf, sizeof(buf), "<buffer> %s", kp[i].from);
     (void)do_map(MAPTYPE_UNMAP, buf, MODE_LANGMAP, false);
   }
