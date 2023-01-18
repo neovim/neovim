@@ -369,7 +369,7 @@ int do_cmdline(char *cmdline, LineGetter fgetline, void *cookie, int flags)
   // Get the function or script name and the address where the next breakpoint
   // line and the debug tick for a function or script are stored.
   if (getline_is_func) {
-    fname = (char *)func_name(real_cookie);
+    fname = func_name(real_cookie);
     breakpoint = func_breakpoint(real_cookie);
     dbg_tick = func_dbg_tick(real_cookie);
   } else if (getline_equal(fgetline, cookie, getsourceline)) {
@@ -3812,8 +3812,8 @@ int expand_filename(exarg_T *eap, char **cmdlinep, char **errormsgp)
 #endif
 
       for (l = repl; *l; l++) {
-        if (vim_strchr((char *)ESCAPE_CHARS, (uint8_t)(*l)) != NULL) {
-          l = vim_strsave_escaped(repl, (char *)ESCAPE_CHARS);
+        if (vim_strchr(ESCAPE_CHARS, (uint8_t)(*l)) != NULL) {
+          l = vim_strsave_escaped(repl, ESCAPE_CHARS);
           xfree(repl);
           repl = l;
           break;
@@ -4976,8 +4976,8 @@ void ex_splitview(exarg_T *eap)
   }
 
   if (eap->cmdidx == CMD_sfind || eap->cmdidx == CMD_tabfind) {
-    fname = (char *)find_file_in_path(eap->arg, strlen(eap->arg),
-                                      FNAME_MESS, true, curbuf->b_ffname);
+    fname = find_file_in_path(eap->arg, strlen(eap->arg),
+                              FNAME_MESS, true, curbuf->b_ffname);
     if (fname == NULL) {
       goto theend;
     }
@@ -4987,7 +4987,7 @@ void ex_splitview(exarg_T *eap)
   // Either open new tab page or split the window.
   if (use_tab) {
     if (win_new_tabpage(cmdmod.cmod_tab != 0 ? cmdmod.cmod_tab : eap->addr_count == 0
-                        ? 0 : (int)eap->line2 + 1, (char_u *)eap->arg) != FAIL) {
+                        ? 0 : (int)eap->line2 + 1, eap->arg) != FAIL) {
       do_exedit(eap, old_curwin);
       apply_autocmds(EVENT_TABNEWENTERED, NULL, NULL, false, curbuf);
 
@@ -5169,15 +5169,15 @@ static void ex_resize(exarg_T *eap)
 /// ":find [+command] <file>" command.
 static void ex_find(exarg_T *eap)
 {
-  char *fname = (char *)find_file_in_path(eap->arg, strlen(eap->arg),
-                                          FNAME_MESS, true, curbuf->b_ffname);
+  char *fname = find_file_in_path(eap->arg, strlen(eap->arg),
+                                  FNAME_MESS, true, curbuf->b_ffname);
   if (eap->addr_count > 0) {
     // Repeat finding the file "count" times.  This matters when it
     // appears several times in the path.
     linenr_T count = eap->line2;
     while (fname != NULL && --count > 0) {
       xfree(fname);
-      fname = (char *)find_file_in_path(NULL, 0, FNAME_MESS, false, curbuf->b_ffname);
+      fname = find_file_in_path(NULL, 0, FNAME_MESS, false, curbuf->b_ffname);
     }
   }
 
@@ -6845,7 +6845,7 @@ char_u *eval_vars(char *src, const char_u *srcstart, size_t *usedlen, linenr_T *
       break;
 
     case SPEC_CFILE:            // file name under cursor
-      result = (char *)file_name_at_cursor(FNAME_MESS|FNAME_HYP, 1L, NULL);
+      result = file_name_at_cursor(FNAME_MESS|FNAME_HYP, 1L, NULL);
       if (result == NULL) {
         *errormsg = "";
         return NULL;

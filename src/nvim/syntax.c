@@ -92,7 +92,7 @@ typedef struct syn_pattern {
 } synpat_T;
 
 typedef struct syn_cluster_S {
-  char_u *scl_name;         // syntax cluster name
+  char *scl_name;           // syntax cluster name
   char *scl_name_u;         // uppercase of scl_name
   int16_t *scl_list;        // IDs in this syntax cluster
 } syn_cluster_T;
@@ -3453,7 +3453,7 @@ static void syn_list_cluster(int id)
 
   // slight hack:  roughly duplicate the guts of syn_list_header()
   msg_putchar('\n');
-  msg_outtrans((char *)SYN_CLSTR(curwin->w_s)[id].scl_name);
+  msg_outtrans(SYN_CLSTR(curwin->w_s)[id].scl_name);
 
   if (msg_col >= endcol) {      // output at least one space
     endcol = msg_col + 1;
@@ -3490,7 +3490,7 @@ static void put_id_list(const char *const name, const int16_t *const list, const
       int scl_id = *p - SYNID_CLUSTER;
 
       msg_putchar('@');
-      msg_outtrans((char *)SYN_CLSTR(curwin->w_s)[scl_id].scl_name);
+      msg_outtrans(SYN_CLSTR(curwin->w_s)[scl_id].scl_name);
     } else {
       msg_outtrans(highlight_group_name(*p - 1));
     }
@@ -3743,7 +3743,7 @@ static void add_keyword(char *const name, const int id, const int flags,
   }
   kp->next_list = copy_id_list(next_list);
 
-  const hash_T hash = hash_hash((char_u *)kp->keyword);
+  const hash_T hash = hash_hash(kp->keyword);
   hashtab_T *const ht = (curwin->w_s->b_syn_ic)
       ? &curwin->w_s->b_keywtab_ic
       : &curwin->w_s->b_keywtab;
@@ -3757,7 +3757,7 @@ static void add_keyword(char *const name, const int id, const int flags,
   if (HASHITEM_EMPTY(hi)) {
     // new keyword, add to hashtable
     kp->ke_next = NULL;
-    hash_add_item(ht, hi, (char_u *)kp->keyword, hash);
+    hash_add_item(ht, hi, kp->keyword, hash);
   } else {
     // keyword already exists, prepend to list
     kp->ke_next = HI2KE(hi);
@@ -4634,7 +4634,7 @@ static int syn_add_cluster(char *name)
   syn_cluster_T *scp = GA_APPEND_VIA_PTR(syn_cluster_T,
                                          &curwin->w_s->b_syn_clusters);
   CLEAR_POINTER(scp);
-  scp->scl_name = (char_u *)name;
+  scp->scl_name = name;
   scp->scl_name_u = vim_strsave_up(name);
   scp->scl_list = NULL;
 

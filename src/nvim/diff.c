@@ -2293,7 +2293,7 @@ static bool diff_equal_char(const char *const p1, const char *const p2, int *con
 static int diff_cmp(char *s1, char *s2)
 {
   if ((diff_flags & DIFF_IBLANK)
-      && (*(char_u *)skipwhite(s1) == NUL || *skipwhite(s2) == NUL)) {
+      && (*skipwhite(s1) == NUL || *skipwhite(s2) == NUL)) {
     return 0;
   }
 

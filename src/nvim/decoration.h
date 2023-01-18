@@ -58,7 +58,7 @@ struct Decoration {
   DecorPriority priority;
   int col;  // fixed col value, like win_col
   int virt_text_width;  // width of virt_text
-  char_u *sign_text;
+  char *sign_text;
   int sign_hl_id;
   int number_hl_id;
   int line_hl_id;

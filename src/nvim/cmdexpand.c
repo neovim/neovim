@@ -979,7 +979,7 @@ static void showmatches_oneline(expand_T *xp, char **matches, int numMatches, in
         // Expansion was done before and special characters
         // were escaped, need to halve backslashes.  Also
         // $HOME has been replaced with ~/.
-        char *exp_path = (char *)expand_env_save_opt(matches[j], true);
+        char *exp_path = expand_env_save_opt(matches[j], true);
         char *path = exp_path != NULL ? exp_path : matches[j];
         char *halved_slash = backslash_halve_save(path);
         isdir = os_isdir(halved_slash);
@@ -2914,14 +2914,14 @@ static void expand_shellcmd_onedir(char *buf, char *s, size_t l, char *pat, char
 
     if (strlen(name) > l) {
       // Check if this name was already found.
-      hash_T hash = hash_hash((char_u *)name + l);
+      hash_T hash = hash_hash(name + l);
       hashitem_T *hi =
         hash_lookup(ht, (const char *)(name + l), strlen(name + l), hash);
       if (HASHITEM_EMPTY(hi)) {
         // Remove the path that was prepended.
         STRMOVE(name, name + l);
         ((char **)gap->ga_data)[gap->ga_len++] = name;
-        hash_add_item(ht, hi, (char_u *)name, hash);
+        hash_add_item(ht, hi, name, hash);
         name = NULL;
       }
     }

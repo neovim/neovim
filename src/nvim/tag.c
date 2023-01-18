@@ -2078,10 +2078,10 @@ static void findtags_add_match(findtags_state_T *st, tagptrs_T *tagpp, findtags_
     // the part that matters for comparing, more bytes may
     // follow after it.  E.g. help tags store the priority
     // after the NUL.
-    *hash = hash_hash((char_u *)mfp);
+    *hash = hash_hash(mfp);
     hi = hash_lookup(&st->ht_match[mtt], (const char *)mfp, strlen(mfp), *hash);
     if (HASHITEM_EMPTY(hi)) {
-      hash_add_item(&st->ht_match[mtt], hi, (char_u *)mfp, *hash);
+      hash_add_item(&st->ht_match[mtt], hi, mfp, *hash);
       GA_APPEND(char *, &st->ga_match[mtt], mfp);
       st->match_count++;
     } else {
@@ -2573,7 +2573,7 @@ int get_tagfname(tagname_T *tnp, int first, char *buf)
   // tnp->tn_did_filefind_init == true: find next file in this part.
   for (;;) {
     if (tnp->tn_did_filefind_init) {
-      fname = (char *)vim_findfile(tnp->tn_search_ctx);
+      fname = vim_findfile(tnp->tn_search_ctx);
       if (fname != NULL) {
         break;
       }

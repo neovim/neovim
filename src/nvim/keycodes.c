@@ -541,7 +541,7 @@ char_u *get_special_key_name(int c, int modifiers)
       } else if (vim_isprintc(c)) {
         string[idx++] = (char_u)c;
       } else {
-        s = transchar(c);
+        s = (char_u *)transchar(c);
         while (*s) {
           string[idx++] = *s++;
         }
@@ -572,7 +572,7 @@ char_u *get_special_key_name(int c, int modifiers)
 /// @param[out]  did_simplify  found <C-H>, etc.
 ///
 /// @return Number of characters added to dst, zero for no match.
-unsigned int trans_special(const char **const srcp, const size_t src_len, char_u *const dst,
+unsigned int trans_special(const char **const srcp, const size_t src_len, char *const dst,
                            const int flags, const bool escape_ks, bool *const did_simplify)
   FUNC_ATTR_NONNULL_ARG(1, 3) FUNC_ATTR_WARN_UNUSED_RESULT
 {
@@ -582,7 +582,7 @@ unsigned int trans_special(const char **const srcp, const size_t src_len, char_u
     return 0;
   }
 
-  return special_to_buf(key, modifiers, escape_ks, dst);
+  return special_to_buf(key, modifiers, escape_ks, (char_u *)dst);
 }
 
 /// Put the character sequence for "key" with "modifiers" into "dst" and return
@@ -944,7 +944,7 @@ char *replace_termcodes(const char *const from, const size_t from_len, char **co
         }
       }
 
-      slen = trans_special(&src, (size_t)(end - src) + 1, (char_u *)result + dlen,
+      slen = trans_special(&src, (size_t)(end - src) + 1, result + dlen,
                            FSK_KEYCODE | ((flags & REPTERM_NO_SIMPLIFY) ? 0 : FSK_SIMPLIFY),
                            true, did_simplify);
       if (slen) {
@@ -1059,8 +1059,8 @@ char *vim_strsave_escape_ks(char *p)
   // Need a buffer to hold up to three times as much.  Four in case of an
   // illegal utf-8 byte:
   // 0xc0 -> 0xc3 - 0x80 -> 0xc3 K_SPECIAL KS_SPECIAL KE_FILLER
-  char_u *res = xmalloc(strlen(p) * 4 + 1);
-  char_u *d = res;
+  char *res = xmalloc(strlen(p) * 4 + 1);
+  char_u *d = (char_u *)res;
   for (char_u *s = (char_u *)p; *s != NUL;) {
     if (s[0] == K_SPECIAL && s[1] != NUL && s[2] != NUL) {
       // Copy special key unmodified.
@@ -1076,7 +1076,7 @@ char *vim_strsave_escape_ks(char *p)
   }
   *d = NUL;
 
-  return (char *)res;
+  return res;
 }
 
 /// Remove escaping from K_SPECIAL characters.  Reverse of

@@ -105,7 +105,7 @@ enum {
 // Structure to pass arguments from buf_write() to buf_write_bytes().
 struct bw_info {
   int bw_fd;                     // file descriptor
-  char_u *bw_buf;           // buffer with data to be written
+  char *bw_buf;                  // buffer with data to be written
   int bw_len;                    // length of data
 #ifdef HAS_BW_FLAGS
   int bw_flags;                  // FIO_ flags
@@ -113,7 +113,7 @@ struct bw_info {
   char_u bw_rest[CONV_RESTLEN];  // not converted bytes
   int bw_restlen;                // nr of bytes in bw_rest[]
   int bw_first;                  // first write call
-  char_u *bw_conv_buf;           // buffer for writing converted chars
+  char *bw_conv_buf;             // buffer for writing converted chars
   size_t bw_conv_buflen;         // size of bw_conv_buf
   int bw_conv_error;             // set for conversion error
   linenr_T bw_conv_error_lnum;   // first line with error or zero
@@ -835,14 +835,14 @@ retry:
       // appears not to handle this correctly.  This works just like
       // conversion to UTF-8 except how the resulting character is put in
       // the buffer.
-      fio_flags = get_fio_flags((char_u *)fenc);
+      fio_flags = get_fio_flags(fenc);
     }
 
 #ifdef HAVE_ICONV
     // Try using iconv() if we can't convert internally.
     if (fio_flags == 0
         && !did_iconv) {
-      iconv_fd = (iconv_t)my_iconv_open((char_u *)"utf-8", (char_u *)fenc);
+      iconv_fd = (iconv_t)my_iconv_open("utf-8", fenc);
     }
 #endif
 
@@ -1107,7 +1107,7 @@ retry:
               || (!curbuf->b_p_bomb
                   && tmpname == NULL
                   && (*fenc == 'u' || *fenc == NUL)))) {
-        char_u *ccname;
+        char *ccname;
         int blen = 0;
 
         // no BOM detection in a short file or in binary mode
@@ -1115,7 +1115,7 @@ retry:
           ccname = NULL;
         } else {
           ccname = check_for_bom((char_u *)ptr, size, &blen,
-                                 fio_flags == FIO_UCSBOM ? FIO_ALL : get_fio_flags((char_u *)fenc));
+                                 fio_flags == FIO_UCSBOM ? FIO_ALL : get_fio_flags(fenc));
         }
         if (ccname != NULL) {
           // Remove BOM from the text
@@ -1137,7 +1137,7 @@ retry:
             if (fenc_alloced) {
               xfree(fenc);
             }
-            fenc = (char *)ccname;
+            fenc = ccname;
             fenc_alloced = false;
           }
           // retry reading without getting new bytes or rewinding
@@ -1193,7 +1193,7 @@ retry:
         if (from_size > 0) {
           // Some remaining characters, keep them for the next
           // round.
-          memmove(conv_rest, (char_u *)fromp, from_size);
+          memmove(conv_rest, fromp, from_size);
           conv_restlen = (int)from_size;
         }
 
@@ -1394,7 +1394,7 @@ retry:
             // an incomplete character at the end though, the next
             // read() will get the next bytes, we'll check it
             // then.
-            l = utf_ptr2len_len(p, todo);
+            l = utf_ptr2len_len((char *)p, todo);
             if (l > todo && !incomplete_tail) {
               // Avoid retrying with a different encoding when
               // a truncated file is more likely, or attempting
@@ -2566,7 +2566,7 @@ int buf_write(buf_T *buf, char *fname, char *sfname, linenr_T start, linenr_T en
 #ifdef HAVE_ACL
   // For systems that support ACL: get the ACL from the original file.
   if (!newfile) {
-    acl = os_get_acl((char_u *)fname);
+    acl = os_get_acl(fname);
   }
 #endif
 
@@ -2806,7 +2806,7 @@ int buf_write(buf_T *buf, char *fname, char *sfname, linenr_T start, linenr_T en
                           (double)file_info_old.stat.st_mtim.tv_sec);
 #endif
 #ifdef HAVE_ACL
-          os_set_acl((char_u *)backup, acl);
+          os_set_acl(backup, acl);
 #endif
           SET_ERRMSG(NULL);
           break;
@@ -2980,7 +2980,7 @@ nobackup:
   // Latin1 to Unicode conversion.  This is handled in buf_write_bytes().
   // Prepare the flags for it and allocate bw_conv_buf when needed.
   if (converted) {
-    wb_flags = get_fio_flags((char_u *)fenc);
+    wb_flags = get_fio_flags(fenc);
     if (wb_flags & (FIO_UCS2 | FIO_UCS4 | FIO_UTF16 | FIO_UTF8)) {
       // Need to allocate a buffer to translate into.
       if (wb_flags & (FIO_UCS2 | FIO_UTF16 | FIO_UTF8)) {
@@ -2999,7 +2999,7 @@ nobackup:
 #ifdef HAVE_ICONV
     // Use iconv() conversion when conversion is needed and it's not done
     // internally.
-    write_info.bw_iconv_fd = (iconv_t)my_iconv_open((char_u *)fenc, (char_u *)"utf-8");
+    write_info.bw_iconv_fd = (iconv_t)my_iconv_open(fenc, "utf-8");
     if (write_info.bw_iconv_fd != (iconv_t)-1) {
       // We're going to use iconv(), allocate a buffer to convert in.
       write_info.bw_conv_buflen = (size_t)bufsize * ICONV_MULT;
@@ -3151,7 +3151,7 @@ restore_backup:
     }
     SET_ERRMSG(NULL);
 
-    write_info.bw_buf = (char_u *)buffer;
+    write_info.bw_buf = buffer;
     nchars = 0;
 
     // use "++bin", "++nobin" or 'binary'
@@ -3164,7 +3164,7 @@ restore_backup:
     // Skip the BOM when appending and the file already existed, the BOM
     // only makes sense at the start of the file.
     if (buf->b_p_bomb && !write_bin && (!append || perm < 0)) {
-      write_info.bw_len = make_bom((char_u *)buffer, (char_u *)fenc);
+      write_info.bw_len = make_bom((char_u *)buffer, fenc);
       if (write_info.bw_len > 0) {
         // don't convert
         write_info.bw_flags = FIO_NOCONVERT | wb_flags;
@@ -3342,7 +3342,7 @@ restore_backup:
     // Probably need to set the ACL before changing the user (can't set the
     // ACL on a file the user doesn't own).
     if (!backup_copy) {
-      os_set_acl((char_u *)wfname, acl);
+      os_set_acl(wfname, acl);
     }
 #endif
 
@@ -3812,7 +3812,7 @@ static bool time_differs(const FileInfo *file_info, long mtime, long mtime_ns) F
 static int buf_write_bytes(struct bw_info *ip)
 {
   int wlen;
-  char_u *buf = ip->bw_buf;        // data to write
+  char *buf = ip->bw_buf;        // data to write
   int len = ip->bw_len;                 // length of data
 #ifdef HAS_BW_FLAGS
   int flags = ip->bw_flags;             // extra flags
@@ -3820,7 +3820,7 @@ static int buf_write_bytes(struct bw_info *ip)
 
   // Skip conversion when writing the BOM.
   if (!(flags & FIO_NOCONVERT)) {
-    char_u *p;
+    char *p;
     unsigned c;
     int n;
 
@@ -3828,7 +3828,7 @@ static int buf_write_bytes(struct bw_info *ip)
       // Convert latin1 in the buffer to UTF-8 in the file.
       p = ip->bw_conv_buf;              // translate to buffer
       for (wlen = 0; wlen < len; wlen++) {
-        p += utf_char2bytes(buf[wlen], (char *)p);
+        p += utf_char2bytes((uint8_t)buf[wlen], p);
       }
       buf = ip->bw_conv_buf;
       len = (int)(p - ip->bw_conv_buf);
@@ -3852,7 +3852,7 @@ static int buf_write_bytes(struct bw_info *ip)
             l = len;
           }
           memmove(ip->bw_rest + ip->bw_restlen, buf, (size_t)l);
-          n = utf_ptr2len_len(ip->bw_rest, ip->bw_restlen + l);
+          n = utf_ptr2len_len((char *)ip->bw_rest, ip->bw_restlen + l);
           if (n > ip->bw_restlen + len) {
             // We have an incomplete byte sequence at the end to
             // be written.  We can't convert it without the
@@ -3892,9 +3892,9 @@ static int buf_write_bytes(struct bw_info *ip)
             break;
           }
           if (n > 1) {
-            c = (unsigned)utf_ptr2char((char *)buf + wlen);
+            c = (unsigned)utf_ptr2char(buf + wlen);
           } else {
-            c = buf[wlen];
+            c = (uint8_t)buf[wlen];
           }
         }
 
@@ -3929,17 +3929,17 @@ static int buf_write_bytes(struct bw_info *ip)
         // the bytes of the current call.  Use the end of the
         // conversion buffer for this.
         fromlen = (size_t)len + (size_t)ip->bw_restlen;
-        fp = (char *)ip->bw_conv_buf + ip->bw_conv_buflen - fromlen;
+        fp = ip->bw_conv_buf + ip->bw_conv_buflen - fromlen;
         memmove(fp, ip->bw_rest, (size_t)ip->bw_restlen);
         memmove(fp + ip->bw_restlen, buf, (size_t)len);
         from = fp;
         tolen = ip->bw_conv_buflen - fromlen;
       } else {
-        from = (const char *)buf;
+        from = buf;
         fromlen = (size_t)len;
         tolen = ip->bw_conv_buflen;
       }
-      to = (char *)ip->bw_conv_buf;
+      to = ip->bw_conv_buf;
 
       if (ip->bw_first) {
         size_t save_len = tolen;
@@ -3950,7 +3950,7 @@ static int buf_write_bytes(struct bw_info *ip)
         // There is a bug in iconv() on Linux (which appears to be
         // wide-spread) which sets "to" to NULL and messes up "tolen".
         if (to == NULL) {
-          to = (char *)ip->bw_conv_buf;
+          to = ip->bw_conv_buf;
           tolen = save_len;
         }
         ip->bw_first = false;
@@ -3971,7 +3971,7 @@ static int buf_write_bytes(struct bw_info *ip)
       ip->bw_restlen = (int)fromlen;
 
       buf = ip->bw_conv_buf;
-      len = (int)((char_u *)to - ip->bw_conv_buf);
+      len = (int)(to - ip->bw_conv_buf);
     }
 #endif
   }
@@ -3991,9 +3991,9 @@ static int buf_write_bytes(struct bw_info *ip)
 /// @param flags FIO_ flags that specify which encoding to use
 ///
 /// @return true for an error, false when it's OK.
-static bool ucs2bytes(unsigned c, char_u **pp, int flags) FUNC_ATTR_NONNULL_ALL
+static bool ucs2bytes(unsigned c, char **pp, int flags) FUNC_ATTR_NONNULL_ALL
 {
-  char_u *p = *pp;
+  char_u *p = (char_u *)(*pp);
   bool error = false;
   int cc;
 
@@ -4047,7 +4047,7 @@ static bool ucs2bytes(unsigned c, char_u **pp, int flags) FUNC_ATTR_NONNULL_ALL
     }
   }
 
-  *pp = p;
+  *pp = (char *)p;
   return error;
 }
 
@@ -4070,8 +4070,8 @@ static bool need_conversion(const char *fenc)
   } else {
     // Ignore difference between "ansi" and "latin1", "ucs-4" and
     // "ucs-4be", etc.
-    enc_flags = get_fio_flags((char_u *)p_enc);
-    fenc_flags = get_fio_flags((char_u *)fenc);
+    enc_flags = get_fio_flags(p_enc);
+    fenc_flags = get_fio_flags(fenc);
     same_encoding = (enc_flags != 0 && fenc_flags == enc_flags);
   }
   if (same_encoding) {
@@ -4089,14 +4089,14 @@ static bool need_conversion(const char *fenc)
 /// use 'encoding'.
 ///
 /// @param name string to check for encoding
-static int get_fio_flags(const char_u *name)
+static int get_fio_flags(const char *name)
 {
   int prop;
 
   if (*name == NUL) {
-    name = (char_u *)p_enc;
+    name = p_enc;
   }
-  prop = enc_canon_props((char *)name);
+  prop = enc_canon_props(name);
   if (prop & ENC_UNICODE) {
     if (prop & ENC_2BYTE) {
       if (prop & ENC_ENDIAN_L) {
@@ -4130,7 +4130,7 @@ static int get_fio_flags(const char_u *name)
 ///
 /// @return  the name of the encoding and set "*lenp" to the length or,
 ///          NULL when no BOM found.
-static char_u *check_for_bom(const char_u *p, long size, int *lenp, int flags)
+static char *check_for_bom(const char_u *p, long size, int *lenp, int flags)
 {
   char *name = NULL;
   int len = 2;
@@ -4167,16 +4167,16 @@ static char_u *check_for_bom(const char_u *p, long size, int *lenp, int flags)
   }
 
   *lenp = len;
-  return (char_u *)name;
+  return name;
 }
 
 /// Generate a BOM in "buf[4]" for encoding "name".
 ///
 /// @return  the length of the BOM (zero when no BOM).
-static int make_bom(char_u *buf, char_u *name)
+static int make_bom(char_u *buf, char *name)
 {
   int flags;
-  char_u *p;
+  char *p;
 
   flags = get_fio_flags(name);
 
@@ -4191,9 +4191,9 @@ static int make_bom(char_u *buf, char_u *name)
     buf[2] = 0xbf;
     return 3;
   }
-  p = buf;
+  p = (char *)buf;
   (void)ucs2bytes(0xfeff, &p, flags);
-  return (int)(p - buf);
+  return (int)((char_u *)p - buf);
 }
 
 /// Shorten filename of a buffer.
@@ -4232,9 +4232,9 @@ void shorten_buf_fname(buf_T *buf, char *dirname, int force)
 /// Shorten filenames for all buffers.
 void shorten_fnames(int force)
 {
-  char_u dirname[MAXPATHL];
+  char dirname[MAXPATHL];
 
-  os_dirname((char *)dirname, MAXPATHL);
+  os_dirname(dirname, MAXPATHL);
   FOR_ALL_BUFFERS(buf) {
     shorten_buf_fname(buf, (char *)dirname, force);
 
@@ -4597,7 +4597,7 @@ int vim_rename(const char *from, const char *to)
   perm = os_getperm(from);
 #ifdef HAVE_ACL
   // For systems that support ACL: get the ACL from the original file.
-  acl = os_get_acl((char_u *)from);
+  acl = os_get_acl(from);
 #endif
   fd_in = os_open((char *)from, O_RDONLY, 0);
   if (fd_in < 0) {
@@ -4650,7 +4650,7 @@ int vim_rename(const char *from, const char *to)
   os_setperm((const char *)to, perm);
 #endif
 #ifdef HAVE_ACL
-  os_set_acl((char_u *)to, acl);
+  os_set_acl(to, acl);
   os_free_acl(acl);
 #endif
   if (errmsg != NULL) {

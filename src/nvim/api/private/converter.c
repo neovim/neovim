@@ -358,7 +358,7 @@ bool object_to_vim(Object obj, typval_T *tv, Error *err)
   }
 
   case kObjectTypeLuaRef: {
-    char *name = (char *)register_luafunc(api_new_luaref(obj.data.luaref));
+    char *name = register_luafunc(api_new_luaref(obj.data.luaref));
     tv->v_type = VAR_FUNC;
     tv->vval.v_string = xstrdup(name);
     break;

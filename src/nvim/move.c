@@ -760,7 +760,7 @@ void curs_columns(win_T *wp, int may_scroll)
       // When cursor wraps to first char of next line in Insert
       // mode, the 'showbreak' string isn't shown, backup to first
       // column
-      char *const sbr = (char *)get_showbreak_value(wp);
+      char *const sbr = get_showbreak_value(wp);
       if (*sbr && *get_cursor_pos_ptr() == NUL
           && wp->w_wcol == vim_strsize(sbr)) {
         wp->w_wcol = 0;

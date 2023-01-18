@@ -1950,7 +1950,7 @@ char_u *nlua_register_table_as_callable(const typval_T *const arg)
 
   LuaRef func = nlua_ref_global(lstate, -1);
 
-  char_u *name = register_luafunc(func);
+  char_u *name = (char_u *)register_luafunc(func);
 
   lua_pop(lstate, 1);  // []
   assert(top == lua_gettop(lstate));

@@ -1489,7 +1489,7 @@ int do_digraph(int c)
 
 /// Find a digraph for "val".  If found return the string to display it.
 /// If not found return NULL.
-char_u *get_digraph_for_char(int val_arg)
+char *get_digraph_for_char(int val_arg)
 {
   const int val = val_arg;
   const digr_T *dp;
@@ -1506,7 +1506,7 @@ char_u *get_digraph_for_char(int val_arg)
         r[0] = dp->char1;
         r[1] = dp->char2;
         r[2] = NUL;
-        return r;
+        return (char *)r;
       }
       dp++;
     }
@@ -1749,16 +1749,16 @@ static void digraph_getlist_appendpair(const digr_T *dp, list_T *l)
   list_T *l2 = tv_list_alloc(2);
   tv_list_append_list(l, l2);
 
-  char_u buf[30];
-  buf[0] = dp->char1;
-  buf[1] = dp->char2;
+  char buf[30];
+  buf[0] = (char)dp->char1;
+  buf[1] = (char)dp->char2;
   buf[2] = NUL;
-  tv_list_append_string(l2, (char *)buf, -1);
+  tv_list_append_string(l2, buf, -1);
 
-  char_u *p = buf;
-  p += utf_char2bytes(dp->result, (char *)p);
+  char *p = buf;
+  p += utf_char2bytes(dp->result, p);
   *p = NUL;
-  tv_list_append_string(l2, (char *)buf, -1);
+  tv_list_append_string(l2, buf, -1);
 }
 
 void digraph_getlist_common(bool list_all, typval_T *rettv)
@@ -1824,7 +1824,7 @@ struct dg_header_entry {
 static void printdigraph(const digr_T *dp, result_T *previous)
   FUNC_ATTR_NONNULL_ARG(1)
 {
-  char_u buf[30];
+  char buf[30];
   int list_width = 13;
 
   if (dp->result == 0) {
@@ -1854,29 +1854,29 @@ static void printdigraph(const digr_T *dp, result_T *previous)
     }
   }
 
-  char_u *p = &buf[0];
-  *p++ = dp->char1;
-  *p++ = dp->char2;
+  char *p = &buf[0];
+  *p++ = (char)dp->char1;
+  *p++ = (char)dp->char2;
   *p++ = ' ';
   *p = NUL;
-  msg_outtrans((char *)buf);
+  msg_outtrans(buf);
   p = buf;
 
   // add a space to draw a composing char on
   if (utf_iscomposing(dp->result)) {
     *p++ = ' ';
   }
-  p += utf_char2bytes(dp->result, (char *)p);
+  p += utf_char2bytes(dp->result, p);
 
   *p = NUL;
-  msg_outtrans_attr((char *)buf, HL_ATTR(HLF_8));
+  msg_outtrans_attr(buf, HL_ATTR(HLF_8));
   p = buf;
   if (char2cells(dp->result) == 1) {
     *p++ = ' ';
   }
   assert(p >= buf);
-  vim_snprintf((char *)p, sizeof(buf) - (size_t)(p - buf), " %3d", dp->result);
-  msg_outtrans((char *)buf);
+  vim_snprintf(p, sizeof(buf) - (size_t)(p - buf), " %3d", dp->result);
+  msg_outtrans(buf);
 }
 
 /// Get the two digraph characters from a typval.

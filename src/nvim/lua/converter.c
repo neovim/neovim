@@ -391,7 +391,7 @@ nlua_pop_typval_table_processing_end:
     case LUA_TFUNCTION: {
       LuaRef func = nlua_ref_global(lstate, -1);
 
-      char *name = (char *)register_luafunc(func);
+      char *name = register_luafunc(func);
 
       cur.tv->v_type = VAR_FUNC;
       cur.tv->vval.v_string = xstrdup(name);

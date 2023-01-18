@@ -435,7 +435,7 @@ bool terminal_enter(void)
   handle_T save_curwin = curwin->handle;
   bool save_w_p_cul = curwin->w_p_cul;
   char *save_w_p_culopt = NULL;
-  char_u save_w_p_culopt_flags = curwin->w_p_culopt_flags;
+  uint8_t save_w_p_culopt_flags = curwin->w_p_culopt_flags;
   int save_w_p_cuc = curwin->w_p_cuc;
   long save_w_p_so = curwin->w_p_so;
   long save_w_p_siso = curwin->w_p_siso;
@@ -718,7 +718,7 @@ void terminal_paste(long count, char **y_array, size_t y_size)
   }
   vterm_keyboard_start_paste(curbuf->terminal->vt);
   size_t buff_len = strlen(y_array[0]);
-  char_u *buff = xmalloc(buff_len);
+  char *buff = xmalloc(buff_len);
   for (int i = 0; i < count; i++) {  // -V756
     // feed the lines to the terminal
     for (size_t j = 0; j < y_size; j++) {
@@ -731,18 +731,18 @@ void terminal_paste(long count, char **y_array, size_t y_size)
         buff = xrealloc(buff, len);
         buff_len = len;
       }
-      char_u *dst = buff;
-      char_u *src = (char_u *)y_array[j];
+      char *dst = buff;
+      char *src = y_array[j];
       while (*src != '\0') {
-        len = (size_t)utf_ptr2len((char *)src);
-        int c = utf_ptr2char((char *)src);
+        len = (size_t)utf_ptr2len(src);
+        int c = utf_ptr2char(src);
         if (!is_filter_char(c)) {
           memcpy(dst, src, len);
           dst += len;
         }
         src += len;
       }
-      terminal_send(curbuf->terminal, (char *)buff, (size_t)(dst - buff));
+      terminal_send(curbuf->terminal, buff, (size_t)(dst - buff));
     }
   }
   xfree(buff);

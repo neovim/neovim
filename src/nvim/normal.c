@@ -1526,8 +1526,7 @@ void restore_visual_mode(void)
 /// @param dir    the direction of searching, is either FORWARD or BACKWARD
 /// @param *colp  is in/decremented if "ptr[-dir]" should also be included.
 /// @param bnp    points to a counter for square brackets.
-static bool find_is_eval_item(const char_u *const ptr, int *const colp, int *const bnp,
-                              const int dir)
+static bool find_is_eval_item(const char *const ptr, int *const colp, int *const bnp, const int dir)
 {
   // Accept everything inside [].
   if ((*ptr == ']' && dir == BACKWARD) || (*ptr == '[' && dir == FORWARD)) {
@@ -1635,7 +1634,7 @@ size_t find_ident_at_pos(win_T *wp, linenr_T lnum, colnr_T startcol, char **text
               || (find_type & FIND_IDENT))
           && (!(find_type & FIND_EVAL)
               || prevcol == 0
-              || !find_is_eval_item((char_u *)ptr + prevcol, &prevcol, &bn, BACKWARD))) {
+              || !find_is_eval_item(ptr + prevcol, &prevcol, &bn, BACKWARD))) {
         break;
       }
       col = prevcol;
@@ -1678,7 +1677,7 @@ size_t find_ident_at_pos(win_T *wp, linenr_T lnum, colnr_T startcol, char **text
               : mb_get_class(ptr + col) != 0)
              || ((find_type & FIND_EVAL)
                  && col <= (int)startcol
-                 && find_is_eval_item((char_u *)ptr + col, &col, &bn, FORWARD)))) {
+                 && find_is_eval_item(ptr + col, &col, &bn, FORWARD)))) {
     col += utfc_ptr2len(ptr + col);
   }
 
@@ -1927,7 +1926,7 @@ bool add_to_showcmd(int c)
     }
   }
 
-  char *p = (char *)transchar(c);
+  char *p = transchar(c);
   if (*p == ' ') {
     STRCPY(p, "<20>");
   }
@@ -2236,7 +2235,7 @@ static void nv_gd(oparg_T *oap, int nchar, int thisblock)
   size_t len;
   char *ptr;
   if ((len = find_ident_under_cursor(&ptr, FIND_IDENT)) == 0
-      || !find_decl((char_u *)ptr, len, nchar == 'd', thisblock, SEARCH_START)) {
+      || !find_decl(ptr, len, nchar == 'd', thisblock, SEARCH_START)) {
     clearopbeep(oap);
     return;
   }
@@ -2252,7 +2251,7 @@ static void nv_gd(oparg_T *oap, int nchar, int thisblock)
 
 /// @return true if line[offset] is not inside a C-style comment or string,
 ///         false otherwise.
-static bool is_ident(const char_u *line, int offset)
+static bool is_ident(const char *line, int offset)
 {
   bool incomment = false;
   int instring = 0;
@@ -2260,11 +2259,11 @@ static bool is_ident(const char_u *line, int offset)
 
   for (int i = 0; i < offset && line[i] != NUL; i++) {
     if (instring != 0) {
-      if (prev != '\\' && line[i] == instring) {
+      if (prev != '\\' && (uint8_t)line[i] == instring) {
         instring = 0;
       }
     } else if ((line[i] == '"' || line[i] == '\'') && !incomment) {
-      instring = line[i];
+      instring = (uint8_t)line[i];
     } else {
       if (incomment) {
         if (prev == '*' && line[i] == '/') {
@@ -2277,7 +2276,7 @@ static bool is_ident(const char_u *line, int offset)
       }
     }
 
-    prev = line[i];
+    prev = (uint8_t)line[i];
   }
 
   return incomment == false && instring == 0;
@@ -2291,7 +2290,7 @@ static bool is_ident(const char_u *line, int offset)
 /// @param flags_arg  flags passed to searchit()
 ///
 /// @return           fail when not found.
-bool find_decl(char_u *ptr, size_t len, bool locally, bool thisblock, int flags_arg)
+bool find_decl(char *ptr, size_t len, bool locally, bool thisblock, int flags_arg)
 {
   char *pat;
   pos_T old_pos;
@@ -2309,7 +2308,7 @@ bool find_decl(char_u *ptr, size_t len, bool locally, bool thisblock, int flags_
   // Put "\V" before the pattern to avoid that the special meaning of "."
   // and "~" causes trouble.
   assert(len <= INT_MAX);
-  sprintf(pat, vim_iswordp((char *)ptr) ? "\\V\\<%.*s\\>" : "\\V%.*s",  // NOLINT(runtime/printf)
+  sprintf(pat, vim_iswordp(ptr) ? "\\V\\<%.*s\\>" : "\\V%.*s",  // NOLINT(runtime/printf)
           (int)len, ptr);
   old_pos = curwin->w_cursor;
   save_p_ws = p_ws;
@@ -2370,7 +2369,7 @@ bool find_decl(char_u *ptr, size_t len, bool locally, bool thisblock, int flags_
       curwin->w_cursor.col = 0;
       continue;
     }
-    bool valid = is_ident((char_u *)get_cursor_line_ptr(), curwin->w_cursor.col);
+    bool valid = is_ident(get_cursor_line_ptr(), curwin->w_cursor.col);
 
     // If the current position is not a valid identifier and a previous match is
     // present, favor that one instead.
@@ -2551,7 +2550,7 @@ static bool nv_screengo(oparg_T *oap, int dir, long dist)
     validate_virtcol();
     colnr_T virtcol = curwin->w_virtcol;
     if (virtcol > (colnr_T)width1 && *get_showbreak_value(curwin) != NUL) {
-      virtcol -= vim_strsize((char *)get_showbreak_value(curwin));
+      virtcol -= vim_strsize(get_showbreak_value(curwin));
     }
 
     int c = utf_ptr2char(get_cursor_pos_ptr());
@@ -3929,7 +3928,7 @@ static void nv_gotofile(cmdarg_T *cap)
     return;
   }
 
-  ptr = (char *)grab_file_name(cap->count1, &lnum);
+  ptr = grab_file_name(cap->count1, &lnum);
 
   if (ptr != NULL) {
     // do autowrite if necessary

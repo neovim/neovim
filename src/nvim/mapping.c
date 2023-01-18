@@ -1851,9 +1851,9 @@ int makemap(FILE *fd, buf_T *buf)
           }
 
           if (putc(' ', fd) < 0
-              || put_escstr(fd, (char_u *)mp->m_keys, 0) == FAIL
+              || put_escstr(fd, mp->m_keys, 0) == FAIL
               || putc(' ', fd) < 0
-              || put_escstr(fd, (char_u *)mp->m_str, 1) == FAIL
+              || put_escstr(fd, mp->m_str, 1) == FAIL
               || put_eol(fd) < 0) {
             return FAIL;
           }
@@ -1879,9 +1879,9 @@ int makemap(FILE *fd, buf_T *buf)
 // "what": 0 for :map lhs, 1 for :map rhs, 2 for :set
 //
 // return FAIL for failure, OK otherwise
-int put_escstr(FILE *fd, char_u *strstart, int what)
+int put_escstr(FILE *fd, char *strstart, int what)
 {
-  char_u *str = strstart;
+  char_u *str = (char_u *)strstart;
   int c;
 
   // :map xx <Nop>
@@ -1958,7 +1958,7 @@ int put_escstr(FILE *fd, char_u *strstart, int what)
       }
     } else if (c < ' ' || c > '~' || c == '|'
                || (what == 0 && c == ' ')
-               || (what == 1 && str == strstart && c == ' ')
+               || (what == 1 && str == (char_u *)strstart && c == ' ')
                || (what != 2 && c == '<')) {
       if (putc(Ctrl_V, fd) < 0) {
         return FAIL;

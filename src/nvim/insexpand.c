@@ -2997,7 +2997,7 @@ static void get_next_filename_completion(void)
 #ifdef BACKSLASH_IN_FILENAME
   if (curbuf->b_p_csl[0] != NUL) {
     for (int i = 0; i < num_matches; i++) {
-      char_u *ptr = matches[i];
+      char *ptr = matches[i];
       while (*ptr != NUL) {
         if (curbuf->b_p_csl[0] == 's' && *ptr == '\\') {
           *ptr = '/';

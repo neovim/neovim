@@ -540,7 +540,7 @@ int utf_ptr2cells_len(const char *p, int size)
 
   // Need to convert to a wide character.
   if (size > 0 && (uint8_t)(*p) >= 0x80) {
-    if (utf_ptr2len_len((char_u *)p, size) < utf8len_tab[(uint8_t)(*p)]) {
+    if (utf_ptr2len_len(p, size) < utf8len_tab[(uint8_t)(*p)]) {
       return 1;        // truncated
     }
     c = utf_ptr2char((char *)p);
@@ -584,9 +584,9 @@ size_t mb_string2cells_len(const char *str, size_t size)
 {
   size_t clen = 0;
 
-  for (const char_u *p = (char_u *)str; *p != NUL && p < (char_u *)str + size;
-       p += utfc_ptr2len_len((char *)p, (int)size + (int)(p - (char_u *)str))) {
-    clen += (size_t)utf_ptr2cells((char *)p);
+  for (const char *p = str; *p != NUL && p < str + size;
+       p += utfc_ptr2len_len(p, (int)size + (int)(p - str))) {
+    clen += (size_t)utf_ptr2cells(p);
   }
 
   return clen;
@@ -785,7 +785,7 @@ int utfc_ptr2char_len(const char *p, int *pcc, int maxlen)
 
   int i = 0;
 
-  int len = utf_ptr2len_len((char_u *)p, maxlen);
+  int len = utf_ptr2len_len(p, maxlen);
   // Is it safe to use utf_ptr2char()?
   bool safe = len > 1 && len <= maxlen;
   int c = safe ? utf_ptr2char(p) : (uint8_t)(*p);
@@ -793,7 +793,7 @@ int utfc_ptr2char_len(const char *p, int *pcc, int maxlen)
   // Only accept a composing char when the first char isn't illegal.
   if ((safe || c < 0x80) && len < maxlen && (uint8_t)p[len] >= 0x80) {
     for (; i < MAX_MCO; i++) {
-      int len_cc = utf_ptr2len_len((char_u *)p + len, maxlen - len);
+      int len_cc = utf_ptr2len_len(p + len, maxlen - len);
       safe = len_cc > 1 && len_cc <= maxlen - len;
       if (!safe || (pcc[i] = utf_ptr2char(p + len)) < 0x80
           || !(i == 0 ? utf_composinglike(p, p + len) : utf_iscomposing(pcc[i]))) {
@@ -848,13 +848,13 @@ int utf_byte2len(int b)
 // Returns 1 for an illegal byte sequence (also in incomplete byte seq.).
 // Returns number > "size" for an incomplete byte sequence.
 // Never returns zero.
-int utf_ptr2len_len(const char_u *p, int size)
+int utf_ptr2len_len(const char *p, int size)
 {
   int len;
   int i;
   int m;
 
-  len = utf8len_tab[*p];
+  len = utf8len_tab[(uint8_t)(*p)];
   if (len == 1) {
     return 1;           // NUL, ascii or illegal lead byte
   }
@@ -925,7 +925,7 @@ int utfc_ptr2len_len(const char *p, int size)
   }
 
   // Skip over first UTF-8 char, stopping at a NUL byte.
-  len = utf_ptr2len_len((char_u *)p, size);
+  len = utf_ptr2len_len(p, size);
 
   // Check for illegal byte and incomplete byte sequence.
   if ((len == 1 && (uint8_t)p[0] >= 0x80) || len > size) {
@@ -944,7 +944,7 @@ int utfc_ptr2len_len(const char *p, int size)
 
     // Next character length should not go beyond size to ensure that
     // utf_composinglike(...) does not read beyond size.
-    len_next_char = utf_ptr2len_len((char_u *)p + len, size - len);
+    len_next_char = utf_ptr2len_len(p + len, size - len);
     if (len_next_char > size - len) {
       break;
     }
@@ -1462,7 +1462,7 @@ void mb_utflen(const char *s, size_t len, size_t *codepoints, size_t *codeunits)
   size_t count = 0, extra = 0;
   size_t clen;
   for (size_t i = 0; i < len; i += clen) {
-    clen = (size_t)utf_ptr2len_len((char_u *)s + i, (int)(len - i));
+    clen = (size_t)utf_ptr2len_len(s + i, (int)(len - i));
     // NB: gets the byte value of invalid sequence bytes.
     // we only care whether the char fits in the BMP or not
     int c = (clen > 1) ? utf_ptr2char(s + i) : (uint8_t)s[i];
@@ -1475,7 +1475,7 @@ void mb_utflen(const char *s, size_t len, size_t *codepoints, size_t *codeunits)
   *codeunits += count + extra;
 }
 
-ssize_t mb_utf_index_to_bytes(const char_u *s, size_t len, size_t index, bool use_utf16_units)
+ssize_t mb_utf_index_to_bytes(const char *s, size_t len, size_t index, bool use_utf16_units)
   FUNC_ATTR_NONNULL_ALL
 {
   size_t count = 0;
@@ -1487,7 +1487,7 @@ ssize_t mb_utf_index_to_bytes(const char_u *s, size_t len, size_t index, bool us
     clen = (size_t)utf_ptr2len_len(s + i, (int)(len - i));
     // NB: gets the byte value of invalid sequence bytes.
     // we only care whether the char fits in the BMP or not
-    int c = (clen > 1) ? utf_ptr2char((char *)s + i) : s[i];
+    int c = (clen > 1) ? utf_ptr2char(s + i) : (uint8_t)s[i];
     count++;
     if (use_utf16_units && c > 0xFFFF) {
       count++;
@@ -1787,7 +1787,7 @@ void mb_copy_char(const char **const fp, char **const tp)
 /// Return the offset from "p_in" to the first byte of a character.  When "p_in" is
 /// at the start of a character 0 is returned, otherwise the offset to the next
 /// character.  Can start anywhere in a stream of bytes.
-int mb_off_next(const char_u *base, const char *p_in)
+int mb_off_next(const char *base, const char *p_in)
 {
   const uint8_t *p = (uint8_t *)p_in;
   int i;
@@ -1801,7 +1801,7 @@ int mb_off_next(const char_u *base, const char *p_in)
   for (i = 0; (p[i] & 0xc0) == 0x80; i++) {}
   if (i > 0) {
     // Check for illegal sequence.
-    for (j = 0; p - j > base; j++) {
+    for (j = 0; p - j > (uint8_t *)base; j++) {
       if ((p[-j] & 0xc0) != 0x80) {
         break;
       }
@@ -2265,7 +2265,7 @@ enc_locale_copy_enc:
 // versions).
 // Returns (void *)-1 if failed.
 // (should return iconv_t, but that causes problems with prototypes).
-void *my_iconv_open(char_u *to, char_u *from)
+void *my_iconv_open(char *to, char *from)
 {
   iconv_t fd;
 # define ICONV_TESTLEN 400
@@ -2277,7 +2277,7 @@ void *my_iconv_open(char_u *to, char_u *from)
   if (iconv_working == kBroken) {
     return (void *)-1;          // detected a broken iconv() previously
   }
-  fd = iconv_open(enc_skip((char *)to), enc_skip((char *)from));
+  fd = iconv_open(enc_skip(to), enc_skip(from));
 
   if (fd != (iconv_t)-1 && iconv_working == kUnknown) {
     // Do a dummy iconv() call to check if it actually works.  There is a
@@ -2452,8 +2452,8 @@ int convert_setup_ext(vimconv_T *vcp, char *from, bool from_unicode_is_utf8, cha
 #ifdef HAVE_ICONV
   else {  // NOLINT(readability/braces)
     // Use iconv() for conversion.
-    vcp->vc_fd = (iconv_t)my_iconv_open(to_is_utf8 ? (char_u *)"utf-8" : (char_u *)to,
-                                        from_is_utf8 ? (char_u *)"utf-8" : (char_u *)from);
+    vcp->vc_fd = (iconv_t)my_iconv_open(to_is_utf8 ? "utf-8" : to,
+                                        from_is_utf8 ? "utf-8" : from);
     if (vcp->vc_fd != (iconv_t)-1) {
       vcp->vc_type = CONV_ICONV;
       vcp->vc_factor = 4;       // could be longer too...
@@ -2553,7 +2553,7 @@ char_u *string_convert_ext(const vimconv_T *const vcp, char_u *ptr, size_t *lenp
     retval = xmalloc(len + 1);
     d = retval;
     for (size_t i = 0; i < len; i++) {
-      l = utf_ptr2len_len(ptr + i, (int)(len - i));
+      l = utf_ptr2len_len((char *)ptr + i, (int)(len - i));
       if (l == 0) {
         *d++ = NUL;
       } else if (l == 1) {

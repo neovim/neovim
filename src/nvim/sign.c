@@ -99,7 +99,7 @@ static signgroup_T *sign_group_ref(const char *groupname)
   hashitem_T *hi;
   signgroup_T *group;
 
-  hash = hash_hash((char_u *)groupname);
+  hash = hash_hash(groupname);
   hi = hash_lookup(&sg_table, (char *)groupname, strlen(groupname), hash);
   if (HASHITEM_EMPTY(hi)) {
     // new group
@@ -108,7 +108,7 @@ static signgroup_T *sign_group_ref(const char *groupname)
     STRCPY(group->sg_name, groupname);
     group->sg_refcount = 1;
     group->sg_next_sign_id = 1;
-    hash_add_item(&sg_table, hi, (char_u *)group->sg_name, hash);
+    hash_add_item(&sg_table, hi, group->sg_name, hash);
   } else {
     // existing group
     group = HI2SG(hi);

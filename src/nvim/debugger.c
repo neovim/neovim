@@ -802,7 +802,7 @@ static linenr_T debuggy_find(bool file, char *fname, linenr_T after, garray_T *g
       // while matching should abort it.
       prev_got_int = got_int;
       got_int = false;
-      if (vim_regexec_prog(&bp->dbg_prog, false, (char_u *)name, (colnr_T)0)) {
+      if (vim_regexec_prog(&bp->dbg_prog, false, name, (colnr_T)0)) {
         lnum = bp->dbg_lnum;
         if (fp != NULL) {
           *fp = bp->dbg_forceit;

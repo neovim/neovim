@@ -158,7 +158,7 @@ void do_ascii(const exarg_T *const eap)
     char buf2[20];
     buf2[0] = NUL;
 
-    dig = (char *)get_digraph_for_char(cval);
+    dig = get_digraph_for_char(cval);
     if (dig != NULL) {
       iobuff_len += (size_t)vim_snprintf(IObuff + iobuff_len,
                                          sizeof(IObuff) - iobuff_len,
@@ -206,7 +206,7 @@ void do_ascii(const exarg_T *const eap)
     }
     iobuff_len += (size_t)utf_char2bytes(c, IObuff + iobuff_len);
 
-    dig = (char *)get_digraph_for_char(c);
+    dig = get_digraph_for_char(c);
     if (dig != NULL) {
       iobuff_len += (size_t)vim_snprintf(IObuff + iobuff_len,
                                          sizeof(IObuff) - iobuff_len,
@@ -3895,7 +3895,7 @@ static int do_sub(exarg_T *eap, proftime_T timeout, long cmdpreview_ns, handle_T
           // When it fails sublen is zero.
           sublen = vim_regsub_multi(&regmatch,
                                     sub_firstlnum - regmatch.startpos[0].lnum,
-                                    (char_u *)sub, (char_u *)sub_firstline, 0,
+                                    sub, sub_firstline, 0,
                                     REGSUB_BACKSLASH
                                     | (magic_isset() ? REGSUB_MAGIC : 0));
           textlock--;
@@ -3938,7 +3938,7 @@ static int do_sub(exarg_T *eap, proftime_T timeout, long cmdpreview_ns, handle_T
           textlock++;
           (void)vim_regsub_multi(&regmatch,
                                  sub_firstlnum - regmatch.startpos[0].lnum,
-                                 (char_u *)sub, (char_u *)new_end, sublen,
+                                 sub, new_end, sublen,
                                  REGSUB_COPY | REGSUB_BACKSLASH
                                  | (magic_isset() ? REGSUB_MAGIC : 0));
           textlock--;

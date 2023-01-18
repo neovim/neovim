@@ -715,7 +715,7 @@ void draw_tabline(void)
   int len;
   int attr_nosel = HL_ATTR(HLF_TP);
   int attr_fill = HL_ATTR(HLF_TPF);
-  char_u *p;
+  char *p;
   int room;
   int use_sep_chars = (t_colors < 8);
 
@@ -815,16 +815,16 @@ void draw_tabline(void)
         get_trans_bufname(cwp->w_buffer);
         shorten_dir(NameBuff);
         len = vim_strsize(NameBuff);
-        p = (char_u *)NameBuff;
+        p = NameBuff;
         while (len > room) {
-          len -= ptr2cells((char *)p);
+          len -= ptr2cells(p);
           MB_PTR_ADV(p);
         }
         if (len > Columns - col - 1) {
           len = Columns - col - 1;
         }
 
-        grid_puts_len(&default_grid, (char *)p, (int)strlen((char *)p), 0, col, attr);
+        grid_puts_len(&default_grid, p, (int)strlen(p), 0, col, attr);
         col += len;
       }
       grid_putchar(&default_grid, ' ', 0, col++, attr);

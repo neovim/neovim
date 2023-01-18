@@ -1599,7 +1599,7 @@ void callback_free(Callback *callback)
 {
   switch (callback->type) {
   case kCallbackFuncref:
-    func_unref((char_u *)callback->data.funcref);
+    func_unref(callback->data.funcref);
     xfree(callback->data.funcref);
     break;
   case kCallbackPartial:
@@ -1628,7 +1628,7 @@ void callback_put(Callback *cb, typval_T *tv)
   case kCallbackFuncref:
     tv->v_type = VAR_FUNC;
     tv->vval.v_string = xstrdup(cb->data.funcref);
-    func_ref((char_u *)cb->data.funcref);
+    func_ref(cb->data.funcref);
     break;
   case kCallbackLua:
   // TODO(tjdevries): Unified Callback.
@@ -1654,7 +1654,7 @@ void callback_copy(Callback *dest, Callback *src)
     break;
   case kCallbackFuncref:
     dest->data.funcref = xstrdup(src->data.funcref);
-    func_ref((char_u *)src->data.funcref);
+    func_ref(src->data.funcref);
     break;
   case kCallbackLua:
     dest->data.luaref = api_new_luaref(src->data.luaref);
@@ -3019,7 +3019,7 @@ static inline int _nothing_conv_func_start(typval_T *const tv, char_u *const fun
       return OK;
     }
   } else {
-    func_unref(fun);
+    func_unref((char *)fun);
     if ((const char *)fun != tv_empty_string) {
       xfree(fun);
     }
@@ -3235,7 +3235,7 @@ void tv_free(typval_T *tv)
       partial_unref(tv->vval.v_partial);
       break;
     case VAR_FUNC:
-      func_unref((char_u *)tv->vval.v_string);
+      func_unref(tv->vval.v_string);
       FALLTHROUGH;
     case VAR_STRING:
       xfree(tv->vval.v_string);
@@ -3288,7 +3288,7 @@ void tv_copy(const typval_T *const from, typval_T *const to)
     if (from->vval.v_string != NULL) {
       to->vval.v_string = xstrdup(from->vval.v_string);
       if (from->v_type == VAR_FUNC) {
-        func_ref((char_u *)to->vval.v_string);
+        func_ref(to->vval.v_string);
       }
     }
     break;
