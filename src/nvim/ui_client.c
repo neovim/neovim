@@ -84,8 +84,8 @@ void ui_client_run(bool remote_ui)
   if (term) {
     PUT(opts, "term_name", STRING_OBJ(cstr_to_string(term)));
   }
-  if (ui_client_bg_respose != kNone) {
-    bool is_dark = (ui_client_bg_respose == kTrue);
+  if (ui_client_bg_response != kNone) {
+    bool is_dark = (ui_client_bg_response == kTrue);
     PUT_C(opts, "term_background", STRING_OBJ(cstr_as_string(is_dark ? "dark" : "light")));
   }
   PUT_C(opts, "term_colors", INTEGER_OBJ(t_colors));
