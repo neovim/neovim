@@ -7,9 +7,6 @@ local global_helpers = require('test.helpers')
 local assert = require('luassert')
 local say = require('say')
 
-local posix = nil
-local syscall = nil
-
 local check_cores = global_helpers.check_cores
 local dedent = global_helpers.dedent
 local neq = global_helpers.neq
@@ -373,124 +370,91 @@ local function to_cstr(string)
   return cstr(#string + 1, string)
 end
 
-local sc
-
-if posix ~= nil then
-  sc = {
-    fork = posix.fork,
-    pipe = posix.pipe,
-    read = posix.read,
-    write = posix.write,
-    close = posix.close,
-    wait = posix.wait,
-    exit = posix._exit,
-  }
-elseif syscall ~= nil then
-  sc = {
-    fork = syscall.fork,
-    pipe = function()
-      local ret = {syscall.pipe()}
-      return ret[3], ret[4]
-    end,
-    read = function(rd, len)
-      return rd:read(nil, len)
-    end,
-    write = function(wr, s)
-      return wr:write(s)
-    end,
-    close = function(p)
-      return p:close()
-    end,
-    wait = syscall.wait,
-    exit = syscall.exit,
-  }
-else
-  cimport_immediate('./test/unit/fixtures/posix.h')
-  sc = {
-    fork = function()
-      return tonumber(ffi.C.fork())
-    end,
-    pipe = function()
-      local ret = ffi.new('int[2]', {-1, -1})
-      ffi.errno(0)
-      local res = ffi.C.pipe(ret)
-      if (res ~= 0) then
+cimport_immediate('./test/unit/fixtures/posix.h')
+local sc = {
+  fork = function()
+    return tonumber(ffi.C.fork())
+  end,
+  pipe = function()
+    local ret = ffi.new('int[2]', {-1, -1})
+    ffi.errno(0)
+    local res = ffi.C.pipe(ret)
+    if (res ~= 0) then
+      local err = ffi.errno(0)
+      assert(res == 0, ("pipe() error: %u: %s"):format(
+      err, ffi.string(ffi.C.strerror(err))))
+    end
+    assert(ret[0] ~= -1 and ret[1] ~= -1)
+    return ret[0], ret[1]
+  end,
+  read = function(rd, len)
+    local ret = ffi.new('char[?]', len, {0})
+    local total_bytes_read = 0
+    ffi.errno(0)
+    while total_bytes_read < len do
+      local bytes_read = tonumber(ffi.C.read(
+      rd,
+      ffi.cast('void*', ret + total_bytes_read),
+      len - total_bytes_read))
+      if bytes_read == -1 then
         local err = ffi.errno(0)
-        assert(res == 0, ("pipe() error: %u: %s"):format(
-            err, ffi.string(ffi.C.strerror(err))))
+        if err ~= ffi.C.kPOSIXErrnoEINTR then
+          assert(false, ("read() error: %u: %s"):format(
+          err, ffi.string(ffi.C.strerror(err))))
+        end
+      elseif bytes_read == 0 then
+        break
+      else
+        total_bytes_read = total_bytes_read + bytes_read
       end
-      assert(ret[0] ~= -1 and ret[1] ~= -1)
-      return ret[0], ret[1]
-    end,
-    read = function(rd, len)
-      local ret = ffi.new('char[?]', len, {0})
-      local total_bytes_read = 0
-      ffi.errno(0)
-      while total_bytes_read < len do
-        local bytes_read = tonumber(ffi.C.read(
-            rd,
-            ffi.cast('void*', ret + total_bytes_read),
-            len - total_bytes_read))
-        if bytes_read == -1 then
-          local err = ffi.errno(0)
-          if err ~= ffi.C.kPOSIXErrnoEINTR then
-            assert(false, ("read() error: %u: %s"):format(
-                err, ffi.string(ffi.C.strerror(err))))
-          end
-        elseif bytes_read == 0 then
+    end
+    return ffi.string(ret, total_bytes_read)
+  end,
+  write = function(wr, s)
+    local wbuf = to_cstr(s)
+    local total_bytes_written = 0
+    ffi.errno(0)
+    while total_bytes_written < #s do
+      local bytes_written = tonumber(ffi.C.write(
+      wr,
+      ffi.cast('void*', wbuf + total_bytes_written),
+      #s - total_bytes_written))
+      if bytes_written == -1 then
+        local err = ffi.errno(0)
+        if err ~= ffi.C.kPOSIXErrnoEINTR then
+          assert(false, ("write() error: %u: %s ('%s')"):format(
+          err, ffi.string(ffi.C.strerror(err)), s))
+        end
+      elseif bytes_written == 0 then
+        break
+      else
+        total_bytes_written = total_bytes_written + bytes_written
+      end
+    end
+    return total_bytes_written
+  end,
+  close = ffi.C.close,
+  wait = function(pid)
+    ffi.errno(0)
+    local stat_loc = ffi.new('int[1]', {0})
+    while true do
+      local r = ffi.C.waitpid(pid, stat_loc, ffi.C.kPOSIXWaitWUNTRACED)
+      if r == -1 then
+        local err = ffi.errno(0)
+        if err == ffi.C.kPOSIXErrnoECHILD then
           break
-        else
-          total_bytes_read = total_bytes_read + bytes_read
+        elseif err ~= ffi.C.kPOSIXErrnoEINTR then
+          assert(false, ("waitpid() error: %u: %s"):format(
+          err, ffi.string(ffi.C.strerror(err))))
         end
+      else
+        assert(r == pid)
       end
-      return ffi.string(ret, total_bytes_read)
-    end,
-    write = function(wr, s)
-      local wbuf = to_cstr(s)
-      local total_bytes_written = 0
-      ffi.errno(0)
-      while total_bytes_written < #s do
-        local bytes_written = tonumber(ffi.C.write(
-            wr,
-            ffi.cast('void*', wbuf + total_bytes_written),
-            #s - total_bytes_written))
-        if bytes_written == -1 then
-          local err = ffi.errno(0)
-          if err ~= ffi.C.kPOSIXErrnoEINTR then
-            assert(false, ("write() error: %u: %s ('%s')"):format(
-                err, ffi.string(ffi.C.strerror(err)), s))
-          end
-        elseif bytes_written == 0 then
-          break
-        else
-          total_bytes_written = total_bytes_written + bytes_written
-        end
-      end
-      return total_bytes_written
-    end,
-    close = ffi.C.close,
-    wait = function(pid)
-      ffi.errno(0)
-      local stat_loc = ffi.new('int[1]', {0})
-      while true do
-        local r = ffi.C.waitpid(pid, stat_loc, ffi.C.kPOSIXWaitWUNTRACED)
-        if r == -1 then
-          local err = ffi.errno(0)
-          if err == ffi.C.kPOSIXErrnoECHILD then
-            break
-          elseif err ~= ffi.C.kPOSIXErrnoEINTR then
-            assert(false, ("waitpid() error: %u: %s"):format(
-                err, ffi.string(ffi.C.strerror(err))))
-          end
-        else
-          assert(r == pid)
-        end
-      end
-      return stat_loc[0]
-    end,
-    exit = ffi.C._exit,
-  }
-end
+    end
+    return stat_loc[0]
+  end,
+  exit = ffi.C._exit,
+}
 
 local function format_list(lst)
   local ret = ''
