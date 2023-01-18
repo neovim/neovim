@@ -1824,7 +1824,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
           syntax_attr = get_syntax_attr((colnr_T)v - 1,
                                         has_spell ? &can_spell : NULL, false);
 
-          if (did_emsg) {
+          if (did_emsg) {  // -V547
             wp->w_s->b_syn_error = true;
             has_syntax = false;
           } else {
