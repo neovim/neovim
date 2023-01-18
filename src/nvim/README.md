@@ -70,8 +70,8 @@ Create a directory to store logs:
 
 Configure the sanitizer(s) via these environment variables:
 
-    # Change to detect_leaks=1 to detect memory leaks (slower).
-    export ASAN_OPTIONS="detect_leaks=0:log_path=$HOME/logs/asan"
+    # Change to detect_leaks=1 to detect memory leaks (slower, noisier).
+    export ASAN_OPTIONS="detect_leaks=0:log_path=$HOME/logs/asan,handle_abort=1,handle_sigill=1"
     # Show backtraces in the logs.
     export UBSAN_OPTIONS=print_stacktrace=1
     export MSAN_OPTIONS="log_path=${HOME}/logs/msan"

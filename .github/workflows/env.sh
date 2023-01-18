@@ -23,7 +23,7 @@ TSAN_OPTIONS=
 case "$FLAVOR" in
   asan)
     CLANG_SANITIZER=ASAN_UBSAN
-    ASAN_OPTIONS="detect_leaks=1:check_initialization_order=1:log_path=$LOG_DIR/asan:intercept_tls_get_addr=0"
+    ASAN_OPTIONS="detect_leaks=1:check_initialization_order=1:handle_abort=1:handle_sigill=1:log_path=$LOG_DIR/asan:intercept_tls_get_addr=0"
     UBSAN_OPTIONS="print_stacktrace=1 log_path=$LOG_DIR/ubsan"
     ;;
   tsan)
