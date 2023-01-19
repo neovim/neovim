@@ -631,7 +631,7 @@ static char e_not_open[] = N_("E828: Cannot open undo file for writing: %s");
 /// @param[in] buf The buffer used to compute the hash
 /// @param[in] hash Array of size UNDO_HASH_SIZE in which to store the value of
 ///                 the hash
-void u_compute_hash(buf_T *buf, char *hash)
+void u_compute_hash(buf_T *buf, char_u *hash)
 {
   context_sha256_T ctx;
   sha256_start(&ctx);
@@ -639,7 +639,7 @@ void u_compute_hash(buf_T *buf, char *hash)
     char *p = ml_get_buf(buf, lnum, false);
     sha256_update(&ctx, (char_u *)p, (uint32_t)(strlen(p) + 1));
   }
-  sha256_finish(&ctx, (char_u *)hash);
+  sha256_finish(&ctx, hash);
 }
 
 /// Return an allocated string of the full path of the target undofile.
@@ -765,7 +765,7 @@ static void u_free_uhp(u_header_T *uhp)
 /// @param hash The hash of the buffer contents
 //
 /// @returns false in case of an error.
-static bool serialize_header(bufinfo_T *bi, char *hash)
+static bool serialize_header(bufinfo_T *bi, char_u *hash)
   FUNC_ATTR_NONNULL_ALL
 {
   buf_T *buf = bi->bi_buf;
@@ -788,7 +788,7 @@ static bool serialize_header(bufinfo_T *bi, char *hash)
   undo_write_bytes(bi, (uintmax_t)buf->b_ml.ml_line_count, 4);
   size_t len = buf->b_u_line_ptr ? strlen(buf->b_u_line_ptr) : 0;
   undo_write_bytes(bi, len, 4);
-  if (len > 0 && !undo_write(bi, buf->b_u_line_ptr, len)) {
+  if (len > 0 && !undo_write(bi, (char_u *)buf->b_u_line_ptr, len)) {
     return false;
   }
   undo_write_bytes(bi, (uintmax_t)buf->b_u_line_lnum, 4);
@@ -804,7 +804,7 @@ static bool serialize_header(bufinfo_T *bi, char *hash)
   undo_write_bytes(bi, (uintmax_t)buf->b_u_seq_cur, 4);
   uint8_t time_buf[8];
   time_to_bytes(buf->b_u_time_cur, time_buf);
-  undo_write(bi, (char *)time_buf, sizeof(time_buf));
+  undo_write(bi, time_buf, sizeof(time_buf));
 
   // Write optional fields.
   undo_write_bytes(bi, 4, 1);
@@ -844,7 +844,7 @@ static bool serialize_uhp(bufinfo_T *bi, u_header_T *uhp)
   serialize_visualinfo(bi, &uhp->uh_visual);
   uint8_t time_buf[8];
   time_to_bytes(uhp->uh_time, time_buf);
-  undo_write(bi, (char *)time_buf, sizeof(time_buf));
+  undo_write(bi, time_buf, sizeof(time_buf));
 
   // Write optional fields.
   undo_write_bytes(bi, 4, 1);
@@ -980,14 +980,14 @@ static bool serialize_extmark(bufinfo_T *bi, ExtmarkUndoObject extup)
   if (extup.type == kExtmarkSplice) {
     undo_write_bytes(bi, (uintmax_t)UF_ENTRY_MAGIC, 2);
     undo_write_bytes(bi, (uintmax_t)extup.type, 4);
-    if (!undo_write(bi, (char *)&(extup.data.splice),
+    if (!undo_write(bi, (uint8_t *)&(extup.data.splice),
                     sizeof(ExtmarkSplice))) {
       return false;
     }
   } else if (extup.type == kExtmarkMove) {
     undo_write_bytes(bi, (uintmax_t)UF_ENTRY_MAGIC, 2);
     undo_write_bytes(bi, (uintmax_t)extup.type, 4);
-    if (!undo_write(bi, (char *)&(extup.data.move), sizeof(ExtmarkMove))) {
+    if (!undo_write(bi, (uint8_t *)&(extup.data.move), sizeof(ExtmarkMove))) {
       return false;
     }
   }
@@ -1007,14 +1007,14 @@ static ExtmarkUndoObject *unserialize_extmark(bufinfo_T *bi, bool *error, const 
   if (type == kExtmarkSplice) {
     size_t n_elems = (size_t)sizeof(ExtmarkSplice) / sizeof(uint8_t);
     buf = xcalloc(n_elems, sizeof(uint8_t));
-    if (!undo_read(bi, (char *)buf, n_elems)) {
+    if (!undo_read(bi, buf, n_elems)) {
       goto error;
     }
     extup->data.splice = *(ExtmarkSplice *)buf;
   } else if (type == kExtmarkMove) {
     size_t n_elems = (size_t)sizeof(ExtmarkMove) / sizeof(uint8_t);
     buf = xcalloc(n_elems, sizeof(uint8_t));
-    if (!undo_read(bi, (char *)buf, n_elems)) {
+    if (!undo_read(bi, buf, n_elems)) {
       goto error;
     }
     extup->data.move = *(ExtmarkMove *)buf;
@@ -1053,7 +1053,7 @@ static bool serialize_uep(bufinfo_T *bi, u_entry_T *uep)
     if (!undo_write_bytes(bi, len, 4)) {
       return false;
     }
-    if (len > 0 && !undo_write(bi, uep->ue_array[i], len)) {
+    if (len > 0 && !undo_write(bi, (char_u *)uep->ue_array[i], len)) {
       return false;
     }
   }
@@ -1072,18 +1072,18 @@ static u_entry_T *unserialize_uep(bufinfo_T *bi, bool *error, const char *file_n
   uep->ue_lcount = undo_read_4c(bi);
   uep->ue_size = undo_read_4c(bi);
 
-  char **array = NULL;
+  char_u **array = NULL;
   if (uep->ue_size > 0) {
     if ((size_t)uep->ue_size < SIZE_MAX / sizeof(char *)) {  // -V547
       array = xmalloc(sizeof(char *) * (size_t)uep->ue_size);
       memset(array, 0, sizeof(char *) * (size_t)uep->ue_size);
     }
   }
-  uep->ue_array = array;
+  uep->ue_array = (char **)array;
 
   for (size_t i = 0; i < (size_t)uep->ue_size; i++) {
     int line_len = undo_read_4c(bi);
-    char *line;
+    char_u *line;
     if (line_len >= 0) {
       line = undo_read_string(bi, (size_t)line_len);
     } else {
@@ -1150,7 +1150,7 @@ static void unserialize_visualinfo(bufinfo_T *bi, visualinfo_T *info)
 /// @param[in]  buf  Buffer for which undo file is written.
 /// @param[in]  hash  Hash value of the buffer text. Must have #UNDO_HASH_SIZE
 ///                   size.
-void u_write_undo(const char *const name, const bool forceit, buf_T *const buf, char *const hash)
+void u_write_undo(const char *const name, const bool forceit, buf_T *const buf, char_u *const hash)
   FUNC_ATTR_NONNULL_ARG(3, 4)
 {
   char *file_name;
@@ -1359,7 +1359,7 @@ theend:
 /// a bit more verbose.
 /// Otherwise use curbuf->b_ffname to generate the undo file name.
 /// "hash[UNDO_HASH_SIZE]" must be the hash value of the buffer text.
-void u_read_undo(char *name, const char *hash, const char *orig_name FUNC_ATTR_UNUSED)
+void u_read_undo(char *name, const char_u *hash, const char *orig_name FUNC_ATTR_UNUSED)
   FUNC_ATTR_NONNULL_ARG(2)
 {
   u_header_T **uhp_table = NULL;
@@ -1427,7 +1427,7 @@ void u_read_undo(char *name, const char *hash, const char *orig_name FUNC_ATTR_U
   }
 
   char read_hash[UNDO_HASH_SIZE];
-  if (!undo_read(&bi, read_hash, UNDO_HASH_SIZE)) {
+  if (!undo_read(&bi, (char_u *)read_hash, UNDO_HASH_SIZE)) {
     corruption_error("hash", file_name);
     goto error;
   }
@@ -1453,7 +1453,7 @@ void u_read_undo(char *name, const char *hash, const char *orig_name FUNC_ATTR_U
   }
 
   if (str_len > 0) {
-    line_ptr = undo_read_string(&bi, (size_t)str_len);
+    line_ptr = (char *)undo_read_string(&bi, (size_t)str_len);
   }
   linenr_T line_lnum = (linenr_T)undo_read_4c(&bi);
   colnr_T line_colnr = (colnr_T)undo_read_4c(&bi);
@@ -1663,7 +1663,7 @@ theend:
 /// @param len The number of bytes to write
 ///
 /// @returns false in case of an error.
-static bool undo_write(bufinfo_T *bi, char *ptr, size_t len)
+static bool undo_write(bufinfo_T *bi, uint8_t *ptr, size_t len)
   FUNC_ATTR_NONNULL_ARG(1)
 {
   return fwrite(ptr, len, 1, bi->bi_fp) == 1;
@@ -1685,7 +1685,7 @@ static bool undo_write_bytes(bufinfo_T *bi, uintmax_t nr, size_t len)
   for (size_t i = len - 1, bufi = 0; bufi < len; i--, bufi++) {
     buf[bufi] = (uint8_t)(nr >> (i * 8));
   }
-  return undo_write(bi, (char *)buf, len);
+  return undo_write(bi, buf, len);
 }
 
 /// Writes the pointer to an undo header.
@@ -1726,7 +1726,7 @@ static time_t undo_read_time(bufinfo_T *bi)
 /// @param size   The size of the character buffer
 ///
 /// @returns false in case of an error.
-static bool undo_read(bufinfo_T *bi, char *buffer, size_t size)
+static bool undo_read(bufinfo_T *bi, uint8_t *buffer, size_t size)
   FUNC_ATTR_NONNULL_ARG(1)
 {
   const bool retval = fread(buffer, size, 1, bi->bi_fp) == 1;
@@ -1743,9 +1743,9 @@ static bool undo_read(bufinfo_T *bi, char *buffer, size_t size)
 /// @param len can be zero to allocate an empty line.
 ///
 /// @returns a pointer to allocated memory or NULL in case of an error.
-static char *undo_read_string(bufinfo_T *bi, size_t len)
+static uint8_t *undo_read_string(bufinfo_T *bi, size_t len)
 {
-  char *ptr = xmallocz(len);
+  uint8_t *ptr = xmallocz(len);
   if (len > 0 && !undo_read(bi, ptr, len)) {
     xfree(ptr);
     return NULL;

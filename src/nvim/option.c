@@ -1973,8 +1973,8 @@ static char *set_bool_option(const int opt_idx, char_u *const varp, const int va
         if ((curbuf == bp
              || (opt_flags & OPT_GLOBAL) || opt_flags == 0)
             && !bufIsChanged(bp) && bp->b_ml.ml_mfp != NULL) {
-          u_compute_hash(bp, (char *)hash);
-          u_read_undo(NULL, (char *)hash, bp->b_fname);
+          u_compute_hash(bp, hash);
+          u_read_undo(NULL, hash, bp->b_fname);
         }
       }
     }

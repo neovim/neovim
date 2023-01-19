@@ -1887,7 +1887,7 @@ failed:
     char_u hash[UNDO_HASH_SIZE];
 
     sha256_finish(&sha_ctx, hash);
-    u_read_undo(NULL, (char *)hash, fname);
+    u_read_undo(NULL, hash, fname);
   }
 
   if (!read_stdin && !read_fifo && (!read_buffer || sfname != NULL)) {
@@ -3608,7 +3608,7 @@ nofail:
     char hash[UNDO_HASH_SIZE];
 
     sha256_finish(&sha_ctx, (char_u *)hash);
-    u_write_undo(NULL, false, buf, hash);
+    u_write_undo(NULL, false, buf, (char_u *)hash);
   }
 
   if (!should_abort(retval)) {
@@ -4982,8 +4982,8 @@ int buf_check_timestamp(buf_T *buf)
       char_u hash[UNDO_HASH_SIZE];
 
       // Any existing undo file is unusable, write it now.
-      u_compute_hash(buf, (char *)hash);
-      u_write_undo(NULL, false, buf, (char *)hash);
+      u_compute_hash(buf, hash);
+      u_write_undo(NULL, false, buf, hash);
     }
   }
 
