@@ -164,6 +164,24 @@ describe('statusline clicks', function()
     meths.input_mouse('right', 'press', '', 0, 6, 5)
     eq('0 1 r', eval("g:testvar"))
   end)
+
+  it('no memory leak with zero-width click labels', function()
+    command([[
+      let &stl = '%@Test@%T%@MyClickFunc@%=%T%@Test@'
+    ]])
+    meths.input_mouse('left', 'press', '', 0, 6, 0)
+    eq('0 1 l', eval("g:testvar"))
+    meths.input_mouse('right', 'press', '', 0, 6, 39)
+    eq('0 1 r', eval("g:testvar"))
+  end)
+
+  it('no memory leak with truncated click labels', function()
+    command([[
+      let &stl = '%@MyClickFunc@foo%X' .. repeat('a', 40) .. '%<t%@Test@bar%X%@Test@baz'
+    ]])
+    meths.input_mouse('left', 'press', '', 0, 6, 2)
+    eq('0 1 l', eval("g:testvar"))
+  end)
 end)
 
 describe('global statusline', function()
