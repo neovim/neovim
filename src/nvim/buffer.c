@@ -3343,7 +3343,7 @@ void maketitle(void)
                      (SPACE_FOR_DIR - (size_t)(buf_p - buf)), true);
 #ifdef BACKSLASH_IN_FILENAME
         // Avoid "c:/name" to be reduced to "c".
-        if (isalpha((uint8_t)buf_p) && *(buf_p + 1) == ':') {
+        if (isalpha((uint8_t)(*buf_p)) && *(buf_p + 1) == ':') {
           buf_p += 2;
         }
 #endif
