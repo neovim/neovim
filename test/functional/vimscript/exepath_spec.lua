@@ -5,20 +5,20 @@ local command = helpers.command
 local exc_exec = helpers.exc_exec
 local matches = helpers.matches
 local is_os = helpers.is_os
+local set_shell_powershell = helpers.set_shell_powershell
+local eval = helpers.eval
+
+local find_dummies = function(ext_pat)
+  local tmp_path = eval('$PATH')
+  command('let $PATH = fnamemodify("./test/functional/fixtures/bin", ":p")')
+  matches('null' .. ext_pat, call('exepath', 'null'))
+  matches('true' .. ext_pat, call('exepath', 'true'))
+  matches('false' .. ext_pat, call('exepath', 'false'))
+  command("let $PATH = '"..tmp_path.."'")
+end
 
 describe('exepath()', function()
   before_each(clear)
-
-  it('returns 1 for commands in $PATH', function()
-    local exe = is_os('win') and 'ping' or 'ls'
-    local ext_pat = is_os('win') and '%.EXE$' or '$'
-    matches(exe .. ext_pat, call('exepath', exe))
-    command('let $PATH = fnamemodify("./test/functional/fixtures/bin", ":p")')
-    ext_pat = is_os('win') and '%.CMD$' or '$'
-    matches('null' .. ext_pat, call('exepath', 'null'))
-    matches('true' .. ext_pat, call('exepath', 'true'))
-    matches('false' .. ext_pat, call('exepath', 'false'))
-  end)
 
   it('fails for invalid values', function()
     for _, input in ipairs({'v:null', 'v:true', 'v:false', '{}', '[]'}) do
@@ -32,11 +32,32 @@ describe('exepath()', function()
   end)
 
   if is_os('win') then
+    it('returns 1 for commands in $PATH (Windows)', function()
+      local exe = 'ping'
+      matches(exe .. '%.EXE$', call('exepath', exe))
+    end)
+
     it('append extension if omitted', function()
       local filename = 'cmd'
       local pathext = '.exe'
       clear({env={PATHEXT=pathext}})
       eq(call('exepath', filename..pathext), call('exepath', filename))
+    end)
+
+    it('returns file WITH extension if files both with and without extension exist in $PATH', function()
+      local ext_pat = '%.CMD$'
+      find_dummies(ext_pat)
+      set_shell_powershell()
+      find_dummies(ext_pat)
+    end)
+  else
+    it('returns 1 for commands in $PATH (not Windows)', function()
+      local exe = 'ls'
+      matches(exe .. '$', call('exepath', exe))
+    end)
+
+    it('returns file WITHOUT extension if files both with and without extension exist in $PATH', function()
+      find_dummies('$')
     end)
   end
 end)
