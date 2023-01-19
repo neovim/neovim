@@ -1141,6 +1141,42 @@ static void did_set_virtualedit(win_T *win, int opt_flags, char *oldval, char **
   }
 }
 
+static void did_set_optexpr(buf_T *buf, win_T *win, char **varp, char **gvarp)
+{
+  char **p_opt = NULL;
+
+  // If the option value starts with <SID> or s:, then replace that with
+  // the script identifier.
+
+  if (varp == &p_dex) {  // 'diffexpr'
+    p_opt = &p_dex;
+  } else if (varp == &win->w_p_fde) {  // 'foldexpr'
+    p_opt = &win->w_p_fde;
+  } else if (varp == &win->w_p_fdt) {  // 'foldtext'
+    p_opt = &win->w_p_fdt;
+  } else if (varp == &p_pex) {  // 'patchexpr'
+    p_opt = &p_pex;
+  } else if (gvarp == &p_fex) {  // 'formatexpr'
+    p_opt = &buf->b_p_fex;
+  } else if (gvarp == &p_inex) {  // 'includeexpr'
+    p_opt = &buf->b_p_inex;
+  } else if (gvarp == &p_inde) {  // 'indentexpr'
+    p_opt = &buf->b_p_inde;
+  }
+
+  if (p_opt != NULL) {
+    char *name = get_scriptlocal_funcname(*p_opt);
+    if (name != NULL) {
+      free_string_option(*p_opt);
+      *p_opt = name;
+    }
+  }
+
+  if (varp == &win->w_p_fde && foldmethodIsExpr(win)) {
+    foldUpdateAll(win);
+  }
+}
+
 /// Handle string options that need some action to perform when changed.
 /// The new value must be allocated.
 ///
@@ -1594,44 +1630,7 @@ char *did_set_string_option(int opt_idx, char **varp, char *oldval, char *errbuf
              || gvarp == &p_inex
              || gvarp == &p_inde
              || varp == &p_pex) {  // '*expr' options
-    char **p_opt = NULL;
-
-    // If the option value starts with <SID> or s:, then replace that with
-    // the script identifier.
-
-    if (varp == &p_dex) {  // 'diffexpr'
-      p_opt = &p_dex;
-    }
-    if (varp == &curwin->w_p_fde) {  // 'foldexpr'
-      p_opt = &curwin->w_p_fde;
-    }
-    if (varp == &curwin->w_p_fdt) {  // 'foldtext'
-      p_opt = &curwin->w_p_fdt;
-    }
-    if (gvarp == &p_fex) {  // 'formatexpr'
-      p_opt = &curbuf->b_p_fex;
-    }
-    if (gvarp == &p_inex) {  // 'includeexpr'
-      p_opt = &curbuf->b_p_inex;
-    }
-    if (gvarp == &p_inde) {  // 'indentexpr'
-      p_opt = &curbuf->b_p_inde;
-    }
-    if (varp == &p_pex) {  // 'patchexpr'
-      p_opt = &p_pex;
-    }
-
-    if (p_opt != NULL) {
-      char *name = get_scriptlocal_funcname(*p_opt);
-      if (name != NULL) {
-        free_string_option(*p_opt);
-        *p_opt = name;
-      }
-    }
-
-    if (varp == &curwin->w_p_fde && foldmethodIsExpr(curwin)) {
-      foldUpdateAll(curwin);
-    }
+    did_set_optexpr(curbuf, curwin, varp, gvarp);
   } else if (gvarp == &p_cfu) {  // 'completefunc'
     if (set_completefunc_option() == FAIL) {
       errmsg = e_invarg;
