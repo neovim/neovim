@@ -329,7 +329,7 @@ function STHighlighter:process_response(response, client, version)
       idx = token_edit.start + token_edit.deleteCount + 1
     end
     vim.list_extend(tokens, old_tokens, idx)
-  else
+  elseif response.data then
     tokens = response.data
   end
 
