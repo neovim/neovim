@@ -1193,18 +1193,20 @@ static void put_reedit_in_typebuf(int silent)
 {
   char_u buf[3];
 
-  if (restart_edit != NUL) {
-    if (restart_edit == 'V') {
-      buf[0] = 'g';
-      buf[1] = 'R';
-      buf[2] = NUL;
-    } else {
-      buf[0] = (char_u)(restart_edit == 'I' ? 'i' : restart_edit);
-      buf[1] = NUL;
-    }
-    if (ins_typebuf((char *)buf, REMAP_NONE, 0, true, silent) == OK) {
-      restart_edit = NUL;
-    }
+  if (restart_edit == NUL) {
+    return;
+  }
+
+  if (restart_edit == 'V') {
+    buf[0] = 'g';
+    buf[1] = 'R';
+    buf[2] = NUL;
+  } else {
+    buf[0] = (char_u)(restart_edit == 'I' ? 'i' : restart_edit);
+    buf[1] = NUL;
+  }
+  if (ins_typebuf((char *)buf, REMAP_NONE, 0, true, silent) == OK) {
+    restart_edit = NUL;
   }
 }
 
@@ -2574,12 +2576,14 @@ void free_register(yankreg_T *reg)
   FUNC_ATTR_NONNULL_ALL
 {
   set_yreg_additional_data(reg, NULL);
-  if (reg->y_array != NULL) {
-    for (size_t i = reg->y_size; i-- > 0;) {  // from y_size - 1 to 0 included
-      xfree(reg->y_array[i]);
-    }
-    XFREE_CLEAR(reg->y_array);
+  if (reg->y_array == NULL) {
+    return;
   }
+
+  for (size_t i = reg->y_size; i-- > 0;) {  // from y_size - 1 to 0 included
+    xfree(reg->y_array[i]);
+  }
+  XFREE_CLEAR(reg->y_array);
 }
 
 /// Yanks the text between "oap->start" and "oap->end" into a yank register.

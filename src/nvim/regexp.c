@@ -1184,32 +1184,36 @@ static int prog_magic_wrong(void)
 // used (to increase speed).
 static void cleanup_subexpr(void)
 {
-  if (rex.need_clear_subexpr) {
-    if (REG_MULTI) {
-      // Use 0xff to set lnum to -1
-      memset(rex.reg_startpos, 0xff, sizeof(lpos_T) * NSUBEXP);
-      memset(rex.reg_endpos, 0xff, sizeof(lpos_T) * NSUBEXP);
-    } else {
-      memset(rex.reg_startp, 0, sizeof(char *) * NSUBEXP);
-      memset(rex.reg_endp, 0, sizeof(char *) * NSUBEXP);
-    }
-    rex.need_clear_subexpr = false;
+  if (!rex.need_clear_subexpr) {
+    return;
   }
+
+  if (REG_MULTI) {
+    // Use 0xff to set lnum to -1
+    memset(rex.reg_startpos, 0xff, sizeof(lpos_T) * NSUBEXP);
+    memset(rex.reg_endpos, 0xff, sizeof(lpos_T) * NSUBEXP);
+  } else {
+    memset(rex.reg_startp, 0, sizeof(char *) * NSUBEXP);
+    memset(rex.reg_endp, 0, sizeof(char *) * NSUBEXP);
+  }
+  rex.need_clear_subexpr = false;
 }
 
 static void cleanup_zsubexpr(void)
 {
-  if (rex.need_clear_zsubexpr) {
-    if (REG_MULTI) {
-      // Use 0xff to set lnum to -1
-      memset(reg_startzpos, 0xff, sizeof(lpos_T) * NSUBEXP);
-      memset(reg_endzpos, 0xff, sizeof(lpos_T) * NSUBEXP);
-    } else {
-      memset(reg_startzp, 0, sizeof(char *) * NSUBEXP);
-      memset(reg_endzp, 0, sizeof(char *) * NSUBEXP);
-    }
-    rex.need_clear_zsubexpr = false;
+  if (!rex.need_clear_zsubexpr) {
+    return;
   }
+
+  if (REG_MULTI) {
+    // Use 0xff to set lnum to -1
+    memset(reg_startzpos, 0xff, sizeof(lpos_T) * NSUBEXP);
+    memset(reg_endzpos, 0xff, sizeof(lpos_T) * NSUBEXP);
+  } else {
+    memset(reg_startzp, 0, sizeof(char *) * NSUBEXP);
+    memset(reg_endzp, 0, sizeof(char *) * NSUBEXP);
+  }
+  rex.need_clear_zsubexpr = false;
 }
 
 // Advance rex.lnum, rex.line and rex.input to the next line.
