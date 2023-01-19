@@ -2781,6 +2781,26 @@ describe('builtin popupmenu', function()
     ]]}
   end)
 
+  it('wildoptions=pum with a wrapped line in buffer vim-patch:8.2.4655', function()
+    screen:try_resize(32, 10)
+    meths.buf_set_lines(0, 0, -1, true, { ('a'):rep(100) })
+    command('set wildoptions+=pum')
+    feed('$')
+    feed(':sign <Tab>')
+    screen:expect([[
+      aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+      aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+      aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+      aaaa {s: define         }           |
+      {1:~    }{n: jump           }{1:           }|
+      {1:~    }{n: list           }{1:           }|
+      {1:~    }{n: place          }{1:           }|
+      {1:~    }{n: undefine       }{1:           }|
+      {1:~    }{n: unplace        }{1:           }|
+      :sign define^                    |
+    ]])
+  end)
+
   -- oldtest: Test_wildmenu_pum_clear_entries()
   it('wildoptions=pum when using Ctrl-E as wildchar vim-patch:9.0.1030', function()
     screen:try_resize(30, 10)

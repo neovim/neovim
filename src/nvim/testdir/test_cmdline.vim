@@ -2610,6 +2610,30 @@ func Test_wildmenumode_with_pum()
   cunmap <F2>
 endfunc
 
+" Test for opening the cmdline completion popup menu from the terminal window.
+" The popup menu should be positioned correctly over the status line of the
+" bottom-most window.
+func Test_wildmenu_pum_from_terminal()
+  CheckRunVimInTerminal
+  let python = PythonProg()
+  call CheckPython(python)
+
+  %bw!
+  let cmds = ['set wildmenu wildoptions=pum']
+  let pcmd = python .. ' -c "import sys; sys.stdout.write(sys.stdin.read())"'
+  call add(cmds, "call term_start('" .. pcmd .. "')")
+  call writefile(cmds, 'Xtest')
+  let buf = RunVimInTerminal('-S Xtest', #{rows: 10})
+  call term_sendkeys(buf, "\r\r\r")
+  call term_wait(buf)
+  call term_sendkeys(buf, "\<C-W>:sign \<Tab>")
+  call term_wait(buf)
+  call VerifyScreenDump(buf, 'Test_wildmenu_pum_term_01', {})
+  call term_wait(buf)
+  call StopVimInTerminal(buf)
+  call delete('Xtest')
+endfunc
+
 func Test_wildmenu_pum_clear_entries()
   CheckRunVimInTerminal
 
