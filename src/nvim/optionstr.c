@@ -690,6 +690,20 @@ static void did_set_helpfile(void)
   }
 }
 
+static void did_set_helplang(char **errmsg)
+{
+  // Check for "", "ab", "ab,cd", etc.
+  for (char *s = p_hlg; *s != NUL; s += 3) {
+    if (s[1] == NUL || ((s[2] != ',' || s[3] == NUL) && s[2] != NUL)) {
+      *errmsg = e_invarg;
+      break;
+    }
+    if (s[2] == NUL) {
+      break;
+    }
+  }
+}
+
 /// Handle string options that need some action to perform when changed.
 /// The new value must be allocated.
 ///
@@ -759,16 +773,7 @@ char *did_set_string_option(int opt_idx, char **varp, char *oldval, char *errbuf
   } else if (varp == &curwin->w_p_cc) {  // 'colorcolumn'
     errmsg = check_colorcolumn(curwin);
   } else if (varp == &p_hlg) {  // 'helplang'
-    // Check for "", "ab", "ab,cd", etc.
-    for (char *s = p_hlg; *s != NUL; s += 3) {
-      if (s[1] == NUL || ((s[2] != ',' || s[3] == NUL) && s[2] != NUL)) {
-        errmsg = e_invarg;
-        break;
-      }
-      if (s[2] == NUL) {
-        break;
-      }
-    }
+    did_set_helplang(&errmsg);
   } else if (varp == &p_hl) {  // 'highlight'
     if (strcmp(*varp, HIGHLIGHT_INIT) != 0) {
       errmsg = e_unsupportedoption;
