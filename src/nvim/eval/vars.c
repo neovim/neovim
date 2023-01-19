@@ -877,13 +877,13 @@ static int do_unlet_var(lval_T *lp, char *name_end, exarg_T *eap, int deep FUNC_
   } else if ((lp->ll_list != NULL
               // ll_list is not NULL when lvalue is not in a list, NULL lists
               // yield E689.
-              && var_check_lock(tv_list_locked(lp->ll_list),
-                                lp->ll_name,
-                                lp->ll_name_len))
+              && value_check_lock(tv_list_locked(lp->ll_list),
+                                  lp->ll_name,
+                                  lp->ll_name_len))
              || (lp->ll_dict != NULL
-                 && var_check_lock(lp->ll_dict->dv_lock,
-                                   lp->ll_name,
-                                   lp->ll_name_len))) {
+                 && value_check_lock(lp->ll_dict->dv_lock,
+                                     lp->ll_name,
+                                     lp->ll_name_len))) {
     return FAIL;
   } else if (lp->ll_range) {
     assert(lp->ll_list != NULL);
@@ -892,9 +892,9 @@ static int do_unlet_var(lval_T *lp, char *name_end, exarg_T *eap, int deep FUNC_
     listitem_T *last_li = first_li;
     for (;;) {
       listitem_T *const li = TV_LIST_ITEM_NEXT(lp->ll_list, lp->ll_li);
-      if (var_check_lock(TV_LIST_ITEM_TV(lp->ll_li)->v_lock,
-                         lp->ll_name,
-                         lp->ll_name_len)) {
+      if (value_check_lock(TV_LIST_ITEM_TV(lp->ll_li)->v_lock,
+                           lp->ll_name,
+                           lp->ll_name_len)) {
         return false;
       }
       lp->ll_li = li;
@@ -976,11 +976,11 @@ int do_unlet(const char *const name, const size_t name_len, const bool forceit)
       dictitem_T *const di = TV_DICT_HI2DI(hi);
       if (var_check_fixed(di->di_flags, name, TV_CSTRING)
           || var_check_ro(di->di_flags, name, TV_CSTRING)
-          || var_check_lock(d->dv_lock, name, TV_CSTRING)) {
+          || value_check_lock(d->dv_lock, name, TV_CSTRING)) {
         return FAIL;
       }
 
-      if (var_check_lock(d->dv_lock, name, TV_CSTRING)) {
+      if (value_check_lock(d->dv_lock, name, TV_CSTRING)) {
         return FAIL;
       }
 
@@ -1023,10 +1023,6 @@ static int do_lock_var(lval_T *lp, char *name_end FUNC_ATTR_UNUSED, exarg_T *eap
   bool lock = eap->cmdidx == CMD_lockvar;
   int ret = OK;
 
-  if (deep == 0) {  // Nothing to do.
-    return OK;
-  }
-
   if (lp->ll_tv == NULL) {
     if (*lp->ll_name == '$') {
       semsg(_(e_lock_unlock), lp->ll_name);
@@ -1050,9 +1046,13 @@ static int do_lock_var(lval_T *lp, char *name_end FUNC_ATTR_UNUSED, exarg_T *eap
         } else {
           di->di_flags &= (uint8_t)(~DI_FLAGS_LOCK);
         }
-        tv_item_lock(&di->di_tv, deep, lock, false);
+        if (deep != 0) {
+          tv_item_lock(&di->di_tv, deep, lock, false);
+        }
       }
     }
+  } else if (deep == 0) {
+    // nothing to do
   } else if (lp->ll_range) {
     listitem_T *li = lp->ll_li;
 
@@ -1282,11 +1282,17 @@ void set_var_const(const char *name, const size_t name_len, typval_T *const tv, 
       return;
     }
 
-    // existing variable, need to clear the value
+    // Check in this order for backwards compatibility:
+    // - Whether the variable is read-only
+    // - Whether the variable value is locked
+    // - Whether the variable is locked
     if (var_check_ro(v->di_flags, name, name_len)
-        || var_check_lock(v->di_tv.v_lock, name, name_len)) {
+        || value_check_lock(v->di_tv.v_lock, name, name_len)
+        || var_check_lock(v->di_flags, name, name_len)) {
       return;
     }
+
+    // existing variable, need to clear the value
 
     // Handle setting internal v: variables separately where needed to
     // prevent changing the type.
@@ -1414,6 +1420,26 @@ bool var_check_ro(const int flags, const char *name, size_t name_len)
   }
 
   semsg(_(error_message), (int)name_len, name);
+
+  return true;
+}
+
+/// Return true if di_flags "flags" indicates variable "name" is locked.
+/// Also give an error message.
+bool var_check_lock(const int flags, const char *name, size_t name_len)
+{
+  if (!(flags & DI_FLAGS_LOCK)) {
+    return false;
+  }
+
+  if (name_len == TV_TRANSLATE) {
+    name = _(name);
+    name_len = strlen(name);
+  } else if (name_len == TV_CSTRING) {
+    name_len = strlen(name);
+  }
+
+  semsg(_("E1122: Variable is locked: %*s"), (int)name_len, name);
 
   return true;
 }

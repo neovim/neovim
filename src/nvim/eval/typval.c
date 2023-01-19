@@ -900,8 +900,8 @@ void tv_list_remove(typval_T *argvars, typval_T *rettv, const char *arg_errmsg)
   list_T *l;
   bool error = false;
 
-  if (var_check_lock(tv_list_locked((l = argvars[0].vval.v_list)),
-                     arg_errmsg, TV_TRANSLATE)) {
+  if (value_check_lock(tv_list_locked((l = argvars[0].vval.v_list)),
+                       arg_errmsg, TV_TRANSLATE)) {
     return;
   }
 
@@ -1156,7 +1156,7 @@ static void do_sort_uniq(typval_T *argvars, typval_T *rettv, bool sort)
     semsg(_(e_listarg), sort ? "sort()" : "uniq()");
   } else {
     list_T *const l = argvars[0].vval.v_list;
-    if (var_check_lock(tv_list_locked(l), arg_errmsg, TV_TRANSLATE)) {
+    if (value_check_lock(tv_list_locked(l), arg_errmsg, TV_TRANSLATE)) {
       goto theend;
     }
     tv_list_set_ret(rettv, l);
@@ -2494,7 +2494,7 @@ void tv_dict_extend(dict_T *const d1, dict_T *const d2, const char *const action
     } else if (*action == 'f' && di2 != di1) {
       typval_T oldtv;
 
-      if (var_check_lock(di1->di_tv.v_lock, arg_errmsg, arg_errmsg_len)
+      if (value_check_lock(di1->di_tv.v_lock, arg_errmsg, arg_errmsg_len)
           || var_check_ro(di1->di_flags, arg_errmsg, arg_errmsg_len)) {
         break;
       }
@@ -2710,7 +2710,7 @@ void tv_blob_remove(typval_T *argvars, typval_T *rettv, const char *arg_errmsg)
 {
   blob_T *const b = argvars[0].vval.v_blob;
 
-  if (b != NULL && var_check_lock(b->bv_lock, arg_errmsg, TV_TRANSLATE)) {
+  if (b != NULL && value_check_lock(b->bv_lock, arg_errmsg, TV_TRANSLATE)) {
     return;
   }
 
@@ -2902,7 +2902,7 @@ void tv_dict_remove(typval_T *argvars, typval_T *rettv, const char *arg_errmsg)
   if (argvars[2].v_type != VAR_UNKNOWN) {
     semsg(_(e_toomanyarg), "remove()");
   } else if ((d = argvars[0].vval.v_dict) != NULL
-             && !var_check_lock(d->dv_lock, arg_errmsg, TV_TRANSLATE)) {
+             && !value_check_lock(d->dv_lock, arg_errmsg, TV_TRANSLATE)) {
     const char *key = tv_get_string_chk(&argvars[1]);
     if (key != NULL) {
       dictitem_T *di = tv_dict_find(d, key, -1);
@@ -3460,12 +3460,12 @@ bool tv_check_lock(const typval_T *tv, const char *name, size_t name_len)
   default:
     break;
   }
-  return var_check_lock(tv->v_lock, name, name_len)
-         || (lock != VAR_UNLOCKED && var_check_lock(lock, name, name_len));
+  return value_check_lock(tv->v_lock, name, name_len)
+         || (lock != VAR_UNLOCKED && value_check_lock(lock, name, name_len));
 }
 
-/// @return true if variable "name" is locked (immutable)
-bool var_check_lock(VarLockStatus lock, const char *name, size_t name_len)
+/// @return true if variable "name" has a locked (immutable) value
+bool value_check_lock(VarLockStatus lock, const char *name, size_t name_len)
 {
   const char *error_message = NULL;
   switch (lock) {

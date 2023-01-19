@@ -1485,9 +1485,9 @@ char *get_lval(char *const name, typval_T *const rettv, lval_T *const lp, const 
         tv_clear(&var1);
         break;
         // existing variable, need to check if it can be changed
-      } else if (!(flags & GLV_READ_ONLY) && var_check_ro(lp->ll_di->di_flags,
-                                                          (const char *)name,
-                                                          (size_t)(p - name))) {
+      } else if (!(flags & GLV_READ_ONLY)
+                 && (var_check_ro(lp->ll_di->di_flags, name, (size_t)(p - name))
+                     || var_check_lock(lp->ll_di->di_flags, name, (size_t)(p - name)))) {
         tv_clear(&var1);
         return NULL;
       }
@@ -1618,7 +1618,7 @@ void set_var_lval(lval_T *lp, char *endp, typval_T *rettv, int copy, const bool 
         semsg(_(e_letwrong), op);
         return;
       }
-      if (var_check_lock(lp->ll_blob->bv_lock, lp->ll_name, TV_CSTRING)) {
+      if (value_check_lock(lp->ll_blob->bv_lock, lp->ll_name, TV_CSTRING)) {
         return;
       }
 
@@ -1681,10 +1681,10 @@ void set_var_lval(lval_T *lp, char *endp, typval_T *rettv, int copy, const bool 
       set_var_const(lp->ll_name, lp->ll_name_len, rettv, copy, is_const);
     }
     *endp = (char)cc;
-  } else if (var_check_lock(lp->ll_newkey == NULL
-                            ? lp->ll_tv->v_lock
-                            : lp->ll_tv->vval.v_dict->dv_lock,
-                            lp->ll_name, TV_CSTRING)) {
+  } else if (value_check_lock(lp->ll_newkey == NULL
+                              ? lp->ll_tv->v_lock
+                              : lp->ll_tv->vval.v_dict->dv_lock,
+                              lp->ll_name, TV_CSTRING)) {
     // Skip
   } else if (lp->ll_range) {
     listitem_T *ll_li = lp->ll_li;
@@ -1698,8 +1698,8 @@ void set_var_lval(lval_T *lp, char *endp, typval_T *rettv, int copy, const bool 
     // Check whether any of the list items is locked
     for (ri = tv_list_first(rettv->vval.v_list);
          ri != NULL && ll_li != NULL;) {
-      if (var_check_lock(TV_LIST_ITEM_TV(ll_li)->v_lock, lp->ll_name,
-                         TV_CSTRING)) {
+      if (value_check_lock(TV_LIST_ITEM_TV(ll_li)->v_lock, lp->ll_name,
+                           TV_CSTRING)) {
         return;
       }
       ri = TV_LIST_ITEM_NEXT(rettv->vval.v_list, ri);
@@ -4795,12 +4795,12 @@ void filter_map(typval_T *argvars, typval_T *rettv, int map)
   } else if (argvars[0].v_type == VAR_LIST) {
     if ((l = argvars[0].vval.v_list) == NULL
         || (!map
-            && var_check_lock(tv_list_locked(l), arg_errmsg, TV_TRANSLATE))) {
+            && value_check_lock(tv_list_locked(l), arg_errmsg, TV_TRANSLATE))) {
       return;
     }
   } else if (argvars[0].v_type == VAR_DICT) {
     if ((d = argvars[0].vval.v_dict) == NULL
-        || (!map && var_check_lock(d->dv_lock, arg_errmsg, TV_TRANSLATE))) {
+        || (!map && value_check_lock(d->dv_lock, arg_errmsg, TV_TRANSLATE))) {
       return;
     }
   } else {
@@ -4839,7 +4839,7 @@ void filter_map(typval_T *argvars, typval_T *rettv, int map)
 
           dictitem_T *di = TV_DICT_HI2DI(hi);
           if (map
-              && (var_check_lock(di->di_tv.v_lock, arg_errmsg, TV_TRANSLATE)
+              && (value_check_lock(di->di_tv.v_lock, arg_errmsg, TV_TRANSLATE)
                   || var_check_ro(di->di_flags, arg_errmsg, TV_TRANSLATE))) {
             break;
           }
@@ -4899,8 +4899,8 @@ void filter_map(typval_T *argvars, typval_T *rettv, int map)
       }
       for (listitem_T *li = tv_list_first(l); li != NULL;) {
         if (map
-            && var_check_lock(TV_LIST_ITEM_TV(li)->v_lock, arg_errmsg,
-                              TV_TRANSLATE)) {
+            && value_check_lock(TV_LIST_ITEM_TV(li)->v_lock, arg_errmsg,
+                                TV_TRANSLATE)) {
           break;
         }
         vimvars[VV_KEY].vv_nr = idx;

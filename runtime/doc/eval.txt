@@ -2681,6 +2681,8 @@ text...
 
 			[depth] is relevant when locking a |List| or
 			|Dictionary|.  It specifies how deep the locking goes:
+				0	Lock the variable {name} but not its
+					value.
 				1	Lock the |List| or |Dictionary| itself,
 					cannot add or remove items, but can
 					still change their values.
@@ -2694,7 +2696,14 @@ text...
 					|Dictionary|, one level deeper.
 			The default [depth] is 2, thus when {name} is a |List|
 			or |Dictionary| the values cannot be changed.
-								*E743*
+
+			Example with [depth] 0: >
+				let mylist = [1, 2, 3]
+				lockvar 0 mylist
+				let mylist[0] = 77   	" OK
+				call add(mylist, 4]  	" OK
+				let mylist = [7, 8, 9]  " Error!
+<								*E743*
 			For unlimited depth use [!] and omit [depth].
 			However, there is a maximum depth of 100 to catch
 			loops.
