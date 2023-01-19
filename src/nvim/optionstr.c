@@ -1078,6 +1078,22 @@ static void did_set_signcolumn(win_T *win, char **varp, const char *oldval, char
   }
 }
 
+static void did_set_pastetoggle(void)
+{
+  // 'pastetoggle': translate key codes like in a mapping
+  if (*p_pt) {
+    char *p = NULL;
+    (void)replace_termcodes(p_pt,
+                            strlen(p_pt),
+                            &p, REPTERM_FROM_PART | REPTERM_DO_LT, NULL,
+                            CPO_TO_CPO_FLAGS);
+    if (p != NULL) {
+      free_string_option(p_pt);
+      p_pt = p;
+    }
+  }
+}
+
 /// Handle string options that need some action to perform when changed.
 /// The new value must be allocated.
 ///
@@ -1371,19 +1387,8 @@ char *did_set_string_option(int opt_idx, char **varp, char *oldval, char *errbuf
     if (**varp == NUL || check_opt_strings(*varp, p_fdc_values, false) != OK) {
       errmsg = e_invarg;
     }
-  } else if (varp == &p_pt) {
-    // 'pastetoggle': translate key codes like in a mapping
-    if (*p_pt) {
-      char *p = NULL;
-      (void)replace_termcodes(p_pt,
-                              strlen(p_pt),
-                              &p, REPTERM_FROM_PART | REPTERM_DO_LT, NULL,
-                              CPO_TO_CPO_FLAGS);
-      if (p != NULL) {
-        free_string_option(p_pt);
-        p_pt = p;
-      }
-    }
+  } else if (varp == &p_pt) {  // 'pastetoggle'
+    did_set_pastetoggle();
   } else if (varp == &p_bs) {  // 'backspace'
     if (ascii_isdigit(*p_bs)) {
       if (*p_bs > '3' || p_bs[1] != NUL) {
