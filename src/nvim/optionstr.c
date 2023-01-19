@@ -1219,6 +1219,34 @@ static void did_set_syntax(buf_T *buf, bool value_changed)
   syn_recursive--;
 }
 
+static void did_set_filetype(buf_T *buf, char **varp, int opt_flags, bool value_changed)
+{
+  // 'filetype' is set, trigger the FileType autocommand
+  // Skip this when called from a modeline and the filetype was
+  // already set to this value.
+  if (!(opt_flags & OPT_MODELINE) || value_changed) {
+    static int ft_recursive = 0;
+    int secure_save = secure;
+
+    // Reset the secure flag, since the value of 'filetype' has
+    // been checked to be safe.
+    secure = 0;
+
+    ft_recursive++;
+    did_filetype = true;
+    // Only pass true for "force" when the value changed or not
+    // used recursively, to avoid endless recurrence.
+    apply_autocmds(EVENT_FILETYPE, buf->b_p_ft, buf->b_fname,
+                   value_changed || ft_recursive == 1, buf);
+    ft_recursive--;
+    // Just in case the old "buf" is now invalid
+    if (varp != &(buf->b_p_ft)) {
+      varp = NULL;
+    }
+    secure = secure_save;
+  }
+}
+
 /// Handle string options that need some action to perform when changed.
 /// The new value must be allocated.
 ///
@@ -1736,30 +1764,7 @@ char *did_set_string_option(int opt_idx, char **varp, char *oldval, char *errbuf
     if (varp == &(curbuf->b_p_syn)) {
       did_set_syntax(curbuf, value_changed);
     } else if (varp == &(curbuf->b_p_ft)) {
-      // 'filetype' is set, trigger the FileType autocommand
-      // Skip this when called from a modeline and the filetype was
-      // already set to this value.
-      if (!(opt_flags & OPT_MODELINE) || value_changed) {
-        static int ft_recursive = 0;
-        int secure_save = secure;
-
-        // Reset the secure flag, since the value of 'filetype' has
-        // been checked to be safe.
-        secure = 0;
-
-        ft_recursive++;
-        did_filetype = true;
-        // Only pass true for "force" when the value changed or not
-        // used recursively, to avoid endless recurrence.
-        apply_autocmds(EVENT_FILETYPE, curbuf->b_p_ft, curbuf->b_fname,
-                       value_changed || ft_recursive == 1, curbuf);
-        ft_recursive--;
-        // Just in case the old "curbuf" is now invalid
-        if (varp != &(curbuf->b_p_ft)) {
-          varp = NULL;
-        }
-        secure = secure_save;
-      }
+      did_set_filetype(curbuf, varp, opt_flags, value_changed);
     }
     if (varp == &(curwin->w_s->b_p_spl)) {
       char fname[200];
