@@ -1064,6 +1064,20 @@ static void did_set_completeopt(char **errmsg)
   }
 }
 
+static void did_set_signcolumn(win_T *win, char **varp, const char *oldval, char **errmsg)
+{
+  if (check_signcolumn(*varp) != OK) {
+    *errmsg = e_invarg;
+  }
+  // When changing the 'signcolumn' to or from 'number', recompute the
+  // width of the number column if 'number' or 'relativenumber' is set.
+  if (((*oldval == 'n' && *(oldval + 1) == 'u')
+       || (*win->w_p_scl == 'n' && *(win->w_p_scl + 1) == 'u'))
+      && (win->w_p_nu || win->w_p_rnu)) {
+    win->w_nrwidth_line_count = 0;
+  }
+}
+
 /// Handle string options that need some action to perform when changed.
 /// The new value must be allocated.
 ///
@@ -1346,16 +1360,7 @@ char *did_set_string_option(int opt_idx, char **varp, char *oldval, char *errbuf
     }
 #endif
   } else if (varp == &curwin->w_p_scl) {  // 'signcolumn'
-    if (check_signcolumn(*varp) != OK) {
-      errmsg = e_invarg;
-    }
-    // When changing the 'signcolumn' to or from 'number', recompute the
-    // width of the number column if 'number' or 'relativenumber' is set.
-    if (((*oldval == 'n' && *(oldval + 1) == 'u')
-         || (*curwin->w_p_scl == 'n' && *(curwin->w_p_scl + 1) == 'u'))
-        && (curwin->w_p_nu || curwin->w_p_rnu)) {
-      curwin->w_nrwidth_line_count = 0;
-    }
+    did_set_signcolumn(curwin, varp, oldval, &errmsg);
   } else if (varp == &p_sloc) {  // 'showcmdloc'
     if (check_opt_strings(p_sloc, p_sloc_values, false) != OK) {
       errmsg = e_invarg;
