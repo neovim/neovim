@@ -810,6 +810,25 @@ static void did_set_keymap(buf_T *buf, char **varp, int opt_flags, int *value_ch
   }
 }
 
+static void did_set_fileformat(buf_T *buf, char **varp, const char *oldval, int opt_flags,
+                               char **errmsg)
+{
+  if (!MODIFIABLE(buf) && !(opt_flags & OPT_GLOBAL)) {
+    *errmsg = e_modifiable;
+  } else if (check_opt_strings(*varp, p_ff_values, false) != OK) {
+    *errmsg = e_invarg;
+  } else {
+    redraw_titles();
+    // update flag in swap file
+    ml_setflags(buf);
+    // Redraw needed when switching to/from "mac": a CR in the text
+    // will be displayed differently.
+    if (get_fileformat(buf) == EOL_MAC || *oldval == 'm') {
+      redraw_buf_later(buf, UPD_NOT_VALID);
+    }
+  }
+}
+
 /// Handle string options that need some action to perform when changed.
 /// The new value must be allocated.
 ///
@@ -944,20 +963,7 @@ char *did_set_string_option(int opt_idx, char **varp, char *oldval, char *errbuf
   } else if (varp == &curbuf->b_p_keymap) {
     did_set_keymap(curbuf, varp, opt_flags, value_checked, &errmsg);
   } else if (gvarp == &p_ff) {  // 'fileformat'
-    if (!MODIFIABLE(curbuf) && !(opt_flags & OPT_GLOBAL)) {
-      errmsg = e_modifiable;
-    } else if (check_opt_strings(*varp, p_ff_values, false) != OK) {
-      errmsg = e_invarg;
-    } else {
-      redraw_titles();
-      // update flag in swap file
-      ml_setflags(curbuf);
-      // Redraw needed when switching to/from "mac": a CR in the text
-      // will be displayed differently.
-      if (get_fileformat(curbuf) == EOL_MAC || *oldval == 'm') {
-        redraw_curbuf_later(UPD_NOT_VALID);
-      }
-    }
+    did_set_fileformat(curbuf, varp, oldval, opt_flags, &errmsg);
   } else if (varp == &p_ffs) {  // 'fileformats'
     if (check_opt_strings(p_ffs, p_ff_values, true) != OK) {
       errmsg = e_invarg;
