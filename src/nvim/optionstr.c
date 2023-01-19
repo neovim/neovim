@@ -983,6 +983,40 @@ static void did_set_buftype(buf_T *buf, win_T *win, char **errmsg)
   }
 }
 
+// 'statusline', 'winbar', 'tabline', 'rulerformat' or 'statuscolumn'
+static void did_set_statusline(win_T *win, char **varp, char **gvarp, char **errmsg)
+{
+  if (varp == &p_ruf) {       // reset ru_wid first
+    ru_wid = 0;
+  } else if (varp == &win->w_p_stc) {
+    win->w_nrwidth_line_count = 0;
+  }
+  char *s = *varp;
+  if (varp == &p_ruf && *s == '%') {
+    // set ru_wid if 'ruf' starts with "%99("
+    if (*++s == '-') {        // ignore a '-'
+      s++;
+    }
+    int wid = getdigits_int(&s, true, 0);
+    if (wid && *s == '(' && (*errmsg = check_stl_option(p_ruf)) == NULL) {
+      ru_wid = wid;
+    } else {
+      *errmsg = check_stl_option(p_ruf);
+    }
+  } else if (varp == &p_ruf || s[0] != '%' || s[1] != '!') {
+    // check 'statusline', 'winbar', 'tabline' or 'statuscolumn'
+    // only if it doesn't start with "%!"
+    *errmsg = check_stl_option(s);
+  }
+  if (varp == &p_ruf && *errmsg == NULL) {
+    comp_col();
+  }
+  // add / remove window bars for 'winbar'
+  if (gvarp == &p_wbr) {
+    set_winbar(true);
+  }
+}
+
 /// Handle string options that need some action to perform when changed.
 /// The new value must be allocated.
 ///
@@ -1252,37 +1286,7 @@ char *did_set_string_option(int opt_idx, char **varp, char *oldval, char *errbuf
   } else if (gvarp == &p_stl || gvarp == &p_wbr || varp == &p_tal
              || varp == &p_ruf || varp == &curwin->w_p_stc) {
     // 'statusline', 'winbar', 'tabline', 'rulerformat' or 'statuscolumn'
-    int wid;
-
-    if (varp == &p_ruf) {       // reset ru_wid first
-      ru_wid = 0;
-    } else if (varp == &curwin->w_p_stc) {
-      curwin->w_nrwidth_line_count = 0;
-    }
-    char *s = *varp;
-    if (varp == &p_ruf && *s == '%') {
-      // set ru_wid if 'ruf' starts with "%99("
-      if (*++s == '-') {        // ignore a '-'
-        s++;
-      }
-      wid = getdigits_int(&s, true, 0);
-      if (wid && *s == '(' && (errmsg = check_stl_option(p_ruf)) == NULL) {
-        ru_wid = wid;
-      } else {
-        errmsg = check_stl_option(p_ruf);
-      }
-    } else if (varp == &p_ruf || s[0] != '%' || s[1] != '!') {
-      // check 'statusline', 'winbar', 'tabline' or 'statuscolumn'
-      // only if it doesn't start with "%!"
-      errmsg = check_stl_option(s);
-    }
-    if (varp == &p_ruf && errmsg == NULL) {
-      comp_col();
-    }
-    // add / remove window bars for 'winbar'
-    if (gvarp == &p_wbr) {
-      set_winbar(true);
-    }
+    did_set_statusline(curwin, varp, gvarp, &errmsg);
   } else if (gvarp == &p_cpt) {
     // check if it is a valid value for 'complete' -- Acevedo
     for (char *s = *varp; *s;) {
