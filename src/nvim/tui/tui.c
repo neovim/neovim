@@ -2035,7 +2035,7 @@ static void augment_terminfo(TUIData *tui, const char *term, long vte_version, l
 
   // terminfo describes strikethrough modes as rmxx/smxx with respect
   // to the ECMA-48 strikeout/crossed-out attributes.
-  tui->unibi_ext.enter_strikethrough_mode = unibi_find_ext_str(ut, "smxx");
+  tui->unibi_ext.enter_strikethrough_mode = (int)unibi_add_ext_str(ut, "smxx", "\x1b[9m");
 
   // Dickey ncurses terminfo does not include the setrgbf and setrgbb
   // capabilities, proposed by Rüdiger Sonderfeld on 2013-10-15.  Adding
