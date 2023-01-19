@@ -511,7 +511,7 @@ static bool attrs_differ(TUIData *tui, int id1, int id2, bool rgb)
     return a1.cterm_fg_color != a2.cterm_fg_color
            || a1.cterm_bg_color != a2.cterm_bg_color
            || a1.cterm_ae_attr != a2.cterm_ae_attr
-           || (a1.cterm_ae_attr & HL_ANY_UNDERLINE
+           || (a1.cterm_ae_attr & HL_UNDERLINE_MASK
                && a1.rgb_sp_color != a2.rgb_sp_color);
   }
 }
@@ -538,13 +538,14 @@ static void update_attrs(TUIData *tui, int attr_id)
   bool underdotted;
   bool underdashed;
   if (tui->unibi_ext.set_underline_style != -1) {
-    underline = attr & HL_UNDERLINE;
-    undercurl = attr & HL_UNDERCURL;
-    underdouble = attr & HL_UNDERDOUBLE;
-    underdashed = attr & HL_UNDERDASHED;
-    underdotted = attr & HL_UNDERDOTTED;
+    int ul = attr & HL_UNDERLINE_MASK;
+    underline = ul == HL_UNDERLINE;
+    undercurl = ul == HL_UNDERCURL;
+    underdouble = ul == HL_UNDERDOUBLE;
+    underdashed = ul == HL_UNDERDASHED;
+    underdotted = ul == HL_UNDERDOTTED;
   } else {
-    underline = attr & HL_ANY_UNDERLINE;
+    underline = attr & HL_UNDERLINE_MASK;
     undercurl = false;
     underdouble = false;
     underdotted = false;

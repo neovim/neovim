@@ -32,12 +32,14 @@ describe('API: highlight',function()
     italic = true,
     reverse = true,
     underline = true,
-    undercurl = true,
-    underdouble = true,
-    underdotted = true,
-    underdashed = true,
     strikethrough = true,
     nocombine = true,
+  }
+  local expected_undercurl = {
+    background = Screen.colors.Yellow,
+    foreground = Screen.colors.Red,
+    special = Screen.colors.Blue,
+    undercurl = true,
   }
 
   before_each(function()
@@ -59,8 +61,12 @@ describe('API: highlight',function()
     eq('Invalid highlight id: 30000', string.match(emsg, 'Invalid.*'))
 
     -- Test all highlight properties.
-    command('hi NewHighlight gui=underline,bold,undercurl,underdouble,underdotted,underdashed,italic,reverse,strikethrough,nocombine')
+    command('hi NewHighlight gui=underline,bold,italic,reverse,strikethrough,nocombine')
     eq(expected_rgb2, nvim("get_hl_by_id", hl_id, true))
+
+    -- Test undercurl
+    command('hi NewHighlight gui=undercurl')
+    eq(expected_undercurl, nvim("get_hl_by_id", hl_id, true))
 
     -- Test nil argument.
     err, emsg = pcall(meths.get_hl_by_id, { nil }, false)
@@ -207,16 +213,11 @@ describe("API: set highlight", function()
     bold = true,
     italic = true,
     reverse = true,
-    undercurl = true,
     underline = true,
-    underdashed = true,
-    underdotted = true,
-    underdouble = true,
     strikethrough = true,
     cterm = {
       italic = true,
       reverse = true,
-      undercurl = true,
       strikethrough = true,
       nocombine = true,
     }
@@ -227,11 +228,7 @@ describe("API: set highlight", function()
     bold = true,
     italic = true,
     reverse = true,
-    undercurl = true,
     underline = true,
-    underdashed = true,
-    underdotted = true,
-    underdouble = true,
     strikethrough = true,
   }
   local highlight3_result_cterm = {
@@ -239,7 +236,6 @@ describe("API: set highlight", function()
     foreground = highlight_color.ctermfg,
     italic = true,
     reverse = true,
-    undercurl = true,
     strikethrough = true,
     nocombine = true,
   }
@@ -296,7 +292,7 @@ describe("API: set highlight", function()
       exec_capture('highlight Test_hl'))
 
     meths.set_hl(0, 'Test_hl2', highlight3_config)
-    eq('Test_hl2       xxx cterm=undercurl,italic,reverse,strikethrough,nocombine ctermfg=8 ctermbg=15 gui=bold,underline,undercurl,underdouble,underdotted,underdashed,italic,reverse,strikethrough guifg=#ff0000 guibg=#0032aa',
+    eq('Test_hl2       xxx cterm=italic,reverse,strikethrough,nocombine ctermfg=8 ctermbg=15 gui=bold,underline,italic,reverse,strikethrough guifg=#ff0000 guibg=#0032aa',
       exec_capture('highlight Test_hl2'))
 
     -- Colors are stored with the name they are defined, but
