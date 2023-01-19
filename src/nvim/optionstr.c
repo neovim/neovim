@@ -853,6 +853,35 @@ static void did_set_matchpairs(char **varp, char **errmsg)
   }
 }
 
+static void did_set_comments(char **varp, char *errbuf, size_t errbuflen, char **errmsg)
+{
+  for (char *s = *varp; *s;) {
+    while (*s && *s != ':') {
+      if (vim_strchr(COM_ALL, (uint8_t)(*s)) == NULL
+          && !ascii_isdigit(*s) && *s != '-') {
+        *errmsg = illegal_char(errbuf, errbuflen, *s);
+        break;
+      }
+      s++;
+    }
+    if (*s++ == NUL) {
+      *errmsg = N_("E524: Missing colon");
+    } else if (*s == ',' || *s == NUL) {
+      *errmsg = N_("E525: Zero length string");
+    }
+    if (*errmsg != NULL) {
+      break;
+    }
+    while (*s && *s != ',') {
+      if (*s == '\\' && s[1] != NUL) {
+        s++;
+      }
+      s++;
+    }
+    s = skip_to_option_part(s);
+  }
+}
+
 /// Handle string options that need some action to perform when changed.
 /// The new value must be allocated.
 ///
@@ -995,31 +1024,7 @@ char *did_set_string_option(int opt_idx, char **varp, char *oldval, char *errbuf
   } else if (gvarp == &p_mps) {  // 'matchpairs'
     did_set_matchpairs(varp, &errmsg);
   } else if (gvarp == &p_com) {  // 'comments'
-    for (char *s = *varp; *s;) {
-      while (*s && *s != ':') {
-        if (vim_strchr(COM_ALL, (uint8_t)(*s)) == NULL
-            && !ascii_isdigit(*s) && *s != '-') {
-          errmsg = illegal_char(errbuf, errbuflen, *s);
-          break;
-        }
-        s++;
-      }
-      if (*s++ == NUL) {
-        errmsg = N_("E524: Missing colon");
-      } else if (*s == ',' || *s == NUL) {
-        errmsg = N_("E525: Zero length string");
-      }
-      if (errmsg != NULL) {
-        break;
-      }
-      while (*s && *s != ',') {
-        if (*s == '\\' && s[1] != NUL) {
-          s++;
-        }
-        s++;
-      }
-      s = skip_to_option_part(s);
-    }
+    did_set_comments(varp, errbuf, errbuflen, &errmsg);
   } else if (varp == &p_lcs || varp == &p_fcs) {  // global 'listchars' or 'fillchars'
     char **local_ptr = varp == &p_lcs ? &curwin->w_p_lcs : &curwin->w_p_fcs;
     // only apply the global value to "curwin" when it does not have a local value
