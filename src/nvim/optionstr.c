@@ -1247,6 +1247,32 @@ static void did_set_filetype(buf_T *buf, char **varp, int opt_flags, bool value_
   }
 }
 
+static void did_set_spelllang_source(win_T *win)
+{
+  char fname[200];
+  char *q = win->w_s->b_p_spl;
+
+  // Skip the first name if it is "cjk".
+  if (strncmp(q, "cjk,", 4) == 0) {
+    q += 4;
+  }
+
+  // Source the spell/LANG.vim in 'runtimepath'.
+  // They could set 'spellcapcheck' depending on the language.
+  // Use the first name in 'spelllang' up to '_region' or
+  // '.encoding'.
+  char *p;
+  for (p = q; *p != NUL; p++) {
+    if (!ASCII_ISALNUM(*p) && *p != '-') {
+      break;
+    }
+  }
+  if (p > q) {
+    vim_snprintf(fname, sizeof(fname), "spell/%.*s.vim", (int)(p - q), q);
+    source_runtime(fname, DIP_ALL);
+  }
+}
+
 /// Handle string options that need some action to perform when changed.
 /// The new value must be allocated.
 ///
@@ -1765,30 +1791,8 @@ char *did_set_string_option(int opt_idx, char **varp, char *oldval, char *errbuf
       did_set_syntax(curbuf, value_changed);
     } else if (varp == &(curbuf->b_p_ft)) {
       did_set_filetype(curbuf, varp, opt_flags, value_changed);
-    }
-    if (varp == &(curwin->w_s->b_p_spl)) {
-      char fname[200];
-      char *q = curwin->w_s->b_p_spl;
-
-      // Skip the first name if it is "cjk".
-      if (strncmp(q, "cjk,", 4) == 0) {
-        q += 4;
-      }
-
-      // Source the spell/LANG.vim in 'runtimepath'.
-      // They could set 'spellcapcheck' depending on the language.
-      // Use the first name in 'spelllang' up to '_region' or
-      // '.encoding'.
-      char *p;
-      for (p = q; *p != NUL; p++) {
-        if (!ASCII_ISALNUM(*p) && *p != '-') {
-          break;
-        }
-      }
-      if (p > q) {
-        vim_snprintf(fname, sizeof(fname), "spell/%.*s.vim", (int)(p - q), q);
-        source_runtime(fname, DIP_ALL);
-      }
+    } else if (varp == &(curwin->w_s->b_p_spl)) {
+      did_set_spelllang_source(curwin);
     }
   }
 
