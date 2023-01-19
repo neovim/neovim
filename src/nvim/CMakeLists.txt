@@ -857,6 +857,37 @@ set_target_properties(
 target_compile_definitions(libnvim PRIVATE MAKE_LIB)
 target_link_libraries(libnvim PRIVATE main_lib PUBLIC libuv_lib)
 
+add_library(sanitizer_lib INTERFACE)
+if(CLANG_ASAN_UBSAN)
+  message(STATUS "Enabling Clang address sanitizer and undefined behavior sanitizer.")
+  if(CI_BUILD)
+    # Try to recover from all sanitize issues so we get reports about all failures
+    target_compile_options(sanitizer_lib INTERFACE -fsanitize-recover=all)
+  else()
+    target_compile_options(sanitizer_lib INTERFACE -fno-sanitize-recover=all)
+  endif()
+  target_compile_options(sanitizer_lib INTERFACE
+    -fno-omit-frame-pointer
+    -fno-optimize-sibling-calls
+    -fsanitize=address
+    -fsanitize=undefined
+    -fsanitize-blacklist=${PROJECT_SOURCE_DIR}/src/.asan-blacklist)
+  target_link_libraries(sanitizer_lib INTERFACE -fsanitize=address -fsanitize=undefined)
+elseif(CLANG_MSAN)
+  message(STATUS "Enabling Clang memory sanitizer.")
+  target_compile_options(sanitizer_lib INTERFACE
+    -fsanitize=memory
+    -fsanitize-memory-track-origins
+    -fno-omit-frame-pointer
+    -fno-optimize-sibling-calls)
+  target_link_libraries(sanitizer_lib INTERFACE -fsanitize=memory -fsanitize-memory-track-origins)
+elseif(CLANG_TSAN)
+  message(STATUS "Enabling Clang thread sanitizer.")
+  target_compile_options(sanitizer_lib INTERFACE -fsanitize=thread -fPIE)
+  target_link_libraries(sanitizer_lib INTERFACE -fsanitize=thread)
+endif()
+target_link_libraries(nvim PRIVATE sanitizer_lib)
+
 if(NOT LUAJIT_FOUND)
   message(STATUS "luajit not found, skipping nvim-test (unit tests) target")
 else()
@@ -870,41 +901,14 @@ else()
     ${EXTERNAL_SOURCES} ${EXTERNAL_HEADERS}
     ${UNIT_TEST_FIXTURES}
   )
-  target_link_libraries(nvim-test PRIVATE ${LUAJIT_LIBRARIES} main_lib PUBLIC libuv_lib)
+  target_link_libraries(nvim-test
+    PRIVATE ${LUAJIT_LIBRARIES} main_lib sanitizer_lib
+    PUBLIC libuv_lib)
   if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
     target_link_libraries(nvim-test PRIVATE "-framework CoreServices")
   endif()
   target_include_directories(nvim-test PRIVATE ${LUAJIT_INCLUDE_DIRS})
   target_compile_definitions(nvim-test PRIVATE UNIT_TESTING)
-endif()
-
-if(CLANG_ASAN_UBSAN)
-  message(STATUS "Enabling Clang address sanitizer and undefined behavior sanitizer for nvim.")
-  if(CI_BUILD)
-    # Try to recover from all sanitize issues so we get reports about all failures
-    target_compile_options(nvim PRIVATE -fsanitize-recover=all)
-  else()
-    target_compile_options(nvim PRIVATE -fno-sanitize-recover=all)
-  endif()
-  target_compile_options(nvim PRIVATE
-    -fno-omit-frame-pointer
-    -fno-optimize-sibling-calls
-    -fsanitize=address
-    -fsanitize=undefined
-    -fsanitize-blacklist=${PROJECT_SOURCE_DIR}/src/.asan-blacklist)
-  target_link_libraries(nvim PRIVATE -fsanitize=address -fsanitize=undefined)
-elseif(CLANG_MSAN)
-  message(STATUS "Enabling Clang memory sanitizer for nvim.")
-  target_compile_options(nvim PRIVATE
-    -fsanitize=memory
-    -fsanitize-memory-track-origins
-    -fno-omit-frame-pointer
-    -fno-optimize-sibling-calls)
-  target_link_libraries(nvim PRIVATE -fsanitize=memory -fsanitize-memory-track-origins)
-elseif(CLANG_TSAN)
-  message(STATUS "Enabling Clang thread sanitizer for nvim.")
-  target_compile_options(nvim PRIVATE -fsanitize=thread -fPIE)
-  target_link_libraries(nvim PRIVATE -fsanitize=thread)
 endif()
 
 function(get_test_target prefix sfile relative_path_var target_var)
