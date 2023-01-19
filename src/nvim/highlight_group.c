@@ -656,8 +656,6 @@ void init_highlight(bool both, bool reset)
 /// @return  OK for success, FAIL for failure.
 int load_colors(char *name)
 {
-  char *buf;
-  int retval = FAIL;
   static bool recursive = false;
 
   // When being called recursively, this is probably because setting
@@ -669,10 +667,10 @@ int load_colors(char *name)
 
   recursive = true;
   size_t buflen = strlen(name) + 12;
-  buf = xmalloc(buflen);
+  char *buf = xmalloc(buflen);
   apply_autocmds(EVENT_COLORSCHEMEPRE, name, curbuf->b_fname, false, curbuf);
   snprintf(buf, buflen, "colors/%s.vim", name);
-  retval = source_runtime(buf, DIP_START + DIP_OPT);
+  int retval = source_runtime(buf, DIP_START + DIP_OPT);
   if (retval == FAIL) {
     snprintf(buf, buflen, "colors/%s.lua", name);
     retval = source_runtime(buf, DIP_START + DIP_OPT);
@@ -871,25 +869,6 @@ update:
 void do_highlight(const char *line, const bool forceit, const bool init)
   FUNC_ATTR_NONNULL_ALL
 {
-  const char *name_end;
-  const char *linep;
-  const char *key_start;
-  const char *arg_start;
-  int off;
-  int len;
-  int attr;
-  int id;
-  int idx;
-  HlGroup item_before;
-  bool did_change = false;
-  bool dodefault = false;
-  bool doclear = false;
-  bool dolink = false;
-  bool error = false;
-  int color;
-  bool is_normal_group = false;   // "Normal" group
-  bool did_highlight_changed = false;
-
   // If no argument, list current highlighting.
   if (!init && ends_excmd((uint8_t)(*line))) {
     for (int i = 1; i <= highlight_ga.ga_len && !got_int; i++) {
@@ -899,9 +878,11 @@ void do_highlight(const char *line, const bool forceit, const bool init)
     return;
   }
 
+  bool dodefault = false;
+
   // Isolate the name.
-  name_end = (const char *)skiptowhite(line);
-  linep = (const char *)skipwhite(name_end);
+  const char *name_end = (const char *)skiptowhite(line);
+  const char *linep = (const char *)skipwhite(name_end);
 
   // Check for "default" argument.
   if (strncmp(line, "default", (size_t)(name_end - line)) == 0) {
@@ -910,6 +891,9 @@ void do_highlight(const char *line, const bool forceit, const bool init)
     name_end = (const char *)skiptowhite(line);
     linep = (const char *)skipwhite(name_end);
   }
+
+  bool doclear = false;
+  bool dolink = false;
 
   // Check for "clear" or "link" argument.
   if (strncmp(line, "clear", (size_t)(name_end - line)) == 0) {
@@ -920,7 +904,7 @@ void do_highlight(const char *line, const bool forceit, const bool init)
 
   // ":highlight {group-name}": list highlighting for one group.
   if (!doclear && !dolink && ends_excmd((uint8_t)(*linep))) {
-    id = syn_name2id_len(line, (size_t)(name_end - line));
+    int id = syn_name2id_len(line, (size_t)(name_end - line));
     if (id == 0) {
       semsg(_("E411: highlight group not found: %s"), line);
     } else {
@@ -1022,11 +1006,11 @@ void do_highlight(const char *line, const bool forceit, const bool init)
   }
 
   // Find the group name in the table.  If it does not exist yet, add it.
-  id = syn_check_group(line, (size_t)(name_end - line));
+  int id = syn_check_group(line, (size_t)(name_end - line));
   if (id == 0) {  // Failed (out of memory).
     return;
   }
-  idx = id - 1;  // Index is ID minus one.
+  int idx = id - 1;  // Index is ID minus one.
 
   // Return if "default" was used and the group already has settings
   if (dodefault && hl_has_settings(idx, true)) {
@@ -1034,8 +1018,8 @@ void do_highlight(const char *line, const bool forceit, const bool init)
   }
 
   // Make a copy so we can check if any attribute actually changed
-  item_before = hl_table[idx];
-  is_normal_group = (strcmp(hl_table[idx].sg_name_u, "NORMAL") == 0);
+  HlGroup item_before = hl_table[idx];
+  bool is_normal_group = (strcmp(hl_table[idx].sg_name_u, "NORMAL") == 0);
 
   // Clear the highlighting for ":hi clear {group}" and ":hi clear".
   if (doclear || (forceit && init)) {
@@ -1045,11 +1029,16 @@ void do_highlight(const char *line, const bool forceit, const bool init)
     }
   }
 
+  bool did_change = false;
+  bool error = false;
+
   char key[64];
   char arg[512];
   if (!doclear) {
+    const char *arg_start;
+
     while (!ends_excmd((uint8_t)(*linep))) {
-      key_start = linep;
+      const char *key_start = linep;
       if (*linep == '=') {
         semsg(_("E415: unexpected equal sign: %s"), key_start);
         error = true;
@@ -1126,12 +1115,12 @@ void do_highlight(const char *line, const bool forceit, const bool init)
       if (strcmp(key, "TERM") == 0
           || strcmp(key, "CTERM") == 0
           || strcmp(key, "GUI") == 0) {
-        attr = 0;
-        off = 0;
+        int attr = 0;
+        int off = 0;
         int i;
         while (arg[off] != NUL) {
           for (i = ARRAY_SIZE(hl_attr_table); --i >= 0;) {
-            len = (int)strlen(hl_name_table[i]);
+            int len = (int)strlen(hl_name_table[i]);
             if (STRNICMP(arg + off, hl_name_table[i], len) == 0) {
               attr |= hl_attr_table[i];
               off += len;
@@ -1181,6 +1170,7 @@ void do_highlight(const char *line, const bool forceit, const bool init)
             hl_table[idx].sg_cterm_bold = false;
           }
 
+          int color;
           if (ascii_isdigit(*arg)) {
             color = atoi(arg);
           } else if (STRICMP(arg, "fg") == 0) {
@@ -1201,7 +1191,7 @@ void do_highlight(const char *line, const bool forceit, const bool init)
             }
           } else {
             // Reduce calls to STRICMP a bit, it can be slow.
-            off = TOUPPER_ASC(*arg);
+            int off = TOUPPER_ASC(*arg);
             int i;
             for (i = ARRAY_SIZE(color_names); --i >= 0;) {
               if (off == color_names[i][0]
@@ -1357,6 +1347,8 @@ void do_highlight(const char *line, const bool forceit, const bool init)
       linep = (const char *)skipwhite(linep);
     }
   }
+
+  bool did_highlight_changed = false;
 
   if (!error && is_normal_group) {
     // Need to update all groups, because they might be using "bg" and/or
@@ -1542,8 +1534,6 @@ Dictionary get_global_hl_defs(Arena *arena)
 static bool highlight_list_arg(const int id, bool didh, const int type, int iarg, const char *sarg,
                                const char *const name)
 {
-  char buf[100];
-
   if (got_int) {
     return false;
   }
@@ -1552,6 +1542,7 @@ static bool highlight_list_arg(const int id, bool didh, const int type, int iarg
     return didh;
   }
 
+  char buf[100];
   const char *ts = buf;
   if (type == LIST_INT) {
     snprintf((char *)buf, sizeof(buf), "%d", iarg - 1);
@@ -1592,11 +1583,11 @@ static bool highlight_list_arg(const int id, bool didh, const int type, int iarg
 const char *highlight_has_attr(const int id, const int flag, const int modec)
   FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_PURE
 {
-  int attr;
-
   if (id <= 0 || id > highlight_ga.ga_len) {
     return NULL;
   }
+
+  int attr;
 
   if (modec == 'g') {
     attr = hl_table[id - 1].sg_gui;
@@ -1620,7 +1611,6 @@ const char *highlight_color(const int id, const char *const what, const int mode
   FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
 {
   static char name[20];
-  int n;
   bool fg = false;
   bool sp = false;
   bool font = false;
@@ -1639,6 +1629,9 @@ const char *highlight_color(const int id, const char *const what, const int mode
   } else if (!(TOLOWER_ASC(what[0]) == 'b' && TOLOWER_ASC(what[1]) == 'g')) {
     return NULL;
   }
+
+  int n;
+
   if (modec == 'g') {
     if (what[2] == '#' && ui_rgb_attached()) {
       if (fg) {
@@ -2046,17 +2039,15 @@ static void combine_stl_hlt(int id, int id_S, int id_alt, int hlcnt, int i, int 
 /// screen redraw after any :highlight command.
 void highlight_changed(void)
 {
-  int id;
   char userhl[30];  // use 30 to avoid compiler warning
   int id_S = -1;
   int id_SNC = 0;
-  int hlcnt;
 
   need_highlight_changed = false;
 
   /// Translate builtin highlight groups into attributes for quick lookup.
   for (int hlf = 0; hlf < HLF_COUNT; hlf++) {
-    id = syn_check_group(hlf_names[hlf], strlen(hlf_names[hlf]));
+    int id = syn_check_group(hlf_names[hlf], strlen(hlf_names[hlf]));
     if (id == 0) {
       abort();
     }
@@ -2095,7 +2086,7 @@ void highlight_changed(void)
   // Must to be in there simultaneously in case of table overflows in
   // get_attr_entry()
   ga_grow(&highlight_ga, 10);
-  hlcnt = highlight_ga.ga_len;
+  int hlcnt = highlight_ga.ga_len;
   if (id_S == -1) {
     // Make sure id_S is always valid to simplify code below. Use the last entry
     CLEAR_POINTER(&hl_table[hlcnt + 9]);
@@ -2103,7 +2094,7 @@ void highlight_changed(void)
   }
   for (int i = 0; i < 9; i++) {
     snprintf(userhl, sizeof(userhl), "User%d", i + 1);
-    id = syn_name2id(userhl);
+    int id = syn_name2id(userhl);
     if (id == 0) {
       highlight_user[i] = 0;
       highlight_stlnc[i] = 0;
@@ -2169,12 +2160,10 @@ void set_context_in_highlight_cmd(expand_T *xp, const char *arg)
 /// List highlighting matches in a nice way.
 static void highlight_list(void)
 {
-  int i;
-
-  for (i = 10; --i >= 0;) {
+  for (int i = 10; --i >= 0;) {
     highlight_list_two(i, HL_ATTR(HLF_D));
   }
-  for (i = 40; --i >= 0;) {
+  for (int i = 40; --i >= 0;) {
     highlight_list_two(99, 0);
   }
 }
@@ -2945,7 +2934,6 @@ RgbValue name_to_color(const char *name, int *idx)
     } else {  // found match
       *idx = m;
       return color_name_table[m].color;
-      break;
     }
   }
 
