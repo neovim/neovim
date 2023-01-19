@@ -1177,6 +1177,34 @@ static void did_set_optexpr(buf_T *buf, win_T *win, char **varp, char **gvarp)
   }
 }
 
+// handle options that are a list of flags.
+static void did_set_option_listflags(buf_T *buf, win_T *win, char **varp, char *errbuf,
+                                     size_t errbuflen, char **errmsg)
+{
+  char *p = NULL;
+  if (varp == &p_ww) {  // 'whichwrap'
+    p = WW_ALL;
+  } else if (varp == &p_shm) {  // 'shortmess'
+    p = SHM_ALL;
+  } else if (varp == &(p_cpo)) {  // 'cpoptions'
+    p = CPO_VI;
+  } else if (varp == &(buf->b_p_fo)) {  // 'formatoptions'
+    p = FO_ALL;
+  } else if (varp == &win->w_p_cocu) {  // 'concealcursor'
+    p = COCU_ALL;
+  } else if (varp == &p_mouse) {  // 'mouse'
+    p = MOUSE_ALL;
+  }
+  if (p != NULL) {
+    for (char *s = *varp; *s; s++) {
+      if (vim_strchr(p, (uint8_t)(*s)) == NULL) {
+        *errmsg = illegal_char(errbuf, errbuflen, *s);
+        break;
+      }
+    }
+  }
+}
+
 /// Handle string options that need some action to perform when changed.
 /// The new value must be allocated.
 ///
@@ -1656,30 +1684,7 @@ char *did_set_string_option(int opt_idx, char **varp, char *oldval, char *errbuf
       errmsg = e_invarg;
     }
   } else {
-    // Options that are a list of flags.
-    char *p = NULL;
-    if (varp == &p_ww) {  // 'whichwrap'
-      p = WW_ALL;
-    }
-    if (varp == &p_shm) {  // 'shortmess'
-      p = SHM_ALL;
-    } else if (varp == &(p_cpo)) {  // 'cpoptions'
-      p = CPO_VI;
-    } else if (varp == &(curbuf->b_p_fo)) {  // 'formatoptions'
-      p = FO_ALL;
-    } else if (varp == &curwin->w_p_cocu) {  // 'concealcursor'
-      p = COCU_ALL;
-    } else if (varp == &p_mouse) {  // 'mouse'
-      p = MOUSE_ALL;
-    }
-    if (p != NULL) {
-      for (char *s = *varp; *s; s++) {
-        if (vim_strchr(p, (uint8_t)(*s)) == NULL) {
-          errmsg = illegal_char(errbuf, errbuflen, *s);
-          break;
-        }
-      }
-    }
+    did_set_option_listflags(curbuf, curwin, varp, errbuf, errbuflen, &errmsg);
   }
 
   // If error detected, restore the previous value.
