@@ -640,6 +640,34 @@ char *check_stl_option(char *s)
 
 static int shada_idx = -1;
 
+static void did_set_backupcopy(buf_T *buf, char *oldval, int opt_flags, char **errmsg)
+{
+  char *bkc = p_bkc;
+  unsigned int *flags = &bkc_flags;
+
+  if (opt_flags & OPT_LOCAL) {
+    bkc = buf->b_p_bkc;
+    flags = &buf->b_bkc_flags;
+  }
+
+  if ((opt_flags & OPT_LOCAL) && *bkc == NUL) {
+    // make the local value empty: use the global value
+    *flags = 0;
+  } else {
+    if (opt_strings_flags(bkc, p_bkc_values, flags, true) != OK) {
+      *errmsg = e_invarg;
+    }
+
+    if (((*flags & BKC_AUTO) != 0)
+        + ((*flags & BKC_YES) != 0)
+        + ((*flags & BKC_NO) != 0) != 1) {
+      // Must have exactly one of "auto", "yes"  and "no".
+      (void)opt_strings_flags(oldval, p_bkc_values, flags, true);
+      *errmsg = e_invarg;
+    }
+  }
+}
+
 /// Handle string options that need some action to perform when changed.
 /// The new value must be allocated.
 ///
@@ -678,30 +706,7 @@ char *did_set_string_option(int opt_idx, char **varp, char *oldval, char *errbuf
     // are often illegal in a file name. Be more permissive if "secure" is off.
     errmsg = e_invarg;
   } else if (gvarp == &p_bkc) {  // 'backupcopy'
-    char *bkc = p_bkc;
-    unsigned int *flags = &bkc_flags;
-
-    if (opt_flags & OPT_LOCAL) {
-      bkc = curbuf->b_p_bkc;
-      flags = &curbuf->b_bkc_flags;
-    }
-
-    if ((opt_flags & OPT_LOCAL) && *bkc == NUL) {
-      // make the local value empty: use the global value
-      *flags = 0;
-    } else {
-      if (opt_strings_flags(bkc, p_bkc_values, flags, true) != OK) {
-        errmsg = e_invarg;
-      }
-
-      if (((*flags & BKC_AUTO) != 0)
-          + ((*flags & BKC_YES) != 0)
-          + ((*flags & BKC_NO) != 0) != 1) {
-        // Must have exactly one of "auto", "yes"  and "no".
-        (void)opt_strings_flags(oldval, p_bkc_values, flags, true);
-        errmsg = e_invarg;
-      }
-    }
+    did_set_backupcopy(curbuf, oldval, opt_flags, &errmsg);
   } else if (varp == &p_bex || varp == &p_pm) {  // 'backupext' and 'patchmode'
     if (strcmp(*p_bex == '.' ? p_bex + 1 : p_bex,
                *p_pm == '.' ? p_pm + 1 : p_pm) == 0) {
