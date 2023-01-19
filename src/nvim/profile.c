@@ -703,17 +703,17 @@ void script_prof_save(proftime_T *tm)
 /// Count time spent in children after invoking another script or function.
 void script_prof_restore(const proftime_T *tm)
 {
-  scriptitem_T *si;
+  if (!SCRIPT_ID_VALID(current_sctx.sc_sid)) {
+    return;
+  }
 
-  if (current_sctx.sc_sid > 0 && current_sctx.sc_sid <= script_items.ga_len) {
-    si = &SCRIPT_ITEM(current_sctx.sc_sid);
-    if (si->sn_prof_on && --si->sn_pr_nest == 0) {
-      si->sn_pr_child = profile_end(si->sn_pr_child);
-      // don't count wait time
-      si->sn_pr_child = profile_sub_wait(*tm, si->sn_pr_child);
-      si->sn_pr_children = profile_add(si->sn_pr_children, si->sn_pr_child);
-      si->sn_prl_children = profile_add(si->sn_prl_children, si->sn_pr_child);
-    }
+  scriptitem_T *si = &SCRIPT_ITEM(current_sctx.sc_sid);
+  if (si->sn_prof_on && --si->sn_pr_nest == 0) {
+    si->sn_pr_child = profile_end(si->sn_pr_child);
+    // don't count wait time
+    si->sn_pr_child = profile_sub_wait(*tm, si->sn_pr_child);
+    si->sn_pr_children = profile_add(si->sn_pr_children, si->sn_pr_child);
+    si->sn_prl_children = profile_add(si->sn_prl_children, si->sn_pr_child);
   }
 }
 
@@ -787,17 +787,17 @@ static void script_dump_profile(FILE *fd)
 /// Dump the profiling info.
 void profile_dump(void)
 {
-  FILE *fd;
+  if (profile_fname == NULL) {
+    return;
+  }
 
-  if (profile_fname != NULL) {
-    fd = os_fopen(profile_fname, "w");
-    if (fd == NULL) {
-      semsg(_(e_notopen), profile_fname);
-    } else {
-      script_dump_profile(fd);
-      func_dump_profile(fd);
-      fclose(fd);
-    }
+  FILE *fd = os_fopen(profile_fname, "w");
+  if (fd == NULL) {
+    semsg(_(e_notopen), profile_fname);
+  } else {
+    script_dump_profile(fd);
+    func_dump_profile(fd);
+    fclose(fd);
   }
 }
 
