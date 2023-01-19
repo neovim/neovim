@@ -330,7 +330,7 @@ function STHighlighter:process_response(response, client, version)
     end
     vim.list_extend(tokens, old_tokens, idx)
   else
-    tokens = response.data
+    tokens = response.data or {}
   end
 
   -- Update the state with the new results
@@ -378,7 +378,7 @@ function STHighlighter:on_win(topline, botline)
       --
       -- Instead, we have to use normal extmarks that can attach to locations
       -- in the buffer and are persisted between redraws.
-      local highlights = current_result.highlights
+      local highlights = current_result.highlights or {}
       local idx = binary_search(highlights, topline)
 
       for i = idx, #highlights do
@@ -612,7 +612,7 @@ function M.get_at_pos(bufnr, row, col)
 
   local tokens = {}
   for client_id, client in pairs(highlighter.client_state) do
-    local highlights = client.current_result.highlights
+    local highlights = client.current_result.highlights or {}
     if highlights then
       local idx = binary_search(highlights, row)
       for i = idx, #highlights do

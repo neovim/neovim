@@ -852,6 +852,20 @@ b = "as"]],
           },
         },
       },
+      {
+        it = 'nil_data',
+        text = [[some text]],
+        response = [[{}]], -- Data is nil
+        legend = [[{
+          "tokenTypes": [
+            "namespace", "type", "class", "enum", "interface", "struct", "typeParameter", "parameter", "variable", "property", "enumMember", "event", "function", "method", "macro", "keyword", "modifier", "comment", "string", "number", "regexp", "operator"
+          ],
+          "tokenModifiers": [
+            "declaration", "definition", "readonly", "static", "deprecated", "abstract", "async", "modification", "documentation", "defaultLibrary"
+          ]
+        }]],
+        expected = {},
+      },
     }) do
       it(test.it, function()
         exec_lua(create_server_definition)
