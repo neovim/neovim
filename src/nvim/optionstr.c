@@ -1017,6 +1017,44 @@ static void did_set_statusline(win_T *win, char **varp, char **gvarp, char **err
   }
 }
 
+static void did_set_complete(char **varp, char *errbuf, size_t errbuflen, char **errmsg)
+{
+  // check if it is a valid value for 'complete' -- Acevedo
+  for (char *s = *varp; *s;) {
+    while (*s == ',' || *s == ' ') {
+      s++;
+    }
+    if (!*s) {
+      break;
+    }
+    if (vim_strchr(".wbuksid]tU", (uint8_t)(*s)) == NULL) {
+      *errmsg = illegal_char(errbuf, errbuflen, *s);
+      break;
+    }
+    if (*++s != NUL && *s != ',' && *s != ' ') {
+      if (s[-1] == 'k' || s[-1] == 's') {
+        // skip optional filename after 'k' and 's'
+        while (*s && *s != ',' && *s != ' ') {
+          if (*s == '\\' && s[1] != NUL) {
+            s++;
+          }
+          s++;
+        }
+      } else {
+        if (errbuf != NULL) {
+          vim_snprintf(errbuf, errbuflen,
+                       _("E535: Illegal character after <%c>"),
+                       *--s);
+          *errmsg = errbuf;
+        } else {
+          *errmsg = "";
+        }
+        break;
+      }
+    }
+  }
+}
+
 /// Handle string options that need some action to perform when changed.
 /// The new value must be allocated.
 ///
@@ -1287,41 +1325,8 @@ char *did_set_string_option(int opt_idx, char **varp, char *oldval, char *errbuf
              || varp == &p_ruf || varp == &curwin->w_p_stc) {
     // 'statusline', 'winbar', 'tabline', 'rulerformat' or 'statuscolumn'
     did_set_statusline(curwin, varp, gvarp, &errmsg);
-  } else if (gvarp == &p_cpt) {
-    // check if it is a valid value for 'complete' -- Acevedo
-    for (char *s = *varp; *s;) {
-      while (*s == ',' || *s == ' ') {
-        s++;
-      }
-      if (!*s) {
-        break;
-      }
-      if (vim_strchr(".wbuksid]tU", (uint8_t)(*s)) == NULL) {
-        errmsg = illegal_char(errbuf, errbuflen, *s);
-        break;
-      }
-      if (*++s != NUL && *s != ',' && *s != ' ') {
-        if (s[-1] == 'k' || s[-1] == 's') {
-          // skip optional filename after 'k' and 's'
-          while (*s && *s != ',' && *s != ' ') {
-            if (*s == '\\' && s[1] != NUL) {
-              s++;
-            }
-            s++;
-          }
-        } else {
-          if (errbuf != NULL) {
-            vim_snprintf(errbuf, errbuflen,
-                         _("E535: Illegal character after <%c>"),
-                         *--s);
-            errmsg = errbuf;
-          } else {
-            errmsg = "";
-          }
-          break;
-        }
-      }
-    }
+  } else if (gvarp == &p_cpt) {  // 'complete'
+    did_set_complete(varp, errbuf, errbuflen, &errmsg);
   } else if (varp == &p_cot) {  // 'completeopt'
     if (check_opt_strings(p_cot, p_cot_values, true) != OK) {
       errmsg = e_invarg;
