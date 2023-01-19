@@ -12,12 +12,12 @@ list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake" "${PROJECT_SOURCE_DI
 include(CheckCCompilerFlag)
 include(Util)
 
+set_default_buildtype()
+
 get_property(isMultiConfig GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG)
 if(NOT isMultiConfig)
   set(BUILD_TYPE_STRING -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE})
 endif()
-
-set_default_buildtype()
 
 set(DEFAULT_MAKE_CFLAGS CFLAGS+=-g)
 
