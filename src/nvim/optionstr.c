@@ -907,6 +907,65 @@ static void did_set_global_listfillchars(win_T *win, char **varp, int opt_flags,
   }
 }
 
+static void did_set_shada(vimoption_T **opt, int *opt_idx, bool *free_oldval, char *errbuf,
+                          size_t errbuflen, char **errmsg)
+{
+  // TODO(ZyX-I): Remove this code in the future, alongside with &viminfo
+  //              option.
+  *opt_idx = (((*opt)->fullname[0] == 'v')
+              ? (shada_idx == -1 ? ((shada_idx = findoption("shada"))) : shada_idx)
+              : *opt_idx);
+  *opt = get_option(*opt_idx);
+  // Update free_oldval now that we have the opt_idx for 'shada', otherwise
+  // there would be a disconnect between the check for P_ALLOCED at the start
+  // of the function and the set of P_ALLOCED at the end of the function.
+  *free_oldval = ((*opt)->flags & P_ALLOCED);
+  for (char *s = p_shada; *s;) {
+    // Check it's a valid character
+    if (vim_strchr("!\"%'/:<@cfhnrs", (uint8_t)(*s)) == NULL) {
+      *errmsg = illegal_char(errbuf, errbuflen, *s);
+      break;
+    }
+    if (*s == 'n') {          // name is always last one
+      break;
+    } else if (*s == 'r') {  // skip until next ','
+      while (*++s && *s != ',') {}
+    } else if (*s == '%') {
+      // optional number
+      while (ascii_isdigit(*++s)) {}
+    } else if (*s == '!' || *s == 'h' || *s == 'c') {
+      s++;                    // no extra chars
+    } else {                    // must have a number
+      while (ascii_isdigit(*++s)) {}
+
+      if (!ascii_isdigit(*(s - 1))) {
+        if (errbuf != NULL) {
+          vim_snprintf(errbuf, errbuflen,
+                       _("E526: Missing number after <%s>"),
+                       transchar_byte((uint8_t)(*(s - 1))));
+          *errmsg = errbuf;
+        } else {
+          *errmsg = "";
+        }
+        break;
+      }
+    }
+    if (*s == ',') {
+      s++;
+    } else if (*s) {
+      if (errbuf != NULL) {
+        *errmsg = N_("E527: Missing comma");
+      } else {
+        *errmsg = "";
+      }
+      break;
+    }
+  }
+  if (*p_shada && *errmsg == NULL && get_shada_parameter('\'') < 0) {
+    *errmsg = N_("E528: Must specify a ' value");
+  }
+}
+
 /// Handle string options that need some action to perform when changed.
 /// The new value must be allocated.
 ///
@@ -1064,60 +1123,7 @@ char *did_set_string_option(int opt_idx, char **varp, char *oldval, char *errbuf
       errmsg = e_invarg;
     }
   } else if (varp == &p_shada) {  // 'shada'
-    // TODO(ZyX-I): Remove this code in the future, alongside with &viminfo
-    //              option.
-    opt_idx = ((opt->fullname[0] == 'v')
-               ? (shada_idx == -1 ? ((shada_idx = findoption("shada"))) : shada_idx)
-               : opt_idx);
-    opt = get_option(opt_idx);
-    // Update free_oldval now that we have the opt_idx for 'shada', otherwise
-    // there would be a disconnect between the check for P_ALLOCED at the start
-    // of the function and the set of P_ALLOCED at the end of the function.
-    free_oldval = (opt->flags & P_ALLOCED);
-    for (char *s = p_shada; *s;) {
-      // Check it's a valid character
-      if (vim_strchr("!\"%'/:<@cfhnrs", (uint8_t)(*s)) == NULL) {
-        errmsg = illegal_char(errbuf, errbuflen, *s);
-        break;
-      }
-      if (*s == 'n') {          // name is always last one
-        break;
-      } else if (*s == 'r') {  // skip until next ','
-        while (*++s && *s != ',') {}
-      } else if (*s == '%') {
-        // optional number
-        while (ascii_isdigit(*++s)) {}
-      } else if (*s == '!' || *s == 'h' || *s == 'c') {
-        s++;                    // no extra chars
-      } else {                    // must have a number
-        while (ascii_isdigit(*++s)) {}
-
-        if (!ascii_isdigit(*(s - 1))) {
-          if (errbuf != NULL) {
-            vim_snprintf(errbuf, errbuflen,
-                         _("E526: Missing number after <%s>"),
-                         transchar_byte((uint8_t)(*(s - 1))));
-            errmsg = errbuf;
-          } else {
-            errmsg = "";
-          }
-          break;
-        }
-      }
-      if (*s == ',') {
-        s++;
-      } else if (*s) {
-        if (errbuf != NULL) {
-          errmsg = N_("E527: Missing comma");
-        } else {
-          errmsg = "";
-        }
-        break;
-      }
-    }
-    if (*p_shada && errmsg == NULL && get_shada_parameter('\'') < 0) {
-      errmsg = N_("E528: Must specify a ' value");
-    }
+    did_set_shada(&opt, &opt_idx, &free_oldval, errbuf, errbuflen, &errmsg);
   } else if (gvarp == &p_sbr) {  // 'showbreak'
     for (char *s = *varp; *s;) {
       if (ptr2cells(s) != 1) {
