@@ -1116,6 +1116,31 @@ static void did_set_tagcase(buf_T *buf, int opt_flags, char **errmsg)
   }
 }
 
+static void did_set_virtualedit(win_T *win, int opt_flags, char *oldval, char **errmsg)
+{
+  char *ve = p_ve;
+  unsigned int *flags = &ve_flags;
+
+  if (opt_flags & OPT_LOCAL) {
+    ve = win->w_p_ve;
+    flags = &win->w_ve_flags;
+  }
+
+  if ((opt_flags & OPT_LOCAL) && *ve == NUL) {
+    // make the local value empty: use the global value
+    *flags = 0;
+  } else {
+    if (opt_strings_flags(ve, p_ve_values, flags, true) != OK) {
+      *errmsg = e_invarg;
+    } else if (strcmp(p_ve, oldval) != 0) {
+      // Recompute cursor position in case the new 've' setting
+      // changes something.
+      validate_virtcol_win(win);
+      coladvance(win->w_virtcol);
+    }
+  }
+}
+
 /// Handle string options that need some action to perform when changed.
 /// The new value must be allocated.
 ///
@@ -1469,27 +1494,7 @@ char *did_set_string_option(int opt_idx, char **varp, char *oldval, char *errbuf
       foldUpdateAll(curwin);
     }
   } else if (gvarp == &p_ve) {  // 'virtualedit'
-    char *ve = p_ve;
-    unsigned int *flags = &ve_flags;
-
-    if (opt_flags & OPT_LOCAL) {
-      ve = curwin->w_p_ve;
-      flags = &curwin->w_ve_flags;
-    }
-
-    if ((opt_flags & OPT_LOCAL) && *ve == NUL) {
-      // make the local value empty: use the global value
-      *flags = 0;
-    } else {
-      if (opt_strings_flags(ve, p_ve_values, flags, true) != OK) {
-        errmsg = e_invarg;
-      } else if (strcmp(p_ve, oldval) != 0) {
-        // Recompute cursor position in case the new 've' setting
-        // changes something.
-        validate_virtcol();
-        coladvance(curwin->w_virtcol);
-      }
-    }
+    did_set_virtualedit(curwin, opt_flags, oldval, &errmsg);
   } else if (gvarp == &p_cino) {  // 'cinoptions'
     // TODO(vim): recognize errors
     parse_cino(curbuf);
