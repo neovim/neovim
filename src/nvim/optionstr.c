@@ -882,6 +882,31 @@ static void did_set_comments(char **varp, char *errbuf, size_t errbuflen, char *
   }
 }
 
+static void did_set_global_listfillchars(win_T *win, char **varp, int opt_flags, char **errmsg)
+{
+  char **local_ptr = varp == &p_lcs ? &win->w_p_lcs : &win->w_p_fcs;
+  // only apply the global value to "win" when it does not have a local value
+  *errmsg = set_chars_option(win, varp, **local_ptr == NUL || !(opt_flags & OPT_GLOBAL));
+  if (*errmsg == NULL) {
+    // If the current window is set to use the global
+    // 'listchars'/'fillchars' value, clear the window-local value.
+    if (!(opt_flags & OPT_GLOBAL)) {
+      clear_string_option(local_ptr);
+    }
+    FOR_ALL_TAB_WINDOWS(tp, wp) {
+      // If the current window has a local value need to apply it
+      // again, it was changed when setting the global value.
+      // If no error was returned above, we don't expect an error
+      // here, so ignore the return value.
+      local_ptr = varp == &p_lcs ? &wp->w_p_lcs : &wp->w_p_fcs;
+      if (**local_ptr == NUL) {
+        (void)set_chars_option(wp, local_ptr, true);
+      }
+    }
+    redraw_all_later(UPD_NOT_VALID);
+  }
+}
+
 /// Handle string options that need some action to perform when changed.
 /// The new value must be allocated.
 ///
@@ -1026,28 +1051,7 @@ char *did_set_string_option(int opt_idx, char **varp, char *oldval, char *errbuf
   } else if (gvarp == &p_com) {  // 'comments'
     did_set_comments(varp, errbuf, errbuflen, &errmsg);
   } else if (varp == &p_lcs || varp == &p_fcs) {  // global 'listchars' or 'fillchars'
-    char **local_ptr = varp == &p_lcs ? &curwin->w_p_lcs : &curwin->w_p_fcs;
-    // only apply the global value to "curwin" when it does not have a local value
-    errmsg =
-      set_chars_option(curwin, varp, **local_ptr == NUL || !(opt_flags & OPT_GLOBAL));
-    if (errmsg == NULL) {
-      // If the current window is set to use the global
-      // 'listchars'/'fillchars' value, clear the window-local value.
-      if (!(opt_flags & OPT_GLOBAL)) {
-        clear_string_option(local_ptr);
-      }
-      FOR_ALL_TAB_WINDOWS(tp, wp) {
-        // If the current window has a local value need to apply it
-        // again, it was changed when setting the global value.
-        // If no error was returned above, we don't expect an error
-        // here, so ignore the return value.
-        local_ptr = varp == &p_lcs ? &wp->w_p_lcs : &wp->w_p_fcs;
-        if (**local_ptr == NUL) {
-          (void)set_chars_option(wp, local_ptr, true);
-        }
-      }
-      redraw_all_later(UPD_NOT_VALID);
-    }
+    did_set_global_listfillchars(curwin, varp, opt_flags, &errmsg);
   } else if (varp == &curwin->w_p_lcs) {  // local 'listchars'
     errmsg = set_chars_option(curwin, varp, true);
   } else if (varp == &curwin->w_p_fcs) {  // local 'fillchars'
