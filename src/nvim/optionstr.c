@@ -1055,6 +1055,15 @@ static void did_set_complete(char **varp, char *errbuf, size_t errbuflen, char *
   }
 }
 
+static void did_set_completeopt(char **errmsg)
+{
+  if (check_opt_strings(p_cot, p_cot_values, true) != OK) {
+    *errmsg = e_invarg;
+  } else {
+    completeopt_was_set();
+  }
+}
+
 /// Handle string options that need some action to perform when changed.
 /// The new value must be allocated.
 ///
@@ -1328,11 +1337,7 @@ char *did_set_string_option(int opt_idx, char **varp, char *oldval, char *errbuf
   } else if (gvarp == &p_cpt) {  // 'complete'
     did_set_complete(varp, errbuf, errbuflen, &errmsg);
   } else if (varp == &p_cot) {  // 'completeopt'
-    if (check_opt_strings(p_cot, p_cot_values, true) != OK) {
-      errmsg = e_invarg;
-    } else {
-      completeopt_was_set();
-    }
+    did_set_completeopt(&errmsg);
 #ifdef BACKSLASH_IN_FILENAME
   } else if (gvarp == &p_csl) {  // 'completeslash'
     if (check_opt_strings(p_csl, p_csl_values, false) != OK
