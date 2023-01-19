@@ -1205,6 +1205,20 @@ static void did_set_option_listflags(buf_T *buf, win_T *win, char **varp, char *
   }
 }
 
+// When 'syntax' is set, load the syntax of that name
+static void did_set_syntax(buf_T *buf, bool value_changed)
+{
+  static int syn_recursive = 0;
+
+  syn_recursive++;
+  // Only pass true for "force" when the value changed or not used
+  // recursively, to avoid endless recurrence.
+  apply_autocmds(EVENT_SYNTAX, buf->b_p_syn, buf->b_fname,
+                 value_changed || syn_recursive == 1, buf);
+  buf->b_flags |= BF_SYN_SET;
+  syn_recursive--;
+}
+
 /// Handle string options that need some action to perform when changed.
 /// The new value must be allocated.
 ///
@@ -1719,17 +1733,8 @@ char *did_set_string_option(int opt_idx, char **varp, char *oldval, char *errbuf
     }
 
     // Trigger the autocommand only after setting the flags.
-    // When 'syntax' is set, load the syntax of that name
     if (varp == &(curbuf->b_p_syn)) {
-      static int syn_recursive = 0;
-
-      syn_recursive++;
-      // Only pass true for "force" when the value changed or not used
-      // recursively, to avoid endless recurrence.
-      apply_autocmds(EVENT_SYNTAX, curbuf->b_p_syn, curbuf->b_fname,
-                     value_changed || syn_recursive == 1, curbuf);
-      curbuf->b_flags |= BF_SYN_SET;
-      syn_recursive--;
+      did_set_syntax(curbuf, value_changed);
     } else if (varp == &(curbuf->b_p_ft)) {
       // 'filetype' is set, trigger the FileType autocommand
       // Skip this when called from a modeline and the filetype was
