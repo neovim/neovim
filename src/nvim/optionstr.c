@@ -966,6 +966,23 @@ static void did_set_shada(vimoption_T **opt, int *opt_idx, bool *free_oldval, ch
   }
 }
 
+static void did_set_buftype(buf_T *buf, win_T *win, char **errmsg)
+{
+  // When 'buftype' is set, check for valid value.
+  if ((buf->terminal && buf->b_p_bt[0] != 't')
+      || (!buf->terminal && buf->b_p_bt[0] == 't')
+      || check_opt_strings(buf->b_p_bt, p_buftype_values, false) != OK) {
+    *errmsg = e_invarg;
+  } else {
+    if (win->w_status_height || global_stl_height()) {
+      win->w_redr_status = true;
+      redraw_later(win, UPD_VALID);
+    }
+    buf->b_help = (buf->b_p_bt[0] == 'h');
+    redraw_titles();
+  }
+}
+
 /// Handle string options that need some action to perform when changed.
 /// The new value must be allocated.
 ///
@@ -1230,20 +1247,8 @@ char *did_set_string_option(int opt_idx, char **varp, char *oldval, char *errbuf
     if (check_opt_strings(curbuf->b_p_bh, p_bufhidden_values, false) != OK) {
       errmsg = e_invarg;
     }
-  } else if (gvarp == &p_bt) {
-    // When 'buftype' is set, check for valid value.
-    if ((curbuf->terminal && curbuf->b_p_bt[0] != 't')
-        || (!curbuf->terminal && curbuf->b_p_bt[0] == 't')
-        || check_opt_strings(curbuf->b_p_bt, p_buftype_values, false) != OK) {
-      errmsg = e_invarg;
-    } else {
-      if (curwin->w_status_height || global_stl_height()) {
-        curwin->w_redr_status = true;
-        redraw_later(curwin, UPD_VALID);
-      }
-      curbuf->b_help = (curbuf->b_p_bt[0] == 'h');
-      redraw_titles();
-    }
+  } else if (gvarp == &p_bt) {  // 'buftype'
+    did_set_buftype(curbuf, curwin, &errmsg);
   } else if (gvarp == &p_stl || gvarp == &p_wbr || varp == &p_tal
              || varp == &p_ruf || varp == &curwin->w_p_stc) {
     // 'statusline', 'winbar', 'tabline', 'rulerformat' or 'statuscolumn'
