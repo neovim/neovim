@@ -1094,6 +1094,28 @@ static void did_set_pastetoggle(void)
   }
 }
 
+static void did_set_tagcase(buf_T *buf, int opt_flags, char **errmsg)
+{
+  unsigned int *flags;
+  char *p;
+
+  if (opt_flags & OPT_LOCAL) {
+    p = buf->b_p_tc;
+    flags = &buf->b_tc_flags;
+  } else {
+    p = p_tc;
+    flags = &tc_flags;
+  }
+
+  if ((opt_flags & OPT_LOCAL) && *p == NUL) {
+    // make the local value empty: use the global value
+    *flags = 0;
+  } else if (*p == NUL
+             || opt_strings_flags(p, p_tc_values, flags, false) != OK) {
+    *errmsg = e_invarg;
+  }
+}
+
 /// Handle string options that need some action to perform when changed.
 /// The new value must be allocated.
 ///
@@ -1402,24 +1424,7 @@ char *did_set_string_option(int opt_idx, char **varp, char *oldval, char *errbuf
       errmsg = e_invarg;
     }
   } else if (gvarp == &p_tc) {  // 'tagcase'
-    unsigned int *flags;
-    char *p;
-
-    if (opt_flags & OPT_LOCAL) {
-      p = curbuf->b_p_tc;
-      flags = &curbuf->b_tc_flags;
-    } else {
-      p = p_tc;
-      flags = &tc_flags;
-    }
-
-    if ((opt_flags & OPT_LOCAL) && *p == NUL) {
-      // make the local value empty: use the global value
-      *flags = 0;
-    } else if (*p == NUL
-               || opt_strings_flags(p, p_tc_values, flags, false) != OK) {
-      errmsg = e_invarg;
-    }
+    did_set_tagcase(curbuf, opt_flags, &errmsg);
   } else if (varp == &p_cmp) {  // 'casemap'
     if (opt_strings_flags(p_cmp, p_cmp_values, &cmp_flags, true) != OK) {
       errmsg = e_invarg;
