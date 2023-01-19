@@ -882,8 +882,8 @@ void draw_tabline(void)
   redraw_tabline = false;
 }
 
-/// Build the 'statuscolumn' string for line "lnum".  If "setnum" is true,
-/// update the "lnum" and "relnum" vim-variables for a new line.
+/// Build the 'statuscolumn' string for line "lnum". When "relnum" == -1,
+/// the v:lnum and v:relnum variables don't have to be updated.
 ///
 /// @param hlrec  HL attributes (can be NULL)
 /// @param stcp  Status column attributes (can be NULL)
@@ -891,6 +891,8 @@ void draw_tabline(void)
 int build_statuscol_str(win_T *wp, linenr_T lnum, long relnum, int maxwidth, int fillchar,
                         char *buf, stl_hlrec_t **hlrec, statuscol_T *stcp)
 {
+  bool fillclick = relnum >= 0 && lnum == wp->w_topline;
+
   if (relnum >= 0) {
     set_vim_var_nr(VV_LNUM, lnum);
     set_vim_var_nr(VV_RELNUM, relnum);
@@ -898,14 +900,17 @@ int build_statuscol_str(win_T *wp, linenr_T lnum, long relnum, int maxwidth, int
 
   StlClickRecord *clickrec;
   char *stc = xstrdup(wp->w_p_stc);
-  int width = build_stl_str_hl(wp, buf, MAXPATHL, stc, "statuscolumn", OPT_LOCAL,
-                               fillchar, maxwidth, hlrec, &clickrec, stcp);
+  int width = build_stl_str_hl(wp, buf, MAXPATHL, stc, "statuscolumn", OPT_LOCAL, fillchar,
+                               maxwidth, hlrec, fillclick ? &clickrec : NULL, stcp);
   xfree(stc);
 
-  stl_clear_click_defs(wp->w_statuscol_click_defs, wp->w_statuscol_click_defs_size);
-  wp->w_statuscol_click_defs = stl_alloc_click_defs(wp->w_statuscol_click_defs, width,
-                                                    &wp->w_statuscol_click_defs_size);
-  stl_fill_click_defs(wp->w_statuscol_click_defs, clickrec, buf, width, false);
+  // Only update click definitions once per window per redraw
+  if (fillclick) {
+    stl_clear_click_defs(wp->w_statuscol_click_defs, wp->w_statuscol_click_defs_size);
+    wp->w_statuscol_click_defs = stl_alloc_click_defs(wp->w_statuscol_click_defs, width,
+                                                      &wp->w_statuscol_click_defs_size);
+    stl_fill_click_defs(wp->w_statuscol_click_defs, clickrec, buf, width, false);
+  }
 
   return width;
 }

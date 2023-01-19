@@ -61,7 +61,7 @@ describe('statuscolumn', function()
     ]])
   end)
 
-  it("works with 'statuscolumn'", function()
+  it("works with 'number' and 'relativenumber'", function()
     command([[set stc=%{&nu?v:lnum:''}%=%{&rnu?'\ '.v:relnum:''}│]])
     screen:expect([[
       4 │aaaaa                                             |
