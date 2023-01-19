@@ -270,10 +270,6 @@
 #include "nvim/undo.h"
 #include "nvim/vim.h"
 
-#ifndef UNIX            // it's in os/unix_defs.h for Unix
-# include <time.h>
-#endif
-
 // Special byte values for <byte>.  Some are only used in the tree for
 // postponed prefixes, some only in the other trees.  This is a bit messy...
 enum {

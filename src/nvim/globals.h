@@ -806,8 +806,8 @@ enum {
 extern char *default_vim_dir;
 extern char *default_vimruntime_dir;
 extern char *default_lib_dir;
-extern char_u *compiled_user;
-extern char_u *compiled_sys;
+extern char *compiled_user;
+extern char *compiled_sys;
 #endif
 
 // When a window has a local directory, the absolute path of the global

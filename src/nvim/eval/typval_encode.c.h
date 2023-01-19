@@ -339,7 +339,7 @@ static int _TYPVAL_ENCODE_CONVERT_ONE_VALUE(
                             tv_blob_len(tv->vval.v_blob));
     break;
   case VAR_FUNC:
-    TYPVAL_ENCODE_CONV_FUNC_START(tv, (char_u *)tv->vval.v_string);
+    TYPVAL_ENCODE_CONV_FUNC_START(tv, tv->vval.v_string);
     TYPVAL_ENCODE_CONV_FUNC_BEFORE_ARGS(tv, 0);
     TYPVAL_ENCODE_CONV_FUNC_BEFORE_SELF(tv, -1);
     TYPVAL_ENCODE_CONV_FUNC_END(tv);
@@ -347,7 +347,7 @@ static int _TYPVAL_ENCODE_CONVERT_ONE_VALUE(
   case VAR_PARTIAL: {
     partial_T *const pt = tv->vval.v_partial;
     (void)pt;
-    TYPVAL_ENCODE_CONV_FUNC_START(tv, (pt == NULL ? NULL : (char_u *)partial_name(pt)));  // -V547
+    TYPVAL_ENCODE_CONV_FUNC_START(tv, (pt == NULL ? NULL : partial_name(pt)));  // -V547
     _mp_push(*mpstack, ((MPConvStackVal) {  // -V779
         .type = kMPConvPartial,
         .tv = tv,

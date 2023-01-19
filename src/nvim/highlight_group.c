@@ -1069,7 +1069,7 @@ void do_highlight(const char *line, const bool forceit, const bool init)
       }
       memcpy(key, key_start, key_len);
       key[key_len] = NUL;
-      vim_strup((char_u *)key);
+      vim_strup(key);
       linep = (const char *)skipwhite(linep);
 
       if (strcmp(key, "NONE") == 0) {
@@ -1793,7 +1793,7 @@ int syn_name2id_len(const char *name, size_t len)
   // Avoid alloc()/free(), these are slow too.
   memcpy(name_u, name, len);
   name_u[len] = '\0';
-  vim_strup((char_u *)name_u);
+  vim_strup(name_u);
 
   // map_get(..., int) returns 0 when no key is present, which is
   // the expected value for missing highlight group.
@@ -1906,7 +1906,7 @@ static int syn_add_group(const char *name, size_t len)
   hlgp->sg_parent = scoped_parent;
   // will get set to false by caller if settings are added
   hlgp->sg_cleared = true;
-  vim_strup((char_u *)hlgp->sg_name_u);
+  vim_strup(hlgp->sg_name_u);
 
   int id = highlight_ga.ga_len;  // ID is index plus one
 

@@ -143,7 +143,7 @@ typedef struct ff_visited_list_hdr {
 
 // '**' can be expanded to several directory levels.
 // Set the default maximum depth.
-#define FF_MAX_STAR_STAR_EXPAND ((char_u)30)
+#define FF_MAX_STAR_STAR_EXPAND 30
 
 // The search context:
 //   ffsc_stack_ptr:    the stack for the dirs to search
@@ -182,7 +182,7 @@ typedef struct ff_search_ctx_T {
 # include "file_search.c.generated.h"
 #endif
 
-static char_u e_pathtoolong[] = N_("E854: path too long for completion");
+static char e_pathtoolong[] = N_("E854: path too long for completion");
 
 /// Initialization routine for vim_findfile().
 ///
@@ -302,14 +302,12 @@ void *vim_findfile_init(char *path, char *filename, char *stopdirs, int level, i
 #ifdef BACKSLASH_IN_FILENAME
     // "c:dir" needs "c:" to be expanded, otherwise use current dir
     if (*path != NUL && path[1] == ':') {
-      char_u drive[3];
+      char drive[3];
 
       drive[0] = path[0];
       drive[1] = ':';
       drive[2] = NUL;
-      if (vim_FullName((const char *)drive, (char *)ff_expand_buffer, MAXPATHL,
-                       true)
-          == FAIL) {
+      if (vim_FullName(drive, ff_expand_buffer, MAXPATHL, true) == FAIL) {
         goto error_return;
       }
       path += 2;
@@ -504,15 +502,15 @@ error_return:
 }
 
 /// @return  the stopdir string.  Check that ';' is not escaped.
-char_u *vim_findfile_stopdir(char *buf)
+char *vim_findfile_stopdir(char *buf)
 {
-  char_u *r_ptr = (char_u *)buf;
+  char *r_ptr = buf;
 
   while (*r_ptr != NUL && *r_ptr != ';') {
     if (r_ptr[0] == '\\' && r_ptr[1] == ';') {
       // Overwrite the escape char,
       // use strlen(r_ptr) to move the trailing '\0'.
-      STRMOVE(r_ptr, (char *)r_ptr + 1);
+      STRMOVE(r_ptr, r_ptr + 1);
       r_ptr++;
     }
     r_ptr++;
@@ -1291,7 +1289,7 @@ char *find_file_in_path(char *ptr, size_t len, int options, int first, char *rel
 {
   return find_file_in_path_option(ptr, len, options, first,
                                   (*curbuf->b_p_path == NUL
-                                   ? (char *)p_path
+                                   ? p_path
                                    : curbuf->b_p_path),
                                   FINDFILE_BOTH, rel_fname, curbuf->b_p_sua);
 }
@@ -1324,7 +1322,7 @@ void free_findfile(void)
 /// @return  an allocated string for the file name.  NULL for error.
 char *find_directory_in_path(char *ptr, size_t len, int options, char *rel_fname)
 {
-  return find_file_in_path_option(ptr, len, options, true, (char *)p_cdpath,
+  return find_file_in_path_option(ptr, len, options, true, p_cdpath,
                                   FINDFILE_DIR, rel_fname, "");
 }
 
@@ -1469,7 +1467,7 @@ char *find_file_in_path_option(char *ptr, size_t len, int options, int first, ch
         copy_option_part(&dir, buf, MAXPATHL, " ,");
 
         // get the stopdir string
-        r_ptr = (char *)vim_findfile_stopdir(buf);
+        r_ptr = vim_findfile_stopdir(buf);
         fdip_search_ctx = vim_findfile_init(buf, ff_file_to_find,
                                             r_ptr, 100, false, find_what,
                                             fdip_search_ctx, false, rel_fname);

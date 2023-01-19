@@ -3710,7 +3710,7 @@ char *replace_makeprg(exarg_T *eap, char *arg, char **cmdlinep)
   if ((eap->cmdidx == CMD_make || eap->cmdidx == CMD_lmake || isgrep)
       && !grep_internal(eap->cmdidx)) {
     const char *program = isgrep ? (*curbuf->b_p_gp == NUL ? p_gp : curbuf->b_p_gp)
-                                 : (*curbuf->b_p_mp == NUL ? (char *)p_mp : curbuf->b_p_mp);
+                                 : (*curbuf->b_p_mp == NUL ? p_mp : curbuf->b_p_mp);
 
     arg = skipwhite(arg);
 
@@ -3767,8 +3767,8 @@ int expand_filename(exarg_T *eap, char **cmdlinep, char **errormsgp)
     // Try to find a match at this position.
     size_t srclen;
     int escaped;
-    char *repl = (char *)eval_vars(p, (char_u *)eap->arg, &srclen, &(eap->do_ecmd_lnum),
-                                   errormsgp, &escaped, true);
+    char *repl = eval_vars(p, eap->arg, &srclen, &(eap->do_ecmd_lnum),
+                           errormsgp, &escaped, true);
     if (*errormsgp != NULL) {           // error detected
       return FAIL;
     }
@@ -3868,7 +3868,7 @@ int expand_filename(exarg_T *eap, char **cmdlinep, char **errormsgp)
       backslash_halve(eap->arg);
     }
 #else
-    backslash_halve((char_u *)eap->arg);
+    backslash_halve(eap->arg);
 #endif
 
     if (has_wildcards) {
@@ -6725,8 +6725,8 @@ ssize_t find_cmdline_var(const char *src, size_t *usedlen)
 /// @return          an allocated string if a valid match was found.
 ///                  Returns NULL if no match was found.  "usedlen" then still contains the
 ///                  number of characters to skip.
-char_u *eval_vars(char *src, const char_u *srcstart, size_t *usedlen, linenr_T *lnump,
-                  char **errormsg, int *escaped, bool empty_is_error)
+char *eval_vars(char *src, const char *srcstart, size_t *usedlen, linenr_T *lnump, char **errormsg,
+                int *escaped, bool empty_is_error)
 {
   char *result;
   char *resultbuf = NULL;
@@ -6750,7 +6750,7 @@ char_u *eval_vars(char *src, const char_u *srcstart, size_t *usedlen, linenr_T *
 
   // Skip when preceded with a backslash "\%" and "\#".
   // Note: In "\\%" the % is also not recognized!
-  if ((char_u *)src > srcstart && src[-1] == '\\') {
+  if (src > srcstart && src[-1] == '\\') {
     *usedlen = 0;
     STRMOVE(src - 1, (char *)src);      // remove backslash
     return NULL;
@@ -6985,7 +6985,7 @@ char_u *eval_vars(char *src, const char_u *srcstart, size_t *usedlen, linenr_T *
     result = xstrnsave(result, resultlen);
   }
   xfree(resultbuf);
-  return (char_u *)result;
+  return result;
 }
 
 /// Expand the <sfile> string in "arg".
@@ -7002,8 +7002,7 @@ char *expand_sfile(char *arg)
       // replace "<sfile>" with the sourced file name, and do ":" stuff
       size_t srclen;
       char *errormsg;
-      char *repl = (char *)eval_vars(p, (char_u *)result, &srclen, NULL, &errormsg, NULL,
-                                     true);
+      char *repl = eval_vars(p, result, &srclen, NULL, &errormsg, NULL, true);
       if (errormsg != NULL) {
         if (*errormsg) {
           emsg(errormsg);

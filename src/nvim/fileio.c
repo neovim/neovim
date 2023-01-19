@@ -1114,7 +1114,7 @@ retry:
         if (size < 2 || curbuf->b_p_bin) {
           ccname = NULL;
         } else {
-          ccname = check_for_bom((char_u *)ptr, size, &blen,
+          ccname = check_for_bom(ptr, size, &blen,
                                  fio_flags == FIO_UCSBOM ? FIO_ALL : get_fio_flags(fenc));
         }
         if (ccname != NULL) {
@@ -2473,7 +2473,7 @@ int buf_write(buf_T *buf, char *fname, char *sfname, linenr_T start, linenr_T en
   if (!filtering) {
     filemess(buf,
 #ifndef UNIX
-             (char_u *)sfname,
+             sfname,
 #else
              fname,
 #endif
@@ -2517,7 +2517,7 @@ int buf_write(buf_T *buf, char *fname, char *sfname, linenr_T start, linenr_T en
   }
 #else  // win32
   // Check for a writable device name.
-  c = fname == NULL ? NODE_OTHER : os_nodetype((char *)fname);
+  c = fname == NULL ? NODE_OTHER : os_nodetype(fname);
   if (c == NODE_OTHER) {
     SET_ERRMSG_NUM("E503", _("is not a file or writable device"));
     goto fail;
@@ -2535,7 +2535,7 @@ int buf_write(buf_T *buf, char *fname, char *sfname, linenr_T start, linenr_T en
       goto fail;
     }
     if (overwriting) {
-      os_fileinfo((char *)fname, &file_info_old);
+      os_fileinfo(fname, &file_info_old);
     }
   }
 #endif  // !UNIX
@@ -2572,7 +2572,7 @@ int buf_write(buf_T *buf, char *fname, char *sfname, linenr_T start, linenr_T en
 
   // If 'backupskip' is not empty, don't make a backup for some files.
   dobackup = (p_wb || p_bk || *p_pm != NUL);
-  if (dobackup && *p_bsk != NUL && match_file_list((char *)p_bsk, sfname, ffname)) {
+  if (dobackup && *p_bsk != NUL && match_file_list(p_bsk, sfname, ffname)) {
     dobackup = false;
   }
 
@@ -4130,8 +4130,9 @@ static int get_fio_flags(const char *name)
 ///
 /// @return  the name of the encoding and set "*lenp" to the length or,
 ///          NULL when no BOM found.
-static char *check_for_bom(const char_u *p, long size, int *lenp, int flags)
+static char *check_for_bom(const char *p_in, long size, int *lenp, int flags)
 {
+  const uint8_t *p = (const uint8_t *)p_in;
   char *name = NULL;
   int len = 2;
 
@@ -4647,7 +4648,7 @@ int vim_rename(const char *from, const char *to)
     to = from;
   }
 #ifndef UNIX  // For Unix os_open() already set the permission.
-  os_setperm((const char *)to, perm);
+  os_setperm(to, perm);
 #endif
 #ifdef HAVE_ACL
   os_set_acl(to, acl);
@@ -5156,11 +5157,11 @@ void write_lnum_adjust(linenr_T offset)
 #if defined(BACKSLASH_IN_FILENAME)
 /// Convert all backslashes in fname to forward slashes in-place,
 /// unless when it looks like a URL.
-void forward_slash(char_u *fname)
+void forward_slash(char *fname)
 {
-  char_u *p;
+  char *p;
 
-  if (path_with_url((const char *)fname)) {
+  if (path_with_url(fname)) {
     return;
   }
   for (p = fname; *p != NUL; p++) {

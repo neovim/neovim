@@ -868,7 +868,7 @@ static int qf_get_nextline(qfstate_T *state)
 #endif
   }
 
-  remove_bom((char_u *)state->linebuf);
+  remove_bom(state->linebuf);
 
   return QF_OK;
 }
@@ -925,7 +925,7 @@ restofline:
   // match or no match.
   fields->valid = true;
   for (; fmt_ptr != NULL; fmt_ptr = fmt_ptr->next) {
-    idx = (char_u)fmt_ptr->prefix;
+    idx = (uint8_t)fmt_ptr->prefix;
     status = qf_parse_get_fields(linebuf, linelen, fmt_ptr, fields,
                                  qfl->qf_multiline, qfl->qf_multiscan,
                                  &tail);
@@ -5048,8 +5048,8 @@ void ex_cfile(exarg_T *eap)
   // first error.
   // :caddfile adds to an existing quickfix list. If there is no
   // quickfix list then a new list is created.
-  int res = qf_init(wp, (char *)p_ef, p_efm, (eap->cmdidx != CMD_caddfile
-                                              && eap->cmdidx != CMD_laddfile),
+  int res = qf_init(wp, p_ef, p_efm, (eap->cmdidx != CMD_caddfile
+                                      && eap->cmdidx != CMD_laddfile),
                     qf_cmdtitle(*eap->cmdlinep), enc);
   if (wp != NULL) {
     qi = GET_LOC_LIST(wp);

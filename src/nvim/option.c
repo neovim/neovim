@@ -381,12 +381,12 @@ void set_init_1(bool clean_arg)
   // enc_locale() will try to find the encoding of the current locale.
   // This will be used when 'default' is used as encoding specifier
   // in 'fileencodings'
-  char_u *p = enc_locale();
+  char *p = enc_locale();
   if (p == NULL) {
     // use utf-8 as 'default' if locale encoding can't be detected.
-    p = (char_u *)xmemdupz(S_LEN("utf-8"));
+    p = xmemdupz(S_LEN("utf-8"));
   }
-  fenc_default = (char *)p;
+  fenc_default = p;
 
 #ifdef HAVE_WORKING_LIBINTL
   // GNU gettext 0.10.37 supports this feature: set the codeset used for
@@ -1654,7 +1654,7 @@ static char *option_expand(int opt_idx, char *val)
   // names.
   // For 'spellsuggest' expand after "file:".
   expand_env_esc(val, NameBuff, MAXPATHL,
-                 (char_u **)options[opt_idx].var == &p_tags, false,
+                 (char **)options[opt_idx].var == &p_tags, false,
                  (char_u **)options[opt_idx].var == (char_u **)&p_sps ? "file:" :
                  NULL);
   if (strcmp(NameBuff, val) == 0) {   // they are the same
@@ -4034,12 +4034,12 @@ static char_u *get_varp(vimoption_T *p)
 }
 
 /// Get the value of 'equalprg', either the buffer-local one or the global one.
-char_u *get_equalprg(void)
+char *get_equalprg(void)
 {
   if (*curbuf->b_p_ep == NUL) {
     return p_ep;
   }
-  return (char_u *)curbuf->b_p_ep;
+  return curbuf->b_p_ep;
 }
 
 /// Copy options from one window to another.
@@ -4225,7 +4225,7 @@ static void init_buf_opt_idx(void)
 void buf_copy_options(buf_T *buf, int flags)
 {
   int should_copy = true;
-  char_u *save_p_isk = NULL;           // init for GCC
+  char *save_p_isk = NULL;           // init for GCC
   int did_isk = false;
 
   // Skip this when the option defaults have not been set yet.  Happens when
@@ -4258,7 +4258,7 @@ void buf_copy_options(buf_T *buf, int flags)
       // (jumping back to a help file with CTRL-T or CTRL-O)
       bool dont_do_help = ((flags & BCO_NOHELP) && buf->b_help) || buf->b_p_initialized;
       if (dont_do_help) {               // don't free b_p_isk
-        save_p_isk = (char_u *)buf->b_p_isk;
+        save_p_isk = buf->b_p_isk;
         buf->b_p_isk = NULL;
       }
       // Always free the allocated strings.  If not already initialized,
@@ -4453,7 +4453,7 @@ void buf_copy_options(buf_T *buf, int flags)
       // Don't touch these at all when BCO_NOHELP is used and going from
       // or to a help buffer.
       if (dont_do_help) {
-        buf->b_p_isk = (char *)save_p_isk;
+        buf->b_p_isk = save_p_isk;
         if (p_vts && p_vts != empty_option && !buf->b_p_vts_array) {
           (void)tabstop_set(p_vts, &buf->b_p_vts_array);
         } else {
@@ -4843,7 +4843,7 @@ void ExpandOldSetting(int *num_file, char ***file)
 
   // A backslash is required before some characters.  This is the reverse of
   // what happens in do_set().
-  char_u *buf = (char_u *)vim_strsave_escaped(var, escape_chars);
+  char *buf = vim_strsave_escaped(var, escape_chars);
 
 #ifdef BACKSLASH_IN_FILENAME
   // For MS-Windows et al. we don't double backslashes at the start and
@@ -4859,7 +4859,7 @@ void ExpandOldSetting(int *num_file, char ***file)
   }
 #endif
 
-  *file[0] = (char *)buf;
+  *file[0] = buf;
   *num_file = 1;
 }
 

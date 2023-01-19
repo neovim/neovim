@@ -403,7 +403,7 @@ void ex_debug(exarg_T *eap)
   debug_break_level = debug_break_level_save;
 }
 
-static char_u *debug_breakpoint_name = NULL;
+static char *debug_breakpoint_name = NULL;
 static linenr_T debug_breakpoint_lnum;
 
 /// When debugging or a breakpoint is set on a skipped command, no debug prompt
@@ -412,7 +412,7 @@ static linenr_T debug_breakpoint_lnum;
 /// a skipped command decides itself that a debug prompt should be displayed, it
 /// can do so by calling dbg_check_skipped().
 static int debug_skipped;
-static char_u *debug_skipped_name;
+static char *debug_skipped_name;
 
 /// Go to debug mode when a breakpoint was encountered or "ex_nesting_level" is
 /// at or below the break level.  But only when the line is actually
@@ -426,8 +426,8 @@ void dbg_check_breakpoint(exarg_T *eap)
     if (!eap->skip) {
       char *p;
       // replace K_SNR with "<SNR>"
-      if (debug_breakpoint_name[0] == K_SPECIAL
-          && debug_breakpoint_name[1] == KS_EXTRA
+      if ((uint8_t)debug_breakpoint_name[0] == K_SPECIAL
+          && (uint8_t)debug_breakpoint_name[1] == KS_EXTRA
           && debug_breakpoint_name[2] == KE_SNR) {
         p = "<SNR>";
       } else {
@@ -857,6 +857,6 @@ static linenr_T debuggy_find(bool file, char *fname, linenr_T after, garray_T *g
 void dbg_breakpoint(char *name, linenr_T lnum)
 {
   // We need to check if this line is actually executed in do_one_cmd()
-  debug_breakpoint_name = (char_u *)name;
+  debug_breakpoint_name = name;
   debug_breakpoint_lnum = lnum;
 }

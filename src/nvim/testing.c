@@ -68,15 +68,15 @@ static void prepare_assert_error(garray_T *gap)
 
 /// Append "p[clen]" to "gap", escaping unprintable characters.
 /// Changes NL to \n, CR to \r, etc.
-static void ga_concat_esc(garray_T *gap, const char_u *p, int clen)
+static void ga_concat_esc(garray_T *gap, const char *p, int clen)
   FUNC_ATTR_NONNULL_ALL
 {
-  char_u buf[NUMBUFLEN];
+  char buf[NUMBUFLEN];
 
   if (clen > 1) {
     memmove(buf, p, (size_t)clen);
     buf[clen] = NUL;
-    ga_concat(gap, (char *)buf);
+    ga_concat(gap, buf);
   } else {
     switch (*p) {
     case BS:
@@ -94,11 +94,11 @@ static void ga_concat_esc(garray_T *gap, const char_u *p, int clen)
     case '\\':
       ga_concat(gap, "\\\\"); break;
     default:
-      if (*p < ' ' || *p == 0x7f) {
-        vim_snprintf((char *)buf, NUMBUFLEN, "\\x%02x", *p);
-        ga_concat(gap, (char *)buf);
+      if ((uint8_t)(*p) < ' ' || *p == 0x7f) {
+        vim_snprintf(buf, NUMBUFLEN, "\\x%02x", *p);
+        ga_concat(gap, buf);
       } else {
-        ga_append(gap, (char)(*p));
+        ga_append(gap, *p);
       }
       break;
     }
@@ -107,21 +107,21 @@ static void ga_concat_esc(garray_T *gap, const char_u *p, int clen)
 
 /// Append "str" to "gap", escaping unprintable characters.
 /// Changes NL to \n, CR to \r, etc.
-static void ga_concat_shorten_esc(garray_T *gap, const char_u *str)
+static void ga_concat_shorten_esc(garray_T *gap, const char *str)
   FUNC_ATTR_NONNULL_ARG(1)
 {
-  char_u buf[NUMBUFLEN];
+  char buf[NUMBUFLEN];
 
   if (str == NULL) {
     ga_concat(gap, "NULL");
     return;
   }
 
-  for (const char_u *p = str; *p != NUL; p++) {
+  for (const char *p = str; *p != NUL; p++) {
     int same_len = 1;
-    const char *s = (char *)p;
+    const char *s = p;
     const int c = mb_ptr2char_adv(&s);
-    const int clen = (int)((char_u *)s - p);
+    const int clen = (int)(s - p);
     while (*s != NUL && c == utf_ptr2char(s)) {
       same_len++;
       s += clen;
@@ -130,10 +130,10 @@ static void ga_concat_shorten_esc(garray_T *gap, const char_u *str)
       ga_concat(gap, "\\[");
       ga_concat_esc(gap, p, clen);
       ga_concat(gap, " occurs ");
-      vim_snprintf((char *)buf, NUMBUFLEN, "%d", same_len);
-      ga_concat(gap, (char *)buf);
+      vim_snprintf(buf, NUMBUFLEN, "%d", same_len);
+      ga_concat(gap, buf);
       ga_concat(gap, " times]");
-      p = (char_u *)s - 1;
+      p = s - 1;
     } else {
       ga_concat_esc(gap, p, clen);
     }
@@ -141,10 +141,10 @@ static void ga_concat_shorten_esc(garray_T *gap, const char_u *str)
 }
 
 /// Fill "gap" with information about an assert error.
-static void fill_assert_error(garray_T *gap, typval_T *opt_msg_tv, char_u *exp_str,
+static void fill_assert_error(garray_T *gap, typval_T *opt_msg_tv, char *exp_str,
                               typval_T *exp_tv_arg, typval_T *got_tv_arg, assert_type_T atype)
 {
-  char_u *tofree;
+  char *tofree;
   typval_T *exp_tv = exp_tv_arg;
   typval_T *got_tv = got_tv_arg;
   bool did_copy = false;
@@ -154,8 +154,8 @@ static void fill_assert_error(garray_T *gap, typval_T *opt_msg_tv, char_u *exp_s
       && !(opt_msg_tv->v_type == VAR_STRING
            && (opt_msg_tv->vval.v_string == NULL
                || *opt_msg_tv->vval.v_string == NUL))) {
-    tofree = (char_u *)encode_tv2echo(opt_msg_tv, NULL);
-    ga_concat(gap, (char *)tofree);
+    tofree = encode_tv2echo(opt_msg_tv, NULL);
+    ga_concat(gap, tofree);
     xfree(tofree);
     ga_concat(gap, ": ");
   }
@@ -218,7 +218,7 @@ static void fill_assert_error(garray_T *gap, typval_T *opt_msg_tv, char_u *exp_s
       }
     }
 
-    tofree = (char_u *)encode_tv2string(exp_tv, NULL);
+    tofree = encode_tv2string(exp_tv, NULL);
     ga_concat_shorten_esc(gap, tofree);
     xfree(tofree);
   } else {
@@ -233,7 +233,7 @@ static void fill_assert_error(garray_T *gap, typval_T *opt_msg_tv, char_u *exp_s
     } else {
       ga_concat(gap, " but got ");
     }
-    tofree = (char_u *)encode_tv2string(got_tv, NULL);
+    tofree = encode_tv2string(got_tv, NULL);
     ga_concat_shorten_esc(gap, tofree);
     xfree(tofree);
 
@@ -306,7 +306,7 @@ static int assert_bool(typval_T *argvars, bool is_true)
                                 : kBoolVarFalse)))) {
     prepare_assert_error(&ga);
     fill_assert_error(&ga, &argvars[1],
-                      (char_u *)(is_true ? "True" : "False"),
+                      is_true ? "True" : "False",
                       NULL, &argvars[0], ASSERT_OTHER);
     assert_error(&ga);
     ga_clear(&ga);
@@ -642,8 +642,8 @@ static int assert_inrange(typval_T *argvars)
       garray_T ga;
       prepare_assert_error(&ga);
       if (argvars[3].v_type != VAR_UNKNOWN) {
-        char_u *const tofree = (char_u *)encode_tv2string(&argvars[3], NULL);
-        ga_concat(&ga, (char *)tofree);
+        char *const tofree = encode_tv2string(&argvars[3], NULL);
+        ga_concat(&ga, tofree);
         xfree(tofree);
       } else {
         char msg[80];
@@ -671,7 +671,7 @@ static int assert_inrange(typval_T *argvars)
       vim_snprintf(msg, sizeof(msg),
                    "range %" PRIdVARNUMBER " - %" PRIdVARNUMBER ",",
                    lower, upper);  // -V576
-      fill_assert_error(&ga, &argvars[3], (char_u *)msg, NULL, &argvars[2],
+      fill_assert_error(&ga, &argvars[3], msg, NULL, &argvars[2],
                         ASSERT_INRANGE);
       assert_error(&ga);
       ga_clear(&ga);

@@ -5002,7 +5002,7 @@ void common_function(typval_T *argvars, typval_T *rettv, bool is_funcref)
     // Don't check an autoload name for existence here.
   } else if (trans_name != NULL
              && (is_funcref
-                 ? find_func((char_u *)trans_name) == NULL
+                 ? find_func(trans_name) == NULL
                  : !translated_function_exists((const char *)trans_name))) {
     semsg(_("E700: Unknown function: %s"), s);
   } else {
@@ -5101,7 +5101,7 @@ void common_function(typval_T *argvars, typval_T *rettv, bool is_funcref)
         func_ptr_ref(pt->pt_func);
         xfree(name);
       } else if (is_funcref) {
-        pt->pt_func = find_func((char_u *)trans_name);
+        pt->pt_func = find_func(trans_name);
         func_ptr_ref(pt->pt_func);
         xfree(name);
       } else {
@@ -5536,7 +5536,7 @@ bool callback_from_typval(Callback *const callback, const typval_T *const arg)
     }
   } else if (nlua_is_table_from_lua(arg)) {
     // TODO(tjdvries): UnifiedCallback
-    char *name = (char *)nlua_register_table_as_callable(arg);
+    char *name = nlua_register_table_as_callable(arg);
 
     if (name != NULL) {
       callback->data.funcref = xstrdup(name);
@@ -8299,7 +8299,7 @@ bool eval_has_provider(const char *feat)
     if (get_var_tv(buf, len, &tv, NULL, false, true) == FAIL) {
       // Show a hint if Call() is defined but g:loaded_xx_provider is missing.
       snprintf(buf, sizeof(buf), "provider#%s#Call", name);
-      if (!!find_func((char_u *)buf) && p_lpl) {
+      if (!!find_func(buf) && p_lpl) {
         semsg("provider: %s: missing required variable g:loaded_%s_provider",
               name, name);
       }
@@ -8314,7 +8314,7 @@ bool eval_has_provider(const char *feat)
   if (ok) {
     // Call() must be defined if provider claims to be working.
     snprintf(buf, sizeof(buf), "provider#%s#Call", name);
-    if (!find_func((char_u *)buf)) {
+    if (!find_func(buf)) {
       semsg("provider: %s: g:loaded_%s_provider=2 but %s is not defined",
             name, name, buf);
       ok = false;
@@ -8337,10 +8337,10 @@ void eval_fmt_source_name_line(char *buf, size_t bufsize)
 /// ":checkhealth [plugins]"
 void ex_checkhealth(exarg_T *eap)
 {
-  bool found = !!find_func((char_u *)"health#check");
+  bool found = !!find_func("health#check");
   if (!found
       && script_autoload("health#check", sizeof("health#check") - 1, false)) {
-    found = !!find_func((char_u *)"health#check");
+    found = !!find_func("health#check");
   }
   if (!found) {
     const char *vimruntime_env = os_getenv("VIMRUNTIME");

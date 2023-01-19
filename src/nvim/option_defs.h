@@ -442,7 +442,7 @@ EXTERN unsigned bo_flags;
 #define BO_SPELL  0x20000
 #define BO_WILD   0x40000
 
-EXTERN char_u *p_bsk;         // 'backupskip'
+EXTERN char *p_bsk;           // 'backupskip'
 EXTERN char *p_breakat;       // 'breakat'
 EXTERN char *p_bh;            ///< 'bufhidden'
 EXTERN char *p_bt;            ///< 'buftype'
@@ -468,7 +468,7 @@ EXTERN long p_columns;          // 'columns'
 EXTERN int p_confirm;           // 'confirm'
 EXTERN char *p_cot;             // 'completeopt'
 #ifdef BACKSLASH_IN_FILENAME
-EXTERN char_u *p_csl;         // 'completeslash'
+EXTERN char *p_csl;             // 'completeslash'
 #endif
 EXTERN long p_pb;               // 'pumblend'
 EXTERN long p_ph;               // 'pumheight'
@@ -494,9 +494,9 @@ EXTERN int p_ed;                // 'edcompatible'
 EXTERN char *p_ead;             // 'eadirection'
 EXTERN int p_emoji;             // 'emoji'
 EXTERN int p_ea;                // 'equalalways'
-EXTERN char_u *p_ep;            // 'equalprg'
+EXTERN char *p_ep;              // 'equalprg'
 EXTERN int p_eb;                // 'errorbells'
-EXTERN char_u *p_ef;            // 'errorfile'
+EXTERN char *p_ef;              // 'errorfile'
 EXTERN char *p_efm;             // 'errorformat'
 EXTERN char *p_gefm;            // 'grepformat'
 EXTERN char *p_gp;              // 'grepprg'
@@ -531,12 +531,12 @@ EXTERN unsigned fdo_flags;
 EXTERN char *p_fex;             ///< 'formatexpr'
 EXTERN char *p_flp;             ///< 'formatlistpat'
 EXTERN char *p_fo;              ///< 'formatoptions'
-EXTERN char_u *p_fp;            // 'formatprg'
+EXTERN char *p_fp;              // 'formatprg'
 EXTERN int p_fs;                // 'fsync'
 EXTERN int p_gd;                // 'gdefault'
 EXTERN char *p_guicursor;       // 'guicursor'
-EXTERN char_u *p_guifont;       // 'guifont'
-EXTERN char_u *p_guifontwide;   // 'guifontwide'
+EXTERN char *p_guifont;         // 'guifont'
+EXTERN char *p_guifontwide;     // 'guifontwide'
 EXTERN char *p_hf;              // 'helpfile'
 EXTERN long p_hh;               // 'helpheight'
 EXTERN char *p_hlg;             // 'helplang'
@@ -568,12 +568,12 @@ EXTERN unsigned jop_flags;
 #define JOP_STACK               0x01
 #define JOP_VIEW                0x02
 EXTERN char *p_keymap;          ///< 'keymap'
-EXTERN char_u *p_kp;            // 'keywordprg'
+EXTERN char *p_kp;              // 'keywordprg'
 EXTERN char *p_km;              // 'keymodel'
 EXTERN char *p_langmap;         // 'langmap'
 EXTERN int p_lnr;               // 'langnoremap'
 EXTERN int p_lrm;               // 'langremap'
-EXTERN char_u *p_lm;            // 'langmenu'
+EXTERN char *p_lm;              // 'langmenu'
 EXTERN long p_lines;            // 'lines'
 EXTERN long p_linespace;        // 'linespace'
 EXTERN int p_lisp;              ///< 'lisp'
@@ -588,7 +588,7 @@ EXTERN int p_lpl;               // 'loadplugins'
 EXTERN int p_magic;             // 'magic'
 EXTERN char *p_menc;            // 'makeencoding'
 EXTERN char *p_mef;             // 'makeef'
-EXTERN char_u *p_mp;            // 'makeprg'
+EXTERN char *p_mp;              // 'makeprg'
 EXTERN char *p_mps;             ///< 'matchpairs'
 EXTERN long p_mat;              // 'matchtime'
 EXTERN long p_mco;              // 'maxcombine'
@@ -613,13 +613,13 @@ EXTERN long p_mouset;           // 'mousetime'
 EXTERN int p_more;              // 'more'
 EXTERN char *p_nf;              ///< 'nrformats'
 EXTERN char *p_opfunc;          // 'operatorfunc'
-EXTERN char_u *p_para;          // 'paragraphs'
+EXTERN char *p_para;            // 'paragraphs'
 EXTERN int p_paste;             // 'paste'
 EXTERN char *p_pt;              // 'pastetoggle'
 EXTERN char *p_pex;             // 'patchexpr'
 EXTERN char *p_pm;              // 'patchmode'
-EXTERN char_u *p_path;          // 'path'
-EXTERN char_u *p_cdpath;        // 'cdpath'
+EXTERN char *p_path;            // 'path'
+EXTERN char *p_cdpath;          // 'cdpath'
 EXTERN int p_pi;                ///< 'preserveindent'
 EXTERN long p_pyx;              // 'pyxversion'
 EXTERN char *p_qe;              ///< 'quoteescape'
@@ -673,11 +673,11 @@ EXTERN unsigned ssop_flags;
 #define SSOP_SKIP_RTP          0x20000
 
 EXTERN char *p_sh;              // 'shell'
-EXTERN char_u *p_shcf;          // 'shellcmdflag'
+EXTERN char *p_shcf;            // 'shellcmdflag'
 EXTERN char *p_sp;              // 'shellpipe'
 EXTERN char *p_shq;             // 'shellquote'
 EXTERN char *p_sxq;             // 'shellxquote'
-EXTERN char_u *p_sxe;           // 'shellxescape'
+EXTERN char *p_sxe;             // 'shellxescape'
 EXTERN char *p_srr;             // 'shellredir'
 EXTERN int p_stmp;              // 'shelltemp'
 #ifdef BACKSLASH_IN_FILENAME
@@ -725,7 +725,7 @@ EXTERN unsigned int spo_flags;
 EXTERN char *p_sps;             // 'spellsuggest'
 EXTERN int p_spr;               // 'splitright'
 EXTERN int p_sol;               // 'startofline'
-EXTERN char_u *p_su;            // 'suffixes'
+EXTERN char *p_su;              // 'suffixes'
 EXTERN char *p_swb;             // 'switchbuf'
 EXTERN unsigned swb_flags;
 // Keep in sync with p_swb_values in optionstr.c
@@ -747,7 +747,7 @@ EXTERN unsigned tc_flags;       ///< flags from 'tagcase'
 #define TC_SMART                0x10
 EXTERN long p_tl;               ///< 'taglength'
 EXTERN int p_tr;                ///< 'tagrelative'
-EXTERN char_u *p_tags;          ///< 'tags'
+EXTERN char *p_tags;            ///< 'tags'
 EXTERN int p_tgst;              ///< 'tagstack'
 EXTERN int p_tbidi;             ///< 'termbidi'
 EXTERN long p_tw;               ///< 'textwidth'
@@ -756,13 +756,13 @@ EXTERN int p_timeout;           ///< 'timeout'
 EXTERN long p_tm;               ///< 'timeoutlen'
 EXTERN int p_title;             ///< 'title'
 EXTERN long p_titlelen;         ///< 'titlelen'
-EXTERN char_u *p_titleold;      ///< 'titleold'
+EXTERN char *p_titleold;        ///< 'titleold'
 EXTERN char *p_titlestring;     ///< 'titlestring'
-EXTERN char_u *p_tsr;           ///< 'thesaurus'
+EXTERN char *p_tsr;             ///< 'thesaurus'
 EXTERN int p_tgc;               ///< 'termguicolors'
 EXTERN int p_ttimeout;          ///< 'ttimeout'
 EXTERN long p_ttm;              ///< 'ttimeoutlen'
-EXTERN char_u *p_udir;          ///< 'undodir'
+EXTERN char *p_udir;            ///< 'undodir'
 EXTERN int p_udf;               ///< 'undofile'
 EXTERN long p_ul;               ///< 'undolevels'
 EXTERN long p_ur;               ///< 'undoreload'
@@ -778,15 +778,15 @@ EXTERN unsigned vop_flags;      ///< uses SSOP_ flags
 EXTERN int p_vb;                ///< 'visualbell'
 EXTERN char *p_ve;              ///< 'virtualedit'
 EXTERN unsigned ve_flags;
-#define VE_BLOCK       5U      // includes "all"
-#define VE_INSERT      6U      // includes "all"
+#define VE_BLOCK       5U       // includes "all"
+#define VE_INSERT      6U       // includes "all"
 #define VE_ALL         4U
 #define VE_ONEMORE     8U
-#define VE_NONE        16U     // "none"
-#define VE_NONEU       32U     // "NONE"
+#define VE_NONE        16U      // "none"
+#define VE_NONEU       32U      // "NONE"
 EXTERN long p_verbose;          // 'verbose'
 #ifdef IN_OPTION_C
-char_u *p_vfile = (char_u *)"";   // used before options are initialized
+char *p_vfile = "";             // used before options are initialized
 #else
 extern char *p_vfile;           // 'verbosefile'
 #endif

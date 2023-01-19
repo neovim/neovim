@@ -2951,7 +2951,7 @@ static void get_next_dict_tsr_completion(int compl_type, char *dict, int dict_f)
   } else {
     ins_compl_dictionaries(dict != NULL ? dict
                            : (compl_type == CTRL_X_THESAURUS
-                              ? (*curbuf->b_p_tsr == NUL ? (char *)p_tsr : curbuf->b_p_tsr)
+                              ? (*curbuf->b_p_tsr == NUL ? p_tsr : curbuf->b_p_tsr)
                               : (*curbuf->b_p_dict ==
                                  NUL ? p_dict : curbuf->b_p_dict)),
                            compl_pattern,

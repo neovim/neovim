@@ -624,7 +624,7 @@ int u_savecommon(buf_T *buf, linenr_T top, linenr_T bot, linenr_T newbot, int re
 // extra fields for uhp
 #define UHP_SAVE_NR            1
 
-static char_u e_not_open[] = N_("E828: Cannot open undo file for writing: %s");
+static char e_not_open[] = N_("E828: Cannot open undo file for writing: %s");
 
 /// Compute the hash for a buffer text into hash[UNDO_HASH_SIZE].
 ///
@@ -677,7 +677,7 @@ char *u_get_undo_file_name(const char *const buf_ffname, const bool reading)
 
   // Loop over 'undodir'.  When reading find the first file that exists.
   // When not reading use the first directory that exists or ".".
-  char *dirp = (char *)p_udir;
+  char *dirp = p_udir;
   while (*dirp != NUL) {
     size_t dir_len = copy_option_part(&dirp, dir_name, MAXPATHL, ",");
     if (dir_len == 1 && dir_name[0] == '.') {

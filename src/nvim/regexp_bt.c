@@ -242,17 +242,17 @@
 
 static int prevchr_len;         ///< byte length of previous char
 static int num_complex_braces;  ///< Complex \{...} count
-static char_u *regcode;         ///< Code-emit pointer, or JUST_CALC_SIZE
+static uint8_t *regcode;         ///< Code-emit pointer, or JUST_CALC_SIZE
 static long regsize;            ///< Code size.
 static int reg_toolong;         ///< true when offset out of range
-static char_u had_endbrace[NSUBEXP];  ///< flags, true if end of () found
+static uint8_t had_endbrace[NSUBEXP];  ///< flags, true if end of () found
 static long brace_min[10];        ///< Minimums for complex brace repeats
 static long brace_max[10];        ///< Maximums for complex brace repeats
 static int brace_count[10];       ///< Current counts for complex brace repeats
 static int one_exactly = false;   ///< only do one char for EXACTLY
 
 // When making changes to classchars also change nfa_classcodes.
-static char_u *classchars = (char_u *)".iIkKfFpPsSdDxXoOwWhHaAlLuU";
+static uint8_t *classchars = (uint8_t *)".iIkKfFpPsSdDxXoOwWhHaAlLuU";
 static int classcodes[] = {
   ANY, IDENT, SIDENT, KWORD, SKWORD,
   FNAME, SFNAME, PRINT, SPRINT,
@@ -265,7 +265,7 @@ static int classcodes[] = {
 
 // When regcode is set to this value, code is not emitted and size is computed
 // instead.
-#define JUST_CALC_SIZE  ((char_u *)-1)
+#define JUST_CALC_SIZE  ((uint8_t *)-1)
 
 // Values for rs_state in regitem_T.
 typedef enum regstate_E {
@@ -290,7 +290,7 @@ typedef enum regstate_E {
 // Also stores the length of "backpos".
 typedef struct {
   union {
-    char_u *ptr;       // rex.input pointer, for single-line regexp
+    uint8_t *ptr;       // rex.input pointer, for single-line regexp
     lpos_T pos;        // rex.input pos, for multi-line regexp
   } rs_u;
   int rs_len;
@@ -299,7 +299,7 @@ typedef struct {
 // struct to save start/end pointer/position in for \(\)
 typedef struct {
   union {
-    char_u *ptr;
+    uint8_t *ptr;
     lpos_T pos;
   } se_u;
 } save_se_T;
@@ -320,7 +320,7 @@ typedef struct regbehind_S {
 typedef struct regitem_S {
   regstate_T rs_state;         // what we are doing, one of RS_ above
   int16_t rs_no;            // submatch nr or BEHIND/NOBEHIND
-  char_u *rs_scan;         // current node in program
+  uint8_t *rs_scan;         // current node in program
   union {
     save_se_T sesave;
     regsave_T regsave;
@@ -339,7 +339,7 @@ typedef struct regstar_S {
 // used to store input position when a BACK was encountered, so that we now if
 // we made any progress since the last time.
 typedef struct backpos_S {
-  char_u *bp_scan;         // "scan" where BACK was encountered
+  uint8_t *bp_scan;         // "scan" where BACK was encountered
   regsave_T bp_pos;           // last input position
 } backpos_T;
 
@@ -411,14 +411,14 @@ static regsave_T behind_pos;
 // Obtain a second single-byte operand stored after a four bytes operand.
 #define OPERAND_CMP(p)  (p)[7]
 
-static char_u *reg(int paren, int *flagp);
+static uint8_t *reg(int paren, int *flagp);
 
 #ifdef BT_REGEXP_DUMP
-static void     regdump(char_u *, bt_regprog_T *);
+static void     regdump(uint8_t *, bt_regprog_T *);
 #endif
 
 #ifdef REGEXP_DEBUG
-static char_u *regprop(char_u *);
+static uint8_t *regprop(uint8_t *);
 
 static int regnarrate = 0;
 #endif
@@ -428,7 +428,7 @@ static int regnarrate = 0;
 #endif
 
 // Setup to parse the regexp.  Used once to get the length and once to do it.
-static void regcomp_start(char_u *expr, int re_flags)                        // see vim_regcomp()
+static void regcomp_start(uint8_t *expr, int re_flags)                        // see vim_regcomp()
 {
   initchr((char *)expr);
   if (re_flags & RE_MAGIC) {
@@ -466,7 +466,7 @@ static void regc(int b)
   if (regcode == JUST_CALC_SIZE) {
     regsize++;
   } else {
-    *regcode++ = (char_u)b;
+    *regcode++ = (uint8_t)b;
   }
 }
 
@@ -1453,15 +1453,15 @@ static void reg_equi_class(int c)
 
 // Emit a node.
 // Return pointer to generated code.
-static char_u *regnode(int op)
+static uint8_t *regnode(int op)
 {
-  char_u *ret;
+  uint8_t *ret;
 
   ret = regcode;
   if (ret == JUST_CALC_SIZE) {
     regsize += 3;
   } else {
-    *regcode++ = (char_u)op;
+    *regcode++ = (uint8_t)op;
     *regcode++ = NUL;                   // Null "next" pointer.
     *regcode++ = NUL;
   }
@@ -1469,19 +1469,19 @@ static char_u *regnode(int op)
 }
 
 // Write a four bytes number at "p" and return pointer to the next char.
-static char_u *re_put_uint32(char_u *p, uint32_t val)
+static uint8_t *re_put_uint32(uint8_t *p, uint32_t val)
 {
-  *p++ = (char_u)((val >> 24) & 0377);
-  *p++ = (char_u)((val >> 16) & 0377);
-  *p++ = (char_u)((val >> 8) & 0377);
-  *p++ = (char_u)(val & 0377);
+  *p++ = (uint8_t)((val >> 24) & 0377);
+  *p++ = (uint8_t)((val >> 16) & 0377);
+  *p++ = (uint8_t)((val >> 8) & 0377);
+  *p++ = (uint8_t)(val & 0377);
   return p;
 }
 
 // regnext - dig the "next" pointer out of a node
 // Returns NULL when calculating size, when there is no next item and when
 // there is an error.
-static char_u *regnext(char_u *p)
+static uint8_t *regnext(uint8_t *p)
   FUNC_ATTR_NONNULL_ALL
 {
   int offset;
@@ -1503,7 +1503,7 @@ static char_u *regnext(char_u *p)
 }
 
 // Set the next-pointer at the end of a node chain.
-static void regtail(char_u *p, char_u *val)
+static void regtail(uint8_t *p, uint8_t *val)
 {
   int offset;
 
@@ -1512,9 +1512,9 @@ static void regtail(char_u *p, char_u *val)
   }
 
   // Find last node.
-  char_u *scan = p;
+  uint8_t *scan = p;
   for (;;) {
-    char_u *temp = regnext(scan);
+    uint8_t *temp = regnext(scan);
     if (temp == NULL) {
       break;
     }
@@ -1532,13 +1532,13 @@ static void regtail(char_u *p, char_u *val)
   if (offset > 0xffff) {
     reg_toolong = true;
   } else {
-    *(scan + 1) = (char_u)(((unsigned)offset >> 8) & 0377);
-    *(scan + 2) = (char_u)(offset & 0377);
+    *(scan + 1) = (uint8_t)(((unsigned)offset >> 8) & 0377);
+    *(scan + 2) = (uint8_t)(offset & 0377);
   }
 }
 
 // Like regtail, on item after a BRANCH; nop if none.
-static void regoptail(char_u *p, char_u *val)
+static void regoptail(uint8_t *p, uint8_t *val)
 {
   // When op is neither BRANCH nor BRACE_COMPLEX0-9, it is "operandless"
   if (p == NULL || p == JUST_CALC_SIZE
@@ -1552,11 +1552,11 @@ static void regoptail(char_u *p, char_u *val)
 // Insert an operator in front of already-emitted operand
 //
 // Means relocating the operand.
-static void reginsert(int op, char_u *opnd)
+static void reginsert(int op, uint8_t *opnd)
 {
-  char_u *src;
-  char_u *dst;
-  char_u *place;
+  uint8_t *src;
+  uint8_t *dst;
+  uint8_t *place;
 
   if (regcode == JUST_CALC_SIZE) {
     regsize += 3;
@@ -1570,18 +1570,18 @@ static void reginsert(int op, char_u *opnd)
   }
 
   place = opnd;                 // Op node, where operand used to be.
-  *place++ = (char_u)op;
+  *place++ = (uint8_t)op;
   *place++ = NUL;
   *place = NUL;
 }
 
 // Insert an operator in front of already-emitted operand.
 // Add a number to the operator.
-static void reginsert_nr(int op, long val, char_u *opnd)
+static void reginsert_nr(int op, long val, uint8_t *opnd)
 {
-  char_u *src;
-  char_u *dst;
-  char_u *place;
+  uint8_t *src;
+  uint8_t *dst;
+  uint8_t *place;
 
   if (regcode == JUST_CALC_SIZE) {
     regsize += 7;
@@ -1595,7 +1595,7 @@ static void reginsert_nr(int op, long val, char_u *opnd)
   }
 
   place = opnd;                 // Op node, where operand used to be.
-  *place++ = (char_u)op;
+  *place++ = (uint8_t)op;
   *place++ = NUL;
   *place++ = NUL;
   assert(val >= 0 && (uintmax_t)val <= UINT32_MAX);
@@ -1606,11 +1606,11 @@ static void reginsert_nr(int op, long val, char_u *opnd)
 // The operator has the given limit values as operands.  Also set next pointer.
 //
 // Means relocating the operand.
-static void reginsert_limits(int op, long minval, long maxval, char_u *opnd)
+static void reginsert_limits(int op, long minval, long maxval, uint8_t *opnd)
 {
-  char_u *src;
-  char_u *dst;
-  char_u *place;
+  uint8_t *src;
+  uint8_t *dst;
+  uint8_t *place;
 
   if (regcode == JUST_CALC_SIZE) {
     regsize += 11;
@@ -1624,7 +1624,7 @@ static void reginsert_limits(int op, long minval, long maxval, char_u *opnd)
   }
 
   place = opnd;                 // Op node, where operand used to be.
-  *place++ = (char_u)op;
+  *place++ = (uint8_t)op;
   *place++ = NUL;
   *place++ = NUL;
   assert(minval >= 0 && (uintmax_t)minval <= UINT32_MAX);
@@ -1641,11 +1641,11 @@ static void reginsert_limits(int op, long minval, long maxval, char_u *opnd)
 static int seen_endbrace(int refnum)
 {
   if (!had_endbrace[refnum]) {
-    char_u *p;
+    uint8_t *p;
 
     // Trick: check if "@<=" or "@<!" follows, in which case
     // the \1 can appear before the referenced match.
-    for (p = (char_u *)regparse; *p != NUL; p++) {
+    for (p = (uint8_t *)regparse; *p != NUL; p++) {
       if (p[0] == '@' && p[1] == '<' && (p[2] == '!' || p[2] == '=')) {
         break;
       }
@@ -1665,12 +1665,12 @@ static int seen_endbrace(int refnum)
 // Optimization:  gobbles an entire sequence of ordinary characters so that
 // it can turn them into a single node, which is smaller to store and
 // faster to run.  Don't do this when one_exactly is set.
-static char_u *regatom(int *flagp)
+static uint8_t *regatom(int *flagp)
 {
-  char_u *ret;
+  uint8_t *ret;
   int flags;
   int c;
-  char_u *p;
+  uint8_t *p;
   int extra = 0;
   int save_prev_at_start = prev_at_start;
 
@@ -1746,7 +1746,7 @@ static char_u *regatom(int *flagp)
   case Magic('L'):
   case Magic('u'):
   case Magic('U'):
-    p = (char_u *)vim_strchr((char *)classchars, no_Magic(c));
+    p = (uint8_t *)vim_strchr((char *)classchars, no_Magic(c));
     if (p == NULL) {
       EMSG_RET_NULL(_("E63: invalid use of \\_"));
     }
@@ -1808,17 +1808,17 @@ static char_u *regatom(int *flagp)
 
   case Magic('~'):              // previous substitute pattern
     if (reg_prev_sub != NULL) {
-      char_u *lp;
+      uint8_t *lp;
 
       ret = regnode(EXACTLY);
-      lp = (char_u *)reg_prev_sub;
+      lp = (uint8_t *)reg_prev_sub;
       while (*lp != NUL) {
         regc(*lp++);
       }
       regc(NUL);
       if (*reg_prev_sub != NUL) {
         *flagp |= HASWIDTH;
-        if ((lp - (char_u *)reg_prev_sub) == 1) {
+        if ((lp - (uint8_t *)reg_prev_sub) == 1) {
           *flagp |= SIMPLE;
         }
       }
@@ -1948,9 +1948,9 @@ static char_u *regatom(int *flagp)
         EMSG_ONE_RET_NULL;
       }
       {
-        char_u *lastbranch;
-        char_u *lastnode = NULL;
-        char_u *br;
+        uint8_t *lastbranch;
+        uint8_t *lastnode = NULL;
+        uint8_t *br;
 
         ret = NULL;
         while ((c = getchr()) != ']') {
@@ -2072,8 +2072,8 @@ static char_u *regatom(int *flagp)
           if (ret == JUST_CALC_SIZE) {
             regsize += 2;
           } else {
-            *regcode++ = (char_u)c;
-            *regcode++ = (char_u)cmp;
+            *regcode++ = (uint8_t)c;
+            *regcode++ = (uint8_t)cmp;
           }
           break;
         } else if ((c == 'l' || c == 'c' || c == 'v') && (cur || got_digit)) {
@@ -2110,7 +2110,7 @@ static char_u *regatom(int *flagp)
             // put the number and the optional
             // comparator after the opcode
             regcode = re_put_uint32(regcode, n);
-            *regcode++ = (char_u)cmp;
+            *regcode++ = (uint8_t)cmp;
           }
           break;
         }
@@ -2124,11 +2124,11 @@ static char_u *regatom(int *flagp)
   case Magic('['):
 collection:
     {
-      char_u *lp;
+      uint8_t *lp;
 
       // If there is no matching ']', we assume the '[' is a normal
       // character.  This makes 'incsearch' and ":help [" work.
-      lp = (char_u *)skip_anyof(regparse);
+      lp = (uint8_t *)skip_anyof(regparse);
       if (*lp == ']') {         // there is a matching ']'
         int startc = -1;                // > 0 when next '-' is a range
         int endc;
@@ -2460,11 +2460,11 @@ do_multibyte:
 // both the endmarker for their branch list and the body of the last branch.
 // It might seem that this node could be dispensed with entirely, but the
 // endmarker role is not redundant.
-static char_u *regpiece(int *flagp)
+static uint8_t *regpiece(int *flagp)
 {
-  char_u *ret;
+  uint8_t *ret;
   int op;
-  char_u *next;
+  uint8_t *next;
   int flags;
   long minval;
   long maxval;
@@ -2597,11 +2597,11 @@ static char_u *regpiece(int *flagp)
 
 // Parse one alternative of an | or & operator.
 // Implements the concatenation operator.
-static char_u *regconcat(int *flagp)
+static uint8_t *regconcat(int *flagp)
 {
-  char_u *first = NULL;
-  char_u *chain = NULL;
-  char_u *latest;
+  uint8_t *first = NULL;
+  uint8_t *chain = NULL;
+  uint8_t *latest;
   int flags;
   int cont = true;
 
@@ -2673,11 +2673,11 @@ static char_u *regconcat(int *flagp)
 
 // Parse one alternative of an | operator.
 // Implements the & operator.
-static char_u *regbranch(int *flagp)
+static uint8_t *regbranch(int *flagp)
 {
-  char_u *ret;
-  char_u *chain = NULL;
-  char_u *latest;
+  uint8_t *ret;
+  uint8_t *chain = NULL;
+  uint8_t *latest;
   int flags;
 
   *flagp = WORST | HASNL;               // Tentatively.
@@ -2722,11 +2722,11 @@ static char_u *regbranch(int *flagp)
 /// follows makes it hard to avoid.
 ///
 /// @param paren  REG_NOPAREN, REG_PAREN, REG_NPAREN or REG_ZPAREN
-static char_u *reg(int paren, int *flagp)
+static uint8_t *reg(int paren, int *flagp)
 {
-  char_u *ret;
-  char_u *br;
-  char_u *ender;
+  uint8_t *ret;
+  uint8_t *br;
+  uint8_t *ender;
   int parno = 0;
   int flags;
 
@@ -2840,10 +2840,10 @@ static char_u *reg(int paren, int *flagp)
 // Beware that the optimization-preparation code in here knows about some
 // of the structure of the compiled regexp.
 // "re_flags": RE_MAGIC and/or RE_STRING.
-static regprog_T *bt_regcomp(char_u *expr, int re_flags)
+static regprog_T *bt_regcomp(uint8_t *expr, int re_flags)
 {
-  char_u *scan;
-  char_u *longest;
+  uint8_t *scan;
+  uint8_t *longest;
   int len;
   int flags;
 
@@ -2890,7 +2890,7 @@ static regprog_T *bt_regcomp(char_u *expr, int re_flags)
     r->regflags |= RF_LOOKBH;
   }
   // Remember whether this pattern has any \z specials in it.
-  r->reghasz = (char_u)re_has_z;
+  r->reghasz = (uint8_t)re_has_z;
   scan = r->program + 1;        // First BRANCH.
   if (OP(regnext(scan)) == END) {   // Only one top-level choice.
     scan = OPERAND(scan);
@@ -2908,7 +2908,7 @@ static regprog_T *bt_regcomp(char_u *expr, int re_flags)
                || OP(scan) == NOTHING
                || OP(scan) == MOPEN + 0 || OP(scan) == NOPEN
                || OP(scan) == MCLOSE + 0 || OP(scan) == NCLOSE) {
-      char_u *regnext_scan = regnext(scan);
+      uint8_t *regnext_scan = regnext(scan);
       if (OP(regnext_scan) == EXACTLY) {
         r->regstart = utf_ptr2char((char *)OPERAND(regnext_scan));
       }
@@ -3014,7 +3014,7 @@ static void reg_restore(regsave_T *save, garray_T *gap)
       // only call reg_getline() when the line number changed to save
       // a bit of time
       rex.lnum = save->rs_u.pos.lnum;
-      rex.line = (char_u *)reg_getline(rex.lnum);
+      rex.line = (uint8_t *)reg_getline(rex.lnum);
     }
     rex.input = rex.line + save->rs_u.pos.col;
   } else {
@@ -3057,7 +3057,7 @@ static void save_se_multi(save_se_T *savep, lpos_T *posp)
   posp->col = (colnr_T)(rex.input - rex.line);
 }
 
-static void save_se_one(save_se_T *savep, char_u **pp)
+static void save_se_one(save_se_T *savep, uint8_t **pp)
 {
   savep->se_u.ptr = *pp;
   *pp = rex.input;
@@ -3067,14 +3067,14 @@ static void save_se_one(save_se_T *savep, char_u **pp)
 /// Advances rex.input (and rex.lnum) to just after the matched chars.
 ///
 /// @param maxcount  maximum number of matches allowed
-static int regrepeat(char_u *p, long maxcount)
+static int regrepeat(uint8_t *p, long maxcount)
 {
   long count = 0;
-  char_u *opnd;
+  uint8_t *opnd;
   int mask;
   int testval = 0;
 
-  char_u *scan = rex.input;  // Make local copy of rex.input for speed.
+  uint8_t *scan = rex.input;  // Make local copy of rex.input for speed.
   opnd = OPERAND(p);
   switch (OP(p)) {
   case ANY:
@@ -3431,7 +3431,7 @@ do_class:
 
 // Push an item onto the regstack.
 // Returns pointer to new item.  Returns NULL when out of memory.
-static regitem_T *regstack_push(regstate_T state, char_u *scan)
+static regitem_T *regstack_push(regstate_T state, uint8_t *scan)
 {
   regitem_T *rp;
 
@@ -3450,7 +3450,7 @@ static regitem_T *regstack_push(regstate_T state, char_u *scan)
 }
 
 // Pop an item from the regstack.
-static void regstack_pop(char_u **scan)
+static void regstack_pop(uint8_t **scan)
 {
   regitem_T *rp;
 
@@ -3520,9 +3520,9 @@ static void restore_subexpr(regbehind_T *bp)
 ///         just after the last matched character.
 ///         - false when there is no match.  Leaves rex.input and rex.lnum in an
 ///         undefined state!
-static bool regmatch(char_u *scan, proftime_T *tm, int *timed_out)
+static bool regmatch(uint8_t *scan, proftime_T *tm, int *timed_out)
 {
-  char_u *next;          // Next node.
+  uint8_t *next;          // Next node.
   int op;
   int c;
   regitem_T *rp;
@@ -3651,7 +3651,7 @@ static bool regmatch(char_u *scan, proftime_T *tm, int *timed_out)
 
           // Line may have been freed, get it again.
           if (REG_MULTI) {
-            rex.line = (char_u *)reg_getline(rex.lnum);
+            rex.line = (uint8_t *)reg_getline(rex.lnum);
             rex.input = rex.line + col;
           }
 
@@ -3965,7 +3965,7 @@ static bool regmatch(char_u *scan, proftime_T *tm, int *timed_out)
 
         case EXACTLY: {
           int len;
-          char_u *opnd;
+          uint8_t *opnd;
 
           opnd = OPERAND(scan);
           // Inline the first byte, for speed.
@@ -4017,7 +4017,7 @@ static bool regmatch(char_u *scan, proftime_T *tm, int *timed_out)
         case MULTIBYTECODE: {
           int i, len;
 
-          const char_u *opnd = OPERAND(scan);
+          const uint8_t *opnd = OPERAND(scan);
           // Safety check (just in case 'encoding' was changed since
           // compiling the program).
           if ((len = utfc_ptr2len((char *)opnd)) < 2) {
@@ -4703,8 +4703,8 @@ static bool regmatch(char_u *scan, proftime_T *tm, int *timed_out)
                   (colnr_T)strlen((char *)rex.line);
               }
             } else {
-              const char_u *const line =
-                (char_u *)reg_getline(rp->rs_un.regsave.rs_u.pos.lnum);
+              const uint8_t *const line =
+                (uint8_t *)reg_getline(rp->rs_un.regsave.rs_u.pos.lnum);
 
               rp->rs_un.regsave.rs_u.pos.col -=
                 utf_head_off((char *)line,
@@ -4786,7 +4786,7 @@ static bool regmatch(char_u *scan, proftime_T *tm, int *timed_out)
                   break;
                 }
                 rex.lnum--;
-                rex.line = (char_u *)reg_getline(rex.lnum);
+                rex.line = (uint8_t *)reg_getline(rex.lnum);
                 // Just in case regrepeat() didn't count right.
                 if (rex.line == NULL) {
                   break;
@@ -4917,13 +4917,13 @@ static long regtry(bt_regprog_T *prog, colnr_T col, proftime_T *tm, int *timed_o
             && reg_endzpos[i].lnum == reg_startzpos[i].lnum
             && reg_endzpos[i].col >= reg_startzpos[i].col) {
           re_extmatch_out->matches[i] =
-            (char_u *)xstrnsave((char *)reg_getline(reg_startzpos[i].lnum) + reg_startzpos[i].col,
-                                (size_t)(reg_endzpos[i].col - reg_startzpos[i].col));
+            (uint8_t *)xstrnsave((char *)reg_getline(reg_startzpos[i].lnum) + reg_startzpos[i].col,
+                                 (size_t)(reg_endzpos[i].col - reg_startzpos[i].col));
         }
       } else {
         if (reg_startzp[i] != NULL && reg_endzp[i] != NULL) {
           re_extmatch_out->matches[i] =
-            (char_u *)xstrnsave((char *)reg_startzp[i], (size_t)(reg_endzp[i] - reg_startzp[i]));
+            (uint8_t *)xstrnsave((char *)reg_startzp[i], (size_t)(reg_endzp[i] - reg_startzp[i]));
         }
       }
     }
@@ -4939,10 +4939,10 @@ static long regtry(bt_regprog_T *prog, colnr_T col, proftime_T *tm, int *timed_o
 /// @param timed_out  flag set on timeout or NULL
 ///
 /// @return  0 for failure, or number of lines contained in the match.
-static long bt_regexec_both(char_u *line, colnr_T startcol, proftime_T *tm, int *timed_out)
+static long bt_regexec_both(uint8_t *line, colnr_T startcol, proftime_T *tm, int *timed_out)
 {
   bt_regprog_T *prog;
-  char_u *s;
+  uint8_t *s;
   colnr_T col = startcol;
   long retval = 0L;
 
@@ -4966,13 +4966,13 @@ static long bt_regexec_both(char_u *line, colnr_T startcol, proftime_T *tm, int 
 
   if (REG_MULTI) {
     prog = (bt_regprog_T *)rex.reg_mmatch->regprog;
-    line = (char_u *)reg_getline((linenr_T)0);
+    line = (uint8_t *)reg_getline((linenr_T)0);
     rex.reg_startpos = rex.reg_mmatch->startpos;
     rex.reg_endpos = rex.reg_mmatch->endpos;
   } else {
     prog = (bt_regprog_T *)rex.reg_match->regprog;
-    rex.reg_startp = (char_u **)rex.reg_match->startp;
-    rex.reg_endp = (char_u **)rex.reg_match->endp;
+    rex.reg_startp = (uint8_t **)rex.reg_match->startp;
+    rex.reg_endp = (uint8_t **)rex.reg_match->endp;
   }
 
   // Be paranoid...
@@ -5011,14 +5011,14 @@ static long bt_regexec_both(char_u *line, colnr_T startcol, proftime_T *tm, int 
     // This is used very often, esp. for ":global".  Use two versions of
     // the loop to avoid overhead of conditions.
     if (!rex.reg_ic) {
-      while ((s = (char_u *)vim_strchr((char *)s, c)) != NULL) {
+      while ((s = (uint8_t *)vim_strchr((char *)s, c)) != NULL) {
         if (cstrncmp((char *)s, (char *)prog->regmust, &prog->regmlen) == 0) {
           break;  // Found it.
         }
         MB_PTR_ADV(s);
       }
     } else {
-      while ((s = (char_u *)cstrchr((char *)s, c)) != NULL) {
+      while ((s = (uint8_t *)cstrchr((char *)s, c)) != NULL) {
         if (cstrncmp((char *)s, (char *)prog->regmust, &prog->regmlen) == 0) {
           break;  // Found it.
         }
@@ -5053,7 +5053,7 @@ static long bt_regexec_both(char_u *line, colnr_T startcol, proftime_T *tm, int 
     while (!got_int) {
       if (prog->regstart != NUL) {
         // Skip until the char we know it must start with.
-        s = (char_u *)cstrchr((char *)rex.line + col, prog->regstart);
+        s = (uint8_t *)cstrchr((char *)rex.line + col, prog->regstart);
         if (s == NULL) {
           retval = 0;
           break;
@@ -5075,7 +5075,7 @@ static long bt_regexec_both(char_u *line, colnr_T startcol, proftime_T *tm, int 
       // if not currently on the first line, get it again
       if (rex.lnum != 0) {
         rex.lnum = 0;
-        rex.line = (char_u *)reg_getline((linenr_T)0);
+        rex.line = (uint8_t *)reg_getline((linenr_T)0);
       }
       if (rex.line[col] == NUL) {
         break;
@@ -5145,7 +5145,7 @@ theend:
 /// @param col   column to start looking for match
 ///
 /// @return  0 for failure, number of lines contained in the match otherwise.
-static int bt_regexec_nl(regmatch_T *rmp, char_u *line, colnr_T col, bool line_lbr)
+static int bt_regexec_nl(regmatch_T *rmp, uint8_t *line, colnr_T col, bool line_lbr)
 {
   rex.reg_match = rmp;
   rex.reg_mmatch = NULL;
@@ -5182,7 +5182,7 @@ static long bt_regexec_multi(regmmatch_T *rmp, win_T *win, buf_T *buf, linenr_T 
 }
 
 // Compare a number with the operand of RE_LNUM, RE_COL or RE_VCOL.
-static int re_num_cmp(uint32_t val, char_u *scan)
+static int re_num_cmp(uint32_t val, uint8_t *scan)
 {
   uint32_t n = (uint32_t)OPERAND_MIN(scan);
 
@@ -5198,12 +5198,12 @@ static int re_num_cmp(uint32_t val, char_u *scan)
 #ifdef BT_REGEXP_DUMP
 
 // regdump - dump a regexp onto stdout in vaguely comprehensible form
-static void regdump(char_u *pattern, bt_regprog_T *r)
+static void regdump(uint8_t *pattern, bt_regprog_T *r)
 {
-  char_u *s;
+  uint8_t *s;
   int op = EXACTLY;             // Arbitrary non-END op.
-  char_u *next;
-  char_u *end = NULL;
+  uint8_t *next;
+  uint8_t *end = NULL;
   FILE *f;
 
 # ifdef BT_REGEXP_LOG
@@ -5284,7 +5284,7 @@ static void regdump(char_u *pattern, bt_regprog_T *r)
 #ifdef REGEXP_DEBUG
 
 // regprop - printable representation of opcode
-static char_u *regprop(char_u *op)
+static uint8_t *regprop(uint8_t *op)
 {
   char *p;
   static char buf[50];
@@ -5656,6 +5656,6 @@ static char_u *regprop(char_u *op)
   if (p != NULL) {
     STRCAT(buf, p);
   }
-  return (char_u *)buf;
+  return (uint8_t *)buf;
 }
 #endif      // REGEXP_DEBUG

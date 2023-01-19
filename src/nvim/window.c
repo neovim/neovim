@@ -6790,17 +6790,17 @@ char *grab_file_name(long count, linenr_T *file_lnum)
 // FNAME_INCL       apply "includeexpr"
 char *file_name_at_cursor(int options, long count, linenr_T *file_lnum)
 {
-  return (char *)file_name_in_line(get_cursor_line_ptr(),
-                                   curwin->w_cursor.col, options, count, curbuf->b_ffname,
-                                   file_lnum);
+  return file_name_in_line(get_cursor_line_ptr(),
+                           curwin->w_cursor.col, options, count, curbuf->b_ffname,
+                           file_lnum);
 }
 
 /// @param rel_fname  file we are searching relative to
 /// @param file_lnum  line number after the file name
 ///
 /// @return  the name of the file under or after ptr[col]. Otherwise like file_name_at_cursor().
-char_u *file_name_in_line(char *line, int col, int options, long count, char *rel_fname,
-                          linenr_T *file_lnum)
+char *file_name_in_line(char *line, int col, int options, long count, char *rel_fname,
+                        linenr_T *file_lnum)
 {
   // search forward for what could be the start of a file name
   char *ptr = line + col;
@@ -6888,7 +6888,7 @@ char_u *file_name_in_line(char *line, int col, int options, long count, char *re
     }
   }
 
-  return (char_u *)find_file_name_in_path(ptr, len, options, count, rel_fname);
+  return find_file_name_in_path(ptr, len, options, count, rel_fname);
 }
 
 /// Add or remove a status line from window(s), according to the

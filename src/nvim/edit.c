@@ -323,7 +323,7 @@ static void insert_enter(InsertState *s)
 
   // Get the current length of the redo buffer, those characters have to be
   // skipped if we want to get to the inserted characters.
-  s->ptr = (char *)get_inserted();
+  s->ptr = get_inserted();
   if (s->ptr == NULL) {
     new_insert_skip = 0;
   } else {
@@ -2303,7 +2303,7 @@ static void stop_insert(pos_T *end_insert_pos, int esc, int nomove)
   // Save the inserted text for later redo with ^@ and CTRL-A.
   // Don't do it when "restart_edit" was set and nothing was inserted,
   // otherwise CTRL-O w and then <Left> will clear "last_insert".
-  ptr = (char *)get_inserted();
+  ptr = get_inserted();
   if (did_restart_edit == 0 || (ptr != NULL
                                 && (int)strlen(ptr) > new_insert_skip)) {
     xfree(last_insert);

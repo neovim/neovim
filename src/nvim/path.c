@@ -229,7 +229,7 @@ char *get_past_head(const char *path)
 
 #ifdef MSWIN
   // May skip "c:"
-  if (is_path_head((char_u *)path)) {
+  if (is_path_head(path)) {
     retval = path + 2;
   }
 #endif
@@ -842,7 +842,7 @@ static bool is_unique(char *maybe_unique, garray_T *gap, int i)
 // expanding each into their equivalent path(s).
 static void expand_path_option(char *curdir, garray_T *gap)
 {
-  char *path_option = *curbuf->b_p_path == NUL ? (char *)p_path : curbuf->b_p_path;
+  char *path_option = *curbuf->b_p_path == NUL ? p_path : curbuf->b_p_path;
   char *buf = xmalloc(MAXPATHL);
 
   while (*path_option != NUL) {
@@ -1461,7 +1461,7 @@ void addfile(garray_T *gap, char *f, int flags)
 
 #ifdef FNAME_ILLEGAL
   // if the file/dir contains illegal characters, don't add it
-  if (strpbrk((char *)f, FNAME_ILLEGAL) != NULL) {
+  if (strpbrk(f, FNAME_ILLEGAL) != NULL) {
     return;
   }
 #endif
@@ -1824,7 +1824,7 @@ int vim_FullName(const char *fname, char *buf, size_t len, bool force)
   if (strlen(fname) > (len - 1)) {
     xstrlcpy(buf, fname, len);  // truncate
 #ifdef MSWIN
-    slash_adjust((char_u *)buf);
+    slash_adjust(buf);
 #endif
     return FAIL;
   }
@@ -1839,7 +1839,7 @@ int vim_FullName(const char *fname, char *buf, size_t len, bool force)
     xstrlcpy(buf, fname, len);  // something failed; use the filename
   }
 #ifdef MSWIN
-  slash_adjust((char_u *)buf);
+  slash_adjust(buf);
 #endif
   return rv;
 }
@@ -1859,7 +1859,7 @@ char *fix_fname(const char *fname)
 #ifdef UNIX
   return FullName_save(fname, true);
 #else
-  if (!vim_isAbsName((char_u *)fname)
+  if (!vim_isAbsName((char *)fname)
       || strstr(fname, "..") != NULL
       || strstr(fname, "//") != NULL
 # ifdef BACKSLASH_IN_FILENAME
@@ -2124,9 +2124,9 @@ int expand_wildcards_eval(char **pat, int *num_file, char ***file, int flags)
 
   if (is_cur_alt_file || *exp_pat == '<') {
     emsg_off++;
-    eval_pat = (char *)eval_vars(exp_pat, (char_u *)exp_pat, &usedlen, NULL, &ignored_msg,
-                                 NULL,
-                                 true);
+    eval_pat = eval_vars(exp_pat, exp_pat, &usedlen, NULL, &ignored_msg,
+                         NULL,
+                         true);
     emsg_off--;
     if (eval_pat != NULL) {
       star_follows = strcmp(exp_pat + usedlen, "*") == 0;
@@ -2241,7 +2241,7 @@ int match_suffix(char *fname)
 
   size_t fnamelen = strlen(fname);
   size_t setsuflen = 0;
-  for (char *setsuf = (char *)p_su; *setsuf;) {
+  for (char *setsuf = p_su; *setsuf;) {
     setsuflen = copy_option_part(&setsuf, suf_buf, MAXSUFLEN, ".,");
     if (setsuflen == 0) {
       char *tail = path_tail(fname);

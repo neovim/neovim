@@ -765,7 +765,7 @@ void getout(int exitval)
 
   // Apply 'titleold'.
   if (p_title && *p_titleold != NUL) {
-    ui_call_set_title(cstr_as_string((char *)p_titleold));
+    ui_call_set_title(cstr_as_string(p_titleold));
   }
 
   if (garbage_collect_at_exit) {
@@ -1509,7 +1509,7 @@ static void handle_quickfix(mparm_T *paramp)
       set_string_option_direct("ef", -1, paramp->use_ef, OPT_FREE, SID_CARG);
     }
     vim_snprintf(IObuff, IOSIZE, "cfile %s", p_ef);
-    if (qf_init(NULL, (char *)p_ef, p_efm, true, IObuff, p_menc) < 0) {
+    if (qf_init(NULL, p_ef, p_efm, true, IObuff, p_menc) < 0) {
       msg_putchar('\n');
       os_exit(3);
     }

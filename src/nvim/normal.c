@@ -3474,7 +3474,7 @@ static void nv_ident(cmdarg_T *cap)
   // Allocate buffer to put the command in.  Inserting backslashes can
   // double the length of the word.  p_kp / curbuf->b_p_kp could be added
   // and some numbers.
-  char *kp = *curbuf->b_p_kp == NUL ? (char *)p_kp : curbuf->b_p_kp;  // 'keywordprg'
+  char *kp = *curbuf->b_p_kp == NUL ? p_kp : curbuf->b_p_kp;  // 'keywordprg'
   bool kp_help = (*kp == NUL || strcmp(kp, ":he") == 0 || strcmp(kp, ":help") == 0);
   if (kp_help && *skipwhite(ptr) == NUL) {
     emsg(_(e_noident));   // found white space only
