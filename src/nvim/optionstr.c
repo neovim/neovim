@@ -727,6 +727,42 @@ static void did_set_background(char **errmsg)
   }
 }
 
+// 'encoding', 'fileencoding' and 'makeencoding'
+static void did_set_encoding(buf_T *buf, char **varp, char **gvarp, int opt_flags, char **errmsg)
+{
+  if (gvarp == &p_fenc) {
+    if (!MODIFIABLE(buf) && opt_flags != OPT_GLOBAL) {
+      *errmsg = e_modifiable;
+      return;
+    }
+
+    if (vim_strchr(*varp, ',') != NULL) {
+      // No comma allowed in 'fileencoding'; catches confusing it
+      // with 'fileencodings'.
+      *errmsg = e_invarg;
+      return;
+    }
+
+    // May show a "+" in the title now.
+    redraw_titles();
+    // Add 'fileencoding' to the swap file.
+    ml_setflags(buf);
+  }
+
+  // canonize the value, so that strcmp() can be used on it
+  char *p = enc_canonize(*varp);
+  xfree(*varp);
+  *varp = p;
+  if (varp == &p_enc) {
+    // only encoding=utf-8 allowed
+    if (strcmp(p_enc, "utf-8") != 0) {
+      *errmsg = e_unsupportedoption;
+      return;
+    }
+    spell_reload();
+  }
+}
+
 /// Handle string options that need some action to perform when changed.
 /// The new value must be allocated.
 ///
@@ -857,35 +893,7 @@ char *did_set_string_option(int opt_idx, char **varp, char *oldval, char *errbuf
     }
   } else if (varp == &p_enc || gvarp == &p_fenc || gvarp == &p_menc) {
     // 'encoding', 'fileencoding' and 'makeencoding'
-    if (gvarp == &p_fenc) {
-      if (!MODIFIABLE(curbuf) && opt_flags != OPT_GLOBAL) {
-        errmsg = e_modifiable;
-      } else if (vim_strchr(*varp, ',') != NULL) {
-        // No comma allowed in 'fileencoding'; catches confusing it
-        // with 'fileencodings'.
-        errmsg = e_invarg;
-      } else {
-        // May show a "+" in the title now.
-        redraw_titles();
-        // Add 'fileencoding' to the swap file.
-        ml_setflags(curbuf);
-      }
-    }
-
-    if (errmsg == NULL) {
-      // canonize the value, so that strcmp() can be used on it
-      char *p = enc_canonize(*varp);
-      xfree(*varp);
-      *varp = p;
-      if (varp == &p_enc) {
-        // only encoding=utf-8 allowed
-        if (strcmp(p_enc, "utf-8") != 0) {
-          errmsg = e_unsupportedoption;
-        } else {
-          spell_reload();
-        }
-      }
-    }
+    did_set_encoding(curbuf, varp, gvarp, opt_flags, &errmsg);
   } else if (varp == &curbuf->b_p_keymap) {
     if (!valid_filetype(*varp)) {
       errmsg = e_invarg;
