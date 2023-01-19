@@ -679,6 +679,17 @@ static void did_set_breakindentopt(win_T *win, char **errmsg)
   }
 }
 
+static void did_set_helpfile(void)
+{
+  // May compute new values for $VIM and $VIMRUNTIME
+  if (didset_vim) {
+    vim_unsetenv_ext("VIM");
+  }
+  if (didset_vimruntime) {
+    vim_unsetenv_ext("VIMRUNTIME");
+  }
+}
+
 /// Handle string options that need some action to perform when changed.
 /// The new value must be allocated.
 ///
@@ -737,13 +748,7 @@ char *did_set_string_option(int opt_idx, char **varp, char *oldval, char *errbuf
       errmsg = e_invarg;            // error in value
     }
   } else if (varp == &p_hf) {  // 'helpfile'
-    // May compute new values for $VIM and $VIMRUNTIME
-    if (didset_vim) {
-      vim_unsetenv_ext("VIM");
-    }
-    if (didset_vimruntime) {
-      vim_unsetenv_ext("VIMRUNTIME");
-    }
+    did_set_helpfile();
   } else if (varp == &p_rtp || varp == &p_pp) {  // 'runtimepath' 'packpath'
     runtime_search_path_invalidate();
   } else if (varp == &curwin->w_p_culopt
