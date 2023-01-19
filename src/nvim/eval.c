@@ -2887,12 +2887,7 @@ static int eval6(char **arg, typval_T *rettv, int evaluate, int want_string)
 /// @return  OK or FAIL.
 static int eval7(char **arg, typval_T *rettv, int evaluate, int want_string)
 {
-  varnumber_T n;
-  int len;
-  char *s;
-  const char *start_leader, *end_leader;
   int ret = OK;
-  char *alias;
   static int recurse = 0;
 
   // Initialise variable so that tv_clear() can't mistake this for a
@@ -2900,11 +2895,11 @@ static int eval7(char **arg, typval_T *rettv, int evaluate, int want_string)
   rettv->v_type = VAR_UNKNOWN;
 
   // Skip '!', '-' and '+' characters.  They are handled later.
-  start_leader = *arg;
+  const char *start_leader = *arg;
   while (**arg == '!' || **arg == '-' || **arg == '+') {
     *arg = skipwhite(*arg + 1);
   }
-  end_leader = *arg;
+  const char *end_leader = *arg;
 
   // Limit recursion to 1000 levels.  At least at 10000 we run out of stack
   // and crash.  With MSVC the stack is smaller.
@@ -2931,88 +2926,9 @@ static int eval7(char **arg, typval_T *rettv, int evaluate, int want_string)
   case '6':
   case '7':
   case '8':
-  case '9': {
-    char *p = skipdigits(*arg + 1);
-    int get_float = false;
-
-    // We accept a float when the format matches
-    // "[0-9]\+\.[0-9]\+\([eE][+-]\?[0-9]\+\)\?".  This is very
-    // strict to avoid backwards compatibility problems.
-    // Don't look for a float after the "." operator, so that
-    // ":let vers = 1.2.3" doesn't fail.
-    if (!want_string && p[0] == '.' && ascii_isdigit(p[1])) {
-      get_float = true;
-      p = skipdigits(p + 2);
-      if (*p == 'e' || *p == 'E') {
-        p++;
-        if (*p == '-' || *p == '+') {
-          p++;
-        }
-        if (!ascii_isdigit(*p)) {
-          get_float = false;
-        } else {
-          p = skipdigits(p + 1);
-        }
-      }
-      if (ASCII_ISALPHA(*p) || *p == '.') {
-        get_float = false;
-      }
-    }
-    if (get_float) {
-      float_T f;
-
-      *arg += string2float(*arg, &f);
-      if (evaluate) {
-        rettv->v_type = VAR_FLOAT;
-        rettv->vval.v_float = f;
-      }
-    } else if (**arg == '0' && ((*arg)[1] == 'z' || (*arg)[1] == 'Z')) {
-      blob_T *blob = NULL;
-      // Blob constant: 0z0123456789abcdef
-      if (evaluate) {
-        blob = tv_blob_alloc();
-      }
-      char *bp;
-      for (bp = *arg + 2; ascii_isxdigit(bp[0]); bp += 2) {
-        if (!ascii_isxdigit(bp[1])) {
-          if (blob != NULL) {
-            emsg(_("E973: Blob literal should have an even number of hex "
-                   "characters"));
-            ga_clear(&blob->bv_ga);
-            XFREE_CLEAR(blob);
-          }
-          ret = FAIL;
-          break;
-        }
-        if (blob != NULL) {
-          ga_append(&blob->bv_ga, (char)((hex2nr(*bp) << 4) + hex2nr(*(bp + 1))));
-        }
-        if (bp[2] == '.' && ascii_isxdigit(bp[3])) {
-          bp++;
-        }
-      }
-      if (blob != NULL) {
-        tv_blob_set_ret(rettv, blob);
-      }
-      *arg = bp;
-    } else {
-      // decimal, hex or octal number
-      vim_str2nr(*arg, NULL, &len, STR2NR_ALL, &n, NULL, 0, true);
-      if (len == 0) {
-        if (evaluate) {
-          semsg(_(e_invexpr2), *arg);
-        }
-        ret = FAIL;
-        break;
-      }
-      *arg += len;
-      if (evaluate) {
-        rettv->v_type = VAR_NUMBER;
-        rettv->vval.v_number = n;
-      }
-    }
+  case '9':
+    ret = get_number_tv(arg, rettv, evaluate, want_string);
     break;
-  }
 
   // String constant: "string".
   case '"':
@@ -3090,8 +3006,9 @@ static int eval7(char **arg, typval_T *rettv, int evaluate, int want_string)
   if (ret == NOTDONE) {
     // Must be a variable or function name.
     // Can also be a curly-braces kind of name: {expr}.
-    s = *arg;
-    len = get_name_len((const char **)arg, &alias, evaluate, true);
+    char *s = *arg;
+    char *alias;
+    int len = get_name_len((const char **)arg, &alias, evaluate, true);
     if (alias != NULL) {
       s = alias;
     }
@@ -3714,6 +3631,91 @@ int get_option_tv(const char **const arg, typval_T *const rettv, const bool eval
   *arg = option_end;
 
   return ret;
+}
+
+/// Allocate a variable for a number constant.  Also deals with "0z" for blob.
+///
+/// @return  OK or FAIL.
+static int get_number_tv(char **arg, typval_T *rettv, bool evaluate, bool want_string)
+{
+  char *p = skipdigits(*arg + 1);
+  bool get_float = false;
+
+  // We accept a float when the format matches
+  // "[0-9]\+\.[0-9]\+\([eE][+-]\?[0-9]\+\)\?".  This is very
+  // strict to avoid backwards compatibility problems.
+  // Don't look for a float after the "." operator, so that
+  // ":let vers = 1.2.3" doesn't fail.
+  if (!want_string && p[0] == '.' && ascii_isdigit(p[1])) {
+    get_float = true;
+    p = skipdigits(p + 2);
+    if (*p == 'e' || *p == 'E') {
+      p++;
+      if (*p == '-' || *p == '+') {
+        p++;
+      }
+      if (!ascii_isdigit(*p)) {
+        get_float = false;
+      } else {
+        p = skipdigits(p + 1);
+      }
+    }
+    if (ASCII_ISALPHA(*p) || *p == '.') {
+      get_float = false;
+    }
+  }
+  if (get_float) {
+    float_T f;
+    *arg += string2float(*arg, &f);
+    if (evaluate) {
+      rettv->v_type = VAR_FLOAT;
+      rettv->vval.v_float = f;
+    }
+  } else if (**arg == '0' && ((*arg)[1] == 'z' || (*arg)[1] == 'Z')) {
+    // Blob constant: 0z0123456789abcdef
+    blob_T *blob = NULL;
+    if (evaluate) {
+      blob = tv_blob_alloc();
+    }
+    char *bp;
+    for (bp = *arg + 2; ascii_isxdigit(bp[0]); bp += 2) {
+      if (!ascii_isxdigit(bp[1])) {
+        if (blob != NULL) {
+          emsg(_("E973: Blob literal should have an even number of hex characters"));
+          ga_clear(&blob->bv_ga);
+          XFREE_CLEAR(blob);
+        }
+        return FAIL;
+      }
+      if (blob != NULL) {
+        ga_append(&blob->bv_ga, (char)((hex2nr(*bp) << 4) + hex2nr(*(bp + 1))));
+      }
+      if (bp[2] == '.' && ascii_isxdigit(bp[3])) {
+        bp++;
+      }
+    }
+    if (blob != NULL) {
+      tv_blob_set_ret(rettv, blob);
+    }
+    *arg = bp;
+  } else {
+    // decimal, hex or octal number
+    int len;
+    varnumber_T n;
+    vim_str2nr(*arg, NULL, &len, STR2NR_ALL, &n, NULL, 0, true);
+    if (len == 0) {
+      if (evaluate) {
+        semsg(_(e_invexpr2), *arg);
+      }
+      return FAIL;
+    }
+    *arg += len;
+    if (evaluate) {
+      rettv->v_type = VAR_NUMBER;
+      rettv->vval.v_number = n;
+    }
+  }
+  return OK;
 }
 
 /// Allocate a variable for a string constant.
