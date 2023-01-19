@@ -668,6 +668,17 @@ static void did_set_backupcopy(buf_T *buf, char *oldval, int opt_flags, char **e
   }
 }
 
+static void did_set_breakindentopt(win_T *win, char **errmsg)
+{
+  if (briopt_check(win) == FAIL) {
+    *errmsg = e_invarg;
+  }
+  // list setting requires a redraw
+  if (win == curwin && win->w_briopt_list) {
+    redraw_all_later(UPD_NOT_VALID);
+  }
+}
+
 /// Handle string options that need some action to perform when changed.
 /// The new value must be allocated.
 ///
@@ -713,13 +724,7 @@ char *did_set_string_option(int opt_idx, char **varp, char *oldval, char *errbuf
       errmsg = e_backupext_and_patchmode_are_equal;
     }
   } else if (varp == &curwin->w_p_briopt) {  // 'breakindentopt'
-    if (briopt_check(curwin) == FAIL) {
-      errmsg = e_invarg;
-    }
-    // list setting requires a redraw
-    if (curwin->w_briopt_list) {
-      redraw_all_later(UPD_NOT_VALID);
-    }
+    did_set_breakindentopt(curwin, &errmsg);
   } else if (varp == &p_isi
              || varp == &(curbuf->b_p_isk)
              || varp == &p_isp
