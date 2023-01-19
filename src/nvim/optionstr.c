@@ -704,6 +704,29 @@ static void did_set_helplang(char **errmsg)
   }
 }
 
+static void did_set_background(char **errmsg)
+{
+  if (check_opt_strings(p_bg, p_bg_values, false) != OK) {
+    *errmsg = e_invarg;
+    return;
+  }
+
+  int dark = (*p_bg == 'd');
+
+  init_highlight(false, false);
+
+  if (dark != (*p_bg == 'd') && get_var_value("g:colors_name") != NULL) {
+    // The color scheme must have set 'background' back to another
+    // value, that's not what we want here.  Disable the color
+    // scheme and set the colors again.
+    do_unlet(S_LEN("g:colors_name"), true);
+    free_string_option(p_bg);
+    p_bg = xstrdup((dark ? "dark" : "light"));
+    check_string_option(&p_bg);
+    init_highlight(false, false);
+  }
+}
+
 /// Handle string options that need some action to perform when changed.
 /// The new value must be allocated.
 ///
@@ -814,24 +837,7 @@ char *did_set_string_option(int opt_idx, char **varp, char *oldval, char *errbuf
       errmsg = check_chars_options();
     }
   } else if (varp == &p_bg) {  // 'background'
-    if (check_opt_strings(p_bg, p_bg_values, false) == OK) {
-      int dark = (*p_bg == 'd');
-
-      init_highlight(false, false);
-
-      if (dark != (*p_bg == 'd') && get_var_value("g:colors_name") != NULL) {
-        // The color scheme must have set 'background' back to another
-        // value, that's not what we want here.  Disable the color
-        // scheme and set the colors again.
-        do_unlet(S_LEN("g:colors_name"), true);
-        free_string_option(p_bg);
-        p_bg = xstrdup((dark ? "dark" : "light"));
-        check_string_option(&p_bg);
-        init_highlight(false, false);
-      }
-    } else {
-      errmsg = e_invarg;
-    }
+    did_set_background(&errmsg);
   } else if (varp == &p_wim) {  // 'wildmode'
     if (check_opt_wim() == FAIL) {
       errmsg = e_invarg;
