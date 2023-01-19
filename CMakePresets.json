@@ -1,5 +1,5 @@
 {
-  "version": 3,
+  "version": 6,
   "configurePresets": [
     {
       "name": "base",
@@ -14,9 +14,7 @@
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "RelWithDebInfo"
       },
-      "inherits": [
-        "base"
-      ]
+      "inherits": ["base"]
     },
     {
       "name": "debug",
@@ -25,9 +23,7 @@
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Debug"
       },
-      "inherits": [
-        "base"
-      ]
+      "inherits": ["base"]
     },
     {
       "name": "release",
@@ -36,9 +32,7 @@
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release"
       },
-      "inherits": [
-        "base"
-      ]
+      "inherits": ["base"]
     },
     {
       "name": "windows-default",
@@ -54,9 +48,7 @@
       },
       "vendor": {
         "microsoft.com/VisualStudioSettings/CMake/1.0": {
-          "hostOS": [
-            "Windows"
-          ]
+          "hostOS": ["Windows"]
         }
       },
       "condition": {
@@ -64,9 +56,7 @@
         "lhs": "${hostSystemName}",
         "rhs": "Windows"
       },
-      "inherits": [
-        "base"
-      ]
+      "inherits": ["base"]
     },
     {
       "name": "iwyu",
@@ -75,9 +65,7 @@
       "cacheVariables": {
         "ENABLE_IWYU": "ON"
       },
-      "inherits": [
-        "base"
-      ]
+      "inherits": ["base"]
     }
   ],
   "buildPresets": [
@@ -105,6 +93,21 @@
     {
       "name": "iwyu",
       "configurePreset": "iwyu"
+    }
+  ],
+  "workflowPresets": [
+    {
+      "name": "iwyu",
+      "steps": [
+        {
+          "type": "configure",
+          "name": "iwyu"
+        },
+        {
+          "type": "build",
+          "name": "iwyu"
+        }
+      ]
     }
   ]
 }
