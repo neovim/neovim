@@ -66,8 +66,7 @@ ifeq ($(CMAKE_GENERATOR),Ninja)
 endif
 
 DEPS_CMAKE_FLAGS ?=
-# Back-compat: USE_BUNDLED_DEPS was the old name.
-USE_BUNDLED ?= $(USE_BUNDLED_DEPS)
+USE_BUNDLED ?=
 
 ifneq (,$(USE_BUNDLED))
   BUNDLED_CMAKE_FLAG := -DUSE_BUNDLED=$(USE_BUNDLED)
@@ -127,13 +126,16 @@ endif
 src/nvim/testdir/%.vim: phony_force
 	+$(SINGLE_MAKE) -C src/nvim/testdir NVIM_PRG=$(NVIM_PRG) SCRIPTS= $(MAKEOVERRIDES) $(patsubst src/nvim/testdir/%.vim,%,$@)
 
-functionaltest functionaltest-lua unittest benchmark: | nvim
+functionaltest-lua: | nvim
 	$(BUILD_TOOL) -C build $@
 
-lintlua lintsh lintc check-single-includes generated-sources lintcommit lint formatc formatlua format: | build/.ran-cmake
+FORMAT=formatc formatlua format
+LINT=lintlua lintsh lintc check-single-includes lintcommit lint
+TEST=functionaltest unittest
+generated-sources benchmark $(FORMAT) $(LINT) $(TEST): | build/.ran-cmake
 	$(CMAKE_PRG) --build build --target $@
 
-test: functionaltest unittest
+test: $(TEST)
 
 iwyu: build/.ran-cmake
 	cmake --workflow --fresh --preset iwyu > build/iwyu.log
@@ -171,4 +173,4 @@ $(DEPS_BUILD_DIR)/%: phony_force
 	$(BUILD_TOOL) -C $(DEPS_BUILD_DIR) $(patsubst $(DEPS_BUILD_DIR)/%,%,$@)
 endif
 
-.PHONY: test lintlua lintsh functionaltest unittest lint lintc clean distclean nvim libnvim cmake deps install appimage checkprefix lintcommit formatc formatlua format
+.PHONY: test clean distclean nvim libnvim cmake deps install appimage checkprefix benchmark $(FORMAT) $(LINT) $(TEST)
