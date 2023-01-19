@@ -829,6 +829,30 @@ static void did_set_fileformat(buf_T *buf, char **varp, const char *oldval, int 
   }
 }
 
+static void did_set_matchpairs(char **varp, char **errmsg)
+{
+  for (char *p = *varp; *p != NUL; p++) {
+    int x2 = -1;
+    int x3 = -1;
+
+    p += utfc_ptr2len(p);
+    if (*p != NUL) {
+      x2 = (unsigned char)(*p++);
+    }
+    if (*p != NUL) {
+      x3 = utf_ptr2char(p);
+      p += utfc_ptr2len(p);
+    }
+    if (x2 != ':' || x3 == -1 || (*p != NUL && *p != ',')) {
+      *errmsg = e_invarg;
+      break;
+    }
+    if (*p == NUL) {
+      break;
+    }
+  }
+}
+
 /// Handle string options that need some action to perform when changed.
 /// The new value must be allocated.
 ///
@@ -969,26 +993,7 @@ char *did_set_string_option(int opt_idx, char **varp, char *oldval, char *errbuf
       errmsg = e_invarg;
     }
   } else if (gvarp == &p_mps) {  // 'matchpairs'
-    for (char *p = *varp; *p != NUL; p++) {
-      int x2 = -1;
-      int x3 = -1;
-
-      p += utfc_ptr2len(p);
-      if (*p != NUL) {
-        x2 = (unsigned char)(*p++);
-      }
-      if (*p != NUL) {
-        x3 = utf_ptr2char(p);
-        p += utfc_ptr2len(p);
-      }
-      if (x2 != ':' || x3 == -1 || (*p != NUL && *p != ',')) {
-        errmsg = e_invarg;
-        break;
-      }
-      if (*p == NUL) {
-        break;
-      }
-    }
+    did_set_matchpairs(varp, &errmsg);
   } else if (gvarp == &p_com) {  // 'comments'
     for (char *s = *varp; *s;) {
       while (*s && *s != ':') {
