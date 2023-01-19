@@ -218,11 +218,16 @@ void pum_display(pumitem_T *array, int size, int selected, bool array_changed, i
       // pum above "pum_win_row"
       pum_above = true;
 
-      // Leave two lines of context if possible
-      if (curwin->w_wrow - curwin->w_cline_row >= 2) {
-        context_lines = 2;
+      if (State == MODE_CMDLINE) {
+        // for cmdline pum, no need for context lines
+        context_lines = 0;
       } else {
-        context_lines = curwin->w_wrow - curwin->w_cline_row;
+        // Leave two lines of context if possible
+        if (curwin->w_wrow - curwin->w_cline_row >= 2) {
+          context_lines = 2;
+        } else {
+          context_lines = curwin->w_wrow - curwin->w_cline_row;
+        }
       }
 
       if (pum_win_row >= size + context_lines) {
@@ -241,13 +246,17 @@ void pum_display(pumitem_T *array, int size, int selected, bool array_changed, i
       // pum below "pum_win_row"
       pum_above = false;
 
-      // Leave two lines of context if possible
-      validate_cheight();
-      if (curwin->w_cline_row + curwin->w_cline_height - curwin->w_wrow >= 3) {
-        context_lines = 3;
+      if (State == MODE_CMDLINE) {
+        // for cmdline pum, no need for context lines
+        context_lines = 0;
       } else {
-        context_lines = curwin->w_cline_row
-                        + curwin->w_cline_height - curwin->w_wrow;
+        // Leave two lines of context if possible
+        validate_cheight();
+        if (curwin->w_cline_row + curwin->w_cline_height - curwin->w_wrow >= 3) {
+          context_lines = 3;
+        } else {
+          context_lines = curwin->w_cline_row + curwin->w_cline_height - curwin->w_wrow;
+        }
       }
 
       pum_row = pum_win_row + context_lines;
