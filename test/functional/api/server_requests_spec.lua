@@ -337,6 +337,21 @@ describe('server -> client', function()
       eq('localhost:', string.sub(address,1,10))
       connect_test(server, 'tcp', address)
     end)
+
+    it('does not crash on receiving UI events', function()
+      local server = spawn(nvim_argv)
+      set_session(server)
+      local address = funcs.serverlist()[1]
+      local client = spawn(nvim_argv, false, nil, true)
+      set_session(client)
+
+      local id = funcs.sockconnect('pipe', address, {rpc=true})
+      funcs.rpcrequest(id, 'nvim_ui_attach', 80, 24, {})
+      assert_alive()
+
+      server:close()
+      client:close()
+    end)
   end)
 
   describe('connecting to its own pipe address', function()
