@@ -114,6 +114,7 @@ return {
     "underdashed";
     "italic";
     "reverse";
+    "altfont";
     "nocombine";
     "default";
     "cterm";
@@ -140,6 +141,7 @@ return {
     "underdashed";
     "italic";
     "reverse";
+    "altfont";
     "nocombine";
   }};
   -- Autocmds

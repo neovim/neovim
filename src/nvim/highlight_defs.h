@@ -22,10 +22,11 @@ typedef enum {
   HL_UNDERCURL       = 0x18,
   HL_UNDERDOTTED     = 0x20,
   HL_UNDERDASHED     = 0x28,
-                       // 0x30 and 0x38 spare for underline styles
+  // 0x30 and 0x38 spare for underline styles
   HL_STANDOUT      = 0x0040,
   HL_STRIKETHROUGH = 0x0080,
-  // 0x0100-0x0200 spare
+  HL_ALTFONT       = 0x0100,
+  // 0x0200 spare
   HL_NOCOMBINE     = 0x0400,
   HL_BG_INDEXED    = 0x0800,
   HL_FG_INDEXED    = 0x1000,

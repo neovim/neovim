@@ -324,6 +324,7 @@ numerical highlight ids to the actual attributes.
 	`underdouble`:		double underlined text. The lines have `special` color.
 	`underdotted`:		underdotted text. The dots have `special` color.
 	`underdashed`:		underdashed text. The dashes have `special` color.
+	`altfont`:		alternative font.
 	`blend`:		Blend level (0-100). Could be used by UIs to
 				support blending floating windows to the
 				background or to signal a transparent cursor.
