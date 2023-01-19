@@ -4508,15 +4508,15 @@ void reset_modifiable(void)
 }
 
 /// Set the global value for 'iminsert' to the local value.
-void set_iminsert_global(void)
+void set_iminsert_global(buf_T *buf)
 {
-  p_iminsert = curbuf->b_p_iminsert;
+  p_iminsert = buf->b_p_iminsert;
 }
 
 /// Set the global value for 'imsearch' to the local value.
-void set_imsearch_global(void)
+void set_imsearch_global(buf_T *buf)
 {
-  p_imsearch = curbuf->b_p_imsearch;
+  p_imsearch = buf->b_p_imsearch;
 }
 
 static int expand_option_idx = -1;

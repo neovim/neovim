@@ -763,6 +763,53 @@ static void did_set_encoding(buf_T *buf, char **varp, char **gvarp, int opt_flag
   }
 }
 
+static void did_set_keymap(buf_T *buf, char **varp, int opt_flags, int *value_checked,
+                           char **errmsg)
+{
+  if (!valid_filetype(*varp)) {
+    *errmsg = e_invarg;
+    return;
+  }
+
+  int secure_save = secure;
+
+  // Reset the secure flag, since the value of 'keymap' has
+  // been checked to be safe.
+  secure = 0;
+
+  // load or unload key mapping tables
+  *errmsg = keymap_init();
+
+  secure = secure_save;
+
+  // Since we check the value, there is no need to set P_INSECURE,
+  // even when the value comes from a modeline.
+  *value_checked = true;
+
+  if (*errmsg == NULL) {
+    if (*buf->b_p_keymap != NUL) {
+      // Installed a new keymap, switch on using it.
+      buf->b_p_iminsert = B_IMODE_LMAP;
+      if (buf->b_p_imsearch != B_IMODE_USE_INSERT) {
+        buf->b_p_imsearch = B_IMODE_LMAP;
+      }
+    } else {
+      // Cleared the keymap, may reset 'iminsert' and 'imsearch'.
+      if (buf->b_p_iminsert == B_IMODE_LMAP) {
+        buf->b_p_iminsert = B_IMODE_NONE;
+      }
+      if (buf->b_p_imsearch == B_IMODE_LMAP) {
+        buf->b_p_imsearch = B_IMODE_USE_INSERT;
+      }
+    }
+    if ((opt_flags & OPT_LOCAL) == 0) {
+      set_iminsert_global(buf);
+      set_imsearch_global(buf);
+    }
+    status_redraw_buf(buf);
+  }
+}
+
 /// Handle string options that need some action to perform when changed.
 /// The new value must be allocated.
 ///
@@ -895,47 +942,7 @@ char *did_set_string_option(int opt_idx, char **varp, char *oldval, char *errbuf
     // 'encoding', 'fileencoding' and 'makeencoding'
     did_set_encoding(curbuf, varp, gvarp, opt_flags, &errmsg);
   } else if (varp == &curbuf->b_p_keymap) {
-    if (!valid_filetype(*varp)) {
-      errmsg = e_invarg;
-    } else {
-      int secure_save = secure;
-
-      // Reset the secure flag, since the value of 'keymap' has
-      // been checked to be safe.
-      secure = 0;
-
-      // load or unload key mapping tables
-      errmsg = keymap_init();
-
-      secure = secure_save;
-
-      // Since we check the value, there is no need to set P_INSECURE,
-      // even when the value comes from a modeline.
-      *value_checked = true;
-    }
-
-    if (errmsg == NULL) {
-      if (*curbuf->b_p_keymap != NUL) {
-        // Installed a new keymap, switch on using it.
-        curbuf->b_p_iminsert = B_IMODE_LMAP;
-        if (curbuf->b_p_imsearch != B_IMODE_USE_INSERT) {
-          curbuf->b_p_imsearch = B_IMODE_LMAP;
-        }
-      } else {
-        // Cleared the keymap, may reset 'iminsert' and 'imsearch'.
-        if (curbuf->b_p_iminsert == B_IMODE_LMAP) {
-          curbuf->b_p_iminsert = B_IMODE_NONE;
-        }
-        if (curbuf->b_p_imsearch == B_IMODE_LMAP) {
-          curbuf->b_p_imsearch = B_IMODE_USE_INSERT;
-        }
-      }
-      if ((opt_flags & OPT_LOCAL) == 0) {
-        set_iminsert_global();
-        set_imsearch_global();
-      }
-      status_redraw_curbuf();
-    }
+    did_set_keymap(curbuf, varp, opt_flags, value_checked, &errmsg);
   } else if (gvarp == &p_ff) {  // 'fileformat'
     if (!MODIFIABLE(curbuf) && !(opt_flags & OPT_GLOBAL)) {
       errmsg = e_modifiable;
