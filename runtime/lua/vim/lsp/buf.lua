@@ -733,6 +733,7 @@ end
 ---               List of LSP `CodeActionKind`s used to filter the code actions.
 ---               Most language servers support values like `refactor`
 ---               or `quickfix`.
+---        - triggerKind (number|nil): The reason why code actions were requested.
 ---  - filter: (function|nil)
 ---           Predicate taking an `CodeAction` and returning a boolean.
 ---  - apply: (boolean|nil)
@@ -746,6 +747,7 @@ end
 ---           using mark-like indexing. See |api-indexing|
 ---
 ---@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_codeAction
+---@see vim.lsp.protocol.constants.CodeActionTriggerKind
 function M.code_action(options)
   validate({ options = { options, 't', true } })
   options = options or {}
@@ -755,6 +757,9 @@ function M.code_action(options)
     options = { options = options }
   end
   local context = options.context or {}
+  if not context.triggerKind then
+    context.triggerKind = vim.lsp.protocol.CodeActionTriggerKind.Invoked
+  end
   if not context.diagnostics then
     local bufnr = api.nvim_get_current_buf()
     context.diagnostics = vim.lsp.diagnostic.get_line_diagnostics(bufnr)
