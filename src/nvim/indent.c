@@ -852,7 +852,7 @@ int get_breakindent_win(win_T *wp, char *line)
           if (wp->w_briopt_list > 0) {
             prev_list += wp->w_briopt_list;
           } else {
-            prev_list = (int)(*regmatch.endp - *regmatch.startp);
+            prev_indent = (int)(*regmatch.endp - *regmatch.startp);
           }
         }
         vim_regfree(regmatch.regprog);
@@ -871,12 +871,8 @@ int get_breakindent_win(win_T *wp, char *line)
   bri += win_col_off2(wp);
 
   // add additional indent for numbered lists
-  if (wp->w_briopt_list != 0) {
-    if (wp->w_briopt_list > 0) {
-      bri += prev_list;
-    } else {
-      bri = prev_list;
-    }
+  if (wp->w_briopt_list > 0) {
+    bri += prev_list;
   }
 
   // indent minus the length of the showbreak string
