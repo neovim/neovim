@@ -4,10 +4,10 @@ local command = helpers.command
 local eq = helpers.eq
 local eval = helpers.eval
 
-before_each(clear)
-
 -- oldtest: Test_missing_attr()
-it('synIDattr() works', function()
+describe('synIDattr()', function()
+  setup(clear)
+
   local bool_attrs = {
     'bold',
     'italic',
@@ -22,39 +22,55 @@ it('synIDattr() works', function()
     'nocombine',
   }
 
-  command('hi Mine cterm=NONE gui=NONE')
-  eq('Mine', eval([[synIDattr(hlID("Mine"), "name")]]))
-  for _, mode in ipairs({'cterm', 'gui'}) do
-    eq('', eval(([[synIDattr("Mine"->hlID(), "bg", '%s')]]):format(mode)))
-    eq('', eval(([[synIDattr("Mine"->hlID(), "fg", '%s')]]):format(mode)))
-    eq('', eval(([[synIDattr("Mine"->hlID(), "sp", '%s')]]):format(mode)))
-    for _, attr in ipairs(bool_attrs) do
-      eq('', eval(([[synIDattr(hlID("Mine"), "%s", '%s')]]):format(attr, mode)))
-      eq('', eval(([[synIDattr(hlID("Mine"), "%s", '%s')]]):format(attr, mode)))
-      eq('', eval(([[synIDattr(hlID("Mine"), "%s", '%s')]]):format(attr, mode)))
+  describe(':hi Mine cterm=NONE gui=NONE', function()
+    setup(function()
+      command(':hi Mine cterm=NONE gui=NONE')
+    end)
+
+    it('"name"', function()
+      eq('Mine', eval([[synIDattr(hlID("Mine"), "name")]]))
+    end)
+
+    local function none_test(attr, mode)
+      it(('"%s"'):format(attr), function()
+        eq('', eval(([[synIDattr(hlID("Mine"), "%s", '%s')]]):format(attr, mode)))
+      end)
     end
-    eq('', eval(([[synIDattr(hlID("Mine"), "inverse", '%s')]]):format(mode)))
+
+    for _, mode in ipairs({'cterm', 'gui'}) do
+      describe(('"%s"'):format(mode), function()
+        for _, attr in ipairs(bool_attrs) do
+          none_test(attr, mode)
+        end
+        for _, attr in ipairs({'inverse', 'bg', 'fg', 'sp'}) do
+          none_test(attr, mode)
+        end
+      end)
+    end
+  end)
+
+  local function attr_test(attr1, attr2)
+    local cmd = (':hi Mine cterm=%s gui=%s'):format(attr1, attr2)
+    it(cmd, function()
+      command(cmd)
+      eq('1', eval(([[synIDattr("Mine"->hlID(), "%s", 'cterm')]]):format(attr1)))
+      eq('', eval(([[synIDattr(hlID("Mine"), "%s", 'cterm')]]):format(attr2)))
+      eq('', eval(([[synIDattr("Mine"->hlID(), "%s", 'gui')]]):format(attr1)))
+      eq('1', eval(([[synIDattr(hlID("Mine"), "%s", 'gui')]]):format(attr2)))
+    end)
   end
 
   for i, attr1 in ipairs(bool_attrs) do
     local attr2 = bool_attrs[i - 1] or bool_attrs[#bool_attrs]
-
-    command(('hi Mine cterm=%s gui=%s'):format(attr1, attr2))
-    eq('1', eval(([[synIDattr(hlID("Mine"), "%s", 'cterm')]]):format(attr1)))
-    eq('', eval(([[synIDattr(hlID("Mine"), "%s", 'cterm')]]):format(attr2)))
-    eq('', eval(([[synIDattr("Mine"->hlID(), "%s", 'gui')]]):format(attr1)))
-    eq('1', eval(([[synIDattr("Mine"->hlID(), "%s", 'gui')]]):format(attr2)))
-
-    command(('hi Mine cterm=%s gui=%s'):format(attr2, attr1))
-    eq('', eval(([[synIDattr("Mine"->hlID(), "%s", 'cterm')]]):format(attr1)))
-    eq('1', eval(([[synIDattr("Mine"->hlID(), "%s", 'cterm')]]):format(attr2)))
-    eq('1', eval(([[synIDattr(hlID("Mine"), "%s", 'gui')]]):format(attr1)))
-    eq('', eval(([[synIDattr(hlID("Mine"), "%s", 'gui')]]):format(attr2)))
+    attr_test(attr1, attr2)
+    attr_test(attr2, attr1)
   end
 
-  command('hi Mine cterm=reverse gui=inverse')
-  eq('1', eval([[synIDattr(hlID("Mine"), "reverse", 'cterm')]]))
-  eq('1', eval([[synIDattr(hlID("Mine"), "inverse", 'cterm')]]))
-  eq('1', eval([[synIDattr(hlID("Mine"), "reverse", 'gui')]]))
-  eq('1', eval([[synIDattr(hlID("Mine"), "inverse", 'gui')]]))
+  it(':hi Mine cterm=reverse gui=inverse', function()
+    command(':hi Mine cterm=reverse gui=inverse')
+    eq('1', eval([[synIDattr(hlID("Mine"), "reverse", 'cterm')]]))
+    eq('1', eval([[synIDattr(hlID("Mine"), "inverse", 'cterm')]]))
+    eq('1', eval([[synIDattr(hlID("Mine"), "reverse", 'gui')]]))
+    eq('1', eval([[synIDattr(hlID("Mine"), "inverse", 'gui')]]))
+  end)
 end)
