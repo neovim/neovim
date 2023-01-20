@@ -216,7 +216,7 @@ void ga_concat_len(garray_T *const gap, const char *restrict s, const size_t len
 ///
 /// @param gap
 /// @param c
-void ga_append(garray_T *gap, char c)
+void ga_append(garray_T *gap, uint8_t c)
 {
-  GA_APPEND(char, gap, c);
+  GA_APPEND(uint8_t, gap, c);
 }

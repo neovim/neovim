@@ -51,7 +51,7 @@ int eexe_mod_op(typval_T *const tv1, const typval_T *const tv2, const char *cons
         blob_T *const b1 = tv1->vval.v_blob;
         blob_T *const b2 = tv2->vval.v_blob;
         for (int i = 0; i < tv_blob_len(b2); i++) {
-          ga_append(&b1->bv_ga, (char)tv_blob_get(b2, i));
+          ga_append(&b1->bv_ga, tv_blob_get(b2, i));
         }
       }
       return OK;

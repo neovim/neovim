@@ -2993,16 +2993,16 @@ char *getcmdkeycmd(int promptc, void *cookie, int indent, bool do_concat)
       ga_concat(&line_ga, "<SNR>");
     } else {
       if (cmod != 0) {
-        ga_append(&line_ga, (char)K_SPECIAL);
-        ga_append(&line_ga, (char)KS_MODIFIER);
-        ga_append(&line_ga, (char)cmod);
+        ga_append(&line_ga, K_SPECIAL);
+        ga_append(&line_ga, KS_MODIFIER);
+        ga_append(&line_ga, (uint8_t)cmod);
       }
       if (IS_SPECIAL(c1)) {
-        ga_append(&line_ga, (char)K_SPECIAL);
-        ga_append(&line_ga, (char)K_SECOND(c1));
-        ga_append(&line_ga, (char)K_THIRD(c1));
+        ga_append(&line_ga, K_SPECIAL);
+        ga_append(&line_ga, (uint8_t)K_SECOND(c1));
+        ga_append(&line_ga, (uint8_t)K_THIRD(c1));
       } else {
-        ga_append(&line_ga, (char)c1);
+        ga_append(&line_ga, (uint8_t)c1);
       }
     }
 
@@ -3038,7 +3038,7 @@ bool map_execute_lua(void)
     } else if (c1 == '\r' || c1 == '\n') {
       c1 = NUL;  // end the line
     } else {
-      ga_append(&line_ga, (char)c1);
+      ga_append(&line_ga, (uint8_t)c1);
     }
   }
 

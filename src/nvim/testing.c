@@ -98,7 +98,7 @@ static void ga_concat_esc(garray_T *gap, const char *p, int clen)
         vim_snprintf(buf, NUMBUFLEN, "\\x%02x", *p);
         ga_concat(gap, buf);
       } else {
-        ga_append(gap, *p);
+        ga_append(gap, (uint8_t)(*p));
       }
       break;
     }

@@ -309,7 +309,7 @@ int encode_read_from_list(ListReaderState *const state, char *const buf, const s
         if (buf_[i_] == '\'') { \
           ga_append(gap, '\''); \
         } \
-        ga_append(gap, buf_[i_]); \
+        ga_append(gap, (uint8_t)buf_[i_]); \
       } \
       ga_append(gap, '\''); \
     } \
