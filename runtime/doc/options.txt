@@ -3869,8 +3869,9 @@ A jump table for the options with a short description can be found at |Q_op|.
 			setting, except for single spaces.  When omitted, the
 			"space" setting is used.  For example,
 			`:set listchars=multispace:---+` shows ten consecutive
-			spaces as:
+			spaces as: >
 				---+---+-- ~
+<
 							*lcs-lead*
 	  lead:c	Character to show for leading spaces.  When omitted,
 			leading spaces are blank.  Overrides the "space" and
@@ -3884,8 +3885,9 @@ A jump table for the options with a short description can be found at |Q_op|.
 			spaces only.  Also overrides |lcs-lead| for leading
 			multiple spaces.
 			`:set listchars=leadmultispace:---+` shows ten
-			consecutive leading spaces as:
+			consecutive leading spaces as: >
 				---+---+--XXX ~
+<
 			Where "XXX" denotes the first non-blank characters in
 			the line.
 							*lcs-trail*
