@@ -12,7 +12,7 @@
 typedef struct {
   uint32_t total[2];
   uint32_t state[8];
-  char_u buffer[SHA256_BUFFER_SIZE];
+  uint8_t buffer[SHA256_BUFFER_SIZE];
 } context_sha256_T;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS

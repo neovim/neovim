@@ -32,10 +32,10 @@
 }
 
 #define PUT_UINT32(n, b, i) { \
-  (b)[(i)] = (char_u)((n) >> 24); \
-  (b)[(i) + 1] = (char_u)((n) >> 16); \
-  (b)[(i) + 2] = (char_u)((n) >>  8); \
-  (b)[(i) + 3] = (char_u)((n)); \
+  (b)[(i)] = (uint8_t)((n) >> 24); \
+  (b)[(i) + 1] = (uint8_t)((n) >> 16); \
+  (b)[(i) + 2] = (uint8_t)((n) >>  8); \
+  (b)[(i) + 3] = (uint8_t)((n)); \
 }
 
 void sha256_start(context_sha256_T *ctx)
@@ -53,7 +53,7 @@ void sha256_start(context_sha256_T *ctx)
   ctx->state[7] = 0x5BE0CD19;
 }
 
-static void sha256_process(context_sha256_T *ctx, const char_u data[SHA256_BUFFER_SIZE])
+static void sha256_process(context_sha256_T *ctx, const uint8_t data[SHA256_BUFFER_SIZE])
 {
   uint32_t temp1, temp2, W[SHA256_BUFFER_SIZE];
   uint32_t A, B, C, D, E, F, G, H;
@@ -180,7 +180,7 @@ static void sha256_process(context_sha256_T *ctx, const char_u data[SHA256_BUFFE
   ctx->state[7] += H;
 }
 
-void sha256_update(context_sha256_T *ctx, const char_u *input, size_t length)
+void sha256_update(context_sha256_T *ctx, const uint8_t *input, size_t length)
 {
   if (length == 0) {
     return;
@@ -198,7 +198,7 @@ void sha256_update(context_sha256_T *ctx, const char_u *input, size_t length)
   size_t fill = SHA256_BUFFER_SIZE - left;
 
   if (left && (length >= fill)) {
-    memcpy((void *)(ctx->buffer + left), (void *)input, fill);
+    memcpy(ctx->buffer + left, input, fill);
     sha256_process(ctx, ctx->buffer);
     length -= fill;
     input  += fill;
@@ -212,22 +212,22 @@ void sha256_update(context_sha256_T *ctx, const char_u *input, size_t length)
   }
 
   if (length) {
-    memcpy((void *)(ctx->buffer + left), (void *)input, length);
+    memcpy(ctx->buffer + left, input, length);
   }
 }
 
-static char_u sha256_padding[SHA256_BUFFER_SIZE] = {
+static uint8_t sha256_padding[SHA256_BUFFER_SIZE] = {
   0x80, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 };
 
-void sha256_finish(context_sha256_T *ctx, char_u digest[SHA256_SUM_SIZE])
+void sha256_finish(context_sha256_T *ctx, uint8_t digest[SHA256_SUM_SIZE])
 {
   uint32_t last, padn;
   uint32_t high, low;
-  char_u msglen[8];
+  uint8_t msglen[8];
 
   high = (ctx->total[0] >> 29) | (ctx->total[1] <<  3);
   low  = (ctx->total[0] <<  3);
@@ -265,7 +265,7 @@ void sha256_finish(context_sha256_T *ctx, char_u digest[SHA256_SUM_SIZE])
 const char *sha256_bytes(const uint8_t *restrict buf,  size_t buf_len, const uint8_t *restrict salt,
                          size_t salt_len)
 {
-  char_u sha256sum[SHA256_SUM_SIZE];
+  uint8_t sha256sum[SHA256_SUM_SIZE];
   static char hexit[SHA256_BUFFER_SIZE + 1];  // buf size + NULL
   context_sha256_T ctx;
 
@@ -309,8 +309,8 @@ bool sha256_self_test(void)
 {
   char output[SHA256_BUFFER_SIZE + 1];  // buf size + NULL
   context_sha256_T ctx;
-  char_u buf[1000];
-  char_u sha256sum[SHA256_SUM_SIZE];
+  uint8_t buf[1000];
+  uint8_t sha256sum[SHA256_SUM_SIZE];
   const char *hexit;
 
   static bool sha256_self_tested = false;
