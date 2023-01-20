@@ -12,12 +12,12 @@ list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake" "${PROJECT_SOURCE_DI
 include(CheckCCompilerFlag)
 include(Util)
 
+set_default_buildtype()
+
 get_property(isMultiConfig GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG)
 if(NOT isMultiConfig)
   set(BUILD_TYPE_STRING -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE})
 endif()
-
-set_default_buildtype()
 
 set(DEFAULT_MAKE_CFLAGS CFLAGS+=-g)
 
@@ -107,27 +107,16 @@ endif()
 
 set(DEPS_C_COMPILER "${CMAKE_C_COMPILER}")
 
-if(CMAKE_CXX_COMPILER)
-  set(DEPS_CXX_COMPILER "${CMAKE_CXX_COMPILER}")
-endif()
-
 if(CMAKE_OSX_SYSROOT)
   set(DEPS_C_COMPILER "${DEPS_C_COMPILER} -isysroot${CMAKE_OSX_SYSROOT}")
-  if(DEPS_CXX_COMPILER)
-    set(DEPS_CXX_COMPILER "${DEPS_CXX_COMPILER} -isysroot${CMAKE_OSX_SYSROOT}")
-  endif()
 endif()
 
 if(CMAKE_OSX_ARCHITECTURES)
-  string(REPLACE ";" "|" CMAKE_OSX_ARCHITECTURES_ALT_SEP "${CMAKE_OSX_ARCHITECTURES}")
   # The LuaJIT build does not like being passed multiple `-arch` flags
   # so we handle a universal build the old-fashioned way.
   set(LUAJIT_C_COMPILER "${DEPS_C_COMPILER}")
   foreach(ARCH IN LISTS CMAKE_OSX_ARCHITECTURES)
     set(DEPS_C_COMPILER "${DEPS_C_COMPILER} -arch ${ARCH}")
-    if(DEPS_CXX_COMPILER)
-      set(DEPS_CXX_COMPILER "${DEPS_CXX_COMPILER} -arch ${ARCH}")
-    endif()
   endforeach()
 endif()
 
@@ -140,7 +129,7 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
                     OUTPUT_STRIP_TRAILING_WHITESPACE)
     set(CMAKE_OSX_DEPLOYMENT_TARGET "${MACOS_VERSION}")
   endif()
-  message("-- Using deployment target ${CMAKE_OSX_DEPLOYMENT_TARGET}")
+  message(STATUS "Using deployment target ${CMAKE_OSX_DEPLOYMENT_TARGET}")
 endif()
 
 include(ExternalProject)

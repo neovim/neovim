@@ -7,7 +7,7 @@ execute_process(
   OUTPUT_STRIP_TRAILING_WHITESPACE
   RESULT_VARIABLE RES)
 
-if(RES AND NOT RES EQUAL 0)
+if(RES)
   message(STATUS "Using NVIM_VERSION: ${NVIM_VERSION}")
   file(WRITE "${OUTPUT}" "")
   return()
