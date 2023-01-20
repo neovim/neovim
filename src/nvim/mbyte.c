@@ -2300,6 +2300,10 @@ void *my_iconv_open(char *to, char *from)
   return (void *)fd;
 }
 
+// Use a fixed-size buffer in the stack to avoid a lot of small mallocs
+// and prevent memory fragmentation.
+#define CONV_BUF_SIZE 256
+
 // Convert the string "str[slen]" with iconv().
 // If "unconvlenp" is not NULL handle the string ending in an incomplete
 // sequence and set "*unconvlenp" to the length of it.
@@ -2308,38 +2312,20 @@ void *my_iconv_open(char *to, char *from)
 static char *iconv_string(const vimconv_T *const vcp, const char *str, size_t slen,
                           size_t *unconvlenp, size_t *resultlenp)
 {
-  const char *from;
-  size_t fromlen;
-  char *to;
-  size_t tolen;
-  size_t len = 0;
-  size_t done = 0;
-  char *result = NULL;
-  char *p;
-  int l;
+  StringBuilder b = KV_INITIAL_VALUE;
+  kv_resize(b, CONV_BUF_SIZE);
 
-  from = str;
-  fromlen = slen;
+  char *from = (char *)str;
+  size_t fromlen = slen;
+  char outbufs[CONV_BUF_SIZE];
+  char *tobuf = outbufs;
+  size_t toleft = CONV_BUF_SIZE;
+
   for (;;) {
-    if (len == 0 || ICONV_ERRNO == ICONV_E2BIG) {
-      // Allocate enough room for most conversions.  When re-allocating
-      // increase the buffer size.
-      len = len + fromlen * 2 + 40;
-      p = xmalloc(len);
-      if (done > 0) {
-        memmove(p, result, done);
-      }
-      xfree(result);
-      result = p;
-    }
+    size_t ret = iconv(vcp->vc_fd, &from, &fromlen, &tobuf, &toleft);
+    kv_concat_len(b, outbufs, CONV_BUF_SIZE - toleft);
 
-    to = result + done;
-    tolen = len - done - 2;
-    // Avoid a warning for systems with a wrong iconv() prototype by
-    // casting the second argument to void *.
-    if (iconv(vcp->vc_fd, (void *)&from, &fromlen, &to, &tolen) != SIZE_MAX) {
-      // Finished, append a NUL.
-      *to = NUL;
+    if (ret != SIZE_MAX) {
       break;
     }
 
@@ -2348,9 +2334,11 @@ static char *iconv_string(const vimconv_T *const vcp, const char *str, size_t sl
     if (!vcp->vc_fail && unconvlenp != NULL
         && (ICONV_ERRNO == ICONV_EINVAL || ICONV_ERRNO == EINVAL)) {
       // Handle an incomplete sequence at the end.
-      *to = NUL;
       *unconvlenp = fromlen;
       break;
+    } else if (ICONV_ERRNO == E2BIG) {
+      toleft = CONV_BUF_SIZE;
+      tobuf = outbufs;
     } else if (!vcp->vc_fail
                && (ICONV_ERRNO == ICONV_EILSEQ || ICONV_ERRNO == EILSEQ
                    || ICONV_ERRNO == ICONV_EINVAL || ICONV_ERRNO == EINVAL)) {
@@ -2360,26 +2348,26 @@ static char *iconv_string(const vimconv_T *const vcp, const char *str, size_t sl
       // Can't convert: insert a '?' and skip a character.  This assumes
       // conversion from 'encoding' to something else.  In other
       // situations we don't know what to skip anyway.
-      *to++ = '?';
+      kv_concat(b, "?");
       if (utf_ptr2cells(from) > 1) {
-        *to++ = '?';
+        kv_concat(b, "?");
       }
-      l = utfc_ptr2len_len(from, (int)fromlen);
+      int l = utfc_ptr2len_len(from, (int)fromlen);
+      l = l ? l : 1;  // Make sure to progress by at least 1 byte
       from += l;
+      assert(fromlen >= (size_t)l);  // Don't underflow
       fromlen -= (size_t)l;
-    } else if (ICONV_ERRNO != ICONV_E2BIG) {
+    } else {
       // conversion failed
-      XFREE_CLEAR(result);
+      XFREE_CLEAR(b.items);
       break;
     }
-    // Not enough room or skipping illegal sequence.
-    done = (size_t)(to - result);
   }
 
-  if (resultlenp != NULL && result != NULL) {
-    *resultlenp = (size_t)(to - result);
+  if (resultlenp != NULL && b.items != NULL) {
+    *resultlenp = b.size;
   }
-  return result;
+  return b.items;
 }
 
 #endif  // HAVE_ICONV
