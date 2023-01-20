@@ -112,7 +112,6 @@ if(CMAKE_OSX_SYSROOT)
 endif()
 
 if(CMAKE_OSX_ARCHITECTURES)
-  string(REPLACE ";" "|" CMAKE_OSX_ARCHITECTURES_ALT_SEP "${CMAKE_OSX_ARCHITECTURES}")
   # The LuaJIT build does not like being passed multiple `-arch` flags
   # so we handle a universal build the old-fashioned way.
   set(LUAJIT_C_COMPILER "${DEPS_C_COMPILER}")
