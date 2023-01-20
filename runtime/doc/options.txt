@@ -3870,7 +3870,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 			"space" setting is used.  For example,
 			`:set listchars=multispace:---+` shows ten consecutive
 			spaces as: >
-				---+---+-- ~
+				---+---+--
 <
 							*lcs-lead*
 	  lead:c	Character to show for leading spaces.  When omitted,
@@ -3886,7 +3886,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 			multiple spaces.
 			`:set listchars=leadmultispace:---+` shows ten
 			consecutive leading spaces as: >
-				---+---+--XXX ~
+				---+---+--XXX
 <
 			Where "XXX" denotes the first non-blank characters in
 			the line.
