@@ -3843,21 +3843,21 @@ A jump table for the options with a short description can be found at |Q_op|.
 			The third character is optional.
 
 	  tab:xy	The 'x' is always used, then 'y' as many times as will
-			fit.  Thus "tab:>-" displays:
+			fit.  Thus "tab:>-" displays: >
 				>
 				>-
 				>--
 				etc.
-
+<
 	  tab:xyz	The 'z' is always used, then 'x' is prepended, and
 			then 'y' is used as many times as will fit.  Thus
-			"tab:<->" displays:
+			"tab:<->" displays: >
 				>
 				<>
 				<->
 				<-->
 				etc.
-
+<
 			When "tab:" is omitted, a tab is shown as ^I.
 							*lcs-space*
 	  space:c	Character to show for a space.  When omitted, spaces
@@ -3869,22 +3869,25 @@ A jump table for the options with a short description can be found at |Q_op|.
 			setting, except for single spaces.  When omitted, the
 			"space" setting is used.  For example,
 			`:set listchars=multispace:---+` shows ten consecutive
-			spaces as:
-				---+---+-- ~
+			spaces as: >
+				---+---+--
+<
 							*lcs-lead*
 	  lead:c	Character to show for leading spaces.  When omitted,
 			leading spaces are blank.  Overrides the "space" and
 			"multispace" settings for leading spaces.  You can
 			combine it with "tab:", for example: >
 				:set listchars+=tab:>-,lead:.
-<							*lcs-leadmultispace*
+<
+							*lcs-leadmultispace*
 	  leadmultispace:c...
 			Like the |lcs-multispace| value, but for leading
 			spaces only.  Also overrides |lcs-lead| for leading
 			multiple spaces.
 			`:set listchars=leadmultispace:---+` shows ten
-			consecutive leading spaces as:
-				---+---+--XXX ~
+			consecutive leading spaces as: >
+				---+---+--XXX
+<
 			Where "XXX" denotes the first non-blank characters in
 			the line.
 							*lcs-trail*
