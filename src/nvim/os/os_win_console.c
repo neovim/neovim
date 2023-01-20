@@ -10,6 +10,7 @@
 # include "os/os_win_console.c.generated.h"
 #endif
 
+static char origTitle[256] = { 0 };
 static HWND hWnd = NULL;
 static HICON hOrigIconSmall = NULL;
 static HICON hOrigIcon = NULL;
@@ -91,4 +92,16 @@ void os_icon_init(void)
       os_icon_set(hVimIcon, hVimIcon);
     }
   }
+}
+
+/// Saves the original Windows console title.
+void os_title_save(void)
+{
+  GetConsoleTitle(origTitle, sizeof(origTitle));
+}
+
+/// Resets the original Windows console title.
+void os_title_reset(void)
+{
+  SetConsoleTitle(origTitle);
 }
