@@ -368,7 +368,7 @@ newwindow:
         newtab = curtab;
         goto_tabpage_tp(oldtab, true, true);
         if (curwin == wp) {
-          win_close(curwin, false, false);
+          win_close(curwin, false);
         }
         if (valid_tabpage(newtab)) {
           goto_tabpage_tp(newtab, true, true);
@@ -517,7 +517,7 @@ wingotofile:
         RESET_BINDING(curwin);
         if (do_ecmd(0, ptr, NULL, NULL, ECMD_LASTL, ECMD_HIDE, NULL) == FAIL) {
           // Failed to open the file, close the window opened for it.
-          win_close(curwin, false, false);
+          win_close(curwin, false);
           goto_tabpage_win(oldtab, oldwin);
         } else if (nchar == 'F' && lnum >= 0) {
           curwin->w_cursor.lnum = lnum;
@@ -2491,7 +2491,7 @@ void close_windows(buf_T *buf, bool keep_curwin)
   for (win_T *wp = lastwin; wp != NULL && (is_aucmd_win(lastwin) || !one_window(wp));) {
     if (wp->w_buffer == buf && (!keep_curwin || wp != curwin)
         && !(wp->w_closing || wp->w_buffer->b_locked > 0)) {
-      if (win_close(wp, false, false) == FAIL) {
+      if (win_close(wp, false) == FAIL) {
         // If closing the window fails give up, to avoid looping forever.
         break;
       }
@@ -2566,24 +2566,6 @@ bool one_nonfloat(void) FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 bool last_nonfloat(win_T *wp) FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
   return wp != NULL && firstwin == wp && !(wp->w_next && !wp->w_floating);
-}
-
-/// Check if floating windows in the current tab can be closed.
-/// Do not call this when the autocommand window is in use!
-///
-/// @return true if all floating windows can be closed
-static bool can_close_floating_windows(void)
-{
-  assert(!is_aucmd_win(lastwin));
-  for (win_T *wp = lastwin; wp->w_floating; wp = wp->w_prev) {
-    buf_T *buf = wp->w_buffer;
-    int need_hide = (bufIsChanged(buf) && buf->b_nwindows <= 1);
-
-    if (need_hide && !buf_hide(buf)) {
-      return false;
-    }
-  }
-  return true;
 }
 
 /// Close the possibly last window in a tab page.
@@ -2677,7 +2659,7 @@ static void win_close_buffer(win_T *win, bool free_buf, bool abort_if_last)
 //
 // Called by :quit, :close, :xit, :wq and findtag().
 // Returns FAIL when the window was not closed.
-int win_close(win_T *win, bool free_buf, bool force)
+int win_close(win_T *win, bool free_buf)
 {
   tabpage_T *prev_curtab = curtab;
   frame_T *win_frame = win->w_floating ? NULL : win->w_frame->fr_parent;
@@ -2701,18 +2683,14 @@ int win_close(win_T *win, bool free_buf, bool force)
       emsg(_("E814: Cannot close window, only autocmd window would remain"));
       return FAIL;
     }
-    if (force || can_close_floating_windows()) {
-      // close the last window until the there are no floating windows
-      while (lastwin->w_floating) {
-        // `force` flag isn't actually used when closing a floating window.
-        if (win_close(lastwin, free_buf, true) == FAIL) {
-          // If closing the window fails give up, to avoid looping forever.
-          return FAIL;
-        }
+    // close the last window until the there are no floating windows
+    while (lastwin->w_floating) {
+      buf_T *buf = lastwin->w_buffer;
+      bool need_hide = (bufIsChanged(buf) && buf->b_nwindows <= 1);
+      if (win_close(lastwin, !need_hide && !buf_hide(buf)) == FAIL) {
+        // If closing the window fails give up, to avoid looping forever.
+        return FAIL;
       }
-    } else {
-      emsg(e_floatonly);
-      return FAIL;
     }
   }
 
@@ -3902,7 +3880,7 @@ void close_others(int message, int forceit)
         continue;
       }
     }
-    win_close(wp, !buf_hide(wp->w_buffer) && !bufIsChanged(wp->w_buffer), false);
+    win_close(wp, !buf_hide(wp->w_buffer) && !bufIsChanged(wp->w_buffer));
   }
 
   if (message && !ONE_WINDOW) {

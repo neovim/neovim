@@ -3093,7 +3093,7 @@ static int jumpto_tag(const char *lbuf_arg, int forceit, int keep_help)
   } else {
     RedrawingDisabled--;
     if (postponed_split) {              // close the window
-      win_close(curwin, false, false);
+      win_close(curwin, false);
       postponed_split = 0;
     }
   }
