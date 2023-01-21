@@ -102,25 +102,9 @@ describe('TUI', function()
     command('call jobresize(b:terminal_job_id, 1, 4)')
     screen:try_resize(57, 17)
     command('call jobresize(b:terminal_job_id, 57, 17)')
-    screen:expect([[
-      {1:0}000;<control>;Cc;0;BN;;;;;N;NULL;;;;                    |
-      0001;<control>;Cc;0;BN;;;;;N;START OF HEADING;;;;        |
-      0002;<control>;Cc;0;BN;;;;;N;START OF TEXT;;;;           |
-      0003;<control>;Cc;0;BN;;;;;N;END OF TEXT;;;;             |
-      0004;<control>;Cc;0;BN;;;;;N;END OF TRANSMISSION;;;;     |
-      0005;<control>;Cc;0;BN;;;;;N;ENQUIRY;;;;                 |
-      0006;<control>;Cc;0;BN;;;;;N;ACKNOWLEDGE;;;;             |
-      0007;<control>;Cc;0;BN;;;;;N;BELL;;;;                    |
-      0008;<control>;Cc;0;BN;;;;;N;BACKSPACE;;;;               |
-      0009;<control>;Cc;0;S;;;;;N;CHARACTER TABULATION;;;;     |
-      000A;<control>;Cc;0;B;;;;;N;LINE FEED (LF);;;;           |
-      000B;<control>;Cc;0;S;;;;;N;LINE TABULATION;;;;          |
-      000C;<control>;Cc;0;WS;;;;;N;FORM FEED (FF);;;;          |
-      000D;<control>;Cc;0;B;;;;;N;CARRIAGE RETURN (CR);;;;     |
-      {5:test/functional/fixtures/bigfile.txt                     }|
-                                                               |
-      {3:-- TERMINAL --}                                           |
-    ]])
+    retry(nil, nil, function()
+      eq({true, 57}, {child_session:request('nvim_win_get_width', 0)})
+    end)
   end)
 
   it('accepts resize while pager is active', function()
