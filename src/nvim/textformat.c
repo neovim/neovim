@@ -530,6 +530,9 @@ static bool same_leader(linenr_T lnum, int leader1_len, char *leader1_flags, int
     return leader2_len == 0;
   }
 
+  char *lnum_line = NULL;
+  int line_len = 0;
+
   // If first leader has 'f' flag, the lines can be joined only if the
   // second line does not have a leader.
   // If first leader has 'e' flag, the lines can never be joined.
@@ -544,7 +547,11 @@ static bool same_leader(linenr_T lnum, int leader1_len, char *leader1_flags, int
         return false;
       }
       if (*p == COM_START) {
-        if (*(ml_get(lnum) + leader1_len) == NUL) {
+        if (lnum_line == NULL) {
+          lnum_line = ml_get(lnum);
+          line_len = (int)strlen(lnum_line);
+        }
+        if (line_len <= leader1_len) {
           return false;
         }
         if (leader2_flags == NULL || leader2_len == 0) {
