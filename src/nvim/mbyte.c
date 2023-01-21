@@ -100,8 +100,8 @@ static char e_list_item_nr_cell_width_invalid[]
   = N_("E1112: List item %d cell width invalid");
 static char e_overlapping_ranges_for_nr[]
   = N_("E1113: Overlapping ranges for 0x%lx");
-static char e_only_values_of_0x100_and_higher_supported[]
-  = N_("E1114: Only values of 0x100 and higher supported");
+static char e_only_values_of_0x80_and_higher_supported[]
+  = N_("E1114: Only values of 0x80 and higher supported");
 
 // To speed up BYTELEN(); keep a lookup table to quickly get the length in
 // bytes of a UTF-8 character from the first byte of a UTF-8 string.  Bytes
@@ -482,12 +482,16 @@ static bool intable(const struct interval *table, size_t n_items, int c)
 ///       gen_unicode_tables.lua, which must be manually invoked as needed.
 int utf_char2cells(int c)
 {
-  if (c >= 0x100) {
+  // Use the value from setcellwidths() at 0x80 and higher, unless the
+  // character is not printable.
+  if (c >= 0x80 && vim_isprintc(c)) {
     int n = cw_value(c);
     if (n != 0) {
       return n;
     }
+  }
 
+  if (c >= 0x100) {
     if (!utf_printable(c)) {
       return 6;                 // unprintable, displays <xxxx>
     }
@@ -2724,8 +2728,8 @@ void f_setcellwidths(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
       }
       if (i == 0) {
         n1 = lili_tv->vval.v_number;
-        if (n1 < 0x100) {
-          emsg(_(e_only_values_of_0x100_and_higher_supported));
+        if (n1 < 0x80) {
+          emsg(_(e_only_values_of_0x80_and_higher_supported));
           xfree((void *)ptrs);
           return;
         }
