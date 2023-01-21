@@ -30,7 +30,9 @@
 #include <string.h>
 
 #include "auto/config.h"
+#include "nvim/api/extmark.h"
 #include "nvim/api/private/defs.h"
+#include "nvim/api/private/helpers.h"
 #include "nvim/ascii.h"
 #include "nvim/autocmd.h"
 #include "nvim/buffer.h"
@@ -61,6 +63,7 @@
 #include "nvim/keycodes.h"
 #include "nvim/locale.h"
 #include "nvim/log.h"
+#include "nvim/lua/executor.h"
 #include "nvim/macros.h"
 #include "nvim/mapping.h"
 #include "nvim/mbyte.h"
@@ -75,6 +78,8 @@
 #include "nvim/option.h"
 #include "nvim/option_defs.h"
 #include "nvim/optionstr.h"
+#include "nvim/os/input.h"
+#include "nvim/os/lang.h"
 #include "nvim/os/os.h"
 #include "nvim/path.h"
 #include "nvim/popupmenu.h"
@@ -95,14 +100,10 @@
 #include "nvim/undo.h"
 #include "nvim/vim.h"
 #include "nvim/window.h"
-#ifdef MSWIN
-# include "nvim/os/pty_conpty_win.h"
+
+#ifdef BACKSLASH_IN_FILENAME
+# include "nvim/arglist.h"
 #endif
-#include "nvim/api/extmark.h"
-#include "nvim/api/private/helpers.h"
-#include "nvim/lua/executor.h"
-#include "nvim/os/input.h"
-#include "nvim/os/lang.h"
 
 static char e_unknown_option[]
   = N_("E518: Unknown option");

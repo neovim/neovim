@@ -1311,16 +1311,16 @@ static void parse_register(exarg_T *eap)
 }
 
 // Change line1 and line2 of Ex command to use count
-void set_cmd_count(exarg_T *eap, long count, bool validate)
+void set_cmd_count(exarg_T *eap, linenr_T count, bool validate)
 {
   if (eap->addr_type != ADDR_LINES) {  // e.g. :buffer 2, :sleep 3
-    eap->line2 = (linenr_T)count;
+    eap->line2 = count;
     if (eap->addr_count == 0) {
       eap->addr_count = 1;
     }
   } else {
     eap->line1 = eap->line2;
-    eap->line2 += (linenr_T)count - 1;
+    eap->line2 += count - 1;
     eap->addr_count++;
     // Be vi compatible: no error message for out of range.
     if (validate && eap->line2 > curbuf->b_ml.ml_line_count) {
@@ -1338,7 +1338,7 @@ static int parse_count(exarg_T *eap, char **errormsg, bool validate)
   if ((eap->argt & EX_COUNT) && ascii_isdigit(*eap->arg)
       && (!(eap->argt & EX_BUFNAME) || *(p = skipdigits(eap->arg + 1)) == NUL
           || ascii_iswhite(*p))) {
-    long n = getdigits_long(&eap->arg, false, -1);
+    linenr_T n = getdigits_int32(&eap->arg, false, -1);
     eap->arg = skipwhite(eap->arg);
 
     if (eap->args != NULL) {

@@ -181,7 +181,7 @@ void nvim_set_option_value(String name, Object value, Dict(option) *opts, Error 
 
   switch (value.type) {
   case kObjectTypeInteger:
-    numval = value.data.integer;
+    numval = (long)value.data.integer;
     break;
   case kObjectTypeBoolean:
     numval = value.data.boolean ? 1 : 0;

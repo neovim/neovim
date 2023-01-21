@@ -34,7 +34,11 @@
 #include "nvim/vim.h"
 
 #ifdef MSWIN
-# include "nvim/mbyte.h"  // for utf8_to_utf16, utf16_to_utf8
+# include "nvim/mbyte.h"
+#endif
+
+#ifdef BACKSLASH_IN_FILENAME
+# include "nvim/fileio.h"
 #endif
 
 #ifdef HAVE__NSGETENVIRON

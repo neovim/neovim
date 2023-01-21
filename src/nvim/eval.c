@@ -3276,7 +3276,7 @@ static int eval_index(char **arg, typval_T *rettv, int evaluate, int verbose)
 {
   bool empty1 = false;
   bool empty2 = false;
-  long n1, n2 = 0;
+  int n1, n2 = 0;
   ptrdiff_t len = -1;
   int range = false;
   char *key = NULL;
@@ -3375,14 +3375,14 @@ static int eval_index(char **arg, typval_T *rettv, int evaluate, int verbose)
   if (evaluate) {
     n1 = 0;
     if (!empty1 && rettv->v_type != VAR_DICT && !tv_is_luafunc(rettv)) {
-      n1 = tv_get_number(&var1);
+      n1 = (int)tv_get_number(&var1);
       tv_clear(&var1);
     }
     if (range) {
       if (empty2) {
         n2 = -1;
       } else {
-        n2 = tv_get_number(&var2);
+        n2 = (int)tv_get_number(&var2);
         tv_clear(&var2);
       }
     }
@@ -3397,15 +3397,15 @@ static int eval_index(char **arg, typval_T *rettv, int evaluate, int verbose)
         // The resulting variable is a substring.  If the indexes
         // are out of range the result is empty.
         if (n1 < 0) {
-          n1 = len + n1;
+          n1 = (int)len + n1;
           if (n1 < 0) {
             n1 = 0;
           }
         }
         if (n2 < 0) {
-          n2 = len + n2;
+          n2 = (int)len + n2;
         } else if (n2 >= len) {
-          n2 = len;
+          n2 = (int)len;
         }
         if (n1 >= len || n2 < 0 || n1 > n2) {
           v = NULL;
@@ -3433,15 +3433,15 @@ static int eval_index(char **arg, typval_T *rettv, int evaluate, int verbose)
         // The resulting variable is a sub-blob.  If the indexes
         // are out of range the result is empty.
         if (n1 < 0) {
-          n1 = len + n1;
+          n1 = (int)len + n1;
           if (n1 < 0) {
             n1 = 0;
           }
         }
         if (n2 < 0) {
-          n2 = len + n2;
+          n2 = (int)len + n2;
         } else if (n2 >= len) {
-          n2 = len - 1;
+          n2 = (int)len - 1;
         }
         if (n1 >= len || n2 < 0 || n1 > n2) {
           tv_clear(rettv);
@@ -3449,8 +3449,8 @@ static int eval_index(char **arg, typval_T *rettv, int evaluate, int verbose)
           rettv->vval.v_blob = NULL;
         } else {
           blob_T *const blob = tv_blob_alloc();
-          ga_grow(&blob->bv_ga, (int)(n2 - n1 + 1));
-          blob->bv_ga.ga_len = (int)(n2 - n1 + 1);
+          ga_grow(&blob->bv_ga, n2 - n1 + 1);
+          blob->bv_ga.ga_len = n2 - n1 + 1;
           for (long i = n1; i <= n2; i++) {
             tv_blob_set(blob, (int)(i - n1), tv_blob_get(rettv->vval.v_blob, (int)i));
           }
@@ -3461,10 +3461,10 @@ static int eval_index(char **arg, typval_T *rettv, int evaluate, int verbose)
         // The resulting variable is a byte value.
         // If the index is too big or negative that is an error.
         if (n1 < 0) {
-          n1 = len + n1;
+          n1 = (int)len + n1;
         }
         if (n1 < len && n1 >= 0) {
-          const int v = (int)tv_blob_get(rettv->vval.v_blob, (int)n1);
+          const int v = (int)tv_blob_get(rettv->vval.v_blob, n1);
           tv_clear(rettv);
           rettv->v_type = VAR_NUMBER;
           rettv->vval.v_number = v;
@@ -3476,7 +3476,7 @@ static int eval_index(char **arg, typval_T *rettv, int evaluate, int verbose)
     case VAR_LIST:
       len = tv_list_len(rettv->vval.v_list);
       if (n1 < 0) {
-        n1 = len + n1;
+        n1 = (int)len + n1;
       }
       if (!empty1 && (n1 < 0 || n1 >= len)) {
         // For a range we allow invalid values and return an empty
@@ -3487,22 +3487,22 @@ static int eval_index(char **arg, typval_T *rettv, int evaluate, int verbose)
           }
           return FAIL;
         }
-        n1 = len;
+        n1 = (int)len;
       }
       if (range) {
         list_T *l;
         listitem_T *item;
 
         if (n2 < 0) {
-          n2 = len + n2;
+          n2 = (int)len + n2;
         } else if (n2 >= len) {
-          n2 = len - 1;
+          n2 = (int)len - 1;
         }
         if (!empty2 && (n2 < 0 || n2 + 1 < n1)) {
           n2 = -1;
         }
         l = tv_list_alloc(n2 - n1 + 1);
-        item = tv_list_find(rettv->vval.v_list, (int)n1);
+        item = tv_list_find(rettv->vval.v_list, n1);
         while (n1++ <= n2) {
           tv_list_append_tv(l, TV_LIST_ITEM_TV(item));
           item = TV_LIST_ITEM_NEXT(rettv->vval.v_list, item);
@@ -6220,25 +6220,25 @@ int list2fpos(typval_T *arg, pos_T *posp, int *fnump, colnr_T *curswantp, bool c
   }
 
   int i = 0;
-  long n;
+  int n;
   if (fnump != NULL) {
-    n = tv_list_find_nr(l, i++, NULL);  // fnum
+    n = (int)tv_list_find_nr(l, i++, NULL);  // fnum
     if (n < 0) {
       return FAIL;
     }
     if (n == 0) {
       n = curbuf->b_fnum;  // Current buffer.
     }
-    *fnump = (int)n;
+    *fnump = n;
   }
 
-  n = tv_list_find_nr(l, i++, NULL);  // lnum
+  n = (int)tv_list_find_nr(l, i++, NULL);  // lnum
   if (n < 0) {
     return FAIL;
   }
-  posp->lnum = (linenr_T)n;
+  posp->lnum = n;
 
-  n = tv_list_find_nr(l, i++, NULL);  // col
+  n = (int)tv_list_find_nr(l, i++, NULL);  // col
   if (n < 0) {
     return FAIL;
   }
@@ -6252,15 +6252,15 @@ int list2fpos(typval_T *arg, pos_T *posp, int *fnump, colnr_T *curswantp, bool c
     }
     n = buf_charidx_to_byteidx(buf,
                                posp->lnum == 0 ? curwin->w_cursor.lnum : posp->lnum,
-                               (int)n) + 1;
+                               n) + 1;
   }
-  posp->col = (colnr_T)n;
+  posp->col = n;
 
-  n = tv_list_find_nr(l, i, NULL);  // off
+  n = (int)tv_list_find_nr(l, i, NULL);  // off
   if (n < 0) {
     posp->coladd = 0;
   } else {
-    posp->coladd = (colnr_T)n;
+    posp->coladd = n;
   }
 
   if (curswantp != NULL) {

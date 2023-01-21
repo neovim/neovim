@@ -307,7 +307,7 @@ int ml_open(buf_T *buf)
     b0p->b0_uname[B0_UNAME_SIZE - 1] = NUL;
     os_get_hostname((char *)b0p->b0_hname, B0_HNAME_SIZE);
     b0p->b0_hname[B0_HNAME_SIZE - 1] = NUL;
-    long_to_char(os_get_pid(), b0p->b0_pid);
+    long_to_char((long)os_get_pid(), b0p->b0_pid);
   }
 
   // Always sync block number 0 to disk, so we can check the file name in

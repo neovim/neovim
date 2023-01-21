@@ -32,12 +32,14 @@
 #include "nvim/msgpack_rpc/server.h"
 #include "nvim/os/os_defs.h"
 #include "nvim/os/shell.h"
+#include "nvim/path.h"
 #include "nvim/rbuffer.h"
+
 #ifdef MSWIN
+# include "nvim/os/fs.h"
 # include "nvim/os/os_win_console.h"
 # include "nvim/os/pty_conpty_win.h"
 #endif
-#include "nvim/path.h"
 
 static bool did_stdio = false;
 

@@ -27,6 +27,10 @@
 #include "nvim/rbuffer.h"
 #include "nvim/types.h"
 
+#ifdef MSWIN
+# include "nvim/os/os_win_console.h"
+#endif
+
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "os/fileio.c.generated.h"
 #endif

@@ -34,15 +34,17 @@
 #include "nvim/msgpack_rpc/channel.h"
 #include "nvim/os/input.h"
 #include "nvim/os/os.h"
-#include "nvim/ui_client.h"
-#ifdef MSWIN
-# include "nvim/os/os_win_console.h"
-#endif
 #include "nvim/tui/input.h"
 #include "nvim/tui/terminfo.h"
 #include "nvim/tui/tui.h"
 #include "nvim/ugrid.h"
 #include "nvim/ui.h"
+#include "nvim/ui_client.h"
+
+#ifdef MSWIN
+# include "nvim/os/os_win_console.h"
+# include "nvim/os/tty.h"
+#endif
 
 // Space reserved in two output buffers to make the cursor normal or invisible
 // when flushing. No existing terminal will require 32 bytes to do that.

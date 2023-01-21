@@ -64,6 +64,10 @@
 #include "nvim/undo.h"
 #include "nvim/vim.h"
 
+#ifdef BACKSLASH_IN_FILENAME
+# include "nvim/charset.h"
+#endif
+
 #if defined(HAVE_FLOCK) && defined(HAVE_DIRFD)
 # include <dirent.h>
 # include <sys/file.h>
@@ -207,7 +211,7 @@ int readfile(char *fname, char *sfname, linenr_T from, linenr_T lines_to_skip,
   char *line_start = NULL;       // init to shut up gcc
   int wasempty;                         // buffer was empty before reading
   colnr_T len;
-  long size = 0;
+  ptrdiff_t size = 0;
   uint8_t *p = NULL;
   off_T filesize = 0;
   bool skip_read = false;
@@ -217,7 +221,7 @@ int readfile(char *fname, char *sfname, linenr_T from, linenr_T lines_to_skip,
   linenr_T linecnt;
   bool error = false;                   // errors encountered
   int ff_error = EOL_UNKNOWN;           // file format with errors
-  long linerest = 0;                    // remaining chars in line
+  ptrdiff_t linerest = 0;               // remaining chars in line
   int perm = 0;
 #ifdef UNIX
   int swap_mode = -1;                   // protection bits for swap file
@@ -1079,7 +1083,7 @@ retry:
         if (size < 2 || curbuf->b_p_bin) {
           ccname = NULL;
         } else {
-          ccname = check_for_bom(ptr, size, &blen,
+          ccname = check_for_bom(ptr, (int)size, &blen,
                                  fio_flags == FIO_UCSBOM ? FIO_ALL : get_fio_flags(fenc));
         }
         if (ccname != NULL) {
@@ -4038,7 +4042,7 @@ static int get_fio_flags(const char *name)
 ///
 /// @return  the name of the encoding and set "*lenp" to the length or,
 ///          NULL when no BOM found.
-static char *check_for_bom(const char *p_in, long size, int *lenp, int flags)
+static char *check_for_bom(const char *p_in, int size, int *lenp, int flags)
 {
   const uint8_t *p = (const uint8_t *)p_in;
   char *name = NULL;
@@ -5630,7 +5634,7 @@ long read_eintr(int fd, void *buf, size_t bufsize)
   long ret;
 
   for (;;) {
-    ret = read(fd, buf, bufsize);
+    ret = read(fd, buf, (unsigned int)bufsize);
     if (ret >= 0 || errno != EINTR) {
       break;
     }
@@ -5647,7 +5651,7 @@ long write_eintr(int fd, void *buf, size_t bufsize)
   // Repeat the write() so long it didn't fail, other than being interrupted
   // by a signal.
   while (ret < (long)bufsize) {
-    long wlen = write(fd, (char *)buf + ret, bufsize - (size_t)ret);
+    long wlen = write(fd, (char *)buf + ret, (unsigned int)(bufsize - (size_t)ret));
     if (wlen < 0) {
       if (errno != EINTR) {
         break;
