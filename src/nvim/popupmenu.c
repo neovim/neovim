@@ -824,7 +824,7 @@ static bool pum_set_selected(int n, int repeat)
             // When the preview window was resized we need to
             // update the view on the buffer.  Only go back to
             // the window when needed, otherwise it will always be
-            // redraw.
+            // redrawn.
             if (resized) {
               no_u_sync++;
               win_enter(curwin_save, true);

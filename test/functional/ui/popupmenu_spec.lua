@@ -1044,6 +1044,7 @@ describe('builtin popupmenu', function()
       [5] = {bold = true, foreground = Screen.colors.SeaGreen},
       [6] = {foreground = Screen.colors.Grey100, background = Screen.colors.Red},
       [7] = {background = Screen.colors.Yellow},  -- Search
+      [8] = {foreground = Screen.colors.Red},
     })
   end)
 
@@ -1188,6 +1189,66 @@ describe('builtin popupmenu', function()
       hh                              |
       {3:[No Name] [Preview][+]          }|
       {2:-- }{5:match 1 of 10}                |
+    ]])
+  end)
+
+  -- oldtest: Test_pum_with_preview_win()
+  it('preview window opened during completion', function()
+    exec([[
+      funct Omni_test(findstart, base)
+        if a:findstart
+          return col(".") - 1
+        endif
+        return [#{word: "one", info: "1info"}, #{word: "two", info: "2info"}, #{word: "three", info: "3info"}]
+      endfunc
+      set omnifunc=Omni_test
+      set completeopt+=longest
+    ]])
+    feed('Gi<C-X><C-O>')
+    screen:expect([[
+      ^                                |
+      {n:one            }{1:                 }|
+      {n:two            }{1:                 }|
+      {n:three          }{1:                 }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {2:-- }{8:Back at original}             |
+    ]])
+    feed('<C-N>')
+    screen:expect([[
+      1info                           |
+                                      |
+      {1:~                               }|
+      {3:[Scratch] [Preview]             }|
+      one^                             |
+      {s:one            }{1:                 }|
+      {n:two            }{1:                 }|
+      {n:three          }{1:                 }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {4:[No Name] [+]                   }|
+      {2:-- }{5:match 1 of 3}                 |
     ]])
   end)
 
