@@ -7,7 +7,6 @@
 local helpers = require('test.functional.helpers')(after_each)
 local thelpers = require('test.functional.terminal.helpers')
 local Screen = require('test.functional.ui.screen')
-local assert_alive = helpers.assert_alive
 local eq = helpers.eq
 local feed_command = helpers.feed_command
 local feed_data = thelpers.feed_data
@@ -77,7 +76,16 @@ describe('TUI', function()
 
   it('rapid resize #7572 #7628', function()
     -- Need buffer rows to provoke the behavior.
-    feed_data(":edit test/functional/fixtures/bigfile.txt:")
+    feed_data(":edit test/functional/fixtures/bigfile.txt\n")
+    screen:expect([[
+      {1:0}000;<control>;Cc;0;BN;;;;;N;NULL;;;;             |
+      0001;<control>;Cc;0;BN;;;;;N;START OF HEADING;;;; |
+      0002;<control>;Cc;0;BN;;;;;N;START OF TEXT;;;;    |
+      0003;<control>;Cc;0;BN;;;;;N;END OF TEXT;;;;      |
+      {5:test/functional/fixtures/bigfile.txt              }|
+      :edit test/functional/fixtures/bigfile.txt        |
+      {3:-- TERMINAL --}                                    |
+    ]])
     command('call jobresize(b:terminal_job_id, 58, 9)')
     command('call jobresize(b:terminal_job_id, 62, 13)')
     command('call jobresize(b:terminal_job_id, 100, 42)')
@@ -94,7 +102,25 @@ describe('TUI', function()
     command('call jobresize(b:terminal_job_id, 1, 4)')
     screen:try_resize(57, 17)
     command('call jobresize(b:terminal_job_id, 57, 17)')
-    assert_alive()
+    screen:expect([[
+      {1:0}000;<control>;Cc;0;BN;;;;;N;NULL;;;;                    |
+      0001;<control>;Cc;0;BN;;;;;N;START OF HEADING;;;;        |
+      0002;<control>;Cc;0;BN;;;;;N;START OF TEXT;;;;           |
+      0003;<control>;Cc;0;BN;;;;;N;END OF TEXT;;;;             |
+      0004;<control>;Cc;0;BN;;;;;N;END OF TRANSMISSION;;;;     |
+      0005;<control>;Cc;0;BN;;;;;N;ENQUIRY;;;;                 |
+      0006;<control>;Cc;0;BN;;;;;N;ACKNOWLEDGE;;;;             |
+      0007;<control>;Cc;0;BN;;;;;N;BELL;;;;                    |
+      0008;<control>;Cc;0;BN;;;;;N;BACKSPACE;;;;               |
+      0009;<control>;Cc;0;S;;;;;N;CHARACTER TABULATION;;;;     |
+      000A;<control>;Cc;0;B;;;;;N;LINE FEED (LF);;;;           |
+      000B;<control>;Cc;0;S;;;;;N;LINE TABULATION;;;;          |
+      000C;<control>;Cc;0;WS;;;;;N;FORM FEED (FF);;;;          |
+      000D;<control>;Cc;0;B;;;;;N;CARRIAGE RETURN (CR);;;;     |
+      {5:test/functional/fixtures/bigfile.txt                     }|
+                                                               |
+      {3:-- TERMINAL --}                                           |
+    ]])
   end)
 
   it('accepts resize while pager is active', function()
