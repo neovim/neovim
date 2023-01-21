@@ -5972,18 +5972,18 @@ static void ex_undo(exarg_T *eap)
 
 static void ex_wundo(exarg_T *eap)
 {
-  char hash[UNDO_HASH_SIZE];
+  uint8_t hash[UNDO_HASH_SIZE];
 
-  u_compute_hash(curbuf, (char_u *)hash);
-  u_write_undo(eap->arg, eap->forceit, curbuf, (char_u *)hash);
+  u_compute_hash(curbuf, hash);
+  u_write_undo(eap->arg, eap->forceit, curbuf, hash);
 }
 
 static void ex_rundo(exarg_T *eap)
 {
-  char hash[UNDO_HASH_SIZE];
+  uint8_t hash[UNDO_HASH_SIZE];
 
-  u_compute_hash(curbuf, (char_u *)hash);
-  u_read_undo(eap->arg, (char_u *)hash, NULL);
+  u_compute_hash(curbuf, hash);
+  u_read_undo(eap->arg, hash, NULL);
 }
 
 /// ":redo".

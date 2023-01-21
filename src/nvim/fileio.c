@@ -1554,7 +1554,7 @@ rewind_retry:
               break;
             }
             if (read_undo_file) {
-              sha256_update(&sha_ctx, (char_u *)line_start, (size_t)len);
+              sha256_update(&sha_ctx, (uint8_t *)line_start, (size_t)len);
             }
             lnum++;
             if (--read_count == 0) {
@@ -1610,7 +1610,7 @@ rewind_retry:
               break;
             }
             if (read_undo_file) {
-              sha256_update(&sha_ctx, (char_u *)line_start, (size_t)len);
+              sha256_update(&sha_ctx, (uint8_t *)line_start, (size_t)len);
             }
             lnum++;
             if (--read_count == 0) {
@@ -1667,7 +1667,7 @@ failed:
       error = true;
     } else {
       if (read_undo_file) {
-        sha256_update(&sha_ctx, (char_u *)line_start, (size_t)len);
+        sha256_update(&sha_ctx, (uint8_t *)line_start, (size_t)len);
       }
       read_no_eol_lnum = ++lnum;
     }
@@ -3196,7 +3196,7 @@ restore_backup:
       // Keep it fast!
       ptr = ml_get_buf(buf, lnum, false) - 1;
       if (write_undo_file) {
-        sha256_update(&sha_ctx, (char_u *)ptr + 1, (uint32_t)(strlen(ptr + 1) + 1));
+        sha256_update(&sha_ctx, (uint8_t *)ptr + 1, (uint32_t)(strlen(ptr + 1) + 1));
       }
       while ((c = *++ptr) != NUL) {
         if (c == NL) {
@@ -3605,10 +3605,10 @@ nofail:
   // When writing the whole file and 'undofile' is set, also write the undo
   // file.
   if (retval == OK && write_undo_file) {
-    char hash[UNDO_HASH_SIZE];
+    uint8_t hash[UNDO_HASH_SIZE];
 
-    sha256_finish(&sha_ctx, (char_u *)hash);
-    u_write_undo(NULL, false, buf, (char_u *)hash);
+    sha256_finish(&sha_ctx, hash);
+    u_write_undo(NULL, false, buf, hash);
   }
 
   if (!should_abort(retval)) {
