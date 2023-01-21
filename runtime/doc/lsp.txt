@@ -1022,6 +1022,8 @@ code_action({options})                             *vim.lsp.buf.code_action()*
                      • only (table|nil): List of LSP `CodeActionKind`s used to
                        filter the code actions. Most language servers support
                        values like `refactor` or `quickfix`.
+                     • triggerKind (number|nil): The reason why code actions
+                       were requested.
 
                    • filter: (function|nil) Predicate taking an `CodeAction`
                      and returning a boolean.
@@ -1036,6 +1038,7 @@ code_action({options})                             *vim.lsp.buf.code_action()*
 
     See also: ~
         https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_codeAction
+        vim.lsp.protocol.constants.CodeActionTriggerKind
 
 completion({context})                               *vim.lsp.buf.completion()*
     Retrieves the completion items at the current cursor position. Can only be
