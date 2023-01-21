@@ -1199,7 +1199,7 @@ static char_u *translate_mapping(char_u *str, int cpo_flags)
     }
 
     if (c) {
-      ga_append(&ga, (char)c);
+      ga_append(&ga, (uint8_t)c);
     }
   }
   ga_append(&ga, NUL);

@@ -375,7 +375,7 @@ static void f_add(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
       const varnumber_T n = tv_get_number_chk(&argvars[1], &error);
 
       if (!error) {
-        ga_append(&b->bv_ga, (char)n);
+        ga_append(&b->bv_ga, (uint8_t)n);
         tv_copy(&argvars[0], rettv);
       }
     }
@@ -3584,9 +3584,9 @@ static void f_insert(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     }
 
     ga_grow(&b->bv_ga, 1);
-    char_u *const p = (char_u *)b->bv_ga.ga_data;
+    uint8_t *const p = (uint8_t *)b->bv_ga.ga_data;
     memmove(p + before + 1, p + before, (size_t)(len - before));
-    *(p + before) = (char_u)val;
+    *(p + before) = (uint8_t)val;
     b->bv_ga.ga_len++;
 
     tv_copy(&argvars[0], rettv);
@@ -5976,7 +5976,7 @@ static void f_reverse(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     const int len = tv_blob_len(b);
 
     for (int i = 0; i < len / 2; i++) {
-      const char_u tmp = tv_blob_get(b, i);
+      const uint8_t tmp = tv_blob_get(b, i);
       tv_blob_set(b, i, tv_blob_get(b, len - i - 1));
       tv_blob_set(b, len - i - 1, tmp);
     }

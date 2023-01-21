@@ -1648,7 +1648,7 @@ void set_var_lval(lval_T *lp, char *endp, typval_T *rettv, int copy, const bool 
           // the end is an error otherwise.
           if (lp->ll_n1 < gap->ga_len || lp->ll_n1 == gap->ga_len) {
             ga_grow(&lp->ll_blob->bv_ga, 1);
-            tv_blob_set(lp->ll_blob, (int)lp->ll_n1, (char_u)val);
+            tv_blob_set(lp->ll_blob, (int)lp->ll_n1, (uint8_t)val);
             if (lp->ll_n1 == gap->ga_len) {
               gap->ga_len++;
             }
@@ -2660,10 +2660,10 @@ static int eval5(char **arg, typval_T *rettv, int evaluate)
         blob_T *const b = tv_blob_alloc();
 
         for (int i = 0; i < tv_blob_len(b1); i++) {
-          ga_append(&b->bv_ga, (char)tv_blob_get(b1, i));
+          ga_append(&b->bv_ga, tv_blob_get(b1, i));
         }
         for (int i = 0; i < tv_blob_len(b2); i++) {
-          ga_append(&b->bv_ga, (char)tv_blob_get(b2, i));
+          ga_append(&b->bv_ga, tv_blob_get(b2, i));
         }
 
         tv_clear(rettv);
@@ -3688,7 +3688,7 @@ static int get_number_tv(char **arg, typval_T *rettv, bool evaluate, bool want_s
         return FAIL;
       }
       if (blob != NULL) {
-        ga_append(&blob->bv_ga, (char)((hex2nr(*bp) << 4) + hex2nr(*(bp + 1))));
+        ga_append(&blob->bv_ga, (uint8_t)((hex2nr(*bp) << 4) + hex2nr(*(bp + 1))));
       }
       if (bp[2] == '.' && ascii_isxdigit(bp[3])) {
         bp++;
@@ -4881,7 +4881,7 @@ void filter_map(typval_T *argvars, typval_T *rettv, int map)
         }
         if (map) {
           if (tv.vval.v_number != val) {
-            tv_blob_set(b, i, (char_u)tv.vval.v_number);
+            tv_blob_set(b, i, (uint8_t)tv.vval.v_number);
           }
         } else if (rem) {
           char *const p = argvars[0].vval.v_blob->bv_ga.ga_data;

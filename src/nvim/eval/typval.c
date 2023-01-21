@@ -2730,7 +2730,7 @@ void tv_blob_remove(typval_T *argvars, typval_T *rettv, const char *arg_errmsg)
     }
     if (argvars[2].v_type == VAR_UNKNOWN) {
       // Remove one item, return its value.
-      char_u *const p = (char_u *)b->bv_ga.ga_data;
+      uint8_t *const p = (uint8_t *)b->bv_ga.ga_data;
       rettv->vval.v_number = (varnumber_T)(*(p + idx));
       memmove(p + idx, p + idx + 1, (size_t)(len - idx - 1));
       b->bv_ga.ga_len--;
@@ -2752,9 +2752,8 @@ void tv_blob_remove(typval_T *argvars, typval_T *rettv, const char *arg_errmsg)
       blob->bv_ga.ga_len = (int)(end - idx + 1);
       ga_grow(&blob->bv_ga, (int)(end - idx + 1));
 
-      char_u *const p = (char_u *)b->bv_ga.ga_data;
-      memmove((char_u *)blob->bv_ga.ga_data, p + idx,
-              (size_t)(end - idx + 1));
+      uint8_t *const p = (uint8_t *)b->bv_ga.ga_data;
+      memmove(blob->bv_ga.ga_data, p + idx, (size_t)(end - idx + 1));
       tv_blob_set_ret(rettv, blob);
 
       if (len - end - 1 > 0) {

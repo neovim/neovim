@@ -358,7 +358,7 @@ static inline int tv_blob_len(const blob_T *const b)
   return b->bv_ga.ga_len;
 }
 
-static inline char_u tv_blob_get(const blob_T *b, int idx)
+static inline uint8_t tv_blob_get(const blob_T *b, int idx)
   REAL_FATTR_ALWAYS_INLINE REAL_FATTR_NONNULL_ALL REAL_FATTR_WARN_UNUSED_RESULT;
 
 /// Get the byte at index `idx` in the blob.
@@ -367,12 +367,12 @@ static inline char_u tv_blob_get(const blob_T *b, int idx)
 /// @param[in]  idx  Index in a blob. Must be valid.
 ///
 /// @return Byte value at the given index.
-static inline char_u tv_blob_get(const blob_T *const b, int idx)
+static inline uint8_t tv_blob_get(const blob_T *const b, int idx)
 {
-  return ((char_u *)b->bv_ga.ga_data)[idx];
+  return ((uint8_t *)b->bv_ga.ga_data)[idx];
 }
 
-static inline void tv_blob_set(blob_T *b, int idx, char_u c)
+static inline void tv_blob_set(blob_T *b, int idx, uint8_t c)
   REAL_FATTR_ALWAYS_INLINE REAL_FATTR_NONNULL_ALL;
 
 /// Store the byte `c` at index `idx` in the blob.
@@ -380,9 +380,9 @@ static inline void tv_blob_set(blob_T *b, int idx, char_u c)
 /// @param[in]  b  Blob to index. Cannot be NULL.
 /// @param[in]  idx  Index in a blob. Must be valid.
 /// @param[in]  c  Value to store.
-static inline void tv_blob_set(blob_T *const b, int idx, char_u c)
+static inline void tv_blob_set(blob_T *const b, int idx, uint8_t c)
 {
-  ((char_u *)b->bv_ga.ga_data)[idx] = c;
+  ((uint8_t *)b->bv_ga.ga_data)[idx] = c;
 }
 
 /// Initialize VimL object
