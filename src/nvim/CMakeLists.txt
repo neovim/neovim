@@ -89,8 +89,11 @@ if(ENABLE_IWYU)
 endif()
 
 if(MSVC)
-  # XXX: /W4 gives too many warnings. #3241
-  target_compile_options(main_lib INTERFACE -W1 -wd4311)
+  # TODO(dundargoc): bump warning level
+  target_compile_options(main_lib INTERFACE -W2)
+
+  # Disable warnings that give too many false positives.
+  target_compile_options(main_lib INTERFACE -wd4311 -wd4146)
   target_compile_definitions(main_lib INTERFACE _CRT_SECURE_NO_WARNINGS _CRT_NONSTDC_NO_DEPRECATE)
 else()
   target_compile_options(main_lib INTERFACE -Wall -Wextra -pedantic -Wno-unused-parameter
@@ -458,7 +461,7 @@ list(REMOVE_ITEM NVIM_SOURCES ${to_remove})
 # xdiff, mpack, lua-cjson: inlined external project, we don't maintain it. #9306
 if(MSVC)
   set_source_files_properties(
-    ${EXTERNAL_SOURCES} PROPERTIES COMPILE_FLAGS "${COMPILE_FLAGS} /wd4090")
+    ${EXTERNAL_SOURCES} PROPERTIES COMPILE_FLAGS "${COMPILE_FLAGS} /wd4090 /wd4244")
 else()
   set_source_files_properties(
     ${EXTERNAL_SOURCES} PROPERTIES COMPILE_FLAGS "${COMPILE_FLAGS} -Wno-conversion -Wno-missing-noreturn -Wno-missing-format-attribute -Wno-double-promotion -Wno-strict-prototypes")
