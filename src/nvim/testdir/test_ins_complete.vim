@@ -581,6 +581,33 @@ func Test_pum_with_folds_two_tabs()
   call delete('Xpumscript')
 endfunc
 
+func Test_pum_with_preview_win()
+  CheckScreendump
+
+  let lines =<< trim END
+      funct Omni_test(findstart, base)
+	if a:findstart
+	  return col(".") - 1
+	endif
+	return [#{word: "one", info: "1info"}, #{word: "two", info: "2info"}, #{word: "three", info: "3info"}]
+      endfunc
+      set omnifunc=Omni_test
+      set completeopt+=longest
+  END
+
+  call writefile(lines, 'Xpreviewscript')
+  let buf = RunVimInTerminal('-S Xpreviewscript', #{rows: 12})
+  call term_wait(buf, 100)
+  call term_sendkeys(buf, "Gi\<C-X>\<C-O>")
+  call term_wait(buf, 200)
+  call term_sendkeys(buf, "\<C-N>")
+  call VerifyScreenDump(buf, 'Test_pum_with_preview_win', {})
+
+  call term_sendkeys(buf, "\<Esc>")
+  call StopVimInTerminal(buf)
+  call delete('Xpreviewscript')
+endfunc
+
 " Test for inserting the tag search pattern in insert mode
 func Test_ins_compl_tag_sft()
   call writefile([
