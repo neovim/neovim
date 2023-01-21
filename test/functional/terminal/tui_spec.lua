@@ -2410,9 +2410,7 @@ describe("TUI as a client", function()
     clear()
     local screen = thelpers.screen_setup(0,
       string.format([=[["%s", "-u", "NONE", "-i", "NONE", "--server", "127.0.0.1:2436546", "--remote-ui"]]=],
-                    nvim_prog))
-
-    screen:try_resize(60, 7)
+                    nvim_prog), 60)
 
     screen:expect([[
       Remote ui failed to start: {MATCH:.*}|

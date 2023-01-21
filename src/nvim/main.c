@@ -885,7 +885,7 @@ static void remote_request(mparm_T *params, int remote_args, char *server_addr, 
       os_errmsg("Remote ui failed to start: ");
       os_errmsg(connect_error);
       os_errmsg("\n");
-      exit(1);
+      os_exit(1);
     }
 
     ui_client_channel_id = chan;
