@@ -11,7 +11,6 @@ add_library(parser
 set_target_properties(
   parser
   PROPERTIES
-    POSITION_INDEPENDENT_CODE ON
     OUTPUT_NAME ${PARSERLANG}
     PREFIX ""
 )
