@@ -861,7 +861,6 @@ endif()
 set_target_properties(
   libnvim
   PROPERTIES
-    POSITION_INDEPENDENT_CODE ON
     OUTPUT_NAME ${LIBNVIM_NAME}
 )
 target_compile_definitions(libnvim PRIVATE MAKE_LIB)
@@ -885,11 +884,6 @@ else()
     target_link_libraries(nvim-test PRIVATE "-framework CoreServices")
   endif()
   target_include_directories(nvim-test PRIVATE ${LUAJIT_INCLUDE_DIRS})
-  set_target_properties(
-    nvim-test
-    PROPERTIES
-      POSITION_INDEPENDENT_CODE ON
-  )
   target_compile_definitions(nvim-test PRIVATE UNIT_TESTING)
 endif()
 
