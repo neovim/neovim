@@ -2710,11 +2710,11 @@ static int ExpandFromContext(expand_T *xp, char *pat, char ***matches, int *numM
   }
   if (xp->xp_context == EXPAND_COLORS) {
     char *directories[] = { "colors", NULL };
-    return ExpandRTDir(pat, DIP_START + DIP_OPT + DIP_LUA, numMatches, matches, directories);
+    return ExpandRTDir(pat, DIP_START + DIP_OPT, numMatches, matches, directories);
   }
   if (xp->xp_context == EXPAND_COMPILER) {
     char *directories[] = { "compiler", NULL };
-    return ExpandRTDir(pat, DIP_LUA, numMatches, matches, directories);
+    return ExpandRTDir(pat, 0, numMatches, matches, directories);
   }
   if (xp->xp_context == EXPAND_OWNSYNTAX) {
     char *directories[] = { "syntax", NULL };
@@ -2722,7 +2722,7 @@ static int ExpandFromContext(expand_T *xp, char *pat, char ***matches, int *numM
   }
   if (xp->xp_context == EXPAND_FILETYPE) {
     char *directories[] = { "syntax", "indent", "ftplugin", NULL };
-    return ExpandRTDir(pat, DIP_LUA, numMatches, matches, directories);
+    return ExpandRTDir(pat, 0, numMatches, matches, directories);
   }
   if (xp->xp_context == EXPAND_USER_LIST) {
     return ExpandUserList(xp, matches, numMatches);
