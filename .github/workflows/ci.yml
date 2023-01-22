@@ -17,7 +17,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  UNCRUSTIFY_VERSION: uncrustify-0.75.0
+  BUILD_DIR: ${{github.workspace}}/build
   # TEST_FILE: test/functional/core/startup_spec.lua
   # TEST_FILTER: foo
 
@@ -39,30 +39,10 @@ jobs:
           ./.github/scripts/install_deps_ubuntu.sh
           sudo apt-get install -y lua-check
 
-      - name: Cache uncrustify
-        id: cache-uncrustify
-        uses: actions/cache@v3
-        with:
-          path: ${{ env.CACHE_UNCRUSTIFY }}
-          key: ${{ env.UNCRUSTIFY_VERSION }}
-
-      - name: Clone uncrustify
-        if: steps.cache-uncrustify.outputs.cache-hit != 'true'
-        uses: actions/checkout@v3
-        with:
-          repository: uncrustify/uncrustify
-          ref: ${{ env.UNCRUSTIFY_VERSION }}
-          path: uncrustify
+      - uses: cachix/install-nix-action@v18
 
       - name: Install uncrustify
-        if: steps.cache-uncrustify.outputs.cache-hit != 'true'
-        run: |
-          source_dir=uncrustify
-          build_dir=uncrustify/build
-          cmake -S $source_dir -B $build_dir -G Ninja -DCMAKE_BUILD_TYPE=Release
-          cmake --build $build_dir
-          mkdir -p $HOME/.cache
-          cp $build_dir/uncrustify ${{ env.CACHE_UNCRUSTIFY }}
+        run: nix-env -iA uncrustify -f https://github.com/NixOS/nixpkgs/archive/ee01de29d2f58d56b1be4ae24c24bd91c5380cea.tar.gz
 
       - uses: ./.github/actions/cache
 
@@ -95,7 +75,7 @@ jobs:
       - if: success() || failure() && steps.abort_job.outputs.status == 'success'
         name: uncrustify
         run: |
-          ${{ env.CACHE_UNCRUSTIFY }} -c ./src/uncrustify.cfg -q --replace --no-backup $(find ./src/nvim -name "*.[ch]")
+          uncrustify -c ./src/uncrustify.cfg -q --replace --no-backup $(find ./src/nvim -name "*.[ch]")
 
       - if: success() || failure() && steps.abort_job.outputs.status == 'success'
         name: suggester / uncrustify

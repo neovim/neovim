@@ -9,7 +9,6 @@ EOF
 
 cat <<EOF >> "$GITHUB_ENV"
 CI_BUILD_DIR=$GITHUB_WORKSPACE
-BUILD_DIR=$GITHUB_WORKSPACE/build
 DEPS_BUILD_DIR=$HOME/nvim-deps
 INSTALL_PREFIX=$HOME/nvim-install
 LOG_DIR=$GITHUB_WORKSPACE/build/log
@@ -17,7 +16,6 @@ NVIM_LOG_FILE=$GITHUB_WORKSPACE/build/.nvimlog
 VALGRIND_LOG=$GITHUB_WORKSPACE/build/log/valgrind-%p.log
 CACHE_NVIM_DEPS_DIR=$HOME/.cache/nvim-deps
 CACHE_MARKER=$HOME/.cache/nvim-deps/.ci_cache_marker
-CACHE_UNCRUSTIFY=$HOME/.cache/uncrustify
 EOF
 
 DEPS_CMAKE_FLAGS=
