@@ -190,6 +190,7 @@ local extension = {
   BUILD = 'bzl',
   qc = 'c',
   cabal = 'cabal',
+  capnp = 'capnp',
   cdl = 'cdl',
   toc = 'cdrtoc',
   cfc = 'cf',

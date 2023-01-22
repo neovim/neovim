@@ -98,6 +98,7 @@ let s:filename_checks = {
     \ 'cabalconfig': ['cabal.config'],
     \ 'cabalproject': ['cabal.project', 'cabal.project.local'],
     \ 'calendar': ['calendar', '/.calendar/file', '/share/calendar/any/calendar.file', '/share/calendar/calendar.file', 'any/share/calendar/any/calendar.file', 'any/share/calendar/calendar.file'],
+    \ 'capnp': ['file.capnp'],
     \ 'catalog': ['catalog', 'sgml.catalogfile', 'sgml.catalog', 'sgml.catalog-file'],
     \ 'cdl': ['file.cdl'],
     \ 'cdrdaoconf': ['/etc/cdrdao.conf', '/etc/defaults/cdrdao', '/etc/default/cdrdao', '.cdrdao', 'any/etc/cdrdao.conf', 'any/etc/default/cdrdao', 'any/etc/defaults/cdrdao'],
