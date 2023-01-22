@@ -7,6 +7,7 @@
 #include "nvim/decoration.h"
 #include "nvim/drawscreen.h"
 #include "nvim/extmark.h"
+#include "nvim/fold.h"
 #include "nvim/highlight.h"
 #include "nvim/highlight_group.h"
 #include "nvim/memory.h"
