@@ -581,6 +581,7 @@ let s:filename_checks = {
     \ 'texmf': ['texmf.cnf'],
     \ 'text': ['file.text', 'file.txt', 'README', 'LICENSE', 'COPYING', 'AUTHORS', '/usr/share/doc/bash-completion/AUTHORS', '/etc/apt/apt.conf.d/README', '/etc/Muttrc.d/README'],
     \ 'tf': ['file.tf', '.tfrc', 'tfrc'],
+    \ 'thrift': ['file.thrift'],
     \ 'tidy': ['.tidyrc', 'tidyrc', 'tidy.conf'],
     \ 'tilde': ['file.t.html'],
     \ 'tla': ['file.tla'],
