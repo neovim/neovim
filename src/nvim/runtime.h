@@ -105,7 +105,6 @@ typedef kvec_t(char *) CharVec;
 #define DIP_NORTP 0x20  // do not use 'runtimepath'
 #define DIP_NOAFTER 0x40  // skip "after" directories
 #define DIP_AFTER   0x80  // only use "after" directories
-#define DIP_LUA  0x100    // also use ".lua" files
 #define DIP_DIRFILE 0x200  // find both files and directories
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
