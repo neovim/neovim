@@ -1939,6 +1939,7 @@ describe("folded lines", function()
       end
 
       feed('kzo<C-Y>')
+      funcs.setline(5, 'line 5')
       if multigrid then
         screen:expect([[
           ## grid 1
@@ -1955,8 +1956,8 @@ describe("folded lines", function()
             ^line 1                                       |
             line 2                                       |
             virt_line below line 2                       |
-            {5:+--  2 lines: line 3}                         |
-            {1:~                                            }|
+            {5:+--  2 lines: line 3·························}|
+            line 5                                       |
             {1:~                                            }|
           ## grid 3
                                                          |
@@ -1967,8 +1968,8 @@ describe("folded lines", function()
           ^line 1                                       |
           line 2                                       |
           virt_line below line 2                       |
-          {5:+--  2 lines: line 3}                         |
-          {1:~                                            }|
+          {5:+--  2 lines: line 3·························}|
+          line 5                                       |
           {1:~                                            }|
                                                        |
         ]])

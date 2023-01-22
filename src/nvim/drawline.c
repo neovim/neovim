@@ -1528,7 +1528,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
         && has_fold
         && col < grid->cols
         && n_extra == 0
-        && row == startrow) {
+        && row == startrow + filler_lines) {
       // fill rest of line with 'fold'
       c_extra = wp->w_p_fcs_chars.fold;
       c_final = NUL;
@@ -1540,7 +1540,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
         && has_fold
         && col >= grid->cols
         && n_extra != 0
-        && row == startrow) {
+        && row == startrow + filler_lines) {
       // Truncate the folding.
       n_extra = 0;
     }
@@ -2753,7 +2753,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
     // At end of screen line and there is more to come: Display the line
     // so far.  If there is no more to display it is caught above.
     if ((wp->w_p_rl ? (col < 0) : (col >= grid->cols))
-        && (!has_fold || n_virt_lines > 0)
+        && (!has_fold || virt_line_offset >= 0)
         && (draw_state != WL_LINE
             || *ptr != NUL
             || filler_todo > 0
