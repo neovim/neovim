@@ -95,6 +95,8 @@ if(MSVC)
   # Disable warnings that give too many false positives.
   target_compile_options(main_lib INTERFACE -wd4311 -wd4146)
   target_compile_definitions(main_lib INTERFACE _CRT_SECURE_NO_WARNINGS _CRT_NONSTDC_NO_DEPRECATE)
+
+  target_sources(main_lib INTERFACE ${CMAKE_CURRENT_LIST_DIR}/os/nvim.manifest)
 else()
   target_compile_options(main_lib INTERFACE -Wall -Wextra -pedantic -Wno-unused-parameter
     -Wstrict-prototypes -std=gnu99 -Wshadow -Wconversion
