@@ -1377,6 +1377,22 @@ func Test_subst_word_under_cursor()
   set noincsearch
 endfunc
 
+func Test_search_skip_all_matches()
+  enew
+  call setline(1, ['no match here',
+        \ 'match this line',
+        \ 'nope',
+        \ 'match in this line',
+        \ 'last line',
+        \ ])
+  call cursor(1, 1)
+  let lnum = search('this', '', 0, 0, 'getline(".") =~ "this line"')
+  " Only check that no match is found.  Previously it searched forever.
+  call assert_equal(0, lnum)
+
+  bwipe!
+endfunc
+
 func Test_search_undefined_behaviour()
   CheckFeature terminal
 
