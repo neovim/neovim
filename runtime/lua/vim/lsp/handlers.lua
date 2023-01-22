@@ -131,9 +131,10 @@ end
 
 --see: https://microsoft.github.io/language-server-protocol/specifications/specification-current/#workspace_applyEdit
 M['workspace/applyEdit'] = function(_, workspace_edit, ctx)
-  if not workspace_edit then
-    return
-  end
+  assert(
+    workspace_edit,
+    'workspace/applyEdit must be called with `ApplyWorkspaceEditParams`. Server is violating the specification'
+  )
   -- TODO(ashkan) Do something more with label?
   local client_id = ctx.client_id
   local client = vim.lsp.get_client_by_id(client_id)
