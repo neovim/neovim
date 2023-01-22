@@ -1906,7 +1906,7 @@ static void win_update(win_T *wp, DecorProviders *providers)
       if (j > 0 && !wp->w_botfill && row < wp->w_grid.rows) {
         // Display filler text below last line. win_line() will check
         // for ml_line_count+1 and only draw filler lines
-        foldinfo_T info = FOLDINFO_INIT;
+        foldinfo_T info = { 0 };
         row = win_line(wp, wp->w_botline, row, wp->w_grid.rows,
                        false, false, info, &line_providers, &provider_err);
       }

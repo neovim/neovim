@@ -51,7 +51,7 @@ int plines_win(win_T *wp, linenr_T lnum, bool winheight)
 /// @return Number of filler lines above lnum
 int win_get_fill(win_T *wp, linenr_T lnum)
 {
-  int virt_lines = decor_virt_lines(wp, lnum, NULL);
+  int virt_lines = decor_virt_lines(wp, lnum, NULL, kNone);
 
   // be quick when there are no filler lines
   if (diffopt_filler()) {

@@ -8,6 +8,7 @@ local expect = helpers.expect
 local funcs = helpers.funcs
 local meths = helpers.meths
 local exec = helpers.exec
+local exec_lua = helpers.exec_lua
 local assert_alive = helpers.assert_alive
 
 
@@ -1847,6 +1848,128 @@ describe("folded lines", function()
           {8:  5 }n his cave.                              |
           {8:  6 }                                         |
           {1:~                                            }|
+          {1:~                                            }|
+                                                       |
+        ]])
+      end
+    end)
+
+    it('fold attached virtual lines are drawn correctly #21837', function()
+      funcs.setline(1, 'line 1')
+      funcs.setline(2, 'line 2')
+      funcs.setline(3, 'line 3')
+      funcs.setline(4, 'line 4')
+      feed("zfj")
+      exec_lua([[
+        local ns = vim.api.nvim_create_namespace("ns")
+        vim.api.nvim_buf_set_extmark(0, ns, 0, 0, { virt_lines_above = true, virt_lines = {{{"virt_line above line 1", ""}}} })
+        vim.api.nvim_buf_set_extmark(0, ns, 1, 0, { virt_lines = {{{"virt_line below line 2", ""}}} })
+        vim.api.nvim_buf_set_extmark(0, ns, 2, 0, { virt_lines_above = true, virt_lines = {{{"virt_line above line 3", ""}}} })
+        vim.api.nvim_buf_set_extmark(0, ns, 3, 0, { virt_lines = {{{"virt_line below line 4", ""}}} })
+      ]])
+      if multigrid then
+        screen:expect([[
+        ## grid 1
+          [2:---------------------------------------------]|
+          [2:---------------------------------------------]|
+          [2:---------------------------------------------]|
+          [2:---------------------------------------------]|
+          [2:---------------------------------------------]|
+          [2:---------------------------------------------]|
+          [2:---------------------------------------------]|
+          [3:---------------------------------------------]|
+        ## grid 2
+          {5:^+--  2 lines: line 1·························}|
+          virt_line above line 3                       |
+          line 3                                       |
+          line 4                                       |
+          virt_line below line 4                       |
+          {1:~                                            }|
+          {1:~                                            }|
+        ## grid 3
+                                                       |
+        ]])
+      else
+        screen:expect([[
+          {5:^+--  2 lines: line 1·························}|
+          virt_line above line 3                       |
+          line 3                                       |
+          line 4                                       |
+          virt_line below line 4                       |
+          {1:~                                            }|
+          {1:~                                            }|
+                                                       |
+        ]])
+      end
+
+      feed('jzfj')
+      if multigrid then
+        screen:expect([[
+        ## grid 1
+          [2:---------------------------------------------]|
+          [2:---------------------------------------------]|
+          [2:---------------------------------------------]|
+          [2:---------------------------------------------]|
+          [2:---------------------------------------------]|
+          [2:---------------------------------------------]|
+          [2:---------------------------------------------]|
+          [3:---------------------------------------------]|
+        ## grid 2
+          {5:+--  2 lines: line 1·························}|
+          {5:^+--  2 lines: line 3·························}|
+          {1:~                                            }|
+          {1:~                                            }|
+          {1:~                                            }|
+          {1:~                                            }|
+          {1:~                                            }|
+        ## grid 3
+                                                       |
+        ]])
+      else
+        screen:expect([[
+          {5:+--  2 lines: line 1·························}|
+          {5:^+--  2 lines: line 3·························}|
+          {1:~                                            }|
+          {1:~                                            }|
+          {1:~                                            }|
+          {1:~                                            }|
+          {1:~                                            }|
+                                                       |
+        ]])
+      end
+
+      feed('kzo<C-Y>')
+      funcs.setline(5, 'line 5')
+      if multigrid then
+        screen:expect([[
+        ## grid 1
+          [2:---------------------------------------------]|
+          [2:---------------------------------------------]|
+          [2:---------------------------------------------]|
+          [2:---------------------------------------------]|
+          [2:---------------------------------------------]|
+          [2:---------------------------------------------]|
+          [2:---------------------------------------------]|
+          [3:---------------------------------------------]|
+        ## grid 2
+          virt_line above line 1                       |
+          ^line 1                                       |
+          line 2                                       |
+          virt_line below line 2                       |
+          {5:+--  2 lines: line 3·························}|
+          line 5                                       |
+          {1:~                                            }|
+        ## grid 3
+                                                       |
+        ]])
+      else
+        screen:expect([[
+          virt_line above line 1                       |
+          ^line 1                                       |
+          line 2                                       |
+          virt_line below line 2                       |
+          {5:+--  2 lines: line 3·························}|
+          line 5                                       |
           {1:~                                            }|
                                                        |
         ]])
