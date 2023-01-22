@@ -1022,6 +1022,7 @@ local extension = {
   texinfo = 'texinfo',
   text = 'text',
   tfvars = 'terraform-vars',
+  thrift = 'thrift',
   tla = 'tla',
   tli = 'tli',
   toml = 'toml',
