@@ -550,7 +550,8 @@ void decor_add_ephemeral(int start_row, int start_col, int end_row, int end_col,
   decor_add(&decor_state, start_row, start_col, end_row, end_col, decor, true, ns_id, mark_id);
 }
 
-int decor_virt_lines(win_T *wp, linenr_T lnum, VirtLines *lines, bool has_fold)
+/// @param has_fold  whether line "lnum" has a fold, or kNone when not calculated yet
+int decor_virt_lines(win_T *wp, linenr_T lnum, VirtLines *lines, TriState has_fold)
 {
   buf_T *buf = wp->w_buffer;
   if (!buf->b_virt_line_blocks) {
@@ -564,7 +565,10 @@ int decor_virt_lines(win_T *wp, linenr_T lnum, VirtLines *lines, bool has_fold)
   int end_row = (int)lnum;
   MarkTreeIter itr[1] = { 0 };
   marktree_itr_get(buf->b_marktree, row, 0,  itr);
-  bool has_fold_below = lnum > 1 ? hasFoldingWin(wp, lnum - 1, NULL, NULL, true, NULL) : false;
+  bool below_fold = lnum > 1 && hasFoldingWin(wp, lnum - 1, NULL, NULL, true, NULL);
+  if (has_fold == kNone) {
+    has_fold = hasFoldingWin(wp, lnum, NULL, NULL, true, NULL);
+  }
   while (true) {
     mtkey_t mark = marktree_itr_current(itr);
     if (mark.pos.row < 0 || mark.pos.row >= end_row) {
@@ -573,7 +577,7 @@ int decor_virt_lines(win_T *wp, linenr_T lnum, VirtLines *lines, bool has_fold)
       goto next_mark;
     }
     bool above = mark.pos.row > (lnum - 2);
-    bool has_fold_cur = above ? has_fold : has_fold_below;
+    bool has_fold_cur = above ? has_fold : below_fold;
     Decoration *decor = mark.decor_full;
     if (!has_fold_cur && decor && decor->virt_lines_above == above) {
       virt_lines += (int)kv_size(decor->virt_lines);
