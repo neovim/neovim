@@ -1467,6 +1467,34 @@ static void did_set_foldmarker(win_T *win, char **varp, char **errmsg)
   }
 }
 
+static void did_set_commentstring(char **varp, char **errmsg)
+{
+  if (**varp != NUL && strstr(*varp, "%s") == NULL) {
+    *errmsg = N_("E537: 'commentstring' must be empty or contain %s");
+  }
+}
+
+static void did_set_foldopen(char **errmsg)
+{
+  if (opt_strings_flags(p_fdo, p_fdo_values, &fdo_flags, true) != OK) {
+    *errmsg = e_invarg;
+  }
+}
+
+static void did_set_foldclose(char **errmsg)
+{
+  if (check_opt_strings(p_fcl, p_fcl_values, true) != OK) {
+    *errmsg = e_invarg;
+  }
+}
+
+static void did_set_foldignore(win_T *win)
+{
+  if (foldmethodIsIndent(win)) {
+    foldUpdateAll(win);
+  }
+}
+
 static void did_set_virtualedit(win_T *win, int opt_flags, char *oldval, char **errmsg)
 {
   char *ve = p_ve;
@@ -1844,21 +1872,13 @@ char *did_set_string_option(int opt_idx, char **varp, char *oldval, char *errbuf
   } else if (gvarp == &curwin->w_allbuf_opt.wo_fmr) {  // 'foldmarker'
     did_set_foldmarker(curwin, varp, &errmsg);
   } else if (gvarp == &p_cms) {  // 'commentstring'
-    if (**varp != NUL && strstr(*varp, "%s") == NULL) {
-      errmsg = N_("E537: 'commentstring' must be empty or contain %s");
-    }
+    did_set_commentstring(varp, &errmsg);
   } else if (varp == &p_fdo) {  // 'foldopen'
-    if (opt_strings_flags(p_fdo, p_fdo_values, &fdo_flags, true) != OK) {
-      errmsg = e_invarg;
-    }
+    did_set_foldopen(&errmsg);
   } else if (varp == &p_fcl) {  // 'foldclose'
-    if (check_opt_strings(p_fcl, p_fcl_values, true) != OK) {
-      errmsg = e_invarg;
-    }
+    did_set_foldclose(&errmsg);
   } else if (gvarp == &curwin->w_allbuf_opt.wo_fdi) {  // 'foldignore'
-    if (foldmethodIsIndent(curwin)) {
-      foldUpdateAll(curwin);
-    }
+    did_set_foldignore(curwin);
   } else if (gvarp == &p_ve) {  // 'virtualedit'
     did_set_virtualedit(curwin, opt_flags, oldval, &errmsg);
   } else if (gvarp == &p_cino) {  // 'cinoptions'
