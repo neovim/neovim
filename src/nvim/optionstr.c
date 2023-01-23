@@ -745,6 +745,13 @@ static void did_set_sessionoptions(char *oldval, char **errmsg)
   }
 }
 
+static void did_set_viewoptions(char **errmsg)
+{
+  if (opt_strings_flags(p_vop, p_ssop_values, &vop_flags, true) != OK) {
+    *errmsg = e_invarg;
+  }
+}
+
 static void did_set_redrawdebug(char **errmsg)
 {
   if (opt_strings_flags(p_rdb, p_rdb_values, &rdb_flags, true) != OK) {
@@ -1466,9 +1473,7 @@ char *did_set_string_option(int opt_idx, char **varp, char *oldval, char *errbuf
   } else if (varp == &p_ssop) {  // 'sessionoptions'
     did_set_sessionoptions(oldval, &errmsg);
   } else if (varp == &p_vop) {  // 'viewoptions'
-    if (opt_strings_flags(p_vop, p_ssop_values, &vop_flags, true) != OK) {
-      errmsg = e_invarg;
-    }
+    did_set_viewoptions(&errmsg);
   } else if (varp == &p_rdb) {  // 'redrawdebug'
     did_set_redrawdebug(&errmsg);
   } else if (varp == &p_sbo) {  // 'scrollopt'
