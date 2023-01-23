@@ -935,6 +935,13 @@ static void did_set_fileformat(buf_T *buf, char **varp, const char *oldval, int 
   }
 }
 
+static void did_set_fileformats(char **errmsg)
+{
+  if (check_opt_strings(p_ffs, p_ff_values, true) != OK) {
+    *errmsg = e_invarg;
+  }
+}
+
 static void did_set_matchpairs(char **varp, char **errmsg)
 {
   for (char *p = *varp; *p != NUL; p++) {
@@ -1517,9 +1524,7 @@ char *did_set_string_option(int opt_idx, char **varp, char *oldval, char *errbuf
   } else if (gvarp == &p_ff) {  // 'fileformat'
     did_set_fileformat(curbuf, varp, oldval, opt_flags, &errmsg);
   } else if (varp == &p_ffs) {  // 'fileformats'
-    if (check_opt_strings(p_ffs, p_ff_values, true) != OK) {
-      errmsg = e_invarg;
-    }
+    did_set_fileformats(&errmsg);
   } else if (gvarp == &p_mps) {  // 'matchpairs'
     did_set_matchpairs(varp, &errmsg);
   } else if (gvarp == &p_com) {  // 'comments'
