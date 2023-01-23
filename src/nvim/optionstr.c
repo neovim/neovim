@@ -1165,6 +1165,21 @@ static void did_set_virtualedit(win_T *win, int opt_flags, char *oldval, char **
   }
 }
 
+static void did_set_syntax(char **varp, char *oldval, int *value_checked, bool *value_changed,
+                           char **errmsg)
+{
+  if (!valid_filetype(*varp)) {
+    *errmsg = e_invarg;
+    return;
+  }
+
+  *value_changed = strcmp(oldval, *varp) != 0;
+
+  // Since we check the value, there is no need to set P_INSECURE,
+  // even when the value comes from a modeline.
+  *value_checked = true;
+}
+
 static void did_set_optexpr(buf_T *buf, win_T *win, char **varp, char **gvarp)
 {
   char **p_opt = NULL;
@@ -1230,7 +1245,7 @@ static void did_set_option_listflags(buf_T *buf, win_T *win, char **varp, char *
 }
 
 // When 'syntax' is set, load the syntax of that name
-static void did_set_syntax(buf_T *buf, bool value_changed)
+static void do_syntax_autocmd(buf_T *buf, bool value_changed)
 {
   static int syn_recursive = 0;
 
@@ -1243,7 +1258,7 @@ static void did_set_syntax(buf_T *buf, bool value_changed)
   syn_recursive--;
 }
 
-static void did_set_filetype(buf_T *buf, char **varp, int opt_flags, bool value_changed)
+static void do_filetype_autocmd(buf_T *buf, char **varp, int opt_flags, bool value_changed)
 {
   // 'filetype' is set, trigger the FileType autocommand
   // Skip this when called from a modeline and the filetype was
@@ -1660,15 +1675,7 @@ char *did_set_string_option(int opt_idx, char **varp, char *oldval, char *errbuf
       *value_checked = true;
     }
   } else if (gvarp == &p_syn) {
-    if (!valid_filetype(*varp)) {
-      errmsg = e_invarg;
-    } else {
-      value_changed = strcmp(oldval, *varp) != 0;
-
-      // Since we check the value, there is no need to set P_INSECURE,
-      // even when the value comes from a modeline.
-      *value_checked = true;
-    }
+    did_set_syntax(varp, oldval, value_checked, &value_changed, &errmsg);
   } else if (varp == &curwin->w_p_winhl) {
     if (!parse_winhl_opt(curwin)) {
       errmsg = e_invarg;
@@ -1787,9 +1794,9 @@ char *did_set_string_option(int opt_idx, char **varp, char *oldval, char *errbuf
 
     // Trigger the autocommand only after setting the flags.
     if (varp == &(curbuf->b_p_syn)) {
-      did_set_syntax(curbuf, value_changed);
+      do_syntax_autocmd(curbuf, value_changed);
     } else if (varp == &(curbuf->b_p_ft)) {
-      did_set_filetype(curbuf, varp, opt_flags, value_changed);
+      do_filetype_autocmd(curbuf, varp, opt_flags, value_changed);
     } else if (varp == &(curwin->w_s->b_p_spl)) {
       did_set_spelllang_source(curwin);
     }
