@@ -745,6 +745,13 @@ static void did_set_sessionoptions(char *oldval, char **errmsg)
   }
 }
 
+static void did_set_scrollopt(char **errmsg)
+{
+  if (check_opt_strings(p_sbo, p_scbopt_values, true) != OK) {
+    *errmsg = e_invarg;
+  }
+}
+
 static void did_set_ambiwidth(char **errmsg)
 {
   if (check_opt_strings(p_ambw, p_ambw_values, false) != OK) {
@@ -1460,9 +1467,7 @@ char *did_set_string_option(int opt_idx, char **varp, char *oldval, char *errbuf
       errmsg = e_invarg;
     }
   } else if (varp == &p_sbo) {  // 'scrollopt'
-    if (check_opt_strings(p_sbo, p_scbopt_values, true) != OK) {
-      errmsg = e_invarg;
-    }
+    did_set_scrollopt(&errmsg);
   } else if (varp == &p_ambw || (int *)varp == &p_emoji) {  // 'ambiwidth'
     did_set_ambiwidth(&errmsg);
   } else if (varp == &p_bg) {  // 'background'
