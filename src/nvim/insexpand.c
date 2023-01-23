@@ -2258,14 +2258,14 @@ static void copy_global_to_buflocal_cb(Callback *globcb, Callback *bufcb)
 /// Invoked when the 'completefunc' option is set. The option value can be a
 /// name of a function (string), or function(<name>) or funcref(<name>) or a
 /// lambda expression.
-int set_completefunc_option(void)
+void set_completefunc_option(char **errmsg)
 {
-  int retval = option_set_callback_func(curbuf->b_p_cfu, &cfu_cb);
-  if (retval == OK) {
-    set_buflocal_cfu_callback(curbuf);
+  if (option_set_callback_func(curbuf->b_p_cfu, &cfu_cb) == FAIL) {
+    *errmsg = e_invarg;
+    return;
   }
 
-  return retval;
+  set_buflocal_cfu_callback(curbuf);
 }
 
 /// Copy the global 'completefunc' callback function to the buffer-local
@@ -2279,14 +2279,13 @@ void set_buflocal_cfu_callback(buf_T *buf)
 /// Invoked when the 'omnifunc' option is set. The option value can be a
 /// name of a function (string), or function(<name>) or funcref(<name>) or a
 /// lambda expression.
-int set_omnifunc_option(void)
+void set_omnifunc_option(buf_T *buf, char **errmsg)
 {
-  int retval = option_set_callback_func(curbuf->b_p_ofu, &ofu_cb);
-  if (retval == OK) {
-    set_buflocal_ofu_callback(curbuf);
+  if (option_set_callback_func(buf->b_p_ofu, &ofu_cb) == FAIL) {
+    *errmsg = e_invarg;
+    return;
   }
-
-  return retval;
+  set_buflocal_ofu_callback(buf);
 }
 
 /// Copy the global 'omnifunc' callback function to the buffer-local 'omnifunc'
@@ -2300,7 +2299,7 @@ void set_buflocal_ofu_callback(buf_T *buf)
 /// Invoked when the 'thesaurusfunc' option is set. The option value can be a
 /// name of a function (string), or function(<name>) or funcref(<name>) or a
 /// lambda expression.
-int set_thesaurusfunc_option(void)
+void set_thesaurusfunc_option(char **errmsg)
 {
   int retval;
 
@@ -2312,7 +2311,9 @@ int set_thesaurusfunc_option(void)
     retval = option_set_callback_func(p_tsrfu, &tsrfu_cb);
   }
 
-  return retval;
+  if (retval == FAIL) {
+    *errmsg = e_invarg;
+  }
 }
 
 /// Mark the global 'completefunc' 'omnifunc' and 'thesaurusfunc' callbacks with

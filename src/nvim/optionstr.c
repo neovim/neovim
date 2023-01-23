@@ -1728,29 +1728,17 @@ char *did_set_string_option(int opt_idx, char **varp, char *oldval, char *errbuf
              || varp == &p_pex) {  // '*expr' options
     did_set_optexpr(curbuf, curwin, varp, gvarp);
   } else if (gvarp == &p_cfu) {  // 'completefunc'
-    if (set_completefunc_option() == FAIL) {
-      errmsg = e_invarg;
-    }
+    set_completefunc_option(&errmsg);
   } else if (gvarp == &p_ofu) {  // 'omnifunc'
-    if (set_omnifunc_option() == FAIL) {
-      errmsg = e_invarg;
-    }
+    set_omnifunc_option(curbuf, &errmsg);
   } else if (gvarp == &p_tsrfu) {  // 'thesaurusfunc'
-    if (set_thesaurusfunc_option() == FAIL) {
-      errmsg = e_invarg;
-    }
+    set_thesaurusfunc_option(&errmsg);
   } else if (varp == &p_opfunc) {  // 'operatorfunc'
-    if (set_operatorfunc_option() == FAIL) {
-      errmsg = e_invarg;
-    }
+    set_operatorfunc_option(&errmsg);
   } else if (varp == &p_qftf) {  // 'quickfixtextfunc'
-    if (qf_process_qftf_option() == FAIL) {
-      errmsg = e_invarg;
-    }
+    qf_process_qftf_option(&errmsg);
   } else if (gvarp == &p_tfu) {  // 'tagfunc'
-    if (set_tagfunc_option() == FAIL) {
-      errmsg = e_invarg;
-    }
+    set_tagfunc_option(&errmsg);
   } else {
     did_set_option_listflags(curbuf, curwin, varp, errbuf, errbuflen, &errmsg);
   }

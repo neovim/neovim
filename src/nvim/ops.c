@@ -5626,10 +5626,11 @@ static void op_colon(oparg_T *oap)
 static Callback opfunc_cb;
 
 /// Process the 'operatorfunc' option value.
-/// @return  OK or FAIL
-int set_operatorfunc_option(void)
+void set_operatorfunc_option(char **errmsg)
 {
-  return option_set_callback_func(p_opfunc, &opfunc_cb);
+  if (option_set_callback_func(p_opfunc, &opfunc_cb) == FAIL) {
+    *errmsg = e_invarg;
+  }
 }
 
 #if defined(EXITFREE)
