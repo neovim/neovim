@@ -3432,6 +3432,38 @@ describe('LSP', function()
       }
       eq(expected_range, result[3].params.range)
     end)
+    it('Aborts with notify if no clients support requested method', function()
+      exec_lua(create_server_definition)
+      exec_lua([[
+        vim.notify = function(msg, _)
+          notify_msg = msg
+        end
+      ]])
+      local fail_msg = "[LSP] Format request failed, no matching language servers."
+      local function check_notify(name, formatting, range_formatting)
+        local timeout_msg = "[LSP][" .. name .. "] timeout"
+        exec_lua([[
+          local formatting, range_formatting, name = ...
+          local server = _create_server({ capabilities = {
+            documentFormattingProvider = formatting,
+            documentRangeFormattingProvider = range_formatting,
+          }})
+          vim.lsp.start({ name = name, cmd = server.cmd })
+          notify_msg = nil
+          vim.lsp.buf.format({ name = name, timeout_ms = 1 })
+        ]], formatting, range_formatting, name)
+        eq(formatting and timeout_msg or fail_msg, exec_lua('return notify_msg'))
+        exec_lua([[
+          notify_msg = nil
+          vim.lsp.buf.format({ name = name, timeout_ms = 1, range = {start={1, 0}, ['end']={1, 0}}})
+        ]])
+        eq(range_formatting and timeout_msg or fail_msg, exec_lua('return notify_msg'))
+      end
+      check_notify("none", false, false)
+      check_notify("formatting", true, false)
+      check_notify("rangeFormatting", false, true)
+      check_notify("both", true, true)
+    end)
   end)
   describe('cmd', function()
     it('can connect to lsp server via rpc.connect', function()

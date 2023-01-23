@@ -197,18 +197,19 @@ function M.format(options)
     clients = vim.tbl_filter(options.filter, clients)
   end
 
-  clients = vim.tbl_filter(function(client)
-    return client.supports_method('textDocument/formatting')
-  end, clients)
-
-  if #clients == 0 then
-    vim.notify('[LSP] Format request failed, no matching language servers.')
-  end
-
   local mode = api.nvim_get_mode().mode
   local range = options.range
   if not range and mode == 'v' or mode == 'V' then
     range = range_from_selection()
+  end
+  local method = range and 'textDocument/rangeFormatting' or 'textDocument/formatting'
+
+  clients = vim.tbl_filter(function(client)
+    return client.supports_method(method)
+  end, clients)
+
+  if #clients == 0 then
+    vim.notify('[LSP] Format request failed, no matching language servers.')
   end
 
   ---@private
@@ -221,7 +222,6 @@ function M.format(options)
     return params
   end
 
-  local method = range and 'textDocument/rangeFormatting' or 'textDocument/formatting'
   if options.async then
     local do_format
     do_format = function(idx, client)
