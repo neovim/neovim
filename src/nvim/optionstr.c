@@ -733,9 +733,9 @@ static void did_set_jumpoptions(char **errmsg)
   }
 }
 
-static void did_set_nrformats(char **varp, char **errmsg)
+static void did_set_opt_strings(char *val, char **values, bool list, char **errmsg)
 {
-  if (check_opt_strings(*varp, p_nf_values, true) != OK) {
+  if (check_opt_strings(val, values, list) != OK) {
     *errmsg = e_invarg;
   }
 }
@@ -762,13 +762,6 @@ static void did_set_viewoptions(char **errmsg)
 static void did_set_redrawdebug(char **errmsg)
 {
   if (opt_strings_flags(p_rdb, p_rdb_values, &rdb_flags, true) != OK) {
-    *errmsg = e_invarg;
-  }
-}
-
-static void did_set_scrollopt(char **errmsg)
-{
-  if (check_opt_strings(p_sbo, p_scbopt_values, true) != OK) {
     *errmsg = e_invarg;
   }
 }
@@ -932,13 +925,6 @@ static void did_set_fileformat(buf_T *buf, char **varp, const char *oldval, int 
     if (get_fileformat(buf) == EOL_MAC || *oldval == 'm') {
       redraw_buf_later(buf, UPD_NOT_VALID);
     }
-  }
-}
-
-static void did_set_fileformats(char **errmsg)
-{
-  if (check_opt_strings(p_ffs, p_ff_values, true) != OK) {
-    *errmsg = e_invarg;
   }
 }
 
@@ -1118,13 +1104,6 @@ static void did_set_selection(char **errmsg)
   }
 }
 
-static void did_set_selectmode(char **errmsg)
-{
-  if (check_opt_strings(p_slm, p_slm_values, true) != OK) {
-    *errmsg = e_invarg;
-  }
-}
-
 static void did_set_keymodel(char **errmsg)
 {
   if (check_opt_strings(p_km, p_km_values, true) != OK) {
@@ -1135,30 +1114,9 @@ static void did_set_keymodel(char **errmsg)
   km_startsel = (vim_strchr(p_km, 'a') != NULL);
 }
 
-static void did_set_mousemodel(char **errmsg)
-{
-  if (check_opt_strings(p_mousem, p_mousem_values, false) != OK) {
-    *errmsg = e_invarg;
-  }
-}
-
 static void did_set_switchbuf(char **errmsg)
 {
   if (opt_strings_flags(p_swb, p_swb_values, &swb_flags, true) != OK) {
-    *errmsg = e_invarg;
-  }
-}
-
-static void did_set_splitkeep(char **errmsg)
-{
-  if (check_opt_strings(p_spk, p_spk_values, false) != OK) {
-    *errmsg = e_invarg;
-  }
-}
-
-static void did_set_debug(char **errmsg)
-{
-  if (check_opt_strings(p_debug, p_debug_values, true) != OK) {
     *errmsg = e_invarg;
   }
 }
@@ -1171,13 +1129,6 @@ static void did_set_display(char **errmsg)
   }
   (void)init_chartab();
   msg_grid_validate();
-}
-
-static void did_set_eoddirection(char **errmsg)
-{
-  if (check_opt_strings(p_ead, p_ead_values, false) != OK) {
-    *errmsg = e_invarg;
-  }
 }
 
 static void did_set_clipboard(char **errmsg)
@@ -1234,14 +1185,6 @@ static void did_set_spellsuggest(char **errmsg)
 static void did_set_mkspellmem(char **errmsg)
 {
   if (spell_check_msm() != OK) {
-    *errmsg = e_invarg;
-  }
-}
-
-static void did_set_bufhidden(buf_T *buf, char **errmsg)
-{
-  // When 'bufhidden' is set, check for valid value.
-  if (check_opt_strings(buf->b_p_bh, p_bufhidden_values, false) != OK) {
     *errmsg = e_invarg;
   }
 }
@@ -1355,13 +1298,6 @@ static void did_set_signcolumn(win_T *win, char **varp, const char *oldval, char
        || (*win->w_p_scl == 'n' && *(win->w_p_scl + 1) == 'u'))
       && (win->w_p_nu || win->w_p_rnu)) {
     win->w_nrwidth_line_count = 0;
-  }
-}
-
-static void did_set_showcmdloc(char **errmsg)
-{
-  if (check_opt_strings(p_sloc, p_sloc_values, false) != OK) {
-    *errmsg = e_invarg;
   }
 }
 
@@ -1481,13 +1417,6 @@ static void did_set_foldopen(char **errmsg)
   }
 }
 
-static void did_set_foldclose(char **errmsg)
-{
-  if (check_opt_strings(p_fcl, p_fcl_values, true) != OK) {
-    *errmsg = e_invarg;
-  }
-}
-
 static void did_set_foldignore(win_T *win)
 {
   if (foldmethodIsIndent(win)) {
@@ -1523,13 +1452,6 @@ static void did_set_virtualedit(win_T *win, int opt_flags, char *oldval, char **
 static void did_set_lispoptions(char **varp, char **errmsg)
 {
   if (**varp != NUL && strcmp(*varp, "expr:0") != 0 && strcmp(*varp, "expr:1") != 0) {
-    *errmsg = e_invarg;
-  }
-}
-
-static void did_set_inccommand(char **errmsg)
-{
-  if (check_opt_strings(p_icm, p_icm_values, false) != OK) {
     *errmsg = e_invarg;
   }
 }
@@ -1765,7 +1687,7 @@ char *did_set_string_option(int opt_idx, char **varp, char *oldval, char *errbuf
   } else if (varp == &p_jop) {  // 'jumpoptions'
     did_set_jumpoptions(&errmsg);
   } else if (gvarp == &p_nf) {  // 'nrformats'
-    did_set_nrformats(varp, &errmsg);
+    did_set_opt_strings(*varp, p_nf_values, true, &errmsg);
   } else if (varp == &p_ssop) {  // 'sessionoptions'
     did_set_sessionoptions(oldval, &errmsg);
   } else if (varp == &p_vop) {  // 'viewoptions'
@@ -1773,7 +1695,7 @@ char *did_set_string_option(int opt_idx, char **varp, char *oldval, char *errbuf
   } else if (varp == &p_rdb) {  // 'redrawdebug'
     did_set_redrawdebug(&errmsg);
   } else if (varp == &p_sbo) {  // 'scrollopt'
-    did_set_scrollopt(&errmsg);
+    did_set_opt_strings(p_sbo, p_scbopt_values, true, &errmsg);
   } else if (varp == &p_ambw || (int *)varp == &p_emoji) {  // 'ambiwidth'
     did_set_ambiwidth(&errmsg);
   } else if (varp == &p_bg) {  // 'background'
@@ -1794,7 +1716,7 @@ char *did_set_string_option(int opt_idx, char **varp, char *oldval, char *errbuf
   } else if (gvarp == &p_ff) {  // 'fileformat'
     did_set_fileformat(curbuf, varp, oldval, opt_flags, &errmsg);
   } else if (varp == &p_ffs) {  // 'fileformats'
-    did_set_fileformats(&errmsg);
+    did_set_opt_strings(p_ffs, p_ff_values, true, &errmsg);
   } else if (gvarp == &p_mps) {  // 'matchpairs'
     did_set_matchpairs(varp, &errmsg);
   } else if (gvarp == &p_com) {  // 'comments'
@@ -1825,23 +1747,23 @@ char *did_set_string_option(int opt_idx, char **varp, char *oldval, char *errbuf
   } else if (varp == &p_sel) {  // 'selection'
     did_set_selection(&errmsg);
   } else if (varp == &p_slm) {  // 'selectmode'
-    did_set_selectmode(&errmsg);
+    did_set_opt_strings(p_slm, p_slm_values, true, &errmsg);
   } else if (varp == &p_km) {  // 'keymodel'
     did_set_keymodel(&errmsg);
   } else if (varp == &p_mousem) {  // 'mousemodel'
-    did_set_mousemodel(&errmsg);
+    did_set_opt_strings(p_mousem, p_mousem_values, false, &errmsg);
   } else if (varp == &p_mousescroll) {  // 'mousescroll'
     errmsg = check_mousescroll(p_mousescroll);
   } else if (varp == &p_swb) {  // 'switchbuf'
     did_set_switchbuf(&errmsg);
   } else if (varp == &p_spk) {  // 'splitkeep'
-    did_set_splitkeep(&errmsg);
+    did_set_opt_strings(p_spk, p_spk_values, false, &errmsg);
   } else if (varp == &p_debug) {  // 'debug'
-    did_set_debug(&errmsg);
+    did_set_opt_strings(p_debug, p_debug_values, true, &errmsg);
   } else if (varp == &p_dy) {  // 'display'
     did_set_display(&errmsg);
   } else if (varp == &p_ead) {  // 'eadirection'
-    did_set_eoddirection(&errmsg);
+    did_set_opt_strings(p_ead, p_ead_values, false, &errmsg);
   } else if (varp == &p_cb) {  // 'clipboard'
     did_set_clipboard(&errmsg);
   } else if (varp == &(curwin->w_s->b_p_spf)) {
@@ -1857,7 +1779,7 @@ char *did_set_string_option(int opt_idx, char **varp, char *oldval, char *errbuf
   } else if (varp == &p_msm) {  // 'mkspellmem'
     did_set_mkspellmem(&errmsg);
   } else if (gvarp == &p_bh) {
-    did_set_bufhidden(curbuf, &errmsg);
+    did_set_opt_strings(curbuf->b_p_bh, p_bufhidden_values, false, &errmsg);
   } else if (gvarp == &p_bt) {  // 'buftype'
     did_set_buftype(curbuf, curwin, &errmsg);
   } else if (gvarp == &p_stl || gvarp == &p_wbr || varp == &p_tal
@@ -1878,7 +1800,7 @@ char *did_set_string_option(int opt_idx, char **varp, char *oldval, char *errbuf
   } else if (varp == &curwin->w_p_scl) {  // 'signcolumn'
     did_set_signcolumn(curwin, varp, oldval, &errmsg);
   } else if (varp == &p_sloc) {  // 'showcmdloc'
-    did_set_showcmdloc(&errmsg);
+    did_set_opt_strings(*varp, p_sloc_values, false, &errmsg);
   } else if (varp == &curwin->w_p_fdc
              || varp == &curwin->w_allbuf_opt.wo_fdc) {
     // 'foldcolumn'
@@ -1904,7 +1826,7 @@ char *did_set_string_option(int opt_idx, char **varp, char *oldval, char *errbuf
   } else if (varp == &p_fdo) {  // 'foldopen'
     did_set_foldopen(&errmsg);
   } else if (varp == &p_fcl) {  // 'foldclose'
-    did_set_foldclose(&errmsg);
+    did_set_opt_strings(*varp, p_fcl_values, true, &errmsg);
   } else if (gvarp == &curwin->w_allbuf_opt.wo_fdi) {  // 'foldignore'
     did_set_foldignore(curwin);
   } else if (gvarp == &p_ve) {  // 'virtualedit'
@@ -1915,7 +1837,7 @@ char *did_set_string_option(int opt_idx, char **varp, char *oldval, char *errbuf
   } else if (gvarp == &p_lop) {  // 'lispoptions'
     did_set_lispoptions(varp, &errmsg);
   } else if (varp == &p_icm) {  // 'inccommand'
-    did_set_inccommand(&errmsg);
+    did_set_opt_strings(*varp, p_icm_values, false, &errmsg);
   } else if (gvarp == &p_ft || gvarp == &p_syn) {
     did_set_filetype_or_syntax(varp, oldval, value_checked, &value_changed, &errmsg);
   } else if (varp == &curwin->w_p_winhl) {
