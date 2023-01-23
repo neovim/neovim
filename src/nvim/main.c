@@ -182,7 +182,7 @@ void early_init(mparm_T *paramp)
 #ifdef MSWIN
   OSVERSIONINFO ovi;
   ovi.dwOSVersionInfoSize = sizeof(ovi);
-  // Disable warning about GetVersionExA being deprecated. There doesn't seem to be a conventient
+  // Disable warning about GetVersionExA being deprecated. There doesn't seem to be a convenient
   // replacement that doesn't add a ton of extra code as of writing this.
 # pragma warning(suppress : 4996)
   GetVersionEx(&ovi);

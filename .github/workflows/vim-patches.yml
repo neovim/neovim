@@ -34,7 +34,7 @@ jobs:
           mv nvim.appimage $HOME/.local/bin/nvim
           printf '%s\n' "$HOME/.local/bin" >> $GITHUB_PATH
 
-      - name: Setup git config
+      - name: Set up git config
         run: |
           git config --global user.name 'marvim'
           git config --global user.email 'marvim@users.noreply.github.com'

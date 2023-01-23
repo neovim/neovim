@@ -92,7 +92,7 @@ The ignore-case matches are found when:
 - when 'tagcase' is "followscs" and 'ignorecase' is on or the 'smartcase'
   option is on and the pattern does not contain an upper case character
 - when 'tagcase' is "ignore"
-- when 'tagcase' is "smart" and the patter does not contain an upper case
+- when 'tagcase' is "smart" and the pattern does not contain an upper case
   character
 
 Note that using ignore-case tag searching disables binary searching in the

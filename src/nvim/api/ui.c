@@ -254,7 +254,7 @@ void nvim_ui_detach(uint64_t channel_id, Error *err)
   remote_ui_disconnect(channel_id);
 }
 
-// TODO(bfredl): use me to detach a specifc ui from the server
+// TODO(bfredl): use me to detach a specific ui from the server
 void remote_ui_stop(UI *ui)
 {}
 

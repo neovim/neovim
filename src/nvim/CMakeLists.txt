@@ -6,7 +6,7 @@ find_package(libuv CONFIG)
 if(TARGET libuv::uv_a)
   target_link_libraries(libuv_lib INTERFACE libuv::uv_a)
 else()
-  # Fallback to find module for older libuv versions, that don't provide the cmake package
+  # Fall back to find module for older libuv versions that don't provide config file
   find_package(LibUV 1.28.0 REQUIRED MODULE)
   target_include_directories(libuv_lib SYSTEM BEFORE INTERFACE ${LIBUV_INCLUDE_DIRS})
   target_link_libraries(libuv_lib INTERFACE ${LIBUV_LIBRARIES})
