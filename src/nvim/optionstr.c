@@ -1420,6 +1420,61 @@ static void did_set_winhl(win_T *win, char **errmsg)
   }
 }
 
+static void did_set_varsoftabstop(buf_T *buf, char **varp, char **errmsg)
+{
+  if (!(*varp)[0] || ((*varp)[0] == '0' && !(*varp)[1])) {
+    XFREE_CLEAR(buf->b_p_vsts_array);
+    return;
+  }
+
+  for (char *cp = *varp; *cp; cp++) {
+    if (ascii_isdigit(*cp)) {
+      continue;
+    }
+    if (*cp == ',' && cp > *varp && *(cp - 1) != ',') {
+      continue;
+    }
+    *errmsg = e_invarg;
+    return;
+  }
+
+  long *oldarray = buf->b_p_vsts_array;
+  if (tabstop_set(*varp, &(buf->b_p_vsts_array))) {
+    xfree(oldarray);
+  } else {
+    *errmsg = e_invarg;
+  }
+}
+
+static void did_set_vartabstop(buf_T *buf, win_T *win, char **varp, char **errmsg)
+{
+  if (!(*varp)[0] || ((*varp)[0] == '0' && !(*varp)[1])) {
+    XFREE_CLEAR(buf->b_p_vts_array);
+    return;
+  }
+
+  for (char *cp = *varp; *cp; cp++) {
+    if (ascii_isdigit(*cp)) {
+      continue;
+    }
+    if (*cp == ',' && cp > *varp && *(cp - 1) != ',') {
+      continue;
+    }
+    *errmsg = e_invarg;
+    return;
+  }
+
+  long *oldarray = buf->b_p_vts_array;
+  if (tabstop_set(*varp, &(buf->b_p_vts_array))) {
+    xfree(oldarray);
+    if (foldmethodIsIndent(win)) {
+      foldUpdateAll(win);
+    }
+  } else {
+    *errmsg = e_invarg;
+  }
+}
+
 static void did_set_optexpr(buf_T *buf, win_T *win, char **varp, char **gvarp)
 {
   char **p_opt = NULL;
@@ -1780,58 +1835,9 @@ char *did_set_string_option(int opt_idx, char **varp, char *oldval, char *errbuf
   } else if (varp == &p_tpf) {
     did_set_opt_flags(p_tpf, p_tpf_values, &tpf_flags, true, &errmsg);
   } else if (varp == &(curbuf->b_p_vsts)) {  // 'varsofttabstop'
-    char *cp;
-
-    if (!(*varp)[0] || ((*varp)[0] == '0' && !(*varp)[1])) {
-      XFREE_CLEAR(curbuf->b_p_vsts_array);
-    } else {
-      for (cp = *varp; *cp; cp++) {
-        if (ascii_isdigit(*cp)) {
-          continue;
-        }
-        if (*cp == ',' && cp > *varp && *(cp - 1) != ',') {
-          continue;
-        }
-        errmsg = e_invarg;
-        break;
-      }
-      if (errmsg == NULL) {
-        long *oldarray = curbuf->b_p_vsts_array;
-        if (tabstop_set(*varp, &(curbuf->b_p_vsts_array))) {
-          xfree(oldarray);
-        } else {
-          errmsg = e_invarg;
-        }
-      }
-    }
+    did_set_varsoftabstop(curbuf, varp, &errmsg);
   } else if (varp == &(curbuf->b_p_vts)) {  // 'vartabstop'
-    char *cp;
-
-    if (!(*varp)[0] || ((*varp)[0] == '0' && !(*varp)[1])) {
-      XFREE_CLEAR(curbuf->b_p_vts_array);
-    } else {
-      for (cp = *varp; *cp; cp++) {
-        if (ascii_isdigit(*cp)) {
-          continue;
-        }
-        if (*cp == ',' && cp > *varp && *(cp - 1) != ',') {
-          continue;
-        }
-        errmsg = e_invarg;
-        break;
-      }
-      if (errmsg == NULL) {
-        long *oldarray = curbuf->b_p_vts_array;
-        if (tabstop_set(*varp, &(curbuf->b_p_vts_array))) {
-          xfree(oldarray);
-          if (foldmethodIsIndent(curwin)) {
-            foldUpdateAll(curwin);
-          }
-        } else {
-          errmsg = e_invarg;
-        }
-      }
-    }
+    did_set_vartabstop(curbuf, curwin, varp, &errmsg);
   } else if (varp == &p_dex
              || varp == &curwin->w_p_fde
              || varp == &curwin->w_p_fdt
