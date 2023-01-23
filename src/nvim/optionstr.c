@@ -819,6 +819,13 @@ static void did_set_wildoptions(char **errmsg)
   }
 }
 
+static void did_set_winaltkeys(char **errmsg)
+{
+  if (*p_wak == NUL || check_opt_strings(p_wak, p_wak_values, false) != OK) {
+    *errmsg = e_invarg;
+  }
+}
+
 static void did_set_eventignore(char **errmsg)
 {
   if (check_ei() == FAIL) {
@@ -1499,10 +1506,7 @@ char *did_set_string_option(int opt_idx, char **varp, char *oldval, char *errbuf
   } else if (varp == &p_wop) {  // 'wildoptions'
     did_set_wildoptions(&errmsg);
   } else if (varp == &p_wak) {  // 'winaltkeys'
-    if (*p_wak == NUL
-        || check_opt_strings(p_wak, p_wak_values, false) != OK) {
-      errmsg = e_invarg;
-    }
+    did_set_winaltkeys(&errmsg);
   } else if (varp == &p_ei) {  // 'eventignore'
     did_set_eventignore(&errmsg);
   } else if (varp == &p_enc || gvarp == &p_fenc || gvarp == &p_menc) {
