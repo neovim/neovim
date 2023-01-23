@@ -370,7 +370,7 @@ void nvim_win_hide(Window window, Error *err)
   TryState tstate;
   try_enter(&tstate);
   if (tabpage == curtab) {
-    win_close(win, false, false);
+    win_close(win, false);
   } else {
     win_close_othertab(win, false, tabpage);
   }

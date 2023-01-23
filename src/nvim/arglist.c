@@ -927,7 +927,7 @@ static void arg_all_close_unused_windows(arg_all_state_T *aall)
               && (first_tabpage->tp_next == NULL || !aall->had_tab)) {
             aall->use_firstwin = true;
           } else {
-            win_close(wp, !buf_hide(buf) && !bufIsChanged(buf), false);
+            win_close(wp, !buf_hide(buf) && !bufIsChanged(buf));
             // check if autocommands removed the next window
             if (!win_valid(wpnext)) {
               // start all over...

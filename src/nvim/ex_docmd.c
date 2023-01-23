@@ -4553,7 +4553,7 @@ static void ex_quit(exarg_T *eap)
     }
     not_exiting();
     // close window; may free buffer
-    win_close(wp, !buf_hide(wp->w_buffer) || eap->forceit, eap->forceit);
+    win_close(wp, !buf_hide(wp->w_buffer) || eap->forceit);
   }
 }
 
@@ -4663,7 +4663,7 @@ void ex_win_close(int forceit, win_T *win, tabpage_T *tp)
 
   // free buffer when not hiding it or when it's a scratch buffer
   if (tp == NULL) {
-    win_close(win, !need_hide && !buf_hide(buf), forceit);
+    win_close(win, !need_hide && !buf_hide(buf));
   } else {
     win_close_othertab(win, !need_hide && !buf_hide(buf), tp);
   }
@@ -4811,7 +4811,7 @@ static void ex_hide(exarg_T *eap)
   }
 
   if (eap->addr_count == 0) {
-    win_close(curwin, false, eap->forceit);  // don't free buffer
+    win_close(curwin, false);  // don't free buffer
   } else {
     int winnr = 0;
     win_T *win = NULL;
@@ -4826,7 +4826,7 @@ static void ex_hide(exarg_T *eap)
     if (win == NULL) {
       win = lastwin;
     }
-    win_close(win, false, eap->forceit);
+    win_close(win, false);
   }
 }
 
@@ -4883,7 +4883,7 @@ static void ex_exit(exarg_T *eap)
     }
     not_exiting();
     // Quit current window, may free the buffer.
-    win_close(curwin, !buf_hide(curwin->w_buffer), eap->forceit);
+    win_close(curwin, !buf_hide(curwin->w_buffer));
   }
 }
 
@@ -5282,7 +5282,7 @@ void do_exedit(exarg_T *eap, win_T *old_curwin)
           // Reset the error/interrupt/exception state here so that
           // aborting() returns false when closing a window.
           enter_cleanup(&cs);
-          win_close(curwin, !need_hide && !buf_hide(curbuf), false);
+          win_close(curwin, !need_hide && !buf_hide(curbuf));
 
           // Restore the error/interrupt/exception state if not
           // discarded by a new aborting error, interrupt, or

@@ -3006,7 +3006,7 @@ static void qf_jump_newwin(qf_info_T *qi, int dir, int errornr, int forceit, boo
 
   if (retval != OK) {
     if (opened_window) {
-      win_close(curwin, true, false);          // Close opened window
+      win_close(curwin, true);          // Close opened window
     }
     if (qf_ptr != NULL && qf_ptr->qf_fnum != 0) {
       // Couldn't open file, so put index back where it was.  This could
@@ -3548,7 +3548,7 @@ void ex_cclose(exarg_T *eap)
   // Find existing quickfix window and close it.
   win_T *win = qf_find_win(qi);
   if (win != NULL) {
-    win_close(win, false, false);
+    win_close(win, false);
   }
 }
 
@@ -5709,7 +5709,7 @@ static void wipe_dummy_buffer(buf_T *buf, char *dirname_start)
     if (firstwin->w_next != NULL) {
       for (win_T *wp = firstwin; wp != NULL; wp = wp->w_next) {
         if (wp->w_buffer == buf) {
-          if (win_close(wp, false, false) == OK) {
+          if (win_close(wp, false) == OK) {
             did_one = true;
           }
           break;
