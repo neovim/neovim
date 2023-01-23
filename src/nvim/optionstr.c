@@ -768,6 +768,20 @@ static void did_set_background(char **errmsg)
   }
 }
 
+static void did_set_wildmode(char **errmsg)
+{
+  if (check_opt_wim() == FAIL) {
+    *errmsg = e_invarg;
+  }
+}
+
+static void did_set_wildoptions(char **errmsg)
+{
+  if (opt_strings_flags(p_wop, p_wop_values, &wop_flags, true) != OK) {
+    *errmsg = e_invarg;
+  }
+}
+
 // 'encoding', 'fileencoding' and 'makeencoding'
 static void did_set_encoding(buf_T *buf, char **varp, char **gvarp, int opt_flags, char **errmsg)
 {
@@ -1449,13 +1463,9 @@ char *did_set_string_option(int opt_idx, char **varp, char *oldval, char *errbuf
   } else if (varp == &p_bg) {  // 'background'
     did_set_background(&errmsg);
   } else if (varp == &p_wim) {  // 'wildmode'
-    if (check_opt_wim() == FAIL) {
-      errmsg = e_invarg;
-    }
+    did_set_wildmode(&errmsg);
   } else if (varp == &p_wop) {  // 'wildoptions'
-    if (opt_strings_flags(p_wop, p_wop_values, &wop_flags, true) != OK) {
-      errmsg = e_invarg;
-    }
+    did_set_wildoptions(&errmsg);
   } else if (varp == &p_wak) {  // 'winaltkeys'
     if (*p_wak == NUL
         || check_opt_strings(p_wak, p_wak_values, false) != OK) {
