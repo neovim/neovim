@@ -819,6 +819,13 @@ static void did_set_wildoptions(char **errmsg)
   }
 }
 
+static void did_set_eventignore(char **errmsg)
+{
+  if (check_ei() == FAIL) {
+    *errmsg = e_invarg;
+  }
+}
+
 // 'encoding', 'fileencoding' and 'makeencoding'
 static void did_set_encoding(buf_T *buf, char **varp, char **gvarp, int opt_flags, char **errmsg)
 {
@@ -1497,9 +1504,7 @@ char *did_set_string_option(int opt_idx, char **varp, char *oldval, char *errbuf
       errmsg = e_invarg;
     }
   } else if (varp == &p_ei) {  // 'eventignore'
-    if (check_ei() == FAIL) {
-      errmsg = e_invarg;
-    }
+    did_set_eventignore(&errmsg);
   } else if (varp == &p_enc || gvarp == &p_fenc || gvarp == &p_menc) {
     // 'encoding', 'fileencoding' and 'makeencoding'
     did_set_encoding(curbuf, varp, gvarp, opt_flags, &errmsg);
