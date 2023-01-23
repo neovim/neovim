@@ -2815,6 +2815,25 @@ nvim_win_get_cursor({window})                          *nvim_win_get_cursor()*
     Return: ~
         (row, col) tuple
 
+nvim_win_get_foldinfo({window}, {lnum})                *nvim_win_get_foldinfo()*
+    Get fold information for {line} in {window}. Useful to build a custom fold
+    column in the |'statuscolumn'|.
+
+    Parameters: ~
+      • {window}  Window handle, or 0 for current window
+      • {line}    Line number to get the fold information for
+
+    Return: ~
+        Dictionary containing fold information for {line}, with these keys:
+        • level: (number) Level of the deepest fold. When zero, the rest of the
+                          keys are invalid.
+        • start: (number) Line number where the deepest fold containing {line}
+                          starts.
+        • lines: (number) When non-zero, this indicates the number of lines
+                          from {line} until the end of a closed fold.
+        • low_level: (number) Lowest fold level that starts at {line}.
+        • max_depth: (number) Maximum fold depth in {window}.
+
 nvim_win_get_height({window})                          *nvim_win_get_height()*
     Gets the window height
 

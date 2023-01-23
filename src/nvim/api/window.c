@@ -15,6 +15,7 @@
 #include "nvim/drawscreen.h"
 #include "nvim/eval/window.h"
 #include "nvim/ex_docmd.h"
+#include "nvim/fold.h"
 #include "nvim/gettext.h"
 #include "nvim/globals.h"
 #include "nvim/lua/executor.h"
@@ -468,4 +469,40 @@ void nvim_win_set_hl_ns(Window window, Integer ns_id, Error *err)
   win->w_ns_hl = (NS)ns_id;
   win->w_hl_needs_update = true;
   redraw_later(win, UPD_NOT_VALID);
+}
+
+/// Get fold information for "line" in "window"
+///
+/// @param window   Window handle, or 0 for current window
+/// @param line   Line number for which to retrieve the fold information
+/// @param[out] err Error details, if any
+/// @return Dictionary containing fold information, with these keys:
+///       - level: (number) Level of the deepest fold, when zero the rest of the keys are invalid.
+///       - start: (number) Line number where the deepest fold containing "line" starts.
+///       - lines: (number) When non-zero, this indicates the number of lines from "line" until the
+///                         end of a closed fold.
+///       - low_level: (number) Lowest fold level that starts at "line".
+///       - max_depth: (number) Maximum fold depth in "window".
+Dictionary nvim_win_get_foldinfo(Window window, Integer line, Error *err)
+  FUNC_API_SINCE(9)
+{
+  Dictionary rv = ARRAY_DICT_INIT;
+
+  win_T *wp = find_window_by_handle(window, err);
+  if (wp == NULL) {
+    return rv;
+  }
+
+  if (line > wp->w_buffer->b_ml.ml_line_count) {
+    api_set_error(err, kErrorTypeValidation, "line value outside range");
+    return rv;
+  }
+
+  foldinfo_T fi = fold_info(wp, (linenr_T)line);
+  PUT(rv, "level", INTEGER_OBJ(fi.fi_level));
+  PUT(rv, "start", INTEGER_OBJ(fi.fi_lnum));
+  PUT(rv, "lines", INTEGER_OBJ(fi.fi_lines));
+  PUT(rv, "low_level", INTEGER_OBJ(fi.fi_low_level));
+  PUT(rv, "max_depth", INTEGER_OBJ(getDeepestNesting(wp)));
+  return rv;
 }
