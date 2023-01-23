@@ -1520,6 +1520,20 @@ static void did_set_virtualedit(win_T *win, int opt_flags, char *oldval, char **
   }
 }
 
+static void did_set_lispoptions(char **varp, char **errmsg)
+{
+  if (**varp != NUL && strcmp(*varp, "expr:0") != 0 && strcmp(*varp, "expr:1") != 0) {
+    *errmsg = e_invarg;
+  }
+}
+
+static void did_set_inccommand(char **errmsg)
+{
+  if (check_opt_strings(p_icm, p_icm_values, false) != OK) {
+    *errmsg = e_invarg;
+  }
+}
+
 static void did_set_filetype_or_syntax(char **varp, char *oldval, int *value_checked,
                                        bool *value_changed, char **errmsg)
 {
@@ -1533,6 +1547,20 @@ static void did_set_filetype_or_syntax(char **varp, char *oldval, int *value_che
   // Since we check the value, there is no need to set P_INSECURE,
   // even when the value comes from a modeline.
   *value_checked = true;
+}
+
+static void did_set_winhl(win_T *win, char **errmsg)
+{
+  if (!parse_winhl_opt(win)) {
+    *errmsg = e_invarg;
+  }
+}
+
+static void did_set_termpastefilter(char **errmsg)
+{
+  if (opt_strings_flags(p_tpf, p_tpf_values, &tpf_flags, true) != OK) {
+    *errmsg = e_invarg;
+  }
 }
 
 static void did_set_optexpr(buf_T *buf, win_T *win, char **varp, char **gvarp)
@@ -1885,23 +1913,15 @@ char *did_set_string_option(int opt_idx, char **varp, char *oldval, char *errbuf
     // TODO(vim): recognize errors
     parse_cino(curbuf);
   } else if (gvarp == &p_lop) {  // 'lispoptions'
-    if (**varp != NUL && strcmp(*varp, "expr:0") != 0 && strcmp(*varp, "expr:1") != 0) {
-      errmsg = e_invarg;
-    }
+    did_set_lispoptions(varp, &errmsg);
   } else if (varp == &p_icm) {  // 'inccommand'
-    if (check_opt_strings(p_icm, p_icm_values, false) != OK) {
-      errmsg = e_invarg;
-    }
+    did_set_inccommand(&errmsg);
   } else if (gvarp == &p_ft || gvarp == &p_syn) {
     did_set_filetype_or_syntax(varp, oldval, value_checked, &value_changed, &errmsg);
   } else if (varp == &curwin->w_p_winhl) {
-    if (!parse_winhl_opt(curwin)) {
-      errmsg = e_invarg;
-    }
+    did_set_winhl(curwin, &errmsg);
   } else if (varp == &p_tpf) {
-    if (opt_strings_flags(p_tpf, p_tpf_values, &tpf_flags, true) != OK) {
-      errmsg = e_invarg;
-    }
+    did_set_termpastefilter(&errmsg);
   } else if (varp == &(curbuf->b_p_vsts)) {  // 'varsofttabstop'
     char *cp;
 
