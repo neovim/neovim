@@ -698,6 +698,13 @@ static void did_set_helpfile(void)
   }
 }
 
+static void did_set_cursorlineopt(win_T *win, char **varp, char **errmsg)
+{
+  if (**varp == NUL || fill_culopt_flags(*varp, win) != OK) {
+    *errmsg = e_invarg;
+  }
+}
+
 static void did_set_helplang(char **errmsg)
 {
   // Check for "", "ab", "ab,cd", etc.
@@ -1457,9 +1464,7 @@ char *did_set_string_option(int opt_idx, char **varp, char *oldval, char *errbuf
     runtime_search_path_invalidate();
   } else if (varp == &curwin->w_p_culopt
              || gvarp == &curwin->w_allbuf_opt.wo_culopt) {  // 'cursorlineopt'
-    if (**varp == NUL || fill_culopt_flags(*varp, curwin) != OK) {
-      errmsg = e_invarg;
-    }
+    did_set_cursorlineopt(curwin, varp, &errmsg);
   } else if (varp == &curwin->w_p_cc) {  // 'colorcolumn'
     errmsg = check_colorcolumn(curwin);
   } else if (varp == &p_hlg) {  // 'helplang'
