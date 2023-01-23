@@ -348,7 +348,6 @@ install_helper(
 
 add_subdirectory(src/nvim)
 get_directory_property(NVIM_VERSION_CFLAGS DIRECTORY src/nvim DEFINITION NVIM_VERSION_CFLAGS)
-add_subdirectory(test/includes)
 add_subdirectory(cmake.config)
 add_subdirectory(test/functional/fixtures)  # compile test programs
 add_subdirectory(runtime)
@@ -371,7 +370,7 @@ endif()
 if(BUSTED_PRG)
   get_target_property(TEST_INCLUDE_DIRS main_lib INTERFACE_INCLUDE_DIRECTORIES)
 
-  set(UNITTEST_PREREQS nvim-test unittest-headers)
+  set(UNITTEST_PREREQS nvim-test)
   set(FUNCTIONALTEST_PREREQS nvim printenv-test printargs-test shell-test pwsh-test streams-test tty-test ${GENERATED_HELP_TAGS})
   set(BENCHMARK_PREREQS nvim tty-test)
 

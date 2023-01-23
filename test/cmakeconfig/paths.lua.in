@@ -6,7 +6,6 @@ for p in ("${TEST_INCLUDE_DIRS}" .. ";"):gmatch("[^;]+") do
 end
 
 module.test_build_dir = "${CMAKE_BINARY_DIR}"
-module.test_include_path = module.test_build_dir .. "/test/includes/post"
 module.test_libnvim_path = "${TEST_LIBNVIM_PATH}"
 module.test_source_path = "${CMAKE_SOURCE_DIR}"
 module.test_lua_prg = "${LUA_PRG}"
