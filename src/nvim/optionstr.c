@@ -1187,6 +1187,43 @@ static void did_set_clipboard(char **errmsg)
   }
 }
 
+static void did_set_spellfile(char **varp, char **errmsg)
+{
+  // When there is a window for this buffer in which 'spell'
+  // is set load the wordlists.
+
+  if ((!valid_spellfile(*varp))) {
+    *errmsg = e_invarg;
+  } else {
+    *errmsg = did_set_spell_option(true);
+  }
+}
+
+static void did_set_spell(char **varp, char **errmsg)
+{
+  // When there is a window for this buffer in which 'spell'
+  // is set load the wordlists.
+  if (!valid_spelllang(*varp)) {
+    *errmsg = e_invarg;
+  } else {
+    *errmsg = did_set_spell_option(false);
+  }
+}
+
+static void did_set_spellcapcheck(win_T *win, char **errmsg)
+{
+  // When 'spellcapcheck' is set compile the regexp program.
+  *errmsg = compile_cap_prog(win->w_s);
+}
+
+static void did_set_spelloptions(win_T *win, char **errmsg)
+{
+  if (opt_strings_flags(win->w_s->b_p_spo, p_spo_values, &(win->w_s->b_p_spo_flags),
+                        true) != OK) {
+    *errmsg = e_invarg;
+  }
+}
+
 static void did_set_spellsuggest(char **errmsg)
 {
   if (spell_check_sps() != OK) {
@@ -1197,6 +1234,14 @@ static void did_set_spellsuggest(char **errmsg)
 static void did_set_mkspellmem(char **errmsg)
 {
   if (spell_check_msm() != OK) {
+    *errmsg = e_invarg;
+  }
+}
+
+static void did_set_bufhidden(buf_T *buf, char **errmsg)
+{
+  // When 'bufhidden' is set, check for valid value.
+  if (check_opt_strings(buf->b_p_bh, p_bufhidden_values, false) != OK) {
     *errmsg = e_invarg;
   }
 }
@@ -1672,35 +1717,20 @@ char *did_set_string_option(int opt_idx, char **varp, char *oldval, char *errbuf
     did_set_eoddirection(&errmsg);
   } else if (varp == &p_cb) {  // 'clipboard'
     did_set_clipboard(&errmsg);
-  } else if (varp == &(curwin->w_s->b_p_spl)  // 'spell'
-             || varp == &(curwin->w_s->b_p_spf)) {
-    // When 'spelllang' or 'spellfile' is set and there is a window for this
-    // buffer in which 'spell' is set load the wordlists.
-    const bool is_spellfile = varp == &(curwin->w_s->b_p_spf);
-
-    if ((is_spellfile && !valid_spellfile(*varp))
-        || (!is_spellfile && !valid_spelllang(*varp))) {
-      errmsg = e_invarg;
-    } else {
-      errmsg = did_set_spell_option(is_spellfile);
-    }
+  } else if (varp == &(curwin->w_s->b_p_spf)) {
+    did_set_spellfile(varp, &errmsg);
+  } else if (varp == &(curwin->w_s->b_p_spl)) {  // 'spell'
+    did_set_spell(varp, &errmsg);
   } else if (varp == &(curwin->w_s->b_p_spc)) {
-    // When 'spellcapcheck' is set compile the regexp program.
-    errmsg = compile_cap_prog(curwin->w_s);
+    did_set_spellcapcheck(curwin, &errmsg);
   } else if (varp == &(curwin->w_s->b_p_spo)) {  // 'spelloptions'
-    if (opt_strings_flags(curwin->w_s->b_p_spo, p_spo_values, &(curwin->w_s->b_p_spo_flags),
-                          true) != OK) {
-      errmsg = e_invarg;
-    }
+    did_set_spelloptions(curwin, &errmsg);
   } else if (varp == &p_sps) {  // 'spellsuggest'
     did_set_spellsuggest(&errmsg);
   } else if (varp == &p_msm) {  // 'mkspellmem'
     did_set_mkspellmem(&errmsg);
   } else if (gvarp == &p_bh) {
-    // When 'bufhidden' is set, check for valid value.
-    if (check_opt_strings(curbuf->b_p_bh, p_bufhidden_values, false) != OK) {
-      errmsg = e_invarg;
-    }
+    did_set_bufhidden(curbuf, &errmsg);
   } else if (gvarp == &p_bt) {  // 'buftype'
     did_set_buftype(curbuf, curwin, &errmsg);
   } else if (gvarp == &p_stl || gvarp == &p_wbr || varp == &p_tal
