@@ -711,6 +711,13 @@ static void did_set_highlight(char **varp, char **errmsg)
   }
 }
 
+static void did_set_jumpoptions(char **errmsg)
+{
+  if (opt_strings_flags(p_jop, p_jop_values, &jop_flags, true) != OK) {
+    *errmsg = e_invarg;
+  }
+}
+
 static void did_set_background(char **errmsg)
 {
   if (check_opt_strings(p_bg, p_bg_values, false) != OK) {
@@ -1392,9 +1399,7 @@ char *did_set_string_option(int opt_idx, char **varp, char *oldval, char *errbuf
   } else if (varp == &p_hl) {  // 'highlight'
     did_set_highlight(varp, &errmsg);
   } else if (varp == &p_jop) {  // 'jumpoptions'
-    if (opt_strings_flags(p_jop, p_jop_values, &jop_flags, true) != OK) {
-      errmsg = e_invarg;
-    }
+    did_set_jumpoptions(&errmsg);
   } else if (gvarp == &p_nf) {  // 'nrformats'
     if (check_opt_strings(*varp, p_nf_values, true) != OK) {
       errmsg = e_invarg;
