@@ -966,6 +966,16 @@ static void did_set_shada(vimoption_T **opt, int *opt_idx, bool *free_oldval, ch
   }
 }
 
+static void did_set_showbreak(char **varp, char **errmsg)
+{
+  for (char *s = *varp; *s;) {
+    if (ptr2cells(s) != 1) {
+      *errmsg = e_showbreak_contains_unprintable_or_wide_character;
+    }
+    MB_PTR_ADV(s);
+  }
+}
+
 static void did_set_titleiconstring(char **varp)
 {
   // 'titlestring' and 'iconstring'
@@ -1446,12 +1456,7 @@ char *did_set_string_option(int opt_idx, char **varp, char *oldval, char *errbuf
   } else if (varp == &p_shada) {  // 'shada'
     did_set_shada(&opt, &opt_idx, &free_oldval, errbuf, errbuflen, &errmsg);
   } else if (gvarp == &p_sbr) {  // 'showbreak'
-    for (char *s = *varp; *s;) {
-      if (ptr2cells(s) != 1) {
-        errmsg = e_showbreak_contains_unprintable_or_wide_character;
-      }
-      MB_PTR_ADV(s);
-    }
+    did_set_showbreak(varp, &errmsg);
   } else if (varp == &p_guicursor) {  // 'guicursor'
     errmsg = parse_shape_opt(SHAPE_CURSOR);
   } else if (varp == &p_langmap) {  // 'langmap'
