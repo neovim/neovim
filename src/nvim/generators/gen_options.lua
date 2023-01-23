@@ -159,7 +159,7 @@ local dump_option = function(i, o)
     if #o.scope == 2 then
       pv_name = 'OPT_BOTH(' .. pv_name .. ')'
     end
-    defines['PV_' .. varname:sub(3):upper()] = pv_name
+    table.insert(defines,  { 'PV_' .. varname:sub(3):upper() , pv_name})
     w('    .indir=' .. pv_name)
   end
   if o.enable_if then
@@ -192,7 +192,7 @@ w('  [' .. ('%u'):format(#options.options) .. ']={.fullname=NULL}')
 w('};')
 w('')
 
-for k, v in pairs(defines) do
-  w('#define ' .. k .. ' ' .. v)
+for _, v in ipairs(defines) do
+  w('#define ' .. v[1] .. ' ' .. v[2])
 end
 opt_fd:close()

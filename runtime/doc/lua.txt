@@ -1694,6 +1694,18 @@ pesc({s})                                                         *vim.pesc()*
     See also: ~
         https://github.com/rxi/lume
 
+spairs({t})                                                     *vim.spairs()*
+    Enumerate a table sorted by its keys.
+
+    Parameters: ~
+      • {t}  (table) List-like table
+
+    Return: ~
+        iterator over sorted keys and their values
+
+    See also: ~
+        Based on https://github.com/premake/premake-core/blob/master/src/base/table.lua
+
 split({s}, {sep}, {kwargs})                                      *vim.split()*
     Splits a string at each instance of a separator.
 

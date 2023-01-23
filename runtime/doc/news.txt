@@ -143,6 +143,10 @@ The following new APIs or features were added.
   instance in the background and display its UI on demand, which previously
   only was possible using an external UI implementation.
 
+• Several improvements were made to make the code generation scripts more
+  deterministic, and a `LUA_GEN_PRG` build parameter has been introduced to
+  allow for a workaround for some remaining reproducibility problems.
+
 ==============================================================================
 CHANGED FEATURES                                                 *news-changes*
 

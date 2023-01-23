@@ -242,6 +242,17 @@ endif()
 
 message(STATUS "Using Lua interpreter: ${LUA_PRG}")
 
+# Some of the code generation still relies on stable table ordering in order to
+# produce reproducible output - specifically the msgpack'ed data in
+# funcs_metadata.generated.h and ui_events_metadata.generated.h. This should
+# ideally be fixed in the generators, but until then as a workaround you may provide
+# a specific lua implementation that provides the needed stability by setting LUA_GEN_PRG:
+if(NOT LUA_GEN_PRG)
+  set(LUA_GEN_PRG "${LUA_PRG}" CACHE FILEPATH "Path to the lua used for code generation.")
+endif()
+
+message(STATUS "Using Lua interpreter for code generation: ${LUA_GEN_PRG}")
+
 option(COMPILE_LUA "Pre-compile Lua sources into bytecode (for sources that are included in the binary)" ON)
 
 if(COMPILE_LUA AND NOT WIN32)

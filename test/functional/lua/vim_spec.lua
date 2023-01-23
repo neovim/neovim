@@ -763,6 +763,20 @@ describe('lua stdlib', function()
       pcall_err(exec_lua, code))
   end)
 
+  it('vim.spairs', function()
+    local res = ''
+    local table = {
+      ccc=1,
+      bbb=2,
+      ddd=3,
+      aaa=4
+    }
+    for key, _ in vim.spairs(table) do
+      res = res .. key
+    end
+    matches('aaabbbcccddd', res)
+  end)
+
   it('vim.call, vim.fn', function()
     eq(true, exec_lua([[return vim.call('sin', 0.0) == 0.0 ]]))
     eq(true, exec_lua([[return vim.fn.sin(0.0) == 0.0 ]]))
