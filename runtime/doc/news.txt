@@ -45,6 +45,8 @@ The following changes may require adaptations in user config or plugins.
     - `printheader`
     - `printmbcharset`
 
+• libiconv is now a required build dependency.
+
 ==============================================================================
 NEW FEATURES                                                    *news-features*
 
