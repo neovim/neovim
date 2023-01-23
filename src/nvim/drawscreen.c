@@ -126,12 +126,14 @@ static char *provider_err = NULL;
 void conceal_check_cursor_line(void)
 {
   bool should_conceal = conceal_cursor_line(curwin);
-  if (curwin->w_p_cole > 0 && (conceal_cursor_used != should_conceal)) {
-    redrawWinline(curwin, curwin->w_cursor.lnum);
-    // Need to recompute cursor column, e.g., when starting Visual mode
-    // without concealing.
-    curs_columns(curwin, true);
+  if (curwin->w_p_cole <= 0 || conceal_cursor_used == should_conceal) {
+    return;
   }
+
+  redrawWinline(curwin, curwin->w_cursor.lnum);
+  // Need to recompute cursor column, e.g., when starting Visual mode
+  // without concealing.
+  curs_columns(curwin, true);
 }
 
 /// Resize default_grid to Rows and Columns.
@@ -837,25 +839,29 @@ static bool vsep_connected(win_T *wp, WindowCorner corner)
 /// Draw the vertical separator right of window "wp"
 static void draw_vsep_win(win_T *wp)
 {
-  if (wp->w_vsep_width) {
-    // draw the vertical separator right of this window
-    int hl;
-    int c = fillchar_vsep(wp, &hl);
-    grid_fill(&default_grid, wp->w_winrow, W_ENDROW(wp),
-              W_ENDCOL(wp), W_ENDCOL(wp) + 1, c, ' ', hl);
+  if (!wp->w_vsep_width) {
+    return;
   }
+
+  // draw the vertical separator right of this window
+  int hl;
+  int c = fillchar_vsep(wp, &hl);
+  grid_fill(&default_grid, wp->w_winrow, W_ENDROW(wp),
+            W_ENDCOL(wp), W_ENDCOL(wp) + 1, c, ' ', hl);
 }
 
 /// Draw the horizontal separator below window "wp"
 static void draw_hsep_win(win_T *wp)
 {
-  if (wp->w_hsep_height) {
-    // draw the horizontal separator below this window
-    int hl;
-    int c = fillchar_hsep(wp, &hl);
-    grid_fill(&default_grid, W_ENDROW(wp), W_ENDROW(wp) + 1,
-              wp->w_wincol, W_ENDCOL(wp), c, c, hl);
+  if (!wp->w_hsep_height) {
+    return;
   }
+
+  // draw the horizontal separator below this window
+  int hl;
+  int c = fillchar_hsep(wp, &hl);
+  grid_fill(&default_grid, W_ENDROW(wp), W_ENDROW(wp) + 1,
+            wp->w_wincol, W_ENDCOL(wp), c, c, hl);
 }
 
 /// Get the separator connector for specified window corner of window "wp"

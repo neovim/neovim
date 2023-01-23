@@ -1488,14 +1488,16 @@ void spell_cat_line(char *buf, char *line, int maxlen)
     p = (char_u *)skipwhite((char *)p + 1);
   }
 
-  if (*p != NUL) {
-    // Only worth concatenating if there is something else than spaces to
-    // concatenate.
-    int n = (int)(p - (char_u *)line) + 1;
-    if (n < maxlen - 1) {
-      memset(buf, ' ', (size_t)n);
-      xstrlcpy(buf + n, (char *)p, (size_t)(maxlen - n));
-    }
+  if (*p == NUL) {
+    return;
+  }
+
+  // Only worth concatenating if there is something else than spaces to
+  // concatenate.
+  int n = (int)(p - (char_u *)line) + 1;
+  if (n < maxlen - 1) {
+    memset(buf, ' ', (size_t)n);
+    xstrlcpy(buf + n, (char *)p, (size_t)(maxlen - n));
   }
 }
 
@@ -1702,17 +1704,19 @@ static void spell_load_cb(char *fname, void *cookie)
 {
   spelload_T *slp = (spelload_T *)cookie;
   slang_T *slang = spell_load_file(fname, slp->sl_lang, NULL, false);
-  if (slang != NULL) {
-    // When a previously loaded file has NOBREAK also use it for the
-    // ".add" files.
-    if (slp->sl_nobreak && slang->sl_add) {
-      slang->sl_nobreak = true;
-    } else if (slang->sl_nobreak) {
-      slp->sl_nobreak = true;
-    }
-
-    slp->sl_slang = slang;
+  if (slang == NULL) {
+    return;
   }
+
+  // When a previously loaded file has NOBREAK also use it for the
+  // ".add" files.
+  if (slp->sl_nobreak && slang->sl_add) {
+    slang->sl_nobreak = true;
+  } else if (slang->sl_nobreak) {
+    slp->sl_nobreak = true;
+  }
+
+  slp->sl_slang = slang;
 }
 
 /// Add a word to the hashtable of common words.
@@ -2258,13 +2262,15 @@ int captype(char *word, const char *end)
 // Delete the internal wordlist and its .spl file.
 void spell_delete_wordlist(void)
 {
-  if (int_wordlist != NULL) {
-    char fname[MAXPATHL] = { 0 };
-    os_remove(int_wordlist);
-    int_wordlist_spl(fname);
-    os_remove(fname);
-    XFREE_CLEAR(int_wordlist);
+  if (int_wordlist == NULL) {
+    return;
   }
+
+  char fname[MAXPATHL] = { 0 };
+  os_remove(int_wordlist);
+  int_wordlist_spl(fname);
+  os_remove(fname);
+  XFREE_CLEAR(int_wordlist);
 }
 
 // Free all languages.
@@ -2332,10 +2338,12 @@ buf_T *open_spellbuf(void)
 // Close the buffer used for spell info.
 void close_spellbuf(buf_T *buf)
 {
-  if (buf != NULL) {
-    ml_close(buf, true);
-    xfree(buf);
+  if (buf == NULL) {
+    return;
   }
+
+  ml_close(buf, true);
+  xfree(buf);
 }
 
 // Init the chartab used for spelling for ASCII.
@@ -3624,15 +3632,16 @@ char *did_set_spell_option(bool is_spellfile)
     }
   }
 
-  if (errmsg == NULL) {
-    FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
-      if (wp->w_buffer == curbuf && wp->w_p_spell) {
-        errmsg = did_set_spelllang(wp);
-        break;
-      }
-    }
+  if (errmsg != NULL) {
+    return errmsg;
   }
 
+  FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+    if (wp->w_buffer == curbuf && wp->w_p_spell) {
+      errmsg = did_set_spelllang(wp);
+      break;
+    }
+  }
   return errmsg;
 }
 

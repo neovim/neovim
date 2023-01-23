@@ -821,12 +821,14 @@ static void source_all_matches(char *pat)
   int num_files;
   char **files;
 
-  if (gen_expand_wildcards(1, &pat, &num_files, &files, EW_FILE) == OK) {
-    for (int i = 0; i < num_files; i++) {
-      (void)do_source(files[i], false, DOSO_NONE);
-    }
-    FreeWild(num_files, files);
+  if (gen_expand_wildcards(1, &pat, &num_files, &files, EW_FILE) != OK) {
+    return;
   }
+
+  for (int i = 0; i < num_files; i++) {
+    (void)do_source(files[i], false, DOSO_NONE);
+  }
+  FreeWild(num_files, files);
 }
 
 /// Add the package directory to 'runtimepath'
