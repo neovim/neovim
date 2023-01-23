@@ -1165,8 +1165,8 @@ static void did_set_virtualedit(win_T *win, int opt_flags, char *oldval, char **
   }
 }
 
-static void did_set_syntax(char **varp, char *oldval, int *value_checked, bool *value_changed,
-                           char **errmsg)
+static void did_set_filetype_or_syntax(char **varp, char *oldval, int *value_checked,
+                                       bool *value_changed, char **errmsg)
 {
   if (!valid_filetype(*varp)) {
     *errmsg = e_invarg;
@@ -1664,18 +1664,8 @@ char *did_set_string_option(int opt_idx, char **varp, char *oldval, char *errbuf
     if (check_opt_strings(p_icm, p_icm_values, false) != OK) {
       errmsg = e_invarg;
     }
-  } else if (gvarp == &p_ft) {
-    if (!valid_filetype(*varp)) {
-      errmsg = e_invarg;
-    } else {
-      value_changed = strcmp(oldval, *varp) != 0;
-
-      // Since we check the value, there is no need to set P_INSECURE,
-      // even when the value comes from a modeline.
-      *value_checked = true;
-    }
-  } else if (gvarp == &p_syn) {
-    did_set_syntax(varp, oldval, value_checked, &value_changed, &errmsg);
+  } else if (gvarp == &p_ft || gvarp == &p_syn) {
+    did_set_filetype_or_syntax(varp, oldval, value_checked, &value_changed, &errmsg);
   } else if (varp == &curwin->w_p_winhl) {
     if (!parse_winhl_opt(curwin)) {
       errmsg = e_invarg;
