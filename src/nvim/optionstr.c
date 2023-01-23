@@ -1111,6 +1111,96 @@ static void did_set_titleiconstring(char **varp)
   did_set_title();
 }
 
+static void did_set_selection(char **errmsg)
+{
+  if (*p_sel == NUL || check_opt_strings(p_sel, p_sel_values, false) != OK) {
+    *errmsg = e_invarg;
+  }
+}
+
+static void did_set_selectmode(char **errmsg)
+{
+  if (check_opt_strings(p_slm, p_slm_values, true) != OK) {
+    *errmsg = e_invarg;
+  }
+}
+
+static void did_set_keymodel(char **errmsg)
+{
+  if (check_opt_strings(p_km, p_km_values, true) != OK) {
+    *errmsg = e_invarg;
+    return;
+  }
+  km_stopsel = (vim_strchr(p_km, 'o') != NULL);
+  km_startsel = (vim_strchr(p_km, 'a') != NULL);
+}
+
+static void did_set_mousemodel(char **errmsg)
+{
+  if (check_opt_strings(p_mousem, p_mousem_values, false) != OK) {
+    *errmsg = e_invarg;
+  }
+}
+
+static void did_set_switchbuf(char **errmsg)
+{
+  if (opt_strings_flags(p_swb, p_swb_values, &swb_flags, true) != OK) {
+    *errmsg = e_invarg;
+  }
+}
+
+static void did_set_splitkeep(char **errmsg)
+{
+  if (check_opt_strings(p_spk, p_spk_values, false) != OK) {
+    *errmsg = e_invarg;
+  }
+}
+
+static void did_set_debug(char **errmsg)
+{
+  if (check_opt_strings(p_debug, p_debug_values, true) != OK) {
+    *errmsg = e_invarg;
+  }
+}
+
+static void did_set_display(char **errmsg)
+{
+  if (opt_strings_flags(p_dy, p_dy_values, &dy_flags, true) != OK) {
+    *errmsg = e_invarg;
+    return;
+  }
+  (void)init_chartab();
+  msg_grid_validate();
+}
+
+static void did_set_eoddirection(char **errmsg)
+{
+  if (check_opt_strings(p_ead, p_ead_values, false) != OK) {
+    *errmsg = e_invarg;
+  }
+}
+
+static void did_set_clipboard(char **errmsg)
+{
+  if (opt_strings_flags(p_cb, p_cb_values, &cb_flags, true) != OK) {
+    *errmsg = e_invarg;
+  }
+}
+
+static void did_set_spellsuggest(char **errmsg)
+{
+  if (spell_check_sps() != OK) {
+    *errmsg = e_invarg;
+  }
+}
+
+static void did_set_mkspellmem(char **errmsg)
+{
+  if (spell_check_msm() != OK) {
+    *errmsg = e_invarg;
+  }
+}
+
 static void did_set_buftype(buf_T *buf, win_T *win, char **errmsg)
 {
   // When 'buftype' is set, check for valid value.
@@ -1561,54 +1651,27 @@ char *did_set_string_option(int opt_idx, char **varp, char *oldval, char *errbuf
     // 'titlestring' and 'iconstring'
     did_set_titleiconstring(varp);
   } else if (varp == &p_sel) {  // 'selection'
-    if (*p_sel == NUL
-        || check_opt_strings(p_sel, p_sel_values, false) != OK) {
-      errmsg = e_invarg;
-    }
+    did_set_selection(&errmsg);
   } else if (varp == &p_slm) {  // 'selectmode'
-    if (check_opt_strings(p_slm, p_slm_values, true) != OK) {
-      errmsg = e_invarg;
-    }
+    did_set_selectmode(&errmsg);
   } else if (varp == &p_km) {  // 'keymodel'
-    if (check_opt_strings(p_km, p_km_values, true) != OK) {
-      errmsg = e_invarg;
-    } else {
-      km_stopsel = (vim_strchr(p_km, 'o') != NULL);
-      km_startsel = (vim_strchr(p_km, 'a') != NULL);
-    }
+    did_set_keymodel(&errmsg);
   } else if (varp == &p_mousem) {  // 'mousemodel'
-    if (check_opt_strings(p_mousem, p_mousem_values, false) != OK) {
-      errmsg = e_invarg;
-    }
+    did_set_mousemodel(&errmsg);
   } else if (varp == &p_mousescroll) {  // 'mousescroll'
     errmsg = check_mousescroll(p_mousescroll);
   } else if (varp == &p_swb) {  // 'switchbuf'
-    if (opt_strings_flags(p_swb, p_swb_values, &swb_flags, true) != OK) {
-      errmsg = e_invarg;
-    }
+    did_set_switchbuf(&errmsg);
   } else if (varp == &p_spk) {  // 'splitkeep'
-    if (check_opt_strings(p_spk, p_spk_values, false) != OK) {
-      errmsg = e_invarg;
-    }
+    did_set_splitkeep(&errmsg);
   } else if (varp == &p_debug) {  // 'debug'
-    if (check_opt_strings(p_debug, p_debug_values, true) != OK) {
-      errmsg = e_invarg;
-    }
+    did_set_debug(&errmsg);
   } else if (varp == &p_dy) {  // 'display'
-    if (opt_strings_flags(p_dy, p_dy_values, &dy_flags, true) != OK) {
-      errmsg = e_invarg;
-    } else {
-      (void)init_chartab();
-      msg_grid_validate();
-    }
+    did_set_display(&errmsg);
   } else if (varp == &p_ead) {  // 'eadirection'
-    if (check_opt_strings(p_ead, p_ead_values, false) != OK) {
-      errmsg = e_invarg;
-    }
+    did_set_eoddirection(&errmsg);
   } else if (varp == &p_cb) {  // 'clipboard'
-    if (opt_strings_flags(p_cb, p_cb_values, &cb_flags, true) != OK) {
-      errmsg = e_invarg;
-    }
+    did_set_clipboard(&errmsg);
   } else if (varp == &(curwin->w_s->b_p_spl)  // 'spell'
              || varp == &(curwin->w_s->b_p_spf)) {
     // When 'spelllang' or 'spellfile' is set and there is a window for this
@@ -1630,13 +1693,9 @@ char *did_set_string_option(int opt_idx, char **varp, char *oldval, char *errbuf
       errmsg = e_invarg;
     }
   } else if (varp == &p_sps) {  // 'spellsuggest'
-    if (spell_check_sps() != OK) {
-      errmsg = e_invarg;
-    }
+    did_set_spellsuggest(&errmsg);
   } else if (varp == &p_msm) {  // 'mkspellmem'
-    if (spell_check_msm() != OK) {
-      errmsg = e_invarg;
-    }
+    did_set_mkspellmem(&errmsg);
   } else if (gvarp == &p_bh) {
     // When 'bufhidden' is set, check for valid value.
     if (check_opt_strings(curbuf->b_p_bh, p_bufhidden_values, false) != OK) {
