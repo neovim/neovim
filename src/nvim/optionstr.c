@@ -668,6 +668,14 @@ static void did_set_backupcopy(buf_T *buf, char *oldval, int opt_flags, char **e
   }
 }
 
+static void did_set_backupext_or_patchmode(char **errmsg)
+{
+  if (strcmp(*p_bex == '.' ? p_bex + 1 : p_bex,
+             *p_pm == '.' ? p_pm + 1 : p_pm) == 0) {
+    *errmsg = e_backupext_and_patchmode_are_equal;
+  }
+}
+
 static void did_set_breakindentopt(win_T *win, char **errmsg)
 {
   if (briopt_check(win) == FAIL) {
@@ -1385,10 +1393,7 @@ char *did_set_string_option(int opt_idx, char **varp, char *oldval, char *errbuf
   } else if (gvarp == &p_bkc) {  // 'backupcopy'
     did_set_backupcopy(curbuf, oldval, opt_flags, &errmsg);
   } else if (varp == &p_bex || varp == &p_pm) {  // 'backupext' and 'patchmode'
-    if (strcmp(*p_bex == '.' ? p_bex + 1 : p_bex,
-               *p_pm == '.' ? p_pm + 1 : p_pm) == 0) {
-      errmsg = e_backupext_and_patchmode_are_equal;
-    }
+    did_set_backupext_or_patchmode(&errmsg);
   } else if (varp == &curwin->w_p_briopt) {  // 'breakindentopt'
     did_set_breakindentopt(curwin, &errmsg);
   } else if (varp == &p_isi
