@@ -640,6 +640,17 @@ char *check_stl_option(char *s)
 
 static int shada_idx = -1;
 
+static bool check_illegal_path_names(char *val, uint32_t flags)
+{
+  // Disallow a path separator (slash and/or backslash), wildcards and
+  // characters that are often illegal in a file name. Be more permissive
+  // if "secure" is off.
+  return (((flags & P_NFNAME)
+           && strpbrk(val, (secure ? "/\\*?[|;&<>\r\n" : "/\\*?[<>\r\n")) != NULL)
+          || ((flags & P_NDNAME)
+              && strpbrk(val, "*?[|;&<>\r\n") != NULL));
+}
+
 static void did_set_backupcopy(buf_T *buf, char *oldval, int opt_flags, char **errmsg)
 {
   char *bkc = p_bkc;
@@ -684,6 +695,17 @@ static void did_set_breakindentopt(win_T *win, char **errmsg)
   // list setting requires a redraw
   if (win == curwin && win->w_briopt_list) {
     redraw_all_later(UPD_NOT_VALID);
+  }
+}
+
+static void did_set_isopt(buf_T *buf, bool *did_chartab, char **errmsg)
+{
+  // 'isident', 'iskeyword', 'isprint or 'isfname' option: refill g_chartab[]
+  // If the new option is invalid, use old value.  'lisp' option: refill
+  // g_chartab[] for '-' char
+  if (buf_init_chartab(buf, true) == FAIL) {
+    *did_chartab = true;           // need to restore it below
+    *errmsg = e_invarg;            // error in value
   }
 }
 
@@ -1623,7 +1645,7 @@ char *did_set_string_option(int opt_idx, char **varp, char *oldval, char *errbuf
                             int opt_flags, int *value_checked)
 {
   char *errmsg = NULL;
-  int did_chartab = false;
+  bool did_chartab = false;
   vimoption_T *opt = get_option(opt_idx);
   bool free_oldval = (opt->flags & P_ALLOCED);
   bool value_changed = false;
@@ -1636,13 +1658,8 @@ char *did_set_string_option(int opt_idx, char **varp, char *oldval, char *errbuf
   if ((secure || sandbox != 0)
       && (opt->flags & P_SECURE)) {
     errmsg = e_secure;
-  } else if (((opt->flags & P_NFNAME)
-              && strpbrk(*varp, (secure ? "/\\*?[|;&<>\r\n" : "/\\*?[<>\r\n")) != NULL)
-             || ((opt->flags & P_NDNAME)
-                 && strpbrk(*varp, "*?[|;&<>\r\n") != NULL)) {
-    // Check for a "normal" directory or file name in some options.  Disallow a
-    // path separator (slash and/or backslash), wildcards and characters that
-    // are often illegal in a file name. Be more permissive if "secure" is off.
+  } else if (check_illegal_path_names(*varp, opt->flags)) {
+    // Check for a "normal" directory or file name in some options.
     errmsg = e_invarg;
   } else if (gvarp == &p_bkc) {  // 'backupcopy'
     did_set_backupcopy(curbuf, oldval, opt_flags, &errmsg);
@@ -1654,13 +1671,8 @@ char *did_set_string_option(int opt_idx, char **varp, char *oldval, char *errbuf
              || varp == &(curbuf->b_p_isk)
              || varp == &p_isp
              || varp == &p_isf) {
-    // 'isident', 'iskeyword', 'isprint or 'isfname' option: refill g_chartab[]
-    // If the new option is invalid, use old value.  'lisp' option: refill
-    // g_chartab[] for '-' char
-    if (init_chartab() == FAIL) {
-      did_chartab = true;           // need to restore it below
-      errmsg = e_invarg;            // error in value
-    }
+    // 'isident', 'iskeyword', 'isprint or 'isfname' option
+    did_set_isopt(buf, &did_chartab, &errmsg);
   } else if (varp == &p_hf) {  // 'helpfile'
     did_set_helpfile();
   } else if (varp == &p_rtp || varp == &p_pp) {  // 'runtimepath' 'packpath'
@@ -1868,7 +1880,7 @@ char *did_set_string_option(int opt_idx, char **varp, char *oldval, char *errbuf
     *varp = oldval;
     // When resetting some values, need to act on it.
     if (did_chartab) {
-      (void)init_chartab();
+      (void)buf_init_chartab(buf, true);
     }
   } else {
     // Remember where the option was set.
