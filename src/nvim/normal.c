@@ -1994,7 +1994,7 @@ void pop_showcmd(void)
   display_showcmd();
 }
 
-static void display_showcmd(void)
+void display_showcmd(void)
 {
   int len = (int)strlen(showcmd_buf);
   showcmd_is_clear = (len == 0);
@@ -2007,10 +2007,6 @@ static void display_showcmd(void)
   if (*p_sloc == 't') {
     draw_tabline();
     setcursor();  // put cursor back where it belongs
-    return;
-  }
-  // 'showcmdloc' is "last" or empty
-  if (p_ch == 0 && !ui_has(kUIMessages)) {
     return;
   }
 
@@ -2028,16 +2024,18 @@ static void display_showcmd(void)
   }
 
   msg_grid_validate();
-  int showcmd_row = Rows - 1;
-  grid_puts_line_start(&msg_grid_adj, showcmd_row);
+  // NOTE: If 'laststatus' >= 2, use above line than statusline
+  int showcmd_row = p_ch <= 0 && p_ls >= 2 ? Rows - 2 : Rows - 1;
+  ScreenGrid *grid = p_ch <= 0 ? &default_grid : &msg_grid_adj;
+  grid_puts_line_start(grid, showcmd_row);
 
   if (!showcmd_is_clear) {
-    grid_puts(&msg_grid_adj, showcmd_buf, showcmd_row, sc_col,
+    grid_puts(grid, showcmd_buf, showcmd_row, sc_col,
               HL_ATTR(HLF_MSG));
   }
 
   // clear the rest of an old message by outputting up to SHOWCMD_COLS spaces
-  grid_puts(&msg_grid_adj, (char *)"          " + len, showcmd_row,
+  grid_puts(grid, (char *)"          " + len, showcmd_row,
             sc_col + len, HL_ATTR(HLF_MSG));
 
   grid_puts_line_flush(false);
