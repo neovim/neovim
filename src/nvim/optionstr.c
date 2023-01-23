@@ -745,6 +745,15 @@ static void did_set_sessionoptions(char *oldval, char **errmsg)
   }
 }
 
+static void did_set_ambiwidth(char **errmsg)
+{
+  if (check_opt_strings(p_ambw, p_ambw_values, false) != OK) {
+    *errmsg = e_invarg;
+  } else {
+    *errmsg = check_chars_options();
+  }
+}
+
 static void did_set_background(char **errmsg)
 {
   if (check_opt_strings(p_bg, p_bg_values, false) != OK) {
@@ -1455,11 +1464,7 @@ char *did_set_string_option(int opt_idx, char **varp, char *oldval, char *errbuf
       errmsg = e_invarg;
     }
   } else if (varp == &p_ambw || (int *)varp == &p_emoji) {  // 'ambiwidth'
-    if (check_opt_strings(p_ambw, p_ambw_values, false) != OK) {
-      errmsg = e_invarg;
-    } else {
-      errmsg = check_chars_options();
-    }
+    did_set_ambiwidth(&errmsg);
   } else if (varp == &p_bg) {  // 'background'
     did_set_background(&errmsg);
   } else if (varp == &p_wim) {  // 'wildmode'
