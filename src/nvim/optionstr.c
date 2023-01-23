@@ -725,6 +725,18 @@ static void did_set_nrformats(char **varp, char **errmsg)
   }
 }
 
+static void did_set_sessionoptions(char *oldval, char **errmsg)
+{
+  if (opt_strings_flags(p_ssop, p_ssop_values, &ssop_flags, true) != OK) {
+    *errmsg = e_invarg;
+  }
+  if ((ssop_flags & SSOP_CURDIR) && (ssop_flags & SSOP_SESDIR)) {
+    // Don't allow both "sesdir" and "curdir".
+    (void)opt_strings_flags(oldval, p_ssop_values, &ssop_flags, true);
+    *errmsg = e_invarg;
+  }
+}
+
 static void did_set_background(char **errmsg)
 {
   if (check_opt_strings(p_bg, p_bg_values, false) != OK) {
@@ -1410,14 +1422,7 @@ char *did_set_string_option(int opt_idx, char **varp, char *oldval, char *errbuf
   } else if (gvarp == &p_nf) {  // 'nrformats'
     did_set_nrformats(varp, &errmsg);
   } else if (varp == &p_ssop) {  // 'sessionoptions'
-    if (opt_strings_flags(p_ssop, p_ssop_values, &ssop_flags, true) != OK) {
-      errmsg = e_invarg;
-    }
-    if ((ssop_flags & SSOP_CURDIR) && (ssop_flags & SSOP_SESDIR)) {
-      // Don't allow both "sesdir" and "curdir".
-      (void)opt_strings_flags(oldval, p_ssop_values, &ssop_flags, true);
-      errmsg = e_invarg;
-    }
+    did_set_sessionoptions(oldval, &errmsg);
   } else if (varp == &p_vop) {  // 'viewoptions'
     if (opt_strings_flags(p_vop, p_ssop_values, &vop_flags, true) != OK) {
       errmsg = e_invarg;
