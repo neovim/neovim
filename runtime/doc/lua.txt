@@ -2392,7 +2392,7 @@ normalize({path})                                         *vim.fs.normalize()*
 
     Examples: >lua
 
-       vim.fs.normalize('C:\Users\jdoe')
+       vim.fs.normalize('C:\\Users\\jdoe')
        --> 'C:/Users/jdoe'
 
        vim.fs.normalize('~/src/neovim')
