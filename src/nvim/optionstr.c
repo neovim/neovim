@@ -966,6 +966,20 @@ static void did_set_shada(vimoption_T **opt, int *opt_idx, bool *free_oldval, ch
   }
 }
 
+static void did_set_titleiconstring(char **varp)
+{
+  // 'titlestring' and 'iconstring'
+  int flagval = (varp == &p_titlestring) ? STL_IN_TITLE : STL_IN_ICON;
+
+  // NULL => statusline syntax
+  if (vim_strchr(*varp, '%') && check_stl_option(*varp) == NULL) {
+    stl_syntax |= flagval;
+  } else {
+    stl_syntax &= ~flagval;
+  }
+  did_set_title();
+}
+
 static void did_set_buftype(buf_T *buf, win_T *win, char **errmsg)
 {
   // When 'buftype' is set, check for valid value.
@@ -1446,15 +1460,7 @@ char *did_set_string_option(int opt_idx, char **varp, char *oldval, char *errbuf
     fill_breakat_flags();
   } else if (varp == &p_titlestring || varp == &p_iconstring) {
     // 'titlestring' and 'iconstring'
-    int flagval = (varp == &p_titlestring) ? STL_IN_TITLE : STL_IN_ICON;
-
-    // NULL => statusline syntax
-    if (vim_strchr(*varp, '%') && check_stl_option(*varp) == NULL) {
-      stl_syntax |= flagval;
-    } else {
-      stl_syntax &= ~flagval;
-    }
-    did_set_title();
+    did_set_titleiconstring(varp);
   } else if (varp == &p_sel) {  // 'selection'
     if (*p_sel == NUL
         || check_opt_strings(p_sel, p_sel_values, false) != OK) {
