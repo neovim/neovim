@@ -584,6 +584,7 @@ int main(int argc, char **argv)
   if (use_builtin_ui) {
     os_icon_init();
   }
+  os_title_save();
 #endif
 
   // Adjust default register name for "unnamed" in 'clipboard'. Can only be
@@ -775,6 +776,7 @@ void getout(int exitval)
 #ifdef MSWIN
   // Restore Windows console icon before exiting.
   os_icon_set(NULL, NULL);
+  os_title_reset();
 #endif
 
   os_exit(exitval);
