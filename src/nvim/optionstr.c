@@ -1020,6 +1020,14 @@ static void did_set_global_listfillchars(win_T *win, char **varp, int opt_flags,
   }
 }
 
+static void did_set_verbosefile(char **errmsg)
+{
+  verbose_stop();
+  if (*p_vfile != NUL && verbose_open() == FAIL) {
+    *errmsg = e_invarg;
+  }
+}
+
 static void did_set_shada(vimoption_T **opt, int *opt_idx, bool *free_oldval, char *errbuf,
                           size_t errbuflen, char **errmsg)
 {
@@ -1538,10 +1546,7 @@ char *did_set_string_option(int opt_idx, char **varp, char *oldval, char *errbuf
   } else if (varp == &p_cedit) {  // 'cedit'
     errmsg = check_cedit();
   } else if (varp == &p_vfile) {  // 'verbosefile'
-    verbose_stop();
-    if (*p_vfile != NUL && verbose_open() == FAIL) {
-      errmsg = e_invarg;
-    }
+    did_set_verbosefile(&errmsg);
   } else if (varp == &p_shada) {  // 'shada'
     did_set_shada(&opt, &opt_idx, &free_oldval, errbuf, errbuflen, &errmsg);
   } else if (gvarp == &p_sbr) {  // 'showbreak'
