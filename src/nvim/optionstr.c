@@ -1358,6 +1358,20 @@ static void did_set_signcolumn(win_T *win, char **varp, const char *oldval, char
   }
 }
 
+static void did_set_showcmdloc(char **errmsg)
+{
+  if (check_opt_strings(p_sloc, p_sloc_values, false) != OK) {
+    *errmsg = e_invarg;
+  }
+}
+
+static void did_set_foldcolumn(char **varp, char **errmsg)
+{
+  if (**varp == NUL || check_opt_strings(*varp, p_fdc_values, false) != OK) {
+    *errmsg = e_invarg;
+  }
+}
+
 static void did_set_pastetoggle(void)
 {
   // 'pastetoggle': translate key codes like in a mapping
@@ -1371,6 +1385,24 @@ static void did_set_pastetoggle(void)
       free_string_option(p_pt);
       p_pt = p;
     }
+  }
+}
+
+static void did_set_backspace(char **errmsg)
+{
+  if (ascii_isdigit(*p_bs)) {
+    if (*p_bs > '3' || p_bs[1] != NUL) {
+      *errmsg = e_invarg;
+    }
+  } else if (check_opt_strings(p_bs, p_bs_values, true) != OK) {
+    *errmsg = e_invarg;
+  }
+}
+
+static void did_set_belloff(char **errmsg)
+{
+  if (opt_strings_flags(p_bo, p_bo_values, &bo_flags, true) != OK) {
+    *errmsg = e_invarg;
   }
 }
 
@@ -1393,6 +1425,45 @@ static void did_set_tagcase(buf_T *buf, int opt_flags, char **errmsg)
   } else if (*p == NUL
              || opt_strings_flags(p, p_tc_values, flags, false) != OK) {
     *errmsg = e_invarg;
+  }
+}
+
+static void did_set_casemap(char **errmsg)
+{
+  if (opt_strings_flags(p_cmp, p_cmp_values, &cmp_flags, true) != OK) {
+    *errmsg = e_invarg;
+  }
+}
+
+static void did_set_diffopt(char **errmsg)
+{
+  if (diffopt_changed() == FAIL) {
+    *errmsg = e_invarg;
+  }
+}
+
+static void did_set_foldmethod(win_T *win, char **varp, char **errmsg)
+{
+  if (check_opt_strings(*varp, p_fdm_values, false) != OK
+      || *win->w_p_fdm == NUL) {
+    *errmsg = e_invarg;
+  } else {
+    foldUpdateAll(win);
+    if (foldmethodIsDiff(win)) {
+      newFoldLevel();
+    }
+  }
+}
+
+static void did_set_foldmarker(win_T *win, char **varp, char **errmsg)
+{
+  char *p = vim_strchr(*varp, ',');
+  if (p == NULL) {
+    *errmsg = N_("E536: comma required");
+  } else if (p == *varp || p[1] == NUL) {
+    *errmsg = e_invarg;
+  } else if (foldmethodIsMarker(win)) {
+    foldUpdateAll(win);
   }
 }
 
@@ -1751,58 +1822,27 @@ char *did_set_string_option(int opt_idx, char **varp, char *oldval, char *errbuf
   } else if (varp == &curwin->w_p_scl) {  // 'signcolumn'
     did_set_signcolumn(curwin, varp, oldval, &errmsg);
   } else if (varp == &p_sloc) {  // 'showcmdloc'
-    if (check_opt_strings(p_sloc, p_sloc_values, false) != OK) {
-      errmsg = e_invarg;
-    }
+    did_set_showcmdloc(&errmsg);
   } else if (varp == &curwin->w_p_fdc
              || varp == &curwin->w_allbuf_opt.wo_fdc) {
     // 'foldcolumn'
-    if (**varp == NUL || check_opt_strings(*varp, p_fdc_values, false) != OK) {
-      errmsg = e_invarg;
-    }
+    did_set_foldcolumn(varp, &errmsg);
   } else if (varp == &p_pt) {  // 'pastetoggle'
     did_set_pastetoggle();
   } else if (varp == &p_bs) {  // 'backspace'
-    if (ascii_isdigit(*p_bs)) {
-      if (*p_bs > '3' || p_bs[1] != NUL) {
-        errmsg = e_invarg;
-      }
-    } else if (check_opt_strings(p_bs, p_bs_values, true) != OK) {
-      errmsg = e_invarg;
-    }
+    did_set_backspace(&errmsg);
   } else if (varp == &p_bo) {
-    if (opt_strings_flags(p_bo, p_bo_values, &bo_flags, true) != OK) {
-      errmsg = e_invarg;
-    }
+    did_set_belloff(&errmsg);
   } else if (gvarp == &p_tc) {  // 'tagcase'
     did_set_tagcase(curbuf, opt_flags, &errmsg);
   } else if (varp == &p_cmp) {  // 'casemap'
-    if (opt_strings_flags(p_cmp, p_cmp_values, &cmp_flags, true) != OK) {
-      errmsg = e_invarg;
-    }
+    did_set_casemap(&errmsg);
   } else if (varp == &p_dip) {  // 'diffopt'
-    if (diffopt_changed() == FAIL) {
-      errmsg = e_invarg;
-    }
+    did_set_diffopt(&errmsg);
   } else if (gvarp == &curwin->w_allbuf_opt.wo_fdm) {  // 'foldmethod'
-    if (check_opt_strings(*varp, p_fdm_values, false) != OK
-        || *curwin->w_p_fdm == NUL) {
-      errmsg = e_invarg;
-    } else {
-      foldUpdateAll(curwin);
-      if (foldmethodIsDiff(curwin)) {
-        newFoldLevel();
-      }
-    }
+    did_set_foldmethod(curwin, varp, &errmsg);
   } else if (gvarp == &curwin->w_allbuf_opt.wo_fmr) {  // 'foldmarker'
-    char *p = vim_strchr(*varp, ',');
-    if (p == NULL) {
-      errmsg = N_("E536: comma required");
-    } else if (p == *varp || p[1] == NUL) {
-      errmsg = e_invarg;
-    } else if (foldmethodIsMarker(curwin)) {
-      foldUpdateAll(curwin);
-    }
+    did_set_foldmarker(curwin, varp, &errmsg);
   } else if (gvarp == &p_cms) {  // 'commentstring'
     if (**varp != NUL && strstr(*varp, "%s") == NULL) {
       errmsg = N_("E537: 'commentstring' must be empty or contain %s");
