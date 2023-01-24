@@ -75,14 +75,6 @@ endif()
 
 if(UNIX)
   find_program(MAKE_PRG NAMES gmake make)
-  if(MAKE_PRG)
-    execute_process(
-      COMMAND "${MAKE_PRG}" --version
-      OUTPUT_VARIABLE MAKE_VERSION_INFO)
-    if(NOT "${OUTPUT_VARIABLE}" MATCHES ".*GNU.*")
-      unset(MAKE_PRG)
-    endif()
-  endif()
   if(NOT MAKE_PRG)
     message(FATAL_ERROR "GNU Make is required to build the dependencies.")
   else()
