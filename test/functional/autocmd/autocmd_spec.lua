@@ -9,6 +9,7 @@ local neq = helpers.neq
 local eval = helpers.eval
 local feed = helpers.feed
 local clear = helpers.clear
+local matches = helpers.matches
 local meths = helpers.meths
 local pcall_err = helpers.pcall_err
 local funcs = helpers.funcs
@@ -433,6 +434,39 @@ describe('autocmd', function()
       eq('BufAdd Autocommands for "Xa.txt": Vim(close):E814: Cannot close window, only autocmd window would remain',
          pcall_err(command, 'doautoall BufAdd'))
     end)
+  end)
+
+  it('closing `aucmd_win` using API gives E813', function()
+    exec_lua([[
+      vim.cmd('tabnew')
+      _G.buf = vim.api.nvim_create_buf(true, true)
+    ]])
+    matches('Vim:E813: Cannot close autocmd window$', pcall_err(exec_lua, [[
+      vim.api.nvim_buf_call(_G.buf, function()
+        local win = vim.api.nvim_get_current_win()
+        vim.api.nvim_win_close(win, true)
+      end)
+    ]]))
+    matches('Vim:E813: Cannot close autocmd window$', pcall_err(exec_lua, [[
+      vim.api.nvim_buf_call(_G.buf, function()
+        local win = vim.api.nvim_get_current_win()
+        vim.cmd('tabnext')
+        vim.api.nvim_win_close(win, true)
+      end)
+    ]]))
+    matches('Vim:E813: Cannot close autocmd window$', pcall_err(exec_lua, [[
+      vim.api.nvim_buf_call(_G.buf, function()
+        local win = vim.api.nvim_get_current_win()
+        vim.api.nvim_win_hide(win)
+      end)
+    ]]))
+    matches('Vim:E813: Cannot close autocmd window$', pcall_err(exec_lua, [[
+      vim.api.nvim_buf_call(_G.buf, function()
+        local win = vim.api.nvim_get_current_win()
+        vim.cmd('tabnext')
+        vim.api.nvim_win_hide(win)
+      end)
+    ]]))
   end)
 
   it(':doautocmd does not warn "No matching autocommands" #10689', function()
