@@ -1641,8 +1641,9 @@ static void did_set_spelllang_source(win_T *win)
 /// @param value_checked  value was checked to be safe, no need to set P_INSECURE
 ///
 /// @return  NULL for success, or an untranslated error message for an error
-char *did_set_string_option(int opt_idx, char **varp, char *oldval, char *errbuf, size_t errbuflen,
-                            int opt_flags, int *value_checked)
+static char *did_set_string_option_for(buf_T *buf, win_T *win, int opt_idx, char **varp,
+                                       char *oldval, char *errbuf, size_t errbuflen, int opt_flags,
+                                       int *value_checked)
 {
   char *errmsg = NULL;
   bool did_chartab = false;
@@ -1662,13 +1663,13 @@ char *did_set_string_option(int opt_idx, char **varp, char *oldval, char *errbuf
     // Check for a "normal" directory or file name in some options.
     errmsg = e_invarg;
   } else if (gvarp == &p_bkc) {  // 'backupcopy'
-    did_set_backupcopy(curbuf, oldval, opt_flags, &errmsg);
+    did_set_backupcopy(buf, oldval, opt_flags, &errmsg);
   } else if (varp == &p_bex || varp == &p_pm) {  // 'backupext' and 'patchmode'
     did_set_backupext_or_patchmode(&errmsg);
-  } else if (varp == &curwin->w_p_briopt) {  // 'breakindentopt'
-    did_set_breakindentopt(curwin, &errmsg);
+  } else if (varp == &win->w_p_briopt) {  // 'breakindentopt'
+    did_set_breakindentopt(win, &errmsg);
   } else if (varp == &p_isi
-             || varp == &(curbuf->b_p_isk)
+             || varp == &(buf->b_p_isk)
              || varp == &p_isp
              || varp == &p_isf) {
     // 'isident', 'iskeyword', 'isprint or 'isfname' option
@@ -1677,11 +1678,11 @@ char *did_set_string_option(int opt_idx, char **varp, char *oldval, char *errbuf
     did_set_helpfile();
   } else if (varp == &p_rtp || varp == &p_pp) {  // 'runtimepath' 'packpath'
     runtime_search_path_invalidate();
-  } else if (varp == &curwin->w_p_culopt
-             || gvarp == &curwin->w_allbuf_opt.wo_culopt) {  // 'cursorlineopt'
-    did_set_cursorlineopt(curwin, varp, &errmsg);
-  } else if (varp == &curwin->w_p_cc) {  // 'colorcolumn'
-    errmsg = check_colorcolumn(curwin);
+  } else if (varp == &win->w_p_culopt
+             || gvarp == &win->w_allbuf_opt.wo_culopt) {  // 'cursorlineopt'
+    did_set_cursorlineopt(win, varp, &errmsg);
+  } else if (varp == &win->w_p_cc) {  // 'colorcolumn'
+    errmsg = check_colorcolumn(win);
   } else if (varp == &p_hlg) {  // 'helplang'
     did_set_helplang(&errmsg);
   } else if (varp == &p_hl) {  // 'highlight'
@@ -1712,11 +1713,11 @@ char *did_set_string_option(int opt_idx, char **varp, char *oldval, char *errbuf
     did_set_eventignore(&errmsg);
   } else if (varp == &p_enc || gvarp == &p_fenc || gvarp == &p_menc) {
     // 'encoding', 'fileencoding' and 'makeencoding'
-    did_set_encoding(curbuf, varp, gvarp, opt_flags, &errmsg);
-  } else if (varp == &curbuf->b_p_keymap) {
-    did_set_keymap(curbuf, varp, opt_flags, value_checked, &errmsg);
+    did_set_encoding(buf, varp, gvarp, opt_flags, &errmsg);
+  } else if (varp == &buf->b_p_keymap) {
+    did_set_keymap(buf, varp, opt_flags, value_checked, &errmsg);
   } else if (gvarp == &p_ff) {  // 'fileformat'
-    did_set_fileformat(curbuf, varp, oldval, opt_flags, &errmsg);
+    did_set_fileformat(buf, varp, oldval, opt_flags, &errmsg);
   } else if (varp == &p_ffs) {  // 'fileformats'
     did_set_opt_strings(p_ffs, p_ff_values, true, &errmsg);
   } else if (gvarp == &p_mps) {  // 'matchpairs'
@@ -1724,11 +1725,11 @@ char *did_set_string_option(int opt_idx, char **varp, char *oldval, char *errbuf
   } else if (gvarp == &p_com) {  // 'comments'
     did_set_comments(varp, errbuf, errbuflen, &errmsg);
   } else if (varp == &p_lcs || varp == &p_fcs) {  // global 'listchars' or 'fillchars'
-    did_set_global_listfillchars(curwin, varp, opt_flags, &errmsg);
-  } else if (varp == &curwin->w_p_lcs) {  // local 'listchars'
-    errmsg = set_chars_option(curwin, varp, true);
-  } else if (varp == &curwin->w_p_fcs) {  // local 'fillchars'
-    errmsg = set_chars_option(curwin, varp, true);
+    did_set_global_listfillchars(win, varp, opt_flags, &errmsg);
+  } else if (varp == &win->w_p_lcs) {  // local 'listchars'
+    errmsg = set_chars_option(win, varp, true);
+  } else if (varp == &win->w_p_fcs) {  // local 'fillchars'
+    errmsg = set_chars_option(win, varp, true);
   } else if (varp == &p_cedit) {  // 'cedit'
     errmsg = check_cedit();
   } else if (varp == &p_vfile) {  // 'verbosefile'
@@ -1768,26 +1769,26 @@ char *did_set_string_option(int opt_idx, char **varp, char *oldval, char *errbuf
     did_set_opt_strings(p_ead, p_ead_values, false, &errmsg);
   } else if (varp == &p_cb) {  // 'clipboard'
     did_set_opt_flags(p_cb, p_cb_values, &cb_flags, true, &errmsg);
-  } else if (varp == &(curwin->w_s->b_p_spf)) {
+  } else if (varp == &(win->w_s->b_p_spf)) {
     did_set_spellfile(varp, &errmsg);
-  } else if (varp == &(curwin->w_s->b_p_spl)) {  // 'spell'
+  } else if (varp == &(win->w_s->b_p_spl)) {  // 'spell'
     did_set_spell(varp, &errmsg);
-  } else if (varp == &(curwin->w_s->b_p_spc)) {
-    did_set_spellcapcheck(curwin, &errmsg);
-  } else if (varp == &(curwin->w_s->b_p_spo)) {  // 'spelloptions'
-    did_set_spelloptions(curwin, &errmsg);
+  } else if (varp == &(win->w_s->b_p_spc)) {
+    did_set_spellcapcheck(win, &errmsg);
+  } else if (varp == &(win->w_s->b_p_spo)) {  // 'spelloptions'
+    did_set_spelloptions(win, &errmsg);
   } else if (varp == &p_sps) {  // 'spellsuggest'
     did_set_spellsuggest(&errmsg);
   } else if (varp == &p_msm) {  // 'mkspellmem'
     did_set_mkspellmem(&errmsg);
   } else if (gvarp == &p_bh) {
-    did_set_opt_strings(curbuf->b_p_bh, p_bufhidden_values, false, &errmsg);
+    did_set_opt_strings(buf->b_p_bh, p_bufhidden_values, false, &errmsg);
   } else if (gvarp == &p_bt) {  // 'buftype'
-    did_set_buftype(curbuf, curwin, &errmsg);
+    did_set_buftype(buf, win, &errmsg);
   } else if (gvarp == &p_stl || gvarp == &p_wbr || varp == &p_tal
-             || varp == &p_ruf || varp == &curwin->w_p_stc) {
+             || varp == &p_ruf || varp == &win->w_p_stc) {
     // 'statusline', 'winbar', 'tabline', 'rulerformat' or 'statuscolumn'
-    did_set_statusline(curwin, varp, gvarp, &errmsg);
+    did_set_statusline(win, varp, gvarp, &errmsg);
   } else if (gvarp == &p_cpt) {  // 'complete'
     did_set_complete(varp, errbuf, errbuflen, &errmsg);
   } else if (varp == &p_cot) {  // 'completeopt'
@@ -1795,16 +1796,16 @@ char *did_set_string_option(int opt_idx, char **varp, char *oldval, char *errbuf
 #ifdef BACKSLASH_IN_FILENAME
   } else if (gvarp == &p_csl) {  // 'completeslash'
     if (check_opt_strings(p_csl, p_csl_values, false) != OK
-        || check_opt_strings(curbuf->b_p_csl, p_csl_values, false) != OK) {
+        || check_opt_strings(buf->b_p_csl, p_csl_values, false) != OK) {
       errmsg = e_invarg;
     }
 #endif
-  } else if (varp == &curwin->w_p_scl) {  // 'signcolumn'
-    did_set_signcolumn(curwin, varp, oldval, &errmsg);
+  } else if (varp == &win->w_p_scl) {  // 'signcolumn'
+    did_set_signcolumn(win, varp, oldval, &errmsg);
   } else if (varp == &p_sloc) {  // 'showcmdloc'
     did_set_opt_strings(*varp, p_sloc_values, false, &errmsg);
-  } else if (varp == &curwin->w_p_fdc
-             || varp == &curwin->w_allbuf_opt.wo_fdc) {
+  } else if (varp == &win->w_p_fdc
+             || varp == &win->w_allbuf_opt.wo_fdc) {
     // 'foldcolumn'
     did_set_foldcolumn(varp, &errmsg);
   } else if (varp == &p_pt) {  // 'pastetoggle'
@@ -1814,54 +1815,54 @@ char *did_set_string_option(int opt_idx, char **varp, char *oldval, char *errbuf
   } else if (varp == &p_bo) {
     did_set_opt_flags(p_bo, p_bo_values, &bo_flags, true, &errmsg);
   } else if (gvarp == &p_tc) {  // 'tagcase'
-    did_set_tagcase(curbuf, opt_flags, &errmsg);
+    did_set_tagcase(buf, opt_flags, &errmsg);
   } else if (varp == &p_cmp) {  // 'casemap'
     did_set_opt_flags(p_cmp, p_cmp_values, &cmp_flags, true, &errmsg);
   } else if (varp == &p_dip) {  // 'diffopt'
     did_set_diffopt(&errmsg);
-  } else if (gvarp == &curwin->w_allbuf_opt.wo_fdm) {  // 'foldmethod'
-    did_set_foldmethod(curwin, varp, &errmsg);
-  } else if (gvarp == &curwin->w_allbuf_opt.wo_fmr) {  // 'foldmarker'
-    did_set_foldmarker(curwin, varp, &errmsg);
+  } else if (gvarp == &win->w_allbuf_opt.wo_fdm) {  // 'foldmethod'
+    did_set_foldmethod(win, varp, &errmsg);
+  } else if (gvarp == &win->w_allbuf_opt.wo_fmr) {  // 'foldmarker'
+    did_set_foldmarker(win, varp, &errmsg);
   } else if (gvarp == &p_cms) {  // 'commentstring'
     did_set_commentstring(varp, &errmsg);
   } else if (varp == &p_fdo) {  // 'foldopen'
     did_set_opt_flags(p_fdo, p_fdo_values, &fdo_flags, true, &errmsg);
   } else if (varp == &p_fcl) {  // 'foldclose'
     did_set_opt_strings(*varp, p_fcl_values, true, &errmsg);
-  } else if (gvarp == &curwin->w_allbuf_opt.wo_fdi) {  // 'foldignore'
-    did_set_foldignore(curwin);
+  } else if (gvarp == &win->w_allbuf_opt.wo_fdi) {  // 'foldignore'
+    did_set_foldignore(win);
   } else if (gvarp == &p_ve) {  // 'virtualedit'
-    did_set_virtualedit(curwin, opt_flags, oldval, &errmsg);
+    did_set_virtualedit(win, opt_flags, oldval, &errmsg);
   } else if (gvarp == &p_cino) {  // 'cinoptions'
     // TODO(vim): recognize errors
-    parse_cino(curbuf);
+    parse_cino(buf);
   } else if (gvarp == &p_lop) {  // 'lispoptions'
     did_set_lispoptions(varp, &errmsg);
   } else if (varp == &p_icm) {  // 'inccommand'
     did_set_opt_strings(*varp, p_icm_values, false, &errmsg);
   } else if (gvarp == &p_ft || gvarp == &p_syn) {
     did_set_filetype_or_syntax(varp, oldval, value_checked, &value_changed, &errmsg);
-  } else if (varp == &curwin->w_p_winhl) {
-    did_set_winhl(curwin, &errmsg);
+  } else if (varp == &win->w_p_winhl) {
+    did_set_winhl(win, &errmsg);
   } else if (varp == &p_tpf) {
     did_set_opt_flags(p_tpf, p_tpf_values, &tpf_flags, true, &errmsg);
-  } else if (varp == &(curbuf->b_p_vsts)) {  // 'varsofttabstop'
-    did_set_varsoftabstop(curbuf, varp, &errmsg);
-  } else if (varp == &(curbuf->b_p_vts)) {  // 'vartabstop'
-    did_set_vartabstop(curbuf, curwin, varp, &errmsg);
+  } else if (varp == &(buf->b_p_vsts)) {  // 'varsofttabstop'
+    did_set_varsoftabstop(buf, varp, &errmsg);
+  } else if (varp == &(buf->b_p_vts)) {  // 'vartabstop'
+    did_set_vartabstop(buf, win, varp, &errmsg);
   } else if (varp == &p_dex
-             || varp == &curwin->w_p_fde
-             || varp == &curwin->w_p_fdt
+             || varp == &win->w_p_fde
+             || varp == &win->w_p_fdt
              || gvarp == &p_fex
              || gvarp == &p_inex
              || gvarp == &p_inde
              || varp == &p_pex) {  // '*expr' options
-    did_set_optexpr(curbuf, curwin, varp, gvarp);
+    did_set_optexpr(buf, win, varp, gvarp);
   } else if (gvarp == &p_cfu) {  // 'completefunc'
     set_completefunc_option(&errmsg);
   } else if (gvarp == &p_ofu) {  // 'omnifunc'
-    set_omnifunc_option(curbuf, &errmsg);
+    set_omnifunc_option(buf, &errmsg);
   } else if (gvarp == &p_tsrfu) {  // 'thesaurusfunc'
     set_thesaurusfunc_option(&errmsg);
   } else if (varp == &p_opfunc) {  // 'operatorfunc'
@@ -1871,7 +1872,7 @@ char *did_set_string_option(int opt_idx, char **varp, char *oldval, char *errbuf
   } else if (gvarp == &p_tfu) {  // 'tagfunc'
     set_tagfunc_option(&errmsg);
   } else {
-    did_set_option_listflags(curbuf, curwin, varp, errbuf, errbuflen, &errmsg);
+    did_set_option_listflags(buf, win, varp, errbuf, errbuflen, &errmsg);
   }
 
   // If error detected, restore the previous value.
@@ -1906,12 +1907,12 @@ char *did_set_string_option(int opt_idx, char **varp, char *oldval, char *errbuf
     }
 
     // Trigger the autocommand only after setting the flags.
-    if (varp == &(curbuf->b_p_syn)) {
-      do_syntax_autocmd(curbuf, value_changed);
-    } else if (varp == &(curbuf->b_p_ft)) {
-      do_filetype_autocmd(curbuf, varp, opt_flags, value_changed);
-    } else if (varp == &(curwin->w_s->b_p_spl)) {
-      did_set_spelllang_source(curwin);
+    if (varp == &(buf->b_p_syn)) {
+      do_syntax_autocmd(buf, value_changed);
+    } else if (varp == &(buf->b_p_ft)) {
+      do_filetype_autocmd(buf, varp, opt_flags, value_changed);
+    } else if (varp == &(win->w_s->b_p_spl)) {
+      did_set_spelllang_source(win);
     }
   }
 
@@ -1921,18 +1922,25 @@ char *did_set_string_option(int opt_idx, char **varp, char *oldval, char *errbuf
 
   // Changing Formatlistpattern when briopt includes the list setting:
   // redraw
-  if ((varp == &p_flp || varp == &(curbuf->b_p_flp)) && curwin->w_briopt_list) {
+  if ((varp == &p_flp || varp == &(buf->b_p_flp)) && win->w_briopt_list) {
     redraw_all_later(UPD_NOT_VALID);
   }
 
-  if (curwin->w_curswant != MAXCOL
+  if (win->w_curswant != MAXCOL
       && (opt->flags & (P_CURSWANT | P_RALL)) != 0) {
-    curwin->w_set_curswant = true;
+    win->w_set_curswant = true;
   }
 
-  check_redraw(opt->flags);
+  check_redraw_for(buf, win, opt->flags);
 
   return errmsg;
+}
+
+char *did_set_string_option(int opt_idx, char **varp, char *oldval, char *errbuf, size_t errbuflen,
+                            int opt_flags, int *value_checked)
+{
+  return did_set_string_option_for(curbuf, curwin, opt_idx, varp, oldval, errbuf, errbuflen,
+                                   opt_flags, value_checked);
 }
 
 /// Check an option that can be a range of string values.

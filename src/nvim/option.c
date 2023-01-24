@@ -2582,7 +2582,7 @@ static char *set_num_option(int opt_idx, char_u *varp, long value, char *errbuf,
 }
 
 /// Called after an option changed: check if something needs to be redrawn.
-void check_redraw(uint32_t flags)
+void check_redraw_for(buf_T *buf, win_T *win, uint32_t flags)
 {
   // Careful: P_RALL is a combination of other P_ flags
   bool all = (flags & P_RALL) == P_RALL;
@@ -2596,17 +2596,22 @@ void check_redraw(uint32_t flags)
   }
 
   if ((flags & P_RBUF) || (flags & P_RWIN) || all) {
-    changed_window_setting();
+    changed_window_setting_win(win);
   }
   if (flags & P_RBUF) {
-    redraw_curbuf_later(UPD_NOT_VALID);
+    redraw_buf_later(buf, UPD_NOT_VALID);
   }
   if (flags & P_RWINONLY) {
-    redraw_later(curwin, UPD_NOT_VALID);
+    redraw_later(win, UPD_NOT_VALID);
   }
   if (all) {
     redraw_all_later(UPD_NOT_VALID);
   }
+}
+
+void check_redraw(uint32_t flags)
+{
+  check_redraw_for(curbuf, curwin, flags);
 }
 
 /// Find index for named option
