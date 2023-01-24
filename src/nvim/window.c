@@ -354,7 +354,7 @@ newwindow:
   // move window to new tab page
   case 'T':
     CHECK_CMDWIN;
-    if (one_window(curwin)) {
+    if (one_window(curwin, curtab)) {
       msg(_(m_onlyone));
     } else {
       tabpage_T *oldtab = curtab;
@@ -2488,7 +2488,7 @@ void close_windows(buf_T *buf, bool keep_curwin)
 
   // Start from lastwin to close floating windows with the same buffer first.
   // When the autocommand window is involved win_close() may need to print an error message.
-  for (win_T *wp = lastwin; wp != NULL && (is_aucmd_win(lastwin) || !one_window(wp));) {
+  for (win_T *wp = lastwin; wp != NULL && (is_aucmd_win(lastwin) || !one_window(wp, curtab));) {
     if (wp->w_buffer == buf && (!keep_curwin || wp != curwin)
         && !(wp->w_closing || wp->w_buffer->b_locked > 0)) {
       if (win_close(wp, false) == FAIL) {
@@ -2530,11 +2530,11 @@ void close_windows(buf_T *buf, bool keep_curwin)
 /// Check if "win" is the last non-floating window that exists.
 bool last_window(win_T *win) FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  return one_window(win) && first_tabpage->tp_next == NULL;
+  return one_window(win, curtab) && first_tabpage->tp_next == NULL;
 }
 
-/// Check if "win" is the only non-floating window in the current tabpage.
-bool one_window(win_T *win) FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
+/// Check if "win" is the only non-floating window in tabpage "tp".
+bool one_window(win_T *win, tabpage_T *tp) FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
   if (win->w_floating) {
     return false;
@@ -2578,7 +2578,7 @@ bool last_nonfloat(win_T *wp) FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 static bool close_last_window_tabpage(win_T *win, bool free_buf, tabpage_T *prev_curtab)
   FUNC_ATTR_NONNULL_ARG(1)
 {
-  if (!ONE_WINDOW) {
+  if (!one_window(win, prev_curtab)) {
     return false;
   }
   buf_T *old_curbuf = curbuf;
@@ -2677,7 +2677,7 @@ int win_close(win_T *win, bool free_buf)
     emsg(_(e_autocmd_close));
     return FAIL;
   }
-  if (lastwin->w_floating && one_window(win)) {
+  if (lastwin->w_floating && one_window(win, curtab)) {
     if (is_aucmd_win(lastwin)) {
       emsg(_("E814: Cannot close window, only autocmd window would remain"));
       return FAIL;
@@ -2958,6 +2958,15 @@ void win_close_othertab(win_T *win, int free_buf, tabpage_T *tp)
   if (win->w_closing
       || (win->w_buffer != NULL && win->w_buffer->b_locked > 0)) {
     return;  // window is already being closed
+  }
+
+  if (one_window(win, tp)) {
+    // close the last window until the there are no floating windows
+    while (tp->tp_lastwin->w_floating) {
+      buf_T *buf = tp->tp_lastwin->w_buffer;
+      bool need_hide = (bufIsChanged(buf) && buf->b_nwindows <= 1);
+      win_close_othertab(tp->tp_lastwin, !need_hide && !buf_hide(buf), tp);
+    }
   }
 
   // Fire WinClosed just before starting to free window-related resources.
