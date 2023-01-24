@@ -684,8 +684,6 @@ foreach(hfile ${NVIM_GENERATED_FOR_HEADERS})
   endif()
 endforeach()
 
-# Our dependencies come first.
-
 if (CMAKE_SYSTEM_NAME MATCHES "OpenBSD")
   target_link_libraries(main_lib INTERFACE pthread c++abi)
 endif()

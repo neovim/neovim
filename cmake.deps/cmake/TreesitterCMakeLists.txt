@@ -2,7 +2,8 @@ cmake_minimum_required(VERSION 3.10)
 project(tree-sitter LANGUAGES C)
 
 add_library(tree-sitter lib/src/lib.c)
-target_include_directories(tree-sitter PRIVATE lib/include)
+target_include_directories(tree-sitter
+  PRIVATE lib/src lib/include)
 
 install(FILES
   lib/include/tree_sitter/api.h
