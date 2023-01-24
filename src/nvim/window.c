@@ -2527,24 +2527,23 @@ void close_windows(buf_T *buf, bool keep_curwin)
   RedrawingDisabled--;
 }
 
-/// Check that the specified window is the last one.
-/// @param win  counted even if floating
-///
-/// @return  true if the specified window is the only window that exists,
-///          false if there is another, possibly in another tab page.
+/// Check if "win" is the last non-floating window that exists.
 bool last_window(win_T *win) FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
   return one_window(win) && first_tabpage->tp_next == NULL;
 }
 
-/// Check if current tab page contains no more than one window other than `aucmd_win[]`.
-/// @param counted_float  counted even if floating, but not if it is `aucmd_win[]`
-bool one_window(win_T *counted_float) FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
+/// Check if "win" is the only non-floating window in the current tabpage.
+bool one_window(win_T *win) FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
+  if (win->w_floating) {
+    return false;
+  }
+
   bool seen_one = false;
 
   FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
-    if (!is_aucmd_win(wp) && (!wp->w_floating || wp == counted_float)) {
+    if (!wp->w_floating) {
       if (seen_one) {
         return false;
       }
