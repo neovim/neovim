@@ -420,6 +420,10 @@ local function extract_sect_and_name_path(path)
 end
 
 local function find_man()
+  if vim.bo.filetype == 'man' then
+    return true
+  end
+
   local win = 1
   while win <= fn.winnr('$') do
     local buf = fn.winbufnr(win)
