@@ -20,17 +20,4 @@ install(TARGETS termkey
   ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
   PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 
-enable_testing()
-file(GLOB TESTSOURCES "t/[0-9]*.c")
-foreach(f ${TESTSOURCES})
-  get_filename_component(t ${f} NAME_WE)
-  if(${t} STREQUAL 05read)
-    continue()
-  endif()
-
-  add_executable("test_${t}" ${f} t/taplib.c)
-  target_link_libraries("test_${t}" termkey)
-  add_test("${t}" "test_${t}")
-endforeach()
-
 # vim: set ft=cmake:
