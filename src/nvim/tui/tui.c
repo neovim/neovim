@@ -137,6 +137,7 @@ struct TUIData {
     int enable_bracketed_paste, disable_bracketed_paste;
     int enable_lr_margin, disable_lr_margin;
     int enter_strikethrough_mode;
+    int enter_altfont_mode;
     int set_rgb_foreground, set_rgb_background;
     int set_cursor_color;
     int reset_cursor_color;
@@ -251,6 +252,7 @@ static void terminfo_start(TUIData *tui)
   tui->unibi_ext.enable_bracketed_paste = -1;
   tui->unibi_ext.disable_bracketed_paste = -1;
   tui->unibi_ext.enter_strikethrough_mode = -1;
+  tui->unibi_ext.enter_altfont_mode = -1;
   tui->unibi_ext.enable_lr_margin = -1;
   tui->unibi_ext.disable_lr_margin = -1;
   tui->unibi_ext.enable_focus_reporting = -1;
@@ -511,7 +513,7 @@ static bool attrs_differ(TUIData *tui, int id1, int id2, bool rgb)
     return a1.cterm_fg_color != a2.cterm_fg_color
            || a1.cterm_bg_color != a2.cterm_bg_color
            || a1.cterm_ae_attr != a2.cterm_ae_attr
-           || (a1.cterm_ae_attr & HL_ANY_UNDERLINE
+           || (a1.cterm_ae_attr & HL_UNDERLINE_MASK
                && a1.rgb_sp_color != a2.rgb_sp_color);
   }
 }
@@ -531,6 +533,7 @@ static void update_attrs(TUIData *tui, int attr_id)
   bool reverse = attr & HL_INVERSE;
   bool standout = attr & HL_STANDOUT;
   bool strikethrough = attr & HL_STRIKETHROUGH;
+  bool altfont = attr & HL_ALTFONT;
 
   bool underline;
   bool undercurl;
@@ -538,13 +541,14 @@ static void update_attrs(TUIData *tui, int attr_id)
   bool underdotted;
   bool underdashed;
   if (tui->unibi_ext.set_underline_style != -1) {
-    underline = attr & HL_UNDERLINE;
-    undercurl = attr & HL_UNDERCURL;
-    underdouble = attr & HL_UNDERDOUBLE;
-    underdashed = attr & HL_UNDERDASHED;
-    underdotted = attr & HL_UNDERDOTTED;
+    int ul = attr & HL_UNDERLINE_MASK;
+    underline = ul == HL_UNDERLINE;
+    undercurl = ul == HL_UNDERCURL;
+    underdouble = ul == HL_UNDERDOUBLE;
+    underdashed = ul == HL_UNDERDASHED;
+    underdotted = ul == HL_UNDERDOTTED;
   } else {
-    underline = attr & HL_ANY_UNDERLINE;
+    underline = attr & HL_UNDERLINE_MASK;
     undercurl = false;
     underdouble = false;
     underdotted = false;
@@ -588,6 +592,9 @@ static void update_attrs(TUIData *tui, int attr_id)
   }
   if (italic) {
     unibi_out(tui, unibi_enter_italics_mode);
+  }
+  if (altfont && tui->unibi_ext.enter_altfont_mode != -1) {
+    unibi_out_ext(tui, tui->unibi_ext.enter_altfont_mode);
   }
   if (strikethrough && tui->unibi_ext.enter_strikethrough_mode != -1) {
     unibi_out_ext(tui, tui->unibi_ext.enter_strikethrough_mode);
@@ -2036,6 +2043,11 @@ static void augment_terminfo(TUIData *tui, const char *term, long vte_version, l
   // terminfo describes strikethrough modes as rmxx/smxx with respect
   // to the ECMA-48 strikeout/crossed-out attributes.
   tui->unibi_ext.enter_strikethrough_mode = unibi_find_ext_str(ut, "smxx");
+
+  // It should be pretty safe to always enable this, as terminals will ignore
+  // unrecognised SGR numbers.
+  tui->unibi_ext.enter_altfont_mode = (int)unibi_add_ext_str(ut, "ext.enter_altfont_mode",
+                                                             "\x1b[11m");
 
   // Dickey ncurses terminfo does not include the setrgbf and setrgbb
   // capabilities, proposed by Rüdiger Sonderfeld on 2013-10-15.  Adding

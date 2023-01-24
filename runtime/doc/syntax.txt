@@ -4958,7 +4958,8 @@ the same syntax file on all UIs.
 					*bold* *underline* *undercurl*
 					*underdouble* *underdotted*
 					*underdashed* *inverse* *italic*
-					*standout* *nocombine* *strikethrough*
+					*standout* *strikethrough* *altfont*
+					*nocombine*
 cterm={attr-list}			*attr-list* *highlight-cterm* *E418*
 	attr-list is a comma-separated list (without spaces) of the
 	following items (in any order):
@@ -4973,6 +4974,7 @@ cterm={attr-list}			*attr-list* *highlight-cterm* *E418*
 		inverse		same as reverse
 		italic
 		standout
+		altfont
 		nocombine	override attributes instead of combining them
 		NONE		no attributes used (used to reset it)
 

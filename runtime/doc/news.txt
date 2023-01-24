@@ -149,6 +149,8 @@ The following new APIs or features were added.
   deterministic, and a `LUA_GEN_PRG` build parameter has been introduced to
   allow for a workaround for some remaining reproducibility problems.
 
+• |:highlight| now supports an additional attribute "altfont".
+
 ==============================================================================
 CHANGED FEATURES                                                 *news-changes*
 

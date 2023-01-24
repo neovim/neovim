@@ -649,7 +649,7 @@ int hl_blend_attrs(int back_attr, int front_attr, bool *through)
     cattrs = battrs;
     cattrs.rgb_fg_color = rgb_blend(ratio, battrs.rgb_fg_color,
                                     fattrs.rgb_bg_color);
-    if (cattrs.rgb_ae_attr & (HL_ANY_UNDERLINE)) {
+    if (cattrs.rgb_ae_attr & (HL_UNDERLINE_MASK)) {
       cattrs.rgb_sp_color = rgb_blend(ratio, battrs.rgb_sp_color,
                                       fattrs.rgb_bg_color);
     } else {
@@ -667,7 +667,7 @@ int hl_blend_attrs(int back_attr, int front_attr, bool *through)
     }
     cattrs.rgb_fg_color = rgb_blend(ratio/2, battrs.rgb_fg_color,
                                     fattrs.rgb_fg_color);
-    if (cattrs.rgb_ae_attr & (HL_ANY_UNDERLINE)) {
+    if (cattrs.rgb_ae_attr & (HL_UNDERLINE_MASK)) {
       cattrs.rgb_sp_color = rgb_blend(ratio/2, battrs.rgb_bg_color,
                                       fattrs.rgb_sp_color);
     } else {
@@ -825,44 +825,50 @@ void hlattrs2dict(Dictionary *dict, HlAttrs ae, bool use_rgb)
   Dictionary hl = *dict;
   int mask  = use_rgb ? ae.rgb_ae_attr : ae.cterm_ae_attr;
 
+  if (mask & HL_INVERSE) {
+    PUT_C(hl, "reverse", BOOLEAN_OBJ(true));
+  }
+
   if (mask & HL_BOLD) {
     PUT_C(hl, "bold", BOOLEAN_OBJ(true));
-  }
-
-  if (mask & HL_STANDOUT) {
-    PUT_C(hl, "standout", BOOLEAN_OBJ(true));
-  }
-
-  if (mask & HL_UNDERLINE) {
-    PUT_C(hl, "underline", BOOLEAN_OBJ(true));
-  }
-
-  if (mask & HL_UNDERCURL) {
-    PUT_C(hl, "undercurl", BOOLEAN_OBJ(true));
-  }
-
-  if (mask & HL_UNDERDOUBLE) {
-    PUT_C(hl, "underdouble", BOOLEAN_OBJ(true));
-  }
-
-  if (mask & HL_UNDERDOTTED) {
-    PUT_C(hl, "underdotted", BOOLEAN_OBJ(true));
-  }
-
-  if (mask & HL_UNDERDASHED) {
-    PUT_C(hl, "underdashed", BOOLEAN_OBJ(true));
   }
 
   if (mask & HL_ITALIC) {
     PUT_C(hl, "italic", BOOLEAN_OBJ(true));
   }
 
-  if (mask & HL_INVERSE) {
-    PUT_C(hl, "reverse", BOOLEAN_OBJ(true));
+  switch (mask & HL_UNDERLINE_MASK) {
+  case HL_UNDERLINE:
+    PUT_C(hl, "underline", BOOLEAN_OBJ(true));
+    break;
+
+  case HL_UNDERDOUBLE:
+    PUT_C(hl, "underdouble", BOOLEAN_OBJ(true));
+    break;
+
+  case HL_UNDERCURL:
+    PUT_C(hl, "undercurl", BOOLEAN_OBJ(true));
+    break;
+
+  case HL_UNDERDOTTED:
+    PUT_C(hl, "underdotted", BOOLEAN_OBJ(true));
+    break;
+
+  case HL_UNDERDASHED:
+    PUT_C(hl, "underdashed", BOOLEAN_OBJ(true));
+    break;
+  }
+
+  if (mask & HL_STANDOUT) {
+    PUT_C(hl, "standout", BOOLEAN_OBJ(true));
   }
 
   if (mask & HL_STRIKETHROUGH) {
     PUT_C(hl, "strikethrough", BOOLEAN_OBJ(true));
+  }
+
+  if (mask & HL_ALTFONT) {
+    PUT_C(hl, "altfont", BOOLEAN_OBJ(true));
   }
 
   if (mask & HL_NOCOMBINE) {
@@ -920,16 +926,17 @@ HlAttrs dict2hlattrs(Dict(highlight) *dict, bool use_rgb, int *link_id, Error *e
     m = m | flag; \
   }
 
+  CHECK_FLAG(dict, mask, reverse, , HL_INVERSE);
   CHECK_FLAG(dict, mask, bold, , HL_BOLD);
-  CHECK_FLAG(dict, mask, standout, , HL_STANDOUT);
+  CHECK_FLAG(dict, mask, italic, , HL_ITALIC);
   CHECK_FLAG(dict, mask, underline, , HL_UNDERLINE);
-  CHECK_FLAG(dict, mask, undercurl, , HL_UNDERCURL);
   CHECK_FLAG(dict, mask, underdouble, , HL_UNDERDOUBLE);
+  CHECK_FLAG(dict, mask, undercurl, , HL_UNDERCURL);
   CHECK_FLAG(dict, mask, underdotted, , HL_UNDERDOTTED);
   CHECK_FLAG(dict, mask, underdashed, , HL_UNDERDASHED);
-  CHECK_FLAG(dict, mask, italic, , HL_ITALIC);
-  CHECK_FLAG(dict, mask, reverse, , HL_INVERSE);
+  CHECK_FLAG(dict, mask, standout, , HL_STANDOUT);
   CHECK_FLAG(dict, mask, strikethrough, , HL_STRIKETHROUGH);
+  CHECK_FLAG(dict, mask, altfont, , HL_ALTFONT);
   if (use_rgb) {
     CHECK_FLAG(dict, mask, fg_indexed, , HL_FG_INDEXED);
     CHECK_FLAG(dict, mask, bg_indexed, , HL_BG_INDEXED);
@@ -1005,13 +1012,14 @@ HlAttrs dict2hlattrs(Dict(highlight) *dict, bool use_rgb, int *link_id, Error *e
     }
 
     cterm_mask_provided = true;
+    CHECK_FLAG(cterm, cterm_mask, reverse, , HL_INVERSE);
     CHECK_FLAG(cterm, cterm_mask, bold, , HL_BOLD);
-    CHECK_FLAG(cterm, cterm_mask, standout, , HL_STANDOUT);
+    CHECK_FLAG(cterm, cterm_mask, italic, , HL_ITALIC);
     CHECK_FLAG(cterm, cterm_mask, underline, , HL_UNDERLINE);
     CHECK_FLAG(cterm, cterm_mask, undercurl, , HL_UNDERCURL);
-    CHECK_FLAG(cterm, cterm_mask, italic, , HL_ITALIC);
-    CHECK_FLAG(cterm, cterm_mask, reverse, , HL_INVERSE);
+    CHECK_FLAG(cterm, cterm_mask, standout, , HL_STANDOUT);
     CHECK_FLAG(cterm, cterm_mask, strikethrough, , HL_STRIKETHROUGH);
+    CHECK_FLAG(cterm, cterm_mask, altfont, , HL_ALTFONT);
     CHECK_FLAG(cterm, cterm_mask, nocombine, , HL_NOCOMBINE);
   } else if (dict->cterm.type == kObjectTypeArray && dict->cterm.data.array.size == 0) {
     // empty list from Lua API should clear all cterm attributes
