@@ -7,16 +7,18 @@ set_target_properties(unibilium PROPERTIES PUBLIC_HEADER ${PROJECT_SOURCE_DIR}/u
   VERSION "${VERSION_MAJOR}.${VERSION_MINOR}")
 
 if(NOT WIN32)
-  execute_process(COMMAND "shell ncursesw6-config --terminfo-dirs 2>/dev/null || \
+  execute_process(COMMAND sh -c "ncursesw6-config --terminfo-dirs 2>/dev/null || \
       ncurses6-config  --terminfo-dirs 2>/dev/null || \
       ncursesw5-config --terminfo-dirs 2>/dev/null || \
       ncurses5-config  --terminfo-dirs 2>/dev/null || \
       echo '/etc/terminfo:/lib/terminfo:/usr/share/terminfo:/usr/lib/terminfo:/usr/local/share/terminfo:/usr/local/lib/terminfo'"
     OUTPUT_VARIABLE TERMINFO_DIRS)
+  # Remove trailing newline
+  string(STRIP "${TERMINFO_DIRS}" TERMINFO_DIRS)
 else()
-  set(TERMINFO_DIRS "\"\"")
+  set(TERMINFO_DIRS "")
 endif()
-target_compile_definitions(unibilium PUBLIC TERMINFO_DIRS=${TERMINFO_DIRS})
+target_compile_definitions(unibilium PUBLIC "TERMINFO_DIRS=\"${TERMINFO_DIRS}\"")
 
 include(GNUInstallDirs)
 install(TARGETS unibilium
