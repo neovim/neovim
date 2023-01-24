@@ -2844,7 +2844,7 @@ void intro_message(int colon)
                              STR(NVIM_VERSION_MAJOR), STR(NVIM_VERSION_MINOR));
         assert(mesg_size > 0);
         mesg = xmallocz((size_t)mesg_size);
-        snprintf(mesg, mesg_size + 1, p,
+        snprintf(mesg, (size_t)mesg_size + 1, p,
                  STR(NVIM_VERSION_MAJOR), STR(NVIM_VERSION_MINOR));
       }
 
