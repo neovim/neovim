@@ -2862,7 +2862,11 @@ void intro_message(int colon)
       }
 
       if (mesg == NULL) {
-        mesg = _(p);
+        if (*p != NUL) {
+          mesg = _(p);
+        } else {
+          mesg = "";
+        }
       }
 
       if (*mesg != NUL) {
