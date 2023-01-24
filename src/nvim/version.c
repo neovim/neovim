@@ -2835,6 +2835,8 @@ void intro_message(int colon)
   if (((row >= 2) && (Columns >= 50)) || colon) {
     for (i = 0; i < (int)ARRAY_SIZE(lines); i++) {
       p = lines[i];
+      mesg = NULL;
+      mesg_size = 0;
 
       if (strstr(p, "news") != NULL) {
         p = _(p);
@@ -2849,16 +2851,18 @@ void intro_message(int colon)
       if (sponsor != 0) {
         if (strstr(p, "children") != NULL) {
           mesg = sponsor < 0
-              ? N_("Sponsor Vim development!")
-              : N_("Become a registered Vim user!");
-          p = NULL;
+              ? _("Sponsor Vim development!")
+              : _("Become a registered Vim user!");
         }
         if (strstr(p, "iccf") != NULL) {
           mesg = sponsor < 0
-              ? N_("type  :help sponsor<Enter>    for information ")
-              : N_("type  :help register<Enter>   for information ");
-          p = NULL;
+              ? _("type  :help sponsor<Enter>    for information ")
+              : _("type  :help register<Enter>   for information ");
         }
+      }
+
+      if (mesg == NULL) {
+        mesg = _(p);
       }
 
       if (*mesg != NUL) {
@@ -2866,7 +2870,7 @@ void intro_message(int colon)
       }
       row++;
 
-      if (p != NULL) {
+      if (mesg_size > 0) {
         XFREE_CLEAR(mesg);
       }
     }
