@@ -282,7 +282,7 @@ end
 ---
 --- Examples:
 --- <pre>lua
----   vim.fs.normalize('C:\\Users\\jdoe')
+---   vim.fs.normalize('C:\\\\Users\\\\jdoe')
 ---   --> 'C:/Users/jdoe'
 ---
 ---   vim.fs.normalize('~/src/neovim')
