@@ -122,17 +122,17 @@ static signgroup_T *sign_group_ref(const char *groupname)
 /// removed, then remove the group.
 static void sign_group_unref(char *groupname)
 {
-  signgroup_T *group;
-
   hashitem_T *hi = hash_find(&sg_table, groupname);
-  if (!HASHITEM_EMPTY(hi)) {
-    group = HI2SG(hi);
-    group->sg_refcount--;
-    if (group->sg_refcount == 0) {
-      // All the signs in this group are removed
-      hash_remove(&sg_table, hi);
-      xfree(group);
-    }
+  if (HASHITEM_EMPTY(hi)) {
+    return;
+  }
+
+  signgroup_T *group = HI2SG(hi);
+  group->sg_refcount--;
+  if (group->sg_refcount == 0) {
+    // All the signs in this group are removed
+    hash_remove(&sg_table, hi);
+    xfree(group);
   }
 }
 

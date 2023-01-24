@@ -112,40 +112,43 @@ static int ses_win_rec(FILE *fd, frame_T *fr)
   frame_T *frc;
   int count = 0;
 
-  if (fr->fr_layout != FR_LEAF) {
-    // Find first frame that's not skipped and then create a window for
-    // each following one (first frame is already there).
-    frc = ses_skipframe(fr->fr_child);
-    if (frc != NULL) {
-      while ((frc = ses_skipframe(frc->fr_next)) != NULL) {
-        // Make window as big as possible so that we have lots of room
-        // to split.
-        if (fprintf(fd, "%s%s",
-                    "wincmd _ | wincmd |\n",
-                    (fr->fr_layout == FR_COL ? "split\n" : "vsplit\n")) < 0) {
-          return FAIL;
-        }
-        count++;
-      }
-    }
+  if (fr->fr_layout == FR_LEAF) {
+    return OK;
+  }
 
-    // Go back to the first window.
-    if (count > 0 && (fprintf(fd, fr->fr_layout == FR_COL
-                              ? "%dwincmd k\n" : "%dwincmd h\n", count) < 0)) {
-      return FAIL;
-    }
-
-    // Recursively create frames/windows in each window of this column or row.
-    frc = ses_skipframe(fr->fr_child);
-    while (frc != NULL) {
-      ses_win_rec(fd, frc);
-      frc = ses_skipframe(frc->fr_next);
-      // Go to next window.
-      if (frc != NULL && put_line(fd, "wincmd w") == FAIL) {
+  // Find first frame that's not skipped and then create a window for
+  // each following one (first frame is already there).
+  frc = ses_skipframe(fr->fr_child);
+  if (frc != NULL) {
+    while ((frc = ses_skipframe(frc->fr_next)) != NULL) {
+      // Make window as big as possible so that we have lots of room
+      // to split.
+      if (fprintf(fd, "%s%s",
+                  "wincmd _ | wincmd |\n",
+                  (fr->fr_layout == FR_COL ? "split\n" : "vsplit\n")) < 0) {
         return FAIL;
       }
+      count++;
     }
   }
+
+  // Go back to the first window.
+  if (count > 0 && (fprintf(fd, fr->fr_layout == FR_COL
+                            ? "%dwincmd k\n" : "%dwincmd h\n", count) < 0)) {
+    return FAIL;
+  }
+
+  // Recursively create frames/windows in each window of this column or row.
+  frc = ses_skipframe(fr->fr_child);
+  while (frc != NULL) {
+    ses_win_rec(fd, frc);
+    frc = ses_skipframe(frc->fr_next);
+    // Go to next window.
+    if (frc != NULL && put_line(fd, "wincmd w") == FAIL) {
+      return FAIL;
+    }
+  }
+
   return OK;
 }
 
@@ -906,12 +909,14 @@ static int makeopens(FILE *fd, char *dirnow)
 void ex_loadview(exarg_T *eap)
 {
   char *fname = get_view_file(*eap->arg);
-  if (fname != NULL) {
-    if (do_source(fname, false, DOSO_NONE) == FAIL) {
-      semsg(_(e_notopen), fname);
-    }
-    xfree(fname);
+  if (fname == NULL) {
+    return;
   }
+
+  if (do_source(fname, false, DOSO_NONE) == FAIL) {
+    semsg(_(e_notopen), fname);
+  }
+  xfree(fname);
 }
 
 /// ":mkexrc", ":mkvimrc", ":mkview", ":mksession".

@@ -721,10 +721,12 @@ static void syn_sync(win_T *wp, linenr_T start_lnum, synstate_T *last_valid)
 
 static void save_chartab(char *chartab)
 {
-  if (syn_block->b_syn_isk != empty_option) {
-    memmove(chartab, syn_buf->b_chartab, (size_t)32);
-    memmove(syn_buf->b_chartab, syn_win->w_s->b_syn_chartab, (size_t)32);
+  if (syn_block->b_syn_isk == empty_option) {
+    return;
   }
+
+  memmove(chartab, syn_buf->b_chartab, (size_t)32);
+  memmove(syn_buf->b_chartab, syn_win->w_s->b_syn_chartab, (size_t)32);
 }
 
 static void restore_chartab(char *chartab)
@@ -737,22 +739,23 @@ static void restore_chartab(char *chartab)
 /// Return true if the line-continuation pattern matches in line "lnum".
 static int syn_match_linecont(linenr_T lnum)
 {
-  if (syn_block->b_syn_linecont_prog != NULL) {
-    regmmatch_T regmatch;
-    // chartab array for syn iskeyword
-    char buf_chartab[32];
-    save_chartab(buf_chartab);
-
-    regmatch.rmm_ic = syn_block->b_syn_linecont_ic;
-    regmatch.regprog = syn_block->b_syn_linecont_prog;
-    int r = syn_regexec(&regmatch, lnum, (colnr_T)0,
-                        IF_SYN_TIME(&syn_block->b_syn_linecont_time));
-    syn_block->b_syn_linecont_prog = regmatch.regprog;
-
-    restore_chartab(buf_chartab);
-    return r;
+  if (syn_block->b_syn_linecont_prog == NULL) {
+    return false;
   }
-  return false;
+
+  regmmatch_T regmatch;
+  // chartab array for syn iskeyword
+  char buf_chartab[32];
+  save_chartab(buf_chartab);
+
+  regmatch.rmm_ic = syn_block->b_syn_linecont_ic;
+  regmatch.regprog = syn_block->b_syn_linecont_prog;
+  int r = syn_regexec(&regmatch, lnum, (colnr_T)0,
+                      IF_SYN_TIME(&syn_block->b_syn_linecont_time));
+  syn_block->b_syn_linecont_prog = regmatch.regprog;
+
+  restore_chartab(buf_chartab);
+  return r;
 }
 
 // Prepare the current state for the start of a line.
@@ -873,14 +876,16 @@ static void syn_stack_free_block(synblock_T *block)
 {
   synstate_T *p;
 
-  if (block->b_sst_array != NULL) {
-    for (p = block->b_sst_first; p != NULL; p = p->sst_next) {
-      clear_syn_state(p);
-    }
-    XFREE_CLEAR(block->b_sst_array);
-    block->b_sst_first = NULL;
-    block->b_sst_len = 0;
+  if (block->b_sst_array == NULL) {
+    return;
   }
+
+  for (p = block->b_sst_first; p != NULL; p = p->sst_next) {
+    clear_syn_state(p);
+  }
+  XFREE_CLEAR(block->b_sst_array);
+  block->b_sst_first = NULL;
+  block->b_sst_len = 0;
 }
 // Free b_sst_array[] for buffer "buf".
 // Used when syntax items changed to force resyncing everywhere.
@@ -5369,34 +5374,39 @@ void set_context_in_syntax_cmd(expand_T *xp, const char *arg)
   include_link = 0;
   include_default = 0;
 
+  if (*arg == NUL) {
+    return;
+  }
+
   // (part of) subcommand already typed
-  if (*arg != NUL) {
-    const char *p = (const char *)skiptowhite(arg);
-    if (*p != NUL) {  // Past first word.
-      xp->xp_pattern = skipwhite(p);
-      if (*skiptowhite(xp->xp_pattern) != NUL) {
-        xp->xp_context = EXPAND_NOTHING;
-      } else if (STRNICMP(arg, "case", p - arg) == 0) {
-        expand_what = EXP_CASE;
-      } else if (STRNICMP(arg, "spell", p - arg) == 0) {
-        expand_what = EXP_SPELL;
-      } else if (STRNICMP(arg, "sync", p - arg) == 0) {
-        expand_what = EXP_SYNC;
-      } else if (STRNICMP(arg, "list", p - arg) == 0) {
-        p = skipwhite(p);
-        if (*p == '@') {
-          expand_what = EXP_CLUSTER;
-        } else {
-          xp->xp_context = EXPAND_HIGHLIGHT;
-        }
-      } else if (STRNICMP(arg, "keyword", p - arg) == 0
-                 || STRNICMP(arg, "region", p - arg) == 0
-                 || STRNICMP(arg, "match", p - arg) == 0) {
-        xp->xp_context = EXPAND_HIGHLIGHT;
-      } else {
-        xp->xp_context = EXPAND_NOTHING;
-      }
+  const char *p = (const char *)skiptowhite(arg);
+  if (*p == NUL) {
+    return;
+  }
+
+  // past first world
+  xp->xp_pattern = skipwhite(p);
+  if (*skiptowhite(xp->xp_pattern) != NUL) {
+    xp->xp_context = EXPAND_NOTHING;
+  } else if (STRNICMP(arg, "case", p - arg) == 0) {
+    expand_what = EXP_CASE;
+  } else if (STRNICMP(arg, "spell", p - arg) == 0) {
+    expand_what = EXP_SPELL;
+  } else if (STRNICMP(arg, "sync", p - arg) == 0) {
+    expand_what = EXP_SYNC;
+  } else if (STRNICMP(arg, "list", p - arg) == 0) {
+    p = skipwhite(p);
+    if (*p == '@') {
+      expand_what = EXP_CLUSTER;
+    } else {
+      xp->xp_context = EXPAND_HIGHLIGHT;
     }
+  } else if (STRNICMP(arg, "keyword", p - arg) == 0
+             || STRNICMP(arg, "region", p - arg) == 0
+             || STRNICMP(arg, "match", p - arg) == 0) {
+    xp->xp_context = EXPAND_HIGHLIGHT;
+  } else {
+    xp->xp_context = EXPAND_NOTHING;
   }
 }
 
