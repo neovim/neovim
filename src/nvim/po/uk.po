@@ -5550,9 +5550,6 @@ msgstr " заміна для $VIMRUNTIME: \""
 msgid "Nvim is open source and freely distributable"
 msgstr "Nvim — це відкрита й вільно розповсюджувана програма"
 
-msgid "https://neovim.io/#chat"
-msgstr "https://neovim.io/#chat"
-
 msgid "type  :help nvim<Enter>       if you are new! "
 msgstr ":help nvim<Enter>       якщо ви вперше!       "
 

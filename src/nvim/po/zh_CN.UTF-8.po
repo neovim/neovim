@@ -7248,10 +7248,6 @@ msgstr "  $VIMRUNTIME 预设值: \""
 msgid "Nvim is open source and freely distributable"
 msgstr "Nvim 是可自由分发的开放源代码软件"
 
-#: ../version.c:2806
-msgid "https://neovim.io/#chat"
-msgstr ""
-
 #: ../version.c:2808
 msgid "type  :help nvim<Enter>       if you are new! "
 msgstr ""
