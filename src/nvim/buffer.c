@@ -933,7 +933,7 @@ void goto_buffer(exarg_T *eap, int start, int dir, int count)
     enter_cleanup(&cs);
 
     // Quitting means closing the split window, nothing else.
-    win_close(curwin, true);
+    win_close(curwin, true, false);
     swap_exists_action = SEA_NONE;
     swap_exists_did_quit = true;
 
@@ -1335,7 +1335,7 @@ int do_buffer(int action, int start, int dir, int count, int forceit)
     while (buf == curbuf
            && !(curwin->w_closing || curwin->w_buffer->b_locked > 0)
            && (is_aucmd_win(lastwin) || !last_window(curwin))) {
-      if (win_close(curwin, false) == FAIL) {
+      if (win_close(curwin, false, false) == FAIL) {
         break;
       }
     }
@@ -3620,7 +3620,7 @@ void ex_buffer_all(exarg_T *eap)
           && !ONE_WINDOW
           && !(wp->w_closing
                || wp->w_buffer->b_locked > 0)) {
-        win_close(wp, false);
+        win_close(wp, false, false);
         wpnext = firstwin;              // just in case an autocommand does
                                         // something strange with windows
         tpnext = first_tabpage;         // start all over...
@@ -3700,7 +3700,7 @@ void ex_buffer_all(exarg_T *eap)
         enter_cleanup(&cs);
 
         // User selected Quit at ATTENTION prompt; close this window.
-        win_close(curwin, true);
+        win_close(curwin, true, false);
         open_wins--;
         swap_exists_action = SEA_NONE;
         swap_exists_did_quit = true;
@@ -3740,7 +3740,7 @@ void ex_buffer_all(exarg_T *eap)
       // BufWrite Autocommands made the window invalid, start over
       wp = lastwin;
     } else if (r) {
-      win_close(wp, !buf_hide(wp->w_buffer));
+      win_close(wp, !buf_hide(wp->w_buffer), false);
       open_wins--;
       wp = lastwin;
     } else {

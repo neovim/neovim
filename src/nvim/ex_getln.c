@@ -4355,7 +4355,7 @@ static int open_cmdwin(void)
   // Create empty command-line buffer.
   if (buf_open_scratch(0, _("[Command Line]")) == FAIL) {
     // Some autocommand messed it up?
-    win_close(curwin, true);
+    win_close(curwin, true, false);
     ga_clear(&winsizes);
     cmdwin_type = 0;
     return Ctrl_C;
@@ -4520,7 +4520,7 @@ static int open_cmdwin(void)
     // win_goto() may trigger an autocommand that already closes the
     // cmdline window.
     if (win_valid(wp) && wp != curwin) {
-      win_close(wp, true);
+      win_close(wp, true, false);
     }
 
     // win_close() may have already wiped the buffer when 'bh' is

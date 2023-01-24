@@ -462,9 +462,6 @@ describe('float window', function()
       end)
     end)
     describe("deleting the last non-floating window's buffer", function()
-      after_each(function()
-        eq(false, meths.buf_is_valid(old_buf))
-      end)
       describe('leaves one window with an empty buffer when there is only one buffer', function()
         local same_buf_float
         before_each(function()
@@ -555,9 +552,6 @@ describe('float window', function()
       end)
     end)
     describe('with splits, deleting the last listed buffer creates an empty buffer', function()
-      after_each(function()
-        eq(false, meths.buf_is_valid(old_buf))
-      end)
       describe('when a non-floating window has an unlisted buffer', function()
         local same_buf_float
         before_each(function()
@@ -603,7 +597,6 @@ describe('float window', function()
         same_buf_float = meths.open_win(old_buf, false, float_opts).id
       end)
       after_each(function()
-        eq(false, meths.buf_is_valid(old_buf))
         expect('')
         eq(2, #meths.list_wins())
         eq(2, #meths.list_tabpages())
@@ -636,7 +629,6 @@ describe('float window', function()
         same_buf_float = meths.open_win(old_buf, false, float_opts).id
       end)
       after_each(function()
-        eq(false, meths.buf_is_valid(old_buf))
         expect('')
         eq(3, #meths.list_wins())
         eq(2, #meths.list_tabpages())
@@ -664,18 +656,12 @@ describe('float window', function()
       old_win = curwin().id
     end)
     describe('closing the last non-floating window', function()
-      describe('closes the tabpage force-closing floating windows', function()
-        local same_buf_float, other_buf, other_buf_float
+      describe('closes the tabpage when all floating windows are closeable', function()
+        local same_buf_float
         before_each(function()
-          command('set nohidden')
           same_buf_float = meths.open_win(old_buf, false, float_opts).id
-          other_buf = meths.create_buf(true, false).id
-          other_buf_float = meths.open_win(other_buf, true, float_opts).id
-          insert('foo')
-          meths.set_current_win(old_win)
         end)
         after_each(function()
-          eq(true, meths.buf_is_valid(other_buf))
           eq(old_tabpage, curtab().id)
           expect('oldtab')
           eq(1, #meths.list_tabpages())
@@ -683,30 +669,41 @@ describe('float window', function()
         it('if called from non-floating window', function()
           meths.win_close(old_win, false)
         end)
-        it('if called from floating window with the same buffer', function()
+        it('if called from floating window', function()
           meths.set_current_win(same_buf_float)
           meths.win_close(old_win, false)
         end)
-        it('if called from floating window with another buffer', function()
-          meths.set_current_win(other_buf_float)
-          meths.win_close(old_win, false)
-        end)
       end)
-    end)
-    describe("deleting the last non-floating window's buffer", function()
-      describe('closes the tabpage force-closing floating windows', function()
-        local same_buf_float, other_buf, other_buf_float
+      describe('gives E5601 when there are non-closeable floating windows', function()
+        local other_buf_float
         before_each(function()
           command('set nohidden')
-          same_buf_float = meths.open_win(old_buf, false, float_opts).id
-          other_buf = meths.create_buf(true, false).id
+          local other_buf = meths.create_buf(true, false).id
           other_buf_float = meths.open_win(other_buf, true, float_opts).id
           insert('foo')
           meths.set_current_win(old_win)
         end)
+        it('if called from non-floating window', function()
+          eq('Vim:E5601: Cannot close window, only floating window would remain',
+             pcall_err(meths.win_close, old_win, false))
+        end)
+        it('if called from floating window', function()
+          meths.set_current_win(other_buf_float)
+          eq('Vim:E5601: Cannot close window, only floating window would remain',
+             pcall_err(meths.win_close, old_win, false))
+        end)
+      end)
+    end)
+    describe("deleting the last non-floating window's buffer", function()
+      describe('closes the tabpage when all floating windows are closeable', function()
+        local same_buf_float, other_buf, other_buf_float
+        before_each(function()
+          same_buf_float = meths.open_win(old_buf, false, float_opts).id
+          other_buf = meths.create_buf(true, false).id
+          other_buf_float = meths.open_win(other_buf, true, float_opts).id
+          meths.set_current_win(old_win)
+        end)
         after_each(function()
-          eq(false, meths.buf_is_valid(old_buf))
-          eq(true, meths.buf_is_valid(other_buf))
           eq(old_tabpage, curtab().id)
           expect('oldtab')
           eq(1, #meths.list_tabpages())
@@ -724,6 +721,7 @@ describe('float window', function()
           meths.buf_delete(old_buf, {force = false})
         end)
       end)
+      -- TODO: what to do when there are non-closeable floating windows?
     end)
   end)
 
