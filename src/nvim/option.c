@@ -1179,18 +1179,24 @@ static set_op_T get_op(const char *arg)
   return op;
 }
 
+static int get_option_prefix(char **argp)
+{
+  if (strncmp(*argp, "no", 2) == 0) {
+    *argp += 2;
+    return 0;
+  } else if (strncmp(*argp, "inv", 3) == 0) {
+    *argp += 3;
+    return 2;
+  }
+
+  return 1;
+}
+
 static void do_set_option(int opt_flags, char **argp, bool *did_show, char *errbuf,
                           size_t errbuflen, char **errmsg)
 {
-  int prefix = 1;  // 1: nothing, 0: "no", 2: "inv" in front of name
-
-  if (strncmp(*argp, "no", 2) == 0) {
-    prefix = 0;
-    *argp += 2;
-  } else if (strncmp(*argp, "inv", 3) == 0) {
-    prefix = 2;
-    *argp += 3;
-  }
+  // 1: nothing, 0: "no", 2: "inv" in front of name
+  int prefix = get_option_prefix(argp);
 
   char *arg = *argp;
 
@@ -1221,11 +1227,11 @@ static void do_set_option(int opt_flags, char **argp, bool *did_show, char *errb
       key = find_key_option(arg + 1, true);
     }
   } else {
-    len = 0;
     // The two characters after "t_" may not be alphanumeric.
     if (arg[0] == 't' && arg[1] == '_' && arg[2] && arg[3]) {
       len = 4;
     } else {
+      len = 0;
       while (ASCII_ISALNUM(arg[len]) || arg[len] == '_') {
         len++;
       }
