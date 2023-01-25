@@ -1412,7 +1412,7 @@ int do_set(char *arg, int opt_flags)
   bool did_show = false;             // already showed one value
 
   if (*arg == NUL) {
-    showoptions(0, opt_flags);
+    showoptions(false, opt_flags);
     did_show = true;
     goto theend;
   }
@@ -1432,7 +1432,7 @@ int do_set(char *arg, int opt_flags)
         ui_refresh_options();
         redraw_all_later(UPD_CLEAR);
       } else {
-        showoptions(1, opt_flags);
+        showoptions(true, opt_flags);
         did_show = true;
       }
     } else {
@@ -3124,11 +3124,11 @@ static int find_key_option(const char *arg, bool has_lt)
   return find_key_option_len(arg, strlen(arg), has_lt);
 }
 
-/// if 'all' == 0: show changed options
-/// if 'all' == 1: show all normal options
+/// if 'all' == false: show changed options
+/// if 'all' == true: show all normal options
 ///
 /// @param opt_flags  OPT_LOCAL and/or OPT_GLOBAL
-static void showoptions(int all, int opt_flags)
+static void showoptions(bool all, int opt_flags)
 {
 #define INC 20
 #define GAP 3
