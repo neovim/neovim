@@ -5625,9 +5625,6 @@ msgstr "$VIMRUNTIME öntanımlı konumu: \""
 msgid "Nvim is open source and freely distributable"
 msgstr "Nvim açık kaynaklıdır ve özgürce dağıtılabilir"
 
-msgid "https://neovim.io/#chat"
-msgstr "https://neovim.io/#chat"
-
 msgid "type  :help nvim<Enter>       if you are new! "
 msgstr "eğer yeniyseniz         :help nvim<Enter>       "
 

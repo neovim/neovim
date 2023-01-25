@@ -19,7 +19,7 @@ msgstr ""
 "Project-Id-Version: Vim(Simplified Chinese)\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2022-11-17 08:00+0800\n"
-"PO-Revision-Date: 2022-11-17 22:29+0800\n"
+"PO-Revision-Date: 2023-01-24 13:00+0800\n"
 "Last-Translator: Sizhe Zhao <prc.zhao@outlook.com>\n"
 "Language-Team: Simplified Chinese <i18n-translation@lists.linux.net.cn>\n"
 "Language: zh_CN\n"
@@ -7248,17 +7248,13 @@ msgstr "  $VIMRUNTIME 预设值: \""
 msgid "Nvim is open source and freely distributable"
 msgstr "Nvim 是可自由分发的开放源代码软件"
 
-#: ../version.c:2806
-msgid "https://neovim.io/#chat"
-msgstr ""
-
 #: ../version.c:2808
 msgid "type  :help nvim<Enter>       if you are new! "
-msgstr ""
+msgstr "输入  :help nvim<Enter>       了解 Neovim！   "
 
 #: ../version.c:2809
 msgid "type  :checkhealth<Enter>     to optimize Nvim"
-msgstr ""
+msgstr "输入  :checkhealth<Enter>     优化 Neovim     "
 
 #: ../version.c:2810
 msgid "type  :q<Enter>               to exit         "
@@ -7266,11 +7262,12 @@ msgstr "输入  :q<Enter>               退出            "
 
 #: ../version.c:2811
 msgid "type  :help<Enter>            for help        "
-msgstr ""
+msgstr "输入  :help<Enter>            查看帮助        "
 
 #: ../version.c:2813
-msgid "type  :help news<Enter> to see changes in"
-msgstr ""
+#, c-format
+msgid "type  :help news<Enter> to see changes in v%s.%s"
+msgstr "输入  :help news<Enter>       查看 v%s.%s 的变化"
 
 #: ../version.c:2816
 msgid "Help poor children in Uganda!"
