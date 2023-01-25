@@ -234,6 +234,7 @@ func Test_includeexpr_scriptlocal_func()
   endfunc
   set includeexpr=s:IncludeFunc()
   call assert_equal(expand('<SID>') .. 'IncludeFunc()', &includeexpr)
+  call assert_equal(expand('<SID>') .. 'IncludeFunc()', &g:includeexpr)
   new | only
   call setline(1, 'TestFile1')
   let g:IncludeFname = ''
@@ -242,11 +243,35 @@ func Test_includeexpr_scriptlocal_func()
   bw!
   set includeexpr=<SID>IncludeFunc()
   call assert_equal(expand('<SID>') .. 'IncludeFunc()', &includeexpr)
+  call assert_equal(expand('<SID>') .. 'IncludeFunc()', &g:includeexpr)
   new | only
   call setline(1, 'TestFile2')
   let g:IncludeFname = ''
   call assert_fails('normal! gf', 'E447:')
   call assert_equal('TestFile2', g:IncludeFname)
+  bw!
+  setlocal includeexpr=
+  setglobal includeexpr=s:IncludeFunc()
+  call assert_equal(expand('<SID>') .. 'IncludeFunc()', &g:includeexpr)
+  call assert_equal('', &includeexpr)
+  new
+  call assert_equal(expand('<SID>') .. 'IncludeFunc()', &includeexpr)
+  call setline(1, 'TestFile3')
+  let g:IncludeFname = ''
+  call assert_fails('normal! gf', 'E447:')
+  call assert_equal('TestFile3', g:IncludeFname)
+  bw!
+  setlocal includeexpr=
+  setglobal includeexpr=<SID>IncludeFunc()
+  call assert_equal(expand('<SID>') .. 'IncludeFunc()', &g:includeexpr)
+  call assert_equal('', &includeexpr)
+  new
+  call assert_equal(expand('<SID>') .. 'IncludeFunc()', &includeexpr)
+  call setline(1, 'TestFile4')
+  let g:IncludeFname = ''
+  call assert_fails('normal! gf', 'E447:')
+  call assert_equal('TestFile4', g:IncludeFname)
+  bw!
   set includeexpr&
   delfunc s:IncludeFunc
   bw!

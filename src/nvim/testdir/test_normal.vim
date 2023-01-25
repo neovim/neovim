@@ -262,6 +262,7 @@ func Test_formatexpr_scriptlocal_func()
   endfunc
   set formatexpr=s:Format()
   call assert_equal(expand('<SID>') .. 'Format()', &formatexpr)
+  call assert_equal(expand('<SID>') .. 'Format()', &g:formatexpr)
   new | only
   call setline(1, range(1, 40))
   let g:FormatArgs = []
@@ -270,6 +271,7 @@ func Test_formatexpr_scriptlocal_func()
   bw!
   set formatexpr=<SID>Format()
   call assert_equal(expand('<SID>') .. 'Format()', &formatexpr)
+  call assert_equal(expand('<SID>') .. 'Format()', &g:formatexpr)
   new | only
   call setline(1, range(1, 40))
   let g:FormatArgs = []
@@ -277,6 +279,7 @@ func Test_formatexpr_scriptlocal_func()
   call assert_equal([4, 2], g:FormatArgs)
   bw!
   let &formatexpr = 's:Format()'
+  call assert_equal(expand('<SID>') .. 'Format()', &g:formatexpr)
   new | only
   call setline(1, range(1, 40))
   let g:FormatArgs = []
@@ -284,12 +287,55 @@ func Test_formatexpr_scriptlocal_func()
   call assert_equal([6, 2], g:FormatArgs)
   bw!
   let &formatexpr = '<SID>Format()'
+  call assert_equal(expand('<SID>') .. 'Format()', &g:formatexpr)
   new | only
   call setline(1, range(1, 40))
   let g:FormatArgs = []
   normal! 8GVjgq
   call assert_equal([8, 2], g:FormatArgs)
+  bw!
   setlocal formatexpr=
+  setglobal formatexpr=s:Format()
+  call assert_equal(expand('<SID>') .. 'Format()', &g:formatexpr)
+  call assert_equal('', &formatexpr)
+  new
+  call assert_equal(expand('<SID>') .. 'Format()', &formatexpr)
+  call setline(1, range(1, 40))
+  let g:FormatArgs = []
+  normal! 10GVjgq
+  call assert_equal([10, 2], g:FormatArgs)
+  bw!
+  setglobal formatexpr=<SID>Format()
+  call assert_equal(expand('<SID>') .. 'Format()', &g:formatexpr)
+  call assert_equal('', &formatexpr)
+  new
+  call assert_equal(expand('<SID>') .. 'Format()', &formatexpr)
+  call setline(1, range(1, 40))
+  let g:FormatArgs = []
+  normal! 12GVjgq
+  call assert_equal([12, 2], g:FormatArgs)
+  bw!
+  let &g:formatexpr = 's:Format()'
+  call assert_equal(expand('<SID>') .. 'Format()', &g:formatexpr)
+  call assert_equal('', &formatexpr)
+  new
+  call assert_equal(expand('<SID>') .. 'Format()', &formatexpr)
+  call setline(1, range(1, 40))
+  let g:FormatArgs = []
+  normal! 14GVjgq
+  call assert_equal([14, 2], g:FormatArgs)
+  bw!
+  let &g:formatexpr = '<SID>Format()'
+  call assert_equal(expand('<SID>') .. 'Format()', &g:formatexpr)
+  call assert_equal('', &formatexpr)
+  new
+  call assert_equal(expand('<SID>') .. 'Format()', &formatexpr)
+  call setline(1, range(1, 40))
+  let g:FormatArgs = []
+  normal! 16GVjgq
+  call assert_equal([16, 2], g:FormatArgs)
+  bw!
+  set formatexpr=
   delfunc s:Format
   bw!
 endfunc

@@ -1497,12 +1497,12 @@ static void did_set_vartabstop(buf_T *buf, win_T *win, char **varp, char **errms
   }
 }
 
-static void did_set_optexpr(win_T *win, char **p_opt, char **varp, char **gvarp)
+static void did_set_optexpr(char **varp)
 {
-  char *name = get_scriptlocal_funcname(*p_opt);
+  char *name = get_scriptlocal_funcname(*varp);
   if (name != NULL) {
-    free_string_option(*p_opt);
-    *p_opt = name;
+    free_string_option(*varp);
+    *varp = name;
   }
 }
 
@@ -1808,23 +1808,18 @@ static char *did_set_string_option_for(buf_T *buf, win_T *win, int opt_idx, char
     did_set_varsoftabstop(buf, varp, &errmsg);
   } else if (varp == &buf->b_p_vts) {  // 'vartabstop'
     did_set_vartabstop(buf, win, varp, &errmsg);
-  } else if (varp == &p_dex) {  // 'diffexpr'
-    did_set_optexpr(win, &p_dex, varp, gvarp);
-  } else if (varp == &win->w_p_fde) {  // 'foldexpr'
-    did_set_optexpr(win, &win->w_p_fde, varp, gvarp);
-    if (foldmethodIsExpr(win)) {
+  } else if (varp == &p_dex  // 'diffexpr'
+             || gvarp == &win->w_allbuf_opt.wo_fde  // 'foldexpr'
+             || gvarp == &win->w_allbuf_opt.wo_fdt  // 'foldtext'
+             || gvarp == &p_fex  // 'formatexpr'
+             || gvarp == &p_inex  // 'includeexpr'
+             || gvarp == &p_inde  // 'indentexpr'
+             || varp == &p_pex  // 'patchexpr'
+             || varp == &p_ccv) {  // 'charconvert'
+    did_set_optexpr(varp);
+    if (varp == &win->w_p_fde && foldmethodIsExpr(win)) {
       foldUpdateAll(win);
     }
-  } else if (varp == &win->w_p_fdt) {  // 'foldtext'
-    did_set_optexpr(win, &win->w_p_fdt, varp, gvarp);
-  } else if (varp == &p_pex) {  // 'patchexpr'
-    did_set_optexpr(win, &p_pex, varp, gvarp);
-  } else if (gvarp == &p_fex) {  // 'formatexpr'
-    did_set_optexpr(win, &buf->b_p_fex, varp, gvarp);
-  } else if (gvarp == &p_inex) {  // 'includeexpr'
-    did_set_optexpr(win, &buf->b_p_inex, varp, gvarp);
-  } else if (gvarp == &p_inde) {  // 'indentexpr'
-    did_set_optexpr(win, &buf->b_p_inde, varp, gvarp);
   } else if (gvarp == &p_cfu) {  // 'completefunc'
     set_completefunc_option(&errmsg);
   } else if (gvarp == &p_ofu) {  // 'omnifunc'
