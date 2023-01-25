@@ -3474,7 +3474,7 @@ static void ins_ctrl_hat(void)
       State |= MODE_LANGMAP;
     }
   }
-  set_iminsert_global();
+  set_iminsert_global(curbuf);
   showmode();
   // Show/unshow value of 'keymap' in status lines.
   status_redraw_curbuf();

@@ -1557,9 +1557,9 @@ static void command_line_toggle_langmap(CommandLineState *s)
 
   if (s->b_im_ptr != NULL) {
     if (s->b_im_ptr == &curbuf->b_p_iminsert) {
-      set_iminsert_global();
+      set_iminsert_global(curbuf);
     } else {
-      set_imsearch_global();
+      set_imsearch_global(curbuf);
     }
   }
   ui_cursor_shape();                // may show different cursor shape
