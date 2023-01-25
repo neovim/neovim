@@ -831,10 +831,9 @@ static void do_set_num(int opt_idx, int opt_flags, char **argp, int nextchar, co
 }
 
 /// Part of do_set() for string options.
-/// @return  FAIL on failure, do not process further options.
-static int do_set_string(int opt_idx, int opt_flags, char **argp, int nextchar, set_op_T op_arg,
-                         uint32_t flags, char *varp_arg, char *errbuf, size_t errbuflen,
-                         int *value_checked, char **errmsg)
+static void do_set_string(int opt_idx, int opt_flags, char **argp, int nextchar, set_op_T op_arg,
+                          uint32_t flags, char *varp_arg, char *errbuf, size_t errbuflen,
+                          int *value_checked, char **errmsg)
 {
   char *arg = *argp;
   set_op_T op = op_arg;
@@ -1163,7 +1162,6 @@ static int do_set_string(int opt_idx, int opt_flags, char **argp, int nextchar, 
   xfree(saved_newval);
 
   *argp = arg;
-  return *errmsg == NULL ? OK : FAIL;
 }
 
 /// Parse 'arg' for option settings.
@@ -1429,13 +1427,10 @@ int do_set(char *arg, int opt_flags)
               goto skip;
             }
           } else if (opt_idx >= 0) {  // String.
-            if (do_set_string(opt_idx, opt_flags, &arg, nextchar,
-                              op, flags, varp, errbuf, sizeof(errbuf),
-                              &value_checked, &errmsg) == FAIL) {
-              if (errmsg != NULL) {
-                goto skip;
-              }
-              break;
+            do_set_string(opt_idx, opt_flags, &arg, nextchar, op, flags, varp, errbuf,
+                          sizeof(errbuf), &value_checked, &errmsg);
+            if (errmsg != NULL) {
+              goto skip;
             }
           } else {
             // key code option(FIXME(tarruda): Show a warning or something
