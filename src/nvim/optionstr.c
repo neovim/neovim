@@ -1849,6 +1849,12 @@ static char *did_set_string_option_for(buf_T *buf, win_T *win, int opt_idx, char
     did_set_option_listflag(varp, COCU_ALL, errbuf, errbuflen, &errmsg);
   } else if (varp == &p_mouse) {  // 'mouse'
     did_set_option_listflag(varp, MOUSE_ALL, errbuf, errbuflen, &errmsg);
+  } else if (gvarp == &p_flp) {
+    if (win->w_briopt_list) {
+      // Changing Formatlistpattern when briopt includes the list setting:
+      // redraw
+      redraw_all_later(UPD_NOT_VALID);
+    }
   }
 
   // If error detected, restore the previous value.
@@ -1894,12 +1900,6 @@ static char *did_set_string_option_for(buf_T *buf, win_T *win, int opt_idx, char
 
   if (varp == &p_mouse) {
     setmouse();  // in case 'mouse' changed
-  }
-
-  // Changing Formatlistpattern when briopt includes the list setting:
-  // redraw
-  if ((varp == &p_flp || varp == &(buf->b_p_flp)) && win->w_briopt_list) {
-    redraw_all_later(UPD_NOT_VALID);
   }
 
   if (win->w_curswant != MAXCOL
