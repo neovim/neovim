@@ -1497,39 +1497,12 @@ static void did_set_vartabstop(buf_T *buf, win_T *win, char **varp, char **errms
   }
 }
 
-static void did_set_optexpr(buf_T *buf, win_T *win, char **varp, char **gvarp)
+static void did_set_optexpr(win_T *win, char **p_opt, char **varp, char **gvarp)
 {
-  char **p_opt = NULL;
-
-  // If the option value starts with <SID> or s:, then replace that with
-  // the script identifier.
-
-  if (varp == &p_dex) {  // 'diffexpr'
-    p_opt = &p_dex;
-  } else if (varp == &win->w_p_fde) {  // 'foldexpr'
-    p_opt = &win->w_p_fde;
-  } else if (varp == &win->w_p_fdt) {  // 'foldtext'
-    p_opt = &win->w_p_fdt;
-  } else if (varp == &p_pex) {  // 'patchexpr'
-    p_opt = &p_pex;
-  } else if (gvarp == &p_fex) {  // 'formatexpr'
-    p_opt = &buf->b_p_fex;
-  } else if (gvarp == &p_inex) {  // 'includeexpr'
-    p_opt = &buf->b_p_inex;
-  } else if (gvarp == &p_inde) {  // 'indentexpr'
-    p_opt = &buf->b_p_inde;
-  }
-
-  if (p_opt != NULL) {
-    char *name = get_scriptlocal_funcname(*p_opt);
-    if (name != NULL) {
-      free_string_option(*p_opt);
-      *p_opt = name;
-    }
-  }
-
-  if (varp == &win->w_p_fde && foldmethodIsExpr(win)) {
-    foldUpdateAll(win);
+  char *name = get_scriptlocal_funcname(*p_opt);
+  if (name != NULL) {
+    free_string_option(*p_opt);
+    *p_opt = name;
   }
 }
 
@@ -1835,14 +1808,23 @@ static char *did_set_string_option_for(buf_T *buf, win_T *win, int opt_idx, char
     did_set_varsoftabstop(buf, varp, &errmsg);
   } else if (varp == &buf->b_p_vts) {  // 'vartabstop'
     did_set_vartabstop(buf, win, varp, &errmsg);
-  } else if (varp == &p_dex
-             || varp == &win->w_p_fde
-             || varp == &win->w_p_fdt
-             || gvarp == &p_fex
-             || gvarp == &p_inex
-             || gvarp == &p_inde
-             || varp == &p_pex) {  // '*expr' options
-    did_set_optexpr(buf, win, varp, gvarp);
+  } else if (varp == &p_dex) {  // 'diffexpr'
+    did_set_optexpr(win, &p_dex, varp, gvarp);
+  } else if (varp == &win->w_p_fde) {  // 'foldexpr'
+    did_set_optexpr(win, &win->w_p_fde, varp, gvarp);
+    if (foldmethodIsExpr(win)) {
+      foldUpdateAll(win);
+    }
+  } else if (varp == &win->w_p_fdt) {  // 'foldtext'
+    did_set_optexpr(win, &win->w_p_fdt, varp, gvarp);
+  } else if (varp == &p_pex) {  // 'patchexpr'
+    did_set_optexpr(win, &p_pex, varp, gvarp);
+  } else if (gvarp == &p_fex) {  // 'formatexpr'
+    did_set_optexpr(win, &buf->b_p_fex, varp, gvarp);
+  } else if (gvarp == &p_inex) {  // 'includeexpr'
+    did_set_optexpr(win, &buf->b_p_inex, varp, gvarp);
+  } else if (gvarp == &p_inde) {  // 'indentexpr'
+    did_set_optexpr(win, &buf->b_p_inde, varp, gvarp);
   } else if (gvarp == &p_cfu) {  // 'completefunc'
     set_completefunc_option(&errmsg);
   } else if (gvarp == &p_ofu) {  // 'omnifunc'
