@@ -1192,18 +1192,18 @@ static int get_option_prefix(char **argp)
   return 1;
 }
 
-static void do_set_option(int opt_flags, char **argp, bool *did_show, char *errbuf,
-                          size_t errbuflen, char **errmsg)
+/// @param[in]   arg       Pointer to start option name
+/// @param[out]  opt_idxp  Option index in options[] table.
+/// @param[out]  keyp
+/// @param[out]  len       Length of option name
+/// @return  FAIL if an error is detected, OK otherwise
+static int parse_option_name(char *arg, int *keyp, int *lenp, int *opt_idxp)
 {
-  // 1: nothing, 0: "no", 2: "inv" in front of name
-  int prefix = get_option_prefix(argp);
-
-  char *arg = *argp;
-
   // find end of name
   int key = 0;
   int len;
   int opt_idx;
+
   if (*arg == '<') {
     opt_idx = -1;
     // look out for <t_>;>
@@ -1216,8 +1216,7 @@ static void do_set_option(int opt_flags, char **argp, bool *did_show, char *errb
       }
     }
     if (arg[len] != '>') {
-      *errmsg = e_invarg;
-      return;
+      return FAIL;
     }
     if (arg[1] == 't' && arg[2] == '_') {  // could be term code
       opt_idx = findoption_len((const char *)arg + 1, (size_t)(len - 1));
@@ -1240,6 +1239,30 @@ static void do_set_option(int opt_flags, char **argp, bool *did_show, char *errb
     if (opt_idx == -1) {
       key = find_key_option(arg, false);
     }
+  }
+
+  *keyp = key;
+  *lenp = len;
+  *opt_idxp = opt_idx;
+
+  return OK;
+}
+
+static void do_set_option(int opt_flags, char **argp, bool *did_show, char *errbuf,
+                          size_t errbuflen, char **errmsg)
+{
+  // 1: nothing, 0: "no", 2: "inv" in front of name
+  int prefix = get_option_prefix(argp);
+
+  char *arg = *argp;
+
+  // find end of name
+  int key = 0;
+  int len;
+  int opt_idx;
+  if (parse_option_name(arg, &key, &len, &opt_idx) == FAIL) {
+    *errmsg = e_invarg;
+    return;
   }
 
   // remember character after option name
