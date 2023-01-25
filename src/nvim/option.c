@@ -1164,6 +1164,21 @@ static void do_set_string(int opt_idx, int opt_flags, char **argp, int nextchar,
   *argp = arg;
 }
 
+static set_op_T get_op(const char *arg)
+{
+  set_op_T op = OP_NONE;
+  if (*arg != NUL && *(arg + 1) == '=') {
+    if (*arg == '+') {
+      op = OP_ADDING;          // "+="
+    } else if (*arg == '^') {
+      op = OP_PREPENDING;      // "^="
+    } else if (*arg == '-') {
+      op = OP_REMOVING;        // "-="
+    }
+  }
+  return op;
+}
+
 static void do_set_option(int opt_flags, char **argp, bool *did_show, char *errbuf,
                           size_t errbuflen, char **errmsg)
 {
@@ -1229,19 +1244,11 @@ static void do_set_option(int opt_flags, char **argp, bool *did_show, char *errb
     len++;
   }
 
-  set_op_T op = OP_NONE;
-  if (arg[len] != NUL && arg[len + 1] == '=') {
-    if (arg[len] == '+') {
-      op = OP_ADDING;                       // "+="
-      len++;
-    } else if (arg[len] == '^') {
-      op = OP_PREPENDING;                   // "^="
-      len++;
-    } else if (arg[len] == '-') {
-      op = OP_REMOVING;                     // "-="
-      len++;
-    }
+  set_op_T op = get_op(arg + len);
+  if (op != OP_NONE) {
+    len++;
   }
+
   uint8_t nextchar = (uint8_t)arg[len];  // next non-white char after option name
 
   if (opt_idx == -1 && key == 0) {          // found a mismatch: skip
