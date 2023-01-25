@@ -1164,6 +1164,234 @@ static void do_set_string(int opt_idx, int opt_flags, char **argp, int nextchar,
   *argp = arg;
 }
 
+static void do_set_option(int opt_flags, char **argp, bool *did_show, char *errbuf,
+                          size_t errbuflen, char **errmsg)
+{
+  int prefix = 1;  // 1: nothing, 0: "no", 2: "inv" in front of name
+
+  if (strncmp(*argp, "no", 2) == 0) {
+    prefix = 0;
+    *argp += 2;
+  } else if (strncmp(*argp, "inv", 3) == 0) {
+    prefix = 2;
+    *argp += 3;
+  }
+
+  char *arg = *argp;
+
+  // find end of name
+  int key = 0;
+  int len;
+  int opt_idx;
+  if (*arg == '<') {
+    opt_idx = -1;
+    // look out for <t_>;>
+    if (arg[1] == 't' && arg[2] == '_' && arg[3] && arg[4]) {
+      len = 5;
+    } else {
+      len = 1;
+      while (arg[len] != NUL && arg[len] != '>') {
+        len++;
+      }
+    }
+    if (arg[len] != '>') {
+      *errmsg = e_invarg;
+      return;
+    }
+    if (arg[1] == 't' && arg[2] == '_') {  // could be term code
+      opt_idx = findoption_len((const char *)arg + 1, (size_t)(len - 1));
+    }
+    len++;
+    if (opt_idx == -1) {
+      key = find_key_option(arg + 1, true);
+    }
+  } else {
+    len = 0;
+    // The two characters after "t_" may not be alphanumeric.
+    if (arg[0] == 't' && arg[1] == '_' && arg[2] && arg[3]) {
+      len = 4;
+    } else {
+      while (ASCII_ISALNUM(arg[len]) || arg[len] == '_') {
+        len++;
+      }
+    }
+    opt_idx = findoption_len((const char *)arg, (size_t)len);
+    if (opt_idx == -1) {
+      key = find_key_option(arg, false);
+    }
+  }
+
+  // remember character after option name
+  int afterchar = (uint8_t)arg[len];
+
+  // skip white space, allow ":set ai  ?"
+  while (ascii_iswhite(arg[len])) {
+    len++;
+  }
+
+  set_op_T op = OP_NONE;
+  if (arg[len] != NUL && arg[len + 1] == '=') {
+    if (arg[len] == '+') {
+      op = OP_ADDING;                       // "+="
+      len++;
+    } else if (arg[len] == '^') {
+      op = OP_PREPENDING;                   // "^="
+      len++;
+    } else if (arg[len] == '-') {
+      op = OP_REMOVING;                     // "-="
+      len++;
+    }
+  }
+  char_u nextchar = (uint8_t)arg[len];  // next non-white char after option name
+
+  if (opt_idx == -1 && key == 0) {          // found a mismatch: skip
+    *errmsg = e_unknown_option;
+    return;
+  }
+
+  uint32_t flags;  // flags for current option
+  char *varp = NULL;  // pointer to variable for current option
+
+  if (opt_idx >= 0) {
+    if (options[opt_idx].var == NULL) {         // hidden option: skip
+      // Only give an error message when requesting the value of
+      // a hidden option, ignore setting it.
+      if (vim_strchr("=:!&<", (uint8_t)nextchar) == NULL
+          && (!(options[opt_idx].flags & P_BOOL)
+              || nextchar == '?')) {
+        *errmsg = e_unsupportedoption;
+      }
+      return;
+    }
+
+    flags = options[opt_idx].flags;
+    varp = get_varp_scope(&(options[opt_idx]), opt_flags);
+  } else {
+    flags = P_STRING;
+  }
+
+  // Skip all options that are not window-local (used when showing
+  // an already loaded buffer in a window).
+  if ((opt_flags & OPT_WINONLY)
+      && (opt_idx < 0 || options[opt_idx].var != VAR_WIN)) {
+    return;
+  }
+
+  // Skip all options that are window-local (used for :vimgrep).
+  if ((opt_flags & OPT_NOWIN) && opt_idx >= 0
+      && options[opt_idx].var == VAR_WIN) {
+    return;
+  }
+
+  // Disallow changing some options from modelines.
+  if (opt_flags & OPT_MODELINE) {
+    if (flags & (P_SECURE | P_NO_ML)) {
+      *errmsg = e_not_allowed_in_modeline;
+      return;
+    }
+    if ((flags & P_MLE) && !p_mle) {
+      *errmsg = e_not_allowed_in_modeline_when_modelineexpr_is_off;
+      return;
+    }
+    // In diff mode some options are overruled.  This avoids that
+    // 'foldmethod' becomes "marker" instead of "diff" and that
+    // "wrap" gets set.
+    if (curwin->w_p_diff
+        && opt_idx >= 0              // shut up coverity warning
+        && (options[opt_idx].indir == PV_FDM
+            || options[opt_idx].indir == PV_WRAP)) {
+      return;
+    }
+  }
+
+  // Disallow changing some options in the sandbox
+  if (sandbox != 0 && (flags & P_SECURE)) {
+    *errmsg = e_sandbox;
+    return;
+  }
+
+  if (vim_strchr("?=:!&<", (uint8_t)nextchar) != NULL) {
+    *argp += len;
+    if (nextchar == '&' && (*argp)[1] == 'v' && (*argp)[2] == 'i') {
+      if ((*argp)[3] == 'm') {  // "opt&vim": set to Vim default
+        *argp += 3;
+      } else {  // "opt&vi": set to Vi default
+        *argp += 2;
+      }
+    }
+    if (vim_strchr("?!&<", (uint8_t)nextchar) != NULL
+        && (*argp)[1] != NUL && !ascii_iswhite((*argp)[1])) {
+      *errmsg = e_trailing;
+      return;
+    }
+  }
+
+  //
+  // allow '=' and ':' as MS-DOS command.com allows only one
+  // '=' character per "set" command line. grrr. (jw)
+  //
+  if (nextchar == '?'
+      || (prefix == 1
+          && vim_strchr("=:&<", (uint8_t)nextchar) == NULL
+          && !(flags & P_BOOL))) {
+    // print value
+    if (*did_show) {
+      msg_putchar('\n');                // cursor below last one
+    } else {
+      gotocmdline(true);                // cursor at status line
+      *did_show = true;                 // remember that we did a line
+    }
+    if (opt_idx >= 0) {
+      showoneopt(&options[opt_idx], opt_flags);
+      if (p_verbose > 0) {
+        // Mention where the option was last set.
+        if (varp == (char *)options[opt_idx].var) {
+          option_last_set_msg(options[opt_idx].last_set);
+        } else if ((int)options[opt_idx].indir & PV_WIN) {
+          option_last_set_msg(curwin->w_p_script_ctx[(int)options[opt_idx].indir & PV_MASK]);
+        } else if ((int)options[opt_idx].indir & PV_BUF) {
+          option_last_set_msg(curbuf->b_p_script_ctx[(int)options[opt_idx].indir & PV_MASK]);
+        }
+      }
+    } else {
+      *errmsg = e_key_code_not_set;
+      return;
+    }
+    if (nextchar != '?' && nextchar != NUL && !ascii_iswhite(afterchar)) {
+      *errmsg = e_trailing;
+    }
+  } else {
+    int value_checked = false;
+    if (flags & P_BOOL) {                       // boolean
+      do_set_bool(opt_idx, opt_flags, prefix, nextchar, afterchar, varp, errmsg);
+    } else {  // Numeric or string.
+      if (vim_strchr("=:&<", (uint8_t)nextchar) == NULL
+          || prefix != 1) {
+        *errmsg = e_invarg;
+        return;
+      }
+
+      if (flags & P_NUM) {  // numeric
+        do_set_num(opt_idx, opt_flags, argp, nextchar, op, varp, errbuf, errbuflen, errmsg);
+      } else if (opt_idx >= 0) {  // String.
+        do_set_string(opt_idx, opt_flags, argp, nextchar, op, flags, varp, errbuf,
+                      errbuflen, &value_checked, errmsg);
+      } else {
+        // key code option(FIXME(tarruda): Show a warning or something
+        // similar)
+      }
+    }
+
+    if (*errmsg != NULL) {
+      return;
+    }
+
+    if (opt_idx >= 0) {
+      did_set_option(opt_idx, opt_flags, op == OP_NONE, value_checked);
+    }
+  }
+}
+
 /// Parse 'arg' for option settings.
 ///
 /// 'arg' may be IObuff, but only when no errors can be present and option
@@ -1181,7 +1409,7 @@ static void do_set_string(int opt_idx, int opt_flags, char **argp, int nextchar,
 /// @return  FAIL if an error is detected, OK otherwise
 int do_set(char *arg, int opt_flags)
 {
-  int did_show = false;             // already showed one value
+  bool did_show = false;             // already showed one value
 
   if (*arg == NUL) {
     showoptions(0, opt_flags);
@@ -1213,232 +1441,8 @@ int do_set(char *arg, int opt_flags)
         did_show = true;
       }
     } else {
-      int prefix = 1;  // 1: nothing, 0: "no", 2: "inv" in front of name
-      if (strncmp(arg, "no", 2) == 0) {
-        prefix = 0;
-        arg += 2;
-      } else if (strncmp(arg, "inv", 3) == 0) {
-        prefix = 2;
-        arg += 3;
-      }
+      do_set_option(opt_flags, &arg, &did_show, errbuf, sizeof(errbuf), &errmsg);
 
-      // find end of name
-      int key = 0;
-      int len;
-      int opt_idx;
-      if (*arg == '<') {
-        opt_idx = -1;
-        // look out for <t_>;>
-        if (arg[1] == 't' && arg[2] == '_' && arg[3] && arg[4]) {
-          len = 5;
-        } else {
-          len = 1;
-          while (arg[len] != NUL && arg[len] != '>') {
-            len++;
-          }
-        }
-        if (arg[len] != '>') {
-          errmsg = e_invarg;
-          goto skip;
-        }
-        if (arg[1] == 't' && arg[2] == '_') {  // could be term code
-          opt_idx = findoption_len((const char *)arg + 1, (size_t)(len - 1));
-        }
-        len++;
-        if (opt_idx == -1) {
-          key = find_key_option(arg + 1, true);
-        }
-      } else {
-        len = 0;
-        // The two characters after "t_" may not be alphanumeric.
-        if (arg[0] == 't' && arg[1] == '_' && arg[2] && arg[3]) {
-          len = 4;
-        } else {
-          while (ASCII_ISALNUM(arg[len]) || arg[len] == '_') {
-            len++;
-          }
-        }
-        opt_idx = findoption_len((const char *)arg, (size_t)len);
-        if (opt_idx == -1) {
-          key = find_key_option(arg, false);
-        }
-      }
-
-      // remember character after option name
-      int afterchar = (uint8_t)arg[len];
-
-      // skip white space, allow ":set ai  ?"
-      while (ascii_iswhite(arg[len])) {
-        len++;
-      }
-
-      set_op_T op = OP_NONE;
-      if (arg[len] != NUL && arg[len + 1] == '=') {
-        if (arg[len] == '+') {
-          op = OP_ADDING;                       // "+="
-          len++;
-        } else if (arg[len] == '^') {
-          op = OP_PREPENDING;                   // "^="
-          len++;
-        } else if (arg[len] == '-') {
-          op = OP_REMOVING;                     // "-="
-          len++;
-        }
-      }
-      char_u nextchar = (uint8_t)arg[len];  // next non-white char after option name
-
-      if (opt_idx == -1 && key == 0) {          // found a mismatch: skip
-        errmsg = e_unknown_option;
-        goto skip;
-      }
-
-      uint32_t flags;  // flags for current option
-      char *varp = NULL;  // pointer to variable for current option
-
-      if (opt_idx >= 0) {
-        if (options[opt_idx].var == NULL) {         // hidden option: skip
-          // Only give an error message when requesting the value of
-          // a hidden option, ignore setting it.
-          if (vim_strchr("=:!&<", (uint8_t)nextchar) == NULL
-              && (!(options[opt_idx].flags & P_BOOL)
-                  || nextchar == '?')) {
-            errmsg = e_unsupportedoption;
-          }
-          goto skip;
-        }
-
-        flags = options[opt_idx].flags;
-        varp = get_varp_scope(&(options[opt_idx]), opt_flags);
-      } else {
-        flags = P_STRING;
-      }
-
-      // Skip all options that are not window-local (used when showing
-      // an already loaded buffer in a window).
-      if ((opt_flags & OPT_WINONLY)
-          && (opt_idx < 0 || options[opt_idx].var != VAR_WIN)) {
-        goto skip;
-      }
-
-      // Skip all options that are window-local (used for :vimgrep).
-      if ((opt_flags & OPT_NOWIN) && opt_idx >= 0
-          && options[opt_idx].var == VAR_WIN) {
-        goto skip;
-      }
-
-      // Disallow changing some options from modelines.
-      if (opt_flags & OPT_MODELINE) {
-        if (flags & (P_SECURE | P_NO_ML)) {
-          errmsg = e_not_allowed_in_modeline;
-          goto skip;
-        }
-        if ((flags & P_MLE) && !p_mle) {
-          errmsg = e_not_allowed_in_modeline_when_modelineexpr_is_off;
-          goto skip;
-        }
-        // In diff mode some options are overruled.  This avoids that
-        // 'foldmethod' becomes "marker" instead of "diff" and that
-        // "wrap" gets set.
-        if (curwin->w_p_diff
-            && opt_idx >= 0              // shut up coverity warning
-            && (options[opt_idx].indir == PV_FDM
-                || options[opt_idx].indir == PV_WRAP)) {
-          goto skip;
-        }
-      }
-
-      // Disallow changing some options in the sandbox
-      if (sandbox != 0 && (flags & P_SECURE)) {
-        errmsg = e_sandbox;
-        goto skip;
-      }
-
-      if (vim_strchr("?=:!&<", (uint8_t)nextchar) != NULL) {
-        arg += len;
-        if (nextchar == '&' && arg[1] == 'v' && arg[2] == 'i') {
-          if (arg[3] == 'm') {  // "opt&vim": set to Vim default
-            arg += 3;
-          } else {  // "opt&vi": set to Vi default
-            arg += 2;
-          }
-        }
-        if (vim_strchr("?!&<", (uint8_t)nextchar) != NULL
-            && arg[1] != NUL && !ascii_iswhite(arg[1])) {
-          errmsg = e_trailing;
-          goto skip;
-        }
-      }
-
-      //
-      // allow '=' and ':' as MS-DOS command.com allows only one
-      // '=' character per "set" command line. grrr. (jw)
-      //
-      if (nextchar == '?'
-          || (prefix == 1
-              && vim_strchr("=:&<", (uint8_t)nextchar) == NULL
-              && !(flags & P_BOOL))) {
-        // print value
-        if (did_show) {
-          msg_putchar('\n');                // cursor below last one
-        } else {
-          gotocmdline(true);                // cursor at status line
-          did_show = true;                  // remember that we did a line
-        }
-        if (opt_idx >= 0) {
-          showoneopt(&options[opt_idx], opt_flags);
-          if (p_verbose > 0) {
-            // Mention where the option was last set.
-            if (varp == (char *)options[opt_idx].var) {
-              option_last_set_msg(options[opt_idx].last_set);
-            } else if ((int)options[opt_idx].indir & PV_WIN) {
-              option_last_set_msg(curwin->w_p_script_ctx[
-                                                         (int)options[opt_idx].indir & PV_MASK]);
-            } else if ((int)options[opt_idx].indir & PV_BUF) {
-              option_last_set_msg(curbuf->b_p_script_ctx[
-                                                         (int)options[opt_idx].indir & PV_MASK]);
-            }
-          }
-        } else {
-          errmsg = e_key_code_not_set;
-          goto skip;
-        }
-        if (nextchar != '?'
-            && nextchar != NUL && !ascii_iswhite(afterchar)) {
-          errmsg = e_trailing;
-        }
-      } else {
-        int value_checked = false;
-        if (flags & P_BOOL) {                       // boolean
-          do_set_bool(opt_idx, opt_flags, prefix, nextchar, afterchar, varp, &errmsg);
-        } else {  // Numeric or string.
-          if (vim_strchr("=:&<", (uint8_t)nextchar) == NULL
-              || prefix != 1) {
-            errmsg = e_invarg;
-            goto skip;
-          }
-
-          if (flags & P_NUM) {  // numeric
-            do_set_num(opt_idx, opt_flags, &arg, nextchar, op, varp, errbuf, sizeof(errbuf),
-                       &errmsg);
-          } else if (opt_idx >= 0) {  // String.
-            do_set_string(opt_idx, opt_flags, &arg, nextchar, op, flags, varp, errbuf,
-                          sizeof(errbuf), &value_checked, &errmsg);
-          } else {
-            // key code option(FIXME(tarruda): Show a warning or something
-            // similar)
-          }
-        }
-
-        if (errmsg != NULL) {
-          goto skip;
-        }
-
-        if (opt_idx >= 0) {
-          did_set_option(opt_idx, opt_flags, op == OP_NONE, value_checked);
-        }
-      }
-
-skip:
       // Advance to next argument.
       // - skip until a blank found, taking care of backslashes
       // - skip blanks
