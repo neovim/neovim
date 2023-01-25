@@ -726,6 +726,49 @@ void ex_set(exarg_T *eap)
   (void)do_set(eap->arg, flags);
 }
 
+static void do_set_bool(int opt_idx, int opt_flags, int prefix, int nextchar, int afterchar,
+                        const char *varp, char **errmsg)
+{
+  if (nextchar == '=' || nextchar == ':') {
+    *errmsg = e_invarg;
+    return;
+  }
+
+  varnumber_T value;
+
+  // ":set opt!": invert
+  // ":set opt&": reset to default value
+  // ":set opt<": reset to global value
+  if (nextchar == '!') {
+    value = *(int *)(varp) ^ 1;
+  } else if (nextchar == '&') {
+    value = (int)(intptr_t)options[opt_idx].def_val;
+  } else if (nextchar == '<') {
+    // For 'autoread' -1 means to use global value.
+    if ((int *)varp == &curbuf->b_p_ar
+        && opt_flags == OPT_LOCAL) {
+      value = -1;
+    } else {
+      value = *(int *)get_varp_scope(&(options[opt_idx]),
+                                     OPT_GLOBAL);
+    }
+  } else {
+    // ":set invopt": invert
+    // ":set opt" or ":set noopt": set or reset
+    if (nextchar != NUL && !ascii_iswhite(afterchar)) {
+      *errmsg = e_trailing;
+      return;
+    }
+    if (prefix == 2) {                  // inv
+      value = *(int *)(varp) ^ 1;
+    } else {
+      value = prefix;
+    }
+  }
+
+  *errmsg = set_bool_option(opt_idx, (char_u *)varp, (int)value, opt_flags);
+}
+
 static void do_set_num(int opt_idx, int opt_flags, char **argp, int nextchar, const set_op_T op,
                        const char *varp, char *errbuf, size_t errbuflen, char **errmsg)
 {
@@ -1367,45 +1410,11 @@ int do_set(char *arg, int opt_flags)
         }
       } else {
         int value_checked = false;
-        varnumber_T value;
-
         if (flags & P_BOOL) {                       // boolean
-          if (nextchar == '=' || nextchar == ':') {
-            errmsg = e_invarg;
+          do_set_bool(opt_idx, opt_flags, prefix, nextchar, afterchar, varp, &errmsg);
+          if (errmsg != NULL) {
             goto skip;
           }
-
-          // ":set opt!": invert
-          // ":set opt&": reset to default value
-          // ":set opt<": reset to global value
-          if (nextchar == '!') {
-            value = *(int *)(varp) ^ 1;
-          } else if (nextchar == '&') {
-            value = (int)(intptr_t)options[opt_idx].def_val;
-          } else if (nextchar == '<') {
-            // For 'autoread' -1 means to use global value.
-            if ((int *)varp == &curbuf->b_p_ar
-                && opt_flags == OPT_LOCAL) {
-              value = -1;
-            } else {
-              value = *(int *)get_varp_scope(&(options[opt_idx]),
-                                             OPT_GLOBAL);
-            }
-          } else {
-            // ":set invopt": invert
-            // ":set opt" or ":set noopt": set or reset
-            if (nextchar != NUL && !ascii_iswhite(afterchar)) {
-              errmsg = e_trailing;
-              goto skip;
-            }
-            if (prefix == 2) {                  // inv
-              value = *(int *)(varp) ^ 1;
-            } else {
-              value = prefix;
-            }
-          }
-
-          errmsg = set_bool_option(opt_idx, (char_u *)varp, (int)value, opt_flags);
         } else {  // Numeric or string.
           if (vim_strchr("=:&<", (uint8_t)nextchar) == NULL
               || prefix != 1) {
