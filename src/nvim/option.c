@@ -1242,7 +1242,7 @@ static void do_set_option(int opt_flags, char **argp, bool *did_show, char *errb
       len++;
     }
   }
-  char_u nextchar = (uint8_t)arg[len];  // next non-white char after option name
+  uint8_t nextchar = (uint8_t)arg[len];  // next non-white char after option name
 
   if (opt_idx == -1 && key == 0) {          // found a mismatch: skip
     *errmsg = e_unknown_option;
@@ -1256,7 +1256,7 @@ static void do_set_option(int opt_flags, char **argp, bool *did_show, char *errb
     if (options[opt_idx].var == NULL) {         // hidden option: skip
       // Only give an error message when requesting the value of
       // a hidden option, ignore setting it.
-      if (vim_strchr("=:!&<", (uint8_t)nextchar) == NULL
+      if (vim_strchr("=:!&<", nextchar) == NULL
           && (!(options[opt_idx].flags & P_BOOL)
               || nextchar == '?')) {
         *errmsg = e_unsupportedoption;
@@ -1310,7 +1310,7 @@ static void do_set_option(int opt_flags, char **argp, bool *did_show, char *errb
     return;
   }
 
-  if (vim_strchr("?=:!&<", (uint8_t)nextchar) != NULL) {
+  if (vim_strchr("?=:!&<", nextchar) != NULL) {
     *argp += len;
     if (nextchar == '&' && (*argp)[1] == 'v' && (*argp)[2] == 'i') {
       if ((*argp)[3] == 'm') {  // "opt&vim": set to Vim default
@@ -1319,7 +1319,7 @@ static void do_set_option(int opt_flags, char **argp, bool *did_show, char *errb
         *argp += 2;
       }
     }
-    if (vim_strchr("?!&<", (uint8_t)nextchar) != NULL
+    if (vim_strchr("?!&<", nextchar) != NULL
         && (*argp)[1] != NUL && !ascii_iswhite((*argp)[1])) {
       *errmsg = e_trailing;
       return;
@@ -1332,7 +1332,7 @@ static void do_set_option(int opt_flags, char **argp, bool *did_show, char *errb
   //
   if (nextchar == '?'
       || (prefix == 1
-          && vim_strchr("=:&<", (uint8_t)nextchar) == NULL
+          && vim_strchr("=:&<", nextchar) == NULL
           && !(flags & P_BOOL))) {
     // print value
     if (*did_show) {
@@ -1365,8 +1365,7 @@ static void do_set_option(int opt_flags, char **argp, bool *did_show, char *errb
     if (flags & P_BOOL) {                       // boolean
       do_set_bool(opt_idx, opt_flags, prefix, nextchar, afterchar, varp, errmsg);
     } else {  // Numeric or string.
-      if (vim_strchr("=:&<", (uint8_t)nextchar) == NULL
-          || prefix != 1) {
+      if (vim_strchr("=:&<", nextchar) == NULL || prefix != 1) {
         *errmsg = e_invarg;
         return;
       }
