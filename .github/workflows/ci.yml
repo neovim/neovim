@@ -128,7 +128,7 @@ jobs:
       - uses: actions/checkout@v3
 
       - name: Setup common environment variables
-        run: ./.github/workflows/env.sh lint
+        run: ./.github/workflows/env.sh lintc
 
       - name: Install apt packages
         run: |
@@ -141,14 +141,17 @@ jobs:
             libtree-sitter-dev \
             libunibilium-dev \
             libuv1-dev \
-            libvterm-dev \
             lua-busted \
             lua-filesystem \
             lua-inspect \
             lua-lpeg \
-            lua-luv-dev \
             lua-nvim \
             luajit
+            # libvterm-dev \
+            # lua-luv-dev
+
+            # Remove comments from packages once we start using these external
+            # dependencies. See env.sh for more context.
 
       - uses: ./.github/actions/cache
 
@@ -156,7 +159,7 @@ jobs:
         run: ./ci/before_script.sh
 
       - name: Build nvim
-        run: ./ci/run_tests.sh build_nvim
+        run: make
 
       - if: "!cancelled()"
         name: Determine if run should be aborted
