@@ -726,6 +726,67 @@ void ex_set(exarg_T *eap)
   (void)do_set(eap->arg, flags);
 }
 
+static void do_set_num(int opt_idx, int opt_flags, char **argp, int nextchar, const set_op_T op,
+                       const char *varp, char *errbuf, size_t errbuflen, char **errmsg)
+{
+  varnumber_T value;
+  char *arg = *argp;
+
+  // Different ways to set a number option:
+  // &            set to default value
+  // <            set to global value
+  // <xx>         accept special key codes for 'wildchar'
+  // c            accept any non-digit for 'wildchar'
+  // [-]0-9       set number
+  // other        error
+  arg++;
+  if (nextchar == '&') {
+    value = (long)(intptr_t)options[opt_idx].def_val;
+  } else if (nextchar == '<') {
+    // For 'undolevels' NO_LOCAL_UNDOLEVEL means to
+    // use the global value.
+    if ((long *)varp == &curbuf->b_p_ul && opt_flags == OPT_LOCAL) {
+      value = NO_LOCAL_UNDOLEVEL;
+    } else {
+      value = *(long *)get_varp_scope(&(options[opt_idx]), OPT_GLOBAL);
+    }
+  } else if (((long *)varp == &p_wc
+              || (long *)varp == &p_wcm)
+             && (*arg == '<'
+                 || *arg == '^'
+                 || (*arg != NUL && (!arg[1] || ascii_iswhite(arg[1]))
+                     && !ascii_isdigit(*arg)))) {
+    value = string_to_key(arg);
+    if (value == 0 && (long *)varp != &p_wcm) {
+      *errmsg = e_invarg;
+      return;
+    }
+  } else if (*arg == '-' || ascii_isdigit(*arg)) {
+    int i;
+    // Allow negative, octal and hex numbers.
+    vim_str2nr(arg, NULL, &i, STR2NR_ALL, &value, NULL, 0, true);
+    if (i == 0 || (arg[i] != NUL && !ascii_iswhite(arg[i]))) {
+      *errmsg = e_number_required_after_equal;
+      return;
+    }
+  } else {
+    *errmsg = e_number_required_after_equal;
+    return;
+  }
+
+  if (op == OP_ADDING) {
+    value = *(long *)varp + value;
+  }
+  if (op == OP_PREPENDING) {
+    value = *(long *)varp * value;
+  }
+  if (op == OP_REMOVING) {
+    value = *(long *)varp - value;
+  }
+  *errmsg = set_num_option(opt_idx, (char_u *)varp, (long)value,
+                           errbuf, errbuflen, opt_flags);
+}
+
 /// Part of do_set() for string options.
 /// @return  FAIL on failure, do not process further options.
 static int do_set_string(int opt_idx, int opt_flags, char **argp, int nextchar, set_op_T op_arg,
@@ -1352,61 +1413,12 @@ int do_set(char *arg, int opt_flags)
             goto skip;
           }
 
-          if (flags & P_NUM) {                      // numeric
-            // Different ways to set a number option:
-            // &            set to default value
-            // <            set to global value
-            // <xx>         accept special key codes for 'wildchar'
-            // c            accept any non-digit for 'wildchar'
-            // [-]0-9       set number
-            // other        error
-            arg++;
-            if (nextchar == '&') {
-              value = (long)(intptr_t)options[opt_idx].def_val;
-            } else if (nextchar == '<') {
-              // For 'undolevels' NO_LOCAL_UNDOLEVEL means to
-              // use the global value.
-              if ((long *)varp == &curbuf->b_p_ul && opt_flags == OPT_LOCAL) {
-                value = NO_LOCAL_UNDOLEVEL;
-              } else {
-                value = *(long *)get_varp_scope(&(options[opt_idx]), OPT_GLOBAL);
-              }
-            } else if (((long *)varp == &p_wc
-                        || (long *)varp == &p_wcm)
-                       && (*arg == '<'
-                           || *arg == '^'
-                           || (*arg != NUL && (!arg[1] || ascii_iswhite(arg[1]))
-                               && !ascii_isdigit(*arg)))) {
-              value = string_to_key(arg);
-              if (value == 0 && (long *)varp != &p_wcm) {
-                errmsg = e_invarg;
-                goto skip;
-              }
-            } else if (*arg == '-' || ascii_isdigit(*arg)) {
-              int i;
-              // Allow negative, octal and hex numbers.
-              vim_str2nr(arg, NULL, &i, STR2NR_ALL, &value, NULL, 0, true);
-              if (i == 0 || (arg[i] != NUL && !ascii_iswhite(arg[i]))) {
-                errmsg = e_number_required_after_equal;
-                goto skip;
-              }
-            } else {
-              errmsg = e_number_required_after_equal;
+          if (flags & P_NUM) {  // numeric
+            do_set_num(opt_idx, opt_flags, &arg, nextchar, op, varp, errbuf, sizeof(errbuf),
+                       &errmsg);
+            if (errmsg != NULL) {
               goto skip;
             }
-
-            if (op == OP_ADDING) {
-              value = *(long *)varp + value;
-            }
-            if (op == OP_PREPENDING) {
-              value = *(long *)varp * value;
-            }
-            if (op == OP_REMOVING) {
-              value = *(long *)varp - value;
-            }
-            errmsg = set_num_option(opt_idx, (char_u *)varp, (long)value,
-                                    errbuf, sizeof(errbuf),
-                                    opt_flags);
           } else if (opt_idx >= 0) {  // String.
             if (do_set_string(opt_idx, opt_flags, &arg, nextchar,
                               op, flags, varp, errbuf, sizeof(errbuf),
@@ -2245,8 +2257,7 @@ static char *set_num_option(int opt_idx, char_u *varp, long value, char *errbuf,
       errmsg = e_positive;
     }
   } else if (pp == &p_ch) {
-    int minval = 0;
-    if (value < minval) {
+    if (value < 0) {
       errmsg = e_positive;
     } else {
       p_ch_was_zero = value == 0;
