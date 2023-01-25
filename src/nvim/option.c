@@ -1444,11 +1444,7 @@ int do_set(char *arg, int opt_flags)
         // - skip blanks
         // - skip one "=val" argument (for hidden options ":set gfn =xx")
         for (int i = 0; i < 2; i++) {
-          while (*arg != NUL && !ascii_iswhite(*arg)) {
-            if (*arg++ == '\\' && *arg != NUL) {
-              arg++;
-            }
-          }
+          arg = skiptowhite_esc(arg);
           arg = skipwhite(arg);
           if (*arg != '=') {
             break;
