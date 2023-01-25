@@ -1420,7 +1420,6 @@ int do_set(char *arg, int opt_flags)
   char errbuf[80];
 
   while (*arg != NUL) {         // loop to process all options
-    char *errmsg = NULL;
     char *startarg = arg;             // remember for error message
 
     if (strncmp(arg, "all", 3) == 0 && !ASCII_ISALPHA(arg[3])
@@ -1441,6 +1440,7 @@ int do_set(char *arg, int opt_flags)
         did_show = true;
       }
     } else {
+      char *errmsg = NULL;
       do_set_option(opt_flags, &arg, &did_show, errbuf, sizeof(errbuf), &errmsg);
 
       // Advance to next argument.
@@ -1458,26 +1458,26 @@ int do_set(char *arg, int opt_flags)
           break;
         }
       }
-    }
 
-    if (errmsg != NULL) {
-      xstrlcpy(IObuff, _(errmsg), IOSIZE);
-      int i = (int)strlen(IObuff) + 2;
-      if (i + (arg - startarg) < IOSIZE) {
-        // append the argument with the error
-        STRCAT(IObuff, ": ");
-        assert(arg >= startarg);
-        memmove(IObuff + i, startarg, (size_t)(arg - startarg));
-        IObuff[i + (arg - startarg)] = NUL;
+      if (errmsg != NULL) {
+        xstrlcpy(IObuff, _(errmsg), IOSIZE);
+        int i = (int)strlen(IObuff) + 2;
+        if (i + (arg - startarg) < IOSIZE) {
+          // append the argument with the error
+          STRCAT(IObuff, ": ");
+          assert(arg >= startarg);
+          memmove(IObuff + i, startarg, (size_t)(arg - startarg));
+          IObuff[i + (arg - startarg)] = NUL;
+        }
+        // make sure all characters are printable
+        trans_characters(IObuff, IOSIZE);
+
+        no_wait_return++;         // wait_return() done later
+        emsg(IObuff);             // show error highlighted
+        no_wait_return--;
+
+        return FAIL;
       }
-      // make sure all characters are printable
-      trans_characters(IObuff, IOSIZE);
-
-      no_wait_return++;         // wait_return() done later
-      emsg(IObuff);             // show error highlighted
-      no_wait_return--;
-
-      return FAIL;
     }
 
     arg = skipwhite(arg);
