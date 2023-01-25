@@ -1417,8 +1417,6 @@ int do_set(char *arg, int opt_flags)
     goto theend;
   }
 
-  char errbuf[80];
-
   while (*arg != NUL) {         // loop to process all options
     char *startarg = arg;             // remember for error message
 
@@ -1441,6 +1439,8 @@ int do_set(char *arg, int opt_flags)
       }
     } else {
       char *errmsg = NULL;
+      char errbuf[80];
+
       do_set_option(opt_flags, &arg, &did_show, errbuf, sizeof(errbuf), &errmsg);
 
       // Advance to next argument.
