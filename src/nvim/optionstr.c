@@ -1653,7 +1653,7 @@ static char *did_set_string_option_for(buf_T *buf, win_T *win, int opt_idx, char
   } else if (varp == &win->w_p_briopt) {  // 'breakindentopt'
     did_set_breakindentopt(win, &errmsg);
   } else if (varp == &p_isi
-             || varp == &(buf->b_p_isk)
+             || varp == &buf->b_p_isk
              || varp == &p_isp
              || varp == &p_isf) {
     // 'isident', 'iskeyword', 'isprint or 'isfname' option
@@ -1753,13 +1753,13 @@ static char *did_set_string_option_for(buf_T *buf, win_T *win, int opt_idx, char
     did_set_opt_strings(p_ead, p_ead_values, false, &errmsg);
   } else if (varp == &p_cb) {  // 'clipboard'
     did_set_opt_flags(p_cb, p_cb_values, &cb_flags, true, &errmsg);
-  } else if (varp == &(win->w_s->b_p_spf)) {
+  } else if (varp == &win->w_s->b_p_spf) {
     did_set_spellfile(varp, &errmsg);
-  } else if (varp == &(win->w_s->b_p_spl)) {  // 'spell'
+  } else if (varp == &win->w_s->b_p_spl) {  // 'spell'
     did_set_spell(varp, &errmsg);
-  } else if (varp == &(win->w_s->b_p_spc)) {
+  } else if (varp == &win->w_s->b_p_spc) {
     did_set_spellcapcheck(win, &errmsg);
-  } else if (varp == &(win->w_s->b_p_spo)) {  // 'spelloptions'
+  } else if (varp == &win->w_s->b_p_spo) {  // 'spelloptions'
     did_set_spelloptions(win, &errmsg);
   } else if (varp == &p_sps) {  // 'spellsuggest'
     did_set_spellsuggest(&errmsg);
@@ -1831,9 +1831,9 @@ static char *did_set_string_option_for(buf_T *buf, win_T *win, int opt_idx, char
     did_set_winhl(win, &errmsg);
   } else if (varp == &p_tpf) {
     did_set_opt_flags(p_tpf, p_tpf_values, &tpf_flags, true, &errmsg);
-  } else if (varp == &(buf->b_p_vsts)) {  // 'varsofttabstop'
+  } else if (varp == &buf->b_p_vsts) {  // 'varsofttabstop'
     did_set_varsoftabstop(buf, varp, &errmsg);
-  } else if (varp == &(buf->b_p_vts)) {  // 'vartabstop'
+  } else if (varp == &buf->b_p_vts) {  // 'vartabstop'
     did_set_vartabstop(buf, win, varp, &errmsg);
   } else if (varp == &p_dex
              || varp == &win->w_p_fde
@@ -1859,9 +1859,9 @@ static char *did_set_string_option_for(buf_T *buf, win_T *win, int opt_idx, char
     did_set_option_listflag(varp, WW_ALL, errbuf, errbuflen, &errmsg);
   } else if (varp == &p_shm) {  // 'shortmess'
     did_set_option_listflag(varp, SHM_ALL, errbuf, errbuflen, &errmsg);
-  } else if (varp == &(p_cpo)) {  // 'cpoptions'
+  } else if (varp == &p_cpo) {  // 'cpoptions'
     did_set_option_listflag(varp, CPO_VI, errbuf, errbuflen, &errmsg);
-  } else if (varp == &(buf->b_p_fo)) {  // 'formatoptions'
+  } else if (varp == &buf->b_p_fo) {  // 'formatoptions'
     did_set_option_listflag(varp, FO_ALL, errbuf, errbuflen, &errmsg);
   } else if (varp == &win->w_p_cocu) {  // 'concealcursor'
     did_set_option_listflag(varp, COCU_ALL, errbuf, errbuflen, &errmsg);
@@ -1901,11 +1901,11 @@ static char *did_set_string_option_for(buf_T *buf, win_T *win, int opt_idx, char
     }
 
     // Trigger the autocommand only after setting the flags.
-    if (varp == &(buf->b_p_syn)) {
+    if (varp == &buf->b_p_syn) {
       do_syntax_autocmd(buf, value_changed);
-    } else if (varp == &(buf->b_p_ft)) {
+    } else if (varp == &buf->b_p_ft) {
       do_filetype_autocmd(buf, varp, opt_flags, value_changed);
-    } else if (varp == &(win->w_s->b_p_spl)) {
+    } else if (varp == &win->w_s->b_p_spl) {
       did_set_spelllang_source(win);
     }
   }
