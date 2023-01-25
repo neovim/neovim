@@ -2526,10 +2526,12 @@ static int vgetorpeek(bool advance)
           // move cursor left, if possible
           if (curwin->w_cursor.col != 0) {
             if (curwin->w_wcol > 0) {
-              if (did_ai) {
-                // We are expecting to truncate the trailing
-                // white-space, so find the last non-white
-                // character -- webb
+              // After auto-indenting and no text is following,
+              // we are expecting to truncate the trailing
+              // white-space, so find the last non-white
+              // character -- webb
+              if (did_ai
+                  && *skipwhite(get_cursor_line_ptr() + curwin->w_cursor.col) == NUL) {
                 curwin->w_wcol = 0;
                 ptr = (char_u *)get_cursor_line_ptr();
                 chartabsize_T cts;
