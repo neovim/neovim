@@ -1410,9 +1410,6 @@ int do_set(char *arg, int opt_flags)
         int value_checked = false;
         if (flags & P_BOOL) {                       // boolean
           do_set_bool(opt_idx, opt_flags, prefix, nextchar, afterchar, varp, &errmsg);
-          if (errmsg != NULL) {
-            goto skip;
-          }
         } else {  // Numeric or string.
           if (vim_strchr("=:&<", (uint8_t)nextchar) == NULL
               || prefix != 1) {
@@ -1423,19 +1420,17 @@ int do_set(char *arg, int opt_flags)
           if (flags & P_NUM) {  // numeric
             do_set_num(opt_idx, opt_flags, &arg, nextchar, op, varp, errbuf, sizeof(errbuf),
                        &errmsg);
-            if (errmsg != NULL) {
-              goto skip;
-            }
           } else if (opt_idx >= 0) {  // String.
             do_set_string(opt_idx, opt_flags, &arg, nextchar, op, flags, varp, errbuf,
                           sizeof(errbuf), &value_checked, &errmsg);
-            if (errmsg != NULL) {
-              goto skip;
-            }
           } else {
             // key code option(FIXME(tarruda): Show a warning or something
             // similar)
           }
+        }
+
+        if (errmsg != NULL) {
+          goto skip;
         }
 
         if (opt_idx >= 0) {
