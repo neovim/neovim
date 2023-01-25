@@ -1414,75 +1414,73 @@ int do_set(char *arg, int opt_flags)
   if (*arg == NUL) {
     showoptions(false, opt_flags);
     did_show = true;
-    goto theend;
-  }
-
-  while (*arg != NUL) {         // loop to process all options
-    if (strncmp(arg, "all", 3) == 0 && !ASCII_ISALPHA(arg[3])
-        && !(opt_flags & OPT_MODELINE)) {
-      // ":set all"  show all options.
-      // ":set all&" set all options to their default value.
-      arg += 3;
-      if (*arg == '&') {
-        arg++;
-        // Only for :set command set global value of local options.
-        set_options_default(OPT_FREE | opt_flags);
-        didset_options();
-        didset_options2();
-        ui_refresh_options();
-        redraw_all_later(UPD_CLEAR);
+  } else {
+    while (*arg != NUL) {         // loop to process all options
+      if (strncmp(arg, "all", 3) == 0 && !ASCII_ISALPHA(arg[3])
+          && !(opt_flags & OPT_MODELINE)) {
+        // ":set all"  show all options.
+        // ":set all&" set all options to their default value.
+        arg += 3;
+        if (*arg == '&') {
+          arg++;
+          // Only for :set command set global value of local options.
+          set_options_default(OPT_FREE | opt_flags);
+          didset_options();
+          didset_options2();
+          ui_refresh_options();
+          redraw_all_later(UPD_CLEAR);
+        } else {
+          showoptions(true, opt_flags);
+          did_show = true;
+        }
       } else {
-        showoptions(true, opt_flags);
-        did_show = true;
-      }
-    } else {
-      char *startarg = arg;             // remember for error message
-      char *errmsg = NULL;
-      char errbuf[80];
+        char *startarg = arg;             // remember for error message
+        char *errmsg = NULL;
+        char errbuf[80];
 
-      do_set_option(opt_flags, &arg, &did_show, errbuf, sizeof(errbuf), &errmsg);
+        do_set_option(opt_flags, &arg, &did_show, errbuf, sizeof(errbuf), &errmsg);
 
-      // Advance to next argument.
-      // - skip until a blank found, taking care of backslashes
-      // - skip blanks
-      // - skip one "=val" argument (for hidden options ":set gfn =xx")
-      for (int i = 0; i < 2; i++) {
-        while (*arg != NUL && !ascii_iswhite(*arg)) {
-          if (*arg++ == '\\' && *arg != NUL) {
-            arg++;
+        // Advance to next argument.
+        // - skip until a blank found, taking care of backslashes
+        // - skip blanks
+        // - skip one "=val" argument (for hidden options ":set gfn =xx")
+        for (int i = 0; i < 2; i++) {
+          while (*arg != NUL && !ascii_iswhite(*arg)) {
+            if (*arg++ == '\\' && *arg != NUL) {
+              arg++;
+            }
+          }
+          arg = skipwhite(arg);
+          if (*arg != '=') {
+            break;
           }
         }
-        arg = skipwhite(arg);
-        if (*arg != '=') {
-          break;
+
+        if (errmsg != NULL) {
+          xstrlcpy(IObuff, _(errmsg), IOSIZE);
+          int i = (int)strlen(IObuff) + 2;
+          if (i + (arg - startarg) < IOSIZE) {
+            // append the argument with the error
+            STRCAT(IObuff, ": ");
+            assert(arg >= startarg);
+            memmove(IObuff + i, startarg, (size_t)(arg - startarg));
+            IObuff[i + (arg - startarg)] = NUL;
+          }
+          // make sure all characters are printable
+          trans_characters(IObuff, IOSIZE);
+
+          no_wait_return++;         // wait_return() done later
+          emsg(IObuff);             // show error highlighted
+          no_wait_return--;
+
+          return FAIL;
         }
       }
 
-      if (errmsg != NULL) {
-        xstrlcpy(IObuff, _(errmsg), IOSIZE);
-        int i = (int)strlen(IObuff) + 2;
-        if (i + (arg - startarg) < IOSIZE) {
-          // append the argument with the error
-          STRCAT(IObuff, ": ");
-          assert(arg >= startarg);
-          memmove(IObuff + i, startarg, (size_t)(arg - startarg));
-          IObuff[i + (arg - startarg)] = NUL;
-        }
-        // make sure all characters are printable
-        trans_characters(IObuff, IOSIZE);
-
-        no_wait_return++;         // wait_return() done later
-        emsg(IObuff);             // show error highlighted
-        no_wait_return--;
-
-        return FAIL;
-      }
+      arg = skipwhite(arg);
     }
-
-    arg = skipwhite(arg);
   }
 
-theend:
   if (silent_mode && did_show) {
     // After displaying option values in silent mode.
     silent_mode = false;
