@@ -1533,30 +1533,14 @@ static void did_set_optexpr(buf_T *buf, win_T *win, char **varp, char **gvarp)
   }
 }
 
-// handle options that are a list of flags.
-static void did_set_option_listflags(buf_T *buf, win_T *win, char **varp, char *errbuf,
-                                     size_t errbuflen, char **errmsg)
+// handle option that is a list of flags.
+static void did_set_option_listflag(char **varp, char *flags, char *errbuf, size_t errbuflen,
+                                    char **errmsg)
 {
-  char *p = NULL;
-  if (varp == &p_ww) {  // 'whichwrap'
-    p = WW_ALL;
-  } else if (varp == &p_shm) {  // 'shortmess'
-    p = SHM_ALL;
-  } else if (varp == &(p_cpo)) {  // 'cpoptions'
-    p = CPO_VI;
-  } else if (varp == &(buf->b_p_fo)) {  // 'formatoptions'
-    p = FO_ALL;
-  } else if (varp == &win->w_p_cocu) {  // 'concealcursor'
-    p = COCU_ALL;
-  } else if (varp == &p_mouse) {  // 'mouse'
-    p = MOUSE_ALL;
-  }
-  if (p != NULL) {
-    for (char *s = *varp; *s; s++) {
-      if (vim_strchr(p, (uint8_t)(*s)) == NULL) {
-        *errmsg = illegal_char(errbuf, errbuflen, *s);
-        break;
-      }
+  for (char *s = *varp; *s; s++) {
+    if (vim_strchr(flags, *s) == NULL) {
+      *errmsg = illegal_char(errbuf, errbuflen, *s);
+      break;
     }
   }
 }
@@ -1871,8 +1855,18 @@ static char *did_set_string_option_for(buf_T *buf, win_T *win, int opt_idx, char
     qf_process_qftf_option(&errmsg);
   } else if (gvarp == &p_tfu) {  // 'tagfunc'
     set_tagfunc_option(&errmsg);
-  } else {
-    did_set_option_listflags(buf, win, varp, errbuf, errbuflen, &errmsg);
+  } else if (varp == &p_ww) {  // 'whichwrap'
+    did_set_option_listflag(varp, WW_ALL, errbuf, errbuflen, &errmsg);
+  } else if (varp == &p_shm) {  // 'shortmess'
+    did_set_option_listflag(varp, SHM_ALL, errbuf, errbuflen, &errmsg);
+  } else if (varp == &(p_cpo)) {  // 'cpoptions'
+    did_set_option_listflag(varp, CPO_VI, errbuf, errbuflen, &errmsg);
+  } else if (varp == &(buf->b_p_fo)) {  // 'formatoptions'
+    did_set_option_listflag(varp, FO_ALL, errbuf, errbuflen, &errmsg);
+  } else if (varp == &win->w_p_cocu) {  // 'concealcursor'
+    did_set_option_listflag(varp, COCU_ALL, errbuf, errbuflen, &errmsg);
+  } else if (varp == &p_mouse) {  // 'mouse'
+    did_set_option_listflag(varp, MOUSE_ALL, errbuf, errbuflen, &errmsg);
   }
 
   // If error detected, restore the previous value.
