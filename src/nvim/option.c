@@ -1418,8 +1418,6 @@ int do_set(char *arg, int opt_flags)
   }
 
   while (*arg != NUL) {         // loop to process all options
-    char *startarg = arg;             // remember for error message
-
     if (strncmp(arg, "all", 3) == 0 && !ASCII_ISALPHA(arg[3])
         && !(opt_flags & OPT_MODELINE)) {
       // ":set all"  show all options.
@@ -1438,6 +1436,7 @@ int do_set(char *arg, int opt_flags)
         did_show = true;
       }
     } else {
+      char *startarg = arg;             // remember for error message
       char *errmsg = NULL;
       char errbuf[80];
 
