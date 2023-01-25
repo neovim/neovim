@@ -44,13 +44,15 @@ EOF
 BUILD_UCHAR=1
 EOF
     ;;
-  lint)
+  lintc)
 # Re-enable once system deps are available
 #    BUILD_FLAGS="$BUILD_FLAGS -DLIBLUV_LIBRARY:FILEPATH=/usr/lib/$(dpkg-architecture -qDEB_HOST_MULTIARCH)/lua/5.1/luv.so -DLIBLUV_INCLUDE_DIR:PATH=/usr/include/lua5.1"
-    DEPS_CMAKE_FLAGS="$DEPS_CMAKE_FLAGS -DUSE_BUNDLED_LUV=ON"
-    cat <<EOF >> "$GITHUB_ENV"
-USE_BUNDLED=OFF
-EOF
+
+    # Ideally all dependencies should external for this job, but some
+    # dependencies don't have the required version available. We use the
+    # bundled versions for these with the hopes of being able to remove them
+    # later on.
+    DEPS_CMAKE_FLAGS="$DEPS_CMAKE_FLAGS -DUSE_BUNDLED=OFF -DUSE_BUNDLED_LUV=ON -DUSE_BUNDLED_LIBVTERM=ON"
     ;;
   functionaltest-lua)
     BUILD_FLAGS="$BUILD_FLAGS -DPREFER_LUA=ON"
