@@ -1405,34 +1405,35 @@ static void do_set_option(int opt_flags, char **argp, bool *did_show, char *errb
     if (nextchar != '?' && nextchar != NUL && !ascii_iswhite(afterchar)) {
       *errmsg = e_trailing;
     }
-  } else {
-    int value_checked = false;
-    if (flags & P_BOOL) {                       // boolean
-      do_set_bool(opt_idx, opt_flags, prefix, nextchar, afterchar, varp, errmsg);
-    } else {  // Numeric or string.
-      if (vim_strchr("=:&<", nextchar) == NULL || prefix != 1) {
-        *errmsg = e_invarg;
-        return;
-      }
+    return;
+  }
 
-      if (flags & P_NUM) {  // numeric
-        do_set_num(opt_idx, opt_flags, argp, nextchar, op, varp, errbuf, errbuflen, errmsg);
-      } else if (opt_idx >= 0) {  // String.
-        do_set_string(opt_idx, opt_flags, argp, nextchar, op, flags, varp, errbuf,
-                      errbuflen, &value_checked, errmsg);
-      } else {
-        // key code option(FIXME(tarruda): Show a warning or something
-        // similar)
-      }
-    }
-
-    if (*errmsg != NULL) {
+  int value_checked = false;
+  if (flags & P_BOOL) {                       // boolean
+    do_set_bool(opt_idx, opt_flags, prefix, nextchar, afterchar, varp, errmsg);
+  } else {  // Numeric or string.
+    if (vim_strchr("=:&<", nextchar) == NULL || prefix != 1) {
+      *errmsg = e_invarg;
       return;
     }
 
-    if (opt_idx >= 0) {
-      did_set_option(opt_idx, opt_flags, op == OP_NONE, value_checked);
+    if (flags & P_NUM) {  // numeric
+      do_set_num(opt_idx, opt_flags, argp, nextchar, op, varp, errbuf, errbuflen, errmsg);
+    } else if (opt_idx >= 0) {  // String.
+      do_set_string(opt_idx, opt_flags, argp, nextchar, op, flags, varp, errbuf,
+                    errbuflen, &value_checked, errmsg);
+    } else {
+      // key code option(FIXME(tarruda): Show a warning or something
+      // similar)
     }
+  }
+
+  if (*errmsg != NULL) {
+    return;
+  }
+
+  if (opt_idx >= 0) {
+    did_set_option(opt_idx, opt_flags, op == OP_NONE, value_checked);
   }
 }
 
