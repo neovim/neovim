@@ -482,6 +482,71 @@ LspSignatureActiveParameter
     Used to highlight the active parameter in the signature help. See
     |vim.lsp.handlers.signature_help()|.
 
+------------------------------------------------------------------------------
+LSP SEMANTIC HIGHLIGHTS                               *lsp-semantic-highlight*
+
+When available, the LSP client highlights code using |lsp-semantic_tokens|,
+which are another way that LSP servers can provide information about source
+code.  Note that this is in addition to treesitter syntax highlighting;
+semantic highlighting does not replace syntax highlighting.
+
+The server will typically provide one token per identifier in the source code.
+The token will have a `type` such as "function" or "variable", and 0 or more
+`modifier`s such as "readonly" or "deprecated." The standard types and
+modifiers are described here:
+https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocument_semanticTokens
+LSP servers may also use off-spec types and modifiers.
+
+The LSP client adds one or more highlights for each token. The highlight
+groups are derived from the token's type and modifiers:
+  • `@lsp.type.<type>.<ft>` for the type
+  • `@lsp.mod.<mod>.<ft>` for each modifier
+  • `@lsp.typemod.<type>.<mod>.<ft>` for each modifier
+Use |:Inspect| to view the higlights for a specific token. Use |:hi| or
+|nvim_set_hl()| to change the appearance of semantic highlights: >vim
+
+    hi @lsp.type.function guifg=Yellow        " function names are yellow
+    hi @lsp.type.variable.lua guifg=Green     " variables in lua are green
+    hi @lsp.mod.deprecated gui=strikethrough  " deprecated is crossed out
+    hi @lsp.typemod.function.async guifg=Blue " async functions are blue
+<
+The value |vim.highlight.priorities|`.semantic_tokens` is the priority of the
+`@lsp.type.*` highlights. The `@lsp.mod.*` and `@lsp.typemod.*` highlights
+have priorities one and two higher, respectively.
+
+You can disable semantic highlights by clearing the highlight groups: >lua
+
+    -- Hide semantic highlights for functions
+    vim.api.nvim_set_hl(0, '@lsp.type.function', {})
+
+    -- Hide all semantic highlights
+    for _, group in ipairs(vim.fn.getcompletion("@lsp", "highlight")) do
+      vim.api.nvim_set_hl(0, group, {})
+    end
+<
+You probably want these inside a |ColorScheme| autocommand.
+
+Use |LspTokenUpdate| and |vim.lsp.semantic_tokens.highlight_token()| for more
+complex highlighting.
+
+The following groups are linked by default to standard |group-name|s:
+>
+    @lsp.type.class         Structure
+    @lsp.type.decorator     Function
+    @lsp.type.enum          Structure
+    @lsp.type.enumMember    Constant
+    @lsp.type.function      Function
+    @lsp.type.interface     Structure
+    @lsp.type.macro         Macro
+    @lsp.type.method        Function
+    @lsp.type.namespace     Structure
+    @lsp.type.parameter     Identifier
+    @lsp.type.property      Identifier
+    @lsp.type.struct        Structure
+    @lsp.type.type          Type
+    @lsp.type.typeParameter TypeDef
+    @lsp.type.variable      Identifier
+<
 ==============================================================================
 EVENTS                                                            *lsp-events*
 
@@ -516,6 +581,29 @@ callback in the "data" table. Example: >lua
       end,
     })
 <
+
+LspTokenUpdate                                                *LspTokenUpdate*
+
+When a visible semantic token is sent or updated by the LSP server, or when an
+existing token becomes visible for the first time. The |autocmd-pattern| is
+the name of the buffer. When used from Lua, the token and client ID are passed
+to the callback in the "data" table. The token fields are documented in
+|vim.lsp.semantic_tokens.get_at_pos()|. Example: >lua
+
+    vim.api.nvim_create_autocmd('LspTokenUpdate', {
+      callback = function(args)
+        local token = args.data.token
+        if token.type == 'variable' and not token.modifiers.readonly then
+          vim.lsp.semantic_tokens.highlight_token(
+            token, args.buf, args.data.client_id, 'MyMutableVariableHighlight'
+          )
+        end
+      end,
+    })
+<
+Note: doing anything other than calling
+|vim.lsp.semantic_tokens.highlight_token()| is considered experimental.
+
 Also the following |User| |autocommand|s are provided:
 
 LspProgressUpdate                                          *LspProgressUpdate*
@@ -1332,7 +1420,8 @@ force_refresh({bufnr})               *vim.lsp.semantic_tokens.force_refresh()*
     highlighting (|vim.lsp.semantic_tokens.start()| has been called for it)
 
     Parameters: ~
-      • {bufnr}  (nil|number) default: current buffer
+      • {bufnr}  (number|nil) filter by buffer. All buffers if nil, current
+                 buffer if 0
 
                                         *vim.lsp.semantic_tokens.get_at_pos()*
 get_at_pos({bufnr}, {row}, {col})
@@ -1345,7 +1434,34 @@ get_at_pos({bufnr}, {row}, {col})
       • {col}    (number|nil) Position column (default cursor position)
 
     Return: ~
-        (table|nil) List of tokens at position
+        (table|nil) List of tokens at position. Each token has the following
+        fields:
+        • line (number) line number, 0-based
+        • start_col (number) start column, 0-based
+        • end_col (number) end column, 0-based
+        • type (string) token type as string, e.g. "variable"
+        • modifiers (table) token modifiers as a set. E.g., { static = true,
+          readonly = true }
+
+                                   *vim.lsp.semantic_tokens.highlight_token()*
+highlight_token({token}, {bufnr}, {client_id}, {hl_group}, {opts})
+    Highlight a semantic token.
+
+    Apply an extmark with a given highlight group for a semantic token. The
+    mark will be deleted by the semantic token engine when appropriate; for
+    example, when the LSP sends updated tokens. This function is intended for
+    use inside |LspTokenUpdate| callbacks.
+
+    Parameters: ~
+      • {token}      (table) a semantic token, found as `args.data.token` in
+                     |LspTokenUpdate|.
+      • {bufnr}      (number) the buffer to highlight
+      • {client_id}  (number) The ID of the |vim.lsp.client|
+      • {hl_group}   (string) Highlight group name
+      • {opts}       (table|nil) Optional parameters.
+                     • priority: (number|nil) Priority for the applied
+                       extmark. Defaults to
+                       `vim.highlight.priorities.semantic_tokens + 3`
 
 start({bufnr}, {client_id}, {opts})          *vim.lsp.semantic_tokens.start()*
     Start the semantic token highlighting engine for the given buffer with the

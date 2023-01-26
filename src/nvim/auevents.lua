@@ -72,6 +72,7 @@ return {
     'InsertLeavePre',         -- just before leaving Insert mode
     'LspAttach',              -- after an LSP client attaches to a buffer
     'LspDetach',              -- after an LSP client detaches from a buffer
+    'LspTokenUpdate',         -- after a visible LSP token is updated
     'MenuPopup',              -- just before popup menu is displayed
     'ModeChanged',            -- after changing the mode
     'OptionSet',              -- after setting any option
@@ -151,6 +152,7 @@ return {
     DiagnosticChanged=true,
     LspAttach=true,
     LspDetach=true,
+    LspTokenUpdate=true,
     RecordingEnter=true,
     RecordingLeave=true,
     Signal=true,
