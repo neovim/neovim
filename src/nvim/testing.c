@@ -77,31 +77,32 @@ static void ga_concat_esc(garray_T *gap, const char *p, int clen)
     memmove(buf, p, (size_t)clen);
     buf[clen] = NUL;
     ga_concat(gap, buf);
-  } else {
-    switch (*p) {
-    case BS:
-      ga_concat(gap, "\\b"); break;
-    case ESC:
-      ga_concat(gap, "\\e"); break;
-    case FF:
-      ga_concat(gap, "\\f"); break;
-    case NL:
-      ga_concat(gap, "\\n"); break;
-    case TAB:
-      ga_concat(gap, "\\t"); break;
-    case CAR:
-      ga_concat(gap, "\\r"); break;
-    case '\\':
-      ga_concat(gap, "\\\\"); break;
-    default:
-      if ((uint8_t)(*p) < ' ' || *p == 0x7f) {
-        vim_snprintf(buf, NUMBUFLEN, "\\x%02x", *p);
-        ga_concat(gap, buf);
-      } else {
-        ga_append(gap, (uint8_t)(*p));
-      }
-      break;
+    return;
+  }
+
+  switch (*p) {
+  case BS:
+    ga_concat(gap, "\\b"); break;
+  case ESC:
+    ga_concat(gap, "\\e"); break;
+  case FF:
+    ga_concat(gap, "\\f"); break;
+  case NL:
+    ga_concat(gap, "\\n"); break;
+  case TAB:
+    ga_concat(gap, "\\t"); break;
+  case CAR:
+    ga_concat(gap, "\\r"); break;
+  case '\\':
+    ga_concat(gap, "\\\\"); break;
+  default:
+    if ((uint8_t)(*p) < ' ' || *p == 0x7f) {
+      vim_snprintf(buf, NUMBUFLEN, "\\x%02x", *p);
+      ga_concat(gap, buf);
+    } else {
+      ga_append(gap, (uint8_t)(*p));
     }
+    break;
   }
 }
 

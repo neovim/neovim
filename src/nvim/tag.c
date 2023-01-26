@@ -2732,55 +2732,57 @@ static int parse_match(char *lbuf, tagptrs_T *tagp)
   tagp->tagline = 0;
   tagp->command_end = NULL;
 
-  if (retval == OK) {
-    // Try to find a kind field: "kind:<kind>" or just "<kind>"
-    p = tagp->command;
-    if (find_extra(&p) == OK) {
-      tagp->command_end = p;
-      if (p > tagp->command && p[-1] == '|') {
-        tagp->command_end = p - 1;  // drop trailing bar
-      }
-      p += 2;  // skip ";\""
-      if (*p++ == TAB) {
-        // Accept ASCII alphabetic kind characters and any multi-byte
-        // character.
-        while (ASCII_ISALPHA(*p) || utfc_ptr2len(p) > 1) {
-          if (strncmp(p, "kind:", 5) == 0) {
-            tagp->tagkind = p + 5;
-          } else if (strncmp(p, "user_data:", 10) == 0) {
-            tagp->user_data = p + 10;
-          } else if (strncmp(p, "line:", 5) == 0) {
-            tagp->tagline = atoi(p + 5);
-          }
-          if (tagp->tagkind != NULL && tagp->user_data != NULL) {
-            break;
-          }
+  if (retval != OK) {
+    return retval;
+  }
 
-          pc = vim_strchr(p, ':');
-          pt = vim_strchr(p, '\t');
-          if (pc == NULL || (pt != NULL && pc > pt)) {
-            tagp->tagkind = p;
-          }
-          if (pt == NULL) {
-            break;
-          }
-          p = pt;
-          MB_PTR_ADV(p);
+  // Try to find a kind field: "kind:<kind>" or just "<kind>"
+  p = tagp->command;
+  if (find_extra(&p) == OK) {
+    tagp->command_end = p;
+    if (p > tagp->command && p[-1] == '|') {
+      tagp->command_end = p - 1;  // drop trailing bar
+    }
+    p += 2;  // skip ";\""
+    if (*p++ == TAB) {
+      // Accept ASCII alphabetic kind characters and any multi-byte
+      // character.
+      while (ASCII_ISALPHA(*p) || utfc_ptr2len(p) > 1) {
+        if (strncmp(p, "kind:", 5) == 0) {
+          tagp->tagkind = p + 5;
+        } else if (strncmp(p, "user_data:", 10) == 0) {
+          tagp->user_data = p + 10;
+        } else if (strncmp(p, "line:", 5) == 0) {
+          tagp->tagline = atoi(p + 5);
         }
+        if (tagp->tagkind != NULL && tagp->user_data != NULL) {
+          break;
+        }
+
+        pc = vim_strchr(p, ':');
+        pt = vim_strchr(p, '\t');
+        if (pc == NULL || (pt != NULL && pc > pt)) {
+          tagp->tagkind = p;
+        }
+        if (pt == NULL) {
+          break;
+        }
+        p = pt;
+        MB_PTR_ADV(p);
       }
     }
-    if (tagp->tagkind != NULL) {
-      for (p = tagp->tagkind;
-           *p && *p != '\t' && *p != '\r' && *p != '\n';
-           MB_PTR_ADV(p)) {}
-      tagp->tagkind_end = p;
-    }
-    if (tagp->user_data != NULL) {
-      for (p = tagp->user_data;
-           *p && *p != '\t' && *p != '\r' && *p != '\n';
-           MB_PTR_ADV(p)) {}
-      tagp->user_data_end = p;
-    }
+  }
+  if (tagp->tagkind != NULL) {
+    for (p = tagp->tagkind;
+         *p && *p != '\t' && *p != '\r' && *p != '\n';
+         MB_PTR_ADV(p)) {}
+    tagp->tagkind_end = p;
+  }
+  if (tagp->user_data != NULL) {
+    for (p = tagp->user_data;
+         *p && *p != '\t' && *p != '\r' && *p != '\n';
+         MB_PTR_ADV(p)) {}
+    tagp->user_data_end = p;
   }
   return retval;
 }
@@ -3329,86 +3331,88 @@ int get_tags(list_T *list, char *pat, char *buf_fname)
 
   ret = find_tags(pat, &num_matches, &matches,
                   TAG_REGEXP | TAG_NOIC, MAXCOL, buf_fname);
-  if (ret == OK && num_matches > 0) {
-    for (i = 0; i < num_matches; i++) {
-      int parse_result = parse_match(matches[i], &tp);
+  if (ret != OK || num_matches <= 0) {
+    return ret;
+  }
 
-      // Avoid an unused variable warning in release builds.
-      (void)parse_result;
-      assert(parse_result == OK);
+  for (i = 0; i < num_matches; i++) {
+    int parse_result = parse_match(matches[i], &tp);
 
-      is_static = test_for_static(&tp);
+    // Avoid an unused variable warning in release builds.
+    (void)parse_result;
+    assert(parse_result == OK);
 
-      // Skip pseudo-tag lines.
-      if (strncmp(tp.tagname, "!_TAG_", 6) == 0) {
-        xfree(matches[i]);
-        continue;
-      }
+    is_static = test_for_static(&tp);
 
-      dict = tv_dict_alloc();
-      tv_list_append_dict(list, dict);
+    // Skip pseudo-tag lines.
+    if (strncmp(tp.tagname, "!_TAG_", 6) == 0) {
+      xfree(matches[i]);
+      continue;
+    }
 
-      full_fname = tag_full_fname(&tp);
-      if (add_tag_field(dict, "name", tp.tagname, tp.tagname_end) == FAIL
-          || add_tag_field(dict, "filename", full_fname, NULL) == FAIL
-          || add_tag_field(dict, "cmd", tp.command, tp.command_end) == FAIL
-          || add_tag_field(dict, "kind", tp.tagkind,
-                           tp.tagkind ? tp.tagkind_end : NULL) == FAIL
-          || tv_dict_add_nr(dict, S_LEN("static"), is_static) == FAIL) {
-        ret = FAIL;
-      }
+    dict = tv_dict_alloc();
+    tv_list_append_dict(list, dict);
 
-      xfree(full_fname);
+    full_fname = tag_full_fname(&tp);
+    if (add_tag_field(dict, "name", tp.tagname, tp.tagname_end) == FAIL
+        || add_tag_field(dict, "filename", full_fname, NULL) == FAIL
+        || add_tag_field(dict, "cmd", tp.command, tp.command_end) == FAIL
+        || add_tag_field(dict, "kind", tp.tagkind,
+                         tp.tagkind ? tp.tagkind_end : NULL) == FAIL
+        || tv_dict_add_nr(dict, S_LEN("static"), is_static) == FAIL) {
+      ret = FAIL;
+    }
 
-      if (tp.command_end != NULL) {
-        for (char *p = tp.command_end + 3;
-             *p != NUL && *p != '\n' && *p != '\r';
-             MB_PTR_ADV(p)) {
-          if (p == tp.tagkind
-              || (p + 5 == tp.tagkind && strncmp(p, "kind:", 5) == 0)) {
-            // skip "kind:<kind>" and "<kind>"
-            p = tp.tagkind_end - 1;
-          } else if (strncmp(p, "file:", 5) == 0) {
-            // skip "file:" (static tag)
-            p += 4;
-          } else if (!ascii_iswhite(*p)) {
-            char *s, *n;
-            int len;
+    xfree(full_fname);
 
-            // Add extra field as a dict entry.  Fields are
-            // separated by Tabs.
-            n = p;
-            while (*p != NUL && *p >= ' ' && *p < 127 && *p != ':') {
+    if (tp.command_end != NULL) {
+      for (char *p = tp.command_end + 3;
+           *p != NUL && *p != '\n' && *p != '\r';
+           MB_PTR_ADV(p)) {
+        if (p == tp.tagkind
+            || (p + 5 == tp.tagkind && strncmp(p, "kind:", 5) == 0)) {
+          // skip "kind:<kind>" and "<kind>"
+          p = tp.tagkind_end - 1;
+        } else if (strncmp(p, "file:", 5) == 0) {
+          // skip "file:" (static tag)
+          p += 4;
+        } else if (!ascii_iswhite(*p)) {
+          char *s, *n;
+          int len;
+
+          // Add extra field as a dict entry.  Fields are
+          // separated by Tabs.
+          n = p;
+          while (*p != NUL && *p >= ' ' && *p < 127 && *p != ':') {
+            p++;
+          }
+          len = (int)(p - n);
+          if (*p == ':' && len > 0) {
+            s = ++p;
+            while (*p != NUL && (uint8_t)(*p) >= ' ') {
               p++;
             }
-            len = (int)(p - n);
-            if (*p == ':' && len > 0) {
-              s = ++p;
-              while (*p != NUL && (uint8_t)(*p) >= ' ') {
-                p++;
-              }
-              n[len] = NUL;
-              if (add_tag_field(dict, n, s, p) == FAIL) {
-                ret = FAIL;
-              }
-              n[len] = ':';
-            } else {
-              // Skip field without colon.
-              while (*p != NUL && (uint8_t)(*p) >= ' ') {
-                p++;
-              }
+            n[len] = NUL;
+            if (add_tag_field(dict, n, s, p) == FAIL) {
+              ret = FAIL;
             }
-            if (*p == NUL) {
-              break;
+            n[len] = ':';
+          } else {
+            // Skip field without colon.
+            while (*p != NUL && (uint8_t)(*p) >= ' ') {
+              p++;
             }
+          }
+          if (*p == NUL) {
+            break;
           }
         }
       }
-
-      xfree(matches[i]);
     }
-    xfree(matches);
+
+    xfree(matches[i]);
   }
+  xfree(matches);
   return ret;
 }
 

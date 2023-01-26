@@ -7823,34 +7823,35 @@ static void f_strftime(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   // MSVC returns NULL for an invalid value of seconds.
   if (curtime_ptr == NULL) {
     rettv->vval.v_string = xstrdup(_("(Invalid)"));
-  } else {
-    vimconv_T conv;
-
-    conv.vc_type = CONV_NONE;
-    char *enc = enc_locale();
-    convert_setup(&conv, p_enc, enc);
-    if (conv.vc_type != CONV_NONE) {
-      p = string_convert(&conv, p, NULL);
-    }
-    char result_buf[256];
-    if (p == NULL || strftime(result_buf, sizeof(result_buf), p, curtime_ptr) == 0) {
-      result_buf[0] = NUL;
-    }
-
-    if (conv.vc_type != CONV_NONE) {
-      xfree(p);
-    }
-    convert_setup(&conv, enc, p_enc);
-    if (conv.vc_type != CONV_NONE) {
-      rettv->vval.v_string = string_convert(&conv, result_buf, NULL);
-    } else {
-      rettv->vval.v_string = xstrdup(result_buf);
-    }
-
-    // Release conversion descriptors.
-    convert_setup(&conv, NULL, NULL);
-    xfree(enc);
+    return;
   }
+
+  vimconv_T conv;
+
+  conv.vc_type = CONV_NONE;
+  char *enc = enc_locale();
+  convert_setup(&conv, p_enc, enc);
+  if (conv.vc_type != CONV_NONE) {
+    p = string_convert(&conv, p, NULL);
+  }
+  char result_buf[256];
+  if (p == NULL || strftime(result_buf, sizeof(result_buf), p, curtime_ptr) == 0) {
+    result_buf[0] = NUL;
+  }
+
+  if (conv.vc_type != CONV_NONE) {
+    xfree(p);
+  }
+  convert_setup(&conv, enc, p_enc);
+  if (conv.vc_type != CONV_NONE) {
+    rettv->vval.v_string = string_convert(&conv, result_buf, NULL);
+  } else {
+    rettv->vval.v_string = xstrdup(result_buf);
+  }
+
+  // Release conversion descriptors.
+  convert_setup(&conv, NULL, NULL);
+  xfree(enc);
 }
 
 /// "strgetchar()" function
@@ -8654,6 +8655,7 @@ static void f_timer_pause(typval_T *argvars, typval_T *unused, EvalFuncData fptr
     emsg(_(e_number_exp));
     return;
   }
+
   int paused = (bool)tv_get_number(&argvars[1]);
   timer_T *timer = find_timer_by_nr(tv_get_number(&argvars[0]));
   if (timer != NULL) {
