@@ -109,6 +109,7 @@ static bool cmdline_fuzzy_completion_supported(const expand_T *const xp)
          && xp->xp_context != EXPAND_OLD_SETTING
          && xp->xp_context != EXPAND_OWNSYNTAX
          && xp->xp_context != EXPAND_PACKADD
+         && xp->xp_context != EXPAND_RUNTIME
          && xp->xp_context != EXPAND_SHELLCMD
          && xp->xp_context != EXPAND_TAGS
          && xp->xp_context != EXPAND_TAGS_LISTFILES
@@ -1215,6 +1216,7 @@ char *addstar(char *fname, size_t len, int context)
         || context == EXPAND_OWNSYNTAX
         || context == EXPAND_FILETYPE
         || context == EXPAND_PACKADD
+        || context == EXPAND_RUNTIME
         || ((context == EXPAND_TAGS_LISTFILES || context == EXPAND_TAGS)
             && fname[0] == '/')) {
       retval = xstrnsave(fname, len);
@@ -2092,6 +2094,10 @@ static const char *set_context_by_cmdname(const char *cmd, cmdidx_T cmdidx, expa
     xp->xp_pattern = (char *)arg;
     break;
 
+  case CMD_runtime:
+    set_context_in_runtime_cmd(xp, arg);
+    break;
+
 #ifdef HAVE_WORKING_LIBINTL
   case CMD_language:
     return set_context_in_lang_cmd(xp, arg);
@@ -2733,6 +2739,9 @@ static int ExpandFromContext(expand_T *xp, char *pat, char ***matches, int *numM
   if (xp->xp_context == EXPAND_PACKADD) {
     return ExpandPackAddDir(pat, numMatches, matches);
   }
+  if (xp->xp_context == EXPAND_RUNTIME) {
+    return expand_runtime_cmd(pat, numMatches, matches);
+  }
 
   // When expanding a function name starting with s:, match the <SNR>nr_
   // prefix.
@@ -3201,11 +3210,12 @@ static int ExpandUserLua(expand_T *xp, int *num_file, char ***file)
 
 /// Expand `file` for all comma-separated directories in `path`.
 /// Adds matches to `ga`.
-void globpath(char *path, char *file, garray_T *ga, int expand_options)
+/// If "dirs" is true only expand directory names.
+void globpath(char *path, char *file, garray_T *ga, int expand_options, bool dirs)
 {
   expand_T xpc;
   ExpandInit(&xpc);
-  xpc.xp_context = EXPAND_FILES;
+  xpc.xp_context = dirs ? EXPAND_DIRECTORIES : EXPAND_FILES;
 
   char *buf = xmalloc(MAXPATHL);
 
@@ -3524,9 +3534,12 @@ void f_getcompletion(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     set_context_in_menu_cmd(&xpc, "menu", xpc.xp_pattern, false);
     xpc.xp_pattern_len = strlen(xpc.xp_pattern);
   }
-
   if (xpc.xp_context == EXPAND_SIGN) {
     set_context_in_sign_cmd(&xpc, xpc.xp_pattern);
+    xpc.xp_pattern_len = strlen(xpc.xp_pattern);
+  }
+  if (xpc.xp_context == EXPAND_RUNTIME) {
+    set_context_in_runtime_cmd(&xpc, xpc.xp_pattern);
     xpc.xp_pattern_len = strlen(xpc.xp_pattern);
   }
 

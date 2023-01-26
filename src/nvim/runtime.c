@@ -26,6 +26,7 @@
 #include "nvim/ex_cmds_defs.h"
 #include "nvim/ex_docmd.h"
 #include "nvim/ex_eval.h"
+#include "nvim/garray.h"
 #include "nvim/getchar.h"
 #include "nvim/gettext.h"
 #include "nvim/globals.h"
@@ -208,29 +209,56 @@ void runtime_init(void)
   uv_mutex_init(&runtime_search_path_mutex);
 }
 
-/// ":runtime [what] {name}"
+/// Get DIP_ flags from the [where] argument of a :runtime command.
+/// "*argp" is advanced to after the [where] argument.
+static int get_runtime_cmd_flags(char **argp, size_t where_len)
+{
+  char *arg = *argp;
+
+  if (where_len == 0) {
+    return 0;
+  }
+
+  if (strncmp(arg, "START", where_len) == 0) {
+    *argp = skipwhite(arg + where_len);
+    return DIP_START + DIP_NORTP;
+  }
+  if (strncmp(arg, "OPT", where_len) == 0) {
+    *argp = skipwhite(arg + where_len);
+    return DIP_OPT + DIP_NORTP;
+  }
+  if (strncmp(arg, "PACK", where_len) == 0) {
+    *argp = skipwhite(arg + where_len);
+    return DIP_START + DIP_OPT + DIP_NORTP;
+  }
+  if (strncmp(arg, "ALL", where_len) == 0) {
+    *argp = skipwhite(arg + where_len);
+    return DIP_START + DIP_OPT;
+  }
+
+  return 0;
+}
+
+/// ":runtime [where] {name}"
 void ex_runtime(exarg_T *eap)
 {
   char *arg = eap->arg;
-  char *p = skiptowhite(arg);
-  size_t len = (size_t)(p - arg);
   int flags = eap->forceit ? DIP_ALL : 0;
-
-  if (strncmp(arg, "START", len) == 0) {
-    flags += DIP_START + DIP_NORTP;
-    arg = skipwhite(arg + len);
-  } else if (strncmp(arg, "OPT", len) == 0) {
-    flags += DIP_OPT + DIP_NORTP;
-    arg = skipwhite(arg + len);
-  } else if (strncmp(arg, "PACK", len) == 0) {
-    flags += DIP_START + DIP_OPT + DIP_NORTP;
-    arg = skipwhite(arg + len);
-  } else if (strncmp(arg, "ALL", len) == 0) {
-    flags += DIP_START + DIP_OPT;
-    arg = skipwhite(arg + len);
-  }
-
+  char *p = skiptowhite(arg);
+  flags += get_runtime_cmd_flags(&arg, (size_t)(p - arg));
   source_runtime(arg, flags);
+}
+
+static int runtime_expand_flags;
+
+/// Set the completion context for the :runtime command.
+void set_context_in_runtime_cmd(expand_T *xp, const char *arg)
+{
+  char *p = skiptowhite(arg);
+  runtime_expand_flags
+    = *p != NUL ? get_runtime_cmd_flags((char **)&arg, (size_t)(p - arg)) : 0;
+  xp->xp_context = EXPAND_RUNTIME;
+  xp->xp_pattern = (char *)arg;
 }
 
 static void source_callback(char *fname, void *cookie)
@@ -1175,6 +1203,93 @@ void ex_packadd(exarg_T *eap)
   }
 }
 
+static void ExpandRTDir_int(char *pat, size_t pat_len, int flags, bool keep_ext, garray_T *gap,
+                            char *dirnames[])
+{
+  // TODO(bfredl): this is bullshit, expandpath should not reinvent path logic.
+  for (int i = 0; dirnames[i] != NULL; i++) {
+    const size_t buf_len = strlen(dirnames[i]) + pat_len + 31;
+    char *const buf = xmalloc(buf_len);
+    char *const tail = buf + 15;
+    const size_t tail_buflen = buf_len - 15;
+    int glob_flags = 0;
+    bool expand_dirs = false;
+
+    if (*dirnames[i] == NUL) {  // empty dir used for :runtime
+      snprintf(tail, tail_buflen, "%s*.\\(vim\\|lua\\)", pat);
+    } else {
+      snprintf(tail, tail_buflen, "%s/%s*.\\(vim\\|lua\\)", dirnames[i], pat);
+    }
+
+expand:
+    if ((flags & DIP_NORTP) == 0) {
+      globpath(p_rtp, tail, gap, glob_flags, expand_dirs);
+    }
+
+    if (flags & DIP_START) {
+      memcpy(tail - 15, "pack/*/start/*/", 15);  // NOLINT
+      globpath(p_pp, tail - 15, gap, glob_flags, expand_dirs);
+      memcpy(tail - 8, "start/*/", 8);  // NOLINT
+      globpath(p_pp, tail - 8, gap, glob_flags, expand_dirs);
+    }
+
+    if (flags & DIP_OPT) {
+      memcpy(tail - 13, "pack/*/opt/*/", 13);  // NOLINT
+      globpath(p_pp, tail - 13, gap, glob_flags, expand_dirs);
+      memcpy(tail - 6, "opt/*/", 6);  // NOLINT
+      globpath(p_pp, tail - 6, gap, glob_flags, expand_dirs);
+    }
+
+    if (*dirnames[i] == NUL && !expand_dirs) {
+      // expand dir names in another round
+      snprintf(tail, tail_buflen, "%s*", pat);
+      glob_flags = WILD_ADD_SLASH;
+      expand_dirs = true;
+      goto expand;
+    }
+
+    xfree(buf);
+  }
+
+  int pat_pathsep_cnt = 0;
+  for (size_t i = 0; i < pat_len; i++) {
+    if (vim_ispathsep(pat[i])) {
+      pat_pathsep_cnt++;
+    }
+  }
+
+  for (int i = 0; i < gap->ga_len; i++) {
+    char *match = ((char **)gap->ga_data)[i];
+    char *s = match;
+    char *e = s + strlen(s);
+    if (e - s > 4 && !keep_ext && (STRNICMP(e - 4, ".vim", 4) == 0
+                                   || STRNICMP(e - 4, ".lua", 4) == 0)) {
+      e -= 4;
+      *e = NUL;
+    }
+
+    int match_pathsep_cnt = (e > s && e[-1] == '/') ? -1 : 0;
+    for (s = e; s > match; MB_PTR_BACK(match, s)) {
+      if (vim_ispathsep(*s) && ++match_pathsep_cnt > pat_pathsep_cnt) {
+        break;
+      }
+    }
+    s++;
+    if (s != match) {
+      assert((e - s) + 1 >= 0);
+      memmove(match, s, (size_t)(e - s) + 1);
+    }
+  }
+
+  if (GA_EMPTY(gap)) {
+    return;
+  }
+
+  // Sort and remove duplicates which can happen when specifying multiple
+  // directories in dirnames.
+  ga_remove_duplicate_strings(gap);
+}
+
 /// Expand color scheme, compiler or filetype names.
 /// Search from 'runtimepath':
 ///   'runtimepath'/{dirnames}/{pat}.(vim|lua)
@@ -1187,72 +1302,41 @@ int ExpandRTDir(char *pat, int flags, int *num_file, char ***file, char *dirname
 {
   *num_file = 0;
   *file = NULL;
-  size_t pat_len = strlen(pat);
 
   garray_T ga;
   ga_init(&ga, (int)sizeof(char *), 10);
 
-  // TODO(bfredl): this is bullshit, expandpath should not reinvent path logic.
-  for (int i = 0; dirnames[i] != NULL; i++) {
-    size_t size = strlen(dirnames[i]) + pat_len + 16;
-    char *s = xmalloc(size);
-    snprintf(s, size, "%s/%s*.\\(vim\\|lua\\)", dirnames[i], pat);
-    globpath(p_rtp, s, &ga, 0);
-    xfree(s);
+  ExpandRTDir_int(pat, strlen(pat), flags, false, &ga, dirnames);
+
+  if (GA_EMPTY(&ga)) {
+    return FAIL;
   }
 
-  if (flags & DIP_START) {
-    for (int i = 0; dirnames[i] != NULL; i++) {
-      size_t size = strlen(dirnames[i]) + pat_len + 31;
-      char *s = xmalloc(size);
-      snprintf(s, size, "pack/*/start/*/%s/%s*.\\(vim\\|lua\\)", dirnames[i], pat);  // NOLINT
-      globpath(p_pp, s, &ga, 0);
-      xfree(s);
-    }
+  *file = ga.ga_data;
+  *num_file = ga.ga_len;
+  return OK;
+}
 
-    for (int i = 0; dirnames[i] != NULL; i++) {
-      size_t size = strlen(dirnames[i]) + pat_len + 31;
-      char *s = xmalloc(size);
-      snprintf(s, size, "start/*/%s/%s*.\\(vim\\|lua\\)", dirnames[i], pat);  // NOLINT
-      globpath(p_pp, s, &ga, 0);
-      xfree(s);
-    }
-  }
+/// Handle command line completion for :runtime command.
+int expand_runtime_cmd(char *pat, int *numMatches, char ***matches)
+{
+  *numMatches = 0;
+  *matches = NULL;
 
-  if (flags & DIP_OPT) {
-    for (int i = 0; dirnames[i] != NULL; i++) {
-      size_t size = strlen(dirnames[i]) + pat_len + 29;
-      char *s = xmalloc(size);
-      snprintf(s, size, "pack/*/opt/*/%s/%s*.\\(vim\\|lua\\)", dirnames[i], pat);  // NOLINT
-      globpath(p_pp, s, &ga, 0);
-      xfree(s);
-    }
+  garray_T ga;
+  ga_init(&ga, sizeof(char *), 10);
 
-    for (int i = 0; dirnames[i] != NULL; i++) {
-      size_t size = strlen(dirnames[i]) + pat_len + 29;
-      char *s = xmalloc(size);
-      snprintf(s, size, "opt/*/%s/%s*.\\(vim\\|lua\\)", dirnames[i], pat);  // NOLINT
-      globpath(p_pp, s, &ga, 0);
-      xfree(s);
-    }
-  }
+  const size_t pat_len = strlen(pat);
+  char *dirnames[] = { "", NULL };
+  ExpandRTDir_int(pat, pat_len, runtime_expand_flags, true, &ga, dirnames);
 
-  for (int i = 0; i < ga.ga_len; i++) {
-    char *match = ((char **)ga.ga_data)[i];
-    char *s = match;
-    char *e = s + strlen(s);
-    if (e - s > 4 && (STRNICMP(e - 4, ".vim", 4) == 0
-                      || STRNICMP(e - 4, ".lua", 4) == 0)) {
-      e -= 4;
-      for (s = e; s > match; MB_PTR_BACK(match, s)) {
-        if (vim_ispathsep(*s)) {
-          break;
-        }
+  // Try to complete values for [where] argument when none was found.
+  if (runtime_expand_flags == 0) {
+    char *where_values[] = { "START", "OPT", "PACK", "ALL" };
+    for (size_t i = 0; i < ARRAY_SIZE(where_values); i++) {
+      if (strncmp(pat, where_values[i], pat_len) == 0) {
+        GA_APPEND(char *, &ga, xstrdup(where_values[i]));
       }
-      s++;
-      *e = NUL;
-      assert((e - s) + 1 >= 0);
-      memmove(match, s, (size_t)(e - s) + 1);
     }
   }
 
@@ -1260,17 +1344,13 @@ int ExpandRTDir(char *pat, int flags, int *num_file, char ***file, char *dirname
     return FAIL;
   }
 
-  // Sort and remove duplicates which can happen when specifying multiple
-  // directories in dirnames.
-  ga_remove_duplicate_strings(&ga);
-
-  *file = ga.ga_data;
-  *num_file = ga.ga_len;
+  *matches = ga.ga_data;
+  *numMatches = ga.ga_len;
   return OK;
 }
 
 /// Expand loadplugin names:
-/// 'packpath'/pack/ * /opt/{pat}
+/// 'packpath'/pack/*/opt/{pat}
 int ExpandPackAddDir(char *pat, int *num_file, char ***file)
 {
   garray_T ga;
@@ -1283,9 +1363,9 @@ int ExpandPackAddDir(char *pat, int *num_file, char ***file)
   size_t buflen = pat_len + 26;
   char *s = xmalloc(buflen);
   snprintf(s, buflen, "pack/*/opt/%s*", pat);  // NOLINT
-  globpath(p_pp, s, &ga, 0);
+  globpath(p_pp, s, &ga, 0, true);
   snprintf(s, buflen, "opt/%s*", pat);  // NOLINT
-  globpath(p_pp, s, &ga, 0);
+  globpath(p_pp, s, &ga, 0, true);
   xfree(s);
 
   for (int i = 0; i < ga.ga_len; i++) {

@@ -4824,12 +4824,12 @@ int ExpandSettings(expand_T *xp, regmatch_T *regmatch, char *fuzzystr, int *numM
   return OK;
 }
 
-void ExpandOldSetting(int *num_file, char ***file)
+void ExpandOldSetting(int *numMatches, char ***matches)
 {
   char *var = NULL;
 
-  *num_file = 0;
-  *file = xmalloc(sizeof(char_u *));
+  *numMatches = 0;
+  *matches = xmalloc(sizeof(char *));
 
   // For a terminal key code expand_option_idx is < 0.
   if (expand_option_idx < 0) {
@@ -4862,8 +4862,8 @@ void ExpandOldSetting(int *num_file, char ***file)
   }
 #endif
 
-  *file[0] = buf;
-  *num_file = 1;
+  *matches[0] = buf;
+  *numMatches = 1;
 }
 
 /// Get the value for the numeric or string option///opp in a nice format into

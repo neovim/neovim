@@ -2983,7 +2983,7 @@ static void f_globpath(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   if (file != NULL && !error) {
     garray_T ga;
     ga_init(&ga, (int)sizeof(char *), 10);
-    globpath((char *)tv_get_string(&argvars[0]), (char *)file, &ga, flags);
+    globpath((char *)tv_get_string(&argvars[0]), (char *)file, &ga, flags, false);
 
     if (rettv->v_type == VAR_STRING) {
       rettv->vval.v_string = ga_concat_strings_sep(&ga, "\n");
