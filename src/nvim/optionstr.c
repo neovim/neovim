@@ -615,7 +615,7 @@ char *check_stl_option(char *s)
       continue;
     }
     if (vim_strchr(STL_ALL, (uint8_t)(*s)) == NULL) {
-      return illegal_char(errbuf, sizeof(errbuf), *s);
+      return illegal_char(errbuf, sizeof(errbuf), (uint8_t)(*s));
     }
     if (*s == '{') {
       bool reevaluate = (*++s == '%');
@@ -957,7 +957,7 @@ static void did_set_comments(char **varp, char *errbuf, size_t errbuflen, char *
     while (*s && *s != ':') {
       if (vim_strchr(COM_ALL, (uint8_t)(*s)) == NULL
           && !ascii_isdigit(*s) && *s != '-') {
-        *errmsg = illegal_char(errbuf, errbuflen, *s);
+        *errmsg = illegal_char(errbuf, errbuflen, (uint8_t)(*s));
         break;
       }
       s++;
@@ -1029,7 +1029,7 @@ static void did_set_shada(vimoption_T **opt, int *opt_idx, bool *free_oldval, ch
   for (char *s = p_shada; *s;) {
     // Check it's a valid character
     if (vim_strchr("!\"%'/:<@cfhnrs", (uint8_t)(*s)) == NULL) {
-      *errmsg = illegal_char(errbuf, errbuflen, *s);
+      *errmsg = illegal_char(errbuf, errbuflen, (uint8_t)(*s));
       break;
     }
     if (*s == 'n') {          // name is always last one
@@ -1236,7 +1236,7 @@ static void did_set_complete(char **varp, char *errbuf, size_t errbuflen, char *
       break;
     }
     if (vim_strchr(".wbuksid]tU", (uint8_t)(*s)) == NULL) {
-      *errmsg = illegal_char(errbuf, errbuflen, *s);
+      *errmsg = illegal_char(errbuf, errbuflen, (uint8_t)(*s));
       break;
     }
     if (*++s != NUL && *s != ',' && *s != ' ') {
@@ -1511,8 +1511,8 @@ static void did_set_option_listflag(char **varp, char *flags, char *errbuf, size
                                     char **errmsg)
 {
   for (char *s = *varp; *s; s++) {
-    if (vim_strchr(flags, *s) == NULL) {
-      *errmsg = illegal_char(errbuf, errbuflen, *s);
+    if (vim_strchr(flags, (uint8_t)(*s)) == NULL) {
+      *errmsg = illegal_char(errbuf, errbuflen, (uint8_t)(*s));
       break;
     }
   }
