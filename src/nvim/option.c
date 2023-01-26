@@ -726,14 +726,9 @@ void ex_set(exarg_T *eap)
   (void)do_set(eap->arg, flags);
 }
 
-static void do_set_bool(int opt_idx, int opt_flags, int prefix, int nextchar, int afterchar,
-                        const char *varp, char **errmsg)
+static void do_set_bool(int opt_idx, int opt_flags, int prefix, int nextchar, const char *varp,
+                        char **errmsg)
 {
-  if (nextchar == '=' || nextchar == ':') {
-    *errmsg = e_invarg;
-    return;
-  }
-
   varnumber_T value;
 
   // ":set opt!": invert
@@ -745,24 +740,16 @@ static void do_set_bool(int opt_idx, int opt_flags, int prefix, int nextchar, in
     value = (int)(intptr_t)options[opt_idx].def_val;
   } else if (nextchar == '<') {
     // For 'autoread' -1 means to use global value.
-    if ((int *)varp == &curbuf->b_p_ar
-        && opt_flags == OPT_LOCAL) {
+    if ((int *)varp == &curbuf->b_p_ar && opt_flags == OPT_LOCAL) {
       value = -1;
     } else {
-      value = *(int *)get_varp_scope(&(options[opt_idx]),
-                                     OPT_GLOBAL);
+      value = *(int *)get_varp_scope(&(options[opt_idx]), OPT_GLOBAL);
     }
   } else {
-    // ":set invopt": invert
-    // ":set opt" or ":set noopt": set or reset
-    if (nextchar != NUL && !ascii_iswhite(afterchar)) {
-      *errmsg = e_trailing;
-      return;
-    }
-    if (prefix == 2) {                  // inv
-      value = *(int *)(varp) ^ 1;
+    if (prefix == 2) {
+      value = *(int *)varp ^ 1;  // ":set invopt": invert
     } else {
-      value = prefix;
+      value = prefix;  // ":set opt" or ":set noopt": set or reset
     }
   }
 
@@ -1301,12 +1288,12 @@ static int validate_opt_idx(win_T *win, int opt_idx, int opt_flags, uint32_t fla
 }
 
 static void do_set_option_value(int opt_idx, int opt_flags, char **argp, int prefix, int nextchar,
-                                int afterchar, set_op_T op, uint32_t flags, char *varp,
-                                char *errbuf, size_t errbuflen, char **errmsg)
+                                set_op_T op, uint32_t flags, char *varp, char *errbuf,
+                                size_t errbuflen, char **errmsg)
 {
   int value_checked = false;
   if (flags & P_BOOL) {        // boolean
-    do_set_bool(opt_idx, opt_flags, prefix, nextchar, afterchar, varp, errmsg);
+    do_set_bool(opt_idx, opt_flags, prefix, nextchar, varp, errmsg);
   } else if (flags & P_NUM) {  // numeric
     do_set_num(opt_idx, opt_flags, argp, nextchar, op, varp, errbuf, errbuflen, errmsg);
   } else if (opt_idx >= 0) {   // string.
@@ -1441,12 +1428,24 @@ static void do_set_option(int opt_flags, char **argp, bool *did_show, char *errb
     return;
   }
 
-  if (!(flags & P_BOOL) && vim_strchr("=:&<", nextchar) == NULL) {
-    *errmsg = e_invarg;
-    return;
+  if (flags & P_BOOL) {
+    if (vim_strchr("=:", nextchar) != NULL) {
+      *errmsg = e_invarg;
+      return;
+    }
+
+    if (vim_strchr("!&<", nextchar) == NULL && nextchar != NUL && !ascii_iswhite(afterchar)) {
+      *errmsg = e_trailing;
+      return;
+    }
+  } else {
+    if (vim_strchr("=:&<", nextchar) == NULL) {
+      *errmsg = e_invarg;
+      return;
+    }
   }
 
-  do_set_option_value(opt_idx, opt_flags, argp, prefix, nextchar, afterchar, op, flags, varp,
+  do_set_option_value(opt_idx, opt_flags, argp, prefix, nextchar, op, flags, varp,
                       errbuf, errbuflen, errmsg);
 }
 
