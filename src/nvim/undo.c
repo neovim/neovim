@@ -2985,10 +2985,12 @@ void u_saveline(linenr_T lnum)
 /// (this is used externally for crossing a line while in insert mode)
 void u_clearline(void)
 {
-  if (curbuf->b_u_line_ptr != NULL) {
-    XFREE_CLEAR(curbuf->b_u_line_ptr);
-    curbuf->b_u_line_lnum = 0;
+  if (curbuf->b_u_line_ptr == NULL) {
+    return;
   }
+
+  XFREE_CLEAR(curbuf->b_u_line_ptr);
+  curbuf->b_u_line_lnum = 0;
 }
 
 /// Implementation of the "U" command.

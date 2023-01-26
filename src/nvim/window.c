@@ -2599,6 +2599,7 @@ static bool close_last_window_tabpage(win_T *win, bool free_buf, tabpage_T *prev
   if (!ONE_WINDOW) {
     return false;
   }
+
   buf_T *old_curbuf = curbuf;
 
   Terminal *term = win->w_buffer ? win->w_buffer->terminal : NULL;
@@ -4144,12 +4145,13 @@ int may_open_tabpage(void)
 {
   int n = (cmdmod.cmod_tab == 0) ? postponed_split_tab : cmdmod.cmod_tab;
 
-  if (n != 0) {
-    cmdmod.cmod_tab = 0;         // reset it to avoid doing it twice
-    postponed_split_tab = 0;
-    return win_new_tabpage(n, NULL);
+  if (n == 0) {
+    return FAIL;
   }
-  return FAIL;
+
+  cmdmod.cmod_tab = 0;         // reset it to avoid doing it twice
+  postponed_split_tab = 0;
+  return win_new_tabpage(n, NULL);
 }
 
 // Create up to "maxcount" tabpages with empty windows.
@@ -4494,11 +4496,12 @@ void goto_tabpage_tp(tabpage_T *tp, bool trigger_enter_autocmds, bool trigger_le
 /// @return true if the tab page is valid, false otherwise.
 bool goto_tabpage_lastused(void)
 {
-  if (valid_tabpage(lastused_tabpage)) {
-    goto_tabpage_tp(lastused_tabpage, true, true);
-    return true;
+  if (!valid_tabpage(lastused_tabpage)) {
+    return false;
   }
-  return false;
+
+  goto_tabpage_tp(lastused_tabpage, true, true);
+  return true;
 }
 
 // Enter window "wp" in tab page "tp".
@@ -7250,11 +7253,12 @@ static void clear_snapshot(tabpage_T *tp, int idx)
 
 static void clear_snapshot_rec(frame_T *fr)
 {
-  if (fr != NULL) {
-    clear_snapshot_rec(fr->fr_next);
-    clear_snapshot_rec(fr->fr_child);
-    xfree(fr);
+  if (fr == NULL) {
+    return;
   }
+  clear_snapshot_rec(fr->fr_next);
+  clear_snapshot_rec(fr->fr_child);
+  xfree(fr);
 }
 
 /// Traverse a snapshot to find the previous curwin.

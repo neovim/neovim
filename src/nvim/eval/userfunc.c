@@ -760,13 +760,12 @@ static void funccal_unref(funccall_T *fc, ufunc_T *fp, bool force)
 static bool func_remove(ufunc_T *fp)
 {
   hashitem_T *hi = hash_find(&func_hashtab, (char *)UF2HIKEY(fp));
-
-  if (!HASHITEM_EMPTY(hi)) {
-    hash_remove(&func_hashtab, hi);
-    return true;
+  if (HASHITEM_EMPTY(hi)) {
+    return false;
   }
 
-  return false;
+  hash_remove(&func_hashtab, hi);
+  return true;
 }
 
 static void func_clear_items(ufunc_T *fp)
