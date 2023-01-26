@@ -18,6 +18,7 @@ describe('runtime:', function()
     io.open(init, 'w'):close()  --  touch init file
     clear{args = {'-u', init}}
     exec('set rtp+=' .. plug_dir)
+    exec('set completeslash=slash')
   end)
 
   teardown(function()
@@ -42,6 +43,7 @@ describe('runtime:', function()
       write_file(colorscheme_file, [[vim.g.lua_colorscheme = 1]])
 
       eq({'new_colorscheme'}, funcs.getcompletion('new_c', 'color'))
+      eq({'colors/new_colorscheme.lua'}, funcs.getcompletion('colors/new_c', 'runtime'))
 
       exec('colorscheme new_colorscheme')
 
@@ -71,6 +73,7 @@ describe('runtime:', function()
       write_file(compiler_file, [[vim.b.lua_compiler = 1]])
 
       eq({'new_compiler'}, funcs.getcompletion('new_c', 'compiler'))
+      eq({'compiler/new_compiler.lua'}, funcs.getcompletion('compiler/new_c', 'runtime'))
 
       exec('compiler new_compiler')
 
@@ -100,6 +103,7 @@ describe('runtime:', function()
       write_file(ftplugin_file , [[vim.b.lua_ftplugin = 1]])
 
       eq({'new-ft'}, funcs.getcompletion('new-f', 'filetype'))
+      eq({'ftplugin/new-ft.lua'}, funcs.getcompletion('ftplugin/new-f', 'runtime'))
 
       exec [[set filetype=new-ft]]
       eq(1, eval('b:lua_ftplugin'))
@@ -116,6 +120,7 @@ describe('runtime:', function()
       write_file(indent_file , [[vim.b.lua_indent = 1]])
 
       eq({'new-ft'}, funcs.getcompletion('new-f', 'filetype'))
+      eq({'indent/new-ft.lua'}, funcs.getcompletion('indent/new-f', 'runtime'))
 
       exec [[set filetype=new-ft]]
       eq(1, eval('b:lua_indent'))
@@ -152,6 +157,7 @@ describe('runtime:', function()
     it('lua syntaxes are included in cmdline completion', function()
       eq({'my-lang'}, funcs.getcompletion('my-l', 'filetype'))
       eq({'my-lang'}, funcs.getcompletion('my-l', 'syntax'))
+      eq({'syntax/my-lang.lua'}, funcs.getcompletion('syntax/my-l', 'runtime'))
     end)
   end)
 
