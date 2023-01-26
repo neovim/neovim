@@ -2785,13 +2785,6 @@ void maybe_intro_message(void)
 /// @param colon true for ":intro"
 void intro_message(int colon)
 {
-  int i;
-  long row;
-  long blanklines;
-  int sponsor;
-  char *p;
-  char *mesg;
-  int mesg_size;
   static char *(lines[]) = {
     N_(NVIM_VERSION_LONG),
     "",
@@ -2813,7 +2806,7 @@ void intro_message(int colon)
   size_t lines_size = ARRAY_SIZE(lines);
   assert(lines_size <= LONG_MAX);
 
-  blanklines = Rows - ((long)lines_size - 1L);
+  long blanklines = Rows - ((long)lines_size - 1L);
 
   // Don't overwrite a statusline.  Depends on 'cmdheight'.
   if (p_ls > 1) {
@@ -2826,17 +2819,17 @@ void intro_message(int colon)
 
   // Show the sponsor and register message one out of four times, the Uganda
   // message two out of four times.
-  sponsor = (int)time(NULL);
+  int sponsor = (int)time(NULL);
   sponsor = ((sponsor & 2) == 0) - ((sponsor & 4) == 0);
 
   // start displaying the message lines after half of the blank lines
-  row = blanklines / 2;
+  long row = blanklines / 2;
 
   if (((row >= 2) && (Columns >= 50)) || colon) {
-    for (i = 0; i < (int)ARRAY_SIZE(lines); i++) {
-      p = lines[i];
-      mesg = NULL;
-      mesg_size = 0;
+    for (int i = 0; i < (int)ARRAY_SIZE(lines); i++) {
+      char *p = lines[i];
+      char *mesg = NULL;
+      int mesg_size = 0;
 
       if (strstr(p, "news") != NULL) {
         p = _(p);
@@ -2846,18 +2839,15 @@ void intro_message(int colon)
         mesg = xmallocz((size_t)mesg_size);
         snprintf(mesg, (size_t)mesg_size + 1, p,
                  STR(NVIM_VERSION_MAJOR), STR(NVIM_VERSION_MINOR));
-      }
-
-      if (sponsor != 0) {
+      } else if (sponsor != 0) {
         if (strstr(p, "children") != NULL) {
-          mesg = sponsor < 0
-              ? _("Sponsor Vim development!")
-              : _("Become a registered Vim user!");
-        }
-        if (strstr(p, "iccf") != NULL) {
-          mesg = sponsor < 0
-              ? _("type  :help sponsor<Enter>    for information ")
-              : _("type  :help register<Enter>   for information ");
+          p = sponsor < 0
+              ? N_("Sponsor Vim development!")
+              : N_("Become a registered Vim user!");
+        } else if (strstr(p, "iccf") != NULL) {
+          p = sponsor < 0
+              ? N_("type  :help sponsor<Enter>    for information ")
+              : N_("type  :help register<Enter>   for information ");
         }
       }
 
