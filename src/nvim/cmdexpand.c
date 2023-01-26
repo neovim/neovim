@@ -109,6 +109,7 @@ static bool cmdline_fuzzy_completion_supported(const expand_T *const xp)
          && xp->xp_context != EXPAND_OLD_SETTING
          && xp->xp_context != EXPAND_OWNSYNTAX
          && xp->xp_context != EXPAND_PACKADD
+         && xp->xp_context != EXPAND_RUNTIME
          && xp->xp_context != EXPAND_SHELLCMD
          && xp->xp_context != EXPAND_TAGS
          && xp->xp_context != EXPAND_TAGS_LISTFILES
@@ -1211,6 +1212,7 @@ char *addstar(char *fname, size_t len, int context)
     if (context == EXPAND_HELP
         || context == EXPAND_CHECKHEALTH
         || context == EXPAND_COLORS
+        || context == EXPAND_RUNTIME
         || context == EXPAND_COMPILER
         || context == EXPAND_OWNSYNTAX
         || context == EXPAND_FILETYPE
@@ -2072,6 +2074,11 @@ static const char *set_context_by_cmdname(const char *cmd, cmdidx_T cmdidx, expa
     xp->xp_pattern = (char *)arg;
     break;
 
+  case CMD_runtime:
+    xp->xp_context = EXPAND_RUNTIME;
+    xp->xp_pattern = (char *)arg;
+    break;
+
   case CMD_compiler:
     xp->xp_context = EXPAND_COMPILER;
     xp->xp_pattern = (char *)arg;
@@ -2711,6 +2718,11 @@ static int ExpandFromContext(expand_T *xp, char *pat, char ***matches, int *numM
   if (xp->xp_context == EXPAND_COLORS) {
     char *directories[] = { "colors", NULL };
     return ExpandRTDir(pat, DIP_START + DIP_OPT, numMatches, matches, directories);
+  }
+  if (xp->xp_context == EXPAND_RUNTIME) {
+    char *directories[] = { "", NULL };
+    return ExpandRTDir(pat, DIP_START + DIP_OPT + DIP_PRNEXT, numMatches,
+                       matches, directories);
   }
   if (xp->xp_context == EXPAND_COMPILER) {
     char *directories[] = { "compiler", NULL };
