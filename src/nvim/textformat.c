@@ -736,22 +736,24 @@ void check_auto_format(bool end_insert)
   int c = ' ';
   int cc;
 
-  if (did_add_space) {
-    cc = gchar_cursor();
-    if (!WHITECHAR(cc)) {
-      // Somehow the space was removed already.
+  if (!did_add_space) {
+    return;
+  }
+
+  cc = gchar_cursor();
+  if (!WHITECHAR(cc)) {
+    // Somehow the space was removed already.
+    did_add_space = false;
+  } else {
+    if (!end_insert) {
+      inc_cursor();
+      c = gchar_cursor();
+      dec_cursor();
+    }
+    if (c != NUL) {
+      // The space is no longer at the end of the line, delete it.
+      del_char(false);
       did_add_space = false;
-    } else {
-      if (!end_insert) {
-        inc_cursor();
-        c = gchar_cursor();
-        dec_cursor();
-      }
-      if (c != NUL) {
-        // The space is no longer at the end of the line, delete it.
-        del_char(false);
-        did_add_space = false;
-      }
     }
   }
 }

@@ -3208,17 +3208,19 @@ static inline void _nothing_conv_dict_end(typval_T *const tv, dict_T **const dic
 /// @param[in,out]  tv  Value to free.
 void tv_clear(typval_T *const tv)
 {
-  if (tv != NULL && tv->v_type != VAR_UNKNOWN) {
-    // WARNING: do not translate the string here, gettext is slow and function
-    // is used *very* often. At the current state encode_vim_to_nothing() does
-    // not error out and does not use the argument anywhere.
-    //
-    // If situation changes and this argument will be used, translate it in the
-    // place where it is used.
-    const int evn_ret = encode_vim_to_nothing(NULL, tv, "tv_clear() argument");
-    (void)evn_ret;
-    assert(evn_ret == OK);
+  if (tv == NULL || tv->v_type == VAR_UNKNOWN) {
+    return;
   }
+
+  // WARNING: do not translate the string here, gettext is slow and function
+  // is used *very* often. At the current state encode_vim_to_nothing() does
+  // not error out and does not use the argument anywhere.
+  //
+  // If situation changes and this argument will be used, translate it in the
+  // place where it is used.
+  const int evn_ret = encode_vim_to_nothing(NULL, tv, "tv_clear() argument");
+  (void)evn_ret;
+  assert(evn_ret == OK);
 }
 
 //{{{3 Free
@@ -3228,35 +3230,37 @@ void tv_clear(typval_T *const tv)
 /// @param  tv  Object to free.
 void tv_free(typval_T *tv)
 {
-  if (tv != NULL) {
-    switch (tv->v_type) {
-    case VAR_PARTIAL:
-      partial_unref(tv->vval.v_partial);
-      break;
-    case VAR_FUNC:
-      func_unref(tv->vval.v_string);
-      FALLTHROUGH;
-    case VAR_STRING:
-      xfree(tv->vval.v_string);
-      break;
-    case VAR_BLOB:
-      tv_blob_unref(tv->vval.v_blob);
-      break;
-    case VAR_LIST:
-      tv_list_unref(tv->vval.v_list);
-      break;
-    case VAR_DICT:
-      tv_dict_unref(tv->vval.v_dict);
-      break;
-    case VAR_BOOL:
-    case VAR_SPECIAL:
-    case VAR_NUMBER:
-    case VAR_FLOAT:
-    case VAR_UNKNOWN:
-      break;
-    }
-    xfree(tv);
+  if (tv == NULL) {
+    return;
   }
+
+  switch (tv->v_type) {
+  case VAR_PARTIAL:
+    partial_unref(tv->vval.v_partial);
+    break;
+  case VAR_FUNC:
+    func_unref(tv->vval.v_string);
+    FALLTHROUGH;
+  case VAR_STRING:
+    xfree(tv->vval.v_string);
+    break;
+  case VAR_BLOB:
+    tv_blob_unref(tv->vval.v_blob);
+    break;
+  case VAR_LIST:
+    tv_list_unref(tv->vval.v_list);
+    break;
+  case VAR_DICT:
+    tv_dict_unref(tv->vval.v_dict);
+    break;
+  case VAR_BOOL:
+  case VAR_SPECIAL:
+  case VAR_NUMBER:
+  case VAR_FLOAT:
+  case VAR_UNKNOWN:
+    break;
+  }
+  xfree(tv);
 }
 
 //{{{3 Copy
