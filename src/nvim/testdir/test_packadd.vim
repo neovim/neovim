@@ -193,8 +193,10 @@ func Test_packadd_completion()
 
   call mkdir(optdir1 . '/pluginA', 'p')
   call mkdir(optdir1 . '/pluginC', 'p')
+  call writefile([], optdir1 . '/unrelated')
   call mkdir(optdir2 . '/pluginB', 'p')
   call mkdir(optdir2 . '/pluginC', 'p')
+  call writefile([], optdir2 . '/unrelated')
 
   let li = []
   call feedkeys(":packadd \<Tab>')\<C-B>call add(li, '\<CR>", 't')
@@ -356,6 +358,68 @@ func Test_runtime()
   let g:sequence = ''
   runtime! ALL extra/bar.vim
   call assert_equal('runstartopt', g:sequence)
+endfunc
+
+func Test_runtime_completion()
+  let rundir = &packpath . '/runtime/Xextra'
+  let startdir = &packpath . '/pack/mine/start/foo/Xextra'
+  let optdir = &packpath . '/pack/mine/opt/bar/Xextra'
+  call mkdir(rundir . '/Xrunbaz', 'p')
+  call mkdir(startdir . '/Xstartbaz', 'p')
+  call mkdir(optdir . '/Xoptbaz', 'p')
+  call writefile([], rundir . '/../Xrunfoo.vim')
+  call writefile([], rundir . '/Xrunbar.vim')
+  call writefile([], rundir . '/Xunrelated')
+  call writefile([], rundir . '/../Xunrelated')
+  call writefile([], startdir . '/../Xstartfoo.vim')
+  call writefile([], startdir . '/Xstartbar.vim')
+  call writefile([], startdir . '/Xunrelated')
+  call writefile([], startdir . '/../Xunrelated')
+  call writefile([], optdir . '/../Xoptfoo.vim')
+  call writefile([], optdir . '/Xoptbar.vim')
+  call writefile([], optdir . '/Xunrelated')
+  call writefile([], optdir . '/../Xunrelated')
+  exe 'set rtp=' . &packpath . '/runtime'
+
+  func Check_runtime_completion(arg, arg1, res)
+    call feedkeys(':runtime ' .. a:arg .. "\<C-A>\<C-B>\"\<CR>", 'xt')
+    call assert_equal('"runtime ' .. a:arg1 .. join(a:res), @:)
+    call assert_equal(a:res, getcompletion(a:arg, 'runtime'))
+
+    call feedkeys(':runtime ' .. a:arg .. "X\<C-A>\<C-B>\"\<CR>", 'xt')
+    call assert_equal('"runtime ' .. a:arg1 .. join(a:res), @:)
+    call assert_equal(a:res, getcompletion(a:arg .. 'X', 'runtime'))
+  endfunc
+
+  call Check_runtime_completion('', '',
+        \ ['Xextra/', 'Xrunfoo.vim'])
+  call Check_runtime_completion('Xextra/', '',
+        \ ['Xextra/Xrunbar.vim', 'Xextra/Xrunbaz/'])
+
+  call Check_runtime_completion('START ', 'START ',
+        \ ['Xextra/', 'Xstartfoo.vim'])
+  call Check_runtime_completion('START Xextra/', 'START ',
+        \ ['Xextra/Xstartbar.vim', 'Xextra/Xstartbaz/'])
+
+  call Check_runtime_completion('OPT ', 'OPT ',
+        \ ['Xextra/', 'Xoptfoo.vim'])
+  call Check_runtime_completion('OPT Xextra/', 'OPT ',
+        \ ['Xextra/Xoptbar.vim', 'Xextra/Xoptbaz/'])
+
+  call Check_runtime_completion('PACK ', 'PACK ',
+        \ ['Xextra/', 'Xoptfoo.vim', 'Xstartfoo.vim'])
+  call Check_runtime_completion('PACK Xextra/', 'PACK ',
+        \ ['Xextra/Xoptbar.vim', 'Xextra/Xoptbaz/',
+        \ 'Xextra/Xstartbar.vim', 'Xextra/Xstartbaz/'])
+
+  call Check_runtime_completion('ALL ', 'ALL ',
+        \ ['Xextra/', 'Xoptfoo.vim', 'Xrunfoo.vim', 'Xstartfoo.vim'])
+  call Check_runtime_completion('ALL Xextra/', 'ALL ',
+        \ ['Xextra/Xoptbar.vim', 'Xextra/Xoptbaz/',
+        \ 'Xextra/Xrunbar.vim', 'Xextra/Xrunbaz/',
+        \ 'Xextra/Xstartbar.vim', 'Xextra/Xstartbaz/'])
+
+  delfunc Check_runtime_completion
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab
