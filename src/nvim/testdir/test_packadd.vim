@@ -26,7 +26,7 @@ func Test_packadd()
 
   let rtp_entries = split(rtp, ',')
   for entry in rtp_entries
-    if entry =~? '\<after\>' 
+    if entry =~? '\<after\>'
       let first_after_entry = entry
       break
     endif
@@ -186,7 +186,7 @@ func Test_packadd_symlink_dir2()
   exec "silent !rmdir" top2_dir
 endfunc
 
-" Check command-line completion for 'packadd'
+" Check command-line completion for :packadd
 func Test_packadd_completion()
   let optdir1 = &packpath . '/pack/mine/opt'
   let optdir2 = &packpath . '/pack/candidate/opt'
@@ -262,9 +262,9 @@ func Test_helptags()
 
   helptags ALL
 
-  let tags1 = readfile(docdir1 . '/tags') 
+  let tags1 = readfile(docdir1 . '/tags')
   call assert_match('look-here', tags1[0])
-  let tags2 = readfile(docdir2 . '/tags') 
+  let tags2 = readfile(docdir2 . '/tags')
   call assert_match('look-away', tags2[0])
 
   call assert_fails('helptags abcxyz', 'E150:')

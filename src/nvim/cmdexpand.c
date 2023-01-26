@@ -1212,11 +1212,11 @@ char *addstar(char *fname, size_t len, int context)
     if (context == EXPAND_HELP
         || context == EXPAND_CHECKHEALTH
         || context == EXPAND_COLORS
-        || context == EXPAND_RUNTIME
         || context == EXPAND_COMPILER
         || context == EXPAND_OWNSYNTAX
         || context == EXPAND_FILETYPE
         || context == EXPAND_PACKADD
+        || context == EXPAND_RUNTIME
         || ((context == EXPAND_TAGS_LISTFILES || context == EXPAND_TAGS)
             && fname[0] == '/')) {
       retval = xstrnsave(fname, len);
@@ -2074,10 +2074,6 @@ static const char *set_context_by_cmdname(const char *cmd, cmdidx_T cmdidx, expa
     xp->xp_pattern = (char *)arg;
     break;
 
-  case CMD_runtime:
-    set_context_in_runtime_cmd(xp, arg);
-    break;
-
   case CMD_compiler:
     xp->xp_context = EXPAND_COMPILER;
     xp->xp_pattern = (char *)arg;
@@ -2096,6 +2092,10 @@ static const char *set_context_by_cmdname(const char *cmd, cmdidx_T cmdidx, expa
   case CMD_packadd:
     xp->xp_context = EXPAND_PACKADD;
     xp->xp_pattern = (char *)arg;
+    break;
+
+  case CMD_runtime:
+    set_context_in_runtime_cmd(xp, arg);
     break;
 
 #ifdef HAVE_WORKING_LIBINTL
