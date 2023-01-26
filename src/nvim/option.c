@@ -1248,6 +1248,51 @@ static int parse_option_name(char *arg, int *keyp, int *lenp, int *opt_idxp)
   return OK;
 }
 
+static int validate_opt_idx(win_T *win, int opt_idx, int opt_flags, uint32_t flags, char **errmsg)
+{
+  // Skip all options that are not window-local (used when showing
+  // an already loaded buffer in a window).
+  if ((opt_flags & OPT_WINONLY)
+      && (opt_idx < 0 || options[opt_idx].var != VAR_WIN)) {
+    return FAIL;
+  }
+
+  // Skip all options that are window-local (used for :vimgrep).
+  if ((opt_flags & OPT_NOWIN) && opt_idx >= 0
+      && options[opt_idx].var == VAR_WIN) {
+    return FAIL;
+  }
+
+  // Disallow changing some options from modelines.
+  if (opt_flags & OPT_MODELINE) {
+    if (flags & (P_SECURE | P_NO_ML)) {
+      *errmsg = e_not_allowed_in_modeline;
+      return FAIL;
+    }
+    if ((flags & P_MLE) && !p_mle) {
+      *errmsg = e_not_allowed_in_modeline_when_modelineexpr_is_off;
+      return FAIL;
+    }
+    // In diff mode some options are overruled.  This avoids that
+    // 'foldmethod' becomes "marker" instead of "diff" and that
+    // "wrap" gets set.
+    if (win->w_p_diff
+        && opt_idx >= 0              // shut up coverity warning
+        && (options[opt_idx].indir == PV_FDM
+            || options[opt_idx].indir == PV_WRAP)) {
+      return FAIL;
+    }
+  }
+
+  // Disallow changing some options in the sandbox
+  if (sandbox != 0 && (flags & P_SECURE)) {
+    *errmsg = e_sandbox;
+    return FAIL;
+  }
+
+  return OK;
+}
+
 static void do_set_option(int opt_flags, char **argp, bool *did_show, char *errbuf,
                           size_t errbuflen, char **errmsg)
 {
@@ -1306,43 +1351,7 @@ static void do_set_option(int opt_flags, char **argp, bool *did_show, char *errb
     flags = P_STRING;
   }
 
-  // Skip all options that are not window-local (used when showing
-  // an already loaded buffer in a window).
-  if ((opt_flags & OPT_WINONLY)
-      && (opt_idx < 0 || options[opt_idx].var != VAR_WIN)) {
-    return;
-  }
-
-  // Skip all options that are window-local (used for :vimgrep).
-  if ((opt_flags & OPT_NOWIN) && opt_idx >= 0
-      && options[opt_idx].var == VAR_WIN) {
-    return;
-  }
-
-  // Disallow changing some options from modelines.
-  if (opt_flags & OPT_MODELINE) {
-    if (flags & (P_SECURE | P_NO_ML)) {
-      *errmsg = e_not_allowed_in_modeline;
-      return;
-    }
-    if ((flags & P_MLE) && !p_mle) {
-      *errmsg = e_not_allowed_in_modeline_when_modelineexpr_is_off;
-      return;
-    }
-    // In diff mode some options are overruled.  This avoids that
-    // 'foldmethod' becomes "marker" instead of "diff" and that
-    // "wrap" gets set.
-    if (curwin->w_p_diff
-        && opt_idx >= 0              // shut up coverity warning
-        && (options[opt_idx].indir == PV_FDM
-            || options[opt_idx].indir == PV_WRAP)) {
-      return;
-    }
-  }
-
-  // Disallow changing some options in the sandbox
-  if (sandbox != 0 && (flags & P_SECURE)) {
-    *errmsg = e_sandbox;
+  if (validate_opt_idx(curwin, opt_idx, opt_flags, flags, errmsg) == FAIL) {
     return;
   }
 
