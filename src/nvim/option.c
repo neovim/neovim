@@ -1300,6 +1300,32 @@ static int validate_opt_idx(win_T *win, int opt_idx, int opt_flags, uint32_t fla
   return OK;
 }
 
+static void do_set_option_value(int opt_idx, int opt_flags, char **argp, int prefix, int nextchar,
+                                int afterchar, set_op_T op, uint32_t flags, char *varp,
+                                char *errbuf, size_t errbuflen, char **errmsg)
+{
+  int value_checked = false;
+  if (flags & P_BOOL) {        // boolean
+    do_set_bool(opt_idx, opt_flags, prefix, nextchar, afterchar, varp, errmsg);
+  } else if (flags & P_NUM) {  // numeric
+    do_set_num(opt_idx, opt_flags, argp, nextchar, op, varp, errbuf, errbuflen, errmsg);
+  } else if (opt_idx >= 0) {   // string.
+    do_set_string(opt_idx, opt_flags, argp, nextchar, op, flags, varp, errbuf,
+                  errbuflen, &value_checked, errmsg);
+  } else {
+    // key code option(FIXME(tarruda): Show a warning or something
+    // similar)
+  }
+
+  if (*errmsg != NULL) {
+    return;
+  }
+
+  if (opt_idx >= 0) {
+    did_set_option(opt_idx, opt_flags, op == OP_NONE, value_checked);
+  }
+}
+
 static void do_set_option(int opt_flags, char **argp, bool *did_show, char *errbuf,
                           size_t errbuflen, char **errmsg)
 {
@@ -1420,26 +1446,8 @@ static void do_set_option(int opt_flags, char **argp, bool *did_show, char *errb
     return;
   }
 
-  int value_checked = false;
-  if (flags & P_BOOL) {        // boolean
-    do_set_bool(opt_idx, opt_flags, prefix, nextchar, afterchar, varp, errmsg);
-  } else if (flags & P_NUM) {  // numeric
-    do_set_num(opt_idx, opt_flags, argp, nextchar, op, varp, errbuf, errbuflen, errmsg);
-  } else if (opt_idx >= 0) {   // string.
-    do_set_string(opt_idx, opt_flags, argp, nextchar, op, flags, varp, errbuf,
-                  errbuflen, &value_checked, errmsg);
-  } else {
-    // key code option(FIXME(tarruda): Show a warning or something
-    // similar)
-  }
-
-  if (*errmsg != NULL) {
-    return;
-  }
-
-  if (opt_idx >= 0) {
-    did_set_option(opt_idx, opt_flags, op == OP_NONE, value_checked);
-  }
+  do_set_option_value(opt_idx, opt_flags, argp, prefix, nextchar, afterchar, op, flags, varp,
+                      errbuf, errbuflen, errmsg);
 }
 
 /// Parse 'arg' for option settings.
