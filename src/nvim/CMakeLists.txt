@@ -30,9 +30,8 @@ find_package(LibTermkey 0.22 REQUIRED)
 target_include_directories(main_lib SYSTEM BEFORE INTERFACE ${LIBTERMKEY_INCLUDE_DIRS})
 target_link_libraries(main_lib INTERFACE ${LIBTERMKEY_LIBRARIES})
 
-find_package(LIBVTERM 0.3 REQUIRED)
-target_include_directories(main_lib SYSTEM BEFORE INTERFACE ${LIBVTERM_INCLUDE_DIRS})
-target_link_libraries(main_lib INTERFACE ${LIBVTERM_LIBRARIES})
+find_package(libvterm 0.3 REQUIRED)
+target_link_libraries(main_lib INTERFACE libvterm)
 
 find_package(Iconv REQUIRED)
 target_include_directories(main_lib SYSTEM BEFORE INTERFACE ${Iconv_INCLUDE_DIRS})
