@@ -211,9 +211,7 @@ For writing a Vim script, see chapter 41 of the user manual |usr_41.txt|.
 			When [!] is included, all found files are sourced.
 			Else only the first found file is sourced.
 
-			When [where] is omitted, first 'runtimepath' is
-			searched, then directories under "start" in 'packpath'
-			are searched.
+			When [where] is omitted only 'runtimepath' is used.
 			Other values:
 				START	search only under "start" in 'packpath'
 				OPT 	search only under "opt" in 'packpath'
