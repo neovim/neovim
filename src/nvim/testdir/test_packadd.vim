@@ -361,63 +361,75 @@ func Test_runtime()
 endfunc
 
 func Test_runtime_completion()
-  let rundir = &packpath . '/runtime/Xextra'
-  let startdir = &packpath . '/pack/mine/start/foo/Xextra'
-  let optdir = &packpath . '/pack/mine/opt/bar/Xextra'
-  call mkdir(rundir . '/Xrunbaz', 'p')
-  call mkdir(startdir . '/Xstartbaz', 'p')
-  call mkdir(optdir . '/Xoptbaz', 'p')
-  call writefile([], rundir . '/../Xrunfoo.vim')
-  call writefile([], rundir . '/Xrunbar.vim')
-  call writefile([], rundir . '/Xunrelated')
-  call writefile([], rundir . '/../Xunrelated')
-  call writefile([], startdir . '/../Xstartfoo.vim')
-  call writefile([], startdir . '/Xstartbar.vim')
-  call writefile([], startdir . '/Xunrelated')
-  call writefile([], startdir . '/../Xunrelated')
-  call writefile([], optdir . '/../Xoptfoo.vim')
-  call writefile([], optdir . '/Xoptbar.vim')
-  call writefile([], optdir . '/Xunrelated')
-  call writefile([], optdir . '/../Xunrelated')
+  let rundir = &packpath . '/runtime/Aextra'
+  let startdir = &packpath . '/pack/mine/start/foo/Aextra'
+  let optdir = &packpath . '/pack/mine/opt/bar/Aextra'
+  call mkdir(rundir . '/Arunbaz', 'p')
+  call mkdir(startdir . '/Astartbaz', 'p')
+  call mkdir(optdir . '/Aoptbaz', 'p')
+  call writefile([], rundir . '/../Arunfoo.vim')
+  call writefile([], rundir . '/Arunbar.vim')
+  call writefile([], rundir . '/Aunrelated')
+  call writefile([], rundir . '/../Aunrelated')
+  call writefile([], startdir . '/../Astartfoo.vim')
+  call writefile([], startdir . '/Astartbar.vim')
+  call writefile([], startdir . '/Aunrelated')
+  call writefile([], startdir . '/../Aunrelated')
+  call writefile([], optdir . '/../Aoptfoo.vim')
+  call writefile([], optdir . '/Aoptbar.vim')
+  call writefile([], optdir . '/Aunrelated')
+  call writefile([], optdir . '/../Aunrelated')
   exe 'set rtp=' . &packpath . '/runtime'
 
   func Check_runtime_completion(arg, arg1, res)
     call feedkeys(':runtime ' .. a:arg .. "\<C-A>\<C-B>\"\<CR>", 'xt')
     call assert_equal('"runtime ' .. a:arg1 .. join(a:res), @:)
     call assert_equal(a:res, getcompletion(a:arg, 'runtime'))
-
-    call feedkeys(':runtime ' .. a:arg .. "X\<C-A>\<C-B>\"\<CR>", 'xt')
-    call assert_equal('"runtime ' .. a:arg1 .. join(a:res), @:)
-    call assert_equal(a:res, getcompletion(a:arg .. 'X', 'runtime'))
   endfunc
 
   call Check_runtime_completion('', '',
-        \ ['Xextra/', 'Xrunfoo.vim'])
-  call Check_runtime_completion('Xextra/', '',
-        \ ['Xextra/Xrunbar.vim', 'Xextra/Xrunbaz/'])
+        \ ['Aextra/', 'Arunfoo.vim', 'START', 'OPT', 'PACK', 'ALL'])
+  call Check_runtime_completion('S', '',
+        \ ['START'])
+  call Check_runtime_completion('O', '',
+        \ ['OPT'])
+  call Check_runtime_completion('P', '',
+        \ ['PACK'])
+  call Check_runtime_completion('A', '',
+        \ ['Aextra/', 'Arunfoo.vim', 'ALL'])
+  call Check_runtime_completion('Aextra/', '',
+        \ ['Aextra/Arunbar.vim', 'Aextra/Arunbaz/'])
 
   call Check_runtime_completion('START ', 'START ',
-        \ ['Xextra/', 'Xstartfoo.vim'])
-  call Check_runtime_completion('START Xextra/', 'START ',
-        \ ['Xextra/Xstartbar.vim', 'Xextra/Xstartbaz/'])
+        \ ['Aextra/', 'Astartfoo.vim'])
+  call Check_runtime_completion('START A', 'START ',
+        \ ['Aextra/', 'Astartfoo.vim'])
+  call Check_runtime_completion('START Aextra/', 'START ',
+        \ ['Aextra/Astartbar.vim', 'Aextra/Astartbaz/'])
 
   call Check_runtime_completion('OPT ', 'OPT ',
-        \ ['Xextra/', 'Xoptfoo.vim'])
-  call Check_runtime_completion('OPT Xextra/', 'OPT ',
-        \ ['Xextra/Xoptbar.vim', 'Xextra/Xoptbaz/'])
+        \ ['Aextra/', 'Aoptfoo.vim'])
+  call Check_runtime_completion('OPT A', 'OPT ',
+        \ ['Aextra/', 'Aoptfoo.vim'])
+  call Check_runtime_completion('OPT Aextra/', 'OPT ',
+        \ ['Aextra/Aoptbar.vim', 'Aextra/Aoptbaz/'])
 
   call Check_runtime_completion('PACK ', 'PACK ',
-        \ ['Xextra/', 'Xoptfoo.vim', 'Xstartfoo.vim'])
-  call Check_runtime_completion('PACK Xextra/', 'PACK ',
-        \ ['Xextra/Xoptbar.vim', 'Xextra/Xoptbaz/',
-        \ 'Xextra/Xstartbar.vim', 'Xextra/Xstartbaz/'])
+        \ ['Aextra/', 'Aoptfoo.vim', 'Astartfoo.vim'])
+  call Check_runtime_completion('PACK A', 'PACK ',
+        \ ['Aextra/', 'Aoptfoo.vim', 'Astartfoo.vim'])
+  call Check_runtime_completion('PACK Aextra/', 'PACK ',
+        \ ['Aextra/Aoptbar.vim', 'Aextra/Aoptbaz/',
+        \ 'Aextra/Astartbar.vim', 'Aextra/Astartbaz/'])
 
   call Check_runtime_completion('ALL ', 'ALL ',
-        \ ['Xextra/', 'Xoptfoo.vim', 'Xrunfoo.vim', 'Xstartfoo.vim'])
-  call Check_runtime_completion('ALL Xextra/', 'ALL ',
-        \ ['Xextra/Xoptbar.vim', 'Xextra/Xoptbaz/',
-        \ 'Xextra/Xrunbar.vim', 'Xextra/Xrunbaz/',
-        \ 'Xextra/Xstartbar.vim', 'Xextra/Xstartbaz/'])
+        \ ['Aextra/', 'Aoptfoo.vim', 'Arunfoo.vim', 'Astartfoo.vim'])
+  call Check_runtime_completion('ALL A', 'ALL ',
+        \ ['Aextra/', 'Aoptfoo.vim', 'Arunfoo.vim', 'Astartfoo.vim'])
+  call Check_runtime_completion('ALL Aextra/', 'ALL ',
+        \ ['Aextra/Aoptbar.vim', 'Aextra/Aoptbaz/',
+        \ 'Aextra/Arunbar.vim', 'Aextra/Arunbaz/',
+        \ 'Aextra/Astartbar.vim', 'Aextra/Astartbaz/'])
 
   delfunc Check_runtime_completion
 endfunc

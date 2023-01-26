@@ -26,6 +26,7 @@
 #include "nvim/ex_cmds_defs.h"
 #include "nvim/ex_docmd.h"
 #include "nvim/ex_eval.h"
+#include "nvim/garray.h"
 #include "nvim/getchar.h"
 #include "nvim/gettext.h"
 #include "nvim/globals.h"
@@ -208,45 +209,43 @@ void runtime_init(void)
   uv_mutex_init(&runtime_search_path_mutex);
 }
 
-/// Get DIP_ flags from the [what] argument of a :runtime command.
-/// "*argp" is advanced to after the [what] argument.
-static int get_runtime_cmd_flags(char **argp)
+/// Get DIP_ flags from the [where] argument of a :runtime command.
+/// "*argp" is advanced to after the [where] argument.
+static int get_runtime_cmd_flags(char **argp, size_t where_len)
 {
   char *arg = *argp;
-  char *p = skiptowhite(arg);
-  size_t what_len = (size_t)(p - arg);
 
-  if (what_len == 0) {
+  if (where_len == 0) {
     return 0;
   }
 
-  if (strncmp(arg, "START", what_len) == 0) {
-    *argp = skipwhite(arg + what_len);
+  if (strncmp(arg, "START", where_len) == 0) {
+    *argp = skipwhite(arg + where_len);
     return DIP_START + DIP_NORTP;
   }
-  if (strncmp(arg, "OPT", what_len) == 0) {
-    *argp = skipwhite(arg + what_len);
+  if (strncmp(arg, "OPT", where_len) == 0) {
+    *argp = skipwhite(arg + where_len);
     return DIP_OPT + DIP_NORTP;
   }
-  if (strncmp(arg, "PACK", what_len) == 0) {
-    *argp = skipwhite(arg + what_len);
+  if (strncmp(arg, "PACK", where_len) == 0) {
+    *argp = skipwhite(arg + where_len);
     return DIP_START + DIP_OPT + DIP_NORTP;
   }
-  if (strncmp(arg, "ALL", what_len) == 0) {
-    *argp = skipwhite(arg + what_len);
+  if (strncmp(arg, "ALL", where_len) == 0) {
+    *argp = skipwhite(arg + where_len);
     return DIP_START + DIP_OPT;
   }
 
   return 0;
 }
 
-/// ":runtime [what] {name}"
+/// ":runtime [where] {name}"
 void ex_runtime(exarg_T *eap)
 {
   char *arg = eap->arg;
   int flags = eap->forceit ? DIP_ALL : 0;
-
-  flags += get_runtime_cmd_flags(&arg);
+  char *p = skiptowhite(arg);
+  flags += get_runtime_cmd_flags(&arg, (size_t)(p - arg));
   source_runtime(arg, flags);
 }
 
@@ -255,16 +254,11 @@ static int runtime_expand_flags;
 /// Set the completion context for the :runtime command.
 void set_context_in_runtime_cmd(expand_T *xp, const char *arg)
 {
-  runtime_expand_flags = DIP_KEEPEXT + get_runtime_cmd_flags((char **)&arg);
+  char *p = skiptowhite(arg);
+  runtime_expand_flags
+    = *p != NUL ? get_runtime_cmd_flags((char **)&arg, (size_t)(p - arg)) : 0;
   xp->xp_context = EXPAND_RUNTIME;
   xp->xp_pattern = (char *)arg;
-}
-
-/// Handle command line completion for :runtime command.
-int expand_runtime_cmd(char *pat, int *numMatches, char ***matches)
-{
-  char *directories[] = {"", NULL};
-  return ExpandRTDir(pat, runtime_expand_flags, numMatches, matches, directories);
 }
 
 static void source_callback(char *fname, void *cookie)
@@ -1209,23 +1203,9 @@ void ex_packadd(exarg_T *eap)
   }
 }
 
-/// Expand color scheme, compiler or filetype names.
-/// Search from 'runtimepath':
-///   'runtimepath'/{dirnames}/{pat}.(vim|lua)
-/// When "flags" has DIP_START: search also from "start" of 'packpath':
-///   'packpath'/pack/*/start/*/{dirnames}/{pat}.(vim|lua)
-/// When "flags" has DIP_OPT: search also from "opt" of 'packpath':
-///   'packpath'/pack/*/opt/*/{dirnames}/{pat}.(vim|lua)
-/// "dirnames" is an array with one or more directory names.
-int ExpandRTDir(char *pat, int flags, int *num_file, char ***file, char *dirnames[])
+static void ExpandRTDir_int(char *pat, size_t pat_len, int flags, bool keep_ext, garray_T *gap,
+                            char *dirnames[])
 {
-  *num_file = 0;
-  *file = NULL;
-  size_t pat_len = strlen(pat);
-
-  garray_T ga;
-  ga_init(&ga, (int)sizeof(char *), 10);
-
   // TODO(bfredl): this is bullshit, expandpath should not reinvent path logic.
   for (int i = 0; dirnames[i] != NULL; i++) {
     const size_t buf_len = strlen(dirnames[i]) + pat_len + 31;
@@ -1243,21 +1223,21 @@ int ExpandRTDir(char *pat, int flags, int *num_file, char ***file, char *dirname
 
 expand:
     if ((flags & DIP_NORTP) == 0) {
-      globpath(p_rtp, tail, &ga, glob_flags, expand_dirs);
+      globpath(p_rtp, tail, gap, glob_flags, expand_dirs);
     }
 
     if (flags & DIP_START) {
       memcpy(tail - 15, "pack/*/start/*/", 15);  // NOLINT
-      globpath(p_pp, tail - 15, &ga, glob_flags, expand_dirs);
+      globpath(p_pp, tail - 15, gap, glob_flags, expand_dirs);
       memcpy(tail - 8, "start/*/", 8);  // NOLINT
-      globpath(p_pp, tail - 8, &ga, glob_flags, expand_dirs);
+      globpath(p_pp, tail - 8, gap, glob_flags, expand_dirs);
     }
 
     if (flags & DIP_OPT) {
       memcpy(tail - 13, "pack/*/opt/*/", 13);  // NOLINT
-      globpath(p_pp, tail - 13, &ga, glob_flags, expand_dirs);
+      globpath(p_pp, tail - 13, gap, glob_flags, expand_dirs);
       memcpy(tail - 6, "opt/*/", 6);  // NOLINT
-      globpath(p_pp, tail - 6, &ga, glob_flags, expand_dirs);
+      globpath(p_pp, tail - 6, gap, glob_flags, expand_dirs);
     }
 
     if (*dirnames[i] == NUL && !expand_dirs) {
@@ -1278,13 +1258,12 @@ expand:
     }
   }
 
-  for (int i = 0; i < ga.ga_len; i++) {
-    char *match = ((char **)ga.ga_data)[i];
+  for (int i = 0; i < gap->ga_len; i++) {
+    char *match = ((char **)gap->ga_data)[i];
     char *s = match;
     char *e = s + strlen(s);
-    if (e - s > 4 && (flags & DIP_KEEPEXT) == 0
-        && (STRNICMP(e - 4, ".vim", 4) == 0
-            || STRNICMP(e - 4, ".lua", 4) == 0)) {
+    if (e - s > 4 && !keep_ext && (STRNICMP(e - 4, ".vim", 4) == 0
+                                   || STRNICMP(e - 4, ".lua", 4) == 0)) {
       e -= 4;
       *e = NUL;
     }
@@ -1296,26 +1275,82 @@ expand:
       }
     }
     s++;
-    *e = NUL;
-    assert((e - s) + 1 >= 0);
-    memmove(match, s, (size_t)(e - s) + 1);
+    if (s != match) {
+      assert((e - s) + 1 >= 0);
+      memmove(match, s, (size_t)(e - s) + 1);
+    }
   }
 
-  if (GA_EMPTY(&ga)) {
-    return FAIL;
+  if (GA_EMPTY(gap)) {
+    return;
   }
 
   // Sort and remove duplicates which can happen when specifying multiple
   // directories in dirnames.
-  ga_remove_duplicate_strings(&ga);
+  ga_remove_duplicate_strings(gap);
+}
+
+/// Expand color scheme, compiler or filetype names.
+/// Search from 'runtimepath':
+///   'runtimepath'/{dirnames}/{pat}.(vim|lua)
+/// When "flags" has DIP_START: search also from "start" of 'packpath':
+///   'packpath'/pack/*/start/*/{dirnames}/{pat}.(vim|lua)
+/// When "flags" has DIP_OPT: search also from "opt" of 'packpath':
+///   'packpath'/pack/*/opt/*/{dirnames}/{pat}.(vim|lua)
+/// "dirnames" is an array with one or more directory names.
+int ExpandRTDir(char *pat, int flags, int *num_file, char ***file, char *dirnames[])
+{
+  *num_file = 0;
+  *file = NULL;
+
+  garray_T ga;
+  ga_init(&ga, (int)sizeof(char *), 10);
+
+  ExpandRTDir_int(pat, strlen(pat), flags, false, &ga, dirnames);
+
+  if (GA_EMPTY(&ga)) {
+    return FAIL;
+  }
 
   *file = ga.ga_data;
   *num_file = ga.ga_len;
   return OK;
 }
 
+/// Handle command line completion for :runtime command.
+int expand_runtime_cmd(char *pat, int *numMatches, char ***matches)
+{
+  *numMatches = 0;
+  *matches = NULL;
+
+  garray_T ga;
+  ga_init(&ga, sizeof(char *), 10);
+
+  const size_t pat_len = strlen(pat);
+  char *dirnames[] = { "", NULL };
+  ExpandRTDir_int(pat, pat_len, runtime_expand_flags, true, &ga, dirnames);
+
+  // Try to complete values for [where] argument when none was found.
+  if (runtime_expand_flags == 0) {
+    char *where_values[] = { "START", "OPT", "PACK", "ALL" };
+    for (size_t i = 0; i < ARRAY_SIZE(where_values); i++) {
+      if (strncmp(pat, where_values[i], pat_len) == 0) {
+        GA_APPEND(char *, &ga, xstrdup(where_values[i]));
+      }
+    }
+  }
+
+  if (GA_EMPTY(&ga)) {
+    return FAIL;
+  }
+
+  *matches = ga.ga_data;
+  *numMatches = ga.ga_len;
+  return OK;
+}
+
 /// Expand loadplugin names:
-/// 'packpath'/pack/ * /opt/{pat}
+/// 'packpath'/pack/*/opt/{pat}
 int ExpandPackAddDir(char *pat, int *num_file, char ***file)
 {
   garray_T ga;

@@ -2718,9 +2718,6 @@ static int ExpandFromContext(expand_T *xp, char *pat, char ***matches, int *numM
     char *directories[] = { "colors", NULL };
     return ExpandRTDir(pat, DIP_START + DIP_OPT, numMatches, matches, directories);
   }
-  if (xp->xp_context == EXPAND_RUNTIME) {
-    return expand_runtime_cmd(pat, numMatches, matches);
-  }
   if (xp->xp_context == EXPAND_COMPILER) {
     char *directories[] = { "compiler", NULL };
     return ExpandRTDir(pat, 0, numMatches, matches, directories);
@@ -2741,6 +2738,9 @@ static int ExpandFromContext(expand_T *xp, char *pat, char ***matches, int *numM
   }
   if (xp->xp_context == EXPAND_PACKADD) {
     return ExpandPackAddDir(pat, numMatches, matches);
+  }
+  if (xp->xp_context == EXPAND_RUNTIME) {
+    return expand_runtime_cmd(pat, numMatches, matches);
   }
 
   // When expanding a function name starting with s:, match the <SNR>nr_
