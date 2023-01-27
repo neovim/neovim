@@ -42,6 +42,11 @@ Developer guidelines
   make distclean
   make  # Nvim build system uses ninja automatically, if available.
   ```
+- Install `ccache` for faster rebuilds of Nvim. Nvim will use it automatically
+  if it's found. To disable caching use:
+  ```
+  CCACHE_DISABLE=true make
+  ```
 
 Pull requests (PRs)
 ---------------------

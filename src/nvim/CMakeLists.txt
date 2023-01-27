@@ -688,6 +688,13 @@ set_target_properties(nvim
   EXPORT_COMPILE_COMMANDS ON
   ENABLE_EXPORTS TRUE)
 
+find_program(CCACHE_PRG ccache)
+if(CCACHE_PRG)
+  set_target_properties(nvim
+    PROPERTIES
+    C_COMPILER_LAUNCHER "${CMAKE_COMMAND};-E;env;CCACHE_SLOPPINESS=pch_defines,time_macros;${CCACHE_PRG}")
+endif()
+
 if(${CMAKE_VERSION} VERSION_LESS 3.20)
   set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 endif()
