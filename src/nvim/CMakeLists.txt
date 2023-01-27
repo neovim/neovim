@@ -22,9 +22,8 @@ find_package(TreeSitter REQUIRED)
 target_include_directories(main_lib SYSTEM BEFORE INTERFACE ${TreeSitter_INCLUDE_DIRS})
 target_link_libraries(main_lib INTERFACE ${TreeSitter_LIBRARIES})
 
-find_package(UNIBILIUM 2.0 REQUIRED)
-target_include_directories(main_lib SYSTEM BEFORE INTERFACE ${UNIBILIUM_INCLUDE_DIRS})
-target_link_libraries(main_lib INTERFACE ${UNIBILIUM_LIBRARIES})
+find_package(unibilium 2.0 REQUIRED)
+target_link_libraries(main_lib INTERFACE unibilium)
 
 find_package(LibTermkey 0.22 REQUIRED)
 target_include_directories(main_lib SYSTEM BEFORE INTERFACE ${LIBTERMKEY_INCLUDE_DIRS})
@@ -172,24 +171,6 @@ if(CI_BUILD)
       target_compile_options(main_lib INTERFACE -funsigned-char)
     endif()
   endif()
-endif()
-
-list(APPEND CMAKE_REQUIRED_INCLUDES "${UNIBILIUM_INCLUDE_DIRS}")
-list(APPEND CMAKE_REQUIRED_LIBRARIES "${UNIBILIUM_LIBRARIES}")
-check_c_source_compiles("
-#include <unibilium.h>
-
-int
-main(void)
-{
-  unibi_str_from_var(unibi_var_from_str(\"\"));
-  return unibi_num_from_var(unibi_var_from_num(0));
-}
-" UNIBI_HAS_VAR_FROM)
-list(REMOVE_ITEM CMAKE_REQUIRED_INCLUDES "${UNIBILIUM_INCLUDE_DIRS}")
-list(REMOVE_ITEM CMAKE_REQUIRED_LIBRARIES "${UNIBILIUM_LIBRARIES}")
-if(UNIBI_HAS_VAR_FROM)
-  target_compile_definitions(main_lib INTERFACE NVIM_UNIBI_HAS_VAR_FROM)
 endif()
 
 list(APPEND CMAKE_REQUIRED_INCLUDES "${MSGPACK_INCLUDE_DIRS}")
