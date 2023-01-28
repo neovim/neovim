@@ -5439,16 +5439,16 @@ bool match_file_list(char *list, char *sfname, char *ffname)
 char *file_pat_to_reg_pat(const char *pat, const char *pat_end, char *allow_dirs, int no_bslash)
   FUNC_ATTR_NONNULL_ARG(1)
 {
+  if (allow_dirs != NULL) {
+    *allow_dirs = false;
+  }
+
   if (pat_end == NULL) {
     pat_end = pat + strlen(pat);
   }
 
   if (pat_end == pat) {
     return xstrdup("^$");
-  }
-
-  if (allow_dirs != NULL) {
-    *allow_dirs = false;
   }
 
   size_t size = 2;  // '^' at start, '$' at end.
