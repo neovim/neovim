@@ -80,7 +80,7 @@ check_sanitizer() {
 
 unittests() {(
   ulimit -c unlimited || true
-  if ! build_make unittest ; then
+  if ! ninja -C "${BUILD_DIR}" unittest; then
     fail 'unittests' 'Unit tests failed'
   fi
   check_core_dumps "$(command -v luajit)"
@@ -88,7 +88,7 @@ unittests() {(
 
 functionaltests() {(
   ulimit -c unlimited || true
-  if ! build_make "${FUNCTIONALTEST}"; then
+  if ! ninja -C "${BUILD_DIR}" "${FUNCTIONALTEST}"; then
     fail 'functionaltests' 'Functional tests failed'
   fi
   check_sanitizer "${LOG_DIR}"
@@ -125,7 +125,7 @@ check_runtime_files() {(
 )}
 
 install_nvim() {(
-  if ! build_make install ; then
+  if ! ninja -C "${BUILD_DIR}" install ; then
     fail 'install' 'make install failed'
     exit 1
   fi

@@ -6,15 +6,6 @@ _stat() {
   fi
 }
 
-top_make() {
-  printf '%78s\n' ' ' | tr ' ' '='
-  ninja "$@"
-}
-
-build_make() {
-  top_make -C "${BUILD_DIR}" "$@"
-}
-
 build_deps() {
   if test "${FUNCTIONALTEST}" = "functionaltest-lua" \
      || test "${CLANG_SANITIZER}" = "ASAN_UBSAN" ; then
@@ -36,7 +27,7 @@ build_deps() {
   # shellcheck disable=SC2086
   CC= cmake -G Ninja ${DEPS_CMAKE_FLAGS} "${CI_BUILD_DIR}/cmake.deps/"
 
-  if ! top_make; then
+  if ! ninja; then
     exit 1
   fi
 
@@ -57,19 +48,19 @@ build_nvim() {
   cmake -G Ninja ${CMAKE_FLAGS} "$@" "${CI_BUILD_DIR}"
 
   echo "Building nvim."
-  if ! top_make nvim ; then
+  if ! ninja nvim ; then
     exit 1
   fi
 
   if test "$CLANG_SANITIZER" != "TSAN" ; then
     echo "Building libnvim."
-    if ! top_make libnvim ; then
+    if ! ninja libnvim ; then
       exit 1
     fi
 
     if test "${FUNCTIONALTEST}" != "functionaltest-lua"; then
       echo "Building nvim-test."
-      if ! top_make nvim-test ; then
+      if ! ninja nvim-test ; then
         exit 1
       fi
     fi
