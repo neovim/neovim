@@ -537,6 +537,19 @@ func Test_global_local_virtualedit()
   set virtualedit&
 endfunc
 
+func Test_virtualedit_setlocal()
+  enew
+  setglobal virtualedit=all
+  setlocal virtualedit=all
+  normal! l
+  redraw
+  setlocal virtualedit=none
+  call assert_equal(1, wincol())
+
+  setlocal virtualedit&
+  set virtualedit&
+endfunc
+
 func Test_virtualedit_mouse()
   let save_mouse = &mouse
   set mouse=a
