@@ -1404,10 +1404,11 @@ static void did_set_virtualedit(win_T *win, int opt_flags, char *oldval, char **
   } else {
     if (opt_strings_flags(ve, p_ve_values, flags, true) != OK) {
       *errmsg = e_invarg;
-    } else if (strcmp(p_ve, oldval) != 0) {
+    } else if (strcmp(ve, oldval) != 0) {
       // Recompute cursor position in case the new 've' setting
       // changes something.
       validate_virtcol_win(win);
+      // XXX: this only works when win == curwin
       coladvance(win->w_virtcol);
     }
   }
