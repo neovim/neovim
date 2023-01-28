@@ -23,8 +23,13 @@ if(CLANG_ASAN_UBSAN)
   set(LUA_CFLAGS "${LUA_CFLAGS} -fsanitize=address")
   set(LUA_CFLAGS "${LUA_CFLAGS} -fno-omit-frame-pointer")
   set(LUA_CFLAGS "${LUA_CFLAGS} -fno-optimize-sibling-calls")
-
   set(LUA_LDFLAGS "${LUA_LDFLAGS} -fsanitize=address")
+elseif(CLANG_MSAN)
+  set(LUA_CFLAGS "${LUA_CFLAGS} -fsanitize=memory")
+  set(LUA_CFLAGS "${LUA_CFLAGS} -fsanitize-memory-track-origins")
+  set(LUA_CFLAGS "${LUA_CFLAGS} -fno-omit-frame-pointer")
+  set(LUA_CFLAGS "${LUA_CFLAGS} -fno-optimize-sibling-calls")
+  set(LUA_LDFLAGS "${LUA_LDFLAGS} -fsanitize=memory")
 endif()
 
 set(LUA_CONFIGURE_COMMAND

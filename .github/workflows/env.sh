@@ -33,6 +33,14 @@ ASAN_OPTIONS=detect_leaks=1:check_initialization_order=1:log_path=$GITHUB_WORKSP
 UBSAN_OPTIONS=print_stacktrace=1 log_path=$GITHUB_WORKSPACE/build/log/ubsan
 EOF
     ;;
+  msan)
+    DEPS_CMAKE_FLAGS="$DEPS_CMAKE_FLAGS -DCLANG_MSAN=ON"
+    cat <<EOF >> "$GITHUB_ENV"
+CXX=clang++
+CLANG_SANITIZER=MSAN
+MSAN_OPTIONS=print_stacktrace=1 log_path=$GITHUB_WORKSPACE/build/log/msan
+EOF
+    ;;
   tsan)
     cat <<EOF >> "$GITHUB_ENV"
 TSAN_OPTIONS=log_path=$GITHUB_WORKSPACE/build/log/tsan

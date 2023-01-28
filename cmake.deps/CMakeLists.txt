@@ -27,11 +27,10 @@ if(NOT isMultiConfig)
   list(APPEND DEPS_CMAKE_ARGS -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE})
 endif()
 
-set(DEFAULT_MAKE_CFLAGS CFLAGS+=-g)
-
-check_c_compiler_flag(-Og HAS_OG_FLAG)
-if(HAS_OG_FLAG)
-  set(DEFAULT_MAKE_CFLAGS CFLAGS+=-Og ${DEFAULT_MAKE_CFLAGS})
+if(CLANG_MSAN)
+  list(APPEND DEPS_CMAKE_ARGS "-DCMAKE_C_FLAGS=-fsanitize=memory -fsanitize-memory-track-origins -fno-omit-frame-pointer -fno-optimize-sibling-calls")
+  list(APPEND DEPS_CMAKE_ARGS "-DCMAKE_SHARED_LINKER_FLAGS=-fsanitize=memory")
+  list(APPEND DEPS_CMAKE_ARGS "-DCMAKE_EXE_LINKER_FLAGS=-fsanitize=memory")
 endif()
 
 if(CMAKE_SYSTEM_NAME MATCHES "OpenBSD")
@@ -137,8 +136,8 @@ endif()
 include(ExternalProject)
 set_directory_properties(PROPERTIES EP_PREFIX "${DEPS_BUILD_DIR}")
 
-set(LIBUV_URL https://github.com/libuv/libuv/archive/f610339f74f7f0fcd183533d2c965ce1468b44c6.tar.gz)
-set(LIBUV_SHA256 d5f22303ba44ac60d3232b1977b404d23a349ae4e8cb83f00e7122fafe38d8c9)
+set(LIBUV_URL https://github.com/libuv/libuv/archive/ee206367d4e8ebb70455665de78b8309220fd7d0.tar.gz)
+set(LIBUV_SHA256 ef934ef84f5df4f7e1dc0f3bd9ce1b3b8b6de99b66a0c30bc01eb985232f4f24)
 
 set(MSGPACK_URL https://github.com/msgpack/msgpack-c/releases/download/c-4.0.0/msgpack-c-4.0.0.tar.gz)
 set(MSGPACK_SHA256 420fe35e7572f2a168d17e660ef981a589c9cbe77faa25eb34a520e1fcc032c8)

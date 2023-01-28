@@ -1,6 +1,13 @@
 if(USE_EXISTING_SRC_DIR)
   unset(LIBUV_URL)
 endif()
+
+if(CLANG_MSAN)
+  set(LIBUV_CMAKE_ARGS "-DMSAN=ON")
+else()
+  set(LIBUV_CMAKE_ARGS "")
+endif()
+
 ExternalProject_Add(libuv
   URL ${LIBUV_URL}
   URL_HASH SHA256=${LIBUV_SHA256}
@@ -10,6 +17,7 @@ ExternalProject_Add(libuv
     -DCMAKE_INSTALL_LIBDIR=lib
     -DBUILD_TESTING=OFF
     -DLIBUV_BUILD_SHARED=OFF
+    ${LIBUV_CMAKE_ARGS}
   CMAKE_CACHE_ARGS ${DEPS_CMAKE_CACHE_ARGS})
 
 list(APPEND THIRD_PARTY_DEPS libuv)

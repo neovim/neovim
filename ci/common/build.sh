@@ -34,7 +34,11 @@ build_deps() {
   cd "${DEPS_BUILD_DIR}"
   echo "Configuring with '${DEPS_CMAKE_FLAGS}'."
   # shellcheck disable=SC2086
-  CC= cmake -G Ninja ${DEPS_CMAKE_FLAGS} "${CI_BUILD_DIR}/cmake.deps/"
+  if test "${CLANG_SANITIZER}" = "MSAN" ; then
+    cmake -G Ninja ${DEPS_CMAKE_FLAGS} "${CI_BUILD_DIR}/cmake.deps/"
+  else
+    CC= cmake -G Ninja ${DEPS_CMAKE_FLAGS} "${CI_BUILD_DIR}/cmake.deps/"
+  fi
 
   if ! top_make; then
     exit 1

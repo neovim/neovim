@@ -1,6 +1,18 @@
 add_library(main_lib INTERFACE)
 add_executable(nvim main.c)
 
+if(CLANG_MSAN)
+  set(save_c_flags ${CMAKE_C_FLAGS})
+  set(save_shared_linker_flags ${CMAKE_SHARED_LINKER_FLAGS})
+  set(save_shared_linker_flags ${CMAKE_EXE_LINKER_FLAGS})
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fsanitize=memory")
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fsanitize-memory-track-origins")
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fno-omit-frame-pointer")
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fno-optimize-sibling-calls")
+  set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -fsanitize=memory")
+  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fsanitize=memory")
+endif()
+
 add_library(libuv_lib INTERFACE)
 find_package(LibUV 1.28.0 REQUIRED)
 target_include_directories(libuv_lib SYSTEM BEFORE INTERFACE ${LIBUV_INCLUDE_DIRS})
@@ -245,6 +257,12 @@ if(NOT HAS_ACCEPTABLE_FORTIFY)
   # -U in add_definitions doesn't end up in the correct spot, so we add it to
   # the flags variable instead.
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${_FORTIFY_SOURCE_PREFIX}-U_FORTIFY_SOURCE ${_FORTIFY_SOURCE_PREFIX}-D_FORTIFY_SOURCE=1")
+endif()
+
+if(CLANG_MSAN)
+  set(CMAKE_C_FLAGS ${save_c_flags})
+  set(CMAKE_SHARED_LINKER_FLAGS ${save_shared_linker_flags})
+  set(CMAKE_EXE_LINKER_FLAGS ${save_shared_linker_flags})
 endif()
 
 target_compile_definitions(main_lib INTERFACE INCLUDE_GENERATED_DECLARATIONS)

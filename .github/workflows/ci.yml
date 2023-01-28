@@ -187,6 +187,10 @@ jobs:
             cc: clang
             runner: ubuntu-22.04
             os: linux
+          - flavor: msan
+            cc: clang
+            runner: ubuntu-22.04
+            os: linux
           - flavor: tsan
             cc: clang
             runner: ubuntu-22.04

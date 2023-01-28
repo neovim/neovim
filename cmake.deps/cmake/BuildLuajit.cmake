@@ -37,6 +37,16 @@ function(BuildLuajit)
   endif()
 endfunction()
 
+if(CLANG_MSAN)
+  list(APPEND MSAN_ARGS "CFLAGS+=-fsanitize=memory")
+  list(APPEND MSAN_ARGS "CFLAGS+=-fsanitize-memory-track-origins")
+  list(APPEND MSAN_ARGS "CFLAGS+=-fno-omit-frame-pointer")
+  list(APPEND MSAN_ARGS "CFLAGS+=-fno-optimize-sibling-calls")
+  list(APPEND MSAN_ARGS "LDFLAGS+=-fsanitize=memory")
+else()
+  set(MSAN_ARGS "")
+endif()
+
 check_c_compiler_flag(-fno-stack-check HAS_NO_STACK_CHECK)
 if(CMAKE_SYSTEM_NAME MATCHES "Darwin" AND HAS_NO_STACK_CHECK)
   set(NO_STACK_CHECK "CFLAGS+=-fno-stack-check")
@@ -51,6 +61,7 @@ endif()
 set(BUILDCMD_UNIX ${MAKE_PRG} CFLAGS=-fPIC
                               CFLAGS+=-DLUA_USE_APICHECK
                               CFLAGS+=-funwind-tables
+                              ${MSAN_ARGS}
                               ${NO_STACK_CHECK}
                               ${AMD64_ABI}
                               CCDEBUG+=-g
