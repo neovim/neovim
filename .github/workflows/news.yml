@@ -22,9 +22,10 @@ jobs:
               {
                 echo "
                   Pull request includes a new feature or a breaking change, but
-                  news.txt hasn't been updated yet. news.txt is our primary way of
-                  communicating changes to users so it's important to keep it up to
-                  date."
+                  news.txt hasn't been updated yet. This is just a reminder
+                  that news.txt may need to be updated. You can ignore this CI
+                  failure if you think the change won't be of interest to
+                  users."
                   exit 1
                }
             fi
