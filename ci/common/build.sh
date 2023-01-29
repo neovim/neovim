@@ -1,11 +1,3 @@
-_stat() {
-  if test "${CI_OS_NAME}" = osx ; then
-    stat -f %Sm "${@}"
-  else
-    stat -c %y "${@}"
-  fi
-}
-
 build_nvim() {
   check_core_dumps --delete quiet
 

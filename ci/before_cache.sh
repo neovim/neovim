@@ -22,5 +22,5 @@ if ended_successfully && [ -d "${DEPS_BUILD_DIR}" ]; then
   mv "${DEPS_BUILD_DIR}" "${CACHE_NVIM_DEPS_DIR}"
 
   touch "${CACHE_MARKER}"
-  echo "Updated third-party dependencies (timestamp: $(_stat "${CACHE_MARKER}"))."
+  echo "Updated third-party dependencies."
 fi
