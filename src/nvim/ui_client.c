@@ -23,6 +23,7 @@
 #include "nvim/ui_client.h"
 
 static TUIData *tui = NULL;
+static bool ui_client_is_remote = false;
 
 // uncrustify:off
 #ifdef INCLUDE_GENERATED_DECLARATIONS
@@ -66,13 +67,8 @@ uint64_t ui_client_start_server(int argc, char **argv)
   return channel->id;
 }
 
-void ui_client_run(bool remote_ui)
-  FUNC_ATTR_NORETURN
+void ui_client_attach(int width, int height, char *term)
 {
-  int width, height;
-  char *term;
-  tui = tui_start(&width, &height, &term);
-
   MAXSIZE_TEMP_ARRAY(args, 3);
   ADD_C(args, INTEGER_OBJ(width));
   ADD_C(args, INTEGER_OBJ(height));
@@ -82,14 +78,14 @@ void ui_client_run(bool remote_ui)
   PUT_C(opts, "ext_linegrid", BOOLEAN_OBJ(true));
   PUT_C(opts, "ext_termcolors", BOOLEAN_OBJ(true));
   if (term) {
-    PUT(opts, "term_name", STRING_OBJ(cstr_to_string(term)));
+    PUT_C(opts, "term_name", STRING_OBJ(cstr_as_string(term)));
   }
   if (ui_client_bg_response != kNone) {
     bool is_dark = (ui_client_bg_response == kTrue);
     PUT_C(opts, "term_background", STRING_OBJ(cstr_as_string(is_dark ? "dark" : "light")));
   }
   PUT_C(opts, "term_colors", INTEGER_OBJ(t_colors));
-  if (!remote_ui) {
+  if (!ui_client_is_remote) {
     PUT_C(opts, "stdin_tty", BOOLEAN_OBJ(stdin_isatty));
     PUT_C(opts, "stdout_tty", BOOLEAN_OBJ(stdout_isatty));
     if (ui_client_forward_stdin) {
@@ -100,6 +96,23 @@ void ui_client_run(bool remote_ui)
 
   rpc_send_event(ui_client_channel_id, "nvim_ui_attach", args);
   ui_client_attached = true;
+}
+
+void ui_client_detach(void)
+{
+  rpc_send_event(ui_client_channel_id, "nvim_ui_detach", (Array)ARRAY_DICT_INIT);
+  ui_client_attached = false;
+}
+
+void ui_client_run(bool remote_ui)
+  FUNC_ATTR_NORETURN
+{
+  ui_client_is_remote = remote_ui;
+  int width, height;
+  char *term;
+  tui = tui_start(&width, &height, &term);
+
+  ui_client_attach(width, height, term);
 
   // os_exit() will be invoked when the client channel detaches
   while (true) {

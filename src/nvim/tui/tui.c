@@ -1344,6 +1344,7 @@ static void show_verbose_terminfo(TUIData *tui)
 static void suspend_event(void **argv)
 {
   TUIData *tui = argv[0];
+  ui_client_detach();
   bool enable_mouse = tui->mouse_enabled;
   tui_terminal_stop(tui);
   stream_set_blocking(tui->input.in_fd, true);   // normalize stream (#2598)
@@ -1356,6 +1357,7 @@ static void suspend_event(void **argv)
     tui_mouse_on(tui);
   }
   stream_set_blocking(tui->input.in_fd, false);  // libuv expects this
+  ui_client_attach(tui->width, tui->height, tui->term);
 }
 #endif
 
