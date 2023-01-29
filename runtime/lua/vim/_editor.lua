@@ -876,6 +876,15 @@ function vim._init_default_mappings()
   -- Use : instead of <Cmd> so that ranges are supported. #19365
   map('n', '&', ':&&<CR>')
 
+  -- Repeat macro for each line of visual selection #21422
+  map('x', 'Q', ':normal @<c-r>=reg_recorded()<CR><CR>')
+  vim.api.nvim_set_keymap(
+    'x',
+    '@',
+    "':normal @'.getcharstr().'<CR>'",
+    { noremap = true, expr = true, desc = 'Nvim builtin' }
+  )
+
   -- menus
 
   -- TODO VimScript, no l10n
