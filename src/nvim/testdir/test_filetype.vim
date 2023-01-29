@@ -181,6 +181,7 @@ let s:filename_checks = {
     \ 'elixir': ['file.ex', 'file.exs', 'mix.lock'],
     \ 'elm': ['file.elm'],
     \ 'elmfilt': ['filter-rules'],
+    \ 'elsa': ['file.lc'],
     \ 'elvish': ['file.elv'],
     \ 'epuppet': ['file.epp'],
     \ 'erlang': ['file.erl', 'file.hrl', 'file.yaws'],
