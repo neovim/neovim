@@ -34,4 +34,5 @@ for i in "${tests[@]}"; do
   eval "$i" || fail "$i"
 done
 
-end_tests
+touch "${END_MARKER}"
+ended_successfully

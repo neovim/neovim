@@ -33,8 +33,3 @@ ended_successfully() {
   fi
   return 0
 }
-
-end_tests() {
-  touch "${END_MARKER}"
-  ended_successfully
-}
