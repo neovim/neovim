@@ -332,6 +332,7 @@ local extension = {
   am = 'elf',
   exs = 'elixir',
   elm = 'elm',
+  lc = 'elsa',
   elv = 'elvish',
   ent = function(path, bufnr)
     return require('vim.filetype.detect').ent(bufnr)
