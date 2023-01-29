@@ -54,7 +54,7 @@ local function run_die(cmd, err_msg)
 end
 
 local function require_executable(cmd)
-  local cmd_path = run_die({ 'command', '-v', cmd }, cmd .. ' not found!')
+  local cmd_path = run_die({ 'sh', '-c', 'command -v ' .. cmd }, cmd .. ' not found!')
   run_die({ 'test', '-x', cmd_path }, cmd .. ' is not executable')
 end
 
