@@ -31,6 +31,11 @@ set(TOUCHES_DIR ${PROJECT_BINARY_DIR}/touches)
 
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
+find_program(CCACHE_PRG ccache)
+if(CCACHE_PRG)
+  set(CMAKE_C_COMPILER_LAUNCHER ${CMAKE_COMMAND} -E env CCACHE_SLOPPINESS=pch_defines,time_macros ${CCACHE_PRG})
+endif()
+
 # Prefer our bundled versions of dependencies.
 if(DEFINED ENV{DEPS_BUILD_DIR})
   if(CMAKE_SYSTEM_NAME MATCHES "OpenBSD")
