@@ -20,17 +20,7 @@ if test -f "${CACHE_MARKER}"; then
   cp -a "${CACHE_NVIM_DEPS_DIR}"/. "${DEPS_BUILD_DIR}"
 fi
 
-# Even if we're using cached dependencies, run CMake and make to
-# update CMake configuration and update to newer deps versions.
-cd "${DEPS_BUILD_DIR}"
-# shellcheck disable=SC2086
-cmake -G Ninja ${DEPS_CMAKE_FLAGS} "${CI_BUILD_DIR}/cmake.deps/"
-
-if ! ninja; then
-  exit 1
-fi
-
-cd "${CI_BUILD_DIR}"
+make deps CMAKE_FLAGS="$DEPS_CMAKE_FLAGS"
 
 rm -rf "${LOG_DIR}"
 mkdir -p "${LOG_DIR}"
