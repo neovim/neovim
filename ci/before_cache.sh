@@ -5,8 +5,6 @@ set -o pipefail
 
 CI_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck source-path=SCRIPTDIR
-source "${CI_DIR}/common/build.sh"
-# shellcheck source-path=SCRIPTDIR
 source "${CI_DIR}/common/suite.sh"
 
 mkdir -p "${HOME}/.cache"

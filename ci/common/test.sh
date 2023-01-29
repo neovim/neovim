@@ -1,4 +1,3 @@
-. "${CI_DIR}/common/build.sh"
 . "${CI_DIR}/common/suite.sh"
 
 print_core() {

@@ -3,10 +3,6 @@
 set -e
 set -o pipefail
 
-CI_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-# shellcheck source-path=SCRIPTDIR
-source "${CI_DIR}/common/build.sh"
-
 if test "${FUNCTIONALTEST}" = "functionaltest-lua" \
    || test "${CLANG_SANITIZER}" = "ASAN_UBSAN" ; then
   DEPS_CMAKE_FLAGS="${DEPS_CMAKE_FLAGS} -DUSE_BUNDLED_LUA=ON"
