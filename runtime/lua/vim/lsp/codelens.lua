@@ -126,6 +126,10 @@ function M.clear(client_id, bufnr)
       lens_cache_by_buf[iter_bufnr][iter_client_id] = {}
       api.nvim_buf_clear_namespace(iter_bufnr, ns, 0, -1)
     end
+
+    if active_refreshes[iter_bufnr] then
+      active_refreshes[iter_bufnr] = nil
+    end
   end
 end
 
