@@ -118,6 +118,13 @@ struct bw_info {
   iconv_t bw_iconv_fd;           // descriptor for iconv() or -1
 };
 
+typedef struct {
+  const char *num;
+  char *msg;
+  int arg;
+  bool alloc;
+} Error_T;
+
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "fileio.c.generated.h"
 #endif
@@ -2245,6 +2252,39 @@ static int buf_write_do_autocmds(buf_T *buf, char **fnamep, char **sfnamep, char
   return NOTDONE;
 }
 
+static inline Error_T set_err_num(const char *num, const char *msg)
+{
+  return (Error_T){ .num = num, .msg = (char *)msg, .arg = 0 };
+}
+
+static inline Error_T set_err_arg(const char *msg, int arg)
+{
+  return (Error_T){ .num = NULL, .msg = (char *)msg, .arg = arg };
+}
+
+static inline Error_T set_err(const char *msg)
+{
+  return (Error_T){ .num = NULL, .msg = (char *)msg, .arg = 0 };
+}
+
+static void emit_err(Error_T *e)
+{
+  if (e->num != NULL) {
+    if (e->arg != 0) {
+      semsg("%s: %s%s: %s", e->num, IObuff, e->msg, os_strerror(e->arg));
+    } else {
+      semsg("%s: %s%s", e->num, IObuff, e->msg);
+    }
+  } else if (e->arg != 0) {
+    semsg(e->msg, os_strerror(e->arg));
+  } else {
+    emsg(e->msg);
+  }
+  if (e->alloc) {
+    xfree(e->msg);
+  }
+}
+
 /// buf_write() - write to file "fname" lines "start" through "end"
 ///
 /// We do our own buffering here because fwrite() is so slow.
@@ -2266,16 +2306,6 @@ static int buf_write_do_autocmds(buf_T *buf, char **fnamep, char **sfnamep, char
 int buf_write(buf_T *buf, char *fname, char *sfname, linenr_T start, linenr_T end, exarg_T *eap,
               int append, int forceit, int reset_changed, int filtering)
 {
-#define SET_ERRMSG_NUM(num, msg) \
-  errnum = (num), errmsg = (msg), errmsgarg = 0
-#define SET_ERRMSG_ARG(msg, error) \
-  errnum = NULL, errmsg = (msg), errmsgarg = error
-#define SET_ERRMSG(msg) \
-  errnum = NULL, errmsg = (msg), errmsgarg = 0
-  const char *errnum = NULL;
-  char *errmsg = NULL;
-  int errmsgarg = 0;
-  bool errmsg_allocated = false;
   int retval = OK;
   int msg_save = msg_scroll;
   int prev_got_int = got_int;
@@ -2407,6 +2437,7 @@ int buf_write(buf_T *buf, char *fname, char *sfname, linenr_T start, linenr_T en
     bufsize = BUFSIZE;
   }
 
+  Error_T err = { 0 };
   int newfile = false;  // true if file doesn't exist yet
   int device = false;  // writing to a device
   char *backup = NULL;
@@ -2429,11 +2460,11 @@ int buf_write(buf_T *buf, char *fname, char *sfname, linenr_T start, linenr_T en
     perm = (long)file_info_old.stat.st_mode;
     if (!S_ISREG(file_info_old.stat.st_mode)) {             // not a file
       if (S_ISDIR(file_info_old.stat.st_mode)) {
-        SET_ERRMSG_NUM("E502", _("is a directory"));
+        err = set_err_num("E502", _("is a directory"));
         goto fail;
       }
       if (os_nodetype(fname) != NODE_WRITABLE) {
-        SET_ERRMSG_NUM("E503", _("is not a file or writable device"));
+        err = set_err_num("E503", _("is not a file or writable device"));
         goto fail;
       }
       // It's a device of some kind (or a fifo) which we can write to
@@ -2447,7 +2478,7 @@ int buf_write(buf_T *buf, char *fname, char *sfname, linenr_T start, linenr_T en
   // Check for a writable device name.
   char nodetype = fname == NULL ? NODE_OTHER : os_nodetype(fname);
   if (nodetype == NODE_OTHER) {
-    SET_ERRMSG_NUM("E503", _("is not a file or writable device"));
+    err = set_err_num("E503", _("is not a file or writable device"));
     goto fail;
   }
   if (nodetype == NODE_WRITABLE) {
@@ -2459,7 +2490,7 @@ int buf_write(buf_T *buf, char *fname, char *sfname, linenr_T start, linenr_T en
     if (perm < 0) {
       newfile = true;
     } else if (os_isdir(fname)) {
-      SET_ERRMSG_NUM("E502", _("is a directory"));
+      err = set_err_num("E502", _("is a directory"));
       goto fail;
     }
     if (overwriting) {
@@ -2477,9 +2508,9 @@ int buf_write(buf_T *buf, char *fname, char *sfname, linenr_T start, linenr_T en
 
     if (!forceit && file_readonly) {
       if (vim_strchr(p_cpo, CPO_FWRITE) != NULL) {
-        SET_ERRMSG_NUM("E504", _(err_readonly));
+        err = set_err_num("E504", _(err_readonly));
       } else {
-        SET_ERRMSG_NUM("E505", _("is read-only (add ! to override)"));
+        err = set_err_num("E505", _("is read-only (add ! to override)"));
       }
       goto fail;
     }
@@ -2716,7 +2747,7 @@ int buf_write(buf_T *buf, char *fname, char *sfname, linenr_T start, linenr_T en
 
           // copy the file
           if (os_copy(fname, backup, UV_FS_COPYFILE_FICLONE) != 0) {
-            SET_ERRMSG(_("E509: Cannot create backup file (add ! to override)"));
+            err = set_err(_("E509: Cannot create backup file (add ! to override)"));
             XFREE_CLEAR(backup);
             backup = NULL;
             continue;
@@ -2730,21 +2761,21 @@ int buf_write(buf_T *buf, char *fname, char *sfname, linenr_T start, linenr_T en
 #ifdef HAVE_ACL
           os_set_acl(backup, acl);
 #endif
-          SET_ERRMSG(NULL);
+          err = set_err(NULL);
           break;
         }
       }
 
 nobackup:
-      if (backup == NULL && errmsg == NULL) {
-        SET_ERRMSG(_("E509: Cannot create backup file (add ! to override)"));
+      if (backup == NULL && err.msg == NULL) {
+        err = set_err(_("E509: Cannot create backup file (add ! to override)"));
       }
       // Ignore errors when forceit is true.
-      if ((some_error || errmsg != NULL) && !forceit) {
+      if ((some_error || err.msg != NULL) && !forceit) {
         retval = FAIL;
         goto fail;
       }
-      SET_ERRMSG(NULL);
+      err = set_err(NULL);
     } else {
       // Make a backup by renaming the original file.
 
@@ -2752,7 +2783,7 @@ nobackup:
       // overwrite a read-only file.  But rename may be possible
       // anyway, thus we need an extra check here.
       if (file_readonly && vim_strchr(p_cpo, CPO_FWRITE) != NULL) {
-        SET_ERRMSG_NUM("E504", _(err_readonly));
+        err = set_err_num("E504", _(err_readonly));
         goto fail;
       }
 
@@ -2832,7 +2863,7 @@ nobackup:
         }
       }
       if (backup == NULL && !forceit) {
-        SET_ERRMSG(_("E510: Can't make backup file (add ! to override)"));
+        err = set_err(_("E510: Can't make backup file (add ! to override)"));
         goto fail;
       }
     }
@@ -2877,7 +2908,7 @@ nobackup:
       && !(exiting && backup != NULL)) {
     ml_preserve(buf, false, !!p_fs);
     if (got_int) {
-      SET_ERRMSG(_(e_interr));
+      err = set_err(_(e_interr));
       goto restore_backup;
     }
   }
@@ -2939,7 +2970,7 @@ nobackup:
       if (*p_ccv != NUL) {
         wfname = vim_tempname();
         if (wfname == NULL) {  // Can't write without a tempfile!
-          SET_ERRMSG(_("E214: Can't find temp file for writing"));
+          err = set_err(_("E214: Can't find temp file for writing"));
           goto restore_backup;
         }
       }
@@ -2952,7 +2983,7 @@ nobackup:
       && write_info.bw_iconv_fd == (iconv_t)-1
       && wfname == fname) {
     if (!forceit) {
-      SET_ERRMSG(_("E213: Cannot convert (add ! to write without conversion)"));
+      err = set_err(_("E213: Cannot convert (add ! to write without conversion)"));
       goto restore_backup;
     }
     notconverted = true;
@@ -3002,7 +3033,7 @@ nobackup:
         // A forced write will try to create a new file if the old one
         // is still readonly. This may also happen when the directory
         // is read-only. In that case the mch_remove() will fail.
-        if (errmsg == NULL) {
+        if (err.msg == NULL) {
 #ifdef UNIX
           FileInfo file_info;
 
@@ -3010,10 +3041,10 @@ nobackup:
           if ((!newfile && os_fileinfo_hardlinks(&file_info_old) > 1)
               || (os_fileinfo_link(fname, &file_info)
                   && !os_fileinfo_id_equal(&file_info, &file_info_old))) {
-            SET_ERRMSG(_("E166: Can't open linked file for writing"));
+            err = set_err(_("E166: Can't open linked file for writing"));
           } else {
 #endif
-          SET_ERRMSG_ARG(_("E212: Can't open file for writing: %s"), fd);
+          err = set_err_arg(_("E212: Can't open file for writing: %s"), fd);
           if (forceit && vim_strchr(p_cpo, CPO_FWRITE) == NULL
               && perm >= 0) {
 #ifdef UNIX
@@ -3076,7 +3107,7 @@ restore_backup:
       }
       write_info.bw_fd = fd;
     }
-    SET_ERRMSG(NULL);
+    err = set_err(NULL);
 
     write_info.bw_buf = buffer;
     nchars = 0;
@@ -3226,7 +3257,7 @@ restore_backup:
     if (p_fs && (error = os_fsync(fd)) != 0 && !device
         // fsync not supported on this storage.
         && error != UV_ENOTSUP) {
-      SET_ERRMSG_ARG(e_fsync, error);
+      err = set_err_arg(e_fsync, error);
       end = 0;
     }
 
@@ -3253,7 +3284,7 @@ restore_backup:
 #endif
 
     if ((error = os_close(fd)) != 0) {
-      SET_ERRMSG_ARG(_("E512: Close failed: %s"), error);
+      err = set_err_arg(_("E512: Close failed: %s"), error);
       end = 0;
     }
 
@@ -3289,23 +3320,23 @@ restore_backup:
 
   if (end == 0) {
     // Error encountered.
-    if (errmsg == NULL) {
+    if (err.msg == NULL) {
       if (write_info.bw_conv_error) {
         if (write_info.bw_conv_error_lnum == 0) {
-          SET_ERRMSG(_("E513: write error, conversion failed "
-                       "(make 'fenc' empty to override)"));
+          err = set_err(_("E513: write error, conversion failed "
+                          "(make 'fenc' empty to override)"));
         } else {
-          errmsg_allocated = true;
-          SET_ERRMSG(xmalloc(300));
-          vim_snprintf(errmsg, 300,  // NOLINT(runtime/printf)
+          err = set_err(xmalloc(300));
+          err.alloc = true;
+          vim_snprintf(err.msg, 300,  // NOLINT(runtime/printf)
                        _("E513: write error, conversion failed in line %" PRIdLINENR
                          " (make 'fenc' empty to override)"),
                        write_info.bw_conv_error_lnum);
         }
       } else if (got_int) {
-        SET_ERRMSG(_(e_interr));
+        err = set_err(_(e_interr));
       } else {
-        SET_ERRMSG(_("E514: write error (file system full?)"));
+        err = set_err(_("E514: write error (file system full?)"));
       }
     }
 
@@ -3486,27 +3517,14 @@ nofail:
   os_free_acl(acl);
 #endif
 
-  if (errmsg != NULL) {
+  if (err.msg != NULL) {
     // - 100 to save some space for further error message
 #ifndef UNIX
     add_quoted_fname(IObuff, IOSIZE - 100, buf, (const char *)sfname);
 #else
     add_quoted_fname(IObuff, IOSIZE - 100, buf, (const char *)fname);
 #endif
-    if (errnum != NULL) {
-      if (errmsgarg != 0) {
-        semsg("%s: %s%s: %s", errnum, IObuff, errmsg, os_strerror(errmsgarg));
-      } else {
-        semsg("%s: %s%s", errnum, IObuff, errmsg);
-      }
-    } else if (errmsgarg != 0) {
-      semsg(errmsg, os_strerror(errmsgarg));
-    } else {
-      emsg(errmsg);
-    }
-    if (errmsg_allocated) {
-      xfree(errmsg);
-    }
+    emit_err(&err);
 
     retval = FAIL;
     if (end == 0) {
@@ -3570,9 +3588,6 @@ nofail:
   got_int |= prev_got_int;
 
   return retval;
-#undef SET_ERRMSG
-#undef SET_ERRMSG_ARG
-#undef SET_ERRMSG_NUM
 }
 
 /// Set the name of the current buffer.  Use when the buffer doesn't have a
