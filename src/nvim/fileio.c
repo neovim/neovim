@@ -2266,18 +2266,6 @@ static int buf_write_do_autocmds(buf_T *buf, char **fnamep, char **sfnamep, char
 int buf_write(buf_T *buf, char *fname, char *sfname, linenr_T start, linenr_T end, exarg_T *eap,
               int append, int forceit, int reset_changed, int filtering)
 {
-  int fd;
-  char *backup = NULL;
-  int backup_copy = false;               // copy the original file?
-  int dobackup;
-  char *ffname;
-  char *wfname = NULL;       // name of file to write to
-  char *s;
-  char *ptr;
-  char c;
-  int len;
-  linenr_T lnum;
-  long nchars;
 #define SET_ERRMSG_NUM(num, msg) \
   errnum = (num), errmsg = (msg), errmsgarg = 0
 #define SET_ERRMSG_ARG(msg, error) \
@@ -2288,38 +2276,13 @@ int buf_write(buf_T *buf, char *fname, char *sfname, linenr_T start, linenr_T en
   char *errmsg = NULL;
   int errmsgarg = 0;
   bool errmsg_allocated = false;
-  char *buffer;
-  char smallbuf[SMBUFSIZE];
-  int bufsize;
-  long perm;                                // file permissions
   int retval = OK;
-  int newfile = false;                      // true if file doesn't exist yet
   int msg_save = msg_scroll;
-  int overwriting;                          // true if writing over original
-  int no_eol = false;                       // no end-of-line written
-  int device = false;                       // writing to a device
   int prev_got_int = got_int;
-  int checking_conversion;
-  bool file_readonly = false;               // overwritten file is read-only
   static char *err_readonly =
     "is read-only (cannot override: \"W\" in 'cpoptions')";
-#if defined(UNIX)
-  int made_writable = false;                // 'w' bit has been set
-#endif
   // writing everything
   int whole = (start == 1 && end == buf->b_ml.ml_line_count);
-  int fileformat;
-  int write_bin;
-  struct bw_info write_info;            // info for buf_write_bytes()
-  int converted = false;
-  int notconverted = false;
-  char *fenc;                // effective 'fileencoding'
-  char *fenc_tofree = NULL;   // allocated "fenc"
-  int wb_flags = 0;
-#ifdef HAVE_ACL
-  vim_acl_T acl = NULL;                 // ACL copied from original file to
-                                        // backup or new file
-#endif
   int write_undo_file = false;
   context_sha256_T sha_ctx;
   unsigned int bkc = get_bkc_value(buf);
@@ -2346,6 +2309,7 @@ int buf_write(buf_T *buf, char *fname, char *sfname, linenr_T start, linenr_T en
   }
 
   // must init bw_conv_buf and bw_iconv_fd before jumping to "fail"
+  struct bw_info write_info;            // info for buf_write_bytes()
   write_info.bw_conv_buf = NULL;
   write_info.bw_conv_error = false;
   write_info.bw_conv_error_lnum = 0;
@@ -2383,16 +2347,13 @@ int buf_write(buf_T *buf, char *fname, char *sfname, linenr_T start, linenr_T en
   // Avoids problems with networks and when directory names are changed.
   // Don't do this for Windows, a "cd" in a sub-shell may have moved us to
   // another directory, which we don't detect.
-  ffname = fname;                           // remember full fname
+  char *ffname = fname;                           // remember full fname
 #ifdef UNIX
   fname = sfname;
 #endif
 
-  if (buf->b_ffname != NULL && path_fnamecmp(ffname, buf->b_ffname) == 0) {
-    overwriting = true;
-  } else {
-    overwriting = false;
-  }
+// true if writing over original
+  int overwriting = buf->b_ffname != NULL && path_fnamecmp(ffname, buf->b_ffname) == 0;
 
   no_wait_return++;                 // don't wait for return yet
 
@@ -2434,7 +2395,9 @@ int buf_write(buf_T *buf, char *fname, char *sfname, linenr_T start, linenr_T en
   }
   msg_scroll = false;               // always overwrite the file message now
 
-  buffer = verbose_try_malloc(BUFSIZE);
+  char *buffer = verbose_try_malloc(BUFSIZE);
+  int bufsize;
+  char smallbuf[SMBUFSIZE];
   // can't allocate big buffer, use small one (to be able to write when out of
   // memory)
   if (buffer == NULL) {
@@ -2444,8 +2407,20 @@ int buf_write(buf_T *buf, char *fname, char *sfname, linenr_T start, linenr_T en
     bufsize = BUFSIZE;
   }
 
+  int newfile = false;  // true if file doesn't exist yet
+  int device = false;  // writing to a device
+  char *backup = NULL;
+  char *fenc_tofree = NULL;   // allocated "fenc"
+
   // Get information about original file (if there is one).
   FileInfo file_info_old;
+
+#ifdef HAVE_ACL
+  vim_acl_T acl = NULL;                 // ACL copied from original file to
+                                        // backup or new file
+#endif
+
+  long perm;  // file permissions
 #if defined(UNIX)
   perm = -1;
   if (!os_fileinfo(fname, &file_info_old)) {
@@ -2470,12 +2445,12 @@ int buf_write(buf_T *buf, char *fname, char *sfname, linenr_T start, linenr_T en
   }
 #else  // win32
   // Check for a writable device name.
-  c = fname == NULL ? NODE_OTHER : os_nodetype(fname);
-  if (c == NODE_OTHER) {
+  char nodetype = fname == NULL ? NODE_OTHER : os_nodetype(fname);
+  if (nodetype == NODE_OTHER) {
     SET_ERRMSG_NUM("E503", _("is not a file or writable device"));
     goto fail;
   }
-  if (c == NODE_WRITABLE) {
+  if (nodetype == NODE_WRITABLE) {
     device = true;
     newfile = true;
     perm = -1;
@@ -2492,6 +2467,8 @@ int buf_write(buf_T *buf, char *fname, char *sfname, linenr_T start, linenr_T en
     }
   }
 #endif  // !UNIX
+
+  bool file_readonly = false;  // overwritten file is read-only
 
   if (!device && !newfile) {
     // Check if the file is really writable (when renaming the file to
@@ -2524,10 +2501,12 @@ int buf_write(buf_T *buf, char *fname, char *sfname, linenr_T start, linenr_T en
 #endif
 
   // If 'backupskip' is not empty, don't make a backup for some files.
-  dobackup = (p_wb || p_bk || *p_pm != NUL);
+  bool dobackup = (p_wb || p_bk || *p_pm != NUL);
   if (dobackup && *p_bsk != NUL && match_file_list(p_bsk, sfname, ffname)) {
     dobackup = false;
   }
+
+  int backup_copy = false;  // copy the original file?
 
   // Save the value of got_int and reset it.  We don't want a previous
   // interruption cancel writing, only hitting CTRL-C while writing should
@@ -2573,8 +2552,8 @@ int buf_write(buf_T *buf, char *fname, char *sfname, linenr_T start, linenr_T en
             break;
           }
         }
-        fd = os_open(IObuff,
-                     O_CREAT|O_WRONLY|O_EXCL|O_NOFOLLOW, (int)perm);
+        int fd = os_open(IObuff,
+                         O_CREAT|O_WRONLY|O_EXCL|O_NOFOLLOW, (int)perm);
         if (fd < 0) {           // can't write in directory
           backup_copy = true;
         } else {
@@ -2860,6 +2839,8 @@ nobackup:
   }
 
 #if defined(UNIX)
+  int made_writable = false;  // 'w' bit has been set
+
   // When using ":w!" and the file was read-only: make it writable
   if (forceit && perm >= 0 && !(perm & 0200)
       && file_info_old.stat.st_uid == getuid()
@@ -2885,6 +2866,8 @@ nobackup:
     start = end + 1;
   }
 
+  char *wfname = NULL;       // name of file to write to
+
   // If the original file is being overwritten, there is a small chance that
   // we crash in the middle of writing. Therefore the file is preserved now.
   // This makes all block numbers positive so that recovery does not need
@@ -2903,6 +2886,8 @@ nobackup:
   // multi-byte conversion.
   wfname = fname;
 
+  char *fenc;  // effective 'fileencoding'
+
   // Check for forced 'fileencoding' from "++opt=val" argument.
   if (eap != NULL && eap->force_enc != 0) {
     fenc = eap->cmd + eap->force_enc;
@@ -2913,7 +2898,8 @@ nobackup:
   }
 
   // Check if the file needs to be converted.
-  converted = need_conversion(fenc);
+  int converted = need_conversion(fenc);
+  int wb_flags = 0;
 
   // Check if UTF-8 to UCS-2/4 or Latin1 conversion needs to be done.  Or
   // Latin1 to Unicode conversion.  This is handled in buf_write_bytes().
@@ -2960,6 +2946,8 @@ nobackup:
     }
   }
 
+  int notconverted = false;
+
   if (converted && wb_flags == 0
       && write_info.bw_iconv_fd == (iconv_t)-1
       && wfname == fname) {
@@ -2969,6 +2957,14 @@ nobackup:
     }
     notconverted = true;
   }
+
+  int no_eol = false;  // no end-of-line written
+  long nchars;
+  linenr_T lnum;
+  int fileformat;
+  int checking_conversion;
+
+  int fd;
 
   // If conversion is taking place, we may first pretend to write and check
   // for conversion errors.  Then loop again to write for real.
@@ -3086,6 +3082,7 @@ restore_backup:
     nchars = 0;
 
     // use "++bin", "++nobin" or 'binary'
+    int write_bin;
     if (eap != NULL && eap->force_bin != 0) {
       write_bin = (eap->force_bin == FORCE_BIN);
     } else {
@@ -3118,15 +3115,16 @@ restore_backup:
     write_info.bw_len = bufsize;
     write_info.bw_flags = wb_flags;
     fileformat = get_fileformat_force(buf, eap);
-    s = buffer;
-    len = 0;
+    char *s = buffer;
+    int len = 0;
     for (lnum = start; lnum <= end; lnum++) {
       // The next while loop is done once for each character written.
       // Keep it fast!
-      ptr = ml_get_buf(buf, lnum, false) - 1;
+      char *ptr = ml_get_buf(buf, lnum, false) - 1;
       if (write_undo_file) {
         sha256_update(&sha_ctx, (uint8_t *)ptr + 1, (uint32_t)(strlen(ptr + 1) + 1));
       }
+      char c;
       while ((c = *++ptr) != NUL) {
         if (c == NL) {
           *s = NUL;                       // replace newlines with NULs
@@ -3349,7 +3347,7 @@ restore_backup:
 #endif
   if (!filtering) {
     add_quoted_fname(IObuff, IOSIZE, buf, (const char *)fname);
-    c = false;
+    char c = false;
     if (write_info.bw_conv_error) {
       STRCAT(IObuff, _(" CONVERSION ERROR"));
       c = true;
