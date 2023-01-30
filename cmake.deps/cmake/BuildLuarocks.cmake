@@ -148,7 +148,7 @@ if(USE_BUNDLED_BUSTED)
     set(LUACHECK_EXE "${DEPS_BIN_DIR}/luacheck")
   endif()
   add_custom_command(OUTPUT ${BUSTED_EXE}
-    COMMAND ${LUAROCKS_BINARY} build busted 2.0.0 ${LUAROCKS_BUILDARGS}
+    COMMAND ${LUAROCKS_BINARY} build busted 2.1.1 ${LUAROCKS_BUILDARGS}
     DEPENDS penlight)
   add_custom_target(busted DEPENDS ${BUSTED_EXE})
 
