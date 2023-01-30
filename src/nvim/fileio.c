@@ -4410,6 +4410,38 @@ int put_time(FILE *fd, time_t time_)
   return fwrite(buf, sizeof(uint8_t), ARRAY_SIZE(buf), fd) == 1 ? OK : FAIL;
 }
 
+static int rename_with_tmp(const char *const from, const char *const to)
+{
+  // Find a name that doesn't exist and is in the same directory.
+  // Rename "from" to "tempname" and then rename "tempname" to "to".
+  if (strlen(from) >= MAXPATHL - 5) {
+    return -1;
+  }
+
+  char tempname[MAXPATHL + 1];
+  STRCPY(tempname, from);
+  for (int n = 123; n < 99999; n++) {
+    char *tail = path_tail(tempname);
+    snprintf(tail, (size_t)((MAXPATHL + 1) - (tail - tempname - 1)), "%d", n);
+
+    if (!os_path_exists(tempname)) {
+      if (os_rename(from, tempname) == OK) {
+        if (os_rename(tempname, to) == OK) {
+          return 0;
+        }
+        // Strange, the second step failed.  Try moving the
+        // file back and return failure.
+        (void)os_rename(tempname, from);
+        return -1;
+      }
+      // If it fails for one temp name it will most likely fail
+      // for any temp name, give up.
+      return -1;
+    }
+  }
+  return -1;
+}
+
 /// os_rename() only works if both files are on the same file system, this
 /// function will (attempts to?) copy the file across if rename fails -- webb
 ///
@@ -4417,12 +4449,7 @@ int put_time(FILE *fd, time_t time_)
 int vim_rename(const char *from, const char *to)
   FUNC_ATTR_NONNULL_ALL
 {
-  int fd_in;
-  int fd_out;
   char *errmsg = NULL;
-#ifdef HAVE_ACL
-  vim_acl_T acl;                // ACL from original file
-#endif
   bool use_tmp_file = false;
 
   // When the names are identical, there is nothing to do.  When they refer
@@ -4453,34 +4480,7 @@ int vim_rename(const char *from, const char *to)
   }
 
   if (use_tmp_file) {
-    char tempname[MAXPATHL + 1];
-
-    // Find a name that doesn't exist and is in the same directory.
-    // Rename "from" to "tempname" and then rename "tempname" to "to".
-    if (strlen(from) >= MAXPATHL - 5) {
-      return -1;
-    }
-    STRCPY(tempname, from);
-    for (int n = 123; n < 99999; n++) {
-      char *tail = path_tail(tempname);
-      snprintf(tail, (size_t)((MAXPATHL + 1) - (tail - tempname - 1)), "%d", n);
-
-      if (!os_path_exists(tempname)) {
-        if (os_rename(from, tempname) == OK) {
-          if (os_rename(tempname, to) == OK) {
-            return 0;
-          }
-          // Strange, the second step failed.  Try moving the
-          // file back and return failure.
-          (void)os_rename(tempname, from);
-          return -1;
-        }
-        // If it fails for one temp name it will most likely fail
-        // for any temp name, give up.
-        return -1;
-      }
-    }
-    return -1;
+    return rename_with_tmp(from, to);
   }
 
   // Delete the "to" file, this is required on some systems to make the
@@ -4498,9 +4498,9 @@ int vim_rename(const char *from, const char *to)
   long perm = os_getperm(from);
 #ifdef HAVE_ACL
   // For systems that support ACL: get the ACL from the original file.
-  acl = os_get_acl(from);
+  vim_acl_T acl = os_get_acl(from);
 #endif
-  fd_in = os_open((char *)from, O_RDONLY, 0);
+  int fd_in = os_open((char *)from, O_RDONLY, 0);
   if (fd_in < 0) {
 #ifdef HAVE_ACL
     os_free_acl(acl);
@@ -4509,8 +4509,7 @@ int vim_rename(const char *from, const char *to)
   }
 
   // Create the new file with same permissions as the original.
-  fd_out = os_open((char *)to,
-                   O_CREAT|O_EXCL|O_WRONLY|O_NOFOLLOW, (int)perm);
+  int fd_out = os_open((char *)to, O_CREAT|O_EXCL|O_WRONLY|O_NOFOLLOW, (int)perm);
   if (fd_out < 0) {
     close(fd_in);
 #ifdef HAVE_ACL
