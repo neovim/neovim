@@ -821,6 +821,9 @@ void nlua_init(char **argv, int argc, int lua_arg0)
   luaL_openlibs(lstate);
   if (!nlua_state_init(lstate)) {
     os_errmsg(_("E970: Failed to initialize builtin lua modules\n"));
+#ifdef EXITFREE
+    nlua_common_free_all_mem(lstate);
+#endif
     os_exit(1);
   }
 
