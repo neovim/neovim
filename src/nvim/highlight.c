@@ -842,12 +842,12 @@ void hlattrs2dict(Dictionary *dict, HlAttrs ae, bool use_rgb)
     PUT_C(hl, "underline", BOOLEAN_OBJ(true));
     break;
 
-  case HL_UNDERDOUBLE:
-    PUT_C(hl, "underdouble", BOOLEAN_OBJ(true));
-    break;
-
   case HL_UNDERCURL:
     PUT_C(hl, "undercurl", BOOLEAN_OBJ(true));
+    break;
+
+  case HL_UNDERDOUBLE:
+    PUT_C(hl, "underdouble", BOOLEAN_OBJ(true));
     break;
 
   case HL_UNDERDOTTED:
@@ -930,8 +930,8 @@ HlAttrs dict2hlattrs(Dict(highlight) *dict, bool use_rgb, int *link_id, Error *e
   CHECK_FLAG(dict, mask, bold, , HL_BOLD);
   CHECK_FLAG(dict, mask, italic, , HL_ITALIC);
   CHECK_FLAG(dict, mask, underline, , HL_UNDERLINE);
-  CHECK_FLAG(dict, mask, underdouble, , HL_UNDERDOUBLE);
   CHECK_FLAG(dict, mask, undercurl, , HL_UNDERCURL);
+  CHECK_FLAG(dict, mask, underdouble, , HL_UNDERDOUBLE);
   CHECK_FLAG(dict, mask, underdotted, , HL_UNDERDOTTED);
   CHECK_FLAG(dict, mask, underdashed, , HL_UNDERDASHED);
   CHECK_FLAG(dict, mask, standout, , HL_STANDOUT);

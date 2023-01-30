@@ -214,7 +214,7 @@ describe("API: set highlight", function()
     bold = true,
     italic = true,
     reverse = true,
-    underline = true,
+    underdashed = true,
     strikethrough = true,
     altfont = true,
     cterm = {
@@ -231,7 +231,7 @@ describe("API: set highlight", function()
     bold = true,
     italic = true,
     reverse = true,
-    underline = true,
+    underdashed = true,
     strikethrough = true,
     altfont = true,
   }
@@ -297,7 +297,7 @@ describe("API: set highlight", function()
       exec_capture('highlight Test_hl'))
 
     meths.set_hl(0, 'Test_hl2', highlight3_config)
-    eq('Test_hl2       xxx cterm=italic,reverse,strikethrough,altfont,nocombine ctermfg=8 ctermbg=15 gui=bold,underline,italic,reverse,strikethrough,altfont guifg=#ff0000 guibg=#0032aa',
+    eq('Test_hl2       xxx cterm=italic,reverse,strikethrough,altfont,nocombine ctermfg=8 ctermbg=15 gui=bold,underdashed,italic,reverse,strikethrough,altfont guifg=#ff0000 guibg=#0032aa',
       exec_capture('highlight Test_hl2'))
 
     -- Colors are stored with the name they are defined, but
