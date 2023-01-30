@@ -18,6 +18,7 @@ typedef struct {
 #include "klib/kvec.h"
 #include "nvim/api/private/defs.h"
 #include "nvim/eval/typval.h"
+#include "nvim/fold_defs.h"
 #include "nvim/garray.h"
 #include "nvim/grid_defs.h"
 #include "nvim/hashtab.h"
@@ -1423,17 +1424,17 @@ struct statuscol {
   int width;                           ///< width of the status column
   int cur_attr;                        ///< current attributes in text
   int num_attr;                        ///< attributes used for line number
-  int fold_attr;                       ///< attributes used for fold column
-  int sign_attr[SIGN_SHOW_MAX + 1];    ///< attributes used for signs
+  int sign_cul_attr;                   ///< cursorline sign attr
   int truncate;                        ///< truncated width
-  bool draw;                           ///< draw statuscolumn or not
-  char fold_text[9 * 4 + 1];           ///< text in fold column (%C)
-  char *sign_text[SIGN_SHOW_MAX + 1];  ///< text in sign column (%s)
+  bool draw;                           ///< whether to draw the statuscolumn
+  bool use_cul;                        ///< whether to use cursorline attrs
   char text[MAXPATHL];                 ///< text in status column
   char *textp;                         ///< current position in text
   char *text_end;                      ///< end of text (the NUL byte)
   stl_hlrec_t *hlrec;                  ///< highlight groups
   stl_hlrec_t *hlrecp;                 ///< current highlight group
+  foldinfo_T foldinfo;                 ///< fold information
+  SignTextAttrs *sattrs;               ///< sign attributes
 };
 
 /// Macros defined in Vim, but not in Neovim
