@@ -130,28 +130,6 @@ set(NVIM_API_LEVEL 11)         # Bump this after any API change.
 set(NVIM_API_LEVEL_COMPAT 0)  # Adjust this after a _breaking_ API change.
 set(NVIM_API_PRERELEASE true)
 
-set(NVIM_VERSION_BUILD_TYPE "${CMAKE_BUILD_TYPE}")
-# NVIM_VERSION_CFLAGS set further below.
-
-# Log level (MIN_LOG_LEVEL in log.h)
-if("${MIN_LOG_LEVEL}" MATCHES "^$")
-  # Minimize logging for release-type builds.
-  if(CMAKE_BUILD_TYPE STREQUAL "Release"
-      OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo"
-      OR CMAKE_BUILD_TYPE STREQUAL "MinSizeRel")
-    message(STATUS "MIN_LOG_LEVEL not specified, default is 3 (ERROR) for release builds")
-    set(MIN_LOG_LEVEL 3)
-  else()
-    message(STATUS "MIN_LOG_LEVEL not specified, default is 1 (INFO)")
-    set(MIN_LOG_LEVEL 1)
-  endif()
-else()
-  if(NOT MIN_LOG_LEVEL MATCHES "^[0-3]$")
-    message(FATAL_ERROR "invalid MIN_LOG_LEVEL: " ${MIN_LOG_LEVEL})
-  endif()
-  message(STATUS "MIN_LOG_LEVEL=${MIN_LOG_LEVEL}")
-endif()
-
 # Default to -O2 on release builds.
 if(CMAKE_C_FLAGS_RELEASE MATCHES "-O3")
   message(STATUS "Replacing -O3 in CMAKE_C_FLAGS_RELEASE with -O2")
@@ -173,20 +151,6 @@ endif()
 # We _want_ assertions in RelWithDebInfo build-type.
 if(CMAKE_C_FLAGS_RELWITHDEBINFO MATCHES DNDEBUG)
   string(REPLACE "-DNDEBUG" "" CMAKE_C_FLAGS_RELWITHDEBINFO "${CMAKE_C_FLAGS_RELWITHDEBINFO}")
-endif()
-
-# gcc 4.0+ sets _FORTIFY_SOURCE=2 automatically.  This currently
-# does not work with Neovim due to some uses of dynamically-sized structures.
-# https://github.com/neovim/neovim/issues/223
-
-# Include the build type's default flags in the check for _FORTIFY_SOURCE,
-# otherwise we may incorrectly identify the level as acceptable and find out
-# later that it was not when optimizations were enabled.  CFLAGS is applied
-# even though you don't see it in CMAKE_REQUIRED_FLAGS.
-set(INIT_FLAGS_NAME CMAKE_C_FLAGS_${CMAKE_BUILD_TYPE})
-string(TOUPPER ${INIT_FLAGS_NAME} INIT_FLAGS_NAME)
-if(${INIT_FLAGS_NAME})
-  set(CMAKE_REQUIRED_FLAGS "${${INIT_FLAGS_NAME}}")
 endif()
 
 option(LOG_LIST_ACTIONS "Add list actions logging" OFF)
@@ -347,7 +311,6 @@ install_helper(
 #
 
 add_subdirectory(src/nvim)
-get_directory_property(NVIM_VERSION_CFLAGS DIRECTORY src/nvim DEFINITION NVIM_VERSION_CFLAGS)
 add_subdirectory(cmake.config)
 add_subdirectory(test/functional/fixtures)  # compile test programs
 add_subdirectory(runtime)
