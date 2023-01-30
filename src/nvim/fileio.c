@@ -3794,6 +3794,103 @@ static int buf_write_convert_with_iconv(struct bw_info *ip, char **bufp, int *le
   return OK;
 }
 
+static int buf_write_convert(struct bw_info *ip, char **bufp, int *lenp)
+{
+  int flags = ip->bw_flags;  // extra flags
+
+  if (flags & FIO_UTF8) {
+    // Convert latin1 in the buffer to UTF-8 in the file.
+    char *p = ip->bw_conv_buf;              // translate to buffer
+    for (int wlen = 0; wlen < *lenp; wlen++) {
+      p += utf_char2bytes((uint8_t)(*bufp)[wlen], p);
+    }
+    *bufp = ip->bw_conv_buf;
+    *lenp = (int)(p - ip->bw_conv_buf);
+  } else if (flags & (FIO_UCS4 | FIO_UTF16 | FIO_UCS2 | FIO_LATIN1)) {
+    unsigned c;
+    int n = 0;
+    // Convert UTF-8 bytes in the buffer to UCS-2, UCS-4, UTF-16 or
+    // Latin1 chars in the file.
+    // translate in-place (can only get shorter) or to buffer
+    char *p = flags & FIO_LATIN1 ? *bufp : ip->bw_conv_buf;
+    for (int wlen = 0; wlen < *lenp; wlen += n) {
+      if (wlen == 0 && ip->bw_restlen != 0) {
+        // Use remainder of previous call.  Append the start of
+        // buf[] to get a full sequence.  Might still be too
+        // short!
+        int l = MIN(*lenp, CONV_RESTLEN - ip->bw_restlen);
+        memmove(ip->bw_rest + ip->bw_restlen, *bufp, (size_t)l);
+        n = utf_ptr2len_len((char *)ip->bw_rest, ip->bw_restlen + l);
+        if (n > ip->bw_restlen + *lenp) {
+          // We have an incomplete byte sequence at the end to
+          // be written.  We can't convert it without the
+          // remaining bytes.  Keep them for the next call.
+          if (ip->bw_restlen + *lenp > CONV_RESTLEN) {
+            return FAIL;
+          }
+          ip->bw_restlen += *lenp;
+          break;
+        }
+        if (n > 1) {
+          c = (unsigned)utf_ptr2char((char *)ip->bw_rest);
+        } else {
+          c = ip->bw_rest[0];
+        }
+        if (n >= ip->bw_restlen) {
+          n -= ip->bw_restlen;
+          ip->bw_restlen = 0;
+        } else {
+          ip->bw_restlen -= n;
+          memmove(ip->bw_rest, ip->bw_rest + n,
+                  (size_t)ip->bw_restlen);
+          n = 0;
+        }
+      } else {
+        n = utf_ptr2len_len(*bufp + wlen, *lenp - wlen);
+        if (n > *lenp - wlen) {
+          // We have an incomplete byte sequence at the end to
+          // be written.  We can't convert it without the
+          // remaining bytes.  Keep them for the next call.
+          if (*lenp - wlen > CONV_RESTLEN) {
+            return FAIL;
+          }
+          ip->bw_restlen = *lenp - wlen;
+          memmove(ip->bw_rest, *bufp + wlen,
+                  (size_t)ip->bw_restlen);
+          break;
+        }
+        if (n > 1) {
+          c = (unsigned)utf_ptr2char(*bufp + wlen);
+        } else {
+          c = (uint8_t)(*bufp)[wlen];
+        }
+      }
+
+      if (ucs2bytes(c, &p, flags) && !ip->bw_conv_error) {
+        ip->bw_conv_error = true;
+        ip->bw_conv_error_lnum = ip->bw_start_lnum;
+      }
+      if (c == NL) {
+        ip->bw_start_lnum++;
+      }
+    }
+    if (flags & FIO_LATIN1) {
+      *lenp = (int)(p - *bufp);
+    } else {
+      *bufp = ip->bw_conv_buf;
+      *lenp = (int)(p - ip->bw_conv_buf);
+    }
+  }
+
+  if (ip->bw_iconv_fd != (iconv_t)-1) {
+    if (buf_write_convert_with_iconv(ip, bufp, lenp) == FAIL) {
+      return FAIL;
+    }
+  }
+
+  return OK;
+}
+
 /// Call write() to write a number of bytes to the file.
 /// Handles 'encoding' conversion.
 ///
@@ -3808,94 +3905,8 @@ static int buf_write_bytes(struct bw_info *ip)
 
   // Skip conversion when writing the BOM.
   if (!(flags & FIO_NOCONVERT)) {
-    if (flags & FIO_UTF8) {
-      // Convert latin1 in the buffer to UTF-8 in the file.
-      char *p = ip->bw_conv_buf;              // translate to buffer
-      for (int wlen = 0; wlen < len; wlen++) {
-        p += utf_char2bytes((uint8_t)buf[wlen], p);
-      }
-      buf = ip->bw_conv_buf;
-      len = (int)(p - ip->bw_conv_buf);
-    } else if (flags & (FIO_UCS4 | FIO_UTF16 | FIO_UCS2 | FIO_LATIN1)) {
-      unsigned c;
-      int n = 0;
-      // Convert UTF-8 bytes in the buffer to UCS-2, UCS-4, UTF-16 or
-      // Latin1 chars in the file.
-      // translate in-place (can only get shorter) or to buffer
-      char *p = flags & FIO_LATIN1 ? buf : ip->bw_conv_buf;
-      for (int wlen = 0; wlen < len; wlen += n) {
-        if (wlen == 0 && ip->bw_restlen != 0) {
-          // Use remainder of previous call.  Append the start of
-          // buf[] to get a full sequence.  Might still be too
-          // short!
-          int l = MIN(len, CONV_RESTLEN - ip->bw_restlen);
-          memmove(ip->bw_rest + ip->bw_restlen, buf, (size_t)l);
-          n = utf_ptr2len_len((char *)ip->bw_rest, ip->bw_restlen + l);
-          if (n > ip->bw_restlen + len) {
-            // We have an incomplete byte sequence at the end to
-            // be written.  We can't convert it without the
-            // remaining bytes.  Keep them for the next call.
-            if (ip->bw_restlen + len > CONV_RESTLEN) {
-              return FAIL;
-            }
-            ip->bw_restlen += len;
-            break;
-          }
-          if (n > 1) {
-            c = (unsigned)utf_ptr2char((char *)ip->bw_rest);
-          } else {
-            c = ip->bw_rest[0];
-          }
-          if (n >= ip->bw_restlen) {
-            n -= ip->bw_restlen;
-            ip->bw_restlen = 0;
-          } else {
-            ip->bw_restlen -= n;
-            memmove(ip->bw_rest, ip->bw_rest + n,
-                    (size_t)ip->bw_restlen);
-            n = 0;
-          }
-        } else {
-          n = utf_ptr2len_len(buf + wlen, len - wlen);
-          if (n > len - wlen) {
-            // We have an incomplete byte sequence at the end to
-            // be written.  We can't convert it without the
-            // remaining bytes.  Keep them for the next call.
-            if (len - wlen > CONV_RESTLEN) {
-              return FAIL;
-            }
-            ip->bw_restlen = len - wlen;
-            memmove(ip->bw_rest, buf + wlen,
-                    (size_t)ip->bw_restlen);
-            break;
-          }
-          if (n > 1) {
-            c = (unsigned)utf_ptr2char(buf + wlen);
-          } else {
-            c = (uint8_t)buf[wlen];
-          }
-        }
-
-        if (ucs2bytes(c, &p, flags) && !ip->bw_conv_error) {
-          ip->bw_conv_error = true;
-          ip->bw_conv_error_lnum = ip->bw_start_lnum;
-        }
-        if (c == NL) {
-          ip->bw_start_lnum++;
-        }
-      }
-      if (flags & FIO_LATIN1) {
-        len = (int)(p - buf);
-      } else {
-        buf = ip->bw_conv_buf;
-        len = (int)(p - ip->bw_conv_buf);
-      }
-    }
-
-    if (ip->bw_iconv_fd != (iconv_t)-1) {
-      if (buf_write_convert_with_iconv(ip, &buf, &len) == FAIL) {
-        return FAIL;
-      }
+    if (buf_write_convert(ip, &buf, &len) == FAIL) {
+      return FAIL;
     }
   }
 
