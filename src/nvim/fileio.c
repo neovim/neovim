@@ -2076,6 +2076,188 @@ char *new_file_message(void)
   return shortmess(SHM_NEW) ? _("[New]") : _("[New File]");
 }
 
+static int buf_write_do_autocmds(buf_T *buf, char **fnamep, char **sfnamep, char **ffnamep,
+                                 linenr_T start, linenr_T *endp, exarg_T *eap, bool append,
+                                 bool filtering, bool reset_changed, bool overwriting, bool whole,
+                                 const pos_T orig_start, const pos_T orig_end)
+{
+  linenr_T old_line_count = buf->b_ml.ml_line_count;
+  int msg_save = msg_scroll;
+
+  aco_save_T aco;
+  int buf_ffname = false;
+  int buf_sfname = false;
+  int buf_fname_f = false;
+  int buf_fname_s = false;
+  int did_cmd = false;
+  int nofile_err = false;
+  int empty_memline = (buf->b_ml.ml_mfp == NULL);
+  bufref_T bufref;
+
+  char *sfname = *sfnamep;
+
+  // Apply PRE autocommands.
+  // Set curbuf to the buffer to be written.
+  // Careful: The autocommands may call buf_write() recursively!
+  if (*ffnamep == buf->b_ffname) {
+    buf_ffname = true;
+  }
+  if (sfname == buf->b_sfname) {
+    buf_sfname = true;
+  }
+  if (*fnamep == buf->b_ffname) {
+    buf_fname_f = true;
+  }
+  if (*fnamep == buf->b_sfname) {
+    buf_fname_s = true;
+  }
+
+  // Set curwin/curbuf to buf and save a few things.
+  aucmd_prepbuf(&aco, buf);
+  set_bufref(&bufref, buf);
+
+  if (append) {
+    if (!(did_cmd = apply_autocmds_exarg(EVENT_FILEAPPENDCMD,
+                                         sfname, sfname, false, curbuf, eap))) {
+      if (overwriting && bt_nofilename(curbuf)) {
+        nofile_err = true;
+      } else {
+        apply_autocmds_exarg(EVENT_FILEAPPENDPRE,
+                             sfname, sfname, false, curbuf, eap);
+      }
+    }
+  } else if (filtering) {
+    apply_autocmds_exarg(EVENT_FILTERWRITEPRE,
+                         NULL, sfname, false, curbuf, eap);
+  } else if (reset_changed && whole) {
+    int was_changed = curbufIsChanged();
+
+    did_cmd = apply_autocmds_exarg(EVENT_BUFWRITECMD,
+                                   sfname, sfname, false, curbuf, eap);
+    if (did_cmd) {
+      if (was_changed && !curbufIsChanged()) {
+        // Written everything correctly and BufWriteCmd has reset
+        // 'modified': Correct the undo information so that an
+        // undo now sets 'modified'.
+        u_unchanged(curbuf);
+        u_update_save_nr(curbuf);
+      }
+    } else {
+      if (overwriting && bt_nofilename(curbuf)) {
+        nofile_err = true;
+      } else {
+        apply_autocmds_exarg(EVENT_BUFWRITEPRE,
+                             sfname, sfname, false, curbuf, eap);
+      }
+    }
+  } else {
+    if (!(did_cmd = apply_autocmds_exarg(EVENT_FILEWRITECMD,
+                                         sfname, sfname, false, curbuf, eap))) {
+      if (overwriting && bt_nofilename(curbuf)) {
+        nofile_err = true;
+      } else {
+        apply_autocmds_exarg(EVENT_FILEWRITEPRE,
+                             sfname, sfname, false, curbuf, eap);
+      }
+    }
+  }
+
+  // restore curwin/curbuf and a few other things
+  aucmd_restbuf(&aco);
+
+  // In three situations we return here and don't write the file:
+  // 1. the autocommands deleted or unloaded the buffer.
+  // 2. The autocommands abort script processing.
+  // 3. If one of the "Cmd" autocommands was executed.
+  if (!bufref_valid(&bufref)) {
+    buf = NULL;
+  }
+  if (buf == NULL || (buf->b_ml.ml_mfp == NULL && !empty_memline)
+      || did_cmd || nofile_err
+      || aborting()) {
+    if (buf != NULL && (cmdmod.cmod_flags & CMOD_LOCKMARKS)) {
+      // restore the original '[ and '] positions
+      buf->b_op_start = orig_start;
+      buf->b_op_end = orig_end;
+    }
+
+    no_wait_return--;
+    msg_scroll = msg_save;
+    if (nofile_err) {
+      semsg(_(e_no_matching_autocommands_for_buftype_str_buffer), curbuf->b_p_bt);
+    }
+
+    if (nofile_err
+        || aborting()) {
+      // An aborting error, interrupt or exception in the
+      // autocommands.
+      return FAIL;
+    }
+    if (did_cmd) {
+      if (buf == NULL) {
+        // The buffer was deleted.  We assume it was written
+        // (can't retry anyway).
+        return OK;
+      }
+      if (overwriting) {
+        // Assume the buffer was written, update the timestamp.
+        ml_timestamp(buf);
+        if (append) {
+          buf->b_flags &= ~BF_NEW;
+        } else {
+          buf->b_flags &= ~BF_WRITE_MASK;
+        }
+      }
+      if (reset_changed && buf->b_changed && !append
+          && (overwriting || vim_strchr(p_cpo, CPO_PLUS) != NULL)) {
+        // Buffer still changed, the autocommands didn't work properly.
+        return FAIL;
+      }
+      return OK;
+    }
+    if (!aborting()) {
+      emsg(_("E203: Autocommands deleted or unloaded buffer to be written"));
+    }
+    return FAIL;
+  }
+
+  // The autocommands may have changed the number of lines in the file.
+  // When writing the whole file, adjust the end.
+  // When writing part of the file, assume that the autocommands only
+  // changed the number of lines that are to be written (tricky!).
+  if (buf->b_ml.ml_line_count != old_line_count) {
+    if (whole) {                                              // write all
+      *endp = buf->b_ml.ml_line_count;
+    } else if (buf->b_ml.ml_line_count > old_line_count) {           // more lines
+      *endp += buf->b_ml.ml_line_count - old_line_count;
+    } else {                                                    // less lines
+      *endp -= old_line_count - buf->b_ml.ml_line_count;
+      if (*endp < start) {
+        no_wait_return--;
+        msg_scroll = msg_save;
+        emsg(_("E204: Autocommand changed number of lines in unexpected way"));
+        return FAIL;
+      }
+    }
+  }
+
+  // The autocommands may have changed the name of the buffer, which may
+  // be kept in fname, ffname and sfname.
+  if (buf_ffname) {
+    *ffnamep = buf->b_ffname;
+  }
+  if (buf_sfname) {
+    *sfnamep = buf->b_sfname;
+  }
+  if (buf_fname_f) {
+    *fnamep = buf->b_ffname;
+  }
+  if (buf_fname_s) {
+    *fnamep = buf->b_sfname;
+  }
+  return NOTDONE;
+}
+
 /// buf_write() - write to file "fname" lines "start" through "end"
 ///
 /// We do our own buffering here because fwrite() is so slow.
@@ -2139,7 +2321,6 @@ int buf_write(buf_T *buf, char *fname, char *sfname, linenr_T start, linenr_T en
 #endif
   // writing everything
   int whole = (start == 1 && end == buf->b_ml.ml_line_count);
-  linenr_T old_line_count = buf->b_ml.ml_line_count;
   int fileformat;
   int write_bin;
   struct bw_info write_info;            // info for buf_write_bytes()
@@ -2155,8 +2336,6 @@ int buf_write(buf_T *buf, char *fname, char *sfname, linenr_T start, linenr_T en
   int write_undo_file = false;
   context_sha256_T sha_ctx;
   unsigned int bkc = get_bkc_value(buf);
-  const pos_T orig_start = buf->b_op_start;
-  const pos_T orig_end = buf->b_op_end;
 
   if (fname == NULL || *fname == NUL) {  // safety check
     return FAIL;
@@ -2230,182 +2409,20 @@ int buf_write(buf_T *buf, char *fname, char *sfname, linenr_T start, linenr_T en
 
   no_wait_return++;                 // don't wait for return yet
 
+  const pos_T orig_start = buf->b_op_start;
+  const pos_T orig_end = buf->b_op_end;
+
   // Set '[ and '] marks to the lines to be written.
   buf->b_op_start.lnum = start;
   buf->b_op_start.col = 0;
   buf->b_op_end.lnum = end;
   buf->b_op_end.col = 0;
 
-  {
-    aco_save_T aco;
-    int buf_ffname = false;
-    int buf_sfname = false;
-    int buf_fname_f = false;
-    int buf_fname_s = false;
-    int did_cmd = false;
-    int nofile_err = false;
-    int empty_memline = (buf->b_ml.ml_mfp == NULL);
-    bufref_T bufref;
-
-    // Apply PRE autocommands.
-    // Set curbuf to the buffer to be written.
-    // Careful: The autocommands may call buf_write() recursively!
-    if (ffname == buf->b_ffname) {
-      buf_ffname = true;
-    }
-    if (sfname == buf->b_sfname) {
-      buf_sfname = true;
-    }
-    if (fname == buf->b_ffname) {
-      buf_fname_f = true;
-    }
-    if (fname == buf->b_sfname) {
-      buf_fname_s = true;
-    }
-
-    // Set curwin/curbuf to buf and save a few things.
-    aucmd_prepbuf(&aco, buf);
-    set_bufref(&bufref, buf);
-
-    if (append) {
-      if (!(did_cmd = apply_autocmds_exarg(EVENT_FILEAPPENDCMD,
-                                           sfname, sfname, false, curbuf, eap))) {
-        if (overwriting && bt_nofilename(curbuf)) {
-          nofile_err = true;
-        } else {
-          apply_autocmds_exarg(EVENT_FILEAPPENDPRE,
-                               sfname, sfname, false, curbuf, eap);
-        }
-      }
-    } else if (filtering) {
-      apply_autocmds_exarg(EVENT_FILTERWRITEPRE,
-                           NULL, sfname, false, curbuf, eap);
-    } else if (reset_changed && whole) {
-      int was_changed = curbufIsChanged();
-
-      did_cmd = apply_autocmds_exarg(EVENT_BUFWRITECMD,
-                                     sfname, sfname, false, curbuf, eap);
-      if (did_cmd) {
-        if (was_changed && !curbufIsChanged()) {
-          // Written everything correctly and BufWriteCmd has reset
-          // 'modified': Correct the undo information so that an
-          // undo now sets 'modified'.
-          u_unchanged(curbuf);
-          u_update_save_nr(curbuf);
-        }
-      } else {
-        if (overwriting && bt_nofilename(curbuf)) {
-          nofile_err = true;
-        } else {
-          apply_autocmds_exarg(EVENT_BUFWRITEPRE,
-                               sfname, sfname, false, curbuf, eap);
-        }
-      }
-    } else {
-      if (!(did_cmd = apply_autocmds_exarg(EVENT_FILEWRITECMD,
-                                           sfname, sfname, false, curbuf, eap))) {
-        if (overwriting && bt_nofilename(curbuf)) {
-          nofile_err = true;
-        } else {
-          apply_autocmds_exarg(EVENT_FILEWRITEPRE,
-                               sfname, sfname, false, curbuf, eap);
-        }
-      }
-    }
-
-    // restore curwin/curbuf and a few other things
-    aucmd_restbuf(&aco);
-
-    // In three situations we return here and don't write the file:
-    // 1. the autocommands deleted or unloaded the buffer.
-    // 2. The autocommands abort script processing.
-    // 3. If one of the "Cmd" autocommands was executed.
-    if (!bufref_valid(&bufref)) {
-      buf = NULL;
-    }
-    if (buf == NULL || (buf->b_ml.ml_mfp == NULL && !empty_memline)
-        || did_cmd || nofile_err
-        || aborting()) {
-      if (buf != NULL && (cmdmod.cmod_flags & CMOD_LOCKMARKS)) {
-        // restore the original '[ and '] positions
-        buf->b_op_start = orig_start;
-        buf->b_op_end = orig_end;
-      }
-
-      no_wait_return--;
-      msg_scroll = msg_save;
-      if (nofile_err) {
-        semsg(_(e_no_matching_autocommands_for_buftype_str_buffer), curbuf->b_p_bt);
-      }
-
-      if (nofile_err
-          || aborting()) {
-        // An aborting error, interrupt or exception in the
-        // autocommands.
-        return FAIL;
-      }
-      if (did_cmd) {
-        if (buf == NULL) {
-          // The buffer was deleted.  We assume it was written
-          // (can't retry anyway).
-          return OK;
-        }
-        if (overwriting) {
-          // Assume the buffer was written, update the timestamp.
-          ml_timestamp(buf);
-          if (append) {
-            buf->b_flags &= ~BF_NEW;
-          } else {
-            buf->b_flags &= ~BF_WRITE_MASK;
-          }
-        }
-        if (reset_changed && buf->b_changed && !append
-            && (overwriting || vim_strchr(p_cpo, CPO_PLUS) != NULL)) {
-          // Buffer still changed, the autocommands didn't work properly.
-          return FAIL;
-        }
-        return OK;
-      }
-      if (!aborting()) {
-        emsg(_("E203: Autocommands deleted or unloaded buffer to be written"));
-      }
-      return FAIL;
-    }
-
-    // The autocommands may have changed the number of lines in the file.
-    // When writing the whole file, adjust the end.
-    // When writing part of the file, assume that the autocommands only
-    // changed the number of lines that are to be written (tricky!).
-    if (buf->b_ml.ml_line_count != old_line_count) {
-      if (whole) {                                              // write all
-        end = buf->b_ml.ml_line_count;
-      } else if (buf->b_ml.ml_line_count > old_line_count) {           // more lines
-        end += buf->b_ml.ml_line_count - old_line_count;
-      } else {                                                    // less lines
-        end -= old_line_count - buf->b_ml.ml_line_count;
-        if (end < start) {
-          no_wait_return--;
-          msg_scroll = msg_save;
-          emsg(_("E204: Autocommand changed number of lines in unexpected way"));
-          return FAIL;
-        }
-      }
-    }
-
-    // The autocommands may have changed the name of the buffer, which may
-    // be kept in fname, ffname and sfname.
-    if (buf_ffname) {
-      ffname = buf->b_ffname;
-    }
-    if (buf_sfname) {
-      sfname = buf->b_sfname;
-    }
-    if (buf_fname_f) {
-      fname = buf->b_ffname;
-    }
-    if (buf_fname_s) {
-      fname = buf->b_sfname;
-    }
+  int res = buf_write_do_autocmds(buf, &fname, &sfname, &ffname, start, &end, eap, append,
+                                  filtering, reset_changed, overwriting, whole, orig_start,
+                                  orig_end);
+  if (res != NOTDONE) {
+    return res;
   }
 
   if (cmdmod.cmod_flags & CMOD_LOCKMARKS) {
