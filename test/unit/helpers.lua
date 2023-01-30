@@ -75,7 +75,8 @@ local function child_cleanup_once(func, ...)
   end
 end
 
-local libnvim = nil
+-- Unittests are run from debug nvim binary in lua interpreter mode.
+local libnvim = ffi.C
 
 local lib = setmetatable({}, {
   __index = only_separate(function(_, idx)
@@ -87,8 +88,6 @@ local lib = setmetatable({}, {
 })
 
 local init = only_separate(function()
-  -- load neovim shared library
-  libnvim = ffi.load(Paths.test_libnvim_path)
   for _, c in ipairs(child_calls_init) do
     c.func(unpack(c.args))
   end
