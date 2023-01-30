@@ -81,7 +81,6 @@
 # define UV_FS_COPYFILE_FICLONE 0
 #endif
 
-#define HAS_BW_FLAGS
 enum {
   FIO_LATIN1 = 0x01,       // convert Latin1
   FIO_UTF8 = 0x02,         // convert UTF-8
@@ -107,9 +106,7 @@ struct bw_info {
   int bw_fd;                     // file descriptor
   char *bw_buf;                  // buffer with data to be written
   int bw_len;                    // length of data
-#ifdef HAS_BW_FLAGS
   int bw_flags;                  // FIO_ flags
-#endif
   char_u bw_rest[CONV_RESTLEN];  // not converted bytes
   int bw_restlen;                // nr of bytes in bw_rest[]
   int bw_first;                  // first write call
@@ -2150,9 +2147,7 @@ int buf_write(buf_T *buf, char *fname, char *sfname, linenr_T start, linenr_T en
   int notconverted = false;
   char *fenc;                // effective 'fileencoding'
   char *fenc_tofree = NULL;   // allocated "fenc"
-#ifdef HAS_BW_FLAGS
   int wb_flags = 0;
-#endif
 #ifdef HAVE_ACL
   vim_acl_T acl = NULL;                 // ACL copied from original file to
                                         // backup or new file
@@ -3117,9 +3112,7 @@ restore_backup:
     }
 
     write_info.bw_len = bufsize;
-#ifdef HAS_BW_FLAGS
     write_info.bw_flags = wb_flags;
-#endif
     fileformat = get_fileformat_force(buf, eap);
     s = buffer;
     len = 0;
@@ -3899,9 +3892,7 @@ static int buf_write_bytes(struct bw_info *ip)
 {
   char *buf = ip->bw_buf;    // data to write
   int len = ip->bw_len;      // length of data
-#ifdef HAS_BW_FLAGS
   int flags = ip->bw_flags;  // extra flags
-#endif
 
   // Skip conversion when writing the BOM.
   if (!(flags & FIO_NOCONVERT)) {
