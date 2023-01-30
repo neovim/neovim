@@ -3064,9 +3064,6 @@ static void f_has(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     "conceal",
     "cursorbind",
     "cursorshape",
-#ifdef DEBUG
-    "debug",
-#endif
     "dialog_con",
     "diff",
     "digraphs",
