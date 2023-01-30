@@ -156,13 +156,10 @@ local function check_performance()
     health.report_ok(buildtype)
   else
     health.report_info(buildtype)
-    health.report_warn(
-      'Non-optimized ' .. (has('debug') and '(DEBUG) ' or '') .. 'build. Nvim will be slower.',
-      {
-        'Install a different Nvim package, or rebuild with `CMAKE_BUILD_TYPE=RelWithDebInfo`.',
-        suggest_faq,
-      }
-    )
+    health.report_warn('Non-optimized debug build. Nvim will be slower.', {
+      'Install a different Nvim package, or rebuild with `CMAKE_BUILD_TYPE=RelWithDebInfo`.',
+      suggest_faq,
+    })
   end
 
   -- check for slow shell invocation

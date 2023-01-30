@@ -117,11 +117,6 @@ endif()
 message(STATUS "CMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX}")
 
 set_default_buildtype()
-if(CMAKE_BUILD_TYPE MATCHES Debug)
-  set(DEBUG 1)
-else()
-  set(DEBUG 0)
-endif()
 
 # If not in a git repo (e.g., a tarball) these tokens define the complete
 # version string, else they are combined with the result of `git describe`.

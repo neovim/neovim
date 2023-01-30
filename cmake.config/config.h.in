@@ -1,8 +1,6 @@
 #ifndef AUTO_CONFIG_H
 #define AUTO_CONFIG_H
 
-#cmakedefine DEBUG
-
 #cmakedefine SIZEOF_INT @SIZEOF_INT@
 #cmakedefine SIZEOF_INTMAX_T @SIZEOF_INTMAX_T@
 #cmakedefine SIZEOF_INT32_T @SIZEOF_INT32_T@
