@@ -3733,6 +3733,67 @@ static bool time_differs(const FileInfo *file_info, long mtime, long mtime_ns) F
 #endif
 }
 
+static int buf_write_convert_with_iconv(struct bw_info *ip, char **bufp, int *lenp)
+{
+  const char *from;
+  size_t fromlen;
+  size_t tolen;
+
+  int len = *lenp;
+
+  // Convert with iconv().
+  if (ip->bw_restlen > 0) {
+    // Need to concatenate the remainder of the previous call and
+    // the bytes of the current call.  Use the end of the
+    // conversion buffer for this.
+    fromlen = (size_t)len + (size_t)ip->bw_restlen;
+    char *fp = ip->bw_conv_buf + ip->bw_conv_buflen - fromlen;
+    memmove(fp, ip->bw_rest, (size_t)ip->bw_restlen);
+    memmove(fp + ip->bw_restlen, *bufp, (size_t)len);
+    from = fp;
+    tolen = ip->bw_conv_buflen - fromlen;
+  } else {
+    from = *bufp;
+    fromlen = (size_t)len;
+    tolen = ip->bw_conv_buflen;
+  }
+  char *to = ip->bw_conv_buf;
+
+  if (ip->bw_first) {
+    size_t save_len = tolen;
+
+    // output the initial shift state sequence
+    (void)iconv(ip->bw_iconv_fd, NULL, NULL, &to, &tolen);
+
+    // There is a bug in iconv() on Linux (which appears to be
+    // wide-spread) which sets "to" to NULL and messes up "tolen".
+    if (to == NULL) {
+      to = ip->bw_conv_buf;
+      tolen = save_len;
+    }
+    ip->bw_first = false;
+  }
+
+  // If iconv() has an error or there is not enough room, fail.
+  if ((iconv(ip->bw_iconv_fd, (void *)&from, &fromlen, &to, &tolen)
+       == (size_t)-1 && ICONV_ERRNO != ICONV_EINVAL)
+      || fromlen > CONV_RESTLEN) {
+    ip->bw_conv_error = true;
+    return FAIL;
+  }
+
+  // copy remainder to ip->bw_rest[] to be used for the next call.
+  if (fromlen > 0) {
+    memmove(ip->bw_rest, (void *)from, fromlen);
+  }
+  ip->bw_restlen = (int)fromlen;
+
+  *bufp = ip->bw_conv_buf;
+  *lenp = (int)(to - ip->bw_conv_buf);
+
+  return OK;
+}
+
 /// Call write() to write a number of bytes to the file.
 /// Handles 'encoding' conversion.
 ///
@@ -3832,59 +3893,9 @@ static int buf_write_bytes(struct bw_info *ip)
     }
 
     if (ip->bw_iconv_fd != (iconv_t)-1) {
-      const char *from;
-      size_t fromlen;
-      size_t tolen;
-
-      // Convert with iconv().
-      if (ip->bw_restlen > 0) {
-        // Need to concatenate the remainder of the previous call and
-        // the bytes of the current call.  Use the end of the
-        // conversion buffer for this.
-        fromlen = (size_t)len + (size_t)ip->bw_restlen;
-        char *fp = ip->bw_conv_buf + ip->bw_conv_buflen - fromlen;
-        memmove(fp, ip->bw_rest, (size_t)ip->bw_restlen);
-        memmove(fp + ip->bw_restlen, buf, (size_t)len);
-        from = fp;
-        tolen = ip->bw_conv_buflen - fromlen;
-      } else {
-        from = buf;
-        fromlen = (size_t)len;
-        tolen = ip->bw_conv_buflen;
-      }
-      char *to = ip->bw_conv_buf;
-
-      if (ip->bw_first) {
-        size_t save_len = tolen;
-
-        // output the initial shift state sequence
-        (void)iconv(ip->bw_iconv_fd, NULL, NULL, &to, &tolen);
-
-        // There is a bug in iconv() on Linux (which appears to be
-        // wide-spread) which sets "to" to NULL and messes up "tolen".
-        if (to == NULL) {
-          to = ip->bw_conv_buf;
-          tolen = save_len;
-        }
-        ip->bw_first = false;
-      }
-
-      // If iconv() has an error or there is not enough room, fail.
-      if ((iconv(ip->bw_iconv_fd, (void *)&from, &fromlen, &to, &tolen)
-           == (size_t)-1 && ICONV_ERRNO != ICONV_EINVAL)
-          || fromlen > CONV_RESTLEN) {
-        ip->bw_conv_error = true;
+      if (buf_write_convert_with_iconv(ip, &buf, &len) == FAIL) {
         return FAIL;
       }
-
-      // copy remainder to ip->bw_rest[] to be used for the next call.
-      if (fromlen > 0) {
-        memmove(ip->bw_rest, (void *)from, fromlen);
-      }
-      ip->bw_restlen = (int)fromlen;
-
-      buf = ip->bw_conv_buf;
-      len = (int)(to - ip->bw_conv_buf);
     }
   }
 
