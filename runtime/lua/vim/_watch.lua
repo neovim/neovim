@@ -20,10 +20,10 @@ end
 ---
 ---@param handle (uv_fs_event_t|uv_fs_poll_t) The handle to stop
 local function stop(handle)
-  local _, err = handle:stop()
-  assert(not err, err)
-  local is_closing, err = handle:is_closing()
-  assert(not err, err)
+  local _, stop_err = handle:stop()
+  assert(not stop_err, stop_err)
+  local is_closing, close_err = handle:is_closing()
+  assert(not close_err, close_err)
   if not is_closing then
     handle:close()
   end
@@ -46,9 +46,9 @@ function M.watch(path, opts, callback)
 
   path = vim.fs.normalize(path)
   local uvflags = opts and opts.uvflags
-  local handle, err = vim.loop.new_fs_event()
-  assert(not err, err)
-  local _, err = handle:start(path, uvflags, function(err, filename, events)
+  local handle, new_err = vim.loop.new_fs_event()
+  assert(not new_err, new_err)
+  local _, start_err = handle:start(path, uvflags, function(err, filename, events)
     assert(not err, err)
     local fullpath = path
     if filename then
@@ -66,7 +66,7 @@ function M.watch(path, opts, callback)
     end
     callback(fullpath, change_type)
   end)
-  assert(not err, err)
+  assert(not start_err, start_err)
   return function()
     stop(handle)
   end
@@ -95,13 +95,13 @@ local function poll_internal(path, opts, callback, watches)
   }
 
   if not watches.handle then
-    local poll, err = vim.loop.new_fs_poll()
-    assert(not err, err)
+    local poll, new_err = vim.loop.new_fs_poll()
+    assert(not new_err, new_err)
     watches.handle = poll
-    local _, err = poll:start(
+    local _, start_err = poll:start(
       path,
       interval,
-      vim.schedule_wrap(function(err, prev, curr)
+      vim.schedule_wrap(function(err)
         local change_type = M.FileChangeType.Changed
         if err == 'ENOENT' then
           change_type = M.FileChangeType.Deleted
@@ -113,7 +113,7 @@ local function poll_internal(path, opts, callback, watches)
         callback(path, change_type)
       end)
     )
-    assert(not err, err)
+    assert(not start_err, start_err)
     callback(path, M.FileChangeType.Created)
   end
 

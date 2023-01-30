@@ -151,6 +151,9 @@ The following new APIs or features were added.
 
 • |:highlight| now supports an additional attribute "altfont".
 
+• Added support for the `workspace/didChangeWatchedFiles` capability to the
+  LSP client to notify servers of file changes on disk.
+
 ==============================================================================
 CHANGED FEATURES                                                 *news-changes*
 
