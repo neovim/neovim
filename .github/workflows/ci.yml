@@ -171,8 +171,7 @@ jobs:
         run: cmake --build build --target lintc-clint
 
       - if: success() || failure() && steps.abort_job.outputs.status == 'success'
-        name: check-single-includes
-        run: make check-single-includes
+        run: cmake --build build --target clang-tidy
 
       - name: Cache dependencies
         run: ./ci/before_cache.sh

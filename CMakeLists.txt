@@ -244,9 +244,9 @@ endif()
 # Lint
 #
 find_program(LUACHECK_PRG luacheck)
+find_program(SHELLCHECK_PRG shellcheck)
 find_program(STYLUA_PRG stylua)
 find_program(UNCRUSTIFY_PRG uncrustify)
-find_program(SHELLCHECK_PRG shellcheck)
 
 add_glob_target(
   REQUIRED
@@ -287,7 +287,7 @@ add_custom_target(lintcommit
 add_dependencies(lintcommit nvim)
 
 add_custom_target(lint)
-add_dependencies(lint check-single-includes lintc lintlua lintsh lintcommit)
+add_dependencies(lint clang-tidy lintc lintlua lintsh lintcommit)
 
 #
 # Format
