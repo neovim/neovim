@@ -18,8 +18,8 @@ typedef enum {
   // The next three bits are all underline styles
   HL_UNDERLINE_MASK  = 0x38,
   HL_UNDERLINE       = 0x08,
-  HL_UNDERDOUBLE     = 0x10,
-  HL_UNDERCURL       = 0x18,
+  HL_UNDERCURL       = 0x10,
+  HL_UNDERDOUBLE     = 0x18,
   HL_UNDERDOTTED     = 0x20,
   HL_UNDERDASHED     = 0x28,
   // 0x30 and 0x38 spare for underline styles

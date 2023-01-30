@@ -1553,12 +1553,17 @@ static bool highlight_list_arg(const int id, bool didh, const int type, int iarg
   } else {    // type == LIST_ATTR
     buf[0] = NUL;
     for (int i = 0; hl_attr_table[i] != 0; i++) {
-      if (iarg & hl_attr_table[i]) {
+      if (((hl_attr_table[i] & HL_UNDERLINE_MASK)
+           && ((iarg & HL_UNDERLINE_MASK) == hl_attr_table[i]))
+          || (!(hl_attr_table[i] & HL_UNDERLINE_MASK)
+              && (iarg & hl_attr_table[i]))) {
         if (buf[0] != NUL) {
           xstrlcat(buf, ",", 100);
         }
         xstrlcat(buf, hl_name_table[i], 100);
-        iarg &= ~hl_attr_table[i];                // don't want "inverse"
+        if (!(hl_attr_table[i] & HL_UNDERLINE_MASK)) {
+          iarg &= ~hl_attr_table[i];  // don't want "inverse"
+        }
       }
     }
   }
