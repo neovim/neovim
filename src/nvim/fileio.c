@@ -5363,13 +5363,7 @@ bool match_file_pat(char *pattern, regprog_T **prog, char *fname, char *sfname, 
   bool result = false;
 
   regmatch.rm_ic = p_fic;   // ignore case if 'fileignorecase' is set
-  {
-    if (prog != NULL) {
-      regmatch.regprog = *prog;
-    } else {
-      regmatch.regprog = vim_regcomp(pattern, RE_MAGIC);
-    }
-  }
+  regmatch.regprog = prog != NULL ? *prog : vim_regcomp(pattern, RE_MAGIC);
 
   // Try for a match with the pattern with:
   // 1. the full file name, when the pattern has a '/'.
