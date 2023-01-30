@@ -2085,13 +2085,9 @@ static int buf_write_do_autocmds(buf_T *buf, char **fnamep, char **sfnamep, char
   int msg_save = msg_scroll;
 
   aco_save_T aco;
-  int buf_ffname = false;
-  int buf_sfname = false;
-  int buf_fname_f = false;
-  int buf_fname_s = false;
-  int did_cmd = false;
-  int nofile_err = false;
-  int empty_memline = (buf->b_ml.ml_mfp == NULL);
+  bool did_cmd = false;
+  bool nofile_err = false;
+  bool empty_memline = buf->b_ml.ml_mfp == NULL;
   bufref_T bufref;
 
   char *sfname = *sfnamep;
@@ -2099,26 +2095,18 @@ static int buf_write_do_autocmds(buf_T *buf, char **fnamep, char **sfnamep, char
   // Apply PRE autocommands.
   // Set curbuf to the buffer to be written.
   // Careful: The autocommands may call buf_write() recursively!
-  if (*ffnamep == buf->b_ffname) {
-    buf_ffname = true;
-  }
-  if (sfname == buf->b_sfname) {
-    buf_sfname = true;
-  }
-  if (*fnamep == buf->b_ffname) {
-    buf_fname_f = true;
-  }
-  if (*fnamep == buf->b_sfname) {
-    buf_fname_s = true;
-  }
+  bool buf_ffname = *ffnamep == buf->b_ffname;
+  bool buf_sfname = sfname == buf->b_sfname;
+  bool buf_fname_f = *fnamep == buf->b_ffname;
+  bool buf_fname_s = *fnamep == buf->b_sfname;
 
   // Set curwin/curbuf to buf and save a few things.
   aucmd_prepbuf(&aco, buf);
   set_bufref(&bufref, buf);
 
   if (append) {
-    if (!(did_cmd = apply_autocmds_exarg(EVENT_FILEAPPENDCMD,
-                                         sfname, sfname, false, curbuf, eap))) {
+    did_cmd = apply_autocmds_exarg(EVENT_FILEAPPENDCMD, sfname, sfname, false, curbuf, eap);
+    if (!did_cmd) {
       if (overwriting && bt_nofilename(curbuf)) {
         nofile_err = true;
       } else {
@@ -2130,10 +2118,9 @@ static int buf_write_do_autocmds(buf_T *buf, char **fnamep, char **sfnamep, char
     apply_autocmds_exarg(EVENT_FILTERWRITEPRE,
                          NULL, sfname, false, curbuf, eap);
   } else if (reset_changed && whole) {
-    int was_changed = curbufIsChanged();
+    bool was_changed = curbufIsChanged();
 
-    did_cmd = apply_autocmds_exarg(EVENT_BUFWRITECMD,
-                                   sfname, sfname, false, curbuf, eap);
+    did_cmd = apply_autocmds_exarg(EVENT_BUFWRITECMD, sfname, sfname, false, curbuf, eap);
     if (did_cmd) {
       if (was_changed && !curbufIsChanged()) {
         // Written everything correctly and BufWriteCmd has reset
@@ -2151,8 +2138,8 @@ static int buf_write_do_autocmds(buf_T *buf, char **fnamep, char **sfnamep, char
       }
     }
   } else {
-    if (!(did_cmd = apply_autocmds_exarg(EVENT_FILEWRITECMD,
-                                         sfname, sfname, false, curbuf, eap))) {
+    did_cmd = apply_autocmds_exarg(EVENT_FILEWRITECMD, sfname, sfname, false, curbuf, eap);
+    if (!did_cmd) {
       if (overwriting && bt_nofilename(curbuf)) {
         nofile_err = true;
       } else {
