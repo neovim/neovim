@@ -2421,6 +2421,324 @@ static int get_fileinfo(buf_T *buf, char *fname, bool overwriting, bool forceit,
   return OK;
 }
 
+static int buf_write_make_backup(char *fname, bool append, FileInfo *file_info_old, vim_acl_T acl,
+                                 long perm, unsigned int bkc, bool file_readonly, bool forceit,
+                                 int *backup_copyp, char **backupp, Error_T *err)
+{
+  FileInfo file_info;
+  const bool no_prepend_dot = false;
+
+  if ((bkc & BKC_YES) || append) {       // "yes"
+    *backup_copyp = true;
+  } else if ((bkc & BKC_AUTO)) {          // "auto"
+    // Don't rename the file when:
+    // - it's a hard link
+    // - it's a symbolic link
+    // - we don't have write permission in the directory
+    if (os_fileinfo_hardlinks(file_info_old) > 1
+        || !os_fileinfo_link(fname, &file_info)
+        || !os_fileinfo_id_equal(&file_info, file_info_old)) {
+      *backup_copyp = true;
+    } else {
+      // Check if we can create a file and set the owner/group to
+      // the ones from the original file.
+      // First find a file name that doesn't exist yet (use some
+      // arbitrary numbers).
+      STRCPY(IObuff, fname);
+      for (int i = 4913;; i += 123) {
+        char *tail = path_tail(IObuff);
+        size_t size = (size_t)(tail - IObuff);
+        snprintf(tail, IOSIZE - size, "%d", i);
+        if (!os_fileinfo_link(IObuff, &file_info)) {
+          break;
+        }
+      }
+      int fd = os_open(IObuff,
+                       O_CREAT|O_WRONLY|O_EXCL|O_NOFOLLOW, (int)perm);
+      if (fd < 0) {           // can't write in directory
+        *backup_copyp = true;
+      } else {
+#ifdef UNIX
+        os_fchown(fd, (uv_uid_t)file_info_old->stat.st_uid, (uv_gid_t)file_info_old->stat.st_gid);
+        if (!os_fileinfo(IObuff, &file_info)
+            || file_info.stat.st_uid != file_info_old->stat.st_uid
+            || file_info.stat.st_gid != file_info_old->stat.st_gid
+            || (long)file_info.stat.st_mode != perm) {
+          *backup_copyp = true;
+        }
+#endif
+        // Close the file before removing it, on MS-Windows we
+        // can't delete an open file.
+        close(fd);
+        os_remove(IObuff);
+      }
+    }
+  }
+
+  // Break symlinks and/or hardlinks if we've been asked to.
+  if ((bkc & BKC_BREAKSYMLINK) || (bkc & BKC_BREAKHARDLINK)) {
+#ifdef UNIX
+    bool file_info_link_ok = os_fileinfo_link(fname, &file_info);
+
+    // Symlinks.
+    if ((bkc & BKC_BREAKSYMLINK)
+        && file_info_link_ok
+        && !os_fileinfo_id_equal(&file_info, file_info_old)) {
+      *backup_copyp = false;
+    }
+
+    // Hardlinks.
+    if ((bkc & BKC_BREAKHARDLINK)
+        && os_fileinfo_hardlinks(file_info_old) > 1
+        && (!file_info_link_ok
+            || os_fileinfo_id_equal(&file_info, file_info_old))) {
+      *backup_copyp = false;
+    }
+#endif
+  }
+
+  // make sure we have a valid backup extension to use
+  char *backup_ext = *p_bex == NUL ? ".bak" : p_bex;
+
+  if (*backup_copyp) {
+    int some_error = false;
+
+    // Try to make the backup in each directory in the 'bdir' option.
+    //
+    // Unix semantics has it, that we may have a writable file,
+    // that cannot be recreated with a simple open(..., O_CREAT, ) e.g:
+    //  - the directory is not writable,
+    //  - the file may be a symbolic link,
+    //  - the file may belong to another user/group, etc.
+    //
+    // For these reasons, the existing writable file must be truncated
+    // and reused. Creation of a backup COPY will be attempted.
+    char *dirp = p_bdir;
+    while (*dirp) {
+      // Isolate one directory name, using an entry in 'bdir'.
+      size_t dir_len = copy_option_part(&dirp, IObuff, IOSIZE, ",");
+      char *p  = IObuff + dir_len;
+      bool trailing_pathseps = after_pathsep(IObuff, p) && p[-1] == p[-2];
+      if (trailing_pathseps) {
+        IObuff[dir_len - 2] = NUL;
+      }
+      if (*dirp == NUL && !os_isdir(IObuff)) {
+        int ret;
+        char *failed_dir;
+        if ((ret = os_mkdir_recurse(IObuff, 0755, &failed_dir)) != 0) {
+          semsg(_("E303: Unable to create directory \"%s\" for backup file: %s"),
+                failed_dir, os_strerror(ret));
+          xfree(failed_dir);
+        }
+      }
+      if (trailing_pathseps) {
+        // Ends with '//', Use Full path
+        if ((p = make_percent_swname(IObuff, fname))
+            != NULL) {
+          *backupp = modname(p, backup_ext, no_prepend_dot);
+          xfree(p);
+        }
+      }
+
+      char *rootname = get_file_in_dir(fname, IObuff);
+      if (rootname == NULL) {
+        some_error = true;                // out of memory
+        goto nobackup;
+      }
+
+      FileInfo file_info_new;
+      {
+        //
+        // Make the backup file name.
+        //
+        if (*backupp == NULL) {
+          *backupp = modname(rootname, backup_ext, no_prepend_dot);
+        }
+
+        if (*backupp == NULL) {
+          xfree(rootname);
+          some_error = true;                          // out of memory
+          goto nobackup;
+        }
+
+        // Check if backup file already exists.
+        if (os_fileinfo(*backupp, &file_info_new)) {
+          if (os_fileinfo_id_equal(&file_info_new, file_info_old)) {
+            //
+            // Backup file is same as original file.
+            // May happen when modname() gave the same file back (e.g. silly
+            // link). If we don't check here, we either ruin the file when
+            // copying or erase it after writing.
+            //
+            XFREE_CLEAR(*backupp);              // no backup file to delete
+          } else if (!p_bk) {
+            // We are not going to keep the backup file, so don't
+            // delete an existing one, and try to use another name instead.
+            // Change one character, just before the extension.
+            //
+            char *wp = *backupp + strlen(*backupp) - 1 - strlen(backup_ext);
+            if (wp < *backupp) {                // empty file name ???
+              wp = *backupp;
+            }
+            *wp = 'z';
+            while (*wp > 'a' && os_fileinfo(*backupp, &file_info_new)) {
+              (*wp)--;
+            }
+            // They all exist??? Must be something wrong.
+            if (*wp == 'a') {
+              XFREE_CLEAR(*backupp);
+            }
+          }
+        }
+      }
+      xfree(rootname);
+
+      // Try to create the backup file
+      if (*backupp != NULL) {
+        // remove old backup, if present
+        os_remove(*backupp);
+
+        // set file protection same as original file, but
+        // strip s-bit.
+        (void)os_setperm((const char *)(*backupp), perm & 0777);
+
+#ifdef UNIX
+        //
+        // Try to set the group of the backup same as the original file. If
+        // this fails, set the protection bits for the group same as the
+        // protection bits for others.
+        //
+        if (file_info_new.stat.st_gid != file_info_old->stat.st_gid
+            && os_chown(*backupp, (uv_uid_t)-1, (uv_gid_t)file_info_old->stat.st_gid) != 0) {
+          os_setperm((const char *)(*backupp),
+                     ((int)perm & 0707) | (((int)perm & 07) << 3));
+        }
+#endif
+
+        // copy the file
+        if (os_copy(fname, *backupp, UV_FS_COPYFILE_FICLONE) != 0) {
+          *err = set_err(_("E509: Cannot create backup file (add ! to override)"));
+          XFREE_CLEAR(*backupp);
+          *backupp = NULL;
+          continue;
+        }
+
+#ifdef UNIX
+        os_file_settime(*backupp,
+                        (double)file_info_old->stat.st_atim.tv_sec,
+                        (double)file_info_old->stat.st_mtim.tv_sec);
+#endif
+#ifdef HAVE_ACL
+        os_set_acl(*backupp, acl);
+#endif
+        *err = set_err(NULL);
+        break;
+      }
+    }
+
+nobackup:
+    if (*backupp == NULL && err->msg == NULL) {
+      *err = set_err(_("E509: Cannot create backup file (add ! to override)"));
+    }
+    // Ignore errors when forceit is true.
+    if ((some_error || err->msg != NULL) && !forceit) {
+      return FAIL;
+    }
+    *err = set_err(NULL);
+  } else {
+    // Make a backup by renaming the original file.
+
+    // If 'cpoptions' includes the "W" flag, we don't want to
+    // overwrite a read-only file.  But rename may be possible
+    // anyway, thus we need an extra check here.
+    if (file_readonly && vim_strchr(p_cpo, CPO_FWRITE) != NULL) {
+      *err = set_err_num("E504", _(err_readonly));
+      return FAIL;
+    }
+
+    // Form the backup file name - change path/fo.o.h to
+    // path/fo.o.h.bak Try all directories in 'backupdir', first one
+    // that works is used.
+    char *dirp = p_bdir;
+    while (*dirp) {
+      // Isolate one directory name and make the backup file name.
+      size_t dir_len = copy_option_part(&dirp, IObuff, IOSIZE, ",");
+      char *p = IObuff + dir_len;
+      bool trailing_pathseps = after_pathsep(IObuff, p) && p[-1] == p[-2];
+      if (trailing_pathseps) {
+        IObuff[dir_len - 2] = NUL;
+      }
+      if (*dirp == NUL && !os_isdir(IObuff)) {
+        int ret;
+        char *failed_dir;
+        if ((ret = os_mkdir_recurse(IObuff, 0755, &failed_dir)) != 0) {
+          semsg(_("E303: Unable to create directory \"%s\" for backup file: %s"),
+                failed_dir, os_strerror(ret));
+          xfree(failed_dir);
+        }
+      }
+      if (trailing_pathseps) {
+        // path ends with '//', use full path
+        if ((p = make_percent_swname(IObuff, fname))
+            != NULL) {
+          *backupp = modname(p, backup_ext, no_prepend_dot);
+          xfree(p);
+        }
+      }
+
+      if (*backupp == NULL) {
+        char *rootname = get_file_in_dir(fname, IObuff);
+        if (rootname == NULL) {
+          *backupp = NULL;
+        } else {
+          *backupp = modname(rootname, backup_ext, no_prepend_dot);
+          xfree(rootname);
+        }
+      }
+
+      if (*backupp != NULL) {
+        // If we are not going to keep the backup file, don't
+        // delete an existing one, try to use another name.
+        // Change one character, just before the extension.
+        if (!p_bk && os_path_exists(*backupp)) {
+          p = *backupp + strlen(*backupp) - 1 - strlen(backup_ext);
+          if (p < *backupp) {           // empty file name ???
+            p = *backupp;
+          }
+          *p = 'z';
+          while (*p > 'a' && os_path_exists(*backupp)) {
+            (*p)--;
+          }
+          // They all exist??? Must be something wrong!
+          if (*p == 'a') {
+            XFREE_CLEAR(*backupp);
+          }
+        }
+      }
+      if (*backupp != NULL) {
+        // Delete any existing backup and move the current version
+        // to the backup. For safety, we don't remove the backup
+        // until the write has finished successfully. And if the
+        // 'backup' option is set, leave it around.
+
+        // If the renaming of the original file to the backup file
+        // works, quit here.
+        ///
+        if (vim_rename(fname, *backupp) == 0) {
+          break;
+        }
+
+        XFREE_CLEAR(*backupp);             // don't do the rename below
+      }
+    }
+    if (*backupp == NULL && !forceit) {
+      *err = set_err(_("E510: Can't make backup file (add ! to override)"));
+      return FAIL;
+    }
+  }
+  return OK;
+}
+
 /// buf_write() - write to file "fname" lines "start" through "end"
 ///
 /// We do our own buffering here because fwrite() is so slow.
@@ -2582,10 +2900,8 @@ int buf_write(buf_T *buf, char *fname, char *sfname, linenr_T start, linenr_T en
   // Get information about original file (if there is one).
   FileInfo file_info_old;
 
-#ifdef HAVE_ACL
   vim_acl_T acl = NULL;                 // ACL copied from original file to
                                         // backup or new file
-#endif
 
   if (get_fileinfo(buf, fname, overwriting, forceit, &file_info_old, &perm, &device, &newfile,
                    &file_readonly, &err) == FAIL) {
@@ -2623,317 +2939,10 @@ int buf_write(buf_T *buf, char *fname, char *sfname, linenr_T start, linenr_T en
   // Do not make any backup, if 'writebackup' and 'backup' are both switched
   // off.  This helps when editing large files on almost-full disks.
   if (!(append && *p_pm == NUL) && !filtering && perm >= 0 && dobackup) {
-    FileInfo file_info;
-    const bool no_prepend_dot = false;
-
-    if ((bkc & BKC_YES) || append) {       // "yes"
-      backup_copy = true;
-    } else if ((bkc & BKC_AUTO)) {          // "auto"
-      // Don't rename the file when:
-      // - it's a hard link
-      // - it's a symbolic link
-      // - we don't have write permission in the directory
-      if (os_fileinfo_hardlinks(&file_info_old) > 1
-          || !os_fileinfo_link(fname, &file_info)
-          || !os_fileinfo_id_equal(&file_info, &file_info_old)) {
-        backup_copy = true;
-      } else {
-        // Check if we can create a file and set the owner/group to
-        // the ones from the original file.
-        // First find a file name that doesn't exist yet (use some
-        // arbitrary numbers).
-        STRCPY(IObuff, fname);
-        for (int i = 4913;; i += 123) {
-          char *tail = path_tail(IObuff);
-          size_t size = (size_t)(tail - IObuff);
-          snprintf(tail, IOSIZE - size, "%d", i);
-          if (!os_fileinfo_link(IObuff, &file_info)) {
-            break;
-          }
-        }
-        int fd = os_open(IObuff,
-                         O_CREAT|O_WRONLY|O_EXCL|O_NOFOLLOW, (int)perm);
-        if (fd < 0) {           // can't write in directory
-          backup_copy = true;
-        } else {
-#ifdef UNIX
-          os_fchown(fd, (uv_uid_t)file_info_old.stat.st_uid, (uv_gid_t)file_info_old.stat.st_gid);
-          if (!os_fileinfo(IObuff, &file_info)
-              || file_info.stat.st_uid != file_info_old.stat.st_uid
-              || file_info.stat.st_gid != file_info_old.stat.st_gid
-              || (long)file_info.stat.st_mode != perm) {
-            backup_copy = true;
-          }
-#endif
-          // Close the file before removing it, on MS-Windows we
-          // can't delete an open file.
-          close(fd);
-          os_remove(IObuff);
-        }
-      }
-    }
-
-    // Break symlinks and/or hardlinks if we've been asked to.
-    if ((bkc & BKC_BREAKSYMLINK) || (bkc & BKC_BREAKHARDLINK)) {
-#ifdef UNIX
-      bool file_info_link_ok = os_fileinfo_link(fname, &file_info);
-
-      // Symlinks.
-      if ((bkc & BKC_BREAKSYMLINK)
-          && file_info_link_ok
-          && !os_fileinfo_id_equal(&file_info, &file_info_old)) {
-        backup_copy = false;
-      }
-
-      // Hardlinks.
-      if ((bkc & BKC_BREAKHARDLINK)
-          && os_fileinfo_hardlinks(&file_info_old) > 1
-          && (!file_info_link_ok
-              || os_fileinfo_id_equal(&file_info, &file_info_old))) {
-        backup_copy = false;
-      }
-#endif
-    }
-
-    // make sure we have a valid backup extension to use
-    char *backup_ext = *p_bex == NUL ? ".bak" : p_bex;
-
-    if (backup_copy) {
-      int some_error = false;
-
-      // Try to make the backup in each directory in the 'bdir' option.
-      //
-      // Unix semantics has it, that we may have a writable file,
-      // that cannot be recreated with a simple open(..., O_CREAT, ) e.g:
-      //  - the directory is not writable,
-      //  - the file may be a symbolic link,
-      //  - the file may belong to another user/group, etc.
-      //
-      // For these reasons, the existing writable file must be truncated
-      // and reused. Creation of a backup COPY will be attempted.
-      char *dirp = p_bdir;
-      while (*dirp) {
-        // Isolate one directory name, using an entry in 'bdir'.
-        size_t dir_len = copy_option_part(&dirp, IObuff, IOSIZE, ",");
-        char *p  = IObuff + dir_len;
-        bool trailing_pathseps = after_pathsep(IObuff, p) && p[-1] == p[-2];
-        if (trailing_pathseps) {
-          IObuff[dir_len - 2] = NUL;
-        }
-        if (*dirp == NUL && !os_isdir(IObuff)) {
-          int ret;
-          char *failed_dir;
-          if ((ret = os_mkdir_recurse(IObuff, 0755, &failed_dir)) != 0) {
-            semsg(_("E303: Unable to create directory \"%s\" for backup file: %s"),
-                  failed_dir, os_strerror(ret));
-            xfree(failed_dir);
-          }
-        }
-        if (trailing_pathseps) {
-          // Ends with '//', Use Full path
-          if ((p = make_percent_swname(IObuff, fname))
-              != NULL) {
-            backup = modname(p, backup_ext, no_prepend_dot);
-            xfree(p);
-          }
-        }
-
-        char *rootname = get_file_in_dir(fname, IObuff);
-        if (rootname == NULL) {
-          some_error = true;                // out of memory
-          goto nobackup;
-        }
-
-        FileInfo file_info_new;
-        {
-          //
-          // Make the backup file name.
-          //
-          if (backup == NULL) {
-            backup = modname(rootname, backup_ext, no_prepend_dot);
-          }
-
-          if (backup == NULL) {
-            xfree(rootname);
-            some_error = true;                          // out of memory
-            goto nobackup;
-          }
-
-          // Check if backup file already exists.
-          if (os_fileinfo(backup, &file_info_new)) {
-            if (os_fileinfo_id_equal(&file_info_new, &file_info_old)) {
-              //
-              // Backup file is same as original file.
-              // May happen when modname() gave the same file back (e.g. silly
-              // link). If we don't check here, we either ruin the file when
-              // copying or erase it after writing.
-              //
-              XFREE_CLEAR(backup);              // no backup file to delete
-            } else if (!p_bk) {
-              // We are not going to keep the backup file, so don't
-              // delete an existing one, and try to use another name instead.
-              // Change one character, just before the extension.
-              //
-              char *wp = backup + strlen(backup) - 1 - strlen(backup_ext);
-              if (wp < backup) {                // empty file name ???
-                wp = backup;
-              }
-              *wp = 'z';
-              while (*wp > 'a' && os_fileinfo(backup, &file_info_new)) {
-                (*wp)--;
-              }
-              // They all exist??? Must be something wrong.
-              if (*wp == 'a') {
-                XFREE_CLEAR(backup);
-              }
-            }
-          }
-        }
-        xfree(rootname);
-
-        // Try to create the backup file
-        if (backup != NULL) {
-          // remove old backup, if present
-          os_remove(backup);
-
-          // set file protection same as original file, but
-          // strip s-bit.
-          (void)os_setperm((const char *)backup, perm & 0777);
-
-#ifdef UNIX
-          //
-          // Try to set the group of the backup same as the original file. If
-          // this fails, set the protection bits for the group same as the
-          // protection bits for others.
-          //
-          if (file_info_new.stat.st_gid != file_info_old.stat.st_gid
-              && os_chown(backup, (uv_uid_t)-1, (uv_gid_t)file_info_old.stat.st_gid) != 0) {
-            os_setperm((const char *)backup,
-                       ((int)perm & 0707) | (((int)perm & 07) << 3));
-          }
-#endif
-
-          // copy the file
-          if (os_copy(fname, backup, UV_FS_COPYFILE_FICLONE) != 0) {
-            err = set_err(_("E509: Cannot create backup file (add ! to override)"));
-            XFREE_CLEAR(backup);
-            backup = NULL;
-            continue;
-          }
-
-#ifdef UNIX
-          os_file_settime(backup,
-                          (double)file_info_old.stat.st_atim.tv_sec,
-                          (double)file_info_old.stat.st_mtim.tv_sec);
-#endif
-#ifdef HAVE_ACL
-          os_set_acl(backup, acl);
-#endif
-          err = set_err(NULL);
-          break;
-        }
-      }
-
-nobackup:
-      if (backup == NULL && err.msg == NULL) {
-        err = set_err(_("E509: Cannot create backup file (add ! to override)"));
-      }
-      // Ignore errors when forceit is true.
-      if ((some_error || err.msg != NULL) && !forceit) {
-        retval = FAIL;
-        goto fail;
-      }
-      err = set_err(NULL);
-    } else {
-      // Make a backup by renaming the original file.
-
-      // If 'cpoptions' includes the "W" flag, we don't want to
-      // overwrite a read-only file.  But rename may be possible
-      // anyway, thus we need an extra check here.
-      if (file_readonly && vim_strchr(p_cpo, CPO_FWRITE) != NULL) {
-        err = set_err_num("E504", _(err_readonly));
-        goto fail;
-      }
-
-      // Form the backup file name - change path/fo.o.h to
-      // path/fo.o.h.bak Try all directories in 'backupdir', first one
-      // that works is used.
-      char *dirp = p_bdir;
-      while (*dirp) {
-        // Isolate one directory name and make the backup file name.
-        size_t dir_len = copy_option_part(&dirp, IObuff, IOSIZE, ",");
-        char *p = IObuff + dir_len;
-        bool trailing_pathseps = after_pathsep(IObuff, p) && p[-1] == p[-2];
-        if (trailing_pathseps) {
-          IObuff[dir_len - 2] = NUL;
-        }
-        if (*dirp == NUL && !os_isdir(IObuff)) {
-          int ret;
-          char *failed_dir;
-          if ((ret = os_mkdir_recurse(IObuff, 0755, &failed_dir)) != 0) {
-            semsg(_("E303: Unable to create directory \"%s\" for backup file: %s"),
-                  failed_dir, os_strerror(ret));
-            xfree(failed_dir);
-          }
-        }
-        if (trailing_pathseps) {
-          // path ends with '//', use full path
-          if ((p = make_percent_swname(IObuff, fname))
-              != NULL) {
-            backup = modname(p, backup_ext, no_prepend_dot);
-            xfree(p);
-          }
-        }
-
-        if (backup == NULL) {
-          char *rootname = get_file_in_dir(fname, IObuff);
-          if (rootname == NULL) {
-            backup = NULL;
-          } else {
-            backup = modname(rootname, backup_ext, no_prepend_dot);
-            xfree(rootname);
-          }
-        }
-
-        if (backup != NULL) {
-          // If we are not going to keep the backup file, don't
-          // delete an existing one, try to use another name.
-          // Change one character, just before the extension.
-          if (!p_bk && os_path_exists(backup)) {
-            p = backup + strlen(backup) - 1 - strlen(backup_ext);
-            if (p < backup) {           // empty file name ???
-              p = backup;
-            }
-            *p = 'z';
-            while (*p > 'a' && os_path_exists(backup)) {
-              (*p)--;
-            }
-            // They all exist??? Must be something wrong!
-            if (*p == 'a') {
-              XFREE_CLEAR(backup);
-            }
-          }
-        }
-        if (backup != NULL) {
-          // Delete any existing backup and move the current version
-          // to the backup. For safety, we don't remove the backup
-          // until the write has finished successfully. And if the
-          // 'backup' option is set, leave it around.
-
-          // If the renaming of the original file to the backup file
-          // works, quit here.
-          ///
-          if (vim_rename(fname, backup) == 0) {
-            break;
-          }
-
-          XFREE_CLEAR(backup);             // don't do the rename below
-        }
-      }
-      if (backup == NULL && !forceit) {
-        err = set_err(_("E510: Can't make backup file (add ! to override)"));
-        goto fail;
-      }
+    if (buf_write_make_backup(fname, append, &file_info_old, acl, perm, bkc, file_readonly, forceit,
+                              &backup_copy, &backup, &err) == FAIL) {
+      retval = FAIL;
+      goto fail;
     }
   }
 
