@@ -1,5 +1,5 @@
 require('test.compat')
-local shared = require('vim.shared')
+local shared = vim
 local assert = require('luassert')
 local busted = require('busted')
 local luv = require('luv')

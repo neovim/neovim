@@ -1,14 +1,11 @@
-require('coxpcall')
 local luv = require('luv')
 local lfs = require('lfs')
-local mpack = require('mpack')
 local global_helpers = require('test.helpers')
 
--- nvim client: Found in .deps/usr/share/lua/<version>/nvim/ if "bundled".
-local Session = require('nvim.session')
-local TcpStream = require('nvim.tcp_stream')
-local SocketStream = require('nvim.socket_stream')
-local ChildProcessStream = require('nvim.child_process_stream')
+local Session = require('test.client.session')
+local uv_stream = require('test.client.uv_stream')
+local SocketStream = uv_stream.SocketStream
+local ChildProcessStream = uv_stream.ChildProcessStream
 
 local check_cores = global_helpers.check_cores
 local check_logs = global_helpers.check_logs
@@ -23,7 +20,6 @@ local tbl_contains = global_helpers.tbl_contains
 local fail = global_helpers.fail
 
 local module = {
-  NIL = mpack.NIL,
   mkdir = lfs.mkdir,
 }
 
@@ -202,7 +198,7 @@ function module.expect_msg_seq(...)
 end
 
 local function call_and_stop_on_error(lsession, ...)
-  local status, result = copcall(...)  -- luacheck: ignore
+  local status, result = Session.safe_pcall(...)  -- luacheck: ignore
   if not status then
     lsession:stop()
     last_error = result
@@ -428,7 +424,7 @@ end
 -- Creates a new Session connected by domain socket (named pipe) or TCP.
 function module.connect(file_or_address)
   local addr, port = string.match(file_or_address, "(.*):(%d+)")
-  local stream = (addr and port) and TcpStream.open(addr, port) or
+  local stream = (addr and port) and SocketStream.connect(addr, port) or
     SocketStream.open(file_or_address)
   return Session.new(stream)
 end
