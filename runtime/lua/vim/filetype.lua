@@ -569,6 +569,7 @@ local extension = {
   libsonnet = 'jsonnet',
   jsp = 'jsp',
   jl = 'julia',
+  kdl = 'kdl',
   kv = 'kivy',
   kix = 'kix',
   kts = 'kotlin',
