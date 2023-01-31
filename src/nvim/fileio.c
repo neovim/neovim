@@ -2252,6 +2252,35 @@ static int buf_write_do_autocmds(buf_T *buf, char **fnamep, char **sfnamep, char
   return NOTDONE;
 }
 
+static void buf_write_do_post_autocmds(buf_T *buf, char *fname, exarg_T *eap, bool append,
+                                       bool filtering, bool reset_changed, bool whole)
+{
+  aco_save_T aco;
+
+  curbuf->b_no_eol_lnum = 0;      // in case it was set by the previous read
+
+  // Apply POST autocommands.
+  // Careful: The autocommands may call buf_write() recursively!
+  aucmd_prepbuf(&aco, buf);
+
+  if (append) {
+    apply_autocmds_exarg(EVENT_FILEAPPENDPOST, fname, fname,
+                         false, curbuf, eap);
+  } else if (filtering) {
+    apply_autocmds_exarg(EVENT_FILTERWRITEPOST, NULL, fname,
+                         false, curbuf, eap);
+  } else if (reset_changed && whole) {
+    apply_autocmds_exarg(EVENT_BUFWRITEPOST, fname, fname,
+                         false, curbuf, eap);
+  } else {
+    apply_autocmds_exarg(EVENT_FILEWRITEPOST, fname, fname,
+                         false, curbuf, eap);
+  }
+
+  // restore curwin/curbuf and a few other things
+  aucmd_restbuf(&aco);
+}
+
 static inline Error_T set_err_num(const char *num, const char *msg)
 {
   return (Error_T){ .num = num, .msg = (char *)msg, .arg = 0 };
@@ -3555,31 +3584,7 @@ nofail:
   }
 
   if (!should_abort(retval)) {
-    aco_save_T aco;
-
-    curbuf->b_no_eol_lnum = 0;      // in case it was set by the previous read
-
-    // Apply POST autocommands.
-    // Careful: The autocommands may call buf_write() recursively!
-    aucmd_prepbuf(&aco, buf);
-
-    if (append) {
-      apply_autocmds_exarg(EVENT_FILEAPPENDPOST, fname, fname,
-                           false, curbuf, eap);
-    } else if (filtering) {
-      apply_autocmds_exarg(EVENT_FILTERWRITEPOST, NULL, fname,
-                           false, curbuf, eap);
-    } else if (reset_changed && whole) {
-      apply_autocmds_exarg(EVENT_BUFWRITEPOST, fname, fname,
-                           false, curbuf, eap);
-    } else {
-      apply_autocmds_exarg(EVENT_FILEWRITEPOST, fname, fname,
-                           false, curbuf, eap);
-    }
-
-    // restore curwin/curbuf and a few other things
-    aucmd_restbuf(&aco);
-
+    buf_write_do_post_autocmds(buf, fname, eap, append, filtering, reset_changed, whole);
     if (aborting()) {       // autocmds may abort script processing
       retval = false;
     }
