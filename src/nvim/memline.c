@@ -117,7 +117,7 @@ struct pointer_block {
   uint16_t pb_id;               // ID for pointer block: PTR_ID
   uint16_t pb_count;            // number of pointers in this block
   uint16_t pb_count_max;        // maximum value for pb_count
-  PTR_EN pb_pointer[1];         // list of pointers to blocks (actually longer)
+  PTR_EN pb_pointer[];          // list of pointers to blocks
                                 // followed by empty space until end of page
 };
 
@@ -133,7 +133,7 @@ struct data_block {
   unsigned db_txt_end;          // byte just after data block
   // linenr_T db_line_count;
   long db_line_count;           // number of lines in this block
-  unsigned db_index[1];         // index for start of line (actually bigger)
+  unsigned db_index[];          // index for start of line
                                 // followed by empty space up to db_txt_start
                                 // followed by the text in the lines until
                                 // end of page

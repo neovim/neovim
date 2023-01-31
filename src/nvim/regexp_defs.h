@@ -102,7 +102,7 @@ typedef struct {
   char_u *regmust;
   int regmlen;
   char_u reghasz;
-  char_u program[1];                    // actually longer..
+  char_u program[];
 } bt_regprog_T;
 
 // Structure representing a NFA state.
@@ -138,7 +138,7 @@ typedef struct {
   char *pattern;
   int nsubexp;                          // number of ()
   int nstate;
-  nfa_state_T state[1];                 // actually longer..
+  nfa_state_T state[];
 } nfa_regprog_T;
 
 // Structure to be used for single-line matching.

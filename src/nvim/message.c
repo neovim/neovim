@@ -64,7 +64,7 @@ struct msgchunk_S {
   char sb_eol;                  // true when line ends after this text
   int sb_msg_col;               // column in which text starts
   int sb_attr;                  // text attributes
-  char sb_text[1];              // text to be displayed, actually longer
+  char sb_text[];               // text to be displayed
 };
 
 // Magic chars used in confirm dialog strings

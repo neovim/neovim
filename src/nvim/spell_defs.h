@@ -243,7 +243,7 @@ typedef enum {
 
 typedef struct wordcount_S {
   uint16_t wc_count;                ///< nr of times word was seen
-  char_u wc_word[1];                ///< word, actually longer
+  char_u wc_word[];                 ///< word
 } wordcount_T;
 
 #define WC_KEY_OFF   offsetof(wordcount_T, wc_word)
