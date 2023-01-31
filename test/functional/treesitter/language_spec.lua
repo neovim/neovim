@@ -31,6 +31,11 @@ describe('treesitter language API', function()
        pcall_err(exec_lua, 'vim.treesitter.require_language("c", nil, false, "borklang")'))
   end)
 
+  it('shows error for invalid language name', function()
+    eq(".../language.lua:0: '/foo/' is not a valid language name",
+      pcall_err(exec_lua, 'vim.treesitter.require_language("/foo/", nil, false)'))
+  end)
+
   it('inspects language', function()
     local keys, fields, symbols = unpack(exec_lua([[
       local lang = vim.treesitter.inspect_language('c')

@@ -684,6 +684,7 @@ require_language({lang}, {path}, {silent}, {symbol_name})
 
     Parameters: ~
       • {lang}         (string) Language the parser should parse
+                       (alphanumerical and `_` only)
       • {path}         (string|nil) Optional path the parser is located at
       • {silent}       (boolean|nil) Don't throw an error if language not
                        found
