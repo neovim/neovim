@@ -125,6 +125,8 @@ typedef struct {
   bool alloc;
 } Error_T;
 
+static char *err_readonly = "is read-only (cannot override: \"W\" in 'cpoptions')";
+
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "fileio.c.generated.h"
 #endif
@@ -2314,6 +2316,111 @@ static void emit_err(Error_T *e)
   }
 }
 
+#if defined(UNIX)
+
+static int get_fileinfo_os(char *fname, FileInfo *file_info_old, bool overwriting, long *perm,
+                           bool *device, bool *newfile, Error_T *err)
+{
+  *perm = -1;
+  if (!os_fileinfo(fname, file_info_old)) {
+    *newfile = true;
+  } else {
+    *perm = (long)file_info_old->stat.st_mode;
+    if (!S_ISREG(file_info_old->stat.st_mode)) {             // not a file
+      if (S_ISDIR(file_info_old->stat.st_mode)) {
+        *err = set_err_num("E502", _("is a directory"));
+        return FAIL;
+      }
+      if (os_nodetype(fname) != NODE_WRITABLE) {
+        *err = set_err_num("E503", _("is not a file or writable device"));
+        return FAIL;
+      }
+      // It's a device of some kind (or a fifo) which we can write to
+      // but for which we can't make a backup.
+      *device = true;
+      *newfile = true;
+      *perm = -1;
+    }
+  }
+  return OK;
+}
+
+#else
+
+static int get_fileinfo_os(char *fname, FileInfo *file_info_old, bool overwriting, long *perm,
+                           bool *device, bool *newfile, Error_T *err)
+{
+  // Check for a writable device name.
+  char nodetype = fname == NULL ? NODE_OTHER : (char)os_nodetype(fname);
+  if (nodetype == NODE_OTHER) {
+    *err = set_err_num("E503", _("is not a file or writable device"));
+    return FAIL;
+  }
+  if (nodetype == NODE_WRITABLE) {
+    *device = true;
+    *newfile = true;
+    *perm = -1;
+  } else {
+    *perm = os_getperm((const char *)fname);
+    if (*perm < 0) {
+      *newfile = true;
+    } else if (os_isdir(fname)) {
+      *err = set_err_num("E502", _("is a directory"));
+      return FAIL;
+    }
+    if (overwriting) {
+      os_fileinfo(fname, file_info_old);
+    }
+  }
+  return OK;
+}
+
+#endif
+
+/// @param buf
+/// @param fname          File name
+/// @param overwriting
+/// @param forceit
+/// @param[out] file_info_old
+/// @param[out] perm
+/// @param[out] device
+/// @param[out] newfile
+/// @param[out] readonly
+static int get_fileinfo(buf_T *buf, char *fname, bool overwriting, bool forceit,
+                        FileInfo *file_info_old, long *perm, bool *device, bool *newfile,
+                        bool *readonly, Error_T *err)
+{
+  if (get_fileinfo_os(fname, file_info_old, overwriting, perm, device, newfile, err) == FAIL) {
+    return FAIL;
+  }
+
+  *readonly = false;  // overwritten file is read-only
+
+  if (!*device && !*newfile) {
+    // Check if the file is really writable (when renaming the file to
+    // make a backup we won't discover it later).
+    *readonly = !os_file_is_writable(fname);
+
+    if (!forceit && *readonly) {
+      if (vim_strchr(p_cpo, CPO_FWRITE) != NULL) {
+        *err = set_err_num("E504", _(err_readonly));
+      } else {
+        *err = set_err_num("E505", _("is read-only (add ! to override)"));
+      }
+      return FAIL;
+    }
+
+    // If 'forceit' is false, check if the timestamp hasn't changed since reading the file.
+    if (overwriting && !forceit) {
+      int retval = check_mtime(buf, file_info_old);
+      if (retval == FAIL) {
+        return FAIL;
+      }
+    }
+  }
+  return OK;
+}
+
 /// buf_write() - write to file "fname" lines "start" through "end"
 ///
 /// We do our own buffering here because fwrite() is so slow.
@@ -2338,8 +2445,6 @@ int buf_write(buf_T *buf, char *fname, char *sfname, linenr_T start, linenr_T en
   int retval = OK;
   int msg_save = msg_scroll;
   int prev_got_int = got_int;
-  static char *err_readonly =
-    "is read-only (cannot override: \"W\" in 'cpoptions')";
   // writing everything
   int whole = (start == 1 && end == buf->b_ml.ml_line_count);
   int write_undo_file = false;
@@ -2467,8 +2572,10 @@ int buf_write(buf_T *buf, char *fname, char *sfname, linenr_T start, linenr_T en
   }
 
   Error_T err = { 0 };
-  int newfile = false;  // true if file doesn't exist yet
-  int device = false;  // writing to a device
+  long perm;             // file permissions
+  bool newfile = false;  // true if file doesn't exist yet
+  bool device = false;   // writing to a device
+  bool file_readonly = false;  // overwritten file is read-only
   char *backup = NULL;
   char *fenc_tofree = NULL;   // allocated "fenc"
 
@@ -2480,77 +2587,9 @@ int buf_write(buf_T *buf, char *fname, char *sfname, linenr_T start, linenr_T en
                                         // backup or new file
 #endif
 
-  long perm;  // file permissions
-#if defined(UNIX)
-  perm = -1;
-  if (!os_fileinfo(fname, &file_info_old)) {
-    newfile = true;
-  } else {
-    perm = (long)file_info_old.stat.st_mode;
-    if (!S_ISREG(file_info_old.stat.st_mode)) {             // not a file
-      if (S_ISDIR(file_info_old.stat.st_mode)) {
-        err = set_err_num("E502", _("is a directory"));
-        goto fail;
-      }
-      if (os_nodetype(fname) != NODE_WRITABLE) {
-        err = set_err_num("E503", _("is not a file or writable device"));
-        goto fail;
-      }
-      // It's a device of some kind (or a fifo) which we can write to
-      // but for which we can't make a backup.
-      device = true;
-      newfile = true;
-      perm = -1;
-    }
-  }
-#else  // win32
-  // Check for a writable device name.
-  char nodetype = fname == NULL ? NODE_OTHER : os_nodetype(fname);
-  if (nodetype == NODE_OTHER) {
-    err = set_err_num("E503", _("is not a file or writable device"));
+  if (get_fileinfo(buf, fname, overwriting, forceit, &file_info_old, &perm, &device, &newfile,
+                   &file_readonly, &err) == FAIL) {
     goto fail;
-  }
-  if (nodetype == NODE_WRITABLE) {
-    device = true;
-    newfile = true;
-    perm = -1;
-  } else {
-    perm = os_getperm((const char *)fname);
-    if (perm < 0) {
-      newfile = true;
-    } else if (os_isdir(fname)) {
-      err = set_err_num("E502", _("is a directory"));
-      goto fail;
-    }
-    if (overwriting) {
-      os_fileinfo(fname, &file_info_old);
-    }
-  }
-#endif  // !UNIX
-
-  bool file_readonly = false;  // overwritten file is read-only
-
-  if (!device && !newfile) {
-    // Check if the file is really writable (when renaming the file to
-    // make a backup we won't discover it later).
-    file_readonly = !os_file_is_writable(fname);
-
-    if (!forceit && file_readonly) {
-      if (vim_strchr(p_cpo, CPO_FWRITE) != NULL) {
-        err = set_err_num("E504", _(err_readonly));
-      } else {
-        err = set_err_num("E505", _("is read-only (add ! to override)"));
-      }
-      goto fail;
-    }
-
-    // If 'forceit' is false, check if the timestamp hasn't changed since reading the file.
-    if (overwriting && !forceit) {
-      retval = check_mtime(buf, &file_info_old);
-      if (retval == FAIL) {
-        goto fail;
-      }
-    }
   }
 
 #ifdef HAVE_ACL
@@ -3407,37 +3446,37 @@ restore_backup:
 #endif
   if (!filtering) {
     add_quoted_fname(IObuff, IOSIZE, buf, (const char *)fname);
-    char c = false;
+    bool insert_space = false;
     if (write_info.bw_conv_error) {
       STRCAT(IObuff, _(" CONVERSION ERROR"));
-      c = true;
+      insert_space = true;
       if (write_info.bw_conv_error_lnum != 0) {
         vim_snprintf_add(IObuff, IOSIZE, _(" in line %" PRId64 ";"),
                          (int64_t)write_info.bw_conv_error_lnum);
       }
     } else if (notconverted) {
       STRCAT(IObuff, _("[NOT converted]"));
-      c = true;
+      insert_space = true;
     } else if (converted) {
       STRCAT(IObuff, _("[converted]"));
-      c = true;
+      insert_space = true;
     }
     if (device) {
       STRCAT(IObuff, _("[Device]"));
-      c = true;
+      insert_space = true;
     } else if (newfile) {
       STRCAT(IObuff, new_file_message());
-      c = true;
+      insert_space = true;
     }
     if (no_eol) {
       msg_add_eol();
-      c = true;
+      insert_space = true;
     }
     // may add [unix/dos/mac]
     if (msg_add_fileformat(fileformat)) {
-      c = true;
+      insert_space = true;
     }
-    msg_add_lines(c, (long)lnum, nchars);       // add line/char count
+    msg_add_lines(insert_space, (long)lnum, nchars);       // add line/char count
     if (!shortmess(SHM_WRITE)) {
       if (append) {
         STRCAT(IObuff, shortmess(SHM_WRI) ? _(" [a]") : _(" appended"));
