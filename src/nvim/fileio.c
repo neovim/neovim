@@ -3090,14 +3090,12 @@ nobackup:
       // quotum for number of files).
       // Appending will fail if the file does not exist and forceit is
       // false.
-      while ((fd = os_open(wfname,
-                           O_WRONLY |
-                           (append
-                            ? (forceit
-                               ? (O_APPEND | O_CREAT)
-                               : O_APPEND)
-                            : (O_CREAT | O_TRUNC)),
-                           perm < 0 ? 0666 : (perm & 0777))) < 0) {
+      const int fflags = O_WRONLY | (append
+                                     ? (forceit ? (O_APPEND | O_CREAT) : O_APPEND)
+                                     : (O_CREAT | O_TRUNC));
+      const int mode = perm < 0 ? 0666 : (perm & 0777);
+
+      while ((fd = os_open(wfname, fflags, mode)) < 0) {
         // A forced write will try to create a new file if the old one
         // is still readonly. This may also happen when the directory
         // is read-only. In that case the mch_remove() will fail.
