@@ -34,7 +34,7 @@
 #endif
 
 #ifndef FTPLUGIN_FILE
-# define FTPLUGIN_FILE  "ftplugin.vim"
+# define FTPLUGIN_FILE  "ftplugin.lua ftplugin.vim"
 #endif
 
 #ifndef INDENT_FILE
