@@ -6,7 +6,7 @@ local M = {}
 ---
 --- Parsers are searched in the `parser` runtime directory, or the provided {path}
 ---
----@param lang string Language the parser should parse
+---@param lang string Language the parser should parse (alphanumerical and `_` only)
 ---@param path (string|nil) Optional path the parser is located at
 ---@param silent (boolean|nil) Don't throw an error if language not found
 ---@param symbol_name (string|nil) Internal symbol name for the language to load
@@ -16,13 +16,19 @@ function M.require_language(lang, path, silent, symbol_name)
     return true
   end
   if path == nil then
-    local fname = 'parser/' .. vim.fn.fnameescape(lang) .. '.*'
+    if not (lang and lang:match('[%w_]+') == lang) then
+      if silent then
+        return false
+      end
+      error("'" .. lang .. "' is not a valid language name")
+    end
+
+    local fname = 'parser/' .. lang .. '.*'
     local paths = a.nvim_get_runtime_file(fname, false)
     if #paths == 0 then
       if silent then
         return false
       end
-
       error("no parser for '" .. lang .. "' language, see :help treesitter-parsers")
     end
     path = paths[1]
