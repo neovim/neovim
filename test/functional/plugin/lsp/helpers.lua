@@ -80,17 +80,14 @@ M.fake_lsp_logfile = 'Xtest-fake-lsp.log'
 local function fake_lsp_server_setup(test_name, timeout_ms, options, settings)
   exec_lua([=[
     lsp = require('vim.lsp')
-    local test_name, fixture_filename, logfile, timeout, options, settings = ...
+    local test_name, fake_lsp_code, fake_lsp_logfile, timeout, options, settings = ...
     TEST_RPC_CLIENT_ID = lsp.start_client {
       cmd_env = {
-        NVIM_LOG_FILE = logfile;
+        NVIM_LOG_FILE = fake_lsp_logfile;
         NVIM_LUA_NOTRACK = "1";
       };
       cmd = {
-        vim.v.progpath, '-Es', '-u', 'NONE', '--headless',
-        "-c", string.format("lua TEST_NAME = %q", test_name),
-        "-c", string.format("lua TIMEOUT = %d", timeout),
-        "-c", "luafile "..fixture_filename,
+        vim.v.progpath, '-l', fake_lsp_code, test_name, tostring(timeout),
       };
       handlers = setmetatable({}, {
         __index = function(t, method)

@@ -46,16 +46,14 @@ describe('LSP', function()
     local test_name = "basic_init"
     exec_lua([=[
       lsp = require('vim.lsp')
-      local test_name, fixture_filename, logfile = ...
+      local test_name, fake_lsp_code, fake_lsp_logfile = ...
       function test__start_client()
         return lsp.start_client {
           cmd_env = {
-            NVIM_LOG_FILE = logfile;
+            NVIM_LOG_FILE = fake_lsp_logfile;
           };
           cmd = {
-            vim.v.progpath, '-Es', '-u', 'NONE', '--headless',
-            "-c", string.format("lua TEST_NAME = %q", test_name),
-            "-c", "luafile "..fixture_filename;
+            vim.v.progpath, '-l', fake_lsp_code, test_name;
           };
           workspace_folders = {{
               uri = 'file://' .. vim.loop.cwd(),
