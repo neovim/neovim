@@ -12,7 +12,7 @@ local multiqueue = cimport("./test/unit/fixtures/multiqueue.h")
 local ui_client = cimport("./src/nvim/ui_client.h")
 
 itp('handle_background_color', function()
-  local handle_background_color = cinput.ut_handle_background_color
+  local handle_background_color = cinput.handle_background_color
   local term_input = ffi.new('TermInput', {})
   local events = globals.main_loop.thread_events
   local kIncomplete = cinput.kIncomplete

@@ -370,7 +370,7 @@ endif()
 if(BUSTED_PRG)
   get_target_property(TEST_INCLUDE_DIRS main_lib INTERFACE_INCLUDE_DIRECTORIES)
 
-  set(UNITTEST_PREREQS nvim-test)
+  set(UNITTEST_PREREQS nvim)
   set(FUNCTIONALTEST_PREREQS nvim printenv-test printargs-test shell-test pwsh-test streams-test tty-test ${GENERATED_HELP_TAGS})
   set(BENCHMARK_PREREQS nvim tty-test)
 
@@ -380,6 +380,7 @@ if(BUSTED_PRG)
       COMMAND ${CMAKE_COMMAND}
         -DBUSTED_PRG=${BUSTED_PRG}
         -DLUA_PRG=${LUA_PRG}
+        -DNVIM_PRG=$<TARGET_FILE:nvim>
         -DWORKING_DIR=${CMAKE_CURRENT_SOURCE_DIR}
         -DBUSTED_OUTPUT_TYPE=${BUSTED_OUTPUT_TYPE}
         -DTEST_DIR=${CMAKE_CURRENT_SOURCE_DIR}/test
@@ -394,11 +395,6 @@ if(BUSTED_PRG)
     message(WARNING "disabling unit tests: no Luajit FFI in ${LUA_PRG}")
   endif()
 
-  if(LUA_HAS_FFI)
-    set(TEST_LIBNVIM_PATH $<TARGET_FILE:nvim-test>)
-  else()
-    set(TEST_LIBNVIM_PATH "")
-  endif()
   configure_file(
     ${CMAKE_SOURCE_DIR}/test/cmakeconfig/paths.lua.in
     ${CMAKE_BINARY_DIR}/test/cmakeconfig/paths.lua.gen)

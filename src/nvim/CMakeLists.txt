@@ -52,7 +52,7 @@ if(PREFER_LUA)
   find_package(Lua 5.1 EXACT REQUIRED)
   target_include_directories(main_lib SYSTEM BEFORE INTERFACE ${LUA_INCLUDE_DIR})
   target_link_libraries(main_lib INTERFACE ${LUA_LIBRARIES})
-  # Passive (not REQUIRED): if LUAJIT_FOUND is not set, nvim-test is skipped.
+  # Passive (not REQUIRED): if LUAJIT_FOUND is not set, fixtures for unittests is skipped.
   find_package(LuaJit)
 else()
   find_package(LuaJit REQUIRED)
@@ -679,6 +679,14 @@ if(UNIX)
   endif()
 endif()
 
+if(NOT LUAJIT_FOUND)
+  message(STATUS "luajit not found, skipping unit tests")
+elseif(CMAKE_BUILD_TYPE MATCHES Debug)
+  glob_wrapper(UNIT_TEST_FIXTURES ${PROJECT_SOURCE_DIR}/test/unit/fixtures/*.c)
+  list(APPEND NVIM_SOURCES ${UNIT_TEST_FIXTURES})
+  target_compile_definitions(main_lib INTERFACE UNIT_TESTING)
+endif()
+
 target_sources(nvim PRIVATE ${NVIM_GENERATED_FOR_SOURCES} ${NVIM_GENERATED_FOR_HEADERS}
   ${NVIM_GENERATED_SOURCES} ${NVIM_SOURCES} ${NVIM_HEADERS}
   ${EXTERNAL_SOURCES} ${EXTERNAL_HEADERS})
@@ -836,27 +844,6 @@ set_target_properties(
 )
 target_compile_definitions(libnvim PRIVATE MAKE_LIB)
 target_link_libraries(libnvim PRIVATE main_lib PUBLIC libuv_lib)
-
-if(NOT LUAJIT_FOUND)
-  message(STATUS "luajit not found, skipping nvim-test (unit tests) target")
-else()
-  glob_wrapper(UNIT_TEST_FIXTURES ${PROJECT_SOURCE_DIR}/test/unit/fixtures/*.c)
-  add_library(
-    nvim-test
-    MODULE
-    EXCLUDE_FROM_ALL
-    ${NVIM_SOURCES} ${NVIM_GENERATED_SOURCES}
-    ${NVIM_HEADERS} ${NVIM_GENERATED_FOR_SOURCES} ${NVIM_GENERATED_FOR_HEADERS}
-    ${EXTERNAL_SOURCES} ${EXTERNAL_HEADERS}
-    ${UNIT_TEST_FIXTURES}
-  )
-  target_link_libraries(nvim-test PRIVATE ${LUAJIT_LIBRARIES} main_lib PUBLIC libuv_lib)
-  if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
-    target_link_libraries(nvim-test PRIVATE "-framework CoreServices")
-  endif()
-  target_include_directories(nvim-test PRIVATE ${LUAJIT_INCLUDE_DIRS})
-  target_compile_definitions(nvim-test PRIVATE UNIT_TESTING)
-endif()
 
 if(CLANG_ASAN_UBSAN)
   message(STATUS "Enabling Clang address sanitizer and undefined behavior sanitizer for nvim.")

@@ -16,8 +16,7 @@ build_make() {
 }
 
 build_deps() {
-  if test "${FUNCTIONALTEST}" = "functionaltest-lua" \
-     || test "${CLANG_SANITIZER}" = "ASAN_UBSAN" ; then
+  if test "${FUNCTIONALTEST}" = "functionaltest-lua" ; then
     DEPS_CMAKE_FLAGS="${DEPS_CMAKE_FLAGS} -DUSE_BUNDLED_LUA=ON"
   fi
 
@@ -65,13 +64,6 @@ build_nvim() {
     echo "Building libnvim."
     if ! top_make libnvim ; then
       exit 1
-    fi
-
-    if test "${FUNCTIONALTEST}" != "functionaltest-lua"; then
-      echo "Building nvim-test."
-      if ! top_make nvim-test ; then
-        exit 1
-      fi
     fi
   fi
 

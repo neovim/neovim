@@ -1182,7 +1182,7 @@ static size_t check_node(MarkTree *b, mtnode_t *x, mtpos_t *last, bool *last_rig
         assert(x->ptr[i] != x->ptr[j]);
       }
     }
-  } else {
+  } else if (x->n > 0) {
     *last = x->key[x->n - 1].pos;
   }
   return n_keys;

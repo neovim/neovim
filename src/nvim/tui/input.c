@@ -117,14 +117,6 @@ static const struct kitty_key_map_entry {
 
 static Map(KittyKey, cstr_t) kitty_key_map = MAP_INIT;
 
-#ifndef UNIT_TESTING
-typedef enum {
-  kIncomplete = -1,
-  kNotApplicable = 0,
-  kComplete = 1,
-} HandleState;
-#endif
-
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "tui/input.c.generated.h"
 #endif
@@ -584,7 +576,7 @@ static void set_bg(char *bgvalue)
 // ignored in the calculations.
 //
 // [1] https://en.wikipedia.org/wiki/Luma_%28video%29
-static HandleState handle_background_color(TermInput *input)
+HandleState handle_background_color(TermInput *input)
 {
   if (input->waiting_for_bg_response <= 0) {
     return kNotApplicable;
@@ -669,12 +661,6 @@ static HandleState handle_background_color(TermInput *input)
   }
   return kComplete;
 }
-#ifdef UNIT_TESTING
-HandleState ut_handle_background_color(TermInput *input)
-{
-  return handle_background_color(input);
-}
-#endif
 
 static void handle_raw_buffer(TermInput *input, bool force)
 {
