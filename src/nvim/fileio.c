@@ -389,13 +389,18 @@ int readfile(char *fname, char *sfname, linenr_T from, linenr_T lines_to_skip,
     perm = os_getperm(fname);
     // On Unix it is possible to read a directory, so we have to
     // check for it before os_open().
+
+#ifdef OPEN_CHR_FILES
+# define IS_CHR_DEV(perm, fname) S_ISCHR(perm) && is_dev_fd_file(fname)
+#else
+# define IS_CHR_DEV(perm, fname) false
+#endif
+
     if (perm >= 0 && !S_ISREG(perm)                 // not a regular file ...
         && !S_ISFIFO(perm)                          // ... or fifo
         && !S_ISSOCK(perm)                          // ... or socket
-#ifdef OPEN_CHR_FILES
-        && !(S_ISCHR(perm) && is_dev_fd_file(fname))
+        && !(IS_CHR_DEV(perm, fname))
         // ... or a character special file named /dev/fd/<n>
-#endif
         ) {
       if (S_ISDIR(perm)) {
         if (!silent) {
@@ -513,15 +518,18 @@ int readfile(char *fname, char *sfname, linenr_T from, linenr_T lines_to_skip,
       }
       return OK;                  // a new file is not an error
     }
-    filemess(curbuf, sfname, ((fd == UV_EFBIG) ? _("[File too big]") :
 #if defined(UNIX) && defined(EOVERFLOW)
+    filemess(curbuf, sfname, ((fd == UV_EFBIG) ? _("[File too big]") :
                               // libuv only returns -errno
                               // in Unix and in Windows
                               // open() does not set
                               // EOVERFLOW
                               (fd == -EOVERFLOW) ? _("[File too big]") :
-#endif
                               _("[Permission Denied]")), 0);
+#else
+    filemess(curbuf, sfname, ((fd == UV_EFBIG) ? _("[File too big]") :
+                              _("[Permission Denied]")), 0);
+#endif
     curbuf->b_p_ro = true;                  // must use "w!" now
 
     return FAIL;
@@ -2865,13 +2873,12 @@ int buf_write(buf_T *buf, char *fname, char *sfname, linenr_T start, linenr_T en
     msg_scroll = true;              // don't overwrite previous file message
   }
   if (!filtering) {
-    filemess(buf,
+    // show that we are busy
 #ifndef UNIX
-             sfname,
+    filemess(buf, sfname, "", 0);
 #else
-             fname,
+    filemess(buf, fname, "", 0);
 #endif
-             "", 0);               // show that we are busy
   }
   msg_scroll = false;               // always overwrite the file message now
 
@@ -3114,29 +3121,32 @@ int buf_write(buf_T *buf, char *fname, char *sfname, linenr_T start, linenr_T en
                   && !os_fileinfo_id_equal(&file_info, &file_info_old))) {
             err = set_err(_("E166: Can't open linked file for writing"));
           } else {
-#endif
+            err = set_err_arg(_("E212: Can't open file for writing: %s"), fd);
+            if (forceit && vim_strchr(p_cpo, CPO_FWRITE) == NULL && perm >= 0) {
+              // we write to the file, thus it should be marked
+              // writable after all
+              if (!(perm & 0200)) {
+                made_writable = true;
+              }
+              perm |= 0200;
+              if (file_info_old.stat.st_uid != getuid()
+                  || file_info_old.stat.st_gid != getgid()) {
+                perm &= 0777;
+              }
+              if (!append) {                    // don't remove when appending
+                os_remove(wfname);
+              }
+              continue;
+            }
+          }
+#else
           err = set_err_arg(_("E212: Can't open file for writing: %s"), fd);
-          if (forceit && vim_strchr(p_cpo, CPO_FWRITE) == NULL
-              && perm >= 0) {
-#ifdef UNIX
-            // we write to the file, thus it should be marked
-            // writable after all
-            if (!(perm & 0200)) {
-              made_writable = true;
-            }
-            perm |= 0200;
-            if (file_info_old.stat.st_uid != getuid()
-                || file_info_old.stat.st_gid != getgid()) {
-              perm &= 0777;
-            }
-#endif
+          if (forceit && vim_strchr(p_cpo, CPO_FWRITE) == NULL && perm >= 0) {
             if (!append) {                    // don't remove when appending
               os_remove(wfname);
             }
             continue;
           }
-#ifdef UNIX
-        }
 #endif
         }
 
@@ -3774,14 +3784,15 @@ static int check_mtime(buf_T *buf, FileInfo *file_info)
 
 static bool time_differs(const FileInfo *file_info, long mtime, long mtime_ns) FUNC_ATTR_CONST
 {
-  return file_info->stat.st_mtim.tv_nsec != mtime_ns
 #if defined(__linux__) || defined(MSWIN)
+  return file_info->stat.st_mtim.tv_nsec != mtime_ns
          // On a FAT filesystem, esp. under Linux, there are only 5 bits to store
          // the seconds.  Since the roundoff is done when flushing the inode, the
          // time may change unexpectedly by one second!!!
          || file_info->stat.st_mtim.tv_sec - mtime > 1
          || mtime - file_info->stat.st_mtim.tv_sec > 1;
 #else
+  return file_info->stat.st_mtim.tv_nsec != mtime_ns
          || file_info->stat.st_mtim.tv_sec != mtime;
 #endif
 }
@@ -5600,11 +5611,7 @@ char *file_pat_to_reg_pat(const char *pat, const char *pat_end, char *allow_dirs
       // regexp.
       // An escaped { must be unescaped since we use magic not
       // verymagic.  Use "\\\{n,m\}"" to get "\{n,m}".
-      if (*++p == '?'
-#ifdef BACKSLASH_IN_FILENAME
-          && no_bslash
-#endif
-          ) {
+      if (*++p == '?' && (!BACKSLASH_IN_FILENAME_BOOL || no_bslash)) {
         reg_pat[i++] = '?';
       } else if (*p == ',' || *p == '%' || *p == '#'
                  || ascii_isspace(*p) || *p == '{' || *p == '}') {
@@ -5615,10 +5622,7 @@ char *file_pat_to_reg_pat(const char *pat, const char *pat_end, char *allow_dirs
         p += 2;
       } else {
         if (allow_dirs != NULL && vim_ispathsep(*p)
-#ifdef BACKSLASH_IN_FILENAME
-            && (!no_bslash || *p != '\\')
-#endif
-            ) {
+            && (!BACKSLASH_IN_FILENAME_BOOL || (!no_bslash || *p != '\\'))) {
           *allow_dirs = true;
         }
         reg_pat[i++] = '\\';
