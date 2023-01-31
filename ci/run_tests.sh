@@ -13,7 +13,7 @@ build_nvim() {
   check_core_dumps --delete quiet
 
   if test -n "${CLANG_SANITIZER}" ; then
-    CMAKE_FLAGS="${CMAKE_FLAGS} -DCLANG_${CLANG_SANITIZER}=ON"
+    CMAKE_FLAGS="${CMAKE_FLAGS} -D CLANG_${CLANG_SANITIZER}=ON"
   fi
 
   mkdir -p "${BUILD_DIR}"

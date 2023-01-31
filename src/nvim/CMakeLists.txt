@@ -166,11 +166,12 @@ if(CI_BUILD)
     target_compile_options(main_lib INTERFACE -WX)
   else()
     target_compile_options(main_lib INTERFACE -Werror)
-    if(DEFINED ENV{BUILD_UCHAR})
-      # Get some test coverage for unsigned char
-      target_compile_options(main_lib INTERFACE -funsigned-char)
-    endif()
   endif()
+endif()
+
+option(UNSIGNED_CHAR "Set char to be unsigned" OFF)
+if(UNSIGNED_CHAR)
+  target_compile_options(main_lib INTERFACE -funsigned-char)
 endif()
 
 list(APPEND CMAKE_REQUIRED_INCLUDES "${MSGPACK_INCLUDE_DIRS}")
