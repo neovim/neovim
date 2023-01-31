@@ -1,7 +1,7 @@
 --  Updates version.c list of applied Vim patches.
 --
 --  Usage:
---    VIM_SOURCE_DIR=~/neovim/.vim-src/ nvim -V1 -es -i NONE +'luafile ./scripts/vimpatch.lua' +q
+--    VIM_SOURCE_DIR=~/neovim/.vim-src/ nvim -l ./scripts/vimpatch.lua
 
 local nvim = vim.api
 

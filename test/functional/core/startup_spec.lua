@@ -83,6 +83,7 @@ describe('startup', function()
   end)
   after_each(function()
     os.remove('Xtest_startup_ttyout')
+    os.remove('Xtest_shada')
   end)
 
   describe('-l Lua', function()
@@ -92,7 +93,11 @@ describe('startup', function()
       vim.list_extend(args, { '-l', (script or 'test/functional/fixtures/startup.lua') })
       vim.list_extend(args, lua_args or {})
       local out = funcs.system(args, input):gsub('\r\n', '\n')
-      return eq(dedent(expected), out)
+      if type(expected) == 'function' then
+        return expected(out)
+      else
+        return eq(dedent(expected), out)
+      end
     end
 
     it('failure modes', function()
@@ -101,7 +106,7 @@ describe('startup', function()
       eq(1, eval('v:shell_error'))
     end)
 
-    it('os.exit() sets Nvim exitcode', function()
+    it('os.exit() exitcode', function()
       -- nvim -l foo.lua -arg1 -- a b c
       assert_l_out([[
           bufs:
@@ -115,13 +120,23 @@ describe('startup', function()
       eq(73, eval('v:shell_error'))
     end)
 
-    it('Lua-error sets Nvim exitcode', function()
+    it('exitcode on Lua error', function()
       eq(0, eval('v:shell_error'))
       matches('E5113: .* my pearls!!',
         funcs.system({ nvim_prog, '-l', 'test/functional/fixtures/startup-fail.lua' }))
-      eq(1, eval('v:shell_error'))
+      eq(2, eval('v:shell_error'))
       matches('E5113: .* %[string "error%("whoa"%)"%]:1: whoa',
         funcs.system({ nvim_prog, '-l', '-' }, 'error("whoa")'))
+      eq(2, eval('v:shell_error'))
+    end)
+
+    it('exitcode on Vimscript error', function()
+      eq(0, eval('v:shell_error'))
+      matches('E5113: .* my pearls!!',
+        funcs.system({ nvim_prog, '-l', 'test/functional/fixtures/startup-fail.lua' }))
+      assert_l_out(function(out) return matches('Error detected while processing command line:\nnooo\nok', out) end,
+        { '+echoerr "nooo"', '-l', '-' , 'print("ok")' },
+        nil, '-', 'print("ok")')
       eq(1, eval('v:shell_error'))
     end)
 
@@ -193,13 +208,16 @@ describe('startup', function()
       eq(0, eval('v:shell_error'))
     end)
 
-    it('disables swapfile/shada/config/plugins', function()
+    it('disables swapfile/shada/config/plugins unless overridden', function()
+      local script = [[print(('updatecount=%d shadafile=%s loadplugins=%s scriptnames=%d'):format(
+                       vim.o.updatecount, vim.o.shadafile, tostring(vim.o.loadplugins), math.max(1, #vim.fn.split(vim.fn.execute('scriptnames'),'\n'))))]]
       assert_l_out('updatecount=0 shadafile=NONE loadplugins=false scriptnames=1',
-        nil,
-        nil,
-        '-',
-        [[print(('updatecount=%d shadafile=%s loadplugins=%s scriptnames=%d'):format(
-          vim.o.updatecount, vim.o.shadafile, tostring(vim.o.loadplugins), math.max(1, #vim.fn.split(vim.fn.execute('scriptnames'),'\n'))))]])
+        nil, nil, '-', script)
+
+      -- User can override.
+      assert_l_out(function(out) return matches('updatecount=99 shadafile=Xtest_shada loadplugins=true scriptnames=2%d', out) end,
+        { '+set updatecount=99', '-i', 'Xtest_shada', '+set loadplugins', '-u', 'NORC' },
+        nil, '-', script)
     end)
   end)
 
@@ -386,21 +404,39 @@ describe('startup', function()
                     { 'set encoding', '' }))
   end)
 
-  it('-es/-Es disables swapfile, user config #8540', function()
+  it('-es/-Es disables swapfile/shada/config/plugins unless overridden #8540', function()
     for _,arg in ipairs({'-es', '-Es'}) do
       local out = funcs.system({nvim_prog, arg,
-                                '+set swapfile? updatecount? shadafile?',
+                                '+set updatecount? shadafile? loadplugins?',
                                 "+put =execute('scriptnames')", '+%print'})
       local line1 = string.match(out, '^.-\n')
       -- updatecount=0 means swapfile was disabled.
-      eq("  swapfile  updatecount=0  shadafile=\n", line1)
-      -- Standard plugins were loaded, but not user config.
-      eq('health.vim', string.match(out, 'health.vim'))
+      eq("  updatecount=0  shadafile=NONEnoloadplugins\n", line1)
+      -- No plugins were loaded.
+      eq(nil, string.match(out, 'health.vim'))
       eq(nil, string.match(out, 'init.vim'))
     end
   end)
 
-  it('-e sets ex mode', function()
+  it('-es/-Es exitcode on script error', function()
+    for _,arg in ipairs({'-es', '-Es'}) do
+      local out = funcs.system({nvim_prog, arg, '-V1', '+echoerr "nooo"', })
+      matches('nooo', out)
+      eq(1, eval('v:shell_error'))
+      out = funcs.system({nvim_prog, arg, '-V1', '+throw "excepooo"', })
+      eq(1, eval('v:shell_error'))
+      matches('excepooo', out)
+      out = funcs.system({nvim_prog, arg, '-V1', '+echo "fine"',
+        '-u', 'test/functional/fixtures/startup-fail.vim', })
+      eq(1, eval('v:shell_error'))
+      matches('E605: Exception not caught: failed in TestFail', out)
+      -- Reset v:shell_error.
+      funcs.system({nvim_prog, arg, '-V1', '+echo "okay"'})
+      eq(0, eval('v:shell_error'))
+    end
+  end)
+
+  it('-e sets Ex mode', function()
     local screen = Screen.new(25, 3)
     clear('-e')
     screen:attach()

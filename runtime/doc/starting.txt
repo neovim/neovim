@@ -162,10 +162,9 @@ argument.
 		be prevented from accidentally overwriting a file.  If you
 		forgot that you are in View mode and did make some changes,
 		you can overwrite a file by adding an exclamation mark to
-		the Ex command, as in ":w!".  The 'readonly' option can be
-		reset with ":set noro" (see the options chapter, |options|).
-		Subsequent edits will not be done in readonly mode.  Calling
-		the executable "view" has the same effect as the -R argument.
+		the Ex command, as in ":w!". Subsequent edits will not be done
+		in readonly mode.
+
 		The 'updatecount' option will be set to 10000, meaning that
 		the swap file will not be updated automatically very often.
 		See |-M| for disallowing modifications.
@@ -190,9 +189,10 @@ argument.
 		  -E reads stdin as text (into buffer 1).
 
 -es						*-es* *-Es* *-s-ex* *silent-mode*
--Es		Script mode, aka "silent mode", aka "batch mode". No UI,
-		disables most prompts and messages. Unrelated to |-s|.
-		See also |-S| to run script files.
+-Es		Script mode, aka "silent mode" or "batch mode". No UI,
+		disables most prompts and messages. Exits 1 on Vimscript
+		error (including user config or |-u| scripts).
+		Unrelated to |-s|. See also |-S| to run script files.
 
 		-es reads/executes stdin as Ex commands. >
 			printf "put ='foo'\n%%print\n" | nvim -es
@@ -207,38 +207,46 @@ argument.
 			:print
 			:set
 		With |:verbose| or 'verbose', other commands display on stderr: >
-			nvim -es +":verbose echo 'foo'"
-			nvim -V1 -es +foo
+			nvim -es "+verbose echo 'foo'"
+			nvim -V1 -es "+echo 'foo'"
 
-<		User |config| is skipped unless |-u| was given.
-		Swap file is skipped (like |-n|).
-		User |shada| is loaded (unless "-i NONE" is given).
+<		Disables user |config| unless |-u| was given.
+		Disables plugins unless 'loadplugins' was set.
+		Disables |shada| unless |-i| was given.
+		Disables swapfile (like |-n|).
 
 							*-l*
 -l {script} [args]
 		Executes Lua {script} non-interactively (no UI) with optional
 		[args] after processing any preceding Nvim |cli-arguments|,
-		then exits. Exits 1 on Lua error. See |-S| to run multiple Lua
-		scripts without args, with a UI.
+		then exits. Exits 2 on Lua error, 1 on Vimscript error
+		(including user config or |-u| scripts).
+		See |-S| to run multiple Lua scripts without args, with a UI.
+
+		Disables user |config| unless |-u| was given.
+		Disables plugins unless 'loadplugins' was set.
+		Disables |shada| unless |-i| was given.
+		Disables swapfile (like |-n|).
 								    *lua-args*
 		All [args] are treated as {script} arguments and stored in the
 		Lua `_G.arg` global table, thus "-l" ends processing of Nvim
 		arguments. The {script} name is stored at `_G.arg[0]`.
 		
 		Sets 'verbose' to 1 (like "-V1"), so Lua `print()` writes to
-		output.
+		output, as well as other message-emitting functions like
+		|:echo|.
 
 		Arguments before "-l" are processed before executing {script}.
 		This example quits before executing "foo.lua": >
 			nvim +q -l foo.lua
 <		This loads Lua module "bar" before executing "foo.lua": >
 			nvim +"lua require('bar')" -l foo.lua
+<								    *lua-shebang*
+		You can set the "shebang" of the script so that Nvim executes
+		the script when called with "./" from a shell (remember to
+		"chmod u+x"): >
+			#!/usr/bin/env -S nvim -l
 <
-		Skips user |config| unless |-u| was given.
-		Disables plugins unless 'loadplugins' was set.
-		Disables |shada| unless |-i| was given.
-		Disables swapfile (like |-n|).
-
 							*-b*
 -b		Binary mode.  File I/O will only recognize <NL> to separate
 		lines.  The 'expandtab' option will be reset.  The 'textwidth'
@@ -272,21 +280,18 @@ argument.
 		command from a script. |debug-mode|
 
 							*-n*
--n		No |swap-file| will be used.  Recovery after a crash will be
-		impossible.  Handy if you want to view or edit a file on a
-		very slow medium (e.g., a floppy).
-		Can also be done with ":set updatecount=0".  You can switch it
-		on again by setting the 'updatecount' option to some value,
-		e.g., ":set uc=100".
-		'updatecount' is set to 0 AFTER executing commands from a
-		vimrc file, but before the GUI initializations.  Thus it
-		overrides a setting for 'updatecount' in a vimrc file, but not
-		in a gvimrc file.  See |startup|.
-		When you want to reduce accesses to the disk (e.g., for a
-		laptop), don't use "-n", but set 'updatetime' and
-		'updatecount' to very big numbers, and type ":preserve" when
-		you want to save your work.  This way you keep the possibility
-		for crash recovery.
+-n		Disables |swap-file| by setting 'updatecount' to 0 (after
+		executing any |vimrc|).  Recovery after a crash will be
+		impossible.  Useful for avoiding disk access, or for running
+		non-interactive scripts (|-es|, |-l|).
+
+		You can switch it on again by setting 'updatecount' to some
+		value, e.g., ":set uc=100".
+
+		To reduce accesses to the disk, don't use "-n", but set
+		'updatetime' and 'updatecount' to very big numbers, and type
+		":preserve" when you want to save your work.  This way you
+		keep the possibility for crash recovery.
 
 							*-o*
 -o[N]		Open N windows, split horizontally.  If [N] is not given,
