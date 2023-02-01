@@ -149,15 +149,21 @@ local function highlight_line(line, linenr)
     if overstrike then
       local last_hl = hls[#hls]
       if char == prev_char then
-        if char == '_' and attr == UNDERLINE and last_hl and last_hl.final == byte then
-          -- This underscore is in the middle of an underlined word
-          attr = UNDERLINE
+        if char == '_' and attr == ITALIC and last_hl and last_hl.final == byte then
+          -- This underscore is in the middle of an italic word
+          attr = ITALIC
         else
           attr = BOLD
         end
       elseif prev_char == '_' then
-        -- char is underlined
-        attr = UNDERLINE
+        -- Even though underline is strictly what this should be. <bs>_ was used by nroff to
+        -- indicate italics which wasn't possible on old typewriters so underline was used. Modern
+        -- terminals now support italics so lets use that now.
+        -- See:
+        -- - https://unix.stackexchange.com/questions/274658/purpose-of-ascii-text-with-overstriking-file-format/274795#274795
+        -- - https://cmd.inp.nsk.su/old/cmd2/manuals/unix/UNIX_Unleashed/ch08.htm
+        -- attr = UNDERLINE
+        attr = ITALIC
       elseif prev_char == '+' and char == 'o' then
         -- bullet (overstrike text '+^Ho')
         attr = BOLD
