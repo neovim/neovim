@@ -2610,7 +2610,12 @@ static void cmdline_search_stat(int dirc, pos_T *pos, pos_T *cursor_pos, bool sh
       len += 2;
     }
 
-    memmove(msgbuf + STRLEN(msgbuf) - len, t, len);
+    size_t msgbuf_len = STRLEN(msgbuf);
+    if (len > msgbuf_len) {
+      len = msgbuf_len;
+    }
+    memmove(msgbuf + msgbuf_len - len, t, len);
+
     if (dirc == '?' && stat.cur == maxcount + 1) {
       stat.cur = -1;
     }
