@@ -2887,6 +2887,7 @@ def ParseArguments(args):
 
 
 def main():
+    print("This fork is utter garbage and only for me testing things.")
     filenames = ParseArguments(sys.argv[1:])
 
     _cpplint_state.ResetErrorCounts()
