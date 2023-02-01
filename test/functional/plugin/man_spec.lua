@@ -59,7 +59,7 @@ describe(':Man', function()
 
       screen:expect([[
       ^this {b:is} {b:a} test                                      |
-      with {u:overstruck} text                                |
+      with {i:overstruck} text                                |
       {eob:~                                                   }|
       {eob:~                                                   }|
                                                           |
@@ -98,7 +98,7 @@ describe(':Man', function()
 
       screen:expect([[
       ^this {b:is} {b:あ} test                                     |
-      with {u:överstrũck} te{i:xt¶}                               |
+      with {i:överstrũck} te{i:xt¶}                               |
       {eob:~                                                   }|
       {eob:~                                                   }|
                                                           |
@@ -115,7 +115,7 @@ describe(':Man', function()
       screen:expect([[
       {b:^_begins}                                             |
       {b:mid_dle}                                             |
-      {u:mid_dle}                                             |
+      {i:mid_dle}                                             |
       {eob:~                                                   }|
                                                           |
       ]])
