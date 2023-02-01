@@ -230,7 +230,7 @@ static void add_buff(buffheader_T *const buf, const char *const s, ptrdiff_t sle
 
   if (buf->bh_first.b_next == NULL) {  // first add to list
     buf->bh_space = 0;
-    buf->bh_curr = &(buf->bh_first);
+    buf->bh_curr = (buffblock_T *)&(buf->bh_first);
   } else if (buf->bh_curr == NULL) {  // buffer has already been read
     iemsg(_("E222: Add to read buffer"));
     return;
@@ -361,11 +361,11 @@ static int read_readbuf(buffheader_T *buf, int advance)
 static void start_stuff(void)
 {
   if (readbuf1.bh_first.b_next != NULL) {
-    readbuf1.bh_curr = &(readbuf1.bh_first);
+    readbuf1.bh_curr = (buffblock_T *)&(readbuf1.bh_first);
     readbuf1.bh_space = 0;
   }
   if (readbuf2.bh_first.b_next != NULL) {
-    readbuf2.bh_curr = &(readbuf2.bh_first);
+    readbuf2.bh_curr = (buffblock_T *)&(readbuf2.bh_first);
     readbuf2.bh_space = 0;
   }
 }
