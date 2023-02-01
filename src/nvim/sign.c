@@ -103,7 +103,7 @@ static signgroup_T *sign_group_ref(const char *groupname)
   hi = hash_lookup(&sg_table, (char *)groupname, strlen(groupname), hash);
   if (HASHITEM_EMPTY(hi)) {
     // new group
-    group = xmalloc(sizeof(signgroup_T) + strlen(groupname));
+    group = xmalloc(offsetof(signgroup_T, sg_name) + strlen(groupname) + 1);
 
     STRCPY(group->sg_name, groupname);
     group->sg_refcount = 1;

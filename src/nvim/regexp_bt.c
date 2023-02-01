@@ -2862,7 +2862,7 @@ static regprog_T *bt_regcomp(uint8_t *expr, int re_flags)
   }
 
   // Allocate space.
-  bt_regprog_T *r = xmalloc(sizeof(bt_regprog_T) + (size_t)regsize);
+  bt_regprog_T *r = xmalloc(offsetof(bt_regprog_T, program) + (size_t)regsize);
   r->re_in_use = false;
 
   // Second pass: emit code.
