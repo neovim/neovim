@@ -1092,7 +1092,7 @@ static int ff_check_visited(ff_visited_T **visited_list, char *fname, char *wc_p
   }
 
   // New file/dir.  Add it to the list of visited files/dirs.
-  vp = xmalloc(sizeof(ff_visited_T) + strlen(ff_expand_buffer));
+  vp = xmalloc(offsetof(ff_visited_T, ffv_fname) + strlen(ff_expand_buffer) + 1);
 
   if (!url) {
     vp->file_id_valid = true;
