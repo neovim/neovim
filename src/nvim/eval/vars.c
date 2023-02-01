@@ -1347,7 +1347,7 @@ void set_var_const(const char *name, const size_t name_len, typval_T *const tv, 
     // Make sure dict is valid
     assert(dict != NULL);
 
-    v = xmalloc(sizeof(dictitem_T) + strlen(varname));
+    v = xmalloc(offsetof(dictitem_T, di_key) + strlen(varname) + 1);
     STRCPY(v->di_key, varname);
     if (hash_add(ht, (char *)v->di_key) == FAIL) {
       xfree(v);

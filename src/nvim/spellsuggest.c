@@ -2828,7 +2828,7 @@ static void add_sound_suggest(suginfo_T *su, char *goodword, int score, langp_T 
   hi = hash_lookup(&slang->sl_sounddone, (const char *)goodword, goodword_len,
                    hash);
   if (HASHITEM_EMPTY(hi)) {
-    sft = xmalloc(sizeof(sftword_T) + goodword_len);
+    sft = xmalloc(offsetof(sftword_T, sft_word) + goodword_len + 1);
     sft->sft_score = (int16_t)score;
     memcpy(sft->sft_word, goodword, goodword_len + 1);
     hash_add_item(&slang->sl_sounddone, hi, (char *)sft->sft_word, hash);

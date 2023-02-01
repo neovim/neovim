@@ -3855,7 +3855,7 @@ static void *getroom(spellinfo_T *spin, size_t len, bool align)
 
   if (bl == NULL || (size_t)bl->sb_used + len > SBLOCKSIZE) {
     // Allocate a block of memory. It is not freed until much later.
-    bl = xcalloc(1, (sizeof(sblock_T) + SBLOCKSIZE));
+    bl = xcalloc(1, offsetof(sblock_T, sb_data) + SBLOCKSIZE + 1);
     bl->sb_next = spin->si_blocks;
     spin->si_blocks = bl;
     bl->sb_used = 0;

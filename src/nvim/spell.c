@@ -1745,7 +1745,7 @@ void count_common_word(slang_T *lp, char *word, int len, uint8_t count)
   const size_t p_len = strlen(p);
   hashitem_T *hi = hash_lookup(&lp->sl_wordcount, (const char *)p, p_len, hash);
   if (HASHITEM_EMPTY(hi)) {
-    wc = xmalloc(sizeof(wordcount_T) + p_len);
+    wc = xmalloc(offsetof(wordcount_T, wc_word) + p_len + 1);
     memcpy(wc->wc_word, p, p_len + 1);
     wc->wc_count = count;
     hash_add_item(&lp->sl_wordcount, hi, (char *)wc->wc_word, hash);

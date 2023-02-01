@@ -149,7 +149,7 @@ struct data_block {
 #define DB_INDEX_MASK   (~DB_MARKED)
 
 #define INDEX_SIZE  (sizeof(unsigned))      // size of one db_index entry
-#define HEADER_SIZE (sizeof(DATA_BL) - INDEX_SIZE)  // size of data block header
+#define HEADER_SIZE (offsetof(DATA_BL, db_index))  // size of data block header
 
 enum {
   B0_FNAME_SIZE_ORG = 900,      // what it was in older versions
@@ -2720,7 +2720,8 @@ static bhdr_T *ml_new_ptr(memfile_T *mfp)
   PTR_BL *pp = hp->bh_data;
   pp->pb_id = PTR_ID;
   pp->pb_count = 0;
-  pp->pb_count_max = (uint16_t)((mfp->mf_page_size - sizeof(PTR_BL)) / sizeof(PTR_EN) + 1);
+  pp->pb_count_max
+    = (uint16_t)((mfp->mf_page_size - offsetof(PTR_BL, pb_pointer)) / sizeof(PTR_EN));
 
   return hp;
 }
