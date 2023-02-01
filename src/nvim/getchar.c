@@ -252,7 +252,7 @@ static void add_buff(buffheader_T *const buf, const char *const s, ptrdiff_t sle
     } else {
       len = (size_t)slen;
     }
-    buffblock_T *p = xmalloc(sizeof(buffblock_T) + len);
+    buffblock_T *p = xmalloc(offsetof(buffblock_T, b_str) + len + 1);
     buf->bh_space = len - (size_t)slen;
     xstrlcpy(p->b_str, s, (size_t)slen + 1);
 

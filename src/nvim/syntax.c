@@ -3736,7 +3736,7 @@ static void add_keyword(char *const name, const int id, const int flags,
                      sizeof(name_folded))
       : name;
 
-  keyentry_T *const kp = xmalloc(sizeof(keyentry_T) + strlen(name_ic));
+  keyentry_T *const kp = xmalloc(offsetof(keyentry_T, keyword) + strlen(name_ic) + 1);
   STRCPY(kp->keyword, name_ic);
   kp->k_syn.id = (int16_t)id;
   kp->k_syn.inc_tag = current_syn_inc_tag;

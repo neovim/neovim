@@ -10,9 +10,9 @@
 
 // Sign group
 typedef struct signgroup_S {
-  uint16_t sg_refcount;   // number of signs in this group
-  int sg_next_sign_id;    // next sign id for this group
-  char sg_name[1];        // sign group name
+  int sg_next_sign_id;   ///< next sign id for this group
+  uint16_t sg_refcount;  ///< number of signs in this group
+  char sg_name[1];       ///< sign group name, actually longer
 } signgroup_T;
 
 // Macros to get the sign group structure from the group name
