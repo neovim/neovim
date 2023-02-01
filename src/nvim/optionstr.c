@@ -638,13 +638,11 @@ char *check_stl_option(char *s)
   return NULL;
 }
 
-static int shada_idx = -1;
-
+/// Check for a "normal" directory or file name in some options.  Disallow a
+/// path separator (slash and/or backslash), wildcards and characters that are
+/// often illegal in a file name. Be more permissive if "secure" is off.
 static bool check_illegal_path_names(char *val, uint32_t flags)
 {
-  // Disallow a path separator (slash and/or backslash), wildcards and
-  // characters that are often illegal in a file name. Be more permissive
-  // if "secure" is off.
   return (((flags & P_NFNAME)
            && strpbrk(val, (secure ? "/\\*?[|;&<>\r\n" : "/\\*?[<>\r\n")) != NULL)
           || ((flags & P_NDNAME)
@@ -701,8 +699,8 @@ static void did_set_breakindentopt(win_T *win, char **errmsg)
 static void did_set_isopt(buf_T *buf, bool *did_chartab, char **errmsg)
 {
   // 'isident', 'iskeyword', 'isprint or 'isfname' option: refill g_chartab[]
-  // If the new option is invalid, use old value.  'lisp' option: refill
-  // g_chartab[] for '-' char
+  // If the new option is invalid, use old value.
+  // 'lisp' option: refill g_chartab[] for '-' char
   if (buf_init_chartab(buf, true) == FAIL) {
     *did_chartab = true;           // need to restore it below
     *errmsg = e_invarg;            // error in value
@@ -1013,6 +1011,8 @@ static void did_set_verbosefile(char **errmsg)
   }
 }
 
+static int shada_idx = -1;
+
 static void did_set_shada(vimoption_T **opt, int *opt_idx, bool *free_oldval, char *errbuf,
                           size_t errbuflen, char **errmsg)
 {
@@ -1271,6 +1271,16 @@ static void did_set_completeopt(char **errmsg)
     completeopt_was_set();
   }
 }
+
+#ifdef BACKSLASH_IN_FILENAME
+static void did_set_completeslash(buf_T *buf, char **errmsg)
+{
+  if (check_opt_strings(p_csl, p_csl_values, false) != OK
+      || check_opt_strings(buf->b_p_csl, p_csl_values, false) != OK) {
+    *errmsg = e_invarg;
+  }
+}
+#endif
 
 static void did_set_signcolumn(win_T *win, char **varp, const char *oldval, char **errmsg)
 {
@@ -1561,7 +1571,7 @@ static void do_filetype_autocmd(buf_T *buf, char **varp, int opt_flags, bool val
   }
 }
 
-static void did_set_spelllang_source(win_T *win)
+static void do_spelllang_source(win_T *win)
 {
   char fname[200];
   char *q = win->w_s->b_p_spl;
@@ -1614,238 +1624,238 @@ static char *did_set_string_option_for(buf_T *buf, win_T *win, int opt_idx, char
   char **gvarp = (char **)get_varp_scope(opt, OPT_GLOBAL);
 
   // Disallow changing some options from secure mode
-  if ((secure || sandbox != 0)
-      && (opt->flags & P_SECURE)) {
+  if ((secure || sandbox != 0) && (opt->flags & P_SECURE)) {
     errmsg = e_secure;
-  } else if (check_illegal_path_names(*varp, opt->flags)) {
     // Check for a "normal" directory or file name in some options.
+  } else if (check_illegal_path_names(*varp, opt->flags)) {
     errmsg = e_invarg;
-  } else if (gvarp == &p_bkc) {  // 'backupcopy'
+  } else if (gvarp == &p_bkc) {                         // 'backupcopy'
     did_set_backupcopy(buf, oldval, opt_flags, &errmsg);
-  } else if (varp == &p_bex || varp == &p_pm) {  // 'backupext' and 'patchmode'
+  } else if (varp == &p_bex                             // 'backupext'
+             || varp == &p_pm) {                        // 'patchmode'
     did_set_backupext_or_patchmode(&errmsg);
-  } else if (varp == &win->w_p_briopt) {  // 'breakindentopt'
+  } else if (varp == &win->w_p_briopt) {                // 'breakindentopt'
     did_set_breakindentopt(win, &errmsg);
-  } else if (varp == &p_isi
-             || varp == &buf->b_p_isk
-             || varp == &p_isp
-             || varp == &p_isf) {
-    // 'isident', 'iskeyword', 'isprint or 'isfname' option
+  } else if (varp == &p_isi                             // 'isident'
+             || varp == &buf->b_p_isk                   // 'iskeyword'
+             || varp == &p_isp                          // 'isprint'
+             || varp == &p_isf) {                       // 'isfname'
     did_set_isopt(buf, &did_chartab, &errmsg);
-  } else if (varp == &p_hf) {  // 'helpfile'
+  } else if (varp == &p_hf) {                           // 'helpfile'
     did_set_helpfile();
-  } else if (varp == &p_rtp || varp == &p_pp) {  // 'runtimepath' 'packpath'
+  } else if (varp == &p_rtp                             // 'runtimepath'
+             || varp == &p_pp) {                        // 'packpath'
     runtime_search_path_invalidate();
-  } else if (varp == &win->w_p_culopt
-             || gvarp == &win->w_allbuf_opt.wo_culopt) {  // 'cursorlineopt'
+  } else if (gvarp == &win->w_allbuf_opt.wo_culopt) {   // 'cursorlineopt'
     did_set_cursorlineopt(win, varp, &errmsg);
-  } else if (varp == &win->w_p_cc) {  // 'colorcolumn'
+  } else if (varp == &win->w_p_cc) {                    // 'colorcolumn'
     errmsg = check_colorcolumn(win);
-  } else if (varp == &p_hlg) {  // 'helplang'
+  } else if (varp == &p_hlg) {                          // 'helplang'
     did_set_helplang(&errmsg);
-  } else if (varp == &p_hl) {  // 'highlight'
+  } else if (varp == &p_hl) {                           // 'highlight'
     did_set_highlight(varp, &errmsg);
-  } else if (varp == &p_jop) {  // 'jumpoptions'
+  } else if (varp == &p_jop) {                          // 'jumpoptions'
     did_set_opt_flags(p_jop, p_jop_values, &jop_flags, true, &errmsg);
-  } else if (gvarp == &p_nf) {  // 'nrformats'
+  } else if (gvarp == &p_nf) {                          // 'nrformats'
     did_set_opt_strings(*varp, p_nf_values, true, &errmsg);
-  } else if (varp == &p_ssop) {  // 'sessionoptions'
+  } else if (varp == &p_ssop) {                         // 'sessionoptions'
     did_set_sessionoptions(oldval, &errmsg);
-  } else if (varp == &p_vop) {  // 'viewoptions'
+  } else if (varp == &p_vop) {                          // 'viewoptions'
     did_set_opt_flags(p_vop, p_ssop_values, &vop_flags, true, &errmsg);
-  } else if (varp == &p_rdb) {  // 'redrawdebug'
+  } else if (varp == &p_rdb) {                          // 'redrawdebug'
     did_set_opt_flags(p_rdb, p_rdb_values, &rdb_flags, true, &errmsg);
-  } else if (varp == &p_sbo) {  // 'scrollopt'
+  } else if (varp == &p_sbo) {                          // 'scrollopt'
     did_set_opt_strings(p_sbo, p_scbopt_values, true, &errmsg);
-  } else if (varp == &p_ambw || (int *)varp == &p_emoji) {  // 'ambiwidth'
+  } else if (varp == &p_ambw                            // 'ambiwidth'
+             || (int *)varp == &p_emoji) {              // 'emoji'
     did_set_ambiwidth(&errmsg);
-  } else if (varp == &p_bg) {  // 'background'
+  } else if (varp == &p_bg) {                           // 'background'
     did_set_background(&errmsg);
-  } else if (varp == &p_wim) {  // 'wildmode'
+  } else if (varp == &p_wim) {                          // 'wildmode'
     did_set_wildmode(&errmsg);
-  } else if (varp == &p_wop) {  // 'wildoptions'
+  } else if (varp == &p_wop) {                          // 'wildoptions'
     did_set_opt_flags(p_wop, p_wop_values, &wop_flags, true, &errmsg);
-  } else if (varp == &p_wak) {  // 'winaltkeys'
+  } else if (varp == &p_wak) {                          // 'winaltkeys'
     did_set_winaltkeys(&errmsg);
-  } else if (varp == &p_ei) {  // 'eventignore'
+  } else if (varp == &p_ei) {                           // 'eventignore'
     did_set_eventignore(&errmsg);
-  } else if (varp == &p_enc || gvarp == &p_fenc || gvarp == &p_menc) {
-    // 'encoding', 'fileencoding' and 'makeencoding'
+  } else if (varp == &p_enc                             // 'encoding'
+             || gvarp == &p_fenc                        // 'fileencoding'
+             || gvarp == &p_menc) {                     // 'makeencoding'
     did_set_encoding(buf, varp, gvarp, opt_flags, &errmsg);
-  } else if (varp == &buf->b_p_keymap) {
+  } else if (varp == &buf->b_p_keymap) {                // 'keymap'
     did_set_keymap(buf, varp, opt_flags, value_checked, &errmsg);
-  } else if (gvarp == &p_ff) {  // 'fileformat'
+  } else if (gvarp == &p_ff) {                          // 'fileformat'
     did_set_fileformat(buf, varp, oldval, opt_flags, &errmsg);
-  } else if (varp == &p_ffs) {  // 'fileformats'
+  } else if (varp == &p_ffs) {                          // 'fileformats'
     did_set_opt_strings(p_ffs, p_ff_values, true, &errmsg);
-  } else if (gvarp == &p_mps) {  // 'matchpairs'
+  } else if (gvarp == &p_mps) {                         // 'matchpairs'
     did_set_matchpairs(varp, &errmsg);
-  } else if (gvarp == &p_com) {  // 'comments'
+  } else if (gvarp == &p_com) {                         // 'comments'
     did_set_comments(varp, errbuf, errbuflen, &errmsg);
-  } else if (varp == &p_lcs || varp == &p_fcs) {  // global 'listchars' or 'fillchars'
+  } else if (varp == &p_lcs                             // global 'listchars'
+             || varp == &p_fcs) {                       // global 'fillchars'
     did_set_global_listfillchars(win, varp, opt_flags, &errmsg);
-  } else if (varp == &win->w_p_lcs) {  // local 'listchars'
+  } else if (varp == &win->w_p_lcs) {                   // local 'listchars'
     errmsg = set_chars_option(win, varp, true);
-  } else if (varp == &win->w_p_fcs) {  // local 'fillchars'
+  } else if (varp == &win->w_p_fcs) {                   // local 'fillchars'
     errmsg = set_chars_option(win, varp, true);
-  } else if (varp == &p_cedit) {  // 'cedit'
+  } else if (varp == &p_cedit) {                        // 'cedit'
     errmsg = check_cedit();
-  } else if (varp == &p_vfile) {  // 'verbosefile'
+  } else if (varp == &p_vfile) {                        // 'verbosefile'
     did_set_verbosefile(&errmsg);
-  } else if (varp == &p_shada) {  // 'shada'
+  } else if (varp == &p_shada) {                        // 'shada'
     did_set_shada(&opt, &opt_idx, &free_oldval, errbuf, errbuflen, &errmsg);
-  } else if (gvarp == &p_sbr) {  // 'showbreak'
+  } else if (gvarp == &p_sbr) {                         // 'showbreak'
     did_set_showbreak(varp, &errmsg);
-  } else if (varp == &p_guicursor) {  // 'guicursor'
+  } else if (varp == &p_guicursor) {                    // 'guicursor'
     errmsg = parse_shape_opt(SHAPE_CURSOR);
-  } else if (varp == &p_langmap) {  // 'langmap'
+  } else if (varp == &p_langmap) {                      // 'langmap'
     langmap_set();
-  } else if (varp == &p_breakat) {  // 'breakat'
+  } else if (varp == &p_breakat) {                      // 'breakat'
     fill_breakat_flags();
-  } else if (varp == &p_titlestring || varp == &p_iconstring) {
-    // 'titlestring' and 'iconstring'
+  } else if (varp == &p_titlestring                     // 'titlestring'
+             || varp == &p_iconstring) {                // 'iconstring'
     did_set_titleiconstring(varp);
-  } else if (varp == &p_sel) {  // 'selection'
+  } else if (varp == &p_sel) {                          // 'selection'
     did_set_selection(&errmsg);
-  } else if (varp == &p_slm) {  // 'selectmode'
+  } else if (varp == &p_slm) {                          // 'selectmode'
     did_set_opt_strings(p_slm, p_slm_values, true, &errmsg);
-  } else if (varp == &p_km) {  // 'keymodel'
+  } else if (varp == &p_km) {                           // 'keymodel'
     did_set_keymodel(&errmsg);
-  } else if (varp == &p_mousem) {  // 'mousemodel'
+  } else if (varp == &p_mousem) {                       // 'mousemodel'
     did_set_opt_strings(p_mousem, p_mousem_values, false, &errmsg);
-  } else if (varp == &p_mousescroll) {  // 'mousescroll'
+  } else if (varp == &p_mousescroll) {                  // 'mousescroll'
     errmsg = check_mousescroll(p_mousescroll);
-  } else if (varp == &p_swb) {  // 'switchbuf'
+  } else if (varp == &p_swb) {                          // 'switchbuf'
     did_set_opt_flags(p_swb, p_swb_values, &swb_flags, true, &errmsg);
-  } else if (varp == &p_spk) {  // 'splitkeep'
+  } else if (varp == &p_spk) {                          // 'splitkeep'
     did_set_opt_strings(p_spk, p_spk_values, false, &errmsg);
-  } else if (varp == &p_debug) {  // 'debug'
+  } else if (varp == &p_debug) {                        // 'debug'
     did_set_opt_strings(p_debug, p_debug_values, true, &errmsg);
-  } else if (varp == &p_dy) {  // 'display'
+  } else if (varp == &p_dy) {                           // 'display'
     did_set_display(&errmsg);
-  } else if (varp == &p_ead) {  // 'eadirection'
+  } else if (varp == &p_ead) {                          // 'eadirection'
     did_set_opt_strings(p_ead, p_ead_values, false, &errmsg);
-  } else if (varp == &p_cb) {  // 'clipboard'
+  } else if (varp == &p_cb) {                           // 'clipboard'
     did_set_opt_flags(p_cb, p_cb_values, &cb_flags, true, &errmsg);
-  } else if (varp == &win->w_s->b_p_spf) {
+  } else if (varp == &win->w_s->b_p_spf) {              // 'spellfile'
     did_set_spellfile(varp, &errmsg);
-  } else if (varp == &win->w_s->b_p_spl) {  // 'spell'
+  } else if (varp == &win->w_s->b_p_spl) {              // 'spell'
     did_set_spell(varp, &errmsg);
-  } else if (varp == &win->w_s->b_p_spc) {
+  } else if (varp == &win->w_s->b_p_spc) {              // 'spellcapcheck'
     did_set_spellcapcheck(win, &errmsg);
-  } else if (varp == &win->w_s->b_p_spo) {  // 'spelloptions'
+  } else if (varp == &win->w_s->b_p_spo) {              // 'spelloptions'
     did_set_spelloptions(win, &errmsg);
-  } else if (varp == &p_sps) {  // 'spellsuggest'
+  } else if (varp == &p_sps) {                          // 'spellsuggest'
     did_set_spellsuggest(&errmsg);
-  } else if (varp == &p_msm) {  // 'mkspellmem'
+  } else if (varp == &p_msm) {                          // 'mkspellmem'
     did_set_mkspellmem(&errmsg);
-  } else if (gvarp == &p_bh) {
+  } else if (gvarp == &p_bh) {                          // 'bufhidden'
     did_set_opt_strings(buf->b_p_bh, p_bufhidden_values, false, &errmsg);
-  } else if (gvarp == &p_bt) {  // 'buftype'
+  } else if (gvarp == &p_bt) {                          // 'buftype'
     did_set_buftype(buf, win, &errmsg);
-  } else if (gvarp == &p_stl || gvarp == &p_wbr || varp == &p_tal
-             || varp == &p_ruf || varp == &win->w_p_stc) {
-    // 'statusline', 'winbar', 'tabline', 'rulerformat' or 'statuscolumn'
+  } else if (gvarp == &p_stl                            // 'statusline'
+             || gvarp == &p_wbr                         // 'winbar'
+             || varp == &p_tal                          // 'tabline'
+             || varp == &p_ruf                          // 'rulerformat'
+             || varp == &win->w_p_stc) {                // 'statuscolumn'
     did_set_statusline(win, varp, gvarp, &errmsg);
-  } else if (gvarp == &p_cpt) {  // 'complete'
+  } else if (gvarp == &p_cpt) {                         // 'complete'
     did_set_complete(varp, errbuf, errbuflen, &errmsg);
-  } else if (varp == &p_cot) {  // 'completeopt'
+  } else if (varp == &p_cot) {                          // 'completeopt'
     did_set_completeopt(&errmsg);
 #ifdef BACKSLASH_IN_FILENAME
-  } else if (gvarp == &p_csl) {  // 'completeslash'
-    if (check_opt_strings(p_csl, p_csl_values, false) != OK
-        || check_opt_strings(buf->b_p_csl, p_csl_values, false) != OK) {
-      errmsg = e_invarg;
-    }
+  } else if (gvarp == &p_csl) {                         // 'completeslash'
+    did_set_completeslash(buf, &errmsg);
 #endif
-  } else if (varp == &win->w_p_scl) {  // 'signcolumn'
+  } else if (varp == &win->w_p_scl) {                   // 'signcolumn'
     did_set_signcolumn(win, varp, oldval, &errmsg);
-  } else if (varp == &p_sloc) {  // 'showcmdloc'
+  } else if (varp == &p_sloc) {                         // 'showcmdloc'
     did_set_opt_strings(*varp, p_sloc_values, false, &errmsg);
-  } else if (varp == &win->w_p_fdc
-             || varp == &win->w_allbuf_opt.wo_fdc) {
-    // 'foldcolumn'
+  } else if (gvarp == &win->w_allbuf_opt.wo_fdc) {      // 'foldcolumn'
     did_set_foldcolumn(varp, &errmsg);
-  } else if (varp == &p_pt) {  // 'pastetoggle'
+  } else if (varp == &p_pt) {                           // 'pastetoggle'
     did_set_pastetoggle();
-  } else if (varp == &p_bs) {  // 'backspace'
+  } else if (varp == &p_bs) {                           // 'backspace'
     did_set_backspace(&errmsg);
   } else if (varp == &p_bo) {
     did_set_opt_flags(p_bo, p_bo_values, &bo_flags, true, &errmsg);
-  } else if (gvarp == &p_tc) {  // 'tagcase'
+  } else if (gvarp == &p_tc) {                          // 'tagcase'
     did_set_tagcase(buf, opt_flags, &errmsg);
-  } else if (varp == &p_cmp) {  // 'casemap'
+  } else if (varp == &p_cmp) {                          // 'casemap'
     did_set_opt_flags(p_cmp, p_cmp_values, &cmp_flags, true, &errmsg);
-  } else if (varp == &p_dip) {  // 'diffopt'
+  } else if (varp == &p_dip) {                          // 'diffopt'
     did_set_diffopt(&errmsg);
-  } else if (gvarp == &win->w_allbuf_opt.wo_fdm) {  // 'foldmethod'
+  } else if (gvarp == &win->w_allbuf_opt.wo_fdm) {      // 'foldmethod'
     did_set_foldmethod(win, varp, &errmsg);
-  } else if (gvarp == &win->w_allbuf_opt.wo_fmr) {  // 'foldmarker'
+  } else if (gvarp == &win->w_allbuf_opt.wo_fmr) {      // 'foldmarker'
     did_set_foldmarker(win, varp, &errmsg);
-  } else if (gvarp == &p_cms) {  // 'commentstring'
+  } else if (gvarp == &p_cms) {                         // 'commentstring'
     did_set_commentstring(varp, &errmsg);
-  } else if (varp == &p_fdo) {  // 'foldopen'
+  } else if (varp == &p_fdo) {                          // 'foldopen'
     did_set_opt_flags(p_fdo, p_fdo_values, &fdo_flags, true, &errmsg);
-  } else if (varp == &p_fcl) {  // 'foldclose'
+  } else if (varp == &p_fcl) {                          // 'foldclose'
     did_set_opt_strings(*varp, p_fcl_values, true, &errmsg);
-  } else if (gvarp == &win->w_allbuf_opt.wo_fdi) {  // 'foldignore'
+  } else if (gvarp == &win->w_allbuf_opt.wo_fdi) {      // 'foldignore'
     did_set_foldignore(win);
-  } else if (gvarp == &p_ve) {  // 'virtualedit'
+  } else if (gvarp == &p_ve) {                          // 'virtualedit'
     did_set_virtualedit(win, opt_flags, oldval, &errmsg);
-  } else if (gvarp == &p_cino) {  // 'cinoptions'
+  } else if (gvarp == &p_cino) {                        // 'cinoptions'
     // TODO(vim): recognize errors
     parse_cino(buf);
-  } else if (gvarp == &p_lop) {  // 'lispoptions'
+  } else if (gvarp == &p_lop) {                         // 'lispoptions'
     did_set_lispoptions(varp, &errmsg);
-  } else if (varp == &p_icm) {  // 'inccommand'
+  } else if (varp == &p_icm) {                          // 'inccommand'
     did_set_opt_strings(*varp, p_icm_values, false, &errmsg);
-  } else if (gvarp == &p_ft || gvarp == &p_syn) {
+  } else if (gvarp == &p_ft                             // 'filetype'
+             || gvarp == &p_syn) {                      // 'syntax'
     did_set_filetype_or_syntax(varp, oldval, value_checked, &value_changed, &errmsg);
-  } else if (varp == &win->w_p_winhl) {
+  } else if (varp == &win->w_p_winhl) {                 // 'winhighlight'
     did_set_winhl(win, &errmsg);
   } else if (varp == &p_tpf) {
     did_set_opt_flags(p_tpf, p_tpf_values, &tpf_flags, true, &errmsg);
-  } else if (varp == &buf->b_p_vsts) {  // 'varsofttabstop'
+  } else if (varp == &buf->b_p_vsts) {                  // 'varsofttabstop'
     did_set_varsoftabstop(buf, varp, &errmsg);
-  } else if (varp == &buf->b_p_vts) {  // 'vartabstop'
+  } else if (varp == &buf->b_p_vts) {                   // 'vartabstop'
     did_set_vartabstop(buf, win, varp, &errmsg);
-  } else if (varp == &p_dex  // 'diffexpr'
-             || gvarp == &win->w_allbuf_opt.wo_fde  // 'foldexpr'
-             || gvarp == &win->w_allbuf_opt.wo_fdt  // 'foldtext'
-             || gvarp == &p_fex  // 'formatexpr'
-             || gvarp == &p_inex  // 'includeexpr'
-             || gvarp == &p_inde  // 'indentexpr'
-             || varp == &p_pex  // 'patchexpr'
-             || varp == &p_ccv) {  // 'charconvert'
+  } else if (varp == &p_dex                             // 'diffexpr'
+             || gvarp == &win->w_allbuf_opt.wo_fde      // 'foldexpr'
+             || gvarp == &win->w_allbuf_opt.wo_fdt      // 'foldtext'
+             || gvarp == &p_fex                         // 'formatexpr'
+             || gvarp == &p_inex                        // 'includeexpr'
+             || gvarp == &p_inde                        // 'indentexpr'
+             || varp == &p_pex                          // 'patchexpr'
+             || varp == &p_ccv) {                       // 'charconvert'
     did_set_optexpr(varp);
     if (varp == &win->w_p_fde && foldmethodIsExpr(win)) {
       foldUpdateAll(win);
     }
-  } else if (gvarp == &p_cfu) {  // 'completefunc'
+  } else if (gvarp == &p_cfu) {                         // 'completefunc'
     set_completefunc_option(&errmsg);
-  } else if (gvarp == &p_ofu) {  // 'omnifunc'
+  } else if (gvarp == &p_ofu) {                         // 'omnifunc'
     set_omnifunc_option(buf, &errmsg);
-  } else if (gvarp == &p_tsrfu) {  // 'thesaurusfunc'
+  } else if (gvarp == &p_tsrfu) {                       // 'thesaurusfunc'
     set_thesaurusfunc_option(&errmsg);
-  } else if (varp == &p_opfunc) {  // 'operatorfunc'
+  } else if (varp == &p_opfunc) {                       // 'operatorfunc'
     set_operatorfunc_option(&errmsg);
-  } else if (varp == &p_qftf) {  // 'quickfixtextfunc'
+  } else if (varp == &p_qftf) {                         // 'quickfixtextfunc'
     qf_process_qftf_option(&errmsg);
-  } else if (gvarp == &p_tfu) {  // 'tagfunc'
+  } else if (gvarp == &p_tfu) {                         // 'tagfunc'
     set_tagfunc_option(&errmsg);
-  } else if (varp == &p_ww) {  // 'whichwrap'
+  } else if (varp == &p_ww) {                           // 'whichwrap'
     did_set_option_listflag(varp, WW_ALL, errbuf, errbuflen, &errmsg);
-  } else if (varp == &p_shm) {  // 'shortmess'
+  } else if (varp == &p_shm) {                          // 'shortmess'
     did_set_option_listflag(varp, SHM_ALL, errbuf, errbuflen, &errmsg);
-  } else if (varp == &p_cpo) {  // 'cpoptions'
+  } else if (varp == &p_cpo) {                          // 'cpoptions'
     did_set_option_listflag(varp, CPO_VI, errbuf, errbuflen, &errmsg);
-  } else if (varp == &buf->b_p_fo) {  // 'formatoptions'
+  } else if (varp == &buf->b_p_fo) {                    // 'formatoptions'
     did_set_option_listflag(varp, FO_ALL, errbuf, errbuflen, &errmsg);
-  } else if (varp == &win->w_p_cocu) {  // 'concealcursor'
+  } else if (varp == &win->w_p_cocu) {                  // 'concealcursor'
     did_set_option_listflag(varp, COCU_ALL, errbuf, errbuflen, &errmsg);
-  } else if (varp == &p_mouse) {  // 'mouse'
+  } else if (varp == &p_mouse) {                        // 'mouse'
     did_set_option_listflag(varp, MOUSE_ALL, errbuf, errbuflen, &errmsg);
-  } else if (gvarp == &p_flp) {
+  } else if (gvarp == &p_flp) {                         // 'formatlistpat'
     if (win->w_briopt_list) {
       // Changing Formatlistpattern when briopt includes the list setting:
       // redraw
@@ -1853,7 +1863,7 @@ static char *did_set_string_option_for(buf_T *buf, win_T *win, int opt_idx, char
     }
   }
 
-  // If error detected, restore the previous value.
+  // If an error is detected, restore the previous value.
   if (errmsg != NULL) {
     free_string_option(*varp);
     *varp = oldval;
@@ -1890,7 +1900,7 @@ static char *did_set_string_option_for(buf_T *buf, win_T *win, int opt_idx, char
     } else if (varp == &buf->b_p_ft) {
       do_filetype_autocmd(buf, varp, opt_flags, value_changed);
     } else if (varp == &win->w_s->b_p_spl) {
-      did_set_spelllang_source(win);
+      do_spelllang_source(win);
     }
   }
 
