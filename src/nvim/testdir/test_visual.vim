@@ -1319,6 +1319,17 @@ func Test_visual_block_with_substitute()
 endfunc
 
 func Test_visual_reselect_with_count()
+  enew
+  call setline(1, ['aaaaaa', '✗ bbbb', '✗ bbbb'])
+  exe "normal! 2Gw\<C-V>jed"
+  exe "normal! gg0lP"
+  call assert_equal(['abbbbaaaaa', '✗bbbb ', '✗ '], getline(1, '$'))
+
+  exe "normal! 1vr."
+  call assert_equal(['a....aaaaa', '✗.... ', '✗ '], getline(1, '$'))
+
+  bwipe!
+
   " this was causing an illegal memory access
   let lines =<< trim END
 
