@@ -2708,7 +2708,7 @@ static int stp_sal_score(suggest_T *stp, suginfo_T *su, slang_T *slang, char_u *
 /// handled already.
 typedef struct {
   int16_t sft_score;   ///< lowest score used
-  char_u sft_word[1];  ///< soundfolded word, actually longer
+  char_u sft_word[];   ///< soundfolded word
 } sftword_T;
 
 static sftword_T dumsft;

@@ -30,7 +30,7 @@ struct keyentry {
   int16_t *next_list;           // ID list for next match (if non-zero)
   int flags;
   int k_char;                   // conceal substitute character
-  char keyword[1];              // actually longer
+  char keyword[];
 };
 
 // Struct used to store one state of the state stack.

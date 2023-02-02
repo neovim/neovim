@@ -117,7 +117,7 @@ typedef struct ff_visited {
   FileID file_id;
   // The memory for this struct is allocated according to the length of
   // ffv_fname.
-  char ffv_fname[1];                  // actually longer
+  char ffv_fname[];
 } ff_visited_T;
 
 // We might have to manage several visited lists during a search.

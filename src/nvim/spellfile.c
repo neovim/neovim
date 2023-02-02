@@ -404,7 +404,7 @@ typedef struct sblock_S sblock_T;
 struct sblock_S {
   int sb_used;                  // nr of bytes already in use
   sblock_T *sb_next;         // next block in list
-  char_u sb_data[1];            // data, actually longer
+  char_u sb_data[];            // data
 };
 
 // A node in the tree.

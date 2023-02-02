@@ -175,20 +175,6 @@ if(CMAKE_C_FLAGS_RELWITHDEBINFO MATCHES DNDEBUG)
   string(REPLACE "-DNDEBUG" "" CMAKE_C_FLAGS_RELWITHDEBINFO "${CMAKE_C_FLAGS_RELWITHDEBINFO}")
 endif()
 
-# gcc 4.0+ sets _FORTIFY_SOURCE=2 automatically.  This currently
-# does not work with Neovim due to some uses of dynamically-sized structures.
-# https://github.com/neovim/neovim/issues/223
-
-# Include the build type's default flags in the check for _FORTIFY_SOURCE,
-# otherwise we may incorrectly identify the level as acceptable and find out
-# later that it was not when optimizations were enabled.  CFLAGS is applied
-# even though you don't see it in CMAKE_REQUIRED_FLAGS.
-set(INIT_FLAGS_NAME CMAKE_C_FLAGS_${CMAKE_BUILD_TYPE})
-string(TOUPPER ${INIT_FLAGS_NAME} INIT_FLAGS_NAME)
-if(${INIT_FLAGS_NAME})
-  set(CMAKE_REQUIRED_FLAGS "${${INIT_FLAGS_NAME}}")
-endif()
-
 option(LOG_LIST_ACTIONS "Add list actions logging" OFF)
 
 option(CLANG_ASAN_UBSAN "Enable Clang address & undefined behavior sanitizer for nvim binary." OFF)
