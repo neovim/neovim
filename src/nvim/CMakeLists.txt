@@ -412,7 +412,15 @@ else()
     ${EXTERNAL_SOURCES} PROPERTIES COMPILE_FLAGS "${COMPILE_FLAGS} -Wno-conversion -Wno-missing-noreturn -Wno-missing-format-attribute -Wno-double-promotion -Wno-strict-prototypes")
 endif()
 
-if(NOT "${MIN_LOG_LEVEL}" MATCHES "^$")
+# Log level (MIN_LOG_LEVEL in log.h)
+if("${MIN_LOG_LEVEL}" MATCHES "^$")
+  # Minimize logging for release-type builds.
+  target_compile_definitions(main_lib INTERFACE MIN_LOG_LEVEL=$<IF:$<CONFIG:Debug>,1,3>)
+else()
+  if(NOT MIN_LOG_LEVEL MATCHES "^[0-3]$")
+    message(FATAL_ERROR "invalid MIN_LOG_LEVEL: " ${MIN_LOG_LEVEL})
+  endif()
+  message(STATUS "MIN_LOG_LEVEL=${MIN_LOG_LEVEL}")
   target_compile_definitions(main_lib INTERFACE MIN_LOG_LEVEL=${MIN_LOG_LEVEL})
 endif()
 
@@ -435,10 +443,7 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Darwin" AND CMAKE_OSX_SYSROOT)
   list(APPEND gen_cflags "-isysroot")
   list(APPEND gen_cflags "${CMAKE_OSX_SYSROOT}")
 endif()
-string(TOUPPER "${CMAKE_BUILD_TYPE}" build_type)
-separate_arguments(C_FLAGS_ARRAY UNIX_COMMAND ${CMAKE_C_FLAGS})
-separate_arguments(C_FLAGS_${build_type}_ARRAY UNIX_COMMAND ${CMAKE_C_FLAGS_${build_type}})
-set(gen_cflags ${gen_cflags} ${C_FLAGS_${build_type}_ARRAY} ${C_FLAGS_ARRAY})
+set(gen_cflags ${gen_cflags} -O2)
 
 set(NVIM_VERSION_GIT_H ${PROJECT_BINARY_DIR}/cmake.config/auto/versiondef_git.h)
 add_custom_target(update_version_stamp
@@ -653,10 +658,10 @@ endif()
 
 if(NOT LUAJIT_FOUND)
   message(STATUS "luajit not found, skipping unit tests")
-elseif(CMAKE_BUILD_TYPE MATCHES Debug)
+else()
   glob_wrapper(UNIT_TEST_FIXTURES ${PROJECT_SOURCE_DIR}/test/unit/fixtures/*.c)
-  list(APPEND NVIM_SOURCES ${UNIT_TEST_FIXTURES})
-  target_compile_definitions(main_lib INTERFACE UNIT_TESTING)
+  target_sources(nvim PRIVATE $<$<CONFIG:Debug>:${UNIT_TEST_FIXTURES}>)
+  target_compile_definitions(nvim PRIVATE $<$<CONFIG:Debug>:UNIT_TESTING>)
 endif()
 
 target_sources(nvim PRIVATE ${NVIM_GENERATED_FOR_SOURCES} ${NVIM_GENERATED_FOR_HEADERS}
@@ -681,8 +686,11 @@ endif()
 if(ENABLE_LTO)
   include(CheckIPOSupported)
   check_ipo_supported(RESULT IPO_SUPPORTED)
-  if(IPO_SUPPORTED AND (NOT CMAKE_BUILD_TYPE MATCHES Debug))
-    set_target_properties(nvim PROPERTIES INTERPROCEDURAL_OPTIMIZATION TRUE)
+  if(IPO_SUPPORTED)
+    set_target_properties(nvim PROPERTIES
+      INTERPROCEDURAL_OPTIMIZATION_RELEASE TRUE
+      INTERPROCEDURAL_OPTIMIZATION_RELWITHDEBINFO TRUE
+      INTERPROCEDURAL_OPTIMIZATION_MINSIZEREL TRUE)
   endif()
 endif()
 
@@ -942,6 +950,3 @@ add_custom_target(generated-sources DEPENDS
 )
 
 add_subdirectory(po)
-
-include(GetCompileFlags)
-get_compile_flags(NVIM_VERSION_CFLAGS)

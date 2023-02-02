@@ -130,28 +130,6 @@ set(NVIM_API_LEVEL 11)         # Bump this after any API change.
 set(NVIM_API_LEVEL_COMPAT 0)  # Adjust this after a _breaking_ API change.
 set(NVIM_API_PRERELEASE true)
 
-set(NVIM_VERSION_BUILD_TYPE "${CMAKE_BUILD_TYPE}")
-# NVIM_VERSION_CFLAGS set further below.
-
-# Log level (MIN_LOG_LEVEL in log.h)
-if("${MIN_LOG_LEVEL}" MATCHES "^$")
-  # Minimize logging for release-type builds.
-  if(CMAKE_BUILD_TYPE STREQUAL "Release"
-      OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo"
-      OR CMAKE_BUILD_TYPE STREQUAL "MinSizeRel")
-    message(STATUS "MIN_LOG_LEVEL not specified, default is 3 (ERROR) for release builds")
-    set(MIN_LOG_LEVEL 3)
-  else()
-    message(STATUS "MIN_LOG_LEVEL not specified, default is 1 (INFO)")
-    set(MIN_LOG_LEVEL 1)
-  endif()
-else()
-  if(NOT MIN_LOG_LEVEL MATCHES "^[0-3]$")
-    message(FATAL_ERROR "invalid MIN_LOG_LEVEL: " ${MIN_LOG_LEVEL})
-  endif()
-  message(STATUS "MIN_LOG_LEVEL=${MIN_LOG_LEVEL}")
-endif()
-
 # Default to -O2 on release builds.
 if(CMAKE_C_FLAGS_RELEASE MATCHES "-O3")
   message(STATUS "Replacing -O3 in CMAKE_C_FLAGS_RELEASE with -O2")
@@ -333,7 +311,6 @@ install_helper(
 #
 
 add_subdirectory(src/nvim)
-get_directory_property(NVIM_VERSION_CFLAGS DIRECTORY src/nvim DEFINITION NVIM_VERSION_CFLAGS)
 add_subdirectory(cmake.config)
 add_subdirectory(test/functional/fixtures)  # compile test programs
 add_subdirectory(runtime)

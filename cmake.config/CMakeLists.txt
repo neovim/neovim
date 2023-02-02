@@ -162,11 +162,19 @@ configure_file (
   "${PROJECT_BINARY_DIR}/cmake.config/auto/config.h"
   )
 
-# generate version definitions
-configure_file (
-  "${PROJECT_SOURCE_DIR}/cmake.config/versiondef.h.in"
-  "${PROJECT_BINARY_DIR}/cmake.config/auto/versiondef.h"
-  )
+# Improved :version output on newer cmake versions
+if(${CMAKE_VERSION} VERSION_LESS 3.14)
+  configure_file(
+    "${PROJECT_SOURCE_DIR}/cmake.config/versiondef-old.h.in"
+    "${PROJECT_BINARY_DIR}/cmake.config/auto/versiondef.h.gen")
+else()
+  configure_file(
+    "${PROJECT_SOURCE_DIR}/cmake.config/versiondef.h.in"
+    "${PROJECT_BINARY_DIR}/cmake.config/auto/versiondef.h.gen")
+endif()
+file(GENERATE
+  OUTPUT "${PROJECT_BINARY_DIR}/cmake.config/auto/versiondef.h"
+  INPUT "${PROJECT_BINARY_DIR}/cmake.config/auto/versiondef.h.gen")
 
 # generate pathdef.c
 find_program(WHOAMI_PROG whoami)
