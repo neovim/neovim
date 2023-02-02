@@ -155,7 +155,7 @@ static void fread_idle_cb(uv_idle_t *handle)
   uintmax_t fpos_intmax = stream->fpos;
   if (fpos_intmax > INT64_MAX) {
     ELOG("stream offset overflow");
-    preserve_exit();
+    preserve_exit("stream offset overflow");
   }
 
   // Synchronous read

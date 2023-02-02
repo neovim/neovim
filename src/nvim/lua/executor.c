@@ -211,9 +211,7 @@ static int nlua_luv_cfpcall(lua_State *lstate, int nargs, int nresult, int flags
   if (status) {
     if (status == LUA_ERRMEM && !(flags & LUVF_CALLBACK_NOEXIT)) {
       // consider out of memory errors unrecoverable, just like xmalloc()
-      os_errmsg(e_outofmem);
-      os_errmsg("\n");
-      preserve_exit();
+      preserve_exit(e_outofmem);
     }
     const char *error = lua_tostring(lstate, -1);
 
