@@ -45,14 +45,15 @@ function M.watch(path, opts, callback)
   })
 
   path = vim.fs.normalize(path)
-  local uvflags = opts and opts.uvflags
+  local uvflags = opts and opts.uvflags or {}
   local handle, new_err = vim.loop.new_fs_event()
   assert(not new_err, new_err)
   local _, start_err = handle:start(path, uvflags, function(err, filename, events)
     assert(not err, err)
     local fullpath = path
     if filename then
-      fullpath = filepath_join(fullpath, filename:gsub('\\', '/'))
+      filename = filename:gsub('\\', '/')
+      fullpath = filepath_join(fullpath, filename)
     end
     local change_type = events.change and M.FileChangeType.Changed or 0
     if events.rename then
@@ -102,15 +103,12 @@ local function poll_internal(path, opts, callback, watches)
       path,
       interval,
       vim.schedule_wrap(function(err)
-        local change_type = M.FileChangeType.Changed
         if err == 'ENOENT' then
-          change_type = M.FileChangeType.Deleted
-        else
-          assert(not err, err)
-          poll_internal(path, opts, callback, watches)
+          return
         end
-
-        callback(path, change_type)
+        assert(not err, err)
+        poll_internal(path, opts, callback, watches)
+        callback(path, M.FileChangeType.Changed)
       end)
     )
     assert(not start_err, start_err)
@@ -146,6 +144,7 @@ local function poll_internal(path, opts, callback, watches)
       else
         watch.cancel()
         watches.children[name] = nil
+        callback(path .. '/' .. name, M.FileChangeType.Deleted)
       end
     end
     watches.children = newchildren

@@ -165,7 +165,7 @@ function M._match(pattern, s)
   return false
 end
 
-local watchfunc = (vim.fn.has('win32') == 1 or vim.fn.has('mac') == 1) and watch.watch or watch.poll
+M._watchfunc = (vim.fn.has('win32') == 1 or vim.fn.has('mac') == 1) and watch.watch or watch.poll
 
 ---@type table<number, table<number, function()>> client id -> registration id -> cancel function
 local cancels = vim.defaulttable()
@@ -213,7 +213,7 @@ function M.register(reg, ctx)
 
       table.insert(
         cancels[client_id][reg.id],
-        watchfunc(base_dir, { uvflags = { recursive = true } }, function(fullpath, change_type)
+        M._watchfunc(base_dir, { uvflags = { recursive = true } }, function(fullpath, change_type)
           change_type = to_lsp_change_type[change_type]
           if
             M._match(pattern, fullpath) and math.floor(kind / (2 ^ (change_type - 1))) % 2 == 1
