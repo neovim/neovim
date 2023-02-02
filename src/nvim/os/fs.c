@@ -146,11 +146,7 @@ bool os_isdir(const char *name)
     return false;
   }
 
-  if (!S_ISDIR(mode)) {
-    return false;
-  }
-
-  return true;
+  return S_ISDIR(mode);
 }
 
 /// Check what `name` is:
