@@ -397,10 +397,7 @@ if(BUSTED_PRG)
 
   configure_file(
     ${CMAKE_SOURCE_DIR}/test/cmakeconfig/paths.lua.in
-    ${CMAKE_BINARY_DIR}/test/cmakeconfig/paths.lua.gen)
-  file(GENERATE
-    OUTPUT ${CMAKE_BINARY_DIR}/test/cmakeconfig/paths.lua
-    INPUT ${CMAKE_BINARY_DIR}/test/cmakeconfig/paths.lua.gen)
+    ${CMAKE_BINARY_DIR}/test/cmakeconfig/paths.lua)
 
   add_custom_target(functionaltest
     COMMAND ${CMAKE_COMMAND}
