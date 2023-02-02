@@ -385,6 +385,7 @@ local extension = {
   ['m4gl'] = 'fgl',
   ['4gl'] = 'fgl',
   ['4gh'] = 'fgl',
+  fir = 'firrtl',
   fish = 'fish',
   focexec = 'focexec',
   fex = 'focexec',
