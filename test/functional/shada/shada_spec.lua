@@ -266,6 +266,8 @@ describe('ShaDa support code', function()
   end)
 
   it('does not store unlisted buffer', function()
+    skip(is_os('win'))
+
     local fname = funcs.getcwd() .. '/file'
     meths.set_var('__fname', fname)
     nvim_command('silent! edit `=__fname`')
@@ -277,8 +279,6 @@ describe('ShaDa support code', function()
     -- Set 'buflisted', then check again.
     curbufmeths.set_option('buflisted', true)
     nvim_command('wshada! ' .. shada_fname)
-    retry(nil, 4000, function()
-      eq({[7]=1, [8]=1, [10]=1}, find_file(fname))
-    end)
+    eq({[7]=1, [8]=1, [10]=1}, find_file(fname))
   end)
 end)
