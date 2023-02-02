@@ -458,6 +458,9 @@ static void tui_terminal_stop(TUIData *tui)
 
 void tui_stop(TUIData *tui)
 {
+  if (tui->stopped) {
+    return;
+  }
   tui_terminal_stop(tui);
   stream_set_blocking(tui->input.in_fd, true);   // normalize stream (#2598)
   tinput_destroy(&tui->input);

@@ -14,6 +14,7 @@ local clear = helpers.clear
 local command = helpers.command
 local dedent = helpers.dedent
 local exec = helpers.exec
+local exec_lua = helpers.exec_lua
 local testprg = helpers.testprg
 local retry = helpers.retry
 local nvim_prog = helpers.nvim_prog
@@ -1505,6 +1506,11 @@ describe('TUI', function()
       {3:-- INSERT --}                                      |
       {3:-- TERMINAL --}                                    |
     ]]}
+  end)
+
+  it('no assert failure on deadly signal #21896', function()
+    exec_lua([[vim.loop.kill(vim.fn.jobpid(vim.bo.channel), 'sigterm')]])
+    screen:expect({any = '%[Process exited 1%]'})
   end)
 end)
 

@@ -811,6 +811,11 @@ void preserve_exit(void)
   really_exiting = true;
   // Ignore SIGHUP while we are already exiting. #9274
   signal_reject_deadly();
+
+  if (ui_client_channel_id) {
+    os_exit(1);
+  }
+
   os_errmsg(IObuff);
   os_errmsg("\n");
   ui_flush();
