@@ -412,7 +412,6 @@ static void get_statuscol_str(win_T *wp, linenr_T lnum, int row, int startrow, i
   bool use_cul = use_cursor_line_sign(wp, lnum);
   int virtnum = row - startrow - filler_lines;
 
-  set_vim_var_nr(VV_VIRTNUM, virtnum);
   // When called the first time for line "lnum" set num_attr
   if (stcp->num_attr == 0) {
     stcp->num_attr = sign_num_attr ? sign_num_attr
@@ -436,6 +435,18 @@ static void get_statuscol_str(win_T *wp, linenr_T lnum, int row, int startrow, i
                                : win_hl_attr(wp, use_cul ? HLF_CLS : HLF_SC);
   }
   stcp->sign_text[i] = NULL;
+
+  // When a buffer's line count has changed, make a best estimate for the full
+  // width of the status column by building with "w_nrwidth_line_count". Add
+  // potentially truncated width and rebuild before drawing anything.
+  if (wp->w_statuscol_line_count != wp->w_nrwidth_line_count) {
+    wp->w_statuscol_line_count = wp->w_nrwidth_line_count;
+    set_vim_var_nr(VV_VIRTNUM, 0);
+    build_statuscol_str(wp, wp->w_nrwidth_line_count, 0, stcp->width,
+                        ' ', stcp->text, &stcp->hlrec, stcp);
+    stcp->width += stcp->truncate;
+  }
+  set_vim_var_nr(VV_VIRTNUM, virtnum);
 
   int width = build_statuscol_str(wp, lnum, relnum, stcp->width,
                                   ' ', stcp->text, &stcp->hlrec, stcp);

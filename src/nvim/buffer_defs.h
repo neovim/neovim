@@ -1392,6 +1392,7 @@ struct window_S {
   int w_prev_fraction_row;
 
   linenr_T w_nrwidth_line_count;        // line count when ml_nrwidth_width was computed.
+  linenr_T w_statuscol_line_count;      // line count when 'statuscolumn' width was computed.
   int w_nrwidth_width;                  // nr of chars to print line count.
 
   qf_info_T *w_llist;                 // Location list for this window

@@ -768,7 +768,6 @@ void comp_col(void)
 /// Otherwise it depends on 'numberwidth' and the line count.
 int number_width(win_T *wp)
 {
-  int n;
   linenr_T lnum;
 
   if (wp->w_p_rnu && !wp->w_p_nu) {
@@ -784,17 +783,13 @@ int number_width(win_T *wp)
   }
   wp->w_nrwidth_line_count = lnum;
 
-  // make best estimate for 'statuscolumn'
+  // reset for 'statuscolumn'
   if (*wp->w_p_stc != NUL) {
-    char buf[MAXPATHL];
-    wp->w_nrwidth_width = 0;
-    n = build_statuscol_str(wp, lnum, 0, 0, NUL, buf, NULL, NULL);
-    n = MAX(n, (wp->w_p_nu || wp->w_p_rnu) * (int)wp->w_p_nuw);
-    wp->w_nrwidth_width = MIN(n, MAX_NUMBERWIDTH);
+    wp->w_nrwidth_width = (wp->w_p_nu || wp->w_p_rnu) * (int)wp->w_p_nuw;
     return wp->w_nrwidth_width;
   }
 
-  n = 0;
+  int n = 0;
   do {
     lnum /= 10;
     n++;
