@@ -439,7 +439,7 @@ describe('statuscolumn', function()
       vim.api.nvim_buf_set_extmark(0, ns, 7, 0, {
         virt_lines_leftcol = true, virt_lines = {{{"virt", ""}}} })
     ]])
-    feed('lh')  -- force update wcol/row
+    feed('lh')  -- force update cursor row
     screen:expect([[
                 4 aaaaa                                    |
                 5 aaaaa                                    |
@@ -458,5 +458,24 @@ describe('statuscolumn', function()
     ]])
     command('set stc=')  -- also for the default sign column
     screen:expect_unchanged()
+    -- 'statuscolumn' is not too wide with custom (bogus) fold column
+    command([[set stc=%{foldlevel(v:lnum)>0?repeat('-',foldlevel(v:lnum)):''}%=%l\ ]])
+    feed('Gd10Ggg<C-l>')
+    screen:expect([[
+               1 ^aaaaa                                     |
+               2 aaaaa                                     |
+               3 aaaaa                                     |
+               4 aaaaa                                     |
+               5 aaaaa                                     |
+               6 aaaaa                                     |
+               7 aaaaa                                     |
+      virt                                                 |
+      ---------8 aaaaa                                     |
+      virt                                                 |
+      ---------9 aaaaa                                     |
+      ~                                                    |
+      ~                                                    |
+                                                           |
+    ]])
   end)
 end)
