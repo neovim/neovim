@@ -1483,7 +1483,7 @@ static void init_prompt(int cmdchar_todo)
     }
     curwin->w_cursor.lnum = curbuf->b_ml.ml_line_count;
     coladvance(MAXCOL);
-    changed_bytes(curbuf->b_ml.ml_line_count, 0);
+    inserted_bytes(curbuf->b_ml.ml_line_count, 0, 0, (colnr_T)strlen(prompt));
   }
 
   // Insert always starts after the prompt, allow editing text after it.
