@@ -1,6 +1,6 @@
 " Vim plugin for converting a syntax highlighted file to HTML.
 " Maintainer: Ben Fritz <fritzophrenic@gmail.com>
-" Last Change: 2019 Nov 13
+" Last Change: 2023 Jan 01
 "
 " The core of the code is in $VIMRUNTIME/autoload/tohtml.vim and
 " $VIMRUNTIME/syntax/2html.vim
@@ -8,11 +8,23 @@
 if exists('g:loaded_2html_plugin')
   finish
 endif
-let g:loaded_2html_plugin = 'vim8.1_v2'
+let g:loaded_2html_plugin = 'vim9.0_v1'
 
 "
 " Changelog: {{{
-"   8.1_v2  (this version): - Fix Bitbucket issue #19: fix calculation of tab
+"   9.0_v1  (this version): - Implement g:html_no_doc and g:html_no_modeline
+"                             for diff mode. Add tests.
+"           (Vim 9.0.1122): NOTE: no version string update for this version!
+"                           - Bugfix for variable name in g:html_no_doc
+"           (Vim 9.0.0819): NOTE: no version string update for this version!
+"                           - Add options g:html_no_doc, g:html_no_lines,
+"                             and g:html_no_modeline (partially included in Vim
+"                             runtime prior to version string update).
+"                           - Updates for new Vim9 string append style (i.e. use
+"                             ".." instead of ".")
+"
+"   8.1 updates: {{{
+"   8.1_v2  (Vim 8.1.2312): - Fix SourceForge issue #19: fix calculation of tab
 "                             stop position to use in expanding a tab, when that
 "                             tab occurs after a syntax match which in turn
 "                             comes after previously expanded tabs.
@@ -20,17 +32,17 @@ let g:loaded_2html_plugin = 'vim8.1_v2'
 "                             destination file to ignore FileType events;
 "                             speeds up processing when the destination file
 "                             already exists and HTML highlight takes too long.
-"                           - Fix Bitbucket issue #20: progress bar could not be
+"                           - Fix SourceForge issue #20: progress bar could not be
 "                             seen when DiffDelete background color matched
 "                             StatusLine background color. Added TOhtmlProgress
 "                             highlight group for manual user override, but
 "                             calculate it to be visible compared to StatusLine
 "                             by default.
-"                           - Fix Bitbucket issue #1: Remove workaround for old
+"                           - Fix SourceForge issue #1: Remove workaround for old
 "                             browsers which don't support 'ch' CSS unit, since
 "                             all modern browsers, including IE>=9, support it.
-"                           - Fix Bitbucket issue #10: support termguicolors
-"                           - Fix Bitbucket issue #21: default to using
+"                           - Fix SourceForge issue #10: support termguicolors
+"                           - Fix SourceForge issue #21: default to using
 "                             generated content instead of <input> tags for
 "                             uncopyable text, so that text is correctly
 "                             prevented from being copied in chrome. Use
@@ -41,13 +53,14 @@ let g:loaded_2html_plugin = 'vim8.1_v2'
 "                           - Fix fallback sizing of <input> tags for browsers
 "                             without "ch" support.
 "                           - Fix cursor on unselectable diff filler text.
-"   8.1_v1  (Vim 8.1.0528): - Fix Bitbucket issue #6: Don't generate empty
+"   8.1_v1  (Vim 8.1.0528): - Fix SourceForge issue #6: Don't generate empty
 "                             script tag.
-"                           - Fix Bitbucket issue #5: javascript should
+"                           - Fix SourceForge issue #5: javascript should
 "                             declare variables with "var".
-"                           - Fix Bitbucket issue #13: errors thrown sourcing
+"                           - Fix SourceForge issue #13: errors thrown sourcing
 "                             2html.vim directly when plugins not loaded.
-"                           - Fix Bitbucket issue #16: support 'vartabstop'.
+"                           - Fix SourceForge issue #16: support 'vartabstop'.
+"}}}
 "
 "   7.4 updates: {{{
 "   7.4_v2  (Vim 7.4.0899): Fix error raised when converting a diff containing
@@ -152,7 +165,7 @@ let g:loaded_2html_plugin = 'vim8.1_v2'
 
 " TODO: {{{
 "   * Check the issue tracker:
-"     https://bitbucket.org/fritzophrenic/vim-tohtml/issues?status=new&status=open
+"     https://sourceforge.net/p/vim-tohtml/issues/search/?q=%21status%3Aclosed
 "   * Options for generating the CSS in external style sheets. New :TOcss
 "     command to convert the current color scheme into a (mostly) generic CSS
 "     stylesheet which can be re-used. Alternate stylesheet support? Good start

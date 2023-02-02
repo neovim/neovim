@@ -2,8 +2,8 @@
 " Language:     Debian sources.list
 " Maintainer:   Debian Vim Maintainers
 " Former Maintainer: Matthijs Mohlmann <matthijs@cacholong.nl>
-" Last Change: 2022 Oct 29
-" URL: https://salsa.debian.org/vim-team/vim-debian/blob/master/syntax/debsources.vim
+" Last Change: 2023 Jan 16
+" URL: https://salsa.debian.org/vim-team/vim-debian/blob/main/syntax/debsources.vim
 
 " Standard syntax initialization
 if exists('b:current_syntax')
@@ -14,7 +14,7 @@ endif
 syn case match
 
 " A bunch of useful keywords
-syn match debsourcesKeyword        /\(deb-src\|deb\|main\|contrib\|non-free\|restricted\|universe\|multiverse\)/
+syn match debsourcesKeyword        /\(deb-src\|deb\|main\|contrib\|non-free\|non-free-firmware\|restricted\|universe\|multiverse\)/
 
 " Match comments
 syn match debsourcesComment        /#.*/  contains=@Spell

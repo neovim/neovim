@@ -1,6 +1,6 @@
 " Vim syntax support file
 " Maintainer: Ben Fritz <fritzophrenic@gmail.com>
-" Last Change: 2022 Dec 26
+" Last Change: 2023 Jan 01
 "
 " Additional contributors:
 "

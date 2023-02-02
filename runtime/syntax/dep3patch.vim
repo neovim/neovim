@@ -1,8 +1,8 @@
 " Vim syntax file
 " Language:    Debian DEP3 Patch headers
 " Maintainer:  Gabriel Filion <gabster@lelutin.ca>
-" Last Change: 2022 Apr 06
-" URL: https://salsa.debian.org/vim-team/vim-debian/blob/master/syntax/dep3patch.vim
+" Last Change: 2023 Jan 16
+" URL: https://salsa.debian.org/vim-team/vim-debian/blob/main/syntax/dep3patch.vim
 "
 " Specification of the DEP3 patch header format is available at:
 "   https://dep-team.pages.debian.net/deps/dep3/

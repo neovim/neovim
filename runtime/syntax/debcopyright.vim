@@ -1,8 +1,8 @@
 " Vim syntax file
 " Language:    Debian copyright file
 " Maintainer:  Debian Vim Maintainers
-" Last Change: 2019 Sep 07
-" URL: https://salsa.debian.org/vim-team/vim-debian/blob/master/syntax/debcopyright.vim
+" Last Change: 2023 Jan 16
+" URL: https://salsa.debian.org/vim-team/vim-debian/blob/main/syntax/debcopyright.vim
 
 " Standard syntax initialization
 if exists('b:current_syntax')

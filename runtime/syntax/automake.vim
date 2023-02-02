@@ -2,8 +2,8 @@
 " Language: automake Makefile.am
 " Maintainer: Debian Vim Maintainers
 " Former Maintainer: John Williams <jrw@pobox.com>
-" Last Change: 2018 Dec 27
-" URL: https://salsa.debian.org/vim-team/vim-debian/blob/master/syntax/automake.vim
+" Last Change: 2023 Jan 16
+" URL: https://salsa.debian.org/vim-team/vim-debian/blob/main/syntax/automake.vim
 "
 " XXX This file is in need of a new maintainer, Debian VIM Maintainers maintain
 "     it only because patches have been submitted for it by Debian users and the
