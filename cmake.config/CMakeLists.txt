@@ -162,15 +162,15 @@ configure_file (
   "${PROJECT_BINARY_DIR}/cmake.config/auto/config.h"
   )
 
-# Improved :version output on newer cmake versions
-if(${CMAKE_VERSION} VERSION_LESS 3.14)
-  configure_file(
-    "${PROJECT_SOURCE_DIR}/cmake.config/versiondef-old.h.in"
-    "${PROJECT_BINARY_DIR}/cmake.config/auto/versiondef.h.gen")
+# TODO(dundargoc): the following is a hack to work around the behavior of
+# file(GENERATE) for multi-config generators, since it doesn't allow different
+# output with the same filename. This should be fixed to be generator
+# independent in the future.
+get_property(isMultiConfig GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG)
+if(isMultiConfig)
+  configure_file(versiondef-multi.h.in auto/versiondef.h.gen)
 else()
-  configure_file(
-    "${PROJECT_SOURCE_DIR}/cmake.config/versiondef.h.in"
-    "${PROJECT_BINARY_DIR}/cmake.config/auto/versiondef.h.gen")
+  configure_file(versiondef.h.in auto/versiondef.h.gen)
 endif()
 file(GENERATE
   OUTPUT "${PROJECT_BINARY_DIR}/cmake.config/auto/versiondef.h"
