@@ -1401,7 +1401,7 @@ function lsp.start_client(config)
         client_id = client_id,
         bufnr = bufnr,
         params = params,
-        version = version
+        version = version,
       }
       handler(err, result, context)
     end, function(request_id)
