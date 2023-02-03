@@ -2158,9 +2158,6 @@ static char *set_bool_option(const int opt_idx, char_u *const varp, const int va
     if (curwin->w_p_spell) {
       errmsg = did_set_spelllang(curwin);
     }
-  } else if (((int *)varp == &curwin->w_p_nu || (int *)varp == &curwin->w_p_rnu)
-             && *curwin->w_p_stc != NUL) {  // '(relative)number' + 'statuscolumn'
-    curwin->w_nrwidth_line_count = 0;
   }
 
   if ((int *)varp == &curwin->w_p_arab) {
