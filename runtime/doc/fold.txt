@@ -195,7 +195,7 @@ non-matching marker pairs.  Example: >
 
 	/* funcB() {{{2 */
 	void funcB() {}
-
+<							*{{{* *}}}*
 A fold starts at a "{{{" marker.  The following number specifies the fold
 level.  What happens depends on the difference between the current fold level
 and the level given by the marker:

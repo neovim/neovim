@@ -3,9 +3,9 @@
 " Maintainer:   Debian Vim Maintainers <team+vim@tracker.debian.org>
 " Former Maintainers:   Michael Piefel <piefel@informatik.hu-berlin.de>
 "                       Stefano Zacchiroli <zack@debian.org>
-" Last Change:  2022 Jul 25
+" Last Change:  2023 Jan 16
 " License:      Vim License
-" URL:          https://salsa.debian.org/vim-team/vim-debian/blob/master/ftplugin/debchangelog.vim
+" URL:          https://salsa.debian.org/vim-team/vim-debian/blob/main/ftplugin/debchangelog.vim
 
 " Bug completion requires apt-listbugs installed for Debian packages or
 " python-launchpadlib installed for Ubuntu packages
@@ -35,13 +35,13 @@ if exists('g:did_changelog_ftplugin')
   finish
 endif
 
+" Don't load another plugin (this is global)
+let g:did_changelog_ftplugin = 1
+
 " Make sure the '<' and 'C' flags are not included in 'cpoptions', otherwise
 " <CR> would not be recognized.  See ":help 'cpoptions'".
 let s:cpo_save = &cpo
 set cpo&vim
-
-" Don't load another plugin (this is global)
-let g:did_changelog_ftplugin = 1
 
 " {{{1 GUI menu
 
