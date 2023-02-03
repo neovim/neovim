@@ -1,21 +1,25 @@
 local a = vim.api
 local language = require('vim.treesitter.language')
 
--- query: pattern matching on trees
--- predicate matching is implemented in lua
---
 ---@class Query
 ---@field captures string[] List of captures used in query
----@field info table Contains used queries, predicates, directives
+---@field info TSQueryInfo Contains used queries, predicates, directives
 ---@field query userdata Parsed query
 local Query = {}
 Query.__index = Query
 
+---@class TSQueryInfo
+---@field captures table
+---@field patterns table<string,any[][]>
+
 local M = {}
 
 ---@private
+---@param files string[]
+---@return string[]
 local function dedupe_files(files)
   local result = {}
+  ---@type table<string,boolean>
   local seen = {}
 
   for _, path in ipairs(files) do
@@ -65,10 +69,10 @@ function M.get_query_files(lang, query_name, is_included)
     return {}
   end
 
-  local base_query = nil
+  local base_query = nil ---@type string?
   local extensions = {}
 
-  local base_langs = {}
+  local base_langs = {} ---@type string[]
 
   -- Now get the base languages by looking at the first line of every file
   -- The syntax is the following :
@@ -87,6 +91,7 @@ function M.get_query_files(lang, query_name, is_included)
     local extension = false
 
     for modeline in
+      ---@return string
       function()
         return file:read('*l')
       end
@@ -97,6 +102,7 @@ function M.get_query_files(lang, query_name, is_included)
 
       local langlist = modeline:match(MODELINE_FORMAT)
       if langlist then
+        ---@diagnostic disable-next-line:param-type-mismatch
         for _, incllang in ipairs(vim.split(langlist, ',', true)) do
           local is_optional = incllang:match('%(.*%)')
 
@@ -137,6 +143,8 @@ function M.get_query_files(lang, query_name, is_included)
 end
 
 ---@private
+---@param filenames string[]
+---@return string
 local function read_query_files(filenames)
   local contents = {}
 
@@ -147,7 +155,8 @@ local function read_query_files(filenames)
   return table.concat(contents, '')
 end
 
---- The explicitly set queries from |vim.treesitter.query.set_query()|
+-- The explicitly set queries from |vim.treesitter.query.set_query()|
+---@type table<string,table<string,Query>>
 local explicit_queries = setmetatable({}, {
   __index = function(t, k)
     local lang_queries = {}
@@ -174,7 +183,7 @@ end
 ---@param lang string Language to use for the query
 ---@param query_name string Name of the query (e.g. "highlights")
 ---
----@return Query Parsed query
+---@return Query|nil Parsed query
 function M.get_query(lang, query_name)
   if explicit_queries[lang][query_name] then
     return explicit_queries[lang][query_name]
@@ -188,6 +197,7 @@ function M.get_query(lang, query_name)
   end
 end
 
+---@type {[string]: {[string]: Query}}
 local query_cache = vim.defaulttable(function()
   return setmetatable({}, { __mode = 'v' })
 end)
@@ -226,11 +236,11 @@ end
 
 --- Gets the text corresponding to a given node
 ---
----@param node userdata |tsnode|
+---@param node TSNode
 ---@param source (number|string) Buffer or string from which the {node} is extracted
 ---@param opts (table|nil) Optional parameters.
 ---          - concat: (boolean) Concatenate result in a string (default true)
----@return (string[]|string)
+---@return (string[]|string|nil)
 function M.get_node_text(node, source, opts)
   opts = opts or {}
   local concat = vim.F.if_nil(opts.concat, true)
@@ -239,12 +249,12 @@ function M.get_node_text(node, source, opts)
   local end_row, end_col, end_byte = node:end_()
 
   if type(source) == 'number' then
-    local lines
     local eof_row = a.nvim_buf_line_count(source)
     if start_row >= eof_row then
       return nil
     end
 
+    local lines ---@type string[]
     if end_col == 0 then
       lines = a.nvim_buf_get_lines(source, start_row, end_row, true)
       end_col = -1
@@ -267,8 +277,13 @@ function M.get_node_text(node, source, opts)
   end
 end
 
+---@alias TSMatch table<integer,TSNode>
+
+---@alias TSPredicate fun(match: TSMatch, _, _, predicate: any[]): boolean
+
 -- Predicate handler receive the following arguments
 -- (match, pattern, bufnr, predicate)
+---@type table<string,TSPredicate>
 local predicate_handlers = {
   ['eq?'] = function(match, _, source, predicate)
     local node = match[predicate[2]]
@@ -277,13 +292,13 @@ local predicate_handlers = {
     end
     local node_text = M.get_node_text(node, source)
 
-    local str
+    local str ---@type string
     if type(predicate[3]) == 'string' then
       -- (#eq? @aa "foo")
       str = predicate[3]
     else
       -- (#eq? @aa @bb)
-      str = M.get_node_text(match[predicate[3]], source)
+      str = M.get_node_text(match[predicate[3]], source) --[[@as string]]
     end
 
     if node_text ~= str or str == nil then
@@ -299,7 +314,7 @@ local predicate_handlers = {
       return true
     end
     local regex = predicate[3]
-    return string.find(M.get_node_text(node, source), regex)
+    return string.find(M.get_node_text(node, source) --[[@as string]], regex) ~= nil
   end,
 
   ['match?'] = (function()
@@ -321,10 +336,12 @@ local predicate_handlers = {
     })
 
     return function(match, _, source, pred)
+      ---@cast match TSMatch
       local node = match[pred[2]]
       if not node then
         return true
       end
+      ---@diagnostic disable-next-line no-unknown
       local regex = compiled_vim_regexes[pred[3]]
       return regex:match_str(M.get_node_text(node, source))
     end
@@ -335,7 +352,7 @@ local predicate_handlers = {
     if not node then
       return true
     end
-    local node_text = M.get_node_text(node, source)
+    local node_text = M.get_node_text(node, source) --[[@as string]]
 
     for i = 3, #predicate do
       if string.find(node_text, predicate[i], 1, true) then
@@ -359,6 +376,7 @@ local predicate_handlers = {
     if not string_set then
       string_set = {}
       for i = 3, #predicate do
+        ---@diagnostic disable-next-line:no-unknown
         string_set[predicate[i]] = true
       end
       predicate['string_set'] = string_set
@@ -371,21 +389,39 @@ local predicate_handlers = {
 -- As we provide lua-match? also expose vim-match?
 predicate_handlers['vim-match?'] = predicate_handlers['match?']
 
+---@class TSMetadata
+---@field [integer] TSMetadata
+---@field [string] integer|string
+---@field range Range
+
+---@alias TSDirective fun(match: TSMatch, _, _, predicate: any[], metadata: TSMetadata)
+
+-- Predicate handler receive the following arguments
+-- (match, pattern, bufnr, predicate)
+
 -- Directives store metadata or perform side effects against a match.
 -- Directives should always end with a `!`.
 -- Directive handler receive the following arguments
 -- (match, pattern, bufnr, predicate, metadata)
+---@type table<string,TSDirective>
 local directive_handlers = {
   ['set!'] = function(_, _, _, pred, metadata)
     if #pred == 4 then
       -- (#set! @capture "key" "value")
+      ---@diagnostic disable-next-line:no-unknown
       local _, capture_id, key, value = unpack(pred)
+      ---@cast value integer|string
+      ---@cast capture_id integer
+      ---@cast key string
       if not metadata[capture_id] then
         metadata[capture_id] = {}
       end
       metadata[capture_id][key] = value
     else
+      ---@diagnostic disable-next-line:no-unknown
       local _, key, value = unpack(pred)
+      ---@cast value integer|string
+      ---@cast key string
       -- (#set! "key" "value")
       metadata[key] = value
     end
@@ -393,9 +429,11 @@ local directive_handlers = {
   -- Shifts the range of a node.
   -- Example: (#offset! @_node 0 1 0 -1)
   ['offset!'] = function(match, _, _, pred, metadata)
+    ---@cast pred integer[]
     local capture_id = pred[2]
     local offset_node = match[capture_id]
     local range = { offset_node:range() }
+    ---@cast range integer[] bug in sumneko
     local start_row_offset = pred[3] or 0
     local start_col_offset = pred[4] or 0
     local end_row_offset = pred[5] or 0
@@ -419,8 +457,9 @@ local directive_handlers = {
 --- Adds a new predicate to be used in queries
 ---
 ---@param name string Name of the predicate, without leading #
----@param handler function(match:table, pattern:string, bufnr:number, predicate:string[])
+---@param handler function(match:table<string,TSNode>, pattern:string, bufnr:number, predicate:string[])
 ---   - see |vim.treesitter.query.add_directive()| for argument meanings
+---@param force boolean
 function M.add_predicate(name, handler, force)
   if predicate_handlers[name] and not force then
     error(string.format('Overriding %s', name))
@@ -437,12 +476,13 @@ end
 --- metadata table `metadata[capture_id].key = value`
 ---
 ---@param name string Name of the directive, without leading #
----@param handler function(match:table, pattern:string, bufnr:number, predicate:string[], metadata:table)
+---@param handler function(match:table<string,TSNode>, pattern:string, bufnr:number, predicate:string[], metadata:table)
 ---   - match: see |treesitter-query|
 ---      - node-level data are accessible via `match[capture_id]`
 ---   - pattern: see |treesitter-query|
 ---   - predicate: list of strings containing the full directive being called, e.g.
 ---     `(node (#set! conceal "-"))` would get the predicate `{ "#set!", "conceal", "-" }`
+---@param force boolean
 function M.add_directive(name, handler, force)
   if directive_handlers[name] and not force then
     error(string.format('Overriding %s', name))
@@ -474,6 +514,9 @@ local function is_directive(name)
 end
 
 ---@private
+---@param match TSMatch
+---@param pattern string
+---@param source integer|string
 function Query:match_preds(match, pattern, source)
   local preds = self.info.patterns[pattern]
 
@@ -482,8 +525,9 @@ function Query:match_preds(match, pattern, source)
     -- continue on the other case. This way unknown predicates will not be considered,
     -- which allows some testing and easier user extensibility (#12173).
     -- Also, tree-sitter strips the leading # from predicates for us.
-    local pred_name
-    local is_not
+    local pred_name ---@type string
+
+    local is_not ---@type boolean
 
     -- Skip over directives... they will get processed after all the predicates.
     if not is_directive(pred[1]) then
@@ -513,6 +557,8 @@ function Query:match_preds(match, pattern, source)
 end
 
 ---@private
+---@param match TSMatch
+---@param metadata TSMetadata
 function Query:apply_directives(match, pattern, source, metadata)
   local preds = self.info.patterns[pattern]
 
@@ -534,6 +580,10 @@ end
 -- When the node's range is used, the stop is incremented by 1
 -- to make the search inclusive.
 ---@private
+---@param start integer
+---@param stop integer
+---@param node TSNode
+---@return integer, integer
 local function value_or_node_range(start, stop, node)
   if start == nil and stop == nil then
     local node_start, _, node_stop, _ = node:range()
@@ -565,14 +615,12 @@ end
 --- end
 --- </pre>
 ---
----@param node userdata |tsnode| under which the search will occur
----@param source (number|string) Source buffer or string to extract text from
+---@param node TSNode under which the search will occur
+---@param source (integer|string) Source buffer or string to extract text from
 ---@param start number Starting line for the search
 ---@param stop number Stopping line for the search (end-exclusive)
 ---
----@return number capture Matching capture id
----@return table capture_node Capture for {node}
----@return table metadata for the {capture}
+---@return (fun(): integer, TSNode, TSMetadata): capture id, capture node, metadata
 function Query:iter_captures(node, source, start, stop)
   if type(source) == 'number' and source == 0 then
     source = vim.api.nvim_get_current_buf()
@@ -622,14 +670,12 @@ end
 --- end
 --- </pre>
 ---
----@param node userdata |tsnode| under which the search will occur
----@param source (number|string) Source buffer or string to search
----@param start number Starting line for the search
----@param stop number Stopping line for the search (end-exclusive)
+---@param node TSNode under which the search will occur
+---@param source (integer|string) Source buffer or string to search
+---@param start integer Starting line for the search
+---@param stop integer Stopping line for the search (end-exclusive)
 ---
----@return number pattern id
----@return table match
----@return table metadata
+---@return (fun(): integer, table<integer,TSNode>, table): pattern id, match, metadata
 function Query:iter_matches(node, source, start, stop)
   if type(source) == 'number' and source == 0 then
     source = vim.api.nvim_get_current_buf()
@@ -638,6 +684,7 @@ function Query:iter_matches(node, source, start, stop)
   start, stop = value_or_node_range(start, stop, node)
 
   local raw_iter = node:_rawquery(self.query, false, start, stop)
+  ---@cast raw_iter fun(): string, any
   local function iter()
     local pattern, match = raw_iter()
     local metadata = {}

@@ -286,7 +286,12 @@ local function checkComment4fn(Fn_magic, MagicLines)
   return fn_magic
 end
 
-local types = { 'number', 'string', 'table', 'list', 'boolean', 'function' }
+local types = { 'integer', 'number', 'string', 'table', 'list', 'boolean', 'function' }
+
+local tagged_types = { 'TSNode', 'LanguageTree' }
+
+-- Document these as 'table'
+local alias_types = { 'Range' }
 
 --! \brief run the filter
 function TLua2DoX_filter.readfile(this, AppStamp, Filename)
@@ -320,7 +325,12 @@ function TLua2DoX_filter.readfile(this, AppStamp, Filename)
           offset = 1
         end
 
-        if string.sub(line, 3, 3) == '@' or string.sub(line, 1, 4) == '---@' then -- it's a magic comment
+        if vim.startswith(line, '---@cast')
+          or vim.startswith(line, '---@diagnostic')
+          or vim.startswith(line, '---@type') then
+          -- Ignore LSP directives
+          outStream:writeln('// gg:"' .. line .. '"')
+        elseif string.sub(line, 3, 3) == '@' or string.sub(line, 1, 4) == '---@' then -- it's a magic comment
           state = 'in_magic_comment'
           local magic = string.sub(line, 4 + offset)
 
@@ -366,6 +376,17 @@ function TLua2DoX_filter.readfile(this, AppStamp, Filename)
                   magic_split[type_index] = magic_split[type_index]:gsub(k, v)
                 end
               end
+
+              for _, type in ipairs(tagged_types) do
+                magic_split[type_index] =
+                  magic_split[type_index]:gsub(type, '|%1|')
+              end
+
+              for _, type in ipairs(alias_types) do
+                magic_split[type_index] =
+                  magic_split[type_index]:gsub('^'..type..'$', 'table')
+              end
+
               -- surround some types by ()
               for _, type in ipairs(types) do
                 magic_split[type_index] =
@@ -373,6 +394,8 @@ function TLua2DoX_filter.readfile(this, AppStamp, Filename)
                 magic_split[type_index] =
                   magic_split[type_index]:gsub('^(' .. type .. '):?$', '(%1)')
               end
+
+
             end
 
             magic = table.concat(magic_split, ' ')
