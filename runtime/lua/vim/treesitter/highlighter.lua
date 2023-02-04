@@ -1,13 +1,27 @@
 local a = vim.api
 local query = require('vim.treesitter.query')
 
--- support reload for quick experimentation
+---@alias TSHlIter fun(): integer, TSNode, TSMetadata
+
+---@class TSHighlightState
+---@field next_row integer
+---@field iter TSHlIter|nil
+
 ---@class TSHighlighter
+---@field active table<integer,TSHighlighter>
+---@field bufnr integer
+---@field orig_spelloptions string
+---@field _highlight_states table<TSTree,TSHighlightState>
+---@field _queries table<string,TSHighlighterQuery>
+---@field tree LanguageTree
 local TSHighlighter = rawget(vim.treesitter, 'TSHighlighter') or {}
 TSHighlighter.__index = TSHighlighter
 
 TSHighlighter.active = TSHighlighter.active or {}
 
+---@class TSHighlighterQuery
+---@field _query Query|nil
+---@field hl_cache table<integer,integer>
 local TSHighlighterQuery = {}
 TSHighlighterQuery.__index = TSHighlighterQuery
 
@@ -46,7 +60,7 @@ end
 
 --- Creates a new highlighter using @param tree
 ---
----@param tree LanguageTree |LanguageTree| parser object to use for highlighting
+---@param tree LanguageTree parser object to use for highlighting
 ---@param opts (table|nil) Configuration of the highlighter:
 ---           - queries table overwrite queries used by the highlighter
 ---@return TSHighlighter Created highlighter object
@@ -57,9 +71,10 @@ function TSHighlighter.new(tree, opts)
     error('TSHighlighter can not be used with a string parser source.')
   end
 
-  opts = opts or {}
+  opts = opts or {} ---@type { queries: table<string,string> }
   self.tree = tree
   tree:register_cbs({
+    ---@diagnostic disable:invisible
     on_changedtree = function(...)
       self:on_changedtree(...)
     end,
@@ -67,17 +82,20 @@ function TSHighlighter.new(tree, opts)
       self:on_bytes(...)
     end,
     on_detach = function(...)
+      ---@diagnostic disable-next-line:redundant-parameter
       self:on_detach(...)
     end,
   })
 
-  self.bufnr = tree:source()
+  self.bufnr = tree:source() --[[@as integer]]
   self.edit_count = 0
   self.redraw_count = 0
   self.line_count = {}
   -- A map of highlight states.
   -- This state is kept during rendering across each line update.
   self._highlight_states = {}
+
+  ---@type table<string,TSHighlighterQuery>
   self._queries = {}
 
   -- Queries for a specific language can be overridden by a custom
@@ -128,6 +146,8 @@ function TSHighlighter:destroy()
 end
 
 ---@private
+---@param tstree TSTree
+---@return TSHighlightState
 function TSHighlighter:get_highlight_state(tstree)
   if not self._highlight_states[tstree] then
     self._highlight_states[tstree] = {
@@ -145,6 +165,8 @@ function TSHighlighter:reset_highlight_state()
 end
 
 ---@private
+---@param start_row integer
+---@param new_end integer
 function TSHighlighter:on_bytes(_, _, start_row, _, _, _, _, _, new_end)
   a.nvim__buf_redraw_range(self.bufnr, start_row, start_row + new_end + 1)
 end
@@ -155,6 +177,7 @@ function TSHighlighter:on_detach()
 end
 
 ---@private
+---@param changes integer[][]?
 function TSHighlighter:on_changedtree(changes)
   for _, ch in ipairs(changes or {}) do
     a.nvim__buf_redraw_range(self.bufnr, ch[1], ch[3] + 1)
@@ -165,7 +188,7 @@ end
 --
 ---@private
 ---@param lang string Language used by the highlighter.
----@return Query
+---@return TSHighlighterQuery
 function TSHighlighter:get_query(lang)
   if not self._queries[lang] then
     self._queries[lang] = TSHighlighterQuery.new(lang)
@@ -175,7 +198,12 @@ function TSHighlighter:get_query(lang)
 end
 
 ---@private
+---@param self TSHighlighter
+---@param buf integer
+---@param line integer
+---@param is_spell_nav boolean
 local function on_line_impl(self, buf, line, is_spell_nav)
+  ---@diagnostic disable:invisible
   self.tree:for_each_tree(function(tstree, tree)
     if not tstree then
       return
@@ -213,7 +241,7 @@ local function on_line_impl(self, buf, line, is_spell_nav)
       local hl = highlighter_query.hl_cache[capture]
 
       local capture_name = highlighter_query:query().captures[capture]
-      local spell = nil
+      local spell = nil ---@type boolean?
       if capture_name == 'spell' then
         spell = true
       elseif capture_name == 'nospell' then
@@ -242,6 +270,9 @@ local function on_line_impl(self, buf, line, is_spell_nav)
 end
 
 ---@private
+---@param _win integer
+---@param buf integer
+---@param line integer
 function TSHighlighter._on_line(_, _win, buf, line, _)
   local self = TSHighlighter.active[buf]
   if not self then
@@ -252,6 +283,9 @@ function TSHighlighter._on_line(_, _win, buf, line, _)
 end
 
 ---@private
+---@param buf integer
+---@param srow integer
+---@param erow integer
 function TSHighlighter._on_spell_nav(_, _, buf, srow, _, erow, _)
   local self = TSHighlighter.active[buf]
   if not self then
@@ -266,6 +300,7 @@ function TSHighlighter._on_spell_nav(_, _, buf, srow, _, erow, _)
 end
 
 ---@private
+---@param buf integer
 function TSHighlighter._on_buf(_, buf)
   local self = TSHighlighter.active[buf]
   if self then
@@ -274,6 +309,9 @@ function TSHighlighter._on_buf(_, buf)
 end
 
 ---@private
+---@param _win integer
+---@param buf integer
+---@param _topline integer
 function TSHighlighter._on_win(_, _win, buf, _topline)
   local self = TSHighlighter.active[buf]
   if not self then

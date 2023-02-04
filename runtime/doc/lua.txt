@@ -1362,7 +1362,8 @@ defer_fn({fn}, {timeout})                                     *vim.defer_fn()*
 
     Parameters: ~
       • {fn}       (function) Callback to call once `timeout` expires
-      • {timeout}  integer Number of milliseconds to wait before calling `fn`
+      • {timeout}  (integer) Number of milliseconds to wait before calling
+                   `fn`
 
     Return: ~
         (table) timer luv timer object

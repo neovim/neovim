@@ -66,102 +66,102 @@ See |lua-treesitter-languagetree| for the list of available methods.
 
 ==============================================================================
 TREESITTER TREES                                             *treesitter-tree*
-                                                                      *tstree*
+                                                                      *TSTree*
 
 A "treesitter tree" represents the parsed contents of a buffer, which can be
 used to perform further analysis. It is a |luaref-userdata| reference to an
 object held by the tree-sitter library.
 
-An instance `tstree` of a treesitter tree supports the following methods.
+An instance `TSTree` of a treesitter tree supports the following methods.
 
-tstree:root()                                           *tstree:root()*
+TSTree:root()                                           *TSTree:root()*
     Return the root node of this tree.
 
-tstree:copy()                                           *tstree:copy()*
-    Returns a copy of the `tstree`.
+TSTree:copy()                                           *TSTree:copy()*
+    Returns a copy of the `TSTree`.
 
 ==============================================================================
 TREESITTER NODES                                             *treesitter-node*
-                                                                      *tsnode*
+                                                                      *TSNode*
 
 A "treesitter node" represents one specific element of the parsed contents of
 a buffer, which can be captured by a |Query| for, e.g., highlighting. It is a
 |luaref-userdata| reference to an object held by the tree-sitter library.
 
-An instance `tsnode` of a treesitter node supports the following methods.
+An instance `TSNode` of a treesitter node supports the following methods.
 
-tsnode:parent()                                         *tsnode:parent()*
+TSNode:parent()                                         *TSNode:parent()*
     Get the node's immediate parent.
 
-tsnode:next_sibling()                                   *tsnode:next_sibling()*
+TSNode:next_sibling()                                   *TSNode:next_sibling()*
     Get the node's next sibling.
 
-tsnode:prev_sibling()                                   *tsnode:prev_sibling()*
+TSNode:prev_sibling()                                   *TSNode:prev_sibling()*
     Get the node's previous sibling.
 
-tsnode:next_named_sibling()                       *tsnode:next_named_sibling()*
+TSNode:next_named_sibling()                       *TSNode:next_named_sibling()*
     Get the node's next named sibling.
 
-tsnode:prev_named_sibling()                       *tsnode:prev_named_sibling()*
+TSNode:prev_named_sibling()                       *TSNode:prev_named_sibling()*
     Get the node's previous named sibling.
 
-tsnode:iter_children()                                 *tsnode:iter_children()*
-    Iterates over all the direct children of {tsnode}, regardless of whether
+TSNode:iter_children()                                 *TSNode:iter_children()*
+    Iterates over all the direct children of {TSNode}, regardless of whether
     they are named or not.
     Returns the child node plus the eventual field name corresponding to this
     child node.
 
-tsnode:field({name})                                    *tsnode:field()*
+TSNode:field({name})                                    *TSNode:field()*
     Returns a table of the nodes corresponding to the {name} field.
 
-tsnode:child_count()                                    *tsnode:child_count()*
+TSNode:child_count()                                    *TSNode:child_count()*
     Get the node's number of children.
 
-tsnode:child({index})                                   *tsnode:child()*
+TSNode:child({index})                                   *TSNode:child()*
     Get the node's child at the given {index}, where zero represents the first
     child.
 
-tsnode:named_child_count()                         *tsnode:named_child_count()*
+TSNode:named_child_count()                         *TSNode:named_child_count()*
     Get the node's number of named children.
 
-tsnode:named_child({index})                              *tsnode:named_child()*
+TSNode:named_child({index})                              *TSNode:named_child()*
     Get the node's named child at the given {index}, where zero represents the
     first named child.
 
-tsnode:start()                                          *tsnode:start()*
+TSNode:start()                                          *TSNode:start()*
     Get the node's start position. Return three values: the row, column and
     total byte count (all zero-based).
 
-tsnode:end_()                                           *tsnode:end_()*
+TSNode:end_()                                           *TSNode:end_()*
     Get the node's end position. Return three values: the row, column and
     total byte count (all zero-based).
 
-tsnode:range()                                          *tsnode:range()*
+TSNode:range()                                          *TSNode:range()*
     Get the range of the node. Return four values: the row, column of the
     start position, then the row, column of the end position.
 
-tsnode:type()                                           *tsnode:type()*
+TSNode:type()                                           *TSNode:type()*
     Get the node's type as a string.
 
-tsnode:symbol()                                         *tsnode:symbol()*
+TSNode:symbol()                                         *TSNode:symbol()*
     Get the node's type as a numerical id.
 
-tsnode:named()                                          *tsnode:named()*
+TSNode:named()                                          *TSNode:named()*
     Check if the node is named. Named nodes correspond to named rules in the
     grammar, whereas anonymous nodes correspond to string literals in the
     grammar.
 
-tsnode:missing()                                        *tsnode:missing()*
+TSNode:missing()                                        *TSNode:missing()*
     Check if the node is missing. Missing nodes are inserted by the parser in
     order to recover from certain kinds of syntax errors.
 
-tsnode:has_error()                                      *tsnode:has_error()*
+TSNode:has_error()                                      *TSNode:has_error()*
     Check if the node is a syntax error or contains any syntax errors.
 
-tsnode:sexpr()                                          *tsnode:sexpr()*
+TSNode:sexpr()                                          *TSNode:sexpr()*
     Get an S-expression representing the node as a string.
 
-tsnode:id()                                             *tsnode:id()*
+TSNode:id()                                             *TSNode:id()*
     Get an unique identifier for the node inside its own tree.
 
     No guarantees are made about this identifier's internal representation,
@@ -171,20 +171,20 @@ tsnode:id()                                             *tsnode:id()*
     Note: The `id` is not guaranteed to be unique for nodes from different
     trees.
 
-                                                *tsnode:descendant_for_range()*
-tsnode:descendant_for_range({start_row}, {start_col}, {end_row}, {end_col})
+                                                *TSNode:descendant_for_range()*
+TSNode:descendant_for_range({start_row}, {start_col}, {end_row}, {end_col})
     Get the smallest node within this node that spans the given range of (row,
     column) positions
 
-                                          *tsnode:named_descendant_for_range()*
-tsnode:named_descendant_for_range({start_row}, {start_col}, {end_row}, {end_col})
+                                          *TSNode:named_descendant_for_range()*
+TSNode:named_descendant_for_range({start_row}, {start_col}, {end_row}, {end_col})
     Get the smallest named node within this node that spans the given range of
     (row, column) positions
 
 ==============================================================================
 TREESITTER QUERIES                                          *treesitter-query*
 
-Treesitter queries are a way to extract information about a parsed |tstree|,
+Treesitter queries are a way to extract information about a parsed |TSTree|,
 e.g., for the purpose of highlighting. Briefly, a `query` consists of one or
 more patterns. A `pattern` is defined over node types in the syntax tree. A
 `match` corresponds to specific elements of the syntax tree which match a
@@ -336,7 +336,7 @@ repeated, for example, the following two modeline blocks are both valid: >
 TREESITTER SYNTAX HIGHLIGHTING                          *treesitter-highlight*
 
 Syntax highlighting is specified through queries named `highlights.scm`,
-which match a |tsnode| in the parsed |tstree| to a `capture` that can be
+which match a |TSNode| in the parsed |TSTree| to a `capture` that can be
 assigned a highlight group. For example, the query >
 
     (parameters (identifier) @parameter)
@@ -486,7 +486,7 @@ get_captures_at_cursor({winnr})
     Returns a list of highlight capture names under the cursor
 
     Parameters: ~
-      • {winnr}  (number|nil) Window handle or 0 for current window (default)
+      • {winnr}  (integer|nil) Window handle or 0 for current window (default)
 
     Return: ~
         string[] List of capture names
@@ -500,9 +500,9 @@ get_captures_at_pos({bufnr}, {row}, {col})
     if none are defined).
 
     Parameters: ~
-      • {bufnr}  (number) Buffer number (0 for current buffer)
-      • {row}    (number) Position row
-      • {col}    (number) Position column
+      • {bufnr}  (integer) Buffer number (0 for current buffer)
+      • {row}    (integer) Position row
+      • {col}    (integer) Position column
 
     Return: ~
         table[] List of captures `{ capture = "capture name", metadata = { ...
@@ -512,7 +512,7 @@ get_node_at_cursor({winnr})              *vim.treesitter.get_node_at_cursor()*
     Returns the smallest named node under the cursor
 
     Parameters: ~
-      • {winnr}  (number|nil) Window handle or 0 for current window (default)
+      • {winnr}  (integer|nil) Window handle or 0 for current window (default)
 
     Return: ~
         (string) Name of node under the cursor
@@ -522,25 +522,28 @@ get_node_at_pos({bufnr}, {row}, {col}, {opts})
     Returns the smallest named node at the given position
 
     Parameters: ~
-      • {bufnr}  (number) Buffer number (0 for current buffer)
-      • {row}    (number) Position row
-      • {col}    (number) Position column
+      • {bufnr}  (integer) Buffer number (0 for current buffer)
+      • {row}    (integer) Position row
+      • {col}    (integer) Position column
       • {opts}   (table) Optional keyword arguments:
                  • lang string|nil Parser language
                  • ignore_injections boolean Ignore injected languages
                    (default true)
 
     Return: ~
-        userdata|nil |tsnode| under the cursor
+        |TSNode||nil under the cursor
 
 get_node_range({node_or_range})              *vim.treesitter.get_node_range()*
     Returns the node's range or an unpacked range table
 
     Parameters: ~
-      • {node_or_range}  (userdata|table) |tsnode| or table of positions
+      • {node_or_range}  (|TSNode||table) Node or table of positions
 
     Return: ~
-        (table) `{ start_row, start_col, end_row, end_col }`
+        (integer) start_row
+        (integer) start_col
+        (integer) end_row
+        (integer) end_col
 
 get_parser({bufnr}, {lang}, {opts})              *vim.treesitter.get_parser()*
     Returns the parser for a specific buffer and filetype and attaches it to
@@ -549,14 +552,14 @@ get_parser({bufnr}, {lang}, {opts})              *vim.treesitter.get_parser()*
     If needed, this will create the parser.
 
     Parameters: ~
-      • {bufnr}  (number|nil) Buffer the parser should be tied to (default:
+      • {bufnr}  (integer|nil) Buffer the parser should be tied to (default:
                  current buffer)
       • {lang}   (string|nil) Filetype of this parser (default: buffer
                  filetype)
       • {opts}   (table|nil) Options to pass to the created language tree
 
     Return: ~
-        LanguageTree |LanguageTree| object to use for parsing
+        |LanguageTree| object to use for parsing
 
                                           *vim.treesitter.get_string_parser()*
 get_string_parser({str}, {lang}, {opts})
@@ -568,14 +571,14 @@ get_string_parser({str}, {lang}, {opts})
       • {opts}  (table|nil) Options to pass to the created language tree
 
     Return: ~
-        LanguageTree |LanguageTree| object to use for parsing
+        |LanguageTree| object to use for parsing
 
 is_ancestor({dest}, {source})                   *vim.treesitter.is_ancestor()*
     Determines whether a node is the ancestor of another
 
     Parameters: ~
-      • {dest}    userdata Possible ancestor |tsnode|
-      • {source}  userdata Possible descendant |tsnode|
+      • {dest}    |TSNode| Possible ancestor
+      • {source}  |TSNode| Possible descendant
 
     Return: ~
         (boolean) True if {dest} is an ancestor of {source}
@@ -585,9 +588,9 @@ is_in_node_range({node}, {line}, {col})
     Determines whether (line, col) position is in node range
 
     Parameters: ~
-      • {node}  userdata |tsnode| defining the range
-      • {line}  (number) Line (0-based)
-      • {col}   (number) Column (0-based)
+      • {node}  |TSNode| defining the range
+      • {line}  (integer) Line (0-based)
+      • {col}   (integer) Column (0-based)
 
     Return: ~
         (boolean) True if the position is in node range
@@ -596,7 +599,7 @@ node_contains({node}, {range})                *vim.treesitter.node_contains()*
     Determines if a node contains a range
 
     Parameters: ~
-      • {node}   userdata |tsnode|
+      • {node}   |TSNode|
       • {range}  (table)
 
     Return: ~
@@ -615,14 +618,14 @@ show_tree({opts})                                 *vim.treesitter.show_tree()*
                 keys:
                 • lang (string|nil): The language of the source buffer. If
                   omitted, the filetype of the source buffer is used.
-                • bufnr (number|nil): Buffer to draw the tree into. If
+                • bufnr (integer|nil): Buffer to draw the tree into. If
                   omitted, a new buffer is created.
-                • winid (number|nil): Window id to display the tree buffer in.
-                  If omitted, a new window is created with {command}.
+                • winid (integer|nil): Window id to display the tree buffer
+                  in. If omitted, a new window is created with {command}.
                 • command (string|nil): Vimscript command to create the
                   window. Default value is "topleft 60vnew". Only used when
                   {winid} is nil.
-                • title (string|fun(bufnr:number):string|nil): Title of the
+                • title (string|fun(bufnr:integer):string|nil): Title of the
                   window. If a function, it accepts the buffer number of the
                   source buffer as its only argument and should return a
                   string.
@@ -647,7 +650,7 @@ start({bufnr}, {lang})                                *vim.treesitter.start()*
 <
 
     Parameters: ~
-      • {bufnr}  (number|nil) Buffer to be highlighted (default: current
+      • {bufnr}  (integer|nil) Buffer to be highlighted (default: current
                  buffer)
       • {lang}   (string|nil) Language of the parser (default: buffer
                  filetype)
@@ -656,7 +659,7 @@ stop({bufnr})                                          *vim.treesitter.stop()*
     Stops treesitter highlighting for a buffer
 
     Parameters: ~
-      • {bufnr}  (number|nil) Buffer to stop highlighting (default: current
+      • {bufnr}  (integer|nil) Buffer to stop highlighting (default: current
                  buffer)
 
 
@@ -709,8 +712,8 @@ add_directive({name}, {handler}, {force})
 
     Parameters: ~
       • {name}     (string) Name of the directive, without leading #
-      • {handler}  function(match:table, pattern:string, bufnr:number,
-                   predicate:string[], metadata:table)
+      • {handler}  function(match:table<string,|TSNode|>, pattern:string,
+                   bufnr:number, predicate:string[], metadata:table)
                    • match: see |treesitter-query|
                      • node-level data are accessible via `match[capture_id]`
 
@@ -718,6 +721,7 @@ add_directive({name}, {handler}, {force})
                    • predicate: list of strings containing the full directive
                      being called, e.g. `(node (#set! conceal "-"))` would get
                      the predicate `{ "#set!", "conceal", "-" }`
+      • {force}    (boolean)
 
                                         *vim.treesitter.query.add_predicate()*
 add_predicate({name}, {handler}, {force})
@@ -725,17 +729,18 @@ add_predicate({name}, {handler}, {force})
 
     Parameters: ~
       • {name}     (string) Name of the predicate, without leading #
-      • {handler}  function(match:table, pattern:string, bufnr:number,
-                   predicate:string[])
+      • {handler}  function(match:table<string,|TSNode|>, pattern:string,
+                   bufnr:number, predicate:string[])
                    • see |vim.treesitter.query.add_directive()| for argument
                      meanings
+      • {force}    (boolean)
 
                                         *vim.treesitter.query.get_node_text()*
 get_node_text({node}, {source}, {opts})
     Gets the text corresponding to a given node
 
     Parameters: ~
-      • {node}    userdata |tsnode|
+      • {node}    |TSNode|
       • {source}  (number|string) Buffer or string from which the {node} is
                   extracted
       • {opts}    (table|nil) Optional parameters.
@@ -743,7 +748,7 @@ get_node_text({node}, {source}, {opts})
                     true)
 
     Return: ~
-        (string[]|string)
+        (string[]|string|nil)
 
 get_query({lang}, {query_name})             *vim.treesitter.query.get_query()*
     Returns the runtime query {query_name} for {lang}.
@@ -753,7 +758,7 @@ get_query({lang}, {query_name})             *vim.treesitter.query.get_query()*
       • {query_name}  (string) Name of the query (e.g. "highlights")
 
     Return: ~
-        Query Parsed query
+        Query|nil Parsed query
 
                                       *vim.treesitter.query.get_query_files()*
 get_query_files({lang}, {query_name}, {is_included})
@@ -826,16 +831,15 @@ Query:iter_captures({self}, {node}, {source}, {start}, {stop})
 <
 
     Parameters: ~
-      • {node}    userdata |tsnode| under which the search will occur
-      • {source}  (number|string) Source buffer or string to extract text from
+      • {node}    |TSNode| under which the search will occur
+      • {source}  (integer|string) Source buffer or string to extract text
+                  from
       • {start}   (number) Starting line for the search
       • {stop}    (number) Stopping line for the search (end-exclusive)
       • {self}
 
     Return: ~
-        (number) capture Matching capture id
-        (table) capture_node Capture for {node}
-        (table) metadata for the {capture}
+        (fun(): integer, TSNode, TSMetadata ): capture id, capture node, metadata
 
                                                         *Query:iter_matches()*
 Query:iter_matches({self}, {node}, {source}, {start}, {stop})
@@ -861,16 +865,15 @@ Query:iter_matches({self}, {node}, {source}, {start}, {stop})
 <
 
     Parameters: ~
-      • {node}    userdata |tsnode| under which the search will occur
-      • {source}  (number|string) Source buffer or string to search
-      • {start}   (number) Starting line for the search
-      • {stop}    (number) Stopping line for the search (end-exclusive)
+      • {node}    |TSNode| under which the search will occur
+      • {source}  (integer|string) Source buffer or string to search
+      • {start}   (integer) Starting line for the search
+      • {stop}    (integer) Stopping line for the search (end-exclusive)
       • {self}
 
     Return: ~
-        (number) pattern id
-        (table) match
-        (table) metadata
+        (fun(): integer, table<integer,TSNode>, table): pattern id, match,
+        metadata
 
                                             *vim.treesitter.query.set_query()*
 set_query({lang}, {query_name}, {text})
@@ -892,7 +895,7 @@ new({tree}, {opts})                         *vim.treesitter.highlighter.new()*
     Creates a new highlighter using
 
     Parameters: ~
-      • {tree}  LanguageTree |LanguageTree| parser object to use for highlighting
+      • {tree}  |LanguageTree| parser object to use for highlighting
       • {opts}  (table|nil) Configuration of the highlighter:
                 • queries table overwrite queries used by the highlighter
 
@@ -940,9 +943,9 @@ LanguageTree:for_each_child({self}, {fn}, {include_self})
     Invokes the callback for each |LanguageTree| and its children recursively
 
     Parameters: ~
-      • {fn}            function(tree: LanguageTree, lang: string)
-      • {include_self}  (boolean) Whether to include the invoking tree in the
-                        results
+      • {fn}            fun(tree: LanguageTree, lang: string)
+      • {include_self}  (boolean|nil) Whether to include the invoking tree in
+                        the results
       • {self}
 
 LanguageTree:for_each_tree({self}, {fn})        *LanguageTree:for_each_tree()*
@@ -951,7 +954,7 @@ LanguageTree:for_each_tree({self}, {fn})        *LanguageTree:for_each_tree()*
     Note: This includes the invoking tree's child trees as well.
 
     Parameters: ~
-      • {fn}    function(tree: TSTree, languageTree: LanguageTree)
+      • {fn}    fun(tree: TSTree, ltree: LanguageTree)
       • {self}
 
 LanguageTree:included_regions({self})        *LanguageTree:included_regions()*
@@ -964,6 +967,7 @@ LanguageTree:invalidate({self}, {reload})          *LanguageTree:invalidate()*
     Invalidates this parser and all its children
 
     Parameters: ~
+      • {reload}  (boolean|nil)
       • {self}
 
 LanguageTree:is_valid({self})                        *LanguageTree:is_valid()*
@@ -987,7 +991,7 @@ LanguageTree:language_for_range({self}, {range})
       • {self}
 
     Return: ~
-        LanguageTree Managing {range}
+        |LanguageTree| Managing {range}
 
                                          *LanguageTree:named_node_for_range()*
 LanguageTree:named_node_for_range({self}, {range}, {opts})
@@ -1001,7 +1005,7 @@ LanguageTree:named_node_for_range({self}, {range}, {opts})
       • {self}
 
     Return: ~
-        userdata|nil Found |tsnode|
+        |TSNode||nil Found node
 
 LanguageTree:parse({self})                              *LanguageTree:parse()*
     Parses all defined regions using a treesitter parser for the language this
@@ -1012,8 +1016,8 @@ LanguageTree:parse({self})                              *LanguageTree:parse()*
       • {self}
 
     Return: ~
-        userdata[] Table of parsed |tstree|
-        (table) Change list
+        TSTree[]
+        (table|nil) Change list
 
 LanguageTree:register_cbs({self}, {cbs})         *LanguageTree:register_cbs()*
     Registers callbacks for the |LanguageTree|.
@@ -1050,7 +1054,7 @@ LanguageTree:tree_for_range({self}, {range}, {opts})
       • {self}
 
     Return: ~
-        userdata|nil Contained |tstree|
+        TSTree|nil
 
 LanguageTree:trees({self})                              *LanguageTree:trees()*
     Returns all trees this language tree contains. Does not include child
@@ -1065,7 +1069,7 @@ new({source}, {lang}, {opts})              *vim.treesitter.languagetree.new()*
     may contain child languages themselves, hence the name).
 
     Parameters: ~
-      • {source}  (number|string) Buffer or a string of text to parse
+      • {source}  (integer|string) Buffer or a string of text to parse
       • {lang}    (string) Root language this tree represents
       • {opts}    (table|nil) Optional keyword arguments:
                   • injections table Mapping language to injection query
@@ -1074,6 +1078,6 @@ new({source}, {lang}, {opts})              *vim.treesitter.languagetree.new()*
                     per language.
 
     Return: ~
-        LanguageTree |LanguageTree| parser object
+        |LanguageTree| parser object
 
  vim:tw=78:ts=8:sw=4:sts=4:et:ft=help:norl:
