@@ -452,6 +452,12 @@ function M.show_tree(opts)
       pg:draw(b)
     end,
   })
+  a.nvim_buf_set_keymap(b, 'n', 'gq', '', {
+    desc = 'Close the current window',
+    callback = function()
+      a.nvim_win_close(0, false)
+    end,
+  })
 
   local group = a.nvim_create_augroup('treesitter/playground', {})
 
