@@ -790,10 +790,10 @@ void getout(int exitval)
   os_exit(exitval);
 }
 
-/// Preserve files, print contents of `IObuff`, and exit 1.
+/// Preserve files, print contents of `errmsg`, and exit 1.
 ///
 /// May be called from deadly_signal().
-void preserve_exit(void)
+void preserve_exit(const char *errmsg)
   FUNC_ATTR_NORETURN
 {
   // 'true' when we are sure to exit, e.g., after a deadly signal
@@ -813,11 +813,14 @@ void preserve_exit(void)
   signal_reject_deadly();
 
   if (ui_client_channel_id) {
+    // For TUI: exit alternate screen so that the error messages can be seen.
+    ui_client_stop();
+  }
+  os_errmsg(errmsg);
+  os_errmsg("\n");
+  if (ui_client_channel_id) {
     os_exit(1);
   }
-
-  os_errmsg(IObuff);
-  os_errmsg("\n");
   ui_flush();
 
   ml_close_notmod();                // close all not-modified buffers

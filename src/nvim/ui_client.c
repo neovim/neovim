@@ -122,7 +122,9 @@ void ui_client_run(bool remote_ui)
 
 void ui_client_stop(void)
 {
-  tui_stop(tui);
+  if (!tui_is_stopped(tui)) {
+    tui_stop(tui);
+  }
 }
 
 void ui_client_set_size(int width, int height)
