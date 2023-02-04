@@ -18,7 +18,6 @@ typedef struct {
 #include "klib/kvec.h"
 #include "nvim/api/private/defs.h"
 #include "nvim/eval/typval.h"
-#include "nvim/fold_defs.h"
 #include "nvim/garray.h"
 #include "nvim/grid_defs.h"
 #include "nvim/hashtab.h"
@@ -336,36 +335,6 @@ struct mapblock {
   sctx_T m_script_ctx;          // SCTX where map was defined
   char *m_desc;                 // description of mapping
   bool m_replace_keycodes;      // replace keycodes in result of expression
-};
-
-/// Used for highlighting in the status line.
-typedef struct stl_hlrec stl_hlrec_t;
-struct stl_hlrec {
-  char *start;
-  int userhl;                   // 0: no HL, 1-9: User HL, < 0 for syn ID
-};
-
-/// Used for building the status line.
-typedef struct stl_item stl_item_t;
-struct stl_item {
-  // Where the item starts in the status line output buffer
-  char *start;
-  // Function to run for ClickFunc items.
-  char *cmd;
-  // The minimum width of the item
-  int minwid;
-  // The maximum width of the item
-  int maxwid;
-  enum {
-    Normal,
-    Empty,
-    Group,
-    Separate,
-    Highlight,
-    TabPage,
-    ClickFunc,
-    Trunc,
-  } type;
 };
 
 // values for b_syn_spell: what to do with toplevel text
@@ -1415,26 +1384,6 @@ struct window_S {
   StlClickDefinition *w_statuscol_click_defs;
   // Size of the w_statuscol_click_defs array
   size_t w_statuscol_click_defs_size;
-};
-
-/// Struct to hold info for 'statuscolumn'
-typedef struct statuscol statuscol_T;
-
-struct statuscol {
-  int width;                           ///< width of the status column
-  int cur_attr;                        ///< current attributes in text
-  int num_attr;                        ///< attributes used for line number
-  int sign_cul_attr;                   ///< cursorline sign attr
-  int truncate;                        ///< truncated width
-  bool draw;                           ///< whether to draw the statuscolumn
-  bool use_cul;                        ///< whether to use cursorline attrs
-  char text[MAXPATHL];                 ///< text in status column
-  char *textp;                         ///< current position in text
-  char *text_end;                      ///< end of text (the NUL byte)
-  stl_hlrec_t *hlrec;                  ///< highlight groups
-  stl_hlrec_t *hlrecp;                 ///< current highlight group
-  foldinfo_T foldinfo;                 ///< fold information
-  SignTextAttrs *sattrs;               ///< sign attributes
 };
 
 /// Macros defined in Vim, but not in Neovim
