@@ -183,7 +183,7 @@ local function check_rplugin_manifest()
     existing_rplugins[item.path] = 'python'
   end
 
-  for item in ipairs(vim.fn['remote#host#PluginsForHost']('python3')) do
+  for _, item in ipairs(vim.fn['remote#host#PluginsForHost']('python3')) do
     existing_rplugins[item.path] = 'python3'
   end
 
@@ -200,7 +200,7 @@ local function check_rplugin_manifest()
     local scripts = vim.fn.glob(python_dir .. '/*.py', true, true)
     vim.list_extend(scripts, vim.fn.glob(python_dir .. '/*/__init__.py', true, true))
 
-    for script in ipairs(scripts) do
+    for _, script in ipairs(scripts) do
       local contents = vim.fn.join(vim.fn.readfile(script))
       if vim.regex([[\<\%(from\|import\)\s\+neovim\>]]):match_str(contents) then
         if vim.regex([[[\/]__init__\.py$]]):match_str(script) then
@@ -384,7 +384,13 @@ local function check_terminal()
     )
   end
 
-  for env_var in ipairs({ 'XTERM_VERSION', 'VTE_VERSION', 'TERM_PROGRAM', 'COLORTERM', 'SSH_TTY' }) do
+  for _, env_var in ipairs({
+    'XTERM_VERSION',
+    'VTE_VERSION',
+    'TERM_PROGRAM',
+    'COLORTERM',
+    'SSH_TTY',
+  }) do
     if vim.env[env_var] then
       health.report_info(vim.fn.printf('$%s="%s"', env_var, vim.env[env_var]))
     end
