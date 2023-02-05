@@ -22,6 +22,7 @@ describe('search highlighting', function()
       [3] = {reverse = true},
       [4] = {foreground = colors.Red}, -- Message
       [6] = {foreground = Screen.colors.Blue4, background = Screen.colors.LightGrey}, -- Folded
+      [7] = {reverse = true, bold = true};
     })
   end)
 
@@ -317,6 +318,16 @@ describe('search highlighting', function()
       bar foo baz
     ]])
     feed('/foo')
+    screen:expect{grid=[[
+        {3:foo} bar baz       │                   |
+        bar baz {2:foo}       │                   |
+        bar {2:foo} baz       │                   |
+                          │                   |
+      {1:~                   }│                   |
+      {7:[No Name] [+]        }{3:term               }|
+      /foo^                                    |
+    ]]}
+
     helpers.poke_eventloop()
     screen:expect_unchanged()
   end)

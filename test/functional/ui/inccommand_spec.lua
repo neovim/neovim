@@ -2885,6 +2885,24 @@ it(':substitute with inccommand during :terminal activity', function()
 
     feed('gg')
     feed(':%s/foo/ZZZ')
+    screen:expect{grid=[[
+      {12:ZZZ} bar baz                   |
+      bar baz fox                   |
+      bar {12:ZZZ} baz                   |
+      {15:~                             }|
+      {15:~                             }|
+      {15:~                             }|
+      {11:[No Name] [+]                 }|
+                                    |
+      {15:~                             }|
+      {10:term                          }|
+      |1| {12:ZZZ} bar baz               |
+      |3| bar {12:ZZZ} baz               |
+      {15:~                             }|
+      {10:[Preview]                     }|
+      :%s/foo/ZZZ^                   |
+    ]]}
+
     sleep(20)  -- Allow some terminal activity.
     helpers.poke_eventloop()
     screen:expect_unchanged()
