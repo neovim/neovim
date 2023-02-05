@@ -100,9 +100,13 @@ void decor_remove(buf_T *buf, int row, int row2, Decoration *decor)
     if (decor_has_sign(decor)) {
       assert(buf->b_signs > 0);
       buf->b_signs--;
-    }
-    if (row2 >= row && decor->sign_text) {
-      buf_signcols_del_check(buf, row + 1, row2 + 1);
+      if (decor->sign_text) {
+        assert(buf->b_signs_with_text > 0);
+        buf->b_signs_with_text--;
+        if (row2 >= row) {
+          buf_signcols_del_check(buf, row + 1, row2 + 1);
+        }
+      }
     }
   }
   decor_free(decor);
@@ -445,11 +449,11 @@ int decor_signcols(buf_T *buf, DecorState *state, int row, int end_row, int max)
   int signcols = 0;      // highest value of count
   int currow = -1;       // current row
 
-  if (max <= 1 && buf->b_signs >= (size_t)max) {
+  if (max <= 1 && buf->b_signs_with_text >= (size_t)max) {
     return max;
   }
 
-  if (buf->b_signs == 0) {
+  if (buf->b_signs_with_text == 0) {
     return 0;
   }
 

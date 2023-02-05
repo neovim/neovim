@@ -152,6 +152,7 @@ revised:
       buf->b_signs++;
     }
     if (decor->sign_text) {
+      buf->b_signs_with_text++;
       // TODO(lewis6991): smarter invalidation
       buf_signcols_add_check(buf, NULL);
     }
