@@ -288,10 +288,10 @@ end
 
 local types = { 'integer', 'number', 'string', 'table', 'list', 'boolean', 'function' }
 
-local tagged_types = { 'TSNode', 'LanguageTree' }
+local tagged_types = { 'TSNode', 'LanguageTree', 'Diagnostic' }
 
 -- Document these as 'table'
-local alias_types = { 'Range' }
+local alias_types = { 'Range', 'DiagnosticOptions', 'DiagnosticNS' }
 
 --! \brief run the filter
 function TLua2DoX_filter.readfile(this, AppStamp, Filename)

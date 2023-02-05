@@ -1,6 +1,6 @@
 ---@brief lsp-diagnostic
 ---
----@class Diagnostic
+---@class lsp.Diagnostic
 ---@field range Range
 ---@field message string
 ---@field severity DiagnosticSeverity|nil

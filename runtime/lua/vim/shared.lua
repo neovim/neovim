@@ -161,7 +161,7 @@ end
 ---
 ---@see From https://github.com/premake/premake-core/blob/master/src/base/table.lua
 ---
----@generic T: table
+---@generic T
 ---@param t table<T, any> (table) Table
 ---@return T[] (list) List of keys
 function vim.tbl_keys(t)

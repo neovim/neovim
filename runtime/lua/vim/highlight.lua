@@ -36,9 +36,9 @@ end
 
 --- Highlight range between two positions
 ---
----@param bufnr number of buffer to apply highlighting to
----@param ns namespace to add highlight to
----@param higroup highlight group to use for highlighting
+---@param bufnr integer of buffer to apply highlighting to
+---@param ns integer to add highlight to
+---@param higroup integer|string highlight group to use for highlighting
 ---@param start first position (tuple {line,col})
 ---@param finish second position (tuple {line,col})
 ---@param opts table with options:
