@@ -746,6 +746,9 @@ get_node_text({node}, {source}, {opts})
       • {opts}    (table|nil) Optional parameters.
                   • concat: (boolean) Concatenate result in a string (default
                     true)
+                  • metadata (table) Metadata of a specific capture. This
+                    would be set to `metadata[capture_id]` when using
+                    |vim.treesitter.query.add_directive()|.
 
     Return: ~
         (string[]|string|nil)

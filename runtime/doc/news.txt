@@ -151,6 +151,12 @@ The following new APIs or features were added.
 
 • |:highlight| now supports an additional attribute "altfont".
 
+• Treesitter captures can now be transformed by directives. This will allow
+  more complicated dynamic language injections.
+
+• |vim.treesitter.query.get_node_text()| now accepts a `metadata` option for
+  writing custom directives using |vim.treesitter.query.add_directive()|.
+
 ==============================================================================
 CHANGED FEATURES                                                 *news-changes*
 

@@ -408,7 +408,7 @@ function LanguageTree:_get_injections()
 
         -- Lang should override any other language tag
         if name == 'language' and not lang then
-          lang = query.get_node_text(node, self._source) --[[@as string]]
+          lang = query.get_node_text(node, self._source, { metadata = metadata[id] })
         elseif name == 'combined' then
           combined = true
         elseif name == 'content' and #ranges == 0 then

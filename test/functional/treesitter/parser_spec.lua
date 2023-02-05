@@ -277,6 +277,9 @@ end]]
       function fake_node:end_()
         return 3, 0, 23
       end
+      function fake_node:range()
+        return 3, 0, 3, 0
+      end
       return vim.treesitter.get_node_text(fake_node, 0) == nil
     ]])
     eq(true, result)
@@ -295,6 +298,9 @@ end]]
       end
       function fake_node:end_()
         return 1, 0, 7
+      end
+      function fake_node:range()
+        return 1, 0, 1, 0
       end
       return vim.treesitter.get_node_text(fake_node, 0) == ''
     ]])
@@ -728,7 +734,7 @@ int x = INT_MAX;
         return list
         ]]
 
-        eq({ 'offset!', 'set!' }, res_list)
+        eq({ 'gsub!', 'offset!', 'set!' }, res_list)
       end)
     end)
   end)
