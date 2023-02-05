@@ -522,6 +522,7 @@ let s:filename_checks = {
     \ 'sinda': ['file.sin', 'file.s85'],
     \ 'sisu': ['file.sst', 'file.ssm', 'file.ssi', 'file.-sst', 'file._sst', 'file.sst.meta', 'file.-sst.meta', 'file._sst.meta'],
     \ 'skill': ['file.il', 'file.ils', 'file.cdf'],
+    \ 'cdc': ['file.cdc'],
     \ 'slang': ['file.sl'],
     \ 'slice': ['file.ice'],
     \ 'slpconf': ['/etc/slp.conf', 'any/etc/slp.conf'],

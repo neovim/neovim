@@ -191,6 +191,7 @@ local extension = {
   qc = 'c',
   cabal = 'cabal',
   capnp = 'capnp',
+  cdc = 'cdc',
   cdl = 'cdl',
   toc = 'cdrtoc',
   cfc = 'cf',
