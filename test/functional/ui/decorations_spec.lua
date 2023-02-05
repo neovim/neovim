@@ -2109,6 +2109,20 @@ l5
                           |
     ]]}
   end)
+
+  it('does not set signcolumn for signs without text', function()
+    screen:try_resize(20, 3)
+    meths.win_set_option(0, 'signcolumn', 'auto')
+    insert(example_text)
+    feed 'gg'
+    meths.buf_set_extmark(0, ns, 0, -1, {number_hl_group='Error'})
+    screen:expect{grid=[[
+      ^l1                  |
+      l2                  |
+                          |
+    ]]}
+  end)
+
 end)
 
 describe('decorations: virt_text', function()
