@@ -5368,13 +5368,14 @@ void get_xdg_var_list(const XDGVarType xdg, typval_T *rettv)
     return;
   }
   const void *iter = NULL;
+  const char *appname = get_appname();
   do {
     size_t dir_len;
     const char *dir;
     iter = vim_env_iter(ENV_SEPCHAR, dirs, iter, &dir, &dir_len);
     if (dir != NULL && dir_len > 0) {
       char *dir_with_nvim = xmemdupz(dir, dir_len);
-      dir_with_nvim = concat_fnames_realloc(dir_with_nvim, "nvim", true);
+      dir_with_nvim = concat_fnames_realloc(dir_with_nvim, appname, true);
       tv_list_append_string(list, dir_with_nvim, (ssize_t)strlen(dir_with_nvim));
       xfree(dir_with_nvim);
     }

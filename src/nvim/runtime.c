@@ -1435,7 +1435,6 @@ static inline size_t compute_double_env_sep_len(const char *const val, const siz
   return ret;
 }
 
-#define NVIM_SIZE (sizeof("nvim") - 1)
 /// Add directories to a ENV_SEPCHAR-separated array from a colon-separated one
 ///
 /// Commas are escaped in process. To each item PATHSEP "nvim" is appended in
@@ -1464,6 +1463,8 @@ static inline char *add_env_sep_dirs(char *dest, const char *const val, const ch
     return dest;
   }
   const void *iter = NULL;
+  const char *appname = get_appname();
+  const size_t appname_len = strlen(appname);
   do {
     size_t dir_len;
     const char *dir;
@@ -1474,8 +1475,8 @@ static inline char *add_env_sep_dirs(char *dest, const char *const val, const ch
       if (!after_pathsep(dest - 1, dest)) {
         *dest++ = PATHSEP;
       }
-      memmove(dest, "nvim", NVIM_SIZE);
-      dest += NVIM_SIZE;
+      memmove(dest, appname, appname_len);
+      dest += appname_len;
       if (suf1 != NULL) {
         *dest++ = PATHSEP;
         memmove(dest, suf1, len1);
@@ -1529,14 +1530,18 @@ static inline char *add_dir(char *dest, const char *const dir, const size_t dir_
     if (!after_pathsep(dest - 1, dest)) {
       *dest++ = PATHSEP;
     }
+    const char *appname = get_appname();
+    size_t appname_len = strlen(appname);
+    assert(appname_len < (IOSIZE - sizeof("-data")));
+    xstrlcpy(IObuff, appname, appname_len + 1);
 #if defined(MSWIN)
-    size_t size = (type == kXDGDataHome ? sizeof("nvim-data") - 1 : NVIM_SIZE);
-    memmove(dest, (type == kXDGDataHome ? "nvim-data" : "nvim"), size);
-    dest += size;
-#else
-    memmove(dest, "nvim", NVIM_SIZE);
-    dest += NVIM_SIZE;
+    if (type == kXDGDataHome || type == kXDGStateHome) {
+      STRCAT(IObuff, "-data");
+      appname_len += 5;
+    }
 #endif
+    xstrlcpy(dest, IObuff, appname_len + 1);
+    dest += appname_len;
     if (suf1 != NULL) {
       *dest++ = PATHSEP;
       memmove(dest, suf1, len1);
@@ -1596,16 +1601,17 @@ char *runtimepath_default(bool clean_arg)
   size_t config_len = 0;
   size_t vimruntime_len = 0;
   size_t libdir_len = 0;
+  const char *appname = get_appname();
+  size_t appname_len = strlen(appname);
   if (data_home != NULL) {
     data_len = strlen(data_home);
-    if (data_len != 0) {
+    size_t nvim_data_size = appname_len;
 #if defined(MSWIN)
-      size_t nvim_size = (sizeof("nvim-data") - 1);
-#else
-      size_t nvim_size = NVIM_SIZE;
+    nvim_data_size += sizeof("-data");
 #endif
+    if (data_len != 0) {
       rtp_size += ((data_len + memcnt(data_home, ',', data_len)
-                    + nvim_size + 1 + SITE_SIZE + 1
+                    + nvim_data_size + 1 + SITE_SIZE + 1
                     + !after_pathsep(data_home, data_home + data_len)) * 2
                    + AFTER_SIZE + 1);
     }
@@ -1614,7 +1620,7 @@ char *runtimepath_default(bool clean_arg)
     config_len = strlen(config_home);
     if (config_len != 0) {
       rtp_size += ((config_len + memcnt(config_home, ',', config_len)
-                    + NVIM_SIZE + 1
+                    + appname_len + 1
                     + !after_pathsep(config_home, config_home + config_len)) * 2
                    + AFTER_SIZE + 1);
     }
@@ -1632,9 +1638,9 @@ char *runtimepath_default(bool clean_arg)
     }
   }
   rtp_size += compute_double_env_sep_len(data_dirs,
-                                         NVIM_SIZE + 1 + SITE_SIZE + 1,
+                                         appname_len + 1 + SITE_SIZE + 1,
                                          AFTER_SIZE + 1);
-  rtp_size += compute_double_env_sep_len(config_dirs, NVIM_SIZE + 1,
+  rtp_size += compute_double_env_sep_len(config_dirs, appname_len + 1,
                                          AFTER_SIZE + 1);
   char *rtp = NULL;
   if (rtp_size == 0) {
@@ -1675,7 +1681,6 @@ freeall:
 
   return rtp;
 }
-#undef NVIM_SIZE
 
 static void cmd_source(char *fname, exarg_T *eap)
 {

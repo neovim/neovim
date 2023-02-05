@@ -1385,6 +1385,18 @@ STATE DIRECTORY (DEFAULT) ~
 Note: Throughout the user manual these defaults are used as placeholders, e.g.
 "~/.config" is understood to mean "$XDG_CONFIG_HOME or ~/.config".
 
+NVIM_APPNAME					*$NVIM_APPNAME*
+The XDG directories used by Nvim can be further configured by setting the
+`$NVIM_APPNAME` environment variable. This variable controls the directory
+Neovim will look for (and auto-create) in the various XDG parent directories.
+For example, setting `$NVIM_APPNAME` to "neovim" before running Neovim will
+result in Neovim looking for configuration files in `$XDG_CONFIG_HOME/neovim`
+instead of `$XDG_CONFIG_HOME/nvim`.
+
+Note: Similarly to the $XDG environment variables, when
+`$XDG_CONFIG_HOME/nvim` is mentionned, it should be understood as
+`$XDG_CONFIG_HOME/$NVIM_APPNAME`.
+
 LOG FILE					*$NVIM_LOG_FILE* *E5430*
 Besides 'debug' and 'verbose', Nvim keeps a general log file for internal
 debugging, plugins and RPC clients. >
