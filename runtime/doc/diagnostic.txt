@@ -21,42 +21,42 @@ Anything that reports diagnostics is referred to below as a "diagnostic
 producer". Diagnostic producers need only follow a few simple steps to
 report diagnostics:
 
-1. Create a namespace |nvim_create_namespace()|. Note that the namespace must
-   have a name. Anonymous namespaces WILL NOT WORK.
+1. Create a namespace via |nvim_create_namespace()|. Note that the namespace
+   must have a name. Anonymous namespaces WILL NOT WORK.
 2. (Optional) Configure options for the diagnostic namespace
    |vim.diagnostic.config()|.
 3. Generate diagnostics.
 4. Set the diagnostics for the buffer |vim.diagnostic.set()|.
 5. Repeat from step 3.
 
-Generally speaking, the API is split between functions meant to be used by
-diagnostic producers and those meant for diagnostic consumers (i.e. end users
-who want to read and view the diagnostics for a buffer).  The APIs for
-producers require a {namespace} as their first argument, while those for
-consumers generally do not require a namespace (though often one may be
-optionally supplied).  A good rule of thumb is that if a method is meant to
-modify the diagnostics for a buffer (e.g. |vim.diagnostic.set()|) then it
-requires a namespace.
+The API is split between functions meant to be used by diagnostic producers
+and those meant for diagnostic consumers (i.e. end users who want to read and
+view the diagnostics for a buffer).  The APIs for producers require a
+{namespace} as their first argument, while those for consumers generally do
+not require a namespace (though often one may be optionally supplied).  A good
+rule of thumb is that if a method is meant to modify the diagnostics for a
+buffer (e.g. |vim.diagnostic.set()|) then it requires a namespace.
 
                                                         *diagnostic-structure*
-A diagnostic is a Lua table with the following keys. Required keys are
-indicated with (*):
+                                                                  *Diagnostic*
+A diagnostic is an object with the following keys:
 
-    bufnr: Buffer number
-    lnum(*): The starting line of the diagnostic
-    end_lnum: The final line of the diagnostic
-    col(*): The starting column of the diagnostic
-    end_col: The final column of the diagnostic
-    severity: The severity of the diagnostic |vim.diagnostic.severity|
-    message(*): The diagnostic text
-    source: The source of the diagnostic
-    code: The diagnostic code
-    user_data: Arbitrary data plugins or users can add
+    bufnr      (integer) Buffer number (optional)
+    lnum       (integer) The starting line of the diagnostic
+    end_lnum   (integer) The final line of the diagnostic (optional)
+    col        (integer) The starting column of the diagnostic
+    end_col    (integer) The final column of the diagnostic (optional)
+    severity   (|DiagnosticSeverity|) The severity of the diagnostic (optional)
+    message    (string) The diagnostic text
+    source     (string) The source of the diagnostic (optional)
+    code       (string) The diagnostic code (optional)
+    user_data  (any) Arbitrary data plugins or users can add (optional)
 
 Diagnostics use the same indexing as the rest of the Nvim API (i.e. 0-based
 rows and columns). |api-indexing|
 
-                                *vim.diagnostic.severity* *diagnostic-severity*
+                                  *vim.diagnostic.severity* *diagnostic-severity*
+                                                           *DiagnosticSeverity*
 The "severity" key in a diagnostic is one of the values defined in
 `vim.diagnostic.severity`:
 
@@ -189,36 +189,36 @@ highlights), use the |:highlight| command: >vim
 
     highlight DiagnosticError guifg="BrightRed"
 <
-                                                        *hl-DiagnosticError*
+                                                 *hl-DiagnosticError*
 DiagnosticError
     Used as the base highlight group.
     Other Diagnostic highlights link to this by default (except Underline)
 
-                                                        *hl-DiagnosticWarn*
+                                                *hl-DiagnosticWarn*
 DiagnosticWarn
     Used as the base highlight group.
     Other Diagnostic highlights link to this by default (except Underline)
 
-                                                        *hl-DiagnosticInfo*
+                                                *hl-DiagnosticInfo*
 DiagnosticInfo
     Used as the base highlight group.
     Other Diagnostic highlights link to this by default (except Underline)
 
-                                                        *hl-DiagnosticHint*
+                                                *hl-DiagnosticHint*
 DiagnosticHint
     Used as the base highlight group.
     Other Diagnostic highlights link to this by default (except Underline)
 
-                                                        *hl-DiagnosticOk*
+                                                *hl-DiagnosticOk*
 DiagnosticOk
     Used as the base highlight group.
     Other Diagnostic highlights link to this by default (except Underline)
 
-                                        *hl-DiagnosticVirtualTextError*
+                                                *hl-DiagnosticVirtualTextError*
 DiagnosticVirtualTextError
     Used for "Error" diagnostic virtual text.
 
-                                        *hl-DiagnosticVirtualTextWarn*
+                                                *hl-DiagnosticVirtualTextWarn*
 DiagnosticVirtualTextWarn
     Used for "Warn" diagnostic virtual text.
 
