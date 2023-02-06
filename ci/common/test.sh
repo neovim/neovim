@@ -90,7 +90,7 @@ check_sanitizer() {
 
 unittests() {(
   ulimit -c unlimited || true
-  if ! build_make unittest ; then
+  if ! ninja -C "${BUILD_DIR}" unittest; then
     fail 'unittests' 'Unit tests failed'
   fi
   submit_coverage unittest
@@ -99,7 +99,7 @@ unittests() {(
 
 functionaltests() {(
   ulimit -c unlimited || true
-  if ! build_make "${FUNCTIONALTEST}"; then
+  if ! ninja -C "${BUILD_DIR}" "${FUNCTIONALTEST}"; then
     fail 'functionaltests' 'Functional tests failed'
   fi
   submit_coverage functionaltest
@@ -140,7 +140,7 @@ check_runtime_files() {(
 )}
 
 install_nvim() {(
-  if ! build_make install ; then
+  if ! ninja -C "${BUILD_DIR}" install; then
     fail 'install' 'make install failed'
     exit 1
   fi
