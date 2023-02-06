@@ -6,15 +6,6 @@ _stat() {
   fi
 }
 
-top_make() {
-  printf '%78s\n' ' ' | tr ' ' '='
-  ninja "$@"
-}
-
-build_make() {
-  top_make -C "${BUILD_DIR}" "$@"
-}
-
 build_deps() {
   if test "${FUNCTIONALTEST}" = "functionaltest-lua" ; then
     DEPS_CMAKE_FLAGS="${DEPS_CMAKE_FLAGS} -DUSE_BUNDLED_LUA=ON"
@@ -35,9 +26,7 @@ build_deps() {
   # shellcheck disable=SC2086
   CC= cmake -G Ninja ${DEPS_CMAKE_FLAGS} "${CI_BUILD_DIR}/cmake.deps/"
 
-  if ! top_make; then
-    exit 1
-  fi
+  ninja || exit 1
 
   cd "${CI_BUILD_DIR}"
 }
@@ -56,15 +45,11 @@ build_nvim() {
   cmake -G Ninja ${CMAKE_FLAGS} "$@" "${CI_BUILD_DIR}"
 
   echo "Building nvim."
-  if ! top_make nvim ; then
-    exit 1
-  fi
+  ninja nvim || exit 1
 
   if test "$CLANG_SANITIZER" != "TSAN" ; then
     echo "Building libnvim."
-    if ! top_make libnvim ; then
-      exit 1
-    fi
+    ninja libnvim || exit 1
   fi
 
   # Invoke nvim to trigger *San early.
