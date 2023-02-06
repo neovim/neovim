@@ -853,11 +853,18 @@ char *ExpandOne(expand_T *xp, char *str, char *orig, int options, int mode)
   if (mode == WILD_NEXT || mode == WILD_PREV
       || mode == WILD_PAGEUP || mode == WILD_PAGEDOWN
       || mode == WILD_PUM_WANT) {
-    return get_next_or_prev_match(mode, xp, &findex, orig_save);
+    char *item = get_next_or_prev_match(mode, xp, &findex, orig_save);
+    if (xp->xp_context == EXPAND_COLORS && strcmp(item,"default") != 0) {
+      load_colors(item);
+    }
+    return item;
   }
 
   if (mode == WILD_CANCEL) {
     ss = xstrdup(orig_save ? orig_save : "");
+    if (xp->xp_context == EXPAND_COLORS) {
+      load_colors(ss);
+    }
   } else if (mode == WILD_APPLY) {
     ss = xstrdup(findex == -1
                  ? (orig_save ? orig_save : "")
