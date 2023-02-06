@@ -2015,7 +2015,7 @@ static int command_line_handle_key(CommandLineState *s)
       if (nextwild(&s->xpc, wild_type, 0, s->firstc != '@') == FAIL) {
         break;
       }
-      return command_line_not_changed(s);
+      return command_line_changed(s);
     }
     FALLTHROUGH;
 
@@ -2037,7 +2037,7 @@ static int command_line_handle_key(CommandLineState *s)
       if (nextwild(&s->xpc, wild_type, 0, s->firstc != '@') == FAIL) {
         break;
       }
-      return command_line_not_changed(s);
+      return command_line_changed(s);
     } else {
       switch (command_line_browse_history(s)) {
       case CMDLINE_CHANGED:
