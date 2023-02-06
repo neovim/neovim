@@ -47,11 +47,6 @@ build_nvim() {
   echo "Building nvim."
   ninja nvim || exit 1
 
-  if test "$CLANG_SANITIZER" != "TSAN" ; then
-    echo "Building libnvim."
-    ninja libnvim || exit 1
-  fi
-
   # Invoke nvim to trigger *San early.
   if ! (bin/nvim --version && bin/nvim -u NONE -e -cq | cat -vet) ; then
     check_sanitizer "${LOG_DIR}"
