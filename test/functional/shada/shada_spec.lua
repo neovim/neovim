@@ -136,24 +136,6 @@ describe('ShaDa support code', function()
     eq(#msgpack, found)
   end)
 
-  it('does not write NONE file', function()
-    local session = spawn({nvim_prog, '-u', 'NONE', '-i', 'NONE', '--embed',
-                           '--headless', '--cmd', 'qall'}, true)
-    session:close()
-    eq(nil, lfs.attributes('NONE'))
-    eq(nil, lfs.attributes('NONE.tmp.a'))
-  end)
-
-  it('does not read NONE file', function()
-    write_file('NONE', '\005\001\015\131\161na\162rX\194\162rc\145\196\001-')
-    local session = spawn({nvim_prog, '-u', 'NONE', '-i', 'NONE', '--embed',
-                           '--headless'}, true)
-    set_session(session)
-    eq('', funcs.getreg('a'))
-    session:close()
-    os.remove('NONE')
-  end)
-
   local marklike = {[7]=true, [8]=true, [10]=true, [11]=true}
   local find_file = function(fname)
     local found = {}
@@ -261,5 +243,25 @@ describe('ShaDa support code', function()
        .. 'before writing it: permission denied',
        exc_exec('wshada'))
     meths.set_option('shada', '')
+  end)
+end)
+
+describe('ShaDa support code', function()
+  it('does not write NONE file', function()
+    local session = spawn({nvim_prog, '-u', 'NONE', '-i', 'NONE', '--embed',
+                           '--headless', '--cmd', 'qall'}, true)
+    session:close()
+    eq(nil, lfs.attributes('NONE'))
+    eq(nil, lfs.attributes('NONE.tmp.a'))
+  end)
+
+  it('does not read NONE file', function()
+    write_file('NONE', '\005\001\015\131\161na\162rX\194\162rc\145\196\001-')
+    local session = spawn({nvim_prog, '-u', 'NONE', '-i', 'NONE', '--embed',
+                           '--headless'}, true)
+    set_session(session)
+    eq('', funcs.getreg('a'))
+    session:close()
+    os.remove('NONE')
   end)
 end)

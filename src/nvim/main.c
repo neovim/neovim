@@ -674,6 +674,7 @@ void os_exit(int r)
 void getout(int exitval)
   FUNC_ATTR_NORETURN
 {
+  assert(!ui_client_channel_id);
   exiting = true;
 
   // On error during Ex mode, exit with a non-zero code.
@@ -794,6 +795,7 @@ void getout(int exitval)
 }
 
 /// Preserve files, print contents of `errmsg`, and exit 1.
+/// @param errmsg  If NULL, this function will not print anything.
 ///
 /// May be called from deadly_signal().
 void preserve_exit(const char *errmsg)
@@ -819,19 +821,21 @@ void preserve_exit(const char *errmsg)
     // For TUI: exit alternate screen so that the error messages can be seen.
     ui_client_stop();
   }
-  os_errmsg(errmsg);
-  os_errmsg("\n");
+  if (errmsg != NULL) {
+    os_errmsg(errmsg);
+    os_errmsg("\n");
+  }
   if (ui_client_channel_id) {
     os_exit(1);
   }
-  ui_flush();
 
   ml_close_notmod();                // close all not-modified buffers
 
   FOR_ALL_BUFFERS(buf) {
     if (buf->b_ml.ml_mfp != NULL && buf->b_ml.ml_mfp->mf_fname != NULL) {
-      os_errmsg("Vim: preserving files...\r\n");
-      ui_flush();
+      if (errmsg != NULL) {
+        os_errmsg("Vim: preserving files...\r\n");
+      }
       ml_sync_all(false, false, true);  // preserve all swap files
       break;
     }
@@ -839,7 +843,9 @@ void preserve_exit(const char *errmsg)
 
   ml_close_all(false);              // close all memfiles, without deleting
 
-  os_errmsg("Vim: Finished.\r\n");
+  if (errmsg != NULL) {
+    os_errmsg("Vim: Finished.\r\n");
+  }
 
   getout(1);
 }

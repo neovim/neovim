@@ -550,6 +550,10 @@ void rpc_close(Channel *channel)
 
   if (channel->streamtype == kChannelStreamStdio
       || (channel->id == ui_client_channel_id && channel->streamtype != kChannelStreamProc)) {
+    if (channel->streamtype == kChannelStreamStdio) {
+      // Avoid hanging when there are no other UIs and a prompt is triggered on exit.
+      remote_ui_disconnect(channel->id);
+    }
     exit_from_channel(0);
   }
 }
