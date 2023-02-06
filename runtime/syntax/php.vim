@@ -68,8 +68,8 @@
 " Known Bugs:
 "  - setting  php_parent_error_close  on  and  php_parent_error_open  off
 "    has these two leaks:
-"     i) A closing ) or ] inside a string match to the last open ( or [
-"        before the string, when the the closing ) or ] is on the same line
+"     i) A closing ) or ] inside a string matches to the last open ( or [
+"        before the string, when the closing ) or ] is on the same line
 "        where the string started. In this case a following ) or ] after
 "        the string would be highlighted as an error, what is incorrect.
 "    ii) Same problem if you are setting php_folding = 2 with a closing

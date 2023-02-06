@@ -189,7 +189,7 @@ endfun
 
 " ---------------------------------------------------------------------
 " vimball#Vimball: extract and distribute contents from a vimball {{{2
-"                  (invoked the the UseVimball command embedded in 
+"                  (invoked the UseVimball command embedded in
 "                  vimballs' prologue)
 fun! vimball#Vimball(really,...)
 "  call Dfunc("vimball#Vimball(really=".a:really.") a:0=".a:0)
