@@ -606,7 +606,7 @@ void init_highlight(bool both, bool reset)
     // Value of g:colors_name could be freed in load_colors() and make
     // p invalid, so copy it.
     char *copy_p = xstrdup(p);
-    bool okay = load_colors(copy_p);
+    bool okay = load_colors(copy_p, true);
     xfree(copy_p);
     if (okay) {
       return;
@@ -656,7 +656,7 @@ void init_highlight(bool both, bool reset)
 /// Load color file "name".
 ///
 /// @return  OK for success, FAIL for failure.
-int load_colors(char *name)
+int load_colors(char *name, bool trigger_event)
 {
   static bool recursive = false;
 
@@ -670,7 +670,9 @@ int load_colors(char *name)
   recursive = true;
   size_t buflen = strlen(name) + 12;
   char *buf = xmalloc(buflen);
-  apply_autocmds(EVENT_COLORSCHEMEPRE, name, curbuf->b_fname, false, curbuf);
+  if (trigger_event) {
+    apply_autocmds(EVENT_COLORSCHEMEPRE, name, curbuf->b_fname, false, curbuf);
+  }
   snprintf(buf, buflen, "colors/%s.vim", name);
   int retval = source_runtime(buf, DIP_START + DIP_OPT);
   if (retval == FAIL) {
@@ -678,7 +680,7 @@ int load_colors(char *name)
     retval = source_runtime(buf, DIP_START + DIP_OPT);
   }
   xfree(buf);
-  if (retval == OK) {
+  if (retval == OK && trigger_event) {
     apply_autocmds(EVENT_COLORSCHEME, name, curbuf->b_fname, false, curbuf);
   }
 

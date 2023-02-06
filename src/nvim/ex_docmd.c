@@ -4443,7 +4443,7 @@ static void ex_colorscheme(exarg_T *eap)
     } else {
       msg("default");
     }
-  } else if (load_colors(eap->arg) == FAIL) {
+  } else if (load_colors(eap->arg, true) == FAIL) {
     semsg(_("E185: Cannot find color scheme '%s'"), eap->arg);
   }
 }
