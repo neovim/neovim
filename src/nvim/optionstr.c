@@ -1581,7 +1581,7 @@ static void do_spelllang_source(win_T *win)
     q += 4;
   }
 
-  // Source the spell/LANG.vim in 'runtimepath'.
+  // Source the spell/LANG.{vim,lua} in 'runtimepath'.
   // They could set 'spellcapcheck' depending on the language.
   // Use the first name in 'spelllang' up to '_region' or
   // '.encoding'.
@@ -1592,7 +1592,7 @@ static void do_spelllang_source(win_T *win)
     }
   }
   if (p > q) {
-    vim_snprintf(fname, sizeof(fname), "spell/%.*s.vim", (int)(p - q), q);
+    vim_snprintf(fname, sizeof(fname), "spell/%.*s.\\(vim\\|lua\\)", (int)(p - q), q);
     source_runtime(fname, DIP_ALL);
   }
 }

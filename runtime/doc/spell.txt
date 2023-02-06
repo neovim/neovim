@@ -440,9 +440,9 @@ find these functions useful:
 SETTING 'spellcapcheck' AUTOMATICALLY			*set-spc-auto*
 
 After the 'spelllang' option has been set successfully, Vim will source the
-files "spell/LANG.vim" in 'runtimepath'.  "LANG" is the value of 'spelllang'
-up to the first comma, dot or underscore.  This can be used to set options
-specifically for the language, especially 'spellcapcheck'.
+files "spell/LANG.vim" and "spell/LANG.lua" in 'runtimepath'.  "LANG" is the
+value of 'spelllang' up to the first comma, dot or underscore.  This can be
+used to set options specifically for the language, especially 'spellcapcheck'.
 
 The distribution includes a few of these files.  Use this command to see what
 they do: >
