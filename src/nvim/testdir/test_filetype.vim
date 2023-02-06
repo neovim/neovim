@@ -489,6 +489,7 @@ let s:filename_checks = {
     \ 'rnoweb': ['file.rnw', 'file.snw'],
     \ 'robot': ['file.robot', 'file.resource'],
     \ 'robots': ['robots.txt'],
+    \ 'ron': ['file.ron'],
     \ 'routeros': ['file.rsc'],
     \ 'rpcgen': ['file.x'],
     \ 'rpl': ['file.rpl'],
