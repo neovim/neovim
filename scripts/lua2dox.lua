@@ -286,12 +286,118 @@ local function checkComment4fn(Fn_magic, MagicLines)
   return fn_magic
 end
 
-local types = { 'integer', 'number', 'string', 'table', 'list', 'boolean', 'function' }
+local types = {
+  ['any'] = true,
+  ['integer'] = true,
+  ['number'] = true,
+  ['string'] = true,
+  ['table'] = true,
+  ['list'] = true,
+  ['boolean'] = true,
+  ['function'] = true,
+}
 
 local tagged_types = { 'TSNode', 'LanguageTree' }
 
--- Document these as 'table'
-local alias_types = { 'Range' }
+---@param x string
+local function parse_type(x)
+  local state = 'in_type'
+  local cur_name = ''
+  local level = 0
+
+  ---@type string[]
+  local cur_union = {}
+
+  ---@type string[][]
+  local ret = {}
+
+  local function do_surround(ch, s, e)
+    cur_name = cur_name .. ch
+    if ch == s then
+      level = level + 1
+    elseif ch == e then
+      if level == 0 then
+        state = 'in_ws'
+      else
+        level = level - 1
+      end
+    end
+  end
+
+  local i = 1
+  while i <= #x do
+    local ch = x:sub(i, i)
+
+    if state == 'in_type' then
+      if ch:match('[a-zA-Z%[%]?.]') then
+        cur_name = cur_name .. ch
+      elseif ch == ':' then
+        break
+      elseif ch == '"' then
+        cur_name = cur_name .. ch
+        state = 'in_quote'
+      elseif ch == '(' then
+        cur_name = cur_name .. ch
+        state = 'in_paren'
+      elseif ch == '{' then
+        cur_name = cur_name .. ch
+        state = 'in_table'
+      elseif ch == '<' then
+        cur_name = cur_name .. ch
+        state = 'in_angle'
+      elseif ch == '|' or ch == ',' then
+        state = 'in_ws'
+        i = i - 1
+      elseif ch:match('%s') then
+        state = 'in_ws'
+      end
+    elseif state == 'in_ws' then
+      -- next char must be '|' or ',' else we finish
+      if ch == '|' then
+        state = 'in_union'
+        cur_union[#cur_union+1] = cur_name
+      elseif ch == ',' then
+        state = 'in_vararg'
+        cur_union[#cur_union+1] = cur_name
+        ret[#ret+1] = cur_union
+        cur_union = {}
+        cur_name = ''
+      elseif not ch:match('%s') then
+        break
+      end
+    elseif state == 'in_quote' then
+      cur_name = cur_name .. ch
+      if ch == '"' then
+        state = 'in_ws'
+      end
+    elseif state == 'in_paren' then
+      do_surround(ch, '(', ')')
+    elseif state == 'in_table' then
+      do_surround(ch, '{', '}')
+    elseif state == 'in_angle' then
+      do_surround(ch, '<', '>')
+    elseif state == 'in_union' then
+      cur_name = ''
+      if not ch:match('%s') then
+        i = i - 1
+        state = 'in_type'
+      end
+    elseif state == 'in_vararg' then
+      if not ch:match('%s') then
+        cur_union = {}
+        cur_name = ch
+        state = 'in_type'
+      end
+    end
+
+    i = i + 1
+  end
+
+  cur_union[#cur_union+1] = cur_name
+  ret[#ret+1] = cur_union
+
+  return ret, i
+end
 
 --! \brief run the filter
 function TLua2DoX_filter.readfile(this, AppStamp, Filename)
@@ -336,14 +442,14 @@ function TLua2DoX_filter.readfile(this, AppStamp, Filename)
 
           local magic_split = string_split(magic, ' ')
           if magic_split[1] == 'param' then
-            for _, type in ipairs(types) do
+            for type in pairs(types) do
               magic = magic:gsub('^param%s+([a-zA-Z_?]+)%s+.*%((' .. type .. ')%)', 'param %1 %2')
               magic =
                 magic:gsub('^param%s+([a-zA-Z_?]+)%s+.*%((' .. type .. '|nil)%)', 'param %1 %2')
             end
             magic_split = string_split(magic, ' ')
           elseif magic_split[1] == 'return' then
-            for _, type in ipairs(types) do
+            for type in pairs(types) do
               magic = magic:gsub('^return%s+.*%((' .. type .. ')%)', 'return %1')
               magic = magic:gsub('^return%s+.*%((' .. type .. '|nil)%)', 'return %1')
             end
@@ -382,20 +488,30 @@ function TLua2DoX_filter.readfile(this, AppStamp, Filename)
                   magic_split[type_index]:gsub(type, '|%1|')
               end
 
-              for _, type in ipairs(alias_types) do
-                magic_split[type_index] =
-                  magic_split[type_index]:gsub('^'..type..'$', 'table')
+              if magic_split[1] == 'param' or magic_split[1] == 'return' then
+                local type_start = 1
+                for i = 1, type_index - 1 do
+                  type_start = type_start + #magic_split[i] + 1
+                end
+                local types_str = vim.trim(magic:sub(type_start))
+                local types, type_end = parse_type(types_str)
+                local tail = string_split(types_str:sub(type_end),' ')
+
+                -- for i, t in ipairs(types[1]) do
+                --   if not types[t] and not tagged_types[t] then
+                --     types[1][i] = 'table'
+                --   end
+                -- end
+
+                local type_mod = table.concat(types[1], '|')
+                if #types[1] > 0 and not type_mod:match('^%(.*%)$') then
+                  type_mod = '('..type_mod..')'
+                end
+
+                magic_split = vim.list_slice(magic_split, 1, type_index - 1)
+                magic_split[type_index] = type_mod
+                magic_split = vim.list_extend(magic_split, tail)
               end
-
-              -- surround some types by ()
-              for _, type in ipairs(types) do
-                magic_split[type_index] =
-                  magic_split[type_index]:gsub('^(' .. type .. '|nil):?$', '(%1)')
-                magic_split[type_index] =
-                  magic_split[type_index]:gsub('^(' .. type .. '):?$', '(%1)')
-              end
-
-
             end
 
             magic = table.concat(magic_split, ' ')
