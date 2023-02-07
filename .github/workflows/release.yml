@@ -101,40 +101,8 @@ jobs:
         run: printf 'NVIM_BUILD_TYPE=Release\n' >> $GITHUB_ENV
       - if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && github.event.inputs.tag_name == 'nightly')
         run: printf 'NVIM_BUILD_TYPE=RelWithDebInfo\n' >> $GITHUB_ENV
-      - name: Provision universal `libintl`
-        run: |
-          GETTEXT_PREFIX="$(brew --prefix gettext)"
-          printf 'GETTEXT_PREFIX=%s\n' "$GETTEXT_PREFIX" >> $GITHUB_ENV
-          bottle_tag="arm64_big_sur"
-          brew fetch --bottle-tag="$bottle_tag" gettext
-          cd "$(mktemp -d)"
-          tar xf "$(brew --cache)"/**/*gettext*${bottle_tag}*.tar.gz
-          lipo gettext/*/lib/libintl.a "${GETTEXT_PREFIX}/lib/libintl.a" -create -output libintl.a
-          mv -f libintl.a /usr/local/lib/
-      - name: Ensure static linkage to `libintl`
-        run: |
-          # We're about to mangle `gettext`, so let's remove any potentially broken
-          # installs (e.g. curl, git) as those could interfere with our build.
-          brew uninstall $(brew uses --installed --recursive gettext)
-          brew unlink gettext
-          ln -sf "$(brew --prefix)/opt/$(readlink "${GETTEXT_PREFIX}")/bin"/* /usr/local/bin/
-          ln -sf "$(brew --prefix)/opt/$(readlink "${GETTEXT_PREFIX}")/include"/* /usr/local/include/
-          rm -f "$GETTEXT_PREFIX"
-      - name: Build release
-        run: |
-          export MACOSX_DEPLOYMENT_TARGET="$(sw_vers -productVersion | cut -f1 -d.)"
-          OSX_FLAGS="-DCMAKE_OSX_DEPLOYMENT_TARGET=${MACOSX_DEPLOYMENT_TARGET} -DCMAKE_OSX_ARCHITECTURES=arm64\;x86_64"
-          make CMAKE_BUILD_TYPE=${NVIM_BUILD_TYPE} \
-               CMAKE_EXTRA_FLAGS="-DCMAKE_INSTALL_PREFIX:PATH= $OSX_FLAGS" \
-               DEPS_CMAKE_FLAGS="$OSX_FLAGS"
-          make DESTDIR="$GITHUB_WORKSPACE/build/release/nvim-macos" install
-          cd "$GITHUB_WORKSPACE/build/"
-          # Make sure we build everything for M1 as well
-          for macho in bin/* lib/nvim/parser/*.so
-          do
-          lipo -info "$macho" | grep -q arm64 || exit 1
-          done
-          cpack -C "$NVIM_BUILD_TYPE"
+      - name: Build universal binary
+        run: ./.github/scripts/build_universal_macos.sh
       - uses: actions/upload-artifact@v3
         with:
           name: nvim-macos
