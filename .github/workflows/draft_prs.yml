@@ -1,0 +1,13 @@
+name: Draft conflicting PRs
+on:
+  push:
+    branches:
+      - 'master'
+
+jobs:
+  draft:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - run: "echo run script"
+
