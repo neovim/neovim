@@ -88,6 +88,8 @@ function TSHighlighter.new(tree, opts)
     end
   end
 
+  self.orig_spelloptions = vim.bo[self.bufnr].spelloptions
+
   vim.bo[self.bufnr].syntax = ''
   vim.b[self.bufnr].ts_highlight = true
 
