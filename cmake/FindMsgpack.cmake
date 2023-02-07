@@ -50,4 +50,3 @@ include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(Msgpack
   REQUIRED_VARS MSGPACK_LIBRARY MSGPACK_INCLUDE_DIR
   VERSION_VAR MSGPACK_VERSION_STRING)
-
