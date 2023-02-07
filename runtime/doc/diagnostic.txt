@@ -452,7 +452,7 @@ fromqflist({list})                               *vim.diagnostic.fromqflist()*
                 |getloclist()|.
 
     Return: ~
-        Diagnostic [] array of |diagnostic-structure|
+        ( Diagnostic []) array of |diagnostic-structure|
 
 get({bufnr}, {opts})                                    *vim.diagnostic.get()*
     Get current diagnostics.
@@ -467,7 +467,7 @@ get({bufnr}, {opts})                                    *vim.diagnostic.get()*
                  • severity: See |diagnostic-severity|.
 
     Return: ~
-        Diagnostic [] table A list of diagnostic items |diagnostic-structure|.
+        ( Diagnostic []) table A list of diagnostic items |diagnostic-structure|.
 
 get_namespace({namespace})                    *vim.diagnostic.get_namespace()*
     Get namespace metadata.
@@ -491,7 +491,7 @@ get_next({opts})                                   *vim.diagnostic.get_next()*
       • {opts}  (table|nil) See |vim.diagnostic.goto_next()|
 
     Return: ~
-        Diagnostic|nil Next diagnostic
+        (Diagnostic|nil) Next diagnostic
 
 get_next_pos({opts})                           *vim.diagnostic.get_next_pos()*
     Return the position of the next diagnostic in the current buffer.
@@ -500,17 +500,17 @@ get_next_pos({opts})                           *vim.diagnostic.get_next_pos()*
       • {opts}  (table|nil) See |vim.diagnostic.goto_next()|
 
     Return: ~
-        table|false Next diagnostic position as a (row, col) tuple or false if
-        no next diagnostic.
+        (table|false) Next diagnostic position as a (row, col) tuple or false
+        if no next diagnostic.
 
 get_prev({opts})                                   *vim.diagnostic.get_prev()*
     Get the previous diagnostic closest to the cursor position.
 
     Parameters: ~
-      • {opts}  nil|table See |vim.diagnostic.goto_next()|
+      • {opts}  (nil|table) See |vim.diagnostic.goto_next()|
 
     Return: ~
-        Diagnostic|nil Previous diagnostic
+        (Diagnostic|nil) Previous diagnostic
 
 get_prev_pos({opts})                           *vim.diagnostic.get_prev_pos()*
     Return the position of the previous diagnostic in the current buffer.
@@ -519,7 +519,7 @@ get_prev_pos({opts})                           *vim.diagnostic.get_prev_pos()*
       • {opts}  (table|nil) See |vim.diagnostic.goto_next()|
 
     Return: ~
-        table|false Previous diagnostic position as a (row, col) tuple or
+        (table|false) Previous diagnostic position as a (row, col) tuple or
         false if there is no prior diagnostic
 
 goto_next({opts})                                 *vim.diagnostic.goto_next()*
@@ -606,7 +606,7 @@ match({str}, {pat}, {groups}, {severity_map}, {defaults})
                         default to 0 and "severity" defaults to ERROR.
 
     Return: ~
-        Diagnostic|nil: |diagnostic-structure| or `nil` if {pat} fails to
+        (Diagnostic|nil) : |diagnostic-structure| or `nil` if {pat} fails to
         match {str}.
 
 open_float({opts}, {...})                        *vim.diagnostic.open_float()*
@@ -663,7 +663,7 @@ open_float({opts}, {...})                        *vim.diagnostic.open_float()*
                   from |vim.diagnostic.config()|.
 
     Return: ~
-        number|nil, number|nil: ({float_bufnr}, {win_id})
+        (number|nil) : ({float_bufnr}, {win_id})
 
 reset({namespace}, {bufnr})                           *vim.diagnostic.reset()*
     Remove all diagnostics from the given namespace.
@@ -744,6 +744,6 @@ toqflist({diagnostics})                            *vim.diagnostic.toqflist()*
       • {diagnostics}  (table) List of diagnostics |diagnostic-structure|.
 
     Return: ~
-        table[] of quickfix list items |setqflist-what|
+        (table[]) of quickfix list items |setqflist-what|
 
  vim:tw=78:ts=8:sw=4:sts=4:et:ft=help:norl:

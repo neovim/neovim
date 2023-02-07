@@ -489,7 +489,7 @@ get_captures_at_cursor({winnr})
       • {winnr}  (integer|nil) Window handle or 0 for current window (default)
 
     Return: ~
-        string[] List of capture names
+        (string[]) List of capture names
 
                                         *vim.treesitter.get_captures_at_pos()*
 get_captures_at_pos({bufnr}, {row}, {col})
@@ -505,8 +505,8 @@ get_captures_at_pos({bufnr}, {row}, {col})
       • {col}    (integer) Position column
 
     Return: ~
-        table[] List of captures `{ capture = "capture name", metadata = { ...
-        } }`
+        (table[]) List of captures `{ capture = "capture name", metadata = {
+        ... } }`
 
 get_node_at_cursor({winnr})              *vim.treesitter.get_node_at_cursor()*
     Returns the smallest named node under the cursor
@@ -531,13 +531,13 @@ get_node_at_pos({bufnr}, {row}, {col}, {opts})
                    (default true)
 
     Return: ~
-        |TSNode||nil under the cursor
+        (TSNode|nil) under the cursor
 
 get_node_range({node_or_range})              *vim.treesitter.get_node_range()*
     Returns the node's range or an unpacked range table
 
     Parameters: ~
-      • {node_or_range}  (|TSNode||table) Node or table of positions
+      • {node_or_range}  (TSNode|table) Node or table of positions
 
     Return: ~
         (integer) start_row
@@ -559,7 +559,7 @@ get_parser({bufnr}, {lang}, {opts})              *vim.treesitter.get_parser()*
       • {opts}   (table|nil) Options to pass to the created language tree
 
     Return: ~
-        |LanguageTree| object to use for parsing
+        ( LanguageTree ) object to use for parsing
 
                                           *vim.treesitter.get_string_parser()*
 get_string_parser({str}, {lang}, {opts})
@@ -571,14 +571,14 @@ get_string_parser({str}, {lang}, {opts})
       • {opts}  (table|nil) Options to pass to the created language tree
 
     Return: ~
-        |LanguageTree| object to use for parsing
+        ( LanguageTree ) object to use for parsing
 
 is_ancestor({dest}, {source})                   *vim.treesitter.is_ancestor()*
     Determines whether a node is the ancestor of another
 
     Parameters: ~
-      • {dest}    |TSNode| Possible ancestor
-      • {source}  |TSNode| Possible descendant
+      • {dest}    (TSNode) Possible ancestor
+      • {source}  (TSNode) Possible descendant
 
     Return: ~
         (boolean) True if {dest} is an ancestor of {source}
@@ -588,7 +588,7 @@ is_in_node_range({node}, {line}, {col})
     Determines whether (line, col) position is in node range
 
     Parameters: ~
-      • {node}  |TSNode| defining the range
+      • {node}  (TSNode) defining the range
       • {line}  (integer) Line (0-based)
       • {col}   (integer) Column (0-based)
 
@@ -599,7 +599,7 @@ node_contains({node}, {range})                *vim.treesitter.node_contains()*
     Determines if a node contains a range
 
     Parameters: ~
-      • {node}   |TSNode|
+      • {node}   (TSNode)
       • {range}  (table)
 
     Return: ~
@@ -712,8 +712,8 @@ add_directive({name}, {handler}, {force})
 
     Parameters: ~
       • {name}     (string) Name of the directive, without leading #
-      • {handler}  function(match:table<string,|TSNode|>, pattern:string,
-                   bufnr:number, predicate:string[], metadata:table)
+      • {handler}  (function(match:table<string,TSNode>, pattern:string,
+                   bufnr:number, predicate:string[], metadata:table))
                    • match: see |treesitter-query|
                      • node-level data are accessible via `match[capture_id]`
 
@@ -729,8 +729,8 @@ add_predicate({name}, {handler}, {force})
 
     Parameters: ~
       • {name}     (string) Name of the predicate, without leading #
-      • {handler}  function(match:table<string,|TSNode|>, pattern:string,
-                   bufnr:number, predicate:string[])
+      • {handler}  (function(match:table<string,TSNode>, pattern:string,
+                   bufnr:number, predicate:string[]))
                    • see |vim.treesitter.query.add_directive()| for argument
                      meanings
       • {force}    (boolean)
@@ -740,7 +740,7 @@ get_node_text({node}, {source}, {opts})
     Gets the text corresponding to a given node
 
     Parameters: ~
-      • {node}    |TSNode|
+      • {node}    (TSNode)
       • {source}  (number|string) Buffer or string from which the {node} is
                   extracted
       • {opts}    (table|nil) Optional parameters.
@@ -761,7 +761,7 @@ get_query({lang}, {query_name})             *vim.treesitter.query.get_query()*
       • {query_name}  (string) Name of the query (e.g. "highlights")
 
     Return: ~
-        Query|nil Parsed query
+        (Query|nil) Parsed query
 
                                       *vim.treesitter.query.get_query_files()*
 get_query_files({lang}, {query_name}, {is_included})
@@ -774,20 +774,20 @@ get_query_files({lang}, {query_name}, {is_included})
                        as `nil`
 
     Return: ~
-        string[] query_files List of files to load for given query and
+        (string[]) query_files List of files to load for given query and
         language
 
 list_directives()                     *vim.treesitter.query.list_directives()*
     Lists the currently available directives to use in queries.
 
     Return: ~
-        string[] List of supported directives.
+        (string[]) List of supported directives.
 
 list_predicates()                     *vim.treesitter.query.list_predicates()*
     Lists the currently available predicates to use in queries.
 
     Return: ~
-        string[] List of supported predicates.
+        (string[]) List of supported predicates.
 
 parse_query({lang}, {query})              *vim.treesitter.query.parse_query()*
     Parse {query} as a string. (If the query is in a file, the caller should
@@ -806,7 +806,7 @@ parse_query({lang}, {query})              *vim.treesitter.query.parse_query()*
       • {query}  (string) Query in s-expr syntax
 
     Return: ~
-        Query Parsed query
+        ( Query ) Parsed query
 
                                                        *Query:iter_captures()*
 Query:iter_captures({self}, {node}, {source}, {start}, {stop})
@@ -834,7 +834,7 @@ Query:iter_captures({self}, {node}, {source}, {start}, {stop})
 <
 
     Parameters: ~
-      • {node}    |TSNode| under which the search will occur
+      • {node}    (TSNode) under which the search will occur
       • {source}  (integer|string) Source buffer or string to extract text
                   from
       • {start}   (number) Starting line for the search
@@ -842,7 +842,7 @@ Query:iter_captures({self}, {node}, {source}, {start}, {stop})
       • {self}
 
     Return: ~
-        (fun(): integer, TSNode, TSMetadata ): capture id, capture node, metadata
+        (fun(): integer, TSNode, TSMetadata ) : capture id, capture node, metadata
 
                                                         *Query:iter_matches()*
 Query:iter_matches({self}, {node}, {source}, {start}, {stop})
@@ -868,14 +868,14 @@ Query:iter_matches({self}, {node}, {source}, {start}, {stop})
 <
 
     Parameters: ~
-      • {node}    |TSNode| under which the search will occur
+      • {node}    (TSNode) under which the search will occur
       • {source}  (integer|string) Source buffer or string to search
       • {start}   (integer) Starting line for the search
       • {stop}    (integer) Stopping line for the search (end-exclusive)
       • {self}
 
     Return: ~
-        (fun(): integer, table<integer,TSNode>, table): pattern id, match,
+        (fun(): integer, table<integer,TSNode>, table) : pattern id, match,
         metadata
 
                                             *vim.treesitter.query.set_query()*
@@ -898,12 +898,12 @@ new({tree}, {opts})                         *vim.treesitter.highlighter.new()*
     Creates a new highlighter using
 
     Parameters: ~
-      • {tree}  |LanguageTree| parser object to use for highlighting
+      • {tree}  ( LanguageTree ) parser object to use for highlighting
       • {opts}  (table|nil) Configuration of the highlighter:
                 • queries table overwrite queries used by the highlighter
 
     Return: ~
-        TSHighlighter Created highlighter object
+        ( TSHighlighter ) Created highlighter object
 
 TSHighlighter:destroy({self})                        *TSHighlighter:destroy()*
     Removes all internal references to the highlighter
@@ -925,7 +925,7 @@ LanguageTree:contains({self}, {range})               *LanguageTree:contains()*
     Determines whether {range} is contained in the |LanguageTree|.
 
     Parameters: ~
-      • {range}  (table) `{ start_line, start_col, end_line, end_col }`
+      • {range}  (Range) `{ start_line, start_col, end_line, end_col }`
       • {self}
 
     Return: ~
@@ -946,7 +946,7 @@ LanguageTree:for_each_child({self}, {fn}, {include_self})
     Invokes the callback for each |LanguageTree| and its children recursively
 
     Parameters: ~
-      • {fn}            fun(tree: LanguageTree, lang: string)
+      • {fn}            (fun(tree: LanguageTree, lang: string))
       • {include_self}  (boolean|nil) Whether to include the invoking tree in
                         the results
       • {self}
@@ -957,7 +957,7 @@ LanguageTree:for_each_tree({self}, {fn})        *LanguageTree:for_each_tree()*
     Note: This includes the invoking tree's child trees as well.
 
     Parameters: ~
-      • {fn}    fun(tree: TSTree, ltree: LanguageTree)
+      • {fn}    (fun(tree: TSTree, ltree: LanguageTree))
       • {self}
 
 LanguageTree:included_regions({self})        *LanguageTree:included_regions()*
@@ -990,25 +990,25 @@ LanguageTree:language_for_range({self}, {range})
     Gets the appropriate language that contains {range}.
 
     Parameters: ~
-      • {range}  (table) `{ start_line, start_col, end_line, end_col }`
+      • {range}  (Range) `{ start_line, start_col, end_line, end_col }`
       • {self}
 
     Return: ~
-        |LanguageTree| Managing {range}
+        ( LanguageTree ) Managing {range}
 
                                          *LanguageTree:named_node_for_range()*
 LanguageTree:named_node_for_range({self}, {range}, {opts})
     Gets the smallest named node that contains {range}.
 
     Parameters: ~
-      • {range}  (table) `{ start_line, start_col, end_line, end_col }`
+      • {range}  (Range) `{ start_line, start_col, end_line, end_col }`
       • {opts}   (table|nil) Optional keyword arguments:
                  • ignore_injections boolean Ignore injected languages
                    (default true)
       • {self}
 
     Return: ~
-        |TSNode||nil Found node
+        (TSNode|nil) Found node
 
 LanguageTree:parse({self})                              *LanguageTree:parse()*
     Parses all defined regions using a treesitter parser for the language this
@@ -1019,7 +1019,7 @@ LanguageTree:parse({self})                              *LanguageTree:parse()*
       • {self}
 
     Return: ~
-        TSTree[]
+        (TSTree[])
         (table|nil) Change list
 
 LanguageTree:register_cbs({self}, {cbs})         *LanguageTree:register_cbs()*
@@ -1050,14 +1050,14 @@ LanguageTree:tree_for_range({self}, {range}, {opts})
     Gets the tree that contains {range}.
 
     Parameters: ~
-      • {range}  (table) `{ start_line, start_col, end_line, end_col }`
+      • {range}  (Range) `{ start_line, start_col, end_line, end_col }`
       • {opts}   (table|nil) Optional keyword arguments:
                  • ignore_injections boolean Ignore injected languages
                    (default true)
       • {self}
 
     Return: ~
-        TSTree|nil
+        (TSTree|nil)
 
 LanguageTree:trees({self})                              *LanguageTree:trees()*
     Returns all trees this language tree contains. Does not include child
@@ -1081,6 +1081,6 @@ new({source}, {lang}, {opts})              *vim.treesitter.languagetree.new()*
                     per language.
 
     Return: ~
-        |LanguageTree| parser object
+        ( LanguageTree ) parser object
 
  vim:tw=78:ts=8:sw=4:sts=4:et:ft=help:norl:
