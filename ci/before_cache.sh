@@ -5,8 +5,6 @@ set -o pipefail
 
 CI_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck source-path=SCRIPTDIR
-source "${CI_DIR}/common/build.sh"
-# shellcheck source-path=SCRIPTDIR
 source "${CI_DIR}/common/suite.sh"
 
 mkdir -p "${HOME}/.cache"
@@ -22,5 +20,5 @@ if ended_successfully && [ -d "${DEPS_BUILD_DIR}" ]; then
   mv "${DEPS_BUILD_DIR}" "${CACHE_NVIM_DEPS_DIR}"
 
   touch "${CACHE_MARKER}"
-  echo "Updated third-party dependencies (timestamp: $(_stat "${CACHE_MARKER}"))."
+  echo "Updated third-party dependencies."
 fi

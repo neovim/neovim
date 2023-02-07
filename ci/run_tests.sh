@@ -5,11 +5,35 @@ set -o pipefail
 
 CI_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck source-path=SCRIPTDIR
-source "${CI_DIR}/common/build.sh"
-# shellcheck source-path=SCRIPTDIR
 source "${CI_DIR}/common/test.sh"
 # shellcheck source-path=SCRIPTDIR
 source "${CI_DIR}/common/suite.sh"
+
+build_nvim() {
+  check_core_dumps --delete quiet
+
+  if test -n "${CLANG_SANITIZER}" ; then
+    CMAKE_FLAGS="${CMAKE_FLAGS} -DCLANG_${CLANG_SANITIZER}=ON"
+  fi
+
+  mkdir -p "${BUILD_DIR}"
+  cd "${BUILD_DIR}"
+  echo "Configuring with '${CMAKE_FLAGS} $*'."
+  # shellcheck disable=SC2086
+  cmake -G Ninja ${CMAKE_FLAGS} "$@" "${CI_BUILD_DIR}"
+
+  echo "Building nvim."
+  ninja nvim || exit 1
+
+  # Invoke nvim to trigger *San early.
+  if ! (bin/nvim --version && bin/nvim -u NONE -e -cq | cat -vet) ; then
+    check_sanitizer "${LOG_DIR}"
+    exit 1
+  fi
+  check_sanitizer "${LOG_DIR}"
+
+  cd "${CI_BUILD_DIR}"
+}
 
 rm -f "$END_MARKER"
 
@@ -34,7 +58,8 @@ for i in "${tests[@]}"; do
   eval "$i" || fail "$i"
 done
 
-end_tests
+touch "${END_MARKER}"
+ended_successfully
 
 if [[ -s "${GCOV_ERROR_FILE}" ]]; then
   echo '=== Unexpected gcov errors: ==='

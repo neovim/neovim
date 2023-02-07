@@ -1,4 +1,3 @@
-. "${CI_DIR}/common/build.sh"
 . "${CI_DIR}/common/suite.sh"
 
 submit_coverage() {
@@ -84,7 +83,7 @@ valgrind_check() {
 
 check_sanitizer() {
   if test -n "${CLANG_SANITIZER}"; then
-    check_logs "${1}" "*san.*" | ${SYMBOLIZER:-cat}
+    check_logs "${1}" "*san.*" | cat
   fi
 }
 
