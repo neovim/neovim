@@ -10,7 +10,7 @@ if [[ -n "${GCOV}" ]] && [[ ! $(type -P "${GCOV}") ]]; then
 fi
 
 if test "${FUNCTIONALTEST}" = "functionaltest-lua" ; then
-  DEPS_CMAKE_FLAGS="${DEPS_CMAKE_FLAGS} -DUSE_BUNDLED_LUA=ON"
+  DEPS_CMAKE_FLAGS="${DEPS_CMAKE_FLAGS} -D USE_BUNDLED_LUA=ON"
 fi
 
 mkdir -p "${DEPS_BUILD_DIR}"

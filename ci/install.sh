@@ -8,7 +8,7 @@ echo "Install neovim module for Python."
 CC=cc python3 -m pip -q install --user --upgrade pynvim
 
 echo "Install neovim RubyGem."
-gem install --no-document --bindir "$HOME/.local/bin" --user-install --pre neovim
+gem install --no-document --bindir "$BIN_DIR" --user-install --pre neovim
 
 echo "Install neovim npm package"
 npm install -g neovim

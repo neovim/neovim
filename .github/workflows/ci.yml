@@ -11,12 +11,12 @@ on:
     paths-ignore:
       - 'contrib/**'
 
-# Cancel any in-progress CI runs for a PR if it is updated
 concurrency:
   group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.head_ref || github.sha }}
   cancel-in-progress: true
 
 env:
+  CI_BUILD_DIR: ${{ github.workspace }}
   UNCRUSTIFY_VERSION: uncrustify-0.75.0
   # TEST_FILE: test/functional/core/startup_spec.lua
   # TEST_FILTER: foo
@@ -59,9 +59,9 @@ jobs:
         run: |
           source_dir=uncrustify
           build_dir=uncrustify/build
-          cmake -S $source_dir -B $build_dir -G Ninja -DCMAKE_BUILD_TYPE=Release
+          cmake -S $source_dir -B $build_dir -G Ninja -D CMAKE_BUILD_TYPE=Release
           cmake --build $build_dir
-          mkdir -p $HOME/.cache
+          mkdir -p $CACHE_DIR
           cp $build_dir/uncrustify ${{ env.CACHE_UNCRUSTIFY }}
 
       - uses: ./.github/actions/cache
@@ -302,12 +302,12 @@ jobs:
 
       - name: Build deps
         run: |
-          cmake -S cmake.deps -B $env:DEPS_BUILD_DIR -G Ninja -DCMAKE_BUILD_TYPE='RelWithDebInfo'
+          cmake -S cmake.deps -B $env:DEPS_BUILD_DIR -G Ninja -D CMAKE_BUILD_TYPE='RelWithDebInfo'
           cmake --build $env:DEPS_BUILD_DIR
 
       - name: Build nvim
         run: |
-          cmake -B build -G Ninja -DCMAKE_BUILD_TYPE='RelWithDebInfo' -DDEPS_PREFIX="$env:DEPS_PREFIX" -DCI_BUILD=ON
+          cmake -B build -G Ninja -D CMAKE_BUILD_TYPE='RelWithDebInfo' -D DEPS_PREFIX="$env:DEPS_PREFIX" -D CI_BUILD=ON
           cmake --build build
 
       - name: Install test deps

@@ -3,67 +3,77 @@ set -e -u
 
 FLAVOR=${1:-}
 
-cat <<EOF >> "$GITHUB_PATH"
-$HOME/.local/bin
-EOF
-
-cat <<EOF >> "$GITHUB_ENV"
-CI_BUILD_DIR=$GITHUB_WORKSPACE
-BUILD_DIR=$GITHUB_WORKSPACE/build
+BUILD_DIR=$CI_BUILD_DIR/build
+BIN_DIR=$HOME/.local/bin
 DEPS_BUILD_DIR=$HOME/nvim-deps
 INSTALL_PREFIX=$HOME/nvim-install
-LOG_DIR=$GITHUB_WORKSPACE/build/log
-NVIM_LOG_FILE=$GITHUB_WORKSPACE/build/.nvimlog
-VALGRIND_LOG=$GITHUB_WORKSPACE/build/log/valgrind-%p.log
-CACHE_NVIM_DEPS_DIR=$HOME/.cache/nvim-deps
-CACHE_MARKER=$HOME/.cache/nvim-deps/.ci_cache_marker
-CACHE_UNCRUSTIFY=$HOME/.cache/uncrustify
-EOF
-
+LOG_DIR=$BUILD_DIR/log
+NVIM_LOG_FILE=$BUILD_DIR/.nvimlog
+VALGRIND_LOG=$LOG_DIR/valgrind-%p.log
+CACHE_DIR=$HOME/.cache
+CACHE_NVIM_DEPS_DIR=$CACHE_DIR/nvim-deps
+CACHE_MARKER=$CACHE_NVIM_DEPS_DIR/.ci_cache_marker
+CACHE_UNCRUSTIFY=$CACHE_DIR/uncrustify
 DEPS_CMAKE_FLAGS=
 FUNCTIONALTEST=functionaltest
-BUILD_FLAGS="CMAKE_FLAGS=-DCI_BUILD=ON -DCMAKE_BUILD_TYPE=Debug -DCMAKE_INSTALL_PREFIX:PATH=$HOME/nvim-install -DBUSTED_OUTPUT_TYPE=nvim -DDEPS_PREFIX=$HOME/nvim-deps/usr -DMIN_LOG_LEVEL=3"
+CMAKE_FLAGS="-D CI_BUILD=ON -D CMAKE_BUILD_TYPE=Debug -D CMAKE_INSTALL_PREFIX:PATH=$INSTALL_PREFIX -D BUSTED_OUTPUT_TYPE=nvim -D DEPS_PREFIX=$DEPS_BUILD_DIR/usr -D MIN_LOG_LEVEL=3"
+CLANG_SANITIZER=
+ASAN_OPTIONS=
+UBSAN_OPTIONS=
+TSAN_OPTIONS=
 
 case "$FLAVOR" in
   asan)
-    cat <<EOF >> "$GITHUB_ENV"
-CLANG_SANITIZER=ASAN_UBSAN
-ASAN_OPTIONS=detect_leaks=1:check_initialization_order=1:log_path=$GITHUB_WORKSPACE/build/log/asan:intercept_tls_get_addr=0
-UBSAN_OPTIONS=print_stacktrace=1 log_path=$GITHUB_WORKSPACE/build/log/ubsan
-EOF
+    CLANG_SANITIZER=ASAN_UBSAN
+    ASAN_OPTIONS="detect_leaks=1:check_initialization_order=1:log_path=$LOG_DIR/asan:intercept_tls_get_addr=0"
+    UBSAN_OPTIONS="print_stacktrace=1 log_path=$LOG_DIR/ubsan"
     ;;
   tsan)
-    cat <<EOF >> "$GITHUB_ENV"
-TSAN_OPTIONS=log_path=$GITHUB_WORKSPACE/build/log/tsan
-CLANG_SANITIZER=TSAN
-EOF
+    TSAN_OPTIONS=log_path=$LOG_DIR/tsan
+    CLANG_SANITIZER=TSAN
     ;;
   uchar)
-    cat <<EOF >> "$GITHUB_ENV"
-BUILD_UCHAR=1
-EOF
+    CMAKE_FLAGS+=" -D UNSIGNED_CHAR=ON"
     ;;
   lintc)
-# Re-enable once system deps are available
-#    BUILD_FLAGS="$BUILD_FLAGS -DLIBLUV_LIBRARY:FILEPATH=/usr/lib/$(dpkg-architecture -qDEB_HOST_MULTIARCH)/lua/5.1/luv.so -DLIBLUV_INCLUDE_DIR:PATH=/usr/include/lua5.1"
+    # Re-enable once system deps are available
+    #    CMAKE_FLAGS+=" -D LIBLUV_LIBRARY:FILEPATH=/usr/lib/$(dpkg-architecture -qDEB_HOST_MULTIARCH)/lua/5.1/luv.so -D LIBLUV_INCLUDE_DIR:PATH=/usr/include/lua5.1"
 
     # Ideally all dependencies should external for this job, but some
     # dependencies don't have the required version available. We use the
     # bundled versions for these with the hopes of being able to remove them
     # later on.
-    DEPS_CMAKE_FLAGS="$DEPS_CMAKE_FLAGS -DUSE_BUNDLED=OFF -DUSE_BUNDLED_LUV=ON -DUSE_BUNDLED_LIBVTERM=ON"
+    DEPS_CMAKE_FLAGS+=" -D USE_BUNDLED=OFF -D USE_BUNDLED_LUV=ON -D USE_BUNDLED_LIBVTERM=ON"
     ;;
   functionaltest-lua)
-    BUILD_FLAGS="$BUILD_FLAGS -DPREFER_LUA=ON"
+    CMAKE_FLAGS+=" -D PREFER_LUA=ON"
     FUNCTIONALTEST=functionaltest-lua
-    DEPS_CMAKE_FLAGS="$DEPS_CMAKE_FLAGS -DUSE_BUNDLED_LUAJIT=OFF"
+    DEPS_CMAKE_FLAGS+=" -D USE_BUNDLED_LUAJIT=OFF"
     ;;
   *)
     ;;
 esac
 
 cat <<EOF >> "$GITHUB_ENV"
-$BUILD_FLAGS
+CMAKE_FLAGS=$CMAKE_FLAGS
+BUILD_DIR=$BUILD_DIR
+DEPS_BUILD_DIR=$DEPS_BUILD_DIR
 DEPS_CMAKE_FLAGS=$DEPS_CMAKE_FLAGS
 FUNCTIONALTEST=$FUNCTIONALTEST
+INSTALL_PREFIX=$INSTALL_PREFIX
+LOG_DIR=$LOG_DIR
+NVIM_LOG_FILE=$NVIM_LOG_FILE
+VALGRIND_LOG=$VALGRIND_LOG
+CACHE_DIR=$HOME/.cache
+CACHE_NVIM_DEPS_DIR=$CACHE_NVIM_DEPS_DIR
+CACHE_MARKER=$CACHE_MARKER
+CACHE_UNCRUSTIFY=$CACHE_UNCRUSTIFY
+CLANG_SANITIZER=$CLANG_SANITIZER
+ASAN_OPTIONS=$ASAN_OPTIONS
+UBSAN_OPTIONS=$UBSAN_OPTIONS
+TSAN_OPTIONS=$TSAN_OPTIONS
+EOF
+
+cat <<EOF >> "$GITHUB_PATH"
+$BIN_DIR
 EOF
