@@ -211,6 +211,7 @@ let s:filename_checks = {
     \ 'fsh': ['file.fsh'],
     \ 'fsharp': ['file.fs', 'file.fsi', 'file.fsx'],
     \ 'fstab': ['fstab', 'mtab'],
+    \ 'func': ['file.fc'],
     \ 'fusion': ['file.fusion'],
     \ 'fvwm': ['/.fvwm/file', 'any/.fvwm/file'],
     \ 'gdb': ['.gdbinit', 'gdbinit', 'file.gdb', '.config/gdbearlyinit', '.gdbearlyinit'],
