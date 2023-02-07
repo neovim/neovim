@@ -317,6 +317,21 @@ describe(':terminal buffer', function()
       pcall_err(command, 'write test/functional/fixtures/tty-test.c')
     )
   end)
+
+  it('emits #OSC events', function()
+    command('split')
+    command('enew')
+    local term = meths.open_term(0, {})
+    command('autocmd TermOSC * let g:osc_event = deepcopy(v:event)')
+
+    -- cwd will be inserted in a file URI, which cannot contain backs
+    local cwd = funcs.getcwd():gsub('\\', '/')
+    local parent = cwd:match('^(.+/)')
+    local expected = 'file://host' .. parent
+    local payload = '\027]7;' .. expected ..  '\027\\'
+    meths.chan_send(term, payload)
+    eq({ command = 7, payload = expected }, eval('g:osc_event'))
+  end)
 end)
 
 describe('No heap-buffer-overflow when using', function()

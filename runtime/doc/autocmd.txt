@@ -976,6 +976,8 @@ TabClosed			After closing a tab page. <afile> expands to
 							*TermOpen*
 TermOpen			When a |terminal| job is starting.  Can be
 				used to configure the terminal buffer.
+							*TermOSC*
+TermOSC				When a |terminal| job emits an OSC sequence.
 							*TermEnter*
 TermEnter			After entering |Terminal-mode|.
 				After TermOpen.
