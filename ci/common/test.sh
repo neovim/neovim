@@ -1,4 +1,13 @@
-. "${CI_DIR}/common/suite.sh"
+fail() {
+  local test_name="$1"
+  local message="$2"
+
+  : "${message:=Test $test_name failed}"
+
+  local full_msg="$test_name :: $message"
+  echo "Failed: $full_msg"
+  exit 1
+}
 
 submit_coverage() {
   if [ -n "${GCOV}" ]; then
@@ -124,7 +133,7 @@ check_runtime_files() {(
   local message="$1" ; shift
   local tst="$1" ; shift
 
-  cd runtime
+  cd runtime || exit
   for file in $(git ls-files "$@") ; do
     # Check that test is not trying to work with files with spaces/etc
     # Prefer failing the build over using more robust construct because files
@@ -141,7 +150,6 @@ check_runtime_files() {(
 install_nvim() {(
   if ! ninja -C "${BUILD_DIR}" install; then
     fail 'install' 'make install failed'
-    exit 1
   fi
 
   "${INSTALL_PREFIX}/bin/nvim" --version

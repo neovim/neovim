@@ -6,8 +6,6 @@ set -o pipefail
 CI_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck source-path=SCRIPTDIR
 source "${CI_DIR}/common/test.sh"
-# shellcheck source-path=SCRIPTDIR
-source "${CI_DIR}/common/suite.sh"
 
 build_nvim() {
   check_core_dumps --delete quiet
@@ -53,10 +51,8 @@ else
 fi
 
 for i in "${tests[@]}"; do
-  eval "$i" || fail "$i"
+  eval "$i" || exit
 done
-
-ended_successfully
 
 if [[ -s "${GCOV_ERROR_FILE}" ]]; then
   echo '=== Unexpected gcov errors: ==='
