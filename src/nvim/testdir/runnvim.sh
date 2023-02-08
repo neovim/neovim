@@ -26,7 +26,6 @@ main() {(
   export BUILD_DIR
   export FAILED=0
 
-  . $(dirname $0)/suite.sh
   . $(dirname $0)/test.sh
 
   # Redirect XDG_CONFIG_HOME so users local config doesn't interfere

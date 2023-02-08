@@ -3,14 +3,10 @@
 set -e
 set -o pipefail
 
-CI_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-# shellcheck source-path=SCRIPTDIR
-source "${CI_DIR}/common/suite.sh"
-
 mkdir -p "$CACHE_DIR"
 
 # Update the third-party dependency cache only if the build was successful.
-if ended_successfully && [ -d "${DEPS_BUILD_DIR}" ]; then
+if [ -d "${DEPS_BUILD_DIR}" ]; then
   # Do not cache downloads.  They should not be needed with up-to-date deps.
   rm -rf "${DEPS_BUILD_DIR}/build/downloads"
   rm -rf "${CACHE_NVIM_DEPS_DIR}"
