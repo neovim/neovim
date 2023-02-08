@@ -135,8 +135,7 @@ if(MINGW)
   target_compile_definitions(main_lib INTERFACE __USE_MINGW_ANSI_STDIO)
 endif()
 if(WIN32)
-  # Windows Vista is the minimum supported version
-  target_compile_definitions(main_lib INTERFACE _WIN32_WINNT=0x0600 MSWIN)
+  target_compile_definitions(main_lib INTERFACE _WIN32_WINNT=0x0602 MSWIN)
 endif()
 
 # OpenBSD's GCC (4.2.1) doesn't have -Wvla
