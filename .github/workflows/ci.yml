@@ -85,8 +85,8 @@ jobs:
       - if: success() || failure() && steps.abort_job.outputs.status == 'success'
         name: luacheck
         run: |
-          cmake -B $BUILD_DIR -G Ninja
-          cmake --build $BUILD_DIR --target lintlua-luacheck
+          cmake -B build -G Ninja
+          cmake --build build --target lintlua-luacheck
 
       - if: success() || failure() && steps.abort_job.outputs.status == 'success'
         name: lintsh
@@ -300,8 +300,6 @@ jobs:
     timeout-minutes: 45
     env:
       DEPS_BUILD_DIR: ${{ github.workspace }}/nvim-deps
-      CACHE_NVIM_DEPS_DIR: ${{ github.workspace }}/nvim-deps
-      DEPS_PREFIX: ${{ github.workspace }}/nvim-deps/usr
     name: windows (MSVC_64)
     steps:
       - uses: actions/checkout@v3
@@ -318,7 +316,7 @@ jobs:
 
       - name: Build nvim
         run: |
-          cmake -B build -G Ninja -D CMAKE_BUILD_TYPE='RelWithDebInfo' -D DEPS_PREFIX="$env:DEPS_PREFIX" -D CI_BUILD=ON
+          cmake -B build -G Ninja -D CMAKE_BUILD_TYPE='RelWithDebInfo' -D CI_BUILD=ON
           cmake --build build
 
       - name: Install test deps
