@@ -330,9 +330,6 @@ endif()
 # Setup busted.
 find_program(BUSTED_PRG NAMES busted busted.bat)
 find_program(BUSTED_LUA_PRG busted-lua)
-if(NOT BUSTED_OUTPUT_TYPE)
-  set(BUSTED_OUTPUT_TYPE "nvim")
-endif()
 
 # Setup some test-related bits.  We do this after going down the tree because we
 # need some of the targets.
@@ -351,7 +348,6 @@ if(BUSTED_PRG)
         -D LUA_PRG=${LUA_PRG}
         -D NVIM_PRG=$<TARGET_FILE:nvim>
         -D WORKING_DIR=${CMAKE_CURRENT_SOURCE_DIR}
-        -D BUSTED_OUTPUT_TYPE=${BUSTED_OUTPUT_TYPE}
         -D TEST_DIR=${CMAKE_CURRENT_SOURCE_DIR}/test
         -D BUILD_DIR=${CMAKE_BINARY_DIR}
         -D TEST_TYPE=unit
@@ -374,7 +370,6 @@ if(BUSTED_PRG)
       -D LUA_PRG=${LUA_PRG}
       -D NVIM_PRG=$<TARGET_FILE:nvim>
       -D WORKING_DIR=${CMAKE_CURRENT_SOURCE_DIR}
-      -D BUSTED_OUTPUT_TYPE=${BUSTED_OUTPUT_TYPE}
       -D TEST_DIR=${CMAKE_CURRENT_SOURCE_DIR}/test
       -D BUILD_DIR=${CMAKE_BINARY_DIR}
       -D TEST_TYPE=functional
@@ -390,7 +385,6 @@ if(BUSTED_PRG)
       -D LUA_PRG=${LUA_PRG}
       -D NVIM_PRG=$<TARGET_FILE:nvim>
       -D WORKING_DIR=${CMAKE_CURRENT_SOURCE_DIR}
-      -D BUSTED_OUTPUT_TYPE=${BUSTED_OUTPUT_TYPE}
       -D TEST_DIR=${CMAKE_CURRENT_SOURCE_DIR}/test
       -D BUILD_DIR=${CMAKE_BINARY_DIR}
       -D TEST_TYPE=benchmark
@@ -408,7 +402,6 @@ if(BUSTED_LUA_PRG)
       -D LUA_PRG=${LUA_PRG}
       -D NVIM_PRG=$<TARGET_FILE:nvim>
       -D WORKING_DIR=${CMAKE_CURRENT_SOURCE_DIR}
-      -D BUSTED_OUTPUT_TYPE=${BUSTED_OUTPUT_TYPE}
       -D TEST_DIR=${CMAKE_CURRENT_SOURCE_DIR}/test
       -D BUILD_DIR=${CMAKE_BINARY_DIR}
       -D TEST_TYPE=functional
