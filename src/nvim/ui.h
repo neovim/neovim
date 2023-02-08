@@ -79,6 +79,8 @@ typedef struct {
   uint32_t ncalls;  ///< number of calls made to the current event (plus one for the name!)
   bool flushed_events;  ///< events where sent to client without "flush" event
 
+  size_t ncells_pending;  ///< total number of cells since last buffer flush
+
   int hl_id;  // Current highlight for legacy put event.
   Integer cursor_row, cursor_col;  // Intended visible cursor position.
 
