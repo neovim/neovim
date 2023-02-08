@@ -35,8 +35,6 @@ build_nvim() {
   cd "${CI_BUILD_DIR}"
 }
 
-rm -f "$END_MARKER"
-
 # Run all tests (with some caveats) if no input argument is given
 if (($# == 0)); then
   tests=('build_nvim')
@@ -58,7 +56,6 @@ for i in "${tests[@]}"; do
   eval "$i" || fail "$i"
 done
 
-touch "${END_MARKER}"
 ended_successfully
 
 if [[ -s "${GCOV_ERROR_FILE}" ]]; then

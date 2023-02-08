@@ -1,8 +1,6 @@
-# Test success marker. If END_MARKER file exists, we know that all tests 
-# finished. If FAIL_SUMMARY_FILE exists we know that some tests failed, this 
-# file will contain information about failed tests. Build is considered 
-# successful if tests ended without any of them failing.
-END_MARKER="$BUILD_DIR/.tests_finished"
+# If FAIL_SUMMARY_FILE exists we know that some tests failed, this file will
+# contain information about failed tests. Build is considered successful if
+# tests ended without any of them failing.
 FAIL_SUMMARY_FILE="$BUILD_DIR/.test_errors"
 
 fail() {
@@ -26,10 +24,6 @@ ended_successfully() {
         rm -f "$FAIL_SUMMARY_FILE"
     fi
 
-    return 1
-  fi
-  if ! test -f "${END_MARKER}" ; then
-    echo 'ended_successfully called before end marker was touched'
     return 1
   fi
   return 0
