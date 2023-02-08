@@ -202,6 +202,7 @@ void nvim_ui_attach(uint64_t channel_id, Integer width, Integer height, Dictiona
   data->flushed_events = false;
   data->ncalls_pos = NULL;
   data->ncalls = 0;
+  data->ncells_pending = 0;
   data->buf_wptr = data->buf;
   data->temp_buf = NULL;
   data->wildmenu_active = false;
@@ -854,18 +855,25 @@ void remote_ui_raw_line(UI *ui, Integer grid, Integer row, Integer startcol, Int
             mpack_uint(buf, repeat);
           }
         }
+        data->ncells_pending += MIN(repeat, 2);
         last_hl = attrs[i];
         repeat = 0;
       }
     }
     if (endcol < clearcol) {
       nelem++;
+      data->ncells_pending += 1;
       mpack_array(buf, 3);
       mpack_str(buf, " ");
       mpack_uint(buf, (uint32_t)clearattr);
       mpack_uint(buf, (uint32_t)(clearcol - endcol));
     }
     mpack_w2(&lenpos, nelem);
+
+    if (data->ncells_pending > 500) {
+      // pass of cells to UI to let it start processing them
+      remote_ui_flush_buf(ui);
+    }
   } else {
     for (int i = 0; i < endcol - startcol; i++) {
       remote_ui_cursor_goto(ui, row, startcol + i);
@@ -917,6 +925,8 @@ void remote_ui_flush_buf(UI *ui)
   // we have sent events to the client, but possibly not yet the final "flush"
   // event.
   data->flushed_events = true;
+
+  data->ncells_pending = 0;
 }
 
 /// An intentional flush (vsync) when Nvim is finished redrawing the screen

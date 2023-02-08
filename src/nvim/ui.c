@@ -419,7 +419,7 @@ void ui_line(ScreenGrid *grid, int row, int startcol, int endcol, int clearcol, 
                    (const sattr_T *)grid->attrs + off);
 
   // 'writedelay': flush & delay each time.
-  if (p_wd && !(rdb_flags & RDB_COMPOSITOR)) {
+  if (p_wd && (rdb_flags & RDB_LINE)) {
     // If 'writedelay' is active, set the cursor to indicate what was drawn.
     ui_call_grid_cursor_goto(grid->handle, row,
                              MIN(clearcol, (int)grid->cols - 1));
@@ -510,6 +510,10 @@ void ui_flush(void)
     pending_has_mouse = has_mouse;
   }
   ui_call_flush();
+
+  if (p_wd && (rdb_flags & RDB_FLUSH)) {
+    os_microdelay((uint64_t)labs(p_wd) * 1000U, true);
+  }
 }
 
 /// Check if 'mouse' is active for the current mode
