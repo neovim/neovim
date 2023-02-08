@@ -878,44 +878,35 @@ function(get_test_target prefix sfile relative_path_var target_var)
   endif()
 endfunction()
 
+find_program(CLANG_TIDY_PRG clang-tidy)
+set(EXCLUDE_CLANG_TIDY typval_encode.c.h ui_events.in.h)
 if(WIN32)
-  set(NO_SINGLE_CHECK_HEADERS
+  list(APPEND EXCLUDE_CLANG_TIDY
     os/pty_process_unix.h
     os/unix_defs.h)
 else()
-  set(NO_SINGLE_CHECK_HEADERS
+  list(APPEND EXCLUDE_CLANG_TIDY
     os/win_defs.h
     os/pty_process_win.h
     os/pty_conpty_win.h
     os/os_win_console.h)
 endif()
-foreach(hfile ${NVIM_HEADERS})
-  get_test_target(test-includes "${hfile}" relative_path texe)
-
-  if(NOT ${hfile} MATCHES "[.](c|in)[.]h$")
-    set(tsource "${GENERATED_DIR}/${relative_path}.test-include.c")
-    write_file("${tsource}" "#include \"${hfile}\"\nint main(int argc, char **argv) { return 0; }")
-    add_executable(
-      ${texe}
-      EXCLUDE_FROM_ALL
-      ${tsource} ${NVIM_HEADERS} ${NVIM_GENERATED_FOR_HEADERS})
-    target_link_libraries(${texe} PRIVATE main_lib)
-    set_target_properties(${texe} PROPERTIES FOLDER test)
-
-    list(FIND NO_SINGLE_CHECK_HEADERS "${relative_path}" hfile_exclude_idx)
-    if(${hfile_exclude_idx} EQUAL -1)
-      list(APPEND HEADER_CHECK_TARGETS ${texe})
-    endif()
-  endif()
-endforeach()
-add_custom_target(check-single-includes DEPENDS ${HEADER_CHECK_TARGETS})
+add_glob_target(
+  TARGET clang-tidy
+  COMMAND ${CLANG_TIDY_PRG}
+  FILES ${NVIM_SOURCES} ${NVIM_HEADERS}
+  FLAGS --quiet
+  EXCLUDE ${EXCLUDE_CLANG_TIDY})
+add_custom_target(copy_compile_commands
+  COMMAND ${CMAKE_COMMAND} -E copy ${PROJECT_BINARY_DIR}/compile_commands.json ${PROJECT_SOURCE_DIR}/compile_commands.json)
+add_dependencies(copy_compile_commands nvim)
+add_dependencies(clang-tidy copy_compile_commands)
 
 if(CI_BUILD)
   set(LINT_OUTPUT_FORMAT gh_action)
 else()
   set(LINT_OUTPUT_FORMAT vs7)
 endif()
-
 add_glob_target(
   TARGET lintc-clint
   COMMAND ${PROJECT_SOURCE_DIR}/src/clint.py
