@@ -306,10 +306,6 @@ install_helper(
   FILES ${CMAKE_SOURCE_DIR}/src/man/nvim.1
   DESTINATION ${CMAKE_INSTALL_MANDIR}/man1)
 
-#
-# Go down the tree.
-#
-
 if(EXISTS "${DEPS_PREFIX}/share/nvim-qt")
   option(USE_BUNDLED_NVIMQT "Bundle neovim-qt" ON)
 else()
@@ -318,105 +314,12 @@ endif()
 
 add_subdirectory(src/nvim)
 add_subdirectory(cmake.config)
-add_subdirectory(test/functional/fixtures)  # compile test programs
 add_subdirectory(runtime)
-get_directory_property(GENERATED_HELP_TAGS DIRECTORY runtime DEFINITION GENERATED_HELP_TAGS)
+add_subdirectory(test)
 if(WIN32 AND USE_BUNDLED_NVIMQT)
   install_helper(
     FILES ${DEPS_PREFIX}/share/nvim-qt/runtime/plugin/nvim_gui_shim.vim
     DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/nvim-qt/runtime/plugin)
-endif()
-
-# Setup busted.
-find_program(BUSTED_PRG NAMES busted busted.bat)
-find_program(BUSTED_LUA_PRG busted-lua)
-if(NOT BUSTED_OUTPUT_TYPE)
-  set(BUSTED_OUTPUT_TYPE "nvim")
-endif()
-
-# Setup some test-related bits.  We do this after going down the tree because we
-# need some of the targets.
-if(BUSTED_PRG)
-  get_target_property(TEST_INCLUDE_DIRS main_lib INTERFACE_INCLUDE_DIRECTORIES)
-
-  set(UNITTEST_PREREQS nvim)
-  set(FUNCTIONALTEST_PREREQS nvim printenv-test printargs-test shell-test pwsh-test streams-test tty-test ${GENERATED_HELP_TAGS})
-  set(BENCHMARK_PREREQS nvim tty-test)
-
-  check_lua_module(${LUA_PRG} "ffi" LUA_HAS_FFI)
-  if(LUA_HAS_FFI)
-    add_custom_target(unittest
-      COMMAND ${CMAKE_COMMAND}
-        -D BUSTED_PRG=${BUSTED_PRG}
-        -D LUA_PRG=${LUA_PRG}
-        -D NVIM_PRG=$<TARGET_FILE:nvim>
-        -D WORKING_DIR=${CMAKE_CURRENT_SOURCE_DIR}
-        -D BUSTED_OUTPUT_TYPE=${BUSTED_OUTPUT_TYPE}
-        -D TEST_DIR=${CMAKE_CURRENT_SOURCE_DIR}/test
-        -D BUILD_DIR=${CMAKE_BINARY_DIR}
-        -D TEST_TYPE=unit
-        -D CIRRUS_CI=$ENV{CIRRUS_CI}
-        -P ${PROJECT_SOURCE_DIR}/cmake/RunTests.cmake
-      DEPENDS ${UNITTEST_PREREQS}
-      USES_TERMINAL)
-    set_target_properties(unittest PROPERTIES FOLDER test)
-  else()
-    message(WARNING "disabling unit tests: no Luajit FFI in ${LUA_PRG}")
-  endif()
-
-  configure_file(
-    ${CMAKE_SOURCE_DIR}/test/cmakeconfig/paths.lua.in
-    ${CMAKE_BINARY_DIR}/test/cmakeconfig/paths.lua)
-
-  add_custom_target(functionaltest
-    COMMAND ${CMAKE_COMMAND}
-      -D BUSTED_PRG=${BUSTED_PRG}
-      -D LUA_PRG=${LUA_PRG}
-      -D NVIM_PRG=$<TARGET_FILE:nvim>
-      -D WORKING_DIR=${CMAKE_CURRENT_SOURCE_DIR}
-      -D BUSTED_OUTPUT_TYPE=${BUSTED_OUTPUT_TYPE}
-      -D TEST_DIR=${CMAKE_CURRENT_SOURCE_DIR}/test
-      -D BUILD_DIR=${CMAKE_BINARY_DIR}
-      -D TEST_TYPE=functional
-      -D CIRRUS_CI=$ENV{CIRRUS_CI}
-      -P ${PROJECT_SOURCE_DIR}/cmake/RunTests.cmake
-    DEPENDS ${FUNCTIONALTEST_PREREQS}
-    USES_TERMINAL)
-  set_target_properties(functionaltest PROPERTIES FOLDER test)
-
-  add_custom_target(benchmark
-    COMMAND ${CMAKE_COMMAND}
-      -D BUSTED_PRG=${BUSTED_PRG}
-      -D LUA_PRG=${LUA_PRG}
-      -D NVIM_PRG=$<TARGET_FILE:nvim>
-      -D WORKING_DIR=${CMAKE_CURRENT_SOURCE_DIR}
-      -D BUSTED_OUTPUT_TYPE=${BUSTED_OUTPUT_TYPE}
-      -D TEST_DIR=${CMAKE_CURRENT_SOURCE_DIR}/test
-      -D BUILD_DIR=${CMAKE_BINARY_DIR}
-      -D TEST_TYPE=benchmark
-      -D CIRRUS_CI=$ENV{CIRRUS_CI}
-      -P ${PROJECT_SOURCE_DIR}/cmake/RunTests.cmake
-    DEPENDS ${BENCHMARK_PREREQS}
-    USES_TERMINAL)
-  set_target_properties(benchmark PROPERTIES FOLDER test)
-endif()
-
-if(BUSTED_LUA_PRG)
-  add_custom_target(functionaltest-lua
-    COMMAND ${CMAKE_COMMAND}
-      -D BUSTED_PRG=${BUSTED_LUA_PRG}
-      -D LUA_PRG=${LUA_PRG}
-      -D NVIM_PRG=$<TARGET_FILE:nvim>
-      -D WORKING_DIR=${CMAKE_CURRENT_SOURCE_DIR}
-      -D BUSTED_OUTPUT_TYPE=${BUSTED_OUTPUT_TYPE}
-      -D TEST_DIR=${CMAKE_CURRENT_SOURCE_DIR}/test
-      -D BUILD_DIR=${CMAKE_BINARY_DIR}
-      -D TEST_TYPE=functional
-      -D CIRRUS_CI=$ENV{CIRRUS_CI}
-      -P ${PROJECT_SOURCE_DIR}/cmake/RunTests.cmake
-    DEPENDS ${FUNCTIONALTEST_PREREQS}
-    USES_TERMINAL)
-    set_target_properties(functionaltest-lua PROPERTIES FOLDER test)
 endif()
 
 add_custom_target(uninstall
