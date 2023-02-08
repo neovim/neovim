@@ -277,9 +277,6 @@ Number; !must be defined to function properly):
 
 - `TEST_SKIP_FRAGILE` (F) (D): makes test suite skip some fragile tests.
 
-- `TEST_TIMEOUT` (FU) (I): specifies maximum time, in seconds, before the test
-  suite run is killed
-
 - `NVIM_LUA_NOTRACK` (F) (D): disable reference counting of Lua objects
 
 - `NVIM_PRG` (F) (S): path to Nvim executable (default: `build/bin/nvim`).
