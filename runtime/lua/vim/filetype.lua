@@ -692,6 +692,7 @@ local extension = {
   isc = 'monk',
   moo = 'moo',
   moon = 'moonscript',
+  move = 'move',
   mp = 'mp',
   mpiv = function(path, bufnr)
     return 'mp', function(b)
