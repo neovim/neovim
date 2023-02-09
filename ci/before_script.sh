@@ -14,15 +14,6 @@ if test "${FUNCTIONALTEST}" = "functionaltest-lua" ; then
 fi
 
 mkdir -p "${DEPS_BUILD_DIR}"
-
-# Use cached dependencies if $CACHE_MARKER exists.
-if test -f "${CACHE_MARKER}"; then
-  echo "Using third-party dependencies from cache."
-  cp -a "${CACHE_NVIM_DEPS_DIR}"/. "${DEPS_BUILD_DIR}"
-fi
-
-# Even if we're using cached dependencies, run CMake and make to
-# update CMake configuration and update to newer deps versions.
 cd "${DEPS_BUILD_DIR}"
 echo "Configuring with '${DEPS_CMAKE_FLAGS}'."
 # shellcheck disable=SC2086
