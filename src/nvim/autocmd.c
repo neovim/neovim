@@ -2740,14 +2740,12 @@ void do_autocmd_focusgained(bool gained)
 {
   static bool recursive = false;
   static Timestamp last_time = (time_t)0;
-  bool need_redraw = false;
 
   if (recursive) {
     return;  // disallow recursion
   }
   recursive = true;
-  need_redraw |= apply_autocmds((gained ? EVENT_FOCUSGAINED : EVENT_FOCUSLOST),
-                                NULL, NULL, false, curbuf);
+  apply_autocmds((gained ? EVENT_FOCUSGAINED : EVENT_FOCUSLOST), NULL, NULL, false, curbuf);
 
   // When activated: Check if any file was modified outside of Vim.
   // Only do this when not done within the last two seconds as:
@@ -2755,30 +2753,8 @@ void do_autocmd_focusgained(bool gained)
   //    has a granularity of 2 seconds.
   // 2. We could get multiple notifications in a row.
   if (gained && last_time + (Timestamp)2000 < os_now()) {
-    need_redraw = check_timestamps(true);
+    check_timestamps(true);
     last_time = os_now();
-  }
-
-  if (need_redraw) {
-    // Something was executed, make sure the cursor is put back where it
-    // belongs.
-    need_wait_return = false;
-
-    if (State & MODE_CMDLINE) {
-      redrawcmdline();
-    } else if ((State & MODE_NORMAL) || (State & MODE_INSERT)) {
-      if (must_redraw != 0) {
-        update_screen();
-      }
-
-      setcursor();
-    }
-
-    ui_flush();
-  }
-
-  if (need_maketitle) {
-    maketitle();
   }
 
   recursive = false;
