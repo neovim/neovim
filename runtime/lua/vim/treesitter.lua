@@ -96,11 +96,13 @@ function M.get_parser(bufnr, lang, opts)
   if bufnr == nil or bufnr == 0 then
     bufnr = a.nvim_get_current_buf()
   end
-  if lang == nil then
-    lang = a.nvim_buf_get_option(bufnr, 'filetype')
-  end
 
-  if parsers[bufnr] == nil or parsers[bufnr]:lang() ~= lang then
+  if parsers[bufnr] == nil then
+    lang = lang or a.nvim_buf_get_option(bufnr, 'filetype')
+    parsers[bufnr] = M._create_parser(bufnr, lang, opts)
+  elseif lang and parsers[bufnr]:lang() ~= lang then
+    -- Only try to create a new parser if lang is provided
+    -- and it doesn't match the stored parser
     parsers[bufnr] = M._create_parser(bufnr, lang, opts)
   end
 
