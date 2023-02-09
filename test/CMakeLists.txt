@@ -2,7 +2,7 @@ function(test)
   cmake_parse_arguments(ARG
     ""
     "TARGET;BUSTED_PRG;TEST_TYPE;CIRRUS_CI"
-    ""
+    "DEPENDS"
     ${ARGN})
 
   # Set LC_ALL to meet expectations of some locale-sensitive tests.
@@ -76,6 +76,7 @@ function(test)
       ${TEST_PATH}
     COMMAND ${CMAKE_COMMAND} -E remove_directory $ENV{TMPDIR}
     WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
+    DEPENDS $<TARGET_FILE:nvim> ${ARG_DEPENDS}
     USES_TERMINAL)
 
   set_target_properties(${ARG_TARGET} PROPERTIES FOLDER test)
@@ -83,14 +84,11 @@ endfunction()
 
 add_subdirectory(functional/fixtures)  # compile test programs
 get_directory_property(GENERATED_HELP_TAGS DIRECTORY ${PROJECT_SOURCE_DIR}/runtime DEFINITION GENERATED_HELP_TAGS)
+set(FUNCTIONALTEST_PREREQS printenv-test printargs-test shell-test pwsh-test streams-test tty-test ${GENERATED_HELP_TAGS})
 
 find_program(BUSTED_PRG NAMES busted busted.bat)
 if(BUSTED_PRG)
   get_target_property(TEST_INCLUDE_DIRS main_lib INTERFACE_INCLUDE_DIRECTORIES)
-
-  set(UNITTEST_PREREQS nvim)
-  set(FUNCTIONALTEST_PREREQS nvim printenv-test printargs-test shell-test pwsh-test streams-test tty-test ${GENERATED_HELP_TAGS})
-  set(BENCHMARK_PREREQS nvim tty-test)
 
   check_lua_module(${LUA_PRG} "ffi" LUA_HAS_FFI)
   if(LUA_HAS_FFI)
@@ -109,12 +107,14 @@ if(BUSTED_PRG)
   test(TARGET functionaltest
     BUSTED_PRG ${BUSTED_PRG}
     TEST_TYPE functional
-    CIRRUS_CI $ENV{CIRRUS_CI})
+    CIRRUS_CI $ENV{CIRRUS_CI}
+    DEPENDS ${FUNCTIONALTEST_PREREQS})
 
   test(TARGET benchmark
     BUSTED_PRG ${BUSTED_PRG}
     TEST_TYPE benchmark
-    CIRRUS_CI $ENV{CIRRUS_CI})
+    CIRRUS_CI $ENV{CIRRUS_CI}
+    DEPENDS tty-test)
 endif()
 
 find_program(BUSTED_LUA_PRG busted-lua)
@@ -122,5 +122,6 @@ if(BUSTED_LUA_PRG)
   test(TARGET functionaltest-lua
     BUSTED_PRG ${BUSTED_LUA_PRG}
     TEST_TYPE functional
-    CIRRUS_CI $ENV{CIRRUS_CI})
+    CIRRUS_CI $ENV{CIRRUS_CI}
+    DEPENDS ${FUNCTIONALTEST_PREREQS})
 endif()
