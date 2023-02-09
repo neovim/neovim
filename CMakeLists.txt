@@ -12,6 +12,7 @@ if(POLICY CMP0092)
 endif()
 
 project(nvim C)
+enable_testing()
 
 if(POLICY CMP0075)
   cmake_policy(SET CMP0075 NEW)

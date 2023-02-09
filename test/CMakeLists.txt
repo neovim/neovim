@@ -65,8 +65,10 @@ function(test)
     set(RUNNER_PRG ${ARG_BUSTED_PRG})
   endif()
 
-  add_custom_target(${ARG_TARGET}
-    COMMAND ${CMAKE_COMMAND} -E make_directory $ENV{TMPDIR}
+  # add_test(create_env_dir ${CMAKE_COMMAND} -E make_directory $ENV{TMPDIR})
+  # add_test(remove_env_dir COMMAND ${CMAKE_COMMAND} -E remove_directory $ENV{TMPDIR})
+
+  add_test(NAME ${ARG_TARGET}
     COMMAND ${RUNNER_PRG} -v -o test.busted.outputHandlers.nvim
       --lazy --helper=${CMAKE_CURRENT_SOURCE_DIR}/${ARG_TEST_TYPE}/preload.lua
       --lpath=${CMAKE_BINARY_DIR}/?.lua
@@ -74,12 +76,11 @@ function(test)
       --lpath=?.lua
       ${BUSTED_ARGS}
       ${TEST_PATH}
-    COMMAND ${CMAKE_COMMAND} -E remove_directory $ENV{TMPDIR}
-    WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
-    DEPENDS $<TARGET_FILE:nvim> ${ARG_DEPENDS}
-    USES_TERMINAL)
+    WORKING_DIRECTORY ${PROJECT_SOURCE_DIR})
 
-  set_target_properties(${ARG_TARGET} PROPERTIES FOLDER test)
+  # set_tests_properties(create_env_dir PROPERTIES FIXTURES_SETUP ${ARG_TARGET})
+  # set_tests_properties(remove_env_dir PROPERTIES FIXTURES_CLEANUP ${ARG_TARGET})
+
 endfunction()
 
 add_subdirectory(functional/fixtures)  # compile test programs

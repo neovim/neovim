@@ -126,14 +126,17 @@ endif
 src/nvim/testdir/%.vim: phony_force
 	+$(SINGLE_MAKE) -C src/nvim/testdir NVIM_PRG=$(NVIM_PRG) SCRIPTS= $(MAKEOVERRIDES) $(patsubst src/nvim/testdir/%.vim,%,$@)
 
-functionaltest-lua: | nvim
-	$(BUILD_TOOL) -C build $@
+functionaltest-lua: | build/.ran-cmake
+	ctest --test-dir build -R ^$@\$
 
 FORMAT=formatc formatlua format
 LINT=lintlua lintsh lintc clang-tidy lintcommit lint
-TEST=functionaltest unittest
-generated-sources benchmark uninstall $(FORMAT) $(LINT) $(TEST): | build/.ran-cmake
+generated-sources uninstall $(FORMAT) $(LINT): | build/.ran-cmake
 	$(CMAKE_PRG) --build build --target $@
+
+TEST=functionaltest unittest
+$(TEST) benchmark: | build/.ran-cmake
+	ctest --verbose --test-dir build -R ^$@\$
 
 test: $(TEST)
 
