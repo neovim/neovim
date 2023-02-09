@@ -53,7 +53,6 @@ function(test)
 
   # TMPDIR: for helpers.tmpname() and Nvim tempname().
   set(ENV{TMPDIR} "${CMAKE_BINARY_DIR}/Xtest_tmpdir")
-  execute_process(COMMAND ${CMAKE_COMMAND} -E make_directory $ENV{TMPDIR})
 
   # HISTFILE: do not write into user's ~/.bash_history
   set(ENV{HISTFILE} "/dev/null")
@@ -67,6 +66,7 @@ function(test)
   endif()
 
   add_custom_target(${ARG_TARGET}
+    COMMAND ${CMAKE_COMMAND} -E make_directory $ENV{TMPDIR}
     COMMAND ${RUNNER_PRG} -v -o test.busted.outputHandlers.nvim
       --lazy --helper=${CMAKE_CURRENT_SOURCE_DIR}/${ARG_TEST_TYPE}/preload.lua
       --lpath=${CMAKE_BINARY_DIR}/?.lua
@@ -74,13 +74,11 @@ function(test)
       --lpath=?.lua
       ${BUSTED_ARGS}
       ${TEST_PATH}
+    COMMAND ${CMAKE_COMMAND} -E remove_directory $ENV{TMPDIR}
     WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
     USES_TERMINAL)
 
   set_target_properties(${ARG_TARGET} PROPERTIES FOLDER test)
-
-  file(GLOB RM_FILES ${CMAKE_BINARY_DIR}/Xtest_*)
-  file(REMOVE_RECURSE ${RM_FILES})
 endfunction()
 
 add_subdirectory(functional/fixtures)  # compile test programs
