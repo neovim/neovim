@@ -3976,11 +3976,11 @@ uv.metrics_idle_time()                                  *uv.metrics_idle_time()*
 ==============================================================================
 CREDITS                                                            *luv-credits*
 
-This document is a reformatted version of the LUV documentation, based on
-commit c51e705 (5 May 2022) of the luv repository
-https://github.com/luvit/luv/commit/c51e7052ec4f0a25058f70c1b4ee99dd36180e59.
+This document is a reformatted version of the LUV documentation, up-to-date
+with commit e8e7b7e (3 Feb 2023) of the luv repository
+https://github.com/luvit/luv/commit/e8e7b7e13225348a8806118a3ea9e021383a9536.
 
-Included from https://github.com/nanotee/luv-vimdocs with kind permission.
+Based on https://github.com/nanotee/luv-vimdocs with kind permission.
 
 
 vim:tw=78:ts=8:ft=help:norl:

@@ -69,6 +69,7 @@ Some can be auto-bumped by `scripts/bump_deps.lua`.
 * [LuaJIT](https://github.com/LuaJIT/LuaJIT)
 * [Lua](https://www.lua.org/download.html)
 * [Luv](https://github.com/luvit/luv)
+    * When bumping, also sync [our bundled documentation](https://github.com/neovim/neovim/blob/master/runtime/doc/luvref.txt) with [the upstream documentation](https://github.com/luvit/luv/blob/master/docs.md).
 * [gettext](https://ftp.gnu.org/pub/gnu/gettext/)
 * [libiconv](https://ftp.gnu.org/pub/gnu/libiconv)
 * [libtermkey](https://github.com/neovim/libtermkey)
