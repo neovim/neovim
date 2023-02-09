@@ -1,7 +1,7 @@
 function(test)
   cmake_parse_arguments(ARG
     ""
-    "TARGET;BUSTED_PRG;BUSTED_OUTPUT_TYPE;TEST_TYPE;CIRRUS_CI"
+    "TARGET;BUSTED_PRG;TEST_TYPE;CIRRUS_CI"
     ""
     ${ARGN})
 
@@ -36,10 +36,6 @@ function(test)
     file(RELATIVE_PATH TEST_PATH "${PROJECT_SOURCE_DIR}" "${TEST_PATH}")
   endif()
 
-  if(ARG_BUSTED_OUTPUT_TYPE STREQUAL junit)
-    set(EXTRA_ARGS OUTPUT_FILE ${CMAKE_BINARY_DIR}/${ARG_TEST_TYPE}test-junit.xml)
-  endif()
-
   set(BUSTED_ARGS $ENV{BUSTED_ARGS})
   separate_arguments(BUSTED_ARGS)
 
@@ -71,7 +67,7 @@ function(test)
   endif()
 
   add_custom_target(${ARG_TARGET}
-    COMMAND ${RUNNER_PRG} -v -o test.busted.outputHandlers.${ARG_BUSTED_OUTPUT_TYPE}
+    COMMAND ${RUNNER_PRG} -v -o test.busted.outputHandlers.nvim
       --lazy --helper=${CMAKE_CURRENT_SOURCE_DIR}/${ARG_TEST_TYPE}/preload.lua
       --lpath=${CMAKE_BINARY_DIR}/?.lua
       --lpath=${PROJECT_SOURCE_DIR}/runtime/lua/?.lua
@@ -90,10 +86,6 @@ endfunction()
 add_subdirectory(functional/fixtures)  # compile test programs
 get_directory_property(GENERATED_HELP_TAGS DIRECTORY ${PROJECT_SOURCE_DIR}/runtime DEFINITION GENERATED_HELP_TAGS)
 
-if(NOT BUSTED_OUTPUT_TYPE)
-  set(BUSTED_OUTPUT_TYPE "nvim")
-endif()
-
 find_program(BUSTED_PRG NAMES busted busted.bat)
 if(BUSTED_PRG)
   get_target_property(TEST_INCLUDE_DIRS main_lib INTERFACE_INCLUDE_DIRECTORIES)
@@ -106,7 +98,6 @@ if(BUSTED_PRG)
   if(LUA_HAS_FFI)
     test(TARGET unittest
         BUSTED_PRG ${BUSTED_PRG}
-        BUSTED_OUTPUT_TYPE ${BUSTED_OUTPUT_TYPE}
         TEST_TYPE unit
         CIRRUS_CI $ENV{CIRRUS_CI})
   else()
@@ -119,13 +110,11 @@ if(BUSTED_PRG)
 
   test(TARGET functionaltest
     BUSTED_PRG ${BUSTED_PRG}
-    BUSTED_OUTPUT_TYPE ${BUSTED_OUTPUT_TYPE}
     TEST_TYPE functional
     CIRRUS_CI $ENV{CIRRUS_CI})
 
   test(TARGET benchmark
     BUSTED_PRG ${BUSTED_PRG}
-    BUSTED_OUTPUT_TYPE ${BUSTED_OUTPUT_TYPE}
     TEST_TYPE benchmark
     CIRRUS_CI $ENV{CIRRUS_CI})
 endif()
@@ -134,7 +123,6 @@ find_program(BUSTED_LUA_PRG busted-lua)
 if(BUSTED_LUA_PRG)
   test(TARGET functionaltest-lua
     BUSTED_PRG ${BUSTED_LUA_PRG}
-    BUSTED_OUTPUT_TYPE ${BUSTED_OUTPUT_TYPE}
     TEST_TYPE functional
     CIRRUS_CI $ENV{CIRRUS_CI})
 endif()
