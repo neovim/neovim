@@ -22,6 +22,13 @@ local sleep = global_helpers.sleep
 local tbl_contains = global_helpers.tbl_contains
 local fail = global_helpers.fail
 
+print'==== PATH'
+print(package.path)
+print'==== CPATH'
+print(package.cpath)
+print'==== ENDA'
+io.stdout:flush()
+
 local module = {
   NIL = mpack.NIL,
   mkdir = lfs.mkdir,
