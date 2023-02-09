@@ -247,10 +247,12 @@ static void parse_msgpack(Channel *channel)
   Unpacker *p = channel->rpc.unpacker;
   while (unpacker_advance(p)) {
     if (p->type == kMessageTypeRedrawEvent) {
-      if (p->grid_line_event) {
-        ui_client_event_raw_line(p->grid_line_event);
-      } else if (p->ui_handler.fn != NULL && p->result.type == kObjectTypeArray) {
-        p->ui_handler.fn(p->result.data.array);
+      if (ui_client_channel_id) {
+        if (p->grid_line_event) {
+          ui_client_event_raw_line(p->grid_line_event);
+        } else if (p->ui_handler.fn != NULL && p->result.type == kObjectTypeArray) {
+          p->ui_handler.fn(p->result.data.array);
+        }
       }
       arena_mem_free(arena_finish(&p->arena));
     } else if (p->type == kMessageTypeResponse) {
