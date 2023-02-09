@@ -25,30 +25,34 @@ describe('v:exiting', function()
     eq(1, eval('v:exiting is v:null'))
   end)
 
-  it('is 0 on normal exit', function()
+  local function test_exiting(setup_fn)
     local function on_setup()
-      command('autocmd VimLeavePre * call rpcrequest('..cid..', "")')
-      command('autocmd VimLeave    * call rpcrequest('..cid..', "")')
-      command('quit')
+      command('autocmd VimLeavePre * call rpcrequest('..cid..', "exit", "VimLeavePre")')
+      command('autocmd VimLeave    * call rpcrequest('..cid..', "exit", "VimLeave")')
+      setup_fn()
     end
-    local function on_request()
+    local requests_args = {}
+    local function on_request(name, args)
+      eq('exit', name)
+      table.insert(requests_args, args)
       eq(0, eval('v:exiting'))
       return ''
     end
     run(on_request, nil, on_setup)
+    eq({{'VimLeavePre'}, {'VimLeave'}}, requests_args)
+  end
+
+  it('is 0 on normal exit', function()
+    test_exiting(function()
+      command('quit')
+    end)
   end)
+
   it('is 0 on exit from Ex mode involving try-catch vim-patch:8.0.0184', function()
-    local function on_setup()
-      command('autocmd VimLeavePre * call rpcrequest('..cid..', "")')
-      command('autocmd VimLeave    * call rpcrequest('..cid..', "")')
+    test_exiting(function()
       feed('gQ')
       feed_command('try', 'call NoFunction()', 'catch', 'echo "bye"', 'endtry', 'quit')
-    end
-    local function on_request()
-      eq(0, eval('v:exiting'))
-      return ''
-    end
-    run(on_request, nil, on_setup)
+    end)
   end)
 end)
 
