@@ -276,8 +276,6 @@ add_glob_target(
   GLOB_PAT *.sh
   EXCLUDE
     scripts/pvscheck.sh
-    ci/common
-    ci/snap
   TOUCH_STRATEGY SINGLE)
 
 add_custom_target(lintcommit
