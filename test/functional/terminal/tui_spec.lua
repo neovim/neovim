@@ -14,7 +14,6 @@ local clear = helpers.clear
 local command = helpers.command
 local dedent = helpers.dedent
 local exec = helpers.exec
-local exec_lua = helpers.exec_lua
 local testprg = helpers.testprg
 local retry = helpers.retry
 local nvim_prog = helpers.nvim_prog
@@ -30,8 +29,6 @@ local spawn_argv = helpers.spawn_argv
 local set_session = helpers.set_session
 local feed = helpers.feed
 local eval = helpers.eval
-
-if helpers.skip(helpers.is_os('win')) then return end
 
 describe('TUI', function()
   local screen
@@ -1509,7 +1506,7 @@ describe('TUI', function()
   end)
 
   it('no assert failure on deadly signal #21896', function()
-    exec_lua([[vim.loop.kill(vim.fn.jobpid(vim.bo.channel), 'sigterm')]])
+    command('call chanclose(&channel)')
     screen:expect({any = '%[Process exited 1%]'})
   end)
 end)
@@ -2409,7 +2406,7 @@ describe("TUI as a client", function()
 
     -- No heap-use-after-free when receiving UI events after deadly signal #22184
     server:request('nvim_input', ('a'):rep(1000))
-    exec_lua([[vim.loop.kill(vim.fn.jobpid(vim.bo.channel), 'sigterm')]])
+    command('call chanclose(&channel)')
     screen:expect({any = '%[Process exited 1%]'})
 
     client_super:close()
