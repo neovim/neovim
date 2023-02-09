@@ -1092,7 +1092,6 @@ void pum_show_popupmenu(vimmenu_T *menu)
     pum_is_drawn = true;
     pum_redraw();
     setcursor_mayforce(true);
-    ui_flush();
 
     int c = vgetc();
 

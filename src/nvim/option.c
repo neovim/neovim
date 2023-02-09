@@ -1549,7 +1549,6 @@ int do_set(char *arg, int opt_flags)
     silent_mode = false;
     info_message = true;        // use os_msg(), not os_errmsg()
     msg_putchar('\n');
-    ui_flush();
     silent_mode = true;
     info_message = false;       // use os_msg(), not os_errmsg()
   }

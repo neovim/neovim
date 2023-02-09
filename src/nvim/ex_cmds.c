@@ -1507,7 +1507,6 @@ void print_line(linenr_T lnum, int use_number, int list)
   print_line_no_prefix(lnum, use_number, list);
   if (save_silent) {
     msg_putchar('\n');
-    ui_flush();
     silent_mode = save_silent;
   }
   info_message = false;

@@ -2218,9 +2218,6 @@ static int handle_mapping(int *keylenp, const bool *timedout, int *mapdepth)
     if (mp->m_expr) {
       const int save_vgetc_busy = vgetc_busy;
       const bool save_may_garbage_collect = may_garbage_collect;
-      const int save_cursor_row = ui_current_row();
-      const int save_cursor_col = ui_current_col();
-      const handle_T save_cursor_grid = ui_cursor_grid();
       const int prev_did_emsg = did_emsg;
 
       vgetc_busy = 0;
@@ -2232,28 +2229,28 @@ static int handle_mapping(int *keylenp, const bool *timedout, int *mapdepth)
       }
       map_str = eval_map_expr(mp, NUL);
 
-      // The mapping may do anything, but we expect it to take care of
-      // redrawing.  Do put the cursor back where it was.
-      ui_grid_cursor_goto(save_cursor_grid, save_cursor_row, save_cursor_col);
-      ui_flush();
-
-      // If an error was displayed and the expression returns an empty
-      // string, generate a <Nop> to allow for a redraw.
-      if (prev_did_emsg != did_emsg && (map_str == NULL || *map_str == NUL)) {
-        char buf[4];
-        xfree(map_str);
-        buf[0] = (char)K_SPECIAL;
-        buf[1] = (char)KS_EXTRA;
-        buf[2] = KE_IGNORE;
-        buf[3] = NUL;
-        map_str = xstrdup(buf);
-        if (State & MODE_CMDLINE) {
-          // redraw the command below the error
-          msg_didout = true;
-          if (msg_row < cmdline_row) {
-            msg_row = cmdline_row;
+      if ((map_str == NULL || *map_str == NUL)) {
+        // If an error was displayed and the expression returns an empty
+        // string, generate a <Nop> to allow for a redraw.
+        if (prev_did_emsg != did_emsg) {
+          char buf[4];
+          xfree(map_str);
+          buf[0] = (char)K_SPECIAL;
+          buf[1] = (char)KS_EXTRA;
+          buf[2] = KE_IGNORE;
+          buf[3] = NUL;
+          map_str = xstrdup(buf);
+          if (State & MODE_CMDLINE) {
+            // redraw the command below the error
+            msg_didout = true;
+            if (msg_row < cmdline_row) {
+              msg_row = cmdline_row;
+            }
+            redrawcmd();
           }
-          redrawcmd();
+        } else if (State & (MODE_NORMAL | MODE_INSERT)) {
+          // otherwise, just put back the cursor
+          setcursor();
         }
       }
 
