@@ -266,10 +266,12 @@ jobs:
 
       - if: matrix.flavor != 'tsan' && matrix.flavor != 'functionaltest-lua' && (success() || failure() && steps.abort_job.outputs.status == 'success')
         name: Unittests
+        timeout-minutes: 5
         run: ./ci/run_tests.sh unittests
 
       - if: success() || failure() && steps.abort_job.outputs.status == 'success'
         name: Functionaltests
+        timeout-minutes: 15
         run: ./ci/run_tests.sh functionaltests
 
       - if: matrix.flavor != 'tsan' && (success() || failure() && steps.abort_job.outputs.status == 'success')
@@ -340,6 +342,7 @@ jobs:
 
       - if: success() || failure() && steps.abort_job.outputs.status == 'success'
         name: Run functionaltests
+        timeout-minutes: 15
         run: cmake --build build --target functionaltest
 
       - if: success() || failure() && steps.abort_job.outputs.status == 'success'
