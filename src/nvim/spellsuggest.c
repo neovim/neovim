@@ -2491,7 +2491,6 @@ static void score_comp_sal(suginfo_T *su)
 {
   langp_T *lp;
   char badsound[MAXWLEN];
-  int i;
   suggest_T *stp;
   suggest_T *sstp;
   int score;
@@ -2505,7 +2504,7 @@ static void score_comp_sal(suginfo_T *su)
       // soundfold the bad word
       spell_soundfold(lp->lp_slang, su->su_fbadword, true, badsound);
 
-      for (i = 0; i < su->su_ga.ga_len; i++) {
+      for (int i = 0; i < su->su_ga.ga_len; i++) {
         stp = &SUG(su->su_ga, i);
 
         // Case-fold the suggested word, sound-fold it and compute the

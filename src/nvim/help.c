@@ -47,19 +47,14 @@
 void ex_help(exarg_T *eap)
 {
   char *arg;
-  char *tag;
   FILE *helpfd;          // file descriptor of help file
-  int n;
-  int i;
   win_T *wp;
   int num_matches;
   char **matches;
-  char *p;
   int empty_fnum = 0;
   int alt_fnum = 0;
   buf_T *buf;
   int len;
-  char *lang;
   const bool old_KeyTyped = KeyTyped;
 
   if (eap != NULL) {
@@ -88,13 +83,13 @@ void ex_help(exarg_T *eap)
   }
 
   // remove trailing blanks
-  p = arg + strlen(arg) - 1;
+  char *p = arg + strlen(arg) - 1;
   while (p > arg && ascii_iswhite(*p) && p[-1] != '\\') {
     *p-- = NUL;
   }
 
   // Check for a specified language
-  lang = check_help_lang(arg);
+  char *lang = check_help_lang(arg);
 
   // When no argument given go to the index.
   if (*arg == NUL) {
@@ -102,9 +97,9 @@ void ex_help(exarg_T *eap)
   }
 
   // Check if there is a match for the argument.
-  n = find_help_tags(arg, &num_matches, &matches, eap != NULL && eap->forceit);
+  int n = find_help_tags(arg, &num_matches, &matches, eap != NULL && eap->forceit);
 
-  i = 0;
+  int i = 0;
   if (n != FAIL && lang != NULL) {
     // Find first item with the requested language.
     for (i = 0; i < num_matches; i++) {
@@ -128,7 +123,7 @@ void ex_help(exarg_T *eap)
   }
 
   // The first match (in the requested language) is the best match.
-  tag = xstrdup(matches[i]);
+  char *tag = xstrdup(matches[i]);
   FreeWild(num_matches, matches);
 
   // Re-use an existing help window or open a new one.
@@ -259,11 +254,8 @@ char *check_help_lang(char *arg)
 int help_heuristic(char *matched_string, int offset, int wrong_case)
   FUNC_ATTR_PURE
 {
-  int num_letters;
-  char *p;
-
-  num_letters = 0;
-  for (p = matched_string; *p; p++) {
+  int num_letters = 0;
+  for (char *p = matched_string; *p; p++) {
     if (ASCII_ISALNUM(*p)) {
       num_letters++;
     }
@@ -298,11 +290,8 @@ int help_heuristic(char *matched_string, int offset, int wrong_case)
 /// that has been put after the tagname by find_tags().
 static int help_compare(const void *s1, const void *s2)
 {
-  char *p1;
-  char *p2;
-
-  p1 = *(char **)s1 + strlen(*(char **)s1) + 1;
-  p2 = *(char **)s2 + strlen(*(char **)s2) + 1;
+  char *p1 = *(char **)s1 + strlen(*(char **)s1) + 1;
+  char *p2 = *(char **)s2 + strlen(*(char **)s2) + 1;
 
   // Compare by help heuristic number first.
   int cmp = strcmp(p1, p2);
@@ -320,8 +309,6 @@ static int help_compare(const void *s1, const void *s2)
 /// When "keep_lang" is true try keeping the language of the current buffer.
 int find_help_tags(const char *arg, int *num_matches, char ***matches, bool keep_lang)
 {
-  int i;
-
   // Specific tags that either have a specific replacement or won't go
   // through the generic rules.
   static char *(except_tbl[][2]) = {
@@ -379,7 +366,7 @@ int find_help_tags(const char *arg, int *num_matches, char ***matches, bool keep
     // When the string starting with "expr-" and containing '?' and matches
     // the table, it is taken literally (but ~ is escaped).  Otherwise '?'
     // is recognized as a wildcard.
-    for (i = (int)ARRAY_SIZE(expr_table); --i >= 0;) {
+    for (int i = (int)ARRAY_SIZE(expr_table); --i >= 0;) {
       if (strcmp(arg + 5, expr_table[i]) == 0) {
         for (int si = 0, di = 0;; si++) {
           if (arg[si] == '~') {
@@ -396,7 +383,7 @@ int find_help_tags(const char *arg, int *num_matches, char ***matches, bool keep
   } else {
     // Recognize a few exceptions to the rule.  Some strings that contain
     // '*'are changed to "star", otherwise '*' is recognized as a wildcard.
-    for (i = 0; except_tbl[i][0] != NULL; i++) {
+    for (int i = 0; except_tbl[i][0] != NULL; i++) {
       if (strcmp(arg, except_tbl[i][0]) == 0) {
         STRCPY(d, except_tbl[i][1]);
         break;

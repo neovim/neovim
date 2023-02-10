@@ -2652,8 +2652,7 @@ bool diff_find_change(win_T *wp, linenr_T lnum, int *startp, int *endp)
   bool added = true;
 
   linenr_T off = lnum - dp->df_lnum[idx];
-  int i;
-  for (i = 0; i < DB_COUNT; i++) {
+  for (int i = 0; i < DB_COUNT; i++) {
     if ((curtab->tp_diffbuf[i] != NULL) && (i != idx)) {
       // Skip lines that are not in the other change (filler lines).
       if (off >= dp->df_count[i]) {

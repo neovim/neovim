@@ -661,7 +661,6 @@ static int read_redo(bool init, bool old_redo)
   int c;
   int n;
   char_u buf[MB_MAXBYTES + 1];
-  int i;
 
   if (init) {
     bp = old_redo ? old_redobuff.bh_first.b_next : redobuff.bh_first.b_next;
@@ -682,7 +681,7 @@ static int read_redo(bool init, bool old_redo)
   } else {
     n = 1;
   }
-  for (i = 0;; i++) {
+  for (int i = 0;; i++) {
     if (c == K_SPECIAL) {  // special key or escaped K_SPECIAL
       c = TO_SPECIAL(p[1], p[2]);
       p += 2;
@@ -857,7 +856,6 @@ int ins_typebuf(char *str, int noremap, int offset, bool nottyped, bool silent)
 {
   char_u *s1, *s2;
   int addlen;
-  int i;
   int val;
   int nrm;
 
@@ -947,7 +945,7 @@ int ins_typebuf(char *str, int noremap, int offset, bool nottyped, bool silent)
   } else {
     nrm = noremap;
   }
-  for (i = 0; i < addlen; i++) {
+  for (int i = 0; i < addlen; i++) {
     typebuf.tb_noremap[typebuf.tb_off + i + offset] =
       (uint8_t)((--nrm >= 0) ? val : RM_YES);
   }
@@ -1426,7 +1424,6 @@ int vgetc(void)
   } else {
     int c2;
     int n;
-    int i;
     // number of characters recorded from the last vgetc() call
     static size_t last_vgetc_recorded_len = 0;
 
@@ -1552,7 +1549,7 @@ int vgetc(void)
       if ((n = MB_BYTE2LEN_CHECK(c)) > 1) {
         no_mapping++;
         buf[0] = (char_u)c;
-        for (i = 1; i < n; i++) {
+        for (int i = 1; i < n; i++) {
           buf[i] = (char_u)vgetorpeek(true);
           if (buf[i] == K_SPECIAL) {
             // Must be a K_SPECIAL - KS_SPECIAL - KE_FILLER sequence,
@@ -2904,13 +2901,12 @@ int fix_input_buffer(char *buf, int len)
   }
 
   // Reading from script, need to process special bytes
-  int i;
   char_u *p = (char_u *)buf;
 
   // Two characters are special: NUL and K_SPECIAL.
   // Replace       NUL by K_SPECIAL KS_ZERO    KE_FILLER
   // Replace K_SPECIAL by K_SPECIAL KS_SPECIAL KE_FILLER
-  for (i = len; --i >= 0; p++) {
+  for (int i = len; --i >= 0; p++) {
     if (p[0] == NUL
         || (p[0] == K_SPECIAL
             && (i < 2 || p[1] != KS_EXTRA))) {

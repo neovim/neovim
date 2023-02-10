@@ -795,7 +795,6 @@ static void print_tag_list(int new_tag, int use_tagstack, int num_matches, char 
 {
   taggy_T *tagstack = curwin->w_tagstack;
   int tagstackidx = curwin->w_tagstackidx;
-  int i;
   char *p;
   char *command_end;
   tagptrs_T tagp;
@@ -821,7 +820,7 @@ static void print_tag_list(int new_tag, int use_tagstack, int num_matches, char 
   taglen_advance(taglen);
   msg_puts_attr(_("file\n"), HL_ATTR(HLF_T));
 
-  for (i = 0; i < num_matches && !got_int; i++) {
+  for (int i = 0; i < num_matches && !got_int; i++) {
     parse_match(matches[i], &tagp);
     if (!new_tag && (
                      (g_do_tagpreview != 0
@@ -980,7 +979,6 @@ static void print_tag_list(int new_tag, int use_tagstack, int num_matches, char 
 static int add_llist_tags(char *tag, int num_matches, char **matches)
 {
   char tag_name[128 + 1];
-  int i;
   char *p;
   tagptrs_T tagp;
 
@@ -988,7 +986,7 @@ static int add_llist_tags(char *tag, int num_matches, char **matches)
   char *cmd = xmalloc(CMDBUFFSIZE + 1);
   list_T *list = tv_list_alloc(0);
 
-  for (i = 0; i < num_matches; i++) {
+  for (int i = 0; i < num_matches; i++) {
     dict_T *dict;
 
     parse_match(matches[i], &tagp);
@@ -1119,7 +1117,6 @@ static void taglen_advance(int l)
 // Print the tag stack
 void do_tags(exarg_T *eap)
 {
-  int i;
   char *name;
   taggy_T *tagstack = curwin->w_tagstack;
   int tagstackidx = curwin->w_tagstackidx;
@@ -1127,7 +1124,7 @@ void do_tags(exarg_T *eap)
 
   // Highlight title
   msg_puts_title(_("\n  # TO tag         FROM line  in file/text"));
-  for (i = 0; i < tagstacklen; i++) {
+  for (int i = 0; i < tagstacklen; i++) {
     if (tagstack[i].tagname != NULL) {
       name = fm_getname(&(tagstack[i].fmark), 30);
       if (name == NULL) {           // file name not available
@@ -1731,8 +1728,6 @@ static tagmatch_status_T findtags_parse_line(findtags_state_T *st, tagptrs_T *ta
   // For "normal" tags: Do a quick check if the tag matches.
   // This speeds up tag searching a lot!
   if (st->orgpat->headlen) {
-    int i;
-    int tagcmp;
     CLEAR_FIELD(*tagpp);
     tagpp->tagname = st->lbuf;
     tagpp->tagname_end = vim_strchr(st->lbuf, TAB);
@@ -1754,8 +1749,9 @@ static tagmatch_status_T findtags_parse_line(findtags_state_T *st, tagptrs_T *ta
     }
 
     if (st->state == TS_BINARY) {
+      int tagcmp;
       // Simplistic check for unsorted tags file.
-      i = (int)tagpp->tagname[0];
+      int i = (int)tagpp->tagname[0];
       if (margs->sortic) {
         i = TOUPPER_ASC(tagpp->tagname[0]);
       }
@@ -2245,7 +2241,6 @@ static int findtags_copy_matches(findtags_state_T *st, char ***matchesp)
   const bool name_only = (st->flags & TAG_NAMES);
   char **matches;
   int mtt;
-  int i;
   char *mfp;
   char *p;
 
@@ -2256,7 +2251,7 @@ static int findtags_copy_matches(findtags_state_T *st, char ***matchesp)
   }
   st->match_count = 0;
   for (mtt = 0; mtt < MT_COUNT; mtt++) {
-    for (i = 0; i < st->ga_match[mtt].ga_len; i++) {
+    for (int i = 0; i < st->ga_match[mtt].ga_len; i++) {
       mfp = ((char **)(st->ga_match[mtt].ga_data))[i];
       if (matches == NULL) {
         xfree(mfp);
@@ -2731,7 +2726,6 @@ static int parse_match(char *lbuf, tagptrs_T *tagp)
   // Try to find a kind field: "kind:<kind>" or just "<kind>"
   p = tagp->command;
   if (find_extra(&p) == OK) {
-    char *pc;
     tagp->command_end = p;
     if (p > tagp->command && p[-1] == '|') {
       tagp->command_end = p - 1;  // drop trailing bar
@@ -2752,7 +2746,7 @@ static int parse_match(char *lbuf, tagptrs_T *tagp)
           break;
         }
 
-        pc = vim_strchr(p, ':');
+        char *pc = vim_strchr(p, ':');
         pt = vim_strchr(p, '\t');
         if (pc == NULL || (pt != NULL && pc > pt)) {
           tagp->tagkind = p;
@@ -3435,15 +3429,12 @@ static void get_tag_details(taggy_T *tag, dict_T *retdict)
 // 'retdict'.
 void get_tagstack(win_T *wp, dict_T *retdict)
 {
-  list_T *l;
-  int i;
-
   tv_dict_add_nr(retdict, S_LEN("length"), wp->w_tagstacklen);
   tv_dict_add_nr(retdict, S_LEN("curidx"), wp->w_tagstackidx + 1);
-  l = tv_list_alloc(2);
+  list_T *l = tv_list_alloc(2);
   tv_dict_add_list(retdict, S_LEN("items"), l);
 
-  for (i = 0; i < wp->w_tagstacklen; i++) {
+  for (int i = 0; i < wp->w_tagstacklen; i++) {
     dict_T *d = tv_dict_alloc();
     tv_list_append_dict(l, d);
     get_tag_details(&wp->w_tagstack[i], d);

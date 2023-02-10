@@ -805,7 +805,6 @@ void grid_assign_handle(ScreenGrid *grid)
 /// 'row', 'col' and 'end' are relative to the start of the region.
 void grid_ins_lines(ScreenGrid *grid, int row, int line_count, int end, int col, int width)
 {
-  int i;
   int j;
   unsigned temp;
 
@@ -820,7 +819,7 @@ void grid_ins_lines(ScreenGrid *grid, int row, int line_count, int end, int col,
 
   // Shift line_offset[] line_count down to reflect the inserted lines.
   // Clear the inserted lines.
-  for (i = 0; i < line_count; i++) {
+  for (int i = 0; i < line_count; i++) {
     if (width != grid->cols) {
       // need to copy part of a line
       j = end - 1 - i;
@@ -855,7 +854,6 @@ void grid_ins_lines(ScreenGrid *grid, int row, int line_count, int end, int col,
 void grid_del_lines(ScreenGrid *grid, int row, int line_count, int end, int col, int width)
 {
   int j;
-  int i;
   unsigned temp;
 
   int row_off = 0;
@@ -869,7 +867,7 @@ void grid_del_lines(ScreenGrid *grid, int row, int line_count, int end, int col,
 
   // Now shift line_offset[] line_count up to reflect the deleted lines.
   // Clear the inserted lines.
-  for (i = 0; i < line_count; i++) {
+  for (int i = 0; i < line_count; i++) {
     if (width != grid->cols) {
       // need to copy part of a line
       j = row + i;

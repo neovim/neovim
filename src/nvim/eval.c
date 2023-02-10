@@ -1949,7 +1949,6 @@ void set_context_for_expression(expand_T *xp, char *arg, cmdidx_T cmdidx)
   FUNC_ATTR_NONNULL_ALL
 {
   bool got_eq = false;
-  int c;
   char *p;
 
   if (cmdidx == CMD_let || cmdidx == CMD_const) {
@@ -1970,7 +1969,7 @@ void set_context_for_expression(expand_T *xp, char *arg, cmdidx_T cmdidx)
                                         : EXPAND_EXPRESSION;
   }
   while ((xp->xp_pattern = strpbrk(arg, "\"'+-*/%.=!?~|&$([<>,#")) != NULL) {
-    c = (uint8_t)(*xp->xp_pattern);
+    int c = (uint8_t)(*xp->xp_pattern);
     if (c == '&') {
       c = (uint8_t)xp->xp_pattern[1];
       if (c == '&') {
@@ -2310,7 +2309,6 @@ int eval0(char *arg, typval_T *rettv, char **nextcmd, int evaluate)
 /// @return  OK or FAIL.
 int eval1(char **arg, typval_T *rettv, int evaluate)
 {
-  bool result;
   typval_T var2;
 
   // Get the first variable.
@@ -2319,7 +2317,7 @@ int eval1(char **arg, typval_T *rettv, int evaluate)
   }
 
   if ((*arg)[0] == '?') {
-    result = false;
+    bool result = false;
     if (evaluate) {
       bool error = false;
 
@@ -2499,7 +2497,6 @@ static int eval4(char **arg, typval_T *rettv, int evaluate)
   char *p;
   exprtype_T type = EXPR_UNKNOWN;
   int len = 2;
-  bool ic;
 
   // Get the first variable.
   if (eval5(arg, rettv, evaluate) == FAIL) {
@@ -2552,6 +2549,7 @@ static int eval4(char **arg, typval_T *rettv, int evaluate)
 
   // If there is a comparative operator, use it.
   if (type != EXPR_UNKNOWN) {
+    bool ic;
     // extra question mark appended: ignore case
     if (p[len] == '?') {
       ic = true;
@@ -2594,7 +2592,6 @@ static int eval5(char **arg, typval_T *rettv, int evaluate)
 {
   typval_T var2;
   typval_T var3;
-  int op;
   varnumber_T n1, n2;
   float_T f1 = 0, f2 = 0;
   char *p;
@@ -2606,7 +2603,7 @@ static int eval5(char **arg, typval_T *rettv, int evaluate)
 
   // Repeat computing, until no '+', '-' or '.' is following.
   for (;;) {
-    op = (char_u)(**arg);
+    int op = (char_u)(**arg);
     if (op != '+' && op != '-' && op != '.') {
       break;
     }
@@ -3276,7 +3273,6 @@ static int eval_index(char **arg, typval_T *rettv, int evaluate, int verbose)
 {
   bool empty1 = false;
   bool empty2 = false;
-  int n1, n2 = 0;
   ptrdiff_t len = -1;
   int range = false;
   char *key = NULL;
@@ -3373,7 +3369,8 @@ static int eval_index(char **arg, typval_T *rettv, int evaluate, int verbose)
   }
 
   if (evaluate) {
-    n1 = 0;
+    int n2 = 0;
+    int n1 = 0;
     if (!empty1 && rettv->v_type != VAR_DICT && !tv_is_luafunc(rettv)) {
       n1 = (int)tv_get_number(&var1);
       tv_clear(&var1);
@@ -4784,8 +4781,6 @@ void filter_map(typval_T *argvars, typval_T *rettv, int map)
   const char *const arg_errmsg = (map
                                   ? N_("map() argument")
                                   : N_("filter() argument"));
-  int save_did_emsg;
-  int idx = 0;
 
   // Always return the first argument, also on failure.
   tv_copy(&argvars[0], rettv);
@@ -4815,12 +4810,13 @@ void filter_map(typval_T *argvars, typval_T *rettv, int map)
   // message.  Avoid a misleading error message for an empty string that
   // was not passed as argument.
   if (expr->v_type != VAR_UNKNOWN) {
+    int idx = 0;
     typval_T save_val;
     prepare_vimvar(VV_VAL, &save_val);
 
     // We reset "did_emsg" to be able to detect whether an error
     // occurred during evaluation of the expression.
-    save_did_emsg = did_emsg;
+    int save_did_emsg = did_emsg;
     did_emsg = false;
 
     typval_T save_key;
@@ -8064,7 +8060,6 @@ repeat:
 /// @return  an allocated string, NULL for error.
 char *do_string_sub(char *str, char *pat, char *sub, typval_T *expr, const char *flags)
 {
-  int sublen;
   regmatch_T regmatch;
   garray_T ga;
   char *zero_width = NULL;
@@ -8080,6 +8075,7 @@ char *do_string_sub(char *str, char *pat, char *sub, typval_T *expr, const char 
   regmatch.rm_ic = p_ic;
   regmatch.regprog = vim_regcomp(pat, RE_MAGIC + RE_STRING);
   if (regmatch.regprog != NULL) {
+    int sublen;
     char *tail = str;
     char *end = str + strlen(str);
     while (vim_regexec_nl(&regmatch, str, (colnr_T)(tail - str))) {

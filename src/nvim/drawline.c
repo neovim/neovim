@@ -1725,9 +1725,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
         // At start of the line we can have a composing char.
         // Draw it as a space with a composing char.
         if (utf_iscomposing(mb_c)) {
-          int i;
-
-          for (i = MAX_MCO - 1; i > 0; i--) {
+          for (int i = MAX_MCO - 1; i > 0; i--) {
             u8cc[i] = u8cc[i - 1];
           }
           u8cc[0] = mb_c;
@@ -2102,7 +2100,6 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
             n_extra = tab_len;
           } else {
             char *p;
-            int i;
             int saved_nextra = n_extra;
 
             if (vcol_off > 0) {
@@ -2131,7 +2128,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
             p[len] = NUL;
             xfree(p_extra_free);
             p_extra_free = p;
-            for (i = 0; i < tab_len; i++) {
+            for (int i = 0; i < tab_len; i++) {
               if (*p == NUL) {
                 tab_len = i;
                 break;
@@ -2486,7 +2483,6 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
            || draw_color_col || line_attr_lowprio || line_attr
            || diff_hlf != (hlf_T)0 || has_virttext)) {
         int rightmost_vcol = 0;
-        int i;
 
         if (wp->w_p_cuc) {
           rightmost_vcol = wp->w_virtcol;
@@ -2494,7 +2490,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
 
         if (draw_color_col) {
           // determine rightmost colorcolumn to possibly draw
-          for (i = 0; color_cols[i] >= 0; i++) {
+          for (int i = 0; color_cols[i] >= 0; i++) {
             if (rightmost_vcol < color_cols[i]) {
               rightmost_vcol = color_cols[i];
             }

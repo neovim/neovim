@@ -136,14 +136,12 @@ typedef struct SearchedFile {
 int search_regcomp(char *pat, char **used_pat, int pat_save, int pat_use, int options,
                    regmmatch_T *regmatch)
 {
-  int magic;
-  int i;
-
   rc_did_emsg = false;
-  magic = magic_isset();
+  int magic = magic_isset();
 
   // If no pattern given, use a previously defined pattern.
   if (pat == NULL || *pat == NUL) {
+    int i;
     if (pat_use == RE_LAST) {
       i = last_idx;
     } else {
@@ -557,8 +555,6 @@ int searchit(win_T *win, buf_T *buf, pos_T *pos, pos_T *end_pos, Direction dir, 
   lpos_T endpos;
   lpos_T matchpos;
   int loop;
-  pos_T start_pos;
-  int at_first_line;
   int extra_col;
   int start_char_len;
   bool match_ok;
@@ -611,9 +607,9 @@ int searchit(win_T *win, buf_T *buf, pos_T *pos, pos_T *end_pos, Direction dir, 
       extra_col = (options & SEARCH_START) ? start_char_len : 0;
     }
 
-    start_pos = *pos;           // remember start pos for detecting no match
+    pos_T start_pos = *pos;           // remember start pos for detecting no match
     found = 0;                  // default: not found
-    at_first_line = true;       // default: start in first line
+    int at_first_line = true;       // default: start in first line
     if (pos->lnum == 0) {       // correct lnum for when starting in line 0
       pos->lnum = 1;
       pos->col = 0;
@@ -1028,7 +1024,6 @@ int do_search(oparg_T *oap, int dirc, int search_delim, char *pat, long count, i
 {
   pos_T pos;                    // position of the last match
   char *searchstr;
-  struct soffset old_off;
   int retval;                   // Return value
   char *p;
   int64_t c;
@@ -1047,7 +1042,7 @@ int do_search(oparg_T *oap, int dirc, int search_delim, char *pat, long count, i
 
   // Save the values for when (options & SEARCH_KEEP) is used.
   // (there is no "if ()" around this because gcc wants them initialized)
-  old_off = spats[0].off;
+  struct soffset old_off = spats[0].off;
 
   pos = curwin->w_cursor;       // start searching at the cursor position
 
@@ -1434,8 +1429,6 @@ end_do_search:
 int search_for_exact_line(buf_T *buf, pos_T *pos, Direction dir, char *pat)
 {
   linenr_T start = 0;
-  char *ptr;
-  char *p;
 
   if (buf->b_ml.ml_line_count == 0) {
     return FAIL;
@@ -1469,8 +1462,8 @@ int search_for_exact_line(buf_T *buf, pos_T *pos, Direction dir, char *pat)
     if (start == 0) {
       start = pos->lnum;
     }
-    ptr = ml_get_buf(buf, pos->lnum, false);
-    p = skipwhite(ptr);
+    char *ptr = ml_get_buf(buf, pos->lnum, false);
+    char *p = skipwhite(ptr);
     pos->col = (colnr_T)(p - ptr);
 
     // when adding lines the matching line may be empty but it is not
@@ -1503,9 +1496,6 @@ int searchc(cmdarg_T *cap, int t_cmd)
   int c = cap->nchar;                   // char to search for
   int dir = cap->arg;                   // true for searching forward
   long count = cap->count1;             // repeat count
-  int col;
-  char *p;
-  int len;
   bool stop = true;
 
   if (c != NUL) {       // normal search: remember args for repeat
@@ -1550,9 +1540,9 @@ int searchc(cmdarg_T *cap, int t_cmd)
     cap->oap->inclusive = true;
   }
 
-  p = get_cursor_line_ptr();
-  col = curwin->w_cursor.col;
-  len = (int)strlen(p);
+  char *p = get_cursor_line_ptr();
+  int col = curwin->w_cursor.col;
+  int len = (int)strlen(p);
 
   while (count--) {
     for (;;) {
@@ -2295,15 +2285,10 @@ int check_linecomment(const char *line)
 /// @param c  char to show match for
 void showmatch(int c)
 {
-  pos_T *lpos, save_cursor;
-  pos_T mpos;
+  pos_T *lpos;
   colnr_T vcol;
   long *so = curwin->w_p_so >= 0 ? &curwin->w_p_so : &p_so;
   long *siso = curwin->w_p_siso >= 0 ? &curwin->w_p_siso : &p_siso;
-  long save_so;
-  long save_siso;
-  int save_state;
-  colnr_T save_dollar_vcol;
   char *p;
 
   // Only show match for chars in the 'matchpairs' option.
@@ -2345,10 +2330,10 @@ void showmatch(int c)
     return;
   }
 
-  mpos = *lpos;  // save the pos, update_screen() may change it
-  save_cursor = curwin->w_cursor;
-  save_so = *so;
-  save_siso = *siso;
+  pos_T mpos = *lpos;  // save the pos, update_screen() may change it
+  pos_T save_cursor = curwin->w_cursor;
+  long save_so = *so;
+  long save_siso = *siso;
   // Handle "$" in 'cpo': If the ')' is typed on top of the "$",
   // stop displaying the "$".
   if (dollar_vcol >= 0 && dollar_vcol == curwin->w_virtcol) {
@@ -2357,8 +2342,8 @@ void showmatch(int c)
   curwin->w_virtcol++;              // do display ')' just before "$"
   update_screen();                  // show the new char first
 
-  save_dollar_vcol = dollar_vcol;
-  save_state = State;
+  colnr_T save_dollar_vcol = dollar_vcol;
+  int save_state = State;
   State = MODE_SHOWMATCH;
   ui_cursor_shape();                // may show different cursor shape
   curwin->w_cursor = mpos;          // move to matching char
@@ -2531,7 +2516,6 @@ int current_search(long count, bool forward)
 static int is_zero_width(char *pattern, int move, pos_T *cur, Direction direction)
 {
   regmmatch_T regmatch;
-  int nmatched = 0;
   int result = -1;
   pos_T pos;
   const int called_emsg_before = called_emsg;
@@ -2558,6 +2542,7 @@ static int is_zero_width(char *pattern, int move, pos_T *cur, Direction directio
   }
   if (searchit(curwin, curbuf, &pos, NULL, direction, pattern, 1,
                SEARCH_KEEP + flag, RE_SEARCH, NULL) != FAIL) {
+    int nmatched = 0;
     // Zero-width pattern should match somewhere, then we can check if
     // start and end are in the same position.
     do {
@@ -2587,9 +2572,7 @@ static int is_zero_width(char *pattern, int move, pos_T *cur, Direction directio
 /// return true if line 'lnum' is empty or has white chars only.
 int linewhite(linenr_T lnum)
 {
-  char *p;
-
-  p = skipwhite(ml_get(lnum));
+  char *p = skipwhite(ml_get(lnum));
   return *p == NUL;
 }
 
@@ -2682,7 +2665,6 @@ static void update_search_stat(int dirc, pos_T *pos, pos_T *cursor_pos, searchst
   static int chgtick = 0;
   static char *lastpat = NULL;
   static buf_T *lbuf = NULL;
-  proftime_T start;
 
   CLEAR_POINTER(stat);
 
@@ -2722,6 +2704,7 @@ static void update_search_stat(int dirc, pos_T *pos, pos_T *cursor_pos, searchst
       && (dirc == 0 || dirc == '/' ? cur < cnt : cur > 0)) {
     cur += dirc == 0 ? 0 : dirc == '/' ? 1 : -1;
   } else {
+    proftime_T start;
     bool done_search = false;
     pos_T endpos = { 0, 0, 0 };
     p_ws = false;
@@ -2788,7 +2771,6 @@ void f_searchcount(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   if (argvars[0].v_type != VAR_UNKNOWN) {
     dict_T *dict;
     dictitem_T *di;
-    listitem_T *li;
     bool error = false;
 
     if (argvars[0].v_type != VAR_DICT || argvars[0].vval.v_dict == NULL) {
@@ -2834,7 +2816,7 @@ void f_searchcount(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
         semsg(_(e_invarg2), "List format should be [lnum, col, off]");
         return;
       }
-      li = tv_list_find(di->di_tv.vval.v_list, 0L);
+      listitem_T *li = tv_list_find(di->di_tv.vval.v_list, 0L);
       if (li != NULL) {
         pos.lnum = (linenr_T)tv_get_number_chk(TV_LIST_ITEM_TV(li), &error);
         if (error) {
@@ -4156,8 +4138,6 @@ static void show_pat_in_path(char *line, int type, bool did_show, int action, FI
                              linenr_T *lnum, long count)
   FUNC_ATTR_NONNULL_ARG(1, 6)
 {
-  char *p;
-
   if (did_show) {
     msg_putchar('\n');          // cursor below last one
   } else if (!msg_silent) {
@@ -4167,7 +4147,7 @@ static void show_pat_in_path(char *line, int type, bool did_show, int action, FI
     return;
   }
   for (;;) {
-    p = line + strlen(line) - 1;
+    char *p = line + strlen(line) - 1;
     if (fp != NULL) {
       // We used fgets(), so get rid of newline at end
       if (p >= line && *p == '\n') {

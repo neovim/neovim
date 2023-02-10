@@ -1218,7 +1218,6 @@ static synstate_T *store_current_state(void)
 // Copy a state stack from "from" in b_sst_array[] to current_state;
 static void load_current_state(synstate_T *from)
 {
-  int i;
   bufstate_T *bp;
 
   clear_current_state();
@@ -1231,7 +1230,7 @@ static void load_current_state(synstate_T *from)
     } else {
       bp = from->sst_union.sst_stack;
     }
-    for (i = 0; i < from->sst_stacksize; i++) {
+    for (int i = 0; i < from->sst_stacksize; i++) {
       CUR_STATE(i).si_idx = bp[i].bs_idx;
       CUR_STATE(i).si_flags = bp[i].bs_flags;
       CUR_STATE(i).si_seqnr = bp[i].bs_seqnr;
@@ -3441,9 +3440,7 @@ static void syn_list_one(const int id, const bool syncing, const bool link_only)
 
 static void syn_list_flags(struct name_list *nlist, int flags, int attr)
 {
-  int i;
-
-  for (i = 0; nlist[i].flag != 0; i++) {
+  for (int i = 0; nlist[i].flag != 0; i++) {
     if (flags & nlist[i].flag) {
       msg_puts_attr(nlist[i].name, attr);
       msg_putchar(' ');
@@ -4736,17 +4733,15 @@ static void init_syn_patterns(void)
 /// @return  a pointer to the next argument, or NULL in case of an error.
 static char *get_syn_pattern(char *arg, synpat_T *ci)
 {
-  char *end;
   int *p;
   int idx;
-  char *cpo_save;
 
   // need at least three chars
   if (arg == NULL || arg[0] == NUL || arg[1] == NUL || arg[2] == NUL) {
     return NULL;
   }
 
-  end = skip_regexp(arg + 1, *arg, true);
+  char *end = skip_regexp(arg + 1, *arg, true);
   if (*end != *arg) {                       // end delimiter not found
     semsg(_("E401: Pattern delimiter not found: %s"), arg);
     return NULL;
@@ -4755,7 +4750,7 @@ static char *get_syn_pattern(char *arg, synpat_T *ci)
   ci->sp_pattern = xstrnsave(arg + 1, (size_t)(end - arg) - 1);
 
   // Make 'cpoptions' empty, to avoid the 'l' flag
-  cpo_save = p_cpo;
+  char *cpo_save = p_cpo;
   p_cpo = empty_option;
   ci->sp_prog = vim_regcomp(ci->sp_pattern, RE_MAGIC);
   p_cpo = cpo_save;
@@ -5145,7 +5140,6 @@ static int in_id_list(stateitem_T *cur_si, int16_t *list, struct sp_syn *ssp, in
 {
   int retval;
   int16_t *scl_list;
-  int16_t item;
   int16_t id = ssp->id;
   static int depth = 0;
   int r;
@@ -5181,7 +5175,7 @@ static int in_id_list(stateitem_T *cur_si, int16_t *list, struct sp_syn *ssp, in
   // If the first item is "ALLBUT", return true if "id" is NOT in the
   // contains list.  We also require that "id" is at the same ":syn include"
   // level as the list.
-  item = *list;
+  int16_t item = *list;
   if (item >= SYNID_ALLBUT && item < SYNID_CLUSTER) {
     if (item < SYNID_TOP) {
       // ALL or ALLBUT: accept all groups in the same file
@@ -5291,9 +5285,6 @@ void ex_syntax(exarg_T *eap)
 
 void ex_ownsyntax(exarg_T *eap)
 {
-  char *old_value;
-  char *new_value;
-
   if (curwin->w_s == &curwin->w_buffer->b_s) {
     curwin->w_s = xcalloc(1, sizeof(synblock_T));
     hash_init(&curwin->w_s->b_keywtab);
@@ -5309,7 +5300,7 @@ void ex_ownsyntax(exarg_T *eap)
   }
 
   // Save value of b:current_syntax.
-  old_value = get_var_value("b:current_syntax");
+  char *old_value = get_var_value("b:current_syntax");
   if (old_value != NULL) {
     old_value = xstrdup(old_value);
   }
@@ -5318,7 +5309,7 @@ void ex_ownsyntax(exarg_T *eap)
   apply_autocmds(EVENT_SYNTAX, eap->arg, curbuf->b_fname, true, curbuf);
 
   // Move value of b:current_syntax to w:current_syntax.
-  new_value = get_var_value("b:current_syntax");
+  char *new_value = get_var_value("b:current_syntax");
   if (new_value != NULL) {
     set_internal_string_var("w:current_syntax", new_value);
   }
@@ -5483,10 +5474,9 @@ int get_syntax_info(int *seqnrp)
 int syn_get_concealed_id(win_T *wp, linenr_T lnum, colnr_T col)
 {
   int seqnr;
-  int syntax_flags;
 
   (void)syn_get_id(wp, lnum, col, false, NULL, false);
-  syntax_flags = get_syntax_info(&seqnr);
+  int syntax_flags = get_syntax_info(&seqnr);
 
   if (syntax_flags & HL_CONCEAL) {
     return seqnr;

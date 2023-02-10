@@ -1154,7 +1154,6 @@ void do_throw(cstack_T *cstack)
 {
   int inactivate_try = false;
 
-  //
   // Cleanup and deactivate up to the next surrounding try conditional that
   // is not in its finally clause.  Normally, do not deactivate the try
   // conditional itself, so that its ACTIVE flag can be tested below.  But
@@ -1162,7 +1161,7 @@ void do_throw(cstack_T *cstack)
   // deactivate the try conditional, too, as if the conversion had been done,
   // and reset the did_emsg or got_int flag, so this won't happen again at
   // the next surrounding try conditional.
-  //
+
 #ifndef THROW_ON_ERROR_TRUE
   if (did_emsg && !THROW_ON_ERROR) {
     inactivate_try = true;
