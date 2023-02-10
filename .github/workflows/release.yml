@@ -112,8 +112,7 @@ jobs:
   windows:
     runs-on: windows-2019
     env:
-      DEPS_BUILD_DIR: ${{ format('{0}/nvim-deps', github.workspace) }}
-      DEPS_PREFIX: ${{ format('{0}/nvim-deps/usr', github.workspace) }}
+      DEPS_BUILD_DIR: ${{ github.workspace }}/nvim-deps
       CMAKE_BUILD_TYPE: "RelWithDebInfo"
     name: windows (MSVC_64)
     steps:
@@ -128,7 +127,7 @@ jobs:
           cmake --build $env:DEPS_BUILD_DIR
       - name: build package
         run: |
-          cmake -B build -G Ninja -DCMAKE_BUILD_TYPE='RelWithDebInfo' -DDEPS_PREFIX="$env:DEPS_PREFIX"
+          cmake -B build -G Ninja -DCMAKE_BUILD_TYPE='RelWithDebInfo'
           cmake --build build --target package
       - uses: actions/upload-artifact@v3
         with:

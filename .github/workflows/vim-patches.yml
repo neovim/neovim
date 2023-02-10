@@ -11,7 +11,7 @@ jobs:
       contents: write
       pull-requests: write
     env:
-      VIM_SOURCE_DIR: ${{ format('{0}/vim-src', github.workspace) }}
+      VIM_SOURCE_DIR: ${{ github.workspace }}/vim-src
       VERSION_BRANCH: marvim/ci-version-update
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
