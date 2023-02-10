@@ -73,7 +73,7 @@ func Test_mac_locale()
   " If $LANG is not set then the system locale will be used.
   " Run Vim after unsetting all the locale environmental vars, and capture the
   " output of :lang.
-  let lang_results = system("unset LANG; unset LC_MESSAGES; " ..
+  let lang_results = system("unset LANG; unset LC_MESSAGES; unset LC_CTYPE; " ..
             \ shellescape(v:progpath) ..
             \ " --clean -esX -c 'redir @a' -c 'lang' -c 'put a' -c 'print' -c 'qa!' ")
 
