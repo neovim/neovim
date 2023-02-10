@@ -1351,7 +1351,6 @@ retry:
         // Reading UTF-8: Check if the bytes are valid UTF-8.
         for (p = (uint8_t *)ptr;; p++) {
           int todo = (int)(((uint8_t *)ptr + size) - p);
-          int l;
 
           if (todo <= 0) {
             break;
@@ -1361,7 +1360,7 @@ retry:
             // an incomplete character at the end though, the next
             // read() will get the next bytes, we'll check it
             // then.
-            l = utf_ptr2len_len((char *)p, todo);
+            int l = utf_ptr2len_len((char *)p, todo);
             if (l > todo && !incomplete_tail) {
               // Avoid retrying with a different encoding when
               // a truncated file is more likely, or attempting
