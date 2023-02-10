@@ -102,8 +102,9 @@ ChildProcessStream.__index = ChildProcessStream
 
 function ChildProcessStream.spawn(argv, env, io_extra)
   local self = setmetatable({
-    _child_stdin = uv.new_pipe(false),
-    _child_stdout = uv.new_pipe(false)
+    _child_stdin = uv.new_pipe(false);
+    _child_stdout = uv.new_pipe(false);
+    _exiting = false;
   }, ChildProcessStream)
   local prog = argv[1]
   local args = {}
@@ -114,8 +115,9 @@ function ChildProcessStream.spawn(argv, env, io_extra)
     stdio = {self._child_stdin, self._child_stdout, 2, io_extra},
     args = args,
     env = env,
-  }, function()
-    self:close()
+  }, function(status, signal)
+    self.status = status
+    self.signal = signal
   end)
 
   if not self._proc then
@@ -154,7 +156,10 @@ function ChildProcessStream:close(signal)
   if type(signal) == 'string' then
     self._proc:kill('sig'..signal)
   end
-  uv.run('nowait')
+  while self.status == nil do
+    uv.run 'once'
+  end
+  return self.status, self.signal
 end
 
 return {
