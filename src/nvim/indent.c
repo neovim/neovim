@@ -460,7 +460,6 @@ int set_indent(int size, int flags)
   int line_len;
   int doit = false;
   int ind_done = 0;  // Measured in spaces.
-  int ind_col = 0;
   int tab_pad;
   int retval = false;
 
@@ -479,6 +478,7 @@ int set_indent(int size, int flags)
   // 'preserveindent' are set count the number of characters at the
   // beginning of the line to be copied.
   if (!curbuf->b_p_et || (!(flags & SIN_INSERT) && curbuf->b_p_pi)) {
+    int ind_col = 0;
     // If 'preserveindent' is set then reuse as much as possible of
     // the existing indent structure for the new indent.
     if (!(flags & SIN_INSERT) && curbuf->b_p_pi) {
@@ -936,14 +936,10 @@ void ex_retab(exarg_T *eap)
   long num_spaces = 0;
   long num_tabs;
   long len;
-  long col;
-  long vcol;
   long start_col = 0;                   // For start of white-space string
   long start_vcol = 0;                  // For start of white-space string
   long old_len;
-  char *ptr;
   char *new_line = (char *)1;  // init to non-NULL
-  bool did_undo;                         // called u_save for current line
   long *new_vts_array = NULL;
   char *new_ts_str;  // string value of tab argument
 
@@ -972,10 +968,10 @@ void ex_retab(exarg_T *eap)
     new_ts_str = xstrnsave(new_ts_str, (size_t)(eap->arg - new_ts_str));
   }
   for (lnum = eap->line1; !got_int && lnum <= eap->line2; lnum++) {
-    ptr = ml_get(lnum);
-    col = 0;
-    vcol = 0;
-    did_undo = false;
+    char *ptr = ml_get(lnum);
+    long col = 0;
+    long vcol = 0;
+    bool did_undo = false;  // called u_save for current line
     for (;;) {
       if (ascii_iswhite(ptr[col])) {
         if (!got_tab && num_spaces == 0) {
@@ -1186,10 +1182,6 @@ int get_lisp_indent(void)
   pos_T *pos, realpos, paren;
   int amount;
   char *that;
-  colnr_T col;
-  colnr_T firsttry;
-  int parencount;
-  int quotecount;
   int vi_lisp;
 
   // Set vi_lisp to use the vi-compatible method.
@@ -1213,7 +1205,7 @@ int get_lisp_indent(void)
     // Extra trick: Take the indent of the first previous non-white
     // line that is at the same () level.
     amount = -1;
-    parencount = 0;
+    int parencount = 0;
 
     while (--curwin->w_cursor.lnum >= pos->lnum) {
       if (linewhite(curwin->w_cursor.lnum)) {
@@ -1268,7 +1260,7 @@ int get_lisp_indent(void)
     if (amount == -1) {
       curwin->w_cursor.lnum = pos->lnum;
       curwin->w_cursor.col = pos->col;
-      col = pos->col;
+      colnr_T col = pos->col;
 
       that = get_cursor_line_ptr();
 
@@ -1298,7 +1290,7 @@ int get_lisp_indent(void)
             that++;
             amount++;
           }
-          firsttry = amount;
+          colnr_T firsttry = amount;
 
           init_chartabsize_arg(&cts, curwin, (colnr_T)(that - line),
                                amount, line, that);
@@ -1319,13 +1311,13 @@ int get_lisp_indent(void)
             }
 
             parencount = 0;
-            quotecount = 0;
 
             init_chartabsize_arg(&cts, curwin,
                                  (colnr_T)(that - line), amount, line, that);
             if (vi_lisp || ((*that != '"') && (*that != '\'')
                             && (*that != '#')
                             && (((uint8_t)(*that) < '0') || ((uint8_t)(*that) > '9')))) {
+              int quotecount = 0;
               while (*cts.cts_ptr
                      && (!ascii_iswhite(*cts.cts_ptr) || quotecount || parencount)
                      && (!((*cts.cts_ptr == '(' || *cts.cts_ptr == '[')
@@ -1373,12 +1365,11 @@ int get_lisp_indent(void)
 static int lisp_match(char *p)
 {
   char buf[LSIZE];
-  int len;
   char *word = *curbuf->b_p_lw != NUL ? curbuf->b_p_lw : p_lispwords;
 
   while (*word != NUL) {
     (void)copy_option_part(&word, buf, LSIZE, ",");
-    len = (int)strlen(buf);
+    int len = (int)strlen(buf);
 
     if ((strncmp(buf, p, (size_t)len) == 0) && ascii_iswhite_or_nul(p[len])) {
       return true;

@@ -446,12 +446,9 @@ int buf_write_all(buf_T *buf, int forceit)
 /// ":argdo", ":windo", ":bufdo", ":tabdo", ":cdo", ":ldo", ":cfdo" and ":lfdo"
 void ex_listdo(exarg_T *eap)
 {
-  int i;
   win_T *wp;
   tabpage_T *tp;
-  int next_fnum = 0;
   char *save_ei = NULL;
-  char *p_shm_save;
 
   if (eap->cmdidx != CMD_windo && eap->cmdidx != CMD_tabdo) {
     // Don't do syntax HL autocommands.  Skipping the syntax file is a
@@ -469,7 +466,9 @@ void ex_listdo(exarg_T *eap)
       || !check_changed(curbuf, CCGD_AW
                         | (eap->forceit ? CCGD_FORCEIT : 0)
                         | CCGD_EXCMD)) {
-    i = 0;
+    int next_fnum = 0;
+    char *p_shm_save;
+    int i = 0;
     // start at the eap->line1 argument/window/buffer
     wp = firstwin;
     tp = first_tabpage;
@@ -762,14 +761,13 @@ void ex_compiler(exarg_T *eap)
 /// ":checktime [buffer]"
 void ex_checktime(exarg_T *eap)
 {
-  buf_T *buf;
   int save_no_check_timestamps = no_check_timestamps;
 
   no_check_timestamps = 0;
   if (eap->addr_count == 0) {    // default is all buffers
     check_timestamps(false);
   } else {
-    buf = buflist_findnr((int)eap->line2);
+    buf_T *buf = buflist_findnr((int)eap->line2);
     if (buf != NULL) {           // cannot happen?
       (void)buf_check_timestamp(buf);
     }

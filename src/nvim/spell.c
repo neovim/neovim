@@ -380,7 +380,7 @@ size_t spell_check(win_T *wp, char *ptr, hlf_T *attrp, int *capcol, bool docount
       MB_PTR_ADV(mi.mi_end);
     } else if (mi.mi_result == SP_BAD
                && LANGP_ENTRY(wp->w_s->b_langp, 0)->lp_slang->sl_nobreak) {
-      char *p, *fp;
+      char *p;
       int save_result = mi.mi_result;
 
       // First language in 'spelllang' is NOBREAK.  Find first position
@@ -388,7 +388,7 @@ size_t spell_check(win_T *wp, char *ptr, hlf_T *attrp, int *capcol, bool docount
       mi.mi_lp = LANGP_ENTRY(wp->w_s->b_langp, 0);
       if (mi.mi_lp->lp_slang->sl_fidxs != NULL) {
         p = mi.mi_word;
-        fp = mi.mi_fword;
+        char *fp = mi.mi_fword;
         for (;;) {
           MB_PTR_ADV(p);
           MB_PTR_ADV(fp);
@@ -2834,7 +2834,6 @@ static void spell_soundfold_wsal(slang_T *slang, const char *inword, char *res)
   int j, z;
   int reslen;
   int k = 0;
-  int z0;
   int k0;
   int n0;
   int pri;
@@ -2875,7 +2874,7 @@ static void spell_soundfold_wsal(slang_T *slang, const char *inword, char *res)
   while ((c = word[i]) != NUL) {
     // Start with the first rule that has the character in the word.
     int n = slang->sl_sal_first[c & 0xff];
-    z0 = 0;
+    int z0 = 0;
 
     if (n >= 0) {
       // Check all rules for the same index byte.

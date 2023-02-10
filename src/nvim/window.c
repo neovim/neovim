@@ -358,14 +358,13 @@ newwindow:
       msg(_(m_onlyone));
     } else {
       tabpage_T *oldtab = curtab;
-      tabpage_T *newtab;
 
       // First create a new tab with the window, then go back to
       // the old tab and close the window there.
       win_T *wp = curwin;
       if (win_new_tabpage((int)Prenum, NULL) == OK
           && valid_tabpage(oldtab)) {
-        newtab = curtab;
+        tabpage_T *newtab = curtab;
         goto_tabpage_tp(oldtab, true, true);
         if (curwin == wp) {
           win_close(curwin, false, false);

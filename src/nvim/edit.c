@@ -558,10 +558,9 @@ static int insert_execute(VimState *state, int key)
       if (ins_compl_accept_char(s->c)) {
         // Trigger InsertCharPre.
         char *str = do_insert_char_pre(s->c);
-        char *p;
 
         if (str != NULL) {
-          for (p = str; *p != NUL; MB_PTR_ADV(p)) {
+          for (char *p = str; *p != NUL; MB_PTR_ADV(p)) {
             ins_compl_addleader(utf_ptr2char(p));
           }
           xfree(str);
@@ -1122,12 +1121,11 @@ normalchar:
     if (!p_paste) {
       // Trigger InsertCharPre.
       char *str = do_insert_char_pre(s->c);
-      char *p;
 
       if (str != NULL) {
         if (*str != NUL && stop_arrow() != FAIL) {
           // Insert the new value of v:char literally.
-          for (p = str; *p != NUL; MB_PTR_ADV(p)) {
+          for (char *p = str; *p != NUL; MB_PTR_ADV(p)) {
             s->c = utf_ptr2char(p);
             if (s->c == CAR || s->c == K_KENTER || s->c == NL) {
               ins_eol(s->c);
@@ -1410,9 +1408,8 @@ static int pc_col;
 
 void edit_putchar(int c, bool highlight)
 {
-  int attr;
-
   if (curwin->w_grid_alloc.chars != NULL || default_grid.chars != NULL) {
+    int attr;
     update_topline(curwin);  // just in case w_topline isn't valid
     validate_cursor();
     if (highlight) {
@@ -1583,7 +1580,7 @@ void change_indent(int type, int amount, int round, int replaced, int call_chang
   int start_col;
   colnr_T vc;
   colnr_T orig_col = 0;                 // init for GCC
-  char *new_line, *orig_line = NULL;     // init for GCC
+  char *orig_line = NULL;     // init for GCC
 
   // MODE_VREPLACE state needs to know what the line was like before changing
   if (State & VREPLACE_FLAG) {
@@ -1742,7 +1739,7 @@ void change_indent(int type, int amount, int round, int replaced, int call_chang
   // then put it back again the way we wanted it.
   if (State & VREPLACE_FLAG) {
     // Save new line
-    new_line = xstrdup(get_cursor_line_ptr());
+    char *new_line = xstrdup(get_cursor_line_ptr());
 
     // We only put back the new line up to the cursor
     new_line[curwin->w_cursor.col] = NUL;
@@ -1949,9 +1946,6 @@ int get_literal(bool no_simplify)
 /// @param ctrlv `c` was typed after CTRL-V
 static void insert_special(int c, int allow_modmask, int ctrlv)
 {
-  char *p;
-  int len;
-
   // Special function key, translate into "<Key>". Up to the last '>' is
   // inserted with ins_str(), so as not to replace characters in replace
   // mode.
@@ -1961,8 +1955,8 @@ static void insert_special(int c, int allow_modmask, int ctrlv)
     allow_modmask = true;
   }
   if (IS_SPECIAL(c) || (mod_mask && allow_modmask)) {
-    p = (char *)get_special_key_name(c, mod_mask);
-    len = (int)strlen(p);
+    char *p = (char *)get_special_key_name(c, mod_mask);
+    int len = (int)strlen(p);
     c = (uint8_t)p[len - 1];
     if (len > 2) {
       if (stop_arrow() == FAIL) {
@@ -2294,7 +2288,6 @@ int stop_arrow(void)
 /// @param nomove  <c-\><c-o>, don't move cursor
 static void stop_insert(pos_T *end_insert_pos, int esc, int nomove)
 {
-  int cc;
   char *ptr;
 
   stop_redo_ins();
@@ -2314,6 +2307,7 @@ static void stop_insert(pos_T *end_insert_pos, int esc, int nomove)
   }
 
   if (!arrow_used && end_insert_pos != NULL) {
+    int cc;
     // Auto-format now.  It may seem strange to do this when stopping an
     // insertion (or moving the cursor), but it's required when appending
     // a line and having it end in a space.  But only do it when something
@@ -2883,7 +2877,6 @@ static void mb_replace_pop_ins(int cc)
   int n;
   char_u buf[MB_MAXBYTES + 1];
   int i;
-  int c;
 
   if ((n = MB_BYTE2LEN(cc)) > 1) {
     buf[0] = (char_u)cc;
@@ -2897,7 +2890,7 @@ static void mb_replace_pop_ins(int cc)
 
   // Handle composing chars.
   for (;;) {
-    c = replace_pop();
+    int c = replace_pop();
     if (c == -1) {                // stack empty
       break;
     }
@@ -2943,17 +2936,13 @@ static void replace_flush(void)
 static void replace_do_bs(int limit_col)
 {
   int cc;
-  int orig_len = 0;
-  int ins_len;
-  int orig_vcols = 0;
   colnr_T start_vcol;
-  char *p;
-  int i;
-  int vcol;
   const int l_State = State;
 
   cc = replace_pop();
   if (cc > 0) {
+    int orig_len = 0;
+    int orig_vcols = 0;
     if (l_State & VREPLACE_FLAG) {
       // Get the number of screen cells used by the character we are
       // going to delete.
@@ -2969,10 +2958,10 @@ static void replace_do_bs(int limit_col)
 
     if (l_State & VREPLACE_FLAG) {
       // Get the number of screen cells used by the inserted characters
-      p = get_cursor_pos_ptr();
-      ins_len = (int)strlen(p) - orig_len;
-      vcol = start_vcol;
-      for (i = 0; i < ins_len; i++) {
+      char *p = get_cursor_pos_ptr();
+      int ins_len = (int)strlen(p) - orig_len;
+      int vcol = start_vcol;
+      for (int i = 0; i < ins_len; i++) {
         vcol += win_chartabsize(curwin, p + i, vcol);
         i += utfc_ptr2len(p) - 1;
       }
@@ -3786,14 +3775,11 @@ static void ins_bs_one(colnr_T *vcolp)
 static bool ins_bs(int c, int mode, int *inserted_space_p)
   FUNC_ATTR_NONNULL_ARG(3)
 {
-  linenr_T lnum;
   int cc;
   int temp = 0;                     // init for GCC
   colnr_T save_col;
-  colnr_T mincol;
   bool did_backspace = false;
   int in_indent;
-  int oldState;
   int cpc[MAX_MCO];                 // composing characters
   bool call_fix_indent = false;
 
@@ -3844,7 +3830,7 @@ static bool ins_bs(int c, int mode, int *inserted_space_p)
 
   // Delete newline!
   if (curwin->w_cursor.col == 0) {
-    lnum = Insstart.lnum;
+    linenr_T lnum = Insstart.lnum;
     if (curwin->w_cursor.lnum == lnum || revins_on) {
       if (u_save((linenr_T)(curwin->w_cursor.lnum - 2),
                  (linenr_T)(curwin->w_cursor.lnum + 1)) == FAIL) {
@@ -3900,7 +3886,7 @@ static bool ins_bs(int c, int mode, int *inserted_space_p)
         // Do the next ins_char() in MODE_NORMAL state, to
         // prevent ins_char() from replacing characters and
         // avoiding showmatch().
-        oldState = State;
+        int oldState = State;
         State = MODE_NORMAL;
         // restore characters (blanks) deleted after cursor
         while (cc > 0) {
@@ -3920,7 +3906,7 @@ static bool ins_bs(int c, int mode, int *inserted_space_p)
     if (revins_on) {            // put cursor on last inserted char
       dec_cursor();
     }
-    mincol = 0;
+    colnr_T mincol = 0;
     // keep indent
     if (mode == BACKSPACE_LINE
         && (curbuf->b_p_ai || cindent_on())
@@ -3944,7 +3930,6 @@ static bool ins_bs(int c, int mode, int *inserted_space_p)
                 && (*(get_cursor_pos_ptr() - 1) == TAB
                     || (*(get_cursor_pos_ptr() - 1) == ' '
                         && (!*inserted_space_p || arrow_used)))))) {
-      int ts;
       colnr_T vcol;
       colnr_T want_vcol;
       colnr_T start_vcol;
@@ -3959,7 +3944,7 @@ static bool ins_bs(int c, int mode, int *inserted_space_p)
       getvcol(curwin, &curwin->w_cursor, NULL, NULL, &want_vcol);
       inc_cursor();
       if (p_sta && in_indent) {
-        ts = get_sw_value(curbuf);
+        int ts = get_sw_value(curbuf);
         want_vcol = (want_vcol / ts) * ts;
       } else {
         want_vcol = tabstop_start(want_vcol,
@@ -3999,7 +3984,6 @@ static bool ins_bs(int c, int mode, int *inserted_space_p)
       }
     } else {
       // Delete up to starting point, start of line or previous word.
-      int prev_cclass = 0;
 
       int cclass = mb_get_class(get_cursor_pos_ptr());
       do {
@@ -4008,7 +3992,7 @@ static bool ins_bs(int c, int mode, int *inserted_space_p)
         }
         cc = gchar_cursor();
         // look multi-byte character class
-        prev_cclass = cclass;
+        int prev_cclass = cclass;
         cclass = mb_get_class(get_cursor_pos_ptr());
         if (mode == BACKSPACE_WORD && !ascii_isspace(cc)) {   // start of word?
           mode = BACKSPACE_WORD_NOT_SPACE;
@@ -4425,7 +4409,6 @@ static void ins_pagedown(void)
 static bool ins_tab(void)
   FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  int i;
   int temp;
 
   if (Insstart_blank_vcol == MAXCOL && curwin->w_cursor.lnum == Insstart.lnum) {
@@ -4501,6 +4484,7 @@ static bool ins_tab(void)
   if (!curbuf->b_p_et && (tabstop_count(curbuf->b_p_vsts_array) > 0
                           || get_sts_value() > 0
                           || (p_sta && ind))) {
+    int i;
     char *ptr;
     char *saved_line = NULL;         // init for GCC
     pos_T pos;
@@ -4690,7 +4674,6 @@ bool ins_eol(int c)
 static int ins_digraph(void)
 {
   int c;
-  int cc;
   bool did_putchar = false;
 
   pc_status = PC_STATUS_UNSET;
@@ -4736,7 +4719,7 @@ static int ins_digraph(void)
     }
     no_mapping++;
     allow_keys++;
-    cc = plain_vgetc();
+    int cc = plain_vgetc();
     no_mapping--;
     allow_keys--;
     if (did_putchar) {
@@ -4835,13 +4818,14 @@ static int ins_ctrl_ey(int tc)
 // Used when inserting a "normal" character.
 static void ins_try_si(int c)
 {
-  pos_T *pos, old_pos;
-  char *ptr;
-  int i;
-  bool temp;
+  pos_T *pos;
 
   // do some very smart indenting when entering '{' or '}'
   if (((did_si || can_si_back) && c == '{') || (can_si && c == '}' && inindent(0))) {
+    pos_T old_pos;
+    char *ptr;
+    int i;
+    bool temp;
     // for '}' set indent equal to indent of line containing matching '{'
     if (c == '}' && (pos = findmatch(NULL, '{')) != NULL) {
       old_pos = curwin->w_cursor;

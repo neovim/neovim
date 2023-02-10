@@ -278,9 +278,8 @@ bool cause_errthrow(const char *mesg, bool severe, bool *ignore)
 /// Free a "msg_list" and the messages it contains.
 static void free_msglist(msglist_T *l)
 {
-  msglist_T *messages, *next;
-
-  messages = l;
+  msglist_T *next;
+  msglist_T *messages = l;
   while (messages != NULL) {
     next = messages->next;
     xfree(messages->msg);
@@ -379,9 +378,10 @@ int do_intthrow(cstack_T *cstack)
 char *get_exception_string(void *value, except_type_T type, char *cmdname, int *should_free)
 {
   char *ret, *mesg;
-  char *p, *val;
 
   if (type == ET_ERROR) {
+    char *p;
+    char *val;
     *should_free = true;
     mesg = ((msglist_T *)value)->throw_msg;
     if (cmdname != NULL && *cmdname != NUL) {
@@ -441,9 +441,6 @@ char *get_exception_string(void *value, except_type_T type, char *cmdname, int *
 ///          exception.
 static int throw_exception(void *value, except_type_T type, char *cmdname)
 {
-  except_T *excp;
-  int should_free;
-
   // Disallow faking Interrupt or error exceptions as user exceptions.  They
   // would be treated differently from real interrupt or error exceptions
   // when no active try block is found, see do_cmdline().
@@ -456,7 +453,7 @@ static int throw_exception(void *value, except_type_T type, char *cmdname)
     }
   }
 
-  excp = xmalloc(sizeof(except_T));
+  except_T *excp = xmalloc(sizeof(except_T));
 
   if (type == ET_ERROR) {
     // Store the original message and prefix the exception value with
@@ -464,6 +461,7 @@ static int throw_exception(void *value, except_type_T type, char *cmdname)
     excp->messages = (msglist_T *)value;
   }
 
+  int should_free;
   excp->value = get_exception_string(value, type, cmdname, &should_free);
   if (excp->value == NULL && should_free) {
     goto nomem;
@@ -525,8 +523,6 @@ fail:
 /// caught and the catch clause has been ended normally.
 static void discard_exception(except_T *excp, bool was_finished)
 {
-  char *saved_IObuff;
-
   if (current_exception == excp) {
     current_exception = NULL;
   }
@@ -538,7 +534,7 @@ static void discard_exception(except_T *excp, bool was_finished)
   if (p_verbose >= 13 || debug_break_level > 0) {
     int save_msg_silent = msg_silent;
 
-    saved_IObuff = xstrdup(IObuff);
+    char *saved_IObuff = xstrdup(IObuff);
     if (debug_break_level > 0) {
       msg_silent = false;               // display messages
     } else {
@@ -677,7 +673,6 @@ static void report_pending(int action, int pending, void *value)
 {
   char *mesg;
   char *s;
-  int save_msg_silent;
 
   assert(value || !(pending & CSTP_THROW));
 
@@ -727,7 +722,7 @@ static void report_pending(int action, int pending, void *value)
     }
   }
 
-  save_msg_silent = msg_silent;
+  int save_msg_silent = msg_silent;
   if (debug_break_level > 0) {
     msg_silent = false;         // display messages
   }
@@ -806,8 +801,6 @@ void ex_eval(exarg_T *eap)
 /// Handle ":if".
 void ex_if(exarg_T *eap)
 {
-  int skip;
-  int result;
   cstack_T *const cstack = eap->cstack;
 
   if (cstack->cs_idx == CSTACK_LEN - 1) {
@@ -816,10 +809,10 @@ void ex_if(exarg_T *eap)
     cstack->cs_idx++;
     cstack->cs_flags[cstack->cs_idx] = 0;
 
-    skip = CHECK_SKIP;
+    int skip = CHECK_SKIP;
 
     bool error;
-    result = eval_to_bool(eap->arg, &error, &eap->nextcmd, skip);
+    int result = eval_to_bool(eap->arg, &error, &eap->nextcmd, skip);
 
     if (!skip && !error) {
       if (result) {
@@ -860,7 +853,6 @@ void ex_endif(exarg_T *eap)
 /// Handle ":else" and ":elseif".
 void ex_else(exarg_T *eap)
 {
-  bool result = false;
   cstack_T *const cstack = eap->cstack;
 
   bool skip = CHECK_SKIP;
@@ -907,6 +899,7 @@ void ex_else(exarg_T *eap)
   }
 
   if (eap->cmdidx == CMD_elseif) {
+    bool result = false;
     bool error;
     // When skipping we ignore most errors, but a missing expression is
     // wrong, perhaps it should have been "else".
@@ -941,13 +934,12 @@ void ex_else(exarg_T *eap)
 void ex_while(exarg_T *eap)
 {
   bool error;
-  int skip;
-  int result;
   cstack_T *const cstack = eap->cstack;
 
   if (cstack->cs_idx == CSTACK_LEN - 1) {
     eap->errmsg = _("E585: :while/:for nesting too deep");
   } else {
+    int result;
     // The loop flag is set when we have jumped back from the matching
     // ":endwhile" or ":endfor".  When not set, need to initialise this
     // cstack entry.
@@ -959,7 +951,7 @@ void ex_while(exarg_T *eap)
     cstack->cs_flags[cstack->cs_idx] =
       eap->cmdidx == CMD_while ? CSF_WHILE : CSF_FOR;
 
-    skip = CHECK_SKIP;
+    int skip = CHECK_SKIP;
     if (eap->cmdidx == CMD_while) {
       // ":while bool-expr"
       result = eval_to_bool(eap->arg, &error, &eap->nextcmd, skip);
@@ -1013,7 +1005,6 @@ void ex_while(exarg_T *eap)
 /// Handle ":continue"
 void ex_continue(exarg_T *eap)
 {
-  int idx;
   cstack_T *const cstack = eap->cstack;
 
   if (cstack->cs_looplevel <= 0 || cstack->cs_idx < 0) {
@@ -1023,7 +1014,7 @@ void ex_continue(exarg_T *eap)
     // conditional not in its finally clause (which is then to be executed
     // next).  Therefore, deactivate all conditionals except the ":while"
     // itself (if reached).
-    idx = cleanup_conditionals(cstack, CSF_WHILE | CSF_FOR, false);
+    int idx = cleanup_conditionals(cstack, CSF_WHILE | CSF_FOR, false);
     assert(idx >= 0);
     if (cstack->cs_flags[idx] & (CSF_WHILE | CSF_FOR)) {
       rewind_conditionals(cstack, idx, CSF_TRY, &cstack->cs_trylevel);
@@ -1043,7 +1034,6 @@ void ex_continue(exarg_T *eap)
 /// Handle ":break"
 void ex_break(exarg_T *eap)
 {
-  int idx;
   cstack_T *const cstack = eap->cstack;
 
   if (cstack->cs_looplevel <= 0 || cstack->cs_idx < 0) {
@@ -1053,7 +1043,7 @@ void ex_break(exarg_T *eap)
     // conditional not in its finally clause (which is then to be
     // executed next) is found.  In the latter case, make the ":break"
     // pending for execution at the ":endtry".
-    idx = cleanup_conditionals(cstack, CSF_WHILE | CSF_FOR, true);
+    int idx = cleanup_conditionals(cstack, CSF_WHILE | CSF_FOR, true);
     if (idx >= 0 && !(cstack->cs_flags[idx] & (CSF_WHILE | CSF_FOR))) {
       cstack->cs_pending[idx] = CSTP_BREAK;
       report_make_pending(CSTP_BREAK, NULL);
@@ -1065,10 +1055,8 @@ void ex_break(exarg_T *eap)
 void ex_endwhile(exarg_T *eap)
 {
   cstack_T *const cstack = eap->cstack;
-  int idx;
   char *err;
   int csf;
-  int fl;
 
   if (eap->cmdidx == CMD_endwhile) {
     err = e_while;
@@ -1081,7 +1069,7 @@ void ex_endwhile(exarg_T *eap)
   if (cstack->cs_looplevel <= 0 || cstack->cs_idx < 0) {
     eap->errmsg = _(err);
   } else {
-    fl = cstack->cs_flags[cstack->cs_idx];
+    int fl = cstack->cs_flags[cstack->cs_idx];
     if (!(fl & csf)) {
       // If we are in a ":while" or ":for" but used the wrong endloop
       // command, do not rewind to the next enclosing ":for"/":while".
@@ -1098,6 +1086,7 @@ void ex_endwhile(exarg_T *eap)
         eap->errmsg = _(e_endtry);
       }
       // Try to find the matching ":while" and report what's missing.
+      int idx;
       for (idx = cstack->cs_idx; idx > 0; idx--) {
         fl = cstack->cs_flags[idx];
         if ((fl & CSF_TRY) && !(fl & CSF_FINALLY)) {
@@ -1163,7 +1152,6 @@ void ex_throw(exarg_T *eap)
 /// used for rethrowing an uncaught exception.
 void do_throw(cstack_T *cstack)
 {
-  int idx;
   int inactivate_try = false;
 
   //
@@ -1187,7 +1175,7 @@ void do_throw(cstack_T *cstack)
     got_int = false;
   }
 #endif
-  idx = cleanup_conditionals(cstack, 0, inactivate_try);
+  int idx = cleanup_conditionals(cstack, 0, inactivate_try);
   if (idx >= 0) {
     // If this try conditional is active and we are before its first
     // ":catch", set THROWN so that the ":catch" commands will check
@@ -1220,7 +1208,6 @@ void do_throw(cstack_T *cstack)
 /// Handle ":try"
 void ex_try(exarg_T *eap)
 {
-  int skip;
   cstack_T *const cstack = eap->cstack;
 
   if (cstack->cs_idx == CSTACK_LEN - 1) {
@@ -1231,7 +1218,7 @@ void ex_try(exarg_T *eap)
     cstack->cs_flags[cstack->cs_idx] = CSF_TRY;
     cstack->cs_pending[cstack->cs_idx] = CSTP_NONE;
 
-    skip = CHECK_SKIP;
+    int skip = CHECK_SKIP;
 
     if (!skip) {
       // Set ACTIVE and TRUE.  TRUE means that the corresponding ":catch"
@@ -1271,12 +1258,9 @@ void ex_catch(exarg_T *eap)
   int idx = 0;
   bool give_up = false;
   bool skip = false;
-  bool caught = false;
   char *end;
-  char save_char = 0;
   char *save_cpo;
   regmatch_T regmatch;
-  int prev_got_int;
   cstack_T *const cstack = eap->cstack;
   char *pat;
 
@@ -1319,6 +1303,7 @@ void ex_catch(exarg_T *eap)
   }
 
   if (!give_up) {
+    bool caught = false;
     // Don't do something when no exception has been thrown or when the
     // corresponding try block never got active (because of an inactive
     // surrounding conditional or after an error or interrupt or throw).
@@ -1344,6 +1329,7 @@ void ex_catch(exarg_T *eap)
       // the original exception, replace it by an interrupt exception,
       // and don't catch it in this try block.
       if (!dbg_check_skipped(eap) || !do_intthrow(cstack)) {
+        char save_char = 0;
         // Terminate the pattern and avoid the 'l' flag in 'cpoptions'
         // while compiling it.
         if (end != NULL) {
@@ -1365,12 +1351,11 @@ void ex_catch(exarg_T *eap)
         if (regmatch.regprog == NULL) {
           semsg(_(e_invarg2), pat);
         } else {
-          //
           // Save the value of got_int and reset it.  We don't want
           // a previous interruption cancel matching, only hitting
           // CTRL-C while matching should abort it.
-          //
-          prev_got_int = got_int;
+
+          int prev_got_int = got_int;
           got_int = false;
           caught = vim_regexec_nl(&regmatch, current_exception->value, (colnr_T)0);
           got_int |= prev_got_int;
@@ -1415,7 +1400,6 @@ void ex_catch(exarg_T *eap)
 void ex_finally(exarg_T *eap)
 {
   int idx;
-  int skip = false;
   int pending = CSTP_NONE;
   cstack_T *const cstack = eap->cstack;
 
@@ -1451,7 +1435,7 @@ void ex_finally(exarg_T *eap)
   // ":finally".  After every other error (did_emsg or the conditional
   // errors detected above) or after an interrupt (got_int) or an
   // exception (did_throw), the finally clause must be executed.
-  skip = !(cstack->cs_flags[cstack->cs_idx] & CSF_TRUE);
+  int skip = !(cstack->cs_flags[cstack->cs_idx] & CSF_TRUE);
 
   if (!skip) {
     // When debugging or a breakpoint was encountered, display the
@@ -1985,14 +1969,12 @@ void ex_endfunction(exarg_T *eap)
 /// @return  true if the string "p" looks like a ":while" or ":for" command.
 int has_loop_cmd(char *p)
 {
-  int len;
-
   // skip modifiers, white space and ':'
   for (;;) {
     while (*p == ' ' || *p == '\t' || *p == ':') {
       p++;
     }
-    len = modifier_len(p);
+    int len = modifier_len(p);
     if (len == 0) {
       break;
     }
