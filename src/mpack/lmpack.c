@@ -644,7 +644,13 @@ static void lmpack_unparse_enter(mpack_parser_t *parser, mpack_node_t *node)
       mpack_node_t *n;
 
       int has_meta = lua_getmetatable(L, -1);
-      if (packer->ext != LUA_NOREF && has_meta) {
+      int has_mtdict = false;
+      if (has_meta && packer->mtdict != LUA_NOREF) {
+          lmpack_geti(L, packer->reg, packer->mtdict); // [table, metatable, mtdict]
+          has_mtdict = lua_rawequal(L, -1, -2);
+          lua_pop(L, 1); // [table, metatable];
+      }
+      if (packer->ext != LUA_NOREF && has_meta && !has_mtdict) {
         /* check if there's a handler for this metatable */
         lmpack_geti(L, packer->reg, packer->ext);
         lua_pushvalue(L, -2);
@@ -701,14 +707,7 @@ static void lmpack_unparse_enter(mpack_parser_t *parser, mpack_node_t *node)
         }
       }
 
-      int is_array = 1;
       if (has_meta) {
-        // stack: [table, metatable]
-        if (packer->mtdict != LUA_NOREF) {
-          lmpack_geti(L, packer->reg, packer->mtdict); // [table, metatable, mtdict]
-          is_array = !lua_rawequal(L, -1, -2);
-          lua_pop(L, 1); // [table, metatable];
-        }
         lua_pop(L, 1); // [table]
       }
 
@@ -726,6 +725,7 @@ static void lmpack_unparse_enter(mpack_parser_t *parser, mpack_node_t *node)
         lua_pop(L, 1);
       }
 
+      int is_array = !has_mtdict;
       len = lmpack_objlen(L, &is_array);
       if (is_array) {
         node->tok = mpack_pack_array(len);

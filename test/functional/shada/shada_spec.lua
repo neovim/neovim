@@ -126,11 +126,11 @@ describe('ShaDa support code', function()
     wshada(s .. table.concat(msgpack, e .. s) .. e)
     eq(0, exc_exec('wshada ' .. shada_fname))
     local found = 0
-    local typ = mpack.unpack(s)
+    local typ = mpack.decode(s)
     for _, v in ipairs(read_shada_file(shada_fname)) do
       if v.type == typ then
         found = found + 1
-        eq(mpack.unpack(msgpack[found]), v.timestamp)
+        eq(mpack.decode(msgpack[found]), v.timestamp)
       end
     end
     eq(#msgpack, found)

@@ -59,7 +59,7 @@ describe('API', function()
 
     -- XXX: This must be the last one, else next one will fail:
     --      "Packer instance already working. Use another Packer ..."
-    matches("can't serialize object$",
+    matches("can't serialize object of type .$",
       pcall_err(request, nil))
   end)
 

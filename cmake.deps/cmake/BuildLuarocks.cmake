@@ -158,23 +158,14 @@ if(USE_BUNDLED_BUSTED)
     DEPENDS busted)
   add_custom_target(luacheck DEPENDS ${LUACHECK_EXE})
 
-  # luv
-  set(LUV_DEPS luacheck)
-  if(USE_BUNDLED_LUV)
-    set(NVIM_CLIENT_DEPS luacheck luv-static lua-compat-5.3)
-  else()
-    add_custom_command(OUTPUT ${ROCKS_DIR}/luv
-      COMMAND ${LUAROCKS_BINARY} build luv ${LUV_VERSION} ${LUAROCKS_BUILDARGS}
-      DEPENDS luacheck)
-    add_custom_target(luv DEPENDS ${ROCKS_DIR}/luv)
-    set(NVIM_CLIENT_DEPS luv)
+  if (NOT USE_BUNDLED_LUAJIT)
+    # coxpcall
+    add_custom_command(OUTPUT ${ROCKS_DIR}/coxpcall
+      COMMAND ${LUAROCKS_BINARY} build coxpcall 1.16.0-1 ${LUAROCKS_BUILDARGS}
+      DEPENDS luarocks)
+    add_custom_target(coxpcall DEPENDS ${ROCKS_DIR}/coxpcall)
+  list(APPEND THIRD_PARTY_DEPS coxpcall)
   endif()
 
-  # nvim-client: https://github.com/neovim/lua-client
-  add_custom_command(OUTPUT ${ROCKS_DIR}/nvim-client
-    COMMAND ${LUAROCKS_BINARY} build nvim-client 0.2.4-1 ${LUAROCKS_BUILDARGS}
-    DEPENDS ${NVIM_CLIENT_DEPS})
-  add_custom_target(nvim-client DEPENDS ${ROCKS_DIR}/nvim-client)
-
-  list(APPEND THIRD_PARTY_DEPS busted luacheck nvim-client)
+  list(APPEND THIRD_PARTY_DEPS busted luacheck)
 endif()

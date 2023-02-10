@@ -237,7 +237,7 @@ describe('server -> client', function()
         \ }
       ]])
       meths.set_var("args", {
-        helpers.test_lua_prg,
+        nvim_prog, '-ll',
         'test/functional/api/rpc_fixture.lua',
         package.path,
         package.cpath,

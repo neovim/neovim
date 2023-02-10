@@ -71,16 +71,10 @@ if(NOT DEFINED ENV{TEST_TIMEOUT} OR "$ENV{TEST_TIMEOUT}" STREQUAL "")
 endif()
 
 set(ENV{SYSTEM_NAME} ${CMAKE_HOST_SYSTEM_NAME})  # used by test/helpers.lua.
-
-# TODO: eventually always use NVIM_PRG as the runner
-if("${TEST_TYPE}" STREQUAL "unit")
-  set(RUNNER_PRG ${NVIM_PRG} -ll ${WORKING_DIR}/test/busted_runner.lua)
-else()
-  set(RUNNER_PRG ${BUSTED_PRG})
-endif()
+set(ENV{DEPS_PREFIX} ${DEPS_PREFIX})  # used by test/busted_runner.lua on windows
 
 execute_process(
-  COMMAND ${RUNNER_PRG} -v -o test.busted.outputHandlers.${BUSTED_OUTPUT_TYPE}
+  COMMAND ${NVIM_PRG} -ll ${WORKING_DIR}/test/busted_runner.lua -v -o test.busted.outputHandlers.${BUSTED_OUTPUT_TYPE}
     --lazy --helper=${TEST_DIR}/${TEST_TYPE}/preload.lua
     --lpath=${BUILD_DIR}/?.lua
     --lpath=${WORKING_DIR}/runtime/lua/?.lua
