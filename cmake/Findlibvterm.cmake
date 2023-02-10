@@ -18,3 +18,5 @@ find_package_handle_standard_args(libvterm
 add_library(libvterm INTERFACE)
 target_include_directories(libvterm SYSTEM BEFORE INTERFACE ${LIBVTERM_INCLUDE_DIR})
 target_link_libraries(libvterm INTERFACE ${LIBVTERM_LIBRARY})
+
+mark_as_advanced(LIBVTERM_INCLUDE_DIR LIBVTERM_LIBRARY)

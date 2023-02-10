@@ -156,7 +156,6 @@ if (NOT "${HAVE_BE64TOH}")
   endif()
 endif()
 
-# generate configuration header and update include directories
 configure_file (
   "${PROJECT_SOURCE_DIR}/cmake.config/config.h.in"
   "${PROJECT_BINARY_DIR}/cmake.config/auto/config.h"
@@ -176,21 +175,21 @@ file(GENERATE
   OUTPUT "${PROJECT_BINARY_DIR}/cmake.config/auto/versiondef.h"
   INPUT "${PROJECT_BINARY_DIR}/cmake.config/auto/versiondef.h.gen")
 
-# generate pathdef.c
-find_program(WHOAMI_PROG whoami)
-find_program(HOSTNAME_PROG hostname)
+find_program(WHOAMI_PRG whoami)
+find_program(HOSTNAME_PRG hostname)
+mark_as_advanced(HOSTNAME_PRG WHOAMI_PRG)
 
 if (DEFINED ENV{USERNAME})
   set(USERNAME $ENV{USERNAME})
-elseif (NOT DEFINED USERNAME AND EXISTS ${WHOAMI_PROG})
-  execute_process(COMMAND ${WHOAMI_PROG}
+elseif (NOT DEFINED USERNAME AND EXISTS ${WHOAMI_PRG})
+  execute_process(COMMAND ${WHOAMI_PRG}
     OUTPUT_STRIP_TRAILING_WHITESPACE
     OUTPUT_VARIABLE USERNAME)
 endif()
 if (DEFINED ENV{HOSTNAME})
   set(HOSTNAME $ENV{HOSTNAME})
-elseif (EXISTS ${HOSTNAME_PROG})
-  execute_process(COMMAND ${HOSTNAME_PROG}
+elseif (EXISTS ${HOSTNAME_PRG})
+  execute_process(COMMAND ${HOSTNAME_PRG}
     OUTPUT_STRIP_TRAILING_WHITESPACE
     OUTPUT_VARIABLE HOSTNAME)
 endif()
