@@ -2,9 +2,15 @@ add_library(main_lib INTERFACE)
 add_executable(nvim main.c)
 
 add_library(libuv_lib INTERFACE)
-find_package(LibUV 1.28.0 REQUIRED)
-target_include_directories(libuv_lib SYSTEM BEFORE INTERFACE ${LIBUV_INCLUDE_DIRS})
-target_link_libraries(libuv_lib INTERFACE ${LIBUV_LIBRARIES})
+find_package(libuv CONFIG)
+if(TARGET libuv::uv_a)
+  target_link_libraries(libuv_lib INTERFACE libuv::uv_a)
+else()
+  # Fallback to find module for older libuv versions, that don't provide the cmake package
+  find_package(LibUV 1.28.0 REQUIRED MODULE)
+  target_include_directories(libuv_lib SYSTEM BEFORE INTERFACE ${LIBUV_INCLUDE_DIRS})
+  target_link_libraries(libuv_lib INTERFACE ${LIBUV_LIBRARIES})
+endif()
 
 find_package(Msgpack 1.0.0 REQUIRED)
 target_include_directories(main_lib SYSTEM BEFORE INTERFACE ${MSGPACK_INCLUDE_DIRS})
