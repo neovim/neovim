@@ -194,15 +194,11 @@ jobs:
 
             # functionaltest-lua is our dumping ground for non-mainline configurations.
             # 1. Check that the tests pass with PUC Lua instead of LuaJIT.
-            # 2. Use as oldest/minimum versions of dependencies/build tools we
-            #    still explicitly support so we don't accidentally rely on
-            #    features that is only available on later versions.
-            # 3. No treesitter parsers installed.
+            # 2. No treesitter parsers installed.
           - flavor: functionaltest-lua
             cc: gcc
             runner: ubuntu-22.04
             os: linux
-            cmake: minimum_required
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 45
     env:
@@ -217,24 +213,6 @@ jobs:
       - name: Install apt packages
         if: matrix.os == 'linux'
         run: ./.github/scripts/install_deps_ubuntu.sh
-
-      - name: Install minimum required version of cmake
-        if: matrix.cmake == 'minimum_required'
-        env:
-          CMAKE_URL: 'https://cmake.org/files/v3.10/cmake-3.10.0-Linux-x86_64.sh'
-          CMAKE_VERSION: '3.10.0'
-        shell: bash
-        run: |
-          curl --retry 5 --silent --show-error --fail -o /tmp/cmake-installer.sh "$CMAKE_URL"
-          mkdir -p "$HOME/.local/bin" /opt/cmake-custom
-          chmod a+x /tmp/cmake-installer.sh
-          /tmp/cmake-installer.sh --prefix=/opt/cmake-custom --skip-license
-          ln -sfn /opt/cmake-custom/bin/cmake "$HOME/.local/bin/cmake"
-          cmake_version="$(cmake --version | head -1)"
-          echo "$cmake_version" | grep -qF "cmake version $CMAKE_VERSION" || {
-            echo "Unexpected CMake version: $cmake_version"
-            exit 1
-          }
 
       - name: Install brew packages
         if: matrix.os == 'osx'
@@ -275,6 +253,47 @@ jobs:
       - if: success() || failure() && steps.abort_job.outputs.status == 'success'
         name: Install nvim
         run: ./ci/run_tests.sh install_nvim
+
+  old_cmake:
+    name: Test oldest supported cmake
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    env:
+      CI_OS_NAME: linux
+      CMAKE_URL: 'https://cmake.org/files/v3.10/cmake-3.10.0-Linux-x86_64.sh'
+      CMAKE_VERSION: '3.10.0'
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup common environment variables
+        run: ./.github/workflows/env.sh old_cmake
+
+      - name: Install apt packages
+        run: ./.github/scripts/install_deps_ubuntu.sh
+
+      - name: Install minimum required version of cmake
+        run: |
+          curl --retry 5 --silent --show-error --fail -o /tmp/cmake-installer.sh "$CMAKE_URL"
+          mkdir -p "$HOME/.local/bin" /opt/cmake-custom
+          chmod a+x /tmp/cmake-installer.sh
+          /tmp/cmake-installer.sh --prefix=/opt/cmake-custom --skip-license
+          ln -sfn /opt/cmake-custom/bin/cmake "$HOME/.local/bin/cmake"
+          cmake_version="$(cmake --version | head -1)"
+          echo "$cmake_version" | grep -qF "cmake version $CMAKE_VERSION" || {
+            echo "Unexpected CMake version: $cmake_version"
+            exit 1
+          }
+
+      - uses: ./.github/actions/cache
+
+      - name: Build dependencies
+        run: make deps
+
+      - name: Build
+        run: make CMAKE_FLAGS="-D CI_BUILD=ON -D CMAKE_INSTALL_PREFIX:PATH=$INSTALL_PREFIX -D MIN_LOG_LEVEL=3"
+
+      - name: Install
+        run: make install
 
   windows:
     runs-on: windows-2019
