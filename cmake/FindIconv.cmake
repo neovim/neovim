@@ -19,3 +19,5 @@ if(ICONV_LIBRARY)
 endif()
 
 libfind_process(Iconv)
+
+mark_as_advanced(ICONV_LIBRARY)

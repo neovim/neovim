@@ -1,9 +1,14 @@
 find_package(Gettext REQUIRED)
 find_program(XGETTEXT_PRG xgettext)
 find_program(ICONV_PRG iconv)
+mark_as_advanced(
+  GETTEXT_MSGFMT_EXECUTABLE
+  GETTEXT_MSGMERGE_EXECUTABLE
+  ICONV_PRG
+  XGETTEXT_PRG)
 
-option(LANGUAGES "Localizations to build")
-if(NOT LANGUAGES)
+option(ENABLE_LANGUAGES "Localizations to build" ON)
+if(ENABLE_LANGUAGES)
   set(LANGUAGES
     af
     ca
