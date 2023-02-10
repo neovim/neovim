@@ -274,10 +274,10 @@ jobs:
       - name: Install minimum required version of cmake
         run: |
           curl --retry 5 --silent --show-error --fail -o /tmp/cmake-installer.sh "$CMAKE_URL"
-          mkdir -p "$HOME/.local/bin" /opt/cmake-custom
+          mkdir -p "$BIN_DIR" /opt/cmake-custom
           chmod a+x /tmp/cmake-installer.sh
           /tmp/cmake-installer.sh --prefix=/opt/cmake-custom --skip-license
-          ln -sfn /opt/cmake-custom/bin/cmake "$HOME/.local/bin/cmake"
+          ln -sfn /opt/cmake-custom/bin/cmake "$BIN_DIR/cmake"
           cmake_version="$(cmake --version | head -1)"
           echo "$cmake_version" | grep -qF "cmake version $CMAKE_VERSION" || {
             echo "Unexpected CMake version: $cmake_version"
