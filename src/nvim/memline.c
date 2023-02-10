@@ -2022,7 +2022,6 @@ static int ml_append_int(buf_T *buf, linenr_T lnum, char *line, colnr_T len, boo
     int lineadd;
     blocknr_T bnum_left, bnum_right;
     linenr_T lnum_left, lnum_right;
-    int pb_idx;
     PTR_BL *pp_new;
 
     // We are going to allocate a new data block. Depending on the
@@ -2156,7 +2155,7 @@ static int ml_append_int(buf_T *buf, linenr_T lnum, char *line, colnr_T len, boo
     // update pointer blocks for the new data block
     for (stack_idx = buf->b_ml.ml_stack_top - 1; stack_idx >= 0; stack_idx--) {
       infoptr_T *ip = &(buf->b_ml.ml_stack[stack_idx]);
-      pb_idx = ip->ip_index;
+      int pb_idx = ip->ip_index;
       if ((hp = mf_get(mfp, ip->ip_bnum, 1)) == NULL) {
         return FAIL;
       }
@@ -3211,7 +3210,6 @@ static int do_swapexists(buf_T *buf, char *fname)
 static char *findswapname(buf_T *buf, char **dirp, char *old_fname, bool *found_existing_dir)
   FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ARG(1, 2, 4)
 {
-  size_t n;
   char *buf_fname = buf->b_fname;
 
   // Isolate a directory name from *dirp and put it in dir_name.
@@ -3224,6 +3222,7 @@ static char *findswapname(buf_T *buf, char **dirp, char *old_fname, bool *found_
   char *fname = makeswapname(buf_fname, buf->b_ffname, buf, dir_name);
 
   for (;;) {
+    size_t n;
     if (fname == NULL) {        // must be out of memory
       break;
     }
@@ -3605,11 +3604,8 @@ static void ml_updatechunk(buf_T *buf, linenr_T line, long len, int updtype)
 
   linenr_T curline = ml_upd_lastcurline;
   int curix = ml_upd_lastcurix;
-  long size;
   chunksize_T *curchnk;
-  int rest;
   bhdr_T *hp;
-  DATA_BL *dp;
 
   if (buf->b_ml.ml_usedchunks == -1 || len == 0) {
     return;
@@ -3655,6 +3651,8 @@ static void ml_updatechunk(buf_T *buf, linenr_T line, long len, int updtype)
   }
   curchnk->mlcs_totalsize += len;
   if (updtype == ML_CHNK_ADDLINE) {
+    int rest;
+    DATA_BL *dp;
     curchnk->mlcs_numlines++;
 
     // May resize here so we don't have to do it in both cases below
@@ -3665,17 +3663,14 @@ static void ml_updatechunk(buf_T *buf, linenr_T line, long len, int updtype)
     }
 
     if (buf->b_ml.ml_chunksize[curix].mlcs_numlines >= MLCS_MAXL) {
-      int count;                    // number of entries in block
-      int idx;
       int text_end;
-      int linecnt;
 
       memmove(buf->b_ml.ml_chunksize + curix + 1,
               buf->b_ml.ml_chunksize + curix,
               (size_t)(buf->b_ml.ml_usedchunks - curix) * sizeof(chunksize_T));
       // Compute length of first half of lines in the split chunk
-      size = 0;
-      linecnt = 0;
+      long size = 0;
+      int linecnt = 0;
       while (curline < buf->b_ml.ml_line_count
              && linecnt < MLCS_MINL) {
         if ((hp = ml_find_line(buf, curline, ML_FIND)) == NULL) {
@@ -3683,8 +3678,9 @@ static void ml_updatechunk(buf_T *buf, linenr_T line, long len, int updtype)
           return;
         }
         dp = hp->bh_data;
-        count = buf->b_ml.ml_locked_high - buf->b_ml.ml_locked_low + 1;
-        idx = curline - buf->b_ml.ml_locked_low;
+        int count
+          = buf->b_ml.ml_locked_high - buf->b_ml.ml_locked_low + 1;  // number of entries in block
+        int idx = curline - buf->b_ml.ml_locked_low;
         curline = buf->b_ml.ml_locked_high + 1;
         if (idx == 0) {      // first line in block, text at the end
           text_end = (int)dp->db_txt_end;
@@ -3793,13 +3789,8 @@ long ml_find_line_or_offset(buf_T *buf, linenr_T lnum, long *offp, bool no_ff)
   int curix;
   long size;
   bhdr_T *hp;
-  DATA_BL *dp;
-  int count;                    // number of entries in block
-  int idx;
-  int start_idx;
   int text_end;
   long offset;
-  int len;
   int ffdos = !no_ff && (get_fileformat(buf) == EOL_DOS);
   int extra = 0;
 
@@ -3859,9 +3850,11 @@ long ml_find_line_or_offset(buf_T *buf, linenr_T lnum, long *offp, bool no_ff)
         || (hp = ml_find_line(buf, curline, ML_FIND)) == NULL) {
       return -1;
     }
-    dp = hp->bh_data;
-    count = buf->b_ml.ml_locked_high - buf->b_ml.ml_locked_low + 1;
-    start_idx = idx = curline - buf->b_ml.ml_locked_low;
+    DATA_BL *dp = hp->bh_data;
+    int count
+      = buf->b_ml.ml_locked_high - buf->b_ml.ml_locked_low + 1;  // number of entries in block
+    int idx;
+    int start_idx = idx = curline - buf->b_ml.ml_locked_low;
     if (idx == 0) {  // first line in block, text at the end
       text_end = (int)dp->db_txt_end;
     } else {
@@ -3889,7 +3882,7 @@ long ml_find_line_or_offset(buf_T *buf, linenr_T lnum, long *offp, bool no_ff)
         idx++;
       }
     }
-    len = text_end - (int)((dp->db_index[idx]) & DB_INDEX_MASK);
+    int len = text_end - (int)((dp->db_index[idx]) & DB_INDEX_MASK);
     size += len;
     if (offset != 0 && size >= offset) {
       if (size + ffdos == offset) {

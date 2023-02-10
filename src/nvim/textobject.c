@@ -176,7 +176,6 @@ found:
 bool findpar(bool *pincl, int dir, long count, int what, bool both)
 {
   linenr_T curr;
-  bool did_skip;            // true after separating lines have been skipped
   bool first;               // true on first line
   linenr_T fold_first;      // first line of a closed fold
   linenr_T fold_last;       // last line of a closed fold
@@ -186,7 +185,7 @@ bool findpar(bool *pincl, int dir, long count, int what, bool both)
   curr = curwin->w_cursor.lnum;
 
   while (count--) {
-    did_skip = false;
+    bool did_skip = false;  // true after separating lines have been skipped
     for (first = true;; first = false) {
       if (*ml_get(curr) != NUL) {
         did_skip = true;
@@ -324,10 +323,6 @@ static int cls(void)
 /// @param bigword  "W", "E" or "B"
 int fwd_word(long count, bool bigword, bool eol)
 {
-  int sclass;               // starting class
-  int i;
-  int last_line;
-
   curwin->w_cursor.coladd = 0;
   cls_bigword = bigword;
   while (--count >= 0) {
@@ -336,12 +331,12 @@ int fwd_word(long count, bool bigword, bool eol)
     if (hasFolding(curwin->w_cursor.lnum, NULL, &curwin->w_cursor.lnum)) {
       coladvance(MAXCOL);
     }
-    sclass = cls();
+    int sclass = cls();  // starting class
 
     // We always move at least one character, unless on the last
     // character in the buffer.
-    last_line = (curwin->w_cursor.lnum == curbuf->b_ml.ml_line_count);
-    i = inc_cursor();
+    int last_line = (curwin->w_cursor.lnum == curbuf->b_ml.ml_line_count);
+    int i = inc_cursor();
     if (i == -1 || (i >= 1 && last_line)) {   // started at last char in file
       return FAIL;
     }
@@ -493,13 +488,11 @@ finished:
 /// @return         FAIL if start of the file was reached.
 int bckend_word(long count, bool bigword, bool eol)
 {
-  int sclass;               // starting class
-  int i;
-
   curwin->w_cursor.coladd = 0;
   cls_bigword = bigword;
   while (--count >= 0) {
-    sclass = cls();
+    int i;
+    int sclass = cls();  // starting class
     if ((i = dec_cursor()) == -1) {
       return FAIL;
     }
@@ -562,10 +555,8 @@ static void back_in_line(void)
 
 static void find_first_blank(pos_T *posp)
 {
-  int c;
-
   while (decl(posp) != -1) {
-    c = gchar_pos(posp);
+    int c = gchar_pos(posp);
     if (!ascii_iswhite(c)) {
       incl(posp);
       break;
@@ -598,7 +589,6 @@ static void findsent_forward(long count, bool at_start_sent)
 int current_word(oparg_T *oap, long count, bool include, bool bigword)
 {
   pos_T start_pos;
-  pos_T pos;
   bool inclusive = true;
   int include_white = false;
 
@@ -703,7 +693,7 @@ int current_word(oparg_T *oap, long count, bool include, bool bigword)
     // word).  Also when "2daw" deletes "word." at the end of the line
     // (cursor is at start of next line).
     // But don't delete white space at start of line (indent).
-    pos = curwin->w_cursor;     // save cursor position
+    pos_T pos = curwin->w_cursor;     // save cursor position
     curwin->w_cursor = start_pos;
     if (oneleft() == OK) {
       back_in_line();
@@ -1042,7 +1032,6 @@ static bool in_html_tag(bool end_tag)
 {
   char *line = get_cursor_line_ptr();
   char *p;
-  int c;
   int lc = NUL;
   pos_T pos;
 
@@ -1078,7 +1067,7 @@ static bool in_html_tag(bool end_tag)
     if (inc(&pos) < 0) {
       return false;
     }
-    c = (uint8_t)(*ml_get_pos(&pos));
+    int c = (uint8_t)(*ml_get_pos(&pos));
     if (c == '>') {
       break;
     }
@@ -1443,10 +1432,8 @@ extend:
 /// @return        column number of "quotechar" or -1 when not found.
 static int find_next_quote(char *line, int col, int quotechar, char *escape)
 {
-  int c;
-
   for (;;) {
-    c = (uint8_t)line[col];
+    int c = (uint8_t)line[col];
     if (c == NUL) {
       return -1;
     } else if (escape != NULL && vim_strchr(escape, c)) {
@@ -1471,12 +1458,10 @@ static int find_next_quote(char *line, int col, int quotechar, char *escape)
 /// @return        the found column or zero.
 static int find_prev_quote(char *line, int col_start, int quotechar, char *escape)
 {
-  int n;
-
   while (col_start > 0) {
     col_start--;
     col_start -= utf_head_off(line, line + col_start);
-    n = 0;
+    int n = 0;
     if (escape != NULL) {
       while (col_start - n > 0 && vim_strchr(escape,
                                              (uint8_t)line[col_start - n - 1]) != NULL) {

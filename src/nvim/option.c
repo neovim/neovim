@@ -4831,10 +4831,9 @@ int ExpandSettings(expand_T *xp, regmatch_T *regmatch, char *fuzzystr, int *numM
   // loop == 0: count the number of matching options
   // loop == 1: copy the matching options into allocated memory
   for (int loop = 0; loop <= 1; loop++) {
-    int match;
     regmatch->rm_ic = ic;
     if (xp->xp_context != EXPAND_BOOL_SETTINGS) {
-      for (match = 0; match < (int)ARRAY_SIZE(names);
+      for (int match = 0; match < (int)ARRAY_SIZE(names);
            match++) {
         if (match_str(names[match], regmatch, *matches,
                       count, (loop == 0), fuzzy, fuzzystr, fuzmatch)) {

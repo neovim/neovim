@@ -356,14 +356,9 @@ int win_lbr_chartabsize(chartabsize_T *cts, int *headp)
   char *s = cts->cts_ptr;
   colnr_T vcol = cts->cts_vcol;
 
-  colnr_T col2;
   colnr_T col_adj = 0;  // vcol + screen size of tab
-  colnr_T colmax;
-  int added;
   int mb_added = 0;
   int numberextra;
-  char *ps;
-  int n;
 
   cts->cts_cur_text_width = 0;
 
@@ -397,12 +392,12 @@ int win_lbr_chartabsize(chartabsize_T *cts, int *headp)
     // Count all characters from first non-blank after a blank up to next
     // non-blank after a blank.
     numberextra = win_col_off(wp);
-    col2 = vcol;
-    colmax = (colnr_T)(wp->w_width_inner - numberextra - col_adj);
+    colnr_T col2 = vcol;
+    colnr_T colmax = (colnr_T)(wp->w_width_inner - numberextra - col_adj);
 
     if (vcol >= colmax) {
       colmax += col_adj;
-      n = colmax + win_col_off2(wp);
+      int n = colmax + win_col_off2(wp);
 
       if (n > 0) {
         colmax += (((vcol - colmax) / n) + 1) * n - col_adj;
@@ -410,7 +405,7 @@ int win_lbr_chartabsize(chartabsize_T *cts, int *headp)
     }
 
     for (;;) {
-      ps = s;
+      char *ps = s;
       MB_PTR_ADV(s);
       c = (uint8_t)(*s);
 
@@ -439,7 +434,7 @@ int win_lbr_chartabsize(chartabsize_T *cts, int *headp)
   // string at start of line.
   // Set *headp to the size of what we add.
   // Do not use 'showbreak' at the NUL after the text.
-  added = 0;
+  int added = 0;
   char *const sbr = c == NUL ? empty_option : get_showbreak_value(wp);
   if ((*sbr != NUL || wp->w_p_bri) && wp->w_p_wrap && vcol != 0) {
     colnr_T sbrlen = 0;

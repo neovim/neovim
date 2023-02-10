@@ -204,15 +204,11 @@ void grid_puts_len(ScreenGrid *grid, char *text, int textlen, int row, int col, 
   int len = textlen;
   int c;
   size_t max_off;
-  int mbyte_blen = 1;
-  int mbyte_cells = 1;
-  int u8c = 0;
   int u8cc[MAX_MCO];
   bool clear_next_cell = false;
   int prev_c = 0;  // previous Arabic character
   int pc, nc, nc1;
   int pcc[MAX_MCO];
-  int need_redraw;
   bool do_flush = false;
 
   grid_adjust(&grid, &row, &col);
@@ -249,13 +245,13 @@ void grid_puts_len(ScreenGrid *grid, char *text, int textlen, int row, int col, 
          && *ptr != NUL) {
     c = (unsigned char)(*ptr);
     // check if this is the first byte of a multibyte
-    mbyte_blen = len > 0
+    int mbyte_blen = len > 0
       ? utfc_ptr2len_len(ptr, (int)((text + len) - ptr))
       : utfc_ptr2len(ptr);
-    u8c = len >= 0
+    int u8c = len >= 0
       ? utfc_ptr2char_len(ptr, u8cc, (int)((text + len) - ptr))
       : utfc_ptr2char(ptr, u8cc);
-    mbyte_cells = utf_char2cells(u8c);
+    int mbyte_cells = utf_char2cells(u8c);
     if (p_arshape && !p_tbidi && ARABIC_CHAR(u8c)) {
       // Do Arabic shaping.
       if (len >= 0 && (int)(ptr - text) + mbyte_blen >= len) {
@@ -287,11 +283,11 @@ void grid_puts_len(ScreenGrid *grid, char *text, int textlen, int row, int col, 
     schar_T buf;
     schar_from_cc(buf, u8c, u8cc);
 
-    need_redraw = schar_cmp(grid->chars[off], buf)
-                  || (mbyte_cells == 2 && grid->chars[off + 1][0] != 0)
-                  || grid->attrs[off] != attr
-                  || exmode_active
-                  || rdb_flags & RDB_NODELTA;
+    int need_redraw = schar_cmp(grid->chars[off], buf)
+                      || (mbyte_cells == 2 && grid->chars[off + 1][0] != 0)
+                      || grid->attrs[off] != attr
+                      || exmode_active
+                      || rdb_flags & RDB_NODELTA;
 
     if (need_redraw) {
       // When at the end of the text and overwriting a two-cell
@@ -497,7 +493,6 @@ void grid_put_linebuf(ScreenGrid *grid, int row, int coloff, int endcol, int cle
   size_t max_off_from;
   size_t max_off_to;
   int col = 0;
-  bool redraw_this;                         // Does character need redraw?
   bool redraw_next;                         // redraw_this for next character
   bool clear_next = false;
   int char_cells;                           // 1: normal char
@@ -559,7 +554,7 @@ void grid_put_linebuf(ScreenGrid *grid, int row, int coloff, int endcol, int cle
     if (col + 1 < endcol) {
       char_cells = line_off2cells(linebuf_char, off_from, max_off_from);
     }
-    redraw_this = redraw_next;
+    bool redraw_this = redraw_next;  // Does character need redraw?
     redraw_next = grid_char_needs_redraw(grid, off_from + (size_t)char_cells,
                                          off_to + (size_t)char_cells,
                                          endcol - col - char_cells);

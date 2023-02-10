@@ -401,10 +401,8 @@ void init_normal_cmds(void)
 /// @return  -1 for invalid command.
 static int find_command(int cmdchar)
 {
-  int i;
   int idx;
   int top, bot;
-  int c;
 
   // A multi-byte character is never a command.
   if (cmdchar >= 0x100) {
@@ -429,8 +427,8 @@ static int find_command(int cmdchar)
   top = NV_CMDS_SIZE - 1;
   idx = -1;
   while (bot <= top) {
-    i = (top + bot) / 2;
-    c = nv_cmds[nv_cmd_idx[i]].cmd_char;
+    int i = (top + bot) / 2;
+    int c = nv_cmds[nv_cmd_idx[i]].cmd_char;
     if (c < 0) {
       c = -c;
     }
@@ -693,7 +691,6 @@ static void normal_get_additional_char(NormalState *s)
   int *cp;
   bool repl = false;            // get character for replace mode
   bool lit = false;             // get extra character literally
-  bool langmap_active = false;  // using :lmap mappings
   int lang;                     // getting a text character
 
   no_mapping++;
@@ -729,6 +726,7 @@ static void normal_get_additional_char(NormalState *s)
 
   // Get a second or third character.
   if (cp != NULL) {
+    bool langmap_active = false;  // using :lmap mappings
     if (repl) {
       State = MODE_REPLACE;                // pretend Replace mode
       ui_cursor_shape();              // show different cursor shape
@@ -1848,7 +1846,6 @@ void clear_showcmd(void)
       snprintf(showcmd_buf, SHOWCMD_BUFLEN, "%" PRId64, (int64_t)lines);
     } else {
       char *s, *e;
-      int l;
       int bytes = 0;
       int chars = 0;
 
@@ -1860,7 +1857,7 @@ void clear_showcmd(void)
         e = ml_get_pos(&VIsual);
       }
       while ((*p_sel != 'e') ? s <= e : s < e) {
-        l = utfc_ptr2len(s);
+        int l = utfc_ptr2len(s);
         if (l == 0) {
           bytes++;
           chars++;
@@ -2427,7 +2424,6 @@ static bool nv_screengo(oparg_T *oap, int dir, long dist)
   int linelen = linetabsize(get_cursor_line_ptr());
   bool retval = true;
   bool atend = false;
-  int n;
   int col_off1;                 // margin offset for first screen line
   int col_off2;                 // margin offset for wrapped screen line
   int width1;                   // text width for first screen line
@@ -2446,6 +2442,7 @@ static bool nv_screengo(oparg_T *oap, int dir, long dist)
   }
 
   if (curwin->w_width_inner != 0) {
+    int n;
     // Instead of sticking at the last character of the buffer line we
     // try to stick in the last column of the screen.
     if (curwin->w_curswant == MAXCOL) {
@@ -2793,7 +2790,6 @@ static int nv_zg_zw(cmdarg_T *cap, int nchar)
 /// Commands that start with "z".
 static void nv_zet(cmdarg_T *cap)
 {
-  int n;
   colnr_T col;
   int nchar = cap->nchar;
   long old_fdl = curwin->w_p_fdl;
@@ -2949,7 +2945,7 @@ static void nv_zet(cmdarg_T *cap)
       } else {
         getvcol(curwin, &curwin->w_cursor, NULL, NULL, &col);
       }
-      n = curwin->w_width_inner - curwin_col_off();
+      int n = curwin->w_width_inner - curwin_col_off();
       if (col + siso < n) {
         col = 0;
       } else {
@@ -3438,7 +3434,6 @@ static void nv_ident(cmdarg_T *cap)
   int cmdchar;
   bool g_cmd;                   // "g" command
   bool tag_cmd = false;
-  char *aux_ptr;
 
   if (cap->cmdchar == 'g') {    // "g*", "g#", "g]" and "gCTRL-]"
     cmdchar = cap->nchar;
@@ -3542,6 +3537,7 @@ static void nv_ident(cmdarg_T *cap)
     STRCAT(buf, p);
     xfree(p);
   } else {
+    char *aux_ptr;
     if (cmdchar == '*') {
       aux_ptr = (magic_isset() ? "/.*~[^$\\" : "/^$\\");
     } else if (cmdchar == '#') {
@@ -3653,10 +3649,8 @@ static void nv_tagpop(cmdarg_T *cap)
 /// Handle scrolling command 'H', 'L' and 'M'.
 static void nv_scroll(cmdarg_T *cap)
 {
-  int used = 0;
   long n;
   linenr_T lnum;
-  int half;
 
   cap->oap->motion_type = kMTLineWise;
   setpcmark();
@@ -3683,11 +3677,12 @@ static void nv_scroll(cmdarg_T *cap)
     }
   } else {
     if (cap->cmdchar == 'M') {
+      int used = 0;
       // Don't count filler lines above the window.
       used -= win_get_fill(curwin, curwin->w_topline)
               - curwin->w_topfill;
       validate_botline(curwin);  // make sure w_empty_rows is valid
-      half = (curwin->w_height_inner - curwin->w_empty_rows + 1) / 2;
+      int half = (curwin->w_height_inner - curwin->w_empty_rows + 1) / 2;
       for (n = 0; curwin->w_topline + n < curbuf->b_ml.ml_line_count; n++) {
         // Count half the number of filler lines to be "below this
         // line" and half to be "above the next line".
@@ -4115,7 +4110,6 @@ static void nv_bracket_block(cmdarg_T *cap, const pos_T *old_pos)
   pos_T prev_pos;
   long n;
   int findc;
-  int c;
 
   if (cap->nchar == '*') {
     cap->nchar = '/';
@@ -4155,6 +4149,7 @@ static void nv_bracket_block(cmdarg_T *cap, const pos_T *old_pos)
   // Try finding the '{' or '}' we want to be at.
   // Also repeat for the given count.
   if (cap->nchar == 'm' || cap->nchar == 'M') {
+    int c;
     // norm is true for "]M" and "[m"
     int norm = ((findc == '{') == (cap->nchar == 'm'));
 
@@ -4361,7 +4356,6 @@ static void nv_brackets(cmdarg_T *cap)
 /// Handle Normal mode "%" command.
 static void nv_percent(cmdarg_T *cap)
 {
-  pos_T *pos;
   linenr_T lnum = curwin->w_cursor.lnum;
 
   cap->oap->inclusive = true;
@@ -4391,6 +4385,7 @@ static void nv_percent(cmdarg_T *cap)
       beginline(BL_SOL | BL_FIX);
     }
   } else {  // "%" : go to matching paren
+    pos_T *pos;
     cap->oap->motion_type = kMTCharWise;
     cap->oap->use_reg_one = true;
     if ((pos = findmatch(cap->oap, NUL)) == NULL) {
@@ -6046,9 +6041,8 @@ static void adjust_for_sel(cmdarg_T *cap)
 /// @return  true when backed up to the previous line.
 bool unadjust_for_sel(void)
 {
-  pos_T *pp;
-
   if (*p_sel == 'e' && !equalpos(VIsual, curwin->w_cursor)) {
+    pos_T *pp;
     if (lt(VIsual, curwin->w_cursor)) {
       pp = &curwin->w_cursor;
     } else {
@@ -6460,7 +6454,6 @@ static void nv_put(cmdarg_T *cap)
 /// @param fix_indent  true for "[p", "[P", "]p" and "]P".
 static void nv_put_opt(cmdarg_T *cap, bool fix_indent)
 {
-  int regname = 0;
   yankreg_T *savereg = NULL;
   bool empty = false;
   bool was_visual = false;
@@ -6506,7 +6499,7 @@ static void nv_put_opt(cmdarg_T *cap, bool fix_indent)
     // Need to save and restore the registers that the delete
     // overwrites if the old contents is being put.
     was_visual = true;
-    regname = cap->oap->regname;
+    int regname = cap->oap->regname;
     bool keep_registers = cap->cmdchar == 'P';
     // '+' and '*' could be the same selection
     bool clipoverwrite = (regname == '+' || regname == '*') && (cb_flags & CB_UNNAMEDMASK);

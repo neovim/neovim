@@ -88,7 +88,6 @@ int get_keystroke(MultiQueue *events)
 {
   char *buf = NULL;
   int buflen = 150;
-  int maxlen;
   int len = 0;
   int n;
   int save_mapped_ctrl_c = mapped_ctrl_c;
@@ -100,7 +99,7 @@ int get_keystroke(MultiQueue *events)
     // Leave some room for check_termcode() to insert a key code into (max
     // 5 chars plus NUL).  And fix_input_buffer() can triple the number of
     // bytes.
-    maxlen = (buflen - 6 - len) / 3;
+    int maxlen = (buflen - 6 - len) / 3;
     if (buf == NULL) {
       buf = xmalloc((size_t)buflen);
     } else if (maxlen < 10) {
@@ -166,7 +165,6 @@ int get_keystroke(MultiQueue *events)
 int get_number(int colon, int *mouse_used)
 {
   int n = 0;
-  int c;
   int typed = 0;
 
   if (mouse_used != NULL) {
@@ -183,7 +181,7 @@ int get_number(int colon, int *mouse_used)
   allow_keys++;  // no mapping here, but recognize keys
   for (;;) {
     ui_cursor_goto(msg_row, msg_col);
-    c = safe_vgetc();
+    int c = safe_vgetc();
     if (ascii_isdigit(c)) {
       n = n * 10 + c - '0';
       msg_putchar(c);
