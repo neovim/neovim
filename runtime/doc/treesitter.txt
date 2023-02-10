@@ -666,6 +666,36 @@ stop({bufnr})                                          *vim.treesitter.stop()*
 ==============================================================================
 Lua module: vim.treesitter.language                  *lua-treesitter-language*
 
+add({lang}, {opts})                            *vim.treesitter.language.add()*
+    Asserts that a parser for the language {lang} is installed.
+
+    Parsers are searched in the `parser` runtime directory, or the provided
+    {path}
+
+    Parameters: ~
+      • {lang}  (string) Language the parser should parse (alphanumerical and
+                `_` only)
+      • {opts}  (table|nil) Options:
+                • filetype (string|string[]) Filetype(s) that lang can be
+                  parsed with. Note this is not strictly the same as lang
+                  since a single lang can parse multiple filetypes. Defaults
+                  to lang.
+                • path (string|nil) Optional path the parser is located at
+                • symbol_name (string|nil) Internal symbol name for the
+                  language to load
+                • silent (boolean|nil) Don't throw an error if language not
+                  found
+
+    Return: ~
+        (boolean) If the specified language is installed
+
+get_lang({filetype})                      *vim.treesitter.language.get_lang()*
+    Parameters: ~
+      • {filetype}  (string)
+
+    Return: ~
+        (string|nil)
+
 inspect_language({lang})          *vim.treesitter.language.inspect_language()*
     Inspects the provided language.
 
@@ -678,24 +708,12 @@ inspect_language({lang})          *vim.treesitter.language.inspect_language()*
     Return: ~
         (table)
 
-                                  *vim.treesitter.language.require_language()*
-require_language({lang}, {path}, {silent}, {symbol_name})
-    Asserts that a parser for the language {lang} is installed.
-
-    Parsers are searched in the `parser` runtime directory, or the provided
-    {path}
+register({lang}, {filetype})              *vim.treesitter.language.register()*
+    Register a lang to be used for a filetype (or list of filetypes).
 
     Parameters: ~
-      • {lang}         (string) Language the parser should parse
-                       (alphanumerical and `_` only)
-      • {path}         (string|nil) Optional path the parser is located at
-      • {silent}       (boolean|nil) Don't throw an error if language not
-                       found
-      • {symbol_name}  (string|nil) Internal symbol name for the language to
-                       load
-
-    Return: ~
-        (boolean) If the specified language is installed
+      • {lang}      (string) Language to register
+      • {filetype}  string|string[] Filetype(s) to associate with lang
 
 
 ==============================================================================

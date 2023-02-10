@@ -164,6 +164,9 @@ The following new APIs or features were added.
 • |vim.treesitter.query.get_node_text()| now accepts a `metadata` option for
   writing custom directives using |vim.treesitter.query.add_directive()|.
 
+• |vim.treesitter.language.add()| as a new replacement for
+  `vim.treesitter.language.require_language`.
+
 ==============================================================================
 CHANGED FEATURES                                                 *news-changes*
 
@@ -202,6 +205,8 @@ DEPRECATIONS                                                *news-deprecations*
 The following functions are now deprecated and will be removed in the next
 release.
 
+• `vim.treesitter.language.require_language()` has been deprecated in favour
+  of |vim.treesitter.language.add()|.
 
 
  vim:tw=78:ts=8:sw=2:et:ft=help:norl:

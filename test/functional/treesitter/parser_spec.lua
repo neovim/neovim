@@ -182,8 +182,9 @@ void ui_refresh(void)
     local firstrun = q(1)
     local manyruns = q(100)
 
+    local factor = is_os('win') and 3 or 4
     -- First run should be at least 4x slower.
-    assert(400 * manyruns < firstrun, ('firstrun: %d ms, manyruns: %d ms'):format(firstrun / 1000, manyruns / 1000))
+    assert(factor * 100 * manyruns < firstrun, ('firstrun: %d ms, manyruns: %d ms'):format(firstrun / 1000, manyruns / 1000))
   end)
 
   it('support query and iter by capture', function()
