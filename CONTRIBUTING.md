@@ -98,7 +98,7 @@ the VCS/git logs more valuable. The general structure of a commit message is:
 ```
 
 - Prefix the commit subject with one of these [_types_](https://github.com/commitizen/conventional-commit-types/blob/master/index.json):
-    - `build`, `ci`, `docs`, `feat`, `fix`, `perf`, `refactor`, `revert`, `test`, `vim-patch`, `dist`
+    - `build`, `ci`, `docs`, `feat`, `fix`, `perf`, `refactor`, `revert`, `test`, `vim-patch`
     - You can **ignore this for "fixup" commits** or any commits you expect to be squashed.
 - Append optional scope to _type_ such as `(lsp)`, `(treesitter)`, `(float)`, …
 - _Description_ shouldn't start with a capital letter or end in a period.
