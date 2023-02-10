@@ -2150,8 +2150,7 @@ void ex_function(exarg_T *eap)
             }
           }
           msg_prt_line(FUNCLINE(fp, j), false);
-          ui_flush();                  // show a line at a time
-          os_breakcheck();
+          line_breakcheck();  // show multiple lines at a time!
         }
         if (!got_int) {
           msg_putchar('\n');

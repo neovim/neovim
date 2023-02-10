@@ -472,11 +472,6 @@ int ui_current_col(void)
   return cursor_col;
 }
 
-handle_T ui_cursor_grid(void)
-{
-  return cursor_grid_handle;
-}
-
 void ui_flush(void)
 {
   assert(!ui_client_channel_id);
