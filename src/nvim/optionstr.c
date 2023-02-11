@@ -330,7 +330,6 @@ void set_string_option_direct(const char *name, int opt_idx, const char *val, in
                               int set_sid)
 {
   char *s;
-  char **varp;
   int both = (opt_flags & (OPT_LOCAL | OPT_GLOBAL)) == 0;
   int idx = opt_idx;
 
@@ -353,7 +352,7 @@ void set_string_option_direct(const char *name, int opt_idx, const char *val, in
 
   s = xstrdup(val);
   {
-    varp = (char **)get_varp_scope(opt, both ? OPT_LOCAL : opt_flags);
+    char **varp = (char **)get_varp_scope(opt, both ? OPT_LOCAL : opt_flags);
     if ((opt_flags & OPT_FREE) && (opt->flags & P_ALLOCED)) {
       free_string_option(*varp);
     }

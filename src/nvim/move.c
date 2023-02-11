@@ -145,7 +145,6 @@ void update_topline(win_T *wp)
 {
   linenr_T old_topline;
   int old_topfill;
-  bool check_topline = false;
   bool check_botline = false;
   long *so_ptr = wp->w_p_so >= 0 ? &wp->w_p_so : &p_so;
   long save_so = *so_ptr;
@@ -189,6 +188,7 @@ void update_topline(win_T *wp)
     wp->w_viewport_invalid = true;
     wp->w_scbind_pos = 1;
   } else {
+    bool check_topline = false;
     // If the cursor is above or near the top of the window, scroll the window
     // to show the line the cursor is in, with 'scrolloff' context.
     if (wp->w_topline > 1) {

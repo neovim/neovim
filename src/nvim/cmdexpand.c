@@ -222,10 +222,8 @@ static void ExpandEscape(expand_T *xp, char *str, int numfiles, char **files, in
 int nextwild(expand_T *xp, int type, int options, bool escape)
 {
   CmdlineInfo *const ccline = get_cmdline_info();
-  int i, j;
-  char *p1;
+  int i;
   char *p2;
-  int difflen;
 
   if (xp->xp_numfiles == -1) {
     set_expand_context(xp);
@@ -258,6 +256,7 @@ int nextwild(expand_T *xp, int type, int options, bool escape)
     // Get next/previous match for a previous expanded pattern.
     p2 = ExpandOne(xp, NULL, NULL, 0, type);
   } else {
+    char *p1;
     if (cmdline_fuzzy_completion_supported(xp)) {
       // If fuzzy matching, don't modify the search string
       p1 = xstrdup(xp->xp_pattern);
@@ -282,6 +281,7 @@ int nextwild(expand_T *xp, int type, int options, bool escape)
 
     // Longest match: make sure it is not shorter, happens with :help.
     if (p2 != NULL && type == WILD_LONGEST) {
+      int j;
       for (j = 0; (size_t)j < xp->xp_pattern_len; j++) {
         if (ccline->cmdbuff[i + j] == '*'
             || ccline->cmdbuff[i + j] == '?') {
@@ -295,7 +295,7 @@ int nextwild(expand_T *xp, int type, int options, bool escape)
   }
 
   if (p2 != NULL && !got_int) {
-    difflen = (int)strlen(p2) - (int)(xp->xp_pattern_len);
+    int difflen = (int)strlen(p2) - (int)(xp->xp_pattern_len);
     if (ccline->cmdlen + difflen + 4 > ccline->cmdbufflen) {
       realloc_cmdbuff(ccline->cmdlen + difflen + 4);
       xp->xp_pattern = ccline->cmdbuff + i;
@@ -454,8 +454,6 @@ static void redraw_wildmenu(expand_T *xp, int num_matches, char **matches, int m
   char *selend = NULL;
   static int first_match = 0;
   bool add_left = false;
-  char *s;
-  int emenu;
   int l;
 
   if (matches == NULL) {        // interrupted completion?
@@ -528,10 +526,9 @@ static void redraw_wildmenu(expand_T *xp, int num_matches, char **matches, int m
       selstart_col = clen;
     }
 
-    s = SHOW_MATCH(i);
+    char *s = SHOW_MATCH(i);
     // Check for menu separators - replace with '|'
-    emenu = (xp->xp_context == EXPAND_MENUS
-             || xp->xp_context == EXPAND_MENUNAMES);
+    int emenu = (xp->xp_context == EXPAND_MENUS || xp->xp_context == EXPAND_MENUNAMES);
     if (emenu && menu_is_separator(s)) {
       STRCPY(buf + len, transchar('|'));
       l = (int)strlen(buf + len);
@@ -847,7 +844,6 @@ char *ExpandOne(expand_T *xp, char *str, char *orig, int options, int mode)
   static int findex;
   static char *orig_save = NULL;      // kept value of orig
   int orig_saved = false;
-  int i;
 
   // first handle the case of using an old match
   if (mode == WILD_NEXT || mode == WILD_PREV
@@ -900,12 +896,12 @@ char *ExpandOne(expand_T *xp, char *str, char *orig, int options, int mode)
   // TODO(philix): use xstpcpy instead of strcat in a loop (ExpandOne)
   if (mode == WILD_ALL && xp->xp_numfiles > 0 && !got_int) {
     size_t len = 0;
-    for (i = 0; i < xp->xp_numfiles; i++) {
+    for (int i = 0; i < xp->xp_numfiles; i++) {
       len += strlen(xp->xp_files[i]) + 1;
     }
     ss = xmalloc(len);
     *ss = NUL;
-    for (i = 0; i < xp->xp_numfiles; i++) {
+    for (int i = 0; i < xp->xp_numfiles; i++) {
       STRCAT(ss, xp->xp_files[i]);
       if (i != xp->xp_numfiles - 1) {
         STRCAT(ss, (options & WILD_USE_NL) ? "\n" : " ");
@@ -1375,7 +1371,6 @@ void set_expand_context(expand_T *xp)
 static const char *set_cmd_index(const char *cmd, exarg_T *eap, expand_T *xp, int *complp)
 {
   const char *p = NULL;
-  size_t len = 0;
   const bool fuzzy = cmdline_fuzzy_complete(cmd);
 
   // Isolate the command and search for it in the command table.
@@ -1410,7 +1405,7 @@ static const char *set_cmd_index(const char *cmd, exarg_T *eap, expand_T *xp, in
     if (p == cmd && vim_strchr("@*!=><&~#", (uint8_t)(*p)) != NULL) {
       p++;
     }
-    len = (size_t)(p - cmd);
+    size_t len = (size_t)(p - cmd);
 
     if (len == 0) {
       xp->xp_context = EXPAND_UNSUCCESSFUL;
@@ -2955,7 +2950,6 @@ static void expand_shellcmd(char *filepat, char ***matches, int *numMatches, int
   char *path = NULL;
   garray_T ga;
   char *buf = xmalloc(MAXPATHL);
-  size_t l;
   char *s, *e;
   int flags = flagsarg;
   bool did_curdir = false;
@@ -3013,7 +3007,7 @@ static void expand_shellcmd(char *filepat, char ***matches, int *numMatches, int
       flags &= ~EW_DIR;
     }
 
-    l = (size_t)(e - s);
+    size_t l = (size_t)(e - s);
     if (l > MAXPATHL - 5) {
       break;
     }

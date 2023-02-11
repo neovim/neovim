@@ -1766,13 +1766,12 @@ bool nlua_exec_file(const char *path)
 
     StringBuilder sb = KV_INITIAL_VALUE;
     kv_resize(sb, 64);
-    ptrdiff_t read_size = -1;
     // Read all input from stdin, unless interrupted (ctrl-c).
     while (true) {
       if (got_int) {  // User canceled.
         return false;
       }
-      read_size = file_read(stdin_dup, IObuff, 64);
+      ptrdiff_t read_size = file_read(stdin_dup, IObuff, 64);
       if (read_size < 0) {  // Error.
         return false;
       }

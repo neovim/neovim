@@ -521,11 +521,10 @@ fmark_T *pos_to_mark(buf_T *buf, fmark_T *fmp, pos_T pos)
 /// @return whether the buffer was switched or not.
 static MarkMoveRes switch_to_mark_buf(fmark_T *fm, bool pcmark_on_switch)
 {
-  bool res;
   if (fm->fnum != curbuf->b_fnum) {
     // Switch to another file.
     int getfile_flag = pcmark_on_switch ? GETF_SETMARK : 0;
-    res = buflist_getfile(fm->fnum, (linenr_T)1, getfile_flag, false) == OK;
+    bool res = buflist_getfile(fm->fnum, (linenr_T)1, getfile_flag, false) == OK;
     return res == true ? kMarkSwitchedBuf : kMarkMoveFailed;
   }
   return 0;

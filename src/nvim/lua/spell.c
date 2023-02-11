@@ -51,7 +51,6 @@ int nlua_spell_check(lua_State *lstate)
   }
 
   hlf_T attr = HLF_COUNT;
-  size_t len = 0;
   size_t pos = 0;
   int capcol = -1;
   int no_res = 0;
@@ -61,7 +60,7 @@ int nlua_spell_check(lua_State *lstate)
 
   while (*str != NUL) {
     attr = HLF_COUNT;
-    len = spell_check(curwin, (char *)str, &attr, &capcol, false);
+    size_t len = spell_check(curwin, (char *)str, &attr, &capcol, false);
     assert(len <= INT_MAX);
 
     if (attr != HLF_COUNT) {

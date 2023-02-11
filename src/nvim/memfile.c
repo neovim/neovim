@@ -603,11 +603,9 @@ static int mf_read(memfile_T *mfp, bhdr_T *hp)
 static int mf_write(memfile_T *mfp, bhdr_T *hp)
 {
   off_T offset;             // offset in the file
-  blocknr_T nr;             // block nr which is being written
   bhdr_T *hp2;
   unsigned page_size;       // number of bytes in a page
   unsigned page_count;      // number of pages written
-  unsigned size;            // number of bytes written
 
   if (mfp->mf_fd < 0) {     // there is no file, can't write
     return FAIL;
@@ -626,7 +624,7 @@ static int mf_write(memfile_T *mfp, bhdr_T *hp)
   /// If block 'mf_infile_count' is not in the hash list, it has been
   /// freed. Fill the space in the file with data from the current block.
   for (;;) {
-    nr = hp->bh_bnum;
+    blocknr_T nr = hp->bh_bnum;  // block nr which is being written
     if (nr > mfp->mf_infile_count) {            // beyond end of file
       nr = mfp->mf_infile_count;
       hp2 = mf_find_hash(mfp, nr);              // NULL caught below
@@ -645,7 +643,7 @@ static int mf_write(memfile_T *mfp, bhdr_T *hp)
     } else {
       page_count = hp2->bh_page_count;
     }
-    size = page_size * page_count;
+    unsigned size = page_size * page_count;  // number of bytes written
     void *data = (hp2 == NULL) ? hp->bh_data : hp2->bh_data;
     if ((unsigned)write_eintr(mfp->mf_fd, data, size) != size) {
       /// Avoid repeating the error message, this mostly happens when the

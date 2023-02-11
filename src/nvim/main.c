@@ -920,9 +920,8 @@ static void remote_request(mparm_T *params, int remote_args, char *server_addr, 
   }
 
   Array args = ARRAY_DICT_INIT;
-  String arg_s;
   for (int t_argc = remote_args; t_argc < argc; t_argc++) {
-    arg_s = cstr_to_string(argv[t_argc]);
+    String arg_s = cstr_to_string(argv[t_argc]);
     ADD(args, STRING_OBJ(arg_s));
   }
 
@@ -1620,9 +1619,6 @@ static void open_script_files(mparm_T *parmp)
 // Also does recovery if "recoverymode" set.
 static void create_windows(mparm_T *parmp)
 {
-  int dorewind;
-  int done = 0;
-
   // Create the number of windows that was requested.
   if (parmp->window_count == -1) {      // was not set
     parmp->window_count = 1;
@@ -1658,6 +1654,7 @@ static void create_windows(mparm_T *parmp)
     }
     do_modelines(0);                    // do modelines
   } else {
+    int done = 0;
     // Open a buffer for windows that don't have one yet.
     // Commands in the vimrc might have loaded a file or split the window.
     // Watch out for autocommands that delete a window.
@@ -1665,7 +1662,7 @@ static void create_windows(mparm_T *parmp)
     // Don't execute Win/Buf Enter/Leave autocommands here
     autocmd_no_enter++;
     autocmd_no_leave++;
-    dorewind = true;
+    int dorewind = true;
     while (done++ < 1000) {
       if (dorewind) {
         if (parmp->window_layout == WIN_TABS) {

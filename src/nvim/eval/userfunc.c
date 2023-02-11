@@ -729,7 +729,6 @@ static void cleanup_function_call(funccall_T *fc)
 /// @param[in]   force   When true, we are exiting.
 static void funccal_unref(funccall_T *fc, ufunc_T *fp, bool force)
 {
-  funccall_T **pfc;
   int i;
 
   if (fc == NULL) {
@@ -738,7 +737,7 @@ static void funccal_unref(funccall_T *fc, ufunc_T *fp, bool force)
 
   fc->fc_refcount--;
   if (force ? fc->fc_refcount <= 0 : !fc_referenced(fc)) {
-    for (pfc = &previous_funccal; *pfc != NULL; pfc = &(*pfc)->caller) {
+    for (funccall_T **pfc = &previous_funccal; *pfc != NULL; pfc = &(*pfc)->caller) {
       if (fc == *pfc) {
         *pfc = fc->caller;
         free_funccal_contents(fc);
@@ -3289,7 +3288,6 @@ int func_has_abort(void *cookie)
 /// Changes "rettv" in-place.
 void make_partial(dict_T *const selfdict, typval_T *const rettv)
 {
-  char *fname;
   char *tofree = NULL;
   ufunc_T *fp;
   char fname_buf[FLEN_FIXED + 1];
@@ -3298,7 +3296,7 @@ void make_partial(dict_T *const selfdict, typval_T *const rettv)
   if (rettv->v_type == VAR_PARTIAL && rettv->vval.v_partial->pt_func != NULL) {
     fp = rettv->vval.v_partial->pt_func;
   } else {
-    fname = rettv->v_type == VAR_FUNC || rettv->v_type == VAR_STRING
+    char *fname = rettv->v_type == VAR_FUNC || rettv->v_type == VAR_STRING
                                       ? rettv->vval.v_string
                                       : rettv->vval.v_partial->pt_name;
     // Translate "s:func" to the stored function name.
@@ -3319,7 +3317,6 @@ void make_partial(dict_T *const selfdict, typval_T *const rettv)
       pt->pt_name = rettv->vval.v_string;
     } else {
       partial_T *ret_pt = rettv->vval.v_partial;
-      int i;
 
       // Partial: copy the function name, use selfdict and copy
       // args. Can't take over name or args, the partial might
@@ -3335,7 +3332,7 @@ void make_partial(dict_T *const selfdict, typval_T *const rettv)
         size_t arg_size = sizeof(typval_T) * (size_t)ret_pt->pt_argc;
         pt->pt_argv = (typval_T *)xmalloc(arg_size);
         pt->pt_argc = ret_pt->pt_argc;
-        for (i = 0; i < pt->pt_argc; i++) {
+        for (int i = 0; i < pt->pt_argc; i++) {
           tv_copy(&ret_pt->pt_argv[i], &pt->pt_argv[i]);
         }
       }
@@ -3641,14 +3638,13 @@ bool set_ref_in_func(char *name, ufunc_T *fp_in, int copyID)
   int error = FCERR_NONE;
   char fname_buf[FLEN_FIXED + 1];
   char *tofree = NULL;
-  char *fname;
   bool abort = false;
   if (name == NULL && fp_in == NULL) {
     return false;
   }
 
   if (fp_in == NULL) {
-    fname = fname_trans_sid(name, fname_buf, &tofree, &error);
+    char *fname = fname_trans_sid(name, fname_buf, &tofree, &error);
     fp = find_func(fname);
   }
   if (fp != NULL) {

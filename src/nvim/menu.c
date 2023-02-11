@@ -815,7 +815,6 @@ static int show_menus(char *const path_name, int modes)
 static void show_menus_recursive(vimmenu_T *menu, int modes, int depth)
 {
   int i;
-  int bit;
 
   if (menu != NULL && (menu->modes & modes) == 0x0) {
     return;
@@ -838,7 +837,7 @@ static void show_menus_recursive(vimmenu_T *menu, int modes, int depth)
   }
 
   if (menu != NULL && menu->children == NULL) {
-    for (bit = 0; bit < MENU_MODES; bit++) {
+    for (int bit = 0; bit < MENU_MODES; bit++) {
       if ((menu->modes & modes & (1 << bit)) != 0) {
         msg_putchar('\n');
         if (got_int) {                  // "q" hit for "--more--"
@@ -902,7 +901,6 @@ char *set_context_in_menu_cmd(expand_T *xp, const char *cmd, char *arg, bool for
   char *after_dot;
   char *p;
   char *path_name = NULL;
-  char *name;
   int unmenu;
   vimmenu_T *menu;
   int expand_menus;
@@ -963,7 +961,7 @@ char *set_context_in_menu_cmd(expand_T *xp, const char *cmd, char *arg, bool for
       path_name = xmalloc(path_len);
       xstrlcpy(path_name, arg, path_len);
     }
-    name = path_name;
+    char *name = path_name;
     while (name != NULL && *name) {
       p = menu_name_skip(name);
       while (menu != NULL) {

@@ -153,11 +153,10 @@ static int sign_group_get_next_signid(buf_T *buf, const char *groupname)
   int id = 1;
   signgroup_T *group = NULL;
   sign_entry_T *sign;
-  hashitem_T *hi;
   int found = false;
 
   if (groupname != NULL) {
-    hi = hash_find(&sg_table, (char *)groupname);
+    hashitem_T *hi = hash_find(&sg_table, (char *)groupname);
     if (HASHITEM_EMPTY(hi)) {
       return id;
     }
@@ -1198,7 +1197,6 @@ static linenr_T sign_jump(int sign_id, char *sign_group, buf_T *buf)
 /// ":sign define {name} ..." command
 static void sign_define_cmd(char *sign_name, char *cmdline)
 {
-  char *arg;
   char *p = cmdline;
   char *icon = NULL;
   char *text = NULL;
@@ -1210,7 +1208,7 @@ static void sign_define_cmd(char *sign_name, char *cmdline)
 
   // set values for a defined sign.
   for (;;) {
-    arg = skipwhite(p);
+    char *arg = skipwhite(p);
     if (*arg == NUL) {
       break;
     }
@@ -1585,7 +1583,6 @@ static void sign_getinfo(sign_T *sp, dict_T *retdict)
 static void sign_getlist(const char *name, list_T *retlist)
 {
   sign_T *sp = first_sign;
-  dict_T *dict;
 
   if (name != NULL) {
     sp = sign_find((char *)name, NULL);
@@ -1595,7 +1592,7 @@ static void sign_getlist(const char *name, list_T *retlist)
   }
 
   for (; sp != NULL && !got_int; sp = sp->sn_next) {
-    dict = tv_dict_alloc();
+    dict_T *dict = tv_dict_alloc();
     tv_list_append_dict(retlist, dict);
     sign_getinfo(sp, dict);
 
@@ -1610,11 +1607,10 @@ list_T *get_buffer_signs(buf_T *buf)
   FUNC_ATTR_NONNULL_RET FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
   sign_entry_T *sign;
-  dict_T *d;
   list_T *const l = tv_list_alloc(kListLenMayKnow);
 
   FOR_ALL_SIGNS_IN_BUF(buf, sign) {
-    d = sign_get_info(sign);
+    dict_T *d = sign_get_info(sign);
     tv_list_append_dict(l, d);
   }
   return l;
@@ -2055,7 +2051,6 @@ void f_sign_getdefined(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 void f_sign_getplaced(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
   buf_T *buf = NULL;
-  dict_T *dict;
   dictitem_T *di;
   linenr_T lnum = 0;
   int sign_id = 0;
@@ -2072,6 +2067,7 @@ void f_sign_getplaced(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     }
 
     if (argvars[1].v_type != VAR_UNKNOWN) {
+      dict_T *dict;
       if (argvars[1].v_type != VAR_DICT
           || ((dict = argvars[1].vval.v_dict) == NULL)) {
         emsg(_(e_dictreq));
@@ -2327,8 +2323,6 @@ static void sign_undefine_multiple(list_T *l, list_T *retlist)
 /// "sign_undefine()" function
 void f_sign_undefine(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
-  const char *name;
-
   if (argvars[0].v_type == VAR_LIST && argvars[1].v_type == VAR_UNKNOWN) {
     // Undefine multiple signs
     tv_list_alloc_ret(rettv, kListLenMayKnow);
@@ -2345,7 +2339,7 @@ void f_sign_undefine(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     rettv->vval.v_number = 0;
   } else {
     // Free only the specified sign
-    name = tv_get_string_chk(&argvars[0]);
+    const char *name = tv_get_string_chk(&argvars[0]);
     if (name == NULL) {
       return;
     }
