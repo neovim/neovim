@@ -582,7 +582,7 @@ void stuffRedoReadbuff(const char *s)
   add_buff(&readbuf2, s, -1L);
 }
 
-void stuffReadbuffLen(const char *s, long len)
+void stuffReadbuffLen(const char *s, ptrdiff_t len)
 {
   add_buff(&readbuf1, s, len);
 }
@@ -634,7 +634,7 @@ void stuffescaped(const char *arg, bool literally)
       arg++;
     }
     if (arg > start) {
-      stuffReadbuffLen(start, (arg - start));
+      stuffReadbuffLen(start, arg - start);
     }
 
     // stuff a single special character

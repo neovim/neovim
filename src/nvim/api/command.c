@@ -512,7 +512,7 @@ String nvim_cmd(uint64_t channel_id, Dict(cmd) *cmd, Dict(cmd_opts) *opts, Error
     } else if (cmd->count.type != kObjectTypeInteger || cmd->count.data.integer < 0) {
       VALIDATION_ERROR("'count' must be a non-negative Integer");
     }
-    set_cmd_count(&ea, cmd->count.data.integer, true);
+    set_cmd_count(&ea, (linenr_T)cmd->count.data.integer, true);
   }
 
   if (HAS_KEY(cmd->reg)) {
@@ -1005,7 +1005,7 @@ void create_user_command(String name, Object command, Dict(user_command) *opts, 
                          Error *err)
 {
   uint32_t argt = 0;
-  long def = -1;
+  int64_t def = -1;
   cmd_addr_T addr_type_arg = ADDR_NONE;
   int compl = EXPAND_NOTHING;
   char *compl_arg = NULL;

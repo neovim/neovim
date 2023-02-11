@@ -905,14 +905,14 @@ void tv_list_remove(typval_T *argvars, typval_T *rettv, const char *arg_errmsg)
     return;
   }
 
-  long idx = tv_get_number_chk(&argvars[1], &error);
+  int64_t idx = tv_get_number_chk(&argvars[1], &error);
 
   listitem_T *item;
 
   if (error) {
     // Type error: do nothing, errmsg already given.
   } else if ((item = tv_list_find(l, (int)idx)) == NULL) {
-    semsg(_(e_listidx), (int64_t)idx);
+    semsg(_(e_listidx), idx);
   } else {
     if (argvars[2].v_type == VAR_UNKNOWN) {
       // Remove one item, return its value.
@@ -922,11 +922,11 @@ void tv_list_remove(typval_T *argvars, typval_T *rettv, const char *arg_errmsg)
     } else {
       listitem_T *item2;
       // Remove range of items, return list with values.
-      long end = tv_get_number_chk(&argvars[2], &error);
+      int64_t end = tv_get_number_chk(&argvars[2], &error);
       if (error) {
         // Type error: do nothing.
       } else if ((item2 = tv_list_find(l, (int)end)) == NULL) {
-        semsg(_(e_listidx), (int64_t)end);
+        semsg(_(e_listidx), end);
       } else {
         int cnt = 0;
 
@@ -1140,7 +1140,7 @@ static void do_sort_uniq(typval_T *argvars, typval_T *rettv, bool sort)
 {
   ListSortItem *ptrs;
   long len;
-  long i;
+  int i;
 
   // Pointer to current info struct used in compare function. Save and restore
   // the current one for nested calls.
@@ -1184,7 +1184,7 @@ static void do_sort_uniq(typval_T *argvars, typval_T *rettv, bool sort)
       } else {
         bool error = false;
 
-        i = tv_get_number_chk(&argvars[1], &error);
+        i = (int)tv_get_number_chk(&argvars[1], &error);
         if (error) {
           goto theend;  // type error; errmsg already given
         }
@@ -2715,7 +2715,7 @@ void tv_blob_remove(typval_T *argvars, typval_T *rettv, const char *arg_errmsg)
   }
 
   bool error = false;
-  long idx = tv_get_number_chk(&argvars[1], &error);
+  int64_t idx = tv_get_number_chk(&argvars[1], &error);
 
   if (!error) {
     const int len = tv_blob_len(b);
@@ -2725,7 +2725,7 @@ void tv_blob_remove(typval_T *argvars, typval_T *rettv, const char *arg_errmsg)
       idx = len + idx;
     }
     if (idx < 0 || idx >= len) {
-      semsg(_(e_blobidx), (int64_t)idx);
+      semsg(_(e_blobidx), idx);
       return;
     }
     if (argvars[2].v_type == VAR_UNKNOWN) {
@@ -2736,7 +2736,7 @@ void tv_blob_remove(typval_T *argvars, typval_T *rettv, const char *arg_errmsg)
       b->bv_ga.ga_len--;
     } else {
       // Remove range of items, return blob with values.
-      long end = tv_get_number_chk(&argvars[2], &error);
+      int64_t end = tv_get_number_chk(&argvars[2], &error);
       if (error) {
         return;
       }
@@ -2745,7 +2745,7 @@ void tv_blob_remove(typval_T *argvars, typval_T *rettv, const char *arg_errmsg)
         end = len + end;
       }
       if (end >= len || idx > end) {
-        semsg(_(e_blobidx), (int64_t)end);
+        semsg(_(e_blobidx), end);
         return;
       }
       blob_T *const blob = tv_blob_alloc();

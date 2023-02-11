@@ -696,7 +696,7 @@ static char *ex_let_one(char *arg, typval_T *const tv, const bool copy, const bo
 
       if (!failed) {
         if (opt_type != gov_string || s != NULL) {
-          char *err = set_option_value(arg, n, s, scope);
+          char *err = set_option_value(arg, (long)n, s, scope);
           arg_end = p;
           if (err != NULL) {
             emsg(_(err));

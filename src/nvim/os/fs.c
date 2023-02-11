@@ -12,14 +12,20 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
+#include <uv.h>
 
 #include "auto/config.h"
+#include "nvim/ascii.h"
 #include "nvim/gettext.h"
 #include "nvim/globals.h"
 #include "nvim/log.h"
 #include "nvim/macros.h"
+#include "nvim/memory.h"
+#include "nvim/message.h"
 #include "nvim/option_defs.h"
 #include "nvim/os/fs_defs.h"
+#include "nvim/os/os.h"
+#include "nvim/path.h"
 #include "nvim/types.h"
 #include "nvim/vim.h"
 
@@ -27,23 +33,16 @@
 # include <sys/uio.h>
 #endif
 
-#include <uv.h>
-
-#include "nvim/ascii.h"
-#include "nvim/memory.h"
-#include "nvim/message.h"
-#include "nvim/os/os.h"
-#include "nvim/path.h"
-
-struct iovec;
-
 #ifdef MSWIN
-# include "nvim/mbyte.h"  // for utf8_to_utf16, utf16_to_utf8
+# include "nvim/mbyte.h"
+# include "nvim/option.h"
 #endif
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "os/fs.c.generated.h"
 #endif
+
+struct iovec;
 
 #define RUN_UV_FS_FUNC(ret, func, ...) \
   do { \

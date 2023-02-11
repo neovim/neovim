@@ -4127,7 +4127,7 @@ int do_join(size_t count, int insert_space, int save_undo, int use_formatoptions
     linenr_T lnum = curwin->w_cursor.lnum + t;
     colnr_T mincol = (colnr_T)0;
     linenr_T lnum_amount = -t;
-    long col_amount = (cend - newp - spaces_removed);
+    colnr_T col_amount = (colnr_T)(cend - newp - spaces_removed);
 
     mark_col_adjust(lnum, mincol, lnum_amount, col_amount, spaces_removed);
 

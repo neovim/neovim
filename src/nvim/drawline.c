@@ -615,7 +615,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
              foldinfo_T foldinfo, DecorProviders *providers, char **provider_err)
 {
   int c = 0;                          // init for GCC
-  long vcol = 0;                      // virtual column (for tabs)
+  colnr_T vcol = 0;                   // virtual column (for tabs)
   long vcol_sbr = -1;                 // virtual column after showbreak
   long vcol_prev = -1;                // "vcol" of previous character
   char *line;                         // current line
@@ -657,7 +657,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
   bool noinvcur = false;                // don't invert the cursor
   bool lnum_in_visual_area = false;
   pos_T pos;
-  long v;
+  ptrdiff_t v;
 
   int char_attr = 0;                    // attributes for next character
   bool attr_pri = false;                // char_attr has priority
@@ -798,7 +798,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
     // Check for columns to display for 'colorcolumn'.
     color_cols = wp->w_buffer->terminal ? NULL : wp->w_p_cc_cols;
     if (color_cols != NULL) {
-      draw_color_col = advance_color_col((int)VCOL_HLC, &color_cols);
+      draw_color_col = advance_color_col(VCOL_HLC, &color_cols);
     }
 
     if (wp->w_p_spell
@@ -1075,7 +1075,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
     chartabsize_T cts;
     int charsize;
 
-    init_chartabsize_arg(&cts, wp, lnum, (colnr_T)vcol, line, ptr);
+    init_chartabsize_arg(&cts, wp, lnum, vcol, line, ptr);
     while (cts.cts_vcol < v && *cts.cts_ptr != NUL) {
       charsize = win_lbr_chartabsize(&cts, NULL);
       cts.cts_vcol += charsize;
@@ -1096,7 +1096,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
                      || draw_color_col
                      || virtual_active()
                      || (VIsual_active && wp->w_buffer == curwin->w_buffer))) {
-      vcol = v;
+      vcol = (colnr_T)v;
     }
 
     // Handle a character that's not completely on the screen: Put ptr at
@@ -1116,7 +1116,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
     if (tocol <= vcol) {
       fromcol = 0;
     } else if (fromcol >= 0 && fromcol < vcol) {
-      fromcol = (int)vcol;
+      fromcol = vcol;
     }
 
     // When w_skipcol is non-zero, first line needs 'showbreak'
@@ -1473,7 +1473,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
 
         if (has_decor && row == startrow + filler_lines) {
           // hide virt_text on text hidden by 'nowrap'
-          decor_redraw_col(wp->w_buffer, (int)vcol, off, true, &decor_state);
+          decor_redraw_col(wp->w_buffer, vcol, off, true, &decor_state);
         }
 
         if (saved_n_extra) {
@@ -1570,7 +1570,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
         }
       } else if (area_attr != 0 && (vcol == tocol
                                     || (noinvcur
-                                        && (colnr_T)vcol == wp->w_virtcol))) {
+                                        && vcol == wp->w_virtcol))) {
         area_attr = 0;                          // stop highlighting
         area_active = false;
       }
@@ -1875,7 +1875,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
 
         if (has_decor && v > 0) {
           bool selected = (area_active || (area_highlighting && noinvcur
-                                           && (colnr_T)vcol == wp->w_virtcol));
+                                           && vcol == wp->w_virtcol));
           int extmark_attr = decor_redraw_col(wp->w_buffer, (colnr_T)v - 1, off,
                                               selected, &decor_state);
           if (extmark_attr != 0) {
@@ -1984,7 +1984,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
           char *p = ptr - (mb_off + 1);
           chartabsize_T cts;
 
-          init_chartabsize_arg(&cts, wp, lnum, (colnr_T)vcol, line, p);
+          init_chartabsize_arg(&cts, wp, lnum, vcol, line, p);
           n_extra = win_lbr_chartabsize(&cts, NULL) - 1;
 
           // We have just drawn the showbreak value, no need to add
@@ -2003,7 +2003,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
           }
 
           if (c == TAB && n_extra + col > grid->cols) {
-            n_extra = tabstop_padding((colnr_T)vcol, wp->w_buffer->b_p_ts,
+            n_extra = tabstop_padding(vcol, wp->w_buffer->b_p_ts,
                                       wp->w_buffer->b_p_vts_array) - 1;
           }
           c_extra = mb_off > 0 ? MB_FILLER_CHAR : ' ';
@@ -2203,7 +2203,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
                            && (wp->w_p_rl ? (col >= 0) : (col < grid->cols))
                            && !(noinvcur
                                 && lnum == wp->w_cursor.lnum
-                                && (colnr_T)vcol == wp->w_virtcol)))
+                                && vcol == wp->w_virtcol)))
                    && lcs_eol_one > 0) {
           // Display a '$' after the line or highlight an extra
           // character if the line break is included.
@@ -2456,7 +2456,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
 
       // check if line ends before left margin
       if (vcol < v + col - win_col_off(wp)) {
-        vcol = v + col - win_col_off(wp);
+        vcol = (colnr_T)v + col - win_col_off(wp);
       }
       // Get rid of the boguscols now, we want to draw until the right
       // edge for 'cursorcolumn'.
@@ -2464,7 +2464,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
       // boguscols = 0;  // Disabled because value never read after this
 
       if (draw_color_col) {
-        draw_color_col = advance_color_col((int)VCOL_HLC, &color_cols);
+        draw_color_col = advance_color_col(VCOL_HLC, &color_cols);
       }
 
       bool has_virttext = false;
@@ -2523,7 +2523,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
           schar_from_ascii(linebuf_char[off], ' ');
           col += col_stride;
           if (draw_color_col) {
-            draw_color_col = advance_color_col((int)VCOL_HLC, &color_cols);
+            draw_color_col = advance_color_col(VCOL_HLC, &color_cols);
           }
 
           int col_attr = base_attr;
@@ -2597,7 +2597,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
 
     // advance to the next 'colorcolumn'
     if (draw_color_col) {
-      draw_color_col = advance_color_col((int)VCOL_HLC, &color_cols);
+      draw_color_col = advance_color_col(VCOL_HLC, &color_cols);
     }
 
     // Highlight the cursor column if 'cursorcolumn' is set.  But don't

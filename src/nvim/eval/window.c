@@ -192,9 +192,9 @@ win_T *find_tabwin(typval_T *wvp, typval_T *tvp)
 
   if (wvp->v_type != VAR_UNKNOWN) {
     if (tvp->v_type != VAR_UNKNOWN) {
-      long n = tv_get_number(tvp);
+      int n = (int)tv_get_number(tvp);
       if (n >= 0) {
-        tp = find_tabpage((int)n);
+        tp = find_tabpage(n);
       }
     } else {
       tp = curtab;

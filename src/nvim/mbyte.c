@@ -2613,8 +2613,8 @@ char *string_convert_ext(const vimconv_T *const vcp, char *ptr, size_t *lenp, si
 
 /// Table set by setcellwidths().
 typedef struct {
-  long first;
-  long last;
+  int64_t first;
+  int64_t last;
   char width;
 } cw_interval_T;
 

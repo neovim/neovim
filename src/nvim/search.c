@@ -1031,7 +1031,7 @@ int do_search(oparg_T *oap, int dirc, int search_delim, char *pat, long count, i
   struct soffset old_off;
   int retval;                   // Return value
   char *p;
-  long c;
+  int64_t c;
   char *dircp;
   char *strcopy = NULL;
   char *ps;

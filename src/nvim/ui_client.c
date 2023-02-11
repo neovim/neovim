@@ -22,6 +22,10 @@
 #include "nvim/ui.h"
 #include "nvim/ui_client.h"
 
+#ifdef MSWIN
+# include "nvim/os/os_win_console.h"
+#endif
+
 static TUIData *tui = NULL;
 static bool ui_client_is_remote = false;
 
@@ -31,7 +35,6 @@ static bool ui_client_is_remote = false;
 # include "ui_events_client.generated.h"
 #endif
 // uncrustify:on
-//
 
 uint64_t ui_client_start_server(int argc, char **argv)
 {

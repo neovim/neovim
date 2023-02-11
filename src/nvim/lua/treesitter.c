@@ -393,7 +393,7 @@ static int parser_parse(lua_State *L)
   TSTree *new_tree = NULL;
   size_t len;
   const char *str;
-  long bufnr;
+  handle_T bufnr;
   buf_T *buf;
   TSInput input;
 
@@ -406,13 +406,13 @@ static int parser_parse(lua_State *L)
     break;
 
   case LUA_TNUMBER:
-    bufnr = lua_tointeger(L, 3);
-    buf = handle_get_buffer((handle_T)bufnr);
+    bufnr = (handle_T)lua_tointeger(L, 3);
+    buf = handle_get_buffer(bufnr);
 
     if (!buf) {
 #define BUFSIZE 256
       char ebuf[BUFSIZE] = { 0 };
-      vim_snprintf(ebuf, BUFSIZE, "invalid buffer handle: %ld", bufnr);
+      vim_snprintf(ebuf, BUFSIZE, "invalid buffer handle: %d", bufnr);
       return luaL_argerror(L, 3, ebuf);
 #undef BUFSIZE
     }
@@ -898,8 +898,8 @@ static int node_child(lua_State *L)
   if (!node_check(L, 1, &node)) {
     return 0;
   }
-  long num = lua_tointeger(L, 2);
-  TSNode child = ts_node_child(node, (uint32_t)num);
+  uint32_t num = (uint32_t)lua_tointeger(L, 2);
+  TSNode child = ts_node_child(node, num);
 
   push_node(L, child, 1);
   return 1;
@@ -911,8 +911,8 @@ static int node_named_child(lua_State *L)
   if (!node_check(L, 1, &node)) {
     return 0;
   }
-  long num = lua_tointeger(L, 2);
-  TSNode child = ts_node_named_child(node, (uint32_t)num);
+  uint32_t num = (uint32_t)lua_tointeger(L, 2);
+  TSNode child = ts_node_named_child(node, num);
 
   push_node(L, child, 1);
   return 1;
