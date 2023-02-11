@@ -208,8 +208,10 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - name: Setup common environment variables
-        run: ./.github/workflows/env.sh ${{ matrix.flavor }}
+      - name: Set up environment
+        run: |
+          ./.github/workflows/env.sh ${{ matrix.flavor }}
+          ulimit -c unlimited
 
       - name: Create log dir
         run: mkdir -p "${LOG_DIR}"
@@ -225,7 +227,22 @@ jobs:
           brew install automake cpanminus ninja
 
       - name: Setup interpreter packages
-        run: ./ci/install.sh
+        run: |
+          # Use default CC to avoid compilation problems when installing Python modules.
+          echo "Install neovim module for Python."
+          CC=cc python3 -m pip -q install --user --upgrade pynvim
+
+          echo "Install neovim RubyGem."
+          gem install --no-document --bindir "$BIN_DIR" --user-install --pre neovim
+
+          echo "Install neovim npm package"
+          npm install -g neovim
+          npm link neovim
+
+          if [[ $CI_OS_NAME != osx ]]; then
+            sudo cpanm -n Neovim::Ext || cat "$HOME/.cpanm/build.log"
+            perl -W -e 'use Neovim::Ext; print $Neovim::Ext::VERSION'
+          fi
 
       - uses: ./.github/actions/cache
 
@@ -251,18 +268,23 @@ jobs:
         run: echo "status=${{ job.status }}" >> $GITHUB_OUTPUT
 
       - if: matrix.flavor != 'tsan' && matrix.flavor != 'functionaltest-lua' && (success() || failure() && steps.abort_job.outputs.status == 'success')
-        name: Unittests
+        name: Unittest
         timeout-minutes: 5
-        run: ./ci/run_tests.sh unittests
+        run: cmake --build build --target unittest
 
-      - if: success() || failure() && steps.abort_job.outputs.status == 'success'
-        name: Functionaltests
+      - if: matrix.flavor != 'functionaltest-lua' && (success() || failure() && steps.abort_job.outputs.status == 'success')
+        name: Functionaltest
         timeout-minutes: 15
-        run: ./ci/run_tests.sh functionaltests
+        run: cmake --build build --target functionaltest
+
+      - if: matrix.flavor == 'functionaltest-lua' && (success() || failure() && steps.abort_job.outputs.status == 'success')
+        name: Functionaltest with PUC Lua
+        timeout-minutes: 15
+        run: cmake --build build --target functionaltest-lua
 
       - if: matrix.flavor != 'tsan' && (success() || failure() && steps.abort_job.outputs.status == 'success')
-        name: Oldtests
-        run: ./ci/run_tests.sh oldtests
+        name: Oldtest
+        run: make oldtest
 
       - if: success() || failure() && steps.abort_job.outputs.status == 'success'
         name: Install
@@ -270,11 +292,65 @@ jobs:
 
       - if: success() || failure() && steps.abort_job.outputs.status == 'success'
         name: Installtests
-        run: ./ci/run_tests.sh installtests
+        run: |
+          "${INSTALL_PREFIX}/bin/nvim" --version
+          if ! "${INSTALL_PREFIX}/bin/nvim" -u NONE -e -c ':help' -c ':qall'; then
+            echo "Running ':help' in the installed nvim failed."
+            echo "Maybe the helptags have not been generated properly."
+            echo 'Failed running :help'
+            exit 1
+          fi
+
+          # Check that all runtime files were installed
+          for file in $(git -C runtime ls-files '*.vim' '*.ps' '*.dict' '*.py' '*.tutor'); do
+            if ! test -e "$INSTALL_PREFIX/share/nvim/runtime/$file"; then
+              printf "%s%s" 'It appears that %s is not installed.' "$file"
+              exit 1
+            fi
+          done
+
+          # Check that some runtime files are installed and are executables
+          for file in $(git -C runtime ls-files '*.awk' '*.sh' '*.bat'); do
+            if ! test -x "$INSTALL_PREFIX/share/nvim/runtime/$file"; then
+              printf "%s%s" 'It appears that %s is not installed or is not executable.' "$file"
+              exit 1
+            fi
+          done
+
+          # Check that generated syntax file has function names, #5060.
+          genvimsynf=syntax/vim/generated.vim
+          gpat='syn keyword vimFuncName .*eval'
+          if ! grep -q "$gpat" "${INSTALL_PREFIX}/share/nvim/runtime/$genvimsynf"; then
+            echo "It appears that $genvimsynf does not contain $gpat."
+            exit 1
+          fi
 
       - if: success() || failure() && steps.abort_job.outputs.status == 'success'
         name: Show logs
         run: cat $(find "$LOG_DIR" -type f)
+
+      - if: success() || failure() && steps.abort_job.outputs.status == 'success'
+        name: Show core dumps
+        run: |
+          app="${1:-${BUILD_DIR}/bin/nvim}"
+          if test "${CI_OS_NAME}" = osx; then
+            cores="$(find /cores/ -type f -print)"
+          else
+            cores="$(find ./ -type f \( -name 'core.*' -o -name core -o -name nvim.core \) -print)"
+          fi
+
+          if test -z "${cores}"; then
+            exit 0
+          fi
+          for core in $cores; do
+            if test "${CI_OS_NAME}" = osx; then
+              lldb -Q -o "bt all" -f "${app}" -c "${core}"
+            else
+              gdb -n -batch -ex 'thread apply all bt full' "${app}" -c "${core}"
+            fi
+          done
+          echo 'Core dumps found'
+          exit 1
 
   old_cmake:
     name: Test oldest supported cmake
@@ -371,15 +447,15 @@ jobs:
           "status=${{ job.status }}" >> $env:GITHUB_OUTPUT
 
       - if: success() || failure() && steps.abort_job.outputs.status == 'success'
-        name: Run functionaltests
+        name: Run functionaltest
         timeout-minutes: 15
         run: cmake --build build --target functionaltest
 
       - if: success() || failure() && steps.abort_job.outputs.status == 'success'
-        name: Run oldtests
+        name: Run oldtest
         run: |
           # Add MSYS to path, required for e.g. `find` used in test scripts.
-          # But would break functionaltests, where its `more` would be used then.
+          # But would break functionaltest, where its `more` would be used then.
           $OldPath = $env:PATH
           $env:PATH = "C:\msys64\usr\bin;$env:PATH"
           & "C:\msys64\mingw64\bin\mingw32-make.exe" -C $(Convert-Path src\nvim\testdir) VERBOSE=1
