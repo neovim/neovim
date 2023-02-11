@@ -65,8 +65,8 @@ jobs:
 
       - name: Build third-party deps
         run: |
-          cmake -S cmake.deps -B "${DEPS_BUILD_DIR}" -G Ninja ${DEPS_CMAKE_FLAGS}
-          cmake --build "${DEPS_BUILD_DIR}"
+          cmake -S cmake.deps -B $DEPS_BUILD_DIR -G Ninja
+          cmake --build $DEPS_BUILD_DIR
 
       - if: "!cancelled()"
         name: Determine if run should be aborted
@@ -106,8 +106,7 @@ jobs:
 
       - if: success() || failure() && steps.abort_job.outputs.status == 'success'
         name: check uncrustify
-        run: |
-          git diff --color --exit-code
+        run: git diff --color --exit-code
 
   lintc:
     # This job tests two things: it lints the code but also builds neovim using
@@ -145,14 +144,18 @@ jobs:
             # lua-luv-dev
 
             # Remove comments from packages once we start using these external
-            # dependencies. See env.sh for more context.
+            # dependencies.
 
       - uses: ./.github/actions/cache
 
       - name: Build third-party deps
         run: |
-          cmake -S cmake.deps -B "${DEPS_BUILD_DIR}" -G Ninja ${DEPS_CMAKE_FLAGS}
-          cmake --build "${DEPS_BUILD_DIR}"
+          # Ideally all dependencies should external for this job, but some
+          # dependencies don't have the required version available. We use the
+          # bundled versions for these with the hopes of being able to remove them
+          # later on.
+          cmake -S cmake.deps -B $DEPS_BUILD_DIR -G Ninja -D USE_BUNDLED=OFF -D USE_BUNDLED_LUV=ON -D USE_BUNDLED_LIBVTERM=ON
+          cmake --build $DEPS_BUILD_DIR
 
       - name: Build
         run: |
@@ -180,18 +183,16 @@ jobs:
           - flavor: asan
             cc: clang
             runner: ubuntu-22.04
-            os: linux
+            sanitizer_flags: -D CLANG_ASAN_UBSAN=ON
           - flavor: tsan
             cc: clang
             runner: ubuntu-22.04
-            os: linux
+            sanitizer_flags: -D CLANG_TSAN=ON
           - flavor: uchar
             cc: gcc
             runner: ubuntu-22.04
-            os: linux
           - cc: clang
             runner: macos-12
-            os: osx
 
             # functionaltest-lua is our dumping ground for non-mainline configurations.
             # 1. Check that the tests pass with PUC Lua instead of LuaJIT.
@@ -199,12 +200,11 @@ jobs:
           - flavor: functionaltest-lua
             cc: gcc
             runner: ubuntu-22.04
-            os: linux
+            deps_flags: -D USE_BUNDLED_LUAJIT=OFF -D USE_BUNDLED_LUA=ON
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 45
     env:
       CC: ${{ matrix.cc }}
-      CI_OS_NAME: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v3
 
@@ -214,14 +214,14 @@ jobs:
           ulimit -c unlimited
 
       - name: Create log dir
-        run: mkdir -p "${LOG_DIR}"
+        run: mkdir -p "$LOG_DIR"
 
       - name: Install apt packages
-        if: matrix.os == 'linux'
+        if: runner.os == 'Linux'
         run: ./.github/scripts/install_deps_ubuntu.sh
 
       - name: Install brew packages
-        if: matrix.os == 'osx'
+        if: runner.os == 'macOS'
         run: |
           brew update --quiet
           brew install automake cpanminus ninja
@@ -239,7 +239,7 @@ jobs:
           npm install -g neovim
           npm link neovim
 
-          if [[ $CI_OS_NAME != osx ]]; then
+          if [[ $RUNNER_OS != macOS ]]; then
             sudo cpanm -n Neovim::Ext || cat "$HOME/.cpanm/build.log"
             perl -W -e 'use Neovim::Ext; print $Neovim::Ext::VERSION'
           fi
@@ -248,18 +248,12 @@ jobs:
 
       - name: Build third-party deps
         run: |
-          if test "${FUNCTIONALTEST}" = "functionaltest-lua" ; then
-            DEPS_CMAKE_FLAGS="${DEPS_CMAKE_FLAGS} -D USE_BUNDLED_LUA=ON"
-          fi
-          cmake -S cmake.deps -B "${DEPS_BUILD_DIR}" -G Ninja ${DEPS_CMAKE_FLAGS}
-          cmake --build "${DEPS_BUILD_DIR}"
+          cmake -S cmake.deps -B $DEPS_BUILD_DIR -G Ninja ${{ matrix.deps_flags }}
+          cmake --build $DEPS_BUILD_DIR
 
       - name: Build
         run: |
-          if test -n "${CLANG_SANITIZER}" ; then
-            CMAKE_FLAGS="${CMAKE_FLAGS} -D CLANG_${CLANG_SANITIZER}=ON"
-          fi
-          cmake -B build -G Ninja ${CMAKE_FLAGS}
+          cmake -B build -G Ninja $CMAKE_FLAGS ${{ matrix.sanitizer_flags }}
           cmake --build build
 
       - if: "!cancelled()"
@@ -293,8 +287,8 @@ jobs:
       - if: success() || failure() && steps.abort_job.outputs.status == 'success'
         name: Installtests
         run: |
-          "${INSTALL_PREFIX}/bin/nvim" --version
-          if ! "${INSTALL_PREFIX}/bin/nvim" -u NONE -e -c ':help' -c ':qall'; then
+          "$INSTALL_PREFIX/bin/nvim" --version
+          if ! "$INSTALL_PREFIX/bin/nvim" -u NONE -e -c ':help' -c ':qall'; then
             echo "Running ':help' in the installed nvim failed."
             echo "Maybe the helptags have not been generated properly."
             echo 'Failed running :help'
@@ -320,7 +314,7 @@ jobs:
           # Check that generated syntax file has function names, #5060.
           genvimsynf=syntax/vim/generated.vim
           gpat='syn keyword vimFuncName .*eval'
-          if ! grep -q "$gpat" "${INSTALL_PREFIX}/share/nvim/runtime/$genvimsynf"; then
+          if ! grep -q "$gpat" "$INSTALL_PREFIX/share/nvim/runtime/$genvimsynf"; then
             echo "It appears that $genvimsynf does not contain $gpat."
             exit 1
           fi
@@ -332,21 +326,22 @@ jobs:
       - if: success() || failure() && steps.abort_job.outputs.status == 'success'
         name: Show core dumps
         run: |
-          app="${1:-${BUILD_DIR}/bin/nvim}"
-          if test "${CI_OS_NAME}" = osx; then
+          # TODO(dundargoc): app should be luajit for unittests
+          app="build/bin/nvim"
+          if test "$RUNNER_OS" = macOS; then
             cores="$(find /cores/ -type f -print)"
           else
             cores="$(find ./ -type f \( -name 'core.*' -o -name core -o -name nvim.core \) -print)"
           fi
 
-          if test -z "${cores}"; then
+          if test -z "$cores"; then
             exit 0
           fi
           for core in $cores; do
-            if test "${CI_OS_NAME}" = osx; then
-              lldb -Q -o "bt all" -f "${app}" -c "${core}"
+            if test "$RUNNER_OS" = macOS; then
+              lldb -Q -o "bt all" -f "$app" -c "$core"
             else
-              gdb -n -batch -ex 'thread apply all bt full' "${app}" -c "${core}"
+              gdb -n -batch -ex 'thread apply all bt full' "$app" -c "$core"
             fi
           done
           echo 'Core dumps found'
@@ -357,7 +352,6 @@ jobs:
     runs-on: ubuntu-22.04
     timeout-minutes: 15
     env:
-      CI_OS_NAME: linux
       CMAKE_URL: 'https://cmake.org/files/v3.10/cmake-3.10.0-Linux-x86_64.sh'
       CMAKE_VERSION: '3.10.0'
     steps:
