@@ -449,18 +449,16 @@ int mb_get_class_tab(const char *p, const uint64_t *const chartab)
 static bool intable(const struct interval *table, size_t n_items, int c)
   FUNC_ATTR_PURE
 {
-  int mid, bot, top;
-
   // first quick check for Latin1 etc. characters
   if (c < table[0].first) {
     return false;
   }
 
   // binary search in table
-  bot = 0;
-  top = (int)(n_items - 1);
+  int bot = 0;
+  int top = (int)(n_items - 1);
   while (top >= bot) {
-    mid = (bot + top) / 2;
+    int mid = (bot + top) / 2;
     if (table[mid].last < c) {
       bot = mid + 1;
     } else if (table[mid].first > c) {
@@ -518,11 +516,9 @@ int utf_char2cells(int c)
 /// This doesn't take care of unprintable characters, use ptr2cells() for that.
 int utf_ptr2cells(const char *p)
 {
-  int c;
-
   // Need to convert to a character number.
   if ((uint8_t)(*p) >= 0x80) {
-    c = utf_ptr2char(p);
+    int c = utf_ptr2char(p);
     // An illegal byte is displayed as <xx>.
     if (utf_ptr2len(p) == 1 || c == NUL) {
       return 4;
@@ -540,14 +536,12 @@ int utf_ptr2cells(const char *p)
 /// For an empty string or truncated character returns 1.
 int utf_ptr2cells_len(const char *p, int size)
 {
-  int c;
-
   // Need to convert to a wide character.
   if (size > 0 && (uint8_t)(*p) >= 0x80) {
     if (utf_ptr2len_len(p, size) < utf8len_tab[(uint8_t)(*p)]) {
       return 1;        // truncated
     }
-    c = utf_ptr2char((char *)p);
+    int c = utf_ptr2char((char *)p);
     // An illegal byte is displayed as <xx>.
     if (utf_ptr2len((char *)p) == 1 || c == NUL) {
       return 4;
@@ -664,8 +658,6 @@ int utf_ptr2char(const char *const p_in)
 // "s".
 static int utf_safe_read_char_adv(const char_u **s, size_t *n)
 {
-  int c;
-
   if (*n == 0) {  // end of buffer
     return 0;
   }
@@ -682,7 +674,7 @@ static int utf_safe_read_char_adv(const char_u **s, size_t *n)
     // We have a multibyte sequence and it isn't truncated by buffer
     // limits so utf_ptr2char() is safe to use. Or the first byte is
     // illegal (k=0), and it's also safe to use utf_ptr2char().
-    c = utf_ptr2char((char *)(*s));
+    int c = utf_ptr2char((char *)(*s));
 
     // On failure, utf_ptr2char() returns the first byte, so here we
     // check equality with the first byte. The only non-ASCII character
@@ -1141,7 +1133,6 @@ int utf_class_tab(const int c, const uint64_t *const chartab)
   };
   int bot = 0;
   int top = ARRAY_SIZE(classes) - 1;
-  int mid;
 
   // First quick check for Latin1 characters, use 'iskeyword'.
   if (c < 0x100) {
@@ -1161,7 +1152,7 @@ int utf_class_tab(const int c, const uint64_t *const chartab)
 
   // binary search in table
   while (top >= bot) {
-    mid = (bot + top) / 2;
+    int mid = (bot + top) / 2;
     if (classes[mid].last < (unsigned int)c) {
       bot = mid + 1;
     } else if (classes[mid].first > (unsigned int)c) {
@@ -1186,13 +1177,12 @@ bool utf_ambiguous_width(int c)
 // the given conversion "table".  Uses binary search on "table".
 static int utf_convert(int a, const convertStruct *const table, size_t n_items)
 {
-  size_t start, mid, end;   // indices into table
-
-  start = 0;
-  end = n_items;
+  // indices into table
+  size_t start = 0;
+  size_t end = n_items;
   while (start < end) {
     // need to search further
-    mid = (end + start) / 2;
+    size_t mid = (end + start) / 2;
     if (table[mid].rangeEnd < a) {
       start = mid + 1;
     } else {
@@ -1579,9 +1569,6 @@ void show_utf8(void)
 /// Returns 0 when already at the first byte of a character.
 int utf_head_off(const char *base_in, const char *p_in)
 {
-  int c;
-  int len;
-
   if ((uint8_t)(*p_in) < 0x80) {              // be quick for ASCII
     return 0;
   }
@@ -1603,7 +1590,7 @@ int utf_head_off(const char *base_in, const char *p_in)
     }
     // Check for illegal sequence. Do allow an illegal byte after where we
     // started.
-    len = utf8len_tab[*q];
+    int len = utf8len_tab[*q];
     if (len != (int)(s - q + 1) && len != (int)(p - q + 1)) {
       return 0;
     }
@@ -1612,7 +1599,7 @@ int utf_head_off(const char *base_in, const char *p_in)
       break;
     }
 
-    c = utf_ptr2char((char *)q);
+    int c = utf_ptr2char((char *)q);
     if (utf_iscomposing(c)) {
       continue;
     }
@@ -1795,7 +1782,6 @@ int mb_off_next(const char *base, const char *p_in)
 {
   const uint8_t *p = (uint8_t *)p_in;
   int i;
-  int j;
 
   if (*p < 0x80) {              // be quick for ASCII
     return 0;
@@ -1804,6 +1790,7 @@ int mb_off_next(const char *base, const char *p_in)
   // Find the next character that isn't 10xx.xxxx
   for (i = 0; (p[i] & 0xc0) == 0x80; i++) {}
   if (i > 0) {
+    int j;
     // Check for illegal sequence.
     for (j = 0; p - j > (uint8_t *)base; j++) {
       if ((p[-j] & 0xc0) != 0x80) {
@@ -2479,7 +2466,6 @@ char *string_convert_ext(const vimconv_T *const vcp, char *ptr, size_t *lenp, si
 {
   char_u *retval = NULL;
   char_u *d;
-  int l;
   int c;
 
   size_t len;
@@ -2547,7 +2533,7 @@ char *string_convert_ext(const vimconv_T *const vcp, char *ptr, size_t *lenp, si
     retval = xmalloc(len + 1);
     d = retval;
     for (size_t i = 0; i < len; i++) {
-      l = utf_ptr2len_len(ptr + i, (int)(len - i));
+      int l = utf_ptr2len_len(ptr + i, (int)(len - i));
       if (l == 0) {
         *d++ = NUL;
       } else if (l == 1) {

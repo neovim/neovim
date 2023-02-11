@@ -660,7 +660,6 @@ void fix_help_buffer(void)
 {
   linenr_T lnum;
   char *line;
-  bool in_example = false;
 
   // Set filetype to "help".
   if (strcmp(curbuf->b_p_ft, "help") != 0) {
@@ -670,6 +669,7 @@ void fix_help_buffer(void)
   }
 
   if (!syntax_present(curwin)) {
+    bool in_example = false;
     for (lnum = 1; lnum <= curbuf->b_ml.ml_line_count; lnum++) {
       line = ml_get_buf(curbuf, lnum, false);
       const size_t len = strlen(line);
@@ -722,9 +722,7 @@ void fix_help_buffer(void)
             && path_full_compare(rt, NameBuff, false, true) != kEqualFiles) {
           int fcount;
           char **fnames;
-          char *s;
           vimconv_T vc;
-          char *cp;
 
           // Find all "doc/ *.txt" files in this directory.
           if (!add_pathsep(NameBuff)
@@ -740,6 +738,8 @@ void fix_help_buffer(void)
           if (gen_expand_wildcards(1, buff_list, &fcount,
                                    &fnames, EW_FILE|EW_SILENT) == OK
               && fcount > 0) {
+            char *s;
+            char *cp;
             // If foo.abx is found use it instead of foo.txt in
             // the same directory.
             for (int i1 = 0; i1 < fcount; i1++) {
@@ -1080,7 +1080,6 @@ static void helptags_one(char *dir, const char *ext, const char *tagfname, bool 
 static void do_helptags(char *dirname, bool add_help_tags, bool ignore_writeerr)
   FUNC_ATTR_NONNULL_ALL
 {
-  int len;
   garray_T ga;
   char lang[2];
   char ext[5];
@@ -1111,7 +1110,7 @@ static void do_helptags(char *dirname, bool add_help_tags, bool ignore_writeerr)
   int j;
   ga_init(&ga, 1, 10);
   for (int i = 0; i < filecount; i++) {
-    len = (int)strlen(files[i]);
+    int len = (int)strlen(files[i]);
     if (len <= 4) {
       continue;
     }
@@ -1177,7 +1176,6 @@ static void helptags_cb(char *fname, void *cookie)
 void ex_helptags(exarg_T *eap)
 {
   expand_T xpc;
-  char *dirname;
   bool add_help_tags = false;
 
   // Check for ":helptags ++t {dir}".
@@ -1191,7 +1189,8 @@ void ex_helptags(exarg_T *eap)
   } else {
     ExpandInit(&xpc);
     xpc.xp_context = EXPAND_DIRECTORIES;
-    dirname = ExpandOne(&xpc, eap->arg, NULL, WILD_LIST_NOTFOUND|WILD_SILENT, WILD_EXPAND_FREE);
+    char *dirname =
+      ExpandOne(&xpc, eap->arg, NULL, WILD_LIST_NOTFOUND|WILD_SILENT, WILD_EXPAND_FREE);
     if (dirname == NULL || !os_isdir(dirname)) {
       semsg(_("E150: Not a directory: %s"), eap->arg);
     } else {

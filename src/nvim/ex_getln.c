@@ -1729,7 +1729,6 @@ static int command_line_browse_history(CommandLineState *s)
   if (s->hiscnt != s->save_hiscnt) {
     // jumped to other entry
     char *p;
-    int len = 0;
     int old_firstc;
 
     XFREE_CLEAR(ccline.cmdbuff);
@@ -1743,6 +1742,7 @@ static int command_line_browse_history(CommandLineState *s)
     if (s->histype == HIST_SEARCH
         && p != s->lookfor
         && (old_firstc = (uint8_t)p[strlen(p) + 1]) != s->firstc) {
+      int len = 0;
       // Correct for the separator character used when
       // adding the history entry vs the one used now.
       // First loop: count length.
@@ -3676,7 +3676,6 @@ static void restore_cmdline(CmdlineInfo *ccp)
 static bool cmdline_paste(int regname, bool literally, bool remcr)
 {
   char *arg;
-  char *p;
   bool allocated;
 
   // check for valid regname; also accept special characters for CTRL-R in
@@ -3708,7 +3707,7 @@ static bool cmdline_paste(int regname, bool literally, bool remcr)
 
     // When 'incsearch' is set and CTRL-R CTRL-W used: skip the duplicate
     // part of the word.
-    p = arg;
+    char *p = arg;
     if (p_is && regname == Ctrl_W) {
       char *w;
       int len;
@@ -3743,17 +3742,15 @@ static bool cmdline_paste(int regname, bool literally, bool remcr)
 // line.
 void cmdline_paste_str(char *s, int literally)
 {
-  int c, cv;
-
   if (literally) {
     put_on_cmdline(s, -1, true);
   } else {
     while (*s != NUL) {
-      cv = (uint8_t)(*s);
+      int cv = (uint8_t)(*s);
       if (cv == Ctrl_V && s[1]) {
         s++;
       }
-      c = mb_cptr2char_adv((const char **)&s);
+      int c = mb_cptr2char_adv((const char **)&s);
       if (cv == Ctrl_V || c == ESC || c == Ctrl_C
           || c == CAR || c == NL || c == Ctrl_L
           || (c == Ctrl_BSL && *s == Ctrl_N)) {
@@ -3781,8 +3778,6 @@ void redrawcmdline(void)
 
 static void redrawcmdprompt(void)
 {
-  int i;
-
   if (cmd_silent) {
     return;
   }
@@ -3801,7 +3796,7 @@ static void redrawcmdprompt(void)
       ccline.cmdindent--;
     }
   } else {
-    for (i = ccline.cmdindent; i > 0; i--) {
+    for (int i = ccline.cmdindent; i > 0; i--) {
       msg_putchar(' ');
     }
   }
@@ -4284,12 +4279,10 @@ void cmdline_init(void)
 /// Returns NULL if value is OK, error message otherwise.
 char *check_cedit(void)
 {
-  int n;
-
   if (*p_cedit == NUL) {
     cedit_key = -1;
   } else {
-    n = string_to_key(p_cedit);
+    int n = string_to_key(p_cedit);
     if (vim_isprintc(n)) {
       return e_invarg;
     }
@@ -4309,9 +4302,7 @@ static int open_cmdwin(void)
   bufref_T old_curbuf;
   bufref_T bufref;
   win_T *old_curwin = curwin;
-  win_T *wp;
   int i;
-  linenr_T lnum;
   garray_T winsizes;
   char typestr[2];
   int save_restart_edit = restart_edit;
@@ -4392,7 +4383,7 @@ static int open_cmdwin(void)
   if (get_hislen() > 0 && histtype != HIST_INVALID) {
     i = *get_hisidx(histtype);
     if (i >= 0) {
-      lnum = 0;
+      linenr_T lnum = 0;
       do {
         if (++i == get_hislen()) {
           i = 0;
@@ -4463,6 +4454,7 @@ static int open_cmdwin(void)
     cmdwin_result = Ctrl_C;
     emsg(_("E199: Active window or buffer deleted"));
   } else {
+    win_T *wp;
     // autocmds may abort script processing
     if (aborting() && cmdwin_result != K_IGNORE) {
       cmdwin_result = Ctrl_C;
