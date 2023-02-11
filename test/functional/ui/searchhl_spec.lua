@@ -10,7 +10,6 @@ local testprg = helpers.testprg
 
 describe('search highlighting', function()
   local screen
-  local colors = Screen.colors
 
   before_each(function()
     clear()
@@ -18,9 +17,9 @@ describe('search highlighting', function()
     screen:attach()
     screen:set_default_attr_ids( {
       [1] = {bold=true, foreground=Screen.colors.Blue},
-      [2] = {background = colors.Yellow}, -- Search
+      [2] = {background = Screen.colors.Yellow}, -- Search
       [3] = {reverse = true},
-      [4] = {foreground = colors.Red}, -- Message
+      [4] = {foreground = Screen.colors.Red}, -- Message
       [6] = {foreground = Screen.colors.Blue4, background = Screen.colors.LightGrey}, -- Folded
     })
   end)
@@ -498,6 +497,20 @@ describe('search highlighting', function()
       {1:~                   }│{1:~                  }|
       //^                                      |
     ]])
+    feed('<Esc>')
+
+    -- incsearch works after c_CTRL-R_CTRL-R
+    command('let @" = "file"')
+    feed('/<C-R><C-R>"')
+    screen:expect([[
+      the first line      │the first line     |
+      in a little {3:file}    │in a little {2:file}   |
+      {1:~                   }│{1:~                  }|
+      {1:~                   }│{1:~                  }|
+      {1:~                   }│{1:~                  }|
+      {1:~                   }│{1:~                  }|
+      /file^                                   |
+    ]])
   end)
 
   it('works with incsearch and offset', function()
@@ -572,12 +585,12 @@ describe('search highlighting', function()
   it('works with matchadd and syntax', function()
     screen:set_default_attr_ids {
       [1] = {bold=true, foreground=Screen.colors.Blue};
-      [2] = {background = colors.Yellow};
+      [2] = {background = Screen.colors.Yellow};
       [3] = {reverse = true};
-      [4] = {foreground = colors.Red};
-      [5] = {bold = true, background = colors.Green};
-      [6] = {italic = true, background = colors.Magenta};
-      [7] = {bold = true, background = colors.Yellow};
+      [4] = {foreground = Screen.colors.Red};
+      [5] = {bold = true, background = Screen.colors.Green};
+      [6] = {italic = true, background = Screen.colors.Magenta};
+      [7] = {bold = true, background = Screen.colors.Yellow};
       [8] = {foreground = Screen.colors.Blue4, background = Screen.colors.LightGray};
     }
     feed_command('set hlsearch')
