@@ -6,10 +6,6 @@ set -o pipefail
 print_core() {
   local app="$1"
   local core="$2"
-  if test "$app" = quiet; then
-    echo "Found core $core"
-    return 0
-  fi
   echo "======= Core file $core ======="
   if test "${CI_OS_NAME}" = osx; then
     lldb -Q -o "bt all" -f "${app}" -c "${core}"
@@ -19,11 +15,6 @@ print_core() {
 }
 
 check_core_dumps() {
-  local del=
-  if test "$1" = "--delete"; then
-    del=1
-    shift
-  fi
   local app="${1:-${BUILD_DIR}/bin/nvim}"
   local cores
   if test "${CI_OS_NAME}" = osx; then
@@ -39,17 +30,10 @@ check_core_dumps() {
   fi
   local core
   for core in $cores; do
-    if test "$del" = "1"; then
-      print_core "$app" "$core" >&2
-      "$_sudo" rm "$core"
-    else
-      print_core "$app" "$core"
-    fi
+    print_core "$app" "$core"
   done
-  if test "$app" != quiet; then
-    echo 'Core dumps found'
-    exit 1
-  fi
+  echo 'Core dumps found'
+  exit 1
 }
 
 check_logs() {
@@ -161,7 +145,6 @@ installtests() {(
 )}
 
 prepare_sanitizer() {
-  check_core_dumps --delete quiet
   # Invoke nvim to trigger *San early.
   if ! ("${BUILD_DIR}"/bin/nvim --version && "${BUILD_DIR}"/bin/nvim -u NONE -e -cq | cat -vet); then
     check_sanitizer "${LOG_DIR}"
