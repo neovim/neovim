@@ -15,9 +15,7 @@ jobs:
         with:
           fetch-depth: 0
           ref: ${{ github.event.pull_request.head.sha }}
-          path: pr_nvim
       - uses: rhysd/action-setup-vim@v1
         with:
           neovim: true
-      - run: wget https://raw.githubusercontent.com/neovim/neovim/master/scripts/lintcommit.lua
-      - run: nvim --clean -es +"cd pr_nvim" +"lua dofile('../lintcommit.lua').main({trace=false})"
+      - run: nvim --clean -es +"lua require('scripts.lintcommit').main({trace=false})"
