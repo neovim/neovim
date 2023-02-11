@@ -1094,7 +1094,7 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, char *opt_n
       continue;
     }
 
-    // STL_SEPARATE: Separation place between left and right aligned items.
+    // STL_SEPARATE: Separation between items, filled with white space.
     if (*fmt_p == STL_SEPARATE) {
       fmt_p++;
       // Ignored when we are inside of a grouping
@@ -2066,8 +2066,7 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, char *opt_n
     int num_separators = 0;
     for (int i = 0; i < itemcnt; i++) {
       if (stl_items[i].type == Separate) {
-        // Create an array of the start location for each
-        // separator mark.
+        // Create an array of the start location for each separator mark.
         stl_separator_locations[num_separators] = i;
         num_separators++;
       }
@@ -2079,17 +2078,17 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, char *opt_n
       int final_spaces = (maxwidth - width) -
                          standard_spaces * (num_separators - 1);
 
-      for (int i = 0; i < num_separators; i++) {
-        int dislocation = (i == (num_separators - 1)) ? final_spaces : standard_spaces;
+      for (int l = 0; l < num_separators; l++) {
+        int dislocation = (l == (num_separators - 1)) ? final_spaces : standard_spaces;
         dislocation *= utf_char2len(fillchar);
-        char *start = stl_items[stl_separator_locations[i]].start;
+        char *start = stl_items[stl_separator_locations[l]].start;
         char *seploc = start + dislocation;
         STRMOVE(seploc, start);
         for (char *s = start; s < seploc;) {
           MB_CHAR2BYTES(fillchar, s);
         }
 
-        for (int item_idx = stl_separator_locations[i] + 1;
+        for (int item_idx = stl_separator_locations[l] + 1;
              item_idx < itemcnt;
              item_idx++) {
           stl_items[item_idx].start += dislocation;

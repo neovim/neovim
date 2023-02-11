@@ -231,6 +231,10 @@ func Test_statusline()
   " %=: Separation point between left and right aligned items.
   set statusline=foo%=bar
   call assert_match('^foo\s\+bar\s*$', s:get_statusline())
+  set statusline=foo%=bar%=baz
+  call assert_match('^foo\s\+bar\s\+baz\s*$', s:get_statusline())
+  set statusline=foo%=bar%=baz%=qux
+  call assert_match('^foo\s\+bar\s\+baz\s\+qux\s*$', s:get_statusline())
 
   " Test min/max width, leading zeroes, left/right justify.
   set statusline=%04B
