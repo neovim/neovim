@@ -267,7 +267,6 @@ Options:
   'pumblend'    pseudo-transparent popupmenu
   'scrollback'
   'signcolumn'  supports up to 9 dynamic/fixed columns
-  'statusline'  supports unlimited alignment sections
   'tabline'     %@Func@foo%X can call any function on mouse-click
   'winblend'    pseudo-transparency in floating windows |api-floatwin|
   'winhighlight' window-local highlights
@@ -292,6 +291,7 @@ These Nvim features were later integrated into Vim.
 - |WinScrolled|
 - |:sign-define| "numhl" argument
 - |:source| works with anonymous (no file) scripts
+- 'statusline' supports unlimited alignment sections
 
 ==============================================================================
 5. Changed features					 *nvim-features-changed*
