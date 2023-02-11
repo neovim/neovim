@@ -1626,9 +1626,9 @@ static int command_line_insert_reg(CommandLineState *s)
   ccline.special_char = NUL;
   redrawcmd();
 
-  // The text has been stuffed, the command line didn't change yet, but it
-  // will change soon.  The caller must take care of it.
-  return literally ? CMDLINE_NOT_CHANGED : CMDLINE_CHANGED;
+  // With "literally": the command line has already changed.
+  // Else: the text has been stuffed, but the command line didn't change yet.
+  return literally ? CMDLINE_CHANGED : CMDLINE_NOT_CHANGED;
 }
 
 /// Handle the Left and Right mouse clicks in the command-line mode.
@@ -1862,9 +1862,8 @@ static int command_line_handle_key(CommandLineState *s)
     switch (command_line_insert_reg(s)) {
     case GOTO_NORMAL_MODE:
       return 0;  // back to cmd mode
-    case CMDLINE_NOT_CHANGED:
-      s->is_state.incsearch_postponed = true;
-      FALLTHROUGH;
+    case CMDLINE_CHANGED:
+      return command_line_changed(s);
     default:
       return command_line_not_changed(s);
     }
