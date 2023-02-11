@@ -554,7 +554,7 @@ static void find_runtime_cb(char *fname, void *cookie)
 {
   Array *rv = (Array *)cookie;
   if (fname != NULL) {
-    ADD(*rv, STRING_OBJ(cstr_to_string((char *)fname)));
+    ADD(*rv, STRING_OBJ(cstr_to_string(fname)));
   }
 }
 
@@ -2266,7 +2266,7 @@ Dictionary nvim_eval_statusline(String str, Dict(eval_statusline) *opts, Error *
     for (stl_hlrec_t *sp = hltab; sp->start != NULL; sp++) {
       Dictionary hl_info = ARRAY_DICT_INIT;
 
-      PUT(hl_info, "start", INTEGER_OBJ((char *)sp->start - buf));
+      PUT(hl_info, "start", INTEGER_OBJ(sp->start - buf));
 
       if (sp->userhl == 0) {
         grpname = get_default_stl_hl(wp, use_winbar);
@@ -2281,7 +2281,7 @@ Dictionary nvim_eval_statusline(String str, Dict(eval_statusline) *opts, Error *
     }
     PUT(result, "highlights", ARRAY_OBJ(hl_values));
   }
-  PUT(result, "str", CSTR_TO_OBJ((char *)buf));
+  PUT(result, "str", CSTR_TO_OBJ(buf));
 
   return result;
 }

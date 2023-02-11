@@ -2000,8 +2000,8 @@ static const char *set_context_by_cmdname(const char *cmd, cmdidx_T cmdidx, expa
   case CMD_snoremap:
   case CMD_xmap:
   case CMD_xnoremap:
-    return (const char *)set_context_in_map_cmd(xp, (char *)cmd, (char *)arg, forceit, false,
-                                                false, cmdidx);
+    return set_context_in_map_cmd(xp, (char *)cmd, (char *)arg, forceit, false,
+                                  false, cmdidx);
   case CMD_unmap:
   case CMD_nunmap:
   case CMD_vunmap:
@@ -2011,8 +2011,8 @@ static const char *set_context_by_cmdname(const char *cmd, cmdidx_T cmdidx, expa
   case CMD_lunmap:
   case CMD_sunmap:
   case CMD_xunmap:
-    return (const char *)set_context_in_map_cmd(xp, (char *)cmd, (char *)arg, forceit, false,
-                                                true, cmdidx);
+    return set_context_in_map_cmd(xp, (char *)cmd, (char *)arg, forceit, false,
+                                  true, cmdidx);
   case CMD_mapclear:
   case CMD_nmapclear:
   case CMD_vmapclear:
@@ -2032,13 +2032,13 @@ static const char *set_context_by_cmdname(const char *cmd, cmdidx_T cmdidx, expa
   case CMD_cnoreabbrev:
   case CMD_iabbrev:
   case CMD_inoreabbrev:
-    return (const char *)set_context_in_map_cmd(xp, (char *)cmd, (char *)arg, forceit, true,
-                                                false, cmdidx);
+    return set_context_in_map_cmd(xp, (char *)cmd, (char *)arg, forceit, true,
+                                  false, cmdidx);
   case CMD_unabbreviate:
   case CMD_cunabbrev:
   case CMD_iunabbrev:
-    return (const char *)set_context_in_map_cmd(xp, (char *)cmd, (char *)arg, forceit, true,
-                                                true, cmdidx);
+    return set_context_in_map_cmd(xp, (char *)cmd, (char *)arg, forceit, true,
+                                  true, cmdidx);
   case CMD_menu:
   case CMD_noremenu:
   case CMD_unmenu:
@@ -3238,7 +3238,7 @@ void globpath(char *path, char *file, garray_T *ga, int expand_options, bool dir
         ga_grow(ga, num_p);
         // take over the pointers and put them in "ga"
         for (int i = 0; i < num_p; i++) {
-          ((char_u **)ga->ga_data)[ga->ga_len] = (char_u *)p[i];
+          ((char **)ga->ga_data)[ga->ga_len] = p[i];
           ga->ga_len++;
         }
         xfree(p);

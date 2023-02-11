@@ -18,8 +18,6 @@
 #define READ_NOWINENTER 0x80    // do not trigger BufWinEnter
 #define READ_NOFILE     0x100   // do not read a file, do trigger BufReadCmd
 
-#define READ_STRING(x, y) (char_u *)read_string((x), (size_t)(y))
-
 typedef varnumber_T (*CheckItem)(void *expr, const char *name);
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS

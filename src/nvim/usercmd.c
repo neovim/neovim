@@ -298,8 +298,8 @@ const char *set_context_in_user_cmdarg(const char *cmd FUNC_ATTR_UNUSED, const c
     return arg;
   }
   if (context == EXPAND_MAPPINGS) {
-    return (const char *)set_context_in_map_cmd(xp, "map", (char *)arg, forceit, false, false,
-                                                CMD_map);
+    return set_context_in_map_cmd(xp, "map", (char *)arg, forceit, false, false,
+                                  CMD_map);
   }
   // Find start of last argument.
   const char *p = arg;
@@ -1749,8 +1749,8 @@ Dictionary commands_array(buf_T *buf)
     Dictionary d = ARRAY_DICT_INIT;
     ucmd_T *cmd = USER_CMD_GA(gap, i);
 
-    PUT(d, "name", STRING_OBJ(cstr_to_string((char *)cmd->uc_name)));
-    PUT(d, "definition", STRING_OBJ(cstr_to_string((char *)cmd->uc_rep)));
+    PUT(d, "name", STRING_OBJ(cstr_to_string(cmd->uc_name)));
+    PUT(d, "definition", STRING_OBJ(cstr_to_string(cmd->uc_rep)));
     PUT(d, "script_id", INTEGER_OBJ(cmd->uc_script_ctx.sc_sid));
     PUT(d, "bang", BOOLEAN_OBJ(!!(cmd->uc_argt & EX_BANG)));
     PUT(d, "bar", BOOLEAN_OBJ(!!(cmd->uc_argt & EX_TRLBAR)));
@@ -1776,7 +1776,7 @@ Dictionary commands_array(buf_T *buf)
     PUT(d, "complete", (cmd_compl == NULL
                         ? NIL : STRING_OBJ(cstr_to_string(cmd_compl))));
     PUT(d, "complete_arg", cmd->uc_compl_arg == NULL
-        ? NIL : STRING_OBJ(cstr_to_string((char *)cmd->uc_compl_arg)));
+        ? NIL : STRING_OBJ(cstr_to_string(cmd->uc_compl_arg)));
 
     Object obj = NIL;
     if (cmd->uc_argt & EX_COUNT) {
@@ -1812,7 +1812,7 @@ Dictionary commands_array(buf_T *buf)
     }
     PUT(d, "addr", obj);
 
-    PUT(rv, (char *)cmd->uc_name, DICTIONARY_OBJ(d));
+    PUT(rv, cmd->uc_name, DICTIONARY_OBJ(d));
   }
   return rv;
 }

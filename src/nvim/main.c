@@ -1589,7 +1589,7 @@ static void open_script_files(mparm_T *parmp)
       scriptin[0] = file_open_new(&error, parmp->scriptin,
                                   kFileReadOnly|kFileNonBlocking, 0);
       if (scriptin[0] == NULL) {
-        vim_snprintf((char *)IObuff, IOSIZE,
+        vim_snprintf(IObuff, IOSIZE,
                      _("Cannot open for reading: \"%s\": %s\n"),
                      parmp->scriptin, os_strerror(error));
         os_errmsg(IObuff);

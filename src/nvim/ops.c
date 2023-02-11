@@ -926,7 +926,7 @@ int do_record(int c)
     char *p = (char *)get_recorded();
     if (p != NULL) {
       // Remove escaping for K_SPECIAL in multi-byte chars.
-      vim_unescape_ks((char_u *)p);
+      vim_unescape_ks(p);
       (void)tv_dict_add_str(dict, S_LEN("regcontents"), (const char *)p);
     }
 
@@ -3848,7 +3848,7 @@ void ex_display(exarg_T *eap)
   }
 
   // display last inserted text
-  if ((p = (char *)get_last_insert()) != NULL
+  if ((p = get_last_insert()) != NULL
       && (arg == NULL || vim_strchr(arg, '.') != NULL) && !got_int
       && !message_filtered(p)) {
     msg_puts("\n  c  \".   ");
@@ -5490,7 +5490,7 @@ void cursor_pos_info(dict_T *dict)
         validate_virtcol();
         col_print(buf1, sizeof(buf1), (int)curwin->w_cursor.col + 1,
                   (int)curwin->w_virtcol + 1);
-        col_print((char *)buf2, sizeof(buf2), (int)strlen(p), linetabsize(p));
+        col_print(buf2, sizeof(buf2), (int)strlen(p), linetabsize(p));
 
         if (char_count_cursor == byte_count_cursor
             && char_count == byte_count) {

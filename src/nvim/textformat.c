@@ -72,7 +72,7 @@ bool has_format_option(int x)
 void internal_format(int textwidth, int second_indent, int flags, bool format_only, int c)
 {
   int cc;
-  int save_char = NUL;
+  char save_char = NUL;
   bool haveto_redraw = false;
   const bool fo_ins_blank = has_format_option(FO_INS_BLANK);
   const bool fo_multibyte = has_format_option(FO_MBYTE_BREAK);
@@ -93,7 +93,7 @@ void internal_format(int textwidth, int second_indent, int flags, bool format_on
       && !(State & VREPLACE_FLAG)) {
     cc = gchar_cursor();
     if (ascii_iswhite(cc)) {
-      save_char = cc;
+      save_char = (char)cc;
       pchar_cursor('x');
     }
   }
@@ -458,7 +458,7 @@ void internal_format(int textwidth, int second_indent, int flags, bool format_on
   }
 
   if (save_char != NUL) {               // put back space after cursor
-    pchar_cursor((char_u)save_char);
+    pchar_cursor(save_char);
   }
 
   curwin->w_p_lbr = has_lbr;

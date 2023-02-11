@@ -1162,7 +1162,7 @@ static bool expand_buffer = false;
 /// @param cpo_flags  Value of various flags present in &cpo
 ///
 /// @return  NULL when there is a problem.
-static char_u *translate_mapping(char_u *str, int cpo_flags)
+static char *translate_mapping(char_u *str, int cpo_flags)
 {
   garray_T ga;
   ga_init(&ga, 1, 40);
@@ -1203,7 +1203,7 @@ static char_u *translate_mapping(char_u *str, int cpo_flags)
     }
   }
   ga_append(&ga, NUL);
-  return (char_u *)(ga.ga_data);
+  return (char *)ga.ga_data;
 }
 
 /// Work out what to complete when doing command line completion of mapping
@@ -1212,8 +1212,8 @@ static char_u *translate_mapping(char_u *str, int cpo_flags)
 /// @param forceit  true if '!' given
 /// @param isabbrev  true if abbreviation
 /// @param isunmap  true if unmap/unabbrev command
-char_u *set_context_in_map_cmd(expand_T *xp, char *cmd, char *arg, bool forceit, bool isabbrev,
-                               bool isunmap, cmdidx_T cmdidx)
+char *set_context_in_map_cmd(expand_T *xp, char *cmd, char *arg, bool forceit, bool isabbrev,
+                             bool isunmap, cmdidx_T cmdidx)
 {
   if (forceit && cmdidx != CMD_map && cmdidx != CMD_unmap) {
     xp->xp_context = EXPAND_NOTHING;
@@ -1346,7 +1346,7 @@ int ExpandMappings(char *pat, regmatch_T *regmatch, int *numMatches, char ***mat
         continue;
       }
 
-      char *p = (char *)translate_mapping((char_u *)mp->m_keys, CPO_TO_CPO_FLAGS);
+      char *p = translate_mapping((char_u *)mp->m_keys, CPO_TO_CPO_FLAGS);
       if (p == NULL) {
         continue;
       }
@@ -1503,7 +1503,7 @@ bool check_abbr(int c, char *ptr, int col, int mincol)
       if (strchr((const char *)mp->m_keys, K_SPECIAL) != NULL) {
         // Might have K_SPECIAL escaped mp->m_keys.
         q = xstrdup(mp->m_keys);
-        vim_unescape_ks((char_u *)q);
+        vim_unescape_ks(q);
         qlen = (int)strlen(q);
       }
       // find entries with right mode and keys
@@ -1607,7 +1607,7 @@ char *eval_map_expr(mapblock_T *mp, int c)
   // typeahead.
   if (mp->m_luaref == LUA_NOREF) {
     expr = xstrdup(mp->m_str);
-    vim_unescape_ks((char_u *)expr);
+    vim_unescape_ks(expr);
   }
 
   const bool replace_keycodes = mp->m_replace_keycodes;

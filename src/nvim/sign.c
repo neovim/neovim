@@ -298,8 +298,8 @@ static dict_T *sign_get_info(sign_entry_T *sign)
   dict_T *d = tv_dict_alloc();
   tv_dict_add_nr(d,  S_LEN("id"), sign->se_id);
   tv_dict_add_str(d, S_LEN("group"), ((sign->se_group == NULL)
-                                      ? (char *)""
-                                      : (char *)sign->se_group->sg_name));
+                                      ? ""
+                                      : sign->se_group->sg_name));
   tv_dict_add_nr(d,  S_LEN("lnum"), sign->se_lnum);
   tv_dict_add_str(d, S_LEN("name"), sign_typenr2name(sign->se_typenr));
   tv_dict_add_nr(d,  S_LEN("priority"), sign->se_priority);
@@ -576,7 +576,7 @@ static linenr_T buf_delsign(buf_T *buf, linenr_T atlnum, int id, char *group)
       lnum = sign->se_lnum;
       buf_signcols_del_check(buf, lnum, lnum);
       if (sign->se_group != NULL) {
-        sign_group_unref((char *)sign->se_group->sg_name);
+        sign_group_unref(sign->se_group->sg_name);
       }
       xfree(sign);
       redraw_buf_line_later(buf, lnum, false);
@@ -688,7 +688,7 @@ void buf_delete_signs(buf_T *buf, char *group)
         next->se_prev = sign->se_prev;
       }
       if (sign->se_group != NULL) {
-        sign_group_unref((char *)sign->se_group->sg_name);
+        sign_group_unref(sign->se_group->sg_name);
       }
       xfree(sign);
     } else {
@@ -1778,7 +1778,7 @@ static char *get_nth_sign_group_name(int idx)
       todo--;
       if (current_idx++ == idx) {
         signgroup_T *const group = HI2SG(hi);
-        return (char *)group->sg_name;
+        return group->sg_name;
       }
     }
   }

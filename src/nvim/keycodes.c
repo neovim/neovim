@@ -582,7 +582,7 @@ unsigned int trans_special(const char **const srcp, const size_t src_len, char *
     return 0;
   }
 
-  return special_to_buf(key, modifiers, escape_ks, (char_u *)dst);
+  return special_to_buf(key, modifiers, escape_ks, dst);
 }
 
 /// Put the character sequence for "key" with "modifiers" into "dst" and return
@@ -590,27 +590,27 @@ unsigned int trans_special(const char **const srcp, const size_t src_len, char *
 /// When "escape_ks" is true escape K_SPECIAL bytes in the character.
 /// The sequence is not NUL terminated.
 /// This is how characters in a string are encoded.
-unsigned int special_to_buf(int key, int modifiers, bool escape_ks, char_u *dst)
+unsigned int special_to_buf(int key, int modifiers, bool escape_ks, char *dst)
 {
   unsigned int dlen = 0;
 
   // Put the appropriate modifier in a string.
   if (modifiers != 0) {
-    dst[dlen++] = K_SPECIAL;
-    dst[dlen++] = KS_MODIFIER;
-    dst[dlen++] = (char_u)modifiers;
+    dst[dlen++] = (char)(uint8_t)K_SPECIAL;
+    dst[dlen++] = (char)(uint8_t)KS_MODIFIER;
+    dst[dlen++] = (char)(uint8_t)modifiers;
   }
 
   if (IS_SPECIAL(key)) {
-    dst[dlen++] = K_SPECIAL;
-    dst[dlen++] = (char_u)KEY2TERMCAP0(key);
-    dst[dlen++] = KEY2TERMCAP1(key);
+    dst[dlen++] = (char)(uint8_t)K_SPECIAL;
+    dst[dlen++] = (char)(uint8_t)KEY2TERMCAP0(key);
+    dst[dlen++] = (char)(uint8_t)KEY2TERMCAP1(key);
   } else if (escape_ks) {
-    char_u *after = add_char2buf(key, dst + dlen);
+    char *after = add_char2buf(key, dst + dlen);
     assert(after >= dst && (uintmax_t)(after - dst) <= UINT_MAX);
     dlen = (unsigned int)(after - dst);
   } else {
-    dlen += (unsigned int)utf_char2bytes(key, (char *)dst + dlen);
+    dlen += (unsigned int)utf_char2bytes(key, dst + dlen);
   }
 
   return dlen;
@@ -1033,20 +1033,20 @@ char *replace_termcodes(const char *const from, const size_t from_len, char **co
 /// @param[out]  s  Buffer to add to. Must have at least MB_MAXBYTES + 1 bytes.
 ///
 /// @return Pointer to after the added bytes.
-char_u *add_char2buf(int c, char_u *s)
+char *add_char2buf(int c, char *s)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  char_u temp[MB_MAXBYTES + 1];
-  const int len = utf_char2bytes(c, (char *)temp);
+  char temp[MB_MAXBYTES + 1];
+  const int len = utf_char2bytes(c, temp);
   for (int i = 0; i < len; i++) {
     c = (uint8_t)temp[i];
     // Need to escape K_SPECIAL like in the typeahead buffer.
     if (c == K_SPECIAL) {
-      *s++ = K_SPECIAL;
-      *s++ = KS_SPECIAL;
+      *s++ = (char)(uint8_t)K_SPECIAL;
+      *s++ = (char)(uint8_t)KS_SPECIAL;
       *s++ = KE_FILLER;
     } else {
-      *s++ = (char_u)c;
+      *s++ = (char)(uint8_t)c;
     }
   }
   return s;
@@ -1060,9 +1060,9 @@ char *vim_strsave_escape_ks(char *p)
   // illegal utf-8 byte:
   // 0xc0 -> 0xc3 - 0x80 -> 0xc3 K_SPECIAL KS_SPECIAL KE_FILLER
   char *res = xmalloc(strlen(p) * 4 + 1);
-  char_u *d = (char_u *)res;
-  for (char_u *s = (char_u *)p; *s != NUL;) {
-    if (s[0] == K_SPECIAL && s[1] != NUL && s[2] != NUL) {
+  char *d = res;
+  for (char *s = p; *s != NUL;) {
+    if ((uint8_t)s[0] == K_SPECIAL && s[1] != NUL && s[2] != NUL) {
       // Copy special key unmodified.
       *d++ = *s++;
       *d++ = *s++;
@@ -1070,8 +1070,8 @@ char *vim_strsave_escape_ks(char *p)
     } else {
       // Add character, possibly multi-byte to destination, escaping
       // K_SPECIAL. Be careful, it can be an illegal byte!
-      d = add_char2buf(utf_ptr2char((char *)s), d);
-      s += utf_ptr2len((char *)s);
+      d = add_char2buf(utf_ptr2char(s), d);
+      s += utf_ptr2len(s);
     }
   }
   *d = NUL;
@@ -1081,9 +1081,9 @@ char *vim_strsave_escape_ks(char *p)
 
 /// Remove escaping from K_SPECIAL characters.  Reverse of
 /// vim_strsave_escape_ks().  Works in-place.
-void vim_unescape_ks(char_u *p)
+void vim_unescape_ks(char *p)
 {
-  char_u *s = p, *d = p;
+  char_u *s = (char_u *)p, *d = (char_u *)p;
 
   while (*s != NUL) {
     if (s[0] == K_SPECIAL && s[1] == KS_SPECIAL && s[2] == KE_FILLER) {

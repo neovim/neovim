@@ -751,8 +751,8 @@ int tv_list_concat(list_T *const l1, list_T *const l2, typval_T *const tv)
 }
 
 typedef struct {
-  char_u *s;
-  char_u *tofree;
+  char *s;
+  char *tofree;
 } Join;
 
 /// Join list into a string, helper function
@@ -785,7 +785,7 @@ static int list_join_inner(garray_T *const gap, list_T *const l, const char *con
     sumlen += len;
 
     Join *const p = GA_APPEND_VIA_PTR(Join, join_gap);
-    p->tofree = p->s = (char_u *)s;
+    p->tofree = p->s = s;
 
     line_breakcheck();
   });
@@ -806,7 +806,7 @@ static int list_join_inner(garray_T *const gap, list_T *const l, const char *con
     const Join *const p = ((const Join *)join_gap->ga_data) + i;
 
     if (p->s != NULL) {
-      ga_concat(gap, (char *)p->s);
+      ga_concat(gap, p->s);
     }
     line_breakcheck();
   }
@@ -1673,7 +1673,7 @@ char *callback_to_string(Callback *cb)
   }
 
   const size_t msglen = 100;
-  char *msg = (char *)xmallocz(msglen);
+  char *msg = xmallocz(msglen);
 
   switch (cb->type) {
   case kCallbackFuncref:

@@ -221,7 +221,7 @@ static void aupat_show(AutoPat *ap, event_T event, int previous_group)
     char *exec_to_string = aucmd_exec_to_string(ac, ac->exec);
     if (ac->desc != NULL) {
       size_t msglen = 100;
-      char *msg = (char *)xmallocz(msglen);
+      char *msg = xmallocz(msglen);
       if (ac->exec.type == CALLABLE_CB) {
         msg_puts_attr(exec_to_string, HL_ATTR(HLF_8));
         snprintf(msg, msglen, " [%s]", ac->desc);
@@ -286,7 +286,7 @@ static void au_show_for_event(int group, event_T event, char *pat)
     if (aupat_is_buflocal(pat, patlen)) {
       // normalize pat into standard "<buffer>#N" form
       aupat_normalize_buflocal_pat(buflocal_pat, pat, patlen, aupat_get_buflocal_nr(pat, patlen));
-      pat = (char *)buflocal_pat;
+      pat = buflocal_pat;
       patlen = (int)strlen(buflocal_pat);
     }
 
@@ -2119,8 +2119,8 @@ static bool call_autocmd_callback(const AutoCmd *ac, const AutoPatCmd *apc)
     Dictionary data = ARRAY_DICT_INIT;
     PUT(data, "id", INTEGER_OBJ(ac->id));
     PUT(data, "event", CSTR_TO_OBJ(event_nr2name(apc->event)));
-    PUT(data, "match", CSTR_TO_OBJ((char *)autocmd_match));
-    PUT(data, "file", CSTR_TO_OBJ((char *)autocmd_fname));
+    PUT(data, "match", CSTR_TO_OBJ(autocmd_match));
+    PUT(data, "file", CSTR_TO_OBJ(autocmd_fname));
     PUT(data, "buf", INTEGER_OBJ(autocmd_bufnr));
 
     if (apc->data) {

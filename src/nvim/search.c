@@ -95,7 +95,7 @@ static struct spat spats[2] = {
 
 static int last_idx = 0;        // index in spats[] for RE_LAST
 
-static char_u lastc[2] = { NUL, NUL };    // last character searched for
+static uint8_t lastc[2] = { NUL, NUL };   // last character searched for
 static Direction lastcdir = FORWARD;      // last direction of character search
 static int last_t_cmd = true;             // last search t_cmd
 static char lastc_bytes[MB_MAXBYTES + 1];
@@ -439,7 +439,7 @@ int last_csearch_until(void)
 
 void set_last_csearch(int c, char *s, int len)
 {
-  *lastc = (char_u)c;
+  *lastc = (uint8_t)c;
   lastc_bytelen = len;
   if (len) {
     memcpy(lastc_bytes, s, (size_t)len);
@@ -1053,7 +1053,7 @@ int do_search(oparg_T *oap, int dirc, int search_delim, char *pat, long count, i
 
   // Find out the direction of the search.
   if (dirc == 0) {
-    dirc = (char_u)spats[0].off.dir;
+    dirc = (uint8_t)spats[0].off.dir;
   } else {
     spats[0].off.dir = (char)dirc;
     set_vv_searchforward();
@@ -1510,7 +1510,7 @@ int searchc(cmdarg_T *cap, int t_cmd)
 
   if (c != NUL) {       // normal search: remember args for repeat
     if (!KeyStuffed) {      // don't remember when redoing
-      *lastc = (char_u)c;
+      *lastc = (uint8_t)c;
       set_csearch_direction(dir);
       set_csearch_until(t_cmd);
       lastc_bytelen = utf_char2bytes(c, lastc_bytes);
@@ -3125,8 +3125,7 @@ static int fuzzy_match_recursive(const char *fuzpat, const char *str, uint32_t s
 /// normalized and varies with pattern.
 /// Recursion is limited internally (default=10) to prevent degenerate cases
 /// (pat_arg="aaaaaa" str="aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa").
-/// Uses char_u for match indices. Therefore patterns are limited to
-/// MAX_FUZZY_MATCHES characters.
+/// Patterns are limited to MAX_FUZZY_MATCHES characters.
 ///
 /// @return true if "pat_arg" matches "str". Also returns the match score in
 /// "outScore" and the matching character positions in "matches".

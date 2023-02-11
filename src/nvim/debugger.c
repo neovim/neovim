@@ -727,7 +727,7 @@ void ex_breaklist(exarg_T *eap)
   for (int i = 0; i < dbg_breakp.ga_len; i++) {
     struct debuggy *bp = &BREAKP(i);
     if (bp->dbg_type == DBG_FILE) {
-      home_replace(NULL, bp->dbg_name, (char *)NameBuff, MAXPATHL, true);
+      home_replace(NULL, bp->dbg_name, NameBuff, MAXPATHL, true);
     }
     if (bp->dbg_type != DBG_EXPR) {
       smsg(_("%3d  %s %s  line %" PRId64),

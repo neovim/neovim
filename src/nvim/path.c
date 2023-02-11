@@ -810,7 +810,7 @@ static int find_previous_pathsep(char *path, char **psep)
 }
 
 /// Returns true if "maybe_unique" is unique wrt other_paths in "gap".
-/// "maybe_unique" is the end portion of "((char_u **)gap->ga_data)[i]".
+/// "maybe_unique" is the end portion of "((char **)gap->ga_data)[i]".
 static bool is_unique(char *maybe_unique, garray_T *gap, int i)
 {
   char **other_paths = gap->ga_data;
@@ -879,7 +879,7 @@ static void expand_path_option(char *curdir, garray_T *gap)
       }
       STRMOVE(buf + len + 1, buf);
       STRCPY(buf, curdir);
-      buf[len] = (char_u)PATHSEP;
+      buf[len] = PATHSEP;
       simplify_filename(buf);
     }
 
@@ -1923,7 +1923,7 @@ void path_fix_case(char *name)
       xstrlcpy(newname + (tail - name), entry,
                (size_t)(MAXPATHL - (tail - name) + 1));
       FileInfo file_info_new;
-      if (os_fileinfo_link((char *)newname, &file_info_new)
+      if (os_fileinfo_link(newname, &file_info_new)
           && os_fileinfo_id_equal(&file_info, &file_info_new)) {
         STRCPY(tail, entry);
         break;
@@ -1956,11 +1956,11 @@ bool same_directory(char *f1, char *f2)
     return false;
   }
 
-  (void)vim_FullName(f1, (char *)ffname, MAXPATHL, false);
+  (void)vim_FullName(f1, ffname, MAXPATHL, false);
   t1 = path_tail_with_sep(ffname);
   t2 = path_tail_with_sep(f2);
   return t1 - ffname == t2 - f2
-         && pathcmp((char *)ffname, f2, (int)(t1 - ffname)) == 0;
+         && pathcmp(ffname, f2, (int)(t1 - ffname)) == 0;
 }
 
 // Compare path "p[]" to "q[]".

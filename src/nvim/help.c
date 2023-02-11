@@ -1089,7 +1089,7 @@ static void do_helptags(char *dirname, bool add_help_tags, bool ignore_writeerr)
 
   // Get a list of all files in the help directory and in subdirectories.
   xstrlcpy(NameBuff, dirname, sizeof(NameBuff));
-  if (!add_pathsep((char *)NameBuff)
+  if (!add_pathsep(NameBuff)
       || xstrlcat(NameBuff, "**", sizeof(NameBuff)) >= MAXPATHL) {
     emsg(_(e_fnametoolong));
     return;

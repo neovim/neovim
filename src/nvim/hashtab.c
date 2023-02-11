@@ -457,8 +457,8 @@ hash_T hash_hash_len(const char *key, const size_t len)
 ///
 /// Used for testing because luajit ffi does not allow getting addresses of
 /// globals.
-const char_u *_hash_key_removed(void)
+const char *_hash_key_removed(void)
   FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  return (char_u *)HI_KEY_REMOVED;
+  return HI_KEY_REMOVED;
 }
