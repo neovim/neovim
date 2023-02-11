@@ -16,7 +16,6 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  CI_BUILD_DIR: ${{ github.workspace }}
   UNCRUSTIFY_VERSION: uncrustify-0.75.0
   # TEST_FILE: test/functional/core/startup_spec.lua
   # TEST_FILTER: foo
@@ -26,8 +25,6 @@ jobs:
     if: (github.event_name == 'pull_request' && github.base_ref == 'master') || (github.event_name == 'push' && github.ref == 'refs/heads/master')
     runs-on: ubuntu-22.04
     timeout-minutes: 10
-    env:
-      CC: gcc
     steps:
       - uses: actions/checkout@v3
 
@@ -67,7 +64,9 @@ jobs:
       - uses: ./.github/actions/cache
 
       - name: Build third-party deps
-        run: ./ci/before_script.sh
+        run: |
+          cmake -S cmake.deps -B "${DEPS_BUILD_DIR}" -G Ninja ${DEPS_CMAKE_FLAGS}
+          cmake --build "${DEPS_BUILD_DIR}"
 
       - if: "!cancelled()"
         name: Determine if run should be aborted
@@ -90,7 +89,7 @@ jobs:
 
       - if: success() || failure() && steps.abort_job.outputs.status == 'success'
         name: lintsh
-        run: make lintsh
+        run: cmake --build build --target lintsh
 
       - if: success() || failure() && steps.abort_job.outputs.status == 'success'
         name: uncrustify
@@ -119,8 +118,6 @@ jobs:
     if: (github.event_name == 'pull_request' && github.base_ref == 'master') || (github.event_name == 'push' && github.ref == 'refs/heads/master')
     runs-on: ubuntu-22.04
     timeout-minutes: 10
-    env:
-      CC: gcc
     steps:
       - uses: actions/checkout@v3
 
@@ -153,10 +150,14 @@ jobs:
       - uses: ./.github/actions/cache
 
       - name: Build third-party deps
-        run: ./ci/before_script.sh
+        run: |
+          cmake -S cmake.deps -B "${DEPS_BUILD_DIR}" -G Ninja ${DEPS_CMAKE_FLAGS}
+          cmake --build "${DEPS_BUILD_DIR}"
 
-      - name: Build nvim
-        run: make
+      - name: Build
+        run: |
+          cmake -B build -G Ninja
+          cmake --build build
 
       - if: "!cancelled()"
         name: Determine if run should be aborted
@@ -226,10 +227,23 @@ jobs:
       - uses: ./.github/actions/cache
 
       - name: Build third-party deps
-        run: ./ci/before_script.sh
+        run: |
+          if test "${FUNCTIONALTEST}" = "functionaltest-lua" ; then
+            DEPS_CMAKE_FLAGS="${DEPS_CMAKE_FLAGS} -D USE_BUNDLED_LUA=ON"
+          fi
+          cmake -S cmake.deps -B "${DEPS_BUILD_DIR}" -G Ninja ${DEPS_CMAKE_FLAGS}
+          cmake --build "${DEPS_BUILD_DIR}"
 
       - name: Build
-        run: ./ci/run_tests.sh build_nvim
+        run: |
+          if test -n "${CLANG_SANITIZER}" ; then
+            CMAKE_FLAGS="${CMAKE_FLAGS} -D CLANG_${CLANG_SANITIZER}=ON"
+          fi
+          cmake -B build -G Ninja ${CMAKE_FLAGS}
+          cmake --build build
+
+      - name: Prepare sanitizer
+        run: ./ci/run_tests.sh prepare_sanitizer
 
       - if: "!cancelled()"
         name: Determine if run should be aborted
@@ -251,8 +265,12 @@ jobs:
         run: ./ci/run_tests.sh oldtests
 
       - if: success() || failure() && steps.abort_job.outputs.status == 'success'
-        name: Install nvim
-        run: ./ci/run_tests.sh install_nvim
+        name: Install
+        run: cmake --install build
+
+      - if: success() || failure() && steps.abort_job.outputs.status == 'success'
+        name: Installtests
+        run: ./ci/run_tests.sh installtests
 
   old_cmake:
     name: Test oldest supported cmake
@@ -314,7 +332,7 @@ jobs:
           cmake -S cmake.deps -B $env:DEPS_BUILD_DIR -G Ninja -D CMAKE_BUILD_TYPE='RelWithDebInfo'
           cmake --build $env:DEPS_BUILD_DIR
 
-      - name: Build nvim
+      - name: Build
         run: |
           cmake -B build -G Ninja -D CMAKE_BUILD_TYPE='RelWithDebInfo' -D CI_BUILD=ON
           cmake --build build
