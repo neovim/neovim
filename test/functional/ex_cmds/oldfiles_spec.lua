@@ -2,6 +2,8 @@ local Screen = require('test.functional.ui.screen')
 local helpers = require('test.functional.helpers')(after_each)
 
 local clear = helpers.clear
+local command = helpers.command
+local expect_exit = helpers.expect_exit
 local buf, eq, feed_command = helpers.curbufmeths, helpers.eq, helpers.feed_command
 local feed, poke_eventloop = helpers.feed, helpers.poke_eventloop
 local ok = helpers.ok
@@ -19,6 +21,7 @@ describe(':oldfiles', function()
   before_each(_clear)
 
   after_each(function()
+    expect_exit(command, 'qall!')
     os.remove(shada_file)
   end)
 
@@ -42,6 +45,7 @@ describe(':oldfiles', function()
                                                                                                           |
       Press ENTER or type command to continue^                                                             |
     ]])
+    feed('<CR>')
   end)
 
   it('can be filtered with :filter', function()
@@ -107,6 +111,7 @@ describe(':browse oldfiles', function()
   end)
 
   after_each(function()
+    expect_exit(command, 'qall!')
     os.remove(shada_file)
   end)
 

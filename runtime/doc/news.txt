@@ -47,6 +47,9 @@ The following changes may require adaptations in user config or plugins.
 
 • libiconv is now a required build dependency.
 
+• Unsaved changes are now preserved rather than discarded when |channel-stdio|
+  is closed.
+
 ==============================================================================
 NEW FEATURES                                                    *news-features*
 

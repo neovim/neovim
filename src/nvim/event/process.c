@@ -422,7 +422,12 @@ static void exit_event(void **argv)
   }
 
   if (!exiting) {
-    os_exit(status);
+    if (ui_client_channel_id) {
+      os_exit(status);
+    } else {
+      assert(status == 0);  // Called from rpc_close(), which passes 0 as status.
+      preserve_exit(NULL);
+    }
   }
 }
 
