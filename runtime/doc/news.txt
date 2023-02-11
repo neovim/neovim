@@ -63,7 +63,7 @@ The following new APIs or features were added.
 <
   (or the Vimscript equivalent) to their |config| file.
 
-• Run Lua scripts from your shell using |-l|. >
+• Added support for running Lua scripts from shell using |-l|. >
       nvim -l foo.lua --arg1 --arg2
 <  Also works with stdin: >
       echo "print(42)" | nvim -l -
