@@ -1598,8 +1598,10 @@ static int command_line_insert_reg(CommandLineState *s)
     }
   }
 
+  bool literally = false;
   if (s->c != ESC) {               // use ESC to cancel inserting register
-    cmdline_paste(s->c, i == Ctrl_R, false);
+    literally = i == Ctrl_R;
+    cmdline_paste(s->c, literally, false);
 
     // When there was a serious error abort getting the
     // command line.
@@ -1624,8 +1626,9 @@ static int command_line_insert_reg(CommandLineState *s)
   ccline.special_char = NUL;
   redrawcmd();
 
-  // The text has been stuffed, the command line didn't change yet.
-  return CMDLINE_NOT_CHANGED;
+  // With "literally": the command line has already changed.
+  // Else: the text has been stuffed, but the command line didn't change yet.
+  return literally ? CMDLINE_CHANGED : CMDLINE_NOT_CHANGED;
 }
 
 /// Handle the Left and Right mouse clicks in the command-line mode.
@@ -1857,12 +1860,12 @@ static int command_line_handle_key(CommandLineState *s)
 
   case Ctrl_R:                        // insert register
     switch (command_line_insert_reg(s)) {
-    case CMDLINE_NOT_CHANGED:
-      return command_line_not_changed(s);
     case GOTO_NORMAL_MODE:
       return 0;  // back to cmd mode
-    default:
+    case CMDLINE_CHANGED:
       return command_line_changed(s);
+    default:
+      return command_line_not_changed(s);
     }
 
   case Ctrl_D:
