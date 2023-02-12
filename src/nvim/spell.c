@@ -1866,14 +1866,12 @@ char *did_set_spelllang(win_T *wp)
   int len;
   char *p;
   int round;
-  char *spf;
   char *use_region = NULL;
   bool dont_use_region = false;
   bool nobreak = false;
   langp_T *lp, *lp2;
   static bool recursive = false;
   char *ret_msg = NULL;
-  char *spl_copy;
 
   bufref_T bufref;
   set_bufref(&bufref, wp->w_buffer);
@@ -1891,7 +1889,7 @@ char *did_set_spelllang(win_T *wp)
 
   // Make a copy of 'spelllang', the SpellFileMissing autocommands may change
   // it under our fingers.
-  spl_copy = xstrdup(wp->w_s->b_p_spl);
+  char *spl_copy = xstrdup(wp->w_s->b_p_spl);
 
   wp->w_s->b_cjk = 0;
 
@@ -2020,7 +2018,7 @@ char *did_set_spelllang(win_T *wp)
   // round 1: load first name in 'spellfile'.
   // round 2: load second name in 'spellfile.
   // etc.
-  spf = curwin->w_s->b_p_spf;
+  char *spf = curwin->w_s->b_p_spf;
   for (round = 0; round == 0 || *spf != NUL; round++) {
     if (round == 0) {
       // Internal wordlist, if there is one.
