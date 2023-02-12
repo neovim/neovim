@@ -3041,7 +3041,6 @@ static bool sal_to_bool(char *s)
 // Free the structure filled by spell_read_aff().
 static void spell_free_aff(afffile_T *aff)
 {
-  hashtab_T *ht;
   hashitem_T *hi;
   affheader_T *ah;
   affentry_T *ae;
@@ -3049,7 +3048,7 @@ static void spell_free_aff(afffile_T *aff)
   xfree(aff->af_enc);
 
   // All this trouble to free the "ae_prog" items...
-  for (ht = &aff->af_pref;; ht = &aff->af_suff) {
+  for (hashtab_T *ht = &aff->af_pref;; ht = &aff->af_suff) {
     int todo = (int)ht->ht_used;
     for (hi = ht->ht_array; todo > 0; hi++) {
       if (!HASHITEM_EMPTY(hi)) {
@@ -3635,7 +3634,6 @@ static int store_aff_word(spellinfo_T *spin, char *word, char *afflist, afffile_
 // Read a file with a list of words.
 static int spell_read_wordfile(spellinfo_T *spin, char *fname)
 {
-  FILE *fd;
   long lnum = 0;
   char rline[MAXLINELEN];
   char *line;
@@ -3649,7 +3647,7 @@ static int spell_read_wordfile(spellinfo_T *spin, char *fname)
   int regionmask;
 
   // Open the file.
-  fd = os_fopen(fname, "r");
+  FILE *fd = os_fopen(fname, "r");
   if (fd == NULL) {
     semsg(_(e_notopen), fname);
     return FAIL;
@@ -3817,7 +3815,6 @@ static int spell_read_wordfile(spellinfo_T *spin, char *fname)
 static void *getroom(spellinfo_T *spin, size_t len, bool align)
   FUNC_ATTR_NONNULL_RET
 {
-  char_u *p;
   sblock_T *bl = spin->si_blocks;
 
   assert(len <= SBLOCKSIZE);
@@ -3837,7 +3834,7 @@ static void *getroom(spellinfo_T *spin, size_t len, bool align)
     spin->si_blocks_cnt++;
   }
 
-  p = bl->sb_data + bl->sb_used;
+  char_u *p = bl->sb_data + bl->sb_used;
   bl->sb_used += (int)len;
 
   return p;
@@ -4954,9 +4951,6 @@ theend:
 // Build the soundfold trie for language "slang".
 static int sug_filltree(spellinfo_T *spin, slang_T *slang)
 {
-  char_u *byts;
-  idx_T *idxs;
-  int depth;
   idx_T arridx[MAXWLEN];
   int curi[MAXWLEN];
   char_u tword[MAXWLEN];
@@ -4974,14 +4968,14 @@ static int sug_filltree(spellinfo_T *spin, slang_T *slang)
 
   // Go through the whole case-folded tree, soundfold each word and put it
   // in the trie.
-  byts = (char_u *)slang->sl_fbyts;
-  idxs = slang->sl_fidxs;
+  char_u *byts = (char_u *)slang->sl_fbyts;
+  idx_T *idxs = slang->sl_fidxs;
 
   arridx[0] = 0;
   curi[0] = 1;
   wordcount[0] = 0;
 
-  depth = 0;
+  int depth = 0;
   while (depth >= 0 && !got_int) {
     if (curi[depth] > byts[arridx[depth]]) {
       // Done all bytes at this node, go up one level.
@@ -5130,16 +5124,13 @@ static int sug_filltable(spellinfo_T *spin, wordnode_T *node, int startwordnr, g
 // bytes.
 static int offset2bytes(int nr, char_u *buf)
 {
-  int rem;
-  int b1, b2, b3, b4;
-
   // Split the number in parts of base 255.  We need to avoid NUL bytes.
-  b1 = nr % 255 + 1;
-  rem = nr / 255;
-  b2 = rem % 255 + 1;
+  int b1 = nr % 255 + 1;
+  int rem = nr / 255;
+  int b2 = rem % 255 + 1;
   rem = rem / 255;
-  b3 = rem % 255 + 1;
-  b4 = rem / 255 + 1;
+  int b3 = rem % 255 + 1;
+  int b4 = rem / 255 + 1;
 
   if (b4 > 1 || b3 > 0x1f) {    // 4 bytes
     buf[0] = (char_u)(0xe0 + b4);
@@ -5251,10 +5242,7 @@ theend:
 static void mkspell(int fcount, char **fnames, bool ascii, bool over_write, bool added_word)
 {
   char *fname = NULL;
-  char **innames;
-  int incount;
   afffile_T *(afile[MAXREGIONS]);
-  int i;
   int len;
   bool error = false;
   spellinfo_T spin;
@@ -5275,8 +5263,8 @@ static void mkspell(int fcount, char **fnames, bool ascii, bool over_write, bool
 
   // default: fnames[0] is output file, following are input files
   // When "fcount" is 1 there is only one file.
-  innames = &fnames[fcount == 1 ? 0 : 1];
-  incount = fcount - 1;
+  char **innames = &fnames[fcount == 1 ? 0 : 1];
+  int incount = fcount - 1;
 
   char *wfname = xmalloc(MAXPATHL);
 
@@ -5334,7 +5322,7 @@ static void mkspell(int fcount, char **fnames, bool ascii, bool over_write, bool
 
     // Init the aff and dic pointers.
     // Get the region names if there are more than 2 arguments.
-    for (i = 0; i < incount; i++) {
+    for (int i = 0; i < incount; i++) {
       afile[i] = NULL;
 
       if (incount > 1) {
@@ -5366,7 +5354,7 @@ static void mkspell(int fcount, char **fnames, bool ascii, bool over_write, bool
     // Read all the .aff and .dic files.
     // Text is converted to 'encoding'.
     // Words are stored in the case-folded and keep-case trees.
-    for (i = 0; i < incount && !error; i++) {
+    for (int i = 0; i < incount && !error; i++) {
       spin.si_conv.vc_type = CONV_NONE;
       spin.si_region = 1 << i;
 
@@ -5437,7 +5425,7 @@ static void mkspell(int fcount, char **fnames, bool ascii, bool over_write, bool
     hash_clear_all(&spin.si_commonwords, 0);
 
     // Free the .aff file structures.
-    for (i = 0; i < incount; i++) {
+    for (int i = 0; i < incount; i++) {
       if (afile[i] != NULL) {
         spell_free_aff(afile[i]);
       }
@@ -5557,12 +5545,12 @@ void spell_add_word(char *word, int len, SpellAddType what, int idx, bool undo)
   }
 
   if (what == SPELL_ADD_BAD || undo) {
-    long fpos_next = 0;
-    long fpos = 0;
     // When the word appears as good word we need to remove that one,
     // since its flags sort before the one with WF_BANNED.
     fd = os_fopen(fname, "r");
     if (fd != NULL) {
+      long fpos_next = 0;
+      long fpos = 0;
       while (!vim_fgets((char *)line, MAXWLEN * 2, fd)) {
         fpos = fpos_next;
         fpos_next = ftell(fd);
@@ -5654,10 +5642,8 @@ void spell_add_word(char *word, int len, SpellAddType what, int idx, bool undo)
 // Initialize 'spellfile' for the current buffer.
 static void init_spellfile(void)
 {
-  char *buf;
   int l;
   char *fname;
-  char *rtp;
   char *lend;
   bool aspath = false;
   char *lstart = curbuf->b_s.b_p_spl;
@@ -5666,7 +5652,7 @@ static void init_spellfile(void)
     return;
   }
 
-  buf = xmalloc(MAXPATHL);
+  char *buf = xmalloc(MAXPATHL);
 
   // Find the end of the language name.  Exclude the region.  If there
   // is a path separator remember the start of the tail.
@@ -5680,7 +5666,7 @@ static void init_spellfile(void)
 
   // Loop over all entries in 'runtimepath'.  Use the first one where we
   // are allowed to write.
-  rtp = p_rtp;
+  char *rtp = p_rtp;
   while (*rtp != NUL) {
     if (aspath) {
       // Use directory of an entry with path, e.g., for
@@ -5810,7 +5796,6 @@ static int write_spell_prefcond(FILE *fd, garray_T *gap, size_t *fwv)
 // Use map string "map" for languages "lp".
 static void set_map_str(slang_T *lp, char *map)
 {
-  char *p;
   int headc = 0;
 
   if (*map == NUL) {
@@ -5828,7 +5813,7 @@ static void set_map_str(slang_T *lp, char *map)
   // The similar characters are stored separated with slashes:
   // "aaa/bbb/ccc/".  Fill sl_map_array[c] with the character before c and
   // before the same slash.  For characters above 255 sl_map_hash is used.
-  for (p = map; *p != NUL;) {
+  for (char *p = map; *p != NUL;) {
     int c = mb_cptr2char_adv((const char **)&p);
     if (c == '/') {
       headc = 0;
@@ -5843,16 +5828,14 @@ static void set_map_str(slang_T *lp, char *map)
       if (c >= 256) {
         int cl = utf_char2len(c);
         int headcl = utf_char2len(headc);
-        hash_T hash;
-        hashitem_T *hi;
 
         char *b = xmalloc((size_t)(cl + headcl) + 2);
         utf_char2bytes(c, b);
         b[cl] = NUL;
         utf_char2bytes(headc, b + cl + 1);
         b[cl + 1 + headcl] = NUL;
-        hash = hash_hash(b);
-        hi = hash_lookup(&lp->sl_map_hash, (const char *)b, strlen(b), hash);
+        hash_T hash = hash_hash(b);
+        hashitem_T *hi = hash_lookup(&lp->sl_map_hash, (const char *)b, strlen(b), hash);
         if (HASHITEM_EMPTY(hi)) {
           hash_add_item(&lp->sl_map_hash, hi, b, hash);
         } else {
