@@ -175,6 +175,9 @@ local queue_timeout_ms = 100
 local queue_timers = {}
 ---@type table<number, lsp.FileEvent[]> client id -> set of queued changes to send in a single LSP notification
 local change_queues = {}
+---@type table<number, table<string, lsp.FileChangeType>> client id -> URI -> last type of change processed
+--- Used to prune consecutive events of the same type for the same file
+local change_cache = vim.defaulttable()
 
 local to_lsp_change_type = {
   [watch.FileChangeType.Created] = protocol.FileChangeType.Created,
@@ -222,8 +225,14 @@ function M.register(reg, ctx)
               uri = vim.uri_from_fname(fullpath),
               type = change_type,
             }
-            change_queues[client_id] = change_queues[client_id] or {}
-            table.insert(change_queues[client_id], change)
+
+            local last_type = change_cache[client_id][change.uri]
+            if last_type ~= change.type then
+              change_queues[client_id] = change_queues[client_id] or {}
+              table.insert(change_queues[client_id], change)
+              change_cache[client_id][change.uri] = change.type
+            end
+
             if not queue_timers[client_id] then
               queue_timers[client_id] = vim.defer_fn(function()
                 client.notify('workspace/didChangeWatchedFiles', {
@@ -231,6 +240,7 @@ function M.register(reg, ctx)
                 })
                 queue_timers[client_id] = nil
                 change_queues[client_id] = nil
+                change_cache[client_id] = nil
               end, queue_timeout_ms)
             end
           end

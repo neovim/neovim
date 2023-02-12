@@ -3901,5 +3901,87 @@ describe('LSP', function()
         },
       }, result[3].params)
     end)
+
+    it('prunes duplicate events', function()
+      local root_dir = 'some_dir'
+      exec_lua(create_server_definition)
+      local result = exec_lua([[
+        local root_dir = ...
+
+        local server = _create_server()
+        local client_id = vim.lsp.start({
+          name = 'watchfiles-test',
+          cmd = server.cmd,
+          root_dir = root_dir,
+        })
+
+        local expected_messages = 2 -- initialize, initialized
+        local function wait_for_messages()
+          assert(vim.wait(200, function() return #server.messages == expected_messages end), 'Timed out waiting for expected number of messages. Current messages seen so far: ' .. vim.inspect(server.messages))
+        end
+
+        wait_for_messages()
+
+        local send_event
+        require('vim.lsp._watchfiles')._watchfunc = function(_, _, callback)
+          send_event = callback
+          return function()
+            -- noop because this test never stops the watch
+          end
+        end
+
+        vim.lsp.handlers['client/registerCapability'](nil, {
+          registrations = {
+            {
+              id = 'watchfiles-test-kind',
+              method = 'workspace/didChangeWatchedFiles',
+              registerOptions = {
+                watchers = {
+                  {
+                    globPattern = '**/*',
+                  },
+                },
+              },
+            },
+          },
+        }, { client_id = client_id })
+
+        send_event('file1', vim._watch.FileChangeType.Created)
+        send_event('file1', vim._watch.FileChangeType.Created) -- pruned
+        send_event('file1', vim._watch.FileChangeType.Changed)
+        send_event('file2', vim._watch.FileChangeType.Created)
+        send_event('file1', vim._watch.FileChangeType.Changed) -- pruned
+
+        expected_messages = expected_messages + 1
+        wait_for_messages()
+
+        return server.messages
+      ]], root_dir)
+
+      local function watched_uri(fname)
+        return exec_lua([[
+            return vim.uri_from_fname(...)
+          ]], fname)
+      end
+
+      eq(3, #result)
+      eq('workspace/didChangeWatchedFiles', result[3].method)
+      eq({
+        changes = {
+          {
+            type = exec_lua([[return vim.lsp.protocol.FileChangeType.Created]]),
+            uri = watched_uri('file1'),
+          },
+          {
+            type = exec_lua([[return vim.lsp.protocol.FileChangeType.Changed]]),
+            uri = watched_uri('file1'),
+          },
+          {
+            type = exec_lua([[return vim.lsp.protocol.FileChangeType.Created]]),
+            uri = watched_uri('file2'),
+          },
+        },
+      }, result[3].params)
+    end)
   end)
 end)
