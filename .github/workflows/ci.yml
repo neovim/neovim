@@ -154,8 +154,6 @@ jobs:
             # Remove comments from packages once we start using these external
             # dependencies.
 
-      - run: echo "DEPS_BUILD_DIR=$HOME/nvim-deps" >> $GITHUB_ENV
-
       - uses: ./.github/actions/cache
 
       - name: Build third-party deps
