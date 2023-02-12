@@ -593,7 +593,6 @@ static inline int spell_check_magic_string(FILE *const fd)
 /// @return  the slang_T the spell file was loaded into.  NULL for error.
 slang_T *spell_load_file(char *fname, char *lang, slang_T *old_lp, bool silent)
 {
-  FILE *fd;
   char *p;
   int n;
   int len;
@@ -602,7 +601,7 @@ slang_T *spell_load_file(char *fname, char *lang, slang_T *old_lp, bool silent)
   int res;
   bool did_estack_push = false;
 
-  fd = os_fopen(fname, "r");
+  FILE *fd = os_fopen(fname, "r");
   if (fd == NULL) {
     if (!silent) {
       semsg(_(e_notopen), fname);
