@@ -2018,7 +2018,6 @@ static void spell_print_tree(wordnode_T *root)
 // Returns an afffile_T, NULL for complete failure.
 static afffile_T *spell_read_aff(spellinfo_T *spin, char *fname)
 {
-  FILE *fd;
   char rline[MAXLINELEN];
   char *line;
   char *pc = NULL;
@@ -2034,10 +2033,6 @@ static afffile_T *spell_read_aff(spellinfo_T *spin, char *fname)
   char *low = NULL;
   char *fol = NULL;
   char *upp = NULL;
-  int do_rep;
-  int do_repsal;
-  int do_sal;
-  int do_mapline;
   bool found_map = false;
   hashitem_T *hi;
   int l;
@@ -2053,7 +2048,7 @@ static afffile_T *spell_read_aff(spellinfo_T *spin, char *fname)
   char *sofoto = NULL;             // SOFOTO value
 
   // Open the file.
-  fd = os_fopen(fname, "r");
+  FILE *fd = os_fopen(fname, "r");
   if (fd == NULL) {
     semsg(_(e_notopen), fname);
     return NULL;
@@ -2063,16 +2058,16 @@ static afffile_T *spell_read_aff(spellinfo_T *spin, char *fname)
   spell_message(spin, IObuff);
 
   // Only do REP lines when not done in another .aff file already.
-  do_rep = GA_EMPTY(&spin->si_rep);
+  int do_rep = GA_EMPTY(&spin->si_rep);
 
   // Only do REPSAL lines when not done in another .aff file already.
-  do_repsal = GA_EMPTY(&spin->si_repsal);
+  int do_repsal = GA_EMPTY(&spin->si_repsal);
 
   // Only do SAL lines when not done in another .aff file already.
-  do_sal = GA_EMPTY(&spin->si_sal);
+  int do_sal = GA_EMPTY(&spin->si_sal);
 
   // Only do MAP lines when not done in another .aff file already.
-  do_mapline = GA_EMPTY(&spin->si_map);
+  int do_mapline = GA_EMPTY(&spin->si_map);
 
   // Allocate and init the afffile_T structure.
   afffile_T *aff = getroom(spin, sizeof(*aff), true);
