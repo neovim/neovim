@@ -22,13 +22,11 @@ main() {(
     i=$(( i+1 ))
   done
 
-  export CI_DIR="$root/ci"
   BUILD_DIR="$(dirname "$nvim_prg")/.."
   export BUILD_DIR
   export FAILED=0
 
-  . "$CI_DIR/common/suite.sh"
-  . "$CI_DIR/common/test.sh"
+  . $(dirname $0)/test.sh
 
   # Redirect XDG_CONFIG_HOME so users local config doesn't interfere
   export XDG_CONFIG_HOME="$root"

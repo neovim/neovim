@@ -86,15 +86,11 @@ static int get_mouse_class(char *p)
 /// Move "pos" back to the start of the word it's in.
 static void find_start_of_word(pos_T *pos)
 {
-  char *line;
-  int cclass;
-  int col;
-
-  line = ml_get(pos->lnum);
-  cclass = get_mouse_class(line + pos->col);
+  char *line = ml_get(pos->lnum);
+  int cclass = get_mouse_class(line + pos->col);
 
   while (pos->col > 0) {
-    col = pos->col - 1;
+    int col = pos->col - 1;
     col -= utf_head_off(line, line + col);
     if (get_mouse_class(line + col) != cclass) {
       break;
@@ -109,7 +105,6 @@ static void find_end_of_word(pos_T *pos)
 {
   char *line;
   int cclass;
-  int col;
 
   line = ml_get(pos->lnum);
   if (*p_sel == 'e' && pos->col > 0) {
@@ -118,7 +113,7 @@ static void find_end_of_word(pos_T *pos)
   }
   cclass = get_mouse_class(line + pos->col);
   while (line[pos->col] != NUL) {
-    col = pos->col + utfc_ptr2len(line + pos->col);
+    int col = pos->col + utfc_ptr2len(line + pos->col);
     if (get_mouse_class(line + col) != cclass) {
       if (*p_sel == 'e') {
         pos->col = col;
@@ -296,18 +291,16 @@ bool do_mouse(oparg_T *oap, int c, int dir, long count, bool fixindent)
   bool in_status_line;          // mouse in status line
   static bool in_tab_line = false;   // mouse clicked in tab line
   bool in_sep_line;             // mouse in vertical separator line
-  int c1, c2;
-  pos_T save_cursor;
+  int c1;
   win_T *old_curwin = curwin;
   static pos_T orig_cursor;
   colnr_T leftcol, rightcol;
   pos_T end_visual;
-  long diff;
   int old_active = VIsual_active;
   int old_mode = VIsual_mode;
   int regname;
 
-  save_cursor = curwin->w_cursor;
+  pos_T save_cursor = curwin->w_cursor;
 
   for (;;) {
     which_button = get_mouse_button(KEY2TERMCAP1(c), &is_click, &is_drag);
@@ -731,6 +724,7 @@ bool do_mouse(oparg_T *oap, int c, int dir, long count, bool fixindent)
   }
 
   if (start_visual.lnum) {              // right click in visual mode
+    long diff;
     // When ALT is pressed make Visual mode blockwise.
     if (mod_mask & MOD_MASK_ALT) {
       VIsual_mode = Ctrl_V;
@@ -800,6 +794,7 @@ bool do_mouse(oparg_T *oap, int c, int dir, long count, bool fixindent)
 
   // Middle mouse click: Put text before cursor.
   if (which_button == MOUSE_MIDDLE) {
+    int c2;
     if (regname == 0 && eval_has_provider("clipboard")) {
       regname = '*';
     }
@@ -888,13 +883,13 @@ bool do_mouse(oparg_T *oap, int c, int dir, long count, bool fixindent)
     // A double click selects a word or a block.
     if ((mod_mask & MOD_MASK_MULTI_CLICK) == MOD_MASK_2CLICK) {
       pos_T *pos = NULL;
-      int gc;
 
       if (is_click) {
         // If the character under the cursor (skipping white space) is
         // not a word character, try finding a match and select a (),
         // {}, [], #if/#endif, etc. block.
         end_visual = curwin->w_cursor;
+        int gc;
         while (gc = gchar_pos(&end_visual), ascii_iswhite(gc)) {
           inc(&end_visual);
         }
@@ -1388,16 +1383,14 @@ bool mouse_comp_pos(win_T *win, int *rowp, int *colp, linenr_T *lnump)
 {
   int col = *colp;
   int row = *rowp;
-  linenr_T lnum;
   bool retval = false;
-  int off;
   int count;
 
   if (win->w_p_rl) {
     col = win->w_width_inner - 1 - col;
   }
 
-  lnum = win->w_topline;
+  linenr_T lnum = win->w_topline;
 
   while (row > 0) {
     // Don't include filler lines in "count"
@@ -1429,7 +1422,7 @@ bool mouse_comp_pos(win_T *win, int *rowp, int *colp, linenr_T *lnump)
 
   if (!retval) {
     // Compute the column without wrapping.
-    off = win_col_off(win) - win_col_off2(win);
+    int off = win_col_off(win) - win_col_off2(win);
     if (col < off) {
       col = off;
     }
@@ -1467,9 +1460,7 @@ win_T *mouse_find_win(int *gridp, int *rowp, int *colp)
     return NULL;
   }
 
-  frame_T *fp;
-
-  fp = topframe;
+  frame_T *fp = topframe;
   *rowp -= firstwin->w_winrow;
   for (;;) {
     if (fp->fr_layout == FR_LEAF) {
@@ -1716,10 +1707,8 @@ static int mouse_adjust_click(win_T *wp, int row, int col)
     ptr_end += utfc_ptr2len(ptr_end);
   }
 
-  int matchid;
   int prev_matchid;
   int nudge = 0;
-  int cwidth = 0;
 
   vcol = offset;
 
@@ -1727,7 +1716,7 @@ static int mouse_adjust_click(win_T *wp, int row, int col)
 #define DECR() nudge--; ptr_end -= utfc_ptr2len((char *)ptr_end)
 
   while (ptr < ptr_end && *ptr != NUL) {
-    cwidth = win_chartabsize(curwin, ptr, vcol);
+    int cwidth = win_chartabsize(curwin, ptr, vcol);
     vcol += cwidth;
     if (cwidth > 1 && *ptr == '\t' && nudge > 0) {
       // A tab will "absorb" any previous adjustments.
@@ -1738,7 +1727,7 @@ static int mouse_adjust_click(win_T *wp, int row, int col)
       }
     }
 
-    matchid = syn_get_concealed_id(wp, lnum, (colnr_T)(ptr - line));
+    int matchid = syn_get_concealed_id(wp, lnum, (colnr_T)(ptr - line));
     if (matchid != 0) {
       if (wp->w_p_cole == 3) {
         INCR();
@@ -1780,9 +1769,7 @@ int mouse_check_fold(void)
   int max_col = Columns;
   int multigrid = ui_has(kUIMultigrid);
 
-  win_T *wp;
-
-  wp = mouse_find_win(&click_grid, &click_row, &click_col);
+  win_T *wp = mouse_find_win(&click_grid, &click_row, &click_col);
   if (wp && multigrid) {
     max_row = wp->w_grid_alloc.rows;
     max_col = wp->w_grid_alloc.cols;

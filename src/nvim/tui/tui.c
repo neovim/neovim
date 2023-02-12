@@ -34,15 +34,17 @@
 #include "nvim/msgpack_rpc/channel.h"
 #include "nvim/os/input.h"
 #include "nvim/os/os.h"
-#include "nvim/ui_client.h"
-#ifdef MSWIN
-# include "nvim/os/os_win_console.h"
-#endif
 #include "nvim/tui/input.h"
 #include "nvim/tui/terminfo.h"
 #include "nvim/tui/tui.h"
 #include "nvim/ugrid.h"
 #include "nvim/ui.h"
+#include "nvim/ui_client.h"
+
+#ifdef MSWIN
+# include "nvim/os/os_win_console.h"
+# include "nvim/os/tty.h"
+#endif
 
 // Space reserved in two output buffers to make the cursor normal or invisible
 // when flushing. No existing terminal will require 32 bytes to do that.
@@ -467,7 +469,7 @@ void tui_stop(TUIData *tui)
 }
 
 /// Returns true if UI `ui` is stopped.
-static bool tui_is_stopped(TUIData *tui)
+bool tui_is_stopped(TUIData *tui)
 {
   return tui->stopped;
 }
@@ -1344,6 +1346,7 @@ static void show_verbose_terminfo(TUIData *tui)
 static void suspend_event(void **argv)
 {
   TUIData *tui = argv[0];
+  ui_client_detach();
   bool enable_mouse = tui->mouse_enabled;
   tui_terminal_stop(tui);
   stream_set_blocking(tui->input.in_fd, true);   // normalize stream (#2598)
@@ -1356,6 +1359,7 @@ static void suspend_event(void **argv)
     tui_mouse_on(tui);
   }
   stream_set_blocking(tui->input.in_fd, false);  // libuv expects this
+  ui_client_attach(tui->width, tui->height, tui->term);
 }
 #endif
 

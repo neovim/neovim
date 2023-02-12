@@ -221,7 +221,7 @@ static void aupat_show(AutoPat *ap, event_T event, int previous_group)
     char *exec_to_string = aucmd_exec_to_string(ac, ac->exec);
     if (ac->desc != NULL) {
       size_t msglen = 100;
-      char *msg = (char *)xmallocz(msglen);
+      char *msg = xmallocz(msglen);
       if (ac->exec.type == CALLABLE_CB) {
         msg_puts_attr(exec_to_string, HL_ATTR(HLF_8));
         snprintf(msg, msglen, " [%s]", ac->desc);
@@ -286,7 +286,7 @@ static void au_show_for_event(int group, event_T event, char *pat)
     if (aupat_is_buflocal(pat, patlen)) {
       // normalize pat into standard "<buffer>#N" form
       aupat_normalize_buflocal_pat(buflocal_pat, pat, patlen, aupat_get_buflocal_nr(pat, patlen));
-      pat = (char *)buflocal_pat;
+      pat = buflocal_pat;
       patlen = (int)strlen(buflocal_pat);
     }
 
@@ -1535,6 +1535,7 @@ win_found:
     globaldir = aco->globaldir;
 
     // the buffer contents may have changed
+    VIsual_active = aco->save_VIsual_active;
     check_cursor();
     if (curwin->w_topline > curbuf->b_ml.ml_line_count) {
       curwin->w_topline = curbuf->b_ml.ml_line_count;
@@ -1563,14 +1564,16 @@ win_found:
       curwin = save_curwin;
       curbuf = curwin->w_buffer;
       prevwin = win_find_by_handle(aco->save_prevwin_handle);
+
       // In case the autocommand moves the cursor to a position that does not
       // exist in curbuf
+      VIsual_active = aco->save_VIsual_active;
       check_cursor();
     }
   }
 
-  check_cursor();  // just in case lines got deleted
   VIsual_active = aco->save_VIsual_active;
+  check_cursor();  // just in case lines got deleted
   if (VIsual_active) {
     check_pos(curbuf, &VIsual);
   }
@@ -2116,8 +2119,8 @@ static bool call_autocmd_callback(const AutoCmd *ac, const AutoPatCmd *apc)
     Dictionary data = ARRAY_DICT_INIT;
     PUT(data, "id", INTEGER_OBJ(ac->id));
     PUT(data, "event", CSTR_TO_OBJ(event_nr2name(apc->event)));
-    PUT(data, "match", CSTR_TO_OBJ((char *)autocmd_match));
-    PUT(data, "file", CSTR_TO_OBJ((char *)autocmd_fname));
+    PUT(data, "match", CSTR_TO_OBJ(autocmd_match));
+    PUT(data, "file", CSTR_TO_OBJ(autocmd_fname));
     PUT(data, "buf", INTEGER_OBJ(autocmd_bufnr));
 
     if (apc->data) {
@@ -2737,14 +2740,12 @@ void do_autocmd_focusgained(bool gained)
 {
   static bool recursive = false;
   static Timestamp last_time = (time_t)0;
-  bool need_redraw = false;
 
   if (recursive) {
     return;  // disallow recursion
   }
   recursive = true;
-  need_redraw |= apply_autocmds((gained ? EVENT_FOCUSGAINED : EVENT_FOCUSLOST),
-                                NULL, NULL, false, curbuf);
+  apply_autocmds((gained ? EVENT_FOCUSGAINED : EVENT_FOCUSLOST), NULL, NULL, false, curbuf);
 
   // When activated: Check if any file was modified outside of Vim.
   // Only do this when not done within the last two seconds as:
@@ -2752,30 +2753,8 @@ void do_autocmd_focusgained(bool gained)
   //    has a granularity of 2 seconds.
   // 2. We could get multiple notifications in a row.
   if (gained && last_time + (Timestamp)2000 < os_now()) {
-    need_redraw = check_timestamps(true);
+    check_timestamps(true);
     last_time = os_now();
-  }
-
-  if (need_redraw) {
-    // Something was executed, make sure the cursor is put back where it
-    // belongs.
-    need_wait_return = false;
-
-    if (State & MODE_CMDLINE) {
-      redrawcmdline();
-    } else if ((State & MODE_NORMAL) || (State & MODE_INSERT)) {
-      if (must_redraw != 0) {
-        update_screen();
-      }
-
-      setcursor();
-    }
-
-    ui_flush();
-  }
-
-  if (need_maketitle) {
-    maketitle();
   }
 
   recursive = false;

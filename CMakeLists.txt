@@ -65,15 +65,15 @@ else()
     file(MAKE_DIRECTORY ${DEPS_BUILD_DIR})
     execute_process(
       COMMAND ${CMAKE_COMMAND} -G ${CMAKE_GENERATOR}
-        -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE}
-        -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
-        -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
-        -DCMAKE_C_FLAGS=${CMAKE_C_FLAGS}
-        -DCMAKE_C_FLAGS_DEBUG=${CMAKE_C_FLAGS_DEBUG}
-        -DCMAKE_C_FLAGS_MINSIZEREL=${CMAKE_C_FLAGS_MINSIZEREL}
-        -DCMAKE_C_FLAGS_RELWITHDEBINFO=${CMAKE_C_FLAGS_RELWITHDEBINFO}
-        -DCMAKE_C_FLAGS_RELEASE=${CMAKE_C_FLAGS_RELEASE}
-        -DCMAKE_MAKE_PROGRAM=${CMAKE_MAKE_PROGRAM}
+        -D CMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE}
+        -D CMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
+        -D CMAKE_C_COMPILER=${CMAKE_C_COMPILER}
+        -D CMAKE_C_FLAGS=${CMAKE_C_FLAGS}
+        -D CMAKE_C_FLAGS_DEBUG=${CMAKE_C_FLAGS_DEBUG}
+        -D CMAKE_C_FLAGS_MINSIZEREL=${CMAKE_C_FLAGS_MINSIZEREL}
+        -D CMAKE_C_FLAGS_RELWITHDEBINFO=${CMAKE_C_FLAGS_RELWITHDEBINFO}
+        -D CMAKE_C_FLAGS_RELEASE=${CMAKE_C_FLAGS_RELEASE}
+        -D CMAKE_MAKE_PROGRAM=${CMAKE_MAKE_PROGRAM}
         ${PROJECT_SOURCE_DIR}/cmake.deps
       WORKING_DIRECTORY ${DEPS_BUILD_DIR})
     execute_process(
@@ -117,11 +117,6 @@ endif()
 message(STATUS "CMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX}")
 
 set_default_buildtype()
-if(CMAKE_BUILD_TYPE MATCHES Debug)
-  set(DEBUG 1)
-else()
-  set(DEBUG 0)
-endif()
 
 # If not in a git repo (e.g., a tarball) these tokens define the complete
 # version string, else they are combined with the result of `git describe`.
@@ -134,28 +129,6 @@ set(NVIM_VERSION_PRERELEASE "-dev") # for package maintainers
 set(NVIM_API_LEVEL 11)         # Bump this after any API change.
 set(NVIM_API_LEVEL_COMPAT 0)  # Adjust this after a _breaking_ API change.
 set(NVIM_API_PRERELEASE true)
-
-set(NVIM_VERSION_BUILD_TYPE "${CMAKE_BUILD_TYPE}")
-# NVIM_VERSION_CFLAGS set further below.
-
-# Log level (MIN_LOG_LEVEL in log.h)
-if("${MIN_LOG_LEVEL}" MATCHES "^$")
-  # Minimize logging for release-type builds.
-  if(CMAKE_BUILD_TYPE STREQUAL "Release"
-      OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo"
-      OR CMAKE_BUILD_TYPE STREQUAL "MinSizeRel")
-    message(STATUS "MIN_LOG_LEVEL not specified, default is 3 (ERROR) for release builds")
-    set(MIN_LOG_LEVEL 3)
-  else()
-    message(STATUS "MIN_LOG_LEVEL not specified, default is 1 (INFO)")
-    set(MIN_LOG_LEVEL 1)
-  endif()
-else()
-  if(NOT MIN_LOG_LEVEL MATCHES "^[0-3]$")
-    message(FATAL_ERROR "invalid MIN_LOG_LEVEL: " ${MIN_LOG_LEVEL})
-  endif()
-  message(STATUS "MIN_LOG_LEVEL=${MIN_LOG_LEVEL}")
-endif()
 
 # Default to -O2 on release builds.
 if(CMAKE_C_FLAGS_RELEASE MATCHES "-O3")
@@ -178,20 +151,6 @@ endif()
 # We _want_ assertions in RelWithDebInfo build-type.
 if(CMAKE_C_FLAGS_RELWITHDEBINFO MATCHES DNDEBUG)
   string(REPLACE "-DNDEBUG" "" CMAKE_C_FLAGS_RELWITHDEBINFO "${CMAKE_C_FLAGS_RELWITHDEBINFO}")
-endif()
-
-# gcc 4.0+ sets _FORTIFY_SOURCE=2 automatically.  This currently
-# does not work with Neovim due to some uses of dynamically-sized structures.
-# https://github.com/neovim/neovim/issues/223
-
-# Include the build type's default flags in the check for _FORTIFY_SOURCE,
-# otherwise we may incorrectly identify the level as acceptable and find out
-# later that it was not when optimizations were enabled.  CFLAGS is applied
-# even though you don't see it in CMAKE_REQUIRED_FLAGS.
-set(INIT_FLAGS_NAME CMAKE_C_FLAGS_${CMAKE_BUILD_TYPE})
-string(TOUPPER ${INIT_FLAGS_NAME} INIT_FLAGS_NAME)
-if(${INIT_FLAGS_NAME})
-  set(CMAKE_REQUIRED_FLAGS "${${INIT_FLAGS_NAME}}")
 endif()
 
 option(LOG_LIST_ACTIONS "Add list actions logging" OFF)
@@ -285,9 +244,9 @@ endif()
 # Lint
 #
 find_program(LUACHECK_PRG luacheck)
+find_program(SHELLCHECK_PRG shellcheck)
 find_program(STYLUA_PRG stylua)
 find_program(UNCRUSTIFY_PRG uncrustify)
-find_program(SHELLCHECK_PRG shellcheck)
 
 add_glob_target(
   REQUIRED
@@ -317,8 +276,6 @@ add_glob_target(
   GLOB_PAT *.sh
   EXCLUDE
     scripts/pvscheck.sh
-    ci/common
-    ci/snap
   TOUCH_STRATEGY SINGLE)
 
 add_custom_target(lintcommit
@@ -328,7 +285,7 @@ add_custom_target(lintcommit
 add_dependencies(lintcommit nvim)
 
 add_custom_target(lint)
-add_dependencies(lint check-single-includes lintc lintlua lintsh lintcommit)
+add_dependencies(lint clang-tidy lintc lintlua lintsh lintcommit)
 
 #
 # Format
@@ -347,119 +304,20 @@ install_helper(
   FILES ${CMAKE_SOURCE_DIR}/src/man/nvim.1
   DESTINATION ${CMAKE_INSTALL_MANDIR}/man1)
 
-#
-# Go down the tree.
-#
+if(EXISTS "${DEPS_PREFIX}/share/nvim-qt")
+  option(USE_BUNDLED_NVIMQT "Bundle neovim-qt" ON)
+else()
+  option(USE_BUNDLED_NVIMQT "Bundle neovim-qt" OFF)
+endif()
 
 add_subdirectory(src/nvim)
-get_directory_property(NVIM_VERSION_CFLAGS DIRECTORY src/nvim DEFINITION NVIM_VERSION_CFLAGS)
 add_subdirectory(cmake.config)
-add_subdirectory(test/functional/fixtures)  # compile test programs
 add_subdirectory(runtime)
-get_directory_property(GENERATED_HELP_TAGS DIRECTORY runtime DEFINITION GENERATED_HELP_TAGS)
-if(WIN32)
+add_subdirectory(test)
+if(WIN32 AND USE_BUNDLED_NVIMQT)
   install_helper(
     FILES ${DEPS_PREFIX}/share/nvim-qt/runtime/plugin/nvim_gui_shim.vim
     DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/nvim-qt/runtime/plugin)
-endif()
-
-# Setup busted.
-find_program(BUSTED_PRG NAMES busted busted.bat)
-find_program(BUSTED_LUA_PRG busted-lua)
-if(NOT BUSTED_OUTPUT_TYPE)
-  set(BUSTED_OUTPUT_TYPE "nvim")
-endif()
-
-# Setup some test-related bits.  We do this after going down the tree because we
-# need some of the targets.
-if(BUSTED_PRG)
-  get_target_property(TEST_INCLUDE_DIRS main_lib INTERFACE_INCLUDE_DIRECTORIES)
-
-  set(UNITTEST_PREREQS nvim-test)
-  set(FUNCTIONALTEST_PREREQS nvim printenv-test printargs-test shell-test pwsh-test streams-test tty-test ${GENERATED_HELP_TAGS})
-  set(BENCHMARK_PREREQS nvim tty-test)
-
-  check_lua_module(${LUA_PRG} "ffi" LUA_HAS_FFI)
-  if(LUA_HAS_FFI)
-    add_custom_target(unittest
-      COMMAND ${CMAKE_COMMAND}
-        -DBUSTED_PRG=${BUSTED_PRG}
-        -DLUA_PRG=${LUA_PRG}
-        -DWORKING_DIR=${CMAKE_CURRENT_SOURCE_DIR}
-        -DBUSTED_OUTPUT_TYPE=${BUSTED_OUTPUT_TYPE}
-        -DTEST_DIR=${CMAKE_CURRENT_SOURCE_DIR}/test
-        -DBUILD_DIR=${CMAKE_BINARY_DIR}
-        -DTEST_TYPE=unit
-        -DCIRRUS_CI=$ENV{CIRRUS_CI}
-        -P ${PROJECT_SOURCE_DIR}/cmake/RunTests.cmake
-      DEPENDS ${UNITTEST_PREREQS}
-      USES_TERMINAL)
-    set_target_properties(unittest PROPERTIES FOLDER test)
-  else()
-    message(WARNING "disabling unit tests: no Luajit FFI in ${LUA_PRG}")
-  endif()
-
-  if(LUA_HAS_FFI)
-    set(TEST_LIBNVIM_PATH $<TARGET_FILE:nvim-test>)
-  else()
-    set(TEST_LIBNVIM_PATH "")
-  endif()
-  configure_file(
-    ${CMAKE_SOURCE_DIR}/test/cmakeconfig/paths.lua.in
-    ${CMAKE_BINARY_DIR}/test/cmakeconfig/paths.lua.gen)
-  file(GENERATE
-    OUTPUT ${CMAKE_BINARY_DIR}/test/cmakeconfig/paths.lua
-    INPUT ${CMAKE_BINARY_DIR}/test/cmakeconfig/paths.lua.gen)
-
-  add_custom_target(functionaltest
-    COMMAND ${CMAKE_COMMAND}
-      -DBUSTED_PRG=${BUSTED_PRG}
-      -DLUA_PRG=${LUA_PRG}
-      -DNVIM_PRG=$<TARGET_FILE:nvim>
-      -DWORKING_DIR=${CMAKE_CURRENT_SOURCE_DIR}
-      -DBUSTED_OUTPUT_TYPE=${BUSTED_OUTPUT_TYPE}
-      -DTEST_DIR=${CMAKE_CURRENT_SOURCE_DIR}/test
-      -DBUILD_DIR=${CMAKE_BINARY_DIR}
-      -DTEST_TYPE=functional
-      -DCIRRUS_CI=$ENV{CIRRUS_CI}
-      -P ${PROJECT_SOURCE_DIR}/cmake/RunTests.cmake
-    DEPENDS ${FUNCTIONALTEST_PREREQS}
-    USES_TERMINAL)
-  set_target_properties(functionaltest PROPERTIES FOLDER test)
-
-  add_custom_target(benchmark
-    COMMAND ${CMAKE_COMMAND}
-      -DBUSTED_PRG=${BUSTED_PRG}
-      -DLUA_PRG=${LUA_PRG}
-      -DNVIM_PRG=$<TARGET_FILE:nvim>
-      -DWORKING_DIR=${CMAKE_CURRENT_SOURCE_DIR}
-      -DBUSTED_OUTPUT_TYPE=${BUSTED_OUTPUT_TYPE}
-      -DTEST_DIR=${CMAKE_CURRENT_SOURCE_DIR}/test
-      -DBUILD_DIR=${CMAKE_BINARY_DIR}
-      -DTEST_TYPE=benchmark
-      -DCIRRUS_CI=$ENV{CIRRUS_CI}
-      -P ${PROJECT_SOURCE_DIR}/cmake/RunTests.cmake
-    DEPENDS ${BENCHMARK_PREREQS}
-    USES_TERMINAL)
-  set_target_properties(benchmark PROPERTIES FOLDER test)
-endif()
-
-if(BUSTED_LUA_PRG)
-  add_custom_target(functionaltest-lua
-    COMMAND ${CMAKE_COMMAND}
-      -DBUSTED_PRG=${BUSTED_LUA_PRG}
-      -DLUA_PRG=${LUA_PRG}
-      -DNVIM_PRG=$<TARGET_FILE:nvim>
-      -DWORKING_DIR=${CMAKE_CURRENT_SOURCE_DIR}
-      -DBUSTED_OUTPUT_TYPE=${BUSTED_OUTPUT_TYPE}
-      -DTEST_DIR=${CMAKE_CURRENT_SOURCE_DIR}/test
-      -DBUILD_DIR=${CMAKE_BINARY_DIR}
-      -DTEST_TYPE=functional
-      -DCIRRUS_CI=$ENV{CIRRUS_CI}
-      -P ${PROJECT_SOURCE_DIR}/cmake/RunTests.cmake
-    DEPENDS ${FUNCTIONALTEST_PREREQS}
-    USES_TERMINAL)
-    set_target_properties(functionaltest-lua PROPERTIES FOLDER test)
 endif()
 
 add_custom_target(uninstall

@@ -78,20 +78,20 @@ static int regex_match_line(lua_State *lstate)
     return luaL_error(lstate, "not enough args");
   }
 
-  long bufnr = luaL_checkinteger(lstate, 2);
+  handle_T bufnr = (handle_T)luaL_checkinteger(lstate, 2);
   linenr_T rownr = (linenr_T)luaL_checkinteger(lstate, 3);
-  long start = 0, end = -1;
+  int start = 0, end = -1;
   if (narg >= 4) {
-    start = luaL_checkinteger(lstate, 4);
+    start = (int)luaL_checkinteger(lstate, 4);
   }
   if (narg >= 5) {
-    end = luaL_checkinteger(lstate, 5);
+    end = (int)luaL_checkinteger(lstate, 5);
     if (end < 0) {
       return luaL_error(lstate, "invalid end");
     }
   }
 
-  buf_T *buf = bufnr ? handle_get_buffer((int)bufnr) : curbuf;
+  buf_T *buf = bufnr ? handle_get_buffer(bufnr) : curbuf;
   if (!buf || buf->b_ml.ml_mfp == NULL) {
     return luaL_error(lstate, "invalid buffer");
   }
@@ -218,11 +218,11 @@ static int nlua_str_utf_start(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
 {
   size_t s1_len;
   const char *s1 = luaL_checklstring(lstate, 1, &s1_len);
-  long offset = luaL_checkinteger(lstate, 2);
+  ptrdiff_t offset = luaL_checkinteger(lstate, 2);
   if (offset < 0 || offset > (intptr_t)s1_len) {
     return luaL_error(lstate, "index out of range");
   }
-  int head_offset = utf_cp_head_off((char_u *)s1, (char_u *)s1 + offset - 1);
+  int head_offset = utf_cp_head_off(s1, s1 + offset - 1);
   lua_pushinteger(lstate, head_offset);
   return 1;
 }
@@ -238,7 +238,7 @@ static int nlua_str_utf_end(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
 {
   size_t s1_len;
   const char *s1 = luaL_checklstring(lstate, 1, &s1_len);
-  long offset = luaL_checkinteger(lstate, 2);
+  ptrdiff_t offset = luaL_checkinteger(lstate, 2);
   if (offset < 0 || offset > (intptr_t)s1_len) {
     return luaL_error(lstate, "index out of range");
   }

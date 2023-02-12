@@ -30,6 +30,7 @@ describe(':profile', function()
   before_each(helpers.clear)
 
   after_each(function()
+    helpers.expect_exit(command, 'qall!')
     if lfs.attributes(tempfile, 'uid') ~= nil then
       os.remove(tempfile)
     end

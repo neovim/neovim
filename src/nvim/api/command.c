@@ -127,7 +127,7 @@ Dictionary nvim_parse_cmd(String str, Dictionary opts, Error *err)
   // otherwise split arguments by whitespace.
   if (ea.argt & EX_NOSPC) {
     if (*ea.arg != NUL) {
-      ADD(args, STRING_OBJ(cstrn_to_string((char *)ea.arg, length)));
+      ADD(args, STRING_OBJ(cstrn_to_string(ea.arg, length)));
     }
   } else {
     size_t end = 0;
@@ -153,9 +153,9 @@ Dictionary nvim_parse_cmd(String str, Dictionary opts, Error *err)
   }
 
   if (cmd != NULL) {
-    PUT(result, "cmd", CSTR_TO_OBJ((char *)cmd->uc_name));
+    PUT(result, "cmd", CSTR_TO_OBJ(cmd->uc_name));
   } else {
-    PUT(result, "cmd", CSTR_TO_OBJ((char *)get_command_name(NULL, ea.cmdidx)));
+    PUT(result, "cmd", CSTR_TO_OBJ(get_command_name(NULL, ea.cmdidx)));
   }
 
   if (ea.argt & EX_RANGE) {
@@ -237,7 +237,7 @@ Dictionary nvim_parse_cmd(String str, Dictionary opts, Error *err)
     break;
   }
   PUT(result, "addr", CSTR_TO_OBJ(addr));
-  PUT(result, "nextcmd", CSTR_TO_OBJ((char *)ea.nextcmd));
+  PUT(result, "nextcmd", CSTR_TO_OBJ(ea.nextcmd));
 
   Dictionary mods = ARRAY_DICT_INIT;
 
@@ -512,7 +512,7 @@ String nvim_cmd(uint64_t channel_id, Dict(cmd) *cmd, Dict(cmd_opts) *opts, Error
     } else if (cmd->count.type != kObjectTypeInteger || cmd->count.data.integer < 0) {
       VALIDATION_ERROR("'count' must be a non-negative Integer");
     }
-    set_cmd_count(&ea, cmd->count.data.integer, true);
+    set_cmd_count(&ea, (linenr_T)cmd->count.data.integer, true);
   }
 
   if (HAS_KEY(cmd->reg)) {
@@ -1005,7 +1005,7 @@ void create_user_command(String name, Object command, Dict(user_command) *opts, 
                          Error *err)
 {
   uint32_t argt = 0;
-  long def = -1;
+  int64_t def = -1;
   cmd_addr_T addr_type_arg = ADDR_NONE;
   int compl = EXPAND_NOTHING;
   char *compl_arg = NULL;

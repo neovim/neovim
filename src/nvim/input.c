@@ -86,9 +86,8 @@ int ask_yesno(const char *const str, const bool direct)
 /// Translates the interrupt character for unix to ESC.
 int get_keystroke(MultiQueue *events)
 {
-  char_u *buf = NULL;
+  char *buf = NULL;
   int buflen = 150;
-  int maxlen;
   int len = 0;
   int n;
   int save_mapped_ctrl_c = mapped_ctrl_c;
@@ -100,7 +99,7 @@ int get_keystroke(MultiQueue *events)
     // Leave some room for check_termcode() to insert a key code into (max
     // 5 chars plus NUL).  And fix_input_buffer() can triple the number of
     // bytes.
-    maxlen = (buflen - 6 - len) / 3;
+    int maxlen = (buflen - 6 - len) / 3;
     if (buf == NULL) {
       buf = xmalloc((size_t)buflen);
     } else if (maxlen < 10) {
@@ -113,7 +112,7 @@ int get_keystroke(MultiQueue *events)
 
     // First time: blocking wait.  Second time: wait up to 100ms for a
     // terminal code to complete.
-    n = os_inchar(buf + len, maxlen, len == 0 ? -1L : 100L, 0, events);
+    n = os_inchar((uint8_t *)buf + len, maxlen, len == 0 ? -1L : 100L, 0, events);
     if (n > 0) {
       // Replace zero and K_SPECIAL by a special key code.
       n = fix_input_buffer(buf + len, n);
@@ -128,14 +127,14 @@ int get_keystroke(MultiQueue *events)
     }
 
     // Handle modifier and/or special key code.
-    n = buf[0];
+    n = (uint8_t)buf[0];
     if (n == K_SPECIAL) {
-      n = TO_SPECIAL(buf[1], buf[2]);
-      if (buf[1] == KS_MODIFIER
+      n = TO_SPECIAL((uint8_t)buf[1], (uint8_t)buf[2]);
+      if ((uint8_t)buf[1] == KS_MODIFIER
           || n == K_IGNORE
           || (is_mouse_key(n) && n != K_LEFTMOUSE)) {
-        if (buf[1] == KS_MODIFIER) {
-          mod_mask = buf[2];
+        if ((uint8_t)buf[1] == KS_MODIFIER) {
+          mod_mask = (uint8_t)buf[2];
         }
         len -= 3;
         if (len > 0) {
@@ -150,7 +149,7 @@ int get_keystroke(MultiQueue *events)
       continue;
     }
     buf[len >= buflen ? buflen - 1 : len] = NUL;
-    n = utf_ptr2char((char *)buf);
+    n = utf_ptr2char(buf);
     break;
   }
   xfree(buf);
@@ -166,7 +165,6 @@ int get_keystroke(MultiQueue *events)
 int get_number(int colon, int *mouse_used)
 {
   int n = 0;
-  int c;
   int typed = 0;
 
   if (mouse_used != NULL) {
@@ -183,7 +181,7 @@ int get_number(int colon, int *mouse_used)
   allow_keys++;  // no mapping here, but recognize keys
   for (;;) {
     ui_cursor_goto(msg_row, msg_col);
-    c = safe_vgetc();
+    int c = safe_vgetc();
     if (ascii_isdigit(c)) {
       n = n * 10 + c - '0';
       msg_putchar(c);

@@ -72,7 +72,7 @@ bool has_format_option(int x)
 void internal_format(int textwidth, int second_indent, int flags, bool format_only, int c)
 {
   int cc;
-  int save_char = NUL;
+  char save_char = NUL;
   bool haveto_redraw = false;
   const bool fo_ins_blank = has_format_option(FO_INS_BLANK);
   const bool fo_multibyte = has_format_option(FO_MBYTE_BREAK);
@@ -93,7 +93,7 @@ void internal_format(int textwidth, int second_indent, int flags, bool format_on
       && !(State & VREPLACE_FLAG)) {
     cc = gchar_cursor();
     if (ascii_iswhite(cc)) {
-      save_char = cc;
+      save_char = (char)cc;
       pchar_cursor('x');
     }
   }
@@ -458,7 +458,7 @@ void internal_format(int textwidth, int second_indent, int flags, bool format_on
   }
 
   if (save_char != NUL) {               // put back space after cursor
-    pchar_cursor((char_u)save_char);
+    pchar_cursor(save_char);
   }
 
   curwin->w_p_lbr = has_lbr;
@@ -633,19 +633,16 @@ static bool paragraph_start(linenr_T lnum)
 /// @param prev_line   may start in previous line
 void auto_format(bool trailblank, bool prev_line)
 {
-  pos_T pos;
   colnr_T len;
-  char *old;
   char *new, *pnew;
-  int wasatend;
   int cc;
 
   if (!has_format_option(FO_AUTO)) {
     return;
   }
 
-  pos = curwin->w_cursor;
-  old = get_cursor_line_ptr();
+  pos_T pos = curwin->w_cursor;
+  char *old = get_cursor_line_ptr();
 
   // may remove added space
   check_auto_format(false);
@@ -655,7 +652,7 @@ void auto_format(bool trailblank, bool prev_line)
   // in 'formatoptions' and there is a single character before the cursor.
   // Otherwise the line would be broken and when typing another non-white
   // next they are not joined back together.
-  wasatend = (pos.col == (colnr_T)strlen(old));
+  int wasatend = (pos.col == (colnr_T)strlen(old));
   if (*old != NUL && !trailblank && wasatend) {
     dec_cursor();
     cc = gchar_cursor();
@@ -733,18 +730,16 @@ void auto_format(bool trailblank, bool prev_line)
 /// @param end_insert  true when ending Insert mode
 void check_auto_format(bool end_insert)
 {
-  int c = ' ';
-  int cc;
-
   if (!did_add_space) {
     return;
   }
 
-  cc = gchar_cursor();
+  int cc = gchar_cursor();
   if (!WHITECHAR(cc)) {
     // Somehow the space was removed already.
     did_add_space = false;
   } else {
+    int c = ' ';
     if (!end_insert) {
       inc_cursor();
       c = gchar_cursor();
@@ -886,7 +881,6 @@ void op_formatexpr(oparg_T *oap)
 int fex_format(linenr_T lnum, long count, int c)
 {
   int use_sandbox = was_set_insecurely(curwin, "formatexpr", OPT_LOCAL);
-  int r;
 
   // Set v:lnum to the first line number and v:count to the number of lines.
   // Set v:char to the character to be inserted (can be NUL).
@@ -900,7 +894,7 @@ int fex_format(linenr_T lnum, long count, int c)
   if (use_sandbox) {
     sandbox++;
   }
-  r = (int)eval_to_number(fex);
+  int r = (int)eval_to_number(fex);
   if (use_sandbox) {
     sandbox--;
   }

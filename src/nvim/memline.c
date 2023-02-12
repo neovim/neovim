@@ -117,7 +117,7 @@ struct pointer_block {
   uint16_t pb_id;               // ID for pointer block: PTR_ID
   uint16_t pb_count;            // number of pointers in this block
   uint16_t pb_count_max;        // maximum value for pb_count
-  PTR_EN pb_pointer[1];         // list of pointers to blocks (actually longer)
+  PTR_EN pb_pointer[];          // list of pointers to blocks
                                 // followed by empty space until end of page
 };
 
@@ -133,7 +133,7 @@ struct data_block {
   unsigned db_txt_end;          // byte just after data block
   // linenr_T db_line_count;
   long db_line_count;           // number of lines in this block
-  unsigned db_index[1];         // index for start of line (actually bigger)
+  unsigned db_index[];          // index for start of line
                                 // followed by empty space up to db_txt_start
                                 // followed by the text in the lines until
                                 // end of page
@@ -149,7 +149,7 @@ struct data_block {
 #define DB_INDEX_MASK   (~DB_MARKED)
 
 #define INDEX_SIZE  (sizeof(unsigned))      // size of one db_index entry
-#define HEADER_SIZE (sizeof(DATA_BL) - INDEX_SIZE)  // size of data block header
+#define HEADER_SIZE (offsetof(DATA_BL, db_index))  // size of data block header
 
 enum {
   B0_FNAME_SIZE_ORG = 900,      // what it was in older versions
@@ -185,8 +185,8 @@ struct block0 {
   char_u b0_mtime[4];                // last modification time of file
   char_u b0_ino[4];                  // inode of b0_fname
   char_u b0_pid[4];                  // process id of creator (or 0)
-  char_u b0_uname[B0_UNAME_SIZE];    // name of user (uid if no name)
-  char_u b0_hname[B0_HNAME_SIZE];    // host name (if it has a name)
+  char b0_uname[B0_UNAME_SIZE];      // name of user (uid if no name)
+  char b0_hname[B0_HNAME_SIZE];      // host name (if it has a name)
   char b0_fname[B0_FNAME_SIZE_ORG];  // name of file being edited
   long b0_magic_long;                // check for byte order of long
   int b0_magic_int;                  // check for byte order of int
@@ -303,11 +303,11 @@ int ml_open(buf_T *buf)
     b0p->b0_dirty = buf->b_changed ? B0_DIRTY : 0;
     b0p->b0_flags = (char)(get_fileformat(buf) + 1);
     set_b0_fname(b0p, buf);
-    (void)os_get_username((char *)b0p->b0_uname, B0_UNAME_SIZE);
+    (void)os_get_username(b0p->b0_uname, B0_UNAME_SIZE);
     b0p->b0_uname[B0_UNAME_SIZE - 1] = NUL;
-    os_get_hostname((char *)b0p->b0_hname, B0_HNAME_SIZE);
+    os_get_hostname(b0p->b0_hname, B0_HNAME_SIZE);
     b0p->b0_hname[B0_HNAME_SIZE - 1] = NUL;
-    long_to_char(os_get_pid(), b0p->b0_pid);
+    long_to_char((long)os_get_pid(), b0p->b0_pid);
   }
 
   // Always sync block number 0 to disk, so we can check the file name in
@@ -632,7 +632,7 @@ static void set_b0_fname(ZERO_BL *b0p, buf_T *buf)
     // editing the same file on different machines over a network.
     // First replace home dir path with "~/" with home_replace().
     // Then insert the user name to get "~user/".
-    home_replace(NULL, buf->b_ffname, (char *)b0p->b0_fname,
+    home_replace(NULL, buf->b_ffname, b0p->b0_fname,
                  B0_FNAME_SIZE_CRYPT, true);
     if (b0p->b0_fname[0] == '~') {
       // If there is no user name or it is too long, don't use "~/"
@@ -691,7 +691,7 @@ static void add_b0_fenc(ZERO_BL *b0p, buf_T *buf)
   if ((int)strlen(b0p->b0_fname) + n + 1 > size) {
     b0p->b0_flags = (char)(b0p->b0_flags & ~B0_HAS_FENC);
   } else {
-    memmove((char *)b0p->b0_fname + size - n,
+    memmove(b0p->b0_fname + size - n,
             buf->b_p_fenc, (size_t)n);
     *(b0p->b0_fname + size - n - 1) = NUL;
     b0p->b0_flags |= B0_HAS_FENC;
@@ -848,7 +848,7 @@ void ml_recover(bool checkext)
     msg_puts_attr(_("The file was created on "), attr | MSG_HIST);
     // avoid going past the end of a corrupted hostname
     b0p->b0_fname[0] = NUL;
-    msg_puts_attr((char *)b0p->b0_hname, attr | MSG_HIST);
+    msg_puts_attr(b0p->b0_hname, attr | MSG_HIST);
     msg_puts_attr(_(",\nor the file has been damaged."), attr | MSG_HIST);
     msg_end();
     goto theend;
@@ -886,7 +886,7 @@ void ml_recover(bool checkext)
 
   // If .swp file name given directly, use name from swap file for buffer.
   if (directly) {
-    expand_env((char *)b0p->b0_fname, NameBuff, MAXPATHL);
+    expand_env(b0p->b0_fname, NameBuff, MAXPATHL);
     if (setfname(curbuf, NameBuff, NULL, true) == FAIL) {
       goto theend;
     }
@@ -922,7 +922,7 @@ void ml_recover(bool checkext)
   if (b0p->b0_flags & B0_HAS_FENC) {
     int fnsize = B0_FNAME_SIZE_NOCRYPT;
 
-    for (p = (char *)b0p->b0_fname + fnsize; p > b0p->b0_fname && p[-1] != NUL; p--) {}
+    for (p = b0p->b0_fname + fnsize; p > b0p->b0_fname && p[-1] != NUL; p--) {}
     b0_fenc = xstrnsave(p, (size_t)(b0p->b0_fname + fnsize - p));
   }
 
@@ -1411,11 +1411,11 @@ void get_b0_dict(const char *fname, dict_T *d)
       } else {
         // We have swap information.
         tv_dict_add_str_len(d, S_LEN("version"), b0.b0_version, 10);
-        tv_dict_add_str_len(d, S_LEN("user"), (char *)b0.b0_uname,
+        tv_dict_add_str_len(d, S_LEN("user"), b0.b0_uname,
                             B0_UNAME_SIZE);
-        tv_dict_add_str_len(d, S_LEN("host"), (char *)b0.b0_hname,
+        tv_dict_add_str_len(d, S_LEN("host"), b0.b0_hname,
                             B0_HNAME_SIZE);
-        tv_dict_add_str_len(d, S_LEN("fname"), (char *)b0.b0_fname,
+        tv_dict_add_str_len(d, S_LEN("fname"), b0.b0_fname,
                             B0_FNAME_SIZE_ORG);
 
         tv_dict_add_nr(d, S_LEN("pid"), char_to_long(b0.b0_pid));
@@ -1480,7 +1480,7 @@ static time_t swapfile_info(char *fname)
         if (b0.b0_fname[0] == NUL) {
           msg_puts(_("[No Name]"));
         } else {
-          msg_outtrans((char *)b0.b0_fname);
+          msg_outtrans(b0.b0_fname);
         }
 
         msg_puts(_("\n          modified: "));
@@ -1488,7 +1488,7 @@ static time_t swapfile_info(char *fname)
 
         if (*(b0.b0_uname) != NUL) {
           msg_puts(_("\n         user name: "));
-          msg_outtrans((char *)b0.b0_uname);
+          msg_outtrans(b0.b0_uname);
         }
 
         if (*(b0.b0_hname) != NUL) {
@@ -1497,7 +1497,7 @@ static time_t swapfile_info(char *fname)
           } else {
             msg_puts(_("\n         host name: "));
           }
-          msg_outtrans((char *)b0.b0_hname);
+          msg_outtrans(b0.b0_hname);
         }
 
         if (char_to_long(b0.b0_pid) != 0L) {
@@ -2022,7 +2022,6 @@ static int ml_append_int(buf_T *buf, linenr_T lnum, char *line, colnr_T len, boo
     int lineadd;
     blocknr_T bnum_left, bnum_right;
     linenr_T lnum_left, lnum_right;
-    int pb_idx;
     PTR_BL *pp_new;
 
     // We are going to allocate a new data block. Depending on the
@@ -2156,7 +2155,7 @@ static int ml_append_int(buf_T *buf, linenr_T lnum, char *line, colnr_T len, boo
     // update pointer blocks for the new data block
     for (stack_idx = buf->b_ml.ml_stack_top - 1; stack_idx >= 0; stack_idx--) {
       infoptr_T *ip = &(buf->b_ml.ml_stack[stack_idx]);
-      pb_idx = ip->ip_index;
+      int pb_idx = ip->ip_index;
       if ((hp = mf_get(mfp, ip->ip_bnum, 1)) == NULL) {
         return FAIL;
       }
@@ -2720,7 +2719,8 @@ static bhdr_T *ml_new_ptr(memfile_T *mfp)
   PTR_BL *pp = hp->bh_data;
   pp->pb_id = PTR_ID;
   pp->pb_count = 0;
-  pp->pb_count_max = (uint16_t)((mfp->mf_page_size - sizeof(PTR_BL)) / sizeof(PTR_EN) + 1);
+  pp->pb_count_max
+    = (uint16_t)((mfp->mf_page_size - offsetof(PTR_BL, pb_pointer)) / sizeof(PTR_EN));
 
   return hp;
 }
@@ -3028,7 +3028,7 @@ char *makeswapname(char *fname, char *ffname, buf_T *buf, char *dir_name)
 
   // Expand symlink in the file name, so that we put the swap file with the
   // actual file instead of with the symlink.
-  if (resolve_symlink(fname, (char *)fname_buf) == OK) {
+  if (resolve_symlink(fname, fname_buf) == OK) {
     fname_res = fname_buf;
   }
 #endif
@@ -3210,7 +3210,6 @@ static int do_swapexists(buf_T *buf, char *fname)
 static char *findswapname(buf_T *buf, char **dirp, char *old_fname, bool *found_existing_dir)
   FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ARG(1, 2, 4)
 {
-  size_t n;
   char *buf_fname = buf->b_fname;
 
   // Isolate a directory name from *dirp and put it in dir_name.
@@ -3223,6 +3222,7 @@ static char *findswapname(buf_T *buf, char **dirp, char *old_fname, bool *found_
   char *fname = makeswapname(buf_fname, buf->b_ffname, buf, dir_name);
 
   for (;;) {
+    size_t n;
     if (fname == NULL) {        // must be out of memory
       break;
     }
@@ -3266,12 +3266,12 @@ static char *findswapname(buf_T *buf, char **dirp, char *old_fname, bool *found_
             // have a different mountpoint.
             if (b0.b0_flags & B0_SAME_DIR) {
               if (path_fnamecmp(path_tail(buf->b_ffname),
-                                path_tail((char *)b0.b0_fname)) != 0
+                                path_tail(b0.b0_fname)) != 0
                   || !same_directory(fname, buf->b_ffname)) {
                 // Symlinks may point to the same file even
                 // when the name differs, need to check the
                 // inode too.
-                expand_env((char *)b0.b0_fname, NameBuff, MAXPATHL);
+                expand_env(b0.b0_fname, NameBuff, MAXPATHL);
                 if (fnamecmp_ino(buf->b_ffname, NameBuff,
                                  char_to_long(b0.b0_ino))) {
                   differ = true;
@@ -3280,7 +3280,7 @@ static char *findswapname(buf_T *buf, char **dirp, char *old_fname, bool *found_
             } else {
               // The name in the swap file may be
               // "~user/path/file".  Expand it first.
-              expand_env((char *)b0.b0_fname, NameBuff, MAXPATHL);
+              expand_env(b0.b0_fname, NameBuff, MAXPATHL);
               if (fnamecmp_ino(buf->b_ffname, NameBuff,
                                char_to_long(b0.b0_ino))) {
                 differ = true;
@@ -3515,8 +3515,8 @@ static bool fnamecmp_ino(char *fname_c, char *fname_s, long ino_block0)
 
   // One of the inode numbers is unknown, try a forced vim_FullName() and
   // compare the file names.
-  retval_c = vim_FullName(fname_c, (char *)buf_c, MAXPATHL, true);
-  retval_s = vim_FullName(fname_s, (char *)buf_s, MAXPATHL, true);
+  retval_c = vim_FullName(fname_c, buf_c, MAXPATHL, true);
+  retval_s = vim_FullName(fname_s, buf_s, MAXPATHL, true);
   if (retval_c == OK && retval_s == OK) {
     return strcmp(buf_c, buf_s) != 0;
   }
@@ -3604,11 +3604,8 @@ static void ml_updatechunk(buf_T *buf, linenr_T line, long len, int updtype)
 
   linenr_T curline = ml_upd_lastcurline;
   int curix = ml_upd_lastcurix;
-  long size;
   chunksize_T *curchnk;
-  int rest;
   bhdr_T *hp;
-  DATA_BL *dp;
 
   if (buf->b_ml.ml_usedchunks == -1 || len == 0) {
     return;
@@ -3654,6 +3651,8 @@ static void ml_updatechunk(buf_T *buf, linenr_T line, long len, int updtype)
   }
   curchnk->mlcs_totalsize += len;
   if (updtype == ML_CHNK_ADDLINE) {
+    int rest;
+    DATA_BL *dp;
     curchnk->mlcs_numlines++;
 
     // May resize here so we don't have to do it in both cases below
@@ -3664,17 +3663,14 @@ static void ml_updatechunk(buf_T *buf, linenr_T line, long len, int updtype)
     }
 
     if (buf->b_ml.ml_chunksize[curix].mlcs_numlines >= MLCS_MAXL) {
-      int count;                    // number of entries in block
-      int idx;
       int text_end;
-      int linecnt;
 
       memmove(buf->b_ml.ml_chunksize + curix + 1,
               buf->b_ml.ml_chunksize + curix,
               (size_t)(buf->b_ml.ml_usedchunks - curix) * sizeof(chunksize_T));
       // Compute length of first half of lines in the split chunk
-      size = 0;
-      linecnt = 0;
+      long size = 0;
+      int linecnt = 0;
       while (curline < buf->b_ml.ml_line_count
              && linecnt < MLCS_MINL) {
         if ((hp = ml_find_line(buf, curline, ML_FIND)) == NULL) {
@@ -3682,8 +3678,9 @@ static void ml_updatechunk(buf_T *buf, linenr_T line, long len, int updtype)
           return;
         }
         dp = hp->bh_data;
-        count = buf->b_ml.ml_locked_high - buf->b_ml.ml_locked_low + 1;
-        idx = curline - buf->b_ml.ml_locked_low;
+        int count
+          = buf->b_ml.ml_locked_high - buf->b_ml.ml_locked_low + 1;  // number of entries in block
+        int idx = curline - buf->b_ml.ml_locked_low;
         curline = buf->b_ml.ml_locked_high + 1;
         if (idx == 0) {      // first line in block, text at the end
           text_end = (int)dp->db_txt_end;
@@ -3792,13 +3789,8 @@ long ml_find_line_or_offset(buf_T *buf, linenr_T lnum, long *offp, bool no_ff)
   int curix;
   long size;
   bhdr_T *hp;
-  DATA_BL *dp;
-  int count;                    // number of entries in block
-  int idx;
-  int start_idx;
   int text_end;
   long offset;
-  int len;
   int ffdos = !no_ff && (get_fileformat(buf) == EOL_DOS);
   int extra = 0;
 
@@ -3858,9 +3850,11 @@ long ml_find_line_or_offset(buf_T *buf, linenr_T lnum, long *offp, bool no_ff)
         || (hp = ml_find_line(buf, curline, ML_FIND)) == NULL) {
       return -1;
     }
-    dp = hp->bh_data;
-    count = buf->b_ml.ml_locked_high - buf->b_ml.ml_locked_low + 1;
-    start_idx = idx = curline - buf->b_ml.ml_locked_low;
+    DATA_BL *dp = hp->bh_data;
+    int count
+      = buf->b_ml.ml_locked_high - buf->b_ml.ml_locked_low + 1;  // number of entries in block
+    int idx;
+    int start_idx = idx = curline - buf->b_ml.ml_locked_low;
     if (idx == 0) {  // first line in block, text at the end
       text_end = (int)dp->db_txt_end;
     } else {
@@ -3888,7 +3882,7 @@ long ml_find_line_or_offset(buf_T *buf, linenr_T lnum, long *offp, bool no_ff)
         idx++;
       }
     }
-    len = text_end - (int)((dp->db_index[idx]) & DB_INDEX_MASK);
+    int len = text_end - (int)((dp->db_index[idx]) & DB_INDEX_MASK);
     size += len;
     if (offset != 0 && size >= offset) {
       if (size + ffdos == offset) {

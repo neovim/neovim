@@ -113,8 +113,6 @@ static void pum_compute_size(void)
 void pum_display(pumitem_T *array, int size, int selected, bool array_changed, int cmd_startcol)
 {
   int context_lines;
-  int above_row;
-  int below_row;
   int redo_count = 0;
   int pum_win_row;
   int cursor_col;
@@ -134,8 +132,8 @@ void pum_display(pumitem_T *array, int size, int selected, bool array_changed, i
     pum_is_visible = true;
     pum_is_drawn = true;
     validate_cursor_col();
-    above_row = 0;
-    below_row = cmdline_row;
+    int above_row = 0;
+    int below_row = cmdline_row;
 
     // wildoptions=pum
     if (State == MODE_CMDLINE) {
@@ -409,17 +407,15 @@ void pum_display(pumitem_T *array, int size, int selected, bool array_changed, i
 void pum_redraw(void)
 {
   int row = 0;
-  int grid_col;
   int attr_norm = win_hl_attr(curwin, HLF_PNI);
   int attr_select = win_hl_attr(curwin, HLF_PSI);
   int attr_scroll = win_hl_attr(curwin, HLF_PSB);
   int attr_thumb = win_hl_attr(curwin, HLF_PST);
-  int attr;
   int i;
-  int idx;
   char *s;
   char *p = NULL;
-  int totwidth, width, w;
+  int width;
+  int w;
   int thumb_pos = 0;
   int thumb_height = 1;
   int round;
@@ -485,8 +481,8 @@ void pum_redraw(void)
   }
 
   for (i = 0; i < pum_height; i++) {
-    idx = i + pum_first;
-    attr = (idx == pum_selected) ? attr_select : attr_norm;
+    int idx = i + pum_first;
+    int attr = (idx == pum_selected) ? attr_select : attr_norm;
 
     grid_puts_line_start(&pum_grid, row);
 
@@ -501,8 +497,8 @@ void pum_redraw(void)
 
     // Display each entry, use two spaces for a Tab.
     // Do this 3 times: For the main text, kind and extra info
-    grid_col = col_off;
-    totwidth = 0;
+    int grid_col = col_off;
+    int totwidth = 0;
 
     for (round = 1; round <= 3; round++) {
       width = 0;
@@ -725,7 +721,6 @@ static bool pum_set_selected(int n, int repeat)
         && (vim_strchr(p_cot, 'p') != NULL)) {
       win_T *curwin_save = curwin;
       tabpage_T *curtab_save = curtab;
-      int res = OK;
 
       // Open a preview window.  3 lines by default.  Prefer
       // 'previewheight' if set and smaller.
@@ -744,6 +739,7 @@ static bool pum_set_selected(int n, int repeat)
       g_do_tagpreview = 0;
 
       if (curwin->w_p_pvw) {
+        int res = OK;
         if (!resized
             && (curbuf->b_nwindows == 1)
             && (curbuf->b_fname == NULL)
@@ -1092,7 +1088,6 @@ void pum_show_popupmenu(vimmenu_T *menu)
     pum_is_drawn = true;
     pum_redraw();
     setcursor_mayforce(true);
-    ui_flush();
 
     int c = vgetc();
 

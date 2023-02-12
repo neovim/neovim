@@ -1311,16 +1311,16 @@ static void parse_register(exarg_T *eap)
 }
 
 // Change line1 and line2 of Ex command to use count
-void set_cmd_count(exarg_T *eap, long count, bool validate)
+void set_cmd_count(exarg_T *eap, linenr_T count, bool validate)
 {
   if (eap->addr_type != ADDR_LINES) {  // e.g. :buffer 2, :sleep 3
-    eap->line2 = (linenr_T)count;
+    eap->line2 = count;
     if (eap->addr_count == 0) {
       eap->addr_count = 1;
     }
   } else {
     eap->line1 = eap->line2;
-    eap->line2 += (linenr_T)count - 1;
+    eap->line2 += count - 1;
     eap->addr_count++;
     // Be vi compatible: no error message for out of range.
     if (validate && eap->line2 > curbuf->b_ml.ml_line_count) {
@@ -1338,7 +1338,7 @@ static int parse_count(exarg_T *eap, char **errormsg, bool validate)
   if ((eap->argt & EX_COUNT) && ascii_isdigit(*eap->arg)
       && (!(eap->argt & EX_BUFNAME) || *(p = skipdigits(eap->arg + 1)) == NUL
           || ascii_iswhite(*p))) {
-    long n = getdigits_long(&eap->arg, false, -1);
+    linenr_T n = getdigits_int32(&eap->arg, false, -1);
     eap->arg = skipwhite(eap->arg);
 
     if (eap->args != NULL) {
@@ -3200,7 +3200,7 @@ char *skip_range(const char *cmd, int *ctx)
   }
 
   // Skip ":" and white space.
-  cmd = skip_colon_white((char *)cmd, false);
+  cmd = skip_colon_white(cmd, false);
 
   return (char *)cmd;
 }
@@ -4011,7 +4011,7 @@ static char *getargcmd(char **argp)
   if (*arg == '+') {        // +[command]
     arg++;
     if (ascii_isspace(*arg) || *arg == '\0') {
-      command = (char *)dollar_command;
+      command = dollar_command;
     } else {
       command = arg;
       arg = skip_cmd_arg(command, true);
@@ -4401,7 +4401,7 @@ static int check_more(int message, bool forceit)
       if ((p_confirm || (cmdmod.cmod_flags & CMOD_CONFIRM)) && curbuf->b_fname != NULL) {
         char buff[DIALOG_MSG_SIZE];
 
-        vim_snprintf((char *)buff, DIALOG_MSG_SIZE,
+        vim_snprintf(buff, DIALOG_MSG_SIZE,
                      NGETTEXT("%d more file to edit.  Quit anyway?",
                               "%d more files to edit.  Quit anyway?", n), n);
         if (vim_dialog_yesno(VIM_QUESTION, NULL, buff, 1) == VIM_YES) {
@@ -4769,7 +4769,7 @@ void tabpage_close_other(tabpage_T *tp, int forceit)
   // Limit to 1000 windows, autocommands may add a window while we close
   // one.  OK, so I'm paranoid...
   while (++done < 1000) {
-    snprintf((char *)prev_idx, sizeof(prev_idx), "%i", tabpage_index(tp));
+    snprintf(prev_idx, sizeof(prev_idx), "%i", tabpage_index(tp));
     win_T *wp = tp->tp_lastwin;
     ex_win_close(forceit, wp, tp);
 
@@ -4838,13 +4838,9 @@ static void ex_stop(exarg_T *eap)
   }
   apply_autocmds(EVENT_VIMSUSPEND, NULL, NULL, false, NULL);
 
-  // TODO(bfredl): the TUI should do this on suspend
-  ui_cursor_goto(Rows - 1, 0);
-  ui_call_grid_scroll(1, 0, Rows, 0, Columns, 1, 0);
+  ui_call_suspend();
   ui_flush();
-  ui_call_suspend();  // call machine specific function
 
-  ui_flush();
   maketitle();
   resettitle();  // force updating the title
   ui_refresh();  // may have resized window
@@ -6752,7 +6748,7 @@ char *eval_vars(char *src, const char *srcstart, size_t *usedlen, linenr_T *lnum
   // Note: In "\\%" the % is also not recognized!
   if (src > srcstart && src[-1] == '\\') {
     *usedlen = 0;
-    STRMOVE(src - 1, (char *)src);      // remove backslash
+    STRMOVE(src - 1, src);      // remove backslash
     return NULL;
   }
 
@@ -6929,7 +6925,7 @@ char *eval_vars(char *src, const char *srcstart, size_t *usedlen, linenr_T *lnum
         *errormsg = _("E961: no line number to use for \"<sflnum>\"");
         return NULL;
       }
-      snprintf((char *)strbuf, sizeof(strbuf), "%" PRIdLINENR,
+      snprintf(strbuf, sizeof(strbuf), "%" PRIdLINENR,
                current_sctx.sc_lnum + SOURCING_LNUM);
       result = strbuf;
       break;

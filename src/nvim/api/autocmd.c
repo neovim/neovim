@@ -194,8 +194,8 @@ Array nvim_get_autocmds(Dict(get_autocmds) *opts, Error *err)
       goto cleanup;
     }
 
-    snprintf((char *)pattern_buflocal, BUFLOCAL_PAT_LEN, "<buffer=%d>", (int)buf->handle);
-    ADD(buffers, CSTR_TO_OBJ((char *)pattern_buflocal));
+    snprintf(pattern_buflocal, BUFLOCAL_PAT_LEN, "<buffer=%d>", (int)buf->handle);
+    ADD(buffers, CSTR_TO_OBJ(pattern_buflocal));
   } else if (opts->buffer.type == kObjectTypeArray) {
     if (opts->buffer.data.array.size > AUCMD_MAX_PATTERNS) {
       api_set_error(err,
@@ -215,8 +215,8 @@ Array nvim_get_autocmds(Dict(get_autocmds) *opts, Error *err)
         goto cleanup;
       }
 
-      snprintf((char *)pattern_buflocal, BUFLOCAL_PAT_LEN, "<buffer=%d>", (int)buf->handle);
-      ADD(buffers, CSTR_TO_OBJ((char *)pattern_buflocal));
+      snprintf(pattern_buflocal, BUFLOCAL_PAT_LEN, "<buffer=%d>", (int)buf->handle);
+      ADD(buffers, CSTR_TO_OBJ(pattern_buflocal));
     });
   } else if (opts->buffer.type != kObjectTypeNil) {
     api_set_error(err, kErrorTypeValidation,
@@ -319,7 +319,7 @@ Array nvim_get_autocmds(Dict(get_autocmds) *opts, Error *err)
 
         PUT(autocmd_info,
             "pattern",
-            STRING_OBJ(cstr_to_string((char *)ap->pat)));
+            STRING_OBJ(cstr_to_string(ap->pat)));
 
         PUT(autocmd_info,
             "event",
@@ -934,7 +934,7 @@ static bool get_patterns_from_pattern_or_buf(Array *patterns, Object pattern, Ob
       char *pat = v->data.string.data;
       size_t patlen = aucmd_pattern_length(pat);
       while (patlen) {
-        ADD(*patterns, STRING_OBJ(cbuf_to_string((char *)pat, patlen)));
+        ADD(*patterns, STRING_OBJ(cbuf_to_string(pat, patlen)));
 
         pat = aucmd_next_pattern(pat, patlen);
         patlen = aucmd_pattern_length(pat);
@@ -949,7 +949,7 @@ static bool get_patterns_from_pattern_or_buf(Array *patterns, Object pattern, Ob
         char *pat = entry.data.string.data;
         size_t patlen = aucmd_pattern_length(pat);
         while (patlen) {
-          ADD(*patterns, STRING_OBJ(cbuf_to_string((char *)pat, patlen)));
+          ADD(*patterns, STRING_OBJ(cbuf_to_string(pat, patlen)));
 
           pat = aucmd_next_pattern(pat, patlen);
           patlen = aucmd_pattern_length(pat);
@@ -975,7 +975,7 @@ static bool get_patterns_from_pattern_or_buf(Array *patterns, Object pattern, Ob
     }
 
     snprintf((char *)pattern_buflocal, BUFLOCAL_PAT_LEN, "<buffer=%d>", (int)buf->handle);
-    ADD(*patterns, STRING_OBJ(cstr_to_string((char *)pattern_buflocal)));
+    ADD(*patterns, STRING_OBJ(cstr_to_string(pattern_buflocal)));
   }
 
   return true;

@@ -724,7 +724,6 @@ sortend:
 /// @return  FAIL for failure, OK otherwise
 int do_move(linenr_T line1, linenr_T line2, linenr_T dest)
 {
-  char *str;
   linenr_T l;
   linenr_T extra;      // Num lines added before line1
   linenr_T num_lines;  // Num lines moved
@@ -761,7 +760,7 @@ int do_move(linenr_T line1, linenr_T line2, linenr_T dest)
     return FAIL;
   }
   for (extra = 0, l = line1; l <= line2; l++) {
-    str = xstrdup(ml_get(l + extra));
+    char *str = xstrdup(ml_get(l + extra));
     ml_append(dest + l - line1, str, (colnr_T)0, false);
     xfree(str);
     if (dest < line1) {
@@ -875,10 +874,7 @@ int do_move(linenr_T line1, linenr_T line2, linenr_T dest)
 /// ":copy"
 void ex_copy(linenr_T line1, linenr_T line2, linenr_T n)
 {
-  linenr_T count;
-  char *p;
-
-  count = line2 - line1 + 1;
+  linenr_T count = line2 - line1 + 1;
   if ((cmdmod.cmod_flags & CMOD_LOCKMARKS) == 0) {
     curbuf->b_op_start.lnum = n + 1;
     curbuf->b_op_end.lnum = n + count;
@@ -902,7 +898,7 @@ void ex_copy(linenr_T line1, linenr_T line2, linenr_T n)
   while (line1 <= line2) {
     // need to use xstrdup() because the line will be unlocked within
     // ml_append()
-    p = xstrdup(ml_get(line1));
+    char *p = xstrdup(ml_get(line1));
     ml_append(curwin->w_cursor.lnum, p, (colnr_T)0, false);
     xfree(p);
 
@@ -952,7 +948,6 @@ void do_bang(int addr_count, exarg_T *eap, bool forceit, bool do_in, bool do_out
   char *t;
   char *p;
   char *trailarg;
-  size_t len;
   int scroll_save = msg_scroll;
 
   //
@@ -975,7 +970,7 @@ void do_bang(int addr_count, exarg_T *eap, bool forceit, bool do_in, bool do_out
   // Skip leading white space to avoid a strange error with some shells.
   trailarg = skipwhite(arg);
   do {
-    len = strlen(trailarg) + 1;
+    size_t len = strlen(trailarg) + 1;
     if (newcmd != NULL) {
       len += strlen(newcmd);
     }
@@ -1507,7 +1502,6 @@ void print_line(linenr_T lnum, int use_number, int list)
   print_line_no_prefix(lnum, use_number, list);
   if (save_silent) {
     msg_putchar('\n');
-    ui_flush();
     silent_mode = save_silent;
   }
   info_message = false;
@@ -1824,7 +1818,7 @@ int check_overwrite(exarg_T *eap, buf_T *buf, char *fname, char *ffname, int oth
       if (p_confirm || (cmdmod.cmod_flags & CMOD_CONFIRM)) {
         char buff[DIALOG_MSG_SIZE];
 
-        dialog_msg((char *)buff, _("Overwrite existing file \"%s\"?"), fname);
+        dialog_msg(buff, _("Overwrite existing file \"%s\"?"), fname);
         if (vim_dialog_yesno(VIM_QUESTION, NULL, buff, 2) != VIM_YES) {
           return FAIL;
         }
@@ -1860,7 +1854,7 @@ int check_overwrite(exarg_T *eap, buf_T *buf, char *fname, char *ffname, int oth
         if (p_confirm || (cmdmod.cmod_flags & CMOD_CONFIRM)) {
           char buff[DIALOG_MSG_SIZE];
 
-          dialog_msg((char *)buff,
+          dialog_msg(buff,
                      _("Swap file \"%s\" exists, overwrite anyway?"),
                      swapname);
           if (vim_dialog_yesno(VIM_QUESTION, NULL, buff, 2)
@@ -1980,11 +1974,11 @@ static int check_readonly(int *forceit, buf_T *buf)
       char buff[DIALOG_MSG_SIZE];
 
       if (buf->b_p_ro) {
-        dialog_msg((char *)buff,
+        dialog_msg(buff,
                    _("'readonly' option is set for \"%s\".\nDo you wish to write anyway?"),
                    buf->b_fname);
       } else {
-        dialog_msg((char *)buff,
+        dialog_msg(buff,
                    _("File permissions of \"%s\" are read-only.\nIt may still be possible to "
                      "write it.\nDo you wish to try?"),
                    buf->b_fname);
@@ -2737,7 +2731,6 @@ void ex_append(exarg_T *eap)
   linenr_T lnum = eap->line2;
   int indent = 0;
   char *p;
-  int vcol;
   int empty = (curbuf->b_ml.ml_flags & ML_EMPTY);
 
   // the ! flag toggles autoindent
@@ -2804,7 +2797,7 @@ void ex_append(exarg_T *eap)
     }
 
     // Look for the "." after automatic indent.
-    vcol = 0;
+    int vcol = 0;
     for (p = theline; indent > vcol; p++) {
       if (*p == ' ') {
         vcol++;
@@ -2946,7 +2939,7 @@ void ex_z(exarg_T *eap)
       bigness = 2 * curbuf->b_ml.ml_line_count;
     }
 
-    p_window = bigness;
+    p_window = (int)bigness;
     if (*kind == '=') {
       bigness += 2;
     }
@@ -4340,7 +4333,6 @@ static void global_exe_one(char *const cmd, const linenr_T lnum)
 void ex_global(exarg_T *eap)
 {
   linenr_T lnum;                // line number according to old situation
-  int ndone = 0;
   int type;                     // first char of cmd: 'v' or 'g'
   char *cmd;             // command argument
 
@@ -4412,6 +4404,7 @@ void ex_global(exarg_T *eap)
       global_exe_one(cmd, lnum);
     }
   } else {
+    int ndone = 0;
     // pass 1: set marks for each (not) matching line
     for (lnum = eap->line1; lnum <= eap->line2 && !got_int; lnum++) {
       // a match on this line?
@@ -4688,8 +4681,6 @@ int ex_substitute_preview(exarg_T *eap, long cmdpreview_ns, handle_T cmdpreview_
 /// @return  a pointer to the char just past the pattern plus flags.
 char *skip_vimgrep_pat(char *p, char **s, int *flags)
 {
-  int c;
-
   if (vim_isIDc((uint8_t)(*p))) {
     // ":vimgrep pattern fname"
     if (s != NULL) {
@@ -4704,7 +4695,7 @@ char *skip_vimgrep_pat(char *p, char **s, int *flags)
     if (s != NULL) {
       *s = p + 1;
     }
-    c = (uint8_t)(*p);
+    int c = (uint8_t)(*p);
     p = skip_regexp(p + 1, c, true);
     if (*p != c) {
       return NULL;

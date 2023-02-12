@@ -32,7 +32,6 @@ describe('ShaDa support code', function()
     nvim_command('rshada')
     eq('" Test 2', funcs.histget(':', -1))
     eq('" Test', funcs.histget(':', -2))
-    expect_exit(nvim_command, 'qall')
   end)
 
   it('respects &history when dumping',

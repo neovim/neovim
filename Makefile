@@ -130,9 +130,9 @@ functionaltest-lua: | nvim
 	$(BUILD_TOOL) -C build $@
 
 FORMAT=formatc formatlua format
-LINT=lintlua lintsh lintc check-single-includes lintcommit lint
+LINT=lintlua lintsh lintc clang-tidy lintcommit lint
 TEST=functionaltest unittest
-generated-sources benchmark $(FORMAT) $(LINT) $(TEST): | build/.ran-cmake
+generated-sources benchmark uninstall $(FORMAT) $(LINT) $(TEST): | build/.ran-cmake
 	$(CMAKE_PRG) --build build --target $@
 
 test: $(TEST)
@@ -173,4 +173,4 @@ $(DEPS_BUILD_DIR)/%: phony_force
 	$(BUILD_TOOL) -C $(DEPS_BUILD_DIR) $(patsubst $(DEPS_BUILD_DIR)/%,%,$@)
 endif
 
-.PHONY: test clean distclean nvim libnvim cmake deps install appimage checkprefix benchmark $(FORMAT) $(LINT) $(TEST)
+.PHONY: test clean distclean nvim libnvim cmake deps install appimage checkprefix benchmark uninstall $(FORMAT) $(LINT) $(TEST)

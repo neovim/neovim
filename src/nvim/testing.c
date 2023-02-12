@@ -395,12 +395,12 @@ static int assert_equalfile(typval_T *argvars)
   char line2[200];
   ptrdiff_t lineidx = 0;
   if (fd1 == NULL) {
-    snprintf(IObuff, IOSIZE, (char *)e_notread, fname1);
+    snprintf(IObuff, IOSIZE, e_notread, fname1);
   } else {
     FILE *const fd2 = os_fopen(fname2, READBIN);
     if (fd2 == NULL) {
       fclose(fd1);
-      snprintf(IObuff, IOSIZE, (char *)e_notread, fname2);
+      snprintf(IObuff, IOSIZE, e_notread, fname2);
     } else {
       int64_t linecount = 1;
       for (int64_t count = 0;; count++) {

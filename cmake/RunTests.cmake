@@ -1,13 +1,5 @@
 # Set LC_ALL to meet expectations of some locale-sensitive tests.
 set(ENV{LC_ALL} "en_US.UTF-8")
-
-if(POLICY CMP0012)
-  # Avoid policy warning due to CI=true. This is needed even if the main
-  # project has already set this policy as project settings aren't inherited
-  # when using cmake script mode (-P).
-  cmake_policy(SET CMP0012 NEW)
-endif()
-
 set(ENV{VIMRUNTIME} ${WORKING_DIR}/runtime)
 set(ENV{NVIM_RPLUGIN_MANIFEST} ${BUILD_DIR}/Xtest_rplugin_manifest)
 set(ENV{XDG_CONFIG_HOME} ${BUILD_DIR}/Xtest_xdg/config)
@@ -71,8 +63,10 @@ if(NOT DEFINED ENV{TEST_TIMEOUT} OR "$ENV{TEST_TIMEOUT}" STREQUAL "")
 endif()
 
 set(ENV{SYSTEM_NAME} ${CMAKE_HOST_SYSTEM_NAME})  # used by test/helpers.lua.
+set(ENV{DEPS_PREFIX} ${DEPS_PREFIX})  # used by test/busted_runner.lua on windows
+
 execute_process(
-  COMMAND ${BUSTED_PRG} -v -o test.busted.outputHandlers.${BUSTED_OUTPUT_TYPE}
+  COMMAND ${NVIM_PRG} -ll ${WORKING_DIR}/test/busted_runner.lua -v -o test.busted.outputHandlers.${BUSTED_OUTPUT_TYPE}
     --lazy --helper=${TEST_DIR}/${TEST_TYPE}/preload.lua
     --lpath=${BUILD_DIR}/?.lua
     --lpath=${WORKING_DIR}/runtime/lua/?.lua
@@ -97,7 +91,7 @@ if(NOT res EQUAL 0)
   endif()
 
   # Dump the logfile on CI (if not displayed and moved already).
-  if($ENV{CI})
+  if(CI_BUILD)
     if(EXISTS $ENV{NVIM_LOG_FILE} AND NOT EXISTS $ENV{NVIM_LOG_FILE}.displayed)
       file(READ $ENV{NVIM_LOG_FILE} out)
       message(STATUS "$NVIM_LOG_FILE: $ENV{NVIM_LOG_FILE}\n${out}")

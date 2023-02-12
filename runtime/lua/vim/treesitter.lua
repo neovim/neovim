@@ -3,8 +3,11 @@ local query = require('vim.treesitter.query')
 local language = require('vim.treesitter.language')
 local LanguageTree = require('vim.treesitter.languagetree')
 
+---@type table<integer,LanguageTree>
 local parsers = setmetatable({}, { __mode = 'v' })
 
+---@class TreesitterModule
+---@field highlighter TSHighlighter
 local M = vim.tbl_extend('error', query, language)
 
 M.language_version = vim._ts_get_language_version()
@@ -12,6 +15,7 @@ M.minimum_language_version = vim._ts_get_minimum_language_version()
 
 setmetatable(M, {
   __index = function(t, k)
+    ---@diagnostic disable:no-unknown
     if k == 'highlighter' then
       t[k] = require('vim.treesitter.highlighter')
       return t[k]
@@ -29,20 +33,22 @@ setmetatable(M, {
 ---
 --- It is not recommended to use this; use |get_parser()| instead.
 ---
----@param bufnr string Buffer the parser will be tied to (0 for current buffer)
+---@param bufnr integer Buffer the parser will be tied to (0 for current buffer)
 ---@param lang string Language of the parser
 ---@param opts (table|nil) Options to pass to the created language tree
 ---
----@return LanguageTree |LanguageTree| object to use for parsing
+---@return LanguageTree object to use for parsing
 function M._create_parser(bufnr, lang, opts)
   language.require_language(lang)
   if bufnr == 0 then
-    bufnr = a.nvim_get_current_buf()
+    bufnr = vim.api.nvim_get_current_buf()
   end
 
   vim.fn.bufload(bufnr)
 
   local self = LanguageTree.new(bufnr, lang, opts)
+
+  ---@diagnostic disable:invisible
 
   ---@private
   local function bytes_cb(_, ...)
@@ -58,12 +64,14 @@ function M._create_parser(bufnr, lang, opts)
   end
 
   ---@private
-  local function reload_cb(_, ...)
-    self:_on_reload(...)
+  local function reload_cb(_)
+    self:_on_reload()
   end
 
+  local source = self:source() --[[@as integer]]
+
   a.nvim_buf_attach(
-    self:source(),
+    source,
     false,
     { on_bytes = bytes_cb, on_detach = detach_cb, on_reload = reload_cb, preview = true }
   )
@@ -77,11 +85,11 @@ end
 ---
 --- If needed, this will create the parser.
 ---
----@param bufnr (number|nil) Buffer the parser should be tied to (default: current buffer)
+---@param bufnr (integer|nil) Buffer the parser should be tied to (default: current buffer)
 ---@param lang (string|nil) Filetype of this parser (default: buffer filetype)
 ---@param opts (table|nil) Options to pass to the created language tree
 ---
----@return LanguageTree |LanguageTree| object to use for parsing
+---@return LanguageTree object to use for parsing
 function M.get_parser(bufnr, lang, opts)
   opts = opts or {}
 
@@ -107,7 +115,7 @@ end
 ---@param lang string Language of this string
 ---@param opts (table|nil) Options to pass to the created language tree
 ---
----@return LanguageTree |LanguageTree| object to use for parsing
+---@return LanguageTree object to use for parsing
 function M.get_string_parser(str, lang, opts)
   vim.validate({
     str = { str, 'string' },
@@ -120,8 +128,8 @@ end
 
 --- Determines whether a node is the ancestor of another
 ---
----@param dest userdata Possible ancestor |tsnode|
----@param source userdata Possible descendant |tsnode|
+---@param dest TSNode Possible ancestor
+---@param source TSNode Possible descendant
 ---
 ---@return boolean True if {dest} is an ancestor of {source}
 function M.is_ancestor(dest, source)
@@ -143,9 +151,12 @@ end
 
 --- Returns the node's range or an unpacked range table
 ---
----@param node_or_range (userdata|table) |tsnode| or table of positions
+---@param node_or_range (TSNode|table) Node or table of positions
 ---
----@return table `{ start_row, start_col, end_row, end_col }`
+---@return integer start_row
+---@return integer start_col
+---@return integer end_row
+---@return integer end_col
 function M.get_node_range(node_or_range)
   if type(node_or_range) == 'table' then
     return unpack(node_or_range)
@@ -156,9 +167,9 @@ end
 
 --- Determines whether (line, col) position is in node range
 ---
----@param node userdata |tsnode| defining the range
----@param line number Line (0-based)
----@param col number Column (0-based)
+---@param node TSNode defining the range
+---@param line integer Line (0-based)
+---@param col integer Column (0-based)
 ---
 ---@return boolean True if the position is in node range
 function M.is_in_node_range(node, line, col)
@@ -180,7 +191,7 @@ end
 
 --- Determines if a node contains a range
 ---
----@param node userdata |tsnode|
+---@param node TSNode
 ---@param range table
 ---
 ---@return boolean True if the {node} contains the {range}
@@ -197,9 +208,9 @@ end
 --- Each capture is represented by a table containing the capture name as a string as
 --- well as a table of metadata (`priority`, `conceal`, ...; empty if none are defined).
 ---
----@param bufnr number Buffer number (0 for current buffer)
----@param row number Position row
----@param col number Position column
+---@param bufnr integer Buffer number (0 for current buffer)
+---@param row integer Position row
+---@param col integer Position column
 ---
 ---@return table[] List of captures `{ capture = "capture name", metadata = { ... } }`
 function M.get_captures_at_pos(bufnr, row, col)
@@ -250,7 +261,7 @@ end
 
 --- Returns a list of highlight capture names under the cursor
 ---
----@param winnr (number|nil) Window handle or 0 for current window (default)
+---@param winnr (integer|nil) Window handle or 0 for current window (default)
 ---
 ---@return string[] List of capture names
 function M.get_captures_at_cursor(winnr)
@@ -271,14 +282,14 @@ end
 
 --- Returns the smallest named node at the given position
 ---
----@param bufnr number Buffer number (0 for current buffer)
----@param row number Position row
----@param col number Position column
+---@param bufnr integer Buffer number (0 for current buffer)
+---@param row integer Position row
+---@param col integer Position column
 ---@param opts table Optional keyword arguments:
 ---             - lang string|nil Parser language
 ---             - ignore_injections boolean Ignore injected languages (default true)
 ---
----@return userdata|nil |tsnode| under the cursor
+---@return TSNode|nil under the cursor
 function M.get_node_at_pos(bufnr, row, col, opts)
   if bufnr == 0 then
     bufnr = a.nvim_get_current_buf()
@@ -295,7 +306,7 @@ end
 
 --- Returns the smallest named node under the cursor
 ---
----@param winnr (number|nil) Window handle or 0 for current window (default)
+---@param winnr (integer|nil) Window handle or 0 for current window (default)
 ---
 ---@return string Name of node under the cursor
 function M.get_node_at_cursor(winnr)
@@ -323,7 +334,7 @@ end
 --- })
 --- </pre>
 ---
----@param bufnr (number|nil) Buffer to be highlighted (default: current buffer)
+---@param bufnr (integer|nil) Buffer to be highlighted (default: current buffer)
 ---@param lang (string|nil) Language of the parser (default: buffer filetype)
 function M.start(bufnr, lang)
   bufnr = bufnr or a.nvim_get_current_buf()
@@ -333,7 +344,7 @@ end
 
 --- Stops treesitter highlighting for a buffer
 ---
----@param bufnr (number|nil) Buffer to stop highlighting (default: current buffer)
+---@param bufnr (integer|nil) Buffer to stop highlighting (default: current buffer)
 function M.stop(bufnr)
   bufnr = bufnr or a.nvim_get_current_buf()
 
@@ -351,13 +362,13 @@ end
 ---@param opts table|nil Optional options table with the following possible keys:
 ---                      - lang (string|nil): The language of the source buffer. If omitted, the
 ---                        filetype of the source buffer is used.
----                      - bufnr (number|nil): Buffer to draw the tree into. If omitted, a new
+---                      - bufnr (integer|nil): Buffer to draw the tree into. If omitted, a new
 ---                        buffer is created.
----                      - winid (number|nil): Window id to display the tree buffer in. If omitted,
+---                      - winid (integer|nil): Window id to display the tree buffer in. If omitted,
 ---                        a new window is created with {command}.
 ---                      - command (string|nil): Vimscript command to create the window. Default
 ---                        value is "topleft 60vnew". Only used when {winid} is nil.
----                      - title (string|fun(bufnr:number):string|nil): Title of the window. If a
+---                      - title (string|fun(bufnr:integer):string|nil): Title of the window. If a
 ---                        function, it accepts the buffer number of the source buffer as its only
 ---                        argument and should return a string.
 function M.show_tree(opts)

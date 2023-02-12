@@ -1162,7 +1162,7 @@ static bool expand_buffer = false;
 /// @param cpo_flags  Value of various flags present in &cpo
 ///
 /// @return  NULL when there is a problem.
-static char_u *translate_mapping(char_u *str, int cpo_flags)
+static char *translate_mapping(char_u *str, int cpo_flags)
 {
   garray_T ga;
   ga_init(&ga, 1, 40);
@@ -1203,7 +1203,7 @@ static char_u *translate_mapping(char_u *str, int cpo_flags)
     }
   }
   ga_append(&ga, NUL);
-  return (char_u *)(ga.ga_data);
+  return (char *)ga.ga_data;
 }
 
 /// Work out what to complete when doing command line completion of mapping
@@ -1212,8 +1212,8 @@ static char_u *translate_mapping(char_u *str, int cpo_flags)
 /// @param forceit  true if '!' given
 /// @param isabbrev  true if abbreviation
 /// @param isunmap  true if unmap/unabbrev command
-char_u *set_context_in_map_cmd(expand_T *xp, char *cmd, char *arg, bool forceit, bool isabbrev,
-                               bool isunmap, cmdidx_T cmdidx)
+char *set_context_in_map_cmd(expand_T *xp, char *cmd, char *arg, bool forceit, bool isabbrev,
+                             bool isunmap, cmdidx_T cmdidx)
 {
   if (forceit && cmdidx != CMD_map && cmdidx != CMD_unmap) {
     xp->xp_context = EXPAND_NOTHING;
@@ -1346,7 +1346,7 @@ int ExpandMappings(char *pat, regmatch_T *regmatch, int *numMatches, char ***mat
         continue;
       }
 
-      char *p = (char *)translate_mapping((char_u *)mp->m_keys, CPO_TO_CPO_FLAGS);
+      char *p = translate_mapping((char_u *)mp->m_keys, CPO_TO_CPO_FLAGS);
       if (p == NULL) {
         continue;
       }
@@ -1434,15 +1434,11 @@ int ExpandMappings(char *pat, regmatch_T *regmatch, int *numMatches, char ***mat
 // Return true if there is an abbreviation, false if not.
 bool check_abbr(int c, char *ptr, int col, int mincol)
 {
-  int len;
   int scol;                     // starting column of the abbr.
-  int j;
-  char *s;
   char_u tb[MB_MAXBYTES + 4];
   mapblock_T *mp;
   mapblock_T *mp2;
   int clen = 0;                 // length in characters
-  bool is_id = true;
 
   if (typebuf.tb_no_abbr_cnt) {  // abbrev. are not recursive
     return false;
@@ -1462,6 +1458,7 @@ bool check_abbr(int c, char *ptr, int col, int mincol)
   }
 
   {
+    bool is_id = true;
     bool vim_abbr;
     char *p = mb_prevptr(ptr, ptr + col);
     if (!vim_iswordp(p)) {
@@ -1489,7 +1486,7 @@ bool check_abbr(int c, char *ptr, int col, int mincol)
   }
   if (scol < col) {             // there is a word in front of the cursor
     ptr += scol;
-    len = col - scol;
+    int len = col - scol;
     mp = curbuf->b_first_abbr;
     mp2 = first_abbr;
     if (mp == NULL) {
@@ -1506,7 +1503,7 @@ bool check_abbr(int c, char *ptr, int col, int mincol)
       if (strchr((const char *)mp->m_keys, K_SPECIAL) != NULL) {
         // Might have K_SPECIAL escaped mp->m_keys.
         q = xstrdup(mp->m_keys);
-        vim_unescape_ks((char_u *)q);
+        vim_unescape_ks(q);
         qlen = (int)strlen(q);
       }
       // find entries with right mode and keys
@@ -1532,7 +1529,7 @@ bool check_abbr(int c, char *ptr, int col, int mincol)
       //
       // Character CTRL-] is treated specially - it completes the
       // abbreviation, but is not inserted into the input stream.
-      j = 0;
+      int j = 0;
       if (c != Ctrl_RSB) {
         // special key code, split up
         if (IS_SPECIAL(c) || c == K_SPECIAL) {
@@ -1568,6 +1565,7 @@ bool check_abbr(int c, char *ptr, int col, int mincol)
       const bool silent = mp->m_silent;
       const bool expr = mp->m_expr;
 
+      char *s;
       if (expr) {
         s = eval_map_expr(mp, c);
       } else {
@@ -1609,7 +1607,7 @@ char *eval_map_expr(mapblock_T *mp, int c)
   // typeahead.
   if (mp->m_luaref == LUA_NOREF) {
     expr = xstrdup(mp->m_str);
-    vim_unescape_ks((char_u *)expr);
+    vim_unescape_ks(expr);
   }
 
   const bool replace_keycodes = mp->m_replace_keycodes;

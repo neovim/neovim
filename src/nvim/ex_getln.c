@@ -1598,8 +1598,10 @@ static int command_line_insert_reg(CommandLineState *s)
     }
   }
 
+  bool literally = false;
   if (s->c != ESC) {               // use ESC to cancel inserting register
-    cmdline_paste(s->c, i == Ctrl_R, false);
+    literally = i == Ctrl_R;
+    cmdline_paste(s->c, literally, false);
 
     // When there was a serious error abort getting the
     // command line.
@@ -1624,8 +1626,9 @@ static int command_line_insert_reg(CommandLineState *s)
   ccline.special_char = NUL;
   redrawcmd();
 
-  // The text has been stuffed, the command line didn't change yet.
-  return CMDLINE_NOT_CHANGED;
+  // With "literally": the command line has already changed.
+  // Else: the text has been stuffed, but the command line didn't change yet.
+  return literally ? CMDLINE_CHANGED : CMDLINE_NOT_CHANGED;
 }
 
 /// Handle the Left and Right mouse clicks in the command-line mode.
@@ -1729,7 +1732,6 @@ static int command_line_browse_history(CommandLineState *s)
   if (s->hiscnt != s->save_hiscnt) {
     // jumped to other entry
     char *p;
-    int len = 0;
     int old_firstc;
 
     XFREE_CLEAR(ccline.cmdbuff);
@@ -1743,6 +1745,7 @@ static int command_line_browse_history(CommandLineState *s)
     if (s->histype == HIST_SEARCH
         && p != s->lookfor
         && (old_firstc = (uint8_t)p[strlen(p) + 1]) != s->firstc) {
+      int len = 0;
       // Correct for the separator character used when
       // adding the history entry vs the one used now.
       // First loop: count length.
@@ -1857,12 +1860,12 @@ static int command_line_handle_key(CommandLineState *s)
 
   case Ctrl_R:                        // insert register
     switch (command_line_insert_reg(s)) {
-    case CMDLINE_NOT_CHANGED:
-      return command_line_not_changed(s);
     case GOTO_NORMAL_MODE:
       return 0;  // back to cmd mode
-    default:
+    case CMDLINE_CHANGED:
       return command_line_changed(s);
+    default:
+      return command_line_not_changed(s);
     }
 
   case Ctrl_D:
@@ -2015,7 +2018,7 @@ static int command_line_handle_key(CommandLineState *s)
       if (nextwild(&s->xpc, wild_type, 0, s->firstc != '@') == FAIL) {
         break;
       }
-      return command_line_not_changed(s);
+      return command_line_changed(s);
     }
     FALLTHROUGH;
 
@@ -2037,7 +2040,7 @@ static int command_line_handle_key(CommandLineState *s)
       if (nextwild(&s->xpc, wild_type, 0, s->firstc != '@') == FAIL) {
         break;
       }
-      return command_line_not_changed(s);
+      return command_line_changed(s);
     } else {
       switch (command_line_browse_history(s)) {
       case CMDLINE_CHANGED:
@@ -3380,14 +3383,14 @@ static void ui_ext_cmdline_show(CmdlineInfo *line)
       ADD_C(item, INTEGER_OBJ(chunk.attr));
 
       assert(chunk.end >= chunk.start);
-      ADD_C(item, STRING_OBJ(cbuf_as_string((char *)line->cmdbuff + chunk.start,
+      ADD_C(item, STRING_OBJ(cbuf_as_string(line->cmdbuff + chunk.start,
                                             (size_t)(chunk.end - chunk.start))));
       ADD_C(content, ARRAY_OBJ(item));
     }
   } else {
     Array item = arena_array(&arena, 2);
     ADD_C(item, INTEGER_OBJ(0));
-    ADD_C(item, STRING_OBJ(cstr_as_string((char *)(line->cmdbuff))));
+    ADD_C(item, STRING_OBJ(cstr_as_string(line->cmdbuff)));
     content = arena_array(&arena, 1);
     ADD_C(content, ARRAY_OBJ(item));
   }
@@ -3676,7 +3679,6 @@ static void restore_cmdline(CmdlineInfo *ccp)
 static bool cmdline_paste(int regname, bool literally, bool remcr)
 {
   char *arg;
-  char *p;
   bool allocated;
 
   // check for valid regname; also accept special characters for CTRL-R in
@@ -3708,7 +3710,7 @@ static bool cmdline_paste(int regname, bool literally, bool remcr)
 
     // When 'incsearch' is set and CTRL-R CTRL-W used: skip the duplicate
     // part of the word.
-    p = arg;
+    char *p = arg;
     if (p_is && regname == Ctrl_W) {
       char *w;
       int len;
@@ -3743,17 +3745,15 @@ static bool cmdline_paste(int regname, bool literally, bool remcr)
 // line.
 void cmdline_paste_str(char *s, int literally)
 {
-  int c, cv;
-
   if (literally) {
     put_on_cmdline(s, -1, true);
   } else {
     while (*s != NUL) {
-      cv = (uint8_t)(*s);
+      int cv = (uint8_t)(*s);
       if (cv == Ctrl_V && s[1]) {
         s++;
       }
-      c = mb_cptr2char_adv((const char **)&s);
+      int c = mb_cptr2char_adv((const char **)&s);
       if (cv == Ctrl_V || c == ESC || c == Ctrl_C
           || c == CAR || c == NL || c == Ctrl_L
           || (c == Ctrl_BSL && *s == Ctrl_N)) {
@@ -3781,8 +3781,6 @@ void redrawcmdline(void)
 
 static void redrawcmdprompt(void)
 {
-  int i;
-
   if (cmd_silent) {
     return;
   }
@@ -3801,7 +3799,7 @@ static void redrawcmdprompt(void)
       ccline.cmdindent--;
     }
   } else {
-    for (i = ccline.cmdindent; i > 0; i--) {
+    for (int i = ccline.cmdindent; i > 0; i--) {
       msg_putchar(' ');
     }
   }
@@ -4284,12 +4282,10 @@ void cmdline_init(void)
 /// Returns NULL if value is OK, error message otherwise.
 char *check_cedit(void)
 {
-  int n;
-
   if (*p_cedit == NUL) {
     cedit_key = -1;
   } else {
-    n = string_to_key(p_cedit);
+    int n = string_to_key(p_cedit);
     if (vim_isprintc(n)) {
       return e_invarg;
     }
@@ -4309,9 +4305,7 @@ static int open_cmdwin(void)
   bufref_T old_curbuf;
   bufref_T bufref;
   win_T *old_curwin = curwin;
-  win_T *wp;
   int i;
-  linenr_T lnum;
   garray_T winsizes;
   char typestr[2];
   int save_restart_edit = restart_edit;
@@ -4392,7 +4386,7 @@ static int open_cmdwin(void)
   if (get_hislen() > 0 && histtype != HIST_INVALID) {
     i = *get_hisidx(histtype);
     if (i >= 0) {
-      lnum = 0;
+      linenr_T lnum = 0;
       do {
         if (++i == get_hislen()) {
           i = 0;
@@ -4463,6 +4457,7 @@ static int open_cmdwin(void)
     cmdwin_result = Ctrl_C;
     emsg(_("E199: Active window or buffer deleted"));
   } else {
+    win_T *wp;
     // autocmds may abort script processing
     if (aborting() && cmdwin_result != K_IGNORE) {
       cmdwin_result = Ctrl_C;

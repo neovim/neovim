@@ -47,6 +47,9 @@ The following changes may require adaptations in user config or plugins.
 
 • libiconv is now a required build dependency.
 
+• Unsaved changes are now preserved rather than discarded when |channel-stdio|
+  is closed.
+
 ==============================================================================
 NEW FEATURES                                                    *news-features*
 
@@ -63,7 +66,7 @@ The following new APIs or features were added.
 <
   (or the Vimscript equivalent) to their |config| file.
 
-• Run Lua scripts from your shell using |-l|. >
+• Added support for running Lua scripts from shell using |-l|. >
       nvim -l foo.lua --arg1 --arg2
 <  Also works with stdin: >
       echo "print(42)" | nvim -l -
@@ -150,6 +153,12 @@ The following new APIs or features were added.
   allow for a workaround for some remaining reproducibility problems.
 
 • |:highlight| now supports an additional attribute "altfont".
+
+• Treesitter captures can now be transformed by directives. This will allow
+  more complicated dynamic language injections.
+
+• |vim.treesitter.query.get_node_text()| now accepts a `metadata` option for
+  writing custom directives using |vim.treesitter.query.add_directive()|.
 
 • Added support for the `workspace/didChangeWatchedFiles` capability to the
   LSP client to notify servers of file changes on disk.

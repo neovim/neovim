@@ -1,6 +1,5 @@
 // This is an open source non-commercial project. Dear PVS-Studio, please check
 // it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
-//
 
 #include <assert.h>
 #include <inttypes.h>
@@ -261,23 +260,17 @@ static void win_redr_custom(win_T *wp, bool draw_winbar, bool draw_ruler)
 {
   static bool entered = false;
   int attr;
-  int curattr;
   int row;
   int col = 0;
   int maxwidth;
-  int width;
   int n;
-  int len;
   int fillchar;
   char buf[MAXPATHL];
   char *stl;
-  char *p;
   char *opt_name;
   int opt_scope = 0;
   stl_hlrec_t *hltab;
   StlClickRecord *tabtab;
-  win_T *ewp;
-  int p_crb_save;
   bool is_stl_global = global_stl_height() > 0;
 
   ScreenGrid *grid = &default_grid;
@@ -370,22 +363,22 @@ static void win_redr_custom(win_T *wp, bool draw_winbar, bool draw_ruler)
 
   // Temporarily reset 'cursorbind', we don't want a side effect from moving
   // the cursor away and back.
-  ewp = wp == NULL ? curwin : wp;
-  p_crb_save = ewp->w_p_crb;
+  win_T *ewp = wp == NULL ? curwin : wp;
+  int p_crb_save = ewp->w_p_crb;
   ewp->w_p_crb = false;
 
   // Make a copy, because the statusline may include a function call that
   // might change the option value and free the memory.
   stl = xstrdup(stl);
-  width = build_stl_str_hl(ewp, buf, sizeof(buf), stl, opt_name, opt_scope,
-                           fillchar, maxwidth, &hltab, &tabtab, NULL);
+  int width = build_stl_str_hl(ewp, buf, sizeof(buf), stl, opt_name, opt_scope,
+                               fillchar, maxwidth, &hltab, &tabtab, NULL);
 
   xfree(stl);
   ewp->w_p_crb = p_crb_save;
 
   // Make all characters printable.
-  p = transstr(buf, true);
-  len = (int)xstrlcpy(buf, p, sizeof(buf));
+  char *p = transstr(buf, true);
+  int len = (int)xstrlcpy(buf, p, sizeof(buf));
   len = (size_t)len < sizeof(buf) ? len : (int)sizeof(buf) - 1;
   xfree(p);
 
@@ -399,7 +392,7 @@ static void win_redr_custom(win_T *wp, bool draw_winbar, bool draw_ruler)
   // Draw each snippet with the specified highlighting.
   grid_puts_line_start(grid, row);
 
-  curattr = attr;
+  int curattr = attr;
   p = buf;
   for (n = 0; hltab[n].start != NULL; n++) {
     int textlen = (int)(hltab[n].start - p);
@@ -583,7 +576,7 @@ void win_redr_ruler(win_T *wp, bool always)
       MAXSIZE_TEMP_ARRAY(content, 1);
       MAXSIZE_TEMP_ARRAY(chunk, 2);
       ADD_C(chunk, INTEGER_OBJ(attr));
-      ADD_C(chunk, STRING_OBJ(cstr_as_string((char *)buffer)));
+      ADD_C(chunk, STRING_OBJ(cstr_as_string(buffer)));
       ADD_C(content, ARRAY_OBJ(chunk));
       ui_call_msg_ruler(content);
       did_show_ext_ruler = true;
@@ -710,21 +703,9 @@ static void ui_ext_tabline_update(void)
 /// Draw the tab pages line at the top of the Vim window.
 void draw_tabline(void)
 {
-  int tabcount = 0;
-  int tabwidth = 0;
-  int col = 0;
-  int scol = 0;
-  int attr;
   win_T *wp;
-  win_T *cwp;
-  int wincount;
-  int modified;
-  int c;
-  int len;
   int attr_nosel = HL_ATTR(HLF_TP);
   int attr_fill = HL_ATTR(HLF_TPF);
-  char *p;
-  int room;
   int use_sep_chars = (t_colors < 8);
 
   if (default_grid.chars == NULL) {
@@ -749,6 +730,14 @@ void draw_tabline(void)
   if (*p_tal != NUL) {
     win_redr_custom(NULL, false, false);
   } else {
+    int tabcount = 0;
+    int tabwidth = 0;
+    int col = 0;
+    win_T *cwp;
+    int wincount;
+    int c;
+    int len;
+    char *p;
     FOR_ALL_TABS(tp) {
       tabcount++;
     }
@@ -761,7 +750,7 @@ void draw_tabline(void)
       tabwidth = 6;
     }
 
-    attr = attr_nosel;
+    int attr = attr_nosel;
     tabcount = 0;
 
     FOR_ALL_TABS(tp) {
@@ -769,7 +758,7 @@ void draw_tabline(void)
         break;
       }
 
-      scol = col;
+      int scol = col;
 
       if (tp == curtab) {
         cwp = curwin;
@@ -792,7 +781,7 @@ void draw_tabline(void)
 
       grid_putchar(&default_grid, ' ', 0, col++, attr);
 
-      modified = false;
+      int modified = false;
 
       for (wincount = 0; wp != NULL; wp = wp->w_next, wincount++) {
         if (bufIsChanged(wp->w_buffer)) {
@@ -817,7 +806,7 @@ void draw_tabline(void)
         grid_putchar(&default_grid, ' ', 0, col++, attr);
       }
 
-      room = scol - col + tabwidth - 1;
+      int room = scol - col + tabwidth - 1;
       if (room > 0) {
         // Get buffer name in NameBuff[]
         get_trans_bufname(cwp->w_buffer);
@@ -1095,7 +1084,7 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, char *opt_n
       continue;
     }
 
-    // STL_SEPARATE: Separation place between left and right aligned items.
+    // STL_SEPARATE: Separation between items, filled with white space.
     if (*fmt_p == STL_SEPARATE) {
       fmt_p++;
       // Ignored when we are inside of a grouping
@@ -1390,7 +1379,7 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, char *opt_n
     NumberBase base = kNumBaseDecimal;
     bool itemisflag = false;
     bool fillable = true;
-    long num = -1;
+    int num = -1;
     char *str = NULL;
     switch (opt) {
     case STL_FILEPATH:
@@ -1520,10 +1509,10 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, char *opt_n
       // Overload %l with v:lnum for 'statuscolumn'
       if (opt_name != NULL && strcmp(opt_name, "statuscolumn") == 0) {
         if (wp->w_p_nu && !get_vim_var_nr(VV_VIRTNUM)) {
-          num = get_vim_var_nr(VV_LNUM);
+          num = (int)get_vim_var_nr(VV_LNUM);
         }
       } else {
-        num = (wp->w_buffer->b_ml.ml_flags & ML_EMPTY) ? 0L : (long)(wp->w_cursor.lnum);
+        num = (wp->w_buffer->b_ml.ml_flags & ML_EMPTY) ? 0L : wp->w_cursor.lnum;
       }
       break;
 
@@ -1544,7 +1533,7 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, char *opt_n
                                    ? 0 : (int)wp->w_cursor.col + 1))) {
         break;
       }
-      num = (long)virtcol;
+      num = virtcol;
       break;
     }
 
@@ -1604,8 +1593,8 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, char *opt_n
       long l = ml_find_line_or_offset(wp->w_buffer, wp->w_cursor.lnum, NULL,
                                       false);
       num = (wp->w_buffer->b_ml.ml_flags & ML_EMPTY) || l < 0 ?
-            0L : l + 1 + ((State & MODE_INSERT) == 0 && empty_line ?
-                          0 : (int)wp->w_cursor.col);
+            0L : (int)l + 1 + ((State & MODE_INSERT) == 0 && empty_line ?
+                               0 : (int)wp->w_cursor.col);
       break;
     }
     case STL_BYTEVAL_X:
@@ -1625,7 +1614,7 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, char *opt_n
       // Overload %r with v:relnum for 'statuscolumn'
       if (opt_name != NULL && strcmp(opt_name, "statuscolumn") == 0) {
         if (wp->w_p_rnu && !get_vim_var_nr(VV_VIRTNUM)) {
-          num = get_vim_var_nr(VV_RELNUM);
+          num = (int)get_vim_var_nr(VV_RELNUM);
         }
       } else {
         itemisflag = true;
@@ -1889,7 +1878,7 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, char *opt_n
 
         // { Reduce the number by base^n
         while (num_chars-- > maxwid) {
-          num /= (long)base;
+          num /= (int)base;
         }
         // }
 
@@ -2067,8 +2056,7 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, char *opt_n
     int num_separators = 0;
     for (int i = 0; i < itemcnt; i++) {
       if (stl_items[i].type == Separate) {
-        // Create an array of the start location for each
-        // separator mark.
+        // Create an array of the start location for each separator mark.
         stl_separator_locations[num_separators] = i;
         num_separators++;
       }
@@ -2080,17 +2068,17 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, char *opt_n
       int final_spaces = (maxwidth - width) -
                          standard_spaces * (num_separators - 1);
 
-      for (int i = 0; i < num_separators; i++) {
-        int dislocation = (i == (num_separators - 1)) ? final_spaces : standard_spaces;
+      for (int l = 0; l < num_separators; l++) {
+        int dislocation = (l == (num_separators - 1)) ? final_spaces : standard_spaces;
         dislocation *= utf_char2len(fillchar);
-        char *start = stl_items[stl_separator_locations[i]].start;
+        char *start = stl_items[stl_separator_locations[l]].start;
         char *seploc = start + dislocation;
         STRMOVE(seploc, start);
         for (char *s = start; s < seploc;) {
           MB_CHAR2BYTES(fillchar, s);
         }
 
-        for (int item_idx = stl_separator_locations[i] + 1;
+        for (int item_idx = stl_separator_locations[l] + 1;
              item_idx < itemcnt;
              item_idx++) {
           stl_items[item_idx].start += dislocation;

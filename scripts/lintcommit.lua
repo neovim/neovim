@@ -78,10 +78,12 @@ local function validate_commit(commit_message)
 
   -- Check if type is correct
   local type = vim.split(before_colon, "%(")[1]
-  local allowed_types = {'build', 'ci', 'docs', 'feat', 'fix', 'perf', 'refactor', 'revert', 'test', 'dist', 'vim-patch'}
+  local allowed_types = {'build', 'ci', 'docs', 'feat', 'fix', 'perf', 'refactor', 'revert', 'test', 'vim-patch'}
   if not vim.tbl_contains(allowed_types, type) then
     return string.format(
-      'Invalid commit type "%s". Allowed types are:\n    %s',
+      [[Invalid commit type "%s". Allowed types are:
+      %s.
+    If none of these seem appropriate then use "fix"]],
       type,
       vim.inspect(allowed_types))
   end
@@ -164,13 +166,16 @@ function M.main(opt)
       local invalid_msg = validate_commit(msg)
       if invalid_msg then
         failed = failed + 1
+
+        -- Some breathing room
+        if failed == 1 then
+          p('\n')
+        end
+
         p(string.format([[
 Invalid commit message: "%s"
     Commit: %s
     %s
-    See also:
-        https://github.com/neovim/neovim/blob/master/CONTRIBUTING.md#commit-messages
-        https://www.conventionalcommits.org/en/v1.0.0/
 ]],
           msg,
           commit_id,
@@ -180,6 +185,10 @@ Invalid commit message: "%s"
   end
 
   if failed > 0 then
+        p([[
+See also:
+    https://github.com/neovim/neovim/blob/master/CONTRIBUTING.md#commit-messages
+]])
     die()  -- Exit with error.
   else
     p('')
@@ -198,7 +207,6 @@ function M._test()
     ['refactor: normal message'] = true,
     ['revert: normal message'] = true,
     ['test: normal message'] = true,
-    ['dist: normal message'] = true,
     ['ci(window): message with scope'] = true,
     ['ci!: message with breaking change'] = true,
     ['ci(tui)!: message with scope and breaking change'] = true,

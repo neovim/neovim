@@ -205,7 +205,7 @@ int ns_get_hl(NS *ns_hl, int hl_id, bool link, bool nodefault)
   if (!valid_item && p->hl_def != LUA_NOREF && !recursive) {
     MAXSIZE_TEMP_ARRAY(args, 3);
     ADD_C(args, INTEGER_OBJ((Integer)ns_id));
-    ADD_C(args, STRING_OBJ(cstr_to_string((char *)syn_id2name(hl_id))));
+    ADD_C(args, STRING_OBJ(cstr_to_string(syn_id2name(hl_id))));
     ADD_C(args, BOOLEAN_OBJ(link));
     // TODO(bfredl): preload the "global" attr dict?
 
@@ -842,12 +842,12 @@ void hlattrs2dict(Dictionary *dict, HlAttrs ae, bool use_rgb)
     PUT_C(hl, "underline", BOOLEAN_OBJ(true));
     break;
 
-  case HL_UNDERDOUBLE:
-    PUT_C(hl, "underdouble", BOOLEAN_OBJ(true));
-    break;
-
   case HL_UNDERCURL:
     PUT_C(hl, "undercurl", BOOLEAN_OBJ(true));
+    break;
+
+  case HL_UNDERDOUBLE:
+    PUT_C(hl, "underdouble", BOOLEAN_OBJ(true));
     break;
 
   case HL_UNDERDOTTED:
@@ -930,8 +930,8 @@ HlAttrs dict2hlattrs(Dict(highlight) *dict, bool use_rgb, int *link_id, Error *e
   CHECK_FLAG(dict, mask, bold, , HL_BOLD);
   CHECK_FLAG(dict, mask, italic, , HL_ITALIC);
   CHECK_FLAG(dict, mask, underline, , HL_UNDERLINE);
-  CHECK_FLAG(dict, mask, underdouble, , HL_UNDERDOUBLE);
   CHECK_FLAG(dict, mask, undercurl, , HL_UNDERCURL);
+  CHECK_FLAG(dict, mask, underdouble, , HL_UNDERDOUBLE);
   CHECK_FLAG(dict, mask, underdotted, , HL_UNDERDOTTED);
   CHECK_FLAG(dict, mask, underdashed, , HL_UNDERDASHED);
   CHECK_FLAG(dict, mask, standout, , HL_STANDOUT);
@@ -1115,7 +1115,7 @@ static void hl_inspect_impl(Array *arr, int attr)
   case kHlSyntax:
     PUT(item, "kind", STRING_OBJ(cstr_to_string("syntax")));
     PUT(item, "hi_name",
-        STRING_OBJ(cstr_to_string((char *)syn_id2name(e.id1))));
+        STRING_OBJ(cstr_to_string(syn_id2name(e.id1))));
     break;
 
   case kHlUI:
@@ -1123,7 +1123,7 @@ static void hl_inspect_impl(Array *arr, int attr)
     const char *ui_name = (e.id1 == -1) ? "Normal" : hlf_names[e.id1];
     PUT(item, "ui_name", STRING_OBJ(cstr_to_string(ui_name)));
     PUT(item, "hi_name",
-        STRING_OBJ(cstr_to_string((char *)syn_id2name(e.id2))));
+        STRING_OBJ(cstr_to_string(syn_id2name(e.id2))));
     break;
 
   case kHlTerminal:

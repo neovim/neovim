@@ -191,6 +191,7 @@ local extension = {
   qc = 'c',
   cabal = 'cabal',
   capnp = 'capnp',
+  cdc = 'cdc',
   cdl = 'cdl',
   toc = 'cdrtoc',
   cfc = 'cf',
@@ -385,6 +386,7 @@ local extension = {
   ['m4gl'] = 'fgl',
   ['4gl'] = 'fgl',
   ['4gh'] = 'fgl',
+  fir = 'firrtl',
   fish = 'fish',
   focexec = 'focexec',
   fex = 'focexec',
@@ -421,6 +423,7 @@ local extension = {
   fsh = 'fsh',
   fsi = 'fsharp',
   fsx = 'fsharp',
+  fc = 'func',
   fusion = 'fusion',
   gdb = 'gdb',
   gdmo = 'gdmo',
@@ -569,6 +572,7 @@ local extension = {
   libsonnet = 'jsonnet',
   jsp = 'jsp',
   jl = 'julia',
+  kdl = 'kdl',
   kv = 'kivy',
   kix = 'kix',
   kts = 'kotlin',
@@ -688,6 +692,7 @@ local extension = {
   isc = 'monk',
   moo = 'moo',
   moon = 'moonscript',
+  move = 'move',
   mp = 'mp',
   mpiv = function(path, bufnr)
     return 'mp', function(b)
@@ -868,6 +873,7 @@ local extension = {
   Snw = 'rnoweb',
   robot = 'robot',
   resource = 'robot',
+  ron = 'ron',
   rsc = 'routeros',
   x = 'rpcgen',
   rpl = 'rpl',
@@ -1431,6 +1437,7 @@ local filename = {
   gnashrc = 'gnash',
   ['.gnuplot'] = 'gnuplot',
   ['go.sum'] = 'gosum',
+  ['go.work.sum'] = 'gosum',
   ['go.work'] = 'gowork',
   ['.gprc'] = 'gp',
   ['/.gnupg/gpg.conf'] = 'gpg',
@@ -1463,6 +1470,7 @@ local filename = {
   ['Pipfile.lock'] = 'json',
   ['.firebaserc'] = 'json',
   ['.prettierrc'] = 'json',
+  ['.stylelintrc'] = 'json',
   ['.babelrc'] = 'jsonc',
   ['.eslintrc'] = 'jsonc',
   ['.hintrc'] = 'jsonc',
@@ -1698,6 +1706,7 @@ local filename = {
   fglrxrc = 'xml',
   ['/etc/blkid.tab'] = 'xml',
   ['/etc/blkid.tab.old'] = 'xml',
+  ['.clangd'] = 'yaml',
   ['.clang-format'] = 'yaml',
   ['.clang-tidy'] = 'yaml',
   ['/etc/zprofile'] = 'zsh',
@@ -2440,6 +2449,7 @@ local function match_pattern(name, path, tail, pat)
       return false
     end
   end
+
   -- If the pattern contains a / match against the full path, otherwise just the tail
   local fullpat = '^' .. pat .. '$'
   local matches
@@ -2517,64 +2527,64 @@ function M.match(args)
     name = api.nvim_buf_get_name(bufnr)
   end
 
-  if name then
-    name = normalize_path(name)
-  end
-
   local ft, on_detect
 
-  -- First check for the simple case where the full path exists as a key
-  local path = vim.fn.fnamemodify(name, ':p')
-  ft, on_detect = dispatch(filename[path], path, bufnr)
-  if ft then
-    return ft, on_detect
-  end
+  if name then
+    name = normalize_path(name)
 
-  -- Next check against just the file name
-  local tail = vim.fn.fnamemodify(name, ':t')
-  ft, on_detect = dispatch(filename[tail], path, bufnr)
-  if ft then
-    return ft, on_detect
-  end
-
-  -- Next, check the file path against available patterns with non-negative priority
-  local j = 1
-  for i, v in ipairs(pattern_sorted) do
-    local k = next(v)
-    local opts = v[k][2]
-    if opts.priority < 0 then
-      j = i
-      break
+    -- First check for the simple case where the full path exists as a key
+    local path = vim.fn.fnamemodify(name, ':p')
+    ft, on_detect = dispatch(filename[path], path, bufnr)
+    if ft then
+      return ft, on_detect
     end
 
-    local filetype = v[k][1]
-    local matches = match_pattern(name, path, tail, k)
-    if matches then
-      ft, on_detect = dispatch(filetype, path, bufnr, matches)
-      if ft then
-        return ft, on_detect
+    -- Next check against just the file name
+    local tail = vim.fn.fnamemodify(name, ':t')
+    ft, on_detect = dispatch(filename[tail], path, bufnr)
+    if ft then
+      return ft, on_detect
+    end
+
+    -- Next, check the file path against available patterns with non-negative priority
+    local j = 1
+    for i, v in ipairs(pattern_sorted) do
+      local k = next(v)
+      local opts = v[k][2]
+      if opts.priority < 0 then
+        j = i
+        break
+      end
+
+      local filetype = v[k][1]
+      local matches = match_pattern(name, path, tail, k)
+      if matches then
+        ft, on_detect = dispatch(filetype, path, bufnr, matches)
+        if ft then
+          return ft, on_detect
+        end
       end
     end
-  end
 
-  -- Next, check file extension
-  local ext = vim.fn.fnamemodify(name, ':e')
-  ft, on_detect = dispatch(extension[ext], path, bufnr)
-  if ft then
-    return ft, on_detect
-  end
+    -- Next, check file extension
+    local ext = vim.fn.fnamemodify(name, ':e')
+    ft, on_detect = dispatch(extension[ext], path, bufnr)
+    if ft then
+      return ft, on_detect
+    end
 
-  -- Next, check patterns with negative priority
-  for i = j, #pattern_sorted do
-    local v = pattern_sorted[i]
-    local k = next(v)
+    -- Next, check patterns with negative priority
+    for i = j, #pattern_sorted do
+      local v = pattern_sorted[i]
+      local k = next(v)
 
-    local filetype = v[k][1]
-    local matches = match_pattern(name, path, tail, k)
-    if matches then
-      ft, on_detect = dispatch(filetype, path, bufnr, matches)
-      if ft then
-        return ft, on_detect
+      local filetype = v[k][1]
+      local matches = match_pattern(name, path, tail, k)
+      if matches then
+        ft, on_detect = dispatch(filetype, path, bufnr, matches)
+        if ft then
+          return ft, on_detect
+        end
       end
     end
   end

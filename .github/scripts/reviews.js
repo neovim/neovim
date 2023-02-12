@@ -69,10 +69,6 @@ module.exports = async ({github, context}) => {
     reviewers.add("justinmk")
   }
 
-  if (labels.includes('refactor')) {
-    reviewers.add("bfredl")
-  }
-
   if (labels.includes('test')) {
     reviewers.add("justinmk")
   }

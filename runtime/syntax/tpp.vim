@@ -2,8 +2,8 @@
 " Language: tpp - Text Presentation Program
 " Maintainer: Debian Vim Maintainers
 " Former Maintainer: Gerfried Fuchs <alfie@ist.org>
-" Last Change: 2018 Dec 27
-" URL: https://salsa.debian.org/vim-team/vim-debian/master/syntax/tpp.vim
+" Last Change: 2023 Jan 16
+" URL: https://salsa.debian.org/vim-team/vim-debian/blob/main/syntax/tpp.vim
 " Filenames: *.tpp
 " License: BSD
 "

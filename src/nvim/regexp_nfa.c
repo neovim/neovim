@@ -7511,7 +7511,7 @@ static regprog_T *nfa_regcomp(uint8_t *expr, int re_flags)
   post2nfa(postfix, post_ptr, true);
 
   // allocate the regprog with space for the compiled regexp
-  size_t prog_size = sizeof(nfa_regprog_T) + sizeof(nfa_state_T) * (size_t)(nstate - 1);
+  size_t prog_size = offsetof(nfa_regprog_T, state) + sizeof(nfa_state_T) * (size_t)nstate;
   prog = xmalloc(prog_size);
   state_ptr = prog->state;
   prog->re_in_use = false;

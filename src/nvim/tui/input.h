@@ -40,18 +40,14 @@ typedef struct term_input {
   TUIData *tui_data;
 } TermInput;
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "tui/input.h.generated.h"
-#endif
-
-#ifdef UNIT_TESTING
 typedef enum {
   kIncomplete = -1,
   kNotApplicable = 0,
   kComplete = 1,
 } HandleState;
 
-HandleState ut_handle_background_color(TermInput *input);
+#ifdef INCLUDE_GENERATED_DECLARATIONS
+# include "tui/input.h.generated.h"
 #endif
 
 #endif  // NVIM_TUI_INPUT_H

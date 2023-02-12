@@ -619,8 +619,6 @@ void ex_argument(exarg_T *eap)
 /// Edit file "argn" of the argument lists.
 void do_argfile(exarg_T *eap, int argn)
 {
-  int other;
-  char *p;
   int old_arg_idx = curwin->w_arg_idx;
 
   if (argn < 0 || argn >= ARGCOUNT) {
@@ -646,9 +644,9 @@ void do_argfile(exarg_T *eap, int argn)
   } else {
     // if 'hidden' set, only check for changed file when re-editing
     // the same buffer
-    other = true;
+    int other = true;
     if (buf_hide(curbuf)) {
-      p = fix_fname(alist_name(&ARGLIST[argn]));
+      char *p = fix_fname(alist_name(&ARGLIST[argn]));
       other = otherfile(p);
       xfree(p);
     }
@@ -683,8 +681,6 @@ void do_argfile(exarg_T *eap, int argn)
 /// ":next", and commands that behave like it.
 void ex_next(exarg_T *eap)
 {
-  int i;
-
   // check for changed buffer now, if this fails the argument list is not
   // redefined.
   if (buf_hide(curbuf)
@@ -692,6 +688,7 @@ void ex_next(exarg_T *eap)
       || !check_changed(curbuf, CCGD_AW
                         | (eap->forceit ? CCGD_FORCEIT : 0)
                         | CCGD_EXCMD)) {
+    int i;
     if (*eap->arg != NUL) {                 // redefine file list
       if (do_arglist(eap->arg, AL_SET, 0, true) == FAIL) {
         return;

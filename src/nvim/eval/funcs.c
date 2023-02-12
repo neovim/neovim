@@ -492,7 +492,7 @@ buf_T *get_buf_arg(typval_T *arg)
 /// "byte2line(byte)" function
 static void f_byte2line(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
-  long boff = tv_get_number(&argvars[0]) - 1;
+  long boff = (long)tv_get_number(&argvars[0]) - 1;
   if (boff < 0) {
     rettv->vval.v_number = -1;
   } else {
@@ -978,11 +978,11 @@ static void f_count(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
       listitem_T *li = tv_list_first(l);
       if (argvars[2].v_type != VAR_UNKNOWN) {
         if (argvars[3].v_type != VAR_UNKNOWN) {
-          long idx = tv_get_number_chk(&argvars[3], &error);
+          int64_t idx = tv_get_number_chk(&argvars[3], &error);
           if (!error) {
             li = tv_list_find(l, (int)idx);
             if (li == NULL) {
-              semsg(_(e_listidx), (int64_t)idx);
+              semsg(_(e_listidx), idx);
             }
           }
         }
@@ -3064,9 +3064,6 @@ static void f_has(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     "conceal",
     "cursorbind",
     "cursorshape",
-#ifdef DEBUG
-    "debug",
-#endif
     "dialog_con",
     "diff",
     "digraphs",
@@ -3592,7 +3589,7 @@ static void f_insert(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     semsg(_(e_listblobarg), "insert()");
   } else if (!value_check_lock(tv_list_locked((l = argvars[0].vval.v_list)),
                                N_("insert() argument"), TV_TRANSLATE)) {
-    long before = 0;
+    int64_t before = 0;
     if (argvars[2].v_type != VAR_UNKNOWN) {
       before = tv_get_number_chk(&argvars[2], &error);
     }
@@ -3605,7 +3602,7 @@ static void f_insert(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     if (before != tv_list_len(l)) {
       item = tv_list_find(l, (int)before);
       if (item == NULL) {
-        semsg(_(e_listidx), (int64_t)before);
+        semsg(_(e_listidx), before);
         l = NULL;
       }
     }
@@ -4374,11 +4371,11 @@ static void find_some_match(typval_T *const argvars, typval_T *const rettv,
                             const SomeMatchType type)
 {
   char *str = NULL;
-  long len = 0;
+  int64_t len = 0;
   char *expr = NULL;
   regmatch_T regmatch;
-  long start = 0;
-  long nth = 1;
+  int64_t start = 0;
+  int64_t nth = 1;
   colnr_T startcol = 0;
   bool match = false;
   list_T *l = NULL;
@@ -5390,7 +5387,7 @@ static void read_file_or_blob(typval_T *argvars, typval_T *rettv, bool always_bl
   char *prev = NULL;               // previously read bytes, if any
   ptrdiff_t prevlen  = 0;               // length of data in prev
   ptrdiff_t prevsize = 0;               // size of prev buffer
-  long maxline  = MAXLNUM;
+  int64_t maxline  = MAXLNUM;
 
   if (argvars[1].v_type != VAR_UNKNOWN) {
     if (strcmp(tv_get_string(&argvars[1]), "b") == 0) {
@@ -6164,8 +6161,8 @@ static int search_cmn(typval_T *argvars, pos_T *match_pos, int *flagsp)
 {
   bool save_p_ws = p_ws;
   int retval = 0;               // default: FAIL
-  long lnum_stop = 0;
-  long time_limit = 0;
+  linenr_T lnum_stop = 0;
+  int64_t time_limit = 0;
   int options = SEARCH_KEEP;
   bool use_skip = false;
 
@@ -6187,7 +6184,7 @@ static int search_cmn(typval_T *argvars, pos_T *match_pos, int *flagsp)
 
   // Optional arguments: line number to stop searching, timeout and skip.
   if (argvars[1].v_type != VAR_UNKNOWN && argvars[2].v_type != VAR_UNKNOWN) {
-    lnum_stop = tv_get_number_chk(&argvars[2], NULL);
+    lnum_stop = (linenr_T)tv_get_number_chk(&argvars[2], NULL);
     if (lnum_stop < 0) {
       goto theend;
     }
@@ -6217,7 +6214,7 @@ static int search_cmn(typval_T *argvars, pos_T *match_pos, int *flagsp)
   pos_T pos = save_cursor = curwin->w_cursor;
   pos_T firstpos = { 0 };
   searchit_arg_T sia = {
-    .sa_stop_lnum = (linenr_T)lnum_stop,
+    .sa_stop_lnum = lnum_stop,
     .sa_tm = &tm,
   };
 
@@ -6655,8 +6652,8 @@ static int searchpair_cmn(typval_T *argvars, pos_T *match_pos)
   bool save_p_ws = p_ws;
   int flags = 0;
   int retval = 0;  // default: FAIL
-  long lnum_stop = 0;
-  long time_limit = 0;
+  linenr_T lnum_stop = 0;
+  int64_t time_limit = 0;
 
   // Get the three pattern arguments: start, middle, end. Will result in an
   // error if not a valid argument.
@@ -6698,7 +6695,7 @@ static int searchpair_cmn(typval_T *argvars, pos_T *match_pos)
     skip = &argvars[4];
 
     if (argvars[5].v_type != VAR_UNKNOWN) {
-      lnum_stop = tv_get_number_chk(&argvars[5], NULL);
+      lnum_stop = (linenr_T)tv_get_number_chk(&argvars[5], NULL);
       if (lnum_stop < 0) {
         semsg(_(e_invarg2), tv_get_string(&argvars[5]));
         goto theend;
@@ -6714,7 +6711,7 @@ static int searchpair_cmn(typval_T *argvars, pos_T *match_pos)
   }
 
   retval = (int)do_searchpair(spat, mpat, epat, dir, skip,
-                              flags, match_pos, (linenr_T)lnum_stop, time_limit);
+                              flags, match_pos, lnum_stop, time_limit);
 
 theend:
   p_ws = save_p_ws;
@@ -6761,7 +6758,7 @@ static void f_searchpairpos(typval_T *argvars, typval_T *rettv, EvalFuncData fpt
 /// @returns  0 or -1 for no match,
 long do_searchpair(const char *spat, const char *mpat, const char *epat, int dir,
                    const typval_T *skip, int flags, pos_T *match_pos, linenr_T lnum_stop,
-                   long time_limit)
+                   int64_t time_limit)
   FUNC_ATTR_NONNULL_ARG(1, 2, 3)
 {
   long retval = 0;
@@ -8698,7 +8695,8 @@ static void f_timer_start(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   if (!callback_from_typval(&callback, &argvars[1])) {
     return;
   }
-  rettv->vval.v_number = (varnumber_T)timer_start(tv_get_number(&argvars[0]), repeat, &callback);
+  rettv->vval.v_number = (varnumber_T)timer_start((const long)tv_get_number(&argvars[0]), repeat,
+                                                  &callback);
 }
 
 /// "timer_stop(timerid)" function
@@ -8771,7 +8769,7 @@ static void f_tr(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
           tolen = utfc_ptr2len(p);
           if (idx-- == 0) {
             cplen = tolen;
-            cpstr = (char *)p;
+            cpstr = p;
             break;
           }
         }

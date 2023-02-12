@@ -65,10 +65,10 @@ static int put_view_curpos(FILE *fd, const win_T *wp, char *spaces)
 
 static int ses_winsizes(FILE *fd, int restore_size, win_T *tab_firstwin)
 {
-  int n = 0;
   win_T *wp;
 
   if (restore_size && (ssop_flags & SSOP_WINSIZE)) {
+    int n = 0;
     for (wp = tab_firstwin; wp != NULL; wp = wp->w_next) {
       if (!ses_do_win(wp)) {
         continue;
@@ -218,14 +218,13 @@ static int ses_do_win(win_T *wp)
 static int ses_arglist(FILE *fd, char *cmd, garray_T *gap, int fullname, unsigned *flagp)
 {
   char *buf = NULL;
-  char *s;
 
   if (fprintf(fd, "%s\n%s\n", cmd, "%argdel") < 0) {
     return FAIL;
   }
   for (int i = 0; i < gap->ga_len; i++) {
     // NULL file names are skipped (only happens when out of memory).
-    s = alist_name(&((aentry_T *)gap->ga_data)[i]);
+    char *s = alist_name(&((aentry_T *)gap->ga_data)[i]);
     if (s != NULL) {
       if (fullname) {
         buf = xmalloc(MAXPATHL);
@@ -551,7 +550,6 @@ static int put_view(FILE *fd, win_T *wp, int add_edit, unsigned *flagp, int curr
 static int makeopens(FILE *fd, char *dirnow)
 {
   int only_save_windows = true;
-  int nr;
   int restore_size = true;
   win_T *wp;
   char *sname;
@@ -753,11 +751,9 @@ static int makeopens(FILE *fd, char *dirnow)
       PUTLINE_FAIL("let &splitright = s:save_splitright");
     }
 
-    //
     // Check if window sizes can be restored (no windows omitted).
     // Remember the window number of the current window after restoring.
-    //
-    nr = 0;
+    int nr = 0;
     for (wp = tab_firstwin; wp != NULL; wp = wp->w_next) {
       if (ses_do_win(wp)) {
         nr++;
@@ -927,11 +923,9 @@ void ex_loadview(exarg_T *eap)
 void ex_mkrc(exarg_T *eap)
 {
   FILE *fd;
-  int failed = false;
   int view_session = false;  // :mkview, :mksession
   int using_vdir = false;  // using 'viewdir'?
   char *viewFile = NULL;
-  unsigned *flagp;
 
   if (eap->cmdidx == CMD_mksession || eap->cmdidx == CMD_mkview) {
     view_session = true;
@@ -970,6 +964,8 @@ void ex_mkrc(exarg_T *eap)
 
   fd = open_exfile(fname, eap->forceit, WRITEBIN);
   if (fd != NULL) {
+    int failed = false;
+    unsigned *flagp;
     if (eap->cmdidx == CMD_mkview) {
       flagp = &vop_flags;
     } else {

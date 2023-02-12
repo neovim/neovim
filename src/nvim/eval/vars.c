@@ -369,12 +369,10 @@ int ex_let_vars(char *arg_start, typval_T *tv, int copy, int semicolon, int var_
 /// @return  NULL for an error.
 const char *skip_var_list(const char *arg, int *var_count, int *semicolon)
 {
-  const char *p;
-  const char *s;
-
   if (*arg == '[') {
+    const char *s;
     // "[var, var]": find the matching ']'.
-    p = arg;
+    const char *p = arg;
     for (;;) {
       p = skipwhite(p + 1);             // skip whites after '[', ';' or ','
       s = skip_var_one((char *)p);
@@ -575,7 +573,6 @@ static char *ex_let_one(char *arg, typval_T *const tv, const bool copy, const bo
   FUNC_ATTR_NONNULL_ARG(1, 2) FUNC_ATTR_WARN_UNUSED_RESULT
 {
   char *arg_end = NULL;
-  int len;
 
   // ":let $VAR = expr": Set environment variable.
   if (*arg == '$') {
@@ -586,7 +583,7 @@ static char *ex_let_one(char *arg, typval_T *const tv, const bool copy, const bo
     // Find the end of the name.
     arg++;
     char *name = arg;
-    len = get_env_len((const char **)&arg);
+    int len = get_env_len((const char **)&arg);
     if (len == 0) {
       semsg(_(e_invarg2), name - 1);
     } else {
@@ -696,7 +693,7 @@ static char *ex_let_one(char *arg, typval_T *const tv, const bool copy, const bo
 
       if (!failed) {
         if (opt_type != gov_string || s != NULL) {
-          char *err = set_option_value(arg, n, s, scope);
+          char *err = set_option_value(arg, (long)n, s, scope);
           arg_end = p;
           if (err != NULL) {
             emsg(_(err));
@@ -722,12 +719,10 @@ static char *ex_let_one(char *arg, typval_T *const tv, const bool copy, const bo
                && vim_strchr(endchars, (uint8_t)(*skipwhite(arg + 1))) == NULL) {
       emsg(_(e_letunexp));
     } else {
-      char *s;
-
       char *ptofree = NULL;
       const char *p = tv_get_string_chk(tv);
       if (p != NULL && op != NULL && *op == '.') {
-        s = get_reg_contents(*arg == '@' ? '"' : *arg, kGRegExprSrc);
+        char *s = get_reg_contents(*arg == '@' ? '"' : *arg, kGRegExprSrc);
         if (s != NULL) {
           ptofree = concat_str(s, p);
           p = (const char *)ptofree;
@@ -861,10 +856,9 @@ static int do_unlet_var(lval_T *lp, char *name_end, exarg_T *eap, int deep FUNC_
 {
   int forceit = eap->forceit;
   int ret = OK;
-  int cc;
 
   if (lp->ll_tv == NULL) {
-    cc = (uint8_t)(*name_end);
+    int cc = (uint8_t)(*name_end);
     *name_end = NUL;
 
     // Environment variable, normal name or expanded name.
@@ -1347,7 +1341,7 @@ void set_var_const(const char *name, const size_t name_len, typval_T *const tv, 
     // Make sure dict is valid
     assert(dict != NULL);
 
-    v = xmalloc(sizeof(dictitem_T) + strlen(varname));
+    v = xmalloc(offsetof(dictitem_T, di_key) + strlen(varname) + 1);
     STRCPY(v->di_key, varname);
     if (hash_add(ht, (char *)v->di_key) == FAIL) {
       xfree(v);

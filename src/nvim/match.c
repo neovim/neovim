@@ -419,7 +419,6 @@ static void next_search_hl(win_T *win, match_T *search_hl, match_T *shl, linenr_
                            colnr_T mincol, matchitem_T *cur)
   FUNC_ATTR_NONNULL_ARG(2)
 {
-  linenr_T l;
   colnr_T matchcol;
   long nmatched = 0;
   const int called_emsg_before = called_emsg;
@@ -435,7 +434,7 @@ static void next_search_hl(win_T *win, match_T *search_hl, match_T *shl, linenr_
     // 1. If the "lnum" is below a previous match, start a new search.
     // 2. If the previous match includes "mincol", use it.
     // 3. Continue after the previous match.
-    l = shl->lnum + shl->rm.endpos[0].lnum - shl->rm.startpos[0].lnum;
+    linenr_T l = shl->lnum + shl->rm.endpos[0].lnum - shl->rm.startpos[0].lnum;
     if (lnum > l) {
       shl->lnum = 0;
     } else if (lnum < l || shl->rm.endpos[0].col > mincol) {

@@ -1677,7 +1677,7 @@ describe('typval.c', function()
           eq(nil, lib.tv_dict_find(nil, 'test', -1))
           eq(nil, lib.tv_dict_find(nil, nil, 0))
         end)
-        itp('works with NULL key', function()
+        itp('works with empty key', function()
           local lua_d = {
             ['']=0,
             t=1,
@@ -1692,7 +1692,6 @@ describe('typval.c', function()
           alloc_log:check({})
           local dis = dict_items(d)
           eq({0, '', dis['']}, {tv_dict_find(d, '', 0)})
-          eq({0, '', dis['']}, {tv_dict_find(d, nil, 0)})
         end)
         itp('works with len properly', function()
           local lua_d = {
@@ -1910,8 +1909,6 @@ describe('typval.c', function()
           }
           local d = dict(lua_d)
           eq(lua_d, dct2tbl(d))
-          eq({{type='fref', fref='tr'}, true},
-             {tv_dict_get_callback(d, nil, 0)})
           eq({{type='fref', fref='tr'}, true},
              {tv_dict_get_callback(d, '', -1)})
           eq({{type='none'}, true},

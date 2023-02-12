@@ -117,7 +117,7 @@ typedef struct ff_visited {
   FileID file_id;
   // The memory for this struct is allocated according to the length of
   // ffv_fname.
-  char ffv_fname[1];                  // actually longer
+  char ffv_fname[];
 } ff_visited_T;
 
 // We might have to manage several visited lists during a search.
@@ -1026,8 +1026,6 @@ static ff_visited_list_hdr_T *ff_get_visited_list(char *filename,
 static bool ff_wc_equal(char *s1, char *s2)
 {
   int i, j;
-  int c1 = NUL;
-  int c2 = NUL;
   int prev1 = NUL;
   int prev2 = NUL;
 
@@ -1040,8 +1038,8 @@ static bool ff_wc_equal(char *s1, char *s2)
   }
 
   for (i = 0, j = 0; s1[i] != NUL && s2[j] != NUL;) {
-    c1 = utf_ptr2char(s1 + i);
-    c2 = utf_ptr2char(s2 + j);
+    int c1 = utf_ptr2char(s1 + i);
+    int c2 = utf_ptr2char(s2 + j);
 
     if ((p_fic ? mb_tolower(c1) != mb_tolower(c2) : c1 != c2)
         && (prev1 != '*' || prev2 != '*')) {
@@ -1092,7 +1090,7 @@ static int ff_check_visited(ff_visited_T **visited_list, char *fname, char *wc_p
   }
 
   // New file/dir.  Add it to the list of visited files/dirs.
-  vp = xmalloc(sizeof(ff_visited_T) + strlen(ff_expand_buffer));
+  vp = xmalloc(offsetof(ff_visited_T, ffv_fname) + strlen(ff_expand_buffer) + 1);
 
   if (!url) {
     vp->file_id_valid = true;

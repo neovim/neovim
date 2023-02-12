@@ -3,7 +3,7 @@ description: "This action caches neovim dependencies"
 runs:
   using: "composite"
   steps:
-    - run: echo "CACHE_KEY=${{ github.job }}-${{ github.base_ref }}" >> $GITHUB_ENV
+    - run: echo "CACHE_KEY=${{ github.job }}" >> $GITHUB_ENV
       shell: bash
 
     - if: ${{ matrix }}
@@ -16,7 +16,7 @@ runs:
     # files to search through.
     - uses: actions/cache@v3
       with:
-        path: ${{ env.CACHE_NVIM_DEPS_DIR }}
+        path: ${{ env.DEPS_BUILD_DIR }}
         key: ${{ env.CACHE_KEY }}-${{ hashFiles('cmake**', 'ci/**',
           '.github/workflows/ci.yml', 'CMakeLists.txt',
           'runtime/CMakeLists.txt', 'src/nvim/**/CMakeLists.txt') }}

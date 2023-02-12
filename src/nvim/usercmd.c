@@ -298,8 +298,8 @@ const char *set_context_in_user_cmdarg(const char *cmd FUNC_ATTR_UNUSED, const c
     return arg;
   }
   if (context == EXPAND_MAPPINGS) {
-    return (const char *)set_context_in_map_cmd(xp, "map", (char *)arg, forceit, false, false,
-                                                CMD_map);
+    return set_context_in_map_cmd(xp, "map", (char *)arg, forceit, false, false,
+                                  CMD_map);
   }
   // Find start of last argument.
   const char *p = arg;
@@ -531,15 +531,13 @@ static void uc_list(char *name, size_t name_len)
       if (a & (EX_RANGE | EX_COUNT)) {
         if (a & EX_COUNT) {
           // -count=N
-          snprintf(IObuff + len, IOSIZE, "%" PRId64 "c",
-                   (int64_t)cmd->uc_def);
+          snprintf(IObuff + len, IOSIZE, "%" PRId64 "c", cmd->uc_def);
           len += (int)strlen(IObuff + len);
         } else if (a & EX_DFLALL) {
           IObuff[len++] = '%';
         } else if (cmd->uc_def >= 0) {
           // -range=N
-          snprintf(IObuff + len, IOSIZE, "%" PRId64 "",
-                   (int64_t)cmd->uc_def);
+          snprintf(IObuff + len, IOSIZE, "%" PRId64 "", cmd->uc_def);
           len += (int)strlen(IObuff + len);
         } else {
           IObuff[len++] = '.';
@@ -862,9 +860,9 @@ char *uc_validate_name(char *name)
 /// This function takes ownership of compl_arg, compl_luaref, and luaref.
 ///
 /// @return  OK if the command is created, FAIL otherwise.
-int uc_add_command(char *name, size_t name_len, const char *rep, uint32_t argt, long def, int flags,
-                   int compl, char *compl_arg, LuaRef compl_luaref, LuaRef preview_luaref,
-                   cmd_addr_T addr_type, LuaRef luaref, bool force)
+int uc_add_command(char *name, size_t name_len, const char *rep, uint32_t argt, int64_t def,
+                   int flags, int compl, char *compl_arg, LuaRef compl_luaref,
+                   LuaRef preview_luaref, cmd_addr_T addr_type, LuaRef luaref, bool force)
   FUNC_ATTR_NONNULL_ARG(1, 3)
 {
   ucmd_T *cmd = NULL;
@@ -1540,13 +1538,13 @@ static size_t uc_check_code(char *code, size_t len, char *buf, ucmd_T *cmd, exar
   case ct_RANGE:
   case ct_COUNT: {
     char num_buf[20];
-    long num = (type == ct_LINE1) ? eap->line1 :
-               (type == ct_LINE2) ? eap->line2 :
-               (type == ct_RANGE) ? eap->addr_count :
-               (eap->addr_count > 0) ? eap->line2 : cmd->uc_def;
+    int64_t num = (type == ct_LINE1) ? eap->line1 :
+                  (type == ct_LINE2) ? eap->line2 :
+                  (type == ct_RANGE) ? eap->addr_count :
+                  (eap->addr_count > 0) ? eap->line2 : cmd->uc_def;
     size_t num_len;
 
-    snprintf(num_buf, sizeof(num_buf), "%" PRId64, (int64_t)num);
+    snprintf(num_buf, sizeof(num_buf), "%" PRId64, num);
     num_len = strlen(num_buf);
     result = num_len;
 
@@ -1751,8 +1749,8 @@ Dictionary commands_array(buf_T *buf)
     Dictionary d = ARRAY_DICT_INIT;
     ucmd_T *cmd = USER_CMD_GA(gap, i);
 
-    PUT(d, "name", STRING_OBJ(cstr_to_string((char *)cmd->uc_name)));
-    PUT(d, "definition", STRING_OBJ(cstr_to_string((char *)cmd->uc_rep)));
+    PUT(d, "name", STRING_OBJ(cstr_to_string(cmd->uc_name)));
+    PUT(d, "definition", STRING_OBJ(cstr_to_string(cmd->uc_rep)));
     PUT(d, "script_id", INTEGER_OBJ(cmd->uc_script_ctx.sc_sid));
     PUT(d, "bang", BOOLEAN_OBJ(!!(cmd->uc_argt & EX_BANG)));
     PUT(d, "bar", BOOLEAN_OBJ(!!(cmd->uc_argt & EX_TRLBAR)));
@@ -1778,12 +1776,12 @@ Dictionary commands_array(buf_T *buf)
     PUT(d, "complete", (cmd_compl == NULL
                         ? NIL : STRING_OBJ(cstr_to_string(cmd_compl))));
     PUT(d, "complete_arg", cmd->uc_compl_arg == NULL
-        ? NIL : STRING_OBJ(cstr_to_string((char *)cmd->uc_compl_arg)));
+        ? NIL : STRING_OBJ(cstr_to_string(cmd->uc_compl_arg)));
 
     Object obj = NIL;
     if (cmd->uc_argt & EX_COUNT) {
       if (cmd->uc_def >= 0) {
-        snprintf(str, sizeof(str), "%" PRId64, (int64_t)cmd->uc_def);
+        snprintf(str, sizeof(str), "%" PRId64, cmd->uc_def);
         obj = STRING_OBJ(cstr_to_string(str));    // -count=N
       } else {
         obj = STRING_OBJ(cstr_to_string("0"));    // -count
@@ -1796,7 +1794,7 @@ Dictionary commands_array(buf_T *buf)
       if (cmd->uc_argt & EX_DFLALL) {
         obj = STRING_OBJ(cstr_to_string("%"));    // -range=%
       } else if (cmd->uc_def >= 0) {
-        snprintf(str, sizeof(str), "%" PRId64, (int64_t)cmd->uc_def);
+        snprintf(str, sizeof(str), "%" PRId64, cmd->uc_def);
         obj = STRING_OBJ(cstr_to_string(str));    // -range=N
       } else {
         obj = STRING_OBJ(cstr_to_string("."));    // -range
@@ -1814,7 +1812,7 @@ Dictionary commands_array(buf_T *buf)
     }
     PUT(d, "addr", obj);
 
-    PUT(rv, (char *)cmd->uc_name, DICTIONARY_OBJ(d));
+    PUT(rv, cmd->uc_name, DICTIONARY_OBJ(d));
   }
   return rv;
 }

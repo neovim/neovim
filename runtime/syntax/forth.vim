@@ -1,8 +1,8 @@
 " Vim syntax file
 " Language:    FORTH
 " Current Maintainer:  Johan Kotlinski <kotlinski@gmail.com>
-" Previous Maintainer:  Christian V. J. Brüssow <cvjb@cvjb.de>
-" Last Change: 2018-03-29
+" Previous Maintainer:  Christian V. J. Br�ssow <cvjb@cvjb.de>
+" Last Change: 2023-01-12
 " Filenames:   *.fs,*.ft
 " URL:	       https://github.com/jkotlinski/forth.vim
 
@@ -23,7 +23,6 @@ syn case ignore
 
 " Some special, non-FORTH keywords
 syn keyword forthTodo contained TODO FIXME XXX
-syn match forthTodo contained 'Copyright\(\s([Cc])\)\=\(\s[0-9]\{2,4}\)\='
 
 " Characters allowed in keywords
 " I don't know if 128-255 are allowed in ANS-FORTH
@@ -98,13 +97,16 @@ syn keyword forthEndOfColonDef ; ;M ;m
 syn keyword forthEndOfClassDef ;class
 syn keyword forthEndOfObjectDef ;object
 syn keyword forthDefine CONSTANT 2CONSTANT FCONSTANT VARIABLE 2VARIABLE
-syn keyword forthDefine FVARIABLE CREATE USER VALUE TO DEFER IS DOES> IMMEDIATE
+syn keyword forthDefine FVARIABLE CREATE USER VALUE TO DEFER IS <BUILDS DOES> IMMEDIATE
 syn keyword forthDefine COMPILE-ONLY COMPILE RESTRICT INTERPRET POSTPONE EXECUTE
 syn keyword forthDefine LITERAL CREATE-INTERPRET/COMPILE INTERPRETATION>
 syn keyword forthDefine <INTERPRETATION COMPILATION> <COMPILATION ] LASTXT
 syn keyword forthDefine COMP' POSTPONE, FIND-NAME NAME>INT NAME?INT NAME>COMP
 syn keyword forthDefine NAME>STRING STATE C; CVARIABLE BUFFER: MARKER
 syn keyword forthDefine , 2, F, C, COMPILE,
+syn match forthDefine "\[DEFINED]"
+syn match forthDefine "\[UNDEFINED]"
+syn match forthDefine "\[IF]"
 syn match forthDefine "\[IFDEF]"
 syn match forthDefine "\[IFUNDEF]"
 syn match forthDefine "\[THEN]"
@@ -180,6 +182,7 @@ syn keyword forthBlocks BLOCK-INCLUDED BLK
 syn keyword forthMath DECIMAL HEX BASE
 syn match forthInteger '\<-\=[0-9]\+.\=\>'
 syn match forthInteger '\<&-\=[0-9]\+.\=\>'
+syn match forthInteger '\<#-\=[0-9]\+.\=\>'
 " recognize hex and binary numbers, the '$' and '%' notation is for gforth
 syn match forthInteger '\<\$\x*\x\+\>' " *1* --- don't mess
 syn match forthInteger '\<\x*\d\x*\>'  " *2* --- this order!
@@ -192,18 +195,18 @@ syn match forthFloat '\<-\=\d*[.]\=\d\+[DdEe][-+]\d\+\>'
 syn region forthComment start='0 \[if\]' end='\[endif\]' end='\[then\]' contains=forthTodo
 
 " Strings
-syn region forthString start=+\.*\"+ end=+"+ end=+$+
+syn region forthString start=+\.*\"+ end=+"+ end=+$+ contains=@Spell
 " XXX
-syn region forthString start=+s\"+ end=+"+ end=+$+
-syn region forthString start=+s\\\"+ end=+"+ end=+$+
-syn region forthString start=+c\"+ end=+"+ end=+$+
+syn region forthString start=+s\"+ end=+"+ end=+$+ contains=@Spell
+syn region forthString start=+s\\\"+ end=+"+ end=+$+ contains=@Spell
+syn region forthString start=+c\"+ end=+"+ end=+$+ contains=@Spell
 
 " Comments
-syn match forthComment '\\\s.*$' contains=forthTodo,forthSpaceError
-syn region forthComment start='\\S\s' end='.*' contains=forthTodo,forthSpaceError
-syn match forthComment '\.(\s[^)]*)' contains=forthTodo,forthSpaceError
-syn region forthComment start='\(^\|\s\)\zs(\s' skip='\\)' end=')' contains=forthTodo,forthSpaceError
-syn region forthComment start='/\*' end='\*/' contains=forthTodo,forthSpaceError
+syn match forthComment '\\\%(\s.*\)\=$' contains=@Spell,forthTodo,forthSpaceError
+syn region forthComment start='\\S\s' end='.*' contains=@Spell,forthTodo,forthSpaceError
+syn match forthComment '\.(\s[^)]*)' contains=@Spell,forthTodo,forthSpaceError
+syn region forthComment start='\(^\|\s\)\zs(\s' skip='\\)' end=')' contains=@Spell,forthTodo,forthSpaceError
+syn region forthComment start='/\*' end='\*/' contains=@Spell,forthTodo,forthSpaceError
 
 " Include files
 syn match forthInclude '^INCLUDE\s\+\k\+'
@@ -260,3 +263,4 @@ let b:current_syntax = "forth"
 let &cpo = s:cpo_save
 unlet s:cpo_save
 " vim:ts=8:sw=4:nocindent:smartindent:
+

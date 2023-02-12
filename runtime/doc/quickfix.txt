@@ -353,8 +353,6 @@ processing a quickfix or location list command, it will be aborted.
 			If numbers [from] and/or [to] are given, the respective
 			range of errors is listed.  A negative number counts
 			from the last error backwards, -1 being the last error.
-			The 'switchbuf' settings are respected when jumping
-			to a buffer.
 			The |:filter| command can be used to display only the
 			quickfix entries matching a supplied pattern. The
 			pattern is matched against the filename, module name,

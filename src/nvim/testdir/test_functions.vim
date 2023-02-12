@@ -1511,7 +1511,7 @@ endfunc
 
 func Test_setbufvar_options()
   " This tests that aucmd_prepbuf() and aucmd_restbuf() properly restore the
-  " window layout.
+  " window layout and cursor position.
   call assert_equal(1, winnr('$'))
   split dummy_preview
   resize 2
@@ -1525,11 +1525,20 @@ func Test_setbufvar_options()
   execute 'belowright vertical split #' . dummy_buf
   call assert_equal(wh, winheight(0))
   let dum1_id = win_getid()
+  call setline(1, 'foo')
+  normal! V$
+  call assert_equal(4, col('.'))
+  call setbufvar('dummy_preview', '&buftype', 'nofile')
+  call assert_equal(4, col('.'))
 
   wincmd h
   let wh = winheight(0)
+  call setline(1, 'foo')
+  normal! V$
+  call assert_equal(4, col('.'))
   let dummy_buf = bufnr('dummy_buf2', v:true)
   eval 'nofile'->setbufvar(dummy_buf, '&buftype')
+  call assert_equal(4, col('.'))
   execute 'belowright vertical split #' . dummy_buf
   call assert_equal(wh, winheight(0))
 

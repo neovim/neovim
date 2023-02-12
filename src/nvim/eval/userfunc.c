@@ -729,7 +729,6 @@ static void cleanup_function_call(funccall_T *fc)
 /// @param[in]   force   When true, we are exiting.
 static void funccal_unref(funccall_T *fc, ufunc_T *fp, bool force)
 {
-  funccall_T **pfc;
   int i;
 
   if (fc == NULL) {
@@ -738,7 +737,7 @@ static void funccal_unref(funccall_T *fc, ufunc_T *fp, bool force)
 
   fc->fc_refcount--;
   if (force ? fc->fc_refcount <= 0 : !fc_referenced(fc)) {
-    for (pfc = &previous_funccal; *pfc != NULL; pfc = &(*pfc)->caller) {
+    for (funccall_T **pfc = &previous_funccal; *pfc != NULL; pfc = &(*pfc)->caller) {
       if (fc == *pfc) {
         *pfc = fc->caller;
         free_funccal_contents(fc);
@@ -880,7 +879,7 @@ void call_user_func(ufunc_T *fp, int argcount, typval_T *argvars, typval_T *rett
   fc->rettv = rettv;
   fc->level = ex_nesting_level;
   // Check if this function has a breakpoint.
-  fc->breakpoint = dbg_find_breakpoint(false, (char *)fp->uf_name, (linenr_T)0);
+  fc->breakpoint = dbg_find_breakpoint(false, fp->uf_name, (linenr_T)0);
   fc->dbg_tick = debug_tick;
 
   // Set up fields for closure.
@@ -1075,7 +1074,7 @@ void call_user_func(ufunc_T *fp, int argcount, typval_T *argvars, typval_T *rett
 
   bool func_not_yet_profiling_but_should =
     do_profiling_yes
-    && !fp->uf_profiling && has_profiling(false, (char *)fp->uf_name, NULL);
+    && !fp->uf_profiling && has_profiling(false, fp->uf_name, NULL);
 
   if (func_not_yet_profiling_but_should) {
     started_profiling = true;
@@ -1669,7 +1668,7 @@ static void list_func_head(ufunc_T *fp, int indent, bool force)
   if (fp->uf_name_exp != NULL) {
     msg_puts((const char *)fp->uf_name_exp);
   } else {
-    msg_puts((const char *)fp->uf_name);
+    msg_puts(fp->uf_name);
   }
   msg_putchar('(');
   int j;
@@ -1999,10 +1998,10 @@ static void list_functions(regmatch_T *regmatch)
       todo--;
       if ((fp->uf_flags & FC_DEAD) == 0
           && (regmatch == NULL
-              ? (!message_filtered((char *)fp->uf_name)
+              ? (!message_filtered(fp->uf_name)
                  && !func_name_refcount(fp->uf_name))
               : (!isdigit((uint8_t)(*fp->uf_name))
-                 && vim_regexec(regmatch, (char *)fp->uf_name, 0)))) {
+                 && vim_regexec(regmatch, fp->uf_name, 0)))) {
         list_func_head(fp, false, false);
         if (changed != func_hashtab.ht_changed) {
           emsg(_("E454: function list was modified"));
@@ -2150,8 +2149,7 @@ void ex_function(exarg_T *eap)
             }
           }
           msg_prt_line(FUNCLINE(fp, j), false);
-          ui_flush();                  // show a line at a time
-          os_breakcheck();
+          line_breakcheck();  // show multiple lines at a time!
         }
         if (!got_int) {
           msg_putchar('\n');
@@ -2195,7 +2193,7 @@ void ex_function(exarg_T *eap)
         j++;
       }
       if (arg[j] != NUL) {
-        emsg_funcname((char *)e_invarg2, arg);
+        emsg_funcname(e_invarg2, arg);
       }
     }
     // Disallow using the g: dict.
@@ -2749,7 +2747,7 @@ char *get_user_func_name(expand_T *xp, int idx)
     }
 
     if (strlen(fp->uf_name) + 4 >= IOSIZE) {
-      return (char *)fp->uf_name;  // Prevent overflow.
+      return fp->uf_name;  // Prevent overflow.
     }
 
     cat_func_name(IObuff, fp);
@@ -3229,7 +3227,7 @@ char *get_func_line(int c, void *cookie, int indent, bool do_concat)
 
   // If breakpoints have been added/deleted need to check for it.
   if (fcp->dbg_tick != debug_tick) {
-    fcp->breakpoint = dbg_find_breakpoint(false, (char *)fp->uf_name, SOURCING_LNUM);
+    fcp->breakpoint = dbg_find_breakpoint(false, fp->uf_name, SOURCING_LNUM);
     fcp->dbg_tick = debug_tick;
   }
   if (do_profiling == PROF_YES) {
@@ -3259,9 +3257,9 @@ char *get_func_line(int c, void *cookie, int indent, bool do_concat)
 
   // Did we encounter a breakpoint?
   if (fcp->breakpoint != 0 && fcp->breakpoint <= SOURCING_LNUM) {
-    dbg_breakpoint((char *)fp->uf_name, SOURCING_LNUM);
+    dbg_breakpoint(fp->uf_name, SOURCING_LNUM);
     // Find next breakpoint.
-    fcp->breakpoint = dbg_find_breakpoint(false, (char *)fp->uf_name, SOURCING_LNUM);
+    fcp->breakpoint = dbg_find_breakpoint(false, fp->uf_name, SOURCING_LNUM);
     fcp->dbg_tick = debug_tick;
   }
 
@@ -3290,7 +3288,6 @@ int func_has_abort(void *cookie)
 /// Changes "rettv" in-place.
 void make_partial(dict_T *const selfdict, typval_T *const rettv)
 {
-  char *fname;
   char *tofree = NULL;
   ufunc_T *fp;
   char fname_buf[FLEN_FIXED + 1];
@@ -3299,7 +3296,7 @@ void make_partial(dict_T *const selfdict, typval_T *const rettv)
   if (rettv->v_type == VAR_PARTIAL && rettv->vval.v_partial->pt_func != NULL) {
     fp = rettv->vval.v_partial->pt_func;
   } else {
-    fname = rettv->v_type == VAR_FUNC || rettv->v_type == VAR_STRING
+    char *fname = rettv->v_type == VAR_FUNC || rettv->v_type == VAR_STRING
                                       ? rettv->vval.v_string
                                       : rettv->vval.v_partial->pt_name;
     // Translate "s:func" to the stored function name.
@@ -3320,7 +3317,6 @@ void make_partial(dict_T *const selfdict, typval_T *const rettv)
       pt->pt_name = rettv->vval.v_string;
     } else {
       partial_T *ret_pt = rettv->vval.v_partial;
-      int i;
 
       // Partial: copy the function name, use selfdict and copy
       // args. Can't take over name or args, the partial might
@@ -3336,7 +3332,7 @@ void make_partial(dict_T *const selfdict, typval_T *const rettv)
         size_t arg_size = sizeof(typval_T) * (size_t)ret_pt->pt_argc;
         pt->pt_argv = (typval_T *)xmalloc(arg_size);
         pt->pt_argc = ret_pt->pt_argc;
-        for (i = 0; i < pt->pt_argc; i++) {
+        for (int i = 0; i < pt->pt_argc; i++) {
           tv_copy(&ret_pt->pt_argv[i], &pt->pt_argv[i]);
         }
       }
@@ -3642,14 +3638,13 @@ bool set_ref_in_func(char *name, ufunc_T *fp_in, int copyID)
   int error = FCERR_NONE;
   char fname_buf[FLEN_FIXED + 1];
   char *tofree = NULL;
-  char *fname;
   bool abort = false;
   if (name == NULL && fp_in == NULL) {
     return false;
   }
 
   if (fp_in == NULL) {
-    fname = fname_trans_sid(name, fname_buf, &tofree, &error);
+    char *fname = fname_trans_sid(name, fname_buf, &tofree, &error);
     fp = find_func(fname);
   }
   if (fp != NULL) {

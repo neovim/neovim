@@ -838,6 +838,7 @@ struct file_buffer {
   Map(uint32_t, uint32_t) b_extmark_ns[1];         // extmark namespaces
   size_t b_virt_line_blocks;    // number of virt_line blocks
   size_t b_signs;               // number of sign extmarks
+  size_t b_signs_with_text;     // number of sign extmarks with text
 
   // array of channel_id:s which have asked to receive updates for this
   // buffer.
@@ -1392,6 +1393,7 @@ struct window_S {
   int w_prev_fraction_row;
 
   linenr_T w_nrwidth_line_count;        // line count when ml_nrwidth_width was computed.
+  linenr_T w_statuscol_line_count;      // line count when 'statuscolumn' width was computed.
   int w_nrwidth_width;                  // nr of chars to print line count.
 
   qf_info_T *w_llist;                 // Location list for this window

@@ -2,8 +2,8 @@
 " Language:		shell (sh) Korn shell (ksh) bash (sh)
 " Maintainer:		Charles E. Campbell <NcampObell@SdrPchip.AorgM-NOSPAM>
 " Previous Maintainer:	Lennart Schultz <Lennart.Schultz@ecmwf.int>
-" Last Change:		Nov 25, 2022
-" Version:		204
+" Last Change:		Dec 20, 2022
+" Version:		205
 " URL:		http://www.drchip.org/astronaut/vim/index.html#SYNTAX_SH
 " For options and settings, please use:      :help ft-sh-syntax
 " This file includes many ideas from Eric Brunet (eric.brunet@ens.fr) and heredoc fixes from Felipe Contreras
@@ -190,8 +190,10 @@ syn region shEmbeddedEcho contained matchgroup=shStatement start="\<print\>" ski
 " =====
 if exists("b:is_kornshell") || exists("b:is_bash") || exists("b:is_posix")
  syn match shStatement "\<alias\>"
- syn region shAlias matchgroup=shStatement start="\<alias\>\s\+\(\h[-._[:alnum:]]\+\)\@="  skip="\\$" end="\>\|`"
- syn region shAlias matchgroup=shStatement start="\<alias\>\s\+\(\h[-._[:alnum:]]\+=\)\@=" skip="\\$" end="="
+ syn region shAlias matchgroup=shStatement start="\<alias\>\s\+\(\h[-._[:alnum:]]*\)\@="  skip="\\$" end="\>\|`"
+ syn region shAlias matchgroup=shStatement start="\<alias\>\s\+\(\h[-._[:alnum:]]*=\)\@=" skip="\\$" end="="
+" syn region shAlias matchgroup=shStatement start="\<alias\>\s\+\(\h[-._[:alnum:]]\+\)\@="  skip="\\$" end="\>\|`"
+" syn region shAlias matchgroup=shStatement start="\<alias\>\s\+\(\h[-._[:alnum:]]\+=\)\@=" skip="\\$" end="="
 
  " Touch: {{{1
  " =====
@@ -333,7 +335,7 @@ syn match   shEscape	contained	'\%(^\)\@!\%(\\\\\)*\\.'	nextgroup=shComment
 " systems too, however, so the following syntax will flag $(..) as
 " an Error under /bin/sh.  By consensus of vimdev'ers!
 if exists("b:is_kornshell") || exists("b:is_bash") || exists("b:is_posix")
- syn region shCommandSub matchgroup=shCmdSubRegion start="\$(\ze[^(]"  skip='\\\\\|\\.' end=")"  contains=@shCommandSubList
+ syn region shCommandSub matchgroup=shCmdSubRegion start="\$(\ze[^(]\|$"  skip='\\\\\|\\.' end=")"  contains=@shCommandSubList
  syn region shArithmetic matchgroup=shArithRegion  start="\$((" skip='\\\\\|\\.' end="))" contains=@shArithList
  syn region shArithmetic matchgroup=shArithRegion  start="\$\[" skip='\\\\\|\\.' end="\]" contains=@shArithList
  syn match  shSkipInitWS contained	"^\s\+"
@@ -483,7 +485,9 @@ endif
 
 " Parameter Dereferencing: {{{1
 " ========================
-if !exists("g:sh_no_error") && !(exists("b:is_bash") || exists("b:is_kornshell") || exists("b:is_posix"))
+" Note: sh04 failure with following line
+"if !exists("g:sh_no_error") && !(exists("b:is_bash") || exists("b:is_kornshell") || exists("b:is_posix"))
+if !exists("g:sh_no_error")
  syn match  shDerefWordError	"[^}$[~]"	contained
 endif
 syn match  shDerefSimple	"\$\%(\h\w*\|\d\)"	nextgroup=@shNoZSList

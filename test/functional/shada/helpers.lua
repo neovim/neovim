@@ -33,6 +33,7 @@ local function reset(o)
 end
 
 local clear = function()
+  helpers.expect_exit(helpers.command, 'qall!')
   os.remove(tmpname)
 end
 

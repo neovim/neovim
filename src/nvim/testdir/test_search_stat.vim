@@ -270,6 +270,29 @@ func Test_searchcount_fails()
   call assert_fails('echo searchcount({"pos" : [1, 2, []]})', 'E745:')
 endfunc
 
+func Test_search_stat_narrow_screen()
+  " This used to crash Vim
+  let save_columns = &columns
+  try
+    let after =<< trim [CODE]
+      set laststatus=2
+      set columns=16
+      set shortmess-=S showcmd
+      call setline(1, 'abc')
+      call feedkeys("/abc\<CR>:quit!\<CR>")
+      autocmd VimLeavePre * call writefile(["done"], "Xdone")
+    [CODE]
+
+    if !RunVim([], after, '--clean')
+      return
+    endif
+    call assert_equal("done", readfile("Xdone")[0])
+    call delete('Xdone')
+  finally
+    let &columns = save_columns
+  endtry
+endfunc
+
 func Test_searchcount_in_statusline()
   CheckScreendump
 

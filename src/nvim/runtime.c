@@ -276,10 +276,8 @@ static void source_callback(char *fname, void *cookie)
 /// return FAIL when no file could be sourced, OK otherwise.
 int do_in_path(char *path, char *name, int flags, DoInRuntimepathCB callback, void *cookie)
 {
-  char *tail;
   int num_files;
   char **files;
-  int i;
   bool did_one = false;
 
   // Make a copy of 'runtimepath'.  Invoking the callback may change the
@@ -287,6 +285,7 @@ int do_in_path(char *path, char *name, int flags, DoInRuntimepathCB callback, vo
   char *rtp_copy = xstrdup(path);
   char *buf = xmallocz(MAXPATHL);
   {
+    char *tail;
     if (p_verbose > 10 && name != NULL) {
       verbose_enter();
       smsg(_("Searching for \"%s\" in \"%s\""), name, path);
@@ -335,7 +334,7 @@ int do_in_path(char *path, char *name, int flags, DoInRuntimepathCB callback, vo
 
           // Expand wildcards, invoke the callback for each match.
           if (gen_expand_wildcards(1, &buf, &num_files, &files, ew_flags) == OK) {
-            for (i = 0; i < num_files; i++) {
+            for (int i = 0; i < num_files; i++) {
               (*callback)(files[i], cookie);
               did_one = true;
               if (!(flags & DIP_ALL)) {
@@ -416,7 +415,6 @@ int do_in_cached_path(char *name, int flags, DoInRuntimepathCB callback, void *c
   char *tail;
   int num_files;
   char **files;
-  int i;
   bool did_one = false;
 
   char buf[MAXPATHL];
@@ -469,7 +467,7 @@ int do_in_cached_path(char *name, int flags, DoInRuntimepathCB callback, void *c
         // Expand wildcards, invoke the callback for each match.
         char *(pat[]) = { buf };
         if (gen_expand_wildcards(1, pat, &num_files, &files, ew_flags) == OK) {
-          for (i = 0; i < num_files; i++) {
+          for (int i = 0; i < num_files; i++) {
             (*callback)(files[i], cookie);
             did_one = true;
             if (!(flags & DIP_ALL)) {
@@ -2329,7 +2327,6 @@ char *getsourceline(int c, void *cookie, int indent, bool do_concat)
 {
   struct source_cookie *sp = (struct source_cookie *)cookie;
   char *line;
-  char *p;
 
   // If breakpoints have been added/deleted need to check for it.
   if (sp->dbg_tick < debug_tick) {
@@ -2359,6 +2356,7 @@ char *getsourceline(int c, void *cookie, int indent, bool do_concat)
   // Only concatenate lines starting with a \ when 'cpoptions' doesn't
   // contain the 'C' flag.
   if (line != NULL && do_concat && (vim_strchr(p_cpo, CPO_CONCAT) == NULL)) {
+    char *p;
     // compensate for the one line read-ahead
     sp->sourcing_lnum--;
 

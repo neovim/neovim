@@ -12,7 +12,7 @@ typedef struct ucmd {
   char *uc_name;                // The command name
   uint32_t uc_argt;             // The argument type
   char *uc_rep;                 // The command's replacement string
-  long uc_def;                  // The default value for a range/count
+  int64_t uc_def;               // The default value for a range/count
   int uc_compl;                 // completion type
   cmd_addr_T uc_addr_type;      // The command's address type
   sctx_T uc_script_ctx;         // SCTX where the command was defined

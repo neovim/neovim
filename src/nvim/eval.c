@@ -1949,7 +1949,6 @@ void set_context_for_expression(expand_T *xp, char *arg, cmdidx_T cmdidx)
   FUNC_ATTR_NONNULL_ALL
 {
   bool got_eq = false;
-  int c;
   char *p;
 
   if (cmdidx == CMD_let || cmdidx == CMD_const) {
@@ -1970,7 +1969,7 @@ void set_context_for_expression(expand_T *xp, char *arg, cmdidx_T cmdidx)
                                         : EXPAND_EXPRESSION;
   }
   while ((xp->xp_pattern = strpbrk(arg, "\"'+-*/%.=!?~|&$([<>,#")) != NULL) {
-    c = (uint8_t)(*xp->xp_pattern);
+    int c = (uint8_t)(*xp->xp_pattern);
     if (c == '&') {
       c = (uint8_t)xp->xp_pattern[1];
       if (c == '&') {
@@ -2310,7 +2309,6 @@ int eval0(char *arg, typval_T *rettv, char **nextcmd, int evaluate)
 /// @return  OK or FAIL.
 int eval1(char **arg, typval_T *rettv, int evaluate)
 {
-  bool result;
   typval_T var2;
 
   // Get the first variable.
@@ -2319,7 +2317,7 @@ int eval1(char **arg, typval_T *rettv, int evaluate)
   }
 
   if ((*arg)[0] == '?') {
-    result = false;
+    bool result = false;
     if (evaluate) {
       bool error = false;
 
@@ -2499,7 +2497,6 @@ static int eval4(char **arg, typval_T *rettv, int evaluate)
   char *p;
   exprtype_T type = EXPR_UNKNOWN;
   int len = 2;
-  bool ic;
 
   // Get the first variable.
   if (eval5(arg, rettv, evaluate) == FAIL) {
@@ -2552,6 +2549,7 @@ static int eval4(char **arg, typval_T *rettv, int evaluate)
 
   // If there is a comparative operator, use it.
   if (type != EXPR_UNKNOWN) {
+    bool ic;
     // extra question mark appended: ignore case
     if (p[len] == '?') {
       ic = true;
@@ -2594,7 +2592,6 @@ static int eval5(char **arg, typval_T *rettv, int evaluate)
 {
   typval_T var2;
   typval_T var3;
-  int op;
   varnumber_T n1, n2;
   float_T f1 = 0, f2 = 0;
   char *p;
@@ -2606,7 +2603,7 @@ static int eval5(char **arg, typval_T *rettv, int evaluate)
 
   // Repeat computing, until no '+', '-' or '.' is following.
   for (;;) {
-    op = (char_u)(**arg);
+    int op = (char_u)(**arg);
     if (op != '+' && op != '-' && op != '.') {
       break;
     }
@@ -3276,7 +3273,6 @@ static int eval_index(char **arg, typval_T *rettv, int evaluate, int verbose)
 {
   bool empty1 = false;
   bool empty2 = false;
-  long n1, n2 = 0;
   ptrdiff_t len = -1;
   int range = false;
   char *key = NULL;
@@ -3373,16 +3369,17 @@ static int eval_index(char **arg, typval_T *rettv, int evaluate, int verbose)
   }
 
   if (evaluate) {
-    n1 = 0;
+    int n2 = 0;
+    int n1 = 0;
     if (!empty1 && rettv->v_type != VAR_DICT && !tv_is_luafunc(rettv)) {
-      n1 = tv_get_number(&var1);
+      n1 = (int)tv_get_number(&var1);
       tv_clear(&var1);
     }
     if (range) {
       if (empty2) {
         n2 = -1;
       } else {
-        n2 = tv_get_number(&var2);
+        n2 = (int)tv_get_number(&var2);
         tv_clear(&var2);
       }
     }
@@ -3397,20 +3394,20 @@ static int eval_index(char **arg, typval_T *rettv, int evaluate, int verbose)
         // The resulting variable is a substring.  If the indexes
         // are out of range the result is empty.
         if (n1 < 0) {
-          n1 = len + n1;
+          n1 = (int)len + n1;
           if (n1 < 0) {
             n1 = 0;
           }
         }
         if (n2 < 0) {
-          n2 = len + n2;
+          n2 = (int)len + n2;
         } else if (n2 >= len) {
-          n2 = len;
+          n2 = (int)len;
         }
         if (n1 >= len || n2 < 0 || n1 > n2) {
           v = NULL;
         } else {
-          v = xmemdupz(s + n1, (size_t)(n2 - n1 + 1));
+          v = xmemdupz(s + n1, (size_t)n2 - (size_t)n1 + 1);
         }
       } else {
         // The resulting variable is a string of a single
@@ -3433,15 +3430,15 @@ static int eval_index(char **arg, typval_T *rettv, int evaluate, int verbose)
         // The resulting variable is a sub-blob.  If the indexes
         // are out of range the result is empty.
         if (n1 < 0) {
-          n1 = len + n1;
+          n1 = (int)len + n1;
           if (n1 < 0) {
             n1 = 0;
           }
         }
         if (n2 < 0) {
-          n2 = len + n2;
+          n2 = (int)len + n2;
         } else if (n2 >= len) {
-          n2 = len - 1;
+          n2 = (int)len - 1;
         }
         if (n1 >= len || n2 < 0 || n1 > n2) {
           tv_clear(rettv);
@@ -3449,8 +3446,8 @@ static int eval_index(char **arg, typval_T *rettv, int evaluate, int verbose)
           rettv->vval.v_blob = NULL;
         } else {
           blob_T *const blob = tv_blob_alloc();
-          ga_grow(&blob->bv_ga, (int)(n2 - n1 + 1));
-          blob->bv_ga.ga_len = (int)(n2 - n1 + 1);
+          ga_grow(&blob->bv_ga, n2 - n1 + 1);
+          blob->bv_ga.ga_len = n2 - n1 + 1;
           for (long i = n1; i <= n2; i++) {
             tv_blob_set(blob, (int)(i - n1), tv_blob_get(rettv->vval.v_blob, (int)i));
           }
@@ -3461,10 +3458,10 @@ static int eval_index(char **arg, typval_T *rettv, int evaluate, int verbose)
         // The resulting variable is a byte value.
         // If the index is too big or negative that is an error.
         if (n1 < 0) {
-          n1 = len + n1;
+          n1 = (int)len + n1;
         }
         if (n1 < len && n1 >= 0) {
-          const int v = (int)tv_blob_get(rettv->vval.v_blob, (int)n1);
+          const int v = (int)tv_blob_get(rettv->vval.v_blob, n1);
           tv_clear(rettv);
           rettv->v_type = VAR_NUMBER;
           rettv->vval.v_number = v;
@@ -3476,7 +3473,7 @@ static int eval_index(char **arg, typval_T *rettv, int evaluate, int verbose)
     case VAR_LIST:
       len = tv_list_len(rettv->vval.v_list);
       if (n1 < 0) {
-        n1 = len + n1;
+        n1 = (int)len + n1;
       }
       if (!empty1 && (n1 < 0 || n1 >= len)) {
         // For a range we allow invalid values and return an empty
@@ -3487,22 +3484,22 @@ static int eval_index(char **arg, typval_T *rettv, int evaluate, int verbose)
           }
           return FAIL;
         }
-        n1 = len;
+        n1 = (int)len;
       }
       if (range) {
         list_T *l;
         listitem_T *item;
 
         if (n2 < 0) {
-          n2 = len + n2;
+          n2 = (int)len + n2;
         } else if (n2 >= len) {
-          n2 = len - 1;
+          n2 = (int)len - 1;
         }
         if (!empty2 && (n2 < 0 || n2 + 1 < n1)) {
           n2 = -1;
         }
         l = tv_list_alloc(n2 - n1 + 1);
-        item = tv_list_find(rettv->vval.v_list, (int)n1);
+        item = tv_list_find(rettv->vval.v_list, n1);
         while (n1++ <= n2) {
           tv_list_append_tv(l, TV_LIST_ITEM_TV(item));
           item = TV_LIST_ITEM_NEXT(rettv->vval.v_list, item);
@@ -3915,7 +3912,7 @@ char *partial_name(partial_T *pt)
   if (pt->pt_name != NULL) {
     return pt->pt_name;
   }
-  return (char *)pt->pt_func->uf_name;
+  return pt->pt_func->uf_name;
 }
 
 static void partial_free(partial_T *pt)
@@ -4784,8 +4781,6 @@ void filter_map(typval_T *argvars, typval_T *rettv, int map)
   const char *const arg_errmsg = (map
                                   ? N_("map() argument")
                                   : N_("filter() argument"));
-  int save_did_emsg;
-  int idx = 0;
 
   // Always return the first argument, also on failure.
   tv_copy(&argvars[0], rettv);
@@ -4815,12 +4810,13 @@ void filter_map(typval_T *argvars, typval_T *rettv, int map)
   // message.  Avoid a misleading error message for an empty string that
   // was not passed as argument.
   if (expr->v_type != VAR_UNKNOWN) {
+    int idx = 0;
     typval_T save_val;
     prepare_vimvar(VV_VAL, &save_val);
 
     // We reset "did_emsg" to be able to detect whether an error
     // occurred during evaluation of the expression.
-    save_did_emsg = did_emsg;
+    int save_did_emsg = did_emsg;
     did_emsg = false;
 
     typval_T save_key;
@@ -5052,7 +5048,7 @@ void common_function(typval_T *argvars, typval_T *rettv, bool is_funcref)
         if (tv_list_len(list) == 0) {
           arg_idx = 0;
         } else if (tv_list_len(list) > MAX_FUNC_ARGS) {
-          emsg_funcname((char *)e_toomanyarg, s);
+          emsg_funcname(e_toomanyarg, s);
           xfree(name);
           goto theend;
         }
@@ -6220,25 +6216,25 @@ int list2fpos(typval_T *arg, pos_T *posp, int *fnump, colnr_T *curswantp, bool c
   }
 
   int i = 0;
-  long n;
+  int n;
   if (fnump != NULL) {
-    n = tv_list_find_nr(l, i++, NULL);  // fnum
+    n = (int)tv_list_find_nr(l, i++, NULL);  // fnum
     if (n < 0) {
       return FAIL;
     }
     if (n == 0) {
       n = curbuf->b_fnum;  // Current buffer.
     }
-    *fnump = (int)n;
+    *fnump = n;
   }
 
-  n = tv_list_find_nr(l, i++, NULL);  // lnum
+  n = (int)tv_list_find_nr(l, i++, NULL);  // lnum
   if (n < 0) {
     return FAIL;
   }
-  posp->lnum = (linenr_T)n;
+  posp->lnum = n;
 
-  n = tv_list_find_nr(l, i++, NULL);  // col
+  n = (int)tv_list_find_nr(l, i++, NULL);  // col
   if (n < 0) {
     return FAIL;
   }
@@ -6252,15 +6248,15 @@ int list2fpos(typval_T *arg, pos_T *posp, int *fnump, colnr_T *curswantp, bool c
     }
     n = buf_charidx_to_byteidx(buf,
                                posp->lnum == 0 ? curwin->w_cursor.lnum : posp->lnum,
-                               (int)n) + 1;
+                               n) + 1;
   }
-  posp->col = (colnr_T)n;
+  posp->col = n;
 
-  n = tv_list_find_nr(l, i, NULL);  // off
+  n = (int)tv_list_find_nr(l, i, NULL);  // off
   if (n < 0) {
     posp->coladd = 0;
   } else {
-    posp->coladd = (colnr_T)n;
+    posp->coladd = n;
   }
 
   if (curswantp != NULL) {
@@ -7469,7 +7465,6 @@ void ex_execute(exarg_T *eap)
     if (eap->cmdidx == CMD_echomsg) {
       msg_ext_set_kind("echomsg");
       msg_attr(ga.ga_data, echo_attr);
-      ui_flush();
     } else if (eap->cmdidx == CMD_echoerr) {
       // We don't want to abort following commands, restore did_emsg.
       int save_did_emsg = did_emsg;
@@ -8065,7 +8060,6 @@ repeat:
 /// @return  an allocated string, NULL for error.
 char *do_string_sub(char *str, char *pat, char *sub, typval_T *expr, const char *flags)
 {
-  int sublen;
   regmatch_T regmatch;
   garray_T ga;
   char *zero_width = NULL;
@@ -8081,6 +8075,7 @@ char *do_string_sub(char *str, char *pat, char *sub, typval_T *expr, const char 
   regmatch.rm_ic = p_ic;
   regmatch.regprog = vim_regcomp(pat, RE_MAGIC + RE_STRING);
   if (regmatch.regprog != NULL) {
+    int sublen;
     char *tail = str;
     char *end = str + strlen(str);
     while (vim_regexec_nl(&regmatch, str, (colnr_T)(tail - str))) {

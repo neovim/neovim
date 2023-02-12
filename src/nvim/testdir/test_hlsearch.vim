@@ -1,5 +1,8 @@
 " Test for v:hlsearch
 
+source check.vim
+source screendump.vim
+
 func Test_hlsearch()
   new
   call setline(1, repeat(['aaa'], 10))
@@ -63,3 +66,23 @@ func Test_hlsearch_eol_highlight()
   set nohlsearch
   bwipe!
 endfunc
+
+func Test_hlsearch_Ctrl_R()
+  CheckRunVimInTerminal
+
+  let lines =<< trim END
+      set incsearch hlsearch
+      let @" = "text"
+      put
+  END
+  call writefile(lines, 'XhlsearchCtrlR', 'D')
+  let buf = RunVimInTerminal('-S XhlsearchCtrlR', #{rows: 6, cols: 60})
+
+  call term_sendkeys(buf, "/\<C-R>\<C-R>\"")
+  call VerifyScreenDump(buf, 'Test_hlsearch_ctrlr_1', {})
+
+  call term_sendkeys(buf, "\<Esc>")
+  call StopVimInTerminal(buf)
+endfunc
+
+" vim: shiftwidth=2 sts=2 expandtab

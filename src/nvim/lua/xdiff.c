@@ -257,13 +257,13 @@ static NluaXdiffMode process_xdl_diff_opts(lua_State *lstate, xdemitconf_t *cfg,
       if (check_xdiff_opt(v->type, kObjectTypeInteger, "ctxlen", err)) {
         goto exit_1;
       }
-      cfg->ctxlen = v->data.integer;
+      cfg->ctxlen = (long)v->data.integer;
     } else if (strequal("interhunkctxlen", k.data)) {
       if (check_xdiff_opt(v->type, kObjectTypeInteger, "interhunkctxlen",
                           err)) {
         goto exit_1;
       }
-      cfg->interhunkctxlen = v->data.integer;
+      cfg->interhunkctxlen = (long)v->data.integer;
     } else if (strequal("linematch", k.data)) {
       *linematch = api_object_to_bool(*v, "linematch", false, err);
       if (ERROR_SET(err)) {

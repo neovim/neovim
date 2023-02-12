@@ -75,7 +75,6 @@ void do_debug(char *cmd)
   tasave_T typeaheadbuf;
   bool typeahead_saved = false;
   int save_ignore_script = 0;
-  int n;
   char *cmdline = NULL;
   char *p;
   char *tail = NULL;
@@ -146,7 +145,7 @@ void do_debug(char *cmd)
     }
 
     // don't debug any function call, e.g. from an expression mapping
-    n = debug_break_level;
+    int n = debug_break_level;
     debug_break_level = -1;
 
     xfree(cmdline);
@@ -727,7 +726,7 @@ void ex_breaklist(exarg_T *eap)
   for (int i = 0; i < dbg_breakp.ga_len; i++) {
     struct debuggy *bp = &BREAKP(i);
     if (bp->dbg_type == DBG_FILE) {
-      home_replace(NULL, bp->dbg_name, (char *)NameBuff, MAXPATHL, true);
+      home_replace(NULL, bp->dbg_name, NameBuff, MAXPATHL, true);
     }
     if (bp->dbg_type != DBG_EXPR) {
       smsg(_("%3d  %s %s  line %" PRId64),

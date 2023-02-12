@@ -30,7 +30,9 @@
 #include <string.h>
 
 #include "auto/config.h"
+#include "nvim/api/extmark.h"
 #include "nvim/api/private/defs.h"
+#include "nvim/api/private/helpers.h"
 #include "nvim/ascii.h"
 #include "nvim/autocmd.h"
 #include "nvim/buffer.h"
@@ -61,6 +63,7 @@
 #include "nvim/keycodes.h"
 #include "nvim/locale.h"
 #include "nvim/log.h"
+#include "nvim/lua/executor.h"
 #include "nvim/macros.h"
 #include "nvim/mapping.h"
 #include "nvim/mbyte.h"
@@ -75,6 +78,8 @@
 #include "nvim/option.h"
 #include "nvim/option_defs.h"
 #include "nvim/optionstr.h"
+#include "nvim/os/input.h"
+#include "nvim/os/lang.h"
 #include "nvim/os/os.h"
 #include "nvim/path.h"
 #include "nvim/popupmenu.h"
@@ -95,14 +100,10 @@
 #include "nvim/undo.h"
 #include "nvim/vim.h"
 #include "nvim/window.h"
-#ifdef MSWIN
-# include "nvim/os/pty_conpty_win.h"
+
+#ifdef BACKSLASH_IN_FILENAME
+# include "nvim/arglist.h"
 #endif
-#include "nvim/api/extmark.h"
-#include "nvim/api/private/helpers.h"
-#include "nvim/lua/executor.h"
-#include "nvim/os/input.h"
-#include "nvim/os/lang.h"
 
 static char e_unknown_option[]
   = N_("E518: Unknown option");
@@ -165,6 +166,160 @@ void set_init_tablocal(void)
   p_ch = (long)options[ch_idx].def_val;
 }
 
+/// Initialize the 'shell' option to a default value.
+static void set_init_default_shell(void)
+{
+  // Find default value for 'shell' option.
+  // Don't use it if it is empty.
+  const char *shell = os_getenv("SHELL");
+  if (shell != NULL) {
+    if (vim_strchr(shell, ' ') != NULL) {
+      const size_t len = strlen(shell) + 3;  // two quotes and a trailing NUL
+      char *const cmd = xmalloc(len);
+      snprintf(cmd, len, "\"%s\"", shell);
+      set_string_default("sh", cmd, true);
+    } else {
+      set_string_default("sh", (char *)shell, false);
+    }
+  }
+}
+
+/// Set the default for 'backupskip' to include environment variables for
+/// temp files.
+static void set_init_default_backupskip(void)
+{
+#ifdef UNIX
+  static char *(names[4]) = { "", "TMPDIR", "TEMP", "TMP" };
+#else
+  static char *(names[3]) = { "TMPDIR", "TEMP", "TMP" };
+#endif
+  garray_T ga;
+  int opt_idx = findoption("backupskip");
+
+  ga_init(&ga, 1, 100);
+  for (size_t n = 0; n < ARRAY_SIZE(names); n++) {
+    bool mustfree = true;
+    char *p;
+#ifdef UNIX
+    if (*names[n] == NUL) {
+# ifdef __APPLE__
+      p = "/private/tmp";
+# else
+      p = "/tmp";
+# endif
+      mustfree = false;
+    } else  // NOLINT(readability/braces)
+#endif
+    {
+      p = vim_getenv(names[n]);
+    }
+    if (p != NULL && *p != NUL) {
+      // First time count the NUL, otherwise count the ','.
+      const size_t len = strlen(p) + 3;
+      char *item = xmalloc(len);
+      xstrlcpy(item, p, len);
+      add_pathsep(item);
+      xstrlcat(item, "*", len);
+      if (find_dup_item(ga.ga_data, item, options[opt_idx].flags)
+          == NULL) {
+        ga_grow(&ga, (int)len);
+        if (!GA_EMPTY(&ga)) {
+          STRCAT(ga.ga_data, ",");
+        }
+        STRCAT(ga.ga_data, p);
+        add_pathsep(ga.ga_data);
+        STRCAT(ga.ga_data, "*");
+        ga.ga_len += (int)len;
+      }
+      xfree(item);
+    }
+    if (mustfree) {
+      xfree(p);
+    }
+  }
+  if (ga.ga_data != NULL) {
+    set_string_default("bsk", ga.ga_data, true);
+  }
+}
+
+/// Initialize the 'cdpath' option to a default value.
+static void set_init_default_cdpath(void)
+{
+  char *cdpath = vim_getenv("CDPATH");
+  if (cdpath == NULL) {
+    return;
+  }
+
+  char *buf = xmalloc(2 * strlen(cdpath) + 2);
+  buf[0] = ',';               // start with ",", current dir first
+  int j = 1;
+  for (int i = 0; cdpath[i] != NUL; i++) {
+    if (vim_ispathlistsep(cdpath[i])) {
+      buf[j++] = ',';
+    } else {
+      if (cdpath[i] == ' ' || cdpath[i] == ',') {
+        buf[j++] = '\\';
+      }
+      buf[j++] = cdpath[i];
+    }
+  }
+  buf[j] = NUL;
+  int opt_idx = findoption("cdpath");
+  if (opt_idx >= 0) {
+    options[opt_idx].def_val = buf;
+    options[opt_idx].flags |= P_DEF_ALLOCED;
+  } else {
+    xfree(buf);           // cannot happen
+  }
+  xfree(cdpath);
+}
+
+/// Expand environment variables and things like "~" for the defaults.
+/// If option_expand() returns non-NULL the variable is expanded.  This can
+/// only happen for non-indirect options.
+/// Also set the default to the expanded value, so ":set" does not list
+/// them.
+/// Don't set the P_ALLOCED flag, because we don't want to free the
+/// default.
+static void set_init_expand_env(void)
+{
+  for (int opt_idx = 0; options[opt_idx].fullname; opt_idx++) {
+    vimoption_T *opt = &options[opt_idx];
+    if (opt->flags & P_NO_DEF_EXP) {
+      continue;
+    }
+    char *p;
+    if ((opt->flags & P_GETTEXT) && opt->var != NULL) {
+      p = _(*(char **)opt->var);
+    } else {
+      p = option_expand(opt_idx, NULL);
+    }
+    if (p != NULL) {
+      p = xstrdup(p);
+      *(char **)opt->var = p;
+      if (opt->flags & P_DEF_ALLOCED) {
+        xfree(opt->def_val);
+      }
+      opt->def_val = p;
+      opt->flags |= P_DEF_ALLOCED;
+    }
+  }
+}
+
+/// Initialize the encoding used for "default" in 'fileencodings'.
+static void set_init_fenc_default(void)
+{
+  // enc_locale() will try to find the encoding of the current locale.
+  // This will be used when "default" is used as encoding specifier
+  // in 'fileencodings'.
+  char *p = enc_locale();
+  if (p == NULL) {
+    // Use utf-8 as "default" if locale encoding can't be detected.
+    p = xmemdupz(S_LEN("utf-8"));
+  }
+  fenc_default = p;
+}
+
 /// Initialize the options, first part.
 ///
 /// Called only once from main(), just after creating the first buffer.
@@ -177,109 +332,9 @@ void set_init_1(bool clean_arg)
 {
   langmap_init();
 
-  // Find default value for 'shell' option.
-  // Don't use it if it is empty.
-  {
-    const char *shell = os_getenv("SHELL");
-    if (shell != NULL) {
-      if (vim_strchr(shell, ' ') != NULL) {
-        const size_t len = strlen(shell) + 3;  // two quotes and a trailing NUL
-        char *const cmd = xmalloc(len);
-        snprintf(cmd, len, "\"%s\"", shell);
-        set_string_default("sh", cmd, true);
-      } else {
-        set_string_default("sh", (char *)shell, false);
-      }
-    }
-  }
-
-  // Set the default for 'backupskip' to include environment variables for
-  // temp files.
-  {
-#ifdef UNIX
-    static char *(names[4]) = { "", "TMPDIR", "TEMP", "TMP" };
-#else
-    static char *(names[3]) = { "TMPDIR", "TEMP", "TMP" };
-#endif
-    garray_T ga;
-    int opt_idx = findoption("backupskip");
-
-    ga_init(&ga, 1, 100);
-    for (size_t n = 0; n < ARRAY_SIZE(names); n++) {
-      bool mustfree = true;
-      char *p;
-#ifdef UNIX
-      if (*names[n] == NUL) {
-# ifdef __APPLE__
-        p = "/private/tmp";
-# else
-        p = "/tmp";
-# endif
-        mustfree = false;
-      } else  // NOLINT(readability/braces)
-#endif
-      {
-        p = vim_getenv(names[n]);
-      }
-      if (p != NULL && *p != NUL) {
-        // First time count the NUL, otherwise count the ','.
-        const size_t len = strlen(p) + 3;
-        char *item = xmalloc(len);
-        xstrlcpy(item, p, len);
-        add_pathsep(item);
-        xstrlcat(item, "*", len);
-        if (find_dup_item(ga.ga_data, item, options[opt_idx].flags)
-            == NULL) {
-          ga_grow(&ga, (int)len);
-          if (!GA_EMPTY(&ga)) {
-            STRCAT(ga.ga_data, ",");
-          }
-          STRCAT(ga.ga_data, p);
-          add_pathsep(ga.ga_data);
-          STRCAT(ga.ga_data, "*");
-          ga.ga_len += (int)len;
-        }
-        xfree(item);
-      }
-      if (mustfree) {
-        xfree(p);
-      }
-    }
-    if (ga.ga_data != NULL) {
-      set_string_default("bsk", ga.ga_data, true);
-    }
-  }
-
-  {
-    // Initialize the 'cdpath' option's default value.
-    char *cdpath = vim_getenv("CDPATH");
-    if (cdpath != NULL) {
-      char *buf = xmalloc(2 * strlen(cdpath) + 2);
-      {
-        buf[0] = ',';               // start with ",", current dir first
-        int j = 1;
-        for (int i = 0; cdpath[i] != NUL; i++) {
-          if (vim_ispathlistsep(cdpath[i])) {
-            buf[j++] = ',';
-          } else {
-            if (cdpath[i] == ' ' || cdpath[i] == ',') {
-              buf[j++] = '\\';
-            }
-            buf[j++] = cdpath[i];
-          }
-        }
-        buf[j] = NUL;
-        int opt_idx = findoption("cdpath");
-        if (opt_idx >= 0) {
-          options[opt_idx].def_val = buf;
-          options[opt_idx].flags |= P_DEF_ALLOCED;
-        } else {
-          xfree(buf);           // cannot happen
-        }
-      }
-      xfree(cdpath);
-    }
-  }
+  set_init_default_shell();
+  set_init_default_backupskip();
+  set_init_default_cdpath();
 
   char *backupdir = stdpaths_user_state_subpath("backup", 2, true);
   const size_t backupdir_len = strlen(backupdir);
@@ -328,33 +383,7 @@ void set_init_1(bool clean_arg)
   init_spell_chartab();
 
   // Expand environment variables and things like "~" for the defaults.
-  // If option_expand() returns non-NULL the variable is expanded.  This can
-  // only happen for non-indirect options.
-  // Also set the default to the expanded value, so ":set" does not list
-  // them.
-  // Don't set the P_ALLOCED flag, because we don't want to free the
-  // default.
-  for (int opt_idx = 0; options[opt_idx].fullname; opt_idx++) {
-    vimoption_T *opt = &options[opt_idx];
-    if (opt->flags & P_NO_DEF_EXP) {
-      continue;
-    }
-    char *p;
-    if ((opt->flags & P_GETTEXT) && opt->var != NULL) {
-      p = _(*(char **)opt->var);
-    } else {
-      p = option_expand(opt_idx, NULL);
-    }
-    if (p != NULL) {
-      p = xstrdup(p);
-      *(char **)opt->var = p;
-      if (opt->flags & P_DEF_ALLOCED) {
-        xfree(opt->def_val);
-      }
-      opt->def_val = p;
-      opt->flags |= P_DEF_ALLOCED;
-    }
-  }
+  set_init_expand_env();
 
   save_file_ff(curbuf);         // Buffer is unchanged
 
@@ -370,16 +399,7 @@ void set_init_1(bool clean_arg)
   didset_options2();
 
   lang_init();
-
-  // enc_locale() will try to find the encoding of the current locale.
-  // This will be used when 'default' is used as encoding specifier
-  // in 'fileencodings'
-  char *p = enc_locale();
-  if (p == NULL) {
-    // use utf-8 as 'default' if locale encoding can't be detected.
-    p = xmemdupz(S_LEN("utf-8"));
-  }
-  fenc_default = p;
+  set_init_fenc_default();
 
 #ifdef HAVE_WORKING_LIBINTL
   // GNU gettext 0.10.37 supports this feature: set the codeset used for
@@ -753,7 +773,7 @@ static void do_set_bool(int opt_idx, int opt_flags, int prefix, int nextchar, co
     }
   }
 
-  *errmsg = set_bool_option(opt_idx, (char_u *)varp, (int)value, opt_flags);
+  *errmsg = set_bool_option(opt_idx, (char *)varp, (int)value, opt_flags);
 }
 
 static void do_set_num(int opt_idx, int opt_flags, char **argp, int nextchar, const set_op_T op,
@@ -1108,7 +1128,7 @@ static void do_set_string(int opt_idx, int opt_flags, char **argp, int nextchar,
   }
 
   // Set the new value.
-  *(char_u **)(varp) = (char_u *)newval;
+  *(char **)(varp) = newval;
 
   // origval may be freed by did_set_string_option(), make a copy.
   char *saved_origval = (origval != NULL) ? xstrdup(origval) : NULL;
@@ -1549,7 +1569,6 @@ int do_set(char *arg, int opt_flags)
     silent_mode = false;
     info_message = true;        // use os_msg(), not os_errmsg()
     msg_putchar('\n');
-    ui_flush();
     silent_mode = true;
     info_message = false;       // use os_msg(), not os_errmsg()
   }
@@ -1974,7 +1993,7 @@ static void apply_optionset_autocmd(int opt_idx, long opt_flags, long oldval, lo
 /// @param[in]  opt_flags  OPT_LOCAL and/or OPT_GLOBAL.
 ///
 /// @return NULL on success, error message on error.
-static char *set_bool_option(const int opt_idx, char_u *const varp, const int value,
+static char *set_bool_option(const int opt_idx, char *const varp, const int value,
                              const int opt_flags)
 {
   int old_value = *(int *)varp;
@@ -2010,7 +2029,7 @@ static char *set_bool_option(const int opt_idx, char_u *const varp, const int va
     // Ensure that options set to p_force_off cannot be enabled.
   } else if ((int *)varp == &p_force_off && p_force_off == true) {
     p_force_off = false;
-    return (char *)e_unsupportedoption;
+    return e_unsupportedoption;
   } else if ((int *)varp == &p_lrm) {
     // 'langremap' -> !'langnoremap'
     p_lnr = !p_lrm;
@@ -2023,7 +2042,7 @@ static char *set_bool_option(const int opt_idx, char_u *const varp, const int va
     // delete the undo file, the option may be set again without making
     // any changes in between.
     if (curbuf->b_p_udf || p_udf) {
-      char_u hash[UNDO_HASH_SIZE];
+      uint8_t hash[UNDO_HASH_SIZE];
 
       FOR_ALL_BUFFERS(bp) {
         // When 'undofile' is set globally: for every buffer, otherwise
@@ -2103,7 +2122,7 @@ static char *set_bool_option(const int opt_idx, char_u *const varp, const int va
         }
       }
     }
-  } else if (varp == (char_u *)&(curbuf->b_p_lisp)) {
+  } else if (varp == (char *)&(curbuf->b_p_lisp)) {
     // When 'lisp' option changes include/exclude '-' in
     // keyword characters.
     (void)buf_init_chartab(curbuf, false);          // ignore errors
@@ -3127,7 +3146,7 @@ char *set_option_value(const char *const name, const long number, const char *co
   if (flags & P_NUM) {
     return set_num_option(opt_idx, varp, numval, NULL, 0, opt_flags);
   }
-  return set_bool_option(opt_idx, varp, (int)numval, opt_flags);
+  return set_bool_option(opt_idx, (char *)varp, (int)numval, opt_flags);
 }
 
 /// Call set_option_value() and when an error is returned report it.
@@ -3218,13 +3237,13 @@ static void showoptions(bool all, int opt_flags)
         continue;
       }
 
-      char_u *varp = NULL;
+      char *varp = NULL;
       if ((opt_flags & (OPT_LOCAL | OPT_GLOBAL)) != 0) {
         if (p->indir != PV_NONE) {
-          varp = (char_u *)get_varp_scope(p, opt_flags);
+          varp = get_varp_scope(p, opt_flags);
         }
       } else {
-        varp = get_varp(p);
+        varp = (char *)get_varp(p);
       }
       if (varp != NULL
           && (all == 1 || (all == 0 && !optval_default(p, varp)))) {
@@ -3278,7 +3297,7 @@ static void showoptions(bool all, int opt_flags)
 }
 
 /// Return true if option "p" has its default value.
-static int optval_default(vimoption_T *p, const char_u *varp)
+static int optval_default(vimoption_T *p, const char *varp)
 {
   if (varp == NULL) {
     return true;            // hidden option is always at default
@@ -3403,7 +3422,7 @@ int makeset(FILE *fd, int opt_flags, int local_only)
           continue;
         }
         // Global values are only written when not at the default value.
-        if ((opt_flags & OPT_GLOBAL) && optval_default(p, (char_u *)varp)) {
+        if ((opt_flags & OPT_GLOBAL) && optval_default(p, varp)) {
           continue;
         }
 
@@ -3424,7 +3443,7 @@ int makeset(FILE *fd, int opt_flags, int local_only)
             // default, need to write it too.
             if (!(opt_flags & OPT_GLOBAL) && !local_only) {
               char_u *varp_fresh = (char_u *)get_varp_scope(p, OPT_GLOBAL);  // local value
-              if (!optval_default(p, varp_fresh)) {
+              if (!optval_default(p, (char *)varp_fresh)) {
                 round = 1;
                 varp_local = (char_u *)varp;
                 varp = (char *)varp_fresh;
@@ -4831,10 +4850,9 @@ int ExpandSettings(expand_T *xp, regmatch_T *regmatch, char *fuzzystr, int *numM
   // loop == 0: count the number of matching options
   // loop == 1: copy the matching options into allocated memory
   for (int loop = 0; loop <= 1; loop++) {
-    int match;
     regmatch->rm_ic = ic;
     if (xp->xp_context != EXPAND_BOOL_SETTINGS) {
-      for (match = 0; match < (int)ARRAY_SIZE(names);
+      for (int match = 0; match < (int)ARRAY_SIZE(names);
            match++) {
         if (match_str(names[match], regmatch, *matches,
                       count, (loop == 0), fuzzy, fuzzystr, fuzmatch)) {
@@ -4966,7 +4984,7 @@ static void option_value2string(vimoption_T *opp, int scope)
     if (varp == NULL) {  // Just in case.
       NameBuff[0] = NUL;
     } else if (opp->flags & P_EXPAND) {
-      home_replace(NULL, varp, (char *)NameBuff, MAXPATHL, false);
+      home_replace(NULL, varp, NameBuff, MAXPATHL, false);
       // Translate 'pastetoggle' into special key names.
     } else if ((char **)opp->var == &p_pt) {
       str2specialbuf((const char *)p_pt, NameBuff, MAXPATHL);
@@ -5187,8 +5205,8 @@ void fill_breakat_flags(void)
   }
 
   if (p_breakat != NULL) {
-    for (char_u *p = (char_u *)p_breakat; *p; p++) {
-      breakat_flags[*p] = true;
+    for (char *p = p_breakat; *p; p++) {
+      breakat_flags[(uint8_t)(*p)] = true;
     }
   }
 }

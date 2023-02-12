@@ -368,7 +368,6 @@ static int get_history_idx(int histype)
 static int calc_hist_idx(int histype, int num)
 {
   int i;
-  int wrapped = false;
 
   if (hislen == 0 || histype < 0 || histype >= HIST_COUNT
       || (i = hisidx[histype]) < 0 || num == 0) {
@@ -377,6 +376,7 @@ static int calc_hist_idx(int histype, int num)
 
   histentry_T *hist = history[histype];
   if (num > 0) {
+    int wrapped = false;
     while (hist[i].hisnum > num) {
       if (--i < 0) {
         if (wrapped) {
@@ -568,14 +568,12 @@ void f_histdel(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 /// "histget()" function
 void f_histget(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
-  HistoryType type;
-  int idx;
-
   const char *const str = tv_get_string_chk(&argvars[0]);  // NULL on type error
   if (str == NULL) {
     rettv->vval.v_string = NULL;
   } else {
-    type = get_histtype(str, strlen(str), false);
+    int idx;
+    HistoryType type = get_histtype(str, strlen(str), false);
     if (argvars[1].v_type == VAR_UNKNOWN) {
       idx = get_history_idx(type);
     } else {
@@ -603,13 +601,11 @@ void f_histnr(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 /// :history command - print a history
 void ex_history(exarg_T *eap)
 {
-  histentry_T *hist;
   int histype1 = HIST_CMD;
   int histype2 = HIST_CMD;
   int hisidx1 = 1;
   int hisidx2 = -1;
-  int idx;
-  int i, j, k;
+  int i;
   char *end;
   char *arg = eap->arg;
 
@@ -649,10 +645,10 @@ void ex_history(exarg_T *eap)
     assert(history_names[histype1] != NULL);
     STRCAT(STRCAT(IObuff, history_names[histype1]), " history");
     msg_puts_title(IObuff);
-    idx = hisidx[histype1];
-    hist = history[histype1];
-    j = hisidx1;
-    k = hisidx2;
+    int idx = hisidx[histype1];
+    histentry_T *hist = history[histype1];
+    int j = hisidx1;
+    int k = hisidx2;
     if (j < 0) {
       j = (-j > hislen) ? 0 : hist[(hislen + j + idx + 1) % hislen].hisnum;
     }

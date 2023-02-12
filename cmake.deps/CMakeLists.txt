@@ -13,10 +13,10 @@ include(CheckCCompilerFlag)
 include(Util)
 
 set(DEPS_CMAKE_ARGS
-  -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
-  -DCMAKE_GENERATOR=${CMAKE_GENERATOR}
-  -DCMAKE_GENERATOR_PLATFORM=${CMAKE_GENERATOR_PLATFORM}
-  -DCMAKE_POSITION_INDEPENDENT_CODE=ON)
+  -D CMAKE_C_COMPILER=${CMAKE_C_COMPILER}
+  -D CMAKE_GENERATOR=${CMAKE_GENERATOR}
+  -D CMAKE_GENERATOR_PLATFORM=${CMAKE_GENERATOR_PLATFORM}
+  -D CMAKE_POSITION_INDEPENDENT_CODE=ON)
 
 set(DEPS_CMAKE_CACHE_ARGS -DCMAKE_OSX_ARCHITECTURES:STRING=${CMAKE_OSX_ARCHITECTURES})
 
@@ -24,7 +24,7 @@ set_default_buildtype()
 
 get_property(isMultiConfig GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG)
 if(NOT isMultiConfig)
-  list(APPEND DEPS_CMAKE_ARGS -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE})
+  list(APPEND DEPS_CMAKE_ARGS -D CMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE})
 endif()
 
 set(DEFAULT_MAKE_CFLAGS CFLAGS+=-g)
@@ -45,7 +45,7 @@ else()
   set(DEPS_INSTALL_DIR "${CMAKE_BINARY_DIR}/usr" CACHE PATH "Dependencies install directory.")
 endif()
 
-list(APPEND DEPS_CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${DEPS_INSTALL_DIR})
+list(APPEND DEPS_CMAKE_ARGS -D CMAKE_INSTALL_PREFIX=${DEPS_INSTALL_DIR})
 
 set(DEPS_BIN_DIR "${DEPS_INSTALL_DIR}/bin" CACHE PATH "Dependencies binary install directory.")
 set(DEPS_LIB_DIR "${DEPS_INSTALL_DIR}/lib" CACHE PATH "Dependencies library install directory.")
@@ -74,6 +74,10 @@ if(USE_BUNDLED AND MSVC)
 else()
   option(USE_BUNDLED_GETTEXT "Use the bundled version of gettext." OFF)
   option(USE_BUNDLED_LIBICONV "Use the bundled version of libiconv." OFF)
+endif()
+
+if(WIN32)
+  option(USE_BUNDLED_NVIMQT "Bundle neovim-qt" ON)
 endif()
 
 option(USE_EXISTING_SRC_DIR "Skip download of deps sources in case of existing source directory." OFF)
@@ -137,8 +141,8 @@ endif()
 include(ExternalProject)
 set_directory_properties(PROPERTIES EP_PREFIX "${DEPS_BUILD_DIR}")
 
-set(LIBUV_URL https://github.com/libuv/libuv/archive/f610339f74f7f0fcd183533d2c965ce1468b44c6.tar.gz)
-set(LIBUV_SHA256 d5f22303ba44ac60d3232b1977b404d23a349ae4e8cb83f00e7122fafe38d8c9)
+set(LIBUV_URL https://github.com/libuv/libuv/archive/62c2374a8c005ce9e42088965f8f8af2532c177b.tar.gz)
+set(LIBUV_SHA256 c7e89137da65a1cb550ba96b892dfeeabea982bf33b9237bcf9bbcd90f2e70a1)
 
 set(MSGPACK_URL https://github.com/msgpack/msgpack-c/releases/download/c-4.0.0/msgpack-c-4.0.0.tar.gz)
 set(MSGPACK_SHA256 420fe35e7572f2a168d17e660ef981a589c9cbe77faa25eb34a520e1fcc032c8)
@@ -163,8 +167,8 @@ set(LIBVTERM_URL https://www.leonerd.org.uk/code/libvterm/libvterm-0.3.1.tar.gz)
 set(LIBVTERM_SHA256 25a8ad9c15485368dfd0a8a9dca1aec8fea5c27da3fa74ec518d5d3787f0c397)
 
 set(LUV_VERSION 1.44.2-1)
-set(LUV_URL https://github.com/luvit/luv/archive/80c8c00baebe3e994d1616d4b54097c2d6e14834.tar.gz)
-set(LUV_SHA256 bcd3ffc7bc80053ab0ec87f0fe83c7632c7619879b2eb75fba88ddb3bee620e8)
+set(LUV_URL https://github.com/luvit/luv/archive/e8e7b7e13225348a8806118a3ea9e021383a9536.tar.gz)
+set(LUV_SHA256 531dfbcb6fffe3fdfa806860b39035e54b07ee1ff3bb2af813e175febf7e9ccc)
 
 set(LUA_COMPAT53_URL https://github.com/keplerproject/lua-compat-5.3/archive/v0.9.tar.gz)
 set(LUA_COMPAT53_SHA256 ad05540d2d96a48725bb79a1def35cf6652a4e2ec26376e2617c8ce2baa6f416)
@@ -194,8 +198,8 @@ set(TREESITTER_LUA_SHA256 930d0370dc15b66389869355c8e14305b9ba7aafd36edbfdb468c8
 set(TREESITTER_VIM_URL https://github.com/vigoux/tree-sitter-viml/archive/55ff1b080c09edeced9b748cf4c16d0b49d17fb9.tar.gz)
 set(TREESITTER_VIM_SHA256 1b1cd39e33c8fb02fa7fe3977e844883c2a8508a7edd621f2d21e39a9aeefa92)
 
-set(TREESITTER_HELP_URL https://github.com/neovim/tree-sitter-vimdoc/archive/ce20f13c3f12506185754888feaae3f2ad54c287.tar.gz)
-set(TREESITTER_HELP_SHA256 2b8b166438cce66064aab56a744430b1f44871f43e47f70b51246d14bb826609)
+set(TREESITTER_HELP_URL https://github.com/neovim/tree-sitter-vimdoc/archive/v1.3.0.tar.gz)
+set(TREESITTER_HELP_SHA256 f33f6d49c7d71feb2fd68ef2b2684da150f9f8e486ad9726213631d673942331)
 
 set(TREESITTER_URL https://github.com/tree-sitter/tree-sitter/archive/eb970a83a107cbaba52e31588355c0b09b3a308a.tar.gz)
 set(TREESITTER_SHA256 58063721182f182fb9ec5481794f2ba594e52d6c2497e0214570535054dfc78d)
@@ -261,9 +265,11 @@ if(WIN32)
   GetBinaryDep(TARGET wintools
     INSTALL_COMMAND ${CMAKE_COMMAND} -E copy_directory . ${DEPS_INSTALL_DIR}/bin)
 
-  GetBinaryDep(TARGET wingui
-    INSTALL_COMMAND ${CMAKE_COMMAND} -E copy_directory bin ${DEPS_INSTALL_DIR}/bin
+  if(USE_BUNDLED_NVIMQT)
+    GetBinaryDep(TARGET wingui
+      INSTALL_COMMAND ${CMAKE_COMMAND} -E copy_directory bin ${DEPS_INSTALL_DIR}/bin
       COMMAND ${CMAKE_COMMAND} -E copy_directory share ${DEPS_INSTALL_DIR}/share)
+  endif()
 
   GetBinaryDep(TARGET win32yank_X86_64
     INSTALL_COMMAND ${CMAKE_COMMAND} -E copy win32yank.exe ${DEPS_INSTALL_DIR}/bin)
@@ -276,7 +282,7 @@ if (MSVC)
 else()
   add_custom_target(clean-shared-libraries
     COMMAND ${CMAKE_COMMAND}
-      -DREMOVE_FILE_GLOB=${DEPS_INSTALL_DIR}/lib/${CMAKE_SHARED_LIBRARY_PREFIX}*${CMAKE_SHARED_LIBRARY_SUFFIX}*
+      -D REMOVE_FILE_GLOB=${DEPS_INSTALL_DIR}/lib/${CMAKE_SHARED_LIBRARY_PREFIX}*${CMAKE_SHARED_LIBRARY_SUFFIX}*
       -P ${PROJECT_SOURCE_DIR}/cmake/RemoveFiles.cmake
     DEPENDS ${THIRD_PARTY_DEPS}
   )
