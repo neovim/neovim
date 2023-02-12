@@ -26,6 +26,7 @@ if(BUSTED_PRG)
         -D BUILD_DIR=${CMAKE_BINARY_DIR}
         -D TEST_TYPE=unit
         -D CIRRUS_CI=$ENV{CIRRUS_CI}
+        -D CI_BUILD=${CI_BUILD}
         -P ${PROJECT_SOURCE_DIR}/cmake/RunTests.cmake
       DEPENDS ${UNITTEST_PREREQS}
       USES_TERMINAL)
@@ -50,6 +51,7 @@ if(BUSTED_PRG)
       -D DEPS_PREFIX=${DEPS_PREFIX}
       -D TEST_TYPE=functional
       -D CIRRUS_CI=$ENV{CIRRUS_CI}
+      -D CI_BUILD=${CI_BUILD}
       -P ${PROJECT_SOURCE_DIR}/cmake/RunTests.cmake
     DEPENDS ${FUNCTIONALTEST_PREREQS}
     USES_TERMINAL)
@@ -66,6 +68,7 @@ if(BUSTED_PRG)
       -D BUILD_DIR=${CMAKE_BINARY_DIR}
       -D TEST_TYPE=benchmark
       -D CIRRUS_CI=$ENV{CIRRUS_CI}
+      -D CI_BUILD=${CI_BUILD}
       -P ${PROJECT_SOURCE_DIR}/cmake/RunTests.cmake
     DEPENDS ${BENCHMARK_PREREQS}
     USES_TERMINAL)
@@ -85,6 +88,7 @@ if(BUSTED_LUA_PRG)
       -D BUILD_DIR=${CMAKE_BINARY_DIR}
       -D TEST_TYPE=functional
       -D CIRRUS_CI=$ENV{CIRRUS_CI}
+      -D CI_BUILD=${CI_BUILD}
       -P ${PROJECT_SOURCE_DIR}/cmake/RunTests.cmake
     DEPENDS ${FUNCTIONALTEST_PREREQS}
     USES_TERMINAL)
