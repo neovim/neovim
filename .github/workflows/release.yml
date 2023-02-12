@@ -111,9 +111,6 @@ jobs:
 
   windows:
     runs-on: windows-2019
-    env:
-      DEPS_BUILD_DIR: ${{ github.workspace }}/nvim-deps
-      CMAKE_BUILD_TYPE: "RelWithDebInfo"
     name: windows (MSVC_64)
     steps:
       - uses: actions/checkout@v3
@@ -130,8 +127,8 @@ jobs:
           }
       - name: Build deps
         run: |
-          cmake -S cmake.deps -B $env:DEPS_BUILD_DIR -G Ninja -DCMAKE_BUILD_TYPE='RelWithDebInfo'
-          cmake --build $env:DEPS_BUILD_DIR
+          cmake -S cmake.deps -B .deps -G Ninja -DCMAKE_BUILD_TYPE='RelWithDebInfo'
+          cmake --build .deps
       - name: build package
         run: |
           cmake -B build -G Ninja -DCMAKE_BUILD_TYPE='RelWithDebInfo'
