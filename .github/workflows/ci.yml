@@ -16,7 +16,15 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  UNCRUSTIFY_VERSION: uncrustify-0.75.0
+  ASAN_OPTIONS: detect_leaks=1:check_initialization_order=1:handle_abort=1:handle_sigill=1:log_path=${{ github.workspace }}/build/log/asan:intercept_tls_get_addr=0
+  BIN_DIR: ${{ github.workspace }}/bin
+  BUILD_DIR: ${{ github.workspace }}/build
+  INSTALL_PREFIX: ${{ github.workspace }}/nvim-install
+  LOG_DIR: ${{ github.workspace }}/build/log
+  NVIM_LOG_FILE: ${{ github.workspace }}/build/.nvimlog
+  TSAN_OPTIONS: log_path=${{ github.workspace }}/build/log/tsan
+  UBSAN_OPTIONS: "print_stacktrace=1 log_path=${{ github.workspace }}/build/log/ubsan"
+  VALGRIND_LOG: ${{ github.workspace }}/build/log/valgrind-%p.log
   # TEST_FILE: test/functional/core/startup_spec.lua
   # TEST_FILTER: foo
 
@@ -25,11 +33,11 @@ jobs:
     if: (github.event_name == 'pull_request' && github.base_ref == 'master') || (github.event_name == 'push' && github.ref == 'refs/heads/master')
     runs-on: ubuntu-22.04
     timeout-minutes: 10
+    env:
+      CACHE_UNCRUSTIFY: ${{ github.workspace }}/.cache/uncrustify
+      UNCRUSTIFY_VERSION: uncrustify-0.75.0
     steps:
       - uses: actions/checkout@v3
-
-      - name: Setup common environment variables
-        run: ./.github/workflows/env.sh lint
 
       - name: Install apt packages
         run: |
@@ -58,8 +66,10 @@ jobs:
           build_dir=uncrustify/build
           cmake -S $source_dir -B $build_dir -G Ninja -D CMAKE_BUILD_TYPE=Release
           cmake --build $build_dir
-          mkdir -p $CACHE_DIR
+          mkdir -p .cache
           cp $build_dir/uncrustify ${{ env.CACHE_UNCRUSTIFY }}
+
+      - run: echo "DEPS_BUILD_DIR=$HOME/nvim-deps" >> $GITHUB_ENV
 
       - uses: ./.github/actions/cache
 
@@ -120,9 +130,6 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - name: Setup common environment variables
-        run: ./.github/workflows/env.sh lintc
-
       - name: Install apt packages
         run: |
           sudo add-apt-repository ppa:neovim-ppa/stable
@@ -145,6 +152,8 @@ jobs:
 
             # Remove comments from packages once we start using these external
             # dependencies.
+
+      - run: echo "DEPS_BUILD_DIR=$HOME/nvim-deps" >> $GITHUB_ENV
 
       - uses: ./.github/actions/cache
 
@@ -183,14 +192,15 @@ jobs:
           - flavor: asan
             cc: clang
             runner: ubuntu-22.04
-            sanitizer_flags: -D CLANG_ASAN_UBSAN=ON
+            flags: -D CLANG_ASAN_UBSAN=ON
           - flavor: tsan
             cc: clang
             runner: ubuntu-22.04
-            sanitizer_flags: -D CLANG_TSAN=ON
+            flags: -D CLANG_TSAN=ON
           - flavor: uchar
             cc: gcc
             runner: ubuntu-22.04
+            flags: -D UNSIGNED_CHAR=ON
           - cc: clang
             runner: macos-12
 
@@ -201,6 +211,7 @@ jobs:
             cc: gcc
             runner: ubuntu-22.04
             deps_flags: -D USE_BUNDLED_LUAJIT=OFF -D USE_BUNDLED_LUA=ON
+            flags: -D PREFER_LUA=ON
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 45
     env:
@@ -210,8 +221,8 @@ jobs:
 
       - name: Set up environment
         run: |
-          ./.github/workflows/env.sh ${{ matrix.flavor }}
           ulimit -c unlimited
+          echo "$BIN_DIR" >> $GITHUB_PATH
 
       - name: Create log dir
         run: mkdir -p "$LOG_DIR"
@@ -244,6 +255,8 @@ jobs:
             perl -W -e 'use Neovim::Ext; print $Neovim::Ext::VERSION'
           fi
 
+      - run: echo "DEPS_BUILD_DIR=$HOME/nvim-deps" >> $GITHUB_ENV
+
       - uses: ./.github/actions/cache
 
       - name: Build third-party deps
@@ -253,7 +266,7 @@ jobs:
 
       - name: Build
         run: |
-          cmake -B build -G Ninja $CMAKE_FLAGS ${{ matrix.sanitizer_flags }}
+          cmake -B build -G Ninja -D CI_BUILD=ON -D CMAKE_INSTALL_PREFIX:PATH=$INSTALL_PREFIX -D MIN_LOG_LEVEL=3 ${{ matrix.flags }}
           cmake --build build
 
       - if: "!cancelled()"
@@ -357,8 +370,8 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - name: Setup common environment variables
-        run: ./.github/workflows/env.sh old_cmake
+      - name: Set up environment
+        run: echo "$BIN_DIR" >> $GITHUB_PATH
 
       - name: Install apt packages
         run: ./.github/scripts/install_deps_ubuntu.sh
@@ -376,6 +389,8 @@ jobs:
             exit 1
           }
 
+      - run: echo "DEPS_BUILD_DIR=$HOME/nvim-deps" >> $GITHUB_ENV
+
       - uses: ./.github/actions/cache
 
       - name: Build dependencies
@@ -390,16 +405,23 @@ jobs:
   windows:
     runs-on: windows-2019
     timeout-minutes: 45
+    name: windows
     env:
       DEPS_BUILD_DIR: ${{ github.workspace }}/nvim-deps
-    name: windows (MSVC_64)
     steps:
       - uses: actions/checkout@v3
 
       - uses: ./.github/actions/cache
 
       - name: Set env
-        run: ./.github/workflows/env.ps1
+        run: |
+          $installationPath = vswhere.exe -latest -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+          if ($installationPath -and (Test-Path "$installationPath\Common7\Tools\vsdevcmd.bat")) {
+            & "${env:COMSPEC}" /s /c "`"$installationPath\Common7\Tools\vsdevcmd.bat`" -arch=x64 -no_logo && set" | ForEach-Object {
+              $name, $value = $_ -split '=', 2
+              "$name=$value" >> $env:GITHUB_ENV
+            }
+          }
 
       - name: Build deps
         run: |
