@@ -303,7 +303,7 @@ static int draw_virt_text_item(buf_T *buf, int col, VirtText vt, HlMode hl_mode,
 static bool use_cursor_line_sign(win_T *wp, linenr_T lnum)
 {
   return wp->w_p_cul
-         && lnum == wp->w_cursor.lnum
+         && lnum == wp->w_cursorline
          && (wp->w_p_culopt_flags & CULOPT_NBR);
 }
 
@@ -517,7 +517,7 @@ static void get_statuscol_display_info(statuscol_T *stcp, LineDrawState *draw_st
 static bool use_cursor_line_nr(win_T *wp, linenr_T lnum, int row, int startrow, int filler_lines)
 {
   return wp->w_p_cul
-         && lnum == wp->w_cursor.lnum
+         && lnum == wp->w_cursorline
          && (wp->w_p_culopt_flags & CULOPT_NBR)
          && (row == startrow + filler_lines
              || (row > startrow + filler_lines
@@ -547,6 +547,12 @@ static inline void get_line_number_str(win_T *wp, linenr_T lnum, char *buf, size
 
 static int get_line_number_attr(win_T *wp, linenr_T lnum, int row, int startrow, int filler_lines)
 {
+  if (use_cursor_line_nr(wp, lnum, row, startrow, filler_lines)) {
+    // TODO(vim): Can we use CursorLine instead of CursorLineNr
+    // when CursorLineNr isn't set?
+    return win_hl_attr(wp, HLF_CLN);
+  }
+
   if (wp->w_p_rnu) {
     if (lnum < wp->w_cursor.lnum) {
       // Use LineNrAbove
@@ -556,12 +562,6 @@ static int get_line_number_attr(win_T *wp, linenr_T lnum, int row, int startrow,
       // Use LineNrBelow
       return win_hl_attr(wp, HLF_LNB);
     }
-  }
-
-  if (use_cursor_line_nr(wp, lnum, row, startrow, filler_lines)) {
-    // TODO(vim): Can we use CursorLine instead of CursorLineNr
-    // when CursorLineNr isn't set?
-    return win_hl_attr(wp, HLF_CLN);
   }
 
   return win_hl_attr(wp, HLF_N);
@@ -960,20 +960,17 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
   filler_todo = filler_lines;
 
   // Cursor line highlighting for 'cursorline' in the current window.
-  if (lnum == wp->w_cursor.lnum) {
-    // Do not show the cursor line in the text when Visual mode is active,
-    // because it's not clear what is selected then.
-    if (wp->w_p_cul && !(wp == curwin && VIsual_active)
-        && wp->w_p_culopt_flags != CULOPT_NBR) {
-      cul_screenline = (wp->w_p_wrap
-                        && (wp->w_p_culopt_flags & CULOPT_SCRLINE));
-      if (!cul_screenline) {
-        apply_cursorline_highlight(wp, lnum, &line_attr, &cul_attr, &line_attr_lowprio);
-      } else {
-        margin_columns_win(wp, &left_curline_col, &right_curline_col);
-      }
-      area_highlighting = true;
+  if (wp->w_p_cul && wp->w_p_culopt_flags != CULOPT_NBR && lnum == wp->w_cursorline
+      // Do not show the cursor line in the text when Visual mode is active,
+      // because it's not clear what is selected then.
+      && !(wp == curwin && VIsual_active)) {
+    cul_screenline = (wp->w_p_wrap && (wp->w_p_culopt_flags & CULOPT_SCRLINE));
+    if (!cul_screenline) {
+      apply_cursorline_highlight(wp, lnum, &line_attr, &cul_attr, &line_attr_lowprio);
+    } else {
+      margin_columns_win(wp, &left_curline_col, &right_curline_col);
     }
+    area_highlighting = true;
   }
 
   SignTextAttrs sattrs[SIGN_SHOW_MAX];  // sign attributes for the sign column

@@ -1112,20 +1112,23 @@ struct window_S {
   win_T *w_prev;              ///< link to previous window
   win_T *w_next;              ///< link to next window
   bool w_closing;                   ///< window is being closed, don't let
-                                    ///  autocommands close it too.
+                                    ///< autocommands close it too.
 
   frame_T *w_frame;             ///< frame containing this window
 
   pos_T w_cursor;                   ///< cursor position in buffer
 
   colnr_T w_curswant;               ///< Column we want to be at.  This is
-                                    ///  used to try to stay in the same column
-                                    ///  for up/down cursor motions.
+                                    ///< used to try to stay in the same column
+                                    ///< for up/down cursor motions.
 
   int w_set_curswant;               // If set, then update w_curswant the next
                                     // time through cursupdate() to the
                                     // current virtual column
 
+  linenr_T w_cursorline;            ///< Where 'cursorline' should be drawn,
+                                    ///< can be different from w_cursor.lnum
+                                    ///< for closed folds.
   linenr_T w_last_cursorline;       ///< where last 'cursorline' was drawn
   pos_T w_last_cursormoved;         ///< for CursorMoved event
 
