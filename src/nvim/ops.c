@@ -923,7 +923,7 @@ int do_record(int c)
     dict_T *dict = get_v_event(&save_v_event);
 
     // The recorded text contents.
-    char *p = (char *)get_recorded();
+    char *p = get_recorded();
     if (p != NULL) {
       // Remove escaping for K_SPECIAL in multi-byte chars.
       vim_unescape_ks(p);
