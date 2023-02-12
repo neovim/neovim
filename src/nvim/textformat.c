@@ -104,7 +104,6 @@ void internal_format(int textwidth, int second_indent, int flags, bool format_on
     int wantcol;                        // column at textwidth border
     int foundcol;                       // column for start of spaces
     int end_foundcol = 0;               // column for start of word
-    colnr_T len;
     colnr_T virtcol;
     int orig_col = 0;
     char *saved_text = NULL;
@@ -441,7 +440,7 @@ void internal_format(int textwidth, int second_indent, int flags, bool format_on
       // Check if cursor is not past the NUL off the line, cindent
       // may have added or removed indent.
       curwin->w_cursor.col += startcol;
-      len = (colnr_T)strlen(get_cursor_line_ptr());
+      colnr_T len = (colnr_T)strlen(get_cursor_line_ptr());
       if (curwin->w_cursor.col > len) {
         curwin->w_cursor.col = len;
       }
@@ -522,7 +521,6 @@ static bool same_leader(linenr_T lnum, int leader1_len, char *leader1_flags, int
                         char *leader2_flags)
 {
   int idx1 = 0, idx2 = 0;
-  char *p;
   char *line1;
   char *line2;
 
@@ -536,7 +534,7 @@ static bool same_leader(linenr_T lnum, int leader1_len, char *leader1_flags, int
   // If first leader has 's' flag, the lines can only be joined if there is
   // some text after it and the second line has the 'm' flag.
   if (leader1_flags != NULL) {
-    for (p = leader1_flags; *p && *p != ':'; p++) {
+    for (char *p = leader1_flags; *p && *p != ':'; p++) {
       if (*p == COM_FIRST) {
         return leader2_len == 0;
       }
@@ -633,10 +631,6 @@ static bool paragraph_start(linenr_T lnum)
 /// @param prev_line   may start in previous line
 void auto_format(bool trailblank, bool prev_line)
 {
-  colnr_T len;
-  char *new, *pnew;
-  int cc;
-
   if (!has_format_option(FO_AUTO)) {
     return;
   }
@@ -655,7 +649,7 @@ void auto_format(bool trailblank, bool prev_line)
   int wasatend = (pos.col == (colnr_T)strlen(old));
   if (*old != NUL && !trailblank && wasatend) {
     dec_cursor();
-    cc = gchar_cursor();
+    int cc = gchar_cursor();
     if (!WHITECHAR(cc) && curwin->w_cursor.col > 0
         && has_format_option(FO_ONE_LETTER)) {
       dec_cursor();
@@ -705,8 +699,9 @@ void auto_format(bool trailblank, bool prev_line)
   // need to add a space when 'w' is in 'formatoptions' to keep a paragraph
   // formatted.
   if (!wasatend && has_format_option(FO_WHITE_PAR)) {
-    new = get_cursor_line_ptr();
-    len = (colnr_T)strlen(new);
+    char *pnew;
+    char *new = get_cursor_line_ptr();
+    colnr_T len = (colnr_T)strlen(new);
     if (curwin->w_cursor.col == len) {
       pnew = xstrnsave(new, (size_t)len + 2);
       pnew[len] = ' ';
