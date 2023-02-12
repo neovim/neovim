@@ -19,6 +19,7 @@ env:
   ASAN_OPTIONS: detect_leaks=1:check_initialization_order=1:handle_abort=1:handle_sigill=1:log_path=${{ github.workspace }}/build/log/asan:intercept_tls_get_addr=0
   BIN_DIR: ${{ github.workspace }}/bin
   BUILD_DIR: ${{ github.workspace }}/build
+  DEPS_BUILD_DIR: ${{ github.workspace }}/nvim-deps
   INSTALL_PREFIX: ${{ github.workspace }}/nvim-install
   LOG_DIR: ${{ github.workspace }}/build/log
   NVIM_LOG_FILE: ${{ github.workspace }}/build/.nvimlog
@@ -406,8 +407,6 @@ jobs:
     runs-on: windows-2019
     timeout-minutes: 45
     name: windows
-    env:
-      DEPS_BUILD_DIR: ${{ github.workspace }}/nvim-deps
     steps:
       - uses: actions/checkout@v3
 
