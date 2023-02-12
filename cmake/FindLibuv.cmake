@@ -63,7 +63,7 @@ if(Threads_FOUND)
   list(APPEND LIBUV_LIBRARIES ${CMAKE_THREAD_LIBS_INIT})
 endif()
 
-find_package_handle_standard_args(LibUV DEFAULT_MSG
+find_package_handle_standard_args(Libuv DEFAULT_MSG
                                   LIBUV_LIBRARY LIBUV_INCLUDE_DIR)
 
 mark_as_advanced(LIBUV_INCLUDE_DIR LIBUV_LIBRARY)

@@ -118,7 +118,7 @@ endif()
 
 # If the macOS deployment target is not set manually (via $MACOSX_DEPLOYMENT_TARGET),
 # fall back to local system version. Needs to be done here and in top-level CMakeLists.txt.
-if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
+if(APPLE)
   if(NOT CMAKE_OSX_DEPLOYMENT_TARGET)
     execute_process(COMMAND sw_vers -productVersion
                     OUTPUT_VARIABLE MACOS_VERSION
@@ -156,7 +156,6 @@ set(LIBTERMKEY_SHA256 6945bd3c4aaa83da83d80a045c5563da4edd7d0374c62c0d35aec09eb3
 set(LIBVTERM_URL https://www.leonerd.org.uk/code/libvterm/libvterm-0.3.1.tar.gz)
 set(LIBVTERM_SHA256 25a8ad9c15485368dfd0a8a9dca1aec8fea5c27da3fa74ec518d5d3787f0c397)
 
-set(LUV_VERSION 1.44.2-1)
 set(LUV_URL https://github.com/luvit/luv/archive/e8e7b7e13225348a8806118a3ea9e021383a9536.tar.gz)
 set(LUV_SHA256 531dfbcb6fffe3fdfa806860b39035e54b07ee1ff3bb2af813e175febf7e9ccc)
 

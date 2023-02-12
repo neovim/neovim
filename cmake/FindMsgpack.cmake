@@ -22,9 +22,25 @@ find_library(MSGPACK_LIBRARY NAMES ${MSGPACK_NAMES}
 
 mark_as_advanced(MSGPACK_INCLUDE_DIR MSGPACK_LIBRARY)
 
-set(MSGPACK_LIBRARIES ${MSGPACK_LIBRARY})
-set(MSGPACK_INCLUDE_DIRS ${MSGPACK_INCLUDE_DIR})
-
 find_package_handle_standard_args(Msgpack
   REQUIRED_VARS MSGPACK_LIBRARY MSGPACK_INCLUDE_DIR
   VERSION_VAR MSGPACK_VERSION_STRING)
+
+add_library(msgpack INTERFACE)
+target_include_directories(msgpack SYSTEM BEFORE INTERFACE ${MSGPACK_INCLUDE_DIR})
+target_link_libraries(msgpack INTERFACE ${MSGPACK_LIBRARY})
+
+list(APPEND CMAKE_REQUIRED_INCLUDES "${MSGPACK_INCLUDE_DIR}")
+check_c_source_compiles("
+#include <msgpack.h>
+
+int
+main(void)
+{
+  return MSGPACK_OBJECT_FLOAT32;
+}
+" MSGPACK_HAS_FLOAT32)
+list(REMOVE_ITEM CMAKE_REQUIRED_INCLUDES "${MSGPACK_INCLUDE_DIR}")
+if(MSGPACK_HAS_FLOAT32)
+  target_compile_definitions(msgpack INTERFACE NVIM_MSGPACK_HAS_FLOAT32)
+endif()

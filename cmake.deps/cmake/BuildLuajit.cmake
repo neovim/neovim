@@ -38,7 +38,7 @@ function(BuildLuajit)
 endfunction()
 
 check_c_compiler_flag(-fno-stack-check HAS_NO_STACK_CHECK)
-if(CMAKE_SYSTEM_NAME MATCHES "Darwin" AND HAS_NO_STACK_CHECK)
+if(APPLE AND HAS_NO_STACK_CHECK)
   set(NO_STACK_CHECK "CFLAGS+=-fno-stack-check")
 else()
   set(NO_STACK_CHECK "")
@@ -58,7 +58,7 @@ set(BUILDCMD_UNIX ${MAKE_PRG} -j CFLAGS=-fPIC
 
 # Setting MACOSX_DEPLOYMENT_TARGET is mandatory for LuaJIT; use version set by
 # cmake.deps/CMakeLists.txt (either environment variable or current system version).
-if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
+if(APPLE)
   set(DEPLOYMENT_TARGET "MACOSX_DEPLOYMENT_TARGET=${CMAKE_OSX_DEPLOYMENT_TARGET}")
 endif()
 

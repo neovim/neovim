@@ -30,7 +30,7 @@ if(UNIX)
     list(APPEND LUAROCKS_OPTS
       --with-lua=${DEPS_INSTALL_DIR})
   else()
-    find_package(LuaJit)
+    find_package(Luajit)
     if(LUAJIT_FOUND)
       list(APPEND LUAROCKS_OPTS
         --with-lua-include=${LUAJIT_INCLUDE_DIRS}
