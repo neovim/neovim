@@ -111,20 +111,24 @@ jobs:
 
   windows:
     runs-on: windows-2019
-    env:
-      DEPS_BUILD_DIR: ${{ github.workspace }}/nvim-deps
-      CMAKE_BUILD_TYPE: "RelWithDebInfo"
     name: windows (MSVC_64)
     steps:
       - uses: actions/checkout@v3
         with:
           fetch-depth: 0
       - name: Set env
-        run: ./.github/workflows/env.ps1
+        run: |
+          $installationPath = vswhere.exe -latest -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+          if ($installationPath -and (Test-Path "$installationPath\Common7\Tools\vsdevcmd.bat")) {
+            & "${env:COMSPEC}" /s /c "`"$installationPath\Common7\Tools\vsdevcmd.bat`" -arch=x64 -no_logo && set" | ForEach-Object {
+              $name, $value = $_ -split '=', 2
+              "$name=$value" >> $env:GITHUB_ENV
+            }
+          }
       - name: Build deps
         run: |
-          cmake -S cmake.deps -B $env:DEPS_BUILD_DIR -G Ninja -DCMAKE_BUILD_TYPE='RelWithDebInfo'
-          cmake --build $env:DEPS_BUILD_DIR
+          cmake -S cmake.deps -B .deps -G Ninja -DCMAKE_BUILD_TYPE='RelWithDebInfo'
+          cmake --build .deps
       - name: build package
         run: |
           cmake -B build -G Ninja -DCMAKE_BUILD_TYPE='RelWithDebInfo'
