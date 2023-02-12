@@ -40,9 +40,9 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - name: Install apt packages
+      - name: Install dependencies
         run: |
-          ./.github/scripts/install_deps_ubuntu.sh
+          cmake -P ./.github/scripts/install_dependencies.cmake
           sudo apt-get install -y lua-check
 
       - name: Cache uncrustify
@@ -129,10 +129,10 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - name: Install apt packages
+      - name: Install dependencies
         run: |
           sudo add-apt-repository ppa:neovim-ppa/stable
-          ./.github/scripts/install_deps_ubuntu.sh
+          cmake -P ./.github/scripts/install_dependencies.cmake
           sudo apt-get install -y \
             libluajit-5.1-dev \
             libmsgpack-dev \
@@ -224,15 +224,8 @@ jobs:
       - name: Create log dir
         run: mkdir -p "$LOG_DIR"
 
-      - name: Install apt packages
-        if: runner.os == 'Linux'
-        run: ./.github/scripts/install_deps_ubuntu.sh
-
-      - name: Install brew packages
-        if: runner.os == 'macOS'
-        run: |
-          brew update --quiet
-          brew install automake cpanminus ninja
+      - name: Install dependencies
+        run: cmake -D TEST_DEPS=ON -P ./.github/scripts/install_dependencies.cmake
 
       - name: Setup interpreter packages
         run: |
@@ -370,8 +363,8 @@ jobs:
       - name: Set up environment
         run: echo "$BIN_DIR" >> $GITHUB_PATH
 
-      - name: Install apt packages
-        run: ./.github/scripts/install_deps_ubuntu.sh
+      - name: Install dependencies
+        run: cmake -P ./.github/scripts/install_dependencies.cmake
 
       - name: Install minimum required version of cmake
         run: |
