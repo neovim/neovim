@@ -70,8 +70,6 @@ jobs:
           mkdir -p .cache
           cp $build_dir/uncrustify ${{ env.CACHE_UNCRUSTIFY }}
 
-      - run: echo "DEPS_BUILD_DIR=$HOME/nvim-deps" >> $GITHUB_ENV
-
       - uses: ./.github/actions/cache
 
       - name: Build third-party deps
@@ -387,8 +385,6 @@ jobs:
             echo "Unexpected CMake version: $cmake_version"
             exit 1
           }
-
-      - run: echo "DEPS_BUILD_DIR=$HOME/nvim-deps" >> $GITHUB_ENV
 
       - uses: ./.github/actions/cache
 
