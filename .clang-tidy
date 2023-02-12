@@ -1,3 +1,4 @@
+WarningsAsErrors: '*'
 Checks: >
   -*,
 

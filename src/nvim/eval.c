@@ -3410,7 +3410,7 @@ static int eval_index(char **arg, typval_T *rettv, int evaluate, int verbose)
         if (n1 >= len || n2 < 0 || n1 > n2) {
           v = NULL;
         } else {
-          v = xmemdupz(s + n1, (size_t)(n2 - n1 + 1));
+          v = xmemdupz(s + n1, (size_t)n2 - (size_t)n1 + 1);
         }
       } else {
         // The resulting variable is a string of a single
