@@ -645,6 +645,8 @@ void remote_ui_grid_resize(UI *ui, Integer grid, Integer width, Integer height)
   Array args = data->call_buf;
   if (ui->ui_ext[kUILinegrid]) {
     ADD_C(args, INTEGER_OBJ(grid));
+  } else {
+    data->client_col = -1;  // force cursor update
   }
   ADD_C(args, INTEGER_OBJ(width));
   ADD_C(args, INTEGER_OBJ(height));
