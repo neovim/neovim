@@ -616,11 +616,8 @@ fmarkv_T mark_view_make(linenr_T topline, pos_T pos)
 /// @return  next mark or NULL if no mark is found.
 fmark_T *getnextmark(pos_T *startpos, int dir, int begin_line)
 {
-  int i;
   fmark_T *result = NULL;
-  pos_T pos;
-
-  pos = *startpos;
+  pos_T pos = *startpos;
 
   if (dir == BACKWARD && begin_line) {
     pos.col = 0;
@@ -628,7 +625,7 @@ fmark_T *getnextmark(pos_T *startpos, int dir, int begin_line)
     pos.col = MAXCOL;
   }
 
-  for (i = 0; i < NMARKS; i++) {
+  for (int i = 0; i < NMARKS; i++) {
     if (curbuf->b_namedm[i].mark.lnum > 0) {
       if (dir == FORWARD) {
         if ((result == NULL || lt(curbuf->b_namedm[i].mark, result->mark))
@@ -685,18 +682,17 @@ static void fname2fnum(xfmark_T *fm)
 void fmarks_check_names(buf_T *buf)
 {
   char *name = buf->b_ffname;
-  int i;
 
   if (buf->b_ffname == NULL) {
     return;
   }
 
-  for (i = 0; i < NGLOBALMARKS; i++) {
+  for (int i = 0; i < NGLOBALMARKS; i++) {
     fmarks_check_one(&namedfm[i], name, buf);
   }
 
   FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
-    for (i = 0; i < wp->w_jumplistlen; i++) {
+    for (int i = 0; i < wp->w_jumplistlen; i++) {
       fmarks_check_one(&wp->w_jumplist[i], name, buf);
     }
   }
@@ -820,7 +816,6 @@ static char *mark_line(pos_T *mp, int lead_len)
 void ex_marks(exarg_T *eap)
 {
   char *arg = eap->arg;
-  int i;
   char *name;
   pos_T *posp, *startp, *endp;
 
@@ -829,10 +824,10 @@ void ex_marks(exarg_T *eap)
   }
 
   show_one_mark('\'', arg, &curwin->w_pcmark, NULL, true);
-  for (i = 0; i < NMARKS; i++) {
+  for (int i = 0; i < NMARKS; i++) {
     show_one_mark(i + 'a', arg, &curbuf->b_namedm[i].mark, NULL, true);
   }
-  for (i = 0; i < NGLOBALMARKS; i++) {
+  for (int i = 0; i < NGLOBALMARKS; i++) {
     if (namedfm[i].fmark.fnum != 0) {
       name = fm_getname(&namedfm[i].fmark, 15);
     } else {
@@ -918,7 +913,6 @@ void ex_delmarks(exarg_T *eap)
 {
   char *p;
   int from, to;
-  int i;
   int lower;
   int digit;
   int n;
@@ -953,7 +947,7 @@ void ex_delmarks(exarg_T *eap)
           from = to = (uint8_t)(*p);
         }
 
-        for (i = from; i <= to; i++) {
+        for (int i = from; i <= to; i++) {
           if (lower) {
             curbuf->b_namedm[i - 'a'].mark.lnum = 0;
           } else {
@@ -997,13 +991,12 @@ void ex_delmarks(exarg_T *eap)
 // print the jumplist
 void ex_jumps(exarg_T *eap)
 {
-  int i;
   char *name;
 
   cleanup_jumplist(curwin, true);
   // Highlight title
   msg_puts_title(_("\n jump line  col file/text"));
-  for (i = 0; i < curwin->w_jumplistlen && !got_int; i++) {
+  for (int i = 0; i < curwin->w_jumplistlen && !got_int; i++) {
     if (curwin->w_jumplist[i].fmark.mark.lnum != 0) {
       name = fm_getname(&curwin->w_jumplist[i].fmark, 16);
 
@@ -1050,13 +1043,12 @@ void ex_clearjumps(exarg_T *eap)
 // print the changelist
 void ex_changes(exarg_T *eap)
 {
-  int i;
   char *name;
 
   // Highlight title
   msg_puts_title(_("\nchange line  col text"));
 
-  for (i = 0; i < curbuf->b_changelistlen && !got_int; i++) {
+  for (int i = 0; i < curbuf->b_changelistlen && !got_int; i++) {
     if (curbuf->b_changelist[i].mark.lnum != 0) {
       msg_putchar('\n');
       if (got_int) {
@@ -1137,7 +1129,6 @@ void mark_adjust_nofold(linenr_T line1, linenr_T line2, linenr_T amount, linenr_
 static void mark_adjust_internal(linenr_T line1, linenr_T line2, linenr_T amount,
                                  linenr_T amount_after, bool adjust_folds, ExtmarkOp op)
 {
-  int i;
   int fnum = curbuf->b_fnum;
   linenr_T *lp;
   static pos_T initpos = { 1, 0, 0 };
@@ -1148,13 +1139,13 @@ static void mark_adjust_internal(linenr_T line1, linenr_T line2, linenr_T amount
 
   if ((cmdmod.cmod_flags & CMOD_LOCKMARKS) == 0) {
     // named marks, lower case and upper case
-    for (i = 0; i < NMARKS; i++) {
+    for (int i = 0; i < NMARKS; i++) {
       ONE_ADJUST(&(curbuf->b_namedm[i].mark.lnum));
       if (namedfm[i].fmark.fnum == fnum) {
         ONE_ADJUST_NODEL(&(namedfm[i].fmark.mark.lnum));
       }
     }
-    for (i = NMARKS; i < NGLOBALMARKS; i++) {
+    for (int i = NMARKS; i < NGLOBALMARKS; i++) {
       if (namedfm[i].fmark.fnum == fnum) {
         ONE_ADJUST_NODEL(&(namedfm[i].fmark.mark.lnum));
       }
@@ -1172,7 +1163,7 @@ static void mark_adjust_internal(linenr_T line1, linenr_T line2, linenr_T amount
     }
 
     // list of change positions
-    for (i = 0; i < curbuf->b_changelistlen; i++) {
+    for (int i = 0; i < curbuf->b_changelistlen; i++) {
       ONE_ADJUST_NODEL(&(curbuf->b_changelist[i].mark.lnum));
     }
 
@@ -1216,7 +1207,7 @@ static void mark_adjust_internal(linenr_T line1, linenr_T line2, linenr_T amount
     if ((cmdmod.cmod_flags & CMOD_LOCKMARKS) == 0) {
       // Marks in the jumplist.  When deleting lines, this may create
       // duplicate marks in the jumplist, they will be removed later.
-      for (i = 0; i < win->w_jumplistlen; i++) {
+      for (int i = 0; i < win->w_jumplistlen; i++) {
         if (win->w_jumplist[i].fmark.fnum == fnum) {
           ONE_ADJUST_NODEL(&(win->w_jumplist[i].fmark.mark.lnum));
         }
@@ -1226,7 +1217,7 @@ static void mark_adjust_internal(linenr_T line1, linenr_T line2, linenr_T amount
     if (win->w_buffer == curbuf) {
       if ((cmdmod.cmod_flags & CMOD_LOCKMARKS) == 0) {
         // marks in the tag stack
-        for (i = 0; i < win->w_tagstacklen; i++) {
+        for (int i = 0; i < win->w_tagstacklen; i++) {
           if (win->w_tagstack[i].fmark.fnum == fnum) {
             ONE_ADJUST_NODEL(&(win->w_tagstack[i].fmark.mark.lnum));
           }
@@ -1308,7 +1299,6 @@ static void mark_adjust_internal(linenr_T line1, linenr_T line2, linenr_T amount
 void mark_col_adjust(linenr_T lnum, colnr_T mincol, linenr_T lnum_amount, long col_amount,
                      int spaces_removed)
 {
-  int i;
   int fnum = curbuf->b_fnum;
   pos_T *posp;
 
@@ -1316,13 +1306,13 @@ void mark_col_adjust(linenr_T lnum, colnr_T mincol, linenr_T lnum_amount, long c
     return;     // nothing to do
   }
   // named marks, lower case and upper case
-  for (i = 0; i < NMARKS; i++) {
+  for (int i = 0; i < NMARKS; i++) {
     COL_ADJUST(&(curbuf->b_namedm[i].mark));
     if (namedfm[i].fmark.fnum == fnum) {
       COL_ADJUST(&(namedfm[i].fmark.mark));
     }
   }
-  for (i = NMARKS; i < NGLOBALMARKS; i++) {
+  for (int i = NMARKS; i < NGLOBALMARKS; i++) {
     if (namedfm[i].fmark.fnum == fnum) {
       COL_ADJUST(&(namedfm[i].fmark.mark));
     }
@@ -1335,7 +1325,7 @@ void mark_col_adjust(linenr_T lnum, colnr_T mincol, linenr_T lnum_amount, long c
   COL_ADJUST(&(curbuf->b_last_change.mark));
 
   // list of change positions
-  for (i = 0; i < curbuf->b_changelistlen; i++) {
+  for (int i = 0; i < curbuf->b_changelistlen; i++) {
     COL_ADJUST(&(curbuf->b_changelist[i].mark));
   }
 
@@ -1355,7 +1345,7 @@ void mark_col_adjust(linenr_T lnum, colnr_T mincol, linenr_T lnum_amount, long c
   // Adjust items in all windows related to the current buffer.
   FOR_ALL_WINDOWS_IN_TAB(win, curtab) {
     // marks in the jumplist
-    for (i = 0; i < win->w_jumplistlen; i++) {
+    for (int i = 0; i < win->w_jumplistlen; i++) {
       if (win->w_jumplist[i].fmark.fnum == fnum) {
         COL_ADJUST(&(win->w_jumplist[i].fmark.mark));
       }
@@ -1363,7 +1353,7 @@ void mark_col_adjust(linenr_T lnum, colnr_T mincol, linenr_T lnum_amount, long c
 
     if (win->w_buffer == curbuf) {
       // marks in the tag stack
-      for (i = 0; i < win->w_tagstacklen; i++) {
+      for (int i = 0; i < win->w_tagstacklen; i++) {
         if (win->w_tagstack[i].fmark.fnum == fnum) {
           COL_ADJUST(&(win->w_tagstack[i].fmark.mark));
         }
@@ -1456,9 +1446,7 @@ void cleanup_jumplist(win_T *wp, bool loadfiles)
 // Copy the jumplist from window "from" to window "to".
 void copy_jumplist(win_T *from, win_T *to)
 {
-  int i;
-
-  for (i = 0; i < from->w_jumplistlen; i++) {
+  for (int i = 0; i < from->w_jumplistlen; i++) {
     to->w_jumplist[i] = from->w_jumplist[i];
     if (from->w_jumplist[i].fname != NULL) {
       to->w_jumplist[i].fname = xstrdup(from->w_jumplist[i].fname);
@@ -1670,9 +1658,7 @@ bool mark_set_local(const char name, buf_T *const buf, const fmark_T fm, const b
 // Free items in the jumplist of window "wp".
 void free_jumplist(win_T *wp)
 {
-  int i;
-
-  for (i = 0; i < wp->w_jumplistlen; i++) {
+  for (int i = 0; i < wp->w_jumplistlen; i++) {
     free_xfmark(wp->w_jumplist[i]);
   }
   wp->w_jumplistlen = 0;

@@ -897,7 +897,6 @@ void suggest_load_files(void)
   char *dotp;
   FILE *fd;
   char buf[MAXWLEN];
-  int i;
   time_t timestamp;
   int wcount;
   int wordnr;
@@ -925,7 +924,7 @@ void suggest_load_files(void)
       }
 
       // <SUGHEADER>: <fileID> <versionnr> <timestamp>
-      for (i = 0; i < VIMSUGMAGICL; i++) {
+      for (int i = 0; i < VIMSUGMAGICL; i++) {
         buf[i] = (char)getc(fd);                              // <fileID>
       }
       if (strncmp(buf, VIMSUGMAGIC, VIMSUGMAGICL) != 0) {
@@ -1734,7 +1733,6 @@ static idx_T read_tree_node(FILE *fd, char_u *byts, idx_T *idxs, int maxidx, idx
                             bool prefixtree, int maxprefcondnr)
 {
   int len;
-  int i;
   int n;
   idx_T idx = startidx;
   int c2;
@@ -1751,7 +1749,7 @@ static idx_T read_tree_node(FILE *fd, char_u *byts, idx_T *idxs, int maxidx, idx
   byts[idx++] = (char_u)len;
 
   // Read the byte values, flag/region bytes and shared indexes.
-  for (i = 1; i <= len; i++) {
+  for (int i = 1; i <= len; i++) {
     int c = getc(fd);                                       // <byte>
     if (c < 0) {
       return SP_TRUNCERROR;
@@ -1814,7 +1812,7 @@ static idx_T read_tree_node(FILE *fd, char_u *byts, idx_T *idxs, int maxidx, idx
   // Recursively read the children for non-shared siblings.
   // Skip the end-of-word ones (zero byte value) and the shared ones (and
   // remove SHARED_MASK)
-  for (i = 1; i <= len; i++) {
+  for (int i = 1; i <= len; i++) {
     if (byts[startidx + i] != 0) {
       if (idxs[startidx + i] & SHARED_MASK) {
         idxs[startidx + i] &= ~SHARED_MASK;
@@ -2673,9 +2671,7 @@ static afffile_T *spell_read_aff(spellinfo_T *spin, char *fname)
                  && sofoto == NULL) {
         sofoto = getroom_save(spin, items[1]);
       } else if (strcmp(items[0], "COMMON") == 0) {
-        int i;
-
-        for (i = 1; i < itemcnt; i++) {
+        for (int i = 1; i < itemcnt; i++) {
           if (HASHITEM_EMPTY(hash_find(&spin->si_commonwords, (char *)items[i]))) {
             p = xstrdup(items[i]);
             hash_add(&spin->si_commonwords, p);
@@ -3954,10 +3950,9 @@ static int tree_add_word(spellinfo_T *spin, const char_u *word, wordnode_T *root
   wordnode_T *np;
   wordnode_T *copyp, **copyprev;
   wordnode_T **prev = NULL;
-  int i;
 
   // Add each byte of the word to the tree, including the NUL at the end.
-  for (i = 0;; i++) {
+  for (int i = 0;; i++) {
     // When there is more than one reference to this node we need to make
     // a copy, so that we can modify it.  Copy the whole list of siblings
     // (we don't optimize for a partly shared list of siblings).
@@ -5737,13 +5732,12 @@ static void set_spell_charflags(const char_u *flags, int cnt, char *fol)
   // We build the new tables here first, so that we can compare with the
   // previous one.
   spelltab_T new_st;
-  int i;
   char *p = fol;
   int c;
 
   clear_spell_chartab(&new_st);
 
-  for (i = 0; i < 128; i++) {
+  for (int i = 0; i < 128; i++) {
     if (i < cnt) {
       new_st.st_isw[i + 128] = (flags[i] & CF_WORD) != 0;
       new_st.st_isu[i + 128] = (flags[i] & CF_UPPER) != 0;
@@ -5818,7 +5812,6 @@ static void set_map_str(slang_T *lp, char *map)
 {
   char *p;
   int headc = 0;
-  int i;
 
   if (*map == NUL) {
     lp->sl_has_map = false;
@@ -5827,7 +5820,7 @@ static void set_map_str(slang_T *lp, char *map)
   lp->sl_has_map = true;
 
   // Init the array and hash tables empty.
-  for (i = 0; i < 256; i++) {
+  for (int i = 0; i < 256; i++) {
     lp->sl_map_array[i] = 0;
   }
   hash_init(&lp->sl_map_hash);

@@ -637,7 +637,6 @@ int find_special_key(const char **const srcp, const size_t src_len, int *const m
   const bool in_string = flags & FSK_IN_STRING;
   int modifiers;
   int bit;
-  int key;
   uvarnumber_T n;
   int l;
 
@@ -685,6 +684,7 @@ int find_special_key(const char **const srcp, const size_t src_len, int *const m
   }
 
   if (bp <= end && *bp == '>') {  // found matching '>'
+    int key;
     end_of_name = bp + 1;
 
     // Which modifiers are given?

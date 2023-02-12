@@ -286,7 +286,6 @@ int do_in_path(char *path, char *name, int flags, DoInRuntimepathCB callback, vo
   char *buf = xmallocz(MAXPATHL);
   {
     char *tail;
-    int i;
     if (p_verbose > 10 && name != NULL) {
       verbose_enter();
       smsg(_("Searching for \"%s\" in \"%s\""), name, path);
@@ -335,7 +334,7 @@ int do_in_path(char *path, char *name, int flags, DoInRuntimepathCB callback, vo
 
           // Expand wildcards, invoke the callback for each match.
           if (gen_expand_wildcards(1, &buf, &num_files, &files, ew_flags) == OK) {
-            for (i = 0; i < num_files; i++) {
+            for (int i = 0; i < num_files; i++) {
               (*callback)(files[i], cookie);
               did_one = true;
               if (!(flags & DIP_ALL)) {
@@ -416,7 +415,6 @@ int do_in_cached_path(char *name, int flags, DoInRuntimepathCB callback, void *c
   char *tail;
   int num_files;
   char **files;
-  int i;
   bool did_one = false;
 
   char buf[MAXPATHL];
@@ -469,7 +467,7 @@ int do_in_cached_path(char *name, int flags, DoInRuntimepathCB callback, void *c
         // Expand wildcards, invoke the callback for each match.
         char *(pat[]) = { buf };
         if (gen_expand_wildcards(1, pat, &num_files, &files, ew_flags) == OK) {
-          for (i = 0; i < num_files; i++) {
+          for (int i = 0; i < num_files; i++) {
             (*callback)(files[i], cookie);
             did_one = true;
             if (!(flags & DIP_ALL)) {

@@ -75,7 +75,6 @@ void do_debug(char *cmd)
   tasave_T typeaheadbuf;
   bool typeahead_saved = false;
   int save_ignore_script = 0;
-  int n;
   char *cmdline = NULL;
   char *p;
   char *tail = NULL;
@@ -146,7 +145,7 @@ void do_debug(char *cmd)
     }
 
     // don't debug any function call, e.g. from an expression mapping
-    n = debug_break_level;
+    int n = debug_break_level;
     debug_break_level = -1;
 
     xfree(cmdline);

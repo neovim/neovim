@@ -847,7 +847,6 @@ int utf_byte2len(int b)
 int utf_ptr2len_len(const char *p, int size)
 {
   int len;
-  int i;
   int m;
 
   len = utf8len_tab[(uint8_t)(*p)];
@@ -859,7 +858,7 @@ int utf_ptr2len_len(const char *p, int size)
   } else {
     m = len;
   }
-  for (i = 1; i < m; i++) {
+  for (int i = 1; i < m; i++) {
     if ((p[i] & 0xc0) != 0x80) {
       return 1;
     }
@@ -1530,7 +1529,6 @@ void show_utf8(void)
   int rlen = 0;
   char *line;
   int clen;
-  int i;
 
   // Get the byte length of the char under the cursor, including composing
   // characters.
@@ -1542,7 +1540,7 @@ void show_utf8(void)
   }
 
   clen = 0;
-  for (i = 0; i < len; i++) {
+  for (int i = 0; i < len; i++) {
     if (clen == 0) {
       // start of (composing) character, get its length
       if (i > 0) {
@@ -2171,9 +2169,7 @@ char *enc_canonize(char *enc)
 /// Returns -1 when not found.
 static int enc_alias_search(const char *name)
 {
-  int i;
-
-  for (i = 0; enc_alias_table[i].name != NULL; i++) {
+  for (int i = 0; enc_alias_table[i].name != NULL; i++) {
     if (strcmp(name, enc_alias_table[i].name) == 0) {
       return enc_alias_table[i].canon;
     }

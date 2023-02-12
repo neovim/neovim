@@ -281,7 +281,6 @@ static int add_menu_path(const char *const menu_path, vimmenu_T *menuarg, const 
   char *next_name;
   char c;
   char d;
-  int i;
   int pri_idx = 0;
   int old_modes = 0;
   int amenu;
@@ -411,7 +410,7 @@ static int add_menu_path(const char *const menu_path, vimmenu_T *menuarg, const 
     p = (call_data == NULL) ? NULL : xstrdup(call_data);
 
     // loop over all modes, may add more than one
-    for (i = 0; i < MENU_MODES; i++) {
+    for (int i = 0; i < MENU_MODES; i++) {
       if (modes & (1 << i)) {
         // free any old menu
         free_menu_string(menu, i);
@@ -617,10 +616,7 @@ static int remove_menu(vimmenu_T **menup, char *name, int modes, bool silent)
 // Free the given menu structure and remove it from the linked list.
 static void free_menu(vimmenu_T **menup)
 {
-  int i;
-  vimmenu_T *menu;
-
-  menu = *menup;
+  vimmenu_T *menu = *menup;
 
   // Don't change *menup until after calling gui_mch_destroy_menu(). The
   // MacOS code needs the original structure to properly delete the menu.
@@ -630,7 +626,7 @@ static void free_menu(vimmenu_T **menup)
   xfree(menu->en_name);
   xfree(menu->en_dname);
   xfree(menu->actext);
-  for (i = 0; i < MENU_MODES; i++) {
+  for (int i = 0; i < MENU_MODES; i++) {
     free_menu_string(menu, i);
   }
   xfree(menu);
@@ -640,9 +636,8 @@ static void free_menu(vimmenu_T **menup)
 static void free_menu_string(vimmenu_T *menu, int idx)
 {
   int count = 0;
-  int i;
 
-  for (i = 0; i < MENU_MODES; i++) {
+  for (int i = 0; i < MENU_MODES; i++) {
     if (menu->strings[i] == menu->strings[idx]) {
       count++;
     }
@@ -662,13 +657,11 @@ static void free_menu_string(vimmenu_T *menu, int idx)
 /// @see menu_get
 static dict_T *menu_get_recursive(const vimmenu_T *menu, int modes)
 {
-  dict_T *dict;
-
   if (!menu || (menu->modes & modes) == 0x0) {
     return NULL;
   }
 
-  dict = tv_dict_alloc();
+  dict_T *dict = tv_dict_alloc();
   tv_dict_add_str(dict, S_LEN("name"), menu->dname);
   tv_dict_add_nr(dict, S_LEN("priority"), (int)menu->priority);
   tv_dict_add_nr(dict, S_LEN("hidden"), menu_is_hidden(menu->dname));

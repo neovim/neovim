@@ -248,11 +248,8 @@ size_t fill_foldcolumn(char *p, win_T *wp, foldinfo_T foldinfo, linenr_T lnum)
 /// Only works for single-byte characters (e.g., numbers).
 void rl_mirror(char *str)
 {
-  char *p1, *p2;
-  char t;
-
-  for (p1 = str, p2 = str + strlen(str) - 1; p1 < p2; p1++, p2--) {
-    t = *p1;
+  for (char *p1 = str, *p2 = str + strlen(str) - 1; p1 < p2; p1++, p2--) {
+    char t = *p1;
     *p1 = *p2;
     *p2 = t;
   }
@@ -264,9 +261,7 @@ void rl_mirror(char *str)
 /// line of the window right of it.  If not, then it's a vertical separator.
 bool stl_connected(win_T *wp)
 {
-  frame_T *fr;
-
-  fr = wp->w_frame;
+  frame_T *fr = wp->w_frame;
   while (fr->fr_parent != NULL) {
     if (fr->fr_parent->fr_layout == FR_COL) {
       if (fr->fr_next != NULL) {
@@ -437,11 +432,7 @@ bool skip_showmode(void)
 /// @return the length of the message (0 if no message).
 int showmode(void)
 {
-  bool need_clear;
   int length = 0;
-  int do_mode;
-  int attr;
-  int sub_attr;
 
   if (ui_has(kUIMessages) && clear_cmdline) {
     msg_ext_clear(true);
@@ -452,12 +443,13 @@ int showmode(void)
 
   msg_grid_validate();
 
-  do_mode = ((p_smd && msg_silent == 0)
-             && ((State & MODE_TERMINAL)
-                 || (State & MODE_INSERT)
-                 || restart_edit != NUL
-                 || VIsual_active));
+  int do_mode = ((p_smd && msg_silent == 0)
+                 && ((State & MODE_TERMINAL)
+                     || (State & MODE_INSERT)
+                     || restart_edit != NUL
+                     || VIsual_active));
   if (do_mode || reg_recording != 0) {
+    int sub_attr;
     if (skip_showmode()) {
       return 0;  // show mode later
     }
@@ -468,14 +460,14 @@ int showmode(void)
     check_for_delay(false);
 
     // if the cmdline is more than one line high, erase top lines
-    need_clear = clear_cmdline;
+    bool need_clear = clear_cmdline;
     if (clear_cmdline && cmdline_row < Rows - 1) {
       msg_clr_cmdline();  // will reset clear_cmdline
     }
 
     // Position on the last line in the window, column 0
     msg_pos_mode();
-    attr = HL_ATTR(HLF_CM);                     // Highlight mode
+    int attr = HL_ATTR(HLF_CM);                     // Highlight mode
 
     // When the screen is too narrow to show the entire mode message,
     // avoid scrolling and truncate instead.
