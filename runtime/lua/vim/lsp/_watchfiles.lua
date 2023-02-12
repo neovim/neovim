@@ -219,30 +219,36 @@ function M.register(reg, ctx)
         M._watchfunc(base_dir, { uvflags = { recursive = true } }, function(fullpath, change_type)
           change_type = to_lsp_change_type[change_type]
           if
-            M._match(pattern, fullpath) and math.floor(kind / (2 ^ (change_type - 1))) % 2 == 1
+            not M._match(pattern, fullpath)
+            -- e.g. match kind with Delete bit (0b0100) to Delete change_type (3)
+            -- Essentially, bit shift kind to the right using "integer division" with math.floor by (change_type - 1) places.
+            -- Then, "bitwise AND" with the lowest bit with `% 2 == 1`.
+            or not (math.floor(kind / (2 ^ (change_type - 1))) % 2 == 1)
           then
-            local change = {
-              uri = vim.uri_from_fname(fullpath),
-              type = change_type,
-            }
+            return
+          end
 
-            local last_type = change_cache[client_id][change.uri]
-            if last_type ~= change.type then
-              change_queues[client_id] = change_queues[client_id] or {}
-              table.insert(change_queues[client_id], change)
-              change_cache[client_id][change.uri] = change.type
-            end
+          local change = {
+            uri = vim.uri_from_fname(fullpath),
+            type = change_type,
+          }
 
-            if not queue_timers[client_id] then
-              queue_timers[client_id] = vim.defer_fn(function()
-                client.notify('workspace/didChangeWatchedFiles', {
-                  changes = change_queues[client_id],
-                })
-                queue_timers[client_id] = nil
-                change_queues[client_id] = nil
-                change_cache[client_id] = nil
-              end, queue_timeout_ms)
-            end
+          local last_type = change_cache[client_id][change.uri]
+          if last_type ~= change.type then
+            change_queues[client_id] = change_queues[client_id] or {}
+            table.insert(change_queues[client_id], change)
+            change_cache[client_id][change.uri] = change.type
+          end
+
+          if not queue_timers[client_id] then
+            queue_timers[client_id] = vim.defer_fn(function()
+              client.notify('workspace/didChangeWatchedFiles', {
+                changes = change_queues[client_id],
+              })
+              queue_timers[client_id] = nil
+              change_queues[client_id] = nil
+              change_cache[client_id] = nil
+            end, queue_timeout_ms)
           end
         end)
       )
