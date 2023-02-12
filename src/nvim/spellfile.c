@@ -5545,9 +5545,8 @@ void spell_add_word(char *word, int len, SpellAddType what, int idx, bool undo)
     fd = os_fopen(fname, "r");
     if (fd != NULL) {
       long fpos_next = 0;
-      long fpos = 0;
       while (!vim_fgets((char *)line, MAXWLEN * 2, fd)) {
-        fpos = fpos_next;
+        long fpos = fpos_next;
         fpos_next = ftell(fd);
         if (fpos_next < 0) {
           break;  // should never happen
