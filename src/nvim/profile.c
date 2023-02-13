@@ -290,11 +290,8 @@ void ex_profile(exarg_T *eap)
 {
   static proftime_T pause_time;
 
-  char *e;
-  int len;
-
-  e = skiptowhite(eap->arg);
-  len = (int)(e - eap->arg);
+  char *e = skiptowhite(eap->arg);
+  int len = (int)(e - eap->arg);
   e = skipwhite(e);
 
   if (len == 5 && strncmp(eap->arg, "start", 5) == 0 && *e != NUL) {
@@ -599,17 +596,15 @@ static void func_dump_profile(FILE *fd)
 {
   hashtab_T *const functbl = func_tbl_get();
   hashitem_T *hi;
-  int todo;
   ufunc_T *fp;
-  ufunc_T **sorttab;
   int st_len = 0;
 
-  todo = (int)functbl->ht_used;
+  int todo = (int)functbl->ht_used;
   if (todo == 0) {
     return;         // nothing to dump
   }
 
-  sorttab = xmalloc(sizeof(ufunc_T *) * (size_t)todo);
+  ufunc_T **sorttab = xmalloc(sizeof(ufunc_T *) * (size_t)todo);
 
   for (hi = functbl->ht_array; todo > 0; hi++) {
     if (!HASHITEM_EMPTY(hi)) {
@@ -804,12 +799,10 @@ void profile_dump(void)
 /// until later and we need to store the time now.
 void script_line_start(void)
 {
-  scriptitem_T *si;
-
   if (current_sctx.sc_sid <= 0 || current_sctx.sc_sid > script_items.ga_len) {
     return;
   }
-  si = &SCRIPT_ITEM(current_sctx.sc_sid);
+  scriptitem_T *si = &SCRIPT_ITEM(current_sctx.sc_sid);
   if (si->sn_prof_on && SOURCING_LNUM >= 1) {
     // Grow the array before starting the timer, so that the time spent
     // here isn't counted.
@@ -834,12 +827,10 @@ void script_line_start(void)
 /// Called when actually executing a function line.
 void script_line_exec(void)
 {
-  scriptitem_T *si;
-
   if (current_sctx.sc_sid <= 0 || current_sctx.sc_sid > script_items.ga_len) {
     return;
   }
-  si = &SCRIPT_ITEM(current_sctx.sc_sid);
+  scriptitem_T *si = &SCRIPT_ITEM(current_sctx.sc_sid);
   if (si->sn_prof_on && si->sn_prl_idx >= 0) {
     si->sn_prl_execed = true;
   }
@@ -848,12 +839,10 @@ void script_line_exec(void)
 /// Called when done with a function line.
 void script_line_end(void)
 {
-  scriptitem_T *si;
-
   if (current_sctx.sc_sid <= 0 || current_sctx.sc_sid > script_items.ga_len) {
     return;
   }
-  si = &SCRIPT_ITEM(current_sctx.sc_sid);
+  scriptitem_T *si = &SCRIPT_ITEM(current_sctx.sc_sid);
   if (si->sn_prof_on && si->sn_prl_idx >= 0
       && si->sn_prl_idx < si->sn_prl_ga.ga_len) {
     if (si->sn_prl_execed) {
