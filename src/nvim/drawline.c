@@ -104,8 +104,6 @@ static void margin_columns_win(win_T *wp, int *left_col, int *right_col)
   static int prev_col_off;
 
   int cur_col_off = win_col_off(wp);
-  int width1;
-  int width2;
 
   if (saved_w_virtcol == wp->w_virtcol && prev_wp == wp
       && prev_col_off == cur_col_off) {
@@ -114,8 +112,8 @@ static void margin_columns_win(win_T *wp, int *left_col, int *right_col)
     return;
   }
 
-  width1 = wp->w_width - cur_col_off;
-  width2 = width1 + win_col_off2(wp);
+  int width1 = wp->w_width - cur_col_off;
+  int width2 = width1 + win_col_off2(wp);
 
   *left_col = 0;
   *right_col = width1;
@@ -143,11 +141,11 @@ static int line_putchar(buf_T *buf, LineState *s, schar_T *dest, int maxcells, b
   const char *p = s->p;
   int cells = utf_ptr2cells(p);
   int c_len = utfc_ptr2len(p);
-  int u8c, u8cc[MAX_MCO];
+  int u8cc[MAX_MCO];
   if (cells > maxcells) {
     return -1;
   }
-  u8c = utfc_ptr2char(p, u8cc);
+  int u8c = utfc_ptr2char(p, u8cc);
   if (*p == TAB) {
     cells = MIN(tabstop_padding(vcol, buf->b_p_ts, buf->b_p_vts_array), maxcells);
     for (int c = 0; c < cells; c++) {
