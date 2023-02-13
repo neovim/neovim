@@ -254,7 +254,7 @@ jobs:
 
       - name: Build
         run: |
-          cmake -B build -G Ninja -D CI_BUILD=ON -D CMAKE_INSTALL_PREFIX:PATH=$INSTALL_PREFIX -D MIN_LOG_LEVEL=3 ${{ matrix.flags }}
+          cmake -B build -G Ninja -D CI_BUILD=ON -D CMAKE_INSTALL_PREFIX:PATH=$INSTALL_PREFIX ${{ matrix.flags }}
           cmake --build build
 
       - if: "!cancelled()"
@@ -383,7 +383,7 @@ jobs:
         run: make deps
 
       - name: Build
-        run: make CMAKE_FLAGS="-D CI_BUILD=ON -D CMAKE_INSTALL_PREFIX:PATH=$INSTALL_PREFIX -D MIN_LOG_LEVEL=3"
+        run: make CMAKE_FLAGS="-D CI_BUILD=ON -D CMAKE_INSTALL_PREFIX:PATH=$INSTALL_PREFIX"
 
       - name: Install
         run: make install
