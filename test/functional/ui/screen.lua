@@ -214,7 +214,7 @@ function Screen:attach(options, session)
     -- simplify test code by doing the same.
     self._options.rgb = true
   end
-  if self._options.ext_multigrid or self._options.ext_float then
+  if self._options.ext_multigrid then
     self._options.ext_linegrid = true
   end
 end
