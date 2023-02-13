@@ -82,7 +82,7 @@ describe('treesitter language API', function()
     command("set filetype=borklang")
     -- Should throw an error when filetype changes to borklang
     eq(".../language.lua:0: no parser for 'borklang' language, see :help treesitter-parsers",
-       pcall_err(exec_lua, "new_parser = vim.treesitter.get_parser(0)"))
+       pcall_err(exec_lua, "new_parser = vim.treesitter.get_parser(0, 'borklang')"))
   end)
 
   it('retrieve the tree given a range', function ()

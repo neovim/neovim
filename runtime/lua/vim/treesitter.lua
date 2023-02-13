@@ -96,11 +96,13 @@ function M.get_parser(bufnr, lang, opts)
   if bufnr == nil or bufnr == 0 then
     bufnr = a.nvim_get_current_buf()
   end
-  if lang == nil then
-    lang = a.nvim_buf_get_option(bufnr, 'filetype')
-  end
 
-  if parsers[bufnr] == nil or parsers[bufnr]:lang() ~= lang then
+  if parsers[bufnr] == nil then
+    lang = lang or a.nvim_buf_get_option(bufnr, 'filetype')
+    parsers[bufnr] = M._create_parser(bufnr, lang, opts)
+  elseif lang and parsers[bufnr]:lang() ~= lang then
+    -- Only try to create a new parser if lang is provided
+    -- and it doesn't match the stored parser
     parsers[bufnr] = M._create_parser(bufnr, lang, opts)
   end
 
@@ -411,6 +413,7 @@ function M.show_tree(opts)
   vim.bo[b].buflisted = false
   vim.bo[b].buftype = 'nofile'
   vim.bo[b].bufhidden = 'wipe'
+  vim.bo[b].filetype = 'query'
 
   local title = opts.title
   if not title then
@@ -424,9 +427,6 @@ function M.show_tree(opts)
   a.nvim_buf_set_name(b, title)
 
   pg:draw(b)
-
-  vim.fn.matchadd('Comment', '\\[[0-9:-]\\+\\]')
-  vim.fn.matchadd('String', '".*"')
 
   a.nvim_buf_clear_namespace(buf, pg.ns, 0, -1)
   a.nvim_buf_set_keymap(b, 'n', '<CR>', '', {
@@ -467,6 +467,15 @@ function M.show_tree(opts)
         end_col = math.max(0, pos.end_col),
         hl_group = 'Visual',
       })
+
+      local topline, botline = vim.fn.line('w0', win), vim.fn.line('w$', win)
+
+      -- Move the cursor if highlighted range is completely out of view
+      if pos.lnum < topline and pos.end_lnum < topline then
+        a.nvim_win_set_cursor(win, { pos.end_lnum + 1, 0 })
+      elseif pos.lnum > botline and pos.end_lnum > botline then
+        a.nvim_win_set_cursor(win, { pos.lnum + 1, 0 })
+      end
     end,
   })
 
