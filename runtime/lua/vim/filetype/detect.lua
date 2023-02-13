@@ -1420,7 +1420,7 @@ local patterns_hashbang = {
 
 ---@private
 -- File starts with "#!".
-local function match_from_hashbang(contents, path)
+local function match_from_hashbang(contents, path, dispatch_extension)
   local first_line = contents[1]
   -- Check for a line like "#!/usr/bin/env {options} bash".  Turn it into
   -- "#!/usr/bin/bash" to make matching easier.
@@ -1473,6 +1473,11 @@ local function match_from_hashbang(contents, path)
       return ft
     end
   end
+
+  -- If nothing matched, check the extension table. For a hashbang like
+  -- '#!/bin/env foo', this will set the filetype to 'fooscript' assuming
+  -- the filetype for the 'foo' extension is 'fooscript' in the extension table.
+  return dispatch_extension(name)
 end
 
 local patterns_text = {
@@ -1652,10 +1657,10 @@ local function match_from_text(contents, path)
   return cvs_diff(path, contents)
 end
 
-M.match_contents = function(contents, path)
+function M.match_contents(contents, path, dispatch_extension)
   local first_line = contents[1]
   if first_line:find('^#!') then
-    return match_from_hashbang(contents, path)
+    return match_from_hashbang(contents, path, dispatch_extension)
   else
     return match_from_text(contents, path)
   end
