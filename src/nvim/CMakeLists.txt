@@ -412,6 +412,9 @@ else()
 endif()
 
 # Log level (MIN_LOG_LEVEL in log.h)
+if($ENV{CI} MATCHES "true")
+  set(MIN_LOG_LEVEL 3)
+endif()
 if("${MIN_LOG_LEVEL}" MATCHES "^$")
   # Minimize logging for release-type builds.
   target_compile_definitions(main_lib INTERFACE MIN_LOG_LEVEL=$<IF:$<CONFIG:Debug>,1,3>)
