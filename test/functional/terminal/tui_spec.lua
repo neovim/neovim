@@ -2365,18 +2365,18 @@ describe("TUI as a client", function()
 
     set_session(client_super)
     local screen_client = thelpers.screen_setup(0,
-      string.format([=[["%s", "-u", "NONE", "-i", "NONE", "--server", "%s", "--remote-ui"]]=],
+      string.format([=[["%s", "--server", "%s", "--remote-ui"]]=],
                     nvim_prog, server_pipe))
 
-      screen_client:expect{grid=[[
-        Hello, Worl{1:d}                                      |
-        {4:~                                                 }|
-        {4:~                                                 }|
-        {4:~                                                 }|
-        {5:[No Name] [+]                                     }|
-                                                          |
-        {3:-- TERMINAL --}                                    |
-      ]]}
+    screen_client:expect{grid=[[
+      Hello, Worl{1:d}                                      |
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {5:[No Name] [+]                                     }|
+                                                        |
+      {3:-- TERMINAL --}                                    |
+    ]]}
 
     feed_data(":q!\n")
 
@@ -2394,7 +2394,7 @@ describe("TUI as a client", function()
 
     set_session(client_super)
     local screen = thelpers.screen_setup(0,
-      string.format([=[["%s", "-u", "NONE", "-i", "NONE", "--server", "%s", "--remote-ui"]]=],
+      string.format([=[["%s", "--server", "%s", "--remote-ui"]]=],
                     nvim_prog, server_pipe))
 
     screen:expect{grid=[[
@@ -2416,11 +2416,10 @@ describe("TUI as a client", function()
     server:close()
   end)
 
-
   it("throws error when no server exists", function()
     clear()
     local screen = thelpers.screen_setup(0,
-      string.format([=[["%s", "-u", "NONE", "-i", "NONE", "--server", "127.0.0.1:2436546", "--remote-ui"]]=],
+      string.format([=[["%s", "--server", "127.0.0.1:2436546", "--remote-ui"]]=],
                     nvim_prog), 60)
 
     screen:expect([[
@@ -2467,7 +2466,7 @@ describe("TUI as a client", function()
 
     set_session(client_super)
     local screen_client = thelpers.screen_setup(0,
-      string.format([=[["%s", "-u", "NONE", "-i", "NONE", "--server", "%s", "--remote-ui"]]=],
+      string.format([=[["%s", "--server", "%s", "--remote-ui"]]=],
                     nvim_prog, server_pipe))
 
     screen_client:expect{grid=[[
