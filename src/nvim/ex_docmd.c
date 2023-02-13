@@ -320,7 +320,6 @@ int do_cmdline(char *cmdline, LineGetter fgetline, void *cookie, int flags)
   linenr_T *breakpoint = NULL;          // ptr to breakpoint field in cookie
   int *dbg_tick = NULL;                 // ptr to dbg_tick field in cookie
   struct dbg_stuff debug_saved;         // saved things for debug mode
-  int initial_trylevel;
   msglist_T **saved_msg_list = NULL;
   msglist_T *private_msg_list;
 
@@ -328,8 +327,6 @@ int do_cmdline(char *cmdline, LineGetter fgetline, void *cookie, int flags)
   char *(*cmd_getline)(int, void *, int, bool);
   void *cmd_cookie;
   struct loop_cookie cmd_loop_cookie;
-  void *real_cookie;
-  int getline_is_func;
   static int call_depth = 0;            // recursiveness
 
   // For every pair of do_cmdline()/do_one_cmd() calls, use an extra memory
@@ -358,10 +355,10 @@ int do_cmdline(char *cmdline, LineGetter fgetline, void *cookie, int flags)
 
   ga_init(&lines_ga, (int)sizeof(wcmd_T), 10);
 
-  real_cookie = getline_cookie(fgetline, cookie);
+  void *real_cookie = getline_cookie(fgetline, cookie);
 
   // Inside a function use a higher nesting level.
-  getline_is_func = getline_equal(fgetline, cookie, get_func_line);
+  int getline_is_func = getline_equal(fgetline, cookie, get_func_line);
   if (getline_is_func && ex_nesting_level == func_level(real_cookie)) {
     ex_nesting_level++;
   }
@@ -393,7 +390,7 @@ int do_cmdline(char *cmdline, LineGetter fgetline, void *cookie, int flags)
     CLEAR_FIELD(debug_saved);
   }
 
-  initial_trylevel = trylevel;
+  int initial_trylevel = trylevel;
 
   // "did_throw" will be set to true when an exception is being thrown.
   did_throw = false;
@@ -6728,8 +6725,6 @@ char *eval_vars(char *src, const char *srcstart, size_t *usedlen, linenr_T *lnum
   char *resultbuf = NULL;
   size_t resultlen;
   int valid = VALID_HEAD | VALID_PATH;  // Assume valid result.
-  bool tilde_file = false;
-  bool skip_mod = false;
   char strbuf[30];
 
   *errormsg = NULL;
@@ -6774,6 +6769,8 @@ char *eval_vars(char *src, const char *srcstart, size_t *usedlen, linenr_T *lnum
     //    and following modifiers
     //
   } else {
+    bool tilde_file = false;
+    bool skip_mod = false;
     switch (spec_idx) {
     case SPEC_PERC:             // '%': current file
       if (curbuf->b_fname == NULL) {
