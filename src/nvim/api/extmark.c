@@ -520,7 +520,7 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer line, Integer
 
   // For backward compatibility we support "end_line" as an alias for "end_row"
   if (HAS_KEY(opts->end_line)) {
-    VALIDATE(!HAS_KEY(opts->end_row), "cannot use both end_row and end_line", {
+    VALIDATE(!HAS_KEY(opts->end_row), "%s", "cannot use both 'end_row' and 'end_line'", {
       goto error;
     });
     opts->end_row = opts->end_line;
@@ -537,8 +537,8 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer line, Integer
 
   if (opts->end_row.type == kObjectTypeInteger) {
     Integer val = opts->end_row.data.integer;
-    VALIDATE((val >= 0 && !(val > buf->b_ml.ml_line_count && strict)),
-             "end_row value outside range", {
+    VALIDATE_S((val >= 0 && !(val > buf->b_ml.ml_line_count && strict)),
+             "end_row", "(out of range)", {
       goto error;
     });
     line2 = (int)val;
@@ -551,7 +551,7 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer line, Integer
   colnr_T col2 = -1;
   if (opts->end_col.type == kObjectTypeInteger) {
     Integer val = opts->end_col.data.integer;
-    VALIDATE((val >= 0 && val <= MAXCOL), "end_col value outside range", {
+    VALIDATE_S((val >= 0 && val <= MAXCOL), "end_col", "(out of range)", {
       goto error;
     });
     col2 = (int)val;
@@ -720,7 +720,7 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer line, Integer
   // Only error out if they try to set end_right_gravity without
   // setting end_col or end_row
   VALIDATE(!(line2 == -1 && col2 == -1 && HAS_KEY(opts->end_right_gravity)),
-           "cannot set end_right_gravity without setting end_row or end_col", {
+           "%s", "cannot set end_right_gravity without end_row or end_col", {
     goto error;
   });
 
@@ -1092,7 +1092,7 @@ static bool extmark_get_index_from_obj(buf_T *buf, Integer ns_id, Object obj, in
     VALIDATE((pos.size == 2
               && pos.items[0].type == kObjectTypeInteger
               && pos.items[1].type == kObjectTypeInteger),
-             "Invalid position: expected 2 Integer items", {
+             "%s", "Invalid position: expected 2 Integer items", {
       return false;
     });
 
@@ -1102,7 +1102,7 @@ static bool extmark_get_index_from_obj(buf_T *buf, Integer ns_id, Object obj, in
     *col = (colnr_T)(pos_col >= 0 ? pos_col : MAXCOL);
     return true;
   } else {
-    VALIDATE(false, "Invalid position: expected mark id Integer or 2-item Array", {
+    VALIDATE(false, "%s", "Invalid position: expected mark id Integer or 2-item Array", {
       return false;
     });
   }
@@ -1153,7 +1153,7 @@ VirtText parse_virt_text(Array chunks, Error *err, int *width)
     });
     Array chunk = chunks.items[i].data.array;
     VALIDATE((chunk.size > 0 && chunk.size <= 2 && chunk.items[0].type == kObjectTypeString),
-             "Invalid chunk: expected Array with 1 or 2 Strings", {
+             "%s", "Invalid chunk: expected Array with 1 or 2 Strings", {
       goto free_exit;
     });
 

@@ -149,7 +149,7 @@ Array nvim_get_autocmds(Dict(get_autocmds) *opts, Error *err)
   }
 
   VALIDATE((opts->pattern.type == kObjectTypeNil || opts->buffer.type == kObjectTypeNil),
-           "Cannot use both 'pattern' and 'buffer'", {
+           "%s", "Cannot use both 'pattern' and 'buffer'", {
     goto cleanup;
   });
 
@@ -425,7 +425,7 @@ Integer nvim_create_autocmd(uint64_t channel_id, Object event, Dict(create_autoc
   }
 
   VALIDATE((opts->callback.type == kObjectTypeNil || opts->command.type == kObjectTypeNil),
-           "Cannot use both 'callback' and 'command'", {
+           "%s", "Cannot use both 'callback' and 'command'", {
     goto cleanup;
   });
 
@@ -587,7 +587,7 @@ void nvim_clear_autocmds(Dict(clear_autocmds) *opts, Error *err)
   }
 
   VALIDATE((opts->pattern.type == kObjectTypeNil || opts->buffer.type == kObjectTypeNil),
-           "Cannot use both 'pattern' and 'buffer'", {
+           "%s", "Cannot use both 'pattern' and 'buffer'", {
     goto cleanup;
   });
 
@@ -887,7 +887,7 @@ static bool get_patterns_from_pattern_or_buf(Array *patterns, Object pattern, Ob
   const char pattern_buflocal[BUFLOCAL_PAT_LEN];
 
   VALIDATE((pattern.type == kObjectTypeNil || buffer.type == kObjectTypeNil),
-           "Cannot use both 'pattern' and 'buffer' for the same autocmd", {
+           "%s", "Cannot use both 'pattern' and 'buffer' for the same autocmd", {
     return false;
   });
 

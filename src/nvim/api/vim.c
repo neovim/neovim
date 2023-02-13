@@ -500,7 +500,7 @@ Object nvim_notify(String msg, Integer log_level, Dictionary opts, Error *err)
 Integer nvim_strwidth(String text, Error *err)
   FUNC_API_SINCE(1)
 {
-  VALIDATE((text.size <= INT_MAX), "text length (too long)", {
+  VALIDATE_S((text.size <= INT_MAX), "text length", "(too long)", {
     return 0;
   });
 
@@ -574,8 +574,7 @@ ArrayOf(String) nvim__get_runtime(Array pat, Boolean all, Dict(runtime) *opts, E
 {
   bool is_lua = api_object_to_bool(opts->is_lua, "is_lua", false, err);
   bool source = api_object_to_bool(opts->do_source, "do_source", false, err);
-  VALIDATE((!source || nlua_is_deferred_safe()), "'do_source' used in fast callback", {});
-
+  VALIDATE((!source || nlua_is_deferred_safe()), "%s", "'do_source' used in fast callback", {});
   if (ERROR_SET(err)) {
     return (Array)ARRAY_DICT_INIT;
   }
@@ -599,7 +598,7 @@ ArrayOf(String) nvim__get_runtime(Array pat, Boolean all, Dict(runtime) *opts, E
 void nvim_set_current_dir(String dir, Error *err)
   FUNC_API_SINCE(1)
 {
-  VALIDATE((dir.size < MAXPATHL), "directory name (too long)", {
+  VALIDATE_S((dir.size < MAXPATHL), "directory name", "(too long)", {
     return;
   });
 
@@ -1067,7 +1066,7 @@ void nvim_chan_send(Integer chan, String data, Error *err)
 
   channel_send((uint64_t)chan, data.data, data.size,
                false, &error);
-  VALIDATE(!error, error, {});
+  VALIDATE(!error, "%s", error, {});
 }
 
 /// Gets the current list of tabpage handles.
@@ -1643,7 +1642,7 @@ Array nvim_call_atomic(uint64_t channel_id, Array calls, Arena *arena, Error *er
       goto theend;
     });
     Array call = calls.items[i].data.array;
-    VALIDATE((call.size == 2), "Items in calls array must be arrays of size 2", {
+    VALIDATE((call.size == 2), "%s", "calls item must be 2-item Array", {
       goto theend;
     });
     VALIDATE_T("name", kObjectTypeString, call.items[0].type, {
@@ -1911,7 +1910,7 @@ void nvim_select_popupmenu_item(Integer item, Boolean insert, Boolean finish, Di
                                 Error *err)
   FUNC_API_SINCE(6)
 {
-  VALIDATE((opts.size == 0), "opts dict isn't empty", {
+  VALIDATE((opts.size == 0), "%s", "opts dict isn't empty", {
     return;
   });
 
@@ -2100,7 +2099,7 @@ Dictionary nvim_eval_statusline(String str, Dict(eval_statusline) *opts, Error *
 
   if (str.size < 2 || memcmp(str.data, "%!", 2) != 0) {
     const char *const errmsg = check_stl_option(str.data);
-    VALIDATE(!errmsg, errmsg, {
+    VALIDATE(!errmsg, "%s", errmsg, {
       return result;
     });
   }
@@ -2119,7 +2118,7 @@ Dictionary nvim_eval_statusline(String str, Dict(eval_statusline) *opts, Error *
     VALIDATE((opts->fillchar.data.string.size != 0
               && ((size_t)utf_ptr2len(opts->fillchar.data.string.data)
                   == opts->fillchar.data.string.size)),
-             "Invalid fillchar (not a single character)", {
+             "%s", "Invalid fillchar: expected single character", {
       return result;
     });
     fillchar = utf_ptr2char(opts->fillchar.data.string.data);

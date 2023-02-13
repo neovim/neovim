@@ -50,15 +50,7 @@
     } \
   } while (0)
 
-#define VALIDATE(cond, msg_, code) \
-  do { \
-    if (!(cond)) { \
-      api_set_error(err, kErrorTypeValidation, "%s", msg_); \
-      code; \
-    } \
-  } while (0)
-
-#define VALIDATE_FMT(cond, fmt_, msg_, code) \
+#define VALIDATE(cond, fmt_, msg_, code) \
   do { \
     if (!(cond)) { \
       api_set_error(err, kErrorTypeValidation, fmt_, msg_); \
