@@ -318,6 +318,10 @@ void screen_resize(int width, int height)
   resizing_autocmd = false;
   redraw_all_later(UPD_CLEAR);
 
+  if (State != MODE_ASKMORE && State != MODE_EXTERNCMD && State != MODE_CONFIRM) {
+    screenclear();
+  }
+
   if (starting != NO_SCREEN) {
     maketitle();
 
