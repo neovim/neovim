@@ -2412,6 +2412,11 @@ describe("TUI as a client", function()
     exec_lua([[vim.loop.kill(vim.fn.jobpid(vim.bo.channel), 'sigterm')]])
     screen:expect({any = '%[Process exited 1%]'})
 
+    eq(0, meths.get_vvar('shell_error'))
+    -- exits on input eof #22244
+    funcs.system({nvim_prog, '--server', server_pipe, '--remote-ui'})
+    eq(1, meths.get_vvar('shell_error'))
+
     client_super:close()
     server:close()
   end)

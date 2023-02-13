@@ -167,7 +167,7 @@ static bool cursor_style_enabled = false;
 # include "tui/tui.c.generated.h"
 #endif
 
-TUIData *tui_start(int *width, int *height, char **term)
+void tui_start(TUIData **tui_p, int *width, int *height, char **term)
 {
   TUIData *tui = xcalloc(1, sizeof(TUIData));
   tui->is_starting = true;
@@ -190,11 +190,11 @@ TUIData *tui_start(int *width, int *height, char **term)
   uv_timer_start(&tui->startup_delay_timer, after_startup_cb,
                  100, 0);
 
+  *tui_p = tui;
   loop_poll_events(&main_loop, 1);
   *width = tui->width;
   *height = tui->height;
   *term = tui->term;
-  return tui;
 }
 
 void tui_enable_extkeys(TUIData *tui)
