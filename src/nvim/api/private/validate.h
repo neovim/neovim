@@ -58,4 +58,12 @@
     } \
   } while (0)
 
+#define VALIDATE_FMT(cond, fmt_, msg_, code) \
+  do { \
+    if (!(cond)) { \
+      api_set_error(err, kErrorTypeValidation, fmt_, msg_); \
+      code; \
+    } \
+  } while (0)
+
 #endif  // NVIM_API_PRIVATE_VALIDATE_H

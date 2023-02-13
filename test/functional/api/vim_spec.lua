@@ -1410,6 +1410,15 @@ describe('API', function()
       ok(not nvim('get_option_value', 'equalalways', {}))
     end)
 
+    it('validation', function()
+      eq("Invalid scope (expected 'local' or 'global')",
+        pcall_err(nvim, 'get_option_value', 'scrolloff', {scope = 'bogus'}))
+      eq("Invalid scope (expected 'local' or 'global')",
+        pcall_err(nvim, 'set_option_value', 'scrolloff', 1, {scope = 'bogus'}))
+      eq("Invalid scope: expected String, got Integer",
+        pcall_err(nvim, 'get_option_value', 'scrolloff', {scope = 42}))
+    end)
+
     it('can get local values when global value is set', function()
       eq(0, nvim('get_option_value', 'scrolloff', {}))
       eq(-1, nvim('get_option_value', 'scrolloff', {scope = 'local'}))
@@ -2747,7 +2756,7 @@ describe('API', function()
 
   describe('nvim_get_option_info', function()
     it('should error for unknown options', function()
-      eq("no such option: 'bogus'", pcall_err(meths.get_option_info, 'bogus'))
+      eq("Invalid option (not found): 'bogus'", pcall_err(meths.get_option_info, 'bogus'))
     end)
 
     it('should return the same options for short and long name', function()

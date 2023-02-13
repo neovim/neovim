@@ -1090,8 +1090,8 @@ static bool extmark_get_index_from_obj(buf_T *buf, Integer ns_id, Object obj, in
   } else if (obj.type == kObjectTypeArray) {
     Array pos = obj.data.array;
     VALIDATE((pos.size == 2
-             && pos.items[0].type == kObjectTypeInteger
-             && pos.items[1].type == kObjectTypeInteger),
+              && pos.items[0].type == kObjectTypeInteger
+              && pos.items[1].type == kObjectTypeInteger),
              "Invalid position: expected 2 Integer items", {
       return false;
     });

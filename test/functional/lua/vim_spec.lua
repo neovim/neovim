@@ -1458,7 +1458,7 @@ describe('lua stdlib', function()
     ]]
     eq('', funcs.luaeval "vim.bo.filetype")
     eq(true, funcs.luaeval "vim.bo[BUF].modifiable")
-    matches("no such option: 'nosuchopt'$",
+    matches("Invalid option %(not found%): 'nosuchopt'$",
        pcall_err(exec_lua, 'return vim.bo.nosuchopt'))
     matches("Expected lua string$",
        pcall_err(exec_lua, 'return vim.bo[0][0].autoread'))
@@ -1479,7 +1479,7 @@ describe('lua stdlib', function()
     eq(0, funcs.luaeval "vim.wo.cole")
     eq(0, funcs.luaeval "vim.wo[0].cole")
     eq(0, funcs.luaeval "vim.wo[1001].cole")
-    matches("no such option: 'notanopt'$",
+    matches("Invalid option %(not found%): 'notanopt'$",
        pcall_err(exec_lua, 'return vim.wo.notanopt'))
     matches("Expected lua string$",
        pcall_err(exec_lua, 'return vim.wo[0][0].list'))

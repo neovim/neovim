@@ -74,7 +74,6 @@
 # include "api/vim.c.generated.h"
 #endif
 
-
 /// Gets a highlight definition by name.
 ///
 /// @param name Highlight group name

@@ -998,7 +998,7 @@ void nvim_buf_del_user_command(Buffer buffer, String name, Error *err)
     }
   }
 
-  api_set_error(err, kErrorTypeException, "Invalid user-defined command (not found): %s", name.data);
+  api_set_error(err, kErrorTypeException, "Invalid command (not found): %s", name.data);
 }
 
 void create_user_command(String name, Object command, Dict(user_command) *opts, int flags,
@@ -1021,7 +1021,8 @@ void create_user_command(String name, Object command, Dict(user_command) *opts, 
              name.data, {
     goto err;
   });
-  VALIDATE((!HAS_KEY(opts->range) || !HAS_KEY(opts->count)), "'range' and 'count' are mutually exclusive", {
+  VALIDATE((!HAS_KEY(opts->range) || !HAS_KEY(opts->count)),
+           "Cannot use both 'range' and 'count'", {
     goto err;
   });
 

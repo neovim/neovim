@@ -586,7 +586,6 @@ void nvim_clear_autocmds(Dict(clear_autocmds) *opts, Error *err)
     goto cleanup;
   }
 
-
   VALIDATE((opts->pattern.type == kObjectTypeNil || opts->buffer.type == kObjectTypeNil),
            "Cannot use both 'pattern' and 'buffer'", {
     goto cleanup;
