@@ -41,9 +41,7 @@ jobs:
       - uses: actions/checkout@v3
 
       - name: Install dependencies
-        run: |
-          cmake -P ./.github/scripts/install_dependencies.cmake
-          sudo apt-get install -y lua-check
+        run: ./.github/scripts/install_deps.sh lua-check
 
       - name: Cache uncrustify
         id: cache-uncrustify
@@ -132,7 +130,7 @@ jobs:
       - name: Install dependencies
         run: |
           sudo add-apt-repository ppa:neovim-ppa/stable
-          cmake -P ./.github/scripts/install_dependencies.cmake
+          ./.github/scripts/install_deps.sh
           sudo apt-get install -y \
             libluajit-5.1-dev \
             libmsgpack-dev \
@@ -225,7 +223,7 @@ jobs:
         run: mkdir -p "$LOG_DIR"
 
       - name: Install dependencies
-        run: cmake -D TEST_DEPS=ON -P ./.github/scripts/install_dependencies.cmake
+        run: ./.github/scripts/install_deps.sh cpanminus
 
       - name: Setup interpreter packages
         run: |
@@ -364,7 +362,7 @@ jobs:
         run: echo "$BIN_DIR" >> $GITHUB_PATH
 
       - name: Install dependencies
-        run: cmake -P ./.github/scripts/install_dependencies.cmake
+        run: ./.github/scripts/install_deps.sh
 
       - name: Install minimum required version of cmake
         run: |
