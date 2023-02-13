@@ -1411,9 +1411,9 @@ describe('API', function()
     end)
 
     it('validation', function()
-      eq("Invalid scope (expected 'local' or 'global')",
+      eq("Invalid scope: expected 'local' or 'global'",
         pcall_err(nvim, 'get_option_value', 'scrolloff', {scope = 'bogus'}))
-      eq("Invalid scope (expected 'local' or 'global')",
+      eq("Invalid scope: expected 'local' or 'global'",
         pcall_err(nvim, 'set_option_value', 'scrolloff', 1, {scope = 'bogus'}))
       eq("Invalid scope: expected String, got Integer",
         pcall_err(nvim, 'get_option_value', 'scrolloff', {scope = 42}))
@@ -2238,7 +2238,7 @@ describe('API', function()
         {'nvim_set_var'},
         {'nvim_set_var', {'avar', 2}},
       }
-      eq('Items in calls array must be arrays of size 2',
+      eq('calls item must be a 2-item Array',
          pcall_err(meths.call_atomic, req))
       -- call before was done, but not after
       eq(1, meths.get_var('avar'))
@@ -3119,11 +3119,11 @@ describe('API', function()
          meths.eval_statusline('a%=b', { fillchar = '\031', maxwidth = 5 }))
     end)
     it('rejects multiple-character fillchar', function()
-      eq('Invalid fillchar (not a single character)',
+      eq('Invalid fillchar: expected single character',
          pcall_err(meths.eval_statusline, '', { fillchar = 'aa' }))
     end)
     it('rejects empty string fillchar', function()
-      eq('Invalid fillchar (not a single character)',
+      eq('Invalid fillchar: expected single character',
          pcall_err(meths.eval_statusline, '', { fillchar = '' }))
     end)
     it('rejects non-string fillchar', function()

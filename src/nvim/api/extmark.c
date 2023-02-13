@@ -537,8 +537,7 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer line, Integer
 
   if (opts->end_row.type == kObjectTypeInteger) {
     Integer val = opts->end_row.data.integer;
-    VALIDATE_S((val >= 0 && !(val > buf->b_ml.ml_line_count && strict)),
-             "end_row", "(out of range)", {
+    VALIDATE_RANGE((val >= 0 && !(val > buf->b_ml.ml_line_count && strict)), "end_row", {
       goto error;
     });
     line2 = (int)val;
@@ -551,7 +550,7 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer line, Integer
   colnr_T col2 = -1;
   if (opts->end_col.type == kObjectTypeInteger) {
     Integer val = opts->end_col.data.integer;
-    VALIDATE_S((val >= 0 && val <= MAXCOL), "end_col", "(out of range)", {
+    VALIDATE_RANGE((val >= 0 && val <= MAXCOL), "end_col", {
       goto error;
     });
     col2 = (int)val;
@@ -692,7 +691,7 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer line, Integer
   if (opts->priority.type == kObjectTypeInteger) {
     Integer val = opts->priority.data.integer;
 
-    VALIDATE_S((val >= 0 && val <= UINT16_MAX), "priority", "(out of range)", {
+    VALIDATE_RANGE((val >= 0 && val <= UINT16_MAX), "priority", {
       goto error;
     });
     decor.priority = (DecorPriority)val;
@@ -732,7 +731,7 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer line, Integer
   bool ephemeral = false;
   OPTION_TO_BOOL(ephemeral, ephemeral, false);
 
-  if (opts->spell.type == kObjectTypeNil) {
+  if (!HAS_KEY(opts->spell)) {
     decor.spell = kNone;
   } else {
     bool spell = false;
@@ -746,12 +745,12 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer line, Integer
     has_decor = true;
   }
 
-  VALIDATE_S((line >= 0), "line", "(out of range)", {
+  VALIDATE_RANGE((line >= 0), "line", {
     goto error;
   });
 
   if (line > buf->b_ml.ml_line_count) {
-    VALIDATE_S(!strict, "line", "(out of range)", {
+    VALIDATE_RANGE(!strict, "line", {
       goto error;
     });
     line = buf->b_ml.ml_line_count;
@@ -762,12 +761,12 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer line, Integer
   if (col == -1) {
     col = (Integer)len;
   } else if (col > (Integer)len) {
-    VALIDATE_S(!strict, "col", "(out of range)", {
+    VALIDATE_RANGE(!strict, "col", {
       goto error;
     });
     col = (Integer)len;
   } else if (col < -1) {
-    VALIDATE_S(false, "col", "(out of range)", {
+    VALIDATE_RANGE(false, "col", {
       goto error;
     });
   }
@@ -783,7 +782,7 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer line, Integer
       line2 = (int)line;
     }
     if (col2 > (Integer)len) {
-      VALIDATE_S(!strict, "end_col", "(out of range)", {
+      VALIDATE_RANGE(!strict, "end_col", {
         goto error;
       });
       col2 = (int)len;
@@ -886,10 +885,10 @@ Integer nvim_buf_add_highlight(Buffer buffer, Integer ns_id, String hl_group, In
     return 0;
   }
 
-  VALIDATE_S((line >= 0 && line < MAXLNUM), "line number", "(out of range)", {
+  VALIDATE_RANGE((line >= 0 && line < MAXLNUM), "line number", {
     return 0;
   });
-  VALIDATE_S((col_start >= 0 && col_start <= MAXCOL), "column", "(out of range)", {
+  VALIDATE_RANGE((col_start >= 0 && col_start <= MAXCOL), "column", {
     return 0;
   });
 
@@ -948,7 +947,7 @@ void nvim_buf_clear_namespace(Buffer buffer, Integer ns_id, Integer line_start, 
     return;
   }
 
-  VALIDATE_S((line_start >= 0 && line_start < MAXLNUM), "line number", "(out of range)", {
+  VALIDATE_RANGE((line_start >= 0 && line_start < MAXLNUM), "line number", {
     return;
   });
 

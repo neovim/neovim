@@ -42,10 +42,18 @@
     } \
   } while (0)
 
-#define VALIDATE(cond, fmt_, msg_, code) \
+#define VALIDATE(cond, fmt_, fmt_arg1, code) \
   do { \
     if (!(cond)) { \
-      api_set_error(err, kErrorTypeValidation, fmt_, msg_); \
+      api_set_error(err, kErrorTypeValidation, fmt_, fmt_arg1); \
+      code; \
+    } \
+  } while (0)
+
+#define VALIDATE_RANGE(cond, name, code) \
+  do { \
+    if (!(cond)) { \
+      api_set_error(err, kErrorTypeValidation, "Invalid '%s': out of range", name); \
       code; \
     } \
   } while (0)

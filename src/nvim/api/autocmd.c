@@ -125,7 +125,7 @@ Array nvim_get_autocmds(Dict(get_autocmds) *opts, Error *err)
     });
   }
 
-  if (opts->event.type != kObjectTypeNil) {
+  if (HAS_KEY(opts->event)) {
     check_event = true;
 
     Object v = opts->event;
@@ -148,13 +148,13 @@ Array nvim_get_autocmds(Dict(get_autocmds) *opts, Error *err)
     }
   }
 
-  VALIDATE((opts->pattern.type == kObjectTypeNil || opts->buffer.type == kObjectTypeNil),
+  VALIDATE((!HAS_KEY(opts->pattern) || !HAS_KEY(opts->buffer)),
            "%s", "Cannot use both 'pattern' and 'buffer'", {
     goto cleanup;
   });
 
   int pattern_filter_count = 0;
-  if (opts->pattern.type != kObjectTypeNil) {
+  if (HAS_KEY(opts->pattern)) {
     Object v = opts->pattern;
     if (v.type == kObjectTypeString) {
       pattern_filters[pattern_filter_count] = v.data.string.data;
@@ -210,7 +210,7 @@ Array nvim_get_autocmds(Dict(get_autocmds) *opts, Error *err)
       snprintf(pattern_buflocal, BUFLOCAL_PAT_LEN, "<buffer=%d>", (int)buf->handle);
       ADD(buffers, CSTR_TO_OBJ(pattern_buflocal));
     });
-  } else if (opts->buffer.type != kObjectTypeNil) {
+  } else if (HAS_KEY(opts->buffer)) {
     VALIDATE_EXP(false, "buffer", "Integer or Array", api_typename(opts->buffer.type), {
       goto cleanup;
     });
@@ -422,12 +422,12 @@ Integer nvim_create_autocmd(uint64_t channel_id, Object event, Dict(create_autoc
     goto cleanup;
   }
 
-  VALIDATE((opts->callback.type == kObjectTypeNil || opts->command.type == kObjectTypeNil),
+  VALIDATE((!HAS_KEY(opts->callback) || !HAS_KEY(opts->command)),
            "%s", "Cannot use both 'callback' and 'command'", {
     goto cleanup;
   });
 
-  if (opts->callback.type != kObjectTypeNil) {
+  if (HAS_KEY(opts->callback)) {
     // NOTE: We could accept callable tables, but that isn't common in the API.
 
     Object *callback = &opts->callback;
@@ -456,7 +456,7 @@ Integer nvim_create_autocmd(uint64_t channel_id, Object event, Dict(create_autoc
 
     aucmd.type = CALLABLE_CB;
     aucmd.callable.cb = cb;
-  } else if (opts->command.type != kObjectTypeNil) {
+  } else if (HAS_KEY(opts->command)) {
     Object *command = &opts->command;
     VALIDATE_T("command", kObjectTypeString, command->type, {
       goto cleanup;
@@ -784,7 +784,7 @@ void nvim_exec_autocmds(Object event, Dict(exec_autocmds) *opts, Error *err)
     ADD(patterns, STRING_OBJ(STATIC_CSTR_TO_STRING("")));
   }
 
-  if (opts->data.type != kObjectTypeNil) {
+  if (HAS_KEY(opts->data)) {
     data = &opts->data;
   }
 
@@ -795,7 +795,7 @@ void nvim_exec_autocmds(Object event, Dict(exec_autocmds) *opts, Error *err)
     GET_ONE_EVENT(event_nr, event_str, cleanup)
 
     FOREACH_ITEM(patterns, pat, {
-      char *fname = opts->buffer.type == kObjectTypeNil ? pat.data.string.data : NULL;
+      char *fname = !HAS_KEY(opts->buffer) ? pat.data.string.data : NULL;
       did_aucmd |=
         apply_autocmds_group(event_nr, fname, NULL, true, au_group, buf, NULL, data);
     })
@@ -862,12 +862,12 @@ static bool get_patterns_from_pattern_or_buf(Array *patterns, Object pattern, Ob
 {
   const char pattern_buflocal[BUFLOCAL_PAT_LEN];
 
-  VALIDATE((pattern.type == kObjectTypeNil || buffer.type == kObjectTypeNil),
+  VALIDATE((!HAS_KEY(pattern) || !HAS_KEY(buffer)),
            "%s", "Cannot use both 'pattern' and 'buffer' for the same autocmd", {
     return false;
   });
 
-  if (pattern.type != kObjectTypeNil) {
+  if (HAS_KEY(pattern)) {
     Object *v = &pattern;
 
     if (v->type == kObjectTypeString) {
@@ -900,7 +900,7 @@ static bool get_patterns_from_pattern_or_buf(Array *patterns, Object pattern, Ob
         return false;
       });
     }
-  } else if (buffer.type != kObjectTypeNil) {
+  } else if (HAS_KEY(buffer)) {
     VALIDATE_EXP((buffer.type == kObjectTypeInteger || buffer.type == kObjectTypeBuffer),
                  "buffer", "Integer", api_typename(buffer.type), {
       return false;

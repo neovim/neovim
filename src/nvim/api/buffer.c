@@ -293,7 +293,7 @@ ArrayOf(String) nvim_buf_get_lines(uint64_t channel_id,
   start = normalize_index(buf, start, true, &oob);
   end = normalize_index(buf, end, true, &oob);
 
-  VALIDATE_S((!strict_indexing || !oob), "index", "(out of bounds)", {
+  VALIDATE((!strict_indexing || !oob), "%s", "Index out of bounds", {
     return rv;
   });
 
@@ -356,7 +356,7 @@ void nvim_buf_set_lines(uint64_t channel_id, Buffer buffer, Integer start, Integ
   start = normalize_index(buf, start, true, &oob);
   end = normalize_index(buf, end, true, &oob);
 
-  VALIDATE_S((!strict_indexing || !oob), "index", "(out of bounds)", {
+  VALIDATE((!strict_indexing || !oob), "%s", "Index out of bounds", {
     return;
   });
   VALIDATE((start <= end), "%s", "'start' is higher than 'end'", {
@@ -421,7 +421,7 @@ void nvim_buf_set_lines(uint64_t channel_id, Buffer buffer, Integer start, Integ
   for (size_t i = 0; i < to_replace; i++) {
     int64_t lnum = start + (int64_t)i;
 
-    VALIDATE_S(lnum < MAXLNUM, "index", "(out of range)", {
+    VALIDATE(lnum < MAXLNUM, "%s", "Index out of bounds", {
       goto end;
     });
 
@@ -440,7 +440,7 @@ void nvim_buf_set_lines(uint64_t channel_id, Buffer buffer, Integer start, Integ
   for (size_t i = to_replace; i < new_len; i++) {
     int64_t lnum = start + (int64_t)i - 1;
 
-    VALIDATE_S(lnum < MAXLNUM, "index", "(out of range)", {
+    VALIDATE(lnum < MAXLNUM, "%s", "Index out of bounds", {
       goto end;
     });
 
@@ -529,12 +529,12 @@ void nvim_buf_set_text(uint64_t channel_id, Buffer buffer, Integer start_row, In
   // check range is ordered and everything!
   // start_row, end_row within buffer len (except add text past the end?)
   start_row = normalize_index(buf, start_row, false, &oob);
-  VALIDATE_S((!oob), "start_row", "(out of range)", {
+  VALIDATE_RANGE((!oob), "start_row", {
     return;
   });
 
   end_row = normalize_index(buf, end_row, false, &oob);
-  VALIDATE_S((!oob), "end_row", "(out of range)", {
+  VALIDATE_RANGE((!oob), "end_row", {
     return;
   });
 
@@ -544,14 +544,14 @@ void nvim_buf_set_text(uint64_t channel_id, Buffer buffer, Integer start_row, In
   // Another call to ml_get_buf() may free the line, so make a copy.
   str_at_start = xstrdup(ml_get_buf(buf, (linenr_T)start_row, false));
   size_t len_at_start = strlen(str_at_start);
-  VALIDATE_S((start_col >= 0 && (size_t)start_col <= len_at_start), "start_col", "(out of range)", {
+  VALIDATE_RANGE((start_col >= 0 && (size_t)start_col <= len_at_start), "start_col", {
     goto early_end;
   });
 
   // Another call to ml_get_buf() may free the line, so make a copy.
   str_at_end = xstrdup(ml_get_buf(buf, (linenr_T)end_row, false));
   size_t len_at_end = strlen(str_at_end);
-  VALIDATE_S((end_col >= 0 && (size_t)end_col <= len_at_end), "end_col", "(out of range)", {
+  VALIDATE_RANGE((end_col >= 0 && (size_t)end_col <= len_at_end), "end_col", {
     goto early_end;
   });
 
@@ -664,7 +664,7 @@ void nvim_buf_set_text(uint64_t channel_id, Buffer buffer, Integer start_row, In
   for (size_t i = 0; i < to_replace; i++) {
     int64_t lnum = start_row + (int64_t)i;
 
-    VALIDATE_S((lnum < MAXLNUM), "index", "(out of range)", {
+    VALIDATE((lnum < MAXLNUM), "%s", "Index out of bounds", {
       goto end;
     });
 
@@ -681,7 +681,7 @@ void nvim_buf_set_text(uint64_t channel_id, Buffer buffer, Integer start_row, In
   for (size_t i = to_replace; i < new_len; i++) {
     int64_t lnum = start_row + (int64_t)i - 1;
 
-    VALIDATE_S((lnum < MAXLNUM), "index", "(out of range)", {
+    VALIDATE((lnum < MAXLNUM), "%s", "Index out of bounds", {
       goto end;
     });
 
@@ -779,7 +779,7 @@ ArrayOf(String) nvim_buf_get_text(uint64_t channel_id, Buffer buffer,
   start_row = normalize_index(buf, start_row, false, &oob);
   end_row = normalize_index(buf, end_row, false, &oob);
 
-  VALIDATE_S((!oob), "index", "(out of range)", {
+  VALIDATE((!oob), "%s", "Index out of bounds", {
     return rv;
   });
 
@@ -864,7 +864,7 @@ Integer nvim_buf_get_offset(Buffer buffer, Integer index, Error *err)
     return -1;
   }
 
-  VALIDATE_S((index >= 0 && index <= buf->b_ml.ml_line_count), "index", "(out of range)", {
+  VALIDATE((index >= 0 && index <= buf->b_ml.ml_line_count), "%s", "Index out of bounds", {
     return 0;
   });
 
